@@ -2815,6 +2815,153 @@ static void test_D3DXSHEvalDirectionalLight(void)
     ok(hr == D3D_OK, "Expected %#x, got %#x\n", D3D_OK, hr);
 }
 
+static void test_D3DXSHEvalSphericalLight(void)
+{
+    D3DXVECTOR3 dir;
+    FLOAT bout[49], expected, gout[49], rout[49];
+    const FLOAT table[] = {
+    /* Red colour */
+      3.01317239f, -0.97724032f, 2.24765277f, -0.89580363f, 0.0f, 0.0f,
+      0.0f, 0.0f, 0.0f, 0.06292814f, -0.42737406f, 0.61921263f,
+      -0.30450898f, 0.56761158f, 0.03723336f, -0.08191673f, 0.0f, 0.0f,
+      0.0f, 0.0f, 0.0f, -0.0f, 0.0f, 0.0f,
+      0.0f, 0.01249927f, -0.01374878f, -0.14810932f, 0.43434596f, -0.24598616f,
+      -0.15175794f, -0.22548729f, -0.03784076f, 0.19280137f, -0.07830712f, 0.00797894f,
+
+      0.40251964f, -0.24365333f, 0.56040263f, -0.22334887f, 0.16204689f, -0.40659040f,
+      0.44600141f, -0.37270784f, -0.01411773f, -0.04319951f, 0.29338786f, -0.42508304f,
+      0.20904225f, -0.38965943f, -0.02556031f, 0.05623499f, -0.00468823f, -0.07920021f,
+      0.33171222f, -0.30782884f, 0.00052908f, -0.28217643f, -0.02889918f, 0.10309891f,
+      -0.02670213f, 0.00724340f, -0.00796750f, -0.08583023f, 0.25170606f, -0.14255044f,
+      -0.08794463f, -0.13067122f, -0.02192894f, 0.11172954f, -0.04537944f, 0.00462384f,
+
+      1.95445275f, -0.85659367f, 1.97016549f, -0.78521085f, 0.23103346f, -0.57968396f,
+      0.63587302f, -0.53137696f, -0.02012792f, 0.02111043f, -0.14337072f, 0.20772660f,
+      -0.10215330f, 0.19041604f, 0.01249063f, -0.02748052f, 0.00633162f, 0.10696279f,
+      -0.44798949f, 0.41573414f, -0.00071454f, 0.38108963f, 0.03902940f, -0.13923886f,
+      0.03606220f, -0.00447360f, 0.00492081f, 0.05300967f, -0.15545636f, 0.08804068f,
+      0.05431554f, 0.08070395f, 0.01354355f, -0.06900536f, 0.02802683f, -0.00285574f,
+    /* Green colour */
+      4.60838127f, -1.49460280f, 3.43758631f, -1.37005258f, 0.0f, 0.0f,
+      0.0f, 0.0f, 0.0f, 0.09624302f, -0.65363091f, 0.94703102f,
+      -0.46571958f, 0.86811179f, 0.05694513f, -0.12528442f, -0.0f, 0.0f,
+      0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+      0.0f, 0.01911653f, -0.02102755f, -0.22652012f, 0.66429377f, -0.37621412f,
+      -0.23210037f, -0.34486291f, -0.05787410f, 0.29487267f, -0.11976383f, 0.01220309f,
+
+      0.61561823f, -0.37264627f, 0.85708636f, -0.34159240f, 0.24783641f, -0.62184411f,
+      0.68211979f, -0.57002378f, -0.02159182f, -0.06606984f, 0.44871080f, -0.65012693f,
+      0.31971166f, -0.59594971f, -0.03909224f, 0.08600645f, -0.00717023f, -0.12112973f,
+      0.50732452f, -0.47079703f, 0.00080918f, -0.43156394f, -0.04419874f, 0.15768069f,
+      -0.04083854f, 0.01107814f, -0.01218559f, -0.13126975f, 0.38496217f, -0.21801829f,
+      -0.13450353f, -0.19985008f, -0.03353838f, 0.17088045f, -0.06940385f, 0.00707176f,
+
+      2.98916292f, -1.31008446f, 3.01319408f, -1.20091069f, 0.35334525f, -0.88657540f,
+      0.97251165f, -0.81269407f, -0.03078388f, 0.03228654f, -0.21927285f, 0.31769949f,
+      -0.15623444f, 0.29122451f, 0.01910332f, -0.04202903f, 0.00968366f, 0.16359015f,
+      -0.68516040f, 0.63582867f, -0.00109283f, 0.58284295f, 0.05969203f, -0.21295355f,
+      0.05515395f, -0.00684198f, 0.00752595f, 0.08107361f, -0.23775679f, 0.13465045f,
+      0.08307083f, 0.12342957f, 0.02071366f, -0.10553761f, 0.04286456f, -0.00436760f,
+    /* Blue colour */
+      6.20359039f, -2.01196527f, 4.62752008f, -1.84430146f, 0.0f, 0.0f,
+      0.0f, 0.0f, 0.0f, 0.12955792f, -0.87988776f, 1.27484941f,
+      -0.62693024f, 1.16861200f, 0.07665691f, -0.16865209f, 0.0f, 0.0f,
+      0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+      0.0f, 0.02573379f, -0.02830632f, -0.30493096f, 0.89424169f, -0.50644207f,
+      -0.31244281f, -0.46423855f, -0.07790744f, 0.39694402f, -0.16122055f, 0.01642723f,
+
+      0.82871687f, -0.50163919f, 1.15377009f, -0.45983589f, 0.33362597f, -0.83709794f,
+      0.91823828f, -0.76733971f, -0.02906591f, -0.08894017f, 0.60403383f, -0.87517095f,
+      0.43038112f, -0.80224001f, -0.05262417f, 0.11577792f, -0.00965224f, -0.16305926f,
+      0.68293691f, -0.63376528f, 0.00108928f, -0.58095151f, -0.05949831f, 0.21226248f,
+      -0.05497497f, 0.01491288f, -0.01640368f, -0.17670928f, 0.51821834f, -0.29348618f,
+      -0.18106246f, -0.26902896f, -0.04514782f, 0.23003140f, -0.09342826f, 0.00951968f,
+
+      4.02387333f, -1.76357520f, 4.05622292f, -1.61661065f, 0.47565711f, -1.19346702f,
+      1.30915034f, -1.09401131f, -0.04143983f, 0.04346266f, -0.29517499f, 0.42767239f,
+      -0.21031560f, 0.39203301f, 0.02571601f, -0.05657754f, 0.01303570f, 0.22021750f,
+      -0.92233127f, 0.85592318f, -0.00147112f, 0.78459626f, 0.08035465f, -0.28666824f,
+      0.07424571f, -0.00921036f, 0.01013109f, 0.10913756f, -0.32005721f, 0.18126021f,
+      0.11182612f, 0.16615519f, 0.02788378f, -0.14206986f, 0.05770230f, -0.00587946f, };
+    struct
+    {
+        FLOAT *red_received, *green_received, *blue_received;
+        const FLOAT *red_expected, *green_expected, *blue_expected;
+        FLOAT radius, roffset, goffset, boffset;
+    } test[] = {
+        { rout, gout, bout, table, &table[108], &table[216], 17.4f, 1.01f, 1.02f, 1.03f, },
+        { rout, gout, bout, &table[36], &table[144], &table[252], 1.6f, 1.01f, 1.02f, 1.03f, },
+        { rout, gout, bout, &table[72], &table[180], &table[288], -3.0f, 1.01f, 1.02f, 1.03f, },
+        { rout, rout, rout, &table[216], &table[216], &table[216], 17.4f, 1.03f, 1.03f, 1.03f, },
+        { rout, rout, bout, &table[108], &table[108], &table[216], 17.4, 1.02f, 1.02f, 1.03f, },
+        { rout, gout, gout, table, &table[216], &table[216], 17.4f, 1.01f, 1.03f, 1.03f, },
+        { rout, gout, rout, &table[216], &table[108], &table[216], 17.4f, 1.03f, 1.02f, 1.03f, },
+    /* D3DXSHEvalSphericalLight accepts NULL green or blue colour. */
+        { rout, NULL, bout, table, NULL, &table[216], 17.4f, 1.01f, 0.0f, 1.03f, },
+        { rout, gout, NULL, table, &table[108], NULL, 17.4f, 1.01f, 1.02f, 0.0f, },
+        { rout, NULL, NULL, table, NULL, NULL, 17.4f, 1.01f, 0.0f, 0.0f, }, };
+    HRESULT hr;
+    unsigned int j, l, order;
+
+    dir.x = 1.1f; dir.y = 1.2f; dir.z = 2.76f;
+
+    for (l = 0; l < sizeof(test) / sizeof(test[0]); l++)
+    {
+        for (order = D3DXSH_MINORDER; order <= D3DXSH_MAXORDER; order++)
+        {
+            for (j = 0; j < 49; j++)
+            {
+                test[l].red_received[j] = 1.01f + j;
+                if (test[l].green_received)
+                    test[l].green_received[j] = 1.02f + j;
+                if (test[l].blue_received)
+                    test[l].blue_received[j] = 1.03f + j;
+            }
+
+            hr = D3DXSHEvalSphericalLight(order, &dir, test[l].radius, 1.7f, 2.6f, 3.5f, test[l].red_received, test[l].green_received, test[l].blue_received);
+            ok(hr == D3D_OK, "Expected %#x, got %#x\n", D3D_OK, hr);
+
+            for (j = 0; j < 49; j++)
+            {
+                if (j >= order * order)
+                    expected = j + test[l].roffset;
+                else
+                    expected = test[l].red_expected[j];
+                ok(relative_error(expected, test[l].red_received[j]) < admitted_error,
+                    "Red: case %u, order %u: expected[%u] = %f, received %f\n", l, order, j, expected, test[l].red_received[j]);
+
+                if (test[l].green_received)
+                {
+                    if (j >= order * order)
+                        expected = j + test[l].goffset;
+                    else
+                        expected = test[l].green_expected[j];
+                    ok(relative_error(expected, test[l].green_received[j]) < admitted_error,
+                        "Green: case %u, order %u: expected[%u] = %f, received %f\n", l, order, j, expected, test[l].green_received[j]);
+                }
+
+                if (test[l].blue_received)
+                {
+                    if (j >= order * order)
+                        expected = j + test[l].boffset;
+                    else
+                        expected = test[l].blue_expected[j];
+                    ok(relative_error(expected, test[l].blue_received[j]) < admitted_error,
+                        "Blue: case %u, order %u: expected[%u] = %f, received %f\n", l, order, j, expected, test[l].blue_received[j]);
+                }
+            }
+        }
+    }
+
+    /* D3DXSHEvalSphericalLight accepts order < D3DXSH_MINORDER or order > D3DXSH_MAXORDER. But tests in native windows show that the colour outputs are not set */
+    hr = D3DXSHEvalSphericalLight(7, &dir, 17.4f, 1.0f, 2.0f, 3.0f, rout, gout, bout);
+    ok(hr == D3D_OK, "Expected %#x, got %#x\n", D3D_OK, hr);
+    hr = D3DXSHEvalSphericalLight(0, &dir, 17.4f, 1.0f, 2.0f, 3.0f, rout, gout, bout);
+    ok(hr == D3D_OK, "Expected %#x, got %#x\n", D3D_OK, hr);
+    hr = D3DXSHEvalSphericalLight(1, &dir, 17.4f, 1.0f, 2.0f, 3.0f, rout, gout, bout);
+    ok(hr == D3D_OK, "Expected %#x, got %#x\n", D3D_OK, hr);
+}
+
 static void test_D3DXSHMultiply2(void)
 {
     unsigned int i;
@@ -3160,6 +3307,7 @@ START_TEST(math)
     test_D3DXSHEvalConeLight();
     test_D3DXSHEvalDirection();
     test_D3DXSHEvalDirectionalLight();
+    test_D3DXSHEvalSphericalLight();
     test_D3DXSHMultiply2();
     test_D3DXSHMultiply3();
     test_D3DXSHMultiply4();

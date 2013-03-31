@@ -2475,6 +2475,48 @@ HRESULT WINAPI D3DXSHEvalDirectionalLight(UINT order, const D3DXVECTOR3 *dir, FL
     return D3D_OK;
 }
 
+HRESULT WINAPI D3DXSHEvalSphericalLight(UINT order, const D3DXVECTOR3 *dir, FLOAT radius,
+    FLOAT Rintensity, FLOAT Gintensity, FLOAT Bintensity, FLOAT *rout, FLOAT *gout, FLOAT *bout)
+{
+    D3DXVECTOR3 normal;
+    FLOAT cap[6], clamped_angle, dist, temp;
+    UINT i, index, j;
+
+    TRACE("order %u, dir %p, radius %f, red %f, green %f, blue %f, rout %p, gout %p, bout %p\n",
+        order, dir, radius, Rintensity, Gintensity, Bintensity, rout, gout, bout);
+
+    if (order > D3DXSH_MAXORDER)
+    {
+        WARN("Order clamped at D3DXSH_MAXORDER\n");
+        order = D3DXSH_MAXORDER;
+    }
+
+    if (radius < 0.0f)
+        radius = -radius;
+
+    dist = D3DXVec3Length(dir);
+    clamped_angle = (dist <= radius) ? D3DX_PI / 2.0f : asinf(radius / dist);
+
+    weightedcapintegrale(cap, order, clamped_angle);
+    D3DXVec3Normalize(&normal, dir);
+    D3DXSHEvalDirection(rout, order, &normal);
+
+    for (i = 0; i < order; i++)
+        for (j = 0; j < 2 * i + 1; j++)
+        {
+            index = i * i + j;
+            temp = rout[index] * cap[i];
+
+            rout[index] = temp * Rintensity;
+            if (gout)
+                gout[index] = temp * Gintensity;
+            if (bout)
+                bout[index] = temp * Bintensity;
+        }
+
+    return D3D_OK;
+}
+
 FLOAT * WINAPI D3DXSHMultiply2(FLOAT *out, const FLOAT *a, const FLOAT *b)
 {
     FLOAT ta, tb;
