@@ -3005,10 +3005,7 @@ static void X11DRV_WineGL_LoadExtensions(void)
 
     if (has_extension( WineGLInfo.glxExtensions, "GLX_ARB_multisample")) register_extension( "WGL_ARB_multisample" );
 
-    /* In general pbuffer functionality requires support in the X-server. The functionality is
-     * available either when the GLX_SGIX_pbuffer is present or when the GLX server version is 1.3.
-     */
-    if ( glxRequireVersion(3) && has_extension( WineGLInfo.glxExtensions, "GLX_SGIX_pbuffer") )
+    if (glxRequireVersion(3))
     {
         register_extension( "WGL_ARB_pbuffer" );
         opengl_funcs.ext.p_wglCreatePbufferARB    = X11DRV_wglCreatePbufferARB;
@@ -3026,7 +3023,7 @@ static void X11DRV_WineGL_LoadExtensions(void)
 
     /* Support WGL_ARB_render_texture when there's support or pbuffer based emulation */
     if (has_extension( WineGLInfo.glxExtensions, "GLX_ARB_render_texture") ||
-        (glxRequireVersion(3) && has_extension( WineGLInfo.glxExtensions, "GLX_SGIX_pbuffer") && use_render_texture_emulation))
+        (glxRequireVersion(3) && use_render_texture_emulation))
     {
         register_extension( "WGL_ARB_render_texture" );
         opengl_funcs.ext.p_wglBindTexImageARB    = X11DRV_wglBindTexImageARB;
