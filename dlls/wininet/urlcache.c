@@ -2627,57 +2627,56 @@ BOOL urlcache_entry_create(const char *url, const char *ext, WCHAR *full_path)
     cache_container *container;
     urlcache_header *header;
     char file_name[MAX_PATH];
-    const char *url_part, *url_end;
-    const WCHAR *file_name_ext;
-    WCHAR *file_name_no_path;
     WCHAR extW[MAX_PATH];
-    int i, len, len_no_ext;
     BYTE cache_dir;
-    LONG buffer_size;
-    BOOL found = FALSE, generate_name = FALSE;
+    LONG full_path_len;
+    BOOL generate_name = FALSE;
     DWORD error;
     HANDLE file;
     FILETIME ft;
+    URL_COMPONENTSA uc;
+    int i;
 
     TRACE("(%s, %s, %p)\n", debugstr_a(url), debugstr_a(ext), full_path);
 
-    url_end = url + strlen(url);
-    
-    if(((url_end - url) > 1) && (*(url_end - 1) == '/' || *(url_end - 1) == '\\'))
-        url_end--;
+    memset(&uc, 0, sizeof(uc));
+    uc.dwStructSize = sizeof(uc);
+    uc.dwUrlPathLength = 1;
+    uc.dwExtraInfoLength = 1;
+    if(!InternetCrackUrlA(url, 0, 0, &uc))
+        uc.dwUrlPathLength = 0;
 
-    url_part = memchr(url, '?', url_end - url);
-    if(!url_part)
-        url_part = memchr(url, '#', url_end - url);
-    if(url_part)
-        url_end = url_part;
+    if(!uc.dwUrlPathLength) {
+        file_name[0] = 0;
+    }else {
+        char *p, *e;
 
-    for(url_part = url_end; (url_part >= url); url_part--) {
-        if((*url_part == '/' || *url_part == '\\') && ((url_end - url_part) > 1)) {
-            found = TRUE;
-            url_part++;
-            break;
+        p = e = uc.lpszUrlPath+uc.dwUrlPathLength;
+        while(p>uc.lpszUrlPath && *(p-1)!='/' && *(p-1)!='\\' && *(p-1)!='.')
+            p--;
+        if(p>uc.lpszUrlPath && *(p-1)=='.') {
+            e = p-1;
+            while(p>uc.lpszUrlPath && *(p-1)!='/' && *(p-1)!='\\')
+                p--;
+        }
+
+        memcpy(file_name, p, e-p);
+        file_name[e-p] = 0;
+
+        for(p=file_name; *p; p++) {
+            switch(*p) {
+            case '<': case '>':
+            case ':': case '"':
+            case '|': case '?':
+            case '*':
+                *p = '_'; break;
+            default: break;
+            }
         }
     }
-    if(!found)
-        url_part++;
 
-    if(!lstrcmpA(url_part, "www"))
-        url_part += 3;
-
-    len = url_end - url_part;
-
-    if(found && (len < MAX_PATH-1)) {
-        memcpy(file_name, url_part, len);
-        file_name[len] = '\0';
-        while(len && file_name[--len] == '/') file_name[len] = '\0';
-
-        /* FIXME: get rid of illegal characters like \, / and : */
-        TRACE("File name: %s\n", debugstr_a(file_name));
-    }else {
+    if(!file_name[0])
         generate_name = TRUE;
-        file_name[0] = 0;
-    }
 
     error = cache_containers_find(url, &container);
     if(error != ERROR_SUCCESS) {
@@ -2699,50 +2698,43 @@ BOOL urlcache_entry_create(const char *url, const char *ext, WCHAR *full_path)
     else
         cache_dir = CACHE_CONTAINER_NO_SUBDIR;
 
-    buffer_size = MAX_PATH * sizeof(WCHAR);
-    if(!urlcache_create_file_pathW(container, header, file_name, cache_dir, full_path, &buffer_size)) {
+    full_path_len = MAX_PATH * sizeof(WCHAR);
+    if(!urlcache_create_file_pathW(container, header, file_name, cache_dir, full_path, &full_path_len)) {
         WARN("Failed to get full path for filename %s, needed %u bytes.\n",
-                debugstr_a(file_name), buffer_size);
+                debugstr_a(file_name), full_path_len);
         cache_container_unlock_index(container, header);
         return FALSE;
     }
+    full_path_len = full_path_len/sizeof(WCHAR) - 1;
 
     cache_container_unlock_index(container, header);
 
-    for(file_name_no_path = full_path + buffer_size / sizeof(WCHAR) - 2;
-        file_name_no_path >= full_path;  --file_name_no_path) {
-        if (*file_name_no_path == '/' || *file_name_no_path == '\\')
-            break;
-    }
-
-    len_no_ext = lstrlenW(file_name_no_path);
-    file_name_ext = PathFindExtensionW(file_name_no_path);
-    if(file_name_ext)
-        len_no_ext -= lstrlenW(file_name_ext);
-    *extW = '\0';
-
     if(ext) {
-        extW[0] = '.';
-        MultiByteToWideChar(CP_ACP, 0, ext, -1, extW+1, MAX_PATH-1);
-    }
-
-    for(i=0; i<255 && !generate_name; i++) {
-        static const WCHAR format[] = {'[','%','u',']','%','s',0};
         WCHAR *p;
 
-        wsprintfW(file_name_no_path + len_no_ext, format, i, extW);
-        for(p=file_name_no_path+1; *p; p++) {
+        extW[0] = '.';
+        MultiByteToWideChar(CP_ACP, 0, ext, -1, extW+1, MAX_PATH-1);
+
+        for(p=extW; *p; p++) {
             switch(*p) {
             case '<': case '>':
             case ':': case '"':
-            case '/': case '\\':
             case '|': case '?':
             case '*':
                 *p = '_'; break;
             default: break;
             }
         }
-        if(p[-1] == ' ' || p[-1] == '.') p[-1] = '_';
+        if(p[-1]==' ' || p[-1]=='.')
+            p[-1] = '_';
+    }else {
+        extW[0] = '\0';
+    }
+
+    for(i=0; i<255 && !generate_name; i++) {
+        static const WCHAR format[] = {'[','%','u',']','%','s',0};
+
+        wsprintfW(full_path+full_path_len, format, i, extW);
 
         TRACE("Trying: %s\n", debugstr_w(full_path));
         file = CreateFileW(full_path, GENERIC_READ, 0, NULL, CREATE_NEW, 0, NULL);
@@ -2754,7 +2746,7 @@ BOOL urlcache_entry_create(const char *url, const char *ext, WCHAR *full_path)
 
     /* Try to generate random name */
     GetSystemTimeAsFileTime(&ft);
-    strcpyW(file_name_no_path+len_no_ext+8, extW);
+    strcpyW(full_path+full_path_len+8, extW);
 
     for(i=0; i<255; i++) {
         int j;
@@ -2766,7 +2758,7 @@ BOOL urlcache_entry_create(const char *url, const char *ext, WCHAR *full_path)
         for(j=0; j<8; j++) {
             int r = (n % 36);
             n /= 37;
-            file_name_no_path[len_no_ext+j] = (r < 10 ? '0' + r : 'A' + r - 10);
+            full_path[full_path_len+j] = (r < 10 ? '0' + r : 'A' + r - 10);
         }
 
         TRACE("Trying: %s\n", debugstr_w(full_path));
