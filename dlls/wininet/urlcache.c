@@ -1065,7 +1065,7 @@ static BOOL urlcache_create_file_pathA(
         dir_len = 0;
 
     nRequired = (path_len + dir_len + file_name_len) * sizeof(char);
-    if (nRequired < *lpBufferSize)
+    if (nRequired <= *lpBufferSize)
     {
         WideCharToMultiByte(CP_ACP, 0, pContainer->path, -1, szPath, path_len, NULL, NULL);
         if(dir_len) {
