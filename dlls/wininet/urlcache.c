@@ -863,19 +863,6 @@ static DWORD cache_containers_find(const char *url, cache_container **ret)
     return ERROR_FILE_NOT_FOUND;
 }
 
-static DWORD cache_containers_findW(LPCWSTR url, cache_container **container)
-{
-    char *encoded_url = NULL;
-    DWORD ret;
-
-    if (url && !(encoded_url = heap_strdupWtoA(url)))
-        return ERROR_OUTOFMEMORY;
-
-    ret = cache_containers_find(encoded_url, container);
-    heap_free(encoded_url);
-    return ret;
-}
-
 static BOOL cache_containers_enum(char *search_pattern, DWORD index, cache_container **ret)
 {
     DWORD i = 0;
@@ -2789,404 +2776,291 @@ BOOL WINAPI CreateUrlCacheEntryW(LPCWSTR lpszUrlName, DWORD dwExpectedFileSize,
     return ret;
 }
 
-/***********************************************************************
- *           urlcache_entry_commit (Compensates for an MS bug)
- *
- *   The bug we are compensating for is that some drongo at Microsoft
- *   used lpHeaderInfo to pass binary data to CommitUrlCacheEntryA.
- *   As a consequence, CommitUrlCacheEntryA has been effectively
- *   redefined as LPBYTE rather than LPCSTR. But CommitUrlCacheEntryW
- *   is still defined as LPCWSTR. The result (other than madness) is
- *   that we always need to store lpHeaderInfo in CP_ACP rather than
- *   in UTF16, and we need to avoid converting lpHeaderInfo in
- *   CommitUrlCacheEntryA to UTF16 and then back to CP_ACP, since the
- *   result will lose data for arbitrary binary data.
- *
- */
-static BOOL urlcache_entry_commit(
-    IN LPCWSTR lpszUrlName,
-    IN LPCWSTR lpszLocalFileName,
-    IN FILETIME ExpireTime,
-    IN FILETIME LastModifiedTime,
-    IN DWORD CacheEntryType,
-    IN LPBYTE lpHeaderInfo,
-    IN DWORD dwHeaderSize,
-    IN LPCWSTR lpszFileExtension,
-    IN LPCWSTR lpszOriginalUrl
-    )
+static BOOL urlcache_entry_commit(const char *url, const WCHAR *file_name,
+    FILETIME expire_time, FILETIME modify_time, DWORD entry_type,
+    BYTE *header_info, DWORD header_size, const char *file_ext,
+    const char *original_url)
 {
-    cache_container *pContainer;
-    urlcache_header *pHeader;
-    struct hash_entry *pHashEntry;
-    entry_header *pEntry;
-    entry_url * pUrlEntry;
+    cache_container *container;
+    urlcache_header *header;
+    struct hash_entry *hash_entry;
+    entry_header *entry;
+    entry_url *url_entry;
     DWORD url_entry_offset;
-    DWORD dwBytesNeeded = DWORD_ALIGN(sizeof(*pUrlEntry));
-    DWORD dwOffsetLocalFileName = 0;
-    DWORD dwOffsetHeader = 0;
-    DWORD dwOffsetFileExtension = 0;
+    DWORD size = DWORD_ALIGN(sizeof(*url_entry));
+    DWORD file_name_off = 0;
+    DWORD header_info_off = 0;
+    DWORD file_ext_off = 0;
     WIN32_FILE_ATTRIBUTE_DATA file_attr;
     LARGE_INTEGER file_size;
-    BYTE cDirectory;
-    char achFile[MAX_PATH];
-    LPSTR lpszUrlNameA = NULL;
-    LPSTR lpszFileExtensionA = NULL;
-    char *pchLocalFileName = 0;
+    BYTE dir_id;
+    char file_name_no_container[MAX_PATH];
+    char *local_file_name = 0;
     DWORD hit_rate = 0;
     DWORD exempt_delta = 0;
     DWORD error;
 
-    TRACE("(%s, %s, ..., ..., %x, %p, %d, %s, %s)\n",
-        debugstr_w(lpszUrlName),
-        debugstr_w(lpszLocalFileName),
-        CacheEntryType,
-        lpHeaderInfo,
-        dwHeaderSize,
-        debugstr_w(lpszFileExtension),
-        debugstr_w(lpszOriginalUrl));
+    TRACE("(%s, %s, ..., ..., %x, %p, %d, %s, %s)\n", debugstr_a(url), debugstr_w(file_name),
+            entry_type, header_info, header_size, debugstr_a(file_ext), debugstr_a(original_url));
 
-    if (CacheEntryType & STICKY_CACHE_ENTRY && !lpszLocalFileName)
-    {
+    if(entry_type & STICKY_CACHE_ENTRY && !file_name) {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    if (lpszOriginalUrl)
-        WARN(": lpszOriginalUrl ignored\n");
+    if(original_url)
+        WARN(": original_url ignored\n");
 
     memset(&file_attr, 0, sizeof(file_attr));
-    if (lpszLocalFileName)
-    {
-        if(!GetFileAttributesExW(lpszLocalFileName, GetFileExInfoStandard, &file_attr))
+    if(file_name) {
+        if(!GetFileAttributesExW(file_name, GetFileExInfoStandard, &file_attr))
             return FALSE;
     }
     file_size.u.LowPart = file_attr.nFileSizeLow;
     file_size.u.HighPart = file_attr.nFileSizeHigh;
 
-    error = cache_containers_findW(lpszUrlName, &pContainer);
-    if (error != ERROR_SUCCESS)
-    {
+    error = cache_containers_find(url, &container);
+    if(error != ERROR_SUCCESS) {
         SetLastError(error);
         return FALSE;
     }
 
-    error = cache_container_open_index(pContainer, MIN_BLOCK_NO);
-    if (error != ERROR_SUCCESS)
-    {
+    error = cache_container_open_index(container, MIN_BLOCK_NO);
+    if(error != ERROR_SUCCESS) {
         SetLastError(error);
         return FALSE;
     }
 
-    if (!(pHeader = cache_container_lock_index(pContainer)))
+    if(!(header = cache_container_lock_index(container)))
         return FALSE;
 
-    lpszUrlNameA = heap_strdupWtoA(lpszUrlName);
-    if (!lpszUrlNameA)
-    {
-        error = GetLastError();
-        goto cleanup;
-    }
+    if(urlcache_find_hash_entry(header, url, &hash_entry)) {
+        entry_url *url_entry = (entry_url*)((LPBYTE)header + hash_entry->offset);
 
-    if (lpszFileExtension && !(lpszFileExtensionA = heap_strdupWtoA(lpszFileExtension)))
-    {
-        error = GetLastError();
-        goto cleanup;
-    }
-
-    if (urlcache_find_hash_entry(pHeader, lpszUrlNameA, &pHashEntry))
-    {
-        entry_url *pUrlEntry = (entry_url*)((LPBYTE)pHeader + pHashEntry->offset);
-        if (urlcache_hash_entry_is_locked(pHashEntry, pUrlEntry))
-        {
+        if(urlcache_hash_entry_is_locked(hash_entry, url_entry)) {
             TRACE("Trying to overwrite locked entry\n");
-            error = ERROR_SHARING_VIOLATION;
-            goto cleanup;
+            cache_container_unlock_index(container, header);
+            SetLastError(ERROR_SHARING_VIOLATION);
+            return FALSE;
         }
 
-        hit_rate = pUrlEntry->hit_rate;
-        exempt_delta = pUrlEntry->exempt_delta;
-        urlcache_entry_delete(pContainer, pHeader, pHashEntry);
+        hit_rate = url_entry->hit_rate;
+        exempt_delta = url_entry->exempt_delta;
+        urlcache_entry_delete(container, header, hash_entry);
     }
 
-    if (pHeader->dirs_no)
-        cDirectory = 0;
+    if(header->dirs_no)
+        dir_id = 0;
     else
-        cDirectory = CACHE_CONTAINER_NO_SUBDIR;
+        dir_id = CACHE_CONTAINER_NO_SUBDIR;
 
-    if (lpszLocalFileName)
-    {
+    if(file_name) {
         BOOL bFound = FALSE;
 
-        if (strncmpW(lpszLocalFileName, pContainer->path, lstrlenW(pContainer->path)))
-        {
-            ERR("path %s must begin with cache content path %s\n", debugstr_w(lpszLocalFileName), debugstr_w(pContainer->path));
-            error = ERROR_INVALID_PARAMETER;
-            goto cleanup;
+        if(strncmpW(file_name, container->path, lstrlenW(container->path))) {
+            ERR("path %s must begin with cache content path %s\n", debugstr_w(file_name), debugstr_w(container->path));
+            cache_container_unlock_index(container, header);
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
         }
 
         /* skip container path prefix */
-        lpszLocalFileName += lstrlenW(pContainer->path);
+        file_name += lstrlenW(container->path);
 
-        WideCharToMultiByte(CP_ACP, 0, lpszLocalFileName, -1, achFile, MAX_PATH, NULL, NULL);
-	pchLocalFileName = achFile;
+        WideCharToMultiByte(CP_ACP, 0, file_name, -1, file_name_no_container, MAX_PATH, NULL, NULL);
+	local_file_name = file_name_no_container;
 
-        if(pHeader->dirs_no)
-        {
-            for (cDirectory = 0; cDirectory < pHeader->dirs_no; cDirectory++)
-            {
-                if (!strncmp(pHeader->directory_data[cDirectory].name, pchLocalFileName, DIR_LENGTH))
-                {
+        if(header->dirs_no) {
+            for(dir_id = 0; dir_id < header->dirs_no; dir_id++) {
+                if(!strncmp(header->directory_data[dir_id].name, local_file_name, DIR_LENGTH)) {
                     bFound = TRUE;
                     break;
                 }
             }
 
-            if (!bFound)
-            {
-                ERR("cache directory not found in path %s\n", debugstr_w(lpszLocalFileName));
-                error = ERROR_INVALID_PARAMETER;
-                goto cleanup;
+            if(!bFound) {
+                ERR("cache directory not found in path %s\n", debugstr_w(file_name));
+                cache_container_unlock_index(container, header);
+                SetLastError(ERROR_INVALID_PARAMETER);
+                return FALSE;
             }
 
-            lpszLocalFileName += DIR_LENGTH + 1;
-            pchLocalFileName += DIR_LENGTH + 1;
+            file_name += DIR_LENGTH + 1;
+            local_file_name += DIR_LENGTH + 1;
         }
     }
 
-    dwBytesNeeded = DWORD_ALIGN(dwBytesNeeded + strlen(lpszUrlNameA) + 1);
-    if (lpszLocalFileName)
-    {
-        dwOffsetLocalFileName = dwBytesNeeded;
-        dwBytesNeeded = DWORD_ALIGN(dwBytesNeeded + strlen(pchLocalFileName) + 1);
+    size = DWORD_ALIGN(size + strlen(url) + 1);
+    if(file_name) {
+        file_name_off = size;
+        size = DWORD_ALIGN(size + strlen(local_file_name) + 1);
     }
-    if (lpHeaderInfo)
-    {
-        dwOffsetHeader = dwBytesNeeded;
-        dwBytesNeeded = DWORD_ALIGN(dwBytesNeeded + dwHeaderSize);
+    if(header_info && header_size) {
+        header_info_off = size;
+        size = DWORD_ALIGN(size + header_size);
     }
-    if (lpszFileExtensionA)
-    {
-        dwOffsetFileExtension = dwBytesNeeded;
-        dwBytesNeeded = DWORD_ALIGN(dwBytesNeeded + strlen(lpszFileExtensionA) + 1);
+    if(file_ext && (file_ext_off = strlen(file_ext))) {
+        DWORD len = file_ext_off;
+
+        file_ext_off = size;
+        size = DWORD_ALIGN(size + len + 1);
     }
 
     /* round up to next block */
-    if (dwBytesNeeded % BLOCKSIZE)
-    {
-        dwBytesNeeded -= dwBytesNeeded % BLOCKSIZE;
-        dwBytesNeeded += BLOCKSIZE;
+    if(size % BLOCKSIZE) {
+        size -= size % BLOCKSIZE;
+        size += BLOCKSIZE;
     }
 
-    error = urlcache_entry_alloc(pHeader, dwBytesNeeded / BLOCKSIZE, &pEntry);
-    while (error == ERROR_HANDLE_DISK_FULL)
-    {
-        error = cache_container_clean_index(pContainer, &pHeader);
-        if (error == ERROR_SUCCESS)
-            error = urlcache_entry_alloc(pHeader, dwBytesNeeded / BLOCKSIZE, &pEntry);
+    error = urlcache_entry_alloc(header, size / BLOCKSIZE, &entry);
+    while(error == ERROR_HANDLE_DISK_FULL) {
+        error = cache_container_clean_index(container, &header);
+        if(error == ERROR_SUCCESS)
+            error = urlcache_entry_alloc(header, size / BLOCKSIZE, &entry);
     }
-    if (error != ERROR_SUCCESS)
-        goto cleanup;
-
-    /* FindFirstFreeEntry fills in blocks used */
-    pUrlEntry = (entry_url *)pEntry;
-    url_entry_offset = (LPBYTE)pUrlEntry - (LPBYTE)pHeader;
-    pUrlEntry->header.signature = URL_SIGNATURE;
-    pUrlEntry->cache_dir = cDirectory;
-    pUrlEntry->cache_entry_type = CacheEntryType | pContainer->default_entry_type;
-    pUrlEntry->header_info_size = dwHeaderSize;
-    if ((CacheEntryType & STICKY_CACHE_ENTRY) && !exempt_delta)
-    {
-        /* Sticky entries have a default exempt time of one day */
-        exempt_delta = 86400;
-    }
-    pUrlEntry->exempt_delta = exempt_delta;
-    pUrlEntry->hit_rate = hit_rate+1;
-    pUrlEntry->file_extension_off = dwOffsetFileExtension;
-    pUrlEntry->header_info_off = dwOffsetHeader;
-    pUrlEntry->local_name_off = dwOffsetLocalFileName;
-    pUrlEntry->url_off = DWORD_ALIGN(sizeof(*pUrlEntry));
-    pUrlEntry->size.QuadPart = file_size.QuadPart;
-    pUrlEntry->use_count = 0;
-    GetSystemTimeAsFileTime(&pUrlEntry->access_time);
-    pUrlEntry->modification_time = LastModifiedTime;
-    file_time_to_dos_date_time(&pUrlEntry->access_time, &pUrlEntry->sync_date, &pUrlEntry->sync_time);
-    file_time_to_dos_date_time(&ExpireTime, &pUrlEntry->expire_date, &pUrlEntry->expire_time);
-    file_time_to_dos_date_time(&file_attr.ftLastWriteTime, &pUrlEntry->write_date, &pUrlEntry->write_time);
-
-    /*** Unknowns ***/
-    pUrlEntry->unk1 = 0;
-    pUrlEntry->unk2 = 0;
-    pUrlEntry->unk3 = 0x60;
-    pUrlEntry->unk4 = 0;
-    pUrlEntry->unk5 = 0x1010;
-    pUrlEntry->unk7 = 0;
-    pUrlEntry->unk8 = 0;
-
-
-    strcpy((LPSTR)pUrlEntry + pUrlEntry->url_off, lpszUrlNameA);
-    if (dwOffsetLocalFileName)
-        strcpy((LPSTR)((LPBYTE)pUrlEntry + dwOffsetLocalFileName), pchLocalFileName);
-    if (dwOffsetHeader)
-        memcpy((LPBYTE)pUrlEntry + dwOffsetHeader, lpHeaderInfo, dwHeaderSize);
-    if (dwOffsetFileExtension)
-        strcpy((LPSTR)((LPBYTE)pUrlEntry + dwOffsetFileExtension), lpszFileExtensionA);
-
-    error = urlcache_hash_entry_create(pHeader, lpszUrlNameA, url_entry_offset, HASHTABLE_URL);
-    while (error == ERROR_HANDLE_DISK_FULL)
-    {
-        error = cache_container_clean_index(pContainer, &pHeader);
-        if (error == ERROR_SUCCESS)
-        {
-            pUrlEntry = (entry_url *)((LPBYTE)pHeader + url_entry_offset);
-            error = urlcache_hash_entry_create(pHeader, lpszUrlNameA,
-                    url_entry_offset, HASHTABLE_URL);
-        }
-    }
-    if (error != ERROR_SUCCESS)
-        urlcache_entry_free(pHeader, &pUrlEntry->header);
-    else
-    {
-        if (pUrlEntry->cache_dir < pHeader->dirs_no)
-            pHeader->directory_data[pUrlEntry->cache_dir].files_no++;
-        if (CacheEntryType & STICKY_CACHE_ENTRY)
-            pHeader->exempt_usage.QuadPart += file_size.QuadPart;
-        else
-            pHeader->cache_usage.QuadPart += file_size.QuadPart;
-        if (pHeader->cache_usage.QuadPart + pHeader->exempt_usage.QuadPart >
-            pHeader->cache_limit.QuadPart)
-            handle_full_cache();
-    }
-
-cleanup:
-    cache_container_unlock_index(pContainer, pHeader);
-    heap_free(lpszUrlNameA);
-    heap_free(lpszFileExtensionA);
-
-    if (error == ERROR_SUCCESS)
-        return TRUE;
-    else
-    {
+    if(error != ERROR_SUCCESS) {
+        cache_container_unlock_index(container, header);
         SetLastError(error);
         return FALSE;
     }
+
+    /* FindFirstFreeEntry fills in blocks used */
+    url_entry = (entry_url *)entry;
+    url_entry_offset = (LPBYTE)url_entry - (LPBYTE)header;
+    url_entry->header.signature = URL_SIGNATURE;
+    url_entry->cache_dir = dir_id;
+    url_entry->cache_entry_type = entry_type | container->default_entry_type;
+    url_entry->header_info_size = header_size;
+    if((entry_type & STICKY_CACHE_ENTRY) && !exempt_delta) {
+        /* Sticky entries have a default exempt time of one day */
+        exempt_delta = 86400;
+    }
+    url_entry->exempt_delta = exempt_delta;
+    url_entry->hit_rate = hit_rate+1;
+    url_entry->file_extension_off = file_ext_off;
+    url_entry->header_info_off = header_info_off;
+    url_entry->local_name_off = file_name_off;
+    url_entry->url_off = DWORD_ALIGN(sizeof(*url_entry));
+    url_entry->size.QuadPart = file_size.QuadPart;
+    url_entry->use_count = 0;
+    GetSystemTimeAsFileTime(&url_entry->access_time);
+    url_entry->modification_time = modify_time;
+    file_time_to_dos_date_time(&url_entry->access_time, &url_entry->sync_date, &url_entry->sync_time);
+    file_time_to_dos_date_time(&expire_time, &url_entry->expire_date, &url_entry->expire_time);
+    file_time_to_dos_date_time(&file_attr.ftLastWriteTime, &url_entry->write_date, &url_entry->write_time);
+
+    /*** Unknowns ***/
+    url_entry->unk1 = 0;
+    url_entry->unk2 = 0;
+    url_entry->unk3 = 0x60;
+    url_entry->unk4 = 0;
+    url_entry->unk5 = 0x1010;
+    url_entry->unk7 = 0;
+    url_entry->unk8 = 0;
+
+
+    strcpy((LPSTR)url_entry + url_entry->url_off, url);
+    if(file_name_off)
+        strcpy((LPSTR)((LPBYTE)url_entry + file_name_off), local_file_name);
+    if(header_info_off)
+        memcpy((LPBYTE)url_entry + header_info_off, header_info, header_size);
+    if(file_ext_off)
+        strcpy((LPSTR)((LPBYTE)url_entry + file_ext_off), file_ext);
+
+    error = urlcache_hash_entry_create(header, url, url_entry_offset, HASHTABLE_URL);
+    while(error == ERROR_HANDLE_DISK_FULL) {
+        error = cache_container_clean_index(container, &header);
+        if(error == ERROR_SUCCESS) {
+            url_entry = (entry_url *)((LPBYTE)header + url_entry_offset);
+            error = urlcache_hash_entry_create(header, url,
+                    url_entry_offset, HASHTABLE_URL);
+        }
+    }
+    if(error != ERROR_SUCCESS) {
+        urlcache_entry_free(header, &url_entry->header);
+        cache_container_unlock_index(container, header);
+        SetLastError(error);
+        return FALSE;
+    }
+
+    if(url_entry->cache_dir < header->dirs_no)
+        header->directory_data[url_entry->cache_dir].files_no++;
+    if(entry_type & STICKY_CACHE_ENTRY)
+        header->exempt_usage.QuadPart += file_size.QuadPart;
+    else
+        header->cache_usage.QuadPart += file_size.QuadPart;
+    if(header->cache_usage.QuadPart+header->exempt_usage.QuadPart > header->cache_limit.QuadPart)
+            handle_full_cache();
+
+    cache_container_unlock_index(container, header);
+    return TRUE;
 }
 
 /***********************************************************************
  *           CommitUrlCacheEntryA (WININET.@)
- *
  */
-BOOL WINAPI CommitUrlCacheEntryA(
-    IN LPCSTR lpszUrlName,
-    IN LPCSTR lpszLocalFileName,
-    IN FILETIME ExpireTime,
-    IN FILETIME LastModifiedTime,
-    IN DWORD CacheEntryType,
-    IN LPBYTE lpHeaderInfo,
-    IN DWORD dwHeaderSize,
-    IN LPCSTR lpszFileExtension,
-    IN LPCSTR lpszOriginalUrl
-    )
+BOOL WINAPI CommitUrlCacheEntryA(LPCSTR lpszUrlName, LPCSTR lpszLocalFileName,
+        FILETIME ExpireTime, FILETIME LastModifiedTime, DWORD CacheEntryType,
+        LPBYTE lpHeaderInfo, DWORD dwHeaderSize, LPCSTR lpszFileExtension, LPCSTR lpszOriginalUrl)
 {
-    WCHAR *url_name = NULL;
-    WCHAR *local_file_name = NULL;
-    WCHAR *original_url = NULL;
-    WCHAR *file_extension = NULL;
-    BOOL bSuccess = FALSE;
+    WCHAR *file_name = NULL;
+    BOOL ret;
 
-    TRACE("(%s, %s, ..., ..., %x, %p, %d, %s, %s)\n",
-        debugstr_a(lpszUrlName),
-        debugstr_a(lpszLocalFileName),
-        CacheEntryType,
-        lpHeaderInfo,
-        dwHeaderSize,
-        debugstr_a(lpszFileExtension),
-        debugstr_a(lpszOriginalUrl));
-
-    url_name = heap_strdupAtoW(lpszUrlName);
-    if (!url_name)
-        goto cleanup;
-
-    if (lpszLocalFileName)
-    {
-        local_file_name = heap_strdupAtoW(lpszLocalFileName);
-        if (!local_file_name)
-            goto cleanup;
-    }
-    if (lpszFileExtension)
-    {
-        file_extension = heap_strdupAtoW(lpszFileExtension);
-        if (!file_extension)
-            goto cleanup;
-    }
-    if (lpszOriginalUrl)
-    {
-        original_url = heap_strdupAtoW(lpszOriginalUrl);
-        if (!original_url)
-            goto cleanup;
+    if(lpszLocalFileName) {
+        file_name = heap_strdupAtoW(lpszLocalFileName);
+        if(!file_name)
+            return FALSE;
     }
 
-    bSuccess = urlcache_entry_commit(url_name, local_file_name, ExpireTime, LastModifiedTime,
-                                           CacheEntryType, lpHeaderInfo, dwHeaderSize,
-                                           file_extension, original_url);
-
-cleanup:
-    heap_free(original_url);
-    heap_free(file_extension);
-    heap_free(local_file_name);
-    heap_free(url_name);
-    return bSuccess;
+    ret = urlcache_entry_commit(lpszUrlName, file_name, ExpireTime, LastModifiedTime,
+            CacheEntryType, lpHeaderInfo, dwHeaderSize, lpszFileExtension, lpszOriginalUrl);
+    heap_free(file_name);
+    return ret;
 }
 
 /***********************************************************************
  *           CommitUrlCacheEntryW (WININET.@)
- *
  */
-BOOL WINAPI CommitUrlCacheEntryW(
-    IN LPCWSTR lpszUrlName,
-    IN LPCWSTR lpszLocalFileName,
-    IN FILETIME ExpireTime,
-    IN FILETIME LastModifiedTime,
-    IN DWORD CacheEntryType,
-    IN LPWSTR lpHeaderInfo,
-    IN DWORD dwHeaderSize,
-    IN LPCWSTR lpszFileExtension,
-    IN LPCWSTR lpszOriginalUrl
-    )
+BOOL WINAPI CommitUrlCacheEntryW(LPCWSTR lpszUrlName, LPCWSTR lpszLocalFileName,
+        FILETIME ExpireTime, FILETIME LastModifiedTime, DWORD CacheEntryType,
+        LPWSTR lpHeaderInfo, DWORD dwHeaderSize, LPCWSTR lpszFileExtension, LPCWSTR lpszOriginalUrl)
 {
-    DWORD dwError = 0;
-    BOOL bSuccess = FALSE;
-    DWORD len = 0;
-    CHAR *header_info = NULL;
+    char *url, *original_url=NULL, *file_ext=NULL, *header_info=NULL;
+    BOOL ret;
 
-    TRACE("(%s, %s, ..., ..., %x, %p, %d, %s, %s)\n",
-        debugstr_w(lpszUrlName),
-        debugstr_w(lpszLocalFileName),
-        CacheEntryType,
-        lpHeaderInfo,
-        dwHeaderSize,
-        debugstr_w(lpszFileExtension),
-        debugstr_w(lpszOriginalUrl));
+    if(!urlcache_encode_url_alloc(lpszUrlName, &url))
+        return FALSE;
 
-    if (!lpHeaderInfo || (header_info = heap_strdupWtoA(lpHeaderInfo)))
-    {
-        if(header_info)
-            len = strlen(header_info);
-	if (urlcache_entry_commit(lpszUrlName, lpszLocalFileName, ExpireTime, LastModifiedTime,
-				CacheEntryType, (LPBYTE)header_info, len, lpszFileExtension, lpszOriginalUrl))
-	{
-		bSuccess = TRUE;
-	}
-	else
-	{
-		dwError = GetLastError();
-	}
-	if (header_info)
-	{
-	    heap_free(header_info);
-	    if (!bSuccess)
-		SetLastError(dwError);
-	}
+    if(lpHeaderInfo) {
+        header_info = heap_strdupWtoUTF8(lpHeaderInfo);
+        if(!header_info) {
+            heap_free(url);
+            return FALSE;
+        }
+        dwHeaderSize = strlen(header_info);
     }
-    return bSuccess;
+
+    if(lpszFileExtension) {
+        file_ext = heap_strdupWtoA(lpszFileExtension);
+        if(!file_ext) {
+            heap_free(url);
+            heap_free(header_info);
+            return FALSE;
+        }
+    }
+
+    if(lpszOriginalUrl && !urlcache_encode_url_alloc(lpszOriginalUrl, &original_url)) {
+        heap_free(url);
+        heap_free(header_info);
+        heap_free(file_ext);
+    }
+
+    ret = urlcache_entry_commit(url, lpszLocalFileName, ExpireTime, LastModifiedTime,
+            CacheEntryType, (BYTE*)header_info, dwHeaderSize, file_ext, original_url);
+    heap_free(url);
+    heap_free(header_info);
+    heap_free(file_ext);
+    heap_free(original_url);
+    return ret;
 }
 
 /***********************************************************************
