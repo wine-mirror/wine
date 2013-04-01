@@ -3541,7 +3541,7 @@ static DWORD HTTP_HttpQueryInfoW(http_request_t *request, DWORD dwInfoLevel,
         STHook->wDayOfWeek = tmpTM.tm_wday;
         STHook->wMonth = tmpTM.tm_mon + 1;
         STHook->wSecond = tmpTM.tm_sec;
-        STHook->wYear = tmpTM.tm_year;
+        STHook->wYear = 1900+tmpTM.tm_year;
 
         TRACE(" returning time: %04d/%02d/%02d - %d - %02d:%02d:%02d.%02d\n",
               STHook->wYear, STHook->wMonth, STHook->wDay, STHook->wDayOfWeek,
