@@ -2829,6 +2829,7 @@ static void test_window_style(void)
     LONG style, expected_style;
     IDirect3DDevice8 *device;
     IDirect3D8 *d3d8;
+    HRESULT hr;
     ULONG ref;
 
 
@@ -2884,6 +2885,26 @@ static void test_window_style(void)
     ok(EqualRect(&r, &focus_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
             focus_rect.left, focus_rect.top, focus_rect.right, focus_rect.bottom,
             r.left, r.top, r.right, r.bottom);
+
+    hr = reset_device(device, device_window, TRUE);
+    ok(SUCCEEDED(hr), "Failed to reset device, hr %#x.\n", hr);
+
+    style = GetWindowLongA(device_window, GWL_STYLE);
+    expected_style = device_style | WS_VISIBLE;
+    ok(style == expected_style, "Expected device window style %#x, got %#x.\n",
+            expected_style, style);
+    style = GetWindowLongA(device_window, GWL_EXSTYLE);
+    expected_style = device_exstyle | WS_EX_TOPMOST;
+    ok(style == expected_style, "Expected device window extended style %#x, got %#x.\n",
+            expected_style, style);
+
+    style = GetWindowLongA(focus_window, GWL_STYLE);
+    ok(style == focus_style, "Expected focus window style %#x, got %#x.\n",
+            focus_style, style);
+    style = GetWindowLongA(focus_window, GWL_EXSTYLE);
+    ok(style == focus_exstyle, "Expected focus window extended style %#x, got %#x.\n",
+            focus_exstyle, style);
+
 
     ref = IDirect3DDevice8_Release(device);
     ok(ref == 0, "The device was not properly freed: refcount %u.\n", ref);
