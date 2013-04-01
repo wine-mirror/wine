@@ -213,6 +213,20 @@ typedef struct
 /* List of all containers available */
 static struct list UrlContainers = LIST_INIT(UrlContainers);
 
+static inline char *heap_strdupWtoUTF8(LPCWSTR str)
+{
+    char *ret = NULL;
+
+    if(str) {
+        DWORD size = WideCharToMultiByte(CP_UTF8, 0, str, -1, NULL, 0, NULL, NULL);
+        ret = heap_alloc(size);
+        if(ret)
+            WideCharToMultiByte(CP_UTF8, 0, str, -1, ret, size, NULL, NULL);
+    }
+
+    return ret;
+}
+
 /***********************************************************************
  *           urlcache_block_is_free (Internal)
  *
@@ -2567,212 +2581,117 @@ BOOL WINAPI UnlockUrlCacheEntryFileW(LPCWSTR lpszUrlName, DWORD dwReserved)
     return ret;
 }
 
-/***********************************************************************
- *           CreateUrlCacheEntryA (WININET.@)
- *
- */
-BOOL WINAPI CreateUrlCacheEntryA(
-    IN LPCSTR lpszUrlName,
-    IN DWORD dwExpectedFileSize,
-    IN LPCSTR lpszFileExtension,
-    OUT LPSTR lpszFileName,
-    IN DWORD dwReserved
-)
+BOOL urlcache_entry_create(const char *url, const char *ext, WCHAR *full_path)
 {
-    WCHAR *url_name;
-    WCHAR *file_extension = NULL;
-    WCHAR file_name[MAX_PATH];
-    BOOL bSuccess = FALSE;
-    DWORD dwError = 0;
-
-    TRACE("(%s %d %s %p %d)\n", debugstr_a(lpszUrlName), dwExpectedFileSize,
-            debugstr_a(lpszFileExtension), lpszFileName, dwReserved);
-
-    if (lpszUrlName && (url_name = heap_strdupAtoW(lpszUrlName)))
-    {
-        if (!lpszFileExtension || (file_extension = heap_strdupAtoW(lpszFileExtension)))
-        {
-            if (CreateUrlCacheEntryW(url_name, dwExpectedFileSize, file_extension, file_name, dwReserved))
-            {
-                if (WideCharToMultiByte(CP_ACP, 0, file_name, -1, lpszFileName, MAX_PATH, NULL, NULL) < MAX_PATH)
-                {
-                    bSuccess = TRUE;
-                }
-                else
-                {
-                    dwError = GetLastError();
-                }
-            }
-            else
-            {
-                dwError = GetLastError();
-            }
-            heap_free(file_extension);
-        }
-        else
-        {
-            dwError = GetLastError();
-        }
-        heap_free(url_name);
-        if (!bSuccess) SetLastError(dwError);
-    }
-    return bSuccess;
-}
-/***********************************************************************
- *           CreateUrlCacheEntryW (WININET.@)
- *
- */
-BOOL WINAPI CreateUrlCacheEntryW(
-    IN LPCWSTR lpszUrlName,
-    IN DWORD dwExpectedFileSize,
-    IN LPCWSTR lpszFileExtension,
-    OUT LPWSTR lpszFileName,
-    IN DWORD dwReserved
-)
-{
-    cache_container *pContainer;
-    urlcache_header *pHeader;
-    CHAR szFile[MAX_PATH];
-    WCHAR szExtension[MAX_PATH];
-    LPCWSTR lpszUrlPart;
-    LPCWSTR lpszUrlEnd;
-    LPCWSTR lpszFileNameExtension;
-    LPWSTR lpszFileNameNoPath;
-    int i;
-    int countnoextension;
-    BYTE CacheDir;
-    LONG lBufferSize;
-    BOOL bFound = FALSE;
-    BOOL generate_name = FALSE;
-    int count;
+    cache_container *container;
+    urlcache_header *header;
+    char file_name[MAX_PATH];
+    const char *url_part, *url_end;
+    const WCHAR *file_name_ext;
+    WCHAR *file_name_no_path;
+    WCHAR extW[MAX_PATH];
+    int i, len, len_no_ext;
+    BYTE cache_dir;
+    LONG buffer_size;
+    BOOL found = FALSE, generate_name = FALSE;
     DWORD error;
-    HANDLE hFile;
+    HANDLE file;
     FILETIME ft;
 
-    static const WCHAR szWWW[] = {'w','w','w',0};
+    TRACE("(%s, %s, %p)\n", debugstr_a(url), debugstr_a(ext), full_path);
 
-    TRACE("(%s, 0x%08x, %s, %p, 0x%08x)\n",
-        debugstr_w(lpszUrlName),
-        dwExpectedFileSize,
-        debugstr_w(lpszFileExtension),
-        lpszFileName,
-        dwReserved);
-
-    if (dwReserved)
-        FIXME("dwReserved 0x%08x\n", dwReserved);
-
-    lpszUrlEnd = lpszUrlName + strlenW(lpszUrlName);
+    url_end = url + strlen(url);
     
-    if (((lpszUrlEnd - lpszUrlName) > 1) && (*(lpszUrlEnd - 1) == '/' || *(lpszUrlEnd - 1) == '\\'))
-        lpszUrlEnd--;
+    if(((url_end - url) > 1) && (*(url_end - 1) == '/' || *(url_end - 1) == '\\'))
+        url_end--;
 
-    lpszUrlPart = memchrW(lpszUrlName, '?', lpszUrlEnd - lpszUrlName);
-    if (!lpszUrlPart)
-        lpszUrlPart = memchrW(lpszUrlName, '#', lpszUrlEnd - lpszUrlName);
-    if (lpszUrlPart)
-        lpszUrlEnd = lpszUrlPart;
+    url_part = memchr(url, '?', url_end - url);
+    if(!url_part)
+        url_part = memchr(url, '#', url_end - url);
+    if(url_part)
+        url_end = url_part;
 
-    for (lpszUrlPart = lpszUrlEnd; 
-        (lpszUrlPart >= lpszUrlName); 
-        lpszUrlPart--)
-    {
-        if ((*lpszUrlPart == '/' || *lpszUrlPart == '\\') && ((lpszUrlEnd - lpszUrlPart) > 1))
-        {
-            bFound = TRUE;
-            lpszUrlPart++;
+    for(url_part = url_end; (url_part >= url); url_part--) {
+        if((*url_part == '/' || *url_part == '\\') && ((url_end - url_part) > 1)) {
+            found = TRUE;
+            url_part++;
             break;
         }
     }
-    if(!bFound)
-        lpszUrlPart++;
+    if(!found)
+        url_part++;
 
-    if (!lstrcmpW(lpszUrlPart, szWWW))
-    {
-        lpszUrlPart += lstrlenW(szWWW);
-    }
+    if(!lstrcmpA(url_part, "www"))
+        url_part += 3;
 
-    count = lpszUrlEnd - lpszUrlPart;
+    len = url_end - url_part;
 
-    if (bFound && (count < MAX_PATH))
-    {
-	int len = WideCharToMultiByte(CP_ACP, 0, lpszUrlPart, count, szFile, sizeof(szFile) - 1, NULL, NULL);
-	if (!len)
-	    return FALSE;
-        szFile[len] = '\0';
-        while(len && szFile[--len] == '/') szFile[len] = '\0';
+    if(found && (len < MAX_PATH-1)) {
+        memcpy(file_name, url_part, len);
+        file_name[len] = '\0';
+        while(len && file_name[--len] == '/') file_name[len] = '\0';
 
         /* FIXME: get rid of illegal characters like \, / and : */
-        TRACE("File name: %s\n", debugstr_a(szFile));
-    }
-    else
-    {
+        TRACE("File name: %s\n", debugstr_a(file_name));
+    }else {
         generate_name = TRUE;
-        szFile[0] = 0;
+        file_name[0] = 0;
     }
 
-    error = cache_containers_findW(lpszUrlName, &pContainer);
-    if (error != ERROR_SUCCESS)
-    {
+    error = cache_containers_find(url, &container);
+    if(error != ERROR_SUCCESS) {
         SetLastError(error);
         return FALSE;
     }
 
-    error = cache_container_open_index(pContainer, MIN_BLOCK_NO);
-    if (error != ERROR_SUCCESS)
-    {
+    error = cache_container_open_index(container, MIN_BLOCK_NO);
+    if(error != ERROR_SUCCESS) {
         SetLastError(error);
         return FALSE;
     }
 
-    if (!(pHeader = cache_container_lock_index(pContainer)))
+    if(!(header = cache_container_lock_index(container)))
         return FALSE;
 
-    if(pHeader->dirs_no)
-        CacheDir = (BYTE)(rand() % pHeader->dirs_no);
+    if(header->dirs_no)
+        cache_dir = (BYTE)(rand() % header->dirs_no);
     else
-        CacheDir = CACHE_CONTAINER_NO_SUBDIR;
+        cache_dir = CACHE_CONTAINER_NO_SUBDIR;
 
-    lBufferSize = MAX_PATH * sizeof(WCHAR);
-    if (!urlcache_create_file_pathW(pContainer, pHeader, szFile, CacheDir, lpszFileName, &lBufferSize))
-    {
+    buffer_size = MAX_PATH * sizeof(WCHAR);
+    if(!urlcache_create_file_pathW(container, header, file_name, cache_dir, full_path, &buffer_size)) {
         WARN("Failed to get full path for filename %s, needed %u bytes.\n",
-                debugstr_a(szFile), lBufferSize);
-        cache_container_unlock_index(pContainer, pHeader);
+                debugstr_a(file_name), buffer_size);
+        cache_container_unlock_index(container, header);
         return FALSE;
     }
 
-    cache_container_unlock_index(pContainer, pHeader);
+    cache_container_unlock_index(container, header);
 
-    for (lpszFileNameNoPath = lpszFileName + lBufferSize / sizeof(WCHAR) - 2;
-        lpszFileNameNoPath >= lpszFileName; 
-        --lpszFileNameNoPath)
-    {
-        if (*lpszFileNameNoPath == '/' || *lpszFileNameNoPath == '\\')
+    for(file_name_no_path = full_path + buffer_size / sizeof(WCHAR) - 2;
+        file_name_no_path >= full_path;  --file_name_no_path) {
+        if (*file_name_no_path == '/' || *file_name_no_path == '\\')
             break;
     }
 
-    countnoextension = lstrlenW(lpszFileNameNoPath);
-    lpszFileNameExtension = PathFindExtensionW(lpszFileNameNoPath);
-    if (lpszFileNameExtension)
-        countnoextension -= lstrlenW(lpszFileNameExtension);
-    *szExtension = '\0';
+    len_no_ext = lstrlenW(file_name_no_path);
+    file_name_ext = PathFindExtensionW(file_name_no_path);
+    if(file_name_ext)
+        len_no_ext -= lstrlenW(file_name_ext);
+    *extW = '\0';
 
-    if (lpszFileExtension)
-    {
-        szExtension[0] = '.';
-        lstrcpyW(szExtension+1, lpszFileExtension);
+    if(ext) {
+        extW[0] = '.';
+        MultiByteToWideChar(CP_ACP, 0, ext, -1, extW+1, MAX_PATH-1);
     }
 
-    for (i = 0; i<255 && !generate_name; i++)
-    {
-        static const WCHAR szFormat[] = {'[','%','u',']','%','s',0};
+    for(i=0; i<255 && !generate_name; i++) {
+        static const WCHAR format[] = {'[','%','u',']','%','s',0};
         WCHAR *p;
 
-        wsprintfW(lpszFileNameNoPath + countnoextension, szFormat, i, szExtension);
-        for (p = lpszFileNameNoPath + 1; *p; p++)
-        {
-            switch (*p)
-            {
+        wsprintfW(file_name_no_path + len_no_ext, format, i, extW);
+        for(p=file_name_no_path+1; *p; p++) {
+            switch(*p) {
             case '<': case '>':
             case ':': case '"':
             case '/': case '\\':
@@ -2782,47 +2701,92 @@ BOOL WINAPI CreateUrlCacheEntryW(
             default: break;
             }
         }
-        if (p[-1] == ' ' || p[-1] == '.') p[-1] = '_';
+        if(p[-1] == ' ' || p[-1] == '.') p[-1] = '_';
 
-        TRACE("Trying: %s\n", debugstr_w(lpszFileName));
-        hFile = CreateFileW(lpszFileName, GENERIC_READ, 0, NULL, CREATE_NEW, 0, NULL);
-        if (hFile != INVALID_HANDLE_VALUE)
-        {
-            CloseHandle(hFile);
+        TRACE("Trying: %s\n", debugstr_w(full_path));
+        file = CreateFileW(full_path, GENERIC_READ, 0, NULL, CREATE_NEW, 0, NULL);
+        if(file != INVALID_HANDLE_VALUE) {
+            CloseHandle(file);
             return TRUE;
         }
     }
 
     /* Try to generate random name */
     GetSystemTimeAsFileTime(&ft);
-    strcpyW(lpszFileNameNoPath+countnoextension+8, szExtension);
+    strcpyW(file_name_no_path+len_no_ext+8, extW);
 
-    for(i=0; i<255; i++)
-    {
+    for(i=0; i<255; i++) {
         int j;
         ULONGLONG n = ft.dwHighDateTime;
         n <<= 32;
         n += ft.dwLowDateTime;
         n ^= (ULONGLONG)i<<48;
 
-        for(j=0; j<8; j++)
-        {
+        for(j=0; j<8; j++) {
             int r = (n % 36);
             n /= 37;
-            lpszFileNameNoPath[countnoextension+j] = (r < 10 ? '0' + r : 'A' + r - 10);
+            file_name_no_path[len_no_ext+j] = (r < 10 ? '0' + r : 'A' + r - 10);
         }
 
-        TRACE("Trying: %s\n", debugstr_w(lpszFileName));
-        hFile = CreateFileW(lpszFileName, GENERIC_READ, 0, NULL, CREATE_NEW, 0, NULL);
-        if (hFile != INVALID_HANDLE_VALUE)
-        {
-            CloseHandle(hFile);
+        TRACE("Trying: %s\n", debugstr_w(full_path));
+        file = CreateFileW(full_path, GENERIC_READ, 0, NULL, CREATE_NEW, 0, NULL);
+        if(file != INVALID_HANDLE_VALUE) {
+            CloseHandle(file);
             return TRUE;
         }
     }
 
     WARN("Could not find a unique filename\n");
     return FALSE;
+}
+
+/***********************************************************************
+ *           CreateUrlCacheEntryA (WININET.@)
+ *
+ */
+BOOL WINAPI CreateUrlCacheEntryA(LPCSTR lpszUrlName, DWORD dwExpectedFileSize,
+        LPCSTR lpszFileExtension, LPSTR lpszFileName, DWORD dwReserved)
+{
+    WCHAR file_name[MAX_PATH];
+
+    if(dwReserved)
+        FIXME("dwReserved 0x%08x\n", dwReserved);
+
+    if(!urlcache_entry_create(lpszUrlName, lpszFileExtension, file_name))
+        return FALSE;
+
+    if(!WideCharToMultiByte(CP_ACP, 0, file_name, -1, lpszFileName, MAX_PATH, NULL, NULL))
+        return FALSE;
+    return TRUE;
+}
+/***********************************************************************
+ *           CreateUrlCacheEntryW (WININET.@)
+ *
+ */
+BOOL WINAPI CreateUrlCacheEntryW(LPCWSTR lpszUrlName, DWORD dwExpectedFileSize,
+        LPCWSTR lpszFileExtension, LPWSTR lpszFileName, DWORD dwReserved)
+{
+    char *url, *ext = NULL;
+    BOOL ret;
+
+    if(dwReserved)
+        FIXME("dwReserved 0x%08x\n", dwReserved);
+
+    if(lpszFileExtension) {
+        ext = heap_strdupWtoUTF8(lpszFileExtension);
+        if(!ext)
+            return FALSE;
+    }
+
+    if(!urlcache_encode_url_alloc(lpszUrlName, &url)) {
+        heap_free(ext);
+        return FALSE;
+    }
+
+    ret = urlcache_entry_create(url, ext, lpszFileName);
+    heap_free(ext);
+    heap_free(url);
+    return ret;
 }
 
 /***********************************************************************
