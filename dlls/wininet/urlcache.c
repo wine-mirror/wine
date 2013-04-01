@@ -3477,57 +3477,14 @@ BOOL WINAPI DeleteUrlCacheEntryA(LPCSTR lpszUrlName)
  */
 BOOL WINAPI DeleteUrlCacheEntryW(LPCWSTR lpszUrlName)
 {
-    cache_container *pContainer;
-    urlcache_header *pHeader;
-    struct hash_entry *pHashEntry;
-    LPSTR urlA;
-    DWORD error;
+    char *url;
     BOOL ret;
 
-    TRACE("(%s)\n", debugstr_w(lpszUrlName));
-
-    urlA = heap_strdupWtoA(lpszUrlName);
-    if (!urlA)
-    {
-        SetLastError(ERROR_OUTOFMEMORY);
+    if(!urlcache_encode_url_alloc(lpszUrlName, &url))
         return FALSE;
-    }
 
-    error = cache_containers_findW(lpszUrlName, &pContainer);
-    if (error != ERROR_SUCCESS)
-    {
-        heap_free(urlA);
-        SetLastError(error);
-        return FALSE;
-    }
-
-    error = cache_container_open_index(pContainer, MIN_BLOCK_NO);
-    if (error != ERROR_SUCCESS)
-    {
-        heap_free(urlA);
-        SetLastError(error);
-        return FALSE;
-    }
-
-    if (!(pHeader = cache_container_lock_index(pContainer)))
-    {
-        heap_free(urlA);
-        return FALSE;
-    }
-
-    if (!urlcache_find_hash_entry(pHeader, urlA, &pHashEntry))
-    {
-        cache_container_unlock_index(pContainer, pHeader);
-        TRACE("entry %s not found!\n", debugstr_a(urlA));
-        heap_free(urlA);
-        SetLastError(ERROR_FILE_NOT_FOUND);
-        return FALSE;
-    }
-
-    ret = urlcache_entry_delete(pContainer, pHeader, pHashEntry);
-
-    cache_container_unlock_index(pContainer, pHeader);
-    heap_free(urlA);
+    ret = DeleteUrlCacheEntryA(url);
+    heap_free(url);
     return ret;
 }
 
