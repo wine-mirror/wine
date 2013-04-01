@@ -499,7 +499,7 @@ static void test_encoder_properties(const CLSID* clsid_encoder, IPropertyBag2 *o
     }
 
     if (clsid_encoder == &CLSID_WICTiffEncoder)
-        todo_wine test_specific_encoder_properties(options, testdata_tiff_props, all_props, cProperties2);
+        test_specific_encoder_properties(options, testdata_tiff_props, all_props, cProperties2);
 
     for (i=0; i < cProperties2; i++)
     {
