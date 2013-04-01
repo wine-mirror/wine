@@ -146,6 +146,13 @@ static void clean_up_environment(void)
 		pCryptReleaseContext(hProv, 0);
 		pCryptAcquireContextA(&hProv, szKeySet, NULL, PROV_RSA_FULL, CRYPT_DELETEKEYSET);
 	}
+
+        /* Remove container "wine_test_bad_keyset" */
+        if (pCryptAcquireContextA(&hProv, szBadKeySet, szRsaBaseProv, PROV_RSA_FULL, 0))
+        {
+                pCryptReleaseContext(hProv, 0);
+                pCryptAcquireContextA(&hProv, szBadKeySet, szRsaBaseProv, PROV_RSA_FULL, CRYPT_DELETEKEYSET);
+        }
 }
 
 static void test_acquire_context(void)
