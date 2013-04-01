@@ -2495,10 +2495,7 @@ BOOL WINAPI FreeUrlCacheSpaceA(LPCSTR lpszCachePath, DWORD dwSize, DWORD dwFilte
  *           UnlockUrlCacheEntryFileA (WININET.@)
  *
  */
-BOOL WINAPI UnlockUrlCacheEntryFileA(
-    IN LPCSTR lpszUrlName, 
-    IN DWORD dwReserved
-    )
+BOOL WINAPI UnlockUrlCacheEntryFileA(LPCSTR lpszUrlName, DWORD dwReserved)
 {
     urlcache_header *pHeader;
     struct hash_entry *pHashEntry;
@@ -2574,72 +2571,17 @@ BOOL WINAPI UnlockUrlCacheEntryFileA(
  *           UnlockUrlCacheEntryFileW (WININET.@)
  *
  */
-BOOL WINAPI UnlockUrlCacheEntryFileW( LPCWSTR lpszUrlName, DWORD dwReserved )
+BOOL WINAPI UnlockUrlCacheEntryFileW(LPCWSTR lpszUrlName, DWORD dwReserved)
 {
-    urlcache_header *pHeader;
-    struct hash_entry *pHashEntry;
-    entry_header *pEntry;
-    entry_url * pUrlEntry;
-    cache_container *pContainer;
-    DWORD error;
+    char *url;
+    BOOL ret;
 
-    TRACE("(%s, 0x%08x)\n", debugstr_w(lpszUrlName), dwReserved);
-
-    if (dwReserved)
-    {
-        ERR("dwReserved != 0\n");
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-
-    error = cache_containers_findW(lpszUrlName, &pContainer);
-    if (error != ERROR_SUCCESS)
-    {
-        SetLastError(error);
-        return FALSE;
-    }
-
-    error = cache_container_open_index(pContainer, MIN_BLOCK_NO);
-    if (error != ERROR_SUCCESS)
-    {
-        SetLastError(error);
-        return FALSE;
-    }
-
-    if (!(pHeader = cache_container_lock_index(pContainer)))
+    if(!urlcache_encode_url_alloc(lpszUrlName, &url))
         return FALSE;
 
-    if (!urlcache_find_hash_entryW(pHeader, lpszUrlName, &pHashEntry))
-    {
-        cache_container_unlock_index(pContainer, pHeader);
-        TRACE("entry %s not found!\n", debugstr_w(lpszUrlName));
-        SetLastError(ERROR_FILE_NOT_FOUND);
-        return FALSE;
-    }
-
-    pEntry = (entry_header*)((LPBYTE)pHeader + pHashEntry->offset);
-    if (pEntry->signature != URL_SIGNATURE)
-    {
-        cache_container_unlock_index(pContainer, pHeader);
-        FIXME("Trying to retrieve entry of unknown format %s\n", debugstr_an((LPSTR)&pEntry->signature, sizeof(DWORD)));
-        SetLastError(ERROR_FILE_NOT_FOUND);
-        return FALSE;
-    }
-
-    pUrlEntry = (entry_url *)pEntry;
-
-    if (pUrlEntry->use_count == 0)
-    {
-        cache_container_unlock_index(pContainer, pHeader);
-        return FALSE;
-    }
-    pUrlEntry->use_count--;
-    if (!pUrlEntry->use_count)
-        urlcache_hash_entry_set_flags(pHashEntry, HASHTABLE_URL);
-
-    cache_container_unlock_index(pContainer, pHeader);
-
-    return TRUE;
+    ret = UnlockUrlCacheEntryFileA(url, dwReserved);
+    heap_free(url);
+    return ret;
 }
 
 /***********************************************************************
