@@ -1507,23 +1507,6 @@ static BOOL urlcache_find_hash_entry(const urlcache_header *pHeader, LPCSTR lpsz
     return FALSE;
 }
 
-static BOOL urlcache_find_hash_entryW(const urlcache_header *pHeader, LPCWSTR lpszUrl, struct hash_entry **ppHashEntry)
-{
-    LPSTR urlA;
-    BOOL ret;
-
-    urlA = heap_strdupWtoA(lpszUrl);
-    if (!urlA)
-    {
-        SetLastError(ERROR_OUTOFMEMORY);
-        return FALSE;
-    }
-
-    ret = urlcache_find_hash_entry(pHeader, urlA, ppHashEntry);
-    heap_free(urlA);
-    return ret;
-}
-
 /***********************************************************************
  *           urlcache_hash_entry_set_flags (Internal)
  *
@@ -4022,7 +4005,7 @@ static BOOL urlcache_entry_is_expired(const entry_url *pUrlEntry,
  *   dwFlags         [I] Unknown
  *   pftLastModified [O] Last modified time
  */
-BOOL WINAPI IsUrlCacheEntryExpiredA( LPCSTR url, DWORD dwFlags, FILETIME* pftLastModified )
+BOOL WINAPI IsUrlCacheEntryExpiredA(LPCSTR url, DWORD dwFlags, FILETIME* pftLastModified)
 {
     urlcache_header *pHeader;
     struct hash_entry *pHashEntry;
@@ -4090,72 +4073,17 @@ BOOL WINAPI IsUrlCacheEntryExpiredA( LPCSTR url, DWORD dwFlags, FILETIME* pftLas
  *   dwFlags         [I] Unknown
  *   pftLastModified [O] Last modified time
  */
-BOOL WINAPI IsUrlCacheEntryExpiredW( LPCWSTR url, DWORD dwFlags, FILETIME* pftLastModified )
+BOOL WINAPI IsUrlCacheEntryExpiredW(LPCWSTR url, DWORD dwFlags, FILETIME* pftLastModified)
 {
-    urlcache_header *pHeader;
-    struct hash_entry *pHashEntry;
-    const entry_header *pEntry;
-    const entry_url * pUrlEntry;
-    cache_container *pContainer;
-    BOOL expired;
+    char *encoded_url;
+    BOOL ret;
 
-    TRACE("(%s, %08x, %p)\n", debugstr_w(url), dwFlags, pftLastModified);
+    if(!urlcache_encode_url_alloc(url, &encoded_url))
+        return FALSE;
 
-    if (!url || !pftLastModified)
-        return TRUE;
-    if (dwFlags)
-        FIXME("unknown flags 0x%08x\n", dwFlags);
-
-    /* Any error implies that the URL is expired, i.e. not in the cache */
-    if (cache_containers_findW(url, &pContainer))
-    {
-        memset(pftLastModified, 0, sizeof(*pftLastModified));
-        return TRUE;
-    }
-
-    if (cache_container_open_index(pContainer, MIN_BLOCK_NO))
-    {
-        memset(pftLastModified, 0, sizeof(*pftLastModified));
-        return TRUE;
-    }
-
-    if (!(pHeader = cache_container_lock_index(pContainer)))
-    {
-        memset(pftLastModified, 0, sizeof(*pftLastModified));
-        return TRUE;
-    }
-
-    if (!urlcache_find_hash_entryW(pHeader, url, &pHashEntry))
-    {
-        cache_container_unlock_index(pContainer, pHeader);
-        memset(pftLastModified, 0, sizeof(*pftLastModified));
-        TRACE("entry %s not found!\n", debugstr_w(url));
-        return TRUE;
-    }
-
-    if (!urlcache_find_hash_entryW(pHeader, url, &pHashEntry))
-    {
-        cache_container_unlock_index(pContainer, pHeader);
-        memset(pftLastModified, 0, sizeof(*pftLastModified));
-        TRACE("entry %s not found!\n", debugstr_w(url));
-        return TRUE;
-    }
-
-    pEntry = (const entry_header*)((LPBYTE)pHeader + pHashEntry->offset);
-    if (pEntry->signature != URL_SIGNATURE)
-    {
-        cache_container_unlock_index(pContainer, pHeader);
-        memset(pftLastModified, 0, sizeof(*pftLastModified));
-        FIXME("Trying to retrieve entry of unknown format %s\n", debugstr_an((LPCSTR)&pEntry->signature, sizeof(DWORD)));
-        return TRUE;
-    }
-
-    pUrlEntry = (const entry_url *)pEntry;
-    expired = urlcache_entry_is_expired(pUrlEntry, pftLastModified);
-
-    cache_container_unlock_index(pContainer, pHeader);
-
-    return expired;
+    ret = IsUrlCacheEntryExpiredA(encoded_url, dwFlags, pftLastModified);
+    heap_free(encoded_url);
+    return ret;
 }
 
 /***********************************************************************
