@@ -1220,6 +1220,59 @@ static void dos_date_time_to_file_time(WORD fatdate, WORD fattime,
         DosDateTimeToFileTime(fatdate, fattime, ft);
 }
 
+static int urlcache_decode_url(const char *url, WCHAR *decoded_url, int decoded_len)
+{
+    URL_COMPONENTSA uc;
+    DWORD len, part_len;
+    WCHAR *host_name;
+
+    memset(&uc, 0, sizeof(uc));
+    uc.dwStructSize = sizeof(uc);
+    uc.dwHostNameLength = 1;
+    if(!InternetCrackUrlA(url, 0, 0, &uc))
+        uc.nScheme = INTERNET_SCHEME_UNKNOWN;
+
+    if(uc.nScheme!=INTERNET_SCHEME_HTTP && uc.nScheme!=INTERNET_SCHEME_HTTPS)
+        return MultiByteToWideChar(CP_UTF8, 0, url, -1, decoded_url, decoded_len);
+
+    if(!decoded_url)
+        decoded_len = 0;
+
+    len = MultiByteToWideChar(CP_UTF8, 0, url, uc.lpszHostName-url, decoded_url, decoded_len);
+    if(!len)
+        return 0;
+    if(decoded_url)
+        decoded_len -= len;
+
+    host_name = heap_alloc(uc.dwHostNameLength*sizeof(WCHAR));
+    if(!host_name)
+        return 0;
+    if(!MultiByteToWideChar(CP_UTF8, 0, uc.lpszHostName, uc.dwHostNameLength,
+                host_name, uc.dwHostNameLength)) {
+        heap_free(host_name);
+        return 0;
+    }
+    part_len = IdnToUnicode(0, host_name, uc.dwHostNameLength,
+            decoded_url ? decoded_url+len : NULL, decoded_len);
+    heap_free(host_name);
+    if(!part_len) {
+        SetLastError(ERROR_INTERNET_INVALID_URL);
+        return 0;
+    }
+    len += part_len;
+    if(decoded_url)
+        decoded_len -= part_len;
+
+    part_len = MultiByteToWideChar(CP_UTF8, 0,
+            uc.lpszHostName+uc.dwHostNameLength,
+            -1, decoded_url ? decoded_url+len : NULL, decoded_len);
+    if(!part_len)
+        return 0;
+    len += part_len;
+
+    return len;
+}
+
 /***********************************************************************
  *           urlcache_copy_entry (Internal)
  *
@@ -1230,121 +1283,122 @@ static void dos_date_time_to_file_time(WORD fatdate, WORD fattime,
  *    ERROR_INSUFFICIENT_BUFFER if the buffer was too small
  *
  */
-static DWORD urlcache_copy_entry(
-    cache_container *pContainer,
-    const urlcache_header *pHeader,
-    LPINTERNET_CACHE_ENTRY_INFOA lpCacheEntryInfo,
-    LPDWORD lpdwBufferSize,
-    const entry_url * pUrlEntry,
-    BOOL bUnicode)
+static DWORD urlcache_copy_entry(cache_container *container, const urlcache_header *header,
+        INTERNET_CACHE_ENTRY_INFOA *entry_info, DWORD *info_size, const entry_url *url_entry, BOOL unicode)
 {
-    int lenUrl;
-    DWORD dwRequiredSize = sizeof(*lpCacheEntryInfo);
+    int url_len;
+    DWORD size = sizeof(*entry_info);
 
-    if (*lpdwBufferSize >= dwRequiredSize)
-    {
-        lpCacheEntryInfo->lpHeaderInfo = NULL;
-        lpCacheEntryInfo->lpszFileExtension = NULL;
-        lpCacheEntryInfo->lpszLocalFileName = NULL;
-        lpCacheEntryInfo->lpszSourceUrlName = NULL;
-        lpCacheEntryInfo->CacheEntryType = pUrlEntry->cache_entry_type;
-        lpCacheEntryInfo->u.dwExemptDelta = pUrlEntry->exempt_delta;
-        lpCacheEntryInfo->dwHeaderInfoSize = pUrlEntry->header_info_size;
-        lpCacheEntryInfo->dwHitRate = pUrlEntry->hit_rate;
-        lpCacheEntryInfo->dwSizeHigh = pUrlEntry->size.u.HighPart;
-        lpCacheEntryInfo->dwSizeLow = pUrlEntry->size.u.LowPart;
-        lpCacheEntryInfo->dwStructSize = sizeof(*lpCacheEntryInfo);
-        lpCacheEntryInfo->dwUseCount = pUrlEntry->use_count;
-        dos_date_time_to_file_time(pUrlEntry->expire_date, pUrlEntry->expire_time, &lpCacheEntryInfo->ExpireTime);
-        lpCacheEntryInfo->LastAccessTime = pUrlEntry->access_time;
-        lpCacheEntryInfo->LastModifiedTime = pUrlEntry->modification_time;
-        dos_date_time_to_file_time(pUrlEntry->sync_date, pUrlEntry->sync_time, &lpCacheEntryInfo->LastSyncTime);
+    if(*info_size >= size) {
+        entry_info->lpHeaderInfo = NULL;
+        entry_info->lpszFileExtension = NULL;
+        entry_info->lpszLocalFileName = NULL;
+        entry_info->lpszSourceUrlName = NULL;
+        entry_info->CacheEntryType = url_entry->cache_entry_type;
+        entry_info->u.dwExemptDelta = url_entry->exempt_delta;
+        entry_info->dwHeaderInfoSize = url_entry->header_info_size;
+        entry_info->dwHitRate = url_entry->hit_rate;
+        entry_info->dwSizeHigh = url_entry->size.u.HighPart;
+        entry_info->dwSizeLow = url_entry->size.u.LowPart;
+        entry_info->dwStructSize = sizeof(*entry_info);
+        entry_info->dwUseCount = url_entry->use_count;
+        dos_date_time_to_file_time(url_entry->expire_date, url_entry->expire_time, &entry_info->ExpireTime);
+        entry_info->LastAccessTime = url_entry->access_time;
+        entry_info->LastModifiedTime = url_entry->modification_time;
+        dos_date_time_to_file_time(url_entry->sync_date, url_entry->sync_time, &entry_info->LastSyncTime);
     }
 
-    if ((dwRequiredSize % 4) && (dwRequiredSize < *lpdwBufferSize))
-        ZeroMemory((LPBYTE)lpCacheEntryInfo + dwRequiredSize, 4 - (dwRequiredSize % 4));
-    dwRequiredSize = DWORD_ALIGN(dwRequiredSize);
-    if (bUnicode)
-        lenUrl = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pUrlEntry + pUrlEntry->url_off, -1, NULL, 0);
+    if(size%4 && size<*info_size)
+        ZeroMemory((LPBYTE)entry_info+size, 4-size%4);
+    size = DWORD_ALIGN(size);
+    if(unicode)
+        url_len = urlcache_decode_url((const char*)url_entry+url_entry->url_off, NULL, 0);
     else
-        lenUrl = strlen((LPCSTR)pUrlEntry + pUrlEntry->url_off);
-    dwRequiredSize += (lenUrl + 1) * (bUnicode ? sizeof(WCHAR) : sizeof(CHAR));
+        url_len = strlen((LPCSTR)url_entry+url_entry->url_off) + 1;
+    size += url_len * (unicode ? sizeof(WCHAR) : sizeof(CHAR));
 
-    /* FIXME: is source url optional? */
-    if (*lpdwBufferSize >= dwRequiredSize)
-    {
-        DWORD lenUrlBytes = (lenUrl+1) * (bUnicode ? sizeof(WCHAR) : sizeof(CHAR));
+    if(*info_size >= size) {
+        DWORD url_size = url_len * (unicode ? sizeof(WCHAR) : sizeof(CHAR));
 
-        lpCacheEntryInfo->lpszSourceUrlName = (LPSTR)lpCacheEntryInfo + dwRequiredSize - lenUrlBytes;
-        if (bUnicode)
-            MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pUrlEntry + pUrlEntry->url_off, -1, (LPWSTR)lpCacheEntryInfo->lpszSourceUrlName, lenUrl + 1);
+        entry_info->lpszSourceUrlName = (LPSTR)entry_info+size-url_size;
+        if(unicode)
+            urlcache_decode_url((const char*)url_entry+url_entry->url_off, (WCHAR*)entry_info->lpszSourceUrlName, url_len);
         else
-            memcpy(lpCacheEntryInfo->lpszSourceUrlName, (LPCSTR)pUrlEntry + pUrlEntry->url_off, lenUrlBytes);
+            memcpy(entry_info->lpszSourceUrlName, (LPCSTR)url_entry+url_entry->url_off, url_size);
     }
 
-    if ((dwRequiredSize % 4) && (dwRequiredSize < *lpdwBufferSize))
-        ZeroMemory((LPBYTE)lpCacheEntryInfo + dwRequiredSize, 4 - (dwRequiredSize % 4));
-    dwRequiredSize = DWORD_ALIGN(dwRequiredSize);
+    if(size%4 && size<*info_size)
+        ZeroMemory((LPBYTE)entry_info+size, 4-size%4);
+    size = DWORD_ALIGN(size);
 
-    if (pUrlEntry->local_name_off)
-    {
-        LONG nLocalFilePathSize;
-        LPSTR lpszLocalFileName;
-        lpszLocalFileName = (LPSTR)lpCacheEntryInfo + dwRequiredSize;
-        nLocalFilePathSize = *lpdwBufferSize - dwRequiredSize;
-        if ((bUnicode && urlcache_create_file_pathW(pContainer, pHeader, (LPCSTR)pUrlEntry + pUrlEntry->local_name_off, pUrlEntry->cache_dir, (LPWSTR)lpszLocalFileName, &nLocalFilePathSize)) ||
-            (!bUnicode && urlcache_create_file_pathA(pContainer, pHeader, (LPCSTR)pUrlEntry + pUrlEntry->local_name_off, pUrlEntry->cache_dir, lpszLocalFileName, &nLocalFilePathSize)))
-        {
-            lpCacheEntryInfo->lpszLocalFileName = lpszLocalFileName;
+    if(url_entry->local_name_off) {
+        LONG file_name_size;
+        LPSTR file_name;
+        file_name = (LPSTR)entry_info+size;
+        file_name_size = *info_size-size;
+        if((unicode && urlcache_create_file_pathW(container, header, (LPCSTR)url_entry+url_entry->local_name_off, url_entry->cache_dir, (LPWSTR)file_name, &file_name_size)) ||
+            (!unicode && urlcache_create_file_pathA(container, header, (LPCSTR)url_entry+url_entry->local_name_off, url_entry->cache_dir, file_name, &file_name_size))) {
+            entry_info->lpszLocalFileName = file_name;
         }
-        dwRequiredSize += nLocalFilePathSize * (bUnicode ? sizeof(WCHAR) : sizeof(CHAR)) ;
+        size += file_name_size;
 
-        if ((dwRequiredSize % 4) && (dwRequiredSize < *lpdwBufferSize))
-            ZeroMemory((LPBYTE)lpCacheEntryInfo + dwRequiredSize, 4 - (dwRequiredSize % 4));
-        dwRequiredSize = DWORD_ALIGN(dwRequiredSize);
+        if(size%4 && size<*info_size)
+            ZeroMemory((LPBYTE)entry_info+size, 4-size%4);
+        size = DWORD_ALIGN(size);
     }
-    dwRequiredSize += pUrlEntry->header_info_size + 1;
 
-    if (*lpdwBufferSize >= dwRequiredSize)
-    {
-        lpCacheEntryInfo->lpHeaderInfo = (LPBYTE)lpCacheEntryInfo + dwRequiredSize - pUrlEntry->header_info_size - 1;
-        memcpy(lpCacheEntryInfo->lpHeaderInfo, (LPCSTR)pUrlEntry + pUrlEntry->header_info_off, pUrlEntry->header_info_size);
-        ((LPBYTE)lpCacheEntryInfo)[dwRequiredSize - 1] = '\0';
-    }
-    if ((dwRequiredSize % 4) && (dwRequiredSize < *lpdwBufferSize))
-        ZeroMemory((LPBYTE)lpCacheEntryInfo + dwRequiredSize, 4 - (dwRequiredSize % 4));
-    dwRequiredSize = DWORD_ALIGN(dwRequiredSize);
+    if(url_entry->header_info_off) {
+        DWORD header_len;
 
-    if (pUrlEntry->file_extension_off)
-    {
-        int lenExtension;
-
-        if (bUnicode)
-            lenExtension = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pUrlEntry + pUrlEntry->file_extension_off, -1, NULL, 0);
+        if(unicode)
+            header_len = MultiByteToWideChar(CP_UTF8, 0, (const char*)url_entry+url_entry->header_info_off,
+                    url_entry->header_info_size, NULL, 0);
         else
-            lenExtension = strlen((LPCSTR)pUrlEntry + pUrlEntry->file_extension_off) + 1;
-        dwRequiredSize += lenExtension * (bUnicode ? sizeof(WCHAR) : sizeof(CHAR));
+            header_len = url_entry->header_info_size;
+        size += header_len * (unicode ? sizeof(WCHAR) : sizeof(CHAR));
 
-        if (*lpdwBufferSize >= dwRequiredSize)
-        {
-            lpCacheEntryInfo->lpszFileExtension = (LPSTR)lpCacheEntryInfo + dwRequiredSize - lenExtension;
-            if (bUnicode)
-                MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pUrlEntry + pUrlEntry->file_extension_off, -1, (LPWSTR)lpCacheEntryInfo->lpszSourceUrlName, lenExtension);
+        if(*info_size >= size) {
+            DWORD header_size = header_len * (unicode ? sizeof(WCHAR) : sizeof(CHAR));
+            entry_info->lpHeaderInfo = (LPBYTE)entry_info+size-header_size;
+            if(unicode)
+                MultiByteToWideChar(CP_UTF8, 0, (const char*)url_entry+url_entry->header_info_off,
+                        url_entry->header_info_size, (LPWSTR)entry_info->lpHeaderInfo, header_len);
             else
-                memcpy(lpCacheEntryInfo->lpszFileExtension, (LPCSTR)pUrlEntry + pUrlEntry->file_extension_off, lenExtension * sizeof(CHAR));
+                memcpy(entry_info->lpHeaderInfo, (LPCSTR)url_entry+url_entry->header_info_off, header_len);
         }
-
-        if ((dwRequiredSize % 4) && (dwRequiredSize < *lpdwBufferSize))
-            ZeroMemory((LPBYTE)lpCacheEntryInfo + dwRequiredSize, 4 - (dwRequiredSize % 4));
-        dwRequiredSize = DWORD_ALIGN(dwRequiredSize);
+        if(size%4 && size<*info_size)
+            ZeroMemory((LPBYTE)entry_info+size, 4-size%4);
+        size = DWORD_ALIGN(size);
     }
 
-    if (dwRequiredSize > *lpdwBufferSize)
-    {
-        *lpdwBufferSize = dwRequiredSize;
+    if(url_entry->file_extension_off) {
+        int ext_len;
+
+        if(unicode)
+            ext_len = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)url_entry+url_entry->file_extension_off, -1, NULL, 0);
+        else
+            ext_len = strlen((LPCSTR)url_entry+url_entry->file_extension_off) + 1;
+        size += ext_len * (unicode ? sizeof(WCHAR) : sizeof(CHAR));
+
+        if(*info_size >= size) {
+            DWORD ext_size = ext_len * (unicode ? sizeof(WCHAR) : sizeof(CHAR));
+            entry_info->lpszFileExtension = (LPSTR)entry_info+size-ext_size;
+            if(unicode)
+                MultiByteToWideChar(CP_ACP, 0, (LPCSTR)url_entry+url_entry->file_extension_off, -1, (LPWSTR)entry_info->lpszFileExtension, ext_len);
+            else
+                memcpy(entry_info->lpszFileExtension, (LPCSTR)url_entry+url_entry->file_extension_off, ext_len*sizeof(CHAR));
+        }
+
+        if(size%4 && size<*info_size)
+            ZeroMemory((LPBYTE)entry_info+size, 4-size%4);
+        size = DWORD_ALIGN(size);
+    }
+
+    if(size > *info_size) {
+        *info_size = size;
         return ERROR_INSUFFICIENT_BUFFER;
     }
-    *lpdwBufferSize = dwRequiredSize;
+    *info_size = size;
     return ERROR_SUCCESS;
 }
 
