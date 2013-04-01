@@ -226,6 +226,7 @@ static int read_import_lib( struct import *imp )
     struct stat stat;
     struct import *prev_imp;
     DLLSPEC *spec = imp->spec;
+    int delayed = is_delayed_import( spec->file_name );
 
     f = open_input_file( NULL, imp->full_name );
     fstat( fileno(f), &stat );
@@ -244,7 +245,7 @@ static int read_import_lib( struct import *imp )
         return 0;  /* the same file was already loaded, ignore this one */
     }
 
-    if (is_delayed_import( spec->file_name ))
+    if (delayed)
     {
         imp->delay = 1;
         nb_delayed++;
