@@ -1351,31 +1351,31 @@ static DWORD urlcache_copy_entry(
  *           urlcache_set_entry_info (Internal)
  *
  *  Helper for SetUrlCacheEntryInfo{A,W}. Sets fields in URL entry
- * according to the flags set by dwFieldControl.
+ * according to the flags set by field_control.
  *
  * RETURNS
  *    ERROR_SUCCESS if the buffer was big enough
  *    ERROR_INSUFFICIENT_BUFFER if the buffer was too small
  *
  */
-static DWORD urlcache_set_entry_info(entry_url * pUrlEntry, const INTERNET_CACHE_ENTRY_INFOW * lpCacheEntryInfo, DWORD dwFieldControl)
+static DWORD urlcache_set_entry_info(entry_url *url_entry, const INTERNET_CACHE_ENTRY_INFOA *entry_info, DWORD field_control)
 {
-    if (dwFieldControl & CACHE_ENTRY_ACCTIME_FC)
-        pUrlEntry->access_time = lpCacheEntryInfo->LastAccessTime;
-    if (dwFieldControl & CACHE_ENTRY_ATTRIBUTE_FC)
-        pUrlEntry->cache_entry_type = lpCacheEntryInfo->CacheEntryType;
-    if (dwFieldControl & CACHE_ENTRY_EXEMPT_DELTA_FC)
-        pUrlEntry->exempt_delta = lpCacheEntryInfo->u.dwExemptDelta;
-    if (dwFieldControl & CACHE_ENTRY_EXPTIME_FC)
-        file_time_to_dos_date_time(&lpCacheEntryInfo->ExpireTime, &pUrlEntry->expire_date, &pUrlEntry->expire_time);
-    if (dwFieldControl & CACHE_ENTRY_HEADERINFO_FC)
+    if (field_control & CACHE_ENTRY_ACCTIME_FC)
+        url_entry->access_time = entry_info->LastAccessTime;
+    if (field_control & CACHE_ENTRY_ATTRIBUTE_FC)
+        url_entry->cache_entry_type = entry_info->CacheEntryType;
+    if (field_control & CACHE_ENTRY_EXEMPT_DELTA_FC)
+        url_entry->exempt_delta = entry_info->u.dwExemptDelta;
+    if (field_control & CACHE_ENTRY_EXPTIME_FC)
+        file_time_to_dos_date_time(&entry_info->ExpireTime, &url_entry->expire_date, &url_entry->expire_time);
+    if (field_control & CACHE_ENTRY_HEADERINFO_FC)
         FIXME("CACHE_ENTRY_HEADERINFO_FC unimplemented\n");
-    if (dwFieldControl & CACHE_ENTRY_HITRATE_FC)
-        pUrlEntry->hit_rate = lpCacheEntryInfo->dwHitRate;
-    if (dwFieldControl & CACHE_ENTRY_MODTIME_FC)
-        pUrlEntry->modification_time = lpCacheEntryInfo->LastModifiedTime;
-    if (dwFieldControl & CACHE_ENTRY_SYNCTIME_FC)
-        file_time_to_dos_date_time(&lpCacheEntryInfo->LastAccessTime, &pUrlEntry->sync_date, &pUrlEntry->sync_time);
+    if (field_control & CACHE_ENTRY_HITRATE_FC)
+        url_entry->hit_rate = entry_info->dwHitRate;
+    if (field_control & CACHE_ENTRY_MODTIME_FC)
+        url_entry->modification_time = entry_info->LastModifiedTime;
+    if (field_control & CACHE_ENTRY_SYNCTIME_FC)
+        file_time_to_dos_date_time(&entry_info->LastAccessTime, &url_entry->sync_date, &url_entry->sync_time);
 
     return ERROR_SUCCESS;
 }
@@ -1973,10 +1973,9 @@ BOOL WINAPI GetUrlCacheEntryInfoW(LPCWSTR lpszUrl,
 /***********************************************************************
  *           SetUrlCacheEntryInfoA (WININET.@)
  */
-BOOL WINAPI SetUrlCacheEntryInfoA(
-    LPCSTR lpszUrlName,
-    LPINTERNET_CACHE_ENTRY_INFOA lpCacheEntryInfo,
-    DWORD dwFieldControl)
+BOOL WINAPI SetUrlCacheEntryInfoA(LPCSTR lpszUrlName,
+        LPINTERNET_CACHE_ENTRY_INFOA lpCacheEntryInfo,
+        DWORD dwFieldControl)
 {
     urlcache_header *pHeader;
     struct hash_entry *pHashEntry;
@@ -2020,10 +2019,7 @@ BOOL WINAPI SetUrlCacheEntryInfoA(
         return FALSE;
     }
 
-    urlcache_set_entry_info(
-        (entry_url *)pEntry,
-        (const INTERNET_CACHE_ENTRY_INFOW *)lpCacheEntryInfo,
-        dwFieldControl);
+    urlcache_set_entry_info((entry_url*)pEntry, lpCacheEntryInfo, dwFieldControl);
 
     cache_container_unlock_index(pContainer, pHeader);
 
@@ -2033,58 +2029,19 @@ BOOL WINAPI SetUrlCacheEntryInfoA(
 /***********************************************************************
  *           SetUrlCacheEntryInfoW (WININET.@)
  */
-BOOL WINAPI SetUrlCacheEntryInfoW(LPCWSTR lpszUrl, LPINTERNET_CACHE_ENTRY_INFOW lpCacheEntryInfo, DWORD dwFieldControl)
+BOOL WINAPI SetUrlCacheEntryInfoW(LPCWSTR lpszUrl,
+        LPINTERNET_CACHE_ENTRY_INFOW lpCacheEntryInfo,
+        DWORD dwFieldControl)
 {
-    urlcache_header *pHeader;
-    struct hash_entry *pHashEntry;
-    entry_header *pEntry;
-    cache_container *pContainer;
-    DWORD error;
+    char *url;
+    BOOL ret;
 
-    TRACE("(%s, %p, 0x%08x)\n", debugstr_w(lpszUrl), lpCacheEntryInfo, dwFieldControl);
-
-    error = cache_containers_findW(lpszUrl, &pContainer);
-    if (error != ERROR_SUCCESS)
-    {
-        SetLastError(error);
-        return FALSE;
-    }
-
-    error = cache_container_open_index(pContainer, MIN_BLOCK_NO);
-    if (error != ERROR_SUCCESS)
-    {
-        SetLastError(error);
-        return FALSE;
-    }
-
-    if (!(pHeader = cache_container_lock_index(pContainer)))
+    if(!urlcache_encode_url_alloc(lpszUrl, &url))
         return FALSE;
 
-    if (!urlcache_find_hash_entryW(pHeader, lpszUrl, &pHashEntry))
-    {
-        cache_container_unlock_index(pContainer, pHeader);
-        WARN("entry %s not found!\n", debugstr_w(lpszUrl));
-        SetLastError(ERROR_FILE_NOT_FOUND);
-        return FALSE;
-    }
-
-    pEntry = (entry_header*)((LPBYTE)pHeader + pHashEntry->offset);
-    if (pEntry->signature != URL_SIGNATURE)
-    {
-        cache_container_unlock_index(pContainer, pHeader);
-        FIXME("Trying to retrieve entry of unknown format %s\n", debugstr_an((LPSTR)&pEntry->signature, sizeof(DWORD)));
-        SetLastError(ERROR_FILE_NOT_FOUND);
-        return FALSE;
-    }
-
-    urlcache_set_entry_info(
-        (entry_url *)pEntry,
-        lpCacheEntryInfo,
-        dwFieldControl);
-
-    cache_container_unlock_index(pContainer, pHeader);
-
-    return TRUE;
+    ret = SetUrlCacheEntryInfoA(url, (INTERNET_CACHE_ENTRY_INFOA*)lpCacheEntryInfo, dwFieldControl);
+    heap_free(url);
+    return ret;
 }
 
 /***********************************************************************
