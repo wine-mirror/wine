@@ -1044,11 +1044,20 @@ void CDECL wined3d_device_restore_fullscreen_window(struct wined3d_device *devic
 
     if (!device->style && !device->exStyle) return;
 
-    TRACE("Restoring window style of window %p to %08x, %08x.\n",
-            window, device->style, device->exStyle);
-
     style = GetWindowLongW(window, GWL_STYLE);
     exstyle = GetWindowLongW(window, GWL_EXSTYLE);
+
+    /* These flags are set by wined3d_device_setup_fullscreen_window, not the
+     * application, and we want to ignore them in the test below, since it's
+     * not the application's fault that they changed. Additionally, we want to
+     * preserve the current status of these flags (i.e. don't restore them) to
+     * more closely emulate the behavior of Direct3D, which leaves these flags
+     * alone when returning to windowed mode. */
+    device->style ^= (device->style ^ style) & WS_VISIBLE;
+    device->exStyle ^= (device->exStyle ^ exstyle) & WS_EX_TOPMOST;
+
+    TRACE("Restoring window style of window %p to %08x, %08x.\n",
+            window, device->style, device->exStyle);
 
     filter_messages = device->filter_messages;
     device->filter_messages = TRUE;
