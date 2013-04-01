@@ -193,7 +193,7 @@ typedef struct
 typedef struct
 {
     struct list entry; /* part of a list */
-    LPWSTR cache_prefix; /* string that has to be prefixed for this container to be used */
+    char *cache_prefix; /* string that has to be prefixed for this container to be used */
     LPWSTR path; /* path to url container directory */
     HANDLE mapping; /* handle of file mapping */
     DWORD file_size; /* size of file when mapping was opened */
@@ -204,7 +204,7 @@ typedef struct
 typedef struct
 {
     DWORD magic;
-    LPWSTR url_search_pattern;
+    char *url_search_pattern;
     DWORD container_idx;
     DWORD hash_table_idx;
     DWORD hash_entry_idx;
@@ -810,70 +810,71 @@ static void cache_containers_free(void)
         );
 }
 
-static DWORD cache_containers_findW(LPCWSTR lpwszUrl, cache_container **ppContainer)
+static DWORD cache_containers_find(const char *url, cache_container **ret)
 {
-    cache_container *pContainer;
+    cache_container *container;
 
-    TRACE("searching for prefix for URL: %s\n", debugstr_w(lpwszUrl));
+    TRACE("searching for prefix for URL: %s\n", debugstr_a(url));
 
-    if(!lpwszUrl)
+    if(!url)
         return ERROR_INVALID_PARAMETER;
 
-    LIST_FOR_EACH_ENTRY(pContainer, &UrlContainers, cache_container, entry)
+    LIST_FOR_EACH_ENTRY(container, &UrlContainers, cache_container, entry)
     {
-        int prefix_len = strlenW(pContainer->cache_prefix);
-        if (!strncmpW(pContainer->cache_prefix, lpwszUrl, prefix_len))
-        {
-            TRACE("found container with prefix %s for URL %s\n", debugstr_w(pContainer->cache_prefix), debugstr_w(lpwszUrl));
-            *ppContainer = pContainer;
+        int prefix_len = strlen(container->cache_prefix);
+
+        if(!strncmp(container->cache_prefix, url, prefix_len)) {
+            TRACE("found container with prefix %s\n", debugstr_a(container->cache_prefix));
+            *ret = container;
             return ERROR_SUCCESS;
         }
     }
+
     ERR("no container found\n");
     return ERROR_FILE_NOT_FOUND;
 }
 
-static DWORD cache_containers_findA(LPCSTR lpszUrl, cache_container **ppContainer)
+static DWORD cache_containers_findW(LPCWSTR url, cache_container **container)
 {
-    LPWSTR url = NULL;
+    char *encoded_url = NULL;
     DWORD ret;
 
-    if (lpszUrl && !(url = heap_strdupAtoW(lpszUrl)))
+    if (url && !(encoded_url = heap_strdupWtoA(url)))
         return ERROR_OUTOFMEMORY;
 
-    ret = cache_containers_findW(url, ppContainer);
-    heap_free(url);
+    ret = cache_containers_find(encoded_url, container);
+    heap_free(encoded_url);
     return ret;
 }
 
-static BOOL cache_containers_enum(LPCWSTR lpwszSearchPattern, DWORD dwIndex, cache_container **ppContainer)
+static BOOL cache_containers_enum(char *search_pattern, DWORD index, cache_container **ret)
 {
     DWORD i = 0;
-    cache_container *pContainer;
+    cache_container *container;
 
-    TRACE("searching for prefix: %s\n", debugstr_w(lpwszSearchPattern));
+    TRACE("searching for prefix: %s\n", debugstr_a(search_pattern));
 
     /* non-NULL search pattern only returns one container ever */
-    if (lpwszSearchPattern && dwIndex > 0)
+    if (search_pattern && index > 0)
         return FALSE;
 
-    LIST_FOR_EACH_ENTRY(pContainer, &UrlContainers, cache_container, entry)
+    LIST_FOR_EACH_ENTRY(container, &UrlContainers, cache_container, entry)
     {
-        if (lpwszSearchPattern)
+        if (search_pattern)
         {
-            if (!strcmpW(pContainer->cache_prefix, lpwszSearchPattern))
+            if (!strcmp(container->cache_prefix, search_pattern))
             {
-                TRACE("found container with prefix %s\n", debugstr_w(pContainer->cache_prefix));
-                *ppContainer = pContainer;
+                TRACE("found container with prefix %s\n", debugstr_a(container->cache_prefix));
+                *ret = container;
                 return TRUE;
             }
         }
         else
         {
-            if (i == dwIndex)
+            if (i == index)
             {
-                TRACE("found container with prefix %s\n", debugstr_w(pContainer->cache_prefix));
-                *ppContainer = pContainer;
+                TRACE("found container with prefix %s\n", debugstr_a(container->cache_prefix));
+                *ret = container;
                 return TRUE;
             }
         }
@@ -1168,7 +1169,7 @@ static DWORD cache_container_clean_index(cache_container *container, urlcache_he
     urlcache_header *header = *file_view;
     DWORD ret;
 
-    TRACE("(%s %s)\n", debugstr_w(container->cache_prefix), debugstr_w(container->path));
+    TRACE("(%s %s)\n", debugstr_a(container->cache_prefix), debugstr_w(container->path));
 
     if(urlcache_clean_leaked_entries(container, header))
         return ERROR_SUCCESS;
@@ -1766,7 +1767,7 @@ BOOL WINAPI GetUrlCacheEntryInfoExA(
     if (dwFlags & ~GET_INSTALLED_ENTRY)
         FIXME("ignoring unsupported flags: %x\n", dwFlags);
 
-    error = cache_containers_findA(lpszUrl, &pContainer);
+    error = cache_containers_find(lpszUrl, &pContainer);
     if (error != ERROR_SUCCESS)
     {
         SetLastError(error);
@@ -1992,7 +1993,7 @@ BOOL WINAPI SetUrlCacheEntryInfoA(
 
     TRACE("(%s, %p, 0x%08x)\n", debugstr_a(lpszUrlName), lpCacheEntryInfo, dwFieldControl);
 
-    error = cache_containers_findA(lpszUrlName, &pContainer);
+    error = cache_containers_find(lpszUrlName, &pContainer);
     if (error != ERROR_SUCCESS)
     {
         SetLastError(error);
@@ -2124,7 +2125,7 @@ BOOL WINAPI RetrieveUrlCacheEntryFileA(
         return FALSE;
     }
 
-    error = cache_containers_findA(lpszUrlName, &pContainer);
+    error = cache_containers_find(lpszUrlName, &pContainer);
     if (error != ERROR_SUCCESS)
     {
         SetLastError(error);
@@ -2658,7 +2659,7 @@ BOOL WINAPI UnlockUrlCacheEntryFileA(
         return FALSE;
     }
 
-    error = cache_containers_findA(lpszUrlName, &pContainer);
+    error = cache_containers_find(lpszUrlName, &pContainer);
     if (error != ERROR_SUCCESS)
     {
        SetLastError(error);
@@ -3639,7 +3640,7 @@ BOOL WINAPI DeleteUrlCacheEntryA(LPCSTR lpszUrlName)
 
     TRACE("(%s)\n", debugstr_a(lpszUrlName));
 
-    error = cache_containers_findA(lpszUrlName, &pContainer);
+    error = cache_containers_find(lpszUrlName, &pContainer);
     if (error != ERROR_SUCCESS)
     {
         SetLastError(error);
@@ -3857,7 +3858,7 @@ INTERNETAPI HANDLE WINAPI FindFirstUrlCacheEntryA(LPCSTR lpszUrlSearchPattern,
     pEntryHandle->magic = URLCACHE_FIND_ENTRY_HANDLE_MAGIC;
     if (lpszUrlSearchPattern)
     {
-        pEntryHandle->url_search_pattern = heap_strdupAtoW(lpszUrlSearchPattern);
+        pEntryHandle->url_search_pattern = heap_strdupA(lpszUrlSearchPattern);
         if (!pEntryHandle->url_search_pattern)
         {
             heap_free(pEntryHandle);
@@ -3896,7 +3897,7 @@ INTERNETAPI HANDLE WINAPI FindFirstUrlCacheEntryW(LPCWSTR lpszUrlSearchPattern,
     pEntryHandle->magic = URLCACHE_FIND_ENTRY_HANDLE_MAGIC;
     if (lpszUrlSearchPattern)
     {
-        pEntryHandle->url_search_pattern = heap_strdupW(lpszUrlSearchPattern);
+        pEntryHandle->url_search_pattern = heap_strdupWtoA(lpszUrlSearchPattern);
         if (!pEntryHandle->url_search_pattern)
         {
             heap_free(pEntryHandle);
@@ -4282,7 +4283,7 @@ BOOL WINAPI IsUrlCacheEntryExpiredA( LPCSTR url, DWORD dwFlags, FILETIME* pftLas
         FIXME("unknown flags 0x%08x\n", dwFlags);
 
     /* Any error implies that the URL is expired, i.e. not in the cache */
-    if (cache_containers_findA(url, &pContainer))
+    if (cache_containers_find(url, &pContainer))
     {
         memset(pftLastModified, 0, sizeof(*pftLastModified));
         return TRUE;

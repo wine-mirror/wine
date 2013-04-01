@@ -142,6 +142,21 @@ static inline LPWSTR heap_strdupW(LPCWSTR str)
     return ret;
 }
 
+static inline char *heap_strdupA(const char *str)
+{
+    char *ret = NULL;
+
+    if(str) {
+        DWORD size = strlen(str)+1;
+
+        ret = heap_alloc(size);
+        if(ret)
+            memcpy(ret, str, size);
+    }
+
+    return ret;
+}
+
 static inline LPWSTR heap_strndupW(LPCWSTR str, UINT max_len)
 {
     LPWSTR ret;
