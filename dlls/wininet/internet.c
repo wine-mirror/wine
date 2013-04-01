@@ -1580,7 +1580,7 @@ static INTERNET_SCHEME GetInternetSchemeW(LPCWSTR lpszScheme, DWORD nMaxCmp)
         return INTERNET_SCHEME_UNKNOWN;
 
     for (i = 0; i < sizeof(url_schemes)/sizeof(url_schemes[0]); i++)
-        if (!strncmpW(lpszScheme, url_schemes[i], nMaxCmp))
+        if (!strncmpiW(lpszScheme, url_schemes[i], nMaxCmp))
             return INTERNET_SCHEME_FIRST + i;
 
     return INTERNET_SCHEME_UNKNOWN;
