@@ -3154,13 +3154,9 @@ BOOL WINAPI ReadUrlCacheEntryStream(
  *           RetrieveUrlCacheEntryStreamA (WININET.@)
  *
  */
-HANDLE WINAPI RetrieveUrlCacheEntryStreamA(
-    IN LPCSTR lpszUrlName,
-    OUT LPINTERNET_CACHE_ENTRY_INFOA lpCacheEntryInfo,
-    IN OUT LPDWORD lpdwCacheEntryInfoBufferSize,
-    IN BOOL fRandomRead,
-    IN DWORD dwReserved
-    )
+HANDLE WINAPI RetrieveUrlCacheEntryStreamA(LPCSTR lpszUrlName,
+        LPINTERNET_CACHE_ENTRY_INFOA lpCacheEntryInfo,
+        LPDWORD lpdwCacheEntryInfoBufferSize, BOOL fRandomRead, DWORD dwReserved)
 {
     /* NOTE: this is not the same as the way that the native
      * version allocates 'stream' handles. I did it this way
@@ -3168,103 +3164,89 @@ HANDLE WINAPI RetrieveUrlCacheEntryStreamA(
      * on this behaviour. (Native version appears to allocate
      * indices into a table)
      */
-    stream_handle *pStream;
-    HANDLE hFile;
+    stream_handle *stream;
+    HANDLE file;
 
-    TRACE( "(%s, %p, %p, %x, 0x%08x)\n", debugstr_a(lpszUrlName), lpCacheEntryInfo,
-           lpdwCacheEntryInfoBufferSize, fRandomRead, dwReserved );
+    TRACE("(%s, %p, %p, %x, 0x%08x)\n", debugstr_a(lpszUrlName), lpCacheEntryInfo,
+            lpdwCacheEntryInfoBufferSize, fRandomRead, dwReserved);
 
-    if (!RetrieveUrlCacheEntryFileA(lpszUrlName,
-        lpCacheEntryInfo,
-        lpdwCacheEntryInfoBufferSize,
-        dwReserved))
-    {
+    if(!RetrieveUrlCacheEntryFileA(lpszUrlName, lpCacheEntryInfo,
+                lpdwCacheEntryInfoBufferSize, dwReserved))
+        return NULL;
+
+    file = CreateFileA(lpCacheEntryInfo->lpszLocalFileName, GENERIC_READ, FILE_SHARE_READ,
+            NULL, OPEN_EXISTING, fRandomRead ? FILE_FLAG_RANDOM_ACCESS : 0, NULL);
+    if(file == INVALID_HANDLE_VALUE) {
+        UnlockUrlCacheEntryFileA(lpszUrlName, 0);
         return NULL;
     }
 
-    hFile = CreateFileA(lpCacheEntryInfo->lpszLocalFileName,
-        GENERIC_READ,
-        FILE_SHARE_READ,
-        NULL,
-        OPEN_EXISTING,
-        fRandomRead ? FILE_FLAG_RANDOM_ACCESS : 0,
-        NULL);
-    if (hFile == INVALID_HANDLE_VALUE)
-        return FALSE;
-    
     /* allocate handle storage space */
-    pStream = heap_alloc(sizeof(stream_handle) + strlen(lpszUrlName) * sizeof(CHAR));
-    if (!pStream)
-    {
-        CloseHandle(hFile);
+    stream = heap_alloc(sizeof(stream_handle) + strlen(lpszUrlName) * sizeof(CHAR));
+    if(!stream) {
+        CloseHandle(file);
+        UnlockUrlCacheEntryFileA(lpszUrlName, 0);
         SetLastError(ERROR_OUTOFMEMORY);
-        return FALSE;
+        return NULL;
     }
 
-    pStream->file = hFile;
-    strcpy(pStream->url, lpszUrlName);
-    return pStream;
+    stream->file = file;
+    strcpy(stream->url, lpszUrlName);
+    return stream;
 }
 
 /***********************************************************************
  *           RetrieveUrlCacheEntryStreamW (WININET.@)
  *
  */
-HANDLE WINAPI RetrieveUrlCacheEntryStreamW(
-    IN LPCWSTR lpszUrlName,
-    OUT LPINTERNET_CACHE_ENTRY_INFOW lpCacheEntryInfo,
-    IN OUT LPDWORD lpdwCacheEntryInfoBufferSize,
-    IN BOOL fRandomRead,
-    IN DWORD dwReserved
-    )
+HANDLE WINAPI RetrieveUrlCacheEntryStreamW(LPCWSTR lpszUrlName,
+        LPINTERNET_CACHE_ENTRY_INFOW lpCacheEntryInfo,
+        LPDWORD lpdwCacheEntryInfoBufferSize, BOOL fRandomRead, DWORD dwReserved)
 {
-    DWORD size;
-    int url_len;
+    DWORD len;
     /* NOTE: this is not the same as the way that the native
      * version allocates 'stream' handles. I did it this way
      * as it is much easier and no applications should depend
      * on this behaviour. (Native version appears to allocate
      * indices into a table)
      */
-    stream_handle *pStream;
-    HANDLE hFile;
+    stream_handle *stream;
+    HANDLE file;
 
-    TRACE( "(%s, %p, %p, %x, 0x%08x)\n", debugstr_w(lpszUrlName), lpCacheEntryInfo,
-           lpdwCacheEntryInfoBufferSize, fRandomRead, dwReserved );
+    TRACE("(%s, %p, %p, %x, 0x%08x)\n", debugstr_w(lpszUrlName), lpCacheEntryInfo,
+            lpdwCacheEntryInfoBufferSize, fRandomRead, dwReserved);
 
-    if (!RetrieveUrlCacheEntryFileW(lpszUrlName,
-        lpCacheEntryInfo,
-        lpdwCacheEntryInfoBufferSize,
-        dwReserved))
-    {
+    if(!(len = urlcache_encode_url(lpszUrlName, NULL, 0)))
+        return NULL;
+
+    if(!RetrieveUrlCacheEntryFileW(lpszUrlName, lpCacheEntryInfo,
+                lpdwCacheEntryInfoBufferSize, dwReserved))
+        return NULL;
+
+    file = CreateFileW(lpCacheEntryInfo->lpszLocalFileName, GENERIC_READ, FILE_SHARE_READ,
+            NULL, OPEN_EXISTING, fRandomRead ? FILE_FLAG_RANDOM_ACCESS : 0, NULL);
+    if(file == INVALID_HANDLE_VALUE) {
+        UnlockUrlCacheEntryFileW(lpszUrlName, 0);
         return NULL;
     }
 
-    hFile = CreateFileW(lpCacheEntryInfo->lpszLocalFileName,
-        GENERIC_READ,
-        FILE_SHARE_READ,
-        NULL,
-        OPEN_EXISTING,
-        fRandomRead ? FILE_FLAG_RANDOM_ACCESS : 0,
-        NULL);
-    if (hFile == INVALID_HANDLE_VALUE)
-        return FALSE;
-
     /* allocate handle storage space */
-    size = sizeof(stream_handle);
-    url_len = WideCharToMultiByte(CP_ACP, 0, lpszUrlName, -1, NULL, 0, NULL, NULL);
-    size += url_len;
-    pStream = heap_alloc(size);
-    if (!pStream)
-    {
-        CloseHandle(hFile);
+    stream = heap_alloc(sizeof(stream_handle) + len*sizeof(WCHAR));
+    if(!stream) {
+        CloseHandle(file);
+        UnlockUrlCacheEntryFileW(lpszUrlName, 0);
         SetLastError(ERROR_OUTOFMEMORY);
-        return FALSE;
+        return NULL;
     }
 
-    pStream->file = hFile;
-    WideCharToMultiByte(CP_ACP, 0, lpszUrlName, -1, pStream->url, url_len, NULL, NULL);
-    return pStream;
+    stream->file = file;
+    if(!urlcache_encode_url(lpszUrlName, stream->url, len)) {
+        CloseHandle(file);
+        UnlockUrlCacheEntryFileW(lpszUrlName, 0);
+        heap_free(stream);
+        return NULL;
+    }
+    return stream;
 }
 
 /***********************************************************************
