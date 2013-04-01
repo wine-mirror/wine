@@ -874,6 +874,28 @@ static cups_ptype_t get_cups_printer_type( const cups_dest_t *dest )
     return ret;
 }
 
+static void load_cups(void)
+{
+    cupshandle = wine_dlopen( SONAME_LIBCUPS, RTLD_NOW, NULL, 0 );
+    if (!cupshandle) return;
+
+    TRACE("%p: %s loaded\n", cupshandle, SONAME_LIBCUPS);
+
+#define DO_FUNC(x) \
+    p##x = wine_dlsym( cupshandle, #x, NULL, 0 ); \
+    if (!p##x) \
+    { \
+        ERR("failed to load symbol %s\n", #x); \
+        cupshandle = NULL; \
+        return; \
+    }
+    CUPS_FUNCS;
+#undef DO_FUNC
+#define DO_FUNC(x) p##x = wine_dlsym( cupshandle, #x, NULL, 0 )
+    CUPS_OPT_FUNCS;
+#undef DO_FUNC
+}
+
 static BOOL CUPS_LoadPrinters(void)
 {
     int	                  i, nrofdests;
@@ -882,24 +904,11 @@ static BOOL CUPS_LoadPrinters(void)
     PRINTER_INFO_2W       pi2;
     WCHAR *port, *ppd_dir = NULL, *ppd;
     HKEY hkeyPrinter, hkeyPrinters;
-    char    loaderror[256];
     WCHAR   nameW[MAX_PATH];
     HANDLE  added_printer;
     cups_ptype_t printer_type;
 
-    cupshandle = wine_dlopen(SONAME_LIBCUPS, RTLD_NOW, loaderror, sizeof(loaderror));
-    if (!cupshandle) {
-        TRACE("%s\n", loaderror);
-        return FALSE;
-    }
-    TRACE("%p: %s loaded\n", cupshandle, SONAME_LIBCUPS);
-
-#define DO_FUNC(x) p##x = wine_dlsym( cupshandle, #x, NULL, 0 ); if (!p##x) return FALSE
-    CUPS_FUNCS;
-#undef DO_FUNC
-#define DO_FUNC(x) p##x = wine_dlsym( cupshandle, #x, NULL, 0 )
-    CUPS_OPT_FUNCS;
-#undef DO_FUNC
+    if (!cupshandle) return FALSE;
 
     if(RegCreateKeyW(HKEY_LOCAL_MACHINE, PrintersW, &hkeyPrinters) !=
        ERROR_SUCCESS) {
@@ -1589,6 +1598,10 @@ void WINSPOOL_LoadSystemPrinters(void)
     DWORD               needed, num, i;
     WCHAR               PrinterName[256];
     BOOL                done = FALSE;
+
+#ifdef SONAME_LIBCUPS
+    load_cups();
+#endif
 
     /* FIXME: The init code should be moved to spoolsv.exe */
     init_mutex = CreateMutexW( NULL, TRUE, winspool_mutex_name );
