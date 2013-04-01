@@ -75,6 +75,12 @@ typedef struct service_data_t
     WCHAR name[1];
 } service_data;
 
+typedef struct dispatcher_data_t
+{
+    SC_HANDLE manager;
+    HANDLE pipe;
+} dispatcher_data;
+
 static CRITICAL_SECTION service_cs;
 static CRITICAL_SECTION_DEBUG service_cs_debug =
 {
@@ -358,22 +364,7 @@ static DWORD service_handle_control(const service_data *service, DWORD dwControl
  */
 static DWORD WINAPI service_control_dispatcher(LPVOID arg)
 {
-    SC_HANDLE manager;
-    HANDLE pipe;
-
-    if (!(manager = OpenSCManagerW( NULL, NULL, SC_MANAGER_CONNECT )))
-    {
-        ERR("failed to open service manager error %u\n", GetLastError());
-        return 0;
-    }
-
-    pipe = service_open_pipe();
-
-    if (pipe==INVALID_HANDLE_VALUE)
-    {
-        WARN("failed to create control pipe error = %d\n", GetLastError());
-        return 0;
-    }
+    dispatcher_data *disp = arg;
 
     /* dispatcher loop */
     while (1)
@@ -384,7 +375,7 @@ static DWORD WINAPI service_control_dispatcher(LPVOID arg)
         BOOL r;
         DWORD data_size = 0, count, result;
 
-        r = ReadFile( pipe, &info, FIELD_OFFSET(service_start_info,data), &count, NULL );
+        r = ReadFile( disp->pipe, &info, FIELD_OFFSET(service_start_info,data), &count, NULL );
         if (!r)
         {
             if (GetLastError() != ERROR_BROKEN_PIPE)
@@ -400,7 +391,7 @@ static DWORD WINAPI service_control_dispatcher(LPVOID arg)
         {
             data_size = info.total_size - FIELD_OFFSET(service_start_info,data);
             data = HeapAlloc( GetProcessHeap(), 0, data_size );
-            r = ReadFile( pipe, data, data_size, &count, NULL );
+            r = ReadFile( disp->pipe, data, data_size, &count, NULL );
             if (!r)
             {
                 if (GetLastError() != ERROR_BROKEN_PIPE)
@@ -433,8 +424,9 @@ static DWORD WINAPI service_control_dispatcher(LPVOID arg)
         case WINESERV_STARTINFO:
             if (!service->handle)
             {
-                if (!(service->handle = OpenServiceW( manager, data, SERVICE_SET_STATUS )) ||
-                    !(service->full_access_handle = OpenServiceW( manager, data, GENERIC_READ|GENERIC_WRITE )))
+                if (!(service->handle = OpenServiceW( disp->manager, data, SERVICE_SET_STATUS )) ||
+                    !(service->full_access_handle = OpenServiceW( disp->manager, data,
+                            GENERIC_READ|GENERIC_WRITE )))
                     FIXME( "failed to open service %s\n", debugstr_w(data) );
             }
             result = service_handle_start(service, data, data_size / sizeof(WCHAR));
@@ -449,12 +441,13 @@ static DWORD WINAPI service_control_dispatcher(LPVOID arg)
         }
 
     done:
-        WriteFile(pipe, &result, sizeof(result), &count, NULL);
+        WriteFile( disp->pipe, &result, sizeof(result), &count, NULL );
         HeapFree( GetProcessHeap(), 0, data );
     }
 
-    CloseHandle(pipe);
-    CloseServiceHandle( manager );
+    CloseHandle( disp->pipe );
+    CloseServiceHandle( disp->manager );
+    HeapFree( GetProcessHeap(), 0, disp );
     return 1;
 }
 
@@ -466,13 +459,32 @@ static BOOL service_run_main_thread(void)
     DWORD i, n, ret;
     HANDLE wait_handles[MAXIMUM_WAIT_OBJECTS];
     UINT wait_services[MAXIMUM_WAIT_OBJECTS];
+    dispatcher_data *disp = HeapAlloc( GetProcessHeap(), 0, sizeof(*disp) );
+
+    disp->manager = OpenSCManagerW( NULL, NULL, SC_MANAGER_CONNECT );
+    if (!disp->manager)
+    {
+        ERR("failed to open service manager error %u\n", GetLastError());
+        HeapFree( GetProcessHeap(), 0, disp );
+        return FALSE;
+    }
+
+    disp->pipe = service_open_pipe();
+    if (disp->pipe == INVALID_HANDLE_VALUE)
+    {
+        WARN("failed to create control pipe error %u\n", GetLastError());
+        CloseServiceHandle( disp->manager );
+        HeapFree( GetProcessHeap(), 0, disp );
+        SetLastError( ERROR_FAILED_SERVICE_CONTROLLER_CONNECT );
+        return FALSE;
+    }
 
     service_event = CreateEventW( NULL, FALSE, FALSE, NULL );
     stop_event = CreateEventW( NULL, FALSE, FALSE, NULL );
 
     /* FIXME: service_control_dispatcher should be merged into the main thread */
     wait_handles[0] = __wine_make_process_system();
-    wait_handles[1] = CreateThread( NULL, 0, service_control_dispatcher, NULL, 0, NULL );
+    wait_handles[1] = CreateThread( NULL, 0, service_control_dispatcher, disp, 0, NULL );
     wait_handles[2] = service_event;
     wait_handles[3] = stop_event;
 
@@ -563,7 +575,6 @@ BOOL WINAPI StartServiceCtrlDispatcherA( const SERVICE_TABLE_ENTRYA *servent )
 {
     service_data *info;
     unsigned int i;
-    BOOL ret = TRUE;
 
     TRACE("%p\n", servent);
 
@@ -592,9 +603,7 @@ BOOL WINAPI StartServiceCtrlDispatcherA( const SERVICE_TABLE_ENTRYA *servent )
         services[i] = info;
     }
 
-    service_run_main_thread();
-
-    return ret;
+    return service_run_main_thread();
 }
 
 /******************************************************************************
@@ -614,7 +623,6 @@ BOOL WINAPI StartServiceCtrlDispatcherW( const SERVICE_TABLE_ENTRYW *servent )
 {
     service_data *info;
     unsigned int i;
-    BOOL ret = TRUE;
 
     TRACE("%p\n", servent);
 
@@ -643,9 +651,7 @@ BOOL WINAPI StartServiceCtrlDispatcherW( const SERVICE_TABLE_ENTRYW *servent )
         services[i] = info;
     }
 
-    service_run_main_thread();
-
-    return ret;
+    return service_run_main_thread();
 }
 
 /******************************************************************************
