@@ -1216,7 +1216,7 @@ static HRESULT invoke_builtin_prop(DispatchEx *This, DISPID id, LCID lcid, WORD 
             if(FAILED(hres))
                 return hres;
 
-            if(flags != (DISPATCH_PROPERTYGET|DISPATCH_METHOD)) {
+            if(flags != (DISPATCH_PROPERTYGET|DISPATCH_METHOD) || dp->cArgs) {
                 if(V_VT(&v) != VT_DISPATCH) {
                     FIXME("Not a function %s\n", debugstr_variant(&v));
                     VariantClear(&v);
@@ -1228,7 +1228,7 @@ static HRESULT invoke_builtin_prop(DispatchEx *This, DISPID id, LCID lcid, WORD 
             }else if(res) {
                 *res = v;
             }else {
-                IDispatch_Release(V_DISPATCH(&v));
+                VariantClear(&v);
             }
         }
     }

@@ -137,6 +137,8 @@ function test_getter_call() {
     e.onmousedown = function(x) { this.onmousedown_called = x; };
     e.onmousedown("test");
     ok(e.onmousedown_called === "test", "e.onmousedown_called = " + e.onmousedown_called);
+
+    ok(document.all("divid").tagName === "DIV", "document.all('divid').tagName = " + document.all("divid").tagName);
 }
 
 function test_arg_conv() {
