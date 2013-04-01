@@ -2044,204 +2044,111 @@ BOOL WINAPI SetUrlCacheEntryInfoW(LPCWSTR lpszUrl,
     return ret;
 }
 
-/***********************************************************************
- *           RetrieveUrlCacheEntryFileA (WININET.@)
- *
- */
-BOOL WINAPI RetrieveUrlCacheEntryFileA(
-    IN LPCSTR lpszUrlName,
-    OUT LPINTERNET_CACHE_ENTRY_INFOA lpCacheEntryInfo, 
-    IN OUT LPDWORD lpdwCacheEntryInfoBufferSize,
-    IN DWORD dwReserved
-    )
+static BOOL urlcache_entry_get_file(const char *url, void *entry_info, DWORD *size, BOOL unicode)
 {
-    urlcache_header *pHeader;
-    struct hash_entry *pHashEntry;
-    entry_header *pEntry;
-    entry_url * pUrlEntry;
-    cache_container *pContainer;
+    urlcache_header *header;
+    struct hash_entry *hash_entry;
+    entry_url *url_entry;
+    cache_container *container;
     DWORD error;
 
-    TRACE("(%s, %p, %p, 0x%08x)\n",
-        debugstr_a(lpszUrlName),
-        lpCacheEntryInfo,
-        lpdwCacheEntryInfoBufferSize,
-        dwReserved);
+    TRACE("(%s, %p, %p, %x)\n", debugstr_a(url), entry_info, size, unicode);
 
-    if (!lpszUrlName || !lpdwCacheEntryInfoBufferSize ||
-        (!lpCacheEntryInfo && *lpdwCacheEntryInfoBufferSize))
-    {
+    if(!url || !size || (!entry_info && *size)) {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
-    error = cache_containers_find(lpszUrlName, &pContainer);
-    if (error != ERROR_SUCCESS)
-    {
+    error = cache_containers_find(url, &container);
+    if(error != ERROR_SUCCESS) {
         SetLastError(error);
         return FALSE;
     }
 
-    error = cache_container_open_index(pContainer, MIN_BLOCK_NO);
-    if (error != ERROR_SUCCESS)
-    {
+    error = cache_container_open_index(container, MIN_BLOCK_NO);
+    if (error != ERROR_SUCCESS) {
         SetLastError(error);
         return FALSE;
     }
 
-    if (!(pHeader = cache_container_lock_index(pContainer)))
+    if (!(header = cache_container_lock_index(container)))
         return FALSE;
 
-    if (!urlcache_find_hash_entry(pHeader, lpszUrlName, &pHashEntry))
-    {
-        cache_container_unlock_index(pContainer, pHeader);
-        TRACE("entry %s not found!\n", lpszUrlName);
+    if (!urlcache_find_hash_entry(header, url, &hash_entry)) {
+        cache_container_unlock_index(container, header);
+        TRACE("entry %s not found!\n", url);
         SetLastError(ERROR_FILE_NOT_FOUND);
         return FALSE;
     }
 
-    pEntry = (entry_header*)((LPBYTE)pHeader + pHashEntry->offset);
-    if (pEntry->signature != URL_SIGNATURE)
-    {
-        cache_container_unlock_index(pContainer, pHeader);
-        FIXME("Trying to retrieve entry of unknown format %s\n", debugstr_an((LPSTR)&pEntry->signature, sizeof(DWORD)));
+    url_entry = (entry_url*)((LPBYTE)header + hash_entry->offset);
+    if(url_entry->header.signature != URL_SIGNATURE) {
+        cache_container_unlock_index(container, header);
+        FIXME("Trying to retrieve entry of unknown format %s\n",
+                debugstr_an((LPSTR)&url_entry->header.signature, sizeof(DWORD)));
         SetLastError(ERROR_FILE_NOT_FOUND);
         return FALSE;
     }
 
-    pUrlEntry = (entry_url *)pEntry;
-    if (!pUrlEntry->local_name_off)
-    {
-        cache_container_unlock_index(pContainer, pHeader);
+    if(!url_entry->local_name_off) {
+        cache_container_unlock_index(container, header);
         SetLastError(ERROR_INVALID_DATA);
         return FALSE;
     }
 
-    TRACE("Found URL: %s\n", debugstr_a((LPCSTR)pUrlEntry + pUrlEntry->url_off));
-    TRACE("Header info: %s\n", debugstr_an((LPCSTR)pUrlEntry + pUrlEntry->header_info_off,
-                pUrlEntry->header_info_size));
+    TRACE("Found URL: %s\n", debugstr_a((LPCSTR)url_entry + url_entry->url_off));
+    TRACE("Header info: %s\n", debugstr_an((LPCSTR)url_entry + url_entry->header_info_off,
+                url_entry->header_info_size));
 
-    error = urlcache_copy_entry(pContainer, pHeader, lpCacheEntryInfo,
-                               lpdwCacheEntryInfoBufferSize, pUrlEntry,
-                               FALSE);
-    if (error != ERROR_SUCCESS)
-    {
-        cache_container_unlock_index(pContainer, pHeader);
+    error = urlcache_copy_entry(container, header, entry_info,
+            size, url_entry, unicode);
+    if(error != ERROR_SUCCESS) {
+        cache_container_unlock_index(container, header);
         SetLastError(error);
         return FALSE;
     }
-    TRACE("Local File Name: %s\n", debugstr_a((LPCSTR)pUrlEntry + pUrlEntry->local_name_off));
+    TRACE("Local File Name: %s\n", debugstr_a((LPCSTR)url_entry + url_entry->local_name_off));
 
-    pUrlEntry->hit_rate++;
-    pUrlEntry->use_count++;
-    urlcache_hash_entry_set_flags(pHashEntry, HASHTABLE_LOCK);
-    GetSystemTimeAsFileTime(&pUrlEntry->access_time);
+    url_entry->hit_rate++;
+    url_entry->use_count++;
+    urlcache_hash_entry_set_flags(hash_entry, HASHTABLE_LOCK);
+    GetSystemTimeAsFileTime(&url_entry->access_time);
 
-    cache_container_unlock_index(pContainer, pHeader);
+    cache_container_unlock_index(container, header);
 
     return TRUE;
+}
+
+/***********************************************************************
+ *           RetrieveUrlCacheEntryFileA (WININET.@)
+ *
+ */
+BOOL WINAPI RetrieveUrlCacheEntryFileA(LPCSTR lpszUrlName,
+        LPINTERNET_CACHE_ENTRY_INFOA lpCacheEntryInfo,
+        LPDWORD lpdwCacheEntryInfoBufferSize, DWORD dwReserved)
+{
+    return urlcache_entry_get_file(lpszUrlName, lpCacheEntryInfo,
+            lpdwCacheEntryInfoBufferSize, FALSE);
 }
 
 /***********************************************************************
  *           RetrieveUrlCacheEntryFileW (WININET.@)
  *
  */
-BOOL WINAPI RetrieveUrlCacheEntryFileW(
-    IN LPCWSTR lpszUrlName,
-    OUT LPINTERNET_CACHE_ENTRY_INFOW lpCacheEntryInfo,
-    IN OUT LPDWORD lpdwCacheEntryInfoBufferSize,
-    IN DWORD dwReserved
-    )
+BOOL WINAPI RetrieveUrlCacheEntryFileW(LPCWSTR lpszUrlName,
+        LPINTERNET_CACHE_ENTRY_INFOW lpCacheEntryInfo,
+        LPDWORD lpdwCacheEntryInfoBufferSize, DWORD dwReserved)
 {
-    urlcache_header *pHeader;
-    struct hash_entry *pHashEntry;
-    entry_header *pEntry;
-    entry_url * pUrlEntry;
-    cache_container *pContainer;
-    DWORD error;
+    char *url;
+    BOOL ret;
 
-    TRACE("(%s, %p, %p, 0x%08x)\n",
-        debugstr_w(lpszUrlName),
-        lpCacheEntryInfo,
-        lpdwCacheEntryInfoBufferSize,
-        dwReserved);
-
-    if (!lpszUrlName || !lpdwCacheEntryInfoBufferSize ||
-        (!lpCacheEntryInfo && *lpdwCacheEntryInfoBufferSize))
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-
-    error = cache_containers_findW(lpszUrlName, &pContainer);
-    if (error != ERROR_SUCCESS)
-    {
-        SetLastError(error);
-        return FALSE;
-    }
-
-    error = cache_container_open_index(pContainer, MIN_BLOCK_NO);
-    if (error != ERROR_SUCCESS)
-    {
-        SetLastError(error);
-        return FALSE;
-    }
-
-    if (!(pHeader = cache_container_lock_index(pContainer)))
+    if(!urlcache_encode_url_alloc(lpszUrlName, &url))
         return FALSE;
 
-    if (!urlcache_find_hash_entryW(pHeader, lpszUrlName, &pHashEntry))
-    {
-        cache_container_unlock_index(pContainer, pHeader);
-        TRACE("entry %s not found!\n", debugstr_w(lpszUrlName));
-        SetLastError(ERROR_FILE_NOT_FOUND);
-        return FALSE;
-    }
-
-    pEntry = (entry_header*)((LPBYTE)pHeader + pHashEntry->offset);
-    if (pEntry->signature != URL_SIGNATURE)
-    {
-        cache_container_unlock_index(pContainer, pHeader);
-        FIXME("Trying to retrieve entry of unknown format %s\n", debugstr_an((LPSTR)&pEntry->signature, sizeof(DWORD)));
-        SetLastError(ERROR_FILE_NOT_FOUND);
-        return FALSE;
-    }
-
-    pUrlEntry = (entry_url *)pEntry;
-    if (!pUrlEntry->local_name_off)
-    {
-        cache_container_unlock_index(pContainer, pHeader);
-        SetLastError(ERROR_INVALID_DATA);
-        return FALSE;
-    }
-
-    TRACE("Found URL: %s\n", debugstr_a((LPCSTR)pUrlEntry + pUrlEntry->url_off));
-    TRACE("Header info: %s\n", debugstr_an((LPCSTR)pUrlEntry + pUrlEntry->header_info_off,
-            pUrlEntry->header_info_size));
-
-    error = urlcache_copy_entry(
-        pContainer,
-        pHeader,
-        (LPINTERNET_CACHE_ENTRY_INFOA)lpCacheEntryInfo,
-        lpdwCacheEntryInfoBufferSize,
-        pUrlEntry,
-        TRUE /* UNICODE */);
-    if (error != ERROR_SUCCESS)
-    {
-        cache_container_unlock_index(pContainer, pHeader);
-        SetLastError(error);
-        return FALSE;
-    }
-    TRACE("Local File Name: %s\n", debugstr_a((LPCSTR)pUrlEntry + pUrlEntry->local_name_off));
-
-    pUrlEntry->hit_rate++;
-    pUrlEntry->use_count++;
-    urlcache_hash_entry_set_flags(pHashEntry, HASHTABLE_LOCK);
-    GetSystemTimeAsFileTime(&pUrlEntry->access_time);
-
-    cache_container_unlock_index(pContainer, pHeader);
-
-    return TRUE;
+    ret = urlcache_entry_get_file(url, lpCacheEntryInfo,
+            lpdwCacheEntryInfoBufferSize, TRUE);
+    heap_free(url);
+    return ret;
 }
 
 static BOOL urlcache_entry_delete(const cache_container *pContainer,
