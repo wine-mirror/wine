@@ -140,7 +140,8 @@ static void test_get_sp_caps(void)
     ok(caps.dwDefaultEnumTimeout == 1500, "expected 1500, got %d\n", caps.dwDefaultEnumTimeout);
     ok(caps.dwMaxEnumPayloadSize == 983, "expected 983, got %d\n", caps.dwMaxEnumPayloadSize);
     ok(caps.dwBuffersPerThread == 1, "expected 1, got %d\n", caps.dwBuffersPerThread);
-    ok(caps.dwSystemBufferSize == 8192, "expected 8192, got %d\n", caps.dwSystemBufferSize);
+    ok(caps.dwSystemBufferSize == 0x10000 || broken(caps.dwSystemBufferSize == 0x2000 /* before Win8 */),
+       "expected 0x10000, got 0x%x\n", caps.dwSystemBufferSize);
 }
 
 static void test_cleanup_dp(void)

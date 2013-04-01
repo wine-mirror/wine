@@ -404,7 +404,7 @@ static HRESULT WINAPI IDirectPlay8PeerImpl_GetSPCaps(IDirectPlay8Peer *iface, co
     pdpspCaps->dwDefaultEnumTimeout = 1500;
     pdpspCaps->dwMaxEnumPayloadSize = 983;
     pdpspCaps->dwBuffersPerThread = 1;
-    pdpspCaps->dwSystemBufferSize = 8192;
+    pdpspCaps->dwSystemBufferSize = 0x10000;
 
     return DPN_OK;
 }
