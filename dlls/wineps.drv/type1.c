@@ -423,7 +423,7 @@ static BOOL append_complex_glyph(HDC hdc, const BYTE *data, glyph_outline *outli
     const BYTE *ptr = data;
     WORD flags, index;
     short arg1, arg2;
-    WORD scale_xx = 1 << 14, scale_xy = 0, scale_yx = 0, scale_yy = 1 << 14;
+    FLOAT scale_xx = 1, scale_xy = 0, scale_yx = 0, scale_yy = 1;
     WORD start_pt, end_pt;
 
     ptr += 10;
@@ -447,36 +447,43 @@ static BOOL append_complex_glyph(HDC hdc, const BYTE *data, glyph_outline *outli
         }
         if(flags & WE_HAVE_A_SCALE)
         {
-            scale_xx = scale_yy = get_be_word(ptr);
+            scale_xx = scale_yy = (FLOAT)(short)get_be_word(ptr) / 0x4000;
             ptr += 2;
         }
         else if(flags & WE_HAVE_AN_X_AND_Y_SCALE)
         {
-            scale_xx = get_be_word(ptr);
+            scale_xx = (FLOAT)(short)get_be_word(ptr) / 0x4000;
             ptr += 2;
-            scale_yy = get_be_word(ptr);
+            scale_yy = (FLOAT)(short)get_be_word(ptr) / 0x4000;
             ptr += 2;
         }
         else if(flags & WE_HAVE_A_TWO_BY_TWO)
         {
-            scale_xx = get_be_word(ptr);
+            scale_xx = (FLOAT)(short)get_be_word(ptr) / 0x4000;
             ptr += 2;
-            scale_xy = get_be_word(ptr);
+            scale_xy = (FLOAT)(short)get_be_word(ptr) / 0x4000;
             ptr += 2;
-            scale_yx = get_be_word(ptr);
+            scale_yx = (FLOAT)(short)get_be_word(ptr) / 0x4000;
             ptr += 2;
-            scale_yy = get_be_word(ptr);
+            scale_yy = (FLOAT)(short)get_be_word(ptr) / 0x4000;
             ptr += 2;
         }
-
-        if ((flags & (WE_HAVE_A_SCALE | WE_HAVE_AN_X_AND_Y_SCALE | WE_HAVE_A_TWO_BY_TWO)) &&
-            (scale_xx != 1 << 14 || scale_yy != 1 << 14 || scale_xy || scale_yx))
-            FIXME( "unhandled scaling %x,%x,%x,%x of glyph %x\n",
-                   scale_xx, scale_xy, scale_yx, scale_yy, index );
 
         start_pt = pts_in_outline(outline);
         append_glyph_outline(hdc, index, outline);
         end_pt = pts_in_outline(outline);
+
+        if (flags & (WE_HAVE_A_SCALE | WE_HAVE_AN_X_AND_Y_SCALE | WE_HAVE_A_TWO_BY_TWO))
+        {
+            WORD i;
+            TRACE("transform %f,%f,%f,%f of glyph %x\n", scale_xx, scale_xy, scale_yx, scale_yy, index);
+            for (i = start_pt; i < end_pt; i++)
+            {
+                LONG x = outline->pts[i].x, y = outline->pts[i].y;
+                outline->pts[i].x = x * scale_xx + y * scale_yx;
+                outline->pts[i].y = x * scale_xy + y * scale_yy;
+            }
+        }
 
         if((flags & ARGS_ARE_XY_VALUES) == 0)
         {
