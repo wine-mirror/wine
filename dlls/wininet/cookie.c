@@ -234,6 +234,7 @@ static BOOL load_persistent_cookie(LPCWSTR domain, LPCWSTR path)
         heap_free(name);
         heap_free(data);
     }
+    heap_free(str);
     heap_free(name);
     heap_free(data);
 
