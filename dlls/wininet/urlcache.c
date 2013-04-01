@@ -770,6 +770,7 @@ static void cache_containers_init(void)
         WCHAR wszCachePath[MAX_PATH];
         WCHAR wszMutexName[MAX_PATH];
         int path_len, suffix_len;
+        BOOL def_char;
 
         if (!SHGetSpecialFolderPathW(NULL, wszCachePath, DefaultContainerData[i].nFolder, TRUE))
         {
@@ -795,6 +796,20 @@ static void cache_containers_init(void)
             memcpy(wszCachePath + path_len + 1, DefaultContainerData[i].shpath_suffix, (suffix_len + 1) * sizeof(WCHAR));
             wszCachePath[path_len + suffix_len + 1] = '\\';
             wszCachePath[path_len + suffix_len + 2] = '\0';
+        }
+
+        if (!WideCharToMultiByte(CP_ACP, WC_NO_BEST_FIT_CHARS, wszCachePath, path_len,
+                    NULL, 0, NULL, &def_char) || def_char)
+        {
+            WCHAR tmp[MAX_PATH];
+
+            /* cannot convert path to ANSI code page */
+            if (!(path_len = GetShortPathNameW(wszCachePath, tmp, MAX_PATH)) ||
+                !WideCharToMultiByte(CP_ACP, WC_NO_BEST_FIT_CHARS, tmp, path_len,
+                    NULL, 0, NULL, &def_char) || def_char)
+                ERR("Can't create container path accessible by ANSI functions\n");
+            else
+                memcpy(wszCachePath, tmp, (path_len+1)*sizeof(WCHAR));
         }
 
         cache_containers_add(DefaultContainerData[i].cache_prefix, wszCachePath,
