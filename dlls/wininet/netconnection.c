@@ -808,12 +808,24 @@ int sock_get_error( int err )
     return err;
 }
 
-#ifdef SONAME_LIBSSL
-static DWORD netcon_secure_connect_setup(netconn_t *connection, long tls_option)
+static DWORD netcon_secure_connect_setup(netconn_t *connection, BOOL compat_mode)
 {
+#ifdef SONAME_LIBSSL
+    long tls_option;
     void *ssl_s;
     DWORD res;
     int bits;
+
+    tls_option = get_tls_option();
+
+    if(compat_mode) {
+#ifdef SSL_OP_NO_TLSv1_2
+        tls_option |= SSL_OP_NO_TLSv1_1|SSL_OP_NO_TLSv1_2;
+        pSSL_CTX_set_options(ctx,SSL_OP_NO_TLSv1_1|SSL_OP_NO_TLSv1_2);
+#else
+        return ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
+#endif
+    }
 
     ssl_s = pSSL_new(ctx);
     if (!ssl_s)
@@ -850,6 +862,7 @@ static DWORD netcon_secure_connect_setup(netconn_t *connection, long tls_option)
 
     connection->ssl_s = ssl_s;
     connection->secure = TRUE;
+    connection->security_flags |= SECURITY_FLAG_SECURE;
 
     bits = NETCON_GetCipherStrength(connection);
     if (bits >= 128)
@@ -858,7 +871,6 @@ static DWORD netcon_secure_connect_setup(netconn_t *connection, long tls_option)
         connection->security_flags |= SECURITY_FLAG_STRENGTH_MEDIUM;
     else
         connection->security_flags |= SECURITY_FLAG_STRENGTH_WEAK;
-    connection->security_flags |= SECURITY_FLAG_SECURE;
 
     if(connection->mask_errors)
         connection->server->security_flags = connection->security_flags;
@@ -871,8 +883,11 @@ fail:
         pSSL_free(ssl_s);
     }
     return res;
-}
+#else
+    FIXME("Cannot connect, OpenSSL not available.\n");
+    return ERROR_NOT_SUPPORTED;
 #endif
+}
 
 /******************************************************************************
  * NETCON_secure_connect
@@ -880,7 +895,7 @@ fail:
  */
 DWORD NETCON_secure_connect(netconn_t *connection, server_t *server)
 {
-    DWORD res = ERROR_NOT_SUPPORTED;
+    DWORD res;
 
     /* can't connect if we are already connected */
     if(connection->secure) {
@@ -894,28 +909,21 @@ DWORD NETCON_secure_connect(netconn_t *connection, server_t *server)
         connection->server = server;
     }
 
-#ifdef SONAME_LIBSSL
     /* connect with given TLS options */
-    res = netcon_secure_connect_setup(connection, get_tls_option());
+    res = netcon_secure_connect_setup(connection, FALSE);
     if (res == ERROR_SUCCESS)
         return res;
 
-#ifdef SSL_OP_NO_TLSv1_2
     /* FIXME: when got version alert and FIN from server */
     /* fallback to connect without TLSv1.1/TLSv1.2        */
     if (res == ERROR_INTERNET_SECURITY_CHANNEL_ERROR)
     {
         closesocket(connection->socket);
-        pSSL_CTX_set_options(ctx,SSL_OP_NO_TLSv1_1|SSL_OP_NO_TLSv1_2);
         res = create_netconn_socket(connection->server, connection, 500);
         if (res != ERROR_SUCCESS)
             return res;
-        res = netcon_secure_connect_setup(connection, get_tls_option()|SSL_OP_NO_TLSv1_1|SSL_OP_NO_TLSv1_2);
+        res = netcon_secure_connect_setup(connection, TRUE);
     }
-#endif
-#else
-    FIXME("Cannot connect, OpenSSL not available.\n");
-#endif
     return res;
 }
 
