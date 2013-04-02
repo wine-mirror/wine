@@ -333,6 +333,11 @@ static LRESULT WINAPI doc_view_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
     return DefWindowProcW(hwnd, msg, wParam, lParam);
 }
 
+static void free_travellog_entry(travellog_entry_t *entry)
+{
+    heap_free(entry->url);
+}
+
 static void update_travellog(DocHost *This)
 {
     travellog_entry_t *new_entry;
@@ -357,7 +362,7 @@ static void update_travellog(DocHost *This)
         }
 
         while(This->travellog.length > This->travellog.position)
-            heap_free(This->travellog.log[--This->travellog.length].url);
+            free_travellog_entry(This->travellog.log + --This->travellog.length);
     }
 
     new_entry = This->travellog.log + This->travellog.position;
@@ -1013,7 +1018,7 @@ void DocHost_Release(DocHost *This)
     ConnectionPointContainer_Destroy(&This->cps);
 
     while(This->travellog.length)
-        heap_free(This->travellog.log[--This->travellog.length].url);
+        free_travellog_entry(This->travellog.log + --This->travellog.length);
     heap_free(This->travellog.log);
 
     heap_free(This->url);
