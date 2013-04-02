@@ -36,7 +36,7 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 #include <math.h>
 
 /* Context activation is done by the caller. */
-static void drawStridedFast(const struct wined3d_gl_info *gl_info, GLenum primitive_type, UINT count, UINT idx_size,
+static void draw_strided_fast(const struct wined3d_gl_info *gl_info, GLenum primitive_type, UINT count, UINT idx_size,
         const void *idx_data, UINT start_idx, INT base_vertex_index, UINT start_instance, UINT instance_count)
 {
     if (idx_size)
@@ -95,7 +95,7 @@ static void drawStridedFast(const struct wined3d_gl_info *gl_info, GLenum primit
  */
 
 /* Context activation is done by the caller. */
-static void drawStridedSlow(const struct wined3d_device *device, struct wined3d_context *context,
+static void draw_strided_slow(const struct wined3d_state *state, struct wined3d_context *context,
         const struct wined3d_stream_info *si, UINT NumVertexes, GLenum glPrimType,
         const void *idxData, UINT idxSize, UINT startIdx)
 {
@@ -103,7 +103,6 @@ static void drawStridedSlow(const struct wined3d_device *device, struct wined3d_
     const WORD                *pIdxBufS     = NULL;
     const DWORD               *pIdxBufL     = NULL;
     UINT vx_index;
-    const struct wined3d_state *state = &device->state;
     LONG SkipnStrides = startIdx;
     BOOL pixelShader = use_ps(state);
     BOOL specular_fog = FALSE;
@@ -453,7 +452,7 @@ static inline void send_attribute(const struct wined3d_gl_info *gl_info,
 }
 
 /* Context activation is done by the caller. */
-static void drawStridedSlowVs(struct wined3d_context *context, const struct wined3d_state *state,
+static void draw_strided_slow_vs(struct wined3d_context *context, const struct wined3d_state *state,
         const struct wined3d_stream_info *si, UINT numberOfVertices, GLenum glPrimitiveType,
         const void *idxData, UINT idxSize, UINT startIdx)
 {
@@ -510,7 +509,7 @@ static void drawStridedSlowVs(struct wined3d_context *context, const struct wine
 }
 
 /* Context activation is done by the caller. */
-static void drawStridedInstanced(struct wined3d_context *context, const struct wined3d_state *state,
+static void draw_strided_instanced(struct wined3d_context *context, const struct wined3d_state *state,
         const struct wined3d_stream_info *si, UINT numberOfVertices, GLenum glPrimitiveType,
         const void *idxData, UINT idxSize, UINT startIdx, UINT base_vertex_index, UINT instance_count)
 {
@@ -595,10 +594,10 @@ static void remove_vbos(struct wined3d_context *context,
 }
 
 /* Routine common to the draw primitive and draw indexed primitive routines */
-void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_count,
-        UINT start_instance, UINT instance_count, BOOL indexed)
+void draw_primitive(struct wined3d_device *device, const struct wined3d_state *state,
+        UINT start_idx, UINT index_count, UINT start_instance, UINT instance_count,
+        BOOL indexed)
 {
-    const struct wined3d_state *state = &device->state;
     const struct wined3d_stream_info *stream_info;
     struct wined3d_event_query *ib_query = NULL;
     struct wined3d_stream_info si_emulated;
@@ -664,7 +663,7 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
         }
     }
 
-    if (!context_apply_draw_state(context, device))
+    if (!context_apply_draw_state(context, device, state))
     {
         context_release(context);
         WARN("Unable to apply draw state, skipping draw.\n");
@@ -756,28 +755,28 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
             else
                 WARN_(d3d_perf)("Using immediate mode with vertex shaders for half float emulation.\n");
 
-            drawStridedSlowVs(context, state, stream_info, index_count,
+            draw_strided_slow_vs(context, state, stream_info, index_count,
                     state->gl_primitive_type, idx_data, idx_size, start_idx);
         }
         else
         {
             if (context->d3d_info->ffp_generic_attributes)
-                drawStridedSlowVs(context, state, stream_info, index_count,
+                draw_strided_slow_vs(context, state, stream_info, index_count,
                     state->gl_primitive_type, idx_data, idx_size, start_idx);
             else
-                drawStridedSlow(device, context, stream_info, index_count,
+                draw_strided_slow(state, context, stream_info, index_count,
                         state->gl_primitive_type, idx_data, idx_size, start_idx);
         }
     }
     else if (!gl_info->supported[ARB_INSTANCED_ARRAYS] && instance_count)
     {
         /* Instancing emulation by mixing immediate mode and arrays. */
-        drawStridedInstanced(context, state, stream_info, index_count, state->gl_primitive_type,
+        draw_strided_instanced(context, state, stream_info, index_count, state->gl_primitive_type,
                 idx_data, idx_size, start_idx, state->base_vertex_index, instance_count);
     }
     else
     {
-        drawStridedFast(gl_info, state->gl_primitive_type, index_count, idx_size, idx_data,
+        draw_strided_fast(gl_info, state->gl_primitive_type, index_count, idx_size, idx_data,
                 start_idx, state->base_vertex_index, start_instance, instance_count);
     }
 

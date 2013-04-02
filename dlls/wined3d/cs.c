@@ -492,7 +492,7 @@ static UINT wined3d_cs_exec_draw(struct wined3d_cs *cs, const void *data)
 {
     const struct wined3d_cs_draw *op = data;
 
-    draw_primitive(cs->device, op->start_idx, op->index_count,
+    draw_primitive(cs->device, &cs->device->state, op->start_idx, op->index_count,
             op->start_instance, op->instance_count, op->indexed);
 
     return sizeof(*op);
