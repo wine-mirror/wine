@@ -363,6 +363,16 @@ static IStream *get_travellog_stream(DocHost *This)
     return stream;
 }
 
+void dump_travellog(DocHost *This)
+{
+    unsigned i;
+
+    for(i=0; i < This->travellog.length; i++)
+        TRACE("%d: %s %s\n", i, i == This->travellog.position ? "=>" : "  ", debugstr_w(This->travellog.log[i].url));
+    if(i == This->travellog.position)
+        TRACE("%d: =>\n", i);
+}
+
 static void update_travellog(DocHost *This)
 {
     travellog_entry_t *new_entry;
@@ -407,6 +417,8 @@ static void update_travellog(DocHost *This)
     }
     if(This->travellog.position > This->travellog.length)
         This->travellog.length = This->travellog.position;
+
+    dump_travellog(This);
 }
 
 void create_doc_view_hwnd(DocHost *This)
