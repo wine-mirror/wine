@@ -61,6 +61,12 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION driver_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
+#ifdef __APPLE__
+static const char default_driver[] = "mac,x11";
+#else
+static const char default_driver[] = "x11";
+#endif
+
 /**********************************************************************
  *	     create_driver
  *
@@ -102,7 +108,7 @@ static const struct gdi_dc_funcs *get_display_driver( HMODULE *module_ret )
 
     if (display_driver) goto done;
 
-    strcpy( buffer, "x11" );  /* default value */
+    strcpy( buffer, default_driver );
     /* @@ Wine registry key: HKCU\Software\Wine\Drivers */
     if (!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\Drivers", &hkey ))
     {
