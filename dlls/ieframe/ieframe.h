@@ -153,10 +153,12 @@ struct DocHost {
     ShellBrowser *browser_service;
     IShellUIHelper2 *shell_ui_helper;
 
-    travellog_entry_t *travellog;
-    unsigned travellog_size;
-    unsigned travellog_length;
-    unsigned travellog_position;
+    struct {
+        travellog_entry_t *log;
+        unsigned size;
+        unsigned length;
+        unsigned position;
+    } travellog;
 
     ConnectionPointContainer cps;
     IEHTMLWindow html_window;

@@ -331,33 +331,33 @@ static void update_travellog(DocHost *This)
 {
     travellog_entry_t *new_entry;
 
-    if(!This->travellog) {
-        This->travellog = heap_alloc(4 * sizeof(*This->travellog));
-        if(!This->travellog)
+    if(!This->travellog.log) {
+        This->travellog.log = heap_alloc(4 * sizeof(*This->travellog.log));
+        if(!This->travellog.log)
             return;
 
-        This->travellog_size = 4;
-    }else if(This->travellog_size < This->travellog_position+1) {
+        This->travellog.size = 4;
+    }else if(This->travellog.size < This->travellog.position+1) {
         travellog_entry_t *new_travellog;
 
-        new_travellog = heap_realloc(This->travellog, This->travellog_size*2*sizeof(*This->travellog));
+        new_travellog = heap_realloc(This->travellog.log, This->travellog.size*2*sizeof(*This->travellog.log));
         if(!new_travellog)
             return;
 
-        This->travellog = new_travellog;
-        This->travellog_size *= 2;
+        This->travellog.log = new_travellog;
+        This->travellog.size *= 2;
     }
 
-    while(This->travellog_length > This->travellog_position)
-        heap_free(This->travellog[--This->travellog_length].url);
+    while(This->travellog.length > This->travellog.position)
+        heap_free(This->travellog.log[--This->travellog.length].url);
 
-    new_entry = This->travellog + This->travellog_position;
+    new_entry = This->travellog.log + This->travellog.position;
 
     new_entry->url = heap_strdupW(This->url);
     if(!new_entry->url)
         return;
 
-    This->travellog_position++;
+    This->travellog.position++;
 }
 
 void create_doc_view_hwnd(DocHost *This)
@@ -994,9 +994,9 @@ void DocHost_Release(DocHost *This)
 
     ConnectionPointContainer_Destroy(&This->cps);
 
-    while(This->travellog_length)
-        heap_free(This->travellog[--This->travellog_length].url);
-    heap_free(This->travellog);
+    while(This->travellog.length)
+        heap_free(This->travellog.log[--This->travellog.length].url);
+    heap_free(This->travellog.log);
 
     heap_free(This->url);
 }

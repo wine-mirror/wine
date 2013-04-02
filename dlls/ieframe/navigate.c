@@ -1063,12 +1063,12 @@ HRESULT go_back(DocHost *This)
     WCHAR *url;
     HRESULT hres;
 
-    if(!This->travellog_position) {
+    if(!This->travellog.position) {
         WARN("No history available\n");
         return E_FAIL;
     }
 
-    url = This->travellog[--This->travellog_position].url;
+    url = This->travellog.log[--This->travellog.position].url;
 
     if(This->doc_navigate) {
         hres = async_doc_navigate(This, url, NULL, NULL, 0, FALSE);
