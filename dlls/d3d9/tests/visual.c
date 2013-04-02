@@ -1,6 +1,6 @@
 /*
  * Copyright 2005, 2007-2008 Henri Verbeet
- * Copyright (C) 2007-2008 Stefan Dösinger(for CodeWeavers)
+ * Copyright (C) 2007-2013 Stefan Dösinger(for CodeWeavers)
  * Copyright (C) 2008 Jason Green(for TransGaming)
  *
  * This library is free software; you can redistribute it and/or
@@ -12336,10 +12336,12 @@ static void clip_planes_test(IDirect3DDevice9 *device)
 
 static void fp_special_test(IDirect3DDevice9 *device)
 {
+    /* Microsoft's assembler generates nan and inf with "1.#QNAN" and "1.#INF." respectively */
     static const DWORD vs_header[] =
     {
         0xfffe0200,                                                             /* vs_2_0                       */
         0x05000051, 0xa00f0000, 0x00000000, 0x3f000000, 0x3f800000, 0x40000000, /* def c0, 0.0, 0.5, 1.0, 2.0   */
+        0x05000051, 0xa00f0001, 0x7fc00000, 0xff800000, 0x7f800000, 0x00000000, /* def c1, nan, -inf, inf, 0    */
         0x0200001f, 0x80000000, 0x900f0000,                                     /* dcl_position v0              */
         0x0200001f, 0x80000005, 0x900f0001,                                     /* dcl_texcoord0 v1             */
     };
@@ -12354,6 +12356,9 @@ static void fp_special_test(IDirect3DDevice9 *device)
     static const DWORD vs_rsq2[] = {0x02000007, 0x80010000, 0x91000001};        /* rsq r0.x, -v1.x              */
     static const DWORD vs_lit[] = {0x02000010, 0x800f0000, 0x90000001,          /* lit r0, v1.xxxx              */
             0x02000001, 0x80010000, 0x80aa0000};                                /* mov r0.x, v0.z               */
+    static const DWORD vs_def1[] = {0x02000001, 0x80010000, 0xa0000001};        /* mov r0.x, c1.x               */
+    static const DWORD vs_def2[] = {0x02000001, 0x80010000, 0xa0550001};        /* mov r0.x, c1.y               */
+    static const DWORD vs_def3[] = {0x02000001, 0x80010000, 0xa0aa0001};        /* mov r0.x, c1.z               */
 
     static const DWORD vs_footer[] =
     {
@@ -12406,6 +12411,9 @@ static void fp_special_test(IDirect3DDevice9 *device)
         {"rsq1",    vs_rsq1,    sizeof(vs_rsq1),    0x000000ff, 0x00ff00ff, 0x00ff7f00},
         {"rsq2",    vs_rsq2,    sizeof(vs_rsq2),    0x000000ff, 0x00ff00ff, 0x00ff7f00},
         {"lit",     vs_lit,     sizeof(vs_lit),     0x00ff0000, 0x00ff0000, 0x00ff0000},
+        {"def1",    vs_def1,    sizeof(vs_def1),    0x00007f00, 0x00007f00, 0x00007f00},
+        {"def2",    vs_def2,    sizeof(vs_def2),    0x00ff7f00, 0x00ff7f00, 0x00ff7f00},
+        {"def3",    vs_def3,    sizeof(vs_def3),    0x00ff7f00, 0x00ff7f00, 0x00ff7f00},
     };
 
     static const DWORD ps_code[] =
