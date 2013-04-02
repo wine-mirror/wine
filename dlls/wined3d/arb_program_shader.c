@@ -9,7 +9,7 @@
  * Copyright 2006 Ivan Gyurdiev
  * Copyright 2006 Jason Green
  * Copyright 2006 Henri Verbeet
- * Copyright 2007-2008 Stefan Dösinger for CodeWeavers
+ * Copyright 2007-2011, 2013 Stefan Dösinger for CodeWeavers
  * Copyright 2009 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
@@ -753,36 +753,13 @@ static void shader_arb_update_float_pixel_constants(struct wined3d_device *devic
     priv->highest_dirty_ps_const = max(priv->highest_dirty_ps_const, start + count);
 }
 
-static DWORD *local_const_mapping(const struct wined3d_shader *shader)
-{
-    const struct wined3d_shader_lconst *lconst;
-    DWORD *ret;
-    DWORD idx = 0;
-
-    if (shader->load_local_constsF || list_empty(&shader->constantsF))
-        return NULL;
-
-    ret = HeapAlloc(GetProcessHeap(), 0, sizeof(DWORD) * shader->limits.constant_float);
-    if (!ret)
-    {
-        ERR("Out of memory\n");
-        return NULL;
-    }
-
-    LIST_FOR_EACH_ENTRY(lconst, &shader->constantsF, struct wined3d_shader_lconst, entry)
-    {
-        ret[lconst->idx] = idx++;
-    }
-    return ret;
-}
-
 /* Generate the variable & register declarations for the ARB_vertex_program output target */
-static DWORD shader_generate_arb_declarations(const struct wined3d_shader *shader,
+static void shader_generate_arb_declarations(const struct wined3d_shader *shader,
         const struct wined3d_shader_reg_maps *reg_maps, struct wined3d_shader_buffer *buffer,
-        const struct wined3d_gl_info *gl_info, const DWORD *lconst_map,
-        DWORD *num_clipplanes, const struct shader_arb_ctx_priv *ctx)
+        const struct wined3d_gl_info *gl_info, DWORD *num_clipplanes,
+        const struct shader_arb_ctx_priv *ctx)
 {
-    DWORD i, next_local = 0;
+    DWORD i;
     char pshader = shader_is_pshader_version(reg_maps->shader_version.type);
     const struct wined3d_shader_lconst *lconst;
     unsigned max_constantsF;
@@ -874,16 +851,14 @@ static DWORD shader_generate_arb_declarations(const struct wined3d_shader *shade
         }
     }
 
-    /* Load local constants using the program-local space,
-     * this avoids reloading them each time the shader is used
-     */
-    if (lconst_map)
+    if (!shader->load_local_constsF)
     {
         LIST_FOR_EACH_ENTRY(lconst, &shader->constantsF, struct wined3d_shader_lconst, entry)
         {
-            shader_addline(buffer, "PARAM C%u = program.local[%u];\n", lconst->idx,
-                           lconst_map[lconst->idx]);
-            next_local = max(next_local, lconst_map[lconst->idx] + 1);
+            const float *value;
+            value = (const float *)lconst->value;
+            shader_addline(buffer, "PARAM C%u = {%.8e, %.8e, %.8e, %.8e};\n", lconst->idx,
+                           value[0], value[1], value[2], value[3]);
         }
     }
 
@@ -924,8 +899,6 @@ static DWORD shader_generate_arb_declarations(const struct wined3d_shader *shade
             }
         }
     }
-
-    return next_local;
 }
 
 static const char * const shift_tab[] = {
@@ -3586,11 +3559,10 @@ static GLuint shader_arb_generate_pshader(const struct wined3d_shader *shader,
         const struct arb_ps_compile_args *args, struct arb_ps_compiled_shader *compiled)
 {
     const struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
-    const struct wined3d_shader_lconst *lconst;
     const DWORD *function = shader->function;
     GLuint retval;
     char fragcolor[16];
-    DWORD *lconst_map = local_const_mapping(shader), next_local;
+    DWORD next_local = 0;
     struct shader_arb_ctx_priv priv_ctx;
     BOOL dcl_td = FALSE;
     BOOL want_nv_prog = FALSE;
@@ -3748,8 +3720,7 @@ static GLuint shader_arb_generate_pshader(const struct wined3d_shader *shader,
     }
 
     /* Base Declarations */
-    next_local = shader_generate_arb_declarations(shader, reg_maps,
-            buffer, gl_info, lconst_map, NULL, &priv_ctx);
+    shader_generate_arb_declarations(shader, reg_maps, buffer, gl_info, NULL, &priv_ctx);
 
     for (i = 0, map = reg_maps->bumpmat; map; map >>= 1, ++i)
     {
@@ -3908,18 +3879,6 @@ static GLuint shader_arb_generate_pshader(const struct wined3d_shader *shader,
         GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_UNDER_NATIVE_LIMITS_ARB, &native));
         checkGLcall("glGetProgramivARB()");
         if (!native) WARN("Program exceeds native resource limits.\n");
-    }
-
-    /* Load immediate constants */
-    if (lconst_map)
-    {
-        LIST_FOR_EACH_ENTRY(lconst, &shader->constantsF, struct wined3d_shader_lconst, entry)
-        {
-            const float *value = (const float *)lconst->value;
-            GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, lconst_map[lconst->idx], value));
-            checkGLcall("glProgramLocalParameter4fvARB");
-        }
-        HeapFree(GetProcessHeap(), 0, lconst_map);
     }
 
     return retval;
@@ -4177,10 +4136,9 @@ static GLuint shader_arb_generate_vshader(const struct wined3d_shader *shader,
     const struct arb_vshader_private *shader_data = shader->backend_data;
     const struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
     struct shader_arb_priv *priv = shader->device->shader_priv;
-    const struct wined3d_shader_lconst *lconst;
     const DWORD *function = shader->function;
     GLuint ret;
-    DWORD next_local, *lconst_map = local_const_mapping(shader);
+    DWORD next_local = 0;
     struct shader_arb_ctx_priv priv_ctx;
     unsigned int i;
     GLint errPos;
@@ -4228,8 +4186,8 @@ static GLuint shader_arb_generate_vshader(const struct wined3d_shader *shader,
     shader_addline(buffer, "TEMP TB;\n");
 
     /* Base Declarations */
-    next_local = shader_generate_arb_declarations(shader, reg_maps, buffer,
-            gl_info, lconst_map, &priv_ctx.vs_clipplanes, &priv_ctx);
+    shader_generate_arb_declarations(shader, reg_maps, buffer, gl_info,
+            &priv_ctx.vs_clipplanes, &priv_ctx);
 
     for(i = 0; i < MAX_CONST_I; i++)
     {
@@ -4321,18 +4279,7 @@ static GLuint shader_arb_generate_vshader(const struct wined3d_shader *shader,
         GL_EXTCALL(glGetProgramivARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_UNDER_NATIVE_LIMITS_ARB, &native));
         checkGLcall("glGetProgramivARB()");
         if (!native) WARN("Program exceeds native resource limits.\n");
-
-        /* Load immediate constants */
-        if (lconst_map)
-        {
-            LIST_FOR_EACH_ENTRY(lconst, &shader->constantsF, struct wined3d_shader_lconst, entry)
-            {
-                const float *value = (const float *)lconst->value;
-                GL_EXTCALL(glProgramLocalParameter4fvARB(GL_VERTEX_PROGRAM_ARB, lconst_map[lconst->idx], value));
-            }
-        }
     }
-    HeapFree(GetProcessHeap(), 0, lconst_map);
 
     return ret;
 }
