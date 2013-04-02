@@ -97,7 +97,7 @@ struct wined3d_cs_clear
     enum wined3d_cs_op opcode;
     DWORD rect_count;
     DWORD flags;
-    const struct wined3d_color *color;
+    struct wined3d_color color;
     float depth;
     DWORD stencil;
     RECT rects[1];
@@ -464,7 +464,7 @@ static UINT wined3d_cs_exec_clear(struct wined3d_cs *cs, const void *data)
     wined3d_get_draw_rect(&device->state, &draw_rect);
     device_clear_render_targets(device, device->adapter->gl_info.limits.buffers,
             &cs->state.fb, op->rect_count, op->rect_count ? op->rects : NULL, &draw_rect, op->flags,
-            op->color, op->depth, op->stencil);
+            &op->color, op->depth, op->stencil);
 
     return sizeof(*op) + sizeof(*op->rects) * extra_rects;
 }
@@ -481,7 +481,7 @@ void wined3d_cs_emit_clear(struct wined3d_cs *cs, DWORD rect_count, const RECT *
     if (rect_count)
         memcpy(op->rects, rects, rect_count * sizeof(*rects));
     op->flags = flags;
-    op->color = color;
+    op->color = *color;
     op->depth = depth;
     op->stencil = stencil;
 
