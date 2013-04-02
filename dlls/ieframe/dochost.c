@@ -195,6 +195,12 @@ void set_doc_state(DocHost *This, READYSTATE doc_state)
 
 static void update_ready_state(DocHost *This, READYSTATE ready_state)
 {
+    if(ready_state > READYSTATE_LOADING && This->travellog.loading_pos != -1) {
+        WARN("histupdate not notified\n");
+        This->travellog.position = This->travellog.loading_pos;
+        This->travellog.loading_pos = -1;
+    }
+
     if(ready_state > READYSTATE_LOADING && This->doc_state <= READYSTATE_LOADING && !This->browser_service /* FIXME */)
         notif_complete(This, DISPID_NAVIGATECOMPLETE2);
 
@@ -331,25 +337,28 @@ static void update_travellog(DocHost *This)
 {
     travellog_entry_t *new_entry;
 
-    if(!This->travellog.log) {
-        This->travellog.log = heap_alloc(4 * sizeof(*This->travellog.log));
-        if(!This->travellog.log)
-            return;
+    if(This->travellog.loading_pos == -1) {
+        /* Clear forward history. */
+        if(!This->travellog.log) {
+            This->travellog.log = heap_alloc(4 * sizeof(*This->travellog.log));
+            if(!This->travellog.log)
+                return;
 
-        This->travellog.size = 4;
-    }else if(This->travellog.size < This->travellog.position+1) {
-        travellog_entry_t *new_travellog;
+            This->travellog.size = 4;
+        }else if(This->travellog.size < This->travellog.position+1) {
+            travellog_entry_t *new_travellog;
 
-        new_travellog = heap_realloc(This->travellog.log, This->travellog.size*2*sizeof(*This->travellog.log));
-        if(!new_travellog)
-            return;
+            new_travellog = heap_realloc(This->travellog.log, This->travellog.size*2*sizeof(*This->travellog.log));
+            if(!new_travellog)
+                return;
 
-        This->travellog.log = new_travellog;
-        This->travellog.size *= 2;
+            This->travellog.log = new_travellog;
+            This->travellog.size *= 2;
+        }
+
+        while(This->travellog.length > This->travellog.position)
+            heap_free(This->travellog.log[--This->travellog.length].url);
     }
-
-    while(This->travellog.length > This->travellog.position)
-        heap_free(This->travellog.log[--This->travellog.length].url);
 
     new_entry = This->travellog.log + This->travellog.position;
 
@@ -357,7 +366,14 @@ static void update_travellog(DocHost *This)
     if(!new_entry->url)
         return;
 
-    This->travellog.position++;
+    if(This->travellog.loading_pos == -1) {
+        This->travellog.position++;
+    }else {
+         This->travellog.position = This->travellog.loading_pos;
+         This->travellog.loading_pos = -1;
+    }
+    if(This->travellog.position > This->travellog.length)
+        This->travellog.length = This->travellog.position;
 }
 
 void create_doc_view_hwnd(DocHost *This)
@@ -974,6 +990,8 @@ void DocHost_Init(DocHost *This, IWebBrowser2 *wb, const IDocHostContainerVtbl* 
 
     This->ready_state = READYSTATE_UNINITIALIZED;
     list_init(&This->task_queue);
+
+    This->travellog.loading_pos = -1;
 
     DocHost_ClientSite_Init(This);
     DocHost_Frame_Init(This);

@@ -158,6 +158,7 @@ struct DocHost {
         unsigned size;
         unsigned length;
         unsigned position;
+        int loading_pos;
     } travellog;
 
     ConnectionPointContainer cps;

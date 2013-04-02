@@ -1068,7 +1068,8 @@ HRESULT go_back(DocHost *This)
         return E_FAIL;
     }
 
-    url = This->travellog.log[--This->travellog.position].url;
+    This->travellog.loading_pos = This->travellog.position-1;
+    url = This->travellog.log[This->travellog.loading_pos].url;
 
     if(This->doc_navigate) {
         hres = async_doc_navigate(This, url, NULL, NULL, 0, FALSE);
