@@ -96,6 +96,7 @@ typedef struct {
 
 typedef struct {
     WCHAR *url;
+    IStream *stream;
 } travellog_entry_t;
 
 typedef struct _IDocHostContainerVtbl

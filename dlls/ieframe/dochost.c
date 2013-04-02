@@ -20,6 +20,7 @@
 
 #include "exdispid.h"
 #include "mshtml.h"
+#include "perhist.h"
 #include "initguid.h"
 
 #include "wine/debug.h"
@@ -335,7 +336,31 @@ static LRESULT WINAPI doc_view_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 
 static void free_travellog_entry(travellog_entry_t *entry)
 {
+    if(entry->stream)
+        IStream_Release(entry->stream);
     heap_free(entry->url);
+}
+
+static IStream *get_travellog_stream(DocHost *This)
+{
+    IPersistHistory *persist_history;
+    IStream *stream;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(This->document, &IID_IPersistHistory, (void**)&persist_history);
+    if(FAILED(hres))
+        return NULL;
+
+    hres = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    if(SUCCEEDED(hres))
+        hres = IPersistHistory_SaveHistory(persist_history, stream);
+    IPersistHistory_Release(persist_history);
+    if(FAILED(hres)) {
+        IStream_Release(stream);
+        return NULL;
+    }
+
+    return stream;
 }
 
 static void update_travellog(DocHost *This)
@@ -368,8 +393,11 @@ static void update_travellog(DocHost *This)
     new_entry = This->travellog.log + This->travellog.position;
 
     new_entry->url = heap_strdupW(This->url);
+    TRACE("Adding %s at %d\n", debugstr_w(This->url), This->travellog.position);
     if(!new_entry->url)
         return;
+
+    new_entry->stream = get_travellog_stream(This);
 
     if(This->travellog.loading_pos == -1) {
         This->travellog.position++;
