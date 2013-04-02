@@ -112,7 +112,7 @@ static HRESULT GAMEUX_updateStatisticsFile(struct GAMEUX_STATS *stats)
 
     HRESULT hr = S_OK;
     IXMLDOMDocument *document;
-    IXMLDOMElement *root, *categoryElement, *statisticsElement;
+    IXMLDOMElement *root, *statisticsElement;
     IXMLDOMNode *categoryNode, *statisticsNode;
     VARIANT vStatsFilePath, vValue;
     BSTR bstrStatistics = NULL, bstrCategory = NULL, bstrIndex = NULL,
@@ -178,6 +178,8 @@ static HRESULT GAMEUX_updateStatisticsFile(struct GAMEUX_STATS *stats)
     if(SUCCEEDED(hr))
         for(i=0; i<MAX_CATEGORIES; ++i)
         {
+            IXMLDOMElement *categoryElement = NULL;
+
             if(lstrlenW(stats->categories[i].sName)==0)
                 continue;
 
@@ -187,7 +189,7 @@ static HRESULT GAMEUX_updateStatisticsFile(struct GAMEUX_STATS *stats)
             hr = IXMLDOMDocument_createNode(document, vValue, bstrCategory, NULL, &categoryNode);
 
             if(SUCCEEDED(hr))
-                hr = IXMLDOMNode_QueryInterface(categoryNode, &IID_IXMLDOMElement, (LPVOID*)&categoryElement);
+                hr = IXMLDOMNode_QueryInterface(categoryNode, &IID_IXMLDOMElement, (void**)&categoryElement);
 
             V_INT(&vValue) = i;
             if(SUCCEEDED(hr))
@@ -206,6 +208,9 @@ static HRESULT GAMEUX_updateStatisticsFile(struct GAMEUX_STATS *stats)
                 TRACE("storing category %d: %s\n", i, debugstr_w(V_BSTR(&vValue)));
                 hr = IXMLDOMElement_setAttribute(categoryElement, bstrName, vValue);
             }
+
+            if (categoryElement)
+                IXMLDOMElement_Release(categoryElement);
 
             SysFreeString(V_BSTR(&vValue));
 
@@ -269,7 +274,6 @@ static HRESULT GAMEUX_updateStatisticsFile(struct GAMEUX_STATS *stats)
             if(SUCCEEDED(hr))
                 hr = IXMLDOMElement_appendChild(root, categoryNode, &categoryNode);
 
-            IXMLDOMElement_Release(categoryElement);
             IXMLDOMNode_Release(categoryNode);
 
             if(FAILED(hr))
@@ -939,16 +943,13 @@ static HRESULT WINAPI GameStatisticsImpl_Save(
     BOOL trackChanges)
 {
     GameStatisticsImpl *This = impl_from_IGameStatistics(iface);
-    HRESULT hr = S_OK;
 
     TRACE("(%p, %d)\n", This, trackChanges);
 
     if(trackChanges)
         FIXME("tracking changes not yet implemented\n");
 
-    hr = GAMEUX_updateStatisticsFile(&This->stats);
-
-    return hr;
+    return GAMEUX_updateStatisticsFile(&This->stats);
 }
 
 static HRESULT WINAPI GameStatisticsImpl_SetLastPlayedCategory(

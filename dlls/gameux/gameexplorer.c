@@ -681,7 +681,7 @@ static HRESULT GAMEUX_UpdateGame(LPGUID InstanceID) {
     HRESULT hr;
     GAME_INSTALL_SCOPE installScope;
     LPWSTR lpRegistryPath;
-    LPWSTR lpGDFBinaryPath, lpGameInstallDirectory;
+    LPWSTR lpGDFBinaryPath;
 
     TRACE("(%s)\n", debugstr_guid(InstanceID));
 
@@ -702,6 +702,8 @@ static HRESULT GAMEUX_UpdateGame(LPGUID InstanceID) {
 
     if(SUCCEEDED(hr))
     {
+        WCHAR *lpGameInstallDirectory = NULL;
+
         /* game found, it's registry path is in lpRegistryPath and install
          * scope in installScope */
         TRACE("game found in registry (path %s), updating\n", debugstr_w(lpRegistryPath));
