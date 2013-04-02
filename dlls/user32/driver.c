@@ -299,9 +299,10 @@ static BOOL CDECL nulldrv_CreateDesktopWindow( HWND hwnd )
 static BOOL CDECL nulldrv_CreateWindow( HWND hwnd )
 {
     static int warned;
+    HWND parent = GetAncestor( hwnd, GA_PARENT );
 
     /* HWND_MESSAGE windows don't need a graphics driver */
-    if (GetAncestor( hwnd, GA_PARENT ) == get_user_thread_info()->msg_window) return TRUE;
+    if (!parent || parent == get_user_thread_info()->msg_window) return TRUE;
     if (warned++) return FALSE;
 
     MESSAGE( "Application tried to create a window, but no driver could be loaded.\n");
