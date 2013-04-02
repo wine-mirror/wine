@@ -81,24 +81,11 @@ static void test_IsThemed(void)
     BOOL bAppThemed;
     BOOL bTPDefined;
 
-    SetLastError(0xdeadbeef);
     bThemeActive = pIsThemeActive();
     trace("Theming is %s\n", (bThemeActive) ? "active" : "inactive");
 
-    /* This test is not themed */
-    SetLastError(0xdeadbeef);
     bAppThemed = pIsAppThemed();
-
-    if (bThemeActive)
-        todo_wine
-            ok( bAppThemed == FALSE, "Expected FALSE as this test executable is not (yet) themed.\n");
-    else
-        /* Although Wine currently returns FALSE, the logic behind it is wrong. It is not a todo_wine though in the testing sense */
-        ok( bAppThemed == FALSE, "Expected FALSE as this test executable is not (yet) themed.\n");
-
-    ok( GetLastError() == ERROR_SUCCESS,
-        "Expected ERROR_SUCCESS, got 0x%08x\n",
-        GetLastError());
+    trace("Test executable is %s\n", (bAppThemed) ? "themed" : "not themed");
 
     SetLastError(0xdeadbeef);
     bTPDefined = pIsThemePartDefined(NULL, 0 , 0);
