@@ -584,15 +584,16 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
         else if (ins.handler_idx == WINED3DSIH_DEF)
         {
             struct wined3d_shader_lconst *lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(*lconst));
+            float *value;
             if (!lconst) return E_OUTOFMEMORY;
 
             lconst->idx = ins.dst[0].reg.idx[0].offset;
             memcpy(lconst->value, ins.src[0].reg.immconst_data, 4 * sizeof(DWORD));
+            value = (float *)lconst->value;
 
             /* In pixel shader 1.X shaders, the constants are clamped between [-1;1] */
             if (shader_version.major == 1 && shader_version.type == WINED3D_SHADER_TYPE_PIXEL)
             {
-                float *value = (float *)lconst->value;
                 if (value[0] < -1.0f) value[0] = -1.0f;
                 else if (value[0] > 1.0f) value[0] = 1.0f;
                 if (value[1] < -1.0f) value[1] = -1.0f;
@@ -604,6 +605,12 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
             }
 
             list_add_head(&shader->constantsF, &lconst->entry);
+
+            if (isinf(value[0]) || isnan(value[0]) || isinf(value[1]) || isnan(value[1])
+                    || isinf(value[2]) || isnan(value[2]) || isinf(value[3]) || isnan(value[3]))
+            {
+                shader->lconst_inf_or_nan = TRUE;
+            }
         }
         else if (ins.handler_idx == WINED3DSIH_DEFI)
         {
@@ -1629,6 +1636,7 @@ static HRESULT shader_set_function(struct wined3d_shader *shader, const DWORD *b
     list_init(&shader->constantsF);
     list_init(&shader->constantsB);
     list_init(&shader->constantsI);
+    shader->lconst_inf_or_nan = FALSE;
 
     /* Second pass: figure out which registers are used, what the semantics are, etc. */
     hr = shader_get_registers_used(shader, fe,
@@ -1752,12 +1760,20 @@ HRESULT CDECL wined3d_shader_set_local_constants_float(struct wined3d_shader *sh
     for (i = start_idx; i < end_idx; ++i)
     {
         struct wined3d_shader_lconst *lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(*lconst));
+        float *value;
         if (!lconst)
             return E_OUTOFMEMORY;
 
         lconst->idx = i;
-        memcpy(lconst->value, src_data + (i - start_idx) * 4 /* 4 components */, 4 * sizeof(float));
+        value = (float *)lconst->value;
+        memcpy(value, src_data + (i - start_idx) * 4 /* 4 components */, 4 * sizeof(float));
         list_add_head(&shader->constantsF, &lconst->entry);
+
+        if (isinf(value[0]) || isnan(value[0]) || isinf(value[1]) || isnan(value[1])
+                || isinf(value[2]) || isnan(value[2]) || isinf(value[3]) || isnan(value[3]))
+        {
+            shader->lconst_inf_or_nan = TRUE;
+        }
     }
 
     return WINED3D_OK;
@@ -1916,8 +1932,8 @@ static HRESULT vertexshader_init(struct wined3d_shader *shader, struct wined3d_d
 
     vertexshader_set_limits(shader);
 
-    shader->load_local_constsF = reg_maps->usesrelconstF
-            && !list_empty(&shader->constantsF);
+    shader->load_local_constsF = (reg_maps->usesrelconstF && !list_empty(&shader->constantsF)) ||
+            shader->lconst_inf_or_nan;
 
     return WINED3D_OK;
 }
@@ -1964,7 +1980,7 @@ static HRESULT geometryshader_init(struct wined3d_shader *shader, struct wined3d
 
     geometryshader_set_limits(shader);
 
-    shader->load_local_constsF = FALSE;
+    shader->load_local_constsF = shader->lconst_inf_or_nan;
 
     return WINED3D_OK;
 }
@@ -2253,7 +2269,7 @@ static HRESULT pixelshader_init(struct wined3d_shader *shader, struct wined3d_de
         }
     }
 
-    shader->load_local_constsF = FALSE;
+    shader->load_local_constsF = shader->lconst_inf_or_nan;
 
     return WINED3D_OK;
 }

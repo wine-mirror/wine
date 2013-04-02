@@ -1253,15 +1253,14 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     shader_addline(buffer, "vec4 tmp0;\n");
     shader_addline(buffer, "vec4 tmp1;\n");
 
-    /* Local constants use a different name so they can be loaded once at shader link time
-     * They can't be hardcoded into the shader text via LC = {x, y, z, w}; because the
-     * float -> string conversion can cause precision loss.
-     */
     if (!shader->load_local_constsF)
     {
         LIST_FOR_EACH_ENTRY(lconst, &shader->constantsF, struct wined3d_shader_lconst, entry)
         {
-            shader_addline(buffer, "uniform vec4 %s_lc%u;\n", prefix, lconst->idx);
+            const float *value;
+            value = (const float *)lconst->value;
+            shader_addline(buffer, "const vec4 %s_lc%u = vec4(%.8e, %.8e, %.8e, %.8e);\n",
+                    prefix, lconst->idx, value[0], value[1], value[2], value[3]);
         }
     }
 
@@ -4457,25 +4456,6 @@ static void shader_glsl_generate_fog_code(struct wined3d_shader_buffer *buffer, 
 }
 
 /* Context activation is done by the caller. */
-static void hardcode_local_constants(const struct wined3d_shader *shader,
-        const struct wined3d_gl_info *gl_info, GLhandleARB programId, const char *prefix)
-{
-    const struct wined3d_shader_lconst *lconst;
-    GLint tmp_loc;
-    const float *value;
-    char glsl_name[10];
-
-    LIST_FOR_EACH_ENTRY(lconst, &shader->constantsF, struct wined3d_shader_lconst, entry)
-    {
-        value = (const float *)lconst->value;
-        snprintf(glsl_name, sizeof(glsl_name), "%s_lc%u", prefix, lconst->idx);
-        tmp_loc = GL_EXTCALL(glGetUniformLocationARB(programId, glsl_name));
-        GL_EXTCALL(glUniform4fvARB(tmp_loc, 1, value));
-    }
-    checkGLcall("Hardcoding local constants");
-}
-
-/* Context activation is done by the caller. */
 static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context,
         struct wined3d_shader_buffer *buffer, const struct wined3d_shader *shader,
         const struct ps_compile_args *args, struct ps_np2fixup_info *np2fixup_info)
@@ -5705,15 +5685,6 @@ static void set_glsl_shader_program(const struct wined3d_context *context, struc
      */
     shader_glsl_load_vsamplers(gl_info, device->texUnitMap, programId);
     shader_glsl_load_psamplers(gl_info, device->texUnitMap, programId);
-
-    /* If the local constants do not have to be loaded with the environment constants,
-     * load them now to have them hardcoded in the GLSL program. This saves some CPU cycles
-     * later
-     */
-    if (pshader && !pshader->load_local_constsF)
-        hardcode_local_constants(pshader, gl_info, programId, "ps");
-    if (vshader && !vshader->load_local_constsF)
-        hardcode_local_constants(vshader, gl_info, programId, "vs");
 }
 
 /* Context activation is done by the caller. */
