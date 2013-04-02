@@ -3304,6 +3304,8 @@ HRESULT CDECL wined3d_device_clear(struct wined3d_device *device, DWORD rect_cou
         WARN("Rects is %p, but rect_count is 0, ignoring clear\n", rects);
         return WINED3D_OK;
     }
+    if (rect_count && !rects)
+        rect_count = 0;
 
     if (flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL))
     {
