@@ -52,6 +52,8 @@
 
     NSInteger levelWhenActive;
 
+    NSTimer* liveResizeDisplayTimer;
+
     BOOL causing_becomeKeyWindow;
     BOOL ignore_windowMiniaturize;
     BOOL ignore_windowDeminiaturize;

@@ -350,6 +350,8 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
     - (void) dealloc
     {
+        [liveResizeDisplayTimer invalidate];
+        [liveResizeDisplayTimer release];
         [queue release];
         [latentParentWindow release];
         [shape release];
@@ -1115,6 +1117,13 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         [NSApp wineWindow:self ordered:NSWindowAbove relativeTo:nil];
     }
 
+    - (void) windowDidEndLiveResize:(NSNotification *)notification
+    {
+        [liveResizeDisplayTimer invalidate];
+        [liveResizeDisplayTimer release];
+        liveResizeDisplayTimer = nil;
+    }
+
     - (void)windowDidMove:(NSNotification *)notification
     {
         [self windowDidResize:notification];
@@ -1174,6 +1183,34 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         }
 
         ignore_windowMiniaturize = FALSE;
+    }
+
+    - (void) windowWillStartLiveResize:(NSNotification *)notification
+    {
+        // There's a strange restriction in window redrawing during Cocoa-
+        // managed window resizing.  Only calls to -[NSView setNeedsDisplay...]
+        // that happen synchronously when Cocoa tells us that our window size
+        // has changed or asynchronously in a short interval thereafter provoke
+        // the window to redraw.  Calls to those methods that happen asynchronously
+        // a half second or more after the last change of the window size aren't
+        // heeded until the next resize-related user event (e.g. mouse movement).
+        //
+        // Wine often has a significant delay between when it's been told that
+        // the window has changed size and when it can flush completed drawing.
+        // So, our windows would get stuck with incomplete drawing for as long
+        // as the user holds the mouse button down and doesn't move it.
+        //
+        // We address this by "manually" asking our windows to check if they need
+        // redrawing every so often (during live resize only).
+        [self windowDidEndLiveResize:nil];
+        liveResizeDisplayTimer = [NSTimer scheduledTimerWithTimeInterval:1.0/30.0
+                                                                  target:self
+                                                                selector:@selector(displayIfNeeded)
+                                                                userInfo:nil
+                                                                 repeats:YES];
+        [liveResizeDisplayTimer retain];
+        [[NSRunLoop currentRunLoop] addTimer:liveResizeDisplayTimer
+                                     forMode:NSRunLoopCommonModes];
     }
 
 
