@@ -1099,6 +1099,16 @@ HRESULT go_back(DocHost *This)
     return navigate_history(This, This->travellog.position-1);
 }
 
+HRESULT go_forward(DocHost *This)
+{
+    if(This->travellog.position >= This->travellog.length) {
+        WARN("No history available\n");
+        return E_FAIL;
+    }
+
+    return navigate_history(This, This->travellog.position+1);
+}
+
 HRESULT get_location_url(DocHost *This, BSTR *ret)
 {
     FIXME("semi-stub\n");

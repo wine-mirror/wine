@@ -149,8 +149,8 @@ static HRESULT WINAPI InternetExplorer_GoBack(IWebBrowser2 *iface)
 static HRESULT WINAPI InternetExplorer_GoForward(IWebBrowser2 *iface)
 {
     InternetExplorer *This = impl_from_IWebBrowser2(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+    TRACE("(%p)\n", This);
+    return go_forward(&This->doc_host->doc_host);
 }
 
 static HRESULT WINAPI InternetExplorer_GoHome(IWebBrowser2 *iface)
