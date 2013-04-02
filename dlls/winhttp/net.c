@@ -406,7 +406,7 @@ BOOL netconn_secure_connect( netconn_t *conn, WCHAR *hostname )
             size = send(conn->socket, out_buf.pvBuffer, out_buf.cbBuffer, 0);
             if(size != out_buf.cbBuffer) {
                 ERR("send failed\n");
-                status = ERROR_WINHTTP_SECURE_CHANNEL_ERROR;
+                res = ERROR_WINHTTP_SECURE_CHANNEL_ERROR;
                 break;
             }
 
