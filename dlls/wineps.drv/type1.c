@@ -75,7 +75,7 @@ TYPE1 *T1_download_header(PHYSDEV dev, char *ps_name, RECT *bbox, UINT emsize)
     char *buf;
     TYPE1 *t1;
 
-    char dict[] = /* name, emsquare, fontbbox */
+    static const char dict[] = /* name, emsquare, fontbbox */
       "25 dict begin\n"
       " /FontName /%s def\n"
       " /Encoding 256 array 0 1 255{1 index exch /.notdef put} for def\n"
