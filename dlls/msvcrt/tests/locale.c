@@ -713,8 +713,9 @@ static void test__Gettnames(void)
     ok(!strcmp(ret->str[39], "PM"), "ret->str[39] = %s\n", ret->str[39]);
     ok(!strcmp(ret->str[40], "M/d/yyyy") || broken(!strcmp(ret->str[40], "M/d/yy"))/*NT*/,
             "ret->str[40] = %s\n", ret->str[40]);
-    ok(GetLocaleInfoA(MAKELCID(LANG_ENGLISH, SORT_DEFAULT), LOCALE_SLONGDATE|LOCALE_NOUSEROVERRIDE,
-                buf, sizeof(buf)) != 0, "GetLocaleInfo failed: %x\n", GetLastError());
+    size = GetLocaleInfoA(MAKELCID(LANG_ENGLISH, SORT_DEFAULT),
+           LOCALE_SLONGDATE|LOCALE_NOUSEROVERRIDE, buf, sizeof(buf));
+    ok(size, "GetLocaleInfo failed: %x\n", GetLastError());
     ok(!strcmp(ret->str[41], buf), "ret->str[41] = %s, expected %s\n", ret->str[41], buf);
     free(ret);
 
