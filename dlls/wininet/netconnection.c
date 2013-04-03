@@ -1299,8 +1299,16 @@ int NETCON_GetCipherStrength(netconn_t *connection)
     pSSL_CIPHER_get_bits(cipher, &bits);
     return bits;
 #else
-    FIXME("not supported on this platform\n");
-    return 0;
+    SecPkgContext_ConnectionInfo conn_info;
+    SECURITY_STATUS res;
+
+    if (!connection->secure)
+        return 0;
+
+    res = QueryContextAttributesW(&connection->ssl_ctx, SECPKG_ATTR_CONNECTION_INFO, (void*)&conn_info);
+    if(res != SEC_E_OK)
+        WARN("QueryContextAttributesW failed: %08x\n", res);
+    return res == SEC_E_OK ? conn_info.dwCipherStrength : 0;
 #endif
 }
 
