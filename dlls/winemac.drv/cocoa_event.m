@@ -314,7 +314,12 @@ void OnMainThread(dispatch_block_t block)
         }
 
         if (!finished)
+        {
+            [pool release];
+            pool = [[NSAutoreleasePool alloc] init];
+
             kevent(queue->kq, NULL, 0, &kev, 1, NULL);
+        }
     }
 
     [pool release];
