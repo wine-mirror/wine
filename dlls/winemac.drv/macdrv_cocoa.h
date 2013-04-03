@@ -176,6 +176,7 @@ typedef uint32_t macdrv_event_mask;
 
 typedef struct macdrv_event {
     int                 refs;
+    int                 deliver;
     int                 type;
     macdrv_window       window;
     union {

@@ -198,7 +198,7 @@ static NSString* const WineEventQueueThreadDictionaryKey = @"WineEventQueueThrea
         char buf[512];
         int rc;
         NSUInteger index;
-        MacDrvEvent* event;
+        MacDrvEvent* ret = nil;
 
         /* Clear the pipe which signals there are pending events. */
         do
@@ -217,22 +217,27 @@ static NSString* const WineEventQueueThreadDictionaryKey = @"WineEventQueueThrea
         [eventsLock lock];
 
         index = 0;
-        for (event in events)
+        while (index < [events count])
         {
+            MacDrvEvent* event = [events objectAtIndex:index];
             if (event_mask_for_type(event->event->type) & mask)
-                break;
+            {
+                [[event retain] autorelease];
+                [events removeObjectAtIndex:index];
 
-            index++;
-        }
-
-        if (event)
-        {
-            [event retain];
-            [events removeObjectAtIndex:index];
+                if (event->event->deliver == INT_MAX ||
+                    OSAtomicDecrement32Barrier(&event->event->deliver) >= 0)
+                {
+                    ret = event;
+                    break;
+                }
+            }
+            else
+                index++;
         }
 
         [eventsLock unlock];
-        return [event autorelease];
+        return ret;
     }
 
     - (void) discardEventsMatchingMask:(macdrv_event_mask)mask forWindow:(NSWindow*)window
@@ -416,6 +421,7 @@ macdrv_event* macdrv_create_event(int type, WineWindow* window)
 
     event = calloc(1, sizeof(*event));
     event->refs = 1;
+    event->deliver = INT_MAX;
     event->type = type;
     event->window = (macdrv_window)[window retain];
     return event;

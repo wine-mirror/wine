@@ -413,6 +413,13 @@ int macdrv_err_on;
         event->displays_changed.activating = activating;
 
         [eventQueuesLock lock];
+
+        // If we're activating, then we just need one of our threads to get the
+        // event, so it can send it directly to the desktop window.  Otherwise,
+        // we need all of the threads to get it because we don't know which owns
+        // the desktop window and only that one will do anything with it.
+        if (activating) event->deliver = 1;
+
         for (queue in eventQueues)
             [queue postEvent:event];
         [eventQueuesLock unlock];
