@@ -98,6 +98,9 @@ typedef struct
     char *ssl_buf;
     char *extra_buf;
     size_t extra_len;
+    char *peek_msg;
+    char *peek_msg_mem;
+    size_t peek_len;
     DWORD security_flags;
     BOOL mask_errors;
 
