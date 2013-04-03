@@ -610,7 +610,7 @@ static HRESULT WINAPI IDirectPlay4Impl_Close( IDirectPlay4 *iface )
     IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
     HRESULT hr = DP_OK;
 
-    TRACE( "(%p)", This );
+    TRACE( "(%p)\n", This );
 
     /* FIXME: Need to find a new host I assume (how?) */
     /* FIXME: Need to destroy all local groups */
