@@ -111,7 +111,7 @@ static macdrv_event_mask get_event_mask(DWORD mask)
  *
  * Handler for QUERY_EVENT queries.
  */
-static void macdrv_query_event(HWND hwnd, macdrv_event *event)
+static void macdrv_query_event(HWND hwnd, const macdrv_event *event)
 {
     BOOL success = FALSE;
     macdrv_query *query = event->query_event.query;
@@ -148,7 +148,7 @@ static void macdrv_query_event(HWND hwnd, macdrv_event *event)
 /***********************************************************************
  *              macdrv_handle_event
  */
-void macdrv_handle_event(macdrv_event *event)
+void macdrv_handle_event(const macdrv_event *event)
 {
     HWND hwnd = macdrv_get_window_hwnd(event->window);
     const macdrv_event *prev;

@@ -266,7 +266,7 @@ static inline macdrv_event_mask event_mask_for_type(int type)
     return ((macdrv_event_mask)1 << type);
 }
 
-typedef void (*macdrv_event_handler)(macdrv_event *event);
+typedef void (*macdrv_event_handler)(const macdrv_event *event);
 
 extern macdrv_event_queue macdrv_create_event_queue(macdrv_event_handler handler) DECLSPEC_HIDDEN;
 extern void macdrv_destroy_event_queue(macdrv_event_queue queue) DECLSPEC_HIDDEN;

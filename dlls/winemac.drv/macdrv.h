@@ -142,7 +142,7 @@ extern struct window_surface *create_surface(macdrv_window window, const RECT *r
 extern void set_window_surface(macdrv_window window, struct window_surface *window_surface) DECLSPEC_HIDDEN;
 extern void set_surface_use_alpha(struct window_surface *window_surface, BOOL use_alpha) DECLSPEC_HIDDEN;
 
-extern void macdrv_handle_event(macdrv_event *event) DECLSPEC_HIDDEN;
+extern void macdrv_handle_event(const macdrv_event *event) DECLSPEC_HIDDEN;
 
 extern void macdrv_window_close_requested(HWND hwnd) DECLSPEC_HIDDEN;
 extern void macdrv_window_frame_changed(HWND hwnd, CGRect frame) DECLSPEC_HIDDEN;
