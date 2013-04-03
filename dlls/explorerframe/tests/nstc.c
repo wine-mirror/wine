@@ -1366,7 +1366,7 @@ static void test_basics(void)
     psia = (void*)0xdeadbeef;
     hr = INameSpaceTreeControl_GetSelectedItems(pnstc, &psia);
     ok(hr == E_FAIL, "Got 0x%08x\n", hr);
-    ok(psia == (void*)0xdeadbeef, "Got %p\n", psia);
+    ok(!psia || broken(psia == (void*)0xdeadbeef /* before Win8 */), "Got %p\n", psia);
 
     hr = INameSpaceTreeControl_AppendRoot(pnstc, psitestdir2, SHCONTF_FOLDERS, 0, NULL);
     ok(hr == S_OK, "Got (0x%08x)\n", hr);

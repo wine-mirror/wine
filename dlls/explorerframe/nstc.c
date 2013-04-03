@@ -1240,7 +1240,10 @@ static HRESULT WINAPI NSTC2_fnGetSelectedItems(INameSpaceTreeControl2* iface,
 
     psiselected = get_selected_shellitem(This);
     if(!psiselected)
+    {
+        *psiaItems = NULL;
         return E_FAIL;
+    }
 
     hr = SHCreateShellItemArrayFromShellItem(psiselected, &IID_IShellItemArray,
                                              (void**)psiaItems);
