@@ -58,6 +58,11 @@ ULONG CDECL wined3d_vertex_declaration_decref(struct wined3d_vertex_declaration 
 
     if (!refcount)
     {
+        if (wined3d_settings.cs_multithreaded)
+        {
+            FIXME("Waiting for cs.\n");
+            declaration->device->cs->ops->finish(declaration->device->cs);
+        }
         HeapFree(GetProcessHeap(), 0, declaration->elements);
         declaration->parent_ops->wined3d_object_destroyed(declaration->parent);
         HeapFree(GetProcessHeap(), 0, declaration);

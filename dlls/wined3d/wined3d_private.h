@@ -2628,6 +2628,7 @@ struct wined3d_cs_ops
 {
     void *(*require_space)(struct wined3d_cs *cs, size_t size);
     void (*submit)(struct wined3d_cs *cs);
+    void (*finish)(struct wined3d_cs *cs);
 };
 
 struct wined3d_cs

@@ -42,6 +42,12 @@ static void surface_cleanup(struct wined3d_surface *surface)
 
     TRACE("surface %p.\n", surface);
 
+    if (wined3d_settings.cs_multithreaded)
+    {
+        FIXME("Waiting for cs.\n");
+        surface->resource.device->cs->ops->finish(surface->resource.device->cs);
+    }
+
     if (surface->resource.buffer_object || surface->rb_multisample
             || surface->rb_resolved || !list_empty(&surface->renderbuffers))
     {

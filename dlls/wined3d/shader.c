@@ -2125,6 +2125,11 @@ ULONG CDECL wined3d_shader_decref(struct wined3d_shader *shader)
 
     if (!refcount)
     {
+        if (wined3d_settings.cs_multithreaded)
+        {
+            FIXME("Waiting for cs.\n");
+            shader->device->cs->ops->finish(shader->device->cs);
+        }
         shader_cleanup(shader);
         shader->parent_ops->wined3d_object_destroyed(shader->parent);
         HeapFree(GetProcessHeap(), 0, shader);
