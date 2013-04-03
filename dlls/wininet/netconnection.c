@@ -214,6 +214,7 @@ static PCCERT_CONTEXT X509_to_cert_context(X509 *cert)
 
     return ret;
 }
+#endif /* SONAME_LIBSSL */
 
 static DWORD netconn_verify_cert(netconn_t *conn, PCCERT_CONTEXT cert, HCERTSTORE store)
 {
@@ -372,6 +373,7 @@ static DWORD netconn_verify_cert(netconn_t *conn, PCCERT_CONTEXT cert, HCERTSTOR
     return ERROR_SUCCESS;
 }
 
+#ifdef SONAME_LIBSSL
 static int netconn_secure_verify(int preverify_ok, X509_STORE_CTX *ctx)
 {
     SSL *ssl;
@@ -603,6 +605,55 @@ static DWORD init_openssl(void)
     return ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
 #endif
 }
+#else
+
+static SecHandle cred_handle, compat_cred_handle;
+static BOOL cred_handle_initialized, have_compat_cred_handle;
+
+static CRITICAL_SECTION init_sechandle_cs;
+static CRITICAL_SECTION_DEBUG init_sechandle_cs_debug = {
+    0, 0, &init_sechandle_cs,
+    { &init_sechandle_cs_debug.ProcessLocksList,
+      &init_sechandle_cs_debug.ProcessLocksList },
+    0, 0, { (DWORD_PTR)(__FILE__ ": init_sechandle_cs") }
+};
+static CRITICAL_SECTION init_sechandle_cs = { &init_sechandle_cs_debug, -1, 0, 0, 0, 0 };
+
+static BOOL ensure_cred_handle(void)
+{
+    SECURITY_STATUS res = SEC_E_OK;
+
+    EnterCriticalSection(&init_sechandle_cs);
+
+    if(!cred_handle_initialized) {
+        SCHANNEL_CRED cred = {SCHANNEL_CRED_VERSION};
+        SecPkgCred_SupportedProtocols prots;
+
+        res = AcquireCredentialsHandleW(NULL, (WCHAR*)UNISP_NAME_W, SECPKG_CRED_OUTBOUND, NULL, &cred,
+                NULL, NULL, &cred_handle, NULL);
+        if(res == SEC_E_OK) {
+            res = QueryCredentialsAttributesA(&cred_handle, SECPKG_ATTR_SUPPORTED_PROTOCOLS, &prots);
+            if(res != SEC_E_OK || (prots.grbitProtocol & SP_PROT_TLS1_1PLUS_CLIENT)) {
+                cred.grbitEnabledProtocols = prots.grbitProtocol & ~SP_PROT_TLS1_1PLUS_CLIENT;
+                res = AcquireCredentialsHandleW(NULL, (WCHAR*)UNISP_NAME_W, SECPKG_CRED_OUTBOUND, NULL, &cred,
+                       NULL, NULL, &compat_cred_handle, NULL);
+                have_compat_cred_handle = res == SEC_E_OK;
+            }
+        }
+
+        cred_handle_initialized = res == SEC_E_OK;
+    }
+
+    LeaveCriticalSection(&init_sechandle_cs);
+
+    if(res != SEC_E_OK) {
+        WARN("Failed: %08x\n", res);
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 #endif /* SONAME_LIBSSL */
 
 static DWORD create_netconn_socket(server_t *server, netconn_t *netconn, DWORD timeout)
@@ -707,6 +758,10 @@ void free_netconn(netconn_t *netconn)
 #ifdef SONAME_LIBSSL
         pSSL_shutdown(netconn->ssl_s);
         pSSL_free(netconn->ssl_s);
+#else
+        heap_free(netconn->ssl_buf);
+        netconn->ssl_buf = NULL;
+        DeleteSecurityContext(&netconn->ssl_ctx);
 #endif
     }
 
@@ -738,6 +793,12 @@ void NETCON_unload(void)
         }
         heap_free(ssl_locks);
     }
+#else
+    if(cred_handle_initialized)
+        FreeCredentialsHandle(&cred_handle);
+    if(have_compat_cred_handle)
+        FreeCredentialsHandle(&compat_cred_handle);
+    DeleteCriticalSection(&init_sechandle_cs);
 #endif
 }
 
@@ -861,6 +922,147 @@ static DWORD netcon_secure_connect_setup(netconn_t *connection, BOOL compat_mode
     }
 
     connection->ssl_s = ssl_s;
+#else
+    SecBuffer out_buf = {0, SECBUFFER_TOKEN, NULL}, in_bufs[2] = {{0, SECBUFFER_TOKEN}, {0, SECBUFFER_EMPTY}};
+    SecBufferDesc out_desc = {SECBUFFER_VERSION, 1, &out_buf}, in_desc = {SECBUFFER_VERSION, 2, in_bufs};
+    SecHandle *cred = &cred_handle;
+    BYTE *read_buf;
+    SIZE_T read_buf_size = 2048;
+    ULONG attrs = 0;
+    CtxtHandle ctx;
+    SSIZE_T size;
+    int bits;
+    const CERT_CONTEXT *cert;
+    SECURITY_STATUS status;
+    DWORD res = ERROR_SUCCESS;
+
+    const DWORD isc_req_flags = ISC_REQ_ALLOCATE_MEMORY|ISC_REQ_USE_SESSION_KEY|ISC_REQ_CONFIDENTIALITY
+        |ISC_REQ_SEQUENCE_DETECT|ISC_REQ_REPLAY_DETECT|ISC_REQ_MANUAL_CRED_VALIDATION;
+
+    if(!ensure_cred_handle())
+        return FALSE;
+
+    if(compat_mode) {
+        if(!have_compat_cred_handle)
+            return ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
+        cred = &compat_cred_handle;
+    }
+
+    read_buf = heap_alloc(read_buf_size);
+    if(!read_buf)
+        return ERROR_OUTOFMEMORY;
+
+    status = InitializeSecurityContextW(cred, NULL, connection->server->name, isc_req_flags, 0, 0, NULL, 0,
+            &ctx, &out_desc, &attrs, NULL);
+
+    assert(status != SEC_E_OK);
+
+    while(status == SEC_I_CONTINUE_NEEDED || status == SEC_E_INCOMPLETE_MESSAGE) {
+        if(out_buf.cbBuffer) {
+            assert(status == SEC_I_CONTINUE_NEEDED);
+
+            TRACE("sending %u bytes\n", out_buf.cbBuffer);
+
+            size = send(connection->socket, out_buf.pvBuffer, out_buf.cbBuffer, 0);
+            if(size != out_buf.cbBuffer) {
+                ERR("send failed\n");
+                status = ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
+                break;
+            }
+
+            FreeContextBuffer(out_buf.pvBuffer);
+            out_buf.pvBuffer = NULL;
+            out_buf.cbBuffer = 0;
+        }
+
+        if(status == SEC_I_CONTINUE_NEEDED) {
+            assert(in_bufs[1].cbBuffer < read_buf_size);
+
+            memmove(read_buf, (BYTE*)in_bufs[0].pvBuffer+in_bufs[0].cbBuffer-in_bufs[1].cbBuffer, in_bufs[1].cbBuffer);
+            in_bufs[0].cbBuffer = in_bufs[1].cbBuffer;
+
+            in_bufs[1].BufferType = SECBUFFER_EMPTY;
+            in_bufs[1].cbBuffer = 0;
+            in_bufs[1].pvBuffer = NULL;
+        }
+
+        assert(in_bufs[0].BufferType == SECBUFFER_TOKEN);
+        assert(in_bufs[1].BufferType == SECBUFFER_EMPTY);
+
+        if(in_bufs[0].cbBuffer + 1024 > read_buf_size) {
+            BYTE *new_read_buf;
+
+            new_read_buf = heap_realloc(read_buf, read_buf_size + 1024);
+            if(!new_read_buf) {
+                status = E_OUTOFMEMORY;
+                break;
+            }
+
+            in_bufs[0].pvBuffer = read_buf = new_read_buf;
+            read_buf_size += 1024;
+        }
+
+        size = recv(connection->socket, read_buf+in_bufs[0].cbBuffer, read_buf_size-in_bufs[0].cbBuffer, 0);
+        if(size < 1) {
+            WARN("recv error\n");
+            res = ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
+            break;
+        }
+
+        TRACE("recv %lu bytes\n", size);
+
+        in_bufs[0].cbBuffer += size;
+        in_bufs[0].pvBuffer = read_buf;
+        status = InitializeSecurityContextW(cred, &ctx, connection->server->name,  isc_req_flags, 0, 0, &in_desc,
+                0, NULL, &out_desc, &attrs, NULL);
+        TRACE("InitializeSecurityContext ret %08x\n", status);
+
+        if(status == SEC_E_OK) {
+            if(in_bufs[1].BufferType == SECBUFFER_EXTRA)
+                FIXME("SECBUFFER_EXTRA not supported\n");
+
+            status = QueryContextAttributesW(&ctx, SECPKG_ATTR_STREAM_SIZES, &connection->ssl_sizes);
+            if(status != SEC_E_OK) {
+                WARN("Could not get sizes\n");
+                break;
+            }
+
+            status = QueryContextAttributesW(&ctx, SECPKG_ATTR_REMOTE_CERT_CONTEXT, (void*)&cert);
+            if(status == SEC_E_OK) {
+                res = netconn_verify_cert(connection, cert, cert->hCertStore);
+                CertFreeCertificateContext(cert);
+                if(res != ERROR_SUCCESS) {
+                    WARN("cert verify failed: %u\n", res);
+                    break;
+                }
+            }else {
+                WARN("Could not get cert\n");
+                break;
+            }
+
+            connection->ssl_buf = heap_alloc(connection->ssl_sizes.cbHeader + connection->ssl_sizes.cbMaximumMessage
+                    + connection->ssl_sizes.cbTrailer);
+            if(!connection->ssl_buf) {
+                res = GetLastError();
+                break;
+            }
+        }
+    }
+
+
+    if(status != SEC_E_OK || res != ERROR_SUCCESS) {
+        WARN("Failed to initialize security context failed: %08x\n", status);
+        heap_free(connection->ssl_buf);
+        connection->ssl_buf = NULL;
+        DeleteSecurityContext(&ctx);
+        return res ? res : ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
+    }
+
+
+    TRACE("established SSL connection\n");
+    connection->ssl_ctx = ctx;
+#endif
+
     connection->secure = TRUE;
     connection->security_flags |= SECURITY_FLAG_SECURE;
 
@@ -876,6 +1078,7 @@ static DWORD netcon_secure_connect_setup(netconn_t *connection, BOOL compat_mode
         connection->server->security_flags = connection->security_flags;
     return ERROR_SUCCESS;
 
+#ifdef SONAME_LIBSSL
 fail:
     if (ssl_s)
     {
@@ -883,9 +1086,6 @@ fail:
         pSSL_free(ssl_s);
     }
     return res;
-#else
-    FIXME("Cannot connect, OpenSSL not available.\n");
-    return ERROR_NOT_SUPPORTED;
 #endif
 }
 

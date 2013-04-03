@@ -92,7 +92,12 @@ typedef struct
     int socket;
     BOOL secure;
     void *ssl_s;
+    CtxtHandle ssl_ctx;
+    SecPkgContext_StreamSizes ssl_sizes;
     server_t *server;
+    char *ssl_buf;
+    char *extra_buf;
+    size_t extra_len;
     DWORD security_flags;
     BOOL mask_errors;
 
