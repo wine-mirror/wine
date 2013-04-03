@@ -550,7 +550,7 @@ static void test_multi_encoder(const struct bitmap_data **srcs, const CLSID* cls
                 ok(SUCCEEDED(hr), "CreateFrame failed, hr=%x\n", hr);
                 if (SUCCEEDED(hr))
                 {
-                    ok(options != NULL, "Encoder initialization has not created an property bag");
+                    ok(options != NULL, "Encoder initialization has not created an property bag\n");
                     if(options)
                         test_encoder_properties(clsid_encoder, options);
 
