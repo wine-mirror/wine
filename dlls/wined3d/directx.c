@@ -1282,14 +1282,19 @@ static void init_driver_info(struct wined3d_driver_info *driver_info,
                     driver_os_version = 7;
                     driver_model = DRIVER_MODEL_NT6X;
                 }
+                else if (os_version.dwMinorVersion == 1)
+                {
+                    driver_os_version = 8;
+                    driver_model = DRIVER_MODEL_NT6X;
+                }
                 else
                 {
-                    if (os_version.dwMinorVersion > 1)
+                    if (os_version.dwMinorVersion > 2)
                     {
-                        FIXME("Unhandled OS version %u.%u, reporting Win 7.\n",
+                        FIXME("Unhandled OS version %u.%u, reporting Win 8.\n",
                                 os_version.dwMajorVersion, os_version.dwMinorVersion);
                     }
-                    driver_os_version = 8;
+                    driver_os_version = 9;
                     driver_model = DRIVER_MODEL_NT6X;
                 }
                 break;
