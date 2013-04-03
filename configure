@@ -824,7 +824,6 @@ with_mpg123
 with_openal
 with_opencl
 with_opengl
-with_openssl
 with_osmesa
 with_oss
 with_png
@@ -1514,7 +1513,6 @@ Optional Packages:
   --without-openal        do not use OpenAL
   --without-opencl        do not use OpenCL
   --without-opengl        do not use OpenGL
-  --without-openssl       do not use OpenSSL
   --without-osmesa        do not use the OSMesa library
   --without-oss           do not use the OSS sound support
   --without-png           do not use PNG
@@ -2677,12 +2675,6 @@ fi
 # Check whether --with-opengl was given.
 if test "${with_opengl+set}" = set; then :
   withval=$with_opengl;
-fi
-
-
-# Check whether --with-openssl was given.
-if test "${with_openssl+set}" = set; then :
-  withval=$with_openssl; if test "x$withval" = "xno"; then ac_cv_header_openssl_err_h=no; ac_cv_header_openssl_ssl_h=no; fi
 fi
 
 
@@ -5885,8 +5877,6 @@ for ac_header in \
 	netinet/in_systm.h \
 	netinet/tcp.h \
 	netinet/tcp_fsm.h \
-	openssl/err.h \
-	openssl/ssl.h \
 	png.h \
 	poll.h \
 	port.h \
@@ -11442,124 +11432,6 @@ if test "x$ac_cv_lib_soname_fontconfig" = "x"; then :
   xno) ;;
   *)   as_fn_error $? "fontconfig ${notice_platform}development files not found, fontconfig won't be supported.
 This is an error since --with-fontconfig was requested." "$LINENO" 5 ;;
-esac
-fi
-
-if test "$ac_cv_header_openssl_err_h" = "yes" -a "$ac_cv_header_openssl_ssl_h" = "yes"
-then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lssl" >&5
-$as_echo_n "checking for -lssl... " >&6; }
-if ${ac_cv_lib_soname_ssl+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_soname_save_LIBS=$LIBS
-LIBS="-lssl  $LIBS"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char SSL_library_init ();
-int
-main ()
-{
-return SSL_library_init ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  case "$LIBEXT" in
-    dll) ac_cv_lib_soname_ssl=`$ac_cv_path_LDD conftest.exe | grep "ssl" | sed -e "s/dll.*/dll/"';2,$d'` ;;
-    dylib) ac_cv_lib_soname_ssl=`otool -L conftest$ac_exeext | grep "libssl\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libssl\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
-    *) ac_cv_lib_soname_ssl=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libssl\\.$LIBEXT" | sed -e "s/^.*\\[\\(libssl\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
-       if test "x$ac_cv_lib_soname_ssl" = x; then :
-  ac_cv_lib_soname_ssl=`$LDD conftest$ac_exeext | grep "libssl\\.$LIBEXT" | sed -e "s/^.*\(libssl\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
-fi ;;
-  esac
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-  LIBS=$ac_check_soname_save_LIBS
-fi
-if test "x$ac_cv_lib_soname_ssl" = "x"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
-$as_echo "not found" >&6; }
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_ssl" >&5
-$as_echo "$ac_cv_lib_soname_ssl" >&6; }
-
-cat >>confdefs.h <<_ACEOF
-#define SONAME_LIBSSL "$ac_cv_lib_soname_ssl"
-_ACEOF
-
-
-fi
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lcrypto" >&5
-$as_echo_n "checking for -lcrypto... " >&6; }
-if ${ac_cv_lib_soname_crypto+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_soname_save_LIBS=$LIBS
-LIBS="-lcrypto  $LIBS"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char BIO_new_socket ();
-int
-main ()
-{
-return BIO_new_socket ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  case "$LIBEXT" in
-    dll) ac_cv_lib_soname_crypto=`$ac_cv_path_LDD conftest.exe | grep "crypto" | sed -e "s/dll.*/dll/"';2,$d'` ;;
-    dylib) ac_cv_lib_soname_crypto=`otool -L conftest$ac_exeext | grep "libcrypto\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libcrypto\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
-    *) ac_cv_lib_soname_crypto=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libcrypto\\.$LIBEXT" | sed -e "s/^.*\\[\\(libcrypto\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
-       if test "x$ac_cv_lib_soname_crypto" = x; then :
-  ac_cv_lib_soname_crypto=`$LDD conftest$ac_exeext | grep "libcrypto\\.$LIBEXT" | sed -e "s/^.*\(libcrypto\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
-fi ;;
-  esac
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-  LIBS=$ac_check_soname_save_LIBS
-fi
-if test "x$ac_cv_lib_soname_crypto" = "x"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
-$as_echo "not found" >&6; }
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_crypto" >&5
-$as_echo "$ac_cv_lib_soname_crypto" >&6; }
-
-cat >>confdefs.h <<_ACEOF
-#define SONAME_LIBCRYPTO "$ac_cv_lib_soname_crypto"
-_ACEOF
-
-
-fi
-fi
-if test "x$ac_cv_lib_soname_ssl" = "x" -o "x$ac_cv_lib_soname_crypto" = "x"; then :
-  case "x$with_openssl" in
-  x)   as_fn_append wine_warnings "|OpenSSL ${notice_platform}development files not found, SSL won't be supported." ;;
-  xno) ;;
-  *)   as_fn_error $? "OpenSSL ${notice_platform}development files not found, SSL won't be supported.
-This is an error since --with-openssl was requested." "$LINENO" 5 ;;
 esac
 fi
 

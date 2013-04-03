@@ -66,8 +66,6 @@ AC_ARG_WITH(openal,    AS_HELP_STRING([--without-openal],[do not use OpenAL]),
 AC_ARG_WITH(opencl,    AS_HELP_STRING([--without-opencl],[do not use OpenCL]),
             [if test "x$withval" = "xno"; then ac_cv_header_CL_cl_h=no; ac_cv_header_OpenCL_opencl_h=no; fi])
 AC_ARG_WITH(opengl,    AS_HELP_STRING([--without-opengl],[do not use OpenGL]))
-AC_ARG_WITH(openssl,   AS_HELP_STRING([--without-openssl],[do not use OpenSSL]),
-            [if test "x$withval" = "xno"; then ac_cv_header_openssl_err_h=no; ac_cv_header_openssl_ssl_h=no; fi])
 AC_ARG_WITH(osmesa,     AS_HELP_STRING([--without-osmesa],[do not use the OSMesa library]))
 AC_ARG_WITH(oss,       AS_HELP_STRING([--without-oss],[do not use the OSS sound support]))
 AC_ARG_WITH(png,       AS_HELP_STRING([--without-png],[do not use PNG]),
@@ -469,8 +467,6 @@ AC_CHECK_HEADERS(\
 	netinet/in_systm.h \
 	netinet/tcp.h \
 	netinet/tcp_fsm.h \
-	openssl/err.h \
-	openssl/ssl.h \
 	png.h \
 	poll.h \
 	port.h \
@@ -1603,15 +1599,6 @@ then
 fi
 WINE_NOTICE_WITH(fontconfig,[test "x$ac_cv_lib_soname_fontconfig" = "x"],
                  [fontconfig ${notice_platform}development files not found, fontconfig won't be supported.])
-
-dnl **** Check for SSL ****
-if test "$ac_cv_header_openssl_err_h" = "yes" -a "$ac_cv_header_openssl_ssl_h" = "yes"
-then
-    WINE_CHECK_SONAME(ssl,SSL_library_init)
-    WINE_CHECK_SONAME(crypto,BIO_new_socket)
-fi
-WINE_WARNING_WITH(openssl,[test "x$ac_cv_lib_soname_ssl" = "x" -o "x$ac_cv_lib_soname_crypto" = "x"],
-                 [OpenSSL ${notice_platform}development files not found, SSL won't be supported.])
 
 dnl **** Check for gsm codec ****
 if test "$ac_cv_header_gsm_h" = "yes" -o "$ac_cv_header_gsm_gsm_h" = "yes"
