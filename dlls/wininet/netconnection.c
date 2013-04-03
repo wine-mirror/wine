@@ -1458,8 +1458,14 @@ LPCVOID NETCON_GetCert(netconn_t *connection)
     r = X509_to_cert_context(cert);
     return r;
 #else
-    FIXME("not supported on this platform\n");
-    return NULL;
+    const CERT_CONTEXT *ret;
+    SECURITY_STATUS res;
+
+    if (!connection->secure)
+        return NULL;
+
+    res = QueryContextAttributesW(&connection->ssl_ctx, SECPKG_ATTR_REMOTE_CERT_CONTEXT, (void*)&ret);
+    return res == SEC_E_OK ? ret : NULL;
 #endif
 }
 
