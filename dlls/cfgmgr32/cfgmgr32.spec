@@ -64,7 +64,7 @@
 @ stub CM_Get_DevNode_Status_Ex
 @ stdcall CM_Get_Device_IDA(ptr ptr long long) setupapi.CM_Get_Device_IDA
 @ stdcall CM_Get_Device_IDW(ptr ptr long long) setupapi.CM_Get_Device_IDW
-@ stub CM_Get_Device_ID_ExA
+@ stdcall CM_Get_Device_ID_ExA(ptr ptr long long ptr) setupapi.CM_Get_Device_ID_ExA
 @ stdcall CM_Get_Device_ID_ExW(ptr ptr long long ptr) setupapi.CM_Get_Device_ID_ExW
 @ stdcall CM_Get_Device_ID_ListA(str ptr long long) setupapi.CM_Get_Device_ID_ListA
 @ stdcall CM_Get_Device_ID_ListW(wstr ptr long long) setupapi.CM_Get_Device_ID_ListW
