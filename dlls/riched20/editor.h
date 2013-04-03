@@ -100,7 +100,6 @@ const char *ME_GetDITypeName(ME_DIType type) DECLSPEC_HIDDEN;
 /* string.c */
 ME_String *ME_MakeStringN(LPCWSTR szText, int nMaxChars) DECLSPEC_HIDDEN;
 ME_String *ME_MakeStringR(WCHAR cRepeat, int nMaxChars) DECLSPEC_HIDDEN;
-ME_String *ME_StrDup(const ME_String *s) DECLSPEC_HIDDEN;
 void ME_DestroyString(ME_String *s) DECLSPEC_HIDDEN;
 BOOL ME_AppendString(ME_String *s, const WCHAR *append, int len) DECLSPEC_HIDDEN;
 ME_String *ME_VSplitString(ME_String *orig, int nVPos) DECLSPEC_HIDDEN;

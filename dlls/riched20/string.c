@@ -59,11 +59,6 @@ ME_String *ME_MakeStringR(WCHAR cRepeat, int nMaxChars)
   return s;
 }
 
-ME_String *ME_StrDup(const ME_String *s)
-{
-  return ME_MakeStringN(s->szData, s->nLen);
-}
-
 void ME_DestroyString(ME_String *s)
 {
   if (!s) return;
