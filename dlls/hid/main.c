@@ -64,6 +64,12 @@ void WINAPI HidD_GetHidGuid(LPGUID guid)
     *guid = HID_GUID;
 }
 
+BOOLEAN WINAPI HidD_GetManufacturerString(HANDLE HidDeviceObject, PVOID Buffer, ULONG BufferLength)
+{
+    FIXME("(%p %p %u) stub\n", HidDeviceObject, Buffer, BufferLength);
+    return FALSE;
+}
+
 BOOLEAN WINAPI HidD_SetFeature(HANDLE HidDeviceObject, PVOID ReportBuffer, ULONG ReportBufferLength)
 {
     FIXME("(%p %p %u) stub\n", HidDeviceObject, ReportBuffer, ReportBufferLength);

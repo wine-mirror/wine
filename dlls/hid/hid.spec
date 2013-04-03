@@ -6,7 +6,7 @@
 @ stdcall HidD_GetHidGuid(ptr)
 @ stub HidD_GetIndexedString
 @ stub HidD_GetInputReport
-@ stub HidD_GetManufacturerString
+@ stdcall HidD_GetManufacturerString(long ptr long)
 @ stub HidD_GetMsGenreDescriptor
 @ stub HidD_GetNumInputBuffers
 @ stub HidD_GetPhysicalDescriptor
