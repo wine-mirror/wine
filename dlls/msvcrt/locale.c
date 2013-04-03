@@ -1222,7 +1222,7 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
     for(i=0; i<sizeof(time_data)/sizeof(time_data[0]); i++) {
         if(time_data[i]==LOCALE_SSHORTDATE && !lcid[MSVCRT_LC_TIME]) {
             size += sizeof(cloc_short_date) + sizeof(cloc_short_dateW);
-        }else if(time_data[i]==LOCALE_SSHORTDATE && !lcid[MSVCRT_LC_TIME]) {
+        }else if(time_data[i]==LOCALE_SLONGDATE && !lcid[MSVCRT_LC_TIME]) {
             size += sizeof(cloc_long_date) + sizeof(cloc_long_dateW);
         }else {
             ret = GetLocaleInfoA(lcid_tmp, time_data[i]
@@ -1255,7 +1255,7 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
         if(time_data[i]==LOCALE_SSHORTDATE && !lcid[MSVCRT_LC_TIME]) {
             memcpy(&loc->locinfo->lc_time_curr->data[ret], cloc_short_date, sizeof(cloc_short_date));
             ret += sizeof(cloc_short_date);
-        }else if(time_data[i]==LOCALE_SSHORTDATE && !lcid[MSVCRT_LC_TIME]) {
+        }else if(time_data[i]==LOCALE_SLONGDATE && !lcid[MSVCRT_LC_TIME]) {
             memcpy(&loc->locinfo->lc_time_curr->data[ret], cloc_long_date, sizeof(cloc_long_date));
             ret += sizeof(cloc_long_date);
         }else if(time_data[i]==LOCALE_STIMEFORMAT && !lcid[MSVCRT_LC_TIME]) {
@@ -1271,7 +1271,7 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
         if(time_data[i]==LOCALE_SSHORTDATE && !lcid[MSVCRT_LC_TIME]) {
             memcpy(&loc->locinfo->lc_time_curr->data[ret], cloc_short_dateW, sizeof(cloc_short_dateW));
             ret += sizeof(cloc_short_dateW);
-        }else if(time_data[i]==LOCALE_SSHORTDATE && !lcid[MSVCRT_LC_TIME]) {
+        }else if(time_data[i]==LOCALE_SLONGDATE && !lcid[MSVCRT_LC_TIME]) {
             memcpy(&loc->locinfo->lc_time_curr->data[ret], cloc_long_dateW, sizeof(cloc_long_dateW));
             ret += sizeof(cloc_long_dateW);
         }else if(time_data[i]==LOCALE_STIMEFORMAT && !lcid[MSVCRT_LC_TIME]) {
