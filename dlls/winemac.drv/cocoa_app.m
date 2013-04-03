@@ -1206,6 +1206,49 @@ int macdrv_err_on;
         macdrv_release_event(event);
     }
 
+    - (NSApplicationTerminateReply) applicationShouldTerminate:(NSApplication *)sender
+    {
+        NSApplicationTerminateReply ret = NSTerminateNow;
+        NSAppleEventManager* m = [NSAppleEventManager sharedAppleEventManager];
+        NSAppleEventDescriptor* desc = [m currentAppleEvent];
+        macdrv_event* event;
+        WineEventQueue* queue;
+
+        event = macdrv_create_event(APP_QUIT_REQUESTED, nil);
+        event->deliver = 1;
+        switch ([[desc attributeDescriptorForKeyword:kAEQuitReason] int32Value])
+        {
+            case kAELogOut:
+            case kAEReallyLogOut:
+                event->app_quit_requested.reason = QUIT_REASON_LOGOUT;
+                break;
+            case kAEShowRestartDialog:
+                event->app_quit_requested.reason = QUIT_REASON_RESTART;
+                break;
+            case kAEShowShutdownDialog:
+                event->app_quit_requested.reason = QUIT_REASON_SHUTDOWN;
+                break;
+            default:
+                event->app_quit_requested.reason = QUIT_REASON_NONE;
+                break;
+        }
+
+        [eventQueuesLock lock];
+
+        if ([eventQueues count])
+        {
+            for (queue in eventQueues)
+                [queue postEvent:event];
+            ret = NSTerminateLater;
+        }
+
+        [eventQueuesLock unlock];
+
+        macdrv_release_event(event);
+
+        return ret;
+    }
+
     - (void)applicationWillFinishLaunching:(NSNotification *)notification
     {
         NSNotificationCenter* nc = [NSNotificationCenter defaultCenter];
@@ -1539,5 +1582,15 @@ void macdrv_set_application_icon(CFArrayRef images)
 
     OnMainThreadAsync(^{
         [NSApp setApplicationIconFromCGImageArray:imageArray];
+    });
+}
+
+/***********************************************************************
+ *              macdrv_quit_reply
+ */
+void macdrv_quit_reply(int reply)
+{
+    OnMainThread(^{
+        [NSApp replyToApplicationShouldTerminate:reply];
     });
 }

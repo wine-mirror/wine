@@ -149,6 +149,7 @@ extern void macdrv_window_frame_changed(HWND hwnd, CGRect frame) DECLSPEC_HIDDEN
 extern void macdrv_window_got_focus(HWND hwnd, const macdrv_event *event) DECLSPEC_HIDDEN;
 extern void macdrv_window_lost_focus(HWND hwnd, const macdrv_event *event) DECLSPEC_HIDDEN;
 extern void macdrv_app_deactivated(void) DECLSPEC_HIDDEN;
+extern void macdrv_app_quit_requested(const macdrv_event *event) DECLSPEC_HIDDEN;
 extern void macdrv_window_did_minimize(HWND hwnd) DECLSPEC_HIDDEN;
 extern void macdrv_window_did_unminimize(HWND hwnd) DECLSPEC_HIDDEN;
 

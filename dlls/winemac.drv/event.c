@@ -33,6 +33,7 @@ static const char *dbgstr_event(int type)
 {
     static const char * const event_names[] = {
         "APP_DEACTIVATED",
+        "APP_QUIT_REQUESTED",
         "DISPLAYS_CHANGED",
         "KEY_PRESS",
         "KEY_RELEASE",
@@ -87,6 +88,7 @@ static macdrv_event_mask get_event_mask(DWORD mask)
     if (mask & QS_POSTMESSAGE)
     {
         event_mask |= event_mask_for_type(APP_DEACTIVATED);
+        event_mask |= event_mask_for_type(APP_QUIT_REQUESTED);
         event_mask |= event_mask_for_type(DISPLAYS_CHANGED);
         event_mask |= event_mask_for_type(STATUS_ITEM_CLICKED);
         event_mask |= event_mask_for_type(WINDOW_CLOSE_REQUESTED);
@@ -164,6 +166,9 @@ void macdrv_handle_event(const macdrv_event *event)
     {
     case APP_DEACTIVATED:
         macdrv_app_deactivated();
+        break;
+    case APP_QUIT_REQUESTED:
+        macdrv_app_quit_requested(event);
         break;
     case DISPLAYS_CHANGED:
         macdrv_displays_changed(event);
@@ -257,7 +262,8 @@ DWORD CDECL macdrv_MsgWaitForMultipleObjectsEx(DWORD count, const HANDLE *handle
                                         timeout, flags & MWMO_ALERTABLE);
     }
 
-    if (data->current_event && data->current_event->type != QUERY_EVENT)
+    if (data->current_event && data->current_event->type != QUERY_EVENT &&
+        data->current_event->type != APP_QUIT_REQUESTED)
         event_mask = 0;  /* don't process nested events */
 
     if (process_events(data->queue, event_mask)) ret = count - 1;

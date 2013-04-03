@@ -134,6 +134,7 @@ extern int macdrv_start_cocoa_app(unsigned long long tickcount) DECLSPEC_HIDDEN;
 extern void macdrv_window_rejected_focus(const struct macdrv_event *event) DECLSPEC_HIDDEN;
 extern void macdrv_beep(void) DECLSPEC_HIDDEN;
 extern void macdrv_set_application_icon(CFArrayRef images) DECLSPEC_HIDDEN;
+extern void macdrv_quit_reply(int reply) DECLSPEC_HIDDEN;
 
 
 /* cursor */
@@ -153,6 +154,7 @@ extern int macdrv_set_display_mode(const struct macdrv_display* display,
 /* event */
 enum {
     APP_DEACTIVATED,
+    APP_QUIT_REQUESTED,
     DISPLAYS_CHANGED,
     KEY_PRESS,
     KEY_RELEASE,
@@ -172,6 +174,13 @@ enum {
     NUM_EVENT_TYPES
 };
 
+enum {
+    QUIT_REASON_NONE,
+    QUIT_REASON_LOGOUT,
+    QUIT_REASON_RESTART,
+    QUIT_REASON_SHUTDOWN,
+};
+
 typedef uint32_t macdrv_event_mask;
 
 typedef struct macdrv_event {
@@ -180,6 +189,9 @@ typedef struct macdrv_event {
     int                 type;
     macdrv_window       window;
     union {
+        struct {
+            int reason;
+        }                                           app_quit_requested;
         struct {
             int activating;
         }                                           displays_changed;
