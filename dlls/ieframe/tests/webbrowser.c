@@ -160,8 +160,9 @@ static int wb_version;
 #define DWL_EXPECT_BEFORE_NAVIGATE  0x01
 #define DWL_FROM_PUT_HREF           0x02
 #define DWL_FROM_GOBACK             0x04
-#define DWL_HTTP                    0x08
-#define DWL_REFRESH                 0x10
+#define DWL_FROM_GOFORWARD          0x08
+#define DWL_HTTP                    0x10
+#define DWL_REFRESH                 0x20
 
 static DWORD dwl_flags;
 
@@ -786,7 +787,8 @@ static void test_navigatecomplete2(DISPPARAMS *dp)
     ok(V_VT(dp->rgvarg+1) == VT_DISPATCH, "V_VT(dp->rgvarg+1) = %d\n", V_VT(dp->rgvarg+1));
     ok(V_DISPATCH(dp->rgvarg+1) == (IDispatch*)wb, "V_DISPATCH=%p, wb=%p\n", V_DISPATCH(dp->rgvarg+1), wb);
 
-    test_ready_state((dwl_flags & (DWL_FROM_PUT_HREF|DWL_FROM_GOBACK)) ? READYSTATE_COMPLETE : READYSTATE_LOADING);
+    test_ready_state((dwl_flags & (DWL_FROM_PUT_HREF|DWL_FROM_GOBACK|DWL_FROM_GOFORWARD))
+                     ? READYSTATE_COMPLETE : READYSTATE_LOADING);
 }
 
 static void test_documentcomplete(DISPPARAMS *dp)
@@ -857,7 +859,7 @@ static HRESULT WINAPI WebBrowserEvents2_Invoke(IDispatch *iface, DISPID dispIdMe
         test_OnBeforeNavigate(pDispParams->rgvarg+6, pDispParams->rgvarg+5, pDispParams->rgvarg+4,
                               pDispParams->rgvarg+3, pDispParams->rgvarg+2, pDispParams->rgvarg+1,
                               pDispParams->rgvarg);
-        test_ready_state((dwl_flags & DWL_FROM_PUT_HREF) ? READYSTATE_COMPLETE : READYSTATE_LOADING);
+        test_ready_state((dwl_flags & (DWL_FROM_PUT_HREF|DWL_FROM_GOFORWARD)) ? READYSTATE_COMPLETE : READYSTATE_LOADING);
         break;
 
     case DISPID_SETSECURELOCKICON:
@@ -2721,9 +2723,10 @@ static void test_download(DWORD flags)
     is_downloading = TRUE;
     dwl_flags = flags;
 
-    test_ready_state((flags & (DWL_FROM_PUT_HREF|DWL_FROM_GOBACK|DWL_REFRESH)) ? READYSTATE_COMPLETE : READYSTATE_LOADING);
+    test_ready_state((flags & (DWL_FROM_PUT_HREF|DWL_FROM_GOBACK|DWL_FROM_GOFORWARD|DWL_REFRESH))
+                     ? READYSTATE_COMPLETE : READYSTATE_LOADING);
 
-    if((is_http && !(flags & (DWL_FROM_GOBACK|DWL_REFRESH))) || (flags & DWL_EXPECT_BEFORE_NAVIGATE))
+    if((is_http && !(flags & (DWL_FROM_GOBACK|DWL_FROM_GOFORWARD|DWL_REFRESH))) || (flags & DWL_EXPECT_BEFORE_NAVIGATE))
         SET_EXPECT(Invoke_PROPERTYCHANGE);
 
     if(flags & DWL_EXPECT_BEFORE_NAVIGATE) {
@@ -2765,7 +2768,7 @@ static void test_download(DWORD flags)
         DispatchMessage(&msg);
     }
 
-    if((is_http && !(flags & (DWL_FROM_GOBACK|DWL_REFRESH))) || (flags & DWL_EXPECT_BEFORE_NAVIGATE))
+    if((is_http && !(flags & (DWL_FROM_GOBACK|DWL_FROM_GOFORWARD|DWL_REFRESH))) || (flags & DWL_EXPECT_BEFORE_NAVIGATE))
         todo_wine CHECK_CALLED(Invoke_PROPERTYCHANGE);
 
     if(flags & DWL_EXPECT_BEFORE_NAVIGATE) {
@@ -2942,6 +2945,21 @@ static void test_go_back(IWebBrowser2 *wb, const char *back_url)
     SET_EXPECT(Invoke_COMMANDSTATECHANGE);
     hres = IWebBrowser2_GoBack(wb);
     ok(hres == S_OK, "GoBack failed: %08x\n", hres);
+    CHECK_CALLED(Invoke_BEFORENAVIGATE2);
+    todo_wine CHECK_CALLED(Invoke_COMMANDSTATECHANGE);
+}
+
+static void test_go_forward(IWebBrowser2 *wb, const char *forward_url)
+{
+    HRESULT hres;
+
+    current_url = forward_url;
+    dwl_flags |= DWL_FROM_GOFORWARD;
+
+    SET_EXPECT(Invoke_BEFORENAVIGATE2);
+    SET_EXPECT(Invoke_COMMANDSTATECHANGE);
+    hres = IWebBrowser2_GoForward(wb);
+    ok(hres == S_OK, "GoForward failed: %08x\n", hres);
     CHECK_CALLED(Invoke_BEFORENAVIGATE2);
     todo_wine CHECK_CALLED(Invoke_COMMANDSTATECHANGE);
 }
@@ -3309,6 +3327,7 @@ static void init_test(IWebBrowser2 *webbrowser, DWORD flags)
 
     is_downloading = (flags & TEST_DOWNLOAD) != 0;
     is_first_load = TRUE;
+    dwl_flags = 0;
     use_container_olecmd = !(flags & TEST_NOOLECMD);
     use_container_dochostui = !(flags & TEST_NODOCHOST);
 }
@@ -3377,6 +3396,10 @@ static void test_WebBrowser(BOOL do_download, BOOL do_close)
             trace("GoBack...\n");
             test_go_back(webbrowser, "http://test.winehq.org/tests/hello.html");
             test_download(DWL_FROM_GOBACK|DWL_HTTP);
+
+            trace("GoForward...\n");
+            test_go_forward(webbrowser, "http://www.winehq.org/");
+            test_download(DWL_FROM_GOFORWARD|DWL_HTTP);
         }
 
         test_EnumVerbs(webbrowser);
@@ -3398,7 +3421,7 @@ static void test_WebBrowser(BOOL do_download, BOOL do_close)
     test_IServiceProvider(webbrowser);
 
     ref = IWebBrowser2_Release(webbrowser);
-    ok(ref == 0 || broken(do_download && !do_close && ref == 1), "ref=%d, expected 0\n", ref);
+    ok(ref == 0 || broken(do_download && !do_close), "ref=%d, expected 0\n", ref);
 }
 
 static void test_WebBrowserV1(void)
