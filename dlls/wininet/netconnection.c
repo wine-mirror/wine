@@ -1,7 +1,8 @@
 /*
- * Wininet - networking layer. Uses unix sockets or OpenSSL.
+ * Wininet - networking layer. Uses unix sockets.
  *
  * Copyright 2002 TransGaming Technologies Inc.
+ * Copyright 2013 Jacek Caban for CodeWeavers
  *
  * David Hammerton
  *
@@ -61,12 +62,6 @@
 #ifdef HAVE_NETINET_TCP_H
 # include <netinet/tcp.h>
 #endif
-#ifdef HAVE_OPENSSL_SSL_H
-# include <openssl/ssl.h>
-# include <openssl/opensslv.h>
-#undef FAR
-#undef DSA
-#endif
 
 #include <stdarg.h>
 #include <stdlib.h>
@@ -97,124 +92,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 /* FIXME!!!!!!
  *    This should use winsock - To use winsock the functions will have to change a bit
  *        as they are designed for unix sockets.
- *    SSL stuff should use crypt32.dll
  */
-
-#ifdef SONAME_LIBSSL
-
-#include <openssl/err.h>
-
-static void *OpenSSL_ssl_handle;
-static void *OpenSSL_crypto_handle;
-
-#if defined(OPENSSL_VERSION_NUMBER) && (OPENSSL_VERSION_NUMBER > 0x10000000)
-static const SSL_METHOD *meth;
-#else
-static SSL_METHOD *meth;
-#endif
-static SSL_CTX *ctx;
-static int error_idx;
-static int conn_idx;
-
-#define MAKE_FUNCPTR(f) static typeof(f) * p##f
-
-/* OpenSSL functions that we use */
-MAKE_FUNCPTR(SSL_library_init);
-MAKE_FUNCPTR(SSL_load_error_strings);
-MAKE_FUNCPTR(SSLv23_method);
-MAKE_FUNCPTR(SSL_CTX_free);
-MAKE_FUNCPTR(SSL_CTX_new);
-MAKE_FUNCPTR(SSL_CTX_ctrl);
-MAKE_FUNCPTR(SSL_new);
-MAKE_FUNCPTR(SSL_free);
-MAKE_FUNCPTR(SSL_ctrl);
-MAKE_FUNCPTR(SSL_set_fd);
-MAKE_FUNCPTR(SSL_connect);
-MAKE_FUNCPTR(SSL_shutdown);
-MAKE_FUNCPTR(SSL_write);
-MAKE_FUNCPTR(SSL_read);
-MAKE_FUNCPTR(SSL_pending);
-MAKE_FUNCPTR(SSL_get_error);
-MAKE_FUNCPTR(SSL_get_ex_new_index);
-MAKE_FUNCPTR(SSL_get_ex_data);
-MAKE_FUNCPTR(SSL_set_ex_data);
-MAKE_FUNCPTR(SSL_get_ex_data_X509_STORE_CTX_idx);
-MAKE_FUNCPTR(SSL_get_peer_certificate);
-MAKE_FUNCPTR(SSL_CTX_get_timeout);
-MAKE_FUNCPTR(SSL_CTX_set_timeout);
-MAKE_FUNCPTR(SSL_CTX_set_default_verify_paths);
-MAKE_FUNCPTR(SSL_CTX_set_verify);
-MAKE_FUNCPTR(SSL_get_current_cipher);
-MAKE_FUNCPTR(SSL_CIPHER_get_bits);
-
-/* OpenSSL's libcrypto functions that we use */
-MAKE_FUNCPTR(BIO_new_fp);
-MAKE_FUNCPTR(CRYPTO_num_locks);
-MAKE_FUNCPTR(CRYPTO_set_id_callback);
-MAKE_FUNCPTR(CRYPTO_set_locking_callback);
-MAKE_FUNCPTR(ERR_free_strings);
-MAKE_FUNCPTR(ERR_get_error);
-MAKE_FUNCPTR(ERR_error_string);
-MAKE_FUNCPTR(X509_STORE_CTX_get_ex_data);
-MAKE_FUNCPTR(X509_STORE_CTX_get_chain);
-MAKE_FUNCPTR(i2d_X509);
-MAKE_FUNCPTR(sk_num);
-MAKE_FUNCPTR(sk_value);
-#undef MAKE_FUNCPTR
-
-static CRITICAL_SECTION *ssl_locks;
-static unsigned int num_ssl_locks;
-
-static unsigned long ssl_thread_id(void)
-{
-    return GetCurrentThreadId();
-}
-
-static void ssl_lock_callback(int mode, int type, const char *file, int line)
-{
-    if (mode & CRYPTO_LOCK)
-        EnterCriticalSection(&ssl_locks[type]);
-    else
-        LeaveCriticalSection(&ssl_locks[type]);
-}
-
-static PCCERT_CONTEXT X509_to_cert_context(X509 *cert)
-{
-    unsigned char* buffer,*p;
-    INT len;
-    BOOL malloced = FALSE;
-    PCCERT_CONTEXT ret;
-
-    p = NULL;
-    len = pi2d_X509(cert,&p);
-    /*
-     * SSL 0.9.7 and above malloc the buffer if it is null.
-     * however earlier version do not and so we would need to alloc the buffer.
-     *
-     * see the i2d_X509 man page for more details.
-     */
-    if (!p)
-    {
-        buffer = heap_alloc(len);
-        p = buffer;
-        len = pi2d_X509(cert,&p);
-    }
-    else
-    {
-        buffer = p;
-        malloced = TRUE;
-    }
-
-    ret = CertCreateCertificateContext(X509_ASN_ENCODING,buffer,len);
-
-    if (malloced)
-        free(buffer);
-    else
-        heap_free(buffer);
-
-    return ret;
-}
-#endif /* SONAME_LIBSSL */
 
 static DWORD netconn_verify_cert(netconn_t *conn, PCCERT_CONTEXT cert, HCERTSTORE store)
 {
@@ -373,240 +251,6 @@ static DWORD netconn_verify_cert(netconn_t *conn, PCCERT_CONTEXT cert, HCERTSTOR
     return ERROR_SUCCESS;
 }
 
-#ifdef SONAME_LIBSSL
-static int netconn_secure_verify(int preverify_ok, X509_STORE_CTX *ctx)
-{
-    SSL *ssl;
-    BOOL ret = FALSE;
-    HCERTSTORE store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
-        CERT_STORE_CREATE_NEW_FLAG, NULL);
-    netconn_t *conn;
-
-    ssl = pX509_STORE_CTX_get_ex_data(ctx,
-        pSSL_get_ex_data_X509_STORE_CTX_idx());
-    conn = pSSL_get_ex_data(ssl, conn_idx);
-    if (store)
-    {
-        X509 *cert;
-        int i;
-        PCCERT_CONTEXT endCert = NULL;
-        struct stack_st *chain = (struct stack_st *)pX509_STORE_CTX_get_chain( ctx );
-
-        ret = TRUE;
-        for (i = 0; ret && i < psk_num(chain); i++)
-        {
-            PCCERT_CONTEXT context;
-
-            cert = (X509 *)psk_value(chain, i);
-            if ((context = X509_to_cert_context(cert)))
-            {
-                ret = CertAddCertificateContextToStore(store, context,
-                        CERT_STORE_ADD_ALWAYS, i ? NULL : &endCert);
-                CertFreeCertificateContext(context);
-            }
-        }
-        if (!endCert) ret = FALSE;
-        if (ret)
-        {
-            DWORD_PTR err = netconn_verify_cert(conn, endCert, store);
-
-            if (err)
-            {
-                pSSL_set_ex_data(ssl, error_idx, (void *)err);
-                ret = FALSE;
-            }
-        }
-        CertFreeCertificateContext(endCert);
-        CertCloseStore(store, 0);
-    }
-    return ret;
-}
-
-static long get_tls_option(void) {
-    long tls_option = SSL_OP_NO_SSLv2; /* disable SSLv2 for security reason, secur32/Schannel(GnuTLS) don't support it */
-#ifdef SSL_OP_NO_TLSv1_2
-    DWORD type, val, size;
-    HKEY hkey,tls12_client,tls11_client;
-    LONG res;
-    const WCHAR Schannel_Prot[] = {  /* SYSTEM\\CurrentControlSet\\Control\\SecurityProviders\\SCANNEL\\Protocols */
-              'S','Y','S','T','E','M','\\',
-              'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-              'C','o','n','t','r','o','l','\\',
-              'S','e','c','u','r','i','t','y','P','r','o','v','i','d','e','r','s','\\',
-              'S','C','H','A','N','N','E','L','\\',
-              'P','r','o','t','o','c','o','l','s',0 };
-     const WCHAR TLS12_Client[] = {'T','L','S',' ','1','.','2','\\','C','l','i','e','n','t',0};
-     const WCHAR TLS11_Client[] = {'T','L','S',' ','1','.','1','\\','C','l','i','e','n','t',0};
-     const WCHAR DisabledByDefault[] = {'D','i','s','a','b','l','e','d','B','y','D','e','f','a','u','l','t',0};
-
-    res = RegOpenKeyExW(HKEY_LOCAL_MACHINE,
-          Schannel_Prot,
-          0, KEY_READ, &hkey);
-    if (res != ERROR_SUCCESS) { /* enabled TLSv1.1/1.2 when no registry entry */
-        return tls_option;
-    }
-    if (RegOpenKeyExW(hkey, TLS12_Client, 0, KEY_READ, &tls12_client) == ERROR_SUCCESS) {
-        size = sizeof(DWORD);
-        if (RegQueryValueExW(tls12_client, DisabledByDefault, NULL, &type,  (LPBYTE) &val, &size) == ERROR_SUCCESS
-            && type == REG_DWORD) {
-            tls_option |= val?SSL_OP_NO_TLSv1_2:0;
-        }
-        RegCloseKey(tls12_client);
-    }
-    if (RegOpenKeyExW(hkey, TLS11_Client, 0, KEY_READ, &tls11_client) == ERROR_SUCCESS) {
-        size = sizeof(DWORD);
-        if (RegQueryValueExW(tls11_client, DisabledByDefault, NULL, &type,  (LPBYTE) &val, &size) == ERROR_SUCCESS
-            && type == REG_DWORD) {
-            tls_option |= val?SSL_OP_NO_TLSv1_1:0;
-        }
-        RegCloseKey(tls11_client);
-    }
-    RegCloseKey(hkey);
-#endif
-    return tls_option;
-}
-
-static CRITICAL_SECTION init_ssl_cs;
-static CRITICAL_SECTION_DEBUG init_ssl_cs_debug =
-{
-    0, 0, &init_ssl_cs,
-    { &init_ssl_cs_debug.ProcessLocksList,
-      &init_ssl_cs_debug.ProcessLocksList },
-    0, 0, { (DWORD_PTR)(__FILE__ ": init_ssl_cs") }
-};
-static CRITICAL_SECTION init_ssl_cs = { &init_ssl_cs_debug, -1, 0, 0, 0, 0 };
-
-static DWORD init_openssl(void)
-{
-#ifdef SONAME_LIBCRYPTO
-    unsigned int i;
-
-    if(OpenSSL_ssl_handle)
-        return ERROR_SUCCESS;
-
-    OpenSSL_ssl_handle = wine_dlopen(SONAME_LIBSSL, RTLD_NOW, NULL, 0);
-    if(!OpenSSL_ssl_handle) {
-        ERR("trying to use a SSL connection, but couldn't load %s. Expect trouble.\n", SONAME_LIBSSL);
-        return ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
-    }
-
-    OpenSSL_crypto_handle = wine_dlopen(SONAME_LIBCRYPTO, RTLD_NOW, NULL, 0);
-    if(!OpenSSL_crypto_handle) {
-        ERR("trying to use a SSL connection, but couldn't load %s. Expect trouble.\n", SONAME_LIBCRYPTO);
-        return ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
-    }
-
-    /* mmm nice ugly macroness */
-#define DYNSSL(x) \
-    p##x = wine_dlsym(OpenSSL_ssl_handle, #x, NULL, 0); \
-    if (!p##x) { \
-        ERR("failed to load symbol %s\n", #x); \
-        return ERROR_INTERNET_SECURITY_CHANNEL_ERROR; \
-    }
-
-    DYNSSL(SSL_library_init);
-    DYNSSL(SSL_load_error_strings);
-    DYNSSL(SSLv23_method);
-    DYNSSL(SSL_CTX_free);
-    DYNSSL(SSL_CTX_new);
-    DYNSSL(SSL_CTX_ctrl);
-    DYNSSL(SSL_new);
-    DYNSSL(SSL_free);
-    DYNSSL(SSL_ctrl);
-    DYNSSL(SSL_set_fd);
-    DYNSSL(SSL_connect);
-    DYNSSL(SSL_shutdown);
-    DYNSSL(SSL_write);
-    DYNSSL(SSL_read);
-    DYNSSL(SSL_pending);
-    DYNSSL(SSL_get_error);
-    DYNSSL(SSL_get_ex_new_index);
-    DYNSSL(SSL_get_ex_data);
-    DYNSSL(SSL_set_ex_data);
-    DYNSSL(SSL_get_ex_data_X509_STORE_CTX_idx);
-    DYNSSL(SSL_get_peer_certificate);
-    DYNSSL(SSL_CTX_get_timeout);
-    DYNSSL(SSL_CTX_set_timeout);
-    DYNSSL(SSL_CTX_set_default_verify_paths);
-    DYNSSL(SSL_CTX_set_verify);
-    DYNSSL(SSL_get_current_cipher);
-    DYNSSL(SSL_CIPHER_get_bits);
-#undef DYNSSL
-
-#define DYNCRYPTO(x) \
-    p##x = wine_dlsym(OpenSSL_crypto_handle, #x, NULL, 0); \
-    if (!p##x) { \
-        ERR("failed to load symbol %s\n", #x); \
-        return ERROR_INTERNET_SECURITY_CHANNEL_ERROR; \
-    }
-
-    DYNCRYPTO(BIO_new_fp);
-    DYNCRYPTO(CRYPTO_num_locks);
-    DYNCRYPTO(CRYPTO_set_id_callback);
-    DYNCRYPTO(CRYPTO_set_locking_callback);
-    DYNCRYPTO(ERR_free_strings);
-    DYNCRYPTO(ERR_get_error);
-    DYNCRYPTO(ERR_error_string);
-    DYNCRYPTO(X509_STORE_CTX_get_ex_data);
-    DYNCRYPTO(X509_STORE_CTX_get_chain);
-    DYNCRYPTO(i2d_X509);
-    DYNCRYPTO(sk_num);
-    DYNCRYPTO(sk_value);
-#undef DYNCRYPTO
-
-#define pSSL_CTX_set_options(ctx,op) \
-       pSSL_CTX_ctrl((ctx),SSL_CTRL_OPTIONS,(op),NULL)
-#define pSSL_set_options(ssl,op) \
-       pSSL_ctrl((ssl),SSL_CTRL_OPTIONS,(op),NULL)
-
-    pSSL_library_init();
-    pSSL_load_error_strings();
-    pBIO_new_fp(stderr, BIO_NOCLOSE); /* FIXME: should use winedebug stuff */
-
-    meth = pSSLv23_method();
-    ctx = pSSL_CTX_new(meth);
-    pSSL_CTX_set_options(ctx, get_tls_option());
-    if(!pSSL_CTX_set_default_verify_paths(ctx)) {
-        ERR("SSL_CTX_set_default_verify_paths failed: %s\n",
-            pERR_error_string(pERR_get_error(), 0));
-        return ERROR_OUTOFMEMORY;
-    }
-
-    error_idx = pSSL_get_ex_new_index(0, (void *)"error index", NULL, NULL, NULL);
-    if(error_idx == -1) {
-        ERR("SSL_get_ex_new_index failed; %s\n", pERR_error_string(pERR_get_error(), 0));
-        return ERROR_OUTOFMEMORY;
-    }
-
-    conn_idx = pSSL_get_ex_new_index(0, (void *)"netconn index", NULL, NULL, NULL);
-    if(conn_idx == -1) {
-        ERR("SSL_get_ex_new_index failed; %s\n", pERR_error_string(pERR_get_error(), 0));
-        return ERROR_OUTOFMEMORY;
-    }
-
-    pSSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, netconn_secure_verify);
-
-    pCRYPTO_set_id_callback(ssl_thread_id);
-    num_ssl_locks = pCRYPTO_num_locks();
-    ssl_locks = heap_alloc(num_ssl_locks * sizeof(CRITICAL_SECTION));
-    if(!ssl_locks)
-        return ERROR_OUTOFMEMORY;
-
-    for(i = 0; i < num_ssl_locks; i++)
-    {
-        InitializeCriticalSection(&ssl_locks[i]);
-        ssl_locks[i].DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": ssl_locks");
-    }
-    pCRYPTO_set_locking_callback(ssl_lock_callback);
-
-    return ERROR_SUCCESS;
-#else
-    FIXME("can't use SSL, libcrypto not compiled in.\n");
-    return ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
-#endif
-}
-#else
-
 static SecHandle cred_handle, compat_cred_handle;
 static BOOL cred_handle_initialized, have_compat_cred_handle;
 
@@ -653,8 +297,6 @@ static BOOL ensure_cred_handle(void)
 
     return TRUE;
 }
-
-#endif /* SONAME_LIBSSL */
 
 static DWORD create_netconn_socket(server_t *server, netconn_t *netconn, DWORD timeout)
 {
@@ -715,20 +357,6 @@ DWORD create_netconn(BOOL useSSL, server_t *server, DWORD security_flags, BOOL m
     netconn_t *netconn;
     int result;
 
-#ifdef SONAME_LIBSSL
-    if(useSSL) {
-        DWORD res;
-
-        TRACE("using SSL connection\n");
-
-        EnterCriticalSection(&init_ssl_cs);
-        res = init_openssl();
-        LeaveCriticalSection(&init_ssl_cs);
-        if(res != ERROR_SUCCESS)
-            return res;
-    }
-#endif
-
     netconn = heap_alloc_zero(sizeof(*netconn));
     if(!netconn)
         return ERROR_OUTOFMEMORY;
@@ -755,10 +383,6 @@ void free_netconn(netconn_t *netconn)
     server_release(netconn->server);
 
     if (netconn->secure) {
-#ifdef SONAME_LIBSSL
-        pSSL_shutdown(netconn->ssl_s);
-        pSSL_free(netconn->ssl_s);
-#else
         heap_free(netconn->peek_msg_mem);
         netconn->peek_msg_mem = NULL;
         netconn->peek_msg = NULL;
@@ -769,7 +393,6 @@ void free_netconn(netconn_t *netconn)
         netconn->extra_buf = NULL;
         netconn->extra_len = 0;
         DeleteSecurityContext(&netconn->ssl_ctx);
-#endif
     }
 
     closesocket(netconn->socket);
@@ -778,35 +401,11 @@ void free_netconn(netconn_t *netconn)
 
 void NETCON_unload(void)
 {
-#if defined(SONAME_LIBSSL) && defined(SONAME_LIBCRYPTO)
-    if (OpenSSL_crypto_handle)
-    {
-        pERR_free_strings();
-        wine_dlclose(OpenSSL_crypto_handle, NULL, 0);
-    }
-    if (OpenSSL_ssl_handle)
-    {
-        if (ctx)
-            pSSL_CTX_free(ctx);
-        wine_dlclose(OpenSSL_ssl_handle, NULL, 0);
-    }
-    if (ssl_locks)
-    {
-        unsigned int i;
-        for (i = 0; i < num_ssl_locks; i++)
-        {
-            ssl_locks[i].DebugInfo->Spare[0] = 0;
-            DeleteCriticalSection(&ssl_locks[i]);
-        }
-        heap_free(ssl_locks);
-    }
-#else
     if(cred_handle_initialized)
         FreeCredentialsHandle(&cred_handle);
     if(have_compat_cred_handle)
         FreeCredentialsHandle(&compat_cred_handle);
     DeleteCriticalSection(&init_sechandle_cs);
-#endif
 }
 
 /* translate a unix error code into a winsock one */
@@ -878,58 +477,6 @@ int sock_get_error( int err )
 
 static DWORD netcon_secure_connect_setup(netconn_t *connection, BOOL compat_mode)
 {
-#ifdef SONAME_LIBSSL
-    long tls_option;
-    void *ssl_s;
-    DWORD res;
-    int bits;
-
-    tls_option = get_tls_option();
-
-    if(compat_mode) {
-#ifdef SSL_OP_NO_TLSv1_2
-        tls_option |= SSL_OP_NO_TLSv1_1|SSL_OP_NO_TLSv1_2;
-        pSSL_CTX_set_options(ctx,SSL_OP_NO_TLSv1_1|SSL_OP_NO_TLSv1_2);
-#else
-        return ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
-#endif
-    }
-
-    ssl_s = pSSL_new(ctx);
-    if (!ssl_s)
-    {
-        ERR("SSL_new failed: %s\n",
-            pERR_error_string(pERR_get_error(), 0));
-        return ERROR_OUTOFMEMORY;
-    }
-
-    pSSL_set_options(ssl_s, tls_option);
-    if (!pSSL_set_fd(ssl_s, connection->socket))
-    {
-        ERR("SSL_set_fd failed: %s\n",
-            pERR_error_string(pERR_get_error(), 0));
-        res = ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
-        goto fail;
-    }
-
-    if (!pSSL_set_ex_data(ssl_s, conn_idx, connection))
-    {
-        ERR("SSL_set_ex_data failed: %s\n",
-            pERR_error_string(pERR_get_error(), 0));
-        res = ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
-        goto fail;
-    }
-    if (pSSL_connect(ssl_s) <= 0)
-    {
-        res = (DWORD_PTR)pSSL_get_ex_data(ssl_s, error_idx);
-        if (!res)
-            res = ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
-        ERR("SSL_connect failed: %d\n", res);
-        goto fail;
-    }
-
-    connection->ssl_s = ssl_s;
-#else
     SecBuffer out_buf = {0, SECBUFFER_TOKEN, NULL}, in_bufs[2] = {{0, SECBUFFER_TOKEN}, {0, SECBUFFER_EMPTY}};
     SecBufferDesc out_desc = {SECBUFFER_VERSION, 1, &out_buf}, in_desc = {SECBUFFER_VERSION, 2, in_bufs};
     SecHandle *cred = &cred_handle;
@@ -1068,7 +615,6 @@ static DWORD netcon_secure_connect_setup(netconn_t *connection, BOOL compat_mode
 
     TRACE("established SSL connection\n");
     connection->ssl_ctx = ctx;
-#endif
 
     connection->secure = TRUE;
     connection->security_flags |= SECURITY_FLAG_SECURE;
@@ -1084,16 +630,6 @@ static DWORD netcon_secure_connect_setup(netconn_t *connection, BOOL compat_mode
     if(connection->mask_errors)
         connection->server->security_flags = connection->security_flags;
     return ERROR_SUCCESS;
-
-#ifdef SONAME_LIBSSL
-fail:
-    if (ssl_s)
-    {
-        pSSL_shutdown(ssl_s);
-        pSSL_free(ssl_s);
-    }
-    return res;
-#endif
 }
 
 /******************************************************************************
@@ -1134,7 +670,6 @@ DWORD NETCON_secure_connect(netconn_t *connection, server_t *server)
     return res;
 }
 
-#ifndef SONAME_LIBSSL
 static BOOL send_ssl_chunk(netconn_t *conn, const void *msg, size_t size)
 {
     SecBuffer bufs[4] = {
@@ -1160,7 +695,6 @@ static BOOL send_ssl_chunk(netconn_t *conn, const void *msg, size_t size)
 
     return TRUE;
 }
-#endif
 
 /******************************************************************************
  * NETCON_send
@@ -1179,18 +713,6 @@ DWORD NETCON_send(netconn_t *connection, const void *msg, size_t len, int flags,
     }
     else
     {
-#ifdef SONAME_LIBSSL
-        if(!connection->secure) {
-            FIXME("not connected\n");
-            return ERROR_NOT_SUPPORTED;
-        }
-	if (flags)
-            FIXME("SSL_write doesn't support any flags (%08x)\n", flags);
-	*sent = pSSL_write(connection->ssl_s, msg, len);
-	if (*sent < 1 && len)
-	    return ERROR_INTERNET_CONNECTION_ABORTED;
-        return ERROR_SUCCESS;
-#else
         const BYTE *ptr = msg;
         size_t chunk_size;
 
@@ -1207,11 +729,9 @@ DWORD NETCON_send(netconn_t *connection, const void *msg, size_t len, int flags,
         }
 
         return ERROR_SUCCESS;
-#endif
     }
 }
 
-#ifndef SONAME_LIBSSL
 static BOOL read_ssl_chunk(netconn_t *conn, void *buf, SIZE_T buf_size, SIZE_T *ret_size, BOOL *eof)
 {
     const SIZE_T ssl_buf_size = conn->ssl_sizes.cbHeader+conn->ssl_sizes.cbMaximumMessage+conn->ssl_sizes.cbTrailer;
@@ -1304,7 +824,6 @@ static BOOL read_ssl_chunk(netconn_t *conn, void *buf, SIZE_T buf_size, SIZE_T *
 
     return TRUE;
 }
-#endif
 
 /******************************************************************************
  * NETCON_recv
@@ -1324,20 +843,6 @@ DWORD NETCON_recv(netconn_t *connection, void *buf, size_t len, int flags, int *
     }
     else
     {
-#ifdef SONAME_LIBSSL
-        if(!connection->secure) {
-            FIXME("not connected\n");
-            return ERROR_NOT_SUPPORTED;
-        }
-	*recvd = pSSL_read(connection->ssl_s, buf, len);
-
-        /* Check if EOF was received */
-        if(!*recvd && (pSSL_get_error(connection->ssl_s, *recvd)==SSL_ERROR_ZERO_RETURN
-                    || pSSL_get_error(connection->ssl_s, *recvd)==SSL_ERROR_SYSCALL))
-            return ERROR_SUCCESS;
-
-        return *recvd > 0 ? ERROR_SUCCESS : ERROR_INTERNET_CONNECTION_ABORTED;
-#else
         SIZE_T size = 0, cread;
         BOOL res, eof;
 
@@ -1378,7 +883,6 @@ DWORD NETCON_recv(netconn_t *connection, void *buf, size_t len, int flags, int *
         TRACE("received %ld bytes\n", size);
         *recvd = size;
         return ERROR_SUCCESS;
-#endif
     }
 }
 
@@ -1405,12 +909,7 @@ BOOL NETCON_query_data_available(netconn_t *connection, DWORD *available)
     }
     else
     {
-#ifdef SONAME_LIBSSL
-        *available = pSSL_pending(connection->ssl_s);
-#else
         *available = connection->peek_len;
-        return TRUE;
-#endif
     }
     return TRUE;
 }
@@ -1447,17 +946,6 @@ BOOL NETCON_is_alive(netconn_t *netconn)
 
 LPCVOID NETCON_GetCert(netconn_t *connection)
 {
-#ifdef SONAME_LIBSSL
-    X509* cert;
-    LPCVOID r = NULL;
-
-    if (!connection->secure)
-        return NULL;
-
-    cert = pSSL_get_peer_certificate(connection->ssl_s);
-    r = X509_to_cert_context(cert);
-    return r;
-#else
     const CERT_CONTEXT *ret;
     SECURITY_STATUS res;
 
@@ -1466,27 +954,10 @@ LPCVOID NETCON_GetCert(netconn_t *connection)
 
     res = QueryContextAttributesW(&connection->ssl_ctx, SECPKG_ATTR_REMOTE_CERT_CONTEXT, (void*)&ret);
     return res == SEC_E_OK ? ret : NULL;
-#endif
 }
 
 int NETCON_GetCipherStrength(netconn_t *connection)
 {
-#ifdef SONAME_LIBSSL
-#if defined(OPENSSL_VERSION_NUMBER) && (OPENSSL_VERSION_NUMBER >= 0x0090707f)
-    const SSL_CIPHER *cipher;
-#else
-    SSL_CIPHER *cipher;
-#endif
-    int bits = 0;
-
-    if (!connection->secure)
-        return 0;
-    cipher = pSSL_get_current_cipher(connection->ssl_s);
-    if (!cipher)
-        return 0;
-    pSSL_CIPHER_get_bits(cipher, &bits);
-    return bits;
-#else
     SecPkgContext_ConnectionInfo conn_info;
     SECURITY_STATUS res;
 
@@ -1497,7 +968,6 @@ int NETCON_GetCipherStrength(netconn_t *connection)
     if(res != SEC_E_OK)
         WARN("QueryContextAttributesW failed: %08x\n", res);
     return res == SEC_E_OK ? conn_info.dwCipherStrength : 0;
-#endif
 }
 
 DWORD NETCON_set_timeout(netconn_t *connection, BOOL send, DWORD value)

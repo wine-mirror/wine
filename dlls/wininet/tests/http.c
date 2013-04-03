@@ -3070,7 +3070,6 @@ static void test_cert_struct(HINTERNET req)
     ok(!info.lpszSignatureAlgName, "lpszSignatureAlgName = %s\n", info.lpszSignatureAlgName);
     ok(!info.lpszEncryptionAlgName, "lpszEncryptionAlgName = %s\n", info.lpszEncryptionAlgName);
     ok(!info.lpszProtocolName, "lpszProtocolName = %s\n", info.lpszProtocolName);
-    todo_wine
     ok(info.dwKeySize == 128, "dwKeySize = %u\n", info.dwKeySize);
 
     release_cert_info(&info);
