@@ -363,7 +363,7 @@ static IStream *get_travellog_stream(DocHost *This)
     return stream;
 }
 
-void dump_travellog(DocHost *This)
+static void dump_travellog(DocHost *This)
 {
     unsigned i;
 
