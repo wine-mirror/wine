@@ -1408,8 +1408,8 @@ BOOL NETCON_query_data_available(netconn_t *connection, DWORD *available)
 #ifdef SONAME_LIBSSL
         *available = pSSL_pending(connection->ssl_s);
 #else
-        FIXME("not supported on this platform\n");
-        return FALSE;
+        *available = connection->peek_len;
+        return TRUE;
 #endif
     }
     return TRUE;
