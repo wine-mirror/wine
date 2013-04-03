@@ -79,12 +79,12 @@
 
     - (void) postClickedEventWithCount:(int)count
     {
-        macdrv_event event;
-        event.type = STATUS_ITEM_CLICKED;
-        event.window = NULL;
-        event.status_item_clicked.item = (macdrv_status_item)self;
-        event.status_item_clicked.count = count;
-        [queue postEvent:&event];
+        macdrv_event* event;
+        event = macdrv_create_event(STATUS_ITEM_CLICKED, nil);
+        event->status_item_clicked.item = (macdrv_status_item)self;
+        event->status_item_clicked.count = count;
+        [queue postEvent:event];
+        macdrv_release_event(event);
     }
 
     - (void) clicked:(id)sender

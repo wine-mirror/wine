@@ -243,18 +243,18 @@ int macdrv_err_on;
 
     - (void) windowGotFocus:(WineWindow*)window
     {
-        macdrv_event event;
+        macdrv_event* event;
 
         [NSApp invalidateGotFocusEvents];
 
-        event.type = WINDOW_GOT_FOCUS;
-        event.window = (macdrv_window)[window retain];
-        event.window_got_focus.serial = windowFocusSerial;
+        event = macdrv_create_event(WINDOW_GOT_FOCUS, window);
+        event->window_got_focus.serial = windowFocusSerial;
         if (triedWindows)
-            event.window_got_focus.tried_windows = [triedWindows retain];
+            event->window_got_focus.tried_windows = [triedWindows retain];
         else
-            event.window_got_focus.tried_windows = [[NSMutableSet alloc] init];
-        [window.queue postEvent:&event];
+            event->window_got_focus.tried_windows = [[NSMutableSet alloc] init];
+        [window.queue postEvent:event];
+        macdrv_release_event(event);
     }
 
     - (void) windowRejectedFocusEvent:(const macdrv_event*)event
@@ -287,29 +287,25 @@ int macdrv_err_on;
                     kTISPropertyUnicodeKeyLayoutData);
             if (uchr)
             {
-                macdrv_event event;
+                macdrv_event* event;
                 WineEventQueue* queue;
 
-                event.type = KEYBOARD_CHANGED;
-                event.window = NULL;
-                event.keyboard_changed.keyboard_type = self.keyboardType;
-                event.keyboard_changed.iso_keyboard = (KBGetLayoutType(self.keyboardType) == kKeyboardISO);
-                event.keyboard_changed.uchr = CFDataCreateCopy(NULL, uchr);
+                event = macdrv_create_event(KEYBOARD_CHANGED, nil);
+                event->keyboard_changed.keyboard_type = self.keyboardType;
+                event->keyboard_changed.iso_keyboard = (KBGetLayoutType(self.keyboardType) == kKeyboardISO);
+                event->keyboard_changed.uchr = CFDataCreateCopy(NULL, uchr);
 
-                if (event.keyboard_changed.uchr)
+                if (event->keyboard_changed.uchr)
                 {
                     [eventQueuesLock lock];
 
                     for (queue in eventQueues)
-                    {
-                        CFRetain(event.keyboard_changed.uchr);
-                        [queue postEvent:&event];
-                    }
+                        [queue postEvent:event];
 
                     [eventQueuesLock unlock];
-
-                    CFRelease(event.keyboard_changed.uchr);
                 }
+
+                macdrv_release_event(event);
             }
 
             CFRelease(inputSource);
@@ -410,17 +406,18 @@ int macdrv_err_on;
 
     - (void) sendDisplaysChanged:(BOOL)activating
     {
-        macdrv_event event;
+        macdrv_event* event;
         WineEventQueue* queue;
 
-        event.type = DISPLAYS_CHANGED;
-        event.window = NULL;
-        event.displays_changed.activating = activating;
+        event = macdrv_create_event(DISPLAYS_CHANGED, nil);
+        event->displays_changed.activating = activating;
 
         [eventQueuesLock lock];
         for (queue in eventQueues)
-            [queue postEvent:&event];
+            [queue postEvent:event];
         [eventQueuesLock unlock];
+
+        macdrv_release_event(event);
     }
 
     // We can compare two modes directly using CFEqual, but that may require that
@@ -1187,18 +1184,19 @@ int macdrv_err_on;
 
     - (void)applicationDidResignActive:(NSNotification *)notification
     {
-        macdrv_event event;
+        macdrv_event* event;
         WineEventQueue* queue;
 
         [self invalidateGotFocusEvents];
 
-        event.type = APP_DEACTIVATED;
-        event.window = NULL;
+        event = macdrv_create_event(APP_DEACTIVATED, nil);
 
         [eventQueuesLock lock];
         for (queue in eventQueues)
-            [queue postEvent:&event];
+            [queue postEvent:event];
         [eventQueuesLock unlock];
+
+        macdrv_release_event(event);
     }
 
     - (void)applicationWillFinishLaunching:(NSNotification *)notification

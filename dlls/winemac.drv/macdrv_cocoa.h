@@ -175,6 +175,7 @@ enum {
 typedef uint32_t macdrv_event_mask;
 
 typedef struct macdrv_event {
+    int                 refs;
     int                 type;
     macdrv_window       window;
     union {
@@ -272,9 +273,9 @@ extern macdrv_event_queue macdrv_create_event_queue(macdrv_event_handler handler
 extern void macdrv_destroy_event_queue(macdrv_event_queue queue) DECLSPEC_HIDDEN;
 extern int macdrv_get_event_queue_fd(macdrv_event_queue queue) DECLSPEC_HIDDEN;
 
-extern int macdrv_get_event_from_queue(macdrv_event_queue queue,
-        macdrv_event_mask mask, macdrv_event *event) DECLSPEC_HIDDEN;
-extern void macdrv_cleanup_event(macdrv_event *event) DECLSPEC_HIDDEN;
+extern int macdrv_copy_event_from_queue(macdrv_event_queue queue,
+        macdrv_event_mask mask, macdrv_event **event) DECLSPEC_HIDDEN;
+extern void macdrv_release_event(macdrv_event *event) DECLSPEC_HIDDEN;
 
 extern macdrv_query* macdrv_create_query(void) DECLSPEC_HIDDEN;
 extern macdrv_query* macdrv_retain_query(macdrv_query *query) DECLSPEC_HIDDEN;

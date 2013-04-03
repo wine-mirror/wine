@@ -678,17 +678,18 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
     - (void) postMouseButtonEvent:(NSEvent *)theEvent pressed:(int)pressed
     {
         CGPoint pt = CGEventGetLocation([theEvent CGEvent]);
-        macdrv_event event;
+        macdrv_event* event;
 
-        event.type = MOUSE_BUTTON;
-        event.window = (macdrv_window)[self retain];
-        event.mouse_button.button = [theEvent buttonNumber];
-        event.mouse_button.pressed = pressed;
-        event.mouse_button.x = pt.x;
-        event.mouse_button.y = pt.y;
-        event.mouse_button.time_ms = [NSApp ticksForEventTime:[theEvent timestamp]];
+        event = macdrv_create_event(MOUSE_BUTTON, self);
+        event->mouse_button.button = [theEvent buttonNumber];
+        event->mouse_button.pressed = pressed;
+        event->mouse_button.x = pt.x;
+        event->mouse_button.y = pt.y;
+        event->mouse_button.time_ms = [NSApp ticksForEventTime:[theEvent timestamp]];
 
-        [queue postEvent:&event];
+        [queue postEvent:event];
+
+        macdrv_release_event(event);
     }
 
     - (void) makeFocused
@@ -750,15 +751,14 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
            modifiers:(NSUInteger)modifiers
                event:(NSEvent*)theEvent
     {
-        macdrv_event event;
+        macdrv_event* event;
         CGEventRef cgevent;
         WineApplication* app = (WineApplication*)NSApp;
 
-        event.type          = pressed ? KEY_PRESS : KEY_RELEASE;
-        event.window        = (macdrv_window)[self retain];
-        event.key.keycode   = keyCode;
-        event.key.modifiers = modifiers;
-        event.key.time_ms   = [app ticksForEventTime:[theEvent timestamp]];
+        event = macdrv_create_event(pressed ? KEY_PRESS : KEY_RELEASE, self);
+        event->key.keycode   = keyCode;
+        event->key.modifiers = modifiers;
+        event->key.time_ms   = [app ticksForEventTime:[theEvent timestamp]];
 
         if ((cgevent = [theEvent CGEvent]))
         {
@@ -771,7 +771,9 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
             }
         }
 
-        [queue postEvent:&event];
+        [queue postEvent:event];
+
+        macdrv_release_event(event);
     }
 
     - (void) postKeyEvent:(NSEvent *)theEvent
@@ -785,15 +787,15 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
     - (void) postMouseMovedEvent:(NSEvent *)theEvent absolute:(BOOL)absolute
     {
-        macdrv_event event;
+        macdrv_event* event;
 
         if (absolute)
         {
             CGPoint point = CGEventGetLocation([theEvent CGEvent]);
 
-            event.type = MOUSE_MOVED_ABSOLUTE;
-            event.mouse_moved.x = point.x;
-            event.mouse_moved.y = point.y;
+            event = macdrv_create_event(MOUSE_MOVED_ABSOLUTE, self);
+            event->mouse_moved.x = point.x;
+            event->mouse_moved.y = point.y;
 
             mouseMoveDeltaX = 0;
             mouseMoveDeltaY = 0;
@@ -805,22 +807,23 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
             mouseMoveDeltaX += [theEvent deltaX];
             mouseMoveDeltaY += [theEvent deltaY];
 
-            event.type = MOUSE_MOVED;
-            event.mouse_moved.x = mouseMoveDeltaX;
-            event.mouse_moved.y = mouseMoveDeltaY;
+            event = macdrv_create_event(MOUSE_MOVED, self);
+            event->mouse_moved.x = mouseMoveDeltaX;
+            event->mouse_moved.y = mouseMoveDeltaY;
 
             /* Keep the remainder after integer truncation. */
-            mouseMoveDeltaX -= event.mouse_moved.x;
-            mouseMoveDeltaY -= event.mouse_moved.y;
+            mouseMoveDeltaX -= event->mouse_moved.x;
+            mouseMoveDeltaY -= event->mouse_moved.y;
         }
 
-        if (event.type == MOUSE_MOVED_ABSOLUTE || event.mouse_moved.x || event.mouse_moved.y)
+        if (event->type == MOUSE_MOVED_ABSOLUTE || event->mouse_moved.x || event->mouse_moved.y)
         {
-            event.window = (macdrv_window)[self retain];
-            event.mouse_moved.time_ms = [NSApp ticksForEventTime:[theEvent timestamp]];
+            event->mouse_moved.time_ms = [NSApp ticksForEventTime:[theEvent timestamp]];
 
-            [queue postEvent:&event];
+            [queue postEvent:event];
         }
+
+        macdrv_release_event(event);
     }
 
     - (void) setLevelWhenActive:(NSInteger)level
@@ -1006,7 +1009,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
     - (void) scrollWheel:(NSEvent *)theEvent
     {
         CGPoint pt;
-        macdrv_event event;
+        macdrv_event* event;
         CGEventRef cgevent;
         CGFloat x, y;
         BOOL continuous = FALSE;
@@ -1014,11 +1017,10 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         cgevent = [theEvent CGEvent];
         pt = CGEventGetLocation(cgevent);
 
-        event.type = MOUSE_SCROLL;
-        event.window = (macdrv_window)[self retain];
-        event.mouse_scroll.x = pt.x;
-        event.mouse_scroll.y = pt.y;
-        event.mouse_scroll.time_ms = [NSApp ticksForEventTime:[theEvent timestamp]];
+        event = macdrv_create_event(MOUSE_SCROLL, self);
+        event->mouse_scroll.x = pt.x;
+        event->mouse_scroll.y = pt.y;
+        event->mouse_scroll.time_ms = [NSApp ticksForEventTime:[theEvent timestamp]];
 
         if (CGEventGetIntegerValueField(cgevent, kCGScrollWheelEventIsContinuous))
         {
@@ -1055,8 +1057,8 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         /* The x,y values so far are in pixels.  Win32 expects to receive some
            fraction of WHEEL_DELTA == 120.  By my estimation, that's roughly
            6 times the pixel value. */
-        event.mouse_scroll.x_scroll = 6 * x;
-        event.mouse_scroll.y_scroll = 6 * y;
+        event->mouse_scroll.x_scroll = 6 * x;
+        event->mouse_scroll.y_scroll = 6 * y;
 
         if (!continuous)
         {
@@ -1066,19 +1068,21 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
                scroll distance, the user is sure to get some action out of each click.
                For example, this is important for rotating though weapons in a
                first-person shooter. */
-            if (0 < event.mouse_scroll.x_scroll && event.mouse_scroll.x_scroll < 120)
-                event.mouse_scroll.x_scroll = 120;
-            else if (-120 < event.mouse_scroll.x_scroll && event.mouse_scroll.x_scroll < 0)
-                event.mouse_scroll.x_scroll = -120;
+            if (0 < event->mouse_scroll.x_scroll && event->mouse_scroll.x_scroll < 120)
+                event->mouse_scroll.x_scroll = 120;
+            else if (-120 < event->mouse_scroll.x_scroll && event->mouse_scroll.x_scroll < 0)
+                event->mouse_scroll.x_scroll = -120;
 
-            if (0 < event.mouse_scroll.y_scroll && event.mouse_scroll.y_scroll < 120)
-                event.mouse_scroll.y_scroll = 120;
-            else if (-120 < event.mouse_scroll.y_scroll && event.mouse_scroll.y_scroll < 0)
-                event.mouse_scroll.y_scroll = -120;
+            if (0 < event->mouse_scroll.y_scroll && event->mouse_scroll.y_scroll < 120)
+                event->mouse_scroll.y_scroll = 120;
+            else if (-120 < event->mouse_scroll.y_scroll && event->mouse_scroll.y_scroll < 0)
+                event->mouse_scroll.y_scroll = -120;
         }
 
-        if (event.mouse_scroll.x_scroll || event.mouse_scroll.y_scroll)
-            [queue postEvent:&event];
+        if (event->mouse_scroll.x_scroll || event->mouse_scroll.y_scroll)
+            [queue postEvent:event];
+
+        macdrv_release_event(event);
     }
 
 
@@ -1100,16 +1104,16 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
     {
         if (!ignore_windowDeminiaturize)
         {
-            macdrv_event event;
+            macdrv_event* event;
 
             /* Coalesce events by discarding any previous ones still in the queue. */
             [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_DID_MINIMIZE) |
                                              event_mask_for_type(WINDOW_DID_UNMINIMIZE)
                                    forWindow:self];
 
-            event.type = WINDOW_DID_UNMINIMIZE;
-            event.window = (macdrv_window)[self retain];
-            [queue postEvent:&event];
+            event = macdrv_create_event(WINDOW_DID_UNMINIMIZE, self);
+            [queue postEvent:event];
+            macdrv_release_event(event);
         }
 
         ignore_windowDeminiaturize = FALSE;
@@ -1131,18 +1135,18 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
     - (void)windowDidResignKey:(NSNotification *)notification
     {
-        macdrv_event event;
+        macdrv_event* event;
 
         if (causing_becomeKeyWindow) return;
 
-        event.type = WINDOW_LOST_FOCUS;
-        event.window = (macdrv_window)[self retain];
-        [queue postEvent:&event];
+        event = macdrv_create_event(WINDOW_LOST_FOCUS, self);
+        [queue postEvent:event];
+        macdrv_release_event(event);
     }
 
     - (void)windowDidResize:(NSNotification *)notification
     {
-        macdrv_event event;
+        macdrv_event* event;
         NSRect frame = [self contentRectForFrameRect:[self frame]];
 
         [NSApp flipRect:&frame];
@@ -1151,18 +1155,17 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_FRAME_CHANGED)
                                forWindow:self];
 
-        event.type = WINDOW_FRAME_CHANGED;
-        event.window = (macdrv_window)[self retain];
-        event.window_frame_changed.frame = NSRectToCGRect(frame);
-        [queue postEvent:&event];
+        event = macdrv_create_event(WINDOW_FRAME_CHANGED, self);
+        event->window_frame_changed.frame = NSRectToCGRect(frame);
+        [queue postEvent:event];
+        macdrv_release_event(event);
     }
 
     - (BOOL)windowShouldClose:(id)sender
     {
-        macdrv_event event;
-        event.type = WINDOW_CLOSE_REQUESTED;
-        event.window = (macdrv_window)[self retain];
-        [queue postEvent:&event];
+        macdrv_event* event = macdrv_create_event(WINDOW_CLOSE_REQUESTED, self);
+        [queue postEvent:event];
+        macdrv_release_event(event);
         return NO;
     }
 
@@ -1170,16 +1173,16 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
     {
         if (!ignore_windowMiniaturize)
         {
-            macdrv_event event;
+            macdrv_event* event;
 
             /* Coalesce events by discarding any previous ones still in the queue. */
             [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_DID_MINIMIZE) |
                                              event_mask_for_type(WINDOW_DID_UNMINIMIZE)
                                    forWindow:self];
 
-            event.type = WINDOW_DID_MINIMIZE;
-            event.window = (macdrv_window)[self retain];
-            [queue postEvent:&event];
+            event = macdrv_create_event(WINDOW_DID_MINIMIZE, self);
+            [queue postEvent:event];
+            macdrv_release_event(event);
         }
 
         ignore_windowMiniaturize = FALSE;

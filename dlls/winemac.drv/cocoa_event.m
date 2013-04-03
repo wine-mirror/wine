@@ -35,23 +35,29 @@ static NSString* const WineEventQueueThreadDictionaryKey = @"WineEventQueueThrea
 @interface MacDrvEvent : NSObject
 {
 @public
-    macdrv_event event;
+    macdrv_event* event;
 }
 
-    - (id) initWithEvent:(const macdrv_event*)event;
+    - (id) initWithEvent:(macdrv_event*)event;
 
 @end
 
 @implementation MacDrvEvent
 
-    - (id) initWithEvent:(const macdrv_event*)inEvent
+    - (id) initWithEvent:(macdrv_event*)inEvent
     {
         self = [super init];
         if (self)
         {
-            event = *inEvent;
+            event = macdrv_retain_event(inEvent);
         }
         return self;
+    }
+
+    - (void) dealloc
+    {
+        if (event) macdrv_release_event(event);
+        [super dealloc];
     }
 
 @end
@@ -151,28 +157,26 @@ static NSString* const WineEventQueueThreadDictionaryKey = @"WineEventQueueThrea
 
         [eventsLock lock];
 
-        if ((event->event.type == MOUSE_MOVED ||
-             event->event.type == MOUSE_MOVED_ABSOLUTE) &&
+        if ((event->event->type == MOUSE_MOVED ||
+             event->event->type == MOUSE_MOVED_ABSOLUTE) &&
             (lastEvent = [events lastObject]) &&
-            (lastEvent->event.type == MOUSE_MOVED ||
-             lastEvent->event.type == MOUSE_MOVED_ABSOLUTE) &&
-            lastEvent->event.window == event->event.window)
+            (lastEvent->event->type == MOUSE_MOVED ||
+             lastEvent->event->type == MOUSE_MOVED_ABSOLUTE) &&
+            lastEvent->event->window == event->event->window)
         {
-            if (event->event.type == MOUSE_MOVED)
+            if (event->event->type == MOUSE_MOVED)
             {
-                lastEvent->event.mouse_moved.x += event->event.mouse_moved.x;
-                lastEvent->event.mouse_moved.y += event->event.mouse_moved.y;
+                lastEvent->event->mouse_moved.x += event->event->mouse_moved.x;
+                lastEvent->event->mouse_moved.y += event->event->mouse_moved.y;
             }
             else
             {
-                lastEvent->event.type = MOUSE_MOVED_ABSOLUTE;
-                lastEvent->event.mouse_moved.x = event->event.mouse_moved.x;
-                lastEvent->event.mouse_moved.y = event->event.mouse_moved.y;
+                lastEvent->event->type = MOUSE_MOVED_ABSOLUTE;
+                lastEvent->event->mouse_moved.x = event->event->mouse_moved.x;
+                lastEvent->event->mouse_moved.y = event->event->mouse_moved.y;
             }
 
-            lastEvent->event.mouse_moved.time_ms = event->event.mouse_moved.time_ms;
-
-            macdrv_cleanup_event(&event->event);
+            lastEvent->event->mouse_moved.time_ms = event->event->mouse_moved.time_ms;
         }
         else
             [events addObject:event];
@@ -182,7 +186,7 @@ static NSString* const WineEventQueueThreadDictionaryKey = @"WineEventQueueThrea
         [self signalEventAvailable];
     }
 
-    - (void) postEvent:(const macdrv_event*)inEvent
+    - (void) postEvent:(macdrv_event*)inEvent
     {
         MacDrvEvent* event = [[MacDrvEvent alloc] initWithEvent:inEvent];
         [self postEventObject:event];
@@ -215,7 +219,7 @@ static NSString* const WineEventQueueThreadDictionaryKey = @"WineEventQueueThrea
         index = 0;
         for (event in events)
         {
-            if (event_mask_for_type(event->event.type) & mask)
+            if (event_mask_for_type(event->event->type) & mask)
                 break;
 
             index++;
@@ -233,18 +237,14 @@ static NSString* const WineEventQueueThreadDictionaryKey = @"WineEventQueueThrea
 
     - (void) discardEventsMatchingMask:(macdrv_event_mask)mask forWindow:(NSWindow*)window
     {
-        NSMutableIndexSet* indexes = [[[NSMutableIndexSet alloc] init] autorelease];
+        NSIndexSet* indexes;
 
         [eventsLock lock];
 
-        [events enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop){
+        indexes = [events indexesOfObjectsPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop){
             MacDrvEvent* event = obj;
-            if ((event_mask_for_type(event->event.type) & mask) &&
-                (!window || event->event.window == (macdrv_window)window))
-            {
-                macdrv_cleanup_event(&event->event);
-                [indexes addIndex:idx];
-            }
+            return ((event_mask_for_type(event->event->type) & mask) &&
+                    (!window || event->event->window == (macdrv_window)window));
         }];
 
         [events removeObjectsAtIndexes:indexes];
@@ -254,16 +254,16 @@ static NSString* const WineEventQueueThreadDictionaryKey = @"WineEventQueueThrea
 
     - (BOOL) query:(macdrv_query*)query timeout:(NSTimeInterval)timeout processEvents:(BOOL)processEvents
     {
-        macdrv_event event;
+        macdrv_event* event;
         NSDate* timeoutDate = [NSDate dateWithTimeIntervalSinceNow:timeout];
         BOOL timedout;
 
-        event.type = QUERY_EVENT;
-        event.window = (macdrv_window)[(WineWindow*)query->window retain];
-        event.query_event.query = macdrv_retain_query(query);
+        event = macdrv_create_event(QUERY_EVENT, (WineWindow*)query->window);
+        event->query_event.query = macdrv_retain_query(query);
         query->done = FALSE;
 
-        [self postEvent:&event];
+        [self postEvent:event];
+        macdrv_release_event(event);
         timedout = ![NSApp waitUntilQueryDone:&query->done timeout:timeoutDate processEvents:processEvents];
         return !timedout && query->status;
     }
@@ -309,8 +309,7 @@ void OnMainThread(dispatch_block_t block)
         while (!finished &&
                (macDrvEvent = [queue getEventMatchingMask:event_mask_for_type(QUERY_EVENT)]))
         {
-            queue->event_handler(&macDrvEvent->event);
-            macdrv_cleanup_event(&macDrvEvent->event);
+            queue->event_handler(macDrvEvent->event);
         }
 
         if (!finished)
@@ -385,56 +384,83 @@ int macdrv_get_event_queue_fd(macdrv_event_queue queue)
 }
 
 /***********************************************************************
- *              macdrv_get_event_from_queue
+ *              macdrv_copy_event_from_queue
  *
  * Pull an event matching the event mask from the event queue and store
  * it in the event record pointed to by the event parameter.  If a
  * matching event was found, return non-zero; otherwise, return 0.
  *
- * The caller is responsible for calling macdrv_cleanup_event on any
+ * The caller is responsible for calling macdrv_release_event on any
  * event returned by this function.
  */
-int macdrv_get_event_from_queue(macdrv_event_queue queue,
-        macdrv_event_mask mask, macdrv_event *event)
+int macdrv_copy_event_from_queue(macdrv_event_queue queue,
+        macdrv_event_mask mask, macdrv_event **event)
 {
     NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
     WineEventQueue* q = (WineEventQueue*)queue;
 
     MacDrvEvent* macDrvEvent = [q getEventMatchingMask:mask];
     if (macDrvEvent)
-        *event = macDrvEvent->event;
+        *event = macdrv_retain_event(macDrvEvent->event);
 
     [pool release];
     return (macDrvEvent != nil);
 }
 
 /***********************************************************************
- *              macdrv_cleanup_event
- *
- * Performs cleanup of an event.  For event types which carry resources
- * such as allocated memory or retained objects, frees/releases those
- * resources.
+ *              macdrv_create_event
  */
-void macdrv_cleanup_event(macdrv_event *event)
+macdrv_event* macdrv_create_event(int type, WineWindow* window)
 {
-    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+    macdrv_event *event;
 
-    switch (event->type)
+    event = calloc(1, sizeof(*event));
+    event->refs = 1;
+    event->type = type;
+    event->window = (macdrv_window)[window retain];
+    return event;
+}
+
+/***********************************************************************
+ *              macdrv_retain_event
+ */
+macdrv_event* macdrv_retain_event(macdrv_event *event)
+{
+    OSAtomicIncrement32Barrier(&event->refs);
+    return event;
+}
+
+/***********************************************************************
+ *              macdrv_release_event
+ *
+ * Decrements the reference count of an event.  If the count falls to
+ * zero, cleans up any resources, such as allocated memory or retained
+ * objects, held by the event and deallocates it
+ */
+void macdrv_release_event(macdrv_event *event)
+{
+    if (OSAtomicDecrement32Barrier(&event->refs) <= 0)
     {
-        case KEYBOARD_CHANGED:
-            CFRelease(event->keyboard_changed.uchr);
-            break;
-        case QUERY_EVENT:
-            macdrv_release_query(event->query_event.query);
-            break;
-        case WINDOW_GOT_FOCUS:
-            [(NSMutableSet*)event->window_got_focus.tried_windows release];
-            break;
+        NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+
+        switch (event->type)
+        {
+            case KEYBOARD_CHANGED:
+                CFRelease(event->keyboard_changed.uchr);
+                break;
+            case QUERY_EVENT:
+                macdrv_release_query(event->query_event.query);
+                break;
+            case WINDOW_GOT_FOCUS:
+                [(NSMutableSet*)event->window_got_focus.tried_windows release];
+                break;
+        }
+
+        [(WineWindow*)event->window release];
+        free(event);
+
+        [pool release];
     }
-
-    [(WineWindow*)event->window release];
-
-    [pool release];
 }
 
 /***********************************************************************

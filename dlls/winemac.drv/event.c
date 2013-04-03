@@ -223,14 +223,14 @@ void macdrv_handle_event(const macdrv_event *event)
  */
 static int process_events(macdrv_event_queue queue, macdrv_event_mask mask)
 {
-    macdrv_event event;
+    macdrv_event *event;
     int count = 0;
 
-    while (macdrv_get_event_from_queue(queue, mask, &event))
+    while (macdrv_copy_event_from_queue(queue, mask, &event))
     {
         count++;
-        macdrv_handle_event(&event);
-        macdrv_cleanup_event(&event);
+        macdrv_handle_event(event);
+        macdrv_release_event(event);
     }
     if (count) TRACE("processed %d events\n", count);
     return count;
