@@ -545,6 +545,16 @@ interface nsILoadGroup : nsIRequest
 ]
 interface nsIChannel : nsIRequest
 {
+    const UINT LOAD_DOCUMENT_URI            = 1 << 16;
+    const UINT LOAD_RETARGETED_DOCUMENT_URI = 1 << 17;
+    const UINT LOAD_REPLACE                 = 1 << 18;
+    const UINT LOAD_INITIAL_DOCUMENT_URI    = 1 << 19;
+    const UINT LOAD_TARGETED                = 1 << 20;
+    const UINT LOAD_CALL_CONTENT_SNIFFERS   = 1 << 21;
+    const UINT LOAD_CLASSIFY_URI            = 1 << 22;
+    const UINT LOAD_TREAT_APPLICATION_OCTET_STREAM_AS_UNKNOWN = 1 << 23;
+    const UINT LOAD_EXPLICIT_CREDENTIALS    = 1 << 24;
+
     nsresult GetOriginalURI(nsIURI **aOriginalURI);
     nsresult SetOriginalURI(nsIURI *aOriginalURI);
     nsresult GetURI(nsIURI **aURI);
@@ -2299,10 +2309,6 @@ interface nsIBaseWindow : nsISupports
     nsresult SetTitle(const PRUnichar *aTitle);
 }
 
-cpp_quote("#define LOAD_FLAGS_NONE           0x00000000")
-cpp_quote("#define LOAD_REPLACE              0x00040000")
-cpp_quote("#define LOAD_INITIAL_DOCUMENT_URI 0x00080000")
-
 [
     object,
     uuid(f5d9e7b0-d930-11d3-b057-00a024ffc08c),
@@ -2310,6 +2316,25 @@ cpp_quote("#define LOAD_INITIAL_DOCUMENT_URI 0x00080000")
 ]
 interface nsIWebNavigation : nsISupports
 {
+    const UINT LOAD_FLAGS_MASK                    =  0xffff;
+    const UINT LOAD_FLAGS_NONE                    =       0;
+    const UINT LOAD_FLAGS_IS_REFRESH              =  0x0010;
+    const UINT LOAD_FLAGS_IS_LINK                 =  0x0020;
+    const UINT LOAD_FLAGS_BYPASS_HISTORY          =  0x0040;
+    const UINT LOAD_FLAGS_REPLACE_HISTORY         =  0x0080;
+    const UINT LOAD_FLAGS_BYPASS_CACHE            =  0x0100;
+    const UINT LOAD_FLAGS_BYPASS_PROXY            =  0x0200;
+    const UINT LOAD_FLAGS_CHARSET_CHANGE          =  0x0400;
+    const UINT LOAD_FLAGS_STOP_CONTENT            =  0x0800;
+    const UINT LOAD_FLAGS_FROM_EXTERNAL           =  0x1000;
+    const UINT LOAD_FLAGS_ALLOW_THIRD_PARTY_FIXUP =  0x2000;
+    const UINT LOAD_FLAGS_FIRST_LOAD              =  0x4000;
+    const UINT LOAD_FLAGS_ALLOW_POPUPS            =  0x8000;
+    const UINT LOAD_FLAGS_BYPASS_CLASSIFIER       = 0x10000;
+    const UINT LOAD_FLAGS_FORCE_ALLOW_COOKIES     = 0x20000;
+    const UINT LOAD_FLAGS_DISALLOW_INHERIT_OWNER  = 0x40000;
+    const UINT LOAD_FLAGS_URI_IS_UTF8             = 0x80000;
+
     nsresult GetCanGoBack(bool *aCanGoBack);
     nsresult GetCanGoForward(bool *aCanGoForward);
     nsresult GoBack();

@@ -379,7 +379,7 @@ HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, nsChannel
         remove_target_tasks(This->task_magic);
         abort_window_bindings(This->window->base.inner_window);
 
-        hres = load_nsuri(This->window, nsuri, bscallback, 0/*LOAD_INITIAL_DOCUMENT_URI*/);
+        hres = load_nsuri(This->window, nsuri, bscallback, LOAD_FLAGS_BYPASS_CACHE);
         nsISupports_Release((nsISupports*)nsuri); /* FIXME */
         if(SUCCEEDED(hres))
             hres = create_pending_window(This->window, bscallback);
