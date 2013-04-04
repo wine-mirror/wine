@@ -931,6 +931,15 @@ void buffer_internal_preload(struct wined3d_buffer *buffer, struct wined3d_conte
 void CDECL wined3d_buffer_preload(struct wined3d_buffer *buffer)
 {
     struct wined3d_context *context;
+    struct wined3d_device *device = buffer->resource.device;
+
+    if (wined3d_settings.cs_multithreaded)
+    {
+        FIXME("Waiting for cs.\n");
+        wined3d_cs_emit_glfinish(device->cs);
+        device->cs->ops->finish(device->cs);
+    }
+
     context = context_acquire(buffer->resource.device, NULL);
     buffer_internal_preload(buffer, context, NULL);
     context_release(context);
@@ -947,8 +956,16 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
 {
     LONG count;
     BYTE *base;
+    struct wined3d_device *device = buffer->resource.device;
 
     TRACE("buffer %p, offset %u, size %u, data %p, flags %#x\n", buffer, offset, size, data, flags);
+
+    if (wined3d_settings.cs_multithreaded)
+    {
+        FIXME("Waiting for cs.\n");
+        wined3d_cs_emit_glfinish(device->cs);
+        device->cs->ops->finish(device->cs);
+    }
 
     flags = wined3d_resource_sanitize_map_flags(&buffer->resource, flags);
     /* Filter redundant WINED3D_MAP_DISCARD maps. The 3DMark2001 multitexture
