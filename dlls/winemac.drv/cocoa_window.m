@@ -277,6 +277,18 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         return YES;
     }
 
+    - (BOOL) preservesContentDuringLiveResize
+    {
+        // Returning YES from this tells Cocoa to keep our view's content during
+        // a Cocoa-driven resize.  In theory, we're also supposed to override
+        // -setFrameSize: to mark exposed sections as needing redisplay, but
+        // user32 will take care of that in a roundabout way.  This way, we don't
+        // redraw until the window surface is flushed.
+        //
+        // This doesn't do anything when we resize the window ourselves.
+        return YES;
+    }
+
 @end
 
 
