@@ -1796,3 +1796,45 @@ void macdrv_remove_view_opengl_context(macdrv_view v, macdrv_opengl_context c)
 
     [pool release];
 }
+
+/***********************************************************************
+ *              macdrv_window_background_color
+ *
+ * Returns the standard Mac window background color as a 32-bit value of
+ * the form 0x00rrggbb.
+ */
+uint32_t macdrv_window_background_color(void)
+{
+    static uint32_t result;
+    static dispatch_once_t once;
+
+    // Annoyingly, [NSColor windowBackgroundColor] refuses to convert to other
+    // color spaces (RGB or grayscale).  So, the only way to get RGB values out
+    // of it is to draw with it.
+    dispatch_once(&once, ^{
+        OnMainThread(^{
+            unsigned char rgbx[4];
+            unsigned char *planes = rgbx;
+            NSBitmapImageRep *bitmap = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:&planes
+                                                                               pixelsWide:1
+                                                                               pixelsHigh:1
+                                                                            bitsPerSample:8
+                                                                          samplesPerPixel:3
+                                                                                 hasAlpha:NO
+                                                                                 isPlanar:NO
+                                                                           colorSpaceName:NSCalibratedRGBColorSpace
+                                                                             bitmapFormat:0
+                                                                              bytesPerRow:4
+                                                                             bitsPerPixel:32];
+            [NSGraphicsContext saveGraphicsState];
+            [NSGraphicsContext setCurrentContext:[NSGraphicsContext graphicsContextWithBitmapImageRep:bitmap]];
+            [[NSColor windowBackgroundColor] set];
+            NSRectFill(NSMakeRect(0, 0, 1, 1));
+            [NSGraphicsContext restoreGraphicsState];
+            [bitmap release];
+            result = rgbx[0] << 16 | rgbx[1] << 8 | rgbx[2];
+        });
+    });
+
+    return result;
+}

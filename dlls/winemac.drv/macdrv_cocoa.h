@@ -347,6 +347,7 @@ extern void macdrv_dispose_view(macdrv_view v) DECLSPEC_HIDDEN;
 extern void macdrv_set_view_window_and_frame(macdrv_view v, macdrv_window w, CGRect rect) DECLSPEC_HIDDEN;
 extern void macdrv_add_view_opengl_context(macdrv_view v, macdrv_opengl_context c) DECLSPEC_HIDDEN;
 extern void macdrv_remove_view_opengl_context(macdrv_view v, macdrv_opengl_context c) DECLSPEC_HIDDEN;
+extern uint32_t macdrv_window_background_color(void) DECLSPEC_HIDDEN;
 
 
 /* keyboard */
