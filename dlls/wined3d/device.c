@@ -463,9 +463,7 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
         }
     }
 
-    if (wined3d_settings.cs_multithreaded)
-        gl_info->gl_ops.gl.p_glFinish();
-    else if (wined3d_settings.strict_draw_ordering || (flags & WINED3DCLEAR_TARGET
+    if (wined3d_settings.strict_draw_ordering || (flags & WINED3DCLEAR_TARGET
             && target->container->swapchain && target->container->swapchain->front_buffer == target->container))
         gl_info->gl_ops.gl.p_glFlush(); /* Flush to ensure ordering across contexts. */
 
