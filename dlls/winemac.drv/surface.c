@@ -410,3 +410,35 @@ CGImageRef create_surface_image(void *window_surface, CGRect *rect, int copy_dat
 
     return cgimage;
 }
+
+/***********************************************************************
+ *              surface_clip_to_visible_rect
+ *
+ * Intersect the accumulated drawn region with a new visible rect,
+ * effectively discarding stale drawing in the surface slack area.
+ */
+void surface_clip_to_visible_rect(struct window_surface *window_surface, const RECT *visible_rect)
+{
+    struct macdrv_window_surface *surface = get_mac_surface(window_surface);
+
+    window_surface->funcs->lock(window_surface);
+
+    if (surface->drawn)
+    {
+        RECT rect;
+        HRGN region;
+
+        rect = *visible_rect;
+        OffsetRect(&rect, -rect.left, -rect.top);
+
+        if ((region = CreateRectRgnIndirect(&rect)))
+        {
+            CombineRgn(surface->drawn, surface->drawn, region, RGN_AND);
+            DeleteObject(region);
+
+            update_blit_data(surface);
+        }
+    }
+
+    window_surface->funcs->unlock(window_surface);
+}

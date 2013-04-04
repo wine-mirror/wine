@@ -141,6 +141,7 @@ extern struct window_surface *create_surface(macdrv_window window, const RECT *r
                                              struct window_surface *old_surface, BOOL use_alpha) DECLSPEC_HIDDEN;
 extern void set_window_surface(macdrv_window window, struct window_surface *window_surface) DECLSPEC_HIDDEN;
 extern void set_surface_use_alpha(struct window_surface *window_surface, BOOL use_alpha) DECLSPEC_HIDDEN;
+extern void surface_clip_to_visible_rect(struct window_surface *window_surface, const RECT *visible_rect) DECLSPEC_HIDDEN;
 
 extern void macdrv_handle_event(const macdrv_event *event) DECLSPEC_HIDDEN;
 

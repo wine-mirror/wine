@@ -1284,6 +1284,7 @@ void CDECL macdrv_WindowPosChanging(HWND hwnd, HWND insert_after, UINT swp_flags
         if (!memcmp(&data->surface->rect, &surface_rect, sizeof(surface_rect)))
         {
             /* existing surface is good enough */
+            surface_clip_to_visible_rect(data->surface, visible_rect);
             window_surface_add_ref(data->surface);
             *surface = data->surface;
             goto done;
