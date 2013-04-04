@@ -439,7 +439,8 @@ static UINT wined3d_cs_exec_present(struct wined3d_cs *cs, const void *data)
     wined3d_swapchain_set_window(swapchain, op->dst_window_override);
 
     swapchain->swapchain_ops->swapchain_present(swapchain,
-            src_rect, dst_rect, dirty_region, op->flags);
+            src_rect, dst_rect, dirty_region, op->flags,
+            wined3d_rendertarget_view_get_surface(cs->state.fb.depth_stencil));
 
     return sizeof(*op);
 }
