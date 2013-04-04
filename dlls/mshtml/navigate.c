@@ -1954,7 +1954,7 @@ static void navigate_proc(task_t *_task)
     navigate_task_t *task = (navigate_task_t*)_task;
     HRESULT hres;
 
-    hres = set_moniker(&task->window->doc_obj->basedoc, task->mon, NULL, task->bscallback, TRUE);
+    hres = set_moniker(&task->window->doc_obj->basedoc, task->mon, task->uri, NULL, task->bscallback, TRUE);
     if(SUCCEEDED(hres)) {
         set_current_mon(task->window, task->bscallback->bsc.mon, task->flags);
         set_current_uri(task->window, task->uri);
@@ -2266,6 +2266,8 @@ static HRESULT navigate_uri(HTMLOuterWindow *window, IUri *uri, const WCHAR *dis
     nsWineURI *nsuri;
     HRESULT hres;
 
+    TRACE("%s\n", debugstr_w(display_uri));
+
     if(window->doc_obj && window->doc_obj->is_webbrowser && window == window->doc_obj->basedoc.window) {
         if(!(flags & BINDING_REFRESH)) {
             BOOL cancel = FALSE;
@@ -2294,7 +2296,7 @@ static HRESULT navigate_uri(HTMLOuterWindow *window, IUri *uri, const WCHAR *dis
         }
     }
 
-    hres = create_doc_uri(window, display_uri, &nsuri);
+    hres = create_doc_uri(window, uri, &nsuri);
     if(FAILED(hres))
         return hres;
 

@@ -2917,19 +2917,12 @@ static nsresult create_nsuri(IUri *iuri, HTMLOuterWindow *window, NSContainer *c
     return NS_OK;
 }
 
-HRESULT create_doc_uri(HTMLOuterWindow *window, const WCHAR *url, nsWineURI **ret)
+HRESULT create_doc_uri(HTMLOuterWindow *window, IUri *iuri, nsWineURI **ret)
 {
     nsWineURI *uri;
-    IUri *iuri;
     nsresult nsres;
-    HRESULT hres;
-
-    hres = create_uri(url, 0, &iuri);
-    if(FAILED(hres))
-        return hres;
 
     nsres = create_nsuri(iuri, window, window->doc_obj->nscontainer, NULL, &uri);
-    IUri_Release(iuri);
     if(NS_FAILED(nsres))
         return E_FAIL;
 

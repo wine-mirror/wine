@@ -349,12 +349,13 @@ void prepare_for_binding(HTMLDocument *This, IMoniker *mon, DWORD flags)
     }
 }
 
-HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, nsChannelBSC *async_bsc, BOOL set_download)
+HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IUri *nav_uri, IBindCtx *pibc, nsChannelBSC *async_bsc, BOOL set_download)
 {
     download_proc_task_t *download_task;
     nsChannelBSC *bscallback;
     nsWineURI *nsuri;
     LPOLESTR url;
+    IUri *uri;
     HRESULT hres;
 
     hres = IMoniker_GetDisplayName(mon, pibc, NULL, &url);
@@ -363,11 +364,23 @@ HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, nsChannel
         return hres;
     }
 
+    if(nav_uri) {
+        uri = nav_uri;
+    }else {
+        hres = create_uri(url, 0, &uri);
+        if(FAILED(hres)) {
+            CoTaskMemFree(url);
+            return hres;
+        }
+    }
+
     TRACE("got url: %s\n", debugstr_w(url));
 
     set_ready_state(This->window, READYSTATE_LOADING);
 
-    hres = create_doc_uri(This->window, url, &nsuri);
+    hres = create_doc_uri(This->window, uri, &nsuri);
+    if(!nav_uri)
+        IUri_Release(uri);
     if(SUCCEEDED(hres)) {
         if(async_bsc)
             bscallback = async_bsc;
@@ -549,7 +562,7 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
 
     prepare_for_binding(This, pimkName, FALSE);
     call_docview_84(This->doc_obj);
-    hres = set_moniker(This, pimkName, pibc, NULL, TRUE);
+    hres = set_moniker(This, pimkName, NULL, pibc, NULL, TRUE);
     if(FAILED(hres))
         return hres;
 
@@ -818,7 +831,7 @@ static HRESULT WINAPI PersistStreamInit_Load(IPersistStreamInit *iface, LPSTREAM
     }
 
     prepare_for_binding(This, mon, FALSE);
-    hres = set_moniker(This, mon, NULL, NULL, TRUE);
+    hres = set_moniker(This, mon, NULL, NULL, NULL, TRUE);
     IMoniker_Release(mon);
     if(FAILED(hres))
         return hres;
@@ -875,7 +888,7 @@ static HRESULT WINAPI PersistStreamInit_InitNew(IPersistStreamInit *iface)
     }
 
     prepare_for_binding(This, mon, FALSE);
-    hres = set_moniker(This, mon, NULL, NULL, FALSE);
+    hres = set_moniker(This, mon, NULL, NULL, NULL, FALSE);
     IMoniker_Release(mon);
     if(FAILED(hres))
         return hres;
