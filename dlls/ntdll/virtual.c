@@ -1815,22 +1815,21 @@ static int free_reserved_memory( void *base, size_t size, void *arg )
  *
  * Release some address space once we have loaded and initialized the app.
  */
-void virtual_release_address_space( BOOL free_high_mem )
+void virtual_release_address_space(void)
 {
     struct free_range range;
     sigset_t sigset;
 
-    if (user_space_limit == address_space_limit) return;  /* no need to free anything */
+    if (is_win64) return;
 
     server_enter_uninterrupted_section( &csVirtual, &sigset );
 
-    /* no large address space on win9x */
-    if (free_high_mem && NtCurrentTeb()->Peb->OSPlatformId == VER_PLATFORM_WIN32_NT)
+    range.base  = (char *)0x82000000;
+    range.limit = user_space_limit;
+
+    if (range.limit > range.base)
     {
-        range.base  = (char *)0x82000000;
-        range.limit = address_space_limit;
         while (wine_mmap_enum_reserved_areas( free_reserved_memory, &range, 1 )) /* nothing */;
-        user_space_limit = working_set_limit = address_space_limit;
     }
     else
     {
@@ -1842,6 +1841,23 @@ void virtual_release_address_space( BOOL free_high_mem )
     }
 
     server_leave_uninterrupted_section( &csVirtual, &sigset );
+}
+
+
+/***********************************************************************
+ *           virtual_set_large_address_space
+ *
+ * Enable use of a large address space when allowed by the application.
+ */
+void virtual_set_large_address_space(void)
+{
+    IMAGE_NT_HEADERS *nt = RtlImageNtHeader( NtCurrentTeb()->Peb->ImageBaseAddress );
+
+    if (!(nt->FileHeader.Characteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE)) return;
+    /* no large address space on win9x */
+    if (NtCurrentTeb()->Peb->OSPlatformId != VER_PLATFORM_WIN32_NT) return;
+
+    user_space_limit = working_set_limit = address_space_limit;
 }
 
 

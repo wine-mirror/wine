@@ -2703,7 +2703,6 @@ void WINAPI LdrInitializeThunk( void *kernel_start, ULONG_PTR unknown2,
     WINE_MODREF *wm;
     LPCWSTR load_path;
     PEB *peb = NtCurrentTeb()->Peb;
-    IMAGE_NT_HEADERS *nt = RtlImageNtHeader( peb->ImageBaseAddress );
 
     if (main_exe_file) NtClose( main_exe_file );  /* at this point the main module is created */
 
@@ -2721,6 +2720,7 @@ void WINAPI LdrInitializeThunk( void *kernel_start, ULONG_PTR unknown2,
     if (!peb->ProcessParameters->WindowTitle.Buffer)
         peb->ProcessParameters->WindowTitle = wm->ldr.FullDllName;
     version_init( wm->ldr.FullDllName.Buffer );
+    virtual_set_large_address_space();
 
     LdrQueryImageFileExecutionOptions( &peb->ProcessParameters->ImagePathName, globalflagW,
                                        REG_DWORD, &peb->NtGlobalFlag, sizeof(peb->NtGlobalFlag), NULL );
@@ -2742,7 +2742,7 @@ void WINAPI LdrInitializeThunk( void *kernel_start, ULONG_PTR unknown2,
     status = wine_call_on_stack( attach_process_dlls, wm, NtCurrentTeb()->Tib.StackBase );
     if (status != STATUS_SUCCESS) goto error;
 
-    virtual_release_address_space( nt->FileHeader.Characteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE );
+    virtual_release_address_space();
     virtual_clear_thread_stack();
     wine_switch_to_stack( start_process, kernel_start, NtCurrentTeb()->Tib.StackBase );
 
