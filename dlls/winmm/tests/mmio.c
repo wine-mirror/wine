@@ -704,6 +704,8 @@ static void test_mmioSeek(void)
     const LONG size = sizeof(RIFF_buf), offset = 16;
     char test_file[MAX_PATH];
     MMRESULT res;
+    HFILE hfile;
+    OFSTRUCT ofs;
 
     /* test memory file */
     memset(&mmio, 0, sizeof(mmio));
@@ -782,6 +784,24 @@ static void test_mmioSeek(void)
         ok(pos == size-offset, "expected %d, got %d\n", size-offset, pos);
 
         mmioClose(hmmio, 0);
+    }
+
+    /* test seek position inheritance from standard file handle */
+    hfile = OpenFile(test_file, &ofs, OF_READ);
+    ok(hfile != HFILE_ERROR, "Failed to open the file, err %d\n", GetLastError());
+    if (hfile != HFILE_ERROR) {
+        pos = _llseek(hfile, offset, SEEK_SET);
+        ok(pos != HFILE_ERROR, "Failed to seek, err %d\n", GetLastError());
+        memset(&mmio, 0, sizeof(mmio));
+        mmio.fccIOProc = FOURCC_DOS;
+        mmio.adwInfo[0] = (DWORD)hfile;
+        hmmio = mmioOpen(NULL, &mmio, MMIO_READ | MMIO_DENYWRITE | MMIO_ALLOCBUF);
+        ok(hmmio != NULL, "mmioOpen error %u\n", mmio.wErrorRet);
+        if (hmmio != NULL) {
+            pos = mmioSeek(hmmio, 0, SEEK_CUR);
+            ok(pos == offset, "expected %d, got %d\n", offset, pos);
+            mmioClose(hmmio, 0);
+        }
     }
 
     DeleteFileA(test_file);

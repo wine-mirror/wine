@@ -670,9 +670,9 @@ static HMMIO MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo, DWORD dwOpenFlags,
     refmminfo->wErrorRet = send_message(wm->ioProc, &wm->info, MMIOM_OPEN,
                                         (LPARAM)szFileName, 0, FALSE);
 
-    /* grab file size, when possible */
+    /* update offsets and grab file size, when possible */
     if (wm->info.fccIOProc != FOURCC_MEM && (send_message(wm->ioProc, &wm->info, MMIOM_SEEK, 0, SEEK_CUR, FALSE)) != -1) {
-       pos = wm->info.lDiskOffset;
+       pos = wm->info.lBufOffset = wm->info.lDiskOffset;
        send_message(wm->ioProc, &wm->info, MMIOM_SEEK, 0, SEEK_END, FALSE);
        wm->dwFileSize = wm->info.lDiskOffset;
        send_message(wm->ioProc, &wm->info, MMIOM_SEEK, pos, SEEK_SET, FALSE);
