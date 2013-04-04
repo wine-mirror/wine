@@ -83,6 +83,8 @@ static BOOL process_attach( HMODULE module )
 {
     RTL_USER_PROCESS_PARAMETERS *params = NtCurrentTeb()->Peb->ProcessParameters;
 
+    NtQuerySystemInformation( SystemBasicInformation, &system_info, sizeof(system_info), NULL );
+
     /* Setup registry locale information */
     LOCALE_InitRegistry();
 
