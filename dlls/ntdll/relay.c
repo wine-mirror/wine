@@ -357,6 +357,7 @@ __ASM_GLOBAL_FUNC( call_entry_point,
                    "ret" )
 #elif defined(__arm__)
 __ASM_GLOBAL_FUNC( call_entry_point,
+                   ".arm\n\t"
                    "push {r4, r5, LR}\n\t"
                    "mov r4, r0\n\t"
                    "mov r5, SP\n\t"
