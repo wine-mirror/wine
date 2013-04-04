@@ -1514,6 +1514,8 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     ret->current_fb.rt_size = gl_info->limits.buffers;
     if (!ret->current_fb.render_targets)
         goto out;
+    if (device->context_count)
+        ret->offscreenBuffer = device->contexts[0]->offscreenBuffer;
 
     /* Initialize the texture unit mapping to a 1:1 mapping */
     for (s = 0; s < MAX_COMBINED_SAMPLERS; ++s)

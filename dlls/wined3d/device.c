@@ -957,6 +957,7 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
             }
         }
     }
+    device->contexts[0]->offscreenBuffer = device->offscreenBuffer;
 
     TRACE("All defaults now set up, leaving 3D init.\n");
 

@@ -1284,6 +1284,8 @@ struct wined3d_context
     GLfloat                 fog_coord_value;
     GLfloat                 color[4], fogstart, fogend, fogcolor[4];
     GLuint                  dummy_arbfp_prog;
+
+    GLenum                  offscreenBuffer;
 };
 
 typedef void (*APPLYSTATEFUNC)(struct wined3d_context *ctx, const struct wined3d_state *state, DWORD state_id);
