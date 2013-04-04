@@ -27,7 +27,7 @@
 
 #define admitted_error 0.0001f
 
-#define relative_error(exp, out) (fabs(exp) < 0.01f ? fabs(exp - out) : fabs(1.0f - (out) / (exp)))
+#define relative_error(exp, out) (fabsf(exp) < 0.01f ? fabsf(exp - out) : fabsf(1.0f - (out) / (exp)))
 
 #define expect_color(expectedcolor,gotcolor) ok((relative_error(expectedcolor.r, gotcolor.r)<admitted_error)&&(relative_error(expectedcolor.g, gotcolor.g)<admitted_error)&&(relative_error(expectedcolor.b, gotcolor.b)<admitted_error)&&(relative_error(expectedcolor.a, gotcolor.a)<admitted_error),"Expected Color= (%f, %f, %f, %f)\n , Got Color= (%f, %f, %f, %f)\n", expectedcolor.r, expectedcolor.g, expectedcolor.b, expectedcolor.a, gotcolor.r, gotcolor.g, gotcolor.b, gotcolor.a);
 
