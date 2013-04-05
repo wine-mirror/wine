@@ -52,6 +52,12 @@ BOOL PSDRV_CopyColor(PSCOLOR *col1, PSCOLOR *col2)
     return TRUE;
 }
 
+PSRGB rgb_to_grayscale_scale( void )
+{
+    static const PSRGB scale = {0.3, 0.59, 0.11};
+    /* FIXME configurable */
+    return scale;
+}
 
 /**********************************************************************
  *	     PSDRV_CreateColor
@@ -79,9 +85,9 @@ void PSDRV_CreateColor( PHYSDEV dev, PSCOLOR *pscolor, COLORREF wincolor )
 	pscolor->value.rgb.g = g;
 	pscolor->value.rgb.b = b;
     } else {
+        PSRGB scale = rgb_to_grayscale_scale();
         pscolor->type = PSCOLOR_GRAY;
-	/* FIXME configurable */
-	pscolor->value.gray.i = r * 0.3 + g * 0.59 + b * 0.11;
+        pscolor->value.gray.i = r * scale.r + g * scale.g + b * scale.b;
     }
     return;
 }

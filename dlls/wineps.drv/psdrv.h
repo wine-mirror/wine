@@ -485,6 +485,7 @@ extern void PSDRV_ResetClip( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_CopyColor(PSCOLOR *col1, PSCOLOR *col2) DECLSPEC_HIDDEN;
 extern void PSDRV_CreateColor( PHYSDEV dev, PSCOLOR *pscolor,
 		     COLORREF wincolor ) DECLSPEC_HIDDEN;
+extern PSRGB rgb_to_grayscale_scale( void ) DECLSPEC_HIDDEN;
 extern char PSDRV_UnicodeToANSI(int u) DECLSPEC_HIDDEN;
 
 extern INT PSDRV_WriteHeader( PHYSDEV dev, LPCWSTR title ) DECLSPEC_HIDDEN;
