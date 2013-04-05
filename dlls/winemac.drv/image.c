@@ -205,6 +205,7 @@ CGImageRef create_cgimage_from_icon(HANDLE icon, int width, int height)
         if (!info.hbmColor) bm.bmHeight = max(1, bm.bmHeight / 2);
         width = bm.bmWidth;
         height = bm.bmHeight;
+        TRACE("new width %d height %d\n", width, height);
 
         DeleteObject(info.hbmColor);
         DeleteObject(info.hbmMask);
