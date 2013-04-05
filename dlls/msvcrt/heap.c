@@ -596,7 +596,7 @@ int CDECL strncpy_s(char *dest, MSVCRT_size_t numberOfElements,
 {
     MSVCRT_size_t i, end;
 
-    TRACE("(%s %lu %s %lu)\n", dest, numberOfElements, src, count);
+    TRACE("(%p %lu %s %lu)\n", dest, numberOfElements, debugstr_a(src), count);
 
     if(!count) {
         if(dest && numberOfElements)
