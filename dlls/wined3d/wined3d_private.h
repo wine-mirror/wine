@@ -2099,14 +2099,11 @@ struct wined3d_device
     struct wined3d_rendertarget_view *back_buffer_view;
     struct wined3d_swapchain **swapchains;
     UINT swapchain_count;
+    struct wined3d_rendertarget_view *auto_depth_stencil_view;
 
     struct list             resources; /* a linked list to track resources created by the device */
     struct list             shaders;   /* a linked list to track shaders (pixel and vertex)      */
     struct wine_rb_tree samplers;
-
-    /* Render Target Support */
-    struct wined3d_surface *onscreen_depth_stencil;
-    struct wined3d_rendertarget_view *auto_depth_stencil_view;
 
     /* For rendering to a texture using glCopyTexImage */
     GLuint                  depth_blt_texture;
@@ -2149,8 +2146,6 @@ LRESULT device_process_message(struct wined3d_device *device, HWND window, BOOL 
         UINT message, WPARAM wparam, LPARAM lparam, WNDPROC proc) DECLSPEC_HIDDEN;
 void device_resource_add(struct wined3d_device *device, struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 void device_resource_released(struct wined3d_device *device, struct wined3d_resource *resource) DECLSPEC_HIDDEN;
-void device_switch_onscreen_ds(struct wined3d_device *device, struct wined3d_context *context,
-        struct wined3d_surface *depth_stencil) DECLSPEC_HIDDEN;
 void device_invalidate_state(const struct wined3d_device *device, DWORD state) DECLSPEC_HIDDEN;
 
 static inline BOOL isStateDirty(const struct wined3d_context *context, DWORD state)
@@ -2640,6 +2635,7 @@ struct wined3d_cs
     struct wined3d_state state;
     HANDLE thread;
     DWORD tls_idx;
+    struct wined3d_surface *onscreen_depth_stencil;
 
     size_t data_size;
     void *data;
@@ -2650,6 +2646,8 @@ struct wined3d_cs
 
 struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device) DECLSPEC_HIDDEN;
 void wined3d_cs_destroy(struct wined3d_cs *cs) DECLSPEC_HIDDEN;
+void wined3d_cs_switch_onscreen_ds(struct wined3d_cs *cs, struct wined3d_context *context,
+        struct wined3d_surface *depth_stencil) DECLSPEC_HIDDEN;
 
 void wined3d_cs_emit_clear(struct wined3d_cs *cs, DWORD rect_count, const RECT *rects,
         DWORD flags, const struct wined3d_color *color, float depth, DWORD stencil) DECLSPEC_HIDDEN;
