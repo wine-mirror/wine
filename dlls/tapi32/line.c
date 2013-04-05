@@ -134,6 +134,15 @@ DWORD WINAPI lineConfigDialogA(DWORD dwDeviceID, HWND hwndOwner, LPCSTR lpszDevi
 }
 
 /***********************************************************************
+ *		lineConfigDialogW (TAPI32.@)
+ */
+DWORD WINAPI lineConfigDialogW(DWORD dwDeviceID, HWND hwndOwner, LPCWSTR lpszDeviceClass)
+{
+    FIXME("(%08x, %p, %s): stub.\n", dwDeviceID, hwndOwner, debugstr_w(lpszDeviceClass));
+    return 0;
+}
+
+/***********************************************************************
  *		lineConfigDialogEdit (TAPI32.@)
  */
 DWORD WINAPI lineConfigDialogEditA(DWORD dwDeviceID, HWND hwndOwner, LPCSTR lpszDeviceClass, LPVOID const lpDeviceConfigIn, DWORD dwSize, LPVARSTRING lpDeviceConfigOut)
@@ -184,6 +193,15 @@ DWORD WINAPI lineDevSpecificFeature(HLINE hLine, DWORD dwFeature, LPVOID lpParam
 DWORD WINAPI lineDialA(HCALL hCall, LPCSTR lpszDestAddress, DWORD dwCountryCode)
 {
     FIXME("(%p, %s, %08x): stub.\n", hCall, lpszDestAddress, dwCountryCode);
+    return 1;
+}
+
+/***********************************************************************
+ *		lineDialW (TAPI32.@)
+ */
+DWORD WINAPI lineDialW(HCALL hCall, LPCWSTR lpszDestAddress, DWORD dwCountryCode)
+{
+    FIXME("(%p, %s, %08x): stub.\n", hCall, debugstr_w(lpszDestAddress), dwCountryCode);
     return 1;
 }
 
@@ -463,6 +481,14 @@ DWORD WINAPI lineGetCountryA(DWORD dwCountryID, DWORD dwAPIVersion, LPLINECOUNTR
     RegCloseKey(hkey);
 
     return 0;
+}
+
+/***********************************************************************
+ *		lineGetCountry (TAPI32.@)
+ */
+DWORD WINAPI lineGetCountryW(DWORD dwCountryID, DWORD dwAPIVersion, LPLINECOUNTRYLIST lpLineCountryList)
+{
+    return lineGetCountryA(dwCountryID, dwAPIVersion, lpLineCountryList);
 }
 
 /***********************************************************************
@@ -1390,11 +1416,34 @@ DWORD WINAPI lineTranslateAddressA(HLINEAPP hLineApp, DWORD dwDeviceID, DWORD dw
 }
 
 /***********************************************************************
+ *              lineTranslateAddressW (TAPI32.@)
+ */
+DWORD WINAPI lineTranslateAddressW(HLINEAPP hLineApp, DWORD dwDeviceID,
+        DWORD dwAPIVersion, LPCWSTR lpszAddressIn, DWORD dwCard,
+        DWORD dwTranslateOptions, LPLINETRANSLATEOUTPUT lpTranslateOutput)
+{
+    FIXME("(%p, %08x, %08x, %s, %08x, %08x, %p): stub.\n", hLineApp, dwDeviceID, dwAPIVersion,
+            debugstr_w(lpszAddressIn), dwCard, dwTranslateOptions, lpTranslateOutput);
+    return 0;
+}
+
+/***********************************************************************
  *		lineTranslateDialog (TAPI32.@)
  */
 DWORD WINAPI lineTranslateDialogA(HLINEAPP hLineApp, DWORD dwDeviceID, DWORD dwAPIVersion, HWND hwndOwner, LPCSTR lpszAddressIn)
 {
     FIXME("(%p, %08x, %08x, %p, %s): stub.\n", hLineApp, dwDeviceID, dwAPIVersion, hwndOwner, lpszAddressIn);
+    return 0;
+}
+
+/***********************************************************************
+ *              lineTranslateDialogW (TAPI32.@)
+ */
+DWORD WINAPI lineTranslateDialogW(HLINEAPP hLineApp, DWORD dwDeviceID,
+        DWORD dwAPIVersion, HWND hwndOwner, LPCWSTR lpszAddressIn)
+{
+    FIXME("(%p, %08x, %08x, %p, %s): stub.\n", hLineApp, dwDeviceID,
+            dwAPIVersion, hwndOwner, debugstr_w(lpszAddressIn));
     return 0;
 }
 

@@ -11,6 +11,7 @@
 @ stdcall lineCompleteTransfer(long long ptr long)
 @ stdcall lineConfigDialog(long long str) lineConfigDialogA
 @ stdcall lineConfigDialogA(long long str)
+@ stdcall lineConfigDialogW(long long wstr)
 @ stdcall lineConfigDialogEdit(long long str ptr long ptr) lineConfigDialogEditA
 @ stdcall lineConfigDialogEditA(long long str ptr long ptr)
 @ stdcall lineConfigProvider(long long)
@@ -19,6 +20,7 @@
 @ stdcall lineDevSpecificFeature(long long ptr long)
 @ stdcall lineDial(long str long) lineDialA
 @ stdcall lineDialA(long str long)
+@ stdcall lineDialW(long wstr long)
 @ stdcall lineDrop(long str long)
 @ stdcall lineForward(long long long ptr long ptr ptr) lineForwardA
 @ stdcall lineForwardA(long long long ptr long ptr ptr)
@@ -41,6 +43,7 @@
 @ stdcall lineGetConfRelatedCalls(long ptr)
 @ stdcall lineGetCountry(long long ptr) lineGetCountryA
 @ stdcall lineGetCountryA(long long ptr)
+@ stdcall lineGetCountryW(long long ptr)
 @ stdcall lineGetDevCaps(long long long long ptr) lineGetDevCapsA
 @ stdcall lineGetDevCapsA(long long long long ptr)
 @ stdcall lineGetDevCapsW(long long long long ptr)
@@ -117,8 +120,10 @@
 @ stdcall lineSwapHold(long long)
 @ stdcall lineTranslateAddress(long long long str long long ptr) lineTranslateAddressA
 @ stdcall lineTranslateAddressA(long long long str long long ptr)
+@ stdcall lineTranslateAddressW(long long long wstr long long ptr)
 @ stdcall lineTranslateDialog(long long long long str) lineTranslateDialogA
 @ stdcall lineTranslateDialogA(long long long long str)
+@ stdcall lineTranslateDialogW(long long long long wstr)
 @ stdcall lineUncompleteCall(long long)
 @ stdcall lineUnhold(long)
 @ stdcall lineUnpark(long long ptr str) lineUnparkA
