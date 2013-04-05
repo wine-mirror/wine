@@ -2358,7 +2358,7 @@ LONG WINAPI DocumentPropertiesA(HWND hWnd,HANDLE hPrinter,
 	hWnd,hPrinter,pDeviceName,pDevModeOutput,pDevModeInput,fMode
     );
 
-    if(!pDeviceName) {
+    if(!pDeviceName || !*pDeviceName) {
         LPCWSTR lpNameW = get_opened_printer_name(hPrinter);
         if(!lpNameW) {
 		ERR("no name from hPrinter?\n");

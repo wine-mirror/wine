@@ -2653,6 +2653,7 @@ static void test_DocumentProperties(void)
     HANDLE hprn;
     LONG dm_size, ret;
     DEVMODE *dm;
+    char empty_str[] = "";
 
     if (!default_printer)
     {
@@ -2676,6 +2677,9 @@ static void test_DocumentProperties(void)
     dm = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, dm_size);
 
     ret = DocumentProperties(0, hprn, NULL, dm, dm, DM_OUT_BUFFER);
+    ok(ret == IDOK, "DocumentProperties ret value %d != expected IDOK\n", ret);
+
+    ret = DocumentProperties(0, hprn, empty_str, dm, dm, DM_OUT_BUFFER);
     ok(ret == IDOK, "DocumentProperties ret value %d != expected IDOK\n", ret);
 
     test_DEVMODE(dm, dm_size, default_printer);
