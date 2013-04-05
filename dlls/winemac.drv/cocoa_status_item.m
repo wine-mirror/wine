@@ -149,8 +149,21 @@ void macdrv_set_status_item_image(macdrv_status_item s, CGImageRef cgimage)
         NSImage* image = nil;
         if (cgimage)
         {
+            NSSize size;
+            CGFloat maxSize = [[NSStatusBar systemStatusBar] thickness];
+            BOOL changed = FALSE;
+
             image = [[NSImage alloc] initWithCGImage:cgimage size:NSZeroSize];
             CGImageRelease(cgimage);
+            size = [image size];
+            while (size.width > maxSize || size.height > maxSize)
+            {
+                size.width /= 2.0;
+                size.height /= 2.0;
+                changed = TRUE;
+            }
+            if (changed)
+                [image setSize:size];
         }
         [statusItem.item setImage:image];
         [image release];
