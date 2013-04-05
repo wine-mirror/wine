@@ -947,7 +947,7 @@ DECL_HANDLER(new_process)
 
     if (!(thread = create_process( socket_fd, current, req->inherit_all ))) goto done;
     process = thread->process;
-    process->debug_children = !(req->create_flags & DEBUG_ONLY_THIS_PROCESS);
+    process->debug_children = !!(req->create_flags & DEBUG_PROCESS);
     process->startup_info = (struct startup_info *)grab_object( info );
 
     /* connect to the window station */
