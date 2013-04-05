@@ -157,6 +157,7 @@ my %private_idl_headers = (
     "rstbas.idl" => 1,
     "rstinf.idl" => 1,
     "rstloc.idl" => 1,
+    "rstnot.idl" => 1,
     "sesprp.idl" => 1,
     "vmrender.idl" => 1,
     "xmldom.idl" => 1,

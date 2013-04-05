@@ -484,6 +484,7 @@ SRCDIR_INCLUDES = \
 	rstbas.idl \
 	rstinf.idl \
 	rstloc.idl \
+	rstnot.idl \
 	rtutils.h \
 	scarderr.h \
 	schannel.h \
