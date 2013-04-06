@@ -2435,6 +2435,35 @@ todo_wine
     IDataConvert_Release(convert);
 }
 
+static void test_getconversionsize(void)
+{
+    IDataConvert *convert;
+    DBLENGTH dst_len;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_OLEDB_CONVERSIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IDataConvert, (void**)&convert);
+    if(FAILED(hr))
+    {
+        win_skip("Unable to load oledb conversion library\n");
+        return;
+    }
+
+    /* same way as CanConvert fails here */
+    dst_len = 0;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_NULL, DBTYPE_BSTR, NULL, &dst_len, NULL);
+    ok(hr == DB_E_UNSUPPORTEDCONVERSION, "got 0x%08x\n", hr);
+
+    dst_len = 0;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_I2, DBTYPE_I4, NULL, &dst_len, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(dst_len == 4, "got %ld\n", dst_len);
+
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_I2, DBTYPE_I4, NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    IDataConvert_Release(convert);
+}
+
 START_TEST(convert)
 {
     OleInitialize(NULL);
@@ -2453,5 +2482,6 @@ START_TEST(convert)
     test_converttofiletime();
     test_converttocy();
     test_converttoui8();
+    test_getconversionsize();
     OleUninitialize();
 }

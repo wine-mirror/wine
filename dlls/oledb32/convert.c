@@ -996,14 +996,58 @@ static HRESULT WINAPI convert_CanConvert(IDataConvert* iface,
 }
 
 static HRESULT WINAPI convert_GetConversionSize(IDataConvert* iface,
-                                                DBTYPE wSrcType, DBTYPE wDstType,
-                                                DBLENGTH *pcbSrcLength, DBLENGTH *pcbDstLength,
-                                                void *pSrc)
+                                                DBTYPE src_type, DBTYPE dst_type,
+                                                DBLENGTH *src_len, DBLENGTH *dst_len,
+                                                void *src)
 {
     convert *This = impl_from_IDataConvert(iface);
-    FIXME("(%p)->(%d, %d, %p, %p, %p): stub\n", This, wSrcType, wDstType, pcbSrcLength, pcbDstLength, pSrc);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("(%p)->(%d, %d, %p, %p, %p)\n", This, src_type, dst_type, src_len, dst_len, src);
+
+    hr = IDataConvert_CanConvert(iface, src_type, dst_type);
+    if (hr != S_OK)
+        return DB_E_UNSUPPORTEDCONVERSION;
+
+    if (!dst_len)
+        return E_INVALIDARG;
+
+    /* for some types we don't need to look into source data */
+    if ((*dst_len = get_length(dst_type)))
+        return S_OK;
+
+    switch (dst_type)
+    {
+    case DBTYPE_STR:
+    {
+        switch (src_type)
+        {
+        case DBTYPE_VARIANT:
+        {
+            VARIANT v;
+
+            VariantInit(&v);
+            if ((hr = VariantChangeType(&v, (VARIANT*)src, 0, VT_BSTR)) == S_OK)
+            {
+                *dst_len = WideCharToMultiByte(CP_ACP, 0, V_BSTR(&v), -1, NULL, 0, NULL, NULL);
+                VariantClear(&v);
+            }
+            else
+                return hr;
+        }
+        break;
+        default:
+            FIXME("unimplemented for %04x -> DBTYPE_STR\n", src_type);
+            return E_NOTIMPL;
+        }
+    }
+    break;
+    default:
+        FIXME("unimplemented for destination type %d\n", dst_type);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static const struct IDataConvertVtbl convert_vtbl =
