@@ -926,6 +926,7 @@ static void test_converttobstr(void)
     DBSTATUS dst_status;
     DBLENGTH dst_len;
     static const WCHAR ten[] = {'1','0',0};
+    VARIANT v;
     BSTR b;
 
     hr = CoCreateInstance(&CLSID_OLEDB_CONVERSIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IDataConvert, (void**)&convert);
@@ -963,6 +964,19 @@ static void test_converttobstr(void)
     b = SysAllocString(ten);
     *(BSTR *)src = b;
     hr = IDataConvert_DataConvert(convert, DBTYPE_BSTR, DBTYPE_BSTR, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
+    ok(dst != NULL, "got %p\n", dst);
+    ok(dst != b, "got %p src %p\n", dst, b);
+    ok(!lstrcmpW(b, dst), "got %s\n", wine_dbgstr_w(dst));
+    SysFreeString(dst);
+    SysFreeString(b);
+
+    b = SysAllocString(ten);
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = b;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_VARIANT, DBTYPE_BSTR, 0, &dst_len, &v, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
