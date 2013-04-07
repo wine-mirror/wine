@@ -145,6 +145,8 @@ static int get_length(DBTYPE type)
     case DBTYPE_STR:
     case DBTYPE_BYREF | DBTYPE_WSTR:
         return 0;
+    case DBTYPE_VARIANT:
+        return sizeof(VARIANT);
     default:
         FIXME("Unhandled type %04x\n", type);
         return 0;
@@ -725,6 +727,26 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         else hr = E_OUTOFMEMORY;
         SysFreeString(b);
         return hr;
+    }
+
+    case DBTYPE_VARIANT:
+    {
+        VARIANT *v = dst;
+
+        switch(src_type)
+        {
+        case DBTYPE_BSTR:
+        {
+            BSTR s = *(WCHAR**)src;
+            TRACE("%s\n", debugstr_w(s));
+            V_VT(v) = VT_BSTR;
+            V_BSTR(v) = SysAllocString(s);
+            hr = V_BSTR(v) ? S_OK : E_OUTOFMEMORY;
+        }
+        break;
+        default: FIXME("Unimplemented conversion %04x -> VARIANT\n", src_type); return E_NOTIMPL;
+        }
+        break;
     }
 
     default:

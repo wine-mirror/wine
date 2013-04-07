@@ -2440,6 +2440,7 @@ static void test_getconversionsize(void)
     IDataConvert *convert;
     DBLENGTH dst_len;
     HRESULT hr;
+    BSTR str;
 
     hr = CoCreateInstance(&CLSID_OLEDB_CONVERSIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IDataConvert, (void**)&convert);
     if(FAILED(hr))
@@ -2460,6 +2461,43 @@ static void test_getconversionsize(void)
 
     hr = IDataConvert_GetConversionSize(convert, DBTYPE_I2, DBTYPE_I4, NULL, NULL, NULL);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    /* size doesn't include string size */
+    str = SysAllocStringLen(NULL, 10);
+    dst_len = 0;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_BSTR, DBTYPE_VARIANT, NULL, &dst_len, str);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(dst_len == sizeof(VARIANT), "%ld\n", dst_len);
+    SysFreeString(str);
+
+    IDataConvert_Release(convert);
+}
+
+static void test_converttovar(void)
+{
+    static WCHAR strW[] = {'t','e','s','t',0};
+    IDataConvert *convert;
+    DBSTATUS dst_status;
+    DBLENGTH dst_len;
+    VARIANT dst;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_OLEDB_CONVERSIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IDataConvert, (void**)&convert);
+    if(FAILED(hr))
+    {
+        win_skip("Unable to load oledb conversion library\n");
+        return;
+    }
+
+    V_VT(&dst) = VT_EMPTY;
+    dst_len = 0;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_WSTR, DBTYPE_VARIANT, sizeof(strW), &dst_len, strW, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
+    ok(V_VT(&dst) == VT_BSTR, "got %d\n", V_VT(&dst));
+    ok(!lstrcmpW(V_BSTR(&dst), strW), "got %s\n", wine_dbgstr_w(V_BSTR(&dst)));
+    VariantClear(&dst);
 
     IDataConvert_Release(convert);
 }
@@ -2482,6 +2520,7 @@ START_TEST(convert)
     test_converttofiletime();
     test_converttocy();
     test_converttoui8();
+    test_converttovar();
     test_getconversionsize();
     OleUninitialize();
 }
