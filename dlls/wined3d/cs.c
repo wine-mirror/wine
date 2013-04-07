@@ -67,6 +67,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_VS_CONSTS_F,
     WINED3D_CS_OP_SET_PS_CONSTS_F,
     WINED3D_CS_OP_GLFINISH,
+    WINED3D_CS_OP_SET_BASE_VERTEX_INDEX,
     WINED3D_CS_OP_STOP,
 };
 
@@ -300,6 +301,12 @@ struct wined3d_cs_finish
     enum wined3d_cs_op opcode;
 };
 
+struct wined3d_cs_set_base_vertex_index
+{
+    enum wined3d_cs_op opcode;
+    UINT base_vertex_index;
+};
+
 /* FIXME: The list synchronization probably isn't particularly fast. */
 static void wined3d_cs_list_enqueue(struct wined3d_cs_list *list, struct wined3d_cs_block *block)
 {
@@ -514,6 +521,21 @@ void wined3d_cs_emit_clear(struct wined3d_cs *cs, DWORD rect_count, const RECT *
 static UINT wined3d_cs_exec_draw(struct wined3d_cs *cs, const void *data)
 {
     const struct wined3d_cs_draw *op = data;
+    const struct wined3d_gl_info *gl_info = &cs->device->adapter->gl_info;
+
+    if (op->indexed && !gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX])
+    {
+        if (cs->state.load_base_vertex_index != cs->state.base_vertex_index)
+        {
+            cs->state.load_base_vertex_index = cs->state.base_vertex_index;
+            device_invalidate_state(cs->device, STATE_BASEVERTEXINDEX);
+        }
+    }
+    else if (cs->state.load_base_vertex_index)
+    {
+        cs->state.load_base_vertex_index = 0;
+        device_invalidate_state(cs->device, STATE_BASEVERTEXINDEX);
+    }
 
     draw_primitive(cs->device, &cs->state, op->start_idx, op->index_count,
             op->start_instance, op->instance_count, op->indexed);
@@ -957,8 +979,6 @@ static UINT wined3d_cs_exec_transfer_stateblock(struct wined3d_cs *cs, const voi
     /* Don't memcpy the entire struct, we'll remove single items as we add dedicated
      * ops for setting states */
 
-    cs->state.base_vertex_index = op->state.base_vertex_index;
-    cs->state.load_base_vertex_index = op->state.load_base_vertex_index;
     cs->state.gl_primitive_type = op->state.gl_primitive_type;
 
     memcpy(cs->state.vs_consts_b, op->state.vs_consts_b, sizeof(cs->state.vs_consts_b));
@@ -981,8 +1001,6 @@ void wined3d_cs_emit_transfer_stateblock(struct wined3d_cs *cs, const struct win
 
     /* Don't memcpy the entire struct, we'll remove single items as we add dedicated
      * ops for setting states */
-    op->state.base_vertex_index = state->base_vertex_index;
-    op->state.load_base_vertex_index = state->load_base_vertex_index;
     op->state.gl_primitive_type = state->gl_primitive_type;
 
     memcpy(op->state.vs_consts_b, state->vs_consts_b, sizeof(op->state.vs_consts_b));
@@ -1395,6 +1413,28 @@ void wined3d_cs_emit_glfinish(struct wined3d_cs *cs)
     cs->ops->submit(cs);
 }
 
+static UINT wined3d_cs_exec_set_base_vertex_index(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_set_base_vertex_index *op = data;
+
+    cs->state.base_vertex_index = op->base_vertex_index;
+    device_invalidate_state(cs->device, STATE_BASEVERTEXINDEX);
+
+    return sizeof(*op);
+}
+
+void wined3d_cs_emit_set_base_vertex_index(struct wined3d_cs *cs,
+        UINT base_vertex_index)
+{
+    struct wined3d_cs_set_base_vertex_index *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_SET_BASE_VERTEX_INDEX;
+    op->base_vertex_index = base_vertex_index;
+
+    cs->ops->submit(cs);
+}
+
 static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
 {
     /* WINED3D_CS_OP_FENCE                      */ wined3d_cs_exec_fence,
@@ -1428,6 +1468,7 @@ static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_VS_CONSTS_F            */ wined3d_cs_exec_set_vs_consts_f,
     /* WINED3D_CS_OP_SET_PS_CONSTS_F            */ wined3d_cs_exec_set_ps_consts_f,
     /* WINED3D_CS_OP_GLFINISH                   */ wined3d_cs_exec_glfinish,
+    /* WINED3D_CS_OP_SET_BASE_VERTEX_INDEX      */ wined3d_cs_exec_set_base_vertex_index,
 };
 
 static void *wined3d_cs_st_require_space(struct wined3d_cs *cs, size_t size)
