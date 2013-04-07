@@ -1075,8 +1075,8 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock)
         gl_primitive_type = stateblock->state.gl_primitive_type;
         prev = device->update_state->gl_primitive_type;
         device->update_state->gl_primitive_type = gl_primitive_type;
-        if (gl_primitive_type != prev && (gl_primitive_type == GL_POINTS || prev == GL_POINTS))
-            device_invalidate_state(device, STATE_POINT_ENABLE);
+        if (gl_primitive_type != prev)
+            wined3d_cs_emit_set_primitive_type(device->cs, gl_primitive_type);
     }
 
     if (stateblock->changed.indices)

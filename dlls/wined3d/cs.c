@@ -68,6 +68,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_PS_CONSTS_F,
     WINED3D_CS_OP_GLFINISH,
     WINED3D_CS_OP_SET_BASE_VERTEX_INDEX,
+    WINED3D_CS_OP_SET_PRIMITIVE_TYPE,
     WINED3D_CS_OP_STOP,
 };
 
@@ -305,6 +306,12 @@ struct wined3d_cs_set_base_vertex_index
 {
     enum wined3d_cs_op opcode;
     UINT base_vertex_index;
+};
+
+struct wined3d_cs_set_primitive_type
+{
+    enum wined3d_cs_op opcode;
+    GLenum gl_primitive_type;
 };
 
 /* FIXME: The list synchronization probably isn't particularly fast. */
@@ -978,9 +985,6 @@ static UINT wined3d_cs_exec_transfer_stateblock(struct wined3d_cs *cs, const voi
 
     /* Don't memcpy the entire struct, we'll remove single items as we add dedicated
      * ops for setting states */
-
-    cs->state.gl_primitive_type = op->state.gl_primitive_type;
-
     memcpy(cs->state.vs_consts_b, op->state.vs_consts_b, sizeof(cs->state.vs_consts_b));
     memcpy(cs->state.vs_consts_i, op->state.vs_consts_i, sizeof(cs->state.vs_consts_i));
 
@@ -1001,8 +1005,6 @@ void wined3d_cs_emit_transfer_stateblock(struct wined3d_cs *cs, const struct win
 
     /* Don't memcpy the entire struct, we'll remove single items as we add dedicated
      * ops for setting states */
-    op->state.gl_primitive_type = state->gl_primitive_type;
-
     memcpy(op->state.vs_consts_b, state->vs_consts_b, sizeof(op->state.vs_consts_b));
     memcpy(op->state.vs_consts_i, state->vs_consts_i, sizeof(op->state.vs_consts_i));
 
@@ -1435,6 +1437,32 @@ void wined3d_cs_emit_set_base_vertex_index(struct wined3d_cs *cs,
     cs->ops->submit(cs);
 }
 
+static UINT wined3d_cs_exec_set_primitive_type(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_set_primitive_type *op = data;
+    GLenum prev;
+
+    prev = cs->state.gl_primitive_type;
+
+    if (op->gl_primitive_type == GL_POINTS || prev == GL_POINTS)
+        device_invalidate_state(cs->device, STATE_POINT_ENABLE);
+
+    cs->state.gl_primitive_type = op->gl_primitive_type;
+
+    return sizeof(*op);
+}
+
+void wined3d_cs_emit_set_primitive_type(struct wined3d_cs *cs, GLenum primitive_type)
+{
+    struct wined3d_cs_set_primitive_type *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_SET_PRIMITIVE_TYPE;
+    op->gl_primitive_type = primitive_type;
+
+    cs->ops->submit(cs);
+}
+
 static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
 {
     /* WINED3D_CS_OP_FENCE                      */ wined3d_cs_exec_fence,
@@ -1469,6 +1497,7 @@ static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_PS_CONSTS_F            */ wined3d_cs_exec_set_ps_consts_f,
     /* WINED3D_CS_OP_GLFINISH                   */ wined3d_cs_exec_glfinish,
     /* WINED3D_CS_OP_SET_BASE_VERTEX_INDEX      */ wined3d_cs_exec_set_base_vertex_index,
+    /* WINED3D_CS_OP_SET_PRIMITIVE_TYPE         */ wined3d_cs_exec_set_primitive_type,
 };
 
 static void *wined3d_cs_st_require_space(struct wined3d_cs *cs, size_t size)
