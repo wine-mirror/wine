@@ -643,7 +643,7 @@ static HRESULT WINAPI IDirectPlay4Impl_QueryInterface( IDirectPlay4 *iface, REFI
     if ( IsEqualGUID( &IID_IUnknown, riid ) )
     {
         TRACE( "(%p)->(IID_IUnknown %p)\n", This, ppv );
-        *ppv = &This->IDirectPlay4A_iface;
+        *ppv = &This->IDirectPlay_iface;
     }
     else if ( IsEqualGUID( &IID_IDirectPlay, riid ) )
     {

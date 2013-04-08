@@ -6367,6 +6367,7 @@ static void test_host_migration(void)
 
 static void test_COM(void)
 {
+    IDirectPlay *dp;
     IDirectPlay2A *dp2A;
     IDirectPlay2 *dp2;
     IDirectPlay3A *dp3A;
@@ -6426,14 +6427,22 @@ static void test_COM(void)
     ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
     IDirectPlayX_Release(dp4A);
 
+    /* IDirectPlay and IUnknown share a refcount */
+    hr = IDirectPlayX_QueryInterface(dp4, &IID_IDirectPlay, (void**)&dp);
+    ok(hr == S_OK, "QueryInterface for IID_IDirectPlay failed: %08x\n", hr);
+    refcount = IDirectPlayX_AddRef(dp);
+    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+    IDirectPlay_Release(dp);
+
     hr = IDirectPlayX_QueryInterface(dp4, &IID_IUnknown, (void**)&unk);
     ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08x\n", hr);
     refcount = IUnknown_AddRef(unk);
-    todo_wine ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+    ok(refcount == 3, "refcount == %u, expected 3\n", refcount);
     refcount = IUnknown_Release(unk);
-    todo_wine ok(refcount == 1, "refcount == %u, expected 1\n", refcount);
+    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
 
     IUnknown_Release(unk);
+    IDirectPlay_Release(dp);
     IDirectPlayX_Release(dp4A);
     IDirectPlay3_Release(dp3);
     IDirectPlay3_Release(dp3A);
