@@ -85,6 +85,8 @@ static const WCHAR prop_adapterramW[] =
     {'A','d','a','p','t','e','r','R','A','M',0};
 static const WCHAR prop_bootableW[] =
     {'B','o','o','t','a','b','l','e',0};
+static const WCHAR prop_bootpartitionW[] =
+    {'B','o','o','t','P','a','r','t','i','t','i','o','n',0};
 static const WCHAR prop_captionW[] =
     {'C','a','p','t','i','o','n',0};
 static const WCHAR prop_classW[] =
@@ -239,6 +241,7 @@ static const struct column col_compsys[] =
     { prop_domainroleW,           CIM_UINT16 },
     { prop_manufacturerW,         CIM_STRING },
     { prop_modelW,                CIM_STRING },
+    { prop_nameW,                 CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_numlogicalprocessorsW, CIM_UINT32, VT_I4 },
     { prop_numprocessorsW,        CIM_UINT32, VT_I4 },
     { prop_totalphysicalmemoryW,  CIM_UINT64 }
@@ -246,6 +249,7 @@ static const struct column col_compsys[] =
 static const struct column col_diskdrive[] =
 {
     { prop_deviceidW,     CIM_STRING|COL_FLAG_KEY },
+    { prop_indexW,        CIM_UINT32, VT_I4 },
     { prop_manufacturerW, CIM_STRING },
     { prop_modelW,        CIM_STRING },
     { prop_serialnumberW, CIM_STRING }
@@ -253,6 +257,7 @@ static const struct column col_diskdrive[] =
 static const struct column col_diskpartition[] =
 {
     { prop_bootableW,       CIM_BOOLEAN },
+    { prop_bootpartitionW,  CIM_BOOLEAN },
     { prop_deviceidW,       CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
     { prop_diskindexW,      CIM_UINT32, VT_I4 },
     { prop_indexW,          CIM_UINT32, VT_I4 },
@@ -409,6 +414,8 @@ static const WCHAR diskdrive_modelW[] =
     {'W','i','n','e',' ','D','i','s','k',' ','D','r','i','v','e',0};
 static const WCHAR diskdrive_manufacturerW[] =
     {'(','S','t','a','n','d','a','r','d',' ','d','i','s','k',' ','d','r','i','v','e','s',')',0};
+static const WCHAR diskdrive_serialW[] =
+    {'W','I','N','E','H','D','I','S','K',0};
 static const WCHAR networkadapter_pnpdeviceidW[]=
     {'P','C','I','\\','V','E','N','_','8','0','8','6','&','D','E','V','_','1','0','0','E','&',
      'S','U','B','S','Y','S','_','0','0','1','E','8','0','8','6','&','R','E','V','_','0','2','\\',
@@ -456,6 +463,7 @@ struct record_computersystem
     UINT16       domainrole;
     const WCHAR *manufacturer;
     const WCHAR *model;
+    const WCHAR *name;
     UINT32       num_logical_processors;
     UINT32       num_processors;
     UINT64       total_physical_memory;
@@ -463,6 +471,7 @@ struct record_computersystem
 struct record_diskdrive
 {
     const WCHAR *device_id;
+    UINT32       index;
     const WCHAR *manufacturer;
     const WCHAR *name;
     const WCHAR *serialnumber;
@@ -470,6 +479,7 @@ struct record_diskdrive
 struct record_diskpartition
 {
     int          bootable;
+    int          bootpartition;
     const WCHAR *device_id;
     UINT32       diskindex;
     UINT32       index;
@@ -600,7 +610,7 @@ static const struct record_bios data_bios[] =
 };
 static const struct record_diskdrive data_diskdrive[] =
 {
-    { diskdrive_deviceidW, diskdrive_manufacturerW, diskdrive_modelW }
+    { diskdrive_deviceidW, 0, diskdrive_manufacturerW, diskdrive_modelW, diskdrive_serialW }
 };
 static const struct record_param data_param[] =
 {
@@ -726,6 +736,16 @@ static UINT64 get_total_physical_memory(void)
     return status.ullTotalPhys;
 }
 
+static WCHAR *get_computername(void)
+{
+    WCHAR *ret;
+    DWORD size=MAX_COMPUTERNAME_LENGTH;
+
+    if (!(ret = heap_alloc( size * sizeof(WCHAR) ))) return NULL;
+    GetComputerNameW( ret, &size );
+    return ret;
+}
+
 static void fill_compsys( struct table *table )
 {
     struct record_computersystem *rec;
@@ -738,6 +758,7 @@ static void fill_compsys( struct table *table )
     rec->domainrole             = 0; /* standalone workstation */
     rec->manufacturer           = compsys_manufacturerW;
     rec->model                  = compsys_modelW;
+    rec->name                   = get_computername();
     rec->num_logical_processors = get_logical_processor_count();
     rec->num_processors         = get_processor_count();
     rec->total_physical_memory  = get_total_physical_memory();
@@ -807,6 +828,7 @@ static void fill_diskpartition( struct table *table )
             }
             rec = (struct record_diskpartition *)(table->data + offset);
             rec->bootable       = (i == 2) ? -1 : 0;
+            rec->bootpartition  = (i == 2) ? -1 : 0;
             sprintfW( device_id, fmtW, index );
             rec->device_id      = heap_strdupW( device_id );
             rec->diskindex      = index;
