@@ -91,6 +91,11 @@ static void DP_CopySessionDesc( LPDPSESSIONDESC2 destSessionDesc,
 static LONG kludgePlayerGroupId = 1000;
 
 
+static inline IDirectPlayImpl *impl_from_IDirectPlay( IDirectPlay *iface )
+{
+    return CONTAINING_RECORD( iface, IDirectPlayImpl, IDirectPlay_iface );
+}
+
 static inline IDirectPlayImpl *impl_from_IDirectPlay2( IDirectPlay2 *iface )
 {
     return CONTAINING_RECORD( iface, IDirectPlayImpl, IDirectPlay2_iface );
@@ -362,6 +367,239 @@ HRESULT DP_HandleMessage( IDirectPlayImpl *This, const void *lpcMessageBody,
 }
 
 
+static HRESULT WINAPI IDirectPlayImpl_QueryInterface( IDirectPlay *iface, REFIID riid, void **ppv )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay( iface );
+    return IDirectPlayX_QueryInterface( &This->IDirectPlay4_iface, riid, ppv );
+}
+
+static ULONG WINAPI IDirectPlayImpl_AddRef( IDirectPlay *iface )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay( iface );
+    ULONG ref = InterlockedIncrement( &This->ref );
+
+    TRACE( "(%p) ref=%d\n", This, ref );
+
+    if ( ref == 1 )
+        InterlockedIncrement( &This->numIfaces );
+
+    return ref;
+}
+
+static ULONG WINAPI IDirectPlayImpl_Release( IDirectPlay *iface )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay( iface );
+    ULONG ref = InterlockedDecrement( &This->ref );
+
+    TRACE( "(%p) ref=%d\n", This, ref );
+
+    if ( !ref && !InterlockedDecrement( &This->numIfaces ) )
+        dplay_destroy( This );
+
+    return ref;
+}
+
+static HRESULT WINAPI IDirectPlayImpl_AddPlayerToGroup( IDirectPlay *iface, DPID group,
+        DPID player )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay( iface );
+    FIXME( "(%p)->(0x%08x,0x%08x): stub\n", This, group, player );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirectPlayImpl_Close( IDirectPlay *iface )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay( iface );
+    FIXME( "(%p): stub\n", This );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirectPlayImpl_CreatePlayer( IDirectPlay *iface, DPID *player,
+        LPSTR name, LPSTR fullname, HANDLE *event )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay( iface );
+    FIXME( "(%p)->(%p,%s,%s,%p): stub\n", This, player, debugstr_a( name ), debugstr_a( fullname ),
+            event );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirectPlayImpl_CreateGroup( IDirectPlay *iface, DPID *group, LPSTR name,
+        LPSTR fullname )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay( iface );
+    FIXME( "(%p)->(%p,%s,%s): stub\n", This, group, debugstr_a( name ), debugstr_a( fullname ) );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirectPlayImpl_DeletePlayerFromGroup( IDirectPlay *iface, DPID group,
+        DPID player )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay( iface );
+    FIXME( "(%p)->(0x%08x,0x%08x): stub\n", This, group, player );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirectPlayImpl_DestroyPlayer( IDirectPlay *iface, DPID player )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay( iface );
+    FIXME( "(%p)->(0x%08x): stub\n", This, player );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirectPlayImpl_DestroyGroup( IDirectPlay *iface, DPID group )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay( iface );
+    FIXME( "(%p)->(0x%08x): stub\n", This, group );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirectPlayImpl_EnableNewPlayers( IDirectPlay *iface, BOOL enable )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay( iface );
+    FIXME( "(%p)->(%d): stub\n", This, enable );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirectPlayImpl_EnumGroupPlayers( IDirectPlay *iface, DPID group,
+        LPDPENUMPLAYERSCALLBACK enumplayercb, void *context, DWORD flags )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay( iface );
+    FIXME( "(%p)->(0x%08x,%p,%p,0x%08x): stub\n", This, group, enumplayercb, context, flags );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirectPlayImpl_EnumGroups( IDirectPlay *iface, DWORD session,
+        LPDPENUMPLAYERSCALLBACK enumplayercb, void *context, DWORD flags )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay( iface );
+    FIXME( "(%p)->(0x%08x,%p,%p,0x%08x): stub\n", This, session, enumplayercb, context, flags );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirectPlayImpl_EnumPlayers( IDirectPlay *iface, DWORD session,
+        LPDPENUMPLAYERSCALLBACK enumplayercb, void *context, DWORD flags )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay( iface );
+    FIXME( "(%p)->(0x%08x,%p,%p,0x%08x): stub\n", This, session, enumplayercb, context, flags );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirectPlayImpl_EnumSessions( IDirectPlay *iface, DPSESSIONDESC *sdesc,
+        DWORD timeout, LPDPENUMSESSIONSCALLBACK enumsessioncb, void *context, DWORD flags )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay( iface );
+    FIXME( "(%p)->(%p,%u,%p,%p,0x%08x): stub\n", This, sdesc, timeout, enumsessioncb, context,
+            flags );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirectPlayImpl_GetCaps( IDirectPlay *iface, DPCAPS *caps )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay( iface );
+    FIXME( "(%p)->(%p): stub\n", This, caps );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirectPlayImpl_GetMessageCount( IDirectPlay *iface, DPID player,
+        DWORD *count )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay( iface );
+    FIXME( "(%p)->(0x%08x,%p): stub\n", This, player, count );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirectPlayImpl_GetPlayerCaps( IDirectPlay *iface, DPID player, DPCAPS *caps )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay( iface );
+    FIXME( "(%p)->(0x%08x,%p): stub\n", This, player, caps );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirectPlayImpl_GetPlayerName( IDirectPlay *iface, DPID player, LPSTR name,
+        DWORD *size_name, LPSTR fullname, DWORD *size_fullname )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay( iface );
+    FIXME( "(%p)->(0x%08x,%p,%p,%p,%p): stub\n", This, player, name, size_name, fullname,
+            size_fullname );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirectPlayImpl_Initialize( IDirectPlay *iface, GUID *guid )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay( iface );
+    FIXME( "(%p)->(%p): stub\n", This, guid );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirectPlayImpl_Open( IDirectPlay *iface, DPSESSIONDESC *sdesc )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay( iface );
+    FIXME( "(%p)->(%p): stub\n", This, sdesc );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirectPlayImpl_Receive( IDirectPlay *iface, DPID *from, DPID *to,
+        DWORD flags, void *data, DWORD *size )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay( iface );
+    FIXME( "(%p)->(%p,%p,0x%08x,%p,%p): stub\n", This, from, to, flags, data, size );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirectPlayImpl_SaveSession( IDirectPlay *iface, LPSTR reserved )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay( iface );
+    FIXME( "(%p)->(%p): stub\n", This, reserved );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirectPlayImpl_Send( IDirectPlay *iface, DPID from, DPID to, DWORD flags,
+        void *data, DWORD size )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay( iface );
+    FIXME( "(%p)->(0x%08x,0x%08x,0x%08x,%p,%u): stub\n", This, from, to, flags, data, size );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirectPlayImpl_SetPlayerName( IDirectPlay *iface, DPID player, LPSTR name,
+        LPSTR fullname )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay( iface );
+    FIXME( "(%p)->(0x%08x,%s,%s): stub\n", This, player, debugstr_a( name ),
+            debugstr_a ( fullname ) );
+    return E_NOTIMPL;
+}
+
+static const IDirectPlayVtbl dp_vt =
+{
+    IDirectPlayImpl_QueryInterface,
+    IDirectPlayImpl_AddRef,
+    IDirectPlayImpl_Release,
+    IDirectPlayImpl_AddPlayerToGroup,
+    IDirectPlayImpl_Close,
+    IDirectPlayImpl_CreatePlayer,
+    IDirectPlayImpl_CreateGroup,
+    IDirectPlayImpl_DeletePlayerFromGroup,
+    IDirectPlayImpl_DestroyPlayer,
+    IDirectPlayImpl_DestroyGroup,
+    IDirectPlayImpl_EnableNewPlayers,
+    IDirectPlayImpl_EnumGroupPlayers,
+    IDirectPlayImpl_EnumGroups,
+    IDirectPlayImpl_EnumPlayers,
+    IDirectPlayImpl_EnumSessions,
+    IDirectPlayImpl_GetCaps,
+    IDirectPlayImpl_GetMessageCount,
+    IDirectPlayImpl_GetPlayerCaps,
+    IDirectPlayImpl_GetPlayerName,
+    IDirectPlayImpl_Initialize,
+    IDirectPlayImpl_Open,
+    IDirectPlayImpl_Receive,
+    IDirectPlayImpl_SaveSession,
+    IDirectPlayImpl_Send,
+    IDirectPlayImpl_SetPlayerName,
+};
+
+
 static HRESULT WINAPI IDirectPlay2AImpl_QueryInterface( IDirectPlay2A *iface, REFIID riid,
         void **ppv )
 {
@@ -406,6 +644,11 @@ static HRESULT WINAPI IDirectPlay4Impl_QueryInterface( IDirectPlay4 *iface, REFI
     {
         TRACE( "(%p)->(IID_IUnknown %p)\n", This, ppv );
         *ppv = &This->IDirectPlay4A_iface;
+    }
+    else if ( IsEqualGUID( &IID_IDirectPlay, riid ) )
+    {
+        TRACE( "(%p)->(IID_IDirectPlay %p)\n", This, ppv );
+        *ppv = &This->IDirectPlay_iface;
     }
     else if ( IsEqualGUID( &IID_IDirectPlay2A, riid ) )
     {
@@ -5457,6 +5700,7 @@ HRESULT dplay_create( REFIID riid, void **ppv )
     if ( !obj )
         return DPERR_OUTOFMEMORY;
 
+    obj->IDirectPlay_iface.lpVtbl = &dp_vt;
     obj->IDirectPlay2A_iface.lpVtbl = &dp2A_vt;
     obj->IDirectPlay2_iface.lpVtbl = &dp2_vt;
     obj->IDirectPlay3A_iface.lpVtbl = &dp3A_vt;
@@ -5464,6 +5708,7 @@ HRESULT dplay_create( REFIID riid, void **ppv )
     obj->IDirectPlay4A_iface.lpVtbl = &dp4A_vt;
     obj->IDirectPlay4_iface.lpVtbl = &dp4_vt;
     obj->numIfaces = 1;
+    obj->ref = 0;
     obj->ref2A = 0;
     obj->ref2 = 0;
     obj->ref3A = 0;
