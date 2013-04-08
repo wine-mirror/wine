@@ -604,7 +604,7 @@ static HRESULT WINAPI IDirectPlay2AImpl_QueryInterface( IDirectPlay2A *iface, RE
         void **ppv )
 {
     IDirectPlayImpl *This = impl_from_IDirectPlay2A( iface );
-    return IDirectPlayX_QueryInterface( &This->IDirectPlay4A_iface, riid, ppv );
+    return IDirectPlayX_QueryInterface( &This->IDirectPlay4_iface, riid, ppv );
 }
 
 static HRESULT WINAPI IDirectPlay2Impl_QueryInterface( IDirectPlay2 *iface, REFIID riid,
@@ -5713,17 +5713,17 @@ HRESULT dplay_create( REFIID riid, void **ppv )
     obj->ref2 = 0;
     obj->ref3A = 0;
     obj->ref3 = 0;
-    obj->ref4A = 1;
-    obj->ref4 = 0;
+    obj->ref4A = 0;
+    obj->ref4 = 1;
 
     InitializeCriticalSection( &obj->lock );
     obj->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IDirectPlayImpl.lock");
 
     if ( DP_CreateDirectPlay2( obj ) )
-        hr = IDirectPlayX_QueryInterface( &obj->IDirectPlay4A_iface, riid, ppv );
+        hr = IDirectPlayX_QueryInterface( &obj->IDirectPlay4_iface, riid, ppv );
     else
         hr = DPERR_NOMEMORY;
-    IDirectPlayX_Release( &obj->IDirectPlay4A_iface );
+    IDirectPlayX_Release( &obj->IDirectPlay4_iface );
 
     return hr;
 }
