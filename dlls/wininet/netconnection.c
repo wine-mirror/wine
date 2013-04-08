@@ -659,7 +659,7 @@ DWORD NETCON_secure_connect(netconn_t *connection, server_t *server)
 
     /* FIXME: when got version alert and FIN from server */
     /* fallback to connect without TLSv1.1/TLSv1.2        */
-    if (res == ERROR_INTERNET_SECURITY_CHANNEL_ERROR)
+    if (res == ERROR_INTERNET_SECURITY_CHANNEL_ERROR && have_compat_cred_handle)
     {
         closesocket(connection->socket);
         res = create_netconn_socket(connection->server, connection, 500);
