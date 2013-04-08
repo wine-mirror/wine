@@ -40,6 +40,7 @@ BITMAP_FONTS  = \
 	ssef1257.fon \
 	ssef874.fon \
 	svgasys.fon \
+	vgafix.fon \
 	vgasys.fon \
 	vgasyse.fon \
 	vgasysg.fon \
@@ -86,6 +87,9 @@ coue1256.fon: courier.ttf
 
 coue1257.fon: courier.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 $(srcdir)/courier.ttf 13,1257,8
+
+vgafix.fon: fixedsys.ttf
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 $(srcdir)/fixedsys.ttf 15,1252,8
 
 sserife.fon: ms_sans_serif.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 129 $(srcdir)/ms_sans_serif.ttf 13,1252,5 16,1252,7 20,1252,8

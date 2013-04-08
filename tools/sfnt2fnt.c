@@ -429,6 +429,9 @@ static struct fontinfo *fill_fontinfo( const char *face_name, int ppem, int enc,
     /* Hack: Courier has no internal leading, nor do any Chinese or Japanese fonts */
     if(!strcmp(face->family_name, "Courier") || enc == 936 || enc == 950 || enc == 932)
         il = 0;
+    else if (!strcmp(face->family_name, "Fixedsys"))
+        il = 3;
+
     /* Japanese system fonts have an external leading (not small font) */
     if (enc == 932 && ppem > 11)
         el = 2;
