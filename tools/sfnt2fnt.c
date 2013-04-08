@@ -432,8 +432,8 @@ static struct fontinfo *fill_fontinfo( const char *face_name, int ppem, int enc,
     else if (!strcmp(face->family_name, "Fixedsys"))
         il = 3;
 
-    /* Japanese system fonts have an external leading (not small font) */
-    if (enc == 932 && ppem > 11)
+    /* Japanese System font has an external leading */
+    if (!strcmp(face->family_name, "System") && enc == 932)
         el = 2;
     else
         el = 0;
@@ -529,7 +529,7 @@ static struct fontinfo *fill_fontinfo( const char *face_name, int ppem, int enc,
     }
 
     info->hdr.fi.dfAvgWidth = avg_width;
-    info->hdr.fi.dfMaxWidth = max_width;
+    info->hdr.fi.dfMaxWidth = (enc == 932) ? avg_width * 2 : max_width;
     info->hdr.fi.dfDefaultChar = def_char - info->hdr.fi.dfFirstChar;
     info->hdr.fi.dfBreakChar = ' ' - info->hdr.fi.dfFirstChar;
     info->hdr.fi.dfWidthBytes = (width_bytes + 1) & ~1;
