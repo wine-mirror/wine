@@ -5998,9 +5998,7 @@ HRESULT WINAPI DirectPlayCreate
     return DPERR_INVALIDPARAMS;
   }
 
-  /* Create an IDirectPlay object. We don't support that so we'll cheat and
-     give them an IDirectPlay2A object and hope that doesn't cause problems */
-  if ( dplay_create( &IID_IDirectPlay2A, (void**)lplpDP ) != DP_OK )
+  if ( dplay_create( &IID_IDirectPlay, (void**)lplpDP ) != DP_OK )
     return DPERR_UNAVAILABLE;
 
   if( IsEqualGUID( &GUID_NULL, lpGUID ) )
