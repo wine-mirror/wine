@@ -893,6 +893,10 @@ static void test_urlcacheW(void)
         ret = GetUrlCacheEntryInfoA(urls[i].encoded_url, NULL, &size);
         ok(!ret && GetLastError()==ERROR_INSUFFICIENT_BUFFER,
                 "%d) GetLastError() = %d\n", i, GetLastError());
+        if(!ret && GetLastError()!=ERROR_INSUFFICIENT_BUFFER) {
+            win_skip("ANSI version of url is incorrect\n");
+            continue;
+        }
         entry_infoA = HeapAlloc(GetProcessHeap(), 0, size);
         ret = GetUrlCacheEntryInfoA(urls[i].encoded_url, entry_infoA, &size);
         ok(ret, "%d) GetUrlCacheEntryInfoA failed: %d\n", i, GetLastError());
