@@ -292,7 +292,13 @@ static WINE_CLIPFORMAT *insert_clipboard_format(UINT id, CFStringRef type)
     {
         WCHAR buffer[256];
 
-        GetClipboardFormatNameW(format->format_id, buffer, 256);
+        if (!GetClipboardFormatNameW(format->format_id, buffer, sizeof(buffer) / sizeof(buffer[0])))
+        {
+            WARN("failed to get name for format %s; error 0x%08x\n", debugstr_format(format->format_id), GetLastError());
+            HeapFree(GetProcessHeap(), 0, format);
+            return NULL;
+        }
+
         if (!strncmpW(buffer, mac_type_name_prefix, strlenW(mac_type_name_prefix)))
         {
             const WCHAR *p = buffer + strlenW(mac_type_name_prefix);
