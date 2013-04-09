@@ -30,10 +30,10 @@ MAKEDEPFLAGS = -xo -xcross.o
 all: $(TESTPROGRAM) $(WINETEST_RES)
 
 $(MODULE) $(MODULE).so: $(OBJS) Makefile.in
-	$(WINEGCC) $(APPMODE) $(OBJS) -o $@ $(LIBPORT) $(ALL_LIBS)
+	$(WINEGCC) $(APPMODE) $(OBJS) -o $@ $(ALL_LIBS)
 
 $(WINETEST_EXE): $(OBJS) Makefile.in
-	$(WINEGCC) -s -Wb,-F,$(MODULE) $(APPMODE) $(OBJS) -o $@ $(LIBPORT) $(ALL_LIBS)
+	$(WINEGCC) -s -Wb,-F,$(MODULE) $(APPMODE) $(OBJS) -o $@ $(ALL_LIBS)
 
 $(WINETEST_RES): $(WINETEST_EXE)
 	echo "$(MODULE) TESTRES \"$(WINETEST_EXE)\"" | $(LDPATH) $(WRC) $(RCFLAGS) -o $@
