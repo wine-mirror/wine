@@ -40,10 +40,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(dplay);
  */
 typedef struct IDirectPlayLobbyImpl  IDirectPlayLobbyAImpl;
 typedef struct IDirectPlayLobbyImpl  IDirectPlayLobbyWImpl;
-typedef struct IDirectPlayLobby2Impl IDirectPlayLobby2AImpl;
-typedef struct IDirectPlayLobby2Impl IDirectPlayLobby2WImpl;
-typedef struct IDirectPlayLobby3Impl IDirectPlayLobby3AImpl;
-typedef struct IDirectPlayLobby3Impl IDirectPlayLobby3WImpl;
+typedef struct IDirectPlayLobbyImpl  IDirectPlayLobby2AImpl;
+typedef struct IDirectPlayLobbyImpl  IDirectPlayLobby2WImpl;
+typedef struct IDirectPlayLobbyImpl  IDirectPlayLobby3AImpl;
+typedef struct IDirectPlayLobbyImpl  IDirectPlayLobby3WImpl;
 
 /* Forward declarations for this module helper methods */
 HRESULT DPL_CreateCompoundAddress ( LPCDPCOMPOUNDADDRESSELEMENT lpElements, DWORD dwElementCount,
@@ -85,28 +85,13 @@ typedef struct tagDirectPlayLobbyData
   DPQ_HEAD( DPLMSG ) msgs;  /* List of messages received */
 } DirectPlayLobbyData;
 
-#define DPL_IMPL_FIELDS \
- LONG ulInterfaceRef; \
- DirectPlayLobbyIUnknownData*  unk; \
- DirectPlayLobbyData*          dpl;
-
-struct IDirectPlayLobbyImpl
+typedef struct IDirectPlayLobbyImpl
 {
-    const IDirectPlayLobbyVtbl *lpVtbl;
-    DPL_IMPL_FIELDS
-};
-
-struct IDirectPlayLobby2Impl
-{
-    const IDirectPlayLobby2Vtbl *lpVtbl;
-    DPL_IMPL_FIELDS
-};
-
-struct IDirectPlayLobby3Impl
-{
-    const IDirectPlayLobby3Vtbl *lpVtbl;
-    DPL_IMPL_FIELDS
-};
+    const void *lpVtbl;
+    LONG ulInterfaceRef;
+    DirectPlayLobbyIUnknownData*  unk;
+    DirectPlayLobbyData*          dpl;
+} IDirectPlayLobbyImpl;
 
 /* Forward declarations of virtual tables */
 static const IDirectPlayLobbyVtbl  directPlayLobbyWVT;
@@ -203,46 +188,26 @@ static BOOL DPL_DestroyLobby1( LPVOID lpDPL )
 HRESULT DPL_CreateInterface
          ( REFIID riid, LPVOID* ppvObj )
 {
+  IDirectPlayLobbyImpl *This;
+
   TRACE( " for %s\n", debugstr_guid( riid ) );
 
-  *ppvObj = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                       sizeof( IDirectPlayLobbyWImpl ) );
-
-  if( *ppvObj == NULL )
-  {
+  This = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *This ) );
+  if ( !This )
     return DPERR_OUTOFMEMORY;
-  }
 
   if( IsEqualGUID( &IID_IDirectPlayLobby, riid ) )
-  {
-    IDirectPlayLobbyWImpl *This = *ppvObj;
     This->lpVtbl = &directPlayLobbyWVT;
-  }
   else if( IsEqualGUID( &IID_IDirectPlayLobbyA, riid ) )
-  {
-    IDirectPlayLobbyAImpl *This = *ppvObj;
     This->lpVtbl = &directPlayLobbyAVT;
-  }
   else if( IsEqualGUID( &IID_IDirectPlayLobby2, riid ) )
-  {
-    IDirectPlayLobby2WImpl *This = *ppvObj;
     This->lpVtbl = &directPlayLobby2WVT;
-  }
   else if( IsEqualGUID( &IID_IDirectPlayLobby2A, riid ) )
-  {
-    IDirectPlayLobby2AImpl *This = *ppvObj;
     This->lpVtbl = &directPlayLobby2AVT;
-  }
   else if( IsEqualGUID( &IID_IDirectPlayLobby3, riid ) )
-  {
-    IDirectPlayLobby3WImpl *This = *ppvObj;
     This->lpVtbl = &directPlayLobby3WVT;
-  }
   else if( IsEqualGUID( &IID_IDirectPlayLobby3A, riid ) )
-  {
-    IDirectPlayLobby3AImpl *This = *ppvObj;
     This->lpVtbl = &directPlayLobby3AVT;
-  }
   else
   {
     /* Unsupported interface */
@@ -253,6 +218,7 @@ HRESULT DPL_CreateInterface
   }
 
   /* Initialize it */
+  *ppvObj = This;
   if ( DPL_CreateIUnknown( *ppvObj ) &&
        DPL_CreateLobby1( *ppvObj )
      )
