@@ -82,6 +82,98 @@ static void copy_file(LPCWSTR source, LPCWSTR destination)
     CopyFileW(source, destination, FALSE);
 }
 
+static LPWSTR *get_extrac_args(LPWSTR cmdline, int *pargc)
+{
+    enum {OUTSIDE_ARG, INSIDE_ARG, INSIDE_QUOTED_ARG} state;
+    LPWSTR str;
+    int argc;
+    LPWSTR *argv;
+    int max_argc = 16;
+    BOOL new_arg;
+
+    WINE_TRACE("cmdline: %s\n", wine_dbgstr_w(cmdline));
+    str = HeapAlloc(GetProcessHeap(), 0, (strlenW(cmdline) + 1) * sizeof(WCHAR));
+    if(!str) return NULL;
+    strcpyW(str, cmdline);
+    argv = HeapAlloc(GetProcessHeap(), 0, (max_argc + 1) * sizeof(LPWSTR));
+    if(!argv)
+    {
+        HeapFree(GetProcessHeap(), 0, str);
+        return NULL;
+    }
+
+    /* Split command line to separate arg-strings and fill argv */
+    state = OUTSIDE_ARG;
+    argc = 0;
+    while(*str)
+    {
+        new_arg = FALSE;
+        /* Check character */
+        if(isspaceW(*str))          /* white space */
+        {
+            if(state == INSIDE_ARG)
+            {
+                state = OUTSIDE_ARG;
+                *str = 0;
+            }
+        }
+        else if(*str == '"')        /* double quote */
+            switch(state)
+            {
+                case INSIDE_QUOTED_ARG:
+                    state = OUTSIDE_ARG;
+                    *str = 0;
+                    break;
+                case INSIDE_ARG:
+                    *str = 0;
+                    /* Fall through */
+                case OUTSIDE_ARG:
+                    if(!*++str) continue;
+                    state = INSIDE_QUOTED_ARG;
+                    new_arg = TRUE;
+                    break;
+            }
+        else                        /* regular character */
+            if(state == OUTSIDE_ARG)
+            {
+                state = INSIDE_ARG;
+                new_arg = TRUE;
+            }
+
+        /* Add new argv entry, if need */
+        if(new_arg)
+        {
+            if(argc >= max_argc - 1)
+            {
+                /* Realloc argv here because there always should be
+                   at least one reserved cell for terminating NULL */
+                max_argc *= 2;
+                argv = HeapReAlloc(GetProcessHeap(), 0, argv,
+                        (max_argc + 1) * sizeof(LPWSTR));
+                if(!argv)
+                {
+                    HeapFree(GetProcessHeap(), 0, str);
+                    return NULL;
+                }
+            }
+            argv[argc++] = str;
+        }
+
+        str++;
+    }
+
+    argv[argc] = NULL;
+    *pargc = argc;
+
+    if(TRACE_ON(extrac32))
+    {
+        int i;
+        for(i = 0; i < argc; i++)
+            WINE_TRACE("arg %d: %s\n", i, wine_dbgstr_w(argv[i]));
+    }
+    return argv;
+}
+
 int PASCAL wWinMain(HINSTANCE hInstance, HINSTANCE prev, LPWSTR cmdline, int show)
 {
     LPWSTR *argv;
@@ -93,11 +185,17 @@ int PASCAL wWinMain(HINSTANCE hInstance, HINSTANCE prev, LPWSTR cmdline, int sho
     LPCWSTR cabfile = NULL;
 
     path[0] = 0;
-    argv = CommandLineToArgvW(cmdline, &argc);
+
+    /* Do not use CommandLineToArgvW() or __wgetmainargs() to parse
+     * command line for this program. It should treat each quote as argument
+     * delimiter. This doesn't match with behavior of mentioned functions.
+     * Do not use args provided by wmain() for the same reason.
+     */
+    argv = get_extrac_args(cmdline, &argc);
 
     if(!argv)
     {
-        WINE_ERR("Bad command line arguments\n");
+        WINE_ERR("Command line parsing failed\n");
         return 0;
     }
 
