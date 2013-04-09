@@ -85,22 +85,10 @@ typedef struct tagDirectPlayLobbyData
   DPQ_HEAD( DPLMSG ) msgs;  /* List of messages received */
 } DirectPlayLobbyData;
 
-typedef struct tagDirectPlayLobby2Data
-{
-  BOOL dummy;
-} DirectPlayLobby2Data;
-
-typedef struct tagDirectPlayLobby3Data
-{
-  BOOL dummy;
-} DirectPlayLobby3Data;
-
 #define DPL_IMPL_FIELDS \
  LONG ulInterfaceRef; \
  DirectPlayLobbyIUnknownData*  unk; \
- DirectPlayLobbyData*          dpl; \
- DirectPlayLobby2Data*         dpl2; \
- DirectPlayLobby3Data*         dpl3;
+ DirectPlayLobbyData*          dpl;
 
 struct IDirectPlayLobbyImpl
 {
@@ -188,50 +176,6 @@ static BOOL DPL_DestroyLobby1( LPVOID lpDPL )
   return TRUE;
 }
 
-static BOOL DPL_CreateLobby2( LPVOID lpDPL )
-{
-  IDirectPlayLobby2AImpl *This = lpDPL;
-
-  This->dpl2 = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *(This->dpl2) ) );
-  if ( This->dpl2 == NULL )
-  {
-    return FALSE;
-  }
-
-  return TRUE;
-}
-
-static BOOL DPL_DestroyLobby2( LPVOID lpDPL )
-{
-  IDirectPlayLobby2AImpl *This = lpDPL;
-
-  HeapFree( GetProcessHeap(), 0, This->dpl2 );
-
-  return TRUE;
-}
-
-static BOOL DPL_CreateLobby3( LPVOID lpDPL )
-{
-  IDirectPlayLobby3AImpl *This = lpDPL;
-
-  This->dpl3 = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *(This->dpl3) ) );
-  if ( This->dpl3 == NULL )
-  {
-    return FALSE;
-  }
-
-  return TRUE;
-}
-
-static BOOL DPL_DestroyLobby3( LPVOID lpDPL )
-{
-  IDirectPlayLobby3AImpl *This = lpDPL;
-
-  HeapFree( GetProcessHeap(), 0, This->dpl3 );
-
-  return TRUE;
-}
-
 
 /* The COM interface for upversioning an interface
  * We've been given a GUID (riid) and we need to replace the present
@@ -310,9 +254,7 @@ HRESULT DPL_CreateInterface
 
   /* Initialize it */
   if ( DPL_CreateIUnknown( *ppvObj ) &&
-       DPL_CreateLobby1( *ppvObj ) &&
-       DPL_CreateLobby2( *ppvObj ) &&
-       DPL_CreateLobby3( *ppvObj )
+       DPL_CreateLobby1( *ppvObj )
      )
   {
     IDirectPlayLobby_AddRef( (LPDIRECTPLAYLOBBY)*ppvObj );
@@ -320,8 +262,6 @@ HRESULT DPL_CreateInterface
   }
 
   /* Initialize failed, destroy it */
-  DPL_DestroyLobby3( *ppvObj );
-  DPL_DestroyLobby2( *ppvObj );
   DPL_DestroyLobby1( *ppvObj );
   DPL_DestroyIUnknown( *ppvObj );
   HeapFree( GetProcessHeap(), 0, *ppvObj );
@@ -432,8 +372,6 @@ static ULONG WINAPI DPL_Release
   /* Deallocate if this is the last reference to the object */
   if( ulObjRefCount == 0 )
   {
-     DPL_DestroyLobby3( This );
-     DPL_DestroyLobby2( This );
      DPL_DestroyLobby1( This );
      DPL_DestroyIUnknown( This );
   }
