@@ -196,7 +196,7 @@ HRESULT DPL_CreateInterface
   if ( !This )
     return DPERR_OUTOFMEMORY;
 
-  if( IsEqualGUID( &IID_IDirectPlayLobby, riid ) )
+  if ( IsEqualGUID( &IID_IUnknown, riid ) || IsEqualGUID( &IID_IDirectPlayLobby, riid ) )
     This->lpVtbl = &directPlayLobbyWVT;
   else if( IsEqualGUID( &IID_IDirectPlayLobbyA, riid ) )
     This->lpVtbl = &directPlayLobbyAVT;
@@ -255,7 +255,7 @@ static HRESULT WINAPI DPL_QueryInterface
   CopyMemory( *ppvObj, This, sizeof( *This )  );
   (*(IDirectPlayLobbyAImpl**)ppvObj)->ulInterfaceRef = 0;
 
-  if( IsEqualGUID( &IID_IDirectPlayLobby, riid ) )
+  if( IsEqualGUID( &IID_IUnknown, riid ) || IsEqualGUID( &IID_IDirectPlayLobby, riid ) )
   {
     IDirectPlayLobbyWImpl *This = *ppvObj;
     This->lpVtbl = &directPlayLobbyWVT;
