@@ -762,6 +762,40 @@ typedef struct tagPDEXW
 DECL_WINELIB_TYPE_AW(PRINTDLGEX)
 DECL_WINELIB_TYPE_AW(LPPRINTDLGEX)
 
+#ifdef STDMETHOD
+
+DEFINE_GUID(IID_IPrintDialogCallback, 0x5852a2c3,0x6530,0x11d1,0xb6,0xa3,0x00,0x00,0xf8,0x75,0x7b,0xf9);
+#define INTERFACE IPrintDialogCallback
+DECLARE_INTERFACE_(IPrintDialogCallback,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID,void **) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IPrintDialogCallback methods ***/
+    STDMETHOD(InitDone)(THIS) PURE;
+    STDMETHOD(SelectionChange)(THIS) PURE;
+    STDMETHOD(HandleMessage)(THIS_ HWND,UINT,WPARAM,LPARAM,LRESULT *) PURE;
+};
+#undef INTERFACE
+
+DEFINE_GUID(IID_IPrintDialogServices, 0x509aaeda,0x5639,0x11d1,0xb6,0xa1,0x00,0x00,0xf8,0x75,0x7b,0xf9);
+#define INTERFACE IPrintDialogServices
+DECLARE_INTERFACE_(IPrintDialogServices,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID,void **) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IPrintDialogServices methods ***/
+    STDMETHOD(GetCurrentDevMode)(THIS_ LPDEVMODEW,UINT *) PURE;
+    STDMETHOD(GetCurrentPrinterName)(THIS_ LPWSTR,UINT *) PURE;
+    STDMETHOD(GetCurrentPortName)(THIS_ LPWSTR,UINT *) PURE;
+};
+#undef INTERFACE
+
+#endif /* STDMETHOD */
+
 BOOL  WINAPI ChooseColorA(LPCHOOSECOLORA lpChCol);
 BOOL  WINAPI ChooseColorW(LPCHOOSECOLORW lpChCol);
 #define ChooseColor WINELIB_NAME_AW(ChooseColor)

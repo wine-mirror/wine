@@ -23,6 +23,7 @@
 #include <windows.h>
 #include <winreg.h>
 #include <commctrl.h>
+#include <commdlg.h>
 #include <unknwn.h>
 
 #ifdef NONAMELESSUNION
