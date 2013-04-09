@@ -198,7 +198,7 @@ static void start_dosbox( const char *appname, const char *args )
         args[1] = "-conf";
         args[2] = config_file;
         args[3] = NULL;
-        ret = spawnvp( _P_WAIT, args[0], args );
+        ret = _spawnvp( _P_WAIT, args[0], args );
     }
     CloseHandle( file );
     DeleteFileW( config );

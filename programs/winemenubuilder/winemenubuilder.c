@@ -3371,11 +3371,11 @@ static void RefreshFileTypeAssociations(void)
         argv[0] = "update-mime-database";
         argv[1] = mime_dir;
         argv[2] = NULL;
-        spawnvp( _P_DETACH, argv[0], argv );
+        _spawnvp( _P_DETACH, argv[0], argv );
 
         argv[0] = "update-desktop-database";
         argv[1] = applications_dir;
-        spawnvp( _P_DETACH, argv[0], argv );
+        _spawnvp( _P_DETACH, argv[0], argv );
     }
 
 end:

@@ -90,7 +90,7 @@ static int launch_app( WCHAR *candidates, const WCHAR *argv1 )
         argv_new[1] = cmdline;
         argv_new[2] = NULL;
 
-        spawnvp( _P_OVERLAY, app, argv_new );  /* only returns on error */
+        _spawnvp( _P_OVERLAY, app, argv_new );  /* only returns on error */
         app = strtok( NULL, "," );  /* grab the next app */
     }
     WINE_ERR( "could not find a suitable app to run\n" );

@@ -268,7 +268,7 @@ void spawn( struct strarray *args )
         for (i = 0; args->str[i]; i++)
             fprintf( stderr, "%s%c", args->str[i], args->str[i+1] ? ' ' : '\n' );
 
-    if ((status = spawnvp( _P_WAIT, args->str[0], args->str )))
+    if ((status = _spawnvp( _P_WAIT, args->str[0], args->str )))
     {
 	if (status > 0) fatal_error( "%s failed with status %u\n", args->str[0], status );
 	else fatal_perror( "winebuild" );

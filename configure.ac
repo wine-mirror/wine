@@ -2011,7 +2011,6 @@ AC_CHECK_FUNCS(\
 	sigaltstack \
 	sigprocmask \
 	snprintf \
-	spawnvp \
 	statfs \
 	statvfs \
 	strcasecmp \

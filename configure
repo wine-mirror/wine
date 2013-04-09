@@ -13066,7 +13066,6 @@ for ac_func in \
 	sigaltstack \
 	sigprocmask \
 	snprintf \
-	spawnvp \
 	statfs \
 	statvfs \
 	strcasecmp \

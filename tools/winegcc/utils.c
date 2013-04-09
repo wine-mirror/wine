@@ -334,7 +334,7 @@ void spawn(const strarray* prefix, const strarray* args, int ignore_errors)
 	printf("\n");
     }
 
-    if ((status = spawnvp( _P_WAIT, argv[0], argv)) && !ignore_errors)
+    if ((status = _spawnvp( _P_WAIT, argv[0], argv)) && !ignore_errors)
     {
 	if (status > 0) error("%s failed\n", argv[0]);
 	else perror("winegcc");

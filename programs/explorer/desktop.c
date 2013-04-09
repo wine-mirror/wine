@@ -45,7 +45,7 @@ static BOOL start_screensaver( void )
     if (using_root)
     {
         const char *argv[3] = { "xdg-screensaver", "activate", NULL };
-        int pid = spawnvp( _P_DETACH, argv[0], argv );
+        int pid = _spawnvp( _P_DETACH, argv[0], argv );
         if (pid > 0)
         {
             WINE_TRACE( "started process %d\n", pid );

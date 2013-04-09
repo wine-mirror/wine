@@ -21,6 +21,8 @@
 #include "config.h"
 #include "wine/port.h"
 
+#ifndef HAVE__SPAWNVP
+
 #include <errno.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -32,10 +34,8 @@
 # include <unistd.h>
 #endif
 
-#ifndef HAVE_SPAWNVP
-int spawnvp(int mode, const char *cmdname, const char *const argv[])
+int _spawnvp(int mode, const char *cmdname, const char *const argv[])
 {
-#ifndef HAVE__SPAWNVP
     int pid, status, wret;
 
     if (mode == _P_OVERLAY)
@@ -93,8 +93,6 @@ int spawnvp(int mode, const char *cmdname, const char *const argv[])
     }
 
     return pid;
-#else   /* HAVE__SPAWNVP */
-    return _spawnvp(mode, cmdname, argv);
-#endif  /* HAVE__SPAWNVP */
 }
-#endif  /* HAVE_SPAWNVP */
+
+#endif  /* HAVE__SPAWNVP */

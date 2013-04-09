@@ -734,9 +734,6 @@
 /* Define to 1 if you have the `socketpair' function. */
 #undef HAVE_SOCKETPAIR
 
-/* Define to 1 if you have the `spawnvp' function. */
-#undef HAVE_SPAWNVP
-
 /* Define to 1 if the system has the type `ssize_t'. */
 #undef HAVE_SSIZE_T
 
