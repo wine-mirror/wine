@@ -94,12 +94,7 @@ typedef struct IDirectPlayLobbyImpl
 } IDirectPlayLobbyImpl;
 
 /* Forward declarations of virtual tables */
-static const IDirectPlayLobbyVtbl  directPlayLobbyWVT;
-static const IDirectPlayLobby2Vtbl directPlayLobby2WVT;
 static const IDirectPlayLobby3Vtbl directPlayLobby3WVT;
-
-static const IDirectPlayLobbyVtbl  directPlayLobbyAVT;
-static const IDirectPlayLobby2Vtbl directPlayLobby2AVT;
 static const IDirectPlayLobby3Vtbl directPlayLobby3AVT;
 
 static BOOL DPL_CreateIUnknown( LPVOID lpDPL )
@@ -196,17 +191,11 @@ HRESULT DPL_CreateInterface
   if ( !This )
     return DPERR_OUTOFMEMORY;
 
-  if ( IsEqualGUID( &IID_IUnknown, riid ) || IsEqualGUID( &IID_IDirectPlayLobby, riid ) )
-    This->lpVtbl = &directPlayLobbyWVT;
-  else if( IsEqualGUID( &IID_IDirectPlayLobbyA, riid ) )
-    This->lpVtbl = &directPlayLobbyAVT;
-  else if( IsEqualGUID( &IID_IDirectPlayLobby2, riid ) )
-    This->lpVtbl = &directPlayLobby2WVT;
-  else if( IsEqualGUID( &IID_IDirectPlayLobby2A, riid ) )
-    This->lpVtbl = &directPlayLobby2AVT;
-  else if( IsEqualGUID( &IID_IDirectPlayLobby3, riid ) )
+  if ( IsEqualGUID( &IID_IUnknown, riid ) || IsEqualGUID( &IID_IDirectPlayLobby, riid ) ||
+      IsEqualGUID( &IID_IDirectPlayLobby2, riid ) || IsEqualGUID( &IID_IDirectPlayLobby3, riid ) )
     This->lpVtbl = &directPlayLobby3WVT;
-  else if( IsEqualGUID( &IID_IDirectPlayLobby3A, riid ) )
+  else if ( IsEqualGUID( &IID_IDirectPlayLobbyA, riid ) ||
+      IsEqualGUID( &IID_IDirectPlayLobby2A, riid ) || IsEqualGUID( &IID_IDirectPlayLobby3A, riid ) )
     This->lpVtbl = &directPlayLobby3AVT;
   else
   {
@@ -255,32 +244,14 @@ static HRESULT WINAPI DPL_QueryInterface
   CopyMemory( *ppvObj, This, sizeof( *This )  );
   (*(IDirectPlayLobbyAImpl**)ppvObj)->ulInterfaceRef = 0;
 
-  if( IsEqualGUID( &IID_IUnknown, riid ) || IsEqualGUID( &IID_IDirectPlayLobby, riid ) )
-  {
-    IDirectPlayLobbyWImpl *This = *ppvObj;
-    This->lpVtbl = &directPlayLobbyWVT;
-  }
-  else if( IsEqualGUID( &IID_IDirectPlayLobbyA, riid ) )
-  {
-    IDirectPlayLobbyAImpl *This = *ppvObj;
-    This->lpVtbl = &directPlayLobbyAVT;
-  }
-  else if( IsEqualGUID( &IID_IDirectPlayLobby2, riid ) )
-  {
-    IDirectPlayLobby2WImpl *This = *ppvObj;
-    This->lpVtbl = &directPlayLobby2WVT;
-  }
-  else if( IsEqualGUID( &IID_IDirectPlayLobby2A, riid ) )
-  {
-    IDirectPlayLobby2AImpl *This = *ppvObj;
-    This->lpVtbl = &directPlayLobby2AVT;
-  }
-  else if( IsEqualGUID( &IID_IDirectPlayLobby3, riid ) )
+  if ( IsEqualGUID( &IID_IUnknown, riid ) || IsEqualGUID( &IID_IDirectPlayLobby, riid ) ||
+      IsEqualGUID( &IID_IDirectPlayLobby2, riid ) || IsEqualGUID( &IID_IDirectPlayLobby3, riid ) )
   {
     IDirectPlayLobby3WImpl *This = *ppvObj;
     This->lpVtbl = &directPlayLobby3WVT;
   }
-  else if( IsEqualGUID( &IID_IDirectPlayLobby3A, riid ) )
+  else if ( IsEqualGUID( &IID_IDirectPlayLobbyA, riid ) ||
+      IsEqualGUID( &IID_IDirectPlayLobby2A, riid ) || IsEqualGUID( &IID_IDirectPlayLobby3A, riid ) )
   {
     IDirectPlayLobby3AImpl *This = *ppvObj;
     This->lpVtbl = &directPlayLobby3AVT;
@@ -1623,130 +1594,6 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_WaitForConnectionSettings
   return hr;
 }
 
-
-/* Virtual Table definitions for DPL{1,2,3}{A,W} */
-
-/* Note: Hack so we can reuse the old functions without compiler warnings */
-#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)     (typeof(directPlayLobbyAVT.fun))
-#else
-# define XCAST(fun)     (void*)
-#endif
-
-/* Direct Play Lobby 1 (ascii) Virtual Table for methods */
-/* All lobby 1 methods are exactly the same except QueryInterface */
-static const IDirectPlayLobbyVtbl directPlayLobbyAVT =
-{
-
-  XCAST(QueryInterface)DPL_QueryInterface,
-  XCAST(AddRef)DPL_AddRef,
-  XCAST(Release)DPL_Release,
-
-  IDirectPlayLobbyAImpl_Connect,
-  IDirectPlayLobbyAImpl_CreateAddress,
-  IDirectPlayLobbyAImpl_EnumAddress,
-  IDirectPlayLobbyAImpl_EnumAddressTypes,
-  IDirectPlayLobbyAImpl_EnumLocalApplications,
-  IDirectPlayLobbyAImpl_GetConnectionSettings,
-  IDirectPlayLobbyAImpl_ReceiveLobbyMessage,
-  IDirectPlayLobbyAImpl_RunApplication,
-  IDirectPlayLobbyAImpl_SendLobbyMessage,
-  IDirectPlayLobbyAImpl_SetConnectionSettings,
-  IDirectPlayLobbyAImpl_SetLobbyMessageEvent
-};
-#undef XCAST
-
-
-/* Note: Hack so we can reuse the old functions without compiler warnings */
-#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)     (typeof(directPlayLobbyWVT.fun))
-#else
-# define XCAST(fun)     (void*)
-#endif
-
-/* Direct Play Lobby 1 (unicode) Virtual Table for methods */
-static const IDirectPlayLobbyVtbl directPlayLobbyWVT =
-{
-
-  XCAST(QueryInterface)DPL_QueryInterface,
-  XCAST(AddRef)DPL_AddRef,
-  XCAST(Release)DPL_Release,
-
-  IDirectPlayLobbyWImpl_Connect,
-  IDirectPlayLobbyWImpl_CreateAddress,
-  IDirectPlayLobbyWImpl_EnumAddress,
-  IDirectPlayLobbyWImpl_EnumAddressTypes,
-  IDirectPlayLobbyWImpl_EnumLocalApplications,
-  IDirectPlayLobbyWImpl_GetConnectionSettings,
-  IDirectPlayLobbyWImpl_ReceiveLobbyMessage,
-  IDirectPlayLobbyWImpl_RunApplication,
-  IDirectPlayLobbyWImpl_SendLobbyMessage,
-  IDirectPlayLobbyWImpl_SetConnectionSettings,
-  IDirectPlayLobbyWImpl_SetLobbyMessageEvent
-};
-#undef XCAST
-
-/* Note: Hack so we can reuse the old functions without compiler warnings */
-#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)     (typeof(directPlayLobby2AVT.fun))
-#else
-# define XCAST(fun)     (void*)
-#endif
-
-/* Direct Play Lobby 2 (ascii) Virtual Table for methods */
-static const IDirectPlayLobby2Vtbl directPlayLobby2AVT =
-{
-
-  XCAST(QueryInterface)DPL_QueryInterface,
-  XCAST(AddRef)DPL_AddRef,
-  XCAST(Release)DPL_Release,
-
-  XCAST(Connect)IDirectPlayLobbyAImpl_Connect,
-  XCAST(CreateAddress)IDirectPlayLobbyAImpl_CreateAddress,
-  XCAST(EnumAddress)IDirectPlayLobbyAImpl_EnumAddress,
-  XCAST(EnumAddressTypes)IDirectPlayLobbyAImpl_EnumAddressTypes,
-  XCAST(EnumLocalApplications)IDirectPlayLobbyAImpl_EnumLocalApplications,
-  XCAST(GetConnectionSettings)IDirectPlayLobbyAImpl_GetConnectionSettings,
-  XCAST(ReceiveLobbyMessage)IDirectPlayLobbyAImpl_ReceiveLobbyMessage,
-  XCAST(RunApplication)IDirectPlayLobbyAImpl_RunApplication,
-  XCAST(SendLobbyMessage)IDirectPlayLobbyAImpl_SendLobbyMessage,
-  XCAST(SetConnectionSettings)IDirectPlayLobbyAImpl_SetConnectionSettings,
-  XCAST(SetLobbyMessageEvent)IDirectPlayLobbyAImpl_SetLobbyMessageEvent,
-
-  IDirectPlayLobby2AImpl_CreateCompoundAddress
-};
-#undef XCAST
-
-/* Note: Hack so we can reuse the old functions without compiler warnings */
-#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)     (typeof(directPlayLobby2WVT.fun))
-#else
-# define XCAST(fun)     (void*)
-#endif
-
-/* Direct Play Lobby 2 (unicode) Virtual Table for methods */
-static const IDirectPlayLobby2Vtbl directPlayLobby2WVT =
-{
-
-  XCAST(QueryInterface)DPL_QueryInterface,
-  XCAST(AddRef)DPL_AddRef,
-  XCAST(Release)DPL_Release,
-
-  XCAST(Connect)IDirectPlayLobbyWImpl_Connect,
-  XCAST(CreateAddress)IDirectPlayLobbyWImpl_CreateAddress,
-  XCAST(EnumAddress)IDirectPlayLobbyWImpl_EnumAddress,
-  XCAST(EnumAddressTypes)IDirectPlayLobbyWImpl_EnumAddressTypes,
-  XCAST(EnumLocalApplications)IDirectPlayLobbyWImpl_EnumLocalApplications,
-  XCAST(GetConnectionSettings)IDirectPlayLobbyWImpl_GetConnectionSettings,
-  XCAST(ReceiveLobbyMessage)IDirectPlayLobbyWImpl_ReceiveLobbyMessage,
-  XCAST(RunApplication)IDirectPlayLobbyWImpl_RunApplication,
-  XCAST(SendLobbyMessage)IDirectPlayLobbyWImpl_SendLobbyMessage,
-  XCAST(SetConnectionSettings)IDirectPlayLobbyWImpl_SetConnectionSettings,
-  XCAST(SetLobbyMessageEvent)IDirectPlayLobbyWImpl_SetLobbyMessageEvent,
-
-  IDirectPlayLobby2WImpl_CreateCompoundAddress
-};
-#undef XCAST
 
 /* Direct Play Lobby 3 (ascii) Virtual Table for methods */
 
