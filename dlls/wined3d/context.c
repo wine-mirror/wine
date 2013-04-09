@@ -1897,13 +1897,16 @@ static void context_apply_draw_buffers(struct wined3d_context *context, DWORD rt
 void context_set_draw_buffer(struct wined3d_context *context, GLenum buffer)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    DWORD *current_mask = context->current_fbo ? &context->current_fbo->rt_mask : &context->draw_buffers_mask;
+    DWORD new_mask = context_generate_rt_mask(buffer);
+
+    if (new_mask == *current_mask)
+        return;
 
     gl_info->gl_ops.gl.p_glDrawBuffer(buffer);
     checkGLcall("glDrawBuffer()");
-    if (context->current_fbo)
-        context->current_fbo->rt_mask = context_generate_rt_mask(buffer);
-    else
-        context->draw_buffers_mask = context_generate_rt_mask(buffer);
+
+    *current_mask = new_mask;
 }
 
 /* Context activation is done by the caller. */
