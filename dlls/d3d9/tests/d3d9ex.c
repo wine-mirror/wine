@@ -690,7 +690,7 @@ static void test_reset(void)
 
     hr = IDirect3DDevice9Ex_GetScissorRect(device, &rect);
     ok(SUCCEEDED(hr), "Failed to get scissor rect, hr %#x.\n", hr);
-    todo_wine ok(rect.left == 0 && rect.top == 0 && rect.right == 200 && rect.bottom == 150,
+    ok(rect.left == 0 && rect.top == 0 && rect.right == 200 && rect.bottom == 150,
             "Got unexpected scissor rect {%d, %d, %d, %d}.\n",
             rect.left, rect.top, rect.right, rect.bottom);
 
@@ -698,8 +698,8 @@ static void test_reset(void)
     ok(SUCCEEDED(hr), "Failed to get viewport, hr %#x.\n", hr);
     ok(vp.X == 0, "Got unexpected vp.X %u.\n", vp.X);
     ok(vp.Y == 0, "Got unexpected vp.Y %u.\n", vp.Y);
-    todo_wine ok(vp.Width == 200, "Got unexpected vp.Width %u.\n", vp.Width);
-    todo_wine ok(vp.Height == 150, "Got unexpected vp.Height %u.\n", vp.Height);
+    ok(vp.Width == 200, "Got unexpected vp.Width %u.\n", vp.Width);
+    ok(vp.Height == 150, "Got unexpected vp.Height %u.\n", vp.Height);
     ok(vp.MinZ == 2.0f, "Got unexpected vp.MinZ %.8e.\n", vp.MinZ);
     ok(vp.MaxZ == 3.0f, "Got unexpected vp,MaxZ %.8e.\n", vp.MaxZ);
 
@@ -707,8 +707,8 @@ static void test_reset(void)
     ok(SUCCEEDED(hr), "Failed to get swapchain, hr %#x.\n", hr);
     hr = IDirect3DSwapChain9_GetPresentParameters(swapchain, &d3dpp);
     ok(SUCCEEDED(hr), "Failed to get present parameters, hr %#x.\n", hr);
-    todo_wine ok(d3dpp.BackBufferWidth == 200, "Got unexpected backbuffer width %u.\n", d3dpp.BackBufferWidth);
-    todo_wine ok(d3dpp.BackBufferHeight == 150, "Got unexpected backbuffer height %u.\n", d3dpp.BackBufferHeight);
+    ok(d3dpp.BackBufferWidth == 200, "Got unexpected backbuffer width %u.\n", d3dpp.BackBufferWidth);
+    ok(d3dpp.BackBufferHeight == 150, "Got unexpected backbuffer height %u.\n", d3dpp.BackBufferHeight);
     IDirect3DSwapChain9_Release(swapchain);
 
     memset(&d3dpp, 0, sizeof(d3dpp));

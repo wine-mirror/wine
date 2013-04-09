@@ -1110,8 +1110,8 @@ static void test_reset(void)
     {
         ok(vp.X == 0, "D3DVIEWPORT->X = %d\n", vp.X);
         ok(vp.Y == 0, "D3DVIEWPORT->Y = %d\n", vp.Y);
-        todo_wine ok(vp.Width == 200, "D3DVIEWPORT->Width = %d\n", vp.Width);
-        todo_wine ok(vp.Height == 150, "D3DVIEWPORT->Height = %d\n", vp.Height);
+        ok(vp.Width == 200, "D3DVIEWPORT->Width = %d\n", vp.Width);
+        ok(vp.Height == 150, "D3DVIEWPORT->Height = %d\n", vp.Height);
         ok(vp.MinZ == 0, "D3DVIEWPORT->MinZ = %f\n", vp.MinZ);
         ok(vp.MaxZ == 1, "D3DVIEWPORT->MaxZ = %f\n", vp.MaxZ);
     }
@@ -1125,8 +1125,8 @@ static void test_reset(void)
         ok(hr == D3D_OK, "IDirect3DSwapChain9_GetPresentParameters returned %08x\n", hr);
         if(SUCCEEDED(hr))
         {
-            todo_wine ok(d3dpp.BackBufferWidth == 200, "Back buffer width is %d\n", d3dpp.BackBufferWidth);
-            todo_wine ok(d3dpp.BackBufferHeight == 150, "Back buffer height is %d\n", d3dpp.BackBufferHeight);
+            ok(d3dpp.BackBufferWidth == 200, "Back buffer width is %d\n", d3dpp.BackBufferWidth);
+            ok(d3dpp.BackBufferHeight == 150, "Back buffer height is %d\n", d3dpp.BackBufferHeight);
         }
         IDirect3DSwapChain9_Release(pSwapchain);
     }
@@ -1288,6 +1288,16 @@ static void test_reset(void)
     d3dpp.BackBufferHeight = 600;
     hr = IDirect3DDevice9_Reset(device1, &d3dpp);
     ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_Reset to w=801, h=600, windowed=FALSE failed with %08x\n", hr);
+    hr = IDirect3DDevice9_TestCooperativeLevel(device1);
+    ok(hr == D3DERR_DEVICENOTRESET, "IDirect3DDevice9_TestCooperativeLevel after a failed reset returned %#x\n", hr);
+
+    ZeroMemory( &d3dpp, sizeof(d3dpp) );
+    d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
+    d3dpp.Windowed         = FALSE;
+    d3dpp.BackBufferWidth  = 0;
+    d3dpp.BackBufferHeight = 0;
+    hr = IDirect3DDevice9_Reset(device1, &d3dpp);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_Reset to w=0, h=0, windowed=FALSE failed with %08x\n", hr);
     hr = IDirect3DDevice9_TestCooperativeLevel(device1);
     ok(hr == D3DERR_DEVICENOTRESET, "IDirect3DDevice9_TestCooperativeLevel after a failed reset returned %#x\n", hr);
 

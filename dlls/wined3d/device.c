@@ -4904,6 +4904,8 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     struct wined3d_display_mode m;
     BOOL DisplayModeChanged = FALSE;
     BOOL update_desc = FALSE;
+    UINT backbuffer_width = swapchain_desc->backbuffer_width;
+    UINT backbuffer_height = swapchain_desc->backbuffer_height;
     HRESULT hr = WINED3D_OK;
     unsigned int i;
 
@@ -5034,16 +5036,38 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         m.scanline_ordering = WINED3D_SCANLINE_ORDERING_UNKNOWN;
     }
 
-    /* Should Width == 800 && Height == 0 set 800x600? */
-    if (swapchain_desc->backbuffer_width && swapchain_desc->backbuffer_height
-            && (swapchain_desc->backbuffer_width != swapchain->desc.backbuffer_width
-            || swapchain_desc->backbuffer_height != swapchain->desc.backbuffer_height))
+    if (!backbuffer_width || !backbuffer_height)
+    {
+        /* The application is requesting that either the swapchain width or
+         * height be set to the corresponding dimension in the window's
+         * client rect. */
+
+        RECT client_rect;
+
+        if (!swapchain_desc->windowed)
+            return WINED3DERR_INVALIDCALL;
+
+        if (!GetClientRect(swapchain->device_window, &client_rect))
+        {
+            ERR("Failed to get client rect, last error %#x.\n", GetLastError());
+            return WINED3DERR_INVALIDCALL;
+        }
+
+        if (!backbuffer_width)
+            backbuffer_width = client_rect.right;
+
+        if (!backbuffer_height)
+            backbuffer_height = client_rect.bottom;
+    }
+
+    if (backbuffer_width != swapchain->desc.backbuffer_width
+            || backbuffer_height != swapchain->desc.backbuffer_height)
     {
         if (!swapchain_desc->windowed)
             DisplayModeChanged = TRUE;
 
-        swapchain->desc.backbuffer_width = swapchain_desc->backbuffer_width;
-        swapchain->desc.backbuffer_height = swapchain_desc->backbuffer_height;
+        swapchain->desc.backbuffer_width = backbuffer_width;
+        swapchain->desc.backbuffer_height = backbuffer_height;
         update_desc = TRUE;
     }
 
