@@ -28,6 +28,7 @@
 #include <string.h>
 #include <assert.h>
 
+#define COBJMACROS
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "windef.h"
@@ -36,11 +37,12 @@
 #include "winuser.h"
 #include "winspool.h"
 #include "winerror.h"
+#include "objbase.h"
+#include "commdlg.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
-#include "commdlg.h"
 #include "dlgs.h"
 #include "cderr.h"
 #include "cdlg.h"
@@ -3932,6 +3934,80 @@ BOOL WINAPI PageSetupDlgW(LPPAGESETUPDLGW setupdlg)
     return pagesetup_common(&data);
 }
 
+static void pdlgex_to_pdlg(const PRINTDLGEXW *pdlgex, PRINTDLGW *pdlg)
+{
+    pdlg->lStructSize = sizeof(*pdlg);
+    pdlg->hwndOwner = pdlgex->hwndOwner;
+    pdlg->hDevMode = pdlgex->hDevMode;
+    pdlg->hDevNames = pdlgex->hDevNames;
+    pdlg->hDC = pdlgex->hDC;
+    pdlg->Flags = pdlgex->Flags;
+    if ((pdlgex->Flags & PD_NOPAGENUMS) || !pdlgex->nPageRanges || !pdlgex->lpPageRanges)
+    {
+        pdlg->nFromPage = 0;
+        pdlg->nToPage = 65534;
+    }
+    else
+    {
+        pdlg->nFromPage = pdlgex->lpPageRanges[0].nFromPage;
+        pdlg->nToPage = pdlgex->lpPageRanges[0].nToPage;
+    }
+    pdlg->nMinPage = pdlgex->nMinPage;
+    pdlg->nMaxPage = pdlgex->nMaxPage;
+    pdlg->nCopies = pdlgex->nCopies;
+    pdlg->hInstance = pdlgex->hInstance;
+    pdlg->lCustData = 0;
+    pdlg->lpfnPrintHook = NULL;
+    pdlg->lpfnSetupHook = NULL;
+    pdlg->lpPrintTemplateName = pdlgex->lpPrintTemplateName;
+    pdlg->lpSetupTemplateName = NULL;
+    pdlg->hPrintTemplate = NULL;
+    pdlg->hSetupTemplate = NULL;
+}
+
+/* Only copy fields that are supposed to be changed. */
+static void pdlg_to_pdlgex(const PRINTDLGW *pdlg, PRINTDLGEXW *pdlgex)
+{
+    pdlgex->hDevMode = pdlg->hDevMode;
+    pdlgex->hDevNames = pdlg->hDevNames;
+    pdlgex->hDC = pdlg->hDC;
+    if (!(pdlgex->Flags & PD_NOPAGENUMS) && pdlgex->nPageRanges && pdlgex->lpPageRanges)
+    {
+        pdlgex->lpPageRanges[0].nFromPage = pdlg->nFromPage;
+        pdlgex->lpPageRanges[0].nToPage = pdlg->nToPage;
+    }
+    pdlgex->nMinPage = pdlg->nMinPage;
+    pdlgex->nMaxPage = pdlg->nMaxPage;
+    pdlgex->nCopies = pdlg->nCopies;
+}
+
+struct callback_data
+{
+    IPrintDialogCallback *callback;
+    IObjectWithSite *object;
+};
+
+static UINT CALLBACK pdlgex_hook_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+    if (msg == WM_INITDIALOG)
+    {
+        PRINTDLGW *pd = (PRINTDLGW *)lp;
+        struct callback_data *cb = (struct callback_data *)pd->lCustData;
+
+        cb->callback->lpVtbl->SelectionChange(cb->callback);
+        cb->callback->lpVtbl->InitDone(cb->callback);
+    }
+    else
+    {
+/* FIXME: store interface pointer somewhere in window properties and call it
+        HRESULT hres;
+        cb->callback->lpVtbl->HandleMessage(cb->callback, hwnd, msg, wp, lp, &hres);
+*/
+    }
+
+    return 0;
+}
+
 /***********************************************************************
  * PrintDlgExA (COMDLG32.@)
  *
@@ -4003,9 +4079,39 @@ HRESULT WINAPI PrintDlgExA(LPPRINTDLGEXA lppd)
     }
     else
     {
-        FIXME("(%p) dialog not implemented\n", lppd);
-        return E_NOTIMPL;
+        PRINTDLGA pdlg;
+        struct callback_data cb_data = { 0 };
 
+        FIXME("(%p) semi-stub\n", lppd);
+
+        if (lppd->lpCallback)
+        {
+            IUnknown_QueryInterface((IUnknown *)lppd->lpCallback, &IID_IPrintDialogCallback, (void **)&cb_data.callback);
+            IUnknown_QueryInterface((IUnknown *)lppd->lpCallback, &IID_IObjectWithSite, (void **)&cb_data.object);
+        }
+
+        /*
+         * PRINTDLGEXA/W and PRINTDLGA/W layout is the same for A and W variants.
+         */
+        pdlgex_to_pdlg((const PRINTDLGEXW *)lppd, (PRINTDLGW *)&pdlg);
+        pdlg.Flags |= PD_ENABLEPRINTHOOK;
+        pdlg.lpfnPrintHook = pdlgex_hook_proc;
+        pdlg.lCustData = (LPARAM)&cb_data;
+
+        if (PrintDlgA(&pdlg))
+        {
+            pdlg_to_pdlgex((const PRINTDLGW *)&pdlg, (PRINTDLGEXW *)lppd);
+            lppd->dwResultAction = PD_RESULT_PRINT;
+        }
+        else
+            lppd->dwResultAction = PD_RESULT_CANCEL;
+
+        if (cb_data.callback)
+            cb_data.callback->lpVtbl->Release(cb_data.callback);
+        if (cb_data.object)
+            cb_data.object->lpVtbl->Release(cb_data.object);
+
+        return S_OK;
     }
 
     ClosePrinter(hprn);
@@ -4124,9 +4230,36 @@ HRESULT WINAPI PrintDlgExW(LPPRINTDLGEXW lppd)
     }
     else
     {
-        FIXME("(%p) dialog not implemented\n", lppd);
-        return E_NOTIMPL;
+        PRINTDLGW pdlg;
+        struct callback_data cb_data = { 0 };
 
+        FIXME("(%p) semi-stub\n", lppd);
+
+        if (lppd->lpCallback)
+        {
+            IUnknown_QueryInterface((IUnknown *)lppd->lpCallback, &IID_IPrintDialogCallback, (void **)&cb_data.callback);
+            IUnknown_QueryInterface((IUnknown *)lppd->lpCallback, &IID_IObjectWithSite, (void **)&cb_data.object);
+        }
+
+        pdlgex_to_pdlg(lppd, &pdlg);
+        pdlg.Flags |= PD_ENABLEPRINTHOOK;
+        pdlg.lpfnPrintHook = pdlgex_hook_proc;
+        pdlg.lCustData = (LPARAM)&cb_data;
+
+        if (PrintDlgW(&pdlg))
+        {
+            pdlg_to_pdlgex(&pdlg, lppd);
+            lppd->dwResultAction = PD_RESULT_PRINT;
+        }
+        else
+            lppd->dwResultAction = PD_RESULT_CANCEL;
+
+        if (cb_data.callback)
+            cb_data.callback->lpVtbl->Release(cb_data.callback);
+        if (cb_data.object)
+            cb_data.object->lpVtbl->Release(cb_data.object);
+
+        return S_OK;
     }
 
     ClosePrinter(hprn);
