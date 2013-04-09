@@ -1724,7 +1724,7 @@ static void apply_format_fixups(struct wined3d_adapter *adapter, struct wined3d_
 
     for (i = 0; i < sizeof(formats) / sizeof(*formats); ++i)
     {
-        struct wined3d_format *format = &gl_info->formats[idx];
+        struct wined3d_format *format = &gl_info->formats[i];
 
         if (!(format->flags & WINED3DFMT_FLAG_TEXTURE))
             continue;
