@@ -600,9 +600,9 @@ MSVCRT_intptr_t CDECL _execlpe(const char* name, const char* arg0, ...)
  *
  * Unicode version of _execv
  */
-MSVCRT_intptr_t CDECL _wexecv(const MSVCRT_wchar_t* name, MSVCRT_wchar_t* const* argv)
+MSVCRT_intptr_t CDECL _wexecv(const MSVCRT_wchar_t* name, const MSVCRT_wchar_t* const* argv)
 {
-  return MSVCRT__wspawnve(MSVCRT__P_OVERLAY, name, (const MSVCRT_wchar_t* const*) argv, NULL);
+  return MSVCRT__wspawnve(MSVCRT__P_OVERLAY, name, argv, NULL);
 }
 
 /*********************************************************************
@@ -611,9 +611,9 @@ MSVCRT_intptr_t CDECL _wexecv(const MSVCRT_wchar_t* name, MSVCRT_wchar_t* const*
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-MSVCRT_intptr_t CDECL _execv(const char* name, char* const* argv)
+MSVCRT_intptr_t CDECL _execv(const char* name, const char* const* argv)
 {
-  return MSVCRT__spawnve(MSVCRT__P_OVERLAY, name, (const char* const*) argv, NULL);
+  return MSVCRT__spawnve(MSVCRT__P_OVERLAY, name, argv, NULL);
 }
 
 /*********************************************************************
@@ -621,9 +621,9 @@ MSVCRT_intptr_t CDECL _execv(const char* name, char* const* argv)
  *
  * Unicode version of _execve
  */
-MSVCRT_intptr_t CDECL _wexecve(const MSVCRT_wchar_t* name, MSVCRT_wchar_t* const* argv, const MSVCRT_wchar_t* const* envv)
+MSVCRT_intptr_t CDECL _wexecve(const MSVCRT_wchar_t* name, const MSVCRT_wchar_t* const* argv, const MSVCRT_wchar_t* const* envv)
 {
-  return MSVCRT__wspawnve(MSVCRT__P_OVERLAY, name, (const MSVCRT_wchar_t* const*) argv, envv);
+  return MSVCRT__wspawnve(MSVCRT__P_OVERLAY, name, argv, envv);
 }
 
 /*********************************************************************
@@ -632,9 +632,9 @@ MSVCRT_intptr_t CDECL _wexecve(const MSVCRT_wchar_t* name, MSVCRT_wchar_t* const
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-MSVCRT_intptr_t CDECL MSVCRT__execve(const char* name, char* const* argv, const char* const* envv)
+MSVCRT_intptr_t CDECL MSVCRT__execve(const char* name, const char* const* argv, const char* const* envv)
 {
-  return MSVCRT__spawnve(MSVCRT__P_OVERLAY, name, (const char* const*) argv, envv);
+  return MSVCRT__spawnve(MSVCRT__P_OVERLAY, name, argv, envv);
 }
 
 /*********************************************************************
@@ -642,9 +642,9 @@ MSVCRT_intptr_t CDECL MSVCRT__execve(const char* name, char* const* argv, const 
  *
  * Unicode version of _execvpe
  */
-MSVCRT_intptr_t CDECL _wexecvpe(const MSVCRT_wchar_t* name, MSVCRT_wchar_t* const* argv, const MSVCRT_wchar_t* const* envv)
+MSVCRT_intptr_t CDECL _wexecvpe(const MSVCRT_wchar_t* name, const MSVCRT_wchar_t* const* argv, const MSVCRT_wchar_t* const* envv)
 {
-  return MSVCRT__wspawnvpe(MSVCRT__P_OVERLAY, name, (const MSVCRT_wchar_t* const*) argv, envv);
+  return MSVCRT__wspawnvpe(MSVCRT__P_OVERLAY, name, argv, envv);
 }
 
 /*********************************************************************
@@ -653,9 +653,9 @@ MSVCRT_intptr_t CDECL _wexecvpe(const MSVCRT_wchar_t* name, MSVCRT_wchar_t* cons
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-MSVCRT_intptr_t CDECL _execvpe(const char* name, char* const* argv, const char* const* envv)
+MSVCRT_intptr_t CDECL _execvpe(const char* name, const char* const* argv, const char* const* envv)
 {
-  return MSVCRT__spawnvpe(MSVCRT__P_OVERLAY, name, (const char* const*) argv, envv);
+  return MSVCRT__spawnvpe(MSVCRT__P_OVERLAY, name, argv, envv);
 }
 
 /*********************************************************************
@@ -663,7 +663,7 @@ MSVCRT_intptr_t CDECL _execvpe(const char* name, char* const* argv, const char* 
  *
  * Unicode version of _execvp
  */
-MSVCRT_intptr_t CDECL _wexecvp(const MSVCRT_wchar_t* name, MSVCRT_wchar_t* const* argv)
+MSVCRT_intptr_t CDECL _wexecvp(const MSVCRT_wchar_t* name, const MSVCRT_wchar_t* const* argv)
 {
   return _wexecvpe(name, argv, NULL);
 }
@@ -674,7 +674,7 @@ MSVCRT_intptr_t CDECL _wexecvp(const MSVCRT_wchar_t* name, MSVCRT_wchar_t* const
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-MSVCRT_intptr_t CDECL _execvp(const char* name, char* const* argv)
+MSVCRT_intptr_t CDECL _execvp(const char* name, const char* const* argv)
 {
   return _execvpe(name, argv, NULL);
 }

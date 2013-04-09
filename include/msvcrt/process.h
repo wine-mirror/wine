@@ -36,10 +36,10 @@ intptr_t  __cdecl _execl(const char*,const char*,...);
 intptr_t  __cdecl _execle(const char*,const char*,...);
 intptr_t  __cdecl _execlp(const char*,const char*,...);
 intptr_t  __cdecl _execlpe(const char*,const char*,...);
-intptr_t  __cdecl _execv(const char*,char* const *);
-intptr_t  __cdecl _execve(const char*,char* const *,const char* const *);
-intptr_t  __cdecl _execvp(const char*,char* const *);
-intptr_t  __cdecl _execvpe(const char*,char* const *,const char* const *);
+intptr_t  __cdecl _execv(const char*,const char* const *);
+intptr_t  __cdecl _execve(const char*,const char* const *,const char* const *);
+intptr_t  __cdecl _execvp(const char*,const char* const *);
+intptr_t  __cdecl _execvpe(const char*,const char* const *,const char* const *);
 int       __cdecl _getpid(void);
 intptr_t  __cdecl _spawnl(int,const char*,const char*,...);
 intptr_t  __cdecl _spawnle(int,const char*,const char*,...);
@@ -94,10 +94,10 @@ int      __cdecl _wsystem(const wchar_t*);
 
 static inline intptr_t cwait(int *status, intptr_t pid, int action) { return _cwait(status, pid, action); }
 static inline int getpid(void) { return _getpid(); }
-static inline intptr_t execv(const char* name, char* const* argv) { return _execv(name, argv); }
-static inline intptr_t execve(const char* name, char* const* argv, const char* const* envv) { return _execve(name, argv, envv); }
-static inline intptr_t execvp(const char* name, char* const* argv) { return _execvp(name, argv); }
-static inline intptr_t execvpe(const char* name, char* const* argv, const char* const* envv) { return _execvpe(name, argv, envv); }
+static inline intptr_t execv(const char* name, const char* const* argv) { return _execv(name, argv); }
+static inline intptr_t execve(const char* name, const char* const* argv, const char* const* envv) { return _execve(name, argv, envv); }
+static inline intptr_t execvp(const char* name, const char* const* argv) { return _execvp(name, argv); }
+static inline intptr_t execvpe(const char* name, const char* const* argv, const char* const* envv) { return _execvpe(name, argv, envv); }
 static inline intptr_t spawnv(int flags, const char* name, const char* const* argv) { return _spawnv(flags, name, argv); }
 static inline intptr_t spawnve(int flags, const char* name, const char* const* argv, const char* const* envv) { return _spawnve(flags, name, argv, envv); }
 static inline intptr_t spawnvp(int flags, const char* name, const char* const* argv) { return _spawnvp(flags, name, argv); }
