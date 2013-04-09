@@ -19,7 +19,11 @@
  *
  */
 
+#define COBJMACROS
+#define CONST_VTABLE
+
 #include <stdarg.h>
+#include <stdio.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -35,6 +39,8 @@
 
 /* ########################### */
 
+extern const IID IID_IObjectWithSite;
+
 static HMODULE  hcomdlg32;
 static HRESULT (WINAPI * pPrintDlgExW)(LPPRINTDLGEXW);
 
@@ -42,6 +48,18 @@ static HRESULT (WINAPI * pPrintDlgExW)(LPPRINTDLGEXW);
 
 static const CHAR emptyA[] = "";
 static const CHAR PrinterPortsA[] = "PrinterPorts";
+
+static const char *debugstr_guid(const GUID *guid)
+{
+    static char buf[50];
+
+    if (!guid) return "(null)";
+    sprintf(buf, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+            guid->Data1, guid->Data2, guid->Data3, guid->Data4[0],
+            guid->Data4[1], guid->Data4[2], guid->Data4[3], guid->Data4[4],
+            guid->Data4[5], guid->Data4[6], guid->Data4[7]);
+    return buf;
+}
 
 /* ########################### */
 
@@ -210,6 +228,98 @@ static void test_PrintDlgA(void)
 
 /* ########################### */
 
+static HRESULT WINAPI callback_QueryInterface(IPrintDialogCallback *iface,
+                                              REFIID riid, void **ppv)
+{
+    ok(0, "callback_QueryInterface(%s): unexpected call\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI callback_AddRef(IPrintDialogCallback *iface)
+{
+    trace("callback_AddRef\n");
+    return 2;
+}
+
+static ULONG WINAPI callback_Release(IPrintDialogCallback *iface)
+{
+    trace("callback_Release\n");
+    return 1;
+}
+
+static HRESULT WINAPI callback_InitDone(IPrintDialogCallback *iface)
+{
+    trace("callback_InitDone\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI callback_SelectionChange(IPrintDialogCallback *iface)
+{
+    trace("callback_SelectionChange\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI callback_HandleMessage(IPrintDialogCallback *iface,
+    HWND hdlg, UINT msg, WPARAM wp, LPARAM lp, LRESULT *res)
+{
+    trace("callback_HandleMessage %p,%04x,%lx,%lx,%p\n", hdlg, msg, wp, lp, res);
+    /* *res = PD_RESULT_PRINT; */
+    return S_OK;
+}
+
+static const IPrintDialogCallbackVtbl callback_Vtbl =
+{
+    callback_QueryInterface,
+    callback_AddRef,
+    callback_Release,
+    callback_InitDone,
+    callback_SelectionChange,
+    callback_HandleMessage
+};
+
+static IPrintDialogCallback callback = { &callback_Vtbl };
+
+static HRESULT WINAPI unknown_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
+{
+    trace("unknown_QueryInterface %s\n", debugstr_guid(riid));
+
+    if (IsEqualGUID(riid, &IID_IPrintDialogCallback))
+    {
+        *ppv = &callback;
+        return S_OK;
+    }
+    else if (IsEqualGUID(riid, &IID_IObjectWithSite))
+    {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    ok(0, "unexpected IID %s\n", debugstr_guid(riid));
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI unknown_AddRef(IUnknown *iface)
+{
+    trace("unknown_AddRef\n");
+    return 2;
+}
+
+static ULONG WINAPI unknown_Release(IUnknown *iface)
+{
+    trace("unknown_Release\n");
+    return 1;
+}
+
+static const IUnknownVtbl unknown_Vtbl =
+{
+    unknown_QueryInterface,
+    unknown_AddRef,
+    unknown_Release
+};
+
+static IUnknown unknown = { &unknown_Vtbl };
+
 static void test_PrintDlgExW(void)
 {
     PRINTPAGERANGE pagerange[2];
@@ -370,9 +480,30 @@ static void test_PrintDlgExW(void)
     GlobalFree(pDlg->hDevNames);
     DeleteDC(pDlg->hDC);
 
-    HeapFree(GetProcessHeap(), 0, pDlg);
-    return;
+    /* interactive PrintDlgEx tests */
 
+    if (!winetest_interactive)
+    {
+        skip("interactive PrintDlgEx tests (set WINETEST_INTERACTIVE=1)\n");
+        return;
+    }
+
+    ZeroMemory(pDlg, sizeof(PRINTDLGEXW));
+    pDlg->lStructSize = sizeof(PRINTDLGEXW);
+    pDlg->hwndOwner = GetDesktopWindow();
+    pDlg->Flags = PD_NOPAGENUMS | PD_RETURNIC;
+    pDlg->nStartPage = START_PAGE_GENERAL;
+    pDlg->lpCallback = &unknown;
+    pDlg->dwResultAction = S_OK;
+    res = pPrintDlgExW(pDlg);
+    ok(res == S_OK, "got 0x%x (expected S_OK)\n", res);
+    ok(pDlg->dwResultAction == PD_RESULT_PRINT, "expected PD_RESULT_PRINT, got %#x\n", pDlg->dwResultAction);
+    ok(pDlg->hDC != NULL, "HDC missing for PD_RETURNIC\n");
+    GlobalFree(pDlg->hDevMode);
+    GlobalFree(pDlg->hDevNames);
+    DeleteDC(pDlg->hDC);
+
+    HeapFree(GetProcessHeap(), 0, pDlg);
 }
 
 static BOOL abort_proc_called = FALSE;
