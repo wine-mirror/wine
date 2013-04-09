@@ -3014,7 +3014,7 @@ static void test_D3DXSHEvalSphericalLight(void)
                     expected = j + test[l].roffset;
                 else
                     expected = test[l].red_expected[j];
-                ok(relative_error(expected, test[l].red_received[j]) < admitted_error,
+                ok(relative_error(expected, test[l].red_received[j]) < 0.0005f,
                     "Red: case %u, order %u: expected[%u] = %f, received %f\n", l, order, j, expected, test[l].red_received[j]);
 
                 if (test[l].green_received)
@@ -3023,7 +3023,7 @@ static void test_D3DXSHEvalSphericalLight(void)
                         expected = j + test[l].goffset;
                     else
                         expected = test[l].green_expected[j];
-                    ok(relative_error(expected, test[l].green_received[j]) < admitted_error,
+                    ok(relative_error(expected, test[l].green_received[j]) < 0.0005f,
                         "Green: case %u, order %u: expected[%u] = %f, received %f\n", l, order, j, expected, test[l].green_received[j]);
                 }
 
@@ -3033,7 +3033,7 @@ static void test_D3DXSHEvalSphericalLight(void)
                         expected = j + test[l].boffset;
                     else
                         expected = test[l].blue_expected[j];
-                    ok(relative_error(expected, test[l].blue_received[j]) < admitted_error,
+                    ok(relative_error(expected, test[l].blue_received[j]) < 0.0005f,
                         "Blue: case %u, order %u: expected[%u] = %f, received %f\n", l, order, j, expected, test[l].blue_received[j]);
                 }
             }
