@@ -1722,8 +1722,7 @@ static void test_CreateTypeLib(void) {
     ok(pfuncdesc->callconv == CC_STDCALL, "got 0x%x\n", pfuncdesc->callconv);
     ok(pfuncdesc->cParams == 0, "got %d\n", pfuncdesc->cParams);
     ok(pfuncdesc->cParamsOpt == 0, "got %d\n", pfuncdesc->cParamsOpt);
-    todo_wine ok(pfuncdesc->oVft == 12 ||
-            broken(pfuncdesc->oVft == 24) /* xp64 */,
+    ok(pfuncdesc->oVft == 12 || broken(pfuncdesc->oVft == 24) /* xp64 */,
             "got %d\n", pfuncdesc->oVft);
     ok(pfuncdesc->cScodes == 0, "got %d\n", pfuncdesc->cScodes);
     ok(pfuncdesc->elemdescFunc.tdesc.vt == VT_BSTR, "got %d\n", pfuncdesc->elemdescFunc.tdesc.vt);
@@ -1783,8 +1782,7 @@ static void test_CreateTypeLib(void) {
     ok(pfuncdesc->callconv == CC_STDCALL, "got 0x%x\n", pfuncdesc->callconv);
     ok(pfuncdesc->cParams == 1, "got %d\n", pfuncdesc->cParams);
     ok(pfuncdesc->cParamsOpt == 0, "got %d\n", pfuncdesc->cParamsOpt);
-    todo_wine ok(pfuncdesc->oVft == 16 ||
-            broken(pfuncdesc->oVft == 28) /* xp64 */,
+    ok(pfuncdesc->oVft == 16 || broken(pfuncdesc->oVft == 28) /* xp64 */,
             "got %d\n", pfuncdesc->oVft);
     ok(pfuncdesc->cScodes == 0, "got %d\n", pfuncdesc->cScodes);
     ok(pfuncdesc->elemdescFunc.tdesc.vt == VT_VOID, "got %d\n", pfuncdesc->elemdescFunc.tdesc.vt);
@@ -1825,8 +1823,7 @@ static void test_CreateTypeLib(void) {
     ok(pfuncdesc->callconv == CC_STDCALL, "got 0x%x\n", pfuncdesc->callconv);
     ok(pfuncdesc->cParams == 0, "got %d\n", pfuncdesc->cParams);
     ok(pfuncdesc->cParamsOpt == 0, "got %d\n", pfuncdesc->cParamsOpt);
-    todo_wine ok(pfuncdesc->oVft == 16 ||
-            broken(pfuncdesc->oVft == 28), /* xp64 */
+    ok(pfuncdesc->oVft == 16 || broken(pfuncdesc->oVft == 28), /* xp64 */
             "got %d\n", pfuncdesc->oVft);
     ok(pfuncdesc->cScodes == 0, "got %d\n", pfuncdesc->cScodes);
     ok(pfuncdesc->elemdescFunc.tdesc.vt == VT_VOID, "got %d\n", pfuncdesc->elemdescFunc.tdesc.vt);
@@ -1857,8 +1854,7 @@ static void test_CreateTypeLib(void) {
     ok(pfuncdesc->callconv == CC_STDCALL, "got 0x%x\n", pfuncdesc->callconv);
     ok(pfuncdesc->cParams == 1, "got %d\n", pfuncdesc->cParams);
     ok(pfuncdesc->cParamsOpt == 0, "got %d\n", pfuncdesc->cParamsOpt);
-    todo_wine ok(pfuncdesc->oVft == 28 ||
-            broken(pfuncdesc->oVft == 40) /* xp64 */,
+    ok(pfuncdesc->oVft == 28 || broken(pfuncdesc->oVft == 40) /* xp64 */,
             "got %d\n", pfuncdesc->oVft);
     ok(pfuncdesc->cScodes == 0, "got %d\n", pfuncdesc->cScodes);
     ok(pfuncdesc->elemdescFunc.tdesc.vt == VT_VOID, "got %d\n", pfuncdesc->elemdescFunc.tdesc.vt);
@@ -1890,8 +1886,7 @@ static void test_CreateTypeLib(void) {
     ok(pfuncdesc->callconv == CC_STDCALL, "got 0x%x\n", pfuncdesc->callconv);
     ok(pfuncdesc->cParams == 1, "got %d\n", pfuncdesc->cParams);
     ok(pfuncdesc->cParamsOpt == 0, "got %d\n", pfuncdesc->cParamsOpt);
-    todo_wine ok(pfuncdesc->oVft == 28 ||
-            broken(pfuncdesc->oVft == 40) /* xp64 */,
+    ok(pfuncdesc->oVft == 28 || broken(pfuncdesc->oVft == 40) /* xp64 */,
             "got %d\n", pfuncdesc->oVft);
     ok(pfuncdesc->cScodes == 0, "got %d\n", pfuncdesc->cScodes);
     ok(pfuncdesc->elemdescFunc.tdesc.vt == VT_VOID, "got %d\n", pfuncdesc->elemdescFunc.tdesc.vt);
@@ -1927,8 +1922,7 @@ static void test_CreateTypeLib(void) {
     ok(pfuncdesc->callconv == CC_STDCALL, "got 0x%x\n", pfuncdesc->callconv);
     ok(pfuncdesc->cParams == 1, "got %d\n", pfuncdesc->cParams);
     ok(pfuncdesc->cParamsOpt == 0, "got %d\n", pfuncdesc->cParamsOpt);
-    todo_wine ok(pfuncdesc->oVft == 24 ||
-            broken(pfuncdesc->oVft == 36) /* xp64 */,
+    ok(pfuncdesc->oVft == 24 || broken(pfuncdesc->oVft == 36) /* xp64 */,
             "got %d\n", pfuncdesc->oVft);
     ok(pfuncdesc->cScodes == 0, "got %d\n", pfuncdesc->cScodes);
     ok(pfuncdesc->elemdescFunc.tdesc.vt == VT_VOID, "got %d\n", pfuncdesc->elemdescFunc.tdesc.vt);
@@ -1969,8 +1963,7 @@ static void test_CreateTypeLib(void) {
     ok(pfuncdesc->callconv == CC_STDCALL, "got 0x%x\n", pfuncdesc->callconv);
     ok(pfuncdesc->cParams == 2, "got %d\n", pfuncdesc->cParams);
     ok(pfuncdesc->cParamsOpt == 0, "got %d\n", pfuncdesc->cParamsOpt);
-    todo_wine ok(pfuncdesc->oVft == 24 ||
-            broken(pfuncdesc->oVft == 36) /* xp64 */,
+    ok(pfuncdesc->oVft == 24 || broken(pfuncdesc->oVft == 36) /* xp64 */,
             "got %d\n", pfuncdesc->oVft);
     ok(pfuncdesc->cScodes == 0, "got %d\n", pfuncdesc->cScodes);
     ok(pfuncdesc->elemdescFunc.tdesc.vt == VT_VOID, "got %d\n", pfuncdesc->elemdescFunc.tdesc.vt);
@@ -2021,8 +2014,7 @@ static void test_CreateTypeLib(void) {
     ok(pfuncdesc->callconv == CC_STDCALL, "got 0x%x\n", pfuncdesc->callconv);
     ok(pfuncdesc->cParams == 2, "got %d\n", pfuncdesc->cParams);
     ok(pfuncdesc->cParamsOpt == 0, "got %d\n", pfuncdesc->cParamsOpt);
-    todo_wine ok(pfuncdesc->oVft == 24 ||
-            broken(pfuncdesc->oVft == 36) /* xp64 */,
+    ok(pfuncdesc->oVft == 24 || broken(pfuncdesc->oVft == 36) /* xp64 */,
             "got %d\n", pfuncdesc->oVft);
     ok(pfuncdesc->cScodes == 0, "got %d\n", pfuncdesc->cScodes);
     ok(pfuncdesc->elemdescFunc.tdesc.vt == VT_VOID, "got %d\n", pfuncdesc->elemdescFunc.tdesc.vt);
@@ -2078,8 +2070,7 @@ static void test_CreateTypeLib(void) {
     ok(pfuncdesc->callconv == CC_STDCALL, "got 0x%x\n", pfuncdesc->callconv);
     ok(pfuncdesc->cParams == 1, "got %d\n", pfuncdesc->cParams);
     ok(pfuncdesc->cParamsOpt == 0, "got %d\n", pfuncdesc->cParamsOpt);
-    todo_wine ok(pfuncdesc->oVft == 32 ||
-            broken(pfuncdesc->oVft == 44), /* xp64 */
+    ok(pfuncdesc->oVft == 32 || broken(pfuncdesc->oVft == 44), /* xp64 */
             "got %d\n", pfuncdesc->oVft);
     ok(pfuncdesc->cScodes == 0, "got %d\n", pfuncdesc->cScodes);
     ok(pfuncdesc->elemdescFunc.tdesc.vt == VT_VOID, "got %d\n", pfuncdesc->elemdescFunc.tdesc.vt);
@@ -2179,6 +2170,29 @@ static void test_CreateTypeLib(void) {
     funcdesc.oVft = 0xaaa8;
     hres = ICreateTypeInfo_AddFuncDesc(createti, 0, &funcdesc);
     ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ICreateTypeInfo_QueryInterface(createti, &IID_ITypeInfo, (void**)&ti2);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ITypeInfo2_GetFuncDesc(ti2, 0, &pfuncdesc);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    ok(pfuncdesc->memid == 0x60020000, "got %x\n", pfuncdesc->memid);
+    ok(pfuncdesc->lprgscode == NULL, "got %p\n", pfuncdesc->lprgscode);
+    ok(pfuncdesc->lprgelemdescParam != NULL, "got %p\n", pfuncdesc->lprgelemdescParam);
+    ok(pfuncdesc->funckind == FUNC_PUREVIRTUAL, "got 0x%x\n", pfuncdesc->funckind);
+    ok(pfuncdesc->invkind == INVOKE_FUNC, "got 0x%x\n", pfuncdesc->invkind);
+    ok(pfuncdesc->callconv == CC_STDCALL, "got 0x%x\n", pfuncdesc->callconv);
+    ok(pfuncdesc->cParams == 1, "got %d\n", pfuncdesc->cParams);
+    ok(pfuncdesc->cParamsOpt == 0, "got %d\n", pfuncdesc->cParamsOpt);
+    ok(pfuncdesc->oVft == (short)0xaaa8, "got %d\n", pfuncdesc->oVft);
+    ok(pfuncdesc->cScodes == 0, "got %d\n", pfuncdesc->cScodes);
+    ok(pfuncdesc->elemdescFunc.tdesc.vt == VT_VOID, "got %d\n", pfuncdesc->elemdescFunc.tdesc.vt);
+    ok(pfuncdesc->wFuncFlags == 0, "got 0x%x\n", pfuncdesc->wFuncFlags);
+
+    ITypeInfo2_ReleaseFuncDesc(ti2, pfuncdesc);
+    ITypeInfo2_Release(ti2);
+
     funcdesc.oVft = 0;
 
     ICreateTypeInfo_Release(createti);

@@ -3295,9 +3295,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetFuncDesc(
     (*ppFuncDesc)->callconv = (typedata[4] >> 8) & 0xF;
     (*ppFuncDesc)->cParams = typedata[5];
     (*ppFuncDesc)->cParamsOpt = 0; /* FIXME: Unimplemented*/
-    (*ppFuncDesc)->oVft = typedata[3] & 0xFFFF;
-    if ((*ppFuncDesc)->oVft)
-        --(*ppFuncDesc)->oVft;
+    (*ppFuncDesc)->oVft = typedata[3] & 0xFFFC;
     (*ppFuncDesc)->cScodes = 0; /* FIXME: Unimplemented*/
     hres = ctl2_decode_typedesc(This->typelib, typedata[1],
             &(*ppFuncDesc)->elemdescFunc.tdesc);
