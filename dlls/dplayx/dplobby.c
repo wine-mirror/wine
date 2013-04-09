@@ -412,26 +412,16 @@ static HRESULT DPL_ConnectEx
   return hr;
 }
 
-static HRESULT WINAPI IDirectPlayLobbyAImpl_Connect
-( LPDIRECTPLAYLOBBYA iface,
-  DWORD dwFlags,
-  LPDIRECTPLAY2A* lplpDP,
-  IUnknown* pUnk)
+static HRESULT WINAPI IDirectPlayLobby3AImpl_Connect( IDirectPlayLobby3A *iface, DWORD flags,
+    IDirectPlay2A **dp, IUnknown *unk)
 {
-  IDirectPlayLobbyAImpl *This = (IDirectPlayLobbyAImpl *)iface;
-  return DPL_ConnectEx( This, dwFlags, &IID_IDirectPlay2A,
-                        (LPVOID)lplpDP, pUnk );
+    return IDirectPlayLobby_ConnectEx( iface, flags, &IID_IDirectPlay2A, (void**)dp, unk );
 }
 
-static HRESULT WINAPI IDirectPlayLobbyWImpl_Connect
-( LPDIRECTPLAYLOBBY iface,
-  DWORD dwFlags,
-  LPDIRECTPLAY2* lplpDP,
-  IUnknown* pUnk)
+static HRESULT WINAPI IDirectPlayLobby3Impl_Connect( IDirectPlayLobby3 *iface, DWORD flags,
+        IDirectPlay2 **dp, IUnknown *unk)
 {
-  IDirectPlayLobbyAImpl *This = (IDirectPlayLobbyAImpl *)iface; /* Yes cast to A */
-  return DPL_ConnectEx( This, dwFlags, &IID_IDirectPlay2,
-                        (LPVOID)lplpDP, pUnk );
+    return IDirectPlayLobby_ConnectEx( iface, flags, &IID_IDirectPlay2A, (void**)dp, unk );
 }
 
 /********************************************************************
@@ -1610,7 +1600,7 @@ static const IDirectPlayLobby3Vtbl directPlayLobby3AVT =
   XCAST(AddRef)DPL_AddRef,
   XCAST(Release)DPL_Release,
 
-  XCAST(Connect)IDirectPlayLobbyAImpl_Connect,
+    IDirectPlayLobby3AImpl_Connect,
   XCAST(CreateAddress)IDirectPlayLobbyAImpl_CreateAddress,
   XCAST(EnumAddress)IDirectPlayLobbyAImpl_EnumAddress,
   XCAST(EnumAddressTypes)IDirectPlayLobbyAImpl_EnumAddressTypes,
@@ -1646,7 +1636,7 @@ static const IDirectPlayLobby3Vtbl directPlayLobby3WVT =
   XCAST(AddRef)DPL_AddRef,
   XCAST(Release)DPL_Release,
 
-  XCAST(Connect)IDirectPlayLobbyWImpl_Connect,
+    IDirectPlayLobby3Impl_Connect,
   XCAST(CreateAddress)IDirectPlayLobbyWImpl_CreateAddress,
   XCAST(EnumAddress)IDirectPlayLobbyWImpl_EnumAddress,
   XCAST(EnumAddressTypes)IDirectPlayLobbyWImpl_EnumAddressTypes,
