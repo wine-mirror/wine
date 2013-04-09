@@ -760,7 +760,7 @@ static UINT WINECON_ParseOptions(const char* lpCmdLine, struct wc_init* wci)
         if (strncmp(wci->ptr, "--use-event=", 12) == 0)
         {
             char*           end;
-            wci->event = (HANDLE)strtol(wci->ptr + 12, &end, 10);
+            wci->event = ULongToHandle( strtoul(wci->ptr + 12, &end, 10) );
             if (end == wci->ptr + 12) return IDS_CMD_INVALID_EVENT_ID;
             wci->mode = from_event;
             wci->ptr = end;
