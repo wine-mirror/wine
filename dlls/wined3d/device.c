@@ -2225,7 +2225,7 @@ struct wined3d_sampler * CDECL wined3d_device_get_vs_sampler(const struct wined3
     return device->state.sampler[WINED3D_SHADER_TYPE_VERTEX][idx];
 }
 
-static void device_invalidate_shader_constants(const struct wined3d_device *device, DWORD mask)
+void device_invalidate_shader_constants(const struct wined3d_device *device, DWORD mask)
 {
     UINT i;
 
@@ -2258,7 +2258,8 @@ HRESULT CDECL wined3d_device_set_vs_consts_b(struct wined3d_device *device,
     }
     else
     {
-        device_invalidate_shader_constants(device, WINED3D_SHADER_CONST_VS_B);
+        wined3d_cs_emit_set_consts_b(device->cs, start_register, constants,
+                bool_count, WINED3D_SHADER_TYPE_VERTEX);
     }
 
     return WINED3D_OK;
@@ -2492,7 +2493,8 @@ HRESULT CDECL wined3d_device_set_ps_consts_b(struct wined3d_device *device,
     }
     else
     {
-        device_invalidate_shader_constants(device, WINED3D_SHADER_CONST_PS_B);
+        wined3d_cs_emit_set_consts_b(device->cs, start_register, constants,
+                bool_count, WINED3D_SHADER_TYPE_PIXEL);
     }
 
     return WINED3D_OK;
