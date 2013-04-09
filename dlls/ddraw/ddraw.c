@@ -2069,7 +2069,7 @@ static HRESULT WINAPI ddraw7_EnumDisplayModes(IDirectDraw7 *iface, DWORD Flags,
     struct wined3d_display_mode mode;
     unsigned int modenum, fmt;
     DDSURFACEDESC2 callback_sd;
-    unsigned enum_mode_count = 0, enum_mode_array_size = 0;
+    unsigned enum_mode_count = 0, enum_mode_array_size = 16;
     DDPIXELFORMAT pixelformat;
 
     static const enum wined3d_format_id checkFormatList[] =
@@ -2085,18 +2085,10 @@ static HRESULT WINAPI ddraw7_EnumDisplayModes(IDirectDraw7 *iface, DWORD Flags,
     if (!cb)
         return DDERR_INVALIDPARAMS;
 
+    enum_modes = HeapAlloc(GetProcessHeap(), 0, sizeof(*enum_modes) * enum_mode_array_size);
+    if (!enum_modes) return DDERR_OUTOFMEMORY;
+
     wined3d_mutex_lock();
-    if(!(Flags & DDEDM_REFRESHRATES))
-    {
-        enum_mode_array_size = 16;
-        enum_modes = HeapAlloc(GetProcessHeap(), 0, sizeof(*enum_modes) * enum_mode_array_size);
-        if (!enum_modes)
-        {
-            ERR("Out of memory\n");
-            wined3d_mutex_unlock();
-            return DDERR_OUTOFMEMORY;
-        }
-    }
 
     pixelformat.dwSize = sizeof(pixelformat);
     for(fmt = 0; fmt < (sizeof(checkFormatList) / sizeof(checkFormatList[0])); fmt++)
@@ -2105,6 +2097,9 @@ static HRESULT WINAPI ddraw7_EnumDisplayModes(IDirectDraw7 *iface, DWORD Flags,
         while (wined3d_enum_adapter_modes(ddraw->wined3d, WINED3DADAPTER_DEFAULT, checkFormatList[fmt],
                 WINED3D_SCANLINE_ORDERING_UNKNOWN, modenum++, &mode) == WINED3D_OK)
         {
+            BOOL found = FALSE;
+            unsigned i;
+
             PixelFormat_WineD3DtoDD(&pixelformat, mode.format_id);
             if (DDSD)
             {
@@ -2119,27 +2114,18 @@ static HRESULT WINAPI ddraw7_EnumDisplayModes(IDirectDraw7 *iface, DWORD Flags,
                     continue;
             }
 
-            if(!(Flags & DDEDM_REFRESHRATES))
+            /* DX docs state EnumDisplayMode should return only unique modes */
+            for (i = 0; i < enum_mode_count; i++)
             {
-                /* DX docs state EnumDisplayMode should return only unique modes. If DDEDM_REFRESHRATES is not set, refresh
-                 * rate doesn't matter when determining if the mode is unique. So modes only differing in refresh rate have
-                 * to be reduced to a single unique result in such case.
-                 */
-                BOOL found = FALSE;
-                unsigned i;
-
-                for (i = 0; i < enum_mode_count; i++)
+                if (enum_modes[i].width == mode.width && enum_modes[i].height == mode.height
+                    && enum_modes[i].format_id == mode.format_id
+                    && (enum_modes[i].refresh_rate == mode.refresh_rate || !(Flags & DDEDM_REFRESHRATES)))
                 {
-                    if (enum_modes[i].width == mode.width && enum_modes[i].height == mode.height
-                            && enum_modes[i].format_id == mode.format_id)
-                    {
-                        found = TRUE;
-                        break;
-                    }
+                    found = TRUE;
+                    break;
                 }
-
-                if(found) continue;
             }
+            if(found) continue;
 
             memset(&callback_sd, 0, sizeof(callback_sd));
             callback_sd.dwSize = sizeof(callback_sd);
@@ -2169,28 +2155,23 @@ static HRESULT WINAPI ddraw7_EnumDisplayModes(IDirectDraw7 *iface, DWORD Flags,
                 return DD_OK;
             }
 
-            if(!(Flags & DDEDM_REFRESHRATES))
+            if (enum_mode_count == enum_mode_array_size)
             {
-                if (enum_mode_count == enum_mode_array_size)
+                struct wined3d_display_mode *new_enum_modes;
+
+                enum_mode_array_size *= 2;
+                new_enum_modes = HeapReAlloc(GetProcessHeap(), 0, enum_modes,
+                                             sizeof(*new_enum_modes) * enum_mode_array_size);
+                if (!new_enum_modes)
                 {
-                    struct wined3d_display_mode *new_enum_modes;
-
-                    enum_mode_array_size *= 2;
-                    new_enum_modes = HeapReAlloc(GetProcessHeap(), 0, enum_modes,
-                            sizeof(*new_enum_modes) * enum_mode_array_size);
-                    if (!new_enum_modes)
-                    {
-                        ERR("Out of memory\n");
-                        HeapFree(GetProcessHeap(), 0, enum_modes);
-                        wined3d_mutex_unlock();
-                        return DDERR_OUTOFMEMORY;
-                    }
-
-                    enum_modes = new_enum_modes;
+                    HeapFree(GetProcessHeap(), 0, enum_modes);
+                    wined3d_mutex_unlock();
+                    return DDERR_OUTOFMEMORY;
                 }
 
-                enum_modes[enum_mode_count++] = mode;
+                enum_modes = new_enum_modes;
             }
+            enum_modes[enum_mode_count++] = mode;
         }
     }
 
