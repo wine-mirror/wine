@@ -582,10 +582,10 @@ static void convert_s8_uint_d24_float(const BYTE *src, BYTE *dst, UINT pitch, UI
  *     WINED3DFMT_NVHS */
 static const struct wined3d_format_texture_info format_texture_info[] =
 {
-    /* format id                        internal                          srgbInternal                       rtInternal
-            format                      type
+    /* format id                        gl_internal                       gl_srgb_internal                      gl_rt_internal
+            gl_format                   gl_type                           conv_byte_count
             flags
-            extension */
+            extension                   convert */
     /* FourCC formats */
     /* GL_APPLE_ycbcr_422 claims that its '2YUV' format, which is supported via the UNSIGNED_SHORT_8_8_REV_APPLE type
      * is equivalent to 'UYVY' format on Windows, and the 'YUVS' via UNSIGNED_SHORT_8_8_APPLE equates to 'YUY2'. The
