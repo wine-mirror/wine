@@ -1464,14 +1464,6 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     gl_info->gl_ops.gl.p_glGetIntegerv(GL_AUX_BUFFERS, &ret->aux_buffers);
 
     TRACE("Setting up the screen\n");
-    /* Clear the screen */
-    gl_info->gl_ops.gl.p_glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
-    checkGLcall("glClearColor");
-    gl_info->gl_ops.gl.p_glClearIndex(0);
-    gl_info->gl_ops.gl.p_glClearDepth(1);
-    gl_info->gl_ops.gl.p_glClearStencil(0xffff);
-
-    checkGLcall("glClear");
 
     gl_info->gl_ops.gl.p_glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
     checkGLcall("glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);");
