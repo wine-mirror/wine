@@ -886,7 +886,7 @@ static HRESULT ctl2_encode_variant(
         arg_type = VT_UI4;
 
     v = *value;
-    if(arg_type == VT_VARIANT) {
+    if(arg_type==VT_VARIANT || arg_type==VT_USERDEFINED) {
         arg_type = V_VT(value);
     }else if(V_VT(value) != arg_type) {
         hres = VariantChangeType(&v, value, 0, arg_type);

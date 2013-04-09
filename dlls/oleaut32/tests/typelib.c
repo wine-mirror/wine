@@ -2048,8 +2048,10 @@ static void test_CreateTypeLib(void) {
 
     elemdesc[0].tdesc.vt = VT_USERDEFINED;
     U(elemdesc[0].tdesc).hreftype = hreftype;
-    U(elemdesc[0]).paramdesc.pparamdescex = NULL;
-    U(elemdesc[0]).paramdesc.wParamFlags = 0;
+    U(elemdesc[0]).paramdesc.pparamdescex = &paramdescex;
+    U(elemdesc[0]).paramdesc.wParamFlags = PARAMFLAG_FHASDEFAULT;
+    V_VT(&paramdescex.varDefaultValue) = VT_INT;
+    V_INT(&paramdescex.varDefaultValue) = 0x789;
 
     funcdesc.lprgelemdescParam = elemdesc;
     funcdesc.invkind = INVOKE_FUNC;
@@ -2077,10 +2079,15 @@ static void test_CreateTypeLib(void) {
     ok(pfuncdesc->wFuncFlags == 0, "got 0x%x\n", pfuncdesc->wFuncFlags);
 
     edesc = pfuncdesc->lprgelemdescParam;
-    ok(U(*edesc).paramdesc.pparamdescex == NULL, "got: %p\n", U(*edesc).paramdesc.pparamdescex);
-    ok(U(*edesc).paramdesc.wParamFlags == 0, "got: 0x%x\n", U(*edesc).paramdesc.wParamFlags);
+    ok(U(*edesc).paramdesc.pparamdescex != NULL, "got: %p\n", U(*edesc).paramdesc.pparamdescex);
+    ok(U(*edesc).paramdesc.wParamFlags == PARAMFLAG_FHASDEFAULT,
+            "got: 0x%x\n", U(*edesc).paramdesc.wParamFlags);
     ok(edesc->tdesc.vt == VT_USERDEFINED, "got: %d\n", edesc->tdesc.vt);
     ok(U(edesc->tdesc).hreftype == hreftype, "got: 0x%x\n", U(edesc->tdesc).hreftype);
+    ok(V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue) == VT_INT, "got: %d\n",
+            V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue));
+    ok(V_INT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue) == 0x789, "got: %d\n",
+            V_INT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue));
 
     ITypeInfo2_ReleaseFuncDesc(ti2, pfuncdesc);
 
