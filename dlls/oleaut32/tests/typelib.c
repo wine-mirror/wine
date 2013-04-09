@@ -2084,6 +2084,49 @@ static void test_CreateTypeLib(void) {
 
     ITypeInfo2_ReleaseFuncDesc(ti2, pfuncdesc);
 
+    elemdesc[0].tdesc.vt = VT_VARIANT;
+    U(elemdesc[0]).paramdesc.pparamdescex = &paramdescex;
+    U(elemdesc[0]).paramdesc.wParamFlags = PARAMFLAG_FHASDEFAULT;
+    V_VT(&paramdescex.varDefaultValue) = VT_INT;
+    V_INT(&paramdescex.varDefaultValue) = 3;
+
+    funcdesc.lprgelemdescParam = elemdesc;
+    funcdesc.invkind = INVOKE_FUNC;
+    funcdesc.cParams = 1;
+    funcdesc.elemdescFunc.tdesc.vt = VT_VARIANT;
+
+    hres = ICreateTypeInfo_AddFuncDesc(createti, 6, &funcdesc);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ITypeInfo2_GetFuncDesc(ti2, 6, &pfuncdesc);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    ok(pfuncdesc->memid == 0x60010006, "got %x\n", pfuncdesc->memid);
+    ok(pfuncdesc->lprgscode == NULL, "got %p\n", pfuncdesc->lprgscode);
+    ok(pfuncdesc->lprgelemdescParam != NULL, "got %p\n", pfuncdesc->lprgelemdescParam);
+    ok(pfuncdesc->funckind == FUNC_PUREVIRTUAL, "got 0x%x\n", pfuncdesc->funckind);
+    ok(pfuncdesc->invkind == INVOKE_FUNC, "got 0x%x\n", pfuncdesc->invkind);
+    ok(pfuncdesc->callconv == CC_STDCALL, "got 0x%x\n", pfuncdesc->callconv);
+    ok(pfuncdesc->cParams == 1, "got %d\n", pfuncdesc->cParams);
+    ok(pfuncdesc->cParamsOpt == 0, "got %d\n", pfuncdesc->cParamsOpt);
+    ok(pfuncdesc->oVft == 36 || broken(pfuncdesc->oVft == 48), /* xp64 */
+            "got %d\n", pfuncdesc->oVft);
+    ok(pfuncdesc->cScodes == 0, "got %d\n", pfuncdesc->cScodes);
+    ok(pfuncdesc->elemdescFunc.tdesc.vt == VT_VARIANT, "got %d\n", pfuncdesc->elemdescFunc.tdesc.vt);
+    ok(pfuncdesc->wFuncFlags == 0, "got 0x%x\n", pfuncdesc->wFuncFlags);
+
+    edesc = pfuncdesc->lprgelemdescParam;
+    ok(U(*edesc).paramdesc.pparamdescex != NULL, "got: %p\n", U(*edesc).paramdesc.pparamdescex);
+    ok(U(*edesc).paramdesc.wParamFlags == PARAMFLAG_FHASDEFAULT,
+            "got: 0x%x\n", U(*edesc).paramdesc.wParamFlags);
+    ok(edesc->tdesc.vt == VT_VARIANT, "got: %d\n", edesc->tdesc.vt);
+    ok(V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue) == VT_INT, "got: %d\n",
+            V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue));
+    ok(V_INT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue) == 3, "got: %d\n",
+            V_INT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue));
+
+    ITypeInfo2_ReleaseFuncDesc(ti2, pfuncdesc);
+
     hres = ITypeInfo_GetDocumentation(interface1, 0, &name, &docstring, &helpcontext, &helpfile);
     ok(hres == S_OK, "got %08x\n", hres);
     ok(name == NULL, "name != NULL\n");
@@ -2164,6 +2207,7 @@ static void test_CreateTypeLib(void) {
     hres = ITypeInfo_GetImplTypeFlags(interface2, 1, &impltypeflags);
     ok(hres == TYPE_E_ELEMENTNOTFOUND, "got %08x\n", hres);
 
+    funcdesc.elemdescFunc.tdesc.vt = VT_VOID;
     funcdesc.oVft = 0xaaac;
     hres = ICreateTypeInfo_AddFuncDesc(createti, 0, &funcdesc);
     ok(hres == S_OK, "got %08x\n", hres);
@@ -2416,10 +2460,10 @@ static void test_CreateTypeLib(void) {
     ok(hres == S_OK, "got %08x\n", hres);
     ok(typeattr->cbSizeInstance == 4, "cbSizeInstance = %d\n", typeattr->cbSizeInstance);
     ok(typeattr->typekind == 3, "typekind = %d\n", typeattr->typekind);
-    ok(typeattr->cFuncs == 12, "cFuncs = %d\n", typeattr->cFuncs);
+    ok(typeattr->cFuncs == 13, "cFuncs = %d\n", typeattr->cFuncs);
     ok(typeattr->cVars == 0, "cVars = %d\n", typeattr->cVars);
     ok(typeattr->cImplTypes == 1, "cImplTypes = %d\n", typeattr->cImplTypes);
-    ok(typeattr->cbSizeVft == 60 || broken(typeattr->cbSizeVft == 3 * sizeof(void *) + 48), /* xp64 */
+    ok(typeattr->cbSizeVft == 64 || broken(typeattr->cbSizeVft == 3 * sizeof(void *) + 52), /* xp64 */
        "cbSizeVft = %d\n", typeattr->cbSizeVft);
     ok(typeattr->cbAlignment == 4, "cbAlignment = %d\n", typeattr->cbAlignment);
     ok(typeattr->wTypeFlags == 0, "wTypeFlags = %d\n", typeattr->wTypeFlags);

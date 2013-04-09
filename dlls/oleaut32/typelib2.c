@@ -886,7 +886,9 @@ static HRESULT ctl2_encode_variant(
         arg_type = VT_UI4;
 
     v = *value;
-    if(V_VT(value) != arg_type) {
+    if(arg_type == VT_VARIANT) {
+        arg_type = V_VT(value);
+    }else if(V_VT(value) != arg_type) {
         hres = VariantChangeType(&v, value, 0, arg_type);
         if(FAILED(hres))
             return hres;
@@ -894,6 +896,8 @@ static HRESULT ctl2_encode_variant(
 
     /* Check if default value can be stored in encoded_value */
     switch(arg_type) {
+    case VT_INT:
+    case VT_UINT:
     case VT_I4:
     case VT_UI4:
         mask = 0x3ffffff;
@@ -1222,6 +1226,12 @@ static int ctl2_encode_typedesc(
 	*width = 8;
 	*alignment = 4; /* guess? */
 	break;
+
+    case VT_VARIANT:
+        *encoded_tdesc = default_tdesc;
+        *width = sizeof(VT_VARIANT);
+        *alignment = 4;
+        break;
 
     case VT_VOID:
 	*encoded_tdesc = 0x80000000 | (VT_EMPTY << 16) | tdesc->vt;
