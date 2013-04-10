@@ -2645,6 +2645,8 @@ struct wined3d_cs
 
     struct wined3d_cs_list free_list;
     struct wined3d_cs_list exec_list;
+
+    LONG pending_presents;
 };
 
 struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device) DECLSPEC_HIDDEN;
