@@ -437,7 +437,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
                Also, any windows which are supposed to be in front of it had
                better have the same or higher window level.  If not, bump them
                up. */
-            if (index != NSNotFound)
+            if (index != NSNotFound && [self isVisible])
             {
                 for (; index > 0; index--)
                 {
