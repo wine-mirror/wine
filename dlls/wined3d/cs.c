@@ -63,7 +63,6 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_COLOR_KEY,
     WINED3D_CS_OP_SET_MATERIAL,
     WINED3D_CS_OP_RESET_STATE,
-    WINED3D_CS_OP_STATEBLOCK,
     WINED3D_CS_OP_SET_VS_CONSTS_F,
     WINED3D_CS_OP_SET_VS_CONSTS_B,
     WINED3D_CS_OP_SET_VS_CONSTS_I,
@@ -73,6 +72,8 @@ enum wined3d_cs_op
     WINED3D_CS_OP_GLFINISH,
     WINED3D_CS_OP_SET_BASE_VERTEX_INDEX,
     WINED3D_CS_OP_SET_PRIMITIVE_TYPE,
+    WINED3D_CS_OP_SET_LIGHT,
+    WINED3D_CS_OP_SET_LIGHT_ENABLE,
     WINED3D_CS_OP_STOP,
 };
 
@@ -288,12 +289,6 @@ struct wined3d_cs_reset_state
     enum wined3d_cs_op opcode;
 };
 
-struct wined3d_cs_stateblock
-{
-    enum wined3d_cs_op opcode;
-    struct wined3d_state state;
-};
-
 struct wined3d_cs_set_consts_f
 {
     enum wined3d_cs_op opcode;
@@ -330,6 +325,19 @@ struct wined3d_cs_set_primitive_type
 {
     enum wined3d_cs_op opcode;
     GLenum gl_primitive_type;
+};
+
+struct wined3d_cs_set_light
+{
+    enum wined3d_cs_op opcode;
+    struct wined3d_light_info light;
+};
+
+struct wined3d_cs_set_light_enable
+{
+    enum wined3d_cs_op opcode;
+    UINT idx;
+    BOOL enable;
 };
 
 /* FIXME: The list synchronization probably isn't particularly fast. */
@@ -997,35 +1005,6 @@ void wined3d_cs_emit_set_texture(struct wined3d_cs *cs, UINT stage, struct wined
     cs->ops->submit(cs);
 }
 
-static UINT wined3d_cs_exec_transfer_stateblock(struct wined3d_cs *cs, const void *data)
-{
-    const struct wined3d_cs_stateblock *op = data;
-
-    /* Don't memcpy the entire struct, we'll remove single items as we add dedicated
-     * ops for setting states */
-
-    memcpy(cs->state.lights, op->state.lights, sizeof(cs->state.lights));
-
-    return sizeof(*op);
-}
-
-void wined3d_cs_emit_transfer_stateblock(struct wined3d_cs *cs, const struct wined3d_state *state)
-{
-    struct wined3d_cs_stateblock *op;
-
-    op = cs->ops->require_space(cs, sizeof(*op));
-    op->opcode = WINED3D_CS_OP_STATEBLOCK;
-
-    /* Don't memcpy the entire struct, we'll remove single items as we add dedicated
-     * ops for setting states */
-
-    /* FIXME: This is not ideal. CS is still running synchronously, so this is ok.
-     * It will go away soon anyway. */
-    memcpy(op->state.lights, state->lights, sizeof(op->state.lights));
-
-    cs->ops->submit(cs);
-}
-
 static UINT wined3d_cs_exec_set_shader_resource_view(struct wined3d_cs *cs, const void *data)
 {
     const struct wined3d_cs_set_shader_resource_view *op = data;
@@ -1585,6 +1564,152 @@ void wined3d_cs_emit_set_primitive_type(struct wined3d_cs *cs, GLenum primitive_
     cs->ops->submit(cs);
 }
 
+static UINT wined3d_cs_exec_set_light(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_set_light *op = data;
+
+    UINT light_idx = op->light.OriginalIndex;
+    UINT hash_idx = LIGHTMAP_HASHFUNC(op->light.OriginalIndex);
+    struct wined3d_light_info *object = NULL;
+    struct list *e;
+
+    LIST_FOR_EACH(e, &cs->state.light_map[hash_idx])
+    {
+        object = LIST_ENTRY(e, struct wined3d_light_info, entry);
+        if (object->OriginalIndex == light_idx)
+            break;
+        object = NULL;
+    }
+
+    if (!object)
+    {
+        TRACE("Adding new light\n");
+        object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+        if (!object)
+            return E_OUTOFMEMORY;
+
+        list_add_head(&cs->state.light_map[hash_idx], &object->entry);
+        object->glIndex = -1;
+        object->OriginalIndex = light_idx;
+    }
+
+    /* Update the live definitions if the light is currently assigned a glIndex. */
+    if (object->glIndex != -1)
+    {
+        if (object->OriginalParms.type != op->light.OriginalParms.type)
+            device_invalidate_state(cs->device, STATE_LIGHT_TYPE);
+        device_invalidate_state(cs->device, STATE_ACTIVELIGHT(object->glIndex));
+    }
+
+    object->OriginalParms = op->light.OriginalParms;
+    object->position = op->light.position;
+    object->direction = op->light.direction;
+    object->exponent = op->light.exponent;
+    object->cutoff = op->light.cutoff;
+
+    return sizeof(*op);
+}
+
+void wined3d_cs_emit_set_light(struct wined3d_cs *cs, const struct wined3d_light_info *light)
+{
+    struct wined3d_cs_set_light *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_SET_LIGHT;
+    op->light = *light;
+
+    cs->ops->submit(cs);
+}
+
+static UINT wined3d_cs_exec_set_light_enable(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_set_light_enable *op = data;
+    UINT hash_idx = LIGHTMAP_HASHFUNC(op->idx);
+    struct wined3d_light_info *light_info = NULL;
+    struct list *e;
+    struct wined3d_device *device = cs->device;
+
+    LIST_FOR_EACH(e, &cs->state.light_map[hash_idx])
+    {
+        light_info = LIST_ENTRY(e, struct wined3d_light_info, entry);
+        if (light_info->OriginalIndex == op->idx)
+            break;
+        light_info = NULL;
+    }
+    TRACE("Found light %p.\n", light_info);
+
+    /* Should be handled by the device by emitting a set_light op */
+    if (!light_info)
+    {
+        ERR("Light enabled requested but light not defined in cs state!\n");
+        return sizeof(*op);
+    }
+
+    if (!op->enable)
+    {
+        if (light_info->glIndex != -1)
+        {
+            device_invalidate_state(device, STATE_LIGHT_TYPE);
+            device_invalidate_state(device, STATE_ACTIVELIGHT(light_info->glIndex));
+            cs->state.lights[light_info->glIndex] = NULL;
+            light_info->glIndex = -1;
+        }
+        else
+        {
+            TRACE("Light already disabled, nothing to do\n");
+        }
+        light_info->enabled = FALSE;
+    }
+    else
+    {
+        light_info->enabled = TRUE;
+        if (light_info->glIndex != -1)
+        {
+            TRACE("Nothing to do as light was enabled\n");
+        }
+        else
+        {
+            unsigned int i;
+            const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+            /* Find a free GL light. */
+            for (i = 0; i < gl_info->limits.lights; ++i)
+            {
+                if (!cs->state.lights[i])
+                {
+                    cs->state.lights[i] = light_info;
+                    light_info->glIndex = i;
+                    break;
+                }
+            }
+            if (light_info->glIndex == -1)
+            {
+                /* Should be caught by the device before emitting
+                 * the light_enable op */
+                ERR("Too many concurrently active lights in cs\n");
+                return sizeof(*op);
+            }
+
+            /* i == light_info->glIndex */
+            device_invalidate_state(device, STATE_LIGHT_TYPE);
+            device_invalidate_state(device, STATE_ACTIVELIGHT(i));
+        }
+    }
+
+    return sizeof(*op);
+}
+
+void wined3d_cs_emit_set_light_enable(struct wined3d_cs *cs, UINT idx, BOOL enable)
+{
+    struct wined3d_cs_set_light_enable *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_SET_LIGHT_ENABLE;
+    op->idx = idx;
+    op->enable = enable;
+
+    cs->ops->submit(cs);
+}
+
 static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
 {
     /* WINED3D_CS_OP_FENCE                      */ wined3d_cs_exec_fence,
@@ -1614,7 +1739,6 @@ static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_COLOR_KEY              */ wined3d_cs_exec_set_color_key,
     /* WINED3D_CS_OP_SET_MATERIAL               */ wined3d_cs_exec_set_material,
     /* WINED3D_CS_OP_RESET_STATE                */ wined3d_cs_exec_reset_state,
-    /* WINED3D_CS_OP_STATEBLOCK                 */ wined3d_cs_exec_transfer_stateblock,
     /* WINED3D_CS_OP_SET_VS_CONSTS_F            */ wined3d_cs_exec_set_vs_consts_f,
     /* WINED3D_CS_OP_SET_VS_CONSTS_B            */ wined3d_cs_exec_set_vs_consts_b,
     /* WINED3D_CS_OP_SET_VS_CONSTS_I            */ wined3d_cs_exec_set_vs_consts_i,
@@ -1624,6 +1748,8 @@ static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_GLFINISH                   */ wined3d_cs_exec_glfinish,
     /* WINED3D_CS_OP_SET_BASE_VERTEX_INDEX      */ wined3d_cs_exec_set_base_vertex_index,
     /* WINED3D_CS_OP_SET_PRIMITIVE_TYPE         */ wined3d_cs_exec_set_primitive_type,
+    /* WINED3D_CS_OP_SET_LIGHT                  */ wined3d_cs_exec_set_light,
+    /* WINED3D_CS_OP_SET_LIGHT_ENABLE           */ wined3d_cs_exec_set_light_enable,
 };
 
 static void *wined3d_cs_st_require_space(struct wined3d_cs *cs, size_t size)

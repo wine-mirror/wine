@@ -2619,7 +2619,9 @@ struct wined3d_cs_block
 {
     struct list entry;
     UINT pos;
-    BYTE data[sizeof(struct wined3d_state) * 2]; /* FIXME? The size is somewhat arbitrary. */
+     /* FIXME? The size is somewhat arbitrary. It's big enough for huge
+      * shader constant set calls though */
+    BYTE data[sizeof(float) * 4 * 256 * 2];
 };
 
 struct wined3d_cs_ops
@@ -2664,8 +2666,6 @@ void wined3d_cs_emit_set_color_key(struct wined3d_cs *cs, struct wined3d_texture
         WORD flags, const struct wined3d_color_key *color_key) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_constant_buffer(struct wined3d_cs *cs, enum wined3d_shader_type type,
         UINT cb_idx, struct wined3d_buffer *buffer) DECLSPEC_HIDDEN;
-void wined3d_cs_emit_transfer_stateblock(struct wined3d_cs *cs,
-        const struct wined3d_state *state) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_depth_stencil_view(struct wined3d_cs *cs,
         struct wined3d_rendertarget_view *view) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_index_buffer(struct wined3d_cs *cs, struct wined3d_buffer *buffer,
@@ -2711,6 +2711,8 @@ void wined3d_cs_emit_set_base_vertex_index(struct wined3d_cs *cs,
         UINT base_vertex_index) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_primitive_type(struct wined3d_cs *cs,
         GLenum primitive_type) DECLSPEC_HIDDEN;
+void wined3d_cs_emit_set_light(struct wined3d_cs *cs, const struct wined3d_light_info *light) DECLSPEC_HIDDEN;
+void wined3d_cs_emit_set_light_enable(struct wined3d_cs *cs, UINT idx, BOOL enable) DECLSPEC_HIDDEN;
 
 /* Direct3D terminology with little modifications. We do not have an issued state
  * because only the driver knows about it, but we have a created state because d3d
