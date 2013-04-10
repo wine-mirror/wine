@@ -971,39 +971,39 @@ HRESULT __RPC_STUB IDBAsynchStatus_GetStatus_Stub(IDBAsynchStatus* This, HCHAPTE
 HRESULT CALLBACK IRowsetNotify_OnRowChange_Proxy(IRowsetNotify* This, IRowset *rowset, DBCOUNTITEM rows, HROW *hrows, DBREASON reason,
                                                  DBEVENTPHASE phase, BOOL cantdeny)
 {
-    FIXME("(%p)->(%p %ld %p %d %d %d): stub\n", This, rowset, rows, hrows, reason, phase, cantdeny);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p %ld %p %d %d %d)\n", This, rowset, rows, hrows, reason, phase, cantdeny);
+    return IRowsetNotify_RemoteOnRowChange_Proxy(This, rowset, rows, hrows, reason, phase, cantdeny);
 }
 
 HRESULT __RPC_STUB IRowsetNotify_OnRowChange_Stub(IRowsetNotify* This, IRowset *rowset, DBCOUNTITEM rows, HROW *hrows, DBREASON reason,
                                                   DBEVENTPHASE phase, BOOL cantdeny)
 {
-    FIXME("(%p)->(%p %ld %p %d %d %d): stub\n", This, rowset, rows, hrows, reason, phase, cantdeny);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p %ld %p %d %d %d)\n", This, rowset, rows, hrows, reason, phase, cantdeny);
+    return IRowsetNotify_OnRowChange(This, rowset, rows, hrows, reason, phase, cantdeny);
 }
 
 HRESULT CALLBACK IRowsetNotify_OnFieldChange_Proxy(IRowsetNotify* This, IRowset *rowset, HROW row, DBORDINAL ccols, DBORDINAL *columns,
                                                    DBREASON reason, DBEVENTPHASE phase, BOOL cantdeny)
 {
-    FIXME("(%p)->(%p %lx %ld %p %d %d %d): stub\n", This, rowset, row, ccols, columns, reason, phase, cantdeny);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p %lx %ld %p %d %d %d)\n", This, rowset, row, ccols, columns, reason, phase, cantdeny);
+    return IRowsetNotify_RemoteOnFieldChange_Proxy(This, rowset, row, ccols, columns, reason, phase, cantdeny);
 }
 
 HRESULT __RPC_STUB IRowsetNotify_OnFieldChange_Stub(IRowsetNotify* This, IRowset *rowset, HROW row, DBORDINAL ccols, DBORDINAL *columns,
                                                     DBREASON reason, DBEVENTPHASE phase, BOOL cantdeny)
 {
-    FIXME("(%p)->(%p %lx %ld %p %d %d %d): stub\n", This, rowset, row, ccols, columns, reason, phase, cantdeny);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p %lx %ld %p %d %d %d)\n", This, rowset, row, ccols, columns, reason, phase, cantdeny);
+    return IRowsetNotify_OnFieldChange(This, rowset, row, ccols, columns, reason, phase, cantdeny);
 }
 
 HRESULT CALLBACK IRowsetNotify_OnRowsetChange_Proxy(IRowsetNotify* This, IRowset *rowset, DBREASON reason, DBEVENTPHASE phase, BOOL cantdeny)
 {
-    FIXME("(%p)->(%p %d %d %d): stub\n", This, rowset, reason, phase, cantdeny);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p %d %d %d)\n", This, rowset, reason, phase, cantdeny);
+    return IRowsetNotify_RemoteOnRowsetChange_Proxy(This, rowset, reason, phase, cantdeny);
 }
 
 HRESULT __RPC_STUB IRowsetNotify_OnRowsetChange_Stub(IRowsetNotify* This, IRowset *rowset, DBREASON reason, DBEVENTPHASE phase, BOOL cantdeny)
 {
-    FIXME("(%p)->(%p %d %d %d): stub\n", This, rowset, reason, phase, cantdeny);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p %d %d %d)\n", This, rowset, reason, phase, cantdeny);
+    return IRowsetNotify_OnRowsetChange(This, rowset, reason, phase, cantdeny);
 }
