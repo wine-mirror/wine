@@ -29,33 +29,26 @@ static int mywprintf(const WCHAR *format, ...)
     static WCHAR output_bufW[sizeof(output_bufA) / sizeof(WCHAR)];
     va_list             parms;
     DWORD               nOut;
-    int                 len;
     BOOL                res = FALSE;
     HANDLE              hout = GetStdHandle(STD_OUTPUT_HANDLE);
 
     va_start(parms, format);
-    len = vsnprintfW(output_bufW, sizeof(output_bufW), format, parms);
+    vsnprintfW(output_bufW, sizeof(output_bufW), format, parms);
     va_end(parms);
-    if (len < 0)
-    {
-        /* String too long */
-        return 0;
-    }
 
     /* Try to write as unicode whenever we think it's a console */
     if (((DWORD_PTR)hout & 3) == 3)
     {
-        res = WriteConsoleW(hout, output_bufW, len, &nOut, NULL);
+        res = WriteConsoleW(hout, output_bufW, strlenW(output_bufW), &nOut, NULL);
     }
     else
     {
-        BOOL    usedDefaultChar = FALSE;
         DWORD   convertedChars;
 
         /* Convert to OEM, then output */
-        convertedChars = WideCharToMultiByte(GetConsoleOutputCP(), 0, output_bufW, len,
+        convertedChars = WideCharToMultiByte(GetConsoleOutputCP(), 0, output_bufW, -1,
                                              output_bufA, sizeof(output_bufA),
-                                             "?", &usedDefaultChar);
+                                             NULL, NULL);
         res = WriteFile(hout, output_bufA, convertedChars, &nOut, FALSE);
     }
 
