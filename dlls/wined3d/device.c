@@ -1029,6 +1029,9 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
     if (!device->d3d_initialized)
         return WINED3DERR_INVALIDCALL;
 
+    if (wined3d_settings.cs_multithreaded)
+        device->cs->ops->finish(device->cs);
+
     /* I don't think that the interface guarantees that the device is destroyed from the same thread
      * it was created. Thus make sure a context is active for the glDelete* calls
      */
