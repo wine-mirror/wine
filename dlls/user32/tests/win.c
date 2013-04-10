@@ -7326,6 +7326,73 @@ static void test_map_points(void)
     DestroyWindow(wnd0);
 }
 
+static void test_update_region(void)
+{
+    HWND hwnd, parent, child;
+    HRGN  rgn1, rgn2;
+    const RECT rc = {15, 15, 40, 40};
+    const POINT wnd_orig = {30, 20};
+    const POINT child_orig = {10, 5};
+
+    parent = CreateWindowExA(0, "MainWindowClass", NULL,
+                WS_VISIBLE | WS_CLIPCHILDREN,
+                0, 0, 300, 150, NULL, NULL, GetModuleHandleA(0), 0);
+    hwnd = CreateWindowExA(0, "MainWindowClass", NULL,
+                WS_VISIBLE | WS_CLIPCHILDREN | WS_CHILD,
+                0, 0, 200, 100, parent, NULL, GetModuleHandleA(0), 0);
+    child = CreateWindowExA(0, "MainWindowClass", NULL,
+                WS_VISIBLE | WS_CHILD,
+                child_orig.x, child_orig.y,  100, 50,
+                hwnd, NULL, GetModuleHandleA(0), 0);
+    assert(parent && hwnd && child);
+
+    ValidateRgn(parent, NULL);
+    ValidateRgn(hwnd, NULL);
+    InvalidateRect(hwnd, &rc, FALSE);
+    ValidateRgn(child, NULL);
+
+    rgn1 = CreateRectRgn(0, 0, 0, 0);
+    ok(GetUpdateRgn(parent, rgn1, FALSE) == NULLREGION,
+            "has invalid area after ValidRgn(NULL)\n");
+    GetUpdateRgn(hwnd, rgn1, FALSE);
+    rgn2 = CreateRectRgnIndirect(&rc);
+    ok(EqualRgn(rgn1, rgn2), "assigned and retrieved update regions are different\n");
+    ok(GetUpdateRgn(child, rgn2, FALSE) == NULLREGION,
+            "has invalid area after ValidRgn(NULL)\n");
+
+    SetWindowPos(hwnd, 0, wnd_orig.x, wnd_orig.y,  0, 0,
+            SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSIZE);
+
+    /* parent now has non-simple update region, it consist of
+     * two rects, that was exposed after hwnd moving ... */
+    SetRectRgn(rgn1, 0, 0, 200, wnd_orig.y);
+    SetRectRgn(rgn2, 0, 0, wnd_orig.x, 100);
+    CombineRgn(rgn1, rgn1, rgn2, RGN_OR);
+    /* ... and mapped hwnd's invalid area, that hwnd has before moving */
+    SetRectRgn(rgn2, rc.left + wnd_orig.x, rc.top + wnd_orig.y,
+            rc.right + wnd_orig.x, rc.bottom + wnd_orig.y);
+    CombineRgn(rgn1, rgn1, rgn2, RGN_OR);
+    GetUpdateRgn(parent, rgn2, FALSE);
+todo_wine
+    ok(EqualRgn(rgn1, rgn2), "wrong update region\n");
+
+    /* hwnd has the same invalid region as before moving */
+    SetRectRgn(rgn1, rc.left, rc.top, rc.right, rc.bottom);
+    GetUpdateRgn(hwnd, rgn2, FALSE);
+    ok(EqualRgn(rgn1, rgn2), "wrong update region\n");
+
+    /* hwnd's invalid area maps to child during moving */
+    SetRectRgn(rgn1, rc.left - child_orig.x , rc.top - child_orig.y,
+            rc.right - child_orig.x, rc.bottom - child_orig.y);
+    GetUpdateRgn(child, rgn2, FALSE);
+todo_wine
+    ok(EqualRgn(rgn1, rgn2), "wrong update region\n");
+
+    DeleteObject(rgn1);
+    DeleteObject(rgn2);
+    DestroyWindow(parent);
+}
+
 START_TEST(win)
 {
     HMODULE user32 = GetModuleHandleA( "user32.dll" );
@@ -7435,6 +7502,7 @@ START_TEST(win)
     test_handles( hwndMain );
     test_winregion();
     test_map_points();
+    test_update_region();
 
     /* add the tests above this line */
     if (hhook) UnhookWindowsHookEx(hhook);
