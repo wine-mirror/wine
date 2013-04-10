@@ -1794,7 +1794,7 @@ static const struct wined3d_cs_ops wined3d_cs_st_ops =
 static const struct wined3d_cs_ops wined3d_cs_mt_ops =
 {
     wined3d_cs_mt_require_space,
-    wined3d_cs_flush_and_wait,
+    wined3d_cs_flush,
     wined3d_cs_flush_and_wait,
 };
 
