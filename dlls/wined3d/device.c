@@ -4027,7 +4027,7 @@ HRESULT CDECL wined3d_device_draw_primitive(struct wined3d_device *device, UINT 
 
     /* Account for the loading offset due to index buffers. Instead of
      * reloading all sources correct it with the startvertex parameter. */
-    draw_primitive(device, start_vertex, vertex_count, 0, 0, FALSE, NULL);
+    draw_primitive(device, start_vertex, vertex_count, 0, 0, FALSE);
     return WINED3D_OK;
 }
 
@@ -4060,7 +4060,7 @@ HRESULT CDECL wined3d_device_draw_indexed_primitive(struct wined3d_device *devic
         device_invalidate_state(device, STATE_BASEVERTEXINDEX);
     }
 
-    draw_primitive(device, start_idx, index_count, 0, 0, TRUE, NULL);
+    draw_primitive(device, start_idx, index_count, 0, 0, TRUE);
 
     return WINED3D_OK;
 }
@@ -4070,7 +4070,7 @@ void CDECL wined3d_device_draw_indexed_primitive_instanced(struct wined3d_device
 {
     TRACE("device %p, start_idx %u, index_count %u.\n", device, start_idx, index_count);
 
-    draw_primitive(device, start_idx, index_count, start_instance, instance_count, TRUE, NULL);
+    draw_primitive(device, start_idx, index_count, start_instance, instance_count, TRUE);
 }
 
 /* This is a helper function for UpdateTexture, there is no UpdateVolume method in D3D. */

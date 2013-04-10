@@ -577,7 +577,7 @@ static void remove_vbos(const struct wined3d_gl_info *gl_info,
 
 /* Routine common to the draw primitive and draw indexed primitive routines */
 void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_count,
-        UINT start_instance, UINT instance_count, BOOL indexed, const void *idx_data)
+        UINT start_instance, UINT instance_count, BOOL indexed)
 {
     const struct wined3d_state *state = &device->stateBlock->state;
     const struct wined3d_stream_info *stream_info;
@@ -586,6 +586,7 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
     BOOL emulation = FALSE;
+    const void *idx_data = NULL;
     UINT idx_size = 0;
     unsigned int i;
 
