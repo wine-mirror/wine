@@ -410,8 +410,8 @@ void WINAPI UninitializeCriticalSection( CRITICAL_SECTION *crit )
 /***********************************************************************
  *           CreateEventA    (KERNEL32.@)
  */
-HANDLE WINAPI CreateEventA( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
-                            BOOL initial_state, LPCSTR name )
+HANDLE WINAPI DECLSPEC_HOTPATCH CreateEventA( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
+                                              BOOL initial_state, LPCSTR name )
 {
     DWORD flags = 0;
 
@@ -424,8 +424,8 @@ HANDLE WINAPI CreateEventA( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
 /***********************************************************************
  *           CreateEventW    (KERNEL32.@)
  */
-HANDLE WINAPI CreateEventW( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
-                            BOOL initial_state, LPCWSTR name )
+HANDLE WINAPI DECLSPEC_HOTPATCH CreateEventW( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
+                                              BOOL initial_state, LPCWSTR name )
 {
     DWORD flags = 0;
 
@@ -438,7 +438,7 @@ HANDLE WINAPI CreateEventW( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
 /***********************************************************************
  *           CreateEventExA    (KERNEL32.@)
  */
-HANDLE WINAPI CreateEventExA( SECURITY_ATTRIBUTES *sa, LPCSTR name, DWORD flags, DWORD access )
+HANDLE WINAPI DECLSPEC_HOTPATCH CreateEventExA( SECURITY_ATTRIBUTES *sa, LPCSTR name, DWORD flags, DWORD access )
 {
     WCHAR buffer[MAX_PATH];
 
@@ -456,7 +456,7 @@ HANDLE WINAPI CreateEventExA( SECURITY_ATTRIBUTES *sa, LPCSTR name, DWORD flags,
 /***********************************************************************
  *           CreateEventExW    (KERNEL32.@)
  */
-HANDLE WINAPI CreateEventExW( SECURITY_ATTRIBUTES *sa, LPCWSTR name, DWORD flags, DWORD access )
+HANDLE WINAPI DECLSPEC_HOTPATCH CreateEventExW( SECURITY_ATTRIBUTES *sa, LPCWSTR name, DWORD flags, DWORD access )
 {
     HANDLE ret;
     UNICODE_STRING nameW;
@@ -500,7 +500,7 @@ HANDLE WINAPI CreateEventExW( SECURITY_ATTRIBUTES *sa, LPCWSTR name, DWORD flags
 /***********************************************************************
  *           OpenEventA    (KERNEL32.@)
  */
-HANDLE WINAPI OpenEventA( DWORD access, BOOL inherit, LPCSTR name )
+HANDLE WINAPI DECLSPEC_HOTPATCH OpenEventA( DWORD access, BOOL inherit, LPCSTR name )
 {
     WCHAR buffer[MAX_PATH];
 
@@ -518,7 +518,7 @@ HANDLE WINAPI OpenEventA( DWORD access, BOOL inherit, LPCSTR name )
 /***********************************************************************
  *           OpenEventW    (KERNEL32.@)
  */
-HANDLE WINAPI OpenEventW( DWORD access, BOOL inherit, LPCWSTR name )
+HANDLE WINAPI DECLSPEC_HOTPATCH OpenEventW( DWORD access, BOOL inherit, LPCWSTR name )
 {
     HANDLE ret;
     UNICODE_STRING nameW;
@@ -552,7 +552,7 @@ HANDLE WINAPI OpenEventW( DWORD access, BOOL inherit, LPCWSTR name )
 /***********************************************************************
  *           PulseEvent    (KERNEL32.@)
  */
-BOOL WINAPI PulseEvent( HANDLE handle )
+BOOL WINAPI DECLSPEC_HOTPATCH PulseEvent( HANDLE handle )
 {
     NTSTATUS status;
 
@@ -565,7 +565,7 @@ BOOL WINAPI PulseEvent( HANDLE handle )
 /***********************************************************************
  *           SetEvent    (KERNEL32.@)
  */
-BOOL WINAPI SetEvent( HANDLE handle )
+BOOL WINAPI DECLSPEC_HOTPATCH SetEvent( HANDLE handle )
 {
     NTSTATUS status;
 
@@ -578,7 +578,7 @@ BOOL WINAPI SetEvent( HANDLE handle )
 /***********************************************************************
  *           ResetEvent    (KERNEL32.@)
  */
-BOOL WINAPI ResetEvent( HANDLE handle )
+BOOL WINAPI DECLSPEC_HOTPATCH ResetEvent( HANDLE handle )
 {
     NTSTATUS status;
 
@@ -591,7 +591,7 @@ BOOL WINAPI ResetEvent( HANDLE handle )
 /***********************************************************************
  *           CreateMutexA   (KERNEL32.@)
  */
-HANDLE WINAPI CreateMutexA( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCSTR name )
+HANDLE WINAPI DECLSPEC_HOTPATCH CreateMutexA( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCSTR name )
 {
     return CreateMutexExA( sa, name, owner ? CREATE_MUTEX_INITIAL_OWNER : 0, MUTEX_ALL_ACCESS );
 }
@@ -600,7 +600,7 @@ HANDLE WINAPI CreateMutexA( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCSTR name )
 /***********************************************************************
  *           CreateMutexW   (KERNEL32.@)
  */
-HANDLE WINAPI CreateMutexW( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCWSTR name )
+HANDLE WINAPI DECLSPEC_HOTPATCH CreateMutexW( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCWSTR name )
 {
     return CreateMutexExW( sa, name, owner ? CREATE_MUTEX_INITIAL_OWNER : 0, MUTEX_ALL_ACCESS );
 }
@@ -609,7 +609,7 @@ HANDLE WINAPI CreateMutexW( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCWSTR name )
 /***********************************************************************
  *           CreateMutexExA   (KERNEL32.@)
  */
-HANDLE WINAPI CreateMutexExA( SECURITY_ATTRIBUTES *sa, LPCSTR name, DWORD flags, DWORD access )
+HANDLE WINAPI DECLSPEC_HOTPATCH CreateMutexExA( SECURITY_ATTRIBUTES *sa, LPCSTR name, DWORD flags, DWORD access )
 {
     ANSI_STRING nameA;
     NTSTATUS status;
@@ -630,7 +630,7 @@ HANDLE WINAPI CreateMutexExA( SECURITY_ATTRIBUTES *sa, LPCSTR name, DWORD flags,
 /***********************************************************************
  *           CreateMutexExW   (KERNEL32.@)
  */
-HANDLE WINAPI CreateMutexExW( SECURITY_ATTRIBUTES *sa, LPCWSTR name, DWORD flags, DWORD access )
+HANDLE WINAPI DECLSPEC_HOTPATCH CreateMutexExW( SECURITY_ATTRIBUTES *sa, LPCWSTR name, DWORD flags, DWORD access )
 {
     HANDLE ret;
     UNICODE_STRING nameW;
@@ -662,7 +662,7 @@ HANDLE WINAPI CreateMutexExW( SECURITY_ATTRIBUTES *sa, LPCWSTR name, DWORD flags
 /***********************************************************************
  *           OpenMutexA   (KERNEL32.@)
  */
-HANDLE WINAPI OpenMutexA( DWORD access, BOOL inherit, LPCSTR name )
+HANDLE WINAPI DECLSPEC_HOTPATCH OpenMutexA( DWORD access, BOOL inherit, LPCSTR name )
 {
     WCHAR buffer[MAX_PATH];
 
@@ -680,7 +680,7 @@ HANDLE WINAPI OpenMutexA( DWORD access, BOOL inherit, LPCSTR name )
 /***********************************************************************
  *           OpenMutexW   (KERNEL32.@)
  */
-HANDLE WINAPI OpenMutexW( DWORD access, BOOL inherit, LPCWSTR name )
+HANDLE WINAPI DECLSPEC_HOTPATCH OpenMutexW( DWORD access, BOOL inherit, LPCWSTR name )
 {
     HANDLE ret;
     UNICODE_STRING nameW;
@@ -715,7 +715,7 @@ HANDLE WINAPI OpenMutexW( DWORD access, BOOL inherit, LPCWSTR name )
 /***********************************************************************
  *           ReleaseMutex   (KERNEL32.@)
  */
-BOOL WINAPI ReleaseMutex( HANDLE handle )
+BOOL WINAPI DECLSPEC_HOTPATCH ReleaseMutex( HANDLE handle )
 {
     NTSTATUS    status;
 
@@ -737,7 +737,7 @@ BOOL WINAPI ReleaseMutex( HANDLE handle )
 /***********************************************************************
  *           CreateSemaphoreA   (KERNEL32.@)
  */
-HANDLE WINAPI CreateSemaphoreA( SECURITY_ATTRIBUTES *sa, LONG initial, LONG max, LPCSTR name )
+HANDLE WINAPI DECLSPEC_HOTPATCH CreateSemaphoreA( SECURITY_ATTRIBUTES *sa, LONG initial, LONG max, LPCSTR name )
 {
     return CreateSemaphoreExA( sa, initial, max, name, 0, SEMAPHORE_ALL_ACCESS );
 }
@@ -746,8 +746,7 @@ HANDLE WINAPI CreateSemaphoreA( SECURITY_ATTRIBUTES *sa, LONG initial, LONG max,
 /***********************************************************************
  *           CreateSemaphoreW   (KERNEL32.@)
  */
-HANDLE WINAPI CreateSemaphoreW( SECURITY_ATTRIBUTES *sa, LONG initial,
-                                LONG max, LPCWSTR name )
+HANDLE WINAPI DECLSPEC_HOTPATCH CreateSemaphoreW( SECURITY_ATTRIBUTES *sa, LONG initial, LONG max, LPCWSTR name )
 {
     return CreateSemaphoreExW( sa, initial, max, name, 0, SEMAPHORE_ALL_ACCESS );
 }
@@ -756,8 +755,8 @@ HANDLE WINAPI CreateSemaphoreW( SECURITY_ATTRIBUTES *sa, LONG initial,
 /***********************************************************************
  *           CreateSemaphoreExA   (KERNEL32.@)
  */
-HANDLE WINAPI CreateSemaphoreExA( SECURITY_ATTRIBUTES *sa, LONG initial, LONG max, LPCSTR name,
-                                  DWORD flags, DWORD access )
+HANDLE WINAPI DECLSPEC_HOTPATCH CreateSemaphoreExA( SECURITY_ATTRIBUTES *sa, LONG initial, LONG max,
+                                                    LPCSTR name, DWORD flags, DWORD access )
 {
     WCHAR buffer[MAX_PATH];
 
@@ -775,8 +774,8 @@ HANDLE WINAPI CreateSemaphoreExA( SECURITY_ATTRIBUTES *sa, LONG initial, LONG ma
 /***********************************************************************
  *           CreateSemaphoreExW   (KERNEL32.@)
  */
-HANDLE WINAPI CreateSemaphoreExW( SECURITY_ATTRIBUTES *sa, LONG initial, LONG max, LPCWSTR name,
-                                  DWORD flags, DWORD access )
+HANDLE WINAPI DECLSPEC_HOTPATCH CreateSemaphoreExW( SECURITY_ATTRIBUTES *sa, LONG initial, LONG max,
+                                                    LPCWSTR name, DWORD flags, DWORD access )
 {
     HANDLE ret;
     UNICODE_STRING nameW;
@@ -808,7 +807,7 @@ HANDLE WINAPI CreateSemaphoreExW( SECURITY_ATTRIBUTES *sa, LONG initial, LONG ma
 /***********************************************************************
  *           OpenSemaphoreA   (KERNEL32.@)
  */
-HANDLE WINAPI OpenSemaphoreA( DWORD access, BOOL inherit, LPCSTR name )
+HANDLE WINAPI DECLSPEC_HOTPATCH OpenSemaphoreA( DWORD access, BOOL inherit, LPCSTR name )
 {
     WCHAR buffer[MAX_PATH];
 
@@ -826,7 +825,7 @@ HANDLE WINAPI OpenSemaphoreA( DWORD access, BOOL inherit, LPCSTR name )
 /***********************************************************************
  *           OpenSemaphoreW   (KERNEL32.@)
  */
-HANDLE WINAPI OpenSemaphoreW( DWORD access, BOOL inherit, LPCWSTR name )
+HANDLE WINAPI DECLSPEC_HOTPATCH OpenSemaphoreW( DWORD access, BOOL inherit, LPCWSTR name )
 {
     HANDLE ret;
     UNICODE_STRING nameW;
@@ -861,7 +860,7 @@ HANDLE WINAPI OpenSemaphoreW( DWORD access, BOOL inherit, LPCWSTR name )
 /***********************************************************************
  *           ReleaseSemaphore   (KERNEL32.@)
  */
-BOOL WINAPI ReleaseSemaphore( HANDLE handle, LONG count, LONG *previous )
+BOOL WINAPI DECLSPEC_HOTPATCH ReleaseSemaphore( HANDLE handle, LONG count, LONG *previous )
 {
     NTSTATUS status = NtReleaseSemaphore( handle, count, (PULONG)previous );
     if (status) SetLastError( RtlNtStatusToDosError(status) );
