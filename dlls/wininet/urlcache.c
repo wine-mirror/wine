@@ -1780,7 +1780,7 @@ static BOOL urlcache_hash_entry_is_locked(struct hash_entry *hash_entry, entry_u
     return TRUE;
 }
 
-BOOL urlcache_get_entry_info(const char *url, void *entry_info,
+static BOOL urlcache_get_entry_info(const char *url, void *entry_info,
         DWORD *size, DWORD flags, BOOL unicode)
 {
     urlcache_header *header;
@@ -2622,7 +2622,7 @@ BOOL WINAPI UnlockUrlCacheEntryFileW(LPCWSTR lpszUrlName, DWORD dwReserved)
     return ret;
 }
 
-BOOL urlcache_entry_create(const char *url, const char *ext, WCHAR *full_path)
+static BOOL urlcache_entry_create(const char *url, const char *ext, WCHAR *full_path)
 {
     cache_container *container;
     urlcache_header *header;
