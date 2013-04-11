@@ -925,7 +925,7 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING
             | WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL,
             ARB_FRAMEBUFFER_OBJECT,     NULL},
-    {WINED3DFMT_NULL,                   GL_RGBA8,                         GL_RGBA8,                               0,
+    {WINED3DFMT_NULL,                   0,                                0,                                      0,
             GL_RGBA,                    GL_UNSIGNED_INT_8_8_8_8_REV,      0,
             WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_RENDERTARGET,
             ARB_FRAMEBUFFER_OBJECT,     NULL},
