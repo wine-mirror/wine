@@ -93,6 +93,11 @@ typedef struct IDirectPlayLobbyImpl
     DirectPlayLobbyData*          dpl;
 } IDirectPlayLobbyImpl;
 
+static inline IDirectPlayLobbyImpl *impl_from_IDirectPlayLobby3( IDirectPlayLobby3 *iface )
+{
+    return (IDirectPlayLobbyImpl*)iface;     /* What you gonna do? */
+}
+
 static inline IDirectPlayLobbyImpl *impl_from_IDirectPlayLobby3A( IDirectPlayLobby3A *iface )
 {
     return (IDirectPlayLobbyImpl*)iface;     /* What you gonna do? */
@@ -230,12 +235,8 @@ HRESULT DPL_CreateInterface
   return DPERR_NOMEMORY;
 }
 
-static HRESULT WINAPI DPL_QueryInterface
-( LPDIRECTPLAYLOBBYA iface,
-  REFIID riid,
-  LPVOID* ppvObj )
+static HRESULT WINAPI DPL_QueryInterface( IDirectPlayLobbyImpl *This, REFIID riid, void **ppvObj )
 {
-  IDirectPlayLobbyAImpl *This = (IDirectPlayLobbyAImpl *)iface;
   TRACE("(%p)->(%s,%p)\n", This, debugstr_guid( riid ), ppvObj );
 
   *ppvObj = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
@@ -279,11 +280,9 @@ static HRESULT WINAPI DPL_QueryInterface
  * Simple procedure. Just increment the reference count to this
  * structure and return the new reference count.
  */
-static ULONG WINAPI DPL_AddRef
-( LPDIRECTPLAYLOBBY iface )
+static ULONG WINAPI DPL_AddRef( IDirectPlayLobbyImpl *This )
 {
   ULONG ulInterfaceRefCount, ulObjRefCount;
-  IDirectPlayLobbyWImpl *This = (IDirectPlayLobbyWImpl *)iface;
 
   ulObjRefCount       = InterlockedIncrement( &This->unk->ulObjRef );
   ulInterfaceRefCount = InterlockedIncrement( &This->ulInterfaceRef );
@@ -299,11 +298,9 @@ static ULONG WINAPI DPL_AddRef
  * If the object no longer has any reference counts, free up the associated
  * memory.
  */
-static ULONG WINAPI DPL_Release
-( LPDIRECTPLAYLOBBYA iface )
+static ULONG WINAPI DPL_Release( IDirectPlayLobbyImpl *This )
 {
   ULONG ulInterfaceRefCount, ulObjRefCount;
-  IDirectPlayLobbyAImpl *This = (IDirectPlayLobbyAImpl *)iface;
 
   ulObjRefCount       = InterlockedDecrement( &This->unk->ulObjRef );
   ulInterfaceRefCount = InterlockedDecrement( &This->ulInterfaceRef );
@@ -324,6 +321,44 @@ static ULONG WINAPI DPL_Release
   }
 
   return ulInterfaceRefCount;
+}
+
+static HRESULT WINAPI IDirectPlayLobby3AImpl_QueryInterface( IDirectPlayLobby3A *iface, REFIID riid,
+        void **ppv )
+{
+    IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby3A( iface );
+    return DPL_QueryInterface( This, riid, ppv );
+}
+
+static HRESULT WINAPI IDirectPlayLobby3Impl_QueryInterface( IDirectPlayLobby3 *iface, REFIID riid,
+        void **ppv )
+{
+    IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby3( iface );
+    return DPL_QueryInterface( This, riid, ppv );
+}
+
+static ULONG WINAPI IDirectPlayLobby3AImpl_AddRef(IDirectPlayLobby3A *iface)
+{
+    IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby3A( iface );
+    return DPL_AddRef( This );
+}
+
+static ULONG WINAPI IDirectPlayLobby3Impl_AddRef(IDirectPlayLobby3 *iface)
+{
+    IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby3( iface );
+    return DPL_AddRef( This );
+}
+
+static ULONG WINAPI IDirectPlayLobby3AImpl_Release(IDirectPlayLobby3A *iface)
+{
+    IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby3A( iface );
+    return DPL_Release( This );
+}
+
+static ULONG WINAPI IDirectPlayLobby3Impl_Release(IDirectPlayLobby3 *iface)
+{
+    IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby3( iface );
+    return DPL_Release( This );
 }
 
 
@@ -1552,21 +1587,11 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_WaitForConnectionSettings
 }
 
 
-/* Direct Play Lobby 3 (ascii) Virtual Table for methods */
-
-/* Note: Hack so we can reuse the old functions without compiler warnings */
-#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)     (typeof(directPlayLobby3AVT.fun))
-#else
-# define XCAST(fun)     (void*)
-#endif
-
 static const IDirectPlayLobby3Vtbl directPlayLobby3AVT =
 {
-  XCAST(QueryInterface)DPL_QueryInterface,
-  XCAST(AddRef)DPL_AddRef,
-  XCAST(Release)DPL_Release,
-
+    IDirectPlayLobby3AImpl_QueryInterface,
+    IDirectPlayLobby3AImpl_AddRef,
+    IDirectPlayLobby3AImpl_Release,
     IDirectPlayLobby3AImpl_Connect,
     IDirectPlayLobby3AImpl_CreateAddress,
     IDirectPlayLobby3AImpl_EnumAddress,
@@ -1584,7 +1609,6 @@ static const IDirectPlayLobby3Vtbl directPlayLobby3AVT =
     IDirectPlayLobby3AImpl_UnregisterApplication,
     IDirectPlayLobby3AImpl_WaitForConnectionSettings
 };
-#undef XCAST
 
 /* Direct Play Lobby 3 (unicode) Virtual Table for methods */
 
@@ -1597,10 +1621,9 @@ static const IDirectPlayLobby3Vtbl directPlayLobby3AVT =
 
 static const IDirectPlayLobby3Vtbl directPlayLobby3WVT =
 {
-  XCAST(QueryInterface)DPL_QueryInterface,
-  XCAST(AddRef)DPL_AddRef,
-  XCAST(Release)DPL_Release,
-
+    IDirectPlayLobby3Impl_QueryInterface,
+    IDirectPlayLobby3Impl_AddRef,
+    IDirectPlayLobby3Impl_Release,
     IDirectPlayLobby3Impl_Connect,
   XCAST(CreateAddress)IDirectPlayLobbyWImpl_CreateAddress,
   XCAST(EnumAddress)IDirectPlayLobbyWImpl_EnumAddress,
