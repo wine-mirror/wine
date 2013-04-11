@@ -1953,27 +1953,30 @@ static struct wgl_context *X11DRV_wglCreateContextAttribsARB( HDC hdc, struct wg
                 case WGL_CONTEXT_MAJOR_VERSION_ARB:
                     pContextAttribList[0] = GLX_CONTEXT_MAJOR_VERSION_ARB;
                     pContextAttribList[1] = attribList[1];
+                    pContextAttribList += 2;
                     break;
                 case WGL_CONTEXT_MINOR_VERSION_ARB:
                     pContextAttribList[0] = GLX_CONTEXT_MINOR_VERSION_ARB;
                     pContextAttribList[1] = attribList[1];
+                    pContextAttribList += 2;
                     break;
                 case WGL_CONTEXT_LAYER_PLANE_ARB:
                     break;
                 case WGL_CONTEXT_FLAGS_ARB:
                     pContextAttribList[0] = GLX_CONTEXT_FLAGS_ARB;
                     pContextAttribList[1] = attribList[1];
+                    pContextAttribList += 2;
                     break;
                 case WGL_CONTEXT_PROFILE_MASK_ARB:
                     pContextAttribList[0] = GLX_CONTEXT_PROFILE_MASK_ARB;
                     pContextAttribList[1] = attribList[1];
+                    pContextAttribList += 2;
                     break;
                 default:
                     ERR("Unhandled attribList pair: %#x %#x\n", attribList[0], attribList[1]);
                 }
                 ret->numAttribs++;
                 attribList += 2;
-                pContextAttribList += 2;
             }
         }
 
