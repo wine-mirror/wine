@@ -435,14 +435,9 @@ static HRESULT WINAPI IDirectPlayLobby3Impl_Connect( IDirectPlayLobby3 *iface, D
  * NOTE: It appears that this method is supposed to be really really stupid
  *       with no error checking on the contents.
  */
-static HRESULT WINAPI IDirectPlayLobbyAImpl_CreateAddress
-( LPDIRECTPLAYLOBBYA iface,
-  REFGUID guidSP,
-  REFGUID guidDataType,
-  LPCVOID lpData,
-  DWORD dwDataSize,
-  LPVOID lpAddress,
-  LPDWORD lpdwAddressSize )
+static HRESULT WINAPI IDirectPlayLobby3AImpl_CreateAddress( IDirectPlayLobby3A *iface,
+        REFGUID guidSP, REFGUID guidDataType, const void *lpData, DWORD dwDataSize, void *lpAddress,
+        DWORD *lpdwAddressSize )
 {
   return DPL_CreateAddress( guidSP, guidDataType, lpData, dwDataSize,
                             lpAddress, lpdwAddressSize, TRUE );
@@ -498,12 +493,9 @@ static HRESULT DPL_CreateAddress(
  * given callback function, with lpContext, for each of the chunks.
  *
  */
-static HRESULT WINAPI IDirectPlayLobbyAImpl_EnumAddress
-( LPDIRECTPLAYLOBBYA iface,
-  LPDPENUMADDRESSCALLBACK lpEnumAddressCallback,
-  LPCVOID lpAddress,
-  DWORD dwAddressSize,
-  LPVOID lpContext )
+static HRESULT WINAPI IDirectPlayLobby3AImpl_EnumAddress( IDirectPlayLobby3A *iface,
+        LPDPENUMADDRESSCALLBACK lpEnumAddressCallback, const void *lpAddress, DWORD dwAddressSize,
+        void *lpContext )
 {
   IDirectPlayLobbyAImpl *This = (IDirectPlayLobbyAImpl *)iface;
 
@@ -563,12 +555,9 @@ HRESULT DPL_EnumAddress( LPDPENUMADDRESSCALLBACK lpEnumAddressCallback, LPCVOID 
  * build the DirectPlay Address.
  *
  */
-static HRESULT WINAPI IDirectPlayLobbyAImpl_EnumAddressTypes
-( LPDIRECTPLAYLOBBYA iface,
-  LPDPLENUMADDRESSTYPESCALLBACK lpEnumAddressTypeCallback,
-  REFGUID guidSP,
-  LPVOID lpContext,
-  DWORD dwFlags )
+static HRESULT WINAPI IDirectPlayLobby3AImpl_EnumAddressTypes( IDirectPlayLobby3A *iface,
+        LPDPLENUMADDRESSTYPESCALLBACK lpEnumAddressTypeCallback, REFGUID guidSP, void *lpContext,
+        DWORD dwFlags )
 {
   IDirectPlayLobbyAImpl *This = (IDirectPlayLobbyAImpl *)iface;
 
@@ -719,11 +708,8 @@ static HRESULT WINAPI IDirectPlayLobbyWImpl_EnumLocalApplications
   return DPERR_OUTOFMEMORY;
 }
 
-static HRESULT WINAPI IDirectPlayLobbyAImpl_EnumLocalApplications
-( LPDIRECTPLAYLOBBYA iface,
-  LPDPLENUMLOCALAPPLICATIONSCALLBACK lpEnumLocalAppCallback,
-  LPVOID lpContext,
-  DWORD dwFlags )
+static HRESULT WINAPI IDirectPlayLobby3AImpl_EnumLocalApplications( IDirectPlayLobby3A *iface,
+        LPDPLENUMLOCALAPPLICATIONSCALLBACK lpEnumLocalAppCallback, void *lpContext, DWORD dwFlags )
 {
   IDirectPlayLobbyAImpl *This = (IDirectPlayLobbyAImpl *)iface;
 
@@ -821,11 +807,8 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_EnumLocalApplications
  *        the data structure to be allocated by our caller which can then
  *        call this procedure/method again with a valid data pointer.
  */
-static HRESULT WINAPI IDirectPlayLobbyAImpl_GetConnectionSettings
-( LPDIRECTPLAYLOBBYA iface,
-  DWORD dwAppID,
-  LPVOID lpData,
-  LPDWORD lpdwDataSize )
+static HRESULT WINAPI IDirectPlayLobby3AImpl_GetConnectionSettings( IDirectPlayLobby3A *iface,
+        DWORD dwAppID, void *lpData, DWORD *lpdwDataSize )
 {
   IDirectPlayLobbyAImpl *This = (IDirectPlayLobbyAImpl *)iface;
   HRESULT hr;
@@ -873,13 +856,9 @@ static HRESULT WINAPI IDirectPlayLobbyWImpl_GetConnectionSettings
  * application. All messages are queued until received.
  *
  */
-static HRESULT WINAPI IDirectPlayLobbyAImpl_ReceiveLobbyMessage
-( LPDIRECTPLAYLOBBYA iface,
-  DWORD dwFlags,
-  DWORD dwAppID,
-  LPDWORD lpdwMessageFlags,
-  LPVOID lpData,
-  LPDWORD lpdwDataSize )
+static HRESULT WINAPI IDirectPlayLobby3AImpl_ReceiveLobbyMessage( IDirectPlayLobby3A *iface,
+        DWORD dwFlags, DWORD dwAppID, DWORD *lpdwMessageFlags, void *lpData,
+        DWORD *lpdwDataSize )
 {
   IDirectPlayLobbyAImpl *This = (IDirectPlayLobbyAImpl *)iface;
   FIXME(":stub %p %08x %08x %p %p %p\n", This, dwFlags, dwAppID, lpdwMessageFlags, lpData,
@@ -1046,12 +1025,8 @@ static BOOL DPL_CreateAndSetLobbyHandles( DWORD dwDestProcessId, HANDLE hDestPro
  * connect to a session.
  *
  */
-static HRESULT WINAPI IDirectPlayLobbyAImpl_RunApplication
-( LPDIRECTPLAYLOBBYA iface,
-  DWORD dwFlags,
-  LPDWORD lpdwAppID,
-  LPDPLCONNECTION lpConn,
-  HANDLE hReceiveEvent )
+static HRESULT WINAPI IDirectPlayLobby3AImpl_RunApplication( IDirectPlayLobby3A *iface,
+        DWORD dwFlags, DWORD *lpdwAppID, DPLCONNECTION *lpConn, HANDLE hReceiveEvent )
 {
   IDirectPlayLobbyAImpl *This = (IDirectPlayLobbyAImpl *)iface;
   HRESULT hr;
@@ -1194,12 +1169,8 @@ static HRESULT WINAPI IDirectPlayLobbyWImpl_RunApplication
  * All messages are queued until received.
  *
  */
-static HRESULT WINAPI IDirectPlayLobbyAImpl_SendLobbyMessage
-( LPDIRECTPLAYLOBBYA iface,
-  DWORD dwFlags,
-  DWORD dwAppID,
-  LPVOID lpData,
-  DWORD dwDataSize )
+static HRESULT WINAPI IDirectPlayLobby3AImpl_SendLobbyMessage( IDirectPlayLobby3A *iface,
+        DWORD flags, DWORD appid, void *data, DWORD size )
 {
   FIXME(":stub\n");
   return DPERR_OUTOFMEMORY;
@@ -1256,11 +1227,8 @@ static HRESULT WINAPI IDirectPlayLobbyWImpl_SetConnectionSettings
   return hr;
 }
 
-static HRESULT WINAPI IDirectPlayLobbyAImpl_SetConnectionSettings
-( LPDIRECTPLAYLOBBYA iface,
-  DWORD dwFlags,
-  DWORD dwAppID,
-  LPDPLCONNECTION lpConn )
+static HRESULT WINAPI IDirectPlayLobby3AImpl_SetConnectionSettings( IDirectPlayLobby3A *iface,
+        DWORD dwFlags, DWORD dwAppID, DPLCONNECTION *lpConn )
 {
   IDirectPlayLobbyAImpl *This = (IDirectPlayLobbyAImpl *)iface;
   HRESULT hr;
@@ -1292,11 +1260,8 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_SetConnectionSettings
  * Registers an event that will be set when a lobby message is received.
  *
  */
-static HRESULT WINAPI IDirectPlayLobbyAImpl_SetLobbyMessageEvent
-( LPDIRECTPLAYLOBBYA iface,
-  DWORD dwFlags,
-  DWORD dwAppID,
-  HANDLE hReceiveEvent )
+static HRESULT WINAPI IDirectPlayLobby3AImpl_SetLobbyMessageEvent( IDirectPlayLobby3A *iface,
+        DWORD flags, DWORD appid, HANDLE event )
 {
   FIXME(":stub\n");
   return DPERR_OUTOFMEMORY;
@@ -1324,12 +1289,9 @@ static HRESULT WINAPI IDirectPlayLobby2WImpl_CreateCompoundAddress
   return DPL_CreateCompoundAddress( lpElements, dwElementCount, lpAddress, lpdwAddressSize, FALSE );
 }
 
-static HRESULT WINAPI IDirectPlayLobby2AImpl_CreateCompoundAddress
-( LPDIRECTPLAYLOBBY2A iface,
-  LPCDPCOMPOUNDADDRESSELEMENT lpElements,
-  DWORD dwElementCount,
-  LPVOID lpAddress,
-  LPDWORD lpdwAddressSize )
+static HRESULT WINAPI IDirectPlayLobby3AImpl_CreateCompoundAddress( IDirectPlayLobby3A *iface,
+        const DPCOMPOUNDADDRESSELEMENT *lpElements, DWORD dwElementCount, void *lpAddress,
+        DWORD *lpdwAddressSize )
 {
   return DPL_CreateCompoundAddress( lpElements, dwElementCount, lpAddress, lpdwAddressSize, TRUE );
 }
@@ -1601,23 +1563,21 @@ static const IDirectPlayLobby3Vtbl directPlayLobby3AVT =
   XCAST(Release)DPL_Release,
 
     IDirectPlayLobby3AImpl_Connect,
-  XCAST(CreateAddress)IDirectPlayLobbyAImpl_CreateAddress,
-  XCAST(EnumAddress)IDirectPlayLobbyAImpl_EnumAddress,
-  XCAST(EnumAddressTypes)IDirectPlayLobbyAImpl_EnumAddressTypes,
-  XCAST(EnumLocalApplications)IDirectPlayLobbyAImpl_EnumLocalApplications,
-  XCAST(GetConnectionSettings)IDirectPlayLobbyAImpl_GetConnectionSettings,
-  XCAST(ReceiveLobbyMessage)IDirectPlayLobbyAImpl_ReceiveLobbyMessage,
-  XCAST(RunApplication)IDirectPlayLobbyAImpl_RunApplication,
-  XCAST(SendLobbyMessage)IDirectPlayLobbyAImpl_SendLobbyMessage,
-  XCAST(SetConnectionSettings)IDirectPlayLobbyAImpl_SetConnectionSettings,
-  XCAST(SetLobbyMessageEvent)IDirectPlayLobbyAImpl_SetLobbyMessageEvent,
-
-  XCAST(CreateCompoundAddress)IDirectPlayLobby2AImpl_CreateCompoundAddress,
-
-  IDirectPlayLobby3AImpl_ConnectEx,
-  IDirectPlayLobby3AImpl_RegisterApplication,
-  IDirectPlayLobby3AImpl_UnregisterApplication,
-  IDirectPlayLobby3AImpl_WaitForConnectionSettings
+    IDirectPlayLobby3AImpl_CreateAddress,
+    IDirectPlayLobby3AImpl_EnumAddress,
+    IDirectPlayLobby3AImpl_EnumAddressTypes,
+    IDirectPlayLobby3AImpl_EnumLocalApplications,
+    IDirectPlayLobby3AImpl_GetConnectionSettings,
+    IDirectPlayLobby3AImpl_ReceiveLobbyMessage,
+    IDirectPlayLobby3AImpl_RunApplication,
+    IDirectPlayLobby3AImpl_SendLobbyMessage,
+    IDirectPlayLobby3AImpl_SetConnectionSettings,
+    IDirectPlayLobby3AImpl_SetLobbyMessageEvent,
+    IDirectPlayLobby3AImpl_CreateCompoundAddress,
+    IDirectPlayLobby3AImpl_ConnectEx,
+    IDirectPlayLobby3AImpl_RegisterApplication,
+    IDirectPlayLobby3AImpl_UnregisterApplication,
+    IDirectPlayLobby3AImpl_WaitForConnectionSettings
 };
 #undef XCAST
 
