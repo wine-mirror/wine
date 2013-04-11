@@ -146,7 +146,7 @@ static const int is_win64 = (sizeof(void *) > sizeof(int));
 #define VIRTUAL_DEBUG_DUMP_VIEW(view) \
     do { if (TRACE_ON(virtual)) VIRTUAL_DumpView(view); } while (0)
 
-#define VIRTUAL_HEAP_SIZE (4*1024*1024)
+#define VIRTUAL_HEAP_SIZE (sizeof(void*)*1024*1024)
 
 static HANDLE virtual_heap;
 static void *preload_reserve_start;
