@@ -2491,10 +2491,19 @@ static void test_converttovar(void)
 
     V_VT(&dst) = VT_EMPTY;
     dst_len = 0;
+    dst_status = DBSTATUS_S_DEFAULT;
     hr = IDataConvert_DataConvert(convert, DBTYPE_WSTR, DBTYPE_VARIANT, sizeof(strW), &dst_len, strW, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
+    ok(V_VT(&dst) == VT_BSTR, "got %d\n", V_VT(&dst));
+    ok(!lstrcmpW(V_BSTR(&dst), strW), "got %s\n", wine_dbgstr_w(V_BSTR(&dst)));
+    VariantClear(&dst);
+
+    /* with null dest length and status */
+    V_VT(&dst) = VT_EMPTY;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_WSTR, DBTYPE_VARIANT, sizeof(strW), NULL, strW, &dst, sizeof(dst), 0, NULL, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
     ok(V_VT(&dst) == VT_BSTR, "got %d\n", V_VT(&dst));
     ok(!lstrcmpW(V_BSTR(&dst), strW), "got %s\n", wine_dbgstr_w(V_BSTR(&dst)));
     VariantClear(&dst);

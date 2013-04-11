@@ -163,11 +163,16 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
                                           DBDATACONVERT flags)
 {
     convert *This = impl_from_IDataConvert(iface);
+    DBLENGTH dst_len_loc;
+    DBSTATUS dst_status_loc;
     HRESULT hr;
 
     TRACE("(%p)->(%d, %d, %ld, %p, %p, %p, %ld, %d, %p, %d, %d, %x)\n", This,
           src_type, dst_type, src_len, dst_len, src, dst, dst_max_len,
           src_status, dst_status, precision, scale, flags);
+
+    if (!dst_len) dst_len = &dst_len_loc;
+    if (!dst_status) dst_status = &dst_status_loc;
 
     *dst_status = DBSTATUS_E_BADACCESSOR;
 
@@ -752,7 +757,6 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
     default:
         FIXME("Unimplemented conversion %04x -> %04x\n", src_type, dst_type);
         return E_NOTIMPL;
-
     }
 
     if(hr == DISP_E_OVERFLOW)
