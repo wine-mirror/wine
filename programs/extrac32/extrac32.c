@@ -23,6 +23,7 @@
 #include <shellapi.h>
 #include <setupapi.h>
 #include <shlwapi.h>
+#include <shlobj.h>
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -30,6 +31,21 @@
 WINE_DEFAULT_DEBUG_CHANNEL(extrac32);
 
 static BOOL force_mode;
+
+static void create_target_directory(LPWSTR Target)
+{
+    WCHAR dir[MAX_PATH];
+    int res;
+
+    strcpyW(dir, Target);
+    *PathFindFileNameW(dir) = 0; /* Truncate file name */
+    if(!PathIsDirectoryW(dir))
+    {
+        res = SHCreateDirectoryExW(NULL, dir, NULL);
+        if(res != ERROR_SUCCESS && res != ERROR_ALREADY_EXISTS)
+            WINE_ERR("Can't create directory: %s\n", wine_dbgstr_w(dir));
+    }
+}
 
 static UINT WINAPI ExtCabCallback(PVOID Context, UINT Notification, UINT_PTR Param1, UINT_PTR Param2)
 {
@@ -42,6 +58,9 @@ static UINT WINAPI ExtCabCallback(PVOID Context, UINT Notification, UINT_PTR Par
             pInfo = (FILE_IN_CABINET_INFO_W*)Param1;
             lstrcpyW(pInfo->FullTargetName, (LPCWSTR)Context);
             lstrcatW(pInfo->FullTargetName, pInfo->NameInCabinet);
+            /* SetupIterateCabinet() doesn't create full path to target by itself,
+               so we should do it manually */
+            create_target_directory(pInfo->FullTargetName);
             return FILEOP_DOIT;
         case SPFILENOTIFY_FILEEXTRACTED:
             pFilePaths = (FILEPATHS_W*)Param1;
