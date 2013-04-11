@@ -200,7 +200,6 @@ int PASCAL wWinMain(HINSTANCE hInstance, HINSTANCE prev, LPWSTR cmdline, int sho
     int i;
     WCHAR check, cmd = 0;
     WCHAR path[MAX_PATH];
-    WCHAR backslash[] = {'\\',0};
     LPCWSTR cabfile = NULL;
 
     path[0] = 0;
@@ -273,7 +272,7 @@ int PASCAL wWinMain(HINSTANCE hInstance, HINSTANCE prev, LPWSTR cmdline, int sho
     if (cmd == 'E' && !path[0])
         GetCurrentDirectoryW(MAX_PATH, path);
 
-    lstrcatW(path, backslash);
+    PathAddBackslashW(path);
 
     /* Execute the specified command */
     switch(cmd)
