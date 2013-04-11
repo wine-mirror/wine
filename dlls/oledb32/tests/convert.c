@@ -2481,6 +2481,7 @@ static void test_converttovar(void)
     DBLENGTH dst_len;
     VARIANT dst;
     HRESULT hr;
+    INT i4;
 
     hr = CoCreateInstance(&CLSID_OLEDB_CONVERSIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IDataConvert, (void**)&convert);
     if(FAILED(hr))
@@ -2507,6 +2508,17 @@ static void test_converttovar(void)
     ok(V_VT(&dst) == VT_BSTR, "got %d\n", V_VT(&dst));
     ok(!lstrcmpW(V_BSTR(&dst), strW), "got %s\n", wine_dbgstr_w(V_BSTR(&dst)));
     VariantClear(&dst);
+
+    V_VT(&dst) = VT_EMPTY;
+    dst_len = 0;
+    dst_status = DBSTATUS_S_DEFAULT;
+    i4 = 123;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_I4, DBTYPE_VARIANT, sizeof(i4), &dst_len, &i4, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
+    ok(V_VT(&dst) == VT_I4, "got %d\n", V_VT(&dst));
+    ok(V_I4(&dst) == 123, "got %d\n", V_I4(&dst));
 
     IDataConvert_Release(convert);
 }

@@ -740,6 +740,11 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
 
         switch(src_type)
         {
+        case DBTYPE_I4:
+            V_VT(v) = VT_I4;
+            V_I4(v) = *(signed int*)src;
+            hr = S_OK;
+            break;
         case DBTYPE_BSTR:
         {
             BSTR s = *(WCHAR**)src;
@@ -747,8 +752,8 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
             V_VT(v) = VT_BSTR;
             V_BSTR(v) = SysAllocString(s);
             hr = V_BSTR(v) ? S_OK : E_OUTOFMEMORY;
+            break;
         }
-        break;
         default: FIXME("Unimplemented conversion %04x -> VARIANT\n", src_type); return E_NOTIMPL;
         }
         break;
