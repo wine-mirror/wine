@@ -72,11 +72,6 @@ struct DPLMSG
 };
 typedef struct DPLMSG* LPDPLMSG;
 
-typedef struct tagDirectPlayLobbyIUnknownData
-{
-  CRITICAL_SECTION  DPL_lock;
-} DirectPlayLobbyIUnknownData;
-
 typedef struct tagDirectPlayLobbyData
 {
   HKEY  hkCallbackKeyHack;
@@ -89,7 +84,7 @@ typedef struct IDirectPlayLobbyImpl
     IDirectPlayLobby3 IDirectPlayLobby3_iface;
     IDirectPlayLobby3A IDirectPlayLobby3A_iface;
     LONG ulInterfaceRef;
-    DirectPlayLobbyIUnknownData*  unk;
+    CRITICAL_SECTION lock;
     DirectPlayLobbyData*          dpl;
 } IDirectPlayLobbyImpl;
 
@@ -106,33 +101,6 @@ static inline IDirectPlayLobbyImpl *impl_from_IDirectPlayLobby3A( IDirectPlayLob
 /* Forward declarations of virtual tables */
 static const IDirectPlayLobby3Vtbl directPlayLobby3WVT;
 static const IDirectPlayLobby3Vtbl directPlayLobby3AVT;
-
-static BOOL DPL_CreateIUnknown( LPVOID lpDPL )
-{
-  IDirectPlayLobbyAImpl *This = lpDPL;
-
-  This->unk = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *(This->unk) ) );
-  if ( This->unk == NULL )
-  {
-    return FALSE;
-  }
-
-  InitializeCriticalSection( &This->unk->DPL_lock );
-  This->unk->DPL_lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IDirectPlayLobbyAImpl*->DirectPlayLobbyIUnknownData*->DPL_lock");
-
-  return TRUE;
-}
-
-static BOOL DPL_DestroyIUnknown( LPVOID lpDPL )
-{
-  IDirectPlayLobbyAImpl *This = lpDPL;
-
-  This->unk->DPL_lock.DebugInfo->Spare[0] = 0;
-  DeleteCriticalSection( &This->unk->DPL_lock );
-  HeapFree( GetProcessHeap(), 0, This->unk );
-
-  return TRUE;
-}
 
 static BOOL DPL_CreateLobby1( LPVOID lpDPL )
 {
@@ -220,15 +188,16 @@ HRESULT DPL_CreateInterface
   }
 
   /* Initialize it */
-  if ( DPL_CreateIUnknown( This ) && DPL_CreateLobby1( This ) )
+  if ( DPL_CreateLobby1( This ) )
   {
+    InitializeCriticalSection( &This->lock );
+    This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IDirectPlayLobbyImpl.lock");
     IDirectPlayLobby_AddRef( (LPDIRECTPLAYLOBBY)*ppvObj );
     return S_OK;
   }
 
   /* Initialize failed, destroy it */
   DPL_DestroyLobby1( This );
-  DPL_DestroyIUnknown( This );
   HeapFree( GetProcessHeap(), 0, This );
 
   *ppvObj = NULL;
@@ -285,7 +254,8 @@ static ULONG WINAPI DPL_Release( IDirectPlayLobbyImpl *This )
   if( ulInterfaceRefCount == 0 )
   {
      DPL_DestroyLobby1( This );
-     DPL_DestroyIUnknown( This );
+     This->lock.DebugInfo->Spare[0] = 0;
+     DeleteCriticalSection( &This->lock );
      HeapFree( GetProcessHeap(), 0, This );
   }
 
@@ -790,17 +760,17 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_EnumLocalApplications( IDirectPlayL
     dplAppInfo.guidApplication      = serviceProviderGUID;
     dplAppInfo.u.lpszAppNameA = subKeyName;
 
-    EnterCriticalSection( &This->unk->DPL_lock );
+    EnterCriticalSection( &This->lock );
 
     memcpy( &This->dpl->hkCallbackKeyHack, &hkServiceProvider, sizeof( hkServiceProvider ) );
 
     if( !lpEnumLocalAppCallback( &dplAppInfo, lpContext, dwFlags ) )
     {
-       LeaveCriticalSection( &This->unk->DPL_lock );
+       LeaveCriticalSection( &This->lock );
        break;
     }
 
-    LeaveCriticalSection( &This->unk->DPL_lock );
+    LeaveCriticalSection( &This->lock );
   }
 
   return DP_OK;
@@ -824,14 +794,14 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_GetConnectionSettings( IDirectPlayL
 
   TRACE("(%p)->(0x%08x,%p,%p)\n", This, dwAppID, lpData, lpdwDataSize );
 
-  EnterCriticalSection( &This->unk->DPL_lock );
+  EnterCriticalSection( &This->lock );
 
   hr = DPLAYX_GetConnectionSettingsA( dwAppID,
                                       lpData,
                                       lpdwDataSize
                                     );
 
-  LeaveCriticalSection( &This->unk->DPL_lock );
+  LeaveCriticalSection( &This->lock );
 
   return hr;
 }
@@ -847,14 +817,14 @@ static HRESULT WINAPI IDirectPlayLobbyWImpl_GetConnectionSettings
 
   TRACE("(%p)->(0x%08x,%p,%p)\n", This, dwAppID, lpData, lpdwDataSize );
 
-  EnterCriticalSection( &This->unk->DPL_lock );
+  EnterCriticalSection( &This->lock );
 
   hr = DPLAYX_GetConnectionSettingsW( dwAppID,
                                       lpData,
                                       lpdwDataSize
                                     );
 
-  LeaveCriticalSection( &This->unk->DPL_lock );
+  LeaveCriticalSection( &This->lock );
 
   return hr;
 }
@@ -1060,7 +1030,7 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_RunApplication( IDirectPlayLobby3A 
     FIXME( "Waiting lobby not being handled correctly\n" );
   }
 
-  EnterCriticalSection( &This->unk->DPL_lock );
+  EnterCriticalSection( &This->lock );
 
   ZeroMemory( &enumData, sizeof( enumData ) );
   enumData.This    = This;
@@ -1111,7 +1081,7 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_RunApplication( IDirectPlayLobby3A 
     HeapFree( GetProcessHeap(), 0, enumData.lpszCommandLine );
     HeapFree( GetProcessHeap(), 0, enumData.lpszCurrentDirectory );
 
-    LeaveCriticalSection( &This->unk->DPL_lock );
+    LeaveCriticalSection( &This->lock );
     return DPERR_CANTCREATEPROCESS;
   }
 
@@ -1131,7 +1101,7 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_RunApplication( IDirectPlayLobby3A 
   if( hr != DP_OK )
   {
     ERR( "SetConnectionSettings failure %s\n", DPLAYX_HresultToString( hr ) );
-    LeaveCriticalSection( &This->unk->DPL_lock );
+    LeaveCriticalSection( &This->lock );
     return hr;
   }
 
@@ -1146,7 +1116,7 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_RunApplication( IDirectPlayLobby3A 
 
   DPLAYX_SetLobbyMsgThreadId( newProcessInfo.dwProcessId, This->dpl->dwMsgThread );
 
-  LeaveCriticalSection( &This->unk->DPL_lock );
+  LeaveCriticalSection( &This->lock );
 
   /* Everything seems to have been set correctly, update the dwAppID */
   *lpdwAppID = newProcessInfo.dwProcessId;
@@ -1213,7 +1183,7 @@ static HRESULT WINAPI IDirectPlayLobbyWImpl_SetConnectionSettings
 
   TRACE("(%p)->(0x%08x,0x%08x,%p)\n", This, dwFlags, dwAppID, lpConn );
 
-  EnterCriticalSection( &This->unk->DPL_lock );
+  EnterCriticalSection( &This->lock );
 
   hr = DPLAYX_SetConnectionSettingsW( dwFlags, dwAppID, lpConn );
 
@@ -1231,7 +1201,7 @@ static HRESULT WINAPI IDirectPlayLobbyWImpl_SetConnectionSettings
     hr = DPLAYX_SetConnectionSettingsW( dwFlags, dwAppID, lpConn );
   }
 
-  LeaveCriticalSection( &This->unk->DPL_lock );
+  LeaveCriticalSection( &This->lock );
 
   return hr;
 }
@@ -1244,7 +1214,7 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_SetConnectionSettings( IDirectPlayL
 
   TRACE("(%p)->(0x%08x,0x%08x,%p)\n", This, dwFlags, dwAppID, lpConn );
 
-  EnterCriticalSection( &This->unk->DPL_lock );
+  EnterCriticalSection( &This->lock );
 
   hr = DPLAYX_SetConnectionSettingsA( dwFlags, dwAppID, lpConn );
 
@@ -1259,7 +1229,7 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_SetConnectionSettings( IDirectPlayL
     hr = DPLAYX_SetConnectionSettingsA( dwFlags, dwAppID, lpConn );
   }
 
-  LeaveCriticalSection( &This->unk->DPL_lock );
+  LeaveCriticalSection( &This->lock );
 
   return hr;
 }
