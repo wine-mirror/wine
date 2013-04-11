@@ -102,7 +102,7 @@ static const IClassFactoryVtbl cf_vt = {
 };
 
 static IClassFactoryImpl dplay_cf = {{&cf_vt}, dplay_create};
-static IClassFactoryImpl dplaylobby_cf = {{&cf_vt}, DPL_CreateInterface};
+static IClassFactoryImpl dplaylobby_cf = {{&cf_vt}, dplobby_create};
 
 
 /*******************************************************************************

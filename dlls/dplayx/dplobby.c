@@ -98,10 +98,6 @@ static inline IDirectPlayLobbyImpl *impl_from_IDirectPlayLobby3A( IDirectPlayLob
     return CONTAINING_RECORD( iface, IDirectPlayLobbyImpl, IDirectPlayLobby3A_iface );
 }
 
-/* Forward declarations of virtual tables */
-static const IDirectPlayLobby3Vtbl directPlayLobby3WVT;
-static const IDirectPlayLobby3Vtbl directPlayLobby3AVT;
-
 static BOOL DPL_CreateLobby1( LPVOID lpDPL )
 {
   IDirectPlayLobbyAImpl *This = lpDPL;
@@ -132,76 +128,6 @@ static BOOL DPL_DestroyLobby1( LPVOID lpDPL )
   HeapFree( GetProcessHeap(), 0, This->dpl );
 
   return TRUE;
-}
-
-
-/* The COM interface for upversioning an interface
- * We've been given a GUID (riid) and we need to replace the present
- * interface with that of the requested interface.
- *
- * Snip from some Microsoft document:
- * There are four requirements for implementations of QueryInterface (In these
- * cases, "must succeed" means "must succeed barring catastrophic failure."):
- *
- *  * The set of interfaces accessible on an object through
- *    IUnknown::QueryInterface must be static, not dynamic. This means that
- *    if a call to QueryInterface for a pointer to a specified interface
- *    succeeds the first time, it must succeed again, and if it fails the
- *    first time, it must fail on all subsequent queries.
- *  * It must be symmetric ~W if a client holds a pointer to an interface on
- *    an object, and queries for that interface, the call must succeed.
- *  * It must be reflexive ~W if a client holding a pointer to one interface
- *    queries successfully for another, a query through the obtained pointer
- *    for the first interface must succeed.
- *  * It must be transitive ~W if a client holding a pointer to one interface
- *    queries successfully for a second, and through that pointer queries
- *    successfully for a third interface, a query for the first interface
- *    through the pointer for the third interface must succeed.
- */
-HRESULT DPL_CreateInterface
-         ( REFIID riid, LPVOID* ppvObj )
-{
-  IDirectPlayLobbyImpl *This;
-
-  TRACE( " for %s\n", debugstr_guid( riid ) );
-
-  This = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *This ) );
-  if ( !This )
-    return DPERR_OUTOFMEMORY;
-
-  This->IDirectPlayLobby3_iface.lpVtbl = &directPlayLobby3WVT;
-  This->IDirectPlayLobby3A_iface.lpVtbl = &directPlayLobby3AVT;
-
-  if ( IsEqualGUID( &IID_IUnknown, riid ) || IsEqualGUID( &IID_IDirectPlayLobby, riid ) ||
-      IsEqualGUID( &IID_IDirectPlayLobby2, riid ) || IsEqualGUID( &IID_IDirectPlayLobby3, riid ) )
-    *ppvObj = &This->IDirectPlayLobby3_iface;
-  else if ( IsEqualGUID( &IID_IDirectPlayLobbyA, riid ) ||
-      IsEqualGUID( &IID_IDirectPlayLobby2A, riid ) || IsEqualGUID( &IID_IDirectPlayLobby3A, riid ) )
-    *ppvObj = &This->IDirectPlayLobby3A_iface;
-  else
-  {
-    /* Unsupported interface */
-    HeapFree( GetProcessHeap(), 0, *ppvObj );
-    *ppvObj = NULL;
-
-    return E_NOINTERFACE;
-  }
-
-  /* Initialize it */
-  if ( DPL_CreateLobby1( This ) )
-  {
-    InitializeCriticalSection( &This->lock );
-    This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IDirectPlayLobbyImpl.lock");
-    IDirectPlayLobby_AddRef( (LPDIRECTPLAYLOBBY)*ppvObj );
-    return S_OK;
-  }
-
-  /* Initialize failed, destroy it */
-  DPL_DestroyLobby1( This );
-  HeapFree( GetProcessHeap(), 0, This );
-
-  *ppvObj = NULL;
-  return DPERR_NOMEMORY;
 }
 
 static HRESULT WINAPI DPL_QueryInterface( IDirectPlayLobbyImpl *This, REFIID riid, void **ppvObj )
@@ -1526,7 +1452,7 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_WaitForConnectionSettings
 }
 
 
-static const IDirectPlayLobby3Vtbl directPlayLobby3AVT =
+static const IDirectPlayLobby3Vtbl dpl3A_vt =
 {
     IDirectPlayLobby3AImpl_QueryInterface,
     IDirectPlayLobby3AImpl_AddRef,
@@ -1552,13 +1478,9 @@ static const IDirectPlayLobby3Vtbl directPlayLobby3AVT =
 /* Direct Play Lobby 3 (unicode) Virtual Table for methods */
 
 /* Note: Hack so we can reuse the old functions without compiler warnings */
-#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)     (typeof(directPlayLobby3WVT.fun))
-#else
 # define XCAST(fun)     (void*)
-#endif
 
-static const IDirectPlayLobby3Vtbl directPlayLobby3WVT =
+static const IDirectPlayLobby3Vtbl dpl3_vt =
 {
     IDirectPlayLobby3Impl_QueryInterface,
     IDirectPlayLobby3Impl_AddRef,
@@ -1584,12 +1506,35 @@ static const IDirectPlayLobby3Vtbl directPlayLobby3WVT =
 };
 #undef XCAST
 
+HRESULT dplobby_create( REFIID riid, void **ppv )
+{
+    IDirectPlayLobbyImpl *obj;
+    HRESULT hr;
 
-/*********************************************************
- *
- * Direct Play Lobby Interface Implementation
- *
- *********************************************************/
+    TRACE( "(%s, %p)\n", debugstr_guid( riid ), ppv );
+
+    *ppv = NULL;
+    obj = HeapAlloc( GetProcessHeap(), 0, sizeof( *obj ) );
+    if ( !obj )
+        return DPERR_OUTOFMEMORY;
+
+    obj->IDirectPlayLobby3_iface.lpVtbl = &dpl3_vt;
+    obj->IDirectPlayLobby3A_iface.lpVtbl = &dpl3A_vt;
+    obj->ulInterfaceRef = 1;
+
+    InitializeCriticalSection( &obj->lock );
+    obj->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IDirectPlayLobbyImpl.lock");
+
+    if ( DPL_CreateLobby1( obj ) )
+        hr = IDirectPlayLobby_QueryInterface( &obj->IDirectPlayLobby3_iface, riid, ppv );
+    else
+        hr = DPERR_NOMEMORY;
+    IDirectPlayLobby_Release( &obj->IDirectPlayLobby3_iface );
+
+    return hr;
+}
+
+
 
 /***************************************************************************
  *  DirectPlayLobbyCreateA   (DPLAYX.4)
@@ -1620,7 +1565,7 @@ HRESULT WINAPI DirectPlayLobbyCreateA( LPGUID lpGUIDDSP,
      return CLASS_E_NOAGGREGATION;
   }
 
-  return DPL_CreateInterface( &IID_IDirectPlayLobbyA, (void**)lplpDPL );
+  return dplobby_create( &IID_IDirectPlayLobbyA, (void**)lplpDPL );
 }
 
 /***************************************************************************
@@ -1653,5 +1598,5 @@ HRESULT WINAPI DirectPlayLobbyCreateW( LPGUID lpGUIDDSP,
      return CLASS_E_NOAGGREGATION;
   }
 
-  return DPL_CreateInterface( &IID_IDirectPlayLobby, (void**)lplpDPL );
+  return dplobby_create( &IID_IDirectPlayLobby, (void**)lplpDPL );
 }

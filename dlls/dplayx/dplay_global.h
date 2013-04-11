@@ -207,7 +207,7 @@ extern HRESULT DP_SetSPPlayerData( IDirectPlayImpl *lpDP, DPID idPlayer, void *l
 extern LPVOID DPSP_CreateSPPlayerData(void) DECLSPEC_HIDDEN;
 
 extern HRESULT dplay_create( REFIID riid, void **ppv ) DECLSPEC_HIDDEN;
-extern HRESULT DPL_CreateInterface( REFIID riid, LPVOID* ppvObj ) DECLSPEC_HIDDEN;
+extern HRESULT dplobby_create( REFIID riid, void **ppv ) DECLSPEC_HIDDEN;
 extern HRESULT DPSP_CreateInterface( REFIID riid, void **ppvObj, IDirectPlayImpl *dp ) DECLSPEC_HIDDEN;
 extern HRESULT DPLSP_CreateInterface( REFIID riid, void **ppvObj, IDirectPlayImpl *dp ) DECLSPEC_HIDDEN;
 
