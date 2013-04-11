@@ -520,7 +520,7 @@ static int dump_msft_res0f(seg_t *seg)
 
 static void dump_msft_func(int n)
 {
-    int size, args_cnt, i, extra_attr;
+    int size, args_cnt, i, extra_attr, fkccic;
 
     print_begin_block_id("FuncRecord", n);
 
@@ -530,11 +530,11 @@ static void dump_msft_func(int n)
     print_hex("flags");
     print_short_hex("VtableOffset");
     print_short_hex("funcdescsize");
-    print_hex("FKCCIC");
+    fkccic = print_hex("FKCCIC");
     args_cnt = print_short_hex("nrargs");
     print_short_hex("noptargs");
 
-    extra_attr = size/sizeof(INT) - 6 - args_cnt*3;
+    extra_attr = size/sizeof(INT) - 6 - args_cnt*(fkccic&0x1000 ? 4 : 3);
 
     if(extra_attr)
         print_hex("helpcontext");
@@ -550,6 +550,11 @@ static void dump_msft_func(int n)
         print_hex("HelpStringContext");
     if(extra_attr >= 7)
         print_hex("oCustData");
+
+    if(fkccic & 0x1000) {
+        for(i=0; i < args_cnt; i++)
+            print_hex_id("default value[%d]", i);
+    }
 
     for(i=0; i < args_cnt; i++) {
         print_begin_block_id("param", i);
