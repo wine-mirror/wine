@@ -131,6 +131,7 @@ typedef struct tagCyclicList {
 
     union {
         int val;
+        MSFT_VarRecord *var;
         int *data;
     }u;
 } CyclicList;
@@ -255,20 +256,18 @@ static inline INT ctl2_get_record_size(const CyclicList *iter)
     return iter->u.data[0] & 0xFFFF;
 }
 
-static void ctl2_update_var_size(const ICreateTypeInfo2Impl *This, CyclicList *var, int size)
+static void ctl2_update_var_size(const ICreateTypeInfo2Impl *This, MSFT_VarRecord *var)
 {
-    int old = ctl2_get_record_size(var), i;
+    int old = var->Info & 0xFFFF, size;
 
-    if (old >= size) return;
+    if(var->HelpStringContext)
+        size = sizeof(*var);
+    else if(var->HelpContext)
+        size = FIELD_OFFSET(MSFT_VarRecord, HelpString);
+    else
+        size = FIELD_OFFSET(MSFT_VarRecord, HelpContext);
 
-    /* initialize fields included in size but currently unused */
-    for (i = old/sizeof(int); i < (size/sizeof(int) - 1); i++)
-    {
-        /* HelpContext/HelpStringContext being 0 means it's not set */
-        var->u.data[i] = (i == 5 || i == 9) ? 0 : -1;
-    }
-
-    var->u.data[0] += size - old;
+    var->Info += size - old;
     This->typedata->next->u.val += size - old;
 }
 
@@ -2252,7 +2251,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(
 
     HRESULT status = S_OK;
     CyclicList *insert;
-    INT *typedata;
+    MSFT_VarRecord *typedata;
     int var_datawidth;
     int var_alignment;
     int var_type_size;
@@ -2283,8 +2282,8 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(
         return E_OUTOFMEMORY;
 
     /* allocate whole structure, it's fixed size always */
-    insert->u.data = heap_alloc(sizeof(MSFT_VarRecord));
-    if(!insert->u.data) {
+    insert->u.var = heap_alloc(sizeof(MSFT_VarRecord));
+    if(!insert->u.var) {
         heap_free(insert);
         return E_OUTOFMEMORY;
     }
@@ -2297,14 +2296,18 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(
         This->dual->typedata = This->typedata;
 
     This->typedata->next->u.val += FIELD_OFFSET(MSFT_VarRecord, HelpContext);
-    typedata = This->typedata->u.data;
+    typedata = This->typedata->u.var;
 
     /* fill out the basic type information */
+    memset(typedata, 0xff, sizeof(MSFT_VarRecord));
+    typedata->HelpContext = 0;
+    typedata->HelpStringContext = 0;
 
     /* no optional fields initially */
-    typedata[0] = FIELD_OFFSET(MSFT_VarRecord, HelpContext) | (index << 16);
-    typedata[2] = pVarDesc->wVarFlags;
-    typedata[3] = (sizeof(VARDESC) << 16) | pVarDesc->varkind;
+    typedata->Info = FIELD_OFFSET(MSFT_VarRecord, HelpContext) | (index << 16);
+    typedata->Flags = pVarDesc->wVarFlags;
+    typedata->VarKind = pVarDesc->varkind;
+    typedata->vardescsize = sizeof(VARDESC);
 
     /* update the index data */
     insert->indice = 0x40000000 + index;
@@ -2312,7 +2315,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(
 
     /* figure out type widths and whatnot */
     ctl2_encode_typedesc(This->typelib, &pVarDesc->elemdescVar.tdesc,
-			 &typedata[1], &var_datawidth, &var_alignment,
+			 &typedata->DataType, &var_datawidth, &var_alignment,
 			 &var_type_size);
 
     if (pVarDesc->varkind != VAR_CONST)
@@ -2320,7 +2323,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(
 	/* pad out starting position to data width */
 	This->datawidth += var_alignment - 1;
 	This->datawidth &= ~(var_alignment - 1);
-	typedata[4] = This->datawidth;
+	typedata->OffsValue = This->datawidth;
 
 	/* add the new variable to the total data width */
 	This->datawidth += var_datawidth;
@@ -2328,7 +2331,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(
 	    This->dual->datawidth = This->datawidth;
 
 	/* add type description size to total required allocation */
-	typedata[3] += var_type_size << 16;
+        typedata->vardescsize += var_type_size;
 
 	/* fix type alignment */
 	alignment = (This->typeinfo->typekind >> 11) & 0x1f;
@@ -2352,9 +2355,9 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(
 	This->typeinfo->size = (This->datawidth + (alignment - 1)) & ~(alignment - 1);
     } else {
 	VARIANT *value = pVarDesc->DUMMYUNIONNAME.lpvarValue;
-	status = ctl2_encode_variant(This->typelib, typedata+4, value, V_VT(value));
+	status = ctl2_encode_variant(This->typelib, &typedata->OffsValue, value, V_VT(value));
         /* ??? native sets size 0x34 */
-	typedata[3] += 0x10 << 16;
+	typedata->vardescsize += 0x10;
     }
 
     /* increment the number of variable elements */
@@ -2553,8 +2556,8 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetVarDocString(
                int offset = ctl2_alloc_string(This->typelib, docstring);
 
                if (offset == -1) return E_OUTOFMEMORY;
-               ctl2_update_var_size(This, iter, FIELD_OFFSET(MSFT_VarRecord, res9));
-               iter->u.data[6] = offset;
+               iter->u.var->HelpString = offset;
+               ctl2_update_var_size(This, iter->u.var);
                return S_OK;
            }
        }
@@ -2615,8 +2618,8 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetVarHelpContext(
        {
            if (index-- == 0)
            {
-               ctl2_update_var_size(This, iter, FIELD_OFFSET(MSFT_VarRecord, HelpString));
-               iter->u.data[5] = context;
+               iter->u.var->HelpContext = context;
+               ctl2_update_var_size(This, iter->u.var);
                return S_OK;
            }
        }
