@@ -26,8 +26,8 @@ extern "C" {
 #endif
 
 #if defined(__GNUC__)
-#define D3DCOMPILER_DLL_W (const WCHAR[]){'d','3','d','c','o','m','p','i','l','e','r','_','4','3','.','d','l','l',0};
-#elif defined(_MSV_VER)
+#define D3DCOMPILER_DLL_W (const WCHAR[]){'d','3','d','c','o','m','p','i','l','e','r','_','4','3','.','d','l','l',0}
+#elif defined(_MSC_VER)
 #define D3DCOMPILER_DLL_W L"d3dcompiler_43.dll"
 #else
 static const WCHAR D3DCOMPILER_DLL_W[] = {'d','3','d','c','o','m','p','i','l','e','r','_','4','3','.','d','l','l',0};
