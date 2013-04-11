@@ -132,6 +132,7 @@ typedef struct tagCyclicList {
     union {
         int val;
         MSFT_VarRecord *var;
+        MSFT_FuncRecord *func;
         int *data;
     }u;
 } CyclicList;
@@ -256,6 +257,33 @@ static inline INT ctl2_get_record_size(const CyclicList *iter)
     return iter->u.data[0] & 0xFFFF;
 }
 
+static void ctl2_update_func_size(const ICreateTypeInfo2Impl *This, MSFT_FuncRecord *func)
+{
+    int old = func->Info & 0xFFFF, size;
+
+    if(func->oCustData != -1)
+        size = FIELD_OFFSET(MSFT_FuncRecord, oArgCustData);
+    else if(func->HelpStringContext)
+        size = FIELD_OFFSET(MSFT_FuncRecord, oCustData);
+    else if(func->resA != -1)
+        size = FIELD_OFFSET(MSFT_FuncRecord, HelpStringContext);
+    else if(func->res9 != -1)
+        size = FIELD_OFFSET(MSFT_FuncRecord, resA);
+    else if(func->oEntry != -1)
+        size = FIELD_OFFSET(MSFT_FuncRecord, res9);
+    else if(func->oHelpString != -1)
+        size = FIELD_OFFSET(MSFT_FuncRecord, oEntry);
+    else if(func->HelpContext)
+        size = FIELD_OFFSET(MSFT_FuncRecord, oHelpString);
+    else
+        size = FIELD_OFFSET(MSFT_FuncRecord, HelpContext);
+
+    size += func->nrargs * (func->FKCCIC&0x1000 ? 16 : 12);
+
+    func->Info += size - old;
+    This->typedata->next->u.val += size - old;
+}
+
 static void ctl2_update_var_size(const ICreateTypeInfo2Impl *This, MSFT_VarRecord *var)
 {
     int old = var->Info & 0xFFFF, size;
@@ -271,11 +299,10 @@ static void ctl2_update_var_size(const ICreateTypeInfo2Impl *This, MSFT_VarRecor
     This->typedata->next->u.val += size - old;
 }
 
-/* NOTE: entry always assumed to be a function */
-static inline INVOKEKIND ctl2_get_invokekind(const CyclicList *func)
+static inline INVOKEKIND ctl2_get_invokekind(const MSFT_FuncRecord *func)
 {
     /* INVOKEKIND uses bit flags up to 8 */
-    return (func->u.data[4] >> 3) & 0xF;
+    return (func->FKCCIC >> 3) & 0xF;
 }
 
 static inline SYSKIND ctl2_get_syskind(const ICreateTypeLib2Impl *This)
@@ -1523,69 +1550,6 @@ static HRESULT ctl2_find_typeinfo_from_offset(
     return TYPE_E_ELEMENTNOTFOUND;
 }
 
-/****************************************************************************
- *      funcrecord_reallochdr
- *
- *  Ensure FuncRecord data block contains header of required size
- *
- *  PARAMS
- *
- *   typedata [IO] - reference to pointer to data block
- *   need     [I]  - required size of block in bytes
- *
- * RETURNS
- *
- *  Number of additionally allocated bytes
- */
-static INT funcrecord_reallochdr(INT **typedata, int need)
-{
-    int tail = (*typedata)[5]*((*typedata)[4]&0x1000?16:12);
-    int hdr = (*typedata)[0] - tail;
-    int i;
-
-    if (hdr >= need)
-        return 0;
-
-    *typedata = heap_realloc(*typedata, need + tail);
-    if (!*typedata)
-        return -1;
-
-    if (tail)
-        memmove((char*)*typedata + need, (const char*)*typedata + hdr, tail);
-    (*typedata)[0] = need + tail;
-
-    /* fill in default values */
-    for(i = (hdr+3)/4; (i+1)*4 <= need; i++)
-    {
-        switch(i)
-        {
-            case 2:
-                (*typedata)[i] = 0;
-                break;
-            case 7:
-                (*typedata)[i] = -1;
-                break;
-            case 8:
-                (*typedata)[i] = -1;
-                break;
-            case 9:
-                (*typedata)[i] = -1;
-                break;
-            case 10:
-                (*typedata)[i] = -1;
-                break;
-            case 11:
-                (*typedata)[i] = 0;
-                break;
-            case 12:
-                (*typedata)[i] = -1;
-                break;
-        }
-    }
-
-    return need - hdr;
-}
-
 /*================== ICreateTypeInfo2 Implementation ===================================*/
 
 /******************************************************************************
@@ -1946,7 +1910,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
     ICreateTypeInfo2Impl *This = impl_from_ICreateTypeInfo2(iface);
 
     CyclicList *iter, *insert;
-    int *typedata;
+    MSFT_FuncRecord *typedata;
     int i, num_defaults = 0, num_retval = 0;
     int decoded_size;
     HRESULT hres;
@@ -2009,44 +1973,49 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
     insert = alloc_cyclic_list_item(CyclicListFunc);
     if(!insert)
         return E_OUTOFMEMORY;
-    insert->u.data = heap_alloc(FIELD_OFFSET(MSFT_FuncRecord, HelpContext) +
-                            sizeof(int)*(num_defaults?4:3)*pFuncDesc->cParams);
-    if(!insert->u.data) {
+    insert->u.func = heap_alloc(sizeof(MSFT_FuncRecord) + sizeof(int)*(num_defaults?4:3)*pFuncDesc->cParams);
+    if(!insert->u.func) {
         heap_free(insert);
         return E_OUTOFMEMORY;
     }
 
     /* fill out the basic type information */
-    typedata = insert->u.data;
-    typedata[0] = FIELD_OFFSET(MSFT_FuncRecord, HelpContext) + pFuncDesc->cParams*(num_defaults?16:12);
-    ctl2_encode_typedesc(This->typelib, &pFuncDesc->elemdescFunc.tdesc, &typedata[1], NULL, NULL, &decoded_size);
-    typedata[2] = pFuncDesc->wFuncFlags;
-    typedata[3] = ((sizeof(FUNCDESC) + decoded_size) << 16) | (unsigned short)(pFuncDesc->oVft?pFuncDesc->oVft+1:0);
-    typedata[4] = (pFuncDesc->callconv << 8) | (pFuncDesc->invkind << 3) | pFuncDesc->funckind;
-    if(num_defaults) typedata[4] |= 0x1000;
-    if (num_retval) typedata[4] |= 0x4000;
-    typedata[5] = pFuncDesc->cParams;
+    typedata = insert->u.func;
+    memset(typedata, 0xff, sizeof(MSFT_FuncRecord));
+    typedata->HelpContext = 0;
+    typedata->HelpStringContext = 0;
 
-    /* NOTE: High word of typedata[3] is total size of FUNCDESC + size of all ELEMDESCs for params + TYPEDESCs for pointer params and return types. */
+    typedata->Info = FIELD_OFFSET(MSFT_FuncRecord, HelpContext) + pFuncDesc->cParams*(num_defaults?16:12);
+    ctl2_encode_typedesc(This->typelib, &pFuncDesc->elemdescFunc.tdesc, &typedata->DataType, NULL, NULL, &decoded_size);
+    typedata->Flags = pFuncDesc->wFuncFlags;
+    typedata->VtableOffset = pFuncDesc->oVft ? pFuncDesc->oVft+1 : 0;
+    typedata->funcdescsize = sizeof(FUNCDESC) + decoded_size;
+    typedata->FKCCIC = (pFuncDesc->callconv << 8) | (pFuncDesc->invkind << 3) | pFuncDesc->funckind;
+    if(num_defaults) typedata->FKCCIC |= 0x1000;
+    if (num_retval) typedata->FKCCIC |= 0x4000;
+    typedata->nrargs = pFuncDesc->cParams;
+    typedata->nroargs = 0;
+
+    /* NOTE: typedata->funcdescsize is total size of FUNCDESC + size of all ELEMDESCs for params + TYPEDESCs for pointer params and return types. */
     /* That is, total memory allocation required to reconstitute the FUNCDESC in its entirety. */
-    typedata[3] += (sizeof(ELEMDESC) * pFuncDesc->cParams) << 16;
-    typedata[3] += (sizeof(PARAMDESCEX) * num_defaults) << 16;
+    typedata->funcdescsize += sizeof(ELEMDESC) * pFuncDesc->cParams;
+    typedata->funcdescsize += sizeof(PARAMDESCEX) * num_defaults;
 
     /* add default values */
     if(num_defaults) {
         for (i = 0; i < pFuncDesc->cParams; i++)
             if(pFuncDesc->lprgelemdescParam[i].u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT) {
-                hres = ctl2_encode_variant(This->typelib, typedata+6+i,
+                hres = ctl2_encode_variant(This->typelib, &typedata->oArgCustData[i],
                         &pFuncDesc->lprgelemdescParam[i].u.paramdesc.pparamdescex->varDefaultValue,
                         pFuncDesc->lprgelemdescParam[i].tdesc.vt);
 
                 if(FAILED(hres)) {
-                    heap_free(insert->u.data);
+                    heap_free(insert->u.func);
                     heap_free(insert);
                     return hres;
                 }
             } else
-                typedata[6+i] = 0xffffffff;
+                typedata->oArgCustData[i] = -1;
 
         num_defaults = pFuncDesc->cParams;
     }
@@ -2054,10 +2023,10 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
     /* add arguments */
     for (i = 0; i < pFuncDesc->cParams; i++) {
 	ctl2_encode_typedesc(This->typelib, &pFuncDesc->lprgelemdescParam[i].tdesc,
-                &typedata[6+num_defaults+(i*3)], NULL, NULL, &decoded_size);
-	typedata[7+num_defaults+(i*3)] = -1;
-	typedata[8+num_defaults+(i*3)] = pFuncDesc->lprgelemdescParam[i].u.paramdesc.wParamFlags;
-	typedata[3] += decoded_size << 16;
+                &typedata->oArgCustData[num_defaults+(i*3)], NULL, NULL, &decoded_size);
+	typedata->oArgCustData[num_defaults+(i*3)+1] = -1;
+	typedata->oArgCustData[num_defaults+(i*3)+2] = pFuncDesc->lprgelemdescParam[i].u.paramdesc.wParamFlags;
+        typedata->funcdescsize += decoded_size;
     }
 
     /* update the index data */
@@ -2084,7 +2053,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
     }
 
     /* update type data size */
-    This->typedata->next->u.val += FIELD_OFFSET(MSFT_FuncRecord, HelpContext) + pFuncDesc->cParams*(num_defaults?16:12);
+    This->typedata->next->u.val += typedata->Info;
 
     /* Increment the number of function elements */
     This->typeinfo->cElement += 1;
@@ -2394,7 +2363,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncAndParamNames(
                 break;
 
     /* cNames == cParams for put or putref accessor, cParams+1 otherwise */
-    if(cNames != iter->u.data[5] + (ctl2_get_invokekind(iter) & (INVOKE_PROPERTYPUT|INVOKE_PROPERTYPUTREF) ? 0 : 1))
+    if(cNames != iter->u.func->nrargs + (ctl2_get_invokekind(iter->u.func) & (INVOKE_PROPERTYPUT|INVOKE_PROPERTYPUTREF) ? 0 : 1))
         return TYPE_E_ELEMENTNOTFOUND;
 
     TRACE("function name %s\n", debugstr_w(names[0]));
@@ -2404,8 +2373,8 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncAndParamNames(
         int cmp = memcmp(namedata, This->typelib->typelib_segment_data[MSFT_SEG_NAME]+iter2->name+8, len);
         if (iter2->name != -1 && cmp == 0) {
             if (iter2->type == CyclicListFunc) {
-                INVOKEKIND inv1 = ctl2_get_invokekind(iter);
-                INVOKEKIND inv2 = ctl2_get_invokekind(iter2);
+                INVOKEKIND inv1 = ctl2_get_invokekind(iter->u.func);
+                INVOKEKIND inv2 = ctl2_get_invokekind(iter2->u.func);
 
                 /* it's allowed to have PUT, PUTREF and GET methods with the same name */
                 if ((inv1 != inv2) &&
@@ -2428,11 +2397,14 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncAndParamNames(
     if (*((INT*)namedata) == -1)
 	    *((INT *)namedata) = This->typelib->typelib_typeinfo_offsets[This->typeinfo->typekind >> 16];
 
-    len = ctl2_get_record_size(iter)/4 - iter->u.data[5]*3;
+    if(iter->u.func->FKCCIC & 0x1000)
+        len = iter->u.func->nrargs;
+    else
+        len = 0;
 
     for (i = 1; i < cNames; i++) {
 	offset = ctl2_alloc_name(This->typelib, names[i]);
-	iter->u.data[len + ((i-1)*3) + 1] = offset;
+	iter->u.func->oArgCustData[len+(i-1)*3+1] = offset;
     }
 
     return S_OK;
@@ -2589,11 +2561,8 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncHelpContext(
                 if(index-- == 0)
                     break;
 
-    This->typedata->next->u.val += funcrecord_reallochdr(&func->u.data, 7*sizeof(int));
-    if(!func->u.data)
-        return E_OUTOFMEMORY;
-
-    func->u.data[6] = dwHelpContext;
+    func->u.func->HelpContext = dwHelpContext;
+    ctl2_update_func_size(This, func->u.func);
     return S_OK;
 }
 
@@ -2775,8 +2744,8 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(
         if (iter->type == CyclicListFunc)
             last = iter;
 
-    if(last && last->u.data[3]&1)
-        user_vft = last->u.data[3]&0xffff;
+    if(last && last->u.func->VtableOffset & 1)
+        user_vft = last->u.func->VtableOffset;
 
     i = 0;
     for(iter=This->typedata->next->next; iter!=This->typedata->next; iter=iter->next) {
@@ -2807,37 +2776,37 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(
 
         typedata[i] = iter;
 
-        iter->u.data[0] = ctl2_get_record_size(iter) | (i<<16);
+        iter->u.func->Info = (iter->u.func->Info&0xffff) | (i<<16);
 
-        if((iter->u.data[3]&1) != (user_vft&1)) {
+        if((iter->u.func->VtableOffset&1) != (user_vft&1)) {
             heap_free(typedata);
             return TYPE_E_INVALIDID;
         }
 
         if(user_vft&1) {
-            if(user_vft < (iter->u.data[3]&0xffff))
-                user_vft = (iter->u.data[3]&0xffff);
+            if(user_vft < iter->u.func->VtableOffset)
+                user_vft = iter->u.func->VtableOffset;
 
-            if((iter->u.data[3]&0xffff) < This->typeinfo->cbSizeVft) {
+            if((unsigned short)iter->u.func->VtableOffset < This->typeinfo->cbSizeVft) {
                 heap_free(typedata);
                 return TYPE_E_INVALIDID;
             }
         } else if(This->typekind != TKIND_MODULE) {
-            iter->u.data[3] = (iter->u.data[3]&0xffff0000) | This->typeinfo->cbSizeVft;
+            iter->u.func->VtableOffset = This->typeinfo->cbSizeVft;
             This->typeinfo->cbSizeVft += 4;
         }
 
         /* Construct a list of elements with the same memberid */
-        iter->u.data[4] = (iter->u.data[4]&0xffff) | (i<<16);
+        iter->u.func->FKCCIC = (iter->u.func->FKCCIC&0xffff) | (i<<16);
         for(iter2=This->typedata->next->next; iter2!=iter; iter2=iter2->next) {
             if(iter->indice == iter2->indice) {
                 int v1, v2;
 
-                v1 = iter->u.data[4] >> 16;
-                v2 = iter2->u.data[4] >> 16;
+                v1 = iter->u.func->FKCCIC >> 16;
+                v2 = iter2->u.func->FKCCIC >> 16;
 
-                iter->u.data[4] = (iter->u.data[4]&0xffff) | (v2<<16);
-                iter2->u.data[4] = (iter2->u.data[4]&0xffff) | (v1<<16);
+                iter->u.func->FKCCIC = (iter->u.func->FKCCIC&0xffff) | (v2<<16);
+                iter2->u.func->FKCCIC = (iter2->u.func->FKCCIC&0xffff) | (v1<<16);
                 break;
             }
         }
@@ -2849,20 +2818,20 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(
         This->typeinfo->cbSizeVft = user_vft+3;
 
     for(i=0; i< cti2_get_func_count(This->typeinfo); i++) {
-        if(typedata[i]->u.data[4]>>16 > i) {
-            INVOKEKIND inv = ctl2_get_invokekind(typedata[i]);
+        if(typedata[i]->u.func->FKCCIC>>16 > i) {
+            INVOKEKIND inv = ctl2_get_invokekind(typedata[i]->u.func);
 
-            i = typedata[i]->u.data[4] >> 16;
+            i = typedata[i]->u.func->FKCCIC >> 16;
 
-            while(i > typedata[i]->u.data[4]>>16) {
-                INVOKEKIND invkind = ctl2_get_invokekind(typedata[i]);
+            while(i > typedata[i]->u.func->FKCCIC >>16) {
+                INVOKEKIND invkind = ctl2_get_invokekind(typedata[i]->u.func);
 
                 if(inv & invkind) {
                     heap_free(typedata);
                     return TYPE_E_DUPLICATEID;
                 }
 
-                i = typedata[i]->u.data[4] >> 16;
+                i = typedata[i]->u.func->FKCCIC >> 16;
                 inv |= invkind;
             }
 
@@ -3013,6 +2982,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncCustData(
 {
     ICreateTypeInfo2Impl *This = impl_from_ICreateTypeInfo2(iface);
     CyclicList *iter;
+    HRESULT hres;
 
     TRACE("(%p,%d,%s,%p)\n", iface, index, debugstr_guid(guid), pVarVal);
 
@@ -3024,12 +2994,13 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncCustData(
             if (index-- == 0)
                 break;
 
-    This->typedata->next->u.val += funcrecord_reallochdr(&iter->u.data, 13*sizeof(int));
-    if(!iter->u.data)
-        return E_OUTOFMEMORY;
+    hres = ctl2_set_custdata(This->typelib, guid, pVarVal, &iter->u.func->oCustData);
+    if(FAILED(hres))
+        return hres;
 
-    iter->u.data[4] |= 0x80;
-    return ctl2_set_custdata(This->typelib, guid, pVarVal, &iter->u.data[12]);
+    ctl2_update_func_size(This, iter->u.func);
+    iter->u.func->FKCCIC |= 0x80;
+    return S_OK;
 }
 
 /******************************************************************************
@@ -3286,7 +3257,8 @@ static HRESULT WINAPI ITypeInfo2_fnGetFuncDesc(
         FUNCDESC** ppFuncDesc)
 {
     ICreateTypeInfo2Impl *This = impl_from_ITypeInfo2(iface);
-    int i, *typedata, num_defaults = 0, hdr_len, tail, has_defaults;
+    MSFT_FuncRecord *typedata;
+    int i, num_defaults = 0, has_defaults;
     CyclicList *desc;
     HRESULT hres;
 
@@ -3309,7 +3281,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetFuncDesc(
             --i;
     }
 
-    typedata = desc->u.data;
+    typedata = desc->u.func;
 
     *ppFuncDesc = heap_alloc_zero(sizeof(FUNCDESC));
     if (!*ppFuncDesc)
@@ -3317,24 +3289,22 @@ static HRESULT WINAPI ITypeInfo2_fnGetFuncDesc(
 
     (*ppFuncDesc)->memid = desc->indice;
     (*ppFuncDesc)->lprgscode = NULL; /* FIXME: Unimplemented */
-    (*ppFuncDesc)->funckind = typedata[4] & 0x7;
-    (*ppFuncDesc)->invkind = (typedata[4] >> 3) & 0xF;
-    (*ppFuncDesc)->callconv = (typedata[4] >> 8) & 0xF;
-    (*ppFuncDesc)->cParams = typedata[5];
-    (*ppFuncDesc)->cParamsOpt = 0; /* FIXME: Unimplemented*/
-    (*ppFuncDesc)->oVft = typedata[3] & 0xFFFC;
+    (*ppFuncDesc)->funckind = typedata->FKCCIC & 0x7;
+    (*ppFuncDesc)->invkind = (typedata->FKCCIC >> 3) & 0xF;
+    (*ppFuncDesc)->callconv = (typedata->FKCCIC >> 8) & 0xF;
+    (*ppFuncDesc)->cParams = typedata->nrargs;
+    (*ppFuncDesc)->cParamsOpt = typedata->nroargs;
+    (*ppFuncDesc)->oVft = typedata->VtableOffset & 0xFFFC;
     (*ppFuncDesc)->cScodes = 0; /* FIXME: Unimplemented*/
-    hres = ctl2_decode_typedesc(This->typelib, typedata[1],
+    hres = ctl2_decode_typedesc(This->typelib, typedata->DataType,
             &(*ppFuncDesc)->elemdescFunc.tdesc);
     if (FAILED(hres)) {
         heap_free(*ppFuncDesc);
         return hres;
     }
-    (*ppFuncDesc)->wFuncFlags = typedata[2];
+    (*ppFuncDesc)->wFuncFlags = typedata->Flags;
 
-    has_defaults = typedata[4] & 0x1000;
-    tail = typedata[5] * (has_defaults ? 16 : 12);
-    hdr_len = (ctl2_get_record_size(desc) - tail) / sizeof(int);
+    has_defaults = typedata->FKCCIC & 0x1000;
 
     if ((*ppFuncDesc)->cParams > 0) {
         (*ppFuncDesc)->lprgelemdescParam = heap_alloc_zero((*ppFuncDesc)->cParams * sizeof(ELEMDESC));
@@ -3346,7 +3316,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetFuncDesc(
             num_defaults = (*ppFuncDesc)->cParams;
 
             for (i = 0; i < num_defaults; ++i) {
-                if (typedata[hdr_len + i] != 0xFFFFFFFF) {
+                if (typedata->oArgCustData[i] != 0xFFFFFFFF) {
                     (*ppFuncDesc)->lprgelemdescParam[i].u.paramdesc.wParamFlags |= PARAMFLAG_FHASDEFAULT;
 
                     (*ppFuncDesc)->lprgelemdescParam[i].u.paramdesc.pparamdescex = heap_alloc(sizeof(PARAMDESCEX));
@@ -3357,7 +3327,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetFuncDesc(
 
                     (*ppFuncDesc)->lprgelemdescParam[i].u.paramdesc.pparamdescex->cBytes = sizeof(PARAMDESCEX);
                     VariantInit(&(*ppFuncDesc)->lprgelemdescParam[i].u.paramdesc.pparamdescex->varDefaultValue);
-                    hres = ctl2_decode_variant(This->typelib, typedata[hdr_len + i],
+                    hres = ctl2_decode_variant(This->typelib, typedata->oArgCustData[i],
                             &(*ppFuncDesc)->lprgelemdescParam[i].u.paramdesc.pparamdescex->varDefaultValue);
                     if (FAILED(hres)) {
                         ITypeInfo2_ReleaseFuncDesc(iface, *ppFuncDesc);
@@ -3368,13 +3338,13 @@ static HRESULT WINAPI ITypeInfo2_fnGetFuncDesc(
         }
 
         for (i = 0; i < (*ppFuncDesc)->cParams; ++i) {
-            hres = ctl2_decode_typedesc(This->typelib, typedata[hdr_len + num_defaults + (i * 3)],
+            hres = ctl2_decode_typedesc(This->typelib, typedata->oArgCustData[num_defaults+i*3],
                     &((*ppFuncDesc)->lprgelemdescParam + i)->tdesc);
             if (FAILED(hres)) {
                 ITypeInfo2_ReleaseFuncDesc(iface, *ppFuncDesc);
                 return hres;
             }
-            (*ppFuncDesc)->lprgelemdescParam[i].u.paramdesc.wParamFlags = typedata[hdr_len + num_defaults + (i * 3) + 2];
+            (*ppFuncDesc)->lprgelemdescParam[i].u.paramdesc.wParamFlags = typedata->oArgCustData[num_defaults+i*3+2];
         }
     }
 
@@ -3545,13 +3515,10 @@ static HRESULT WINAPI ITypeInfo2_fnGetDocumentation(
             for(iter=This->typedata->next->next; iter!=This->typedata->next; iter=iter->next) {
                 if (iter->indice == memid) {
                     if (iter->type == CyclicListFunc) {
-                        const int *typedata = iter->u.data;
-                        int size = ctl2_get_record_size(iter) - typedata[5]*(typedata[4]&0x1000?16:12);
-
                         nameoffset = iter->name;
                         /* FIXME implement this once SetFuncDocString is implemented */
                         docstringoffset = -1;
-                        helpcontext = (size < 7*sizeof(int)) ? 0 : typedata[6];
+                        helpcontext = iter->u.func->HelpContext;
 
                         status = S_OK;
                     } else {
@@ -4623,9 +4590,17 @@ static int ctl2_write_typeinfos(ICreateTypeLib2Impl *This, HANDLE hFile)
         iter = typeinfo->typedata->next;
         if (!ctl2_write_chunk(hFile, &iter->u.val, sizeof(int)))
             return 0;
-        for(iter=iter->next; iter!=typeinfo->typedata->next; iter=iter->next)
-            if (!ctl2_write_chunk(hFile, iter->u.data, ctl2_get_record_size(iter)))
+        for(iter=iter->next; iter!=typeinfo->typedata->next; iter=iter->next) {
+            if(iter->type == CyclicListFunc) {
+                DWORD cust_size = iter->u.func->nrargs * (iter->u.func->FKCCIC&0x1000 ? 16 : 12);
+                if(!ctl2_write_chunk(hFile, iter->u.func, (iter->u.func->Info&0xffff)-cust_size))
+                    return 0;
+                if(!ctl2_write_chunk(hFile, iter->u.func->oArgCustData, cust_size))
+                    return 0;
+            }else if (!ctl2_write_chunk(hFile, iter->u.data, ctl2_get_record_size(iter))) {
                 return 0;
+            }
+        }
 
         for(iter=typeinfo->typedata->next->next; iter!=typeinfo->typedata->next; iter=iter->next)
             if (!ctl2_write_chunk(hFile, &iter->indice, sizeof(int)))
