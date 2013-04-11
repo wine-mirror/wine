@@ -1688,6 +1688,12 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetTypeFlags(ICreateTypeInfo2 *iface, U
     TRACE("(%p,0x%x)\n", iface, uTypeFlags);
 
     if(uTypeFlags & TYPEFLAG_FDUAL) {
+        static const WCHAR stdole2tlb[] = { 's','t','d','o','l','e','2','.','t','l','b',0 };
+        ITypeLib *stdole;
+        ITypeInfo *dispatch;
+        HREFTYPE hreftype;
+        HRESULT hres;
+
         This->typeinfo->typekind |= 0x10;
         This->typeinfo->typekind &= ~0x0f;
         This->typeinfo->typekind |= TKIND_DISPATCH;
@@ -1719,14 +1725,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetTypeFlags(ICreateTypeInfo2 *iface, U
             }
         } else
             iface = &This->dual->ICreateTypeInfo2_iface;
-    }
-
-    if (uTypeFlags & (TYPEFLAG_FDISPATCHABLE|TYPEFLAG_FDUAL)) {
-        static const WCHAR stdole2tlb[] = { 's','t','d','o','l','e','2','.','t','l','b',0 };
-        ITypeLib *stdole;
-        ITypeInfo *dispatch;
-        HREFTYPE hreftype;
-        HRESULT hres;
 
         hres = LoadTypeLib(stdole2tlb, &stdole);
         if(FAILED(hres))
