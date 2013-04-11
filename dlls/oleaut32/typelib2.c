@@ -178,7 +178,8 @@ typedef struct tagICreateTypeLib2Impl
     int typelib_guids; /* Number of defined typelib guids */
     int typeinfo_guids; /* Number of defined typeinfo guids */
 
-    INT typelib_typeinfo_offsets[0x200]; /* Hope that's enough. */
+    INT *typelib_typeinfo_offsets;
+    int typeinfo_offsets_size;
 
     INT *typelib_namehash_segment;
     INT *typelib_guidhash_segment;
@@ -620,6 +621,21 @@ static int ctl2_alloc_typeinfo(
 {
     int offset;
     MSFT_TypeInfoBase *typeinfo;
+
+    if (!This->typeinfo_offsets_size) {
+        This->typelib_typeinfo_offsets = heap_alloc(8*sizeof(INT));
+        if(!This->typelib_typeinfo_offsets)
+            return -1;
+        This->typeinfo_offsets_size = 8;
+    }else if (This->typelib_header.nrtypeinfos == This->typeinfo_offsets_size) {
+        INT *new_offsets = heap_realloc(This->typelib_typeinfo_offsets,
+                2*This->typeinfo_offsets_size*sizeof(INT));
+        if(!new_offsets)
+            return -1;
+
+        This->typelib_typeinfo_offsets = new_offsets;
+        This->typeinfo_offsets_size *= 2;
+    }
 
     offset = ctl2_alloc_segment(This, MSFT_SEG_TYPEINFO, sizeof(MSFT_TypeInfoBase), 0);
     if (offset == -1) return -1;
@@ -4338,6 +4354,7 @@ static ULONG WINAPI ICreateTypeLib2_fnRelease(ICreateTypeLib2 *iface)
             heap_free(This->typelib_segment_data[i]);
             This->typelib_segment_data[i] = NULL;
 	}
+        heap_free(This->typelib_typeinfo_offsets);
 
         SysFreeString(This->filename);
         This->filename = NULL;
