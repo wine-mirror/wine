@@ -62,10 +62,15 @@ static inline const ACE_HEADER *ace_next( const ACE_HEADER *ace )
     return (const ACE_HEADER *)((const char *)ace + ace->AceSize);
 }
 
+static inline size_t security_sid_len( const SID *sid )
+{
+    return offsetof( SID, SubAuthority[sid->SubAuthorityCount] );
+}
+
 static inline int security_equal_sid( const SID *sid1, const SID *sid2 )
 {
     return ((sid1->SubAuthorityCount == sid2->SubAuthorityCount) &&
-            !memcmp( sid1, sid2, FIELD_OFFSET(SID, SubAuthority[sid1->SubAuthorityCount]) ));
+            !memcmp( sid1, sid2, security_sid_len( sid1 )));
 }
 
 extern void security_set_thread_token( struct thread *thread, obj_handle_t handle );

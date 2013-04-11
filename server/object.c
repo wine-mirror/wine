@@ -443,7 +443,7 @@ int default_set_sd( struct object *obj, const struct security_descriptor *sd,
     else
     {
         owner = token_get_user( current->process->token );
-        new_sd.owner_len = FIELD_OFFSET(SID, SubAuthority[owner->SubAuthorityCount]);
+        new_sd.owner_len = security_sid_len( owner );
         new_sd.control |= SE_OWNER_DEFAULTED;
     }
 
@@ -453,7 +453,7 @@ int default_set_sd( struct object *obj, const struct security_descriptor *sd,
     else
     {
         group = token_get_primary_group( current->process->token );
-        new_sd.group_len = FIELD_OFFSET(SID, SubAuthority[group->SubAuthorityCount]);
+        new_sd.group_len = security_sid_len( group );
         new_sd.control |= SE_GROUP_DEFAULTED;
     }
 

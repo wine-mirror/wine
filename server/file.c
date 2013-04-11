@@ -319,28 +319,24 @@ struct security_descriptor *mode_to_sd( mode_t mode, const SID *user, const SID 
     const SID *local_system_sid = security_local_system_sid;
 
     dacl_size = sizeof(ACL) + FIELD_OFFSET(ACCESS_ALLOWED_ACE, SidStart) +
-        FIELD_OFFSET(SID, SubAuthority[local_system_sid->SubAuthorityCount]);
+        security_sid_len( local_system_sid );
     if (mode & S_IRWXU)
-        dacl_size += FIELD_OFFSET(ACCESS_ALLOWED_ACE, SidStart) +
-            FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]);
+        dacl_size += FIELD_OFFSET(ACCESS_ALLOWED_ACE, SidStart) + security_sid_len( user );
     if ((!(mode & S_IRUSR) && (mode & (S_IRGRP|S_IROTH))) ||
         (!(mode & S_IWUSR) && (mode & (S_IWGRP|S_IWOTH))) ||
         (!(mode & S_IXUSR) && (mode & (S_IXGRP|S_IXOTH))))
-        dacl_size += FIELD_OFFSET(ACCESS_DENIED_ACE, SidStart) +
-            FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]);
+        dacl_size += FIELD_OFFSET(ACCESS_DENIED_ACE, SidStart) + security_sid_len( user );
     if (mode & S_IRWXO)
-        dacl_size += FIELD_OFFSET(ACCESS_ALLOWED_ACE, SidStart) +
-            FIELD_OFFSET(SID, SubAuthority[world_sid->SubAuthorityCount]);
+        dacl_size += FIELD_OFFSET(ACCESS_ALLOWED_ACE, SidStart) + security_sid_len( world_sid );
 
     sd = mem_alloc( sizeof(struct security_descriptor) +
-                    FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]) +
-                    FIELD_OFFSET(SID, SubAuthority[group->SubAuthorityCount]) +
+                    security_sid_len( user ) + security_sid_len( group ) +
                     dacl_size );
     if (!sd) return sd;
 
     sd->control = SE_DACL_PRESENT;
-    sd->owner_len = FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]);
-    sd->group_len = FIELD_OFFSET(SID, SubAuthority[group->SubAuthorityCount]);
+    sd->owner_len = security_sid_len( user );
+    sd->group_len = security_sid_len( group );
     sd->sacl_len = 0;
     sd->dacl_len = dacl_size;
 
@@ -366,11 +362,10 @@ struct security_descriptor *mode_to_sd( mode_t mode, const SID *user, const SID 
     current_ace = &aaa->Header;
     aaa->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
     aaa->Header.AceFlags = 0;
-    aaa->Header.AceSize = FIELD_OFFSET(ACCESS_ALLOWED_ACE, SidStart) +
-        FIELD_OFFSET(SID, SubAuthority[local_system_sid->SubAuthorityCount]);
+    aaa->Header.AceSize = FIELD_OFFSET(ACCESS_ALLOWED_ACE, SidStart) + security_sid_len( local_system_sid );
     aaa->Mask = FILE_ALL_ACCESS;
     sid = (SID *)&aaa->SidStart;
-    memcpy( sid, local_system_sid, FIELD_OFFSET(SID, SubAuthority[local_system_sid->SubAuthorityCount]) );
+    memcpy( sid, local_system_sid, security_sid_len( local_system_sid ));
 
     if (mode & S_IRWXU)
     {
@@ -379,15 +374,14 @@ struct security_descriptor *mode_to_sd( mode_t mode, const SID *user, const SID 
         current_ace = &aaa->Header;
         aaa->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
         aaa->Header.AceFlags = 0;
-        aaa->Header.AceSize = FIELD_OFFSET(ACCESS_ALLOWED_ACE, SidStart) +
-                              FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]);
+        aaa->Header.AceSize = FIELD_OFFSET(ACCESS_ALLOWED_ACE, SidStart) + security_sid_len( user );
         aaa->Mask = WRITE_DAC | WRITE_OWNER;
         if (mode & S_IRUSR)
             aaa->Mask |= FILE_GENERIC_READ | FILE_GENERIC_EXECUTE;
         if (mode & S_IWUSR)
             aaa->Mask |= FILE_GENERIC_WRITE | DELETE | FILE_DELETE_CHILD;
         sid = (SID *)&aaa->SidStart;
-        memcpy( sid, user, FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]) );
+        memcpy( sid, user, security_sid_len( user ));
     }
     if ((!(mode & S_IRUSR) && (mode & (S_IRGRP|S_IROTH))) ||
         (!(mode & S_IWUSR) && (mode & (S_IWGRP|S_IWOTH))) ||
@@ -398,8 +392,7 @@ struct security_descriptor *mode_to_sd( mode_t mode, const SID *user, const SID 
         current_ace = &ada->Header;
         ada->Header.AceType = ACCESS_DENIED_ACE_TYPE;
         ada->Header.AceFlags = 0;
-        ada->Header.AceSize = FIELD_OFFSET(ACCESS_DENIED_ACE, SidStart) +
-                              FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]);
+        ada->Header.AceSize = FIELD_OFFSET(ACCESS_DENIED_ACE, SidStart) + security_sid_len( user );
         ada->Mask = 0;
         if (!(mode & S_IRUSR) && (mode & (S_IRGRP|S_IROTH)))
             ada->Mask |= FILE_GENERIC_READ | FILE_GENERIC_EXECUTE;
@@ -407,7 +400,7 @@ struct security_descriptor *mode_to_sd( mode_t mode, const SID *user, const SID 
             ada->Mask |= FILE_GENERIC_WRITE | DELETE | FILE_DELETE_CHILD;
         ada->Mask &= ~STANDARD_RIGHTS_ALL; /* never deny standard rights */
         sid = (SID *)&ada->SidStart;
-        memcpy( sid, user, FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]) );
+        memcpy( sid, user, security_sid_len( user ));
     }
     if (mode & S_IRWXO)
     {
@@ -416,15 +409,14 @@ struct security_descriptor *mode_to_sd( mode_t mode, const SID *user, const SID 
         current_ace = &aaa->Header;
         aaa->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
         aaa->Header.AceFlags = 0;
-        aaa->Header.AceSize = FIELD_OFFSET(ACCESS_ALLOWED_ACE, SidStart) +
-                             FIELD_OFFSET(SID, SubAuthority[world_sid->SubAuthorityCount]);
+        aaa->Header.AceSize = FIELD_OFFSET(ACCESS_ALLOWED_ACE, SidStart) + security_sid_len( world_sid );
         aaa->Mask = 0;
         if (mode & S_IROTH)
             aaa->Mask |= FILE_GENERIC_READ | FILE_GENERIC_EXECUTE;
         if (mode & S_IWOTH)
             aaa->Mask |= FILE_GENERIC_WRITE | DELETE | FILE_DELETE_CHILD;
         sid = (SID *)&aaa->SidStart;
-        memcpy( sid, world_sid, FIELD_OFFSET(SID, SubAuthority[world_sid->SubAuthorityCount]) );
+        memcpy( sid, world_sid, security_sid_len( world_sid ));
     }
 
     return sd;

@@ -252,8 +252,7 @@ static int acl_is_valid( const ACL *acl, data_size_t size )
         default:
             return FALSE;
         }
-        if (sid_size < FIELD_OFFSET(SID, SubAuthority[0]) ||
-            sid_size < FIELD_OFFSET(SID, SubAuthority[sid->SubAuthorityCount]))
+        if (sid_size < FIELD_OFFSET(SID, SubAuthority[0]) || sid_size < security_sid_len( sid ))
             return FALSE;
         ace = ace_next( ace );
     }
@@ -280,7 +279,7 @@ int sd_is_valid( const struct security_descriptor *sd, data_size_t size )
     owner = sd_get_owner( sd );
     if (owner)
     {
-        size_t needed_size = FIELD_OFFSET(SID, SubAuthority[owner->SubAuthorityCount]);
+        size_t needed_size = security_sid_len( owner );
         if ((sd->owner_len < sizeof(SID)) || (needed_size > sd->owner_len))
             return FALSE;
     }
@@ -292,7 +291,7 @@ int sd_is_valid( const struct security_descriptor *sd, data_size_t size )
     group = sd_get_group( sd );
     if (group)
     {
-        size_t needed_size = FIELD_OFFSET(SID, SubAuthority[group->SubAuthorityCount]);
+        size_t needed_size = security_sid_len( group );
         if ((sd->group_len < sizeof(SID)) || (needed_size > sd->group_len))
             return FALSE;
     }
@@ -454,7 +453,7 @@ static struct token *create_token( unsigned primary, const SID *user,
         token->primary_group = NULL;
 
         /* copy user */
-        token->user = memdup( user, FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]) );
+        token->user = memdup( user, security_sid_len( user ));
         if (!token->user)
         {
             release_object( token );
@@ -472,7 +471,7 @@ static struct token *create_token( unsigned primary, const SID *user,
                 release_object( token );
                 return NULL;
             }
-            memcpy( &group->sid, groups[i].Sid, FIELD_OFFSET( SID, SubAuthority[((const SID *)groups[i].Sid)->SubAuthorityCount] ) );
+            memcpy( &group->sid, groups[i].Sid, security_sid_len( groups[i].Sid ));
             group->enabled = TRUE;
             group->def = TRUE;
             group->logon = (groups[i].Attributes & SE_GROUP_LOGON_ID) != 0;
@@ -574,7 +573,7 @@ static ACL *create_default_dacl( const SID *user )
     size_t default_dacl_size = sizeof(ACL) +
                                2*(sizeof(ACCESS_ALLOWED_ACE) - sizeof(DWORD)) +
                                sizeof(local_system_sid) +
-                               FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]);
+                               security_sid_len( user );
 
     default_dacl = mem_alloc( default_dacl_size );
     if (!default_dacl) return NULL;
@@ -599,11 +598,10 @@ static ACL *create_default_dacl( const SID *user )
     aaa = (ACCESS_ALLOWED_ACE *)((char *)aaa + aaa->Header.AceSize);
     aaa->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
     aaa->Header.AceFlags = 0;
-    aaa->Header.AceSize = (sizeof(ACCESS_ALLOWED_ACE) - sizeof(DWORD)) +
-                          FIELD_OFFSET( SID, SubAuthority[user->SubAuthorityCount] );
+    aaa->Header.AceSize = (sizeof(ACCESS_ALLOWED_ACE) - sizeof(DWORD)) + security_sid_len( user );
     aaa->Mask = GENERIC_ALL;
     sid = (SID *)&aaa->SidStart;
-    memcpy( sid, user, FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]) );
+    memcpy( sid, user, security_sid_len( user ));
 
     return default_dacl;
 }
@@ -1275,7 +1273,7 @@ DECL_HANDLER(get_token_sid)
 
         if (sid)
         {
-            reply->sid_len = FIELD_OFFSET(SID, SubAuthority[sid->SubAuthorityCount]);
+            reply->sid_len = security_sid_len( sid );
             if (reply->sid_len <= get_reply_max_size()) set_reply_data( sid, reply->sid_len );
             else set_error( STATUS_BUFFER_TOO_SMALL );
         }
@@ -1302,7 +1300,7 @@ DECL_HANDLER(get_token_groups)
         LIST_FOR_EACH_ENTRY( group, &token->groups, const struct group, entry )
         {
             group_count++;
-            sid_size += FIELD_OFFSET(SID, SubAuthority[group->sid.SubAuthorityCount]);
+            sid_size += security_sid_len( &group->sid );
         }
         size_needed += sid_size;
         /* attributes size */
@@ -1340,9 +1338,9 @@ DECL_HANDLER(get_token_groups)
                     if (group->resource) *attr_ptr |= SE_GROUP_RESOURCE;
                     if (group->logon) *attr_ptr |= SE_GROUP_LOGON_ID;
 
-                    memcpy(sid_ptr, &group->sid, FIELD_OFFSET(SID, SubAuthority[group->sid.SubAuthorityCount]));
+                    memcpy(sid_ptr, &group->sid, security_sid_len( &group->sid ));
 
-                    sid_ptr = (SID *)((char *)sid_ptr + FIELD_OFFSET(SID, SubAuthority[group->sid.SubAuthorityCount]));
+                    sid_ptr = (SID *)((char *)sid_ptr + security_sid_len( &group->sid ));
                     attr_ptr++;
                 }
             }
