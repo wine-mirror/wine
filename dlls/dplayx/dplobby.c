@@ -74,7 +74,6 @@ typedef struct DPLMSG* LPDPLMSG;
 
 typedef struct tagDirectPlayLobbyIUnknownData
 {
-  LONG              ulObjRef;
   CRITICAL_SECTION  DPL_lock;
 } DirectPlayLobbyIUnknownData;
 
@@ -87,7 +86,8 @@ typedef struct tagDirectPlayLobbyData
 
 typedef struct IDirectPlayLobbyImpl
 {
-    const void *lpVtbl;
+    IDirectPlayLobby3 IDirectPlayLobby3_iface;
+    IDirectPlayLobby3A IDirectPlayLobby3A_iface;
     LONG ulInterfaceRef;
     DirectPlayLobbyIUnknownData*  unk;
     DirectPlayLobbyData*          dpl;
@@ -95,12 +95,12 @@ typedef struct IDirectPlayLobbyImpl
 
 static inline IDirectPlayLobbyImpl *impl_from_IDirectPlayLobby3( IDirectPlayLobby3 *iface )
 {
-    return (IDirectPlayLobbyImpl*)iface;     /* What you gonna do? */
+    return CONTAINING_RECORD( iface, IDirectPlayLobbyImpl, IDirectPlayLobby3_iface );
 }
 
 static inline IDirectPlayLobbyImpl *impl_from_IDirectPlayLobby3A( IDirectPlayLobby3A *iface )
 {
-    return (IDirectPlayLobbyImpl*)iface;     /* What you gonna do? */
+    return CONTAINING_RECORD( iface, IDirectPlayLobbyImpl, IDirectPlayLobby3A_iface );
 }
 
 /* Forward declarations of virtual tables */
@@ -201,12 +201,15 @@ HRESULT DPL_CreateInterface
   if ( !This )
     return DPERR_OUTOFMEMORY;
 
+  This->IDirectPlayLobby3_iface.lpVtbl = &directPlayLobby3WVT;
+  This->IDirectPlayLobby3A_iface.lpVtbl = &directPlayLobby3AVT;
+
   if ( IsEqualGUID( &IID_IUnknown, riid ) || IsEqualGUID( &IID_IDirectPlayLobby, riid ) ||
       IsEqualGUID( &IID_IDirectPlayLobby2, riid ) || IsEqualGUID( &IID_IDirectPlayLobby3, riid ) )
-    This->lpVtbl = &directPlayLobby3WVT;
+    *ppvObj = &This->IDirectPlayLobby3_iface;
   else if ( IsEqualGUID( &IID_IDirectPlayLobbyA, riid ) ||
       IsEqualGUID( &IID_IDirectPlayLobby2A, riid ) || IsEqualGUID( &IID_IDirectPlayLobby3A, riid ) )
-    This->lpVtbl = &directPlayLobby3AVT;
+    *ppvObj = &This->IDirectPlayLobby3A_iface;
   else
   {
     /* Unsupported interface */
@@ -217,19 +220,16 @@ HRESULT DPL_CreateInterface
   }
 
   /* Initialize it */
-  *ppvObj = This;
-  if ( DPL_CreateIUnknown( *ppvObj ) &&
-       DPL_CreateLobby1( *ppvObj )
-     )
+  if ( DPL_CreateIUnknown( This ) && DPL_CreateLobby1( This ) )
   {
     IDirectPlayLobby_AddRef( (LPDIRECTPLAYLOBBY)*ppvObj );
     return S_OK;
   }
 
   /* Initialize failed, destroy it */
-  DPL_DestroyLobby1( *ppvObj );
-  DPL_DestroyIUnknown( *ppvObj );
-  HeapFree( GetProcessHeap(), 0, *ppvObj );
+  DPL_DestroyLobby1( This );
+  DPL_DestroyIUnknown( This );
+  HeapFree( GetProcessHeap(), 0, This );
 
   *ppvObj = NULL;
   return DPERR_NOMEMORY;
@@ -239,35 +239,16 @@ static HRESULT WINAPI DPL_QueryInterface( IDirectPlayLobbyImpl *This, REFIID rii
 {
   TRACE("(%p)->(%s,%p)\n", This, debugstr_guid( riid ), ppvObj );
 
-  *ppvObj = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                       sizeof( *This ) );
-
-  if( *ppvObj == NULL )
-  {
-    return DPERR_OUTOFMEMORY;
-  }
-
-  CopyMemory( *ppvObj, This, sizeof( *This )  );
-  (*(IDirectPlayLobbyAImpl**)ppvObj)->ulInterfaceRef = 0;
-
   if ( IsEqualGUID( &IID_IUnknown, riid ) || IsEqualGUID( &IID_IDirectPlayLobby, riid ) ||
       IsEqualGUID( &IID_IDirectPlayLobby2, riid ) || IsEqualGUID( &IID_IDirectPlayLobby3, riid ) )
-  {
-    IDirectPlayLobby3WImpl *This = *ppvObj;
-    This->lpVtbl = &directPlayLobby3WVT;
-  }
+    *ppvObj = &This->IDirectPlayLobby3_iface;
   else if ( IsEqualGUID( &IID_IDirectPlayLobbyA, riid ) ||
       IsEqualGUID( &IID_IDirectPlayLobby2A, riid ) || IsEqualGUID( &IID_IDirectPlayLobby3A, riid ) )
-  {
-    IDirectPlayLobby3AImpl *This = *ppvObj;
-    This->lpVtbl = &directPlayLobby3AVT;
-  }
+    *ppvObj = &This->IDirectPlayLobby3A_iface;
   else
   {
     /* Unsupported interface */
-    HeapFree( GetProcessHeap(), 0, *ppvObj );
     *ppvObj = NULL;
-
     return E_NOINTERFACE;
   }
 
@@ -282,15 +263,11 @@ static HRESULT WINAPI DPL_QueryInterface( IDirectPlayLobbyImpl *This, REFIID rii
  */
 static ULONG WINAPI DPL_AddRef( IDirectPlayLobbyImpl *This )
 {
-  ULONG ulInterfaceRefCount, ulObjRefCount;
+  ULONG ulInterfaceRefCount = InterlockedIncrement( &This->ulInterfaceRef );
 
-  ulObjRefCount       = InterlockedIncrement( &This->unk->ulObjRef );
-  ulInterfaceRefCount = InterlockedIncrement( &This->ulInterfaceRef );
+  TRACE( "ref count incremented to %u for %p\n", ulInterfaceRefCount, This );
 
-  TRACE( "ref count incremented to %u:%u for %p\n",
-         ulInterfaceRefCount, ulObjRefCount, This );
-
-  return ulObjRefCount;
+  return ulInterfaceRefCount;
 }
 
 /*
@@ -300,24 +277,16 @@ static ULONG WINAPI DPL_AddRef( IDirectPlayLobbyImpl *This )
  */
 static ULONG WINAPI DPL_Release( IDirectPlayLobbyImpl *This )
 {
-  ULONG ulInterfaceRefCount, ulObjRefCount;
+  ULONG ulInterfaceRefCount = InterlockedDecrement( &This->ulInterfaceRef );
 
-  ulObjRefCount       = InterlockedDecrement( &This->unk->ulObjRef );
-  ulInterfaceRefCount = InterlockedDecrement( &This->ulInterfaceRef );
-
-  TRACE( "ref count decremented to %u:%u for %p\n",
-         ulInterfaceRefCount, ulObjRefCount, This );
+  TRACE( "ref count decremented to %u for %p\n", ulInterfaceRefCount, This );
 
   /* Deallocate if this is the last reference to the object */
-  if( ulObjRefCount == 0 )
+  if( ulInterfaceRefCount == 0 )
   {
      DPL_DestroyLobby1( This );
      DPL_DestroyIUnknown( This );
-  }
-
-  if( ulInterfaceRefCount == 0 )
-  {
-    HeapFree( GetProcessHeap(), 0, This );
+     HeapFree( GetProcessHeap(), 0, This );
   }
 
   return ulInterfaceRefCount;
@@ -403,7 +372,7 @@ static HRESULT DPL_ConnectEx
   }
 
   /* FIXME: Is it safe/correct to use appID of 0? */
-  hr = IDirectPlayLobby_GetConnectionSettings( (LPDIRECTPLAYLOBBY)This,
+  hr = IDirectPlayLobby_GetConnectionSettings( &This->IDirectPlayLobby3_iface,
                                                0, NULL, &dwConnSize );
   if( hr != DPERR_BUFFERTOOSMALL )
   {
@@ -418,7 +387,7 @@ static HRESULT DPL_ConnectEx
   }
 
   /* FIXME: Is it safe/correct to use appID of 0? */
-  hr = IDirectPlayLobby_GetConnectionSettings( (LPDIRECTPLAYLOBBY)This,
+  hr = IDirectPlayLobby_GetConnectionSettings( &This->IDirectPlayLobby3_iface,
                                                0, lpConn, &dwConnSize );
   if( FAILED( hr ) )
   {

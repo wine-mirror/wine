@@ -6526,6 +6526,7 @@ static void test_COM_dplobby(void)
     IDirectPlayLobby_Release(dpl3A);
     IDirectPlayLobby_Release(dpl2);
     IDirectPlayLobby_Release(dpl2A);
+    IDirectPlayLobby_Release(dplA);
     IDirectPlayLobby_Release(dpl);
     refcount = IDirectPlayLobby_Release(dpl);
     ok(refcount == 0, "refcount == %u, expected 0\n", refcount);
