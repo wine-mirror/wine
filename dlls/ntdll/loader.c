@@ -2180,7 +2180,7 @@ IMAGE_BASE_RELOCATION * WINAPI LdrProcessRelocationBlock( void *page, UINT count
         {
             DWORD inst = *(INT_PTR *)((char *)page + offset);
             DWORD imm16 = ((inst << 1) & 0x0800) + ((inst << 12) & 0xf000) +
-                          ((inst >> 20) & 0x0700) + ((inst >> 16) & 0x000f);
+                          ((inst >> 20) & 0x0700) + ((inst >> 16) & 0x00ff);
 
             if ((inst & 0x8000fbf0) != 0x0000f240)
                 ERR("wrong Thumb2 instruction %08x, expected MOVW\n", inst);
@@ -2191,13 +2191,13 @@ IMAGE_BASE_RELOCATION * WINAPI LdrProcessRelocationBlock( void *page, UINT count
             *(INT_PTR *)((char *)page + offset) = (inst & 0x8f00fbf0) + ((imm16 >> 1) & 0x0400) +
                                                   ((imm16 >> 12) & 0x000f) +
                                                   ((imm16 << 20) & 0x70000000) +
-                                                  ((imm16 << 16) & 0x0f0000);
+                                                  ((imm16 << 16) & 0xff0000);
 
             if (delta > 0xffff)
             {
                 inst = *(INT_PTR *)((char *)page + offset + 4);
                 imm16 = ((inst << 1) & 0x0800) + ((inst << 12) & 0xf000) +
-                        ((inst >> 20) & 0x0700) + ((inst >> 16) & 0x000f);
+                        ((inst >> 20) & 0x0700) + ((inst >> 16) & 0x00ff);
 
                 if ((inst & 0x8000fbf0) != 0x0000f2c0)
                     ERR("wrong Thumb2 instruction %08x, expected MOVT\n", inst);
@@ -2209,7 +2209,7 @@ IMAGE_BASE_RELOCATION * WINAPI LdrProcessRelocationBlock( void *page, UINT count
                                                           ((imm16 >> 1) & 0x0400) +
                                                           ((imm16 >> 12) & 0x000f) +
                                                           ((imm16 << 20) & 0x70000000) +
-                                                          ((imm16 << 16) & 0x0f0000);
+                                                          ((imm16 << 16) & 0xff0000);
             }
         }
             break;
