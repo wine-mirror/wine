@@ -473,6 +473,17 @@ int CDECL _get_timezone(LONG *timezone)
     return 0;
 }
 
+/*********************************************************************
+ * _get_daylight (MSVCR100.@)
+ */
+int CDECL _get_daylight(int *hours)
+{
+    if(!CHECK_PMT(hours != NULL)) return EINVAL;
+
+    *hours = *(int*)GetProcAddress(GetModuleHandleA("msvcrt.dll"), "_daylight");
+    return 0;
+}
+
 /* copied from dlls/msvcrt/heap.c */
 #define SAVED_PTR(x) ((void *)((DWORD_PTR)((char *)x - sizeof(void *)) & \
                                ~(sizeof(void *) - 1)))

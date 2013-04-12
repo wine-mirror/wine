@@ -1218,7 +1218,7 @@
 @ cdecl _gcvt(double long str) msvcrt._gcvt
 @ cdecl _gcvt_s(ptr long  double long) msvcrt._gcvt_s
 @ cdecl _get_current_locale() msvcrt._get_current_locale
-@ stub _get_daylight
+@ cdecl _get_daylight(ptr) msvcr100._get_daylight
 @ cdecl _get_doserrno(ptr) msvcrt._get_doserrno
 @ stub _get_dstbias
 @ cdecl _get_errno(ptr) msvcrt._get_errno
