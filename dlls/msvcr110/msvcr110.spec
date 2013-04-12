@@ -997,7 +997,8 @@
 @ cdecl __p__wenviron() msvcrt.__p__wenviron
 @ cdecl __p__wpgmptr() msvcrt.__p__wpgmptr
 @ cdecl __pctype_func() msvcrt.__pctype_func
-### extern __pioinfo #don't forward to msvcrt.__pioinfo, it has different size
+#FIXME: add correct __pioinfo implementation
+@ extern __pioinfo msvcrt.__pioinfo
 @ stub __pwctype_func
 @ cdecl __pxcptinfoptrs() msvcrt.__pxcptinfoptrs
 @ stub __report_gsfailure
