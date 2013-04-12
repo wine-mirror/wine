@@ -2386,6 +2386,48 @@ static void test_mapping(void)
     DeleteFile(file_name);
 }
 
+static void test_shared_memory(int is_child)
+{
+    HANDLE mapping;
+    LONG *p;
+
+    SetLastError(0xdeadbef);
+    mapping = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 4096, "winetest_virtual.c");
+    ok(mapping != 0, "CreateFileMapping error %d\n", GetLastError());
+    if (is_child)
+        ok(GetLastError() == ERROR_ALREADY_EXISTS, "expected ERROR_ALREADY_EXISTS, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbef);
+    p = MapViewOfFile(mapping, FILE_MAP_READ|FILE_MAP_WRITE, 0, 0, 4096);
+    ok(p != NULL, "MapViewOfFile error %d\n", GetLastError());
+
+    if (is_child)
+    {
+        ok(*p == 0x1a2b3c4d, "expected 0x1a2b3c4d in child, got %#x\n", *p);
+    }
+    else
+    {
+        char **argv;
+        char cmdline[MAX_PATH];
+        PROCESS_INFORMATION pi;
+        STARTUPINFO si = { sizeof(si) };
+        DWORD ret;
+
+        *p = 0x1a2b3c4d;
+
+        winetest_get_mainargs(&argv);
+        sprintf(cmdline, "\"%s\" virtual sharedmem", argv[0]);
+        ret = CreateProcess(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+        ok(ret, "CreateProcess(%s) error %d\n", cmdline, GetLastError());
+        winetest_wait_child_process(pi.hProcess);
+        CloseHandle(pi.hThread);
+        CloseHandle(pi.hProcess);
+    }
+
+    UnmapViewOfFile(p);
+    CloseHandle(mapping);
+}
+
 START_TEST(virtual)
 {
     int argc;
@@ -2397,6 +2439,11 @@ START_TEST(virtual)
         if (!strcmp(argv[2], "sleep"))
         {
             Sleep(5000); /* spawned process runs for at most 5 seconds */
+            return;
+        }
+        if (!strcmp(argv[2], "sharedmem"))
+        {
+            test_shared_memory(1);
             return;
         }
         while (1)
@@ -2424,6 +2471,7 @@ START_TEST(virtual)
     pNtMapViewOfSection = (void *)GetProcAddress(GetModuleHandle("ntdll.dll"), "NtMapViewOfSection");
     pNtUnmapViewOfSection = (void *)GetProcAddress(GetModuleHandle("ntdll.dll"), "NtUnmapViewOfSection");
 
+    test_shared_memory(0);
     test_mapping();
     test_CreateFileMapping_protection();
     test_VirtualAlloc_protection();
