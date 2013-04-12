@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <stdio.h>
 #include <assert.h>
 
 #include "ntstatus.h"
@@ -30,8 +31,14 @@
 
 #define ALIGN_SIZE(size, alignment) (((size) + (alignment - 1)) & ~((alignment - 1)))
 
+static BOOL is_child;
+static LONG *child_failures;
+
 static NTSTATUS (WINAPI *pNtMapViewOfSection)(HANDLE, HANDLE, PVOID *, ULONG, SIZE_T, const LARGE_INTEGER *, SIZE_T *, ULONG, ULONG, ULONG);
 static NTSTATUS (WINAPI *pNtUnmapViewOfSection)(HANDLE, PVOID);
+static NTSTATUS (WINAPI *pNtTerminateProcess)(HANDLE, DWORD);
+static void (WINAPI *pLdrShutdownProcess)(void);
+static BOOLEAN (WINAPI *pRtlDllShutdownInProgress)(void);
 
 static PVOID RVAToAddr(DWORD_PTR rva, HMODULE module)
 {
@@ -265,7 +272,6 @@ static void test_Loader(void)
     BOOL ret;
 
     GetSystemInfo(&si);
-    trace("system page size 0x%04x\n", si.dwPageSize);
 
     /* prevent displaying of the "Unable to load this DLL" message box */
     SetErrorMode(SEM_FAILCRITICALERRORS);
@@ -736,7 +742,6 @@ static void test_VirtualProtect(void *base, void *section)
     SYSTEM_INFO si;
 
     GetSystemInfo(&si);
-    trace("system page size %#x\n", si.dwPageSize);
 
     SetLastError(0xdeadbeef);
     ret = VirtualProtect(section, si.dwPageSize, PAGE_NOACCESS, &old_prot);
@@ -874,7 +879,6 @@ static void test_section_access(void)
     DWORD ret;
 
     GetSystemInfo(&si);
-    trace("system page size %#x\n", si.dwPageSize);
 
     /* prevent displaying of the "Unable to load this DLL" message box */
     SetErrorMode(SEM_FAILCRITICALERRORS);
@@ -1037,12 +1041,461 @@ nt4_is_broken:
     }
 }
 
+#define MAX_COUNT 10
+static HANDLE attached_thread[MAX_COUNT], stop_event;
+static DWORD attached_thread_count;
+static int test_dll_phase;
+
+static DWORD WINAPI thread_proc(void *param)
+{
+    SetEvent(param);
+
+    while (1)
+    {
+        trace("%04u: thread_proc: still alive\n", GetCurrentThreadId());
+        if (WaitForSingleObject(stop_event, 50) != WAIT_TIMEOUT) break;
+    }
+
+    trace("%04u: thread_proc: exiting\n", GetCurrentThreadId());
+    return 196;
+}
+
+static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
+{
+    BOOL ret;
+
+    switch (reason)
+    {
+    case DLL_PROCESS_ATTACH:
+        trace("dll: %p, DLL_PROCESS_ATTACH, %p\n", hinst, param);
+
+        ret = pRtlDllShutdownInProgress();
+        ok(!ret, "RtlDllShutdownInProgress returned %d\n", ret);
+
+        break;
+    case DLL_PROCESS_DETACH:
+    {
+        DWORD code, expected_code, i;
+
+        trace("dll: %p, DLL_PROCESS_DETACH, %p\n", hinst, param);
+
+        if (test_dll_phase == 0) expected_code = 195;
+        else if (test_dll_phase == 3) expected_code = 196;
+        else expected_code = STILL_ACTIVE;
+
+        if (test_dll_phase == 3 || test_dll_phase == 4)
+        {
+            ret = pRtlDllShutdownInProgress();
+            ok(ret, "RtlDllShutdownInProgress returned %d\n", ret);
+        }
+        else
+        {
+            ret = pRtlDllShutdownInProgress();
+
+            /* FIXME: remove once Wine is fixed */
+            if (expected_code == STILL_ACTIVE || expected_code == 196)
+                ok(!ret || broken(ret) /* before Vista */, "RtlDllShutdownInProgress returned %d\n", ret);
+            else
+            todo_wine
+                ok(!ret || broken(ret) /* before Vista */, "RtlDllShutdownInProgress returned %d\n", ret);
+        }
+
+        ok(attached_thread_count != 0, "attached thread count should not be 0\n");
+
+        for (i = 0; i < attached_thread_count; i++)
+        {
+            ret = GetExitCodeThread(attached_thread[i], &code);
+            trace("dll: GetExitCodeThread(%u) => %d,%u\n", i, ret, code);
+            ok(ret == 1, "GetExitCodeThread returned %d, expected 1\n", ret);
+            /* FIXME: remove once Wine is fixed */
+            if (expected_code == STILL_ACTIVE || expected_code == 196)
+                ok(code == expected_code, "expected thread exit code %u, got %u\n", expected_code, code);
+            else
+            todo_wine
+                ok(code == expected_code, "expected thread exit code %u, got %u\n", expected_code, code);
+        }
+
+        if (test_dll_phase == 2)
+        {
+            trace("dll: call ExitProcess()\n");
+            *child_failures = winetest_get_failures();
+            ExitProcess(197);
+        }
+        break;
+    }
+    case DLL_THREAD_ATTACH:
+        trace("dll: %p, DLL_THREAD_ATTACH, %p\n", hinst, param);
+
+        ret = pRtlDllShutdownInProgress();
+        ok(!ret, "RtlDllShutdownInProgress returned %d\n", ret);
+
+        if (attached_thread_count < MAX_COUNT)
+        {
+            DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &attached_thread[attached_thread_count],
+                            0, TRUE, DUPLICATE_SAME_ACCESS);
+            attached_thread_count++;
+        }
+        break;
+    case DLL_THREAD_DETACH:
+        trace("dll: %p, DLL_THREAD_DETACH, %p\n", hinst, param);
+
+        ret = pRtlDllShutdownInProgress();
+        ok(!ret, "RtlDllShutdownInProgress returned %d\n", ret);
+
+        break;
+    default:
+        trace("dll: %p, %d, %p\n", hinst, reason, param);
+        break;
+    }
+
+    *child_failures = winetest_get_failures();
+
+    return TRUE;
+}
+
+static void child_process(const char *dll_name, DWORD target_offset)
+{
+    void *target;
+    DWORD ret, dummy, i, code, expected_code;
+    HANDLE file, thread, event;
+    HMODULE hmod;
+    NTSTATUS status;
+
+    trace("phase %d: writing %p at %#x\n", test_dll_phase, dll_entry_point, target_offset);
+
+    file = CreateFile(dll_name, GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
+    if (file == INVALID_HANDLE_VALUE)
+    {
+        ok(0, "could not open %s\n", dll_name);
+        return;
+    }
+    SetFilePointer(file, target_offset, NULL, FILE_BEGIN);
+    SetLastError(0xdeadbeef);
+    target = dll_entry_point;
+    ret = WriteFile(file, &target, sizeof(target), &dummy, NULL);
+    ok(ret, "WriteFile error %d\n", GetLastError());
+    CloseHandle(file);
+
+    SetLastError(0xdeadbeef);
+    hmod = LoadLibrary(dll_name);
+    ok(hmod != 0, "LoadLibrary error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    event = CreateEvent(NULL, 0, 0, NULL);
+    ok(event != 0, "CreateEvent error %d\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    stop_event = CreateEvent(NULL, 0, 0, NULL);
+    ok(stop_event != 0, "CreateEvent error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    thread = CreateThread(NULL, 0, thread_proc, event, 0, &dummy);
+    ok(thread != 0, "CreateThread error %d\n", GetLastError());
+    WaitForSingleObject(event, 3000);
+    CloseHandle(thread);
+
+    ResetEvent(event);
+
+    SetLastError(0xdeadbeef);
+    thread = CreateThread(NULL, 0, thread_proc, event, 0, &dummy);
+    ok(thread != 0, "CreateThread error %d\n", GetLastError());
+    WaitForSingleObject(event, 3000);
+    CloseHandle(thread);
+
+    CloseHandle(event);
+    Sleep(100);
+
+    ok(attached_thread_count != 0, "attached thread count should not be 0\n");
+    for (i = 0; i < attached_thread_count; i++)
+    {
+        ret = GetExitCodeThread(attached_thread[i], &code);
+        trace("child: GetExitCodeThread(%u) => %d,%u\n", i, ret, code);
+        ok(ret == 1, "GetExitCodeThread returned %d, expected 1\n", ret);
+        ok(code == STILL_ACTIVE, "expected thread exit code STILL_ACTIVE, got %u\n", code);
+    }
+
+    Sleep(100);
+
+    ret = pRtlDllShutdownInProgress();
+    ok(!ret, "RtlDllShutdownInProgress returned %d\n", ret);
+
+    SetLastError(0xdeadbeef);
+    ret = TerminateProcess(0, 195);
+    ok(!ret, "TerminateProcess(0) should fail\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+
+    Sleep(100);
+
+    switch (test_dll_phase)
+    {
+    case 0:
+        ret = pRtlDllShutdownInProgress();
+        ok(!ret, "RtlDllShutdownInProgress returned %d\n", ret);
+
+        status = pNtTerminateProcess(0, 195);
+    todo_wine
+        ok(!status, "NtTerminateProcess error %#x\n", status);
+
+        ret = pRtlDllShutdownInProgress();
+        ok(!ret, "RtlDllShutdownInProgress returned %d\n", ret);
+
+        break;
+
+    case 1:
+    case 2: /* ExitProcces will be called by PROCESS_DETACH handler */
+        ret = pRtlDllShutdownInProgress();
+        ok(!ret, "RtlDllShutdownInProgress returned %d\n", ret);
+
+        FreeLibrary(hmod);
+
+        ret = pRtlDllShutdownInProgress();
+        ok(!ret, "RtlDllShutdownInProgress returned %d\n", ret);
+
+        break;
+
+    case 3:
+        trace("signalling thread exit\n");
+        SetEvent(stop_event);
+        CloseHandle(stop_event);
+        break;
+
+    case 4:
+        ret = pRtlDllShutdownInProgress();
+        ok(!ret, "RtlDllShutdownInProgress returned %d\n", ret);
+
+        pLdrShutdownProcess();
+
+        ret = pRtlDllShutdownInProgress();
+        ok(ret, "RtlDllShutdownInProgress returned %d\n", ret);
+
+        break;
+
+    default:
+        assert(0);
+        break;
+    }
+
+    Sleep(100);
+
+    if (test_dll_phase == 0) expected_code = 195;
+    else if (test_dll_phase == 3) expected_code = 196;
+    else expected_code = STILL_ACTIVE;
+
+    for (i = 0; i < attached_thread_count; i++)
+    {
+        ret = GetExitCodeThread(attached_thread[i], &code);
+        trace("child: GetExitCodeThread(%u) => %d,%u\n", i, ret, code);
+        ok(ret == 1, "GetExitCodeThread returned %d, expected 1\n", ret);
+        /* FIXME: remove once Wine is fixed */
+        if (expected_code == STILL_ACTIVE || expected_code == 196)
+            ok(code == expected_code, "expected thread exit code %u, got %u\n", expected_code, code);
+        else
+        todo_wine
+            ok(code == expected_code, "expected thread exit code %u, got %u\n", expected_code, code);
+    }
+
+    *child_failures = winetest_get_failures();
+
+    trace("call ExitProcess()\n");
+    ExitProcess(195);
+}
+
+static void test_ExitProcess(void)
+{
+#include "pshpack1.h"
+#ifdef JMP_EAX
+    static struct section_data
+    {
+        BYTE mov_eax;
+        void *target;
+        BYTE jmp_eax[2];
+    } section_data = { 0xb8, dll_entry_point, { 0xff,0xe0 } };
+#else
+    static struct section_data
+    {
+        BYTE push;
+        void *target;
+        BYTE ret;
+    } section_data = { 0x68, dll_entry_point, 0xc3 };
+#endif
+#include "poppack.h"
+    static const char filler[0x1000];
+    DWORD dummy, file_align;
+    HANDLE file;
+    char temp_path[MAX_PATH], dll_name[MAX_PATH], cmdline[MAX_PATH * 2];
+    DWORD ret, target_offset;
+    char **argv;
+    PROCESS_INFORMATION pi;
+    STARTUPINFO si = { sizeof(si) };
+
+#ifndef __i386__
+    skip("x86 specific ExitProcess test\n");
+    return;
+#endif
+
+    if (!pRtlDllShutdownInProgress)
+    {
+        skip("RtlDllShutdownInProgress is not available on this platform (XP+)\n");
+        return;
+    }
+
+    /* prevent displaying of the "Unable to load this DLL" message box */
+    SetErrorMode(SEM_FAILCRITICALERRORS);
+
+    GetTempPath(MAX_PATH, temp_path);
+    GetTempFileName(temp_path, "ldr", 0, dll_name);
+
+    /*trace("creating %s\n", dll_name);*/
+    file = CreateFile(dll_name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    if (file == INVALID_HANDLE_VALUE)
+    {
+        ok(0, "could not create %s\n", dll_name);
+        return;
+    }
+
+    SetLastError(0xdeadbeef);
+    ret = WriteFile(file, &dos_header, sizeof(dos_header), &dummy, NULL);
+    ok(ret, "WriteFile error %d\n", GetLastError());
+
+    nt_header.FileHeader.NumberOfSections = 1;
+    nt_header.FileHeader.SizeOfOptionalHeader = sizeof(IMAGE_OPTIONAL_HEADER);
+    nt_header.FileHeader.Characteristics = IMAGE_FILE_EXECUTABLE_IMAGE | IMAGE_FILE_DLL | IMAGE_FILE_RELOCS_STRIPPED;
+
+    nt_header.OptionalHeader.AddressOfEntryPoint = 0x1000;
+    nt_header.OptionalHeader.SectionAlignment = 0x1000;
+    nt_header.OptionalHeader.FileAlignment = 0x200;
+    nt_header.OptionalHeader.SizeOfImage = sizeof(dos_header) + sizeof(nt_header) + sizeof(IMAGE_SECTION_HEADER) + 0x1000;
+    nt_header.OptionalHeader.SizeOfHeaders = sizeof(dos_header) + sizeof(nt_header) + sizeof(IMAGE_SECTION_HEADER);
+    SetLastError(0xdeadbeef);
+    ret = WriteFile(file, &nt_header, sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER), &dummy, NULL);
+    ok(ret, "WriteFile error %d\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = WriteFile(file, &nt_header.OptionalHeader, sizeof(IMAGE_OPTIONAL_HEADER), &dummy, NULL);
+    ok(ret, "WriteFile error %d\n", GetLastError());
+
+    section.SizeOfRawData = sizeof(section_data);
+    section.PointerToRawData = nt_header.OptionalHeader.FileAlignment;
+    section.VirtualAddress = nt_header.OptionalHeader.SectionAlignment;
+    section.Misc.VirtualSize = sizeof(section_data);
+    section.Characteristics = IMAGE_SCN_CNT_CODE | IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_EXECUTE;
+    SetLastError(0xdeadbeef);
+    ret = WriteFile(file, &section, sizeof(section), &dummy, NULL);
+    ok(ret, "WriteFile error %d\n", GetLastError());
+
+    file_align = nt_header.OptionalHeader.FileAlignment - nt_header.OptionalHeader.SizeOfHeaders;
+    assert(file_align < sizeof(filler));
+    SetLastError(0xdeadbeef);
+    ret = WriteFile(file, filler, file_align, &dummy, NULL);
+    ok(ret, "WriteFile error %d\n", GetLastError());
+
+    target_offset = SetFilePointer(file, 0, NULL, FILE_CURRENT) + FIELD_OFFSET(struct section_data, target);
+
+    /* section data */
+    SetLastError(0xdeadbeef);
+    ret = WriteFile(file, &section_data, sizeof(section_data), &dummy, NULL);
+    ok(ret, "WriteFile error %d\n", GetLastError());
+
+    CloseHandle(file);
+
+    winetest_get_mainargs(&argv);
+
+    *child_failures = -1;
+    sprintf(cmdline, "\"%s\" loader %s %u 0", argv[0], dll_name, target_offset);
+    ret = CreateProcess(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ok(ret, "CreateProcess(%s) error %d\n", cmdline, GetLastError());
+    ret = WaitForSingleObject(pi.hProcess, 30000);
+    ok(ret == WAIT_OBJECT_0, "child process failed to terminate\n");
+    GetExitCodeProcess(pi.hProcess, &ret);
+    ok(ret == 195, "expected exit code 195, got %u\n", ret);
+    ok(!*child_failures, "%u failures in child process\n", *child_failures);
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
+
+    *child_failures = -1;
+    sprintf(cmdline, "\"%s\" loader %s %u 1", argv[0], dll_name, target_offset);
+    ret = CreateProcess(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ok(ret, "CreateProcess(%s) error %d\n", cmdline, GetLastError());
+    ret = WaitForSingleObject(pi.hProcess, 30000);
+    ok(ret == WAIT_OBJECT_0, "child process failed to terminate\n");
+    GetExitCodeProcess(pi.hProcess, &ret);
+    ok(ret == 195, "expected exit code 195, got %u\n", ret);
+    ok(!*child_failures, "%u failures in child process\n", *child_failures);
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
+
+    *child_failures = -1;
+    sprintf(cmdline, "\"%s\" loader %s %u 2", argv[0], dll_name, target_offset);
+    ret = CreateProcess(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ok(ret, "CreateProcess(%s) error %d\n", cmdline, GetLastError());
+    ret = WaitForSingleObject(pi.hProcess, 30000);
+    ok(ret == WAIT_OBJECT_0, "child process failed to terminate\n");
+    GetExitCodeProcess(pi.hProcess, &ret);
+    ok(ret == 197, "expected exit code 197, got %u\n", ret);
+    ok(!*child_failures, "%u failures in child process\n", *child_failures);
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
+
+    *child_failures = -1;
+    sprintf(cmdline, "\"%s\" loader %s %u 3", argv[0], dll_name, target_offset);
+    ret = CreateProcess(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ok(ret, "CreateProcess(%s) error %d\n", cmdline, GetLastError());
+    ret = WaitForSingleObject(pi.hProcess, 30000);
+    ok(ret == WAIT_OBJECT_0, "child process failed to terminate\n");
+    GetExitCodeProcess(pi.hProcess, &ret);
+    ok(ret == 195, "expected exit code 195, got %u\n", ret);
+    ok(!*child_failures, "%u failures in child process\n", *child_failures);
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
+
+    *child_failures = -1;
+    sprintf(cmdline, "\"%s\" loader %s %u 4", argv[0], dll_name, target_offset);
+    ret = CreateProcess(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ok(ret, "CreateProcess(%s) error %d\n", cmdline, GetLastError());
+    ret = WaitForSingleObject(pi.hProcess, 30000);
+    ok(ret == WAIT_OBJECT_0, "child process failed to terminate\n");
+    GetExitCodeProcess(pi.hProcess, &ret);
+todo_wine
+    ok(ret == 0 || broken(ret == 195) /* before win7 */, "expected exit code 0, got %u\n", ret);
+    ok(!*child_failures, "%u failures in child process\n", *child_failures);
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
+
+    ret = DeleteFile(dll_name);
+    ok(ret, "DeleteFile error %d\n", GetLastError());
+}
+
 START_TEST(loader)
 {
+    int argc;
+    char **argv;
+    HANDLE mapping;
+
     pNtMapViewOfSection = (void *)GetProcAddress(GetModuleHandle("ntdll.dll"), "NtMapViewOfSection");
     pNtUnmapViewOfSection = (void *)GetProcAddress(GetModuleHandle("ntdll.dll"), "NtUnmapViewOfSection");
+    pNtTerminateProcess = (void *)GetProcAddress(GetModuleHandle("ntdll.dll"), "NtTerminateProcess");
+    pLdrShutdownProcess = (void *)GetProcAddress(GetModuleHandle("ntdll.dll"), "LdrShutdownProcess");
+    pRtlDllShutdownInProgress = (void *)GetProcAddress(GetModuleHandle("ntdll.dll"), "RtlDllShutdownInProgress");
+
+    mapping = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 4096, "winetest_loader");
+    ok(mapping != 0, "CreateFileMapping failed\n");
+    child_failures = MapViewOfFile(mapping, FILE_MAP_READ|FILE_MAP_WRITE, 0, 0, 4096);
+    if (*child_failures == -1)
+    {
+        is_child = 1;
+        *child_failures = 0;
+    }
+    else
+        *child_failures = -1;
+
+    argc = winetest_get_mainargs(&argv);
+    if (argc > 4)
+    {
+        test_dll_phase = atoi(argv[4]);
+        child_process(argv[2], atol(argv[3]));
+        return;
+    }
 
     test_Loader();
     test_ImportDescriptors();
     test_section_access();
+    test_ExitProcess();
 }

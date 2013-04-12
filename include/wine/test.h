@@ -60,6 +60,7 @@ extern void winetest_start_todo( const char* platform );
 extern int winetest_loop_todo(void);
 extern void winetest_end_todo( const char* platform );
 extern int winetest_get_mainargs( char*** pargv );
+extern LONG winetest_get_failures(void);
 extern void winetest_wait_child_process( HANDLE process );
 
 extern const char *wine_dbgstr_wn( const WCHAR *str, int n );
@@ -426,6 +427,11 @@ int winetest_get_mainargs( char*** pargv )
 {
     *pargv = winetest_argv;
     return winetest_argc;
+}
+
+LONG winetest_get_failures(void)
+{
+    return failures;
 }
 
 void winetest_wait_child_process( HANDLE process )
