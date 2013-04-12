@@ -61,6 +61,7 @@
 340 stdcall -ordinal DPA_CreateEx(long long)
 341 stdcall -noname SendNotify(long long long ptr)
 342 stdcall -noname SendNotifyEx(long long long ptr long)
+345 stdcall -ordinal TaskDialogIndirect(ptr ptr ptr ptr)
 350 stdcall -noname StrChrA(str str)
 351 stdcall -noname StrRChrA(str str long)
 352 stdcall -noname StrCmpNA(str str long)
@@ -188,6 +189,5 @@
 @ stdcall PropertySheet(ptr) PropertySheetA
 @ stdcall PropertySheetA(ptr)
 @ stdcall PropertySheetW(ptr)
-@ stdcall TaskDialogIndirect(ptr ptr ptr ptr)
 @ stdcall UninitializeFlatSB(long)
 @ stdcall _TrackMouseEvent(ptr)
