@@ -4768,6 +4768,129 @@ static void test_rtpatch(void)
     DestroyWindow(window);
 }
 
+static void test_npot_textures(void)
+{
+    IDirect3DDevice8 *device = NULL;
+    IDirect3D8 *d3d8;
+    ULONG refcount;
+    HWND window = NULL;
+    HRESULT hr;
+    D3DCAPS8 caps;
+    IDirect3DTexture8 *texture;
+    IDirect3DCubeTexture8 *cube_texture;
+    IDirect3DVolumeTexture8 *volume_texture;
+    struct
+    {
+        D3DPOOL pool;
+        const char *pool_name;
+        HRESULT hr;
+    }
+    pools[] =
+    {
+        { D3DPOOL_DEFAULT,    "D3DPOOL_DEFAULT",    D3DERR_INVALIDCALL },
+        { D3DPOOL_MANAGED,    "D3DPOOL_MANAGED",    D3DERR_INVALIDCALL },
+        { D3DPOOL_SYSTEMMEM,  "D3DPOOL_SYSTEMMEM",  D3DERR_INVALIDCALL },
+        { D3DPOOL_SCRATCH,    "D3DPOOL_SCRATCH",    D3D_OK             },
+    };
+    unsigned int i, levels;
+    BOOL tex_pow2, cube_pow2, vol_pow2;
+
+    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create IDirect3D8 object, skipping tests.\n");
+        return;
+    }
+
+    window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(d3d8, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice8_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get caps, hr %#x.\n", hr);
+    tex_pow2 = !!(caps.TextureCaps & D3DPTEXTURECAPS_POW2);
+    cube_pow2 = !!(caps.TextureCaps & D3DPTEXTURECAPS_CUBEMAP_POW2);
+    vol_pow2 = !!(caps.TextureCaps & D3DPTEXTURECAPS_VOLUMEMAP_POW2);
+    ok(cube_pow2 == tex_pow2, "Cube texture and 2d texture pow2 restrictions mismatch.\n");
+    ok(vol_pow2 == tex_pow2, "Volume texture and 2d texture pow2 restrictions mismatch.\n");
+
+    for (i = 0; i < sizeof(pools) / sizeof(*pools); i++)
+    {
+        for (levels = 0; levels <= 2; levels++)
+        {
+            HRESULT expected;
+
+            hr = IDirect3DDevice8_CreateTexture(device, 10, 10, levels, 0, D3DFMT_X8R8G8B8,
+                    pools[i].pool, &texture);
+            if (!tex_pow2)
+            {
+                expected = D3D_OK;
+            }
+            else if (caps.TextureCaps & D3DPTEXTURECAPS_NONPOW2CONDITIONAL)
+            {
+                if (levels == 1)
+                    expected = D3D_OK;
+                else
+                    expected = pools[i].hr;
+            }
+            else
+            {
+                expected = pools[i].hr;
+            }
+            ok(hr == expected, "CreateTexture(w=h=10, %s, levels=%u) returned hr %#x, expected %#x.\n",
+                    pools[i].pool_name, levels, hr, expected);
+
+            if (SUCCEEDED(hr))
+                IDirect3DTexture8_Release(texture);
+        }
+
+        hr = IDirect3DDevice8_CreateCubeTexture(device, 3, 1, 0, D3DFMT_X8R8G8B8,
+                pools[i].pool, &cube_texture);
+        if (tex_pow2)
+        {
+            ok(hr == pools[i].hr, "CreateCubeTexture(EdgeLength=3, %s) returned hr %#x, expected %#x.\n",
+                    pools[i].pool_name, hr, pools[i].hr);
+        }
+        else
+        {
+            ok(SUCCEEDED(hr), "CreateCubeTexture(EdgeLength=3, %s) returned hr %#x, expected %#x.\n",
+                    pools[i].pool_name, hr, D3D_OK);
+        }
+
+        if (SUCCEEDED(hr))
+            IDirect3DCubeTexture8_Release(cube_texture);
+
+        hr = IDirect3DDevice8_CreateVolumeTexture(device, 2, 2, 3, 1, 0, D3DFMT_X8R8G8B8,
+                pools[i].pool, &volume_texture);
+        if (tex_pow2)
+        {
+            ok(hr == pools[i].hr, "CreateVolumeTextur(Depth=3, %s) returned hr %#x, expected %#x.\n",
+                    pools[i].pool_name, hr, pools[i].hr);
+        }
+        else
+        {
+            ok(SUCCEEDED(hr), "CreateVolumeTextur(Depth=3, %s) returned hr %#x, expected %#x.\n",
+                    pools[i].pool_name, hr, D3D_OK);
+        }
+
+        if (SUCCEEDED(hr))
+            IDirect3DVolumeTexture8_Release(volume_texture);
+    }
+
+done:
+    if (device)
+    {
+        refcount = IDirect3DDevice8_Release(device);
+        ok(!refcount, "Device has %u references left.\n", refcount);
+    }
+    IDirect3D8_Release(d3d8);
+    DestroyWindow(window);
+
+}
+
 START_TEST(device)
 {
     HMODULE d3d8_handle = LoadLibraryA( "d3d8.dll" );
@@ -4844,6 +4967,7 @@ START_TEST(device)
         test_set_palette();
         test_swvp_buffer();
         test_rtpatch();
+        test_npot_textures();
     }
     UnregisterClassA("d3d8_test_wc", GetModuleHandleA(NULL));
 }
