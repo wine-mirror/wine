@@ -965,15 +965,13 @@ static HRESULT texture_init(struct wined3d_texture *texture, UINT width, UINT he
             && !(format->id == WINED3DFMT_P8_UINT && gl_info->supported[EXT_PALETTED_TEXTURE]
             && wined3d_settings.rendertargetlock_mode == RTL_READTEX))
     {
-        if (width != 1 || height != 1)
-            texture->flags &= ~WINED3D_TEXTURE_POW2_MAT_IDENT;
-
         texture->pow2_matrix[0] = (float)width;
         texture->pow2_matrix[5] = (float)height;
         texture->pow2_matrix[10] = 1.0f;
         texture->pow2_matrix[15] = 1.0f;
         texture->target = GL_TEXTURE_RECTANGLE_ARB;
         texture->flags |= WINED3D_TEXTURE_COND_NP2;
+        texture->flags &= ~WINED3D_TEXTURE_POW2_MAT_IDENT;
 
         if (texture->resource.format->flags & WINED3DFMT_FLAG_FILTERING)
             texture->min_mip_lookup = minMipLookup_noMip;
