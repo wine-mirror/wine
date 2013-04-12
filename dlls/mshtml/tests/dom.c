@@ -781,6 +781,17 @@ static IHTMLDOMNode2 *_get_node2_iface(unsigned line, IUnknown *unk)
     return node;
 }
 
+#define get_htmldoc5_iface(u) _get_htmldoc5_iface(__LINE__,u)
+static IHTMLDocument5 *_get_htmldoc5_iface(unsigned line, IUnknown *unk)
+{
+    IHTMLDocument5 *doc;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLDocument5, (void**)&doc);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLDocument5: %08x\n", hres);
+    return doc;
+}
+
 #define get_img_iface(u) _get_img_iface(__LINE__,u)
 static IHTMLImgElement *_get_img_iface(unsigned line, IUnknown *unk)
 {
@@ -4478,22 +4489,18 @@ static void test_txtrange2(IHTMLDocument2 *doc)
     IHTMLTxtRange_Release(range);
 }
 
-static void test_compatmode(IHTMLDocument2 *doc)
+#define test_compatmode(a,b) _test_compatmode(__LINE__,a,b)
+static void _test_compatmode(unsigned  line, IHTMLDocument2 *doc2, const char *excompat)
 {
-    IHTMLDocument5 *doc5;
-    BSTR mode;
+    IHTMLDocument5 *doc = get_htmldoc5_iface((IUnknown*)doc2);
+    BSTR str;
     HRESULT hres;
 
-    hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument5, (void**)&doc5);
-    ok(hres == S_OK, "Could not get IHTMLDocument5 interface: %08x\n", hres);
-    if(FAILED(hres))
-        return;
+    hres = IHTMLDocument5_get_compatMode(doc, &str);
+    ok_(__FILE__,line)(hres == S_OK, "get_compatMode failed: %08x\n", hres);
+    ok_(__FILE__,line)(!strcmp_wa(str, excompat), "compatMode = %s, expected %s\n", wine_dbgstr_w(str), excompat);
 
-    hres = IHTMLDocument5_get_compatMode(doc5, &mode);
-    IHTMLDocument5_Release(doc5);
-    ok(hres == S_OK, "get_compatMode failed: %08x\n", hres);
-    ok(!strcmp_wa(mode, "BackCompat"), "compatMode=%s\n", wine_dbgstr_w(mode));
-    SysFreeString(mode);
+    IHTMLDocument5_Release(doc);
 }
 
 static void test_location(IHTMLDocument2 *doc)
@@ -5313,7 +5320,7 @@ static void test_defaults(IHTMLDocument2 *doc)
     SysFreeString(str);
 
     test_window(doc);
-    test_compatmode(doc);
+    test_compatmode(doc, "BackCompat");
     test_location(doc);
     test_navigator(doc);
     test_plugins_col(doc);
@@ -6652,9 +6659,8 @@ static void test_create_elems(IHTMLDocument2 *doc)
     test_elem_innertext(body, "insert test Test");
     IHTMLDOMNode_Release(node);
 
-    hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument5, (void**)&doc5);
-    if(hres == S_OK)
-    {
+    doc5 = get_htmldoc5_iface((IUnknown*)doc);
+    if(doc5) {
         str = a2bstr("testing");
         hres = IHTMLDocument5_createComment(doc5, str, &comment);
         SysFreeString(str);
@@ -7168,6 +7174,16 @@ static void test_docfrag(IHTMLDocument2 *doc)
     IHTMLDocument2_Release(frag);
 }
 
+static void check_quirks_mode(IHTMLDocument2 *doc)
+{
+    test_compatmode(doc, "BackCompat");
+}
+
+static void check_strict_mode(IHTMLDocument2 *doc)
+{
+    test_compatmode(doc, "CSS1Compat");
+}
+
 static IHTMLDocument2 *notif_doc;
 static BOOL doc_complete;
 
@@ -7299,6 +7315,12 @@ static void run_domtest(const char *str, domtest_t test)
        "ref = %d\n", ref);
 }
 
+static void test_quirks_mode(void)
+{
+    run_domtest("<html></html>", check_quirks_mode);
+    run_domtest("<!DOCTYPE html>\n<html></html>", check_strict_mode);
+}
+
 START_TEST(dom)
 {
     HMODULE hkernel32 = GetModuleHandleA("kernel32.dll");
@@ -7328,6 +7350,8 @@ START_TEST(dom)
     run_domtest(emptydiv_str, test_docfrag);
     run_domtest(doc_blank, test_replacechild_elems);
     run_domtest(doctype_str, test_doctype);
+
+    test_quirks_mode();
 
     CoUninitialize();
 }
