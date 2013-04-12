@@ -2593,7 +2593,15 @@ DWORD WINAPI LoadModule( LPCSTR name, LPVOID paramBlock )
  */
 BOOL WINAPI TerminateProcess( HANDLE handle, DWORD exit_code )
 {
-    NTSTATUS status = NtTerminateProcess( handle, exit_code );
+    NTSTATUS status;
+
+    if (!handle)
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+
+    status = NtTerminateProcess( handle, exit_code );
     if (status) SetLastError( RtlNtStatusToDosError(status) );
     return !status;
 }
