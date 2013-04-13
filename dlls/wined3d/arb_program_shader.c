@@ -4354,7 +4354,7 @@ static struct arb_ps_compiled_shader *find_arb_pshader(struct wined3d_shader *sh
 
     shader_data->gl_shaders[shader_data->num_gl_shaders].args = *args;
 
-    pixelshader_update_samplers(&shader->reg_maps, device->stateBlock->state.textures);
+    pixelshader_update_samplers(shader, args->super.tex_types);
 
     if (!shader_buffer_init(&buffer))
     {

@@ -746,13 +746,25 @@ enum fogmode {
 #define WINED3D_PSARGS_PROJECTED (1 << 3)
 #define WINED3D_PSARGS_TEXTRANSFORM_SHIFT 4
 #define WINED3D_PSARGS_TEXTRANSFORM_MASK 0xf
+#define WINED3D_PSARGS_TEXTYPE_SHIFT 2
+#define WINED3D_PSARGS_TEXTYPE_MASK 0x3
+
+/* Similar to tex_types, except that it doesn't have 1d textures
+ * (can't be bound), rect textures (handled via np2_fixup) and
+ * none / unknown (treated as 2d and handled via dummy textures). */
+enum wined3d_shader_tex_types
+{
+    WINED3D_SHADER_TEX_2D   = 0,
+    WINED3D_SHADER_TEX_3D   = 1,
+    WINED3D_SHADER_TEX_CUBE = 2,
+};
 
 struct ps_compile_args {
     struct color_fixup_desc     color_fixup[MAX_FRAGMENT_SAMPLERS];
     enum vertexprocessing_mode  vp_mode;
     enum fogmode                fog;
     WORD                        tex_transform; /* ps 1.0-1.3, 4 textures */
-    /* Texture types(2D, Cube, 3D) in ps 1.x */
+    WORD                        tex_types; /* ps 1.0 - 1.4, 6 textures */
     WORD                        srgb_correction;
     WORD                        np2_fixup;
     /* Bitmap for NP2 texcoord fixups (16 samplers max currently).
@@ -2635,8 +2647,7 @@ struct wined3d_shader
     } u;
 };
 
-void pixelshader_update_samplers(struct wined3d_shader_reg_maps *reg_maps,
-        struct wined3d_texture * const *textures) DECLSPEC_HIDDEN;
+void pixelshader_update_samplers(struct wined3d_shader *shader, WORD tex_types) DECLSPEC_HIDDEN;
 void find_ps_compile_args(const struct wined3d_state *state,
         const struct wined3d_shader *shader, struct ps_compile_args *args) DECLSPEC_HIDDEN;
 

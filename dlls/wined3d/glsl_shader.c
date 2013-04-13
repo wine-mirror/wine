@@ -4627,7 +4627,6 @@ static GLhandleARB find_glsl_pshader(const struct wined3d_context *context,
         struct wined3d_shader_buffer *buffer, struct wined3d_shader *shader,
         const struct ps_compile_args *args, const struct ps_np2fixup_info **np2fixup_info)
 {
-    struct wined3d_state *state = &shader->device->stateBlock->state;
     struct glsl_ps_compiled_shader *gl_shaders, *new_array;
     struct glsl_shader_private *shader_data;
     struct ps_np2fixup_info *np2fixup;
@@ -4690,7 +4689,7 @@ static GLhandleARB find_glsl_pshader(const struct wined3d_context *context,
     memset(np2fixup, 0, sizeof(*np2fixup));
     *np2fixup_info = args->np2_fixup ? np2fixup : NULL;
 
-    pixelshader_update_samplers(&shader->reg_maps, state->textures);
+    pixelshader_update_samplers(shader, args->tex_types);
 
     shader_buffer_clear(buffer);
     ret = shader_glsl_generate_pshader(context, buffer, shader, args, np2fixup);

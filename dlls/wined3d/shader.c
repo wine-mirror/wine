@@ -2062,6 +2062,39 @@ void find_ps_compile_args(const struct wined3d_state *state,
             }
         }
     }
+    if (shader->reg_maps.shader_version.major == 1
+            && shader->reg_maps.shader_version.minor <= 4)
+    {
+        for (i = 0; i < shader->limits.sampler; ++i)
+        {
+            const struct wined3d_texture *texture = state->textures[i];
+
+            if (!shader->reg_maps.sampler_type[i])
+                continue;
+
+            /* Treat unbound textures as 2D. The dummy texture will provide
+             * the proper sample value. The tex_types bitmap defaults to
+             * 2D because of the memset. */
+            if (!texture)
+                continue;
+
+            switch (texture->target)
+            {
+                /* RECT textures are distinguished from 2D textures via np2_fixup */
+                case GL_TEXTURE_RECTANGLE_ARB:
+                case GL_TEXTURE_2D:
+                    break;
+
+                case GL_TEXTURE_3D:
+                    args->tex_types |= WINED3D_SHADER_TEX_3D << i * WINED3D_PSARGS_TEXTYPE_SHIFT;
+                    break;
+
+                case GL_TEXTURE_CUBE_MAP_ARB:
+                    args->tex_types |= WINED3D_SHADER_TEX_CUBE << i * WINED3D_PSARGS_TEXTYPE_SHIFT;
+                    break;
+            }
+        }
+    }
 
     for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i)
     {
@@ -2274,46 +2307,32 @@ static HRESULT pixelshader_init(struct wined3d_shader *shader, struct wined3d_de
     return WINED3D_OK;
 }
 
-void pixelshader_update_samplers(struct wined3d_shader_reg_maps *reg_maps, struct wined3d_texture * const *textures)
+void pixelshader_update_samplers(struct wined3d_shader *shader, WORD tex_types)
 {
+    struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
     enum wined3d_sampler_texture_type *sampler_type = reg_maps->sampler_type;
     unsigned int i;
 
     if (reg_maps->shader_version.major != 1) return;
 
-    for (i = 0; i < max(MAX_FRAGMENT_SAMPLERS, MAX_VERTEX_SAMPLERS); ++i)
+    for (i = 0; i < shader->limits.sampler; ++i)
     {
         /* We don't sample from this sampler. */
         if (!sampler_type[i]) continue;
 
-        if (!textures[i])
+        switch ((tex_types >> i * WINED3D_PSARGS_TEXTYPE_SHIFT) & WINED3D_PSARGS_TEXTYPE_MASK)
         {
-            WARN("No texture bound to sampler %u, using 2D.\n", i);
-            sampler_type[i] = WINED3DSTT_2D;
-            continue;
-        }
-
-        switch (textures[i]->target)
-        {
-            case GL_TEXTURE_RECTANGLE_ARB:
-            case GL_TEXTURE_2D:
-                /* We have to select between texture rectangles and 2D
-                 * textures later because 2.0 and 3.0 shaders only have
-                 * WINED3DSTT_2D as well. */
+            case WINED3D_SHADER_TEX_2D:
                 sampler_type[i] = WINED3DSTT_2D;
                 break;
 
-            case GL_TEXTURE_3D:
+            case WINED3D_SHADER_TEX_3D:
                 sampler_type[i] = WINED3DSTT_VOLUME;
                 break;
 
-            case GL_TEXTURE_CUBE_MAP_ARB:
+            case WINED3D_SHADER_TEX_CUBE:
                 sampler_type[i] = WINED3DSTT_CUBE;
                 break;
-
-            default:
-                FIXME("Unrecognized texture type %#x, using 2D.\n", textures[i]->target);
-                sampler_type[i] = WINED3DSTT_2D;
         }
     }
 }
