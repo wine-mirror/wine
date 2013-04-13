@@ -1274,7 +1274,9 @@ BOOL WINAPI GetConsoleKeyboardLayoutNameA(LPSTR layoutName)
  */
 BOOL WINAPI GetConsoleKeyboardLayoutNameW(LPWSTR layoutName)
 {
-    FIXME( "stub %p\n", layoutName);
+    static int once;
+    if (!once++)
+        FIXME( "stub %p\n", layoutName);
     return TRUE;
 }
 
