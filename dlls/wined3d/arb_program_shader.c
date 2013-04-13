@@ -1368,14 +1368,14 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
 {
     struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
     DWORD sampler_type = ins->ctx->reg_maps->sampler_type[sampler_idx];
-    const struct wined3d_shader *shader = ins->ctx->shader;
-    const struct wined3d_texture *texture;
     const char *tex_type;
     BOOL np2_fixup = FALSE;
-    struct wined3d_device *device = shader->device;
     struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
     const char *mod;
     BOOL pshader = shader_is_pshader_version(ins->ctx->reg_maps->shader_version.type);
+    const struct wined3d_shader *shader;
+    const struct wined3d_device *device;
+    const struct wined3d_gl_info *gl_info;
 
     /* D3D vertex shader sampler IDs are vertex samplers(0-3), not global d3d samplers */
     if(!pshader) sampler_idx += MAX_FRAGMENT_SAMPLERS;
@@ -1386,13 +1386,15 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
             break;
 
         case WINED3DSTT_2D:
-            texture = device->stateBlock->state.textures[sampler_idx];
-            if (texture && texture->target == GL_TEXTURE_RECTANGLE_ARB)
-            {
+            shader = ins->ctx->shader;
+            device = shader->device;
+            gl_info = &device->adapter->gl_info;
+
+            if (pshader && priv->cur_ps_args->super.np2_fixup & (1 << sampler_idx)
+                    && gl_info->supported[ARB_TEXTURE_RECTANGLE])
                 tex_type = "RECT";
-            } else {
+            else
                 tex_type = "2D";
-            }
             if (shader_is_pshader_version(ins->ctx->reg_maps->shader_version.type))
             {
                 if (priv->cur_np2fixup_info->super.active & (1 << sampler_idx))

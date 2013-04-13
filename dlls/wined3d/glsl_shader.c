@@ -1058,7 +1058,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
         if (reg_maps->sampler_type[i])
         {
             BOOL shadow_sampler = version->type == WINED3D_SHADER_TYPE_PIXEL && (ps_args->shadow & (1 << i));
-            const struct wined3d_texture *texture;
+            BOOL tex_rect;
 
             switch (reg_maps->sampler_type[i])
             {
@@ -1069,17 +1069,18 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
                         shader_addline(buffer, "uniform sampler1D %s_sampler%u;\n", prefix, i);
                     break;
                 case WINED3DSTT_2D:
-                    texture = state->textures[i];
+                    tex_rect = version->type == WINED3D_SHADER_TYPE_PIXEL && (ps_args->np2_fixup & (1 << i));
+                    tex_rect = tex_rect && gl_info->supported[ARB_TEXTURE_RECTANGLE];
                     if (shadow_sampler)
                     {
-                        if (texture && texture->target == GL_TEXTURE_RECTANGLE_ARB)
+                        if (tex_rect)
                             shader_addline(buffer, "uniform sampler2DRectShadow %s_sampler%u;\n", prefix, i);
                         else
                             shader_addline(buffer, "uniform sampler2DShadow %s_sampler%u;\n", prefix, i);
                     }
                     else
                     {
-                        if (texture && texture->target == GL_TEXTURE_RECTANGLE_ARB)
+                        if (tex_rect)
                             shader_addline(buffer, "uniform sampler2DRect %s_sampler%u;\n", prefix, i);
                         else
                             shader_addline(buffer, "uniform sampler2D %s_sampler%u;\n", prefix, i);
