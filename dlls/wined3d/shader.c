@@ -2011,7 +2011,7 @@ void find_ps_compile_args(const struct wined3d_state *state,
     if (shader->reg_maps.shader_version.major == 1
             && shader->reg_maps.shader_version.minor <= 3)
     {
-        for (i = 0; i < 4; ++i)
+        for (i = 0; i < shader->limits.sampler; ++i)
         {
             DWORD flags = state->texture_states[i][WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS];
 
