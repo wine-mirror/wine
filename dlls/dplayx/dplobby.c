@@ -19,6 +19,7 @@
 #include <stdarg.h>
 #include <string.h>
 
+#define COBJMACROS
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "windef.h"
@@ -131,28 +132,6 @@ static BOOL DPL_DestroyLobby1( LPVOID lpDPL )
   return TRUE;
 }
 
-static HRESULT WINAPI DPL_QueryInterface( IDirectPlayLobbyImpl *This, REFIID riid, void **ppvObj )
-{
-  TRACE("(%p)->(%s,%p)\n", This, debugstr_guid( riid ), ppvObj );
-
-  if ( IsEqualGUID( &IID_IUnknown, riid ) || IsEqualGUID( &IID_IDirectPlayLobby, riid ) ||
-      IsEqualGUID( &IID_IDirectPlayLobby2, riid ) || IsEqualGUID( &IID_IDirectPlayLobby3, riid ) )
-    *ppvObj = &This->IDirectPlayLobby3_iface;
-  else if ( IsEqualGUID( &IID_IDirectPlayLobbyA, riid ) ||
-      IsEqualGUID( &IID_IDirectPlayLobby2A, riid ) || IsEqualGUID( &IID_IDirectPlayLobby3A, riid ) )
-    *ppvObj = &This->IDirectPlayLobby3A_iface;
-  else
-  {
-    /* Unsupported interface */
-    *ppvObj = NULL;
-    return E_NOINTERFACE;
-  }
-
-  IDirectPlayLobby_AddRef( (LPDIRECTPLAYLOBBY)*ppvObj );
-
-  return S_OK;
-}
-
 static void dplobby_destroy(IDirectPlayLobbyImpl *obj)
 {
     DPL_DestroyLobby1( obj );
@@ -165,14 +144,58 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_QueryInterface( IDirectPlayLobby3A 
         void **ppv )
 {
     IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby3A( iface );
-    return DPL_QueryInterface( This, riid, ppv );
+    return IDirectPlayLobby_QueryInterface( &This->IDirectPlayLobby3_iface, riid, ppv );
 }
 
 static HRESULT WINAPI IDirectPlayLobby3Impl_QueryInterface( IDirectPlayLobby3 *iface, REFIID riid,
         void **ppv )
 {
     IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby3( iface );
-    return DPL_QueryInterface( This, riid, ppv );
+
+    if ( IsEqualGUID( &IID_IUnknown, riid ) )
+    {
+        TRACE( "(%p)->(IID_IUnknown %p)\n", This, ppv );
+        *ppv = &This->IDirectPlayLobby3_iface;
+    }
+    else if ( IsEqualGUID( &IID_IDirectPlayLobby, riid ) )
+    {
+        TRACE( "(%p)->(IID_IDirectPlayLobby %p)\n", This, ppv );
+        *ppv = &This->IDirectPlayLobby3_iface;
+    }
+    else if ( IsEqualGUID( &IID_IDirectPlayLobbyA, riid ) )
+    {
+        TRACE( "(%p)->(IID_IDirectPlayLobbyA %p)\n", This, ppv );
+        *ppv = &This->IDirectPlayLobby3A_iface;
+    }
+    else if ( IsEqualGUID( &IID_IDirectPlayLobby2, riid ) )
+    {
+        TRACE( "(%p)->(IID_IDirectPlayLobby2 %p)\n", This, ppv );
+        *ppv = &This->IDirectPlayLobby3_iface;
+    }
+    else if ( IsEqualGUID( &IID_IDirectPlayLobby2A, riid ) )
+    {
+        TRACE( "(%p)->(IID_IDirectPlayLobby2A %p)\n", This, ppv );
+        *ppv = &This->IDirectPlayLobby3A_iface;
+    }
+    else if ( IsEqualGUID( &IID_IDirectPlayLobby3, riid ) )
+    {
+        TRACE( "(%p)->(IID_IDirectPlay3 %p)\n", This, ppv );
+        *ppv = &This->IDirectPlayLobby3_iface;
+    }
+    else if ( IsEqualGUID( &IID_IDirectPlayLobby3A, riid ) )
+    {
+        TRACE( "(%p)->(IID_IDirectPlayLobby3A %p)\n", This, ppv );
+        *ppv = &This->IDirectPlayLobby3A_iface;
+    }
+    else
+    {
+        WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
 }
 
 static ULONG WINAPI IDirectPlayLobby3AImpl_AddRef(IDirectPlayLobby3A *iface)
