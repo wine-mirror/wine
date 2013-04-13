@@ -141,8 +141,8 @@
 @ stub CM_Query_Arbitrator_Free_Size_Ex
 @ stub CM_Query_Remove_SubTree
 @ stub CM_Query_Remove_SubTree_Ex
-@ stub CM_Reenumerate_DevNode
-@ stub CM_Reenumerate_DevNode_Ex
+@ stdcall CM_Reenumerate_DevNode(ptr long) setupapi.CM_Reenumerate_DevNode
+@ stdcall CM_Reenumerate_DevNode_Ex(ptr long ptr) setupapi.CM_Reenumerate_DevNode_Ex
 @ stub CM_Register_Device_Driver
 @ stub CM_Register_Device_Driver_Ex
 @ stub CM_Register_Device_InterfaceA
