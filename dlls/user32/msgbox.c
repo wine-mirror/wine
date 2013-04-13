@@ -86,11 +86,11 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
     SystemParametersInfoW (SPI_GETNONCLIENTMETRICS, 0, &nclm, 0);
     hFont = CreateFontIndirectW (&nclm.lfMessageFont);
     /* set button font */
-    for (i=1; i < 12; i++)
-        /* No button 8 (Close) */
-        if (i != 8) {
+    for (i = IDOK; i <= IDCONTINUE; i++)
+        /* no close button */
+        if (i != IDCANCEL)
             SendDlgItemMessageW (hwnd, i, WM_SETFONT, (WPARAM)hFont, 0);
-        }
+
     /* set text font */
     SendDlgItemMessageW (hwnd, MSGBOX_IDTEXT, WM_SETFONT, (WPARAM)hFont, 0);
 
@@ -234,9 +234,9 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
 
     /* Get the number of visible buttons and their size */
     bh = bw = 1; /* Minimum button sizes */
-    for (buttons = 0, i = 1; i < 12; i++)
+    for (buttons = 0, i = IDOK; i <= IDCONTINUE; i++)
     {
-        if (i == 8) continue; /* No CLOSE button */
+        if (i == IDCLOSE) continue; /* No CLOSE button */
 	hItem = GetDlgItem(hwnd, i);
 	if (GetWindowLongW(hItem, GWL_STYLE) & WS_VISIBLE)
 	{
