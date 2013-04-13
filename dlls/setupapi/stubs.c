@@ -46,7 +46,7 @@ CONFIGRET WINAPI CM_Connect_MachineA(PCSTR name, PHMACHINE machine)
  */
 CONFIGRET WINAPI CM_Connect_MachineW(PCWSTR name, PHMACHINE machine)
 {
-  FIXME("\n");
+  FIXME("stub\n");
   return  CR_ACCESS_DENIED;
 }
 
@@ -73,7 +73,7 @@ CONFIGRET WINAPI CM_Create_DevNodeW(PDEVINST pdnDevInst, DEVINSTID_W pDeviceID, 
  */
 CONFIGRET WINAPI CM_Disconnect_Machine(HMACHINE handle)
 {
-  FIXME("\n");
+  FIXME("stub\n");
   return  CR_SUCCESS;
 
 }
@@ -84,7 +84,7 @@ CONFIGRET WINAPI CM_Disconnect_Machine(HMACHINE handle)
 DWORD WINAPI CM_Get_Device_ID_ExA(
     DEVINST dnDevInst, PCHAR Buffer, ULONG BufferLen, ULONG ulFlags, HMACHINE hMachine)
 {
-    FIXME("0x%08x %p 0x%08x 0x%08x %p\n", dnDevInst, Buffer, BufferLen, ulFlags, hMachine);
+    FIXME("0x%08x %p 0x%08x 0x%08x %p: stub\n", dnDevInst, Buffer, BufferLen, ulFlags, hMachine);
     return CR_SUCCESS;
 }
 
@@ -94,7 +94,7 @@ DWORD WINAPI CM_Get_Device_ID_ExA(
 DWORD WINAPI CM_Get_Device_ID_ExW(
     DEVINST dnDevInst, PWCHAR Buffer, ULONG BufferLen, ULONG ulFlags, HMACHINE hMachine)
 {
-    FIXME("0x%08x %p 0x%08x 0x%08x %p\n", dnDevInst, Buffer, BufferLen, ulFlags, hMachine);
+    FIXME("0x%08x %p 0x%08x 0x%08x %p: stub\n", dnDevInst, Buffer, BufferLen, ulFlags, hMachine);
     return CR_SUCCESS;
 }
 
@@ -104,7 +104,7 @@ DWORD WINAPI CM_Get_Device_ID_ExW(
 CONFIGRET WINAPI CM_Get_Device_ID_ListA(
     PCSTR pszFilter, PCHAR Buffer, ULONG BufferLen, ULONG ulFlags )
 {
-    FIXME("%s %p %d 0x%08x\n", debugstr_a(pszFilter), Buffer, BufferLen, ulFlags);
+    FIXME("%s %p %d 0x%08x: stub\n", debugstr_a(pszFilter), Buffer, BufferLen, ulFlags);
 
     if (BufferLen >= 2) Buffer[0] = Buffer[1] = 0;
     return CR_SUCCESS;
@@ -116,7 +116,7 @@ CONFIGRET WINAPI CM_Get_Device_ID_ListA(
 CONFIGRET WINAPI CM_Get_Device_ID_ListW(
     PCWSTR pszFilter, PWCHAR Buffer, ULONG BufferLen, ULONG ulFlags )
 {
-    FIXME("%s %p %d 0x%08x\n", debugstr_w(pszFilter), Buffer, BufferLen, ulFlags);
+    FIXME("%s %p %d 0x%08x: stub\n", debugstr_w(pszFilter), Buffer, BufferLen, ulFlags);
 
     if (BufferLen >= 2) Buffer[0] = Buffer[1] = 0;
     return CR_SUCCESS;
@@ -127,7 +127,7 @@ CONFIGRET WINAPI CM_Get_Device_ID_ListW(
  */
 CONFIGRET WINAPI CM_Get_Device_ID_List_SizeA( PULONG  pulLen, PCSTR  pszFilter, ULONG  ulFlags )
 {
-    FIXME("%p %s 0x%08x\n", pulLen, debugstr_a(pszFilter), ulFlags);
+    FIXME("%p %s 0x%08x: stub\n", pulLen, debugstr_a(pszFilter), ulFlags);
 
     return CR_SUCCESS;
 }
@@ -137,7 +137,7 @@ CONFIGRET WINAPI CM_Get_Device_ID_List_SizeA( PULONG  pulLen, PCSTR  pszFilter, 
  */
 CONFIGRET WINAPI CM_Get_Device_ID_List_SizeW( PULONG  pulLen, PCWSTR  pszFilter, ULONG  ulFlags )
 {
-    FIXME("%p %s 0x%08x\n", pulLen, debugstr_w(pszFilter), ulFlags);
+    FIXME("%p %s 0x%08x: stub\n", pulLen, debugstr_w(pszFilter), ulFlags);
 
     return CR_SUCCESS;
 }
@@ -219,7 +219,7 @@ BOOL WINAPI SetupOpenLog(BOOL Reserved)
  */
 INT WINAPI SetupPromptReboot( HSPFILEQ file_queue, HWND owner, BOOL scan_only )
 {
-    FIXME("%p, %p, %d\n", file_queue, owner, scan_only);
+    FIXME("%p, %p, %d: stub\n", file_queue, owner, scan_only);
     return 0;
 }
 
@@ -228,7 +228,7 @@ INT WINAPI SetupPromptReboot( HSPFILEQ file_queue, HWND owner, BOOL scan_only )
  */
 BOOL WINAPI SetupQueryDrivesInDiskSpaceListA(HDSKSPC disk_space, PSTR return_buffer, DWORD return_buffer_size, PDWORD required_size)
 {
-    FIXME("%p, %p, %d, %p\n", disk_space, return_buffer, return_buffer_size, required_size);
+    FIXME("%p, %p, %d, %p: stub\n", disk_space, return_buffer, return_buffer_size, required_size);
     return FALSE;
 }
 
@@ -237,7 +237,7 @@ BOOL WINAPI SetupQueryDrivesInDiskSpaceListA(HDSKSPC disk_space, PSTR return_buf
  */
 BOOL WINAPI SetupQueryDrivesInDiskSpaceListW(HDSKSPC disk_space, PWSTR return_buffer, DWORD return_buffer_size, PDWORD required_size)
 {
-    FIXME("%p, %p, %d, %p\n", disk_space, return_buffer, return_buffer_size, required_size);
+    FIXME("%p, %p, %d, %p: stub\n", disk_space, return_buffer, return_buffer_size, required_size);
     return FALSE;
 }
 
@@ -246,7 +246,7 @@ BOOL WINAPI SetupQueryDrivesInDiskSpaceListW(HDSKSPC disk_space, PWSTR return_bu
  */
 BOOL WINAPI SetupAddToSourceListA(DWORD flags, PCSTR source)
 {
-    FIXME("0x%08x %s\n", flags, debugstr_a(source));
+    FIXME("0x%08x %s: stub\n", flags, debugstr_a(source));
     return TRUE;
 }
 
@@ -255,7 +255,7 @@ BOOL WINAPI SetupAddToSourceListA(DWORD flags, PCSTR source)
  */
 BOOL WINAPI SetupAddToSourceListW(DWORD flags, PCWSTR source)
 {
-    FIXME("0x%08x %s\n", flags, debugstr_w(source));
+    FIXME("0x%08x %s: stub\n", flags, debugstr_w(source));
     return TRUE;
 }
 
@@ -264,7 +264,7 @@ BOOL WINAPI SetupAddToSourceListW(DWORD flags, PCWSTR source)
  */
 BOOL WINAPI SetupSetSourceListA(DWORD flags, PCSTR *list, UINT count)
 {
-    FIXME("0x%08x %p %d\n", flags, list, count);
+    FIXME("0x%08x %p %d: stub\n", flags, list, count);
     return FALSE;
 }
 
@@ -273,7 +273,7 @@ BOOL WINAPI SetupSetSourceListA(DWORD flags, PCSTR *list, UINT count)
  */
 BOOL WINAPI SetupSetSourceListW(DWORD flags, PCWSTR *list, UINT count)
 {
-    FIXME("0x%08x %p %d\n", flags, list, count);
+    FIXME("0x%08x %p %d: stub\n", flags, list, count);
     return FALSE;
 }
 
@@ -310,7 +310,7 @@ BOOL WINAPI SetupDiGetClassImageIndex(PSP_CLASSIMAGELIST_DATA ClassImageListData
 BOOL WINAPI SetupDiOpenDeviceInfoA(HDEVINFO DeviceInfoSet, PCSTR DeviceInstanceId,
         HWND hwndParent, DWORD OpenFlags, PSP_DEVINFO_DATA DeviceInfoData)
 {
-    FIXME("%p %s %p 0x%08x %p\n", DeviceInfoSet, debugstr_a(DeviceInstanceId),
+    FIXME("%p %s %p 0x%08x %p: stub\n", DeviceInfoSet, debugstr_a(DeviceInstanceId),
           hwndParent, OpenFlags, DeviceInfoData);
     return FALSE;
 }
@@ -321,7 +321,7 @@ BOOL WINAPI SetupDiOpenDeviceInfoA(HDEVINFO DeviceInfoSet, PCSTR DeviceInstanceI
 BOOL WINAPI SetupDiOpenDeviceInfoW(HDEVINFO DeviceInfoSet, PCWSTR DeviceInstanceId,
         HWND hwndParent, DWORD OpenFlags, PSP_DEVINFO_DATA DeviceInfoData)
 {
-    FIXME("%p %s %p 0x%08x %p\n", DeviceInfoSet, debugstr_w(DeviceInstanceId),
+    FIXME("%p %s %p 0x%08x %p: stub\n", DeviceInfoSet, debugstr_w(DeviceInstanceId),
           hwndParent, OpenFlags, DeviceInfoData);
     return FALSE;
 }
