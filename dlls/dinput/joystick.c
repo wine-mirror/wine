@@ -94,6 +94,7 @@ HRESULT WINAPI JoystickWGenericImpl_SetProperty(LPDIRECTINPUTDEVICE8W iface, REF
 {
     JoystickGenericImpl *This = impl_from_IDirectInputDevice8W(iface);
     DWORD i;
+    ObjProps remap_props;
 
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(rguid),ph);
 
@@ -112,6 +113,28 @@ HRESULT WINAPI JoystickWGenericImpl_SetProperty(LPDIRECTINPUTDEVICE8W iface, REF
             if (ph->dwHow == DIPH_DEVICE) {
                 TRACE("proprange(%d,%d) all\n", pr->lMin, pr->lMax);
                 for (i = 0; i < This->base.data_format.wine_df->dwNumObjs; i++) {
+
+                    remap_props.lDevMin = This->props[i].lMin;
+                    remap_props.lDevMax = This->props[i].lMax;
+
+                    remap_props.lDeadZone = This->props[i].lDeadZone;
+                    remap_props.lSaturation = This->props[i].lSaturation;
+
+                    remap_props.lMin = pr->lMin;
+                    remap_props.lMax = pr->lMax;
+
+                    switch (This->base.data_format.offsets[i]) {
+                    case DIJOFS_X        : This->js.lX  = joystick_map_axis(&remap_props, This->js.lX); break;
+                    case DIJOFS_Y        : This->js.lY  = joystick_map_axis(&remap_props, This->js.lY); break;
+                    case DIJOFS_Z        : This->js.lZ  = joystick_map_axis(&remap_props, This->js.lZ); break;
+                    case DIJOFS_RX       : This->js.lRx = joystick_map_axis(&remap_props, This->js.lRx); break;
+                    case DIJOFS_RY       : This->js.lRy = joystick_map_axis(&remap_props, This->js.lRy); break;
+                    case DIJOFS_RZ       : This->js.lRz = joystick_map_axis(&remap_props, This->js.lRz); break;
+                    case DIJOFS_SLIDER(0): This->js.rglSlider[0] = joystick_map_axis(&remap_props, This->js.rglSlider[0]); break;
+                    case DIJOFS_SLIDER(1): This->js.rglSlider[1] = joystick_map_axis(&remap_props, This->js.rglSlider[1]); break;
+	            default: break;
+                    }
+
                     This->props[i].lMin = pr->lMin;
                     This->props[i].lMax = pr->lMax;
                 }
@@ -120,6 +143,30 @@ HRESULT WINAPI JoystickWGenericImpl_SetProperty(LPDIRECTINPUTDEVICE8W iface, REF
 
                 TRACE("proprange(%d,%d) obj=%d\n", pr->lMin, pr->lMax, obj);
                 if (obj >= 0) {
+
+                    /*ePSXe polls the joystick immediately after setting the range for calibration purposes, so the old values need to be remapped to the new range before it does so*/
+
+                    remap_props.lDevMin = This->props[obj].lMin;
+                    remap_props.lDevMax = This->props[obj].lMax;
+
+                    remap_props.lDeadZone = This->props[obj].lDeadZone;
+                    remap_props.lSaturation = This->props[obj].lSaturation;
+
+                    remap_props.lMin = pr->lMin;
+                    remap_props.lMax = pr->lMax;
+
+                    switch (ph->dwObj) {
+                    case DIJOFS_X        : This->js.lX  = joystick_map_axis(&remap_props, This->js.lX); break;
+                    case DIJOFS_Y        : This->js.lY  = joystick_map_axis(&remap_props, This->js.lY); break;
+                    case DIJOFS_Z        : This->js.lZ  = joystick_map_axis(&remap_props, This->js.lZ); break;
+                    case DIJOFS_RX       : This->js.lRx = joystick_map_axis(&remap_props, This->js.lRx); break;
+                    case DIJOFS_RY       : This->js.lRy = joystick_map_axis(&remap_props, This->js.lRy); break;
+                    case DIJOFS_RZ       : This->js.lRz = joystick_map_axis(&remap_props, This->js.lRz); break;
+                    case DIJOFS_SLIDER(0): This->js.rglSlider[0] = joystick_map_axis(&remap_props, This->js.rglSlider[0]); break;
+                    case DIJOFS_SLIDER(1): This->js.rglSlider[1] = joystick_map_axis(&remap_props, This->js.rglSlider[1]); break;
+		    default: break;
+                    }
+
                     This->props[obj].lMin = pr->lMin;
                     This->props[obj].lMax = pr->lMax;
                     return DI_OK;
