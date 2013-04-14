@@ -1155,9 +1155,20 @@ struct d3d8_texture *unsafe_impl_from_IDirect3DBaseTexture8(IDirect3DBaseTexture
 {
     if (!iface)
         return NULL;
-    assert(iface->lpVtbl == (const IDirect3DBaseTexture8Vtbl *)&Direct3DTexture8_Vtbl
-            || iface->lpVtbl == (const IDirect3DBaseTexture8Vtbl *)&Direct3DCubeTexture8_Vtbl
-            || iface->lpVtbl == (const IDirect3DBaseTexture8Vtbl *)&Direct3DVolumeTexture8_Vtbl);
+
+    /* SetTexture() in particular doesn't do a lot of validation on the pointer
+     * that gets passed in, and passing an invalid pointer works as long as the
+     * application doesn't try to actually render anything with it, so we print
+     * a WARN and return NULL instead of having the usual assert() here.
+     * One application affected by this is Fishdom 2. */
+    if (iface->lpVtbl != (const IDirect3DBaseTexture8Vtbl *)&Direct3DTexture8_Vtbl
+            && iface->lpVtbl != (const IDirect3DBaseTexture8Vtbl *)&Direct3DCubeTexture8_Vtbl
+            && iface->lpVtbl != (const IDirect3DBaseTexture8Vtbl *)&Direct3DVolumeTexture8_Vtbl)
+    {
+        WARN("%p is not a valid IDirect3DBaseTexture8 interface.\n", iface);
+        return NULL;
+    }
+
     return CONTAINING_RECORD(iface, struct d3d8_texture, IDirect3DBaseTexture8_iface);
 }
 
