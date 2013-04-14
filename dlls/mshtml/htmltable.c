@@ -379,8 +379,21 @@ static HRESULT WINAPI HTMLTable_get_tFoot(IHTMLTable *iface, IHTMLTableSection *
 static HRESULT WINAPI HTMLTable_get_tBodies(IHTMLTable *iface, IHTMLElementCollection **p)
 {
     HTMLTable *This = impl_from_IHTMLTable(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsIDOMHTMLCollection *nscol = NULL;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMHTMLTableElement_GetTBodies(This->nstable, &nscol);
+    if(NS_FAILED(nsres)) {
+        ERR("GetTBodies failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    *p = create_collection_from_htmlcol(This->element.node.doc, nscol);
+
+    nsIDOMHTMLCollection_Release(nscol);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLTable_get_caption(IHTMLTable *iface, IHTMLTableCaption **p)

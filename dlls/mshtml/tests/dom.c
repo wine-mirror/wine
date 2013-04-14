@@ -5466,6 +5466,7 @@ static void test_table_elem(IHTMLElement *elem)
 
     static const elem_type_t row_types[] = {ET_TR,ET_TR};
     static const elem_type_t all_types[] = {ET_TBODY,ET_TR,ET_TR,ET_TD,ET_TD};
+    static const elem_type_t tbodies_types[] = {ET_TBODY};
 
     hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLTable, (void**)&table);
     ok(hres == S_OK, "Could not get IHTMLTable iface: %08x\n", hres);
@@ -5475,7 +5476,7 @@ static void test_table_elem(IHTMLElement *elem)
     col = NULL;
     hres = IHTMLTable_get_rows(table, &col);
     ok(hres == S_OK, "get_rows failed: %08x\n", hres);
-    ok(col != NULL, "get_ros returned NULL\n");
+    ok(col != NULL, "get_rows returned NULL\n");
 
     test_elem_collection((IUnknown*)col, row_types, sizeof(row_types)/sizeof(*row_types));
     IHTMLElementCollection_Release(col);
@@ -5491,6 +5492,14 @@ static void test_table_elem(IHTMLElement *elem)
     test_elem_tag((IUnknown*)node, "TABLE");
     test_elem_all((IUnknown*)node, NULL, 0);
     IHTMLDOMNode_Release(node);
+
+    col = NULL;
+    hres = IHTMLTable_get_tBodies(table, &col);
+    ok(hres == S_OK, "get_tBodies failed: %08x\n", hres);
+    ok(col != NULL, "get_tBodies returned NULL\n");
+
+    test_elem_collection((IUnknown*)col, tbodies_types, sizeof(tbodies_types)/sizeof(*tbodies_types));
+    IHTMLElementCollection_Release(col);
 
     IHTMLTable_Release(table);
 }
