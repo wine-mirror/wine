@@ -408,7 +408,6 @@ static void test_Loader(void)
             if (nt_header.OptionalHeader.SectionAlignment >= si.dwPageSize)
             {
                 const char *start;
-                int size;
 
                 start = (const char *)hlib + nt_header.OptionalHeader.SizeOfHeaders;
                 size = ALIGN_SIZE((ULONG_PTR)start, si.dwPageSize) - (ULONG_PTR)start;
@@ -449,7 +448,6 @@ static void test_Loader(void)
                 if (nt_header.OptionalHeader.SectionAlignment >= si.dwPageSize)
                 {
                     const char *start;
-                    int size;
 
                     start = (const char *)hlib + section.VirtualAddress + section.PointerToRawData + section.SizeOfRawData;
                     size = ALIGN_SIZE((ULONG_PTR)start, si.dwPageSize) - (ULONG_PTR)start;
@@ -1302,20 +1300,20 @@ static void child_process(const char *dll_name, DWORD target_offset)
 static void test_ExitProcess(void)
 {
 #include "pshpack1.h"
-#ifdef JMP_EAX
+#ifdef __x86_64__
+    static struct section_data
+    {
+        BYTE mov_rax[2];
+        void *target;
+        BYTE jmp_rax[2];
+    } section_data = { { 0x48,0xb8 }, dll_entry_point, { 0xff,0xe0 } };
+#else
     static struct section_data
     {
         BYTE mov_eax;
         void *target;
         BYTE jmp_eax[2];
     } section_data = { 0xb8, dll_entry_point, { 0xff,0xe0 } };
-#else
-    static struct section_data
-    {
-        BYTE push;
-        void *target;
-        BYTE ret;
-    } section_data = { 0x68, dll_entry_point, 0xc3 };
 #endif
 #include "poppack.h"
     static const char filler[0x1000];
@@ -1327,7 +1325,7 @@ static void test_ExitProcess(void)
     PROCESS_INFORMATION pi;
     STARTUPINFO si = { sizeof(si) };
 
-#ifndef __i386__
+#if !defined(__i386__) && !defined(__x86_64__)
     skip("x86 specific ExitProcess test\n");
     return;
 #endif
