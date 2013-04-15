@@ -77,7 +77,7 @@ static void notify_travellog_update(HTMLDocumentObj *doc)
     IOleCommandTarget *cmdtrg;
     HRESULT hres;
 
-    if(!doc->is_webbrowser)
+    if(!doc->webbrowser)
         return;
 
     hres = IOleClientSite_QueryInterface(doc->client, &IID_IOleCommandTarget, (void**)&cmdtrg);

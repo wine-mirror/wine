@@ -544,6 +544,7 @@ struct HTMLDocumentObj {
     IOleInPlaceUIWindow *ip_window;
     IAdviseSink *view_sink;
     IDocObjectService *doc_object_service;
+    IUnknown *webbrowser;
 
     DOCHOSTUIINFO hostinfo;
 
@@ -557,7 +558,6 @@ struct HTMLDocumentObj {
     BOOL ui_active;
     BOOL window_active;
     BOOL hostui_setup;
-    BOOL is_webbrowser;
     BOOL container_locked;
     BOOL focus;
     BOOL has_popup;

@@ -246,8 +246,12 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
         This->doc_obj->doc_object_service = NULL;
     }
 
+    if(This->doc_obj->webbrowser) {
+        IUnknown_Release(This->doc_obj->webbrowser);
+        This->doc_obj->webbrowser = NULL;
+    }
+
     memset(&This->doc_obj->hostinfo, 0, sizeof(DOCHOSTUIINFO));
-    This->doc_obj->is_webbrowser = FALSE;
 
     if(!pClientSite)
         return S_OK;
@@ -348,11 +352,8 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
                      * embedder supports IWebBrowserApp.
                      */
                     hres = do_query_service((IUnknown*)pClientSite, &IID_IWebBrowserApp, &IID_IWebBrowser2, (void**)&wb);
-                    if(SUCCEEDED(hres)) {
-                        This->doc_obj->is_webbrowser = TRUE;
-                        IWebBrowser2_Release(wb);
-                    }
-
+                    if(SUCCEEDED(hres))
+                        This->doc_obj->webbrowser = (IUnknown*)wb;
                     IBrowserService_Release(browser_service);
                 }
             }

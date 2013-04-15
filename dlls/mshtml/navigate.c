@@ -2268,7 +2268,7 @@ static HRESULT navigate_uri(HTMLOuterWindow *window, IUri *uri, const WCHAR *dis
 
     TRACE("%s\n", debugstr_w(display_uri));
 
-    if(window->doc_obj && window->doc_obj->is_webbrowser && window == window->doc_obj->basedoc.window) {
+    if(window->doc_obj && window->doc_obj->webbrowser && window == window->doc_obj->basedoc.window) {
         if(!(flags & BINDING_REFRESH)) {
             BOOL cancel = FALSE;
 
