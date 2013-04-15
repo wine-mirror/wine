@@ -1105,12 +1105,7 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
             ret = GetExitCodeThread(attached_thread[i], &code);
             trace("dll: GetExitCodeThread(%u) => %d,%u\n", i, ret, code);
             ok(ret == 1, "GetExitCodeThread returned %d, expected 1\n", ret);
-            /* FIXME: remove once Wine is fixed */
-            if (expected_code == STILL_ACTIVE || expected_code == 196)
-                ok(code == expected_code, "expected thread exit code %u, got %u\n", expected_code, code);
-            else
-            todo_wine
-                ok(code == expected_code, "expected thread exit code %u, got %u\n", expected_code, code);
+            ok(code == expected_code, "expected thread exit code %u, got %u\n", expected_code, code);
         }
 
         if (test_dll_phase == 2)
@@ -1230,7 +1225,6 @@ static void child_process(const char *dll_name, DWORD target_offset)
         ok(!ret, "RtlDllShutdownInProgress returned %d\n", ret);
 
         status = pNtTerminateProcess(0, 195);
-    todo_wine
         ok(!status, "NtTerminateProcess error %#x\n", status);
 
         ret = pRtlDllShutdownInProgress();
@@ -1239,7 +1233,7 @@ static void child_process(const char *dll_name, DWORD target_offset)
         break;
 
     case 1:
-    case 2: /* ExitProcces will be called by PROCESS_DETACH handler */
+    case 2: /* ExitProcess will be called by PROCESS_DETACH handler */
         ret = pRtlDllShutdownInProgress();
         ok(!ret, "RtlDllShutdownInProgress returned %d\n", ret);
 
@@ -1283,12 +1277,7 @@ static void child_process(const char *dll_name, DWORD target_offset)
         ret = GetExitCodeThread(attached_thread[i], &code);
         trace("child: GetExitCodeThread(%u) => %d,%u\n", i, ret, code);
         ok(ret == 1, "GetExitCodeThread returned %d, expected 1\n", ret);
-        /* FIXME: remove once Wine is fixed */
-        if (expected_code == STILL_ACTIVE || expected_code == 196)
-            ok(code == expected_code, "expected thread exit code %u, got %u\n", expected_code, code);
-        else
-        todo_wine
-            ok(code == expected_code, "expected thread exit code %u, got %u\n", expected_code, code);
+        ok(code == expected_code, "expected thread exit code %u, got %u\n", expected_code, code);
     }
 
     *child_failures = winetest_get_failures();

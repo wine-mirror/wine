@@ -1082,12 +1082,16 @@ DECL_HANDLER(terminate_process)
 {
     struct process *process;
 
-    if ((process = get_process_from_handle( req->handle, PROCESS_TERMINATE )))
+    if (req->handle)
     {
-        reply->self = (current->process == process);
-        terminate_process( process, current, req->exit_code );
-        release_object( process );
+        process = get_process_from_handle( req->handle, PROCESS_TERMINATE );
+        if (!process) return;
     }
+    else process = (struct process *)grab_object( current->process );
+
+    reply->self = (current->process == process);
+    terminate_process( process, current, req->exit_code );
+    release_object( process );
 }
 
 /* fetch information about a process */
