@@ -43,6 +43,7 @@
 #include "shobjidl.h"
 #include "htiface.h"
 #include "tlogstg.h"
+#include "exdispid.h"
 #include "mshtml_test.h"
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
@@ -194,6 +195,10 @@ DEFINE_EXPECT(ActiveElementChanged);
 DEFINE_EXPECT(IsErrorUrl);
 DEFINE_EXPECT(get_LocationURL);
 DEFINE_EXPECT(CountEntries);
+DEFINE_EXPECT(FindConnectionPoint);
+DEFINE_EXPECT(EnumConnections);
+DEFINE_EXPECT(EnumConnections_Next);
+DEFINE_EXPECT(WindowClosing);
 
 static IUnknown *doc_unk;
 static IMoniker *doc_mon;
@@ -3940,6 +3945,244 @@ static HRESULT browserservice_qi(REFIID riid, void **ppv)
     return E_NOINTERFACE;
 }
 
+static HRESULT WINAPI WBE2Sink_QueryInterface(IDispatch *iface, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IDispatch, riid)) {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    *ppv = NULL;
+    ok(0, "unexpected riid: %s\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI WBE2Sink_Invoke(IDispatch *iface, DISPID dispIdMember, REFIID riid,
+        LCID lcid, WORD wFlags, DISPPARAMS *pdp, VARIANT *pVarResult,
+        EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    ok(IsEqualGUID(&IID_NULL, riid), "riid != IID_NULL\n");
+    ok(pdp != NULL, "pDispParams == NULL\n");
+    ok(pExcepInfo == NULL, "pExcepInfo=%p, expected NULL\n", pExcepInfo);
+    ok(puArgErr == NULL, "puArgErr != NULL\n");
+    ok(pVarResult == NULL, "pVarResult != NULL\n");
+    ok(wFlags == DISPATCH_METHOD, "wFlags=%08x, expected DISPATCH_METHOD\n", wFlags);
+    ok(!pdp->cNamedArgs, "pdp->cNamedArgs = %d\n", pdp->cNamedArgs);
+    ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs = %p\n", pdp->rgdispidNamedArgs);
+
+    switch(dispIdMember) {
+    case DISPID_WINDOWCLOSING: {
+        VARIANT *is_child = pdp->rgvarg+1, *cancel = pdp->rgvarg;
+
+        CHECK_EXPECT(WindowClosing);
+
+        ok(pdp->cArgs == 2, "pdp->cArgs = %d\n", pdp->cArgs);
+        ok(V_VT(is_child) == VT_BOOL, "V_VT(is_child) = %d\n", V_VT(is_child));
+        ok(!V_BOOL(is_child), "V_BOOL(is_child) = %x\n", V_BOOL(is_child));
+        ok(V_VT(cancel) == (VT_BYREF|VT_BOOL), "V_VT(cancel) = %d\n", V_VT(cancel));
+        ok(!*V_BOOLREF(cancel), "*V_BOOLREF(cancel) = %x\n", *V_BOOLREF(cancel));
+
+        *V_BOOLREF(cancel) = VARIANT_TRUE;
+        return S_OK;
+    }
+    default:
+        ok(0, "unexpected id %d\n", dispIdMember);
+    }
+
+    return E_NOTIMPL;
+}
+
+static const IDispatchVtbl WBE2SinkVtbl = {
+    WBE2Sink_QueryInterface,
+    Dispatch_AddRef,
+    Dispatch_Release,
+    Dispatch_GetTypeInfoCount,
+    Dispatch_GetTypeInfo,
+    Dispatch_GetIDsOfNames,
+    WBE2Sink_Invoke
+};
+
+static IDispatch WBE2Sink = { &WBE2SinkVtbl };
+
+static HRESULT WINAPI EnumConnections_QueryInterface(IEnumConnections *iface, REFIID riid, LPVOID *ppv)
+{
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI EnumConnections_AddRef(IEnumConnections *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI EnumConnections_Release(IEnumConnections *iface)
+{
+    return 1;
+}
+
+static BOOL next_called;
+
+static HRESULT WINAPI EnumConnections_Next(IEnumConnections *iface, ULONG cConnections, CONNECTDATA *rgcd, ULONG *pcFetched)
+{
+    CHECK_EXPECT2(EnumConnections_Next);
+
+    ok(cConnections == 1, "cConnections = %d\n", cConnections);
+    ok(pcFetched != NULL, "pcFetched == NULL\n");
+
+    if(next_called) {
+        *pcFetched = 0;
+        return S_FALSE;
+    }
+
+    next_called = TRUE;
+    rgcd->pUnk = (IUnknown*)&WBE2Sink;
+    rgcd->dwCookie = 0xdeadbeef;
+    *pcFetched = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI EnumConnections_Skip(IEnumConnections *iface, ULONG ulConnections)
+{
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI EnumConnections_Reset(IEnumConnections *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI EnumConnections_Clone(IEnumConnections *iface, IEnumConnections **ppEnum)
+{
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static const IEnumConnectionsVtbl EnumConnectionsVtbl = {
+    EnumConnections_QueryInterface,
+    EnumConnections_AddRef,
+    EnumConnections_Release,
+    EnumConnections_Next,
+    EnumConnections_Skip,
+    EnumConnections_Reset,
+    EnumConnections_Clone
+};
+
+static IEnumConnections EnumConnections = { &EnumConnectionsVtbl };
+
+static HRESULT WINAPI ConnectionPoint_QueryInterface(IConnectionPoint *iface, REFIID riid, LPVOID *ppv)
+{
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ConnectionPoint_AddRef(IConnectionPoint *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ConnectionPoint_Release(IConnectionPoint *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI ConnectionPoint_GetConnectionInterface(IConnectionPoint *iface, IID *pIID)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ConnectionPoint_GetConnectionPointContainer(IConnectionPoint *iface,
+        IConnectionPointContainer **ppCPC)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ConnectionPoint_Advise(IConnectionPoint *iface, IUnknown *pUnkSink, DWORD *pdwCookie)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ConnectionPoint_Unadvise(IConnectionPoint *iface, DWORD dwCookie)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ConnectionPoint_EnumConnections(IConnectionPoint *iface, IEnumConnections **ppEnum)
+{
+    CHECK_EXPECT(EnumConnections);
+
+    *ppEnum = &EnumConnections;
+    next_called = FALSE;
+    return S_OK;
+}
+
+static const IConnectionPointVtbl ConnectionPointVtbl =
+{
+    ConnectionPoint_QueryInterface,
+    ConnectionPoint_AddRef,
+    ConnectionPoint_Release,
+    ConnectionPoint_GetConnectionInterface,
+    ConnectionPoint_GetConnectionPointContainer,
+    ConnectionPoint_Advise,
+    ConnectionPoint_Unadvise,
+    ConnectionPoint_EnumConnections
+};
+
+static IConnectionPoint ConnectionPointWBE2 = { &ConnectionPointVtbl };
+
+static HRESULT WINAPI ConnectionPointContainer_QueryInterface(IConnectionPointContainer *iface,
+                                                              REFIID riid, void **ppv)
+{
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ConnectionPointContainer_AddRef(IConnectionPointContainer *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ConnectionPointContainer_Release(IConnectionPointContainer *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI ConnectionPointContainer_EnumConnectionPoints(IConnectionPointContainer *iface,
+        IEnumConnectionPoints **ppEnum)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPointContainer *iface,
+        REFIID riid, IConnectionPoint **ppCP)
+{
+    CHECK_EXPECT(FindConnectionPoint);
+
+    if(IsEqualGUID(riid, &DIID_DWebBrowserEvents2)) {
+        *ppCP = &ConnectionPointWBE2;
+        return S_OK;
+    }
+
+    ok(0, "unexpected riid %s\n", debugstr_guid(riid));
+    return E_NOTIMPL;
+}
+
+static const IConnectionPointContainerVtbl ConnectionPointContainerVtbl = {
+    ConnectionPointContainer_QueryInterface,
+    ConnectionPointContainer_AddRef,
+    ConnectionPointContainer_Release,
+    ConnectionPointContainer_EnumConnectionPoints,
+    ConnectionPointContainer_FindConnectionPoint
+};
+
+static IConnectionPointContainer ConnectionPointContainer = { &ConnectionPointContainerVtbl };
+
 static HRESULT WINAPI WebBrowser_QueryInterface(IWebBrowser2 *iface, REFIID riid, void **ppv)
 {
     *ppv = NULL;
@@ -3952,6 +4195,11 @@ static HRESULT WINAPI WebBrowser_QueryInterface(IWebBrowser2 *iface, REFIID riid
 
     if(IsEqualGUID(riid, &IID_IOleObject))
         return E_NOINTERFACE; /* TODO */
+
+    if(IsEqualGUID(riid, &IID_IConnectionPointContainer)) {
+        *ppv = &ConnectionPointContainer;
+        return S_OK;
+    }
 
     ok(0, "unexpected call %s\n", debugstr_guid(riid));
     return E_NOINTERFACE;
@@ -5580,6 +5828,30 @@ static void test_open_window(IHTMLDocument2 *doc, BOOL do_block)
     IHTMLWindow2_Release(window);
 }
 
+static void test_window_close(IHTMLDocument2 *doc)
+{
+    IHTMLWindow2 *window;
+    HRESULT hres;
+
+    hres = IHTMLDocument2_get_parentWindow(doc, &window);
+    ok(hres == S_OK, "get_parentWindow failed: %08x\n", hres);
+
+    SET_EXPECT(FindConnectionPoint);
+    SET_EXPECT(EnumConnections);
+    SET_EXPECT(EnumConnections_Next);
+    SET_EXPECT(WindowClosing);
+
+    hres = IHTMLWindow2_close(window);
+    ok(hres == S_OK, "close failed: %08x\n", hres);
+
+    CHECK_CALLED(FindConnectionPoint);
+    CHECK_CALLED(EnumConnections);
+    CHECK_CALLED(EnumConnections_Next);
+    CHECK_CALLED(WindowClosing);
+
+    IHTMLWindow2_Release(window);
+}
+
 static void test_elem_from_point(IHTMLDocument2 *doc)
 {
     IHTMLElement *elem;
@@ -7014,6 +7286,8 @@ static void test_HTMLDocument_http(BOOL with_wbapp)
     test_open_window(doc, TRUE);
     if(!support_wbapp) /* FIXME */
         test_open_window(doc, FALSE);
+    if(support_wbapp)
+        test_window_close(doc);
 
     test_InPlaceDeactivate(doc, TRUE);
     test_Close(doc, FALSE);
