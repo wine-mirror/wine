@@ -2021,7 +2021,7 @@ DECLARE_INTERFACE_(IDirect3DRMProgressiveMesh,IDirect3DRMVisual)
     /*** IDirect3DRMProgressiveMesh methods ***/
     STDMETHOD(Load) (THIS_ LPVOID pObjLocation, LPVOID pObjId, D3DRMLOADOPTIONS dloLoadflags,
         D3DRMLOADTEXTURECALLBACK pCallback, LPVOID lpArg) PURE;
-    STDMETHOD(GetLoadStatus) (THIS_ LPD3DRMPMESHLOADSTATUS pStatus) PURE;
+    STDMETHOD(GetLoadStatus) (THIS_ D3DRMPMESHLOADSTATUS *status) PURE;
     STDMETHOD(SetMinRenderDetail) (THIS_ D3DVALUE d3dVal) PURE;
     STDMETHOD(Abort) (THIS_ DWORD flags) PURE;
     STDMETHOD(GetFaceDetail) (THIS_ LPDWORD pCount) PURE;
