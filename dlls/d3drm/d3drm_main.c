@@ -42,13 +42,3 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
     }
     return TRUE;
 }
-
-/***********************************************************************
- *              (D3DRM.@)
- */
-HRESULT WINAPI Direct3DRMCreate(LPDIRECT3DRM* ppDirect3DRM)
-{
-    TRACE("(%p)\n", ppDirect3DRM);
-
-    return Direct3DRM_create((IUnknown**)ppDirect3DRM);
-}

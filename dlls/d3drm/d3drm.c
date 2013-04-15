@@ -1678,14 +1678,13 @@ static const struct IDirect3DRM3Vtbl Direct3DRM3_Vtbl =
     IDirect3DRM3Impl_GetOptions
 };
 
-HRESULT Direct3DRM_create(IUnknown** ppObj)
+HRESULT WINAPI Direct3DRMCreate(IDirect3DRM **d3drm)
 {
-    IDirect3DRMImpl* object;
+    IDirect3DRMImpl *object;
 
-    TRACE("(%p)\n", ppObj);
+    TRACE("d3drm %p.\n", d3drm);
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DRMImpl));
-    if (!object)
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IDirect3DRM_iface.lpVtbl = &Direct3DRM_Vtbl;
@@ -1693,7 +1692,7 @@ HRESULT Direct3DRM_create(IUnknown** ppObj)
     object->IDirect3DRM3_iface.lpVtbl = &Direct3DRM3_Vtbl;
     object->ref = 1;
 
-    *ppObj = (IUnknown*)&object->IDirect3DRM_iface;
+    *d3drm = &object->IDirect3DRM_iface;
 
     return S_OK;
 }
