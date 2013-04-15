@@ -873,10 +873,10 @@ static VOID set_installer_properties(MSIPACKAGE *package)
             msi_set_property( package->db, szMsiNTProductType, verstr, len );
             break;
     }
-    len = sprintfW( verstr, szFormat, OSVersion.dwBuildNumber );
-    msi_set_property( package->db, szWindowsBuild, verstr, len );
-    len = sprintfW( verstr, szFormat, OSVersion.wServicePackMajor );
-    msi_set_property( package->db, szServicePackLevel, verstr, len );
+    len = sprintfW( bufstr, szFormat, OSVersion.dwBuildNumber );
+    msi_set_property( package->db, szWindowsBuild, bufstr, len );
+    len = sprintfW( bufstr, szFormat, OSVersion.wServicePackMajor );
+    msi_set_property( package->db, szServicePackLevel, bufstr, len );
 
     len = sprintfW( bufstr, szFormat2, MSI_MAJORVERSION, MSI_MINORVERSION );
     msi_set_property( package->db, szVersionMsi, bufstr, len );
