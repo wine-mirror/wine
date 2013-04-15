@@ -213,9 +213,7 @@ static HRESULT WINAPI IDirect3DRMLightImpl_SetColorRGB(IDirect3DRMLight* iface,
 
     TRACE("(%p/%p)->(%f,%f,%f)\n", iface, This, red, green, blue);
 
-    This->color = D3DCOLOR_ARGB(0xff, (BYTE)(red   * 255.0f),
-                                      (BYTE)(green * 255.0f),
-                                      (BYTE)(blue  * 255.0f));
+    This->color = RGBA_MAKE((BYTE)(red * 255.0f), (BYTE)(green * 255.0f), (BYTE)(blue * 255.0f), 0xff);
 
     return D3DRM_OK;
 }
