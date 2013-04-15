@@ -1074,7 +1074,7 @@ static HRESULT WINAPI convert_GetConversionSize(IDataConvert* iface,
     }
     break;
     default:
-        FIXME("unimplemented for destination type %d\n", dst_type);
+        FIXME("unimplemented for conversion %d->%d\n", src_type, dst_type);
         return E_NOTIMPL;
     }
 
