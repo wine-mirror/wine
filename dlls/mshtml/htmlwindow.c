@@ -28,6 +28,7 @@
 #include "mshtmdid.h"
 #include "shlguid.h"
 #include "shobjidl.h"
+#include "exdispid.h"
 
 #define NO_SHLWAPI_REG
 #include "shlwapi.h"
@@ -772,10 +773,79 @@ static HRESULT WINAPI HTMLWindow2_get_history(IHTMLWindow2 *iface, IOmHistory **
     return S_OK;
 }
 
+static BOOL notify_webbrowser_close(HTMLOuterWindow *window, HTMLDocumentObj *doc)
+{
+    IConnectionPointContainer *cp_container;
+    VARIANT_BOOL cancel = VARIANT_FALSE;
+    IEnumConnections *enum_conn;
+    VARIANT args[2];
+    DISPPARAMS dp = {args, NULL, 2, 0};
+    CONNECTDATA conn_data;
+    IConnectionPoint *cp;
+    IDispatch *disp;
+    ULONG fetched;
+    HRESULT hres;
+
+    if(!doc->webbrowser)
+        return TRUE;
+
+    hres = IUnknown_QueryInterface(doc->webbrowser, &IID_IConnectionPointContainer, (void**)&cp_container);
+    if(FAILED(hres))
+        return TRUE;
+
+    hres = IConnectionPointContainer_FindConnectionPoint(cp_container, &DIID_DWebBrowserEvents2, &cp);
+    IConnectionPointContainer_Release(cp_container);
+    if(FAILED(hres))
+        return TRUE;
+
+    hres = IConnectionPoint_EnumConnections(cp, &enum_conn);
+    IConnectionPoint_Release(cp);
+    if(FAILED(hres))
+        return TRUE;
+
+    while(!cancel) {
+        conn_data.pUnk = NULL;
+        conn_data.dwCookie = 0;
+        fetched = 0;
+        hres = IEnumConnections_Next(enum_conn, 1, &conn_data, &fetched);
+        if(hres != S_OK)
+            break;
+
+        hres = IUnknown_QueryInterface(conn_data.pUnk, &IID_IDispatch, (void**)&disp);
+        IUnknown_Release(conn_data.pUnk);
+        if(FAILED(hres))
+            continue;
+
+        V_VT(args) = VT_BYREF|VT_BOOL;
+        V_BOOLREF(args) = &cancel;
+        V_VT(args+1) = VT_BOOL;
+        V_BOOL(args+1) = window->parent ? VARIANT_TRUE : VARIANT_FALSE;
+        hres = IDispatch_Invoke(disp, DISPID_WINDOWCLOSING, &IID_NULL, 0, DISPATCH_METHOD, &dp, NULL, NULL, NULL);
+        IDispatch_Release(disp);
+        if(FAILED(hres))
+            cancel = VARIANT_FALSE;
+    }
+
+    IEnumConnections_Release(enum_conn);
+    return !cancel;
+}
+
 static HRESULT WINAPI HTMLWindow2_close(IHTMLWindow2 *iface)
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
-    FIXME("(%p)->()\n", This);
+    HTMLOuterWindow *window = This->outer_window;
+
+    TRACE("(%p)\n", This);
+
+    if(!window->doc_obj) {
+        FIXME("No document object\n");
+        return E_FAIL;
+    }
+
+    if(!notify_webbrowser_close(window, window->doc_obj))
+        return S_OK;
+
+    FIXME("default action not implemented\n");
     return E_NOTIMPL;
 }
 
