@@ -1826,6 +1826,7 @@ static DWORD CALLBACK server_thread(LPVOID param)
     int last_request = 0;
     char host_header[22];
     static int test_b = 0;
+    static int test_no_cache = 0;
 
     WSAStartup(MAKEWORD(1,1), &wsaData);
 
@@ -2018,7 +2019,10 @@ static DWORD CALLBACK server_thread(LPVOID param)
         if (strstr(buffer, "GET /test_cache_control_no_cache"))
         {
             static const char no_cache_response[] = "HTTP/1.1 200 OK\r\nCache-Control: no-cache\r\n\r\nsome content";
-            send(c, no_cache_response, sizeof(no_cache_response)-1, 0);
+            if(!test_no_cache++)
+                send(c, no_cache_response, sizeof(no_cache_response)-1, 0);
+            else
+                send(c, okmsg, sizeof(okmsg)-1, 0);
         }
         if (strstr(buffer, "GET /test_cache_control_no_store"))
         {
@@ -2517,8 +2521,17 @@ static void test_no_cache(int port)
     ok(size == 12, "read %d bytes of data\n", size);
     InternetCloseHandle(req);
 
-    ret = DeleteUrlCacheEntry(cache_url);
-    ok(!ret && GetLastError()==ERROR_FILE_NOT_FOUND, "cache entry should not exist\n");
+    req = HttpOpenRequest(con, NULL, cache_control_no_cache, NULL, NULL, NULL, 0, 0);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+
+    ret = HttpSendRequest(req, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed with error %u\n", GetLastError());
+    size = 0;
+    while(InternetReadFile(req, buf, sizeof(buf), &read) && read)
+        size += read;
+    ok(size == 0, "read %d bytes of data\n", size);
+    InternetCloseHandle(req);
+    DeleteUrlCacheEntry(cache_url);
 
     req = HttpOpenRequest(con, NULL, cache_control_no_store, NULL, NULL, NULL, 0, 0);
     ok(req != NULL, "HttpOpenRequest failed\n");
