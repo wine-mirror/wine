@@ -54,8 +54,6 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD fdwReason, LPVOID fImpLoad)
         DisableThreadLibraryCalls(hinst);
         explorerframe_hinstance = hinst;
         break;
-    case DLL_PROCESS_DETACH:
-        break;
     }
     return TRUE;
 }

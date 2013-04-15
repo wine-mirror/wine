@@ -41,8 +41,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
             DisableThreadLibraryCalls(hInstDLL);
             UXTHEME_InitSystem(hInstDLL);
             break;
-        case DLL_PROCESS_DETACH:
-            break;
     }
     return TRUE;
 }

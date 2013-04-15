@@ -52,10 +52,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
         DEVENUM_hInstance = hinstDLL;
         DisableThreadLibraryCalls(hinstDLL);
 	break;
-
-    case DLL_PROCESS_DETACH:
-        DEVENUM_hInstance = 0;
-	break;
     }
     return TRUE;
 }

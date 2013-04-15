@@ -223,8 +223,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstDll, DWORD fdwReason, LPVOID lpvReserved)
     DisableThreadLibraryCalls(hInstDll);
     AVIFILE_hModule = hInstDll;
     break;
-  case DLL_PROCESS_DETACH:
-    break;
   };
 
   return TRUE;

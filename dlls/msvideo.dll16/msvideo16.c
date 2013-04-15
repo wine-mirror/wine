@@ -969,9 +969,6 @@ BOOL WINAPI VIDEO_LibMain(DWORD fdwReason, HINSTANCE hinstDLL, WORD ds,
     case DLL_PROCESS_DETACH:
         DeleteCriticalSection(&msvideo_cs);
         break;
-    case DLL_THREAD_ATTACH:
-    case DLL_THREAD_DETACH:
-        break;
     }
     return TRUE;
 }

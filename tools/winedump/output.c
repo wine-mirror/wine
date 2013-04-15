@@ -256,17 +256,17 @@ void  output_c_preamble (void)
            "            DisableThreadLibraryCalls(instance);\n");
 
   fprintf (cfile,
-           "            break;\n"
-           "        case DLL_PROCESS_DETACH:\n");
+           "            break;\n");
 
   if (globals.forward_dll)
     fprintf (cfile,
+           "        case DLL_PROCESS_DETACH:\n"
            "            FreeLibrary(hDLL);\n"
-           "            TRACE(\"Forwarding DLL (%s) freed\\n\");\n",
+           "            TRACE(\"Forwarding DLL (%s) freed\\n\");\n"
+           "            break;\n",
            globals.forward_dll);
 
   fprintf (cfile,
-           "            break;\n"
            "    }\n\n"
            "    return TRUE;\n}\n");
 }

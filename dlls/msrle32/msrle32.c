@@ -1917,9 +1917,6 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD dwReason, LPVOID lpReserved)
     DisableThreadLibraryCalls(hModule);
     MSRLE32_hModule = hModule;
     break;
-
-  case DLL_PROCESS_DETACH:
-    break;
   }
 
   return TRUE;

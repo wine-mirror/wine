@@ -184,8 +184,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     case DLL_PROCESS_ATTACH:
         MMC_hInstance = hinstDLL;
         break;
-    case DLL_PROCESS_DETACH:
-        break;
     }
     return TRUE;
 }

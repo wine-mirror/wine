@@ -573,10 +573,6 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 	    activeDS.context = gp_context_new ();
 #endif
             break;
-
-        case DLL_PROCESS_DETACH:
-	    GPHOTO2_instance = NULL;
-            break;
     }
 
     return TRUE;
