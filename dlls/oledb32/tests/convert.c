@@ -917,6 +917,34 @@ todo_wine
     IDataConvert_Release(convert);
 }
 
+static void test_converttoi8(void)
+{
+    IDataConvert *convert;
+    HRESULT hr;
+    LARGE_INTEGER dst;
+    BYTE src[20];
+    DBSTATUS dst_status;
+    DBLENGTH dst_len;
+
+    hr = CoCreateInstance(&CLSID_OLEDB_CONVERSIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IDataConvert, (void**)&convert);
+    if(FAILED(hr))
+    {
+        win_skip("Unable to load oledb conversion library\n");
+        return;
+    }
+
+    dst.QuadPart = 0xcc;
+    ((ULARGE_INTEGER*)src)->QuadPart = 1234;
+    dst_len = 0x1234;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_I8, DBTYPE_I8, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
+    ok(dst.QuadPart == 1234, "got %d\n", (int)dst.QuadPart);
+
+    IDataConvert_Release(convert);
+}
+
 static void test_converttobstr(void)
 {
     IDataConvert *convert;
@@ -2530,6 +2558,7 @@ START_TEST(convert)
     test_canconvert();
     test_converttoi2();
     test_converttoi4();
+    test_converttoi8();
     test_converttostr();
     test_converttobstr();
     test_converttowstr();

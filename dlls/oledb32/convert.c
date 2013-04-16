@@ -287,6 +287,17 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         break;
     }
 
+    case DBTYPE_I8:
+    {
+        LONGLONG *d = dst;
+        switch(src_type)
+        {
+        case DBTYPE_I8:          *d = *(LONGLONG*)src; hr = S_OK;              break;
+        default: FIXME("Unimplemented conversion %04x -> I8\n", src_type); return E_NOTIMPL;
+        }
+        break;
+    }
+
     case DBTYPE_R4:
     {
         FLOAT *d = dst;
