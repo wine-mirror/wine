@@ -109,6 +109,7 @@ DEFINE_EXPECT(Invoke_TITLECHANGE);
 DEFINE_EXPECT(Invoke_NAVIGATECOMPLETE2);
 DEFINE_EXPECT(Invoke_PROGRESSCHANGE);
 DEFINE_EXPECT(Invoke_DOCUMENTCOMPLETE);
+DEFINE_EXPECT(Invoke_WINDOWCLOSING);
 DEFINE_EXPECT(Invoke_282);
 DEFINE_EXPECT(EnableModeless_TRUE);
 DEFINE_EXPECT(EnableModeless_FALSE);
@@ -658,7 +659,7 @@ static HRESULT WINAPI WebBrowserEvents2_QueryInterface(IDispatch *iface, REFIID 
 {
     *ppv = NULL;
 
-    if(IsEqualGUID(&DIID_DWebBrowserEvents2, riid)) {
+    if(IsEqualGUID(&DIID_DWebBrowserEvents2, riid) || IsEqualGUID(&IID_IDispatch, riid)) {
         *ppv = iface;
         return S_OK;
     }
@@ -950,6 +951,21 @@ static HRESULT WINAPI WebBrowserEvents2_Invoke(IDispatch *iface, DISPID dispIdMe
     case DISPID_DOCUMENTCOMPLETE:
         test_documentcomplete(pDispParams);
         break;
+
+    case DISPID_WINDOWCLOSING: {
+        VARIANT *is_child = pDispParams->rgvarg+1, *cancel = pDispParams->rgvarg;
+
+        CHECK_EXPECT(Invoke_WINDOWCLOSING);
+
+        ok(pDispParams->cArgs == 2, "pdp->cArgs = %d\n", pDispParams->cArgs);
+        ok(V_VT(is_child) == VT_BOOL, "V_VT(is_child) = %d\n", V_VT(is_child));
+        ok(!V_BOOL(is_child), "V_BOOL(is_child) = %x\n", V_BOOL(is_child));
+        ok(V_VT(cancel) == (VT_BYREF|VT_BOOL), "V_VT(cancel) = %d\n", V_VT(cancel));
+        ok(!*V_BOOLREF(cancel), "*V_BOOLREF(cancel) = %x\n", *V_BOOLREF(cancel));
+
+        *V_BOOLREF(cancel) = VARIANT_TRUE;
+        return S_OK;
+    }
 
     case 282: /* FIXME */
         CHECK_EXPECT2(Invoke_282);
@@ -3085,6 +3101,28 @@ static void test_external(IWebBrowser2 *unk)
     IDocHostUIHandler2_Release(dochost);
 }
 
+static void test_htmlwindow_close(IWebBrowser2 *wb)
+{
+    IHTMLWindow2 *window;
+    IHTMLDocument2 *doc;
+    HRESULT hres;
+
+    doc = get_document(wb);
+
+    hres = IHTMLDocument2_get_parentWindow(doc, &window);
+    ok(hres == S_OK, "get_parentWindow failed: %08x\n", hres);
+    IHTMLDocument2_Release(doc);
+
+    SET_EXPECT(Invoke_WINDOWCLOSING);
+
+    hres = IHTMLWindow2_close(window);
+    ok(hres == S_OK, "close failed: %08x\n", hres);
+
+    CHECK_CALLED(Invoke_WINDOWCLOSING);
+
+    IHTMLWindow2_Release(window);
+}
+
 static void test_TranslateAccelerator(IWebBrowser2 *unk)
 {
     IOleClientSite *doc_clientsite;
@@ -3404,6 +3442,7 @@ static void test_WebBrowser(BOOL do_download, BOOL do_close)
     }
 
     test_external(webbrowser);
+    test_htmlwindow_close(webbrowser);
 
     if(do_close)
         test_Close(webbrowser, do_download);
