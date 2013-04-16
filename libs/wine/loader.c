@@ -761,6 +761,12 @@ static void apple_main_thread( void (*init_func)(void) )
     CFRunLoopSourceContext source_context = { 0 };
     CFRunLoopSourceRef source;
 
+    if (!pthread_main_np())
+    {
+        init_func();
+        return;
+    }
+
     /* Multi-processing Services can get confused about the main thread if the
      * first time it's used is on a secondary thread.  Use it here to make sure
      * that doesn't happen. */
