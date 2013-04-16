@@ -41,7 +41,7 @@ DEFINE_GUID(IID_IDirect3DRM3,               0x4516ec83, 0x8f20, 0x11d0, 0x9b, 0x
 typedef struct IDirect3DRM2 *LPDIRECT3DRM2, **LPLPDIRECT3DRM2;
 typedef struct IDirect3DRM3 *LPDIRECT3DRM3, **LPLPDIRECT3DRM3;
 
-HRESULT WINAPI Direct3DRMCreate(LPDIRECT3DRM* ppDirect3DRM);
+HRESULT WINAPI Direct3DRMCreate(struct IDirect3DRM **d3drm);
 
 /*****************************************************************************
  * IDirect3DRMObject interface

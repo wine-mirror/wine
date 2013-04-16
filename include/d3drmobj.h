@@ -261,7 +261,7 @@ DECLARE_INTERFACE_(IDirect3DRMObject2,IUnknown)
     STDMETHOD(Clone)(THIS_ LPUNKNOWN pUnkOuter, REFIID riid, LPVOID *ppvObj) PURE;
     STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK pFunc, LPVOID pArg) PURE;
     STDMETHOD(GetClientData)(THIS_ DWORD id, LPVOID* ppData) PURE;
-    STDMETHOD(GetDirect3DRM)(THIS_ LPDIRECT3DRM* ppDirect3DRM) PURE;
+    STDMETHOD(GetDirect3DRM)(THIS_ struct IDirect3DRM **d3drm) PURE;
     STDMETHOD(GetName)(THIS_ LPDWORD pSize, LPSTR pName) PURE;
     STDMETHOD(SetClientData)(THIS_ DWORD id, LPVOID pData, DWORD flags) PURE;
     STDMETHOD(SetName)(THIS_ LPCSTR pName) PURE;
