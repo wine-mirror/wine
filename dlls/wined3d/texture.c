@@ -2,7 +2,7 @@
  * Copyright 2002-2005 Jason Edmeades
  * Copyright 2002-2005 Raphael Junqueira
  * Copyright 2005 Oliver Stieber
- * Copyright 2007-2008 Stefan Dösinger for CodeWeavers
+ * Copyright 2007-2009, 2013 Stefan Dösinger for CodeWeavers
  * Copyright 2009-2011 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
@@ -760,7 +760,6 @@ static HRESULT cubetexture_init(struct wined3d_texture *texture, UINT edge_lengt
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct wined3d_format *format = wined3d_get_format(gl_info, format_id);
-    UINT pow2_edge_length;
     unsigned int i, j;
     UINT tmp_w;
     HRESULT hr;
@@ -802,6 +801,27 @@ static HRESULT cubetexture_init(struct wined3d_texture *texture, UINT edge_lengt
         TRACE("Calculated levels = %u.\n", levels);
     }
 
+    if (!gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO])
+    {
+        UINT pow2_edge_length = 1;
+        while (pow2_edge_length < edge_length) pow2_edge_length <<= 1;
+
+        if (edge_length != pow2_edge_length)
+        {
+            if (pool == WINED3D_POOL_SCRATCH)
+            {
+                /* SCRATCH textures cannot be used for texturing */
+                WARN("Creating a scratch NPOT cube texture despite lack of HW support.\n");
+            }
+            else
+            {
+                WARN("Attempted to create a NPOT cube texture (edge_length=%u) without GL support.\n",
+                        edge_length);
+                return WINED3DERR_INVALIDCALL;
+            }
+        }
+    }
+
     hr = wined3d_texture_init(texture, &texture2d_ops, 6, levels,
             WINED3D_RTYPE_CUBE_TEXTURE, device, usage, format, pool,
             parent, parent_ops, &texture2d_resource_ops);
@@ -811,27 +831,10 @@ static HRESULT cubetexture_init(struct wined3d_texture *texture, UINT edge_lengt
         return hr;
     }
 
-    /* Find the nearest pow2 match. */
-    pow2_edge_length = 1;
-    while (pow2_edge_length < edge_length) pow2_edge_length <<= 1;
-
-    if (gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] || (edge_length == pow2_edge_length))
-    {
-        /* Precalculated scaling for 'faked' non power of two texture coords. */
-        texture->pow2_matrix[0] = 1.0f;
-        texture->pow2_matrix[5] = 1.0f;
-        texture->pow2_matrix[10] = 1.0f;
-        texture->pow2_matrix[15] = 1.0f;
-    }
-    else
-    {
-        /* Precalculated scaling for 'faked' non power of two texture coords. */
-        texture->pow2_matrix[0] = ((float)edge_length) / ((float)pow2_edge_length);
-        texture->pow2_matrix[5] = ((float)edge_length) / ((float)pow2_edge_length);
-        texture->pow2_matrix[10] = ((float)edge_length) / ((float)pow2_edge_length);
-        texture->pow2_matrix[15] = 1.0f;
-        texture->flags &= ~WINED3D_TEXTURE_POW2_MAT_IDENT;
-    }
+    texture->pow2_matrix[0] = 1.0f;
+    texture->pow2_matrix[5] = 1.0f;
+    texture->pow2_matrix[10] = 1.0f;
+    texture->pow2_matrix[15] = 1.0f;
     texture->target = GL_TEXTURE_CUBE_MAP_ARB;
 
     /* Generate all the surfaces. */
@@ -906,12 +909,19 @@ static HRESULT texture_init(struct wined3d_texture *texture, UINT width, UINT he
 
         if (pow2_width != width || pow2_height != height)
         {
-            if (levels > 1)
+            /* levels == 0 returns an error as well */
+            if (levels != 1)
             {
-                WARN("Attempted to create a mipmapped np2 texture without unconditional np2 support.\n");
-                return WINED3DERR_INVALIDCALL;
+                if (pool == WINED3D_POOL_SCRATCH)
+                {
+                    WARN("Creating a scratch mipmapped NPOT texture despite lack of HW support.\n");
+                }
+                else
+                {
+                    WARN("Attempted to create a mipmapped NPOT texture without unconditional NPOT support.\n");
+                    return WINED3DERR_INVALIDCALL;
+                }
             }
-            levels = 1;
         }
     }
 
@@ -1186,6 +1196,31 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, UINT width, U
         TRACE("Calculated levels = %u.\n", levels);
     }
 
+    if (!gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO])
+    {
+        UINT pow2_w, pow2_h, pow2_d;
+        pow2_w = 1;
+        while (pow2_w < width) pow2_w <<= 1;
+        pow2_h = 1;
+        while (pow2_h < height) pow2_h <<= 1;
+        pow2_d = 1;
+        while (pow2_d < depth) pow2_d <<= 1;
+
+        if (pow2_w != width || pow2_h != height || pow2_d != depth)
+        {
+            if (pool == WINED3D_POOL_SCRATCH)
+            {
+                WARN("Creating a scratch NPOT volume texture despite lack of HW support.\n");
+            }
+            else
+            {
+                WARN("Attempted to create a NPOT volume texture (%u,%u,%u) without GL support.\n",
+                        width, height, depth);
+                return WINED3DERR_INVALIDCALL;
+            }
+        }
+    }
+
     hr = wined3d_texture_init(texture, &texture3d_ops, 1, levels,
             WINED3D_RTYPE_VOLUME_TEXTURE, device, usage, format, pool,
             parent, parent_ops, &texture3d_resource_ops);
@@ -1195,7 +1230,6 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, UINT width, U
         return hr;
     }
 
-    /* Is NP2 support for volumes needed? */
     texture->pow2_matrix[0] = 1.0f;
     texture->pow2_matrix[5] = 1.0f;
     texture->pow2_matrix[10] = 1.0f;
