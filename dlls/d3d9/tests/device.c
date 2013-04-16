@@ -4653,7 +4653,10 @@ static void test_cube_texture_levels(IDirect3DDevice9 *device)
     D3DSURFACE_DESC desc;
     DWORD levels;
     HRESULT hr;
+    D3DCAPS9 caps;
 
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
     if (FAILED(IDirect3DDevice9_CreateCubeTexture(device, 64, 0, 0,
             D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &texture, NULL)))
     {
@@ -4662,7 +4665,10 @@ static void test_cube_texture_levels(IDirect3DDevice9 *device)
     }
 
     levels = IDirect3DCubeTexture9_GetLevelCount(texture);
-    ok(levels == 7, "Got unexpected levels %u.\n", levels);
+    if (caps.TextureCaps & D3DPTEXTURECAPS_MIPCUBEMAP)
+        ok(levels == 7, "Got unexpected levels %u.\n", levels);
+    else
+        ok(levels == 1, "Got unexpected levels %u.\n", levels);
 
     hr = IDirect3DCubeTexture9_GetLevelDesc(texture, levels - 1, &desc);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
