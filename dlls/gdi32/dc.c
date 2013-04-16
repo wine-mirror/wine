@@ -1311,6 +1311,84 @@ BOOL WINAPI GetDeviceGammaRamp(HDC hDC, LPVOID ptr)
     return ret;
 }
 
+static BOOL check_gamma_ramps(void *ptr)
+{
+    WORD *ramp = ptr;
+
+    while (ramp < (WORD*)ptr + 3 * 256)
+    {
+        float r_x, r_y, r_lx, r_ly, r_d, r_v, r_e, g_avg, g_min, g_max;
+        unsigned i, f, l, g_n, c;
+
+        f = ramp[0];
+        l = ramp[255];
+        if (f >= l)
+        {
+            TRACE("inverted or flat gamma ramp (%d->%d), rejected\n", f, l);
+            return FALSE;
+        }
+        r_d = l - f;
+        g_min = g_max = g_avg = 0.0;
+
+        /* check gamma ramp entries to estimate the gamma */
+        TRACE("analyzing gamma ramp (%d->%d)\n", f, l);
+        for (i=1, g_n=0; i<255; i++)
+        {
+            if (ramp[i] < f || ramp[i] > l)
+            {
+                TRACE("strange gamma ramp ([%d]=%d for %d->%d), rejected\n", i, ramp[i], f, l);
+                return FALSE;
+            }
+            c = ramp[i] - f;
+            if (!c) continue; /* avoid log(0) */
+
+            /* normalize entry values into 0..1 range */
+            r_x = i/255.0; r_y = c / r_d;
+            /* compute logarithms of values */
+            r_lx = log(r_x); r_ly = log(r_y);
+            /* compute gamma for this entry */
+            r_v = r_ly / r_lx;
+            /* compute differential (error estimate) for this entry */
+            /* some games use table-based logarithms that magnifies the error by 128 */
+            r_e = -r_lx * 128 / (c * r_lx * r_lx);
+
+            /* compute min & max while compensating for estimated error */
+            if (!g_n || g_min > (r_v + r_e)) g_min = r_v + r_e;
+            if (!g_n || g_max < (r_v - r_e)) g_max = r_v - r_e;
+
+            /* add to average */
+            g_avg += r_v;
+            g_n++;
+        }
+
+        if (!g_n)
+        {
+            TRACE("no gamma data, shouldn't happen\n");
+            return FALSE;
+        }
+        g_avg /= g_n;
+        TRACE("low bias is %d, high is %d, gamma is %5.3f\n", f, 65535-l, g_avg);
+
+        /* check that the gamma is reasonably uniform across the ramp */
+        if (g_max - g_min > 12.8)
+        {
+            TRACE("ramp not uniform (max=%f, min=%f, avg=%f), rejected\n", g_max, g_min, g_avg);
+            return FALSE;
+        }
+
+        /* check that the gamma is not too bright */
+        if (g_avg < 0.2)
+        {
+            TRACE("too bright gamma ( %5.3f), rejected\n", g_avg);
+            return FALSE;
+        }
+
+        ramp += 256;
+    }
+
+    return TRUE;
+}
+
 /***********************************************************************
  *           SetDeviceGammaRamp    (GDI32.@)
  */
@@ -1325,7 +1403,9 @@ BOOL WINAPI SetDeviceGammaRamp(HDC hDC, LPVOID ptr)
         if (GetObjectType( hDC ) != OBJ_MEMDC)
         {
             PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetDeviceGammaRamp );
-            ret = physdev->funcs->pSetDeviceGammaRamp( physdev, ptr );
+
+            if (check_gamma_ramps(ptr))
+                ret = physdev->funcs->pSetDeviceGammaRamp( physdev, ptr );
         }
         else SetLastError( ERROR_INVALID_PARAMETER );
 	release_dc_ptr( dc );
