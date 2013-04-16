@@ -651,7 +651,6 @@ static void shader_glsl_load_constantsB(const struct wined3d_shader *shader, con
         snprintf(tmp_name, sizeof(tmp_name), "%s_b[%i]", prefix, i);
         tmp_loc = GL_EXTCALL(glGetUniformLocationARB(programId, tmp_name));
         GL_EXTCALL(glUniform1ivARB(tmp_loc, 1, &constants[i]));
-        checkGLcall("glUniform1ivARB");
     }
 
     /* Load immediate constants */
@@ -666,13 +665,11 @@ static void shader_glsl_load_constantsB(const struct wined3d_shader *shader, con
 
         snprintf(tmp_name, sizeof(tmp_name), "%s_b[%i]", prefix, idx);
         tmp_loc = GL_EXTCALL(glGetUniformLocationARB(programId, tmp_name));
-        if (tmp_loc != -1) {
-            /* We found this uniform name in the program - go ahead and send the data */
-            GL_EXTCALL(glUniform1ivARB(tmp_loc, 1, values));
-            checkGLcall("glUniform1ivARB");
-        }
+        GL_EXTCALL(glUniform1ivARB(tmp_loc, 1, values));
         ptr = list_next(&shader->constantsB, ptr);
     }
+
+    checkGLcall("shader_glsl_load_constantsB()");
 }
 
 static void reset_program_constant_version(struct wine_rb_entry *entry, void *context)
