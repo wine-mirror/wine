@@ -39,6 +39,7 @@ struct cocoa_app_startup_info {
     NSConditionLock*    lock;
     unsigned long long  tickcount;
     uint64_t            uptime_ns;
+    BOOL                success;
 };
 
 
@@ -61,12 +62,23 @@ static void run_cocoa_app(void* info)
 {
     struct cocoa_app_startup_info* startup_info = info;
     NSConditionLock* lock = startup_info->lock;
+    BOOL created_app = FALSE;
 
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 
-    [WineApplication sharedApplication];
-    [NSApp setDelegate:(WineApplication*)NSApp];
-    [NSApp computeEventTimeAdjustmentFromTicks:startup_info->tickcount uptime:startup_info->uptime_ns];
+    if (!NSApp)
+    {
+        [WineApplication sharedApplication];
+        created_app = TRUE;
+    }
+
+    if ([NSApp respondsToSelector:@selector(setWineController:)])
+    {
+        WineApplicationController* controller = [WineApplicationController sharedController];
+        [NSApp setWineController:controller];
+        [controller computeEventTimeAdjustmentFromTicks:startup_info->tickcount uptime:startup_info->uptime_ns];
+        startup_info->success = TRUE;
+    }
 
     /* Retain the lock while we're using it, so macdrv_start_cocoa_app()
        doesn't deallocate it in the middle of us unlocking it. */
@@ -77,8 +89,11 @@ static void run_cocoa_app(void* info)
 
     [pool release];
 
-    /* Never returns */
-    [NSApp run];
+    if (created_app && startup_info->success)
+    {
+        /* Never returns */
+        [NSApp run];
+    }
 }
 
 
@@ -109,6 +124,7 @@ int macdrv_start_cocoa_app(unsigned long long tickcount)
 
     startup_info.lock = [[NSConditionLock alloc] initWithCondition:COCOA_APP_NOT_RUNNING];
     startup_info.tickcount = tickcount;
+    startup_info.success = FALSE;
 
     mach_timebase_info(&mach_timebase);
     startup_info.uptime_ns = uptime_mach * mach_timebase.numer / mach_timebase.denom;
@@ -128,7 +144,7 @@ int macdrv_start_cocoa_app(unsigned long long tickcount)
         if ([startup_info.lock lockWhenCondition:COCOA_APP_RUNNING beforeDate:timeLimit])
         {
             [startup_info.lock unlock];
-            ret = 0;
+            ret = !startup_info.success;
         }
     }
 

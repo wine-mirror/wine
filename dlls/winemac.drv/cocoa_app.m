@@ -32,6 +32,28 @@ static NSString* const WineAppWaitQueryResponseMode = @"WineAppWaitQueryResponse
 int macdrv_err_on;
 
 
+@implementation WineApplication
+
+@synthesize wineController;
+
+    - (void) sendEvent:(NSEvent*)anEvent
+    {
+        if (![wineController handleEvent:anEvent])
+        {
+            [super sendEvent:anEvent];
+            [wineController didSendEvent:anEvent];
+        }
+    }
+
+    - (void) setWineController:(WineApplicationController*)newController
+    {
+        wineController = newController;
+        [self setDelegate:wineController];
+    }
+
+@end
+
+
 @interface WarpRecord : NSObject
 {
     CGEventTimestamp timeBefore, timeAfter;
@@ -53,23 +75,38 @@ int macdrv_err_on;
 @end;
 
 
-@interface WineApplication ()
+@interface WineApplicationController ()
 
 @property (readwrite, copy, nonatomic) NSEvent* lastFlagsChanged;
 @property (copy, nonatomic) NSArray* cursorFrames;
 @property (retain, nonatomic) NSTimer* cursorTimer;
 @property (retain, nonatomic) NSImage* applicationIcon;
 
+    - (void) setupObservations;
+    - (void) applicationDidBecomeActive:(NSNotification *)notification;
+
     static void PerformRequest(void *info);
 
 @end
 
 
-@implementation WineApplication
+@implementation WineApplicationController
 
     @synthesize keyboardType, lastFlagsChanged;
     @synthesize orderedWineWindows, applicationIcon;
     @synthesize cursorFrames, cursorTimer;
+
+    + (WineApplicationController*) sharedController
+    {
+        static WineApplicationController* sharedController;
+        static dispatch_once_t once;
+
+        dispatch_once(&once, ^{
+            sharedController = [[self alloc] init];
+        });
+
+        return sharedController;
+    }
 
     - (id) init
     {
@@ -106,6 +143,13 @@ int macdrv_err_on;
                 [self release];
                 return nil;
             }
+
+            [self setupObservations];
+
+            keyboardType = LMGetKbdType();
+
+            if ([NSApp isActive])
+                [self applicationDidBecomeActive:nil];
         }
         return self;
     }
@@ -133,7 +177,7 @@ int macdrv_err_on;
 
     - (void) transformProcessToForeground
     {
-        if ([self activationPolicy] != NSApplicationActivationPolicyRegular)
+        if ([NSApp activationPolicy] != NSApplicationActivationPolicyRegular)
         {
             NSMenu* mainMenu;
             NSMenu* submenu;
@@ -141,8 +185,8 @@ int macdrv_err_on;
             NSString* title;
             NSMenuItem* item;
 
-            [self setActivationPolicy:NSApplicationActivationPolicyRegular];
-            [self activateIgnoringOtherApps:YES];
+            [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
+            [NSApp activateIgnoringOtherApps:YES];
 
             mainMenu = [[[NSMenu alloc] init] autorelease];
 
@@ -169,10 +213,10 @@ int macdrv_err_on;
             [item setSubmenu:submenu];
             [mainMenu addItem:item];
 
-            [self setMainMenu:mainMenu];
-            [self setWindowsMenu:submenu];
+            [NSApp setMainMenu:mainMenu];
+            [NSApp setWindowsMenu:submenu];
 
-            [self setApplicationIconImage:self.applicationIcon];
+            [NSApp setApplicationIconImage:self.applicationIcon];
         }
     }
 
@@ -245,7 +289,7 @@ int macdrv_err_on;
     {
         macdrv_event* event;
 
-        [NSApp invalidateGotFocusEvents];
+        [self invalidateGotFocusEvents];
 
         event = macdrv_create_event(WINDOW_GOT_FOCUS, window);
         event->window_got_focus.serial = windowFocusSerial;
@@ -263,7 +307,7 @@ int macdrv_err_on;
         {
             triedWindows = (NSMutableSet*)event->window_got_focus.tried_windows;
             [triedWindows addObject:(WineWindow*)event->window];
-            for (NSWindow* window in [keyWindows arrayByAddingObjectsFromArray:[self orderedWindows]])
+            for (NSWindow* window in [keyWindows arrayByAddingObjectsFromArray:[self orderedWineWindows]])
             {
                 if (![triedWindows containsObject:window] && [window canBecomeKeyWindow])
                 {
@@ -673,12 +717,12 @@ int macdrv_err_on;
         }
 
         self.applicationIcon = nsimage;
-        [self setApplicationIconImage:nsimage];
+        [NSApp setApplicationIconImage:nsimage];
     }
 
     - (void) handleCommandTab
     {
-        if ([self isActive])
+        if ([NSApp isActive])
         {
             NSRunningApplication* thisApp = [NSRunningApplication currentApplication];
             NSRunningApplication* app;
@@ -700,7 +744,7 @@ int macdrv_err_on;
                     {
                         // There's another visible app.  Just hide ourselves and let
                         // the system activate the other app.
-                        [self hide:self];
+                        [NSApp hide:self];
                         return;
                     }
 
@@ -894,8 +938,8 @@ int macdrv_err_on;
     CGEventRef WineAppEventTapCallBack(CGEventTapProxy proxy, CGEventType type,
                                        CGEventRef event, void *refcon)
     {
-        WineApplication* app = refcon;
-        return [app eventTapWithProxy:proxy type:type event:event];
+        WineApplicationController* controller = refcon;
+        return [controller eventTapWithProxy:proxy type:type event:event];
     }
 
     - (BOOL) installEventTap
@@ -1042,7 +1086,7 @@ int macdrv_err_on;
 
         clippingCursor = TRUE;
         cursorClipRect = rect;
-        if ([self isActive])
+        if ([NSApp isActive])
             [self activateCursorClipping];
 
         return TRUE;
@@ -1061,16 +1105,19 @@ int macdrv_err_on;
     }
 
 
-    /*
-     * ---------- NSApplication method overrides ----------
-     */
-    - (void) sendEvent:(NSEvent*)anEvent
+    // Returns TRUE if the event was handled and caller should do nothing more
+    // with it.  Returns FALSE if the caller should process it as normal and
+    // then call -didSendEvent:.
+    - (BOOL) handleEvent:(NSEvent*)anEvent
+    {
+        if ([anEvent type] == NSFlagsChanged)
+            self.lastFlagsChanged = anEvent;
+        return FALSE;
+    }
+
+    - (void) didSendEvent:(NSEvent*)anEvent
     {
         NSEventType type = [anEvent type];
-        if (type == NSFlagsChanged)
-            self.lastFlagsChanged = anEvent;
-
-        [super sendEvent:anEvent];
 
         if (type == NSMouseMoved || type == NSLeftMouseDragged ||
             type == NSRightMouseDragged || type == NSOtherMouseDragged)
@@ -1089,7 +1136,7 @@ int macdrv_err_on;
 
                 windowUnderNumber = [NSWindow windowNumberAtPoint:point
                                       belowWindowWithWindowNumber:0];
-                targetWindow = (WineWindow*)[self windowWithWindowNumber:windowUnderNumber];
+                targetWindow = (WineWindow*)[NSApp windowWithWindowNumber:windowUnderNumber];
             }
             else
                 targetWindow = (WineWindow*)[anEvent window];
@@ -1144,6 +1191,40 @@ int macdrv_err_on;
                 [self handleCommandTab];
             }
         }
+    }
+
+    - (void) setupObservations
+    {
+        NSNotificationCenter* nc = [NSNotificationCenter defaultCenter];
+
+        [nc addObserverForName:NSWindowDidBecomeKeyNotification
+                        object:nil
+                         queue:nil
+                    usingBlock:^(NSNotification *note){
+            NSWindow* window = [note object];
+            [keyWindows removeObjectIdenticalTo:window];
+            [keyWindows insertObject:window atIndex:0];
+        }];
+
+        [nc addObserverForName:NSWindowWillCloseNotification
+                        object:nil
+                         queue:[NSOperationQueue mainQueue]
+                    usingBlock:^(NSNotification *note){
+            NSWindow* window = [note object];
+            [keyWindows removeObjectIdenticalTo:window];
+            [orderedWineWindows removeObjectIdenticalTo:window];
+            if (window == lastTargetWindow)
+                lastTargetWindow = nil;
+        }];
+
+        [nc addObserver:self
+               selector:@selector(keyboardSelectionDidChange)
+                   name:NSTextInputContextKeyboardSelectionDidChangeNotification
+                 object:nil];
+
+        /* The above notification isn't sent unless the NSTextInputContext
+           class has initialized itself.  Poke it. */
+        [NSTextInputContext self];
     }
 
 
@@ -1249,42 +1330,6 @@ int macdrv_err_on;
         return ret;
     }
 
-    - (void)applicationWillFinishLaunching:(NSNotification *)notification
-    {
-        NSNotificationCenter* nc = [NSNotificationCenter defaultCenter];
-
-        [nc addObserverForName:NSWindowDidBecomeKeyNotification
-                        object:nil
-                         queue:nil
-                    usingBlock:^(NSNotification *note){
-            NSWindow* window = [note object];
-            [keyWindows removeObjectIdenticalTo:window];
-            [keyWindows insertObject:window atIndex:0];
-        }];
-
-        [nc addObserverForName:NSWindowWillCloseNotification
-                        object:nil
-                         queue:[NSOperationQueue mainQueue]
-                    usingBlock:^(NSNotification *note){
-            NSWindow* window = [note object];
-            [keyWindows removeObjectIdenticalTo:window];
-            [orderedWineWindows removeObjectIdenticalTo:window];
-            if (window == lastTargetWindow)
-                lastTargetWindow = nil;
-        }];
-
-        [nc addObserver:self
-               selector:@selector(keyboardSelectionDidChange)
-                   name:NSTextInputContextKeyboardSelectionDidChangeNotification
-                 object:nil];
-
-        /* The above notification isn't sent unless the NSTextInputContext
-           class has initialized itself.  Poke it. */
-        [NSTextInputContext self];
-
-        self.keyboardType = LMGetKbdType();
-    }
-
     - (void)applicationWillResignActive:(NSNotification *)notification
     {
         [self deactivateCursorClipping];
@@ -1305,17 +1350,17 @@ int macdrv_err_on;
  */
 static void PerformRequest(void *info)
 {
-    WineApplication* app = (WineApplication*)NSApp;
+    WineApplicationController* controller = [WineApplicationController sharedController];
 
     for (;;)
     {
         __block dispatch_block_t block;
 
-        dispatch_sync(app->requestsManipQueue, ^{
-            if ([app->requests count])
+        dispatch_sync(controller->requestsManipQueue, ^{
+            if ([controller->requests count])
             {
-                block = (dispatch_block_t)[[app->requests objectAtIndex:0] retain];
-                [app->requests removeObjectAtIndex:0];
+                block = (dispatch_block_t)[[controller->requests objectAtIndex:0] retain];
+                [controller->requests removeObjectAtIndex:0];
             }
             else
                 block = nil;
@@ -1336,14 +1381,14 @@ static void PerformRequest(void *info)
  */
 void OnMainThreadAsync(dispatch_block_t block)
 {
-    WineApplication* app = (WineApplication*)NSApp;
+    WineApplicationController* controller = [WineApplicationController sharedController];
 
     block = [block copy];
-    dispatch_sync(app->requestsManipQueue, ^{
-        [app->requests addObject:block];
+    dispatch_sync(controller->requestsManipQueue, ^{
+        [controller->requests addObject:block];
     });
     [block release];
-    CFRunLoopSourceSignal(app->requestSource);
+    CFRunLoopSourceSignal(controller->requestSource);
     CFRunLoopWakeUp(CFRunLoopGetMain());
 }
 
@@ -1379,7 +1424,7 @@ void LogErrorv(const char* func, NSString* format, va_list args)
 void macdrv_window_rejected_focus(const macdrv_event *event)
 {
     OnMainThread(^{
-        [NSApp windowRejectedFocusEvent:event];
+        [[WineApplicationController sharedController] windowRejectedFocusEvent:event];
     });
 }
 
@@ -1403,7 +1448,7 @@ CFDataRef macdrv_copy_keyboard_layout(CGEventSourceKeyboardType* keyboard_type, 
             result = CFDataCreateCopy(NULL, uchr);
             CFRelease(inputSource);
 
-            *keyboard_type = ((WineApplication*)NSApp).keyboardType;
+            *keyboard_type = [WineApplicationController sharedController].keyboardType;
             *is_iso = (KBGetLayoutType(*keyboard_type) == kKeyboardISO);
         }
     });
@@ -1432,7 +1477,7 @@ int macdrv_set_display_mode(const struct macdrv_display* display,
     __block int ret;
 
     OnMainThread(^{
-        ret = [NSApp setMode:display_mode forDisplay:display->displayID];
+        ret = [[WineApplicationController sharedController] setMode:display_mode forDisplay:display->displayID];
     });
 
     return ret;
@@ -1467,10 +1512,11 @@ void macdrv_set_cursor(CFStringRef name, CFArrayRef frames)
     if (sel)
     {
         OnMainThreadAsync(^{
+            WineApplicationController* controller = [WineApplicationController sharedController];
             NSCursor* cursor = [NSCursor performSelector:sel];
-            [NSApp setCursorWithFrames:nil];
+            [controller setCursorWithFrames:nil];
             [cursor set];
-            [NSApp unhideCursor];
+            [controller unhideCursor];
         });
     }
     else
@@ -1479,14 +1525,15 @@ void macdrv_set_cursor(CFStringRef name, CFArrayRef frames)
         if ([nsframes count])
         {
             OnMainThreadAsync(^{
-                [NSApp setCursorWithFrames:nsframes];
+                [[WineApplicationController sharedController] setCursorWithFrames:nsframes];
             });
         }
         else
         {
             OnMainThreadAsync(^{
-                [NSApp setCursorWithFrames:nil];
-                [NSApp hideCursor];
+                WineApplicationController* controller = [WineApplicationController sharedController];
+                [controller setCursorWithFrames:nil];
+                [controller hideCursor];
             });
         }
     }
@@ -1502,7 +1549,7 @@ int macdrv_get_cursor_position(CGPoint *pos)
 {
     OnMainThread(^{
         NSPoint location = [NSEvent mouseLocation];
-        location = [NSApp flippedMouseLocation:location];
+        location = [[WineApplicationController sharedController] flippedMouseLocation:location];
         *pos = NSPointToCGPoint(location);
     });
 
@@ -1520,7 +1567,7 @@ int macdrv_set_cursor_position(CGPoint pos)
     __block int ret;
 
     OnMainThread(^{
-        ret = [NSApp setCursorPosition:pos];
+        ret = [[WineApplicationController sharedController] setCursorPosition:pos];
     });
 
     return ret;
@@ -1538,6 +1585,7 @@ int macdrv_clip_cursor(CGRect rect)
     __block int ret;
 
     OnMainThread(^{
+        WineApplicationController* controller = [WineApplicationController sharedController];
         BOOL clipping = FALSE;
 
         if (!CGRectIsInfinite(rect))
@@ -1546,7 +1594,7 @@ int macdrv_clip_cursor(CGRect rect)
             NSScreen* screen;
 
             /* Convert the rectangle from top-down coords to bottom-up. */
-            [NSApp flipRect:&nsrect];
+            [controller flipRect:&nsrect];
 
             clipping = FALSE;
             for (screen in [NSScreen screens])
@@ -1560,9 +1608,9 @@ int macdrv_clip_cursor(CGRect rect)
         }
 
         if (clipping)
-            ret = [NSApp startClippingCursor:rect];
+            ret = [controller startClippingCursor:rect];
         else
-            ret = [NSApp stopClippingCursor];
+            ret = [controller stopClippingCursor];
     });
 
     return ret;
@@ -1581,7 +1629,7 @@ void macdrv_set_application_icon(CFArrayRef images)
     NSArray* imageArray = (NSArray*)images;
 
     OnMainThreadAsync(^{
-        [NSApp setApplicationIconFromCGImageArray:imageArray];
+        [[WineApplicationController sharedController] setApplicationIconFromCGImageArray:imageArray];
     });
 }
 

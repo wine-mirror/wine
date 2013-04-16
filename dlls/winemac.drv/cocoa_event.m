@@ -269,7 +269,9 @@ static NSString* const WineEventQueueThreadDictionaryKey = @"WineEventQueueThrea
 
         [self postEvent:event];
         macdrv_release_event(event);
-        timedout = ![NSApp waitUntilQueryDone:&query->done timeout:timeoutDate processEvents:processEvents];
+        timedout = ![[WineApplicationController sharedController] waitUntilQueryDone:&query->done
+                                                                             timeout:timeoutDate
+                                                                       processEvents:processEvents];
         return !timedout && query->status;
     }
 
@@ -347,7 +349,7 @@ macdrv_event_queue macdrv_create_event_queue(macdrv_event_handler handler)
         queue = [[[WineEventQueue alloc] initWithEventHandler:handler] autorelease];
         if (queue)
         {
-            if ([NSApp registerEventQueue:queue])
+            if ([[WineApplicationController sharedController] registerEventQueue:queue])
                 [threadDict setObject:queue forKey:WineEventQueueThreadDictionaryKey];
             else
                 queue = nil;
@@ -370,7 +372,7 @@ void macdrv_destroy_event_queue(macdrv_event_queue queue)
     WineEventQueue* q = (WineEventQueue*)queue;
     NSMutableDictionary* threadDict = [[NSThread currentThread] threadDictionary];
 
-    [NSApp unregisterEventQueue:q];
+    [[WineApplicationController sharedController] unregisterEventQueue:q];
     [threadDict removeObjectForKey:WineEventQueueThreadDictionaryKey];
 
     [pool release];

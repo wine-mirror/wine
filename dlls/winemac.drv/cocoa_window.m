@@ -310,7 +310,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         WineContentView* contentView;
         NSTrackingArea* trackingArea;
 
-        [NSApp flipRect:&window_frame];
+        [[WineApplicationController sharedController] flipRect:&window_frame];
 
         window = [[[self alloc] initWithContentRect:window_frame
                                           styleMask:style_mask_for_features(wf)
@@ -394,6 +394,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
     - (void) adjustWindowLevel
     {
+        WineApplicationController* controller = [WineApplicationController sharedController];
         NSInteger level;
         BOOL fullscreen, captured;
         NSScreen* screen;
@@ -402,7 +403,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
         screen = screen_covered_by_rect([self frame], [NSScreen screens]);
         fullscreen = (screen != nil);
-        captured = (screen || [self screen]) && [NSApp areDisplaysCaptured];
+        captured = (screen || [self screen]) && [controller areDisplaysCaptured];
 
         if (captured || fullscreen)
         {
@@ -419,10 +420,10 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         else
             level = NSNormalWindowLevel;
 
-        index = [[NSApp orderedWineWindows] indexOfObjectIdenticalTo:self];
-        if (index != NSNotFound && index + 1 < [[NSApp orderedWineWindows] count])
+        index = [[controller orderedWineWindows] indexOfObjectIdenticalTo:self];
+        if (index != NSNotFound && index + 1 < [[controller orderedWineWindows] count])
         {
-            other = [[NSApp orderedWineWindows] objectAtIndex:index + 1];
+            other = [[controller orderedWineWindows] objectAtIndex:index + 1];
             if (level < [other level])
                 level = [other level];
         }
@@ -441,7 +442,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
             {
                 for (; index > 0; index--)
                 {
-                    other = [[NSApp orderedWineWindows] objectAtIndex:index - 1];
+                    other = [[controller orderedWineWindows] objectAtIndex:index - 1];
                     if ([other level] < level)
                         [other setLevelWhenActive:level];
                     else
@@ -504,10 +505,11 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
        its frame intersects any screen. */
     - (BOOL) orderBelow:(WineWindow*)prev orAbove:(WineWindow*)next
     {
+        WineApplicationController* controller = [WineApplicationController sharedController];
         BOOL on_screen = frame_intersects_screens([self frame], [NSScreen screens]);
         if (on_screen)
         {
-            [NSApp transformProcessToForeground];
+            [controller transformProcessToForeground];
 
             if (prev)
             {
@@ -517,20 +519,20 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
                    it out of the z-order that Win32 would otherwise establish. */
                 if ([prev level] < [self level])
                 {
-                    NSUInteger index = [[NSApp orderedWineWindows] indexOfObjectIdenticalTo:prev];
+                    NSUInteger index = [[controller orderedWineWindows] indexOfObjectIdenticalTo:prev];
                     if (index != NSNotFound)
                     {
                         [prev setLevelWhenActive:[self level]];
                         for (; index > 0; index--)
                         {
-                            WineWindow* other = [[NSApp orderedWineWindows] objectAtIndex:index - 1];
+                            WineWindow* other = [[controller orderedWineWindows] objectAtIndex:index - 1];
                             if ([other level] < [self level])
                                 [other setLevelWhenActive:[self level]];
                         }
                     }
                 }
                 [self orderWindow:NSWindowBelow relativeTo:[prev windowNumber]];
-                [NSApp wineWindow:self ordered:NSWindowBelow relativeTo:prev];
+                [controller wineWindow:self ordered:NSWindowBelow relativeTo:prev];
             }
             else
             {
@@ -538,14 +540,14 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
                 if (next && [next level] > [self level])
                     [self setLevelWhenActive:[next level]];
                 [self orderWindow:NSWindowAbove relativeTo:[next windowNumber]];
-                [NSApp wineWindow:self ordered:NSWindowAbove relativeTo:next];
+                [controller wineWindow:self ordered:NSWindowAbove relativeTo:next];
             }
             if (latentParentWindow)
             {
                 if ([latentParentWindow level] > [self level])
                     [self setLevelWhenActive:[latentParentWindow level]];
                 [latentParentWindow addChildWindow:self ordered:NSWindowAbove];
-                [NSApp wineWindow:self ordered:NSWindowAbove relativeTo:latentParentWindow];
+                [controller wineWindow:self ordered:NSWindowAbove relativeTo:latentParentWindow];
                 self.latentParentWindow = nil;
             }
 
@@ -566,7 +568,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         self.latentParentWindow = [self parentWindow];
         [latentParentWindow removeChildWindow:self];
         [self orderOut:nil];
-        [NSApp wineWindow:self ordered:NSWindowOut relativeTo:nil];
+        [[WineApplicationController sharedController] wineWindow:self ordered:NSWindowOut relativeTo:nil];
         [NSApp removeWindowsItem:self];
     }
 
@@ -580,7 +582,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
         /* Origin is (left, top) in a top-down space.  Need to convert it to
            (left, bottom) in a bottom-up space. */
-        [NSApp flipRect:&contentRect];
+        [[WineApplicationController sharedController] flipRect:&contentRect];
 
         if (on_screen)
         {
@@ -633,7 +635,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
                 if ([parent level] > [self level])
                     [self setLevelWhenActive:[parent level]];
                 [parent addChildWindow:self ordered:NSWindowAbove];
-                [NSApp wineWindow:self ordered:NSWindowAbove relativeTo:parent];
+                [[WineApplicationController sharedController] wineWindow:self ordered:NSWindowAbove relativeTo:parent];
             }
             else
                 self.latentParentWindow = parent;
@@ -697,7 +699,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         event->mouse_button.pressed = pressed;
         event->mouse_button.x = pt.x;
         event->mouse_button.y = pt.y;
-        event->mouse_button.time_ms = [NSApp ticksForEventTime:[theEvent timestamp]];
+        event->mouse_button.time_ms = [[WineApplicationController sharedController] ticksForEventTime:[theEvent timestamp]];
 
         [queue postEvent:event];
 
@@ -706,9 +708,10 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
     - (void) makeFocused
     {
+        WineApplicationController* controller = [WineApplicationController sharedController];
         NSArray* screens;
 
-        [NSApp transformProcessToForeground];
+        [controller transformProcessToForeground];
 
         /* If a borderless window is offscreen, orderFront: won't move
            it onscreen like it would for a titled window.  Do that ourselves. */
@@ -723,21 +726,21 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
             [self setFrame:frame display:YES];
         }
 
-        if ([[NSApp orderedWineWindows] count])
+        if ([[controller orderedWineWindows] count])
         {
             WineWindow* front;
             if (self.floating)
-                front = [[NSApp orderedWineWindows] objectAtIndex:0];
+                front = [[controller orderedWineWindows] objectAtIndex:0];
             else
             {
-                for (front in [NSApp orderedWineWindows])
+                for (front in [controller orderedWineWindows])
                     if (!front.floating) break;
             }
             if (front && [front levelWhenActive] > [self levelWhenActive])
                 [self setLevelWhenActive:[front levelWhenActive]];
         }
         [self orderFront:nil];
-        [NSApp wineWindow:self ordered:NSWindowAbove relativeTo:nil];
+        [controller wineWindow:self ordered:NSWindowAbove relativeTo:nil];
         causing_becomeKeyWindow = TRUE;
         [self makeKeyWindow];
         causing_becomeKeyWindow = FALSE;
@@ -746,7 +749,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
             if ([latentParentWindow level] > [self level])
                 [self setLevelWhenActive:[latentParentWindow level]];
             [latentParentWindow addChildWindow:self ordered:NSWindowAbove];
-            [NSApp wineWindow:self ordered:NSWindowAbove relativeTo:latentParentWindow];
+            [controller wineWindow:self ordered:NSWindowAbove relativeTo:latentParentWindow];
             self.latentParentWindow = nil;
         }
         if (![self isExcludedFromWindowsMenu])
@@ -765,21 +768,21 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
     {
         macdrv_event* event;
         CGEventRef cgevent;
-        WineApplication* app = (WineApplication*)NSApp;
+        WineApplicationController* controller = [WineApplicationController sharedController];
 
         event = macdrv_create_event(pressed ? KEY_PRESS : KEY_RELEASE, self);
         event->key.keycode   = keyCode;
         event->key.modifiers = modifiers;
-        event->key.time_ms   = [app ticksForEventTime:[theEvent timestamp]];
+        event->key.time_ms   = [controller ticksForEventTime:[theEvent timestamp]];
 
         if ((cgevent = [theEvent CGEvent]))
         {
             CGEventSourceKeyboardType keyboardType = CGEventGetIntegerValueField(cgevent,
                                                         kCGKeyboardEventKeyboardType);
-            if (keyboardType != app.keyboardType)
+            if (keyboardType != controller.keyboardType)
             {
-                app.keyboardType = keyboardType;
-                [app keyboardSelectionDidChange];
+                controller.keyboardType = keyboardType;
+                [controller keyboardSelectionDidChange];
             }
         }
 
@@ -830,7 +833,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
         if (event->type == MOUSE_MOVED_ABSOLUTE || event->mouse_moved.x || event->mouse_moved.y)
         {
-            event->mouse_moved.time_ms = [NSApp ticksForEventTime:[theEvent timestamp]];
+            event->mouse_moved.time_ms = [[WineApplicationController sharedController] ticksForEventTime:[theEvent timestamp]];
 
             [queue postEvent:event];
         }
@@ -889,11 +892,13 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
     - (void) makeKeyAndOrderFront:(id)sender
     {
         if (![self isKeyWindow] && !self.disabled && !self.noActivate)
-            [NSApp windowGotFocus:self];
+            [[WineApplicationController sharedController] windowGotFocus:self];
     }
 
     - (void) sendEvent:(NSEvent*)event
     {
+        WineApplicationController* controller = [WineApplicationController sharedController];
+
         /* NSWindow consumes certain key-down events as part of Cocoa's keyboard
            interface control.  For example, Control-Tab switches focus among
            views.  We want to bypass that feature, so directly route key-down
@@ -913,7 +918,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
                    in the window will activate it, if Wine and the Win32 program
                    accept. */
                 if (![self isKeyWindow] && !self.disabled && !self.noActivate)
-                    [NSApp windowGotFocus:self];
+                    [controller windowGotFocus:self];
 
                 /* Any left-click on our window anyplace other than the close or
                    minimize buttons will bring it forward. */
@@ -934,7 +939,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
                 }
 
                 if (broughtWindowForward)
-                    [NSApp wineWindow:self ordered:NSWindowAbove relativeTo:nil];
+                    [controller wineWindow:self ordered:NSWindowAbove relativeTo:nil];
             }
 
             [super sendEvent:event];
@@ -1032,7 +1037,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         event = macdrv_create_event(MOUSE_SCROLL, self);
         event->mouse_scroll.x = pt.x;
         event->mouse_scroll.y = pt.y;
-        event->mouse_scroll.time_ms = [NSApp ticksForEventTime:[theEvent timestamp]];
+        event->mouse_scroll.time_ms = [[WineApplicationController sharedController] ticksForEventTime:[theEvent timestamp]];
 
         if (CGEventGetIntegerValueField(cgevent, kCGScrollWheelEventIsContinuous))
         {
@@ -1103,13 +1108,14 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
      */
     - (void)windowDidBecomeKey:(NSNotification *)notification
     {
-        NSEvent* event = [NSApp lastFlagsChanged];
+        WineApplicationController* controller = [WineApplicationController sharedController];
+        NSEvent* event = [controller lastFlagsChanged];
         if (event)
             [self flagsChanged:event];
 
         if (causing_becomeKeyWindow) return;
 
-        [NSApp windowGotFocus:self];
+        [controller windowGotFocus:self];
     }
 
     - (void)windowDidDeminiaturize:(NSNotification *)notification
@@ -1130,7 +1136,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
         ignore_windowDeminiaturize = FALSE;
 
-        [NSApp wineWindow:self ordered:NSWindowAbove relativeTo:nil];
+        [[WineApplicationController sharedController] wineWindow:self ordered:NSWindowAbove relativeTo:nil];
     }
 
     - (void) windowDidEndLiveResize:(NSNotification *)notification
@@ -1161,7 +1167,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         macdrv_event* event;
         NSRect frame = [self contentRectForFrameRect:[self frame]];
 
-        [NSApp flipRect:&frame];
+        [[WineApplicationController sharedController] flipRect:&frame];
 
         /* Coalesce events by discarding any previous ones still in the queue. */
         [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_FRAME_CHANGED)
@@ -1493,7 +1499,7 @@ void macdrv_get_cocoa_window_frame(macdrv_window w, CGRect* out_frame)
         NSRect frame;
 
         frame = [window contentRectForFrameRect:[window frame]];
-        [NSApp flipRect:&frame];
+        [[WineApplicationController sharedController] flipRect:&frame];
         *out_frame = NSRectToCGRect(frame);
     });
 }

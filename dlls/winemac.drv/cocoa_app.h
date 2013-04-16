@@ -35,7 +35,7 @@ enum {
 @class WineWindow;
 
 
-@interface WineApplication : NSApplication <NSApplicationDelegate>
+@interface WineApplicationController : NSObject <NSApplicationDelegate>
 {
     CFRunLoopSourceRef requestSource;
     NSMutableArray* requests;
@@ -84,6 +84,8 @@ enum {
 @property (readonly, nonatomic) NSArray* orderedWineWindows;
 @property (readonly, nonatomic) BOOL areDisplaysCaptured;
 
+    + (WineApplicationController*) sharedController;
+
     - (void) transformProcessToForeground;
 
     - (BOOL) registerEventQueue:(WineEventQueue*)queue;
@@ -104,7 +106,21 @@ enum {
                 ordered:(NSWindowOrderingMode)order
              relativeTo:(WineWindow*)otherWindow;
 
+    - (BOOL) handleEvent:(NSEvent*)anEvent;
+    - (void) didSendEvent:(NSEvent*)anEvent;
+
 @end
+
+
+@interface WineApplication : NSApplication
+{
+    WineApplicationController* wineController;
+}
+
+@property (readwrite, assign, nonatomic) WineApplicationController* wineController;
+
+@end
+
 
 void OnMainThreadAsync(dispatch_block_t block);
 
