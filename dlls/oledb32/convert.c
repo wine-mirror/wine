@@ -292,6 +292,7 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         LONGLONG *d = dst;
         switch(src_type)
         {
+        case DBTYPE_BSTR:        hr = VarI8FromStr(*(WCHAR**)src, LOCALE_USER_DEFAULT, 0, d); break;
         case DBTYPE_I8:          *d = *(LONGLONG*)src; hr = S_OK;              break;
         default: FIXME("Unimplemented conversion %04x -> I8\n", src_type); return E_NOTIMPL;
         }

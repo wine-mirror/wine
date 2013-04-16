@@ -925,6 +925,8 @@ static void test_converttoi8(void)
     BYTE src[20];
     DBSTATUS dst_status;
     DBLENGTH dst_len;
+    static const WCHAR ten[] = {'1','0',0};
+    BSTR b;
 
     hr = CoCreateInstance(&CLSID_OLEDB_CONVERSIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IDataConvert, (void**)&convert);
     if(FAILED(hr))
@@ -941,6 +943,17 @@ static void test_converttoi8(void)
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
     ok(dst.QuadPart == 1234, "got %d\n", (int)dst.QuadPart);
+
+    dst.QuadPart = 0xcc;
+    ((ULARGE_INTEGER*)src)->QuadPart = 1234;
+    b = SysAllocString(ten);
+    *(BSTR *)src = b;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_BSTR, DBTYPE_I8, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
+    ok(dst.QuadPart == 10, "got %d\n", (int)dst.QuadPart);
+    SysFreeString(b);
 
     IDataConvert_Release(convert);
 }
