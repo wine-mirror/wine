@@ -527,7 +527,7 @@ static void test_MeshBuilder3(void)
 {
     HRESULT hr;
     IDirect3DRM *d3drm;
-    LPDIRECT3DRM3 pD3DRM3;
+    IDirect3DRM3 *d3drm3;
     LPDIRECT3DRMMESHBUILDER3 pMeshBuilder3;
     D3DRMLOADMEMORY info;
     int val;
@@ -539,14 +539,14 @@ static void test_MeshBuilder3(void)
     hr = pDirect3DRMCreate(&d3drm);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
 
-    if (FAILED(hr = IDirect3DRM_QueryInterface(d3drm, &IID_IDirect3DRM3, (void **)&pD3DRM3)))
+    if (FAILED(hr = IDirect3DRM_QueryInterface(d3drm, &IID_IDirect3DRM3, (void **)&d3drm3)))
     {
         win_skip("Cannot get IDirect3DRM3 interface (hr = %x), skipping tests\n", hr);
         IDirect3DRM_Release(d3drm);
         return;
     }
 
-    hr = IDirect3DRM3_CreateMeshBuilder(pD3DRM3, &pMeshBuilder3);
+    hr = IDirect3DRM3_CreateMeshBuilder(d3drm3, &pMeshBuilder3);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMMeshBuilder3 interface (hr = %x)\n", hr);
 
     hr = IDirect3DRMMeshBuilder3_GetClassName(pMeshBuilder3, NULL, cname);
@@ -630,7 +630,7 @@ static void test_MeshBuilder3(void)
     ok(valv == 3.21f, "Wrong coordinate %f (must be 3.21)\n", valv);
 
     IDirect3DRMMeshBuilder3_Release(pMeshBuilder3);
-    IDirect3DRM3_Release(pD3DRM3);
+    IDirect3DRM3_Release(d3drm3);
     IDirect3DRM_Release(d3drm);
 }
 
@@ -1118,7 +1118,7 @@ static void test_Material2(void)
 {
     HRESULT hr;
     IDirect3DRM *d3drm;
-    LPDIRECT3DRM3 pD3DRM3;
+    IDirect3DRM3 *d3drm3;
     LPDIRECT3DRMMATERIAL2 pMaterial2;
     D3DVALUE r, g, b;
     DWORD size;
@@ -1127,14 +1127,14 @@ static void test_Material2(void)
     hr = pDirect3DRMCreate(&d3drm);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
 
-    if (FAILED(hr = IDirect3DRM_QueryInterface(d3drm, &IID_IDirect3DRM3, (void **)&pD3DRM3)))
+    if (FAILED(hr = IDirect3DRM_QueryInterface(d3drm, &IID_IDirect3DRM3, (void **)&d3drm3)))
     {
         win_skip("Cannot get IDirect3DRM3 interface (hr = %x), skipping tests\n", hr);
         IDirect3DRM_Release(d3drm);
         return;
     }
 
-    hr = IDirect3DRM3_CreateMaterial(pD3DRM3, 18.5f, &pMaterial2);
+    hr = IDirect3DRM3_CreateMaterial(d3drm3, 18.5f, &pMaterial2);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMMaterial2 interface (hr = %x)\n", hr);
 
     hr = IDirect3DRMMaterial2_GetClassName(pMaterial2, NULL, cname);
@@ -1190,7 +1190,7 @@ static void test_Material2(void)
 
     IDirect3DRMMaterial2_Release(pMaterial2);
 
-    IDirect3DRM3_Release(pD3DRM3);
+    IDirect3DRM3_Release(d3drm3);
     IDirect3DRM_Release(d3drm);
 }
 
