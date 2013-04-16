@@ -5122,6 +5122,9 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct wined3d_shader_buf
 
     shader_addline(buffer, "#version 120\n");
 
+    if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
+        shader_addline(buffer, "#extension GL_ARB_texture_rectangle : enable\n");
+
     shader_addline(buffer, "vec4 tmp0, tmp1;\n");
     shader_addline(buffer, "vec4 ret;\n");
     if (tempreg_used || settings->sRGB_write)
