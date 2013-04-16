@@ -650,12 +650,8 @@ static void shader_glsl_load_constantsB(const struct wined3d_shader *shader, con
          * locations of the constants to avoid looking up each time */
         snprintf(tmp_name, sizeof(tmp_name), "%s_b[%i]", prefix, i);
         tmp_loc = GL_EXTCALL(glGetUniformLocationARB(programId, tmp_name));
-        if (tmp_loc != -1)
-        {
-            /* We found this uniform name in the program - go ahead and send the data */
-            GL_EXTCALL(glUniform1ivARB(tmp_loc, 1, &constants[i]));
-            checkGLcall("glUniform1ivARB");
-        }
+        GL_EXTCALL(glUniform1ivARB(tmp_loc, 1, &constants[i]));
+        checkGLcall("glUniform1ivARB");
     }
 
     /* Load immediate constants */
