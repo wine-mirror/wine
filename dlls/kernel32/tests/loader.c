@@ -1040,27 +1040,51 @@ nt4_is_broken:
 }
 
 #define MAX_COUNT 10
-static HANDLE attached_thread[MAX_COUNT], stop_event;
+static HANDLE attached_thread[MAX_COUNT], stop_event, event, mutex, semaphore;
 static DWORD attached_thread_count;
 static int test_dll_phase;
 
-static DWORD WINAPI thread_proc(void *param)
+static DWORD WINAPI mutex_thread_proc(void *param)
 {
+    DWORD ret;
+
+    ret = WaitForSingleObject(mutex, 0);
+    ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %#x\n", ret);
+
     SetEvent(param);
 
     while (1)
     {
-        trace("%04u: thread_proc: still alive\n", GetCurrentThreadId());
+        trace("%04u: mutex_thread_proc: still alive\n", GetCurrentThreadId());
         if (WaitForSingleObject(stop_event, 50) != WAIT_TIMEOUT) break;
     }
 
-    trace("%04u: thread_proc: exiting\n", GetCurrentThreadId());
+    trace("%04u: mutex_thread_proc: exiting\n", GetCurrentThreadId());
+    return 196;
+}
+
+static DWORD WINAPI semaphore_thread_proc(void *param)
+{
+    DWORD ret;
+
+    ret = WaitForSingleObject(semaphore, 0);
+    ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %#x\n", ret);
+
+    SetEvent(param);
+
+    while (1)
+    {
+        trace("%04u: semaphore_thread_proc: still alive\n", GetCurrentThreadId());
+        if (WaitForSingleObject(stop_event, 50) != WAIT_TIMEOUT) break;
+    }
+
+    trace("%04u: semaphore_thread_proc: exiting\n", GetCurrentThreadId());
     return 196;
 }
 
 static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
 {
-    BOOL ret;
+    DWORD ret;
 
     switch (reason)
     {
@@ -1098,7 +1122,7 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
                 ok(!ret || broken(ret) /* before Vista */, "RtlDllShutdownInProgress returned %d\n", ret);
         }
 
-        ok(attached_thread_count != 0, "attached thread count should not be 0\n");
+        ok(attached_thread_count == 2, "attached thread count should be 2\n");
 
         for (i = 0; i < attached_thread_count; i++)
         {
@@ -1106,6 +1130,34 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
             trace("dll: GetExitCodeThread(%u) => %d,%u\n", i, ret, code);
             ok(ret == 1, "GetExitCodeThread returned %d, expected 1\n", ret);
             ok(code == expected_code, "expected thread exit code %u, got %u\n", expected_code, code);
+        }
+
+        ret = WaitForSingleObject(event, 0);
+        ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %#x\n", ret);
+
+        ret = WaitForSingleObject(mutex, 0);
+        if (expected_code == STILL_ACTIVE)
+            ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %#x\n", ret);
+        else
+            ok(ret == WAIT_ABANDONED, "expected WAIT_ABANDONED, got %#x\n", ret);
+
+        /* semaphore is not abandoned on thread termination */
+        ret = WaitForSingleObject(semaphore, 0);
+        ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %#x\n", ret);
+
+        if (expected_code == STILL_ACTIVE)
+        {
+            ret = WaitForSingleObject(attached_thread[0], 0);
+            ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %#x\n", ret);
+            ret = WaitForSingleObject(attached_thread[1], 0);
+            ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %#x\n", ret);
+        }
+        else
+        {
+            ret = WaitForSingleObject(attached_thread[0], 0);
+            ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %#x\n", ret);
+            ret = WaitForSingleObject(attached_thread[1], 0);
+            ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %#x\n", ret);
         }
 
         if (test_dll_phase == 2)
@@ -1150,11 +1202,23 @@ static void child_process(const char *dll_name, DWORD target_offset)
 {
     void *target;
     DWORD ret, dummy, i, code, expected_code;
-    HANDLE file, thread, event;
+    HANDLE file, thread;
     HMODULE hmod;
     NTSTATUS status;
 
     trace("phase %d: writing %p at %#x\n", test_dll_phase, dll_entry_point, target_offset);
+
+    SetLastError(0xdeadbeef);
+    mutex = CreateMutex(NULL, FALSE, NULL);
+    ok(mutex != 0, "CreateMutex error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    semaphore = CreateSemaphore(NULL, 1, 1, NULL);
+    ok(semaphore != 0, "CreateSemaphore error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    event = CreateEvent(NULL, TRUE, FALSE, NULL);
+    ok(event != 0, "CreateEvent error %d\n", GetLastError());
 
     file = CreateFile(dll_name, GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
     if (file == INVALID_HANDLE_VALUE)
@@ -1174,14 +1238,11 @@ static void child_process(const char *dll_name, DWORD target_offset)
     ok(hmod != 0, "LoadLibrary error %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    event = CreateEvent(NULL, 0, 0, NULL);
-    ok(event != 0, "CreateEvent error %d\n", GetLastError());
-    SetLastError(0xdeadbeef);
-    stop_event = CreateEvent(NULL, 0, 0, NULL);
+    stop_event = CreateEvent(NULL, TRUE, FALSE, NULL);
     ok(stop_event != 0, "CreateEvent error %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    thread = CreateThread(NULL, 0, thread_proc, event, 0, &dummy);
+    thread = CreateThread(NULL, 0, mutex_thread_proc, event, 0, &dummy);
     ok(thread != 0, "CreateThread error %d\n", GetLastError());
     WaitForSingleObject(event, 3000);
     CloseHandle(thread);
@@ -1189,15 +1250,15 @@ static void child_process(const char *dll_name, DWORD target_offset)
     ResetEvent(event);
 
     SetLastError(0xdeadbeef);
-    thread = CreateThread(NULL, 0, thread_proc, event, 0, &dummy);
+    thread = CreateThread(NULL, 0, semaphore_thread_proc, event, 0, &dummy);
     ok(thread != 0, "CreateThread error %d\n", GetLastError());
     WaitForSingleObject(event, 3000);
     CloseHandle(thread);
 
-    CloseHandle(event);
+    ResetEvent(event);
     Sleep(100);
 
-    ok(attached_thread_count != 0, "attached thread count should not be 0\n");
+    ok(attached_thread_count == 2, "attached thread count should be 2\n");
     for (i = 0; i < attached_thread_count; i++)
     {
         ret = GetExitCodeThread(attached_thread[i], &code);
@@ -1206,7 +1267,17 @@ static void child_process(const char *dll_name, DWORD target_offset)
         ok(code == STILL_ACTIVE, "expected thread exit code STILL_ACTIVE, got %u\n", code);
     }
 
-    Sleep(100);
+    ret = WaitForSingleObject(attached_thread[0], 0);
+    ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %#x\n", ret);
+    ret = WaitForSingleObject(attached_thread[1], 0);
+    ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %#x\n", ret);
+
+    ret = WaitForSingleObject(event, 0);
+    ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %#x\n", ret);
+    ret = WaitForSingleObject(mutex, 0);
+    ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %#x\n", ret);
+    ret = WaitForSingleObject(semaphore, 0);
+    ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %#x\n", ret);
 
     ret = pRtlDllShutdownInProgress();
     ok(!ret, "RtlDllShutdownInProgress returned %d\n", ret);
@@ -1224,6 +1295,7 @@ static void child_process(const char *dll_name, DWORD target_offset)
         ret = pRtlDllShutdownInProgress();
         ok(!ret, "RtlDllShutdownInProgress returned %d\n", ret);
 
+        trace("call NtTerminateProcess(0, 195)\n");
         status = pNtTerminateProcess(0, 195);
         ok(!status, "NtTerminateProcess error %#x\n", status);
 
@@ -1237,6 +1309,7 @@ static void child_process(const char *dll_name, DWORD target_offset)
         ret = pRtlDllShutdownInProgress();
         ok(!ret, "RtlDllShutdownInProgress returned %d\n", ret);
 
+        trace("call FreeLibrary(%p)\n", hmod);
         FreeLibrary(hmod);
 
         ret = pRtlDllShutdownInProgress();
@@ -1254,6 +1327,7 @@ static void child_process(const char *dll_name, DWORD target_offset)
         ret = pRtlDllShutdownInProgress();
         ok(!ret, "RtlDllShutdownInProgress returned %d\n", ret);
 
+        trace("call LdrShutdownProcess()\n");
         pLdrShutdownProcess();
 
         ret = pRtlDllShutdownInProgress();
@@ -1271,6 +1345,21 @@ static void child_process(const char *dll_name, DWORD target_offset)
     if (test_dll_phase == 0) expected_code = 195;
     else if (test_dll_phase == 3) expected_code = 196;
     else expected_code = STILL_ACTIVE;
+
+    if (expected_code == STILL_ACTIVE)
+    {
+        ret = WaitForSingleObject(attached_thread[0], 0);
+        ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %#x\n", ret);
+        ret = WaitForSingleObject(attached_thread[1], 0);
+        ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %#x\n", ret);
+    }
+    else
+    {
+        ret = WaitForSingleObject(attached_thread[0], 50);
+        ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %#x\n", ret);
+        ret = WaitForSingleObject(attached_thread[1], 50);
+        ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %#x\n", ret);
+    }
 
     for (i = 0; i < attached_thread_count; i++)
     {
@@ -1385,6 +1474,7 @@ static void test_ExitProcess(void)
 
     winetest_get_mainargs(&argv);
 
+    /* phase 0 */
     *child_failures = -1;
     sprintf(cmdline, "\"%s\" loader %s %u 0", argv[0], dll_name, target_offset);
     ret = CreateProcess(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
@@ -1397,6 +1487,7 @@ static void test_ExitProcess(void)
     CloseHandle(pi.hThread);
     CloseHandle(pi.hProcess);
 
+    /* phase 1 */
     *child_failures = -1;
     sprintf(cmdline, "\"%s\" loader %s %u 1", argv[0], dll_name, target_offset);
     ret = CreateProcess(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
@@ -1409,6 +1500,7 @@ static void test_ExitProcess(void)
     CloseHandle(pi.hThread);
     CloseHandle(pi.hProcess);
 
+    /* phase 2 */
     *child_failures = -1;
     sprintf(cmdline, "\"%s\" loader %s %u 2", argv[0], dll_name, target_offset);
     ret = CreateProcess(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
@@ -1421,6 +1513,7 @@ static void test_ExitProcess(void)
     CloseHandle(pi.hThread);
     CloseHandle(pi.hProcess);
 
+    /* phase 3 */
     *child_failures = -1;
     sprintf(cmdline, "\"%s\" loader %s %u 3", argv[0], dll_name, target_offset);
     ret = CreateProcess(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
@@ -1433,6 +1526,7 @@ static void test_ExitProcess(void)
     CloseHandle(pi.hThread);
     CloseHandle(pi.hProcess);
 
+    /* phase 4 */
     *child_failures = -1;
     sprintf(cmdline, "\"%s\" loader %s %u 4", argv[0], dll_name, target_offset);
     ret = CreateProcess(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
