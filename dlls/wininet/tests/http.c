@@ -2029,6 +2029,8 @@ static DWORD CALLBACK server_thread(LPVOID param)
             static const char no_cache_response[] = "HTTP/1.1 200 OK\r\nCache-Control: No-StOrE\r\n\r\nsome content";
             send(c, no_cache_response, sizeof(no_cache_response)-1, 0);
         }
+        if (strstr(buffer, "GET /test_premature_disconnect"))
+            trace("closing connection\n");
 
         shutdown(c, 2);
         closesocket(c);
@@ -2660,6 +2662,32 @@ static void test_basic_authentication(int port)
     InternetCloseHandle(session);
 }
 
+static void test_premature_disconnect(int port)
+{
+    HINTERNET session, connect, request;
+    DWORD err;
+    BOOL ret;
+
+    session = InternetOpen("winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    ok(session != NULL, "InternetOpen failed\n");
+
+    connect = InternetConnect(session, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    ok(connect != NULL, "InternetConnect failed\n");
+
+    request = HttpOpenRequest(connect, NULL, "/premature_disconnect", NULL, NULL, NULL, INTERNET_FLAG_KEEP_CONNECTION, 0);
+    ok(request != NULL, "HttpOpenRequest failed\n");
+
+    SetLastError(0xdeadbeef);
+    ret = HttpSendRequest(request, NULL, 0, NULL, 0);
+    err = GetLastError();
+    todo_wine ok(!ret, "HttpSendRequest succeeded\n");
+    todo_wine ok(err == ERROR_HTTP_INVALID_SERVER_RESPONSE, "got %u\n", err);
+
+    InternetCloseHandle(request);
+    InternetCloseHandle(connect);
+    InternetCloseHandle(session);
+}
+
 static void test_invalid_response_headers(int port)
 {
     HINTERNET session, connect, request;
@@ -3032,6 +3060,7 @@ static void test_http_connection(void)
     test_no_content(si.port);
     test_conn_close(si.port);
     test_no_cache(si.port);
+    test_premature_disconnect(si.port);
 
     /* send the basic request again to shutdown the server thread */
     test_basic_request(si.port, "GET", "/quit");
