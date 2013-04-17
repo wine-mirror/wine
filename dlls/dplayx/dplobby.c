@@ -1365,9 +1365,8 @@ static HRESULT WINAPI IDirectPlayLobby3Impl_ConnectEx( IDirectPlayLobby3 *iface,
   return DPL_ConnectEx( This, dwFlags, riid, lplpDP, pUnk );
 }
 
-static HRESULT WINAPI IDirectPlayLobby3AImpl_ConnectEx
-( LPDIRECTPLAYLOBBY3A iface, DWORD dwFlags, REFIID riid,
-  LPVOID* lplpDP, IUnknown* pUnk )
+static HRESULT WINAPI IDirectPlayLobby3AImpl_ConnectEx( IDirectPlayLobby3A *iface, DWORD dwFlags,
+        REFIID riid, void **lplpDP, IUnknown *pUnk )
 {
   IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby3A( iface );
   return DPL_ConnectEx( This, dwFlags, riid, lplpDP, pUnk );
@@ -1380,8 +1379,8 @@ static HRESULT WINAPI IDirectPlayLobby3Impl_RegisterApplication( IDirectPlayLobb
   return DP_OK;
 }
 
-static HRESULT WINAPI IDirectPlayLobby3AImpl_RegisterApplication
-( LPDIRECTPLAYLOBBY3A iface, DWORD dwFlags, LPDPAPPLICATIONDESC lpAppDesc )
+static HRESULT WINAPI IDirectPlayLobby3AImpl_RegisterApplication( IDirectPlayLobby3A *iface,
+        DWORD flags, DPAPPLICATIONDESC *appdesc )
 {
   FIXME(":stub\n");
   return DP_OK;
@@ -1394,8 +1393,8 @@ static HRESULT WINAPI IDirectPlayLobby3Impl_UnregisterApplication( IDirectPlayLo
   return DP_OK;
 }
 
-static HRESULT WINAPI IDirectPlayLobby3AImpl_UnregisterApplication
-( LPDIRECTPLAYLOBBY3A iface, DWORD dwFlags, REFGUID lpAppDesc )
+static HRESULT WINAPI IDirectPlayLobby3AImpl_UnregisterApplication( IDirectPlayLobby3A *iface,
+        DWORD flags, REFGUID appdesc )
 {
   FIXME(":stub\n");
   return DP_OK;
@@ -1418,8 +1417,8 @@ static HRESULT WINAPI IDirectPlayLobby3Impl_WaitForConnectionSettings( IDirectPl
   return hr;
 }
 
-static HRESULT WINAPI IDirectPlayLobby3AImpl_WaitForConnectionSettings
-( LPDIRECTPLAYLOBBY3A iface, DWORD dwFlags )
+static HRESULT WINAPI IDirectPlayLobby3AImpl_WaitForConnectionSettings( IDirectPlayLobby3A *iface,
+        DWORD dwFlags )
 {
   HRESULT hr         = DP_OK;
   BOOL    bStartWait = !(dwFlags & DPLWAIT_CANCEL);
@@ -1518,11 +1517,8 @@ HRESULT dplobby_create( REFIID riid, void **ppv )
  *  DirectPlayLobbyCreateA   (DPLAYX.4)
  *
  */
-HRESULT WINAPI DirectPlayLobbyCreateA( LPGUID lpGUIDDSP,
-                                       LPDIRECTPLAYLOBBYA *lplpDPL,
-                                       IUnknown *lpUnk,
-                                       LPVOID lpData,
-                                       DWORD dwDataSize )
+HRESULT WINAPI DirectPlayLobbyCreateA( GUID *lpGUIDDSP, IDirectPlayLobbyA **lplpDPL,
+        IUnknown *lpUnk, void *lpData, DWORD dwDataSize )
 {
   TRACE("lpGUIDDSP=%p lplpDPL=%p lpUnk=%p lpData=%p dwDataSize=%08x\n",
         lpGUIDDSP,lplpDPL,lpUnk,lpData,dwDataSize);
@@ -1550,11 +1546,8 @@ HRESULT WINAPI DirectPlayLobbyCreateA( LPGUID lpGUIDDSP,
  *  DirectPlayLobbyCreateW   (DPLAYX.5)
  *
  */
-HRESULT WINAPI DirectPlayLobbyCreateW( LPGUID lpGUIDDSP,
-                                       LPDIRECTPLAYLOBBY *lplpDPL,
-                                       IUnknown *lpUnk,
-                                       LPVOID lpData,
-                                       DWORD dwDataSize )
+HRESULT WINAPI DirectPlayLobbyCreateW( GUID *lpGUIDDSP, IDirectPlayLobby **lplpDPL,
+        IUnknown *lpUnk, void *lpData, DWORD dwDataSize )
 {
   TRACE("lpGUIDDSP=%p lplpDPL=%p lpUnk=%p lpData=%p dwDataSize=%08x\n",
         lpGUIDDSP,lplpDPL,lpUnk,lpData,dwDataSize);

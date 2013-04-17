@@ -652,7 +652,7 @@ static void init_TCPIP_provider( IDirectPlay4 *pDP, LPCSTR strIPAddressString, W
     DPCOMPOUNDADDRESSELEMENT addressElements[3];
     LPVOID pAddress = NULL;
     DWORD dwAddressSize = 0;
-    LPDIRECTPLAYLOBBY3 pDPL;
+    IDirectPlayLobby3 *pDPL;
     HRESULT hr;
 
     hr = CoCreateInstance( &CLSID_DirectPlayLobby, NULL, CLSCTX_ALL,
@@ -799,7 +799,7 @@ static BOOL CALLBACK EnumConnections_cb( LPCGUID lpguidSP,
 {
 
     lpCallbackData callbackData = lpContext;
-    LPDIRECTPLAYLOBBY pDPL;
+    IDirectPlayLobby *pDPL;
     HRESULT hr;
 
 
@@ -2877,7 +2877,7 @@ static void test_GetPlayerAddress(void)
 {
 
     IDirectPlay4 *pDP[2];
-    LPDIRECTPLAYLOBBY3 pDPL;
+    IDirectPlayLobby3 *pDPL;
     DPSESSIONDESC2 dpsd;
     DPID dpid[2];
     CallbackData callbackData;
