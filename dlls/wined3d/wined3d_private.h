@@ -2787,7 +2787,6 @@ extern enum wined3d_format_id pixelformat_for_depth(DWORD depth) DECLSPEC_HIDDEN
 #define WINED3DFMT_FLAG_DEPTH                       0x00000004
 #define WINED3DFMT_FLAG_STENCIL                     0x00000008
 #define WINED3DFMT_FLAG_RENDERTARGET                0x00000010
-#define WINED3DFMT_FLAG_FOURCC                      0x00000020
 #define WINED3DFMT_FLAG_FBO_ATTACHABLE              0x00000040
 #define WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB         0x00000080
 #define WINED3DFMT_FLAG_GETDC                       0x00000100
