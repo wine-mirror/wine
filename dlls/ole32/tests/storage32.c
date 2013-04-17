@@ -1808,32 +1808,36 @@ static const struct access_res create_close[16] =
     { TRUE, ERROR_SUCCESS }
 };
 
+static const DWORD access_modes[4] = {
+    0,
+    GENERIC_READ,
+    GENERIC_WRITE,
+    GENERIC_READ | GENERIC_WRITE
+};
+
+static const DWORD share_modes[4] = {
+    0,
+    FILE_SHARE_READ,
+    FILE_SHARE_WRITE,
+    FILE_SHARE_READ | FILE_SHARE_WRITE
+};
+
 static void _test_file_access(LPCSTR file, const struct access_res *ares, DWORD line)
 {
-    DWORD access = 0, share = 0;
-    DWORD lasterr;
-    HANDLE hfile;
     int i, j, idx = 0;
 
-    for (i = 0; i < 4; i++)
+    for (i = 0; i < sizeof(access_modes)/sizeof(access_modes[0]); i++)
     {
-        if (i == 0) access = 0;
-        if (i == 1) access = GENERIC_READ;
-        if (i == 2) access = GENERIC_WRITE;
-        if (i == 3) access = GENERIC_READ | GENERIC_WRITE;
-
-        for (j = 0; j < 4; j++)
+        for (j = 0; j < sizeof(share_modes)/sizeof(share_modes[0]); j++)
         {
+            DWORD lasterr;
+            HANDLE hfile;
+
             if (ares[idx].ignore)
                 continue;
 
-            if (j == 0) share = 0;
-            if (j == 1) share = FILE_SHARE_READ;
-            if (j == 2) share = FILE_SHARE_WRITE;
-            if (j == 3) share = FILE_SHARE_READ | FILE_SHARE_WRITE;
-
             SetLastError(0xdeadbeef);
-            hfile = CreateFileA(file, access, share, NULL, OPEN_EXISTING,
+            hfile = CreateFileA(file, access_modes[i], share_modes[j], NULL, OPEN_EXISTING,
                                 FILE_ATTRIBUTE_NORMAL, 0);
             lasterr = GetLastError();
 
@@ -1857,32 +1861,30 @@ static void _test_file_access(LPCSTR file, const struct access_res *ares, DWORD 
 
 static void test_access(void)
 {
+    static const WCHAR fileW[] = {'w','i','n','e','t','e','s','t',0};
+    static const char fileA[] = "winetest";
     IStorage *stg;
     HRESULT hr;
 
-    static const WCHAR fileW[] = {'w','i','n','e','t','e','s','t',0};
-
     /* STGM_TRANSACTED */
-
     hr = StgCreateDocfile(fileW, STGM_CREATE | STGM_READWRITE |
                           STGM_SHARE_EXCLUSIVE | STGM_TRANSACTED, 0, &stg);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
-    test_file_access("winetest", create);
+    test_file_access(fileA, create);
 
     hr = IStorage_Commit(stg, STGC_DEFAULT);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
-    test_file_access("winetest", create_commit);
+    test_file_access(fileA, create_commit);
 
     IStorage_Release(stg);
 
-    test_file_access("winetest", create_close);
+    test_file_access(fileA, create_close);
 
-    DeleteFileA("winetest");
+    DeleteFileA(fileA);
 
     /* STGM_DIRECT */
-
     hr = StgCreateDocfile(fileW, STGM_CREATE | STGM_READWRITE |
                           STGM_SHARE_EXCLUSIVE | STGM_DIRECT, 0, &stg);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
@@ -1892,70 +1894,67 @@ static void test_access(void)
     hr = IStorage_Commit(stg, STGC_DEFAULT);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
-    test_file_access("winetest", create_commit);
+    test_file_access(fileA, create_commit);
 
     IStorage_Release(stg);
 
-    test_file_access("winetest", create_close);
+    test_file_access(fileA, create_close);
 
-    DeleteFileA("winetest");
+    DeleteFileA(fileA);
 
     /* STGM_SHARE_DENY_NONE */
-
     hr = StgCreateDocfile(fileW, STGM_CREATE | STGM_READWRITE |
                           STGM_SHARE_DENY_NONE | STGM_TRANSACTED, 0, &stg);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
-    test_file_access("winetest", create);
+    test_file_access(fileA, create);
 
     hr = IStorage_Commit(stg, STGC_DEFAULT);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
-    test_file_access("winetest", create_commit);
+    test_file_access(fileA, create_commit);
 
     IStorage_Release(stg);
 
-    test_file_access("winetest", create_close);
+    test_file_access(fileA, create_close);
 
-    DeleteFileA("winetest");
+    DeleteFileA(fileA);
 
     /* STGM_SHARE_DENY_READ */
-
     hr = StgCreateDocfile(fileW, STGM_CREATE | STGM_READWRITE |
                           STGM_SHARE_DENY_READ | STGM_TRANSACTED, 0, &stg);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
-    test_file_access("winetest", create);
+    test_file_access(fileA, create);
 
     hr = IStorage_Commit(stg, STGC_DEFAULT);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
-    test_file_access("winetest", create_commit);
+    test_file_access(fileA, create_commit);
 
     IStorage_Release(stg);
 
-    test_file_access("winetest", create_close);
+    test_file_access(fileA, create_close);
 
-    DeleteFileA("winetest");
+    DeleteFileA(fileA);
 
     /* STGM_SHARE_DENY_WRITE */
-
     hr = StgCreateDocfile(fileW, STGM_CREATE | STGM_READWRITE |
                           STGM_SHARE_DENY_WRITE | STGM_TRANSACTED, 0, &stg);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
-    test_file_access("winetest", create);
+    test_file_access(fileA, create);
 
     hr = IStorage_Commit(stg, STGC_DEFAULT);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
-    test_file_access("winetest", create_commit);
+    test_file_access(fileA, create_commit);
 
     IStorage_Release(stg);
 
-    test_file_access("winetest", create_close);
+    test_file_access(fileA, create_close);
 
-    DeleteFileA("winetest");
+    DeleteFileA(fileA);
 }
 
 static void test_readonly(void)
