@@ -1641,8 +1641,8 @@ UINT WINAPI GetSystemDirectoryA( LPSTR path, UINT count )
  *           GetSystemWow64DirectoryW   (KERNEL32.@)
  *
  * As seen on MSDN
- * - On Win32 we should returns ERROR_CALL_NOT_IMPLEMENTED
- * - On Win64 we should returns the SysWow64 (system64) directory
+ * - On Win32 we should return ERROR_CALL_NOT_IMPLEMENTED
+ * - On Win64 we should return the SysWow64 (system64) directory
  */
 UINT WINAPI GetSystemWow64DirectoryW( LPWSTR path, UINT count )
 {
