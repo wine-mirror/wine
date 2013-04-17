@@ -154,7 +154,7 @@ typedef struct IDirect3DRMClippedVisual   *LPDIRECT3DRMCLIPPEDVISUAL, **LPLPDIRE
    Types and structures
    ******************************************************************** */
 
-typedef void (__cdecl *D3DRMOBJECTCALLBACK)(LPDIRECT3DRMOBJECT obj, LPVOID arg);
+typedef void (__cdecl *D3DRMOBJECTCALLBACK)(struct IDirect3DRMObject *obj, void *arg);
 typedef void (__cdecl *D3DRMFRAMEMOVECALLBACK)(LPDIRECT3DRMFRAME obj, LPVOID arg, D3DVALUE delta);
 typedef void (__cdecl *D3DRMFRAME3MOVECALLBACK)(LPDIRECT3DRMFRAME3 obj, LPVOID arg, D3DVALUE delta);
 typedef void (__cdecl *D3DRMUPDATECALLBACK)(struct IDirect3DRMDevice *device, void *ctx, int count, D3DRECT *rects);
@@ -164,7 +164,7 @@ typedef int (__cdecl *D3DRMUSERVISUALCALLBACK)(LPDIRECT3DRMUSERVISUAL obj, LPVOI
     D3DRMUSERVISUALREASON reason, LPDIRECT3DRMDEVICE dev, LPDIRECT3DRMVIEWPORT view);
 typedef HRESULT (__cdecl *D3DRMLOADTEXTURECALLBACK)(char *tex_name, void *arg, LPDIRECT3DRMTEXTURE *);
 typedef HRESULT (__cdecl *D3DRMLOADTEXTURE3CALLBACK)(char *tex_name, void *arg, LPDIRECT3DRMTEXTURE3 *);
-typedef void (__cdecl *D3DRMLOADCALLBACK)(LPDIRECT3DRMOBJECT object, REFIID objectguid, LPVOID arg);
+typedef void (__cdecl *D3DRMLOADCALLBACK)(struct IDirect3DRMObject *object, REFIID objectguid, void *arg);
 typedef HRESULT (__cdecl *D3DRMDOWNSAMPLECALLBACK)(struct IDirect3DRMTexture3 *texture, void *ctx,
         IDirectDrawSurface *src_surface, IDirectDrawSurface *dst_surface);
 typedef HRESULT (__cdecl *D3DRMVALIDATIONCALLBACK)(LPDIRECT3DRMTEXTURE3 lpDirect3DRMTexture, LPVOID pArg,
@@ -3575,8 +3575,8 @@ DECLARE_INTERFACE_(IDirect3DRMWrap, IDirect3DRMObject)
         D3DVALUE ou, D3DVALUE ov,
         D3DVALUE su, D3DVALUE sv
     ) PURE;
-    STDMETHOD(Apply)(THIS_ LPDIRECT3DRMOBJECT) PURE;
-    STDMETHOD(ApplyRelative)(THIS_ LPDIRECT3DRMFRAME frame, LPDIRECT3DRMOBJECT) PURE;
+    STDMETHOD(Apply)(THIS_ IDirect3DRMObject *object) PURE;
+    STDMETHOD(ApplyRelative)(THIS_ IDirect3DRMFrame *frame, IDirect3DRMObject *object) PURE;
 };
 #undef INTERFACE
 
@@ -4182,7 +4182,7 @@ DECLARE_INTERFACE_(IDirect3DRMObjectArray, IDirect3DRMArray)
     /*** IDirect3DRMArray methods ***/
     STDMETHOD_(DWORD, GetSize)(THIS) PURE;
     /*** IDirect3DRMObjectArray methods ***/
-    STDMETHOD(GetElement)(THIS_ DWORD index, LPDIRECT3DRMOBJECT *) PURE;
+    STDMETHOD(GetElement)(THIS_ DWORD index, IDirect3DRMObject **element) PURE;
 };
 #undef INTERFACE
 
@@ -4559,12 +4559,12 @@ DECLARE_INTERFACE_(IDirect3DRMInterpolator, IDirect3DRMObject)
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMInterpolator methods ***/
-    STDMETHOD(AttachObject)(THIS_ LPDIRECT3DRMOBJECT) PURE;
+    STDMETHOD(AttachObject)(THIS_ IDirect3DRMObject *object) PURE;
     STDMETHOD(GetAttachedObjects)(THIS_ LPDIRECT3DRMOBJECTARRAY *) PURE;
-    STDMETHOD(DetachObject)(THIS_ LPDIRECT3DRMOBJECT) PURE;
+    STDMETHOD(DetachObject)(THIS_ IDirect3DRMObject *object) PURE;
     STDMETHOD(SetIndex)(THIS_ D3DVALUE) PURE;
     STDMETHOD_(D3DVALUE, GetIndex)(THIS) PURE;
-    STDMETHOD(Interpolate)(THIS_ D3DVALUE, LPDIRECT3DRMOBJECT, D3DRMINTERPOLATIONOPTIONS) PURE;
+    STDMETHOD(Interpolate)(THIS_ D3DVALUE index, IDirect3DRMObject *object, D3DRMINTERPOLATIONOPTIONS flags) PURE;
 };
 #undef INTERFACE
 

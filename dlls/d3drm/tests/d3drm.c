@@ -1335,7 +1335,7 @@ static const GUID* refiids[] =
     &IID_IDirect3DRMMaterial /* Not taken into account and not notified */
 };
 
-static void __cdecl object_load_callback(LPDIRECT3DRMOBJECT object, REFIID objectguid, LPVOID arg)
+static void __cdecl object_load_callback(IDirect3DRMObject *object, REFIID objectguid, LPVOID arg)
 {
     ok(object != NULL, "Arg 1 should not be null\n");
     ok(IsEqualGUID(objectguid, refiids[nb_objects]), "Arg 2 is incorrect\n");

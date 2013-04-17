@@ -392,11 +392,10 @@ static HRESULT WINAPI IDirect3DRMImpl_GetDevices(IDirect3DRM* iface, LPDIRECT3DR
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMImpl_GetNamedObject(IDirect3DRM* iface, const char * pName, LPDIRECT3DRMOBJECT * ppObject)
+static HRESULT WINAPI IDirect3DRMImpl_GetNamedObject(IDirect3DRM *iface,
+        const char *name, IDirect3DRMObject **object)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM(iface);
-
-    FIXME("(%p/%p)->(%s,%p): stub\n", iface, This, pName, ppObject);
+    FIXME("iface %p, name %s, object %p stub!\n", iface, debugstr_a(name), object);
 
     return E_NOTIMPL;
 }
@@ -795,12 +794,10 @@ static HRESULT WINAPI IDirect3DRM2Impl_GetDevices(IDirect3DRM2* iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRM2Impl_GetNamedObject(IDirect3DRM2* iface, const char * pName,
-                                                      LPDIRECT3DRMOBJECT * ppObject)
+static HRESULT WINAPI IDirect3DRM2Impl_GetNamedObject(IDirect3DRM2 *iface,
+        const char *name, IDirect3DRMObject **object)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM2(iface);
-
-    FIXME("(%p/%p)->(%s,%p): stub\n", iface, This, pName, ppObject);
+    FIXME("iface %p, name %s, object %p stub!\n", iface, debugstr_a(name), object);
 
     return E_NOTIMPL;
 }
@@ -1237,12 +1234,10 @@ static HRESULT WINAPI IDirect3DRM3Impl_GetDevices(IDirect3DRM3* iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRM3Impl_GetNamedObject(IDirect3DRM3* iface, const char* Name,
-                                                      LPDIRECT3DRMOBJECT* Object)
+static HRESULT WINAPI IDirect3DRM3Impl_GetNamedObject(IDirect3DRM3 *iface,
+        const char *name, IDirect3DRMObject **object)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM3(iface);
-
-    FIXME("(%p/%p)->(%s,%p): stub\n", iface, This, Name, Object);
+    FIXME("iface %p, name %s, object %p stub!\n", iface, debugstr_a(name), object);
 
     return E_NOTIMPL;
 }
