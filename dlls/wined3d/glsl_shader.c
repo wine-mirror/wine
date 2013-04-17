@@ -582,9 +582,7 @@ static void shader_glsl_load_constantsF(const struct wined3d_shader *shader, con
     /* Immediate constants are clamped to [-1;1] at shader creation time if needed */
     LIST_FOR_EACH_ENTRY(lconst, &shader->constantsF, struct wined3d_shader_lconst, entry)
     {
-        GLint location = constant_locations[lconst->idx];
-        /* We found this uniform name in the program - go ahead and send the data */
-        if (location != -1) GL_EXTCALL(glUniform4fvARB(location, 1, (const GLfloat *)lconst->value));
+        GL_EXTCALL(glUniform4fvARB(constant_locations[lconst->idx], 1, (const GLfloat *)lconst->value));
     }
     checkGLcall("glUniform4fvARB()");
 }
