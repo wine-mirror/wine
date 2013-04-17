@@ -31,6 +31,7 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
+WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 WINE_DECLARE_DEBUG_CHANNEL(d3d);
 
 static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *dst_rect,
@@ -1551,13 +1552,13 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
      * locking them. */
     if (dst_surface->flags & SFLAG_CONVERTED)
     {
-        WARN("Converted surface, using CPU blit.\n");
+        WARN_(d3d_perf)("Converted surface, using CPU blit.\n");
         return surface_cpu_blt(dst_surface, &dst_rect, src_surface, &src_rect, flags, fx, filter);
     }
 
     if (flags & ~simple_blit)
     {
-        WARN("Using fallback for complex blit (%#x).\n", flags);
+        WARN_(d3d_perf)("Using fallback for complex blit (%#x).\n", flags);
         goto fallback;
     }
 

@@ -35,6 +35,7 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 
 /* Define the default light parameters as specified by MSDN. */
 const struct wined3d_light WINED3D_default_light =
@@ -221,7 +222,7 @@ static void device_stream_info_from_declaration(struct wined3d_device *device, s
          * drawStridedSlow() is needed, including a vertex buffer path. */
         if (state->load_base_vertex_index < 0)
         {
-            WARN("load_base_vertex_index is < 0 (%d), not using VBOs.\n", state->load_base_vertex_index);
+            WARN_(d3d_perf)("load_base_vertex_index is < 0 (%d), not using VBOs.\n", state->load_base_vertex_index);
             data.buffer_object = 0;
             data.addr = buffer_get_sysmem(buffer, &device->adapter->gl_info);
             if ((UINT_PTR)data.addr < -state->load_base_vertex_index * stride)

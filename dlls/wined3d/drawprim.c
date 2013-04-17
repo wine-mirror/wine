@@ -30,6 +30,7 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_draw);
+WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 
 #include <stdio.h>
 #include <math.h>
@@ -102,7 +103,7 @@ static void drawStridedSlow(const struct wined3d_device *device, const struct wi
     UINT num_untracked_materials;
     DWORD tex_mask = 0;
 
-    TRACE("Using slow vertex array code\n");
+    TRACE_(d3d_perf)("Using slow vertex array code\n");
 
     /* Variable Initialization */
     if (idxSize)
@@ -702,7 +703,7 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
             if (!warned++)
                 FIXME("Using software emulation because not all material properties could be tracked.\n");
             else
-                WARN("Using software emulation because not all material properties could be tracked.\n");
+                WARN_(d3d_perf)("Using software emulation because not all material properties could be tracked.\n");
             emulation = TRUE;
         }
         else if (context->fog_coord && state->render_states[WINED3D_RS_FOGENABLE])
@@ -715,7 +716,7 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
             if (!warned++)
                 FIXME("Using software emulation because manual fog coordinates are provided.\n");
             else
-                WARN("Using software emulation because manual fog coordinates are provided.\n");
+                WARN_(d3d_perf)("Using software emulation because manual fog coordinates are provided.\n");
             emulation = TRUE;
         }
 
@@ -737,7 +738,7 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
             if (!warned++)
                 FIXME("Using immediate mode with vertex shaders for half float emulation.\n");
             else
-                WARN("Using immediate mode with vertex shaders for half float emulation.\n");
+                WARN_(d3d_perf)("Using immediate mode with vertex shaders for half float emulation.\n");
 
             drawStridedSlowVs(gl_info, state, stream_info, index_count,
                     state->gl_primitive_type, idx_data, idx_size, start_idx);

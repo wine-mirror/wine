@@ -30,6 +30,7 @@
 #include "winternl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 
 #define WINE_DEFAULT_VIDMEM (64 * 1024 * 1024)
 
@@ -553,7 +554,7 @@ static void test_pbo_functionality(struct wined3d_gl_info *gl_info)
 
     if (memcmp(check, pattern, sizeof(check)))
     {
-        WARN("PBO test failed, read back data doesn't match original.\n"
+        WARN_(d3d_perf)("PBO test failed, read back data doesn't match original.\n"
                 "Disabling PBOs. This may result in slower performance.\n");
         gl_info->supported[ARB_PIXEL_BUFFER_OBJECT] = FALSE;
     }
@@ -2424,7 +2425,7 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
     }
     else
     {
-        WARN("Driver doesn't guarantee a minimum buffer map alignment.\n");
+        WARN_(d3d_perf)("Driver doesn't guarantee a minimum buffer map alignment.\n");
     }
     if (gl_info->supported[NV_REGISTER_COMBINERS])
     {
@@ -2853,7 +2854,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
         }
         else if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
         {
-            WARN("Framebuffer objects not supported, falling back to backbuffer offscreen rendering mode.\n");
+            WARN_(d3d_perf)("Framebuffer objects not supported, falling back to backbuffer offscreen rendering mode.\n");
             wined3d_settings.offscreen_rendering_mode = ORM_BACKBUFFER;
         }
         if (gl_info->supported[EXT_FRAMEBUFFER_BLIT])
