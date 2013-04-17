@@ -6511,7 +6511,7 @@ static void test_COM_dplobby(void)
     hr = IDirectPlayLobby_QueryInterface(dpl, &IID_IDirectPlayLobby3A, (void**)&dpl3A);
     ok(hr == S_OK, "QueryInterface for IID_IDirectPlayLobby3A failed: %08x\n", hr);
     refcount = IDirectPlayLobby_AddRef(dpl3A);
-    todo_wine ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
     IDirectPlayLobby_Release(dpl3A);
 
     /* IDirectPlayLobby and IUnknown share a refcount */
