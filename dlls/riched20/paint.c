@@ -306,9 +306,9 @@ static void get_selection_rect( ME_Context *c, ME_Run *run, int from, int to, in
 {
     from = max( 0, from );
     to = min( run->len, to );
-    r->left = ME_PointFromCharContext( c, run, from );
+    r->left = ME_PointFromCharContext( c, run, from, TRUE );
     r->top = 0;
-    r->right = ME_PointFromCharContext( c, run, to );
+    r->right = ME_PointFromCharContext( c, run, to, TRUE );
     r->bottom = cy;
     return;
 }
@@ -1235,7 +1235,7 @@ void ME_EnsureVisible(ME_TextEditor *editor, ME_Cursor *pCursor)
 
   if (editor->styleFlags & ES_AUTOHSCROLL)
   {
-    x = pRun->pt.x + ME_PointFromChar(editor, pRun, pCursor->nOffset);
+    x = pRun->pt.x + ME_PointFromChar(editor, pRun, pCursor->nOffset, TRUE);
     if (x > editor->horz_si.nPos + editor->sizeWindow.cx)
       x = x + 1 - editor->sizeWindow.cx;
     else if (x > editor->horz_si.nPos)

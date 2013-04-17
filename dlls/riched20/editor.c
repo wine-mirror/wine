@@ -3936,7 +3936,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     ME_RunOfsFromCharOfs(editor, nCharOfs, &pPara, &pRun, &nOffset);
     assert(pRun->type == diRun);
     pt.y = pRun->member.run.pt.y;
-    pt.x = pRun->member.run.pt.x + ME_PointFromChar(editor, &pRun->member.run, nOffset);
+    pt.x = pRun->member.run.pt.x + ME_PointFromChar(editor, &pRun->member.run, nOffset, TRUE);
     pt.y += pPara->member.para.pt.y + editor->rcFormat.top;
     pt.x += editor->rcFormat.left;
 

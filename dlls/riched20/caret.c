@@ -237,7 +237,7 @@ ME_GetCursorCoordinates(ME_TextEditor *editor, ME_Cursor *pCursor,
       assert(run->type == diRun);
     }
   }
-  run_x = ME_PointFromCharContext( &c, &run->member.run, pCursor->nOffset );
+  run_x = ME_PointFromCharContext( &c, &run->member.run, pCursor->nOffset, TRUE );
 
   *height = pSizeRun->member.run.nAscent + pSizeRun->member.run.nDescent;
   *x = c.rcView.left + run->member.run.pt.x + run_x - editor->horz_si.nPos;
@@ -887,7 +887,7 @@ static BOOL ME_FindRunInRow(ME_TextEditor *editor, ME_DisplayItem *pRow,
 
     if (x >= run_x && x < run_x+width)
     {
-      cursor->nOffset = ME_CharFromPoint(editor, x-run_x, &pNext->member.run, TRUE);
+      cursor->nOffset = ME_CharFromPoint(editor, x-run_x, &pNext->member.run, TRUE, TRUE);
       cursor->pRun = pNext;
       cursor->pPara = ME_GetParagraph( cursor->pRun );
       return exact;
@@ -1182,7 +1182,7 @@ static int ME_GetXForArrow(ME_TextEditor *editor, ME_Cursor *pCursor)
     }
     else {
       x = pRun->member.run.pt.x;
-      x += ME_PointFromChar(editor, &pRun->member.run, pCursor->nOffset);
+      x += ME_PointFromChar(editor, &pRun->member.run, pCursor->nOffset, TRUE);
     }
     editor->nUDArrowX = x;
   }

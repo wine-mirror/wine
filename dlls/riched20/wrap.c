@@ -107,7 +107,7 @@ static ME_DisplayItem *split_run_extents(ME_WrapContext *wc, ME_DisplayItem *ite
 static int find_split_point( ME_Context *c, int cx, ME_Run *run )
 {
     if (!run->len || cx <= 0) return 0;
-    return ME_CharFromPointContext( c, cx, run, FALSE );
+    return ME_CharFromPointContext( c, cx, run, FALSE, FALSE );
 }
 
 static ME_DisplayItem *ME_MakeRow(int height, int baseline, int width)
