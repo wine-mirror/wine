@@ -318,7 +318,7 @@ static void draw_text( ME_Context *c, ME_Run *run, int x, int y, BOOL selected, 
 {
     COLORREF text_color = get_text_color( c, run->style, selected );
     COLORREF back_color = selected ? ITextHost_TxGetSysColor( c->editor->texthost, COLOR_HIGHLIGHT ) : 0;
-    COLORREF old_text, old_back;
+    COLORREF old_text, old_back = 0;
     const WCHAR *text = get_text( run, 0 );
     ME_String *masked = NULL;
 
