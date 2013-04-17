@@ -2522,6 +2522,7 @@ static void test_converttovar(void)
     DBLENGTH dst_len;
     VARIANT dst;
     HRESULT hr;
+    CY cy, cy2;
     DATE date;
     INT i4;
 
@@ -2572,6 +2573,20 @@ static void test_converttovar(void)
     ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
     ok(V_VT(&dst) == VT_DATE, "got %d\n", V_VT(&dst));
     ok(V_DATE(&dst) == 123.123, "got %f\n", V_DATE(&dst));
+
+    V_VT(&dst) = VT_EMPTY;
+    dst_len = 0;
+    dst_status = DBSTATUS_S_DEFAULT;
+    S(cy).Lo = 1;
+    S(cy).Hi = 2;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_CY, DBTYPE_VARIANT, sizeof(cy), &dst_len, &cy, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
+    ok(V_VT(&dst) == VT_CY, "got %d\n", V_VT(&dst));
+
+    cy2 = V_CY(&dst);
+    ok(S(cy2).Lo == S(cy).Lo && S(cy2).Hi == S(cy).Hi, "got %d,%d\n", S(cy2).Lo, S(cy2).Hi);
 
     IDataConvert_Release(convert);
 }

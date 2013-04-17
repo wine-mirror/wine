@@ -771,6 +771,11 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
             V_DATE(v) = *(DATE*)src;
             hr = S_OK;
             break;
+        case DBTYPE_CY:
+            V_VT(v) = VT_CY;
+            V_CY(v) = *(CY*)src;
+            hr = S_OK;
+            break;
         default: FIXME("Unimplemented conversion %04x -> VARIANT\n", src_type); return E_NOTIMPL;
         }
         break;
