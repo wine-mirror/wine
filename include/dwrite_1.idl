@@ -675,7 +675,7 @@ interface IDWriteTextAnalyzer1 : IDWriteTextAnalyzer
                                   UINT16 const *clustermap,
                                   FLOAT const *advances,
                                   DWRITE_GLYPH_OFFSET const *offsets,
-                                  /*DWRITE_SHAPING_GLYPH_PROPERTIES const *properties, */
+                                  DWRITE_SHAPING_GLYPH_PROPERTIES const *props,
                                   FLOAT *modified_advances,
                                   DWRITE_GLYPH_OFFSET *modified_offsets);
     HRESULT GetBaseline(IDWriteFontFace *face,
@@ -698,10 +698,7 @@ interface IDWriteTextAnalyzer1 : IDWriteTextAnalyzer
         BOOL is_sideways,
         DWRITE_MATRIX *transform);
 
-/*
- *    HRESULT GetScriptProperties(DWRITE_SCRIPT_ANALYSIS sa,
- *        DWRITE_SCRIPT_PROPERTIES *properties);
- */
+    HRESULT GetScriptProperties(DWRITE_SCRIPT_ANALYSIS sa, DWRITE_SCRIPT_PROPERTIES *props);
 
     HRESULT GetTextComplexity(const WCHAR *text,
                               UINT32 len,
