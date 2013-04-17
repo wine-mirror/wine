@@ -36,16 +36,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dplay);
 
-/*****************************************************************************
- * Predeclare the interface implementation structures
- */
-typedef struct IDirectPlayLobbyImpl  IDirectPlayLobbyAImpl;
-typedef struct IDirectPlayLobbyImpl  IDirectPlayLobbyWImpl;
-typedef struct IDirectPlayLobbyImpl  IDirectPlayLobby2AImpl;
-typedef struct IDirectPlayLobbyImpl  IDirectPlayLobby2WImpl;
-typedef struct IDirectPlayLobbyImpl  IDirectPlayLobby3AImpl;
-typedef struct IDirectPlayLobbyImpl  IDirectPlayLobby3WImpl;
-
 /* Forward declarations for this module helper methods */
 HRESULT DPL_CreateCompoundAddress ( LPCDPCOMPOUNDADDRESSELEMENT lpElements, DWORD dwElementCount,
                                     LPVOID lpAddress, LPDWORD lpdwAddressSize, BOOL bAnsiInterface )DECLSPEC_HIDDEN;
@@ -102,7 +92,7 @@ static inline IDirectPlayLobbyImpl *impl_from_IDirectPlayLobby3A( IDirectPlayLob
 
 static BOOL DPL_CreateLobby1( LPVOID lpDPL )
 {
-  IDirectPlayLobbyAImpl *This = lpDPL;
+  IDirectPlayLobbyImpl *This = lpDPL;
 
   This->dpl = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *(This->dpl) ) );
   if ( This->dpl == NULL )
@@ -117,7 +107,7 @@ static BOOL DPL_CreateLobby1( LPVOID lpDPL )
 
 static BOOL DPL_DestroyLobby1( LPVOID lpDPL )
 {
-  IDirectPlayLobbyAImpl *This = lpDPL;
+  IDirectPlayLobbyImpl *This = lpDPL;
 
   if( This->dpl->dwMsgThread )
   {
@@ -259,12 +249,8 @@ static ULONG WINAPI IDirectPlayLobby3Impl_Release(IDirectPlayLobby3 *iface)
  * Returns an IDirectPlay interface.
  *
  */
-static HRESULT DPL_ConnectEx
-( IDirectPlayLobbyAImpl* This,
-  DWORD     dwFlags,
-  REFIID    riid,
-  LPVOID*   lplpDP,
-  IUnknown* pUnk)
+static HRESULT DPL_ConnectEx( IDirectPlayLobbyImpl *This, DWORD dwFlags, REFIID riid, void **lplpDP,
+        IUnknown* pUnk)
 {
   HRESULT         hr;
   DWORD           dwOpenFlags = 0;
@@ -789,7 +775,7 @@ static HRESULT WINAPI IDirectPlayLobby3Impl_ReceiveLobbyMessage( IDirectPlayLobb
 
 typedef struct tagRunApplicationEnumStruct
 {
-  IDirectPlayLobbyAImpl* This;
+  IDirectPlayLobbyImpl *This;
 
   GUID  appGUID;
   LPSTR lpszPath;
