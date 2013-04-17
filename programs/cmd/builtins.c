@@ -1503,8 +1503,7 @@ static void WCMD_part_execute(CMD_LIST **cmdList, const WCHAR *firstcmd,
   CMD_LIST *curPosition = *cmdList;
   int myDepth = (*cmdList)->bracketDepth;
 
-  WINE_TRACE("cmdList(%p), firstCmd(%p), doIt(%d)\n",
-             cmdList, wine_dbgstr_w(firstcmd),
+  WINE_TRACE("cmdList(%p), firstCmd(%s), doIt(%d)\n", cmdList, wine_dbgstr_w(firstcmd),
              executecmds);
 
   /* Skip leading whitespace between condition and the command */
