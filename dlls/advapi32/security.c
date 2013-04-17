@@ -5671,7 +5671,7 @@ DWORD WINAPI GetNamedSecurityInfoExA( LPCSTR object, SE_OBJECT_TYPE type,
  */
 BOOL WINAPI DecryptFileW(LPCWSTR lpFileName, DWORD dwReserved)
 {
-    FIXME("%s %08x\n", debugstr_w(lpFileName), dwReserved);
+    FIXME("(%s, %08x): stub\n", debugstr_w(lpFileName), dwReserved);
     return TRUE;
 }
 
@@ -5680,7 +5680,7 @@ BOOL WINAPI DecryptFileW(LPCWSTR lpFileName, DWORD dwReserved)
  */
 BOOL WINAPI DecryptFileA(LPCSTR lpFileName, DWORD dwReserved)
 {
-    FIXME("%s %08x\n", debugstr_a(lpFileName), dwReserved);
+    FIXME("(%s, %08x): stub\n", debugstr_a(lpFileName), dwReserved);
     return TRUE;
 }
 
@@ -5689,7 +5689,7 @@ BOOL WINAPI DecryptFileA(LPCSTR lpFileName, DWORD dwReserved)
  */
 BOOL WINAPI EncryptFileW(LPCWSTR lpFileName)
 {
-    FIXME("%s\n", debugstr_w(lpFileName));
+    FIXME("(%s): stub\n", debugstr_w(lpFileName));
     return TRUE;
 }
 
@@ -5698,7 +5698,7 @@ BOOL WINAPI EncryptFileW(LPCWSTR lpFileName)
  */
 BOOL WINAPI EncryptFileA(LPCSTR lpFileName)
 {
-    FIXME("%s\n", debugstr_a(lpFileName));
+    FIXME("(%s): stub\n", debugstr_a(lpFileName));
     return TRUE;
 }
 
