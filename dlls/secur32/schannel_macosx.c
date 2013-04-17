@@ -1007,7 +1007,25 @@ BOOL schan_imp_init(void)
     supported_protocols = SP_PROT_SSL2_CLIENT | SP_PROT_SSL3_CLIENT | SP_PROT_TLS1_0_CLIENT;
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
-    /* FIXME: Test max allowed version for TLS 1.1 and TLS 1.2 */
+    if(SSLGetProtocolVersionMax != NULL) {
+        SSLProtocol max_protocol;
+        SSLContextRef ctx;
+        OSStatus status;
+
+        status = SSLNewContext(FALSE, &ctx);
+        if(status == noErr) {
+            status = SSLGetProtocolVersionMax(ctx, &max_protocol);
+            if(status == noErr) {
+                if(max_protocol >= kTLSProtocol11)
+                    supported_protocols |= SP_PROT_TLS1_1_CLIENT;
+                if(max_protocol >= kTLSProtocol12)
+                    supported_protocols |= SP_PROT_TLS1_2_CLIENT;
+            }
+            SSLDisposeContext(ctx);
+        }else {
+            WARN("SSLNewContext failed\n");
+        }
+    }
 #endif
 
     return TRUE;
