@@ -2432,6 +2432,33 @@ static void _test_text_length(unsigned line, IUnknown *unk, LONG l)
     IHTMLDOMTextNode_Release(text);
 }
 
+#define test_text_data(a,b) _test_text_data(__LINE__,a,b)
+static void _test_text_data(unsigned line, IUnknown *unk, const char *exdata)
+{
+    IHTMLDOMTextNode *text = _get_text_iface(line, unk);
+    BSTR str;
+    HRESULT hres;
+
+    hres = IHTMLDOMTextNode_get_data(text, &str);
+    ok_(__FILE__,line)(hres == S_OK, "get_data failed: %08x\n", hres);
+    ok_(__FILE__,line)(!strcmp_wa(str, exdata), "data = %s, expected %s\n", wine_dbgstr_w(str), exdata);
+    IHTMLDOMTextNode_Release(text);
+    SysFreeString(str);
+}
+
+#define set_text_data(a,b) _set_text_data(__LINE__,a,b)
+static void _set_text_data(unsigned line, IUnknown *unk, const char *data)
+{
+    IHTMLDOMTextNode *text = _get_text_iface(line, unk);
+    BSTR str = a2bstr(data);
+    HRESULT hres;
+
+    hres = IHTMLDOMTextNode_put_data(text, str);
+    ok_(__FILE__,line)(hres == S_OK, "get_data failed: %08x\n", hres);
+    IHTMLDOMTextNode_Release(text);
+    SysFreeString(str);
+}
+
 #define test_select_set_disabled(i,b) _test_select_set_disabled(__LINE__,i,b)
 static void _test_select_set_disabled(unsigned line, IHTMLSelectElement *select, VARIANT_BOOL b)
 {
@@ -6640,10 +6667,13 @@ static void test_create_elems(IHTMLDocument2 *doc)
     IHTMLElement_Release(elem);
     IHTMLDOMNode_Release(node);
 
-    node = test_create_text(doc, "test");
+    node = test_create_text(doc, "abc");
     test_ifaces((IUnknown*)node, text_iids);
     test_disp((IUnknown*)node, &DIID_DispHTMLDOMTextNode, "[object]");
-    test_text_length((IUnknown*)node, 4);
+    test_text_length((IUnknown*)node, 3);
+    test_text_data((IUnknown*)node, "abc");
+    set_text_data((IUnknown*)node, "test");
+    test_text_data((IUnknown*)node, "test");
 
     V_VT(&var) = VT_NULL;
     node2 = test_node_insertbefore((IUnknown*)body, node, &var);
