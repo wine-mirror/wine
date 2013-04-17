@@ -188,7 +188,6 @@ static void ME_InsertRowStart(ME_WrapContext *wc, const ME_DisplayItem *pEnd)
         {
           /* Exclude space characters from run width.
            * Other whitespace or delimiters are not treated this way. */
-          SIZE sz;
           int len = p->member.run.len;
           WCHAR *text = get_text( &p->member.run, len - 1 );
 
@@ -199,13 +198,9 @@ static void ME_InsertRowStart(ME_WrapContext *wc, const ME_DisplayItem *pEnd)
           if (len)
           {
               if (len == p->member.run.len)
-              {
                   width += p->member.run.nWidth;
-              } else {
-                  sz = ME_GetRunSize(wc->context, &para->member.para,
-                                     &p->member.run, len, p->member.run.pt.x);
-                  width += sz.cx;
-              }
+              else
+                  width += ME_PointFromCharContext( wc->context, &p->member.run, len, FALSE );
           }
           bSkippingSpaces = !len;
         } else if (!(p->member.run.nFlags & MERF_ENDPARA))

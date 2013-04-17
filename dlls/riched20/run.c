@@ -622,19 +622,6 @@ SIZE ME_GetRunSizeCommon(ME_Context *c, const ME_Paragraph *para, ME_Run *run, i
 }
 
 /******************************************************************************
- * ME_GetRunSize
- * 
- * Finds width and height (but not ascent and descent) of a part of the run
- * up to given character.    
- */     
-SIZE ME_GetRunSize(ME_Context *c, const ME_Paragraph *para,
-                   ME_Run *run, int nLen, int startx)
-{
-  int asc, desc;
-  return ME_GetRunSizeCommon(c, para, run, nLen, startx, &asc, &desc);
-}
-
-/******************************************************************************
  * ME_SetSelectionCharFormat
  *
  * Applies a style change, either to a current selection, or to insert cursor
