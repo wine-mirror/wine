@@ -72,13 +72,19 @@ typedef struct tagDirectPlayLobbyData
 
 typedef struct IDirectPlayLobbyImpl
 {
+    IDirectPlayLobby IDirectPlayLobby_iface;
     IDirectPlayLobby3 IDirectPlayLobby3_iface;
     IDirectPlayLobby3A IDirectPlayLobby3A_iface;
     LONG numIfaces; /* "in use interfaces" refcount */
-    LONG ref3, ref3A;
+    LONG ref, ref3, ref3A;
     CRITICAL_SECTION lock;
     DirectPlayLobbyData*          dpl;
 } IDirectPlayLobbyImpl;
+
+static inline IDirectPlayLobbyImpl *impl_from_IDirectPlayLobby( IDirectPlayLobby *iface )
+{
+    return CONTAINING_RECORD( iface, IDirectPlayLobbyImpl, IDirectPlayLobby_iface );
+}
 
 static inline IDirectPlayLobbyImpl *impl_from_IDirectPlayLobby3( IDirectPlayLobby3 *iface )
 {
@@ -130,6 +136,13 @@ static void dplobby_destroy(IDirectPlayLobbyImpl *obj)
     HeapFree( GetProcessHeap(), 0, obj );
 }
 
+static HRESULT WINAPI IDirectPlayLobbyImpl_QueryInterface( IDirectPlayLobby *iface, REFIID riid,
+        void **ppv )
+{
+    IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby( iface );
+    return IDirectPlayLobby_QueryInterface( &This->IDirectPlayLobby3_iface, riid, ppv );
+}
+
 static HRESULT WINAPI IDirectPlayLobby3AImpl_QueryInterface( IDirectPlayLobby3A *iface, REFIID riid,
         void **ppv )
 {
@@ -145,12 +158,12 @@ static HRESULT WINAPI IDirectPlayLobby3Impl_QueryInterface( IDirectPlayLobby3 *i
     if ( IsEqualGUID( &IID_IUnknown, riid ) )
     {
         TRACE( "(%p)->(IID_IUnknown %p)\n", This, ppv );
-        *ppv = &This->IDirectPlayLobby3_iface;
+        *ppv = &This->IDirectPlayLobby_iface;
     }
     else if ( IsEqualGUID( &IID_IDirectPlayLobby, riid ) )
     {
         TRACE( "(%p)->(IID_IDirectPlayLobby %p)\n", This, ppv );
-        *ppv = &This->IDirectPlayLobby3_iface;
+        *ppv = &This->IDirectPlayLobby_iface;
     }
     else if ( IsEqualGUID( &IID_IDirectPlayLobbyA, riid ) )
     {
@@ -188,6 +201,19 @@ static HRESULT WINAPI IDirectPlayLobby3Impl_QueryInterface( IDirectPlayLobby3 *i
     return S_OK;
 }
 
+static ULONG WINAPI IDirectPlayLobbyImpl_AddRef( IDirectPlayLobby *iface )
+{
+    IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby( iface );
+    ULONG ref = InterlockedIncrement( &This->ref );
+
+    TRACE( "(%p) ref=%d\n", This, ref );
+
+    if ( ref == 1 )
+        InterlockedIncrement( &This->numIfaces );
+
+    return ref;
+}
+
 static ULONG WINAPI IDirectPlayLobby3AImpl_AddRef(IDirectPlayLobby3A *iface)
 {
     IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby3A( iface );
@@ -210,6 +236,19 @@ static ULONG WINAPI IDirectPlayLobby3Impl_AddRef(IDirectPlayLobby3 *iface)
 
     if ( ref == 1 )
         InterlockedIncrement( &This->numIfaces );
+
+    return ref;
+}
+
+static ULONG WINAPI IDirectPlayLobbyImpl_Release( IDirectPlayLobby *iface )
+{
+    IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby( iface );
+    ULONG ref = InterlockedDecrement( &This->ref );
+
+    TRACE( "(%p) ref=%d\n", This, ref );
+
+    if ( !ref && !InterlockedDecrement( &This->numIfaces ) )
+        dplobby_destroy( This );
 
     return ref;
 }
@@ -327,6 +366,13 @@ static HRESULT DPL_ConnectEx( IDirectPlayLobbyImpl *This, DWORD dwFlags, REFIID 
   return hr;
 }
 
+static HRESULT WINAPI IDirectPlayLobbyImpl_Connect( IDirectPlayLobby *iface, DWORD flags,
+    IDirectPlay2A **dp, IUnknown *unk )
+{
+    IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby( iface );
+    return IDirectPlayLobby_Connect( &This->IDirectPlayLobby3_iface, flags, dp, unk );
+}
+
 static HRESULT WINAPI IDirectPlayLobby3AImpl_Connect( IDirectPlayLobby3A *iface, DWORD flags,
     IDirectPlay2A **dp, IUnknown *unk)
 {
@@ -350,6 +396,14 @@ static HRESULT WINAPI IDirectPlayLobby3Impl_Connect( IDirectPlayLobby3 *iface, D
  * NOTE: It appears that this method is supposed to be really really stupid
  *       with no error checking on the contents.
  */
+static HRESULT WINAPI IDirectPlayLobbyImpl_CreateAddress( IDirectPlayLobby *iface, REFGUID sp,
+        REFGUID datatype, const void *data, DWORD datasize, void *address, DWORD *addrsize )
+{
+    IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby( iface );
+    return IDirectPlayLobby_CreateAddress( &This->IDirectPlayLobby3_iface, sp, datatype, data,
+            datasize, address, addrsize );
+}
+
 static HRESULT WINAPI IDirectPlayLobby3AImpl_CreateAddress( IDirectPlayLobby3A *iface,
         REFGUID guidSP, REFGUID guidDataType, const void *lpData, DWORD dwDataSize, void *lpAddress,
         DWORD *lpdwAddressSize )
@@ -403,6 +457,14 @@ static HRESULT DPL_CreateAddress(
  * given callback function, with lpContext, for each of the chunks.
  *
  */
+static HRESULT WINAPI IDirectPlayLobbyImpl_EnumAddress( IDirectPlayLobby *iface,
+        LPDPENUMADDRESSCALLBACK enumaddrcb, const void *address, DWORD size, void *context )
+{
+    IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby( iface );
+    return IDirectPlayLobby_EnumAddress( &This->IDirectPlayLobby3_iface, enumaddrcb, address, size,
+            context );
+}
+
 static HRESULT WINAPI IDirectPlayLobby3AImpl_EnumAddress( IDirectPlayLobby3A *iface,
         LPDPENUMADDRESSCALLBACK lpEnumAddressCallback, const void *lpAddress, DWORD dwAddressSize,
         void *lpContext )
@@ -462,6 +524,14 @@ HRESULT DPL_EnumAddress( LPDPENUMADDRESSCALLBACK lpEnumAddressCallback, LPCVOID 
  * build the DirectPlay Address.
  *
  */
+static HRESULT WINAPI IDirectPlayLobbyImpl_EnumAddressTypes( IDirectPlayLobby *iface,
+        LPDPLENUMADDRESSTYPESCALLBACK enumaddrtypecb, REFGUID sp, void *context, DWORD flags )
+{
+    IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby( iface );
+    return IDirectPlayLobby_EnumAddressTypes( &This->IDirectPlayLobby3_iface, enumaddrtypecb, sp,
+            context, flags );
+}
+
 static HRESULT WINAPI IDirectPlayLobby3AImpl_EnumAddressTypes( IDirectPlayLobby3A *iface,
         LPDPLENUMADDRESSTYPESCALLBACK lpEnumAddressTypeCallback, REFGUID guidSP, void *lpContext,
         DWORD dwFlags )
@@ -608,6 +678,14 @@ static HRESULT WINAPI IDirectPlayLobby3Impl_EnumLocalApplications( IDirectPlayLo
   return DPERR_OUTOFMEMORY;
 }
 
+static HRESULT WINAPI IDirectPlayLobbyImpl_EnumLocalApplications( IDirectPlayLobby *iface,
+        LPDPLENUMLOCALAPPLICATIONSCALLBACK enumlocalappcb, void *context, DWORD flags )
+{
+    IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby( iface );
+    return IDirectPlayLobby_EnumLocalApplications( &This->IDirectPlayLobby3_iface, enumlocalappcb,
+            context, flags );
+}
+
 static HRESULT WINAPI IDirectPlayLobby3AImpl_EnumLocalApplications( IDirectPlayLobby3A *iface,
         LPDPLENUMLOCALAPPLICATIONSCALLBACK lpEnumLocalAppCallback, void *lpContext, DWORD dwFlags )
 {
@@ -707,6 +785,14 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_EnumLocalApplications( IDirectPlayL
  *        the data structure to be allocated by our caller which can then
  *        call this procedure/method again with a valid data pointer.
  */
+static HRESULT WINAPI IDirectPlayLobbyImpl_GetConnectionSettings( IDirectPlayLobby *iface,
+        DWORD appid, void *data, DWORD *size )
+{
+    IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby( iface );
+    return IDirectPlayLobby_GetConnectionSettings( &This->IDirectPlayLobby3_iface, appid, data,
+            size );
+}
+
 static HRESULT WINAPI IDirectPlayLobby3AImpl_GetConnectionSettings( IDirectPlayLobby3A *iface,
         DWORD dwAppID, void *lpData, DWORD *lpdwDataSize )
 {
@@ -753,6 +839,14 @@ static HRESULT WINAPI IDirectPlayLobby3Impl_GetConnectionSettings( IDirectPlayLo
  * application. All messages are queued until received.
  *
  */
+static HRESULT WINAPI IDirectPlayLobbyImpl_ReceiveLobbyMessage( IDirectPlayLobby *iface,
+        DWORD flags, DWORD appid, DWORD *msgflags, void *data, DWORD *size )
+{
+    IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby( iface );
+    return IDirectPlayLobby_ReceiveLobbyMessage( &This->IDirectPlayLobby3_iface, flags, appid,
+            msgflags, data, size );
+}
+
 static HRESULT WINAPI IDirectPlayLobby3AImpl_ReceiveLobbyMessage( IDirectPlayLobby3A *iface,
         DWORD dwFlags, DWORD dwAppID, DWORD *lpdwMessageFlags, void *lpData,
         DWORD *lpdwDataSize )
@@ -918,6 +1012,14 @@ static BOOL DPL_CreateAndSetLobbyHandles( DWORD dwDestProcessId, HANDLE hDestPro
  * connect to a session.
  *
  */
+static HRESULT WINAPI IDirectPlayLobbyImpl_RunApplication( IDirectPlayLobby *iface, DWORD flags,
+        DWORD *appid, DPLCONNECTION *conn, HANDLE event )
+{
+    IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby( iface );
+    return IDirectPlayLobby_RunApplication( &This->IDirectPlayLobby3_iface, flags, appid, conn,
+            event );
+}
+
 static HRESULT WINAPI IDirectPlayLobby3AImpl_RunApplication( IDirectPlayLobby3A *iface,
         DWORD dwFlags, DWORD *lpdwAppID, DPLCONNECTION *lpConn, HANDLE hReceiveEvent )
 {
@@ -1058,6 +1160,14 @@ static HRESULT WINAPI IDirectPlayLobby3Impl_RunApplication( IDirectPlayLobby3 *i
  * All messages are queued until received.
  *
  */
+static HRESULT WINAPI IDirectPlayLobbyImpl_SendLobbyMessage( IDirectPlayLobby *iface, DWORD flags,
+        DWORD appid, void *data, DWORD size )
+{
+    IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby( iface );
+    return IDirectPlayLobby_SendLobbyMessage( &This->IDirectPlayLobby3_iface, flags, appid, data,
+            size );
+}
+
 static HRESULT WINAPI IDirectPlayLobby3AImpl_SendLobbyMessage( IDirectPlayLobby3A *iface,
         DWORD flags, DWORD appid, void *data, DWORD size )
 {
@@ -1109,6 +1219,14 @@ static HRESULT WINAPI IDirectPlayLobby3Impl_SetConnectionSettings( IDirectPlayLo
   return hr;
 }
 
+static HRESULT WINAPI IDirectPlayLobbyImpl_SetConnectionSettings( IDirectPlayLobby *iface,
+        DWORD flags, DWORD appid, DPLCONNECTION *conn )
+{
+    IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby( iface );
+    return IDirectPlayLobby_SetConnectionSettings( &This->IDirectPlayLobby3_iface, flags,
+            appid, conn );
+}
+
 static HRESULT WINAPI IDirectPlayLobby3AImpl_SetConnectionSettings( IDirectPlayLobby3A *iface,
         DWORD dwFlags, DWORD dwAppID, DPLCONNECTION *lpConn )
 {
@@ -1142,6 +1260,14 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_SetConnectionSettings( IDirectPlayL
  * Registers an event that will be set when a lobby message is received.
  *
  */
+static HRESULT WINAPI IDirectPlayLobbyImpl_SetLobbyMessageEvent( IDirectPlayLobby *iface,
+        DWORD flags, DWORD appid, HANDLE event )
+{
+    IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby( iface );
+    return IDirectPlayLobby_SetLobbyMessageEvent( &This->IDirectPlayLobby3_iface, flags, appid,
+            event );
+}
+
 static HRESULT WINAPI IDirectPlayLobby3AImpl_SetLobbyMessageEvent( IDirectPlayLobby3A *iface,
         DWORD flags, DWORD appid, HANDLE event )
 {
@@ -1420,6 +1546,23 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_WaitForConnectionSettings( IDirectP
   return hr;
 }
 
+static const IDirectPlayLobbyVtbl dpl_vt =
+{
+    IDirectPlayLobbyImpl_QueryInterface,
+    IDirectPlayLobbyImpl_AddRef,
+    IDirectPlayLobbyImpl_Release,
+    IDirectPlayLobbyImpl_Connect,
+    IDirectPlayLobbyImpl_CreateAddress,
+    IDirectPlayLobbyImpl_EnumAddress,
+    IDirectPlayLobbyImpl_EnumAddressTypes,
+    IDirectPlayLobbyImpl_EnumLocalApplications,
+    IDirectPlayLobbyImpl_GetConnectionSettings,
+    IDirectPlayLobbyImpl_ReceiveLobbyMessage,
+    IDirectPlayLobbyImpl_RunApplication,
+    IDirectPlayLobbyImpl_SendLobbyMessage,
+    IDirectPlayLobbyImpl_SetConnectionSettings,
+    IDirectPlayLobbyImpl_SetLobbyMessageEvent
+};
 
 static const IDirectPlayLobby3Vtbl dpl3A_vt =
 {
@@ -1479,9 +1622,11 @@ HRESULT dplobby_create( REFIID riid, void **ppv )
     if ( !obj )
         return DPERR_OUTOFMEMORY;
 
+    obj->IDirectPlayLobby_iface.lpVtbl = &dpl_vt;
     obj->IDirectPlayLobby3_iface.lpVtbl = &dpl3_vt;
     obj->IDirectPlayLobby3A_iface.lpVtbl = &dpl3A_vt;
     obj->numIfaces = 1;
+    obj->ref = 0;
     obj->ref3 = 1;
     obj->ref3A = 0;
 
