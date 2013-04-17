@@ -766,6 +766,11 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
             hr = V_BSTR(v) ? S_OK : E_OUTOFMEMORY;
             break;
         }
+        case DBTYPE_DATE:
+            V_VT(v) = VT_DATE;
+            V_DATE(v) = *(DATE*)src;
+            hr = S_OK;
+            break;
         default: FIXME("Unimplemented conversion %04x -> VARIANT\n", src_type); return E_NOTIMPL;
         }
         break;
