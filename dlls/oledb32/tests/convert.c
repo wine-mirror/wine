@@ -2544,6 +2544,7 @@ static void test_converttovar(void)
     CY cy, cy2;
     DATE date;
     INT i4;
+    LARGE_INTEGER i8;
 
     hr = CoCreateInstance(&CLSID_OLEDB_CONVERSIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IDataConvert, (void**)&convert);
     if(FAILED(hr))
@@ -2570,6 +2571,19 @@ static void test_converttovar(void)
     ok(V_VT(&dst) == VT_BSTR, "got %d\n", V_VT(&dst));
     ok(!lstrcmpW(V_BSTR(&dst), strW), "got %s\n", wine_dbgstr_w(V_BSTR(&dst)));
     VariantClear(&dst);
+
+    V_VT(&dst) = VT_EMPTY;
+    dst_len = 0;
+    dst_status = DBSTATUS_S_DEFAULT;
+    i8.QuadPart = 12345;
+    dst_len = 0x1234;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_I8, DBTYPE_VARIANT, sizeof(i8), &dst_len, &i8, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
+    ok(V_VT(&dst) == VT_DECIMAL, "got %d\n", V_VT(&dst));
+    ok(S(U(V_DECIMAL(&dst))).scale == 0 && S(U(V_DECIMAL(&dst))).sign == 0 &&
+       V_DECIMAL(&dst).Hi32 == 0 && U1(V_DECIMAL(&dst)).Lo64 == 12345, "Not Equal\n");
 
     V_VT(&dst) = VT_EMPTY;
     dst_len = 0;

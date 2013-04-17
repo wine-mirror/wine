@@ -757,6 +757,10 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
             V_I4(v) = *(signed int*)src;
             hr = S_OK;
             break;
+        case DBTYPE_I8:
+            V_VT(v) = VT_DECIMAL;
+            hr = VarDecFromI8( *(LONGLONG*)src,  &V_DECIMAL(v));
+            break;
         case DBTYPE_BSTR:
         {
             BSTR s = *(WCHAR**)src;
