@@ -63,13 +63,6 @@ struct DPLMSG
 };
 typedef struct DPLMSG* LPDPLMSG;
 
-typedef struct tagDirectPlayLobbyData
-{
-  HKEY  hkCallbackKeyHack;
-  DWORD dwMsgThread;
-  DPQ_HEAD( DPLMSG ) msgs;  /* List of messages received */
-} DirectPlayLobbyData;
-
 typedef struct IDirectPlayLobbyImpl
 {
     IDirectPlayLobby IDirectPlayLobby_iface;
@@ -81,7 +74,9 @@ typedef struct IDirectPlayLobbyImpl
     LONG numIfaces; /* "in use interfaces" refcount */
     LONG ref, refA, ref2, ref2A, ref3, ref3A;
     CRITICAL_SECTION lock;
-    DirectPlayLobbyData*          dpl;
+    HKEY cbkeyhack;
+    DWORD msgtid;
+    DPQ_HEAD( DPLMSG ) msgs; /* List of messages received */
 } IDirectPlayLobbyImpl;
 
 static inline IDirectPlayLobbyImpl *impl_from_IDirectPlayLobby( IDirectPlayLobby *iface )
@@ -114,41 +109,12 @@ static inline IDirectPlayLobbyImpl *impl_from_IDirectPlayLobby3A( IDirectPlayLob
     return CONTAINING_RECORD( iface, IDirectPlayLobbyImpl, IDirectPlayLobby3A_iface );
 }
 
-static BOOL DPL_CreateLobby1( LPVOID lpDPL )
-{
-  IDirectPlayLobbyImpl *This = lpDPL;
-
-  This->dpl = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *(This->dpl) ) );
-  if ( This->dpl == NULL )
-  {
-    return FALSE;
-  }
-
-  DPQ_INIT( This->dpl->msgs );
-
-  return TRUE;
-}
-
-static BOOL DPL_DestroyLobby1( LPVOID lpDPL )
-{
-  IDirectPlayLobbyImpl *This = lpDPL;
-
-  if( This->dpl->dwMsgThread )
-  {
-    FIXME( "Should kill the msg thread\n" );
-  }
-
-  DPQ_DELETEQ( This->dpl->msgs, msgs, LPDPLMSG, cbDeleteElemFromHeap );
-
-  /* Delete the contents */
-  HeapFree( GetProcessHeap(), 0, This->dpl );
-
-  return TRUE;
-}
-
 static void dplobby_destroy(IDirectPlayLobbyImpl *obj)
 {
-    DPL_DestroyLobby1( obj );
+    if ( obj->msgtid )
+        FIXME( "Should kill the msg thread\n" );
+
+    DPQ_DELETEQ( obj->msgs, msgs, LPDPLMSG, cbDeleteElemFromHeap );
     obj->lock.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection( &obj->lock );
     HeapFree( GetProcessHeap(), 0, obj );
@@ -995,7 +961,7 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_EnumLocalApplications( IDirectPlayL
 
     EnterCriticalSection( &This->lock );
 
-    memcpy( &This->dpl->hkCallbackKeyHack, &hkServiceProvider, sizeof( hkServiceProvider ) );
+    memcpy( &This->cbkeyhack, &hkServiceProvider, sizeof( hkServiceProvider ) );
 
     if( !lpEnumLocalAppCallback( &dplAppInfo, lpContext, dwFlags ) )
     {
@@ -1182,7 +1148,7 @@ static BOOL CALLBACK RunApplicationA_EnumLocalApplications
     sizeOfReturnBuffer = 200;
 
     /* Get all the appropriate data from the registry */
-    if( RegQueryValueExA( lpData->This->dpl->hkCallbackKeyHack, clSubKey,
+    if( RegQueryValueExA( lpData->This->cbkeyhack, clSubKey,
                           NULL, &returnType, (LPBYTE)returnBuffer,
                           &sizeOfReturnBuffer ) != ERROR_SUCCESS )
     {
@@ -1196,7 +1162,7 @@ static BOOL CALLBACK RunApplicationA_EnumLocalApplications
 
     sizeOfReturnBuffer = 200;
 
-    if( RegQueryValueExA( lpData->This->dpl->hkCallbackKeyHack, cdSubKey,
+    if( RegQueryValueExA( lpData->This->cbkeyhack, cdSubKey,
                           NULL, &returnType, (LPBYTE)returnBuffer,
                           &sizeOfReturnBuffer ) != ERROR_SUCCESS )
     {
@@ -1210,7 +1176,7 @@ static BOOL CALLBACK RunApplicationA_EnumLocalApplications
 
     sizeOfReturnBuffer = 200;
 
-    if( RegQueryValueExA( lpData->This->dpl->hkCallbackKeyHack, fileSubKey,
+    if( RegQueryValueExA( lpData->This->cbkeyhack, fileSubKey,
                           NULL, &returnType, (LPBYTE)returnBuffer,
                           &sizeOfReturnBuffer ) != ERROR_SUCCESS )
     {
@@ -1224,7 +1190,7 @@ static BOOL CALLBACK RunApplicationA_EnumLocalApplications
 
     sizeOfReturnBuffer = 200;
 
-    if( RegQueryValueExA( lpData->This->dpl->hkCallbackKeyHack, pathSubKey,
+    if( RegQueryValueExA( lpData->This->cbkeyhack, pathSubKey,
                           NULL, &returnType, (LPBYTE)returnBuffer,
                           &sizeOfReturnBuffer ) != ERROR_SUCCESS )
     {
@@ -1433,10 +1399,9 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_RunApplication( IDirectPlayLobby3A 
                                 &hStart, &hDeath, &hSettingRead );
 
   /* Setup the message thread ID */
-  This->dpl->dwMsgThread =
-    CreateLobbyMessageReceptionThread( hReceiveEvent, hStart, hDeath, hSettingRead );
+  This->msgtid = CreateLobbyMessageReceptionThread( hReceiveEvent, hStart, hDeath, hSettingRead );
 
-  DPLAYX_SetLobbyMsgThreadId( newProcessInfo.dwProcessId, This->dpl->dwMsgThread );
+  DPLAYX_SetLobbyMsgThreadId( newProcessInfo.dwProcessId, This->msgtid );
 
   LeaveCriticalSection( &This->lock );
 
@@ -2088,11 +2053,9 @@ HRESULT dplobby_create( REFIID riid, void **ppv )
 
     InitializeCriticalSection( &obj->lock );
     obj->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IDirectPlayLobbyImpl.lock");
+    DPQ_INIT( obj->msgs );
 
-    if ( DPL_CreateLobby1( obj ) )
-        hr = IDirectPlayLobby_QueryInterface( &obj->IDirectPlayLobby3_iface, riid, ppv );
-    else
-        hr = DPERR_NOMEMORY;
+    hr = IDirectPlayLobby_QueryInterface( &obj->IDirectPlayLobby3_iface, riid, ppv );
     IDirectPlayLobby_Release( &obj->IDirectPlayLobby3_iface );
 
     return hr;
