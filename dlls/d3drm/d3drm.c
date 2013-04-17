@@ -231,13 +231,12 @@ static HRESULT WINAPI IDirect3DRMImpl_CreateMaterial(IDirect3DRM* iface, D3DVALU
     return IDirect3DRM3_CreateMaterial(&This->IDirect3DRM3_iface, power, (LPDIRECT3DRMMATERIAL2*)material);
 }
 
-static HRESULT WINAPI IDirect3DRMImpl_CreateDevice(IDirect3DRM* iface, DWORD width, DWORD height, LPDIRECT3DRMDEVICE * ppDevice)
+static HRESULT WINAPI IDirect3DRMImpl_CreateDevice(IDirect3DRM *iface,
+        DWORD width, DWORD height, IDirect3DRMDevice **device)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM(iface);
+    FIXME("iface %p, width %u, height %u, device %p partial stub!\n", iface, width, height, device);
 
-    FIXME("(%p/%p)->(%u,%u,%p): partial stub\n", iface, This, width, height, ppDevice);
-
-    return Direct3DRMDevice_create(&IID_IDirect3DRMDevice, (IUnknown**)ppDevice);
+    return Direct3DRMDevice_create(&IID_IDirect3DRMDevice, (IUnknown **)device);
 }
 
 static HRESULT WINAPI IDirect3DRMImpl_CreateDeviceFromSurface(IDirect3DRM *iface, GUID *pGUID,
@@ -292,14 +291,13 @@ static HRESULT WINAPI IDirect3DRMImpl_CreateShadow(IDirect3DRM* iface, LPDIRECT3
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMImpl_CreateViewport(IDirect3DRM* iface, LPDIRECT3DRMDEVICE pDevice, LPDIRECT3DRMFRAME pFrame, DWORD xpos, DWORD ypos, DWORD width, DWORD height, LPDIRECT3DRMVIEWPORT * ppViewport)
+static HRESULT WINAPI IDirect3DRMImpl_CreateViewport(IDirect3DRM *iface, IDirect3DRMDevice *device,
+        IDirect3DRMFrame *camera, DWORD x, DWORD y, DWORD width, DWORD height, IDirect3DRMViewport **viewport)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM(iface);
+    FIXME("iface %p, device %p, camera %p, x %u, y %u, width %u, height %u, viewport %p partial stub!\n",
+            iface, device, camera, x, y, width, height, viewport);
 
-    FIXME("(%p/%p)->(%p,%p,%d,%d,%d,%d,%p): partial stub\n", iface, This, pDevice, pFrame,
-          xpos, ypos, width, height, ppViewport);
-
-    return Direct3DRMViewport_create(&IID_IDirect3DRMViewport, (IUnknown**)ppViewport);
+    return Direct3DRMViewport_create(&IID_IDirect3DRMViewport, (IUnknown **)viewport);
 }
 
 static HRESULT WINAPI IDirect3DRMImpl_CreateWrap(IDirect3DRM* iface, D3DRMWRAPTYPE type, LPDIRECT3DRMFRAME pFrame, D3DVALUE ox, D3DVALUE oy, D3DVALUE oz, D3DVALUE dx, D3DVALUE dy, D3DVALUE dz, D3DVALUE ux, D3DVALUE uy, D3DVALUE uz, D3DVALUE ou, D3DVALUE ov, D3DVALUE su, D3DVALUE sv, LPDIRECT3DRMWRAP * ppWrap)
@@ -675,19 +673,13 @@ static HRESULT WINAPI IDirect3DRM2Impl_CreateShadow(IDirect3DRM2* iface, LPDIREC
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRM2Impl_CreateViewport(IDirect3DRM2* iface,
-                                                      LPDIRECT3DRMDEVICE pDevice,
-                                                      LPDIRECT3DRMFRAME pFrame,
-                                                      DWORD xpos, DWORD ypos,
-                                                      DWORD width, DWORD height,
-                                                      LPDIRECT3DRMVIEWPORT * ppViewport)
+static HRESULT WINAPI IDirect3DRM2Impl_CreateViewport(IDirect3DRM2 *iface, IDirect3DRMDevice *device,
+        IDirect3DRMFrame *camera, DWORD x, DWORD y, DWORD width, DWORD height, IDirect3DRMViewport **viewport)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM2(iface);
+    FIXME("iface %p, device %p, camera %p, x %u, y %u, width %u, height %u, viewport %p partial stub!\n",
+            iface, device, camera, x, y, width, height, viewport);
 
-    FIXME("(%p/%p)->(%p,%p,%d,%d,%d,%d,%p): partial stub\n", iface, This, pDevice, pFrame,
-          xpos, ypos, width, height, ppViewport);
-
-    return Direct3DRMViewport_create(&IID_IDirect3DRMViewport, (IUnknown**)ppViewport);
+    return Direct3DRMViewport_create(&IID_IDirect3DRMViewport, (IUnknown **)viewport);
 }
 
 static HRESULT WINAPI IDirect3DRM2Impl_CreateWrap(IDirect3DRM2* iface, D3DRMWRAPTYPE type,

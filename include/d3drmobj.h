@@ -160,8 +160,8 @@ typedef void (__cdecl *D3DRMFRAME3MOVECALLBACK)(LPDIRECT3DRMFRAME3 obj, LPVOID a
 typedef void (__cdecl *D3DRMUPDATECALLBACK)(struct IDirect3DRMDevice *device, void *ctx, int count, D3DRECT *rects);
 typedef void (__cdecl *D3DRMDEVICE3UPDATECALLBACK)(struct IDirect3DRMDevice3 *device, void *ctx,
         int count, D3DRECT *rects);
-typedef int (__cdecl *D3DRMUSERVISUALCALLBACK)(LPDIRECT3DRMUSERVISUAL obj, LPVOID arg,
-    D3DRMUSERVISUALREASON reason, LPDIRECT3DRMDEVICE dev, LPDIRECT3DRMVIEWPORT view);
+typedef int (__cdecl *D3DRMUSERVISUALCALLBACK)(struct IDirect3DRMUserVisual *visual, void *ctx,
+        D3DRMUSERVISUALREASON reason, struct IDirect3DRMDevice *device, struct IDirect3DRMViewport *viewport);
 typedef HRESULT (__cdecl *D3DRMLOADTEXTURECALLBACK)(char *tex_name, void *arg, LPDIRECT3DRMTEXTURE *);
 typedef HRESULT (__cdecl *D3DRMLOADTEXTURE3CALLBACK)(char *tex_name, void *arg, LPDIRECT3DRMTEXTURE3 *);
 typedef void (__cdecl *D3DRMLOADCALLBACK)(struct IDirect3DRMObject *object, REFIID objectguid, void *arg);
@@ -808,8 +808,8 @@ DECLARE_INTERFACE_(IDirect3DRMViewport,IDirect3DRMObject)
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMViewport methods ***/
-    STDMETHOD(Init) (THIS_ LPDIRECT3DRMDEVICE dev, LPDIRECT3DRMFRAME camera, DWORD xpos, DWORD ypos,
-        DWORD width, DWORD height) PURE;
+    STDMETHOD(Init) (THIS_ IDirect3DRMDevice *device, struct IDirect3DRMFrame *camera,
+            DWORD x, DWORD y, DWORD width, DWORD height) PURE;
     STDMETHOD(Clear)(THIS) PURE;
     STDMETHOD(Render)(THIS_ LPDIRECT3DRMFRAME) PURE;
     STDMETHOD(SetFront)(THIS_ D3DVALUE) PURE;
@@ -824,7 +824,7 @@ DECLARE_INTERFACE_(IDirect3DRMViewport,IDirect3DRMObject)
     STDMETHOD(ForceUpdate)(THIS_ DWORD x1, DWORD y1, DWORD x2, DWORD y2) PURE;
     STDMETHOD(SetPlane)(THIS_ D3DVALUE left, D3DVALUE right, D3DVALUE bottom, D3DVALUE top) PURE;
     STDMETHOD(GetCamera)(THIS_ LPDIRECT3DRMFRAME *) PURE;
-    STDMETHOD(GetDevice)(THIS_ LPDIRECT3DRMDEVICE *) PURE;
+    STDMETHOD(GetDevice)(THIS_ IDirect3DRMDevice **device) PURE;
     STDMETHOD(GetPlane)(THIS_ D3DVALUE *left, D3DVALUE *right, D3DVALUE *bottom, D3DVALUE *top) PURE;
     STDMETHOD(Pick)(THIS_ LONG x, LONG y, LPDIRECT3DRMPICKEDARRAY *return_visuals) PURE;
     STDMETHOD_(BOOL, GetUniformScaling)(THIS) PURE;
@@ -4219,7 +4219,7 @@ DECLARE_INTERFACE_(IDirect3DRMDeviceArray, IDirect3DRMArray)
     /*** IDirect3DRMArray methods ***/
     STDMETHOD_(DWORD, GetSize)(THIS) PURE;
     /*** IDirect3DRMDeviceArray methods ***/
-    STDMETHOD(GetElement)(THIS_ DWORD index, LPDIRECT3DRMDEVICE *) PURE;
+    STDMETHOD(GetElement)(THIS_ DWORD index, IDirect3DRMDevice **element) PURE;
 };
 #undef INTERFACE
 

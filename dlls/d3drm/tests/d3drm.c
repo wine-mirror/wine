@@ -1006,7 +1006,7 @@ static void test_Viewport(void)
     IDirectDrawClipper *pClipper;
     HRESULT hr;
     IDirect3DRM *d3drm;
-    LPDIRECT3DRMDEVICE pDevice;
+    IDirect3DRMDevice *device;
     LPDIRECT3DRMFRAME pFrame;
     LPDIRECT3DRMVIEWPORT pViewport;
     GUID driver;
@@ -1028,13 +1028,13 @@ static void test_Viewport(void)
     ok(hr == DD_OK, "Cannot set HWnd to Clipper (hr = %x)\n", hr);
 
     memcpy(&driver, &IID_IDirect3DRGBDevice, sizeof(GUID));
-    hr = IDirect3DRM3_CreateDeviceFromClipper(d3drm, pClipper, &driver, rc.right, rc.bottom, &pDevice);
+    hr = IDirect3DRM3_CreateDeviceFromClipper(d3drm, pClipper, &driver, rc.right, rc.bottom, &device);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMDevice interface (hr = %x)\n", hr);
 
     hr = IDirect3DRM_CreateFrame(d3drm, NULL, &pFrame);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMFrame interface (hr = %x)\n", hr);
 
-    hr = IDirect3DRM_CreateViewport(d3drm, pDevice, pFrame, rc.left, rc.top, rc.right, rc.bottom, &pViewport);
+    hr = IDirect3DRM_CreateViewport(d3drm, device, pFrame, rc.left, rc.top, rc.right, rc.bottom, &pViewport);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMViewport interface (hr = %x)\n", hr);
 
     hr = IDirect3DRMViewport_GetClassName(pViewport, NULL, cname);
@@ -1052,7 +1052,7 @@ static void test_Viewport(void)
 
     IDirect3DRMViewport_Release(pViewport);
     IDirect3DRMFrame_Release(pFrame);
-    IDirect3DRMDevice_Release(pDevice);
+    IDirect3DRMDevice_Release(device);
     IDirectDrawClipper_Release(pClipper);
 
     IDirect3DRM_Release(d3drm);
@@ -1238,7 +1238,7 @@ static void test_Device(void)
     IDirectDrawClipper *pClipper;
     HRESULT hr;
     IDirect3DRM *d3drm;
-    LPDIRECT3DRMDEVICE pDevice;
+    IDirect3DRMDevice *device;
     LPDIRECT3DRMWINDEVICE pWinDevice;
     GUID driver;
     HWND window;
@@ -1259,24 +1259,24 @@ static void test_Device(void)
     ok(hr == DD_OK, "Cannot set HWnd to Clipper (hr = %x)\n", hr);
 
     memcpy(&driver, &IID_IDirect3DRGBDevice, sizeof(GUID));
-    hr = IDirect3DRM3_CreateDeviceFromClipper(d3drm, pClipper, &driver, rc.right, rc.bottom, &pDevice);
+    hr = IDirect3DRM3_CreateDeviceFromClipper(d3drm, pClipper, &driver, rc.right, rc.bottom, &device);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMDevice interface (hr = %x)\n", hr);
 
-    hr = IDirect3DRMDevice_GetClassName(pDevice, NULL, cname);
+    hr = IDirect3DRMDevice_GetClassName(device, NULL, cname);
     ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    hr = IDirect3DRMDevice_GetClassName(pDevice, NULL, NULL);
+    hr = IDirect3DRMDevice_GetClassName(device, NULL, NULL);
     ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
     size = 1;
-    hr = IDirect3DRMDevice_GetClassName(pDevice, &size, cname);
+    hr = IDirect3DRMDevice_GetClassName(device, &size, cname);
     ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
     size = sizeof(cname);
-    hr = IDirect3DRMDevice_GetClassName(pDevice, &size, cname);
+    hr = IDirect3DRMDevice_GetClassName(device, &size, cname);
     ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
     ok(size == sizeof("Device"), "wrong size: %u\n", size);
     ok(!strcmp(cname, "Device"), "Expected cname to be \"Device\", but got \"%s\"\n", cname);
 
     /* WinDevice */
-    hr = IDirect3DRMDevice_QueryInterface(pDevice, &IID_IDirect3DRMWinDevice, (LPVOID*)&pWinDevice);
+    hr = IDirect3DRMDevice_QueryInterface(device, &IID_IDirect3DRMWinDevice, (LPVOID*)&pWinDevice);
     if (FAILED(hr))
     {
         win_skip("Cannot get IDirect3DRMWinDevice interface (hr = %x), skipping tests\n", hr);
@@ -1299,7 +1299,7 @@ static void test_Device(void)
     IDirect3DRMWinDevice_Release(pWinDevice);
 
 cleanup:
-    IDirect3DRMDevice_Release(pDevice);
+    IDirect3DRMDevice_Release(device);
     IDirectDrawClipper_Release(pClipper);
 
     IDirect3DRM_Release(d3drm);
