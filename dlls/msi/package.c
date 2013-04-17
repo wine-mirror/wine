@@ -869,8 +869,8 @@ static VOID set_installer_properties(MSIPACKAGE *package)
             break;
         case VER_PLATFORM_WIN32_NT:
             msi_set_property( package->db, szVersionNT, verstr, len );
-            len = sprintfW( verstr, szFormat,OSVersion.wProductType );
-            msi_set_property( package->db, szMsiNTProductType, verstr, len );
+            len = sprintfW( bufstr, szFormat,OSVersion.wProductType );
+            msi_set_property( package->db, szMsiNTProductType, bufstr, len );
             break;
     }
     len = sprintfW( bufstr, szFormat, OSVersion.dwBuildNumber );
