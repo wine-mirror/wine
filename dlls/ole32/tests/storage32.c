@@ -1889,7 +1889,7 @@ static void test_access(void)
                           STGM_SHARE_EXCLUSIVE | STGM_DIRECT, 0, &stg);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
-    test_file_access("winetest", create);
+    test_file_access(fileA, create);
 
     hr = IStorage_Commit(stg, STGC_DEFAULT);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
@@ -1952,6 +1952,21 @@ static void test_access(void)
 
     IStorage_Release(stg);
 
+    test_file_access(fileA, create_close);
+
+    DeleteFileA(fileA);
+
+    /* STGM_DIRECT_SWMR | STGM_READ | STGM_SHARE_DENY_NONE - reader mode for direct SWMR mode */
+    hr = StgCreateDocfile(fileW, STGM_CREATE | STGM_READWRITE | STGM_SHARE_DENY_WRITE | STGM_TRANSACTED, 0, &stg);
+    ok(hr == S_OK, "got %08x\n", hr);
+    IStorage_Release(stg);
+
+    hr = StgOpenStorage(fileW, NULL, STGM_DIRECT_SWMR | STGM_READ | STGM_SHARE_DENY_NONE, NULL, 0, &stg);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    test_file_access(fileA, create);
+
+    IStorage_Release(stg);
     test_file_access(fileA, create_close);
 
     DeleteFileA(fileA);
