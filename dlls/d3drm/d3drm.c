@@ -606,14 +606,12 @@ static HRESULT WINAPI IDirect3DRM2Impl_CreateMaterial(IDirect3DRM2* iface, D3DVA
     return IDirect3DRM3_CreateMaterial(&This->IDirect3DRM3_iface, power, (LPDIRECT3DRMMATERIAL2*)material);
 }
 
-static HRESULT WINAPI IDirect3DRM2Impl_CreateDevice(IDirect3DRM2* iface, DWORD width, DWORD height,
-                                                    LPDIRECT3DRMDEVICE2 * ppDevice)
+static HRESULT WINAPI IDirect3DRM2Impl_CreateDevice(IDirect3DRM2 *iface,
+        DWORD width, DWORD height, IDirect3DRMDevice2 **device)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM2(iface);
+    FIXME("iface %p, width %u, height %u, device %p.\n", iface, width, height, device);
 
-    FIXME("(%p/%p)->(%u,%u,%p): partial stub\n", iface, This, width, height, ppDevice);
-
-    return Direct3DRMDevice_create(&IID_IDirect3DRMDevice2, (IUnknown**)ppDevice);
+    return Direct3DRMDevice_create(&IID_IDirect3DRMDevice2, (IUnknown **)device);
 }
 
 static HRESULT WINAPI IDirect3DRM2Impl_CreateDeviceFromSurface(IDirect3DRM2 *iface, GUID *pGUID,
