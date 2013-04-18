@@ -928,7 +928,7 @@
 @ stub -arch=i386,win64 __crtLCMapStringEx
 @ cdecl __crtLCMapStringW(long long wstr long ptr long long long) msvcrt.__crtLCMapStringW
 @ stub -arch=i386,win64 __crtSetThreadStackGuarantee
-@ stub __crtSetUnhandledExceptionFilter
+@ cdecl __crtSetUnhandledExceptionFilter(ptr) MSVCR110__crtSetUnhandledExceptionFilter
 @ stub -arch=i386,win64 __crtTerminateProcess
 @ stub -arch=i386,win64 __crtUnhandledException
 @ cdecl __daylight() msvcrt.__daylight
