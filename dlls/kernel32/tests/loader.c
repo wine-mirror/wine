@@ -1042,6 +1042,7 @@ nt4_is_broken:
 #define MAX_COUNT 10
 static HANDLE attached_thread[MAX_COUNT], stop_event, event, mutex, semaphore;
 static DWORD attached_thread_count;
+static LONG noop_thread_started;
 static int test_dll_phase;
 
 static DWORD WINAPI mutex_thread_proc(void *param)
@@ -1082,6 +1083,14 @@ static DWORD WINAPI semaphore_thread_proc(void *param)
     return 196;
 }
 
+static DWORD WINAPI noop_thread_proc(void *param)
+{
+    InterlockedIncrement(&noop_thread_started);
+
+    trace("%04u: noop_thread_proc: exiting\n", GetCurrentThreadId());
+    return 196;
+}
+
 static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
 {
     DWORD ret;
@@ -1098,6 +1107,11 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
     case DLL_PROCESS_DETACH:
     {
         DWORD code, expected_code, i;
+        HANDLE handle, process;
+        void *addr;
+        SIZE_T size;
+        LARGE_INTEGER offset;
+        DEBUG_EVENT de;
 
         trace("dll: %p, DLL_PROCESS_DETACH, %p\n", hinst, param);
 
@@ -1160,12 +1174,123 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
             ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %#x\n", ret);
         }
 
+        /* win7 doesn't allow to create a thread during process shutdown,
+         * earlier Windows versions allow it.
+         */
+        noop_thread_started = 0;
+        SetLastError(0xdeadbeef);
+        handle = CreateThread(NULL, 0, noop_thread_proc, NULL, 0, &ret);
+        /* manual call to LdrShutdownProcess doesn't prevent thread creation */
+        if (param && test_dll_phase != 4)
+        {
+todo_wine
+            ok(!handle || broken(handle != 0) /* before win7 */, "CreateThread should fail\n");
+            if (!handle)
+                ok(GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
+            else
+                CloseHandle(handle);
+        }
+        else
+        {
+            ok(handle != 0, "CreateThread error %d\n", GetLastError());
+            ret = WaitForSingleObject(handle, 1000);
+            /* FIXME: remove once Wine is fixed */
+            if (test_dll_phase == 4) todo_wine
+            {
+            ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %#x\n", ret);
+            ok(!noop_thread_started || broken(noop_thread_started) /* XP64 */, "thread shouldn't start yet\n");
+            }
+            else
+            {
+            ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %#x\n", ret);
+            ok(!noop_thread_started || broken(noop_thread_started) /* XP64 */, "thread shouldn't start yet\n");
+            }
+            CloseHandle(handle);
+        }
+
+        SetLastError(0xdeadbeef);
+        process = OpenProcess(PROCESS_ALL_ACCESS, FALSE, GetCurrentProcessId());
+        ok(process != NULL, "OpenProcess error %d\n", GetLastError());
+
+        noop_thread_started = 0;
+        SetLastError(0xdeadbeef);
+        handle = CreateRemoteThread(process, NULL, 0, noop_thread_proc, NULL, 0, &ret);
+        /* manual call to LdrShutdownProcess doesn't prevent thread creation */
+        if (param && test_dll_phase != 4)
+        {
+todo_wine
+            ok(!handle || broken(handle != 0) /* before win7 */, "CreateRemoteThread should fail\n");
+            if (!handle)
+                ok(GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
+            else
+                CloseHandle(handle);
+        }
+        else
+        {
+            ok(handle != 0, "CreateRemoteThread error %d\n", GetLastError());
+            ret = WaitForSingleObject(handle, 1000);
+            /* FIXME: remove once Wine is fixed */
+            if (test_dll_phase == 4) todo_wine
+            {
+            ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %#x\n", ret);
+            ok(!noop_thread_started || broken(noop_thread_started) /* XP64 */, "thread shouldn't start yet\n");
+            }
+            else
+            {
+            ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %#x\n", ret);
+            ok(!noop_thread_started || broken(noop_thread_started) /* XP64 */, "thread shouldn't start yet\n");
+            }
+        }
+
+        SetLastError(0xdeadbeef);
+        handle = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 4096, NULL);
+        ok(handle != 0, "CreateFileMapping error %d\n", GetLastError());
+
+        offset.u.LowPart = 0;
+        offset.u.HighPart = 0;
+        addr = NULL;
+        size = 0;
+        ret = pNtMapViewOfSection(handle, process, &addr, 0, 0, &offset,
+                                  &size, 1 /* ViewShare */, 0, PAGE_READONLY);
+        ok(ret == STATUS_SUCCESS, "NtMapViewOfSection error %#x\n", ret);
+        ret = pNtUnmapViewOfSection(process, addr);
+        ok(ret == STATUS_SUCCESS, "NtUnmapViewOfSection error %#x\n", ret);
+
+        CloseHandle(handle);
+        CloseHandle(process);
+
+        SetLastError(0xdeadbeef);
+        handle = GetModuleHandle("winver.exe");
+        ok(!handle, "winver.exe shouldn't be loaded yet\n");
+        handle = LoadLibrary("winver.exe");
+        ok(handle != 0, "LoadLibrary error %d\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        ret = FreeLibrary(handle);
+        ok(ret, "LoadLibrary error %d\n", GetLastError());
+
+        SetLastError(0xdeadbeef);
+        ret = WaitForDebugEvent(&de, 0);
+        ok(!ret, "WaitForDebugEvent should fail\n");
+todo_wine
+        ok(GetLastError() == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+
+        SetLastError(0xdeadbeef);
+        ret = DebugActiveProcess(GetCurrentProcessId());
+        ok(!ret, "DebugActiveProcess should fail\n");
+        ok(GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
+
+        SetLastError(0xdeadbeef);
+        ret = WaitForDebugEvent(&de, 0);
+        ok(!ret, "WaitForDebugEvent should fail\n");
+        ok(GetLastError() == ERROR_SEM_TIMEOUT, "expected ERROR_SEM_TIMEOUT, got %d\n", GetLastError());
+
         if (test_dll_phase == 2)
         {
             trace("dll: call ExitProcess()\n");
             *child_failures = winetest_get_failures();
             ExitProcess(197);
         }
+        trace("dll: %p, DLL_PROCESS_DETACH, %p => DONE\n", hinst, param);
         break;
     }
     case DLL_THREAD_ATTACH:
@@ -1185,7 +1310,14 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
         trace("dll: %p, DLL_THREAD_DETACH, %p\n", hinst, param);
 
         ret = pRtlDllShutdownInProgress();
-        ok(!ret, "RtlDllShutdownInProgress returned %d\n", ret);
+        /* win7 doesn't allow to create a thread during process shutdown,
+         * earlier Windows versions allow it, and DLL_THREAD_DETACH is
+         * sent on thread exit, but DLL_THREAD_ATTACH is never received.
+         */
+        if (noop_thread_started)
+            ok(ret, "RtlDllShutdownInProgress returned %d\n", ret);
+        else
+            ok(!ret, "RtlDllShutdownInProgress returned %d\n", ret);
 
         break;
     default:
