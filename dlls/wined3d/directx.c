@@ -3609,6 +3609,14 @@ static BOOL CheckSurfaceCapability(const struct wined3d_adapter *adapter,
     return FALSE;
 }
 
+/* OpenGL supports mipmapping on all formats. Wrapping is unsupported, but we
+ * have to report mipmapping so we cannot reject WRAPANDMIP. Tests show that
+ * Windows reports WRAPANDMIP on unfilterable surfaces as well, apparently to
+ * show that wrapping is supported. The lack of filtering will sort out the
+ * mipmapping capability anyway.
+ *
+ * For now lets report this on all formats, but in the future we may want to
+ * restrict it to some should applications need that. */
 HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT adapter_idx,
         enum wined3d_device_type device_type, enum wined3d_format_id adapter_format_id, DWORD usage,
         enum wined3d_resource_type resource_type, enum wined3d_format_id check_format_id)
@@ -3617,7 +3625,8 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
     const struct wined3d_gl_info *gl_info = &adapter->gl_info;
     const struct wined3d_format *adapter_format = wined3d_get_format(gl_info, adapter_format_id);
     const struct wined3d_format *format = wined3d_get_format(gl_info, check_format_id);
-    DWORD usage_caps = 0;
+    DWORD format_flags = 0;
+    DWORD allowed_usage;
 
     TRACE("wined3d %p, adapter_idx %u, device_type %s, adapter_format %s, usage %s, %s,\n"
             "resource_type %s, check_format %s.\n",
@@ -3631,326 +3640,68 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
     switch (resource_type)
     {
         case WINED3D_RTYPE_CUBE_TEXTURE:
-            /* Cubetexture allows:
-             *      - WINED3DUSAGE_AUTOGENMIPMAP
-             *      - WINED3DUSAGE_DEPTHSTENCIL
-             *      - WINED3DUSAGE_DYNAMIC
-             *      - WINED3DUSAGE_NONSECURE (d3d9ex)
-             *      - WINED3DUSAGE_RENDERTARGET
-             *      - WINED3DUSAGE_SOFTWAREPROCESSING
-             *      - WINED3DUSAGE_QUERY_WRAPANDMIP
-             */
-            if (wined3d->flags & WINED3D_NO3D)
-            {
-                TRACE("[FAILED]\n");
-                return WINED3DERR_NOTAVAILABLE;
-            }
-
             if (!gl_info->supported[ARB_TEXTURE_CUBE_MAP])
             {
                 TRACE("[FAILED] - No cube texture support.\n");
                 return WINED3DERR_NOTAVAILABLE;
             }
 
-            if (!(format->flags & WINED3DFMT_FLAG_TEXTURE))
-            {
-                TRACE("[FAILED] - Cube texture format not supported.\n");
-                return WINED3DERR_NOTAVAILABLE;
-            }
-
-            if (usage & WINED3DUSAGE_AUTOGENMIPMAP)
-            {
-                if (!gl_info->supported[SGIS_GENERATE_MIPMAP])
-                    /* When autogenmipmap isn't around continue and return
-                     * WINED3DOK_NOAUTOGEN instead of D3D_OK. */
-                    TRACE("[FAILED] - No autogenmipmap support, but continuing.\n");
-                else
-                    usage_caps |= WINED3DUSAGE_AUTOGENMIPMAP;
-            }
-
-            /* Always report dynamic locking. */
-            if (usage & WINED3DUSAGE_DYNAMIC)
-                usage_caps |= WINED3DUSAGE_DYNAMIC;
-
-            if (usage & WINED3DUSAGE_RENDERTARGET)
-            {
-                if (!CheckRenderTargetCapability(adapter, adapter_format, format))
-                {
-                    TRACE("[FAILED] - No render target support.\n");
-                    return WINED3DERR_NOTAVAILABLE;
-                }
-                usage_caps |= WINED3DUSAGE_RENDERTARGET;
-            }
-
-            /* Always report software processing. */
-            if (usage & WINED3DUSAGE_SOFTWAREPROCESSING)
-                usage_caps |= WINED3DUSAGE_SOFTWAREPROCESSING;
-
-            if (usage & WINED3DUSAGE_QUERY_FILTER)
-            {
-                if (!(format->flags & WINED3DFMT_FLAG_FILTERING))
-                {
-                    TRACE("[FAILED] - No filter support.\n");
-                    return WINED3DERR_NOTAVAILABLE;
-                }
-                usage_caps |= WINED3DUSAGE_QUERY_FILTER;
-            }
-
-            if (usage & WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING)
-            {
-                if (!(format->flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING))
-                {
-                    TRACE("[FAILED] - No post pixelshader blending support.\n");
-                    return WINED3DERR_NOTAVAILABLE;
-                }
-                usage_caps |= WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING;
-            }
-
-            if (usage & WINED3DUSAGE_QUERY_SRGBREAD)
-            {
-                if (!(format->flags & WINED3DFMT_FLAG_SRGB_READ))
-                {
-                    TRACE("[FAILED] - No sRGB read support.\n");
-                    return WINED3DERR_NOTAVAILABLE;
-                }
-                usage_caps |= WINED3DUSAGE_QUERY_SRGBREAD;
-            }
-
-            if (usage & WINED3DUSAGE_QUERY_SRGBWRITE)
-            {
-                if (!(format->flags & WINED3DFMT_FLAG_SRGB_WRITE))
-                {
-                    TRACE("[FAILED] - No sRGB write support.\n");
-                    return WINED3DERR_NOTAVAILABLE;
-                }
-                usage_caps |= WINED3DUSAGE_QUERY_SRGBWRITE;
-            }
-
-            if (usage & WINED3DUSAGE_QUERY_VERTEXTEXTURE)
-            {
-                if (!(format->flags & WINED3DFMT_FLAG_VTF))
-                {
-                    TRACE("[FAILED] - No vertex texture support.\n");
-                    return WINED3DERR_NOTAVAILABLE;
-                }
-                usage_caps |= WINED3DUSAGE_QUERY_VERTEXTEXTURE;
-            }
-
-            /* OpenGL supports mipmapping on all formats. Wrapping is
-             * unsupported, but we have to report mipmapping so we cannot
-             * reject this flag. Tests show that Windows reports WRAPANDMIP on
-             * unfilterable surfaces as well, apparently to show that wrapping
-             * is supported. The lack of filtering will sort out the
-             * mipmapping capability anyway.
-             *
-             * For now lets report this on all formats, but in the future we
-             * may want to restrict it to some should applications need that. */
-            if (usage & WINED3DUSAGE_QUERY_WRAPANDMIP)
-                usage_caps |= WINED3DUSAGE_QUERY_WRAPANDMIP;
-
+            format_flags |= WINED3DFMT_FLAG_TEXTURE;
+            allowed_usage = WINED3DUSAGE_AUTOGENMIPMAP
+                    | WINED3DUSAGE_DYNAMIC
+                    | WINED3DUSAGE_RENDERTARGET
+                    | WINED3DUSAGE_SOFTWAREPROCESSING
+                    | WINED3DUSAGE_QUERY_FILTER
+                    | WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING
+                    | WINED3DUSAGE_QUERY_SRGBREAD
+                    | WINED3DUSAGE_QUERY_SRGBWRITE
+                    | WINED3DUSAGE_QUERY_VERTEXTEXTURE
+                    | WINED3DUSAGE_QUERY_WRAPANDMIP;
             break;
 
         case WINED3D_RTYPE_SURFACE:
-            /* Surface allows:
-             *      - WINED3DUSAGE_DEPTHSTENCIL
-             *      - WINED3DUSAGE_NONSECURE (d3d9ex)
-             *      - WINED3DUSAGE_RENDERTARGET
-             */
             if (!CheckSurfaceCapability(adapter, adapter_format, format, wined3d->flags & WINED3D_NO3D))
             {
                 TRACE("[FAILED] - Not supported for plain surfaces.\n");
                 return WINED3DERR_NOTAVAILABLE;
             }
 
-            if (usage & WINED3DUSAGE_DEPTHSTENCIL)
-            {
-                if (!CheckDepthStencilCapability(adapter, adapter_format, format))
-                {
-                    TRACE("[FAILED] - No depth/stencil support.\n");
-                    return WINED3DERR_NOTAVAILABLE;
-                }
-                usage_caps |= WINED3DUSAGE_DEPTHSTENCIL;
-            }
-
-            if (usage & WINED3DUSAGE_RENDERTARGET)
-            {
-                if (!CheckRenderTargetCapability(adapter, adapter_format, format))
-                {
-                    TRACE("[FAILED] - No render target support.\n");
-                    return WINED3DERR_NOTAVAILABLE;
-                }
-                usage_caps |= WINED3DUSAGE_RENDERTARGET;
-            }
-
-            if (usage & WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING)
-            {
-                if (!(format->flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING))
-                {
-                    TRACE("[FAILED] - No post pixelshader blending support.\n");
-                    return WINED3DERR_NOTAVAILABLE;
-                }
-                usage_caps |= WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING;
-            }
+            allowed_usage = WINED3DUSAGE_DEPTHSTENCIL
+                    | WINED3DUSAGE_RENDERTARGET
+                    | WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING;
             break;
 
         case WINED3D_RTYPE_TEXTURE:
-            /* Texture allows:
-             *      - WINED3DUSAGE_AUTOGENMIPMAP
-             *      - WINED3DUSAGE_DEPTHSTENCIL
-             *      - WINED3DUSAGE_DMAP
-             *      - WINED3DUSAGE_DYNAMIC
-             *      - WINED3DUSAGE_NONSECURE (d3d9ex)
-             *      - WINED3DUSAGE_RENDERTARGET
-             *      - WINED3DUSAGE_SOFTWAREPROCESSING
-             *      - WINED3DUSAGE_TEXTAPI (d3d9ex)
-             *      - WINED3DUSAGE_QUERY_WRAPANDMIP
-             */
-            if (wined3d->flags & WINED3D_NO3D)
+            if ((usage & WINED3DUSAGE_DEPTHSTENCIL) && (format->flags & WINED3DFMT_FLAG_SHADOW)
+                    && !gl_info->supported[ARB_SHADOW])
             {
-                TRACE("[FAILED]\n");
+                TRACE("[FAILED] - No shadow sampler support.\n");
                 return WINED3DERR_NOTAVAILABLE;
             }
 
-            if (!(format->flags & WINED3DFMT_FLAG_TEXTURE))
-            {
-                TRACE("[FAILED] - Texture format not supported.\n");
-                return WINED3DERR_NOTAVAILABLE;
-            }
-
-            if (usage & WINED3DUSAGE_AUTOGENMIPMAP)
-            {
-                if (!gl_info->supported[SGIS_GENERATE_MIPMAP])
-                    /* When autogenmipmap isn't around continue and return
-                     * WINED3DOK_NOAUTOGEN instead of D3D_OK. */
-                    TRACE("[FAILED] - No autogenmipmap support, but continuing.\n");
-                else
-                    usage_caps |= WINED3DUSAGE_AUTOGENMIPMAP;
-            }
-
-            /* Always report dynamic locking. */
-            if (usage & WINED3DUSAGE_DYNAMIC)
-                usage_caps |= WINED3DUSAGE_DYNAMIC;
-
-            if (usage & WINED3DUSAGE_RENDERTARGET)
-            {
-                if (!CheckRenderTargetCapability(adapter, adapter_format, format))
-                {
-                    TRACE("[FAILED] - No render target support.\n");
-                    return WINED3DERR_NOTAVAILABLE;
-                }
-                usage_caps |= WINED3DUSAGE_RENDERTARGET;
-            }
-
-            /* Always report software processing. */
-            if (usage & WINED3DUSAGE_SOFTWAREPROCESSING)
-                usage_caps |= WINED3DUSAGE_SOFTWAREPROCESSING;
-
-            if (usage & WINED3DUSAGE_QUERY_FILTER)
-            {
-                if (!(format->flags & WINED3DFMT_FLAG_FILTERING))
-                {
-                    TRACE("[FAILED] - No filter support.\n");
-                    return WINED3DERR_NOTAVAILABLE;
-                }
-                usage_caps |= WINED3DUSAGE_QUERY_FILTER;
-            }
-
-            if (usage & WINED3DUSAGE_QUERY_LEGACYBUMPMAP)
-            {
-                if (!(format->flags & WINED3DFMT_FLAG_BUMPMAP))
-                {
-                    TRACE("[FAILED] - No legacy bumpmap support.\n");
-                    return WINED3DERR_NOTAVAILABLE;
-                }
-                usage_caps |= WINED3DUSAGE_QUERY_LEGACYBUMPMAP;
-            }
-
-            if (usage & WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING)
-            {
-                if (!(format->flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING))
-                {
-                    TRACE("[FAILED] - No post pixelshader blending support.\n");
-                    return WINED3DERR_NOTAVAILABLE;
-                }
-                usage_caps |= WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING;
-            }
-
-            if (usage & WINED3DUSAGE_QUERY_SRGBREAD)
-            {
-                if (!(format->flags & WINED3DFMT_FLAG_SRGB_READ))
-                {
-                    TRACE("[FAILED] - No sRGB read support.\n");
-                    return WINED3DERR_NOTAVAILABLE;
-                }
-                usage_caps |= WINED3DUSAGE_QUERY_SRGBREAD;
-            }
-
-            if (usage & WINED3DUSAGE_QUERY_SRGBWRITE)
-            {
-                if (!(format->flags & WINED3DFMT_FLAG_SRGB_WRITE))
-                {
-                    TRACE("[FAILED] - No sRGB write support.\n");
-                    return WINED3DERR_NOTAVAILABLE;
-                }
-                usage_caps |= WINED3DUSAGE_QUERY_SRGBWRITE;
-            }
-
-            if (usage & WINED3DUSAGE_QUERY_VERTEXTEXTURE)
-            {
-                if (!(format->flags & WINED3DFMT_FLAG_VTF))
-                {
-                    TRACE("[FAILED] - No vertex texture support.\n");
-                    return WINED3DERR_NOTAVAILABLE;
-                }
-                usage_caps |= WINED3DUSAGE_QUERY_VERTEXTEXTURE;
-            }
-
-            if (usage & WINED3DUSAGE_QUERY_WRAPANDMIP)
-                usage_caps |= WINED3DUSAGE_QUERY_WRAPANDMIP;
-
-            if (usage & WINED3DUSAGE_DEPTHSTENCIL)
-            {
-                if (!CheckDepthStencilCapability(adapter, adapter_format, format))
-                {
-                    TRACE("[FAILED] - No depth/stencil support.\n");
-                    return WINED3DERR_NOTAVAILABLE;
-                }
-                if ((format->flags & WINED3DFMT_FLAG_SHADOW) && !gl_info->supported[ARB_SHADOW])
-                {
-                    TRACE("[FAILED] - No shadow sampler support.\n");
-                    return WINED3DERR_NOTAVAILABLE;
-                }
-                usage_caps |= WINED3DUSAGE_DEPTHSTENCIL;
-            }
+            format_flags |= WINED3DFMT_FLAG_TEXTURE;
+            allowed_usage = WINED3DUSAGE_AUTOGENMIPMAP
+                    | WINED3DUSAGE_DEPTHSTENCIL
+                    | WINED3DUSAGE_DYNAMIC
+                    | WINED3DUSAGE_RENDERTARGET
+                    | WINED3DUSAGE_SOFTWAREPROCESSING
+                    | WINED3DUSAGE_QUERY_FILTER
+                    | WINED3DUSAGE_QUERY_LEGACYBUMPMAP
+                    | WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING
+                    | WINED3DUSAGE_QUERY_SRGBREAD
+                    | WINED3DUSAGE_QUERY_SRGBWRITE
+                    | WINED3DUSAGE_QUERY_VERTEXTEXTURE
+                    | WINED3DUSAGE_QUERY_WRAPANDMIP;
             break;
 
         case WINED3D_RTYPE_VOLUME_TEXTURE:
         case WINED3D_RTYPE_VOLUME:
             /* Volume is to VolumeTexture what Surface is to Texture, but its
              * usage caps are not documented. Most driver seem to offer
-             * (nearly) the same on Volume and VolumeTexture, so do that too.
-             *
-             * Volumetexture allows:
-             *      - D3DUSAGE_DYNAMIC
-             *      - D3DUSAGE_NONSECURE (d3d9ex)
-             *      - D3DUSAGE_SOFTWAREPROCESSING
-             *      - D3DUSAGE_QUERY_WRAPANDMIP
-             */
-            if (wined3d->flags & WINED3D_NO3D)
-            {
-                TRACE("[FAILED]\n");
-                return WINED3DERR_NOTAVAILABLE;
-            }
-
+             * (nearly) the same on Volume and VolumeTexture, so do that too. */
             if (!gl_info->supported[EXT_TEXTURE3D])
             {
                 TRACE("[FAILED] - No volume texture support.\n");
-                return WINED3DERR_NOTAVAILABLE;
-            }
-
-            if (!(format->flags & WINED3DFMT_FLAG_TEXTURE))
-            {
-                TRACE("[FAILED] - Format not supported.\n");
                 return WINED3DERR_NOTAVAILABLE;
             }
 
@@ -3985,67 +3736,15 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
                     break;
             }
 
-            /* Always report dynamic locking. */
-            if (usage & WINED3DUSAGE_DYNAMIC)
-                usage_caps |= WINED3DUSAGE_DYNAMIC;
-
-            /* Always report software processing. */
-            if (usage & WINED3DUSAGE_SOFTWAREPROCESSING)
-                usage_caps |= WINED3DUSAGE_SOFTWAREPROCESSING;
-
-            if (usage & WINED3DUSAGE_QUERY_FILTER)
-            {
-                if (!(format->flags & WINED3DFMT_FLAG_FILTERING))
-                {
-                    TRACE("[FAILED] - No filter support.\n");
-                    return WINED3DERR_NOTAVAILABLE;
-                }
-                usage_caps |= WINED3DUSAGE_QUERY_FILTER;
-            }
-
-            if (usage & WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING)
-            {
-                if (!(format->flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING))
-                {
-                    TRACE("[FAILED] - No post pixelshader blending support.\n");
-                    return WINED3DERR_NOTAVAILABLE;
-                }
-                usage_caps |= WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING;
-            }
-
-            if (usage & WINED3DUSAGE_QUERY_SRGBREAD)
-            {
-                if (!(format->flags & WINED3DFMT_FLAG_SRGB_READ))
-                {
-                    TRACE("[FAILED] - No sRGB read support.\n");
-                    return WINED3DERR_NOTAVAILABLE;
-                }
-                usage_caps |= WINED3DUSAGE_QUERY_SRGBREAD;
-            }
-
-            if (usage & WINED3DUSAGE_QUERY_SRGBWRITE)
-            {
-                if (!(format->flags & WINED3DFMT_FLAG_SRGB_WRITE))
-                {
-                    TRACE("[FAILED] - No sRGB write support.\n");
-                    return WINED3DERR_NOTAVAILABLE;
-                }
-                usage_caps |= WINED3DUSAGE_QUERY_SRGBWRITE;
-            }
-
-            if (usage & WINED3DUSAGE_QUERY_VERTEXTEXTURE)
-            {
-                if (!(format->flags & WINED3DFMT_FLAG_VTF))
-                {
-                    TRACE("[FAILED] - No vertex texture support.\n");
-                    return WINED3DERR_NOTAVAILABLE;
-                }
-                usage_caps |= WINED3DUSAGE_QUERY_VERTEXTEXTURE;
-            }
-
-            if (usage & WINED3DUSAGE_QUERY_WRAPANDMIP)
-                usage_caps |= WINED3DUSAGE_QUERY_WRAPANDMIP;
-
+            format_flags |= WINED3DFMT_FLAG_TEXTURE;
+            allowed_usage = WINED3DUSAGE_DYNAMIC
+                    | WINED3DUSAGE_SOFTWAREPROCESSING
+                    | WINED3DUSAGE_QUERY_FILTER
+                    | WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING
+                    | WINED3DUSAGE_QUERY_SRGBREAD
+                    | WINED3DUSAGE_QUERY_SRGBWRITE
+                    | WINED3DUSAGE_QUERY_VERTEXTEXTURE
+                    | WINED3DUSAGE_QUERY_WRAPANDMIP;
             break;
 
         default:
@@ -4053,18 +3752,62 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
             return WINED3DERR_NOTAVAILABLE;
     }
 
-    /* When the usage_caps exactly matches usage return WINED3D_OK except for
-     * the situation in which WINED3DUSAGE_AUTOGENMIPMAP isn't around, then
-     * WINED3DOK_NOAUTOGEN is returned if all the other usage flags match. */
-    if (usage_caps == usage)
-        return WINED3D_OK;
-    if (usage_caps == (usage & ~WINED3DUSAGE_AUTOGENMIPMAP))
+    if ((usage & allowed_usage) != usage)
+    {
+        TRACE("Requested usage %#x, but resource type %s only allows %#x.\n",
+                usage, debug_d3dresourcetype(resource_type), allowed_usage);
+        return WINED3DERR_NOTAVAILABLE;
+    }
+
+    if (usage & WINED3DUSAGE_QUERY_FILTER)
+        format_flags |= WINED3DFMT_FLAG_FILTERING;
+    if (usage & WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING)
+        format_flags |= WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING;
+    if (usage & WINED3DUSAGE_QUERY_SRGBREAD)
+        format_flags |= WINED3DFMT_FLAG_SRGB_READ;
+    if (usage & WINED3DUSAGE_QUERY_SRGBWRITE)
+        format_flags |= WINED3DFMT_FLAG_SRGB_WRITE;
+    if (usage & WINED3DUSAGE_QUERY_VERTEXTEXTURE)
+        format_flags |= WINED3DFMT_FLAG_VTF;
+    if (usage & WINED3DUSAGE_QUERY_LEGACYBUMPMAP)
+        format_flags |= WINED3DFMT_FLAG_BUMPMAP;
+
+    if ((format->flags & format_flags) != format_flags)
+    {
+        TRACE("Requested format flags %#x, but format %s only has %#x.\n",
+                format_flags, debug_d3dformat(check_format_id), format->flags);
+        return WINED3DERR_NOTAVAILABLE;
+    }
+
+    if ((format_flags & WINED3DFMT_FLAG_TEXTURE) && (wined3d->flags & WINED3D_NO3D))
+    {
+        TRACE("Requested texturing support, but wined3d was created with WINED3D_NO3D.\n");
+        return WINED3DERR_NOTAVAILABLE;
+    }
+
+    if ((usage & WINED3DUSAGE_DEPTHSTENCIL)
+            && !CheckDepthStencilCapability(adapter, adapter_format, format))
+    {
+        TRACE("Requested WINED3DUSAGE_DEPTHSTENCIL, but format %s is not supported for depth / stencil buffers.\n",
+                debug_d3dformat(check_format_id));
+        return WINED3DERR_NOTAVAILABLE;
+    }
+
+    if ((usage & WINED3DUSAGE_RENDERTARGET)
+            && !CheckRenderTargetCapability(adapter, adapter_format, format))
+    {
+        TRACE("Requested WINED3DUSAGE_RENDERTARGET, but format %s is not supported for render targets.\n",
+                debug_d3dformat(check_format_id));
+        return WINED3DERR_NOTAVAILABLE;
+    }
+
+    if ((usage & WINED3DUSAGE_AUTOGENMIPMAP) && !gl_info->supported[SGIS_GENERATE_MIPMAP])
+    {
+        TRACE("No WINED3DUSAGE_AUTOGENMIPMAP support, returning WINED3DOK_NOAUTOGEN.\n");
         return WINED3DOK_NOAUTOGEN;
+    }
 
-    TRACE("[FAILED] - Usage %#x requested for format %s and resource_type %s but only %#x is available.\n",
-            usage, debug_d3dformat(check_format_id), debug_d3dresourcetype(resource_type), usage_caps);
-
-    return WINED3DERR_NOTAVAILABLE;
+    return WINED3D_OK;
 }
 
 HRESULT CDECL wined3d_check_device_format_conversion(const struct wined3d *wined3d, UINT adapter_idx,
