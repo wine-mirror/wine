@@ -1793,7 +1793,7 @@ D3DXVECTOR2* WINAPI D3DXVec2TransformNormal(D3DXVECTOR2 *pout, const D3DXVECTOR2
 {
     const D3DXVECTOR2 v = *pv;
 
-    TRACE("pout %p, pv %p, pm %p", pout, pv, pm);
+    TRACE("pout %p, pv %p, pm %p\n", pout, pv, pm);
 
     pout->x = pm->u.m[0][0] * v.x + pm->u.m[1][0] * v.y;
     pout->y = pm->u.m[0][1] * v.x + pm->u.m[1][1] * v.y;
