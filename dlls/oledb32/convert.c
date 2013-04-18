@@ -794,6 +794,26 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         }
         break;
     }
+    case DBTYPE_BYTES:
+    {
+        BYTE *d = dst;
+
+        switch(src_type)
+        {
+        case DBTYPE_BYTES:
+            if( src_len > dst_max_len)
+                *dst_status = DBSTATUS_S_TRUNCATED;
+            else
+                *dst_status = DBSTATUS_S_OK;
+
+            *dst_len = src_len;
+            memcpy(d, src, min(src_len, dst_max_len));
+
+            return S_OK;
+        default: FIXME("Unimplemented conversion %04x -> DBTYPE_BYTES\n", src_type); return E_NOTIMPL;
+        }
+        break;
+    }
 
     default:
         FIXME("Unimplemented conversion %04x -> %04x\n", src_type, dst_type);

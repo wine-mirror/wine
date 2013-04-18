@@ -2424,6 +2424,29 @@ static void test_getconversionsize(void)
 
 }
 
+static void test_converttobytes(void)
+{
+    DBLENGTH dst_len;
+    HRESULT hr;
+    BYTE byte_src[] = {0, 1, 2, 4, 5};
+    BYTE dst[10] = {0};
+    DBSTATUS dst_status;
+
+    dst_len = 0;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_BYTES, DBTYPE_BYTES, sizeof(byte_src), &dst_len, byte_src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(byte_src), "got %ld\n", dst_len);
+    ok(!memcmp(byte_src, dst, dst_len ), "bytes differ\n");
+
+    dst_len = 0;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_BYTES, DBTYPE_BYTES, sizeof(byte_src), &dst_len, byte_src, &dst, 2, 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_TRUNCATED, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(byte_src), "got %ld\n", dst_len);
+    ok(!memcmp(byte_src, dst, 2 ), "bytes differ\n");
+}
+
 static void test_converttovar(void)
 {
     static WCHAR strW[] = {'t','e','s','t',0};
@@ -2559,6 +2582,7 @@ START_TEST(convert)
     test_converttocy();
     test_converttoui8();
     test_converttovar();
+    test_converttobytes();
     test_getconversionsize();
 
     IDataConvert_Release(convert);
