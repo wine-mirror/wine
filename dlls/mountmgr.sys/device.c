@@ -48,6 +48,7 @@ static const WCHAR drive_types[][8] =
     {'h','d',0},                     /* DEVICE_HARDDISK_VOL */
     {'f','l','o','p','p','y',0},     /* DEVICE_FLOPPY */
     {'c','d','r','o','m',0},         /* DEVICE_CDROM */
+    {'c','d','r','o','m',0},         /* DEVICE_DVD */
     {'n','e','t','w','o','r','k',0}, /* DEVICE_NETWORK */
     {'r','a','m','d','i','s','k',0}  /* DEVICE_RAMDISK */
 };
