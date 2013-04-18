@@ -2536,6 +2536,7 @@ static void test_getconversionsize(void)
 static void test_converttovar(void)
 {
     static WCHAR strW[] = {'t','e','s','t',0};
+    double dvalue = 123.56;
     IDataConvert *convert;
     DBSTATUS dst_status;
     DBLENGTH dst_len;
@@ -2584,6 +2585,16 @@ static void test_converttovar(void)
     ok(V_VT(&dst) == VT_DECIMAL, "got %d\n", V_VT(&dst));
     ok(S(U(V_DECIMAL(&dst))).scale == 0 && S(U(V_DECIMAL(&dst))).sign == 0 &&
        V_DECIMAL(&dst).Hi32 == 0 && U1(V_DECIMAL(&dst)).Lo64 == 12345, "Not Equal\n");
+
+    V_VT(&dst) = VT_EMPTY;
+    dst_len = 0;
+    dst_status = DBSTATUS_S_DEFAULT;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_R8, DBTYPE_VARIANT, sizeof(dvalue), &dst_len, &dvalue, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
+    ok(V_VT(&dst) == VT_R8, "got %d\n", V_VT(&dst));
+    ok(V_R8(&dst) == 123.56, "got %f\n", V_R8(&dst));
 
     V_VT(&dst) = VT_EMPTY;
     dst_len = 0;
