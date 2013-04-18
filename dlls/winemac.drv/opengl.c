@@ -1751,7 +1751,7 @@ static BOOL macdrv_wglChoosePixelFormatARB(HDC hdc, const int *piAttribIList,
            bits per pixel instead of the mode's color bits.  On Windows, color
            bits sometimes exceeds r+g+b (e.g. it's 32 for an R8G8B8A0 pixel format).
            If an app depends on that and requests WGL_COLOR_BITS_ARB == 32 and
-           expects that to match such a pixel format, we need to accomodate that. */
+           expects that to match such a pixel format, we need to accommodate that. */
         if (mode->alpha_bits)
         {
             if (mode->color_bits < color_bits)
@@ -2133,7 +2133,7 @@ static BOOL macdrv_wglGetPixelFormatAttribivARB(HDC hdc, int iPixelFormat, int i
                    of color bits.  On Windows, color bits sometimes exceeds r+g+b
                    (e.g. it's 32 for an R8G8B8A0 pixel format).  If an app depends
                    on that and expects that WGL_COLOR_BITS_ARB >= 32 for such a
-                   pixel format, we need to accomodate that. */
+                   pixel format, we need to accommodate that. */
                 if (color_modes[pf->color_mode].alpha_bits)
                     piValues[i] = color_modes[pf->color_mode].color_bits;
                 else
@@ -3124,7 +3124,7 @@ int macdrv_wglDescribePixelFormat(HDC hdc, int fmt, UINT size, PIXELFORMATDESCRI
     /* If the mode doesn't have alpha, return bits per pixel instead of color bits.
        On Windows, color bits sometimes exceeds r+g+b (e.g. it's 32 for an
        R8G8B8A0 pixel format).  If an app depends on that and expects that
-       cColorBits >= 32 for such a pixel format, we need to accomodate that. */
+       cColorBits >= 32 for such a pixel format, we need to accommodate that. */
     if (mode->alpha_bits)
         descr->cColorBits   = mode->color_bits;
     else

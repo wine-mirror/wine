@@ -1437,7 +1437,7 @@ static void child_process(const char *dll_name, DWORD target_offset)
         break;
 
     case 1:
-    case 2: /* ExitProcess will be called by PROCESS_DETACH handler */
+    case 2: /* ExitProcess will be called by the PROCESS_DETACH handler */
         ret = pRtlDllShutdownInProgress();
         ok(!ret, "RtlDllShutdownInProgress returned %d\n", ret);
 
