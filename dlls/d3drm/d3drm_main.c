@@ -23,9 +23,7 @@
 #include "wingdi.h"
 #include "d3drm.h"
 #include "d3drm_private.h"
-#include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3drm);
 
 /***********************************************************************
  *		DllMain  (D3DRM.@)
