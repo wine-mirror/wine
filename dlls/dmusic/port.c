@@ -108,7 +108,7 @@ static inline IDirectMusicDownloadedInstrumentImpl* unsafe_impl_from_IDirectMusi
     return impl_from_IDirectMusicDownloadedInstrument(iface);
 }
 
-HRESULT DMUSIC_CreateDirectMusicDownloadedInstrumentImpl(IDirectMusicDownloadedInstrument **instrument)
+static HRESULT DMUSIC_CreateDirectMusicDownloadedInstrumentImpl(IDirectMusicDownloadedInstrument **instrument)
 {
     IDirectMusicDownloadedInstrumentImpl *object;
 
