@@ -1615,7 +1615,11 @@ static void test_ExitProcess(void)
     ok(ret == WAIT_OBJECT_0, "child process failed to terminate\n");
     GetExitCodeProcess(pi.hProcess, &ret);
     ok(ret == 195, "expected exit code 195, got %u\n", ret);
-    ok(!*child_failures, "%u failures in child process\n", *child_failures);
+    if (*child_failures)
+    {
+        trace("%d failures in child process\n", *child_failures);
+        winetest_add_failures(*child_failures);
+    }
     CloseHandle(pi.hThread);
     CloseHandle(pi.hProcess);
 
@@ -1628,7 +1632,11 @@ static void test_ExitProcess(void)
     ok(ret == WAIT_OBJECT_0, "child process failed to terminate\n");
     GetExitCodeProcess(pi.hProcess, &ret);
     ok(ret == 195, "expected exit code 195, got %u\n", ret);
-    ok(!*child_failures, "%u failures in child process\n", *child_failures);
+    if (*child_failures)
+    {
+        trace("%d failures in child process\n", *child_failures);
+        winetest_add_failures(*child_failures);
+    }
     CloseHandle(pi.hThread);
     CloseHandle(pi.hProcess);
 
@@ -1641,7 +1649,11 @@ static void test_ExitProcess(void)
     ok(ret == WAIT_OBJECT_0, "child process failed to terminate\n");
     GetExitCodeProcess(pi.hProcess, &ret);
     ok(ret == 197, "expected exit code 197, got %u\n", ret);
-    ok(!*child_failures, "%u failures in child process\n", *child_failures);
+    if (*child_failures)
+    {
+        trace("%d failures in child process\n", *child_failures);
+        winetest_add_failures(*child_failures);
+    }
     CloseHandle(pi.hThread);
     CloseHandle(pi.hProcess);
 
@@ -1654,7 +1666,11 @@ static void test_ExitProcess(void)
     ok(ret == WAIT_OBJECT_0, "child process failed to terminate\n");
     GetExitCodeProcess(pi.hProcess, &ret);
     ok(ret == 195, "expected exit code 195, got %u\n", ret);
-    ok(!*child_failures, "%u failures in child process\n", *child_failures);
+    if (*child_failures)
+    {
+        trace("%d failures in child process\n", *child_failures);
+        winetest_add_failures(*child_failures);
+    }
     CloseHandle(pi.hThread);
     CloseHandle(pi.hProcess);
 
@@ -1668,7 +1684,11 @@ static void test_ExitProcess(void)
     GetExitCodeProcess(pi.hProcess, &ret);
 todo_wine
     ok(ret == 0 || broken(ret == 195) /* before win7 */, "expected exit code 0, got %u\n", ret);
-    ok(!*child_failures, "%u failures in child process\n", *child_failures);
+    if (*child_failures)
+    {
+        trace("%d failures in child process\n", *child_failures);
+        winetest_add_failures(*child_failures);
+    }
     CloseHandle(pi.hThread);
     CloseHandle(pi.hProcess);
 
