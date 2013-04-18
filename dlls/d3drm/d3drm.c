@@ -1040,14 +1040,12 @@ static HRESULT WINAPI IDirect3DRM3Impl_CreateMaterial(IDirect3DRM3* iface, D3DVA
     return ret;
 }
 
-static HRESULT WINAPI IDirect3DRM3Impl_CreateDevice(IDirect3DRM3* iface, DWORD width, DWORD height,
-                                                    LPDIRECT3DRMDEVICE3* device)
+static HRESULT WINAPI IDirect3DRM3Impl_CreateDevice(IDirect3DRM3 *iface,
+        DWORD width, DWORD height, IDirect3DRMDevice3 **device)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM3(iface);
+    FIXME("iface %p, width %u, height %u, device %p partial stub!\n", iface, width, height, device);
 
-    FIXME("(%p/%p)->(%d,%d,%p): partial stub\n", iface, This, width, height, device);
-
-    return Direct3DRMDevice_create(&IID_IDirect3DRMDevice3, (IUnknown**)device);
+    return Direct3DRMDevice_create(&IID_IDirect3DRMDevice3, (IUnknown **)device);
 }
 
 static HRESULT WINAPI IDirect3DRM3Impl_CreateDeviceFromSurface(IDirect3DRM3 *iface, GUID *pGUID,
@@ -1106,18 +1104,13 @@ static HRESULT WINAPI IDirect3DRM3Impl_CreateTextureFromSurface(IDirect3DRM3 *if
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRM3Impl_CreateViewport(IDirect3DRM3* iface,
-                                                      LPDIRECT3DRMDEVICE3 Device,
-                                                      LPDIRECT3DRMFRAME3 frame, DWORD xpos,
-                                                      DWORD ypos, DWORD width, DWORD height,
-                                                      LPDIRECT3DRMVIEWPORT2* viewport)
+static HRESULT WINAPI IDirect3DRM3Impl_CreateViewport(IDirect3DRM3 *iface, IDirect3DRMDevice3 *device,
+        IDirect3DRMFrame3 *camera, DWORD x, DWORD y, DWORD width, DWORD height, IDirect3DRMViewport2 **viewport)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM3(iface);
+    FIXME("iface %p, device %p, camera %p, x %u, y %u, width %u, height %u, viewport %p partial stub!\n",
+            iface, device, camera, x, y, width, height, viewport);
 
-    FIXME("(%p/%p)->(%p,%p,%d,%d,%d,%d,%p): stub\n", iface, This, Device, frame, xpos, ypos, width,
-          height, viewport);
-
-    return Direct3DRMViewport_create(&IID_IDirect3DRMViewport2, (IUnknown**)viewport);
+    return Direct3DRMViewport_create(&IID_IDirect3DRMViewport2, (IUnknown **)viewport);
 }
 
 static HRESULT WINAPI IDirect3DRM3Impl_CreateWrap(IDirect3DRM3* iface, D3DRMWRAPTYPE type,

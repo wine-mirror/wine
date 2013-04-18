@@ -948,8 +948,8 @@ DECLARE_INTERFACE_(IDirect3DRMViewport2,IDirect3DRMObject)
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMViewport2 methods ***/
-    STDMETHOD(Init) (THIS_ LPDIRECT3DRMDEVICE3 dev, LPDIRECT3DRMFRAME3 camera, DWORD xpos, DWORD ypos,
-        DWORD width, DWORD height) PURE;
+    STDMETHOD(Init) (THIS_ IDirect3DRMDevice3 *device, struct IDirect3DRMFrame3 *camera,
+            DWORD x, DWORD y, DWORD width, DWORD height) PURE;
     STDMETHOD(Clear)(THIS_ DWORD flags) PURE;
     STDMETHOD(Render)(THIS_ LPDIRECT3DRMFRAME3) PURE;
     STDMETHOD(SetFront)(THIS_ D3DVALUE) PURE;
@@ -964,7 +964,7 @@ DECLARE_INTERFACE_(IDirect3DRMViewport2,IDirect3DRMObject)
     STDMETHOD(ForceUpdate)(THIS_ DWORD x1, DWORD y1, DWORD x2, DWORD y2) PURE;
     STDMETHOD(SetPlane)(THIS_ D3DVALUE left, D3DVALUE right, D3DVALUE bottom, D3DVALUE top) PURE;
     STDMETHOD(GetCamera)(THIS_ LPDIRECT3DRMFRAME3 *) PURE;
-    STDMETHOD(GetDevice)(THIS_ LPDIRECT3DRMDEVICE3 *) PURE;
+    STDMETHOD(GetDevice)(THIS_ IDirect3DRMDevice3 **device) PURE;
     STDMETHOD(GetPlane)(THIS_ D3DVALUE *left, D3DVALUE *right, D3DVALUE *bottom, D3DVALUE *top) PURE;
     STDMETHOD(Pick)(THIS_ LONG x, LONG y, LPDIRECT3DRMPICKEDARRAY *return_visuals) PURE;
     STDMETHOD_(BOOL, GetUniformScaling)(THIS) PURE;
