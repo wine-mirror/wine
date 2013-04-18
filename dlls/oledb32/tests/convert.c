@@ -2303,6 +2303,15 @@ todo_wine
     ok(broken(dst_len == sizeof(dst)) || dst_len == 0x1234 /* W2K+ */, "got %ld\n", dst_len);
     ok(dst == 0x12345678, "got %08x\n", dst);
 
+    dst_len = dst = 0x1234;
+    V_VT((VARIANT*)src) = VT_I2;
+    V_I2((VARIANT*)src) = 0x4321;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_VARIANT, DBTYPE_UI4, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
+    ok(dst == 0x4321, "got %08x\n", dst);
+
     IDataConvert_Release(convert);
 }
 

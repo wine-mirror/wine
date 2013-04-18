@@ -165,6 +165,7 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
     convert *This = impl_from_IDataConvert(iface);
     DBLENGTH dst_len_loc;
     DBSTATUS dst_status_loc;
+    VARIANT tmp;
     HRESULT hr;
 
     TRACE("(%p)->(%d, %d, %ld, %p, %p, %p, %ld, %d, %p, %d, %d, %x)\n", This,
@@ -226,7 +227,6 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
     case DBTYPE_I2:
     {
         signed short *d = dst;
-        VARIANT tmp;
         switch(src_type)
         {
         case DBTYPE_EMPTY:       *d = 0; hr = S_OK;                              break;
@@ -258,7 +258,6 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
     case DBTYPE_I4:
     {
         signed int *d = dst;
-        VARIANT tmp;
         switch(src_type)
         {
         case DBTYPE_EMPTY:       *d = 0; hr = S_OK;                              break;
@@ -523,14 +522,10 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         }
         break;
         case DBTYPE_VARIANT:
-        {
-            VARIANT tmp;
-
             VariantInit(&tmp);
             if ((hr = VariantChangeType(&tmp, (VARIANT*)src, 0, VT_BSTR)) == S_OK)
                 *d = V_BSTR(&tmp);
-        }
-        break;
+            break;
         default: FIXME("Unimplemented conversion %04x -> BSTR\n", src_type); return E_NOTIMPL;
         }
         break;
@@ -608,6 +603,11 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         case DBTYPE_UI4:         *d = *(DWORD*)src; hr = S_OK;                   break;
         case DBTYPE_I8:          hr = VarUI4FromI8(*(LONGLONG*)src, d);          break;
         case DBTYPE_UI8:         hr = VarUI4FromUI8(*(ULONGLONG*)src, d);        break;
+        case DBTYPE_VARIANT:
+            VariantInit(&tmp);
+            if ((hr = VariantChangeType(&tmp, (VARIANT*)src, 0, VT_UI4)) == S_OK)
+                *d = V_UI4(&tmp);
+            break;
         default: FIXME("Unimplemented conversion %04x -> UI4\n", src_type); return E_NOTIMPL;
         }
         break;
