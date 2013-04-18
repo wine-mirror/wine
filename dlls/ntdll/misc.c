@@ -31,7 +31,6 @@
 #include "wine/debug.h"
 #include "ntdll_misc.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
 #if defined(__GNUC__) && defined(__i386__)
 #define DO_FPU(x,y) __asm__ __volatile__( x " %0;fwait" : "=m" (y) : )
