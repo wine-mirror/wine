@@ -3706,6 +3706,19 @@ BOOL WINAPI SetupDiGetDeviceInstallParamsA(
     return FALSE;
 }
 
+/***********************************************************************
+ *              SetupDiSetDeviceInstallParamsA  (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiSetDeviceInstallParamsA(
+       HDEVINFO DeviceInfoSet,
+       PSP_DEVINFO_DATA DeviceInfoData,
+       PSP_DEVINSTALL_PARAMS_A DeviceInstallParams)
+{
+    FIXME("(%p, %p, %p) stub\n", DeviceInfoSet, DeviceInfoData, DeviceInstallParams);
+
+    return TRUE;
+}
+
 static HKEY SETUPDI_OpenDevKey(struct DeviceInfo *devInfo, REGSAM samDesired)
 {
     HKEY enumKey, key = INVALID_HANDLE_VALUE;
