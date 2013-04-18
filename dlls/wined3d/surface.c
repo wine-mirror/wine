@@ -894,6 +894,9 @@ static void surface_map(struct wined3d_surface *surface, const RECT *rect, DWORD
     }
     else
     {
+        if (surface->resource.usage & WINED3DUSAGE_DYNAMIC)
+            WARN_(d3d_perf)("Mapping a dynamic surface without WINED3D_MAP_DISCARD.\n");
+
         /* surface_load_location() does not check if the rectangle specifies
          * the full surface. Most callers don't need that, so do it here. */
         if (rect && !rect->top && !rect->left
