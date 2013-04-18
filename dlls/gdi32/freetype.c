@@ -6148,8 +6148,8 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 	case ft_glyph_format_bitmap:
 	  {
 	    BYTE *src = ft_face->glyph->bitmap.buffer, *dst = buf;
-	    INT w = (ft_face->glyph->bitmap.width + 7) >> 3;
-	    INT h = ft_face->glyph->bitmap.rows;
+	    INT w = min( pitch, (ft_face->glyph->bitmap.width + 7) >> 3 );
+	    INT h = min( height, ft_face->glyph->bitmap.rows );
 	    while(h--) {
 	        memcpy(dst, src, w);
 		src += ft_face->glyph->bitmap.pitch;
@@ -6202,7 +6202,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 	case ft_glyph_format_bitmap:
 	  {
             BYTE *src = ft_face->glyph->bitmap.buffer, *dst = buf;
-            INT h = ft_face->glyph->bitmap.rows;
+            INT h = min( height, ft_face->glyph->bitmap.rows );
             INT x;
             memset( buf, 0, needed );
             while(h--) {
