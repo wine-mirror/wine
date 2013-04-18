@@ -3959,47 +3959,24 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
              * it would be a big performance hit. Unless we hit an application
              * needing one of those formats, don't advertize them to avoid
              * leading applications into temptation. The windows drivers don't
-             * support most of those formats on volumes anyway, except for
-             * WINED3DFMT_R32_FLOAT. */
+             * support most of those formats on volumes anyway. */
+            if (format->convert)
+            {
+                TRACE("[FAILED] - No converted formats on volumes.\n");
+                return WINED3DERR_NOTAVAILABLE;
+            }
+
+            /* The GL_EXT_texture_compression_s3tc spec requires that loading
+             * an s3tc compressed texture results in an error. While the D3D
+             * refrast does support s3tc volumes, at least the nvidia Windows
+             * driver does not, so we're free not to support this format. */
             switch (check_format_id)
             {
-                case WINED3DFMT_P8_UINT:
-                case WINED3DFMT_L4A4_UNORM:
-                case WINED3DFMT_R32_FLOAT:
-                case WINED3DFMT_R16_FLOAT:
-                case WINED3DFMT_R8G8_SNORM_L8X8_UNORM:
-                case WINED3DFMT_R5G5_SNORM_L6_UNORM:
-                case WINED3DFMT_R16G16_UNORM:
-                    TRACE("[FAILED] - No converted formats on volumes.\n");
-                    return WINED3DERR_NOTAVAILABLE;
-
-                case WINED3DFMT_R8G8B8A8_SNORM:
-                case WINED3DFMT_R16G16_SNORM:
-                    if (!gl_info->supported[NV_TEXTURE_SHADER])
-                    {
-                        TRACE("[FAILED] - No converted formats on volumes.\n");
-                        return WINED3DERR_NOTAVAILABLE;
-                    }
-                    break;
-
-                case WINED3DFMT_R8G8_SNORM:
-                    if (!gl_info->supported[NV_TEXTURE_SHADER])
-                    {
-                        TRACE("[FAILED] - No converted formats on volumes.\n");
-                        return WINED3DERR_NOTAVAILABLE;
-                    }
-                    break;
-
                 case WINED3DFMT_DXT1:
                 case WINED3DFMT_DXT2:
                 case WINED3DFMT_DXT3:
                 case WINED3DFMT_DXT4:
                 case WINED3DFMT_DXT5:
-                    /* The GL_EXT_texture_compression_s3tc spec requires that
-                     * loading an s3tc compressed texture results in an error.
-                     * While the D3D refrast does support s3tc volumes, at
-                     * least the nvidia windows driver does not, so we're free
-                     * not to support this format. */
                     TRACE("[FAILED] - DXTn does not support 3D textures.\n");
                     return WINED3DERR_NOTAVAILABLE;
 
