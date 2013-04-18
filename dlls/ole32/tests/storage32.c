@@ -3046,6 +3046,55 @@ static void test_convert(void)
     DeleteFileW(filename);
 }
 
+static void test_direct_swmr(void)
+{
+    static const WCHAR fileW[] = {'w','i','n','e','t','e','s','t',0};
+    IDirectWriterLock *dwlock;
+    ULONG ref, ref2;
+    IStorage *stg;
+    HRESULT hr;
+
+    /* it's possible to create in writer mode */
+    hr = StgCreateDocfile(fileW, STGM_CREATE | STGM_READWRITE | STGM_SHARE_DENY_WRITE | STGM_DIRECT_SWMR, 0, &stg);
+todo_wine
+    ok(hr == S_OK, "got %08x\n", hr);
+if (hr == S_OK) {
+    IStorage_Release(stg);
+    DeleteFileW(fileW);
+}
+
+    hr = StgCreateDocfile(fileW, STGM_CREATE | STGM_READWRITE | STGM_SHARE_DENY_WRITE | STGM_TRANSACTED, 0, &stg);
+    ok(hr == S_OK, "got %08x\n", hr);
+    IStorage_Release(stg);
+
+    /* reader mode */
+    hr = StgOpenStorage(fileW, NULL, STGM_DIRECT_SWMR | STGM_READ | STGM_SHARE_DENY_NONE, NULL, 0, &stg);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = IStorage_QueryInterface(stg, &IID_IDirectWriterLock, (void**)&dwlock);
+    ok(hr == E_NOINTERFACE, "got %08x\n", hr);
+    IStorage_Release(stg);
+
+    /* writer mode */
+    hr = StgOpenStorage(fileW, NULL, STGM_DIRECT_SWMR | STGM_READWRITE | STGM_SHARE_DENY_WRITE, NULL, 0, &stg);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    ref = IStorage_AddRef(stg);
+    IStorage_Release(stg);
+
+    hr = IStorage_QueryInterface(stg, &IID_IDirectWriterLock, (void**)&dwlock);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    ref2 = IStorage_AddRef(stg);
+    IStorage_Release(stg);
+    ok(ref2 == ref + 1, "got %u\n", ref2);
+
+    IDirectWriterLock_Release(dwlock);
+    IStorage_Release(stg);
+
+    DeleteFileW(fileW);
+}
+
 START_TEST(storage32)
 {
     CHAR temp[MAX_PATH];
@@ -3090,4 +3139,5 @@ START_TEST(storage32)
     test_copyto_recursive();
     test_hglobal_storage_creation();
     test_convert();
+    test_direct_swmr();
 }

@@ -177,6 +177,7 @@ struct StorageBaseImpl
 {
   IStorage IStorage_iface;
   IPropertySetStorage IPropertySetStorage_iface; /* interface for adding a properties stream */
+  IDirectWriterLock IDirectWriterLock_iface;
   LONG ref;
 
   /*

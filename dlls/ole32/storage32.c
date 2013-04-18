@@ -71,6 +71,11 @@ static inline StorageBaseImpl *impl_from_IStorage( IStorage *iface )
     return CONTAINING_RECORD(iface, StorageBaseImpl, IStorage_iface);
 }
 
+static inline StorageBaseImpl *impl_from_IDirectWriterLock( IDirectWriterLock *iface )
+{
+    return CONTAINING_RECORD(iface, StorageBaseImpl, IDirectWriterLock_iface);
+}
+
 /****************************************************************************
  * Storage32InternalImpl definitions.
  *
@@ -379,6 +384,12 @@ static HRESULT WINAPI StorageBaseImpl_QueryInterface(
   else if (IsEqualGUID(&IID_IPropertySetStorage, riid))
   {
     *ppvObject = &This->IPropertySetStorage_iface;
+  }
+  /* locking interface is report for writer only */
+  else if (IsEqualGUID(&IID_IDirectWriterLock, riid) &&
+    (This->openFlags == (STGM_DIRECT_SWMR|STGM_READWRITE|STGM_SHARE_DENY_WRITE)))
+  {
+    *ppvObject = &This->IDirectWriterLock_iface;
   }
   else
     return E_NOINTERFACE;
@@ -2648,6 +2659,55 @@ static HRESULT StorageImpl_GetFilename(StorageBaseImpl* iface, LPWSTR *result)
   return hr;
 }
 
+static HRESULT WINAPI directwriterlock_QueryInterface(IDirectWriterLock *iface, REFIID riid, void **obj)
+{
+  StorageBaseImpl *This = impl_from_IDirectWriterLock(iface);
+  return IStorage_QueryInterface(&This->IStorage_iface, riid, obj);
+}
+
+static ULONG WINAPI directwriterlock_AddRef(IDirectWriterLock *iface)
+{
+  StorageBaseImpl *This = impl_from_IDirectWriterLock(iface);
+  return IStorage_AddRef(&This->IStorage_iface);
+}
+
+static ULONG WINAPI directwriterlock_Release(IDirectWriterLock *iface)
+{
+  StorageBaseImpl *This = impl_from_IDirectWriterLock(iface);
+  return IStorage_Release(&This->IStorage_iface);
+}
+
+static HRESULT WINAPI directwriterlock_WaitForWriteAccess(IDirectWriterLock *iface, DWORD timeout)
+{
+  StorageBaseImpl *This = impl_from_IDirectWriterLock(iface);
+  FIXME("(%p)->(%d): stub\n", This, timeout);
+  return E_NOTIMPL;
+}
+
+static HRESULT WINAPI directwriterlock_ReleaseWriteAccess(IDirectWriterLock *iface)
+{
+  StorageBaseImpl *This = impl_from_IDirectWriterLock(iface);
+  FIXME("(%p): stub\n", This);
+  return E_NOTIMPL;
+}
+
+static HRESULT WINAPI directwriterlock_HaveWriteAccess(IDirectWriterLock *iface)
+{
+  StorageBaseImpl *This = impl_from_IDirectWriterLock(iface);
+  FIXME("(%p): stub\n", This);
+  return E_NOTIMPL;
+}
+
+static const IDirectWriterLockVtbl DirectWriterLockVtbl =
+{
+  directwriterlock_QueryInterface,
+  directwriterlock_AddRef,
+  directwriterlock_Release,
+  directwriterlock_WaitForWriteAccess,
+  directwriterlock_ReleaseWriteAccess,
+  directwriterlock_HaveWriteAccess
+};
+
 /*
  * Virtual function table for the IStorage32Impl class.
  */
@@ -2719,6 +2779,7 @@ static HRESULT StorageImpl_Construct(
 
   This->base.IStorage_iface.lpVtbl = &Storage32Impl_Vtbl;
   This->base.IPropertySetStorage_iface.lpVtbl = &IPropertySetStorage_Vtbl;
+  This->base.IDirectWriterLock_iface.lpVtbl = &DirectWriterLockVtbl;
   This->base.baseVtbl = &StorageImpl_BaseVtbl;
   This->base.openFlags = (openFlags & ~STGM_CREATE);
   This->base.ref = 1;
@@ -7631,10 +7692,10 @@ HRESULT WINAPI StgOpenStorage(
     goto end;
   }
 
-  /* shared reading requires transacted mode */
+  /* shared reading requires transacted or single writer mode */
   if( STGM_SHARE_MODE(grfMode) == STGM_SHARE_DENY_WRITE &&
       STGM_ACCESS_MODE(grfMode) == STGM_READWRITE &&
-     !(grfMode&STGM_TRANSACTED) )
+     !(grfMode & STGM_TRANSACTED) && !(grfMode & STGM_DIRECT_SWMR))
   {
     hr = STG_E_INVALIDFLAG;
     goto end;
