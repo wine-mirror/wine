@@ -1259,14 +1259,21 @@ todo_wine
         CloseHandle(handle);
         CloseHandle(process);
 
-        SetLastError(0xdeadbeef);
         handle = GetModuleHandle("winver.exe");
         ok(!handle, "winver.exe shouldn't be loaded yet\n");
+        SetLastError(0xdeadbeef);
         handle = LoadLibrary("winver.exe");
         ok(handle != 0, "LoadLibrary error %d\n", GetLastError());
         SetLastError(0xdeadbeef);
         ret = FreeLibrary(handle);
-        ok(ret, "LoadLibrary error %d\n", GetLastError());
+        ok(ret, "FreeLibrary error %d\n", GetLastError());
+        handle = GetModuleHandle("winver.exe");
+        /* manual call to LdrShutdownProcess doesn't prevent module unloading */
+        if (param && test_dll_phase != 4)
+            ok(handle != 0, "winver.exe should not be unloaded\n");
+        else
+        todo_wine
+            ok(!handle || broken(handle != 0) /* before win7 */, "winver.exe should be unloaded\n");
 
         SetLastError(0xdeadbeef);
         ret = WaitForDebugEvent(&de, 0);
