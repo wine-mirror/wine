@@ -4293,7 +4293,7 @@ DECLARE_INTERFACE_(IDirect3DRMViewportArray, IDirect3DRMArray)
     /*** IDirect3DRMArray methods ***/
     STDMETHOD_(DWORD, GetSize)(THIS) PURE;
     /*** IDirect3DRMViewportArray methods ***/
-    STDMETHOD(GetElement)(THIS_ DWORD index, LPDIRECT3DRMVIEWPORT *) PURE;
+    STDMETHOD(GetElement)(THIS_ DWORD index, IDirect3DRMViewport **element) PURE;
 };
 #undef INTERFACE
 
