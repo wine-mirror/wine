@@ -235,14 +235,29 @@ HRESULT __RPC_STUB IDBInitialize_Initialize_Stub(IDBInitialize* This, IErrorInfo
 
 HRESULT CALLBACK IDBInitialize_Uninitialize_Proxy(IDBInitialize* This)
 {
-    FIXME("(%p): stub\n", This);
-    return E_NOTIMPL;
+    IErrorInfo *error;
+    HRESULT hr;
+
+    TRACE("(%p)\n", This);
+    hr = IDBInitialize_RemoteUninitialize_Proxy(This, &error);
+    if(error)
+    {
+        SetErrorInfo(0, error);
+        IErrorInfo_Release(error);
+    }
+    return hr;
 }
 
-HRESULT __RPC_STUB IDBInitialize_Uninitialize_Stub(IDBInitialize* This, IErrorInfo **ppErrorInfoRem)
+HRESULT __RPC_STUB IDBInitialize_Uninitialize_Stub(IDBInitialize* This, IErrorInfo **error)
 {
-    FIXME("(%p, %p): stub\n", This, ppErrorInfoRem);
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("(%p, %p)\n", This, error);
+    *error = NULL;
+    hr = IDBInitialize_Uninitialize(This);
+    if(FAILED(hr)) GetErrorInfo(0, error);
+
+    return hr;
 }
 
 HRESULT CALLBACK IDBDataSourceAdmin_CreateDataSource_Proxy(IDBDataSourceAdmin* This, ULONG cPropertySets,
