@@ -3198,7 +3198,8 @@ static void test_GetNamedSecurityInfoA(void)
     bret = GetSecurityDescriptorGroup(pSD, &group, &group_defaulted);
     ok(bret, "GetSecurityDescriptorGroup failed with error %d\n", GetLastError());
     ok(group != NULL, "group should not be NULL\n");
-    ok(EqualSid(group, admin_sid) || broken(EqualSid(group, system_sid)) /* before Win7 */,
+    ok(EqualSid(group, admin_sid) || broken(EqualSid(group, system_sid)) /* before Win7 */
+       || broken(((SID*)group)->SubAuthority[0] == SECURITY_NT_NON_UNIQUE) /* Vista */,
        "MACHINE\\Software group SID != Local System SID.\n");
     LocalFree(pSD);
 }
