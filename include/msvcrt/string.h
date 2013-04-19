@@ -42,14 +42,20 @@ static inline void* memccpy(void *s1, const void *s2, int c, size_t n) { return 
 #endif /* _CRT_MEMORY_DEFINED */
 
 int   __cdecl _strcmpi(const char*,const char*);
+int   __cdecl _strcoll_l(const char*, const char*, _locale_t);
 char* __cdecl _strdup(const char*);
 char* __cdecl _strerror(const char*);
 errno_t __cdecl strerror_s(char*,size_t,int);
 int   __cdecl _stricmp(const char*,const char*);
 int   __cdecl _stricoll(const char*,const char*);
+int   __cdecl _stricoll_l(const char*, const char*, _locale_t);
 char* __cdecl _strlwr(char*);
 errno_t __cdecl _strlwr_s(char*,size_t);
+int   __cdecl _strncoll(const char*, const char*, size_t);
+int   __cdecl _strncoll_l(const char*, const char*, size_t, _locale_t);
 int   __cdecl _strnicmp(const char*,const char*,size_t);
+int   __cdecl _strnicoll(const char*, const char*, size_t);
+int   __cdecl _strnicoll_l(const char*, const char*, size_t, _locale_t);
 char* __cdecl _strnset(char*,int,size_t);
 char* __cdecl _strrev(char*);
 char* __cdecl _strset(char*,int);
@@ -86,9 +92,14 @@ size_t  __cdecl strxfrm(char*,const char*,size_t);
 wchar_t* __cdecl _wcsdup(const wchar_t*);
 int      __cdecl _wcsicmp(const wchar_t*,const wchar_t*);
 int      __cdecl _wcsicoll(const wchar_t*,const wchar_t*);
+int      __cdecl _wcsicoll_l(const wchar_t*, const wchar_t*, _locale_t);
 wchar_t* __cdecl _wcslwr(wchar_t*);
+int      __cdecl _wcscoll_l(const wchar_t*, const wchar_t*, _locale_t);
+int      __cdecl _wcsncoll(const wchar_t*, const wchar_t*, size_t);
+int      __cdecl _wcsncoll_l(const wchar_t*, const wchar_t*, size_t, _locale_t);
 int      __cdecl _wcsnicmp(const wchar_t*,const wchar_t*,size_t);
 int      __cdecl _wcsnicoll(const wchar_t*,const wchar_t*,size_t);
+int      __cdecl _wcsnicoll_l(const wchar_t*, const wchar_t*, size_t, _locale_t);
 wchar_t* __cdecl _wcsnset(wchar_t*,wchar_t,size_t);
 wchar_t* __cdecl _wcsrev(wchar_t*);
 wchar_t* __cdecl _wcsset(wchar_t*,wchar_t);
