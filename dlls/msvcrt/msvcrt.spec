@@ -1153,6 +1153,7 @@
 @ cdecl _wexecvpe(wstr ptr ptr)
 @ cdecl _wfdopen(long wstr) MSVCRT__wfdopen
 @ cdecl _wfindfirst(wstr ptr) MSVCRT__wfindfirst
+@ cdecl _wfindfirst32(wstr ptr) MSVCRT__wfindfirst32
 @ cdecl _wfindfirst64(wstr ptr) MSVCRT__wfindfirst64
 @ cdecl _wfindfirsti64(wstr ptr) MSVCRT__wfindfirsti64
 @ cdecl _wfindfirst64i32(wstr ptr) MSVCRT__wfindfirst64i32
