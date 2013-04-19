@@ -59,6 +59,7 @@ enum wined3d_gl_extension
     ARB_HALF_FLOAT_PIXEL,
     ARB_HALF_FLOAT_VERTEX,
     ARB_INSTANCED_ARRAYS,
+    ARB_INTERNALFORMAT_QUERY2,
     ARB_MAP_BUFFER_ALIGNMENT,
     ARB_MAP_BUFFER_RANGE,
     ARB_MULTISAMPLE,
@@ -223,6 +224,10 @@ enum wined3d_gl_extension
     USE_GL_FUNC(glProgramParameteriARB) \
     /* GL_ARB_instanced_arrays */ \
     USE_GL_FUNC(glVertexAttribDivisorARB) \
+    /* GL_ARB_internalformat_query */ \
+    USE_GL_FUNC(glGetInternalformativ) \
+    /* GL_ARB_internalformat_query2 */ \
+    USE_GL_FUNC(glGetInternalformati64v) \
     /* GL_ARB_map_buffer_range */ \
     USE_GL_FUNC(glFlushMappedBufferRange) \
     USE_GL_FUNC(glMapBufferRange) \
