@@ -1857,7 +1857,7 @@ static HRESULT WINAPI IDirectPlay4Impl_DeletePlayerFromGroup( IDirectPlay4 *ifac
         return DPERR_INVALIDGROUP;
 
     /* Find the player */
-    if ( ( plist = DP_FindPlayer( This, player ) ) == NULL )
+    if ( DP_FindPlayer( This, player ) == NULL )
         return DPERR_INVALIDPLAYER;
 
     /* Remove the player shortcut from the group */
