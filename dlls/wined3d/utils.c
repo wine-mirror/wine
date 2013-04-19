@@ -1407,30 +1407,57 @@ static BOOL init_format_texture_info(struct wined3d_adapter *adapter, struct win
         format->height_scale.numerator = 1;
         format->height_scale.denominator = 1;
 
-        if (!gl_info->limits.vertex_samplers)
-            format->flags &= ~WINED3DFMT_FLAG_VTF;
-
-        if (!(gl_info->quirks & WINED3D_QUIRK_LIMITED_TEX_FILTERING))
-            format->flags |= WINED3DFMT_FLAG_FILTERING;
-        else if (format->id != WINED3DFMT_R32G32B32A32_FLOAT && format->id != WINED3DFMT_R32_FLOAT)
-            format->flags &= ~WINED3DFMT_FLAG_VTF;
-
-        if (format->glGammaInternal != format->glInternal)
+        if (gl_info->supported[ARB_INTERNALFORMAT_QUERY2])
         {
-            /* Filter sRGB capabilities if EXT_texture_sRGB is not supported. */
-            if (!gl_info->supported[EXT_TEXTURE_SRGB])
+            query_format_flag(gl_info, format, format->glInternal, GL_VERTEX_TEXTURE,
+                    WINED3DFMT_FLAG_VTF, "vertex texture usage");
+            query_format_flag(gl_info, format, format->glInternal, GL_FILTER,
+                    WINED3DFMT_FLAG_FILTERING, "filtering");
+
+            if (format->glGammaInternal != format->glInternal)
             {
-                format->glGammaInternal = format->glInternal;
-                format->flags &= ~(WINED3DFMT_FLAG_SRGB_READ | WINED3DFMT_FLAG_SRGB_WRITE);
-            }
-            else if (gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
-            {
-                format->glInternal = format->glGammaInternal;
+                query_format_flag(gl_info, format, format->glGammaInternal, GL_SRGB_READ,
+                        WINED3DFMT_FLAG_SRGB_READ, "sRGB read");
+
+                if (srgb_write)
+                    query_format_flag(gl_info, format, format->glGammaInternal, GL_SRGB_WRITE,
+                            WINED3DFMT_FLAG_SRGB_WRITE, "sRGB write");
+                else
+                    format->flags &= ~WINED3DFMT_FLAG_SRGB_WRITE;
+
+                if (!(format->flags & (WINED3DFMT_FLAG_SRGB_READ | WINED3DFMT_FLAG_SRGB_WRITE)))
+                    format->glGammaInternal = format->glInternal;
+                else if (gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
+                    format->glInternal = format->glGammaInternal;
             }
         }
+        else
+        {
+            if (!gl_info->limits.vertex_samplers)
+                format->flags &= ~WINED3DFMT_FLAG_VTF;
 
-        if ((format->flags & WINED3DFMT_FLAG_SRGB_WRITE) && !srgb_write)
-            format->flags &= ~WINED3DFMT_FLAG_SRGB_WRITE;
+            if (!(gl_info->quirks & WINED3D_QUIRK_LIMITED_TEX_FILTERING))
+                format->flags |= WINED3DFMT_FLAG_FILTERING;
+            else if (format->id != WINED3DFMT_R32G32B32A32_FLOAT && format->id != WINED3DFMT_R32_FLOAT)
+                format->flags &= ~WINED3DFMT_FLAG_VTF;
+
+            if (format->glGammaInternal != format->glInternal)
+            {
+                /* Filter sRGB capabilities if EXT_texture_sRGB is not supported. */
+                if (!gl_info->supported[EXT_TEXTURE_SRGB])
+                {
+                    format->glGammaInternal = format->glInternal;
+                    format->flags &= ~(WINED3DFMT_FLAG_SRGB_READ | WINED3DFMT_FLAG_SRGB_WRITE);
+                }
+                else if (gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
+                {
+                    format->glInternal = format->glGammaInternal;
+                }
+            }
+
+            if ((format->flags & WINED3DFMT_FLAG_SRGB_WRITE) && !srgb_write)
+                format->flags &= ~WINED3DFMT_FLAG_SRGB_WRITE;
+        }
 
         /* Texture conversion stuff */
         format->convert = format_texture_info[i].convert;
@@ -1562,6 +1589,10 @@ static void init_format_filter_info(struct wined3d_gl_info *gl_info, enum wined3
         WINED3DFMT_R16G16B16A16_FLOAT,
     };
     BOOL filtered;
+
+    if (gl_info->supported[ARB_INTERNALFORMAT_QUERY2])
+        /* This was already handled by init_format_texture_info(). */
+        return;
 
     if(wined3d_settings.offscreen_rendering_mode != ORM_FBO)
     {
