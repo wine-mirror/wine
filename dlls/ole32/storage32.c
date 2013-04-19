@@ -2615,9 +2615,7 @@ static HRESULT StorageImpl_StreamWriteAt(StorageBaseImpl *base, DirRef index,
     stream = *StorageImpl_GetCachedBlockChainStream(This, index);
     if (!stream) return E_OUTOFMEMORY;
 
-    hr = BlockChainStream_WriteAt(stream, offset, size, buffer, bytesWritten);
-
-    return hr;
+    return BlockChainStream_WriteAt(stream, offset, size, buffer, bytesWritten);
   }
 }
 
@@ -3008,7 +3006,7 @@ end:
   }
   else
   {
-    StorageImpl_Flush((StorageBaseImpl*)This);
+    StorageImpl_Flush(&This->base);
     *result = This;
   }
 
@@ -3048,9 +3046,9 @@ static void StorageImpl_Destroy(StorageBaseImpl* iface)
   HeapFree(GetProcessHeap(), 0, This);
 }
 
-static HRESULT StorageImpl_Flush(StorageBaseImpl* iface)
+static HRESULT StorageImpl_Flush(StorageBaseImpl *storage)
 {
-  StorageImpl *This = (StorageImpl*) iface;
+  StorageImpl *This = (StorageImpl*)storage;
   int i;
   HRESULT hr;
   TRACE("(%p)\n", This);
@@ -3851,20 +3849,17 @@ HRESULT StorageImpl_ReadRawDirEntry(StorageImpl *This, ULONG index, BYTE *buffer
 HRESULT StorageImpl_WriteRawDirEntry(StorageImpl *This, ULONG index, const BYTE *buffer)
 {
   ULARGE_INTEGER offset;
-  HRESULT hr;
   ULONG bytesRead;
 
   offset.u.HighPart = 0;
   offset.u.LowPart  = index * RAW_DIRENTRY_SIZE;
 
-  hr = BlockChainStream_WriteAt(
+  return BlockChainStream_WriteAt(
                     This->rootBlockChain,
                     offset,
                     RAW_DIRENTRY_SIZE,
                     buffer,
                     &bytesRead);
-
-  return hr;
 }
 
 /******************************************************************************
@@ -4036,13 +4031,11 @@ HRESULT StorageImpl_WriteDirEntry(
   DirRef                index,
   const DirEntry*       buffer)
 {
-  BYTE           currentEntry[RAW_DIRENTRY_SIZE];
-  HRESULT        writeRes;
+  BYTE currentEntry[RAW_DIRENTRY_SIZE];
 
   UpdateRawDirEntry(currentEntry, buffer);
 
-  writeRes = StorageImpl_WriteRawDirEntry(This, index, currentEntry);
-  return writeRes;
+  return StorageImpl_WriteRawDirEntry(This, index, currentEntry);
 }
 
 static BOOL StorageImpl_ReadBigBlock(
@@ -5187,7 +5180,7 @@ static HRESULT TransactedSnapshotImpl_Construct(StorageBaseImpl *parentStorage,
             /* parentStorage already has 1 reference, which we take over here. */
             (*result)->transactedParent = parentStorage;
 
-            parentStorage->transactedChild = (StorageBaseImpl*)*result;
+            parentStorage->transactedChild = &(*result)->base;
 
             (*result)->base.storageDirEntry = TransactedSnapshotImpl_CreateStubEntry(*result, parentStorage->storageDirEntry);
         }
@@ -5199,7 +5192,7 @@ static HRESULT TransactedSnapshotImpl_Construct(StorageBaseImpl *parentStorage,
         }
     }
 
-    if (FAILED(hr)) HeapFree(GetProcessHeap(), 0, (*result));
+    if (FAILED(hr)) HeapFree(GetProcessHeap(), 0, *result);
 
     return hr;
   }
