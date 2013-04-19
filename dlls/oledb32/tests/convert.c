@@ -2480,8 +2480,10 @@ static void test_getconversionsize(void)
 {
     IDataConvert *convert;
     DBLENGTH dst_len;
+    DBLENGTH src_len;
     HRESULT hr;
     BSTR str;
+    static WCHAR strW[] = {'t','e','s','t',0};
 
     hr = CoCreateInstance(&CLSID_OLEDB_CONVERSIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IDataConvert, (void**)&convert);
     if(FAILED(hr))
@@ -2510,6 +2512,23 @@ static void test_getconversionsize(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(dst_len == sizeof(VARIANT), "%ld\n", dst_len);
     SysFreeString(str);
+
+    dst_len = 0;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_WSTR, DBTYPE_WSTR, NULL, &dst_len, strW);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(dst_len == 10, "%ld\n", dst_len);
+
+    dst_len = 0;
+    src_len = 2;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_WSTR, DBTYPE_WSTR, &src_len, &dst_len, strW);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(dst_len == 4, "%ld\n", dst_len);
+
+    dst_len = 0;
+    src_len = 20;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_WSTR, DBTYPE_WSTR, &src_len, &dst_len, strW);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(dst_len == 22, "%ld\n", dst_len);
 
     IDataConvert_Release(convert);
 }

@@ -1095,6 +1095,22 @@ static HRESULT WINAPI convert_GetConversionSize(IDataConvert* iface,
         }
     }
     break;
+    case DBTYPE_WSTR:
+    {
+        switch (src_type)
+        {
+        case DBTYPE_WSTR:
+            if(src_len)
+                *dst_len = (*src_len) + sizeof(WCHAR);
+            else
+                *dst_len = (lstrlenW(src) + 1) * sizeof(WCHAR);
+            break;
+        default:
+            FIXME("unimplemented for %04x -> DBTYPE_WSTR\n", src_type);
+            return E_NOTIMPL;
+        }
+    }
+    break;
     default:
         FIXME("unimplemented for conversion %d->%d\n", src_type, dst_type);
         return E_NOTIMPL;
