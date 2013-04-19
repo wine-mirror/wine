@@ -1266,11 +1266,11 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     const struct wined3d_format *color_format;
     struct wined3d_context *ret;
     BOOL auxBuffers = FALSE;
+    HGLRC ctx, share_ctx;
     int pixel_format;
     unsigned int s;
     int swap_interval;
     DWORD state;
-    HGLRC ctx;
     HDC hdc;
 
     TRACE("swapchain %p, target %p, window %p.\n", swapchain, target, swapchain->win_handle);
@@ -1367,19 +1367,28 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
         goto out;
     }
 
-    if (!(ctx = wglCreateContext(hdc)))
+    share_ctx = device->context_count ? device->contexts[0]->glCtx : NULL;
+    if (gl_info->p_wglCreateContextAttribsARB)
     {
-        ERR("Failed to create a WGL context.\n");
-        context_release(ret);
-        goto out;
-    }
-
-    if (device->context_count)
-    {
-        if (!wglShareLists(device->contexts[0]->glCtx, ctx))
+        if (!(ctx = gl_info->p_wglCreateContextAttribsARB(hdc, share_ctx, NULL)))
         {
-            ERR("wglShareLists(%p, %p) failed, last error %#x.\n",
-                    device->contexts[0]->glCtx, ctx, GetLastError());
+            ERR("Failed to create a WGL context.\n");
+            context_release(ret);
+            goto out;
+        }
+    }
+    else
+    {
+        if (!(ctx = wglCreateContext(hdc)))
+        {
+            ERR("Failed to create a WGL context.\n");
+            context_release(ret);
+            goto out;
+        }
+
+        if (share_ctx && !wglShareLists(share_ctx, ctx))
+        {
+            ERR("wglShareLists(%p, %p) failed, last error %#x.\n", share_ctx, ctx, GetLastError());
             context_release(ret);
             if (!wglDeleteContext(ctx))
                 ERR("wglDeleteContext(%p) failed, last error %#x.\n", ctx, GetLastError());

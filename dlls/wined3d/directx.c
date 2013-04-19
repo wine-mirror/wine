@@ -296,6 +296,35 @@ static void WineD3D_ReleaseFakeGLContext(const struct wined3d_fake_gl_ctx *ctx)
         ERR("Failed to restore previous GL context.\n");
 }
 
+static void wined3d_create_fake_gl_context_attribs(struct wined3d_fake_gl_ctx *fake_gl_ctx,
+        struct wined3d_gl_info *gl_info)
+{
+    HGLRC new_ctx;
+
+    if (!(gl_info->p_wglCreateContextAttribsARB = (void *)wglGetProcAddress("wglCreateContextAttribsARB")))
+        return;
+
+    if (!(new_ctx = gl_info->p_wglCreateContextAttribsARB(fake_gl_ctx->dc, NULL, NULL)))
+    {
+        ERR("Failed to create a context using wglCreateContextAttribsARB(), last error %#x.\n", GetLastError());
+        gl_info->p_wglCreateContextAttribsARB = NULL;
+        return;
+    }
+
+    if (!wglMakeCurrent(fake_gl_ctx->dc, new_ctx))
+    {
+        ERR("Failed to make new context current, last error %#x.\n", GetLastError());
+        if (!wglDeleteContext(new_ctx))
+            ERR("Failed to delete new context, last error %#x.\n", GetLastError());
+        gl_info->p_wglCreateContextAttribsARB = NULL;
+        return;
+    }
+
+    if (!wglDeleteContext(fake_gl_ctx->gl_ctx))
+        ERR("Failed to delete old context, last error %#x.\n", GetLastError());
+    fake_gl_ctx->gl_ctx = new_ctx;
+}
+
 /* Do not call while under the GL lock. */
 static BOOL WineD3D_CreateFakeGLContext(struct wined3d_fake_gl_ctx *ctx)
 {
@@ -4918,6 +4947,8 @@ static BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, UINT ordinal)
         ERR("Failed to get a GL context for adapter %p.\n", adapter);
         return FALSE;
     }
+
+    wined3d_create_fake_gl_context_attribs(&fake_gl_ctx, gl_info);
 
     if (!wined3d_adapter_init_gl_caps(adapter))
     {

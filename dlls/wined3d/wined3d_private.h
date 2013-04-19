@@ -1552,6 +1552,7 @@ struct wined3d_gl_info
     BOOL supported[WINED3D_GL_EXT_COUNT];
     GLint wrap_lookup[WINED3D_TADDRESS_MIRROR_ONCE - WINED3D_TADDRESS_WRAP + 1];
 
+    HGLRC (WINAPI *p_wglCreateContextAttribsARB)(HDC dc, HGLRC share, const GLint *attribs);
     struct opengl_funcs gl_ops;
     struct wined3d_fbo_ops fbo_ops;
 
