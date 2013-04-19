@@ -1712,23 +1712,6 @@ struct wined3d_box
     UINT back;
 };
 
-struct wined3d_strided_element
-{
-    enum wined3d_format_id format;  /* Format of the data */
-    const BYTE *data;               /* Pointer to start of data */
-    UINT stride;                    /* Stride between occurrences of this data */
-};
-
-struct wined3d_strided_data
-{
-    struct wined3d_strided_element position;
-    struct wined3d_strided_element normal;
-    struct wined3d_strided_element diffuse;
-    struct wined3d_strided_element specular;
-    struct wined3d_strided_element tex_coords[WINED3DDP_MAXTEXCOORD];
-    BOOL position_transformed;
-};
-
 struct wined3d_vertex_shader_caps
 {
     DWORD caps;
