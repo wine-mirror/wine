@@ -84,6 +84,13 @@ static const struct /* same fields as struct SID */
     SID_IDENTIFIER_AUTHORITY IdentifierAuthority;
     DWORD SubAuthority[2];
 } builtin_admins_sid = { SID_REVISION, 2, { SECURITY_NT_AUTHORITY }, { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS } };
+static const struct /* same fields as struct SID */
+{
+    BYTE Revision;
+    BYTE SubAuthorityCount;
+    SID_IDENTIFIER_AUTHORITY IdentifierAuthority;
+    DWORD SubAuthority[2];
+} builtin_users_sid = { SID_REVISION, 2, { SECURITY_NT_AUTHORITY }, { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_USERS } };
 
 const PSID security_world_sid = (PSID)&world_sid;
 static const PSID security_local_sid = (PSID)&local_sid;
@@ -92,6 +99,7 @@ static const PSID security_authenticated_user_sid = (PSID)&authenticated_user_si
 const PSID security_local_system_sid = (PSID)&local_system_sid;
 const PSID security_local_user_sid = (PSID)&local_user_sid;
 const PSID security_builtin_admins_sid = (PSID)&builtin_admins_sid;
+const PSID security_builtin_users_sid = (PSID)&builtin_users_sid;
 
 static luid_t prev_luid_value = { 1000, 0 };
 

@@ -345,16 +345,33 @@ static struct security_descriptor *key_get_sd( struct object *obj )
 
     if (!key_default_sd)
     {
-        size_t sid_len = security_sid_len( security_builtin_admins_sid );
+        size_t users_sid_len = security_sid_len( security_builtin_users_sid );
+        size_t admins_sid_len = security_sid_len( security_builtin_admins_sid );
+        size_t dacl_len = sizeof(ACL) + offsetof( ACCESS_ALLOWED_ACE, SidStart ) + users_sid_len;
+        ACCESS_ALLOWED_ACE *aaa;
+        ACL *dacl;
 
-        key_default_sd = mem_alloc( sizeof(*key_default_sd) + 2 * sid_len );
-        key_default_sd->control   = 0;
-        key_default_sd->owner_len = sid_len;
-        key_default_sd->group_len = sid_len;
+        key_default_sd = mem_alloc( sizeof(*key_default_sd) + 2 * admins_sid_len + dacl_len );
+        key_default_sd->control   = SE_DACL_PRESENT;
+        key_default_sd->owner_len = admins_sid_len;
+        key_default_sd->group_len = admins_sid_len;
         key_default_sd->sacl_len  = 0;
-        key_default_sd->dacl_len  = 0;
-        memcpy( key_default_sd + 1, security_builtin_admins_sid, sid_len );
-        memcpy( (char *)(key_default_sd + 1) + sid_len, security_builtin_admins_sid, sid_len );
+        key_default_sd->dacl_len  = dacl_len;
+        memcpy( key_default_sd + 1, security_builtin_admins_sid, admins_sid_len );
+        memcpy( (char *)(key_default_sd + 1) + admins_sid_len, security_builtin_admins_sid, admins_sid_len );
+
+        dacl = (ACL *)((char *)(key_default_sd + 1) + 2 * admins_sid_len);
+        dacl->AclRevision = ACL_REVISION;
+        dacl->Sbz1 = 0;
+        dacl->AclSize = dacl_len;
+        dacl->AceCount = 1;
+        dacl->Sbz2 = 0;
+        aaa = (ACCESS_ALLOWED_ACE *)(dacl + 1);
+        aaa->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
+        aaa->Header.AceFlags = INHERIT_ONLY_ACE | CONTAINER_INHERIT_ACE;
+        aaa->Header.AceSize = offsetof( ACCESS_ALLOWED_ACE, SidStart ) + users_sid_len;
+        aaa->Mask = GENERIC_READ;
+        memcpy( &aaa->SidStart, security_builtin_users_sid, users_sid_len );
     }
     return key_default_sd;
 }

@@ -3007,7 +3007,9 @@ static void test_GetNamedSecurityInfoA(void)
 {
     char admin_ptr[sizeof(SID)+sizeof(ULONG)*SID_MAX_SUB_AUTHORITIES], *user;
     char system_ptr[sizeof(SID)+sizeof(ULONG)*SID_MAX_SUB_AUTHORITIES];
-    PSID admin_sid = (PSID) admin_ptr, system_sid = (PSID) system_ptr, user_sid;
+    char users_ptr[sizeof(SID)+sizeof(ULONG)*SID_MAX_SUB_AUTHORITIES];
+    PSID admin_sid = (PSID) admin_ptr, users_sid = (PSID) users_ptr;
+    PSID system_sid = (PSID) system_ptr, user_sid;
     DWORD sid_size = sizeof(admin_ptr), user_size;
     char invalid_path[] = "/an invalid file path";
     char software_key[] = "MACHINE\\Software";
@@ -3015,6 +3017,7 @@ static void test_GetNamedSecurityInfoA(void)
     SECURITY_DESCRIPTOR_CONTROL control;
     ACL_SIZE_INFORMATION acl_size;
     CHAR windows_dir[MAX_PATH];
+    int users_ace_id = -1, i;
     PSECURITY_DESCRIPTOR pSD;
     ACCESS_ALLOWED_ACE *ace;
     BOOL bret = TRUE, isNT4;
@@ -3022,8 +3025,10 @@ static void test_GetNamedSecurityInfoA(void)
     DWORD error, revision;
     BOOL owner_defaulted;
     BOOL group_defaulted;
+    BOOL dacl_defaulted;
     HANDLE token, hTemp;
     PSID owner, group;
+    BOOL dacl_present;
     PACL pDacl;
 
     if (!pSetNamedSecurityInfoA || !pGetNamedSecurityInfoA || !pCreateWellKnownSid)
@@ -3201,6 +3206,41 @@ static void test_GetNamedSecurityInfoA(void)
     ok(EqualSid(group, admin_sid) || broken(EqualSid(group, system_sid)) /* before Win7 */
        || broken(((SID*)group)->SubAuthority[0] == SECURITY_NT_NON_UNIQUE) /* Vista */,
        "MACHINE\\Software group SID != Local System SID.\n");
+    LocalFree(pSD);
+
+    /* Test querying the DACL of a built-in registry key */
+    sid_size = sizeof(users_ptr);
+    pCreateWellKnownSid(WinBuiltinUsersSid, NULL, users_sid, &sid_size);
+    error = pGetNamedSecurityInfoA(software_key, SE_REGISTRY_KEY, DACL_SECURITY_INFORMATION,
+                                   NULL, NULL, NULL, NULL, &pSD);
+    ok(!error, "GetNamedSecurityInfo failed with error %d\n", error);
+
+    bret = GetSecurityDescriptorDacl(pSD, &dacl_present, &pDacl, &dacl_defaulted);
+    ok(bret, "GetSecurityDescriptorDacl failed with error %d\n", GetLastError());
+    ok(dacl_present, "DACL should be present\n");
+    ok(pDacl && IsValidAcl(pDacl), "GetSecurityDescriptorDacl returned invalid DACL.\n");
+    bret = pGetAclInformation(pDacl, &acl_size, sizeof(acl_size), AclSizeInformation);
+    ok(bret, "GetAclInformation failed\n");
+    ok(acl_size.AceCount != 0, "GetAclInformation returned no ACLs\n");
+    for (i=0; i<acl_size.AceCount; i++)
+    {
+        bret = pGetAce(pDacl, i, (VOID **)&ace);
+        ok(bret, "Failed to get ACE %d.\n", i);
+        bret = EqualSid(&ace->SidStart, users_sid);
+        if (bret) users_ace_id = i;
+    }
+    ok(users_ace_id != -1, "Bultin Users ACE not found.\n");
+    if (users_ace_id != -1)
+    {
+        bret = pGetAce(pDacl, users_ace_id, (VOID **)&ace);
+        ok(bret, "Failed to get Builtin Users ACE.\n");
+        ok(((ACE_HEADER *)ace)->AceFlags == (INHERIT_ONLY_ACE|CONTAINER_INHERIT_ACE),
+           "Builtin Users ACE has unexpected flags (0x%x != 0x%x)\n", ((ACE_HEADER *)ace)->AceFlags,
+           INHERIT_ONLY_ACE|CONTAINER_INHERIT_ACE);
+        ok(ace->Mask == GENERIC_READ, "Builtin Users ACE has unexpected mask (0x%x != 0x%x)\n",
+                                      ace->Mask, GENERIC_READ);
+    }
+
     LocalFree(pSD);
 }
 

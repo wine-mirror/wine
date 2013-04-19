@@ -42,6 +42,7 @@ extern const LUID SeCreateGlobalPrivilege;
 extern const PSID security_world_sid;
 extern const PSID security_local_user_sid;
 extern const PSID security_local_system_sid;
+extern const PSID security_builtin_users_sid;
 extern const PSID security_builtin_admins_sid;
 
 
