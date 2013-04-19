@@ -1221,11 +1221,104 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
     gl_info->gl_ops.gl.p_glDeleteTextures(1, &tex);
 }
 
+static void query_format_flag(struct wined3d_gl_info *gl_info, struct wined3d_format *format,
+        GLint internal, GLenum pname, DWORD flag, const char *string)
+{
+    GLint value;
+
+    gl_info->gl_ops.ext.p_glGetInternalformativ(GL_TEXTURE_2D, internal, pname, 1, &value);
+    if (value == GL_FULL_SUPPORT)
+    {
+        TRACE("Format %s supports %s.\n", debug_d3dformat(format->id), string);
+        format->flags |= flag;
+    }
+    else
+    {
+        TRACE("Format %s doesn't support %s.\n", debug_d3dformat(format->id), string);
+        format->flags &= ~flag;
+    }
+}
+
 /* Context activation is done by the caller. */
 static void init_format_fbo_compat_info(struct wined3d_gl_info *gl_info)
 {
     unsigned int i;
     GLuint fbo;
+
+    if (gl_info->supported[ARB_INTERNALFORMAT_QUERY2])
+    {
+        for (i = 0; i < sizeof(formats) / sizeof(*formats); ++i)
+        {
+            GLint value;
+            struct wined3d_format *format = &gl_info->formats[i];
+
+            if (!format->glInternal)
+                continue;
+            if (format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
+                continue;
+
+            gl_info->gl_ops.ext.p_glGetInternalformativ(GL_TEXTURE_2D, format->glInternal,
+                    GL_FRAMEBUFFER_RENDERABLE, 1, &value);
+            if (value == GL_FULL_SUPPORT)
+            {
+                TRACE("Format %s is supported as FBO color attachment.\n", debug_d3dformat(format->id));
+                format->flags |= WINED3DFMT_FLAG_FBO_ATTACHABLE;
+                format->rtInternal = format->glInternal;
+
+                query_format_flag(gl_info, format, format->glInternal, GL_FRAMEBUFFER_BLEND,
+                        WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING, "post-pixelshader blending");
+            }
+            else
+            {
+                if (!format->rtInternal)
+                {
+                    if (format->flags & WINED3DFMT_FLAG_RENDERTARGET)
+                    {
+                        WARN("Format %s with rendertarget flag is not supported as FBO color attachment"
+                                " and no fallback specified.\n", debug_d3dformat(format->id));
+                        format->flags &= ~WINED3DFMT_FLAG_RENDERTARGET;
+                    }
+                    else
+                        TRACE("Format %s is not supported as FBO color attachment.\n", debug_d3dformat(format->id));
+                    format->rtInternal = format->glInternal;
+                }
+                else
+                {
+                    gl_info->gl_ops.ext.p_glGetInternalformativ(GL_TEXTURE_2D, format->rtInternal,
+                            GL_FRAMEBUFFER_RENDERABLE, 1, &value);
+                    if (value == GL_FULL_SUPPORT)
+                    {
+                        TRACE("Format %s rtInternal format is supported as FBO color attachment.\n",
+                                debug_d3dformat(format->id));
+                    }
+                    else
+                    {
+                        WARN("Format %s rtInternal format is not supported as FBO color attachment.\n",
+                                debug_d3dformat(format->id));
+                        format->flags &= ~WINED3DFMT_FLAG_RENDERTARGET;
+                    }
+                }
+            }
+
+            if (format->glInternal != format->glGammaInternal)
+            {
+                gl_info->gl_ops.ext.p_glGetInternalformativ(GL_TEXTURE_2D, format->glGammaInternal,
+                        GL_FRAMEBUFFER_RENDERABLE, 1, &value);
+                if (value == GL_FULL_SUPPORT)
+                {
+                    TRACE("Format %s's sRGB format is FBO attachable.\n", debug_d3dformat(format->id));
+                    format->flags |= WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB;
+                }
+                else
+                {
+                    WARN("Format %s's sRGB format is not FBO attachable.\n", debug_d3dformat(format->id));
+                }
+            }
+            else if (format->flags & WINED3DFMT_FLAG_FBO_ATTACHABLE)
+                format->flags |= WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB;
+        }
+        return;
+    }
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
