@@ -2018,6 +2018,41 @@ void CDECL X11DRV_ReleaseDC( HWND hwnd, HDC hdc )
 }
 
 
+/*************************************************************************
+ *		ScrollDC   (X11DRV.@)
+ */
+BOOL CDECL X11DRV_ScrollDC( HDC hdc, INT dx, INT dy, HRGN update )
+{
+    RECT rect;
+    BOOL ret;
+    HRGN expose_rgn = 0;
+
+    GetClipBox( hdc, &rect );
+
+    if (update)
+    {
+        INT code = X11DRV_START_EXPOSURES;
+        ExtEscape( hdc, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, 0, NULL );
+
+        ret = BitBlt( hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
+                      hdc, rect.left - dx, rect.top - dy, SRCCOPY );
+
+        code = X11DRV_END_EXPOSURES;
+        ExtEscape( hdc, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code,
+                   sizeof(expose_rgn), (LPSTR)&expose_rgn );
+        if (expose_rgn)
+        {
+            CombineRgn( update, update, expose_rgn, RGN_OR );
+            DeleteObject( expose_rgn );
+        }
+    }
+    else ret = BitBlt( hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
+                       hdc, rect.left - dx, rect.top - dy, SRCCOPY );
+
+    return ret;
+}
+
+
 /***********************************************************************
  *		SetCapture  (X11DRV.@)
  */

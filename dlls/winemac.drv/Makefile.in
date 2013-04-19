@@ -14,7 +14,6 @@ C_SRCS = \
 	macdrv_main.c \
 	mouse.c \
 	opengl.c \
-	scroll.c \
 	surface.c \
 	systray.c \
 	window.c

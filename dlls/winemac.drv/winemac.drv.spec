@@ -28,7 +28,6 @@
 @ cdecl IsClipboardFormatAvailable(long) macdrv_IsClipboardFormatAvailable
 @ cdecl MapVirtualKeyEx(long long long) macdrv_MapVirtualKeyEx
 @ cdecl MsgWaitForMultipleObjectsEx(long ptr long long long) macdrv_MsgWaitForMultipleObjectsEx
-@ cdecl ScrollDC(long long long ptr ptr long ptr) macdrv_ScrollDC
 @ cdecl SetClipboardData(long long long) macdrv_SetClipboardData
 @ cdecl SetCursor(long) macdrv_SetCursor
 @ cdecl SetCursorPos(long long) macdrv_SetCursorPos

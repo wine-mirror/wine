@@ -18,7 +18,6 @@ C_SRCS = \
 	opengl.c \
 	palette.c \
 	pen.c \
-	scroll.c \
 	settings.c \
 	systray.c \
 	window.c \
