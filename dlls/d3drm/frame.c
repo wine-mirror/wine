@@ -62,7 +62,7 @@ typedef struct {
     IDirect3DRMFrameArray IDirect3DRMFrameArray_iface;
     LONG ref;
     ULONG size;
-    LPDIRECT3DRMFRAME* frames;
+    IDirect3DRMFrame **frames;
 } IDirect3DRMFrameArrayImpl;
 
 typedef struct {
@@ -161,7 +161,8 @@ static DWORD WINAPI IDirect3DRMFrameArrayImpl_GetSize(IDirect3DRMFrameArray* ifa
 }
 
 /*** IDirect3DRMFrameArray methods ***/
-static HRESULT WINAPI IDirect3DRMFrameArrayImpl_GetElement(IDirect3DRMFrameArray* iface, DWORD index, LPDIRECT3DRMFRAME* frame)
+static HRESULT WINAPI IDirect3DRMFrameArrayImpl_GetElement(IDirect3DRMFrameArray *iface,
+        DWORD index, IDirect3DRMFrame **frame)
 {
     IDirect3DRMFrameArrayImpl *This = (IDirect3DRMFrameArrayImpl*)iface;
 
@@ -591,8 +592,7 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_GetClassName(IDirect3DRMFrame2* ifac
 }
 
 /*** IDirect3DRMFrame methods ***/
-static HRESULT WINAPI IDirect3DRMFrame2Impl_AddChild(IDirect3DRMFrame2* iface,
-                                                     LPDIRECT3DRMFRAME child)
+static HRESULT WINAPI IDirect3DRMFrame2Impl_AddChild(IDirect3DRMFrame2 *iface, IDirect3DRMFrame *child)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
     IDirect3DRMFrame3 *frame;
@@ -723,8 +723,7 @@ static D3DRMMATERIALMODE WINAPI IDirect3DRMFrame2Impl_GetMaterialMode(IDirect3DR
     return D3DRMMATERIAL_FROMPARENT;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_GetParent(IDirect3DRMFrame2* iface,
-                                                      LPDIRECT3DRMFRAME * frame)
+static HRESULT WINAPI IDirect3DRMFrame2Impl_GetParent(IDirect3DRMFrame2 *iface, IDirect3DRMFrame **frame)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
 
@@ -735,7 +734,7 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_GetParent(IDirect3DRMFrame2* iface,
 
     if (This->parent)
     {
-        *frame = (LPDIRECT3DRMFRAME)&This->parent->IDirect3DRMFrame2_iface;
+        *frame = (IDirect3DRMFrame *)&This->parent->IDirect3DRMFrame2_iface;
         IDirect3DRMFrame_AddRef(*frame);
     }
     else
@@ -766,12 +765,9 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_GetRotation(IDirect3DRMFrame2 *iface
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_GetScene(IDirect3DRMFrame2* iface,
-                                                     LPDIRECT3DRMFRAME * frame)
+static HRESULT WINAPI IDirect3DRMFrame2Impl_GetScene(IDirect3DRMFrame2 *iface, IDirect3DRMFrame **scene)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, frame);
+    FIXME("iface %p, frame %p stub!\n", iface, scene);
 
     return E_NOTIMPL;
 }
@@ -894,14 +890,10 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_Load(IDirect3DRMFrame2* iface, LPVOI
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_LookAt(IDirect3DRMFrame2* iface,
-                                                   LPDIRECT3DRMFRAME target,
-                                                   LPDIRECT3DRMFRAME reference,
-                                                   D3DRMFRAMECONSTRAINT constraint)
+static HRESULT WINAPI IDirect3DRMFrame2Impl_LookAt(IDirect3DRMFrame2 *iface, IDirect3DRMFrame *target,
+        IDirect3DRMFrame *reference, D3DRMFRAMECONSTRAINT constraint)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%p,%p,%u): stub\n", iface, This, target, reference, constraint);
+    FIXME("iface %p, target %p, reference %p, constraint %#x stub!\n", iface, target, reference, constraint);
 
     return E_NOTIMPL;
 }
@@ -915,8 +907,7 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_Move(IDirect3DRMFrame2* iface, D3DVA
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_DeleteChild(IDirect3DRMFrame2* iface,
-                                                        LPDIRECT3DRMFRAME frame)
+static HRESULT WINAPI IDirect3DRMFrame2Impl_DeleteChild(IDirect3DRMFrame2 *iface, IDirect3DRMFrame *frame)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
     IDirect3DRMFrame3 *child;
@@ -1141,38 +1132,28 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_SetMaterialMode(IDirect3DRMFrame2* i
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_SetOrientation(IDirect3DRMFrame2* iface,
-                                                           LPDIRECT3DRMFRAME reference,
-                                                           D3DVALUE dx, D3DVALUE dy, D3DVALUE dz,
-                                                           D3DVALUE ux, D3DVALUE uy, D3DVALUE uz )
+static HRESULT WINAPI IDirect3DRMFrame2Impl_SetOrientation(IDirect3DRMFrame2 *iface, IDirect3DRMFrame *reference,
+        D3DVALUE dx, D3DVALUE dy, D3DVALUE dz, D3DVALUE ux, D3DVALUE uy, D3DVALUE uz)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%p,%f,%f,%f,%f,%f,%f): stub\n", iface, This, reference,
-          dx, dy, dz, ux, uy, uz);
+    FIXME("iface %p, reference %p, dx %.8e, dy %.8e, dz %.8e, ux %.8e, uy %.8e, uz %.8e stub!\n",
+            iface, reference, dx, dy, dz, ux, uy, uz);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_SetPosition(IDirect3DRMFrame2* iface,
-                                                        LPDIRECT3DRMFRAME reference,
-                                                        D3DVALUE x, D3DVALUE y, D3DVALUE z)
+static HRESULT WINAPI IDirect3DRMFrame2Impl_SetPosition(IDirect3DRMFrame2 *iface, IDirect3DRMFrame *reference,
+        D3DVALUE x, D3DVALUE y, D3DVALUE z)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%p,%f,%f,%f): stub\n", iface, This, reference, x, y, z);
+    FIXME("iface %p, reference %p, x %.8e, y %.8e, z %.8e stub!\n", iface, reference, x, y, z);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_SetRotation(IDirect3DRMFrame2* iface,
-                                                        LPDIRECT3DRMFRAME reference,
-                                                        D3DVALUE x, D3DVALUE y, D3DVALUE z,
-                                                        D3DVALUE theta)
+static HRESULT WINAPI IDirect3DRMFrame2Impl_SetRotation(IDirect3DRMFrame2 *iface,
+        IDirect3DRMFrame *reference, D3DVALUE x, D3DVALUE y, D3DVALUE z, D3DVALUE theta)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%p,%f,%f,%f,%f): stub\n", iface, This, reference, x, y, z, theta);
+    FIXME("iface %p, reference %p, x %.8e, y %.8e, z %.8e, theta %.8e stub!\n",
+            iface, reference, x, y, z, theta);
 
     return E_NOTIMPL;
 }
@@ -1207,14 +1188,11 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_SetTextureTopology(IDirect3DRMFrame2
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_SetVelocity(IDirect3DRMFrame2* iface,
-                                                        LPDIRECT3DRMFRAME reference,
-                                                        D3DVALUE x, D3DVALUE y, D3DVALUE z,
-                                                        BOOL with_rotation)
+static HRESULT WINAPI IDirect3DRMFrame2Impl_SetVelocity(IDirect3DRMFrame2 *iface,
+        IDirect3DRMFrame *reference, D3DVALUE x, D3DVALUE y, D3DVALUE z, BOOL with_rotation)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%p,%f,%f,%f,%d): stub\n", iface, This, reference, x, y, z, with_rotation);
+    FIXME("iface %p, reference %p, x %.8e, y %.8e, z %.8e, with_rotation %#x stub!\n",
+            iface, reference, x, y, z, with_rotation);
 
     return E_NOTIMPL;
 }
@@ -1744,8 +1722,7 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_GetChildren(IDirect3DRMFrame3* iface
     if (This->nb_children)
     {
         ULONG i;
-        obj->frames = HeapAlloc(GetProcessHeap(), 0, This->nb_children * sizeof(LPDIRECT3DRMFRAME));
-        if (!obj->frames)
+        if (!(obj->frames = HeapAlloc(GetProcessHeap(), 0, This->nb_children * sizeof(*obj->frames))))
             return E_OUTOFMEMORY;
         for (i = 0; i < This->nb_children; i++)
             IDirect3DRMFrame3_QueryInterface(This->children[i], &IID_IDirect3DRMFrame, (void**)&obj->frames[i]);

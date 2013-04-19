@@ -137,13 +137,12 @@ static HRESULT WINAPI IDirect3DRMImpl_CreateObject(IDirect3DRM* iface, REFCLSID 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMImpl_CreateFrame(IDirect3DRM* iface, LPDIRECT3DRMFRAME parent_frame, LPDIRECT3DRMFRAME * frame)
+static HRESULT WINAPI IDirect3DRMImpl_CreateFrame(IDirect3DRM *iface,
+        IDirect3DRMFrame *parent_frame, IDirect3DRMFrame **frame)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM(iface);
+    TRACE("iface %p, parent_frame %p, frame %p.\n", iface, parent_frame, frame);
 
-    TRACE("(%p/%p)->(%p,%p)\n", iface, This, parent_frame, frame);
-
-    return Direct3DRMFrame_create(&IID_IDirect3DRMFrame, (IUnknown*)parent_frame, (IUnknown**)frame);
+    return Direct3DRMFrame_create(&IID_IDirect3DRMFrame, (IUnknown *)parent_frame, (IUnknown **)frame);
 }
 
 static HRESULT WINAPI IDirect3DRMImpl_CreateMesh(IDirect3DRM* iface, LPDIRECT3DRMMESH * ppMesh)
@@ -300,11 +299,14 @@ static HRESULT WINAPI IDirect3DRMImpl_CreateViewport(IDirect3DRM *iface, IDirect
     return Direct3DRMViewport_create(&IID_IDirect3DRMViewport, (IUnknown **)viewport);
 }
 
-static HRESULT WINAPI IDirect3DRMImpl_CreateWrap(IDirect3DRM* iface, D3DRMWRAPTYPE type, LPDIRECT3DRMFRAME pFrame, D3DVALUE ox, D3DVALUE oy, D3DVALUE oz, D3DVALUE dx, D3DVALUE dy, D3DVALUE dz, D3DVALUE ux, D3DVALUE uy, D3DVALUE uz, D3DVALUE ou, D3DVALUE ov, D3DVALUE su, D3DVALUE sv, LPDIRECT3DRMWRAP * ppWrap)
+static HRESULT WINAPI IDirect3DRMImpl_CreateWrap(IDirect3DRM *iface, D3DRMWRAPTYPE type, IDirect3DRMFrame *frame,
+        D3DVALUE ox, D3DVALUE oy, D3DVALUE oz, D3DVALUE dx, D3DVALUE dy, D3DVALUE dz,
+        D3DVALUE ux, D3DVALUE uy, D3DVALUE uz, D3DVALUE ou, D3DVALUE ov, D3DVALUE su, D3DVALUE sv,
+        IDirect3DRMWrap **wrap)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM(iface);
-
-    FIXME("(%p/%p)->(%d,%p,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%p): stub\n", iface, This, type, pFrame, ox, oy, oz, dx, dy, dz, ux, uy, uz, ou, ov, su, sv, ppWrap);
+    FIXME("iface %p, type %#x, frame %p, ox %.8e, oy %.8e, oz %.8e, dx %.8e, dy %.8e, dz %.8e, "
+            "ux %.8e, uy %.8e, uz %.8e, ou %.8e, ov %.8e, su %.8e, sv %.8e, wrap %p stub!\n",
+            iface, type, frame, ox, oy, oz, dx, dy, dz, ux, uy, uz, ou, ov, su, sv, wrap);
 
     return E_NOTIMPL;
 }
@@ -407,20 +409,26 @@ static HRESULT WINAPI IDirect3DRMImpl_EnumerateObjects(IDirect3DRM* iface, D3DRM
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMImpl_Load(IDirect3DRM* iface, LPVOID pObjSource, LPVOID pObjID, LPIID * ppGUIDs, DWORD nb_GUIDs, D3DRMLOADOPTIONS LOFlags, D3DRMLOADCALLBACK LoadProc, LPVOID pArgLP, D3DRMLOADTEXTURECALLBACK LoadTextureProc, LPVOID pArgLTP, LPDIRECT3DRMFRAME pParentFrame)
+static HRESULT WINAPI IDirect3DRMImpl_Load(IDirect3DRM *iface, void *source, void *object_id, IID **iids,
+        DWORD iid_count, D3DRMLOADOPTIONS flags, D3DRMLOADCALLBACK load_cb, void *load_ctx,
+        D3DRMLOADTEXTURECALLBACK load_tex_cb, void *load_tex_ctx, IDirect3DRMFrame *parent_frame)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM(iface);
-    LPDIRECT3DRMFRAME3 pParentFrame3 = NULL;
+    IDirect3DRMImpl *d3drm = impl_from_IDirect3DRM(iface);
+    IDirect3DRMFrame3 *parent_frame3 = NULL;
     HRESULT hr = D3DRM_OK;
 
-    TRACE("(%p/%p)->(%p,%p,%p,%d,%d,%p,%p,%p,%p,%p)\n", iface, This, pObjSource, pObjID, ppGUIDs, nb_GUIDs, LOFlags, LoadProc, pArgLP, LoadTextureProc, pArgLTP, pParentFrame);
+    TRACE("iface %p, source %p, object_id %p, iids %p, iid_count %u, flags %#x, "
+            "load_cb %p, load_ctx %p, load_tex_cb %p, load_tex_ctx %p, parent_frame %p.\n",
+            iface, source, object_id, iids, iid_count, flags,
+            load_cb, load_ctx, load_tex_cb, load_tex_ctx, parent_frame);
 
-    if (pParentFrame)
-        hr = IDirect3DRMFrame_QueryInterface(pParentFrame, &IID_IDirect3DRMFrame3, (void**)&pParentFrame3);
+    if (parent_frame)
+        hr = IDirect3DRMFrame_QueryInterface(parent_frame, &IID_IDirect3DRMFrame3, (void **)&parent_frame3);
     if (SUCCEEDED(hr))
-        hr = IDirect3DRM3_Load(&This->IDirect3DRM3_iface, pObjSource, pObjID, ppGUIDs, nb_GUIDs, LOFlags, LoadProc, pArgLP, LoadTextureProc, pArgLTP, pParentFrame3);
-    if (pParentFrame3)
-        IDirect3DRMFrame3_Release(pParentFrame3);
+        hr = IDirect3DRM3_Load(&d3drm->IDirect3DRM3_iface, source, object_id, iids, iid_count,
+                flags, load_cb, load_ctx, load_tex_cb, load_tex_ctx, parent_frame3);
+    if (parent_frame3)
+        IDirect3DRMFrame3_Release(parent_frame3);
 
     return hr;
 }
@@ -507,8 +515,8 @@ static HRESULT WINAPI IDirect3DRM2Impl_CreateObject(IDirect3DRM2* iface, REFCLSI
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRM2Impl_CreateFrame(IDirect3DRM2* iface, LPDIRECT3DRMFRAME parent_frame,
-                                                   LPDIRECT3DRMFRAME2 * frame)
+static HRESULT WINAPI IDirect3DRM2Impl_CreateFrame(IDirect3DRM2 *iface,
+        IDirect3DRMFrame *parent_frame, IDirect3DRMFrame2 **frame)
 {
     IDirect3DRMImpl *This = impl_from_IDirect3DRM2(iface);
 
@@ -680,18 +688,14 @@ static HRESULT WINAPI IDirect3DRM2Impl_CreateViewport(IDirect3DRM2 *iface, IDire
     return Direct3DRMViewport_create(&IID_IDirect3DRMViewport, (IUnknown **)viewport);
 }
 
-static HRESULT WINAPI IDirect3DRM2Impl_CreateWrap(IDirect3DRM2* iface, D3DRMWRAPTYPE type,
-                                                  LPDIRECT3DRMFRAME pFrame,
-                                                  D3DVALUE ox, D3DVALUE oy, D3DVALUE oz,
-                                                  D3DVALUE dx, D3DVALUE dy, D3DVALUE dz,
-                                                  D3DVALUE ux, D3DVALUE uy, D3DVALUE uz,
-                                                  D3DVALUE ou, D3DVALUE ov, D3DVALUE su,
-                                                  D3DVALUE sv, LPDIRECT3DRMWRAP * ppWrap)
+static HRESULT WINAPI IDirect3DRM2Impl_CreateWrap(IDirect3DRM2 *iface, D3DRMWRAPTYPE type, IDirect3DRMFrame *frame,
+        D3DVALUE ox, D3DVALUE oy, D3DVALUE oz, D3DVALUE dx, D3DVALUE dy, D3DVALUE dz,
+        D3DVALUE ux, D3DVALUE uy, D3DVALUE uz, D3DVALUE ou, D3DVALUE ov, D3DVALUE su, D3DVALUE sv,
+        IDirect3DRMWrap **wrap)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM2(iface);
-
-    FIXME("(%p/%p)->(%d,%p,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%p): stub\n", iface, This, type,
-          pFrame, ox, oy, oz, dx, dy, dz, ux, uy, uz, ou, ov, su, sv, ppWrap);
+    FIXME("iface %p, type %#x, frame %p, ox %.8e, oy %.8e, oz %.8e, dx %.8e, dy %.8e, dz %.8e, "
+            "ux %.8e, uy %.8e, uz %.8e, ou %.8e, ov %.8e, su %.8e, sv %.8e, wrap %p stub!\n",
+            iface, type, frame, ox, oy, oz, dx, dy, dz, ux, uy, uz, ou, ov, su, sv, wrap);
 
     return E_NOTIMPL;
 }
@@ -802,25 +806,26 @@ static HRESULT WINAPI IDirect3DRM2Impl_EnumerateObjects(IDirect3DRM2* iface, D3D
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRM2Impl_Load(IDirect3DRM2* iface, LPVOID pObjSource, LPVOID pObjID,
-                                            LPIID * ppGUIDs, DWORD nb_GUIDs,
-                                            D3DRMLOADOPTIONS LOFlags, D3DRMLOADCALLBACK LoadProc,
-                                            LPVOID pArgLP, D3DRMLOADTEXTURECALLBACK LoadTextureProc,
-                                            LPVOID pArgLTP, LPDIRECT3DRMFRAME pParentFrame)
+static HRESULT WINAPI IDirect3DRM2Impl_Load(IDirect3DRM2 *iface, void *source, void *object_id, IID **iids,
+        DWORD iid_count, D3DRMLOADOPTIONS flags, D3DRMLOADCALLBACK load_cb, void *load_ctx,
+        D3DRMLOADTEXTURECALLBACK load_tex_cb, void *load_tex_ctx, IDirect3DRMFrame *parent_frame)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM2(iface);
-    LPDIRECT3DRMFRAME3 pParentFrame3 = NULL;
+    IDirect3DRMImpl *d3drm = impl_from_IDirect3DRM2(iface);
+    IDirect3DRMFrame3 *parent_frame3 = NULL;
     HRESULT hr = D3DRM_OK;
 
-    TRACE("(%p/%p)->(%p,%p,%p,%d,%d,%p,%p,%p,%p,%p)\n", iface, This, pObjSource, pObjID,
-          ppGUIDs, nb_GUIDs, LOFlags, LoadProc, pArgLP, LoadTextureProc, pArgLTP, pParentFrame);
+    TRACE("iface %p, source %p, object_id %p, iids %p, iid_count %u, flags %#x, "
+            "load_cb %p, load_ctx %p, load_tex_cb %p, load_tex_ctx %p, parent_frame %p.\n",
+            iface, source, object_id, iids, iid_count, flags,
+            load_cb, load_ctx, load_tex_cb, load_tex_ctx, parent_frame);
 
-    if (pParentFrame)
-        hr = IDirect3DRMFrame_QueryInterface(pParentFrame, &IID_IDirect3DRMFrame3, (void**)&pParentFrame3);
+    if (parent_frame)
+        hr = IDirect3DRMFrame_QueryInterface(parent_frame, &IID_IDirect3DRMFrame3, (void **)&parent_frame3);
     if (SUCCEEDED(hr))
-        hr = IDirect3DRM3_Load(&This->IDirect3DRM3_iface, pObjSource, pObjID, ppGUIDs, nb_GUIDs, LOFlags, LoadProc, pArgLP, LoadTextureProc, pArgLTP, pParentFrame3);
-    if (pParentFrame3)
-        IDirect3DRMFrame3_Release(pParentFrame3);
+        hr = IDirect3DRM3_Load(&d3drm->IDirect3DRM3_iface, source, object_id, iids, iid_count,
+                flags, load_cb, load_ctx, load_tex_cb, load_tex_ctx, parent_frame3);
+    if (parent_frame3)
+        IDirect3DRMFrame3_Release(parent_frame3);
 
     return hr;
 }

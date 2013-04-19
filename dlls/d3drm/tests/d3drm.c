@@ -670,10 +670,10 @@ static void test_Frame(void)
 {
     HRESULT hr;
     IDirect3DRM *d3drm;
-    LPDIRECT3DRMFRAME pFrameC;
-    LPDIRECT3DRMFRAME pFrameP1;
-    LPDIRECT3DRMFRAME pFrameP2;
-    LPDIRECT3DRMFRAME pFrameTmp;
+    IDirect3DRMFrame *pFrameC;
+    IDirect3DRMFrame *pFrameP1;
+    IDirect3DRMFrame *pFrameP2;
+    IDirect3DRMFrame *pFrameTmp;
     LPDIRECT3DRMFRAMEARRAY pArray;
     LPDIRECT3DRMMESHBUILDER pMeshBuilder;
     LPDIRECT3DRMVISUAL pVisual1;
@@ -1007,7 +1007,7 @@ static void test_Viewport(void)
     HRESULT hr;
     IDirect3DRM *d3drm;
     IDirect3DRMDevice *device;
-    LPDIRECT3DRMFRAME pFrame;
+    IDirect3DRMFrame *frame;
     IDirect3DRMViewport *viewport;
     GUID driver;
     HWND window;
@@ -1031,10 +1031,10 @@ static void test_Viewport(void)
     hr = IDirect3DRM3_CreateDeviceFromClipper(d3drm, pClipper, &driver, rc.right, rc.bottom, &device);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMDevice interface (hr = %x)\n", hr);
 
-    hr = IDirect3DRM_CreateFrame(d3drm, NULL, &pFrame);
+    hr = IDirect3DRM_CreateFrame(d3drm, NULL, &frame);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMFrame interface (hr = %x)\n", hr);
 
-    hr = IDirect3DRM_CreateViewport(d3drm, device, pFrame, rc.left, rc.top, rc.right, rc.bottom, &viewport);
+    hr = IDirect3DRM_CreateViewport(d3drm, device, frame, rc.left, rc.top, rc.right, rc.bottom, &viewport);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMViewport interface (hr = %x)\n", hr);
 
     hr = IDirect3DRMViewport_GetClassName(viewport, NULL, cname);
@@ -1051,7 +1051,7 @@ static void test_Viewport(void)
     ok(!strcmp(cname, "Viewport"), "Expected cname to be \"Viewport\", but got \"%s\"\n", cname);
 
     IDirect3DRMViewport_Release(viewport);
-    IDirect3DRMFrame_Release(pFrame);
+    IDirect3DRMFrame_Release(frame);
     IDirect3DRMDevice_Release(device);
     IDirectDrawClipper_Release(pClipper);
 
@@ -1310,7 +1310,7 @@ static void test_frame_transform(void)
 {
     HRESULT hr;
     IDirect3DRM *d3drm;
-    LPDIRECT3DRMFRAME frame;
+    IDirect3DRMFrame *frame;
     D3DRMMATRIX4D matrix;
 
     hr = pDirect3DRMCreate(&d3drm);

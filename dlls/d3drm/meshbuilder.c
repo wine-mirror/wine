@@ -603,12 +603,9 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_AddMeshBuilder(IDirect3DRMMesh
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_AddFrame(IDirect3DRMMeshBuilder2* iface,
-                                                           LPDIRECT3DRMFRAME pFrame)
+static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_AddFrame(IDirect3DRMMeshBuilder2 *iface, IDirect3DRMFrame *frame)
 {
-    IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder2(iface);
-
-    FIXME("(%p)->(%p): stub\n", This, pFrame);
+    FIXME("iface %p, frame %p stub!\n", iface, frame);
 
     return E_NOTIMPL;
 }

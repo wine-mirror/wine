@@ -359,22 +359,16 @@ static D3DRMLIGHTTYPE WINAPI IDirect3DRMLightImpl_GetType(IDirect3DRMLight* ifac
     return This->type;
 }
 
-static HRESULT WINAPI IDirect3DRMLightImpl_SetEnableFrame(IDirect3DRMLight* iface,
-                                                            LPDIRECT3DRMFRAME frame)
+static HRESULT WINAPI IDirect3DRMLightImpl_SetEnableFrame(IDirect3DRMLight *iface, IDirect3DRMFrame *frame)
 {
-    IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
-
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, frame);
+    FIXME("iface %p, frame %p stub!\n", iface, frame);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMLightImpl_GetEnableFrame(IDirect3DRMLight* iface,
-                                                            LPDIRECT3DRMFRAME* frame)
+static HRESULT WINAPI IDirect3DRMLightImpl_GetEnableFrame(IDirect3DRMLight *iface, IDirect3DRMFrame **frame)
 {
-    IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
-
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, frame);
+    FIXME("iface %p, frame %p stub!\n", iface, frame);
 
     return E_NOTIMPL;
 }
