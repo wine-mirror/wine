@@ -385,9 +385,8 @@ static HRESULT WINAPI StorageBaseImpl_QueryInterface(
   {
     *ppvObject = &This->IPropertySetStorage_iface;
   }
-  /* locking interface is report for writer only */
-  else if (IsEqualGUID(&IID_IDirectWriterLock, riid) &&
-    (This->openFlags == (STGM_DIRECT_SWMR|STGM_READWRITE|STGM_SHARE_DENY_WRITE)))
+  /* locking interface is reported for writer only */
+  else if (IsEqualGUID(&IID_IDirectWriterLock, riid) && This->lockingrole == SWMR_Writer)
   {
     *ppvObject = &This->IDirectWriterLock_iface;
   }
@@ -2784,6 +2783,13 @@ static HRESULT StorageImpl_Construct(
   This->base.openFlags = (openFlags & ~STGM_CREATE);
   This->base.ref = 1;
   This->base.create = create;
+
+  if (openFlags == (STGM_DIRECT_SWMR|STGM_READWRITE|STGM_SHARE_DENY_WRITE))
+    This->base.lockingrole = SWMR_Writer;
+  else if (openFlags == (STGM_DIRECT_SWMR|STGM_READ|STGM_SHARE_DENY_NONE))
+    This->base.lockingrole = SWMR_Reader;
+  else
+    This->base.lockingrole = SWMR_None;
 
   This->base.reverted = 0;
 
