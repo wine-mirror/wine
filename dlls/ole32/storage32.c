@@ -732,9 +732,6 @@ static HRESULT WINAPI StorageBaseImpl_EnumElements(
   if (newEnum)
   {
     *ppenum = &newEnum->IEnumSTATSTG_iface;
-
-    IEnumSTATSTG_AddRef(*ppenum);
-
     return S_OK;
   }
 
@@ -5599,35 +5596,29 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Clone(
   IEnumSTATSTG**    ppenum)
 {
   IEnumSTATSTGImpl* const This = impl_from_IEnumSTATSTG(iface);
-
   IEnumSTATSTGImpl* newClone;
 
   if (This->parentStorage->reverted)
     return STG_E_REVERTED;
 
-  /*
-   * Perform a sanity check on the parameters.
-   */
   if (ppenum==0)
     return E_INVALIDARG;
 
   newClone = IEnumSTATSTGImpl_Construct(This->parentStorage,
                This->storageDirEntry);
-
+  if (!newClone)
+  {
+    *ppenum = NULL;
+    return E_OUTOFMEMORY;
+  }
 
   /*
    * The new clone enumeration must point to the same current node as
-   * the ole one.
+   * the old one.
    */
   memcpy(newClone->name, This->name, sizeof(newClone->name));
 
   *ppenum = &newClone->IEnumSTATSTG_iface;
-
-  /*
-   * Don't forget to nail down a reference to the clone before
-   * returning it.
-   */
-  IEnumSTATSTGImpl_AddRef(*ppenum);
 
   return S_OK;
 }
@@ -5658,13 +5649,11 @@ static IEnumSTATSTGImpl* IEnumSTATSTGImpl_Construct(
 
   newEnumeration = HeapAlloc(GetProcessHeap(), 0, sizeof(IEnumSTATSTGImpl));
 
-  if (newEnumeration!=0)
+  if (newEnumeration)
   {
-    /*
-     * Set-up the virtual function table and reference count.
-     */
     newEnumeration->IEnumSTATSTG_iface.lpVtbl = &IEnumSTATSTGImpl_Vtbl;
-    newEnumeration->ref       = 0;
+    newEnumeration->ref = 1;
+    newEnumeration->name[0] = 0;
 
     /*
      * We want to nail-down the reference to the storage in case the
@@ -5673,12 +5662,7 @@ static IEnumSTATSTGImpl* IEnumSTATSTGImpl_Construct(
     newEnumeration->parentStorage = parentStorage;
     IStorage_AddRef(&newEnumeration->parentStorage->IStorage_iface);
 
-    newEnumeration->storageDirEntry   = storageDirEntry;
-
-    /*
-     * Make sure the current node of the iterator is the first one.
-     */
-    IEnumSTATSTGImpl_Reset(&newEnumeration->IEnumSTATSTG_iface);
+    newEnumeration->storageDirEntry = storageDirEntry;
   }
 
   return newEnumeration;
