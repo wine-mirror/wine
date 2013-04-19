@@ -3098,6 +3098,7 @@ BOOL WINAPI CommitUrlCacheEntryW(LPCWSTR lpszUrlName, LPCWSTR lpszLocalFileName,
         heap_free(url);
         heap_free(header_info);
         heap_free(file_ext);
+        return FALSE;
     }
 
     ret = urlcache_entry_commit(url, lpszLocalFileName, ExpireTime, LastModifiedTime,
