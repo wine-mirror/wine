@@ -806,7 +806,7 @@ HRESULT __RPC_STUB ICommand_Execute_Stub(ICommand* This, IUnknown *pUnkOuter, RE
     IUnknown *obj = NULL;
     HRESULT hr;
 
-    TRACE("(%p)->(%p, %s, %08lx, %ld, %p, %d, %p, %p, %ld, %p, %p, %p, %p): stub\n", This, pUnkOuter, debugstr_guid(riid),
+    TRACE("(%p)->(%p, %s, %08lx, %ld, %p, %d, %p, %p, %ld, %p, %p, %p, %p)\n", This, pUnkOuter, debugstr_guid(riid),
           hAccessor, cParamSets, pGuid, ulGuidOffset, pInputParams, pOutputParams, cBindings, rgBindings, rgStatus,
           pcRowsAffected, ppRowset);
 
