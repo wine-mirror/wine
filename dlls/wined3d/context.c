@@ -30,6 +30,8 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
+WINE_DECLARE_DEBUG_CHANNEL(d3d_synchronous);
 
 static DWORD wined3d_context_tls_idx;
 
@@ -1257,6 +1259,37 @@ static void bind_dummy_textures(const struct wined3d_device *device, const struc
     }
 }
 
+BOOL context_debug_output_enabled(const struct wined3d_gl_info *gl_info)
+{
+    return gl_info->supported[ARB_DEBUG_OUTPUT]
+            && (ERR_ON(d3d) || FIXME_ON(d3d) || WARN_ON(d3d_perf));
+}
+
+static void WINE_GLAPI wined3d_debug_callback(GLenum source, GLenum type, GLuint id,
+        GLenum severity, GLsizei length, const char *message, void *ctx)
+{
+    switch (type)
+    {
+        case GL_DEBUG_TYPE_ERROR_ARB:
+            ERR("%p: %s.\n", ctx, debugstr_an(message, length));
+            break;
+
+        case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB:
+        case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB:
+        case GL_DEBUG_TYPE_PORTABILITY_ARB:
+            FIXME("%p: %s.\n", ctx, debugstr_an(message, length));
+            break;
+
+        case GL_DEBUG_TYPE_PERFORMANCE_ARB:
+            WARN_(d3d_perf)("%p: %s.\n", ctx, debugstr_an(message, length));
+            break;
+
+        default:
+            FIXME("ctx %p, type %#x: %s.\n", ctx, type, debugstr_an(message, length));
+            break;
+    }
+}
+
 /* Do not call while under the GL lock. */
 struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
         struct wined3d_surface *target, const struct wined3d_format *ds_format)
@@ -1370,7 +1403,17 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     share_ctx = device->context_count ? device->contexts[0]->glCtx : NULL;
     if (gl_info->p_wglCreateContextAttribsARB)
     {
-        if (!(ctx = gl_info->p_wglCreateContextAttribsARB(hdc, share_ctx, NULL)))
+        unsigned int ctx_attrib_idx = 0;
+        GLint ctx_attribs[3];
+
+        if (context_debug_output_enabled(gl_info))
+        {
+            ctx_attribs[ctx_attrib_idx++] = WGL_CONTEXT_FLAGS_ARB;
+            ctx_attribs[ctx_attrib_idx++] = WGL_CONTEXT_DEBUG_BIT_ARB;
+        }
+        ctx_attribs[ctx_attrib_idx] = 0;
+
+        if (!(ctx = gl_info->p_wglCreateContextAttribsARB(hdc, share_ctx, ctx_attribs)))
         {
             ERR("Failed to create a WGL context.\n");
             context_release(ret);
@@ -1438,6 +1481,33 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
         if (!wglDeleteContext(ctx))
             ERR("wglDeleteContext(%p) failed, last error %#x.\n", ctx, GetLastError());
         goto out;
+    }
+
+    if (context_debug_output_enabled(gl_info))
+    {
+        GL_EXTCALL(glDebugMessageCallbackARB(wined3d_debug_callback, ret));
+        if (TRACE_ON(d3d_synchronous))
+            gl_info->gl_ops.gl.p_glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
+        GL_EXTCALL(glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_FALSE));
+        if (ERR_ON(d3d))
+        {
+            GL_EXTCALL(glDebugMessageControlARB(GL_DONT_CARE, GL_DEBUG_TYPE_ERROR_ARB,
+                    GL_DONT_CARE, 0, NULL, GL_TRUE));
+        }
+        if (FIXME_ON(d3d))
+        {
+            GL_EXTCALL(glDebugMessageControlARB(GL_DONT_CARE, GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB,
+                    GL_DONT_CARE, 0, NULL, GL_TRUE));
+            GL_EXTCALL(glDebugMessageControlARB(GL_DONT_CARE, GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB,
+                    GL_DONT_CARE, 0, NULL, GL_TRUE));
+            GL_EXTCALL(glDebugMessageControlARB(GL_DONT_CARE, GL_DEBUG_TYPE_PORTABILITY_ARB,
+                    GL_DONT_CARE, 0, NULL, GL_TRUE));
+        }
+        if (WARN_ON(d3d_perf))
+        {
+            GL_EXTCALL(glDebugMessageControlARB(GL_DONT_CARE, GL_DEBUG_TYPE_PERFORMANCE_ARB,
+                    GL_DONT_CARE, 0, NULL, GL_TRUE));
+        }
     }
 
     switch (swapchain->desc.swap_interval)

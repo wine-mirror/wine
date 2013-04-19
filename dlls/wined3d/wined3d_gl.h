@@ -44,6 +44,7 @@ enum wined3d_gl_extension
     APPLE_YCBCR_422,
     /* ARB */
     ARB_COLOR_BUFFER_FLOAT,
+    ARB_DEBUG_OUTPUT,
     ARB_DEPTH_BUFFER_FLOAT,
     ARB_DEPTH_CLAMP,
     ARB_DEPTH_TEXTURE,
@@ -179,6 +180,11 @@ enum wined3d_gl_extension
     USE_GL_FUNC(glFlushMappedBufferRangeAPPLE) \
     /* GL_ARB_color_buffer_float */ \
     USE_GL_FUNC(glClampColorARB) \
+    /* GL_ARB_debug_output */ \
+    USE_GL_FUNC(glDebugMessageCallbackARB) \
+    USE_GL_FUNC(glDebugMessageControlARB) \
+    USE_GL_FUNC(glDebugMessageInsertARB) \
+    USE_GL_FUNC(glGetDebugMessageLogARB) \
     /* GL_ARB_draw_buffers */ \
     USE_GL_FUNC(glDrawBuffersARB) \
     /* GL_ARB_draw_elements_base_vertex */ \

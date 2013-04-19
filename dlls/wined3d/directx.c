@@ -93,6 +93,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
 
     /* ARB */
     {"GL_ARB_color_buffer_float",           ARB_COLOR_BUFFER_FLOAT        },
+    {"GL_ARB_debug_output",                 ARB_DEBUG_OUTPUT              },
     {"GL_ARB_depth_buffer_float",           ARB_DEPTH_BUFFER_FLOAT        },
     {"GL_ARB_depth_clamp",                  ARB_DEPTH_CLAMP               },
     {"GL_ARB_depth_texture",                ARB_DEPTH_TEXTURE             },
@@ -297,14 +298,14 @@ static void WineD3D_ReleaseFakeGLContext(const struct wined3d_fake_gl_ctx *ctx)
 }
 
 static void wined3d_create_fake_gl_context_attribs(struct wined3d_fake_gl_ctx *fake_gl_ctx,
-        struct wined3d_gl_info *gl_info)
+        struct wined3d_gl_info *gl_info, const GLint *ctx_attribs)
 {
     HGLRC new_ctx;
 
     if (!(gl_info->p_wglCreateContextAttribsARB = (void *)wglGetProcAddress("wglCreateContextAttribsARB")))
         return;
 
-    if (!(new_ctx = gl_info->p_wglCreateContextAttribsARB(fake_gl_ctx->dc, NULL, NULL)))
+    if (!(new_ctx = gl_info->p_wglCreateContextAttribsARB(fake_gl_ctx->dc, NULL, ctx_attribs)))
     {
         ERR("Failed to create a context using wglCreateContextAttribsARB(), last error %#x.\n", GetLastError());
         gl_info->p_wglCreateContextAttribsARB = NULL;
@@ -4902,7 +4903,9 @@ static BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, UINT ordinal)
 {
     struct wined3d_gl_info *gl_info = &adapter->gl_info;
     struct wined3d_fake_gl_ctx fake_gl_ctx = {0};
+    unsigned int ctx_attrib_idx = 0;
     DISPLAY_DEVICEW display_device;
+    GLint ctx_attribs[3];
 
     TRACE("adapter %p, ordinal %u.\n", adapter, ordinal);
 
@@ -4948,7 +4951,13 @@ static BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, UINT ordinal)
         return FALSE;
     }
 
-    wined3d_create_fake_gl_context_attribs(&fake_gl_ctx, gl_info);
+    if (context_debug_output_enabled(gl_info))
+    {
+        ctx_attribs[ctx_attrib_idx++] = WGL_CONTEXT_FLAGS_ARB;
+        ctx_attribs[ctx_attrib_idx++] = WGL_CONTEXT_DEBUG_BIT_ARB;
+    }
+    ctx_attribs[ctx_attrib_idx] = 0;
+    wined3d_create_fake_gl_context_attribs(&fake_gl_ctx, gl_info, ctx_attribs);
 
     if (!wined3d_adapter_init_gl_caps(adapter))
     {
