@@ -1361,7 +1361,7 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetTechniqueByName(ID3DXBaseEffect 
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
     struct d3dx_technique *tech = get_technique_by_name(This, name);
 
-    TRACE("iface %p, name %s stub\n", This, debugstr_a(name));
+    TRACE("iface %p, name %s\n", This, debugstr_a(name));
 
     if (tech)
     {
@@ -2092,7 +2092,7 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_SetVectorArray(ID3DXBaseEffect *iface,
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
     struct d3dx_parameter *param = get_valid_parameter(This, parameter);
 
-    TRACE("iface %p, parameter %p, vector %p, count %u stub\n", This, parameter, vector, count);
+    TRACE("iface %p, parameter %p, vector %p, count %u\n", This, parameter, vector, count);
 
     if (param && param->element_count && param->element_count >= count)
     {
