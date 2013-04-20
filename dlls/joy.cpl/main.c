@@ -414,7 +414,7 @@ static DWORD WINAPI input_thread(void *param)
         axes_pos[2][1] = state.lRz;
 
         /* Set pov values */
-        for (j = 0; i < sizeof(pov_val)/sizeof(pov_val[0]); j++)
+        for (j = 0; j < sizeof(pov_val)/sizeof(pov_val[0]); j++)
         {
             if (state.rgdwPOV[0] == pov_val[j])
             {
