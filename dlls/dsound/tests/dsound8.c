@@ -1095,6 +1095,10 @@ static void test_first_device(void)
 
     hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(devenum, eRender,
             eMultimedia, &defdev);
+    if (hr == E_NOTFOUND) {
+        win_skip("No default device found\n");
+        return;
+    }
     ok(hr == S_OK, "GetDefaultAudioEndpoint failed: %08x\n", hr);
 
     hr = IMMDevice_OpenPropertyStore(defdev, STGM_READ, &ps);
