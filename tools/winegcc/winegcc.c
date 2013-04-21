@@ -343,11 +343,9 @@ static int check_platform( struct options *opts, const char *file )
             if (!memcmp( header, "\177ELF", 4 ))
             {
                 if (header[4] == 2)  /* 64-bit */
-                    ret = (opts->force_pointer_size == 8 ||
-                           (!opts->force_pointer_size && (opts->target_cpu == CPU_x86_64 || opts->target_cpu == CPU_ARM64)));
+                    ret = (opts->target_cpu == CPU_x86_64 || opts->target_cpu == CPU_ARM64);
                 else
-                    ret = (opts->force_pointer_size == 4 ||
-                           (!opts->force_pointer_size && opts->target_cpu != CPU_x86_64 && opts->target_cpu != CPU_ARM64));
+                    ret = (opts->target_cpu != CPU_x86_64 && opts->target_cpu != CPU_ARM64);
             }
         }
         close( fd );
@@ -370,13 +368,13 @@ static char *get_lib_dir( struct options *opts )
         strcpy( p, libwine );
         if (check_platform( opts, buffer )) goto found;
         if (p > buffer + 2 && (!memcmp( p - 2, "32", 2 ) || !memcmp( p - 2, "64", 2 ))) p -= 2;
-        if (opts->force_pointer_size == 4 || (!opts->force_pointer_size && opts->target_cpu != CPU_x86_64 && opts->target_cpu != CPU_ARM64))
+        if (opts->target_cpu != CPU_x86_64 && opts->target_cpu != CPU_ARM64)
         {
             strcpy( p, "32" );
             strcat( p, libwine );
             if (check_platform( opts, buffer )) goto found;
         }
-        if (opts->force_pointer_size == 8 || (!opts->force_pointer_size && (opts->target_cpu == CPU_x86_64 || opts->target_cpu == CPU_ARM64)))
+        if (opts->target_cpu == CPU_x86_64 || opts->target_cpu == CPU_ARM64)
         {
             strcpy( p, "64" );
             strcat( p, libwine );
@@ -1406,6 +1404,10 @@ int main(int argc, char **argv)
                     }
 		    else if (strcmp("-m64", argv[i]) == 0)
                     {
+                        if (opts.target_cpu == CPU_x86)
+                            opts.target_cpu = CPU_x86_64;
+                        else if (opts.target_cpu == CPU_ARM)
+                            opts.target_cpu = CPU_ARM64;
                         opts.force_pointer_size = 8;
 			raw_linker_arg = 1;
                     }
