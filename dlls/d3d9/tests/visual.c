@@ -11549,10 +11549,10 @@ static void depth_blit_test(IDirect3DDevice9 *device)
 {
     static const struct vertex quad1[] =
     {
-        { -1.0,  1.0, 0.50f, 0xff00ff00},
-        {  1.0,  1.0, 0.50f, 0xff00ff00},
-        { -1.0, -1.0, 0.50f, 0xff00ff00},
-        {  1.0, -1.0, 0.50f, 0xff00ff00},
+        { -1.0,  1.0, 0.33f, 0xff00ff00},
+        {  1.0,  1.0, 0.33f, 0xff00ff00},
+        { -1.0, -1.0, 0.33f, 0xff00ff00},
+        {  1.0, -1.0, 0.33f, 0xff00ff00},
     };
     static const struct vertex quad2[] =
     {
