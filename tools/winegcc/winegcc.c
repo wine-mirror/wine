@@ -361,7 +361,7 @@ static char *get_lib_dir( struct options *opts )
 
     for (i = 0; i < sizeof(stdlibpath)/sizeof(stdlibpath[0]); i++)
     {
-        char *p, *buffer = xmalloc( strlen(stdlibpath[i]) + strlen(libwine) + 3 );
+        char *p, *buffer = xmalloc( strlen(stdlibpath[i]) + strlen("/arm-linux-gnueabi") + strlen(libwine) + 1 );
         strcpy( buffer, stdlibpath[i] );
         p = buffer + strlen(buffer);
         while (p > buffer && p[-1] == '/') p--;
@@ -380,6 +380,18 @@ static char *get_lib_dir( struct options *opts )
             strcat( p, libwine );
             if (check_platform( opts, buffer )) goto found;
         }
+        switch(opts->target_cpu)
+        {
+        case CPU_x86:     strcpy( p, "/i386-linux-gnu" ); break;
+        case CPU_x86_64:  strcpy( p, "/x86_64-linux-gnu" ); break;
+        case CPU_ARM:     strcpy( p, "/arm-linux-gnueabi" ); break;
+        case CPU_ARM64:   strcpy( p, "/aarch64-linux-gnu" ); break;
+        case CPU_POWERPC: strcpy( p, "/powerpc-linux-gnu" ); break;
+        default:
+            assert(0);
+        }
+        strcat( p, libwine );
+        if (check_platform( opts, buffer )) goto found;
         free( buffer );
         continue;
 
