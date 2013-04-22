@@ -118,15 +118,12 @@ static const struct gdi_obj_funcs region_funcs =
     REGION_DeleteObject   /* pDeleteObject */
 };
 
-/*  1 if two RECTs overlap.
- *  0 if two RECTs do not overlap.
- */
-#define EXTENTCHECK(r1, r2) \
-	((r1)->right > (r2)->left && \
-	 (r1)->left < (r2)->right && \
-	 (r1)->bottom > (r2)->top && \
-	 (r1)->top < (r2)->bottom)
-
+/* Check if two RECTs overlap. */
+static inline BOOL overlapping( const RECT *r1, const RECT *r2 )
+{
+    return (r1->right > r2->left && r1->left < r2->right &&
+            r1->bottom > r2->top && r1->top < r2->bottom);
+}
 
 static BOOL add_rect( WINEREGION *reg, INT left, INT top, INT right, INT bottom )
 {
@@ -146,18 +143,16 @@ static BOOL add_rect( WINEREGION *reg, INT left, INT top, INT right, INT bottom 
     return TRUE;
 }
 
-#define EMPTY_REGION(pReg) do { \
-    (pReg)->numRects = 0; \
-    (pReg)->extents.left = (pReg)->extents.top = 0; \
-    (pReg)->extents.right = (pReg)->extents.bottom = 0; \
- } while(0)
+static inline void empty_region( WINEREGION *reg )
+{
+    reg->numRects = 0;
+    reg->extents.left = reg->extents.top = reg->extents.right = reg->extents.bottom = 0;
+}
 
-#define INRECT(r, x, y) \
-      ( ( ((r).right >  x)) && \
-        ( ((r).left <= x)) && \
-        ( ((r).bottom >  y)) && \
-        ( ((r).top <= y)) )
-
+static inline BOOL is_in_rect( const RECT *rect, int x, int y )
+{
+    return (rect->right > x && rect->left <= x && rect->bottom > y && rect->top <= y);
+}
 
 /*
  * number of points to buffer before sending them off
@@ -194,6 +189,22 @@ typedef struct _POINTBLOCK {
 
 
 /*
+ *     This structure contains all of the information needed
+ *     to run the bresenham algorithm.
+ *     The variables may be hardcoded into the declarations
+ *     instead of using this structure to make use of
+ *     register declarations.
+ */
+struct bres_info
+{
+    INT minor_axis;	/* minor axis        */
+    INT d;		/* decision variable */
+    INT m, m1;       	/* slope and slope+1 */
+    INT incr1, incr2;	/* error increments */
+};
+
+
+/*
  *  In scan converting polygons, we want to choose those pixels
  *  which are inside the polygon.  Thus, we add .5 to the starting
  *  x coordinate for both left and right edges.  Now we choose the
@@ -212,76 +223,58 @@ typedef struct _POINTBLOCK {
  *  If it is moving to the left, then we don't want it to flip until
  *  we traverse an entire pixel.
  */
-#define BRESINITPGON(dy, x1, x2, xStart, d, m, m1, incr1, incr2) { \
-    int dx;      /* local storage */ \
-\
-    /* \
-     *  if the edge is horizontal, then it is ignored \
-     *  and assumed not to be processed.  Otherwise, do this stuff. \
-     */ \
-    if ((dy) != 0) { \
-        xStart = (x1); \
-        dx = (x2) - xStart; \
-        if (dx < 0) { \
-            m = dx / (dy); \
-            m1 = m - 1; \
-            incr1 = -2 * dx + 2 * (dy) * m1; \
-            incr2 = -2 * dx + 2 * (dy) * m; \
-            d = 2 * m * (dy) - 2 * dx - 2 * (dy); \
-        } else { \
-            m = dx / (dy); \
-            m1 = m + 1; \
-            incr1 = 2 * dx - 2 * (dy) * m1; \
-            incr2 = 2 * dx - 2 * (dy) * m; \
-            d = -2 * m * (dy) + 2 * dx; \
-        } \
-    } \
+static inline void bres_init_polygon( int dy, int x1, int x2, struct bres_info *bres )
+{
+    int dx;
+
+    /*
+     *  if the edge is horizontal, then it is ignored
+     *  and assumed not to be processed.  Otherwise, do this stuff.
+     */
+    if (!dy) return;
+
+    bres->minor_axis = x1;
+    dx = x2 - x1;
+    if (dx < 0)
+    {
+        bres->m = dx / dy;
+        bres->m1 = bres->m - 1;
+        bres->incr1 = -2 * dx + 2 * dy * bres->m1;
+        bres->incr2 = -2 * dx + 2 * dy * bres->m;
+        bres->d = 2 * bres->m * dy - 2 * dx - 2 * dy;
+    }
+    else
+    {
+        bres->m = dx / (dy);
+        bres->m1 = bres->m + 1;
+        bres->incr1 = 2 * dx - 2 * dy * bres->m1;
+        bres->incr2 = 2 * dx - 2 * dy * bres->m;
+        bres->d = -2 * bres->m * dy + 2 * dx;
+    }
 }
 
-#define BRESINCRPGON(d, minval, m, m1, incr1, incr2) { \
-    if (m1 > 0) { \
-        if (d > 0) { \
-            minval += m1; \
-            d += incr1; \
-        } \
-        else { \
-            minval += m; \
-            d += incr2; \
-        } \
-    } else {\
-        if (d >= 0) { \
-            minval += m1; \
-            d += incr1; \
-        } \
-        else { \
-            minval += m; \
-            d += incr2; \
-        } \
-    } \
+static inline void bres_incr_polygon( struct bres_info *bres )
+{
+    if (bres->m1 > 0) {
+        if (bres->d > 0) {
+            bres->minor_axis += bres->m1;
+            bres->d += bres->incr1;
+        }
+        else {
+            bres->minor_axis += bres->m;
+            bres->d += bres->incr2;
+        }
+    } else {
+        if (bres->d >= 0) {
+            bres->minor_axis += bres->m1;
+            bres->d += bres->incr1;
+        }
+        else {
+            bres->minor_axis += bres->m;
+            bres->d += bres->incr2;
+        }
+    }
 }
-
-/*
- *     This structure contains all of the information needed
- *     to run the bresenham algorithm.
- *     The variables may be hardcoded into the declarations
- *     instead of using this structure to make use of
- *     register declarations.
- */
-typedef struct {
-    INT minor_axis;	/* minor axis        */
-    INT d;		/* decision variable */
-    INT m, m1;       	/* slope and slope+1 */
-    INT incr1, incr2;	/* error increments */
-} BRESINFO;
-
-
-#define BRESINITPGONSTRUCT(dmaj, min1, min2, bres) \
-	BRESINITPGON(dmaj, min1, min2, bres.minor_axis, bres.d, \
-                     bres.m, bres.m1, bres.incr1, bres.incr2)
-
-#define BRESINCRPGONSTRUCT(bres) \
-        BRESINCRPGON(bres.d, bres.minor_axis, bres.m, bres.m1, bres.incr1, bres.incr2)
-
 
 
 /*
@@ -338,7 +331,7 @@ typedef struct {
 
 typedef struct _EdgeTableEntry {
      INT ymax;           /* ycoord at which we exit this edge. */
-     BRESINFO bres;        /* Bresenham info to run the edge     */
+     struct bres_info bres;        /* Bresenham info to run the edge     */
      struct _EdgeTableEntry *next;       /* next in the list     */
      struct _EdgeTableEntry *back;       /* for insertion sort   */
      struct _EdgeTableEntry *nextWETE;   /* for winding num rule */
@@ -395,7 +388,7 @@ typedef struct _ScanLineListBlock {
          pAET->back = pPrevAET; \
    } \
    else { \
-      BRESINCRPGONSTRUCT(pAET->bres); \
+      bres_incr_polygon(&pAET->bres); \
       pPrevAET = pAET; \
       pAET = pAET->next; \
    } \
@@ -417,7 +410,7 @@ typedef struct _ScanLineListBlock {
          pAET->back = pPrevAET; \
    } \
    else { \
-      BRESINCRPGONSTRUCT(pAET->bres); \
+      bres_incr_polygon(&pAET->bres); \
       pPrevAET = pAET; \
       pAET = pAET->next; \
    } \
@@ -477,7 +470,7 @@ static BOOL init_region( WINEREGION *pReg, INT n )
 {
     if (!(pReg->rects = HeapAlloc(GetProcessHeap(), 0, n * sizeof( RECT )))) return FALSE;
     pReg->size = n;
-    EMPTY_REGION(pReg);
+    empty_region(pReg);
     return TRUE;
 }
 
@@ -713,7 +706,7 @@ BOOL WINAPI SetRectRgn( HRGN hrgn, INT left, INT top,
         obj->numRects = 1;
     }
     else
-	EMPTY_REGION(obj);
+	empty_region(obj);
 
     GDI_ReleaseObj( hrgn );
     return TRUE;
@@ -1080,9 +1073,9 @@ BOOL WINAPI PtInRegion( HRGN hrgn, INT x, INT y )
     {
 	int i;
 
-	if (obj->numRects > 0 && INRECT(obj->extents, x, y))
+	if (obj->numRects > 0 && is_in_rect(&obj->extents, x, y))
 	    for (i = 0; i < obj->numRects; i++)
-		if (INRECT (obj->rects[i], x, y))
+		if (is_in_rect(&obj->rects[i], x, y))
                 {
 		    ret = TRUE;
                     break;
@@ -1122,7 +1115,7 @@ BOOL WINAPI RectInRegion( HRGN hrgn, const RECT *rect )
 	RECT *pCurRect, *pRectEnd;
 
     /* this is (just) a useful optimization */
-	if ((obj->numRects > 0) && EXTENTCHECK(&obj->extents, &rc))
+	if ((obj->numRects > 0) && overlapping(&obj->extents, &rc))
 	{
 	    for (pCurRect = obj->rects, pRectEnd = pCurRect +
 	     obj->numRects; pCurRect < pRectEnd; pCurRect++)
@@ -1973,7 +1966,7 @@ static BOOL REGION_IntersectRegion(WINEREGION *newReg, WINEREGION *reg1,
 {
    /* check for trivial reject */
     if ( (!(reg1->numRects)) || (!(reg2->numRects))  ||
-	(!EXTENTCHECK(&reg1->extents, &reg2->extents)))
+	(!overlapping(&reg1->extents, &reg2->extents)))
 	newReg->numRects = 0;
     else
 	if (!REGION_RegionOp (newReg, reg1, reg2, REGION_IntersectO, NULL, NULL)) return FALSE;
@@ -2296,7 +2289,7 @@ static BOOL REGION_SubtractRegion(WINEREGION *regD, WINEREGION *regM, WINEREGION
 {
    /* check for trivial reject */
     if ( (!(regM->numRects)) || (!(regS->numRects))  ||
-	(!EXTENTCHECK(&regM->extents, &regS->extents)) )
+	(!overlapping(&regM->extents, &regS->extents)) )
 	return REGION_CopyRegion(regD, regM);
 
     if (!REGION_RegionOp (regD, regM, regS, REGION_SubtractO, REGION_SubtractNonO1, NULL))
@@ -2510,7 +2503,7 @@ static void REGION_CreateETandAET(const INT *Count, INT nbpolygons,
              *  initialize integer edge algorithm
              */
 		dy = bottom->y - top->y;
-		BRESINITPGONSTRUCT(dy, top->x, bottom->x, pETEs->bres);
+		bres_init_polygon(dy, top->x, bottom->x, &pETEs->bres);
 
 		REGION_InsertEdgeInET(ET, pETEs, top->y, &pSLLBlock,
 								&iSLLBlock);
