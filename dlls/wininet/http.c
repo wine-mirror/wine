@@ -4924,6 +4924,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
                                                  request->session->appInfo->proxyPassword,
                                                  NULL))
                         {
+                            heap_free(requestString);
                             if(!drain_content(request, TRUE)) {
                                 FIXME("Could not drain content\n");
                                 http_release_netconn(request, FALSE);
