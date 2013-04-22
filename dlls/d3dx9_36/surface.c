@@ -1941,6 +1941,7 @@ HRESULT WINAPI D3DXSaveSurfaceToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE
     switch (file_format)
     {
         case D3DXIFF_BMP:
+        case D3DXIFF_DIB:
             encoder_clsid = &CLSID_WICBmpEncoder;
             break;
         case D3DXIFF_PNG:
@@ -1951,7 +1952,6 @@ HRESULT WINAPI D3DXSaveSurfaceToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE
             break;
         case D3DXIFF_DDS:
             return save_dds_surface_to_memory(dst_buffer, src_surface, src_rect);
-        case D3DXIFF_DIB:
         case D3DXIFF_HDR:
         case D3DXIFF_PFM:
         case D3DXIFF_TGA:
@@ -2088,6 +2088,10 @@ HRESULT WINAPI D3DXSaveSurfaceToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE
     }
     size = stream_stats.cbSize.u.LowPart;
 
+    /* Remove BMP header for DIB */
+    if (file_format == D3DXIFF_DIB)
+        size -= sizeof(BITMAPFILEHEADER);
+
     hr = D3DXCreateBuffer(size, &buffer);
     if (FAILED(hr)) goto cleanup;
 
@@ -2096,6 +2100,9 @@ HRESULT WINAPI D3DXSaveSurfaceToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE
     {
         void *buffer_pointer = ID3DXBuffer_GetBufferPointer(buffer);
         void *stream_data = GlobalLock(stream_hglobal);
+        /* Remove BMP header for DIB */
+        if (file_format == D3DXIFF_DIB)
+            stream_data = (void*)((BYTE*)stream_data + sizeof(BITMAPFILEHEADER));
         memcpy(buffer_pointer, stream_data, size);
         GlobalUnlock(stream_hglobal);
         *dst_buffer = buffer;
