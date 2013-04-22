@@ -1410,9 +1410,13 @@ void LogError(const char* func, NSString* format, ...)
  */
 void LogErrorv(const char* func, NSString* format, va_list args)
 {
+    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+
     NSString* message = [[NSString alloc] initWithFormat:format arguments:args];
     fprintf(stderr, "err:%s:%s", func, [message UTF8String]);
     [message release];
+
+    [pool release];
 }
 
 /***********************************************************************
