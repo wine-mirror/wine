@@ -728,11 +728,10 @@ static void test_D3DXCreateTexture(IDirect3DDevice9 *device)
     }
 
     /* D3DXCreateTextureFromResource */
-    todo_wine {
-        hr = D3DXCreateTextureFromResourceA(device, NULL, MAKEINTRESOURCEA(IDB_BITMAP_1x1), &texture);
-        ok(hr == D3D_OK, "D3DXCreateTextureFromResource returned %#x, expected %#x\n", hr, D3D_OK);
-        if (SUCCEEDED(hr)) IDirect3DTexture9_Release(texture);
-    }
+    hr = D3DXCreateTextureFromResourceA(device, NULL, MAKEINTRESOURCEA(IDB_BITMAP_1x1), &texture);
+    ok(hr == D3D_OK, "D3DXCreateTextureFromResource returned %#x, expected %#x\n", hr, D3D_OK);
+    if (SUCCEEDED(hr)) IDirect3DTexture9_Release(texture);
+
     hr = D3DXCreateTextureFromResourceA(device, NULL, MAKEINTRESOURCEA(IDD_BITMAPDATA_1x1), &texture);
     ok(hr == D3D_OK, "D3DXCreateTextureFromResource returned %#x, expected %#x\n", hr, D3D_OK);
     if (SUCCEEDED(hr)) IDirect3DTexture9_Release(texture);

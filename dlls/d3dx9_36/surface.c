@@ -1073,6 +1073,9 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileInMemory(IDirect3DSurface9 *pDestSurface,
         return hr;
     }
 
+    if (imginfo.ImageFileFormat == D3DXIFF_DIB)
+        convert_dib_to_bmp((void**)&pSrcData, &SrcDataSize);
+
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     if (FAILED(CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, &IID_IWICImagingFactory, (void**)&factory)))
@@ -1134,6 +1137,9 @@ cleanup_bmp:
 
 cleanup_err:
     CoUninitialize();
+
+    if (imginfo.ImageFileFormat == D3DXIFF_DIB)
+        HeapFree(GetProcessHeap(), 0, (void*)pSrcData);
 
     if (FAILED(hr))
         return D3DXERR_INVALIDDATA;
