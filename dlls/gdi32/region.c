@@ -351,26 +351,19 @@ static inline void bres_incr_polygon( struct bres_info *bres )
  *     drawn (as with the even-odd rule).
  */
 
-/*
- * for the winding number rule
- */
-#define CLOCKWISE          1
-#define COUNTERCLOCKWISE  -1
-
-typedef struct _EdgeTableEntry {
-     INT ymax;           /* ycoord at which we exit this edge. */
-     struct bres_info bres;        /* Bresenham info to run the edge     */
-     struct _EdgeTableEntry *next;       /* next in the list     */
-     struct _EdgeTableEntry *back;       /* for insertion sort   */
-     struct _EdgeTableEntry *nextWETE;   /* for winding num rule */
-     int ClockWise;        /* flag for winding number rule       */
+typedef struct edge_table_entry {
+    struct list entry;
+    struct list winding_entry;
+    INT ymax;                     /* ycoord at which we exit this edge. */
+    struct bres_info bres;        /* Bresenham info to run the edge     */
+    int ClockWise;                /* flag for winding number rule       */
 } EdgeTableEntry;
 
 
 typedef struct _ScanLineList{
-     INT scanline;            /* the scanline represented */
-     EdgeTableEntry *edgelist;  /* header node              */
-     struct _ScanLineList *next;  /* next in the list       */
+    struct list edgelist;
+    INT scanline;            /* the scanline represented */
+    struct _ScanLineList *next;  /* next in the list       */
 } ScanLineList;
 
 
@@ -393,56 +386,6 @@ typedef struct _ScanLineListBlock {
      struct _ScanLineListBlock *next;
 } ScanLineListBlock;
 
-
-/*
- *
- *     a few macros for the inner loops of the fill code where
- *     performance considerations don't allow a procedure call.
- *
- *     Evaluate the given edge at the given scanline.
- *     If the edge has expired, then we leave it and fix up
- *     the active edge table; otherwise, we increment the
- *     x value to be ready for the next scanline.
- *     The winding number rule is in effect, so we must notify
- *     the caller when the edge has been removed so he
- *     can reorder the Winding Active Edge Table.
- */
-#define EVALUATEEDGEWINDING(pAET, pPrevAET, y, fixWAET) { \
-   if (pAET->ymax == y) {          /* leaving this edge */ \
-      pPrevAET->next = pAET->next; \
-      pAET = pPrevAET->next; \
-      fixWAET = 1; \
-      if (pAET) \
-         pAET->back = pPrevAET; \
-   } \
-   else { \
-      bres_incr_polygon(&pAET->bres); \
-      pPrevAET = pAET; \
-      pAET = pAET->next; \
-   } \
-}
-
-
-/*
- *     Evaluate the given edge at the given scanline.
- *     If the edge has expired, then we leave it and fix up
- *     the active edge table; otherwise, we increment the
- *     x value to be ready for the next scanline.
- *     The even-odd rule is in effect.
- */
-#define EVALUATEEDGEEVENODD(pAET, pPrevAET, y) { \
-   if (pAET->ymax == y) {          /* leaving this edge */ \
-      pPrevAET->next = pAET->next; \
-      pAET = pPrevAET->next; \
-      if (pAET) \
-         pAET->back = pPrevAET; \
-   } \
-   else { \
-      bres_incr_polygon(&pAET->bres); \
-      pPrevAET = pAET; \
-      pAET = pAET->next; \
-   } \
-}
 
 /* Note the parameter order is different from the X11 equivalents */
 
@@ -2376,7 +2319,7 @@ static void REGION_InsertEdgeInET(EdgeTable *ET, EdgeTableEntry *ETE,
                 INT scanline, ScanLineListBlock **SLLBlock, INT *iSLLBlock)
 
 {
-    EdgeTableEntry *start, *prev;
+    struct list *ptr;
     ScanLineList *pSLL, *pPrevSLL;
     ScanLineListBlock *tmpSLLBlock;
 
@@ -2412,7 +2355,7 @@ static void REGION_InsertEdgeInET(EdgeTable *ET, EdgeTableEntry *ETE,
         pSLL = &((*SLLBlock)->SLLs[(*iSLLBlock)++]);
 
         pSLL->next = pPrevSLL->next;
-        pSLL->edgelist = NULL;
+        list_init( &pSLL->edgelist );
         pPrevSLL->next = pSLL;
     }
     pSLL->scanline = scanline;
@@ -2420,19 +2363,12 @@ static void REGION_InsertEdgeInET(EdgeTable *ET, EdgeTableEntry *ETE,
     /*
      * now insert the edge in the right bucket
      */
-    prev = NULL;
-    start = pSLL->edgelist;
-    while (start && (start->bres.minor_axis < ETE->bres.minor_axis))
+    LIST_FOR_EACH( ptr, &pSLL->edgelist )
     {
-        prev = start;
-        start = start->next;
+        struct edge_table_entry *entry = LIST_ENTRY( ptr, struct edge_table_entry, entry );
+        if (entry->bres.minor_axis >= ETE->bres.minor_axis) break;
     }
-    ETE->next = start;
-
-    if (prev)
-        prev->next = ETE;
-    else
-        pSLL->edgelist = ETE;
+    list_add_before( ptr, &ETE->entry );
 }
 
 /***********************************************************************
@@ -2459,8 +2395,8 @@ static void REGION_InsertEdgeInET(EdgeTable *ET, EdgeTableEntry *ETE,
  *     which an edge is initially entered.
  *
  */
-static void REGION_CreateETandAET(const INT *Count, INT nbpolygons,
-            const POINT *pts, EdgeTable *ET, EdgeTableEntry *AET,
+static void REGION_CreateEdgeTable(const INT *Count, INT nbpolygons,
+            const POINT *pts, EdgeTable *ET,
             EdgeTableEntry *pETEs, ScanLineListBlock *pSLLBlock)
 {
     const POINT *top, *bottom;
@@ -2468,15 +2404,6 @@ static void REGION_CreateETandAET(const INT *Count, INT nbpolygons,
     INT poly, count;
     int iSLLBlock = 0;
     int dy;
-
-
-    /*
-     *  initialize the Active Edge Table
-     */
-    AET->next = NULL;
-    AET->back = NULL;
-    AET->nextWETE = NULL;
-    AET->bres.minor_axis = SMALL_COORDINATE;
 
     /*
      *  initialize the Edge Table.
@@ -2556,29 +2483,20 @@ static void REGION_CreateETandAET(const INT *Count, INT nbpolygons,
  *     leaving them sorted by smaller x coordinate.
  *
  */
-static void REGION_loadAET(EdgeTableEntry *AET, EdgeTableEntry *ETEs)
+static void REGION_loadAET( struct list *AET, struct list *ETEs )
 {
-    EdgeTableEntry *pPrevAET;
-    EdgeTableEntry *tmp;
+    struct edge_table_entry *ptr, *next, *entry;
+    struct list *active;
 
-    pPrevAET = AET;
-    AET = AET->next;
-    while (ETEs)
+    LIST_FOR_EACH_ENTRY_SAFE( ptr, next, ETEs, struct edge_table_entry, entry )
     {
-        while (AET && (AET->bres.minor_axis < ETEs->bres.minor_axis))
+        LIST_FOR_EACH( active, AET )
         {
-            pPrevAET = AET;
-            AET = AET->next;
+            entry = LIST_ENTRY( active, struct edge_table_entry, entry );
+            if (entry->bres.minor_axis >= ptr->bres.minor_axis) break;
         }
-        tmp = ETEs->next;
-        ETEs->next = AET;
-        if (AET)
-            AET->back = ETEs;
-        ETEs->back = pPrevAET;
-        pPrevAET->next = ETEs;
-        pPrevAET = ETEs;
-
-        ETEs = tmp;
+        list_remove( &ptr->entry );
+        list_add_before( active, &ptr->entry );
     }
 }
 
@@ -2602,70 +2520,50 @@ static void REGION_loadAET(EdgeTableEntry *AET, EdgeTableEntry *ETEs)
  *         V------------------->       V---> ...
  *
  */
-static void REGION_computeWAET(EdgeTableEntry *AET)
+static void REGION_computeWAET( struct list *AET, struct list *WETE )
 {
-    EdgeTableEntry *pWETE;
+    struct edge_table_entry *active;
     int inside = 1;
     int isInside = 0;
 
-    AET->nextWETE = NULL;
-    pWETE = AET;
-    AET = AET->next;
-    while (AET)
+    list_init( WETE );
+    LIST_FOR_EACH_ENTRY( active, AET, struct edge_table_entry, entry )
     {
-        if (AET->ClockWise)
+        if (active->ClockWise)
             isInside++;
         else
             isInside--;
 
-        if ((!inside && !isInside) ||
-            ( inside &&  isInside))
+        if ((!inside && !isInside) || (inside && isInside))
         {
-            pWETE->nextWETE = AET;
-            pWETE = AET;
+            list_add_tail( WETE, &active->winding_entry );
             inside = !inside;
         }
-        AET = AET->next;
     }
-    pWETE->nextWETE = NULL;
 }
 
 /***********************************************************************
  *     REGION_InsertionSort
  *
- *     Just a simple insertion sort using
- *     pointers and back pointers to sort the Active
- *     Edge Table.
+ *     Just a simple insertion sort to sort the Active Edge Table.
  *
  */
-static BOOL REGION_InsertionSort(EdgeTableEntry *AET)
+static BOOL REGION_InsertionSort( struct list *AET )
 {
-    EdgeTableEntry *pETEchase;
-    EdgeTableEntry *pETEinsert;
-    EdgeTableEntry *pETEchaseBackTMP;
+    struct edge_table_entry *active, *next, *insert;
     BOOL changed = FALSE;
 
-    AET = AET->next;
-    while (AET)
+    LIST_FOR_EACH_ENTRY_SAFE( active, next, AET, struct edge_table_entry, entry )
     {
-        pETEinsert = AET;
-        pETEchase = AET;
-        while (pETEchase->back->bres.minor_axis > AET->bres.minor_axis)
-            pETEchase = pETEchase->back;
-
-        AET = AET->next;
-        if (pETEchase != pETEinsert)
+        LIST_FOR_EACH_ENTRY( insert, AET, struct edge_table_entry, entry )
         {
-            pETEchaseBackTMP = pETEchase->back;
-            pETEinsert->back->next = AET;
-            if (AET)
-                AET->back = pETEinsert->back;
-            pETEinsert->next = pETEchase;
-            pETEchase->back->next = pETEinsert;
-            pETEchase->back = pETEinsert;
-            pETEinsert->back = pETEchaseBackTMP;
-            changed = TRUE;
+            if (insert == active) break;
+            if (insert->bres.minor_axis > active->bres.minor_axis) break;
         }
+        if (insert == active) continue;
+        list_remove( &active->entry );
+        list_add_before( &insert->entry, &active->entry );
+        changed = TRUE;
     }
     return changed;
 }
@@ -2759,17 +2657,16 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
 {
     HRGN hrgn = 0;
     WINEREGION *obj;
-    EdgeTableEntry *pAET;            /* Active Edge Table       */
     INT y;                           /* current scanline        */
-    EdgeTableEntry *pWETE;           /* Winding Edge Table Entry*/
+    struct list WETE, *pWETE;        /* Winding Edge Table */
     ScanLineList *pSLL;              /* current scanLineList    */
-    EdgeTableEntry *pPrevAET;        /* ptr to previous AET     */
     EdgeTable ET;                    /* header node for ET      */
-    EdgeTableEntry AET;              /* header node for AET     */
+    struct list AET;                 /* header for AET     */
     EdgeTableEntry *pETEs;           /* EdgeTableEntries pool   */
     ScanLineListBlock SLLBlock;      /* header for scanlinelist */
     int fixWAET = FALSE;
     struct point_block FirstPtBlock, *block; /* PtBlock buffers    */
+    struct edge_table_entry *active, *next;
     INT poly, total;
 
     TRACE("%p, count %d, polygons %d, mode %d\n", Pts, *Count, nbpolygons, mode);
@@ -2794,7 +2691,8 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
     if (! (pETEs = HeapAlloc( GetProcessHeap(), 0, sizeof(EdgeTableEntry) * total )))
 	return 0;
 
-    REGION_CreateETandAET(Count, nbpolygons, Pts, &ET, &AET, pETEs, &SLLBlock);
+    REGION_CreateEdgeTable(Count, nbpolygons, Pts, &ET, pETEs, &SLLBlock);
+    list_init( &AET );
     pSLL = ET.scanlines.next;
     block = &FirstPtBlock;
     FirstPtBlock.count = 0;
@@ -2810,19 +2708,19 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
              *  get to the next edge.
              */
             if (pSLL != NULL && y == pSLL->scanline) {
-                REGION_loadAET(&AET, pSLL->edgelist);
+                REGION_loadAET(&AET, &pSLL->edgelist);
                 pSLL = pSLL->next;
             }
-            pPrevAET = &AET;
-            pAET = AET.next;
 
-            /*
-             *  for each active edge
-             */
-            while (pAET) {
-                block = add_point( block, pAET->bres.minor_axis, y );
+            LIST_FOR_EACH_ENTRY_SAFE( active, next, &AET, struct edge_table_entry, entry )
+            {
+                block = add_point( block, active->bres.minor_axis, y );
                 if (!block) goto done;
-                EVALUATEEDGEEVENODD(pAET, pPrevAET, y);
+
+                if (active->ymax == y)  /* leaving this edge */
+                    list_remove( &active->entry );
+                else
+                    bres_incr_polygon( &active->bres );
             }
             REGION_InsertionSort(&AET);
         }
@@ -2837,28 +2735,33 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
              *  get to the next edge.
              */
             if (pSLL != NULL && y == pSLL->scanline) {
-                REGION_loadAET(&AET, pSLL->edgelist);
-                REGION_computeWAET(&AET);
+                REGION_loadAET(&AET, &pSLL->edgelist);
+                REGION_computeWAET( &AET, &WETE );
                 pSLL = pSLL->next;
             }
-            pPrevAET = &AET;
-            pAET = AET.next;
-            pWETE = pAET;
+            pWETE = list_head( &WETE );
 
             /*
              *  for each active edge
              */
-            while (pAET) {
+            LIST_FOR_EACH_ENTRY_SAFE( active, next, &AET, struct edge_table_entry, entry )
+            {
                 /*
                  *  add to the buffer only those edges that
                  *  are in the Winding active edge table.
                  */
-                if (pWETE == pAET) {
-                    block = add_point( block, pAET->bres.minor_axis, y );
+                if (pWETE == &active->winding_entry) {
+                    block = add_point( block, active->bres.minor_axis, y );
                     if (!block) goto done;
-                    pWETE = pWETE->nextWETE;
+                    pWETE = list_next( &WETE, pWETE );
                 }
-                EVALUATEEDGEWINDING(pAET, pPrevAET, y, fixWAET);
+                if (active->ymax == y)  /* leaving this edge */
+                {
+                    list_remove( &active->entry );
+                    fixWAET = TRUE;
+                }
+                else
+                    bres_incr_polygon( &active->bres );
             }
 
             /*
@@ -2866,7 +2769,7 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
              *  we just resorted or have exited an edge.
              */
             if (REGION_InsertionSort(&AET) || fixWAET) {
-                REGION_computeWAET(&AET);
+                REGION_computeWAET( &AET, &WETE );
                 fixWAET = FALSE;
             }
         }
