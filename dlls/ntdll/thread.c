@@ -461,6 +461,8 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
         return result.create_thread.status;
     }
 
+    if (RtlDllShutdownInProgress()) return STATUS_ACCESS_DENIED;
+
     if (server_pipe( request_pipe ) == -1) return STATUS_TOO_MANY_OPENED_FILES;
     wine_server_send_fd( request_pipe[0] );
 

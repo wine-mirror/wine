@@ -1183,7 +1183,6 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
         /* manual call to LdrShutdownProcess doesn't prevent thread creation */
         if (param && test_dll_phase != 4)
         {
-todo_wine
             ok(!handle || broken(handle != 0) /* before win7 */, "CreateThread should fail\n");
             if (!handle)
                 ok(GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
@@ -1192,16 +1191,15 @@ todo_wine
         }
         else
         {
-            ok(handle != 0, "CreateThread error %d\n", GetLastError());
-            ret = WaitForSingleObject(handle, 1000);
             /* FIXME: remove once Wine is fixed */
             if (test_dll_phase == 4) todo_wine
             {
-            ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %#x\n", ret);
-            ok(!noop_thread_started || broken(noop_thread_started) /* XP64 */, "thread shouldn't start yet\n");
+            ok(handle != 0, "CreateThread error %d\n", GetLastError());
             }
             else
             {
+            ok(handle != 0, "CreateThread error %d\n", GetLastError());
+            ret = WaitForSingleObject(handle, 1000);
             ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %#x\n", ret);
             ok(!noop_thread_started || broken(noop_thread_started) /* XP64 */, "thread shouldn't start yet\n");
             }
@@ -1218,7 +1216,6 @@ todo_wine
         /* manual call to LdrShutdownProcess doesn't prevent thread creation */
         if (param && test_dll_phase != 4)
         {
-todo_wine
             ok(!handle || broken(handle != 0) /* before win7 */, "CreateRemoteThread should fail\n");
             if (!handle)
                 ok(GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
@@ -1227,19 +1224,19 @@ todo_wine
         }
         else
         {
-            ok(handle != 0, "CreateRemoteThread error %d\n", GetLastError());
-            ret = WaitForSingleObject(handle, 1000);
             /* FIXME: remove once Wine is fixed */
             if (test_dll_phase == 4) todo_wine
             {
-            ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %#x\n", ret);
-            ok(!noop_thread_started || broken(noop_thread_started) /* XP64 */, "thread shouldn't start yet\n");
+            ok(handle != 0, "CreateRemoteThread error %d\n", GetLastError());
             }
             else
             {
+            ok(handle != 0, "CreateRemoteThread error %d\n", GetLastError());
+            ret = WaitForSingleObject(handle, 1000);
             ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %#x\n", ret);
             ok(!noop_thread_started || broken(noop_thread_started) /* XP64 */, "thread shouldn't start yet\n");
             }
+            CloseHandle(handle);
         }
 
         SetLastError(0xdeadbeef);
