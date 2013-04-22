@@ -402,7 +402,7 @@ static void test_capture_buffer(LPDIRECTSOUNDCAPTURE dsco,
 
     rc=IDirectSoundCaptureBuffer_GetStatus(dscbo,&status);
     ok(rc==DS_OK,"IDirectSoundCaptureBuffer_GetStatus() failed: %08x\n", rc);
-    ok(status==(DSCBSTATUS_CAPTURING|DSCBSTATUS_LOOPING),
+    ok(status==(DSCBSTATUS_CAPTURING|DSCBSTATUS_LOOPING) || broken(status==DSCBSTATUS_CAPTURING),
        "GetStatus: bad status: %x\n",status);
 
     if (record) {
