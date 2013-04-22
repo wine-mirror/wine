@@ -4702,7 +4702,7 @@ static GLhandleARB find_glsl_vshader(const struct wined3d_context *context,
 {
     UINT i;
     DWORD new_size;
-    DWORD use_map = shader->device->strided_streams.use_map;
+    DWORD use_map = shader->device->stream_info.use_map;
     struct glsl_vs_compiled_shader *gl_shaders, *new_array;
     struct glsl_shader_private *shader_data;
     GLhandleARB ret;

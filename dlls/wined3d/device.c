@@ -318,7 +318,7 @@ static void device_stream_info_from_declaration(struct wined3d_device *device, s
 /* Context activation is done by the caller. */
 void device_update_stream_info(struct wined3d_device *device, const struct wined3d_gl_info *gl_info)
 {
-    struct wined3d_stream_info *stream_info = &device->strided_streams;
+    struct wined3d_stream_info *stream_info = &device->stream_info;
     const struct wined3d_state *state = &device->stateBlock->state;
     DWORD prev_all_vbo = stream_info->all_vbo;
 

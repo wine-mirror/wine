@@ -1768,7 +1768,7 @@ struct wined3d_device
     DWORD                     rev_tex_unit_map[MAX_COMBINED_SAMPLERS];
 
     /* Stream source management */
-    struct wined3d_stream_info strided_streams;
+    struct wined3d_stream_info stream_info;
     struct wined3d_event_query *buffer_queries[MAX_ATTRIBS];
     unsigned int num_buffer_queries;
 

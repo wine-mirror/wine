@@ -310,7 +310,7 @@ static BOOL buffer_find_decl(struct wined3d_buffer *This)
 {
     struct wined3d_device *device = This->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    const struct wined3d_stream_info *si = &device->strided_streams;
+    const struct wined3d_stream_info *si = &device->stream_info;
     const struct wined3d_state *state = &device->stateBlock->state;
     UINT stride_this_run = 0;
     BOOL ret = FALSE;

@@ -1786,7 +1786,7 @@ void find_vs_compile_args(const struct wined3d_state *state,
             == WINED3D_FOG_NONE ? VS_FOG_COORD : VS_FOG_Z;
     args->clip_enabled = state->render_states[WINED3D_RS_CLIPPING]
             && state->render_states[WINED3D_RS_CLIPPLANEENABLE];
-    args->swizzle_map = shader->device->strided_streams.swizzle_map;
+    args->swizzle_map = shader->device->stream_info.swizzle_map;
 }
 
 static BOOL match_usage(BYTE usage1, BYTE usage_idx1, BYTE usage2, BYTE usage_idx2)
@@ -2118,18 +2118,12 @@ void find_ps_compile_args(const struct wined3d_state *state,
     }
     if (shader->reg_maps.shader_version.major >= 3)
     {
-        if (device->strided_streams.position_transformed)
-        {
+        if (device->stream_info.position_transformed)
             args->vp_mode = pretransformed;
-        }
         else if (use_vs(state))
-        {
             args->vp_mode = vertexshader;
-        }
         else
-        {
             args->vp_mode = fixedfunction;
-        }
         args->fog = FOG_OFF;
     }
     else
@@ -2140,7 +2134,7 @@ void find_ps_compile_args(const struct wined3d_state *state,
             switch (state->render_states[WINED3D_RS_FOGTABLEMODE])
             {
                 case WINED3D_FOG_NONE:
-                    if (device->strided_streams.position_transformed || use_vs(state))
+                    if (device->stream_info.position_transformed || use_vs(state))
                     {
                         args->fog = FOG_LINEAR;
                         break;

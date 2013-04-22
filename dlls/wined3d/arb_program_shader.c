@@ -4388,7 +4388,7 @@ static struct arb_vs_compiled_shader *find_arb_vshader(struct wined3d_shader *sh
 {
     struct wined3d_device *device = shader->device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    DWORD use_map = device->strided_streams.use_map;
+    DWORD use_map = device->stream_info.use_map;
     UINT i;
     DWORD new_size;
     struct arb_vs_compiled_shader *new_array;

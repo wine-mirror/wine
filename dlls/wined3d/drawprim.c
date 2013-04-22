@@ -672,7 +672,7 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
         FIXME("Point sprite coordinate origin switching not supported.\n");
     }
 
-    stream_info = &device->strided_streams;
+    stream_info = &device->stream_info;
     if (device->instance_count)
         instance_count = device->instance_count;
 
@@ -722,7 +722,7 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
 
         if (emulation)
         {
-            si_emulated = device->strided_streams;
+            si_emulated = device->stream_info;
             remove_vbos(gl_info, state, &si_emulated);
             stream_info = &si_emulated;
         }

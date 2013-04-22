@@ -87,7 +87,7 @@ static void state_lighting(struct wined3d_context *context, const struct wined3d
         return;
 
     if (state->render_states[WINED3D_RS_LIGHTING]
-            && !context->swapchain->device->strided_streams.position_transformed)
+            && !context->swapchain->device->stream_info.position_transformed)
     {
         gl_info->gl_ops.gl.p_glEnable(GL_LIGHTING);
         checkGLcall("glEnable GL_LIGHTING");
@@ -134,7 +134,7 @@ static void state_zenable(struct wined3d_context *context, const struct wined3d_
 
     if (context->gl_info->supported[ARB_DEPTH_CLAMP])
     {
-        if (!zenable && context->swapchain->device->strided_streams.position_transformed)
+        if (!zenable && context->swapchain->device->stream_info.position_transformed)
         {
             gl_info->gl_ops.gl.p_glEnable(GL_DEPTH_CLAMP);
             checkGLcall("glEnable(GL_DEPTH_CLAMP)");
@@ -1283,7 +1283,7 @@ static void state_colormat(struct wined3d_context *context, const struct wined3d
     }
 
     context->num_untracked_materials = 0;
-    if ((device->strided_streams.use_map & (1 << WINED3D_FFP_DIFFUSE))
+    if ((device->stream_info.use_map & (1 << WINED3D_FFP_DIFFUSE))
             && state->render_states[WINED3D_RS_COLORVERTEX])
     {
         TRACE("diff %d, amb %d, emis %d, spec %d\n",
@@ -1436,7 +1436,7 @@ static void state_normalize(struct wined3d_context *context, const struct wined3
      * by zero and is not properly defined in opengl, so avoid it
      */
     if (state->render_states[WINED3D_RS_NORMALIZENORMALS]
-            && (context->swapchain->device->strided_streams.use_map & (1 << WINED3D_FFP_NORMAL)))
+            && (context->swapchain->device->stream_info.use_map & (1 << WINED3D_FFP_NORMAL)))
     {
         gl_info->gl_ops.gl.p_glEnable(GL_NORMALIZE);
         checkGLcall("glEnable(GL_NORMALIZE);");
@@ -3338,8 +3338,8 @@ static void transform_texture(struct wined3d_context *context, const struct wine
     set_texture_matrix(gl_info, &state->transforms[WINED3D_TS_TEXTURE0 + texUnit].u.m[0][0],
             state->texture_states[texUnit][WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS],
             generated, context->last_was_rhw,
-            device->strided_streams.use_map & (1 << (WINED3D_FFP_TEXCOORD0 + coordIdx))
-            ? device->strided_streams.elements[WINED3D_FFP_TEXCOORD0 + coordIdx].format->id
+            device->stream_info.use_map & (1 << (WINED3D_FFP_TEXCOORD0 + coordIdx))
+            ? device->stream_info.elements[WINED3D_FFP_TEXCOORD0 + coordIdx].format->id
             : WINED3DFMT_UNKNOWN,
             device->shader_backend->shader_has_ffp_proj_control(device->shader_priv));
 
@@ -3602,7 +3602,7 @@ static void tex_coordindex(struct wined3d_context *context, const struct wined3d
         GLuint curVBO = gl_info->supported[ARB_VERTEX_BUFFER_OBJECT] ? ~0U : 0;
 
         unload_tex_coords(gl_info);
-        load_tex_coords(context, &device->strided_streams, &curVBO, state);
+        load_tex_coords(context, &device->stream_info, &curVBO, state);
     }
 }
 
@@ -4552,13 +4552,13 @@ static void streamsrc(struct wined3d_context *context, const struct wined3d_stat
     if (load_numbered)
     {
         TRACE("Loading numbered arrays\n");
-        load_numbered_arrays(context, &device->strided_streams, state);
+        load_numbered_arrays(context, &device->stream_info, state);
         context->numberedArraysLoaded = TRUE;
     }
     else if (load_named)
     {
         TRACE("Loading vertex data\n");
-        load_vertex_data(context, &device->strided_streams, state);
+        load_vertex_data(context, &device->stream_info, state);
         context->namedArraysLoaded = TRUE;
     }
 }
@@ -4580,7 +4580,7 @@ static void vertexdeclaration(struct wined3d_context *context, const struct wine
     BOOL wasrhw = context->last_was_rhw;
     unsigned int i;
 
-    transformed = device->strided_streams.position_transformed;
+    transformed = device->stream_info.position_transformed;
     if (transformed != context->last_was_rhw && !useVertexShaderFunction)
         updateFog = TRUE;
 
@@ -4894,7 +4894,7 @@ static void scissorrect(struct wined3d_context *context, const struct wined3d_st
 
 static void indexbuffer(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    const struct wined3d_stream_info *stream_info = &context->swapchain->device->strided_streams;
+    const struct wined3d_stream_info *stream_info = &context->swapchain->device->stream_info;
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
     if (!state->index_buffer || !stream_info->all_vbo)
