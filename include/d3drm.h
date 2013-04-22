@@ -59,7 +59,7 @@ DECLARE_INTERFACE_(IDirect3DRM,IUnknown)
     /*** IDirect3DRM methods ***/
     STDMETHOD(CreateObject)(THIS_ REFCLSID rclsid, LPUNKNOWN pUnkOuter, REFIID riid, LPVOID *ppvObj) PURE;
     STDMETHOD(CreateFrame)(THIS_ IDirect3DRMFrame *parent, IDirect3DRMFrame **frame) PURE;
-    STDMETHOD(CreateMesh)(THIS_ LPDIRECT3DRMMESH *) PURE;
+    STDMETHOD(CreateMesh)(THIS_ IDirect3DRMMesh **mesh) PURE;
     STDMETHOD(CreateMeshBuilder)(THIS_ LPDIRECT3DRMMESHBUILDER *) PURE;
     STDMETHOD(CreateFace)(THIS_ LPDIRECT3DRMFACE *) PURE;
     STDMETHOD(CreateAnimation)(THIS_ LPDIRECT3DRMANIMATION *) PURE;
@@ -197,7 +197,7 @@ DECLARE_INTERFACE_(IDirect3DRM2,IUnknown)
     /*** IDirect3DRM2 methods ***/
     STDMETHOD(CreateObject)(THIS_ REFCLSID rclsid, LPUNKNOWN pUnkOuter, REFIID riid, LPVOID *ppvObj) PURE;
     STDMETHOD(CreateFrame)(THIS_ IDirect3DRMFrame *parent, IDirect3DRMFrame2 **frame) PURE;
-    STDMETHOD(CreateMesh)(THIS_ LPDIRECT3DRMMESH *) PURE;
+    STDMETHOD(CreateMesh)(THIS_ IDirect3DRMMesh **mesh) PURE;
     STDMETHOD(CreateMeshBuilder)(THIS_ LPDIRECT3DRMMESHBUILDER2 *) PURE;
     STDMETHOD(CreateFace)(THIS_ LPDIRECT3DRMFACE *) PURE;
     STDMETHOD(CreateAnimation)(THIS_ LPDIRECT3DRMANIMATION *) PURE;
@@ -338,7 +338,7 @@ DECLARE_INTERFACE_(IDirect3DRM3,IUnknown)
     /*** IDirect3DRM2 methods ***/
     STDMETHOD(CreateObject)(THIS_ REFCLSID rclsid, LPUNKNOWN pUnkOuter, REFIID riid, LPVOID *ppvObj) PURE;
     STDMETHOD(CreateFrame)(THIS_ IDirect3DRMFrame3 *parent, IDirect3DRMFrame3 **frame) PURE;
-    STDMETHOD(CreateMesh)(THIS_ LPDIRECT3DRMMESH *) PURE;
+    STDMETHOD(CreateMesh)(THIS_ IDirect3DRMMesh **mesh) PURE;
     STDMETHOD(CreateMeshBuilder)(THIS_ LPDIRECT3DRMMESHBUILDER3 *) PURE;
     STDMETHOD(CreateFace)(THIS_ LPDIRECT3DRMFACE2 *) PURE;
     STDMETHOD(CreateAnimation)(THIS_ LPDIRECT3DRMANIMATION2 *) PURE;

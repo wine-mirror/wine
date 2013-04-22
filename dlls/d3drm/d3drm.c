@@ -145,13 +145,13 @@ static HRESULT WINAPI IDirect3DRMImpl_CreateFrame(IDirect3DRM *iface,
     return Direct3DRMFrame_create(&IID_IDirect3DRMFrame, (IUnknown *)parent_frame, (IUnknown **)frame);
 }
 
-static HRESULT WINAPI IDirect3DRMImpl_CreateMesh(IDirect3DRM* iface, LPDIRECT3DRMMESH * ppMesh)
+static HRESULT WINAPI IDirect3DRMImpl_CreateMesh(IDirect3DRM *iface, IDirect3DRMMesh **mesh)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM(iface);
+    IDirect3DRMImpl *d3drm = impl_from_IDirect3DRM(iface);
 
-    TRACE("(%p/%p)->(%p)\n", iface, This, ppMesh);
+    TRACE("iface %p, mesh %p.\n", iface, mesh);
 
-    return IDirect3DRM3_CreateMesh(&This->IDirect3DRM3_iface, ppMesh);
+    return IDirect3DRM3_CreateMesh(&d3drm->IDirect3DRM3_iface, mesh);
 }
 
 static HRESULT WINAPI IDirect3DRMImpl_CreateMeshBuilder(IDirect3DRM* iface, LPDIRECT3DRMMESHBUILDER * ppMeshBuilder)
@@ -526,13 +526,13 @@ static HRESULT WINAPI IDirect3DRM2Impl_CreateFrame(IDirect3DRM2 *iface,
     return Direct3DRMFrame_create(&IID_IDirect3DRMFrame2, (IUnknown*)parent_frame, (IUnknown**)frame);
 }
 
-static HRESULT WINAPI IDirect3DRM2Impl_CreateMesh(IDirect3DRM2* iface, LPDIRECT3DRMMESH * ppMesh)
+static HRESULT WINAPI IDirect3DRM2Impl_CreateMesh(IDirect3DRM2 *iface, IDirect3DRMMesh **mesh)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM2(iface);
+    IDirect3DRMImpl *d3drm = impl_from_IDirect3DRM2(iface);
 
-    TRACE("(%p/%p)->(%p)\n", iface, This, ppMesh);
+    TRACE("iface %p, mesh %p.\n", iface, mesh);
 
-    return IDirect3DRM3_CreateMesh(&This->IDirect3DRM3_iface, ppMesh);
+    return IDirect3DRM3_CreateMesh(&d3drm->IDirect3DRM3_iface, mesh);
 }
 
 static HRESULT WINAPI IDirect3DRM2Impl_CreateMeshBuilder(IDirect3DRM2* iface,
@@ -927,13 +927,11 @@ static HRESULT WINAPI IDirect3DRM3Impl_CreateFrame(IDirect3DRM3 *iface,
     return Direct3DRMFrame_create(&IID_IDirect3DRMFrame3, (IUnknown *)parent, (IUnknown **)frame);
 }
 
-static HRESULT WINAPI IDirect3DRM3Impl_CreateMesh(IDirect3DRM3* iface, LPDIRECT3DRMMESH* Mesh)
+static HRESULT WINAPI IDirect3DRM3Impl_CreateMesh(IDirect3DRM3 *iface, IDirect3DRMMesh **mesh)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM3(iface);
+    TRACE("iface %p, mesh %p.\n", iface, mesh);
 
-    TRACE("(%p/%p)->(%p)\n", iface, This, Mesh);
-
-    return Direct3DRMMesh_create(Mesh);
+    return Direct3DRMMesh_create(mesh);
 }
 
 static HRESULT WINAPI IDirect3DRM3Impl_CreateMeshBuilder(IDirect3DRM3* iface,

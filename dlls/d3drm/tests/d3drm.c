@@ -227,7 +227,7 @@ static void test_MeshBuilder(void)
     HRESULT hr;
     IDirect3DRM *d3drm;
     LPDIRECT3DRMMESHBUILDER pMeshBuilder;
-    LPDIRECT3DRMMESH mesh;
+    IDirect3DRMMesh *mesh;
     D3DRMLOADMEMORY info;
     int val;
     DWORD val1, val2, val3;
@@ -638,30 +638,30 @@ static void test_Mesh(void)
 {
     HRESULT hr;
     IDirect3DRM *d3drm;
-    LPDIRECT3DRMMESH pMesh;
+    IDirect3DRMMesh *mesh;
     DWORD size;
     CHAR cname[64] = {0};
 
     hr = pDirect3DRMCreate(&d3drm);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
 
-    hr = IDirect3DRM_CreateMesh(d3drm, &pMesh);
+    hr = IDirect3DRM_CreateMesh(d3drm, &mesh);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMMesh interface (hr = %x)\n", hr);
 
-    hr = IDirect3DRMMesh_GetClassName(pMesh, NULL, cname);
+    hr = IDirect3DRMMesh_GetClassName(mesh, NULL, cname);
     ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    hr = IDirect3DRMMesh_GetClassName(pMesh, NULL, NULL);
+    hr = IDirect3DRMMesh_GetClassName(mesh, NULL, NULL);
     ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
     size = 1;
-    hr = IDirect3DRMMesh_GetClassName(pMesh, &size, cname);
+    hr = IDirect3DRMMesh_GetClassName(mesh, &size, cname);
     ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
     size = sizeof(cname);
-    hr = IDirect3DRMMesh_GetClassName(pMesh, &size, cname);
+    hr = IDirect3DRMMesh_GetClassName(mesh, &size, cname);
     ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
     ok(size == sizeof("Mesh"), "wrong size: %u\n", size);
     ok(!strcmp(cname, "Mesh"), "Expected cname to be \"Mesh\", but got \"%s\"\n", cname);
 
-    IDirect3DRMMesh_Release(pMesh);
+    IDirect3DRMMesh_Release(mesh);
 
     IDirect3DRM_Release(d3drm);
 }
