@@ -81,6 +81,7 @@ int macdrv_err_on;
 @property (copy, nonatomic) NSArray* cursorFrames;
 @property (retain, nonatomic) NSTimer* cursorTimer;
 @property (retain, nonatomic) NSImage* applicationIcon;
+@property (readonly, nonatomic) BOOL inputSourceIsInputMethod;
 
     - (void) setupObservations;
     - (void) applicationDidBecomeActive:(NSNotification *)notification;
@@ -95,6 +96,19 @@ int macdrv_err_on;
     @synthesize keyboardType, lastFlagsChanged;
     @synthesize orderedWineWindows, applicationIcon;
     @synthesize cursorFrames, cursorTimer;
+
+    + (void) initialize
+    {
+        if (self == [WineApplicationController class])
+        {
+            NSDictionary* defaults = [NSDictionary dictionaryWithObjectsAndKeys:
+                                      @"", @"NSQuotedKeystrokeBinding",
+                                      @"", @"NSRepeatCountBinding",
+                                      [NSNumber numberWithBool:NO], @"ApplePressAndHoldEnabled",
+                                      nil];
+            [[NSUserDefaults standardUserDefaults] registerDefaults:defaults];
+        }
+    }
 
     + (WineApplicationController*) sharedController
     {
@@ -322,6 +336,8 @@ int macdrv_err_on;
     - (void) keyboardSelectionDidChange
     {
         TISInputSourceRef inputSource;
+
+        inputSourceIsInputMethodValid = FALSE;
 
         inputSource = TISCopyCurrentKeyboardLayoutInputSource();
         if (inputSource)
@@ -1227,6 +1243,25 @@ int macdrv_err_on;
         [NSTextInputContext self];
     }
 
+    - (BOOL) inputSourceIsInputMethod
+    {
+        if (!inputSourceIsInputMethodValid)
+        {
+            TISInputSourceRef inputSource = TISCopyCurrentKeyboardInputSource();
+            if (inputSource)
+            {
+                CFStringRef type = TISGetInputSourceProperty(inputSource, kTISPropertyInputSourceType);
+                inputSourceIsInputMethod = !CFEqual(type, kTISTypeKeyboardLayout);
+                CFRelease(inputSource);
+            }
+            else
+                inputSourceIsInputMethod = FALSE;
+            inputSourceIsInputMethodValid = TRUE;
+        }
+
+        return inputSourceIsInputMethod;
+    }
+
 
     /*
      * ---------- NSApplicationDelegate methods ----------
@@ -1645,4 +1680,18 @@ void macdrv_quit_reply(int reply)
     OnMainThread(^{
         [NSApp replyToApplicationShouldTerminate:reply];
     });
+}
+
+/***********************************************************************
+ *              macdrv_using_input_method
+ */
+int macdrv_using_input_method(void)
+{
+    __block BOOL ret;
+
+    OnMainThread(^{
+        ret = [[WineApplicationController sharedController] inputSourceIsInputMethod];
+    });
+
+    return ret;
 }

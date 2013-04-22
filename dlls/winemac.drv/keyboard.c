@@ -889,6 +889,53 @@ static BOOL match_keyboard_layout(HKL hkl)
 
 
 /***********************************************************************
+ *              macdrv_process_text_input
+ */
+BOOL macdrv_process_text_input(UINT vkey, UINT scan, UINT repeat, const BYTE *key_state, void *himc)
+{
+    struct macdrv_thread_data *thread_data = macdrv_thread_data();
+    unsigned int flags;
+    int keyc;
+    BOOL ret = FALSE;
+
+    TRACE("vkey 0x%04x scan 0x%04x repeat %u himc %p\n", vkey, scan, repeat, himc);
+
+    flags = thread_data->last_modifiers;
+    if (key_state[VK_SHIFT] & 0x80)
+        flags |= NX_SHIFTMASK;
+    else
+        flags &= ~(NX_SHIFTMASK | NX_DEVICELSHIFTKEYMASK | NX_DEVICERSHIFTKEYMASK);
+    if (key_state[VK_CAPITAL] & 0x01)
+        flags |= NX_ALPHASHIFTMASK;
+    else
+        flags &= ~NX_ALPHASHIFTMASK;
+    if (key_state[VK_CONTROL] & 0x80)
+        flags |= NX_CONTROLMASK;
+    else
+        flags &= ~(NX_CONTROLMASK | NX_DEVICELCTLKEYMASK | NX_DEVICERCTLKEYMASK);
+    if (key_state[VK_MENU] & 0x80)
+        flags |= NX_COMMANDMASK;
+    else
+        flags &= ~(NX_COMMANDMASK | NX_DEVICELCMDKEYMASK | NX_DEVICERCMDKEYMASK);
+
+    /* Find the Mac keycode corresponding to the scan code */
+    for (keyc = 0; keyc < sizeof(thread_data->keyc2vkey)/sizeof(thread_data->keyc2vkey[0]); keyc++)
+        if (thread_data->keyc2vkey[keyc] == vkey) break;
+
+    if (keyc >= sizeof(thread_data->keyc2vkey)/sizeof(thread_data->keyc2vkey[0]))
+        goto done;
+
+    TRACE("flags 0x%08x keyc 0x%04x\n", flags, keyc);
+
+    ret = macdrv_send_text_input_event(((scan & 0x8000) == 0), flags, repeat, keyc, himc);
+
+done:
+    TRACE(" -> %s\n", ret ? "TRUE" : "FALSE");
+    return ret;
+}
+
+
+/***********************************************************************
  *              ActivateKeyboardLayout (MACDRV.@)
  */
 HKL CDECL macdrv_ActivateKeyboardLayout(HKL hkl, UINT flags)

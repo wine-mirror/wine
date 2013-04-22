@@ -206,6 +206,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved)
     switch(reason)
     {
     case DLL_PROCESS_ATTACH:
+        IME_RegisterClasses(hinst);
         ret = process_attach();
         break;
     case DLL_THREAD_DETACH:

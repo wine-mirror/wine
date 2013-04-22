@@ -135,6 +135,7 @@ extern void macdrv_window_rejected_focus(const struct macdrv_event *event) DECLS
 extern void macdrv_beep(void) DECLSPEC_HIDDEN;
 extern void macdrv_set_application_icon(CFArrayRef images) DECLSPEC_HIDDEN;
 extern void macdrv_quit_reply(int reply) DECLSPEC_HIDDEN;
+extern int macdrv_using_input_method(void) DECLSPEC_HIDDEN;
 
 
 /* cursor */
@@ -156,6 +157,8 @@ enum {
     APP_DEACTIVATED,
     APP_QUIT_REQUESTED,
     DISPLAYS_CHANGED,
+    IM_SET_CURSOR_POS,
+    IM_SET_TEXT,
     KEY_PRESS,
     KEY_RELEASE,
     KEYBOARD_CHANGED,
@@ -195,6 +198,15 @@ typedef struct macdrv_event {
         struct {
             int activating;
         }                                           displays_changed;
+        struct {
+            void           *data;
+            unsigned int    pos;
+        }                                           im_set_cursor_pos;
+        struct {
+            void           *data;
+            CFStringRef     text;       /* new text or NULL if just completing existing text */
+            unsigned int    complete;   /* is completing text? */
+        }                                           im_set_text;
         struct {
             CGKeyCode                   keycode;
             CGEventFlags                modifiers;
@@ -348,6 +360,8 @@ extern void macdrv_set_view_window_and_frame(macdrv_view v, macdrv_window w, CGR
 extern void macdrv_add_view_opengl_context(macdrv_view v, macdrv_opengl_context c) DECLSPEC_HIDDEN;
 extern void macdrv_remove_view_opengl_context(macdrv_view v, macdrv_opengl_context c) DECLSPEC_HIDDEN;
 extern uint32_t macdrv_window_background_color(void) DECLSPEC_HIDDEN;
+extern int macdrv_send_text_input_event(int pressed, unsigned int flags, int repeat, int keyc,
+                                        void* data) DECLSPEC_HIDDEN;
 
 
 /* keyboard */

@@ -54,6 +54,9 @@
 
     NSTimer* liveResizeDisplayTimer;
 
+    void* imeData;
+    BOOL commandDone;
+
     BOOL causing_becomeKeyWindow;
     BOOL ignore_windowMiniaturize;
     BOOL ignore_windowDeminiaturize;

@@ -453,6 +453,10 @@ void macdrv_release_event(macdrv_event *event)
 
         switch (event->type)
         {
+            case IM_SET_TEXT:
+                if (event->im_set_text.text)
+                    CFRelease(event->im_set_text.text);
+                break;
             case KEYBOARD_CHANGED:
                 CFRelease(event->keyboard_changed.uchr);
                 break;

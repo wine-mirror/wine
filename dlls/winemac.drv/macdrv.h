@@ -64,6 +64,8 @@ static inline const char *wine_dbgstr_cgrect(CGRect cgrect)
                             CGRectGetMaxX(cgrect), CGRectGetMaxY(cgrect));
 }
 
+extern const char* debugstr_cf(CFTypeRef t) DECLSPEC_HIDDEN;
+
 
 /**************************************************************************
  * Mac GDI driver
@@ -187,5 +189,18 @@ extern CGImageRef create_cgimage_from_icon(HANDLE icon, int width, int height) D
 extern CFArrayRef create_app_icon_images(void) DECLSPEC_HIDDEN;
 
 extern void macdrv_status_item_clicked(const macdrv_event *event) DECLSPEC_HIDDEN;
+
+
+/**************************************************************************
+ * Mac IME driver
+ */
+
+extern void IME_RegisterClasses(HINSTANCE hImeInst) DECLSPEC_HIDDEN;
+
+extern BOOL macdrv_process_text_input(UINT vkey, UINT scan, UINT repeat, const BYTE *key_state,
+                                      void *himc) DECLSPEC_HIDDEN;
+
+extern void macdrv_im_set_cursor_pos(const macdrv_event *event) DECLSPEC_HIDDEN;
+extern void macdrv_im_set_text(const macdrv_event *event) DECLSPEC_HIDDEN;
 
 #endif  /* __WINE_MACDRV_H */

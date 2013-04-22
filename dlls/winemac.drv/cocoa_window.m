@@ -118,10 +118,13 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 }
 
 
-@interface WineContentView : NSView
+@interface WineContentView : NSView <NSTextInputClient>
 {
     NSMutableArray* glContexts;
     NSMutableArray* pendingGlContexts;
+
+    NSMutableAttributedString* markedText;
+    NSRange markedTextSelection;
 }
 
     - (void) addGLContext:(WineOpenGLContext*)context;
@@ -154,6 +157,9 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
 @property (readwrite, nonatomic) NSInteger levelWhenActive;
 
+@property (assign, nonatomic) void* imeData;
+@property (nonatomic) BOOL commandDone;
+
 @end
 
 
@@ -161,6 +167,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
     - (void) dealloc
     {
+        [markedText release];
         [glContexts release];
         [pendingGlContexts release];
         [super dealloc];
@@ -289,6 +296,147 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         return YES;
     }
 
+    - (BOOL)acceptsFirstResponder
+    {
+        return [[self window] contentView] == self;
+    }
+
+    - (void) completeText:(NSString*)text
+    {
+        macdrv_event* event;
+        WineWindow* window = (WineWindow*)[self window];
+
+        event = macdrv_create_event(IM_SET_TEXT, window);
+        event->im_set_text.data = [window imeData];
+        event->im_set_text.text = (CFStringRef)[text copy];
+        event->im_set_text.complete = TRUE;
+
+        [[window queue] postEvent:event];
+
+        macdrv_release_event(event);
+
+        [markedText deleteCharactersInRange:NSMakeRange(0, [markedText length])];
+        markedTextSelection = NSMakeRange(0, 0);
+        [[self inputContext] discardMarkedText];
+    }
+
+    /*
+     * ---------- NSTextInputClient methods ----------
+     */
+    - (NSTextInputContext*) inputContext
+    {
+        if (!markedText)
+            markedText = [[NSMutableAttributedString alloc] init];
+        return [super inputContext];
+    }
+
+    - (void) insertText:(id)string replacementRange:(NSRange)replacementRange
+    {
+        if ([string isKindOfClass:[NSAttributedString class]])
+            string = [string string];
+
+        if ([string isKindOfClass:[NSString class]])
+            [self completeText:string];
+    }
+
+    - (void) doCommandBySelector:(SEL)aSelector
+    {
+        [(WineWindow*)[self window] setCommandDone:TRUE];
+    }
+
+    - (void) setMarkedText:(id)string selectedRange:(NSRange)selectedRange replacementRange:(NSRange)replacementRange
+    {
+        if ([string isKindOfClass:[NSAttributedString class]])
+            string = [string string];
+
+        if ([string isKindOfClass:[NSString class]])
+        {
+            macdrv_event* event;
+            WineWindow* window = (WineWindow*)[self window];
+
+            if (replacementRange.location == NSNotFound)
+                replacementRange = NSMakeRange(0, [markedText length]);
+
+            [markedText replaceCharactersInRange:replacementRange withString:string];
+            markedTextSelection = selectedRange;
+            markedTextSelection.location += replacementRange.location;
+
+            event = macdrv_create_event(IM_SET_TEXT, window);
+            event->im_set_text.data = [window imeData];
+            event->im_set_text.text = (CFStringRef)[[markedText string] copy];
+            event->im_set_text.complete = FALSE;
+
+            [[window queue] postEvent:event];
+
+            macdrv_release_event(event);
+
+            event = macdrv_create_event(IM_SET_CURSOR_POS, window);
+            event->im_set_cursor_pos.data = [window imeData];
+            event->im_set_cursor_pos.pos = markedTextSelection.location;
+
+            [[window queue] postEvent:event];
+
+            macdrv_release_event(event);
+        }
+    }
+
+    - (void) unmarkText
+    {
+        [self completeText:nil];
+    }
+
+    - (NSRange) selectedRange
+    {
+        return markedTextSelection;
+    }
+
+    - (NSRange) markedRange
+    {
+        NSRange range = NSMakeRange(0, [markedText length]);
+        if (!range.length)
+            range.location = NSNotFound;
+        return range;
+    }
+
+    - (BOOL) hasMarkedText
+    {
+        return [markedText length] > 0;
+    }
+
+    - (NSAttributedString*) attributedSubstringForProposedRange:(NSRange)aRange actualRange:(NSRangePointer)actualRange
+    {
+        if (aRange.location >= [markedText length])
+            return nil;
+
+        aRange = NSIntersectionRange(aRange, NSMakeRange(0, [markedText length]));
+        if (actualRange)
+            *actualRange = aRange;
+        return [markedText attributedSubstringFromRange:aRange];
+    }
+
+    - (NSArray*) validAttributesForMarkedText
+    {
+        return [NSArray array];
+    }
+
+    - (NSRect) firstRectForCharacterRange:(NSRange)aRange actualRange:(NSRangePointer)actualRange
+    {
+        aRange = NSIntersectionRange(aRange, NSMakeRange(0, [markedText length]));
+        if (actualRange)
+            *actualRange = aRange;
+        return NSMakeRect(100, 100, aRange.length ? 1 : 0, 12);
+    }
+
+    - (NSUInteger) characterIndexForPoint:(NSPoint)aPoint
+    {
+        return NSNotFound;
+    }
+
+    - (NSInteger) windowLevel
+    {
+        return [[self window] level];
+    }
+
 @end
 
 
@@ -300,6 +448,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
     @synthesize colorKeyed, colorKeyRed, colorKeyGreen, colorKeyBlue;
     @synthesize usePerPixelAlpha;
     @synthesize levelWhenActive;
+    @synthesize imeData, commandDone;
 
     + (WineWindow*) createWindowWithFeatures:(const struct macdrv_window_features*)wf
                                  windowFrame:(NSRect)window_frame
@@ -356,6 +505,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         [contentView addTrackingArea:trackingArea];
 
         [window setContentView:contentView];
+        [window setInitialFirstResponder:contentView];
 
         return window;
     }
@@ -1843,4 +1993,52 @@ uint32_t macdrv_window_background_color(void)
     });
 
     return result;
+}
+
+/***********************************************************************
+ *              macdrv_send_text_input_event
+ */
+int macdrv_send_text_input_event(int pressed, unsigned int flags, int repeat, int keyc, void* data)
+{
+    __block BOOL ret;
+
+    OnMainThread(^{
+        WineWindow* window = (WineWindow*)[NSApp keyWindow];
+        if (![window isKindOfClass:[WineWindow class]])
+        {
+            window = (WineWindow*)[NSApp mainWindow];
+            if (![window isKindOfClass:[WineWindow class]] && [[NSApp orderedWineWindows] count])
+            {
+                window = [[NSApp orderedWineWindows] objectAtIndex:0];
+                if (![window isKindOfClass:[WineWindow class]])
+                    window = nil;
+            }
+        }
+
+        if (window)
+        {
+            NSUInteger localFlags = flags;
+            CGEventRef c;
+            NSEvent* event;
+
+            window.imeData = data;
+            fix_device_modifiers_by_generic(&localFlags);
+
+            // An NSEvent created with +keyEventWithType:... is internally marked
+            // as synthetic and doesn't get sent through input methods.  But one
+            // created from a CGEvent doesn't have that problem.
+            c = CGEventCreateKeyboardEvent(NULL, keyc, pressed);
+            CGEventSetFlags(c, localFlags);
+            CGEventSetIntegerValueField(c, kCGKeyboardEventAutorepeat, repeat);
+            event = [NSEvent eventWithCGEvent:c];
+            CFRelease(c);
+
+            window.commandDone = FALSE;
+            ret = [[[window contentView] inputContext] handleEvent:event] && !window.commandDone;
+        }
+        else
+            ret = FALSE;
+    });
+
+    return ret;
 }
