@@ -2733,12 +2733,9 @@ static void test_save_history(IUnknown *unk)
 static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID *pguidCmdGroup,
         DWORD nCmdID, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    if((!pguidCmdGroup || !IsEqualGUID(pguidCmdGroup, &CGID_Explorer))
-       && (!pguidCmdGroup || !IsEqualGUID(&CGID_ShellDocView, pguidCmdGroup)
-           || (nCmdID != 63 && (!is_refresh || nCmdID != 37))))
+    if(!pguidCmdGroup) {
         test_readyState(NULL);
 
-    if(!pguidCmdGroup) {
         switch(nCmdID) {
         case OLECMDID_SETPROGRESSMAX:
             CHECK_EXPECT2(Exec_SETPROGRESSMAX);
@@ -2825,6 +2822,8 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
     }
 
     if(IsEqualGUID(&CGID_ShellDocView, pguidCmdGroup)) {
+        if(nCmdID != 63 && (!is_refresh || nCmdID != 37))
+            test_readyState(NULL);
         ok(nCmdexecopt == 0, "nCmdexecopts=%08x\n", nCmdexecopt);
 
         switch(nCmdID) {
@@ -2938,6 +2937,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
     }
 
     if(IsEqualGUID(&CGID_MSHTML, pguidCmdGroup)) {
+        test_readyState(NULL);
         ok(nCmdexecopt == 0, "nCmdexecopts=%08x\n", nCmdexecopt);
 
         switch(nCmdID) {
@@ -2955,6 +2955,9 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         switch(nCmdID) {
         case DOCHOST_DOCCANNAVIGATE:
             CHECK_EXPECT(Exec_DOCCANNAVIGATE);
+
+            test_readyState(NULL);
+
             ok(pvaIn != NULL, "pvaIn == NULL\n");
             ok(pvaOut == NULL, "pvaOut != NULL\n");
             ok(V_VT(pvaIn) == VT_UNKNOWN, "V_VT(pvaIn) != VT_UNKNOWN\n");
@@ -2966,6 +2969,8 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             LONG ind=0;
             VARIANT var;
             HRESULT hres;
+
+            test_readyState(NULL);
 
             ok(pvaIn != NULL, "pvaIn == NULL\n");
             ok(pvaOut != NULL || broken(!pvaOut), "pvaOut != NULL\n");
@@ -3018,6 +3023,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
     }
 
     if(IsEqualGUID(&CGID_Explorer, pguidCmdGroup)) {
+        test_readyState(NULL);
         ok(nCmdexecopt == 0, "nCmdexecopts=%08x\n", nCmdexecopt);
 
         switch(nCmdID) {
@@ -3047,6 +3053,8 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
     }
 
     if(IsEqualGUID(&CGID_DocHostCommandHandler, pguidCmdGroup)) {
+        test_readyState(NULL);
+
         switch (nCmdID) {
         case OLECMDID_PAGEACTIONBLOCKED: /* win2k3 */
             SET_EXPECT(SetStatusText);
