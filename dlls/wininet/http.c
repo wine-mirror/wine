@@ -4607,8 +4607,9 @@ static void http_process_keep_alive(http_request_t *req)
 {
     int index;
 
-    index = HTTP_GetCustomHeaderIndex(req, szConnection, 0, FALSE);
-    if(index != -1)
+    if ((index = HTTP_GetCustomHeaderIndex(req, szConnection, 0, FALSE)) != -1)
+        req->netconn->keep_alive = !strcmpiW(req->custHeaders[index].lpszValue, szKeepAlive);
+    else if ((index = HTTP_GetCustomHeaderIndex(req, szProxy_Connection, 0, FALSE)) != -1)
         req->netconn->keep_alive = !strcmpiW(req->custHeaders[index].lpszValue, szKeepAlive);
     else
         req->netconn->keep_alive = !strcmpiW(req->version, g_szHttp1_1);
