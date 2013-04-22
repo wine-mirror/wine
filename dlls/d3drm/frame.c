@@ -69,7 +69,7 @@ typedef struct {
     IDirect3DRMVisualArray IDirect3DRMVisualArray_iface;
     LONG ref;
     ULONG size;
-    LPDIRECT3DRMVISUAL* visuals;
+    IDirect3DRMVisual **visuals;
 } IDirect3DRMVisualArrayImpl;
 
 typedef struct {
@@ -275,7 +275,8 @@ static DWORD WINAPI IDirect3DRMVisualArrayImpl_GetSize(IDirect3DRMVisualArray* i
 }
 
 /*** IDirect3DRMVisualArray methods ***/
-static HRESULT WINAPI IDirect3DRMVisualArrayImpl_GetElement(IDirect3DRMVisualArray* iface, DWORD index, LPDIRECT3DRMVISUAL* visual)
+static HRESULT WINAPI IDirect3DRMVisualArrayImpl_GetElement(IDirect3DRMVisualArray *iface,
+        DWORD index, IDirect3DRMVisual **visual)
 {
     IDirect3DRMVisualArrayImpl *This = (IDirect3DRMVisualArrayImpl*)iface;
 
@@ -675,14 +676,13 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_AddRotation(IDirect3DRMFrame2* iface
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_AddVisual(IDirect3DRMFrame2* iface,
-                                                      LPDIRECT3DRMVISUAL vis)
+static HRESULT WINAPI IDirect3DRMFrame2Impl_AddVisual(IDirect3DRMFrame2 *iface, IDirect3DRMVisual *visual)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
+    IDirect3DRMFrameImpl *frame = impl_from_IDirect3DRMFrame2(iface);
 
-    TRACE("(%p/%p)->(%p)\n", iface, This, vis);
+    TRACE("iface %p, visual %p.\n", iface, visual);
 
-    return IDirect3DRMFrame3_AddVisual(&This->IDirect3DRMFrame3_iface, (LPUNKNOWN)vis);
+    return IDirect3DRMFrame3_AddVisual(&frame->IDirect3DRMFrame3_iface, (IUnknown *)visual);
 }
 
 static HRESULT WINAPI IDirect3DRMFrame2Impl_GetChildren(IDirect3DRMFrame2* iface,
@@ -846,8 +846,7 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_GetVisuals(IDirect3DRMFrame2* iface,
     if (This->nb_visuals)
     {
         ULONG i;
-        obj->visuals = HeapAlloc(GetProcessHeap(), 0, This->nb_visuals * sizeof(LPDIRECT3DRMVISUAL));
-        if (!obj->visuals)
+        if (!(obj->visuals = HeapAlloc(GetProcessHeap(), 0, This->nb_visuals * sizeof(*obj->visuals))))
             return E_OUTOFMEMORY;
         for (i = 0; i < This->nb_visuals; i++)
         {
@@ -945,14 +944,13 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_DeleteMoveCallback(IDirect3DRMFrame2
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_DeleteVisual(IDirect3DRMFrame2* iface,
-                                                         LPDIRECT3DRMVISUAL vis)
+static HRESULT WINAPI IDirect3DRMFrame2Impl_DeleteVisual(IDirect3DRMFrame2 *iface, IDirect3DRMVisual *visual)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
+    IDirect3DRMFrameImpl *frame = impl_from_IDirect3DRMFrame2(iface);
 
-    TRACE("(%p/%p)->(%p)\n", iface, This, vis);
+    TRACE("iface %p, visual %p.\n", iface, visual);
 
-    return IDirect3DRMFrame3_DeleteVisual(&This->IDirect3DRMFrame3_iface, (LPUNKNOWN)vis);
+    return IDirect3DRMFrame3_DeleteVisual(&frame->IDirect3DRMFrame3_iface, (IUnknown *)visual);
 }
 
 static D3DCOLOR WINAPI IDirect3DRMFrame2Impl_GetSceneBackground(IDirect3DRMFrame2* iface)

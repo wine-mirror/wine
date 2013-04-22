@@ -77,8 +77,9 @@ DECLARE_INTERFACE_(IDirect3DRM,IUnknown)
             int width, int height, IDirect3DRMDevice **device) PURE;
     STDMETHOD(CreateTextureFromSurface)(THIS_ IDirectDrawSurface *surface,
             IDirect3DRMTexture **texture) PURE;
-    STDMETHOD(CreateShadow)(THIS_ LPDIRECT3DRMVISUAL, LPDIRECT3DRMLIGHT, D3DVALUE px, D3DVALUE py, D3DVALUE pz,
-        D3DVALUE nx, D3DVALUE ny, D3DVALUE nz, LPDIRECT3DRMVISUAL *) PURE;
+    STDMETHOD(CreateShadow)(THIS_ IDirect3DRMVisual *visual, IDirect3DRMLight *light,
+            D3DVALUE px, D3DVALUE py, D3DVALUE pz, D3DVALUE nx, D3DVALUE ny, D3DVALUE nz,
+            IDirect3DRMVisual **shadow) PURE;
     STDMETHOD(CreateViewport)(THIS_ IDirect3DRMDevice *device, IDirect3DRMFrame *camera,
             DWORD x, DWORD y, DWORD width, DWORD height, IDirect3DRMViewport **viewport) PURE;
     STDMETHOD(CreateWrap)(THIS_ D3DRMWRAPTYPE type, IDirect3DRMFrame *reference, D3DVALUE ox, D3DVALUE oy, D3DVALUE oz,
@@ -214,8 +215,9 @@ DECLARE_INTERFACE_(IDirect3DRM2,IUnknown)
             int width, int height, IDirect3DRMDevice2 **device) PURE;
     STDMETHOD(CreateTextureFromSurface)(THIS_ IDirectDrawSurface *surface,
             IDirect3DRMTexture2 **texture) PURE;
-    STDMETHOD(CreateShadow)(THIS_ LPDIRECT3DRMVISUAL, LPDIRECT3DRMLIGHT, D3DVALUE px, D3DVALUE py, D3DVALUE pz,
-        D3DVALUE nx, D3DVALUE ny, D3DVALUE nz, LPDIRECT3DRMVISUAL *) PURE;
+    STDMETHOD(CreateShadow)(THIS_ IDirect3DRMVisual *visual, IDirect3DRMLight *light,
+            D3DVALUE px, D3DVALUE py, D3DVALUE pz, D3DVALUE nx, D3DVALUE ny, D3DVALUE nz,
+            IDirect3DRMVisual **shadow) PURE;
     STDMETHOD(CreateViewport)(THIS_ IDirect3DRMDevice *device, IDirect3DRMFrame *camera,
             DWORD x, DWORD y, DWORD width, DWORD height, IDirect3DRMViewport **viewport) PURE;
     STDMETHOD(CreateWrap)(THIS_ D3DRMWRAPTYPE type, IDirect3DRMFrame *reference, D3DVALUE ox, D3DVALUE oy, D3DVALUE oz,
@@ -380,7 +382,7 @@ DECLARE_INTERFACE_(IDirect3DRM3,IUnknown)
     STDMETHOD(CreateProgressiveMesh)(THIS_ LPDIRECT3DRMPROGRESSIVEMESH) PURE;
     STDMETHOD(RegisterClient)(THIS_ REFGUID rguid, LPDWORD lpdwID) PURE;
     STDMETHOD(UnregisterClient)(THIS_ REFGUID rguid) PURE;
-    STDMETHOD(CreateClippedVisual)(THIS_ LPDIRECT3DRMVISUAL, LPDIRECT3DRMCLIPPEDVISUAL *) PURE;
+    STDMETHOD(CreateClippedVisual)(THIS_ IDirect3DRMVisual *visual, IDirect3DRMClippedVisual **clipped_visual) PURE;
     STDMETHOD(SetOptions)(THIS_ DWORD) PURE;
     STDMETHOD(GetOptions)(THIS_ LPDWORD) PURE;
 };

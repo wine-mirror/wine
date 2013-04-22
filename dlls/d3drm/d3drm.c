@@ -281,11 +281,12 @@ static HRESULT WINAPI IDirect3DRMImpl_CreateTextureFromSurface(IDirect3DRM *ifac
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMImpl_CreateShadow(IDirect3DRM* iface, LPDIRECT3DRMVISUAL pVisual, LPDIRECT3DRMLIGHT pLight, D3DVALUE px, D3DVALUE py, D3DVALUE pz, D3DVALUE nx, D3DVALUE ny, D3DVALUE nz, LPDIRECT3DRMVISUAL * ppVisual)
+static HRESULT WINAPI IDirect3DRMImpl_CreateShadow(IDirect3DRM *iface, IDirect3DRMVisual *visual,
+        IDirect3DRMLight *light, D3DVALUE px, D3DVALUE py, D3DVALUE pz, D3DVALUE nx, D3DVALUE ny, D3DVALUE nz,
+        IDirect3DRMVisual **shadow)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM(iface);
-
-    FIXME("(%p/%p)->(%p,%p,%f,%f,%f,%f,%f,%f,%p): stub\n", iface, This, pVisual, pLight, px, py, pz, nx, ny, nz, ppVisual);
+    FIXME("iface %p, visual %p, light %p, px %.8e, py %.8e, pz %.8e, nx %.8e, ny %.8e, nz %.8e, shadow %p stub!\n",
+            iface, visual, light, px, py, pz, nx, ny, nz, shadow);
 
     return E_NOTIMPL;
 }
@@ -665,16 +666,12 @@ static HRESULT WINAPI IDirect3DRM2Impl_CreateTextureFromSurface(IDirect3DRM2 *if
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRM2Impl_CreateShadow(IDirect3DRM2* iface, LPDIRECT3DRMVISUAL pVisual,
-                                                    LPDIRECT3DRMLIGHT pLight,
-                                                    D3DVALUE px, D3DVALUE py, D3DVALUE pz,
-                                                    D3DVALUE nx, D3DVALUE ny, D3DVALUE nz,
-                                                    LPDIRECT3DRMVISUAL * ppVisual)
+static HRESULT WINAPI IDirect3DRM2Impl_CreateShadow(IDirect3DRM2 *iface, IDirect3DRMVisual *visual,
+        IDirect3DRMLight *light, D3DVALUE px, D3DVALUE py, D3DVALUE pz, D3DVALUE nx, D3DVALUE ny, D3DVALUE nz,
+        IDirect3DRMVisual **shadow)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM2(iface);
-
-    FIXME("(%p/%p)->(%p,%p,%f,%f,%f,%f,%f,%f,%p): stub\n", iface, This, pVisual, pLight, px, py, pz,
-                                                           nx, ny, nz, ppVisual);
+    FIXME("iface %p, visual %p, light %p, px %.8e, py %.8e, pz %.8e, nx %.8e, ny %.8e, nz %.8e, shadow %p stub!\n",
+            iface, visual, light, px, py, pz, nx, ny, nz, shadow);
 
     return E_NOTIMPL;
 }
@@ -1580,13 +1577,10 @@ static HRESULT WINAPI IDirect3DRM3Impl_UnregisterClient(IDirect3DRM3* iface, REF
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRM3Impl_CreateClippedVisual(IDirect3DRM3* iface,
-                                                           LPDIRECT3DRMVISUAL vis,
-                                                           LPDIRECT3DRMCLIPPEDVISUAL* clippedvis)
+static HRESULT WINAPI IDirect3DRM3Impl_CreateClippedVisual(IDirect3DRM3 *iface,
+        IDirect3DRMVisual *visual, IDirect3DRMClippedVisual **clipped_visual)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM3(iface);
-
-    FIXME("(%p/%p)->(%p, %p): stub\n", iface, This, vis, clippedvis);
+    FIXME("iface %p, visual %p, clipped_visual %p stub!\n", iface, visual, clipped_visual);
 
     return E_NOTIMPL;
 }

@@ -676,8 +676,8 @@ static void test_Frame(void)
     IDirect3DRMFrame *pFrameTmp;
     LPDIRECT3DRMFRAMEARRAY pArray;
     LPDIRECT3DRMMESHBUILDER pMeshBuilder;
-    LPDIRECT3DRMVISUAL pVisual1;
-    LPDIRECT3DRMVISUAL pVisualTmp;
+    IDirect3DRMVisual *visual1;
+    IDirect3DRMVisual *visual_tmp;
     LPDIRECT3DRMVISUALARRAY pVisualArray;
     LPDIRECT3DRMLIGHT pLight1;
     LPDIRECT3DRMLIGHT pLightTmp;
@@ -909,13 +909,13 @@ static void test_Frame(void)
     /* Create Visual */
     hr = IDirect3DRM_CreateMeshBuilder(d3drm, &pMeshBuilder);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMMeshBuilder interface (hr = %x)\n", hr);
-    pVisual1 = (LPDIRECT3DRMVISUAL)pMeshBuilder;
+    visual1 = (IDirect3DRMVisual *)pMeshBuilder;
 
     /* Add Visual to first parent */
-    hr = IDirect3DRMFrame_AddVisual(pFrameP1, pVisual1);
+    hr = IDirect3DRMFrame_AddVisual(pFrameP1, visual1);
     ok(hr == D3DRM_OK, "Cannot add visual (hr = %x)\n", hr);
     CHECK_REFCOUNT(pFrameP1, 3);
-    CHECK_REFCOUNT(pVisual1, 2);
+    CHECK_REFCOUNT(visual1, 2);
 
     pVisualArray = NULL;
     hr = IDirect3DRMFrame_GetVisuals(pFrameP1, &pVisualArray);
@@ -924,15 +924,15 @@ static void test_Frame(void)
     {
         count = IDirect3DRMVisualArray_GetSize(pVisualArray);
         ok(count == 1, "count = %u\n", count);
-        hr = IDirect3DRMVisualArray_GetElement(pVisualArray, 0, &pVisualTmp);
+        hr = IDirect3DRMVisualArray_GetElement(pVisualArray, 0, &visual_tmp);
         ok(hr == D3DRM_OK, "Cannot get element (hr = %x)\n", hr);
-        ok(pVisualTmp == pVisual1, "pVisualTmp = %p\n", pVisualTmp);
-        IDirect3DRMVisual_Release(pVisualTmp);
+        ok(visual_tmp == visual1, "visual_tmp = %p\n", visual_tmp);
+        IDirect3DRMVisual_Release(visual_tmp);
         IDirect3DRMVisualArray_Release(pVisualArray);
     }
 
     /* Delete Visual */
-    hr = IDirect3DRMFrame_DeleteVisual(pFrameP1, pVisual1);
+    hr = IDirect3DRMFrame_DeleteVisual(pFrameP1, visual1);
     ok(hr == D3DRM_OK, "Cannot delete visual (hr = %x)\n", hr);
     CHECK_REFCOUNT(pFrameP1, 3);
     IDirect3DRMMeshBuilder_Release(pMeshBuilder);
