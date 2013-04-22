@@ -165,11 +165,39 @@ static inline BOOL is_in_rect( const RECT *rect, int x, int y )
  * the buffers together
  */
 
-typedef struct _POINTBLOCK {
+struct point_block
+{
     POINT pts[NUMPTSTOBUFFER];
-    struct _POINTBLOCK *next;
-} POINTBLOCK;
+    int count;
+    struct point_block *next;
+};
 
+static struct point_block *add_point( struct point_block *block, int x, int y )
+{
+    if (block->count == NUMPTSTOBUFFER)
+    {
+        struct point_block *new = HeapAlloc( GetProcessHeap(), 0, sizeof(*new) );
+        if (!new) return NULL;
+        block->next = new;
+        new->count = 0;
+        new->next = NULL;
+        block = new;
+    }
+    block->pts[block->count].x = x;
+    block->pts[block->count].y = y;
+    block->count++;
+    return block;
+}
+
+static void free_point_blocks( struct point_block *block )
+{
+    while (block)
+    {
+	struct point_block *tmp = block->next;
+	HeapFree( GetProcessHeap(), 0, block );
+	block = tmp;
+    }
+}
 
 
 /*
@@ -2665,33 +2693,30 @@ static void REGION_FreeStorage(ScanLineListBlock *pSLLBlock)
  *
  *     Create an array of rectangles from a list of points.
  */
-static BOOL REGION_PtsToRegion(int numFullPtBlocks, int iCurPtBlock,
-                               POINTBLOCK *FirstPtBlock, WINEREGION *reg)
+static BOOL REGION_PtsToRegion( struct point_block *FirstPtBlock, WINEREGION *reg )
 {
     RECT *rects;
     POINT *pts;
-    POINTBLOCK *CurPtBlock;
+    struct point_block *pb;
     int i;
     RECT *extents;
     INT numRects;
 
     extents = &reg->extents;
 
-    numRects = ((numFullPtBlocks * NUMPTSTOBUFFER) + iCurPtBlock) >> 1;
+    for (pb = FirstPtBlock, numRects = 0; pb; pb = pb->next) numRects += pb->count;
     if (!init_region( reg, numRects )) return FALSE;
 
     reg->size = numRects;
-    CurPtBlock = FirstPtBlock;
     rects = reg->rects - 1;
     numRects = 0;
     extents->left = LARGE_COORDINATE,  extents->right = SMALL_COORDINATE;
 
-    for ( ; numFullPtBlocks >= 0; numFullPtBlocks--) {
+    for (pb = FirstPtBlock; pb; pb = pb->next)
+    {
 	/* the loop uses 2 points per iteration */
-	i = NUMPTSTOBUFFER >> 1;
-	if (!numFullPtBlocks)
-	    i = iCurPtBlock >> 1;
-	for (pts = CurPtBlock->pts; i--; pts += 2) {
+	i = pb->count / 2;
+	for (pts = pb->pts; i--; pts += 2) {
 	    if (pts->x == pts[1].x)
 		continue;
 	    if (numRects && pts->x == rects->left && pts->y == rects->bottom &&
@@ -2710,7 +2735,6 @@ static BOOL REGION_PtsToRegion(int numFullPtBlocks, int iCurPtBlock,
 	    if (rects->right > extents->right)
 		extents->right = rects->right;
         }
-	CurPtBlock = CurPtBlock->next;
     }
 
     if (numRects) {
@@ -2737,19 +2761,15 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
     WINEREGION *obj;
     EdgeTableEntry *pAET;            /* Active Edge Table       */
     INT y;                           /* current scanline        */
-    int iPts = 0;                    /* number of pts in buffer */
     EdgeTableEntry *pWETE;           /* Winding Edge Table Entry*/
     ScanLineList *pSLL;              /* current scanLineList    */
-    POINT *pts;                      /* output buffer           */
     EdgeTableEntry *pPrevAET;        /* ptr to previous AET     */
     EdgeTable ET;                    /* header node for ET      */
     EdgeTableEntry AET;              /* header node for AET     */
     EdgeTableEntry *pETEs;           /* EdgeTableEntries pool   */
     ScanLineListBlock SLLBlock;      /* header for scanlinelist */
     int fixWAET = FALSE;
-    POINTBLOCK FirstPtBlock, *curPtBlock; /* PtBlock buffers    */
-    POINTBLOCK *tmpPtBlock;
-    int numFullPtBlocks = 0;
+    struct point_block FirstPtBlock, *block; /* PtBlock buffers    */
     INT poly, total;
 
     TRACE("%p, count %d, polygons %d, mode %d\n", Pts, *Count, nbpolygons, mode);
@@ -2774,10 +2794,11 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
     if (! (pETEs = HeapAlloc( GetProcessHeap(), 0, sizeof(EdgeTableEntry) * total )))
 	return 0;
 
-    pts = FirstPtBlock.pts;
     REGION_CreateETandAET(Count, nbpolygons, Pts, &ET, &AET, pETEs, &SLLBlock);
     pSLL = ET.scanlines.next;
-    curPtBlock = &FirstPtBlock;
+    block = &FirstPtBlock;
+    FirstPtBlock.count = 0;
+    FirstPtBlock.next  = NULL;
 
     if (mode != WINDING) {
         /*
@@ -2799,21 +2820,8 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
              *  for each active edge
              */
             while (pAET) {
-                pts->x = pAET->bres.minor_axis,  pts->y = y;
-                pts++, iPts++;
-
-                /*
-                 *  send out the buffer
-                 */
-                if (iPts == NUMPTSTOBUFFER) {
-                    tmpPtBlock = HeapAlloc( GetProcessHeap(), 0, sizeof(POINTBLOCK));
-		    if(!tmpPtBlock) goto done;
-                    curPtBlock->next = tmpPtBlock;
-                    curPtBlock = tmpPtBlock;
-                    pts = curPtBlock->pts;
-                    numFullPtBlocks++;
-                    iPts = 0;
-                }
+                block = add_point( block, pAET->bres.minor_axis, y );
+                if (!block) goto done;
                 EVALUATEEDGEEVENODD(pAET, pPrevAET, y);
             }
             REGION_InsertionSort(&AET);
@@ -2846,22 +2854,8 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
                  *  are in the Winding active edge table.
                  */
                 if (pWETE == pAET) {
-                    pts->x = pAET->bres.minor_axis,  pts->y = y;
-                    pts++, iPts++;
-
-                    /*
-                     *  send out the buffer
-                     */
-                    if (iPts == NUMPTSTOBUFFER) {
-                        tmpPtBlock = HeapAlloc( GetProcessHeap(), 0,
-					       sizeof(POINTBLOCK) );
-			if(!tmpPtBlock) goto done;
-                        curPtBlock->next = tmpPtBlock;
-                        curPtBlock = tmpPtBlock;
-                        pts = curPtBlock->pts;
-                        numFullPtBlocks++;
-                        iPts = 0;
-                    }
+                    block = add_point( block, pAET->bres.minor_axis, y );
+                    if (!block) goto done;
                     pWETE = pWETE->nextWETE;
                 }
                 EVALUATEEDGEWINDING(pAET, pPrevAET, y, fixWAET);
@@ -2880,7 +2874,7 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
 
     if (!(obj = HeapAlloc( GetProcessHeap(), 0, sizeof(*obj) ))) goto done;
 
-    if (!REGION_PtsToRegion(numFullPtBlocks, iPts, &FirstPtBlock, obj))
+    if (!REGION_PtsToRegion(&FirstPtBlock, obj))
     {
         HeapFree( GetProcessHeap(), 0, obj );
         goto done;
@@ -2893,11 +2887,7 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
 
 done:
     REGION_FreeStorage(SLLBlock.next);
-    for (curPtBlock = FirstPtBlock.next; --numFullPtBlocks >= 0;) {
-	tmpPtBlock = curPtBlock->next;
-	HeapFree( GetProcessHeap(), 0, curPtBlock );
-	curPtBlock = tmpPtBlock;
-    }
+    free_point_blocks( FirstPtBlock.next );
     HeapFree( GetProcessHeap(), 0, pETEs );
     return hrgn;
 }
