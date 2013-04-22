@@ -31,6 +31,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(extrac32);
 
 static BOOL force_mode;
+static BOOL show_content;
 
 static void create_target_directory(LPWSTR Target)
 {
@@ -56,12 +57,37 @@ static UINT WINAPI ExtCabCallback(PVOID Context, UINT Notification, UINT_PTR Par
     {
         case SPFILENOTIFY_FILEINCABINET:
             pInfo = (FILE_IN_CABINET_INFO_W*)Param1;
-            lstrcpyW(pInfo->FullTargetName, (LPCWSTR)Context);
-            lstrcatW(pInfo->FullTargetName, pInfo->NameInCabinet);
-            /* SetupIterateCabinet() doesn't create full path to target by itself,
-               so we should do it manually */
-            create_target_directory(pInfo->FullTargetName);
-            return FILEOP_DOIT;
+            if(show_content)
+            {
+                FILETIME ft;
+                SYSTEMTIME st;
+                CHAR date[12], time[12], buf[2 * MAX_PATH];
+                int count;
+                DWORD dummy;
+
+                /* DosDate and DosTime already represented at local time */
+                DosDateTimeToFileTime(pInfo->DosDate, pInfo->DosTime, &ft);
+                FileTimeToSystemTime(&ft, &st);
+                GetDateFormatA(0, 0, &st, "MM'-'dd'-'yyyy", date, sizeof date);
+                GetTimeFormatA(0, 0, &st, "HH':'mm':'ss", time, sizeof time);
+                count = wsprintfA(buf, "%s %s %c%c%c%c %15u %S\n", date, time,
+                        pInfo->DosAttribs & FILE_ATTRIBUTE_ARCHIVE  ? 'A' : '-',
+                        pInfo->DosAttribs & FILE_ATTRIBUTE_HIDDEN   ? 'H' : '-',
+                        pInfo->DosAttribs & FILE_ATTRIBUTE_READONLY ? 'R' : '-',
+                        pInfo->DosAttribs & FILE_ATTRIBUTE_SYSTEM   ? 'S' : '-',
+                        pInfo->FileSize, pInfo->NameInCabinet);
+                WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), buf, count, &dummy, NULL);
+                return FILEOP_SKIP;
+            }
+            else
+            {
+                lstrcpyW(pInfo->FullTargetName, (LPCWSTR)Context);
+                lstrcatW(pInfo->FullTargetName, pInfo->NameInCabinet);
+                /* SetupIterateCabinet() doesn't create full path to target by itself,
+                   so we should do it manually */
+                create_target_directory(pInfo->FullTargetName);
+                return FILEOP_DOIT;
+            }
         case SPFILENOTIFY_FILEEXTRACTED:
             pFilePaths = (FILEPATHS_W*)Param1;
             WINE_TRACE("Extracted %s\n", wine_dbgstr_w(pFilePaths->Target));
@@ -281,13 +307,13 @@ int PASCAL wWinMain(HINSTANCE hInstance, HINSTANCE prev, LPWSTR cmdline, int sho
             /* Copy file */
             copy_file(cabfile, path);
             break;
+        case 'D':
+            /* Display CAB archive */
+            show_content = TRUE;
+            /* Fall through */
         case 'E':
             /* Extract CAB archive */
             extract(cabfile, path);
-            break;
-        case 'D':
-            /* Display CAB archive */
-            WINE_FIXME("/D not implemented\n");
             break;
     }
     return 0;
