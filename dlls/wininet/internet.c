@@ -788,7 +788,7 @@ static DWORD APPINFO_QueryOption(object_header_t *hdr, DWORD option, void *buffe
             /* If the buffer is copied, the returned length doesn't include
              * the NULL terminator.
              */
-            *size = len * sizeof(WCHAR);
+            *size = len;
         }else {
             if (ai->agent)
                 *size = WideCharToMultiByte(CP_ACP, 0, ai->agent, -1, NULL, 0, NULL, NULL);
@@ -2943,11 +2943,11 @@ BOOL WINAPI InternetSetOptionA(HINTERNET hInternet, DWORD dwOption,
     case INTERNET_OPTION_USER_AGENT:
     case INTERNET_OPTION_USERNAME:
     case INTERNET_OPTION_PASSWORD:
-        wlen = MultiByteToWideChar( CP_ACP, 0, lpBuffer, dwBufferLength,
-                                   NULL, 0 );
-        wbuffer = heap_alloc(wlen*sizeof(WCHAR) );
-        MultiByteToWideChar( CP_ACP, 0, lpBuffer, dwBufferLength,
-                                   wbuffer, wlen );
+    case INTERNET_OPTION_PROXY_USERNAME:
+    case INTERNET_OPTION_PROXY_PASSWORD:
+        wlen = MultiByteToWideChar( CP_ACP, 0, lpBuffer, -1, NULL, 0 );
+        if (!(wbuffer = heap_alloc( wlen * sizeof(WCHAR) ))) return ERROR_OUTOFMEMORY;
+        MultiByteToWideChar( CP_ACP, 0, lpBuffer, -1, wbuffer, wlen );
         break;
     case INTERNET_OPTION_PER_CONNECTION_OPTION: {
         unsigned int i;

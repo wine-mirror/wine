@@ -2159,16 +2159,22 @@ static void test_proxy_direct(int port)
 {
     HINTERNET hi, hc, hr;
     DWORD r, sz;
-    char buffer[0x40];
+    char buffer[0x40], *url;
+    WCHAR bufferW[0x40];
     static CHAR username[] = "mike",
-                password[] = "1101";
+                password[] = "1101",
+                useragent[] = "winetest",
+                url_fmt[] = "http://test.winehq.org:%u/test2";
+    static WCHAR usernameW[] = {'m','i','k','e',0},
+                 passwordW[] = {'1','1','0','1',0},
+                 useragentW[] = {'w','i','n','e','t','e','s','t',0};
 
     sprintf(buffer, "localhost:%d\n", port);
     hi = InternetOpen(NULL, INTERNET_OPEN_TYPE_PROXY, buffer, NULL, 0);
     ok(hi != NULL, "open failed\n");
 
     /* try connect without authorization */
-    hc = InternetConnect(hi, "test.winehq.org/", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    hc = InternetConnect(hi, "test.winehq.org", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
     ok(hc != NULL, "connect failed\n");
 
     hr = HttpOpenRequest(hc, NULL, "/test2", NULL, NULL, NULL, 0, 0);
@@ -2180,23 +2186,226 @@ static void test_proxy_direct(int port)
     test_status_code(hr, 407);
 
     /* set the user + password then try again */
-    todo_wine {
+    r = InternetSetOption(hi, INTERNET_OPTION_PROXY_USERNAME, username, 4);
+    ok(!r, "unexpected success\n");
+
+    r = InternetSetOption(hc, INTERNET_OPTION_PROXY_USERNAME, username, 4);
+    ok(r, "failed to set user\n");
+
     r = InternetSetOption(hr, INTERNET_OPTION_PROXY_USERNAME, username, 4);
     ok(r, "failed to set user\n");
 
+    buffer[0] = 0;
+    sz = 0;
+    SetLastError(0xdeadbeef);
+    r = InternetQueryOption(hr, INTERNET_OPTION_PROXY_USERNAME, buffer, &sz);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %u\n", GetLastError());
+    ok(!r, "unexpected success\n");
+    ok(sz == strlen(username) + 1, "got %u\n", sz);
+
+    bufferW[0] = 0;
+    sz = 0;
+    SetLastError(0xdeadbeef);
+    r = InternetQueryOptionW(hr, INTERNET_OPTION_PROXY_USERNAME, bufferW, &sz);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %u\n", GetLastError());
+    ok(!r, "unexpected success\n");
+    ok(sz == (lstrlenW(usernameW) + 1) * sizeof(WCHAR), "got %u\n", sz);
+
+    buffer[0] = 0;
+    sz = sizeof(buffer);
+    r = InternetQueryOption(hr, INTERNET_OPTION_PROXY_USERNAME, buffer, &sz);
+    ok(r, "failed to get username\n");
+    ok(!strcmp(buffer, username), "got %s\n", buffer);
+    ok(sz == strlen(username), "got %u\n", sz);
+
+    buffer[0] = 0;
+    sz = sizeof(bufferW);
+    r = InternetQueryOptionW(hr, INTERNET_OPTION_PROXY_USERNAME, bufferW, &sz);
+    ok(r, "failed to get username\n");
+    ok(!lstrcmpW(bufferW, usernameW), "wrong username\n");
+    ok(sz == lstrlenW(usernameW), "got %u\n", sz);
+
+    r = InternetSetOption(hr, INTERNET_OPTION_PROXY_USERNAME, username, 1);
+    ok(r, "failed to set user\n");
+
+    buffer[0] = 0;
+    sz = sizeof(buffer);
+    r = InternetQueryOption(hr, INTERNET_OPTION_PROXY_USERNAME, buffer, &sz);
+    ok(r, "failed to get username\n");
+    ok(!strcmp(buffer, username), "got %s\n", buffer);
+    ok(sz == strlen(username), "got %u\n", sz);
+
+    r = InternetSetOption(hi, INTERNET_OPTION_USER_AGENT, useragent, 1);
+    ok(r, "failed to set useragent\n");
+
+    buffer[0] = 0;
+    sz = 0;
+    SetLastError(0xdeadbeef);
+    r = InternetQueryOption(hi, INTERNET_OPTION_USER_AGENT, buffer, &sz);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %u\n", GetLastError());
+    ok(!r, "unexpected success\n");
+    ok(sz == strlen(useragent) + 1, "got %u\n", sz);
+
+    buffer[0] = 0;
+    sz = sizeof(buffer);
+    r = InternetQueryOption(hi, INTERNET_OPTION_USER_AGENT, buffer, &sz);
+    ok(r, "failed to get user agent\n");
+    ok(!strcmp(buffer, useragent), "got %s\n", buffer);
+    ok(sz == strlen(useragent), "got %u\n", sz);
+
+    bufferW[0] = 0;
+    sz = 0;
+    SetLastError(0xdeadbeef);
+    r = InternetQueryOptionW(hi, INTERNET_OPTION_USER_AGENT, bufferW, &sz);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %u\n", GetLastError());
+    ok(!r, "unexpected success\n");
+    ok(sz == (lstrlenW(useragentW) + 1) * sizeof(WCHAR), "got %u\n", sz);
+
+    bufferW[0] = 0;
+    sz = sizeof(bufferW);
+    r = InternetQueryOptionW(hi, INTERNET_OPTION_USER_AGENT, bufferW, &sz);
+    ok(r, "failed to get user agent\n");
+    ok(!lstrcmpW(bufferW, useragentW), "wrong user agent\n");
+    ok(sz == lstrlenW(useragentW), "got %u\n", sz);
+
+    r = InternetSetOption(hr, INTERNET_OPTION_USERNAME, username, 1);
+    ok(r, "failed to set user\n");
+
+    buffer[0] = 0;
+    sz = 0;
+    SetLastError(0xdeadbeef);
+    r = InternetQueryOption(hr, INTERNET_OPTION_USERNAME, buffer, &sz);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %u\n", GetLastError());
+    ok(!r, "unexpected success\n");
+    ok(sz == strlen(username) + 1, "got %u\n", sz);
+
+    buffer[0] = 0;
+    sz = sizeof(buffer);
+    r = InternetQueryOption(hr, INTERNET_OPTION_USERNAME, buffer, &sz);
+    ok(r, "failed to get user\n");
+    ok(!strcmp(buffer, username), "got %s\n", buffer);
+    ok(sz == strlen(username), "got %u\n", sz);
+
+    bufferW[0] = 0;
+    sz = 0;
+    SetLastError(0xdeadbeef);
+    r = InternetQueryOptionW(hr, INTERNET_OPTION_USERNAME, bufferW, &sz);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %u\n", GetLastError());
+    ok(!r, "unexpected success\n");
+    ok(sz == (lstrlenW(usernameW) + 1) * sizeof(WCHAR), "got %u\n", sz);
+
+    bufferW[0] = 0;
+    sz = sizeof(bufferW);
+    r = InternetQueryOptionW(hr, INTERNET_OPTION_USERNAME, bufferW, &sz);
+    ok(r, "failed to get user\n");
+    ok(!lstrcmpW(bufferW, usernameW), "wrong user\n");
+    ok(sz == lstrlenW(usernameW), "got %u\n", sz);
+
+    r = InternetSetOption(hr, INTERNET_OPTION_PASSWORD, password, 1);
+    ok(r, "failed to set password\n");
+
+    buffer[0] = 0;
+    sz = 0;
+    SetLastError(0xdeadbeef);
+    r = InternetQueryOption(hr, INTERNET_OPTION_PASSWORD, buffer, &sz);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %u\n", GetLastError());
+    ok(!r, "unexpected success\n");
+    ok(sz == strlen(password) + 1, "got %u\n", sz);
+
+    buffer[0] = 0;
+    sz = sizeof(buffer);
+    r = InternetQueryOption(hr, INTERNET_OPTION_PASSWORD, buffer, &sz);
+    ok(r, "failed to get password\n");
+    ok(!strcmp(buffer, password), "got %s\n", buffer);
+    ok(sz == strlen(password), "got %u\n", sz);
+
+    bufferW[0] = 0;
+    sz = 0;
+    SetLastError(0xdeadbeef);
+    r = InternetQueryOptionW(hr, INTERNET_OPTION_PASSWORD, bufferW, &sz);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %u\n", GetLastError());
+    ok(!r, "unexpected success\n");
+    ok(sz == (lstrlenW(passwordW) + 1) * sizeof(WCHAR), "got %u\n", sz);
+
+    bufferW[0] = 0;
+    sz = sizeof(bufferW);
+    r = InternetQueryOptionW(hr, INTERNET_OPTION_PASSWORD, bufferW, &sz);
+    ok(r, "failed to get password\n");
+    ok(!lstrcmpW(bufferW, passwordW), "wrong password\n");
+    ok(sz == lstrlenW(passwordW), "got %u\n", sz);
+
+    url = HeapAlloc(GetProcessHeap(), 0, strlen(url_fmt) + 11);
+    sprintf(url, url_fmt, port);
+    buffer[0] = 0;
+    sz = 0;
+    SetLastError(0xdeadbeef);
+    r = InternetQueryOption(hr, INTERNET_OPTION_URL, buffer, &sz);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %u\n", GetLastError());
+    ok(!r, "unexpected success\n");
+    ok(sz == strlen(url) + 1, "got %u\n", sz);
+
+    buffer[0] = 0;
+    sz = sizeof(buffer);
+    r = InternetQueryOption(hr, INTERNET_OPTION_URL, buffer, &sz);
+    ok(r, "failed to get url\n");
+    ok(!strcmp(buffer, url), "got %s\n", buffer);
+    ok(sz == strlen(url), "got %u\n", sz);
+
+    bufferW[0] = 0;
+    sz = 0;
+    SetLastError(0xdeadbeef);
+    r = InternetQueryOptionW(hr, INTERNET_OPTION_URL, bufferW, &sz);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %u\n", GetLastError());
+    ok(!r, "unexpected success\n");
+    ok(sz == (strlen(url) + 1) * sizeof(WCHAR), "got %u\n", sz);
+
+    bufferW[0] = 0;
+    sz = sizeof(bufferW);
+    r = InternetQueryOptionW(hr, INTERNET_OPTION_URL, bufferW, &sz);
+    ok(r, "failed to get url\n");
+    ok(!strcmp_wa(bufferW, url), "wrong url\n");
+    ok(sz == strlen(url), "got %u\n", sz);
+    HeapFree(GetProcessHeap(), 0, url);
+
     r = InternetSetOption(hr, INTERNET_OPTION_PROXY_PASSWORD, password, 4);
     ok(r, "failed to set password\n");
-    }
+
+    buffer[0] = 0;
+    sz = 0;
+    SetLastError(0xdeadbeef);
+    r = InternetQueryOption(hr, INTERNET_OPTION_PROXY_PASSWORD, buffer, &sz);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %u\n", GetLastError());
+    ok(!r, "unexpected success\n");
+    ok(sz == strlen(password) + 1, "got %u\n", sz);
+
+    buffer[0] = 0;
+    sz = sizeof(buffer);
+    r = InternetQueryOption(hr, INTERNET_OPTION_PROXY_PASSWORD, buffer, &sz);
+    ok(r, "failed to get password\n");
+    ok(!strcmp(buffer, password), "got %s\n", buffer);
+    ok(sz == strlen(password), "got %u\n", sz);
+
+    bufferW[0] = 0;
+    sz = 0;
+    SetLastError(0xdeadbeef);
+    r = InternetQueryOptionW(hr, INTERNET_OPTION_PROXY_PASSWORD, bufferW, &sz);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %u\n", GetLastError());
+    ok(!r, "unexpected success\n");
+    ok(sz == (lstrlenW(passwordW) + 1) * sizeof(WCHAR), "got %u\n", sz);
+
+    bufferW[0] = 0;
+    sz = sizeof(bufferW);
+    r = InternetQueryOptionW(hr, INTERNET_OPTION_PROXY_PASSWORD, bufferW, &sz);
+    ok(r, "failed to get password\n");
+    ok(!lstrcmpW(bufferW, passwordW), "wrong password\n");
+    ok(sz == lstrlenW(passwordW), "got %u\n", sz);
 
     r = HttpSendRequest(hr, NULL, 0, NULL, 0);
     ok(r, "HttpSendRequest failed\n");
     sz = sizeof buffer;
     r = HttpQueryInfo(hr, HTTP_QUERY_STATUS_CODE, buffer, &sz, NULL);
     ok(r, "HttpQueryInfo failed\n");
-    todo_wine {
     ok(!strcmp(buffer, "200"), "proxy code wrong\n");
-    }
-
 
     InternetCloseHandle(hr);
     InternetCloseHandle(hc);

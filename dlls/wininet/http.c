@@ -1947,6 +1947,34 @@ static void HTTPREQ_CloseConnection(object_header_t *hdr)
     http_release_netconn(req, drain_content(req, FALSE));
 }
 
+static DWORD str_to_buffer(const WCHAR *str, void *buffer, DWORD *size, BOOL unicode)
+{
+    int len;
+    if (unicode)
+    {
+        len = strlenW(str);
+        if (*size < (len + 1) * sizeof(WCHAR))
+        {
+            *size = (len + 1) * sizeof(WCHAR);
+            return ERROR_INSUFFICIENT_BUFFER;
+        }
+        strcpyW(buffer, str);
+        *size = len;
+        return ERROR_SUCCESS;
+    }
+    else
+    {
+        len = WideCharToMultiByte(CP_ACP, 0, str, -1, buffer, *size, NULL, NULL);
+        if (*size < len)
+        {
+            *size = len;
+            return ERROR_INSUFFICIENT_BUFFER;
+        }
+        *size = len - 1;
+        return ERROR_SUCCESS;
+    }
+}
+
 static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffer, DWORD *size, BOOL unicode)
 {
     http_request_t *req = (http_request_t*)hdr;
@@ -2010,8 +2038,6 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
     case INTERNET_OPTION_URL: {
         WCHAR url[INTERNET_MAX_URL_LENGTH];
         HTTPHEADERW *host;
-        DWORD len;
-        WCHAR *pch;
 
         static const WCHAR httpW[] = {'h','t','t','p',':','/','/',0};
 
@@ -2023,24 +2049,18 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
         strcatW(url, req->path);
 
         TRACE("INTERNET_OPTION_URL: %s\n",debugstr_w(url));
-
-        if(unicode) {
-            len = (strlenW(url)+1) * sizeof(WCHAR);
-            if(*size < len)
-                return ERROR_INSUFFICIENT_BUFFER;
-
-            *size = len;
-            strcpyW(buffer, url);
-            return ERROR_SUCCESS;
-        }else {
-            len = WideCharToMultiByte(CP_ACP, 0, url, -1, buffer, *size, NULL, NULL);
-            if(len > *size)
-                return ERROR_INSUFFICIENT_BUFFER;
-
-            *size = len;
-            return ERROR_SUCCESS;
-        }
+        return str_to_buffer(url, buffer, size, unicode);
     }
+    case INTERNET_OPTION_USER_AGENT:
+        return str_to_buffer(req->session->appInfo->agent, buffer, size, unicode);
+    case INTERNET_OPTION_USERNAME:
+        return str_to_buffer(req->session->userName, buffer, size, unicode);
+    case INTERNET_OPTION_PASSWORD:
+        return str_to_buffer(req->session->password, buffer, size, unicode);
+    case INTERNET_OPTION_PROXY_USERNAME:
+        return str_to_buffer(req->session->appInfo->proxyUsername, buffer, size, unicode);
+    case INTERNET_OPTION_PROXY_PASSWORD:
+        return str_to_buffer(req->session->appInfo->proxyPassword, buffer, size, unicode);
 
     case INTERNET_OPTION_CACHE_TIMESTAMPS: {
         INTERNET_CACHE_ENTRY_INFOW *info;
@@ -2228,6 +2248,17 @@ static DWORD HTTPREQ_SetOption(object_header_t *hdr, DWORD option, void *buffer,
         heap_free(req->session->password);
         if (!(req->session->password = heap_strdupW(buffer))) return ERROR_OUTOFMEMORY;
         return ERROR_SUCCESS;
+
+    case INTERNET_OPTION_PROXY_USERNAME:
+        heap_free(req->session->appInfo->proxyUsername);
+        if (!(req->session->appInfo->proxyUsername = heap_strdupW(buffer))) return ERROR_OUTOFMEMORY;
+        return ERROR_SUCCESS;
+
+    case INTERNET_OPTION_PROXY_PASSWORD:
+        heap_free(req->session->appInfo->proxyPassword);
+        if (!(req->session->appInfo->proxyPassword = heap_strdupW(buffer))) return ERROR_OUTOFMEMORY;
+        return ERROR_SUCCESS;
+
     case INTERNET_OPTION_HTTP_DECODING:
         if(size != sizeof(BOOL))
             return ERROR_INVALID_PARAMETER;
@@ -5512,6 +5543,18 @@ static DWORD HTTPSESSION_SetOption(object_header_t *hdr, DWORD option, void *buf
     {
         heap_free(ses->password);
         if (!(ses->password = heap_strdupW(buffer))) return ERROR_OUTOFMEMORY;
+        return ERROR_SUCCESS;
+    }
+    case INTERNET_OPTION_PROXY_USERNAME:
+    {
+        heap_free(ses->appInfo->proxyUsername);
+        if (!(ses->appInfo->proxyUsername = heap_strdupW(buffer))) return ERROR_OUTOFMEMORY;
+        return ERROR_SUCCESS;
+    }
+    case INTERNET_OPTION_PROXY_PASSWORD:
+    {
+        heap_free(ses->appInfo->proxyPassword);
+        if (!(ses->appInfo->proxyPassword = heap_strdupW(buffer))) return ERROR_OUTOFMEMORY;
         return ERROR_SUCCESS;
     }
     case INTERNET_OPTION_CONNECT_TIMEOUT:
