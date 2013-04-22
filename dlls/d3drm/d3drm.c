@@ -922,14 +922,12 @@ static HRESULT WINAPI IDirect3DRM3Impl_CreateObject(IDirect3DRM3* iface, REFCLSI
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRM3Impl_CreateFrame(IDirect3DRM3* iface, LPDIRECT3DRMFRAME3 parent_frame,
-                                                   LPDIRECT3DRMFRAME3* frame)
+static HRESULT WINAPI IDirect3DRM3Impl_CreateFrame(IDirect3DRM3 *iface,
+        IDirect3DRMFrame3 *parent, IDirect3DRMFrame3 **frame)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM3(iface);
+    TRACE("iface %p, parent %p, frame %p.\n", iface, parent, frame);
 
-    TRACE("(%p/%p)->(%p,%p)\n", iface, This, parent_frame, frame);
-
-    return Direct3DRMFrame_create(&IID_IDirect3DRMFrame3, (IUnknown*)parent_frame, (IUnknown**)frame);
+    return Direct3DRMFrame_create(&IID_IDirect3DRMFrame3, (IUnknown *)parent, (IUnknown **)frame);
 }
 
 static HRESULT WINAPI IDirect3DRM3Impl_CreateMesh(IDirect3DRM3* iface, LPDIRECT3DRMMESH* Mesh)
@@ -1118,18 +1116,14 @@ static HRESULT WINAPI IDirect3DRM3Impl_CreateViewport(IDirect3DRM3 *iface, IDire
     return Direct3DRMViewport_create(&IID_IDirect3DRMViewport2, (IUnknown **)viewport);
 }
 
-static HRESULT WINAPI IDirect3DRM3Impl_CreateWrap(IDirect3DRM3* iface, D3DRMWRAPTYPE type,
-                                                  LPDIRECT3DRMFRAME3 frame,
-                                                  D3DVALUE ox, D3DVALUE oy, D3DVALUE oz,
-                                                  D3DVALUE dx, D3DVALUE dy, D3DVALUE dz,
-                                                  D3DVALUE ux, D3DVALUE uy, D3DVALUE uz,
-                                                  D3DVALUE ou, D3DVALUE ov, D3DVALUE su,
-                                                  D3DVALUE sv, LPDIRECT3DRMWRAP* wrap)
+static HRESULT WINAPI IDirect3DRM3Impl_CreateWrap(IDirect3DRM3 *iface, D3DRMWRAPTYPE type, IDirect3DRMFrame3 *frame,
+        D3DVALUE ox, D3DVALUE oy, D3DVALUE oz, D3DVALUE dx, D3DVALUE dy, D3DVALUE dz,
+        D3DVALUE ux, D3DVALUE uy, D3DVALUE uz, D3DVALUE ou, D3DVALUE ov, D3DVALUE su, D3DVALUE sv,
+        IDirect3DRMWrap **wrap)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM3(iface);
-
-    FIXME("(%p/%p)->(%d,%p,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%p): stub\n", iface, This, type,
-          frame, ox, oy, oz, dx, dy, dz, ux, uy, uz, ou, ov, su, sv, wrap);
+    FIXME("iface %p, type %#x, frame %p, ox %.8e, oy %.8e, oz %.8e, dx %.8e, dy %.8e, dz %.8e, "
+            "ux %.8e, uy %.8e, uz %.8e, ou %.8e, ov %.8e, su %.8e, sv %.8e, wrap %p stub!\n",
+            iface, type, frame, ox, oy, oz, dx, dy, dz, ux, uy, uz, ou, ov, su, sv, wrap);
 
     return E_NOTIMPL;
 }
@@ -1430,13 +1424,10 @@ end:
     return ret;
 }
 
-static HRESULT WINAPI IDirect3DRM3Impl_Load(IDirect3DRM3* iface, LPVOID ObjSource, LPVOID ObjID,
-                                            LPIID* GUIDs, DWORD nb_GUIDs, D3DRMLOADOPTIONS LOFlags,
-                                            D3DRMLOADCALLBACK LoadProc, LPVOID ArgLP,
-                                            D3DRMLOADTEXTURECALLBACK LoadTextureProc, LPVOID ArgLTP,
-                                            LPDIRECT3DRMFRAME3 ParentFrame)
+static HRESULT WINAPI IDirect3DRM3Impl_Load(IDirect3DRM3 *iface, void *source, void *object_id, IID **iids,
+        DWORD iid_count, D3DRMLOADOPTIONS flags, D3DRMLOADCALLBACK load_cb, void *load_ctx,
+        D3DRMLOADTEXTURECALLBACK load_tex_cb, void *load_tex_ctx, IDirect3DRMFrame3 *parent_frame)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM3(iface);
     DXFILELOADOPTIONS load_options;
     LPDIRECTXFILE pDXFile = NULL;
     LPDIRECTXFILEENUMOBJECT pEnumObject = NULL;
@@ -1448,25 +1439,27 @@ static HRESULT WINAPI IDirect3DRM3Impl_Load(IDirect3DRM3* iface, LPVOID ObjSourc
     HRESULT ret = D3DRMERR_BADOBJECT;
     DWORD i;
 
-    TRACE("(%p/%p)->(%p,%p,%p,%d,%d,%p,%p,%p,%p,%p)\n", iface, This, ObjSource, ObjID, GUIDs,
-          nb_GUIDs, LOFlags, LoadProc, ArgLP, LoadTextureProc, ArgLTP, ParentFrame);
+    TRACE("iface %p, source %p, object_id %p, iids %p, iid_count %u, flags %#x, "
+            "load_cb %p, load_ctx %p, load_tex_cb %p, load_tex_ctx %p, parent_frame %p.\n",
+            iface, source, object_id, iids, iid_count, flags,
+            load_cb, load_ctx, load_tex_cb, load_tex_ctx, parent_frame);
 
     TRACE("Looking for GUIDs:\n");
-    for (i = 0; i < nb_GUIDs; i++)
-        TRACE("- %s (%s)\n", debugstr_guid(GUIDs[i]), get_IID_string(GUIDs[i]));
+    for (i = 0; i < iid_count; ++i)
+        TRACE("- %s (%s)\n", debugstr_guid(iids[i]), get_IID_string(iids[i]));
 
-    if (LOFlags == D3DRMLOAD_FROMMEMORY)
+    if (flags == D3DRMLOAD_FROMMEMORY)
     {
         load_options = DXFILELOAD_FROMMEMORY;
     }
-    else if (LOFlags == D3DRMLOAD_FROMFILE)
+    else if (flags == D3DRMLOAD_FROMFILE)
     {
         load_options = DXFILELOAD_FROMFILE;
-        TRACE("Loading from file %s\n", debugstr_a(ObjSource));
+        TRACE("Loading from file %s\n", debugstr_a(source));
     }
     else
     {
-        FIXME("Load options %d not supported yet\n", LOFlags);
+        FIXME("Load options %#x not supported yet.\n", flags);
         return E_NOTIMPL;
     }
 
@@ -1478,7 +1471,7 @@ static HRESULT WINAPI IDirect3DRM3Impl_Load(IDirect3DRM3* iface, LPVOID ObjSourc
     if (hr != DXFILE_OK)
         goto end;
 
-    hr = IDirectXFile_CreateEnumObject(pDXFile, ObjSource, load_options, &pEnumObject);
+    hr = IDirectXFile_CreateEnumObject(pDXFile, source, load_options, &pEnumObject);
     if (hr != DXFILE_OK)
         goto end;
 
@@ -1528,7 +1521,7 @@ static HRESULT WINAPI IDirect3DRM3Impl_Load(IDirect3DRM3* iface, LPVOID ObjSourc
             goto end;
         }
 
-        ret = load_data(iface, pData, GUIDs, nb_GUIDs, LoadProc, ArgLP, LoadTextureProc, ArgLTP, ParentFrame);
+        ret = load_data(iface, pData, iids, iid_count, load_cb, load_ctx, load_tex_cb, load_tex_ctx, parent_frame);
         if (ret != D3DRM_OK)
             goto end;
 
