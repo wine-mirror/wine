@@ -2020,8 +2020,6 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
         host = HTTP_GetHeader(req, hostW);
         strcpyW(url, httpW);
         strcatW(url, host->lpszValue);
-        if (NULL != (pch = strchrW(url + strlenW(httpW), ':')))
-            *pch = 0;
         strcatW(url, req->path);
 
         TRACE("INTERNET_OPTION_URL: %s\n",debugstr_w(url));
