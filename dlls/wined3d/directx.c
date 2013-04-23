@@ -2809,6 +2809,15 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
          * we never render to sRGB surfaces). */
         gl_info->supported[ARB_FRAMEBUFFER_SRGB] = FALSE;
     }
+    if (gl_info->supported[ARB_OCCLUSION_QUERY])
+    {
+        GLint counter_bits;
+
+        GL_EXTCALL(glGetQueryivARB(GL_SAMPLES_PASSED_ARB, GL_QUERY_COUNTER_BITS_ARB, &counter_bits));
+        TRACE("Occlusion query counter has %d bits.\n", counter_bits);
+        if (!counter_bits)
+            gl_info->supported[ARB_OCCLUSION_QUERY] = FALSE;
+    }
 
     wined3d_adapter_init_limits(gl_info);
 

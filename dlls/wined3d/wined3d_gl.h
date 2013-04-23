@@ -251,8 +251,10 @@ enum wined3d_gl_extension
     USE_GL_FUNC(glDeleteQueriesARB) \
     USE_GL_FUNC(glEndQueryARB) \
     USE_GL_FUNC(glGenQueriesARB) \
+    USE_GL_FUNC(glGetQueryivARB) \
     USE_GL_FUNC(glGetQueryObjectivARB) \
     USE_GL_FUNC(glGetQueryObjectuivARB) \
+    USE_GL_FUNC(glIsQueryARB) \
     /* GL_ARB_point_parameters */ \
     USE_GL_FUNC(glPointParameterfARB) \
     USE_GL_FUNC(glPointParameterfvARB) \
