@@ -268,7 +268,7 @@ static int rsrcid_to_token(int lookahead);
 
 %token tNL
 %token <num> tNUMBER tLNUMBER
-%token <str> tSTRING tIDENT tFILENAME
+%token <str> tSTRING tIDENT
 %token <raw> tRAWDATA
 %token tACCELERATORS tBITMAP tCURSOR tDIALOG tDIALOGEX tMENU tMENUEX tMESSAGETABLE
 %token tRCDATA tVERSIONINFO tSTRINGTABLE tFONT tFONTDIR tICON tHTML
@@ -647,8 +647,7 @@ resource_definition
 	;
 
 
-filename: tFILENAME	{ $$ = make_filename($1); }
-	| tIDENT	{ $$ = make_filename($1); }
+filename: tIDENT	{ $$ = make_filename($1); }
 	| tSTRING	{ $$ = make_filename($1); }
 	;
 
