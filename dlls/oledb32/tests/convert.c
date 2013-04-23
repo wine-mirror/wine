@@ -2484,6 +2484,7 @@ static void test_getconversionsize(void)
     HRESULT hr;
     BSTR str;
     static WCHAR strW[] = {'t','e','s','t',0};
+    static char strTest[] = "test";
 
     hr = CoCreateInstance(&CLSID_OLEDB_CONVERSIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IDataConvert, (void**)&convert);
     if(FAILED(hr))
@@ -2529,6 +2530,23 @@ static void test_getconversionsize(void)
     hr = IDataConvert_GetConversionSize(convert, DBTYPE_WSTR, DBTYPE_WSTR, &src_len, &dst_len, strW);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(dst_len == 22, "%ld\n", dst_len);
+
+    dst_len = 0;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_STR, DBTYPE_WSTR, NULL, &dst_len, strTest);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(dst_len == 10 || broken(dst_len == 12), "%ld\n", dst_len);
+
+    dst_len = 0;
+    src_len = 2;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_STR, DBTYPE_WSTR, &src_len, &dst_len, strTest);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(dst_len == 6, "%ld\n", dst_len);
+
+    dst_len = 0;
+    src_len = 20;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_STR, DBTYPE_WSTR, &src_len, &dst_len, strTest);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(dst_len == 42, "%ld\n", dst_len);
 
     IDataConvert_Release(convert);
 }
