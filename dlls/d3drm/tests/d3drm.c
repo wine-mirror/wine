@@ -226,7 +226,7 @@ static void test_MeshBuilder(void)
 {
     HRESULT hr;
     IDirect3DRM *d3drm;
-    LPDIRECT3DRMMESHBUILDER pMeshBuilder;
+    IDirect3DRMMeshBuilder *pMeshBuilder;
     IDirect3DRMMesh *mesh;
     D3DRMLOADMEMORY info;
     int val;
@@ -675,7 +675,7 @@ static void test_Frame(void)
     IDirect3DRMFrame *pFrameP2;
     IDirect3DRMFrame *pFrameTmp;
     LPDIRECT3DRMFRAMEARRAY pArray;
-    LPDIRECT3DRMMESHBUILDER pMeshBuilder;
+    IDirect3DRMMeshBuilder *mesh_builder;
     IDirect3DRMVisual *visual1;
     IDirect3DRMVisual *visual_tmp;
     LPDIRECT3DRMVISUALARRAY pVisualArray;
@@ -907,9 +907,9 @@ static void test_Frame(void)
     CHECK_REFCOUNT(pFrameP1, 3);
 
     /* Create Visual */
-    hr = IDirect3DRM_CreateMeshBuilder(d3drm, &pMeshBuilder);
+    hr = IDirect3DRM_CreateMeshBuilder(d3drm, &mesh_builder);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMMeshBuilder interface (hr = %x)\n", hr);
-    visual1 = (IDirect3DRMVisual *)pMeshBuilder;
+    visual1 = (IDirect3DRMVisual *)mesh_builder;
 
     /* Add Visual to first parent */
     hr = IDirect3DRMFrame_AddVisual(pFrameP1, visual1);
@@ -935,7 +935,7 @@ static void test_Frame(void)
     hr = IDirect3DRMFrame_DeleteVisual(pFrameP1, visual1);
     ok(hr == D3DRM_OK, "Cannot delete visual (hr = %x)\n", hr);
     CHECK_REFCOUNT(pFrameP1, 3);
-    IDirect3DRMMeshBuilder_Release(pMeshBuilder);
+    IDirect3DRMMeshBuilder_Release(mesh_builder);
 
     /* [Add/Delete]Light with NULL pointer */
     hr = IDirect3DRMFrame_AddLight(pFrameP1, NULL);

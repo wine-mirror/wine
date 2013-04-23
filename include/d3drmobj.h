@@ -2510,7 +2510,7 @@ DECLARE_INTERFACE_(IDirect3DRMMeshBuilder,IDirect3DRMVisual)
     STDMETHOD(GenerateNormals)(THIS) PURE;
     STDMETHOD_(D3DRMCOLORSOURCE, GetColorSource)(THIS) PURE;
     STDMETHOD(AddMesh)(THIS_ IDirect3DRMMesh *mesh) PURE;
-    STDMETHOD(AddMeshBuilder)(THIS_ LPDIRECT3DRMMESHBUILDER) PURE;
+    STDMETHOD(AddMeshBuilder)(THIS_ IDirect3DRMMeshBuilder *mesh_builder) PURE;
     STDMETHOD(AddFrame)(THIS_ IDirect3DRMFrame *frame) PURE;
     STDMETHOD(AddFace)(THIS_ LPDIRECT3DRMFACE) PURE;
     STDMETHOD(AddFaces)(THIS_ DWORD vcount, D3DVECTOR *vertices, DWORD ncount, D3DVECTOR *normals, DWORD *data,
@@ -2681,7 +2681,7 @@ DECLARE_INTERFACE_(IDirect3DRMMeshBuilder2,IDirect3DRMMeshBuilder)
     STDMETHOD(GenerateNormals)(THIS) PURE;
     STDMETHOD_(D3DRMCOLORSOURCE, GetColorSource)(THIS) PURE;
     STDMETHOD(AddMesh)(THIS_ IDirect3DRMMesh *mesh) PURE;
-    STDMETHOD(AddMeshBuilder)(THIS_ LPDIRECT3DRMMESHBUILDER) PURE;
+    STDMETHOD(AddMeshBuilder)(THIS_ IDirect3DRMMeshBuilder *mesh_builder) PURE;
     STDMETHOD(AddFrame)(THIS_ IDirect3DRMFrame *frame) PURE;
     STDMETHOD(AddFace)(THIS_ LPDIRECT3DRMFACE) PURE;
     STDMETHOD(AddFaces)(THIS_ DWORD vcount, D3DVECTOR *vertices, DWORD ncount, D3DVECTOR *normals, DWORD *data,
