@@ -413,8 +413,23 @@ static HRESULT WINAPI HTMLDocument_get_scripts(IHTMLDocument2 *iface, IHTMLEleme
 static HRESULT WINAPI HTMLDocument_put_designMode(IHTMLDocument2 *iface, BSTR v)
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    HRESULT hres;
+
+    static const WCHAR onW[] = {'o','n',0};
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    if(strcmpiW(v, onW)) {
+        FIXME("Unsupported arg %s\n", debugstr_w(v));
+        return E_NOTIMPL;
+    }
+
+    hres = setup_edit_mode(This->doc_obj);
+    if(FAILED(hres))
+        return hres;
+
+    call_property_onchanged(&This->cp_container, 1014);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDocument_get_designMode(IHTMLDocument2 *iface, BSTR *p)
