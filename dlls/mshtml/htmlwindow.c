@@ -2949,7 +2949,7 @@ HRESULT update_window_doc(HTMLInnerWindow *window)
 
         static const PRUnichar onW[] = {'o','n',0};
 
-        nsAString_Init(&mode_str, onW);
+        nsAString_InitDepend(&mode_str, onW);
         nsres = nsIDOMHTMLDocument_SetDesignMode(window->doc->nsdoc, &mode_str);
         nsAString_Finish(&mode_str);
         if(NS_FAILED(nsres))
