@@ -1982,7 +1982,7 @@ static struct wgl_context *X11DRV_wglCreateContextAttribsARB( HDC hdc, struct wg
         }
 
         X11DRV_expect_error(gdi_display, GLXErrorHandler, NULL);
-        ret->ctx = create_glxcontext(gdi_display, ret, NULL);
+        ret->ctx = create_glxcontext(gdi_display, ret, hShareContext ? hShareContext->ctx : NULL);
         XSync(gdi_display, False);
         if ((err = X11DRV_check_error()) || !ret->ctx)
         {
