@@ -28,6 +28,7 @@
 #include "objsafe.h"
 #include "htiframe.h"
 #include "tlogstg.h"
+#include "shdeprecated.h"
 
 #include "wine/list.h"
 #include "wine/unicode.h"
@@ -339,6 +340,15 @@ struct HTMLLocation {
 };
 
 typedef struct {
+    DispatchEx dispex;
+    IOmHistory IOmHistory_iface;
+
+    LONG ref;
+
+    HTMLInnerWindow *window;
+} OmHistory;
+
+typedef struct {
     HTMLOuterWindow *window;
     LONG ref;
 }  windowref_t;
@@ -403,7 +413,7 @@ struct HTMLInnerWindow {
     HTMLImageElementFactory *image_factory;
     HTMLOptionElementFactory *option_factory;
     IHTMLScreen *screen;
-    IOmHistory *history;
+    OmHistory *history;
     IHTMLStorage *session_storage;
 
     unsigned parser_callback_cnt;
@@ -545,6 +555,8 @@ struct HTMLDocumentObj {
     IAdviseSink *view_sink;
     IDocObjectService *doc_object_service;
     IUnknown *webbrowser;
+    ITravelLog *travel_log;
+    IUnknown *browser_service;
 
     DOCHOSTUIINFO hostinfo;
 
@@ -738,7 +750,7 @@ HRESULT HTMLImageElementFactory_Create(HTMLInnerWindow*,HTMLImageElementFactory*
 HRESULT HTMLLocation_Create(HTMLInnerWindow*,HTMLLocation**) DECLSPEC_HIDDEN;
 IOmNavigator *OmNavigator_Create(void) DECLSPEC_HIDDEN;
 HRESULT HTMLScreen_Create(IHTMLScreen**) DECLSPEC_HIDDEN;
-HRESULT create_history(IOmHistory**) DECLSPEC_HIDDEN;
+HRESULT create_history(HTMLInnerWindow*,OmHistory**) DECLSPEC_HIDDEN;
 
 HRESULT create_storage(IHTMLStorage**) DECLSPEC_HIDDEN;
 

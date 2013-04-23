@@ -5291,7 +5291,7 @@ static void test_Load(IPersistMoniker *persist, IMoniker *mon)
         CHECK_CALLED(Exec_ShellDocView_37);
         todo_wine CHECK_CALLED_BROKEN(IsErrorUrl);
     }else {
-        todo_wine CHECK_CALLED(GetTravelLog);
+        CHECK_CALLED(GetTravelLog);
     }
     CHECK_CALLED_BROKEN(Exec_ShellDocView_84);
     todo_wine CHECK_CALLED(GetPendingUrl);
@@ -6377,7 +6377,7 @@ static void test_ClientSite(IOleObject *oleobj, DWORD flags)
         CHECK_CALLED(Invoke_AMBIENT_USERAGENT);
         CLEAR_CALLED(Invoke_AMBIENT_PALETTE); /* not called on IE9 */
         CLEAR_CALLED(GetOverrideKeyPath); /* Called by IE9 */
-        todo_wine CHECK_CALLED(GetTravelLog);
+        CHECK_CALLED(GetTravelLog);
         CHECK_CALLED_BROKEN(Exec_ShellDocView_84);
 
         set_clientsite = TRUE;
@@ -7706,7 +7706,7 @@ static void test_UIActivate(BOOL do_load, BOOL use_ipsex, BOOL use_ipsw)
     CHECK_CALLED(QueryStatus_SETPROGRESSTEXT);
     CHECK_CALLED(Exec_SETPROGRESSMAX);
     CHECK_CALLED(Exec_SETPROGRESSPOS);
-    todo_wine CHECK_CALLED(GetTravelLog);
+    CHECK_CALLED(GetTravelLog);
     CHECK_CALLED_BROKEN(Exec_ShellDocView_84);
 
     hres = IOleDocumentView_GetInPlaceSite(view, &inplacesite);

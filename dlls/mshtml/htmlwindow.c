@@ -264,8 +264,12 @@ static void release_inner_window(HTMLInnerWindow *This)
 
     if(This->screen)
         IHTMLScreen_Release(This->screen);
-    if(This->history)
-        IOmHistory_Release(This->history);
+
+    if(This->history) {
+        This->history->window = NULL;
+        IOmHistory_Release(&This->history->IOmHistory_iface);
+    }
+
     if(This->mon)
         IMoniker_Release(This->mon);
 
@@ -763,13 +767,13 @@ static HRESULT WINAPI HTMLWindow2_get_history(IHTMLWindow2 *iface, IOmHistory **
     if(!window->history) {
         HRESULT hres;
 
-        hres = create_history(&window->history);
+        hres = create_history(window, &window->history);
         if(FAILED(hres))
             return hres;
     }
 
-    IOmHistory_AddRef(window->history);
-    *p = window->history;
+    IOmHistory_AddRef(&window->history->IOmHistory_iface);
+    *p = &window->history->IOmHistory_iface;
     return S_OK;
 }
 

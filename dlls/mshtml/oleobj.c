@@ -215,6 +215,7 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
     HTMLDocument *This = impl_from_IOleObject(iface);
     IOleCommandTarget *cmdtrg = NULL;
     IOleWindow *ole_window;
+    IBrowserService *browser_service;
     BOOL hostui_setup;
     VARIANT silent;
     HWND hwnd;
@@ -249,6 +250,16 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
     if(This->doc_obj->webbrowser) {
         IUnknown_Release(This->doc_obj->webbrowser);
         This->doc_obj->webbrowser = NULL;
+    }
+
+    if(This->doc_obj->browser_service) {
+        IUnknown_Release(This->doc_obj->browser_service);
+        This->doc_obj->browser_service = NULL;
+    }
+
+    if(This->doc_obj->travel_log) {
+        ITravelLog_Release(This->doc_obj->travel_log);
+        This->doc_obj->travel_log = NULL;
     }
 
     memset(&This->doc_obj->hostinfo, 0, sizeof(DOCHOSTUIINFO));
@@ -323,6 +334,20 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
         IOleWindow_Release(ole_window);
     }
 
+    hres = do_query_service((IUnknown*)pClientSite, &IID_IShellBrowser,
+            &IID_IBrowserService, (void**)&browser_service);
+    if(SUCCEEDED(hres)) {
+        ITravelLog *travel_log;
+
+        This->doc_obj->browser_service = (IUnknown*)browser_service;
+
+        hres = IBrowserService_GetTravelLog(browser_service, &travel_log);
+        if(SUCCEEDED(hres))
+            This->doc_obj->travel_log = travel_log;
+    }else {
+        browser_service = NULL;
+    }
+
     hres = IOleClientSite_QueryInterface(pClientSite, &IID_IOleCommandTarget, (void**)&cmdtrg);
     if(SUCCEEDED(hres)) {
         VARIANT var;
@@ -332,16 +357,13 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
 
         if(!hostui_setup) {
             IDocObjectService *doc_object_service;
-            IBrowserService *browser_service;
             IWebBrowser2 *wb;
 
             V_VT(&var) = VT_UNKNOWN;
             V_UNKNOWN(&var) = (IUnknown*)&This->window->base.IHTMLWindow2_iface;
             IOleCommandTarget_Exec(cmdtrg, &CGID_DocHostCmdPriv, DOCHOST_DOCCANNAVIGATE, 0, &var, NULL);
 
-            hres = do_query_service((IUnknown*)pClientSite, &IID_IShellBrowser,
-                    &IID_IBrowserService, (void**)&browser_service);
-            if(SUCCEEDED(hres)) {
+            if(browser_service) {
                 hres = IBrowserService_QueryInterface(browser_service,
                         &IID_IDocObjectService, (void**)&doc_object_service);
                 if(SUCCEEDED(hres)) {
@@ -354,7 +376,6 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
                     hres = do_query_service((IUnknown*)pClientSite, &IID_IWebBrowserApp, &IID_IWebBrowser2, (void**)&wb);
                     if(SUCCEEDED(hres))
                         This->doc_obj->webbrowser = (IUnknown*)wb;
-                    IBrowserService_Release(browser_service);
                 }
             }
         }
