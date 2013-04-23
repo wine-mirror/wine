@@ -157,6 +157,7 @@ DEFINE_EXPECT(OnFrameWindowActivate);
 DEFINE_EXPECT(OnChanged_READYSTATE);
 DEFINE_EXPECT(OnChanged_1005);
 DEFINE_EXPECT(OnChanged_1012);
+DEFINE_EXPECT(OnChanged_1014);
 DEFINE_EXPECT(GetDisplayName);
 DEFINE_EXPECT(BindToStorage);
 DEFINE_EXPECT(IsSystemMoniker);
@@ -944,6 +945,9 @@ static HRESULT WINAPI PropertyNotifySink_OnChanged(IPropertyNotifySink *iface, D
         return S_OK;
     case 1012:
         CHECK_EXPECT2(OnChanged_1012);
+        return S_OK;
+    case 1014:
+        CHECK_EXPECT2(OnChanged_1014);
         return S_OK;
     case 1030:
     case 3000022:
@@ -5311,6 +5315,7 @@ static void test_Load(IPersistMoniker *persist, IMoniker *mon)
 #define DWL_EXPECT_HISTUPDATE  0x0080
 #define DWL_FROM_HISTORY       0x0100
 #define DWL_REFRESH            0x0200
+#define DWL_EX_GETHOSTINFO     0x0400
 
 static void test_download(DWORD flags)
 {
@@ -5333,7 +5338,7 @@ static void test_download(DWORD flags)
     }
     if(flags & (DWL_VERBDONE|DWL_HTTP))
         SET_EXPECT(Exec_SETPROGRESSMAX);
-    if((flags & DWL_VERBDONE) && !load_from_stream && !is_js)
+    if(flags & DWL_EX_GETHOSTINFO)
         SET_EXPECT(GetHostInfo);
     SET_EXPECT(SetStatusText);
     if(!(flags & DWL_EMPTY))
@@ -5419,7 +5424,7 @@ static void test_download(DWORD flags)
         CHECK_CALLED(Exec_SETPROGRESSMAX);
     if(flags & DWL_HTTP)
         SET_CALLED(Exec_SETPROGRESSMAX);
-    if((flags & DWL_VERBDONE) && !load_from_stream && !is_js) {
+    if(flags &  DWL_EX_GETHOSTINFO) {
         if(nav_url)
             todo_wine CHECK_CALLED(GetHostInfo);
         else
@@ -5697,7 +5702,7 @@ static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace, const char *hre
 
         if(is_js)
             ignore_external_qi = TRUE;
-        test_download(DWL_VERBDONE | (is_js ? DWL_JAVASCRIPT : DWL_ONREADY_LOADING) | dwl_flags);
+        test_download(DWL_VERBDONE | (is_js ? DWL_JAVASCRIPT : DWL_ONREADY_LOADING|DWL_EX_GETHOSTINFO) | dwl_flags);
         if(is_js)
             ignore_external_qi = FALSE;
 
@@ -5749,7 +5754,7 @@ static void test_load_history(IHTMLDocument2 *doc)
     load_state = LD_LOADING;
     test_timer(EXPECT_UPDATEUI|EXPECT_SETTITLE);
 
-    test_download(DWL_VERBDONE|DWL_HTTP|DWL_EXPECT_HISTUPDATE|DWL_ONREADY_LOADING|DWL_FROM_HISTORY);
+    test_download(DWL_VERBDONE|DWL_HTTP|DWL_EXPECT_HISTUPDATE|DWL_ONREADY_LOADING|DWL_FROM_HISTORY|DWL_EX_GETHOSTINFO);
 
     IPersistHistory_Release(per_hist);
     IStream_Release(history_stream);
@@ -5777,7 +5782,7 @@ static void test_refresh(IHTMLDocument2 *doc)
 
     IOleCommandTarget_Release(cmdtrg);
 
-    test_download(DWL_VERBDONE|DWL_HTTP|DWL_ONREADY_LOADING|DWL_REFRESH);
+    test_download(DWL_VERBDONE|DWL_HTTP|DWL_ONREADY_LOADING|DWL_REFRESH|DWL_EX_GETHOSTINFO);
 }
 
 static void test_open_window(IHTMLDocument2 *doc, BOOL do_block)
@@ -7498,7 +7503,7 @@ static void test_edit_uiactivate(IOleObject *oleobj)
     IOleDocumentView_Release(docview);
 }
 
-static void test_editing_mode(BOOL do_load)
+static void test_editing_mode(BOOL do_load, BOOL use_design_mode)
 {
     IHTMLDocument2 *doc;
     IUnknown *unk;
@@ -7506,7 +7511,7 @@ static void test_editing_mode(BOOL do_load)
     DWORD conn;
     HRESULT hres;
 
-    trace("Testing HTMLDocument (edit%s)...\n", do_load ? " load" : "");
+    trace("Testing HTMLDocument (edit%s%s)...\n", do_load ? " load" : "", use_design_mode ? " using designMode" : "");
 
     init_test(do_load ? LD_DOLOAD : LD_NO);
     call_UIActivate = CallUIActivate_AfterShow;
@@ -7531,13 +7536,74 @@ static void test_editing_mode(BOOL do_load)
     if(do_load)
         test_Persist(doc, &Moniker);
     stream_read = protocol_read = 0;
-    test_exec_editmode(unk, do_load);
-    test_UIDeactivate();
-    call_UIActivate = CallUIActivate_None;
+
+    if(!use_design_mode) {
+        test_exec_editmode(unk, do_load);
+        test_UIDeactivate();
+        call_UIActivate = CallUIActivate_None;
+    }else {
+        BSTR on;
+
+        SET_EXPECT(Exec_SETTITLE);
+        test_download(DWL_VERBDONE|DWL_CSS|DWL_TRYCSS);
+        CLEAR_CALLED(Exec_SETTITLE);
+
+        editmode = TRUE;
+        load_state = LD_DOLOAD;
+        readystate_set_loading = TRUE;
+
+        SET_EXPECT(OnChanged_1005);
+        SET_EXPECT(ActiveElementChanged);
+        SET_EXPECT(GetClassID);
+        SET_EXPECT(SetStatusText);
+        SET_EXPECT(Exec_ShellDocView_37);
+        SET_EXPECT(GetHostInfo);
+        SET_EXPECT(GetDisplayName);
+        SET_EXPECT(Invoke_AMBIENT_SILENT);
+        SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+        SET_EXPECT(OnChanged_READYSTATE);
+        SET_EXPECT(Invoke_OnReadyStateChange_Loading);
+        SET_EXPECT(IsSystemMoniker);
+        SET_EXPECT(Exec_ShellDocView_84);
+        SET_EXPECT(BindToStorage);
+        SET_EXPECT(InPlaceUIWindow_SetActiveObject);
+        SET_EXPECT(HideUI);
+        SET_EXPECT(ShowUI);
+        SET_EXPECT(InPlaceFrame_SetBorderSpace);
+        SET_EXPECT(OnChanged_1014);
+
+        on = a2bstr("On");
+        hres = IHTMLDocument2_put_designMode(doc, on);
+        SysFreeString(on);
+        ok(hres == S_OK, "put_designMode failed: %08x\n", hres);
+
+        todo_wine CHECK_CALLED(OnChanged_1005);
+        todo_wine CHECK_CALLED(ActiveElementChanged);
+        CHECK_CALLED(GetClassID);
+        CHECK_CALLED(SetStatusText);
+        CHECK_CALLED(Exec_ShellDocView_37);
+        CHECK_CALLED(GetHostInfo);
+        CHECK_CALLED(GetDisplayName);
+        CHECK_CALLED(Invoke_AMBIENT_SILENT);
+        CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+        CHECK_CALLED(OnChanged_READYSTATE);
+        CHECK_CALLED(Invoke_OnReadyStateChange_Loading);
+        CLEAR_CALLED(IsSystemMoniker); /* IE7 */
+        CHECK_CALLED_BROKEN(Exec_ShellDocView_84);
+        CHECK_CALLED(BindToStorage);
+        CHECK_CALLED(InPlaceUIWindow_SetActiveObject);
+        CHECK_CALLED(HideUI);
+        CHECK_CALLED(ShowUI);
+        CHECK_CALLED(InPlaceFrame_SetBorderSpace);
+        CHECK_CALLED(OnChanged_1014);
+
+        test_timer(EXPECT_UPDATEUI|EXPECT_SETTITLE);
+    }
+
     IOleObject_Release(oleobj);
 
     test_MSHTML_QueryStatus(doc, OLECMDF_SUPPORTED);
-    test_download(DWL_VERBDONE | (do_load ? DWL_CSS|DWL_TRYCSS : 0));
+    test_download(DWL_VERBDONE | DWL_EX_GETHOSTINFO | (do_load ? DWL_CSS|DWL_TRYCSS : 0));
 
     SET_EXPECT(SetStatusText); /* ignore race in native mshtml */
     test_timer(EXPECT_UPDATEUI);
@@ -7856,8 +7922,9 @@ START_TEST(htmldoc)
     test_HTMLDocument(TRUE, TRUE);
     test_HTMLDocument_StreamLoad();
     test_HTMLDocument_StreamInitNew();
-    test_editing_mode(FALSE);
-    test_editing_mode(TRUE);
+    test_editing_mode(FALSE, FALSE);
+    test_editing_mode(TRUE, FALSE);
+    test_editing_mode(TRUE, TRUE);
     test_HTMLDocument_http(FALSE);
     test_HTMLDocument_http(TRUE);
     test_UIActivate(FALSE, FALSE, FALSE);
