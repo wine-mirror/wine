@@ -528,7 +528,7 @@ static void test_MeshBuilder3(void)
     HRESULT hr;
     IDirect3DRM *d3drm;
     IDirect3DRM3 *d3drm3;
-    LPDIRECT3DRMMESHBUILDER3 pMeshBuilder3;
+    IDirect3DRMMeshBuilder3 *pMeshBuilder3;
     D3DRMLOADMEMORY info;
     int val;
     DWORD val1;

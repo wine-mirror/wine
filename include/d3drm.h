@@ -339,7 +339,7 @@ DECLARE_INTERFACE_(IDirect3DRM3,IUnknown)
     STDMETHOD(CreateObject)(THIS_ REFCLSID rclsid, LPUNKNOWN pUnkOuter, REFIID riid, LPVOID *ppvObj) PURE;
     STDMETHOD(CreateFrame)(THIS_ IDirect3DRMFrame3 *parent, IDirect3DRMFrame3 **frame) PURE;
     STDMETHOD(CreateMesh)(THIS_ IDirect3DRMMesh **mesh) PURE;
-    STDMETHOD(CreateMeshBuilder)(THIS_ LPDIRECT3DRMMESHBUILDER3 *) PURE;
+    STDMETHOD(CreateMeshBuilder)(THIS_ IDirect3DRMMeshBuilder3 **mesh_builder) PURE;
     STDMETHOD(CreateFace)(THIS_ LPDIRECT3DRMFACE2 *) PURE;
     STDMETHOD(CreateAnimation)(THIS_ LPDIRECT3DRMANIMATION2 *) PURE;
     STDMETHOD(CreateAnimationSet)(THIS_ LPDIRECT3DRMANIMATIONSET2 *) PURE;

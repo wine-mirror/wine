@@ -1750,13 +1750,10 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_AddMesh(IDirect3DRMMeshBuilder
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_AddMeshBuilder(IDirect3DRMMeshBuilder3* iface,
-                                                                 LPDIRECT3DRMMESHBUILDER3 MeshBuilder,
-                                                                 DWORD flags)
+static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_AddMeshBuilder(IDirect3DRMMeshBuilder3 *iface,
+        IDirect3DRMMeshBuilder3 *mesh_builder, DWORD flags)
 {
-    IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
-
-    FIXME("(%p)->(%p,%u): stub\n", This, MeshBuilder, flags);
+    FIXME("iface %p, mesh_builder %p, flags %#x stub!\n", iface, mesh_builder, flags);
 
     return E_NOTIMPL;
 }
