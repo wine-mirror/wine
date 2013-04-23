@@ -533,14 +533,11 @@ static HRESULT WINAPI IDirect3DRM2Impl_CreateMesh(IDirect3DRM2 *iface, IDirect3D
     return IDirect3DRM3_CreateMesh(&d3drm->IDirect3DRM3_iface, mesh);
 }
 
-static HRESULT WINAPI IDirect3DRM2Impl_CreateMeshBuilder(IDirect3DRM2* iface,
-                                                         LPDIRECT3DRMMESHBUILDER2 * ppMeshBuilder)
+static HRESULT WINAPI IDirect3DRM2Impl_CreateMeshBuilder(IDirect3DRM2 *iface, IDirect3DRMMeshBuilder2 **mesh_builder)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM2(iface);
+    TRACE("iface %p, mesh_builder %p.\n", iface, mesh_builder);
 
-    TRACE("(%p/%p)->(%p)\n", iface, This, ppMeshBuilder);
-
-    return Direct3DRMMeshBuilder_create(&IID_IDirect3DRMMeshBuilder2, (IUnknown**)ppMeshBuilder);
+    return Direct3DRMMeshBuilder_create(&IID_IDirect3DRMMeshBuilder2, (IUnknown **)mesh_builder);
 }
 
 static HRESULT WINAPI IDirect3DRM2Impl_CreateFace(IDirect3DRM2* iface, LPDIRECT3DRMFACE * ppFace)
