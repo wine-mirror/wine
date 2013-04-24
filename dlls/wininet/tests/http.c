@@ -2026,7 +2026,7 @@ static DWORD CALLBACK server_thread(LPVOID param)
         }
         if (strstr(buffer, "GET /test_cache_control_no_store"))
         {
-            static const char no_cache_response[] = "HTTP/1.1 200 OK\r\nCache-Control: No-StOrE\r\n\r\nsome content";
+            static const char no_cache_response[] = "HTTP/1.1 200 OK\r\nCache-Control: junk, \t No-StOrE\r\n\r\nsome content";
             send(c, no_cache_response, sizeof(no_cache_response)-1, 0);
         }
         if (strstr(buffer, "GET /test_premature_disconnect"))

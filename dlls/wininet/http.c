@@ -2307,9 +2307,30 @@ static void create_cache_entry(http_request_t *req)
 
     if(b) {
         int header_idx = HTTP_GetCustomHeaderIndex(req, szCache_Control, 0, FALSE);
-        if(header_idx!=-1 && (!strcmpiW(req->custHeaders[header_idx].lpszValue, no_cacheW)
-                    || !strcmpiW(req->custHeaders[header_idx].lpszValue, no_storeW)))
-            b = FALSE;
+        if(header_idx != -1) {
+            WCHAR *ptr;
+
+            for(ptr=req->custHeaders[header_idx].lpszValue; *ptr; ) {
+                WCHAR *end;
+
+                while(*ptr==' ' || *ptr=='\t')
+                    ptr++;
+
+                end = strchrW(ptr, ',');
+                if(!end)
+                    end = ptr + strlenW(ptr);
+
+                if(!strncmpiW(ptr, no_cacheW, sizeof(no_cacheW)/sizeof(*no_cacheW)-1)
+                        || !strncmpiW(ptr, no_storeW, sizeof(no_storeW)/sizeof(*no_storeW)-1)) {
+                    b = FALSE;
+                    break;
+                }
+
+                ptr = end;
+                if(*ptr == ',')
+                    ptr++;
+            }
+        }
     }
 
     if(!b) {
