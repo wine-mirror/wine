@@ -863,9 +863,6 @@ do {                                                                \
 #define checkGLcall(A) do {} while(0)
 #endif
 
-/* Global variables */
-extern const struct wined3d_matrix identity DECLSPEC_HIDDEN;
-
 enum wined3d_ffp_idx
 {
     WINED3D_FFP_POSITION = 0,
@@ -1704,7 +1701,6 @@ struct wined3d_device
     DWORD vs_clipping;
     UINT instance_count;
 
-    WORD view_ident : 1;                /* true iff view matrix is identity */
     WORD vertexBlendUsed : 1;           /* To avoid needless setting of the blend matrices */
     WORD isRecordingState : 1;
     WORD isInDraw : 1;
@@ -1714,7 +1710,7 @@ struct wined3d_device
     WORD softwareVertexProcessing : 1;  /* process vertex shaders using software or hardware */
     WORD useDrawStridedSlow : 1;
     WORD filter_messages : 1;
-    WORD padding : 6;
+    WORD padding : 7;
 
     BYTE fixed_function_usage_map;      /* MAX_TEXTURES, 8 */
 

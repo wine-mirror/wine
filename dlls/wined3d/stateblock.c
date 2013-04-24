@@ -1161,6 +1161,13 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
     unsigned int i;
     struct wined3d_swapchain *swapchain;
     struct wined3d_surface *backbuffer;
+    static const struct wined3d_matrix identity =
+    {{{
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    }}};
 
     TRACE("stateblock %p.\n", stateblock);
 

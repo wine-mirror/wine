@@ -53,17 +53,6 @@ const struct wined3d_light WINED3D_default_light =
     0.0f                        /* Phi */
 };
 
-/**********************************************************
- * Global variable / Constants follow
- **********************************************************/
-const struct wined3d_matrix identity =
-{{{
-    1.0f, 0.0f, 0.0f, 0.0f,
-    0.0f, 1.0f, 0.0f, 0.0f,
-    0.0f, 0.0f, 1.0f, 0.0f,
-    0.0f, 0.0f, 0.0f, 1.0f,
-}}};  /* When needed for comparisons */
-
 /* Note that except for WINED3DPT_POINTLIST and WINED3DPT_LINELIST these
  * actually have the same values in GL and D3D. */
 GLenum gl_primitive_type_from_d3d(enum wined3d_primitive_type primitive_type)
@@ -1208,8 +1197,6 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
 
     create_dummy_textures(device, context);
 
-    /* Initialize the current view state */
-    device->view_ident = 1;
     device->contexts[0]->last_was_rhw = 0;
 
     switch (wined3d_settings.offscreen_rendering_mode)
@@ -1684,8 +1671,6 @@ void CDECL wined3d_device_set_transform(struct wined3d_device *device,
     }
 
     device->stateBlock->state.transforms[d3dts] = *matrix;
-    if (d3dts == WINED3D_TS_VIEW)
-        device->view_ident = !memcmp(matrix, &identity, sizeof(identity));
 
     if (d3dts < WINED3D_TS_WORLD_MATRIX(device->adapter->gl_info.limits.blends))
         device_invalidate_state(device, STATE_TRANSFORM(d3dts));

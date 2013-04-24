@@ -3801,19 +3801,10 @@ static void transform_world(struct wined3d_context *context, const struct wined3
     }
     else
     {
-        /* In the general case, the view matrix is the identity matrix */
-        if (context->swapchain->device->view_ident)
-        {
-            gl_info->gl_ops.gl.p_glLoadMatrixf(&state->transforms[WINED3D_TS_WORLD_MATRIX(0)].u.m[0][0]);
-            checkGLcall("glLoadMatrixf");
-        }
-        else
-        {
-            gl_info->gl_ops.gl.p_glLoadMatrixf(&state->transforms[WINED3D_TS_VIEW].u.m[0][0]);
-            checkGLcall("glLoadMatrixf");
-            gl_info->gl_ops.gl.p_glMultMatrixf(&state->transforms[WINED3D_TS_WORLD_MATRIX(0)].u.m[0][0]);
-            checkGLcall("glMultMatrixf");
-        }
+        gl_info->gl_ops.gl.p_glLoadMatrixf(&state->transforms[WINED3D_TS_VIEW].u.m[0][0]);
+        checkGLcall("glLoadMatrixf");
+        gl_info->gl_ops.gl.p_glMultMatrixf(&state->transforms[WINED3D_TS_WORLD_MATRIX(0)].u.m[0][0]);
+        checkGLcall("glMultMatrixf");
     }
 }
 
@@ -3883,18 +3874,10 @@ static void transform_worldex(struct wined3d_context *context, const struct wine
     /* World matrix 0 is multiplied with the view matrix because d3d uses 3
      * matrices while gl uses only 2. To avoid weighting the view matrix
      * incorrectly it has to be multiplied into every GL modelview matrix. */
-    if (context->swapchain->device->view_ident)
-    {
-        gl_info->gl_ops.gl.p_glLoadMatrixf(&state->transforms[WINED3D_TS_WORLD_MATRIX(matrix)].u.m[0][0]);
-        checkGLcall("glLoadMatrixf");
-    }
-    else
-    {
-        gl_info->gl_ops.gl.p_glLoadMatrixf(&state->transforms[WINED3D_TS_VIEW].u.m[0][0]);
-        checkGLcall("glLoadMatrixf");
-        gl_info->gl_ops.gl.p_glMultMatrixf(&state->transforms[WINED3D_TS_WORLD_MATRIX(matrix)].u.m[0][0]);
-        checkGLcall("glMultMatrixf");
-    }
+    gl_info->gl_ops.gl.p_glLoadMatrixf(&state->transforms[WINED3D_TS_VIEW].u.m[0][0]);
+    checkGLcall("glLoadMatrixf");
+    gl_info->gl_ops.gl.p_glMultMatrixf(&state->transforms[WINED3D_TS_WORLD_MATRIX(matrix)].u.m[0][0]);
+    checkGLcall("glMultMatrixf");
 }
 
 static void state_vertexblend_w(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
