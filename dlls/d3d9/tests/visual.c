@@ -12385,6 +12385,7 @@ static void fp_special_test(IDirect3DDevice9 *device)
         const char *name;
         const DWORD *ops;
         DWORD size;
+        D3DCOLOR r500;
         D3DCOLOR r600;
         D3DCOLOR nv40;
         D3DCOLOR nv50;
@@ -12403,17 +12404,17 @@ static void fp_special_test(IDirect3DDevice9 *device)
          *
          * There are considerable differences between graphics cards in how
          * these are handled, but pow and nrm never generate INF or NAN. */
-        {"log",     vs_log,     sizeof(vs_log),     0x00000000, 0x00ff0000, 0x00ff7f00},
-        {"pow",     vs_pow,     sizeof(vs_pow),     0x000000ff, 0x0000ff00, 0x000000ff},
-        {"nrm",     vs_nrm,     sizeof(vs_nrm),     0x00ff0000, 0x0000ff00, 0x00ff0000},
-        {"rcp1",    vs_rcp1,    sizeof(vs_rcp1),    0x000000ff, 0x00ff00ff, 0x00ff7f00},
-        {"rcp2",    vs_rcp2,    sizeof(vs_rcp2),    0x00000000, 0x00ff0000, 0x00ff7f00},
-        {"rsq1",    vs_rsq1,    sizeof(vs_rsq1),    0x000000ff, 0x00ff00ff, 0x00ff7f00},
-        {"rsq2",    vs_rsq2,    sizeof(vs_rsq2),    0x000000ff, 0x00ff00ff, 0x00ff7f00},
-        {"lit",     vs_lit,     sizeof(vs_lit),     0x00ff0000, 0x00ff0000, 0x00ff0000},
-        {"def1",    vs_def1,    sizeof(vs_def1),    0x00007f00, 0x0000ff00, 0x00007f00},
-        {"def2",    vs_def2,    sizeof(vs_def2),    0x00ff7f00, 0x00ff0000, 0x00ff7f00},
-        {"def3",    vs_def3,    sizeof(vs_def3),    0x00ff7f00, 0x00ff00ff, 0x00ff7f00},
+        {"log",     vs_log,     sizeof(vs_log),     0x00000000, 0x00000000, 0x00ff0000, 0x00ff7f00},
+        {"pow",     vs_pow,     sizeof(vs_pow),     0x000000ff, 0x000000ff, 0x0000ff00, 0x000000ff},
+        {"nrm",     vs_nrm,     sizeof(vs_nrm),     0x00ff0000, 0x00ff0000, 0x0000ff00, 0x00ff0000},
+        {"rcp1",    vs_rcp1,    sizeof(vs_rcp1),    0x000000ff, 0x000000ff, 0x00ff00ff, 0x00ff7f00},
+        {"rcp2",    vs_rcp2,    sizeof(vs_rcp2),    0x000000ff, 0x00000000, 0x00ff0000, 0x00ff7f00},
+        {"rsq1",    vs_rsq1,    sizeof(vs_rsq1),    0x000000ff, 0x000000ff, 0x00ff00ff, 0x00ff7f00},
+        {"rsq2",    vs_rsq2,    sizeof(vs_rsq2),    0x000000ff, 0x000000ff, 0x00ff00ff, 0x00ff7f00},
+        {"lit",     vs_lit,     sizeof(vs_lit),     0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000},
+        {"def1",    vs_def1,    sizeof(vs_def1),    0x000000ff, 0x00007f00, 0x0000ff00, 0x00007f00},
+        {"def2",    vs_def2,    sizeof(vs_def2),    0x00ff0000, 0x00ff7f00, 0x00ff0000, 0x00ff7f00},
+        {"def3",    vs_def3,    sizeof(vs_def3),    0x00ff00ff, 0x00ff7f00, 0x00ff00ff, 0x00ff7f00},
     };
 
     static const DWORD ps_code[] =
