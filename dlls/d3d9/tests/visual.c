@@ -12411,9 +12411,9 @@ static void fp_special_test(IDirect3DDevice9 *device)
         {"rsq1",    vs_rsq1,    sizeof(vs_rsq1),    0x000000ff, 0x00ff00ff, 0x00ff7f00},
         {"rsq2",    vs_rsq2,    sizeof(vs_rsq2),    0x000000ff, 0x00ff00ff, 0x00ff7f00},
         {"lit",     vs_lit,     sizeof(vs_lit),     0x00ff0000, 0x00ff0000, 0x00ff0000},
-        {"def1",    vs_def1,    sizeof(vs_def1),    0x00007f00, 0x00007f00, 0x00007f00},
-        {"def2",    vs_def2,    sizeof(vs_def2),    0x00ff7f00, 0x00ff7f00, 0x00ff7f00},
-        {"def3",    vs_def3,    sizeof(vs_def3),    0x00ff7f00, 0x00ff7f00, 0x00ff7f00},
+        {"def1",    vs_def1,    sizeof(vs_def1),    0x00007f00, 0x0000ff00, 0x00007f00},
+        {"def2",    vs_def2,    sizeof(vs_def2),    0x00ff7f00, 0x00ff0000, 0x00ff7f00},
+        {"def3",    vs_def3,    sizeof(vs_def3),    0x00ff7f00, 0x00ff00ff, 0x00ff7f00},
     };
 
     static const DWORD ps_code[] =
