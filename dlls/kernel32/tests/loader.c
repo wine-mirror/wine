@@ -1042,7 +1042,6 @@ nt4_is_broken:
 #define MAX_COUNT 10
 static HANDLE attached_thread[MAX_COUNT], stop_event, event, mutex, semaphore;
 static DWORD attached_thread_count;
-static LONG noop_thread_started;
 static int test_dll_phase;
 
 static DWORD WINAPI mutex_thread_proc(void *param)
@@ -1085,14 +1084,19 @@ static DWORD WINAPI semaphore_thread_proc(void *param)
 
 static DWORD WINAPI noop_thread_proc(void *param)
 {
-    InterlockedIncrement(&noop_thread_started);
+    if (param)
+    {
+        LONG *noop_thread_started = param;
+        InterlockedIncrement(noop_thread_started);
+    }
 
     trace("%04u: noop_thread_proc: exiting\n", GetCurrentThreadId());
-    return 196;
+    return 195;
 }
 
 static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
 {
+    static LONG noop_thread_started;
     DWORD ret;
 
     switch (reason)
@@ -1136,7 +1140,7 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
                 ok(!ret || broken(ret) /* before Vista */, "RtlDllShutdownInProgress returned %d\n", ret);
         }
 
-        ok(attached_thread_count == 2, "attached thread count should be 2\n");
+        ok(attached_thread_count >= 2, "attached thread count should be >= 2\n");
 
         for (i = 0; i < attached_thread_count; i++)
         {
@@ -1179,7 +1183,7 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
          */
         noop_thread_started = 0;
         SetLastError(0xdeadbeef);
-        handle = CreateThread(NULL, 0, noop_thread_proc, NULL, 0, &ret);
+        handle = CreateThread(NULL, 0, noop_thread_proc, &noop_thread_started, 0, &ret);
         /* manual call to LdrShutdownProcess doesn't prevent thread creation */
         if (param && test_dll_phase != 4)
         {
@@ -1187,7 +1191,11 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
             if (!handle)
                 ok(GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
             else
+            {
+                ret = WaitForSingleObject(handle, 1000);
+                ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %#x\n", ret);
                 CloseHandle(handle);
+            }
         }
         else
         {
@@ -1212,7 +1220,7 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
 
         noop_thread_started = 0;
         SetLastError(0xdeadbeef);
-        handle = CreateRemoteThread(process, NULL, 0, noop_thread_proc, NULL, 0, &ret);
+        handle = CreateRemoteThread(process, NULL, 0, noop_thread_proc, &noop_thread_started, 0, &ret);
         /* manual call to LdrShutdownProcess doesn't prevent thread creation */
         if (param && test_dll_phase != 4)
         {
@@ -1220,7 +1228,11 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
             if (!handle)
                 ok(GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
             else
+            {
+                ret = WaitForSingleObject(handle, 1000);
+                ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %#x\n", ret);
                 CloseHandle(handle);
+            }
         }
         else
         {
@@ -1437,6 +1449,19 @@ static void child_process(const char *dll_name, DWORD target_offset)
 
         ret = pRtlDllShutdownInProgress();
         ok(!ret, "RtlDllShutdownInProgress returned %d\n", ret);
+
+        SetLastError(0xdeadbeef);
+        thread = CreateThread(NULL, 0, noop_thread_proc, &dummy, 0, &ret);
+todo_wine
+        ok(!thread || broken(thread != 0) /* before win7 */, "CreateThread should fail\n");
+        if (!thread)
+            ok(GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
+        else
+        {
+            ret = WaitForSingleObject(thread, 1000);
+            ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %#x\n", ret);
+            CloseHandle(thread);
+        }
 
         break;
 
