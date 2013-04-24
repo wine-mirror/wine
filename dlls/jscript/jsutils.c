@@ -294,11 +294,13 @@ HRESULT variant_to_jsval(VARIANT *var, jsval_t *r)
     case VT_BSTR: {
         jsstr_t *str;
 
-        str = jsstr_alloc_len(V_BSTR(var), SysStringLen(V_BSTR(var)));
-        if(!str)
-            return E_OUTOFMEMORY;
-        if(!V_BSTR(var))
-            str->length_flags |= JSSTR_FLAG_NULLBSTR;
+        if(V_BSTR(var)) {
+            str = jsstr_alloc_len(V_BSTR(var), SysStringLen(V_BSTR(var)));
+            if(!str)
+                return E_OUTOFMEMORY;
+        }else {
+            str = jsstr_null_bstr();
+        }
 
         *r = jsval_string(str);
         return S_OK;
@@ -351,7 +353,7 @@ HRESULT jsval_to_variant(jsval_t val, VARIANT *retv)
         jsstr_t *str = get_string(val);
 
         V_VT(retv) = VT_BSTR;
-        if(str->length_flags & JSSTR_FLAG_NULLBSTR) {
+        if(is_null_bstr(str)) {
             V_BSTR(retv) = NULL;
         }else {
             V_BSTR(retv) = SysAllocStringLen(NULL, jsstr_length(str));
@@ -913,7 +915,7 @@ HRESULT variant_change_type(script_ctx_t *ctx, VARIANT *dst, VARIANT *src, VARTY
         if(FAILED(hres))
             break;
 
-        if(str->length_flags & JSSTR_FLAG_NULLBSTR) {
+        if(is_null_bstr(str)) {
             V_BSTR(dst) = NULL;
             break;
         }

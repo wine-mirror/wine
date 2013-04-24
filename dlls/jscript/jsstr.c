@@ -277,7 +277,7 @@ const WCHAR *jsstr_rope_flatten(jsstr_rope_t *str)
     return jsstr_as_heap(&str->str)->buf = buf;
 }
 
-static jsstr_t *empty_str, *nan_str, *undefined_str;
+static jsstr_t *empty_str, *nan_str, *undefined_str, *null_bstr_str;
 
 jsstr_t *jsstr_nan(void)
 {
@@ -294,6 +294,16 @@ jsstr_t *jsstr_undefined(void)
     return jsstr_addref(undefined_str);
 }
 
+jsstr_t *jsstr_null_bstr(void)
+{
+    return jsstr_addref(null_bstr_str);
+}
+
+BOOL is_null_bstr(jsstr_t *str)
+{
+    return str == null_bstr_str;
+}
+
 BOOL init_strings(void)
 {
     static const WCHAR NaNW[] = { 'N','a','N',0 };
@@ -305,12 +315,19 @@ BOOL init_strings(void)
         return FALSE;
     if(!(undefined_str = jsstr_alloc(undefinedW)))
         return FALSE;
-    return TRUE;
+    if(!jsstr_alloc_buf(0, &null_bstr_str))
+        return FALSE;
+     return TRUE;
 }
 
 void free_strings(void)
 {
-    jsstr_release(empty_str);
-    jsstr_release(nan_str);
-    jsstr_release(undefined_str);
+    if(empty_str)
+        jsstr_release(empty_str);
+    if(nan_str)
+        jsstr_release(nan_str);
+    if(undefined_str)
+        jsstr_release(undefined_str);
+    if(null_bstr_str)
+        jsstr_release(null_bstr_str);
 }

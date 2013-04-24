@@ -17,7 +17,7 @@
  */
 
 /*
- * This is a common header for all string representations. The exact layout of the string
+ * jsstr_t is a common header for all string representations. The exact layout of the string
  * representation may be:
  *
  * - inline string - string bytes directly follow string headers.
@@ -41,8 +41,6 @@ struct _jsstr_t {
 #define JSSTR_LENGTH_SHIFT 4
 #define JSSTR_MAX_LENGTH (1 << (32-JSSTR_LENGTH_SHIFT))
 #define JSSTR_FLAGS_MASK ((1 << JSSTR_LENGTH_SHIFT)-1)
-
-#define JSSTR_FLAG_NULLBSTR 4
 
 #define JSSTR_FLAG_LBIT     1
 #define JSSTR_FLAG_FLAT     2
@@ -186,6 +184,9 @@ jsstr_t *jsstr_concat(jsstr_t*,jsstr_t*) DECLSPEC_HIDDEN;
 jsstr_t *jsstr_nan(void) DECLSPEC_HIDDEN;
 jsstr_t *jsstr_empty(void) DECLSPEC_HIDDEN;
 jsstr_t *jsstr_undefined(void) DECLSPEC_HIDDEN;
+
+jsstr_t *jsstr_null_bstr(void) DECLSPEC_HIDDEN;
+BOOL is_null_bstr(jsstr_t*) DECLSPEC_HIDDEN;
 
 BOOL init_strings(void) DECLSPEC_HIDDEN;
 void free_strings(void) DECLSPEC_HIDDEN;
