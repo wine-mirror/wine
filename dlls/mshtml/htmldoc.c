@@ -708,7 +708,7 @@ static HRESULT WINAPI HTMLDocument_get_cookie(IHTMLDocument2 *iface, BSTR *p)
         return S_OK;
     }
 
-    *p = SysAllocStringLen(NULL, size-1);
+    *p = SysAllocStringLen(NULL, size/sizeof(WCHAR)-1);
     if(!*p)
         return E_OUTOFMEMORY;
 
