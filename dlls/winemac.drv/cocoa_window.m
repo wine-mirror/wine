@@ -856,7 +856,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         macdrv_release_event(event);
     }
 
-    - (void) makeFocused
+    - (void) makeFocused:(BOOL)activate
     {
         WineApplicationController* controller = [WineApplicationController sharedController];
         NSArray* screens;
@@ -889,6 +889,8 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
             if (front && [front levelWhenActive] > [self levelWhenActive])
                 [self setLevelWhenActive:[front levelWhenActive]];
         }
+        if (activate)
+            [NSApp activateIgnoringOtherApps:YES];
         [self orderFront:nil];
         [controller wineWindow:self ordered:NSWindowAbove relativeTo:nil];
         causing_becomeKeyWindow = TRUE;
@@ -1804,12 +1806,12 @@ void macdrv_window_use_per_pixel_alpha(macdrv_window w, int use_per_pixel_alpha)
  * orders it front and, if its frame was not within the desktop bounds,
  * Cocoa will typically move it on-screen.
  */
-void macdrv_give_cocoa_window_focus(macdrv_window w)
+void macdrv_give_cocoa_window_focus(macdrv_window w, int activate)
 {
     WineWindow* window = (WineWindow*)w;
 
     OnMainThread(^{
-        [window makeFocused];
+        [window makeFocused:activate];
     });
 }
 

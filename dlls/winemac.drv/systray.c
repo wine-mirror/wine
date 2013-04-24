@@ -325,6 +325,14 @@ void macdrv_status_item_clicked(const macdrv_event *event)
         {
             UINT down;
 
+            if (!SendMessageW(icon->owner, WM_MACDRV_ACTIVATE_ON_FOLLOWING_FOCUS, 0, 0) &&
+                GetLastError() == ERROR_INVALID_WINDOW_HANDLE)
+            {
+                WARN("window %p was destroyed, removing icon 0x%x\n", icon->owner, icon->id);
+                delete_icon(icon);
+                return;
+            }
+
             if (event->status_item_clicked.count == 1)
             {
                 down = WM_LBUTTONDOWN;

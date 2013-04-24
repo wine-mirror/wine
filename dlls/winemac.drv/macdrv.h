@@ -88,6 +88,7 @@ enum macdrv_window_messages
     WM_MACDRV_UPDATE_DESKTOP_RECT,
     WM_MACDRV_RESET_DEVICE_METRICS,
     WM_MACDRV_DISPLAYCHANGE,
+    WM_MACDRV_ACTIVATE_ON_FOLLOWING_FOCUS,
 };
 
 struct macdrv_thread_data

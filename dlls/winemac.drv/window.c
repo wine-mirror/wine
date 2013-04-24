@@ -42,6 +42,8 @@ static CRITICAL_SECTION win_data_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 static CFMutableDictionaryRef win_datas;
 
+DWORD activate_on_focus_time;
+
 
 void CDECL macdrv_SetFocus(HWND hwnd);
 
@@ -855,8 +857,9 @@ void CDECL macdrv_SetFocus(HWND hwnd)
 
     if (data->cocoa_window && data->on_screen)
     {
+        BOOL activate = activate_on_focus_time && (GetTickCount() - activate_on_focus_time < 2000);
         /* Set Mac focus */
-        macdrv_give_cocoa_window_focus(data->cocoa_window);
+        macdrv_give_cocoa_window_focus(data->cocoa_window, activate);
     }
 
     release_win_data(data);
@@ -1226,6 +1229,11 @@ LRESULT CDECL macdrv_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         }
         SendMessageW(hwnd, WM_DISPLAYCHANGE, wp, lp);
         return 0;
+    case WM_MACDRV_ACTIVATE_ON_FOLLOWING_FOCUS:
+        activate_on_focus_time = GetTickCount();
+        if (!activate_on_focus_time) activate_on_focus_time = 1;
+        TRACE("WM_MACDRV_ACTIVATE_ON_FOLLOWING_FOCUS time %u\n", activate_on_focus_time);
+        break;
     }
 
     FIXME("unrecognized window msg %x hwnd %p wp %lx lp %lx\n", msg, hwnd, wp, lp);
