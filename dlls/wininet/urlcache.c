@@ -698,11 +698,11 @@ static void cache_container_close_index(cache_container *pContainer)
     pContainer->mapping = NULL;
 }
 
-static BOOL cache_containers_add(LPCWSTR cache_prefix,
-        LPCWSTR path, DWORD default_entry_type, LPWSTR mutex_name)
+static BOOL cache_containers_add(const char *cache_prefix, LPCWSTR path,
+        DWORD default_entry_type, LPWSTR mutex_name)
 {
     cache_container *pContainer = heap_alloc(sizeof(cache_container));
-    int cache_prefix_len = strlenW(cache_prefix);
+    int cache_prefix_len = strlen(cache_prefix);
 
     if (!pContainer)
     {
@@ -720,7 +720,7 @@ static BOOL cache_containers_add(LPCWSTR cache_prefix,
         return FALSE;
     }
 
-    pContainer->cache_prefix = heap_alloc((cache_prefix_len + 1) * sizeof(WCHAR));
+    pContainer->cache_prefix = heap_alloc(cache_prefix_len+1);
     if (!pContainer->cache_prefix)
     {
         heap_free(pContainer->path);
@@ -728,7 +728,7 @@ static BOOL cache_containers_add(LPCWSTR cache_prefix,
         return FALSE;
     }
 
-    memcpy(pContainer->cache_prefix, cache_prefix, (cache_prefix_len + 1) * sizeof(WCHAR));
+    memcpy(pContainer->cache_prefix, cache_prefix, cache_prefix_len+1);
 
     CharLowerW(mutex_name);
     cache_container_create_object_name(mutex_name, '!');
@@ -760,22 +760,19 @@ static void cache_container_delete_container(cache_container *pContainer)
 static void cache_containers_init(void)
 {
     static const WCHAR UrlSuffix[] = {'C','o','n','t','e','n','t','.','I','E','5',0};
-    static const WCHAR UrlPrefix[] = {0};
     static const WCHAR HistorySuffix[] = {'H','i','s','t','o','r','y','.','I','E','5',0};
-    static const WCHAR HistoryPrefix[] = {'V','i','s','i','t','e','d',':',0};
     static const WCHAR CookieSuffix[] = {0};
-    static const WCHAR CookiePrefix[] = {'C','o','o','k','i','e',':',0};
     static const struct
     {
         int nFolder; /* CSIDL_* constant */
-        const WCHAR * shpath_suffix; /* suffix on path returned by SHGetSpecialFolderPath */
-        const WCHAR * cache_prefix; /* prefix used to reference the container */
+        const WCHAR *shpath_suffix; /* suffix on path returned by SHGetSpecialFolderPath */
+        const char *cache_prefix; /* prefix used to reference the container */
         DWORD default_entry_type;
     } DefaultContainerData[] = 
     {
-        { CSIDL_INTERNET_CACHE, UrlSuffix, UrlPrefix, NORMAL_CACHE_ENTRY },
-        { CSIDL_HISTORY, HistorySuffix, HistoryPrefix, URLHISTORY_CACHE_ENTRY },
-        { CSIDL_COOKIES, CookieSuffix, CookiePrefix, COOKIE_CACHE_ENTRY },
+        { CSIDL_INTERNET_CACHE, UrlSuffix, "", NORMAL_CACHE_ENTRY },
+        { CSIDL_HISTORY, HistorySuffix, "Visited:", URLHISTORY_CACHE_ENTRY },
+        { CSIDL_COOKIES, CookieSuffix, "Cookie:", COOKIE_CACHE_ENTRY },
     };
     DWORD i;
 
