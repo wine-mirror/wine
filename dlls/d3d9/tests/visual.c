@@ -10253,8 +10253,11 @@ static void yuv_color_test(IDirect3DDevice9 *device) {
             continue;
         }
 
-        /* A pixel is effectively 16 bit large, but two pixels are stored together, so the minimum size is 2x1 */
-        hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 2, 1, format, D3DPOOL_DEFAULT, &surface, NULL);
+        /* A pixel is effectively 16 bit large, but two pixels are stored together, so the minimum size is 2x1
+         * However, Nvidia Windows drivers have problems with 2x1 YUY2/UYVY surfaces, so use a 4x1 surface and
+         * fill the second block with dummy data. If the surface has a size of 2x1, those drivers ignore the
+         * second luminance value, resulting in an incorrect color in the right pixel. */
+        hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 4, 1, format, D3DPOOL_DEFAULT, &surface, NULL);
         ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface failed, hr = %08x\n", hr);
 
         for(i = 0; i < (sizeof(test_data)/sizeof(test_data[0])); i++) {
@@ -10269,7 +10272,8 @@ static void yuv_color_test(IDirect3DDevice9 *device) {
             memset(&lr, 0, sizeof(lr));
             hr = IDirect3DSurface9_LockRect(surface, &lr, NULL, 0);
             ok(hr == D3D_OK, "IDirect3DSurface9_LockRect failed, hr = %08x\n", hr);
-            *((DWORD *) lr.pBits) = test_data[i].in;
+            ((DWORD *) lr.pBits)[0] = test_data[i].in;
+            ((DWORD *) lr.pBits)[1] = 0x00800080;
             hr = IDirect3DSurface9_UnlockRect(surface);
             ok(hr == D3D_OK, "IDirect3DSurface9_UnlockRect failed, hr = %08x\n", hr);
 
@@ -10283,24 +10287,13 @@ static void yuv_color_test(IDirect3DDevice9 *device) {
              * want to add tests for the filtered pixels as well.
              *
              * Unfortunately different implementations(Windows-NV and Mac-ATI tested) interpret some colors vastly
-             * differently, so we need a max diff of 16
+             * differently, so we need a max diff of 18
              */
-            color = getPixelColor(device, 40, 240);
-
-            /* Newer versions of the Nvidia Windows driver mix up the U and V channels, breaking all the tests
-             * where U != V. Skip the entire test if this bug in this case
-             */
-            if (broken(test_data[i].in == 0xff000000 && color == 0x00008800 && format == D3DFMT_UYVY))
-            {
-                skip("Nvidia channel confusion bug detected, skipping YUV tests\n");
-                IDirect3DSurface9_Release(surface);
-                goto out;
-            }
-
+            color = getPixelColor(device, 1, 240);
             ok(color_match(color, ref_color_left, 18),
                "Input 0x%08x: Got color 0x%08x for pixel 1/1, expected 0x%08x, format %s\n",
                test_data[i].in, color, ref_color_left, fmt_string);
-            color = getPixelColor(device, 600, 240);
+            color = getPixelColor(device, 318, 240);
             ok(color_match(color, ref_color_right, 18),
                "Input 0x%08x: Got color 0x%08x for pixel 2/1, expected 0x%08x, format %s\n",
                test_data[i].in, color, ref_color_right, fmt_string);
@@ -10310,7 +10303,6 @@ static void yuv_color_test(IDirect3DDevice9 *device) {
         IDirect3DSurface9_Release(surface);
     }
 
-out:
     IDirect3DSurface9_Release(target);
     IDirect3D9_Release(d3d);
 }
