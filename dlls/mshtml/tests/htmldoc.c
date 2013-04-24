@@ -3309,10 +3309,13 @@ static HRESULT WINAPI TravelLog_Clone(ITravelLog *iface, ITravelLog **pptl)
     return E_NOTIMPL;
 }
 
+static IBrowserService BrowserService;
 static DWORD WINAPI TravelLog_CountEntries(ITravelLog *iface, IUnknown *punk)
 {
     CHECK_EXPECT(CountEntries);
-    return E_NOTIMPL;
+
+    ok(punk == (IUnknown*)&BrowserService, "punk != &BrowserService (%p)\n", punk);
+    return 0;
 }
 
 static HRESULT WINAPI TravelLog_Revert(ITravelLog *iface)
@@ -5761,6 +5764,29 @@ static void test_load_history(IHTMLDocument2 *doc)
     history_stream = NULL;
 }
 
+static void test_OmHistory(IHTMLDocument2 *doc)
+{
+    IHTMLWindow2 *win;
+    IOmHistory *hist;
+    short len;
+    HRESULT hres;
+
+    hres = IHTMLDocument2_get_parentWindow(doc, &win);
+    ok(hres == S_OK, "get_parentWindow failed: %08x\n", hres);
+
+    hres = IHTMLWindow2_get_history(win, &hist);
+    ok(hres == S_OK, "get_history failed: %08x\n", hres);
+    IHTMLWindow2_Release(win);
+
+    SET_EXPECT(CountEntries);
+    hres = IOmHistory_get_length(hist, &len);
+    CHECK_CALLED(CountEntries);
+    ok(hres == S_OK, "get_length failed: %08x\n", hres);
+    ok(len == 0, "len = %d\n", len);
+
+    IOmHistory_Release(hist);
+}
+
 static void test_refresh(IHTMLDocument2 *doc)
 {
     IOleCommandTarget *cmdtrg;
@@ -7292,6 +7318,7 @@ static void test_HTMLDocument_http(BOOL with_wbapp)
     test_put_href(doc, TRUE, NULL, "about:replace", FALSE, FALSE, 0);
     if(support_wbapp) {
         test_load_history(doc);
+        test_OmHistory(doc);
         test_put_href(doc, FALSE, NULL, "about:blank", FALSE, FALSE, support_wbapp ? DWL_EXPECT_HISTUPDATE : 0);
     }
 
