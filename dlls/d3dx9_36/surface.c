@@ -675,6 +675,71 @@ HRESULT load_volume_texture_from_dds(IDirect3DVolumeTexture9 *volume_texture, co
     return D3D_OK;
 }
 
+static BOOL convert_dib_to_bmp(void **data, UINT *size)
+{
+    ULONG header_size;
+    ULONG count = 0;
+    ULONG offset;
+    BITMAPFILEHEADER *header;
+    BYTE *new_data;
+    UINT new_size;
+
+    if ((*size < 4) || (*size < (header_size = *(ULONG*)*data)))
+        return FALSE;
+
+    if ((header_size == sizeof(BITMAPINFOHEADER)) ||
+        (header_size == sizeof(BITMAPV4HEADER)) ||
+        (header_size == sizeof(BITMAPV5HEADER)) ||
+        (header_size == 64 /* sizeof(BITMAPCOREHEADER2) */))
+    {
+        /* All structures begin with the same memory layout as BITMAPINFOHEADER */
+        BITMAPINFOHEADER *info_header = (BITMAPINFOHEADER*)*data;
+        count = info_header->biClrUsed;
+
+        if (!count && info_header->biBitCount <= 8)
+            count = 1 << info_header->biBitCount;
+
+        offset = sizeof(BITMAPFILEHEADER) + header_size + sizeof(RGBQUAD) * count;
+
+        /* For BITMAPINFOHEADER with BI_BITFIELDS compression, there are 3 additional color masks after header */
+        if ((info_header->biSize == sizeof(BITMAPINFOHEADER)) && (info_header->biCompression == BI_BITFIELDS))
+            offset += 3 * sizeof(DWORD);
+    }
+    else if (header_size == sizeof(BITMAPCOREHEADER))
+    {
+        BITMAPCOREHEADER *core_header = (BITMAPCOREHEADER*)*data;
+
+        if (core_header->bcBitCount <= 8)
+            count = 1 << core_header->bcBitCount;
+
+        offset = sizeof(BITMAPFILEHEADER) + header_size + sizeof(RGBTRIPLE) * count;
+    }
+    else
+    {
+        return FALSE;
+    }
+
+    TRACE("Converting DIB file to BMP\n");
+
+    new_size = *size + sizeof(BITMAPFILEHEADER);
+    new_data = HeapAlloc(GetProcessHeap(), 0, new_size);
+    CopyMemory(new_data + sizeof(BITMAPFILEHEADER), *data, *size);
+
+    /* Add BMP header */
+    header = (BITMAPFILEHEADER*)new_data;
+    header->bfType = 0x4d42; /* BM */
+    header->bfSize = new_size;
+    header->bfReserved1 = 0;
+    header->bfReserved2 = 0;
+    header->bfOffBits = offset;
+
+    /* Update input data */
+    *data = new_data;
+    *size = new_size;
+
+    return TRUE;
+}
+
 /************************************************************
  * D3DXGetImageInfoFromFileInMemory
  *
@@ -696,13 +761,14 @@ HRESULT load_volume_texture_from_dds(IDirect3DVolumeTexture9 *volume_texture, co
  *   datasize may be bigger than the actual file size
  *
  */
-HRESULT WINAPI D3DXGetImageInfoFromFileInMemory(LPCVOID data, UINT datasize, D3DXIMAGE_INFO *info)
+HRESULT WINAPI D3DXGetImageInfoFromFileInMemory(const void *data, UINT datasize, D3DXIMAGE_INFO *info)
 {
     IWICImagingFactory *factory;
     IWICBitmapDecoder *decoder = NULL;
     IWICStream *stream;
     HRESULT hr;
     HRESULT initresult;
+    BOOL dib;
 
     TRACE("(%p, %d, %p)\n", data, datasize, info);
 
@@ -716,6 +782,9 @@ HRESULT WINAPI D3DXGetImageInfoFromFileInMemory(LPCVOID data, UINT datasize, D3D
         TRACE("File type is DDS\n");
         return get_image_info_from_dds(data, datasize, info);
     }
+
+    /* In case of DIB file, convert it to BMP */
+    dib = convert_dib_to_bmp((void**)&data, &datasize);
 
     initresult = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
@@ -732,8 +801,6 @@ HRESULT WINAPI D3DXGetImageInfoFromFileInMemory(LPCVOID data, UINT datasize, D3D
     if (FAILED(hr)) {
         if ((datasize >= 2) && (!strncmp(data, "P3", 2) || !strncmp(data, "P6", 2)))
             FIXME("File type PPM is not supported yet\n");
-        else if ((datasize >= 4) && (*(DWORD*)data == sizeof(BITMAPINFOHEADER)))
-            FIXME("File type DIB is not supported yet\n");
         else if ((datasize >= 10) && !strncmp(data, "#?RADIANCE", 10))
             FIXME("File type HDR is not supported yet\n");
         else if ((datasize >= 2) && (!strncmp(data, "PF", 2) || !strncmp(data, "Pf", 2)))
@@ -747,8 +814,13 @@ HRESULT WINAPI D3DXGetImageInfoFromFileInMemory(LPCVOID data, UINT datasize, D3D
         hr = IWICBitmapDecoder_GetContainerFormat(decoder, &container_format);
         if (SUCCEEDED(hr)) {
             if (IsEqualGUID(&container_format, &GUID_ContainerFormatBmp)) {
-                TRACE("File type is BMP\n");
-                info->ImageFileFormat = D3DXIFF_BMP;
+                if (dib) {
+                    TRACE("File type is DIB\n");
+                    info->ImageFileFormat = D3DXIFF_DIB;
+                } else {
+                    TRACE("File type is BMP\n");
+                    info->ImageFileFormat = D3DXIFF_BMP;
+                }
             } else if (IsEqualGUID(&container_format, &GUID_ContainerFormatPng)) {
                 TRACE("File type is PNG\n");
                 info->ImageFileFormat = D3DXIFF_PNG;
@@ -804,6 +876,9 @@ HRESULT WINAPI D3DXGetImageInfoFromFileInMemory(LPCVOID data, UINT datasize, D3D
 
     if (SUCCEEDED(initresult))
         CoUninitialize();
+
+    if (dib)
+        HeapFree(GetProcessHeap(), 0, (void*)data);
 
     if (FAILED(hr)) {
         TRACE("Invalid or unsupported image file\n");
