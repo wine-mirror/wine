@@ -4472,11 +4472,11 @@ static struct arb_vs_compiled_shader *find_arb_vshader(struct wined3d_shader *sh
 }
 
 static void find_arb_ps_compile_args(const struct wined3d_state *state,
-        const struct wined3d_shader *shader, struct arb_ps_compile_args *args)
+        const struct wined3d_context *context, const struct wined3d_shader *shader,
+        struct arb_ps_compile_args *args)
 {
-    struct wined3d_device *device = shader->device;
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct wined3d_d3d_info *d3d_info = context->d3d_info;
     int i;
     WORD int_skip;
 
@@ -4528,12 +4528,13 @@ static void find_arb_ps_compile_args(const struct wined3d_state *state,
 }
 
 static void find_arb_vs_compile_args(const struct wined3d_state *state,
-        const struct wined3d_shader *shader, struct arb_vs_compile_args *args)
+        const struct wined3d_context *context, const struct wined3d_shader *shader,
+        struct arb_vs_compile_args *args)
 {
     struct wined3d_device *device = shader->device;
     const struct wined3d_adapter *adapter = device->adapter;
-    const struct wined3d_gl_info *gl_info = &adapter->gl_info;
-    const struct wined3d_d3d_info *d3d_info = &adapter->d3d_info;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct wined3d_d3d_info *d3d_info = context->d3d_info;
     int i;
     WORD int_skip;
 
@@ -4623,7 +4624,7 @@ static void shader_arb_select(const struct wined3d_context *context, enum wined3
         struct arb_ps_compiled_shader *compiled;
 
         TRACE("Using pixel shader %p.\n", ps);
-        find_arb_ps_compile_args(state, ps, &compile_args);
+        find_arb_ps_compile_args(state, context, ps, &compile_args);
         compiled = find_arb_pshader(ps, &compile_args);
         priv->current_fprogram_id = compiled->prgId;
         priv->compiled_fprog = compiled;
@@ -4688,7 +4689,7 @@ static void shader_arb_select(const struct wined3d_context *context, enum wined3
         struct arb_vs_compiled_shader *compiled;
 
         TRACE("Using vertex shader %p\n", vs);
-        find_arb_vs_compile_args(state, vs, &compile_args);
+        find_arb_vs_compile_args(state, context, vs, &compile_args);
         compiled = find_arb_vshader(vs, &compile_args);
         priv->current_vprogram_id = compiled->prgId;
         priv->compiled_vprog = compiled;
