@@ -657,6 +657,7 @@ static void shader_arb_load_constants_internal(const struct wined3d_context *con
     const struct wined3d_stateblock *stateblock = device->stateBlock;
     const struct wined3d_state *state = &stateblock->state;
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct wined3d_d3d_info *d3d_info = context->d3d_info;
     struct shader_arb_priv *priv = device->shader_priv;
 
     if (!from_shader_select)
@@ -689,12 +690,12 @@ static void shader_arb_load_constants_internal(const struct wined3d_context *con
     if (context != priv->last_context)
     {
         memset(priv->vshader_const_dirty, 1,
-                sizeof(*priv->vshader_const_dirty) * device->d3d_vshader_constantF);
-        priv->highest_dirty_vs_const = device->d3d_vshader_constantF;
+                sizeof(*priv->vshader_const_dirty) * d3d_info->limits.vs_uniform_count);
+        priv->highest_dirty_vs_const = d3d_info->limits.vs_uniform_count;
 
         memset(priv->pshader_const_dirty, 1,
-                sizeof(*priv->pshader_const_dirty) * device->d3d_pshader_constantF);
-        priv->highest_dirty_ps_const = device->d3d_pshader_constantF;
+                sizeof(*priv->pshader_const_dirty) * d3d_info->limits.ps_uniform_count);
+        priv->highest_dirty_ps_const = d3d_info->limits.ps_uniform_count;
 
         priv->last_context = context;
     }
@@ -4850,6 +4851,7 @@ static HRESULT shader_arb_alloc(struct wined3d_device *device, const struct wine
     struct shader_arb_priv *priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*priv));
     struct fragment_caps fragment_caps;
     void *vertex_priv, *fragment_priv;
+    const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
 
     if (!(vertex_priv = vertex_pipe->vp_alloc(&arb_program_shader_backend, priv)))
     {
@@ -4867,18 +4869,18 @@ static HRESULT shader_arb_alloc(struct wined3d_device *device, const struct wine
     }
 
     priv->vshader_const_dirty = HeapAlloc(GetProcessHeap(), 0,
-            sizeof(*priv->vshader_const_dirty) * device->d3d_vshader_constantF);
+            sizeof(*priv->vshader_const_dirty) * d3d_info->limits.vs_uniform_count);
     if (!priv->vshader_const_dirty)
         goto fail;
     memset(priv->vshader_const_dirty, 1,
-           sizeof(*priv->vshader_const_dirty) * device->d3d_vshader_constantF);
+           sizeof(*priv->vshader_const_dirty) * d3d_info->limits.vs_uniform_count);
 
     priv->pshader_const_dirty = HeapAlloc(GetProcessHeap(), 0,
-            sizeof(*priv->pshader_const_dirty) * device->d3d_pshader_constantF);
+            sizeof(*priv->pshader_const_dirty) * d3d_info->limits.ps_uniform_count);
     if (!priv->pshader_const_dirty)
         goto fail;
     memset(priv->pshader_const_dirty, 1,
-            sizeof(*priv->pshader_const_dirty) * device->d3d_pshader_constantF);
+            sizeof(*priv->pshader_const_dirty) * d3d_info->limits.ps_uniform_count);
 
     if(wine_rb_init(&priv->signature_tree, &sig_tree_functions) == -1)
     {

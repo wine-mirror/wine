@@ -194,31 +194,31 @@ static const DWORD vertex_states_sampler[] =
  */
 static HRESULT stateblock_allocate_shader_constants(struct wined3d_stateblock *object)
 {
-    struct wined3d_device *device = object->device;
+    const struct wined3d_d3d_info *d3d_info = &object->device->adapter->d3d_info;
 
     /* Allocate space for floating point constants */
     object->state.ps_consts_f = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            sizeof(float) * device->d3d_pshader_constantF * 4);
+            sizeof(float) * d3d_info->limits.ps_uniform_count * 4);
     if (!object->state.ps_consts_f) goto fail;
 
     object->changed.pixelShaderConstantsF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            sizeof(BOOL) * device->d3d_pshader_constantF);
+            sizeof(BOOL) * d3d_info->limits.ps_uniform_count);
     if (!object->changed.pixelShaderConstantsF) goto fail;
 
     object->state.vs_consts_f = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            sizeof(float) * device->d3d_vshader_constantF * 4);
+            sizeof(float) * d3d_info->limits.vs_uniform_count * 4);
     if (!object->state.vs_consts_f) goto fail;
 
     object->changed.vertexShaderConstantsF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            sizeof(BOOL) * device->d3d_vshader_constantF);
+            sizeof(BOOL) * d3d_info->limits.vs_uniform_count);
     if (!object->changed.vertexShaderConstantsF) goto fail;
 
     object->contained_vs_consts_f = HeapAlloc(GetProcessHeap(), 0,
-            sizeof(DWORD) * device->d3d_vshader_constantF);
+            sizeof(DWORD) * d3d_info->limits.vs_uniform_count);
     if (!object->contained_vs_consts_f) goto fail;
 
     object->contained_ps_consts_f = HeapAlloc(GetProcessHeap(), 0,
-            sizeof(DWORD) * device->d3d_pshader_constantF);
+            sizeof(DWORD) * d3d_info->limits.ps_uniform_count);
     if (!object->contained_ps_consts_f) goto fail;
 
     return WINED3D_OK;
@@ -330,7 +330,7 @@ static void stateblock_savedstates_set_vertex(struct wined3d_saved_states *state
 
 void stateblock_init_contained_states(struct wined3d_stateblock *stateblock)
 {
-    struct wined3d_device *device = stateblock->device;
+    const struct wined3d_d3d_info *d3d_info = &stateblock->device->adapter->d3d_info;
     unsigned int i, j;
 
     for (i = 0; i <= WINEHIGHEST_RENDER_STATE >> 5; ++i)
@@ -357,7 +357,7 @@ void stateblock_init_contained_states(struct wined3d_stateblock *stateblock)
         }
     }
 
-    for (i = 0; i < device->d3d_vshader_constantF; ++i)
+    for (i = 0; i < d3d_info->limits.vs_uniform_count; ++i)
     {
         if (stateblock->changed.vertexShaderConstantsF[i])
         {
@@ -384,7 +384,7 @@ void stateblock_init_contained_states(struct wined3d_stateblock *stateblock)
         }
     }
 
-    for (i = 0; i < device->d3d_pshader_constantF; ++i)
+    for (i = 0; i < d3d_info->limits.ps_uniform_count; ++i)
     {
         if (stateblock->changed.pixelShaderConstantsF[i])
         {
@@ -1148,6 +1148,7 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
 {
     struct wined3d_device *device = stateblock->device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
     struct wined3d_state *state = &stateblock->state;
     union
     {
@@ -1171,8 +1172,8 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
 
     TRACE("stateblock %p.\n", stateblock);
 
-    memset(stateblock->changed.pixelShaderConstantsF, 0, device->d3d_pshader_constantF * sizeof(BOOL));
-    memset(stateblock->changed.vertexShaderConstantsF, 0, device->d3d_vshader_constantF * sizeof(BOOL));
+    memset(stateblock->changed.pixelShaderConstantsF, 0, d3d_info->limits.ps_uniform_count * sizeof(BOOL));
+    memset(stateblock->changed.vertexShaderConstantsF, 0, d3d_info->limits.vs_uniform_count * sizeof(BOOL));
 
     /* Set some of the defaults for lights, transforms etc */
     state->transforms[WINED3D_TS_PROJECTION] = identity;
@@ -1400,6 +1401,7 @@ static HRESULT stateblock_init(struct wined3d_stateblock *stateblock,
 {
     unsigned int i;
     HRESULT hr;
+    const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
 
     stateblock->ref = 1;
     stateblock->device = device;
@@ -1423,17 +1425,19 @@ static HRESULT stateblock_init(struct wined3d_stateblock *stateblock,
     {
         case WINED3D_SBT_ALL:
             stateblock_init_lights(stateblock, device->stateBlock->state.light_map);
-            stateblock_savedstates_set_all(&stateblock->changed, device->d3d_vshader_constantF,
-                                           device->d3d_pshader_constantF);
+            stateblock_savedstates_set_all(&stateblock->changed,
+                    d3d_info->limits.vs_uniform_count, d3d_info->limits.ps_uniform_count);
             break;
 
         case WINED3D_SBT_PIXEL_STATE:
-            stateblock_savedstates_set_pixel(&stateblock->changed, device->d3d_pshader_constantF);
+            stateblock_savedstates_set_pixel(&stateblock->changed,
+                    d3d_info->limits.ps_uniform_count);
             break;
 
         case WINED3D_SBT_VERTEX_STATE:
             stateblock_init_lights(stateblock, device->stateBlock->state.light_map);
-            stateblock_savedstates_set_vertex(&stateblock->changed, device->d3d_vshader_constantF);
+            stateblock_savedstates_set_vertex(&stateblock->changed,
+                    d3d_info->limits.vs_uniform_count);
             break;
 
         default:

@@ -2602,6 +2602,7 @@ HRESULT CDECL wined3d_device_set_vs_consts_f(struct wined3d_device *device,
         UINT start_register, const float *constants, UINT vector4f_count)
 {
     UINT i;
+    const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
 
     TRACE("device %p, start_register %u, constants %p, vector4f_count %u.\n",
             device, start_register, constants, vector4f_count);
@@ -2609,8 +2610,8 @@ HRESULT CDECL wined3d_device_set_vs_consts_f(struct wined3d_device *device,
     /* Specifically test start_register > limit to catch MAX_UINT overflows
      * when adding start_register + vector4f_count. */
     if (!constants
-            || start_register + vector4f_count > device->d3d_vshader_constantF
-            || start_register > device->d3d_vshader_constantF)
+            || start_register + vector4f_count > d3d_info->limits.vs_uniform_count
+            || start_register > d3d_info->limits.vs_uniform_count)
         return WINED3DERR_INVALIDCALL;
 
     memcpy(&device->updateStateBlock->state.vs_consts_f[start_register * 4],
@@ -2638,7 +2639,8 @@ HRESULT CDECL wined3d_device_set_vs_consts_f(struct wined3d_device *device,
 HRESULT CDECL wined3d_device_get_vs_consts_f(const struct wined3d_device *device,
         UINT start_register, float *constants, UINT vector4f_count)
 {
-    int count = min(vector4f_count, device->d3d_vshader_constantF - start_register);
+    const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
+    int count = min(vector4f_count, d3d_info->limits.vs_uniform_count - start_register);
 
     TRACE("device %p, start_register %u, constants %p, vector4f_count %u.\n",
             device, start_register, constants, vector4f_count);
@@ -3071,6 +3073,7 @@ HRESULT CDECL wined3d_device_set_ps_consts_f(struct wined3d_device *device,
         UINT start_register, const float *constants, UINT vector4f_count)
 {
     UINT i;
+    const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
 
     TRACE("device %p, start_register %u, constants %p, vector4f_count %u.\n",
             device, start_register, constants, vector4f_count);
@@ -3078,8 +3081,8 @@ HRESULT CDECL wined3d_device_set_ps_consts_f(struct wined3d_device *device,
     /* Specifically test start_register > limit to catch MAX_UINT overflows
      * when adding start_register + vector4f_count. */
     if (!constants
-            || start_register + vector4f_count > device->d3d_pshader_constantF
-            || start_register > device->d3d_pshader_constantF)
+            || start_register + vector4f_count > d3d_info->limits.ps_uniform_count
+            || start_register > d3d_info->limits.ps_uniform_count)
         return WINED3DERR_INVALIDCALL;
 
     memcpy(&device->updateStateBlock->state.ps_consts_f[start_register * 4],
@@ -3107,7 +3110,8 @@ HRESULT CDECL wined3d_device_set_ps_consts_f(struct wined3d_device *device,
 HRESULT CDECL wined3d_device_get_ps_consts_f(const struct wined3d_device *device,
         UINT start_register, float *constants, UINT vector4f_count)
 {
-    int count = min(vector4f_count, device->d3d_pshader_constantF - start_register);
+    const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
+    int count = min(vector4f_count, d3d_info->limits.ps_uniform_count - start_register);
 
     TRACE("device %p, start_register %u, constants %p, vector4f_count %u.\n",
             device, start_register, constants, vector4f_count);
@@ -5408,7 +5412,6 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
     struct wined3d_adapter *adapter = &wined3d->adapters[adapter_idx];
     const struct fragment_pipeline *fragment_pipeline;
     const struct wined3d_vertex_pipe_ops *vertex_pipeline;
-    struct shader_caps shader_caps;
     struct fragment_caps ffp_caps;
     unsigned int i;
     HRESULT hr;
@@ -5429,12 +5432,6 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
     device->create_parms.flags = flags;
 
     device->shader_backend = adapter->shader_backend;
-    device->shader_backend->shader_get_caps(&adapter->gl_info, &shader_caps);
-    device->vs_version = shader_caps.vs_version;
-    device->gs_version = shader_caps.gs_version;
-    device->ps_version = shader_caps.ps_version;
-    device->d3d_vshader_constantF = shader_caps.vs_uniform_count;
-    device->d3d_pshader_constantF = shader_caps.ps_uniform_count;
 
     vertex_pipeline = adapter->vertex_pipe;
 

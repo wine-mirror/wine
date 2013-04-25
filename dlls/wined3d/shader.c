@@ -1625,6 +1625,7 @@ static HRESULT shader_set_function(struct wined3d_shader *shader, const DWORD *b
     const struct wined3d_shader_frontend *fe;
     HRESULT hr;
     unsigned int backend_version;
+    const struct wined3d_d3d_info *d3d_info = &shader->device->adapter->d3d_info;
 
     TRACE("shader %p, byte_code %p, output_signature %p, float_const_count %u.\n",
             shader, byte_code, output_signature, float_const_count);
@@ -1672,13 +1673,13 @@ static HRESULT shader_set_function(struct wined3d_shader *shader, const DWORD *b
     switch (type)
     {
         case WINED3D_SHADER_TYPE_VERTEX:
-            backend_version = shader->device->vs_version;
+            backend_version = d3d_info->limits.vs_version;
             break;
         case WINED3D_SHADER_TYPE_GEOMETRY:
-            backend_version = shader->device->gs_version;
+            backend_version = d3d_info->limits.gs_version;
             break;
         case WINED3D_SHADER_TYPE_PIXEL:
-            backend_version = shader->device->ps_version;
+            backend_version = d3d_info->limits.ps_version;
             break;
         default:
             FIXME("No backend version-checking for this shader type\n");
@@ -1843,6 +1844,7 @@ static void vertexshader_set_limits(struct wined3d_shader *shader)
     DWORD shader_version = WINED3D_SHADER_VERSION(shader->reg_maps.shader_version.major,
             shader->reg_maps.shader_version.minor);
     struct wined3d_device *device = shader->device;
+    const DWORD vs_uniform_count = device->adapter->d3d_info.limits.vs_uniform_count;
 
     shader->limits.packed_input = 0;
 
@@ -1857,7 +1859,7 @@ static void vertexshader_set_limits(struct wined3d_shader *shader)
             /* TODO: vs_1_1 has a minimum of 96 constants. What happens when
              * a vs_1_1 shader is used on a vs_3_0 capable card that has 256
              * constants? */
-            shader->limits.constant_float = min(256, device->d3d_vshader_constantF);
+            shader->limits.constant_float = min(256, vs_uniform_count);
             break;
 
         case WINED3D_SHADER_VERSION(2, 0):
@@ -1866,7 +1868,7 @@ static void vertexshader_set_limits(struct wined3d_shader *shader)
             shader->limits.constant_int = 16;
             shader->limits.packed_output = 12;
             shader->limits.sampler = 0;
-            shader->limits.constant_float = min(256, device->d3d_vshader_constantF);
+            shader->limits.constant_float = min(256, vs_uniform_count);
             break;
 
         case WINED3D_SHADER_VERSION(3, 0):
@@ -1879,7 +1881,7 @@ static void vertexshader_set_limits(struct wined3d_shader *shader)
              * drivers advertise 1024). d3d9.dll and d3d8.dll clamp the
              * wined3d-advertised maximum. Clamp the constant limit for <= 3.0
              * shaders to 256. */
-            shader->limits.constant_float = min(256, device->d3d_vshader_constantF);
+            shader->limits.constant_float = min(256, vs_uniform_count);
             break;
 
         case WINED3D_SHADER_VERSION(4, 0):
@@ -1896,7 +1898,7 @@ static void vertexshader_set_limits(struct wined3d_shader *shader)
             shader->limits.constant_int = 16;
             shader->limits.packed_output = 12;
             shader->limits.sampler = 0;
-            shader->limits.constant_float = min(256, device->d3d_vshader_constantF);
+            shader->limits.constant_float = min(256, vs_uniform_count);
             FIXME("Unrecognized vertex shader version \"%u.%u\".\n",
                     shader->reg_maps.shader_version.major,
                     shader->reg_maps.shader_version.minor);
@@ -1911,11 +1913,12 @@ static HRESULT vertexshader_init(struct wined3d_shader *shader, struct wined3d_d
     unsigned int i;
     HRESULT hr;
     WORD map;
+    const DWORD vs_uniform_count = device->adapter->d3d_info.limits.vs_uniform_count;
 
     if (!byte_code) return WINED3DERR_INVALIDCALL;
 
     shader_init(shader, device, parent, parent_ops);
-    hr = shader_set_function(shader, byte_code, output_signature, device->d3d_vshader_constantF,
+    hr = shader_set_function(shader, byte_code, output_signature, vs_uniform_count,
             WINED3D_SHADER_TYPE_VERTEX, max_version);
     if (FAILED(hr))
     {
@@ -2256,11 +2259,12 @@ static HRESULT pixelshader_init(struct wined3d_shader *shader, struct wined3d_de
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     unsigned int i, highest_reg_used = 0, num_regs_used = 0;
     HRESULT hr;
+    const DWORD ps_uniform_count = device->adapter->d3d_info.limits.ps_uniform_count;
 
     if (!byte_code) return WINED3DERR_INVALIDCALL;
 
     shader_init(shader, device, parent, parent_ops);
-    hr = shader_set_function(shader, byte_code, output_signature, device->d3d_pshader_constantF,
+    hr = shader_set_function(shader, byte_code, output_signature, ps_uniform_count,
             WINED3D_SHADER_TYPE_PIXEL, max_version);
     if (FAILED(hr))
     {

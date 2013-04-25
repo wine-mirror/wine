@@ -1587,8 +1587,16 @@ struct wined3d_driver_info
     DWORD version_low;
 };
 
+struct wined3d_d3d_limits
+{
+    UINT vs_version, gs_version, ps_version;
+    DWORD vs_uniform_count;
+    DWORD ps_uniform_count;
+};
+
 struct wined3d_d3d_info
 {
+    struct wined3d_d3d_limits limits;
     BOOL vs_clipping;
 };
 
@@ -1729,8 +1737,6 @@ struct wined3d_device
     const struct blit_shader *blitter;
 
     unsigned int max_ffp_textures;
-    UINT vs_version, gs_version, ps_version;
-    DWORD d3d_vshader_constantF, d3d_pshader_constantF; /* Advertised d3d caps, not GL ones */
     UINT instance_count;
 
     WORD vertexBlendUsed : 1;           /* To avoid needless setting of the blend matrices */
