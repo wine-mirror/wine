@@ -838,6 +838,7 @@ static void set_tex_op_atifs(struct wined3d_context *context, const struct wined
 {
     const struct wined3d_device *device = context->swapchain->device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct wined3d_d3d_info *d3d_info = context->d3d_info;
     const struct atifs_ffp_desc *desc;
     struct ffp_frag_settings settings;
     struct atifs_private_data *priv = device->fragment_priv;
@@ -854,7 +855,7 @@ static void set_tex_op_atifs(struct wined3d_context *context, const struct wined
             return;
         }
         new_desc->num_textures_used = 0;
-        for (i = 0; i < gl_info->limits.texture_stages; ++i)
+        for (i = 0; i < d3d_info->limits.ffp_blend_stages; ++i)
         {
             if (settings.op[i].cop == WINED3D_TOP_DISABLE)
                 break;

@@ -789,7 +789,7 @@ static void state_texfactor(struct wined3d_context *context, const struct wined3
     D3DCOLORTOGLFLOAT4(state->render_states[WINED3D_RS_TEXTUREFACTOR], col);
 
     /* And now the default texture color as well */
-    for (i = 0; i < gl_info->limits.texture_stages; ++i)
+    for (i = 0; i < context->d3d_info->limits.ffp_blend_stages; ++i)
     {
         /* Note the WINED3D_RS value applies to all textures, but GL has one
          * per texture, so apply it now ready to be used! */
@@ -3376,7 +3376,7 @@ static void load_tex_coords(const struct wined3d_context *context, const struct 
     unsigned int mapped_stage = 0;
     unsigned int textureNo = 0;
 
-    for (textureNo = 0; textureNo < gl_info->limits.texture_stages; ++textureNo)
+    for (textureNo = 0; textureNo < context->d3d_info->limits.ffp_blend_stages; ++textureNo)
     {
         int coordIdx = state->texture_states[textureNo][WINED3D_TSS_TEXCOORD_INDEX];
 
@@ -3751,7 +3751,7 @@ void apply_pixelshader(struct wined3d_context *context, const struct wined3d_sta
     {
         /* Disabled the pixel shader - color ops weren't applied while it was
          * enabled, so re-apply them. */
-        for (i = 0; i < context->gl_info->limits.texture_stages; ++i)
+        for (i = 0; i < context->d3d_info->limits.ffp_blend_stages; ++i)
         {
             if (!isStateDirty(context, STATE_TEXTURESTAGE(i, WINED3D_TSS_COLOR_OP)))
                 context_apply_state(context, state, STATE_TEXTURESTAGE(i, WINED3D_TSS_COLOR_OP));
@@ -5813,11 +5813,12 @@ static void multistate_apply_3(struct wined3d_context *context, const struct win
     context->swapchain->device->multistate_funcs[state_id][2](context, state, state_id);
 }
 
-static void prune_invalid_states(struct StateEntry *state_table, const struct wined3d_gl_info *gl_info)
+static void prune_invalid_states(struct StateEntry *state_table, const struct wined3d_gl_info *gl_info,
+        const struct wined3d_d3d_info *d3d_info)
 {
     unsigned int start, last, i;
 
-    start = STATE_TEXTURESTAGE(gl_info->limits.texture_stages, 0);
+    start = STATE_TEXTURESTAGE(d3d_info->limits.ffp_blend_stages, 0);
     last = STATE_TEXTURESTAGE(MAX_TEXTURES - 1, WINED3D_HIGHEST_TEXTURE_STATE);
     for (i = start; i <= last; ++i)
     {
@@ -5825,7 +5826,7 @@ static void prune_invalid_states(struct StateEntry *state_table, const struct wi
         state_table[i].apply = state_undefined;
     }
 
-    start = STATE_TRANSFORM(WINED3D_TS_TEXTURE0 + gl_info->limits.texture_stages);
+    start = STATE_TRANSFORM(WINED3D_TS_TEXTURE0 + d3d_info->limits.ffp_blend_stages);
     last = STATE_TRANSFORM(WINED3D_TS_TEXTURE0 + MAX_TEXTURES - 1);
     for (i = start; i <= last; ++i)
     {
@@ -5930,8 +5931,9 @@ static void validate_state_table(struct StateEntry *state_table)
 }
 
 HRESULT compile_state_table(struct StateEntry *StateTable, APPLYSTATEFUNC **dev_multistate_funcs,
-        const struct wined3d_gl_info *gl_info, const struct wined3d_vertex_pipe_ops *vertex,
-        const struct fragment_pipeline *fragment, const struct StateEntryTemplate *misc)
+        const struct wined3d_gl_info *gl_info, const struct wined3d_d3d_info *d3d_info,
+        const struct wined3d_vertex_pipe_ops *vertex, const struct fragment_pipeline *fragment,
+        const struct StateEntryTemplate *misc)
 {
     unsigned int i, type, handlers;
     APPLYSTATEFUNC multistate_funcs[STATE_HIGHEST + 1][3];
@@ -6028,7 +6030,7 @@ HRESULT compile_state_table(struct StateEntry *StateTable, APPLYSTATEFUNC **dev_
         }
     }
 
-    prune_invalid_states(StateTable, gl_info);
+    prune_invalid_states(StateTable, gl_info, d3d_info);
     validate_state_table(StateTable);
 
     return WINED3D_OK;

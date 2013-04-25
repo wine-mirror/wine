@@ -3133,7 +3133,7 @@ void gen_ffp_frag_op(const struct wined3d_context *context, const struct wined3d
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_d3d_info *d3d_info = context->d3d_info;
 
-    for (i = 0; i < gl_info->limits.texture_stages; ++i)
+    for (i = 0; i < d3d_info->limits.ffp_blend_stages; ++i)
     {
         const struct wined3d_texture *texture;
 

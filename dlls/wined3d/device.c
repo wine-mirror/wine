@@ -2710,8 +2710,7 @@ static void device_update_fixed_function_usage_map(struct wined3d_device *device
     }
 }
 
-static void device_map_fixed_function_samplers(struct wined3d_device *device, const struct wined3d_gl_info *gl_info,
-        const struct wined3d_d3d_info *d3d_info)
+static void device_map_fixed_function_samplers(struct wined3d_device *device, const struct wined3d_d3d_info *d3d_info)
 {
     unsigned int i, tex;
     WORD ffu_map;
@@ -2719,7 +2718,7 @@ static void device_map_fixed_function_samplers(struct wined3d_device *device, co
     device_update_fixed_function_usage_map(device);
     ffu_map = device->fixed_function_usage_map;
 
-    if (d3d_info->limits.ffp_textures == gl_info->limits.texture_stages
+    if (d3d_info->limits.ffp_textures == d3d_info->limits.ffp_blend_stages
             || device->stateBlock->state.lowest_disabled_stage <= d3d_info->limits.ffp_textures)
     {
         for (i = 0; ffu_map; ffu_map >>= 1, ++i)
@@ -2753,7 +2752,7 @@ static void device_map_fixed_function_samplers(struct wined3d_device *device, co
     }
 }
 
-static void device_map_psamplers(struct wined3d_device *device, const struct wined3d_gl_info *gl_info)
+static void device_map_psamplers(struct wined3d_device *device, const struct wined3d_d3d_info *d3d_info)
 {
     const enum wined3d_sampler_texture_type *sampler_type =
             device->stateBlock->state.pixel_shader->reg_maps.sampler_type;
@@ -2765,7 +2764,7 @@ static void device_map_psamplers(struct wined3d_device *device, const struct win
         {
             device_map_stage(device, i, i);
             device_invalidate_state(device, STATE_SAMPLER(i));
-            if (i < gl_info->limits.texture_stages)
+            if (i < d3d_info->limits.ffp_blend_stages)
                 device_invalidate_texture_stage(device, i);
         }
     }
@@ -2853,9 +2852,9 @@ void device_update_tex_unit_map(struct wined3d_device *device)
      * to be reset. Because of that try to work with a 1:1 mapping as much as possible
      */
     if (ps)
-        device_map_psamplers(device, gl_info);
+        device_map_psamplers(device, d3d_info);
     else
-        device_map_fixed_function_samplers(device, gl_info, d3d_info);
+        device_map_fixed_function_samplers(device, d3d_info);
 
     if (vs)
         device_map_vsamplers(device, ps, gl_info);
@@ -3568,7 +3567,7 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
 void CDECL wined3d_device_set_texture_stage_state(struct wined3d_device *device,
         UINT stage, enum wined3d_texture_stage_state state, DWORD value)
 {
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
     DWORD old_value;
 
     TRACE("device %p, stage %u, state %s, value %#x.\n",
@@ -3580,10 +3579,10 @@ void CDECL wined3d_device_set_texture_stage_state(struct wined3d_device *device,
         return;
     }
 
-    if (stage >= gl_info->limits.texture_stages)
+    if (stage >= d3d_info->limits.ffp_blend_stages)
     {
         WARN("Attempting to set stage %u which is higher than the max stage %u, ignoring.\n",
-                stage, gl_info->limits.texture_stages - 1);
+                stage, d3d_info->limits.ffp_blend_stages - 1);
         return;
     }
 
@@ -3642,7 +3641,7 @@ void CDECL wined3d_device_set_texture_stage_state(struct wined3d_device *device,
              *
              * Again stage stage doesn't need to be dirtified here, it is
              * handled below. */
-            for (i = stage + 1; i < gl_info->limits.texture_stages; ++i)
+            for (i = stage + 1; i < d3d_info->limits.ffp_blend_stages; ++i)
             {
                 if (device->updateStateBlock->state.texture_states[i][WINED3D_TSS_COLOR_OP] == WINED3D_TOP_DISABLE)
                     break;
@@ -3675,7 +3674,7 @@ DWORD CDECL wined3d_device_get_texture_stage_state(const struct wined3d_device *
 HRESULT CDECL wined3d_device_set_texture(struct wined3d_device *device,
         UINT stage, struct wined3d_texture *texture)
 {
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
     struct wined3d_texture *prev;
 
     TRACE("device %p, stage %u, texture %p.\n", device, stage, texture);
@@ -3729,7 +3728,7 @@ HRESULT CDECL wined3d_device_set_texture(struct wined3d_device *device,
         if (!prev || texture->target != prev->target)
             device_invalidate_state(device, STATE_PIXELSHADER);
 
-        if (!prev && stage < gl_info->limits.texture_stages)
+        if (!prev && stage < d3d_info->limits.ffp_blend_stages)
         {
             /* The source arguments for color and alpha ops have different
              * meanings when a NULL texture is bound, so the COLOR_OP and
@@ -3746,7 +3745,7 @@ HRESULT CDECL wined3d_device_set_texture(struct wined3d_device *device,
     {
         LONG bind_count = InterlockedDecrement(&prev->resource.bind_count);
 
-        if (!texture && stage < gl_info->limits.texture_stages)
+        if (!texture && stage < d3d_info->limits.ffp_blend_stages)
         {
             device_invalidate_state(device, STATE_TEXTURESTAGE(stage, WINED3D_TSS_COLOR_OP));
             device_invalidate_state(device, STATE_TEXTURESTAGE(stage, WINED3D_TSS_ALPHA_OP));
@@ -5436,7 +5435,8 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
 
     if (vertex_pipeline->vp_states && fragment_pipeline->states
             && FAILED(hr = compile_state_table(device->StateTable, device->multistate_funcs,
-            &adapter->gl_info, vertex_pipeline, fragment_pipeline, misc_state_template)))
+            &adapter->gl_info, &adapter->d3d_info, vertex_pipeline,
+            fragment_pipeline, misc_state_template)))
     {
         ERR("Failed to compile state table, hr %#x.\n", hr);
         wined3d_decref(device->wined3d);

@@ -1221,8 +1221,9 @@ extern const struct wined3d_vertex_pipe_ops ffp_vertex_pipe DECLSPEC_HIDDEN;
 
 /* "Base" state table */
 HRESULT compile_state_table(struct StateEntry *StateTable, APPLYSTATEFUNC **dev_multistate_funcs,
-        const struct wined3d_gl_info *gl_info, const struct wined3d_vertex_pipe_ops *vertex,
-        const struct fragment_pipeline *fragment, const struct StateEntryTemplate *misc) DECLSPEC_HIDDEN;
+        const struct wined3d_gl_info *gl_info, const struct wined3d_d3d_info *d3d_info,
+        const struct wined3d_vertex_pipe_ops *vertex, const struct fragment_pipeline *fragment,
+        const struct StateEntryTemplate *misc) DECLSPEC_HIDDEN;
 
 enum wined3d_blit_op
 {
@@ -1528,7 +1529,6 @@ struct wined3d_gl_limits
     UINT buffers;
     UINT lights;
     UINT textures;
-    UINT texture_stages;
     UINT texture_coords;
     UINT fragment_samplers;
     UINT vertex_samplers;
@@ -1593,6 +1593,7 @@ struct wined3d_d3d_limits
     DWORD vs_uniform_count;
     DWORD ps_uniform_count;
     UINT ffp_textures;
+    UINT ffp_blend_stages;
 };
 
 struct wined3d_d3d_info

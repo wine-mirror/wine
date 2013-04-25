@@ -98,7 +98,8 @@ static void drawStridedSlow(const struct wined3d_device *device, const struct wi
     const BYTE *texCoords[WINED3DDP_MAXTEXCOORD];
     const BYTE *diffuse = NULL, *specular = NULL, *normal = NULL, *position = NULL;
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    UINT texture_stages = gl_info->limits.texture_stages;
+    const struct wined3d_d3d_info *d3d_info = context->d3d_info;
+    UINT texture_stages = d3d_info->limits.ffp_blend_stages;
     const struct wined3d_stream_info_element *element;
     UINT num_untracked_materials;
     DWORD tex_mask = 0;

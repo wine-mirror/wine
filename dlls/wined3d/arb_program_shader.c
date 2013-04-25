@@ -4319,7 +4319,7 @@ static struct arb_ps_compiled_shader *find_arb_pshader(struct wined3d_shader *sh
 
         if (!d3d_info->vs_clipping)
             shader_data->clipplane_emulation = shader_find_free_input_register(&shader->reg_maps,
-                    gl_info->limits.texture_stages - 1);
+                    d3d_info->limits.ffp_blend_stages - 1);
         else
             shader_data->clipplane_emulation = ~0U;
     }
@@ -4555,7 +4555,7 @@ static void find_arb_vs_compile_args(const struct wined3d_state *state,
         args->ps_signature = ~0;
         if (!d3d_info->vs_clipping && adapter->fragment_pipe == &arbfp_fragment_pipeline)
         {
-            args->clip.boolclip.clip_texcoord = ffp_clip_emul(state) ? gl_info->limits.texture_stages : 0;
+            args->clip.boolclip.clip_texcoord = ffp_clip_emul(state) ? d3d_info->limits.ffp_blend_stages : 0;
         }
         /* Otherwise: Setting boolclip_compare set clip_texcoord to 0 */
     }
