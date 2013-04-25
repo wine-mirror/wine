@@ -388,6 +388,7 @@
 @ stdcall SHGetSpecialFolderLocation(long long ptr)
 @ stdcall SHGetSpecialFolderPathA(long ptr long long)
 @ stdcall SHGetSpecialFolderPathW(long ptr long long)
+@ stdcall SHGetStockIconInfo(long long ptr)
 @ stdcall SHHelpShortcuts_RunDLL(long long long long) SHHelpShortcuts_RunDLLA
 @ stdcall SHHelpShortcuts_RunDLLA(long long long long)
 @ stdcall SHHelpShortcuts_RunDLLW(long long long long)
