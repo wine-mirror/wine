@@ -38,7 +38,7 @@ static void (WINAPI *pILFree)(LPITEMIDLIST);
 static BOOL (WINAPI *pILIsEqual)(LPCITEMIDLIST, LPCITEMIDLIST);
 static HRESULT (WINAPI *pSHILCreateFromPath)(LPCWSTR, LPITEMIDLIST *,DWORD*);
 static HRESULT (WINAPI *pSHDefExtractIconA)(LPCSTR, int, UINT, HICON*, HICON*, UINT);
-
+static HRESULT (WINAPI *pSHGetStockIconInfo)(SHSTOCKICONID, UINT, SHSTOCKICONINFO *);
 static DWORD (WINAPI *pGetLongPathNameA)(LPCSTR, LPSTR, DWORD);
 static DWORD (WINAPI *pGetShortPathNameA)(LPCSTR, LPSTR, DWORD);
 
@@ -991,6 +991,109 @@ static void test_GetIconLocation(void)
     IShellLinkA_Release(sl);
 }
 
+static void test_SHGetStockIconInfo(void)
+{
+    BYTE buffer[sizeof(SHSTOCKICONINFO) + 16];
+    SHSTOCKICONINFO *sii = (SHSTOCKICONINFO *) buffer;
+    BOOL atleast_win7;
+    HRESULT hr;
+    INT i;
+
+    /* not present before vista */
+    if (!pSHGetStockIconInfo)
+    {
+        win_skip("SHGetStockIconInfo not available\n");
+        return;
+    }
+
+    /* negative values are handled */
+    memset(buffer, '#', sizeof(buffer));
+    sii->cbSize = sizeof(SHSTOCKICONINFO);
+    hr = pSHGetStockIconInfo(-1, SHGSI_ICONLOCATION, sii);
+    ok(hr == E_INVALIDARG, "-1: got 0x%x (expected E_INVALIDARG)\n", hr);
+
+    /* max. id for vista is 140 (no definition exists for this value) */
+    for (i = 0; i <= 140; i++)
+    {
+        memset(buffer, '#', sizeof(buffer));
+        sii->cbSize = sizeof(SHSTOCKICONINFO);
+        hr = pSHGetStockIconInfo(i, SHGSI_ICONLOCATION, sii);
+
+        ok(hr == S_OK,
+            "%3d: got 0x%x, iSysImageIndex: 0x%x, iIcon: 0x%x (expected S_OK)\n",
+            i, hr, sii->iSysImageIndex, sii->iIcon);
+
+        if ((hr == S_OK) && (winetest_debug > 1))
+            trace("%3d: got iSysImageIndex %3d, iIcon %3d and %s\n", i, sii->iSysImageIndex,
+                  sii->iIcon, wine_dbgstr_w(sii->szPath));
+    }
+
+    /* there are more icons since win7 */
+    memset(buffer, '#', sizeof(buffer));
+    sii->cbSize = sizeof(SHSTOCKICONINFO);
+    hr = pSHGetStockIconInfo(i, SHGSI_ICONLOCATION, sii);
+    atleast_win7 = (!hr);
+
+    for (; i < (SIID_MAX_ICONS + 25) ; i++)
+    {
+        memset(buffer, '#', sizeof(buffer));
+        sii->cbSize = sizeof(SHSTOCKICONINFO);
+        hr = pSHGetStockIconInfo(i, SHGSI_ICONLOCATION, sii);
+
+        if (atleast_win7 && (i == (SIID_MAX_ICONS - 1)) && broken(hr == E_INVALIDARG))
+        {
+            /* off by one windows bug: there are SIID_MAX_ICONS icons from 0 upto
+               SIID_MAX_ICONS-1 on win8, but the last one is missing on win7 */
+            trace("%3d: got E_INVALIDARG (windows bug: off by one)\n", i);
+        }
+        else if (atleast_win7 && (i < (SIID_MAX_ICONS)))
+        {
+            ok(hr == S_OK,
+                "%3d: got 0x%x, iSysImageIndex: 0x%x, iIcon: 0x%x (expected S_OK)\n",
+                i, hr, sii->iSysImageIndex, sii->iIcon);
+
+            if ((hr == S_OK) && (winetest_debug > 1))
+                trace("%3d: got iSysImageIndex %3d, iIcon %3d and %s\n", i, sii->iSysImageIndex,
+                      sii->iIcon, wine_dbgstr_w(sii->szPath));
+        }
+        else
+            ok(hr == E_INVALIDARG, "%3d: got 0x%x (expected E_INVALIDARG)\n", i, hr);
+    }
+
+    /* test more returned SHSTOCKICONINFO elements without extra flags */
+    memset(buffer, '#', sizeof(buffer));
+    sii->cbSize = sizeof(SHSTOCKICONINFO);
+    hr = pSHGetStockIconInfo(SIID_FOLDER, SHGSI_ICONLOCATION, sii);
+    ok(hr == S_OK, "got 0x%x (expected S_OK)\n", hr);
+    ok(!sii->hIcon, "got %p (expected NULL)\n", sii->hIcon);
+    ok(sii->iSysImageIndex == -1, "got %d (expected -1)\n", sii->iSysImageIndex);
+
+    /* the exact size is required of the struct */
+    memset(buffer, '#', sizeof(buffer));
+    sii->cbSize = sizeof(SHSTOCKICONINFO) + 2;
+    hr = pSHGetStockIconInfo(SIID_FOLDER, SHGSI_ICONLOCATION, sii);
+    ok(hr == E_INVALIDARG, "+2: got 0x%x, iSysImageIndex: 0x%x, iIcon: 0x%x\n", hr, sii->iSysImageIndex, sii->iIcon);
+
+    memset(buffer, '#', sizeof(buffer));
+    sii->cbSize = sizeof(SHSTOCKICONINFO) + 1;
+    hr = pSHGetStockIconInfo(SIID_FOLDER, SHGSI_ICONLOCATION, sii);
+    ok(hr == E_INVALIDARG, "+1: got 0x%x, iSysImageIndex: 0x%x, iIcon: 0x%x\n", hr, sii->iSysImageIndex, sii->iIcon);
+
+    memset(buffer, '#', sizeof(buffer));
+    sii->cbSize = sizeof(SHSTOCKICONINFO) - 1;
+    hr = pSHGetStockIconInfo(SIID_FOLDER, SHGSI_ICONLOCATION, sii);
+    ok(hr == E_INVALIDARG, "-1: got 0x%x, iSysImageIndex: 0x%x, iIcon: 0x%x\n", hr, sii->iSysImageIndex, sii->iIcon);
+
+    memset(buffer, '#', sizeof(buffer));
+    sii->cbSize = sizeof(SHSTOCKICONINFO) - 2;
+    hr = pSHGetStockIconInfo(SIID_FOLDER, SHGSI_ICONLOCATION, sii);
+    ok(hr == E_INVALIDARG, "-2: got 0x%x, iSysImageIndex: 0x%x, iIcon: 0x%x\n", hr, sii->iSysImageIndex, sii->iIcon);
+
+    /* there is a NULL check for the struct  */
+    hr = pSHGetStockIconInfo(SIID_FOLDER, SHGSI_ICONLOCATION, NULL);
+    ok(hr == E_INVALIDARG, "NULL: got 0x%x\n", hr);
+}
+
 START_TEST(shelllink)
 {
     HRESULT r;
@@ -1001,7 +1104,7 @@ START_TEST(shelllink)
     pILIsEqual = (void *)GetProcAddress(hmod, (LPSTR)21);
     pSHILCreateFromPath = (void *)GetProcAddress(hmod, (LPSTR)28);
     pSHDefExtractIconA = (void *)GetProcAddress(hmod, "SHDefExtractIconA");
-
+    pSHGetStockIconInfo = (void *)GetProcAddress(hmod, "SHGetStockIconInfo");
     pGetLongPathNameA = (void *)GetProcAddress(hkernel32, "GetLongPathNameA");
     pGetShortPathNameA = (void *)GetProcAddress(hkernel32, "GetShortPathNameA");
 
@@ -1015,6 +1118,7 @@ START_TEST(shelllink)
     test_datalink();
     test_shdefextracticon();
     test_GetIconLocation();
+    test_SHGetStockIconInfo();
 
     CoUninitialize();
 }
