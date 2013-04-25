@@ -2839,6 +2839,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     checkGLcall("extension detection");
 
     adapter->shader_backend = select_shader_backend(gl_info);
+    adapter->vertex_pipe = &ffp_vertex_pipe;
     adapter->fragment_pipe = select_fragment_implementation(gl_info, adapter->shader_backend);
     adapter->blitter = select_blit_implementation(gl_info, adapter->shader_backend);
 
@@ -3968,6 +3969,7 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
     const struct wined3d_gl_info *gl_info = &adapter->gl_info;
     struct shader_caps shader_caps;
     struct fragment_caps fragment_caps;
+    struct wined3d_vertex_caps vertex_caps;
     DWORD ckey_caps, blit_caps, fx_caps, pal_caps;
 
     TRACE("wined3d %p, adapter_idx %u, device_type %s, caps %p.\n",
@@ -4052,16 +4054,6 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
                              WINED3DPRASTERCAPS_ZBIAS         |
                              WINED3DPRASTERCAPS_MIPMAPLODBIAS;
     }
-    if (gl_info->supported[NV_FOG_DISTANCE])
-    {
-        caps->RasterCaps          |= WINED3DPRASTERCAPS_FOGRANGE;
-    }
-                        /* FIXME Add:
-                           WINED3DPRASTERCAPS_COLORPERSPECTIVE
-                           WINED3DPRASTERCAPS_STRETCHBLTMULTISAMPLE
-                           WINED3DPRASTERCAPS_ANTIALIASEDGES
-                           WINED3DPRASTERCAPS_ZBUFFERLESSHSR
-                           WINED3DPRASTERCAPS_WBUFFER */
 
     caps->ZCmpCaps =  WINED3DPCMPCAPS_ALWAYS       |
                       WINED3DPCMPCAPS_EQUAL        |
@@ -4311,25 +4303,8 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
         caps->StencilCaps |= WINED3DSTENCILCAPS_TWOSIDED;
     }
 
-    caps->FVFCaps = WINED3DFVFCAPS_PSIZE | 0x0008; /* 8 texture coords */
-
-    caps->MaxUserClipPlanes = gl_info->limits.clipplanes;
-    caps->MaxActiveLights = gl_info->limits.lights;
-
-    caps->MaxVertexBlendMatrices = gl_info->limits.blends;
-    caps->MaxVertexBlendMatrixIndex   = 0;
-
     caps->MaxAnisotropy = gl_info->limits.anisotropy;
     caps->MaxPointSize = gl_info->limits.pointsize_max;
-
-
-    /* FIXME: Add D3DVTXPCAPS_TWEENING, D3DVTXPCAPS_TEXGEN_SPHEREMAP */
-    caps->VertexProcessingCaps  = WINED3DVTXPCAPS_DIRECTIONALLIGHTS |
-                                  WINED3DVTXPCAPS_MATERIALSOURCE7   |
-                                  WINED3DVTXPCAPS_POSITIONALLIGHTS  |
-                                  WINED3DVTXPCAPS_LOCALVIEWER       |
-                                  WINED3DVTXPCAPS_VERTEXFOG         |
-                                  WINED3DVTXPCAPS_TEXGEN;
 
     caps->MaxPrimitiveCount   = 0xfffff; /* For now set 2^20-1 which is used by most >=Geforce3/Radeon8500 cards */
     caps->MaxVertexIndex      = 0xfffff;
@@ -4354,6 +4329,7 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
 
     adapter->shader_backend->shader_get_caps(&adapter->gl_info, &shader_caps);
     adapter->fragment_pipe->get_caps(&adapter->gl_info, &fragment_caps);
+    adapter->vertex_pipe->vp_get_caps(&adapter->gl_info, &vertex_caps);
 
     /* Add shader misc caps. Only some of them belong to the shader parts of the pipeline */
     caps->PrimitiveMiscCaps |= fragment_caps.PrimitiveMiscCaps;
@@ -4367,6 +4343,14 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
     caps->TextureOpCaps                    = fragment_caps.TextureOpCaps;
     caps->MaxTextureBlendStages            = fragment_caps.MaxTextureBlendStages;
     caps->MaxSimultaneousTextures          = fragment_caps.MaxSimultaneousTextures;
+
+    caps->MaxUserClipPlanes                = vertex_caps.max_user_clip_planes;
+    caps->MaxActiveLights                  = vertex_caps.max_active_lights;
+    caps->MaxVertexBlendMatrices           = vertex_caps.max_vertex_blend_matrices;
+    caps->MaxVertexBlendMatrixIndex        = vertex_caps.max_vertex_blend_matrix_index;
+    caps->VertexProcessingCaps             = vertex_caps.vertex_processing_caps;
+    caps->FVFCaps                          = vertex_caps.fvf_caps;
+    caps->RasterCaps                      |= vertex_caps.raster_caps;
 
     /* The following caps are shader specific, but they are things we cannot detect, or which
      * are the same among all shader models. So to avoid code duplication set the shader version
@@ -5029,6 +5013,7 @@ static void wined3d_adapter_init_nogl(struct wined3d_adapter *adapter, UINT ordi
 
     initPixelFormatsNoGL(&adapter->gl_info);
 
+    adapter->vertex_pipe = &none_vertex_pipe;
     adapter->fragment_pipe = &none_fragment_pipe;
     adapter->shader_backend = &none_shader_backend;
     adapter->blitter = &cpu_blit;

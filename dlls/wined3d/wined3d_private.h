@@ -794,6 +794,7 @@ enum wined3d_shader_mode
 struct wined3d_context;
 struct wined3d_state;
 struct fragment_pipeline;
+struct wined3d_vertex_pipe_ops;
 
 struct wined3d_shader_backend_ops
 {
@@ -809,7 +810,8 @@ struct wined3d_shader_backend_ops
     void (*shader_load_np2fixup_constants)(void *shader_priv, const struct wined3d_gl_info *gl_info,
             const struct wined3d_state *state);
     void (*shader_destroy)(struct wined3d_shader *shader);
-    HRESULT (*shader_alloc_private)(struct wined3d_device *device, const struct fragment_pipeline *fragment_pipe);
+    HRESULT (*shader_alloc_private)(struct wined3d_device *device, const struct wined3d_vertex_pipe_ops *vertex_pipe,
+            const struct fragment_pipeline *fragment_pipe);
     void (*shader_free_private)(struct wined3d_device *device);
     void (*shader_context_destroyed)(void *shader_priv, const struct wined3d_context *context);
     void (*shader_get_caps)(const struct wined3d_gl_info *gl_info, struct shader_caps *caps);
@@ -1184,8 +1186,27 @@ struct fragment_pipeline
     const struct StateEntryTemplate *states;
 };
 
+struct wined3d_vertex_caps
+{
+    DWORD max_active_lights;
+    DWORD max_vertex_blend_matrices;
+    DWORD max_vertex_blend_matrix_index;
+    DWORD vertex_processing_caps;
+    DWORD fvf_caps;
+    DWORD max_user_clip_planes;
+    DWORD raster_caps;
+};
+
+struct wined3d_vertex_pipe_ops
+{
+    void (*vp_enable)(const struct wined3d_gl_info *gl_info, BOOL enable);
+    void (*vp_get_caps)(const struct wined3d_gl_info *gl_info, struct wined3d_vertex_caps *caps);
+    void *(*vp_alloc)(const struct wined3d_shader_backend_ops *shader_backend, void *shader_priv);
+    void (*vp_free)(struct wined3d_device *device);
+    const struct StateEntryTemplate *vp_states;
+};
+
 extern const struct StateEntryTemplate misc_state_template[] DECLSPEC_HIDDEN;
-extern const struct StateEntryTemplate ffp_vertexstate_template[] DECLSPEC_HIDDEN;
 extern const struct fragment_pipeline none_fragment_pipe DECLSPEC_HIDDEN;
 extern const struct fragment_pipeline ffp_fragment_pipeline DECLSPEC_HIDDEN;
 extern const struct fragment_pipeline atifs_fragment_pipeline DECLSPEC_HIDDEN;
@@ -1194,9 +1215,12 @@ extern const struct fragment_pipeline nvts_fragment_pipeline DECLSPEC_HIDDEN;
 extern const struct fragment_pipeline nvrc_fragment_pipeline DECLSPEC_HIDDEN;
 extern const struct fragment_pipeline glsl_fragment_pipe DECLSPEC_HIDDEN;
 
+extern const struct wined3d_vertex_pipe_ops none_vertex_pipe DECLSPEC_HIDDEN;
+extern const struct wined3d_vertex_pipe_ops ffp_vertex_pipe DECLSPEC_HIDDEN;
+
 /* "Base" state table */
 HRESULT compile_state_table(struct StateEntry *StateTable, APPLYSTATEFUNC **dev_multistate_funcs,
-        const struct wined3d_gl_info *gl_info, const struct StateEntryTemplate *vertex,
+        const struct wined3d_gl_info *gl_info, const struct wined3d_vertex_pipe_ops *vertex,
         const struct fragment_pipeline *fragment, const struct StateEntryTemplate *misc) DECLSPEC_HIDDEN;
 
 enum wined3d_blit_op
@@ -1578,6 +1602,7 @@ struct wined3d_adapter
     unsigned int            UsedTextureRam;
     LUID luid;
 
+    const struct wined3d_vertex_pipe_ops *vertex_pipe;
     const struct fragment_pipeline *fragment_pipe;
     const struct wined3d_shader_backend_ops *shader_backend;
     const struct blit_shader *blitter;
@@ -1689,6 +1714,7 @@ struct wined3d_device
     const struct wined3d_shader_backend_ops *shader_backend;
     void *shader_priv;
     void *fragment_priv;
+    void *vertex_priv;
     void *blit_priv;
     struct StateEntry StateTable[STATE_HIGHEST + 1];
     /* Array of functions for states which are handled by more than one pipeline part */

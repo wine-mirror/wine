@@ -1141,7 +1141,8 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
         }
     }
 
-    if (FAILED(hr = device->shader_backend->shader_alloc_private(device, device->adapter->fragment_pipe)))
+    if (FAILED(hr = device->shader_backend->shader_alloc_private(device,
+            device->adapter->vertex_pipe, device->adapter->fragment_pipe)))
     {
         TRACE("Shader private data couldn't be allocated\n");
         goto err_out;
@@ -4839,7 +4840,8 @@ static HRESULT create_primary_opengl_context(struct wined3d_device *device, stru
     struct wined3d_surface *target;
     HRESULT hr;
 
-    if (FAILED(hr = device->shader_backend->shader_alloc_private(device, device->adapter->fragment_pipe)))
+    if (FAILED(hr = device->shader_backend->shader_alloc_private(device,
+            device->adapter->vertex_pipe, device->adapter->fragment_pipe)))
     {
         ERR("Failed to allocate shader private data, hr %#x.\n", hr);
         return hr;
@@ -5405,6 +5407,7 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
 {
     struct wined3d_adapter *adapter = &wined3d->adapters[adapter_idx];
     const struct fragment_pipeline *fragment_pipeline;
+    const struct wined3d_vertex_pipe_ops *vertex_pipeline;
     struct shader_caps shader_caps;
     struct fragment_caps ffp_caps;
     unsigned int i;
@@ -5434,13 +5437,15 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
     device->d3d_pshader_constantF = shader_caps.ps_uniform_count;
     device->vs_clipping = shader_caps.wined3d_caps & WINED3D_SHADER_CAP_VS_CLIPPING;
 
+    vertex_pipeline = adapter->vertex_pipe;
+
     fragment_pipeline = adapter->fragment_pipe;
     fragment_pipeline->get_caps(&adapter->gl_info, &ffp_caps);
     device->max_ffp_textures = ffp_caps.MaxSimultaneousTextures;
 
-    if (fragment_pipeline->states
+    if (vertex_pipeline->vp_states && fragment_pipeline->states
             && FAILED(hr = compile_state_table(device->StateTable, device->multistate_funcs,
-            &adapter->gl_info, ffp_vertexstate_template, fragment_pipeline, misc_state_template)))
+            &adapter->gl_info, vertex_pipeline, fragment_pipeline, misc_state_template)))
     {
         ERR("Failed to compile state table, hr %#x.\n", hr);
         wined3d_decref(device->wined3d);

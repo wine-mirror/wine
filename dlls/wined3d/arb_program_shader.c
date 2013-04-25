@@ -327,6 +327,7 @@ struct shader_arb_priv
     char *vshader_const_dirty, *pshader_const_dirty;
     const struct wined3d_context *last_context;
 
+    const struct wined3d_vertex_pipe_ops *vertex_pipe;
     const struct fragment_pipeline *fragment_pipe;
     BOOL ffp_proj_control;
 };
@@ -4716,6 +4717,7 @@ static void shader_arb_select(const struct wined3d_context *context, enum wined3
         gl_info->gl_ops.gl.p_glDisable(GL_VERTEX_PROGRAM_ARB);
         checkGLcall("glDisable(GL_VERTEX_PROGRAM_ARB)");
     }
+    priv->vertex_pipe->vp_enable(gl_info, vertex_mode == WINED3D_SHADER_MODE_FFP);
 }
 
 /* Context activation is done by the caller. */
@@ -4837,15 +4839,24 @@ static const struct wine_rb_functions sig_tree_functions =
     sig_tree_compare
 };
 
-static HRESULT shader_arb_alloc(struct wined3d_device *device, const struct fragment_pipeline *fragment_pipe)
+static HRESULT shader_arb_alloc(struct wined3d_device *device, const struct wined3d_vertex_pipe_ops *vertex_pipe,
+        const struct fragment_pipeline *fragment_pipe)
 {
     struct shader_arb_priv *priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*priv));
     struct fragment_caps fragment_caps;
-    void *fragment_priv;
+    void *vertex_priv, *fragment_priv;
+
+    if (!(vertex_priv = vertex_pipe->vp_alloc(&arb_program_shader_backend, priv)))
+    {
+        ERR("Failed to initialize vertex pipe.\n");
+        HeapFree(GetProcessHeap(), 0, priv);
+        return E_FAIL;
+    }
 
     if (!(fragment_priv = fragment_pipe->alloc_private(&arb_program_shader_backend, priv)))
     {
         ERR("Failed to initialize fragment pipe.\n");
+        vertex_pipe->vp_free(device);
         HeapFree(GetProcessHeap(), 0, priv);
         return E_FAIL;
     }
@@ -4870,17 +4881,22 @@ static HRESULT shader_arb_alloc(struct wined3d_device *device, const struct frag
         goto fail;
     }
 
+    priv->vertex_pipe = vertex_pipe;
+    priv->fragment_pipe = fragment_pipe;
     fragment_pipe->get_caps(&device->adapter->gl_info, &fragment_caps);
     priv->ffp_proj_control = fragment_caps.wined3d_caps & WINED3D_FRAGMENT_CAP_PROJ_CONTROL;
+
+    device->vertex_priv = vertex_priv;
     device->fragment_priv = fragment_priv;
-    priv->fragment_pipe = fragment_pipe;
     device->shader_priv = priv;
+
     return WINED3D_OK;
 
 fail:
     HeapFree(GetProcessHeap(), 0, priv->pshader_const_dirty);
     HeapFree(GetProcessHeap(), 0, priv->vshader_const_dirty);
     fragment_pipe->free_private(device);
+    vertex_pipe->vp_free(device);
     HeapFree(GetProcessHeap(), 0, priv);
     return E_OUTOFMEMORY;
 }
@@ -4923,6 +4939,7 @@ static void shader_arb_free(struct wined3d_device *device)
     HeapFree(GetProcessHeap(), 0, priv->pshader_const_dirty);
     HeapFree(GetProcessHeap(), 0, priv->vshader_const_dirty);
     priv->fragment_pipe->free_private(device);
+    priv->vertex_pipe->vp_free(device);
     HeapFree(GetProcessHeap(), 0, device->shader_priv);
 }
 

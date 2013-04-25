@@ -5141,7 +5141,8 @@ const struct StateEntryTemplate misc_state_template[] = {
     {0 /* Terminate */,                                   { 0,                                                  0                   }, WINED3D_GL_EXT_NONE             },
 };
 
-const struct StateEntryTemplate ffp_vertexstate_template[] = {
+const struct StateEntryTemplate vp_ffp_states[] =
+{
     { STATE_VDECL,                                        { STATE_VDECL,                                        vertexdeclaration   }, WINED3D_GL_EXT_NONE             },
     { STATE_VSHADER,                                      { STATE_VDECL,                                        NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_MATERIAL,                                     { STATE_RENDER(WINED3D_RS_SPECULARENABLE),            NULL                }, WINED3D_GL_EXT_NONE             },
@@ -5643,6 +5644,41 @@ static const struct StateEntryTemplate ffp_fragmentstate_template[] = {
 /* Context activation is done by the caller. */
 static void ffp_enable(const struct wined3d_gl_info *gl_info, BOOL enable) {}
 
+static void *ffp_alloc(const struct wined3d_shader_backend_ops *shader_backend, void *shader_priv)
+{
+    return shader_priv;
+}
+
+static void ffp_free(struct wined3d_device *device) {}
+
+static void vp_ffp_get_caps(const struct wined3d_gl_info *gl_info, struct wined3d_vertex_caps *caps)
+{
+    caps->max_active_lights = gl_info->limits.lights;
+    caps->max_vertex_blend_matrices = gl_info->limits.blends;
+    caps->max_vertex_blend_matrix_index = 0;
+    /* FIXME: Add  D3DVTXPCAPS_TWEENING, D3DVTXPCAPS_TEXGEN_SPHEREMAP */
+    caps->vertex_processing_caps = WINED3DVTXPCAPS_DIRECTIONALLIGHTS
+            | WINED3DVTXPCAPS_MATERIALSOURCE7
+            | WINED3DVTXPCAPS_POSITIONALLIGHTS
+            | WINED3DVTXPCAPS_LOCALVIEWER
+            | WINED3DVTXPCAPS_VERTEXFOG
+            | WINED3DVTXPCAPS_TEXGEN;
+    caps->fvf_caps = WINED3DFVFCAPS_PSIZE | 0x0008; /* 8 texture coords */
+    caps->max_user_clip_planes = gl_info->limits.clipplanes;
+    caps->raster_caps = 0;
+    if (gl_info->supported[NV_FOG_DISTANCE])
+        caps->raster_caps |= WINED3DPRASTERCAPS_FOGRANGE;
+}
+
+const struct wined3d_vertex_pipe_ops ffp_vertex_pipe =
+{
+    ffp_enable,
+    vp_ffp_get_caps,
+    ffp_alloc,
+    ffp_free,
+    vp_ffp_states,
+};
+
 static void ffp_fragment_get_caps(const struct wined3d_gl_info *gl_info, struct fragment_caps *caps)
 {
     caps->wined3d_caps = 0;
@@ -5684,12 +5720,6 @@ static void ffp_fragment_get_caps(const struct wined3d_gl_info *gl_info, struct 
     caps->MaxSimultaneousTextures = gl_info->limits.textures;
 }
 
-static void *ffp_fragment_alloc(const struct wined3d_shader_backend_ops *shader_backend, void *shader_priv)
-{
-    return shader_priv;
-}
-
-static void ffp_fragment_free(struct wined3d_device *device) {}
 static BOOL ffp_color_fixup_supported(struct color_fixup_desc fixup)
 {
     if (TRACE_ON(d3d))
@@ -5712,25 +5742,39 @@ static BOOL ffp_color_fixup_supported(struct color_fixup_desc fixup)
 const struct fragment_pipeline ffp_fragment_pipeline = {
     ffp_enable,
     ffp_fragment_get_caps,
-    ffp_fragment_alloc,
-    ffp_fragment_free,
+    ffp_alloc,
+    ffp_free,
     ffp_color_fixup_supported,
     ffp_fragmentstate_template,
 };
 
-static void fp_none_enable(const struct wined3d_gl_info *gl_info, BOOL enable) {}
+static void none_enable(const struct wined3d_gl_info *gl_info, BOOL enable) {}
+
+static void *none_alloc(const struct wined3d_shader_backend_ops *shader_backend, void *shader_priv)
+{
+    return shader_priv;
+}
+
+static void none_free(struct wined3d_device *device) {}
+
+static void vp_none_get_caps(const struct wined3d_gl_info *gl_info, struct wined3d_vertex_caps *caps)
+{
+    memset(caps, 0, sizeof(*caps));
+}
+
+const struct wined3d_vertex_pipe_ops none_vertex_pipe =
+{
+    none_enable,
+    vp_none_get_caps,
+    none_alloc,
+    none_free,
+    NULL,
+};
 
 static void fp_none_get_caps(const struct wined3d_gl_info *gl_info, struct fragment_caps *caps)
 {
     memset(caps, 0, sizeof(*caps));
 }
-
-static void *fp_none_alloc(const struct wined3d_shader_backend_ops *shader_backend, void *shader_priv)
-{
-    return shader_priv;
-}
-
-static void fp_none_free(struct wined3d_device *device) {}
 
 static BOOL fp_none_color_fixup_supported(struct color_fixup_desc fixup)
 {
@@ -5739,10 +5783,10 @@ static BOOL fp_none_color_fixup_supported(struct color_fixup_desc fixup)
 
 const struct fragment_pipeline none_fragment_pipe =
 {
-    fp_none_enable,
+    none_enable,
     fp_none_get_caps,
-    fp_none_alloc,
-    fp_none_free,
+    none_alloc,
+    none_free,
     fp_none_color_fixup_supported,
     NULL,
 };
@@ -5884,7 +5928,7 @@ static void validate_state_table(struct StateEntry *state_table)
 }
 
 HRESULT compile_state_table(struct StateEntry *StateTable, APPLYSTATEFUNC **dev_multistate_funcs,
-        const struct wined3d_gl_info *gl_info, const struct StateEntryTemplate *vertex,
+        const struct wined3d_gl_info *gl_info, const struct wined3d_vertex_pipe_ops *vertex,
         const struct fragment_pipeline *fragment, const struct StateEntryTemplate *misc)
 {
     unsigned int i, type, handlers;
@@ -5904,7 +5948,7 @@ HRESULT compile_state_table(struct StateEntry *StateTable, APPLYSTATEFUNC **dev_
         switch(type) {
             case 0: cur = misc; break;
             case 1: cur = fragment->states; break;
-            case 2: cur = vertex; break;
+            case 2: cur = vertex->vp_states; break;
             default: cur = NULL; /* Stupid compiler */
         }
         if(!cur) continue;

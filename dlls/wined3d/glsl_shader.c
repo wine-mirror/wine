@@ -97,6 +97,7 @@ struct shader_glsl_priv {
     GLhandleARB depth_blt_program_masked[tex_type_count];
     UINT next_constant_version;
 
+    const struct wined3d_vertex_pipe_ops *vertex_pipe;
     const struct fragment_pipeline *fragment_pipe;
     struct wine_rb_tree ffp_fragment_shaders;
     BOOL ffp_proj_control;
@@ -5792,6 +5793,9 @@ static void shader_glsl_select(const struct wined3d_context *context, enum wined
     GLhandleARB program_id = 0;
     GLenum old_vertex_color_clamp, current_vertex_color_clamp;
 
+    priv->vertex_pipe->vp_enable(gl_info, vertex_mode == WINED3D_SHADER_MODE_FFP);
+    priv->fragment_pipe->enable_extension(gl_info, fragment_mode == WINED3D_SHADER_MODE_FFP);
+
     old_vertex_color_clamp = priv->glsl_program ? priv->glsl_program->vs.vertex_color_clamp : GL_FIXED_ONLY_ARB;
     set_glsl_shader_program(context, device, vertex_mode, fragment_mode);
     current_vertex_color_clamp = priv->glsl_program ? priv->glsl_program->vs.vertex_color_clamp : GL_FIXED_ONLY_ARB;
@@ -6023,18 +6027,27 @@ static const struct wine_rb_functions wined3d_glsl_program_rb_functions =
     glsl_program_key_compare,
 };
 
-static HRESULT shader_glsl_alloc(struct wined3d_device *device, const struct fragment_pipeline *fragment_pipe)
+static HRESULT shader_glsl_alloc(struct wined3d_device *device, const struct wined3d_vertex_pipe_ops *vertex_pipe,
+        const struct fragment_pipeline *fragment_pipe)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct shader_glsl_priv *priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct shader_glsl_priv));
     SIZE_T stack_size = wined3d_log2i(max(gl_info->limits.glsl_vs_float_constants,
             gl_info->limits.glsl_ps_float_constants)) + 1;
     struct fragment_caps fragment_caps;
-    void *fragment_priv;
+    void *vertex_priv, *fragment_priv;
+
+    if (!(vertex_priv = vertex_pipe->vp_alloc(&glsl_shader_backend, priv)))
+    {
+        ERR("Failed to initialize vertex pipe.\n");
+        HeapFree(GetProcessHeap(), 0, priv);
+        return E_FAIL;
+    }
 
     if (!(fragment_priv = fragment_pipe->alloc_private(&glsl_shader_backend, priv)))
     {
         ERR("Failed to initialize fragment pipe.\n");
+        vertex_pipe->vp_free(device);
         HeapFree(GetProcessHeap(), 0, priv);
         return E_FAIL;
     }
@@ -6071,12 +6084,15 @@ static HRESULT shader_glsl_alloc(struct wined3d_device *device, const struct fra
     }
 
     priv->next_constant_version = 1;
+    priv->vertex_pipe = vertex_pipe;
+    priv->fragment_pipe = fragment_pipe;
     fragment_pipe->get_caps(gl_info, &fragment_caps);
     priv->ffp_proj_control = fragment_caps.wined3d_caps & WINED3D_FRAGMENT_CAP_PROJ_CONTROL;
-    device->fragment_priv = fragment_priv;
-    priv->fragment_pipe = fragment_pipe;
 
+    device->vertex_priv = vertex_priv;
+    device->fragment_priv = fragment_priv;
     device->shader_priv = priv;
+
     return WINED3D_OK;
 
 fail:
@@ -6085,6 +6101,7 @@ fail:
     HeapFree(GetProcessHeap(), 0, priv->stack);
     shader_buffer_free(&priv->shader_buffer);
     fragment_pipe->free_private(device);
+    vertex_pipe->vp_free(device);
     HeapFree(GetProcessHeap(), 0, priv);
     return E_OUTOFMEMORY;
 }
@@ -6114,6 +6131,7 @@ static void shader_glsl_free(struct wined3d_device *device)
     HeapFree(GetProcessHeap(), 0, priv->stack);
     shader_buffer_free(&priv->shader_buffer);
     priv->fragment_pipe->free_private(device);
+    priv->vertex_pipe->vp_free(device);
 
     HeapFree(GetProcessHeap(), 0, device->shader_priv);
     device->shader_priv = NULL;
