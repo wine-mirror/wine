@@ -1592,6 +1592,7 @@ struct wined3d_d3d_limits
     UINT vs_version, gs_version, ps_version;
     DWORD vs_uniform_count;
     DWORD ps_uniform_count;
+    UINT ffp_textures;
 };
 
 struct wined3d_d3d_info
@@ -1736,7 +1737,6 @@ struct wined3d_device
     APPLYSTATEFUNC *multistate_funcs[STATE_HIGHEST + 1];
     const struct blit_shader *blitter;
 
-    unsigned int max_ffp_textures;
     UINT instance_count;
 
     WORD vertexBlendUsed : 1;           /* To avoid needless setting of the blend matrices */

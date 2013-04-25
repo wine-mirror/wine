@@ -2714,7 +2714,8 @@ static void device_update_fixed_function_usage_map(struct wined3d_device *device
     }
 }
 
-static void device_map_fixed_function_samplers(struct wined3d_device *device, const struct wined3d_gl_info *gl_info)
+static void device_map_fixed_function_samplers(struct wined3d_device *device, const struct wined3d_gl_info *gl_info,
+        const struct wined3d_d3d_info *d3d_info)
 {
     unsigned int i, tex;
     WORD ffu_map;
@@ -2722,8 +2723,8 @@ static void device_map_fixed_function_samplers(struct wined3d_device *device, co
     device_update_fixed_function_usage_map(device);
     ffu_map = device->fixed_function_usage_map;
 
-    if (device->max_ffp_textures == gl_info->limits.texture_stages
-            || device->stateBlock->state.lowest_disabled_stage <= device->max_ffp_textures)
+    if (d3d_info->limits.ffp_textures == gl_info->limits.texture_stages
+            || device->stateBlock->state.lowest_disabled_stage <= d3d_info->limits.ffp_textures)
     {
         for (i = 0; ffu_map; ffu_map >>= 1, ++i)
         {
@@ -2844,6 +2845,7 @@ static void device_map_vsamplers(struct wined3d_device *device, BOOL ps, const s
 void device_update_tex_unit_map(struct wined3d_device *device)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
     const struct wined3d_state *state = &device->stateBlock->state;
     BOOL vs = use_vs(state);
     BOOL ps = use_ps(state);
@@ -2857,7 +2859,7 @@ void device_update_tex_unit_map(struct wined3d_device *device)
     if (ps)
         device_map_psamplers(device, gl_info);
     else
-        device_map_fixed_function_samplers(device, gl_info);
+        device_map_fixed_function_samplers(device, gl_info, d3d_info);
 
     if (vs)
         device_map_vsamplers(device, ps, gl_info);
@@ -5412,7 +5414,6 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
     struct wined3d_adapter *adapter = &wined3d->adapters[adapter_idx];
     const struct fragment_pipeline *fragment_pipeline;
     const struct wined3d_vertex_pipe_ops *vertex_pipeline;
-    struct fragment_caps ffp_caps;
     unsigned int i;
     HRESULT hr;
 
@@ -5436,8 +5437,6 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
     vertex_pipeline = adapter->vertex_pipe;
 
     fragment_pipeline = adapter->fragment_pipe;
-    fragment_pipeline->get_caps(&adapter->gl_info, &ffp_caps);
-    device->max_ffp_textures = ffp_caps.MaxSimultaneousTextures;
 
     if (vertex_pipeline->vp_states && fragment_pipeline->states
             && FAILED(hr = compile_state_table(device->StateTable, device->multistate_funcs,

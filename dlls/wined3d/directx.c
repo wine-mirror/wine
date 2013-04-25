@@ -2854,6 +2854,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
 
     adapter->fragment_pipe->get_caps(gl_info, &fragment_caps);
     gl_info->limits.texture_stages = fragment_caps.MaxTextureBlendStages;
+    adapter->d3d_info.limits.ffp_textures = fragment_caps.MaxSimultaneousTextures;
     TRACE("Max texture stages: %u.\n", gl_info->limits.texture_stages);
 
     if (gl_info->supported[ARB_FRAMEBUFFER_OBJECT])
