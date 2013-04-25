@@ -442,7 +442,7 @@ DWORD WINAPI ParseURLFromOutsideSourceA(LPCSTR url, LPSTR out, LPDWORD plen, LPD
     }
 
     len = sizeof(buffer) / sizeof(buffer[0]);
-    res = ParseURLFromOutsideSourceW(urlW, buffer, &len, unknown);
+    ParseURLFromOutsideSourceW(urlW, buffer, &len, unknown);
     HeapFree(GetProcessHeap(), 0, urlW);
 
     needed = WideCharToMultiByte(CP_ACP, 0, buffer, -1, NULL, 0, NULL, NULL);
