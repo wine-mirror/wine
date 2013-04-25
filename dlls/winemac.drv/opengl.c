@@ -1917,8 +1917,8 @@ static BOOL macdrv_wglChoosePixelFormatARB(HDC hdc, const int *piAttribIList,
         else if (accum_bits || accum_red_bits || accum_green_bits || accum_blue_bits || accum_alpha_bits)
             continue;
 
-        piFormats[found++] = i;
-        TRACE("match: pixel format %d %s\n", i, debugstr_pf(&pixel_formats[i]));
+        piFormats[found++] = i + 1;
+        TRACE("match: pixel format %d %s\n", i + 1, debugstr_pf(&pixel_formats[i]));
     }
 
 cant_match:
