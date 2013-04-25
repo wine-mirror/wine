@@ -2114,7 +2114,7 @@ static void test_proxy_indirect(int port)
     ok(hr != NULL, "HttpOpenRequest failed\n");
 
     r = HttpSendRequest(hr, NULL, 0, NULL, 0);
-    ok(r, "HttpSendRequest failed\n");
+    ok(r, "HttpSendRequest failed %u\n", GetLastError());
 
     sz = sizeof buffer;
     r = HttpQueryInfo(hr, HTTP_QUERY_PROXY_AUTHENTICATE, buffer, &sz, NULL);
@@ -2181,7 +2181,7 @@ static void test_proxy_direct(int port)
     ok(hr != NULL, "HttpOpenRequest failed\n");
 
     r = HttpSendRequest(hr, NULL, 0, NULL, 0);
-    ok(r, "HttpSendRequest failed\n");
+    ok(r, "HttpSendRequest failed %u\n", GetLastError());
 
     test_status_code(hr, 407);
 
@@ -2401,7 +2401,7 @@ static void test_proxy_direct(int port)
     ok(sz == lstrlenW(passwordW), "got %u\n", sz);
 
     r = HttpSendRequest(hr, NULL, 0, NULL, 0);
-    ok(r, "HttpSendRequest failed\n");
+    ok(r, "HttpSendRequest failed %u\n", GetLastError());
     sz = sizeof buffer;
     r = HttpQueryInfo(hr, HTTP_QUERY_STATUS_CODE, buffer, &sz, NULL);
     ok(r, "HttpQueryInfo failed\n");
