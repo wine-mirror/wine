@@ -2625,6 +2625,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     struct wined3d_gl_info *gl_info = &adapter->gl_info;
     enum wined3d_pci_vendor card_vendor;
     struct fragment_caps fragment_caps;
+    struct shader_caps shader_caps;
     const char *WGL_Extensions = NULL;
     const char *GL_Extensions = NULL;
     enum wined3d_gl_vendor gl_vendor;
@@ -2842,6 +2843,9 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     adapter->vertex_pipe = &ffp_vertex_pipe;
     adapter->fragment_pipe = select_fragment_implementation(gl_info, adapter->shader_backend);
     adapter->blitter = select_blit_implementation(gl_info, adapter->shader_backend);
+
+    adapter->shader_backend->shader_get_caps(&adapter->gl_info, &shader_caps);
+    adapter->d3d_info.vs_clipping = shader_caps.wined3d_caps & WINED3D_SHADER_CAP_VS_CLIPPING;
 
     adapter->fragment_pipe->get_caps(gl_info, &fragment_caps);
     gl_info->limits.texture_stages = fragment_caps.MaxTextureBlendStages;

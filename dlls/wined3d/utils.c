@@ -3131,6 +3131,7 @@ void gen_ffp_frag_op(const struct wined3d_device *device, const struct wined3d_s
     DWORD cop, aop, carg0, carg1, carg2, aarg0, aarg1, aarg2;
     const struct wined3d_surface *rt = state->fb->render_targets[0];
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
 
     for (i = 0; i < gl_info->limits.texture_stages; ++i)
     {
@@ -3350,7 +3351,7 @@ void gen_ffp_frag_op(const struct wined3d_device *device, const struct wined3d_s
     } else {
         settings->sRGB_write = 0;
     }
-    if (device->vs_clipping || !use_vs(state) || !state->render_states[WINED3D_RS_CLIPPING]
+    if (d3d_info->vs_clipping || !use_vs(state) || !state->render_states[WINED3D_RS_CLIPPING]
             || !state->render_states[WINED3D_RS_CLIPPLANEENABLE])
     {
         /* No need to emulate clipplanes if GL supports native vertex shader clipping or if

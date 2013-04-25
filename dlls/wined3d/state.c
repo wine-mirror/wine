@@ -610,9 +610,7 @@ static void state_clipping(struct wined3d_context *context, const struct wined3d
 
     if (use_vs(state))
     {
-        const struct wined3d_device *device = context->swapchain->device;
-
-        if (!device->vs_clipping)
+        if (!context->d3d_info->vs_clipping)
         {
             /* The spec says that opengl clipping planes are disabled when using shaders. Direct3D planes aren't,
              * so that is an issue. The MacOS ATI driver keeps clipping planes activated with shaders in some
@@ -4603,8 +4601,11 @@ static void vertexdeclaration(struct wined3d_context *context, const struct wine
         {
             updateFog = TRUE;
 
-            if (!device->vs_clipping && !isStateDirty(context, STATE_RENDER(WINED3D_RS_CLIPPLANEENABLE)))
+            if (!context->d3d_info->vs_clipping
+                    && !isStateDirty(context, STATE_RENDER(WINED3D_RS_CLIPPLANEENABLE)))
+            {
                 state_clipping(context, state, STATE_RENDER(WINED3D_RS_CLIPPLANEENABLE));
+            }
 
             for (i = 0; i < gl_info->limits.clipplanes; ++i)
             {
@@ -4618,7 +4619,8 @@ static void vertexdeclaration(struct wined3d_context *context, const struct wine
     {
         if(!context->last_was_vshader) {
             static BOOL warned = FALSE;
-            if(!device->vs_clipping) {
+            if (!context->d3d_info->vs_clipping)
+            {
                 /* Disable all clip planes to get defined results on all drivers. See comment in the
                  * state_clipping state handler
                  */

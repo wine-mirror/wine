@@ -1059,6 +1059,7 @@ BOOL wined3d_event_query_supported(const struct wined3d_gl_info *gl_info) DECLSP
 struct wined3d_context
 {
     const struct wined3d_gl_info *gl_info;
+    const struct wined3d_d3d_info *d3d_info;
     const struct StateEntry *state_table;
     /* State dirtification
      * dirtyArray is an array that contains markers for dirty states. numDirtyEntries states are dirty, their numbers are in indices
@@ -1586,6 +1587,11 @@ struct wined3d_driver_info
     DWORD version_low;
 };
 
+struct wined3d_d3d_info
+{
+    BOOL vs_clipping;
+};
+
 /* The adapter structure */
 struct wined3d_adapter
 {
@@ -1594,6 +1600,7 @@ struct wined3d_adapter
     enum wined3d_format_id screen_format;
 
     struct wined3d_gl_info  gl_info;
+    struct wined3d_d3d_info d3d_info;
     struct wined3d_driver_info driver_info;
     WCHAR                   DeviceName[CCHDEVICENAME]; /* DeviceName for use with e.g. ChangeDisplaySettings */
     unsigned int cfg_count;
@@ -1724,7 +1731,6 @@ struct wined3d_device
     unsigned int max_ffp_textures;
     UINT vs_version, gs_version, ps_version;
     DWORD d3d_vshader_constantF, d3d_pshader_constantF; /* Advertised d3d caps, not GL ones */
-    DWORD vs_clipping;
     UINT instance_count;
 
     WORD vertexBlendUsed : 1;           /* To avoid needless setting of the blend matrices */

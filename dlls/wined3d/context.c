@@ -1449,6 +1449,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     }
 
     ret->gl_info = gl_info;
+    ret->d3d_info = &device->adapter->d3d_info;
     ret->state_table = device->StateTable;
 
     /* Mark all states dirty to force a proper initialization of the states

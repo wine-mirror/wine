@@ -4293,6 +4293,7 @@ static struct arb_ps_compiled_shader *find_arb_pshader(struct wined3d_shader *sh
 {
     struct wined3d_device *device = shader->device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
     UINT i;
     DWORD new_size;
     struct arb_ps_compiled_shader *new_array;
@@ -4315,7 +4316,7 @@ static struct arb_ps_compiled_shader *find_arb_pshader(struct wined3d_shader *sh
 
         TRACE("Shader got assigned input signature index %u\n", shader_data->input_signature_idx);
 
-        if (!device->vs_clipping)
+        if (!d3d_info->vs_clipping)
             shader_data->clipplane_emulation = shader_find_free_input_register(&shader->reg_maps,
                     gl_info->limits.texture_stages - 1);
         else
@@ -4475,6 +4476,7 @@ static void find_arb_ps_compile_args(const struct wined3d_state *state,
 {
     struct wined3d_device *device = shader->device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
     int i;
     WORD int_skip;
 
@@ -4493,7 +4495,7 @@ static void find_arb_ps_compile_args(const struct wined3d_state *state,
      * is quite expensive because it forces the driver to disable early Z discards. It is cheaper to
      * duplicate the shader than have a no-op KIL instruction in every shader
      */
-    if (!device->vs_clipping && use_vs(state)
+    if (!d3d_info->vs_clipping && use_vs(state)
             && state->render_states[WINED3D_RS_CLIPPING]
             && state->render_states[WINED3D_RS_CLIPPLANEENABLE])
         args->clip = 1;
@@ -4529,7 +4531,9 @@ static void find_arb_vs_compile_args(const struct wined3d_state *state,
         const struct wined3d_shader *shader, struct arb_vs_compile_args *args)
 {
     struct wined3d_device *device = shader->device;
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    const struct wined3d_adapter *adapter = device->adapter;
+    const struct wined3d_gl_info *gl_info = &adapter->gl_info;
+    const struct wined3d_d3d_info *d3d_info = &adapter->d3d_info;
     int i;
     WORD int_skip;
 
@@ -4547,7 +4551,7 @@ static void find_arb_vs_compile_args(const struct wined3d_state *state,
     else
     {
         args->ps_signature = ~0;
-        if (!device->vs_clipping && device->adapter->fragment_pipe == &arbfp_fragment_pipeline)
+        if (!d3d_info->vs_clipping && adapter->fragment_pipe == &arbfp_fragment_pipeline)
         {
             args->clip.boolclip.clip_texcoord = ffp_clip_emul(state) ? gl_info->limits.texture_stages : 0;
         }
