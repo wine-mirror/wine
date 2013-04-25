@@ -1097,7 +1097,7 @@ DECLARE_INTERFACE_(IDirect3DRMFrame,IDirect3DRMVisual)
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMFrame methods ***/
     STDMETHOD(AddChild)(THIS_ IDirect3DRMFrame *child) PURE;
-    STDMETHOD(AddLight)(THIS_ LPDIRECT3DRMLIGHT) PURE;
+    STDMETHOD(AddLight)(THIS_ struct IDirect3DRMLight *light) PURE;
     STDMETHOD(AddMoveCallback)(THIS_ D3DRMFRAMEMOVECALLBACK, VOID *arg) PURE;
     STDMETHOD(AddTransform)(THIS_ D3DRMCOMBINETYPE, D3DRMMATRIX4D) PURE;
     STDMETHOD(AddTranslation)(THIS_ D3DRMCOMBINETYPE, D3DVALUE x, D3DVALUE y, D3DVALUE z) PURE;
@@ -1126,7 +1126,7 @@ DECLARE_INTERFACE_(IDirect3DRMFrame,IDirect3DRMVisual)
             D3DRMFRAMECONSTRAINT constraint) PURE;
     STDMETHOD(Move)(THIS_ D3DVALUE delta) PURE;
     STDMETHOD(DeleteChild)(THIS_ IDirect3DRMFrame *child) PURE;
-    STDMETHOD(DeleteLight)(THIS_ LPDIRECT3DRMLIGHT) PURE;
+    STDMETHOD(DeleteLight)(THIS_ struct IDirect3DRMLight *light) PURE;
     STDMETHOD(DeleteMoveCallback)(THIS_ D3DRMFRAMEMOVECALLBACK, VOID *arg) PURE;
     STDMETHOD(DeleteVisual)(THIS_ IDirect3DRMVisual *visual) PURE;
     STDMETHOD_(D3DCOLOR, GetSceneBackground)(THIS) PURE;
@@ -1330,7 +1330,7 @@ DECLARE_INTERFACE_(IDirect3DRMFrame2,IDirect3DRMFrame)
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMFrame methods ***/
     STDMETHOD(AddChild)(THIS_ IDirect3DRMFrame *child) PURE;
-    STDMETHOD(AddLight)(THIS_ LPDIRECT3DRMLIGHT) PURE;
+    STDMETHOD(AddLight)(THIS_ struct IDirect3DRMLight *light) PURE;
     STDMETHOD(AddMoveCallback)(THIS_ D3DRMFRAMEMOVECALLBACK, VOID *arg) PURE;
     STDMETHOD(AddTransform)(THIS_ D3DRMCOMBINETYPE, D3DRMMATRIX4D) PURE;
     STDMETHOD(AddTranslation)(THIS_ D3DRMCOMBINETYPE, D3DVALUE x, D3DVALUE y, D3DVALUE z) PURE;
@@ -1359,7 +1359,7 @@ DECLARE_INTERFACE_(IDirect3DRMFrame2,IDirect3DRMFrame)
             D3DRMFRAMECONSTRAINT constraint) PURE;
     STDMETHOD(Move)(THIS_ D3DVALUE delta) PURE;
     STDMETHOD(DeleteChild)(THIS_ IDirect3DRMFrame *child) PURE;
-    STDMETHOD(DeleteLight)(THIS_ LPDIRECT3DRMLIGHT) PURE;
+    STDMETHOD(DeleteLight)(THIS_ struct IDirect3DRMLight *light) PURE;
     STDMETHOD(DeleteMoveCallback)(THIS_ D3DRMFRAMEMOVECALLBACK, VOID *arg) PURE;
     STDMETHOD(DeleteVisual)(THIS_ IDirect3DRMVisual *visual) PURE;
     STDMETHOD_(D3DCOLOR, GetSceneBackground)(THIS) PURE;
@@ -1612,7 +1612,7 @@ DECLARE_INTERFACE_(IDirect3DRMFrame3,IDirect3DRMVisual)
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMFrame3 methods ***/
     STDMETHOD(AddChild)(THIS_ IDirect3DRMFrame3 *child) PURE;
-    STDMETHOD(AddLight)(THIS_ LPDIRECT3DRMLIGHT) PURE;
+    STDMETHOD(AddLight)(THIS_ struct IDirect3DRMLight *light) PURE;
     STDMETHOD(AddMoveCallback)(THIS_ D3DRMFRAME3MOVECALLBACK, VOID *arg, DWORD flags) PURE;
     STDMETHOD(AddTransform)(THIS_ D3DRMCOMBINETYPE, D3DRMMATRIX4D) PURE;
     STDMETHOD(AddTranslation)(THIS_ D3DRMCOMBINETYPE, D3DVALUE x, D3DVALUE y, D3DVALUE z) PURE;
@@ -1640,7 +1640,7 @@ DECLARE_INTERFACE_(IDirect3DRMFrame3,IDirect3DRMVisual)
             D3DRMFRAMECONSTRAINT constraint) PURE;
     STDMETHOD(Move)(THIS_ D3DVALUE delta) PURE;
     STDMETHOD(DeleteChild)(THIS_ IDirect3DRMFrame3 *child) PURE;
-    STDMETHOD(DeleteLight)(THIS_ LPDIRECT3DRMLIGHT) PURE;
+    STDMETHOD(DeleteLight)(THIS_ struct IDirect3DRMLight *light) PURE;
     STDMETHOD(DeleteMoveCallback)(THIS_ D3DRMFRAME3MOVECALLBACK, VOID *arg) PURE;
     STDMETHOD(DeleteVisual)(THIS_ LPUNKNOWN) PURE;
     STDMETHOD_(D3DCOLOR, GetSceneBackground)(THIS) PURE;
@@ -2193,13 +2193,13 @@ DECLARE_INTERFACE_(IDirect3DRMShadow2,IDirect3DRMVisual)
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMShadow methods ***/
-    STDMETHOD(Init)(THIS_ LPUNKNOWN pUNK, LPDIRECT3DRMLIGHT light,
-        D3DVALUE px, D3DVALUE py, D3DVALUE pz, D3DVALUE nx, D3DVALUE ny, D3DVALUE nz) PURE;
+    STDMETHOD(Init)(THIS_ IUnknown *object, struct IDirect3DRMLight *light,
+            D3DVALUE px, D3DVALUE py, D3DVALUE pz, D3DVALUE nx, D3DVALUE ny, D3DVALUE nz) PURE;
     /*** IDirect3DRMShadow2 methods ***/
     STDMETHOD(GetVisual)(THIS_ IDirect3DRMVisual **visual) PURE;
     STDMETHOD(SetVisual)(THIS_ LPUNKNOWN pUNK, DWORD) PURE;
-    STDMETHOD(GetLight)(THIS_ LPDIRECT3DRMLIGHT *) PURE;
-    STDMETHOD(SetLight)(THIS_ LPDIRECT3DRMLIGHT, DWORD) PURE;
+    STDMETHOD(GetLight)(THIS_ struct IDirect3DRMLight **light) PURE;
+    STDMETHOD(SetLight)(THIS_ struct IDirect3DRMLight *light, DWORD flags) PURE;
     STDMETHOD(GetPlane)(THIS_ D3DVALUE *px, D3DVALUE *py, D3DVALUE *pz,
             D3DVALUE *nx, D3DVALUE *ny, D3DVALUE *nz) PURE;
     STDMETHOD(SetPlane)(THIS_ D3DVALUE px, D3DVALUE py, D3DVALUE pz,
@@ -4444,7 +4444,7 @@ DECLARE_INTERFACE_(IDirect3DRMLightArray, IDirect3DRMArray)
     /*** IDirect3DRMArray methods ***/
     STDMETHOD_(DWORD, GetSize)(THIS) PURE;
     /*** IDirect3DRMLightArray methods ***/
-    STDMETHOD(GetElement)(THIS_ DWORD index, LPDIRECT3DRMLIGHT *) PURE;
+    STDMETHOD(GetElement)(THIS_ DWORD index, IDirect3DRMLight **element) PURE;
 };
 #undef INTERFACE
 

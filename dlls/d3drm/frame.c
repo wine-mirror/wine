@@ -76,7 +76,7 @@ typedef struct {
     IDirect3DRMLightArray IDirect3DRMLightArray_iface;
     LONG ref;
     ULONG size;
-    LPDIRECT3DRMLIGHT* lights;
+    IDirect3DRMLight **lights;
 } IDirect3DRMLightArrayImpl;
 
 static inline IDirect3DRMFrameImpl *impl_from_IDirect3DRMFrame2(IDirect3DRMFrame2 *iface)
@@ -393,7 +393,8 @@ static DWORD WINAPI IDirect3DRMLightArrayImpl_GetSize(IDirect3DRMLightArray* ifa
 }
 
 /*** IDirect3DRMLightArray methods ***/
-static HRESULT WINAPI IDirect3DRMLightArrayImpl_GetElement(IDirect3DRMLightArray* iface, DWORD index, LPDIRECT3DRMLIGHT* light)
+static HRESULT WINAPI IDirect3DRMLightArrayImpl_GetElement(IDirect3DRMLightArray *iface,
+        DWORD index, IDirect3DRMLight **light)
 {
     IDirect3DRMLightArrayImpl *This = impl_from_IDirect3DRMLightArray(iface);
 
@@ -611,8 +612,7 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_AddChild(IDirect3DRMFrame2 *iface, I
     return IDirect3DRMFrame3_AddChild(&This->IDirect3DRMFrame3_iface, frame);
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_AddLight(IDirect3DRMFrame2* iface,
-                                                       LPDIRECT3DRMLIGHT light)
+static HRESULT WINAPI IDirect3DRMFrame2Impl_AddLight(IDirect3DRMFrame2 *iface, IDirect3DRMLight *light)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
 
@@ -924,8 +924,7 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_DeleteChild(IDirect3DRMFrame2 *iface
     return IDirect3DRMFrame3_DeleteChild(&This->IDirect3DRMFrame3_iface, child);
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_DeleteLight(IDirect3DRMFrame2* iface,
-                                                          LPDIRECT3DRMLIGHT light)
+static HRESULT WINAPI IDirect3DRMFrame2Impl_DeleteLight(IDirect3DRMFrame2 *iface, IDirect3DRMLight *light)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
 
@@ -1532,8 +1531,7 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_AddChild(IDirect3DRMFrame3 *iface, I
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_AddLight(IDirect3DRMFrame3* iface,
-                                                       LPDIRECT3DRMLIGHT light)
+static HRESULT WINAPI IDirect3DRMFrame3Impl_AddLight(IDirect3DRMFrame3 *iface, IDirect3DRMLight *light)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
     ULONG i;
@@ -1760,8 +1758,7 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_GetLights(IDirect3DRMFrame3* iface,
     if (This->nb_lights)
     {
         ULONG i;
-        obj->lights = HeapAlloc(GetProcessHeap(), 0, This->nb_lights * sizeof(LPDIRECT3DRMLIGHT));
-        if (!obj->lights)
+        if (!(obj->lights = HeapAlloc(GetProcessHeap(), 0, This->nb_lights * sizeof(*obj->lights))))
             return E_OUTOFMEMORY;
         for (i = 0; i < This->nb_lights; i++)
             IDirect3DRMLight_QueryInterface(This->lights[i], &IID_IDirect3DRMLight, (void**)&obj->lights[i]);
@@ -1957,8 +1954,7 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_DeleteChild(IDirect3DRMFrame3 *iface
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_DeleteLight(IDirect3DRMFrame3* iface,
-                                                          LPDIRECT3DRMLIGHT light)
+static HRESULT WINAPI IDirect3DRMFrame3Impl_DeleteLight(IDirect3DRMFrame3 *iface, IDirect3DRMLight *light)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
     ULONG i;

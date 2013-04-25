@@ -679,8 +679,8 @@ static void test_Frame(void)
     IDirect3DRMVisual *visual1;
     IDirect3DRMVisual *visual_tmp;
     LPDIRECT3DRMVISUALARRAY pVisualArray;
-    LPDIRECT3DRMLIGHT pLight1;
-    LPDIRECT3DRMLIGHT pLightTmp;
+    IDirect3DRMLight *light1;
+    IDirect3DRMLight *light_tmp;
     LPDIRECT3DRMLIGHTARRAY pLightArray;
     D3DCOLOR color;
     DWORD count;
@@ -947,14 +947,14 @@ static void test_Frame(void)
     CHECK_REFCOUNT(pFrameP1, 3);
 
     /* Create Light */
-    hr = IDirect3DRM_CreateLightRGB(d3drm, D3DRMLIGHT_SPOT, 0.1, 0.2, 0.3, &pLight1);
+    hr = IDirect3DRM_CreateLightRGB(d3drm, D3DRMLIGHT_SPOT, 0.1, 0.2, 0.3, &light1);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMLight interface (hr = %x)\n", hr);
 
     /* Add Light to first parent */
-    hr = IDirect3DRMFrame_AddLight(pFrameP1, pLight1);
+    hr = IDirect3DRMFrame_AddLight(pFrameP1, light1);
     ok(hr == D3DRM_OK, "Cannot add light (hr = %x)\n", hr);
     CHECK_REFCOUNT(pFrameP1, 3);
-    CHECK_REFCOUNT(pLight1, 2);
+    CHECK_REFCOUNT(light1, 2);
 
     pLightArray = NULL;
     hr = IDirect3DRMFrame_GetLights(pFrameP1, &pLightArray);
@@ -963,18 +963,18 @@ static void test_Frame(void)
     {
         count = IDirect3DRMLightArray_GetSize(pLightArray);
         ok(count == 1, "count = %u\n", count);
-        hr = IDirect3DRMLightArray_GetElement(pLightArray, 0, &pLightTmp);
+        hr = IDirect3DRMLightArray_GetElement(pLightArray, 0, &light_tmp);
         ok(hr == D3DRM_OK, "Cannot get element (hr = %x)\n", hr);
-        ok(pLightTmp == pLight1, "pLightTmp = %p\n", pLightTmp);
-        IDirect3DRMLight_Release(pLightTmp);
+        ok(light_tmp == light1, "light_tmp = %p\n", light_tmp);
+        IDirect3DRMLight_Release(light_tmp);
         IDirect3DRMLightArray_Release(pLightArray);
     }
 
     /* Delete Light */
-    hr = IDirect3DRMFrame_DeleteLight(pFrameP1, pLight1);
+    hr = IDirect3DRMFrame_DeleteLight(pFrameP1, light1);
     ok(hr == D3DRM_OK, "Cannot delete light (hr = %x)\n", hr);
     CHECK_REFCOUNT(pFrameP1, 3);
-    IDirect3DRMLight_Release(pLight1);
+    IDirect3DRMLight_Release(light1);
 
     /* Test SceneBackground on first parent */
     color = IDirect3DRMFrame_GetSceneBackground(pFrameP1);
@@ -1063,7 +1063,7 @@ static void test_Light(void)
 {
     HRESULT hr;
     IDirect3DRM *d3drm;
-    LPDIRECT3DRMLIGHT pLight;
+    IDirect3DRMLight *light;
     D3DRMLIGHTTYPE type;
     D3DCOLOR color;
     DWORD size;
@@ -1072,44 +1072,44 @@ static void test_Light(void)
     hr = pDirect3DRMCreate(&d3drm);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
 
-    hr = IDirect3DRM_CreateLightRGB(d3drm, D3DRMLIGHT_SPOT, 0.5, 0.5, 0.5, &pLight);
+    hr = IDirect3DRM_CreateLightRGB(d3drm, D3DRMLIGHT_SPOT, 0.5, 0.5, 0.5, &light);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMLight interface (hr = %x)\n", hr);
 
-    hr = IDirect3DRMLight_GetClassName(pLight, NULL, cname);
+    hr = IDirect3DRMLight_GetClassName(light, NULL, cname);
     ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    hr = IDirect3DRMLight_GetClassName(pLight, NULL, NULL);
+    hr = IDirect3DRMLight_GetClassName(light, NULL, NULL);
     ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
     size = 1;
-    hr = IDirect3DRMLight_GetClassName(pLight, &size, cname);
+    hr = IDirect3DRMLight_GetClassName(light, &size, cname);
     ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
     size = sizeof(cname);
-    hr = IDirect3DRMLight_GetClassName(pLight, &size, cname);
+    hr = IDirect3DRMLight_GetClassName(light, &size, cname);
     ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
     ok(size == sizeof("Light"), "wrong size: %u\n", size);
     ok(!strcmp(cname, "Light"), "Expected cname to be \"Light\", but got \"%s\"\n", cname);
 
-    type = IDirect3DRMLight_GetType(pLight);
+    type = IDirect3DRMLight_GetType(light);
     ok(type == D3DRMLIGHT_SPOT, "wrong type (%u)\n", type);
 
-    color = IDirect3DRMLight_GetColor(pLight);
+    color = IDirect3DRMLight_GetColor(light);
     ok(color == 0xff7f7f7f, "wrong color (%x)\n", color);
 
-    hr = IDirect3DRMLight_SetType(pLight, D3DRMLIGHT_POINT);
+    hr = IDirect3DRMLight_SetType(light, D3DRMLIGHT_POINT);
     ok(hr == D3DRM_OK, "Cannot set type (hr = %x)\n", hr);
-    type = IDirect3DRMLight_GetType(pLight);
+    type = IDirect3DRMLight_GetType(light);
     ok(type == D3DRMLIGHT_POINT, "wrong type (%u)\n", type);
 
-    hr = IDirect3DRMLight_SetColor(pLight, 0xff180587);
+    hr = IDirect3DRMLight_SetColor(light, 0xff180587);
     ok(hr == D3DRM_OK, "Cannot set color (hr = %x)\n", hr);
-    color = IDirect3DRMLight_GetColor(pLight);
+    color = IDirect3DRMLight_GetColor(light);
     ok(color == 0xff180587, "wrong color (%x)\n", color);
 
-    hr = IDirect3DRMLight_SetColorRGB(pLight, 0.5, 0.5, 0.5);
+    hr = IDirect3DRMLight_SetColorRGB(light, 0.5, 0.5, 0.5);
     ok(hr == D3DRM_OK, "Cannot set color (hr = %x)\n", hr);
-    color = IDirect3DRMLight_GetColor(pLight);
+    color = IDirect3DRMLight_GetColor(light);
     ok(color == 0xff7f7f7f, "wrong color (%x)\n", color);
 
-    IDirect3DRMLight_Release(pLight);
+    IDirect3DRMLight_Release(light);
 
     IDirect3DRM_Release(d3drm);
 }

@@ -196,25 +196,25 @@ static HRESULT WINAPI IDirect3DRMImpl_CreateTexture(IDirect3DRM *iface,
     return Direct3DRMTexture_create(&IID_IDirect3DRMTexture, (IUnknown **)texture);
 }
 
-static HRESULT WINAPI IDirect3DRMImpl_CreateLight(IDirect3DRM* iface, D3DRMLIGHTTYPE type,
-                                                    D3DCOLOR color, LPDIRECT3DRMLIGHT* Light)
+static HRESULT WINAPI IDirect3DRMImpl_CreateLight(IDirect3DRM *iface,
+        D3DRMLIGHTTYPE type, D3DCOLOR color, IDirect3DRMLight **light)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM(iface);
+    IDirect3DRMImpl *d3drm = impl_from_IDirect3DRM(iface);
 
-    TRACE("(%p/%p)->(%d,%d,%p)\n", iface, This, type, color, Light);
+    TRACE("iface %p, type %#x, color 0x%08x, light %p.\n", iface, type, color, light);
 
-    return IDirect3DRM3_CreateLight(&This->IDirect3DRM3_iface, type, color, Light);
+    return IDirect3DRM3_CreateLight(&d3drm->IDirect3DRM3_iface, type, color, light);
 }
 
-static HRESULT WINAPI IDirect3DRMImpl_CreateLightRGB(IDirect3DRM* iface, D3DRMLIGHTTYPE type,
-                                                       D3DVALUE red, D3DVALUE green, D3DVALUE blue,
-                                                       LPDIRECT3DRMLIGHT* Light)
+static HRESULT WINAPI IDirect3DRMImpl_CreateLightRGB(IDirect3DRM *iface, D3DRMLIGHTTYPE type,
+        D3DVALUE red, D3DVALUE green, D3DVALUE blue, IDirect3DRMLight **light)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM(iface);
+    IDirect3DRMImpl *d3drm = impl_from_IDirect3DRM(iface);
 
-    TRACE("(%p/%p)->(%d,%f,%f,%f,%p)\n", iface, This, type, red, green, blue, Light);
+    TRACE("iface %p, type %#x, red %.8e, green %.8e, blue %.8e, light %p.\n",
+            iface, type, red, green, blue, light);
 
-    return IDirect3DRM3_CreateLightRGB(&This->IDirect3DRM3_iface, type, red, green, blue, Light);
+    return IDirect3DRM3_CreateLightRGB(&d3drm->IDirect3DRM3_iface, type, red, green, blue, light);
 }
 
 static HRESULT WINAPI IDirect3DRMImpl_CreateMaterial(IDirect3DRM* iface, D3DVALUE power, LPDIRECT3DRMMATERIAL * material)
@@ -575,25 +575,25 @@ static HRESULT WINAPI IDirect3DRM2Impl_CreateTexture(IDirect3DRM2 *iface,
     return Direct3DRMTexture_create(&IID_IDirect3DRMTexture2, (IUnknown **)texture);
 }
 
-static HRESULT WINAPI IDirect3DRM2Impl_CreateLight(IDirect3DRM2* iface, D3DRMLIGHTTYPE type,
-                                                     D3DCOLOR color, LPDIRECT3DRMLIGHT* Light)
+static HRESULT WINAPI IDirect3DRM2Impl_CreateLight(IDirect3DRM2 *iface,
+        D3DRMLIGHTTYPE type, D3DCOLOR color, IDirect3DRMLight **light)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM2(iface);
+    IDirect3DRMImpl *d3drm = impl_from_IDirect3DRM2(iface);
 
-    TRACE("(%p/%p)->(%d,%d,%p)\n", iface, This, type, color, Light);
+    TRACE("iface %p, type %#x, color 0x%08x, light %p.\n", iface, type, color, light);
 
-    return IDirect3DRM3_CreateLight(&This->IDirect3DRM3_iface, type, color, Light);
+    return IDirect3DRM3_CreateLight(&d3drm->IDirect3DRM3_iface, type, color, light);
 }
 
-static HRESULT WINAPI IDirect3DRM2Impl_CreateLightRGB(IDirect3DRM2* iface, D3DRMLIGHTTYPE type,
-                                                        D3DVALUE red, D3DVALUE green, D3DVALUE blue,
-                                                        LPDIRECT3DRMLIGHT* Light)
+static HRESULT WINAPI IDirect3DRM2Impl_CreateLightRGB(IDirect3DRM2 *iface, D3DRMLIGHTTYPE type,
+        D3DVALUE red, D3DVALUE green, D3DVALUE blue, IDirect3DRMLight **light)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM2(iface);
+    IDirect3DRMImpl *d3drm = impl_from_IDirect3DRM2(iface);
 
-    TRACE("(%p/%p)->(%d,%f,%f,%f,%p)\n", iface, This, type, red, green, blue, Light);
+    TRACE("iface %p, type %#x, red %.8e, green %.8e, blue %.8e, light %p.\n",
+            iface, type, red, green, blue, light);
 
-    return IDirect3DRM3_CreateLightRGB(&This->IDirect3DRM3_iface, type, red, green, blue, Light);
+    return IDirect3DRM3_CreateLightRGB(&d3drm->IDirect3DRM3_iface, type, red, green, blue, light);
 }
 
 static HRESULT WINAPI IDirect3DRM2Impl_CreateMaterial(IDirect3DRM2* iface, D3DVALUE power,
@@ -969,43 +969,37 @@ static HRESULT WINAPI IDirect3DRM3Impl_CreateTexture(IDirect3DRM3 *iface,
     return Direct3DRMTexture_create(&IID_IDirect3DRMTexture3, (IUnknown **)texture);
 }
 
-static HRESULT WINAPI IDirect3DRM3Impl_CreateLight(IDirect3DRM3* iface, D3DRMLIGHTTYPE type,
-                                                     D3DCOLOR color, LPDIRECT3DRMLIGHT* Light)
+static HRESULT WINAPI IDirect3DRM3Impl_CreateLight(IDirect3DRM3 *iface,
+        D3DRMLIGHTTYPE type, D3DCOLOR color, IDirect3DRMLight **light)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM3(iface);
-    HRESULT ret;
+    HRESULT hr;
 
-    FIXME("(%p/%p)->(%d,%d,%p): partial stub\n", iface, This, type, color, Light);
+    FIXME("iface %p, type %#x, color 0x%08x, light %p partial stub!\n", iface, type, color, light);
 
-    ret = Direct3DRMLight_create((IUnknown**)Light);
-
-    if (SUCCEEDED(ret))
+    if (SUCCEEDED(hr = Direct3DRMLight_create((IUnknown **)light)))
     {
-        IDirect3DRMLight_SetType(*Light, type);
-        IDirect3DRMLight_SetColor(*Light, color);
+        IDirect3DRMLight_SetType(*light, type);
+        IDirect3DRMLight_SetColor(*light, color);
     }
 
-    return ret;
+    return hr;
 }
 
-static HRESULT WINAPI IDirect3DRM3Impl_CreateLightRGB(IDirect3DRM3* iface, D3DRMLIGHTTYPE type,
-                                                        D3DVALUE red, D3DVALUE green, D3DVALUE blue,
-                                                        LPDIRECT3DRMLIGHT* Light)
+static HRESULT WINAPI IDirect3DRM3Impl_CreateLightRGB(IDirect3DRM3 *iface, D3DRMLIGHTTYPE type,
+        D3DVALUE red, D3DVALUE green, D3DVALUE blue, IDirect3DRMLight **light)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM3(iface);
-    HRESULT ret;
+    HRESULT hr;
 
-    FIXME("(%p/%p)->(%d,%f,%f,%f,%p): partial stub\n", iface, This, type, red, green, blue, Light);
+    FIXME("iface %p, type %#x, red %.8e, green %.8e, blue %.8e, light %p partial stub!\n",
+            iface, type, red, green, blue, light);
 
-    ret = Direct3DRMLight_create((IUnknown**)Light);
-
-    if (SUCCEEDED(ret))
+    if (SUCCEEDED(hr = Direct3DRMLight_create((IUnknown **)light)))
     {
-        IDirect3DRMLight_SetType(*Light, type);
-        IDirect3DRMLight_SetColorRGB(*Light, red, green, blue);
+        IDirect3DRMLight_SetType(*light, type);
+        IDirect3DRMLight_SetColorRGB(*light, red, green, blue);
     }
 
-    return ret;
+    return hr;
 }
 
 static HRESULT WINAPI IDirect3DRM3Impl_CreateMaterial(IDirect3DRM3* iface, D3DVALUE power,
@@ -1064,16 +1058,11 @@ static HRESULT WINAPI IDirect3DRM3Impl_CreateDeviceFromClipper(IDirect3DRM3 *ifa
     return Direct3DRMDevice_create(&IID_IDirect3DRMDevice3, (IUnknown**)device);
 }
 
-static HRESULT WINAPI IDirect3DRM3Impl_CreateShadow(IDirect3DRM3* iface, LPUNKNOWN Visual1,
-                                                    LPDIRECT3DRMLIGHT Light, D3DVALUE px,
-                                                    D3DVALUE py, D3DVALUE pz, D3DVALUE nx,
-                                                    D3DVALUE ny, D3DVALUE nz,
-                                                    LPDIRECT3DRMSHADOW2* Visual2)
+static HRESULT WINAPI IDirect3DRM3Impl_CreateShadow(IDirect3DRM3 *iface, IUnknown *object, IDirect3DRMLight *light,
+        D3DVALUE px, D3DVALUE py, D3DVALUE pz, D3DVALUE nx, D3DVALUE ny, D3DVALUE nz, IDirect3DRMShadow2 **shadow)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM3(iface);
-
-    FIXME("(%p/%p)->(%p,%p,%f,%f,%f,%f,%f,%f,%p): stub\n", iface, This, Visual1, Light, px, py, pz,
-          nx, ny, nz, Visual2);
+    FIXME("iface %p, object %p, light %p, px %.8e, py %.8e, pz %.8e, nx %.8e, ny %.8e, nz %.8e, shadow %p stub!\n",
+            iface, object, light, px, py, pz, nx, ny, nz, shadow);
 
     return E_NOTIMPL;
 }

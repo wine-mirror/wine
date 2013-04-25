@@ -65,8 +65,9 @@ DECLARE_INTERFACE_(IDirect3DRM,IUnknown)
     STDMETHOD(CreateAnimation)(THIS_ LPDIRECT3DRMANIMATION *) PURE;
     STDMETHOD(CreateAnimationSet)(THIS_ LPDIRECT3DRMANIMATIONSET *) PURE;
     STDMETHOD(CreateTexture)(THIS_ D3DRMIMAGE *image, IDirect3DRMTexture **texture) PURE;
-    STDMETHOD(CreateLight)(THIS_ D3DRMLIGHTTYPE, D3DCOLOR, LPDIRECT3DRMLIGHT *) PURE;
-    STDMETHOD(CreateLightRGB)(THIS_ D3DRMLIGHTTYPE, D3DVALUE, D3DVALUE, D3DVALUE, LPDIRECT3DRMLIGHT *) PURE;
+    STDMETHOD(CreateLight)(THIS_ D3DRMLIGHTTYPE type, D3DCOLOR color, IDirect3DRMLight **light) PURE;
+    STDMETHOD(CreateLightRGB)(THIS_ D3DRMLIGHTTYPE type, D3DVALUE r, D3DVALUE g, D3DVALUE b,
+            IDirect3DRMLight **light) PURE;
     STDMETHOD(CreateMaterial)(THIS_ D3DVALUE, LPDIRECT3DRMMATERIAL *) PURE;
     STDMETHOD(CreateDevice)(THIS_ DWORD width, DWORD height, IDirect3DRMDevice **device) PURE;
     STDMETHOD(CreateDeviceFromSurface)(THIS_ GUID *guid, IDirectDraw *ddraw,
@@ -203,8 +204,9 @@ DECLARE_INTERFACE_(IDirect3DRM2,IUnknown)
     STDMETHOD(CreateAnimation)(THIS_ LPDIRECT3DRMANIMATION *) PURE;
     STDMETHOD(CreateAnimationSet)(THIS_ LPDIRECT3DRMANIMATIONSET *) PURE;
     STDMETHOD(CreateTexture)(THIS_ D3DRMIMAGE *image, IDirect3DRMTexture2 **texture) PURE;
-    STDMETHOD(CreateLight)(THIS_ D3DRMLIGHTTYPE, D3DCOLOR, LPDIRECT3DRMLIGHT *) PURE;
-    STDMETHOD(CreateLightRGB)(THIS_ D3DRMLIGHTTYPE, D3DVALUE, D3DVALUE, D3DVALUE, LPDIRECT3DRMLIGHT *) PURE;
+    STDMETHOD(CreateLight)(THIS_ D3DRMLIGHTTYPE type, D3DCOLOR color, IDirect3DRMLight **light) PURE;
+    STDMETHOD(CreateLightRGB)(THIS_ D3DRMLIGHTTYPE type, D3DVALUE r, D3DVALUE g, D3DVALUE b,
+            IDirect3DRMLight **light) PURE;
     STDMETHOD(CreateMaterial)(THIS_ D3DVALUE, LPDIRECT3DRMMATERIAL *) PURE;
     STDMETHOD(CreateDevice)(THIS_ DWORD width, DWORD height, IDirect3DRMDevice2 **device) PURE;
     STDMETHOD(CreateDeviceFromSurface)(THIS_ GUID *guid, IDirectDraw *ddraw,
@@ -344,8 +346,9 @@ DECLARE_INTERFACE_(IDirect3DRM3,IUnknown)
     STDMETHOD(CreateAnimation)(THIS_ LPDIRECT3DRMANIMATION2 *) PURE;
     STDMETHOD(CreateAnimationSet)(THIS_ LPDIRECT3DRMANIMATIONSET2 *) PURE;
     STDMETHOD(CreateTexture)(THIS_ D3DRMIMAGE *image, IDirect3DRMTexture3 **texture) PURE;
-    STDMETHOD(CreateLight)(THIS_ D3DRMLIGHTTYPE, D3DCOLOR, LPDIRECT3DRMLIGHT *) PURE;
-    STDMETHOD(CreateLightRGB)(THIS_ D3DRMLIGHTTYPE, D3DVALUE, D3DVALUE, D3DVALUE, LPDIRECT3DRMLIGHT *) PURE;
+    STDMETHOD(CreateLight)(THIS_ D3DRMLIGHTTYPE type, D3DCOLOR color, IDirect3DRMLight **light) PURE;
+    STDMETHOD(CreateLightRGB)(THIS_ D3DRMLIGHTTYPE type, D3DVALUE r, D3DVALUE g, D3DVALUE b,
+            IDirect3DRMLight **light) PURE;
     STDMETHOD(CreateMaterial)(THIS_ D3DVALUE, LPDIRECT3DRMMATERIAL2 *) PURE;
     STDMETHOD(CreateDevice)(THIS_ DWORD width, DWORD height, IDirect3DRMDevice3 **device) PURE;
     STDMETHOD(CreateDeviceFromSurface)(THIS_ GUID *guid, IDirectDraw *ddraw,
@@ -356,8 +359,8 @@ DECLARE_INTERFACE_(IDirect3DRM3,IUnknown)
             int width, int height, IDirect3DRMDevice3 **device) PURE;
     STDMETHOD(CreateTextureFromSurface)(THIS_ IDirectDrawSurface *surface,
             IDirect3DRMTexture3 **texture) PURE;
-    STDMETHOD(CreateShadow)(THIS_ LPUNKNOWN, LPDIRECT3DRMLIGHT, D3DVALUE px, D3DVALUE py, D3DVALUE pz,
-        D3DVALUE nx, D3DVALUE ny, D3DVALUE nz, LPDIRECT3DRMSHADOW2 *) PURE;
+    STDMETHOD(CreateShadow)(THIS_ IUnknown *object, IDirect3DRMLight *light, D3DVALUE px, D3DVALUE py, D3DVALUE pz,
+            D3DVALUE nx, D3DVALUE ny, D3DVALUE nz, IDirect3DRMShadow2 **shadow) PURE;
     STDMETHOD(CreateViewport)(THIS_ IDirect3DRMDevice3 *device, IDirect3DRMFrame3 *camera,
             DWORD x, DWORD y, DWORD width, DWORD height, IDirect3DRMViewport2 **viewport) PURE;
     STDMETHOD(CreateWrap)(THIS_ D3DRMWRAPTYPE type, IDirect3DRMFrame3 *reference,
