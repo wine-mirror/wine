@@ -5532,7 +5532,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, struc
         struct glsl_ffp_fragment_shader *ffp_shader;
         struct ffp_frag_settings settings;
 
-        gen_ffp_frag_op(device, state, &settings, FALSE);
+        gen_ffp_frag_op(context, state, &settings, FALSE);
         ffp_shader = shader_glsl_find_ffp_fragment_shader(priv, gl_info, &settings);
         ps_id = ffp_shader->id;
         ps_list = &ffp_shader->linked_programs;

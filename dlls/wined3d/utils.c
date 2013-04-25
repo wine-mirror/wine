@@ -3090,7 +3090,7 @@ DWORD get_flexible_vertex_size(DWORD d3dvtVertexType) {
     return size;
 }
 
-void gen_ffp_frag_op(const struct wined3d_device *device, const struct wined3d_state *state,
+void gen_ffp_frag_op(const struct wined3d_context *context, const struct wined3d_state *state,
         struct ffp_frag_settings *settings, BOOL ignore_textype)
 {
 #define ARG1 0x01
@@ -3130,8 +3130,8 @@ void gen_ffp_frag_op(const struct wined3d_device *device, const struct wined3d_s
     DWORD ttff;
     DWORD cop, aop, carg0, carg1, carg2, aarg0, aarg1, aarg2;
     const struct wined3d_surface *rt = state->fb->render_targets[0];
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct wined3d_d3d_info *d3d_info = context->d3d_info;
 
     for (i = 0; i < gl_info->limits.texture_stages; ++i)
     {

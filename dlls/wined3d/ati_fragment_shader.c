@@ -844,7 +844,7 @@ static void set_tex_op_atifs(struct wined3d_context *context, const struct wined
     DWORD mapped_stage;
     unsigned int i;
 
-    gen_ffp_frag_op(device, state, &settings, TRUE);
+    gen_ffp_frag_op(context, state, &settings, TRUE);
     desc = (const struct atifs_ffp_desc *)find_ffp_frag_shader(&priv->fragment_shaders, &settings);
     if(!desc) {
         struct atifs_ffp_desc *new_desc = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_desc));
