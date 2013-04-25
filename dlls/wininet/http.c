@@ -207,7 +207,7 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION authcache_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
-static BOOL HTTP_GetResponseHeaders(http_request_t *req, BOOL clear);
+static BOOL HTTP_GetResponseHeaders(http_request_t *req);
 static DWORD HTTP_ProcessHeader(http_request_t *req, LPCWSTR field, LPCWSTR value, DWORD dwModifier);
 static LPWSTR * HTTP_InterpretHttpHeader(LPCWSTR buffer);
 static DWORD HTTP_InsertCustomHeader(http_request_t *req, LPHTTPHEADERW lpHdr);
@@ -4076,7 +4076,7 @@ static DWORD HTTP_SecureProxyConnect(http_request_t *request)
     if (res != ERROR_SUCCESS)
         return res;
 
-    responseLen = HTTP_GetResponseHeaders( request, TRUE );
+    responseLen = HTTP_GetResponseHeaders( request );
     if (!responseLen)
         return ERROR_HTTP_INVALID_HEADER;
 
@@ -4873,7 +4873,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
             INTERNET_SendCallback(&request->hdr, request->hdr.dwContext,
                                 INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
     
-            responseLen = HTTP_GetResponseHeaders(request, TRUE);
+            responseLen = HTTP_GetResponseHeaders(request);
             /* FIXME: We should know that connection is closed before sending
              * headers. Otherwise wrong callbacks are executed */
             if(!responseLen && reusing_connection) {
@@ -5067,7 +5067,7 @@ static DWORD HTTP_HttpEndRequestW(http_request_t *request, DWORD dwFlags, DWORD_
     INTERNET_SendCallback(&request->hdr, request->hdr.dwContext,
                   INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
 
-    responseLen = HTTP_GetResponseHeaders(request, TRUE);
+    responseLen = HTTP_GetResponseHeaders(request);
     if (!responseLen)
         res = ERROR_HTTP_HEADER_NOT_FOUND;
 
@@ -5722,7 +5722,7 @@ static void HTTP_clear_response_headers( http_request_t *request )
  *   TRUE  on success
  *   FALSE on error
  */
-static INT HTTP_GetResponseHeaders(http_request_t *request, BOOL clear)
+static INT HTTP_GetResponseHeaders(http_request_t *request)
 {
     INT cbreaks = 0;
     WCHAR buffer[MAX_REPLY_LEN];
@@ -5742,6 +5742,9 @@ static INT HTTP_GetResponseHeaders(http_request_t *request, BOOL clear)
     if(!request->netconn)
         goto lend;
 
+    /* clear old response headers (eg. from a redirect response) */
+    HTTP_clear_response_headers( request );
+
     NETCON_set_timeout( request->netconn, FALSE, request->receive_timeout );
     do {
         /*
@@ -5750,12 +5753,6 @@ static INT HTTP_GetResponseHeaders(http_request_t *request, BOOL clear)
         buflen = MAX_REPLY_LEN;
         if (!read_line(request, bufferA, &buflen))
             goto lend;
-
-        /* clear old response headers (eg. from a redirect response) */
-        if (clear) {
-            HTTP_clear_response_headers( request );
-            clear = FALSE;
-        }
 
         rc += buflen;
         MultiByteToWideChar( CP_ACP, 0, bufferA, buflen, buffer, MAX_REPLY_LEN );
