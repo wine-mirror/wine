@@ -207,7 +207,7 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION authcache_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
-static BOOL HTTP_GetResponseHeaders(http_request_t *req);
+static DWORD HTTP_GetResponseHeaders(http_request_t *req, INT *len);
 static DWORD HTTP_ProcessHeader(http_request_t *req, LPCWSTR field, LPCWSTR value, DWORD dwModifier);
 static LPWSTR * HTTP_InterpretHttpHeader(LPCWSTR buffer);
 static DWORD HTTP_InsertCustomHeader(http_request_t *req, LPHTTPHEADERW lpHdr);
@@ -2404,7 +2404,7 @@ static void remove_data( http_request_t *req, int count )
     else req->read_pos += count;
 }
 
-static BOOL read_line( http_request_t *req, LPSTR buffer, DWORD *len )
+static DWORD read_line( http_request_t *req, LPSTR buffer, DWORD *len )
 {
     int count, bytes_read, pos = 0;
     DWORD res;
@@ -2427,13 +2427,18 @@ static BOOL read_line( http_request_t *req, LPSTR buffer, DWORD *len )
         remove_data( req, bytes_read );
         if (eol) break;
 
-        if ((res = read_more_data( req, -1 )) != ERROR_SUCCESS || !req->read_size)
+        if ((res = read_more_data( req, -1 )))
+        {
+            WARN( "read failed %u\n", res );
+            LeaveCriticalSection( &req->read_section );
+            return res;
+        }
+        if (!req->read_size)
         {
             *len = 0;
-            TRACE( "returning empty string %u\n", res);
+            TRACE( "returning empty string\n" );
             LeaveCriticalSection( &req->read_section );
-            INTERNET_SetLastError(res);
-            return FALSE;
+            return ERROR_SUCCESS;
         }
     }
     LeaveCriticalSection( &req->read_section );
@@ -2445,7 +2450,7 @@ static BOOL read_line( http_request_t *req, LPSTR buffer, DWORD *len )
     }
     buffer[*len - 1] = 0;
     TRACE( "returning %s\n", debugstr_a(buffer));
-    return TRUE;
+    return ERROR_SUCCESS;
 }
 
 /* check if we have reached the end of the data to read (the read section must be held) */
@@ -2530,6 +2535,7 @@ static DWORD netconn_read(data_stream_t *stream, http_request_t *req, BYTE *buf,
         DWORD *read, read_mode_t read_mode)
 {
     netconn_stream_t *netconn_stream = (netconn_stream_t*)stream;
+    DWORD res = ERROR_SUCCESS;
     int len = 0;
 
     size = min(size, netconn_stream->content_length-netconn_stream->content_read);
@@ -2541,7 +2547,7 @@ static DWORD netconn_read(data_stream_t *stream, http_request_t *req, BYTE *buf,
     }
 
     if(size && req->netconn) {
-        if(NETCON_recv(req->netconn, buf, size, read_mode == READMODE_SYNC ? MSG_WAITALL : 0, &len) != ERROR_SUCCESS)
+        if((res = NETCON_recv(req->netconn, buf, size, read_mode == READMODE_SYNC ? MSG_WAITALL : 0, &len)))
             len = 0;
         if(!len)
             netconn_stream->content_length = netconn_stream->content_read;
@@ -2549,7 +2555,7 @@ static DWORD netconn_read(data_stream_t *stream, http_request_t *req, BYTE *buf,
 
     netconn_stream->content_read += *read = len;
     TRACE("read %u bytes\n", len);
-    return ERROR_SUCCESS;
+    return res;
 }
 
 static BOOL netconn_drain_content(data_stream_t *stream, http_request_t *req)
@@ -4076,8 +4082,7 @@ static DWORD HTTP_SecureProxyConnect(http_request_t *request)
     if (res != ERROR_SUCCESS)
         return res;
 
-    responseLen = HTTP_GetResponseHeaders( request );
-    if (!responseLen)
+    if (HTTP_GetResponseHeaders( request, &responseLen ) || !responseLen)
         return ERROR_HTTP_INVALID_HEADER;
 
     return ERROR_SUCCESS;
@@ -4873,7 +4878,12 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
             INTERNET_SendCallback(&request->hdr, request->hdr.dwContext,
                                 INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
     
-            responseLen = HTTP_GetResponseHeaders(request);
+            if (HTTP_GetResponseHeaders(request, &responseLen))
+            {
+                http_release_netconn(request, FALSE);
+                res = ERROR_INTERNET_CONNECTION_ABORTED;
+                goto lend;
+            }
             /* FIXME: We should know that connection is closed before sending
              * headers. Otherwise wrong callbacks are executed */
             if(!responseLen && reusing_connection) {
@@ -5067,8 +5077,7 @@ static DWORD HTTP_HttpEndRequestW(http_request_t *request, DWORD dwFlags, DWORD_
     INTERNET_SendCallback(&request->hdr, request->hdr.dwContext,
                   INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
 
-    responseLen = HTTP_GetResponseHeaders(request);
-    if (!responseLen)
+    if (HTTP_GetResponseHeaders(request, &responseLen) || !responseLen)
         res = ERROR_HTTP_HEADER_NOT_FOUND;
 
     INTERNET_SendCallback(&request->hdr, request->hdr.dwContext,
@@ -5722,16 +5731,15 @@ static void HTTP_clear_response_headers( http_request_t *request )
  *   TRUE  on success
  *   FALSE on error
  */
-static INT HTTP_GetResponseHeaders(http_request_t *request)
+static DWORD HTTP_GetResponseHeaders(http_request_t *request, INT *len)
 {
     INT cbreaks = 0;
     WCHAR buffer[MAX_REPLY_LEN];
     DWORD buflen = MAX_REPLY_LEN;
-    BOOL bSuccess = FALSE;
     INT  rc = 0;
     char bufferA[MAX_REPLY_LEN];
     LPWSTR status_code = NULL, status_text = NULL;
-    DWORD cchMaxRawHeaders = 1024;
+    DWORD res = ERROR_HTTP_INVALID_SERVER_RESPONSE, cchMaxRawHeaders = 1024;
     LPWSTR lpszRawHeaders = NULL;
     LPWSTR temp;
     DWORD cchRawHeaders = 0;
@@ -5751,8 +5759,10 @@ static INT HTTP_GetResponseHeaders(http_request_t *request)
          * We should first receive 'HTTP/1.x nnn OK' where nnn is the status code.
          */
         buflen = MAX_REPLY_LEN;
-        if (!read_line(request, bufferA, &buflen))
+        if ((res = read_line(request, bufferA, &buflen)))
             goto lend;
+
+        if (!buflen) goto lend;
 
         rc += buflen;
         MultiByteToWideChar( CP_ACP, 0, bufferA, buflen, buffer, MAX_REPLY_LEN );
@@ -5792,7 +5802,6 @@ static INT HTTP_GetResponseHeaders(http_request_t *request)
             heap_free(request->rawHeaders);
             request->rawHeaders = heap_strdupW(szDefaultHeader);
 
-            bSuccess = TRUE;
             goto lend;
         }
     } while (codeHundred);
@@ -5830,7 +5839,7 @@ static INT HTTP_GetResponseHeaders(http_request_t *request)
     do
     {
 	buflen = MAX_REPLY_LEN;
-        if (read_line(request, bufferA, &buflen))
+        if (!read_line(request, bufferA, &buflen) && buflen)
         {
             LPWSTR * pFieldAndValue;
 
@@ -5883,18 +5892,14 @@ static INT HTTP_GetResponseHeaders(http_request_t *request)
     heap_free(request->rawHeaders);
     request->rawHeaders = lpszRawHeaders;
     TRACE("raw headers: %s\n", debugstr_w(lpszRawHeaders));
-    bSuccess = TRUE;
+    res = ERROR_SUCCESS;
 
 lend:
 
+    if (res) heap_free(lpszRawHeaders);
+    *len = rc;
     TRACE("<--\n");
-    if (bSuccess)
-        return rc;
-    else
-    {
-        heap_free(lpszRawHeaders);
-        return 0;
-    }
+    return res;
 }
 
 /***********************************************************************
