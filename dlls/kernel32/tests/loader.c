@@ -1119,11 +1119,16 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
 
         trace("dll: %p, DLL_PROCESS_DETACH, %p\n", hinst, param);
 
+        if (test_dll_phase == 0 || test_dll_phase == 3)
+            ok(param != NULL, "dll: param %p\n", param);
+        else
+            ok(!param, "dll: param %p\n", param);
+
         if (test_dll_phase == 0) expected_code = 195;
         else if (test_dll_phase == 3) expected_code = 196;
         else expected_code = STILL_ACTIVE;
 
-        if (test_dll_phase == 3 || test_dll_phase == 4)
+        if (test_dll_phase == 3)
         {
             ret = pRtlDllShutdownInProgress();
             ok(ret, "RtlDllShutdownInProgress returned %d\n", ret);
@@ -1184,8 +1189,7 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
         noop_thread_started = 0;
         SetLastError(0xdeadbeef);
         handle = CreateThread(NULL, 0, noop_thread_proc, &noop_thread_started, 0, &ret);
-        /* manual call to LdrShutdownProcess doesn't prevent thread creation */
-        if (param && test_dll_phase != 4)
+        if (param)
         {
             ok(!handle || broken(handle != 0) /* before win7 */, "CreateThread should fail\n");
             if (!handle)
@@ -1199,18 +1203,10 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
         }
         else
         {
-            /* FIXME: remove once Wine is fixed */
-            if (test_dll_phase == 4) todo_wine
-            {
-            ok(handle != 0, "CreateThread error %d\n", GetLastError());
-            }
-            else
-            {
             ok(handle != 0, "CreateThread error %d\n", GetLastError());
             ret = WaitForSingleObject(handle, 1000);
             ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %#x\n", ret);
             ok(!noop_thread_started || broken(noop_thread_started) /* XP64 */, "thread shouldn't start yet\n");
-            }
             CloseHandle(handle);
         }
 
@@ -1221,8 +1217,7 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
         noop_thread_started = 0;
         SetLastError(0xdeadbeef);
         handle = CreateRemoteThread(process, NULL, 0, noop_thread_proc, &noop_thread_started, 0, &ret);
-        /* manual call to LdrShutdownProcess doesn't prevent thread creation */
-        if (param && test_dll_phase != 4)
+        if (param)
         {
             ok(!handle || broken(handle != 0) /* before win7 */, "CreateRemoteThread should fail\n");
             if (!handle)
@@ -1236,18 +1231,10 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
         }
         else
         {
-            /* FIXME: remove once Wine is fixed */
-            if (test_dll_phase == 4) todo_wine
-            {
-            ok(handle != 0, "CreateRemoteThread error %d\n", GetLastError());
-            }
-            else
-            {
             ok(handle != 0, "CreateRemoteThread error %d\n", GetLastError());
             ret = WaitForSingleObject(handle, 1000);
             ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %#x\n", ret);
             ok(!noop_thread_started || broken(noop_thread_started) /* XP64 */, "thread shouldn't start yet\n");
-            }
             CloseHandle(handle);
         }
 
@@ -1277,8 +1264,7 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
         ret = FreeLibrary(handle);
         ok(ret, "FreeLibrary error %d\n", GetLastError());
         handle = GetModuleHandle("winver.exe");
-        /* manual call to LdrShutdownProcess doesn't prevent module unloading */
-        if (param && test_dll_phase != 4)
+        if (param)
             ok(handle != 0, "winver.exe should not be unloaded\n");
         else
         todo_wine
@@ -1450,6 +1436,9 @@ static void child_process(const char *dll_name, DWORD target_offset)
         ret = pRtlDllShutdownInProgress();
         ok(!ret, "RtlDllShutdownInProgress returned %d\n", ret);
 
+        hmod = GetModuleHandle(dll_name);
+        ok(hmod != 0, "DLL should not be unloaded\n");
+
         SetLastError(0xdeadbeef);
         thread = CreateThread(NULL, 0, noop_thread_proc, &dummy, 0, &ret);
 todo_wine
@@ -1463,6 +1452,14 @@ todo_wine
             CloseHandle(thread);
         }
 
+        trace("call LdrShutdownProcess()\n");
+        pLdrShutdownProcess();
+
+        ret = pRtlDllShutdownInProgress();
+        ok(ret, "RtlDllShutdownInProgress returned %d\n", ret);
+
+        hmod = GetModuleHandle(dll_name);
+        ok(hmod != 0, "DLL should not be unloaded\n");
         break;
 
     case 1:
@@ -1471,7 +1468,14 @@ todo_wine
         ok(!ret, "RtlDllShutdownInProgress returned %d\n", ret);
 
         trace("call FreeLibrary(%p)\n", hmod);
-        FreeLibrary(hmod);
+        SetLastError(0xdeadbeef);
+        ret = FreeLibrary(hmod);
+        ok(ret, "FreeLibrary error %d\n", GetLastError());
+        hmod = GetModuleHandle(dll_name);
+        ok(!hmod, "DLL should be unloaded\n");
+
+        if (test_dll_phase == 2)
+            ok(0, "FreeLibrary+ExitProcess should never return\n");
 
         ret = pRtlDllShutdownInProgress();
         ok(!ret, "RtlDllShutdownInProgress returned %d\n", ret);
@@ -1484,24 +1488,10 @@ todo_wine
         CloseHandle(stop_event);
         break;
 
-    case 4:
-        ret = pRtlDllShutdownInProgress();
-        ok(!ret, "RtlDllShutdownInProgress returned %d\n", ret);
-
-        trace("call LdrShutdownProcess()\n");
-        pLdrShutdownProcess();
-
-        ret = pRtlDllShutdownInProgress();
-        ok(ret, "RtlDllShutdownInProgress returned %d\n", ret);
-
-        break;
-
     default:
         assert(0);
         break;
     }
-
-    Sleep(100);
 
     if (test_dll_phase == 0) expected_code = 195;
     else if (test_dll_phase == 3) expected_code = 196;
@@ -1509,16 +1499,16 @@ todo_wine
 
     if (expected_code == STILL_ACTIVE)
     {
-        ret = WaitForSingleObject(attached_thread[0], 0);
+        ret = WaitForSingleObject(attached_thread[0], 100);
         ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %#x\n", ret);
-        ret = WaitForSingleObject(attached_thread[1], 0);
+        ret = WaitForSingleObject(attached_thread[1], 100);
         ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %#x\n", ret);
     }
     else
     {
-        ret = WaitForSingleObject(attached_thread[0], 50);
+        ret = WaitForSingleObject(attached_thread[0], 100);
         ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %#x\n", ret);
-        ret = WaitForSingleObject(attached_thread[1], 50);
+        ret = WaitForSingleObject(attached_thread[1], 100);
         ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %#x\n", ret);
     }
 
@@ -1695,24 +1685,6 @@ static void test_ExitProcess(void)
     ok(ret == WAIT_OBJECT_0, "child process failed to terminate\n");
     GetExitCodeProcess(pi.hProcess, &ret);
     ok(ret == 195, "expected exit code 195, got %u\n", ret);
-    if (*child_failures)
-    {
-        trace("%d failures in child process\n", *child_failures);
-        winetest_add_failures(*child_failures);
-    }
-    CloseHandle(pi.hThread);
-    CloseHandle(pi.hProcess);
-
-    /* phase 4 */
-    *child_failures = -1;
-    sprintf(cmdline, "\"%s\" loader %s %u 4", argv[0], dll_name, target_offset);
-    ret = CreateProcess(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
-    ok(ret, "CreateProcess(%s) error %d\n", cmdline, GetLastError());
-    ret = WaitForSingleObject(pi.hProcess, 30000);
-    ok(ret == WAIT_OBJECT_0, "child process failed to terminate\n");
-    GetExitCodeProcess(pi.hProcess, &ret);
-todo_wine
-    ok(ret == 0 || broken(ret == 195) /* before win7 */, "expected exit code 0, got %u\n", ret);
     if (*child_failures)
     {
         trace("%d failures in child process\n", *child_failures);
