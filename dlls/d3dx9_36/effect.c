@@ -462,7 +462,7 @@ static struct d3dx_technique *get_technique_by_name(struct ID3DXBaseEffectImpl *
     return NULL;
 }
 
-static struct d3dx_technique *is_valid_technique(struct ID3DXBaseEffectImpl *base, D3DXHANDLE technique)
+static struct d3dx_technique *get_valid_technique(struct ID3DXBaseEffectImpl *base, D3DXHANDLE technique)
 {
     struct d3dx_technique *tech = NULL;
     unsigned int i;
@@ -481,7 +481,7 @@ static struct d3dx_technique *is_valid_technique(struct ID3DXBaseEffectImpl *bas
     return tech;
 }
 
-static struct d3dx_pass *is_valid_pass(struct ID3DXBaseEffectImpl *base, D3DXHANDLE pass)
+static struct d3dx_pass *get_valid_pass(struct ID3DXBaseEffectImpl *base, D3DXHANDLE pass)
 {
     unsigned int i, k;
 
@@ -501,7 +501,7 @@ static struct d3dx_pass *is_valid_pass(struct ID3DXBaseEffectImpl *base, D3DXHAN
     return NULL;
 }
 
-static struct d3dx_parameter *is_valid_sub_parameter(struct d3dx_parameter *param, D3DXHANDLE parameter)
+static struct d3dx_parameter *get_valid_sub_parameter(struct d3dx_parameter *param, D3DXHANDLE parameter)
 {
     unsigned int i, count;
     struct d3dx_parameter *p;
@@ -513,7 +513,7 @@ static struct d3dx_parameter *is_valid_sub_parameter(struct d3dx_parameter *para
             return get_parameter_struct(parameter);
         }
 
-        p = is_valid_sub_parameter(get_parameter_struct(param->annotation_handles[i]), parameter);
+        p = get_valid_sub_parameter(get_parameter_struct(param->annotation_handles[i]), parameter);
         if (p) return p;
     }
 
@@ -527,14 +527,14 @@ static struct d3dx_parameter *is_valid_sub_parameter(struct d3dx_parameter *para
             return get_parameter_struct(parameter);
         }
 
-        p = is_valid_sub_parameter(get_parameter_struct(param->member_handles[i]), parameter);
+        p = get_valid_sub_parameter(get_parameter_struct(param->member_handles[i]), parameter);
         if (p) return p;
     }
 
     return NULL;
 }
 
-static struct d3dx_parameter *is_valid_parameter(struct ID3DXBaseEffectImpl *base, D3DXHANDLE parameter)
+static struct d3dx_parameter *get_valid_parameter(struct ID3DXBaseEffectImpl *base, D3DXHANDLE parameter)
 {
     unsigned int i, k, m;
     struct d3dx_parameter *p;
@@ -546,7 +546,7 @@ static struct d3dx_parameter *is_valid_parameter(struct ID3DXBaseEffectImpl *bas
             return get_parameter_struct(parameter);
         }
 
-        p = is_valid_sub_parameter(get_parameter_struct(base->parameter_handles[i]), parameter);
+        p = get_valid_sub_parameter(get_parameter_struct(base->parameter_handles[i]), parameter);
         if (p) return p;
     }
 
@@ -565,7 +565,7 @@ static struct d3dx_parameter *is_valid_parameter(struct ID3DXBaseEffectImpl *bas
                     return get_parameter_struct(parameter);
                 }
 
-                p = is_valid_sub_parameter(get_parameter_struct(pass->annotation_handles[m]), parameter);
+                p = get_valid_sub_parameter(get_parameter_struct(pass->annotation_handles[m]), parameter);
                 if (p) return p;
             }
         }
@@ -577,21 +577,12 @@ static struct d3dx_parameter *is_valid_parameter(struct ID3DXBaseEffectImpl *bas
                 return get_parameter_struct(parameter);
             }
 
-            p = is_valid_sub_parameter(get_parameter_struct(technique->annotation_handles[k]), parameter);
+            p = get_valid_sub_parameter(get_parameter_struct(technique->annotation_handles[k]), parameter);
             if (p) return p;
         }
     }
 
-    return NULL;
-}
-
-static inline struct d3dx_parameter *get_valid_parameter(struct ID3DXBaseEffectImpl *base, D3DXHANDLE parameter)
-{
-    struct d3dx_parameter *param = is_valid_parameter(base, parameter);
-
-    if (!param) param = get_parameter_by_name(base, NULL, parameter);
-
-    return param;
+    return get_parameter_by_name(base, NULL, parameter);
 }
 
 static void free_state(struct d3dx_state *state)
@@ -1150,7 +1141,7 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetParameterDesc(ID3DXBaseEffect *ifac
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetTechniqueDesc(ID3DXBaseEffect *iface, D3DXHANDLE technique, D3DXTECHNIQUE_DESC *desc)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
-    struct d3dx_technique *tech = technique ? is_valid_technique(This, technique) : get_technique_struct(This->technique_handles[0]);
+    struct d3dx_technique *tech = technique ? get_valid_technique(This, technique) : get_technique_struct(This->technique_handles[0]);
 
     TRACE("iface %p, technique %p, desc %p\n", This, technique, desc);
 
@@ -1170,7 +1161,7 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetTechniqueDesc(ID3DXBaseEffect *ifac
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetPassDesc(ID3DXBaseEffect *iface, D3DXHANDLE pass, D3DXPASS_DESC *desc)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
-    struct d3dx_pass *p = is_valid_pass(This, pass);
+    struct d3dx_pass *p = get_valid_pass(This, pass);
 
     TRACE("iface %p, pass %p, desc %p\n", This, pass, desc);
 
@@ -1378,7 +1369,7 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetTechniqueByName(ID3DXBaseEffect 
 static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetPass(ID3DXBaseEffect *iface, D3DXHANDLE technique, UINT index)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
-    struct d3dx_technique *tech = is_valid_technique(This, technique);
+    struct d3dx_technique *tech = get_valid_technique(This, technique);
 
     TRACE("iface %p, technique %p, index %u\n", This, technique, index);
 
@@ -1396,7 +1387,7 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetPass(ID3DXBaseEffect *iface, D3D
 static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetPassByName(ID3DXBaseEffect *iface, D3DXHANDLE technique, LPCSTR name)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
-    struct d3dx_technique *tech = is_valid_technique(This, technique);
+    struct d3dx_technique *tech = get_valid_technique(This, technique);
 
     TRACE("iface %p, technique %p, name %s\n", This, technique, debugstr_a(name));
 
@@ -1443,8 +1434,8 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetAnnotation(ID3DXBaseEffect *ifac
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
     struct d3dx_parameter *param = get_valid_parameter(This, object);
-    struct d3dx_pass *pass = is_valid_pass(This, object);
-    struct d3dx_technique *technique = is_valid_technique(This, object);
+    struct d3dx_pass *pass = get_valid_pass(This, object);
+    struct d3dx_technique *technique = get_valid_technique(This, object);
     UINT annotation_count = 0;
     D3DXHANDLE *annotation_handles = NULL;
 
@@ -1485,8 +1476,8 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetAnnotationByName(ID3DXBaseEffect
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
     struct d3dx_parameter *param = get_valid_parameter(This, object);
-    struct d3dx_pass *pass = is_valid_pass(This, object);
-    struct d3dx_technique *technique = is_valid_technique(This, object);
+    struct d3dx_pass *pass = get_valid_pass(This, object);
+    struct d3dx_technique *technique = get_valid_technique(This, object);
     struct d3dx_parameter *anno = NULL;
     UINT annotation_count = 0;
     D3DXHANDLE *annotation_handles = NULL;
@@ -3434,7 +3425,7 @@ static HRESULT WINAPI ID3DXEffectImpl_SetTechnique(ID3DXEffect *iface, D3DXHANDL
 {
     struct ID3DXEffectImpl *This = impl_from_ID3DXEffect(iface);
     struct ID3DXBaseEffectImpl *base = impl_from_ID3DXBaseEffect(This->base_effect);
-    struct d3dx_technique *tech = is_valid_technique(base, technique);
+    struct d3dx_technique *tech = get_valid_technique(base, technique);
 
     TRACE("iface %p, technique %p\n", This, technique);
 
