@@ -605,8 +605,8 @@ HRESULT WINAPI D3DCompile(const void *data, SIZE_T data_size, const char *filena
 {
     HRESULT hr;
 
-    FIXME("data %p, data_size %lu, filename %s, defines %p, include %p, entrypoint %s,\n"
-            "target %s, sflags %#x, eflags %#x, shader %p, error_messages %p stub!\n",
+    TRACE("data %p, data_size %lu, filename %s, defines %p, include %p, entrypoint %s,\n"
+            "target %s, sflags %#x, eflags %#x, shader %p, error_messages %p\n",
             data, data_size, debugstr_a(filename), defines, include, debugstr_a(entrypoint),
             debugstr_a(target), sflags, eflags, shader, error_messages);
 
