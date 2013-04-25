@@ -1599,6 +1599,7 @@ struct wined3d_d3d_info
 {
     struct wined3d_d3d_limits limits;
     BOOL vs_clipping;
+    DWORD valid_rt_mask;
 };
 
 /* The adapter structure */
@@ -1771,7 +1772,6 @@ struct wined3d_device
     struct list             shaders;   /* a linked list to track shaders (pixel and vertex)      */
 
     /* Render Target Support */
-    DWORD valid_rt_mask;
     struct wined3d_fb_state fb;
     struct wined3d_surface *onscreen_depth_stencil;
     struct wined3d_surface *auto_depth_stencil;

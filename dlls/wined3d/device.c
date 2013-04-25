@@ -1111,7 +1111,6 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
     struct wined3d_context *context;
     HRESULT hr;
     DWORD state;
-    unsigned int i;
 
     TRACE("device %p, swapchain_desc %p.\n", device, swapchain_desc);
 
@@ -1120,9 +1119,6 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
     if (device->wined3d->flags & WINED3D_NO3D)
         return WINED3DERR_INVALIDCALL;
 
-    device->valid_rt_mask = 0;
-    for (i = 0; i < gl_info->limits.buffers; ++i)
-        device->valid_rt_mask |= (1 << i);
     device->fb.render_targets = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
             sizeof(*device->fb.render_targets) * gl_info->limits.buffers);
 

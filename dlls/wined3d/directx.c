@@ -2632,6 +2632,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     enum wined3d_pci_device device;
     DWORD gl_version;
     HDC hdc;
+    unsigned int i;
 
     TRACE("adapter %p.\n", adapter);
 
@@ -2934,6 +2935,10 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
             gl_info->supported[ARB_TEXTURE_BORDER_CLAMP] ? GL_CLAMP_TO_BORDER_ARB : GL_REPEAT;
     gl_info->wrap_lookup[WINED3D_TADDRESS_MIRROR_ONCE - WINED3D_TADDRESS_WRAP] =
             gl_info->supported[ATI_TEXTURE_MIRROR_ONCE] ? GL_MIRROR_CLAMP_TO_EDGE_ATI : GL_REPEAT;
+
+    adapter->d3d_info.valid_rt_mask = 0;
+    for (i = 0; i < gl_info->limits.buffers; ++i)
+        adapter->d3d_info.valid_rt_mask |= (1 << i);
 
     fixup_extensions(gl_info, gl_renderer_str, gl_vendor, card_vendor, device);
     init_driver_info(driver_info, card_vendor, device);
