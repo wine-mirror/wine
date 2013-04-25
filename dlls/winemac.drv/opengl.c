@@ -240,6 +240,116 @@ static int nb_formats, nb_displayable_formats;
 static void *opengl_handle;
 
 
+static const char* debugstr_attrib(int attrib, int value)
+{
+    static const struct {
+        int attrib;
+        const char *name;
+    } attrib_names[] = {
+#define ATTRIB(a) { a, #a }
+        ATTRIB(WGL_ACCELERATION_ARB),
+        ATTRIB(WGL_ACCUM_ALPHA_BITS_ARB),
+        ATTRIB(WGL_ACCUM_BITS_ARB),
+        ATTRIB(WGL_ACCUM_BLUE_BITS_ARB),
+        ATTRIB(WGL_ACCUM_GREEN_BITS_ARB),
+        ATTRIB(WGL_ACCUM_RED_BITS_ARB),
+        ATTRIB(WGL_ALPHA_BITS_ARB),
+        ATTRIB(WGL_ALPHA_SHIFT_ARB),
+        ATTRIB(WGL_AUX_BUFFERS_ARB),
+        ATTRIB(WGL_BIND_TO_TEXTURE_RECTANGLE_RGB_NV),
+        ATTRIB(WGL_BIND_TO_TEXTURE_RECTANGLE_RGBA_NV),
+        ATTRIB(WGL_BIND_TO_TEXTURE_RGB_ARB),
+        ATTRIB(WGL_BIND_TO_TEXTURE_RGBA_ARB),
+        ATTRIB(WGL_BLUE_BITS_ARB),
+        ATTRIB(WGL_BLUE_SHIFT_ARB),
+        ATTRIB(WGL_COLOR_BITS_ARB),
+        ATTRIB(WGL_DEPTH_BITS_ARB),
+        ATTRIB(WGL_DOUBLE_BUFFER_ARB),
+        ATTRIB(WGL_DRAW_TO_BITMAP_ARB),
+        ATTRIB(WGL_DRAW_TO_PBUFFER_ARB),
+        ATTRIB(WGL_DRAW_TO_WINDOW_ARB),
+        ATTRIB(WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB),
+        ATTRIB(WGL_GREEN_BITS_ARB),
+        ATTRIB(WGL_GREEN_SHIFT_ARB),
+        ATTRIB(WGL_NEED_PALETTE_ARB),
+        ATTRIB(WGL_NEED_SYSTEM_PALETTE_ARB),
+        ATTRIB(WGL_NUMBER_OVERLAYS_ARB),
+        ATTRIB(WGL_NUMBER_PIXEL_FORMATS_ARB),
+        ATTRIB(WGL_NUMBER_UNDERLAYS_ARB),
+        ATTRIB(WGL_PIXEL_TYPE_ARB),
+        ATTRIB(WGL_RED_BITS_ARB),
+        ATTRIB(WGL_RED_SHIFT_ARB),
+        ATTRIB(WGL_SAMPLE_BUFFERS_ARB),
+        ATTRIB(WGL_SAMPLES_ARB),
+        ATTRIB(WGL_SHARE_ACCUM_ARB),
+        ATTRIB(WGL_SHARE_DEPTH_ARB),
+        ATTRIB(WGL_SHARE_STENCIL_ARB),
+        ATTRIB(WGL_STENCIL_BITS_ARB),
+        ATTRIB(WGL_STEREO_ARB),
+        ATTRIB(WGL_SUPPORT_GDI_ARB),
+        ATTRIB(WGL_SUPPORT_OPENGL_ARB),
+        ATTRIB(WGL_SWAP_LAYER_BUFFERS_ARB),
+        ATTRIB(WGL_SWAP_METHOD_ARB),
+        ATTRIB(WGL_TRANSPARENT_ALPHA_VALUE_ARB),
+        ATTRIB(WGL_TRANSPARENT_ARB),
+        ATTRIB(WGL_TRANSPARENT_BLUE_VALUE_ARB),
+        ATTRIB(WGL_TRANSPARENT_GREEN_VALUE_ARB),
+        ATTRIB(WGL_TRANSPARENT_INDEX_VALUE_ARB),
+        ATTRIB(WGL_TRANSPARENT_RED_VALUE_ARB),
+#undef ATTRIB
+    };
+    int i;
+    const char *attrib_name = NULL;
+    const char *value_name = NULL;
+
+    for (i = 0; i < sizeof(attrib_names) / sizeof(attrib_names[0]); i++)
+    {
+        if (attrib_names[i].attrib == attrib)
+        {
+            attrib_name = attrib_names[i].name;
+            break;
+        }
+    }
+
+    if (!attrib_name)
+        attrib_name = wine_dbg_sprintf("Attrib 0x%04x", attrib);
+
+    switch (attrib)
+    {
+        case WGL_ACCELERATION_ARB:
+            switch (value)
+            {
+                case WGL_FULL_ACCELERATION_ARB:     value_name = "WGL_FULL_ACCELERATION_ARB"; break;
+                case WGL_GENERIC_ACCELERATION_ARB:  value_name = "WGL_GENERIC_ACCELERATION_ARB"; break;
+                case WGL_NO_ACCELERATION_ARB:       value_name = "WGL_NO_ACCELERATION_ARB"; break;
+            }
+            break;
+        case WGL_PIXEL_TYPE_ARB:
+            switch (value)
+            {
+                case WGL_TYPE_COLORINDEX_ARB:           value_name = "WGL_TYPE_COLORINDEX_ARB"; break;
+                case WGL_TYPE_RGBA_ARB:                 value_name = "WGL_TYPE_RGBA_ARB"; break;
+                case WGL_TYPE_RGBA_FLOAT_ARB:           value_name = "WGL_TYPE_RGBA_FLOAT_ARB"; break;
+                case WGL_TYPE_RGBA_UNSIGNED_FLOAT_EXT:  value_name = "WGL_TYPE_RGBA_UNSIGNED_FLOAT_EXT"; break;
+            }
+            break;
+        case WGL_SWAP_METHOD_ARB:
+            switch (value)
+            {
+                case WGL_SWAP_COPY_ARB:         value_name = "WGL_SWAP_COPY_ARB"; break;
+                case WGL_SWAP_EXCHANGE_ARB:     value_name = "WGL_SWAP_EXCHANGE_ARB"; break;
+                case WGL_SWAP_UNDEFINED_ARB:    value_name = "WGL_SWAP_UNDEFINED_ARB"; break;
+            }
+            break;
+    }
+
+    if (!value_name)
+        value_name = wine_dbg_sprintf("%d / 0x%04x", value, value);
+
+    return wine_dbg_sprintf("%40s: %s", attrib_name, value_name);
+}
+
+
 static BOOL get_renderer_property(CGLRendererInfoObj renderer_info, GLint renderer_index,
                                   CGLRendererProperty property, GLint *value)
 {
@@ -1530,6 +1640,8 @@ static BOOL macdrv_wglChoosePixelFormatARB(HDC hdc, const int *piAttribIList,
         int attr = iptr[0];
         int value = iptr[1];
 
+        TRACE("%s\n", debugstr_attrib(attr, value));
+
         switch (attr)
         {
             case WGL_DRAW_TO_WINDOW_ARB:
@@ -1724,10 +1836,35 @@ static BOOL macdrv_wglChoosePixelFormatARB(HDC hdc, const int *piAttribIList,
                 break;
 
             default:
-                WARN("invalid attribute %x\n", iptr[0]);
+                WARN("invalid attribute %s\n", debugstr_attrib(attr, value));
                 return GL_FALSE;
         }
     }
+
+    TRACE("required: w/p/a %s/%s/%s col/r/g/b/a %d%s/%d/%d/%d/%d srgb %d ac %d/%d/%d/%d/%d dp/stn/ax/b/db/str %u/%u/%u/%s/%s/%s samp %u/%u\n",
+          valid.window ? (pf.window ? "1" : "0") : "?",
+          valid.pbuffer ? (pf.pbuffer ? "1" : "0") : "?",
+          valid.accelerated ? (pf.accelerated ? "1" : "0") : "?",
+          color_bits,
+          float_color == -1 ? "?" : float_color ? "f" : "",
+          red_bits,
+          green_bits,
+          blue_bits,
+          alpha_bits,
+          (int)srgb,
+          accum_bits,
+          accum_red_bits,
+          accum_green_bits,
+          accum_blue_bits,
+          accum_alpha_bits,
+          pf.depth_bits,
+          pf.stencil_bits,
+          pf.aux_buffers,
+          valid.backing_store ? (pf.backing_store ? "1" : "0") : "?",
+          valid.double_buffer ? (pf.double_buffer ? "1" : "0") : "?",
+          valid.stereo ? (pf.stereo ? "1" : "0") : "?",
+          pf.sample_buffers,
+          pf.samples);
 
     for (i = 0; i < nb_formats && found < nMaxFormats; i++)
     {
@@ -1781,6 +1918,7 @@ static BOOL macdrv_wglChoosePixelFormatARB(HDC hdc, const int *piAttribIList,
             continue;
 
         piFormats[found++] = i;
+        TRACE("match: pixel format %d %s\n", i, debugstr_pf(&pixel_formats[i]));
     }
 
 cant_match:
@@ -2021,6 +2159,7 @@ static BOOL macdrv_wglGetPixelFormatAttribivARB(HDC hdc, int iPixelFormat, int i
     if (nAttributes == 1 && piAttributes[0] == WGL_NUMBER_PIXEL_FORMATS_ARB)
     {
         piValues[0] = nb_formats;
+        TRACE("%s\n", debugstr_attrib(piAttributes[0], piValues[0]));
         return GL_TRUE;
     }
 
@@ -2285,7 +2424,7 @@ static BOOL macdrv_wglGetPixelFormatAttribivARB(HDC hdc, int iPixelFormat, int i
                 return GL_FALSE;
         }
 
-        TRACE("piAttributes[%d] (%x) -> %x\n", i, piAttributes[i], piValues[i]);
+        TRACE("%s\n", debugstr_attrib(piAttributes[i], piValues[i]));
     }
 
     return GL_TRUE;
