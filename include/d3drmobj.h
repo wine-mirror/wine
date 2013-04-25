@@ -2863,7 +2863,7 @@ DECLARE_INTERFACE_(IDirect3DRMMeshBuilder3,IDirect3DRMVisual)
     STDMETHOD(AddMesh)(THIS_ IDirect3DRMMesh *mesh) PURE;
     STDMETHOD(AddMeshBuilder)(THIS_ IDirect3DRMMeshBuilder3 *mesh_builder, DWORD flags) PURE;
     STDMETHOD(AddFrame)(THIS_ IDirect3DRMFrame3 *frame) PURE;
-    STDMETHOD(AddFace)(THIS_ LPDIRECT3DRMFACE2) PURE;
+    STDMETHOD(AddFace)(THIS_ IDirect3DRMFace2 *face) PURE;
     STDMETHOD(AddFaces)(THIS_ DWORD vcount, D3DVECTOR *vertices, DWORD ncount, D3DVECTOR *normals, DWORD *data,
         LPDIRECT3DRMFACEARRAY*) PURE;
     STDMETHOD(ReserveSpace)(THIS_ DWORD vertex_Count, DWORD normal_count, DWORD face_count) PURE;
@@ -2885,19 +2885,19 @@ DECLARE_INTERFACE_(IDirect3DRMMeshBuilder3,IDirect3DRMVisual)
     STDMETHOD(GetTextureCoordinates)(THIS_ DWORD index, D3DVALUE *u, D3DVALUE *v) PURE;
     STDMETHOD_(int, AddVertex)(THIS_ D3DVALUE x, D3DVALUE y, D3DVALUE z) PURE;
     STDMETHOD_(int, AddNormal)(THIS_ D3DVALUE x, D3DVALUE y, D3DVALUE z) PURE;
-    STDMETHOD(CreateFace)(THIS_ LPDIRECT3DRMFACE2*) PURE;
+    STDMETHOD(CreateFace)(THIS_ IDirect3DRMFace2 **face) PURE;
     STDMETHOD_(D3DRMRENDERQUALITY, GetQuality)(THIS) PURE;
     STDMETHOD_(BOOL, GetPerspective)(THIS) PURE;
     STDMETHOD_(int, GetFaceCount)(THIS) PURE;
     STDMETHOD_(int, GetVertexCount)(THIS) PURE;
     STDMETHOD_(D3DCOLOR, GetVertexColor)(THIS_ DWORD index) PURE;
     STDMETHOD(CreateMesh)(THIS_ IDirect3DRMMesh **mesh) PURE;
-    STDMETHOD(GetFace)(THIS_ DWORD index, LPDIRECT3DRMFACE2 *) PURE;
+    STDMETHOD(GetFace)(THIS_ DWORD index, IDirect3DRMFace2 **face) PURE;
     STDMETHOD(GetVertex)(THIS_ DWORD index, D3DVECTOR *vector) PURE;
     STDMETHOD(GetNormal)(THIS_ DWORD index, D3DVECTOR *vector) PURE;
     STDMETHOD(DeleteVertices)(THIS_ DWORD IndexFirst, DWORD count) PURE;
     STDMETHOD(DeleteNormals)(THIS_ DWORD IndexFirst, DWORD count) PURE;
-    STDMETHOD(DeleteFace)(THIS_ LPDIRECT3DRMFACE2) PURE;
+    STDMETHOD(DeleteFace)(THIS_ IDirect3DRMFace2 *face) PURE;
     STDMETHOD(Empty)(THIS_ DWORD flags) PURE;
     STDMETHOD(Optimize)(THIS_ DWORD flags) PURE;
     STDMETHOD(AddFacesIndexed)(THIS_ DWORD flags, DWORD *pvIndices, DWORD *pIndexFirst, DWORD *pCount) PURE;

@@ -932,11 +932,9 @@ static HRESULT WINAPI IDirect3DRM3Impl_CreateMeshBuilder(IDirect3DRM3 *iface, ID
     return Direct3DRMMeshBuilder_create(&IID_IDirect3DRMMeshBuilder3, (IUnknown **)mesh_builder);
 }
 
-static HRESULT WINAPI IDirect3DRM3Impl_CreateFace(IDirect3DRM3* iface, LPDIRECT3DRMFACE2* Face)
+static HRESULT WINAPI IDirect3DRM3Impl_CreateFace(IDirect3DRM3 *iface, IDirect3DRMFace2 **face)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM3(iface);
-
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, Face);
+    FIXME("iface %p, face %p stub!\n", iface, face);
 
     return E_NOTIMPL;
 }
