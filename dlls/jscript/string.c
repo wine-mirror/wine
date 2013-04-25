@@ -377,51 +377,80 @@ static HRESULT String_charCodeAt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
 static HRESULT String_concat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    unsigned len = 0, i, str_cnt;
-    jsstr_t **strs, *ret = NULL;
-    WCHAR *ptr;
+    jsstr_t *ret, *str;
     HRESULT hres;
 
     TRACE("\n");
 
-    str_cnt = argc+1;
-    strs = heap_alloc_zero(str_cnt * sizeof(*strs));
-    if(!strs)
-        return E_OUTOFMEMORY;
+    hres = get_string_val(ctx, jsthis, &str);
+    if(FAILED(hres))
+        return hres;
 
-    hres = to_string(ctx, jsval_disp(jsthis->u.disp), strs);
-    if(SUCCEEDED(hres)) {
+    switch(argc) {
+    case 0:
+        ret = str;
+        break;
+    case 1: {
+        jsstr_t *arg_str;
+
+        hres = to_string(ctx, argv[0], &arg_str);
+        if(FAILED(hres)) {
+            jsstr_release(str);
+            return hres;
+        }
+
+        ret = jsstr_concat(str, arg_str);
+        jsstr_release(str);
+        if(!ret)
+            return E_OUTOFMEMORY;
+        break;
+    }
+    default: {
+        const unsigned str_cnt = argc+1;
+        unsigned len = 0, i;
+        jsstr_t **strs;
+        WCHAR *ptr;
+
+        strs = heap_alloc_zero(str_cnt * sizeof(*strs));
+        if(!strs) {
+            jsstr_release(str);
+            return E_OUTOFMEMORY;
+        }
+
+        strs[0] = str;
         for(i=0; i < argc; i++) {
             hres = to_string(ctx, argv[i], strs+i+1);
             if(FAILED(hres))
                 break;
         }
-    }
 
-    if(SUCCEEDED(hres)) {
-        for(i=0; i < str_cnt; i++) {
-            len += jsstr_length(strs[i]);
-            if(len > JSSTR_MAX_LENGTH) {
-                hres = E_OUTOFMEMORY;
-                break;
+        if(SUCCEEDED(hres)) {
+            for(i=0; i < str_cnt; i++) {
+                len += jsstr_length(strs[i]);
+                if(len > JSSTR_MAX_LENGTH) {
+                    hres = E_OUTOFMEMORY;
+                    break;
+                }
+            }
+
+            if(SUCCEEDED(hres)) {
+                ptr = jsstr_alloc_buf(len, &ret);
+                if(ptr) {
+                    for(i=0; i < str_cnt; i++)
+                        ptr += jsstr_flush(strs[i], ptr);
+                }else {
+                    hres = E_OUTOFMEMORY;
+                }
             }
         }
 
-        ptr = jsstr_alloc_buf(len, &ret);
-        if(ptr) {
-            for(i=0; i < str_cnt; i++)
-                ptr += jsstr_flush(strs[i], ptr);
-        }else {
-            hres = E_OUTOFMEMORY;
-        }
+        while(i--)
+            jsstr_release(strs[i]);
+        heap_free(strs);
+        if(FAILED(hres))
+            return hres;
     }
-
-    for(i=0; i < str_cnt; i++)
-        jsstr_release(strs[i]);
-    heap_free(strs);
-
-    if(FAILED(hres))
-        return hres;
+    }
 
     if(r)
         *r = jsval_string(ret);
