@@ -161,11 +161,9 @@ static HRESULT WINAPI IDirect3DRMImpl_CreateMeshBuilder(IDirect3DRM *iface, IDir
     return Direct3DRMMeshBuilder_create(&IID_IDirect3DRMMeshBuilder, (IUnknown **)mesh_builder);
 }
 
-static HRESULT WINAPI IDirect3DRMImpl_CreateFace(IDirect3DRM* iface, LPDIRECT3DRMFACE * ppFace)
+static HRESULT WINAPI IDirect3DRMImpl_CreateFace(IDirect3DRM* iface, IDirect3DRMFace **face)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM(iface);
-
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, ppFace);
+    FIXME("iface %p, face %p stub!\n", iface, face);
 
     return E_NOTIMPL;
 }
@@ -540,11 +538,9 @@ static HRESULT WINAPI IDirect3DRM2Impl_CreateMeshBuilder(IDirect3DRM2 *iface, ID
     return Direct3DRMMeshBuilder_create(&IID_IDirect3DRMMeshBuilder2, (IUnknown **)mesh_builder);
 }
 
-static HRESULT WINAPI IDirect3DRM2Impl_CreateFace(IDirect3DRM2* iface, LPDIRECT3DRMFACE * ppFace)
+static HRESULT WINAPI IDirect3DRM2Impl_CreateFace(IDirect3DRM2 *iface, IDirect3DRMFace **face)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM2(iface);
-
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, ppFace);
+    FIXME("iface %p, face %p stub!\n", iface, face);
 
     return E_NOTIMPL;
 }

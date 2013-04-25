@@ -2512,7 +2512,7 @@ DECLARE_INTERFACE_(IDirect3DRMMeshBuilder,IDirect3DRMVisual)
     STDMETHOD(AddMesh)(THIS_ IDirect3DRMMesh *mesh) PURE;
     STDMETHOD(AddMeshBuilder)(THIS_ IDirect3DRMMeshBuilder *mesh_builder) PURE;
     STDMETHOD(AddFrame)(THIS_ IDirect3DRMFrame *frame) PURE;
-    STDMETHOD(AddFace)(THIS_ LPDIRECT3DRMFACE) PURE;
+    STDMETHOD(AddFace)(THIS_ IDirect3DRMFace *face) PURE;
     STDMETHOD(AddFaces)(THIS_ DWORD vcount, D3DVECTOR *vertices, DWORD ncount, D3DVECTOR *normals, DWORD *data,
         LPDIRECT3DRMFACEARRAY*) PURE;
     STDMETHOD(ReserveSpace)(THIS_ DWORD vertex_Count, DWORD normal_count, DWORD face_count) PURE;
@@ -2534,7 +2534,7 @@ DECLARE_INTERFACE_(IDirect3DRMMeshBuilder,IDirect3DRMVisual)
     STDMETHOD(GetTextureCoordinates)(THIS_ DWORD index, D3DVALUE *u, D3DVALUE *v) PURE;
     STDMETHOD_(int, AddVertex)(THIS_ D3DVALUE x, D3DVALUE y, D3DVALUE z) PURE;
     STDMETHOD_(int, AddNormal)(THIS_ D3DVALUE x, D3DVALUE y, D3DVALUE z) PURE;
-    STDMETHOD(CreateFace)(THIS_ LPDIRECT3DRMFACE*) PURE;
+    STDMETHOD(CreateFace)(THIS_ IDirect3DRMFace **face) PURE;
     STDMETHOD_(D3DRMRENDERQUALITY, GetQuality)(THIS) PURE;
     STDMETHOD_(BOOL, GetPerspective)(THIS) PURE;
     STDMETHOD_(int, GetFaceCount)(THIS) PURE;
@@ -2683,7 +2683,7 @@ DECLARE_INTERFACE_(IDirect3DRMMeshBuilder2,IDirect3DRMMeshBuilder)
     STDMETHOD(AddMesh)(THIS_ IDirect3DRMMesh *mesh) PURE;
     STDMETHOD(AddMeshBuilder)(THIS_ IDirect3DRMMeshBuilder *mesh_builder) PURE;
     STDMETHOD(AddFrame)(THIS_ IDirect3DRMFrame *frame) PURE;
-    STDMETHOD(AddFace)(THIS_ LPDIRECT3DRMFACE) PURE;
+    STDMETHOD(AddFace)(THIS_ IDirect3DRMFace *face) PURE;
     STDMETHOD(AddFaces)(THIS_ DWORD vcount, D3DVECTOR *vertices, DWORD ncount, D3DVECTOR *normals, DWORD *data,
         LPDIRECT3DRMFACEARRAY*) PURE;
     STDMETHOD(ReserveSpace)(THIS_ DWORD vertex_Count, DWORD normal_count, DWORD face_count) PURE;
@@ -2705,7 +2705,7 @@ DECLARE_INTERFACE_(IDirect3DRMMeshBuilder2,IDirect3DRMMeshBuilder)
     STDMETHOD(GetTextureCoordinates)(THIS_ DWORD index, D3DVALUE *u, D3DVALUE *v) PURE;
     STDMETHOD_(int, AddVertex)(THIS_ D3DVALUE x, D3DVALUE y, D3DVALUE z) PURE;
     STDMETHOD_(int, AddNormal)(THIS_ D3DVALUE x, D3DVALUE y, D3DVALUE z) PURE;
-    STDMETHOD(CreateFace)(THIS_ LPDIRECT3DRMFACE*) PURE;
+    STDMETHOD(CreateFace)(THIS_ IDirect3DRMFace **face) PURE;
     STDMETHOD_(D3DRMRENDERQUALITY, GetQuality)(THIS) PURE;
     STDMETHOD_(BOOL, GetPerspective)(THIS) PURE;
     STDMETHOD_(int, GetFaceCount)(THIS) PURE;
@@ -2714,7 +2714,7 @@ DECLARE_INTERFACE_(IDirect3DRMMeshBuilder2,IDirect3DRMMeshBuilder)
     STDMETHOD(CreateMesh)(THIS_ IDirect3DRMMesh **mesh) PURE;
     /*** IDirect3DRMMeshBuilder2 methods ***/
     STDMETHOD(GenerateNormals2)(THIS_ D3DVALUE crease, DWORD flags) PURE;
-    STDMETHOD(GetFace)(THIS_ DWORD index, LPDIRECT3DRMFACE*) PURE;
+    STDMETHOD(GetFace)(THIS_ DWORD index, IDirect3DRMFace **face) PURE;
 };
 #undef INTERFACE
 
@@ -4481,7 +4481,7 @@ DECLARE_INTERFACE_(IDirect3DRMFaceArray, IDirect3DRMArray)
     /*** IDirect3DRMArray methods ***/
     STDMETHOD_(DWORD, GetSize)(THIS) PURE;
     /*** IDirect3DRMFaceArray methods ***/
-    STDMETHOD(GetElement)(THIS_ DWORD index, LPDIRECT3DRMFACE *) PURE;
+    STDMETHOD(GetElement)(THIS_ DWORD index, IDirect3DRMFace **element) PURE;
 };
 #undef INTERFACE
 

@@ -605,12 +605,9 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_AddFrame(IDirect3DRMMeshBuilde
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_AddFace(IDirect3DRMMeshBuilder2* iface,
-                                                          LPDIRECT3DRMFACE pFace)
+static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_AddFace(IDirect3DRMMeshBuilder2 *iface, IDirect3DRMFace *face)
 {
-    IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder2(iface);
-
-    FIXME("(%p)->(%p): stub\n", This, pFace);
+    FIXME("iface %p, face %p stub!\n", iface, face);
 
     return E_NOTIMPL;
 }
@@ -849,12 +846,9 @@ static int WINAPI IDirect3DRMMeshBuilder2Impl_AddNormal(IDirect3DRMMeshBuilder2*
     return 0;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_CreateFace(IDirect3DRMMeshBuilder2* iface,
-                                                             LPDIRECT3DRMFACE* ppFace)
+static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_CreateFace(IDirect3DRMMeshBuilder2 *iface, IDirect3DRMFace **face)
 {
-    IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder2(iface);
-
-    FIXME("(%p)->(%p): stub\n", This, ppFace);
+    FIXME("iface %p, face %p stub!\n", iface, face);
 
     return E_NOTIMPL;
 }
@@ -924,12 +918,10 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_GenerateNormals2(IDirect3DRMMe
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_GetFace(IDirect3DRMMeshBuilder2* iface,
-                                                          DWORD index, LPDIRECT3DRMFACE* ppFace)
+static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_GetFace(IDirect3DRMMeshBuilder2 *iface,
+        DWORD index, IDirect3DRMFace **face)
 {
-    IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder2(iface);
-
-    FIXME("(%p)->(%u,%p): stub\n", This, index, ppFace);
+    FIXME("iface %p, index %u, face %p stub!\n", iface, index, face);
 
     return E_NOTIMPL;
 }
