@@ -280,6 +280,29 @@ static NSString* const WineEventQueueThreadDictionaryKey = @"WineEventQueueThrea
         return [self query:query timeout:timeout processEvents:FALSE];
     }
 
+    - (void) resetMouseEventPositions:(CGPoint)pos
+    {
+        MacDrvEvent* event;
+
+        [eventsLock lock];
+
+        for (event in events)
+        {
+            if (event->event->type == MOUSE_BUTTON)
+            {
+                event->event->mouse_button.x = pos.x;
+                event->event->mouse_button.y = pos.y;
+            }
+            else if (event->event->type == MOUSE_SCROLL)
+            {
+                event->event->mouse_scroll.x = pos.x;
+                event->event->mouse_scroll.y = pos.y;
+            }
+        }
+
+        [eventsLock unlock];
+    }
+
 
 /***********************************************************************
  *              OnMainThread

@@ -42,6 +42,8 @@
     - (BOOL) query:(macdrv_query*)query timeout:(NSTimeInterval)timeout processEvents:(BOOL)processEvents;
     - (BOOL) query:(macdrv_query*)query timeout:(NSTimeInterval)timeout;
 
+    - (void) resetMouseEventPositions:(CGPoint)pos;
+
 @end
 
 void OnMainThread(dispatch_block_t block);

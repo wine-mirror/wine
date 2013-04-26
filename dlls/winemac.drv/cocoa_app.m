@@ -1032,8 +1032,8 @@ int macdrv_err_on;
         {
             [self clipCursorLocation:&pos];
 
+            ret = [self warpCursorTo:&pos from:NULL];
             synthesizedLocation = pos;
-            ret = [self warpCursorTo:&synthesizedLocation from:NULL];
             if (ret)
             {
                 // We want to discard mouse-move events that have already been
@@ -1076,6 +1076,7 @@ int macdrv_err_on;
                 [queue discardEventsMatchingMask:event_mask_for_type(MOUSE_MOVED) |
                                                  event_mask_for_type(MOUSE_MOVED_ABSOLUTE)
                                        forWindow:nil];
+                [queue resetMouseEventPositions:pos];
             }
             [eventQueuesLock unlock];
         }
