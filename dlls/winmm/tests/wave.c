@@ -1469,8 +1469,9 @@ static void wave_out_tests(void)
        "waveOutOpen(%s): MMSYSERR_BADDEVICEID expected, got %s\n",
        dev_name(ndev+1),mmsys_error(rc));
 
-    for (d=0;d<ndev;d++)
-        wave_out_test_device(d);
+    if(winetest_interactive)
+        for (d=0;d<ndev;d++)
+            wave_out_test_device(d);
 
     if (ndev>0)
         wave_out_test_device(WAVE_MAPPER);
