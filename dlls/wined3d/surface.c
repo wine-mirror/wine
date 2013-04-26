@@ -1100,8 +1100,6 @@ static void surface_depth_blt_fbo(const struct wined3d_device *device,
     gl_info = context->gl_info;
 
     context_apply_fbo_state_blit(context, GL_READ_FRAMEBUFFER, NULL, src_surface, src_location);
-    gl_info->gl_ops.gl.p_glReadBuffer(GL_NONE);
-    checkGLcall("glReadBuffer()");
     context_check_fbo_status(context, GL_READ_FRAMEBUFFER);
 
     context_apply_fbo_state_blit(context, GL_DRAW_FRAMEBUFFER, NULL, dst_surface, dst_location);
@@ -5742,7 +5740,6 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
         context_apply_fbo_state_blit(context, GL_FRAMEBUFFER,
                 NULL, surface, SFLAG_INTEXTURE);
         context_set_draw_buffer(context, GL_NONE);
-        gl_info->gl_ops.gl.p_glReadBuffer(GL_NONE);
 
         /* Do the actual blit */
         surface_depth_blt(surface, context, device->depth_blt_texture, 0, 0, w, h, bind_target);

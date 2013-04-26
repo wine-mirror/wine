@@ -2226,8 +2226,6 @@ BOOL context_apply_clear_state(struct wined3d_context *context, const struct win
                 }
                 context_apply_fbo_state(context, GL_FRAMEBUFFER, context->blit_targets, fb->depth_stencil,
                         rt_count ? rts[0]->draw_binding : SFLAG_INTEXTURE);
-                gl_info->gl_ops.gl.p_glReadBuffer(GL_NONE);
-                checkGLcall("glReadBuffer");
             }
             else
             {
@@ -2320,7 +2318,6 @@ static DWORD find_draw_buffers_mask(const struct wined3d_context *context, const
 void context_state_fb(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_device *device = context->swapchain->device;
-    const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_fb_state *fb = state->fb;
     DWORD rt_mask = find_draw_buffers_mask(context, device);
     DWORD *cur_mask;
@@ -2335,8 +2332,6 @@ void context_state_fb(struct wined3d_context *context, const struct wined3d_stat
         {
             context_apply_fbo_state(context, GL_FRAMEBUFFER, fb->render_targets, fb->depth_stencil,
                     fb->render_targets[0]->draw_binding);
-            gl_info->gl_ops.gl.p_glReadBuffer(GL_NONE);
-            checkGLcall("glReadBuffer");
         }
     }
 
