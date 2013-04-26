@@ -6966,12 +6966,37 @@ static void test_cond_comment(IHTMLDocument2 *doc)
     IHTMLElementCollection_Release(col);
 }
 
+static HRESULT WINAPI Unknown_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
+{
+    ok(IsEqualGUID(riid, &IID_IServiceProvider), "riid = %s\n", dbgstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI Unknown_AddRef(IUnknown *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI Unknown_Release(IUnknown *iface)
+{
+    return 1;
+}
+
+static const IUnknownVtbl UnknownVtbl = {
+    Unknown_QueryInterface,
+    Unknown_AddRef,
+    Unknown_Release,
+};
+static IUnknown obj_ident_test = { &UnknownVtbl };
+
 static void test_frame(IDispatch *disp, const char *exp_id)
 {
     IHTMLWindow2 *frame2, *parent, *top;
     IHTMLDocument2 *parent_doc, *top_doc;
     IHTMLWindow4 *frame;
     IHTMLFrameBase *frame_elem;
+    IObjectIdentity *obj_ident;
+    ITravelLogClient *tlc;
     HRESULT hres;
 
     hres = IDispatch_QueryInterface(disp, &IID_IHTMLWindow4, (void**)&frame);
@@ -7001,6 +7026,29 @@ static void test_frame(IDispatch *disp, const char *exp_id)
         IHTMLWindow2_Release(frame2);
         return;
     }
+
+    hres = IHTMLWindow2_QueryInterface(frame2, &IID_IObjectIdentity, (void**)&obj_ident);
+    ok(hres == S_OK, "Could not get IObjectIdentity interface: %08x\n", hres);
+    hres = IHTMLWindow2_QueryInterface(frame2, &IID_ITravelLogClient, (void**)&tlc);
+    if(hres == E_NOINTERFACE) {
+        win_skip("IID_ITravelLogClient not available\n");
+        tlc = NULL;
+    }else {
+        ok(hres == S_OK, "Could not get ITravelLogClient interface: %08x\n", hres);
+
+        hres = IObjectIdentity_IsEqualObject(obj_ident, (IUnknown*)tlc);
+        ok(hres == S_OK, "IsEqualObject returned: 0x%08x\n", hres);
+        ITravelLogClient_Release(tlc);
+    }
+
+    hres = IObjectIdentity_IsEqualObject(obj_ident, (IUnknown*)obj_ident);
+    ok(hres == S_OK, "IsEqualObject returned: 0x%08x\n", hres);
+    hres = IObjectIdentity_IsEqualObject(obj_ident, (IUnknown*)parent);
+    ok(hres == S_FALSE, "IsEqualObject returned: 0x%08x\n", hres);
+    hres = IObjectIdentity_IsEqualObject(obj_ident, &obj_ident_test);
+    ok(hres == E_NOINTERFACE, "IsEqualObject returned: 0x%08x\n", hres);
+
+    IObjectIdentity_Release(obj_ident);
 
     hres = IHTMLWindow2_get_document(parent, &parent_doc);
     ok(hres == S_OK, "IHTMLWindow2_get_document failed: 0x%08x\n", hres);

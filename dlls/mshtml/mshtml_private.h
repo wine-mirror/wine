@@ -365,6 +365,7 @@ struct HTMLWindow {
     IDispatchEx        IDispatchEx_iface;
     IServiceProvider   IServiceProvider_iface;
     ITravelLogClient   ITravelLogClient_iface;
+    IObjectIdentity    IObjectIdentity_iface;
 
     LONG ref;
 

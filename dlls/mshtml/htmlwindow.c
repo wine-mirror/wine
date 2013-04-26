@@ -174,6 +174,9 @@ static HRESULT WINAPI HTMLWindow2_QueryInterface(IHTMLWindow2 *iface, REFIID rii
     }else if(IsEqualGUID(&IID_ITravelLogClient, riid)) {
         TRACE("(%p)->(IID_ITravelLogClient %p)\n", This, ppv);
         *ppv = &This->ITravelLogClient_iface;
+    }else if(IsEqualGUID(&IID_IObjectIdentity, riid)) {
+        TRACE("(%p)->(IID_IObjectIdentity %p)\n", This, ppv);
+        *ppv = &This->IObjectIdentity_iface;
     }else if(dispex_query_interface(&This->inner_window->dispex, riid, ppv)) {
         assert(!*ppv);
         return E_NOINTERFACE;
@@ -2295,6 +2298,57 @@ static const ITravelLogClientVtbl TravelLogClientVtbl = {
     TravelLogClient_LoadHistoryPosition
 };
 
+static inline HTMLWindow *impl_from_IObjectIdentity(IObjectIdentity *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLWindow, IObjectIdentity_iface);
+}
+
+static HRESULT WINAPI ObjectIdentity_QueryInterface(IObjectIdentity *iface, REFIID riid, void **ppv)
+{
+    HTMLWindow *This = impl_from_IObjectIdentity(iface);
+
+    return IHTMLWindow2_QueryInterface(&This->IHTMLWindow2_iface, riid, ppv);
+}
+
+static ULONG WINAPI ObjectIdentity_AddRef(IObjectIdentity *iface)
+{
+    HTMLWindow *This = impl_from_IObjectIdentity(iface);
+
+    return IHTMLWindow2_AddRef(&This->IHTMLWindow2_iface);
+}
+
+static ULONG WINAPI ObjectIdentity_Release(IObjectIdentity *iface)
+{
+    HTMLWindow *This = impl_from_IObjectIdentity(iface);
+
+    return IHTMLWindow2_Release(&This->IHTMLWindow2_iface);
+}
+
+static HRESULT WINAPI ObjectIdentity_IsEqualObject(IObjectIdentity *iface, IUnknown *unk)
+{
+    HTMLWindow *This = impl_from_IObjectIdentity(iface);
+    IServiceProvider *sp;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, unk);
+
+    hres = IUnknown_QueryInterface(unk, &IID_IServiceProvider, (void**)&sp);
+    if(hres != S_OK)
+        return hres;
+
+    hres = &This->inner_window->base.IServiceProvider_iface==sp ||
+        &This->outer_window->base.IServiceProvider_iface==sp ? S_OK : S_FALSE;
+    IServiceProvider_Release(sp);
+    return hres;
+}
+
+static const IObjectIdentityVtbl ObjectIdentityVtbl = {
+    ObjectIdentity_QueryInterface,
+    ObjectIdentity_AddRef,
+    ObjectIdentity_Release,
+    ObjectIdentity_IsEqualObject
+};
+
 static inline HTMLWindow *impl_from_IDispatchEx(IDispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, HTMLWindow, IDispatchEx_iface);
@@ -2793,6 +2847,7 @@ static void *alloc_window(size_t size)
     window->IDispatchEx_iface.lpVtbl = &WindowDispExVtbl;
     window->IServiceProvider_iface.lpVtbl = &ServiceProviderVtbl;
     window->ITravelLogClient_iface.lpVtbl = &TravelLogClientVtbl;
+    window->IObjectIdentity_iface.lpVtbl = &ObjectIdentityVtbl;
     window->ref = 1;
 
     return window;
