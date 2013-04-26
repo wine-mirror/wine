@@ -424,10 +424,17 @@ static void context_apply_fbo_entry(struct wined3d_context *context, GLenum targ
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     unsigned int i;
+    GLuint read_binding, draw_binding;
 
-    context_bind_fbo(context, target, &entry->id);
+    if (entry->attached)
+    {
+        context_bind_fbo(context, target, &entry->id);
+        return;
+    }
 
-    if (entry->attached) return;
+    read_binding = context->fbo_read_binding;
+    draw_binding = context->fbo_draw_binding;
+    context_bind_fbo(context, GL_FRAMEBUFFER, &entry->id);
 
     /* Apply render targets */
     for (i = 0; i < gl_info->limits.buffers; ++i)
@@ -439,6 +446,18 @@ static void context_apply_fbo_entry(struct wined3d_context *context, GLenum targ
     if (entry->depth_stencil)
         surface_set_compatible_renderbuffer(entry->depth_stencil, entry->render_targets[0]);
     context_attach_depth_stencil_fbo(context, target, entry->depth_stencil, entry->location);
+
+    /* Set valid read and draw buffer bindings to satisfy pedantic pre-ES2_compatibility
+     * GL contexts requirements. */
+    glReadBuffer(GL_NONE);
+    context_set_draw_buffer(context, GL_NONE);
+    if (target != GL_FRAMEBUFFER)
+    {
+        if (target == GL_READ_FRAMEBUFFER)
+            context_bind_fbo(context, GL_DRAW_FRAMEBUFFER, draw_binding ? &draw_binding : NULL);
+        else
+            context_bind_fbo(context, GL_READ_FRAMEBUFFER, read_binding ? &read_binding : NULL);
+    }
 
     entry->attached = TRUE;
 }
