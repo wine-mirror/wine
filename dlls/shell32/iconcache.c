@@ -904,7 +904,7 @@ HRESULT WINAPI SHGetStockIconInfo(SHSTOCKICONID id, UINT flags, SHSTOCKICONINFO 
     GetSystemDirectoryW(sii->szPath, MAX_PATH);
 
     /* no icons defined: use default */
-    sii->iIcon = -IDI_SHELL_DOCUMENT,
+    sii->iIcon = -IDI_SHELL_DOCUMENT;
     lstrcatW(sii->szPath, shell32dll);
 
     if (flags)
