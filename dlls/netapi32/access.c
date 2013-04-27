@@ -729,6 +729,20 @@ NetGetDCName(LPCWSTR servername, LPCWSTR domainname, LPBYTE *bufptr)
 }
 
 /************************************************************
+ *                NetGetAnyDCName  (NETAPI32.@)
+ *
+ *  Return the name of any domain controller (DC) for a
+ *   domain that is directly trusted by the specified server
+ */
+
+NET_API_STATUS WINAPI NetGetAnyDCName(LPCWSTR servername, LPCWSTR domainname, LPBYTE *bufptr)
+{
+    FIXME("(%s, %s, %p) stub!\n", debugstr_w(servername),
+          debugstr_w(domainname), bufptr);
+    return ERROR_NO_SUCH_DOMAIN;
+}
+
+/************************************************************
  *                NetGroupEnum  (NETAPI32.@)
  *
  */
