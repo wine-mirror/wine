@@ -168,117 +168,117 @@ static void test_mediadet(void)
     filename = NULL;
     hr = IMediaDet_get_Filename(pM, &filename);
     /* Despite what MSDN claims, this returns S_OK.  */
-    ok(hr == S_OK, "IMediaDet_get_Filename\n");
+    ok(hr == S_OK, "IMediaDet_get_Filename failed: %08x\n", hr);
     ok(filename == NULL, "IMediaDet_get_Filename\n");
 
     filename = (BSTR) -1;
     hr = IMediaDet_get_Filename(pM, &filename);
     /* Despite what MSDN claims, this returns S_OK.  */
-    ok(hr == S_OK, "IMediaDet_get_Filename\n");
+    ok(hr == S_OK, "IMediaDet_get_Filename failed: %08x\n", hr);
     ok(filename == NULL, "IMediaDet_get_Filename\n");
 
     nstrms = -1;
     hr = IMediaDet_get_OutputStreams(pM, &nstrms);
-    ok(hr == E_INVALIDARG, "IMediaDet_get_OutputStreams\n");
-    ok(nstrms == -1, "IMediaDet_get_OutputStreams\n");
+    ok(hr == E_INVALIDARG, "IMediaDet_get_OutputStreams failed: %08x\n", hr);
+    ok(nstrms == -1, "IMediaDet_get_OutputStreams: nstrms is %i\n", nstrms);
 
     strm = -1;
     /* The stream defaults to 0, even without a file!  */
     hr = IMediaDet_get_CurrentStream(pM, &strm);
-    ok(hr == S_OK, "IMediaDet_get_CurrentStream\n");
-    ok(strm == 0, "IMediaDet_get_CurrentStream\n");
+    ok(hr == S_OK, "IMediaDet_get_CurrentStream failed: %08x\n", hr);
+    ok(strm == 0, "IMediaDet_get_CurrentStream: strm is %i\n", strm);
 
     hr = IMediaDet_get_CurrentStream(pM, NULL);
-    ok(hr == E_POINTER, "IMediaDet_get_CurrentStream\n");
+    ok(hr == E_POINTER, "IMediaDet_get_CurrentStream failed: %08x\n", hr);
 
     /* But put_CurrentStream doesn't.  */
     hr = IMediaDet_put_CurrentStream(pM, 0);
-    ok(hr == E_INVALIDARG, "IMediaDet_put_CurrentStream\n");
+    ok(hr == E_INVALIDARG, "IMediaDet_put_CurrentStream failed: %08x\n", hr);
 
     hr = IMediaDet_put_CurrentStream(pM, -1);
-    ok(hr == E_INVALIDARG, "IMediaDet_put_CurrentStream\n");
+    ok(hr == E_INVALIDARG, "IMediaDet_put_CurrentStream failed: %08x\n", hr);
 
     hr = IMediaDet_get_StreamMediaType(pM, &mt);
-    ok(hr == E_INVALIDARG, "IMediaDet_get_StreamMediaType\n");
+    ok(hr == E_INVALIDARG, "IMediaDet_get_StreamMediaType failed: %08x\n", hr);
 
     hr = IMediaDet_get_StreamMediaType(pM, NULL);
-    ok(hr == E_POINTER, "IMediaDet_get_StreamMediaType\n");
+    ok(hr == E_POINTER, "IMediaDet_get_StreamMediaType failed: %08x\n", hr);
 
     filename = SysAllocString(test_avi_filename);
     hr = IMediaDet_put_Filename(pM, filename);
-    ok(hr == S_OK, "IMediaDet_put_Filename -> %x\n", hr);
+    ok(hr == S_OK, "IMediaDet_put_Filename failed: %08x\n", hr);
     SysFreeString(filename);
 
     strm = -1;
     /* The stream defaults to 0.  */
     hr = IMediaDet_get_CurrentStream(pM, &strm);
-    ok(hr == S_OK, "IMediaDet_get_CurrentStream\n");
-    ok(strm == 0, "IMediaDet_get_CurrentStream\n");
+    ok(hr == S_OK, "IMediaDet_get_CurrentStream failed: %08x\n", hr);
+    ok(strm == 0, "IMediaDet_get_CurrentStream: strm is %i\n", strm);
 
     ZeroMemory(&mt, sizeof mt);
     hr = IMediaDet_get_StreamMediaType(pM, &mt);
-    ok(hr == S_OK, "IMediaDet_get_StreamMediaType\n");
+    ok(hr == S_OK, "IMediaDet_get_StreamMediaType failed: %08x\n", hr);
     CoTaskMemFree(mt.pbFormat);
 
     /* Even before get_OutputStreams.  */
     hr = IMediaDet_put_CurrentStream(pM, 1);
-    ok(hr == E_INVALIDARG, "IMediaDet_put_CurrentStream\n");
+    ok(hr == E_INVALIDARG, "IMediaDet_put_CurrentStream failed: %08x\n", hr);
 
     hr = IMediaDet_get_OutputStreams(pM, &nstrms);
-    ok(hr == S_OK, "IMediaDet_get_OutputStreams\n");
-    ok(nstrms == 1, "IMediaDet_get_OutputStreams\n");
+    ok(hr == S_OK, "IMediaDet_get_OutputStreams failed: %08x\n", hr);
+    ok(nstrms == 1, "IMediaDet_get_OutputStreams: nstrms is %i\n", nstrms);
 
     filename = NULL;
     hr = IMediaDet_get_Filename(pM, &filename);
-    ok(hr == S_OK, "IMediaDet_get_Filename\n");
+    ok(hr == S_OK, "IMediaDet_get_Filename failed: %08x\n", hr);
     ok(lstrcmpW(filename, test_avi_filename) == 0,
        "IMediaDet_get_Filename\n");
     SysFreeString(filename);
 
     hr = IMediaDet_get_Filename(pM, NULL);
-    ok(hr == E_POINTER, "IMediaDet_get_Filename\n");
+    ok(hr == E_POINTER, "IMediaDet_get_Filename failed: %08x\n", hr);
 
     strm = -1;
     hr = IMediaDet_get_CurrentStream(pM, &strm);
-    ok(hr == S_OK, "IMediaDet_get_CurrentStream\n");
-    ok(strm == 0, "IMediaDet_get_CurrentStream\n");
+    ok(hr == S_OK, "IMediaDet_get_CurrentStream failed: %08x\n", hr);
+    ok(strm == 0, "IMediaDet_get_CurrentStream: strm is %i\n", strm);
 
     hr = IMediaDet_get_CurrentStream(pM, NULL);
-    ok(hr == E_POINTER, "IMediaDet_get_CurrentStream\n");
+    ok(hr == E_POINTER, "IMediaDet_get_CurrentStream failed: %08x\n", hr);
 
     hr = IMediaDet_put_CurrentStream(pM, -1);
-    ok(hr == E_INVALIDARG, "IMediaDet_put_CurrentStream\n");
+    ok(hr == E_INVALIDARG, "IMediaDet_put_CurrentStream failed: %08x\n", hr);
 
     hr = IMediaDet_put_CurrentStream(pM, 1);
-    ok(hr == E_INVALIDARG, "IMediaDet_put_CurrentStream\n");
+    ok(hr == E_INVALIDARG, "IMediaDet_put_CurrentStream failed: %08x\n", hr);
 
     /* Try again.  */
     strm = -1;
     hr = IMediaDet_get_CurrentStream(pM, &strm);
-    ok(hr == S_OK, "IMediaDet_get_CurrentStream\n");
-    ok(strm == 0, "IMediaDet_get_CurrentStream\n");
+    ok(hr == S_OK, "IMediaDet_get_CurrentStream failed: %08x\n", hr);
+    ok(strm == 0, "IMediaDet_get_CurrentStream: strm is %i\n", strm);
 
     hr = IMediaDet_put_CurrentStream(pM, 0);
-    ok(hr == S_OK, "IMediaDet_put_CurrentStream\n");
+    ok(hr == S_OK, "IMediaDet_put_CurrentStream failed: %08x\n", hr);
 
     strm = -1;
     hr = IMediaDet_get_CurrentStream(pM, &strm);
-    ok(hr == S_OK, "IMediaDet_get_CurrentStream\n");
-    ok(strm == 0, "IMediaDet_get_CurrentStream\n");
+    ok(hr == S_OK, "IMediaDet_get_CurrentStream failed: %08x\n", hr);
+    ok(strm == 0, "IMediaDet_get_CurrentStream: strm is %i\n", strm);
 
     ZeroMemory(&mt, sizeof mt);
     hr = IMediaDet_get_StreamMediaType(pM, &mt);
-    ok(hr == S_OK, "IMediaDet_get_StreamMediaType\n");
+    ok(hr == S_OK, "IMediaDet_get_StreamMediaType failed: %08x\n", hr);
     ok(IsEqualGUID(&mt.majortype, &MEDIATYPE_Video),
                  "IMediaDet_get_StreamMediaType\n");
     CoTaskMemFree(mt.pbFormat);
 
     hr = IMediaDet_get_FrameRate(pM, NULL);
-    ok(hr == E_POINTER, "IMediaDet_get_FrameRate\n");
+    ok(hr == E_POINTER, "IMediaDet_get_FrameRate failed: %08x\n", hr);
 
     hr = IMediaDet_get_FrameRate(pM, &fps);
-    ok(hr == S_OK, "IMediaDet_get_FrameRate\n");
-    ok(fps == 10.0, "IMediaDet_get_FrameRate\n");
+    ok(hr == S_OK, "IMediaDet_get_FrameRate failed: %08x\n", hr);
+    ok(fps == 10.0, "IMediaDet_get_FrameRate: fps is %f\n", fps);
 
     hr = IMediaDet_Release(pM);
     ok(hr == 0, "IMediaDet_Release returned: %x\n", hr);
@@ -293,16 +293,16 @@ static void test_mediadet(void)
 
     filename = SysAllocString(test_sound_avi_filename);
     hr = IMediaDet_put_Filename(pM, filename);
-    ok(hr == S_OK, "IMediaDet_put_Filename -> %x\n", hr);
+    ok(hr == S_OK, "IMediaDet_put_Filename failed: %08x\n", hr);
     SysFreeString(filename);
 
     hr = IMediaDet_get_OutputStreams(pM, &nstrms);
-    ok(hr == S_OK, "IMediaDet_get_OutputStreams\n");
-    ok(nstrms == 2, "IMediaDet_get_OutputStreams\n");
+    ok(hr == S_OK, "IMediaDet_get_OutputStreams failed: %08x\n", hr);
+    ok(nstrms == 2, "IMediaDet_get_OutputStreams: nstrms is %i\n", nstrms);
 
     filename = NULL;
     hr = IMediaDet_get_Filename(pM, &filename);
-    ok(hr == S_OK, "IMediaDet_get_Filename\n");
+    ok(hr == S_OK, "IMediaDet_get_Filename failed: %08x\n", hr);
     ok(lstrcmpW(filename, test_sound_avi_filename) == 0,
        "IMediaDet_get_Filename\n");
     SysFreeString(filename);
@@ -314,16 +314,16 @@ static void test_mediadet(void)
     for (i = 0; i < 2; ++i)
     {
         hr = IMediaDet_put_CurrentStream(pM, i);
-        ok(hr == S_OK, "IMediaDet_put_CurrentStream\n");
+        ok(hr == S_OK, "IMediaDet_put_CurrentStream failed: %08x\n", hr);
 
         strm = -1;
         hr = IMediaDet_get_CurrentStream(pM, &strm);
-        ok(hr == S_OK, "IMediaDet_get_CurrentStream\n");
-        ok(strm == i, "IMediaDet_get_CurrentStream\n");
+        ok(hr == S_OK, "IMediaDet_get_CurrentStream failed: %08x\n", hr);
+        ok(strm == i, "IMediaDet_get_CurrentStream: strm is %i\n", strm);
 
         ZeroMemory(&mt, sizeof mt);
         hr = IMediaDet_get_StreamMediaType(pM, &mt);
-        ok(hr == S_OK, "IMediaDet_get_StreamMediaType\n");
+        ok(hr == S_OK, "IMediaDet_get_StreamMediaType failed: %08x\n", hr);
         flags += (IsEqualGUID(&mt.majortype, &MEDIATYPE_Video)
                   ? 1
                   : (IsEqualGUID(&mt.majortype, &MEDIATYPE_Audio)
@@ -333,20 +333,20 @@ static void test_mediadet(void)
         if (IsEqualGUID(&mt.majortype, &MEDIATYPE_Audio))
         {
             hr = IMediaDet_get_FrameRate(pM, &fps);
-            ok(hr == VFW_E_INVALIDMEDIATYPE, "IMediaDet_get_FrameRate\n");
+            ok(hr == VFW_E_INVALIDMEDIATYPE, "IMediaDet_get_FrameRate failed: %08x\n", hr);
         }
 
         CoTaskMemFree(mt.pbFormat);
     }
-    ok(flags == 3, "IMediaDet_get_StreamMediaType\n");
+    ok(flags == 3, "IMediaDet_get_StreamMediaType: flags are %i\n", flags);
 
     hr = IMediaDet_put_CurrentStream(pM, 2);
-    ok(hr == E_INVALIDARG, "IMediaDet_put_CurrentStream\n");
+    ok(hr == E_INVALIDARG, "IMediaDet_put_CurrentStream failed: %08x\n", hr);
 
     strm = -1;
     hr = IMediaDet_get_CurrentStream(pM, &strm);
-    ok(hr == S_OK, "IMediaDet_get_CurrentStream\n");
-    ok(strm == 1, "IMediaDet_get_CurrentStream\n");
+    ok(hr == S_OK, "IMediaDet_get_CurrentStream failed: %08x\n", hr);
+    ok(strm == 1, "IMediaDet_get_CurrentStream: strm is %i\n", strm);
 
     hr = IMediaDet_Release(pM);
     ok(hr == 0, "IMediaDet_Release returned: %x\n", hr);
