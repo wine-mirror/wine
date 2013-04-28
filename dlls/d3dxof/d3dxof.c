@@ -241,8 +241,9 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
   if (FAILED(hr))
     goto error;
 
-  if (!parse_templates(&object->buf)) {
-    hr = DXFILEERR_BADVALUE;
+  if (!parse_templates(&object->buf))
+  {
+    hr = DXFILEERR_PARSEERROR;
     goto error;
   }
 
@@ -319,8 +320,9 @@ static HRESULT WINAPI IDirectXFileImpl_RegisterTemplates(IDirectXFile* iface, LP
   if (FAILED(hr))
     goto cleanup;
 
-  if (!parse_templates(&buf)) {
-    hr = DXFILEERR_BADVALUE;
+  if (!parse_templates(&buf))
+  {
+    hr = DXFILEERR_PARSEERROR;
     goto cleanup;
   }
 
@@ -1002,7 +1004,7 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
 
   /* Check if there are templates defined before the object */
   if (!parse_templates(&This->buf))
-    return DXFILEERR_BADVALUE;
+    return DXFILEERR_PARSEERROR;
 
   if (!This->buf.rem_bytes)
     return DXFILEERR_NOMOREOBJECTS;
