@@ -7,15 +7,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2013-02-01 14:20+0100\n"
-"Last-Translator: Volkan Gezer <volkangezer@gmail.com>\n"
-"Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
+"PO-Revision-Date: 2013-04-28 11:33+0000\n"
+"Last-Translator: volkangezer <volkangezer@gmail.com>\n"
+"Language-Team: none\n"
 "Language: Turkish\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.5.4\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 #: appwiz.rc:55
 msgid "Install/Uninstall"
@@ -510,7 +509,7 @@ msgstr "Özel &Yazıcı"
 
 #: comdlg32.rc:229 comdlg32.rc:415 comdlg32.rc:434 wineps.rc:31
 msgid "Orientation"
-msgstr "Hizalama"
+msgstr "Yönlendirme"
 
 #: comdlg32.rc:230
 msgid "Po&rtrait"
@@ -1057,7 +1056,7 @@ msgstr "Silme bekleniyor; "
 
 #: comdlg32.rc:83
 msgid "Paper jam; "
-msgstr "Kağıt sıkışması;"
+msgstr "Kağıt sıkışması; "
 
 #: comdlg32.rc:84
 msgid "Out of paper; "
@@ -1065,7 +1064,7 @@ msgstr "Kağıt yok; "
 
 #: comdlg32.rc:85
 msgid "Feed paper manual; "
-msgstr "El ile kağıt besleme;"
+msgstr "El ile kağıt besleme; "
 
 #: comdlg32.rc:86
 msgid "Paper problem; "
@@ -1109,11 +1108,11 @@ msgstr "Hazırlanıyor; "
 
 #: comdlg32.rc:96
 msgid "Warming up; "
-msgstr "Isınıyor;"
+msgstr "Isınıyor; "
 
 #: comdlg32.rc:97
 msgid "Toner low; "
-msgstr "Kartuş az;"
+msgstr "Kartuş az; "
 
 #: comdlg32.rc:98
 msgid "No toner; "
@@ -1121,7 +1120,7 @@ msgstr "Toner yok; "
 
 #: comdlg32.rc:99
 msgid "Page punt; "
-msgstr "Sayfa atışı;"
+msgstr "Sayfa atışı; "
 
 #: comdlg32.rc:100
 msgid "Interrupted by user; "
@@ -1141,11 +1140,11 @@ msgstr "Yazıcı sunucusu bilinmiyor; "
 
 #: comdlg32.rc:104
 msgid "Power save mode; "
-msgstr "Güç koruma modu; "
+msgstr "Güç tasarrufu kipi; "
 
 #: comdlg32.rc:73
 msgid "Default Printer; "
-msgstr "Öntanımlı yazıcı; "
+msgstr "Öntanımlı Yazıcı; "
 
 #: comdlg32.rc:74
 msgid "There are %d documents in the queue"
@@ -1343,7 +1342,7 @@ msgstr "Sertifika Türü"
 
 #: crypt32.rc:59
 msgid "Certificate Manifold"
-msgstr ""
+msgstr "Sertifika Kopyası"
 
 #: crypt32.rc:60
 msgid "Netscape Cert Type"
@@ -1359,7 +1358,7 @@ msgstr "Netscape Revocation URL"
 
 #: crypt32.rc:63
 msgid "Netscape CA Revocation URL"
-msgstr ""
+msgstr "Netscape CA İptal URL'si"
 
 #: crypt32.rc:64
 msgid "Netscape Cert Renewal URL"
@@ -1467,7 +1466,7 @@ msgstr "CRL Numarası"
 
 #: crypt32.rc:90
 msgid "Delta CRL Indicator"
-msgstr ""
+msgstr "Delta CRL Belirteci"
 
 #: crypt32.rc:91
 msgid "Issuing Distribution Point"
@@ -1491,7 +1490,7 @@ msgstr "Politika Kısıtlamaları"
 
 #: crypt32.rc:96
 msgid "Cross-Certificate Distribution Points"
-msgstr ""
+msgstr "Çapraz Sertifika Dağıtım Noktaları"
 
 #: crypt32.rc:97
 msgid "Application Policies"
@@ -1499,11 +1498,11 @@ msgstr "Uygulama Politikaları"
 
 #: crypt32.rc:98
 msgid "Application Policy Mappings"
-msgstr ""
+msgstr "Uygulama Politika Atamaları"
 
 #: crypt32.rc:99
 msgid "Application Policy Constraints"
-msgstr ""
+msgstr "Uygulama Politika Kısıtlamaları"
 
 #: crypt32.rc:100
 msgid "CMC Data"
@@ -1547,99 +1546,99 @@ msgstr "PKCS 7 İmzalanmış Zarflanmış"
 
 #: crypt32.rc:110
 msgid "PKCS 7 Digested"
-msgstr ""
+msgstr "PKCS 7 Özetli"
 
 #: crypt32.rc:111
 msgid "PKCS 7 Encrypted"
-msgstr ""
+msgstr "PKCS 7 Şifreli"
 
 #: crypt32.rc:112
 msgid "Previous CA Certificate Hash"
-msgstr ""
+msgstr "Önceki CA Sertifika Kodu"
 
 #: crypt32.rc:113
 msgid "Virtual Base CRL Number"
-msgstr ""
+msgstr "Sanal Temel CRL Numarası"
 
 #: crypt32.rc:114
 msgid "Next CRL Publish"
-msgstr ""
+msgstr "Sonraki CRL Yayımı"
 
 #: crypt32.rc:115
 msgid "CA Encryption Certificate"
-msgstr ""
+msgstr "CA Şifreleme Sertifikası"
 
 #: crypt32.rc:116 cryptui.rc:145
 msgid "Key Recovery Agent"
-msgstr ""
+msgstr "Anahtar Kurtarma Yardımcısı"
 
 #: crypt32.rc:117
 msgid "Certificate Template Information"
-msgstr ""
+msgstr "Sertifika Şablon Bilgisi"
 
 #: crypt32.rc:118
 msgid "Enterprise Root OID"
-msgstr ""
+msgstr "Kuruluş Kök OID"
 
 #: crypt32.rc:119
 msgid "Dummy Signer"
-msgstr ""
+msgstr "Sahte İmzalayıcı"
 
 #: crypt32.rc:120
 msgid "Encrypted Private Key"
-msgstr ""
+msgstr "Şifrelenmiş Özel Anahtar"
 
 #: crypt32.rc:121
 msgid "Published CRL Locations"
-msgstr ""
+msgstr "Dağıtılmış CRL Konumları"
 
 #: crypt32.rc:122
 msgid "Enforce Certificate Chain Policy"
-msgstr ""
+msgstr "Sertifika Zincir Politikasını Zorla"
 
 #: crypt32.rc:123
 msgid "Transaction Id"
-msgstr ""
+msgstr "İşlem Id'si"
 
 #: crypt32.rc:124
 msgid "Sender Nonce"
-msgstr ""
+msgstr "Şimdiki Gönderici"
 
 #: crypt32.rc:125
 msgid "Recipient Nonce"
-msgstr ""
+msgstr "Şimdiki Alıcı"
 
 #: crypt32.rc:126
 msgid "Reg Info"
-msgstr ""
+msgstr "Kayıt Bilgisi"
 
 #: crypt32.rc:127
 msgid "Get Certificate"
-msgstr ""
+msgstr "Sertifika Al"
 
 #: crypt32.rc:128
 msgid "Get CRL"
-msgstr ""
+msgstr "CRL Al"
 
 #: crypt32.rc:129
 msgid "Revoke Request"
-msgstr ""
+msgstr "İsteği İptal Et"
 
 #: crypt32.rc:130
 msgid "Query Pending"
-msgstr ""
+msgstr "Sorgu Bekliyor"
 
 #: crypt32.rc:131 cryptui.rc:92
 msgid "Certificate Trust List"
-msgstr ""
+msgstr "Sertifika Güven Listesi"
 
 #: crypt32.rc:132
 msgid "Archived Key Certificate Hash"
-msgstr ""
+msgstr "Arşivlenen Anahtar Sertifika Kodu"
 
 #: crypt32.rc:133
 msgid "Private Key Usage Period"
-msgstr ""
+msgstr "Özel Anahtar Kullanım Peryodu"
 
 #: crypt32.rc:134
 msgid "Client Information"
@@ -1647,23 +1646,23 @@ msgstr "İstemci Bilgisi"
 
 #: crypt32.rc:135
 msgid "Server Authentication"
-msgstr ""
+msgstr "Sunucu Yetkilendirmesi"
 
 #: crypt32.rc:136
 msgid "Client Authentication"
-msgstr ""
+msgstr "İstemci Yetkilendirmesi"
 
 #: crypt32.rc:137
 msgid "Code Signing"
-msgstr ""
+msgstr "Kod İmzalama"
 
 #: crypt32.rc:138
 msgid "Secure Email"
-msgstr ""
+msgstr "E-Postayı Güvenli Kıl"
 
 #: crypt32.rc:139
 msgid "Time Stamping"
-msgstr ""
+msgstr "Zaman Damgalaması"
 
 #: crypt32.rc:140
 msgid "Microsoft Trust List Signing"
@@ -1671,27 +1670,27 @@ msgstr "Microsoft Güven Listesi İmzalaması"
 
 #: crypt32.rc:141
 msgid "Microsoft Time Stamping"
-msgstr ""
+msgstr "Microsoft Zaman Damgalaması"
 
 #: crypt32.rc:142
 msgid "IP security end system"
-msgstr ""
+msgstr "IP güvenlik sonu sistemi"
 
 #: crypt32.rc:143
 msgid "IP security tunnel termination"
-msgstr ""
+msgstr "IP güvenlik tünel sonlandırması"
 
 #: crypt32.rc:144
 msgid "IP security user"
-msgstr ""
+msgstr "IP güvenlik kullanıcısı"
 
 #: crypt32.rc:145
 msgid "Encrypting File System"
-msgstr ""
+msgstr "Dosya Sistemi Şifreleniyor"
 
 #: crypt32.rc:146 cryptui.rc:130
 msgid "Windows Hardware Driver Verification"
-msgstr ""
+msgstr "Windows Donanım Sürücü Doğrulaması"
 
 #: crypt32.rc:147 cryptui.rc:131
 msgid "Windows System Component Verification"
@@ -1703,71 +1702,71 @@ msgstr "OEM Windows Sistem Bileşen Doğrulama"
 
 #: crypt32.rc:149 cryptui.rc:133
 msgid "Embedded Windows System Component Verification"
-msgstr ""
+msgstr "Gömülü Windows Sistemi Bileşen Doğrulaması"
 
 #: crypt32.rc:150 cryptui.rc:140
 msgid "Key Pack Licenses"
-msgstr ""
+msgstr "Anahtar Paketi Lisansları"
 
 #: crypt32.rc:151 cryptui.rc:141
 msgid "License Server Verification"
-msgstr ""
+msgstr "Lisans Sunucu Doğrulaması"
 
 #: crypt32.rc:152 cryptui.rc:143
 msgid "Smart Card Logon"
-msgstr ""
+msgstr "Akıllı Kart ile Oturum Açma"
 
 #: crypt32.rc:153 cryptui.rc:139
 msgid "Digital Rights"
-msgstr ""
+msgstr "Dijital Haklar"
 
 #: crypt32.rc:154 cryptui.rc:135
 msgid "Qualified Subordination"
-msgstr ""
+msgstr "Nitelikli Bağlılık"
 
 #: crypt32.rc:155 cryptui.rc:136
 msgid "Key Recovery"
-msgstr ""
+msgstr "Anahtar Kurtarma"
 
 #: crypt32.rc:156 cryptui.rc:137
 msgid "Document Signing"
-msgstr ""
+msgstr "Doküman İmzalama"
 
 #: crypt32.rc:157
 msgid "IP security IKE intermediate"
-msgstr ""
+msgstr "IP güvenlik IKE arası"
 
 #: crypt32.rc:158 cryptui.rc:129
 msgid "File Recovery"
-msgstr ""
+msgstr "Dosya Kurtarma"
 
 #: crypt32.rc:159 cryptui.rc:134
 msgid "Root List Signer"
-msgstr ""
+msgstr "Kök Liste İmzalayıcı"
 
 #: crypt32.rc:160
 msgid "All application policies"
-msgstr ""
+msgstr "Tüm uygulama ilkeleri"
 
 #: crypt32.rc:161 cryptui.rc:146
 msgid "Directory Service Email Replication"
-msgstr ""
+msgstr "Dizin Hizmet E-posta Çoğaltması"
 
 #: crypt32.rc:162 cryptui.rc:142
 msgid "Certificate Request Agent"
-msgstr ""
+msgstr "Sertifika Talebi Yardımcısı"
 
 #: crypt32.rc:163 cryptui.rc:138
 msgid "Lifetime Signing"
-msgstr ""
+msgstr "Sonsuz İmzalama"
 
 #: crypt32.rc:164
 msgid "All issuance policies"
-msgstr ""
+msgstr "Tüm yayın ilkeleri"
 
 #: crypt32.rc:169
 msgid "Trusted Root Certification Authorities"
-msgstr ""
+msgstr "Güvenlik Kök Sertifika Yetkilileri"
 
 #: crypt32.rc:170
 msgid "Personal"
@@ -1775,27 +1774,27 @@ msgstr "Kişisel"
 
 #: crypt32.rc:171
 msgid "Intermediate Certification Authorities"
-msgstr ""
+msgstr "Ara Sertifika Yetkilileri"
 
 #: crypt32.rc:172
 msgid "Other People"
-msgstr ""
+msgstr "Diğer Kişiler"
 
 #: crypt32.rc:173
 msgid "Trusted Publishers"
-msgstr ""
+msgstr "Güvenilir Dağıtıcılar"
 
 #: crypt32.rc:174
 msgid "Untrusted Certificates"
-msgstr ""
+msgstr "Güvenilmeyen Sertifikalar"
 
 #: crypt32.rc:179
 msgid "KeyID="
-msgstr ""
+msgstr "AnahtarKimliği="
 
 #: crypt32.rc:180
 msgid "Certificate Issuer"
-msgstr ""
+msgstr "Sertifika Yayıncısı"
 
 #: crypt32.rc:181
 msgid "Certificate Serial Number="
@@ -1827,32 +1826,32 @@ msgstr "IP Adresi="
 
 #: crypt32.rc:188
 msgid "Mask="
-msgstr ""
+msgstr "Maske="
 
 #: crypt32.rc:189
 msgid "Registered ID="
-msgstr ""
+msgstr "Kayıtlı Kimlik="
 
 #: crypt32.rc:190
 msgid "Unknown Key Usage"
-msgstr ""
+msgstr "Bilinmeyen Anahtar Kullanımı"
 
 #: crypt32.rc:191
 msgid "Subject Type="
-msgstr ""
+msgstr "Konu Türü="
 
 #: crypt32.rc:192
 msgctxt "Certificate Authority"
 msgid "CA"
-msgstr ""
+msgstr "CA"
 
 #: crypt32.rc:193
 msgid "End Entity"
-msgstr ""
+msgstr "Öge Sonu"
 
 #: crypt32.rc:194
 msgid "Path Length Constraint="
-msgstr ""
+msgstr "Yol Uzunluk Sınırlaması="
 
 #: crypt32.rc:195
 msgctxt "path length"
@@ -1861,11 +1860,11 @@ msgstr "Hiçbiri"
 
 #: crypt32.rc:196
 msgid "Information Not Available"
-msgstr ""
+msgstr "Bilgi Kullanılabilir Değil"
 
 #: crypt32.rc:197
 msgid "Authority Info Access"
-msgstr ""
+msgstr "Yetkili Bilgi Erişimi"
 
 #: crypt32.rc:198
 msgid "Access Method="
@@ -1874,11 +1873,11 @@ msgstr "Erişim Yöntemi="
 #: crypt32.rc:199
 msgctxt "Online Certificate Status Protocol"
 msgid "OCSP"
-msgstr ""
+msgstr "OCSP"
 
 #: crypt32.rc:200
 msgid "CA Issuers"
-msgstr ""
+msgstr "CA Dağıtıcıları"
 
 #: crypt32.rc:201
 msgid "Unknown Access Method"
@@ -1890,11 +1889,11 @@ msgstr "Alternatif İisim"
 
 #: crypt32.rc:203
 msgid "CRL Distribution Point"
-msgstr ""
+msgstr "CRL Dağıtım Noktası"
 
 #: crypt32.rc:204
 msgid "Distribution Point Name"
-msgstr ""
+msgstr "Dağıtım Nokta Adı"
 
 #: crypt32.rc:205
 msgid "Full Name"
@@ -1902,39 +1901,39 @@ msgstr "Tam Adı"
 
 #: crypt32.rc:206
 msgid "RDN Name"
-msgstr ""
+msgstr "RDN Adı"
 
 #: crypt32.rc:207
 msgid "CRL Reason="
-msgstr ""
+msgstr "CRL Sebebi="
 
 #: crypt32.rc:208
 msgid "CRL Issuer"
-msgstr ""
+msgstr "CRL Dağıtıcı"
 
 #: crypt32.rc:209
 msgid "Key Compromise"
-msgstr ""
+msgstr "Anahtar Uzlaşması"
 
 #: crypt32.rc:210
 msgid "CA Compromise"
-msgstr ""
+msgstr "CA Uzlaşması"
 
 #: crypt32.rc:211
 msgid "Affiliation Changed"
-msgstr ""
+msgstr "Üyelik Değişti"
 
 #: crypt32.rc:212
 msgid "Superseded"
-msgstr ""
+msgstr "Yerini aldı"
 
 #: crypt32.rc:213
 msgid "Operation Ceased"
-msgstr ""
+msgstr "İşlem Anlaşması Yapıldı"
 
 #: crypt32.rc:214
 msgid "Certificate Hold"
-msgstr ""
+msgstr "Sertifika Tutuluyor"
 
 #: crypt32.rc:215
 msgid "Financial Information="
@@ -1946,11 +1945,11 @@ msgstr "Kullanılabilir"
 
 #: crypt32.rc:217
 msgid "Not Available"
-msgstr ""
+msgstr "Kullanılamaz"
 
 #: crypt32.rc:218
 msgid "Meets Criteria="
-msgstr ""
+msgstr "Kriteri Sağlıyor="
 
 #: crypt32.rc:219 cryptui.rc:163 oleaut32.rc:29 wininet.rc:80 ipconfig.rc:44
 msgid "Yes"
@@ -1966,47 +1965,47 @@ msgstr "Dijital İmza"
 
 #: crypt32.rc:222
 msgid "Non-Repudiation"
-msgstr ""
+msgstr "Yadsımasız"
 
 #: crypt32.rc:223
 msgid "Key Encipherment"
-msgstr ""
+msgstr "Anahtar Şifreleme"
 
 #: crypt32.rc:224
 msgid "Data Encipherment"
-msgstr ""
+msgstr "Veri Şifreleme"
 
 #: crypt32.rc:225
 msgid "Key Agreement"
-msgstr ""
+msgstr "Anahtar Anlaşması"
 
 #: crypt32.rc:226
 msgid "Certificate Signing"
-msgstr ""
+msgstr "Sertifika İmzalama"
 
 #: crypt32.rc:227
 msgid "Off-line CRL Signing"
-msgstr ""
+msgstr "Çevrimdışı CRL İmzalama"
 
 #: crypt32.rc:228
 msgid "CRL Signing"
-msgstr ""
+msgstr "CRL İmzalama"
 
 #: crypt32.rc:229
 msgid "Encipher Only"
-msgstr ""
+msgstr "Sadece Şifrele"
 
 #: crypt32.rc:230
 msgid "Decipher Only"
-msgstr ""
+msgstr "Sadece Şifre Çöz"
 
 #: crypt32.rc:231
 msgid "SSL Client Authentication"
-msgstr ""
+msgstr "SSL İstemci Yetkilendirmesi"
 
 #: crypt32.rc:232
 msgid "SSL Server Authentication"
-msgstr ""
+msgstr "SSL Sunucu Yetkilendirmesi"
 
 #: crypt32.rc:233
 msgid "S/MIME"
@@ -2018,15 +2017,15 @@ msgstr "İmza"
 
 #: crypt32.rc:235
 msgid "SSL CA"
-msgstr ""
+msgstr "SSL CA"
 
 #: crypt32.rc:236
 msgid "S/MIME CA"
-msgstr ""
+msgstr "S/MIME CA"
 
 #: crypt32.rc:237
 msgid "Signature CA"
-msgstr ""
+msgstr "İmza CA"
 
 #: cryptdlg.rc:27
 msgid "Certificate Policy"
@@ -2034,23 +2033,23 @@ msgstr "Sertifika İlkeleri"
 
 #: cryptdlg.rc:28
 msgid "Policy Identifier: "
-msgstr ""
+msgstr "Politika Tanımlayıcı:"
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
-msgstr ""
+msgstr "İlke Nitelik Bilgisi"
 
 #: cryptdlg.rc:30
 msgid "Policy Qualifier Id="
-msgstr ""
+msgstr "İlke Nitelik Kimliği="
 
 #: cryptdlg.rc:33
 msgid "Qualifier"
-msgstr ""
+msgstr "Niteleyici"
 
 #: cryptdlg.rc:34
 msgid "Notice Reference"
-msgstr ""
+msgstr "Bilgi Referansı"
 
 #: cryptdlg.rc:35
 msgid "Organization="
@@ -2058,11 +2057,11 @@ msgstr "Organizasyon="
 
 #: cryptdlg.rc:36
 msgid "Notice Number="
-msgstr ""
+msgstr "Bilgi Numarası="
 
 #: cryptdlg.rc:37
 msgid "Notice Text="
-msgstr ""
+msgstr "Bildirim Metni="
 
 #: cryptui.rc:177 cryptui.rc:232 inetcpl.rc:43
 msgid "General"
@@ -2070,11 +2069,11 @@ msgstr "Genel"
 
 #: cryptui.rc:188
 msgid "&Install Certificate..."
-msgstr ""
+msgstr "Sertifika &Yükle..."
 
 #: cryptui.rc:189
 msgid "Issuer &Statement"
-msgstr ""
+msgstr "Dağıtıcı &Beyanı"
 
 #: cryptui.rc:197
 msgid "&Show:"
@@ -2082,23 +2081,23 @@ msgstr "&Göster:"
 
 #: cryptui.rc:202
 msgid "&Edit Properties..."
-msgstr "&Özellikleri Düzenle ..."
+msgstr "&Özellikleri Düzenle..."
 
 #: cryptui.rc:203
 msgid "&Copy to File..."
-msgstr ""
+msgstr "Dosyaya &Kopyala..."
 
 #: cryptui.rc:207
 msgid "Certification Path"
-msgstr ""
+msgstr "Sertifika Yolu"
 
 #: cryptui.rc:211
 msgid "Certification path"
-msgstr ""
+msgstr "Sertifika yolu"
 
 #: cryptui.rc:214
 msgid "&View Certificate"
-msgstr ""
+msgstr "&Sertifikayı Görüntüle"
 
 #: cryptui.rc:215
 msgid "Certificate &status:"
@@ -2106,15 +2105,15 @@ msgstr "Sertifika &durumu:"
 
 #: cryptui.rc:221
 msgid "Disclaimer"
-msgstr ""
+msgstr "Yadsıma"
 
 #: cryptui.rc:228
 msgid "More &Info"
-msgstr ""
+msgstr "Daha Fazla B&ilgi"
 
 #: cryptui.rc:236
 msgid "&Friendly name:"
-msgstr ""
+msgstr "&Dosya isim:"
 
 #: cryptui.rc:238 progman.rc:151 progman.rc:167
 msgid "&Description:"
@@ -2122,48 +2121,48 @@ msgstr "&Açıklama:"
 
 #: cryptui.rc:240
 msgid "Certificate purposes"
-msgstr ""
+msgstr "Sertifika amaçları"
 
 #: cryptui.rc:241
 msgid "&Enable all purposes for this certificate"
-msgstr ""
+msgstr "Bu s&ertifika için tüm amaçları etkinleştir"
 
 #: cryptui.rc:243
 msgid "D&isable all purposes for this certificate"
-msgstr ""
+msgstr "Bu s&ertifika için tüm amaçları devre dışı bırak"
 
 #: cryptui.rc:245
 msgid "Enable &only the following purposes for this certificate:"
-msgstr ""
+msgstr "Bu sertifika i&çin sadece aşağıdaki amaçları etkinleştir:"
 
 #: cryptui.rc:250
 msgid "Add &Purpose..."
-msgstr ""
+msgstr "&Amaç Ekle..."
 
 #: cryptui.rc:254
 msgid "Add Purpose"
-msgstr ""
+msgstr "Amaç Ekle"
 
 #: cryptui.rc:257
 msgid ""
 "Add the object identifier (OID) for the certificate purpose you wish to add:"
-msgstr ""
+msgstr "Eklemek istediğiniz sertifika amacı için nesne kimliği (OID) ekle:"
 
 #: cryptui.rc:265 cryptui.rc:66
 msgid "Select Certificate Store"
-msgstr ""
+msgstr "Sertifika Mağazasını Seç"
 
 #: cryptui.rc:268
 msgid "Select the certificate store you want to use:"
-msgstr ""
+msgstr "Kullanmak istediğiniz sertifika mağazasını seçin:"
 
 #: cryptui.rc:271
 msgid "&Show physical stores"
-msgstr ""
+msgstr "Fizik&sel mağazaları göster"
 
 #: cryptui.rc:277 cryptui.rc:288 cryptui.rc:305 cryptui.rc:319 cryptui.rc:68
 msgid "Certificate Import Wizard"
-msgstr ""
+msgstr "Sertifika Alma Sihirbazı"
 
 #: cryptui.rc:280
 msgid "Welcome to the Certificate Import Wizard"
@@ -2181,6 +2180,15 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
+"Bu sihirbaz; sertifikaları, sertifika iptal listesini ve sertifika güven "
+"listesini bir dosyadan sertifika mağazasına aktarmanıza yardım eder.\n"
+"\n"
+"Bir sertifika, sizi veya iletişim kurduğunuz bilgisayarınızı tanımlamanızda "
+"kullanılabilir. Ayrıca yetkilendirme ve iletileri imzalamada da "
+"kullanılabilir. Sertifika mağazaları; sertifikalar, sertifika iptal "
+"listeleri ve sertifika güven listelerinden oluşan koleksiyonlardır.\n"
+"\n"
+"Devam etmek için İleri tıklayın."
 
 #: cryptui.rc:291 cryptui.rc:427
 msgid "&File name:"
@@ -2195,44 +2203,48 @@ msgid ""
 "Note: The following file formats may contain more than one certificate, "
 "certificate revocation list, or certificate trust list:"
 msgstr ""
+"Not: Aşağıdaki dosya biçimleri, bir veya birden fazla sertifika, sertifika "
+"iptal listesi veya sertifika güven listesi içerebilir:"
 
 #: cryptui.rc:296
 msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (*.p7b)"
-msgstr ""
+msgstr "Kriptografik İleti Sözdizimi Standardı/PKCS #7 İletileri (*.p7b)"
 
 #: cryptui.rc:298
 msgid "Personal Information Exchange/PKCS #12 (*.pfx; *.p12)"
-msgstr ""
+msgstr "Kişisel Bilgi Değişimi/PKCS #12 (*.pfx; *.p12)"
 
 #: cryptui.rc:300 cryptui.rc:78 cryptui.rc:159
 msgid "Microsoft Serialized Certificate Store (*.sst)"
-msgstr ""
+msgstr "Microsoft Numaralandırılmış Sertifika Mağazası (*.sst)"
 
 #: cryptui.rc:308
 msgid ""
 "Wine can automatically select the certificate store, or you can specify a "
 "location for the certificates."
 msgstr ""
+"Wine otomatik olarak bir sertifika mağazası seçebilir veya sertifikalar için "
+"siz de bir konum belirleyebilirsiniz."
 
 #: cryptui.rc:310
 msgid "&Automatically select certificate store"
-msgstr ""
+msgstr "Sertifik&a mağazasını otomatik seç"
 
 #: cryptui.rc:312
 msgid "&Place all certificates in the following store:"
-msgstr ""
+msgstr "&Tüm sertifikaları aşağıdaki mağazaya yerleştir:"
 
 #: cryptui.rc:322
 msgid "Completing the Certificate Import Wizard"
-msgstr ""
+msgstr "Sertifika Alma Sihirbazı Tamamlanıyor"
 
 #: cryptui.rc:324
 msgid "You have successfully completed the Certificate Import Wizard."
-msgstr ""
+msgstr "Sertifika Alma Sihirbazını başarıyla tamamladınız."
 
 #: cryptui.rc:326 cryptui.rc:440
 msgid "You have specified the following settings:"
-msgstr ""
+msgstr "Aşağıdaki ayarları belirttiniz:"
 
 #: cryptui.rc:334 cryptui.rc:119 inetcpl.rc:108
 msgid "Certificates"
@@ -2240,7 +2252,7 @@ msgstr "Sertifikalar"
 
 #: cryptui.rc:337
 msgid "I&ntended purpose:"
-msgstr ""
+msgstr "İste&nen amaç:"
 
 #: cryptui.rc:341
 msgid "&Import..."
@@ -2256,7 +2268,7 @@ msgstr "&Gelişmiş..."
 
 #: cryptui.rc:345
 msgid "Certificate intended purposes"
-msgstr ""
+msgstr "Sertifikada istenen amaçlar"
 
 #: cryptui.rc:347 ieframe.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56
 #: oleview.rc:58 oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:45
@@ -2270,25 +2282,26 @@ msgstr "Gelişmiş Seçenekler"
 
 #: cryptui.rc:355
 msgid "Certificate purpose"
-msgstr ""
+msgstr "Sertifika amacı"
 
 #: cryptui.rc:356
 msgid ""
 "Select one or more purposes to be listed when Advanced Purposes is selected."
 msgstr ""
+"Gelişmiş Amaçlar seçildiğinde listelenecek bir veya birden fazla amacı seçin."
 
 #: cryptui.rc:358
 msgid "&Certificate purposes:"
-msgstr ""
+msgstr "&Sertifika amaçları:"
 
 #: cryptui.rc:367 cryptui.rc:378 cryptui.rc:391 cryptui.rc:401 cryptui.rc:424
 #: cryptui.rc:433 cryptui.rc:147
 msgid "Certificate Export Wizard"
-msgstr ""
+msgstr "Sertifika Dışa Aktarım Sihirbazı"
 
 #: cryptui.rc:370
 msgid "Welcome to the Certificate Export Wizard"
-msgstr ""
+msgstr "Sertifika Dışa Aktarım Sihirbazına Hoş Geldiniz"
 
 #: cryptui.rc:373
 msgid ""
@@ -2302,24 +2315,35 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
+"Bu sihirbaz; bir sertifika mağazasından sertifika, sertifika iptal listesi "
+"ve sertifika güven listesini bir dosyaya aktarmanıza yardım edecektir.\n"
+"\n"
+"Bir sertifika, sizi ve iletişim kurduğunuz bilgisayarınızı tanımlamada "
+"kullanılabilir. Ayrıca yetkilendirme ve iletileri imzalama da "
+"kullanılabilir. Sertifika mağazaları; sertifikalar, sertifika iptal listesi "
+"ve sertifika güven listesinden oluşan koleksiyonlardır.\n"
+"\n"
+"Devam etmek için İleri tıklayın."
 
 #: cryptui.rc:381
 msgid ""
 "If you choose to export the private key, you will be prompted for a password "
 "to protect the private key on a later page."
 msgstr ""
+"Eğer özel anahtarınızı aktarmayı seçerseniz, ileriki adımlarda özel "
+"anahtarınızı korumanız için bir parola sorulacaktır."
 
 #: cryptui.rc:382
 msgid "Do you wish to export the private key?"
-msgstr ""
+msgstr "Özel anahtarı dışarı aktarmak ister misiniz?"
 
 #: cryptui.rc:383
 msgid "&Yes, export the private key"
-msgstr ""
+msgstr "Evet, özel anahtarı &dışa aktar"
 
 #: cryptui.rc:385
 msgid "N&o, do not export the private key"
-msgstr ""
+msgstr "Hayır, dışa aktar&ma"
 
 #: cryptui.rc:396
 msgid "&Confirm password:"
@@ -2327,47 +2351,47 @@ msgstr "&Parola onayla:"
 
 #: cryptui.rc:404
 msgid "Select the format you want to use:"
-msgstr ""
+msgstr "Kullanmak biçimi seçin:"
 
 #: cryptui.rc:405
 msgid "&DER-encoded X.509 (*.cer)"
-msgstr ""
+msgstr "&DER-encoded X.509 (*.cer)"
 
 #: cryptui.rc:407
 msgid "Ba&se64-encoded X.509 (*.cer):"
-msgstr ""
+msgstr "Ba&se64-encoded X.509 (*.cer):"
 
 #: cryptui.rc:409
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (*.p7b)"
-msgstr ""
+msgstr "&Kriptografik İleti Sözdizimi Standardı/PKCS #7 İletisi (*.p7b)"
 
 #: cryptui.rc:411
 msgid "&Include all certificates in the certification path if possible"
-msgstr ""
+msgstr "M&ümkün olduğunca tüm sertifikaları sertifikalama yoluna dahil et"
 
 #: cryptui.rc:413
 msgid "&Personal Information Exchange/PKCS #12 (*.pfx)"
-msgstr ""
+msgstr "&Kişisel Bilgi Değişimi/PKCS #12 (*.pfx)"
 
 #: cryptui.rc:415
 msgid "Incl&ude all certificates in the certification path if possible"
-msgstr ""
+msgstr "Mümkün &olduğunda sertifika yolundaki tüm sertifikaları dahil et"
 
 #: cryptui.rc:417
 msgid "&Enable strong encryption"
-msgstr ""
+msgstr "Güçlü şifr&elemeyi etkinleştir"
 
 #: cryptui.rc:419
 msgid "Delete the private &key if the export is successful"
-msgstr ""
+msgstr "A&ktarım başarılı olursa özel anahtarı sil"
 
 #: cryptui.rc:436
 msgid "Completing the Certificate Export Wizard"
-msgstr ""
+msgstr "Sertifika Dışa Aktarım Sihirbazı Tamamlanıyor"
 
 #: cryptui.rc:438
 msgid "You have successfully completed the Certificate Export Wizard."
-msgstr ""
+msgstr "Sertifika Dışa Aktarım Sihirbazını başarıyla tamamladınız."
 
 #: cryptui.rc:27 cryptui.rc:90
 msgid "Certificate"
@@ -2382,68 +2406,72 @@ msgid ""
 "This certificate has an invalid signature. The certificate may have been "
 "altered or corrupted."
 msgstr ""
+"Bu sertifika geçersiz bir imzaya sahip. Sertifika değiştirilmiş veya bozuk "
+"olabilir."
 
 #: cryptui.rc:30
 msgid ""
 "This root certificate is not trusted. To trust it, add it to your system's "
 "trusted root certificate store."
 msgstr ""
+"Bu kök sertifikasına güvenilmiyor. Güvenmek için, sisteminizin güvenilir kök "
+"sertifika mağazasına eklemeniz gerekli."
 
 #: cryptui.rc:31
 msgid "This certificate could not be validated to a trusted root certificate."
-msgstr ""
+msgstr "Bu sertifika, güvenilir bir kök sertifikası ile doğrulanamadı."
 
 #: cryptui.rc:32
 msgid "This certificate's issuer could not be found."
-msgstr ""
+msgstr "Bu sertifika dağıtımcısı bulunamadı."
 
 #: cryptui.rc:33
 msgid "All the intended purposes of this certificate could not be verified."
-msgstr ""
+msgstr "Bu sertifikanın istenen tüm amaçları doğrulanamadı."
 
 #: cryptui.rc:34
 msgid "This certificate is intended for the following purposes:"
-msgstr ""
+msgstr "Bu sertifika aşağıdaki isteklerde amaçlanıyor:"
 
 #: cryptui.rc:35
 msgid "Issued to: "
-msgstr ""
+msgstr "Verilen:"
 
 #: cryptui.rc:36
 msgid "Issued by: "
-msgstr ""
+msgstr "Veren:"
 
 #: cryptui.rc:37
 msgid "Valid from "
-msgstr ""
+msgstr "Geçerlilik başlangıcı:"
 
 #: cryptui.rc:38
 msgid " to "
-msgstr ""
+msgstr "bitişi:"
 
 #: cryptui.rc:39
 msgid "This certificate has an invalid signature."
-msgstr ""
+msgstr "Bu sertifikanın geçersiz imzası var."
 
 #: cryptui.rc:40
 msgid "This certificate has expired or is not yet valid."
-msgstr ""
+msgstr "Bu sertifikanın süresi dolmuş veya henüz geçerli değil."
 
 #: cryptui.rc:41
 msgid "This certificate's validity period exceeds that of its issuer."
-msgstr ""
+msgstr "Bu sertifikanın geçerlilik peryodu dağıtıcısını aşmakta."
 
 #: cryptui.rc:42
 msgid "This certificate was revoked by its issuer."
-msgstr ""
+msgstr "Bu sertifika dağıtıcısı tarafından iptal edildi."
 
 #: cryptui.rc:43
 msgid "This certificate is OK."
-msgstr ""
+msgstr "Bu sertifika tamam."
 
 #: cryptui.rc:44
 msgid "Field"
-msgstr ""
+msgstr "Alan"
 
 #: cryptui.rc:45
 msgid "Value"
@@ -2451,11 +2479,11 @@ msgstr "Değer"
 
 #: cryptui.rc:46 cryptui.rc:99 cryptui.rc:105
 msgid "<All>"
-msgstr ""
+msgstr "<Tüm>"
 
 #: cryptui.rc:47
 msgid "Version 1 Fields Only"
-msgstr ""
+msgstr "Sadece Sürüm 1 Alanları"
 
 #: cryptui.rc:48
 msgid "Extensions Only"
@@ -2467,7 +2495,7 @@ msgstr "Sadece Kritik Eklentile"
 
 #: cryptui.rc:50
 msgid "Properties Only"
-msgstr ""
+msgstr "Sadece Özellikler"
 
 #: cryptui.rc:52
 msgid "Serial number"
@@ -2475,39 +2503,39 @@ msgstr "Seri numarası"
 
 #: cryptui.rc:53
 msgid "Issuer"
-msgstr ""
+msgstr "Dağıtıcı"
 
 #: cryptui.rc:54
 msgid "Valid from"
-msgstr ""
+msgstr "Geçerlilik başlangıcı"
 
 #: cryptui.rc:55
 msgid "Valid to"
-msgstr ""
+msgstr "Geçerlilik bitişi"
 
 #: cryptui.rc:56
 msgid "Subject"
-msgstr ""
+msgstr "Konu"
 
 #: cryptui.rc:57
 msgid "Public key"
-msgstr ""
+msgstr "Açık anahtar"
 
 #: cryptui.rc:58
 msgid "%1 (%2!d! bits)"
-msgstr ""
+msgstr "%1 (%2!d! bit)"
 
 #: cryptui.rc:59
 msgid "SHA1 hash"
-msgstr ""
+msgstr "SHA1 hash"
 
 #: cryptui.rc:60
 msgid "Enhanced key usage (property)"
-msgstr ""
+msgstr "İyileştirilmiş anahtar kullanımı (özellik)"
 
 #: cryptui.rc:61
 msgid "Friendly name"
-msgstr ""
+msgstr "Dostça isim"
 
 #: cryptui.rc:62 shell32.rc:239 ipconfig.rc:41
 msgid "Description"
@@ -2519,39 +2547,43 @@ msgstr "Sertifika Özellikleri"
 
 #: cryptui.rc:64
 msgid "Please enter an OID in the form 1.2.3.4"
-msgstr ""
+msgstr "Lütfen 1.2.3.4 biçiminde bir OID girin"
 
 #: cryptui.rc:65
 msgid "The OID you entered already exists."
-msgstr ""
+msgstr "Girdiğiniz OID zaten mevcut."
 
 #: cryptui.rc:67
 msgid "Please select a certificate store."
-msgstr ""
+msgstr "Lütfen bir sertifika mağazası seçin."
 
 #: cryptui.rc:69
 msgid ""
 "The file contains objects that do not match the given criteria. Please "
 "select another file."
 msgstr ""
+"Bu dosya belirtilen kriterlerle eşleşmeyen nesneler içeriyor. Lütfen başka "
+"bir dosya seçin."
 
 #: cryptui.rc:70
 msgid "File to Import"
-msgstr ""
+msgstr "Alınacak Dosya"
 
 #: cryptui.rc:71
 msgid "Specify the file you want to import."
-msgstr ""
+msgstr "Almak istediğiniz dosyayı belirtin."
 
 #: cryptui.rc:72 cryptui.rc:95
 msgid "Certificate Store"
-msgstr ""
+msgstr "Sertifika Mağazası"
 
 #: cryptui.rc:73
 msgid ""
 "Certificate stores are collections of certificates, certificate revocation "
 "lists, and certificate trust lists."
 msgstr ""
+"Sertifika mağazaları, sertifikalar, sertifika iptal listesi ve sertifika "
+"güven listelerinin koleksiyonlarıdır."
 
 #: cryptui.rc:74
 msgid "X.509 Certificate (*.cer; *.crt)"
@@ -2559,19 +2591,19 @@ msgstr "X.509 Sertifika (*.cer; *.crt)"
 
 #: cryptui.rc:75
 msgid "Personal Information Exchange (*.pfx; *.p12)"
-msgstr ""
+msgstr "Kişisel Bilgi Değişimi (*.pfx; *.p12)"
 
 #: cryptui.rc:76 cryptui.rc:155
 msgid "Certificate Revocation List (*.crl)"
-msgstr ""
+msgstr "Sertifika İptal Listesi (*.crl)"
 
 #: cryptui.rc:77 cryptui.rc:156
 msgid "Certificate Trust List (*.stl)"
-msgstr ""
+msgstr "Sertifika Güven Listesi (*.stl)"
 
 #: cryptui.rc:79
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
-msgstr ""
+msgstr "CMS/PKCS #7 İletileri (*.spc; *.p7b)"
 
 #: cryptui.rc:81
 msgid "Please select a file."
@@ -2611,39 +2643,39 @@ msgstr "İçerik"
 
 #: cryptui.rc:91
 msgid "Certificate Revocation List"
-msgstr ""
+msgstr "Sertifika İptal Listesi"
 
 #: cryptui.rc:93
 msgid "CMS/PKCS #7 Message"
-msgstr ""
+msgstr "CMS/PKCS #7 İletisi"
 
 #: cryptui.rc:94
 msgid "Personal Information Exchange"
-msgstr ""
+msgstr "Kişisel Bilgi Değişimi"
 
 #: cryptui.rc:96
 msgid "The import was successful."
-msgstr ""
+msgstr "Alma başarılı."
 
 #: cryptui.rc:97
 msgid "The import failed."
-msgstr ""
+msgstr "Alma başarısız."
 
 #: cryptui.rc:98
 msgid "Arial"
-msgstr ""
+msgstr "Arial"
 
 #: cryptui.rc:100
 msgid "<Advanced Purposes>"
-msgstr ""
+msgstr "<Gelişmiş Amaçlar>"
 
 #: cryptui.rc:101
 msgid "Issued To"
-msgstr ""
+msgstr "Verilen"
 
 #: cryptui.rc:102
 msgid "Issued By"
-msgstr ""
+msgstr "Veren"
 
 #: cryptui.rc:103
 msgid "Expiration Date"
@@ -2651,7 +2683,7 @@ msgstr "Son Kullanma Tarihi"
 
 #: cryptui.rc:104
 msgid "Friendly Name"
-msgstr ""
+msgstr "Dostça İsim"
 
 #: cryptui.rc:106 cryptui.rc:120
 msgid "<None>"
@@ -2663,6 +2695,9 @@ msgid ""
 "sign messages with it.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
+"Artık bu sertifika ile iletileri çözemeyecek veya iletileri "
+"imzalayamayacaksınız.\n"
+"Bu sertifikayı silmek istediğinizden emin misiniz?"
 
 #: cryptui.rc:108
 msgid ""
@@ -2670,6 +2705,9 @@ msgid ""
 "sign messages with them.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
+"Artık bu sertifikalar ile iletileri çözemeyecek veya iletileri "
+"imzalayamayacaksınız.\n"
+"Bu sertifikaları silmek istediğinizden emin misiniz?"
 
 #: cryptui.rc:109
 msgid ""
@@ -2677,6 +2715,9 @@ msgid ""
 "verify messages signed with it.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
+"Bu sertifikayı kullanarak iletileri şifrelemeyecek ve imzalanmış iletileri "
+"doğrulayamayacaksınız.\n"
+"Bu sertifikayı silmek istediğinizden emin misiniz?"
 
 #: cryptui.rc:110
 msgid ""
@@ -2684,6 +2725,9 @@ msgid ""
 "verify messages signed with it.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
+"Artık bu sertifikalar ile iletileri şifreleyemeyecek veya imzalanmış "
+"iletileri doğrulayamayacaksınız.\n"
+"Bu sertifikaları silmek istediğinizden emin misiniz?"
 
 #: cryptui.rc:111
 msgid ""
@@ -2691,6 +2735,9 @@ msgid ""
 "trusted.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
+"Bu sertifika yetkilisi tarafından sağlanmış sertifikalara artık "
+"güvenilmeyecek.\n"
+"Bu sertifikayı silmek istediğinizden emin misiniz?"
 
 #: cryptui.rc:112
 msgid ""
@@ -2698,6 +2745,9 @@ msgid ""
 "trusted.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
+"Bu sertifika yetkilileri tarafından sağlanmış sertifikalara artık "
+"güvenilmeyecek.\n"
+"Bu sertifikaları silmek istediğinizden emin misiniz?"
 
 #: cryptui.rc:113
 msgid ""
@@ -2705,6 +2755,9 @@ msgid ""
 "certification authorities it issued, will no longer be trusted.\n"
 "Are you sure you want to remove this trusted root certificate?"
 msgstr ""
+"Bu kök sertifika yetkilisi tarafından sağlanan sertifikalara veya sertifika "
+"sağladığı kişilere artık güvenilmeyecek.\n"
+"Bu kök sertifikasını silmek istediğinizden emin misiniz?"
 
 #: cryptui.rc:114
 msgid ""
@@ -2712,100 +2765,109 @@ msgid ""
 "certification authorities they issued, will no longer be trusted.\n"
 "Are you sure you want to remove these trusted root certificates?"
 msgstr ""
+"Bu kök sertifika yetkilisi tarafından sağlanan sertifikalara veya sertifika "
+"sağladığı kişilere artık güvenilmeyecek.\n"
+"Bu kök sertifikalarını silmek istediğinizden emin misiniz?"
 
 #: cryptui.rc:115
 msgid ""
 "Software signed by this publisher will no longer be trusted.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
+"Bu yayıncı tarafından imzalanan yazılıma artık güvenilmeyecek.\n"
+"Bu sertifikayı kaldırmak istediğinizden emin misiniz?"
 
 #: cryptui.rc:116
 msgid ""
 "Software signed by these publishers will no longer be trusted.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
+"Bu yayıncılar tarafından imzalanan yazılıma güvenilmeyecek.\n"
+"Bu sertifikaları kaldırmak istediğinizden emin misiniz?"
 
 #: cryptui.rc:117
 msgid "Are you sure you want to remove this certificate?"
-msgstr ""
+msgstr "Bu sertifikayı kaldırmak istediğinizden emin misiniz?"
 
 #: cryptui.rc:118
 msgid "Are you sure you want to remove these certificates?"
-msgstr ""
+msgstr "Bu sertifikaları kaldırmak istediğinizden emin misiniz?"
 
 #: cryptui.rc:121
 msgid "Ensures the identity of a remote computer"
-msgstr ""
+msgstr "Uzak bir bilgisayarın kimliğini kanıtlar"
 
 #: cryptui.rc:122
 msgid "Proves your identity to a remote computer"
-msgstr ""
+msgstr "Uzak bir bilgisayara kimliğinizi kanıtlar"
 
 #: cryptui.rc:123
 msgid ""
 "Ensures software came from software publisher\n"
 "Protects software from alteration after publication"
 msgstr ""
+"Yazılımın yazılım dağıtıcısından geldiğinden emin kılar\n"
+"Yazılımın dağıtımdan sonra değiştirilmesini önler"
 
 #: cryptui.rc:124
 msgid "Protects e-mail messages"
-msgstr ""
+msgstr "E-posta mesajlarını korur"
 
 #: cryptui.rc:125
 msgid "Allows secure communication over the Internet"
-msgstr ""
+msgstr "İnternet üzerinden güvenli iletişime izin verir"
 
 #: cryptui.rc:126
 msgid "Allows data to be signed with the current time"
-msgstr ""
+msgstr "Geçerli zaman ile verinin imzalanmasına izin verir"
 
 #: cryptui.rc:127
 msgid "Allows you to digitally sign a certificate trust list"
-msgstr ""
+msgstr "Bir sertifika güven listesini dijital olarak imzalamanıza izin verir"
 
 #: cryptui.rc:128
 msgid "Allows data on disk to be encrypted"
-msgstr ""
+msgstr "Diskteki verinin şifrelenmesine izin verir"
 
 #: cryptui.rc:144
 msgid "Private Key Archival"
-msgstr ""
+msgstr "Özel Anahtar Arşivlemesi"
 
 #: cryptui.rc:148
 msgid "Export Format"
-msgstr ""
+msgstr "Dışa Aktarım Biçimi"
 
 #: cryptui.rc:149
 msgid "Choose the format in which the content will be saved."
-msgstr ""
+msgstr "İçeriğin kaydedileceği biçimi seçin."
 
 #: cryptui.rc:150
 msgid "Export Filename"
-msgstr ""
+msgstr "Dışa aktarma dosya adı"
 
 #: cryptui.rc:151
 msgid "Specify the name of the file in which the content will be saved."
-msgstr ""
+msgstr "İçeriğin kaydedileceği dosyanın adını belirtin."
 
 #: cryptui.rc:152
 msgid "The specified file already exists. Do you want to replace it?"
-msgstr ""
+msgstr "Belirtilen isim mevcut. Üzerine yazılsın mı?"
 
 #: cryptui.rc:153
 msgid "DER-Encoded Binary X.509 (*.cer)"
-msgstr ""
+msgstr "DER-Kodlu İkili X.509 (*.cer)"
 
 #: cryptui.rc:154
 msgid "Base64-Encoded X.509 (*.cer)"
-msgstr ""
+msgstr "Base64-Kodlu X.509 (*.cer)"
 
 #: cryptui.rc:157
 msgid "CMS/PKCS #7 Messages (*.p7b)"
-msgstr ""
+msgstr "CMS/PKCS #7 İletileri (*.p7b)"
 
 #: cryptui.rc:158
 msgid "Personal Information Exchange (*.pfx)"
-msgstr ""
+msgstr "Kişisel Bilgi Değişimi (*.pfx)"
 
 #: cryptui.rc:160
 msgid "File Format"
@@ -2813,29 +2875,31 @@ msgstr "Dosya Biçimi"
 
 #: cryptui.rc:161
 msgid "Include all certificates in certificate path"
-msgstr ""
+msgstr "Sertifika yolundaki tüm sertifikaları dahil et"
 
 #: cryptui.rc:162
 msgid "Export keys"
-msgstr ""
+msgstr "Anahtarları aktar"
 
 #: cryptui.rc:165
 msgid "The export was successful."
-msgstr ""
+msgstr "Dışa aktarma başarılı."
 
 #: cryptui.rc:166
 msgid "The export failed."
-msgstr ""
+msgstr "Aktarma başarısız."
 
 #: cryptui.rc:167
 msgid "Export Private Key"
-msgstr ""
+msgstr "Özel Anahtarı Aktar"
 
 #: cryptui.rc:168
 msgid ""
 "The certificate contains a private key which may be exported along with the "
 "certificate."
 msgstr ""
+"Bu sertifika, sertifika ile birlikte dışa aktarılabilecek özel bir anahtar "
+"içeriyor"
 
 #: cryptui.rc:169
 msgid "Enter Password"
@@ -2843,7 +2907,7 @@ msgstr "Parola Gir"
 
 #: cryptui.rc:170
 msgid "You may password-protect a private key."
-msgstr ""
+msgstr "Özel bir anahtarı parola ile koruyabilirsiniz."
 
 #: cryptui.rc:171
 msgid "The passwords do not match."
@@ -2851,11 +2915,11 @@ msgstr "Parolalar eşleşmedi."
 
 #: cryptui.rc:172
 msgid "Note: The private key for this certificate could not be opened."
-msgstr ""
+msgstr "Not: Bu sertifika için özel anahtar açılamaz."
 
 #: cryptui.rc:173
 msgid "Note: The private key for this certificate is not exportable."
-msgstr ""
+msgstr "Not: Bu sertifika için özel anahtar aktarılamaz."
 
 #: devenum.rc:32
 msgid "Default DirectSound"
@@ -2863,7 +2927,7 @@ msgstr "Varsayılan DirectSound"
 
 #: devenum.rc:33
 msgid "DirectSound: %s"
-msgstr ""
+msgstr "DirectSound: %s"
 
 #: devenum.rc:34
 msgid "Default WaveOut Device"
@@ -2895,7 +2959,7 @@ msgstr "Eylemler"
 
 #: dinput.rc:51
 msgid "Mapping"
-msgstr ""
+msgstr "Eşleme"
 
 #: dinput.rc:53
 msgid "Show Assigned First"
@@ -2967,15 +3031,15 @@ msgstr "ÇİNCE_GB2312"
 
 #: gdi32.rc:37
 msgid "Hangul"
-msgstr ""
+msgstr "Hangul"
 
 #: gdi32.rc:38
 msgid "CHINESE_BIG5"
-msgstr ""
+msgstr "CHINESE_BIG5"
 
 #: gdi32.rc:39
 msgid "Hangul(Johab)"
-msgstr ""
+msgstr "Hangul(Johab)"
 
 #: gdi32.rc:40
 msgid "Symbol"
@@ -3267,6 +3331,8 @@ msgid ""
 "Temporary internet files\n"
 "Cached copies of web pages, images and certificates."
 msgstr ""
+"Geçici internet dosyaları\n"
+"Web sayfaları, resimler ve sertifikaların önbellek kopyaları."
 
 #: inetcpl.rc:70
 msgid ""
@@ -3274,24 +3340,32 @@ msgid ""
 "Files saved on your computer by websites, which store things like user "
 "preferences and login information."
 msgstr ""
+"Çerezler\n"
+"Gezdiğiniz sitelerın sakladığı tercih ve oturum bilgileri gibi bilgiler."
 
 #: inetcpl.rc:72
 msgid ""
 "History\n"
 "List of websites you have accessed."
 msgstr ""
+"Geçmiş\n"
+"Eriştiğiniz websitelerini listeler"
 
 #: inetcpl.rc:74
 msgid ""
 "Form data\n"
 "Usernames and other information you have entered into forms."
 msgstr ""
+"Form verileri\n"
+"Formlara girdiğiniz kullanıcı adı ve diğer bilgiler"
 
 #: inetcpl.rc:76
 msgid ""
 "Passwords\n"
 "Saved passwords you have entered into forms."
 msgstr ""
+"Şifreler\n"
+"Formlara girdiğiniz şifreler"
 
 #: inetcpl.rc:79 progman.rc:64
 msgid "Delete"
@@ -3306,6 +3380,8 @@ msgid ""
 "Certificates are used for your personal identification and to identify "
 "certificate authorities and publishers."
 msgstr ""
+"Sertifikalar kişisel kimliğiniz için ve sertifika yetkilileri ve "
+"yayıncılarını tanımlamak için kullanılırlar."
 
 #: inetcpl.rc:111
 msgid "Certificates..."
@@ -3325,7 +3401,7 @@ msgstr "Wine Internet Tarayıcısı ve bağlı ayarlarını yapılandır"
 
 #: inetcpl.rc:30
 msgid "Security settings for zone: "
-msgstr "Bölge için güvenlik ayarları:"
+msgstr "Bölge için güvenlik ayarları: "
 
 #: inetcpl.rc:31
 msgid "Custom"
@@ -3409,15 +3485,15 @@ msgstr "Oyun Denetimleri"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
-msgstr ""
+msgstr "Nesneyi ilkel birime dönüştürürken hata"
 
 #: jscript.rc:26
 msgid "Invalid procedure call or argument"
-msgstr ""
+msgstr "Geçersiz prosedür çağırımı veya argümanı"
 
 #: jscript.rc:27
 msgid "Subscript out of range"
-msgstr ""
+msgstr "Alt indis kapsama dışında"
 
 #: jscript.rc:28
 msgid "Object required"
@@ -3429,11 +3505,11 @@ msgstr "Otomasyon sunucusu nesneyi oluşturamadı"
 
 #: jscript.rc:30
 msgid "Object doesn't support this property or method"
-msgstr ""
+msgstr "Nesne bu özelliği veya yöntemi desteklemiyor"
 
 #: jscript.rc:31
 msgid "Object doesn't support this action"
-msgstr ""
+msgstr "Nesne bu işlemi desteklemiyor"
 
 #: jscript.rc:32
 msgid "Argument not optional"
@@ -3513,7 +3589,7 @@ msgstr "'|' tanımsız"
 
 #: jscript.rc:51
 msgid "Boolean object expected"
-msgstr ""
+msgstr "Mantıksal nesne bekleniyor"
 
 #: jscript.rc:52
 msgid "Cannot delete '|'"
@@ -3525,23 +3601,23 @@ msgstr "VBArray nesnesi beklendi"
 
 #: jscript.rc:54
 msgid "JScript object expected"
-msgstr ""
+msgstr "JScript nesnesi bekleniyor"
 
 #: jscript.rc:55
 msgid "Syntax error in regular expression"
-msgstr ""
+msgstr "Düzenli ifadede sözdizimi hatası"
 
 #: jscript.rc:57
 msgid "URI to be encoded contains invalid characters"
-msgstr ""
+msgstr "Kodlanacak URI geçersiz karakterler içeriyor"
 
 #: jscript.rc:56
 msgid "URI to be decoded is incorrect"
-msgstr ""
+msgstr "Kodu çözülecek URI geçersiz"
 
 #: jscript.rc:58
 msgid "Number of fraction digits is out of range"
-msgstr ""
+msgstr "Kesirli rakam sayısı aralık dışı"
 
 #: jscript.rc:59
 msgid "Precision is out of range"
@@ -3673,35 +3749,35 @@ msgstr "Kağıt bitti.\n"
 
 #: winerror.mc:171
 msgid "Write fault.\n"
-msgstr ""
+msgstr "Yazma hatası.\n"
 
 #: winerror.mc:176
 msgid "Read fault.\n"
-msgstr ""
+msgstr "Okuma hatası.\n"
 
 #: winerror.mc:181
 msgid "General failure.\n"
-msgstr ""
+msgstr "Genel hata.\n"
 
 #: winerror.mc:186
 msgid "Sharing violation.\n"
-msgstr ""
+msgstr "Paylaşma ihlali.\n"
 
 #: winerror.mc:191
 msgid "Lock violation.\n"
-msgstr ""
+msgstr "Kilit ihlali.\n"
 
 #: winerror.mc:196
 msgid "Wrong disk.\n"
-msgstr ""
+msgstr "Hatalı disk.\n"
 
 #: winerror.mc:201
 msgid "Sharing buffer exceeded.\n"
-msgstr ""
+msgstr "Paylaşma tamponu doldu.\n"
 
 #: winerror.mc:206
 msgid "End of file.\n"
-msgstr ""
+msgstr "Dosya sonu.\n"
 
 #: winerror.mc:211 winerror.mc:436
 msgid "Disk full.\n"
@@ -3709,15 +3785,15 @@ msgstr "Disk dolu.\n"
 
 #: winerror.mc:216
 msgid "Request not supported.\n"
-msgstr ""
+msgstr "İstek desteklenmiyor.\n"
 
 #: winerror.mc:221
 msgid "Remote machine not listening.\n"
-msgstr ""
+msgstr "Uzak makine dinlemiyor.\n"
 
 #: winerror.mc:226
 msgid "Duplicate network name.\n"
-msgstr ""
+msgstr "Yinelenmiş ağ adı.\n"
 
 #: winerror.mc:231
 msgid "Bad network path.\n"
@@ -3725,39 +3801,39 @@ msgstr "Kötü ağ yolu.\n"
 
 #: winerror.mc:236
 msgid "Network busy.\n"
-msgstr ""
+msgstr "Ağ meşgul.\n"
 
 #: winerror.mc:241
 msgid "Device does not exist.\n"
-msgstr ""
+msgstr "Aygıt mevcut değil.\n"
 
 #: winerror.mc:246
 msgid "Too many commands.\n"
-msgstr ""
+msgstr "Çok fazla komut.\n"
 
 #: winerror.mc:251
 msgid "Adapter hardware error.\n"
-msgstr ""
+msgstr "Bağlayıcı donanım hatası.\n"
 
 #: winerror.mc:256
 msgid "Bad network response.\n"
-msgstr ""
+msgstr "Bozuk ağ yanıtı.\n"
 
 #: winerror.mc:261
 msgid "Unexpected network error.\n"
-msgstr ""
+msgstr "Beklenmedik ağ hatası.\n"
 
 #: winerror.mc:266
 msgid "Bad remote adapter.\n"
-msgstr ""
+msgstr "Bozuk uzak bağlayıcı.\n"
 
 #: winerror.mc:271
 msgid "Print queue full.\n"
-msgstr ""
+msgstr "Yazdırma kuyruğu dolu.\n"
 
 #: winerror.mc:276
 msgid "No spool space.\n"
-msgstr ""
+msgstr "Sarım boşluğu yok.\n"
 
 #: winerror.mc:281
 msgid "Print canceled.\n"
@@ -3781,43 +3857,43 @@ msgstr "Kötü ağ adı.\n"
 
 #: winerror.mc:306
 msgid "Too many network names.\n"
-msgstr ""
+msgstr "Çok sayıda ağ adı.\n"
 
 #: winerror.mc:311
 msgid "Too many network sessions.\n"
-msgstr ""
+msgstr "Çok sayıda ağ oturumu.\n"
 
 #: winerror.mc:316
 msgid "Sharing paused.\n"
-msgstr ""
+msgstr "Paylaşım bekletildi.\n"
 
 #: winerror.mc:321
 msgid "Request not accepted.\n"
-msgstr ""
+msgstr "İstek kabul edilmedi.\n"
 
 #: winerror.mc:326
 msgid "Redirector paused.\n"
-msgstr ""
+msgstr "Yönlendirici bekletildi.\n"
 
 #: winerror.mc:331
 msgid "File exists.\n"
-msgstr ""
+msgstr "Dosya mevcut.\n"
 
 #: winerror.mc:336
 msgid "Cannot create.\n"
-msgstr ""
+msgstr "Oluşturulamıyor.\n"
 
 #: winerror.mc:341
 msgid "Int24 failure.\n"
-msgstr ""
+msgstr "Int24 başarısız.\n"
 
 #: winerror.mc:346
 msgid "Out of structures.\n"
-msgstr ""
+msgstr "Yapı dışı.\n"
 
 #: winerror.mc:351
 msgid "Already assigned.\n"
-msgstr ""
+msgstr "Zaten atanmış.\n"
 
 #: winerror.mc:356 winerror.mc:1711
 msgid "Invalid password.\n"
@@ -3829,67 +3905,67 @@ msgstr "Geçersiz parametre.\n"
 
 #: winerror.mc:366
 msgid "Net write fault.\n"
-msgstr ""
+msgstr "Net yazım hatası.\n"
 
 #: winerror.mc:371
 msgid "No process slots.\n"
-msgstr ""
+msgstr "Süreç yeri yok.\n"
 
 #: winerror.mc:376
 msgid "Too many semaphores.\n"
-msgstr ""
+msgstr "Çok fazla bayrak işareti.\n"
 
 #: winerror.mc:381
 msgid "Exclusive semaphore already owned.\n"
-msgstr ""
+msgstr "Dışsal semafor zaten sahipli.\n"
 
 #: winerror.mc:386
 msgid "Semaphore is set.\n"
-msgstr ""
+msgstr "Bayrak işareti ayarlanmış.\n"
 
 #: winerror.mc:391
 msgid "Too many semaphore requests.\n"
-msgstr ""
+msgstr "Çok fazla bayrak işareti talebi.\n"
 
 #: winerror.mc:396
 msgid "Invalid at interrupt time.\n"
-msgstr ""
+msgstr "Kesme zamanında geçersiz.\n"
 
 #: winerror.mc:401
 msgid "Semaphore owner died.\n"
-msgstr ""
+msgstr "Semafor sahibi sonlandı.\n"
 
 #: winerror.mc:406
 msgid "Semaphore user limit.\n"
-msgstr ""
+msgstr "Semafor kullanıcı sınırı.\n"
 
 #: winerror.mc:411
 msgid "Insert disk for drive %1.\n"
-msgstr ""
+msgstr "%1 sürücüsü için disk yerleştirin.\n"
 
 #: winerror.mc:416
 msgid "Drive locked.\n"
-msgstr ""
+msgstr "Sürücü kilitli.\n"
 
 #: winerror.mc:421
 msgid "Broken pipe.\n"
-msgstr ""
+msgstr "Bozuk iletişim tüneli.\n"
 
 #: winerror.mc:426
 msgid "Open failed.\n"
-msgstr ""
+msgstr "Açma başarısız.\n"
 
 #: winerror.mc:431
 msgid "Buffer overflow.\n"
-msgstr ""
+msgstr "Tampon taşımı.\n"
 
 #: winerror.mc:441
 msgid "No more search handles.\n"
-msgstr ""
+msgstr "Daha fazla arama işleyici yok.\n"
 
 #: winerror.mc:446
 msgid "Invalid target handle.\n"
-msgstr ""
+msgstr "Geçersiz hedef alıcı.\n"
 
 #: winerror.mc:451
 msgid "Invalid IOCTL.\n"
@@ -3897,23 +3973,23 @@ msgstr "IOCTL geçersiz.\n"
 
 #: winerror.mc:456
 msgid "Invalid verify switch.\n"
-msgstr ""
+msgstr "Geçersiz doğrulama anahtarı.\n"
 
 #: winerror.mc:461
 msgid "Bad driver level.\n"
-msgstr ""
+msgstr "Bozuk sürücü seviyesi.\n"
 
 #: winerror.mc:466
 msgid "Call not implemented.\n"
-msgstr ""
+msgstr "Çalıştırılamaz.\n"
 
 #: winerror.mc:471
 msgid "Semaphore timeout.\n"
-msgstr ""
+msgstr "İşaret zaman aşımı.\n"
 
 #: winerror.mc:476
 msgid "Insufficient buffer.\n"
-msgstr ""
+msgstr "Yetersiz tampon.\n"
 
 #: winerror.mc:481
 msgid "Invalid name.\n"
@@ -3925,7 +4001,7 @@ msgstr "Geçersiz seviye.\n"
 
 #: winerror.mc:491
 msgid "No volume label.\n"
-msgstr ""
+msgstr "Yığın etiketi yok.\n"
 
 #: winerror.mc:496
 msgid "Module not found.\n"
@@ -3933,191 +4009,191 @@ msgstr "Modül bulunamadı.\n"
 
 #: winerror.mc:501
 msgid "Procedure not found.\n"
-msgstr ""
+msgstr "Prosedür bulunamadı.\n"
 
 #: winerror.mc:506
 msgid "No children to wait for.\n"
-msgstr ""
+msgstr "Beklenilecek alt görev yok.\n"
 
 #: winerror.mc:511
 msgid "Child process has not completed.\n"
-msgstr ""
+msgstr "Alt görev tamamlanmadı.\n"
 
 #: winerror.mc:516
 msgid "Invalid use of direct access handle.\n"
-msgstr ""
+msgstr "Doğrudan erişim kullanımı hatalı kullanıldı.\n"
 
 #: winerror.mc:521
 msgid "Negative seek.\n"
-msgstr ""
+msgstr "Negatif arama.\n"
 
 #: winerror.mc:531
 msgid "Drive is a JOIN target.\n"
-msgstr ""
+msgstr "Sürücü bir JOIN hedefi.\n"
 
 #: winerror.mc:536
 msgid "Drive is already JOINed.\n"
-msgstr ""
+msgstr "Sürücü zaten JOIN halinde.\n"
 
 #: winerror.mc:541
 msgid "Drive is already SUBSTed.\n"
-msgstr ""
+msgstr "Sürücü zaten SUBST halinde.\n"
 
 #: winerror.mc:546
 msgid "Drive is not JOINed.\n"
-msgstr ""
+msgstr "Sürücü JOIN halinde değil.\n"
 
 #: winerror.mc:551
 msgid "Drive is not SUBSTed.\n"
-msgstr ""
+msgstr "Sürücü SUBST halinde değil.\n"
 
 #: winerror.mc:556
 msgid "Attempt to JOIN onto a JOINed drive.\n"
-msgstr ""
+msgstr "JOIN halindeki sürücüye JOIN denemesi.\n"
 
 #: winerror.mc:561
 msgid "Attempt to SUBST onto a SUBSTed drive.\n"
-msgstr ""
+msgstr "SUBST halindeki sürücüye SUBST denemesi.\n"
 
 #: winerror.mc:566
 msgid "Attempt to JOIN to a SUBSTed drive.\n"
-msgstr ""
+msgstr "SUBST halindeki sürücüye JOIN denemesi.\n"
 
 #: winerror.mc:571
 msgid "Attempt to SUBST to a JOINed drive.\n"
-msgstr ""
+msgstr "JOIN halindeki sürücüye SUBST denemesi.\n"
 
 #: winerror.mc:576
 msgid "Drive is busy.\n"
-msgstr ""
+msgstr "Sürücü meşgul.\n"
 
 #: winerror.mc:581
 msgid "Same drive.\n"
-msgstr ""
+msgstr "Aynı sürücü.\n"
 
 #: winerror.mc:586
 msgid "Not top-level directory.\n"
-msgstr ""
+msgstr "Üst seviye dizin değil.\n"
 
 #: winerror.mc:591
 msgid "Directory is not empty.\n"
-msgstr ""
+msgstr "Dİzin boş değil.\n"
 
 #: winerror.mc:596
 msgid "Path is in use as a SUBST.\n"
-msgstr ""
+msgstr "Yol bir SUBST olarak kullanımda.\n"
 
 #: winerror.mc:601
 msgid "Path is in use as a JOIN.\n"
-msgstr ""
+msgstr "Yol bir JOIN olarak kullanımda.\n"
 
 #: winerror.mc:606
 msgid "Path is busy.\n"
-msgstr ""
+msgstr "Yol meşgul.\n"
 
 #: winerror.mc:611
 msgid "Already a SUBST target.\n"
-msgstr ""
+msgstr "Zaten bir SUBST hedefi.\n"
 
 #: winerror.mc:616
 msgid "System trace not specified or disallowed.\n"
-msgstr ""
+msgstr "Sistem izi belirtilmemiş veya izin verilmiyor.\n"
 
 #: winerror.mc:621
 msgid "Event count for DosMuxSemWait incorrect.\n"
-msgstr ""
+msgstr "DosMuxSemWait için olay sayacı doğru değil.\n"
 
 #: winerror.mc:626
 msgid "Too many waiters for DosMuxSemWait.\n"
-msgstr ""
+msgstr "DosMuxSemWait için çok fazla bekleyen.\n"
 
 #: winerror.mc:631
 msgid "DosSemMuxWait list invalid.\n"
-msgstr ""
+msgstr "DosMuxSemWait listesi geçersiz.\n"
 
 #: winerror.mc:636
 msgid "Volume label too long.\n"
-msgstr ""
+msgstr "Hacim etiketi çok uzun.\n"
 
 #: winerror.mc:641
 msgid "Too many TCBs.\n"
-msgstr ""
+msgstr "Çok sayıda TCB.\n"
 
 #: winerror.mc:646
 msgid "Signal refused.\n"
-msgstr ""
+msgstr "Sinyal reddedildi.\n"
 
 #: winerror.mc:651
 msgid "Segment discarded.\n"
-msgstr ""
+msgstr "Bölüm silindi.\n"
 
 #: winerror.mc:656
 msgid "Segment not locked.\n"
-msgstr ""
+msgstr "Bölüm kilitli değil.\n"
 
 #: winerror.mc:661
 msgid "Bad thread ID address.\n"
-msgstr ""
+msgstr "Bozuk iş yığını kimlik adresi.\n"
 
 #: winerror.mc:666
 msgid "Bad arguments to DosExecPgm.\n"
-msgstr ""
+msgstr "DosExecPgm için hatalı argüman.\n"
 
 #: winerror.mc:671
 msgid "Path is invalid.\n"
-msgstr ""
+msgstr "Yol geçersiz.\n"
 
 #: winerror.mc:676
 msgid "Signal pending.\n"
-msgstr ""
+msgstr "Sinyal bekliyor.\n"
 
 #: winerror.mc:681
 msgid "Max system-wide thread count reached.\n"
-msgstr ""
+msgstr "Azami sistem çapında iş parçacığı sayısına ulaşıldı.\n"
 
 #: winerror.mc:686
 msgid "Lock failed.\n"
-msgstr ""
+msgstr "Kilitleme başarısız.\n"
 
 #: winerror.mc:691
 msgid "Resource in use.\n"
-msgstr ""
+msgstr "Kaynak kullanımda.\n"
 
 #: winerror.mc:696
 msgid "Cancel violation.\n"
-msgstr ""
+msgstr "İhlali iptal et.\n"
 
 #: winerror.mc:701
 msgid "Atomic locks not supported.\n"
-msgstr ""
+msgstr "Atomik kilitler desteklenmiyor.\n"
 
 #: winerror.mc:706
 msgid "Invalid segment number.\n"
-msgstr ""
+msgstr "Geçersiz segment numarası.\n"
 
 #: winerror.mc:711
 msgid "Invalid ordinal for %1.\n"
-msgstr ""
+msgstr "%1 için geçersiz sıra.\n"
 
 #: winerror.mc:716
 msgid "File already exists.\n"
-msgstr ""
+msgstr "Dosya zaten mevcut.\n"
 
 #: winerror.mc:721
 msgid "Invalid flag number.\n"
-msgstr ""
+msgstr "Geçersiz bayrak numarası.\n"
 
 #: winerror.mc:726
 msgid "Semaphore name not found.\n"
-msgstr ""
+msgstr "Semafor adı bulunamadı.\n"
 
 #: winerror.mc:731
 msgid "Invalid starting code segment for %1.\n"
-msgstr ""
+msgstr "%1 için geçersiz başlangıç kod segmenti.\n"
 
 #: winerror.mc:736
 msgid "Invalid starting stack segment for %1.\n"
-msgstr ""
+msgstr "%1 için geçersiz başlangıç yığın segmenti.\n"
 
 #: winerror.mc:741
 msgid "Invalid module type for %1.\n"
@@ -4125,11 +4201,11 @@ msgstr "%1 için geçersiz modül türü.\n"
 
 #: winerror.mc:746
 msgid "Invalid EXE signature in %1.\n"
-msgstr ""
+msgstr "%1 içinde geçersiz EXE imzası.\n"
 
 #: winerror.mc:751
 msgid "EXE %1 is marked invalid.\n"
-msgstr ""
+msgstr "EXE %1 geçersiz işaretlenmiş.\n"
 
 #: winerror.mc:756
 msgid "Bad EXE format for %1.\n"
@@ -4137,31 +4213,31 @@ msgstr "%1 için bozuk EXE biçimi.\n"
 
 #: winerror.mc:761
 msgid "Iterated data exceeds 64k in %1.\n"
-msgstr ""
+msgstr "Yinelenmiş veri %1 içinde 64k'ya ulaşıyor.\n"
 
 #: winerror.mc:766
 msgid "Invalid MinAllocSize in %1.\n"
-msgstr ""
+msgstr "%1 içinde geçersiz MinAllocSize.\n"
 
 #: winerror.mc:771
 msgid "Dynlink from invalid ring.\n"
-msgstr ""
+msgstr "Geçersiz dönüşten dynlink.\n"
 
 #: winerror.mc:776
 msgid "IOPL not enabled.\n"
-msgstr ""
+msgstr "IOPL etkin değil.\n"
 
 #: winerror.mc:781
 msgid "Invalid SEGDPL in %1.\n"
-msgstr ""
+msgstr "%1 içinde geçersiz SEGDPL.\n"
 
 #: winerror.mc:786
 msgid "Auto data segment exceeds 64k.\n"
-msgstr ""
+msgstr "Otomatik veri segmenti 64k'yı aşıyor.\n"
 
 #: winerror.mc:791
 msgid "Ring 2 segment must be movable.\n"
-msgstr ""
+msgstr "Dönüş 2 segmenti hareketli olmalı.\n"
 
 #: winerror.mc:796
 msgid "Relocation chain exceeds segment limit in %1.\n"
@@ -4177,11 +4253,11 @@ msgstr ""
 
 #: winerror.mc:811
 msgid "No signal sent.\n"
-msgstr ""
+msgstr "Sinyal ayarlanmadı.\n"
 
 #: winerror.mc:816
 msgid "File name is too long.\n"
-msgstr ""
+msgstr "Dosya adı çok uzun.\n"
 
 #: winerror.mc:821
 msgid "Ring 2 stack in use.\n"
@@ -4193,11 +4269,11 @@ msgstr ""
 
 #: winerror.mc:831
 msgid "Invalid signal number.\n"
-msgstr ""
+msgstr "Geçersiz sinyal numarası.\n"
 
 #: winerror.mc:836
 msgid "Error setting signal handler.\n"
-msgstr ""
+msgstr "Sinyal ele alıcısı ayarlanırken hata.\n"
 
 #: winerror.mc:841
 msgid "Segment locked.\n"
@@ -4205,7 +4281,7 @@ msgstr ""
 
 #: winerror.mc:846
 msgid "Too many modules.\n"
-msgstr ""
+msgstr "Çok fazla modül.\n"
 
 #: winerror.mc:851
 msgid "Nesting LoadModule calls not allowed.\n"
@@ -4217,47 +4293,47 @@ msgstr ""
 
 #: winerror.mc:861
 msgid "Bad pipe.\n"
-msgstr ""
+msgstr "Kötü iletişim tüneli.\n"
 
 #: winerror.mc:866
 msgid "Pipe busy.\n"
-msgstr ""
+msgstr "İletişim tüneli meşgul.\n"
 
 #: winerror.mc:871
 msgid "Pipe closed.\n"
-msgstr ""
+msgstr "İletişim tüneli kapalı.\n"
 
 #: winerror.mc:876
 msgid "Pipe not connected.\n"
-msgstr ""
+msgstr "İletişim tüneli bağlı değil.\n"
 
 #: winerror.mc:881
 msgid "More data available.\n"
-msgstr ""
+msgstr "Daha fazla veri kullanılabilir.\n"
 
 #: winerror.mc:886
 msgid "Session canceled.\n"
-msgstr ""
+msgstr "Oturum iptal edildi.\n"
 
 #: winerror.mc:891
 msgid "Invalid extended attribute name.\n"
-msgstr ""
+msgstr "Geçersiz uzatılmış özellik adı.\n"
 
 #: winerror.mc:896
 msgid "Extended attribute list inconsistent.\n"
-msgstr ""
+msgstr "Uzatılmış özellik listesi tutarsız.\n"
 
 #: winerror.mc:901
 msgid "No more data available.\n"
-msgstr ""
+msgstr "Daha fazla veri kullanılabilir değil.\n"
 
 #: winerror.mc:906
 msgid "Cannot use Copy API.\n"
-msgstr ""
+msgstr "Kopyalama API'ı kullanılamaz.\n"
 
 #: winerror.mc:911
 msgid "Directory name invalid.\n"
-msgstr ""
+msgstr "Dizin adı geçersiz.\n"
 
 #: winerror.mc:916
 msgid "Extended attributes didn't fit.\n"
@@ -4313,11 +4389,11 @@ msgstr ""
 
 #: winerror.mc:981
 msgid "Pipe connected.\n"
-msgstr ""
+msgstr "İletişim tüneli bağlandı.\n"
 
 #: winerror.mc:986
 msgid "Pipe listening.\n"
-msgstr ""
+msgstr "İletişim tüneli dinleniyor.\n"
 
 #: winerror.mc:991
 msgid "Extended attribute access denied.\n"
@@ -4377,7 +4453,7 @@ msgstr ""
 
 #: winerror.mc:1061
 msgid "Registry corrupt.\n"
-msgstr ""
+msgstr "Kayıt defteri bozuk.\n"
 
 #: winerror.mc:1066
 msgid "Invalid key.\n"
@@ -4461,7 +4537,7 @@ msgstr ""
 
 #: winerror.mc:1166
 msgid "Service is disabled.\n"
-msgstr ""
+msgstr "Hizmet etkin değil.\n"
 
 #: winerror.mc:1171
 msgid "Circular dependency.\n"
@@ -4485,27 +4561,27 @@ msgstr ""
 
 #: winerror.mc:1196
 msgid "Exception in service.\n"
-msgstr ""
+msgstr "Hizmette olağan dışı durum.\n"
 
 #: winerror.mc:1201
 msgid "Database does not exist.\n"
-msgstr ""
+msgstr "Veritabanı bulunmuyor.\n"
 
 #: winerror.mc:1206
 msgid "Service-specific error.\n"
-msgstr ""
+msgstr "Hizmete özel hata.\n"
 
 #: winerror.mc:1211
 msgid "Process aborted.\n"
-msgstr ""
+msgstr "İşlem durduruldu.\n"
 
 #: winerror.mc:1216
 msgid "Service dependency failed.\n"
-msgstr ""
+msgstr "Hizmet bağlılığı başarısız.\n"
 
 #: winerror.mc:1221
 msgid "Service login failed.\n"
-msgstr ""
+msgstr "Hizmet oturumu açılamadı.\n"
 
 #: winerror.mc:1226
 msgid "Service start-hang.\n"
@@ -4513,15 +4589,15 @@ msgstr ""
 
 #: winerror.mc:1231
 msgid "Invalid service lock.\n"
-msgstr ""
+msgstr "Geçersiz hizmet kilidi.\n"
 
 #: winerror.mc:1236
 msgid "Service marked for delete.\n"
-msgstr ""
+msgstr "Hizmet silinmek üzere işaretlendi.\n"
 
 #: winerror.mc:1241
 msgid "Service exists.\n"
-msgstr ""
+msgstr "Hizmet mevcut.\n"
 
 #: winerror.mc:1246
 msgid "System running last-known-good config.\n"
@@ -4541,15 +4617,15 @@ msgstr ""
 
 #: winerror.mc:1266
 msgid "Duplicate service name.\n"
-msgstr ""
+msgstr "Aynı hizmet adı.\n"
 
 #: winerror.mc:1271
 msgid "Different service account.\n"
-msgstr ""
+msgstr "Farklı hizmet hesabı.\n"
 
 #: winerror.mc:1276
 msgid "Driver failure cannot be detected.\n"
-msgstr ""
+msgstr "Sürücü başarısızlığı tespit edilemed.\n"
 
 #: winerror.mc:1281
 msgid "Process abort cannot be detected.\n"
@@ -4565,7 +4641,7 @@ msgstr ""
 
 #: winerror.mc:1296
 msgid "End of media.\n"
-msgstr ""
+msgstr "Ortamın sonu.\n"
 
 #: winerror.mc:1301
 msgid "Filemark detected.\n"
@@ -4573,7 +4649,7 @@ msgstr ""
 
 #: winerror.mc:1306
 msgid "Beginning of media.\n"
-msgstr ""
+msgstr "Ortamın başı.\n"
 
 #: winerror.mc:1311
 msgid "Setmark detected.\n"
@@ -4581,19 +4657,19 @@ msgstr ""
 
 #: winerror.mc:1316
 msgid "No data detected.\n"
-msgstr ""
+msgstr "Veri tespit edilemedi.\n"
 
 #: winerror.mc:1321
 msgid "Partition failure.\n"
-msgstr ""
+msgstr "Disk Bölümü hatası.\n"
 
 #: winerror.mc:1326
 msgid "Invalid block length.\n"
-msgstr ""
+msgstr "Geçersiz blok boyutu.\n"
 
 #: winerror.mc:1331
 msgid "Device not partitioned.\n"
-msgstr ""
+msgstr "Aygıt bölümlendirilmemiş.\n"
 
 #: winerror.mc:1336
 msgid "Unable to lock media.\n"
@@ -4601,19 +4677,19 @@ msgstr ""
 
 #: winerror.mc:1341
 msgid "Unable to unload media.\n"
-msgstr ""
+msgstr "Ortam yüklemesi kaldırılamadı.\n"
 
 #: winerror.mc:1346
 msgid "Media changed.\n"
-msgstr ""
+msgstr "Ortam değiştirildi.\n"
 
 #: winerror.mc:1351
 msgid "I/O bus reset.\n"
-msgstr ""
+msgstr "I/O bus sıfırlaması.\n"
 
 #: winerror.mc:1356
 msgid "No media in drive.\n"
-msgstr ""
+msgstr "Sürücüde ortam yok.\n"
 
 #: winerror.mc:1361
 msgid "No Unicode translation.\n"
@@ -4621,19 +4697,19 @@ msgstr ""
 
 #: winerror.mc:1366
 msgid "DLL init failed.\n"
-msgstr ""
+msgstr "DLL yükleme başarısız.\n"
 
 #: winerror.mc:1371
 msgid "Shutdown in progress.\n"
-msgstr ""
+msgstr "Kapatılıyor.\n"
 
 #: winerror.mc:1376
 msgid "No shutdown in progress.\n"
-msgstr ""
+msgstr "Devam eden bir kapatma yok.\n"
 
 #: winerror.mc:1381
 msgid "I/O device error.\n"
-msgstr ""
+msgstr "G/Ç aygıt hatası.\n"
 
 #: winerror.mc:1386
 msgid "No serial devices found.\n"
@@ -4781,7 +4857,7 @@ msgstr ""
 
 #: winerror.mc:1566
 msgid "Element not found.\n"
-msgstr ""
+msgstr "Eleman bulunamadı.\n"
 
 #: winerror.mc:1571
 msgid "No match found.\n"
@@ -4945,59 +5021,59 @@ msgstr ""
 
 #: winerror.mc:1776
 msgid "Connection invalid.\n"
-msgstr ""
+msgstr "Bağlantı geçersiz.\n"
 
 #: winerror.mc:1781
 msgid "Connection is active.\n"
-msgstr ""
+msgstr "Bağlantı etkin.\n"
 
 #: winerror.mc:1786
 msgid "Network unreachable.\n"
-msgstr ""
+msgstr "Ağ ulaşılamaz.\n"
 
 #: winerror.mc:1791
 msgid "Host unreachable.\n"
-msgstr ""
+msgstr "Uzak sunucu ulaşılamaz.\n"
 
 #: winerror.mc:1796
 msgid "Protocol unreachable.\n"
-msgstr ""
+msgstr "Protokol ulaşılamaz.\n"
 
 #: winerror.mc:1801
 msgid "Port unreachable.\n"
-msgstr ""
+msgstr "Bağlantı noktası ulaşılamaz.\n"
 
 #: winerror.mc:1806
 msgid "Request aborted.\n"
-msgstr ""
+msgstr "İstek iptal edildi.\n"
 
 #: winerror.mc:1811
 msgid "Connection aborted.\n"
-msgstr ""
+msgstr "Bağlantı iptal edildi.\n"
 
 #: winerror.mc:1816
 msgid "Please retry operation.\n"
-msgstr ""
+msgstr "Lütfen işlemi yeniden deneyin.\n"
 
 #: winerror.mc:1821
 msgid "Connection count limit reached.\n"
-msgstr ""
+msgstr "Bağlantı sayısı sınırına ulaşıldı.\n"
 
 #: winerror.mc:1826
 msgid "Login time restriction.\n"
-msgstr ""
+msgstr "Oturum süresi kısıtlaması.\n"
 
 #: winerror.mc:1831
 msgid "Login workstation restriction.\n"
-msgstr ""
+msgstr "Oturum çalışma istasyonu kısıtlaması.\n"
 
 #: winerror.mc:1836
 msgid "Incorrect network address.\n"
-msgstr ""
+msgstr "Geçersiz ağ adresi.\n"
 
 #: winerror.mc:1841
 msgid "Service already registered.\n"
-msgstr ""
+msgstr "Hizmet zaten kayıtlı.\n"
 
 #: winerror.mc:1846
 msgid "Service not found.\n"
@@ -5005,15 +5081,15 @@ msgstr "Servis bulunamadı.\n"
 
 #: winerror.mc:1851
 msgid "User not authenticated.\n"
-msgstr ""
+msgstr "Kullanıcı yetkilendirmesi başarısız.\n"
 
 #: winerror.mc:1856
 msgid "User not logged on.\n"
-msgstr ""
+msgstr "Kullanıcı oturum açmamış.\n"
 
 #: winerror.mc:1861
 msgid "Continue work in progress.\n"
-msgstr ""
+msgstr "Süren işe devam et.\n"
 
 #: winerror.mc:1866
 msgid "Already initialized.\n"
@@ -5021,51 +5097,51 @@ msgstr ""
 
 #: winerror.mc:1871
 msgid "No more local devices.\n"
-msgstr ""
+msgstr "Daha fazla yerel sürücü yok.\n"
 
 #: winerror.mc:1876
 msgid "The site does not exist.\n"
-msgstr ""
+msgstr "Site mevcut değil.\n"
 
 #: winerror.mc:1881
 msgid "The domain controller already exists.\n"
-msgstr ""
+msgstr "Bu alan adı denetleyicisi mevcut.\n"
 
 #: winerror.mc:1886
 msgid "Supported only when connected.\n"
-msgstr ""
+msgstr "Sadece bağlanıldığında desteklenir.\n"
 
 #: winerror.mc:1891
 msgid "Perform operation even when nothing changed.\n"
-msgstr ""
+msgstr "Hiçbir şey değişmediğinde dahi işlemi gerçekleştir.\n"
 
 #: winerror.mc:1896
 msgid "The user profile is invalid.\n"
-msgstr ""
+msgstr "Kullanıcı profili geçersiz.\n"
 
 #: winerror.mc:1901
 msgid "Not supported on Small Business Server.\n"
-msgstr ""
+msgstr "Küçük İş Sunucusunda desteklenmiyor.\n"
 
 #: winerror.mc:1906
 msgid "Not all privileges assigned.\n"
-msgstr ""
+msgstr "Tüm yetkiler atanmamış.\n"
 
 #: winerror.mc:1911
 msgid "Some security IDs not mapped.\n"
-msgstr ""
+msgstr "Bazı güvenlik kimlikleri eşlenmemiş.\n"
 
 #: winerror.mc:1916
 msgid "No quotas for account.\n"
-msgstr ""
+msgstr "Bu hesap için sınır yok.\n"
 
 #: winerror.mc:1921
 msgid "Local user session key.\n"
-msgstr ""
+msgstr "Yerel kullanıcı oturum anahtarı.\n"
 
 #: winerror.mc:1926
 msgid "Password too complex for LM.\n"
-msgstr ""
+msgstr "Şifre LM için çok karmaşık.\n"
 
 #: winerror.mc:1931
 msgid "Unknown revision.\n"
@@ -5073,39 +5149,39 @@ msgstr "Bilinmeyen revizyon.\n"
 
 #: winerror.mc:1936
 msgid "Incompatible revision levels.\n"
-msgstr ""
+msgstr "Uyumsuz gözden geçirme seviyeleri.\n"
 
 #: winerror.mc:1941
 msgid "Invalid owner.\n"
-msgstr ""
+msgstr "Geçersiz sahip.\n"
 
 #: winerror.mc:1946
 msgid "Invalid primary group.\n"
-msgstr ""
+msgstr "Geçersiz birincil grup.\n"
 
 #: winerror.mc:1951
 msgid "No impersonation token.\n"
-msgstr ""
+msgstr "Kişiselleştirme belirtisi yok.\n"
 
 #: winerror.mc:1956
 msgid "Can't disable mandatory group.\n"
-msgstr ""
+msgstr "Zorunlu grup devre dışı bırakılamaz.\n"
 
 #: winerror.mc:1961
 msgid "No logon servers available.\n"
-msgstr ""
+msgstr "Kullanılabilir oturum sunucusu yok.\n"
 
 #: winerror.mc:1966
 msgid "No such logon session.\n"
-msgstr ""
+msgstr "Böyle bir oturum yok.\n"
 
 #: winerror.mc:1971
 msgid "No such privilege.\n"
-msgstr ""
+msgstr "Böyle bir yetki yok.\n"
 
 #: winerror.mc:1976
 msgid "Privilege not held.\n"
-msgstr ""
+msgstr "Yetki sahiplenemedi.\n"
 
 #: winerror.mc:1981
 msgid "Invalid account name.\n"
@@ -5113,67 +5189,67 @@ msgstr "Geçersiz hesap adı.\n"
 
 #: winerror.mc:1986
 msgid "User already exists.\n"
-msgstr ""
+msgstr "Kullanıcı zaten mevcut.\n"
 
 #: winerror.mc:1991
 msgid "No such user.\n"
-msgstr ""
+msgstr "Kullanıcı yok.\n"
 
 #: winerror.mc:1996
 msgid "Group already exists.\n"
-msgstr ""
+msgstr "Grup zaten mevcut.\n"
 
 #: winerror.mc:2001
 msgid "No such group.\n"
-msgstr ""
+msgstr "Grup bulunamadı.\n"
 
 #: winerror.mc:2006
 msgid "User already in group.\n"
-msgstr ""
+msgstr "Kullanıcı zaten grupta.\n"
 
 #: winerror.mc:2011
 msgid "User not in group.\n"
-msgstr ""
+msgstr "Kullanıcı grupta değil.\n"
 
 #: winerror.mc:2016
 msgid "Can't delete last admin user.\n"
-msgstr ""
+msgstr "Son yönetici kullanıcı silinemedi.\n"
 
 #: winerror.mc:2021
 msgid "Wrong password.\n"
-msgstr ""
+msgstr "Hatalı şifre.\n"
 
 #: winerror.mc:2026
 msgid "Ill-formed password.\n"
-msgstr ""
+msgstr "Geçersiz parola.\n"
 
 #: winerror.mc:2031
 msgid "Password restriction.\n"
-msgstr ""
+msgstr "Parola kısıtlaması.\n"
 
 #: winerror.mc:2036
 msgid "Logon failure.\n"
-msgstr ""
+msgstr "Oturum başarısız.\n"
 
 #: winerror.mc:2041
 msgid "Account restriction.\n"
-msgstr ""
+msgstr "Hesap sınırlaması.\n"
 
 #: winerror.mc:2046
 msgid "Invalid logon hours.\n"
-msgstr ""
+msgstr "Geçersiz oturum açma saatleri.\n"
 
 #: winerror.mc:2051
 msgid "Invalid workstation.\n"
-msgstr ""
+msgstr "Geçersiz iş istasyonu.\n"
 
 #: winerror.mc:2056
 msgid "Password expired.\n"
-msgstr ""
+msgstr "Parola süresi dolmuş.\n"
 
 #: winerror.mc:2061
 msgid "Account disabled.\n"
-msgstr ""
+msgstr "Hesap devre dışı.\n"
 
 #: winerror.mc:2066
 msgid "No security ID mapped.\n"
@@ -5513,15 +5589,15 @@ msgstr ""
 
 #: winerror.mc:2491
 msgid "Hotkey not registered.\n"
-msgstr ""
+msgstr "Kısayol kaydedilemedi.\n"
 
 #: winerror.mc:2496
 msgid "Not a dialog window.\n"
-msgstr ""
+msgstr "İletişim penceresi değil.\n"
 
 #: winerror.mc:2501
 msgid "Control ID not found.\n"
-msgstr ""
+msgstr "Denetim kimliği bulunamadı.\n"
 
 #: winerror.mc:2506
 msgid "Invalid combo box message.\n"
@@ -5581,7 +5657,7 @@ msgstr ""
 
 #: winerror.mc:2576
 msgid "Child window menus not allowed.\n"
-msgstr ""
+msgstr "Alt pencere menülerine izin verilmiyor.\n"
 
 #: winerror.mc:2581
 msgid "Window has no system menu.\n"
@@ -5625,11 +5701,11 @@ msgstr ""
 
 #: winerror.mc:2631
 msgid "No scrollbars.\n"
-msgstr ""
+msgstr "Kaydırma çubuğu yok.\n"
 
 #: winerror.mc:2636
 msgid "Invalid scrollbar range.\n"
-msgstr ""
+msgstr "Geçersiz kaydırma çubuğu aralığı.\n"
 
 #: winerror.mc:2641
 msgid "Invalid ShowWin command.\n"
@@ -5637,7 +5713,7 @@ msgstr ""
 
 #: winerror.mc:2646
 msgid "No system resources.\n"
-msgstr ""
+msgstr "Sistem kaynağı yok.\n"
 
 #: winerror.mc:2651
 msgid "No non-paged system resources.\n"
@@ -6676,6 +6752,35 @@ msgid ""
 "\t/help\n"
 "\t/?\n"
 msgstr ""
+"Windows Yükleyici %s\n"
+"\n"
+"Kullanım:\n"
+"msiexec komut {gerekli parametre} [isteğe bağlı parametre]\n"
+"\n"
+"Bir ürün yükle:\n"
+"\t/i {paket|ürün_kodu} [özellik]\n"
+"\t/package {paket|ürün_kodu} [özellik]\n"
+"\t/a paket [özellik]\n"
+"Bir kurulumu onar:\n"
+"\t/f[p|o|e|d|c|a|u|m|s|v] {paket|ürün_kodu}\n"
+"Bir ürünü kaldır:\n"
+"\t/uninstall {paket|ürün_kodu} [özellik]\n"
+"\t/x {paket|ürün_kodu} [özellik]\n"
+"Bir ürünü yay:\n"
+"\t/j[u|m] paket [/t dönüştür] [/g dilkimliği]\n"
+"Bir yama uygula:\n"
+"\t/p yama_paketi [özellik]\n"
+"\t/p yama_paketi /a paket [özellik]\n"
+"Yukarıdaki komutlar için günlük ve kullanıcı arayüz değiştiricileri:\n"
+"\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] günlük_dosyası\n"
+"\t/q{|n|b|r|f|n+|b+|b-}\n"
+"MSI Hizmetini kaydet:\n"
+"\t/y\n"
+"MSI Hizmetini kaldır:\n"
+"\t/z\n"
+"Bu yardımı göster:\n"
+"\t/help\n"
+"\t/?\n"
 
 #: msi.rc:57
 msgid "enter which folder contains %s"
@@ -6731,7 +6836,7 @@ msgstr "Sıkıştırma &Kalitesi:"
 
 #: msvfw32.rc:46
 msgid "&Key Frame Every"
-msgstr ""
+msgstr "&Anahtar Kare Her"
 
 #: msvfw32.rc:50
 msgid "&Data Rate"
@@ -6779,7 +6884,7 @@ msgstr "imleç"
 
 #: oleacc.rc:34
 msgid "caret"
-msgstr ""
+msgstr "inceltme işareti"
 
 #: oleacc.rc:35
 msgid "alert"
@@ -6951,7 +7056,7 @@ msgstr "ara"
 
 #: oleacc.rc:77
 msgid "hot key field"
-msgstr ""
+msgstr "kısayol alanı"
 
 #: oleacc.rc:78
 msgid "slider"
@@ -6963,7 +7068,7 @@ msgstr "dönme kutusu"
 
 #: oleacc.rc:80
 msgid "diagram"
-msgstr "diagram"
+msgstr "diyagram"
 
 #: oleacc.rc:81
 msgid "animation"
@@ -7165,6 +7270,9 @@ msgid ""
 "The shortcut is linked to the source file so that changes to the file will "
 "be reflected in your document."
 msgstr ""
+"Pano içeriklerinin konumunu belirten bir kısayol ekler. Kısayol kaynak "
+"dosyasına bağlanır ve böylece dosyaya yapılan değişiklikler belgenize "
+"yansıtılır."
 
 #: oledlg.rc:40
 msgid "Inserts the contents of the clipboard into your document."
@@ -7249,21 +7357,23 @@ msgstr "Hedef:"
 
 #: setupapi.rc:49
 msgid "Files Needed"
-msgstr ""
+msgstr "Dosya Gerekli"
 
 #: setupapi.rc:52
 msgid ""
 "Insert the manufacturer's installation disk, and then\n"
 "make sure the correct drive is selected below"
 msgstr ""
+"Üreticinin kurulum diskini yerleştirin ve ardından\n"
+"aşağıda doğru sürücünün seçildiğinden emin olun"
 
 #: setupapi.rc:54
 msgid "Copy manufacturer's files from:"
-msgstr ""
+msgstr "Üretici dosyalarını şuradan kopyala:"
 
 #: setupapi.rc:28
 msgid "The file '%1' on %2 is needed"
-msgstr ""
+msgstr "'%1' dosyası %2 üzerinde gerekli"
 
 #: setupapi.rc:29 ipconfig.rc:31
 msgid "Unknown"
@@ -7271,11 +7381,11 @@ msgstr "Bilinmiyor"
 
 #: setupapi.rc:30
 msgid "Copy files from:"
-msgstr ""
+msgstr "Dosyaları şuradan kopyala:"
 
 #: setupapi.rc:31
 msgid "Type the path where the file is located, and then click OK."
-msgstr ""
+msgstr "Dosyanın bulunduğu yolu yazın ve Tamam tıklayın."
 
 #: shdoclc.rc:39
 msgid "F&orward"
@@ -7450,63 +7560,63 @@ msgstr "Geri Çevir"
 
 #: shdoclc.rc:196
 msgid "Trace Tags"
-msgstr ""
+msgstr "İzleme Etiketleri"
 
 #: shdoclc.rc:197
 msgid "Resource Failures"
-msgstr ""
+msgstr "Kaynak Başarısızlıkları"
 
 #: shdoclc.rc:198
 msgid "Dump Tracking Info"
-msgstr ""
+msgstr "İzleme Bilgisini Yığ"
 
 #: shdoclc.rc:199
 msgid "Debug Break"
-msgstr ""
+msgstr "Kesme Hata Ayıklaması Yap"
 
 #: shdoclc.rc:200
 msgid "Debug View"
-msgstr ""
+msgstr "Hata Ayıklama Görünümü"
 
 #: shdoclc.rc:201
 msgid "Dump Tree"
-msgstr ""
+msgstr "Yığın Ağacı"
 
 #: shdoclc.rc:202
 msgid "Dump Lines"
-msgstr ""
+msgstr "Yığın Satırları"
 
 #: shdoclc.rc:203
 msgid "Dump DisplayTree"
-msgstr ""
+msgstr "Yığın GörüntülemeAğacı"
 
 #: shdoclc.rc:204
 msgid "Dump FormatCaches"
-msgstr ""
+msgstr "Yığın BiçimTamponları"
 
 #: shdoclc.rc:205
 msgid "Dump LayoutRects"
-msgstr ""
+msgstr "Yığın DüzenDikd"
 
 #: shdoclc.rc:206
 msgid "Memory Monitor"
-msgstr ""
+msgstr "Bellek İzleyici"
 
 #: shdoclc.rc:207
 msgid "Performance Meters"
-msgstr ""
+msgstr "Başarım Ölçücüleri"
 
 #: shdoclc.rc:208
 msgid "Save HTML"
-msgstr ""
+msgstr "HTML Kaydet"
 
 #: shdoclc.rc:210
 msgid "&Browse View"
-msgstr ""
+msgstr "&Görünüme Gözat"
 
 #: shdoclc.rc:211
 msgid "&Edit View"
-msgstr ""
+msgstr "G&örünümü Düzenle"
 
 #: shdoclc.rc:216 shdoclc.rc:230
 msgid "Scroll Here"
@@ -7562,11 +7672,11 @@ msgstr "Sağa Kaydır"
 
 #: shdoclc.rc:25
 msgid "Wine Internet Explorer"
-msgstr ""
+msgstr "Wine Internet Tarayıcısı"
 
 #: shdoclc.rc:30
 msgid "&w&bPage &p"
-msgstr ""
+msgstr "&w&bSayfa &p"
 
 #: shell32.rc:27 shell32.rc:42 shell32.rc:119 shell32.rc:159 taskmgr.rc:65
 #: taskmgr.rc:110 taskmgr.rc:252
@@ -7642,7 +7752,7 @@ msgstr "&Geri Yükle"
 
 #: shell32.rc:83
 msgid "&Erase"
-msgstr ""
+msgstr "&Sil"
 
 #: shell32.rc:95
 msgid "E&xplore"
@@ -7679,7 +7789,7 @@ msgstr "Klasör:"
 
 #: shell32.rc:296
 msgid "&Make New Folder"
-msgstr ""
+msgstr "&Yeni Klasör Oluştur"
 
 #: shell32.rc:303
 msgid "Message"
@@ -7691,7 +7801,7 @@ msgstr "&Evet"
 
 #: shell32.rc:307
 msgid "Yes to &all"
-msgstr ""
+msgstr "T&ümüne evet"
 
 #: shell32.rc:308 shlwapi.rc:44 user32.rc:83
 msgid "&No"
@@ -7707,7 +7817,7 @@ msgstr "Wine &lisans"
 
 #: shell32.rc:325
 msgid "Running on %s"
-msgstr ""
+msgstr "%s üzerinde çalışıyor"
 
 #: shell32.rc:326
 msgid "Wine was brought to you by:"
@@ -7817,11 +7927,11 @@ msgstr "Sık Kullanılanlar"
 
 #: shell32.rc:203
 msgid "StartUp"
-msgstr ""
+msgstr "Başlangı"
 
 #: shell32.rc:204
 msgid "Start Menu"
-msgstr ""
+msgstr "Başlat Menüs"
 
 #: shell32.rc:205
 msgid "My Music"
@@ -7838,15 +7948,15 @@ msgstr "Masaüstü"
 
 #: shell32.rc:208
 msgid "NetHood"
-msgstr ""
+msgstr "Ağ Komşuları"
 
 #: shell32.rc:209
 msgid "Templates"
-msgstr ""
+msgstr "Şablonlar"
 
 #: shell32.rc:210
 msgid "PrintHood"
-msgstr ""
+msgstr "Paylaşılan Yazıcılar"
 
 #: shell32.rc:211 winhlp32.rc:45
 msgid "History"
@@ -7862,7 +7972,7 @@ msgstr "Resimlerim"
 
 #: shell32.rc:215
 msgid "Common Files"
-msgstr ""
+msgstr "Ortak Dosyalar"
 
 #: shell32.rc:216 shell32.rc:147 shell32.rc:232
 msgid "Documents"
@@ -7898,11 +8008,11 @@ msgstr "Bağlantılar"
 
 #: shell32.rc:223
 msgid "Slide Shows"
-msgstr ""
+msgstr "Slayt Gösterileri"
 
 #: shell32.rc:224
 msgid "Playlists"
-msgstr ""
+msgstr "Çalma Listeleri"
 
 #: shell32.rc:148 taskmgr.rc:326
 msgid "Status"
@@ -7934,7 +8044,7 @@ msgstr "Örnek Videolar"
 
 #: shell32.rc:229
 msgid "Saved Games"
-msgstr ""
+msgstr "Kayıtlı Oyunlar"
 
 #: shell32.rc:230
 msgid "Searches"
@@ -7982,6 +8092,9 @@ msgid ""
 "\n"
 "Do you want to replace it?"
 msgstr ""
+"Bu klasör zaten '%1' isminde farklı bir dosya içeriyor.\n"
+"\n"
+"Üzerine yazmak istiyor musunuz?"
 
 #: shell32.rc:172
 msgid "Are you sure you want to delete the selected item(s)?"
@@ -8013,6 +8126,12 @@ msgid ""
 "selected folder they will be replaced. Do you still want to move or copy\n"
 "the folder?"
 msgstr ""
+"Bu klasör zaten '%1' adında bir klasör içeriyor.\n"
+"\n"
+"Eğer hedef klasördeki dosyalar seçilen klasördeki dosyalar ile aynı "
+"isimleri\n"
+"taşıyorlarsa, üzerlerine yazılacaktır. Hala klasörü kopyalamak veya taşımak\n"
+"istiyor musunuz?"
 
 #: shell32.rc:235
 msgid "New Folder"
@@ -8024,19 +8143,19 @@ msgstr "Wine Kontrol Paneli"
 
 #: shell32.rc:192
 msgid "Unable to display Run File dialog box (internal error)"
-msgstr ""
+msgstr "Dosya Çalıştır iletişim kutusu görüntülenemedi (dahili hata)"
 
 #: shell32.rc:193
 msgid "Unable to display Browse dialog box (internal error)"
-msgstr ""
+msgstr "Gözat iletişim kutusu görüntülenemedi (dahili hata)"
 
 #: shell32.rc:195
 msgid "Executable files (*.exe)"
-msgstr ""
+msgstr "Uygulama dosyaları (*.exe)"
 
 #: shell32.rc:241
 msgid "There is no Windows program configured to open this type of file."
-msgstr ""
+msgstr "Bu dosya türünü açmak üzere hiçbir Windows programı yapılandırılmamış."
 
 #: shell32.rc:243
 msgid "Are you sure you wish to permanently delete '%1'?"
@@ -8048,7 +8167,7 @@ msgstr "Bu %1 öğeyi silmek istediğinizden emin misiniz?"
 
 #: shell32.rc:245
 msgid "Confirm deletion"
-msgstr ""
+msgstr "Silme işlemini onayla"
 
 #: shell32.rc:246
 msgid ""
@@ -8056,6 +8175,9 @@ msgid ""
 "\n"
 "Do you want to replace it?"
 msgstr ""
+"%1 yolunda bir dosya zaten mevcut.\n"
+"\n"
+"Üzerine yazmak istiyor musunuz?"
 
 #: shell32.rc:247
 msgid ""
@@ -8063,6 +8185,9 @@ msgid ""
 "\n"
 "Do you want to replace it?"
 msgstr ""
+"%1 yolunda bir klasör zaten mevcut.\n"
+"\n"
+"Üzerine yazmak istiyor musunuz?"
 
 #: shell32.rc:248
 msgid "Confirm overwrite"
@@ -8084,6 +8209,19 @@ msgid ""
 "along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 msgstr ""
+"Wine ücretsiz bir yazılım olup; Free Software Foundation tarafından "
+"dağıtılan GNU Lesser Genel Kamu Lisansı'nın 2.1 veya (seçimi size bağlı) "
+"herhangi sonraki sürümü altında şartlara bağlı kalarak tekrar dağıtabilir ve/"
+"veya düzenleyebilirsiniz.\n"
+"\n"
+"Wine, yararlı olabileceği umularak dağıtılmaktadır, fakat hiçbir GARANTİSİ "
+"YOKTUR; hatta BU FERAGATNAMEDE BELİRTİLDİĞİ GİBİ TİCARÎ veya HERHANGİ BAŞKA "
+"BİR AMACA UYGUNLUĞU bile garanti edilmez. Daha fazla bilgi için GNU Lesser "
+"Genel Kamu Lisansı'na bakın.\n"
+"\n"
+"Wine ile birlikte GNU Lesser Genel Kamu Lisansı'nın bir kopyasını almış "
+"olmanız gerekli. Eğer almamışsanız Free Software Foundation, Inc., 51 "
+"Franklin St, Fifth Floor, Boston, MA 02110-1301, USA adresine yazın."
 
 #: shell32.rc:253
 msgid "Wine License"
@@ -8130,21 +8268,23 @@ msgstr "Bu yazılımı yüklemek istiyor musunuz?"
 
 #: urlmon.rc:34 explorer.rc:29
 msgid "Location:"
-msgstr ""
+msgstr "Konum:"
 
 #: urlmon.rc:36
 msgid "Don't install"
-msgstr ""
+msgstr "Yükleme"
 
 #: urlmon.rc:40
 msgid ""
 "When installed, an ActiveX component has full access to your computer. Do "
 "not click install unless you have absolute trust in the above source."
 msgstr ""
+"Yüklendiğinde, bir ActiveX bileşeni bilgisayarınıza tam erişime sahip olur. "
+"Eğer yukarıdaki kaynağa tamamen güvenmiyorsanız, yükle tıklamayın."
 
 #: urlmon.rc:48
 msgid "Installation of component failed: %08x"
-msgstr ""
+msgstr "Bileşen yüklemesi başarısız: %08x"
 
 #: urlmon.rc:49
 msgid "Install (%d)"
@@ -8189,7 +8329,7 @@ msgstr "&Kapat\tCtrl+F4"
 
 #: user32.rc:48
 msgid "Nex&t\tCtrl+F6"
-msgstr ""
+msgstr "İle&ri\tCtrl+F6"
 
 #: user32.rc:79
 msgid "&Abort"
@@ -8205,11 +8345,11 @@ msgstr "Y&oksay"
 
 #: user32.rc:84
 msgid "&Try Again"
-msgstr ""
+msgstr "&Yeniden Dene"
 
 #: user32.rc:85
 msgid "&Continue"
-msgstr ""
+msgstr "&Devam Et"
 
 #: user32.rc:91
 msgid "Select Window"
@@ -8241,7 +8381,7 @@ msgstr "Sunucu"
 
 #: wininet.rc:77
 msgid "There is a problem with the certificate for this site."
-msgstr ""
+msgstr "Bu sitenin sertifikasında bir problem var."
 
 #: wininet.rc:79
 msgid "Do you want to continue anyway?"
@@ -8254,6 +8394,7 @@ msgstr "LAN Bağlantısı"
 #: wininet.rc:26
 msgid "The certificate is issued by an unknown or untrusted publisher."
 msgstr ""
+"Sertifika bilinmeyen veya güvenilmeyen bir dağıtıcı tarafından sağlanmış"
 
 #: wininet.rc:27
 msgid "The date on the certificate is invalid."
@@ -8261,12 +8402,12 @@ msgstr "Sertifikada yazılı tarih geçersiz."
 
 #: wininet.rc:28
 msgid "The name on the certificate does not match the site."
-msgstr ""
+msgstr "Sertifikadaki isim site ile eşleşmiyor."
 
 #: wininet.rc:29
 msgid ""
 "There is at least one unspecified security problem with this certificate."
-msgstr ""
+msgstr "Bu sertifika ile en az bir belirtilmemiş güvenlik problemi var."
 
 #: winmm.rc:28
 msgid "The specified command was carried out."
@@ -8333,7 +8474,7 @@ msgid ""
 "Capabilities function to determine the supported formats."
 msgstr ""
 "Belirtilen biçim desteklenmiyor veya çevrilemiyor. Desteklenen biçimleri "
-"belirlemek için Yetenekler işlevini kullanın"
+"belirlemek için Yetenekler işlevini kullanın."
 
 #: winmm.rc:43 winmm.rc:49
 msgid ""
@@ -9118,10 +9259,12 @@ msgid ""
 "Not Yet Implemented\n"
 "\n"
 msgstr ""
+"Henüz Geliştirilmedi\n"
+"\n"
 
 #: attrib.rc:28 cmd.rc:328
 msgid "%1: File Not Found\n"
-msgstr ""
+msgstr "%1: Dosya Bulunamadı\n"
 
 #: attrib.rc:47
 msgid ""
@@ -9144,6 +9287,24 @@ msgid ""
 "  /S  Processes matching files in the current folder and all subfolders.\n"
 "  /D  Processes folders as well.\n"
 msgstr ""
+"ATTRIB - Dosya niteliklerini görüntüler veya değiştirir.\n"
+"\n"
+"Sözdizimi:\n"
+"ATTRIB [+R | -R] [+A | -A ] [+S | -S] [+H | -H] [sürücü:][yol][dosyaadı]\n"
+"       [/S [/D]]\n"
+"\n"
+"Şöyle ki:\n"
+"\n"
+"  +   Bir nitelik ayarlar.\n"
+"  -   Bir niteliği temizler.\n"
+"  R   Salt okunur dosya niteliği.\n"
+"  A   Arşiv dosya niteliği.\n"
+"  S   Sistem dosya niteliği.\n"
+"  H   Gizli dosya niteliği.\n"
+"  [sürücü:][yol][dosyaadı]\n"
+"      Nitelikleme için işlenecek dosya veya dosyaları belirtir.\n"
+"  /S  Geçerli klasör ve alt klasörlerinde eşlelen dosyaları işler.\n"
+"  /D  Klasörleri de işler.\n"
 
 #: clock.rc:29
 msgid "Ana&log"
@@ -9209,7 +9370,7 @@ msgstr ""
 
 #: cmd.rc:41
 msgid "CHDIR <dir> changes the current default directory.\n"
-msgstr "CHDIR <dizin> geçerli varsayılan dizini değiştirir\n"
+msgstr "CHDIR <dizin> geçerli varsayılan dizini değiştirir.\n"
 
 #: cmd.rc:43
 msgid "CLS clears the console screen.\n"
@@ -9457,10 +9618,14 @@ msgstr ""
 #: cmd.rc:156
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
 msgstr ""
+"REN <dosyaadı> RENAME komutunun kısa sürümüdür. Bir dosyayı yeniden "
+"adlandırır.\n"
 
 #: cmd.rc:157
 msgid "RENAME <filename> renames a file.\n"
 msgstr ""
+"RENAME <dosyaadı> bir dosyayı yeniden adlandırır.\n"
+"\n"
 
 #: cmd.rc:159
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
@@ -9544,6 +9709,33 @@ msgid ""
 "/ProgIDOpen  Open a document using the specified progID.\n"
 "/?           Display this help and exit.\n"
 msgstr ""
+"Normalde bu son eki kullanan dosyalar için program içerisinde bir program "
+"başlat veya belge aç.\n"
+"Kullanım:\n"
+"start [seçenekler] program_dosyaadı [...]\n"
+"start [seçenekler] belge_dosyaadı\n"
+"\n"
+"Seçenekler:\n"
+"\"başlık\"      Alt pencerelerin başlığını belirtir.\n"
+"/d dizin Programı belirtilen dizinde başlat.\n"
+"/b           Program için yeni bir konsol oluşturma.\n"
+"/i           Programı taze ortam değişkenleri ile başlat.\n"
+"/min         Programı simge durumunda başlat.\n"
+"/max         Programı ekran kaplanmış başlat.\n"
+"/low         Programı boşta öncelik sınıfı ile başlat.\n"
+"/normal      Programı normal öncelik sınıfı ile başlat.\n"
+"/high        Programı yüksek öncelik sınıfı ile başlat.\n"
+"/realtime    Programı gerçek zaman öncelik sınıfı ile başlat.\n"
+"/abovenormal Programı normal üstü öncelik sınıfı ile başlat.\n"
+"/belownormal Programı normal altı öncelik sınıfı ile başlat.\n"
+"/node n      Programı belirtilen NUMA kipinde başlat.\n"
+"/affinity maske Programı belirtilen yakınlık maskesi ile başlat.\n"
+"/wait        Başlatılan programın bitmesini bekle ve ardından çıkış koduyla "
+"çık.\n"
+"/unix        Bir Unix dosya adı kullan ve dosyayı windows gezgini benzeri "
+"bir biçimde başlat.\n"
+"/ProgIDOpen  Belirtilen program kimliği kullanarak bir belge aç.\n"
+"/?           Bu yardımı görüntüle ve çık.\n"
 
 #: cmd.rc:211
 msgid "TIME sets or shows the current system time.\n"
@@ -9650,6 +9842,11 @@ msgid ""
 "presses an allowed Key from a selectable list.\n"
 "CHOICE is mainly used to build a menu selection in a batch file.\n"
 msgstr ""
+"CHOICE bir metin görüntüler ve Kullanıcı seçilebilir listeden\n"
+"izin verilen bir tuşa basıncaya kadar bekler.\n"
+"CHOICE çoğu zaman bir toplu dosyada menü seçimi inşası için\n"
+"kullanılır.\n"
+"\n"
 
 #: cmd.rc:277
 msgid ""
@@ -9923,7 +10120,7 @@ msgstr ""
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
-msgstr ""
+msgstr "DirectX Tanı Aracı"
 
 #: dxdiag.rc:28
 msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
@@ -10025,6 +10222,13 @@ msgid ""
 "\n"
 "Where 'command' is one of HELP, START, STOP or USE.\n"
 msgstr ""
+"Bu komutun sözdizimi:\n"
+"\n"
+"NET komut [argümanlar]\n"
+"    -veya-\n"
+"NET komut /HELP\n"
+"\n"
+"'komut'; HELP, START, STOP veya USE komutlarından biridir.\n"
 
 #: net.rc:28
 msgid ""
@@ -10142,7 +10346,7 @@ msgstr "Yabancı Adres"
 
 #: netstat.rc:31
 msgid "State"
-msgstr "State"
+msgstr "Durum"
 
 #: netstat.rc:32
 msgid "Interface Statistics"
@@ -10185,32 +10389,24 @@ msgid "TCP Statistics for IPv4"
 msgstr ""
 
 #: netstat.rc:42
-#, fuzzy
-#| msgid "Active Connections"
 msgid "Active Opens"
-msgstr "Etkin Bağlantılar"
+msgstr ""
 
 #: netstat.rc:43
 msgid "Passive Opens"
 msgstr ""
 
 #: netstat.rc:44
-#, fuzzy
-#| msgid "Active Connections"
 msgid "Failed Connection Attempts"
-msgstr "Etkin Bağlantılar"
+msgstr ""
 
 #: netstat.rc:45
-#, fuzzy
-#| msgid "Active Connections"
 msgid "Reset Connections"
-msgstr "Etkin Bağlantılar"
+msgstr ""
 
 #: netstat.rc:46
-#, fuzzy
-#| msgid "Active Connections"
 msgid "Current Connections"
-msgstr "Etkin Bağlantılar"
+msgstr ""
 
 #: netstat.rc:47
 msgid "Segments Received"
@@ -10233,16 +10429,12 @@ msgid "Datagrams Received"
 msgstr ""
 
 #: netstat.rc:52
-#, fuzzy
-#| msgid "Local Port"
 msgid "No Ports"
-msgstr "Yerel Bağlantı Noktası"
+msgstr ""
 
 #: netstat.rc:53
-#, fuzzy
-#| msgid "Decoding Error"
 msgid "Receive Errors"
-msgstr "Kod Çözme Hatası"
+msgstr ""
 
 #: netstat.rc:54
 msgid "Datagrams Sent"
@@ -10654,7 +10846,7 @@ msgstr "sürüm 1.0"
 
 #: oleview.rc:100
 msgid "TypeLib files (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
-msgstr ""
+msgstr "TypeLib dosyaları (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
 
 #: oleview.rc:103
 msgid "Bind to file via a File Moniker"
@@ -12305,7 +12497,7 @@ msgstr ""
 
 #: wineboot.rc:28
 msgid "Waiting for Program"
-msgstr ""
+msgstr "Program Bekleniyor"
 
 #: wineboot.rc:32
 msgid "Terminate Process"
@@ -12318,6 +12510,10 @@ msgid ""
 "\n"
 "If you terminate the process you may lose all unsaved data."
 msgstr ""
+"Benzetilmiş bir oturumu veya bilgisayarı kapatma yapılıyor ancak bu program "
+"yanıt vermiyor.\n"
+"\n"
+"Eğer R"
 
 #: wineboot.rc:39
 msgid "Wine"
@@ -12325,7 +12521,7 @@ msgstr "Wine"
 
 #: wineboot.rc:43
 msgid "The Wine configuration in %s is being updated, please wait..."
-msgstr ""
+msgstr "%s içerisindeki Wine yapılandırması güncelleniyor, lütfen bekleyin..."
 
 #: winecfg.rc:132
 msgid ""
@@ -12334,10 +12530,14 @@ msgid ""
 "Free Software Foundation; either version 2.1 of the License, or (at your "
 "option) any later version."
 msgstr ""
+"Bu program ücretsiz bir yazılım olup; Free Software Foundation tarafından "
+"dağıtılan GNU Lesser Genel Kamu Lisansı'nın 2.1 veya (seçimi size bağlı) "
+"herhangi sonraki sürümü altında şartlara bağlı kalarak tekrar dağıtabilir ve/"
+"veya düzenleyebilirsiniz."
 
 #: winecfg.rc:134
 msgid "Windows registration information"
-msgstr ""
+msgstr "Windows kayıt bilgisi"
 
 #: winecfg.rc:135
 msgid "&Owner:"
@@ -12379,11 +12579,11 @@ msgstr "Pencere ayarları"
 
 #: winecfg.rc:161
 msgid "Automatically capture the &mouse in full-screen windows"
-msgstr ""
+msgstr "Fareyi ta&m ekran pencerelerde otomatik olarak yakala"
 
 #: winecfg.rc:162
 msgid "Allow the window manager to &decorate the windows"
-msgstr ""
+msgstr "Pencere yöneticisinin pencereleri &düzenlemesine izin ver"
 
 #: winecfg.rc:163
 msgid "Allow the &window manager to control the windows"
@@ -12403,7 +12603,7 @@ msgstr "Ekran Çözünürlüğü"
 
 #: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
-msgstr ""
+msgstr "Bu, 10 nokta Tahoma kullanan örnek bir metindir"
 
 #: winecfg.rc:182
 msgid "DLL overrides"
@@ -12461,11 +12661,11 @@ msgstr "Önce D&oğal sonra Yerleşik"
 
 #: winecfg.rc:211
 msgid "Select Drive Letter"
-msgstr ""
+msgstr "Sürücü Harfini Seçin"
 
 #: winecfg.rc:223
 msgid "Drive mappings"
-msgstr ""
+msgstr "Sürücü eşlemeleri"
 
 #: winecfg.rc:224
 msgid ""
@@ -12511,7 +12711,7 @@ msgstr "Noktayla başlayan dosyaları göster"
 
 #: winecfg.rc:256
 msgid "Driver diagnostics"
-msgstr ""
+msgstr "Sürücü tanıları"
 
 #: winecfg.rc:258
 msgid "Defaults"
@@ -12539,7 +12739,7 @@ msgstr "&Ses Testi"
 
 #: winecfg.rc:274
 msgid "Appearance"
-msgstr ""
+msgstr "Görünüm"
 
 #: winecfg.rc:275
 msgid "&Theme:"
@@ -13104,6 +13304,9 @@ msgid ""
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
 "Database</a> for tips about running this application."
 msgstr ""
+"Bu programdaki veya Wine içerisindeki bir sorundan dolayı olabilir. Bu "
+"uygulamayı çalıştırma hakkında ipuçları için <a href=\"http://appdb.winehq."
+"org\">Uygulama Veritabanı</a> sayfasını kontrol etmek isteyebilirsiniz."
 
 #: winedbg.rc:58
 msgid "Show &Details"
@@ -13352,7 +13555,7 @@ msgstr "İndis/Düğüm"
 
 #: winefile.rc:114
 msgid "%1 of %2 free"
-msgstr "%s / %s boş"
+msgstr "%1 / %2 boş"
 
 #: winefile.rc:115
 msgctxt "unit kilobyte"
@@ -13559,7 +13762,7 @@ msgstr "Hata: Komut satırı desteklenmiyor\n"
 
 #: wmic.rc:26
 msgid "Error: Alias not found\n"
-msgstr "Hata: Sahte isim bulunamadı.\n"
+msgstr "Hata: Sahte isim bulunamadı\n"
 
 #: wmic.rc:27
 msgid "Error: Invalid query\n"
@@ -13727,7 +13930,7 @@ msgstr "&Satır kaydırma yok"
 
 #: wordpad.rc:258
 msgid "Wrap text by the &window border"
-msgstr "Metni %pencere sınırına göre kaydır"
+msgstr "Metni &pencere sınırına göre kaydır"
 
 #: wordpad.rc:259
 msgid "Wrap text by the &margin"
@@ -13893,7 +14096,7 @@ msgstr ""
 
 #: wordpad.rc:187
 msgid "Invalid number format."
-msgstr "Geçersiz sayı biçimi"
+msgstr "Geçersiz sayı biçimi."
 
 #: wordpad.rc:188
 msgid "OLE storage documents are not supported."
