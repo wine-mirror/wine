@@ -347,7 +347,8 @@ static struct security_descriptor *key_get_sd( struct object *obj )
     {
         size_t users_sid_len = security_sid_len( security_builtin_users_sid );
         size_t admins_sid_len = security_sid_len( security_builtin_admins_sid );
-        size_t dacl_len = sizeof(ACL) + offsetof( ACCESS_ALLOWED_ACE, SidStart ) + users_sid_len;
+        size_t dacl_len = sizeof(ACL) + 2 * offsetof( ACCESS_ALLOWED_ACE, SidStart )
+                          + users_sid_len + admins_sid_len;
         ACCESS_ALLOWED_ACE *aaa;
         ACL *dacl;
 
@@ -364,7 +365,7 @@ static struct security_descriptor *key_get_sd( struct object *obj )
         dacl->AclRevision = ACL_REVISION;
         dacl->Sbz1 = 0;
         dacl->AclSize = dacl_len;
-        dacl->AceCount = 1;
+        dacl->AceCount = 2;
         dacl->Sbz2 = 0;
         aaa = (ACCESS_ALLOWED_ACE *)(dacl + 1);
         aaa->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
@@ -372,6 +373,12 @@ static struct security_descriptor *key_get_sd( struct object *obj )
         aaa->Header.AceSize = offsetof( ACCESS_ALLOWED_ACE, SidStart ) + users_sid_len;
         aaa->Mask = GENERIC_READ;
         memcpy( &aaa->SidStart, security_builtin_users_sid, users_sid_len );
+        aaa = (ACCESS_ALLOWED_ACE *)((char *)aaa + aaa->Header.AceSize);
+        aaa->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
+        aaa->Header.AceFlags = 0;
+        aaa->Header.AceSize = offsetof( ACCESS_ALLOWED_ACE, SidStart ) + admins_sid_len;
+        aaa->Mask = KEY_ALL_ACCESS;
+        memcpy( &aaa->SidStart, security_builtin_admins_sid, admins_sid_len );
     }
     return key_default_sd;
 }
