@@ -3232,13 +3232,16 @@ static void test_GetNamedSecurityInfoA(void)
         bret = EqualSid(&ace->SidStart, admin_sid);
         if (bret) admins_ace_id = i;
     }
-    ok(users_ace_id != -1, "Bultin Users ACE not found.\n");
+    ok(users_ace_id != -1 || broken(users_ace_id == -1) /* win2k */,
+       "Bultin Users ACE not found.\n");
     if (users_ace_id != -1)
     {
         bret = pGetAce(pDacl, users_ace_id, (VOID **)&ace);
         ok(bret, "Failed to get Builtin Users ACE.\n");
-        ok(((ACE_HEADER *)ace)->AceFlags == (INHERIT_ONLY_ACE|CONTAINER_INHERIT_ACE),
-           "Builtin Users ACE has unexpected flags (0x%x != 0x%x)\n", ((ACE_HEADER *)ace)->AceFlags,
+        flags = ((ACE_HEADER *)ace)->AceFlags;
+        ok(flags == (INHERIT_ONLY_ACE|CONTAINER_INHERIT_ACE)
+           || broken(flags == (INHERIT_ONLY_ACE|CONTAINER_INHERIT_ACE|INHERITED_ACE)) /* w2k8 */,
+           "Builtin Users ACE has unexpected flags (0x%x != 0x%x)\n", flags,
            INHERIT_ONLY_ACE|CONTAINER_INHERIT_ACE);
         ok(ace->Mask == GENERIC_READ, "Builtin Users ACE has unexpected mask (0x%x != 0x%x)\n",
                                       ace->Mask, GENERIC_READ);
