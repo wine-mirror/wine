@@ -140,6 +140,22 @@ static char object_syntax_string_with_separator[] =
 "\"foo;bar\";\n"
 "}\n";
 
+static char templates_bad_file_type1[] =
+"xOf 0302txt 0064\n";
+
+static char templates_bad_file_version[] =
+"xof 0102txt 0064\n";
+
+static char templates_bad_file_type2[] =
+"xof 0302foo 0064\n";
+
+static char templates_bad_file_float_size[] =
+"xof 0302txt 0050\n";
+
+static char templates_parse_error[] =
+"xof 0302txt 0064"
+"foobar;\n";
+
 static void init_function_pointers(void)
 {
     /* We have to use LoadLibrary as no d3dxof functions are referenced directly */
@@ -375,6 +391,43 @@ static void test_file_types(void)
     lminfo.dSize = sizeof(empty_xxxx_file) - 1;
     hr = IDirectXFile_CreateEnumObject(dxfile, &lminfo, DXFILELOAD_FROMMEMORY, &enum_object);
     ok(hr == DXFILEERR_BADFILETYPE, "IDirectXFile_CreateEnumObject: %x\n", hr);
+
+    IDirectXFile_Release(dxfile);
+}
+
+static void test_templates(void)
+{
+    HRESULT ret;
+    IDirectXFile *dxfile = NULL;
+
+    if (!pDirectXFileCreate)
+    {
+        win_skip("DirectXFileCreate is not available\n");
+        return;
+    }
+
+    ret = pDirectXFileCreate(&dxfile);
+    ok(ret == DXFILE_OK, "DirectXFileCreate: %x\n", ret);
+    if (!dxfile)
+    {
+        skip("Couldn't create DirectXFile interface\n");
+        return;
+    }
+
+    ret = IDirectXFile_RegisterTemplates(dxfile, templates_bad_file_type1, sizeof(templates_bad_file_type1) - 1);
+    ok(ret == DXFILEERR_BADFILETYPE, "RegisterTemplates returned %#x, expected %#x\n", ret, DXFILEERR_BADFILETYPE);
+
+    ret = IDirectXFile_RegisterTemplates(dxfile, templates_bad_file_version, sizeof(templates_bad_file_version) - 1);
+    ok(ret == DXFILEERR_BADFILEVERSION, "RegisterTemplates returned %#x, expected %#x\n", ret, DXFILEERR_BADFILEVERSION);
+
+    ret = IDirectXFile_RegisterTemplates(dxfile, templates_bad_file_type2, sizeof(templates_bad_file_type2) - 1);
+    ok(ret == DXFILEERR_BADFILETYPE, "RegisterTemplates returned %#x, expected %#x\n", ret, DXFILEERR_BADFILETYPE);
+
+    ret = IDirectXFile_RegisterTemplates(dxfile, templates_bad_file_float_size, sizeof(templates_bad_file_float_size) - 1);
+    ok(ret == DXFILEERR_BADFILEFLOATSIZE, "RegisterTemplates returned %#x, expected %#x\n", ret, DXFILEERR_BADFILEFLOATSIZE);
+
+    ret = IDirectXFile_RegisterTemplates(dxfile, templates_parse_error, sizeof(templates_parse_error) - 1);
+    todo_wine ok(ret == DXFILEERR_PARSEERROR, "RegisterTemplates returned %#x, expected %#x\n", ret, DXFILEERR_PARSEERROR);
 
     IDirectXFile_Release(dxfile);
 }
@@ -788,6 +841,7 @@ START_TEST(d3dxof)
     test_refcount();
     test_CreateEnumObject();
     test_file_types();
+    test_templates();
     test_compressed_files();
     test_getname();
     test_syntax();
