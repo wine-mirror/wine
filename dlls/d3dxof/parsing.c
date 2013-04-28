@@ -884,11 +884,6 @@ static WORD check_TOKEN(parse_buffer * buf)
   return buf->current_token;
 }
 
-static BOOL is_template_available(parse_buffer * buf)
-{
-  return check_TOKEN(buf) == TOKEN_TEMPLATE;
-}
-
 static inline BOOL is_primitive_type(WORD token)
 {
   BOOL ret;
@@ -1133,7 +1128,7 @@ static BOOL parse_template(parse_buffer * buf)
 
 BOOL parse_templates(parse_buffer * buf)
 {
-  while (buf->rem_bytes && is_template_available(buf))
+  while (buf->rem_bytes && (check_TOKEN(buf) == TOKEN_TEMPLATE))
   {
     if (!parse_template(buf))
     {
