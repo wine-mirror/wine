@@ -19,6 +19,7 @@
 #include "config.h"
 
 #include <stdarg.h>
+#include <assert.h>
 
 #define COBJMACROS
 
@@ -773,6 +774,22 @@ void release_document_mutation(HTMLDocumentNode *doc)
 
     nsIContentUtils_RemoveDocumentObserver(content_utils, nsdoc, &doc->nsIDocumentObserver_iface);
     nsIDocument_Release(nsdoc);
+}
+
+JSContext *get_context_from_document(nsIDOMHTMLDocument *nsdoc)
+{
+    nsIDocument *doc;
+    JSContext *ctx;
+    nsresult nsres;
+
+    nsres = nsIDOMHTMLDocument_QueryInterface(nsdoc, &IID_nsIDocument, (void**)&doc);
+    assert(nsres == NS_OK);
+
+    ctx = nsIContentUtils_GetContextFromDocument(content_utils, doc);
+    nsIDocument_Release(doc);
+
+    TRACE("ret %p\n", ctx);
+    return ctx;
 }
 
 void init_mutation(nsIComponentManager *component_manager)

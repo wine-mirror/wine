@@ -833,6 +833,7 @@ static HRESULT WINAPI HTMLDocument_get_nameProp(IHTMLDocument2 *iface, BSTR *p)
 static HRESULT document_write(HTMLDocument *This, SAFEARRAY *psarray, BOOL ln)
 {
     VARIANT *var, tmp;
+    JSContext *jsctx;
     nsAString nsstr;
     ULONG i, argc;
     nsresult nsres;
@@ -859,6 +860,7 @@ static HRESULT document_write(HTMLDocument *This, SAFEARRAY *psarray, BOOL ln)
 
     V_VT(&tmp) = VT_EMPTY;
 
+    jsctx = get_context_from_document(This->doc_node->nsdoc);
     argc = psarray->rgsabound[0].cElements;
     for(i=0; i < argc; i++) {
         if(V_VT(var+i) == VT_BSTR) {
@@ -873,9 +875,9 @@ static HRESULT document_write(HTMLDocument *This, SAFEARRAY *psarray, BOOL ln)
         }
 
         if(!ln || i != argc-1)
-            nsres = nsIDOMHTMLDocument_Write(This->doc_node->nsdoc, &nsstr, NULL /* FIXME! */);
+            nsres = nsIDOMHTMLDocument_Write(This->doc_node->nsdoc, &nsstr, jsctx);
         else
-            nsres = nsIDOMHTMLDocument_Writeln(This->doc_node->nsdoc, &nsstr, NULL /* FIXME! */);
+            nsres = nsIDOMHTMLDocument_Writeln(This->doc_node->nsdoc, &nsstr, jsctx);
         nsAString_Finish(&nsstr);
         if(V_VT(var+i) != VT_BSTR)
             VariantClear(&tmp);
@@ -930,7 +932,8 @@ static HRESULT WINAPI HTMLDocument_open(IHTMLDocument2 *iface, BSTR url, VARIANT
        || V_VT(&features) != VT_ERROR || V_VT(&replace) != VT_ERROR)
         FIXME("unsupported args\n");
 
-    nsres = nsIDOMHTMLDocument_Open(This->doc_node->nsdoc, NULL, NULL, NULL, NULL, 0, &tmp);
+    nsres = nsIDOMHTMLDocument_Open(This->doc_node->nsdoc, NULL, NULL, NULL,
+            get_context_from_document(This->doc_node->nsdoc), 0, &tmp);
     if(NS_FAILED(nsres)) {
         ERR("Open failed: %08x\n", nsres);
         return E_FAIL;

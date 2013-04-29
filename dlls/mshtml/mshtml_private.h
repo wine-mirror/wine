@@ -781,6 +781,7 @@ void NSContainer_Release(NSContainer*) DECLSPEC_HIDDEN;
 void init_mutation(nsIComponentManager*) DECLSPEC_HIDDEN;
 void init_document_mutation(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 void release_document_mutation(HTMLDocumentNode*) DECLSPEC_HIDDEN;
+JSContext *get_context_from_document(nsIDOMHTMLDocument*) DECLSPEC_HIDDEN;
 
 void HTMLDocument_LockContainer(HTMLDocumentObj*,BOOL) DECLSPEC_HIDDEN;
 void show_context_menu(HTMLDocumentObj*,DWORD,POINT*,IDispatch*) DECLSPEC_HIDDEN;
