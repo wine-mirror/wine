@@ -33,7 +33,6 @@
 #include <stdlib.h>
 
 #ifdef __APPLE__
-# include <CoreFoundation/CFBundle.h>
 # include <CoreFoundation/CFLocale.h>
 # include <CoreFoundation/CFString.h>
 #endif
@@ -3197,16 +3196,16 @@ void LOCALE_Init(void)
 
     if (user_locale_country_ref)
     {
-        user_locale_string_ref = CFStringCreateWithFormat(NULL, NULL, CFSTR("%@_%@.UTF-8"),
+        user_locale_string_ref = CFStringCreateWithFormat(NULL, NULL, CFSTR("%@_%@"),
             user_locale_lang_ref, user_locale_country_ref);
     }
     else
     {
-        user_locale_string_ref = CFStringCreateWithFormat(NULL, NULL, CFSTR("%@.UTF-8"),
-            user_locale_lang_ref);
+        user_locale_string_ref = CFStringCreateCopy(NULL, user_locale_lang_ref);
     }
 
     CFStringGetCString( user_locale_string_ref, user_locale, sizeof(user_locale), kCFStringEncodingUTF8 );
+    strcat(user_locale, ".UTF-8");
 
     unix_cp = CP_UTF8;  /* default to utf-8 even if we don't get a valid locale */
     setenv( "LANG", user_locale, 0 );
@@ -3225,12 +3224,13 @@ void LOCALE_Init(void)
         /* Retrieve the preferred language as chosen in System Preferences. */
         /* If language is a less specific variant of locale (e.g. 'en' vs. 'en_US'),
            leave things be. */
-        CFArrayRef all_locales = CFLocaleCopyAvailableLocaleIdentifiers();
-        CFArrayRef preferred_locales = CFBundleCopyLocalizationsForPreferences( all_locales, NULL );
+        CFArrayRef preferred_langs = CFLocaleCopyPreferredLanguages();
+        CFStringRef canonical_lang_string_ref = CFLocaleCreateCanonicalLanguageIdentifierFromString(NULL, user_locale_string_ref);
         CFStringRef user_language_string_ref;
-        if (preferred_locales && CFArrayGetCount( preferred_locales ) &&
-            (user_language_string_ref = CFArrayGetValueAtIndex( preferred_locales, 0 )) &&
-            !CFEqual(user_language_string_ref, user_locale_lang_ref))
+        if (preferred_langs && canonical_lang_string_ref && CFArrayGetCount( preferred_langs ) &&
+            (user_language_string_ref = CFArrayGetValueAtIndex( preferred_langs, 0 )) &&
+            !CFEqual(user_language_string_ref, user_locale_lang_ref) &&
+            !CFEqual(user_language_string_ref, canonical_lang_string_ref))
         {
             struct locale_name locale_name;
             WCHAR buffer[128];
@@ -3238,11 +3238,12 @@ void LOCALE_Init(void)
             strcpynAtoW( buffer, user_locale, sizeof(buffer)/sizeof(WCHAR) );
             parse_locale_name( buffer, &locale_name );
             lcid_LC_MESSAGES = locale_name.lcid;
-            TRACE( "setting lcid_LC_MESSAGES to '%s'\n", user_locale );
+            TRACE( "setting lcid_LC_MESSAGES to '%s' %04x\n", user_locale, lcid_LC_MESSAGES );
         }
-        CFRelease( all_locales );
-        if (preferred_locales)
-            CFRelease( preferred_locales );
+        if (preferred_langs)
+            CFRelease( preferred_langs );
+        if (canonical_lang_string_ref)
+            CFRelease( canonical_lang_string_ref );
     }
 
     CFRelease( user_locale_ref );
