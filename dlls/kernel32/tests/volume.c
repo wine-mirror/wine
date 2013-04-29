@@ -775,17 +775,12 @@ static void test_dvd_read_structure(HANDLE handle)
     /* Test whether this ioctl is supported */
     ret = DeviceIoControl(handle, IOCTL_DVD_READ_STRUCTURE, &dvdReadStructure, sizeof(DVD_READ_STRUCTURE),
         &completeDvdLayerDescriptor, sizeof(struct COMPLETE_DVD_LAYER_DESCRIPTOR), &nbBytes, NULL);
-    if ((!ret && GetLastError() == ERROR_INVALID_FUNCTION)
-     || (!ret && GetLastError() == ERROR_NOT_SUPPORTED))
+
+    if(!ret)
     {
-        skip("IOCTL_DVD_READ_STRUCTURE not supported\n");
+        skip("IOCTL_DVD_READ_STRUCTURE not supported: %u\n", GetLastError());
         return;
     }
-
-    ok(ret || broken(GetLastError() == ERROR_NOT_READY) || broken(GetLastError() == ERROR_INVALID_PARAMETER),
-        "IOCTL_DVD_READ_STRUCTURE (DvdPhysicalDescriptor) failed, last error = %u\n", GetLastError());
-    if(!ret)
-        return;
 
     /* Confirm there is always a header before the actual data */
     ok( completeDvdLayerDescriptor.Header.Length == 0x0802, "Length is 0x%04x instead of 0x0802\n", completeDvdLayerDescriptor.Header.Length);
