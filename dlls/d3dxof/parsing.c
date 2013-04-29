@@ -1065,39 +1065,6 @@ static BOOL parse_template_parts(parse_buffer * buf)
   return TRUE;
 }
 
-static void go_to_next_definition(parse_buffer * buf)
-{
-  char c;
-  while (buf->rem_bytes)
-  {
-    if (!read_bytes(buf, &c, 1))
-      return;
-    if ((c == '#') || (c == '/'))
-    {
-      /* Handle comment (# or //) */
-      if (c == '/')
-      {
-        if (!read_bytes(buf, &c, 1))
-          return;
-        if (c != '/')
-          return;
-      }
-      c = 0;
-      while (c != 0x0A)
-      {
-        if (!read_bytes(buf, &c, 1))
-          return;
-      }
-      continue;
-    }
-    else if (!is_space(c))
-    {
-      rewind_bytes(buf, 1);
-      break;
-    }
-  }
-}
-
 static BOOL parse_template(parse_buffer * buf)
 {
   if (get_TOKEN(buf) != TOKEN_TEMPLATE)
@@ -1466,11 +1433,8 @@ BOOL parse_object(parse_buffer * buf)
   if (get_TOKEN(buf) != TOKEN_CBRACE)
     return FALSE;
 
-  if (buf->txt)
-  {
-    /* Go to the next object */
-    go_to_next_definition(buf);
-  }
+  /* For seeking to a possibly eof to avoid parsing another object next time */
+  check_TOKEN(buf);
 
   return TRUE;
 }
