@@ -405,7 +405,7 @@ NTSTATUS WINAPI LsaLookupNames2( LSA_HANDLE policy, ULONG flags, ULONG count,
 
     /* use maximum domain count */
     if (!(*domains = heap_alloc(sizeof(LSA_REFERENCED_DOMAIN_LIST) + sizeof(LSA_TRUST_INFORMATION)*count +
-                                sid_size_total + domainname_size_total)))
+                                sid_size_total + domainname_size_total*sizeof(WCHAR))))
     {
         heap_free(*sids);
         return STATUS_NO_MEMORY;
@@ -440,6 +440,7 @@ NTSTATUS WINAPI LsaLookupNames2( LSA_HANDLE policy, ULONG flags, ULONG count,
             if (domain_size)
             {
                 domain.Length = domain_size * sizeof(WCHAR);
+                domain.MaximumLength = (domain_size + 1) * sizeof(WCHAR);
                 (*sids)[i].DomainIndex = lsa_reflist_add_domain(*domains, &domain, &domain_data);
             }
         }

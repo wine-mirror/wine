@@ -390,6 +390,8 @@ static void test_LsaLookupSids(void)
     {
        ok((char*)list->Domains - (char*)list > 0, "%p, %p\n", list, list->Domains);
        ok((char*)list->Domains[0].Sid - (char*)list->Domains > 0, "%p, %p\n", list->Domains, list->Domains[0].Sid);
+       ok(list->Domains[0].Name.MaximumLength > list->Domains[0].Name.Length, "got %d, %d\n", list->Domains[0].Name.MaximumLength,
+           list->Domains[0].Name.Length);
     }
 
     pLsaFreeMemory(names);
