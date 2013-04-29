@@ -982,6 +982,7 @@ static HRESULT WINAPI HTMLElement2_get_dir(IHTMLElement2 *iface, BSTR *p)
         return S_OK;
     }
 
+    nsAString_Init(&dir_str, NULL);
     nsres = nsIDOMHTMLElement_GetDir(This->nselem, &dir_str);
     return return_nsstr(nsres, &dir_str, p);
 }
