@@ -1114,11 +1114,6 @@ static BOOL parse_template(parse_buffer * buf)
     return FALSE;
   if (get_TOKEN(buf) != TOKEN_CBRACE)
     return FALSE;
-  if (buf->txt)
-  {
-    /* Go to the next template */
-    go_to_next_definition(buf);
-  }
 
   TRACE("%d - %s - %s\n", buf->pdxf->nb_xtemplates, buf->pdxf->xtemplates[buf->pdxf->nb_xtemplates].name, debugstr_guid(&buf->pdxf->xtemplates[buf->pdxf->nb_xtemplates].class_id));
   buf->pdxf->nb_xtemplates++;
@@ -1128,7 +1123,7 @@ static BOOL parse_template(parse_buffer * buf)
 
 BOOL parse_templates(parse_buffer * buf)
 {
-  while (buf->rem_bytes && (check_TOKEN(buf) == TOKEN_TEMPLATE))
+  while (check_TOKEN(buf) == TOKEN_TEMPLATE)
   {
     if (!parse_template(buf))
     {
