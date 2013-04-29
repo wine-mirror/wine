@@ -74,6 +74,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_PRIMITIVE_TYPE,
     WINED3D_CS_OP_SET_LIGHT,
     WINED3D_CS_OP_SET_LIGHT_ENABLE,
+    WINED3D_CS_OP_BLT,
     WINED3D_CS_OP_STOP,
 };
 
@@ -338,6 +339,18 @@ struct wined3d_cs_set_light_enable
     enum wined3d_cs_op opcode;
     UINT idx;
     BOOL enable;
+};
+
+struct wined3d_cs_blt
+{
+    enum wined3d_cs_op opcode;
+    struct wined3d_surface *dst_surface;
+    RECT dst_rect;
+    struct wined3d_surface *src_surface;
+    RECT src_rect;
+    DWORD flags;
+    WINEDDBLTFX fx;
+    enum wined3d_texture_filter_type filter;
 };
 
 /* FIXME: The list synchronization probably isn't particularly fast. */
@@ -1507,6 +1520,9 @@ static UINT wined3d_cs_exec_glfinish(struct wined3d_cs *cs, const void *data)
     struct wined3d_device *device = cs->device;
     struct wined3d_context *context;
 
+    if (!device->d3d_initialized)
+        return sizeof(*op);
+
     context = context_acquire(device, NULL);
     context->gl_info->gl_ops.gl.p_glFinish();
     context_release(context);
@@ -1718,6 +1734,38 @@ void wined3d_cs_emit_set_light_enable(struct wined3d_cs *cs, UINT idx, BOOL enab
     cs->ops->submit(cs);
 }
 
+static UINT wined3d_cs_exec_blt(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_blt *op = data;
+
+    surface_blt_ugly(op->dst_surface, &op->dst_rect,
+            op->src_surface, &op->src_rect,
+            op->flags, &op->fx, op->filter);
+
+    return sizeof(*op);
+}
+
+void wined3d_cs_emit_blt(struct wined3d_cs *cs, struct wined3d_surface *dst_surface,
+        const RECT *dst_rect, struct wined3d_surface *src_surface,
+        const RECT *src_rect, DWORD flags, const WINEDDBLTFX *fx,
+        enum wined3d_texture_filter_type filter)
+{
+    struct wined3d_cs_blt *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_BLT;
+    op->dst_surface = dst_surface;
+    op->dst_rect = *dst_rect;
+    op->src_surface = src_surface;
+    op->src_rect = *src_rect;
+    op->flags = flags;
+    op->filter = filter;
+    if (fx)
+        op->fx = *fx;
+
+    cs->ops->submit(cs);
+}
+
 static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
 {
     /* WINED3D_CS_OP_FENCE                      */ wined3d_cs_exec_fence,
@@ -1758,6 +1806,7 @@ static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_PRIMITIVE_TYPE         */ wined3d_cs_exec_set_primitive_type,
     /* WINED3D_CS_OP_SET_LIGHT                  */ wined3d_cs_exec_set_light,
     /* WINED3D_CS_OP_SET_LIGHT_ENABLE           */ wined3d_cs_exec_set_light_enable,
+    /* WINED3D_CS_OP_BLT                        */ wined3d_cs_exec_blt,
 };
 
 static void *wined3d_cs_st_require_space(struct wined3d_cs *cs, size_t size)
@@ -1832,6 +1881,7 @@ static DWORD WINAPI wined3d_cs_run(void *thread_param)
 
     TRACE("Started.\n");
 
+    cs->thread_id = GetCurrentThreadId();
     for (;;)
     {
         struct wined3d_cs_block *block;
