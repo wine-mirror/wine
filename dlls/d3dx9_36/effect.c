@@ -560,7 +560,7 @@ static struct d3dx_parameter *get_valid_parameter(struct ID3DXBaseEffectImpl *ba
 
             for (m = 0; m < pass->annotation_count; ++m)
             {
-                if (pass->annotation_handles[i] == parameter)
+                if (pass->annotation_handles[m] == parameter)
                 {
                     return get_parameter_struct(parameter);
                 }
