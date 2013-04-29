@@ -527,7 +527,7 @@ int CDECL MSVCRT__stricoll( const char* str1, const char* str2 )
 /*********************************************************************
  *              _strncoll_l (MSVCRT.@)
  */
-int CDECL MSVCRT_strncoll_l( const char* str1, const char* str2, MSVCRT_size_t count, MSVCRT__locale_t locale )
+int CDECL MSVCRT__strncoll_l( const char* str1, const char* str2, MSVCRT_size_t count, MSVCRT__locale_t locale )
 {
     MSVCRT_pthreadlocinfo locinfo;
 
@@ -540,11 +540,11 @@ int CDECL MSVCRT_strncoll_l( const char* str1, const char* str2, MSVCRT_size_t c
 }
 
 /*********************************************************************
- *              strncoll (MSVCRT.@)
+ *              _strncoll (MSVCRT.@)
  */
-int CDECL MSVCRT_strncoll( const char* str1, const char* str2, MSVCRT_size_t count )
+int CDECL MSVCRT__strncoll( const char* str1, const char* str2, MSVCRT_size_t count )
 {
-    return MSVCRT_strncoll_l(str1, str2, count, NULL);
+    return MSVCRT__strncoll_l(str1, str2, count, NULL);
 }
 
 /*********************************************************************

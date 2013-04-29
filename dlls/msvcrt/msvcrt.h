@@ -987,7 +987,7 @@ void __cdecl MSVCRT__invalid_parameter(const MSVCRT_wchar_t *expr, const MSVCRT_
 int __cdecl      MSVCRT__toupper_l(int,MSVCRT__locale_t);
 int __cdecl      MSVCRT__tolower_l(int,MSVCRT__locale_t);
 int __cdecl      MSVCRT__strnicoll_l(const char*, const char*, MSVCRT_size_t, MSVCRT__locale_t);
-int __cdecl      MSVCRT_strncoll_l(const char*, const char*, MSVCRT_size_t, MSVCRT__locale_t);
+int __cdecl      MSVCRT__strncoll_l(const char*, const char*, MSVCRT_size_t, MSVCRT__locale_t);
 unsigned int __cdecl _get_output_format(void);
 
 /* Maybe one day we'll enable the invalid parameter handlers with the full set of information (msvcrXXd)

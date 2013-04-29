@@ -963,8 +963,8 @@
 @ cdecl _strlwr_l(str ptr)
 @ cdecl _strlwr_s(ptr long)
 @ cdecl _strlwr_s_l(ptr long ptr)
-@ cdecl _strncoll(str str long) MSVCRT_strncoll_l
-@ cdecl _strncoll_l(str str long ptr) MSVCRT_strncoll
+@ cdecl _strncoll(str str long) MSVCRT__strncoll
+@ cdecl _strncoll_l(str str long ptr) MSVCRT__strncoll_l
 @ cdecl _strnicmp(str str long) MSVCRT__strnicmp
 @ cdecl _strnicmp_l(str str long ptr) MSVCRT__strnicmp_l
 @ cdecl _strnicoll(str str long) MSVCRT__strnicoll

@@ -819,7 +819,7 @@ int CDECL _mbsnbcoll_l(const unsigned char *str1, const unsigned char *str2, MSV
         mbcinfo = locale->mbcinfo;
 
     if(!mbcinfo->ismbcodepage)
-        return MSVCRT_strncoll_l((const char*)str1, (const char*)str2, len, locale);
+        return MSVCRT__strncoll_l((const char*)str1, (const char*)str2, len, locale);
     return CompareStringA(mbcinfo->mblcid, 0, (const char*)str1, len, (const char*)str2, len)-CSTR_EQUAL;
 }
 
