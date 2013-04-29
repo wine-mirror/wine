@@ -444,19 +444,12 @@ if (0) /* crashes on native */
 
     hr = IDWriteFont_CreateFontFace(font, &fontface);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    EXPECT_REF(font, 1);
-    EXPECT_REF(fontface, 2);
 
     hr = IDWriteFont_CreateFontFace(font, &fontface2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(fontface == fontface2, "got %p, was %p\n", fontface2, fontface);
-    EXPECT_REF(fontface, 3);
-    EXPECT_REF(font, 1);
+    /* the fontface refcount is increased here */
 
-    IDWriteFontFace_AddRef(fontface);
-    EXPECT_REF(font, 1);
-    EXPECT_REF(fontface, 4);
-    IDWriteFontFace_Release(fontface);
     IDWriteFontFace_Release(fontface);
 
     IDWriteFontFace_Release(fontface);
