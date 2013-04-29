@@ -43,20 +43,19 @@
 
 #include "winedump.h"
 
+static inline USHORT ushort_bswap(USHORT s)
+{
+    return (s >> 8) | (s << 8);
+}
+
+static inline ULONG ulong_bswap(ULONG l)
+{
+    return ((ULONG)ushort_bswap((USHORT)l) << 16) | ushort_bswap((USHORT)(l >> 16));
+}
+
 static void dump_import_object(const IMPORT_OBJECT_HEADER *ioh)
 {
-    if (ioh->Version >= 1)
-    {
-#if 0 /* FIXME: supposed to handle uuid.lib but it doesn't */
-        const ANON_OBJECT_HEADER *aoh = (const ANON_OBJECT_HEADER *)ioh;
-
-        printf("CLSID {%08x-%04x-%04x-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-               aoh->ClassID.Data1, aoh->ClassID.Data2, aoh->ClassID.Data3,
-               aoh->ClassID.Data4[0], aoh->ClassID.Data4[1], aoh->ClassID.Data4[2], aoh->ClassID.Data4[3],
-               aoh->ClassID.Data4[4], aoh->ClassID.Data4[5], aoh->ClassID.Data4[6], aoh->ClassID.Data4[7]);
-#endif
-    }
-    else
+    if (ioh->Version == 0)
     {
         static const char * const obj_type[] = { "code", "data", "const" };
         static const char * const name_type[] = { "ordinal", "name", "no prefix", "undecorate" };
@@ -150,15 +149,17 @@ enum FileSig get_kind_lib(void)
 
 void lib_dump(void)
 {
-    long cur_file_pos;
+    int first_linker_member = 1;
+    unsigned long cur_file_pos, long_names_size = 0;
     const IMAGE_ARCHIVE_MEMBER_HEADER *iamh;
+    const char *long_names = NULL;
 
     cur_file_pos = IMAGE_ARCHIVE_START_SIZE;
 
     for (;;)
     {
         const IMPORT_OBJECT_HEADER *ioh;
-        long size;
+        unsigned long size;
 
         if (!(iamh = PRD(cur_file_pos, sizeof(*iamh)))) break;
 
@@ -169,11 +170,18 @@ void lib_dump(void)
             printf("Name %.16s", iamh->Name);
             if (!strncmp((const char *)iamh->Name, IMAGE_ARCHIVE_LINKER_MEMBER, sizeof(iamh->Name)))
             {
-                printf(" - %s archive linker member\n",
-                       cur_file_pos == IMAGE_ARCHIVE_START_SIZE ? "1st" : "2nd");
+                printf(" - %s archive linker member\n", first_linker_member ? "1st" : "2nd");
             }
             else
+            {
+                if (long_names && iamh->Name[0] == '/')
+                {
+                    unsigned long long_names_offset = atol((const char *)&iamh->Name[1]);
+                    if (long_names_offset < long_names_size)
+                        printf("%s\n", long_names + long_names_offset);
+                }
                 printf("\n");
+            }
             printf("Date %.12s %s\n", iamh->Date, get_time_str(strtoul((const char *)iamh->Date, NULL, 10)));
             printf("UserID %.6s\n", iamh->UserID);
             printf("GroupID %.6s\n", iamh->GroupID);
@@ -186,17 +194,63 @@ void lib_dump(void)
         size = strtoul((const char *)iamh->Size, NULL, 10);
         size = (size + 1) & ~1; /* align to an even address */
 
-        /* FIXME: only import library contents with the short format are
-         * recognized.
-         */
         if (!(ioh = PRD(cur_file_pos, sizeof(*ioh)))) break;
+
         if (ioh->Sig1 == IMAGE_FILE_MACHINE_UNKNOWN && ioh->Sig2 == IMPORT_OBJECT_HDR_SIG2)
         {
             dump_import_object(ioh);
         }
-        else if (strncmp((const char *)iamh->Name, IMAGE_ARCHIVE_LINKER_MEMBER, sizeof(iamh->Name)))
+        else if (!strncmp((const char *)iamh->Name, IMAGE_ARCHIVE_LINKER_MEMBER, sizeof(iamh->Name)))
         {
-            long expected_size;
+            const DWORD *offset = (const DWORD *)ioh;
+            const char *name;
+            DWORD i, count;
+
+            if (first_linker_member) /* 1st archive linker member, BE format */
+            {
+                count = ulong_bswap(*offset++);
+                name = (const char *)(offset + count);
+                printf("%u public symbols\n", count);
+                for (i = 0; i < count; i++)
+                {
+                    printf("%8x %s\n", ulong_bswap(offset[i]), name);
+                    name += strlen(name) + 1;
+                }
+                printf("\n");
+            }
+            else /* 2nd archive linker member, LE format */
+            {
+                const WORD *idx;
+
+                count = *offset++;
+                printf("%u offsets\n", count);
+                for (i = 0; i < count; i++)
+                {
+                    printf("%8x %8x\n", i, offset[i]);
+                }
+                printf("\n");
+
+                offset += count;
+                count = *offset++;
+                idx = (const WORD *)offset;
+                name = (const char *)(idx + count);
+                printf("%u public symbols\n", count);
+                for (i = 0; i < count; i++)
+                {
+                    printf("%8x %s\n", idx[i], name);
+                    name += strlen(name) + 1;
+                }
+                printf("\n");
+            }
+        }
+        else if (!strncmp((const char *)iamh->Name, IMAGE_ARCHIVE_LONGNAMES_MEMBER, sizeof(iamh->Name)))
+        {
+            long_names = PRD(cur_file_pos, size);
+            long_names_size = size;
+        }
+        else
+        {
+            unsigned long expected_size;
             const IMAGE_FILE_HEADER *fh = (const IMAGE_FILE_HEADER *)ioh;
 
             if (globals.do_dumpheader)
@@ -214,6 +268,7 @@ void lib_dump(void)
                 dump_long_import(fh, (const IMAGE_SECTION_HEADER *)((const char *)fh + sizeof(*fh) + fh->SizeOfOptionalHeader), fh->NumberOfSections);
         }
 
+        first_linker_member = 0;
         cur_file_pos += size;
     }
 }
