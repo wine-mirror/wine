@@ -1121,10 +1121,12 @@ static BOOL parse_template(parse_buffer * buf)
   return TRUE;
 }
 
-BOOL parse_templates(parse_buffer * buf)
+BOOL parse_templates(parse_buffer * buf, BOOL templates_only)
 {
-  while (check_TOKEN(buf) == TOKEN_TEMPLATE)
+  while (check_TOKEN(buf) != TOKEN_NONE)
   {
+    if (templates_only && (check_TOKEN(buf) != TOKEN_TEMPLATE))
+      return TRUE;
     if (!parse_template(buf))
     {
       WARN("Template is not correct\n");

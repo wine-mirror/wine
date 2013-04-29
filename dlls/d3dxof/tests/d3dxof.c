@@ -427,7 +427,7 @@ static void test_templates(void)
     ok(ret == DXFILEERR_BADFILEFLOATSIZE, "RegisterTemplates returned %#x, expected %#x\n", ret, DXFILEERR_BADFILEFLOATSIZE);
 
     ret = IDirectXFile_RegisterTemplates(dxfile, templates_parse_error, sizeof(templates_parse_error) - 1);
-    todo_wine ok(ret == DXFILEERR_PARSEERROR, "RegisterTemplates returned %#x, expected %#x\n", ret, DXFILEERR_PARSEERROR);
+    ok(ret == DXFILEERR_PARSEERROR, "RegisterTemplates returned %#x, expected %#x\n", ret, DXFILEERR_PARSEERROR);
 
     IDirectXFile_Release(dxfile);
 }

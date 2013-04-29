@@ -77,7 +77,7 @@ static void test_templates(void)
     ok(ret == D3DXFERR_BADFILEFLOATSIZE, "RegisterTemplates returned %#x, expected %#x\n", ret, D3DXFERR_BADFILEFLOATSIZE);
 
     ret = d3dxfile->lpVtbl->RegisterTemplates(d3dxfile, templates_parse_error, sizeof(templates_parse_error) - 1);
-    todo_wine ok(ret == D3DXFERR_PARSEERROR, "RegisterTemplates returned %#x, expected %#x\n", ret, D3DXFERR_PARSEERROR);
+    ok(ret == D3DXFERR_PARSEERROR, "RegisterTemplates returned %#x, expected %#x\n", ret, D3DXFERR_PARSEERROR);
 
     ret = d3dxfile->lpVtbl->RegisterTemplates(d3dxfile, templates, sizeof(templates) - 1);
     ok(ret == S_OK, "RegisterTemplates failed with %#x\n", ret);
