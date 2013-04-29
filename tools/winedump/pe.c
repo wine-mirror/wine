@@ -1384,52 +1384,51 @@ static void dump_dir_resource(void)
     for (i = 0; i< root->NumberOfNamedEntries + root->NumberOfIdEntries; i++)
     {
         e1 = (const IMAGE_RESOURCE_DIRECTORY_ENTRY*)(root + 1) + i;
-        namedir = (const IMAGE_RESOURCE_DIRECTORY *)((const char *)root + e1->u2.s3.OffsetToDirectory);
+        namedir = (const IMAGE_RESOURCE_DIRECTORY *)((const char *)root + e1->u2.s2.OffsetToDirectory);
         for (j = 0; j < namedir->NumberOfNamedEntries + namedir->NumberOfIdEntries; j++)
         {
             e2 = (const IMAGE_RESOURCE_DIRECTORY_ENTRY*)(namedir + 1) + j;
-            langdir = (const IMAGE_RESOURCE_DIRECTORY *)((const char *)root + e2->u2.s3.OffsetToDirectory);
+            langdir = (const IMAGE_RESOURCE_DIRECTORY *)((const char *)root + e2->u2.s2.OffsetToDirectory);
             for (k = 0; k < langdir->NumberOfNamedEntries + langdir->NumberOfIdEntries; k++)
             {
                 e3 = (const IMAGE_RESOURCE_DIRECTORY_ENTRY*)(langdir + 1) + k;
 
                 printf( "\n  " );
-                if (e1->u1.s1.NameIsString)
+                if (e1->u.s.NameIsString)
                 {
-                    string = (const IMAGE_RESOURCE_DIR_STRING_U*)((const char *)root + e1->u1.s1.NameOffset);
+                    string = (const IMAGE_RESOURCE_DIR_STRING_U*)((const char *)root + e1->u.s.NameOffset);
                     dump_unicode_str( string->NameString, string->Length );
                 }
                 else
                 {
-                    const char *type = get_resource_type( e1->u1.s2.Id );
+                    const char *type = get_resource_type( e1->u.Id );
                     if (type) printf( "%s", type );
-                    else printf( "%04x", e1->u1.s2.Id );
+                    else printf( "%04x", e1->u.Id );
                 }
 
                 printf( " Name=" );
-                if (e2->u1.s1.NameIsString)
+                if (e2->u.s.NameIsString)
                 {
-                    string = (const IMAGE_RESOURCE_DIR_STRING_U*) ((const char *)root + e2->u1.s1.NameOffset);
+                    string = (const IMAGE_RESOURCE_DIR_STRING_U*) ((const char *)root + e2->u.s.NameOffset);
                     dump_unicode_str( string->NameString, string->Length );
                 }
                 else
-                    printf( "%04x", e2->u1.s2.Id );
+                    printf( "%04x", e2->u.Id );
 
-                printf( " Language=%04x:\n", e3->u1.s2.Id );
+                printf( " Language=%04x:\n", e3->u.Id );
                 data = (const IMAGE_RESOURCE_DATA_ENTRY *)((const char *)root + e3->u2.OffsetToData);
-                if (e1->u1.s1.NameIsString)
+                if (e1->u.s.NameIsString)
                 {
                     dump_data( RVA( data->OffsetToData, data->Size ), data->Size, "    " );
                 }
-                else switch(e1->u1.s2.Id)
+                else switch(e1->u.Id)
                 {
                 case 6:
-                    dump_string_data( RVA( data->OffsetToData, data->Size ), data->Size,
-                                      e2->u1.s2.Id, "    " );
+                    dump_string_data( RVA( data->OffsetToData, data->Size ), data->Size,                                      e2->u.Id, "    " );
                     break;
                 case 11:
                     dump_msgtable_data( RVA( data->OffsetToData, data->Size ), data->Size,
-                                        e2->u1.s2.Id, "    " );
+                                        e2->u.Id, "    " );
                     break;
                 default:
                     dump_data( RVA( data->OffsetToData, data->Size ), data->Size, "    " );

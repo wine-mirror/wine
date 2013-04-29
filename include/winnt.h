@@ -3343,18 +3343,16 @@ typedef struct _IMAGE_RESOURCE_DIRECTORY_ENTRY {
 			unsigned NameOffset:31;
 			unsigned NameIsString:1;
 #endif
-		} DUMMYSTRUCTNAME1;
+		} DUMMYSTRUCTNAME;
 		DWORD   Name;
-                struct {
 #ifdef WORDS_BIGENDIAN
-			WORD    __pad;
-			WORD    Id;
+		WORD    __pad;
+		WORD    Id;
 #else
-			WORD    Id;
-			WORD    __pad;
+		WORD    Id;
+		WORD    __pad;
 #endif
-		} DUMMYSTRUCTNAME2;
-	} DUMMYUNIONNAME1;
+	} DUMMYUNIONNAME;
 	union {
 		DWORD   OffsetToData;
 		struct {
@@ -3365,7 +3363,7 @@ typedef struct _IMAGE_RESOURCE_DIRECTORY_ENTRY {
 			unsigned OffsetToDirectory:31;
 			unsigned DataIsDirectory:1;
 #endif
-		} DUMMYSTRUCTNAME3;
+		} DUMMYSTRUCTNAME2;
 	} DUMMYUNIONNAME2;
 } IMAGE_RESOURCE_DIRECTORY_ENTRY,*PIMAGE_RESOURCE_DIRECTORY_ENTRY;
 
