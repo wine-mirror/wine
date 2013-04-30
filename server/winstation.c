@@ -300,6 +300,40 @@ struct desktop *get_thread_desktop( struct thread *thread, unsigned int access )
     return get_desktop_obj( thread->process, thread->desktop, access );
 }
 
+static void close_desktop_timeout( void *private )
+{
+    struct desktop *desktop = private;
+
+    desktop->close_timeout = NULL;
+    unlink_named_object( &desktop->obj );  /* make sure no other process can open it */
+    post_desktop_message( desktop, WM_CLOSE, 0, 0 );  /* and signal the owner to quit */
+}
+
+/* add a user of the desktop and cancel the close timeout */
+static void add_desktop_user( struct desktop *desktop )
+{
+    desktop->users++;
+    if (desktop->close_timeout)
+    {
+        remove_timeout_user( desktop->close_timeout );
+        desktop->close_timeout = NULL;
+    }
+}
+
+/* remove a user of the desktop and start the close timeout if necessary */
+static void remove_desktop_user( struct desktop *desktop )
+{
+    assert( desktop->users > 0 );
+    desktop->users--;
+
+    /* if we have one remaining user, it has to be the manager of the desktop window */
+    if (desktop->users == 1 && get_top_window_owner( desktop ))
+    {
+        assert( !desktop->close_timeout );
+        desktop->close_timeout = add_timeout_user( -TICKS_PER_SEC, close_desktop_timeout, desktop );
+    }
+}
+
 /* set the process default desktop handle */
 void set_process_default_desktop( struct process *process, struct desktop *desktop,
                                   obj_handle_t handle )
@@ -316,15 +350,10 @@ void set_process_default_desktop( struct process *process, struct desktop *deskt
     LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
         if (!thread->desktop) thread->desktop = handle;
 
-    if (!process->is_system)
+    if (!process->is_system && desktop != old_desktop)
     {
-        desktop->users++;
-        if (desktop->close_timeout)
-        {
-            remove_timeout_user( desktop->close_timeout );
-            desktop->close_timeout = NULL;
-        }
-        if (old_desktop) old_desktop->users--;
+        add_desktop_user( desktop );
+        if (old_desktop) remove_desktop_user( old_desktop );
     }
 
     if (old_desktop) release_object( old_desktop );
@@ -372,15 +401,6 @@ done:
     clear_error();
 }
 
-static void close_desktop_timeout( void *private )
-{
-    struct desktop *desktop = private;
-
-    desktop->close_timeout = NULL;
-    unlink_named_object( &desktop->obj );  /* make sure no other process can open it */
-    post_desktop_message( desktop, WM_CLOSE, 0, 0 );  /* and signal the owner to quit */
-}
-
 /* close the desktop of a given process */
 void close_process_desktop( struct process *process )
 {
@@ -388,14 +408,7 @@ void close_process_desktop( struct process *process )
 
     if (process->desktop && (desktop = get_desktop_obj( process, process->desktop, 0 )))
     {
-        assert( desktop->users > 0 );
-        desktop->users--;
-        /* if we have one remaining user, it has to be the manager of the desktop window */
-        if (desktop->users == 1 && get_top_window_owner( desktop ))
-        {
-            assert( !desktop->close_timeout );
-            desktop->close_timeout = add_timeout_user( -TICKS_PER_SEC, close_desktop_timeout, desktop );
-        }
+        remove_desktop_user( desktop );
         release_object( desktop );
     }
     clear_error();  /* ignore errors */
