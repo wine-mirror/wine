@@ -1494,6 +1494,7 @@ static DWORD set_content_length( request_t *request )
         request->content_length = ~0u;
         request->read_chunked = TRUE;
     }
+    request->content_read = 0;
     return request->content_length;
 }
 
