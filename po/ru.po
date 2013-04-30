@@ -10435,77 +10435,59 @@ msgstr "Неизвестные протоколы"
 
 #: netstat.rc:41
 msgid "TCP Statistics for IPv4"
-msgstr ""
+msgstr "Статистика TCP для IPv4"
 
 #: netstat.rc:42
-#, fuzzy
-#| msgid "Active Connections"
 msgid "Active Opens"
 msgstr "Активные подключения"
 
 #: netstat.rc:43
 msgid "Passive Opens"
-msgstr ""
+msgstr "Пассивные подключения"
 
 #: netstat.rc:44
-#, fuzzy
-#| msgid "Active Connections"
 msgid "Failed Connection Attempts"
-msgstr "Активные подключения"
+msgstr "Сбоев при подключении"
 
 #: netstat.rc:45
-#, fuzzy
-#| msgid "Active Connections"
 msgid "Reset Connections"
-msgstr "Активные подключения"
+msgstr "Сброшено подключений"
 
 #: netstat.rc:46
-#, fuzzy
-#| msgid "Active Connections"
 msgid "Current Connections"
-msgstr "Активные подключения"
+msgstr "Текущих подключений"
 
 #: netstat.rc:47
-#, fuzzy
-#| msgid "Segment locked.\n"
 msgid "Segments Received"
-msgstr "Сегмент заблокирован.\n"
+msgstr "Получено сегментов"
 
 #: netstat.rc:48
-#, fuzzy
-#| msgid "Segment locked.\n"
 msgid "Segments Sent"
-msgstr "Сегмент заблокирован.\n"
+msgstr "Отправлено сегментов"
 
 #: netstat.rc:49
 msgid "Segments Retransmitted"
-msgstr ""
+msgstr "Повторно отправлено сегментов"
 
 #: netstat.rc:50
 msgid "UDP Statistics for IPv4"
-msgstr ""
+msgstr "Статистика UDP для IPv4"
 
 #: netstat.rc:51
-#, fuzzy
-#| msgid "Segment locked.\n"
 msgid "Datagrams Received"
-msgstr "Сегмент заблокирован.\n"
+msgstr "Получено датаграмм"
 
 #: netstat.rc:52
-#, fuzzy
-#| msgid "Local Port"
 msgid "No Ports"
-msgstr "Локальный порт"
+msgstr "Порт не указан"
 
 #: netstat.rc:53
-#, fuzzy
-#| msgid "Decoding Error"
 msgid "Receive Errors"
-msgstr "Ошибка декодирования"
+msgstr "Ошибок приема"
 
 #: netstat.rc:54
 msgid "Datagrams Sent"
-msgstr ""
+msgstr "Отправлено датаграмм"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
