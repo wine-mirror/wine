@@ -6362,9 +6362,10 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
                 y_shift = height - (src_height / vmul);
 
             dst += x_shift + y_shift * ( pitch / 4 );
-            while ( src_height )
+            height = min( height, src_height / vmul );
+            while ( height-- )
             {
-                for ( x = 0; x < src_width / hmul; x++ )
+                for ( x = 0; x < width && x < src_width / hmul; x++ )
                 {
                     if ( rgb )
                     {
