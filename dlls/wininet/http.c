@@ -2276,12 +2276,15 @@ static void commit_cache_entry(http_request_t *req)
     req->hCacheFile = NULL;
 
     if(HTTP_GetRequestURL(req, url)) {
-        DWORD headersLen;
+        WCHAR *header;
+        DWORD header_len;
 
-        headersLen = req->rawHeaders ? strlenW(req->rawHeaders) : 0;
+        header = build_response_header(req, TRUE);
+        header_len = (header ? strlenW(header) : 0);
         CommitUrlCacheEntryW(url, req->cacheFile, req->expires,
                 req->last_modified, NORMAL_CACHE_ENTRY,
-                req->rawHeaders, headersLen, NULL, 0);
+                header, header_len, NULL, 0);
+        heap_free(header);
     }
 }
 
