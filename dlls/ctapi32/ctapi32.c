@@ -92,16 +92,6 @@ LOAD_FUNCPTR(CT_close);
 	return 0;
 }
 
-static void unload_functions(void)
-{
-	pCT_close = NULL;
-	pCT_data = NULL;
-	pCT_init = NULL;
-	if (ctapi_handle)
-		wine_dlclose(ctapi_handle, NULL, 0);
-}
-
-
 /*
  *  ct-API specific functions
  */
@@ -137,18 +127,15 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     switch (fdwReason)
     {
         case DLL_PROCESS_ATTACH:
-        {
             DisableThreadLibraryCalls(hinstDLL);
             /* Try to load low-level library */
             if (load_functions() != 0)
 		return FALSE;  /* error */
             break;
-        }
         case DLL_PROCESS_DETACH:
-        {
-            unload_functions();
+            if (lpvReserved) break;
+            if (ctapi_handle) wine_dlclose(ctapi_handle, NULL, 0);
             break;
-        }
     }
 
     return TRUE;
