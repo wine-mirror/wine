@@ -274,25 +274,21 @@ static void NETSTAT_tcp_table(void)
 
 static void NETSTAT_tcp_stats(void)
 {
-    PMIB_TCPSTATS stats;
+    MIB_TCPSTATS stats;
 
-    stats = (PMIB_TCPSTATS)HeapAlloc(GetProcessHeap(), 0, sizeof(MIB_TCPSTATS));
-
-    if (GetTcpStatistics(stats) == NO_ERROR)
+    if (GetTcpStatistics(&stats) == NO_ERROR)
     {
         NETSTAT_wprintf(fmtnn, NETSTAT_load_message(IDS_TCP_STAT));
         NETSTAT_wprintf(fmtn);
-        NETSTAT_wprintf(fmttcpstat, NETSTAT_load_message(IDS_TCP_ACTIVE_OPEN), stats->dwActiveOpens);
-        NETSTAT_wprintf(fmttcpstat, NETSTAT_load_message(IDS_TCP_PASSIV_OPEN), stats->dwPassiveOpens);
-        NETSTAT_wprintf(fmttcpstat, NETSTAT_load_message(IDS_TCP_FAILED_CONN), stats->dwAttemptFails);
-        NETSTAT_wprintf(fmttcpstat, NETSTAT_load_message(IDS_TCP_RESET_CONN),  stats->dwEstabResets);
-        NETSTAT_wprintf(fmttcpstat, NETSTAT_load_message(IDS_TCP_CURR_CONN),   stats->dwCurrEstab);
-        NETSTAT_wprintf(fmttcpstat, NETSTAT_load_message(IDS_TCP_SEGM_RECV),   stats->dwInSegs);
-        NETSTAT_wprintf(fmttcpstat, NETSTAT_load_message(IDS_TCP_SEGM_SENT),   stats->dwOutSegs);
-        NETSTAT_wprintf(fmttcpstat, NETSTAT_load_message(IDS_TCP_SEGM_RETRAN), stats->dwRetransSegs);
+        NETSTAT_wprintf(fmttcpstat, NETSTAT_load_message(IDS_TCP_ACTIVE_OPEN), stats.dwActiveOpens);
+        NETSTAT_wprintf(fmttcpstat, NETSTAT_load_message(IDS_TCP_PASSIV_OPEN), stats.dwPassiveOpens);
+        NETSTAT_wprintf(fmttcpstat, NETSTAT_load_message(IDS_TCP_FAILED_CONN), stats.dwAttemptFails);
+        NETSTAT_wprintf(fmttcpstat, NETSTAT_load_message(IDS_TCP_RESET_CONN),  stats.dwEstabResets);
+        NETSTAT_wprintf(fmttcpstat, NETSTAT_load_message(IDS_TCP_CURR_CONN),   stats.dwCurrEstab);
+        NETSTAT_wprintf(fmttcpstat, NETSTAT_load_message(IDS_TCP_SEGM_RECV),   stats.dwInSegs);
+        NETSTAT_wprintf(fmttcpstat, NETSTAT_load_message(IDS_TCP_SEGM_SENT),   stats.dwOutSegs);
+        NETSTAT_wprintf(fmttcpstat, NETSTAT_load_message(IDS_TCP_SEGM_RETRAN), stats.dwRetransSegs);
     }
-
-    HeapFree(GetProcessHeap(), 0, stats);
 }
 
 static void NETSTAT_udp_table(void)
@@ -325,21 +321,17 @@ static void NETSTAT_udp_table(void)
 
 static void NETSTAT_udp_stats(void)
 {
-    PMIB_UDPSTATS stats;
+    MIB_UDPSTATS stats;
 
-    stats = (PMIB_UDPSTATS)HeapAlloc(GetProcessHeap(), 0, sizeof(MIB_UDPSTATS));
-
-    if (GetUdpStatistics(stats) == NO_ERROR)
+    if (GetUdpStatistics(&stats) == NO_ERROR)
     {
         NETSTAT_wprintf(fmtnn, NETSTAT_load_message(IDS_UDP_STAT));
         NETSTAT_wprintf(fmtn);
-        NETSTAT_wprintf(fmtudpstat, NETSTAT_load_message(IDS_UDP_DGRAMS_RECV), stats->dwInDatagrams);
-        NETSTAT_wprintf(fmtudpstat, NETSTAT_load_message(IDS_UDP_NO_PORTS), stats->dwNoPorts);
-        NETSTAT_wprintf(fmtudpstat, NETSTAT_load_message(IDS_UDP_RECV_ERRORS), stats->dwInErrors);
-        NETSTAT_wprintf(fmtudpstat, NETSTAT_load_message(IDS_UDP_DGRAMS_SENT),  stats->dwOutDatagrams);
+        NETSTAT_wprintf(fmtudpstat, NETSTAT_load_message(IDS_UDP_DGRAMS_RECV), stats.dwInDatagrams);
+        NETSTAT_wprintf(fmtudpstat, NETSTAT_load_message(IDS_UDP_NO_PORTS), stats.dwNoPorts);
+        NETSTAT_wprintf(fmtudpstat, NETSTAT_load_message(IDS_UDP_RECV_ERRORS), stats.dwInErrors);
+        NETSTAT_wprintf(fmtudpstat, NETSTAT_load_message(IDS_UDP_DGRAMS_SENT),  stats.dwOutDatagrams);
     }
-
-    HeapFree(GetProcessHeap(), 0, stats);
 }
 
 static NETSTATPROTOCOLS NETSTAT_get_protocol(WCHAR name[])
