@@ -102,14 +102,12 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             break;
 	}
         case DLL_PROCESS_DETACH:
+            if (lpvReserved) break;
 #ifdef SONAME_LIBSANE
             TRACE("calling sane_exit()\n");
 	    psane_exit ();
-
             close_libsane(libsane_handle);
-            libsane_handle = NULL;
-#endif 
-	    SANE_instance = NULL;
+#endif
             break;
     }
 
