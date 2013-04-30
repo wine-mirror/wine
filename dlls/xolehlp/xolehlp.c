@@ -38,7 +38,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     return TRUE;
 }
 
-HRESULT WINAPI DtcGetTransactionManager(char *host, char *tm_name, REFIID riid,
+HRESULT CDECL DtcGetTransactionManager(char *host, char *tm_name, REFIID riid,
         DWORD dwReserved1, WORD wcbReserved2, void *pvReserved2, void **ppv)
 {
     FIXME("(%s, %s, %s, %d, %d, %p, %p): stub\n", debugstr_a(host), debugstr_a(tm_name),
@@ -46,7 +46,7 @@ HRESULT WINAPI DtcGetTransactionManager(char *host, char *tm_name, REFIID riid,
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI DtcGetTransactionManagerExA(CHAR *host, CHAR *tm_name, REFIID riid,
+HRESULT CDECL DtcGetTransactionManagerExA(CHAR *host, CHAR *tm_name, REFIID riid,
         DWORD options, void *config, void **ppv)
 {
     FIXME("(%s, %s, %s, %d, %p, %p): stub\n", debugstr_a(host), debugstr_a(tm_name),
@@ -54,7 +54,7 @@ HRESULT WINAPI DtcGetTransactionManagerExA(CHAR *host, CHAR *tm_name, REFIID rii
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI DtcGetTransactionManagerExW(WCHAR *host, WCHAR *tm_name, REFIID riid,
+HRESULT CDECL DtcGetTransactionManagerExW(WCHAR *host, WCHAR *tm_name, REFIID riid,
         DWORD options, void *config, void **ppv)
 {
     FIXME("(%s, %s, %s, %d, %p, %p): stub\n", debugstr_w(host), debugstr_w(tm_name),
