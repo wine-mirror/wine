@@ -78,8 +78,8 @@ typedef void  (__cdecl *free_func_t)(void*);
 extern char* __cdecl __unDName(char *,const char*,int,malloc_func_t,free_func_t,unsigned short int);
 
 /*********************************************************************
- *  *  stat64_to_stat32 [internal]
- *   */
+ *  stat64_to_stat32 [internal]
+ */
 static void stat64_to_stat32(const struct _stat64 *buf64, struct _stat32 *buf)
 {
     buf->st_dev   = buf64->st_dev;
@@ -210,20 +210,6 @@ void* CDECL _recalloc(void* mem, size_t num, size_t size)
 }
 
 /*********************************************************************
- *  _fstat32 (MSVCR100.@)
- */
-int CDECL _fstat32(int fd, struct _stat32* buf)
-{
-    int ret;
-    struct _stat64 buf64;
-
-    ret = _fstat64(fd, &buf64);
-    if (!ret)
-        stat64_to_stat32(&buf64, buf);
-    return ret;
-}
-
-/*********************************************************************
  *  _stat32 (MSVCR100.@)
  */
 int CDECL _stat32(const char *path, struct _stat32* buf)
@@ -307,20 +293,6 @@ static void stat64_to_stat64i32(const struct _stat64 *buf64, struct _stat64i32 *
     buf->st_atime = buf64->st_atime;
     buf->st_mtime = buf64->st_mtime;
     buf->st_ctime = buf64->st_ctime;
-}
-
-/*********************************************************************
- * _fstat64i32 (MSVCR100.@)
- */
-int CDECL _fstat64i32(int fd, struct _stat64i32* buf)
-{
-    int ret;
-    struct _stat64 buf64;
-
-    ret = _fstat64(fd, &buf64);
-    if (!ret)
-        stat64_to_stat64i32(&buf64, buf);
-    return ret;
 }
 
 /*********************************************************************

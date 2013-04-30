@@ -489,10 +489,10 @@
 @ cdecl _fseeki64(ptr int64 long) msvcrt._fseeki64
 @ stub _fseeki64_nolock
 @ cdecl _fsopen(str str long) msvcrt._fsopen
-@ cdecl _fstat32(long ptr) msvcr100._fstat32
+@ cdecl _fstat32(long ptr) msvcrt._fstat32
 @ stub _fstat32i64
 @ cdecl _fstat64(long ptr) msvcrt._fstat64
-@ cdecl _fstat64i32(long ptr) msvcr100._fstat64i32
+@ cdecl _fstat64i32(long ptr) msvcrt._fstat64i32
 @ stub _ftell_nolock
 @ cdecl -ret64 _ftelli64(ptr) msvcrt._ftelli64
 @ stub _ftelli64_nolock
