@@ -23,6 +23,9 @@
 #include "stdlib.h"
 #include "windef.h"
 #include "winbase.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 /*********************************************************************
  *  DllMain (MSVCR110.@)
@@ -46,4 +49,16 @@ BOOL WINAPI DllMain(HINSTANCE hdll, DWORD reason, LPVOID reserved)
 LPTOP_LEVEL_EXCEPTION_FILTER CDECL MSVCR110__crtSetUnhandledExceptionFilter(LPTOP_LEVEL_EXCEPTION_FILTER filter)
 {
     return SetUnhandledExceptionFilter(filter);
+}
+
+/*********************************************************************
+ *  __crtGetShowWindowMode (MSVCR110.@)
+ */
+int CDECL MSVCR110__crtGetShowWindowMode(void)
+{
+    STARTUPINFOW si;
+
+    GetStartupInfoW(&si);
+    TRACE("window=%d\n", si.wShowWindow);
+    return si.wShowWindow;
 }

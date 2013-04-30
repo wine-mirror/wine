@@ -918,7 +918,7 @@
 @ stub -arch=i386,win64 __crtFlsSetValue
 @ stub -arch=i386,win64 __crtGetDateFormatEx
 @ stub -arch=i386,win64 __crtGetLocaleInfoEx
-@ stub __crtGetShowWindowMode
+@ cdecl __crtGetShowWindowMode() MSVCR110__crtGetShowWindowMode
 @ stub -arch=i386,win64 __crtGetTimeFormatEx
 @ stub -arch=i386,win64 __crtGetUserDefaultLocaleName
 @ stub -arch=i386,win64 __crtInitializeCriticalSectionEx
