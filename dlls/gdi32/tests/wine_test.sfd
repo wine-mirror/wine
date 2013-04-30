@@ -20,7 +20,7 @@ OS2Version: 2
 OS2_WeightWidthSlopeOnly: 0
 OS2_UseTypoMetrics: 1
 CreationTime: 1288336343
-ModificationTime: 1352483620
+ModificationTime: 1366465321
 PfmFamily: 17
 TTFWeight: 500
 TTFWidth: 5
@@ -32,10 +32,10 @@ OS2TypoAOffset: 1
 OS2TypoDescent: 0
 OS2TypoDOffset: 1
 OS2TypoLinegap: 184
-OS2WinAscent: 0
-OS2WinAOffset: 1
-OS2WinDescent: 0
-OS2WinDOffset: 1
+OS2WinAscent: 1638
+OS2WinAOffset: 0
+OS2WinDescent: 410
+OS2WinDOffset: 0
 HheadAscent: 0
 HheadAOffset: 1
 HheadDescent: 0
@@ -78,15 +78,17 @@ ShortTable: maxp 16
   0
 EndShort
 LangName: 1033 "" "" "" "Wine : wine_test : 4-11-2010"
-GaspTable: 1 65535 2
+GaspTable: 1 65535 2 0
 Encoding: UnicodeBmp
 UnicodeInterp: none
 NameList: Adobe Glyph List
 DisplaySize: -24
 AntiAlias: 1
 FitToEm: 1
-WinInfo: 65 65 19
-BeginChars: 65539 5
+WinInfo: 48 16 4
+BeginPrivate: 0
+EndPrivate
+BeginChars: 65539 7
 
 StartChar: .notdef
 Encoding: 65536 -1 0
@@ -178,10 +180,10 @@ LayerCount: 2
 EndChar
 
 StartChar: dieresis
-Encoding: 168 168 0
+Encoding: 168 168 4
 Width: 1000
 VWidth: 0
-Flags: HW
+Flags: W
 LayerCount: 2
 Fore
 SplineSet
@@ -199,6 +201,44 @@ SplineSet
  308.375 621.934 308.375 621.934 374.609 691.182 c 0,16,17
  410.471 728.672 410.471 728.672 374.609 767.354 c 1,18,19
  310.707 834.805 310.707 834.805 254.492 773.213 c 1,12,13
+EndSplineSet
+EndChar
+
+StartChar: A
+Encoding: 65 65 5
+Width: 1000
+VWidth: 0
+Flags: WO
+LayerCount: 2
+Fore
+SplineSet
+459 1258 m 29,0,-1
+ 462 1639 l 5,1,-1
+ 389 1638 l 5,2,-1
+ 492 1815 l 5,3,-1
+ 609 1638.5 l 5,4,-1
+ 531 1637.5 l 5,5,-1
+ 523 1258 l 5,6,-1
+ 459 1258 l 29,0,-1
+EndSplineSet
+EndChar
+
+StartChar: D
+Encoding: 68 68 6
+Width: 1000
+VWidth: 0
+Flags: WO
+LayerCount: 2
+Fore
+SplineSet
+461 -30.7998 m 29,0,-1
+ 464 -411.8 l 5,1,-1
+ 391 -410.8 l 5,2,-1
+ 494 -587.8 l 5,3,-1
+ 611 -411.3 l 5,4,-1
+ 533 -410.3 l 5,5,-1
+ 525 -30.7998 l 5,6,-1
+ 461 -30.7998 l 29,0,-1
 EndSplineSet
 EndChar
 EndChars

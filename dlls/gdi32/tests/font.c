@@ -4561,6 +4561,46 @@ static void test_GetGlyphOutline_empty_contour(void)
     ReleaseDC(NULL, hdc);
 }
 
+static void test_GetGlyphOutline_metric_clipping(void)
+{
+    HDC hdc;
+    LOGFONTA lf;
+    HFONT hfont, hfont_prev;
+    GLYPHMETRICS gm;
+    TEXTMETRICA tm;
+    DWORD ret;
+
+    memset(&lf, 0, sizeof(lf));
+    lf.lfHeight = 72;
+    lstrcpyA(lf.lfFaceName, "wine_test");
+
+    SetLastError(0xdeadbeef);
+    hfont = CreateFontIndirectA(&lf);
+    ok(hfont != 0, "CreateFontIndirectA error %u\n", GetLastError());
+
+    hdc = GetDC(NULL);
+
+    hfont_prev = SelectObject(hdc, hfont);
+    ok(hfont_prev != NULL, "SelectObject failed\n");
+
+    SetLastError(0xdeadbeef);
+    ret = GetTextMetrics(hdc, &tm);
+    ok(ret, "GetTextMetrics error %u\n", GetLastError());
+
+    GetGlyphOutlineA(hdc, 'A', GGO_METRICS, &gm, 0, NULL, &mat);
+    ok(gm.gmptGlyphOrigin.y <= tm.tmAscent,
+        "Glyph top(%d) exceeds ascent(%d)\n",
+        gm.gmptGlyphOrigin.y, tm.tmAscent);
+    GetGlyphOutlineA(hdc, 'D', GGO_METRICS, &gm, 0, NULL, &mat);
+    ok(gm.gmptGlyphOrigin.y - gm.gmBlackBoxY >= -tm.tmDescent,
+        "Glyph bottom(%d) exceeds descent(%d)\n",
+        gm.gmptGlyphOrigin.y - gm.gmBlackBoxY, -tm.tmDescent);
+
+    SelectObject(hdc, hfont_prev);
+    DeleteObject(hfont);
+    ReleaseDC(NULL, hdc);
+}
+
 static void test_CreateScalableFontResource(void)
 {
     char ttf_name[MAX_PATH];
@@ -4643,6 +4683,7 @@ static void test_CreateScalableFontResource(void)
     ok(ret, "font wine_test should be enumerated\n");
 
     test_GetGlyphOutline_empty_contour();
+    test_GetGlyphOutline_metric_clipping();
 
     ret = pRemoveFontResourceExA(fot_name, FR_PRIVATE, 0);
     ok(!ret, "RemoveFontResourceEx() with not matching flags should fail\n");
