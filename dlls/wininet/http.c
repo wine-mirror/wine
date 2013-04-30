@@ -701,7 +701,7 @@ static WCHAR* build_response_header(http_request_t *request, BOOL use_cr)
     if(!req)
         return NULL;
 
-    if(request->rawHeaders)
+    if (request->status_code)
     {
         req[n++] = request->version;
         sprintfW(buf, status_fmt, request->status_code);
@@ -1847,7 +1847,6 @@ static void HTTPREQ_Destroy(object_header_t *hdr)
 
     heap_free(request->path);
     heap_free(request->verb);
-    heap_free(request->rawHeaders);
     heap_free(request->version);
     heap_free(request->statusText);
 
@@ -2179,7 +2178,7 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
 
         if(req->proxy)
             flags |= INTERNET_REQFLAG_VIA_PROXY;
-        if(!req->rawHeaders)
+        if(!req->status_code)
             flags |= INTERNET_REQFLAG_NO_HEADERS;
 
         TRACE("INTERNET_OPTION_REQUEST_FLAGS returning %x\n", flags);
@@ -5742,10 +5741,7 @@ static DWORD HTTP_GetResponseHeaders(http_request_t *request, INT *len)
     INT  rc = 0;
     char bufferA[MAX_REPLY_LEN];
     LPWSTR status_code = NULL, status_text = NULL;
-    DWORD res = ERROR_HTTP_INVALID_SERVER_RESPONSE, cchMaxRawHeaders = 1024;
-    LPWSTR lpszRawHeaders = NULL;
-    LPWSTR temp;
-    DWORD cchRawHeaders = 0;
+    DWORD res = ERROR_HTTP_INVALID_SERVER_RESPONSE;
     BOOL codeHundred = FALSE;
 
     TRACE("-->\n");
@@ -5802,9 +5798,6 @@ static DWORD HTTP_GetResponseHeaders(http_request_t *request, INT *len)
             request->version = heap_strdupW(g_szHttp1_0);
             request->statusText = heap_strdupW(szOK);
 
-            heap_free(request->rawHeaders);
-            request->rawHeaders = heap_strdupW(szDefaultHeader);
-
             goto lend;
         }
     } while (codeHundred);
@@ -5823,25 +5816,10 @@ static DWORD HTTP_GetResponseHeaders(http_request_t *request, INT *len)
     *(status_code-1) = ' ';
     *(status_text-1) = ' ';
 
-    /* regenerate raw headers */
-    lpszRawHeaders = heap_alloc((cchMaxRawHeaders + 1) * sizeof(WCHAR));
-    if (!lpszRawHeaders) goto lend;
-
-    while (cchRawHeaders + buflen + strlenW(szCrLf) > cchMaxRawHeaders)
-        cchMaxRawHeaders *= 2;
-    temp = heap_realloc(lpszRawHeaders, (cchMaxRawHeaders+1)*sizeof(WCHAR));
-    if (temp == NULL) goto lend;
-    lpszRawHeaders = temp;
-    memcpy(lpszRawHeaders+cchRawHeaders, buffer, (buflen-1)*sizeof(WCHAR));
-    cchRawHeaders += (buflen-1);
-    memcpy(lpszRawHeaders+cchRawHeaders, szCrLf, sizeof(szCrLf));
-    cchRawHeaders += sizeof(szCrLf)/sizeof(szCrLf[0])-1;
-    lpszRawHeaders[cchRawHeaders] = '\0';
-
     /* Parse each response line */
     do
     {
-	buflen = MAX_REPLY_LEN;
+        buflen = MAX_REPLY_LEN;
         if (!read_line(request, bufferA, &buflen) && buflen)
         {
             LPWSTR * pFieldAndValue;
@@ -5854,52 +5832,23 @@ static DWORD HTTP_GetResponseHeaders(http_request_t *request, INT *len)
             pFieldAndValue = HTTP_InterpretHttpHeader(buffer);
             if (pFieldAndValue)
             {
-                while (cchRawHeaders + buflen + strlenW(szCrLf) > cchMaxRawHeaders)
-                    cchMaxRawHeaders *= 2;
-                temp = heap_realloc(lpszRawHeaders, (cchMaxRawHeaders+1)*sizeof(WCHAR));
-                if (temp == NULL) goto lend;
-                lpszRawHeaders = temp;
-                memcpy(lpszRawHeaders+cchRawHeaders, buffer, (buflen-1)*sizeof(WCHAR));
-                cchRawHeaders += (buflen-1);
-                memcpy(lpszRawHeaders+cchRawHeaders, szCrLf, sizeof(szCrLf));
-                cchRawHeaders += sizeof(szCrLf)/sizeof(szCrLf[0])-1;
-                lpszRawHeaders[cchRawHeaders] = '\0';
-
                 HTTP_ProcessHeader(request, pFieldAndValue[0], pFieldAndValue[1],
                                    HTTP_ADDREQ_FLAG_ADD );
-
                 HTTP_FreeTokens(pFieldAndValue);
             }
         }
-	else
-	{
-	    cbreaks++;
-	    if (cbreaks >= 2)
-	       break;
-	}
+        else
+        {
+            cbreaks++;
+            if (cbreaks >= 2)
+                break;
+        }
     }while(1);
 
-    /* make sure the response header is terminated with an empty line.  Some apps really
-       truly care about that empty line being there for some reason.  Just add it to the
-       header. */
-    if (cchRawHeaders + strlenW(szCrLf) > cchMaxRawHeaders)
-    {
-        cchMaxRawHeaders = cchRawHeaders + strlenW(szCrLf);
-        temp = heap_realloc(lpszRawHeaders, (cchMaxRawHeaders + 1) * sizeof(WCHAR));
-        if (temp == NULL) goto lend;
-        lpszRawHeaders = temp;
-    }
-
-    memcpy(&lpszRawHeaders[cchRawHeaders], szCrLf, sizeof(szCrLf));
-
-    heap_free(request->rawHeaders);
-    request->rawHeaders = lpszRawHeaders;
-    TRACE("raw headers: %s\n", debugstr_w(lpszRawHeaders));
     res = ERROR_SUCCESS;
 
 lend:
 
-    if (res) heap_free(lpszRawHeaders);
     *len = rc;
     TRACE("<--\n");
     return res;

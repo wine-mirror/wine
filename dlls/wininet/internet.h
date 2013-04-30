@@ -343,7 +343,6 @@ typedef struct
     server_t *proxy;
     LPWSTR path;
     LPWSTR verb;
-    LPWSTR rawHeaders;
     netconn_t *netconn;
     DWORD security_flags;
     DWORD connect_timeout;
