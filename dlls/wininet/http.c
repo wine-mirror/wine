@@ -2822,8 +2822,10 @@ static DWORD set_content_length(http_request_t *request)
         static const WCHAR gzipW[] = {'g','z','i','p',0};
 
         encoding_idx = HTTP_GetCustomHeaderIndex(request, szContent_Encoding, 0, FALSE);
-        if(encoding_idx != -1 && !strcmpiW(request->custHeaders[encoding_idx].lpszValue, gzipW))
+        if(encoding_idx != -1 && !strcmpiW(request->custHeaders[encoding_idx].lpszValue, gzipW)) {
+            HTTP_DeleteCustomHeader(request, encoding_idx);
             return init_gzip_stream(request);
+        }
     }
 
     return ERROR_SUCCESS;
