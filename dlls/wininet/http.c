@@ -631,20 +631,21 @@ static void HTTP_FixURL(http_request_t *request)
     }
 }
 
-static LPWSTR HTTP_BuildHeaderRequestString( http_request_t *request, LPCWSTR verb, LPCWSTR path, LPCWSTR version )
+static WCHAR* build_request_header(http_request_t *request, const WCHAR *verb,
+        const WCHAR *path, const WCHAR *version, BOOL use_cr)
 {
     LPWSTR requestString;
     DWORD len, n;
     LPCWSTR *req;
     UINT i;
-    LPWSTR p;
 
     static const WCHAR szSpace[] = { ' ',0 };
     static const WCHAR szColon[] = { ':',' ',0 };
-    static const WCHAR sztwocrlf[] = {'\r','\n','\r','\n', 0};
+    static const WCHAR szCr[] = { '\r',0 };
+    static const WCHAR szLf[] = { '\n',0 };
 
     /* allocate space for an array of all the string pointers to be added */
-    len = (request->nCustHeaders)*4 + 10;
+    len = (request->nCustHeaders)*5 + 10;
     req = heap_alloc(len*sizeof(LPCWSTR));
 
     /* add the verb, path and HTTP version string */
@@ -654,39 +655,34 @@ static LPWSTR HTTP_BuildHeaderRequestString( http_request_t *request, LPCWSTR ve
     req[n++] = path;
     req[n++] = szSpace;
     req[n++] = version;
+    if (use_cr)
+        req[n++] = szCr;
+    req[n++] = szLf;
 
     /* Append custom request headers */
     for (i = 0; i < request->nCustHeaders; i++)
     {
         if (request->custHeaders[i].wFlags & HDR_ISREQUEST)
         {
-            req[n++] = szCrLf;
             req[n++] = request->custHeaders[i].lpszField;
             req[n++] = szColon;
             req[n++] = request->custHeaders[i].lpszValue;
+            if (use_cr)
+                req[n++] = szCr;
+            req[n++] = szLf;
 
             TRACE("Adding custom header %s (%s)\n",
                    debugstr_w(request->custHeaders[i].lpszField),
                    debugstr_w(request->custHeaders[i].lpszValue));
         }
     }
-
-    if( n >= len )
-        ERR("oops. buffer overrun\n");
-
+    if (use_cr)
+        req[n++] = szCr;
+    req[n++] = szLf;
     req[n] = NULL;
+
     requestString = HTTP_build_req( req, 4 );
     heap_free( req );
-
-    /*
-     * Set (header) termination string for request
-     * Make sure there's exactly two new lines at the end of the request
-     */
-    p = &requestString[strlenW(requestString)-1];
-    while ( (*p == '\n') || (*p == '\r') )
-       p--;
-    strcpyW( p+1, sztwocrlf );
-    
     return requestString;
 }
 
@@ -3421,13 +3417,13 @@ static DWORD HTTP_HttpQueryInfoW(http_request_t *request, DWORD dwInfoLevel,
             DWORD res = ERROR_INVALID_PARAMETER;
 
             if (request_only)
-                headers = HTTP_BuildHeaderRequestString(request, request->verb, request->path, request->version);
+                headers = build_request_header(request, request->verb, request->path, request->version, TRUE);
             else
                 headers = build_response_header(request, TRUE);
+            if (!headers)
+                return ERROR_OUTOFMEMORY;
 
-            if (headers)
-                len = strlenW(headers) * sizeof(WCHAR);
-
+            len = strlenW(headers) * sizeof(WCHAR);
             if (len + sizeof(WCHAR) > *lpdwBufferLength)
             {
                 len += sizeof(WCHAR);
@@ -3435,13 +3431,7 @@ static DWORD HTTP_HttpQueryInfoW(http_request_t *request, DWORD dwInfoLevel,
             }
             else if (lpBuffer)
             {
-                if (headers)
-                    memcpy(lpBuffer, headers, len + sizeof(WCHAR));
-                else
-                {
-                    len = strlenW(szCrLf) * sizeof(WCHAR);
-                    memcpy(lpBuffer, szCrLf, sizeof(szCrLf));
-                }
+                memcpy(lpBuffer, headers, len + sizeof(WCHAR));
                 TRACE("returning data: %s\n", debugstr_wn(lpBuffer, len / sizeof(WCHAR)));
                 res = ERROR_SUCCESS;
             }
@@ -3455,7 +3445,10 @@ static DWORD HTTP_HttpQueryInfoW(http_request_t *request, DWORD dwInfoLevel,
             LPWSTR headers;
             DWORD len;
 
-            headers = build_response_header(request, FALSE);
+            if (request_only)
+                headers = build_request_header(request, request->verb, request->path, request->version, FALSE);
+            else
+                headers = build_response_header(request, FALSE);
             if (!headers)
                 return ERROR_OUTOFMEMORY;
 
@@ -4070,7 +4063,7 @@ static DWORD HTTP_SecureProxyConnect(http_request_t *request)
 
     TRACE("\n");
 
-    requestString = HTTP_BuildHeaderRequestString( request, connectW, server->host_port, g_szHttp1_1 );
+    requestString = build_request_header( request, connectW, server->host_port, g_szHttp1_1, TRUE );
 
     len = WideCharToMultiByte( CP_ACP, 0, requestString, -1,
                                 NULL, 0, NULL, NULL );
@@ -4829,11 +4822,11 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
         if (request->proxy)
         {
             WCHAR *url = build_proxy_path_url(request);
-            requestString = HTTP_BuildHeaderRequestString(request, request->verb, url, request->version);
+            requestString = build_request_header(request, request->verb, url, request->version, TRUE);
             heap_free(url);
         }
         else
-            requestString = HTTP_BuildHeaderRequestString(request, request->verb, request->path, request->version);
+            requestString = build_request_header(request, request->verb, request->path, request->version, TRUE);
 
  
         TRACE("Request header -> %s\n", debugstr_w(requestString) );
