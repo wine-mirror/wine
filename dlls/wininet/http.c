@@ -585,61 +585,9 @@ static DWORD init_gzip_stream(http_request_t *req)
 #endif
 
 /***********************************************************************
- *           HTTP_Tokenize (internal)
- *
- *  Tokenize a string, allocating memory for the tokens.
- */
-static LPWSTR * HTTP_Tokenize(LPCWSTR string, LPCWSTR token_string)
-{
-    LPWSTR * token_array;
-    int tokens = 0;
-    int i;
-    LPCWSTR next_token;
-
-    if (string)
-    {
-        /* empty string has no tokens */
-        if (*string)
-            tokens++;
-        /* count tokens */
-        for (i = 0; string[i]; i++)
-        {
-            if (!strncmpW(string+i, token_string, strlenW(token_string)))
-            {
-                DWORD j;
-                tokens++;
-                /* we want to skip over separators, but not the null terminator */
-                for (j = 0; j < strlenW(token_string) - 1; j++)
-                    if (!string[i+j])
-                        break;
-                i += j;
-            }
-        }
-    }
-
-    /* add 1 for terminating NULL */
-    token_array = heap_alloc((tokens+1) * sizeof(*token_array));
-    token_array[tokens] = NULL;
-    if (!tokens)
-        return token_array;
-    for (i = 0; i < tokens; i++)
-    {
-        int len;
-        next_token = strstrW(string, token_string);
-        if (!next_token) next_token = string+strlenW(string);
-        len = next_token - string;
-        token_array[i] = heap_alloc((len+1)*sizeof(WCHAR));
-        memcpy(token_array[i], string, len*sizeof(WCHAR));
-        token_array[i][len] = '\0';
-        string = next_token+strlenW(token_string);
-    }
-    return token_array;
-}
-
-/***********************************************************************
  *           HTTP_FreeTokens (internal)
  *
- *  Frees memory returned from HTTP_Tokenize.
+ *  Frees table of pointers.
  */
 static void HTTP_FreeTokens(LPWSTR * token_array)
 {
@@ -740,6 +688,59 @@ static LPWSTR HTTP_BuildHeaderRequestString( http_request_t *request, LPCWSTR ve
     strcpyW( p+1, sztwocrlf );
     
     return requestString;
+}
+
+static WCHAR* build_response_header(http_request_t *request, BOOL use_cr)
+{
+    static const WCHAR colonW[] = { ':',' ',0 };
+    static const WCHAR crW[] = { '\r',0 };
+    static const WCHAR lfW[] = { '\n',0 };
+    static const WCHAR status_fmt[] = { ' ','%','u',' ',0 };
+
+    const WCHAR **req;
+    WCHAR *ret, buf[14];
+    DWORD i, n = 0;
+
+    req = heap_alloc((request->nCustHeaders*5+8)*sizeof(WCHAR*));
+    if(!req)
+        return NULL;
+
+    if(request->rawHeaders)
+    {
+        req[n++] = request->version;
+        sprintfW(buf, status_fmt, request->status_code);
+        req[n++] = buf;
+        req[n++] = request->statusText;
+        if (use_cr)
+            req[n++] = crW;
+        req[n++] = lfW;
+    }
+
+    for(i = 0; i < request->nCustHeaders; i++)
+    {
+        if(!(request->custHeaders[i].wFlags & HDR_ISREQUEST)
+                && strcmpW(request->custHeaders[i].lpszField, szStatus))
+        {
+            req[n++] = request->custHeaders[i].lpszField;
+            req[n++] = colonW;
+            req[n++] = request->custHeaders[i].lpszValue;
+            if(use_cr)
+                req[n++] = crW;
+            req[n++] = lfW;
+
+            TRACE("Adding custom header %s (%s)\n",
+                    debugstr_w(request->custHeaders[i].lpszField),
+                    debugstr_w(request->custHeaders[i].lpszValue));
+        }
+    }
+    if(use_cr)
+        req[n++] = crW;
+    req[n++] = lfW;
+    req[n] = NULL;
+
+    ret = HTTP_build_req(req, 0);
+    heap_free(req);
+    return ret;
 }
 
 static void HTTP_ProcessCookies( http_request_t *request )
@@ -3422,7 +3423,7 @@ static DWORD HTTP_HttpQueryInfoW(http_request_t *request, DWORD dwInfoLevel,
             if (request_only)
                 headers = HTTP_BuildHeaderRequestString(request, request->verb, request->path, request->version);
             else
-                headers = request->rawHeaders;
+                headers = build_response_header(request, TRUE);
 
             if (headers)
                 len = strlenW(headers) * sizeof(WCHAR);
@@ -3446,38 +3447,42 @@ static DWORD HTTP_HttpQueryInfoW(http_request_t *request, DWORD dwInfoLevel,
             }
             *lpdwBufferLength = len;
 
-            if (request_only) heap_free(headers);
+            heap_free(headers);
             return res;
         }
     case HTTP_QUERY_RAW_HEADERS:
         {
-            LPWSTR * ppszRawHeaderLines = HTTP_Tokenize(request->rawHeaders, szCrLf);
-            DWORD i, size = 0;
-            LPWSTR pszString = lpBuffer;
+            LPWSTR headers;
+            DWORD len;
 
-            for (i = 0; ppszRawHeaderLines[i]; i++)
-                size += strlenW(ppszRawHeaderLines[i]) + 1;
+            headers = build_response_header(request, FALSE);
+            if (!headers)
+                return ERROR_OUTOFMEMORY;
 
-            if (size + 1 > *lpdwBufferLength/sizeof(WCHAR))
+            len = strlenW(headers) * sizeof(WCHAR);
+            if (len > *lpdwBufferLength)
             {
-                HTTP_FreeTokens(ppszRawHeaderLines);
-                *lpdwBufferLength = (size + 1) * sizeof(WCHAR);
+                *lpdwBufferLength = len;
+                heap_free(headers);
                 return ERROR_INSUFFICIENT_BUFFER;
             }
-            if (pszString)
-            {
-                for (i = 0; ppszRawHeaderLines[i]; i++)
-                {
-                    DWORD len = strlenW(ppszRawHeaderLines[i]);
-                    memcpy(pszString, ppszRawHeaderLines[i], (len+1)*sizeof(WCHAR));
-                    pszString += len+1;
-                }
-                *pszString = '\0';
-                TRACE("returning data: %s\n", debugstr_wn(lpBuffer, size));
-            }
-            *lpdwBufferLength = size * sizeof(WCHAR);
-            HTTP_FreeTokens(ppszRawHeaderLines);
 
+            if (lpBuffer)
+            {
+                DWORD i;
+
+                TRACE("returning data: %s\n", debugstr_wn(headers, len / sizeof(WCHAR)));
+
+                for (i=0; i<len; i++)
+                {
+                    if (headers[i] == '\n')
+                        headers[i] = 0;
+                }
+                memcpy(lpBuffer, headers, len + sizeof(WCHAR));
+            }
+            *lpdwBufferLength = len - sizeof(WCHAR);
+
+            heap_free(headers);
             return ERROR_SUCCESS;
         }
     case HTTP_QUERY_STATUS_TEXT:
