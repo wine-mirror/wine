@@ -465,39 +465,25 @@ static void ODBC_ReplicateToRegistry (void)
 
 /***********************************************************************
  * DllMain [Internal] Initializes the internal 'ODBC32.DLL'.
- *
- * PARAMS
- *     hinstDLL    [I] handle to the DLL's instance
- *     fdwReason   [I]
- *     lpvReserved [I] reserved, must be NULL
- *
- * RETURNS
- *     Success: TRUE
- *     Failure: FALSE
  */
-
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID reserved)
 {
-    TRACE("Initializing or Finalizing proxy ODBC: %p,%x,%p\n", hinstDLL, fdwReason, lpvReserved);
+    TRACE("proxy ODBC: %p,%x,%p\n", hinstDLL, reason, reserved);
 
-    if (fdwReason == DLL_PROCESS_ATTACH)
+    switch (reason)
     {
-       TRACE("Loading ODBC...\n");
+    case DLL_PROCESS_ATTACH:
        DisableThreadLibraryCalls(hinstDLL);
        if (ODBC_LoadDriverManager())
        {
           ODBC_LoadDMFunctions();
           ODBC_ReplicateToRegistry();
        }
-    }
-    else if (fdwReason == DLL_PROCESS_DETACH)
-    {
-      TRACE("Unloading ODBC...\n");
-      if (dmHandle)
-      {
-         wine_dlclose(dmHandle,NULL,0);
-         dmHandle = NULL;
-      }
+       break;
+
+    case DLL_PROCESS_DETACH:
+      if (reserved) break;
+      if (dmHandle) wine_dlclose(dmHandle,NULL,0);
     }
 
     return TRUE;
