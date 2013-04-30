@@ -145,11 +145,6 @@ static inline unsigned char *u_strrchr( const unsigned char *s, unsigned char x 
   return (unsigned char*) strrchr( (const char*)s, x );
 }
 
-static inline unsigned char *u_strtok( unsigned char *s, const unsigned char *delim )
-{
-  return (unsigned char*) strtok( (char*)s, (const char*)delim );
-}
-
 static inline unsigned char *u__strset( unsigned char *s, unsigned char c )
 {
   return (unsigned char*) _strset( (char*)s, c);
@@ -1090,38 +1085,71 @@ unsigned char* CDECL _mbsrchr(const unsigned char* s, unsigned int x)
 }
 
 /*********************************************************************
+ *              _mbstok_s_l(MSVCRT.@)
+ */
+unsigned char* CDECL _mbstok_s_l(unsigned char *str, const unsigned char *delim,
+        unsigned char **ctx, MSVCRT__locale_t locale)
+{
+    MSVCRT_pthreadmbcinfo mbcinfo;
+    unsigned int c;
+
+    if(!MSVCRT_CHECK_PMT(delim != NULL)) return NULL;
+    if(!MSVCRT_CHECK_PMT(ctx != NULL)) return NULL;
+    if(!MSVCRT_CHECK_PMT(str || *ctx)) return NULL;
+
+    if(locale)
+        mbcinfo = locale->mbcinfo;
+    else
+        mbcinfo = get_mbcinfo();
+
+    if(!mbcinfo->ismbcodepage)
+        return (unsigned char*)MSVCRT_strtok_s((char*)str, (const char*)delim, (char**)ctx);
+
+    if(!str)
+        str = *ctx;
+
+    while((c=_mbsnextc(str)) && _mbschr(delim, c))
+        str += c>255 ? 2 : 1;
+    if(!*str)
+        return NULL;
+
+    *ctx = str + (c>255 ? 2 : 1);
+    while((c=_mbsnextc(*ctx)) && !_mbschr(delim, c))
+        *ctx += c>255 ? 2 : 1;
+    if (**ctx) {
+        *(*ctx)++ = 0;
+        if(c > 255)
+            *(*ctx)++ = 0;
+    }
+
+    return str;
+}
+
+
+/*********************************************************************
+ *              _mbstok_s(MSVCRT.@)
+ */
+unsigned char* CDECL _mbstok_s(unsigned char *str,
+        const unsigned char *delim, unsigned char **ctx)
+{
+    return _mbstok_s_l(str, delim, ctx, NULL);
+}
+
+/*********************************************************************
+ *              _mbstok_l(MSVCRT.@)
+ */
+unsigned char* CDECL _mbstok_l(unsigned char *str,
+        const unsigned char *delim, MSVCRT__locale_t locale)
+{
+    return _mbstok_s_l(str, delim, &msvcrt_get_thread_data()->mbstok_next, locale);
+}
+
+/*********************************************************************
  *		_mbstok(MSVCRT.@)
- *
- * Find and extract tokens from strings
  */
 unsigned char* CDECL _mbstok(unsigned char *str, const unsigned char *delim)
 {
-    thread_data_t *data = msvcrt_get_thread_data();
-    unsigned char *ret;
-
-    if(get_mbcinfo()->ismbcodepage)
-    {
-	unsigned int c;
-
-	if (!str)
-    	    if (!(str = data->mbstok_next)) return NULL;
-
-	while ((c = _mbsnextc(str)) && _mbschr(delim, c)) {
-	    str += c > 255 ? 2 : 1;
-	}
-	if (!*str) return NULL;
-	ret = str++;
-	while ((c = _mbsnextc(str)) && !_mbschr(delim, c)) {
-	    str += c > 255 ? 2 : 1;
-	}
-	if (*str) {
-	    *str++ = 0;
-	    if (c > 255) *str++ = 0;
-	}
-	data->mbstok_next = str;
-	return ret;
-    }
-    return u_strtok(str, delim); /* ASCII CP */
+    return _mbstok_s_l(str, delim, &msvcrt_get_thread_data()->mbstok_next, NULL);
 }
 
 /*********************************************************************

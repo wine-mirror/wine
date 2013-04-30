@@ -808,9 +808,9 @@
 @ cdecl _mbsstr(str str)
 # stub _mbsstr_l(str str ptr)
 @ cdecl _mbstok(str str)
-# stub _mbstok_l(str str ptr)
-# stub _mbstok_s(str str ptr)
-# stub _mbstok_s_l(str str ptr ptr)
+@ cdecl _mbstok_l(str str ptr)
+@ cdecl _mbstok_s(str str ptr)
+@ cdecl _mbstok_s_l(str str ptr ptr)
 @ cdecl _mbstowcs_l(ptr str long ptr) MSVCRT__mbstowcs_l
 @ cdecl _mbstowcs_s_l(ptr ptr long str long ptr) MSVCRT__mbstowcs_s_l
 @ cdecl _mbstrlen(str)
