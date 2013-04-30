@@ -148,6 +148,29 @@ typedef struct
     BOOL is_request; /* part of request headers? */
 } header_t;
 
+enum auth_scheme
+{
+    SCHEME_INVALID = -1,
+    SCHEME_BASIC,
+    SCHEME_NTLM,
+    SCHEME_PASSPORT,
+    SCHEME_DIGEST,
+    SCHEME_NEGOTIATE
+};
+
+struct authinfo
+{
+    enum auth_scheme scheme;
+    CredHandle cred;
+    CtxtHandle ctx;
+    TimeStamp exp;
+    ULONG attr;
+    ULONG max_token;
+    char *data;
+    unsigned int data_len;
+    BOOL finished; /* finished authenticating */
+};
+
 typedef struct
 {
     object_header_t hdr;
@@ -174,6 +197,8 @@ typedef struct
     DWORD num_headers;
     WCHAR **accept_types;
     DWORD num_accept_types;
+    struct authinfo *authinfo;
+    struct authinfo *proxy_authinfo;
 } request_t;
 
 typedef struct _task_header_t task_header_t;
@@ -252,7 +277,8 @@ BOOL set_cookies( request_t *, const WCHAR * ) DECLSPEC_HIDDEN;
 BOOL add_cookie_headers( request_t * ) DECLSPEC_HIDDEN;
 BOOL add_request_headers( request_t *, LPCWSTR, DWORD, DWORD ) DECLSPEC_HIDDEN;
 void delete_domain( domain_t * ) DECLSPEC_HIDDEN;
-BOOL set_server_for_hostname( connect_t *connect, LPCWSTR server, INTERNET_PORT port ) DECLSPEC_HIDDEN;
+BOOL set_server_for_hostname( connect_t *, LPCWSTR, INTERNET_PORT ) DECLSPEC_HIDDEN;
+void destroy_authinfo( struct authinfo * ) DECLSPEC_HIDDEN;
 
 extern HRESULT WinHttpRequest_create( IUnknown *, void ** ) DECLSPEC_HIDDEN;
 
