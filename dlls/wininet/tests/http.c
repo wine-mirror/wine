@@ -1815,6 +1815,8 @@ struct server_info {
     int port;
 };
 
+static int test_cache_gzip;
+
 static DWORD CALLBACK server_thread(LPVOID param)
 {
     struct server_info *si = param;
@@ -2028,6 +2030,16 @@ static DWORD CALLBACK server_thread(LPVOID param)
         {
             static const char no_cache_response[] = "HTTP/1.1 200 OK\r\nCache-Control: junk, \t No-StOrE\r\n\r\nsome content";
             send(c, no_cache_response, sizeof(no_cache_response)-1, 0);
+        }
+        if (strstr(buffer, "GET /test_cache_gzip"))
+        {
+            static const char gzip_response[] = "HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Type: text/html\r\n\r\n"
+                "\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\x03\x4b\xaf\xca\x2c\x50\x28"
+                "\x49\x2d\x2e\xe1\x02\x00\x62\x92\xc7\x6c\x0a\x00\x00\x00";
+            if(!test_cache_gzip++)
+                send(c, gzip_response, sizeof(gzip_response), 0);
+            else
+                send(c, notokmsg, sizeof(notokmsg)-1, 0);
         }
         if (strstr(buffer, "GET /test_premature_disconnect"))
             trace("closing connection\n");
@@ -2765,6 +2777,133 @@ static void test_no_cache(int port)
     InternetCloseHandle(ses);
 }
 
+static void test_cache_read_gzipped(int port)
+{
+    static const char cache_url_fmt[] = "http://localhost:%d%s";
+    static const char get_gzip[] = "/test_cache_gzip";
+    static const char content[] = "gzip test\n";
+    static const char text_html[] = "text/html";
+    static const char raw_header[] = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
+
+    HINTERNET ses, con, req;
+    DWORD read, size;
+    char cache_url[256], buf[256];
+    BOOL ret;
+
+    trace("Testing reading compressed content from cache\n");
+
+    ses = InternetOpen("winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    ok(ses != NULL,"InternetOpen failed with error %u\n", GetLastError());
+
+    con = InternetConnect(ses, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    ok(con != NULL, "InternetConnect failed with error %u\n", GetLastError());
+
+    req = HttpOpenRequest(con, NULL, get_gzip, NULL, NULL, NULL, 0, 0);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+
+    ret = TRUE;
+    ret = InternetSetOption(req, INTERNET_OPTION_HTTP_DECODING, &ret, sizeof(ret));
+    if(!ret && GetLastError()==ERROR_INTERNET_INVALID_OPTION) {
+        win_skip("INTERNET_OPTION_HTTP_DECODING not supported\n");
+        InternetCloseHandle(req);
+        InternetCloseHandle(con);
+        InternetCloseHandle(ses);
+        return;
+    }
+    ok(ret, "InternetSetOption(INTERNET_OPTION_HTTP_DECODING) failed: %d\n", GetLastError());
+
+    ret = HttpSendRequest(req, "Accept-Encoding: gzip", -1, NULL, 0);
+    ok(ret, "HttpSendRequest failed with error %u\n", GetLastError());
+    size = 0;
+    while(InternetReadFile(req, buf+size, sizeof(buf)-size, &read) && read)
+        size += read;
+    ok(size == 10, "read %d bytes of data\n", size);
+    buf[size] = 0;
+    ok(!strncmp(buf, content, size), "incorrect page content: %s\n", buf);
+
+    size = sizeof(buf);
+    ret = HttpQueryInfoA(req, HTTP_QUERY_CONTENT_TYPE, buf, &size, 0);
+    ok(ret, "HttpQueryInfo(HTTP_QUERY_CONTENT_TYPE) failed: %d\n", GetLastError());
+    buf[size] = 0;
+    ok(!strncmp(text_html, buf, size), "buf = %s\n", buf);
+
+    size = sizeof(buf);
+    ret = HttpQueryInfoA(req, HTTP_QUERY_RAW_HEADERS_CRLF, buf, &size, 0);
+    ok(ret, "HttpQueryInfo(HTTP_QUERY_CONTENT_TYPE) failed: %d\n", GetLastError());
+    buf[size] = 0;
+    ok(!strncmp(raw_header, buf, size), "buf = %s\n", buf);
+    InternetCloseHandle(req);
+
+    req = HttpOpenRequest(con, NULL, get_gzip, NULL, NULL, NULL, INTERNET_FLAG_FROM_CACHE, 0);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+
+    ret = TRUE;
+    ret = InternetSetOption(req, INTERNET_OPTION_HTTP_DECODING, &ret, sizeof(ret));
+    ok(ret, "InternetSetOption(INTERNET_OPTION_HTTP_DECODING) failed: %d\n", GetLastError());
+
+    ret = HttpSendRequest(req, "Accept-Encoding: gzip", -1, NULL, 0);
+    ok(ret, "HttpSendRequest failed with error %u\n", GetLastError());
+    size = 0;
+    while(InternetReadFile(req, buf+size, sizeof(buf)-size, &read) && read)
+        size += read;
+    todo_wine ok(size == 10, "read %d bytes of data\n", size);
+    buf[size] = 0;
+    ok(!strncmp(buf, content, size), "incorrect page content: %s\n", buf);
+
+    size = sizeof(buf);
+    ret = HttpQueryInfoA(req, HTTP_QUERY_CONTENT_ENCODING, buf, &size, 0);
+    ok(!ret && GetLastError()==ERROR_HTTP_HEADER_NOT_FOUND,
+            "HttpQueryInfo(HTTP_QUERY_CONTENT_ENCODING) returned %d, %d\n",
+            ret, GetLastError());
+
+    size = sizeof(buf);
+    ret = HttpQueryInfoA(req, HTTP_QUERY_CONTENT_TYPE, buf, &size, 0);
+    todo_wine ok(ret, "HttpQueryInfo(HTTP_QUERY_CONTENT_TYPE) failed: %d\n", GetLastError());
+    buf[size] = 0;
+    todo_wine ok(!strncmp(text_html, buf, size), "buf = %s\n", buf);
+    InternetCloseHandle(req);
+
+    /* Decompression doesn't work while reading from cache */
+    test_cache_gzip = 0;
+    sprintf(cache_url, cache_url_fmt, port, get_gzip);
+    DeleteUrlCacheEntry(cache_url);
+
+    req = HttpOpenRequest(con, NULL, get_gzip, NULL, NULL, NULL, 0, 0);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+
+    ret = HttpSendRequest(req, "Accept-Encoding: gzip", -1, NULL, 0);
+    ok(ret, "HttpSendRequest failed with error %u\n", GetLastError());
+    size = 0;
+    while(InternetReadFile(req, buf+size, sizeof(buf)-size, &read) && read)
+        size += read;
+    ok(size == 31, "read %d bytes of data\n", size);
+    InternetCloseHandle(req);
+
+    req = HttpOpenRequest(con, NULL, get_gzip, NULL, NULL, NULL, INTERNET_FLAG_FROM_CACHE, 0);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+
+    ret = TRUE;
+    ret = InternetSetOption(req, INTERNET_OPTION_HTTP_DECODING, &ret, sizeof(ret));
+    ok(ret, "InternetSetOption(INTERNET_OPTION_HTTP_DECODING) failed: %d\n", GetLastError());
+
+    ret = HttpSendRequest(req, "Accept-Encoding: gzip", -1, NULL, 0);
+    ok(ret, "HttpSendRequest failed with error %u\n", GetLastError());
+    size = 0;
+    while(InternetReadFile(req, buf+size, sizeof(buf)-size, &read) && read)
+        size += read;
+    todo_wine ok(size == 31, "read %d bytes of data\n", size);
+
+    size = sizeof(buf);
+    ret = HttpQueryInfoA(req, HTTP_QUERY_CONTENT_ENCODING, buf, &size, 0);
+    todo_wine ok(ret, "HttpQueryInfo(HTTP_QUERY_CONTENT_ENCODING) failed: %d\n", GetLastError());
+    InternetCloseHandle(req);
+
+    InternetCloseHandle(con);
+    InternetCloseHandle(ses);
+
+    DeleteUrlCacheEntry(cache_url);
+}
+
 static void test_HttpSendRequestW(int port)
 {
     static const WCHAR header[] = {'U','A','-','C','P','U',':',' ','x','8','6',0};
@@ -3269,6 +3408,7 @@ static void test_http_connection(void)
     test_no_content(si.port);
     test_conn_close(si.port);
     test_no_cache(si.port);
+    test_cache_read_gzipped(si.port);
     test_premature_disconnect(si.port);
 
     /* send the basic request again to shutdown the server thread */
