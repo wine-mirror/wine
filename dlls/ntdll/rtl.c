@@ -34,6 +34,7 @@
 #include <netinet/in.h>
 #endif
 #include "ntstatus.h"
+#define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #define WIN32_NO_STATUS
 #define USE_WS_PREFIX

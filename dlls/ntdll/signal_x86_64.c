@@ -2574,7 +2574,7 @@ static void set_int_reg( CONTEXT *context, KNONVOLATILE_CONTEXT_POINTERS *ctx_pt
 static void set_float_reg( CONTEXT *context, KNONVOLATILE_CONTEXT_POINTERS *ctx_ptr, int reg, M128A val )
 {
     *(&context->u.s.Xmm0 + reg) = val;
-    if (ctx_ptr) ctx_ptr->u1.FloatingContext[reg] = &context->u.s.Xmm0 + reg;
+    if (ctx_ptr) ctx_ptr->u.FloatingContext[reg] = &context->u.s.Xmm0 + reg;
 }
 
 static int get_opcode_size( struct opcode op )
