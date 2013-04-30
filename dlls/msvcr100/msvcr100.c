@@ -423,6 +423,14 @@ int CDECL _vswprintf_p(wchar_t *buffer, size_t length, const wchar_t *format, __
 }
 
 /*********************************************************************
+ * _vscwprintf_p (MSVCR100.@)
+ */
+int CDECL _vscwprintf_p(const wchar_t *format, __ms_va_list args)
+{
+    return _vscwprintf_p_l(format, NULL, args);
+}
+
+/*********************************************************************
  * _byteswap_ushort (MSVCR100.@)
  */
 unsigned short CDECL _byteswap_ushort(unsigned short s)

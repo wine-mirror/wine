@@ -320,6 +320,7 @@ int      __cdecl _putws(const wchar_t*);
 int      __cdecl _snwprintf(wchar_t*,size_t,const wchar_t*,...);
 int      __cdecl _snwprintf_s(wchar_t*,size_t,size_t,const wchar_t*,...);
 int      __cdecl _vscwprintf(const wchar_t*,__ms_va_list);
+int      __cdecl _vscwprintf_p_l(const wchar_t*,_locale_t,__ms_va_list);
 int      __cdecl _vsnwprintf(wchar_t*,size_t,const wchar_t*,__ms_va_list);
 int      __cdecl _vsnwprintf_s(wchar_t*,size_t,size_t,const wchar_t*,__ms_va_list);
 int      __cdecl _vswprintf_p_l(wchar_t*,size_t,const wchar_t*,_locale_t,__ms_va_list);
