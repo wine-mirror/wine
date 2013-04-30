@@ -1124,9 +1124,13 @@ static BOOL send_request( request_t *request, LPCWSTR headers, DWORD headers_len
     heap_free( req_ascii );
     if (!ret) goto end;
 
-    if (optional_len && !netconn_send( &request->netconn, optional, optional_len, 0, &bytes_sent )) goto end;
-    len += optional_len;
-
+    if (optional_len)
+    {
+        if (!netconn_send( &request->netconn, optional, optional_len, 0, &bytes_sent )) goto end;
+        request->optional = optional;
+        request->optional_len = optional_len;
+        len += optional_len;
+    }
     send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_SENT, &len, sizeof(DWORD) );
 
 end:
@@ -1951,6 +1955,8 @@ static BOOL handle_redirect( request_t *request, DWORD status )
     {
         heap_free( request->verb );
         request->verb = strdupW( getW );
+        request->optional = NULL;
+        request->optional_len = 0;
     }
     ret = TRUE;
 
@@ -1987,7 +1993,8 @@ static BOOL receive_response( request_t *request, BOOL async )
 
             if (!(ret = handle_redirect( request, status ))) break;
 
-            send_request( request, NULL, 0, NULL, 0, 0, 0, FALSE ); /* recurse synchronously */
+            /* recurse synchronously */
+            send_request( request, NULL, 0, request->optional, request->optional_len, 0, 0, FALSE );
             continue;
         }
         else if (status == HTTP_STATUS_DENIED || status == HTTP_STATUS_PROXY_AUTH_REQ)
@@ -2000,7 +2007,8 @@ static BOOL receive_response( request_t *request, BOOL async )
                 ret = TRUE;
                 break;
             }
-            send_request( request, NULL, 0, NULL, 0, 0, 0, FALSE );
+            /* recurse synchronously */
+            send_request( request, NULL, 0, request->optional, request->optional_len, 0, 0, FALSE );
             continue;
         }
         break;

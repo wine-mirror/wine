@@ -156,6 +156,8 @@ typedef struct
     LPWSTR path;
     LPWSTR version;
     LPWSTR raw_headers;
+    void *optional;
+    DWORD optional_len;
     netconn_t netconn;
     int resolve_timeout;
     int connect_timeout;
