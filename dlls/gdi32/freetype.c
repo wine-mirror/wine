@@ -6352,20 +6352,35 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
             }
 
             x_shift = ft_face->glyph->bitmap_left - lpgm->gmptGlyphOrigin.x;
-            if ( x_shift < 0 ) x_shift = 0;
-            if ( x_shift + (src_width / hmul) > width )
-                x_shift = width - (src_width / hmul);
+            if ( x_shift < 0 )
+            {
+                src += hmul * -x_shift;
+                src_width -= hmul * -x_shift;
+            }
+            else if ( x_shift > 0 )
+            {
+                dst += x_shift;
+                width -= x_shift;
+            }
 
             y_shift = lpgm->gmptGlyphOrigin.y - ft_face->glyph->bitmap_top;
-            if ( y_shift < 0 ) y_shift = 0;
-            if ( y_shift + (src_height / vmul) > height )
-                y_shift = height - (src_height / vmul);
+            if ( y_shift < 0 )
+            {
+                src += src_pitch * vmul * -y_shift;
+                src_height -= vmul * -y_shift;
+            }
+            else if ( y_shift > 0 )
+            {
+                dst += y_shift * ( pitch / sizeof(*dst) );
+                height -= y_shift;
+            }
 
-            dst += x_shift + y_shift * ( pitch / 4 );
+            width = min( width, src_width / hmul );
             height = min( height, src_height / vmul );
+
             while ( height-- )
             {
-                for ( x = 0; x < width && x < src_width / hmul; x++ )
+                for ( x = 0; x < width; x++ )
                 {
                     if ( rgb )
                     {
@@ -6383,8 +6398,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
                     }
                 }
                 src += src_pitch * vmul;
-                dst += pitch / 4;
-                src_height -= vmul;
+                dst += pitch / sizeof(*dst);
             }
 
             break;
