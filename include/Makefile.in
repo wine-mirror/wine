@@ -99,6 +99,8 @@ PUBLIC_IDL_H_SRCS = \
 	tlogstg.idl \
 	tom.idl \
 	transact.idl \
+	txcoord.idl \
+	txdtc.idl \
 	uiautomationclient.idl \
 	uiautomationcore.idl \
 	unknwn.idl \

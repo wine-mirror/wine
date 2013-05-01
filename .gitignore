@@ -247,6 +247,8 @@ include/textstor.h
 include/tlogstg.h
 include/tom.h
 include/transact.h
+include/txcoord.h
+include/txdtc.h
 include/uiautomationclient.h
 include/uiautomationcore.h
 include/unknwn.h
