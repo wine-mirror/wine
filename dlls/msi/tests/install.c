@@ -3122,9 +3122,9 @@ static void test_continuouscabs(void)
     }
     else
     {
-        todo_wine ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
         ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
-        todo_wine ok(delete_pf("msitest\\caesar", TRUE), "File not installed\n");
+        ok(delete_pf("msitest\\caesar", TRUE), "File not installed\n");
         ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
         ok(delete_pf("msitest", FALSE), "Directory not created\n");
     }
