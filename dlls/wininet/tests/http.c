@@ -2193,7 +2193,12 @@ static void test_proxy_direct(int port)
     ok(hr != NULL, "HttpOpenRequest failed\n");
 
     r = HttpSendRequest(hr, NULL, 0, NULL, 0);
-    ok(r, "HttpSendRequest failed %u\n", GetLastError());
+    ok(r || broken(!r), "HttpSendRequest failed %u\n", GetLastError());
+    if (!r)
+    {
+        win_skip("skipping proxy tests on broken wininet\n");
+        goto done;
+    }
 
     test_status_code(hr, 407);
 
@@ -2419,6 +2424,7 @@ static void test_proxy_direct(int port)
     ok(r, "HttpQueryInfo failed\n");
     ok(!strcmp(buffer, "200"), "proxy code wrong\n");
 
+done:
     InternetCloseHandle(hr);
     InternetCloseHandle(hc);
     InternetCloseHandle(hi);
