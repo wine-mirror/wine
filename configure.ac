@@ -878,6 +878,50 @@ clean::
 "])
     ;;
 
+  linux-android*)
+    DLLFLAGS="$DLLFLAGS -fPIC"
+    DLLEXT=".so"
+    LDDLLFLAGS="-shared -Wl,-Bsymbolic"
+    WINE_TRY_CFLAGS([-fPIC -shared -Wl,-Bsymbolic,-z,defs],
+                    [LDDLLFLAGS="$LDDLLFLAGS,-z,defs"])
+    WINE_TRY_CFLAGS([-fPIC -shared -Wl,-Bsymbolic,-init,__wine_spec_init,-fini,__wine_spec_fini],
+                    [LDDLLFLAGS="$LDDLLFLAGS,-init,__wine_spec_init,-fini,__wine_spec_fini"])
+    WINE_TRY_CFLAGS([-fPIC -Wl,--export-dynamic],
+                    [AC_SUBST(LDEXECFLAGS,["-Wl,--export-dynamic"])])
+    WINE_TRY_CFLAGS([-fPIC -Wl,--rpath,\$ORIGIN/../lib],
+                    [LDRPATH_INSTALL="-Wl,--rpath,\\\$\$ORIGIN/\`\$(RELPATH) \$(bindir) \$(libdir)\`"
+                     LDRPATH_LOCAL="-Wl,--rpath,\\\$\$ORIGIN/\$(top_builddir)/libs/wine"],
+        [WINE_TRY_CFLAGS([-fPIC -Wl,-R,\$ORIGIN/../lib],
+                         [LDRPATH_INSTALL="-Wl,-R,\\\$\$ORIGIN/\`\$(RELPATH) \$(bindir) \$(libdir)\`"
+                          LDRPATH_LOCAL="-Wl,-R,\\\$\$ORIGIN/\$(top_builddir)/libs/wine"])])
+
+    WINE_TRY_CFLAGS([-Wl,--enable-new-dtags],
+                    [LDRPATH_INSTALL="$LDRPATH_INSTALL -Wl,--enable-new-dtags"])
+
+    case $host_cpu in
+      *i[[3456789]]86* | x86_64)
+        WINE_TRY_CFLAGS([-Wl,--section-start,.interp=0x7bf00400],
+                        [LDEXECFLAGS="$LDEXECFLAGS -Wl,--section-start,.interp=0x7bf00400"])
+        ;;
+    esac
+
+    AC_SUBST(LIBWINE_RULES,["
+all: libwine.so
+
+libwine.so: \$(OBJS) Makefile.in
+	\$(CC) -shared \$(OBJS) \$(EXTRALIBS) \$(LDFLAGS) \$(LIBS) -o \$@
+
+install install-lib:: libwine.so \$(DESTDIR)\$(libdir) dummy
+	\$(INSTALL_PROGRAM) libwine.so \$(DESTDIR)\$(libdir)/libwine.so
+
+uninstall::
+	\$(RM) \$(DESTDIR)\$(libdir)/libwine.so
+
+clean::
+	\$(RM) libwine.so version.c
+"])
+    ;;
+
   *)
     DLLFLAGS="$DLLFLAGS -fPIC"
     DLLEXT=".so"
