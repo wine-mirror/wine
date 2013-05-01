@@ -21,6 +21,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "transact.h"
+#include "txdtc.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
@@ -29,6 +30,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(xolehlp);
 typedef struct {
     ITransactionDispenser ITransactionDispenser_iface;
     LONG ref;
+    IResourceManagerFactory2 IResourceManagerFactory2_iface;
 } TransactionManager;
 
 static inline TransactionManager *impl_from_ITransactionDispenser(ITransactionDispenser *iface)
@@ -48,6 +50,11 @@ static HRESULT WINAPI TransactionDispenser_QueryInterface(ITransactionDispenser 
         IsEqualIID(&IID_ITransactionDispenser, iid))
     {
         *ppv = &This->ITransactionDispenser_iface;
+    }
+    else if (IsEqualIID(&IID_IResourceManagerFactory, iid) ||
+        IsEqualIID(&IID_IResourceManagerFactory2, iid))
+    {
+        *ppv = &This->IResourceManagerFactory2_iface;
     }
     else
     {
@@ -116,6 +123,53 @@ static const ITransactionDispenserVtbl TransactionDispenser_Vtbl = {
     TransactionDispenser_BeginTransaction
 };
 
+static inline TransactionManager *impl_from_IResourceManagerFactory2(IResourceManagerFactory2 *iface)
+{
+    return CONTAINING_RECORD(iface, TransactionManager, IResourceManagerFactory2_iface);
+}
+
+static HRESULT WINAPI ResourceManagerFactory2_QueryInterface(IResourceManagerFactory2 *iface, REFIID iid,
+    void **ppv)
+{
+    TransactionManager *This = impl_from_IResourceManagerFactory2(iface);
+    return TransactionDispenser_QueryInterface(&This->ITransactionDispenser_iface, iid, ppv);
+}
+
+static ULONG WINAPI ResourceManagerFactory2_AddRef(IResourceManagerFactory2 *iface)
+{
+    TransactionManager *This = impl_from_IResourceManagerFactory2(iface);
+    return TransactionDispenser_AddRef(&This->ITransactionDispenser_iface);
+}
+
+static ULONG WINAPI ResourceManagerFactory2_Release(IResourceManagerFactory2 *iface)
+{
+    TransactionManager *This = impl_from_IResourceManagerFactory2(iface);
+    return TransactionDispenser_Release(&This->ITransactionDispenser_iface);
+}
+static HRESULT WINAPI ResourceManagerFactory2_Create(IResourceManagerFactory2 *iface,
+        GUID *pguidRM, CHAR *pszRMName, IResourceManagerSink *pIResMgrSink, IResourceManager **ppResMgr)
+{
+    FIXME("(%p, %s, %s, %p, %p): stub\n", iface, debugstr_guid(pguidRM),
+        debugstr_a(pszRMName), pIResMgrSink, ppResMgr);
+
+    return E_NOTIMPL;
+}
+static HRESULT WINAPI ResourceManagerFactory2_CreateEx(IResourceManagerFactory2 *iface,
+        GUID *pguidRM, CHAR *pszRMName, IResourceManagerSink *pIResMgrSink, REFIID riidRequested, void **ppResMgr)
+{
+    FIXME("(%p, %s, %s, %p, %s, %p): stub\n", iface, debugstr_guid(pguidRM),
+        debugstr_a(pszRMName), pIResMgrSink, debugstr_guid(riidRequested), ppResMgr);
+
+    return E_NOTIMPL;
+}
+static const IResourceManagerFactory2Vtbl ResourceManagerFactory2_Vtbl = {
+    ResourceManagerFactory2_QueryInterface,
+    ResourceManagerFactory2_AddRef,
+    ResourceManagerFactory2_Release,
+    ResourceManagerFactory2_Create,
+    ResourceManagerFactory2_CreateEx
+};
+
 static HRESULT TransactionManager_Create(REFIID riid, void **ppv)
 {
     TransactionManager *This;
@@ -125,6 +179,7 @@ static HRESULT TransactionManager_Create(REFIID riid, void **ppv)
     if (!This) return E_OUTOFMEMORY;
 
     This->ITransactionDispenser_iface.lpVtbl = &TransactionDispenser_Vtbl;
+    This->IResourceManagerFactory2_iface.lpVtbl = &ResourceManagerFactory2_Vtbl;
     This->ref = 1;
 
     ret = ITransactionDispenser_QueryInterface(&This->ITransactionDispenser_iface, riid, ppv);
