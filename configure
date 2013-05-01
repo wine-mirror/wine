@@ -633,8 +633,6 @@ LIBPOLL
 LIBDL
 EXTRA_BINARIES
 MAIN_BINARY
-SOCKETLIBS
-CRTLIBS
 TOOLSEXT
 LDPATH
 UNWINDFLAGS
@@ -691,6 +689,8 @@ CORESERVICESLIB
 APPLICATIONSERVICESLIB
 IOKITLIB
 COREFOUNDATIONLIB
+LIBWINE_RULES
+SOCKETLIBS
 DLLWRAP
 DLLTOOL
 ac_ct_READELF
@@ -699,9 +699,7 @@ LDD
 LDRPATH_LOCAL
 LDRPATH_INSTALL
 IMPLIBEXT
-LIBEXT
 LDDLLFLAGS
-LDSHARED
 DLLFLAGS
 DLLEXT
 CPP
@@ -6282,11 +6280,7 @@ DLLEXT=""
 
 DLLFLAGS="-D_REENTRANT"
 
-LDSHARED=""
-
 LDDLLFLAGS=""
-
-LIBEXT="so"
 
 IMPLIBEXT="def"
 
@@ -6294,6 +6288,7 @@ LDRPATH_INSTALL=""
 
 LDRPATH_LOCAL=""
 
+LIBEXT="so"
 STATIC_IMPLIBEXT="def.a"
 # Extract the first word of "ldd", so it can be a program name with args.
 set dummy ldd; ac_word=$2
@@ -6625,10 +6620,9 @@ else
 fi
 
     if test "$DLLWRAP" = "false"; then
-      LIBEXT="a"
-    else
-            LIBEXT="dll"
+        as_fn_error $? "dllwrap is needed to build a dll for Windows" "$LINENO" 5
     fi
+    LIBEXT="dll"
     IMPLIBEXT="a"
     STATIC_IMPLIBEXT="a"
         enable_iphlpapi=${enable_iphlpapi:-no}
@@ -6640,14 +6634,45 @@ fi
     enable_server=${enable_server:-no}
         with_x=${with_x:-no}
     with_pthread=${with_pthread:-no}
+
+        crtlibs=""
+    case $host_os in
+        mingw32*)
+          crtlibs="-lmsvcrt"
+          SOCKETLIBS="-L\$(top_builddir)/dlls/ws2_32 -lws2_32"
+ ;;
+    esac
+
+    LIBWINE_RULES="
+all: libwine.dll libwine.a
+
+libwine.a: wine.def
+	\$(DLLTOOL) -l \$@ -d \$(srcdir)/wine.def
+
+libwine.dll: \$(OBJS) wine.def Makefile.in
+	\$(DLLWRAP) --def \$(srcdir)/wine.def -o \$@ \$(OBJS) $crtlibs \$(EXTRALIBS)
+
+install install-lib:: libwine.dll \$(DESTDIR)\$(libdir) dummy
+	\$(INSTALL_DATA) libwine.dll \$(DESTDIR)\$(libdir)/libwine.dll
+
+install install-dev:: libwine.a \$(DESTDIR)\$(libdir) dummy
+	\$(INSTALL_DATA) libwine.a \$(DESTDIR)\$(libdir)/libwine.a
+
+uninstall::
+	-cd \$(DESTDIR)\$(libdir) && \$(RM) libwine.a libwine.dll
+
+clean::
+	\$(RM) libwine.dll version.c
+"
+
     ;;
+
   darwin*|macosx*)
     DLLEXT=".so"
     LIBEXT="dylib"
     DLLFLAGS="$DLLFLAGS -fPIC"
     LDDLLFLAGS="-bundle -multiply_defined suppress"
     LIBWINE_LDFLAGS="-multiply_defined suppress"
-    LDSHARED="\$(CC) -dynamiclib"
     LDRPATH_INSTALL="-Wl,-rpath,@loader_path/\`\$(RELPATH) \$(bindir) \$(libdir)\`"
     LDRPATH_LOCAL="-Wl,-rpath,@loader_path/\$(top_builddir)/libs/wine"
         COREFOUNDATIONLIB="-framework CoreFoundation"
@@ -6818,7 +6843,35 @@ rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
 fi
 
     fi
+
+    LIBWINE_RULES="
+all: libwine.dylib
+
+libwine.\$(VERSION).dylib: \$(OBJS) \$(RELPATH) Makefile.in
+	\$(CC) -dynamiclib -install_name @rpath/libwine.\$(SOVERSION).dylib -Wl,-rpath,@loader_path/ -compatibility_version \$(SOVERSION) -current_version \$(VERSION) \$(OBJS) \$(EXTRALIBS) \$(LDFLAGS) \$(LIBS) -o \$@
+
+libwine.\$(SOVERSION).dylib: libwine.\$(VERSION).dylib
+	\$(RM) \$@ && \$(LN_S) libwine.\$(VERSION).dylib \$@
+
+libwine.dylib: libwine.\$(SOVERSION).dylib
+	\$(RM) \$@ && \$(LN_S) libwine.\$(SOVERSION).dylib \$@
+
+install install-lib:: libwine.\$(VERSION).dylib \$(DESTDIR)\$(libdir) dummy
+	\$(INSTALL_PROGRAM) libwine.\$(VERSION).dylib \$(DESTDIR)\$(libdir)/libwine.\$(VERSION).dylib
+	cd \$(DESTDIR)\$(libdir) && \$(RM) libwine.\$(SOVERSION).dylib && \$(LN_S) libwine.\$(VERSION).dylib libwine.\$(SOVERSION).dylib
+
+install install-dev:: \$(DESTDIR)\$(libdir) dummy
+	cd \$(DESTDIR)\$(libdir) && \$(RM) libwine.dylib && \$(LN_S) libwine.\$(VERSION).dylib libwine.dylib
+
+uninstall::
+	-cd \$(DESTDIR)\$(libdir) && \$(RM) libwine.dylib libwine.\$(VERSION).dylib libwine.\$(SOVERSION).dylib
+
+clean::
+	\$(RM) libwine.dylib libwine.\$(VERSION).dylib libwine.\$(SOVERSION).dylib version.c
+"
+
     ;;
+
   *)
     DLLFLAGS="$DLLFLAGS -fPIC"
     DLLEXT=".so"
@@ -6871,7 +6924,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__fPIC__shared__Wl__soname_confest_so_1" >&5
 $as_echo "$ac_cv_cflags__fPIC__shared__Wl__soname_confest_so_1" >&6; }
 if test $ac_cv_cflags__fPIC__shared__Wl__soname_confest_so_1 = yes; then :
-  LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-soname,%)"
+  LDSHARED="\$(CC) -shared -Wl,-soname,libwine.so.\$(SOVERSION)"
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fPIC -shared -Wl,-h,confest.so.1" >&5
 $as_echo_n "checking whether the compiler supports -fPIC -shared -Wl,-h,confest.so.1... " >&6; }
@@ -6896,7 +6949,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__fPIC__shared__Wl__h_confest_so_1" >&5
 $as_echo "$ac_cv_cflags__fPIC__shared__Wl__h_confest_so_1" >&6; }
 if test $ac_cv_cflags__fPIC__shared__Wl__h_confest_so_1 = yes; then :
-  LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-h,%)"
+  LDSHARED="\$(CC) -shared -Wl,-h,libwine.so.\$(SOVERSION)"
 fi
 fi
 
@@ -6976,7 +7029,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__fPIC__shared__Wl___version_script_conftest_map" >&5
 $as_echo "$ac_cv_cflags__fPIC__shared__Wl___version_script_conftest_map" >&6; }
 if test $ac_cv_cflags__fPIC__shared__Wl___version_script_conftest_map = yes; then :
-  LDSHARED="$LDSHARED \$(VERSCRIPT:%=-Wl,--version-script=%)"
+  LDSHARED="$LDSHARED -Wl,--version-script=\$(srcdir)/wine.map"
 fi
       rm -f conftest.map
 
@@ -7195,54 +7248,41 @@ fi
 $as_echo "$ac_cv_c_dll_unixware" >&6; }
       if test "$ac_cv_c_dll_unixware" = "yes"
       then
-        LDSHARED="\$(CC) -Wl,-G \$(SONAME:%=-Wl,-h,%)"
+        LDSHARED="\$(CC) -Wl,-G,-h,libwine.so.\$(SOVERSION)"
         LDDLLFLAGS="-Wl,-G,-B,symbolic"
-
-      else
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we can build an HP-UX dll" >&5
-$as_echo_n "checking whether we can build an HP-UX dll... " >&6; }
-if ${ac_cv_c_dll_hpux+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_wine_try_cflags_saved=$CFLAGS
-CFLAGS="$CFLAGS -shared"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void myfunc() {}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_c_dll_hpux="yes"
-else
-  ac_cv_c_dll_hpux="no"
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_dll_hpux" >&5
-$as_echo "$ac_cv_c_dll_hpux" >&6; }
-        if test "$ac_cv_c_dll_hpux" = "yes"
-        then
-          LIBEXT="sl"
-          DLLEXT=".sl"
-          LDDLLFLAGS="-shared -fPIC"
-          LDSHARED="\$(CC) -shared"
-        fi
       fi
     fi
+    LIBWINE_RULES="
+all: libwine.so
+
+libwine.so.\$(VERSION): \$(OBJS) wine.map Makefile.in
+	$LDSHARED \$(OBJS) \$(EXTRALIBS) \$(LDFLAGS) \$(LIBS) -o \$@
+
+libwine.so.\$(SOVERSION): libwine.so.\$(VERSION)
+	\$(RM) \$@ && \$(LN_S) libwine.so.\$(VERSION) \$@
+
+libwine.so: libwine.so.\$(SOVERSION)
+	\$(RM) \$@ && \$(LN_S) libwine.so.\$(SOVERSION) \$@
+
+install install-lib:: libwine.so.\$(VERSION) \$(DESTDIR)\$(libdir) dummy
+	\$(INSTALL_PROGRAM) libwine.so.\$(VERSION) \$(DESTDIR)\$(libdir)/libwine.so.\$(VERSION)
+	cd \$(DESTDIR)\$(libdir) && \$(RM) libwine.so.\$(SOVERSION) && \$(LN_S) libwine.so.\$(VERSION) libwine.so.\$(SOVERSION)
+
+install install-dev:: \$(DESTDIR)\$(libdir) dummy
+	cd \$(DESTDIR)\$(libdir) && \$(RM) libwine.so && \$(LN_S) libwine.so.\$(VERSION) libwine.so
+
+uninstall::
+	-cd \$(DESTDIR)\$(libdir) && \$(RM) libwine.so libwine.so.\$(VERSION) libwine.so.\$(SOVERSION)
+
+clean::
+	\$(RM) libwine.so.\$(SOVERSION) libwine.so.\$(VERSION) version.c
+"
+
     ;;
 esac
 
 enable_wineqtdecoder=${enable_wineqtdecoder:-no}
 enable_winemac_drv=${enable_winemac_drv:-no}
-
-if test "$LIBEXT" = "a"; then
-  as_fn_error $? "could not find a way to build shared libraries.
-It is currently not possible to build Wine without shared library
-(.so) support to allow transparent switch between .so and .dll files.
-If you are using Linux, you will need a newer binutils.
-" "$LINENO" 5
-fi
 
 CROSSTEST_DISABLE=\#
 
@@ -12980,15 +13020,6 @@ case $build_os in
     ;;
   *)
     LDPATH="LD_LIBRARY_PATH=\"\$(TOOLSDIR)/libs/wine:\$\$LD_LIBRARY_PATH\""
-    ;;
-esac
-
-case $host_os in
-  mingw32*)
-    CRTLIBS="-lmsvcrt"
-
-    SOCKETLIBS="-L\$(top_builddir)/dlls/ws2_32 -lws2_32"
-
     ;;
 esac
 

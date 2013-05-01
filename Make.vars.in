@@ -30,7 +30,6 @@ BISON           = @BISON@
 FLEX            = @FLEX@
 EXEEXT          = @EXEEXT@
 OBJEXT          = @OBJEXT@
-LIBEXT          = @LIBEXT@
 DLLEXT          = @DLLEXT@
 FAKEEXT         = $(DLLEXT:.so=.fake)
 TOOLSEXT        = @TOOLSEXT@

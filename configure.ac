@@ -679,12 +679,11 @@ dnl **** Check for working dll ****
 
 AC_SUBST(DLLEXT,"")
 AC_SUBST(DLLFLAGS,"-D_REENTRANT")
-AC_SUBST(LDSHARED,"")
 AC_SUBST(LDDLLFLAGS,"")
-AC_SUBST(LIBEXT,"so")
 AC_SUBST(IMPLIBEXT,"def")
 AC_SUBST(LDRPATH_INSTALL,"")
 AC_SUBST(LDRPATH_LOCAL,"")
+LIBEXT="so"
 STATIC_IMPLIBEXT="def.a"
 WINE_PATH_SONAME_TOOLS
 
@@ -693,11 +692,9 @@ case $host_os in
     AC_CHECK_TOOL(DLLTOOL,dlltool,false)
     AC_CHECK_TOOL(DLLWRAP,dllwrap,false)
     if test "$DLLWRAP" = "false"; then
-      LIBEXT="a"
-    else
-      dnl FIXME - check whether dllwrap works correctly...
-      LIBEXT="dll"
+        AC_MSG_ERROR([dllwrap is needed to build a dll for Windows])
     fi
+    LIBEXT="dll"
     IMPLIBEXT="a"
     STATIC_IMPLIBEXT="a"
     dnl Disable modules that can't be used on Windows
@@ -711,14 +708,44 @@ case $host_os in
     dnl Disable dependencies that are not useful on Windows
     with_x=${with_x:-no}
     with_pthread=${with_pthread:-no}
+
+    dnl Mingw needs explicit msvcrt for linking libwine and winsock for wininet
+    crtlibs=""
+    case $host_os in
+        mingw32*)
+          crtlibs="-lmsvcrt"
+          AC_SUBST(SOCKETLIBS,"-L\$(top_builddir)/dlls/ws2_32 -lws2_32") ;;
+    esac
+
+    AC_SUBST(LIBWINE_RULES,["
+all: libwine.dll libwine.a
+
+libwine.a: wine.def
+	\$(DLLTOOL) -l \$@ -d \$(srcdir)/wine.def
+
+libwine.dll: \$(OBJS) wine.def Makefile.in
+	\$(DLLWRAP) --def \$(srcdir)/wine.def -o \$@ \$(OBJS) $crtlibs \$(EXTRALIBS)
+
+install install-lib:: libwine.dll \$(DESTDIR)\$(libdir) dummy
+	\$(INSTALL_DATA) libwine.dll \$(DESTDIR)\$(libdir)/libwine.dll
+
+install install-dev:: libwine.a \$(DESTDIR)\$(libdir) dummy
+	\$(INSTALL_DATA) libwine.a \$(DESTDIR)\$(libdir)/libwine.a
+
+uninstall::
+	-cd \$(DESTDIR)\$(libdir) && \$(RM) libwine.a libwine.dll
+
+clean::
+	\$(RM) libwine.dll version.c
+"])
     ;;
+
   darwin*|macosx*)
     DLLEXT=".so"
     LIBEXT="dylib"
     DLLFLAGS="$DLLFLAGS -fPIC"
     LDDLLFLAGS="-bundle -multiply_defined suppress"
     LIBWINE_LDFLAGS="-multiply_defined suppress"
-    LDSHARED="\$(CC) -dynamiclib"
     LDRPATH_INSTALL="-Wl,-rpath,@loader_path/\`\$(RELPATH) \$(bindir) \$(libdir)\`"
     LDRPATH_LOCAL="-Wl,-rpath,@loader_path/\$(top_builddir)/libs/wine"
     dnl declare needed frameworks
@@ -823,7 +850,34 @@ case $host_os in
                                        AC_MSG_ERROR([Xcode 3.x cannot build 16-bit code correctly. Use --disable-win16 if you don't need 16-bit support.])],
                                        AC_MSG_RESULT([[cross-compiling, assuming yes]]))
     fi
+
+    AC_SUBST(LIBWINE_RULES,["
+all: libwine.dylib
+
+libwine.\$(VERSION).dylib: \$(OBJS) \$(RELPATH) Makefile.in
+	\$(CC) -dynamiclib -install_name @rpath/libwine.\$(SOVERSION).dylib -Wl,-rpath,@loader_path/ -compatibility_version \$(SOVERSION) -current_version \$(VERSION) \$(OBJS) \$(EXTRALIBS) \$(LDFLAGS) \$(LIBS) -o \$@
+
+libwine.\$(SOVERSION).dylib: libwine.\$(VERSION).dylib
+	\$(RM) \$@ && \$(LN_S) libwine.\$(VERSION).dylib \$@
+
+libwine.dylib: libwine.\$(SOVERSION).dylib
+	\$(RM) \$@ && \$(LN_S) libwine.\$(SOVERSION).dylib \$@
+
+install install-lib:: libwine.\$(VERSION).dylib \$(DESTDIR)\$(libdir) dummy
+	\$(INSTALL_PROGRAM) libwine.\$(VERSION).dylib \$(DESTDIR)\$(libdir)/libwine.\$(VERSION).dylib
+	cd \$(DESTDIR)\$(libdir) && \$(RM) libwine.\$(SOVERSION).dylib && \$(LN_S) libwine.\$(VERSION).dylib libwine.\$(SOVERSION).dylib
+
+install install-dev:: \$(DESTDIR)\$(libdir) dummy
+	cd \$(DESTDIR)\$(libdir) && \$(RM) libwine.dylib && \$(LN_S) libwine.\$(VERSION).dylib libwine.dylib
+
+uninstall::
+	-cd \$(DESTDIR)\$(libdir) && \$(RM) libwine.dylib libwine.\$(VERSION).dylib libwine.\$(SOVERSION).dylib
+
+clean::
+	\$(RM) libwine.dylib libwine.\$(VERSION).dylib libwine.\$(SOVERSION).dylib version.c
+"])
     ;;
+
   *)
     DLLFLAGS="$DLLFLAGS -fPIC"
     DLLEXT=".so"
@@ -835,9 +889,9 @@ case $host_os in
       LDSHARED="\$(CC) -shared"
       LDDLLFLAGS="-shared -Wl,-Bsymbolic"
       WINE_TRY_CFLAGS([-fPIC -shared -Wl,-soname,confest.so.1],
-                      [LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-soname,%)"],
+                      [LDSHARED="\$(CC) -shared -Wl,-soname,libwine.so.\$(SOVERSION)"],
                       [WINE_TRY_CFLAGS([-fPIC -shared -Wl,-h,confest.so.1],
-                                       [LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-h,%)"])])
+                                       [LDSHARED="\$(CC) -shared -Wl,-h,libwine.so.\$(SOVERSION)"])])
 
       WINE_TRY_CFLAGS([-fPIC -shared -Wl,-Bsymbolic,-z,defs], [LDDLLFLAGS="$LDDLLFLAGS,-z,defs"])
 
@@ -846,7 +900,7 @@ case $host_os in
 
       echo '{ global: *; };' >conftest.map
       WINE_TRY_CFLAGS([-fPIC -shared -Wl,--version-script=conftest.map],
-                      [LDSHARED="$LDSHARED \$(VERSCRIPT:%=-Wl,--version-script=%)"])
+                      [LDSHARED="$LDSHARED -Wl,--version-script=\$(srcdir)/wine.map"])
       rm -f conftest.map
 
       WINE_TRY_CFLAGS([-fPIC -Wl,--export-dynamic],
@@ -884,35 +938,40 @@ case $host_os in
                                 ac_cv_c_dll_unixware="yes",ac_cv_c_dll_unixware="no")])
       if test "$ac_cv_c_dll_unixware" = "yes"
       then
-        LDSHARED="\$(CC) -Wl,-G \$(SONAME:%=-Wl,-h,%)"
+        LDSHARED="\$(CC) -Wl,-G,-h,libwine.so.\$(SOVERSION)"
         LDDLLFLAGS="-Wl,-G,-B,symbolic"
-
-      else
-        AC_CACHE_CHECK(whether we can build an HP-UX dll, ac_cv_c_dll_hpux,
-          [WINE_TRY_SHLIB_FLAGS([-shared], ac_cv_c_dll_hpux="yes", ac_cv_c_dll_hpux="no")])
-        if test "$ac_cv_c_dll_hpux" = "yes"
-        then
-          LIBEXT="sl"
-          DLLEXT=".sl"
-          LDDLLFLAGS="-shared -fPIC"
-          LDSHARED="\$(CC) -shared"
-        fi
       fi
     fi
+    AC_SUBST(LIBWINE_RULES,["
+all: libwine.so
+
+libwine.so.\$(VERSION): \$(OBJS) wine.map Makefile.in
+	$LDSHARED \$(OBJS) \$(EXTRALIBS) \$(LDFLAGS) \$(LIBS) -o \$@
+
+libwine.so.\$(SOVERSION): libwine.so.\$(VERSION)
+	\$(RM) \$@ && \$(LN_S) libwine.so.\$(VERSION) \$@
+
+libwine.so: libwine.so.\$(SOVERSION)
+	\$(RM) \$@ && \$(LN_S) libwine.so.\$(SOVERSION) \$@
+
+install install-lib:: libwine.so.\$(VERSION) \$(DESTDIR)\$(libdir) dummy
+	\$(INSTALL_PROGRAM) libwine.so.\$(VERSION) \$(DESTDIR)\$(libdir)/libwine.so.\$(VERSION)
+	cd \$(DESTDIR)\$(libdir) && \$(RM) libwine.so.\$(SOVERSION) && \$(LN_S) libwine.so.\$(VERSION) libwine.so.\$(SOVERSION)
+
+install install-dev:: \$(DESTDIR)\$(libdir) dummy
+	cd \$(DESTDIR)\$(libdir) && \$(RM) libwine.so && \$(LN_S) libwine.so.\$(VERSION) libwine.so
+
+uninstall::
+	-cd \$(DESTDIR)\$(libdir) && \$(RM) libwine.so libwine.so.\$(VERSION) libwine.so.\$(SOVERSION)
+
+clean::
+	\$(RM) libwine.so.\$(SOVERSION) libwine.so.\$(VERSION) version.c
+"])
     ;;
 esac
 
 enable_wineqtdecoder=${enable_wineqtdecoder:-no}
 enable_winemac_drv=${enable_winemac_drv:-no}
-
-if test "$LIBEXT" = "a"; then
-  AC_MSG_ERROR(
-[could not find a way to build shared libraries.
-It is currently not possible to build Wine without shared library
-(.so) support to allow transparent switch between .so and .dll files.
-If you are using Linux, you will need a newer binutils.]
-)
-fi
 
 dnl Check for cross compiler to build test programs
 AC_SUBST([CROSSTEST_DISABLE],[\#])
@@ -1928,14 +1987,6 @@ case $build_os in
     ;;
   *)
     LDPATH="LD_LIBRARY_PATH=\"\$(TOOLSDIR)/libs/wine:\$\$LD_LIBRARY_PATH\""
-    ;;
-esac
-
-dnl Mingw needs explicit msvcrt for linking libwine and winsock for wininet
-case $host_os in
-  mingw32*)
-    AC_SUBST(CRTLIBS,"-lmsvcrt")
-    AC_SUBST(SOCKETLIBS,"-L\$(top_builddir)/dlls/ws2_32 -lws2_32")
     ;;
 esac
 

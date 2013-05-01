@@ -1,13 +1,9 @@
 DLLFLAGS  = @DLLFLAGS@
-MODULE    = libwine.$(LIBEXT)
-VERSCRIPT = $(srcdir)/wine.map
-EXTRALIBS = $(LIBPORT) @LIBDL@ @CRTLIBS@ @COREFOUNDATIONLIB@ @CORESERVICESLIB@
+EXTRALIBS = $(LIBPORT) @LIBDL@ @COREFOUNDATIONLIB@ @CORESERVICESLIB@
 DEFS      = -D__WINESRC__ -DWINE_UNICODE_API=""
 
 VERSION   = 1.0
 SOVERSION = 1
-SONAME    = libwine.so.$(SOVERSION)
-DYNAME    = libwine.$(SOVERSION).dylib
 
 INSTALLDIRS = $(DESTDIR)$(libdir)
 
@@ -94,8 +90,6 @@ C_SRCS = \
 
 EXTRA_OBJS = version.o
 
-all: $(MODULE) $(MODULE:.dll=.a)
-
 @MAKE_RULES@
 
 # Special defines needed for config.c
@@ -111,70 +105,10 @@ CONFIGDIRS = \
 config.o: config.c $(RELPATH)
 	$(CC) -c $(ALLCFLAGS) -o $@ $(srcdir)/config.c $(CONFIGDIRS)
 
-# Linking rules
-
-libwine.so.$(VERSION): $(OBJS) $(VERSCRIPT) Makefile.in
-	$(LDSHARED) $(OBJS) $(EXTRALIBS) $(LDFLAGS) $(LIBS) -o $@
-
-libwine.so.$(SOVERSION): libwine.so.$(VERSION)
-	$(RM) $@ && $(LN_S) libwine.so.$(VERSION) $@
-
-libwine.so: libwine.so.$(SOVERSION)
-	$(RM) $@ && $(LN_S) libwine.so.$(SOVERSION) $@
-
-libwine.a: wine.def
-	$(DLLTOOL) -l $@ -d $(srcdir)/wine.def
-
-libwine.dll: $(OBJS) wine.def Makefile.in
-	$(DLLWRAP) --def $(srcdir)/wine.def -o $@ $(OBJS) $(EXTRALIBS)
-
-DYLIB_LDFLAGS = -compatibility_version $(SOVERSION) -current_version $(VERSION)
-
-libwine.$(VERSION).dylib: $(OBJS) $(RELPATH) Makefile.in
-	$(LDSHARED) -install_name @rpath/$(DYNAME) -Wl,-rpath,@loader_path/ $(DYLIB_LDFLAGS) $(OBJS) $(EXTRALIBS) $(LDFLAGS) $(LIBS) -o $@
-
-libwine.$(SOVERSION).dylib: libwine.$(VERSION).dylib
-	$(RM) $@ && $(LN_S) libwine.$(VERSION).dylib $@
-
-libwine.dylib: libwine.$(SOVERSION).dylib
-	$(RM) $@ && $(LN_S) libwine.$(SOVERSION).dylib $@
-
-# Install rules
-
-.PHONY: install-lib-so install-lib-dll install-lib-dylib install-dev-so install-dev-dll install-dev-dylib
-
-install-lib-so: libwine.so.$(VERSION) $(DESTDIR)$(libdir) dummy
-	$(INSTALL_PROGRAM) libwine.so.$(VERSION) $(DESTDIR)$(libdir)/libwine.so.$(VERSION)
-	cd $(DESTDIR)$(libdir) && $(RM) libwine.so.$(SOVERSION) && $(LN_S) libwine.so.$(VERSION) libwine.so.$(SOVERSION)
-
-install-lib-dll: libwine.dll $(DESTDIR)$(libdir) dummy
-	$(INSTALL_DATA) libwine.dll $(DESTDIR)$(libdir)/libwine.dll
-
-install-lib-dylib: libwine.$(VERSION).dylib $(DESTDIR)$(libdir) dummy
-	$(INSTALL_PROGRAM) libwine.$(VERSION).dylib $(DESTDIR)$(libdir)/libwine.$(VERSION).dylib
-	cd $(DESTDIR)$(libdir) && $(RM) libwine.$(SOVERSION).dylib && $(LN_S) libwine.$(VERSION).dylib libwine.$(SOVERSION).dylib
-
-install-dev-so: $(DESTDIR)$(libdir) dummy
-	cd $(DESTDIR)$(libdir) && $(RM) libwine.so && $(LN_S) libwine.so.$(VERSION) libwine.so
-
-install-dev-dll: libwine.a $(DESTDIR)$(libdir) dummy
-	$(INSTALL_DATA) libwine.a $(DESTDIR)$(libdir)/libwine.a
-
-install-dev-dylib: $(DESTDIR)$(libdir) dummy
-	cd $(DESTDIR)$(libdir) && $(RM) libwine.dylib && $(LN_S) libwine.$(VERSION).dylib libwine.dylib
-
-install install-lib:: $(LIBEXT:%=install-lib-%)
-install install-dev:: $(LIBEXT:%=install-dev-%)
-
-uninstall::
-	-cd $(DESTDIR)$(libdir) && $(RM) libwine.a libwine.dll libwine.so libwine.so.$(VERSION) \
-		libwine.so.$(SOVERSION) libwine.dylib libwine.$(VERSION).dylib libwine.$(SOVERSION).dylib
-
 version.c: dummy
 	version=`(GIT_DIR=$(top_srcdir)/.git git describe HEAD 2>/dev/null || echo "wine-@PACKAGE_VERSION@") | sed -n -e '$$s/\(.*\)/const char wine_build[] = "\1";/p'` && (echo $$version | cmp -s - $@) || echo $$version >$@ || ($(RM) $@ && exit 1)
 
-clean::
-	$(RM) libwine.so.$(SOVERSION) libwine.so.$(VERSION) version.c
-
 $(RELPATH):
 	@cd $(TOOLSDIR)/tools && $(MAKE) relpath$(TOOLSEXT)
+
+@LIBWINE_RULES@
