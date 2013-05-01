@@ -28,6 +28,126 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(xolehlp);
 
+/* Resource manager start */
+
+typedef struct {
+    IResourceManager IResourceManager_iface;
+    LONG ref;
+} ResourceManager;
+
+static inline ResourceManager *impl_from_IResourceManager(IResourceManager *iface)
+{
+    return CONTAINING_RECORD(iface, ResourceManager, IResourceManager_iface);
+}
+
+static HRESULT WINAPI ResourceManager_QueryInterface(IResourceManager *iface, REFIID iid,
+    void **ppv)
+{
+    ResourceManager *This = impl_from_IResourceManager(iface);
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
+
+    if (!ppv) return E_INVALIDARG;
+
+    if (IsEqualIID(&IID_IUnknown, iid) ||
+        IsEqualIID(&IID_IResourceManager, iid))
+    {
+        *ppv = &This->IResourceManager_iface;
+    }
+    else
+    {
+        FIXME("(%s): not implemented\n", debugstr_guid(iid));
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI ResourceManager_AddRef(IResourceManager *iface)
+{
+    ResourceManager *This = impl_from_IResourceManager(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI ResourceManager_Release(IResourceManager *iface)
+{
+    ResourceManager *This = impl_from_IResourceManager(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+
+    if (ref == 0)
+    {
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+static HRESULT WINAPI ResourceManager_Enlist(IResourceManager *iface,
+	ITransaction *pTransaction,ITransactionResourceAsync *pRes,XACTUOW *pUOW,
+	LONG *pisoLevel,ITransactionEnlistmentAsync **ppEnlist)
+{
+    FIXME("(%p, %p, %p, %p, %p, %p): stub\n", iface, pTransaction,pRes,pUOW,
+        pisoLevel,ppEnlist);
+    return E_NOTIMPL;
+}
+static HRESULT WINAPI ResourceManager_Reenlist(IResourceManager *iface,
+        byte *pPrepInfo,ULONG cbPrepInfo,DWORD lTimeout,XACTSTAT *pXactStat)
+{
+    FIXME("(%p, %p, %u, %u, %p): stub\n", iface, pPrepInfo, cbPrepInfo, lTimeout, pXactStat);
+    return E_NOTIMPL;
+}
+static HRESULT WINAPI ResourceManager_ReenlistmentComplete(IResourceManager *iface)
+{
+    FIXME("(%p): stub\n", iface);
+    return S_OK;
+}
+static HRESULT WINAPI ResourceManager_GetDistributedTransactionManager(IResourceManager *iface,
+        REFIID iid,void **ppvObject)
+{
+    FIXME("(%p, %s, %p): stub\n", iface, debugstr_guid(iid), ppvObject);
+    return E_NOTIMPL;
+}
+
+static const IResourceManagerVtbl ResourceManager_Vtbl = {
+    ResourceManager_QueryInterface,
+    ResourceManager_AddRef,
+    ResourceManager_Release,
+    ResourceManager_Enlist,
+    ResourceManager_Reenlist,
+    ResourceManager_ReenlistmentComplete,
+    ResourceManager_GetDistributedTransactionManager
+};
+
+static HRESULT ResourceManager_Create(REFIID riid, void **ppv)
+{
+    ResourceManager *This;
+    HRESULT ret;
+
+    if (!ppv) return E_INVALIDARG;
+
+    This = HeapAlloc(GetProcessHeap(), 0, sizeof(ResourceManager));
+    if (!This) return E_OUTOFMEMORY;
+
+    This->IResourceManager_iface.lpVtbl = &ResourceManager_Vtbl;
+    This->ref = 1;
+
+    ret = IResourceManager_QueryInterface(&This->IResourceManager_iface, riid, ppv);
+    IResourceManager_Release(&This->IResourceManager_iface);
+
+    return ret;
+}
+
+/* Resource manager end */
+
+
+/* DTC Proxy Core Object start */
+
 typedef struct {
     ITransactionDispenser ITransactionDispenser_iface;
     LONG ref;
@@ -155,18 +275,17 @@ static ULONG WINAPI ResourceManagerFactory2_Release(IResourceManagerFactory2 *if
 static HRESULT WINAPI ResourceManagerFactory2_Create(IResourceManagerFactory2 *iface,
         GUID *pguidRM, CHAR *pszRMName, IResourceManagerSink *pIResMgrSink, IResourceManager **ppResMgr)
 {
-    FIXME("(%p, %s, %s, %p, %p): stub\n", iface, debugstr_guid(pguidRM),
+    FIXME("(%p, %s, %s, %p, %p): semi-stub\n", iface, debugstr_guid(pguidRM),
         debugstr_a(pszRMName), pIResMgrSink, ppResMgr);
-
-    return E_NOTIMPL;
+    return ResourceManager_Create(&IID_IResourceManager, (void**)ppResMgr);
 }
 static HRESULT WINAPI ResourceManagerFactory2_CreateEx(IResourceManagerFactory2 *iface,
         GUID *pguidRM, CHAR *pszRMName, IResourceManagerSink *pIResMgrSink, REFIID riidRequested, void **ppResMgr)
 {
-    FIXME("(%p, %s, %s, %p, %s, %p): stub\n", iface, debugstr_guid(pguidRM),
+    FIXME("(%p, %s, %s, %p, %s, %p): semi-stub\n", iface, debugstr_guid(pguidRM),
         debugstr_a(pszRMName), pIResMgrSink, debugstr_guid(riidRequested), ppResMgr);
 
-    return E_NOTIMPL;
+    return ResourceManager_Create(riidRequested, ppResMgr);
 }
 static const IResourceManagerFactory2Vtbl ResourceManagerFactory2_Vtbl = {
     ResourceManagerFactory2_QueryInterface,
@@ -239,6 +358,7 @@ static HRESULT TransactionManager_Create(REFIID riid, void **ppv)
 
     return ret;
 }
+/* DTC Proxy Core Object end */
 
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
