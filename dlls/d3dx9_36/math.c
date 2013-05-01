@@ -348,66 +348,70 @@ D3DXMATRIX* WINAPI D3DXMatrixInverse(D3DXMATRIX *pout, FLOAT *pdeterminant, cons
     return pout;
 }
 
-D3DXMATRIX* WINAPI D3DXMatrixLookAtLH(D3DXMATRIX *pout, const D3DXVECTOR3 *peye, const D3DXVECTOR3 *pat, const D3DXVECTOR3 *pup)
+D3DXMATRIX * WINAPI D3DXMatrixLookAtLH(D3DXMATRIX *out, const D3DXVECTOR3 *eye, const D3DXVECTOR3 *at,
+        const D3DXVECTOR3 *up)
 {
-    D3DXVECTOR3 right, rightn, up, upn, vec, vec2;
+    D3DXVECTOR3 right, upn, vec;
 
-    TRACE("pout %p, peye %p, pat %p, pup %p\n", pout, peye, pat, pup);
+    TRACE("out %p, eye %p, at %p, up %p\n", out, eye, at, up);
 
-    D3DXVec3Subtract(&vec2, pat, peye);
-    D3DXVec3Normalize(&vec, &vec2);
-    D3DXVec3Cross(&right, pup, &vec);
-    D3DXVec3Cross(&up, &vec, &right);
-    D3DXVec3Normalize(&rightn, &right);
-    D3DXVec3Normalize(&upn, &up);
-    pout->u.m[0][0] = rightn.x;
-    pout->u.m[1][0] = rightn.y;
-    pout->u.m[2][0] = rightn.z;
-    pout->u.m[3][0] = -D3DXVec3Dot(&rightn,peye);
-    pout->u.m[0][1] = upn.x;
-    pout->u.m[1][1] = upn.y;
-    pout->u.m[2][1] = upn.z;
-    pout->u.m[3][1] = -D3DXVec3Dot(&upn, peye);
-    pout->u.m[0][2] = vec.x;
-    pout->u.m[1][2] = vec.y;
-    pout->u.m[2][2] = vec.z;
-    pout->u.m[3][2] = -D3DXVec3Dot(&vec, peye);
-    pout->u.m[0][3] = 0.0f;
-    pout->u.m[1][3] = 0.0f;
-    pout->u.m[2][3] = 0.0f;
-    pout->u.m[3][3] = 1.0f;
-    return pout;
+    D3DXVec3Subtract(&vec, at, eye);
+    D3DXVec3Normalize(&vec, &vec);
+    D3DXVec3Cross(&right, up, &vec);
+    D3DXVec3Cross(&upn, &vec, &right);
+    D3DXVec3Normalize(&right, &right);
+    D3DXVec3Normalize(&upn, &upn);
+    out->u.m[0][0] = right.x;
+    out->u.m[1][0] = right.y;
+    out->u.m[2][0] = right.z;
+    out->u.m[3][0] = -D3DXVec3Dot(&right, eye);
+    out->u.m[0][1] = upn.x;
+    out->u.m[1][1] = upn.y;
+    out->u.m[2][1] = upn.z;
+    out->u.m[3][1] = -D3DXVec3Dot(&upn, eye);
+    out->u.m[0][2] = vec.x;
+    out->u.m[1][2] = vec.y;
+    out->u.m[2][2] = vec.z;
+    out->u.m[3][2] = -D3DXVec3Dot(&vec, eye);
+    out->u.m[0][3] = 0.0f;
+    out->u.m[1][3] = 0.0f;
+    out->u.m[2][3] = 0.0f;
+    out->u.m[3][3] = 1.0f;
+
+    return out;
 }
 
-D3DXMATRIX* WINAPI D3DXMatrixLookAtRH(D3DXMATRIX *pout, const D3DXVECTOR3 *peye, const D3DXVECTOR3 *pat, const D3DXVECTOR3 *pup)
+D3DXMATRIX * WINAPI D3DXMatrixLookAtRH(D3DXMATRIX *out, const D3DXVECTOR3 *eye, const D3DXVECTOR3 *at,
+        const D3DXVECTOR3 *up)
 {
-    D3DXVECTOR3 right, rightn, up, upn, vec, vec2;
+    D3DXVECTOR3 right, upn, vec;
 
-    TRACE("pout %p, peye %p, pat %p, pup %p\n", pout, peye, pat, pup);
+    TRACE("out %p, eye %p, at %p, up %p\n", out, eye, at, up);
 
-    D3DXVec3Subtract(&vec2, pat, peye);
-    D3DXVec3Normalize(&vec, &vec2);
-    D3DXVec3Cross(&right, pup, &vec);
-    D3DXVec3Cross(&up, &vec, &right);
-    D3DXVec3Normalize(&rightn, &right);
-    D3DXVec3Normalize(&upn, &up);
-    pout->u.m[0][0] = -rightn.x;
-    pout->u.m[1][0] = -rightn.y;
-    pout->u.m[2][0] = -rightn.z;
-    pout->u.m[3][0] = D3DXVec3Dot(&rightn,peye);
-    pout->u.m[0][1] = upn.x;
-    pout->u.m[1][1] = upn.y;
-    pout->u.m[2][1] = upn.z;
-    pout->u.m[3][1] = -D3DXVec3Dot(&upn, peye);
-    pout->u.m[0][2] = -vec.x;
-    pout->u.m[1][2] = -vec.y;
-    pout->u.m[2][2] = -vec.z;
-    pout->u.m[3][2] = D3DXVec3Dot(&vec, peye);
-    pout->u.m[0][3] = 0.0f;
-    pout->u.m[1][3] = 0.0f;
-    pout->u.m[2][3] = 0.0f;
-    pout->u.m[3][3] = 1.0f;
-    return pout;
+    D3DXVec3Subtract(&vec, at, eye);
+    D3DXVec3Normalize(&vec, &vec);
+    D3DXVec3Cross(&right, up, &vec);
+    D3DXVec3Cross(&upn, &vec, &right);
+    D3DXVec3Normalize(&right, &right);
+    D3DXVec3Normalize(&upn, &upn);
+    out->u.m[0][0] = -right.x;
+    out->u.m[1][0] = -right.y;
+    out->u.m[2][0] = -right.z;
+    out->u.m[3][0] = D3DXVec3Dot(&right, eye);
+    out->u.m[0][1] = upn.x;
+    out->u.m[1][1] = upn.y;
+    out->u.m[2][1] = upn.z;
+    out->u.m[3][1] = -D3DXVec3Dot(&upn, eye);
+    out->u.m[0][2] = -vec.x;
+    out->u.m[1][2] = -vec.y;
+    out->u.m[2][2] = -vec.z;
+    out->u.m[3][2] = D3DXVec3Dot(&vec, eye);
+    out->u.m[0][3] = 0.0f;
+    out->u.m[1][3] = 0.0f;
+    out->u.m[2][3] = 0.0f;
+    out->u.m[3][3] = 1.0f;
+
+    return out;
 }
 
 D3DXMATRIX* WINAPI D3DXMatrixMultiply(D3DXMATRIX *pout, const D3DXMATRIX *pm1, const D3DXMATRIX *pm2)
