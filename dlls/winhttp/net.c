@@ -531,15 +531,13 @@ static BOOL send_ssl_chunk(netconn_t *conn, const void *msg, size_t size)
     return TRUE;
 }
 
-BOOL netconn_send( netconn_t *conn, const void *msg, size_t len, int flags, int *sent )
+BOOL netconn_send( netconn_t *conn, const void *msg, size_t len, int *sent )
 {
     if (!netconn_connected( conn )) return FALSE;
     if (conn->secure)
     {
         const BYTE *ptr = msg;
         size_t chunk_size;
-
-        if (flags) FIXME("flags %08x not supported in SSL\n", flags);
 
         *sent = 0;
 
@@ -555,7 +553,7 @@ BOOL netconn_send( netconn_t *conn, const void *msg, size_t len, int flags, int 
 
         return TRUE;
     }
-    if ((*sent = send( conn->socket, msg, len, flags )) == -1)
+    if ((*sent = send( conn->socket, msg, len, 0 )) == -1)
     {
         set_last_error( sock_get_error( errno ) );
         return FALSE;

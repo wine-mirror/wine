@@ -900,7 +900,7 @@ static BOOL secure_proxy_connect( request_t *request )
             {
                 int len = strlen( req_ascii ), bytes_sent;
 
-                ret = netconn_send( &request->netconn, req_ascii, len, 0, &bytes_sent );
+                ret = netconn_send( &request->netconn, req_ascii, len, &bytes_sent );
                 heap_free( req_ascii );
                 if (ret)
                     ret = read_reply( request );
@@ -1120,13 +1120,13 @@ static BOOL send_request( request_t *request, LPCWSTR headers, DWORD headers_len
 
     send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_SENDING_REQUEST, NULL, 0 );
 
-    ret = netconn_send( &request->netconn, req_ascii, len, 0, &bytes_sent );
+    ret = netconn_send( &request->netconn, req_ascii, len, &bytes_sent );
     heap_free( req_ascii );
     if (!ret) goto end;
 
     if (optional_len)
     {
-        if (!netconn_send( &request->netconn, optional, optional_len, 0, &bytes_sent )) goto end;
+        if (!netconn_send( &request->netconn, optional, optional_len, &bytes_sent )) goto end;
         request->optional = optional;
         request->optional_len = optional_len;
         len += optional_len;
@@ -2494,7 +2494,7 @@ static BOOL write_data( request_t *request, LPCVOID buffer, DWORD to_write, LPDW
     BOOL ret;
     int num_bytes;
 
-    ret = netconn_send( &request->netconn, buffer, to_write, 0, &num_bytes );
+    ret = netconn_send( &request->netconn, buffer, to_write, &num_bytes );
 
     if (async)
     {
