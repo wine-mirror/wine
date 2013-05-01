@@ -21,6 +21,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "transact.h"
+#include "initguid.h"
 #include "txdtc.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -31,6 +32,7 @@ typedef struct {
     ITransactionDispenser ITransactionDispenser_iface;
     LONG ref;
     IResourceManagerFactory2 IResourceManagerFactory2_iface;
+    ITransactionImportWhereabouts ITransactionImportWhereabouts_iface;
 } TransactionManager;
 
 static inline TransactionManager *impl_from_ITransactionDispenser(ITransactionDispenser *iface)
@@ -55,6 +57,10 @@ static HRESULT WINAPI TransactionDispenser_QueryInterface(ITransactionDispenser 
         IsEqualIID(&IID_IResourceManagerFactory2, iid))
     {
         *ppv = &This->IResourceManagerFactory2_iface;
+    }
+    else if (IsEqualIID(&IID_ITransactionImportWhereabouts, iid))
+    {
+        *ppv = &This->ITransactionImportWhereabouts_iface;
     }
     else
     {
@@ -170,6 +176,51 @@ static const IResourceManagerFactory2Vtbl ResourceManagerFactory2_Vtbl = {
     ResourceManagerFactory2_CreateEx
 };
 
+static inline TransactionManager *impl_from_ITransactionImportWhereabouts(ITransactionImportWhereabouts *iface)
+{
+    return CONTAINING_RECORD(iface, TransactionManager, ITransactionImportWhereabouts_iface);
+}
+
+static HRESULT WINAPI TransactionImportWhereabouts_QueryInterface(ITransactionImportWhereabouts *iface, REFIID iid,
+    void **ppv)
+{
+    TransactionManager *This = impl_from_ITransactionImportWhereabouts(iface);
+    return TransactionDispenser_QueryInterface(&This->ITransactionDispenser_iface, iid, ppv);
+}
+
+static ULONG WINAPI TransactionImportWhereabouts_AddRef(ITransactionImportWhereabouts *iface)
+{
+    TransactionManager *This = impl_from_ITransactionImportWhereabouts(iface);
+    return TransactionDispenser_AddRef(&This->ITransactionDispenser_iface);
+}
+
+static ULONG WINAPI TransactionImportWhereabouts_Release(ITransactionImportWhereabouts *iface)
+{
+    TransactionManager *This = impl_from_ITransactionImportWhereabouts(iface);
+    return TransactionDispenser_Release(&This->ITransactionDispenser_iface);
+}
+static HRESULT WINAPI TransactionImportWhereabouts_GetWhereaboutsSize(ITransactionImportWhereabouts *iface,
+        ULONG *pcbWhereabouts)
+{
+    FIXME("(%p, %p): stub\n", iface, pcbWhereabouts);
+
+    return E_NOTIMPL;
+}
+static HRESULT WINAPI TransactionImportWhereabouts_GetWhereabouts(ITransactionImportWhereabouts *iface,
+        ULONG cbWhereabouts, BYTE *rgbWhereabouts,ULONG *pcbUsed)
+{
+    FIXME("(%p, %u, %p, %p): stub\n", iface, cbWhereabouts, rgbWhereabouts, pcbUsed);
+
+    return E_NOTIMPL;
+}
+static const ITransactionImportWhereaboutsVtbl TransactionImportWhereabouts_Vtbl = {
+    TransactionImportWhereabouts_QueryInterface,
+    TransactionImportWhereabouts_AddRef,
+    TransactionImportWhereabouts_Release,
+    TransactionImportWhereabouts_GetWhereaboutsSize,
+    TransactionImportWhereabouts_GetWhereabouts
+};
+
 static HRESULT TransactionManager_Create(REFIID riid, void **ppv)
 {
     TransactionManager *This;
@@ -180,6 +231,7 @@ static HRESULT TransactionManager_Create(REFIID riid, void **ppv)
 
     This->ITransactionDispenser_iface.lpVtbl = &TransactionDispenser_Vtbl;
     This->IResourceManagerFactory2_iface.lpVtbl = &ResourceManagerFactory2_Vtbl;
+    This->ITransactionImportWhereabouts_iface.lpVtbl = &TransactionImportWhereabouts_Vtbl;
     This->ref = 1;
 
     ret = ITransactionDispenser_QueryInterface(&This->ITransactionDispenser_iface, riid, ppv);
