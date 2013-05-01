@@ -392,6 +392,13 @@ static const CHAR cc_media_dat[] = "DiskId\tLastSequence\tDiskPrompt\tCabinet\tV
                                    "2\t2\t\ttest2.cab\tDISK2\t\n"
                                    "3\t12\t\ttest3.cab\tDISK3\t\n";
 
+static const CHAR cc3_media_dat[] = "DiskId\tLastSequence\tDiskPrompt\tCabinet\tVolumeLabel\tSource\n"
+                                    "i2\ti4\tL64\tS255\tS32\tS72\n"
+                                    "Media\tDiskId\n"
+                                    "1\t10\t\ttest1.cab\tDISK1\t\n"
+                                    "2\t2\t\ttest2_.cab\tDISK2\t\n"
+                                    "3\t12\t\ttest3.cab\tDISK3\t\n";
+
 static const CHAR co_file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
                                   "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
                                   "File\tFile\n"
@@ -1460,6 +1467,18 @@ static const msi_table cc2_tables[] =
     ADD_TABLE(property),
 };
 
+static const msi_table cc3_tables[] =
+{
+    ADD_TABLE(cc_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(cc_feature),
+    ADD_TABLE(cc_feature_comp),
+    ADD_TABLE(cc_file),
+    ADD_TABLE(install_exec_seq),
+    ADD_TABLE(cc3_media),
+    ADD_TABLE(property),
+};
+
 static const msi_table co_tables[] =
 {
     ADD_TABLE(cc_component),
@@ -2013,7 +2032,7 @@ static INT_PTR CDECL fci_open(char *pszFile, int oflag, int pmode, int *err, voi
     DWORD dwAccess = 0;
     DWORD dwShareMode = 0;
     DWORD dwCreateDisposition = OPEN_EXISTING;
-    
+
     dwAccess = GENERIC_READ | GENERIC_WRITE;
     /* FILE_SHARE_DELETE is not supported by Windows Me/98/95 */
     dwShareMode = FILE_SHARE_READ | FILE_SHARE_WRITE;
@@ -2036,7 +2055,7 @@ static UINT CDECL fci_read(INT_PTR hf, void *memory, UINT cb, int *err, void *pv
     HANDLE handle = (HANDLE)hf;
     DWORD dwRead;
     BOOL res;
-    
+
     res = ReadFile(handle, memory, cb, &dwRead, NULL);
     ok(res, "Failed to ReadFile\n");
 
@@ -2175,7 +2194,7 @@ static INT_PTR CDECL get_open_info(char *pszName, USHORT *pdate, USHORT *ptime,
 
     res = GetFileInformationByHandle(handle, &finfo);
     ok(res, "Expected GetFileInformationByHandle to succeed\n");
-   
+
     FileTimeToLocalFileTime(&finfo.ftLastWriteTime, &filetime);
     FileTimeToDosDateTime(&filetime, pdate, ptime);
 
@@ -3025,11 +3044,18 @@ static void test_continuouscabs(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
-    ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
-    ok(delete_pf("msitest\\caesar", TRUE), "File not installed\n");
-    ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
-    ok(delete_pf("msitest", FALSE), "Directory not created\n");
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+    }
+    else
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+        ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
+        ok(delete_pf("msitest\\caesar", TRUE), "File not installed\n");
+        ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
+        ok(delete_pf("msitest", FALSE), "Directory not created\n");
+    }
 
     delete_cab_files();
     DeleteFile(msifile);
@@ -3043,16 +3069,66 @@ static void test_continuouscabs(void)
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
-        goto error;
     }
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
-    ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
-    ok(!delete_pf("msitest\\augustus", TRUE), "File installed\n");
-    ok(delete_pf("msitest\\tiberius", TRUE), "File not installed\n");
-    ok(delete_pf("msitest\\caesar", TRUE), "File not installed\n");
-    ok(delete_pf("msitest", FALSE), "Directory not created\n");
+    else
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+        ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
+        ok(!delete_pf("msitest\\augustus", TRUE), "File installed\n");
+        ok(delete_pf("msitest\\tiberius", TRUE), "File not installed\n");
+        ok(delete_pf("msitest\\caesar", TRUE), "File not installed\n");
+        ok(delete_pf("msitest", FALSE), "Directory not created\n");
+    }
 
-error:
+    delete_cab_files();
+    DeleteFile(msifile);
+
+    /* Tests to show that only msi cab filename is taken in case of mismatch with the one given by previous cab */
+
+    /* Filename from cab is right and the one from msi is wrong */
+    create_cc_test_files();
+    create_database(msifile, cc3_tables, sizeof(cc3_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+    }
+    else
+    {
+        ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAIRE, got %u\n", r);
+        todo_wine ok(!delete_pf("msitest\\augustus", TRUE), "File installed\n");
+        ok(!delete_pf("msitest\\caesar", TRUE), "File installed\n");
+        todo_wine ok(!delete_pf("msitest\\maximus", TRUE), "File installed\n");
+        todo_wine ok(!delete_pf("msitest", FALSE), "Directory created\n");
+    }
+
+    delete_cab_files();
+    DeleteFile(msifile);
+
+    /* Filename from msi is right and the one from cab is wrong */
+    create_cc_test_files();
+    ok(MoveFile("test2.cab", "test2_.cab"), "Cannot rename test3.cab to test3_.cab");
+    create_database(msifile, cc3_tables, sizeof(cc3_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+    }
+    else
+    {
+        todo_wine ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+        ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
+        todo_wine ok(delete_pf("msitest\\caesar", TRUE), "File not installed\n");
+        ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
+        ok(delete_pf("msitest", FALSE), "Directory not created\n");
+    }
+
     delete_cab_files();
     DeleteFile(msifile);
 }
