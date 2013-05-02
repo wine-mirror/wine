@@ -1352,6 +1352,35 @@ static void _test_anchor_put_href(unsigned line, IUnknown *unk, const char *exhr
     _test_disp_value(line, unk, exhref);
 }
 
+#define test_anchor_rel(a,h) _test_anchor_rel(__LINE__,a,h)
+static void _test_anchor_rel(unsigned line, IUnknown *unk, const char *exrel)
+{
+    IHTMLAnchorElement *anchor = _get_anchor_iface(line, unk);
+    BSTR str;
+    HRESULT hres;
+
+    hres = IHTMLAnchorElement_get_rel(anchor, &str);
+    ok_(__FILE__,line)(hres == S_OK, "get_rel failed: %08x\n", hres);
+    if(exrel)
+        ok_(__FILE__,line)(!strcmp_wa(str, exrel), "rel = %s, expected %s\n", wine_dbgstr_w(str), exrel);
+    else
+        ok_(__FILE__,line)(!str, "rel = %s, expected NULL\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+}
+
+#define test_anchor_put_rel(a,h) _test_anchor_put_rel(__LINE__,a,h)
+static void _test_anchor_put_rel(unsigned line, IUnknown *unk, const char *exrel)
+{
+    IHTMLAnchorElement *anchor = _get_anchor_iface(line, unk);
+    BSTR str;
+    HRESULT hres;
+
+    str = a2bstr(exrel);
+    hres = IHTMLAnchorElement_put_rel(anchor, str);
+    ok_(__FILE__,line)(hres == S_OK, "get_rel failed: %08x\n", hres);
+    SysFreeString(str);
+}
+
 #define test_anchor_get_target(a,h) _test_anchor_get_target(__LINE__,a,h)
 static void _test_anchor_get_target(unsigned line, IUnknown *unk, const char *target)
 {
@@ -6255,6 +6284,10 @@ static void test_elems(IHTMLDocument2 *doc)
 
         /* target */
         test_anchor_get_target((IUnknown*)elem, NULL);
+
+        test_anchor_rel((IUnknown*)elem, NULL);
+        test_anchor_put_rel((IUnknown*)elem, "Next");
+        test_anchor_rel((IUnknown*)elem, "Next");
 
         /* Change the target */
         test_anchor_put_target((IUnknown*)elem, "wine");
