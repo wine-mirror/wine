@@ -1372,6 +1372,9 @@ INT CDECL macdrv_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState
 
     if (is_menu)
     {
+        if (keyAction == kUCKeyActionUp)
+            goto done;
+
         options = kUCKeyTranslateNoDeadKeysMask;
         deadKeyState = 0;
     }
@@ -1390,7 +1393,12 @@ INT CDECL macdrv_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState
         goto done;
     }
     if (!is_menu)
+    {
         thread_data->dead_key_state = deadKeyState;
+
+        if (keyAction == kUCKeyActionUp)
+            goto done;
+    }
 
     if (len == 0 && deadKeyState)
     {
