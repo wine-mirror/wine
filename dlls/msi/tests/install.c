@@ -3110,7 +3110,7 @@ static void test_continuouscabs(void)
 
     /* Filename from msi is right and the one from cab is wrong */
     create_cc_test_files();
-    ok(MoveFile("test2.cab", "test2_.cab"), "Cannot rename test3.cab to test3_.cab");
+    ok(MoveFile("test2.cab", "test2_.cab"), "Cannot rename test2.cab to test2_.cab\n");
     create_database(msifile, cc3_tables, sizeof(cc3_tables) / sizeof(msi_table));
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
