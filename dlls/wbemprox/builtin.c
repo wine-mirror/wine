@@ -123,6 +123,8 @@ static const WCHAR prop_driveW[] =
     {'D','r','i','v','e',0};
 static const WCHAR prop_drivetypeW[] =
     {'D','r','i','v','e','T','y','p','e',0};
+static const WCHAR prop_familyW[] =
+    {'F','a','m','i','l','y',0};
 static const WCHAR prop_filesystemW[] =
     {'F','i','l','e','S','y','s','t','e','m',0};
 static const WCHAR prop_flavorW[] =
@@ -334,6 +336,7 @@ static const struct column col_processor[] =
 {
     { prop_cpustatusW,            CIM_UINT16 },
     { prop_deviceidW,             CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
+    { prop_familyW,               CIM_UINT16, VT_I4 },
     { prop_manufacturerW,         CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_maxclockspeedW,        CIM_UINT32, VT_I4 },
     { prop_nameW,                 CIM_STRING|COL_FLAG_DYNAMIC },
@@ -563,6 +566,7 @@ struct record_processor
 {
     UINT16       cpu_status;
     const WCHAR *device_id;
+    UINT16       family;
     const WCHAR *manufacturer;
     UINT32       maxclockspeed;
     const WCHAR *name;
@@ -1143,6 +1147,7 @@ static void fill_processor( struct table *table )
         rec->cpu_status             = 1; /* CPU Enabled */
         sprintfW( device_id, fmtW, i );
         rec->device_id              = heap_strdupW( device_id );
+        rec->family                 = 2; /* Unknown */
         rec->manufacturer           = heap_strdupW( manufacturer );
         rec->maxclockspeed          = maxclockspeed;
         rec->name                   = heap_strdupW( name );
