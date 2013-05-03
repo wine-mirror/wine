@@ -1399,28 +1399,15 @@ dnl **** Check for libgphoto2 ****
 if test "x$with_gphoto" != "xno"
 then
     ac_save_CPPFLAGS="$CPPFLAGS"
-    AC_CHECK_PROG(gphoto2_devel,gphoto2-config,gphoto2-config,no)
-    AC_CHECK_PROG(gphoto2port_devel,gphoto2-port-config,gphoto2-port-config,no)
-    if test "$gphoto2_devel" != "no" -a "$gphoto2port_devel" != "no"
-    then
-        ac_gphoto2_incl="`$gphoto2_devel --cflags` `$gphoto2port_devel --cflags`"
-        ac_gphoto2_libs=""
-        for i in `$gphoto2_devel --libs` `$gphoto2port_devel --libs`
-        do
-            case "$i" in
-            -L/usr/lib|-L/usr/lib64) ;;
-            -L*|-l*) ac_gphoto2_libs="$ac_gphoto2_libs $i";;
-            esac
-        done
-        CPPFLAGS="$CPPFLAGS $ac_gphoto2_incl"
-    fi
-    ac_gphoto2_libs=${ac_gphoto2_libs:-"-lgphoto2"}
+    WINE_PACKAGE_FLAGS(GPHOTO2,[libgphoto2],[-lgphoto2],
+                       [(gphoto2-config --cflags || gphoto2-port-config --cflags)],
+                       [(gphoto2-config --libs || gphoto2-port-config --libs)])
     AC_CHECK_HEADER(gphoto2-camera.h,
                     [AC_CHECK_LIB(gphoto2,gp_camera_new,
-                                  [AC_DEFINE(HAVE_GPHOTO2, 1, [Define if we have libgphoto2 development environment])
-                                   AC_SUBST(GPHOTO2LIBS,"$ac_gphoto2_libs")
-                                   AC_SUBST(GPHOTO2INCL,"$ac_gphoto2_incl")],,
-                                  [$ac_gphoto2_libs])])
+                                  [AC_DEFINE(HAVE_GPHOTO2, 1, [Define if we have libgphoto2 development environment])],
+                                  [GPHOTO2_LIBS=""; GPHOTO2_CFLAGS=""],
+                                  [$GPHOTO2_LIBS])],
+                    [GPHOTO2_LIBS=""; GPHOTO2_CFLAGS=""])
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 WINE_NOTICE_WITH(gphoto,[test "$ac_cv_lib_gphoto2_gp_camera_new" != "yes"],

@@ -1,7 +1,7 @@
 MODULE    = gphoto2.ds
 IMPORTS   = comctl32 user32 gdi32 advapi32
-EXTRALIBS = @GPHOTO2LIBS@
-EXTRAINCL = @GPHOTO2INCL@
+EXTRALIBS = @GPHOTO2_LIBS@
+EXTRAINCL = @GPHOTO2_CFLAGS@
 
 C_SRCS = \
 	capability.c \
