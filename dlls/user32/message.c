@@ -56,8 +56,6 @@ WINE_DECLARE_DEBUG_CHANNEL(key);
 
 #define MAX_PACK_COUNT 4
 
-#define SYS_TIMER_RATE  55   /* min. timer rate in ms (actually 54.925)*/
-
 /* the various structures that can be sent in messages, in platform-independent layout */
 struct packed_CREATESTRUCTW
 {
@@ -4385,12 +4383,16 @@ UINT_PTR WINAPI SetTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIMERPROC proc )
 
     if (proc) winproc = WINPROC_AllocProc( (WNDPROC)proc, FALSE );
 
+    /* MSDN states that the minimum timeout should be USER_TIMER_MINIMUM (10.0 ms), but testing
+     * indicates that the true minimum is closer to 15.6 ms. */
+    timeout = min( max( 15, timeout ), USER_TIMER_MAXIMUM );
+
     SERVER_START_REQ( set_win_timer )
     {
         req->win    = wine_server_user_handle( hwnd );
         req->msg    = WM_TIMER;
         req->id     = id;
-        req->rate   = max( timeout, SYS_TIMER_RATE );
+        req->rate   = timeout;
         req->lparam = (ULONG_PTR)winproc;
         if (!wine_server_call_err( req ))
         {
@@ -4416,12 +4418,16 @@ UINT_PTR WINAPI SetSystemTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIMERPROC 
 
     if (proc) winproc = WINPROC_AllocProc( (WNDPROC)proc, FALSE );
 
+    /* MSDN states that the minimum timeout should be USER_TIMER_MINIMUM (10.0 ms), but testing
+     * indicates that the true minimum is closer to 15.6 ms. */
+    timeout = min( max( 15, timeout ), USER_TIMER_MAXIMUM );
+
     SERVER_START_REQ( set_win_timer )
     {
         req->win    = wine_server_user_handle( hwnd );
         req->msg    = WM_SYSTIMER;
         req->id     = id;
-        req->rate   = max( timeout, SYS_TIMER_RATE );
+        req->rate   = timeout;
         req->lparam = (ULONG_PTR)winproc;
         if (!wine_server_call_err( req ))
         {

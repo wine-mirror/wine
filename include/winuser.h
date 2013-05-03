@@ -2521,6 +2521,10 @@ typedef struct tagMINIMIZEDMETRICS {
 #define PM_QS_PAINT       (QS_PAINT << 16)
 #define PM_QS_SENDMESSAGE (QS_SENDMESSAGE << 16)
 
+/* SetTimer() limits */
+#define USER_TIMER_MINIMUM 0x0000000A
+#define USER_TIMER_MAXIMUM 0x7FFFFFFF
+
 /* AnimateWindow() flags */
 #define AW_SLIDE        0x00040000
 #define AW_ACTIVATE     0x00020000

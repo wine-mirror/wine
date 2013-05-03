@@ -1722,6 +1722,8 @@ static BOOL (WINAPI *pUnhookWinEvent)(HWINEVENTHOOK);
 static BOOL (WINAPI *pGetMonitorInfoA)(HMONITOR,LPMONITORINFO);
 static HMONITOR (WINAPI *pMonitorFromPoint)(POINT,DWORD);
 static BOOL (WINAPI *pUpdateLayeredWindow)(HWND,HDC,POINT*,SIZE*,HDC,POINT*,COLORREF,BLENDFUNCTION*,DWORD);
+static UINT_PTR (WINAPI *pSetSystemTimer)(HWND, UINT_PTR, UINT, TIMERPROC);
+static UINT_PTR (WINAPI *pKillSystemTimer)(HWND, UINT_PTR);
 /* kernel32 functions */
 static BOOL (WINAPI *pGetCPInfoExA)(UINT, DWORD, LPCPINFOEXA);
 
@@ -1746,6 +1748,8 @@ static void init_procs(void)
     GET_PROC(user32, GetMonitorInfoA)
     GET_PROC(user32, MonitorFromPoint)
     GET_PROC(user32, UpdateLayeredWindow)
+    GET_PROC(user32, SetSystemTimer)
+    GET_PROC(user32, KillSystemTimer)
 
     GET_PROC(kernel32, GetCPInfoExA)
 
@@ -8156,7 +8160,15 @@ static VOID CALLBACK tfunc(HWND hwnd, UINT uMsg, UINT_PTR id, DWORD dwTime)
 {
 }
 
-#define TIMER_ID  0x19
+#define TIMER_ID               0x19
+#define TIMER_COUNT_EXPECTED   64
+#define TIMER_COUNT_TOLERANCE  9
+
+static int count = 0;
+static void CALLBACK callback_count(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
+{
+    count++;
+}
 
 static DWORD WINAPI timer_thread_proc(LPVOID x)
 {
@@ -8176,7 +8188,9 @@ static DWORD WINAPI timer_thread_proc(LPVOID x)
 static void test_timers(void)
 {
     struct timer_info info;
+    DWORD start;
     DWORD id;
+    MSG msg;
 
     info.hWnd = CreateWindow ("TestWindowClass", NULL,
        WS_OVERLAPPEDWINDOW ,
@@ -8198,23 +8212,53 @@ static void test_timers(void)
 
     ok( KillTimer(info.hWnd, TIMER_ID), "KillTimer failed\n");
 
-    ok(DestroyWindow(info.hWnd), "failed to destroy window\n");
-}
+    /* Check the minimum allowed timeout for a timer.  MSDN indicates that it should be 10.0 ms,
+     * but testing indicates that the minimum timeout is actually about 15.6 ms.  Since there is
+     * some measurement error between test runs we're allowing for ±8 counts (~2 ms).
+     */
+    count = 0;
+    id = SetTimer(info.hWnd, TIMER_ID, 0, callback_count);
+    ok(id != 0, "did not get id from SetTimer.\n");
+    ok(id==TIMER_ID, "SetTimer timer ID different\n");
+    start = GetTickCount();
+    while (GetTickCount()-start < 1001 && GetMessage(&msg, info.hWnd, 0, 0))
+        DispatchMessage(&msg);
+    ok(abs(count-TIMER_COUNT_EXPECTED) < TIMER_COUNT_TOLERANCE
+       || broken(abs(count-43) < TIMER_COUNT_TOLERANCE) /* w2k3 */,
+       "did not get expected count for minimum timeout (%d != ~%d).\n",
+       count, TIMER_COUNT_EXPECTED);
+    ok(KillTimer(info.hWnd, id), "KillTimer failed\n");
+    /* Perform the same check on SetSystemTimer (only available on w2k3 and older) */
+    if (pSetSystemTimer)
+    {
+        int syscount = 0;
 
-static int count = 0;
-static VOID CALLBACK callback_count(
-    HWND hwnd,
-    UINT uMsg,
-    UINT_PTR idEvent,
-    DWORD dwTime
-)
-{
-    count++;
+        count = 0;
+        id = pSetSystemTimer(info.hWnd, TIMER_ID, 0, callback_count);
+        ok(id != 0, "did not get id from SetSystemTimer.\n");
+        ok(id==TIMER_ID, "SetTimer timer ID different\n");
+        start = GetTickCount();
+        while (GetTickCount()-start < 1001 && GetMessage(&msg, info.hWnd, 0, 0))
+        {
+            if (msg.message == WM_SYSTIMER)
+                syscount++;
+            DispatchMessage(&msg);
+        }
+        ok(abs(syscount-TIMER_COUNT_EXPECTED) < TIMER_COUNT_TOLERANCE,
+           "did not get expected count for minimum timeout (%d != ~%d).\n",
+           syscount, TIMER_COUNT_EXPECTED);
+        todo_wine ok(count == 0, "did not get expected count for callback timeout (%d != 0).\n",
+                                 count);
+        ok(pKillSystemTimer(info.hWnd, id), "KillSystemTimer failed\n");
+    }
+
+    ok(DestroyWindow(info.hWnd), "failed to destroy window\n");
 }
 
 static void test_timers_no_wnd(void)
 {
     UINT_PTR id, id2;
+    DWORD start;
     MSG msg;
 
     count = 0;
@@ -8232,6 +8276,22 @@ static void test_timers_no_wnd(void)
     Sleep(250);
     while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
     ok(count == 1, "killing replaced timer did not work (%i).\n", count);
+
+    /* Check the minimum allowed timeout for a timer.  MSDN indicates that it should be 10.0 ms,
+     * but testing indicates that the minimum timeout is actually about 15.6 ms.  Since there is
+     * some measurement error between test runs we're allowing for ±8 counts (~2 ms).
+     */
+    count = 0;
+    id = SetTimer(NULL, 0, 0, callback_count);
+    ok(id != 0, "did not get id from SetTimer.\n");
+    start = GetTickCount();
+    while (GetTickCount()-start < 1001 && GetMessage(&msg, NULL, 0, 0))
+        DispatchMessage(&msg);
+    ok(abs(count-TIMER_COUNT_EXPECTED) < TIMER_COUNT_TOLERANCE,
+       "did not get expected count for minimum timeout (%d != ~%d).\n",
+       count, TIMER_COUNT_EXPECTED);
+    KillTimer(NULL, id);
+    /* Note: SetSystemTimer doesn't support a NULL window, see test_timers */
 }
 
 /* Various win events with arbitrary parameters */
