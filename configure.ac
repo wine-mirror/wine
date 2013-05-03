@@ -1320,15 +1320,10 @@ dnl **** Check for libdbus ****
 if test "x$with_dbus" != "xno"
 then
     ac_save_CPPFLAGS="$CPPFLAGS"
-    if test "$PKG_CONFIG" != "false"
-    then
-        ac_dbus_libs="`$PKG_CONFIG --libs dbus-1 2>/dev/null`"
-        ac_dbus_cflags="`$PKG_CONFIG --cflags dbus-1 2>/dev/null`"
-        CPPFLAGS="$CPPFLAGS $ac_dbus_cflags"
-    fi
+    WINE_PACKAGE_FLAGS(DBUS,[dbus-1])
     AC_CHECK_HEADER([dbus/dbus.h],
-        [WINE_CHECK_SONAME(dbus-1, dbus_connection_close,
-            [AC_SUBST(DBUSINCL,"$ac_dbus_cflags")],,[$ac_dbus_libs])])
+        [WINE_CHECK_SONAME(dbus-1, dbus_connection_close,,[DBUS_CFLAGS=""],[$DBUS_LIBS])],
+        [DBUS_CFLAGS=""])
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 WINE_NOTICE_WITH(dbus,[test "x$ac_cv_lib_soname_dbus_1" = "x" -a \
@@ -1339,15 +1334,10 @@ dnl **** Check for libhal ****
 if test "x$with_hal" != "xno" -a "x$ac_cv_lib_soname_dbus_1" != x
 then
     ac_save_CPPFLAGS="$CPPFLAGS"
-    if test "$PKG_CONFIG" != "false"
-    then
-        ac_hal_libs="`$PKG_CONFIG --libs hal 2>/dev/null`"
-        ac_hal_cflags="`$PKG_CONFIG --cflags hal 2>/dev/null`"
-        CPPFLAGS="$CPPFLAGS $ac_hal_cflags"
-    fi
+    WINE_PACKAGE_FLAGS(HAL,[hal],[-ldbus-1])
     AC_CHECK_HEADER([hal/libhal.h],
-        [WINE_CHECK_SONAME(hal, libhal_ctx_new,
-            [AC_SUBST(HALINCL,"$ac_hal_cflags")],,[$ac_hal_libs])])
+        [WINE_CHECK_SONAME(hal, libhal_ctx_new,,[HAL_CFLAGS=""],[$HAL_LIBS])],
+        [HAL_CFLAGS=""])
     CPPFLAGS="$ac_save_CPPFLAGS"
     WINE_NOTICE_WITH(hal,[test "x$ac_cv_lib_soname_hal" = "x" -a \
                                "x$ac_cv_header_DiskArbitration_DiskArbitration_h" != "xyes"],

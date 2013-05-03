@@ -662,8 +662,10 @@ gphoto2_devel
 SANEINCL
 sane_devel
 GNUTLSINCL
-HALINCL
-DBUSINCL
+HAL_LIBS
+HAL_CFLAGS
+DBUS_LIBS
+DBUS_CFLAGS
 XSLT_LIBS
 XSLT_CFLAGS
 XML2_LIBS
@@ -863,7 +865,11 @@ XMKMF
 XML2_CFLAGS
 XML2_LIBS
 XSLT_CFLAGS
-XSLT_LIBS'
+XSLT_LIBS
+DBUS_CFLAGS
+DBUS_LIBS
+HAL_CFLAGS
+HAL_LIBS'
 
 
 # Initialize some variables set by options.
@@ -1555,6 +1561,10 @@ Some influential environment variables:
   XML2_LIBS   Linker flags for libxml-2.0, overriding pkg-config
   XSLT_CFLAGS C compiler flags for libxslt, overriding pkg-config
   XSLT_LIBS   Linker flags for libxslt, overriding pkg-config
+  DBUS_CFLAGS C compiler flags for dbus-1, overriding pkg-config
+  DBUS_LIBS   Linker flags for dbus-1, overriding pkg-config
+  HAL_CFLAGS  C compiler flags for hal, overriding pkg-config
+  HAL_LIBS    Linker flags for hal, overriding pkg-config
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -10046,12 +10056,20 @@ fi
 if test "x$with_dbus" != "xno"
 then
     ac_save_CPPFLAGS="$CPPFLAGS"
-    if test "$PKG_CONFIG" != "false"
-    then
-        ac_dbus_libs="`$PKG_CONFIG --libs dbus-1 2>/dev/null`"
-        ac_dbus_cflags="`$PKG_CONFIG --cflags dbus-1 2>/dev/null`"
-        CPPFLAGS="$CPPFLAGS $ac_dbus_cflags"
-    fi
+    if test -n "$DBUS_CFLAGS"; then :
+
+elif test -n "$PKG_CONFIG"; then :
+  DBUS_CFLAGS=`$PKG_CONFIG --cflags dbus-1 2>/dev/null`
+fi
+
+CPPFLAGS="$CPPFLAGS $DBUS_CFLAGS"
+if test -n "$DBUS_LIBS"; then :
+
+elif test -n "$PKG_CONFIG"; then :
+  DBUS_LIBS=`$PKG_CONFIG --libs dbus-1 2>/dev/null`
+fi
+
+
     ac_fn_c_check_header_mongrel "$LINENO" "dbus/dbus.h" "ac_cv_header_dbus_dbus_h" "$ac_includes_default"
 if test "x$ac_cv_header_dbus_dbus_h" = xyes; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -ldbus-1" >&5
@@ -10060,7 +10078,7 @@ if ${ac_cv_lib_soname_dbus_1+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_soname_save_LIBS=$LIBS
-LIBS="-ldbus-1 $ac_dbus_libs $LIBS"
+LIBS="-ldbus-1 $DBUS_LIBS $LIBS"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -10096,7 +10114,7 @@ fi
 if test "x$ac_cv_lib_soname_dbus_1" = "x"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
 $as_echo "not found" >&6; }
-
+       DBUS_CFLAGS=""
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_dbus_1" >&5
 $as_echo "$ac_cv_lib_soname_dbus_1" >&6; }
@@ -10105,9 +10123,10 @@ cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBDBUS_1 "$ac_cv_lib_soname_dbus_1"
 _ACEOF
 
-       DBUSINCL="$ac_dbus_cflags"
 
 fi
+else
+  DBUS_CFLAGS=""
 fi
 
 
@@ -10126,12 +10145,20 @@ fi
 if test "x$with_hal" != "xno" -a "x$ac_cv_lib_soname_dbus_1" != x
 then
     ac_save_CPPFLAGS="$CPPFLAGS"
-    if test "$PKG_CONFIG" != "false"
-    then
-        ac_hal_libs="`$PKG_CONFIG --libs hal 2>/dev/null`"
-        ac_hal_cflags="`$PKG_CONFIG --cflags hal 2>/dev/null`"
-        CPPFLAGS="$CPPFLAGS $ac_hal_cflags"
-    fi
+    if test -n "$HAL_CFLAGS"; then :
+
+elif test -n "$PKG_CONFIG"; then :
+  HAL_CFLAGS=`$PKG_CONFIG --cflags hal 2>/dev/null`
+fi
+
+CPPFLAGS="$CPPFLAGS $HAL_CFLAGS"
+if test -n "$HAL_LIBS"; then :
+
+elif test -n "$PKG_CONFIG"; then :
+  HAL_LIBS=`$PKG_CONFIG --libs hal 2>/dev/null`
+fi
+
+HAL_LIBS=${HAL_LIBS:-"-ldbus-1"}
     ac_fn_c_check_header_mongrel "$LINENO" "hal/libhal.h" "ac_cv_header_hal_libhal_h" "$ac_includes_default"
 if test "x$ac_cv_header_hal_libhal_h" = xyes; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lhal" >&5
@@ -10140,7 +10167,7 @@ if ${ac_cv_lib_soname_hal+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_soname_save_LIBS=$LIBS
-LIBS="-lhal $ac_hal_libs $LIBS"
+LIBS="-lhal $HAL_LIBS $LIBS"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -10176,7 +10203,7 @@ fi
 if test "x$ac_cv_lib_soname_hal" = "x"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
 $as_echo "not found" >&6; }
-
+       HAL_CFLAGS=""
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_hal" >&5
 $as_echo "$ac_cv_lib_soname_hal" >&6; }
@@ -10185,9 +10212,10 @@ cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBHAL "$ac_cv_lib_soname_hal"
 _ACEOF
 
-       HALINCL="$ac_hal_cflags"
 
 fi
+else
+  HAL_CFLAGS=""
 fi
 
 
