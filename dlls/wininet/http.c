@@ -2125,6 +2125,9 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
     case INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT: {
         PCCERT_CONTEXT context;
 
+        if(!req->netconn)
+            return ERROR_INTERNET_INVALID_OPERATION;
+
         if(*size < sizeof(INTERNET_CERTIFICATE_INFOA)) {
             *size = sizeof(INTERNET_CERTIFICATE_INFOA);
             return ERROR_INSUFFICIENT_BUFFER;

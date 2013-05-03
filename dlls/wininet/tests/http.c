@@ -3354,6 +3354,13 @@ static void test_options(int port)
     ret = InternetQueryOption(req, INTERNET_OPTION_DIAGNOSTIC_SOCKET_INFO, &idsi, &size);
     ok(ret, "InternetQueryOption failed %u\n", GetLastError());
 
+    size = 0;
+    SetLastError(0xdeadbeef);
+    ret = InternetQueryOption(req, INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT, NULL, &size);
+    error = GetLastError();
+    ok(!ret, "InternetQueryOption succeeded\n");
+    ok(error == ERROR_INTERNET_INVALID_OPERATION, "expected ERROR_INTERNET_INVALID_OPERATION, got %u\n", error);
+
     /* INTERNET_OPTION_PROXY */
     SetLastError(0xdeadbeef);
     ret = InternetQueryOptionA(ses, INTERNET_OPTION_PROXY, NULL, NULL);
