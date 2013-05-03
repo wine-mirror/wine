@@ -1,8 +1,8 @@
 EXTRADEFS = -DCOM_NO_WINDOWS_H
 MODULE    = msxml3.dll
 IMPORTS   = uuid urlmon shlwapi oleaut32 ole32 user32 advapi32
-EXTRALIBS = @XML2LIBS@
-EXTRAINCL = @XML2INCL@ @XSLTINCL@
+EXTRALIBS = @XML2_LIBS@
+EXTRAINCL = @XML2_CFLAGS@ @XSLT_CFLAGS@
 
 C_SRCS = \
 	attribute.c \

@@ -286,7 +286,6 @@ AC_SUBST(LINTFLAGS)
 
 dnl Check for various programs
 AC_CHECK_PROGS(FONTFORGE, fontforge, false)
-AC_CHECK_PROGS(PKG_CONFIG, pkg-config, false)
 AC_CHECK_PROGS(RSVG, rsvg, false)
 AC_CHECK_PROGS(CONVERT, convert, false)
 AC_CHECK_PROGS(ICOTOOL, icotool, false)
@@ -1268,40 +1267,30 @@ test "x$ac_cv_lib_OpenCL_clGetPlatformInfo" != xyes && enable_opencl=${enable_op
 
 dnl **** Check for libxml2 ****
 
-AC_SUBST(XML2LIBS,"")
-AC_SUBST(XML2INCL,"")
-AC_SUBST(XSLTINCL,"")
 if test "x$with_xml" != "xno"
 then
     ac_save_CPPFLAGS="$CPPFLAGS"
-    if test "$PKG_CONFIG" != "false"
-    then
-        ac_xml_libs="`$PKG_CONFIG --libs libxml-2.0 2>/dev/null`"
-        ac_xml_cflags="`$PKG_CONFIG --cflags libxml-2.0 2>/dev/null`"
-    else
-        ac_xml_libs="`xml2-config --libs 2>/dev/null`"
-        ac_xml_cflags="`xml2-config --cflags  2>/dev/null`"
-    fi
-    CPPFLAGS="$CPPFLAGS $ac_xml_cflags"
+    WINE_PACKAGE_FLAGS(XML2,[libxml-2.0],[-lxml2],[xml2-config --cflags],[xml2-config --libs])
     AC_CHECK_HEADERS([libxml/parser.h libxml/xmlsave.h libxml/SAX2.h])
     if test "$ac_cv_header_libxml_parser_h" = "yes" -a "$ac_cv_header_libxml_xmlsave_h" = "yes" -a "$ac_cv_header_libxml_SAX2_h" = "yes"
     then
         AC_CHECK_LIB(xml2, xmlParseMemory,
-            [AC_DEFINE(HAVE_LIBXML2, 1, [Define if you have the libxml2 library])
-             XML2LIBS="$ac_xml_libs"
-             XML2INCL="$ac_xml_cflags"],,$ac_xml_libs)
+            [AC_DEFINE(HAVE_LIBXML2, 1, [Define if you have the libxml2 library])],[XML2_LIBS=""],[$XML2_LIBS])
         AC_CHECK_LIB(xml2, xmlReadMemory,
-            [AC_DEFINE(HAVE_XMLREADMEMORY,1,[Define if libxml2 has the xmlReadMemory function])],,$ac_xml_libs)
+            [AC_DEFINE(HAVE_XMLREADMEMORY,1,[Define if libxml2 has the xmlReadMemory function])],,[$XML2_LIBS])
         AC_CHECK_LIB(xml2, xmlNewDocPI,
-            [AC_DEFINE(HAVE_XMLNEWDOCPI,1,[Define if libxml2 has the xmlNewDocPI function])],,$ac_xml_libs)
+            [AC_DEFINE(HAVE_XMLNEWDOCPI,1,[Define if libxml2 has the xmlNewDocPI function])],,[$XML2_LIBS])
         AC_CHECK_LIB(xml2, xmlSchemaSetParserStructuredErrors,
-            [AC_DEFINE(HAVE_XMLSCHEMASSETPARSERSTRUCTUREDERRORS,1,[Define if libxml2 has the xmlSchemaSetParserStructuredErrors function])],,$ac_xml_libs)
+            [AC_DEFINE(HAVE_XMLSCHEMASSETPARSERSTRUCTUREDERRORS,1,[Define if libxml2 has the xmlSchemaSetParserStructuredErrors function])],,[$XML2_LIBS])
         AC_CHECK_LIB(xml2, xmlSchemaSetValidStructuredErrors,
-            [AC_DEFINE(HAVE_XMLSCHEMASSETVALIDSTRUCTUREDERRORS,1,[Define if libxml2 has the xmlSchemaSetValidStructuredErrors function])],,$ac_xml_libs)
+            [AC_DEFINE(HAVE_XMLSCHEMASSETVALIDSTRUCTUREDERRORS,1,[Define if libxml2 has the xmlSchemaSetValidStructuredErrors function])],,[$XML2_LIBS])
         AC_CHECK_LIB(xml2, xmlFirstElementChild,
-            [AC_DEFINE(HAVE_XMLFIRSTELEMENTCHILD,1,[Define if libxml2 has the xmlFirstElementChild function])],,$ac_xml_libs)
+            [AC_DEFINE(HAVE_XMLFIRSTELEMENTCHILD,1,[Define if libxml2 has the xmlFirstElementChild function])],,[$XML2_LIBS])
         AC_CHECK_TYPE([xmlDocProperties],
             [AC_DEFINE(HAVE_XMLDOC_PROPERTIES,1,[Define if libxml2 has the xmlDocProperties enum])],,[[#include <libxml/tree.h>]])
+    else
+        XML2_CFLAGS=""
+        XML2_LIBS=""
     fi
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
@@ -1310,16 +1299,8 @@ WINE_WARNING_WITH(xml,[test "$ac_cv_lib_xml2_xmlParseMemory" != "yes"],
 
 if test "x$with_xslt" != "xno"
 then
-    if test "$PKG_CONFIG" != "false"
-    then
-        ac_xslt_libs="`$PKG_CONFIG --libs libxslt 2>/dev/null`"
-        ac_xslt_cflags="`$PKG_CONFIG --cflags libxslt 2>/dev/null`"
-    else
-        ac_xslt_libs="`xslt-config --libs 2>/dev/null`"
-        ac_xslt_cflags="`xslt-config --cflags 2>/dev/null`"
-    fi
     ac_save_CPPFLAGS="$CPPFLAGS"
-    CPPFLAGS="$CPPFLAGS $ac_xslt_cflags"
+    WINE_PACKAGE_FLAGS(XSLT,[libxslt],[-lxml2],[xslt-config --cflags],[xslt-config --libs])
     AC_CHECK_HEADERS([libxslt/pattern.h libxslt/transform.h],,,
     [#ifdef HAVE_LIBXSLT_PATTERN_H
 # include <libxslt/pattern.h>
@@ -1327,8 +1308,9 @@ then
     CPPFLAGS="$ac_save_CPPFLAGS"
     if test "$ac_cv_header_libxslt_transform_h" = "yes"
     then
-        WINE_CHECK_SONAME(xslt,xsltCompilePattern,
-                         [XSLTINCL="$ac_xslt_cflags"],,[$ac_xslt_libs])
+        WINE_CHECK_SONAME(xslt,xsltCompilePattern,,,[$XSLT_LIBS])
+    else
+        XSLT_CFLAGS=""
     fi
 fi
 WINE_WARNING_WITH(xslt,[test "x$ac_cv_lib_soname_xslt" = "x"],
