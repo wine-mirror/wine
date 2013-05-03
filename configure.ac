@@ -1378,15 +1378,10 @@ dnl **** Check for SANE ****
 if test "x$with_sane" != "xno"
 then
     ac_save_CPPFLAGS="$CPPFLAGS"
-    AC_CHECK_PROG(sane_devel,sane-config,sane-config,no)
-    if test "$sane_devel" != "no"
-    then
-        ac_sane_incl="`$sane_devel --cflags`"
-        ac_sane_libs="`$sane_devel --ldflags`"
-        CPPFLAGS="$CPPFLAGS $ac_sane_incl"
-    fi
+    WINE_PACKAGE_FLAGS(SANE,[libsane],,[sane-config --cflags],[sane-config --ldflags])
     AC_CHECK_HEADER(sane/sane.h,
-        [WINE_CHECK_SONAME(sane,sane_init,[AC_SUBST(SANEINCL,"$ac_sane_incl")],,[$ac_sane_libs])])
+        [WINE_CHECK_SONAME(sane,sane_init,,[SANE_CFLAGS=""],[$SANE_LIBS])]
+        [SANE_CFLAGS=""])
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 WINE_NOTICE_WITH(sane,[test "x$ac_cv_lib_soname_sane" = "x"],

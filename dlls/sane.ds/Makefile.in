@@ -1,6 +1,6 @@
 MODULE    = sane.ds
 IMPORTS   = comctl32 user32 gdi32
-EXTRAINCL = @SANEINCL@
+EXTRAINCL = @SANE_CFLAGS@
 
 C_SRCS = \
 	capability.c \
