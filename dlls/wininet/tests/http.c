@@ -3249,6 +3249,7 @@ static void test_HttpQueryInfo(int port)
 
 static void test_options(int port)
 {
+    INTERNET_DIAGNOSTIC_SOCKET_INFO idsi;
     HINTERNET ses, con, req;
     DWORD size, error;
     DWORD_PTR ctx;
@@ -3348,6 +3349,10 @@ static void test_options(int port)
     ret = InternetQueryOption(req, INTERNET_OPTION_CONTEXT_VALUE, &ctx, &size);
     ok(ret, "InternetQueryOption failed %u\n", GetLastError());
     ok(ctx == 3, "expected 3 got %lu\n", ctx);
+
+    size = sizeof(idsi);
+    ret = InternetQueryOption(req, INTERNET_OPTION_DIAGNOSTIC_SOCKET_INFO, &idsi, &size);
+    ok(ret, "InternetQueryOption failed %u\n", GetLastError());
 
     /* INTERNET_OPTION_PROXY */
     SetLastError(0xdeadbeef);
