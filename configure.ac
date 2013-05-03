@@ -1448,24 +1448,13 @@ WINE_NOTICE_WITH(cms,[test "$ac_cv_lib_lcms_cmsOpenProfileFromFile" != "yes"],
 dnl **** Check for FreeType 2 ****
 if test "x$with_freetype" != "xno"
 then
-    if test "$PKG_CONFIG" != "false"
-    then
-        ac_freetype_incl="`$PKG_CONFIG --cflags freetype2 2>/dev/null`"
-        ac_freetype_libs="`$PKG_CONFIG --libs freetype2 2>/dev/null`"
-    else
-        AC_CHECK_PROGS(ft_devel,[freetype-config freetype2-config],no)
-        if test "$ft_devel" != "no"
-        then
-            ac_freetype_incl=`$ft_devel --cflags`
-            ac_freetype_libs=`$ft_devel --libs`
-        fi
-    fi
-    ac_freetype_libs=${ac_freetype_libs:-"-lfreetype"}
-    WINE_CHECK_SONAME(freetype,FT_Init_FreeType,[ft_lib=yes],[ft_lib=no],[$ac_freetype_libs])
+    ac_save_CPPFLAGS="$CPPFLAGS"
+    WINE_PACKAGE_FLAGS(FREETYPE,[freetype2],[-lfreetype],
+                       [(freetype-config --cflags || freetype2-config --cflags)],
+                       [(freetype-config --libs || freetype2-config --libs)])
+    WINE_CHECK_SONAME(freetype,FT_Init_FreeType,[ft_lib=yes],[ft_lib=no],[$FREETYPE_LIBS])
     if test "$ft_lib" = "yes"
     then
-	ac_save_CPPFLAGS="$CPPFLAGS"
-	CPPFLAGS="$ac_freetype_incl $CPPFLAGS"
 	AC_CHECK_HEADERS(ft2build.h \
                          freetype/freetype.h \
                          freetype/ftglyph.h \
@@ -1489,13 +1478,17 @@ then
 	if test "$ac_cv_header_freetype_freetype_h" = "yes" -a "$wine_cv_fttrigon" = "yes"
 	then
 	    AC_DEFINE(HAVE_FREETYPE, 1, [Define if FreeType 2 is installed])
-            AC_SUBST(FREETYPELIBS,"$ac_freetype_libs")
-            AC_SUBST(FREETYPEINCL,"$ac_freetype_incl")
+        else
+            FREETYPE_LIBS=""
 	fi
+    else
+        FREETYPE_LIBS=""
     fi
+    CPPFLAGS="$ac_save_CPPFLAGS"
 fi
-WINE_ERROR_WITH(freetype,[test "x$FREETYPELIBS" = "x"],[FreeType ${notice_platform}development files not found. Fonts will not be built.])
-test "x$FREETYPELIBS" = "x" && enable_fonts=${enable_fonts:-no}
+WINE_ERROR_WITH(freetype,[test "x$ac_cv_header_freetype_freetype_h" != xyes -o "x$wine_cv_fttrigon" != xyes],
+                [FreeType ${notice_platform}development files not found. Fonts will not be built.])
+test "x$ac_cv_header_freetype_freetype_h" = xyes -a "x$wine_cv_fttrigon" = xyes || enable_fonts=${enable_fonts:-no}
 
 dnl **** Check for parport (currently Linux only) ****
 AC_CACHE_CHECK([for parport header/ppdev.h], ac_cv_c_ppdev,

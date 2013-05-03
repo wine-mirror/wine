@@ -650,9 +650,8 @@ GSTREAMER_INCL
 GSTREAMER_LIBS
 LIBGETTEXTPO
 ZLIB
-FREETYPEINCL
-FREETYPELIBS
-ft_devel
+FREETYPE_LIBS
+FREETYPE_CFLAGS
 LCMSLIBS
 RESOLVLIBS
 GPHOTO2_LIBS
@@ -874,7 +873,9 @@ GNUTLS_LIBS
 SANE_CFLAGS
 SANE_LIBS
 GPHOTO2_CFLAGS
-GPHOTO2_LIBS'
+GPHOTO2_LIBS
+FREETYPE_CFLAGS
+FREETYPE_LIBS'
 
 
 # Initialize some variables set by options.
@@ -1579,6 +1580,10 @@ Some influential environment variables:
               C compiler flags for libgphoto2, overriding pkg-config
   GPHOTO2_LIBS
               Linker flags for libgphoto2, overriding pkg-config
+  FREETYPE_CFLAGS
+              C compiler flags for freetype2, overriding pkg-config
+  FREETYPE_LIBS
+              Linker flags for freetype2, overriding pkg-config
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -10809,68 +10814,28 @@ fi
 
 if test "x$with_freetype" != "xno"
 then
-    if test "$PKG_CONFIG" != "false"
-    then
-        ac_freetype_incl="`$PKG_CONFIG --cflags freetype2 2>/dev/null`"
-        ac_freetype_libs="`$PKG_CONFIG --libs freetype2 2>/dev/null`"
-    else
-        for ac_prog in freetype-config freetype2-config
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_ft_devel+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$ft_devel"; then
-  ac_cv_prog_ft_devel="$ft_devel" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_ft_devel="$ac_prog"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
+    ac_save_CPPFLAGS="$CPPFLAGS"
+    if test -n "$FREETYPE_CFLAGS"; then :
 
+elif test -n "$PKG_CONFIG"; then :
+  FREETYPE_CFLAGS=`$PKG_CONFIG --cflags freetype2 2>/dev/null`
 fi
+FREETYPE_CFLAGS=${FREETYPE_CFLAGS:-`(freetype-config --cflags || freetype2-config --cflags) 2>/dev/null`}
+CPPFLAGS="$CPPFLAGS $FREETYPE_CFLAGS"
+if test -n "$FREETYPE_LIBS"; then :
+
+elif test -n "$PKG_CONFIG"; then :
+  FREETYPE_LIBS=`$PKG_CONFIG --libs freetype2 2>/dev/null`
 fi
-ft_devel=$ac_cv_prog_ft_devel
-if test -n "$ft_devel"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ft_devel" >&5
-$as_echo "$ft_devel" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-  test -n "$ft_devel" && break
-done
-test -n "$ft_devel" || ft_devel="no"
-
-        if test "$ft_devel" != "no"
-        then
-            ac_freetype_incl=`$ft_devel --cflags`
-            ac_freetype_libs=`$ft_devel --libs`
-        fi
-    fi
-    ac_freetype_libs=${ac_freetype_libs:-"-lfreetype"}
+FREETYPE_LIBS=${FREETYPE_LIBS:-`(freetype-config --libs || freetype2-config --libs) 2>/dev/null`}
+FREETYPE_LIBS=${FREETYPE_LIBS:-"-lfreetype"}
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lfreetype" >&5
 $as_echo_n "checking for -lfreetype... " >&6; }
 if ${ac_cv_lib_soname_freetype+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_soname_save_LIBS=$LIBS
-LIBS="-lfreetype $ac_freetype_libs $LIBS"
+LIBS="-lfreetype $FREETYPE_LIBS $LIBS"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -10919,8 +10884,6 @@ _ACEOF
 fi
     if test "$ft_lib" = "yes"
     then
-	ac_save_CPPFLAGS="$CPPFLAGS"
-	CPPFLAGS="$ac_freetype_incl $CPPFLAGS"
 	for ac_header in ft2build.h \
                          freetype/freetype.h \
                          freetype/ftglyph.h \
@@ -10977,21 +10940,22 @@ fi
 
 $as_echo "#define HAVE_FREETYPE 1" >>confdefs.h
 
-            FREETYPELIBS="$ac_freetype_libs"
-
-            FREETYPEINCL="$ac_freetype_incl"
-
+        else
+            FREETYPE_LIBS=""
 	fi
+    else
+        FREETYPE_LIBS=""
     fi
+    CPPFLAGS="$ac_save_CPPFLAGS"
 fi
-if test "x$FREETYPELIBS" = "x"; then :
+if test "x$ac_cv_header_freetype_freetype_h" != xyes -o "x$wine_cv_fttrigon" != xyes; then :
   case "x$with_freetype" in
   xno) ;;
   *)   as_fn_error $? "FreeType ${notice_platform}development files not found. Fonts will not be built.
 Use the --without-freetype option if you really want this." "$LINENO" 5 ;;
 esac
 fi
-test "x$FREETYPELIBS" = "x" && enable_fonts=${enable_fonts:-no}
+test "x$ac_cv_header_freetype_freetype_h" = xyes -a "x$wine_cv_fttrigon" = xyes || enable_fonts=${enable_fonts:-no}
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for parport header/ppdev.h" >&5
 $as_echo_n "checking for parport header/ppdev.h... " >&6; }
