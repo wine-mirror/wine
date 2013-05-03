@@ -79,9 +79,7 @@ WINE_DECLARE_DEBUG_CHANNEL(relay);
 #define EF_AFTER_WRAP		0x0080	/* the caret is displayed after the last character of a
 					   wrapped line, instead of in front of the next character */
 #define EF_USE_SOFTBRK		0x0100	/* Enable soft breaks in text. */
-#define EF_APP_HAS_HANDLE       0x0200  /* Set when an app sends EM_[G|S]ETHANDLE.  We are in sole control of
-                                           the text buffer if this is clear. */
-#define EF_DIALOGMODE           0x0400  /* Indicates that we are inside a dialog window */
+#define EF_DIALOGMODE           0x0200  /* Indicates that we are inside a dialog window */
 
 typedef enum
 {
@@ -1296,7 +1294,6 @@ static void EDIT_LockBuffer(EDITSTATE *es)
 	    }
 	    else es->text = LocalLock(es->hloc32W);
 	}
-        if(es->flags & EF_APP_HAS_HANDLE) text_buffer_changed(es);
 	es->lock_count++;
 }
 
@@ -2493,8 +2490,7 @@ static HLOCAL EDIT_EM_GetHandle(EDITSTATE *es)
 
         /* The text buffer handle belongs to the app */
         es->hlocapp = hLocal;
-        /* The app has knowledge of the text buffer handle */
-        es->flags |= EF_APP_HAS_HANDLE;
+
 	TRACE("Returning %p, LocalSize() = %ld\n", hLocal, LocalSize(hLocal));
 	return hLocal;
 }
@@ -2837,9 +2833,9 @@ static void EDIT_EM_SetHandle(EDITSTATE *es, HLOCAL hloc)
 
         /* The text buffer handle belongs to the control */
         es->hlocapp = NULL;
-        /* The app has knowledge of the text buffer handle */
-        es->flags |= EF_APP_HAS_HANDLE;
+
 	EDIT_LockBuffer(es);
+        text_buffer_changed(es);
 
 	es->x_offset = es->y_offset = 0;
 	es->selection_start = es->selection_end = 0;
