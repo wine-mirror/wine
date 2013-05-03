@@ -1020,7 +1020,7 @@ static VOID set_installer_properties(MSIPACKAGE *package)
         if ((computername = msi_alloc( len * sizeof(WCHAR) )))
         {
             if (GetComputerNameW( computername, &len ))
-                msi_set_property( package->db, szComputerName, computername, len - 1 );
+                msi_set_property( package->db, szComputerName, computername, len );
             msi_free( computername );
         }
     }
