@@ -151,6 +151,7 @@ typedef struct
 	HLOCAL hloc32W;			/* our unicode local memory block */
 	HLOCAL hloc32A;			/* alias for ANSI control receiving EM_GETHANDLE
 				   	   or EM_SETHANDLE */
+        HLOCAL hlocapp;                 /* The text buffer handle belongs to the app */
 	/*
 	 * IME Data
 	 */
@@ -1264,6 +1265,8 @@ static inline void text_buffer_changed(EDITSTATE *es)
  */
 static void EDIT_LockBuffer(EDITSTATE *es)
 {
+        if (es->hlocapp) return;
+
 	if (!es->text) {
 
 	    if(!es->hloc32W) return;
@@ -1305,6 +1308,7 @@ static void EDIT_LockBuffer(EDITSTATE *es)
  */
 static void EDIT_UnlockBuffer(EDITSTATE *es, BOOL force)
 {
+        if (es->hlocapp) return;
 
 	/* Edit window might be already destroyed */
 	if(!IsWindow(es->hwndSelf))
@@ -2485,6 +2489,11 @@ static HLOCAL EDIT_EM_GetHandle(EDITSTATE *es)
 	    hLocal = es->hloc32A;
 	}
 
+        EDIT_UnlockBuffer(es, TRUE);
+
+        /* The text buffer handle belongs to the app */
+        es->hlocapp = hLocal;
+        /* The app has knowledge of the text buffer handle */
         es->flags |= EF_APP_HAS_HANDLE;
 	TRACE("Returning %p, LocalSize() = %ld\n", hLocal, LocalSize(hLocal));
 	return hLocal;
@@ -2826,6 +2835,9 @@ static void EDIT_EM_SetHandle(EDITSTATE *es, HLOCAL hloc)
 
 	es->buffer_size = LocalSize(es->hloc32W)/sizeof(WCHAR) - 1;
 
+        /* The text buffer handle belongs to the control */
+        es->hlocapp = NULL;
+        /* The app has knowledge of the text buffer handle */
         es->flags |= EF_APP_HAS_HANDLE;
 	EDIT_LockBuffer(es);
 
@@ -4597,10 +4609,11 @@ static LRESULT EDIT_WM_NCDestroy(EDITSTATE *es)
 {
 	LINEDEF *pc, *pp;
 
-	if (es->hloc32W) {
+        /* The app can own the text buffer handle */
+        if (es->hloc32W && (es->hloc32W != es->hlocapp)) {
 		LocalFree(es->hloc32W);
 	}
-	if (es->hloc32A) {
+        if (es->hloc32A && (es->hloc32A != es->hlocapp)) {
 		LocalFree(es->hloc32A);
 	}
 	EDIT_InvalidateUniscribeData(es);
