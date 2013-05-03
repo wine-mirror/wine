@@ -580,7 +580,7 @@ SAFEARRAY *to_safearray( const struct array *array, CIMTYPE type )
     VARTYPE vartype = to_vartype( type );
     LONG i;
 
-    if (!(ret = SafeArrayCreateVector( vartype, 0, array->count ))) return NULL;
+    if (!array || !(ret = SafeArrayCreateVector( vartype, 0, array->count ))) return NULL;
 
     for (i = 0; i < array->count; i++)
     {
