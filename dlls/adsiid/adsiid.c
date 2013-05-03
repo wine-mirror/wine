@@ -25,3 +25,4 @@
 #include "initguid.h"
 
 #include "iads.h"
+#include "transact.h"
