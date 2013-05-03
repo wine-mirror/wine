@@ -1348,16 +1348,11 @@ dnl **** Check for libgnutls ****
 if test "x$with_gnutls" != "xno"
 then
     ac_save_CPPFLAGS="$CPPFLAGS"
-    if test "$PKG_CONFIG" != "false"
-    then
-        ac_gnutls_libs="`$PKG_CONFIG --libs gnutls 2>/dev/null`"
-        ac_gnutls_cflags="`$PKG_CONFIG --cflags gnutls 2>/dev/null`"
-        CPPFLAGS="$CPPFLAGS $ac_gnutls_cflags"
-    fi
+    WINE_PACKAGE_FLAGS(GNUTLS,[gnutls])
     AC_CHECK_HEADER(gnutls/gnutls.h,
         [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <gnutls/gnutls.h>]], [[static typeof(gnutls_mac_get_key_size) *func; if (func) return 0;]])],
-            [WINE_CHECK_SONAME(gnutls,gnutls_global_init,
-                [AC_SUBST(GNUTLSINCL,"$ac_gnutls_cflags")],,[$ac_gnutls_libs])])])
+            [WINE_CHECK_SONAME(gnutls,gnutls_global_init,,[GNUTLS_CFLAGS=""],[$GNUTLS_LIBS])])],
+        [GNUTLS_CFLAGS=""])
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 WINE_NOTICE_WITH(gnutls,[test "x$ac_cv_lib_soname_gnutls" = "x"],

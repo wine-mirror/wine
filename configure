@@ -661,7 +661,8 @@ gphoto2port_devel
 gphoto2_devel
 SANEINCL
 sane_devel
-GNUTLSINCL
+GNUTLS_LIBS
+GNUTLS_CFLAGS
 HAL_LIBS
 HAL_CFLAGS
 DBUS_LIBS
@@ -869,7 +870,9 @@ XSLT_LIBS
 DBUS_CFLAGS
 DBUS_LIBS
 HAL_CFLAGS
-HAL_LIBS'
+HAL_LIBS
+GNUTLS_CFLAGS
+GNUTLS_LIBS'
 
 
 # Initialize some variables set by options.
@@ -1565,6 +1568,9 @@ Some influential environment variables:
   DBUS_LIBS   Linker flags for dbus-1, overriding pkg-config
   HAL_CFLAGS  C compiler flags for hal, overriding pkg-config
   HAL_LIBS    Linker flags for hal, overriding pkg-config
+  GNUTLS_CFLAGS
+              C compiler flags for gnutls, overriding pkg-config
+  GNUTLS_LIBS Linker flags for gnutls, overriding pkg-config
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -10234,12 +10240,20 @@ fi
 if test "x$with_gnutls" != "xno"
 then
     ac_save_CPPFLAGS="$CPPFLAGS"
-    if test "$PKG_CONFIG" != "false"
-    then
-        ac_gnutls_libs="`$PKG_CONFIG --libs gnutls 2>/dev/null`"
-        ac_gnutls_cflags="`$PKG_CONFIG --cflags gnutls 2>/dev/null`"
-        CPPFLAGS="$CPPFLAGS $ac_gnutls_cflags"
-    fi
+    if test -n "$GNUTLS_CFLAGS"; then :
+
+elif test -n "$PKG_CONFIG"; then :
+  GNUTLS_CFLAGS=`$PKG_CONFIG --cflags gnutls 2>/dev/null`
+fi
+
+CPPFLAGS="$CPPFLAGS $GNUTLS_CFLAGS"
+if test -n "$GNUTLS_LIBS"; then :
+
+elif test -n "$PKG_CONFIG"; then :
+  GNUTLS_LIBS=`$PKG_CONFIG --libs gnutls 2>/dev/null`
+fi
+
+
     ac_fn_c_check_header_mongrel "$LINENO" "gnutls/gnutls.h" "ac_cv_header_gnutls_gnutls_h" "$ac_includes_default"
 if test "x$ac_cv_header_gnutls_gnutls_h" = xyes; then :
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -10260,7 +10274,7 @@ if ${ac_cv_lib_soname_gnutls+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_soname_save_LIBS=$LIBS
-LIBS="-lgnutls $ac_gnutls_libs $LIBS"
+LIBS="-lgnutls $GNUTLS_LIBS $LIBS"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -10296,7 +10310,7 @@ fi
 if test "x$ac_cv_lib_soname_gnutls" = "x"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
 $as_echo "not found" >&6; }
-
+       GNUTLS_CFLAGS=""
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_gnutls" >&5
 $as_echo "$ac_cv_lib_soname_gnutls" >&6; }
@@ -10305,11 +10319,12 @@ cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBGNUTLS "$ac_cv_lib_soname_gnutls"
 _ACEOF
 
-       GNUTLSINCL="$ac_gnutls_cflags"
 
 fi
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+else
+  GNUTLS_CFLAGS=""
 fi
 
 
