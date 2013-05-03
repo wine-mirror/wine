@@ -646,8 +646,8 @@ FONTCONFIGINCL
 CUPSINCL
 OSS4INCL
 ALSALIBS
-GSTREAMER_INCL
 GSTREAMER_LIBS
+GSTREAMER_CFLAGS
 LIBGETTEXTPO
 ZLIB
 FREETYPE_LIBS
@@ -875,7 +875,9 @@ SANE_LIBS
 GPHOTO2_CFLAGS
 GPHOTO2_LIBS
 FREETYPE_CFLAGS
-FREETYPE_LIBS'
+FREETYPE_LIBS
+GSTREAMER_CFLAGS
+GSTREAMER_LIBS'
 
 
 # Initialize some variables set by options.
@@ -1584,6 +1586,10 @@ Some influential environment variables:
               C compiler flags for freetype2, overriding pkg-config
   FREETYPE_LIBS
               Linker flags for freetype2, overriding pkg-config
+  GSTREAMER_CFLAGS
+              C compiler flags for gstreamer-app-0.10, overriding pkg-config
+  GSTREAMER_LIBS
+              Linker flags for gstreamer-app-0.10, overriding pkg-config
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -11131,17 +11137,30 @@ fi
 if test "x$with_gstreamer" != "xno"
 then
     ac_save_CPPFLAGS="$CPPFLAGS"
-    if test "$PKG_CONFIG" != "false"; then
-        ac_gst_incl=""
-        for i in `$PKG_CONFIG --cflags gstreamer-app-0.10 2>/dev/null`
-        do
-            case "$i" in
-                -I*) ac_gst_incl="$ac_gst_incl $i";;
-            esac
-        done
-        ac_gst_libs="`$PKG_CONFIG --libs gstreamer-app-0.10 2>/dev/null`"
-        CPPFLAGS="$CPPFLAGS $ac_gst_incl"
-        ac_fn_c_check_header_mongrel "$LINENO" "gst/gstpad.h" "ac_cv_header_gst_gstpad_h" "$ac_includes_default"
+    if test -n "$GSTREAMER_CFLAGS"; then :
+
+elif test -n "$PKG_CONFIG"; then :
+  GSTREAMER_CFLAGS=`$PKG_CONFIG --cflags gstreamer-app-0.10 2>/dev/null`
+fi
+
+CPPFLAGS="$CPPFLAGS $GSTREAMER_CFLAGS"
+if test -n "$GSTREAMER_LIBS"; then :
+
+elif test -n "$PKG_CONFIG"; then :
+  GSTREAMER_LIBS=`$PKG_CONFIG --libs gstreamer-app-0.10 2>/dev/null`
+fi
+
+
+    ac_gst_incl=""
+    for i in $GSTREAMER_CFLAGS
+    do
+        case "$i" in
+            -I*) ac_gst_incl="$ac_gst_incl $i";;
+        esac
+    done
+    GSTREAMER_CFLAGS=$ac_gst_incl
+    CPPFLAGS="$ac_save_CPPFLAGS $GSTREAMER_CFLAGS"
+    ac_fn_c_check_header_mongrel "$LINENO" "gst/gstpad.h" "ac_cv_header_gst_gstpad_h" "$ac_includes_default"
 if test "x$ac_cv_header_gst_gstpad_h" = xyes; then :
   ac_fn_c_check_header_mongrel "$LINENO" "gst/app/gstappsink.h" "ac_cv_header_gst_app_gstappsink_h" "$ac_includes_default"
 if test "x$ac_cv_header_gst_app_gstappsink_h" = xyes; then :
@@ -11204,7 +11223,7 @@ if ${ac_cv_lib_gstapp_0_10_gst_app_buffer_new+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lgstapp-0.10 $ac_gst_libs $LIBS"
+LIBS="-lgstapp-0.10 $GSTREAMER_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -11235,10 +11254,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_gstapp_0_10_gst_app_buffer_new" >&5
 $as_echo "$ac_cv_lib_gstapp_0_10_gst_app_buffer_new" >&6; }
 if test "x$ac_cv_lib_gstapp_0_10_gst_app_buffer_new" = xyes; then :
-  GSTREAMER_LIBS="$ac_gst_libs"
-
-                       GSTREAMER_INCL="$ac_gst_incl"
-
+  :
 fi
 
 fi
@@ -11251,10 +11267,11 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
 
 
+else
+  GSTREAMER_CFLAGS=""
 fi
 
 
-    fi
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 if test "x$ac_cv_lib_gstapp_0_10_gst_app_buffer_new" != xyes -a "x$ac_cv_header_QuickTime_ImageCompression_h" != xyes; then :

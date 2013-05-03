@@ -1,6 +1,6 @@
 MODULE    = winegstreamer.dll
 IMPORTS   = strmbase strmiids uuid winmm msacm32 msvfw32 ole32 oleaut32 user32 gdi32 advapi32
-EXTRAINCL = @GSTREAMER_INCL@
+EXTRAINCL = @GSTREAMER_CFLAGS@
 EXTRALIBS = @GSTREAMER_LIBS@ @LIBPTHREAD@
 
 C_SRCS = \
