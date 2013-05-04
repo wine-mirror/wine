@@ -321,16 +321,21 @@ static ULONG WINAPI TransactionImportWhereabouts_Release(ITransactionImportWhere
 static HRESULT WINAPI TransactionImportWhereabouts_GetWhereaboutsSize(ITransactionImportWhereabouts *iface,
         ULONG *pcbWhereabouts)
 {
-    FIXME("(%p, %p): stub\n", iface, pcbWhereabouts);
+    FIXME("(%p, %p): stub returning fake value\n", iface, pcbWhereabouts);
 
-    return E_NOTIMPL;
+    if (!pcbWhereabouts) return E_INVALIDARG;
+    *pcbWhereabouts = 1;
+    return S_OK;
 }
 static HRESULT WINAPI TransactionImportWhereabouts_GetWhereabouts(ITransactionImportWhereabouts *iface,
         ULONG cbWhereabouts, BYTE *rgbWhereabouts,ULONG *pcbUsed)
 {
-    FIXME("(%p, %u, %p, %p): stub\n", iface, cbWhereabouts, rgbWhereabouts, pcbUsed);
+    FIXME("(%p, %u, %p, %p): stub returning fake value\n", iface, cbWhereabouts, rgbWhereabouts, pcbUsed);
 
-    return E_NOTIMPL;
+    if (!rgbWhereabouts || !pcbUsed) return E_INVALIDARG;
+    *rgbWhereabouts = 0;
+    *pcbUsed = 1;
+    return S_OK;
 }
 static const ITransactionImportWhereaboutsVtbl TransactionImportWhereabouts_Vtbl = {
     TransactionImportWhereabouts_QueryInterface,
