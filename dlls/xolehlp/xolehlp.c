@@ -254,6 +254,121 @@ static HRESULT TransactionOptions_Create(ITransactionOptions **ppv)
 
 /* Transaction options end */
 
+/* Transaction start */
+
+typedef struct {
+    ITransaction ITransaction_iface;
+    LONG ref;
+    XACTTRANSINFO info;
+} Transaction;
+
+static inline Transaction *impl_from_ITransaction(ITransaction *iface)
+{
+    return CONTAINING_RECORD(iface, Transaction, ITransaction_iface);
+}
+
+static HRESULT WINAPI Transaction_QueryInterface(ITransaction *iface, REFIID iid,
+    void **ppv)
+{
+    Transaction *This = impl_from_ITransaction(iface);
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
+
+    if (!ppv) return E_INVALIDARG;
+
+    if (IsEqualIID(&IID_IUnknown, iid) ||
+        IsEqualIID(&IID_ITransaction, iid))
+    {
+        *ppv = &This->ITransaction_iface;
+    }
+    else
+    {
+        FIXME("(%s): not implemented\n", debugstr_guid(iid));
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI Transaction_AddRef(ITransaction *iface)
+{
+    Transaction *This = impl_from_ITransaction(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI Transaction_Release(ITransaction *iface)
+{
+    Transaction *This = impl_from_ITransaction(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+
+    if (ref == 0)
+    {
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+static HRESULT WINAPI Transaction_Commit(ITransaction *iface,
+    BOOL fRetaining, DWORD grfTC, DWORD grfRM)
+{
+    FIXME("(%p, %d, %08x, %08x): stub\n", iface, fRetaining, grfTC, grfRM);
+    return E_NOTIMPL;
+}
+static HRESULT WINAPI Transaction_Abort(ITransaction *iface,
+    BOID *pboidReason, BOOL fRetaining, BOOL fAsync)
+{
+    FIXME("(%p, %p, %d, %d): stub\n", iface, pboidReason, fRetaining, fAsync);
+    return E_NOTIMPL;
+}
+static HRESULT WINAPI Transaction_GetTransactionInfo(ITransaction *iface,
+    XACTTRANSINFO *pinfo)
+{
+    Transaction *This = impl_from_ITransaction(iface);
+    TRACE("(%p, %p)\n", iface, pinfo);
+    if (!pinfo) return E_INVALIDARG;
+    *pinfo = This->info;
+    return S_OK;
+}
+
+static const ITransactionVtbl Transaction_Vtbl = {
+    Transaction_QueryInterface,
+    Transaction_AddRef,
+    Transaction_Release,
+    Transaction_Commit,
+    Transaction_Abort,
+    Transaction_GetTransactionInfo
+};
+
+static HRESULT Transaction_Create(ISOLEVEL isoLevel, ULONG isoFlags,
+        ITransactionOptions *pOptions, ITransaction **ppv)
+{
+    Transaction *This;
+
+    if (!ppv) return E_INVALIDARG;
+
+    This = HeapAlloc(GetProcessHeap(), 0, sizeof(Transaction));
+    if (!This) return E_OUTOFMEMORY;
+    ZeroMemory(&This->info, sizeof(This->info));
+
+    This->ITransaction_iface.lpVtbl = &Transaction_Vtbl;
+    This->ref = 1;
+    This->info.isoLevel = isoLevel;
+    This->info.isoFlags = isoFlags;
+
+    *ppv = &This->ITransaction_iface;
+
+    return S_OK;
+}
+
+/* Transaction end */
+
 /* DTC Proxy Core Object start */
 
 typedef struct {
@@ -346,13 +461,12 @@ static HRESULT WINAPI TransactionDispenser_BeginTransaction(ITransactionDispense
         ITransactionOptions *pOptions,
         ITransaction **ppTransaction)
 {
-    FIXME("(%p, %p, %08x, %08x, %p, %p): stub\n", iface, punkOuter,
+    FIXME("(%p, %p, %08x, %08x, %p, %p): semi-stub\n", iface, punkOuter,
         isoLevel, isoFlags, pOptions, ppTransaction);
 
     if (!ppTransaction) return E_INVALIDARG;
-    *ppTransaction = NULL;
     if (punkOuter) return CLASS_E_NOAGGREGATION;
-    return E_NOTIMPL;
+    return Transaction_Create(isoLevel, isoFlags, pOptions, ppTransaction);
 }
 static const ITransactionDispenserVtbl TransactionDispenser_Vtbl = {
     TransactionDispenser_QueryInterface,
