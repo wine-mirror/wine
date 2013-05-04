@@ -145,6 +145,114 @@ static HRESULT ResourceManager_Create(REFIID riid, void **ppv)
 
 /* Resource manager end */
 
+/* Transaction options start */
+
+typedef struct {
+    ITransactionOptions ITransactionOptions_iface;
+    LONG ref;
+    XACTOPT opts;
+} TransactionOptions;
+
+static inline TransactionOptions *impl_from_ITransactionOptions(ITransactionOptions *iface)
+{
+    return CONTAINING_RECORD(iface, TransactionOptions, ITransactionOptions_iface);
+}
+
+static HRESULT WINAPI TransactionOptions_QueryInterface(ITransactionOptions *iface, REFIID iid,
+    void **ppv)
+{
+    TransactionOptions *This = impl_from_ITransactionOptions(iface);
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
+
+    if (!ppv) return E_INVALIDARG;
+
+    if (IsEqualIID(&IID_IUnknown, iid) ||
+        IsEqualIID(&IID_ITransactionOptions, iid))
+    {
+        *ppv = &This->ITransactionOptions_iface;
+    }
+    else
+    {
+        FIXME("(%s): not implemented\n", debugstr_guid(iid));
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI TransactionOptions_AddRef(ITransactionOptions *iface)
+{
+    TransactionOptions *This = impl_from_ITransactionOptions(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI TransactionOptions_Release(ITransactionOptions *iface)
+{
+    TransactionOptions *This = impl_from_ITransactionOptions(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+
+    if (ref == 0)
+    {
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+static HRESULT WINAPI TransactionOptions_SetOptions(ITransactionOptions *iface,
+    XACTOPT *pOptions)
+{
+    TransactionOptions *This = impl_from_ITransactionOptions(iface);
+
+    if (!pOptions) return E_INVALIDARG;
+    TRACE("(%p, %u, %s)\n", iface, pOptions->ulTimeout, debugstr_a(pOptions->szDescription));
+    This->opts = *pOptions;
+    return S_OK;
+}
+static HRESULT WINAPI TransactionOptions_GetOptions(ITransactionOptions *iface,
+    XACTOPT *pOptions)
+{
+    TransactionOptions *This = impl_from_ITransactionOptions(iface);
+
+    TRACE("(%p, %p)\n", iface, pOptions);
+    if (!pOptions) return E_INVALIDARG;
+    *pOptions = This->opts;
+    return S_OK;
+}
+
+static const ITransactionOptionsVtbl TransactionOptions_Vtbl = {
+    TransactionOptions_QueryInterface,
+    TransactionOptions_AddRef,
+    TransactionOptions_Release,
+    TransactionOptions_SetOptions,
+    TransactionOptions_GetOptions
+};
+
+static HRESULT TransactionOptions_Create(ITransactionOptions **ppv)
+{
+    TransactionOptions *This;
+
+    if (!ppv) return E_INVALIDARG;
+
+    This = HeapAlloc(GetProcessHeap(), 0, sizeof(TransactionOptions));
+    if (!This) return E_OUTOFMEMORY;
+
+    This->ITransactionOptions_iface.lpVtbl = &TransactionOptions_Vtbl;
+    This->ref = 1;
+
+    *ppv = &This->ITransactionOptions_iface;
+
+    return S_OK;
+}
+
+/* Transaction options end */
 
 /* DTC Proxy Core Object start */
 
@@ -226,10 +334,10 @@ static ULONG WINAPI TransactionDispenser_Release(ITransactionDispenser *iface)
 static HRESULT WINAPI TransactionDispenser_GetOptionsObject(ITransactionDispenser *iface,
         ITransactionOptions **ppOptions)
 {
-    FIXME("(%p, %p): stub\n", iface, ppOptions);
+    TRACE("(%p, %p)\n", iface, ppOptions);
+
     if (!ppOptions) return E_INVALIDARG;
-    *ppOptions = NULL;
-    return E_NOTIMPL;
+    return TransactionOptions_Create(ppOptions);
 }
 static HRESULT WINAPI TransactionDispenser_BeginTransaction(ITransactionDispenser *iface,
         IUnknown *punkOuter,
