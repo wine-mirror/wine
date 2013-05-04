@@ -116,6 +116,7 @@ static const WCHAR szInternetSettings[] =
       'I','n','t','e','r','n','e','t',' ','S','e','t','t','i','n','g','s',0 };
 static const WCHAR szProxyServer[] = { 'P','r','o','x','y','S','e','r','v','e','r', 0 };
 static const WCHAR szProxyEnable[] = { 'P','r','o','x','y','E','n','a','b','l','e', 0 };
+static const WCHAR szProxyOverride[] = { 'P','r','o','x','y','O','v','e','r','r','i','d','e', 0 };
 
 void *alloc_object(object_header_t *parent, const object_vtbl_t *vtbl, size_t size)
 {
@@ -610,9 +611,49 @@ static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
 
         TRACE("http proxy (from environment) = %s\n", debugstr_w(lpwpi->proxy));
     }
-    RegCloseKey( key );
 
     lpwpi->proxyBypass = NULL;
+    if (lpwpi->proxyEnabled)
+    {
+        if (!(envproxy = getenv( "no_proxy" )))
+        {
+            /* figure out how much memory the proxy setting takes */
+            if (!RegQueryValueExW( key, szProxyOverride, NULL, &type, NULL, &len ) && len && (type == REG_SZ))
+            {
+                LPWSTR szProxy;
+
+                if (!(szProxy = heap_alloc(len)))
+                {
+                    RegCloseKey( key );
+                    return ERROR_OUTOFMEMORY;
+                }
+                RegQueryValueExW( key, szProxyOverride, NULL, &type, (BYTE*)szProxy, &len );
+
+                lpwpi->proxyBypass = szProxy;
+
+                TRACE("http proxy bypass = %s\n", debugstr_w(lpwpi->proxyBypass));
+            }
+            else
+            {
+                TRACE("No proxy bypass server settings in registry.\n");
+            }
+        }
+        else if (envproxy)
+        {
+            WCHAR *envproxyW;
+
+            len = MultiByteToWideChar( CP_UNIXCP, 0, envproxy, -1, NULL, 0 );
+            if (!(envproxyW = heap_alloc(len * sizeof(WCHAR))))
+                return ERROR_OUTOFMEMORY;
+            MultiByteToWideChar( CP_UNIXCP, 0, envproxy, -1, envproxyW, len );
+
+            lpwpi->proxyBypass = envproxyW;
+
+            TRACE("http proxy bypass (from environment) = %s\n", debugstr_w(lpwpi->proxyBypass));
+        }
+    }
+
+    RegCloseKey( key );
 
     return ERROR_SUCCESS;
 }
