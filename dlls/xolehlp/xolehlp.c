@@ -153,6 +153,7 @@ typedef struct {
     LONG ref;
     IResourceManagerFactory2 IResourceManagerFactory2_iface;
     ITransactionImportWhereabouts ITransactionImportWhereabouts_iface;
+    ITransactionImport ITransactionImport_iface;
 } TransactionManager;
 
 static inline TransactionManager *impl_from_ITransactionDispenser(ITransactionDispenser *iface)
@@ -181,6 +182,10 @@ static HRESULT WINAPI TransactionDispenser_QueryInterface(ITransactionDispenser 
     else if (IsEqualIID(&IID_ITransactionImportWhereabouts, iid))
     {
         *ppv = &This->ITransactionImportWhereabouts_iface;
+    }
+    else if (IsEqualIID(&IID_ITransactionImport, iid))
+    {
+        *ppv = &This->ITransactionImport_iface;
     }
     else
     {
@@ -345,6 +350,44 @@ static const ITransactionImportWhereaboutsVtbl TransactionImportWhereabouts_Vtbl
     TransactionImportWhereabouts_GetWhereabouts
 };
 
+static inline TransactionManager *impl_from_ITransactionImport(ITransactionImport *iface)
+{
+    return CONTAINING_RECORD(iface, TransactionManager, ITransactionImport_iface);
+}
+
+static HRESULT WINAPI TransactionImport_QueryInterface(ITransactionImport *iface, REFIID iid,
+    void **ppv)
+{
+    TransactionManager *This = impl_from_ITransactionImport(iface);
+    return TransactionDispenser_QueryInterface(&This->ITransactionDispenser_iface, iid, ppv);
+}
+
+static ULONG WINAPI TransactionImport_AddRef(ITransactionImport *iface)
+{
+    TransactionManager *This = impl_from_ITransactionImport(iface);
+    return TransactionDispenser_AddRef(&This->ITransactionDispenser_iface);
+}
+
+static ULONG WINAPI TransactionImport_Release(ITransactionImport *iface)
+{
+    TransactionManager *This = impl_from_ITransactionImport(iface);
+    return TransactionDispenser_Release(&This->ITransactionDispenser_iface);
+}
+static HRESULT WINAPI TransactionImport_Import(ITransactionImport *iface,
+    ULONG cbTransactionCookie, byte *rgbTransactionCookie, IID *piid, void **ppvTransaction)
+{
+    FIXME("(%p, %u, %p, %s, %p): stub\n", iface, cbTransactionCookie, rgbTransactionCookie, debugstr_guid(piid), ppvTransaction);
+
+    if (!rgbTransactionCookie || !piid || !ppvTransaction) return E_INVALIDARG;
+    return E_NOTIMPL;
+}
+static const ITransactionImportVtbl TransactionImport_Vtbl = {
+    TransactionImport_QueryInterface,
+    TransactionImport_AddRef,
+    TransactionImport_Release,
+    TransactionImport_Import
+};
+
 static HRESULT TransactionManager_Create(REFIID riid, void **ppv)
 {
     TransactionManager *This;
@@ -356,6 +399,7 @@ static HRESULT TransactionManager_Create(REFIID riid, void **ppv)
     This->ITransactionDispenser_iface.lpVtbl = &TransactionDispenser_Vtbl;
     This->IResourceManagerFactory2_iface.lpVtbl = &ResourceManagerFactory2_Vtbl;
     This->ITransactionImportWhereabouts_iface.lpVtbl = &TransactionImportWhereabouts_Vtbl;
+    This->ITransactionImport_iface.lpVtbl = &TransactionImport_Vtbl;
     This->ref = 1;
 
     ret = ITransactionDispenser_QueryInterface(&This->ITransactionDispenser_iface, riid, ppv);
