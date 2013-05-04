@@ -231,6 +231,7 @@ typedef union
     pixel_format    format;
     UInt64          code;
 } pixel_format_or_code;
+C_ASSERT(sizeof(((pixel_format_or_code*)0)->format) <= sizeof(((pixel_format_or_code*)0)->code));
 
 
 static pixel_format *pixel_formats;
@@ -1079,8 +1080,6 @@ static BOOL init_pixel_formats(void)
     CFRange range;
 
     TRACE("()\n");
-
-    assert(sizeof(((pixel_format_or_code*)0)->format) <= sizeof(((pixel_format_or_code*)0)->code));
 
     err = CGLQueryRendererInfo(CGDisplayIDToOpenGLDisplayMask(CGMainDisplayID()), &renderer_info, &rendererCount);
     if (err)

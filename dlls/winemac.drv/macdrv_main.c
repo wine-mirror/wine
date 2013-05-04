@@ -37,6 +37,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(macdrv);
 #define kCFCoreFoundationVersionNumber10_7      635.00
 #endif
 
+C_ASSERT(NUM_EVENT_TYPES <= sizeof(macdrv_event_mask) * 8);
+
 DWORD thread_data_tls_index = TLS_OUT_OF_INDEXES;
 
 
@@ -95,8 +97,6 @@ static BOOL process_attach(void)
 {
     SessionAttributeBits attributes;
     OSStatus status;
-
-    assert(NUM_EVENT_TYPES <= sizeof(macdrv_event_mask) * 8);
 
     status = SessionGetInfo(callerSecuritySession, NULL, &attributes);
     if (status != noErr || !(attributes & sessionHasGraphicAccess))
