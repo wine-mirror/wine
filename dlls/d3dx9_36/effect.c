@@ -6196,3 +6196,10 @@ HRESULT WINAPI D3DXCreateEffectCompilerFromResourceW(HMODULE srcmodule, const WC
 
     return D3DXERR_INVALIDDATA;
 }
+
+HRESULT WINAPI D3DXDisassembleEffect(ID3DXEffect *effect, BOOL enable_color_code, ID3DXBuffer **disassembly)
+{
+    FIXME("(%p, %u, %p): stub\n", effect, enable_color_code, disassembly);
+
+    return D3DXERR_INVALIDDATA;
+}
