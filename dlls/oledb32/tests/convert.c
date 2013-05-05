@@ -35,6 +35,7 @@
 
 #include "wine/test.h"
 
+static IDataConvert *convert;
 
 static void test_dcinfo(void)
 {
@@ -199,14 +200,15 @@ static inline BOOL array_type(DBTYPE type)
 
 static void test_canconvert(void)
 {
-    IDataConvert *convert;
     HRESULT hr;
     int src_idx, dst_idx;
 
-    hr = CoCreateInstance(&CLSID_OLEDB_CONVERSIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IDataConvert, (void**)&convert);
-    if(FAILED(hr))
+    /* Some older versions of the library don't support several conversions, we'll skip
+       if we have such a library */
+    hr = IDataConvert_CanConvert(convert, DBTYPE_EMPTY, DBTYPE_DBTIMESTAMP);
+    if(hr == S_FALSE)
     {
-        win_skip("Unable to load oledb conversion library\n");
+        win_skip("Doesn't handle DBTYPE_EMPTY -> DBTYPE_DBTIMESTAMP conversion so skipping\n");
         return;
     }
 
@@ -216,17 +218,6 @@ static void test_canconvert(void)
     if(hr == S_FALSE)
     {
         win_skip("Doesn't handle DBTYPE_EMPTY -> DBTYPE_DBTIMESTAMP conversion so skipping\n");
-        IDataConvert_Release(convert);
-        return;
-    }
-
-    /* Some older versions of the library don't support several conversions, we'll skip
-       if we have such a library */
-    hr = IDataConvert_CanConvert(convert, DBTYPE_EMPTY, DBTYPE_DBTIMESTAMP);
-    if(hr == S_FALSE)
-    {
-        win_skip("Doesn't handle DBTYPE_EMPTY -> DBTYPE_DBTIMESTAMP conversion so skipping\n");
-        IDataConvert_Release(convert);
         return;
     }
 
@@ -336,13 +327,10 @@ static void test_canconvert(void)
 
 
         }
-
-    IDataConvert_Release(convert);
 }
 
 static void test_converttoi2(void)
 {
-    IDataConvert *convert;
     HRESULT hr;
     signed short dst;
     BYTE src[20];
@@ -350,13 +338,6 @@ static void test_converttoi2(void)
     DBLENGTH dst_len;
     static const WCHAR ten[] = {'1','0',0};
     BSTR b;
-
-    hr = CoCreateInstance(&CLSID_OLEDB_CONVERSIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IDataConvert, (void**)&convert);
-    if(FAILED(hr))
-    {
-        win_skip("Unable to load oledb conversion library\n");
-        return;
-    }
 
     dst_len = dst = 0x1234;
     hr = IDataConvert_DataConvert(convert, DBTYPE_EMPTY, DBTYPE_I2, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
@@ -651,13 +632,10 @@ todo_wine
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
     ok(dst == 10, "got %08x\n", dst);
-
-    IDataConvert_Release(convert);
 }
 
 static void test_converttoi4(void)
 {
-    IDataConvert *convert;
     HRESULT hr;
     INT i4;
     BYTE src[20];
@@ -665,13 +643,6 @@ static void test_converttoi4(void)
     DBLENGTH dst_len;
     static const WCHAR ten[] = {'1','0',0};
     BSTR b;
-
-    hr = CoCreateInstance(&CLSID_OLEDB_CONVERSIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IDataConvert, (void**)&convert);
-    if(FAILED(hr))
-    {
-        win_skip("Unable to load oledb conversion library\n");
-        return;
-    }
 
     i4 = 0x12345678;
     dst_len = 0x1234;
@@ -913,13 +884,10 @@ todo_wine
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     ok(dst_len == sizeof(i4), "got %ld\n", dst_len);
     ok(i4 == 10, "got %08x\n", i4);
-
-    IDataConvert_Release(convert);
 }
 
 static void test_converttoi8(void)
 {
-    IDataConvert *convert;
     HRESULT hr;
     LARGE_INTEGER dst;
     BYTE src[20];
@@ -927,13 +895,6 @@ static void test_converttoi8(void)
     DBLENGTH dst_len;
     static const WCHAR ten[] = {'1','0',0};
     BSTR b;
-
-    hr = CoCreateInstance(&CLSID_OLEDB_CONVERSIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IDataConvert, (void**)&convert);
-    if(FAILED(hr))
-    {
-        win_skip("Unable to load oledb conversion library\n");
-        return;
-    }
 
     dst.QuadPart = 0xcc;
     ((ULARGE_INTEGER*)src)->QuadPart = 1234;
@@ -954,13 +915,10 @@ static void test_converttoi8(void)
     ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
     ok(dst.QuadPart == 10, "got %d\n", (int)dst.QuadPart);
     SysFreeString(b);
-
-    IDataConvert_Release(convert);
 }
 
 static void test_converttobstr(void)
 {
-    IDataConvert *convert;
     HRESULT hr;
     BSTR dst;
     BYTE src[20];
@@ -969,13 +927,6 @@ static void test_converttobstr(void)
     static const WCHAR ten[] = {'1','0',0};
     VARIANT v;
     BSTR b;
-
-    hr = CoCreateInstance(&CLSID_OLEDB_CONVERSIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IDataConvert, (void**)&convert);
-    if(FAILED(hr))
-    {
-        win_skip("Unable to load oledb conversion library\n");
-        return;
-    }
 
     dst_len = 0x1234;
     hr = IDataConvert_DataConvert(convert, DBTYPE_EMPTY, DBTYPE_BSTR, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
@@ -1026,13 +977,10 @@ static void test_converttobstr(void)
     ok(!lstrcmpW(b, dst), "got %s\n", wine_dbgstr_w(dst));
     SysFreeString(dst);
     SysFreeString(b);
-
-    IDataConvert_Release(convert);
 }
 
 static void test_converttowstr(void)
 {
-    IDataConvert *convert;
     HRESULT hr;
     WCHAR dst[100];
     BYTE src[20];
@@ -1046,14 +994,6 @@ static void test_converttowstr(void)
     static const WCHAR hexunpacked_w[] = {'5','7','0','0','6','9','0','0','6','E','0','0','6','5','0','0','0','0','0','0', 0 };
     static const WCHAR hexpacked_w[] = {'W','i','n','e', 0 };
     BSTR b;
-
-    hr = CoCreateInstance(&CLSID_OLEDB_CONVERSIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IDataConvert, (void**)&convert);
-    if(FAILED(hr))
-    {
-        win_skip("Unable to load oledb conversion library\n");
-        return;
-    }
-
 
     memset(dst, 0xcc, sizeof(dst));
     dst_len = 0x1234;
@@ -1507,14 +1447,10 @@ static void test_converttowstr(void)
     ok(dst_len == 0, "got %ld\n", dst_len);
     ok(dst[0] == 0, "not null terminated\n");
     ok(dst[1] == 0xcccc, "clobbered buffer\n");
-
-
-    IDataConvert_Release(convert);
 }
 
 static void test_converttostr(void)
 {
-    IDataConvert *convert;
     HRESULT hr;
     char dst[100];
     BYTE src[64];
@@ -1527,14 +1463,6 @@ static void test_converttostr(void)
     static const char hexunpacked_a[] = "57696E6500";
     static const char hexpacked_a[] = "Wine";
     BSTR b;
-
-    hr = CoCreateInstance(&CLSID_OLEDB_CONVERSIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IDataConvert, (void**)&convert);
-    if(FAILED(hr))
-    {
-        win_skip("Unable to load oledb conversion library\n");
-        return;
-    }
-
 
     memset(dst, 0xcc, sizeof(dst));
     dst_len = 0x1234;
@@ -2012,13 +1940,10 @@ static void test_converttostr(void)
     ok(dst_len == 0, "got %ld\n", dst_len);
     ok(dst[0] == 0, "not null terminated\n");
     ok(dst[1] == (char)0xcc, "clobbered buffer\n");
-
-    IDataConvert_Release(convert);
 }
 
 static void test_converttobyrefwstr(void)
 {
-    IDataConvert *convert;
     HRESULT hr;
     WCHAR *dst;
     BYTE src[20];
@@ -2027,13 +1952,6 @@ static void test_converttobyrefwstr(void)
     static const WCHAR ten[] = {'1','0',0};
     static const WCHAR fourthreetwoone[] = {'4','3','2','1',0};
     BSTR b;
-
-    hr = CoCreateInstance(&CLSID_OLEDB_CONVERSIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IDataConvert, (void**)&convert);
-    if(FAILED(hr))
-    {
-        win_skip("Unable to load oledb conversion library\n");
-        return;
-    }
 
     hr = IDataConvert_DataConvert(convert, DBTYPE_EMPTY, DBTYPE_BYREF | DBTYPE_WSTR, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
     ok(hr == S_OK, "got %08x\n", hr);
@@ -2106,25 +2024,15 @@ static void test_converttobyrefwstr(void)
     ok(dst_len == 4, "got %ld\n", dst_len);
     ok(!lstrcmpW(ten, dst), "got %s\n", wine_dbgstr_w(dst));
     CoTaskMemFree(dst);
-
-    IDataConvert_Release(convert);
 }
 
 static void test_converttoguid(void)
 {
-    IDataConvert *convert;
     HRESULT hr;
     GUID dst;
     BYTE src[20];
     DBSTATUS dst_status;
     DBLENGTH dst_len;
-
-    hr = CoCreateInstance(&CLSID_OLEDB_CONVERSIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IDataConvert, (void**)&convert);
-    if(FAILED(hr))
-    {
-        win_skip("Unable to load oledb conversion library\n");
-        return;
-    }
 
     dst = IID_IDCInfo;
     dst_len = 0x1234;
@@ -2150,25 +2058,15 @@ static void test_converttoguid(void)
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     ok(dst_len == sizeof(GUID), "got %ld\n", dst_len);
     ok(IsEqualGUID(&dst, &IID_IDataConvert), "didn't get IID_IDataConvert\n");
-
-    IDataConvert_Release(convert);
 }
 
 static void test_converttofiletime(void)
 {
-    IDataConvert *convert;
     HRESULT hr;
     FILETIME dst;
     BYTE src[20];
     DBSTATUS dst_status;
     DBLENGTH dst_len;
-
-    hr = CoCreateInstance(&CLSID_OLEDB_CONVERSIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IDataConvert, (void**)&convert);
-    if(FAILED(hr))
-    {
-        win_skip("Unable to load oledb conversion library\n");
-        return;
-    }
 
     memset(&dst, 0xcc, sizeof(dst));
     ((FILETIME *)src)->dwLowDateTime = 0x12345678;
@@ -2185,25 +2083,15 @@ static void test_converttofiletime(void)
         ok(dst.dwLowDateTime == 0x12345678, "got %08x\n", dst.dwLowDateTime);
         ok(dst.dwHighDateTime == 0x9abcdef0, "got %08x\n", dst.dwHighDateTime);
     }
-
-    IDataConvert_Release(convert);
 }
 
 static void test_converttoui1(void)
 {
-    IDataConvert *convert;
     HRESULT hr;
     BYTE dst;
     BYTE src[20];
     DBSTATUS dst_status;
     DBLENGTH dst_len;
-
-    hr = CoCreateInstance(&CLSID_OLEDB_CONVERSIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IDataConvert, (void**)&convert);
-    if(FAILED(hr))
-    {
-        win_skip("Unable to load oledb conversion library\n");
-        return;
-    }
 
     dst = 0x12;
     dst_len = 0x1234;
@@ -2238,25 +2126,15 @@ static void test_converttoui1(void)
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
     ok(dst == 0xfe, "got %08x\n", dst);
-
-    IDataConvert_Release(convert);
 }
 
 static void test_converttoui4(void)
 {
-    IDataConvert *convert;
     HRESULT hr;
     DWORD dst;
     BYTE src[20];
     DBSTATUS dst_status;
     DBLENGTH dst_len;
-
-    hr = CoCreateInstance(&CLSID_OLEDB_CONVERSIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IDataConvert, (void**)&convert);
-    if(FAILED(hr))
-    {
-        win_skip("Unable to load oledb conversion library\n");
-        return;
-    }
 
     dst = 0x12345678;
     dst_len = 0x1234;
@@ -2311,25 +2189,15 @@ todo_wine
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
     ok(dst == 0x4321, "got %08x\n", dst);
-
-    IDataConvert_Release(convert);
 }
 
 static void test_converttor4(void)
 {
-    IDataConvert *convert;
     HRESULT hr;
     FLOAT dst;
     BYTE src[20];
     DBSTATUS dst_status;
     DBLENGTH dst_len;
-
-    hr = CoCreateInstance(&CLSID_OLEDB_CONVERSIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IDataConvert, (void**)&convert);
-    if(FAILED(hr))
-    {
-        win_skip("Unable to load oledb conversion library\n");
-        return;
-    }
 
     dst = 1.0;
     dst_len = 0x1234;
@@ -2364,25 +2232,15 @@ static void test_converttor4(void)
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
     ok(dst == 10.0, "got %f\n", dst);
-
-    IDataConvert_Release(convert);
 }
 
 static void test_converttocy(void)
 {
-    IDataConvert *convert;
     HRESULT hr;
     CY dst;
     BYTE src[20];
     DBSTATUS dst_status;
     DBLENGTH dst_len;
-
-    hr = CoCreateInstance(&CLSID_OLEDB_CONVERSIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IDataConvert, (void**)&convert);
-    if(FAILED(hr))
-    {
-        win_skip("Unable to load oledb conversion library\n");
-        return;
-    }
 
     dst.int64 = 0xcc;
     dst_len = 0x1234;
@@ -2417,25 +2275,15 @@ static void test_converttocy(void)
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     ok(dst_len == sizeof(CY), "got %ld\n", dst_len);
     ok(dst.int64 == 1234, "got %d\n", dst.s.Lo);
-
-    IDataConvert_Release(convert);
 }
 
 static void test_converttoui8(void)
 {
-    IDataConvert *convert;
     HRESULT hr;
     ULARGE_INTEGER dst;
     BYTE src[20];
     DBSTATUS dst_status;
     DBLENGTH dst_len;
-
-    hr = CoCreateInstance(&CLSID_OLEDB_CONVERSIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IDataConvert, (void**)&convert);
-    if(FAILED(hr))
-    {
-        win_skip("Unable to load oledb conversion library\n");
-        return;
-    }
 
     dst.QuadPart = 0xcc;
     dst_len = 0x1234;
@@ -2481,26 +2329,16 @@ todo_wine
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
     ok(dst.QuadPart == 1234, "got %d\n", (int)dst.QuadPart);
-
-    IDataConvert_Release(convert);
 }
 
 static void test_getconversionsize(void)
 {
-    IDataConvert *convert;
     DBLENGTH dst_len;
     DBLENGTH src_len;
     HRESULT hr;
     BSTR str;
     static WCHAR strW[] = {'t','e','s','t',0};
     static char strTest[] = "test";
-
-    hr = CoCreateInstance(&CLSID_OLEDB_CONVERSIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IDataConvert, (void**)&convert);
-    if(FAILED(hr))
-    {
-        win_skip("Unable to load oledb conversion library\n");
-        return;
-    }
 
     /* same way as CanConvert fails here */
     dst_len = 0;
@@ -2556,15 +2394,12 @@ static void test_getconversionsize(void)
     hr = IDataConvert_GetConversionSize(convert, DBTYPE_STR, DBTYPE_WSTR, &src_len, &dst_len, strTest);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(dst_len == 42, "%ld\n", dst_len);
-
-    IDataConvert_Release(convert);
 }
 
 static void test_converttovar(void)
 {
     static WCHAR strW[] = {'t','e','s','t',0};
     double dvalue = 123.56;
-    IDataConvert *convert;
     DBSTATUS dst_status;
     DBLENGTH dst_len;
     VARIANT dst;
@@ -2574,13 +2409,6 @@ static void test_converttovar(void)
     INT i4;
     LARGE_INTEGER i8;
     VARIANT_BOOL boolean = VARIANT_TRUE;
-
-    hr = CoCreateInstance(&CLSID_OLEDB_CONVERSIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IDataConvert, (void**)&convert);
-    if(FAILED(hr))
-    {
-        win_skip("Unable to load oledb conversion library\n");
-        return;
-    }
 
     V_VT(&dst) = VT_EMPTY;
     dst_len = 0;
@@ -2669,14 +2497,24 @@ static void test_converttovar(void)
 
     cy2 = V_CY(&dst);
     ok(S(cy2).Lo == S(cy).Lo && S(cy2).Hi == S(cy).Hi, "got %d,%d\n", S(cy2).Lo, S(cy2).Hi);
-
-    IDataConvert_Release(convert);
 }
 
 START_TEST(convert)
 {
+    HRESULT hr;
+
     OleInitialize(NULL);
+
     test_dcinfo();
+
+    hr = CoCreateInstance(&CLSID_OLEDB_CONVERSIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IDataConvert, (void**)&convert);
+    if(FAILED(hr))
+    {
+        win_skip("Unable to create IDataConvert instance, 0x%08x\n", hr);
+        OleUninitialize();
+        return;
+    }
+
     test_canconvert();
     test_converttoi2();
     test_converttoi4();
@@ -2694,5 +2532,8 @@ START_TEST(convert)
     test_converttoui8();
     test_converttovar();
     test_getconversionsize();
+
+    IDataConvert_Release(convert);
+
     OleUninitialize();
 }
