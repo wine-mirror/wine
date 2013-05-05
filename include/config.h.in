@@ -236,8 +236,11 @@
 /* Define to 1 if you have the `getuid' function. */
 #undef HAVE_GETUID
 
-/* Define if we have libgphoto2 development environment */
+/* Define if we have the libgphoto2 development environment */
 #undef HAVE_GPHOTO2
+
+/* Define if we have the libgphoto2_port development environment */
+#undef HAVE_GPHOTO2_PORT
 
 /* Define to 1 if you have the <grp.h> header file. */
 #undef HAVE_GRP_H

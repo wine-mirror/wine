@@ -1400,18 +1400,28 @@ if test "x$with_gphoto" != "xno"
 then
     ac_save_CPPFLAGS="$CPPFLAGS"
     WINE_PACKAGE_FLAGS(GPHOTO2,[libgphoto2],[-lgphoto2],
-                       [(gphoto2-config --cflags || gphoto2-port-config --cflags)],
-                       [(gphoto2-config --libs || gphoto2-port-config --libs)])
+                       [gphoto2-config --cflags], [gphoto2-config --libs])
     AC_CHECK_HEADER(gphoto2-camera.h,
                     [AC_CHECK_LIB(gphoto2,gp_camera_new,
-                                  [AC_DEFINE(HAVE_GPHOTO2, 1, [Define if we have libgphoto2 development environment])],
+                                  [AC_DEFINE(HAVE_GPHOTO2, 1, [Define if we have the libgphoto2 development environment])],
                                   [GPHOTO2_LIBS=""; GPHOTO2_CFLAGS=""],
                                   [$GPHOTO2_LIBS])],
                     [GPHOTO2_LIBS=""; GPHOTO2_CFLAGS=""])
+    WINE_PACKAGE_FLAGS(GPHOTO2_PORT,[libgphoto2_port],[-lgphoto2_port],
+                       [gphoto2-port-config --cflags],
+                       [gphoto2-port-config --libs])
+    AC_CHECK_HEADER(gphoto2-port.h,
+                    [AC_CHECK_LIB(gphoto2_port,gp_port_info_list_new,
+                                  [AC_DEFINE(HAVE_GPHOTO2_PORT, 1, [Define if we have the libgphoto2_port development environment])],
+                                  [GPHOTO2_PORT_LIBS=""; GPHOTO2_PORT_CFLAGS=""],
+                                  [$GPHOTO2_PORT_LIBS])],
+                    [GPHOTO2_PORT_LIBS=""; GPHOTO2_PORT_CFLAGS=""])
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 WINE_NOTICE_WITH(gphoto,[test "$ac_cv_lib_gphoto2_gp_camera_new" != "yes"],
                  [libgphoto2 ${notice_platform}development files not found, digital cameras won't be supported.])
+WINE_NOTICE_WITH(gphoto,[test "$ac_cv_lib_gphoto2_port_gp_port_info_list_new" != "yes"],
+                 [libgphoto2_port ${notice_platform}development files not found, digital cameras won't be auto-detected.])
 
 
 dnl **** Check for resolver library ***
@@ -3162,7 +3172,7 @@ WINE_CONFIG_MAKEFILE([documentation])
 WINE_CONFIG_MAKEFILE([fonts],,[install-lib])
 WINE_CONFIG_MAKEFILE([include],,[install-dev])
 WINE_CONFIG_MAKEFILE([libs/port])
-WINE_CONFIG_MAKEFILE([libs/wine],,[install-dev,install-lib])
+WINE_CONFIG_MAKEFILE([libs/wine])
 WINE_CONFIG_MAKEFILE([libs/wpp])
 WINE_CONFIG_MAKEFILE([loader],,[install-lib,manpage])
 WINE_CONFIG_PROGRAM(aspnet_regiis,,[install])

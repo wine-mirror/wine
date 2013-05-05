@@ -654,6 +654,8 @@ FREETYPE_LIBS
 FREETYPE_CFLAGS
 LCMSLIBS
 RESOLVLIBS
+GPHOTO2_PORT_LIBS
+GPHOTO2_PORT_CFLAGS
 GPHOTO2_LIBS
 GPHOTO2_CFLAGS
 SANE_LIBS
@@ -874,6 +876,8 @@ SANE_CFLAGS
 SANE_LIBS
 GPHOTO2_CFLAGS
 GPHOTO2_LIBS
+GPHOTO2_PORT_CFLAGS
+GPHOTO2_PORT_LIBS
 FREETYPE_CFLAGS
 FREETYPE_LIBS
 GSTREAMER_CFLAGS
@@ -1582,6 +1586,10 @@ Some influential environment variables:
               C compiler flags for libgphoto2, overriding pkg-config
   GPHOTO2_LIBS
               Linker flags for libgphoto2, overriding pkg-config
+  GPHOTO2_PORT_CFLAGS
+              C compiler flags for libgphoto2_port, overriding pkg-config
+  GPHOTO2_PORT_LIBS
+              Linker flags for libgphoto2_port, overriding pkg-config
   FREETYPE_CFLAGS
               C compiler flags for freetype2, overriding pkg-config
   FREETYPE_LIBS
@@ -10653,14 +10661,14 @@ then
 elif test -n "$PKG_CONFIG"; then :
   GPHOTO2_CFLAGS=`$PKG_CONFIG --cflags libgphoto2 2>/dev/null`
 fi
-GPHOTO2_CFLAGS=${GPHOTO2_CFLAGS:-`(gphoto2-config --cflags || gphoto2-port-config --cflags) 2>/dev/null`}
+GPHOTO2_CFLAGS=${GPHOTO2_CFLAGS:-`gphoto2-config --cflags 2>/dev/null`}
 CPPFLAGS="$CPPFLAGS $GPHOTO2_CFLAGS"
 if test -n "$GPHOTO2_LIBS"; then :
 
 elif test -n "$PKG_CONFIG"; then :
   GPHOTO2_LIBS=`$PKG_CONFIG --libs libgphoto2 2>/dev/null`
 fi
-GPHOTO2_LIBS=${GPHOTO2_LIBS:-`(gphoto2-config --libs || gphoto2-port-config --libs) 2>/dev/null`}
+GPHOTO2_LIBS=${GPHOTO2_LIBS:-`gphoto2-config --libs 2>/dev/null`}
 GPHOTO2_LIBS=${GPHOTO2_LIBS:-"-lgphoto2"}
     ac_fn_c_check_header_mongrel "$LINENO" "gphoto2-camera.h" "ac_cv_header_gphoto2_camera_h" "$ac_includes_default"
 if test "x$ac_cv_header_gphoto2_camera_h" = xyes; then :
@@ -10713,6 +10721,71 @@ else
 fi
 
 
+    if test -n "$GPHOTO2_PORT_CFLAGS"; then :
+
+elif test -n "$PKG_CONFIG"; then :
+  GPHOTO2_PORT_CFLAGS=`$PKG_CONFIG --cflags libgphoto2_port 2>/dev/null`
+fi
+GPHOTO2_PORT_CFLAGS=${GPHOTO2_PORT_CFLAGS:-`gphoto2-port-config --cflags 2>/dev/null`}
+CPPFLAGS="$CPPFLAGS $GPHOTO2_PORT_CFLAGS"
+if test -n "$GPHOTO2_PORT_LIBS"; then :
+
+elif test -n "$PKG_CONFIG"; then :
+  GPHOTO2_PORT_LIBS=`$PKG_CONFIG --libs libgphoto2_port 2>/dev/null`
+fi
+GPHOTO2_PORT_LIBS=${GPHOTO2_PORT_LIBS:-`gphoto2-port-config --libs 2>/dev/null`}
+GPHOTO2_PORT_LIBS=${GPHOTO2_PORT_LIBS:-"-lgphoto2_port"}
+    ac_fn_c_check_header_mongrel "$LINENO" "gphoto2-port.h" "ac_cv_header_gphoto2_port_h" "$ac_includes_default"
+if test "x$ac_cv_header_gphoto2_port_h" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gp_port_info_list_new in -lgphoto2_port" >&5
+$as_echo_n "checking for gp_port_info_list_new in -lgphoto2_port... " >&6; }
+if ${ac_cv_lib_gphoto2_port_gp_port_info_list_new+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lgphoto2_port $GPHOTO2_PORT_LIBS $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char gp_port_info_list_new ();
+int
+main ()
+{
+return gp_port_info_list_new ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_gphoto2_port_gp_port_info_list_new=yes
+else
+  ac_cv_lib_gphoto2_port_gp_port_info_list_new=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_gphoto2_port_gp_port_info_list_new" >&5
+$as_echo "$ac_cv_lib_gphoto2_port_gp_port_info_list_new" >&6; }
+if test "x$ac_cv_lib_gphoto2_port_gp_port_info_list_new" = xyes; then :
+
+$as_echo "#define HAVE_GPHOTO2_PORT 1" >>confdefs.h
+
+else
+  GPHOTO2_PORT_LIBS=""; GPHOTO2_PORT_CFLAGS=""
+fi
+
+else
+  GPHOTO2_PORT_LIBS=""; GPHOTO2_PORT_CFLAGS=""
+fi
+
+
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 if test "$ac_cv_lib_gphoto2_gp_camera_new" != "yes"; then :
@@ -10720,6 +10793,14 @@ if test "$ac_cv_lib_gphoto2_gp_camera_new" != "yes"; then :
   x)   as_fn_append wine_notices "|libgphoto2 ${notice_platform}development files not found, digital cameras won't be supported." ;;
   xno) ;;
   *)   as_fn_error $? "libgphoto2 ${notice_platform}development files not found, digital cameras won't be supported.
+This is an error since --with-gphoto was requested." "$LINENO" 5 ;;
+esac
+fi
+if test "$ac_cv_lib_gphoto2_port_gp_port_info_list_new" != "yes"; then :
+  case "x$with_gphoto" in
+  x)   as_fn_append wine_notices "|libgphoto2_port ${notice_platform}development files not found, digital cameras won't be auto-detected." ;;
+  xno) ;;
+  *)   as_fn_error $? "libgphoto2_port ${notice_platform}development files not found, digital cameras won't be auto-detected.
 This is an error since --with-gphoto was requested." "$LINENO" 5 ;;
 esac
 fi
@@ -16356,7 +16437,7 @@ wine_fn_config_makefile documentation enable_documentation
 wine_fn_config_makefile fonts enable_fonts install-lib
 wine_fn_config_makefile include enable_include install-dev
 wine_fn_config_makefile libs/port enable_libs_port
-wine_fn_config_makefile libs/wine enable_libs_wine install-dev,install-lib
+wine_fn_config_makefile libs/wine enable_libs_wine
 wine_fn_config_makefile libs/wpp enable_libs_wpp
 wine_fn_config_makefile loader enable_loader install-lib,manpage
 wine_fn_config_program aspnet_regiis enable_aspnet_regiis install

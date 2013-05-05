@@ -578,7 +578,7 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     return TRUE;
 }
 
-#ifdef HAVE_GPHOTO2
+#if defined(HAVE_GPHOTO2) && defined(HAVE_GPHOTO2_PORT)
 static TW_UINT16 GPHOTO2_GetIdentity( pTW_IDENTITY, pTW_IDENTITY);
 static TW_UINT16 GPHOTO2_OpenDS( pTW_IDENTITY, pTW_IDENTITY);
 #endif
@@ -597,7 +597,7 @@ static TW_UINT16 GPHOTO2_SourceControlHandler (
 	    switch (MSG)
 	    {
 		case MSG_CLOSEDS:
-#ifdef HAVE_GPHOTO2
+#if defined(HAVE_GPHOTO2) && defined(HAVE_GPHOTO2_PORT)
 		     if (activeDS.camera) {
 			gp_camera_free (activeDS.camera);
 			activeDS.camera = NULL;
@@ -605,14 +605,14 @@ static TW_UINT16 GPHOTO2_SourceControlHandler (
 #endif
 		     break;
 		case MSG_GET:
-#ifdef HAVE_GPHOTO2
+#if defined(HAVE_GPHOTO2) && defined(HAVE_GPHOTO2_PORT)
 		     twRC = GPHOTO2_GetIdentity(pOrigin,(pTW_IDENTITY)pData);
 #else
 		     twRC = TWRC_FAILURE;
 #endif
 		     break;
 		case MSG_OPENDS:
-#ifdef HAVE_GPHOTO2
+#if defined(HAVE_GPHOTO2) && defined(HAVE_GPHOTO2_PORT)
 		     twRC = GPHOTO2_OpenDS(pOrigin,(pTW_IDENTITY)pData);
 #else
 		     twRC = TWRC_FAILURE;
@@ -1024,7 +1024,7 @@ DS_Entry ( pTW_IDENTITY pOrigin,
     return twRC;
 }
 
-#ifdef HAVE_GPHOTO2
+#if defined(HAVE_GPHOTO2) && defined(HAVE_GPHOTO2_PORT)
 static GPPortInfoList *port_list;
 static int curcamera;
 static CameraList *detected_cameras;
