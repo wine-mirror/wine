@@ -435,6 +435,13 @@ static const char szExampleXML[] =
 "    </elem>\n"
 "</root>\n";
 
+static const char charrefsxml[] =
+"<?xml version='1.0'?>"
+"<a>"
+"<b1> Text &#65; end </b1>"
+"<b2>&#65;&#66; &#67; </b2>"
+"</a>";
+
 static const CHAR szNodeTypesXML[] =
 "<?xml version='1.0'?>"
 "<!-- comment node 0 -->"
@@ -4154,10 +4161,58 @@ static inline void _check_ws_preserved(int line, IXMLDOMDocument2* doc, char con
     IXMLDOMNode_Release(node2);
 }
 
+static void test_preserve_charref(IXMLDOMDocument2 *doc, VARIANT_BOOL preserve)
+{
+    static const WCHAR b1_p[] = {' ','T','e','x','t',' ','A',' ','e','n','d',' ',0};
+    static const WCHAR b1_i[] = {'T','e','x','t',' ','A',' ','e','n','d',0};
+    static const WCHAR b2_p[] = {'A','B',' ','C',' ',0};
+    static const WCHAR b2_i[] = {'A','B',' ','C',0};
+    IXMLDOMNodeList *list;
+    IXMLDOMElement *root;
+    IXMLDOMNode *node;
+    const WCHAR *text;
+    VARIANT_BOOL b;
+    HRESULT hr;
+    BSTR s;
+
+    hr = IXMLDOMDocument2_put_preserveWhiteSpace(doc, preserve);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(charrefsxml), &b);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXMLDOMDocument2_get_documentElement(doc, &root);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXMLDOMElement_get_childNodes(root, &list);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IXMLDOMElement_Release(root);
+
+    text = preserve == VARIANT_TRUE ? b1_p : b1_i;
+    hr = IXMLDOMNodeList_get_item(list, 0, &node);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IXMLDOMNode_get_text(node, &s);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(s, text), "0x%x, got %s\n", preserve, wine_dbgstr_w(s));
+    SysFreeString(s);
+    IXMLDOMNode_Release(node);
+
+    text = preserve == VARIANT_TRUE ? b2_p : b2_i;
+    hr = IXMLDOMNodeList_get_item(list, 1, &node);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IXMLDOMNode_get_text(node, &s);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(s, text), "0x%x, got %s\n", preserve, wine_dbgstr_w(s));
+    SysFreeString(s);
+    IXMLDOMNode_Release(node);
+
+    IXMLDOMNodeList_Release(list);
+}
+
 static void test_whitespace(void)
 {
-    VARIANT_BOOL b;
     IXMLDOMDocument2 *doc1, *doc2, *doc3, *doc4;
+    VARIANT_BOOL b;
 
     doc1 = create_document(&IID_IXMLDOMDocument2);
     doc2 = create_document(&IID_IXMLDOMDocument2);
@@ -4224,10 +4279,15 @@ static void test_whitespace(void)
     check_ws_preserved(doc3, NULL);
     check_ws_ignored(doc4, NULL);
 
-    IXMLDOMDocument2_Release(doc1);
     IXMLDOMDocument2_Release(doc2);
     IXMLDOMDocument2_Release(doc3);
     IXMLDOMDocument2_Release(doc4);
+
+    /* text with char references */
+    test_preserve_charref(doc1, VARIANT_TRUE);
+    test_preserve_charref(doc1, VARIANT_FALSE);
+    IXMLDOMDocument2_Release(doc1);
+
     free_bstrs();
 }
 
