@@ -356,6 +356,12 @@ static BOOL GetFileDialog95A(LPOPENFILENAMEA ofn,UINT iDlgType)
   LPWSTR defext = NULL;
   LPWSTR filter = NULL;
   LPWSTR customfilter = NULL;
+  INITCOMMONCONTROLSEX icc;
+
+  /* Initialize ComboBoxEx32 */
+  icc.dwSize = sizeof(icc);
+  icc.dwICC = ICC_USEREX_CLASSES;
+  InitCommonControlsEx(&icc);
 
   /* Initialize CommDlgExtendedError() */
   COMDLG32_SetCommDlgExtendedError(0);
@@ -489,6 +495,12 @@ static BOOL GetFileDialog95W(LPOPENFILENAMEW ofn,UINT iDlgType)
   BOOL ret;
   FileOpenDlgInfos fodInfos;
   LPWSTR lpstrSavDir = NULL;
+  INITCOMMONCONTROLSEX icc;
+
+  /* Initialize ComboBoxEx32 */
+  icc.dwSize = sizeof(icc);
+  icc.dwICC = ICC_USEREX_CLASSES;
+  InitCommonControlsEx(&icc);
 
   /* Initialize CommDlgExtendedError() */
   COMDLG32_SetCommDlgExtendedError(0);
