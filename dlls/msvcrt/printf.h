@@ -48,7 +48,7 @@ static int FUNC_NAME(puts_clbk_str)(void *ctx, int len, const APICHAR *str)
         return len;
 
     if(out->len < len) {
-        memcpy(out->buf, str, out->len);
+        memcpy(out->buf, str, out->len*sizeof(APICHAR));
         out->buf += out->len;
         out->len = 0;
         return -1;
