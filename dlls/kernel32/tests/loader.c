@@ -1525,7 +1525,6 @@ static void child_process(const char *dll_name, DWORD target_offset)
 
         SetLastError(0xdeadbeef);
         thread = CreateThread(NULL, 0, noop_thread_proc, &dummy, 0, &ret);
-todo_wine
         ok(!thread || broken(thread != 0) /* before win7 */, "CreateThread should fail\n");
         if (!thread)
             ok(GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());

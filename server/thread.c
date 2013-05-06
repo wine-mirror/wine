@@ -214,6 +214,12 @@ struct thread *create_thread( int fd, struct process *process )
 {
     struct thread *thread;
 
+    if (process->is_terminating)
+    {
+        set_error( STATUS_PROCESS_IS_TERMINATING );
+        return NULL;
+    }
+
     if (!(thread = alloc_object( &thread_ops ))) return NULL;
 
     init_thread_structure( thread );
