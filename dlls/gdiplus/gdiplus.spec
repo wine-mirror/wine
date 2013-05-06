@@ -190,8 +190,8 @@
 190 stdcall GdipDrawString(ptr wstr long ptr ptr ptr ptr)
 191 stdcall GdipEmfToWmfBits(ptr long ptr long long)
 192 stdcall GdipEndContainer(ptr ptr)
-193 stub GdipEnumerateMetafileDestPoint
-194 stub GdipEnumerateMetafileDestPointI
+193 stdcall GdipEnumerateMetafileDestPoint(ptr ptr ptr ptr ptr ptr)
+194 stdcall GdipEnumerateMetafileDestPointI(ptr ptr ptr ptr ptr ptr)
 195 stub GdipEnumerateMetafileDestPoints
 196 stub GdipEnumerateMetafileDestPointsI
 197 stdcall GdipEnumerateMetafileDestRect(ptr ptr ptr ptr ptr ptr)

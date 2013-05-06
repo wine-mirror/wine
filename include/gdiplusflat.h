@@ -206,6 +206,10 @@ GpStatus WINGDIPAPI GdipDrawRectanglesI(GpGraphics*,GpPen*,GDIPCONST GpRect*,INT
 GpStatus WINGDIPAPI GdipDrawString(GpGraphics*,GDIPCONST WCHAR*,INT,
     GDIPCONST GpFont*,GDIPCONST RectF*, GDIPCONST GpStringFormat*,
     GDIPCONST GpBrush*);
+GpStatus WINGDIPAPI GdipEnumerateMetafileDestPoint(GpGraphics*,GDIPCONST GpMetafile*,
+    GDIPCONST GpPointF*,EnumerateMetafileProc,VOID*,GDIPCONST GpImageAttributes*);
+GpStatus WINGDIPAPI GdipEnumerateMetafileDestPointI(GpGraphics*,GDIPCONST GpMetafile*,
+    GDIPCONST GpPoint*,EnumerateMetafileProc,VOID*,GDIPCONST GpImageAttributes*);
 GpStatus WINGDIPAPI GdipEnumerateMetafileDestRect(GpGraphics*,GDIPCONST GpMetafile*,
     GDIPCONST GpRectF*,EnumerateMetafileProc,VOID*,GDIPCONST GpImageAttributes*);
 GpStatus WINGDIPAPI GdipEnumerateMetafileDestRectI(GpGraphics*,GDIPCONST GpMetafile*,
