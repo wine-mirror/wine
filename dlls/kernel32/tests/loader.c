@@ -1958,7 +1958,7 @@ todo_wine
     /* Checking process state without waiting for process termination
      * leads to different results due to a race condition.
      */
-    ret = WaitForSingleObject(pi.hProcess, 100);
+    ret = WaitForSingleObject(pi.hProcess, 1000);
     ok(ret == WAIT_OBJECT_0, "WaitForSingleObject failed: %x\n", ret);
 
     memset(&pbi, 0, sizeof(pbi));
@@ -1967,7 +1967,6 @@ todo_wine
     ok(pbi.ExitStatus == 198, "expected 198, got %lu\n", pbi.ExitStatus);
     affinity = 1;
     ret = pNtSetInformationProcess(pi.hProcess, ProcessAffinityMask, &affinity, sizeof(affinity));
-todo_wine
     ok(ret == STATUS_PROCESS_IS_TERMINATING, "expected STATUS_PROCESS_IS_TERMINATING, got %#x\n", ret);
 
     SetLastError(0xdeadbeef);

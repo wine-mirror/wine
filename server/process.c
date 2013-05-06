@@ -1122,6 +1122,12 @@ static void set_process_affinity( struct process *process, affinity_t affinity )
 {
     struct thread *thread;
 
+    if (!process->running_threads)
+    {
+        set_error( STATUS_PROCESS_IS_TERMINATING );
+        return;
+    }
+
     process->affinity = affinity;
 
     LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
