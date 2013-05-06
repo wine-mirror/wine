@@ -2170,7 +2170,7 @@ out:
 static void test_proxy_direct(int port)
 {
     HINTERNET hi, hc, hr;
-    DWORD r, sz;
+    DWORD r, sz, error;
     char buffer[0x40], *url;
     WCHAR bufferW[0x40];
     static CHAR username[] = "mike",
@@ -2180,6 +2180,14 @@ static void test_proxy_direct(int port)
     static WCHAR usernameW[] = {'m','i','k','e',0},
                  passwordW[] = {'1','1','0','1',0},
                  useragentW[] = {'w','i','n','e','t','e','s','t',0};
+
+    /* specify proxy type without the proxy and bypass */
+    SetLastError(0xdeadbeef);
+    hi = InternetOpen(NULL, INTERNET_OPEN_TYPE_PROXY, NULL, NULL, 0);
+    error = GetLastError();
+    ok(error == ERROR_INVALID_PARAMETER ||
+        broken(error == ERROR_SUCCESS) /* WinXPProSP2 */, "got %u\n", error);
+    ok(hi == NULL || broken(!!hi) /* WinXPProSP2 */, "open should have failed\n");
 
     sprintf(buffer, "localhost:%d\n", port);
     hi = InternetOpen(NULL, INTERNET_OPEN_TYPE_PROXY, buffer, NULL, 0);

@@ -1015,6 +1015,11 @@ HINTERNET WINAPI InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType,
     /* Clear any error information */
     INTERNET_SetLastError(0);
 
+    if((dwAccessType == INTERNET_OPEN_TYPE_PROXY) && !lpszProxy) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return NULL;
+    }
+
     lpwai = alloc_object(NULL, &APPINFOVtbl, sizeof(appinfo_t));
     if (!lpwai) {
         SetLastError(ERROR_OUTOFMEMORY);
@@ -1031,9 +1036,10 @@ HINTERNET WINAPI InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType,
     lpwai->agent = heap_strdupW(lpszAgent);
     if(dwAccessType == INTERNET_OPEN_TYPE_PRECONFIG)
         INTERNET_ConfigureProxy( lpwai );
-    else
+    else if(dwAccessType == INTERNET_OPEN_TYPE_PROXY) {
         lpwai->proxy = heap_strdupW(lpszProxy);
-    lpwai->proxyBypass = heap_strdupW(lpszProxyBypass);
+        lpwai->proxyBypass = heap_strdupW(lpszProxyBypass);
+    }
 
     TRACE("returning %p\n", lpwai);
 
