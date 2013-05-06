@@ -551,6 +551,39 @@ GpStatus WINGDIPAPI GdipEnumerateMetafileSrcRectDestPoints(GpGraphics *graphics,
     return stat;
 }
 
+GpStatus WINGDIPAPI GdipEnumerateMetafileDestRect(GpGraphics *graphics,
+    GDIPCONST GpMetafile *metafile, GDIPCONST GpRectF *dest,
+    EnumerateMetafileProc callback, VOID *cb_data, GDIPCONST GpImageAttributes *attrs)
+{
+    GpPointF points[3];
+
+    if (!graphics || !metafile || !dest) return InvalidParameter;
+
+    points[0].X = points[2].X = dest->X;
+    points[0].Y = points[1].Y = dest->Y;
+    points[1].X = dest->X + dest->Width;
+    points[2].Y = dest->Y + dest->Height;
+
+    return GdipEnumerateMetafileSrcRectDestPoints(graphics, metafile, points, 3,
+        &metafile->bounds, metafile->unit, callback, cb_data, attrs);
+}
+
+GpStatus WINGDIPAPI GdipEnumerateMetafileDestRectI(GpGraphics *graphics,
+    GDIPCONST GpMetafile *metafile, GDIPCONST GpRect *dest,
+    EnumerateMetafileProc callback, VOID *cb_data, GDIPCONST GpImageAttributes *attrs)
+{
+    GpRectF destf;
+
+    if (!graphics || !metafile || !dest) return InvalidParameter;
+
+    destf.X = dest->X;
+    destf.Y = dest->Y;
+    destf.Width = dest->Width;
+    destf.Height = dest->Height;
+
+    return GdipEnumerateMetafileDestRect(graphics, metafile, &destf, callback, cb_data, attrs);
+}
+
 static int CALLBACK get_metafile_type_proc(HDC hDC, HANDLETABLE *lpHTable, const ENHMETARECORD *lpEMFR,
     int nObj, LPARAM lpData)
 {
