@@ -35,8 +35,7 @@ AC_ARG_WITH(alsa,      AS_HELP_STRING([--without-alsa],[do not use the Alsa soun
             [if test "x$withval" = "xno"; then ac_cv_header_sys_asoundlib_h=no; ac_cv_header_alsa_asoundlib_h=no; fi])
 AC_ARG_WITH(capi,      AS_HELP_STRING([--without-capi],[do not use CAPI (ISDN support)]),
             [if test "x$withval" = "xno"; then ac_cv_header_capi20_h=no; ac_cv_header_linux_capi_h=no; fi])
-AC_ARG_WITH(cms,       AS_HELP_STRING([--without-cms],[do not use CMS (color management support)]),
-            [if test "x$withval" = "xno"; then ac_cv_header_lcms_h=no; ac_cv_header_lcms_lcms_h=no; fi])
+AC_ARG_WITH(cms,       AS_HELP_STRING([--without-cms],[do not use CMS (color management support)]))
 AC_ARG_WITH(coreaudio, AS_HELP_STRING([--without-coreaudio],[do not use the CoreAudio sound support]),
             [if test "x$withval" = "xno"; then ac_cv_header_CoreAudio_CoreAudio_h=no; fi])
 AC_ARG_WITH(cups,      AS_HELP_STRING([--without-cups],[do not use CUPS]))
@@ -434,8 +433,6 @@ AC_CHECK_HEADERS(\
 	jpeglib.h \
 	kstat.h \
 	lber.h \
-	lcms.h \
-	lcms/lcms.h \
 	ldap.h \
 	link.h \
 	linux/cdrom.h \
@@ -1445,12 +1442,20 @@ then
 fi
 
 dnl **** Check for LittleCMS ***
-AC_SUBST(LCMSLIBS,"")
-if test "$ac_cv_header_lcms_h" = "yes" -o "$ac_cv_header_lcms_lcms_h" = "yes"
+if test "x$with_lcms" != "xno"
 then
-    AC_CHECK_LIB(lcms, cmsOpenProfileFromFile,
-        [AC_DEFINE(HAVE_LCMS, 1, [Define if you have the LittleCMS development environment])
-         LCMSLIBS="-llcms"])
+    ac_save_CPPFLAGS="$CPPFLAGS"
+    WINE_PACKAGE_FLAGS(LCMS,[lcms],[-llcms])
+    AC_CHECK_HEADERS([lcms.h lcms/lcms.h])
+    if test "$ac_cv_header_lcms_h" = "yes" -o "$ac_cv_header_lcms_lcms_h" = "yes"
+    then
+        AC_CHECK_LIB(lcms, cmsOpenProfileFromFile,
+            [AC_DEFINE(HAVE_LCMS, 1, [Define if you have the LittleCMS development environment])],[LCMS_LIBS=""])
+    else
+        LCMS_CFLAGS=""
+        LCMS_LIBS=""
+    fi
+    CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 WINE_NOTICE_WITH(cms,[test "$ac_cv_lib_lcms_cmsOpenProfileFromFile" != "yes"],
                  [liblcms ${notice_platform}development files not found, Color Management won't be supported.])

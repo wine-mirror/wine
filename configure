@@ -652,7 +652,8 @@ LIBGETTEXTPO
 ZLIB
 FREETYPE_LIBS
 FREETYPE_CFLAGS
-LCMSLIBS
+LCMS_LIBS
+LCMS_CFLAGS
 RESOLVLIBS
 GPHOTO2_PORT_LIBS
 GPHOTO2_PORT_CFLAGS
@@ -878,6 +879,8 @@ GPHOTO2_CFLAGS
 GPHOTO2_LIBS
 GPHOTO2_PORT_CFLAGS
 GPHOTO2_PORT_LIBS
+LCMS_CFLAGS
+LCMS_LIBS
 FREETYPE_CFLAGS
 FREETYPE_LIBS
 GSTREAMER_CFLAGS
@@ -1590,6 +1593,8 @@ Some influential environment variables:
               C compiler flags for libgphoto2_port, overriding pkg-config
   GPHOTO2_PORT_LIBS
               Linker flags for libgphoto2_port, overriding pkg-config
+  LCMS_CFLAGS C compiler flags for lcms, overriding pkg-config
+  LCMS_LIBS   Linker flags for lcms, overriding pkg-config
   FREETYPE_CFLAGS
               C compiler flags for freetype2, overriding pkg-config
   FREETYPE_LIBS
@@ -2603,7 +2608,7 @@ fi
 
 # Check whether --with-cms was given.
 if test "${with_cms+set}" = set; then :
-  withval=$with_cms; if test "x$withval" = "xno"; then ac_cv_header_lcms_h=no; ac_cv_header_lcms_lcms_h=no; fi
+  withval=$with_cms;
 fi
 
 
@@ -5851,8 +5856,6 @@ for ac_header in \
 	jpeglib.h \
 	kstat.h \
 	lber.h \
-	lcms.h \
-	lcms/lcms.h \
 	ldap.h \
 	link.h \
 	linux/cdrom.h \
@@ -10843,11 +10846,39 @@ rm -f core conftest.err conftest.$ac_objext \
     LIBS="$ac_save_LIBS"
 fi
 
-LCMSLIBS=""
-
-if test "$ac_cv_header_lcms_h" = "yes" -o "$ac_cv_header_lcms_lcms_h" = "yes"
+if test "x$with_lcms" != "xno"
 then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for cmsOpenProfileFromFile in -llcms" >&5
+    ac_save_CPPFLAGS="$CPPFLAGS"
+    if test -n "$LCMS_CFLAGS"; then :
+
+elif test -n "$PKG_CONFIG"; then :
+  LCMS_CFLAGS=`$PKG_CONFIG --cflags lcms 2>/dev/null`
+fi
+
+CPPFLAGS="$CPPFLAGS $LCMS_CFLAGS"
+if test -n "$LCMS_LIBS"; then :
+
+elif test -n "$PKG_CONFIG"; then :
+  LCMS_LIBS=`$PKG_CONFIG --libs lcms 2>/dev/null`
+fi
+
+LCMS_LIBS=${LCMS_LIBS:-"-llcms"}
+    for ac_header in lcms.h lcms/lcms.h
+do :
+  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
+if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+
+done
+
+    if test "$ac_cv_header_lcms_h" = "yes" -o "$ac_cv_header_lcms_lcms_h" = "yes"
+    then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for cmsOpenProfileFromFile in -llcms" >&5
 $as_echo_n "checking for cmsOpenProfileFromFile in -llcms... " >&6; }
 if ${ac_cv_lib_lcms_cmsOpenProfileFromFile+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -10887,9 +10918,15 @@ if test "x$ac_cv_lib_lcms_cmsOpenProfileFromFile" = xyes; then :
 
 $as_echo "#define HAVE_LCMS 1" >>confdefs.h
 
-         LCMSLIBS="-llcms"
+else
+  LCMS_LIBS=""
 fi
 
+    else
+        LCMS_CFLAGS=""
+        LCMS_LIBS=""
+    fi
+    CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 if test "$ac_cv_lib_lcms_cmsOpenProfileFromFile" != "yes"; then :
   case "x$with_cms" in
