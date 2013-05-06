@@ -1698,6 +1698,88 @@ static WCHAR *build_proxy_path_url(http_request_t *req)
     return url;
 }
 
+static BOOL HTTP_DomainMatches(LPCWSTR server, LPCWSTR domain)
+{
+    static const WCHAR localW[] = { '<','l','o','c','a','l','>',0 };
+    BOOL ret = FALSE;
+
+    if (!strcmpiW( domain, localW ) && !strchrW( server, '.' ))
+        ret = TRUE;
+    else if (*domain == '*')
+    {
+        if (domain[1] == '.')
+        {
+            LPCWSTR dot;
+
+            /* For a hostname to match a wildcard, the last domain must match
+             * the wildcard exactly.  E.g. if the wildcard is *.a.b, and the
+             * hostname is www.foo.a.b, it matches, but a.b does not.
+             */
+            dot = strchrW( server, '.' );
+            if (dot)
+            {
+                int len = strlenW( dot + 1 );
+
+                if (len > strlenW( domain + 2 ))
+                {
+                    LPCWSTR ptr;
+
+                    /* The server's domain is longer than the wildcard, so it
+                     * could be a subdomain.  Compare the last portion of the
+                     * server's domain.
+                     */
+                    ptr = dot + len + 1 - strlenW( domain + 2 );
+                    if (!strcmpiW( ptr, domain + 2 ))
+                    {
+                        /* This is only a match if the preceding character is
+                         * a '.', i.e. that it is a matching domain.  E.g.
+                         * if domain is '*.b.c' and server is 'www.ab.c' they
+                         * do not match.
+                         */
+                        ret = *(ptr - 1) == '.';
+                    }
+                }
+                else
+                    ret = !strcmpiW( dot + 1, domain + 2 );
+            }
+        }
+    }
+    else
+        ret = !strcmpiW( server, domain );
+    return ret;
+}
+
+static BOOL HTTP_ShouldBypassProxy(appinfo_t *lpwai, LPCWSTR server)
+{
+    LPCWSTR ptr;
+    BOOL ret = FALSE;
+
+    if (!lpwai->proxyBypass) return FALSE;
+    ptr = lpwai->proxyBypass;
+    do {
+        LPCWSTR tmp = ptr;
+
+        ptr = strchrW( ptr, ';' );
+        if (!ptr)
+            ptr = strchrW( tmp, ' ' );
+        if (ptr)
+        {
+            if (ptr - tmp < INTERNET_MAX_HOST_NAME_LENGTH)
+            {
+                WCHAR domain[INTERNET_MAX_HOST_NAME_LENGTH];
+
+                memcpy( domain, tmp, (ptr - tmp) * sizeof(WCHAR) );
+                domain[ptr - tmp] = 0;
+                ret = HTTP_DomainMatches( server, domain );
+            }
+            ptr += 1;
+        }
+        else if (*tmp)
+            ret = HTTP_DomainMatches( server, tmp );
+    } while (ptr && !ret);
+    return ret;
+}
+
 /***********************************************************************
  *           HTTP_DealWithProxy
  */
@@ -3247,7 +3329,7 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
     if (session->hostPort == INTERNET_INVALID_PORT_NUMBER)
         session->hostPort = INTERNET_DEFAULT_HTTP_PORT;
 
-    if (hIC->proxy && hIC->proxy[0])
+    if (hIC->proxy && hIC->proxy[0] && !HTTP_ShouldBypassProxy(hIC, session->hostName))
         HTTP_DealWithProxy( hIC, session, request );
 
     INTERNET_SendCallback(&session->hdr, dwContext,
