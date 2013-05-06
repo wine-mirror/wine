@@ -333,7 +333,7 @@ static HRESULT WINAPI domcdata_hasChildNodes(
 {
     domcdata *This = impl_from_IXMLDOMCDATASection( iface );
     TRACE("(%p)->(%p)\n", This, ret);
-    return node_has_childnodes(&This->node, ret);
+    return return_var_false(ret);
 }
 
 static HRESULT WINAPI domcdata_get_ownerDocument(

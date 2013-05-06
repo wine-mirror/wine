@@ -332,7 +332,7 @@ static HRESULT WINAPI domcomment_hasChildNodes(
 {
     domcomment *This = impl_from_IXMLDOMComment( iface );
     TRACE("(%p)->(%p)\n", This, ret);
-    return node_has_childnodes(&This->node, ret);
+    return return_var_false(ret);
 }
 
 static HRESULT WINAPI domcomment_get_ownerDocument(
