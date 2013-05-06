@@ -1872,7 +1872,6 @@ static void test_ExitProcess(void)
         ret = CreateProcess(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
         ok(ret, "CreateProcess(%s) error %d\n", cmdline, GetLastError());
         ret = WaitForSingleObject(pi.hProcess, 5000);
-todo_wine
         ok(ret == WAIT_TIMEOUT, "child process should fail to terminate\n");
         if (ret != WAIT_OBJECT_0)
         {
@@ -1882,7 +1881,6 @@ todo_wine
         ret = WaitForSingleObject(pi.hProcess, 1000);
         ok(ret == WAIT_OBJECT_0, "child process failed to terminate\n");
         GetExitCodeProcess(pi.hProcess, &ret);
-todo_wine
         ok(ret == 199, "expected exit code 199, got %u\n", ret);
         if (*child_failures)
         {
