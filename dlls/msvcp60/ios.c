@@ -1277,7 +1277,12 @@ fpos_int* __thiscall basic_streambuf_char_seekoff(basic_streambuf_char *this,
 
 /* ?pubseekoff@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAE?AV?$fpos@H@2@JHH@Z */
 /* ?pubseekoff@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAA?AV?$fpos@H@2@_JHH@Z */
-static fpos_int* basic_streambuf_char_pubseekoff(basic_streambuf_char *this,
+/* ?pubseekoff@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAE?AV?$fpos@H@2@JFF@Z */
+/* ?pubseekoff@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAA?AV?$fpos@H@2@_JFF@Z */
+/* ?pubseekoff@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAE?AV?$fpos@H@2@JW4seekdir@ios_base@2@H@Z */
+/* ?pubseekoff@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAA?AV?$fpos@H@2@_JW4seekdir@ios_base@2@H@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_pubseekoff, 20)
+fpos_int* __thiscall basic_streambuf_char_pubseekoff(basic_streambuf_char *this,
         fpos_int *ret, streamoff off, int way, int mode)
 {
     TRACE("(%p %ld %d %d)\n", this, off, way, mode);
@@ -2006,7 +2011,12 @@ fpos_int* __thiscall basic_streambuf_wchar_seekoff(basic_streambuf_wchar *this,
 /* ?pubseekoff@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QEAA?AV?$fpos@H@2@_JHH@Z */
 /* ?pubseekoff@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QAE?AV?$fpos@H@2@JHH@Z */
 /* ?pubseekoff@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QEAA?AV?$fpos@H@2@_JHH@Z */
-static fpos_int* basic_streambuf_wchar_pubseekoff(basic_streambuf_wchar *this,
+/* ?pubseekoff@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QAE?AV?$fpos@H@2@JFF@Z */
+/* ?pubseekoff@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QEAA?AV?$fpos@H@2@_JFF@Z */
+/* ?pubseekoff@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QAE?AV?$fpos@H@2@JW4seekdir@ios_base@2@H@Z */
+/* ?pubseekoff@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QEAA?AV?$fpos@H@2@_JW4seekdir@ioos_base@2@H@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_pubseekoff, 20)
+fpos_int* __thiscall basic_streambuf_wchar_pubseekoff(basic_streambuf_wchar *this,
         fpos_int *ret, streamoff off, int way, int mode)
 {
     TRACE("(%p %ld %d %d)\n", this, off, way, mode);
