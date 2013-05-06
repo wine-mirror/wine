@@ -1380,7 +1380,7 @@ then
     ac_save_CPPFLAGS="$CPPFLAGS"
     WINE_PACKAGE_FLAGS(SANE,[libsane],,[sane-config --cflags],[sane-config --ldflags])
     AC_CHECK_HEADER(sane/sane.h,
-        [WINE_CHECK_SONAME(sane,sane_init,,[SANE_CFLAGS=""],[$SANE_LIBS])]
+        [WINE_CHECK_SONAME(sane,sane_init,,[SANE_CFLAGS=""],[$SANE_LIBS])],
         [SANE_CFLAGS=""])
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
