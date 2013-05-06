@@ -697,13 +697,14 @@ static BOOL INTERNET_ConfigureProxy( appinfo_t *lpwai )
 
             lpwai->accessType = INTERNET_OPEN_TYPE_PROXY;
             lpwai->proxy = heap_strdupW(proxyurl);
+            lpwai->proxyBypass = heap_strdupW(wpi.proxyBypass);
             if (UrlComponents.dwUserNameLength)
             {
                 lpwai->proxyUsername = heap_strdupW(UrlComponents.lpszUserName);
                 lpwai->proxyPassword = heap_strdupW(UrlComponents.lpszPassword);
             }
 
-            TRACE("http proxy = %s\n", debugstr_w(lpwai->proxy));
+            TRACE("http proxy = %s bypass = %s\n", debugstr_w(lpwai->proxy), debugstr_w(lpwai->proxyBypass));
             return TRUE;
         }
         else
