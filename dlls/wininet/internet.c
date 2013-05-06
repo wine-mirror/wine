@@ -663,7 +663,7 @@ static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
  */
 static BOOL INTERNET_ConfigureProxy( appinfo_t *lpwai )
 {
-    proxyinfo_t wpi;
+    proxyinfo_t wpi = {0};
 
     if (INTERNET_LoadProxySettings( &wpi ))
         return FALSE;
@@ -705,6 +705,7 @@ static BOOL INTERNET_ConfigureProxy( appinfo_t *lpwai )
             }
 
             TRACE("http proxy = %s bypass = %s\n", debugstr_w(lpwai->proxy), debugstr_w(lpwai->proxyBypass));
+            FreeProxyInfo(&wpi);
             return TRUE;
         }
         else
@@ -715,6 +716,7 @@ static BOOL INTERNET_ConfigureProxy( appinfo_t *lpwai )
     }
 
     lpwai->accessType = INTERNET_OPEN_TYPE_DIRECT;
+    FreeProxyInfo(&wpi);
     return FALSE;
 }
 
