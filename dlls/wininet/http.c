@@ -5753,10 +5753,6 @@ DWORD HTTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
     session->appInfo = hIC;
     list_add_head( &hIC->hdr.children, &session->hdr.entry );
 
-    if(hIC->proxy && hIC->accessType == INTERNET_OPEN_TYPE_PROXY) {
-        if(hIC->proxyBypass)
-            FIXME("Proxy bypass is ignored.\n");
-    }
     session->hostName = heap_strdupW(lpszServerName);
     if (lpszUserName && lpszUserName[0])
         session->userName = heap_strdupW(lpszUserName);
