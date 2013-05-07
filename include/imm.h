@@ -129,6 +129,15 @@ typedef struct _tagCOMPOSITIONFORM
 
 typedef BOOL (CALLBACK* IMCENUMPROC)(HIMC, LPARAM);
 
+typedef struct _tagIMECHARPOSITION
+{
+    DWORD dwSize;
+    DWORD dwCharPos;
+    POINT pt;
+    UINT  cLineHeight;
+    RECT  rcDocument;
+} IMECHARPOSITION, *LPIMECHARPOSITION;
+
 /* wParam for WM_IME_CONTROL */
 #define IMC_GETCANDIDATEPOS             0x0007
 #define IMC_SETCANDIDATEPOS             0x0008

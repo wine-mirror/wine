@@ -5169,6 +5169,25 @@ LRESULT EditWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, B
 	case WM_IME_CONTROL:
 		break;
 
+	case WM_IME_REQUEST:
+		switch (wParam)
+		{
+                    case IMR_QUERYCHARPOSITION:
+                    {
+                        LRESULT pos;
+                        IMECHARPOSITION *chpos = (IMECHARPOSITION *)lParam;
+
+                        pos = EDIT_EM_PosFromChar(es, es->selection_start + chpos->dwCharPos, FALSE);
+                        chpos->pt.x = LOWORD(pos);
+                        chpos->pt.y = HIWORD(pos);
+                        chpos->cLineHeight = es->line_height;
+                        chpos->rcDocument = es->format_rect;
+                        result = 1;
+                        break;
+                    }
+		}
+		break;
+
 	default:
 		result = DefWindowProcT(hwnd, msg, wParam, lParam, unicode);
 		break;
