@@ -1545,6 +1545,49 @@ static void test_set_count( void )
     DestroyWindow( parent );
 }
 
+static DWORD (WINAPI *pGetListBoxInfo)(HWND);
+static int lb_getlistboxinfo;
+
+static LRESULT WINAPI listbox_subclass_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    WNDPROC oldproc = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
+
+    if (message == LB_GETLISTBOXINFO)
+        lb_getlistboxinfo++;
+
+    return CallWindowProcA(oldproc, hwnd, message, wParam, lParam);
+}
+
+static void test_GetListBoxInfo(void)
+{
+    HWND listbox, parent;
+    WNDPROC oldproc;
+    DWORD ret;
+
+    pGetListBoxInfo = (void*)GetProcAddress(GetModuleHandle("user32"), "GetListBoxInfo");
+
+    if (!pGetListBoxInfo)
+    {
+        win_skip("GetListBoxInfo() not available\n");
+        return;
+    }
+
+    parent = create_parent();
+    listbox = create_listbox(WS_CHILD | WS_VISIBLE, parent);
+
+    oldproc = (WNDPROC)SetWindowLongPtrA(listbox, GWLP_WNDPROC, (LONG_PTR)listbox_subclass_proc);
+    SetWindowLongPtrA(listbox, GWLP_USERDATA, (LONG_PTR)oldproc);
+
+    lb_getlistboxinfo = 0;
+    ret = pGetListBoxInfo(listbox);
+    ok(ret > 0, "got %d\n", ret);
+todo_wine
+    ok(lb_getlistboxinfo == 0, "got %d\n", lb_getlistboxinfo);
+
+    DestroyWindow(listbox);
+    DestroyWindow(parent);
+}
+
 START_TEST(listbox)
 {
   const struct listbox_test SS =
@@ -1624,4 +1667,5 @@ START_TEST(listbox)
   test_listbox_LB_DIR();
   test_listbox_dlgdir();
   test_set_count();
+  test_GetListBoxInfo();
 }

@@ -308,7 +308,7 @@
 @ stdcall GetLastActivePopup(long)
 @ stdcall GetLastInputInfo(ptr)
 @ stdcall GetLayeredWindowAttributes(long ptr ptr ptr)
-# @ stub GetListBoxInfo
+@ stdcall GetListBoxInfo(long)
 @ stdcall GetMenu(long)
 @ stdcall GetMenuBarInfo(long long long ptr)
 @ stdcall GetMenuCheckMarkDimensions()
