@@ -1300,6 +1300,99 @@ int macdrv_err_on;
         forceNextMouseMoveAbsolute = TRUE;
     }
 
+    - (void) handleScrollWheel:(NSEvent*)theEvent
+    {
+        WineWindow* window = (WineWindow*)[theEvent window];
+
+        if ([window isKindOfClass:[WineWindow class]])
+        {
+            CGEventRef cgevent = [theEvent CGEvent];
+            CGPoint pt = CGEventGetLocation(cgevent);
+            NSPoint nspoint = [self flippedMouseLocation:NSPointFromCGPoint(pt)];
+            NSRect contentRect = [window contentRectForFrameRect:[window frame]];
+
+            // Only process the event if it was in the window's content area.
+            if (NSPointInRect(nspoint, contentRect))
+            {
+                macdrv_event* event;
+                CGFloat x, y;
+                BOOL continuous = FALSE;
+
+                event = macdrv_create_event(MOUSE_SCROLL, window);
+                event->mouse_scroll.x = pt.x;
+                event->mouse_scroll.y = pt.y;
+                event->mouse_scroll.time_ms = [self ticksForEventTime:[theEvent timestamp]];
+
+                if (CGEventGetIntegerValueField(cgevent, kCGScrollWheelEventIsContinuous))
+                {
+                    continuous = TRUE;
+
+                    /* Continuous scroll wheel events come from high-precision scrolling
+                       hardware like Apple's Magic Mouse, Mighty Mouse, and trackpads.
+                       For these, we can get more precise data from the CGEvent API. */
+                    /* Axis 1 is vertical, axis 2 is horizontal. */
+                    x = CGEventGetDoubleValueField(cgevent, kCGScrollWheelEventPointDeltaAxis2);
+                    y = CGEventGetDoubleValueField(cgevent, kCGScrollWheelEventPointDeltaAxis1);
+                }
+                else
+                {
+                    double pixelsPerLine = 10;
+                    CGEventSourceRef source;
+
+                    /* The non-continuous values are in units of "lines", not pixels. */
+                    if ((source = CGEventCreateSourceFromEvent(cgevent)))
+                    {
+                        pixelsPerLine = CGEventSourceGetPixelsPerLine(source);
+                        CFRelease(source);
+                    }
+
+                    x = pixelsPerLine * [theEvent deltaX];
+                    y = pixelsPerLine * [theEvent deltaY];
+                }
+
+                /* Mac: negative is right or down, positive is left or up.
+                   Win32: negative is left or down, positive is right or up.
+                   So, negate the X scroll value to translate. */
+                x = -x;
+
+                /* The x,y values so far are in pixels.  Win32 expects to receive some
+                   fraction of WHEEL_DELTA == 120.  By my estimation, that's roughly
+                   6 times the pixel value. */
+                event->mouse_scroll.x_scroll = 6 * x;
+                event->mouse_scroll.y_scroll = 6 * y;
+
+                if (!continuous)
+                {
+                    /* For non-continuous "clicky" wheels, if there was any motion, make
+                       sure there was at least WHEEL_DELTA motion.  This is so, at slow
+                       speeds where the system's acceleration curve is actually reducing the
+                       scroll distance, the user is sure to get some action out of each click.
+                       For example, this is important for rotating though weapons in a
+                       first-person shooter. */
+                    if (0 < event->mouse_scroll.x_scroll && event->mouse_scroll.x_scroll < 120)
+                        event->mouse_scroll.x_scroll = 120;
+                    else if (-120 < event->mouse_scroll.x_scroll && event->mouse_scroll.x_scroll < 0)
+                        event->mouse_scroll.x_scroll = -120;
+
+                    if (0 < event->mouse_scroll.y_scroll && event->mouse_scroll.y_scroll < 120)
+                        event->mouse_scroll.y_scroll = 120;
+                    else if (-120 < event->mouse_scroll.y_scroll && event->mouse_scroll.y_scroll < 0)
+                        event->mouse_scroll.y_scroll = -120;
+                }
+
+                if (event->mouse_scroll.x_scroll || event->mouse_scroll.y_scroll)
+                    [window.queue postEvent:event];
+
+                macdrv_release_event(event);
+
+                // Since scroll wheel events deliver absolute cursor position, the
+                // accumulating delta from move events is invalidated.  Make sure next
+                // mouse move event starts over from an absolute baseline.
+                forceNextMouseMoveAbsolute = TRUE;
+            }
+        }
+    }
+
     // Returns TRUE if the event was handled and caller should do nothing more
     // with it.  Returns FALSE if the caller should process it as normal and
     // then call -didSendEvent:.
@@ -1327,10 +1420,7 @@ int macdrv_err_on;
         }
         else if (type == NSScrollWheel)
         {
-            // Since scroll wheel events deliver absolute cursor position, the
-            // accumulating delta from move events is invalidated.  Make sure next
-            // mouse move event starts over from an absolute baseline.
-            forceNextMouseMoveAbsolute = TRUE;
+            [self handleScrollWheel:anEvent];
         }
         else if (type == NSKeyDown && ![anEvent isARepeat] && [anEvent keyCode] == kVK_Tab)
         {
