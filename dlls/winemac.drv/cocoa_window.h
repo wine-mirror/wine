@@ -48,8 +48,6 @@
 
     NSUInteger lastModifierFlags;
 
-    double mouseMoveDeltaX, mouseMoveDeltaY;
-
     NSInteger levelWhenActive;
 
     NSTimer* liveResizeDisplayTimer;
@@ -67,7 +65,5 @@
 @property (readonly, nonatomic) NSInteger levelWhenActive;
 
     - (void) adjustWindowLevel;
-
-    - (void) postMouseMovedEvent:(NSEvent *)theEvent absolute:(BOOL)absolute;
 
 @end

@@ -1157,6 +1157,7 @@ int macdrv_err_on;
 
         if ([targetWindow isKindOfClass:[WineWindow class]])
         {
+            macdrv_event* event;
             BOOL absolute = forceNextMouseMoveAbsolute || (targetWindow != lastTargetWindow);
             forceNextMouseMoveAbsolute = FALSE;
 
@@ -1172,7 +1173,42 @@ int macdrv_err_on;
                 absolute = TRUE;
             }
 
-            [targetWindow postMouseMovedEvent:anEvent absolute:absolute];
+            if (absolute)
+            {
+                CGPoint point = CGEventGetLocation([anEvent CGEvent]);
+
+                event = macdrv_create_event(MOUSE_MOVED_ABSOLUTE, targetWindow);
+                event->mouse_moved.x = point.x;
+                event->mouse_moved.y = point.y;
+
+                mouseMoveDeltaX = 0;
+                mouseMoveDeltaY = 0;
+            }
+            else
+            {
+                /* Add event delta to accumulated delta error */
+                /* deltaY is already flipped */
+                mouseMoveDeltaX += [anEvent deltaX];
+                mouseMoveDeltaY += [anEvent deltaY];
+
+                event = macdrv_create_event(MOUSE_MOVED, targetWindow);
+                event->mouse_moved.x = mouseMoveDeltaX;
+                event->mouse_moved.y = mouseMoveDeltaY;
+
+                /* Keep the remainder after integer truncation. */
+                mouseMoveDeltaX -= event->mouse_moved.x;
+                mouseMoveDeltaY -= event->mouse_moved.y;
+            }
+
+            if (event->type == MOUSE_MOVED_ABSOLUTE || event->mouse_moved.x || event->mouse_moved.y)
+            {
+                event->mouse_moved.time_ms = [self ticksForEventTime:[anEvent timestamp]];
+
+                [targetWindow.queue postEvent:event];
+            }
+
+            macdrv_release_event(event);
+
             lastTargetWindow = targetWindow;
         }
         else if (lastTargetWindow)

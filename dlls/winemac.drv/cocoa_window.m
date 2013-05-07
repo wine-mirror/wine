@@ -952,47 +952,6 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
                 event:theEvent];
     }
 
-    - (void) postMouseMovedEvent:(NSEvent *)theEvent absolute:(BOOL)absolute
-    {
-        macdrv_event* event;
-
-        if (absolute)
-        {
-            CGPoint point = CGEventGetLocation([theEvent CGEvent]);
-
-            event = macdrv_create_event(MOUSE_MOVED_ABSOLUTE, self);
-            event->mouse_moved.x = point.x;
-            event->mouse_moved.y = point.y;
-
-            mouseMoveDeltaX = 0;
-            mouseMoveDeltaY = 0;
-        }
-        else
-        {
-            /* Add event delta to accumulated delta error */
-            /* deltaY is already flipped */
-            mouseMoveDeltaX += [theEvent deltaX];
-            mouseMoveDeltaY += [theEvent deltaY];
-
-            event = macdrv_create_event(MOUSE_MOVED, self);
-            event->mouse_moved.x = mouseMoveDeltaX;
-            event->mouse_moved.y = mouseMoveDeltaY;
-
-            /* Keep the remainder after integer truncation. */
-            mouseMoveDeltaX -= event->mouse_moved.x;
-            mouseMoveDeltaY -= event->mouse_moved.y;
-        }
-
-        if (event->type == MOUSE_MOVED_ABSOLUTE || event->mouse_moved.x || event->mouse_moved.y)
-        {
-            event->mouse_moved.time_ms = [[WineApplicationController sharedController] ticksForEventTime:[theEvent timestamp]];
-
-            [queue postEvent:event];
-        }
-
-        macdrv_release_event(event);
-    }
-
     - (void) setLevelWhenActive:(NSInteger)level
     {
         levelWhenActive = level;
