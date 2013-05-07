@@ -1177,6 +1177,9 @@ int macdrv_err_on;
             {
                 CGPoint point = CGEventGetLocation([anEvent CGEvent]);
 
+                if (clippingCursor)
+                    [self clipCursorLocation:&point];
+
                 event = macdrv_create_event(MOUSE_MOVED_ABSOLUTE, targetWindow);
                 event->mouse_moved.x = point.x;
                 event->mouse_moved.y = point.y;
@@ -1229,6 +1232,9 @@ int macdrv_err_on;
             BOOL pressed = (type == NSLeftMouseDown || type == NSRightMouseDown || type == NSOtherMouseDown);
             CGPoint pt = CGEventGetLocation([theEvent CGEvent]);
             BOOL process;
+
+            if (clippingCursor)
+                [self clipCursorLocation:&pt];
 
             if (pressed)
             {
@@ -1308,8 +1314,14 @@ int macdrv_err_on;
         {
             CGEventRef cgevent = [theEvent CGEvent];
             CGPoint pt = CGEventGetLocation(cgevent);
-            NSPoint nspoint = [self flippedMouseLocation:NSPointFromCGPoint(pt)];
-            NSRect contentRect = [window contentRectForFrameRect:[window frame]];
+            NSPoint nspoint;
+            NSRect contentRect;
+
+            if (clippingCursor)
+                [self clipCursorLocation:&pt];
+
+            nspoint = [self flippedMouseLocation:NSPointFromCGPoint(pt)];
+            contentRect = [window contentRectForFrameRect:[window frame]];
 
             // Only process the event if it was in the window's content area.
             if (NSPointInRect(nspoint, contentRect))
