@@ -150,7 +150,7 @@ static HRESULT WINAPI SupportErrorInfo_InterfaceSupportsErrorInfo(ISupportErrorI
     TRACE("(%p)->(%s)\n", This, debugstr_guid(riid));
 
     tid = This->iids;
-    while (*tid)
+    while (*tid != NULL_tid)
     {
         if (IsEqualGUID(riid, get_riid_from_tid(*tid)))
             return S_OK;

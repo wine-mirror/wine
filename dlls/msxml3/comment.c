@@ -52,7 +52,7 @@ typedef struct _domcomment
 static const tid_t domcomment_se_tids[] = {
     IXMLDOMNode_tid,
     IXMLDOMComment_tid,
-    0
+    NULL_tid
 };
 
 static inline domcomment *impl_from_IXMLDOMComment( IXMLDOMComment *iface )

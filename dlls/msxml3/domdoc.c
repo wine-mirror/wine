@@ -859,7 +859,7 @@ static const tid_t domdoc_se_tids[] = {
     IXMLDOMDocument_tid,
     IXMLDOMDocument2_tid,
     IXMLDOMDocument3_tid,
-    0
+    NULL_tid
 };
 
 static HRESULT WINAPI domdoc_QueryInterface( IXMLDOMDocument3 *iface, REFIID riid, void** ppvObject )

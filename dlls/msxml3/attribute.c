@@ -53,7 +53,7 @@ typedef struct _domattr
 static const tid_t domattr_se_tids[] = {
     IXMLDOMNode_tid,
     IXMLDOMAttribute_tid,
-    0
+    NULL_tid
 };
 
 static inline domattr *impl_from_IXMLDOMAttribute( IXMLDOMAttribute *iface )

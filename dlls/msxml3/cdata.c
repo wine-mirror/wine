@@ -52,7 +52,7 @@ typedef struct
 static const tid_t domcdata_se_tids[] = {
     IXMLDOMNode_tid,
     IXMLDOMCDATASection_tid,
-    0
+    NULL_tid
 };
 
 static inline domcdata *impl_from_IXMLDOMCDATASection( IXMLDOMCDATASection *iface )
