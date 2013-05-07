@@ -134,14 +134,14 @@ static const CFStringRef cocoa_cursor_names[] =
  * Update the various window states on a mouse event.
  */
 static void send_mouse_input(HWND hwnd, UINT flags, int x, int y,
-                             DWORD mouse_data, unsigned long time)
+                             DWORD mouse_data, BOOL drag, unsigned long time)
 {
     INPUT input;
     HWND top_level_hwnd;
 
     top_level_hwnd = GetAncestor(hwnd, GA_ROOT);
 
-    if ((flags & MOUSEEVENTF_MOVE) && (flags & MOUSEEVENTF_ABSOLUTE))
+    if ((flags & MOUSEEVENTF_MOVE) && (flags & MOUSEEVENTF_ABSOLUTE) && !drag)
     {
         RECT rect;
 
@@ -854,7 +854,7 @@ void macdrv_mouse_button(HWND hwnd, const macdrv_event *event)
 
     send_mouse_input(hwnd, flags | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE,
                      event->mouse_button.x, event->mouse_button.y,
-                     data, event->mouse_button.time_ms);
+                     data, FALSE, event->mouse_button.time_ms);
 }
 
 
@@ -867,16 +867,16 @@ void macdrv_mouse_moved(HWND hwnd, const macdrv_event *event)
 {
     UINT flags = MOUSEEVENTF_MOVE;
 
-    TRACE("win %p/%p %s (%d,%d) time %lu (%lu ticks ago)\n", hwnd, event->window,
+    TRACE("win %p/%p %s (%d,%d) drag %d time %lu (%lu ticks ago)\n", hwnd, event->window,
           (event->type == MOUSE_MOVED) ? "relative" : "absolute",
-          event->mouse_moved.x, event->mouse_moved.y,
+          event->mouse_moved.x, event->mouse_moved.y, event->mouse_moved.drag,
           event->mouse_moved.time_ms, (GetTickCount() - event->mouse_moved.time_ms));
 
     if (event->type == MOUSE_MOVED_ABSOLUTE)
         flags |= MOUSEEVENTF_ABSOLUTE;
 
     send_mouse_input(hwnd, flags, event->mouse_moved.x, event->mouse_moved.y,
-                     0, event->mouse_moved.time_ms);
+                     0, event->mouse_moved.drag, event->mouse_moved.time_ms);
 }
 
 
@@ -894,8 +894,8 @@ void macdrv_mouse_scroll(HWND hwnd, const macdrv_event *event)
 
     send_mouse_input(hwnd, MOUSEEVENTF_WHEEL | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE,
                      event->mouse_scroll.x, event->mouse_scroll.y,
-                     event->mouse_scroll.y_scroll, event->mouse_scroll.time_ms);
+                     event->mouse_scroll.y_scroll, FALSE, event->mouse_scroll.time_ms);
     send_mouse_input(hwnd, MOUSEEVENTF_HWHEEL | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE,
                      event->mouse_scroll.x, event->mouse_scroll.y,
-                     event->mouse_scroll.x_scroll, event->mouse_scroll.time_ms);
+                     event->mouse_scroll.x_scroll, FALSE, event->mouse_scroll.time_ms);
 }

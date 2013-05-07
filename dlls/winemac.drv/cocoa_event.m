@@ -162,7 +162,8 @@ static NSString* const WineEventQueueThreadDictionaryKey = @"WineEventQueueThrea
             (lastEvent = [events lastObject]) &&
             (lastEvent->event->type == MOUSE_MOVED ||
              lastEvent->event->type == MOUSE_MOVED_ABSOLUTE) &&
-            lastEvent->event->window == event->event->window)
+            lastEvent->event->window == event->event->window &&
+            lastEvent->event->mouse_moved.drag == event->event->mouse_moved.drag)
         {
             if (event->event->type == MOUSE_MOVED)
             {

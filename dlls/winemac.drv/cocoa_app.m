@@ -1157,12 +1157,13 @@ int macdrv_err_on;
     - (void) handleMouseMove:(NSEvent*)anEvent
     {
         WineWindow* targetWindow;
+        BOOL drag = [anEvent type] != NSMouseMoved;
 
         /* Because of the way -[NSWindow setAcceptsMouseMovedEvents:] works, the
            event indicates its window is the main window, even if the cursor is
            over a different window.  Find the actual WineWindow that is under the
            cursor and post the event as being for that window. */
-        if ([anEvent type] == NSMouseMoved)
+        if (!drag)
         {
             CGPoint cgpoint = CGEventGetLocation([anEvent CGEvent]);
             NSPoint point = [self flippedMouseLocation:NSPointFromCGPoint(cgpoint)];
@@ -1276,6 +1277,7 @@ int macdrv_err_on;
             if (event->type == MOUSE_MOVED_ABSOLUTE || event->mouse_moved.x || event->mouse_moved.y)
             {
                 event->mouse_moved.time_ms = [self ticksForEventTime:[anEvent timestamp]];
+                event->mouse_moved.drag = drag;
 
                 [targetWindow.queue postEvent:event];
             }
