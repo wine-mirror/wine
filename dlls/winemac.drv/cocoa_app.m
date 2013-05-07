@@ -170,6 +170,7 @@ int macdrv_err_on;
 
     - (void) dealloc
     {
+        [screenFrameCGRects release];
         [applicationIcon release];
         [warpRecords release];
         [cursorTimer release];
@@ -377,10 +378,29 @@ int macdrv_err_on;
         if (!primaryScreenHeightValid)
         {
             NSArray* screens = [NSScreen screens];
-            if ([screens count])
+            NSUInteger count = [screens count];
+            if (count)
             {
+                NSUInteger size;
+                CGRect* rect;
+                NSScreen* screen;
+
                 primaryScreenHeight = NSHeight([[screens objectAtIndex:0] frame]);
                 primaryScreenHeightValid = TRUE;
+
+                size = count * sizeof(CGRect);
+                if (!screenFrameCGRects)
+                    screenFrameCGRects = [[NSMutableData alloc] initWithLength:size];
+                else
+                    [screenFrameCGRects setLength:size];
+
+                rect = [screenFrameCGRects mutableBytes];
+                for (screen in screens)
+                {
+                    CGRect temp = NSRectToCGRect([screen frame]);
+                    temp.origin.y = primaryScreenHeight - CGRectGetMaxY(temp);
+                    *rect++ = temp;
+                }
             }
             else
                 return 1280; /* arbitrary value */
@@ -1157,9 +1177,9 @@ int macdrv_err_on;
 
         if ([targetWindow isKindOfClass:[WineWindow class]])
         {
+            CGPoint point = CGEventGetLocation([anEvent CGEvent]);
             macdrv_event* event;
-            BOOL absolute = forceNextMouseMoveAbsolute || (targetWindow != lastTargetWindow);
-            forceNextMouseMoveAbsolute = FALSE;
+            BOOL absolute;
 
             // If we recently warped the cursor (other than in our cursor-clipping
             // event tap), discard mouse move events until we see an event which is
@@ -1170,13 +1190,63 @@ int macdrv_err_on;
                     return;
 
                 lastSetCursorPositionTime = 0;
+                forceNextMouseMoveAbsolute = TRUE;
+            }
+
+            if (forceNextMouseMoveAbsolute || targetWindow != lastTargetWindow)
+            {
                 absolute = TRUE;
+                forceNextMouseMoveAbsolute = FALSE;
+            }
+            else
+            {
+                // Send absolute move events if the cursor is in the interior of
+                // its range.  Only send relative moves if the cursor is pinned to
+                // the boundaries of where it can go.  We compute the position
+                // that's one additional point in the direction of movement.  If
+                // that is outside of the clipping rect or desktop region (the
+                // union of the screen frames), then we figure the cursor would
+                // have moved outside if it could but it was pinned.
+                CGPoint computedPoint = point;
+                CGFloat deltaX = [anEvent deltaX];
+                CGFloat deltaY = [anEvent deltaY];
+
+                if (deltaX > 0.001)
+                    computedPoint.x++;
+                else if (deltaX < -0.001)
+                    computedPoint.x--;
+
+                if (deltaY > 0.001)
+                    computedPoint.y++;
+                else if (deltaY < -0.001)
+                    computedPoint.y--;
+
+                // Assume cursor is pinned for now
+                absolute = FALSE;
+                if (!clippingCursor || CGRectContainsPoint(cursorClipRect, computedPoint))
+                {
+                    const CGRect* rects;
+                    NSUInteger count, i;
+
+                    // Caches screenFrameCGRects if necessary
+                    [self primaryScreenHeight];
+
+                    rects = [screenFrameCGRects bytes];
+                    count = [screenFrameCGRects length] / sizeof(rects[0]);
+
+                    for (i = 0; i < count; i++)
+                    {
+                        if (CGRectContainsPoint(rects[i], computedPoint))
+                        {
+                            absolute = TRUE;
+                            break;
+                        }
+                    }
+                }
             }
 
             if (absolute)
             {
-                CGPoint point = CGEventGetLocation([anEvent CGEvent]);
-
                 if (clippingCursor)
                     [self clipCursorLocation:&point];
 
