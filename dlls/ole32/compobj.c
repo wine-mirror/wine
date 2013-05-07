@@ -2098,6 +2098,15 @@ HRESULT WINAPI CLSIDFromProgID(LPCOLESTR progid, LPCLSID clsid)
     return __CLSIDFromString(buf2,clsid);
 }
 
+/******************************************************************************
+ *              CLSIDFromProgIDEx [OLE32.@]
+ */
+HRESULT WINAPI CLSIDFromProgIDEx(LPCOLESTR progid, LPCLSID clsid)
+{
+    FIXME("%s,%p: semi-stub\n", debugstr_w(progid), clsid);
+
+    return CLSIDFromProgID(progid, clsid);
+}
 
 /*****************************************************************************
  *             CoGetPSClsid [OLE32.@]
