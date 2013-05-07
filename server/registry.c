@@ -1737,7 +1737,7 @@ void init_registry(void)
 
     /* switch to the config dir */
 
-    if (fchdir( config_dir_fd ) == -1) fatal_perror( "chdir to config dir" );
+    if (fchdir( config_dir_fd ) == -1) fatal_error( "chdir to config dir: %s\n", strerror( errno ));
 
     /* create the root key */
     root_key = alloc_key( &root_name, current_time );
@@ -1790,7 +1790,7 @@ void init_registry(void)
     set_periodic_save_timer();
 
     /* go back to the server dir */
-    if (fchdir( server_dir_fd ) == -1) fatal_perror( "chdir to server dir" );
+    if (fchdir( server_dir_fd ) == -1) fatal_error( "chdir to server dir: %s\n", strerror( errno ));
 }
 
 /* save a registry branch to a file */
@@ -1922,7 +1922,7 @@ static void periodic_save( void *arg )
     save_timeout_user = NULL;
     for (i = 0; i < save_branch_count; i++)
         save_branch( save_branch_info[i].key, save_branch_info[i].path );
-    if (fchdir( server_dir_fd ) == -1) fatal_perror( "chdir to server dir" );
+    if (fchdir( server_dir_fd ) == -1) fatal_error( "chdir to server dir: %s\n", strerror( errno ));
     set_periodic_save_timer();
 }
 
@@ -1948,7 +1948,7 @@ void flush_registry(void)
             perror( " " );
         }
     }
-    if (fchdir( server_dir_fd ) == -1) fatal_perror( "chdir to server dir" );
+    if (fchdir( server_dir_fd ) == -1) fatal_error( "chdir to server dir: %s\n", strerror( errno ));
 }
 
 /* determine if the thread is wow64 (32-bit client running on 64-bit prefix) */

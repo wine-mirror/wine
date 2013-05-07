@@ -652,7 +652,7 @@ static int send_thread_wakeup( struct thread *thread, client_ptr_t cookie, int s
     else if (errno == EPIPE)
         kill_thread( thread, 0 );  /* normal death */
     else
-        fatal_protocol_perror( thread, "write" );
+        fatal_protocol_error( thread, "write: %s\n", strerror( errno ));
     return -1;
 }
 

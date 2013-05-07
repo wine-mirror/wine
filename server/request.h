@@ -38,15 +38,10 @@
 #ifdef __GNUC__
 extern void fatal_protocol_error( struct thread *thread,
                                   const char *err, ... ) __attribute__((format (printf,2,3)));
-extern void fatal_protocol_perror( struct thread *thread,
-                                   const char *err, ... ) __attribute__((format (printf,2,3)));
 extern void fatal_error( const char *err, ... )  __attribute__((noreturn,format(printf,1,2)));
-extern void fatal_perror( const char *err, ... )  __attribute__((noreturn,format(printf,1,2)));
 #else
 extern void fatal_protocol_error( struct thread *thread, const char *err, ... );
-extern void fatal_protocol_perror( struct thread *thread, const char *err, ... );
 extern void fatal_error( const char *err, ... );
-extern void fatal_perror( const char *err, ... );
 #endif
 
 extern const char *get_config_dir(void);
