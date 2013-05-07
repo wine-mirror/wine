@@ -61,6 +61,7 @@ enum {
     WineWindow* lastTargetWindow;
     BOOL forceNextMouseMoveAbsolute;
     double mouseMoveDeltaX, mouseMoveDeltaY;
+    NSUInteger unmatchedMouseDowns;
 
     NSMutableArray* orderedWineWindows;
 

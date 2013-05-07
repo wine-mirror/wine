@@ -1219,6 +1219,87 @@ int macdrv_err_on;
         }
     }
 
+    - (void) handleMouseButton:(NSEvent*)theEvent
+    {
+        WineWindow* window = (WineWindow*)[theEvent window];
+
+        if ([window isKindOfClass:[WineWindow class]])
+        {
+            NSEventType type = [theEvent type];
+            BOOL pressed = (type == NSLeftMouseDown || type == NSRightMouseDown || type == NSOtherMouseDown);
+            CGPoint pt = CGEventGetLocation([theEvent CGEvent]);
+            BOOL process;
+
+            if (pressed)
+            {
+                // Test if the click was in the window's content area.
+                NSPoint nspoint = [self flippedMouseLocation:NSPointFromCGPoint(pt)];
+                NSRect contentRect = [window contentRectForFrameRect:[window frame]];
+                process = NSPointInRect(nspoint, contentRect);
+                if (process && [window styleMask] & NSResizableWindowMask)
+                {
+                    // Ignore clicks in the grow box (resize widget).
+                    HIPoint origin = { 0, 0 };
+                    HIThemeGrowBoxDrawInfo info = { 0 };
+                    HIRect bounds;
+                    OSStatus status;
+
+                    info.kind = kHIThemeGrowBoxKindNormal;
+                    info.direction = kThemeGrowRight | kThemeGrowDown;
+                    if ([window styleMask] & NSUtilityWindowMask)
+                        info.size = kHIThemeGrowBoxSizeSmall;
+                    else
+                        info.size = kHIThemeGrowBoxSizeNormal;
+
+                    status = HIThemeGetGrowBoxBounds(&origin, &info, &bounds);
+                    if (status == noErr)
+                    {
+                        NSRect growBox = NSMakeRect(NSMaxX(contentRect) - bounds.size.width,
+                                                    NSMinY(contentRect),
+                                                    bounds.size.width,
+                                                    bounds.size.height);
+                        process = !NSPointInRect(nspoint, growBox);
+                    }
+                }
+                if (process)
+                    unmatchedMouseDowns |= NSEventMaskFromType(type);
+            }
+            else
+            {
+                NSEventType downType = type - 1;
+                NSUInteger downMask = NSEventMaskFromType(downType);
+                process = (unmatchedMouseDowns & downMask) != 0;
+                unmatchedMouseDowns &= ~downMask;
+            }
+
+            if (process)
+            {
+                macdrv_event* event;
+
+                event = macdrv_create_event(MOUSE_BUTTON, window);
+                event->mouse_button.button = [theEvent buttonNumber];
+                event->mouse_button.pressed = pressed;
+                event->mouse_button.x = pt.x;
+                event->mouse_button.y = pt.y;
+                event->mouse_button.time_ms = [self ticksForEventTime:[theEvent timestamp]];
+
+                [window.queue postEvent:event];
+
+                macdrv_release_event(event);
+            }
+        }
+
+        // Since mouse button events deliver absolute cursor position, the
+        // accumulating delta from move events is invalidated.  Make sure
+        // next mouse move event starts over from an absolute baseline.
+        // Also, it's at least possible that the title bar widgets (e.g. close
+        // button, etc.) could enter an internal event loop on a mouse down that
+        // wouldn't exit until a mouse up.  In that case, we'd miss any mouse
+        // dragged events and, after that, any notion of the cursor position
+        // computed from accumulating deltas would be wrong.
+        forceNextMouseMoveAbsolute = TRUE;
+    }
+
     // Returns TRUE if the event was handled and caller should do nothing more
     // with it.  Returns FALSE if the caller should process it as normal and
     // then call -didSendEvent:.
@@ -1240,12 +1321,15 @@ int macdrv_err_on;
         }
         else if (type == NSLeftMouseDown || type == NSLeftMouseUp ||
                  type == NSRightMouseDown || type == NSRightMouseUp ||
-                 type == NSOtherMouseDown || type == NSOtherMouseUp ||
-                 type == NSScrollWheel)
+                 type == NSOtherMouseDown || type == NSOtherMouseUp)
         {
-            // Since mouse button and scroll wheel events deliver absolute cursor
-            // position, the accumulating delta from move events is invalidated.
-            // Make sure next mouse move event starts over from an absolute baseline.
+            [self handleMouseButton:anEvent];
+        }
+        else if (type == NSScrollWheel)
+        {
+            // Since scroll wheel events deliver absolute cursor position, the
+            // accumulating delta from move events is invalidated.  Make sure next
+            // mouse move event starts over from an absolute baseline.
             forceNextMouseMoveAbsolute = TRUE;
         }
         else if (type == NSKeyDown && ![anEvent isARepeat] && [anEvent keyCode] == kVK_Tab)

@@ -250,13 +250,6 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         }
     }
 
-    /* By default, NSView will swallow right-clicks in an attempt to support contextual
-       menus.  We need to bypass that and allow the event to make it to the window. */
-    - (void) rightMouseDown:(NSEvent*)theEvent
-    {
-        [[self window] rightMouseDown:theEvent];
-    }
-
     - (void) addGLContext:(WineOpenGLContext*)context
     {
         if (!glContexts)
@@ -839,23 +832,6 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         [self checkTransparency];
     }
 
-    - (void) postMouseButtonEvent:(NSEvent *)theEvent pressed:(int)pressed
-    {
-        CGPoint pt = CGEventGetLocation([theEvent CGEvent]);
-        macdrv_event* event;
-
-        event = macdrv_create_event(MOUSE_BUTTON, self);
-        event->mouse_button.button = [theEvent buttonNumber];
-        event->mouse_button.pressed = pressed;
-        event->mouse_button.x = pt.x;
-        event->mouse_button.y = pt.y;
-        event->mouse_button.time_ms = [[WineApplicationController sharedController] ticksForEventTime:[theEvent timestamp]];
-
-        [queue postEvent:event];
-
-        macdrv_release_event(event);
-    }
-
     - (void) makeFocused:(BOOL)activate
     {
         WineApplicationController* controller = [WineApplicationController sharedController];
@@ -1061,14 +1037,6 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
     /*
      * ---------- NSResponder method overrides ----------
      */
-    - (void) mouseDown:(NSEvent *)theEvent { [self postMouseButtonEvent:theEvent pressed:1]; }
-    - (void) rightMouseDown:(NSEvent *)theEvent { [self mouseDown:theEvent]; }
-    - (void) otherMouseDown:(NSEvent *)theEvent { [self mouseDown:theEvent]; }
-
-    - (void) mouseUp:(NSEvent *)theEvent { [self postMouseButtonEvent:theEvent pressed:0]; }
-    - (void) rightMouseUp:(NSEvent *)theEvent { [self mouseUp:theEvent]; }
-    - (void) otherMouseUp:(NSEvent *)theEvent { [self mouseUp:theEvent]; }
-
     - (void) keyDown:(NSEvent *)theEvent { [self postKeyEvent:theEvent]; }
     - (void) keyUp:(NSEvent *)theEvent   { [self postKeyEvent:theEvent]; }
 
