@@ -2305,9 +2305,12 @@ static WCHAR *get_install_location( MSIPACKAGE *package )
     WCHAR *path;
 
     if (!package->ProductCode) return NULL;
-    if (MSIREG_OpenInstallProps( package->ProductCode, package->Context, NULL, &hkey, FALSE ))
-        return NULL;
-    path = msi_reg_get_val_str( hkey, szInstallLocation );
+    if (MSIREG_OpenInstallProps( package->ProductCode, package->Context, NULL, &hkey, FALSE )) return NULL;
+    if ((path = msi_reg_get_val_str( hkey, szInstallLocation )) && !path[0])
+    {
+        msi_free( path );
+        path = NULL;
+    }
     RegCloseKey( hkey );
     return path;
 }
