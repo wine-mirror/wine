@@ -60,6 +60,7 @@ enum {
     NSMutableData* screenFrameCGRects;
 
     WineWindow* lastTargetWindow;
+    WineWindow* mouseCaptureWindow;
     BOOL forceNextMouseMoveAbsolute;
     double mouseMoveDeltaX, mouseMoveDeltaY;
     NSUInteger unmatchedMouseDowns;

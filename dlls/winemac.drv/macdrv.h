@@ -95,6 +95,7 @@ struct macdrv_thread_data
 {
     macdrv_event_queue          queue;
     const macdrv_event         *current_event;
+    macdrv_window               capture_window;
     CFDataRef                   keyboard_layout_uchr;
     CGEventSourceKeyboardType   keyboard_type;
     int                         iso_keyboard;

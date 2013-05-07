@@ -136,6 +136,7 @@ extern void macdrv_beep(void) DECLSPEC_HIDDEN;
 extern void macdrv_set_application_icon(CFArrayRef images) DECLSPEC_HIDDEN;
 extern void macdrv_quit_reply(int reply) DECLSPEC_HIDDEN;
 extern int macdrv_using_input_method(void) DECLSPEC_HIDDEN;
+extern void macdrv_set_mouse_capture_window(macdrv_window window) DECLSPEC_HIDDEN;
 
 
 /* cursor */

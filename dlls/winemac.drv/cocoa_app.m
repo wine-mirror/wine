@@ -82,6 +82,7 @@ int macdrv_err_on;
 @property (retain, nonatomic) NSTimer* cursorTimer;
 @property (retain, nonatomic) NSImage* applicationIcon;
 @property (readonly, nonatomic) BOOL inputSourceIsInputMethod;
+@property (retain, nonatomic) WineWindow* mouseCaptureWindow;
 
     - (void) setupObservations;
     - (void) applicationDidBecomeActive:(NSNotification *)notification;
@@ -96,6 +97,7 @@ int macdrv_err_on;
     @synthesize keyboardType, lastFlagsChanged;
     @synthesize orderedWineWindows, applicationIcon;
     @synthesize cursorFrames, cursorTimer;
+    @synthesize mouseCaptureWindow;
 
     + (void) initialize
     {
@@ -1159,12 +1161,16 @@ int macdrv_err_on;
         WineWindow* targetWindow;
         BOOL drag = [anEvent type] != NSMouseMoved;
 
-        /* Because of the way -[NSWindow setAcceptsMouseMovedEvents:] works, the
-           event indicates its window is the main window, even if the cursor is
-           over a different window.  Find the actual WineWindow that is under the
-           cursor and post the event as being for that window. */
-        if (!drag)
+        if (mouseCaptureWindow)
+            targetWindow = mouseCaptureWindow;
+        else if (drag)
+            targetWindow = (WineWindow*)[anEvent window];
+        else
         {
+            /* Because of the way -[NSWindow setAcceptsMouseMovedEvents:] works, the
+               event indicates its window is the main window, even if the cursor is
+               over a different window.  Find the actual WineWindow that is under the
+               cursor and post the event as being for that window. */
             CGPoint cgpoint = CGEventGetLocation([anEvent CGEvent]);
             NSPoint point = [self flippedMouseLocation:NSPointFromCGPoint(cgpoint)];
             NSInteger windowUnderNumber;
@@ -1173,8 +1179,6 @@ int macdrv_err_on;
                                   belowWindowWithWindowNumber:0];
             targetWindow = (WineWindow*)[NSApp windowWithWindowNumber:windowUnderNumber];
         }
-        else
-            targetWindow = (WineWindow*)[anEvent window];
 
         if ([targetWindow isKindOfClass:[WineWindow class]])
         {
@@ -1296,7 +1300,12 @@ int macdrv_err_on;
 
     - (void) handleMouseButton:(NSEvent*)theEvent
     {
-        WineWindow* window = (WineWindow*)[theEvent window];
+        WineWindow* window;
+
+        if (mouseCaptureWindow)
+            window = mouseCaptureWindow;
+        else
+            window = (WineWindow*)[theEvent window];
 
         if ([window isKindOfClass:[WineWindow class]])
         {
@@ -1310,33 +1319,38 @@ int macdrv_err_on;
 
             if (pressed)
             {
-                // Test if the click was in the window's content area.
-                NSPoint nspoint = [self flippedMouseLocation:NSPointFromCGPoint(pt)];
-                NSRect contentRect = [window contentRectForFrameRect:[window frame]];
-                process = NSPointInRect(nspoint, contentRect);
-                if (process && [window styleMask] & NSResizableWindowMask)
+                if (mouseCaptureWindow)
+                    process = TRUE;
+                else
                 {
-                    // Ignore clicks in the grow box (resize widget).
-                    HIPoint origin = { 0, 0 };
-                    HIThemeGrowBoxDrawInfo info = { 0 };
-                    HIRect bounds;
-                    OSStatus status;
-
-                    info.kind = kHIThemeGrowBoxKindNormal;
-                    info.direction = kThemeGrowRight | kThemeGrowDown;
-                    if ([window styleMask] & NSUtilityWindowMask)
-                        info.size = kHIThemeGrowBoxSizeSmall;
-                    else
-                        info.size = kHIThemeGrowBoxSizeNormal;
-
-                    status = HIThemeGetGrowBoxBounds(&origin, &info, &bounds);
-                    if (status == noErr)
+                    // Test if the click was in the window's content area.
+                    NSPoint nspoint = [self flippedMouseLocation:NSPointFromCGPoint(pt)];
+                    NSRect contentRect = [window contentRectForFrameRect:[window frame]];
+                    process = NSPointInRect(nspoint, contentRect);
+                    if (process && [window styleMask] & NSResizableWindowMask)
                     {
-                        NSRect growBox = NSMakeRect(NSMaxX(contentRect) - bounds.size.width,
-                                                    NSMinY(contentRect),
-                                                    bounds.size.width,
-                                                    bounds.size.height);
-                        process = !NSPointInRect(nspoint, growBox);
+                        // Ignore clicks in the grow box (resize widget).
+                        HIPoint origin = { 0, 0 };
+                        HIThemeGrowBoxDrawInfo info = { 0 };
+                        HIRect bounds;
+                        OSStatus status;
+
+                        info.kind = kHIThemeGrowBoxKindNormal;
+                        info.direction = kThemeGrowRight | kThemeGrowDown;
+                        if ([window styleMask] & NSUtilityWindowMask)
+                            info.size = kHIThemeGrowBoxSizeSmall;
+                        else
+                            info.size = kHIThemeGrowBoxSizeNormal;
+
+                        status = HIThemeGetGrowBoxBounds(&origin, &info, &bounds);
+                        if (status == noErr)
+                        {
+                            NSRect growBox = NSMakeRect(NSMaxX(contentRect) - bounds.size.width,
+                                                        NSMinY(contentRect),
+                                                        bounds.size.width,
+                                                        bounds.size.height);
+                            process = !NSPointInRect(nspoint, growBox);
+                        }
                     }
                 }
                 if (process)
@@ -1380,23 +1394,33 @@ int macdrv_err_on;
 
     - (void) handleScrollWheel:(NSEvent*)theEvent
     {
-        WineWindow* window = (WineWindow*)[theEvent window];
+        WineWindow* window;
+
+        if (mouseCaptureWindow)
+            window = mouseCaptureWindow;
+        else
+            window = (WineWindow*)[theEvent window];
 
         if ([window isKindOfClass:[WineWindow class]])
         {
             CGEventRef cgevent = [theEvent CGEvent];
             CGPoint pt = CGEventGetLocation(cgevent);
-            NSPoint nspoint;
-            NSRect contentRect;
+            BOOL process;
 
             if (clippingCursor)
                 [self clipCursorLocation:&pt];
 
-            nspoint = [self flippedMouseLocation:NSPointFromCGPoint(pt)];
-            contentRect = [window contentRectForFrameRect:[window frame]];
+            if (mouseCaptureWindow)
+                process = TRUE;
+            else
+            {
+                // Only process the event if it was in the window's content area.
+                NSPoint nspoint = [self flippedMouseLocation:NSPointFromCGPoint(pt)];
+                NSRect contentRect = [window contentRectForFrameRect:[window frame]];
+                process = NSPointInRect(nspoint, contentRect);
+            }
 
-            // Only process the event if it was in the window's content area.
-            if (NSPointInRect(nspoint, contentRect))
+            if (process)
             {
                 macdrv_event* event;
                 CGFloat x, y;
@@ -1482,31 +1506,38 @@ int macdrv_err_on;
     // then call -didSendEvent:.
     - (BOOL) handleEvent:(NSEvent*)anEvent
     {
-        if ([anEvent type] == NSFlagsChanged)
-            self.lastFlagsChanged = anEvent;
-        return FALSE;
-    }
-
-    - (void) didSendEvent:(NSEvent*)anEvent
-    {
+        BOOL ret = FALSE;
         NSEventType type = [anEvent type];
 
-        if (type == NSMouseMoved || type == NSLeftMouseDragged ||
-            type == NSRightMouseDragged || type == NSOtherMouseDragged)
+        if (type == NSFlagsChanged)
+            self.lastFlagsChanged = anEvent;
+        else if (type == NSMouseMoved || type == NSLeftMouseDragged ||
+                 type == NSRightMouseDragged || type == NSOtherMouseDragged)
         {
             [self handleMouseMove:anEvent];
+            ret = mouseCaptureWindow != nil;
         }
         else if (type == NSLeftMouseDown || type == NSLeftMouseUp ||
                  type == NSRightMouseDown || type == NSRightMouseUp ||
                  type == NSOtherMouseDown || type == NSOtherMouseUp)
         {
             [self handleMouseButton:anEvent];
+            ret = mouseCaptureWindow != nil;
         }
         else if (type == NSScrollWheel)
         {
             [self handleScrollWheel:anEvent];
+            ret = mouseCaptureWindow != nil;
         }
-        else if (type == NSKeyDown && ![anEvent isARepeat] && [anEvent keyCode] == kVK_Tab)
+
+        return ret;
+    }
+
+    - (void) didSendEvent:(NSEvent*)anEvent
+    {
+        NSEventType type = [anEvent type];
+
+        if (type == NSKeyDown && ![anEvent isARepeat] && [anEvent keyCode] == kVK_Tab)
         {
             NSUInteger modifiers = [anEvent modifierFlags];
             if ((modifiers & NSCommandKeyMask) &&
@@ -1543,6 +1574,8 @@ int macdrv_err_on;
             [orderedWineWindows removeObjectIdenticalTo:window];
             if (window == lastTargetWindow)
                 lastTargetWindow = nil;
+            if (window == self.mouseCaptureWindow)
+                self.mouseCaptureWindow = nil;
         }];
 
         [nc addObserver:self
@@ -2006,4 +2039,16 @@ int macdrv_using_input_method(void)
     });
 
     return ret;
+}
+
+/***********************************************************************
+ *              macdrv_set_mouse_capture_window
+ */
+void macdrv_set_mouse_capture_window(macdrv_window window)
+{
+    WineWindow* w = (WineWindow*)window;
+
+    OnMainThread(^{
+        [[WineApplicationController sharedController] setMouseCaptureWindow:w];
+    });
 }

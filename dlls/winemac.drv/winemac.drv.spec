@@ -28,6 +28,7 @@
 @ cdecl IsClipboardFormatAvailable(long) macdrv_IsClipboardFormatAvailable
 @ cdecl MapVirtualKeyEx(long long long) macdrv_MapVirtualKeyEx
 @ cdecl MsgWaitForMultipleObjectsEx(long ptr long long long) macdrv_MsgWaitForMultipleObjectsEx
+@ cdecl SetCapture(long long) macdrv_SetCapture
 @ cdecl SetClipboardData(long long long) macdrv_SetClipboardData
 @ cdecl SetCursor(long) macdrv_SetCursor
 @ cdecl SetCursorPos(long long) macdrv_SetCursorPos
@@ -39,13 +40,13 @@
 @ cdecl SetWindowText(long wstr) macdrv_SetWindowText
 @ cdecl ShowWindow(long long ptr long) macdrv_ShowWindow
 @ cdecl SysCommand(long long long) macdrv_SysCommand
+@ cdecl SystemParametersInfo(long long ptr long) macdrv_SystemParametersInfo
 @ cdecl ToUnicodeEx(long long ptr ptr long long long) macdrv_ToUnicodeEx
 @ cdecl UpdateLayeredWindow(long ptr ptr) macdrv_UpdateLayeredWindow
 @ cdecl VkKeyScanEx(long long) macdrv_VkKeyScanEx
 @ cdecl WindowMessage(long long long long) macdrv_WindowMessage
 @ cdecl WindowPosChanged(long long long ptr ptr ptr ptr ptr) macdrv_WindowPosChanged
 @ cdecl WindowPosChanging(long long long ptr ptr ptr ptr) macdrv_WindowPosChanging
-@ cdecl SystemParametersInfo(long long ptr long) macdrv_SystemParametersInfo
 
 # System tray
 @ cdecl wine_notify_icon(long ptr)
