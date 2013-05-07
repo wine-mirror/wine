@@ -1134,6 +1134,54 @@ int macdrv_err_on;
         return TRUE;
     }
 
+    - (void) handleMouseMove:(NSEvent*)anEvent
+    {
+        WineWindow* targetWindow;
+
+        /* Because of the way -[NSWindow setAcceptsMouseMovedEvents:] works, the
+           event indicates its window is the main window, even if the cursor is
+           over a different window.  Find the actual WineWindow that is under the
+           cursor and post the event as being for that window. */
+        if ([anEvent type] == NSMouseMoved)
+        {
+            CGPoint cgpoint = CGEventGetLocation([anEvent CGEvent]);
+            NSPoint point = [self flippedMouseLocation:NSPointFromCGPoint(cgpoint)];
+            NSInteger windowUnderNumber;
+
+            windowUnderNumber = [NSWindow windowNumberAtPoint:point
+                                  belowWindowWithWindowNumber:0];
+            targetWindow = (WineWindow*)[NSApp windowWithWindowNumber:windowUnderNumber];
+        }
+        else
+            targetWindow = (WineWindow*)[anEvent window];
+
+        if ([targetWindow isKindOfClass:[WineWindow class]])
+        {
+            BOOL absolute = forceNextMouseMoveAbsolute || (targetWindow != lastTargetWindow);
+            forceNextMouseMoveAbsolute = FALSE;
+
+            // If we recently warped the cursor (other than in our cursor-clipping
+            // event tap), discard mouse move events until we see an event which is
+            // later than that time.
+            if (lastSetCursorPositionTime)
+            {
+                if ([anEvent timestamp] <= lastSetCursorPositionTime)
+                    return;
+
+                lastSetCursorPositionTime = 0;
+                absolute = TRUE;
+            }
+
+            [targetWindow postMouseMovedEvent:anEvent absolute:absolute];
+            lastTargetWindow = targetWindow;
+        }
+        else if (lastTargetWindow)
+        {
+            [[NSCursor arrowCursor] set];
+            [self unhideCursor];
+            lastTargetWindow = nil;
+        }
+    }
 
     // Returns TRUE if the event was handled and caller should do nothing more
     // with it.  Returns FALSE if the caller should process it as normal and
@@ -1152,51 +1200,7 @@ int macdrv_err_on;
         if (type == NSMouseMoved || type == NSLeftMouseDragged ||
             type == NSRightMouseDragged || type == NSOtherMouseDragged)
         {
-            WineWindow* targetWindow;
-
-            /* Because of the way -[NSWindow setAcceptsMouseMovedEvents:] works, the
-               event indicates its window is the main window, even if the cursor is
-               over a different window.  Find the actual WineWindow that is under the
-               cursor and post the event as being for that window. */
-            if (type == NSMouseMoved)
-            {
-                CGPoint cgpoint = CGEventGetLocation([anEvent CGEvent]);
-                NSPoint point = [self flippedMouseLocation:NSPointFromCGPoint(cgpoint)];
-                NSInteger windowUnderNumber;
-
-                windowUnderNumber = [NSWindow windowNumberAtPoint:point
-                                      belowWindowWithWindowNumber:0];
-                targetWindow = (WineWindow*)[NSApp windowWithWindowNumber:windowUnderNumber];
-            }
-            else
-                targetWindow = (WineWindow*)[anEvent window];
-
-            if ([targetWindow isKindOfClass:[WineWindow class]])
-            {
-                BOOL absolute = forceNextMouseMoveAbsolute || (targetWindow != lastTargetWindow);
-                forceNextMouseMoveAbsolute = FALSE;
-
-                // If we recently warped the cursor (other than in our cursor-clipping
-                // event tap), discard mouse move events until we see an event which is
-                // later than that time.
-                if (lastSetCursorPositionTime)
-                {
-                    if ([anEvent timestamp] <= lastSetCursorPositionTime)
-                        return;
-
-                    lastSetCursorPositionTime = 0;
-                    absolute = TRUE;
-                }
-
-                [targetWindow postMouseMovedEvent:anEvent absolute:absolute];
-                lastTargetWindow = targetWindow;
-            }
-            else if (lastTargetWindow)
-            {
-                [[NSCursor arrowCursor] set];
-                [self unhideCursor];
-                lastTargetWindow = nil;
-            }
+            [self handleMouseMove:anEvent];
         }
         else if (type == NSLeftMouseDown || type == NSLeftMouseUp ||
                  type == NSRightMouseDown || type == NSRightMouseUp ||
