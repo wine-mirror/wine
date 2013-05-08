@@ -208,134 +208,135 @@ struct cpu_register
     size_t      ctx_offset;
     size_t      ctx_length;
     size_t      gdb_length;
+    ULONG       ctx_flags;
 };
 
-#define REG(r,gs)  {FIELD_OFFSET(CONTEXT, r), sizeof(((CONTEXT*)NULL)->r), gs}
+#define REG(r,gs,m)  {FIELD_OFFSET(CONTEXT, r), sizeof(((CONTEXT*)NULL)->r), gs, m}
 
 #ifdef __i386__
 static const char target_xml[] = "";
 static struct cpu_register cpu_register_map[] = {
-    REG(Eax, 4),
-    REG(Ecx, 4),
-    REG(Edx, 4),
-    REG(Ebx, 4),
-    REG(Esp, 4),
-    REG(Ebp, 4),
-    REG(Esi, 4),
-    REG(Edi, 4),
-    REG(Eip, 4),
-    REG(EFlags, 4),
-    REG(SegCs, 4),
-    REG(SegSs, 4),
-    REG(SegDs, 4),
-    REG(SegEs, 4),
-    REG(SegFs, 4),
-    REG(SegGs, 4),
+    REG(Eax, 4, CONTEXT_INTEGER),
+    REG(Ecx, 4, CONTEXT_INTEGER),
+    REG(Edx, 4, CONTEXT_INTEGER),
+    REG(Ebx, 4, CONTEXT_INTEGER),
+    REG(Esp, 4, CONTEXT_CONTROL),
+    REG(Ebp, 4, CONTEXT_CONTROL),
+    REG(Esi, 4, CONTEXT_INTEGER),
+    REG(Edi, 4, CONTEXT_INTEGER),
+    REG(Eip, 4, CONTEXT_CONTROL),
+    REG(EFlags, 4, CONTEXT_CONTROL),
+    REG(SegCs, 4, CONTEXT_CONTROL),
+    REG(SegSs, 4, CONTEXT_SEGMENTS),
+    REG(SegDs, 4, CONTEXT_SEGMENTS),
+    REG(SegEs, 4, CONTEXT_SEGMENTS),
+    REG(SegFs, 4, CONTEXT_SEGMENTS),
+    REG(SegGs, 4, CONTEXT_SEGMENTS),
 };
 #elif defined(__powerpc__)
 static const char target_xml[] = "";
 static struct cpu_register cpu_register_map[] = {
-    REG(Gpr0, 4),
-    REG(Gpr1, 4),
-    REG(Gpr2, 4),
-    REG(Gpr3, 4),
-    REG(Gpr4, 4),
-    REG(Gpr5, 4),
-    REG(Gpr6, 4),
-    REG(Gpr7, 4),
-    REG(Gpr8, 4),
-    REG(Gpr9, 4),
-    REG(Gpr10, 4),
-    REG(Gpr11, 4),
-    REG(Gpr12, 4),
-    REG(Gpr13, 4),
-    REG(Gpr14, 4),
-    REG(Gpr15, 4),
-    REG(Gpr16, 4),
-    REG(Gpr17, 4),
-    REG(Gpr18, 4),
-    REG(Gpr19, 4),
-    REG(Gpr20, 4),
-    REG(Gpr21, 4),
-    REG(Gpr22, 4),
-    REG(Gpr23, 4),
-    REG(Gpr24, 4),
-    REG(Gpr25, 4),
-    REG(Gpr26, 4),
-    REG(Gpr27, 4),
-    REG(Gpr28, 4),
-    REG(Gpr29, 4),
-    REG(Gpr30, 4),
-    REG(Gpr31, 4),
-    REG(Fpr0, 4),
-    REG(Fpr1, 4),
-    REG(Fpr2, 4),
-    REG(Fpr3, 4),
-    REG(Fpr4, 4),
-    REG(Fpr5, 4),
-    REG(Fpr6, 4),
-    REG(Fpr7, 4),
-    REG(Fpr8, 4),
-    REG(Fpr9, 4),
-    REG(Fpr10, 4),
-    REG(Fpr11, 4),
-    REG(Fpr12, 4),
-    REG(Fpr13, 4),
-    REG(Fpr14, 4),
-    REG(Fpr15, 4),
-    REG(Fpr16, 4),
-    REG(Fpr17, 4),
-    REG(Fpr18, 4),
-    REG(Fpr19, 4),
-    REG(Fpr20, 4),
-    REG(Fpr21, 4),
-    REG(Fpr22, 4),
-    REG(Fpr23, 4),
-    REG(Fpr24, 4),
-    REG(Fpr25, 4),
-    REG(Fpr26, 4),
-    REG(Fpr27, 4),
-    REG(Fpr28, 4),
-    REG(Fpr29, 4),
-    REG(Fpr30, 4),
-    REG(Fpr31, 4),
+    REG(Gpr0, 4, CONTEXT_INTEGER),
+    REG(Gpr1, 4, CONTEXT_INTEGER),
+    REG(Gpr2, 4, CONTEXT_INTEGER),
+    REG(Gpr3, 4, CONTEXT_INTEGER),
+    REG(Gpr4, 4, CONTEXT_INTEGER),
+    REG(Gpr5, 4, CONTEXT_INTEGER),
+    REG(Gpr6, 4, CONTEXT_INTEGER),
+    REG(Gpr7, 4, CONTEXT_INTEGER),
+    REG(Gpr8, 4, CONTEXT_INTEGER),
+    REG(Gpr9, 4, CONTEXT_INTEGER),
+    REG(Gpr10, 4, CONTEXT_INTEGER),
+    REG(Gpr11, 4, CONTEXT_INTEGER),
+    REG(Gpr12, 4, CONTEXT_INTEGER),
+    REG(Gpr13, 4, CONTEXT_INTEGER),
+    REG(Gpr14, 4, CONTEXT_INTEGER),
+    REG(Gpr15, 4, CONTEXT_INTEGER),
+    REG(Gpr16, 4, CONTEXT_INTEGER),
+    REG(Gpr17, 4, CONTEXT_INTEGER),
+    REG(Gpr18, 4, CONTEXT_INTEGER),
+    REG(Gpr19, 4, CONTEXT_INTEGER),
+    REG(Gpr20, 4, CONTEXT_INTEGER),
+    REG(Gpr21, 4, CONTEXT_INTEGER),
+    REG(Gpr22, 4, CONTEXT_INTEGER),
+    REG(Gpr23, 4, CONTEXT_INTEGER),
+    REG(Gpr24, 4, CONTEXT_INTEGER),
+    REG(Gpr25, 4, CONTEXT_INTEGER),
+    REG(Gpr26, 4, CONTEXT_INTEGER),
+    REG(Gpr27, 4, CONTEXT_INTEGER),
+    REG(Gpr28, 4, CONTEXT_INTEGER),
+    REG(Gpr29, 4, CONTEXT_INTEGER),
+    REG(Gpr30, 4, CONTEXT_INTEGER),
+    REG(Gpr31, 4, CONTEXT_INTEGER),
+    REG(Fpr0, 4, CONTEXT_FLOATING_POINT),
+    REG(Fpr1, 4, CONTEXT_FLOATING_POINT),
+    REG(Fpr2, 4, CONTEXT_FLOATING_POINT),
+    REG(Fpr3, 4, CONTEXT_FLOATING_POINT),
+    REG(Fpr4, 4, CONTEXT_FLOATING_POINT),
+    REG(Fpr5, 4, CONTEXT_FLOATING_POINT),
+    REG(Fpr6, 4, CONTEXT_FLOATING_POINT),
+    REG(Fpr7, 4, CONTEXT_FLOATING_POINT),
+    REG(Fpr8, 4, CONTEXT_FLOATING_POINT),
+    REG(Fpr9, 4, CONTEXT_FLOATING_POINT),
+    REG(Fpr10, 4, CONTEXT_FLOATING_POINT),
+    REG(Fpr11, 4, CONTEXT_FLOATING_POINT),
+    REG(Fpr12, 4, CONTEXT_FLOATING_POINT),
+    REG(Fpr13, 4, CONTEXT_FLOATING_POINT),
+    REG(Fpr14, 4, CONTEXT_FLOATING_POINT),
+    REG(Fpr15, 4, CONTEXT_FLOATING_POINT),
+    REG(Fpr16, 4, CONTEXT_FLOATING_POINT),
+    REG(Fpr17, 4, CONTEXT_FLOATING_POINT),
+    REG(Fpr18, 4, CONTEXT_FLOATING_POINT),
+    REG(Fpr19, 4, CONTEXT_FLOATING_POINT),
+    REG(Fpr20, 4, CONTEXT_FLOATING_POINT),
+    REG(Fpr21, 4, CONTEXT_FLOATING_POINT),
+    REG(Fpr22, 4, CONTEXT_FLOATING_POINT),
+    REG(Fpr23, 4, CONTEXT_FLOATING_POINT),
+    REG(Fpr24, 4, CONTEXT_FLOATING_POINT),
+    REG(Fpr25, 4, CONTEXT_FLOATING_POINT),
+    REG(Fpr26, 4, CONTEXT_FLOATING_POINT),
+    REG(Fpr27, 4, CONTEXT_FLOATING_POINT),
+    REG(Fpr28, 4, CONTEXT_FLOATING_POINT),
+    REG(Fpr29, 4, CONTEXT_FLOATING_POINT),
+    REG(Fpr30, 4, CONTEXT_FLOATING_POINT),
+    REG(Fpr31, 4, CONTEXT_FLOATING_POINT),
 
-    REG(Iar, 4),
-    REG(Msr, 4),
-    REG(Cr, 4),
-    REG(Lr, 4),
-    REG(Ctr, 4),
-    REG(Xer, 4),
+    REG(Iar, 4, CONTEXT_CONTROL),
+    REG(Msr, 4, CONTEXT_CONTROL),
+    REG(Cr, 4, CONTEXT_INTEGER),
+    REG(Lr, 4, CONTEXT_CONTROL),
+    REG(Ctr, 4, CONTEXT_CONTROL),
+    REG(Xer, 4, CONTEXT_INTEGER),
     /* FIXME: MQ is missing? FIELD_OFFSET(CONTEXT, Mq), */
     /* see gdb/nlm/ppc.c */
 };
 #elif defined(__x86_64__)
 static const char target_xml[] = "";
 static struct cpu_register cpu_register_map[] = {
-    REG(Rax, 8),
-    REG(Rbx, 8),
-    REG(Rcx, 8),
-    REG(Rdx, 8),
-    REG(Rsi, 8),
-    REG(Rdi, 8),
-    REG(Rbp, 8),
-    REG(Rsp, 8),
-    REG(R8, 8),
-    REG(R9, 8),
-    REG(R10, 8),
-    REG(R11, 8),
-    REG(R12, 8),
-    REG(R13, 8),
-    REG(R14, 8),
-    REG(R15, 8),
-    REG(Rip, 8),
-    REG(EFlags, 4),
-    REG(SegCs, 4),
-    REG(SegSs, 4),
-    REG(SegDs, 4),
-    REG(SegEs, 4),
-    REG(SegFs, 4),
-    REG(SegGs, 4),
+    REG(Rax, 8, CONTEXT_INTEGER),
+    REG(Rbx, 8, CONTEXT_INTEGER),
+    REG(Rcx, 8, CONTEXT_INTEGER),
+    REG(Rdx, 8, CONTEXT_INTEGER),
+    REG(Rsi, 8, CONTEXT_INTEGER),
+    REG(Rdi, 8, CONTEXT_INTEGER),
+    REG(Rbp, 8, CONTEXT_INTEGER),
+    REG(Rsp, 8, CONTEXT_INTEGER),
+    REG(R8, 8, CONTEXT_INTEGER),
+    REG(R9, 8, CONTEXT_INTEGER),
+    REG(R10, 8, CONTEXT_INTEGER),
+    REG(R11, 8, CONTEXT_INTEGER),
+    REG(R12, 8, CONTEXT_INTEGER),
+    REG(R13, 8, CONTEXT_INTEGER),
+    REG(R14, 8, CONTEXT_INTEGER),
+    REG(R15, 8, CONTEXT_INTEGER),
+    REG(Rip, 8, CONTEXT_CONTROL),
+    REG(EFlags, 4, CONTEXT_CONTROL),
+    REG(SegCs, 4, CONTEXT_CONTROL),
+    REG(SegSs, 4, CONTEXT_CONTROL),
+    REG(SegDs, 4, CONTEXT_SEGMENTS),
+    REG(SegEs, 4, CONTEXT_SEGMENTS),
+    REG(SegFs, 4, CONTEXT_SEGMENTS),
+    REG(SegGs, 4, CONTEXT_SEGMENTS),
 };
 #elif defined(__arm__)
 static const char target_xml[] =
@@ -361,61 +362,61 @@ static const char target_xml[] =
     "</feature></target>\n";
 
 static struct cpu_register cpu_register_map[] = {
-    REG(R0, 4),
-    REG(R1, 4),
-    REG(R2, 4),
-    REG(R3, 4),
-    REG(R4, 4),
-    REG(R5, 4),
-    REG(R6, 4),
-    REG(R7, 4),
-    REG(R8, 4),
-    REG(R9, 4),
-    REG(R10, 4),
-    REG(Fp, 4),
-    REG(Ip, 4),
-    REG(Sp, 4),
-    REG(Lr, 4),
-    REG(Pc, 4),
-    REG(Cpsr, 4),
+    REG(R0, 4, CONTEXT_INTEGER),
+    REG(R1, 4, CONTEXT_INTEGER),
+    REG(R2, 4, CONTEXT_INTEGER),
+    REG(R3, 4, CONTEXT_INTEGER),
+    REG(R4, 4, CONTEXT_INTEGER),
+    REG(R5, 4, CONTEXT_INTEGER),
+    REG(R6, 4, CONTEXT_INTEGER),
+    REG(R7, 4, CONTEXT_INTEGER),
+    REG(R8, 4, CONTEXT_INTEGER),
+    REG(R9, 4, CONTEXT_INTEGER),
+    REG(R10, 4, CONTEXT_INTEGER),
+    REG(Fp, 4, CONTEXT_INTEGER),
+    REG(Ip, 4, CONTEXT_INTEGER),
+    REG(Sp, 4, CONTEXT_CONTROL),
+    REG(Lr, 4, CONTEXT_CONTROL),
+    REG(Pc, 4, CONTEXT_CONTROL),
+    REG(Cpsr, 4, CONTEXT_CONTROL),
 };
 #elif defined(__aarch64__)
 static const char target_xml[] = "";
 static struct cpu_register cpu_register_map[] = {
-    REG(X0,  8),
-    REG(X1,  8),
-    REG(X2,  8),
-    REG(X3,  8),
-    REG(X4,  8),
-    REG(X5,  8),
-    REG(X6,  8),
-    REG(X7,  8),
-    REG(X8,  8),
-    REG(X9,  8),
-    REG(X10, 8),
-    REG(X11, 8),
-    REG(X12, 8),
-    REG(X13, 8),
-    REG(X14, 8),
-    REG(X15, 8),
-    REG(X16, 8),
-    REG(X17, 8),
-    REG(X18, 8),
-    REG(X19, 8),
-    REG(X20, 8),
-    REG(X21, 8),
-    REG(X22, 8),
-    REG(X23, 8),
-    REG(X24, 8),
-    REG(X25, 8),
-    REG(X26, 8),
-    REG(X27, 8),
-    REG(X28, 8),
-    REG(X29, 8),
-    REG(X30, 8),
-    REG(Sp,  8),
-    REG(Pc,  8),
-    REG(PState, 8),
+    REG(X0,  8, CONTEXT_INTEGER),
+    REG(X1,  8, CONTEXT_INTEGER),
+    REG(X2,  8, CONTEXT_INTEGER),
+    REG(X3,  8, CONTEXT_INTEGER),
+    REG(X4,  8, CONTEXT_INTEGER),
+    REG(X5,  8, CONTEXT_INTEGER),
+    REG(X6,  8, CONTEXT_INTEGER),
+    REG(X7,  8, CONTEXT_INTEGER),
+    REG(X8,  8, CONTEXT_INTEGER),
+    REG(X9,  8, CONTEXT_INTEGER),
+    REG(X10, 8, CONTEXT_INTEGER),
+    REG(X11, 8, CONTEXT_INTEGER),
+    REG(X12, 8, CONTEXT_INTEGER),
+    REG(X13, 8, CONTEXT_INTEGER),
+    REG(X14, 8, CONTEXT_INTEGER),
+    REG(X15, 8, CONTEXT_INTEGER),
+    REG(X16, 8, CONTEXT_INTEGER),
+    REG(X17, 8, CONTEXT_INTEGER),
+    REG(X18, 8, CONTEXT_INTEGER),
+    REG(X19, 8, CONTEXT_INTEGER),
+    REG(X20, 8, CONTEXT_INTEGER),
+    REG(X21, 8, CONTEXT_INTEGER),
+    REG(X22, 8, CONTEXT_INTEGER),
+    REG(X23, 8, CONTEXT_INTEGER),
+    REG(X24, 8, CONTEXT_INTEGER),
+    REG(X25, 8, CONTEXT_INTEGER),
+    REG(X26, 8, CONTEXT_INTEGER),
+    REG(X27, 8, CONTEXT_INTEGER),
+    REG(X28, 8, CONTEXT_INTEGER),
+    REG(X29, 8, CONTEXT_INTEGER),
+    REG(X30, 8, CONTEXT_INTEGER),
+    REG(Sp,  8, CONTEXT_CONTROL),
+    REG(Pc,  8, CONTEXT_CONTROL),
+    REG(PState, 8, CONTEXT_CONTROL),
 };
 #else
 # error Define the registers map for your CPU
@@ -474,6 +475,9 @@ static BOOL fetch_context(struct gdb_context* gdbctx, HANDLE h, CONTEXT* ctx)
 {
     ctx->ContextFlags =  CONTEXT_CONTROL
                        | CONTEXT_INTEGER
+#if defined(__powerpc__)
+                       | CONTEXT_FLOATING_POINT
+#endif
 #ifdef CONTEXT_SEGMENTS
 	               | CONTEXT_SEGMENTS
 #endif
@@ -1042,6 +1046,10 @@ static enum packet_return packet_reply_status(struct gdb_context* gdbctx)
 
         for (i = 0; i < cpu_num_regs; i++)
         {
+            ULONG flags = cpu_register_map[i].ctx_flags;
+            if ((gdbctx->context.ContextFlags & flags) != flags)
+                break;
+
             /* FIXME: this call will also grow the buffer...
              * unneeded, but not harmful
              */
@@ -1379,6 +1387,9 @@ static enum packet_return packet_read_registers(struct gdb_context* gdbctx)
     packet_reply_open(gdbctx);
     for (i = 0; i < cpu_num_regs; i++)
     {
+        ULONG flags = cpu_register_map[i].ctx_flags;
+        if ((gdbctx->context.ContextFlags & flags) != flags)
+            break;
         packet_reply_register_hex_to(gdbctx, i);
     }
     packet_reply_close(gdbctx);
@@ -1403,6 +1414,9 @@ static enum packet_return packet_write_registers(struct gdb_context* gdbctx)
     ptr = gdbctx->in_packet;
     for (i = 0; i < cpu_num_regs; i++)
     {
+        ULONG flags = cpu_register_map[i].ctx_flags;
+        if ((pctx->ContextFlags & flags) != flags)
+            break;
         cpu_register_hex_from(pctx, i, &ptr);
     }
     if (pctx != &gdbctx->context && !SetThreadContext(gdbctx->other_thread->handle, pctx))
@@ -1596,6 +1610,12 @@ static enum packet_return packet_write_register(struct gdb_context* gdbctx)
     {
         if (!fetch_context(gdbctx, gdbctx->other_thread->handle, pctx = &ctx))
             return packet_error;
+    }
+    if ((pctx->ContextFlags & cpu_register_map[reg].ctx_flags) != cpu_register_map[reg].ctx_flags)
+    {
+        if (gdbctx->trace & GDBPXY_TRC_COMMAND_ERROR)
+            fprintf(stderr, "Writing reg %u is not supported on this host\n", reg);
+        return packet_error;
     }
 
     cpu_register_hex_from(pctx, reg, (const char**)&ptr);
