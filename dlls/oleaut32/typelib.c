@@ -2458,7 +2458,7 @@ static CRITICAL_SECTION cache_section = { &cache_section_debug, -1, 0, 0, 0, 0 }
 
 typedef struct TLB_PEFile
 {
-    const IUnknownVtbl *lpvtbl;
+    IUnknown IUnknown_iface;
     LONG refs;
     HMODULE dll;
     HRSRC typelib_resource;
@@ -2515,7 +2515,7 @@ static HRESULT TLB_PEFile_Open(LPCWSTR path, INT index, LPVOID *ppBase, DWORD *p
     if (!This)
         return E_OUTOFMEMORY;
 
-    This->lpvtbl = &TLB_PEFile_Vtable;
+    This->IUnknown_iface.lpVtbl = &TLB_PEFile_Vtable;
     This->refs = 1;
     This->dll = NULL;
     This->typelib_resource = NULL;
@@ -2540,7 +2540,7 @@ static HRESULT TLB_PEFile_Open(LPCWSTR path, INT index, LPVOID *ppBase, DWORD *p
                 {
                     *pdwTLBLength = SizeofResource(This->dll, This->typelib_resource);
                     *ppBase = This->typelib_base;
-                    *ppFile = (IUnknown *)&This->lpvtbl;
+                    *ppFile = &This->IUnknown_iface;
                     return S_OK;
                 }
             }
@@ -2550,13 +2550,13 @@ static HRESULT TLB_PEFile_Open(LPCWSTR path, INT index, LPVOID *ppBase, DWORD *p
         hr = E_FAIL;
     }
 
-    TLB_PEFile_Release((IUnknown *)&This->lpvtbl);
+    TLB_PEFile_Release(&This->IUnknown_iface);
     return hr;
 }
 
 typedef struct TLB_NEFile
 {
-    const IUnknownVtbl *lpvtbl;
+    IUnknown IUnknown_iface;
     LONG refs;
     LPVOID typelib_base;
 } TLB_NEFile;
@@ -2738,7 +2738,7 @@ static HRESULT TLB_NEFile_Open(LPCWSTR path, INT index, LPVOID *ppBase, DWORD *p
     This = heap_alloc(sizeof(TLB_NEFile));
     if (!This) return E_OUTOFMEMORY;
 
-    This->lpvtbl = &TLB_NEFile_Vtable;
+    This->IUnknown_iface.lpVtbl = &TLB_NEFile_Vtable;
     This->refs = 1;
     This->typelib_base = NULL;
 
@@ -2758,20 +2758,20 @@ static HRESULT TLB_NEFile_Open(LPCWSTR path, INT index, LPVOID *ppBase, DWORD *p
                 LZClose( lzfd );
                 *ppBase = This->typelib_base;
                 *pdwTLBLength = reslen;
-                *ppFile = (IUnknown *)&This->lpvtbl;
+                *ppFile = &This->IUnknown_iface;
                 return S_OK;
             }
         }
     }
 
     if( lzfd >= 0) LZClose( lzfd );
-    TLB_NEFile_Release((IUnknown *)&This->lpvtbl);
+    TLB_NEFile_Release(&This->IUnknown_iface);
     return hr;
 }
 
 typedef struct TLB_Mapping
 {
-    const IUnknownVtbl *lpvtbl;
+    IUnknown IUnknown_iface;
     LONG refs;
     HANDLE file;
     HANDLE mapping;
@@ -2828,7 +2828,7 @@ static HRESULT TLB_Mapping_Open(LPCWSTR path, LPVOID *ppBase, DWORD *pdwTLBLengt
     if (!This)
         return E_OUTOFMEMORY;
 
-    This->lpvtbl = &TLB_Mapping_Vtable;
+    This->IUnknown_iface.lpVtbl = &TLB_Mapping_Vtable;
     This->refs = 1;
     This->file = INVALID_HANDLE_VALUE;
     This->mapping = NULL;
@@ -2846,13 +2846,13 @@ static HRESULT TLB_Mapping_Open(LPCWSTR path, LPVOID *ppBase, DWORD *pdwTLBLengt
                 /* retrieve file size */
                 *pdwTLBLength = GetFileSize(This->file, NULL);
                 *ppBase = This->typelib_base;
-                *ppFile = (IUnknown *)&This->lpvtbl;
+                *ppFile = &This->IUnknown_iface;
                 return S_OK;
             }
         }
     }
 
-    IUnknown_Release((IUnknown *)&This->lpvtbl);
+    IUnknown_Release(&This->IUnknown_iface);
     return TYPE_E_CANTLOADLIBRARY;
 }
 
