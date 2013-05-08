@@ -2,6 +2,7 @@
  * Unit test suite for comdlg32 API functions: printer dialogs
  *
  * Copyright 2006-2007 Detlef Riekenberg
+ * Copyright 2013 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -123,9 +124,19 @@ static void test_PageSetupDlgA(void)
 
 /* ########################### */
 
+static UINT_PTR CALLBACK print_hook_proc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp)
+{
+    if (msg == WM_INITDIALOG)
+    {
+        SetDlgItemInt(hdlg, edt3, 1234, FALSE);
+        PostMessage(hdlg, WM_COMMAND, IDOK, FALSE);
+    }
+    return 0;
+}
+
 static void test_PrintDlgA(void)
 {
-    DWORD       res;
+    DWORD res, n_copies = 0;
     LPPRINTDLGA pDlg;
     DEVNAMES    *pDevNames;
     LPCSTR driver;
@@ -133,7 +144,7 @@ static void test_PrintDlgA(void)
     LPCSTR port;
     CHAR   buffer[MAX_PATH];
     LPSTR  ptr;
-
+    DEVMODE *dm;
 
     pDlg = HeapAlloc(GetProcessHeap(), 0, (sizeof(PRINTDLGA)) * 2);
     if (!pDlg) return;
@@ -216,14 +227,55 @@ static void test_PrintDlgA(void)
         if (ptr) ptr[0] = '\0';
         ok( lstrcmpiA(driver, buffer) == 0,
             "got driver '%s' (expected '%s')\n", driver, buffer);
+
+        n_copies = DeviceCapabilities(device, port, DC_COPIES, NULL, NULL);
+        ok(n_copies > 0, "DeviceCapabilities(DC_COPIES) failed\n");
     }
 
     GlobalUnlock(pDlg->hDevNames);
-
     GlobalFree(pDlg->hDevMode);
     GlobalFree(pDlg->hDevNames);
-    HeapFree(GetProcessHeap(), 0, pDlg);
 
+    /* if device doesn't support printing of multiple copies then
+     * an attempt to set number of copies > 1 in print dialog would
+     * cause the PrintDlg under Windows display the MessageBox and
+     * the test will hang waiting for user response.
+     */
+    if (n_copies > 1)
+    {
+        ZeroMemory(pDlg, sizeof(*pDlg));
+        pDlg->lStructSize = sizeof(*pDlg);
+        pDlg->Flags = PD_ENABLEPRINTHOOK;
+        pDlg->lpfnPrintHook = print_hook_proc;
+        res = PrintDlg(pDlg);
+        ok(res, "PrintDlg error %#x\n", CommDlgExtendedError());
+        /* Version of Microsoft XPS Document Writer driver shipped before Win7
+         * reports that it can print multiple copies, but returns 1.
+         */
+        ok(pDlg->nCopies == 1234 || broken(pDlg->nCopies == 1), "expected nCopies 1234, got %d\n", pDlg->nCopies);
+        ok(pDlg->hDevMode != 0, "hDevMode should not be 0\n");
+        dm = GlobalLock(pDlg->hDevMode);
+        ok(dm->dmCopies == 1, "expected dm->dmCopies 1, got %d\n", dm->dmCopies);
+        GlobalUnlock(pDlg->hDevMode);
+        GlobalFree(pDlg->hDevMode);
+        GlobalFree(pDlg->hDevNames);
+
+        ZeroMemory(pDlg, sizeof(*pDlg));
+        pDlg->lStructSize = sizeof(*pDlg);
+        pDlg->Flags = PD_ENABLEPRINTHOOK | PD_USEDEVMODECOPIES;
+        pDlg->lpfnPrintHook = print_hook_proc;
+        res = PrintDlg(pDlg);
+        ok(res, "PrintDlg error %#x\n", CommDlgExtendedError());
+        ok(pDlg->nCopies == 1, "expected nCopies 1, got %d\n", pDlg->nCopies);
+        ok(pDlg->hDevMode != 0, "hDevMode should not be 0\n");
+        dm = GlobalLock(pDlg->hDevMode);
+        ok(dm->dmCopies == 1234, "expected dm->dmCopies 1234, got %d\n", dm->dmCopies);
+        GlobalUnlock(pDlg->hDevMode);
+        GlobalFree(pDlg->hDevMode);
+        GlobalFree(pDlg->hDevNames);
+    }
+
+    HeapFree(GetProcessHeap(), 0, pDlg);
 }
 
 /* ########################### */
