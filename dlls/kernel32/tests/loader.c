@@ -1141,10 +1141,6 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
     DWORD ret;
 
     ok(!inside_loader_lock, "inside_loader_lock should not be set\n");
-    /* FIXME: remove once Wine is fixed */
-    if (inside_peb_lock && reason == DLL_PROCESS_DETACH) todo_wine
-    ok(!inside_peb_lock, "inside_peb_lock should not be set\n");
-    else
     ok(!inside_peb_lock, "inside_peb_lock should not be set\n");
 
     switch (reason)
