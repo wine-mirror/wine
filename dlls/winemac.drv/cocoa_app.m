@@ -1613,6 +1613,10 @@ int macdrv_err_on;
      */
     - (void)applicationDidBecomeActive:(NSNotification *)notification
     {
+        WineWindow* window;
+        WineWindow* firstMinimized;
+        BOOL anyShowing;
+
         [self activateCursorClipping];
 
         [orderedWineWindows enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(id obj, NSUInteger idx, BOOL *stop){
@@ -1620,6 +1624,24 @@ int macdrv_err_on;
             if ([window levelWhenActive] != [window level])
                 [window setLevel:[window levelWhenActive]];
         }];
+
+        firstMinimized = nil;
+        anyShowing = FALSE;
+        for (window in orderedWineWindows)
+        {
+            if ([window isMiniaturized])
+            {
+                if (!firstMinimized)
+                    firstMinimized = window;
+            }
+            else if ([window isVisible])
+            {
+                anyShowing = TRUE;
+                break;
+            }
+        }
+        if (!anyShowing && firstMinimized)
+            [firstMinimized deminiaturize:self];
 
         // If a Wine process terminates abruptly while it has the display captured
         // and switched to a different resolution, Mac OS X will uncapture the
