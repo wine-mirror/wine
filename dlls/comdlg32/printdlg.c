@@ -3987,7 +3987,7 @@ struct callback_data
     IObjectWithSite *object;
 };
 
-static UINT CALLBACK pdlgex_hook_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+static UINT_PTR CALLBACK pdlgex_hook_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     if (msg == WM_INITDIALOG)
     {
