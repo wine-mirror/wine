@@ -287,6 +287,7 @@ static nsresult NSAPI nsDirectoryServiceProvider2_GetFile(nsIDirectoryServicePro
         return nsIFile_Clone(profile_directory, _retval);
     }
 
+    *_retval = NULL;
     return NS_ERROR_FAILURE;
 }
 
@@ -310,8 +311,10 @@ static nsresult NSAPI nsDirectoryServiceProvider2_GetFiles(nsIDirectoryServicePr
 
             strcpyW(plugin_path+len, gecko_pluginW);
             nsres = create_nsfile(plugin_path, &plugin_directory);
-            if(NS_FAILED(nsres))
+            if(NS_FAILED(nsres)) {
+                *_retval = NULL;
                 return nsres;
+            }
         }
 
         nsres = nsIFile_Clone(plugin_directory, &file);
@@ -326,6 +329,7 @@ static nsresult NSAPI nsDirectoryServiceProvider2_GetFiles(nsIDirectoryServicePr
         return NS_OK;
     }
 
+    *_retval = NULL;
     return NS_ERROR_FAILURE;
 }
 
