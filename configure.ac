@@ -686,10 +686,6 @@ WINE_PATH_SONAME_TOOLS
 case $host_os in
   cygwin*|mingw32*)
     AC_CHECK_TOOL(DLLTOOL,dlltool,false)
-    AC_CHECK_TOOL(DLLWRAP,dllwrap,false)
-    if test "$DLLWRAP" = "false"; then
-        AC_MSG_ERROR([dllwrap is needed to build a dll for Windows])
-    fi
     LIBEXT="dll"
     IMPLIBEXT="a"
     STATIC_IMPLIBEXT="a"
@@ -720,7 +716,7 @@ libwine.a: wine.def
 	\$(DLLTOOL) -l \$@ -d \$(srcdir)/wine.def
 
 libwine.dll: \$(OBJS) wine.def Makefile.in
-	\$(DLLWRAP) --def \$(srcdir)/wine.def -o \$@ \$(OBJS) $crtlibs \$(EXTRALIBS)
+	\$(CC) -shared \$(srcdir)/wine.def -o \$@ \$(OBJS) $crtlibs \$(EXTRALIBS)
 
 install install-lib:: libwine.dll \$(DESTDIR)\$(libdir) dummy
 	\$(INSTALL_DATA) libwine.dll \$(DESTDIR)\$(libdir)/libwine.dll
