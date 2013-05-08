@@ -798,6 +798,8 @@ static void build(struct options* opts)
         if (opts->win16_app)
             error( "Building 16-bit code is not supported for Windows\n" );
 
+        strarray_addall(link_args, get_translator(opts));
+
         if (opts->shared)
         {
             /* run winebuild to generate the .def file */
@@ -814,16 +816,13 @@ static void build(struct options* opts)
             spawn(opts->prefix, spec_args, 0);
             strarray_free(spec_args);
 
-            if (opts->target) strarray_add(link_args, strmake("%s-dllwrap", opts->target));
-            else strarray_add(link_args, "dllwrap");
+            strarray_add(link_args, "-shared");
             if (verbose) strarray_add(link_args, "-v");
-            strarray_add(link_args, "-k");
-            strarray_add(link_args, "--def");
+            strarray_add(link_args, "-Wl,--kill-at");
             strarray_add(link_args, spec_def_name);
         }
         else
         {
-            strarray_addall(link_args, get_translator(opts));
             strarray_add(link_args, opts->gui_app ? "-mwindows" : "-mconsole");
             if (opts->nodefaultlibs) strarray_add(link_args, "-nodefaultlibs");
         }
