@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdio.h>
+
 #include "wine/test.h"
 #include "d3dx9.h"
 #include "d3dx9xof.h"
@@ -126,8 +128,155 @@ static void test_lock_unlock(void)
     d3dxfile->lpVtbl->Release(d3dxfile);
 }
 
+static inline void debugstr_guid(char* buf, const GUID *id)
+{
+    sprintf(buf, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+            id->Data1, id->Data2, id->Data3,
+            id->Data4[0], id->Data4[1], id->Data4[2], id->Data4[3],
+            id->Data4[4], id->Data4[5], id->Data4[6], id->Data4[7] );
+}
+
+static void process_data(ID3DXFileData *xfile_data, int level)
+{
+    HRESULT ret;
+    char name[100];
+    GUID clsid;
+    GUID clsid_type;
+    char str_clsid[40];
+    char str_clsid_type[40];
+    SIZE_T len = sizeof(name);
+    int i;
+    const BYTE *data;
+    SIZE_T size;
+    SIZE_T children;
+
+    ret = xfile_data->lpVtbl->GetId(xfile_data, &clsid);
+    ok(ret == S_OK, "ID3DXFileData_GetId failed with %#x\n", ret);
+    ret = xfile_data->lpVtbl->GetName(xfile_data, name, &len);
+    ok(ret == S_OK, "ID3DXFileData_GetName failed with %#x\n", ret);
+    ret = xfile_data->lpVtbl->GetType(xfile_data, &clsid_type);
+    ok(ret == S_OK, "IDirectXFileData_GetType failed with %#x\n", ret);
+    ret = xfile_data->lpVtbl->Lock(xfile_data, &size, (const void**)&data);
+    ok(ret == S_OK, "IDirectXFileData_Lock failed with %#x\n", ret);
+
+    for (i = 0; i < level; i++)
+        printf("  ");
+    debugstr_guid(str_clsid, &clsid);
+    debugstr_guid(str_clsid_type, &clsid_type);
+
+    printf("Found object '%s' - %s - %s - %lu\n", len ? name : "", str_clsid, str_clsid_type, size);
+
+    if (size)
+    {
+        int j;
+        for (j = 0; j < size; j++)
+        {
+            if (j && !(j%16))
+                printf("\n");
+            printf("%02x ", data[j]);
+        }
+        printf("\n");
+    }
+
+    ret = xfile_data->lpVtbl->Unlock(xfile_data);
+    ok(ret == S_OK, "ID3DXFileData_Unlock failed with %#x\n", ret);
+
+    ret = xfile_data->lpVtbl->GetChildren(xfile_data, &children);
+    ok(ret == S_OK, "ID3DXFileData_GetChildren failed with %#x\n", ret);
+
+    level++;
+
+    for (i = 0; i < children; i++)
+    {
+        ID3DXFileData *child;
+        int j;
+
+        ret = xfile_data->lpVtbl->GetChild(xfile_data, i, &child);
+        ok(ret == S_OK, "ID3DXFileData_GetChild failed with %#x\n", ret);
+        for (j = 0; j < level; j++)
+            printf("  ");
+        if (child->lpVtbl->IsReference(child))
+            printf("Found Data Reference (%d)\n", i + 1);
+        else
+            printf("Found Data (%d)\n", i + 1);
+
+        process_data(child, level);
+
+        child->lpVtbl->Release(child);
+    }
+}
+
+/* Dump an X file 'objects.x' and its related templates file 'templates.x' if they are both presents
+ * Useful for debug by comparing outputs from native and builtin dlls */
+static void test_dump(void)
+{
+    HRESULT ret;
+    ULONG ref;
+    ID3DXFile *xfile = NULL;
+    ID3DXFileEnumObject *xfile_enum_object = NULL;
+    HANDLE file;
+    void *data;
+    DWORD size;
+    SIZE_T children;
+    int i;
+
+    /* Dump data only if there is an object and a template */
+    file = CreateFileA("objects.x", GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+    if (file == INVALID_HANDLE_VALUE)
+        return;
+    CloseHandle(file);
+
+    file = CreateFileA("templates.x", GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+    if (file == INVALID_HANDLE_VALUE)
+        return;
+
+    data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 10000);
+
+    if (!ReadFile(file, data, 10000, &size, NULL))
+    {
+        skip("Templates file is too big\n");
+        goto exit;
+    }
+
+    printf("Load templates file (%d bytes)\n", size);
+
+    ret = D3DXFileCreate(&xfile);
+    ok(ret == S_OK, "D3DXCreateFile failed with %#x\n", ret);
+
+    ret = xfile->lpVtbl->RegisterTemplates(xfile, data, size);
+    ok(ret == S_OK, "ID3DXFileImpl_RegisterTemplates failed with %#x\n", ret);
+
+    ret = xfile->lpVtbl->CreateEnumObject(xfile, (void*)"objects.x", D3DXF_FILELOAD_FROMFILE, &xfile_enum_object);
+    ok(ret == S_OK, "ID3DXFile_CreateEnumObject failed with %#x\n", ret);
+
+    ret = xfile_enum_object->lpVtbl->GetChildren(xfile_enum_object, &children);
+    ok(ret == S_OK, "ID3DXFileEnumObject_GetChildren failed with %#x\n", ret);
+
+    for (i = 0; i < children; i++)
+    {
+        ID3DXFileData *child;
+        ret = xfile_enum_object->lpVtbl->GetChild(xfile_enum_object, i, &child);
+        ok(ret == S_OK, "ID3DXFileEnumObject_GetChild failed with %#x\n", ret);
+        printf("\n");
+        process_data(child, 0);
+        child->lpVtbl->Release(child);
+    }
+
+    ref = xfile_enum_object->lpVtbl->Release(xfile_enum_object);
+    ok(ref == 0, "Got refcount %u, expected 0\n", ref);
+
+    ref = xfile->lpVtbl->Release(xfile);
+    ok(ref == 0, "Got refcount %u, expected 0\n", ref);
+
+
+exit:
+    CloseHandle(file);
+    HeapFree(GetProcessHeap(), 0, data);
+}
+
 START_TEST(xfile)
 {
     test_templates();
     test_lock_unlock();
+    test_dump();
 }
