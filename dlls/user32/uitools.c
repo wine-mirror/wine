@@ -539,7 +539,7 @@ static BOOL UITOOLS95_DrawRectEdge(HDC hdc, LPRECT rc,
     if(uFlags & BF_BOTTOM)
     {
         MoveToEx(hdc, InnerRect.left, InnerRect.bottom-1, NULL);
-        LineTo(hdc, InnerRect.right-1, InnerRect.bottom-1);
+        LineTo(hdc, InnerRect.right, InnerRect.bottom-1);
     }
     if(uFlags & BF_RIGHT)
     {
@@ -563,12 +563,12 @@ static BOOL UITOOLS95_DrawRectEdge(HDC hdc, LPRECT rc,
     if(uFlags & BF_BOTTOM)
     {
         MoveToEx(hdc, InnerRect.left+LBpenplus, InnerRect.bottom-2, NULL);
-        LineTo(hdc, InnerRect.right-1-RBpenplus, InnerRect.bottom-2);
+        LineTo(hdc, InnerRect.right-RBpenplus, InnerRect.bottom-2);
     }
     if(uFlags & BF_RIGHT)
     {
-        MoveToEx(hdc, InnerRect.right-2, InnerRect.top+2-RBpenplus, NULL);
-        LineTo(hdc, InnerRect.right-2, InnerRect.bottom-2+RTpenplus);
+        MoveToEx(hdc, InnerRect.right-2, InnerRect.top+RTpenplus, NULL);
+        LineTo(hdc, InnerRect.right-2, InnerRect.bottom-RBpenplus);
     }
 
     if( ((uFlags & BF_MIDDLE) && retval) || (uFlags & BF_ADJUST) )
