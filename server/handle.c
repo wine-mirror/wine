@@ -244,7 +244,7 @@ obj_handle_t alloc_handle_no_access_check( struct process *process, void *ptr, u
     if (attr & OBJ_INHERIT) access |= RESERVED_INHERIT;
     if (!process->handles)
     {
-        set_error( STATUS_NO_MEMORY );
+        set_error( STATUS_PROCESS_IS_TERMINATING );
         return 0;
     }
     return alloc_entry( process->handles, obj, access );

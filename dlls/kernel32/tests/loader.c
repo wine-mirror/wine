@@ -2061,7 +2061,6 @@ if (0)
     ret = DuplicateHandle(GetCurrentProcess(), hmap, pi.hProcess, &hmap_dup,
                           0, FALSE, DUPLICATE_SAME_ACCESS);
     ok(!ret, "DuplicateHandle should fail\n");
-todo_wine
     ok(GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
 
     offset.u.LowPart = 0;
@@ -2070,7 +2069,6 @@ todo_wine
     size = 0;
     ret = pNtMapViewOfSection(hmap, pi.hProcess, &addr, 0, 0, &offset,
                               &size, 1 /* ViewShare */, 0, PAGE_READONLY);
-todo_wine
     ok(ret == STATUS_PROCESS_IS_TERMINATING, "expected STATUS_PROCESS_IS_TERMINATING, got %#x\n", ret);
 
     SetLastError(0xdeadbeef);
