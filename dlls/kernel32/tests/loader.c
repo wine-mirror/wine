@@ -1165,7 +1165,6 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
 
         if (test_dll_phase == 4 || test_dll_phase == 5)
         {
-todo_wine
             ok(0, "dll_entry_point(DLL_PROCESS_DETACH) should not be called\n");
             break;
         }
