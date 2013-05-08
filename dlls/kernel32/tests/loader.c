@@ -1675,7 +1675,7 @@ static void test_ExitProcess(void)
 #include "poppack.h"
     static const char filler[0x1000];
     DWORD dummy, file_align;
-    HANDLE file, thread, hmap;
+    HANDLE file, thread, process, hmap, hmap_dup;
     char temp_path[MAX_PATH], dll_name[MAX_PATH], cmdline[MAX_PATH * 2];
     DWORD ret, target_offset, old_prot;
     char **argv, buf[256];
@@ -1683,6 +1683,7 @@ static void test_ExitProcess(void)
     STARTUPINFO si = { sizeof(si) };
     CONTEXT ctx;
     struct PROCESS_BASIC_INFORMATION_PRIVATE pbi;
+    MEMORY_BASIC_INFORMATION mbi;
     DWORD_PTR affinity;
     void *addr;
     LARGE_INTEGER offset;
@@ -1906,6 +1907,10 @@ static void test_ExitProcess(void)
     ok(ret, "VirtualProtectEx error %d\n", GetLastError());
     ok(old_prot == PAGE_READWRITE, "expected PAGE_READWRITE, got %#x\n", old_prot);
     SetLastError(0xdeadbeef);
+    size = VirtualQueryEx(pi.hProcess, NULL, &mbi, sizeof(mbi));
+    ok(size == sizeof(mbi), "VirtualQueryEx error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
     ret = ReadProcessMemory(pi.hProcess, addr, buf, 4, &size);
     ok(ret, "ReadProcessMemory error %d\n", GetLastError());
     ok(size == 4, "expected 4, got %lu\n", size);
@@ -1913,6 +1918,11 @@ static void test_ExitProcess(void)
     SetLastError(0xdeadbeef);
     hmap = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 4096, NULL);
     ok(hmap != 0, "CreateFileMapping error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = DuplicateHandle(GetCurrentProcess(), hmap, pi.hProcess, &hmap_dup,
+                          0, FALSE, DUPLICATE_SAME_ACCESS);
+    ok(ret, "DuplicateHandle error %d\n", GetLastError());
 
     offset.u.LowPart = 0;
     offset.u.HighPart = 0;
@@ -1958,6 +1968,11 @@ static void test_ExitProcess(void)
      */
     ret = WaitForSingleObject(pi.hProcess, 1000);
     ok(ret == WAIT_OBJECT_0, "WaitForSingleObject failed: %x\n", ret);
+
+    SetLastError(0xdeadbeef);
+    process = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pi.dwProcessId);
+    ok(process != NULL, "OpenProcess error %d\n", GetLastError());
+    CloseHandle(process);
 
     memset(&pbi, 0, sizeof(pbi));
     ret = pNtQueryInformationProcess(pi.hProcess, ProcessBasicInformation, &pbi, sizeof(pbi), NULL);
@@ -2026,6 +2041,27 @@ static void test_ExitProcess(void)
     SetLastError(0xdeadbeef);
     addr = VirtualAllocEx(pi.hProcess, NULL, 4096, MEM_COMMIT, PAGE_READWRITE);
     ok(!addr, "VirtualAllocEx should fail\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    size = VirtualQueryEx(pi.hProcess, NULL, &mbi, sizeof(mbi));
+    ok(!size, "VirtualQueryEx should fail\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
+
+    /* CloseHandle() call below leads to premature process termination
+     * under some Windows versions.
+     */
+if (0)
+{
+    SetLastError(0xdeadbeef);
+    ret = CloseHandle(hmap_dup);
+    ok(ret, "CloseHandle should not fail\n");
+}
+
+    SetLastError(0xdeadbeef);
+    ret = DuplicateHandle(GetCurrentProcess(), hmap, pi.hProcess, &hmap_dup,
+                          0, FALSE, DUPLICATE_SAME_ACCESS);
+    ok(!ret, "DuplicateHandle should fail\n");
+todo_wine
     ok(GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
 
     offset.u.LowPart = 0;
