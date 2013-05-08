@@ -322,7 +322,7 @@ static struct thread *get_ptrace_thread( struct process *process )
     {
         if (thread->unix_pid != -1) return thread;
     }
-    set_error( STATUS_ACCESS_DENIED );  /* process is dead */
+    set_error( STATUS_PROCESS_IS_TERMINATING );  /* process is dead */
     return NULL;
 }
 
