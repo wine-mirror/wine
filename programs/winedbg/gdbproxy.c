@@ -232,6 +232,22 @@ static struct cpu_register cpu_register_map[] = {
     REG(SegEs, 4, CONTEXT_SEGMENTS),
     REG(SegFs, 4, CONTEXT_SEGMENTS),
     REG(SegGs, 4, CONTEXT_SEGMENTS),
+    { FIELD_OFFSET(CONTEXT, FloatSave.RegisterArea[ 0]), 10, 10, CONTEXT_FLOATING_POINT },
+    { FIELD_OFFSET(CONTEXT, FloatSave.RegisterArea[10]), 10, 10, CONTEXT_FLOATING_POINT },
+    { FIELD_OFFSET(CONTEXT, FloatSave.RegisterArea[20]), 10, 10, CONTEXT_FLOATING_POINT },
+    { FIELD_OFFSET(CONTEXT, FloatSave.RegisterArea[30]), 10, 10, CONTEXT_FLOATING_POINT },
+    { FIELD_OFFSET(CONTEXT, FloatSave.RegisterArea[40]), 10, 10, CONTEXT_FLOATING_POINT },
+    { FIELD_OFFSET(CONTEXT, FloatSave.RegisterArea[50]), 10, 10, CONTEXT_FLOATING_POINT },
+    { FIELD_OFFSET(CONTEXT, FloatSave.RegisterArea[60]), 10, 10, CONTEXT_FLOATING_POINT },
+    { FIELD_OFFSET(CONTEXT, FloatSave.RegisterArea[70]), 10, 10, CONTEXT_FLOATING_POINT },
+    { FIELD_OFFSET(CONTEXT, FloatSave.ControlWord), 2, 4, CONTEXT_FLOATING_POINT },
+    { FIELD_OFFSET(CONTEXT, FloatSave.StatusWord), 2, 4, CONTEXT_FLOATING_POINT },
+    { FIELD_OFFSET(CONTEXT, FloatSave.TagWord), 2, 4, CONTEXT_FLOATING_POINT },
+    { FIELD_OFFSET(CONTEXT, FloatSave.ErrorSelector), 2, 4, CONTEXT_FLOATING_POINT },
+    REG(FloatSave.ErrorOffset, 4, CONTEXT_FLOATING_POINT ),
+    { FIELD_OFFSET(CONTEXT, FloatSave.DataSelector), 2, 4, CONTEXT_FLOATING_POINT },
+    REG(FloatSave.DataOffset, 4, CONTEXT_FLOATING_POINT ),
+    { FIELD_OFFSET(CONTEXT, FloatSave.ErrorSelector)+2, 2, 4, CONTEXT_FLOATING_POINT },
 };
 #elif defined(__powerpc__)
 static const char target_xml[] = "";
@@ -480,7 +496,7 @@ static BOOL fetch_context(struct gdb_context* gdbctx, HANDLE h, CONTEXT* ctx)
 {
     ctx->ContextFlags =  CONTEXT_CONTROL
                        | CONTEXT_INTEGER
-#if defined(__powerpc__)
+#if defined(__powerpc__) || defined(__i386__)
                        | CONTEXT_FLOATING_POINT
 #endif
 #ifdef CONTEXT_SEGMENTS
