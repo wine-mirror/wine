@@ -984,7 +984,7 @@ typedef struct tagTLBImpLib
 typedef struct tagITypeLibImpl
 {
     ITypeLib2 ITypeLib2_iface;
-    const ITypeCompVtbl *lpVtblTypeComp;
+    ITypeComp ITypeComp_iface;
     LONG ref;
     TLIBATTR LibAttr;            /* guid,lcid,syskind,version,flags */
     LCID lcid;
@@ -1020,7 +1020,7 @@ static const ITypeCompVtbl tlbtcvt;
 
 static inline ITypeLibImpl *impl_from_ITypeComp( ITypeComp *iface )
 {
-    return (ITypeLibImpl *)((char*)iface - FIELD_OFFSET(ITypeLibImpl, lpVtblTypeComp));
+    return CONTAINING_RECORD(iface, ITypeLibImpl, ITypeComp_iface);
 }
 
 /* ITypeLib methods */
@@ -2988,7 +2988,7 @@ static ITypeLibImpl* TypeLibImpl_Constructor(void)
     if (!pTypeLibImpl) return NULL;
 
     pTypeLibImpl->ITypeLib2_iface.lpVtbl = &tlbvt;
-    pTypeLibImpl->lpVtblTypeComp = &tlbtcvt;
+    pTypeLibImpl->ITypeComp_iface.lpVtbl = &tlbtcvt;
     pTypeLibImpl->ref = 1;
 
     list_init(&pTypeLibImpl->implib_list);
@@ -4438,7 +4438,7 @@ static HRESULT WINAPI ITypeLib2_fnGetTypeComp(
     ITypeLibImpl *This = impl_from_ITypeLib2(iface);
 
     TRACE("(%p)->(%p)\n",This,ppTComp);
-    *ppTComp = (ITypeComp *)&This->lpVtblTypeComp;
+    *ppTComp = &This->ITypeComp_iface;
     ITypeComp_AddRef(*ppTComp);
 
     return S_OK;
