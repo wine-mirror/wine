@@ -5028,6 +5028,64 @@ static void test_stock_fonts(void)
     }
 }
 
+static void test_max_height(void)
+{
+    HDC hdc;
+    LOGFONT lf;
+    HFONT hfont, hfont_old;
+    TEXTMETRICA tm1, tm;
+    BOOL r;
+    LONG invalid_height[] = { -65536, -123456, 123456 };
+    size_t i;
+
+    memset(&tm1, 0, sizeof(tm1));
+    memset(&lf, 0, sizeof(lf));
+    strcpy(lf.lfFaceName, "Tahoma");
+    lf.lfHeight = -1;
+
+    hdc = GetDC(NULL);
+
+    /* get 1 ppem value */
+    hfont = CreateFontIndirect(&lf);
+    hfont_old = SelectObject(hdc, hfont);
+    r = GetTextMetrics(hdc, &tm1);
+    ok(r, "GetTextMetrics failed\n");
+    ok(tm1.tmHeight > 0, "expected a positive value, got %d\n", tm1.tmHeight);
+    ok(tm1.tmAveCharWidth > 0, "expected a positive value, got %d\n", tm1.tmHeight);
+    DeleteObject(SelectObject(hdc, hfont_old));
+
+    /* test the largest value */
+    lf.lfHeight = -((1 << 16) - 1);
+    hfont = CreateFontIndirect(&lf);
+    hfont_old = SelectObject(hdc, hfont);
+    memset(&tm, 0, sizeof(tm));
+    r = GetTextMetrics(hdc, &tm);
+    ok(r, "GetTextMetrics failed\n");
+    ok(tm.tmHeight > tm1.tmHeight,
+       "expected greater than 1 ppem value (%d), got %d\n", tm1.tmHeight, tm.tmHeight);
+    ok(tm.tmAveCharWidth > tm1.tmAveCharWidth,
+       "expected greater than 1 ppem value (%d), got %d\n", tm1.tmAveCharWidth, tm.tmAveCharWidth);
+    DeleteObject(SelectObject(hdc, hfont_old));
+
+    /* test an invalid value */
+    for (i = 0; i < sizeof(invalid_height)/sizeof(invalid_height[0]); i++) {
+        lf.lfHeight = invalid_height[i];
+        hfont = CreateFontIndirect(&lf);
+        hfont_old = SelectObject(hdc, hfont);
+        memset(&tm, 0, sizeof(tm));
+        r = GetTextMetrics(hdc, &tm);
+        ok(r, "GetTextMetrics failed\n");
+        ok(tm.tmHeight == tm1.tmHeight,
+           "expected 1 ppem value (%d), got %d\n", tm1.tmHeight, tm.tmHeight);
+        ok(tm.tmAveCharWidth == tm1.tmAveCharWidth,
+           "expected 1 ppem value (%d), got %d\n", tm1.tmAveCharWidth, tm.tmAveCharWidth);
+        DeleteObject(SelectObject(hdc, hfont_old));
+    }
+
+    ReleaseDC(NULL, hdc);
+    return;
+}
+
 START_TEST(font)
 {
     init();
@@ -5084,6 +5142,7 @@ START_TEST(font)
     test_fullname();
     test_fullname2();
     test_east_asian_font_selection();
+    test_max_height();
 
     /* These tests should be last test until RemoveFontResource
      * is properly implemented.

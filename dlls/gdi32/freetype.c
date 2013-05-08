@@ -3983,6 +3983,7 @@ static LONG calc_ppem_for_height(FT_Face ft_face, LONG height)
     TT_HoriHeader *pHori;
 
     LONG ppem;
+    const LONG MAX_PPEM = (1 << 16) - 1;
 
     pOS2 = pFT_Get_Sfnt_Table(ft_face, ft_sfnt_os2);
     pHori = pFT_Get_Sfnt_Table(ft_face, ft_sfnt_hhea);
@@ -4010,9 +4011,17 @@ static LONG calc_ppem_for_height(FT_Face ft_face, LONG height)
         else
             ppem = MulDiv(ft_face->units_per_EM, height,
                           pOS2->usWinAscent + pOS2->usWinDescent);
+        if(ppem > MAX_PPEM) {
+            WARN("Ignoring too large height %d, ppem %d\n", height, ppem);
+            ppem = 1;
+        }
     }
-    else
+    else if(height >= -MAX_PPEM)
         ppem = -height;
+    else {
+        WARN("Ignoring too large height %d\n", height);
+        ppem = 1;
+    }
 
     return ppem;
 }
