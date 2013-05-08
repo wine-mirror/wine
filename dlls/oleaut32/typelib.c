@@ -1094,8 +1094,8 @@ typedef struct tagTLBImplType
 /* internal TypeInfo data */
 typedef struct tagITypeInfoImpl
 {
-    const ITypeInfo2Vtbl *lpVtbl;
-    const ITypeCompVtbl  *lpVtblTypeComp;
+    ITypeInfo2 ITypeInfo2_iface;
+    ITypeComp ITypeComp_iface;
     LONG ref;
     BOOL not_attached_to_typelib;
     TYPEATTR TypeAttr ;         /* _lots_ of type information. */
@@ -1125,7 +1125,7 @@ typedef struct tagITypeInfoImpl
 
 static inline ITypeInfoImpl *info_impl_from_ITypeComp( ITypeComp *iface )
 {
-    return (ITypeInfoImpl *)((char*)iface - FIELD_OFFSET(ITypeInfoImpl, lpVtblTypeComp));
+    return CONTAINING_RECORD(iface, ITypeInfoImpl, ITypeComp_iface);
 }
 
 static const ITypeInfo2Vtbl tinfvt;
@@ -4884,7 +4884,7 @@ static HRESULT WINAPI ITypeLibComp_fnBind(
             if (pTypeInfo->Name && !strcmpW(pTypeInfo->Name, szName))
             {
                 *pDescKind = DESCKIND_TYPECOMP;
-                pBindPtr->lptcomp = (ITypeComp *)&pTypeInfo->lpVtblTypeComp;
+                pBindPtr->lptcomp = &pTypeInfo->ITypeComp_iface;
                 ITypeComp_AddRef(pBindPtr->lptcomp);
                 TRACE("module or enum: %s\n", debugstr_w(szName));
                 return S_OK;
@@ -4894,7 +4894,7 @@ static HRESULT WINAPI ITypeLibComp_fnBind(
         if ((pTypeInfo->TypeAttr.typekind == TKIND_MODULE) ||
             (pTypeInfo->TypeAttr.typekind == TKIND_ENUM))
         {
-            ITypeComp *pSubTypeComp = (ITypeComp *)&pTypeInfo->lpVtblTypeComp;
+            ITypeComp *pSubTypeComp = &pTypeInfo->ITypeComp_iface;
             HRESULT hr;
 
             hr = ITypeComp_Bind(pSubTypeComp, szName, lHash, wFlags, ppTInfo, pDescKind, pBindPtr);
@@ -4910,7 +4910,7 @@ static HRESULT WINAPI ITypeLibComp_fnBind(
         if ((pTypeInfo->TypeAttr.typekind == TKIND_COCLASS) &&
             (pTypeInfo->TypeAttr.wTypeFlags & TYPEFLAG_FAPPOBJECT))
         {
-            ITypeComp *pSubTypeComp = (ITypeComp *)&pTypeInfo->lpVtblTypeComp;
+            ITypeComp *pSubTypeComp = &pTypeInfo->ITypeComp_iface;
             HRESULT hr;
             ITypeInfo *subtypeinfo;
             BINDPTR subbindptr;
@@ -5013,9 +5013,9 @@ static HRESULT WINAPI ITypeLibComp_fnBindType(
         if (pTypeInfo->Name && !strcmpiW(pTypeInfo->Name, szName))
         {
             TRACE("returning %p\n", pTypeInfo);
-            *ppTInfo = (ITypeInfo *)&pTypeInfo->lpVtbl;
+            *ppTInfo = (ITypeInfo *)&pTypeInfo->ITypeInfo2_iface;
             ITypeInfo_AddRef(*ppTInfo);
-            *ppTComp = (ITypeComp *)&pTypeInfo->lpVtblTypeComp;
+            *ppTComp = &pTypeInfo->ITypeComp_iface;
             ITypeComp_AddRef(*ppTComp);
             return S_OK;
         }
@@ -5046,8 +5046,8 @@ static ITypeInfoImpl* ITypeInfoImpl_Constructor(void)
     pTypeInfoImpl = heap_alloc_zero(sizeof(ITypeInfoImpl));
     if (pTypeInfoImpl)
     {
-      pTypeInfoImpl->lpVtbl = &tinfvt;
-      pTypeInfoImpl->lpVtblTypeComp = &tcompvt;
+      pTypeInfoImpl->ITypeInfo2_iface.lpVtbl = &tinfvt;
+      pTypeInfoImpl->ITypeComp_iface.lpVtbl = &tcompvt;
       pTypeInfoImpl->ref = 0;
       pTypeInfoImpl->hreftype = -1;
       pTypeInfoImpl->TypeAttr.memidConstructor = MEMBERID_NIL;
@@ -5238,7 +5238,7 @@ static HRESULT WINAPI ITypeInfo_fnGetTypeComp( ITypeInfo2 *iface,
 
     TRACE("(%p)->(%p)\n", This, ppTComp);
 
-    *ppTComp = (ITypeComp *)&This->lpVtblTypeComp;
+    *ppTComp = &This->ITypeComp_iface;
     ITypeComp_AddRef(*ppTComp);
     return S_OK;
 }
@@ -6999,7 +6999,7 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
 
     if ((This->hreftype != -1) && (This->hreftype == hRefType))
     {
-        *ppTInfo = (ITypeInfo *)&This->lpVtbl;
+        *ppTInfo = (ITypeInfo *)&This->ITypeInfo2_iface;
         ITypeInfo_AddRef(*ppTInfo);
         result = S_OK;
     }
@@ -7913,7 +7913,7 @@ static HRESULT WINAPI ITypeComp_fnBind(
         if (FAILED(hr))
             return hr;
         *pDescKind = DESCKIND_FUNCDESC;
-        *ppTInfo = (ITypeInfo *)&This->lpVtbl;
+        *ppTInfo = (ITypeInfo *)&This->ITypeInfo2_iface;
         ITypeInfo_AddRef(*ppTInfo);
         return S_OK;
     } else {
@@ -7923,7 +7923,7 @@ static HRESULT WINAPI ITypeComp_fnBind(
             if (FAILED(hr))
                 return hr;
             *pDescKind = DESCKIND_VARDESC;
-            *ppTInfo = (ITypeInfo *)&This->lpVtbl;
+            *ppTInfo = (ITypeInfo *)&This->ITypeInfo2_iface;
             ITypeInfo_AddRef(*ppTInfo);
             return S_OK;
         }
@@ -7934,7 +7934,7 @@ static HRESULT WINAPI ITypeComp_fnBind(
         ITypeInfo *pTInfo;
         ITypeComp *pTComp;
         HRESULT hr;
-        hr=ITypeInfo_GetRefTypeInfo((ITypeInfo *)&This->lpVtbl, This->impltypes[0].hRef, &pTInfo);
+        hr=ITypeInfo2_GetRefTypeInfo(&This->ITypeInfo2_iface, This->impltypes[0].hRef, &pTInfo);
         if (SUCCEEDED(hr))
         {
             hr = ITypeInfo_GetTypeComp(pTInfo,&pTComp);
