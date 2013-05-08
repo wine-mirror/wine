@@ -447,22 +447,27 @@ static inline DWORD64   cpu_register(CONTEXT* ctx, unsigned idx)
 
 static inline   void    cpu_register_hex_from(CONTEXT* ctx, unsigned idx, const char** phex)
 {
-    DWORD64     val = 0;
-    unsigned    i;
-    BYTE        b;
+    if (cpu_register_map[idx].gdb_length == cpu_register_map[idx].ctx_length)
+        hex_from(cpu_register_ptr(ctx, idx), *phex, cpu_register_map[idx].gdb_length);
+    else
+    {
+        DWORD64     val = 0;
+        unsigned    i;
+        BYTE        b;
 
-    for (i = 0; i < cpu_register_map[idx].gdb_length; i++)
-    {
-        hex_from(&b, *phex, 1);
-        *phex += 2;
-        val += (DWORD64)b << (8 * i);
-    }
-    switch (cpu_register_map[idx].ctx_length)
-    {
-    case 2: *(WORD*)cpu_register_ptr(ctx, idx) = (WORD)val; break;
-    case 4: *(DWORD*)cpu_register_ptr(ctx, idx) = (DWORD)val; break;
-    case 8: *(DWORD64*)cpu_register_ptr(ctx, idx) = val; break;
-    default: assert(0);
+        for (i = 0; i < cpu_register_map[idx].gdb_length; i++)
+        {
+            hex_from(&b, *phex, 1);
+            *phex += 2;
+            val += (DWORD64)b << (8 * i);
+        }
+        switch (cpu_register_map[idx].ctx_length)
+        {
+        case 2: *(WORD*)cpu_register_ptr(ctx, idx) = (WORD)val; break;
+        case 4: *(DWORD*)cpu_register_ptr(ctx, idx) = (DWORD)val; break;
+        case 8: *(DWORD64*)cpu_register_ptr(ctx, idx) = val; break;
+        default: assert(0);
+        }
     }
 }
 
@@ -1010,14 +1015,19 @@ static enum packet_return packet_reply_error(struct gdb_context* gdbctx, int err
 
 static inline void packet_reply_register_hex_to(struct gdb_context* gdbctx, unsigned idx)
 {
-    DWORD64     val = cpu_register(&gdbctx->context, idx);
-    unsigned    i;
-
-    for (i = 0; i < cpu_register_map[idx].gdb_length; i++)
+    if (cpu_register_map[idx].gdb_length == cpu_register_map[idx].ctx_length)
+        packet_reply_hex_to(gdbctx, cpu_register_ptr(&gdbctx->context, idx), cpu_register_map[idx].gdb_length);
+    else
     {
-        BYTE    b = val;
-        packet_reply_hex_to(gdbctx, &b, 1);
-        val >>= 8;
+        DWORD64     val = cpu_register(&gdbctx->context, idx);
+        unsigned    i;
+
+        for (i = 0; i < cpu_register_map[idx].gdb_length; i++)
+        {
+            BYTE    b = val;
+            packet_reply_hex_to(gdbctx, &b, 1);
+            val >>= 8;
+        }
     }
 }
 
@@ -1573,8 +1583,13 @@ static enum packet_return packet_read_register(struct gdb_context* gdbctx)
             return packet_error;
     }
     if (gdbctx->trace & GDBPXY_TRC_COMMAND)
-        fprintf(stderr, "Read register %x => %08x%08x\n", reg,
-                (unsigned)(cpu_register(pctx, reg) >> 32), (unsigned)cpu_register(pctx, reg));
+    {
+        if (cpu_register_map[reg].ctx_length <= sizeof(DWORD64))
+            fprintf(stderr, "Read register %x => %08x%08x\n", reg,
+                    (unsigned)(cpu_register(pctx, reg) >> 32), (unsigned)cpu_register(pctx, reg));
+        else
+            fprintf(stderr, "Read register %x\n", reg);
+    }
     packet_reply_open(gdbctx);
     packet_reply_register_hex_to(gdbctx, reg);
     packet_reply_close(gdbctx);
