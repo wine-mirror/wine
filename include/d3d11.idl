@@ -27,7 +27,36 @@ typedef D3D_PRIMITIVE_TOPOLOGY D3D11_PRIMITIVE_TOPOLOGY;
 typedef D3D_SRV_DIMENSION D3D11_SRV_DIMENSION;
 typedef RECT D3D11_RECT;
 
+const UINT D3D11_DEFAULT_DEPTH_BIAS          = 0;
+cpp_quote("#define D3D11_DEFAULT_DEPTH_BIAS_CLAMP 0.0f")
+const UINT D3D11_DEFAULT_MAX_ANISOTROPY      = 16;
+cpp_quote("#define D3D11_DEFAULT_MIP_LOD_BIAS 0.0f")
+const UINT D3D11_DEFAULT_RENDER_TARGET_ARRAY_INDEX = 0;
+const UINT D3D11_DEFAULT_SAMPLE_MASK         = 0xffffffff;
+const UINT D3D11_DEFAULT_SCISSOR_ENDX        = 0;
+const UINT D3D11_DEFAULT_SCISSOR_ENDY        = 0;
+const UINT D3D11_DEFAULT_SCISSOR_STARTX      = 0;
+const UINT D3D11_DEFAULT_SCISSOR_STARTY      = 0;
+cpp_quote("#define D3D11_DEFAULT_SLOPE_SCALED_DEPTH_BIAS 0.0f")
+const UINT D3D11_DEFAULT_STENCIL_READ_MASK   = 0xff;
+const UINT D3D11_DEFAULT_STENCIL_REFERENCE   = 0;
+const UINT D3D11_DEFAULT_STENCIL_WRITE_MASK  = 0xff;
+const UINT D3D11_DEFAULT_VIEWPORT_AND_SCISSORRECT_INDEX = 0;
+const UINT D3D11_DEFAULT_VIEWPORT_HEIGHT     = 0;
+cpp_quote("#define D3D11_DEFAULT_VIEWPORT_MAX_DEPTH 0.0f")
+cpp_quote("#define D3D11_DEFAULT_VIEWPORT_MIN_DEPTH 0.0f")
+const UINT D3D11_DEFAULT_VIEWPORT_TOPLEFTX   = 0;
+const UINT D3D11_DEFAULT_VIEWPORT_TOPLEFTY   = 0;
+const UINT D3D11_DEFAULT_VIEWPORT_WIDTH      = 0;
+
 const unsigned int D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT = 8;
+
+const UINT D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION = 16384;
+
+cpp_quote("#if !defined(D3D11_NO_HELPERS) && defined(__cplusplus)")
+cpp_quote("struct CD3D11_DEFAULT {};")
+cpp_quote("extern const DECLSPEC_SELECTANY CD3D11_DEFAULT D3D11_DEFAULT;")
+cpp_quote("#endif")
 
 typedef enum D3D11_BLEND
 {
@@ -307,6 +336,41 @@ typedef struct D3D11_RASTERIZER_DESC
     BOOL AntialiasedLineEnable;
 } D3D11_RASTERIZER_DESC;
 
+cpp_quote("#if !defined(D3D11_NO_HELPERS) && defined(__cplusplus)")
+cpp_quote("struct CD3D11_RASTERIZER_DESC : public D3D11_RASTERIZER_DESC {")
+cpp_quote("    CD3D11_RASTERIZER_DESC() {}")
+cpp_quote("    explicit CD3D11_RASTERIZER_DESC(const D3D11_RASTERIZER_DESC &o) : D3D11_RASTERIZER_DESC(o) {}")
+cpp_quote("    explicit CD3D11_RASTERIZER_DESC(CD3D11_DEFAULT) {")
+cpp_quote("        FillMode = D3D11_FILL_SOLID;")
+cpp_quote("        CullMode = D3D11_CULL_BACK;")
+cpp_quote("        FrontCounterClockwise = FALSE;")
+cpp_quote("        DepthBias = D3D11_DEFAULT_DEPTH_BIAS;")
+cpp_quote("        DepthBiasClamp = D3D11_DEFAULT_DEPTH_BIAS_CLAMP;")
+cpp_quote("        SlopeScaledDepthBias = D3D11_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;")
+cpp_quote("        DepthClipEnable = TRUE;")
+cpp_quote("        ScissorEnable = FALSE;")
+cpp_quote("        MultisampleEnable = FALSE;")
+cpp_quote("        AntialiasedLineEnable = FALSE;")
+cpp_quote("    }")
+cpp_quote("    explicit CD3D11_RASTERIZER_DESC(D3D11_FILL_MODE fillMode, D3D11_CULL_MODE cullMode," )
+cpp_quote("            BOOL frontCounterClockwise, INT depthBias, FLOAT depthBiasClamp, FLOAT slopeScaledDepthBias,")
+cpp_quote("            BOOL depthClipEnable, BOOL scissorEnable, BOOL multisampleEnable, BOOL antialiasedLineEnable) {")
+cpp_quote("        FillMode = fillMode;")
+cpp_quote("        CullMode = cullMode;")
+cpp_quote("        FrontCounterClockwise = frontCounterClockwise;")
+cpp_quote("        DepthBias = depthBias;")
+cpp_quote("        DepthBiasClamp = depthBiasClamp;")
+cpp_quote("        SlopeScaledDepthBias = slopeScaledDepthBias;")
+cpp_quote("        DepthClipEnable = depthClipEnable;")
+cpp_quote("        ScissorEnable = scissorEnable;")
+cpp_quote("        MultisampleEnable = multisampleEnable;")
+cpp_quote("        AntialiasedLineEnable = antialiasedLineEnable;")
+cpp_quote("    }")
+cpp_quote("    ~CD3D11_RASTERIZER_DESC() {}")
+cpp_quote("    operator const D3D11_RASTERIZER_DESC&() const { return *this; }")
+cpp_quote("};")
+cpp_quote("#endif")
+
 typedef enum D3D11_RESOURCE_DIMENSION
 {
     D3D11_RESOURCE_DIMENSION_UNKNOWN,
@@ -569,6 +633,26 @@ typedef enum D3D11_USAGE
     D3D11_USAGE_STAGING,
 } D3D11_USAGE;
 
+typedef enum D3D11_BIND_FLAG
+{
+    D3D11_BIND_VERTEX_BUFFER    = 0x0001,
+    D3D11_BIND_INDEX_BUFFER     = 0x0002,
+    D3D11_BIND_CONSTANT_BUFFER  = 0x0004,
+    D3D11_BIND_SHADER_RESOURCE  = 0x0008,
+    D3D11_BIND_STREAM_OUTPUT    = 0x0010,
+    D3D11_BIND_RENDER_TARGET    = 0x0020,
+    D3D11_BIND_DEPTH_STENCIL    = 0x0040,
+    D3D11_BIND_UNORDERED_ACCESS = 0x0080,
+    D3D11_BIND_DECODER          = 0x0200,
+    D3D11_BIND_VIDEO_ENCODER    = 0x0400
+} D3D11_BIND_FLAG;
+
+typedef enum D3D11_CPU_ACCESS_FLAG
+{
+    D3D11_CPU_ACCESS_WRITE = 0x00010000,
+    D3D11_CPU_ACCESS_READ  = 0x00020000
+} D3D11_CPU_ACCESS_FLAG;
+
 typedef struct D3D11_VIEWPORT
 {
     FLOAT TopLeftX;
@@ -578,6 +662,16 @@ typedef struct D3D11_VIEWPORT
     FLOAT MinDepth;
     FLOAT MaxDepth;
 } D3D11_VIEWPORT;
+
+typedef enum D3D11_COLOR_WRITE_ENABLE
+{
+    D3D11_COLOR_WRITE_ENABLE_RED   = 1,
+    D3D11_COLOR_WRITE_ENABLE_GREEN = 2,
+    D3D11_COLOR_WRITE_ENABLE_BLUE  = 4,
+    D3D11_COLOR_WRITE_ENABLE_ALPHA = 8,
+    D3D11_COLOR_WRITE_ENABLE_ALL   =
+        (D3D11_COLOR_WRITE_ENABLE_RED|D3D11_COLOR_WRITE_ENABLE_GREEN|D3D11_COLOR_WRITE_ENABLE_BLUE|D3D11_COLOR_WRITE_ENABLE_ALPHA)
+} D3D11_COLOR_WRITE_ENABLE;
 
 typedef struct D3D11_RENDER_TARGET_BLEND_DESC
 {
@@ -598,6 +692,26 @@ typedef struct D3D11_BLEND_DESC
     D3D11_RENDER_TARGET_BLEND_DESC RenderTarget[D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT];
 } D3D11_BLEND_DESC;
 
+cpp_quote("#if !defined(D3D11_NO_HELPERS) && defined(__cplusplus)")
+cpp_quote("struct CD3D11_BLEND_DESC : public D3D11_BLEND_DESC {")
+cpp_quote("    CD3D11_BLEND_DESC() {}")
+cpp_quote("    explicit CD3D11_BLEND_DESC(const D3D11_BLEND_DESC &o) : D3D11_BLEND_DESC(o) {}")
+cpp_quote("    explicit CD3D11_BLEND_DESC(CD3D11_DEFAULT) {")
+cpp_quote("        AlphaToCoverageEnable = FALSE;")
+cpp_quote("        IndependentBlendEnable = FALSE;")
+cpp_quote("        for(D3D11_RENDER_TARGET_BLEND_DESC *target; target < RenderTarget+D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; target++) {")
+cpp_quote("            target->BlendEnable = FALSE;")
+cpp_quote("            target->SrcBlend = target->SrcBlendAlpha = D3D11_BLEND_ONE;")
+cpp_quote("            target->DestBlend = target->DestBlendAlpha = D3D11_BLEND_ZERO;")
+cpp_quote("            target->BlendOp = target->BlendOpAlpha = D3D11_BLEND_OP_ADD;")
+cpp_quote("            target->RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;")
+cpp_quote("        }")
+cpp_quote("    }")
+cpp_quote("    ~CD3D11_BLEND_DESC() {}")
+cpp_quote("    operator const D3D11_BLEND_DESC&() const { return *this; }")
+cpp_quote("};" )
+cpp_quote("#endif" )
+
 typedef struct D3D11_BUFFER_DESC
 {
     UINT ByteWidth;
@@ -607,6 +721,25 @@ typedef struct D3D11_BUFFER_DESC
     UINT MiscFlags;
     UINT StructureByteStride;
 } D3D11_BUFFER_DESC;
+
+cpp_quote("#if !defined(D3D11_NO_HELPERS) && defined(__cplusplus)")
+cpp_quote("struct CD3D11_BUFFER_DESC : public D3D11_BUFFER_DESC {")
+cpp_quote("    CD3D11_BUFFER_DESC() {}" )
+cpp_quote("    explicit CD3D11_BUFFER_DESC(const D3D11_BUFFER_DESC &o) : D3D11_BUFFER_DESC(o) {}")
+cpp_quote("    explicit CD3D11_BUFFER_DESC(UINT byteWidth,UINT bindFlags,")
+cpp_quote("            D3D11_USAGE usage = D3D11_USAGE_DEFAULT, UINT cpuaccessFlags = 0,")
+cpp_quote("            UINT miscFlags = 0, UINT structureByteStride = 0 ) {")
+cpp_quote("        ByteWidth = byteWidth;")
+cpp_quote("        Usage = usage;")
+cpp_quote("        BindFlags = bindFlags;")
+cpp_quote("        CPUAccessFlags = cpuaccessFlags;")
+cpp_quote("        MiscFlags = miscFlags;" )
+cpp_quote("        StructureByteStride = structureByteStride;")
+cpp_quote("    }")
+cpp_quote("    ~CD3D11_BUFFER_DESC() {}")
+cpp_quote("    operator const D3D11_BUFFER_DESC&() const { return *this; }")
+cpp_quote("};" )
+cpp_quote("#endif" )
 
 typedef struct D3D11_DEPTH_STENCIL_VIEW_DESC
 {
@@ -677,6 +810,49 @@ typedef struct D3D11_SAMPLER_DESC
     FLOAT MaxLOD;
 } D3D11_SAMPLER_DESC;
 
+cpp_quote("#if !defined(D3D11_NO_HELPERS) && defined(__cplusplus)")
+cpp_quote("struct CD3D11_SAMPLER_DESC : public D3D11_SAMPLER_DESC {")
+cpp_quote("    CD3D11_SAMPLER_DESC() {}")
+cpp_quote("    explicit CD3D11_SAMPLER_DESC(const D3D11_SAMPLER_DESC &o) : D3D11_SAMPLER_DESC(o) {}")
+cpp_quote("    explicit CD3D11_SAMPLER_DESC(CD3D11_DEFAULT) {" )
+cpp_quote("        Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;")
+cpp_quote("        AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;")
+cpp_quote("        AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;")
+cpp_quote("        AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;")
+cpp_quote("        MipLODBias = 0;")
+cpp_quote("        MaxAnisotropy = 1;")
+cpp_quote("        ComparisonFunc = D3D11_COMPARISON_NEVER;")
+cpp_quote("        BorderColor[0] = BorderColor[1] = BorderColor[2] = BorderColor[3] = 1.0f;")
+cpp_quote("        MinLOD = -3.402823466e+38f;")
+cpp_quote("        MaxLOD = 3.402823466e+38f;")
+cpp_quote("    }")
+cpp_quote("    explicit CD3D11_SAMPLER_DESC(D3D11_FILTER filter, D3D11_TEXTURE_ADDRESS_MODE addressU,")
+cpp_quote("            D3D11_TEXTURE_ADDRESS_MODE addressV, D3D11_TEXTURE_ADDRESS_MODE addressW,")
+cpp_quote("            FLOAT mipLODBias, UINT maxAnisotropy, D3D11_COMPARISON_FUNC comparisonFunc,")
+cpp_quote("            const FLOAT *borderColor, FLOAT minLOD, FLOAT maxLOD) {" )
+cpp_quote("        Filter = filter;")
+cpp_quote("        AddressU = addressU;")
+cpp_quote("        AddressV = addressV;")
+cpp_quote("        AddressW = addressW;")
+cpp_quote("        MipLODBias = mipLODBias;")
+cpp_quote("        MaxAnisotropy = maxAnisotropy;")
+cpp_quote("        ComparisonFunc = comparisonFunc;")
+cpp_quote("        if(borderColor) {")
+cpp_quote("            BorderColor[0] = borderColor[0];")
+cpp_quote("            BorderColor[1] = borderColor[1];")
+cpp_quote("            BorderColor[2] = borderColor[2];")
+cpp_quote("            BorderColor[3] = borderColor[3];")
+cpp_quote("        }else {")
+cpp_quote("            BorderColor[0] = BorderColor[1] = BorderColor[2] = BorderColor[3] = 1.0f;")
+cpp_quote("        }")
+cpp_quote("        MinLOD = minLOD;")
+cpp_quote("        MaxLOD = maxLOD;")
+cpp_quote("    }")
+cpp_quote("    ~CD3D11_SAMPLER_DESC() {}")
+cpp_quote("    operator const D3D11_SAMPLER_DESC&() const { return *this; }")
+cpp_quote("};")
+cpp_quote("#endif")
+
 typedef struct D3D11_SHADER_RESOURCE_VIEW_DESC
 {
     DXGI_FORMAT Format;
@@ -723,6 +899,31 @@ typedef struct D3D11_TEXTURE2D_DESC
     UINT CPUAccessFlags;
     UINT MiscFlags;
 } D3D11_TEXTURE2D_DESC;
+
+cpp_quote("#if !defined(D3D11_NO_HELPERS) && defined(__cplusplus)")
+cpp_quote("struct CD3D11_TEXTURE2D_DESC : public D3D11_TEXTURE2D_DESC {")
+cpp_quote("    CD3D11_TEXTURE2D_DESC() {}")
+cpp_quote("    explicit CD3D11_TEXTURE2D_DESC(const D3D11_TEXTURE2D_DESC &o) : D3D11_TEXTURE2D_DESC(o) {}")
+cpp_quote("    explicit CD3D11_TEXTURE2D_DESC(DXGI_FORMAT format, UINT width, UINT height, UINT arraySize = 1,")
+cpp_quote("            UINT mipLevels = 0, UINT bindFlags = D3D11_BIND_SHADER_RESOURCE,")
+cpp_quote("            D3D11_USAGE usage = D3D11_USAGE_DEFAULT, UINT cpuaccessFlags = 0, UINT sampleCount = 1," )
+cpp_quote("            UINT sampleQuality = 0, UINT miscFlags = 0) {")
+cpp_quote("        Width = width;")
+cpp_quote("        Height = height;")
+cpp_quote("        MipLevels = mipLevels;")
+cpp_quote("        ArraySize = arraySize;")
+cpp_quote("        Format = format;")
+cpp_quote("        SampleDesc.Count = sampleCount;")
+cpp_quote("        SampleDesc.Quality = sampleQuality;")
+cpp_quote("        Usage = usage;")
+cpp_quote("        BindFlags = bindFlags;")
+cpp_quote("        CPUAccessFlags = cpuaccessFlags;")
+cpp_quote("        MiscFlags = miscFlags;")
+cpp_quote("    }" )
+cpp_quote("    ~CD3D11_TEXTURE2D_DESC() {}")
+cpp_quote("    operator const D3D11_TEXTURE2D_DESC&() const { return *this; }")
+cpp_quote("};")
+cpp_quote("#endif")
 
 typedef struct D3D11_TEXTURE3D_DESC
 {
@@ -1643,6 +1844,20 @@ interface ID3D11Device : IUnknown
     HRESULT SetExceptionMode(UINT RaiseFlags);
     UINT GetExceptionMode();
 }
+
+typedef enum D3D11_CREATE_DEVICE_FLAG {
+    D3D11_CREATE_DEVICE_SINGLETHREADED  = 0x0001,
+    D3D11_CREATE_DEVICE_DEBUG           = 0x0002,
+    D3D11_CREATE_DEVICE_SWITCH_TO_REF   = 0x0004,
+    D3D11_CREATE_DEVICE_PREVENT_INTERNAL_THREADING_OPTIMIZATIONS = 0x0008,
+    D3D11_CREATE_DEVICE_BGRA_SUPPORT    = 0x0020,
+    D3D11_CREATE_DEVICE_DEBUGGABLE      = 0x0040,
+    D3D11_CREATE_DEVICE_PREVENT_ALTERING_LAYER_SETTINGS_FROM_REGISTRY = 0x0080,
+    D3D11_CREATE_DEVICE_DISABLE_GPU_TIMEOUT = 0x0100,
+    D3D11_CREATE_DEVICE_VIDEO_SUPPORT   = 0x0800
+} D3D11_CREATE_DEVICE_FLAG;
+
+const UINT D3D11_SDK_VERSION = 7;
 
 cpp_quote("#include <d3d10_1.h>")
 cpp_quote("#ifndef D3D11_IGNORE_SDK_LAYERS")
