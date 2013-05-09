@@ -666,6 +666,159 @@ static void test_Mesh(void)
     IDirect3DRM_Release(d3drm);
 }
 
+static void test_Face(void)
+{
+    HRESULT hr;
+    IDirect3DRM *d3drm;
+    IDirect3DRM2 *d3drm2;
+    IDirect3DRM3 *d3drm3;
+    IDirect3DRMMeshBuilder2 *MeshBuilder2;
+    IDirect3DRMMeshBuilder3 *MeshBuilder3;
+    IDirect3DRMFace *face1;
+    IDirect3DRMFace2 *face2;
+    IDirect3DRMFaceArray *array1;
+    DWORD count;
+    CHAR cname[64] = {0};
+    int icount;
+
+    hr = pDirect3DRMCreate(&d3drm);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
+
+    hr = IDirect3DRM_CreateFace(d3drm, &face1);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRMFace interface (hr = %x)\n", hr);
+    if (FAILED(hr))
+    {
+        skip("Cannot get IDirect3DRMFace interface (hr = %x), skipping tests\n", hr);
+        IDirect3DRM_Release(d3drm);
+        return;
+    }
+
+    hr = IDirect3DRMFace_GetClassName(face1, NULL, cname);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    hr = IDirect3DRMFace_GetClassName(face1, NULL, NULL);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    count = 1;
+    hr = IDirect3DRMFace_GetClassName(face1, &count, cname);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    count = sizeof(cname);
+    hr = IDirect3DRMFace_GetClassName(face1, &count, cname);
+    ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
+    ok(count == sizeof("Face"), "wrong size: %u\n", count);
+    ok(!strcmp(cname, "Face"), "Expected cname to be \"Face\", but got \"%s\"\n", cname);
+
+    icount = IDirect3DRMFace_GetVertexCount(face1);
+    ok(!icount, "wrong VertexCount: %i\n", icount);
+
+    IDirect3DRMFace_Release(face1);
+
+    if (FAILED(hr = IDirect3DRM_QueryInterface(d3drm, &IID_IDirect3DRM2, (void **)&d3drm2)))
+    {
+        win_skip("Cannot get IDirect3DRM2 interface (hr = %x), skipping tests\n", hr);
+        IDirect3DRM_Release(d3drm);
+        return;
+    }
+
+    hr = IDirect3DRM2_CreateMeshBuilder(d3drm2, &MeshBuilder2);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRMMeshBuilder2 interface (hr = %x)\n", hr);
+
+    icount = IDirect3DRMMeshBuilder2_GetFaceCount(MeshBuilder2);
+    ok(!icount, "wrong FaceCount: %i\n", icount);
+
+    array1 = NULL;
+    hr = IDirect3DRMMeshBuilder2_GetFaces(MeshBuilder2, &array1);
+    todo_wine
+    ok(hr == D3DRM_OK, "Cannot get FaceArray (hr = %x)\n", hr);
+
+    hr = IDirect3DRMMeshBuilder2_CreateFace(MeshBuilder2, &face1);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRMFace interface (hr = %x)\n", hr);
+
+    icount = IDirect3DRMMeshBuilder2_GetFaceCount(MeshBuilder2);
+    todo_wine
+    ok(icount == 1, "wrong FaceCount: %i\n", icount);
+
+    array1 = NULL;
+    hr = IDirect3DRMMeshBuilder2_GetFaces(MeshBuilder2, &array1);
+    todo_wine
+    ok(hr == D3DRM_OK, "Cannot get FaceArray (hr = %x)\n", hr);
+    todo_wine
+    ok(array1 != NULL, "pArray = %p\n", array1);
+    if (array1)
+    {
+        IDirect3DRMFace *face;
+        count = IDirect3DRMFaceArray_GetSize(array1);
+        ok(count == 1, "count = %u\n", count);
+        hr = IDirect3DRMFaceArray_GetElement(array1, 0, &face);
+        ok(hr == D3DRM_OK, "Cannot get face (hr = %x)\n", hr);
+        IDirect3DRMFace_Release(face);
+        IDirect3DRMFaceArray_Release(array1);
+    }
+
+    icount = IDirect3DRMFace_GetVertexCount(face1);
+    ok(!icount, "wrong VertexCount: %i\n", icount);
+
+    IDirect3DRMFace_Release(face1);
+    IDirect3DRMMeshBuilder2_Release(MeshBuilder2);
+
+    if (FAILED(hr = IDirect3DRM_QueryInterface(d3drm, &IID_IDirect3DRM3, (void **)&d3drm3)))
+    {
+        win_skip("Cannot get IDirect3DRM3 interface (hr = %x), skipping tests\n", hr);
+        IDirect3DRM_Release(d3drm);
+        return;
+    }
+
+    hr = IDirect3DRM3_CreateMeshBuilder(d3drm3, &MeshBuilder3);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRMMeshBuilder3 interface (hr = %x)\n", hr);
+
+    icount = IDirect3DRMMeshBuilder3_GetFaceCount(MeshBuilder3);
+    ok(!icount, "wrong FaceCount: %i\n", icount);
+
+    hr = IDirect3DRMMeshBuilder3_CreateFace(MeshBuilder3, &face2);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRMFace2 interface (hr = %x)\n", hr);
+
+    hr = IDirect3DRMFace2_GetClassName(face2, NULL, cname);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    hr = IDirect3DRMFace2_GetClassName(face2, NULL, NULL);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    count = 1;
+    hr = IDirect3DRMFace2_GetClassName(face2, &count, cname);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    count = sizeof(cname);
+    hr = IDirect3DRMFace2_GetClassName(face2, &count, cname);
+    ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
+    ok(count == sizeof("Face"), "wrong size: %u\n", count);
+    ok(!strcmp(cname, "Face"), "Expected cname to be \"Face\", but got \"%s\"\n", cname);
+
+    icount = IDirect3DRMMeshBuilder3_GetFaceCount(MeshBuilder3);
+    todo_wine
+    ok(icount == 1, "wrong FaceCount: %i\n", icount);
+
+    array1 = NULL;
+    hr = IDirect3DRMMeshBuilder3_GetFaces(MeshBuilder3, &array1);
+    todo_wine
+    ok(hr == D3DRM_OK, "Cannot get FaceArray (hr = %x)\n", hr);
+    todo_wine
+    ok(array1 != NULL, "pArray = %p\n", array1);
+    if (array1)
+    {
+        IDirect3DRMFace *face;
+        count = IDirect3DRMFaceArray_GetSize(array1);
+        ok(count == 1, "count = %u\n", count);
+        hr = IDirect3DRMFaceArray_GetElement(array1, 0, &face);
+        ok(hr == D3DRM_OK, "Cannot get face (hr = %x)\n", hr);
+        IDirect3DRMFace_Release(face);
+        IDirect3DRMFaceArray_Release(array1);
+    }
+
+    icount = IDirect3DRMFace2_GetVertexCount(face2);
+    ok(!icount, "wrong VertexCount: %i\n", icount);
+
+    IDirect3DRMFace2_Release(face2);
+    IDirect3DRMMeshBuilder3_Release(MeshBuilder3);
+    IDirect3DRM3_Release(d3drm3);
+    IDirect3DRM2_Release(d3drm2);
+    IDirect3DRM_Release(d3drm);
+}
+
 static void test_Frame(void)
 {
     HRESULT hr;
@@ -1496,6 +1649,7 @@ START_TEST(d3drm)
     test_MeshBuilder();
     test_MeshBuilder3();
     test_Mesh();
+    test_Face();
     test_Frame();
     test_Device();
     test_Viewport();
