@@ -613,18 +613,11 @@ TRACKBAR_DrawTics (const TRACKBAR_INFO *infoPtr, HDC hdc)
 }
 
 static void
-TRACKBAR_DrawThumb (const TRACKBAR_INFO *infoPtr, HDC hdc)
+TRACKBAR_DrawThumb (TRACKBAR_INFO *infoPtr, HDC hdc)
 {
-    HBRUSH oldbr;
-    HPEN  oldpen;
-    RECT thumb = infoPtr->rcThumb;
-    int BlackUntil = 3;
-    int PointCount = 6;
-    POINT points[6];
-    int fillClr;
-    int PointDepth;
     HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
-    
+    HBRUSH brush;
+
     if (theme)
     {
         int partId;
@@ -645,32 +638,42 @@ TRACKBAR_DrawThumb (const TRACKBAR_INFO *infoPtr, HDC hdc)
         else
             stateId = TUS_NORMAL;
         
-        DrawThemeBackground (theme, hdc, partId, stateId, &thumb, 0);
+        DrawThemeBackground (theme, hdc, partId, stateId, &infoPtr->rcThumb, NULL);
         
         return;
     }
 
-    fillClr = infoPtr->flags & TB_DRAG_MODE ? COLOR_BTNHILIGHT : COLOR_BTNFACE;
-    oldbr = SelectObject (hdc, GetSysColorBrush(fillClr));
-    SetPolyFillMode (hdc, WINDING);
+    if (infoPtr->dwStyle & WS_DISABLED)
+    {
+        if (comctl32_color.clr3dHilight == comctl32_color.clrWindow)
+            brush = COMCTL32_hPattern55AABrush;
+        else
+            brush = GetSysColorBrush(COLOR_SCROLLBAR);
+
+        SetTextColor(hdc, comctl32_color.clr3dFace);
+        SetBkColor(hdc, comctl32_color.clr3dHilight);
+    }
+    else
+        brush = GetSysColorBrush(infoPtr->flags & TB_DRAG_MODE ? COLOR_BTNHILIGHT : COLOR_BTNFACE);
 
     if (infoPtr->dwStyle & TBS_BOTH)
     {
-       points[0].x=thumb.right;
-       points[0].y=thumb.top;
-       points[1].x=thumb.right;
-       points[1].y=thumb.bottom;
-       points[2].x=thumb.left;
-       points[2].y=thumb.bottom;
-       points[3].x=thumb.left;
-       points[3].y=thumb.top;
-       points[4].x=points[0].x;
-       points[4].y=points[0].y;
-       PointCount = 5;
-       BlackUntil = 3;
+       FillRect(hdc, &infoPtr->rcThumb, brush);
+       DrawEdge(hdc, &infoPtr->rcThumb, EDGE_RAISED, BF_RECT | BF_SOFT);
+       return;
     }
     else
     {
+        HBRUSH oldbr = SelectObject(hdc, brush);
+        RECT thumb = infoPtr->rcThumb;
+        int BlackUntil = 3;
+        int PointCount = 6;
+        POINT points[6];
+        int PointDepth;
+        HPEN oldpen;
+
+        SetPolyFillMode (hdc, WINDING);
+
         if (infoPtr->dwStyle & TBS_VERT)
         {
           PointDepth = (thumb.bottom - thumb.top) / 2;
@@ -742,16 +745,15 @@ TRACKBAR_DrawThumb (const TRACKBAR_INFO *infoPtr, HDC hdc)
           }
         }
 
+        /* Draw the thumb now */
+        Polygon (hdc, points, PointCount);
+        oldpen = SelectObject(hdc, GetStockObject(BLACK_PEN));
+        Polyline(hdc,points, BlackUntil);
+        SelectObject(hdc, GetStockObject(WHITE_PEN));
+        Polyline(hdc, &points[BlackUntil-1], PointCount+1-BlackUntil);
+        SelectObject(hdc, oldpen);
+        SelectObject(hdc, oldbr);
     }
-
-    /* Draw the thumb now */
-    Polygon (hdc, points, PointCount);
-    oldpen = SelectObject(hdc, GetStockObject(BLACK_PEN));
-    Polyline(hdc,points, BlackUntil);
-    SelectObject(hdc, GetStockObject(WHITE_PEN));
-    Polyline(hdc, &points[BlackUntil-1], PointCount+1-BlackUntil);
-    SelectObject(hdc, oldpen);
-    SelectObject(hdc, oldbr);
 }
 
 
