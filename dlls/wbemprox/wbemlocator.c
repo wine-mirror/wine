@@ -193,6 +193,7 @@ static HRESULT WINAPI wbem_locator_ConnectServer(
 
     hr = WbemServices_create( NULL, namespace, (void **)ppNamespace );
     heap_free( namespace );
+    heap_free( server );
     if (SUCCEEDED( hr ))
         return WBEM_NO_ERROR;
 
