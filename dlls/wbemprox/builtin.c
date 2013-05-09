@@ -1407,7 +1407,7 @@ static void fill_videocontroller( struct table *table )
     const WCHAR *name = videocontroller_deviceidW;
 
     if (!(table->data = heap_alloc( sizeof(*rec) ))) return;
-
+    memset (&desc, 0, sizeof(desc));
     hr = CreateDXGIFactory( &IID_IDXGIFactory, (void **)&factory );
     if (FAILED(hr)) goto done;
 
