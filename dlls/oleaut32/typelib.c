@@ -2476,6 +2476,11 @@ typedef struct TLB_PEFile
     LPVOID typelib_base;
 } TLB_PEFile;
 
+static inline TLB_PEFile *pefile_impl_from_IUnknown(IUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, TLB_PEFile, IUnknown_iface);
+}
+
 static HRESULT WINAPI TLB_PEFile_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
 {
     if (IsEqualIID(riid, &IID_IUnknown))
@@ -2490,13 +2495,13 @@ static HRESULT WINAPI TLB_PEFile_QueryInterface(IUnknown *iface, REFIID riid, vo
 
 static ULONG WINAPI TLB_PEFile_AddRef(IUnknown *iface)
 {
-    TLB_PEFile *This = (TLB_PEFile *)iface;
+    TLB_PEFile *This = pefile_impl_from_IUnknown(iface);
     return InterlockedIncrement(&This->refs);
 }
 
 static ULONG WINAPI TLB_PEFile_Release(IUnknown *iface)
 {
-    TLB_PEFile *This = (TLB_PEFile *)iface;
+    TLB_PEFile *This = pefile_impl_from_IUnknown(iface);
     ULONG refs = InterlockedDecrement(&This->refs);
     if (!refs)
     {
@@ -2571,6 +2576,11 @@ typedef struct TLB_NEFile
     LPVOID typelib_base;
 } TLB_NEFile;
 
+static inline TLB_NEFile *nefile_impl_from_IUnknown(IUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, TLB_NEFile, IUnknown_iface);
+}
+
 static HRESULT WINAPI TLB_NEFile_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
 {
     if (IsEqualIID(riid, &IID_IUnknown))
@@ -2585,13 +2595,13 @@ static HRESULT WINAPI TLB_NEFile_QueryInterface(IUnknown *iface, REFIID riid, vo
 
 static ULONG WINAPI TLB_NEFile_AddRef(IUnknown *iface)
 {
-    TLB_NEFile *This = (TLB_NEFile *)iface;
+    TLB_NEFile *This = nefile_impl_from_IUnknown(iface);
     return InterlockedIncrement(&This->refs);
 }
 
 static ULONG WINAPI TLB_NEFile_Release(IUnknown *iface)
 {
-    TLB_NEFile *This = (TLB_NEFile *)iface;
+    TLB_NEFile *This = nefile_impl_from_IUnknown(iface);
     ULONG refs = InterlockedDecrement(&This->refs);
     if (!refs)
     {
@@ -2788,6 +2798,11 @@ typedef struct TLB_Mapping
     LPVOID typelib_base;
 } TLB_Mapping;
 
+static inline TLB_Mapping *mapping_impl_from_IUnknown(IUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, TLB_Mapping, IUnknown_iface);
+}
+
 static HRESULT WINAPI TLB_Mapping_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
 {
     if (IsEqualIID(riid, &IID_IUnknown))
@@ -2802,13 +2817,13 @@ static HRESULT WINAPI TLB_Mapping_QueryInterface(IUnknown *iface, REFIID riid, v
 
 static ULONG WINAPI TLB_Mapping_AddRef(IUnknown *iface)
 {
-    TLB_Mapping *This = (TLB_Mapping *)iface;
+    TLB_Mapping *This = mapping_impl_from_IUnknown(iface);
     return InterlockedIncrement(&This->refs);
 }
 
 static ULONG WINAPI TLB_Mapping_Release(IUnknown *iface)
 {
-    TLB_Mapping *This = (TLB_Mapping *)iface;
+    TLB_Mapping *This = mapping_impl_from_IUnknown(iface);
     ULONG refs = InterlockedDecrement(&This->refs);
     if (!refs)
     {
