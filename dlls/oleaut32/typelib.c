@@ -1018,6 +1018,16 @@ typedef struct tagITypeLibImpl
 static const ITypeLib2Vtbl tlbvt;
 static const ITypeCompVtbl tlbtcvt;
 
+static inline ITypeLibImpl *impl_from_ITypeLib2(ITypeLib2 *iface)
+{
+    return CONTAINING_RECORD(iface, ITypeLibImpl, ITypeLib2_iface);
+}
+
+static inline ITypeLibImpl *impl_from_ITypeLib(ITypeLib *iface)
+{
+    return impl_from_ITypeLib2((ITypeLib2*)iface);
+}
+
 static inline ITypeLibImpl *impl_from_ITypeComp( ITypeComp *iface )
 {
     return CONTAINING_RECORD(iface, ITypeLibImpl, ITypeComp_iface);
@@ -2977,7 +2987,7 @@ static HRESULT TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath
     }
 
     if(*ppTypeLib) {
-	ITypeLibImpl *impl = (ITypeLibImpl*)*ppTypeLib;
+	ITypeLibImpl *impl = impl_from_ITypeLib2(*ppTypeLib);
 
 	TRACE("adding to cache\n");
 	impl->path = heap_alloc((strlenW(pszPath)+1) * sizeof(WCHAR));
@@ -4229,11 +4239,6 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
 
     heap_free(pOtherTypeInfoBlks);
     return &pTypeLibImpl->ITypeLib2_iface;
-}
-
-static inline ITypeLibImpl *impl_from_ITypeLib2(ITypeLib2 *iface)
-{
-    return CONTAINING_RECORD(iface, ITypeLibImpl, ITypeLib2_iface);
 }
 
 static HRESULT WINAPI ITypeLib2_fnQueryInterface(ITypeLib2 *iface, REFIID riid, void **ppv)
@@ -7102,7 +7107,7 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
 			SysFreeString(libnam);
 		    }
 		    if(SUCCEEDED(result)) {
-                        ref_type->pImpTLInfo->pImpTypeLib = (ITypeLibImpl*)pTLib;
+                        ref_type->pImpTLInfo->pImpTypeLib = impl_from_ITypeLib(pTLib);
                         ITypeLib_AddRef(pTLib);
 		    }
 		}
