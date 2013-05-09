@@ -2842,9 +2842,9 @@
 @ thiscall -arch=win32 ?do_put@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@AAVios_base@2@G_N@Z(ptr ptr long ptr ptr long long) num_put_short_do_put_bool
 @ cdecl -arch=win64 ?do_put@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@AEAVios_base@2@G_N@Z(ptr ptr ptr ptr long long) num_put_short_do_put_bool
 @ thiscall -arch=win32 ?do_put@?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@PBUtm@@DD@Z(ptr ptr long ptr ptr ptr long long) time_put_char_do_put
-@ cdecl -arch=win64 ?do_put@?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@PEBUtm@@DD@Z(ptr ptr long ptr ptr ptr long long) time_put_char_do_put
+@ cdecl -arch=win64 ?do_put@?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@PEBUtm@@DD@Z(ptr ptr ptr ptr ptr long long) time_put_char_do_put
 @ thiscall -arch=win32 ?do_put@?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@AAVios_base@2@PBUtm@@DD@Z(ptr ptr long ptr ptr ptr long long) time_put_wchar_do_put
-@ cdecl -arch=win64 ?do_put@?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@AEAVios_base@2@PEBUtm@@DD@Z(ptr ptr long ptr ptr ptr long long) time_put_wchar_do_put
+@ cdecl -arch=win64 ?do_put@?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@AEAVios_base@2@PEBUtm@@DD@Z(ptr ptr ptr ptr ptr long long) time_put_wchar_do_put
 @ thiscall -arch=win32 ?do_scan_is@?$ctype@G@std@@MBEPBGFPBG0@Z(ptr long ptr ptr) ctype_wchar_do_scan_is
 @ cdecl -arch=win64 ?do_scan_is@?$ctype@G@std@@MEBAPEBGFPEBG0@Z(ptr long ptr ptr) ctype_wchar_do_scan_is
 @ thiscall -arch=win32 ?do_scan_not@?$ctype@G@std@@MBEPBGFPBG0@Z(ptr long ptr ptr) ctype_wchar_do_scan_not
@@ -3714,9 +3714,9 @@
 @ thiscall -arch=win32 ?put@?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@PBUtm@@PBD3@Z(ptr ptr long ptr ptr ptr ptr ptr) time_put_char_put_format
 @ cdecl -arch=win64 ?put@?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@PEBUtm@@PEBD3@Z(ptr ptr ptr ptr ptr ptr ptr) time_put_char_put_format
 @ thiscall -arch=win32 ?put@?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QBE?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@AAVios_base@2@PBUtm@@DD@Z(ptr ptr long ptr ptr ptr long long) time_put_wchar_put
-@ cdecl -arch=win64 ?put@?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QEBA?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@AEAVios_base@2@PEBUtm@@DD@Z(ptr ptr long ptr ptr ptr long long) time_put_wchar_put
+@ cdecl -arch=win64 ?put@?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QEBA?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@AEAVios_base@2@PEBUtm@@DD@Z(ptr ptr ptr ptr ptr long long) time_put_wchar_put
 @ thiscall -arch=win32 ?put@?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QBE?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@AAVios_base@2@PBUtm@@PBG3@Z(ptr ptr long ptr ptr ptr ptr ptr) time_put_wchar_put_format
-@ cdecl -arch=win64 ?put@?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QEBA?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@AEAVios_base@2@PEBUtm@@PEBG3@Z(ptr ptr long ptr ptr ptr ptr ptr) time_put_wchar_put_format
+@ cdecl -arch=win64 ?put@?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QEBA?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@AEAVios_base@2@PEBUtm@@PEBG3@Z(ptr ptr ptr ptr ptr ptr ptr) time_put_wchar_put_format
 @ thiscall -arch=win32 ?putback@?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV12@D@Z(ptr long) basic_istream_char_putback
 @ cdecl -arch=win64 ?putback@?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAAEAV12@D@Z(ptr long) basic_istream_char_putback
 @ thiscall -arch=win32 ?putback@?$basic_istream@GU?$char_traits@G@std@@@std@@QAEAAV12@G@Z(ptr long) basic_istream_wchar_putback
