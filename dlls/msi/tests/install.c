@@ -158,6 +158,7 @@ static const CHAR property_dat[] = "Property\tValue\n"
                                    "InstallMode\tTypical\n"
                                    "Manufacturer\tWine\n"
                                    "PIDTemplate\t12345<###-%%%%%%%>@@@@@\n"
+                                   "PRIMARYFOLDER\tTARGETDIR\n"
                                    "ProductCode\t{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}\n"
                                    "ProductID\tnone\n"
                                    "ProductLanguage\t1033\n"
@@ -1288,6 +1289,65 @@ static const char mixed_install_exec_seq_dat[] =
     "PublishProduct\t\t1300\n"
     "InstallFinalize\t\t1400\n";
 
+static const char vp_file_dat[] =
+    "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
+    "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
+    "File\tFile\n"
+    "volumeprop\tcomp\tvolumeprop.txt\t1000\t\t\t8192\t1\n";
+
+static const char vp_feature_dat[] =
+    "Feature\tFeature_Parent\tTitle\tDescription\tDisplay\tLevel\tDirectory_\tAttributes\n"
+    "s38\tS38\tL64\tL255\tI2\ti2\tS72\ti2\n"
+    "Feature\tFeature\n"
+    "feature\t\t\t\t1\t2\tMSITESTDIR\t0\n";
+
+static const char vp_feature_comp_dat[] =
+    "Feature_\tComponent_\n"
+    "s38\ts72\n"
+    "FeatureComponents\tFeature_\tComponent_\n"
+    "feature\tcomp\n";
+
+static const char vp_component_dat[] =
+    "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+    "s72\tS38\ts72\ti2\tS255\tS72\n"
+    "Component\tComponent\n"
+    "comp\t{24364AE7-5B7F-496C-AF5A-54893639C567}\tMSITESTDIR\t0\t\tvolumeprop\n";
+
+static const char vp_custom_action_dat[] =
+    "Action\tType\tSource\tTarget\tISComments\n"
+    "s72\ti2\tS64\tS0\tS255\n"
+    "CustomAction\tAction\n"
+    "TestPrimaryVolumePath0\t19\t\tPrimaryVolumePath set before CostFinalize\t\n"
+    "TestPrimaryVolumeSpaceAvailable0\t19\t\tPrimaryVolumeSpaceAvailable set before CostFinalize\t\n"
+    "TestPrimaryVolumePath1\t19\t\tPrimaryVolumePath set before InstallValidate\t\n"
+    "TestPrimaryVolumeSpaceAvailable1\t19\t\tPrimaryVolumeSpaceAvailable not set before InstallValidate\t\n"
+    "TestPrimaryVolumePath2\t19\t\tPrimaryVolumePath not set after InstallValidate\t\n"
+    "TestPrimaryVolumeSpaceAvailable2\t19\t\tPrimaryVolumeSpaceAvailable not set after InstallValidate\t\n";
+
+static const char vp_install_exec_seq_dat[] =
+    "Action\tCondition\tSequence\n"
+    "s72\tS255\tI2\n"
+    "InstallExecuteSequence\tAction\n"
+    "LaunchConditions\t\t100\n"
+    "CostInitialize\t\t200\n"
+    "FileCost\t\t300\n"
+    "TestPrimaryVolumePath0\tPrimaryVolumePath AND NOT REMOVE\t400\n"
+    "TestPrimaryVolumeSpaceAvailable0\tPrimaryVolumeSpaceAvailable AND NOT REMOVE\t500\n"
+    "CostFinalize\t\t600\n"
+    "TestPrimaryVolumePath1\tPrimaryVolumePath AND NOT REMOVE\t600\n"
+    "TestPrimaryVolumeSpaceAvailable1\tNOT PrimaryVolumeSpaceAvailable AND NOT REMOVE\t800\n"
+    "InstallValidate\t\t900\n"
+    "TestPrimaryVolumePath2\tNOT PrimaryVolumePath AND NOT REMOVE\t1000\n"
+    "TestPrimaryVolumeSpaceAvailable2\tNOT PrimaryVolumeSpaceAvailable AND NOT REMOVE\t1100\n"
+    "InstallInitialize\t\t1200\n"
+    "ProcessComponents\t\t1300\n"
+    "RemoveFiles\t\t1400\n"
+    "InstallFiles\t\t1500\n"
+    "RegisterProduct\t\t1600\n"
+    "PublishFeatures\t\t1700\n"
+    "PublishProduct\t\t1800\n"
+    "InstallFinalize\t\t1900\n";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -1987,6 +2047,19 @@ static const msi_table mixed_tables[] =
     ADD_TABLE(mixed_feature_comp),
     ADD_TABLE(mixed_install_exec_seq),
     ADD_TABLE(mixed_registry),
+    ADD_TABLE(media),
+    ADD_TABLE(property)
+};
+
+static const msi_table vp_tables[] =
+{
+    ADD_TABLE(directory),
+    ADD_TABLE(vp_file),
+    ADD_TABLE(vp_component),
+    ADD_TABLE(vp_feature),
+    ADD_TABLE(vp_feature_comp),
+    ADD_TABLE(vp_custom_action),
+    ADD_TABLE(vp_install_exec_seq),
     ADD_TABLE(media),
     ADD_TABLE(property)
 };
@@ -6293,7 +6366,32 @@ static void test_mixed_package(void)
 
 error:
     DeleteFileA( msifile );
-    return;
+}
+
+static void test_volume_props(void)
+{
+    UINT r;
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+    CreateDirectoryA("msitest", NULL);
+    create_file("msitest\\volumeprop.txt", 1000);
+    create_database(msifile, vp_tables, sizeof(vp_tables)/sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "got %u\n", r);
+
+    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "got %u\n", r);
+
+    DeleteFileA("msitest\\volumeprop.txt");
+    RemoveDirectoryA("msitest");
+    DeleteFile(msifile);
 }
 
 START_TEST(install)
@@ -6384,6 +6482,7 @@ START_TEST(install)
     test_command_line_parsing();
     test_upgrade_code();
     test_mixed_package();
+    test_volume_props();
 
     DeleteFileA(log_file);
 

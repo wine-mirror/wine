@@ -2365,14 +2365,21 @@ void msi_resolve_target_folder( MSIPACKAGE *package, const WCHAR *name, BOOL loa
 
 static UINT ACTION_CostFinalize(MSIPACKAGE *package)
 {
-    static const WCHAR query[] = {
-        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-        '`','C','o','n','d','i','t','i','o','n','`',0};
-    static const WCHAR szOutOfDiskSpace[] = {
-        'O','u','t','O','f','D','i','s','k','S','p','a','c','e',0};
+    static const WCHAR query[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         '`','C','o','n','d','i','t','i','o','n','`',0};
+    static const WCHAR szOutOfDiskSpace[] =
+        {'O','u','t','O','f','D','i','s','k','S','p','a','c','e',0};
+    static const WCHAR szPrimaryFolder[] =
+        {'P','R','I','M','A','R','Y','F','O','L','D','E','R',0};
+    static const WCHAR szPrimaryVolumePath[] =
+        {'P','r','i','m','a','r','y','V','o','l','u','m','e','P','a','t','h',0};
+    static const WCHAR szPrimaryVolumeSpaceAvailable[] =
+        {'P','r','i','m','a','r','y','V','o','l','u','m','e','S','p','a','c','e',
+         'A','v','a','i','l','a','b','l','e',0};
     MSICOMPONENT *comp;
     MSIQUERY *view;
-    LPWSTR level;
+    WCHAR *level, *primary_key, *primary_folder;
     UINT rc;
 
     TRACE("Building directory properties\n");
@@ -2415,9 +2422,34 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     msi_set_property( package->db, szCostingComplete, szOne, -1 );
     /* set default run level if not set */
     level = msi_dup_property( package->db, szInstallLevel );
-    if (!level)
-        msi_set_property( package->db, szInstallLevel, szOne, -1 );
+    if (!level) msi_set_property( package->db, szInstallLevel, szOne, -1 );
     msi_free(level);
+
+    if ((primary_key = msi_dup_property( package->db, szPrimaryFolder )))
+    {
+        if ((primary_folder = msi_dup_property( package->db, primary_key )))
+        {
+            if (((primary_folder[0] >= 'A' && primary_folder[0] <= 'Z') ||
+                 (primary_folder[0] >= 'a' && primary_folder[0] <= 'z')) && primary_folder[1] == ':')
+            {
+                ULARGE_INTEGER free;
+
+                primary_folder[2] = 0;
+                if (GetDiskFreeSpaceExW( primary_folder, &free, NULL, NULL ))
+                {
+                    static const WCHAR fmtW[] = {'%','l','u',0};
+                    WCHAR buf[21];
+
+                    sprintfW( buf, fmtW, free.QuadPart / 512 );
+                    msi_set_property( package->db, szPrimaryVolumeSpaceAvailable, buf, -1 );
+                }
+                toupperW( primary_folder[0] );
+                msi_set_property( package->db, szPrimaryVolumePath, primary_folder, 2 );
+            }
+            msi_free( primary_folder );
+        }
+        msi_free( primary_key );
+    }
 
     /* FIXME: check volume disk space */
     msi_set_property( package->db, szOutOfDiskSpace, szZero, -1 );
