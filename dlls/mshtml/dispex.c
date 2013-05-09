@@ -267,7 +267,7 @@ static void add_func_info(dispex_data_t *data, DWORD *size, tid_t tid, const FUN
 
         info->prop_vt = desc->elemdescFunc.tdesc.vt;
         if(info->prop_vt != VT_VOID && !is_arg_type_supported(info->prop_vt)) {
-            TRACE("%s: return type %d\n", debugstr_w(info->name), info->arg_types[i]);
+            TRACE("%s: return type %d\n", debugstr_w(info->name), info->prop_vt);
             return; /* Fallback to ITypeInfo::Invoke */
         }
 
