@@ -379,12 +379,18 @@ static HRESULT reader_push_element(xmlreader *reader, strval *qname)
     if (!elem) return E_OUTOFMEMORY;
 
     hr = reader_strvaldup(reader, qname, &elem->qname);
-    if (FAILED(hr)) return hr;
+    if (FAILED(hr)) {
+        reader_free(reader, elem);
+        return hr;
+    }
 
     if (!list_empty(&reader->elements))
     {
         hr = reader_inc_depth(reader);
-        if (FAILED(hr)) return hr;
+        if (FAILED(hr)) {
+             reader_free(reader, elem);
+             return hr;
+        }
     }
 
     list_add_head(&reader->elements, &elem->entry);
