@@ -25,6 +25,7 @@
 #include "dxfile.h"
 
 HRESULT Direct3DRMDevice_create(REFIID riid, IUnknown** ppObj) DECLSPEC_HIDDEN;
+HRESULT Direct3DRMFace_create(IUnknown** ret_iface) DECLSPEC_HIDDEN;
 HRESULT Direct3DRMFrame_create(REFIID riid, IUnknown* parent_frame, IUnknown** ret_iface) DECLSPEC_HIDDEN;
 HRESULT Direct3DRMLight_create(IUnknown** ppObj) DECLSPEC_HIDDEN;
 HRESULT Direct3DRMMesh_create(IDirect3DRMMesh** obj) DECLSPEC_HIDDEN;

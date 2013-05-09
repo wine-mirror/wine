@@ -6,6 +6,7 @@ C_SRCS = \
 	d3drm.c \
 	d3drm_main.c \
 	device.c \
+	face.c \
 	frame.c \
 	light.c \
 	material.c \

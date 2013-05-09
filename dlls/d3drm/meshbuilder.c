@@ -848,9 +848,9 @@ static int WINAPI IDirect3DRMMeshBuilder2Impl_AddNormal(IDirect3DRMMeshBuilder2*
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_CreateFace(IDirect3DRMMeshBuilder2 *iface, IDirect3DRMFace **face)
 {
-    FIXME("iface %p, face %p stub!\n", iface, face);
+    TRACE("iface %p, face %p.\n", iface, face);
 
-    return E_NOTIMPL;
+    return Direct3DRMFace_create((IUnknown **)face);
 }
 
 static D3DRMRENDERQUALITY WINAPI IDirect3DRMMeshBuilder2Impl_GetQuality(IDirect3DRMMeshBuilder2* iface)
