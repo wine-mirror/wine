@@ -384,13 +384,11 @@ static HRESULT WINAPI IDirectPlaySPImpl_GetSPPlayerData
   /* What to do in the case where there is nothing set yet? */
   if( dwFlags == DPSET_LOCAL )
   {
-    HeapFree( GetProcessHeap(), 0, lpPlayerData->lpPlayerLocalData );
     *lplpData     = lpPlayerData->lpPlayerLocalData;
     *lpdwDataSize = lpPlayerData->dwPlayerLocalDataSize;
   }
   else if( dwFlags == DPSET_REMOTE )
   {
-    HeapFree( GetProcessHeap(), 0, lpPlayerData->lpPlayerRemoteData );
     *lplpData     = lpPlayerData->lpPlayerRemoteData;
     *lpdwDataSize = lpPlayerData->dwPlayerRemoteDataSize;
   }
