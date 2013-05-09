@@ -1036,7 +1036,7 @@ static HRESULT reader_parse_sddecl(xmlreader *reader)
     reader_skipn(reader, reader_cmp(reader, yesW) ? 2 : 3);
     ptr = reader_get_cur(reader);
     TRACE("standalone=%s\n", debugstr_wn(start, ptr-start));
-    val.str = start;
+    val.str = val.start = start;
     val.len = ptr-start;
 
     if (reader_cmp(reader, quoteW) && reader_cmp(reader, dblquoteW))
