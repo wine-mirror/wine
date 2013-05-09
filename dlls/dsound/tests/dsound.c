@@ -1578,12 +1578,6 @@ START_TEST(dsound)
 
         ret = FreeLibrary(hDsound);
         ok( ret, "FreeLibrary(1) returned %d\n", GetLastError());
-        SetLastError(0xdeadbeef);
-        ret = FreeLibrary(hDsound);
-        ok( ret ||
-            broken(!ret && GetLastError() == ERROR_MOD_NOT_FOUND), /* NT4 */
-            "FreeLibrary(2) returned %d\n", GetLastError());
-        ok(!FreeLibrary(hDsound), "DirectSound DLL still loaded\n");
     }
 
     hDsound = LoadLibrary("dsound.dll");
