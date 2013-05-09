@@ -429,7 +429,7 @@ static HRESULT WINAPI IQueryAssociations_fnGetString(
   HRESULT hr;
   WCHAR path[MAX_PATH];
 
-  TRACE("(%p,0x%8x,0x%8x,%s,%p,%p)\n", This, cfFlags, str,
+  TRACE("(%p,0x%08x,%u,%s,%p,%p)\n", This, cfFlags, str,
         debugstr_w(pszExtra), pszOut, pcchOut);
 
   if (cfFlags & cfUnimplemented)
@@ -615,6 +615,30 @@ get_friendly_name_fail:
         hr = HRESULT_FROM_WIN32(ret);
       HeapFree(GetProcessHeap(), 0, pszFileType);
       return hr;
+    }
+    case ASSOCSTR_SHELLEXTENSION:
+    {
+        static const WCHAR shellexW[] = {'S','h','e','l','l','E','x','\\',0};
+        WCHAR keypath[sizeof(shellexW) / sizeof(shellexW[0]) + 39], guid[39];
+        CLSID clsid;
+        HKEY hkey;
+        DWORD size;
+        LONG ret;
+
+        hr = CLSIDFromString(pszExtra, &clsid);
+        if (FAILED(hr)) return hr;
+
+        strcpyW(keypath, shellexW);
+        strcatW(keypath, pszExtra);
+        ret = RegOpenKeyExW(This->hkeySource, keypath, 0, KEY_READ, &hkey);
+        if (ret) return HRESULT_FROM_WIN32(ret);
+
+        size = sizeof(guid);
+        ret = RegGetValueW(hkey, NULL, NULL, RRF_RT_REG_SZ, NULL, guid, &size);
+        RegCloseKey(hkey);
+        if (ret) return HRESULT_FROM_WIN32(ret);
+
+        return ASSOC_ReturnString(pszOut, pcchOut, guid, size / sizeof(WCHAR));
     }
 
     default:
