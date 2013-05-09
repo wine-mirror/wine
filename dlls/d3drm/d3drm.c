@@ -165,7 +165,7 @@ static HRESULT WINAPI IDirect3DRMImpl_CreateFace(IDirect3DRM* iface, IDirect3DRM
 {
     TRACE("iface %p, face %p.\n", iface, face);
 
-    return Direct3DRMFace_create((IUnknown **)face);
+    return Direct3DRMFace_create(&IID_IDirect3DRMFace, (IUnknown **)face);
 }
 
 static HRESULT WINAPI IDirect3DRMImpl_CreateAnimation(IDirect3DRM* iface, LPDIRECT3DRMANIMATION * ppAnimation)
@@ -544,7 +544,7 @@ static HRESULT WINAPI IDirect3DRM2Impl_CreateFace(IDirect3DRM2 *iface, IDirect3D
 {
     TRACE("iface %p, face %p.\n", iface, face);
 
-    return Direct3DRMFace_create((IUnknown **)face);
+    return Direct3DRMFace_create(&IID_IDirect3DRMFace, (IUnknown **)face);
 }
 
 static HRESULT WINAPI IDirect3DRM2Impl_CreateAnimation(IDirect3DRM2* iface,
@@ -936,9 +936,9 @@ static HRESULT WINAPI IDirect3DRM3Impl_CreateMeshBuilder(IDirect3DRM3 *iface, ID
 
 static HRESULT WINAPI IDirect3DRM3Impl_CreateFace(IDirect3DRM3 *iface, IDirect3DRMFace2 **face)
 {
-    FIXME("iface %p, face %p stub!\n", iface, face);
+    TRACE("iface %p, face %p.\n", iface, face);
 
-    return E_NOTIMPL;
+    return Direct3DRMFace_create(&IID_IDirect3DRMFace2, (IUnknown **)face);
 }
 
 static HRESULT WINAPI IDirect3DRM3Impl_CreateAnimation(IDirect3DRM3* iface,
