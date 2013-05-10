@@ -6898,7 +6898,7 @@ static HRESULT WINAPI ITypeInfo_fnGetDocumentation( ITypeInfo2 *iface,
         if(pdwHelpContext)
             *pdwHelpContext=This->dwHelpContext;
         if(pBstrHelpFile)
-            *pBstrHelpFile=SysAllocString(This->DocString);/* FIXME */
+            *pBstrHelpFile=SysAllocString(This->pTypeLib->HelpFile);
         return S_OK;
     }else {/* for a member */
         pFDesc = TLB_get_funcdesc_by_memberid(This->funcdescs, This->TypeAttr.cFuncs, memid);
@@ -6919,6 +6919,8 @@ static HRESULT WINAPI ITypeInfo_fnGetDocumentation( ITypeInfo2 *iface,
               *pBstrDocString=SysAllocString(pVDesc->HelpString);
             if(pdwHelpContext)
               *pdwHelpContext=pVDesc->HelpContext;
+            if(pBstrHelpFile)
+              *pBstrHelpFile = SysAllocString(This->pTypeLib->HelpFile);
             return S_OK;
         }
     }
