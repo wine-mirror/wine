@@ -111,4 +111,8 @@ version.c: dummy
 $(RELPATH):
 	@cd $(TOOLSDIR)/tools && $(MAKE) relpath$(TOOLSEXT)
 
+# Make sure that make_makefiles sees the install rules
+install install-lib::
+install install-dev::
+
 @LIBWINE_RULES@

@@ -16379,7 +16379,7 @@ wine_fn_config_makefile documentation enable_documentation
 wine_fn_config_makefile fonts enable_fonts install-lib
 wine_fn_config_makefile include enable_include install-dev
 wine_fn_config_makefile libs/port enable_libs_port
-wine_fn_config_makefile libs/wine enable_libs_wine
+wine_fn_config_makefile libs/wine enable_libs_wine install-dev,install-lib
 wine_fn_config_makefile libs/wpp enable_libs_wpp
 wine_fn_config_makefile loader enable_loader install-lib,manpage
 wine_fn_config_program aspnet_regiis enable_aspnet_regiis install
