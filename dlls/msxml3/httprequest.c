@@ -736,26 +736,30 @@ static HRESULT BindStatusCallback_create(httprequest* This, BindStatusCallback *
             /* fall through */
         case VT_EMPTY:
         case VT_ERROR:
+        case VT_NULL:
             ptr = NULL;
             size = 0;
             break;
         }
 
-        bsc->body = GlobalAlloc(GMEM_FIXED, size);
-        if (!bsc->body)
+        if (size)
         {
-            if (V_VT(body) == VT_BSTR)
-                heap_free(ptr);
-            else if (V_VT(body) == (VT_ARRAY|VT_UI1))
-                SafeArrayUnaccessData(sa);
+            bsc->body = GlobalAlloc(GMEM_FIXED, size);
+            if (!bsc->body)
+            {
+                if (V_VT(body) == VT_BSTR)
+                    heap_free(ptr);
+                else if (V_VT(body) == (VT_ARRAY|VT_UI1))
+                    SafeArrayUnaccessData(sa);
 
-            heap_free(bsc);
-            return E_OUTOFMEMORY;
+                heap_free(bsc);
+                return E_OUTOFMEMORY;
+            }
+
+            send_data = GlobalLock(bsc->body);
+            memcpy(send_data, ptr, size);
+            GlobalUnlock(bsc->body);
         }
-
-        send_data = GlobalLock(bsc->body);
-        memcpy(send_data, ptr, size);
-        GlobalUnlock(bsc->body);
 
         if (V_VT(body) == VT_BSTR)
             heap_free(ptr);
