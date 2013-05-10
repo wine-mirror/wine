@@ -51,6 +51,9 @@ static HRESULT WINAPI InternetExplorer_QueryInterface(IWebBrowser2 *iface, REFII
     }else if(IsEqualGUID(&IID_IConnectionPointContainer, riid)) {
         TRACE("(%p)->(IID_IConnectionPointContainer %p)\n", This, ppv);
         *ppv = &This->doc_host->doc_host.cps.IConnectionPointContainer_iface;
+    }else if(IsEqualGUID(&IID_IExternalConnection, riid)) {
+        TRACE("(%p)->(IID_IExternalConnection %p)\n", This, ppv);
+        *ppv = &This->IExternalConnection_iface;
     }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
         TRACE("(%p)->(IID_IServiceProvider %p)\n", This, ppv);
         *ppv = &This->IServiceProvider_iface;
@@ -705,6 +708,52 @@ static const IWebBrowser2Vtbl InternetExplorerVtbl =
     InternetExplorer_put_Resizable
 };
 
+static inline InternetExplorer *impl_from_IExternalConnection(IExternalConnection *iface)
+{
+    return CONTAINING_RECORD(iface, InternetExplorer, IExternalConnection_iface);
+}
+
+static HRESULT WINAPI ExternalConnection_QueryInterface(IExternalConnection *iface, REFIID riid, void **ppv)
+{
+    InternetExplorer *This = impl_from_IExternalConnection(iface);
+    return IWebBrowser2_QueryInterface(&This->IWebBrowser2_iface, riid, ppv);
+}
+
+static ULONG WINAPI ExternalConnection_AddRef(IExternalConnection *iface)
+{
+    InternetExplorer *This = impl_from_IExternalConnection(iface);
+    return IWebBrowser2_AddRef(&This->IWebBrowser2_iface);
+}
+
+static ULONG WINAPI ExternalConnection_Release(IExternalConnection *iface)
+{
+    InternetExplorer *This = impl_from_IExternalConnection(iface);
+    return IWebBrowser2_Release(&This->IWebBrowser2_iface);
+}
+
+static DWORD WINAPI ExternalConnection_AddConnection(IExternalConnection *iface, DWORD extconn, DWORD reserved)
+{
+    InternetExplorer *This = impl_from_IExternalConnection(iface);
+    FIXME("(%p)\n", This);
+    return 2;
+}
+
+static DWORD WINAPI ExternalConnection_ReleaseConnection(IExternalConnection *iface, DWORD extconn,
+        DWORD reserved, BOOL fLastReleaseCloses)
+{
+    InternetExplorer *This = impl_from_IExternalConnection(iface);
+    FIXME("(%p)\n", This);
+    return 1;
+}
+
+static const IExternalConnectionVtbl ExternalConnectionVtbl = {
+    ExternalConnection_QueryInterface,
+    ExternalConnection_AddRef,
+    ExternalConnection_Release,
+    ExternalConnection_AddConnection,
+    ExternalConnection_ReleaseConnection
+};
+
 static inline InternetExplorer *impl_from_IServiceProvider(IServiceProvider *iface)
 {
     return CONTAINING_RECORD(iface, InternetExplorer, IServiceProvider_iface);
@@ -755,5 +804,6 @@ static const IServiceProviderVtbl ServiceProviderVtbl =
 void InternetExplorer_WebBrowser_Init(InternetExplorer *This)
 {
     This->IWebBrowser2_iface.lpVtbl = &InternetExplorerVtbl;
+    This->IExternalConnection_iface.lpVtbl = &ExternalConnectionVtbl;
     This->IServiceProvider_iface.lpVtbl = &ServiceProviderVtbl;
 }

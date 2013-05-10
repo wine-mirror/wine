@@ -224,6 +224,7 @@ typedef struct {
 
 struct InternetExplorer {
     IWebBrowser2 IWebBrowser2_iface;
+    IExternalConnection IExternalConnection_iface;
     IServiceProvider IServiceProvider_iface;
     HlinkFrame hlink_frame;
 
