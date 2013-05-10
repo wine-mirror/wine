@@ -232,6 +232,7 @@ static HRESULT WINAPI DEVENUM_IPropertyBag_Write(
     switch (V_VT(pVar))
     {
     case VT_BSTR:
+    case VT_LPWSTR:
         TRACE("writing %s\n", debugstr_w(V_UNION(pVar, bstrVal)));
         lpData = V_UNION(pVar, bstrVal);
         dwType = REG_SZ;
