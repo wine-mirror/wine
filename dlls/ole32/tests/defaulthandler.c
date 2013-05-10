@@ -54,8 +54,15 @@
         expect_ ## func = called_ ## func = FALSE; \
     }while(0)
 
+#define CHECK_NOT_CALLED(func) \
+    do { \
+        ok(!called_ ## func, "unexpected " #func "\n"); \
+        expect_ ## func = called_ ## func = FALSE; \
+    }while(0)
+
 DEFINE_EXPECT(CF_QueryInterface_ClassFactory);
 DEFINE_EXPECT(CF_CreateInstance);
+DEFINE_EXPECT(CF_QueryInterface_IMarshal);
 
 static const char *debugstr_guid(REFIID riid)
 {
@@ -178,6 +185,7 @@ static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID r
         *ppv = iface;
         return S_OK;
     }else if(IsEqualGUID(riid, &IID_IMarshal)) {
+        CHECK_EXPECT(CF_QueryInterface_IMarshal);
         *ppv = NULL;
         return E_NOINTERFACE;
     }else if(IsEqualGUID(riid, &IID_IClassFactory)) {
@@ -262,11 +270,15 @@ static void test_default_handler_run(void)
     ok(hres == REGDB_E_CLASSNOTREG, "Run returned: %x, expected REGDB_E_CLASSNOTREG\n", hres);
     IRunnableObject_Release(ro);
 
+    SET_EXPECT(CF_QueryInterface_IMarshal);
     CoRevokeClassObject(class_reg);
+    todo_wine CHECK_CALLED(CF_QueryInterface_IMarshal);
 
+    SET_EXPECT(CF_QueryInterface_IMarshal);
     hres = CoRegisterClassObject(&test_server_clsid, (IUnknown*)&ClassFactory,
             CLSCTX_LOCAL_SERVER, 0, &class_reg);
     ok(hres == S_OK, "CoRegisterClassObject failed: %x\n", hres);
+    todo_wine CHECK_NOT_CALLED(CF_QueryInterface_IMarshal);
 
     hres = OleCreateDefaultHandler(&test_server_clsid, NULL, &IID_IUnknown, (void**)&unk);
     ok(hres == S_OK, "OleCreateDefaultHandler failed: %x\n", hres);
@@ -283,7 +295,9 @@ static void test_default_handler_run(void)
     CHECK_CALLED(CF_CreateInstance);
     IRunnableObject_Release(ro);
 
+    SET_EXPECT(CF_QueryInterface_IMarshal);
     CoRevokeClassObject(class_reg);
+    todo_wine CHECK_CALLED(CF_QueryInterface_IMarshal);
 }
 
 START_TEST(defaulthandler)
