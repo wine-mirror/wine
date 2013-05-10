@@ -5330,9 +5330,12 @@ static HRESULT TLB_AllocAndInitFuncDesc( const FUNCDESC *src, FUNCDESC **dest_pt
         dest->funckind = FUNC_DISPATCH;
     buffer = (char *)(dest + 1);
 
-    dest->lprgscode = (SCODE *)buffer;
-    memcpy(dest->lprgscode, src->lprgscode, sizeof(*src->lprgscode) * src->cScodes);
-    buffer += sizeof(*src->lprgscode) * src->cScodes;
+    if (dest->cScodes) {
+        dest->lprgscode = (SCODE *)buffer;
+        memcpy(dest->lprgscode, src->lprgscode, sizeof(*src->lprgscode) * src->cScodes);
+        buffer += sizeof(*src->lprgscode) * src->cScodes;
+    } else
+        dest->lprgscode = NULL;
 
     hr = TLB_CopyElemDesc(&src->elemdescFunc, &dest->elemdescFunc, &buffer);
     if (FAILED(hr))
@@ -5341,23 +5344,26 @@ static HRESULT TLB_AllocAndInitFuncDesc( const FUNCDESC *src, FUNCDESC **dest_pt
         return hr;
     }
 
-    dest->lprgelemdescParam = (ELEMDESC *)buffer;
-    buffer += sizeof(ELEMDESC) * src->cParams;
-    for (i = 0; i < src->cParams; i++)
-    {
-        hr = TLB_CopyElemDesc(&src->lprgelemdescParam[i], &dest->lprgelemdescParam[i], &buffer);
+    if (dest->cParams) {
+        dest->lprgelemdescParam = (ELEMDESC *)buffer;
+        buffer += sizeof(ELEMDESC) * src->cParams;
+        for (i = 0; i < src->cParams; i++)
+        {
+            hr = TLB_CopyElemDesc(&src->lprgelemdescParam[i], &dest->lprgelemdescParam[i], &buffer);
+            if (FAILED(hr))
+                break;
+        }
         if (FAILED(hr))
-            break;
-    }
-    if (FAILED(hr))
-    {
-        /* undo the above actions */
-        for (i = i - 1; i >= 0; i--)
-            TLB_FreeElemDesc(&dest->lprgelemdescParam[i]);
-        TLB_FreeElemDesc(&dest->elemdescFunc);
-        SysFreeString((BSTR)dest);
-        return hr;
-    }
+        {
+            /* undo the above actions */
+            for (i = i - 1; i >= 0; i--)
+                TLB_FreeElemDesc(&dest->lprgelemdescParam[i]);
+            TLB_FreeElemDesc(&dest->elemdescFunc);
+            SysFreeString((BSTR)dest);
+            return hr;
+        }
+    } else
+        dest->lprgelemdescParam = NULL;
 
     /* special treatment for dispinterfaces: this makes functions appear
      * to return their [retval] value when it is really returning an
