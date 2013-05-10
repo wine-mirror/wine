@@ -1573,9 +1573,15 @@ TRACKBAR_SetFocus (TRACKBAR_INFO *infoPtr)
 static LRESULT
 TRACKBAR_Size (TRACKBAR_INFO *infoPtr)
 {
-    TRACKBAR_CalcChannel (infoPtr);
-    TRACKBAR_UpdateThumb (infoPtr);
+    if (infoPtr->dwStyle & TBS_FIXEDLENGTH)
+    {
+        TRACKBAR_CalcChannel(infoPtr);
+        TRACKBAR_UpdateThumb(infoPtr);
+    }
+    else
+        TRACKBAR_InitializeThumb(infoPtr);
     TRACKBAR_AlignBuddies (infoPtr);
+    TRACKBAR_InvalidateAll(infoPtr);
 
     return 0;
 }
