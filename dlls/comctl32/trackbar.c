@@ -1749,6 +1749,19 @@ TRACKBAR_KeyUp (const TRACKBAR_INFO *infoPtr, INT nVirtKey)
 }
 
 
+static LRESULT
+TRACKBAR_Enable (TRACKBAR_INFO *infoPtr, BOOL enable)
+{
+    if (enable)
+        infoPtr->dwStyle &= ~WS_DISABLED;
+    else
+        infoPtr->dwStyle |= WS_DISABLED;
+
+    InvalidateRect(infoPtr->hwndSelf, &infoPtr->rcThumb, TRUE);
+
+    return 1;
+}
+
 static LRESULT WINAPI
 TRACKBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -1876,7 +1889,8 @@ TRACKBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     case WM_DESTROY:
         return TRACKBAR_Destroy (infoPtr);
 
-/*	case WM_ENABLE: */
+    case WM_ENABLE:
+        return TRACKBAR_Enable (infoPtr, (BOOL)wParam);
 
     case WM_ERASEBKGND:
 	return 0;
