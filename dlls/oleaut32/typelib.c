@@ -5498,6 +5498,9 @@ static HRESULT WINAPI ITypeInfo_fnGetFuncDesc( ITypeInfo2 *iface, UINT index,
 
     TRACE("(%p) index %d\n", This, index);
 
+    if (!ppFuncDesc)
+        return E_INVALIDARG;
+
     if (This->TypeAttr.typekind == TKIND_DISPATCH)
         hr = ITypeInfoImpl_GetInternalDispatchFuncDesc((ITypeInfo *)iface, index,
                                                        &internal_funcdesc, NULL,
@@ -5728,6 +5731,9 @@ static HRESULT WINAPI ITypeInfo_fnGetImplTypeFlags( ITypeInfo2 *iface,
     ITypeInfoImpl *This = impl_from_ITypeInfo2(iface);
 
     TRACE("(%p) index %d\n", This, index);
+
+    if(!pImplTypeFlags)
+        return E_INVALIDARG;
 
     if(This->TypeAttr.typekind == TKIND_DISPATCH && index == 0){
         *pImplTypeFlags = 0;
@@ -7027,6 +7033,9 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
     ITypeInfoImpl *This = impl_from_ITypeInfo2(iface);
     HRESULT result = E_FAIL;
 
+    if(!ppTInfo)
+        return E_INVALIDARG;
+
     if ((This->hreftype != -1) && (This->hreftype == hRefType))
     {
         *ppTInfo = (ITypeInfo *)&This->ITypeInfo2_iface;
@@ -7423,6 +7432,9 @@ static HRESULT WINAPI ITypeInfo2_fnGetCustData(
     TLBCustData *pCData;
 
     TRACE("%p %s %p\n", This, debugstr_guid(guid), pVarVal);
+
+    if(!guid || !pVarVal)
+        return E_INVALIDARG;
 
     pCData = TLB_get_custdata_by_guid(&This->custdata_list, guid);
 
