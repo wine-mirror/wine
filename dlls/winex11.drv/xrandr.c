@@ -278,6 +278,9 @@ static int xrandr12_get_current_mode(void)
     XRRCrtcInfo *crtc_info;
     int i, ret = -1;
 
+    if (xrandr_current_mode != -1)
+        return xrandr_current_mode;
+
     if (!(resources = pXRRGetScreenResourcesCurrent( gdi_display, root_window )))
     {
         ERR("Failed to get screen resources.\n");
@@ -310,9 +313,10 @@ static int xrandr12_get_current_mode(void)
     if (ret == -1)
     {
         ERR("Unknown mode, returning default.\n");
-        ret = 0;
+        return 0;
     }
 
+    xrandr_current_mode = ret;
     return ret;
 }
 
@@ -354,6 +358,7 @@ static LONG xrandr12_set_current_mode( int mode )
         return DISP_CHANGE_FAILED;
     }
 
+    xrandr_current_mode = mode;
     X11DRV_resize_desktop( dd_modes[mode].width, dd_modes[mode].height );
     return DISP_CHANGE_SUCCESSFUL;
 }
