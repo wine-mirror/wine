@@ -45,9 +45,36 @@ static inline void _check_release(unsigned int line, IUnknown *obj, int exp)
 }
 
 /* 1x1 bmp (1 bpp) */
-static const unsigned char bmp01[66] = {
+static const unsigned char bmp_1bpp[] = {
 0x42,0x4d,0x42,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x3e,0x00,0x00,0x00,0x28,0x00,
 0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x00,0x01,0x00,0x00,0x00,
+0x00,0x00,0x04,0x00,0x00,0x00,0x12,0x0b,0x00,0x00,0x12,0x0b,0x00,0x00,0x02,0x00,
+0x00,0x00,0x02,0x00,0x00,0x00,0xff,0xff,0xff,0x00,0xff,0xff,0xff,0x00,0x00,0x00,
+0x00,0x00
+};
+
+/* 1x1 bmp (2 bpp) */
+static const unsigned char bmp_2bpp[] = {
+0x42,0x4d,0x42,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x3e,0x00,0x00,0x00,0x28,0x00,
+0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x00,0x02,0x00,0x00,0x00,
+0x00,0x00,0x04,0x00,0x00,0x00,0x12,0x0b,0x00,0x00,0x12,0x0b,0x00,0x00,0x02,0x00,
+0x00,0x00,0x02,0x00,0x00,0x00,0xff,0xff,0xff,0x00,0xff,0xff,0xff,0x00,0x00,0x00,
+0x00,0x00
+};
+
+/* 1x1 bmp (4 bpp) */
+static const unsigned char bmp_4bpp[] = {
+0x42,0x4d,0x42,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x3e,0x00,0x00,0x00,0x28,0x00,
+0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x00,0x04,0x00,0x00,0x00,
+0x00,0x00,0x04,0x00,0x00,0x00,0x12,0x0b,0x00,0x00,0x12,0x0b,0x00,0x00,0x02,0x00,
+0x00,0x00,0x02,0x00,0x00,0x00,0xff,0xff,0xff,0x00,0xff,0xff,0xff,0x00,0x00,0x00,
+0x00,0x00
+};
+
+/* 1x1 bmp (8 bpp) */
+static const unsigned char bmp_8bpp[] = {
+0x42,0x4d,0x42,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x3e,0x00,0x00,0x00,0x28,0x00,
+0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x00,0x08,0x00,0x00,0x00,
 0x00,0x00,0x04,0x00,0x00,0x00,0x12,0x0b,0x00,0x00,0x12,0x0b,0x00,0x00,0x02,0x00,
 0x00,0x00,0x02,0x00,0x00,0x00,0xff,0xff,0xff,0x00,0xff,0xff,0xff,0x00,0x00,0x00,
 0x00,0x00
@@ -340,7 +367,7 @@ static void test_D3DXGetImageInfo(void)
     hr = create_file("testdummy.bmp", noimage, sizeof(noimage));  /* invalid image */
     testdummy_ok = SUCCEEDED(hr);
 
-    hr = create_file("testbitmap.bmp", bmp01, sizeof(bmp01));  /* valid image */
+    hr = create_file("testbitmap.bmp", bmp_1bpp, sizeof(bmp_1bpp));  /* valid image */
     testbitmap_ok = SUCCEEDED(hr);
 
     /* D3DXGetImageInfoFromFile */
@@ -403,13 +430,13 @@ static void test_D3DXGetImageInfo(void)
 
 
     /* D3DXGetImageInfoFromFileInMemory */
-    hr = D3DXGetImageInfoFromFileInMemory(bmp01, sizeof(bmp01), &info);
+    hr = D3DXGetImageInfoFromFileInMemory(bmp_1bpp, sizeof(bmp_1bpp), &info);
     ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3D_OK);
 
-    hr = D3DXGetImageInfoFromFileInMemory(bmp01, sizeof(bmp01)+5, &info); /* too large size */
+    hr = D3DXGetImageInfoFromFileInMemory(bmp_1bpp, sizeof(bmp_1bpp)+5, &info); /* too large size */
     ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3D_OK);
 
-    hr = D3DXGetImageInfoFromFileInMemory(bmp01, sizeof(bmp01), NULL);
+    hr = D3DXGetImageInfoFromFileInMemory(bmp_1bpp, sizeof(bmp_1bpp), NULL);
     ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3D_OK);
 
     hr = D3DXGetImageInfoFromFileInMemory(noimage, sizeof(noimage), NULL);
@@ -419,17 +446,17 @@ static void test_D3DXGetImageInfo(void)
     ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
 
     todo_wine {
-        hr = D3DXGetImageInfoFromFileInMemory(bmp01, sizeof(bmp01)-1, &info);
+        hr = D3DXGetImageInfoFromFileInMemory(bmp_1bpp, sizeof(bmp_1bpp)-1, &info);
         ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
     }
 
-    hr = D3DXGetImageInfoFromFileInMemory(bmp01+1, sizeof(bmp01)-1, &info);
+    hr = D3DXGetImageInfoFromFileInMemory(bmp_1bpp+1, sizeof(bmp_1bpp)-1, &info);
     ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
 
-    hr = D3DXGetImageInfoFromFileInMemory(bmp01, 0, &info);
+    hr = D3DXGetImageInfoFromFileInMemory(bmp_1bpp, 0, &info);
     ok(hr == D3DERR_INVALIDCALL, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
 
-    hr = D3DXGetImageInfoFromFileInMemory(bmp01, 0, NULL);
+    hr = D3DXGetImageInfoFromFileInMemory(bmp_1bpp, 0, NULL);
     ok(hr == D3DERR_INVALIDCALL, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXGetImageInfoFromFileInMemory(noimage, 0, &info);
@@ -450,6 +477,21 @@ static void test_D3DXGetImageInfo(void)
     hr = D3DXGetImageInfoFromFileInMemory(NULL, 0, NULL);
     ok(hr == D3DERR_INVALIDCALL, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
 
+    /* test BMP support */
+    hr = D3DXGetImageInfoFromFileInMemory(bmp_1bpp, sizeof(bmp_1bpp), &info);
+    ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(info.Depth == 1, "Got depth %u, expected 1\n", info.Depth);
+    todo_wine ok(info.Format == D3DFMT_P8, "Got format %u, expected %u\n", info.Format, D3DFMT_P8);
+    hr = D3DXGetImageInfoFromFileInMemory(bmp_2bpp, sizeof(bmp_2bpp), &info);
+    ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
+    hr = D3DXGetImageInfoFromFileInMemory(bmp_4bpp, sizeof(bmp_4bpp), &info);
+    ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(info.Depth == 1, "Got depth %u, expected 1\n", info.Depth);
+    todo_wine ok(info.Format == D3DFMT_P8, "Got format %u, expected %u\n", info.Format, D3DFMT_P8);
+    hr = D3DXGetImageInfoFromFileInMemory(bmp_8bpp, sizeof(bmp_8bpp), &info);
+    ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(info.Depth == 1, "Got depth %u, expected 1\n", info.Depth);
+    todo_wine ok(info.Format == D3DFMT_P8, "Got format %u, expected %u\n", info.Format, D3DFMT_P8);
 
     /* test DDS support */
     hr = D3DXGetImageInfoFromFileInMemory(dds_24bit, sizeof(dds_24bit), &info);
@@ -590,7 +632,7 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
     hr = create_file("testdummy.bmp", noimage, sizeof(noimage));  /* invalid image */
     testdummy_ok = SUCCEEDED(hr);
 
-    hr = create_file("testbitmap.bmp", bmp01, sizeof(bmp01));  /* valid image */
+    hr = create_file("testbitmap.bmp", bmp_1bpp, sizeof(bmp_1bpp));  /* valid image */
     testbitmap_ok = SUCCEEDED(hr);
 
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 256, 256, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &surf, NULL);
@@ -640,16 +682,16 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
 
 
     /* D3DXLoadSurfaceFromFileInMemory */
-    hr = D3DXLoadSurfaceFromFileInMemory(surf, NULL, NULL, bmp01, sizeof(bmp01), NULL, D3DX_DEFAULT, 0, NULL);
+    hr = D3DXLoadSurfaceFromFileInMemory(surf, NULL, NULL, bmp_1bpp, sizeof(bmp_1bpp), NULL, D3DX_DEFAULT, 0, NULL);
     ok(hr == D3D_OK, "D3DXLoadSurfaceFromFileInMemory returned %#x, expected %#x\n", hr, D3D_OK);
 
     hr = D3DXLoadSurfaceFromFileInMemory(surf, NULL, NULL, noimage, sizeof(noimage), NULL, D3DX_DEFAULT, 0, NULL);
     ok(hr == D3DXERR_INVALIDDATA, "D3DXLoadSurfaceFromFileInMemory returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
 
-    hr = D3DXLoadSurfaceFromFileInMemory(surf, NULL, NULL, bmp01, 0, NULL, D3DX_DEFAULT, 0, NULL);
+    hr = D3DXLoadSurfaceFromFileInMemory(surf, NULL, NULL, bmp_1bpp, 0, NULL, D3DX_DEFAULT, 0, NULL);
     ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
 
-    hr = D3DXLoadSurfaceFromFileInMemory(NULL, NULL, NULL, bmp01, sizeof(bmp01), NULL, D3DX_DEFAULT, 0, NULL);
+    hr = D3DXLoadSurfaceFromFileInMemory(NULL, NULL, NULL, bmp_1bpp, sizeof(bmp_1bpp), NULL, D3DX_DEFAULT, 0, NULL);
     ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXLoadSurfaceFromFileInMemory(surf, NULL, NULL, NULL, 8, NULL, D3DX_DEFAULT, 0, NULL);
