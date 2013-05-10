@@ -1297,9 +1297,11 @@ static inline LRESULT
 TRACKBAR_SetThumbLength (TRACKBAR_INFO *infoPtr, UINT iLength)
 {
     if (infoPtr->dwStyle & TBS_FIXEDLENGTH) {
+        /* We're not supposed to check if it's really changed or not,
+           just repaint in any case. */
         infoPtr->uThumbLen = iLength;
 	infoPtr->flags |= TB_THUMBSIZECHANGED;
-	InvalidateRect (infoPtr->hwndSelf, &infoPtr->rcThumb, FALSE);
+	TRACKBAR_InvalidateAll(infoPtr);
     }
 
     return 0;
