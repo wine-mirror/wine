@@ -3954,7 +3954,8 @@ static DWORD find_input_signature(struct shader_arb_priv *priv, const struct win
     return found_sig->idx;
 }
 
-static void init_output_registers(const struct wined3d_shader *shader, DWORD sig_num,
+static void init_output_registers(const struct wined3d_shader *shader,
+        const struct wined3d_shader_signature_element *ps_input_sig,
         struct shader_arb_ctx_priv *priv_ctx, struct arb_vs_compiled_shader *compiled)
 {
     unsigned int i, j;
@@ -3963,8 +3964,6 @@ static void init_output_registers(const struct wined3d_shader *shader, DWORD sig
         "result.texcoord[0]", "result.texcoord[1]", "result.texcoord[2]", "result.texcoord[3]",
         "result.texcoord[4]", "result.texcoord[5]", "result.texcoord[6]", "result.texcoord[7]"
     };
-    struct wined3d_device *device = shader->device;
-    const struct wined3d_shader_signature_element *sig;
     const char *semantic_name;
     DWORD semantic_idx, reg_idx;
 
@@ -3978,7 +3977,7 @@ static void init_output_registers(const struct wined3d_shader *shader, DWORD sig
         "result.color.primary", "result.color.secondary"
     };
 
-    if(sig_num == ~0)
+    if (!ps_input_sig)
     {
         TRACE("Pixel shader uses builtin varyings\n");
         /* Map builtins to builtins */
@@ -4037,10 +4036,6 @@ static void init_output_registers(const struct wined3d_shader *shader, DWORD sig
         return;
     }
 
-    /* Instead of searching for the signature in the signature list, read the one from the current pixel shader.
-     * Its maybe not the shader where the signature came from, but it is the same signature and faster to find
-     */
-    sig = device->stateBlock->state.pixel_shader->input_signature;
     TRACE("Pixel shader uses declared varyings\n");
 
     /* Map builtin to declared. /dev/null the results by default to the TA temp reg */
@@ -4054,9 +4049,9 @@ static void init_output_registers(const struct wined3d_shader *shader, DWORD sig
 
     for(i = 0; i < MAX_REG_INPUT; i++)
     {
-        semantic_name = sig[i].semantic_name;
-        semantic_idx = sig[i].semantic_idx;
-        reg_idx = sig[i].register_idx;
+        semantic_name = ps_input_sig[i].semantic_name;
+        semantic_idx = ps_input_sig[i].semantic_idx;
+        reg_idx = ps_input_sig[i].register_idx;
         if (!semantic_name) continue;
 
         /* If a declared input register is not written by builtin arguments, don't write to it.
@@ -4115,12 +4110,12 @@ static void init_output_registers(const struct wined3d_shader *shader, DWORD sig
 
         for(j = 0; j < MAX_REG_INPUT; j++)
         {
-            if (!sig[j].semantic_name) continue;
+            if (!ps_input_sig[j].semantic_name) continue;
 
-            if (!strcmp(sig[j].semantic_name, semantic_name)
-                    && sig[j].semantic_idx == shader->output_signature[i].semantic_idx)
+            if (!strcmp(ps_input_sig[j].semantic_name, semantic_name)
+                    && ps_input_sig[j].semantic_idx == shader->output_signature[i].semantic_idx)
             {
-                priv_ctx->vs_output[i] = decl_idx_to_string[sig[j].register_idx];
+                priv_ctx->vs_output[i] = decl_idx_to_string[ps_input_sig[j].register_idx];
 
                 if (!strcmp(priv_ctx->vs_output[i], "result.color.primary")
                         || !strcmp(priv_ctx->vs_output[i], "result.color.secondary"))
@@ -4135,7 +4130,8 @@ static void init_output_registers(const struct wined3d_shader *shader, DWORD sig
 /* Context activation is done by the caller. */
 static GLuint shader_arb_generate_vshader(const struct wined3d_shader *shader,
         const struct wined3d_gl_info *gl_info, struct wined3d_shader_buffer *buffer,
-        const struct arb_vs_compile_args *args, struct arb_vs_compiled_shader *compiled)
+        const struct arb_vs_compile_args *args, struct arb_vs_compiled_shader *compiled,
+        const struct wined3d_shader_signature_element *ps_input_sig)
 {
     const struct arb_vshader_private *shader_data = shader->backend_data;
     const struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
@@ -4150,7 +4146,7 @@ static GLuint shader_arb_generate_vshader(const struct wined3d_shader *shader,
     memset(&priv_ctx, 0, sizeof(priv_ctx));
     priv_ctx.cur_vs_args = args;
     list_init(&priv_ctx.control_frames);
-    init_output_registers(shader, args->ps_signature, &priv_ctx, compiled);
+    init_output_registers(shader, ps_input_sig, &priv_ctx, compiled);
 
     /*  Create the hw ARB shader */
     shader_addline(buffer, "!!ARBvp1.0\n");
@@ -4387,7 +4383,8 @@ static inline BOOL vs_args_equal(const struct arb_vs_compile_args *stored, const
 }
 
 static struct arb_vs_compiled_shader *find_arb_vshader(struct wined3d_shader *shader,
-        const struct arb_vs_compile_args *args)
+        const struct arb_vs_compile_args *args,
+        const struct wined3d_shader_signature_element *ps_input_sig)
 {
     struct wined3d_device *device = shader->device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
@@ -4465,7 +4462,8 @@ static struct arb_vs_compiled_shader *find_arb_vshader(struct wined3d_shader *sh
     }
 
     ret = shader_arb_generate_vshader(shader, gl_info, &buffer, args,
-            &shader_data->gl_shaders[shader_data->num_gl_shaders]);
+            &shader_data->gl_shaders[shader_data->num_gl_shaders],
+            ps_input_sig);
     shader_buffer_free(&buffer);
     shader_data->gl_shaders[shader_data->num_gl_shaders].prgId = ret;
 
@@ -4688,10 +4686,20 @@ static void shader_arb_select(const struct wined3d_context *context, enum wined3
         struct wined3d_shader *vs = state->vertex_shader;
         struct arb_vs_compile_args compile_args;
         struct arb_vs_compiled_shader *compiled;
+        const struct wined3d_shader_signature_element *ps_input_sig;
 
         TRACE("Using vertex shader %p\n", vs);
         find_arb_vs_compile_args(state, context, vs, &compile_args);
-        compiled = find_arb_vshader(vs, &compile_args);
+
+        /* Instead of searching for the signature in the signature list, read the one from the
+         * current pixel shader. It's maybe not the shader where the signature came from, but it
+         * is the same signature and faster to find. */
+        if (compile_args.ps_signature == ~0U)
+            ps_input_sig = NULL;
+        else
+            ps_input_sig = state->pixel_shader->input_signature;
+
+        compiled = find_arb_vshader(vs, &compile_args, ps_input_sig);
         priv->current_vprogram_id = compiled->prgId;
         priv->compiled_vprog = compiled;
 
