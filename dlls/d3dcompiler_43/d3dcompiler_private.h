@@ -49,8 +49,9 @@ const char *debug_d3dcompiler_shader_variable_type(D3D_SHADER_VARIABLE_TYPE t) D
 
 enum shader_type
 {
+    ST_UNKNOWN,
     ST_VERTEX,
-    ST_PIXEL,
+    ST_PIXEL
 };
 
 typedef enum BWRITER_COMPARISON_TYPE {
