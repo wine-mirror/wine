@@ -677,6 +677,8 @@ static void test_Face(void)
     IDirect3DRMFace *face1;
     IDirect3DRMFace2 *face2;
     IDirect3DRMFaceArray *array1;
+    D3DRMLOADMEMORY info;
+    D3DVECTOR v1[4], n1[4], v2[4], n2[4];
     DWORD count;
     CHAR cname[64] = {0};
     int icount;
@@ -811,6 +813,88 @@ static void test_Face(void)
 
     icount = IDirect3DRMFace2_GetVertexCount(face2);
     ok(!icount, "wrong VertexCount: %i\n", icount);
+
+    info.lpMemory = data_ok;
+    info.dSize = strlen(data_ok);
+    hr = IDirect3DRMMeshBuilder3_Load(MeshBuilder3, &info, NULL, D3DRMLOAD_FROMMEMORY, NULL, NULL);
+    ok(hr == D3DRM_OK, "Cannot load mesh data (hr = %x)\n", hr);
+
+    icount = IDirect3DRMMeshBuilder3_GetVertexCount(MeshBuilder3);
+    ok(icount == 4, "Wrong number of vertices %d (must be 4)\n", icount);
+
+    icount = IDirect3DRMMeshBuilder3_GetNormalCount(MeshBuilder3);
+    ok(icount == 4, "Wrong number of normals %d (must be 4)\n", icount);
+
+    icount = IDirect3DRMMeshBuilder3_GetFaceCount(MeshBuilder3);
+    todo_wine
+    ok(icount == 4, "Wrong number of faces %d (must be 4)\n", icount);
+
+    count = 4;
+    hr = IDirect3DRMMeshBuilder3_GetVertices(MeshBuilder3, 0, &count, v1);
+    ok(hr == D3DRM_OK, "Cannot get vertices information (hr = %x)\n", hr);
+    ok(count == 4, "Wrong number of vertices %d (must be 4)\n", count);
+
+    hr = IDirect3DRMMeshBuilder3_GetNormals(MeshBuilder3, 0, &count, n1);
+    ok(hr == D3DRM_OK, "Cannot get normals information (hr = %x)\n", hr);
+    ok(count == 4, "Wrong number of normals %d (must be 4)\n", count);
+
+    array1 = NULL;
+    hr = IDirect3DRMMeshBuilder3_GetFaces(MeshBuilder3, &array1);
+    todo_wine
+    ok(hr == D3DRM_OK, "Cannot get FaceArray (hr = %x)\n", hr);
+    todo_wine
+    ok(array1 != NULL, "pArray = %p\n", array1);
+    if (array1)
+    {
+        IDirect3DRMFace *face;
+        count = IDirect3DRMFaceArray_GetSize(array1);
+        ok(count == 4, "count = %u\n", count);
+        hr = IDirect3DRMFaceArray_GetElement(array1, 1, &face);
+        ok(hr == D3DRM_OK, "Cannot get face (hr = %x)\n", hr);
+        IDirect3DRMFace_GetVertices(face, &count, v2, n2);
+        ok(hr == D3DRM_OK, "Cannot get vertices information (hr = %x)\n", hr);
+        ok(count == 3, "Wrong number of vertices %d (must be 3)\n", count);
+        ok(U1(v2[0]).x == U1(v1[0]).x, "Wrong component v2[0].x = %f (expected %f)\n",
+           U1(v2[0]).x, U1(v1[0]).x);
+        ok(U1(v2[0]).y == U1(v1[0]).y, "Wrong component v2[0].y = %f (expected %f)\n",
+           U1(v2[0]).y, U1(v1[0]).y);
+        ok(U1(v2[0]).z == U1(v1[0]).z, "Wrong component v2[0].z = %f (expected %f)\n",
+           U1(v2[0]).z, U1(v1[0]).z);
+        ok(U1(v2[1]).x == U1(v1[1]).x, "Wrong component v2[1].x = %f (expected %f)\n",
+           U1(v2[1]).x, U1(v1[1]).x);
+        ok(U1(v2[1]).y == U1(v1[1]).y, "Wrong component v2[1].y = %f (expected %f)\n",
+           U1(v2[1]).y, U1(v1[1]).y);
+        ok(U1(v2[1]).z == U1(v1[1]).z, "Wrong component v2[1].z = %f (expected %f)\n",
+           U1(v2[1]).z, U1(v1[1]).z);
+        ok(U1(v2[2]).x == U1(v1[2]).x, "Wrong component v2[2].x = %f (expected %f)\n",
+           U1(v2[2]).x, U1(v1[2]).x);
+        ok(U1(v2[2]).y == U1(v1[2]).y, "Wrong component v2[2].y = %f (expected %f)\n",
+           U1(v2[2]).y, U1(v1[2]).y);
+        ok(U1(v2[2]).z == U1(v1[2]).z, "Wrong component v2[2].z = %f (expected %f)\n",
+           U1(v2[2]).z, U1(v1[2]).z);
+
+        ok(U1(n2[0]).x == U1(n1[0]).x, "Wrong component n2[0].x = %f (expected %f)\n",
+           U1(n2[0]).x, U1(n1[0]).x);
+        ok(U1(n2[0]).y == U1(n1[0]).y, "Wrong component n2[0].y = %f (expected %f)\n",
+           U1(n2[0]).y, U1(n1[0]).y);
+        ok(U1(n2[0]).z == U1(n1[0]).z, "Wrong component n2[0].z = %f (expected %f)\n",
+           U1(n2[0]).z, U1(n1[0]).z);
+        ok(U1(n2[1]).x == U1(n1[1]).x, "Wrong component n2[1].x = %f (expected %f)\n",
+           U1(n2[1]).x, U1(n1[1]).x);
+        ok(U1(n2[1]).y == U1(n1[1]).y, "Wrong component n2[1].y = %f (expected %f)\n",
+           U1(n2[1]).y, U1(n1[1]).y);
+        ok(U1(n2[1]).z == U1(n1[1]).z, "Wrong component n2[1].z = %f (expected %f)\n",
+           U1(n2[1]).z, U1(n1[1]).z);
+        ok(U1(n2[2]).x == U1(n1[2]).x, "Wrong component n2[2].x = %f (expected %f)\n",
+           U1(n2[2]).x, U1(n1[2]).x);
+        ok(U1(n2[2]).y == U1(n1[2]).y, "Wrong component n2[2].y = %f (expected %f)\n",
+           U1(n2[2]).y, U1(n1[2]).y);
+        ok(U1(n2[2]).z == U1(n1[2]).z, "Wrong component n2[2].z = %f (expected %f)\n",
+           U1(n2[2]).z, U1(n1[2]).z);
+
+        IDirect3DRMFace_Release(face);
+        IDirect3DRMFaceArray_Release(array1);
+    }
 
     IDirect3DRMFace2_Release(face2);
     IDirect3DRMMeshBuilder3_Release(MeshBuilder3);
