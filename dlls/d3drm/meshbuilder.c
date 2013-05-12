@@ -2392,9 +2392,9 @@ static int WINAPI IDirect3DRMMeshBuilder3Impl_GetNormalCount(IDirect3DRMMeshBuil
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
 
-    FIXME("(%p)->(): stub\n", This);
+    TRACE("(%p)->()\n", This);
 
-    return E_NOTIMPL;
+    return This->nb_normals;
 }
 
 static const struct IDirect3DRMMeshBuilder3Vtbl Direct3DRMMeshBuilder3_Vtbl =
