@@ -138,6 +138,9 @@ typedef struct
     HWND    hwndPrevParent;
 } REBAR_BAND;
 
+/* has a value of: 0, CCS_TOP, CCS_NOMOVEY, CCS_BOTTOM */
+#define CCS_LAYOUT_MASK 0x3
+
 /* fStatus flags */
 #define HAS_GRIPPER    0x00000001
 #define HAS_IMAGE      0x00000002
