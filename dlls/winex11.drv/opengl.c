@@ -251,6 +251,7 @@ struct gl_drawable
     const struct wgl_pixel_format *format;       /* pixel format for the drawable */
     XVisualInfo                   *visual;       /* information about the GL visual */
     RECT                           rect;         /* drawable rect, relative to whole window drawable */
+    int                            swap_interval;
 };
 
 /* X context to associate a struct gl_drawable to an hwnd */
@@ -271,7 +272,6 @@ static struct wgl_pixel_format *pixel_formats;
 static int nb_pixel_formats, nb_onscreen_formats;
 static int use_render_texture_emulation = 1;
 static BOOL has_swap_control;
-static int swap_interval = 1;
 
 static CRITICAL_SECTION context_section;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -1223,6 +1223,10 @@ static void free_gl_drawable( struct gl_drawable *gl )
 static BOOL create_gl_drawable( HWND hwnd, HWND parent, struct gl_drawable *gl )
 {
     gl->drawable = 0;
+    /* Default GLX and WGL swap interval is 1, but in case of glXSwapIntervalSGI
+     * there is no way to query it, so we have to store it here.
+     */
+    gl->swap_interval = 1;
 
     if (GetAncestor( hwnd, GA_PARENT ) == GetDesktopWindow())  /* top-level window */
     {
@@ -2866,9 +2870,24 @@ static const GLubyte *X11DRV_wglGetExtensionsStringEXT(void)
  */
 static int X11DRV_wglGetSwapIntervalEXT(void)
 {
-    /* GLX_SGI_swap_control doesn't have any provisions for getting the swap
-     * interval, so the swap interval has to be tracked. */
+    struct wgl_context *ctx = NtCurrentTeb()->glContext;
+    struct gl_drawable *gl;
+    int swap_interval;
+
     TRACE("()\n");
+
+    if (!(gl = get_gl_drawable( WindowFromDC( ctx->hdc ), ctx->hdc )))
+    {
+        /* This can't happen because a current WGL context is required to get
+         * here. Likely the application is buggy.
+         */
+        WARN("No GL drawable found, returning swap interval 0\n");
+        return 0;
+    }
+
+    swap_interval = gl->swap_interval;
+    release_gl_drawable(gl);
+
     return swap_interval;
 }
 
@@ -2879,6 +2898,8 @@ static int X11DRV_wglGetSwapIntervalEXT(void)
  */
 static BOOL X11DRV_wglSwapIntervalEXT(int interval)
 {
+    struct wgl_context *ctx = NtCurrentTeb()->glContext;
+    struct gl_drawable *gl;
     BOOL ret = TRUE;
 
     TRACE("(%d)\n", interval);
@@ -2888,13 +2909,20 @@ static BOOL X11DRV_wglSwapIntervalEXT(int interval)
         SetLastError(ERROR_INVALID_DATA);
         return FALSE;
     }
-    else if (!has_swap_control && interval == 0)
+
+    if (!(gl = get_gl_drawable( WindowFromDC( ctx->hdc ), ctx->hdc )))
+    {
+        SetLastError(ERROR_DC_NOT_FOUND);
+        return FALSE;
+    }
+
+    if (!has_swap_control && interval == 0)
     {
         /* wglSwapIntervalEXT considers an interval value of zero to mean that
          * vsync should be disabled, but glXSwapIntervalSGI considers such a
          * value to be an error. Just silently ignore the request for now. */
         WARN("Request to disable vertical sync is not handled\n");
-        swap_interval = 0;
+        gl->swap_interval = 0;
     }
     else
     {
@@ -2904,10 +2932,12 @@ static BOOL X11DRV_wglSwapIntervalEXT(int interval)
             WARN("GLX_SGI_swap_control extension is not available\n");
 
         if (ret)
-            swap_interval = interval;
+            gl->swap_interval = interval;
         else
             SetLastError(ERROR_DC_NOT_FOUND);
     }
+
+    release_gl_drawable(gl);
 
     return ret;
 }

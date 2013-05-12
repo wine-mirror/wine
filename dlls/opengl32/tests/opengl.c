@@ -1581,7 +1581,7 @@ static void test_swap_control(HDC oldhdc)
      * is not global or shared among contexts.
      */
     interval = pwglGetSwapIntervalEXT();
-    todo_wine ok(interval == 1, "Expected swap interval 1, got %d\n", interval);
+    ok(interval == 1, "Expected swap interval 1, got %d\n", interval);
 
     ret = wglDeleteContext(ctx1);
     ok(ret, "Failed to delete GL context, last error %#x.\n", GetLastError());
