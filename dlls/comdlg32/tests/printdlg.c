@@ -255,7 +255,7 @@ static void test_PrintDlgA(void)
         ok(pDlg->nCopies == 1234 || broken(pDlg->nCopies == 1), "expected nCopies 1234, got %d\n", pDlg->nCopies);
         ok(pDlg->hDevMode != 0, "hDevMode should not be 0\n");
         dm = GlobalLock(pDlg->hDevMode);
-        ok(dm->dmCopies == 1, "expected dm->dmCopies 1, got %d\n", dm->dmCopies);
+        ok(S1(U1(*dm)).dmCopies == 1, "expected dm->dmCopies 1, got %d\n", S1(U1(*dm)).dmCopies);
         GlobalUnlock(pDlg->hDevMode);
         GlobalFree(pDlg->hDevMode);
         GlobalFree(pDlg->hDevNames);
@@ -269,7 +269,7 @@ static void test_PrintDlgA(void)
         ok(pDlg->nCopies == 1, "expected nCopies 1, got %d\n", pDlg->nCopies);
         ok(pDlg->hDevMode != 0, "hDevMode should not be 0\n");
         dm = GlobalLock(pDlg->hDevMode);
-        ok(dm->dmCopies == 1234, "expected dm->dmCopies 1234, got %d\n", dm->dmCopies);
+        ok(S1(U1(*dm)).dmCopies == 1234, "expected dm->dmCopies 1234, got %d\n", S1(U1(*dm)).dmCopies);
         GlobalUnlock(pDlg->hDevMode);
         GlobalFree(pDlg->hDevMode);
         GlobalFree(pDlg->hDevNames);
