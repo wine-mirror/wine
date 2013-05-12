@@ -4311,7 +4311,7 @@ static struct arb_ps_compiled_shader *find_arb_pshader(struct wined3d_shader *sh
         shader_data->clamp_consts = shader->reg_maps.shader_version.major == 1;
 
         if (shader->reg_maps.shader_version.major < 3)
-            shader_data->input_signature_idx = ~0;
+            shader_data->input_signature_idx = ~0U;
         else
             shader_data->input_signature_idx = find_input_signature(priv, shader->input_signature);
 
