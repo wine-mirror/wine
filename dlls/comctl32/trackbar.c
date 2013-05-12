@@ -499,12 +499,12 @@ TRACKBAR_DrawOneTic (const TRACKBAR_INFO *infoPtr, HDC hdc, LONG ticPos, int fla
         offsetthumb = (infoPtr->rcThumb.bottom - infoPtr->rcThumb.top)/2;
 	rcTics.left = infoPtr->rcThumb.left - 2;
 	rcTics.right = infoPtr->rcThumb.right + 2;
-	rcTics.top    = infoPtr->rcChannel.top + offsetthumb + 1;
-	rcTics.bottom = infoPtr->rcChannel.bottom - offsetthumb;
+	rcTics.top    = infoPtr->rcChannel.top + offsetthumb;
+	rcTics.bottom = infoPtr->rcChannel.bottom - offsetthumb - 1;
     } else {
         offsetthumb = (infoPtr->rcThumb.right - infoPtr->rcThumb.left)/2;
-	rcTics.left   = infoPtr->rcChannel.left + offsetthumb + 1;
-	rcTics.right  = infoPtr->rcChannel.right - offsetthumb;
+	rcTics.left   = infoPtr->rcChannel.left + offsetthumb;
+	rcTics.right  = infoPtr->rcChannel.right - offsetthumb - 1;
 	rcTics.top = infoPtr->rcThumb.top - 2;
 	rcTics.bottom = infoPtr->rcThumb.bottom + 2;
     }
