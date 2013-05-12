@@ -2379,13 +2379,19 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_SetNormals(IDirect3DRMMeshBuil
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_GetNormals(IDirect3DRMMeshBuilder3 *iface,
-        DWORD IndexFirst, DWORD *count, D3DVECTOR *vector)
+        DWORD IndexFirst, DWORD *ncount, D3DVECTOR *normals)
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
+    DWORD count = This->nb_normals - IndexFirst;
 
-    FIXME("(%p)->(%u,%p,%p): stub\n", This, IndexFirst, count, vector);
+    TRACE("(%p)->(%u,%p,%p)\n", This, IndexFirst, ncount, normals);
 
-    return E_NOTIMPL;
+    if (ncount)
+        *ncount = count;
+    if (normals && This->nb_normals)
+        memcpy(normals, This->pNormals + IndexFirst, count * sizeof(D3DVECTOR));
+
+    return D3DRM_OK;
 }
 
 static int WINAPI IDirect3DRMMeshBuilder3Impl_GetNormalCount(IDirect3DRMMeshBuilder3* iface)
