@@ -612,10 +612,103 @@ TRACKBAR_DrawTics (const TRACKBAR_INFO *infoPtr, HDC hdc)
     }
 }
 
+static int
+TRACKBAR_FillThumb (const TRACKBAR_INFO *infoPtr, HDC hdc, HBRUSH hbrush)
+{
+    const RECT *thumb = &infoPtr->rcThumb;
+    const int PointCount = 6;
+    POINT points[PointCount];
+    int PointDepth;
+    HBRUSH oldbr;
+
+    if (infoPtr->dwStyle & TBS_BOTH)
+    {
+        FillRect(hdc, thumb, hbrush);
+        return 0;
+    }
+
+    if (infoPtr->dwStyle & TBS_VERT)
+    {
+        PointDepth = (thumb->bottom - thumb->top) / 2;
+        if (infoPtr->dwStyle & TBS_LEFT)
+        {
+            points[0].x = thumb->right-1;
+            points[0].y = thumb->top;
+            points[1].x = thumb->right-1;
+            points[1].y = thumb->bottom-1;
+            points[2].x = thumb->left + PointDepth;
+            points[2].y = thumb->bottom-1;
+            points[3].x = thumb->left;
+            points[3].y = thumb->top + PointDepth;
+            points[4].x = thumb->left + PointDepth;
+            points[4].y = thumb->top;
+            points[5].x = points[0].x;
+            points[5].y = points[0].y;
+        }
+        else
+        {
+            points[0].x = thumb->right;
+            points[0].y = thumb->top + PointDepth;
+            points[1].x = thumb->right - PointDepth;
+            points[1].y = thumb->bottom-1;
+            points[2].x = thumb->left;
+            points[2].y = thumb->bottom-1;
+            points[3].x = thumb->left;
+            points[3].y = thumb->top;
+            points[4].x = thumb->right - PointDepth;
+            points[4].y = thumb->top;
+            points[5].x = points[0].x;
+            points[5].y = points[0].y;
+        }
+    }
+    else
+    {
+        PointDepth = (thumb->right - thumb->left) / 2;
+        if (infoPtr->dwStyle & TBS_TOP)
+        {
+            points[0].x = thumb->left + PointDepth;
+            points[0].y = thumb->top+1;
+            points[1].x = thumb->right-1;
+            points[1].y = thumb->top + PointDepth + 1;
+            points[2].x = thumb->right-1;
+            points[2].y = thumb->bottom-1;
+            points[3].x = thumb->left;
+            points[3].y = thumb->bottom-1;
+            points[4].x = thumb->left;
+            points[4].y = thumb->top + PointDepth + 1;
+            points[5].x = points[0].x;
+            points[5].y = points[0].y;
+        }
+        else
+        {
+            points[0].x = thumb->right-1;
+            points[0].y = thumb->top;
+            points[1].x = thumb->right-1;
+            points[1].y = thumb->bottom - PointDepth - 1;
+            points[2].x = thumb->left + PointDepth;
+            points[2].y = thumb->bottom-1;
+            points[3].x = thumb->left;
+            points[3].y = thumb->bottom - PointDepth - 1;
+            points[4].x = thumb->left;
+            points[4].y = thumb->top;
+            points[5].x = points[0].x;
+            points[5].y = points[0].y;
+        }
+    }
+
+    oldbr = SelectObject(hdc, hbrush);
+    SetPolyFillMode(hdc, WINDING);
+    Polygon(hdc, points, PointCount);
+    SelectObject(hdc, oldbr);
+
+    return PointDepth;
+}
+
 static void
 TRACKBAR_DrawThumb (TRACKBAR_INFO *infoPtr, HDC hdc)
 {
     HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
+    int PointDepth;
     HBRUSH brush;
 
     if (theme)
@@ -643,7 +736,7 @@ TRACKBAR_DrawThumb (TRACKBAR_INFO *infoPtr, HDC hdc)
         return;
     }
 
-    if (infoPtr->dwStyle & WS_DISABLED)
+    if (infoPtr->dwStyle & WS_DISABLED || infoPtr->flags & TB_DRAG_MODE)
     {
         if (comctl32_color.clr3dHilight == comctl32_color.clrWindow)
             brush = COMCTL32_hPattern55AABrush;
@@ -654,105 +747,98 @@ TRACKBAR_DrawThumb (TRACKBAR_INFO *infoPtr, HDC hdc)
         SetBkColor(hdc, comctl32_color.clr3dHilight);
     }
     else
-        brush = GetSysColorBrush(infoPtr->flags & TB_DRAG_MODE ? COLOR_BTNHILIGHT : COLOR_BTNFACE);
+        brush = GetSysColorBrush(COLOR_BTNFACE);
+
+    PointDepth = TRACKBAR_FillThumb(infoPtr, hdc, brush);
 
     if (infoPtr->dwStyle & TBS_BOTH)
     {
-       FillRect(hdc, &infoPtr->rcThumb, brush);
        DrawEdge(hdc, &infoPtr->rcThumb, EDGE_RAISED, BF_RECT | BF_SOFT);
        return;
     }
     else
     {
-        HBRUSH oldbr = SelectObject(hdc, brush);
         RECT thumb = infoPtr->rcThumb;
-        int BlackUntil = 3;
-        int PointCount = 6;
-        POINT points[6];
-        int PointDepth;
-        HPEN oldpen;
-
-        SetPolyFillMode (hdc, WINDING);
 
         if (infoPtr->dwStyle & TBS_VERT)
         {
-          PointDepth = (thumb.bottom - thumb.top) / 2;
           if (infoPtr->dwStyle & TBS_LEFT)
           {
-            points[0].x=thumb.right;
-            points[0].y=thumb.top;
-            points[1].x=thumb.right;
-            points[1].y=thumb.bottom;
-            points[2].x=thumb.left + PointDepth;
-            points[2].y=thumb.bottom;
-            points[3].x=thumb.left;
-            points[3].y=(thumb.bottom - thumb.top) / 2 + thumb.top + 1;
-            points[4].x=thumb.left + PointDepth;
-            points[4].y=thumb.top;
-            points[5].x=points[0].x;
-            points[5].y=points[0].y;
-            BlackUntil = 4;
+            /* rectangular part */
+            thumb.left += PointDepth;
+            DrawEdge(hdc, &thumb, EDGE_RAISED, BF_TOP | BF_RIGHT | BF_BOTTOM | BF_SOFT);
+
+            /* light edge */
+            thumb.left -= PointDepth;
+            thumb.right = thumb.left + PointDepth;
+            thumb.bottom = infoPtr->rcThumb.top + PointDepth + 1;
+            thumb.top = infoPtr->rcThumb.top;
+            DrawEdge(hdc, &thumb, EDGE_RAISED, BF_DIAGONAL_ENDTOPRIGHT | BF_SOFT);
+
+            /* shadowed edge */
+            thumb.top += PointDepth;
+            thumb.bottom += PointDepth;
+            DrawEdge(hdc, &thumb, EDGE_SUNKEN, BF_DIAGONAL_ENDTOPLEFT | BF_SOFT);
+            return;
           }
           else
           {
-            points[0].x=thumb.right;
-            points[0].y=(thumb.bottom - thumb.top) / 2 + thumb.top + 1;
-            points[1].x=thumb.right - PointDepth;
-            points[1].y=thumb.bottom;
-            points[2].x=thumb.left;
-            points[2].y=thumb.bottom;
-            points[3].x=thumb.left;
-            points[3].y=thumb.top;
-            points[4].x=thumb.right - PointDepth;
-            points[4].y=thumb.top;
-            points[5].x=points[0].x;
-            points[5].y=points[0].y;
+            /* rectangular part */
+            thumb.right -= PointDepth;
+            DrawEdge(hdc, &thumb, EDGE_RAISED, BF_TOP | BF_LEFT | BF_BOTTOM | BF_SOFT);
+
+            /* light edge */
+            thumb.left = thumb.right;
+            thumb.right += PointDepth + 1;
+            thumb.bottom = infoPtr->rcThumb.top + PointDepth + 1;
+            thumb.top = infoPtr->rcThumb.top;
+            DrawEdge(hdc, &thumb, EDGE_RAISED, BF_DIAGONAL_ENDTOPLEFT | BF_SOFT);
+
+            /* shadowed edge */
+            thumb.top += PointDepth;
+            thumb.bottom += PointDepth;
+            DrawEdge(hdc, &thumb, EDGE_RAISED, BF_DIAGONAL_ENDBOTTOMLEFT | BF_SOFT);
           }
         }
         else
         {
-          PointDepth = (thumb.right - thumb.left) / 2;
           if (infoPtr->dwStyle & TBS_TOP)
           {
-            points[0].x=(thumb.right - thumb.left) / 2 + thumb.left + 1;
-            points[0].y=thumb.top;
-            points[1].x=thumb.right;
-            points[1].y=thumb.top + PointDepth;
-            points[2].x=thumb.right;
-            points[2].y=thumb.bottom;
-            points[3].x=thumb.left;
-            points[3].y=thumb.bottom;
-            points[4].x=thumb.left;
-            points[4].y=thumb.top + PointDepth;
-            points[5].x=points[0].x;
-            points[5].y=points[0].y;
-            BlackUntil = 4;
+            /* rectangular part */
+            thumb.top += PointDepth;
+            DrawEdge(hdc, &thumb, EDGE_RAISED, BF_LEFT | BF_BOTTOM | BF_RIGHT | BF_SOFT);
+
+            /* light edge */
+            thumb.left = infoPtr->rcThumb.left;
+            thumb.right = thumb.left + PointDepth;
+            thumb.bottom = infoPtr->rcThumb.top + PointDepth + 1;
+            thumb.top -= PointDepth;
+            DrawEdge(hdc, &thumb, EDGE_RAISED, BF_DIAGONAL_ENDTOPRIGHT | BF_SOFT);
+
+            /* shadowed edge */
+            thumb.left += PointDepth;
+            thumb.right += PointDepth;
+            DrawEdge(hdc, &thumb, EDGE_RAISED, BF_DIAGONAL_ENDBOTTOMRIGHT | BF_SOFT);
           }
           else
           {
-            points[0].x=thumb.right;
-            points[0].y=thumb.top;
-            points[1].x=thumb.right;
-            points[1].y=thumb.bottom - PointDepth;
-            points[2].x=(thumb.right - thumb.left) / 2 + thumb.left + 1;
-            points[2].y=thumb.bottom;
-            points[3].x=thumb.left;
-            points[3].y=thumb.bottom - PointDepth;
-            points[4].x=thumb.left;
-            points[4].y=thumb.top;
-            points[5].x=points[0].x;
-            points[5].y=points[0].y;
+            /* rectangular part */
+            thumb.bottom -= PointDepth;
+            DrawEdge(hdc, &thumb, EDGE_RAISED, BF_LEFT | BF_TOP | BF_RIGHT | BF_SOFT);
+
+            /* light edge */
+            thumb.left = infoPtr->rcThumb.left;
+            thumb.right = thumb.left + PointDepth;
+            thumb.top = infoPtr->rcThumb.bottom - PointDepth - 1;
+            thumb.bottom += PointDepth;
+            DrawEdge(hdc, &thumb, EDGE_RAISED, BF_DIAGONAL_ENDTOPLEFT | BF_SOFT);
+
+            /* shadowed edge */
+            thumb.left += PointDepth;
+            thumb.right += PointDepth;
+            DrawEdge(hdc, &thumb, EDGE_RAISED, BF_DIAGONAL_ENDBOTTOMLEFT | BF_SOFT);
           }
         }
-
-        /* Draw the thumb now */
-        Polygon (hdc, points, PointCount);
-        oldpen = SelectObject(hdc, GetStockObject(BLACK_PEN));
-        Polyline(hdc,points, BlackUntil);
-        SelectObject(hdc, GetStockObject(WHITE_PEN));
-        Polyline(hdc, &points[BlackUntil-1], PointCount+1-BlackUntil);
-        SelectObject(hdc, oldpen);
-        SelectObject(hdc, oldbr);
     }
 }
 
