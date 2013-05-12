@@ -722,6 +722,9 @@ HRESULT WINAPI D3DPreprocess(const void *data, SIZE_T size, const char *filename
     HRESULT hr;
     ID3DBlob *buffer;
 
+    TRACE("data %p, size %lu, filename %s, defines %p, include %p, shader %p, error_messages %p\n",
+          data, size, debugstr_a(filename), defines, include, shader, error_messages);
+
     if (!data)
         return E_INVALIDARG;
 
