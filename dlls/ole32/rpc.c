@@ -1917,16 +1917,12 @@ static DWORD WINAPI local_server_thread(LPVOID param)
                 DWORD ret;
                 ret = WaitForMultipleObjects(2, handles, FALSE, INFINITE);
                 if (ret != WAIT_OBJECT_0)
-                {
-                    CloseHandle(hPipe);
                     break;
-                }
             }
             /* client already connected isn't an error */
             else if (error != ERROR_PIPE_CONNECTED)
             {
                 ERR("ConnectNamedPipe failed with error %d\n", GetLastError());
-                CloseHandle(hPipe);
                 break;
             }
         }
@@ -1935,20 +1931,14 @@ static DWORD WINAPI local_server_thread(LPVOID param)
         
         hres = IStream_Stat(pStm,&ststg,STATFLAG_NONAME);
         if (hres)
-        {
-            CloseHandle(hPipe);
-            CloseHandle(pipe_event);
-            return hres;
-        }
+            break;
 
         seekto.u.LowPart = 0;
         seekto.u.HighPart = 0;
         hres = IStream_Seek(pStm,seekto,STREAM_SEEK_SET,&newpos);
         if (hres) {
             FIXME("IStream_Seek failed, %x\n",hres);
-            CloseHandle(hPipe);
-            CloseHandle(pipe_event);
-            return hres;
+            break;
         }
 
         buflen = ststg.cbSize.u.LowPart;
@@ -1957,10 +1947,8 @@ static DWORD WINAPI local_server_thread(LPVOID param)
         hres = IStream_Read(pStm,buffer,buflen,&res);
         if (hres) {
             FIXME("Stream Read failed, %x\n",hres);
-            CloseHandle(hPipe);
-            CloseHandle(pipe_event);
             HeapFree(GetProcessHeap(),0,buffer);
-            return hres;
+            break;
         }
         
         WriteFile(hPipe,buffer,buflen,&res,&ovl);
@@ -1974,22 +1962,22 @@ static DWORD WINAPI local_server_thread(LPVOID param)
         if (!multi_use)
         {
             TRACE("single use object, shutting down pipe %s\n", debugstr_w(pipefn));
-            CloseHandle(hPipe);
             break;
         }
         new_pipe = CreateNamedPipeW( pipefn, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
                                      PIPE_TYPE_BYTE|PIPE_WAIT, PIPE_UNLIMITED_INSTANCES,
                                      4096, 4096, 500 /* 0.5 second timeout */, NULL );
-        CloseHandle(hPipe);
         if (new_pipe == INVALID_HANDLE_VALUE)
         {
             FIXME("pipe creation failed for %s, le is %u\n", debugstr_w(pipefn), GetLastError());
-            CloseHandle(pipe_event);
-            return 1;
+            break;
         }
+        CloseHandle(hPipe);
         hPipe = new_pipe;
     }
+
     CloseHandle(pipe_event);
+    CloseHandle(hPipe);
     return 0;
 }
 
