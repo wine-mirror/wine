@@ -87,20 +87,9 @@ typedef struct CCPRIVATE
     HWND hwndFocus;      /* handle last focused item */
 } CCPRIV, *LPCCPRIV;
 
-/***********************************************************************
- *                             CC_HSLtoRGB                    [internal]
- */
-static int CC_HSLtoRGB(char c, int hue, int sat, int lum)
+static int hsl_to_x(int hue, int sat, int lum)
 {
  int res = 0, maxrgb;
-
- /* hue */
- switch(c)
- {
-  case 'R': if (hue > 80)  hue -= 80; else hue += 160; break;
-  case 'G': if (hue > 160) hue -= 160; else hue += 80; break;
-  case 'B': break;
- }
 
  /* l below 120 */
  maxrgb = (256 * min(120,lum)) / 120;  /* 0 .. 256 */
@@ -130,6 +119,25 @@ static int CC_HSLtoRGB(char c, int hue, int sat, int lum)
   res += ((lum - 120) * (256 - res)) / 120;
 
  return min(res, 255);
+}
+
+/***********************************************************************
+ *                             CC_HSLtoRGB                    [internal]
+ */
+static COLORREF CC_HSLtoRGB(int hue, int sat, int lum)
+{
+ int h, r, g, b;
+
+ /* r */
+ h = hue > 80 ? hue-80 : hue+160;
+ r = hsl_to_x(h, sat, lum);
+ /* g */
+ h = hue > 160 ? hue-160 : hue+80;
+ g = hsl_to_x(h, sat, lum);
+ /* b */
+ b = hsl_to_x(hue, sat, lum);
+
+ return RGB(r, g, b);
 }
 
 /***********************************************************************
@@ -555,7 +563,7 @@ static void CC_PaintCross( HWND hDlg, int x, int y)
  */
 static void CC_PrepareColorGraph( HWND hDlg )
 {
- int sdif, hdif, xdif, ydif, r, g, b, hue, sat;
+ int sdif, hdif, xdif, ydif, hue, sat;
  HWND hwnd = GetDlgItem(hDlg, IDC_COLOR_GRAPH);
  LPCCPRIV lpp = GetPropW( hDlg, szColourDialogProp );
  HBRUSH hbrush;
@@ -580,10 +588,7 @@ static void CC_PrepareColorGraph( HWND hDlg )
   for(sat = 0; sat < 240 + sdif; sat += sdif)
   {
    rect.top = rect.bottom - ydif;
-   r = CC_HSLtoRGB('R', hue, sat, 120);
-   g = CC_HSLtoRGB('G', hue, sat, 120);
-   b = CC_HSLtoRGB('B', hue, sat, 120);
-   hbrush = CreateSolidBrush( RGB(r, g, b));
+   hbrush = CreateSolidBrush(CC_HSLtoRGB(hue, sat, 120));
    FillRect(lpp->hdcMem, &rect, hbrush);
    DeleteObject(hbrush);
    rect.bottom = rect.top;
@@ -625,7 +630,7 @@ static void CC_PaintLumBar( HWND hDlg, int hue, int sat )
 {
  HWND hwnd = GetDlgItem(hDlg, IDC_COLOR_LUMBAR);
  RECT rect, client;
- int lum, ldif, ydif, r, g, b;
+ int lum, ldif, ydif;
  HBRUSH hbrush;
  HDC hDC;
 
@@ -640,10 +645,7 @@ static void CC_PaintLumBar( HWND hDlg, int hue, int sat )
   for (lum = 0; lum < 240 + ldif; lum += ldif)
   {
    rect.top = max(0, rect.bottom - ydif);
-   r = CC_HSLtoRGB('R', hue, sat, lum);
-   g = CC_HSLtoRGB('G', hue, sat, lum);
-   b = CC_HSLtoRGB('B', hue, sat, lum);
-   hbrush = CreateSolidBrush( RGB(r, g, b) );
+   hbrush = CreateSolidBrush(CC_HSLtoRGB(hue, sat, lum));
    FillRect(hDC, &rect, hbrush);
    DeleteObject(hbrush);
    rect.bottom = rect.top;
@@ -1008,10 +1010,7 @@ static LRESULT CC_WMCommand( HWND hDlg, WPARAM wParam, LPARAM lParam, WORD notif
 			   }
 			   if (xx) /* something has changed */
 			   {
-			    r = CC_HSLtoRGB('R', lpp->h, lpp->s, lpp->l);
-			    g = CC_HSLtoRGB('G', lpp->h, lpp->s, lpp->l);
-			    b = CC_HSLtoRGB('B', lpp->h, lpp->s, lpp->l);
-			    lpp->lpcc->rgbResult = RGB(r, g, b);
+			    lpp->lpcc->rgbResult = CC_HSLtoRGB(lpp->h, lpp->s, lpp->l);
 			    CC_PaintSelectedColor(hDlg, lpp->lpcc->rgbResult);
 			    CC_EditSetRGB(hDlg, lpp->lpcc->rgbResult);
 			    CC_PaintCross(hDlg, lpp->h, lpp->s);
@@ -1120,7 +1119,6 @@ static LRESULT CC_WMLButtonUp( HWND hDlg )
 static LRESULT CC_WMMouseMove( HWND hDlg, LPARAM lParam )
 {
    LPCCPRIV lpp = GetPropW( hDlg, szColourDialogProp );
-   int r, g, b;
 
    if (lpp->capturedGraph)
    {
@@ -1132,10 +1130,7 @@ static LRESULT CC_WMMouseMove( HWND hDlg, LPARAM lParam )
       }
       if (CC_MouseCheckColorGraph( hDlg, lpp->capturedGraph, ptrh, ptrs, lParam))
       {
-          r = CC_HSLtoRGB('R', lpp->h, lpp->s, lpp->l);
-          g = CC_HSLtoRGB('G', lpp->h, lpp->s, lpp->l);
-          b = CC_HSLtoRGB('B', lpp->h, lpp->s, lpp->l);
-          lpp->lpcc->rgbResult = RGB(r, g, b);
+          lpp->lpcc->rgbResult = CC_HSLtoRGB(lpp->h, lpp->s, lpp->l);
           CC_EditSetRGB(hDlg, lpp->lpcc->rgbResult);
           CC_EditSetHSL(hDlg,lpp->h, lpp->s, lpp->l);
           CC_PaintCross(hDlg, lpp->h, lpp->s);
@@ -1181,10 +1176,7 @@ static LRESULT CC_WMLButtonDown( HWND hDlg, LPARAM lParam )
    if ( i == 2 )
    {
       SetCapture(hDlg);
-      r = CC_HSLtoRGB('R', lpp->h, lpp->s, lpp->l);
-      g = CC_HSLtoRGB('G', lpp->h, lpp->s, lpp->l);
-      b = CC_HSLtoRGB('B', lpp->h, lpp->s, lpp->l);
-      lpp->lpcc->rgbResult = RGB(r, g, b);
+      lpp->lpcc->rgbResult = CC_HSLtoRGB(lpp->h, lpp->s, lpp->l);
    }
    if ( i == 1 )
    {
