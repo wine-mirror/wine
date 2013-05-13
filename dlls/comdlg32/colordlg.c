@@ -23,11 +23,8 @@
    sometimes, especially when 2 instances of the
    dialog are loaded at the same time */
 
-#include <ctype.h>
-#include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include <string.h>
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -373,11 +370,11 @@ static int CC_MouseCheckResultWindow( HWND hDlg, LPARAM lParam )
 
  CONV_LPARAMTOPOINT(lParam, &point);
  ClientToScreen(hDlg, &point);
- hwnd = GetDlgItem(hDlg, 0x2c5);
+ hwnd = GetDlgItem(hDlg, IDC_COLOR_RESULT);
  GetWindowRect(hwnd, &rect);
  if (PtInRect(&rect, point))
  {
-  PostMessageA(hDlg, WM_COMMAND, 0x2c9, 0);
+  PostMessageA(hDlg, WM_COMMAND, IDC_COLOR_RES, 0);
   return 1;
  }
  return 0;
@@ -433,8 +430,8 @@ static void CC_PaintSelectedColor( HWND hDlg, COLORREF cr )
  RECT rect;
  HDC  hdc;
  HBRUSH hBrush;
- HWND hwnd = GetDlgItem(hDlg, 0x2c5);
- if (IsWindowVisible( GetDlgItem(hDlg, 0x2c6) ))   /* if full size */
+ HWND hwnd = GetDlgItem(hDlg, IDC_COLOR_RESULT);
+ if (IsWindowVisible( GetDlgItem(hDlg, IDC_COLOR_GRAPH) ))   /* if full size */
  {
   hdc = GetDC(hwnd);
   GetClientRect(hwnd, &rect) ;
@@ -462,10 +459,10 @@ static void CC_PaintTriangle( HWND hDlg, int y)
  int oben;
  RECT rect;
  HBRUSH hbr;
- HWND hwnd = GetDlgItem(hDlg, 0x2be);
+ HWND hwnd = GetDlgItem(hDlg, IDC_COLOR_LUMBAR);
  LPCCPRIV lpp = GetPropW( hDlg, szColourDialogProp );
 
- if (IsWindowVisible( GetDlgItem(hDlg, 0x2c6)))   /* if full size */
+ if (IsWindowVisible( GetDlgItem(hDlg, IDC_COLOR_GRAPH)))   /* if full size */
  {
    GetClientRect(hwnd, &rect);
    height = rect.bottom;
@@ -508,13 +505,13 @@ static void CC_PaintCross( HWND hDlg, int x, int y)
  HDC hDC;
  int w = GetDialogBaseUnits() - 1;
  int wc = GetDialogBaseUnits() * 3 / 4;
- HWND hwnd = GetDlgItem(hDlg, 0x2c6);
+ HWND hwnd = GetDlgItem(hDlg, IDC_COLOR_GRAPH);
  LPCCPRIV lpp = GetPropW( hDlg, szColourDialogProp );
  RECT rect;
  POINT point, p;
  HPEN hPen;
 
- if (IsWindowVisible( GetDlgItem(hDlg, 0x2c6) ))   /* if full size */
+ if (IsWindowVisible( GetDlgItem(hDlg, IDC_COLOR_GRAPH) ))   /* if full size */
  {
    GetClientRect(hwnd, &rect);
    hDC = GetDC(hwnd);
@@ -532,7 +529,7 @@ static void CC_PaintCross( HWND hDlg, int x, int y)
    lpp->oldcross.top    = point.y - w - 1;
    lpp->oldcross.bottom = point.y + w + 1;
 
-   hPen = CreatePen(PS_SOLID, 3, 0x000000); /* -black- color */
+   hPen = CreatePen(PS_SOLID, 3, RGB(0, 0, 0)); /* -black- color */
    hPen = SelectObject(hDC, hPen);
    MoveToEx(hDC, point.x - w, point.y, &p);
    LineTo(hDC, point.x - wc, point.y);
@@ -559,7 +556,7 @@ static void CC_PaintCross( HWND hDlg, int x, int y)
 static void CC_PrepareColorGraph( HWND hDlg )
 {
  int sdif, hdif, xdif, ydif, r, g, b, hue, sat;
- HWND hwnd = GetDlgItem(hDlg, 0x2c6);
+ HWND hwnd = GetDlgItem(hDlg, IDC_COLOR_GRAPH);
  LPCCPRIV lpp = GetPropW( hDlg, szColourDialogProp );
  HBRUSH hbrush;
  HDC hdc ;
@@ -602,7 +599,7 @@ static void CC_PrepareColorGraph( HWND hDlg )
  */
 static void CC_PaintColorGraph( HWND hDlg )
 {
- HWND hwnd = GetDlgItem( hDlg, 0x2c6 );
+ HWND hwnd = GetDlgItem( hDlg, IDC_COLOR_GRAPH );
  LPCCPRIV lpp = GetPropW( hDlg, szColourDialogProp );
  HDC  hDC;
  RECT rect;
@@ -626,7 +623,7 @@ static void CC_PaintColorGraph( HWND hDlg )
  */
 static void CC_PaintLumBar( HWND hDlg, int hue, int sat )
 {
- HWND hwnd = GetDlgItem(hDlg, 0x2be);
+ HWND hwnd = GetDlgItem(hDlg, IDC_COLOR_LUMBAR);
  RECT rect, client;
  int lum, ldif, ydif, r, g, b;
  HBRUSH hbrush;
@@ -667,15 +664,15 @@ static void CC_EditSetRGB( HWND hDlg, COLORREF cr )
  int r = GetRValue(cr);
  int g = GetGValue(cr);
  int b = GetBValue(cr);
- if (IsWindowVisible( GetDlgItem(hDlg, 0x2c6) ))   /* if full size */
+ if (IsWindowVisible( GetDlgItem(hDlg, IDC_COLOR_GRAPH) ))   /* if full size */
  {
    lpp->updating = TRUE;
    sprintf(buffer, "%d", r);
-   SetWindowTextA( GetDlgItem(hDlg, 0x2c2), buffer);
+   SetWindowTextA( GetDlgItem(hDlg, IDC_COLOR_EDIT_R), buffer);
    sprintf(buffer, "%d", g);
-   SetWindowTextA( GetDlgItem(hDlg, 0x2c3), buffer);
+   SetWindowTextA( GetDlgItem(hDlg, IDC_COLOR_EDIT_G), buffer);
    sprintf( buffer, "%d", b );
-   SetWindowTextA( GetDlgItem(hDlg, 0x2c4),buffer);
+   SetWindowTextA( GetDlgItem(hDlg, IDC_COLOR_EDIT_B), buffer);
    lpp->updating = FALSE;
  }
 }
@@ -688,15 +685,15 @@ static void CC_EditSetHSL( HWND hDlg, int h, int s, int l )
  char buffer[10];
  LPCCPRIV lpp = GetPropW( hDlg, szColourDialogProp );
 
- if (IsWindowVisible( GetDlgItem(hDlg, 0x2c6) ))   /* if full size */
+ if (IsWindowVisible( GetDlgItem(hDlg, IDC_COLOR_GRAPH) ))   /* if full size */
  {
    lpp->updating = TRUE;
    sprintf(buffer, "%d", h);
-   SetWindowTextA( GetDlgItem(hDlg, 0x2bf), buffer);
+   SetWindowTextA( GetDlgItem(hDlg, IDC_COLOR_EDIT_H), buffer);
    sprintf(buffer, "%d", s);
-   SetWindowTextA( GetDlgItem(hDlg, 0x2c0), buffer);
+   SetWindowTextA( GetDlgItem(hDlg, IDC_COLOR_EDIT_S), buffer);
    sprintf(buffer, "%d", l);
-   SetWindowTextA( GetDlgItem(hDlg, 0x2c1), buffer);
+   SetWindowTextA( GetDlgItem(hDlg, IDC_COLOR_EDIT_L), buffer);
    lpp->updating = FALSE;
  }
  CC_PaintLumBar(hDlg, h, s);
@@ -710,27 +707,27 @@ static void CC_SwitchToFullSize( HWND hDlg, COLORREF result, LPCRECT lprect )
  int i;
  LPCCPRIV lpp = GetPropW( hDlg, szColourDialogProp );
 
- EnableWindow( GetDlgItem(hDlg, 0x2cf), FALSE);
+ EnableWindow( GetDlgItem(hDlg, IDC_COLOR_DEFINE), FALSE);
  CC_PrepareColorGraph(hDlg);
- for (i = 0x2bf; i < 0x2c5; i++)
+ for (i = IDC_COLOR_EDIT_H; i <= IDC_COLOR_EDIT_B; i++)
    ShowWindow( GetDlgItem(hDlg, i), SW_SHOW);
- for (i = 0x2d3; i < 0x2d9; i++)
+ for (i = IDC_COLOR_HL; i <= IDC_COLOR_BL; i++)
    ShowWindow( GetDlgItem(hDlg, i), SW_SHOW);
- ShowWindow( GetDlgItem(hDlg, 0x2c9), SW_SHOW);
- ShowWindow( GetDlgItem(hDlg, 0x2c8), SW_SHOW);
+ ShowWindow( GetDlgItem(hDlg, IDC_COLOR_RES), SW_SHOW);
+ ShowWindow( GetDlgItem(hDlg, IDC_COLOR_ADD), SW_SHOW);
  ShowWindow( GetDlgItem(hDlg, 1090), SW_SHOW);
 
  if (lprect)
   SetWindowPos(hDlg, 0, 0, 0, lprect->right-lprect->left,
    lprect->bottom-lprect->top, SWP_NOMOVE|SWP_NOZORDER);
 
- ShowWindow( GetDlgItem(hDlg, 0x2be), SW_SHOW);
- ShowWindow( GetDlgItem(hDlg, 0x2c5), SW_SHOW);
+ ShowWindow( GetDlgItem(hDlg, IDC_COLOR_LUMBAR), SW_SHOW);
+ ShowWindow( GetDlgItem(hDlg, IDC_COLOR_RESULT), SW_SHOW);
 
  CC_EditSetRGB(hDlg, result);
  CC_EditSetHSL(hDlg, lpp->h, lpp->s, lpp->l);
- ShowWindow( GetDlgItem( hDlg, 0x2c6), SW_SHOW);
- UpdateWindow( GetDlgItem(hDlg, 0x2c6) );
+ ShowWindow( GetDlgItem( hDlg, IDC_COLOR_GRAPH), SW_SHOW);
+ UpdateWindow( GetDlgItem(hDlg, IDC_COLOR_GRAPH) );
 }
 
 /***********************************************************************
@@ -739,7 +736,7 @@ static void CC_SwitchToFullSize( HWND hDlg, COLORREF result, LPCRECT lprect )
  */
 static void CC_PaintPredefColorArray( HWND hDlg, int rows, int cols)
 {
- HWND hwnd = GetDlgItem(hDlg, 0x2d0);
+ HWND hwnd = GetDlgItem(hDlg, IDC_COLOR_PREDEF);
  RECT rect, blockrect;
  HDC  hdc;
  HBRUSH hBrush;
@@ -786,7 +783,7 @@ static void CC_PaintPredefColorArray( HWND hDlg, int rows, int cols)
  */
 static void CC_PaintUserColorArray( HWND hDlg, int rows, int cols, const COLORREF *lpcr )
 {
- HWND hwnd = GetDlgItem(hDlg, 0x2d1);
+ HWND hwnd = GetDlgItem(hDlg, IDC_COLOR_USRDEF);
  RECT rect, blockrect;
  HDC  hdc;
  HBRUSH hBrush;
@@ -892,14 +889,14 @@ static LRESULT CC_WMInitDialog( HWND hDlg, WPARAM wParam, LPARAM lParam )
    GetWindowRect(hDlg, &lpp->fullsize);
    if (lpp->lpcc->Flags & CC_FULLOPEN || lpp->lpcc->Flags & CC_PREVENTFULLOPEN)
    {
-      hwnd = GetDlgItem(hDlg, 0x2cf);
+      hwnd = GetDlgItem(hDlg, IDC_COLOR_DEFINE);
       EnableWindow(hwnd, FALSE);
    }
    if (!(lpp->lpcc->Flags & CC_FULLOPEN ) || lpp->lpcc->Flags & CC_PREVENTFULLOPEN)
    {
       rect = lpp->fullsize;
       res = rect.bottom - rect.top;
-      hwnd = GetDlgItem(hDlg, 0x2c6); /* cut at left border */
+      hwnd = GetDlgItem(hDlg, IDC_COLOR_GRAPH); /* cut at left border */
       point.x = point.y = 0;
       ClientToScreen(hwnd, &point);
       ScreenToClient(hDlg,&point);
@@ -907,20 +904,20 @@ static LRESULT CC_WMInitDialog( HWND hDlg, WPARAM wParam, LPARAM lParam )
       point.x += GetSystemMetrics(SM_CXDLGFRAME);
       SetWindowPos(hDlg, 0, 0, 0, point.x, res, SWP_NOMOVE|SWP_NOZORDER);
 
-      for (i = 0x2bf; i < 0x2c5; i++)
+      for (i = IDC_COLOR_EDIT_H; i <= IDC_COLOR_EDIT_B; i++)
          ShowWindow( GetDlgItem(hDlg, i), SW_HIDE);
-      for (i = 0x2d3; i < 0x2d9; i++)
+      for (i = IDC_COLOR_HL; i <= IDC_COLOR_BL; i++)
          ShowWindow( GetDlgItem(hDlg, i), SW_HIDE);
-      ShowWindow( GetDlgItem(hDlg, 0x2c9), SW_HIDE);
-      ShowWindow( GetDlgItem(hDlg, 0x2c8), SW_HIDE);
-      ShowWindow( GetDlgItem(hDlg, 0x2c6), SW_HIDE);
-      ShowWindow( GetDlgItem(hDlg, 0x2c5), SW_HIDE);
+      ShowWindow( GetDlgItem(hDlg, IDC_COLOR_RES), SW_HIDE);
+      ShowWindow( GetDlgItem(hDlg, IDC_COLOR_ADD), SW_HIDE);
+      ShowWindow( GetDlgItem(hDlg, IDC_COLOR_GRAPH), SW_HIDE);
+      ShowWindow( GetDlgItem(hDlg, IDC_COLOR_RESULT), SW_HIDE);
       ShowWindow( GetDlgItem(hDlg, 1090 ), SW_HIDE);
    }
    else
       CC_SwitchToFullSize(hDlg, lpp->lpcc->rgbResult, NULL);
    res = TRUE;
-   for (i = 0x2bf; i < 0x2c5; i++)
+   for (i = IDC_COLOR_EDIT_H; i <= IDC_COLOR_EDIT_B; i++)
      SendMessageA( GetDlgItem(hDlg, i), EM_LIMITTEXT, 3, 0);  /* max 3 digits:  xyz  */
    if (CC_HookCallChk(lpp->lpcc))
    {
@@ -938,12 +935,12 @@ static LRESULT CC_WMInitDialog( HWND hDlg, WPARAM wParam, LPARAM lParam )
    lpp->l = CC_RGBtoHSL('L', r, g, b);
 
    /* Doing it the long way because CC_EditSetRGB/HSL doesn't seem to work */
-   SetDlgItemInt(hDlg, 703, lpp->h, TRUE);
-   SetDlgItemInt(hDlg, 704, lpp->s, TRUE);
-   SetDlgItemInt(hDlg, 705, lpp->l, TRUE);
-   SetDlgItemInt(hDlg, 706, r, TRUE);
-   SetDlgItemInt(hDlg, 707, g, TRUE);
-   SetDlgItemInt(hDlg, 708, b, TRUE);
+   SetDlgItemInt(hDlg, IDC_COLOR_EDIT_H, lpp->h, TRUE);
+   SetDlgItemInt(hDlg, IDC_COLOR_EDIT_S, lpp->s, TRUE);
+   SetDlgItemInt(hDlg, IDC_COLOR_EDIT_L, lpp->l, TRUE);
+   SetDlgItemInt(hDlg, IDC_COLOR_EDIT_R, r, TRUE);
+   SetDlgItemInt(hDlg, IDC_COLOR_EDIT_G, g, TRUE);
+   SetDlgItemInt(hDlg, IDC_COLOR_EDIT_B, b, TRUE);
 
    CC_PaintCross(hDlg, lpp->h, lpp->s);
    CC_PaintTriangle(hDlg, lpp->l);
@@ -966,9 +963,9 @@ static LRESULT CC_WMCommand( HWND hDlg, WPARAM wParam, LPARAM lParam, WORD notif
     TRACE("CC_WMCommand wParam=%lx lParam=%lx\n", wParam, lParam);
     switch (LOWORD(wParam))
     {
-          case 0x2c2:  /* edit notify RGB */
-	  case 0x2c3:
-	  case 0x2c4:
+        case IDC_COLOR_EDIT_R:  /* edit notify RGB */
+        case IDC_COLOR_EDIT_G:
+        case IDC_COLOR_EDIT_B:
 	       if (notifyCode == EN_UPDATE && !lpp->updating)
 			 {
 			   i = CC_CheckDigitsInEdit(hwndCtl, 255);
@@ -978,9 +975,9 @@ static LRESULT CC_WMCommand( HWND hDlg, WPARAM wParam, LPARAM lParam, WORD notif
 			   xx = 0;
 			   switch (LOWORD(wParam))
 			   {
-			    case 0x2c2: if ((xx = (i != r))) r = i; break;
-			    case 0x2c3: if ((xx = (i != g))) g = i; break;
-			    case 0x2c4: if ((xx = (i != b))) b = i; break;
+			    case IDC_COLOR_EDIT_R: if ((xx = (i != r))) r = i; break;
+			    case IDC_COLOR_EDIT_G: if ((xx = (i != g))) g = i; break;
+			    case IDC_COLOR_EDIT_B: if ((xx = (i != b))) b = i; break;
 			   }
 			   if (xx) /* something has changed */
 			   {
@@ -996,18 +993,18 @@ static LRESULT CC_WMCommand( HWND hDlg, WPARAM wParam, LPARAM lParam, WORD notif
 			 }
 		 break;
 
-	  case 0x2bf:  /* edit notify HSL */
-	  case 0x2c0:
-	  case 0x2c1:
+        case IDC_COLOR_EDIT_H:  /* edit notify HSL */
+        case IDC_COLOR_EDIT_S:
+        case IDC_COLOR_EDIT_L:
 	       if (notifyCode == EN_UPDATE && !lpp->updating)
 			 {
-			   i = CC_CheckDigitsInEdit(hwndCtl , LOWORD(wParam) == 0x2bf ? 239:240);
+			   i = CC_CheckDigitsInEdit(hwndCtl , LOWORD(wParam) == IDC_COLOR_EDIT_H ? 239 : 240);
 			   xx = 0;
 			   switch (LOWORD(wParam))
 			   {
-			    case 0x2bf: if ((xx = ( i != lpp->h))) lpp->h = i; break;
-			    case 0x2c0: if ((xx = ( i != lpp->s))) lpp->s = i; break;
-			    case 0x2c1: if ((xx = ( i != lpp->l))) lpp->l = i; break;
+			    case IDC_COLOR_EDIT_H: if ((xx = ( i != lpp->h))) lpp->h = i; break;
+			    case IDC_COLOR_EDIT_S: if ((xx = ( i != lpp->s))) lpp->s = i; break;
+			    case IDC_COLOR_EDIT_L: if ((xx = ( i != lpp->l))) lpp->l = i; break;
 			   }
 			   if (xx) /* something has changed */
 			   {
@@ -1023,12 +1020,12 @@ static LRESULT CC_WMCommand( HWND hDlg, WPARAM wParam, LPARAM lParam, WORD notif
 			 }
 	       break;
 
-          case 0x2cf:
+        case IDC_COLOR_DEFINE:
                CC_SwitchToFullSize(hDlg, lpp->lpcc->rgbResult, &lpp->fullsize);
-	       SetFocus( GetDlgItem(hDlg, 0x2bf));
+	       SetFocus( GetDlgItem(hDlg, IDC_COLOR_EDIT_H));
 	       break;
 
-          case 0x2c8:    /* add colors ... column by column */
+        case IDC_COLOR_ADD:    /* add colors ... column by column */
                cr = lpp->lpcc->lpCustColors;
                cr[(lpp->nextuserdef % 2) * 8 + lpp->nextuserdef / 2] = lpp->lpcc->rgbResult;
                if (++lpp->nextuserdef == 16)
@@ -1036,7 +1033,7 @@ static LRESULT CC_WMCommand( HWND hDlg, WPARAM wParam, LPARAM lParam, WORD notif
 	       CC_PaintUserColorArray(hDlg, 2, 8, lpp->lpcc->lpCustColors);
 	       break;
 
-          case 0x2c9:              /* resulting color */
+        case IDC_COLOR_RES:              /* resulting color */
 	       hdc = GetDC(hDlg);
 	       lpp->lpcc->rgbResult = GetNearestColor(hdc, lpp->lpcc->rgbResult);
 	       ReleaseDC(hDlg, hdc);
@@ -1128,7 +1125,7 @@ static LRESULT CC_WMMouseMove( HWND hDlg, LPARAM lParam )
    if (lpp->capturedGraph)
    {
       int *ptrh = NULL, *ptrs = &lpp->l;
-      if (lpp->capturedGraph == 0x2c6)
+      if (lpp->capturedGraph == IDC_COLOR_GRAPH)
       {
           ptrh = &lpp->h;
           ptrs = &lpp->s;
@@ -1164,22 +1161,22 @@ static LRESULT CC_WMLButtonDown( HWND hDlg, LPARAM lParam )
    int r, g, b, i;
    i = 0;
 
-   if (CC_MouseCheckPredefColorArray(lpp, hDlg, 0x2d0, 6, 8, lParam))
+   if (CC_MouseCheckPredefColorArray(lpp, hDlg, IDC_COLOR_PREDEF, 6, 8, lParam))
       i = 1;
    else
-      if (CC_MouseCheckUserColorArray(lpp, hDlg, 0x2d1, 2, 8, lParam))
+      if (CC_MouseCheckUserColorArray(lpp, hDlg, IDC_COLOR_USRDEF, 2, 8, lParam))
          i = 1;
       else
-	 if (CC_MouseCheckColorGraph(hDlg, 0x2c6, &lpp->h, &lpp->s, lParam))
+	 if (CC_MouseCheckColorGraph(hDlg, IDC_COLOR_GRAPH, &lpp->h, &lpp->s, lParam))
          {
 	    i = 2;
-            lpp->capturedGraph = 0x2c6;
+            lpp->capturedGraph = IDC_COLOR_GRAPH;
          }
 	 else
-	    if (CC_MouseCheckColorGraph(hDlg, 0x2be, NULL, &lpp->l, lParam))
+	    if (CC_MouseCheckColorGraph(hDlg, IDC_COLOR_LUMBAR, NULL, &lpp->l, lParam))
             {
 	       i = 2;
-               lpp->capturedGraph = 0x2be;
+               lpp->capturedGraph = IDC_COLOR_LUMBAR;
             }
    if ( i == 2 )
    {

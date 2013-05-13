@@ -148,6 +148,28 @@ typedef struct {
 #define IDS_COLOR_AQUA                  1054
 #define IDS_COLOR_WHITE                 1055
 
+/* Color dialog controls */
+#define IDC_COLOR_LUMBAR 702
+#define IDC_COLOR_EDIT_H 703
+#define IDC_COLOR_EDIT_S 704
+#define IDC_COLOR_EDIT_L 705
+#define IDC_COLOR_EDIT_R 706
+#define IDC_COLOR_EDIT_G 707
+#define IDC_COLOR_EDIT_B 708
+#define IDC_COLOR_RESULT 709
+#define IDC_COLOR_GRAPH  710
+#define IDC_COLOR_ADD    712
+#define IDC_COLOR_RES    713
+#define IDC_COLOR_DEFINE 719
+#define IDC_COLOR_PREDEF 720
+#define IDC_COLOR_USRDEF 721
+#define IDC_COLOR_HL     723
+#define IDC_COLOR_SL     724
+#define IDC_COLOR_LL     725
+#define IDC_COLOR_RL     726
+#define IDC_COLOR_GL     727
+#define IDC_COLOR_BL     728
+
 #define IDS_FONT_SIZE    1200
 #define IDS_SAVE_BUTTON  1201
 #define IDS_SAVE_IN      1202
