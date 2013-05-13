@@ -481,7 +481,7 @@ static void set_thread_info( struct thread *thread,
         if ((req->affinity & thread->process->affinity) != req->affinity)
             set_error( STATUS_INVALID_PARAMETER );
         else if (thread->state == TERMINATED)
-            set_error( STATUS_ACCESS_DENIED );
+            set_error( STATUS_THREAD_IS_TERMINATING );
         else if (set_thread_affinity( thread, req->affinity ))
             file_set_error();
     }
