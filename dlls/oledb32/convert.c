@@ -1113,6 +1113,20 @@ static HRESULT WINAPI convert_GetConversionSize(IDataConvert* iface,
     {
         switch (src_type)
         {
+        case DBTYPE_VARIANT:
+        {
+            VARIANT v;
+
+            VariantInit(&v);
+            if ((hr = VariantChangeType(&v, (VARIANT*)src, 0, VT_BSTR)) == S_OK)
+            {
+                *dst_len = (SysStringLen(V_BSTR(&v)) + 1) * sizeof(WCHAR);
+                VariantClear(&v);
+            }
+            else
+                return hr;
+        }
+        break;
         case DBTYPE_STR:
             if(src_len)
                 *dst_len = (*src_len + 1) * sizeof(WCHAR);

@@ -2339,6 +2339,7 @@ static void test_getconversionsize(void)
     BSTR str;
     static WCHAR strW[] = {'t','e','s','t',0};
     static char strTest[] = "test";
+    VARIANT var;
 
     /* same way as CanConvert fails here */
     dst_len = 0;
@@ -2394,6 +2395,33 @@ static void test_getconversionsize(void)
     hr = IDataConvert_GetConversionSize(convert, DBTYPE_STR, DBTYPE_WSTR, &src_len, &dst_len, strTest);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(dst_len == 42, "%ld\n", dst_len);
+
+    dst_len = 0;
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(strW);
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_VARIANT, DBTYPE_WSTR, NULL, &dst_len, &var);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(dst_len == 10, "%ld\n", dst_len);
+    VariantClear(&var);
+
+    dst_len = 0;
+    src_len = 20;
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(strW);
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_VARIANT, DBTYPE_WSTR, &src_len, &dst_len, &var);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(dst_len == 10, "%ld\n", dst_len);
+    VariantClear(&var);
+
+    dst_len = 0;
+    src_len = 20;
+    V_VT(&var) = VT_I4;
+    V_I4(&var) = 4;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_VARIANT, DBTYPE_WSTR, &src_len, &dst_len, &var);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+    VariantClear(&var);
+
 }
 
 static void test_converttovar(void)
