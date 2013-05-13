@@ -1582,6 +1582,8 @@ static BOOL do_authorization( request_t *request, DWORD target, DWORD scheme_fla
         {
             ERR("authentication scheme changed from %s to %s\n",
                 debugstr_w(auth_schemes[authinfo->scheme].str), debugstr_w(auth_value));
+            destroy_authinfo( authinfo );
+            *auth_ptr = NULL;
             return FALSE;
         }
         in.BufferType = SECBUFFER_TOKEN;
