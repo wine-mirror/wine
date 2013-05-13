@@ -11900,6 +11900,93 @@ static void test_dbcs_wm_char(void)
     DestroyWindow(hwnd2);
 }
 
+static void test_unicode_wm_char(void)
+{
+    HWND hwnd;
+    MSG msg;
+    struct message seq[2];
+    HKL hkl_orig, hkl_greek;
+    DWORD cp;
+    LCID thread_locale;
+
+    hkl_orig = GetKeyboardLayout( 0 );
+    GetLocaleInfoW( LOWORD( hkl_orig ), LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER, (WCHAR*)&cp, sizeof(cp) / sizeof(WCHAR) );
+    if (cp != 1252)
+    {
+        skip( "Default codepage %d\n", cp );
+        return;
+    }
+
+    hkl_greek = LoadKeyboardLayout( "00000408", 0 );
+    if (!hkl_greek || hkl_greek == hkl_orig /* win2k */)
+    {
+        skip( "Unable to load Greek keyboard layout\n" );
+        return;
+    }
+
+    hwnd = CreateWindowExW( 0, testWindowClassW, NULL, WS_OVERLAPPEDWINDOW,
+                            100, 100, 200, 200, 0, 0, 0, NULL );
+    flush_sequence();
+
+    PostMessageW( hwnd, WM_CHAR, 0x3b1, 0 );
+
+    ok( GetMessageW( &msg, hwnd, 0, 0 ), "no message\n" );
+    ok( msg.hwnd == hwnd, "unexpected hwnd %p\n", msg.hwnd );
+    ok( msg.message == WM_CHAR, "unexpected message %x\n", msg.message );
+    ok( msg.wParam == 0x3b1, "bad wparam %lx\n", msg.wParam );
+    ok( msg.lParam == 0, "bad lparam %lx\n", msg.lParam );
+
+    DispatchMessageW( &msg );
+
+    memset( seq, 0, sizeof(seq) );
+    seq[0].message = WM_CHAR;
+    seq[0].flags = sent|wparam;
+    seq[0].wParam = 0x3b1;
+
+    ok_sequence( seq, "unicode WM_CHAR", FALSE );
+
+    flush_sequence();
+
+    /* greek alpha -> 'a' in cp1252 */
+    PostMessageW( hwnd, WM_CHAR, 0x3b1, 0 );
+
+    ok( GetMessageA( &msg, hwnd, 0, 0 ), "no message\n" );
+    ok( msg.hwnd == hwnd, "unexpected hwnd %p\n", msg.hwnd );
+    ok( msg.message == WM_CHAR, "unexpected message %x\n", msg.message );
+    ok( msg.wParam == 0x61, "bad wparam %lx\n", msg.wParam );
+    ok( msg.lParam == 0, "bad lparam %lx\n", msg.lParam );
+
+    DispatchMessageA( &msg );
+
+    seq[0].wParam = 0x61;
+    ok_sequence( seq, "unicode WM_CHAR", FALSE );
+
+    thread_locale = GetThreadLocale();
+    ActivateKeyboardLayout( hkl_greek, 0 );
+    ok( GetThreadLocale() == thread_locale, "locale changed from %08x to %08x\n",
+        thread_locale, GetThreadLocale() );
+
+    flush_sequence();
+
+    /* greek alpha -> 0xe1 in cp1253 */
+    PostMessageW( hwnd, WM_CHAR, 0x3b1, 0 );
+
+    ok( GetMessageA( &msg, hwnd, 0, 0 ), "no message\n" );
+    ok( msg.hwnd == hwnd, "unexpected hwnd %p\n", msg.hwnd );
+    ok( msg.message == WM_CHAR, "unexpected message %x\n", msg.message );
+    ok( msg.wParam == 0xe1, "bad wparam %lx\n", msg.wParam );
+    ok( msg.lParam == 0, "bad lparam %lx\n", msg.lParam );
+
+    DispatchMessageA( &msg );
+
+    seq[0].wParam = 0x3b1;
+    ok_sequence( seq, "unicode WM_CHAR", FALSE );
+
+    DestroyWindow( hwnd );
+    ActivateKeyboardLayout( hkl_orig, 0 );
+    UnloadKeyboardLayout( hkl_greek );
+}
+
 #define ID_LISTBOX 0x000f
 
 static const struct message wm_lb_setcursel_0[] =
@@ -14124,6 +14211,7 @@ START_TEST(msg)
     test_EndDialog();
     test_nullCallback();
     test_dbcs_wm_char();
+    test_unicode_wm_char();
     test_menu_messages();
     test_paintingloop();
     test_defwinproc();
