@@ -1060,12 +1060,12 @@ nt4_is_broken:
 #define MAX_COUNT 10
 static HANDLE attached_thread[MAX_COUNT];
 static DWORD attached_thread_count;
-HANDLE stop_event, event, mutex, semaphore, loader_lock_event, peb_lock_event, ack_event;
-static int test_dll_phase, inside_loader_lock, inside_peb_lock;
+HANDLE stop_event, event, mutex, semaphore, loader_lock_event, peb_lock_event, heap_lock_event, ack_event;
+static int test_dll_phase, inside_loader_lock, inside_peb_lock, inside_heap_lock;
 
 static DWORD WINAPI mutex_thread_proc(void *param)
 {
-    HANDLE wait_list[3];
+    HANDLE wait_list[4];
     DWORD ret;
 
     ret = WaitForSingleObject(mutex, 0);
@@ -1076,11 +1076,12 @@ static DWORD WINAPI mutex_thread_proc(void *param)
     wait_list[0] = stop_event;
     wait_list[1] = loader_lock_event;
     wait_list[2] = peb_lock_event;
+    wait_list[3] = heap_lock_event;
 
     while (1)
     {
         trace("%04u: mutex_thread_proc: still alive\n", GetCurrentThreadId());
-        ret = WaitForMultipleObjects(3, wait_list, FALSE, 50);
+        ret = WaitForMultipleObjects(sizeof(wait_list)/sizeof(wait_list[0]), wait_list, FALSE, 50);
         if (ret == WAIT_OBJECT_0) break;
         else if (ret == WAIT_OBJECT_0 + 1)
         {
@@ -1096,6 +1097,13 @@ static DWORD WINAPI mutex_thread_proc(void *param)
             trace("%04u: mutex_thread_proc: Entering PEB lock\n", GetCurrentThreadId());
             pRtlAcquirePebLock();
             inside_peb_lock++;
+            SetEvent(ack_event);
+        }
+        else if (ret == WAIT_OBJECT_0 + 3)
+        {
+            trace("%04u: mutex_thread_proc: Entering heap lock\n", GetCurrentThreadId());
+            HeapLock(GetProcessHeap());
+            inside_heap_lock++;
             SetEvent(ack_event);
         }
     }
@@ -1166,6 +1174,18 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
         if (test_dll_phase == 4 || test_dll_phase == 5)
         {
             ok(0, "dll_entry_point(DLL_PROCESS_DETACH) should not be called\n");
+            break;
+        }
+
+        /* The process should already deadlock at this point */
+        if (test_dll_phase == 6)
+        {
+            /* In reality, code below never gets executed, probably some other
+             * code tries to access process heap and deadlocks earlier, even XP
+             * doesn't call the DLL entry point on process detach either.
+             */
+            HeapLock(GetProcessHeap());
+            ok(0, "dll_entry_point: process should already deadlock\n");
             break;
         }
 
@@ -1444,6 +1464,10 @@ static void child_process(const char *dll_name, DWORD target_offset)
     ok(peb_lock_event != 0, "CreateEvent error %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
+    heap_lock_event = CreateEvent(NULL, FALSE, FALSE, NULL);
+    ok(heap_lock_event != 0, "CreateEvent error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
     ack_event = CreateEvent(NULL, FALSE, FALSE, NULL);
     ok(ack_event != 0, "CreateEvent error %d\n", GetLastError());
 
@@ -1641,6 +1665,20 @@ static void child_process(const char *dll_name, DWORD target_offset)
         /* calling ExitProcess should cause a deadlock */
         trace("call ExitProcess(198)\n");
         ExitProcess(198);
+        ok(0, "ExitProcess should not return\n");
+        break;
+
+    case 6:
+        trace("setting heap_lock_event\n");
+        SetEvent(heap_lock_event);
+        WaitForSingleObject(ack_event, 1000);
+        ok(inside_heap_lock != 0, "inside_heap_lock is not set\n");
+
+        *child_failures = winetest_get_failures();
+
+        /* calling ExitProcess should cause a deadlock */
+        trace("call ExitProcess(1)\n");
+        ExitProcess(1);
         ok(0, "ExitProcess should not return\n");
         break;
 
@@ -1922,6 +1960,30 @@ static void test_ExitProcess(void)
     }
     else
         win_skip("RtlAcquirePebLock/RtlReleasePebLock are not available on this platform\n");
+
+    /* phase 6 */
+    *child_failures = -1;
+    sprintf(cmdline, "\"%s\" loader %s %u 6", argv[0], dll_name, target_offset);
+    ret = CreateProcess(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ok(ret, "CreateProcess(%s) error %d\n", cmdline, GetLastError());
+    ret = WaitForSingleObject(pi.hProcess, 5000);
+    ok(ret == WAIT_TIMEOUT || broken(ret == WAIT_OBJECT_0) /* XP */, "child process should fail to terminate\n");
+    if (ret != WAIT_OBJECT_0)
+    {
+        trace("terminating child process\n");
+        TerminateProcess(pi.hProcess, 201);
+    }
+    ret = WaitForSingleObject(pi.hProcess, 1000);
+    ok(ret == WAIT_OBJECT_0, "child process failed to terminate\n");
+    GetExitCodeProcess(pi.hProcess, &ret);
+    ok(ret == 201 || broken(ret == 1) /* XP */, "expected exit code 201, got %u\n", ret);
+    if (*child_failures)
+    {
+        trace("%d failures in child process\n", *child_failures);
+        winetest_add_failures(*child_failures);
+    }
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
 
     /* test remote process termination */
     SetLastError(0xdeadbeef);
