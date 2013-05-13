@@ -10502,7 +10502,7 @@ msgstr "Unbekannte Protokolle"
 
 #: netstat.rc:41
 msgid "TCP Statistics for IPv4"
-msgstr "TCP-Statisktik für IPv4"
+msgstr "TCP-Statistik für IPv4"
 
 #: netstat.rc:42
 msgid "Active Opens"
