@@ -1225,19 +1225,11 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
             if (expected_code != STILL_ACTIVE)
             {
                 ret = WaitForSingleObject(attached_thread[i], 1000);
-                /* FIXME: remove once Wine is fixed */
-                if (test_dll_phase == 1) todo_wine
-                ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %#x\n", ret);
-                else
                 ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %#x\n", ret);
             }
             ret = GetExitCodeThread(attached_thread[i], &code);
             trace("dll: GetExitCodeThread(%u) => %d,%u\n", i, ret, code);
             ok(ret == 1, "GetExitCodeThread returned %d, expected 1\n", ret);
-            /* FIXME: remove once Wine is fixed */
-            if (test_dll_phase == 1) todo_wine
-            ok(code == expected_code, "expected thread exit code %u, got %u\n", expected_code, code);
-            else
             ok(code == expected_code, "expected thread exit code %u, got %u\n", expected_code, code);
         }
 
@@ -1248,13 +1240,7 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
         if (expected_code == STILL_ACTIVE)
             ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %#x\n", ret);
         else
-        {
-            /* FIXME: remove once Wine is fixed */
-            if (test_dll_phase == 1) todo_wine
             ok(ret == WAIT_ABANDONED, "expected WAIT_ABANDONED, got %#x\n", ret);
-            else
-            ok(ret == WAIT_ABANDONED, "expected WAIT_ABANDONED, got %#x\n", ret);
-        }
 
         /* semaphore is not abandoned on thread termination */
         ret = WaitForSingleObject(semaphore, 0);
@@ -1270,16 +1256,8 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
         else
         {
             ret = WaitForSingleObject(attached_thread[0], 0);
-            /* FIXME: remove once Wine is fixed */
-            if (test_dll_phase == 1) todo_wine
-            ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %#x\n", ret);
-            else
             ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %#x\n", ret);
             ret = WaitForSingleObject(attached_thread[1], 0);
-            /* FIXME: remove once Wine is fixed */
-            if (test_dll_phase == 1) todo_wine
-            ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %#x\n", ret);
-            else
             ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %#x\n", ret);
         }
 

@@ -2631,6 +2631,7 @@ __ASM_STDCALL_FUNC( ExitProcess, 4, /* Shrinker depend on this particular ExitPr
 void WINAPI process_ExitProcess( DWORD status )
 {
     RtlAcquirePebLock();
+    NtTerminateProcess(0, status);
     LdrShutdownProcess();
     NtTerminateProcess(GetCurrentProcess(), status);
     exit(status);
@@ -2641,6 +2642,7 @@ void WINAPI process_ExitProcess( DWORD status )
 void WINAPI ExitProcess( DWORD status )
 {
     RtlAcquirePebLock();
+    NtTerminateProcess(0, status);
     LdrShutdownProcess();
     NtTerminateProcess(GetCurrentProcess(), status);
     exit(status);
