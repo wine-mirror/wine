@@ -71,6 +71,7 @@ static const WCHAR szColourDialogProp[] = {
 typedef struct CCPRIVATE
 {
     LPCHOOSECOLORW lpcc; /* points to public known data structure */
+    HWND hwndSelf;       /* dialog window */
     int nextuserdef;     /* next free place in user defined color array */
     HDC hdcMem;          /* color graph used for BitBlt() */
     HBITMAP hbmMem;      /* color graph bitmap */
@@ -437,17 +438,18 @@ static int CC_CheckDigitsInEdit( HWND hwnd, int maxval )
 /***********************************************************************
  *                    CC_PaintSelectedColor                   [internal]
  */
-static void CC_PaintSelectedColor( HWND hDlg, COLORREF cr )
+static void CC_PaintSelectedColor(const CCPRIV *infoPtr)
 {
- RECT rect;
- HDC  hdc;
- HBRUSH hBrush;
- HWND hwnd = GetDlgItem(hDlg, IDC_COLOR_RESULT);
- if (IsWindowVisible( GetDlgItem(hDlg, IDC_COLOR_GRAPH) ))   /* if full size */
+ if (IsWindowVisible( GetDlgItem(infoPtr->hwndSelf, IDC_COLOR_GRAPH) ))   /* if full size */
  {
+  RECT rect;
+  HDC  hdc;
+  HBRUSH hBrush;
+  HWND hwnd = GetDlgItem(infoPtr->hwndSelf, IDC_COLOR_RESULT);
+
   hdc = GetDC(hwnd);
   GetClientRect(hwnd, &rect) ;
-  hBrush = CreateSolidBrush(cr);
+  hBrush = CreateSolidBrush(infoPtr->lpcc->rgbResult);
   if (hBrush)
   {
    FillRect(hdc, &rect, hBrush);
@@ -461,7 +463,7 @@ static void CC_PaintSelectedColor( HWND hDlg, COLORREF cr )
 /***********************************************************************
  *                    CC_PaintTriangle                        [internal]
  */
-static void CC_PaintTriangle( HWND hDlg, int y)
+static void CC_PaintTriangle(CCPRIV *infoPtr)
 {
  HDC hDC;
  long temp;
@@ -471,21 +473,20 @@ static void CC_PaintTriangle( HWND hDlg, int y)
  int oben;
  RECT rect;
  HBRUSH hbr;
- HWND hwnd = GetDlgItem(hDlg, IDC_COLOR_LUMBAR);
- LPCCPRIV lpp = GetPropW( hDlg, szColourDialogProp );
+ HWND hwnd = GetDlgItem(infoPtr->hwndSelf, IDC_COLOR_LUMBAR);
 
- if (IsWindowVisible( GetDlgItem(hDlg, IDC_COLOR_GRAPH)))   /* if full size */
+ if (IsWindowVisible( GetDlgItem(infoPtr->hwndSelf, IDC_COLOR_GRAPH)))   /* if full size */
  {
    GetClientRect(hwnd, &rect);
    height = rect.bottom;
-   hDC = GetDC(hDlg);
+   hDC = GetDC(infoPtr->hwndSelf);
    points[0].y = rect.top;
-   points[0].x = rect.right;     /*  |  /|  */
-   ClientToScreen(hwnd, points); /*  | / |  */
-   ScreenToClient(hDlg, points); /*  |<  |  */
-   oben = points[0].y;           /*  | \ |  */
-                                 /*  |  \|  */
-   temp = (long)height * (long)y;
+   points[0].x = rect.right;                  /*  |  /|  */
+   ClientToScreen(hwnd, points);              /*  | / |  */
+   ScreenToClient(infoPtr->hwndSelf, points); /*  |<  |  */
+   oben = points[0].y;                        /*  | \ |  */
+                                              /*  |  \|  */
+   temp = (long)height * (long)infoPtr->l;
    points[0].x += 1;
    points[0].y = oben + height - temp / (long)MAXVERT;
    points[1].y = points[0].y + w;
@@ -494,17 +495,17 @@ static void CC_PaintTriangle( HWND hDlg, int y)
 
    hbr = (HBRUSH)GetClassLongPtrW( hwnd, GCLP_HBRBACKGROUND);
    if (!hbr) hbr = GetSysColorBrush(COLOR_BTNFACE);
-   FillRect(hDC, &lpp->old3angle, hbr);
-   lpp->old3angle.left  = points[0].x;
-   lpp->old3angle.right = points[1].x + 1;
-   lpp->old3angle.top   = points[2].y - 1;
-   lpp->old3angle.bottom= points[1].y + 1;
+   FillRect(hDC, &infoPtr->old3angle, hbr);
+   infoPtr->old3angle.left  = points[0].x;
+   infoPtr->old3angle.right = points[1].x + 1;
+   infoPtr->old3angle.top   = points[2].y - 1;
+   infoPtr->old3angle.bottom= points[1].y + 1;
 
    hbr = SelectObject(hDC, GetStockObject(BLACK_BRUSH));
    Polygon(hDC, points, 3);
    SelectObject(hDC, hbr);
 
-   ReleaseDC(hDlg, hDC);
+   ReleaseDC(infoPtr->hwndSelf, hDC);
  }
 }
 
@@ -512,34 +513,37 @@ static void CC_PaintTriangle( HWND hDlg, int y)
 /***********************************************************************
  *                    CC_PaintCross                           [internal]
  */
-static void CC_PaintCross( HWND hDlg, int x, int y)
+static void CC_PaintCross(CCPRIV *infoPtr)
 {
- HDC hDC;
- int w = GetDialogBaseUnits() - 1;
- int wc = GetDialogBaseUnits() * 3 / 4;
- HWND hwnd = GetDlgItem(hDlg, IDC_COLOR_GRAPH);
- LPCCPRIV lpp = GetPropW( hDlg, szColourDialogProp );
- RECT rect;
- POINT point, p;
- HPEN hPen;
-
- if (IsWindowVisible( GetDlgItem(hDlg, IDC_COLOR_GRAPH) ))   /* if full size */
+ if (IsWindowVisible( GetDlgItem(infoPtr->hwndSelf, IDC_COLOR_GRAPH) ))   /* if full size */
  {
+   HDC hDC;
+   int w = GetDialogBaseUnits() - 1;
+   int wc = GetDialogBaseUnits() * 3 / 4;
+   HWND hwnd = GetDlgItem(infoPtr->hwndSelf, IDC_COLOR_GRAPH);
+   RECT rect;
+   POINT point, p;
+   HPEN hPen;
+   int x, y;
+
+   x = infoPtr->h;
+   y = infoPtr->s;
+
    GetClientRect(hwnd, &rect);
    hDC = GetDC(hwnd);
    SelectClipRgn( hDC, CreateRectRgnIndirect(&rect));
 
    point.x = ((long)rect.right * (long)x) / (long)MAXHORI;
    point.y = rect.bottom - ((long)rect.bottom * (long)y) / (long)MAXVERT;
-   if ( lpp->oldcross.left != lpp->oldcross.right )
-     BitBlt(hDC, lpp->oldcross.left, lpp->oldcross.top,
-              lpp->oldcross.right - lpp->oldcross.left,
-              lpp->oldcross.bottom - lpp->oldcross.top,
-              lpp->hdcMem, lpp->oldcross.left, lpp->oldcross.top, SRCCOPY);
-   lpp->oldcross.left   = point.x - w - 1;
-   lpp->oldcross.right  = point.x + w + 1;
-   lpp->oldcross.top    = point.y - w - 1;
-   lpp->oldcross.bottom = point.y + w + 1;
+   if ( infoPtr->oldcross.left != infoPtr->oldcross.right )
+     BitBlt(hDC, infoPtr->oldcross.left, infoPtr->oldcross.top,
+              infoPtr->oldcross.right - infoPtr->oldcross.left,
+              infoPtr->oldcross.bottom - infoPtr->oldcross.top,
+              infoPtr->hdcMem, infoPtr->oldcross.left, infoPtr->oldcross.top, SRCCOPY);
+   infoPtr->oldcross.left   = point.x - w - 1;
+   infoPtr->oldcross.right  = point.x + w + 1;
+   infoPtr->oldcross.top    = point.y - w - 1;
+   infoPtr->oldcross.bottom = point.y + w + 1;
 
    hPen = CreatePen(PS_SOLID, 3, RGB(0, 0, 0)); /* -black- color */
    hPen = SelectObject(hDC, hPen);
@@ -606,21 +610,21 @@ static void CC_PrepareColorGraph( HWND hDlg )
 /***********************************************************************
  *                          CC_PaintColorGraph                [internal]
  */
-static void CC_PaintColorGraph( HWND hDlg )
+static void CC_PaintColorGraph(const CCPRIV *infoPtr)
 {
- HWND hwnd = GetDlgItem( hDlg, IDC_COLOR_GRAPH );
- LPCCPRIV lpp = GetPropW( hDlg, szColourDialogProp );
+ HWND hwnd = GetDlgItem( infoPtr->hwndSelf, IDC_COLOR_GRAPH );
  HDC  hDC;
  RECT rect;
+
  if (IsWindowVisible(hwnd))   /* if full size */
  {
-  if (!lpp->hdcMem)
-   CC_PrepareColorGraph(hDlg);   /* should not be necessary */
+  if (!infoPtr->hdcMem)
+   CC_PrepareColorGraph(infoPtr->hwndSelf);   /* should not be necessary */
 
   hDC = GetDC(hwnd);
   GetClientRect(hwnd, &rect);
-  if (lpp->hdcMem)
-      BitBlt(hDC, 0, 0, rect.right, rect.bottom, lpp->hdcMem, 0, 0, SRCCOPY);
+  if (infoPtr->hdcMem)
+      BitBlt(hDC, 0, 0, rect.right, rect.bottom, infoPtr->hdcMem, 0, 0, SRCCOPY);
   else
       WARN("choose color: hdcMem is not defined\n");
   ReleaseDC(hwnd, hDC);
@@ -630,9 +634,9 @@ static void CC_PaintColorGraph( HWND hDlg )
 /***********************************************************************
  *                           CC_PaintLumBar                   [internal]
  */
-static void CC_PaintLumBar( HWND hDlg, int hue, int sat )
+static void CC_PaintLumBar(const CCPRIV *infoPtr)
 {
- HWND hwnd = GetDlgItem(hDlg, IDC_COLOR_LUMBAR);
+ HWND hwnd = GetDlgItem(infoPtr->hwndSelf, IDC_COLOR_LUMBAR);
  RECT rect, client;
  int lum, ldif, ydif;
  HBRUSH hbrush;
@@ -649,7 +653,7 @@ static void CC_PaintLumBar( HWND hDlg, int hue, int sat )
   for (lum = 0; lum < 240 + ldif; lum += ldif)
   {
    rect.top = max(0, rect.bottom - ydif);
-   hbrush = CreateSolidBrush(CC_HSLtoRGB(hue, sat, lum));
+   hbrush = CreateSolidBrush(CC_HSLtoRGB(infoPtr->h, infoPtr->s, lum));
    FillRect(hDC, &rect, hbrush);
    DeleteObject(hbrush);
    rect.bottom = rect.top;
@@ -703,7 +707,7 @@ static void CC_EditSetHSL( HWND hDlg )
    SetWindowTextA( GetDlgItem(hDlg, IDC_COLOR_EDIT_L), buffer);
    lpp->updating = FALSE;
  }
- CC_PaintLumBar(hDlg, lpp->h, lpp->s);
+ CC_PaintLumBar(lpp);
 }
 
 /***********************************************************************
@@ -852,23 +856,25 @@ static BOOL CC_HookCallChk( const CHOOSECOLORW *lpcc )
  */
 static LRESULT CC_WMInitDialog( HWND hDlg, WPARAM wParam, LPARAM lParam )
 {
+   CHOOSECOLORW *cc = (CHOOSECOLORW*)lParam;
    int i, res;
    int r, g, b;
    HWND hwnd;
    RECT rect;
    POINT point;
-   LPCCPRIV lpp;
+   CCPRIV *lpp;
 
    TRACE("WM_INITDIALOG lParam=%08lX\n", lParam);
-   lpp = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct CCPRIVATE) );
 
-   lpp->lpcc = (LPCHOOSECOLORW) lParam;
-   if (lpp->lpcc->lStructSize != sizeof(CHOOSECOLORW) )
+   if (cc->lStructSize != sizeof(CHOOSECOLORW))
    {
-       HeapFree(GetProcessHeap(), 0, lpp);
-       EndDialog (hDlg, 0) ;
+       EndDialog(hDlg, 0);
        return FALSE;
    }
+
+   lpp = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct CCPRIVATE) );
+   lpp->lpcc = cc;
+   lpp->hwndSelf = hDlg;
 
    SetPropW( hDlg, szColourDialogProp, lpp );
 
@@ -935,7 +941,7 @@ static LRESULT CC_WMInitDialog( HWND hDlg, WPARAM wParam, LPARAM lParam )
    g = GetGValue(lpp->lpcc->rgbResult);
    b = GetBValue(lpp->lpcc->rgbResult);
 
-   CC_PaintSelectedColor(hDlg, lpp->lpcc->rgbResult);
+   CC_PaintSelectedColor(lpp);
    lpp->h = CC_RGBtoHSL('H', lpp->lpcc->rgbResult);
    lpp->s = CC_RGBtoHSL('S', lpp->lpcc->rgbResult);
    lpp->l = CC_RGBtoHSL('L', lpp->lpcc->rgbResult);
@@ -948,8 +954,8 @@ static LRESULT CC_WMInitDialog( HWND hDlg, WPARAM wParam, LPARAM lParam )
    SetDlgItemInt(hDlg, IDC_COLOR_EDIT_G, g, TRUE);
    SetDlgItemInt(hDlg, IDC_COLOR_EDIT_B, b, TRUE);
 
-   CC_PaintCross(hDlg, lpp->h, lpp->s);
-   CC_PaintTriangle(hDlg, lpp->l);
+   CC_PaintCross(lpp);
+   CC_PaintTriangle(lpp);
 
    return res;
 }
@@ -988,13 +994,13 @@ static LRESULT CC_WMCommand( HWND hDlg, WPARAM wParam, LPARAM lParam, WORD notif
 			   if (xx) /* something has changed */
 			   {
 			    lpp->lpcc->rgbResult = RGB(r, g, b);
-			    CC_PaintSelectedColor(hDlg, lpp->lpcc->rgbResult);
+			    CC_PaintSelectedColor(lpp);
 			    lpp->h = CC_RGBtoHSL('H', lpp->lpcc->rgbResult);
 			    lpp->s = CC_RGBtoHSL('S', lpp->lpcc->rgbResult);
 			    lpp->l = CC_RGBtoHSL('L', lpp->lpcc->rgbResult);
 			    CC_EditSetHSL(hDlg);
-			    CC_PaintCross(hDlg, lpp->h, lpp->s);
-			    CC_PaintTriangle(hDlg, lpp->l);
+			    CC_PaintCross(lpp);
+			    CC_PaintTriangle(lpp);
 			   }
 			 }
 		 break;
@@ -1015,10 +1021,10 @@ static LRESULT CC_WMCommand( HWND hDlg, WPARAM wParam, LPARAM lParam, WORD notif
 			   if (xx) /* something has changed */
 			   {
 			    lpp->lpcc->rgbResult = CC_HSLtoRGB(lpp->h, lpp->s, lpp->l);
-			    CC_PaintSelectedColor(hDlg, lpp->lpcc->rgbResult);
+			    CC_PaintSelectedColor(lpp);
 			    CC_EditSetRGB(hDlg, lpp->lpcc->rgbResult);
-			    CC_PaintCross(hDlg, lpp->h, lpp->s);
-			    CC_PaintTriangle(hDlg, lpp->l);
+			    CC_PaintCross(lpp);
+			    CC_PaintTriangle(lpp);
 			   }
 			 }
 	       break;
@@ -1041,13 +1047,13 @@ static LRESULT CC_WMCommand( HWND hDlg, WPARAM wParam, LPARAM lParam, WORD notif
 	       lpp->lpcc->rgbResult = GetNearestColor(hdc, lpp->lpcc->rgbResult);
 	       ReleaseDC(hDlg, hdc);
 	       CC_EditSetRGB(hDlg, lpp->lpcc->rgbResult);
-	       CC_PaintSelectedColor(hDlg, lpp->lpcc->rgbResult);
+	       CC_PaintSelectedColor(lpp);
 	       lpp->h = CC_RGBtoHSL('H', lpp->lpcc->rgbResult);
 	       lpp->s = CC_RGBtoHSL('S', lpp->lpcc->rgbResult);
 	       lpp->l = CC_RGBtoHSL('L', lpp->lpcc->rgbResult);
 	       CC_EditSetHSL(hDlg);
-	       CC_PaintCross(hDlg, lpp->h, lpp->s);
-	       CC_PaintTriangle(hDlg, lpp->l);
+	       CC_PaintCross(lpp);
+	       CC_PaintTriangle(lpp);
 	       break;
 
 	  case 0x40e:           /* Help! */ /* The Beatles, 1965  ;-) */
@@ -1087,11 +1093,11 @@ static LRESULT CC_WMPaint( HWND hDlg )
     /* we have to paint dialog children except text and buttons */
     CC_PaintPredefColorArray(hDlg, 6, 8);
     CC_PaintUserColorArray(hDlg, 2, 8, lpp->lpcc->lpCustColors);
-    CC_PaintLumBar(hDlg, lpp->h, lpp->s);
-    CC_PaintTriangle(hDlg, lpp->l);
-    CC_PaintSelectedColor(hDlg, lpp->lpcc->rgbResult);
-    CC_PaintColorGraph(hDlg);
-    CC_PaintCross(hDlg, lpp->h, lpp->s);
+    CC_PaintLumBar(lpp);
+    CC_PaintTriangle(lpp);
+    CC_PaintSelectedColor(lpp);
+    CC_PaintColorGraph(lpp);
+    CC_PaintCross(lpp);
     EndPaint(hDlg, &ps);
 
     return TRUE;
@@ -1108,7 +1114,7 @@ static LRESULT CC_WMLButtonUp( HWND hDlg )
    {
        lpp->capturedGraph = 0;
        ReleaseCapture();
-       CC_PaintCross(hDlg, lpp->h, lpp->s);
+       CC_PaintCross(lpp);
        return 1;
    }
    return 0;
@@ -1134,9 +1140,9 @@ static LRESULT CC_WMMouseMove( HWND hDlg, LPARAM lParam )
           lpp->lpcc->rgbResult = CC_HSLtoRGB(lpp->h, lpp->s, lpp->l);
           CC_EditSetRGB(hDlg, lpp->lpcc->rgbResult);
           CC_EditSetHSL(hDlg);
-          CC_PaintCross(hDlg, lpp->h, lpp->s);
-          CC_PaintTriangle(hDlg, lpp->l);
-          CC_PaintSelectedColor(hDlg, lpp->lpcc->rgbResult);
+          CC_PaintCross(lpp);
+          CC_PaintTriangle(lpp);
+          CC_PaintSelectedColor(lpp);
       }
       else
       {
@@ -1188,9 +1194,9 @@ static LRESULT CC_WMLButtonDown( HWND hDlg, LPARAM lParam )
    {
       CC_EditSetRGB(hDlg, lpp->lpcc->rgbResult);
       CC_EditSetHSL(hDlg);
-      CC_PaintCross(hDlg, lpp->h, lpp->s);
-      CC_PaintTriangle(hDlg, lpp->l);
-      CC_PaintSelectedColor(hDlg, lpp->lpcc->rgbResult);
+      CC_PaintCross(lpp);
+      CC_PaintTriangle(lpp);
+      CC_PaintSelectedColor(lpp);
       return TRUE;
    }
    return FALSE;
@@ -1274,13 +1280,13 @@ static INT_PTR CALLBACK ColorDlgProc( HWND hDlg, UINT message,
  *  TRUE:  Ok button clicked.
  *  FALSE: Cancel button clicked, or error.
  */
-BOOL WINAPI ChooseColorW( LPCHOOSECOLORW lpChCol )
+BOOL WINAPI ChooseColorW( CHOOSECOLORW *lpChCol )
 {
     HANDLE hDlgTmpl = 0;
-    BOOL bRet = FALSE;
-    LPCVOID template;
+    const void *template;
 
-    TRACE("ChooseColor\n");
+    TRACE("(%p)\n", lpChCol);
+
     if (!lpChCol) return FALSE;
 
     if (lpChCol->Flags & CC_ENABLETEMPLATEHANDLE)
@@ -1326,9 +1332,8 @@ BOOL WINAPI ChooseColorW( LPCHOOSECOLORW lpChCol )
 	}
     }
 
-    bRet = DialogBoxIndirectParamW(COMDLG32_hInstance, template, lpChCol->hwndOwner,
+    return DialogBoxIndirectParamW(COMDLG32_hInstance, template, lpChCol->hwndOwner,
                      ColorDlgProc, (LPARAM)lpChCol);
-    return bRet;
 }
 
 /***********************************************************************
