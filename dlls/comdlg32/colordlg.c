@@ -143,10 +143,14 @@ static COLORREF CC_HSLtoRGB(int hue, int sat, int lum)
 /***********************************************************************
  *                             CC_RGBtoHSL                    [internal]
  */
-static int CC_RGBtoHSL(char c, int r, int g, int b)
+static int CC_RGBtoHSL(char c, COLORREF rgb)
 {
  WORD maxi, mini, mmsum, mmdif, result = 0;
- int iresult = 0;
+ int iresult = 0, r, g, b;
+
+ r = GetRValue(rgb);
+ g = GetGValue(rgb);
+ b = GetBValue(rgb);
 
  maxi = max(r, b);
  maxi = max(maxi, g);
@@ -682,23 +686,24 @@ static void CC_EditSetRGB( HWND hDlg, COLORREF cr )
 /***********************************************************************
  *                             CC_EditSetHSL                  [internal]
  */
-static void CC_EditSetHSL( HWND hDlg, int h, int s, int l )
+static void CC_EditSetHSL( HWND hDlg )
 {
- char buffer[10];
- LPCCPRIV lpp = GetPropW( hDlg, szColourDialogProp );
+ CCPRIV *lpp = GetPropW( hDlg, szColourDialogProp );
 
  if (IsWindowVisible( GetDlgItem(hDlg, IDC_COLOR_GRAPH) ))   /* if full size */
  {
+   char buffer[10];
+
    lpp->updating = TRUE;
-   sprintf(buffer, "%d", h);
+   sprintf(buffer, "%d", lpp->h);
    SetWindowTextA( GetDlgItem(hDlg, IDC_COLOR_EDIT_H), buffer);
-   sprintf(buffer, "%d", s);
+   sprintf(buffer, "%d", lpp->s);
    SetWindowTextA( GetDlgItem(hDlg, IDC_COLOR_EDIT_S), buffer);
-   sprintf(buffer, "%d", l);
+   sprintf(buffer, "%d", lpp->l);
    SetWindowTextA( GetDlgItem(hDlg, IDC_COLOR_EDIT_L), buffer);
    lpp->updating = FALSE;
  }
- CC_PaintLumBar(hDlg, h, s);
+ CC_PaintLumBar(hDlg, lpp->h, lpp->s);
 }
 
 /***********************************************************************
@@ -707,7 +712,6 @@ static void CC_EditSetHSL( HWND hDlg, int h, int s, int l )
 static void CC_SwitchToFullSize( HWND hDlg, COLORREF result, LPCRECT lprect )
 {
  int i;
- LPCCPRIV lpp = GetPropW( hDlg, szColourDialogProp );
 
  EnableWindow( GetDlgItem(hDlg, IDC_COLOR_DEFINE), FALSE);
  CC_PrepareColorGraph(hDlg);
@@ -727,7 +731,7 @@ static void CC_SwitchToFullSize( HWND hDlg, COLORREF result, LPCRECT lprect )
  ShowWindow( GetDlgItem(hDlg, IDC_COLOR_RESULT), SW_SHOW);
 
  CC_EditSetRGB(hDlg, result);
- CC_EditSetHSL(hDlg, lpp->h, lpp->s, lpp->l);
+ CC_EditSetHSL(hDlg);
  ShowWindow( GetDlgItem( hDlg, IDC_COLOR_GRAPH), SW_SHOW);
  UpdateWindow( GetDlgItem(hDlg, IDC_COLOR_GRAPH) );
 }
@@ -932,9 +936,9 @@ static LRESULT CC_WMInitDialog( HWND hDlg, WPARAM wParam, LPARAM lParam )
    b = GetBValue(lpp->lpcc->rgbResult);
 
    CC_PaintSelectedColor(hDlg, lpp->lpcc->rgbResult);
-   lpp->h = CC_RGBtoHSL('H', r, g, b);
-   lpp->s = CC_RGBtoHSL('S', r, g, b);
-   lpp->l = CC_RGBtoHSL('L', r, g, b);
+   lpp->h = CC_RGBtoHSL('H', lpp->lpcc->rgbResult);
+   lpp->s = CC_RGBtoHSL('S', lpp->lpcc->rgbResult);
+   lpp->l = CC_RGBtoHSL('L', lpp->lpcc->rgbResult);
 
    /* Doing it the long way because CC_EditSetRGB/HSL doesn't seem to work */
    SetDlgItemInt(hDlg, IDC_COLOR_EDIT_H, lpp->h, TRUE);
@@ -985,10 +989,10 @@ static LRESULT CC_WMCommand( HWND hDlg, WPARAM wParam, LPARAM lParam, WORD notif
 			   {
 			    lpp->lpcc->rgbResult = RGB(r, g, b);
 			    CC_PaintSelectedColor(hDlg, lpp->lpcc->rgbResult);
-			    lpp->h = CC_RGBtoHSL('H', r, g, b);
-			    lpp->s = CC_RGBtoHSL('S', r, g, b);
-			    lpp->l = CC_RGBtoHSL('L', r, g, b);
-			    CC_EditSetHSL(hDlg, lpp->h, lpp->s, lpp->l);
+			    lpp->h = CC_RGBtoHSL('H', lpp->lpcc->rgbResult);
+			    lpp->s = CC_RGBtoHSL('S', lpp->lpcc->rgbResult);
+			    lpp->l = CC_RGBtoHSL('L', lpp->lpcc->rgbResult);
+			    CC_EditSetHSL(hDlg);
 			    CC_PaintCross(hDlg, lpp->h, lpp->s);
 			    CC_PaintTriangle(hDlg, lpp->l);
 			   }
@@ -1038,13 +1042,10 @@ static LRESULT CC_WMCommand( HWND hDlg, WPARAM wParam, LPARAM lParam, WORD notif
 	       ReleaseDC(hDlg, hdc);
 	       CC_EditSetRGB(hDlg, lpp->lpcc->rgbResult);
 	       CC_PaintSelectedColor(hDlg, lpp->lpcc->rgbResult);
-	       r = GetRValue(lpp->lpcc->rgbResult);
-	       g = GetGValue(lpp->lpcc->rgbResult);
-	       b = GetBValue(lpp->lpcc->rgbResult);
-	       lpp->h = CC_RGBtoHSL('H', r, g, b);
-	       lpp->s = CC_RGBtoHSL('S', r, g, b);
-	       lpp->l = CC_RGBtoHSL('L', r, g, b);
-	       CC_EditSetHSL(hDlg, lpp->h, lpp->s, lpp->l);
+	       lpp->h = CC_RGBtoHSL('H', lpp->lpcc->rgbResult);
+	       lpp->s = CC_RGBtoHSL('S', lpp->lpcc->rgbResult);
+	       lpp->l = CC_RGBtoHSL('L', lpp->lpcc->rgbResult);
+	       CC_EditSetHSL(hDlg);
 	       CC_PaintCross(hDlg, lpp->h, lpp->s);
 	       CC_PaintTriangle(hDlg, lpp->l);
 	       break;
@@ -1132,7 +1133,7 @@ static LRESULT CC_WMMouseMove( HWND hDlg, LPARAM lParam )
       {
           lpp->lpcc->rgbResult = CC_HSLtoRGB(lpp->h, lpp->s, lpp->l);
           CC_EditSetRGB(hDlg, lpp->lpcc->rgbResult);
-          CC_EditSetHSL(hDlg,lpp->h, lpp->s, lpp->l);
+          CC_EditSetHSL(hDlg);
           CC_PaintCross(hDlg, lpp->h, lpp->s);
           CC_PaintTriangle(hDlg, lpp->l);
           CC_PaintSelectedColor(hDlg, lpp->lpcc->rgbResult);
@@ -1153,8 +1154,7 @@ static LRESULT CC_WMMouseMove( HWND hDlg, LPARAM lParam )
 static LRESULT CC_WMLButtonDown( HWND hDlg, LPARAM lParam )
 {
    LPCCPRIV lpp = GetPropW( hDlg, szColourDialogProp );
-   int r, g, b, i;
-   i = 0;
+   int i = 0;
 
    if (CC_MouseCheckPredefColorArray(lpp, hDlg, IDC_COLOR_PREDEF, 6, 8, lParam))
       i = 1;
@@ -1180,17 +1180,14 @@ static LRESULT CC_WMLButtonDown( HWND hDlg, LPARAM lParam )
    }
    if ( i == 1 )
    {
-      r = GetRValue(lpp->lpcc->rgbResult);
-      g = GetGValue(lpp->lpcc->rgbResult);
-      b = GetBValue(lpp->lpcc->rgbResult);
-      lpp->h = CC_RGBtoHSL('H', r, g, b);
-      lpp->s = CC_RGBtoHSL('S', r, g, b);
-      lpp->l = CC_RGBtoHSL('L', r, g, b);
+      lpp->h = CC_RGBtoHSL('H', lpp->lpcc->rgbResult);
+      lpp->s = CC_RGBtoHSL('S', lpp->lpcc->rgbResult);
+      lpp->l = CC_RGBtoHSL('L', lpp->lpcc->rgbResult);
    }
    if (i)
    {
       CC_EditSetRGB(hDlg, lpp->lpcc->rgbResult);
-      CC_EditSetHSL(hDlg,lpp->h, lpp->s, lpp->l);
+      CC_EditSetHSL(hDlg);
       CC_PaintCross(hDlg, lpp->h, lpp->s);
       CC_PaintTriangle(hDlg, lpp->l);
       CC_PaintSelectedColor(hDlg, lpp->lpcc->rgbResult);
