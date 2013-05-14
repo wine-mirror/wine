@@ -1167,10 +1167,9 @@ static void *atifs_alloc(const struct wined3d_shader_backend_ops *shader_backend
 }
 
 /* Context activation is done by the caller. */
-static void atifs_free_ffpshader(struct wine_rb_entry *entry, void *context)
+static void atifs_free_ffpshader(struct wine_rb_entry *entry, void *cb_ctx)
 {
-    struct wined3d_device *device = context;
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    const struct wined3d_gl_info *gl_info = cb_ctx;
     struct atifs_ffp_desc *entry_ati = WINE_RB_ENTRY_VALUE(entry, struct atifs_ffp_desc, parent.entry);
 
     GL_EXTCALL(glDeleteFragmentShaderATI(entry_ati->shader));
@@ -1183,7 +1182,7 @@ static void atifs_free(struct wined3d_device *device)
 {
     struct atifs_private_data *priv = device->fragment_priv;
 
-    wine_rb_destroy(&priv->fragment_shaders, atifs_free_ffpshader, device);
+    wine_rb_destroy(&priv->fragment_shaders, atifs_free_ffpshader, &device->adapter->gl_info);
 
     HeapFree(GetProcessHeap(), 0, priv);
     device->fragment_priv = NULL;
