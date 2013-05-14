@@ -790,6 +790,32 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
             V_CY(v) = *(CY*)src;
             hr = S_OK;
             break;
+        case DBTYPE_BYTES:
+        {
+            LONG i;
+            LONG size;
+            SAFEARRAY *psa = NULL;
+            SAFEARRAYBOUND rgsabound[1];
+            unsigned char *p = src;
+
+            size = min(src_len, dst_max_len);
+
+            rgsabound[0].lLbound = 0;
+            rgsabound[0].cElements = size;
+
+            psa = SafeArrayCreate(VT_UI1,1,rgsabound);
+            for(i =0; i < size; i++,p++)
+            {
+                hr = SafeArrayPutElement(psa, &i, &p);
+                if(FAILED(hr))
+                   return hr;
+            }
+
+            V_VT(v) = VT_ARRAY|VT_UI1;
+            V_ARRAY(v) = psa;
+            hr = S_OK;
+            break;
+        }
         default: FIXME("Unimplemented conversion %04x -> VARIANT\n", src_type); return E_NOTIMPL;
         }
         break;
