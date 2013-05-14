@@ -5480,13 +5480,11 @@ static void shader_glsl_init_ps_uniform_locations(const struct wined3d_gl_info *
 }
 
 /* Context activation is done by the caller. */
-static void set_glsl_shader_program(const struct wined3d_context *context, struct wined3d_device *device,
-        enum wined3d_shader_mode vertex_mode, enum wined3d_shader_mode fragment_mode)
+static void set_glsl_shader_program(const struct wined3d_context *context, const struct wined3d_state *state,
+        struct shader_glsl_priv *priv)
 {
-    const struct wined3d_state *state = &device->stateBlock->state;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct ps_np2fixup_info *np2fixup_info = NULL;
-    struct shader_glsl_priv *priv = device->shader_priv;
     struct glsl_shader_prog_link *entry = NULL;
     struct wined3d_shader *vshader = NULL;
     struct wined3d_shader *gshader = NULL;
@@ -5498,8 +5496,9 @@ static void set_glsl_shader_program(const struct wined3d_context *context, struc
     struct vs_compile_args vs_compile_args;
     GLhandleARB vs_id, gs_id, ps_id;
     struct list *ps_list;
+    struct wined3d_device *device = context->swapchain->device;
 
-    if (vertex_mode == WINED3D_SHADER_MODE_SHADER)
+    if (use_vs(state))
     {
         vshader = state->vertex_shader;
         find_vs_compile_args(state, vshader, &vs_compile_args);
@@ -5516,7 +5515,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, struc
         gs_id = 0;
     }
 
-    if (fragment_mode == WINED3D_SHADER_MODE_SHADER)
+    if (use_ps(state))
     {
         pshader = state->pixel_shader;
         find_ps_compile_args(state, pshader, &ps_compile_args);
@@ -5524,7 +5523,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, struc
                 pshader, &ps_compile_args, &np2fixup_info);
         ps_list = &pshader->linked_programs;
     }
-    else if (fragment_mode == WINED3D_SHADER_MODE_FFP && priv->fragment_pipe == &glsl_fragment_pipe)
+    else if (priv->fragment_pipe == &glsl_fragment_pipe)
     {
         struct glsl_ffp_fragment_shader *ffp_shader;
         struct ffp_frag_settings settings;
@@ -5781,20 +5780,19 @@ static GLhandleARB create_glsl_blt_shader(const struct wined3d_gl_info *gl_info,
 }
 
 /* Context activation is done by the caller. */
-static void shader_glsl_select(const struct wined3d_context *context, enum wined3d_shader_mode vertex_mode,
-        enum wined3d_shader_mode fragment_mode)
+static void shader_glsl_select(void *shader_priv, const struct wined3d_context *context,
+        const struct wined3d_state *state)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    struct wined3d_device *device = context->swapchain->device;
-    struct shader_glsl_priv *priv = device->shader_priv;
+    struct shader_glsl_priv *priv = shader_priv;
     GLhandleARB program_id = 0;
     GLenum old_vertex_color_clamp, current_vertex_color_clamp;
 
-    priv->vertex_pipe->vp_enable(gl_info, vertex_mode == WINED3D_SHADER_MODE_FFP);
-    priv->fragment_pipe->enable_extension(gl_info, fragment_mode == WINED3D_SHADER_MODE_FFP);
+    priv->vertex_pipe->vp_enable(gl_info, !use_vs(state));
+    priv->fragment_pipe->enable_extension(gl_info, !use_ps(state));
 
     old_vertex_color_clamp = priv->glsl_program ? priv->glsl_program->vs.vertex_color_clamp : GL_FIXED_ONLY_ARB;
-    set_glsl_shader_program(context, device, vertex_mode, fragment_mode);
+    set_glsl_shader_program(context, state, priv);
     current_vertex_color_clamp = priv->glsl_program ? priv->glsl_program->vs.vertex_color_clamp : GL_FIXED_ONLY_ARB;
     if (old_vertex_color_clamp != current_vertex_color_clamp)
     {
@@ -5819,7 +5817,7 @@ static void shader_glsl_select(const struct wined3d_context *context, enum wined
      * called between selecting the shader and using it, which results in wrong fixup for some frames. */
     if (priv->glsl_program && priv->glsl_program->ps.np2_fixup_info)
     {
-        shader_glsl_load_np2fixup_constants(priv, gl_info, &device->stateBlock->state);
+        shader_glsl_load_np2fixup_constants(priv, gl_info, state);
     }
 }
 

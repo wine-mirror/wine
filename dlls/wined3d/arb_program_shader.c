@@ -640,8 +640,8 @@ static void shader_arb_vs_local_constants(const struct arb_vs_compiled_shader *g
     checkGLcall("Load vs int consts");
 }
 
-static void shader_arb_select(const struct wined3d_context *context, enum wined3d_shader_mode vertex_mode,
-        enum wined3d_shader_mode fragment_mode);
+static void shader_arb_select(void *shader_priv, const struct wined3d_context *context,
+        const struct wined3d_state *state);
 
 /**
  * Loads the app-supplied constants into the currently set ARB_[vertex/fragment]_programs.
@@ -666,9 +666,7 @@ static void shader_arb_load_constants_internal(struct shader_arb_priv *priv,
                 && (vshader->reg_maps.integer_constants & ~vshader->reg_maps.local_int_consts))))
         {
             TRACE("bool/integer vertex shader constants potentially modified, forcing shader reselection.\n");
-            shader_arb_select(context,
-                    useVertexShader ? WINED3D_SHADER_MODE_SHADER : WINED3D_SHADER_MODE_FFP,
-                    usePixelShader ? WINED3D_SHADER_MODE_SHADER : WINED3D_SHADER_MODE_FFP);
+            shader_arb_select(priv, context, state);
         }
         else if (pshader
                 && (pshader->reg_maps.boolean_constants
@@ -676,9 +674,7 @@ static void shader_arb_load_constants_internal(struct shader_arb_priv *priv,
                 && (pshader->reg_maps.integer_constants & ~pshader->reg_maps.local_int_consts))))
         {
             TRACE("bool/integer pixel shader constants potentially modified, forcing shader reselection.\n");
-            shader_arb_select(context,
-                    useVertexShader ? WINED3D_SHADER_MODE_SHADER : WINED3D_SHADER_MODE_FFP,
-                    usePixelShader ? WINED3D_SHADER_MODE_SHADER : WINED3D_SHADER_MODE_FFP);
+            shader_arb_select(priv, context, state);
         }
     }
 
@@ -4605,17 +4601,16 @@ static void find_arb_vs_compile_args(const struct wined3d_state *state,
 }
 
 /* Context activation is done by the caller. */
-static void shader_arb_select(const struct wined3d_context *context, enum wined3d_shader_mode vertex_mode,
-        enum wined3d_shader_mode fragment_mode)
+static void shader_arb_select(void *shader_priv, const struct wined3d_context *context,
+        const struct wined3d_state *state)
 {
     struct wined3d_device *device = context->swapchain->device;
-    struct shader_arb_priv *priv = device->shader_priv;
+    struct shader_arb_priv *priv = shader_priv;
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    const struct wined3d_state *state = &device->stateBlock->state;
     int i;
 
     /* Deal with pixel shaders first so the vertex shader arg function has the input signature ready */
-    if (fragment_mode == WINED3D_SHADER_MODE_SHADER)
+    if (use_ps(state))
     {
         struct wined3d_shader *ps = state->pixel_shader;
         struct arb_ps_compile_args compile_args;
@@ -4653,7 +4648,7 @@ static void shader_arb_select(const struct wined3d_context *context, enum wined3
                 priv->pshader_const_dirty[i] = 1;
             }
             /* Also takes care of loading local constants */
-            shader_arb_load_constants_internal(device->shader_priv, context, state, TRUE, FALSE, TRUE);
+            shader_arb_load_constants_internal(shader_priv, context, state, TRUE, FALSE, TRUE);
         }
         else
         {
@@ -4680,7 +4675,7 @@ static void shader_arb_select(const struct wined3d_context *context, enum wined3
         priv->fragment_pipe->enable_extension(gl_info, TRUE);
     }
 
-    if (vertex_mode == WINED3D_SHADER_MODE_SHADER)
+    if (use_vs(state))
     {
         struct wined3d_shader *vs = state->vertex_shader;
         struct arb_vs_compile_args compile_args;

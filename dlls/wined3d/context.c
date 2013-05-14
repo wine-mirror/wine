@@ -2403,9 +2403,7 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
 
     if (context->select_shader)
     {
-        device->shader_backend->shader_select(context,
-                use_vs(state) ? WINED3D_SHADER_MODE_SHADER : WINED3D_SHADER_MODE_FFP,
-                use_ps(state) ? WINED3D_SHADER_MODE_SHADER : WINED3D_SHADER_MODE_FFP);
+        device->shader_backend->shader_select(device->shader_priv, context, state);
         context->select_shader = 0;
     }
 

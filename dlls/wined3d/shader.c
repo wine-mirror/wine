@@ -1517,15 +1517,14 @@ static void shader_none_destroy(struct wined3d_shader *shader) {}
 static void shader_none_context_destroyed(void *shader_priv, const struct wined3d_context *context) {}
 
 /* Context activation is done by the caller. */
-static void shader_none_select(const struct wined3d_context *context, enum wined3d_shader_mode vertex_mode,
-        enum wined3d_shader_mode fragment_mode)
+static void shader_none_select(void *shader_priv, const struct wined3d_context *context,
+        const struct wined3d_state *state)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    struct wined3d_device *device = context->swapchain->device;
-    struct shader_none_priv *priv = device->shader_priv;
+    struct shader_none_priv *priv = shader_priv;
 
-    priv->vertex_pipe->vp_enable(gl_info, vertex_mode == WINED3D_SHADER_MODE_FFP);
-    priv->fragment_pipe->enable_extension(gl_info, fragment_mode == WINED3D_SHADER_MODE_FFP);
+    priv->vertex_pipe->vp_enable(gl_info, !use_vs(state));
+    priv->fragment_pipe->enable_extension(gl_info, !use_ps(state));
 }
 
 /* Context activation is done by the caller. */
