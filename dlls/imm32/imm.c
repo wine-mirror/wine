@@ -386,6 +386,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
             IMM_FreeThreadData();
             break;
         case DLL_PROCESS_DETACH:
+            if (lpReserved) break;
             IMM_FreeThreadData();
             IMM_FreeAllImmHkl();
             TlsFree(tlsIndex);
