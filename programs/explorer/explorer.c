@@ -643,7 +643,7 @@ static int copy_path_string(LPWSTR target, LPWSTR source)
     }
     else
     {
-        while (*source && !isspaceW(*source)) target[i++] = *source++;
+        while (*source && *source != ',') target[i++] = *source++;
         target[i] = 0;
     }
     return i;
