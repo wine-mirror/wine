@@ -420,6 +420,11 @@ static HRESULT parse_text( struct path *path, ULONG mode, const WCHAR *text )
         path->flags |= WBEMPATH_INFO_PATH_HAD_SERVER;
     }
     p = q;
+    if (*q && *q != '\\' && *q != '/' && *q != ':')
+    {
+        path->num_namespaces = 1;
+        q++;
+    }
     while (*q && *q != ':')
     {
         if (*q == '\\' || *q == '/') path->num_namespaces++;
@@ -432,6 +437,18 @@ static HRESULT parse_text( struct path *path, ULONG mode, const WCHAR *text )
 
         i = 0;
         q = p;
+        if (*q && *q != '\\' && *q != '/' && *q != ':')
+        {
+            p = q;
+            while (*p && *p != '\\' && *p != '/' && *p != ':') p++;
+            len = p - q;
+            if (!(path->namespaces[i] = heap_alloc( (len + 1) * sizeof(WCHAR) ))) goto done;
+            memcpy( path->namespaces[i], q, len * sizeof(WCHAR) );
+            path->namespaces[i][len] = 0;
+            path->len_namespaces[i] = len;
+            q = p;
+            i++;
+        }
         while (*q && *q != ':')
         {
             if (*q == '\\' || *q == '/')

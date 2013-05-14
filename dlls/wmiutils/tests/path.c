@@ -122,7 +122,8 @@ static void test_IWbemPath_SetText(void)
         { path8, WBEMPATH_TREAT_SINGLE_IDENT_AS_NS + 1, S_OK },
         { path9, WBEMPATH_CREATE_ACCEPT_ABSOLUTE, S_OK },
         { path10, WBEMPATH_CREATE_ACCEPT_ABSOLUTE, WBEM_E_INVALID_PARAMETER, 1 },
-        { path11, WBEMPATH_CREATE_ACCEPT_ABSOLUTE, S_OK }
+        { path11, WBEMPATH_CREATE_ACCEPT_ABSOLUTE, S_OK },
+        { path15, WBEMPATH_CREATE_ACCEPT_ALL, S_OK }
     };
     IWbemPath *path;
     HRESULT hr;
@@ -167,6 +168,8 @@ static void test_IWbemPath_GetText(void)
     static const WCHAR expected2W[] =
         {'W','i','n','3','2','_','L','o','g','i','c','a','l','D','i','s','k','.',
          'D','e','v','i','c','e','I','d','=','"','C',':','"',0};
+    static const WCHAR expected3W[] =
+        {'\\','\\','.','\\','r','o','o','t','\\','c','i','m','v','2',0};
     WCHAR buf[128];
     ULONG len, count;
     IWbemPath *path;
@@ -305,6 +308,16 @@ static void test_IWbemPath_GetText(void)
     ok( hr == S_OK, "got %08x\n", hr );
     ok( !lstrcmpW( buf, expected2W ), "unexpected buffer contents %s\n", wine_dbgstr_w(buf) );
     ok( len == lstrlenW( expected2W ) + 1, "unexpected length %u\n", len );
+
+    hr = IWbemPath_SetText( path, WBEMPATH_CREATE_ACCEPT_ALL, path15 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    len = sizeof(buf)/sizeof(buf[0]);
+    memset( buf, 0x55, sizeof(buf) );
+    hr = IWbemPath_GetText( path, WBEMPATH_GET_SERVER_TOO, &len, buf );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !lstrcmpW( buf, expected3W ), "unexpected buffer contents %s\n", wine_dbgstr_w(buf) );
+    ok( len == lstrlenW( expected3W ) + 1, "unexpected length %u\n", len );
 
     hr = IWbemPath_SetText( path, WBEMPATH_CREATE_ACCEPT_ALL, path18 );
     ok( hr == S_OK, "got %08x\n", hr );
