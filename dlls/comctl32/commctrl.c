@@ -157,7 +157,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             break;
 
 	case DLL_PROCESS_DETACH:
-            /* clean up subclassing */ 
+            if (lpvReserved) break;
+            /* clean up subclassing */
             THEMING_Uninitialize();
 
             /* unregister all common control classes */
@@ -185,14 +186,11 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
             /* delete local pattern brush */
             DeleteObject (COMCTL32_hPattern55AABrush);
-            COMCTL32_hPattern55AABrush = NULL;
             DeleteObject (COMCTL32_hPattern55AABitmap);
-            COMCTL32_hPattern55AABitmap = NULL;
 
             /* delete global subclassing atom */
             GlobalDeleteAtom (LOWORD(COMCTL32_wSubclass));
             TRACE("Subclassing atom deleted: %p\n", COMCTL32_wSubclass);
-            COMCTL32_wSubclass = NULL;
             break;
     }
 
