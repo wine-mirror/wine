@@ -99,12 +99,9 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
                 return FALSE;
             break;
         case DLL_PROCESS_DETACH:
+            if (lpReserved) break;
             TRACE("Detaching\n");
-            if (hwndDefault)
-            {
-                DestroyWindow(hwndDefault);
-                hwndDefault = 0;
-            }
+            if (hwndDefault) DestroyWindow(hwndDefault);
             TABLET_Unregister();
             DeleteCriticalSection(&csTablet);
             break;
