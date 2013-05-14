@@ -719,13 +719,13 @@ static void shader_arb_load_constants_internal(struct shader_arb_priv *priv,
     }
 }
 
-static void shader_arb_load_constants(const struct wined3d_context *context, BOOL ps, BOOL vs)
+static void shader_arb_load_constants(void *shader_priv, const struct wined3d_context *context,
+        const struct wined3d_state *state)
 {
-    struct wined3d_device *device = context->swapchain->device;
-    const struct wined3d_stateblock *stateblock = device->stateBlock;
-    const struct wined3d_state *state = &stateblock->state;
+    BOOL vs = use_vs(state);
+    BOOL ps = use_ps(state);
 
-    shader_arb_load_constants_internal(device->shader_priv, context, state, ps, vs, FALSE);
+    shader_arb_load_constants_internal(shader_priv, context, state, ps, vs, FALSE);
 }
 
 static void shader_arb_update_float_vertex_constants(struct wined3d_device *device, UINT start, UINT count)

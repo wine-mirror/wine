@@ -5,6 +5,7 @@
  * Copyright 2002-2003 Raphael Junqueira
  * Copyright 2002-2003, 2004 Jason Edmeades
  * Copyright 2005 Oliver Stieber
+ * Copyright 2006-2011, 2013 Stefan Dösinger for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -806,7 +807,8 @@ struct wined3d_shader_backend_ops
     void (*shader_deselect_depth_blt)(void *shader_priv, const struct wined3d_gl_info *gl_info);
     void (*shader_update_float_vertex_constants)(struct wined3d_device *device, UINT start, UINT count);
     void (*shader_update_float_pixel_constants)(struct wined3d_device *device, UINT start, UINT count);
-    void (*shader_load_constants)(const struct wined3d_context *context, BOOL usePS, BOOL useVS);
+    void (*shader_load_constants)(void *shader_priv, const struct wined3d_context *context,
+            const struct wined3d_state *state);
     void (*shader_load_np2fixup_constants)(void *shader_priv, const struct wined3d_gl_info *gl_info,
             const struct wined3d_state *state);
     void (*shader_destroy)(struct wined3d_shader *shader);

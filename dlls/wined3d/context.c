@@ -2411,7 +2411,8 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
 
     if (context->load_constants)
     {
-        device->shader_backend->shader_load_constants(context, use_ps(state), use_vs(state));
+        device->shader_backend->shader_load_constants(device->shader_priv,
+                context, state);
         context->load_constants = 0;
     }
 

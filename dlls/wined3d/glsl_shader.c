@@ -725,14 +725,11 @@ static void shader_glsl_load_np2fixup_constants(void *shader_priv,
 }
 
 /* Context activation is done by the caller (state handler). */
-static void shader_glsl_load_constants(const struct wined3d_context *context,
-        BOOL usePixelShader, BOOL useVertexShader)
+static void shader_glsl_load_constants(void *shader_priv, const struct wined3d_context *context,
+        const struct wined3d_state *state)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    struct wined3d_device *device = context->swapchain->device;
-    struct wined3d_stateblock *stateBlock = device->stateBlock;
-    const struct wined3d_state *state = &stateBlock->state;
-    struct shader_glsl_priv *priv = device->shader_priv;
+    struct shader_glsl_priv *priv = shader_priv;
     float position_fixup[4];
 
     GLhandleARB programId;
@@ -747,7 +744,7 @@ static void shader_glsl_load_constants(const struct wined3d_context *context,
     programId = prog->programId;
     constant_version = prog->constant_version;
 
-    if (useVertexShader)
+    if (use_vs(state))
     {
         const struct wined3d_shader *vshader = state->vertex_shader;
 
@@ -757,11 +754,11 @@ static void shader_glsl_load_constants(const struct wined3d_context *context,
 
         /* Load DirectX 9 integer constants/uniforms for vertex shader */
         shader_glsl_load_constantsI(vshader, gl_info, prog->vs.uniform_i_locations, state->vs_consts_i,
-                stateBlock->changed.vertexShaderConstantsI & vshader->reg_maps.integer_constants);
+                vshader->reg_maps.integer_constants);
 
         /* Load DirectX 9 boolean constants/uniforms for vertex shader */
         shader_glsl_load_constantsB(vshader, gl_info, programId, state->vs_consts_b,
-                stateBlock->changed.vertexShaderConstantsB & vshader->reg_maps.boolean_constants);
+                vshader->reg_maps.boolean_constants);
 
         /* Upload the position fixup params */
         shader_get_position_fixup(context, state, position_fixup);
@@ -769,7 +766,7 @@ static void shader_glsl_load_constants(const struct wined3d_context *context,
         checkGLcall("glUniform4fvARB");
     }
 
-    if (usePixelShader)
+    if (use_ps(state))
     {
         const struct wined3d_shader *pshader = state->pixel_shader;
 
@@ -779,11 +776,11 @@ static void shader_glsl_load_constants(const struct wined3d_context *context,
 
         /* Load DirectX 9 integer constants/uniforms for pixel shader */
         shader_glsl_load_constantsI(pshader, gl_info, prog->ps.uniform_i_locations, state->ps_consts_i,
-                stateBlock->changed.pixelShaderConstantsI & pshader->reg_maps.integer_constants);
+                pshader->reg_maps.integer_constants);
 
         /* Load DirectX 9 boolean constants/uniforms for pixel shader */
         shader_glsl_load_constantsB(pshader, gl_info, programId, state->ps_consts_b,
-                stateBlock->changed.pixelShaderConstantsB & pshader->reg_maps.boolean_constants);
+                pshader->reg_maps.boolean_constants);
 
         /* Upload the environment bump map matrix if needed. The needsbumpmat
          * member specifies the texture stage to load the matrix from. It
