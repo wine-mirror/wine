@@ -4604,7 +4604,6 @@ static void find_arb_vs_compile_args(const struct wined3d_state *state,
 static void shader_arb_select(void *shader_priv, const struct wined3d_context *context,
         const struct wined3d_state *state)
 {
-    struct wined3d_device *device = context->swapchain->device;
     struct shader_arb_priv *priv = shader_priv;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     int i;
@@ -4633,8 +4632,7 @@ static void shader_arb_select(void *shader_priv, const struct wined3d_context *c
         gl_info->gl_ops.gl.p_glEnable(GL_FRAGMENT_PROGRAM_ARB);
         checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB);");
 
-        TRACE("(%p) : Bound fragment program %u and enabled GL_FRAGMENT_PROGRAM_ARB\n",
-                device, priv->current_fprogram_id);
+        TRACE("Bound fragment program %u and enabled GL_FRAGMENT_PROGRAM_ARB\n", priv->current_fprogram_id);
 
         /* Pixel Shader 1.x constants are clamped to [-1;1], Pixel Shader 2.0 constants are not. If switching between
          * a 1.x and newer shader, reload the first 8 constants
@@ -4706,7 +4704,7 @@ static void shader_arb_select(void *shader_priv, const struct wined3d_context *c
         /* Enable OpenGL vertex programs */
         gl_info->gl_ops.gl.p_glEnable(GL_VERTEX_PROGRAM_ARB);
         checkGLcall("glEnable(GL_VERTEX_PROGRAM_ARB);");
-        TRACE("(%p) : Bound vertex program %u and enabled GL_VERTEX_PROGRAM_ARB\n", device, priv->current_vprogram_id);
+        TRACE("Bound vertex program %u and enabled GL_VERTEX_PROGRAM_ARB\n", priv->current_vprogram_id);
         shader_arb_vs_local_constants(compiled, context, state);
 
         if(priv->last_vs_color_unclamp != compiled->need_color_unclamp) {
