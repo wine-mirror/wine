@@ -516,6 +516,77 @@ static void test_StdRegProv( IWbemServices *services )
     SysFreeString( class );
 }
 
+static HRESULT WINAPI sink_QueryInterface(
+    IWbemObjectSink *iface, REFIID riid, void **ppv )
+{
+    *ppv = NULL;
+    if (IsEqualGUID( &IID_IUnknown, riid ) || IsEqualGUID( &IID_IWbemObjectSink, riid ))
+    {
+        *ppv = iface;
+        IWbemObjectSink_AddRef( iface );
+        return S_OK;
+    }
+    return E_NOINTERFACE;
+}
+
+static ULONG sink_refs;
+
+static ULONG WINAPI sink_AddRef(
+    IWbemObjectSink *iface )
+{
+    return ++sink_refs;
+}
+
+static ULONG WINAPI sink_Release(
+    IWbemObjectSink *iface )
+{
+    return --sink_refs;
+}
+
+static HRESULT WINAPI sink_Indicate(
+    IWbemObjectSink *iface, LONG count, IWbemClassObject **objects )
+{
+    trace("%d, %p\n", count, objects);
+    return S_OK;
+}
+
+static HRESULT WINAPI sink_SetStatus(
+    IWbemObjectSink *iface, LONG flags, HRESULT hresult, BSTR str_param, IWbemClassObject *obj_param )
+{
+    trace("%08x, %08x, %s, %p\n", flags, hresult, wine_dbgstr_w(str_param), obj_param);
+    return S_OK;
+}
+
+static IWbemObjectSinkVtbl sink_vtbl =
+{
+    sink_QueryInterface,
+    sink_AddRef,
+    sink_Release,
+    sink_Indicate,
+    sink_SetStatus
+};
+
+static IWbemObjectSink sink = { &sink_vtbl };
+
+static void test_notification_query_async( IWbemServices *services )
+{
+    static const WCHAR queryW[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','W','i','n','3','2','_',
+         'D','e','v','i','c','e','C','h','a','n','g','e','E','v','e','n','t',0};
+    BSTR wql = SysAllocString( wqlW ), query = SysAllocString( queryW );
+    HRESULT hr;
+
+    hr = IWbemServices_ExecNotificationQueryAsync( services, wql, query, 0, NULL, &sink );
+    ok( hr == S_OK || broken(hr == WBEM_E_NOT_FOUND), "got %08x\n", hr );
+    ok( sink_refs, "got %u\n", sink_refs );
+
+    hr =  IWbemServices_CancelAsyncCall( services, &sink );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    SysFreeString( wql );
+    SysFreeString( query );
+}
+
 START_TEST(query)
 {
     static const WCHAR cimv2W[] = {'R','O','O','T','\\','C','I','M','V','2',0};
@@ -545,6 +616,7 @@ START_TEST(query)
     test_Win32_Process( services );
     test_Win32_Service( services );
     test_StdRegProv( services );
+    test_notification_query_async( services );
 
     SysFreeString( path );
     IWbemServices_Release( services );

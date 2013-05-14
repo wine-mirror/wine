@@ -221,8 +221,10 @@ static HRESULT WINAPI wbem_services_CancelAsyncCall(
     IWbemServices *iface,
     IWbemObjectSink *pSink )
 {
-    FIXME("\n");
-    return WBEM_E_FAILED;
+    FIXME("%p, %p\n", iface, pSink);
+
+    IWbemObjectSink_Release( pSink );
+    return S_OK;
 }
 
 static HRESULT WINAPI wbem_services_QueryObjectSink(
@@ -562,8 +564,11 @@ static HRESULT WINAPI wbem_services_ExecNotificationQueryAsync(
     IWbemContext *pCtx,
     IWbemObjectSink *pResponseHandler )
 {
-    FIXME("\n");
-    return WBEM_E_FAILED;
+    FIXME("%p, %s, %s, 0x%08x, %p, %p\n", iface, debugstr_w(strQueryLanguage), debugstr_w(strQuery),
+          lFlags, pCtx, pResponseHandler);
+
+    IWbemObjectSink_AddRef( pResponseHandler );
+    return S_OK;
 }
 
 static HRESULT WINAPI wbem_services_ExecMethod(
