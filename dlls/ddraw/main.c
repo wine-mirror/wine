@@ -848,13 +848,12 @@ static inline DWORD get_config_key(HKEY defkey, HKEY appkey, const char* name, c
  * app didn't release them properly(Gothic 2, Diablo 2, Moto racer, ...)
  *
  ***********************************************************************/
-BOOL WINAPI
-DllMain(HINSTANCE hInstDLL,
-        DWORD Reason,
-        LPVOID lpv)
+BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD reason, LPVOID reserved)
 {
-    TRACE("(%p,%x,%p)\n", hInstDLL, Reason, lpv);
-    if (Reason == DLL_PROCESS_ATTACH)
+    TRACE("(%p,%x,%p)\n", hInstDLL, reason, reserved);
+    switch (reason)
+    {
+    case DLL_PROCESS_ATTACH:
     {
         static HMODULE ddraw_self;
         char buffer[MAX_PATH+10];
@@ -968,9 +967,10 @@ DllMain(HINSTANCE hInstDLL,
 
         instance = hInstDLL;
         DisableThreadLibraryCalls(hInstDLL);
+        break;
     }
-    else if (Reason == DLL_PROCESS_DETACH)
-    {
+
+    case DLL_PROCESS_DETACH:
         if(!list_empty(&global_ddraw_list))
         {
             struct list *entry, *entry2;
@@ -1034,7 +1034,7 @@ DllMain(HINSTANCE hInstDLL,
             }
         }
 
-        /* Unregister the window class. */
+        if (reserved) break;
         UnregisterClassA(DDRAW_WINDOW_CLASS_NAME, hInstDLL);
     }
 
