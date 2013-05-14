@@ -460,7 +460,6 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
                                               defer:YES] autorelease];
 
         if (!window) return nil;
-        window->normalStyleMask = [window styleMask];
 
         /* Standardize windows to eliminate differences between titled and
            borderless windows and between NSWindow and NSPanel. */
@@ -515,22 +514,37 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
     - (void) adjustFeaturesForState
     {
-        NSUInteger style = normalStyleMask;
-
-        if (self.disabled)
-            style &= ~NSResizableWindowMask;
-        if (style != [self styleMask])
-            [self setStyleMask:style];
+        NSUInteger style = [self styleMask];
 
         if (style & NSClosableWindowMask)
             [[self standardWindowButton:NSWindowCloseButton] setEnabled:!self.disabled];
         if (style & NSMiniaturizableWindowMask)
             [[self standardWindowButton:NSWindowMiniaturizeButton] setEnabled:!self.disabled];
+        if (style & NSResizableWindowMask)
+            [[self standardWindowButton:NSWindowZoomButton] setEnabled:!self.disabled];
     }
 
     - (void) setWindowFeatures:(const struct macdrv_window_features*)wf
     {
-        normalStyleMask = style_mask_for_features(wf);
+        NSUInteger currentStyle = [self styleMask];
+        NSUInteger newStyle = style_mask_for_features(wf);
+
+        if (newStyle != currentStyle)
+        {
+            BOOL showingButtons = (currentStyle & (NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask)) != 0;
+            BOOL shouldShowButtons = (newStyle & (NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask)) != 0;
+            if (shouldShowButtons != showingButtons && !((newStyle ^ currentStyle) & NSClosableWindowMask))
+            {
+                // -setStyleMask: is buggy on 10.7+ with respect to NSResizableWindowMask.
+                // If transitioning from NSTitledWindowMask | NSResizableWindowMask to
+                // just NSTitledWindowMask, the window buttons should disappear rather
+                // than just being disabled.  But they don't.  Similarly in reverse.
+                // The workaround is to also toggle NSClosableWindowMask at the same time.
+                [self setStyleMask:newStyle ^ NSClosableWindowMask];
+            }
+            [self setStyleMask:newStyle];
+        }
+
         [self adjustFeaturesForState];
         [self setHasShadow:wf->shadow];
     }
@@ -791,6 +805,18 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         {
             disabled = newValue;
             [self adjustFeaturesForState];
+
+            if (disabled)
+            {
+                NSSize size = [self frame].size;
+                [self setMinSize:size];
+                [self setMaxSize:size];
+            }
+            else
+            {
+                [self setMaxSize:NSMakeSize(FLT_MAX, FLT_MAX)];
+                [self setMinSize:NSZeroSize];
+            }
         }
     }
 
@@ -1165,8 +1191,16 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
     - (void)windowDidResize:(NSNotification *)notification
     {
         macdrv_event* event;
-        NSRect frame = [self contentRectForFrameRect:[self frame]];
+        NSRect frame = [self frame];
 
+        if (self.disabled)
+        {
+            NSSize size = frame.size;
+            [self setMinSize:size];
+            [self setMaxSize:size];
+        }
+
+        frame = [self contentRectForFrameRect:frame];
         [[WineApplicationController sharedController] flipRect:&frame];
 
         /* Coalesce events by discarding any previous ones still in the queue. */

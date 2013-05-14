@@ -26,7 +26,6 @@
 
 @interface WineWindow : NSPanel <NSWindowDelegate>
 {
-    NSUInteger normalStyleMask;
     BOOL disabled;
     BOOL noActivate;
     BOOL floating;
