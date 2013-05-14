@@ -4701,6 +4701,8 @@ static void shader_arb_select(void *shader_priv, const struct wined3d_context *c
         GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, priv->current_vprogram_id));
         checkGLcall("glBindProgramARB(GL_VERTEX_PROGRAM_ARB, priv->current_vprogram_id);");
 
+        priv->vertex_pipe->vp_enable(gl_info, FALSE);
+
         /* Enable OpenGL vertex programs */
         gl_info->gl_ops.gl.p_glEnable(GL_VERTEX_PROGRAM_ARB);
         checkGLcall("glEnable(GL_VERTEX_PROGRAM_ARB);");
