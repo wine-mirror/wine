@@ -416,20 +416,26 @@ static void sax_characters(void *ctx, const xmlChar *ch, int len)
 
     if (ctxt->node)
     {
+        xmlChar cur = *(ctxt->input->cur);
+
         /* Characters are reported with multiple calls, for example each charref is reported with a separate
            call and then parser appends it to a single text node or creates a new node if not created.
            It's not possible to tell if it's ignorable data or not just looking at data itself cause it could be
-           a space chars that separate charrefs or similar case. We only need to skip leading and trailing spaces,
+           space chars that separate charrefs or similar case. We only need to skip leading and trailing spaces,
            or whole node if it has nothing but space chars, so to detect leading space node->last is checked that
            contains text node pointer if already created, trailing spaces are detected directly looking at parser input
-           for next '<' opening bracket - similar logic is used by libxml2 itself.
+           for next '<' opening bracket - similar logic is used by libxml2 itself. Basically 'cur' == '<' means the last
+           chunk of char data, in case it's not the last chunk we check for previously added node type and if it's not
+           a text node it's safe to ignore.
 
            Note that during domdoc_loadXML() the xmlDocPtr->_private data is not available. */
+
         if (!This->properties->preserving &&
             !is_preserving_whitespace(ctxt->node) &&
             strn_isspace(ch, len) &&
             (!ctxt->node->last ||
-            ((ctxt->node->last && (*ctxt->input->cur) == '<'))))
+            ((ctxt->node->last && (cur == '<' || ctxt->node->last->type != XML_TEXT_NODE))
+           )))
             return;
     }
 

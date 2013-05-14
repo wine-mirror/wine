@@ -385,6 +385,15 @@ static const WCHAR szComplete6[] = {
     '<','o','p','e','n','>','<','/','o','p','e','n','>','\n',0
 };
 
+static const char complete7[] = {
+    "<?xml version=\"1.0\"?>\n\t"
+    "<root>\n"
+    "\t<a/>\n"
+    "\t<b/>\n"
+    "\t<c/>\n"
+    "</root>"
+};
+
 #define DECL_WIN_1252 \
 "<?xml version=\"1.0\" encoding=\"Windows-1252\"?>"
 
@@ -4212,7 +4221,11 @@ static void test_preserve_charref(IXMLDOMDocument2 *doc, VARIANT_BOOL preserve)
 static void test_whitespace(void)
 {
     IXMLDOMDocument2 *doc1, *doc2, *doc3, *doc4;
+    IXMLDOMNodeList *list;
+    IXMLDOMElement *root;
     VARIANT_BOOL b;
+    HRESULT hr;
+    LONG len;
 
     doc1 = create_document(&IID_IXMLDOMDocument2);
     doc2 = create_document(&IID_IXMLDOMDocument2);
@@ -4286,6 +4299,26 @@ static void test_whitespace(void)
     /* text with char references */
     test_preserve_charref(doc1, VARIANT_TRUE);
     test_preserve_charref(doc1, VARIANT_FALSE);
+
+    /* formatting whitespaces */
+    hr = IXMLDOMDocument2_put_preserveWhiteSpace(doc1, VARIANT_FALSE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXMLDOMDocument2_loadXML(doc1, _bstr_(complete7), &b);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(b == VARIANT_TRUE, "for %x\n", b);
+
+    hr = IXMLDOMDocument2_get_documentElement(doc1, &root);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IXMLDOMElement_get_childNodes(root, &list);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    len = 0;
+    hr = IXMLDOMNodeList_get_length(list, &len);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(len == 3, "got %d\n", len);
+    IXMLDOMNodeList_Release(list);
+    IXMLDOMElement_Release(root);
+
     IXMLDOMDocument2_Release(doc1);
 
     free_bstrs();
