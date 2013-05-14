@@ -2451,6 +2451,7 @@ static void test_converttovar(void)
 {
     static WCHAR strW[] = {'t','e','s','t',0};
     BYTE byte_src[5] = {1, 2, 3, 4, 5};
+    DBTIMESTAMP ts = {2013, 5, 14, 2, 4, 12, 0};
     double dvalue = 123.56;
     DBSTATUS dst_status;
     DBLENGTH dst_len;
@@ -2557,6 +2558,14 @@ static void test_converttovar(void)
     ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
     ok(V_VT(&dst) == (VT_ARRAY|VT_UI1), "got %d\n", V_VT(&dst));
     VariantClear(&dst);
+
+    dst_len = 0x1234;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_DBTIMESTAMP, DBTYPE_VARIANT, 0, &dst_len, &ts, &dst, sizeof(ts), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
+    ok(V_VT(&dst) == VT_DATE, "got %d\n", V_VT(&dst));
+    ok( (float)V_DATE(&dst) == 41408.086250f, "got %f\n", V_DATE(&dst));
 }
 
 START_TEST(convert)
