@@ -1316,7 +1316,7 @@ static LRESULT COMBOEX_DrawItem (COMBOEX_INFO *infoPtr, DRAWITEMSTRUCT const *di
     UINT xbase, x, y;
     INT len;
     COLORREF nbkc, ntxc, bkc, txc;
-    int drawimage, drawstate, xioff;
+    int drawimage, drawstate, xioff, selected;
 
     TRACE("DRAWITEMSTRUCT: CtlType=0x%08x CtlID=0x%08x\n",
 	  dis->CtlType, dis->CtlID);
@@ -1417,36 +1417,30 @@ static LRESULT COMBOEX_DrawItem (COMBOEX_INFO *infoPtr, DRAWITEMSTRUCT const *di
 
     drawimage = -2;
     drawstate = ILD_NORMAL;
+    selected = infoPtr->selected == dis->itemID;
+
     if (item->mask & CBEIF_IMAGE)
 	drawimage = item->iImage;
+    if (item->mask & CBEIF_SELECTEDIMAGE && selected)
+        drawimage = item->iSelectedImage;
     if (dis->itemState & ODS_COMBOEXLBOX) {
 	/* drawing listbox entry */
-	if (dis->itemState & ODS_SELECTED) {
-	    if (item->mask & CBEIF_SELECTEDIMAGE)
-	        drawimage = item->iSelectedImage;
+	if (dis->itemState & ODS_SELECTED)
 	    drawstate = ILD_SELECTED;
-	}
     } else {
 	/* drawing combo/edit entry */
 	if (IsWindowVisible(infoPtr->hwndEdit)) {
 	    /* if we have an edit control, the slave the
              * selection state to the Edit focus state
 	     */
-	    if (infoPtr->flags & WCBE_EDITFOCUSED) {
-	        if (item->mask & CBEIF_SELECTEDIMAGE)
-		    drawimage = item->iSelectedImage;
+	    if (infoPtr->flags & WCBE_EDITFOCUSED)
 		drawstate = ILD_SELECTED;
-	    }
-	} else {
+	} else
 	    /* if we don't have an edit control, use
 	     * the requested state.
 	     */
-	    if (dis->itemState & ODS_SELECTED) {
-		if (item->mask & CBEIF_SELECTEDIMAGE)
-		    drawimage = item->iSelectedImage;
+	    if (dis->itemState & ODS_SELECTED)
 		drawstate = ILD_SELECTED;
-	    }
-	}
     }
 
     if (infoPtr->himl && !(infoPtr->dwExtStyle & CBES_EX_NOEDITIMAGEINDENT)) {
@@ -1469,17 +1463,17 @@ static LRESULT COMBOEX_DrawItem (COMBOEX_INFO *infoPtr, DRAWITEMSTRUCT const *di
     	if (drawimage == I_IMAGECALLBACK) {
 	    NMCOMBOBOXEXW nmce;
 	    ZeroMemory(&nmce, sizeof(nmce));
-	    nmce.ceItem.mask = (drawstate == ILD_NORMAL) ? CBEIF_IMAGE : CBEIF_SELECTEDIMAGE;
+	    nmce.ceItem.mask = selected ? CBEIF_SELECTEDIMAGE : CBEIF_IMAGE;
 	    nmce.ceItem.lParam = item->lParam;
 	    nmce.ceItem.iItem = dis->itemID;
 	    COMBOEX_NotifyItem(infoPtr, CBEN_GETDISPINFOW, &nmce);
-	    if (drawstate == ILD_NORMAL) {
+	    if (!selected) {
 	    	if (nmce.ceItem.mask & CBEIF_DI_SETITEM) item->iImage = nmce.ceItem.iImage;
 	    	drawimage = nmce.ceItem.iImage;
-	    } else if (drawstate == ILD_SELECTED) {
+	    } else {
 	        if (nmce.ceItem.mask & CBEIF_DI_SETITEM) item->iSelectedImage = nmce.ceItem.iSelectedImage;
-	        drawimage =  nmce.ceItem.iSelectedImage;
-	    } else ERR("Bad draw state = %d\n", drawstate);
+                drawimage = nmce.ceItem.iSelectedImage;
+	    }
         }
 
 	if (overlay == I_IMAGECALLBACK) {
