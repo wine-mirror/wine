@@ -787,7 +787,6 @@ struct vs_compile_args {
 
 enum wined3d_shader_mode
 {
-    WINED3D_SHADER_MODE_NONE,
     WINED3D_SHADER_MODE_FFP,
     WINED3D_SHADER_MODE_SHADER,
 };
@@ -802,6 +801,7 @@ struct wined3d_shader_backend_ops
     void (*shader_handle_instruction)(const struct wined3d_shader_instruction *);
     void (*shader_select)(const struct wined3d_context *context, enum wined3d_shader_mode vertex_mode,
             enum wined3d_shader_mode fragment_mode);
+    void (*shader_disable)(void *shader_priv, const struct wined3d_context *context);
     void (*shader_select_depth_blt)(void *shader_priv, const struct wined3d_gl_info *gl_info,
             enum tex_types tex_type, const SIZE *ds_mask_size);
     void (*shader_deselect_depth_blt)(void *shader_priv, const struct wined3d_gl_info *gl_info);

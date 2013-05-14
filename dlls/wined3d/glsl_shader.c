@@ -3,7 +3,7 @@
  *
  * Copyright 2006 Jason Green
  * Copyright 2006-2007 Henri Verbeet
- * Copyright 2007-2008 Stefan Dösinger for CodeWeavers
+ * Copyright 2007-2009, 2013 Stefan Dösinger for CodeWeavers
  * Copyright 2009-2011 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
@@ -5824,6 +5824,26 @@ static void shader_glsl_select(const struct wined3d_context *context, enum wined
 }
 
 /* Context activation is done by the caller. */
+static void shader_glsl_disable(void *shader_priv, const struct wined3d_context *context)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct shader_glsl_priv *priv = shader_priv;
+
+    priv->glsl_program = NULL;
+    GL_EXTCALL(glUseProgramObjectARB(0));
+    checkGLcall("glUseProgramObjectARB");
+
+    priv->vertex_pipe->vp_enable(gl_info, FALSE);
+    priv->fragment_pipe->enable_extension(gl_info, FALSE);
+
+    if (gl_info->supported[ARB_COLOR_BUFFER_FLOAT])
+    {
+        GL_EXTCALL(glClampColorARB(GL_CLAMP_VERTEX_COLOR_ARB, GL_FIXED_ONLY_ARB));
+        checkGLcall("glClampColorARB");
+    }
+}
+
+/* Context activation is done by the caller. */
 static void shader_glsl_select_depth_blt(void *shader_priv, const struct wined3d_gl_info *gl_info,
         enum tex_types tex_type, const SIZE *ds_mask_size)
 {
@@ -5907,7 +5927,7 @@ static void shader_glsl_destroy(struct wined3d_shader *shader)
                 {
                     TRACE("Deleting pixel shader %u.\n", gl_shaders[i].prgId);
                     if (priv->glsl_program && priv->glsl_program->ps.id == gl_shaders[i].prgId)
-                        shader_glsl_select(context, WINED3D_SHADER_MODE_NONE, WINED3D_SHADER_MODE_NONE);
+                        shader_glsl_disable(priv, context);
                     GL_EXTCALL(glDeleteObjectARB(gl_shaders[i].prgId));
                     checkGLcall("glDeleteObjectARB");
                 }
@@ -5930,7 +5950,7 @@ static void shader_glsl_destroy(struct wined3d_shader *shader)
                 {
                     TRACE("Deleting vertex shader %u.\n", gl_shaders[i].prgId);
                     if (priv->glsl_program && priv->glsl_program->vs.id == gl_shaders[i].prgId)
-                        shader_glsl_select(context, WINED3D_SHADER_MODE_NONE, WINED3D_SHADER_MODE_NONE);
+                        shader_glsl_disable(priv, context);
                     GL_EXTCALL(glDeleteObjectARB(gl_shaders[i].prgId));
                     checkGLcall("glDeleteObjectARB");
                 }
@@ -5953,7 +5973,7 @@ static void shader_glsl_destroy(struct wined3d_shader *shader)
                 {
                     TRACE("Deleting geometry shader %u.\n", gl_shaders[i].id);
                     if (priv->glsl_program && priv->glsl_program->gs.id == gl_shaders[i].id)
-                        shader_glsl_select(context, WINED3D_SHADER_MODE_NONE, WINED3D_SHADER_MODE_NONE);
+                        shader_glsl_disable(priv, context);
                     GL_EXTCALL(glDeleteObjectARB(gl_shaders[i].id));
                     checkGLcall("glDeleteObjectARB");
                 }
@@ -6342,6 +6362,7 @@ const struct wined3d_shader_backend_ops glsl_shader_backend =
 {
     shader_glsl_handle_instruction,
     shader_glsl_select,
+    shader_glsl_disable,
     shader_glsl_select_depth_blt,
     shader_glsl_deselect_depth_blt,
     shader_glsl_update_float_vertex_constants,

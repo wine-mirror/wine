@@ -4677,7 +4677,7 @@ static void shader_arb_select(const struct wined3d_context *context, enum wined3
             checkGLcall("glDisable(GL_FRAGMENT_PROGRAM_ARB)");
             priv->current_fprogram_id = 0;
         }
-        priv->fragment_pipe->enable_extension(gl_info, fragment_mode == WINED3D_SHADER_MODE_FFP);
+        priv->fragment_pipe->enable_extension(gl_info, TRUE);
     }
 
     if (vertex_mode == WINED3D_SHADER_MODE_SHADER)
@@ -4724,13 +4724,47 @@ static void shader_arb_select(const struct wined3d_context *context, enum wined3
             }
         }
     }
-    else if (gl_info->supported[ARB_VERTEX_PROGRAM])
+    else
+    {
+        if (gl_info->supported[ARB_VERTEX_PROGRAM])
+        {
+            priv->current_vprogram_id = 0;
+            gl_info->gl_ops.gl.p_glDisable(GL_VERTEX_PROGRAM_ARB);
+            checkGLcall("glDisable(GL_VERTEX_PROGRAM_ARB)");
+        }
+        priv->vertex_pipe->vp_enable(gl_info, TRUE);
+    }
+}
+
+
+/* Context activation is done by the caller. */
+static void shader_arb_disable(void *shader_priv, const struct wined3d_context *context)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct shader_arb_priv *priv = shader_priv;
+
+    if (gl_info->supported[ARB_FRAGMENT_PROGRAM])
+    {
+        gl_info->gl_ops.gl.p_glDisable(GL_FRAGMENT_PROGRAM_ARB);
+        checkGLcall("glDisable(GL_FRAGMENT_PROGRAM_ARB)");
+        priv->current_fprogram_id = 0;
+    }
+    priv->fragment_pipe->enable_extension(gl_info, FALSE);
+
+    if (gl_info->supported[ARB_VERTEX_PROGRAM])
     {
         priv->current_vprogram_id = 0;
         gl_info->gl_ops.gl.p_glDisable(GL_VERTEX_PROGRAM_ARB);
         checkGLcall("glDisable(GL_VERTEX_PROGRAM_ARB)");
     }
-    priv->vertex_pipe->vp_enable(gl_info, vertex_mode == WINED3D_SHADER_MODE_FFP);
+    priv->vertex_pipe->vp_enable(gl_info, FALSE);
+
+    if (gl_info->supported[ARB_COLOR_BUFFER_FLOAT] && priv->last_vs_color_unclamp)
+    {
+        GL_EXTCALL(glClampColorARB(GL_CLAMP_VERTEX_COLOR_ARB, GL_FIXED_ONLY_ARB));
+        checkGLcall("glClampColorARB");
+        priv->last_vs_color_unclamp = FALSE;
+    }
 }
 
 /* Context activation is done by the caller. */
@@ -5628,6 +5662,7 @@ const struct wined3d_shader_backend_ops arb_program_shader_backend =
 {
     shader_arb_handle_instruction,
     shader_arb_select,
+    shader_arb_disable,
     shader_arb_select_depth_blt,
     shader_arb_deselect_depth_blt,
     shader_arb_update_float_vertex_constants,

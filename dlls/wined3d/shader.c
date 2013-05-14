@@ -4,7 +4,7 @@
  * Copyright 2004 Christian Costa
  * Copyright 2005 Oliver Stieber
  * Copyright 2006 Ivan Gyurdiev
- * Copyright 2007-2008 Stefan Dösinger for CodeWeavers
+ * Copyright 2007-2008, 2013 Stefan Dösinger for CodeWeavers
  * Copyright 2009-2011 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
@@ -1516,6 +1516,7 @@ static void shader_none_load_np2fixup_constants(void *shader_priv,
 static void shader_none_destroy(struct wined3d_shader *shader) {}
 static void shader_none_context_destroyed(void *shader_priv, const struct wined3d_context *context) {}
 
+/* Context activation is done by the caller. */
 static void shader_none_select(const struct wined3d_context *context, enum wined3d_shader_mode vertex_mode,
         enum wined3d_shader_mode fragment_mode)
 {
@@ -1525,6 +1526,16 @@ static void shader_none_select(const struct wined3d_context *context, enum wined
 
     priv->vertex_pipe->vp_enable(gl_info, vertex_mode == WINED3D_SHADER_MODE_FFP);
     priv->fragment_pipe->enable_extension(gl_info, fragment_mode == WINED3D_SHADER_MODE_FFP);
+}
+
+/* Context activation is done by the caller. */
+static void shader_none_disable(void *shader_priv, const struct wined3d_context *context)
+{
+    struct shader_none_priv *priv = shader_priv;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+
+    priv->vertex_pipe->vp_enable(gl_info, FALSE);
+    priv->fragment_pipe->enable_extension(gl_info, FALSE);
 }
 
 static HRESULT shader_none_alloc(struct wined3d_device *device, const struct wined3d_vertex_pipe_ops *vertex_pipe,
@@ -1603,6 +1614,7 @@ const struct wined3d_shader_backend_ops none_shader_backend =
 {
     shader_none_handle_instruction,
     shader_none_select,
+    shader_none_disable,
     shader_none_select_depth_blt,
     shader_none_deselect_depth_blt,
     shader_none_update_float_vertex_constants,
