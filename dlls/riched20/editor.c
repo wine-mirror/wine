@@ -2843,6 +2843,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
       break;
 
     case DLL_PROCESS_DETACH:
+      if (lpvReserved) break;
       UnregisterClassW(RICHEDIT_CLASS20W, 0);
       UnregisterClassW(MSFTEDIT_CLASS, 0);
       UnregisterClassA(RICHEDIT_CLASS20A, 0);
@@ -2853,7 +2854,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
           UnregisterClassW(REComboBox20W, 0);
       LookupCleanup();
       HeapDestroy (me_heap);
-      me_heap = NULL;
       break;
     }
     return TRUE;
