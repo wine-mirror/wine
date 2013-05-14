@@ -521,18 +521,15 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
             return wined3d_dll_init(hInstDLL);
 
         case DLL_PROCESS_DETACH:
+            if (lpv) break;
             return wined3d_dll_destroy(hInstDLL);
 
         case DLL_THREAD_DETACH:
-        {
             if (!context_set_current(NULL))
             {
                 ERR("Failed to clear current context.\n");
             }
             return TRUE;
-        }
-
-        default:
-            return TRUE;
     }
+    return TRUE;
 }
