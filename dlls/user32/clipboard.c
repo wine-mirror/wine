@@ -287,7 +287,7 @@ BOOL WINAPI CloseClipboard(void)
             bCBHasChanged = FALSE;
 
             if (hWndViewer)
-                SendMessageW(hWndViewer, WM_DRAWCLIPBOARD, (WPARAM) GetClipboardOwner(), 0);
+                SendNotifyMessageW(hWndViewer, WM_DRAWCLIPBOARD, (WPARAM) GetClipboardOwner(), 0);
         }
 
         bRet = TRUE;
@@ -393,7 +393,7 @@ HWND WINAPI SetClipboardViewer( HWND hWnd )
     HWND hwndPrev = CLIPBOARD_SetClipboardViewer(hWnd);
 
     if (hWnd)
-        SendMessageW(hWnd, WM_DRAWCLIPBOARD, (WPARAM) GetClipboardOwner(), 0);
+        SendNotifyMessageW(hWnd, WM_DRAWCLIPBOARD, (WPARAM) GetClipboardOwner(), 0);
     TRACE("(%p): returning %p\n", hWnd, hwndPrev);
 
     return hwndPrev;
