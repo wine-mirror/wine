@@ -55,6 +55,13 @@ static char objects[] =
 "1; 2; 3;\n"
 "}\n";
 
+static char object_noname[] =
+"xof 0302txt 0064\n"
+"Header\n"
+"{\n"
+"1; 2; 3;\n"
+"}\n";
+
 static void test_templates(void)
 {
     ID3DXFile *d3dxfile;
@@ -126,6 +133,81 @@ static void test_lock_unlock(void)
     data_object->lpVtbl->Release(data_object);
     enum_object->lpVtbl->Release(enum_object);
     d3dxfile->lpVtbl->Release(d3dxfile);
+}
+
+static void test_getname(void)
+{
+    ID3DXFile *d3dxfile;
+    D3DXF_FILELOADMEMORY memory;
+    ID3DXFileEnumObject *enum_object;
+    ID3DXFileData *data_object;
+    SIZE_T length;
+    char name[100];
+    HRESULT ret;
+
+    ret = D3DXFileCreate(&d3dxfile);
+    ok(ret == S_OK, "D3DXCreateFile failed with %#x\n", ret);
+
+    ret = d3dxfile->lpVtbl->RegisterTemplates(d3dxfile, templates, sizeof(templates) - 1);
+    ok(ret == S_OK, "RegisterTemplates failed with %#x\n", ret);
+
+    /* Check object with name */
+    memory.lpMemory = objects;
+    memory.dSize = sizeof(objects) - 1;
+    ret = d3dxfile->lpVtbl->CreateEnumObject(d3dxfile, &memory, D3DXF_FILELOAD_FROMMEMORY, &enum_object);
+    ok(ret == S_OK, "CreateEnumObject failed with %#x\n", ret);
+    ret = enum_object->lpVtbl->GetChild(enum_object, 0, &data_object);
+    ok(ret == S_OK, "GetChild failed with %#x\n", ret);
+
+    ret = data_object->lpVtbl->GetName(data_object, NULL, NULL);
+    ok(ret == D3DXFERR_BADVALUE, "GetName returned %#x, expected %#x\n", ret, D3DXFERR_BADVALUE);
+    ret = data_object->lpVtbl->GetName(data_object, name, NULL);
+    ok(ret == D3DXFERR_BADVALUE, "GetName returned %#x, expected %#x\n", ret, D3DXFERR_BADVALUE);
+    ret = data_object->lpVtbl->GetName(data_object, NULL, &length);
+    ok(ret == S_OK, "GetName failed with %#x\n", ret);
+    ok(length == 7, "Returned length should be 7 instead of %ld\n", length);
+    length = sizeof(name);
+    ret = data_object->lpVtbl->GetName(data_object, name, &length);
+    ok(ret == S_OK, "GetName failed with %#x\n", ret);
+    ok(length == 7, "Returned length should be 7 instead of %ld\n", length);
+    ok(!strcmp(name, "Object"), "Returned string should be 'Object' intead of '%s'\n", name);
+    length = 3;
+    ret = data_object->lpVtbl->GetName(data_object, name, &length);
+    ok(ret== D3DXFERR_BADVALUE, "GetName returned %#x, expected %#x\n", ret, D3DXFERR_BADVALUE);
+
+    data_object->lpVtbl->Release(data_object);
+    enum_object->lpVtbl->Release(enum_object);
+
+    /* Check object without name */
+    memory.lpMemory = object_noname;
+    memory.dSize = sizeof(object_noname) - 1;
+    ret = d3dxfile->lpVtbl->CreateEnumObject(d3dxfile, &memory, D3DXF_FILELOAD_FROMMEMORY, &enum_object);
+    ok(ret == S_OK, "CreateEnumObject failed with %#x\n", ret);
+    ret = enum_object->lpVtbl->GetChild(enum_object, 0, &data_object);
+    ok(ret == S_OK, "GetChild failed with %#x\n", ret);
+
+    /* Contrary to d3dxof, d3dx9_36 returns an empty string with a null byte when no name is available.
+     * If the input size is 0, it returns a length of 1 without touching the buffer */
+    ret = data_object->lpVtbl->GetName(data_object, NULL, &length);
+    ok(ret == S_OK, "GetName failed with %#x\n", ret);
+    ok(length == 1, "Returned length should be 1 instead of %ld\n", length);
+    length = 0;
+    name[0] = 0x7f;
+    ret = data_object->lpVtbl->GetName(data_object, name, &length);
+    ok(ret == S_OK, "GetName failed with %#x\n", ret);
+    ok(length == 1, "Returned length should be 1 instead of %ld\n", length);
+    ok(name[0] == 0x7f, "First character is %#x instead of 0x7f\n", name[0]);
+    length = sizeof(name);
+    name[0] = 0x7f;
+    ret = data_object->lpVtbl->GetName(data_object, name, &length);
+    ok(ret == S_OK, "GetName failed with %#x\n", ret);
+    ok(length == 1, "Returned length should be 1 instead of %ld\n", length);
+    ok(name[0] == 0, "First character is %#x instead of 0x00\n", name[0]);
+
+    data_object->lpVtbl->Release(data_object);
+    enum_object->lpVtbl->Release(enum_object);
+    d3dxfile->lpVtbl->Release(d3dxfile);
+
 }
 
 static inline void debugstr_guid(char* buf, const GUID *id)
@@ -278,5 +360,6 @@ START_TEST(xfile)
 {
     test_templates();
     test_lock_unlock();
+    test_getname();
     test_dump();
 }

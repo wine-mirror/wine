@@ -38,6 +38,8 @@ static HRESULT error_dxfile_to_d3dxfile(HRESULT error)
             return D3DXFERR_BADFILEFLOATSIZE;
         case DXFILEERR_PARSEERROR:
             return D3DXFERR_PARSEERROR;
+        case DXFILEERR_BADVALUE:
+            return D3DXFERR_BADVALUE;
         default:
             FIXME("Cannot map error %#x\n", error);
             return E_FAIL;
@@ -151,14 +153,23 @@ static HRESULT WINAPI ID3DXFileDataImpl_GetName(ID3DXFileData *iface, char *name
 
     TRACE("(%p)->(%p, %p)\n", iface, name, size);
 
-    if (!name || !size)
-        return E_POINTER;
+    if (!size)
+        return D3DXFERR_BADVALUE;
 
     dxfile_size = *size;
 
     ret = IDirectXFileData_GetName(This->dxfile_data, name, &dxfile_size);
     if (ret != DXFILE_OK)
         return error_dxfile_to_d3dxfile(ret);
+
+    if (!dxfile_size)
+    {
+        /* Contrary to d3dxof, d3dx9_36 returns an empty string with a null byte when no name is available.
+         * If the input size is 0, it returns a length of 1 without touching the buffer */
+        dxfile_size = 1;
+        if (name && *size)
+            name[0] = 0;
+    }
 
     *size = dxfile_size;
 
