@@ -243,6 +243,7 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
         break;
 
     case DLL_PROCESS_DETACH:
+        if (!reserved)
         {
             OSSDevice *iter, *iter2;
 
@@ -251,9 +252,8 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
             LIST_FOR_EACH_ENTRY_SAFE(iter, iter2, &g_devices, OSSDevice, entry){
                 HeapFree(GetProcessHeap(), 0, iter);
             }
-
-            break;
         }
+        break;
     }
     return TRUE;
 }
