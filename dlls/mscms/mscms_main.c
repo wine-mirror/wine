@@ -66,6 +66,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 #endif
         break;
     case DLL_PROCESS_DETACH:
+        if (reserved) break;
 #ifdef HAVE_LCMS
         free_handle_tables();
 #endif
