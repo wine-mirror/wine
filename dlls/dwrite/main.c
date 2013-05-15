@@ -44,6 +44,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID reserved)
         DisableThreadLibraryCalls( hinstDLL );
         break;
     case DLL_PROCESS_DETACH:
+        if (reserved) break;
         release_system_fontcollection();
         break;
     }
