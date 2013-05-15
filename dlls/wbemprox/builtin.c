@@ -43,6 +43,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wbemprox);
 
+static const WCHAR class_logicaldisk2W[] =
+    {'C','I','M','_','L','o','g','i','c','a','l','D','i','s','k',0};
 static const WCHAR class_baseboardW[] =
     {'W','i','n','3','2','_','B','a','s','e','B','o','a','r','d',0};
 static const WCHAR class_biosW[] =
@@ -1447,6 +1449,7 @@ static struct table builtin_classes[] =
     { class_compsysW, SIZEOF(col_compsys), col_compsys, 0, NULL, fill_compsys },
     { class_diskdriveW, SIZEOF(col_diskdrive), col_diskdrive, SIZEOF(data_diskdrive), (BYTE *)data_diskdrive },
     { class_diskpartitionW, SIZEOF(col_diskpartition), col_diskpartition, 0, NULL, fill_diskpartition },
+    { class_logicaldisk2W, SIZEOF(col_logicaldisk), col_logicaldisk, 0, NULL, fill_logicaldisk },
     { class_logicaldiskW, SIZEOF(col_logicaldisk), col_logicaldisk, 0, NULL, fill_logicaldisk },
     { class_networkadapterW, SIZEOF(col_networkadapter), col_networkadapter, 0, NULL, fill_networkadapter },
     { class_osW, SIZEOF(col_os), col_os, 0, NULL, fill_os },
