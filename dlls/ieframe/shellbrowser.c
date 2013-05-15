@@ -824,12 +824,18 @@ static HRESULT WINAPI DocObjectService_FireDocumentComplete(
     V_VT(&url_var) = VT_BSTR;
     V_BSTR(&url_var) = url;
 
+    /* Keep reference to This. It may be released in event handler. */
+    IShellBrowser_AddRef(&This->IShellBrowser_iface);
+
     TRACE(">>>\n");
     call_sink(This->doc_host->cps.wbe2, DISPID_DOCUMENTCOMPLETE, &dp);
     TRACE("<<<\n");
 
     SysFreeString(url);
-    This->doc_host->busy = VARIANT_FALSE;
+    if(This->doc_host)
+        This->doc_host->busy = VARIANT_FALSE;
+
+    IShellBrowser_Release(&This->IShellBrowser_iface);
     return S_OK;
 }
 
