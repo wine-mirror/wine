@@ -5182,6 +5182,8 @@ LRESULT EditWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, B
                         chpos->pt.y = HIWORD(pos);
                         chpos->cLineHeight = es->line_height;
                         chpos->rcDocument = es->format_rect;
+                        MapWindowPoints(hwnd, 0, &chpos->pt, 1);
+                        MapWindowPoints(hwnd, 0, (POINT*)&chpos->rcDocument, 2);
                         result = 1;
                         break;
                     }
