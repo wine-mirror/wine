@@ -176,6 +176,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
             scrrun_instance = hinst;
             break;
         case DLL_PROCESS_DETACH:
+            if (reserved) break;
             release_typelib();
             break;
     }
