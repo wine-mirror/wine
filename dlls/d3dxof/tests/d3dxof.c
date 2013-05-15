@@ -546,10 +546,18 @@ static void test_getname(void)
     hr = IDirectXFileData_GetName(lpdxfd, NULL, &length);
     ok(hr == DXFILE_OK, "IDirectXFileData_GetName: %x\n", hr);
     ok(length == 0, "Returned length should be 0 instead of %u\n", length);
-    length = sizeof(name);
+    length = 0;
+    name[0] = 0x7f;
     hr = IDirectXFileData_GetName(lpdxfd, name, &length);
     ok(hr == DXFILE_OK, "IDirectXFileData_GetName: %x\n", hr);
     ok(length == 0, "Returned length should be 0 instead of %u\n", length);
+    ok(name[0] == 0x7f, "First character is %#x instead of 0x7f\n", name[0]);
+    length = sizeof(name);
+    name[0] = 0x7f;
+    hr = IDirectXFileData_GetName(lpdxfd, name, &length);
+    ok(hr == DXFILE_OK, "IDirectXFileData_GetName: %x\n", hr);
+    ok(length == 0, "Returned length should be 0 instead of %u\n", length);
+    ok(name[0] == 0, "First character is %#x instead of 0x00\n", name[0]);
 
     ref = IDirectXFileEnumObject_Release(lpdxfeo);
     ok(ref == 0, "Got refcount %d, expected 0\n", ref);

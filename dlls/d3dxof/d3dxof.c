@@ -587,6 +587,9 @@ static HRESULT WINAPI IDirectXFileDataImpl_GetName(IDirectXFileData* iface, LPST
     if (*pdwBufLen < len)
       return DXFILEERR_BADVALUE;
     CopyMemory(pstrNameBuf, This->pobj->name, len);
+    /* Even if we return a size of 0, an empty string with a null byte must be returned */
+    if (*pdwBufLen && !len)
+      pstrNameBuf[0] = 0;
   }
   *pdwBufLen = len;
 
@@ -851,6 +854,9 @@ static HRESULT WINAPI IDirectXFileDataReferenceImpl_GetName(IDirectXFileDataRefe
     if (*pdwBufLen < len)
       return DXFILEERR_BADVALUE;
     CopyMemory(pstrNameBuf, This->ptarget->name, len);
+    /* Even if we return a size of 0, an empty string with a null byte must be returned */
+    if (*pdwBufLen && !len)
+      pstrNameBuf[0] = 0;
   }
   *pdwBufLen = len;
 
