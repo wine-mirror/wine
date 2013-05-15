@@ -157,6 +157,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
         break;
 
     case DLL_PROCESS_DETACH:
+        if (fImpLoad) break;
         process_detach();
         DeleteCriticalSection(&tls_cs);
         break;
