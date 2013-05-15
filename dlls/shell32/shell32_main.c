@@ -1279,7 +1279,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
         break;
 
     case DLL_PROCESS_DETACH:
-        shell32_hInstance = 0;
+        if (fImpLoad) break;
         SIC_Destroy();
         FreeChangeNotifications();
         break;
