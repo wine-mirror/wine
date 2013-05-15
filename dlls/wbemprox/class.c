@@ -130,7 +130,7 @@ static HRESULT WINAPI enum_class_object_Next(
 
     ec->index++;
     *puReturned = 1;
-    if (ec->index == view->count) return WBEM_S_FALSE;
+    if (ec->index == view->count && uCount > 1) return WBEM_S_FALSE;
     if (uCount > 1) return WBEM_S_TIMEDOUT;
     return WBEM_S_NO_ERROR;
 }
