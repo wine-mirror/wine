@@ -1177,15 +1177,16 @@ BOOLEAN WINAPI TranslateNameW(
 /***********************************************************************
  *		DllMain (SECUR32.0)
  */
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID reserved)
 {
-    if (fdwReason == DLL_PROCESS_ATTACH)
+    switch (reason)
     {
+    case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls(hinstDLL);
         SECUR32_initializeProviders();
-    }
-    else if (fdwReason == DLL_PROCESS_DETACH)
-    {
+        break;
+    case DLL_PROCESS_DETACH:
+        if (reserved) break;
         SECUR32_freeProviders();
     }
 
