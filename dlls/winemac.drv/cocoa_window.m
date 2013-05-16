@@ -573,6 +573,11 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         [self setHasShadow:wf->shadow];
     }
 
+    - (BOOL) isOrderedIn
+    {
+        return [self isVisible] || [self isMiniaturized];
+    }
+
     - (void) adjustWindowLevel
     {
         WineApplicationController* controller = [WineApplicationController sharedController];
@@ -619,14 +624,14 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
                Also, any windows which are supposed to be in front of it had
                better have the same or higher window level.  If not, bump them
                up. */
-            if (index != NSNotFound && [self isVisible])
+            if (index != NSNotFound && [self isOrderedIn])
             {
                 for (; index > 0; index--)
                 {
                     other = [[controller orderedWineWindows] objectAtIndex:index - 1];
                     if ([other level] < level)
                         [other setLevelWhenActive:level];
-                    else
+                    else if ([self isVisible])
                     {
                         [self orderWindow:NSWindowBelow relativeTo:[other windowNumber]];
                         break;
@@ -654,13 +659,13 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         if (state->excluded_by_cycle)
         {
             behavior |= NSWindowCollectionBehaviorIgnoresCycle;
-            if ([self isVisible])
+            if ([self isOrderedIn])
                 [NSApp removeWindowsItem:self];
         }
         else
         {
             behavior |= NSWindowCollectionBehaviorParticipatesInCycle;
-            if ([self isVisible])
+            if ([self isOrderedIn])
                 [NSApp addWindowsItem:self title:[self title] filename:NO];
         }
         [self setCollectionBehavior:behavior];
@@ -756,7 +761,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
     - (BOOL) setFrameIfOnScreen:(NSRect)contentRect
     {
         NSArray* screens = [NSScreen screens];
-        BOOL on_screen = [self isVisible];
+        BOOL on_screen = [self isOrderedIn];
         NSRect frame, oldFrame;
 
         if (![screens count]) return on_screen;
@@ -892,7 +897,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         /* If a borderless window is offscreen, orderFront: won't move
            it onscreen like it would for a titled window.  Do that ourselves. */
         screens = [NSScreen screens];
-        if (!([self styleMask] & NSTitledWindowMask) && ![self isVisible] &&
+        if (!([self styleMask] & NSTitledWindowMask) && ![self isOrderedIn] &&
             !frame_intersects_screens([self frame], screens))
         {
             NSScreen* primaryScreen = [screens objectAtIndex:0];
@@ -1482,7 +1487,7 @@ void macdrv_set_cocoa_window_title(macdrv_window w, const unsigned short* title,
         titleString = @"";
     OnMainThreadAsync(^{
         [window setTitle:titleString];
-        if ([window isVisible] && ![window isExcludedFromWindowsMenu])
+        if ([window isOrderedIn] && ![window isExcludedFromWindowsMenu])
             [NSApp changeWindowsItem:window title:titleString filename:NO];
     });
 
