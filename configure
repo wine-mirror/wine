@@ -641,7 +641,8 @@ EXTRACFLAGS
 LIBKSTAT
 LIBOPENAL
 LIBMPG123
-PNGINCL
+PNG_LIBS
+PNG_CFLAGS
 FONTCONFIGINCL
 CUPSINCL
 OSS4INCL
@@ -883,7 +884,9 @@ LCMS_LIBS
 FREETYPE_CFLAGS
 FREETYPE_LIBS
 GSTREAMER_CFLAGS
-GSTREAMER_LIBS'
+GSTREAMER_LIBS
+PNG_CFLAGS
+PNG_LIBS'
 
 
 # Initialize some variables set by options.
@@ -1602,6 +1605,8 @@ Some influential environment variables:
               C compiler flags for gstreamer-app-0.10, overriding pkg-config
   GSTREAMER_LIBS
               Linker flags for gstreamer-app-0.10, overriding pkg-config
+  PNG_CFLAGS  C compiler flags for libpng, overriding pkg-config
+  PNG_LIBS    Linker flags for libpng, overriding pkg-config
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -2745,7 +2750,7 @@ fi
 
 # Check whether --with-png was given.
 if test "${with_png+set}" = set; then :
-  withval=$with_png; if test "x$withval" = "xno"; then ac_cv_header_png_h=no; fi
+  withval=$with_png;
 fi
 
 
@@ -5885,7 +5890,6 @@ for ac_header in \
 	netinet/in_systm.h \
 	netinet/tcp.h \
 	netinet/tcp_fsm.h \
-	png.h \
 	poll.h \
 	port.h \
 	process.h \
@@ -11824,109 +11828,23 @@ This is an error since --with-jpeg was requested." "$LINENO" 5 ;;
 esac
 fi
 
-if test "$ac_cv_header_png_h" = "yes"
+if test "x$with_png" != "xno"
 then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lpng" >&5
-$as_echo_n "checking for -lpng... " >&6; }
-if ${ac_cv_lib_soname_png+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_soname_save_LIBS=$LIBS
-LIBS="-lpng -lm -lz $LIBS"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
+    ac_save_CPPFLAGS="$CPPFLAGS"
+    if test -n "$PNG_CFLAGS"; then :
 
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char png_create_read_struct ();
-int
-main ()
-{
-return png_create_read_struct ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  case "$LIBEXT" in
-    dll) ac_cv_lib_soname_png=`$ac_cv_path_LDD conftest.exe | grep "png" | sed -e "s/dll.*/dll/"';2,$d'` ;;
-    dylib) ac_cv_lib_soname_png=`otool -L conftest$ac_exeext | grep "libpng[0-9]*\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libpng[0-9]*\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
-    *) ac_cv_lib_soname_png=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libpng[0-9]*\\.$LIBEXT" | sed -e "s/^.*\\[\\(libpng[0-9]*\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
-       if test "x$ac_cv_lib_soname_png" = x; then :
-  ac_cv_lib_soname_png=`$LDD conftest$ac_exeext | grep "libpng[0-9]*\\.$LIBEXT" | sed -e "s/^.*\(libpng[0-9]*\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
-fi ;;
-  esac
+elif test -n "$PKG_CONFIG"; then :
+  PNG_CFLAGS=`$PKG_CONFIG --cflags libpng 2>/dev/null`
 fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-  LIBS=$ac_check_soname_save_LIBS
+PNG_CFLAGS=${PNG_CFLAGS:-$X_CFLAGS}
+CPPFLAGS="$CPPFLAGS $PNG_CFLAGS"
+if test -n "$PNG_LIBS"; then :
+
+elif test -n "$PKG_CONFIG"; then :
+  PNG_LIBS=`$PKG_CONFIG --libs libpng 2>/dev/null`
 fi
-if test "x$ac_cv_lib_soname_png" = "x"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
-$as_echo "not found" >&6; }
+PNG_LIBS=${PNG_LIBS:-$X_LIBS}
 
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_png" >&5
-$as_echo "$ac_cv_lib_soname_png" >&6; }
-
-cat >>confdefs.h <<_ACEOF
-#define SONAME_LIBPNG "$ac_cv_lib_soname_png"
-_ACEOF
-
-
-fi
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for png_set_expand_gray_1_2_4_to_8 in -lpng" >&5
-$as_echo_n "checking for png_set_expand_gray_1_2_4_to_8 in -lpng... " >&6; }
-if ${ac_cv_lib_png_png_set_expand_gray_1_2_4_to_8+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lpng -lm -lz $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char png_set_expand_gray_1_2_4_to_8 ();
-int
-main ()
-{
-return png_set_expand_gray_1_2_4_to_8 ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_png_png_set_expand_gray_1_2_4_to_8=yes
-else
-  ac_cv_lib_png_png_set_expand_gray_1_2_4_to_8=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_png_png_set_expand_gray_1_2_4_to_8" >&5
-$as_echo "$ac_cv_lib_png_png_set_expand_gray_1_2_4_to_8" >&6; }
-if test "x$ac_cv_lib_png_png_set_expand_gray_1_2_4_to_8" = xyes; then :
-
-$as_echo "#define HAVE_PNG_SET_EXPAND_GRAY_1_2_4_TO_8 1" >>confdefs.h
-
-
-fi
-
-elif test -n "$X_CFLAGS" -a "x$with_png" != "xno"
-then
-        ac_save_CPPFLAGS="$CPPFLAGS"
-    CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-    $as_unset ac_cv_header_png_h
     for ac_header in png.h
 do :
   ac_fn_c_check_header_mongrel "$LINENO" "png.h" "ac_cv_header_png_h" "$ac_includes_default"
@@ -11939,18 +11857,15 @@ fi
 
 done
 
-    CPPFLAGS="$ac_save_CPPFLAGS"
     if test "$ac_cv_header_png_h" = "yes"
     then
-        PNGINCL="$X_CFLAGS"
-
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lpng" >&5
 $as_echo_n "checking for -lpng... " >&6; }
 if ${ac_cv_lib_soname_png+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_soname_save_LIBS=$LIBS
-LIBS="-lpng $X_LIBS -lm -lz $LIBS"
+LIBS="-lpng $PNG_LIBS -lm -lz $LIBS"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -11986,7 +11901,7 @@ fi
 if test "x$ac_cv_lib_soname_png" = "x"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
 $as_echo "not found" >&6; }
-
+       PNG_CFLAGS=""
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_png" >&5
 $as_echo "$ac_cv_lib_soname_png" >&6; }
@@ -11995,50 +11910,28 @@ cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBPNG "$ac_cv_lib_soname_png"
 _ACEOF
 
-
-fi
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for png_set_expand_gray_1_2_4_to_8 in -lpng" >&5
-$as_echo_n "checking for png_set_expand_gray_1_2_4_to_8 in -lpng... " >&6; }
-if ${ac_cv_lib_png_png_set_expand_gray_1_2_4_to_8+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lpng $X_LIBS -lm -lz $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+       cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char png_set_expand_gray_1_2_4_to_8 ();
+#include <png.h>
 int
 main ()
 {
-return png_set_expand_gray_1_2_4_to_8 ();
+typeof(png_set_expand_gray_1_2_4_to_8) *p
   ;
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_png_png_set_expand_gray_1_2_4_to_8=yes
-else
-  ac_cv_lib_png_png_set_expand_gray_1_2_4_to_8=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_png_png_set_expand_gray_1_2_4_to_8" >&5
-$as_echo "$ac_cv_lib_png_png_set_expand_gray_1_2_4_to_8" >&6; }
-if test "x$ac_cv_lib_png_png_set_expand_gray_1_2_4_to_8" = xyes; then :
-  $as_echo "#define HAVE_PNG_SET_EXPAND_GRAY_1_2_4_TO_8 1" >>confdefs.h
+if ac_fn_c_try_compile "$LINENO"; then :
+
+$as_echo "#define HAVE_PNG_SET_EXPAND_GRAY_1_2_4_TO_8 1" >>confdefs.h
 
 fi
-
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+    else
+        PNG_CFLAGS=""
     fi
+    CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 if test "x$ac_cv_lib_soname_png" = "x"; then :
   case "x$with_png" in

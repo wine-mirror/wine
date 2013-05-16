@@ -75,13 +75,13 @@ AC_ARG_VAR([$1]_CFLAGS, [C compiler flags for $2, overriding pkg-config])dnl
 AS_IF([test -n "$[$1]_CFLAGS"],[],
       [test -n "$PKG_CONFIG"],
       [[$1]_CFLAGS=`$PKG_CONFIG --cflags [$2] 2>/dev/null`])
-m4_ifval([$4],[[$1]_CFLAGS=[$]{[$1]_CFLAGS:-`[$4] 2>/dev/null`}])
+m4_ifval([$4],[[$1]_CFLAGS=[$]{[$1]_CFLAGS:-[$4]}])
 CPPFLAGS="$CPPFLAGS $[$1]_CFLAGS"
 AC_ARG_VAR([$1]_LIBS, [Linker flags for $2, overriding pkg-config])dnl
 AS_IF([test -n "$[$1]_LIBS"],[],
       [test -n "$PKG_CONFIG"],
       [[$1]_LIBS=`$PKG_CONFIG --libs [$2] 2>/dev/null`])
-m4_ifval([$5],[[$1]_LIBS=[$]{[$1]_LIBS:-`[$5] 2>/dev/null`}])
+m4_ifval([$5],[[$1]_LIBS=[$]{[$1]_LIBS:-[$5]}])
 m4_ifval([$3],[[$1]_LIBS=[$]{[$1]_LIBS:-"$3"}])])
 
 dnl **** Link C code with an assembly file ****
