@@ -322,9 +322,21 @@ int macdrv_err_on;
     {
         if (event->window_got_focus.serial == windowFocusSerial)
         {
+            NSMutableArray* windows = [keyWindows mutableCopy];
+            NSNumber* windowNumber;
+            WineWindow* window;
+
+            for (windowNumber in [NSWindow windowNumbersWithOptions:NSWindowNumberListAllSpaces])
+            {
+                window = (WineWindow*)[NSApp windowWithWindowNumber:[windowNumber integerValue]];
+                if ([window isKindOfClass:[WineWindow class]] && [window screen] &&
+                    ![windows containsObject:window])
+                    [windows addObject:window];
+            }
+
             triedWindows = (NSMutableSet*)event->window_got_focus.tried_windows;
             [triedWindows addObject:(WineWindow*)event->window];
-            for (NSWindow* window in [keyWindows arrayByAddingObjectsFromArray:[self orderedWineWindows]])
+            for (window in windows)
             {
                 if (![triedWindows containsObject:window] && [window canBecomeKeyWindow])
                 {
@@ -333,6 +345,7 @@ int macdrv_err_on;
                 }
             }
             triedWindows = nil;
+            [windows release];
         }
     }
 
