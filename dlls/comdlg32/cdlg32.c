@@ -112,6 +112,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD Reason, LPVOID Reserved)
 		break;
 
 	case DLL_PROCESS_DETACH:
+            if (Reserved) break;
             if (COMDLG32_TlsIndex != TLS_OUT_OF_INDEXES) TlsFree(COMDLG32_TlsIndex);
             if(SHFOLDER_hInstance) FreeLibrary(SHFOLDER_hInstance);
             break;
