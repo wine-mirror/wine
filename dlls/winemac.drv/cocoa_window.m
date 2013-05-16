@@ -762,7 +762,11 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
                 if (on_screen)
                 {
-                    [[WineApplicationController sharedController] adjustWindowLevels];
+                    BOOL fullscreen = (screen_covered_by_rect(frame, screens) != nil);
+                    BOOL oldFullscreen = (screen_covered_by_rect(oldFrame, screens) != nil);
+
+                    if (fullscreen != oldFullscreen)
+                        [[WineApplicationController sharedController] adjustWindowLevels];
 
                     /* In case Cocoa adjusted the frame we tried to set, generate a frame-changed
                        event.  The back end will ignore it if nothing actually changed. */
