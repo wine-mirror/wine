@@ -1634,7 +1634,7 @@ void check_dinput_hooks(LPDIRECTINPUTDEVICE8W iface)
     LeaveCriticalSection(&dinput_hook_crit);
 }
 
-BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserv)
+BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved)
 {
     switch(reason)
     {
@@ -1643,6 +1643,7 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserv)
         DINPUT_instance = inst;
         break;
       case DLL_PROCESS_DETACH:
+        if (reserved) break;
         DeleteCriticalSection(&dinput_hook_crit);
         break;
     }
