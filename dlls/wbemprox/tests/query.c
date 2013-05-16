@@ -546,14 +546,14 @@ static ULONG WINAPI sink_Release(
 static HRESULT WINAPI sink_Indicate(
     IWbemObjectSink *iface, LONG count, IWbemClassObject **objects )
 {
-    trace("%d, %p\n", count, objects);
+    trace("Indicate: %d, %p\n", count, objects);
     return S_OK;
 }
 
 static HRESULT WINAPI sink_SetStatus(
     IWbemObjectSink *iface, LONG flags, HRESULT hresult, BSTR str_param, IWbemClassObject *obj_param )
 {
-    trace("%08x, %08x, %s, %p\n", flags, hresult, wine_dbgstr_w(str_param), obj_param);
+    trace("SetStatus: %08x, %08x, %s, %p\n", flags, hresult, wine_dbgstr_w(str_param), obj_param);
     return S_OK;
 }
 
@@ -574,11 +574,40 @@ static void test_notification_query_async( IWbemServices *services )
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','W','i','n','3','2','_',
          'D','e','v','i','c','e','C','h','a','n','g','e','E','v','e','n','t',0};
     BSTR wql = SysAllocString( wqlW ), query = SysAllocString( queryW );
+    ULONG prev_sink_refs;
     HRESULT hr;
 
+    hr = IWbemServices_ExecNotificationQueryAsync( services, wql, query, 0, NULL, NULL );
+    ok( hr == WBEM_E_INVALID_PARAMETER, "got %08x\n", hr );
+
+    prev_sink_refs = sink_refs;
     hr = IWbemServices_ExecNotificationQueryAsync( services, wql, query, 0, NULL, &sink );
     ok( hr == S_OK || broken(hr == WBEM_E_NOT_FOUND), "got %08x\n", hr );
-    ok( sink_refs, "got %u\n", sink_refs );
+    ok( sink_refs > prev_sink_refs, "got %u refs\n", sink_refs );
+
+    hr =  IWbemServices_CancelAsyncCall( services, &sink );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    SysFreeString( wql );
+    SysFreeString( query );
+}
+
+static void test_query_async( IWbemServices *services )
+{
+    static const WCHAR queryW[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','W','i','n','3','2','_',
+         'P','r','o','c','e','s','s',0};
+    BSTR wql = SysAllocString( wqlW ), query = SysAllocString( queryW );
+    HRESULT hr;
+
+    hr = IWbemServices_ExecQueryAsync( services, wql, query, 0, NULL, NULL );
+    ok( hr == WBEM_E_INVALID_PARAMETER, "got %08x\n", hr );
+
+    hr = IWbemServices_ExecQueryAsync( services, wql, query, 0, NULL, &sink );
+    ok( hr == S_OK || broken(hr == WBEM_E_NOT_FOUND), "got %08x\n", hr );
+
+    hr =  IWbemServices_CancelAsyncCall( services, NULL );
+    ok( hr == WBEM_E_INVALID_PARAMETER, "got %08x\n", hr );
 
     hr =  IWbemServices_CancelAsyncCall( services, &sink );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -617,6 +646,7 @@ START_TEST(query)
     test_Win32_Service( services );
     test_StdRegProv( services );
     test_notification_query_async( services );
+    test_query_async( services );
 
     SysFreeString( path );
     IWbemServices_Release( services );

@@ -176,6 +176,13 @@ typedef [v1_enum] enum tag_WBEMSTATUS
     WBEM_E_PROVIDER_DISABLED                = 0x8004108a
 } WBEMSTATUS;
 
+typedef [v1_enum] enum tag_WBEM_STATUS_TYPE
+{
+    WBEM_STATUS_COMPLETE     = 0,
+    WBEM_STATUS_REQUIREMENTS = 1,
+    WBEM_STATUS_PROGRESS     = 2
+} WBEM_STATUS_TYPE;
+
 typedef [v1_enum] enum tag_WBEM_TIMEOUT_TYPE
 {
     WBEM_NO_WAIT  = 0,
