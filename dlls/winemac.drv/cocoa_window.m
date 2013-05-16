@@ -1020,9 +1020,12 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
     - (BOOL) validateMenuItem:(NSMenuItem *)menuItem
     {
+        BOOL ret = [super validateMenuItem:menuItem];
+
         if ([menuItem action] == @selector(makeKeyAndOrderFront:))
-            return [self isKeyWindow] || (!self.disabled && !self.noActivate);
-        return [super validateMenuItem:menuItem];
+            ret = [self isKeyWindow] || (!self.disabled && !self.noActivate);
+
+        return ret;
     }
 
     /* We don't call this.  It's the action method of the items in the Window menu. */
