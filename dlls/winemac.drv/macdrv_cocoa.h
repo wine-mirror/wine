@@ -259,6 +259,7 @@ enum {
     QUERY_DRAG_DROP,
     QUERY_DRAG_EXITED,
     QUERY_DRAG_OPERATION,
+    QUERY_IME_CHAR_RECT,
     QUERY_PASTEBOARD_DATA,
     NUM_QUERY_TYPES
 };
@@ -283,6 +284,11 @@ typedef struct macdrv_query {
             uint32_t            accepted_op;
             CFTypeRef           pasteboard;
         }                                           drag_operation;
+        struct {
+            void   *data;
+            CFRange range;
+            CGRect  rect;
+        }                                           ime_char_rect;
         struct {
             CFStringRef type;
         }                                           pasteboard_data;

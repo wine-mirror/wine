@@ -1509,3 +1509,126 @@ void macdrv_im_set_text(const macdrv_event *event)
     if (event->im_set_text.complete)
         IME_NotifyComplete(himc);
 }
+
+
+/**************************************************************************
+ *              query_ime_char_rect
+ */
+BOOL query_ime_char_rect(macdrv_query* query)
+{
+    HWND hwnd = macdrv_get_window_hwnd(query->window);
+    void *himc = query->ime_char_rect.data;
+    CFRange* range = &query->ime_char_rect.range;
+    CGRect* rect = &query->ime_char_rect.rect;
+    IMECHARPOSITION charpos;
+    BOOL ret = FALSE;
+
+    TRACE("win %p/%p himc %p range %ld-%ld\n", hwnd, query->window, himc, range->location,
+          range->length);
+
+    if (!himc) himc = RealIMC(FROM_MACDRV);
+
+    charpos.dwSize = sizeof(charpos);
+    charpos.dwCharPos = range->location;
+    if (ImmRequestMessageW(himc, IMR_QUERYCHARPOSITION, (ULONG_PTR)&charpos))
+    {
+        int i;
+
+        *rect = CGRectMake(charpos.pt.x, charpos.pt.y, 0, charpos.cLineHeight);
+
+        /* iterate over rest of length to extend rect */
+        for (i = 1; i <= range->length; i++)
+        {
+            charpos.dwSize = sizeof(charpos);
+            charpos.dwCharPos = range->location + i;
+            if (!ImmRequestMessageW(himc, IMR_QUERYCHARPOSITION, (ULONG_PTR)&charpos) ||
+                charpos.pt.y != rect->origin.y)
+            {
+                range->length = i;
+                break;
+            }
+
+            rect->size.width = charpos.pt.x - rect->origin.x;
+        }
+
+        ret = TRUE;
+    }
+
+    if (!ret)
+    {
+        LPINPUTCONTEXT ic = ImmLockIMC(himc);
+
+        if (ic)
+        {
+            LPIMEPRIVATE private = ImmLockIMCC(ic->hPrivate);
+            LPBYTE compdata = ImmLockIMCC(ic->hCompStr);
+            LPCOMPOSITIONSTRING compstr = (LPCOMPOSITIONSTRING)compdata;
+            LPWSTR str = (LPWSTR)(compdata + compstr->dwCompStrOffset);
+
+            if (private->hwndDefault && compstr->dwCompStrOffset &&
+                IsWindowVisible(private->hwndDefault))
+            {
+                HDC dc = GetDC(private->hwndDefault);
+                HFONT oldfont = NULL;
+                SIZE size;
+
+                if (private->textfont)
+                    oldfont = SelectObject(dc, private->textfont);
+
+                if (range->location > compstr->dwCompStrLen)
+                    range->location = compstr->dwCompStrLen;
+                if (range->location + range->length > compstr->dwCompStrLen)
+                    range->length = compstr->dwCompStrLen - range->location;
+
+                GetTextExtentPoint32W(dc, str, range->location, &size);
+                charpos.rcDocument.left = size.cx;
+                charpos.rcDocument.top = 0;
+                GetTextExtentPoint32W(dc, str, range->location + range->length, &size);
+                charpos.rcDocument.right = size.cx;
+                charpos.rcDocument.bottom = size.cy;
+
+                if (ic->cfCompForm.dwStyle == CFS_DEFAULT)
+                    OffsetRect(&charpos.rcDocument, 10, 10);
+
+                LPtoDP(dc, (POINT*)&charpos.rcDocument, 2);
+                MapWindowPoints(private->hwndDefault, 0, (POINT*)&charpos.rcDocument, 2);
+                *rect = cgrect_from_rect(charpos.rcDocument);
+                ret = TRUE;
+
+                if (oldfont)
+                    SelectObject(dc, oldfont);
+                ReleaseDC(private->hwndDefault, dc);
+            }
+
+            ImmUnlockIMCC(ic->hCompStr);
+            ImmUnlockIMCC(ic->hPrivate);
+        }
+
+        ImmUnlockIMC(himc);
+    }
+
+    if (!ret)
+    {
+        HWND focus = GetFocus();
+        if (focus && (focus == hwnd || IsChild(hwnd, focus)) &&
+            GetClientRect(focus, &charpos.rcDocument))
+        {
+            if (!GetCaretPos((POINT*)&charpos.rcDocument))
+                charpos.rcDocument.left = charpos.rcDocument.top = 0;
+
+            charpos.rcDocument.right = charpos.rcDocument.left + 1;
+            MapWindowPoints(focus, 0, (POINT*)&charpos.rcDocument, 2);
+
+            *rect = cgrect_from_rect(charpos.rcDocument);
+            ret = TRUE;
+        }
+    }
+
+    if (ret && range->length && !rect->size.width)
+        rect->size.width = 1;
+
+    TRACE(" -> %s range %ld-%ld rect %s\n", ret ? "TRUE" : "FALSE", range->location,
+          range->length, wine_dbgstr_cgrect(*rect));
+
+    return ret;
+}

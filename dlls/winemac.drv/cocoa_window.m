@@ -370,6 +370,8 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
             [[window queue] postEvent:event];
 
             macdrv_release_event(event);
+
+            [[self inputContext] invalidateCharacterCoordinates];
         }
     }
 
@@ -414,10 +416,32 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
     - (NSRect) firstRectForCharacterRange:(NSRange)aRange actualRange:(NSRangePointer)actualRange
     {
+        macdrv_query* query;
+        WineWindow* window = (WineWindow*)[self window];
+        NSRect ret;
+
         aRange = NSIntersectionRange(aRange, NSMakeRange(0, [markedText length]));
+
+        query = macdrv_create_query();
+        query->type = QUERY_IME_CHAR_RECT;
+        query->window = (macdrv_window)[window retain];
+        query->ime_char_rect.data = [window imeData];
+        query->ime_char_rect.range = CFRangeMake(aRange.location, aRange.length);
+
+        if ([window.queue query:query timeout:1])
+        {
+            aRange = NSMakeRange(query->ime_char_rect.range.location, query->ime_char_rect.range.length);
+            ret = NSRectFromCGRect(query->ime_char_rect.rect);
+            [[WineApplicationController sharedController] flipRect:&ret];
+        }
+        else
+            ret = NSMakeRect(100, 100, aRange.length ? 1 : 0, 12);
+
+        macdrv_release_query(query);
+
         if (actualRange)
             *actualRange = aRange;
-        return NSMakeRect(100, 100, aRange.length ? 1 : 0, 12);
+        return ret;
     }
 
     - (NSUInteger) characterIndexForPoint:(NSPoint)aPoint
@@ -1211,6 +1235,8 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         event->window_frame_changed.frame = NSRectToCGRect(frame);
         [queue postEvent:event];
         macdrv_release_event(event);
+
+        [[[self contentView] inputContext] invalidateCharacterCoordinates];
     }
 
     - (BOOL)windowShouldClose:(id)sender

@@ -136,6 +136,10 @@ static void macdrv_query_event(HWND hwnd, const macdrv_event *event)
             TRACE("QUERY_DRAG_OPERATION\n");
             success = query_drag_operation(query);
             break;
+        case QUERY_IME_CHAR_RECT:
+            TRACE("QUERY_IME_CHAR_RECT\n");
+            success = query_ime_char_rect(query);
+            break;
         case QUERY_PASTEBOARD_DATA:
             TRACE("QUERY_PASTEBOARD_DATA\n");
             success = query_pasteboard_data(hwnd, query->pasteboard_data.type);
