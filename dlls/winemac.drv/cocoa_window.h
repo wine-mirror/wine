@@ -47,8 +47,6 @@
 
     NSUInteger lastModifierFlags;
 
-    NSInteger levelWhenActive;
-
     NSTimer* liveResizeDisplayTimer;
 
     void* imeData;
@@ -61,8 +59,7 @@
 
 @property (retain, readonly, nonatomic) WineEventQueue* queue;
 @property (readonly, nonatomic) BOOL floating;
-@property (readonly, nonatomic) NSInteger levelWhenActive;
 
-    - (void) adjustWindowLevel;
+    - (NSInteger) minimumLevelForActive:(BOOL)active;
 
 @end

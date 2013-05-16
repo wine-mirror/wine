@@ -155,8 +155,6 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 @property (nonatomic) CGFloat colorKeyRed, colorKeyGreen, colorKeyBlue;
 @property (nonatomic) BOOL usePerPixelAlpha;
 
-@property (readwrite, nonatomic) NSInteger levelWhenActive;
-
 @property (assign, nonatomic) void* imeData;
 @property (nonatomic) BOOL commandDone;
 
@@ -464,7 +462,6 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
     @synthesize shape, shapeChangedSinceLastDraw;
     @synthesize colorKeyed, colorKeyRed, colorKeyGreen, colorKeyBlue;
     @synthesize usePerPixelAlpha;
-    @synthesize levelWhenActive;
     @synthesize imeData, commandDone;
 
     + (WineWindow*) createWindowWithFeatures:(const struct macdrv_window_features*)wf
@@ -578,67 +575,37 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         return [self isVisible] || [self isMiniaturized];
     }
 
-    - (void) adjustWindowLevel
+    - (NSInteger) minimumLevelForActive:(BOOL)active
     {
-        WineApplicationController* controller = [WineApplicationController sharedController];
         NSInteger level;
-        BOOL fullscreen, captured;
-        NSScreen* screen;
-        NSUInteger index;
-        WineWindow* other = nil;
 
-        screen = screen_covered_by_rect([self frame], [NSScreen screens]);
-        fullscreen = (screen != nil);
-        captured = (screen || [self screen]) && [controller areDisplaysCaptured];
-
-        if (captured || fullscreen)
-        {
-            if (captured)
-                level = CGShieldingWindowLevel() + 1; /* Need +1 or we don't get mouse moves */
-            else
-                level = NSMainMenuWindowLevel + 1;
-
-            if (self.floating)
-                level++;
-        }
-        else if (self.floating)
+        if (self.floating)
             level = NSFloatingWindowLevel;
         else
             level = NSNormalWindowLevel;
 
-        index = [[controller orderedWineWindows] indexOfObjectIdenticalTo:self];
-        if (index != NSNotFound && index + 1 < [[controller orderedWineWindows] count])
+        if (active)
         {
-            other = [[controller orderedWineWindows] objectAtIndex:index + 1];
-            if (level < [other level])
-                level = [other level];
-        }
+            BOOL fullscreen, captured;
+            NSScreen* screen;
 
-        if (level != [self level])
-        {
-            [self setLevelWhenActive:level];
+            screen = screen_covered_by_rect([self frame], [NSScreen screens]);
+            fullscreen = (screen != nil);
+            captured = (screen || [self screen]) && [[WineApplicationController sharedController] areDisplaysCaptured];
 
-            /* Setting the window level above has moved this window to the front
-               of all other windows at the same level.  We need to move it
-               back into its proper place among other windows of that level.
-               Also, any windows which are supposed to be in front of it had
-               better have the same or higher window level.  If not, bump them
-               up. */
-            if (index != NSNotFound && [self isOrderedIn])
+            if (captured || fullscreen)
             {
-                for (; index > 0; index--)
-                {
-                    other = [[controller orderedWineWindows] objectAtIndex:index - 1];
-                    if ([other level] < level)
-                        [other setLevelWhenActive:level];
-                    else if ([self isVisible])
-                    {
-                        [self orderWindow:NSWindowBelow relativeTo:[other windowNumber]];
-                        break;
-                    }
-                }
+                if (captured)
+                    level = CGShieldingWindowLevel() + 1; /* Need +1 or we don't get mouse moves */
+                else
+                    level = NSMainMenuWindowLevel + 1;
+
+                if (self.floating)
+                    level++;
             }
         }
+
+        return level;
     }
 
     - (void) setMacDrvState:(const struct macdrv_window_state*)state
@@ -648,8 +615,11 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         self.disabled = state->disabled;
         self.noActivate = state->no_activate;
 
-        self.floating = state->floating;
-        [self adjustWindowLevel];
+        if (self.floating != state->floating)
+        {
+            self.floating = state->floating;
+            [[WineApplicationController sharedController] adjustWindowLevels];
+        }
 
         behavior = NSWindowCollectionBehaviorDefault;
         if (state->excluded_by_expose)
@@ -697,45 +667,40 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         {
             [controller transformProcessToForeground];
 
+            NSDisableScreenUpdates();
+
             if (latentParentWindow)
             {
                 if ([latentParentWindow level] > [self level])
-                    [self setLevelWhenActive:[latentParentWindow level]];
+                    [self setLevel:[latentParentWindow level]];
                 [latentParentWindow addChildWindow:self ordered:NSWindowAbove];
-                [controller wineWindow:self ordered:NSWindowAbove relativeTo:latentParentWindow];
                 self.latentParentWindow = nil;
             }
-            if (prev)
+            if (prev || next)
             {
-                /* Make sure that windows that should be above this one really are.
-                   This is necessary since a full-screen window gets a boost to its
-                   window level to be in front of the menu bar and Dock and that moves
-                   it out of the z-order that Win32 would otherwise establish. */
-                if ([prev level] < [self level])
-                {
-                    NSUInteger index = [[controller orderedWineWindows] indexOfObjectIdenticalTo:prev];
-                    if (index != NSNotFound)
-                    {
-                        [prev setLevelWhenActive:[self level]];
-                        for (; index > 0; index--)
-                        {
-                            WineWindow* other = [[controller orderedWineWindows] objectAtIndex:index - 1];
-                            if ([other level] < [self level])
-                                [other setLevelWhenActive:[self level]];
-                        }
-                    }
-                }
-                [self orderWindow:NSWindowBelow relativeTo:[prev windowNumber]];
-                [controller wineWindow:self ordered:NSWindowBelow relativeTo:prev];
+                WineWindow* other = [prev isVisible] ? prev : next;
+                NSWindowOrderingMode orderingMode = [prev isVisible] ? NSWindowBelow : NSWindowAbove;
+
+                // This window level may not be right for this window based
+                // on floating-ness, fullscreen-ness, etc.  But we set it
+                // temporarily to allow us to order the windows properly.
+                // Then the levels get fixed by -adjustWindowLevels.
+                if ([self level] != [other level])
+                    [self setLevel:[other level]];
+                [self orderWindow:orderingMode relativeTo:[other windowNumber]];
             }
             else
             {
-                /* Similarly, make sure this window is really above what it should be. */
-                if (next && [next level] > [self level])
-                    [self setLevelWhenActive:[next level]];
-                [self orderWindow:NSWindowAbove relativeTo:[next windowNumber]];
-                [controller wineWindow:self ordered:NSWindowAbove relativeTo:next];
+                // Again, temporarily set level to make sure we can order to
+                // the right place.
+                next = [controller frontWineWindow];
+                if (next && [self level] < [next level])
+                    [self setLevel:[next level]];
+                [self orderFront:nil];
             }
+            [controller adjustWindowLevels];
+
+            NSEnableScreenUpdates();
 
             /* Cocoa may adjust the frame when the window is ordered onto the screen.
                Generate a frame-changed event just in case.  The back end will ignore
@@ -754,7 +719,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         self.latentParentWindow = [self parentWindow];
         [latentParentWindow removeChildWindow:self];
         [self orderOut:nil];
-        [[WineApplicationController sharedController] wineWindow:self ordered:NSWindowOut relativeTo:nil];
+        [[WineApplicationController sharedController] adjustWindowLevels];
         [NSApp removeWindowsItem:self];
     }
 
@@ -792,7 +757,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
         if (on_screen)
         {
-            [self adjustWindowLevel];
+            [[WineApplicationController sharedController] adjustWindowLevels];
 
             /* In case Cocoa adjusted the frame we tried to set, generate a frame-changed
                event.  The back end will ignore it if nothing actually changed. */
@@ -819,9 +784,9 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
             if ([self isVisible] && parent)
             {
                 if ([parent level] > [self level])
-                    [self setLevelWhenActive:[parent level]];
+                    [self setLevel:[parent level]];
                 [parent addChildWindow:self ordered:NSWindowAbove];
-                [[WineApplicationController sharedController] wineWindow:self ordered:NSWindowAbove relativeTo:parent];
+                [[WineApplicationController sharedController] adjustWindowLevels];
             }
             else
                 self.latentParentWindow = parent;
@@ -891,6 +856,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
     {
         WineApplicationController* controller = [WineApplicationController sharedController];
         NSArray* screens;
+        WineWindow* front;
 
         [controller transformProcessToForeground];
 
@@ -907,34 +873,30 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
             [self setFrame:frame display:YES];
         }
 
-        if ([[controller orderedWineWindows] count])
-        {
-            WineWindow* front;
-            if (self.floating)
-                front = [[controller orderedWineWindows] objectAtIndex:0];
-            else
-            {
-                for (front in [controller orderedWineWindows])
-                    if (!front.floating) break;
-            }
-            if (front && [front levelWhenActive] > [self levelWhenActive])
-                [self setLevelWhenActive:[front levelWhenActive]];
-        }
         if (activate)
             [NSApp activateIgnoringOtherApps:YES];
+
+        NSDisableScreenUpdates();
+
         if (latentParentWindow)
         {
             if ([latentParentWindow level] > [self level])
-                [self setLevelWhenActive:[latentParentWindow level]];
+                [self setLevel:[latentParentWindow level]];
             [latentParentWindow addChildWindow:self ordered:NSWindowAbove];
-            [controller wineWindow:self ordered:NSWindowAbove relativeTo:latentParentWindow];
             self.latentParentWindow = nil;
         }
+        front = [controller frontWineWindow];
+        if (front && [self level] < [front level])
+            [self setLevel:[front level]];
         [self orderFront:nil];
-        [controller wineWindow:self ordered:NSWindowAbove relativeTo:nil];
+        [controller adjustWindowLevels];
+
+        NSEnableScreenUpdates();
+
         causing_becomeKeyWindow = TRUE;
         [self makeKeyWindow];
         causing_becomeKeyWindow = FALSE;
+
         if (![self isExcludedFromWindowsMenu])
             [NSApp addWindowsItem:self title:[self title] filename:NO];
 
@@ -981,14 +943,6 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
               pressed:[theEvent type] == NSKeyDown
             modifiers:[theEvent modifierFlags]
                 event:theEvent];
-    }
-
-    - (void) setLevelWhenActive:(NSInteger)level
-    {
-        levelWhenActive = level;
-        if (([NSApp isActive] || level <= NSFloatingWindowLevel) &&
-            level != [self level])
-            [self setLevel:level];
     }
 
 
@@ -1054,9 +1008,6 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         {
             if ([event type] == NSLeftMouseDown)
             {
-                NSWindowButton windowButton;
-                BOOL broughtWindowForward = TRUE;
-
                 /* Since our windows generally claim they can't be made key, clicks
                    in their title bars are swallowed by the theme frame stuff.  So,
                    we hook directly into the event stream and assume that any click
@@ -1064,27 +1015,6 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
                    accept. */
                 if (![self isKeyWindow] && !self.disabled && !self.noActivate)
                     [controller windowGotFocus:self];
-
-                /* Any left-click on our window anyplace other than the close or
-                   minimize buttons will bring it forward. */
-                for (windowButton = NSWindowCloseButton;
-                     windowButton <= NSWindowMiniaturizeButton;
-                     windowButton++)
-                {
-                    NSButton* button = [[event window] standardWindowButton:windowButton];
-                    if (button)
-                    {
-                        NSPoint point = [button convertPoint:[event locationInWindow] fromView:nil];
-                        if ([button mouse:point inRect:[button bounds]])
-                        {
-                            broughtWindowForward = FALSE;
-                            break;
-                        }
-                    }
-                }
-
-                if (broughtWindowForward)
-                    [controller wineWindow:self ordered:NSWindowAbove relativeTo:nil];
             }
 
             [super sendEvent:event];
@@ -1194,7 +1124,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
         ignore_windowDeminiaturize = FALSE;
 
-        [[WineApplicationController sharedController] wineWindow:self ordered:NSWindowAbove relativeTo:nil];
+        [[WineApplicationController sharedController] adjustWindowLevels];
     }
 
     - (void) windowDidEndLiveResize:(NSNotification *)notification

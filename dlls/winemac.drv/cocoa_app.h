@@ -65,8 +65,6 @@ enum {
     double mouseMoveDeltaX, mouseMoveDeltaY;
     NSUInteger unmatchedMouseDowns;
 
-    NSMutableArray* orderedWineWindows;
-
     NSMutableDictionary* originalDisplayModes;
 
     NSArray*    cursorFrames;
@@ -87,7 +85,6 @@ enum {
 
 @property (nonatomic) CGEventSourceKeyboardType keyboardType;
 @property (readonly, copy, nonatomic) NSEvent* lastFlagsChanged;
-@property (readonly, nonatomic) NSArray* orderedWineWindows;
 @property (readonly, nonatomic) BOOL areDisplaysCaptured;
 
     + (WineApplicationController*) sharedController;
@@ -108,10 +105,8 @@ enum {
 
     - (void) flipRect:(NSRect*)rect;
 
-    - (void) wineWindow:(WineWindow*)window
-                ordered:(NSWindowOrderingMode)order
-             relativeTo:(WineWindow*)otherWindow;
     - (WineWindow*) frontWineWindow;
+    - (void) adjustWindowLevels;
 
     - (BOOL) handleEvent:(NSEvent*)anEvent;
     - (void) didSendEvent:(NSEvent*)anEvent;

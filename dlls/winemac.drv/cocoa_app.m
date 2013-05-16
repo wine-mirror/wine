@@ -95,7 +95,7 @@ int macdrv_err_on;
 @implementation WineApplicationController
 
     @synthesize keyboardType, lastFlagsChanged;
-    @synthesize orderedWineWindows, applicationIcon;
+    @synthesize applicationIcon;
     @synthesize cursorFrames, cursorTimer;
     @synthesize mouseCaptureWindow;
 
@@ -147,14 +147,13 @@ int macdrv_err_on;
             eventQueuesLock = [[NSLock alloc] init];
 
             keyWindows = [[NSMutableArray alloc] init];
-            orderedWineWindows = [[NSMutableArray alloc] init];
 
             originalDisplayModes = [[NSMutableDictionary alloc] init];
 
             warpRecords = [[NSMutableArray alloc] init];
 
             if (!requests || !requestsManipQueue || !eventQueues || !eventQueuesLock ||
-                !keyWindows || !orderedWineWindows || !originalDisplayModes || !warpRecords)
+                !keyWindows || !originalDisplayModes || !warpRecords)
             {
                 [self release];
                 return nil;
@@ -178,7 +177,6 @@ int macdrv_err_on;
         [cursorTimer release];
         [cursorFrames release];
         [originalDisplayModes release];
-        [orderedWineWindows release];
         [keyWindows release];
         [eventQueues release];
         [eventQueuesLock release];
@@ -441,64 +439,6 @@ int macdrv_err_on;
         rect->origin.y = NSMaxY([[[NSScreen screens] objectAtIndex:0] frame]) - NSMaxY(*rect);
     }
 
-    - (void) wineWindow:(WineWindow*)window
-                ordered:(NSWindowOrderingMode)order
-             relativeTo:(WineWindow*)otherWindow
-    {
-        NSUInteger index;
-
-        switch (order)
-        {
-            case NSWindowAbove:
-                [window retain];
-                [orderedWineWindows removeObjectIdenticalTo:window];
-                if (otherWindow)
-                {
-                    index = [orderedWineWindows indexOfObjectIdenticalTo:otherWindow];
-                    if (index == NSNotFound)
-                        index = 0;
-                }
-                else
-                {
-                    index = 0;
-                    for (otherWindow in orderedWineWindows)
-                    {
-                        if ([otherWindow levelWhenActive] <= [window levelWhenActive])
-                            break;
-                        index++;
-                    }
-                }
-                [orderedWineWindows insertObject:window atIndex:index];
-                [window release];
-                break;
-            case NSWindowBelow:
-                [window retain];
-                [orderedWineWindows removeObjectIdenticalTo:window];
-                if (otherWindow)
-                {
-                    index = [orderedWineWindows indexOfObjectIdenticalTo:otherWindow];
-                    if (index == NSNotFound)
-                        index = [orderedWineWindows count];
-                }
-                else
-                {
-                    index = 0;
-                    for (otherWindow in orderedWineWindows)
-                    {
-                        if ([otherWindow levelWhenActive] < [window levelWhenActive])
-                            break;
-                        index++;
-                    }
-                }
-                [orderedWineWindows insertObject:window atIndex:index];
-                [window release];
-                break;
-            case NSWindowOut:
-            default:
-                break;
-        }
-    }
-
     - (WineWindow*) frontWineWindow
     {
         NSNumber* windowNumber;
@@ -510,6 +450,113 @@ int macdrv_err_on;
         }
 
         return nil;
+    }
+
+    - (void) adjustWindowLevels:(BOOL)active
+    {
+        NSArray* windowNumbers = [NSWindow windowNumbersWithOptions:0];
+        NSMutableArray* wineWindows = [[NSMutableArray alloc] initWithCapacity:[windowNumbers count]];
+        NSNumber* windowNumber;
+        NSUInteger nextFloatingIndex = 0;
+        __block NSInteger maxLevel = NSIntegerMin;
+        __block NSInteger maxNonfloatingLevel = NSNormalWindowLevel;
+        __block WineWindow* prev = nil;
+        WineWindow* window;
+
+        // For the most part, we rely on the window server's ordering of the windows
+        // to be authoritative.  The one exception is if the "floating" property of
+        // one of the windows has been changed, it may be in the wrong level and thus
+        // in the order.  This method is what's supposed to fix that up.  So build
+        // a list of Wine windows sorted first by floating-ness and then by order
+        // as indicated by the window server.
+        for (windowNumber in windowNumbers)
+        {
+            window = (WineWindow*)[NSApp windowWithWindowNumber:[windowNumber integerValue]];
+            if ([window isKindOfClass:[WineWindow class]])
+            {
+                if (window.floating)
+                    [wineWindows insertObject:window atIndex:nextFloatingIndex++];
+                else
+                    [wineWindows addObject:window];
+            }
+        }
+
+        NSDisableScreenUpdates();
+
+        // Go from back to front so that all windows in front of one which is
+        // elevated for full-screen are also elevated.
+        [wineWindows enumerateObjectsWithOptions:NSEnumerationReverse
+                                      usingBlock:^(id obj, NSUInteger idx, BOOL *stop){
+            WineWindow* window = (WineWindow*)obj;
+            NSInteger origLevel = [window level];
+            NSInteger newLevel = [window minimumLevelForActive:active];
+
+            if (newLevel < maxLevel)
+                newLevel = maxLevel;
+            else
+                maxLevel = newLevel;
+
+            if (!window.floating && maxNonfloatingLevel < newLevel)
+                maxNonfloatingLevel = newLevel;
+
+            if (newLevel != origLevel)
+            {
+                [window setLevel:newLevel];
+
+                // -setLevel: puts the window at the front of its new level.  If
+                // we decreased the level, that's good (it was in front of that
+                // level before, so it should still be now).  But if we increased
+                // the level, the window should be toward the back (but still
+                // ahead of the previous windows we did this to).
+                if (origLevel < newLevel)
+                {
+                    if (prev)
+                        [window orderWindow:NSWindowAbove relativeTo:[prev windowNumber]];
+                    else
+                        [window orderBack:nil];
+                }
+            }
+
+            prev = window;
+        }];
+
+        NSEnableScreenUpdates();
+
+        [wineWindows release];
+
+        // The above took care of the visible windows on the current space.  That
+        // leaves windows on other spaces, minimized windows, and windows which
+        // are not ordered in.  We want to leave windows on other spaces alone
+        // so the space remains just as they left it (when viewed in Exposé or
+        // Mission Control, for example).  We'll adjust the window levels again
+        // after we switch to another space, anyway.  Windows which aren't
+        // ordered in will be handled when we order them in.  Minimized windows
+        // on the current space should be set to the level they would have gotten
+        // if they were at the front of the windows with the same floating-ness,
+        // because that's where they'll go if/when they are unminimized.  Again,
+        // for good measure we'll adjust window levels again when a window is
+        // unminimized, too.
+        for (window in [NSApp windows])
+        {
+            if ([window isKindOfClass:[WineWindow class]] && [window isMiniaturized] &&
+                [window isOnActiveSpace])
+            {
+                NSInteger origLevel = [window level];
+                NSInteger newLevel = [window minimumLevelForActive:YES];
+                NSInteger maxLevelForType = window.floating ? maxLevel : maxNonfloatingLevel;
+
+                if (newLevel < maxLevelForType)
+                    newLevel = maxLevelForType;
+
+                if (newLevel != origLevel)
+                    [window setLevel:newLevel];
+            }
+        }
+    }
+
+    - (void) adjustWindowLevels
+    {
+        [self adjustWindowLevels:[NSApp isActive]];
     }
 
     - (void) sendDisplaysChanged:(BOOL)activating
@@ -650,11 +697,7 @@ int macdrv_err_on;
         CGDisplayModeRelease(currentMode);
 
         if (ret)
-        {
-            [orderedWineWindows enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(id obj, NSUInteger idx, BOOL *stop){
-                [(WineWindow*)obj adjustWindowLevel];
-            }];
-        }
+            [self adjustWindowLevels];
 
         return ret;
     }
@@ -1581,6 +1624,7 @@ int macdrv_err_on;
     - (void) setupObservations
     {
         NSNotificationCenter* nc = [NSNotificationCenter defaultCenter];
+        NSNotificationCenter* wsnc = [[NSWorkspace sharedWorkspace] notificationCenter];
 
         [nc addObserverForName:NSWindowDidBecomeKeyNotification
                         object:nil
@@ -1597,7 +1641,6 @@ int macdrv_err_on;
                     usingBlock:^(NSNotification *note){
             NSWindow* window = [note object];
             [keyWindows removeObjectIdenticalTo:window];
-            [orderedWineWindows removeObjectIdenticalTo:window];
             if (window == lastTargetWindow)
                 lastTargetWindow = nil;
             if (window == self.mouseCaptureWindow)
@@ -1612,6 +1655,11 @@ int macdrv_err_on;
         /* The above notification isn't sent unless the NSTextInputContext
            class has initialized itself.  Poke it. */
         [NSTextInputContext self];
+
+        [wsnc addObserver:self
+                 selector:@selector(adjustWindowLevels)
+                     name:NSWorkspaceActiveSpaceDidChangeNotification
+                   object:nil];
     }
 
     - (BOOL) inputSourceIsInputMethod
@@ -1641,11 +1689,7 @@ int macdrv_err_on;
     {
         [self activateCursorClipping];
 
-        [orderedWineWindows enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(id obj, NSUInteger idx, BOOL *stop){
-            WineWindow* window = obj;
-            if ([window levelWhenActive] != [window level])
-                [window setLevel:[window levelWhenActive]];
-        }];
+        [self adjustWindowLevels:YES];
 
         if (![self frontWineWindow])
         {
@@ -1681,6 +1725,7 @@ int macdrv_err_on;
     {
         primaryScreenHeightValid = FALSE;
         [self sendDisplaysChanged:FALSE];
+        [self adjustWindowLevels];
 
         // When the display configuration changes, the cursor position may jump.
         // Accumulated mouse movement deltas are invalidated.  Make sure the next
@@ -1752,12 +1797,7 @@ int macdrv_err_on;
     {
         [self deactivateCursorClipping];
 
-        [orderedWineWindows enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(id obj, NSUInteger idx, BOOL *stop){
-            WineWindow* window = obj;
-            NSInteger level = window.floating ? NSFloatingWindowLevel : NSNormalWindowLevel;
-            if ([window level] > level)
-                [window setLevel:level];
-        }];
+        [self adjustWindowLevels:NO];
     }
 
 /***********************************************************************
