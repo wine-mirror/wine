@@ -697,6 +697,14 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         {
             [controller transformProcessToForeground];
 
+            if (latentParentWindow)
+            {
+                if ([latentParentWindow level] > [self level])
+                    [self setLevelWhenActive:[latentParentWindow level]];
+                [latentParentWindow addChildWindow:self ordered:NSWindowAbove];
+                [controller wineWindow:self ordered:NSWindowAbove relativeTo:latentParentWindow];
+                self.latentParentWindow = nil;
+            }
             if (prev)
             {
                 /* Make sure that windows that should be above this one really are.
@@ -727,14 +735,6 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
                     [self setLevelWhenActive:[next level]];
                 [self orderWindow:NSWindowAbove relativeTo:[next windowNumber]];
                 [controller wineWindow:self ordered:NSWindowAbove relativeTo:next];
-            }
-            if (latentParentWindow)
-            {
-                if ([latentParentWindow level] > [self level])
-                    [self setLevelWhenActive:[latentParentWindow level]];
-                [latentParentWindow addChildWindow:self ordered:NSWindowAbove];
-                [controller wineWindow:self ordered:NSWindowAbove relativeTo:latentParentWindow];
-                self.latentParentWindow = nil;
             }
 
             /* Cocoa may adjust the frame when the window is ordered onto the screen.
@@ -922,11 +922,6 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         }
         if (activate)
             [NSApp activateIgnoringOtherApps:YES];
-        [self orderFront:nil];
-        [controller wineWindow:self ordered:NSWindowAbove relativeTo:nil];
-        causing_becomeKeyWindow = TRUE;
-        [self makeKeyWindow];
-        causing_becomeKeyWindow = FALSE;
         if (latentParentWindow)
         {
             if ([latentParentWindow level] > [self level])
@@ -935,6 +930,11 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
             [controller wineWindow:self ordered:NSWindowAbove relativeTo:latentParentWindow];
             self.latentParentWindow = nil;
         }
+        [self orderFront:nil];
+        [controller wineWindow:self ordered:NSWindowAbove relativeTo:nil];
+        causing_becomeKeyWindow = TRUE;
+        [self makeKeyWindow];
+        causing_becomeKeyWindow = FALSE;
         if (![self isExcludedFromWindowsMenu])
             [NSApp addWindowsItem:self title:[self title] filename:NO];
 
