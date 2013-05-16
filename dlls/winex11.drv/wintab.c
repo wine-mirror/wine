@@ -422,6 +422,7 @@ static BOOL is_stylus(const char *name, const char *type)
         "stylus",
         "wizardpen",
         "acecad",
+        "pen",
         NULL
     };
 
