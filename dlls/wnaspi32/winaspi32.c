@@ -76,6 +76,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
             SCSI_Init();
             break;
 	case DLL_PROCESS_DETACH:
+            if (fImpLoad) break;
             DeleteCriticalSection( &ASPI_CritSection );
             break;
 	}
