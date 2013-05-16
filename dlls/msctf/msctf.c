@@ -526,6 +526,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD fdwReason, LPVOID fImpLoad)
             tlsIndex = TlsAlloc();
             break;
         case DLL_PROCESS_DETACH:
+            if (fImpLoad) break;
             TlsFree(tlsIndex);
             break;
     }
