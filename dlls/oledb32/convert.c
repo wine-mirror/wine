@@ -797,6 +797,23 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
             V_DATE(v) = *(DATE*)src;
             hr = S_OK;
             break;
+        case DBTYPE_DBDATE:
+        {
+            SYSTEMTIME st;
+            DBDATE *ts=(DBDATE*)src;
+
+            V_VT(v) = VT_DATE;
+
+            st.wYear = ts->year;
+            st.wMonth = ts->month;
+            st.wDay = ts->day;
+            st.wHour = 0;
+            st.wMinute = 0;
+            st.wSecond = 0;
+            st.wMilliseconds = 0;
+            hr = (SystemTimeToVariantTime(&st, &V_DATE(v)) ? S_OK : E_FAIL);
+            break;
+        }
         case DBTYPE_DBTIMESTAMP:
         {
             SYSTEMTIME st;
