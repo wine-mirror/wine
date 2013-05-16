@@ -855,7 +855,7 @@ static void CALLBACK DSOUND_capture_timer(UINT timerID, UINT msg, DWORD_PTR user
                                           DWORD_PTR dw1, DWORD_PTR dw2)
 {
     DirectSoundCaptureDevice *device = (DirectSoundCaptureDevice*)user;
-    UINT32 packet_frames, packet_bytes, avail_bytes;
+    UINT32 packet_frames, packet_bytes, avail_bytes, skip_bytes = 0;
     DWORD flags;
     BYTE *buf;
     HRESULT hr;
@@ -888,18 +888,23 @@ static void CALLBACK DSOUND_capture_timer(UINT timerID, UINT msg, DWORD_PTR user
     }
 
     packet_bytes = packet_frames * device->pwfx->nBlockAlign;
+    if(packet_bytes > device->buflen){
+        TRACE("audio glitch: dsound buffer too small for data\n");
+        skip_bytes = packet_bytes - device->buflen;
+        packet_bytes = device->buflen;
+    }
 
     avail_bytes = device->buflen - device->write_pos_bytes;
     if(avail_bytes > packet_bytes)
         avail_bytes = packet_bytes;
 
-    memcpy(device->buffer + device->write_pos_bytes, buf, avail_bytes);
+    memcpy(device->buffer + device->write_pos_bytes, buf + skip_bytes, avail_bytes);
     capture_CheckNotify(device->capture_buffer, device->write_pos_bytes, avail_bytes);
 
     packet_bytes -= avail_bytes;
     if(packet_bytes > 0){
         if(device->capture_buffer->flags & DSCBSTART_LOOPING){
-            memcpy(device->buffer, buf + avail_bytes, packet_bytes);
+            memcpy(device->buffer, buf + skip_bytes + avail_bytes, packet_bytes);
             capture_CheckNotify(device->capture_buffer, 0, packet_bytes);
         }else{
             device->state = STATE_STOPPED;
