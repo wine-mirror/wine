@@ -1920,12 +1920,8 @@ int macdrv_send_text_input_event(int pressed, unsigned int flags, int repeat, in
         if (![window isKindOfClass:[WineWindow class]])
         {
             window = (WineWindow*)[NSApp mainWindow];
-            if (![window isKindOfClass:[WineWindow class]] && [[NSApp orderedWineWindows] count])
-            {
-                window = [[NSApp orderedWineWindows] objectAtIndex:0];
-                if (![window isKindOfClass:[WineWindow class]])
-                    window = nil;
-            }
+            if (![window isKindOfClass:[WineWindow class]])
+                window = [[WineApplicationController sharedController] frontWineWindow];
         }
 
         if (window)

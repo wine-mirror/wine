@@ -111,6 +111,7 @@ enum {
     - (void) wineWindow:(WineWindow*)window
                 ordered:(NSWindowOrderingMode)order
              relativeTo:(WineWindow*)otherWindow;
+    - (WineWindow*) frontWineWindow;
 
     - (BOOL) handleEvent:(NSEvent*)anEvent;
     - (void) didSendEvent:(NSEvent*)anEvent;

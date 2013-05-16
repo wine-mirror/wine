@@ -486,6 +486,19 @@ int macdrv_err_on;
         }
     }
 
+    - (WineWindow*) frontWineWindow
+    {
+        NSNumber* windowNumber;
+        for (windowNumber in [NSWindow windowNumbersWithOptions:NSWindowNumberListAllSpaces])
+        {
+            NSWindow* window = [NSApp windowWithWindowNumber:[windowNumber integerValue]];
+            if ([window isKindOfClass:[WineWindow class]] && [window screen])
+                return (WineWindow*)window;
+        }
+
+        return nil;
+    }
+
     - (void) sendDisplaysChanged:(BOOL)activating
     {
         macdrv_event* event;
@@ -1613,10 +1626,6 @@ int macdrv_err_on;
      */
     - (void)applicationDidBecomeActive:(NSNotification *)notification
     {
-        WineWindow* window;
-        WineWindow* firstMinimized;
-        BOOL anyShowing;
-
         [self activateCursorClipping];
 
         [orderedWineWindows enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(id obj, NSUInteger idx, BOOL *stop){
@@ -1625,23 +1634,17 @@ int macdrv_err_on;
                 [window setLevel:[window levelWhenActive]];
         }];
 
-        firstMinimized = nil;
-        anyShowing = FALSE;
-        for (window in orderedWineWindows)
+        if (![self frontWineWindow])
         {
-            if ([window isMiniaturized])
+            for (WineWindow* window in [NSApp windows])
             {
-                if (!firstMinimized)
-                    firstMinimized = window;
-            }
-            else if ([window isVisible])
-            {
-                anyShowing = TRUE;
-                break;
+                if ([window isKindOfClass:[WineWindow class]] && [window isMiniaturized])
+                {
+                    [window deminiaturize:self];
+                    break;
+                }
             }
         }
-        if (!anyShowing && firstMinimized)
-            [firstMinimized deminiaturize:self];
 
         // If a Wine process terminates abruptly while it has the display captured
         // and switched to a different resolution, Mac OS X will uncapture the
