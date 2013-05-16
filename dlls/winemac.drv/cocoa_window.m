@@ -727,7 +727,6 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
     {
         NSArray* screens = [NSScreen screens];
         BOOL on_screen = [self isOrderedIn];
-        NSRect frame, oldFrame;
 
         if (![screens count]) return on_screen;
 
@@ -742,8 +741,16 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
                 [self doOrderOut];
         }
 
+        /* The back end is establishing a new window size and position.  It's
+           not interested in any stale events regarding those that may be sitting
+           in the queue. */
+        [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_FRAME_CHANGED)
+                               forWindow:self];
+
         if (!NSIsEmptyRect(contentRect))
         {
+            NSRect frame, oldFrame;
+
             oldFrame = [self frame];
             frame = [self frameRectForContentRect:contentRect];
             if (!NSEqualRects(frame, oldFrame))
@@ -752,24 +759,16 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
                     [self setFrameOrigin:frame.origin];
                 else
                     [self setFrame:frame display:YES];
+
+                if (on_screen)
+                {
+                    [[WineApplicationController sharedController] adjustWindowLevels];
+
+                    /* In case Cocoa adjusted the frame we tried to set, generate a frame-changed
+                       event.  The back end will ignore it if nothing actually changed. */
+                    [self windowDidResize:nil];
+                }
             }
-        }
-
-        if (on_screen)
-        {
-            [[WineApplicationController sharedController] adjustWindowLevels];
-
-            /* In case Cocoa adjusted the frame we tried to set, generate a frame-changed
-               event.  The back end will ignore it if nothing actually changed. */
-            [self windowDidResize:nil];
-        }
-        else
-        {
-            /* The back end is establishing a new window size and position.  It's
-               not interested in any stale events regarding those that may be sitting
-               in the queue. */
-            [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_FRAME_CHANGED)
-                                   forWindow:self];
         }
 
         return on_screen;
