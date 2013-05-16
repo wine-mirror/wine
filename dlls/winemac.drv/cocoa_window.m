@@ -1051,8 +1051,16 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
     /* We don't call this.  It's the action method of the items in the Window menu. */
     - (void) makeKeyAndOrderFront:(id)sender
     {
+        WineApplicationController* controller = [WineApplicationController sharedController];
+        WineWindow* front = [controller frontWineWindow];
+
         if (![self isKeyWindow] && !self.disabled && !self.noActivate)
-            [[WineApplicationController sharedController] windowGotFocus:self];
+            [controller windowGotFocus:self];
+
+        if (front && [self level] < [front level])
+            [self setLevel:[front level]];
+        [self orderFront:nil];
+        [controller adjustWindowLevels];
     }
 
     - (void) sendEvent:(NSEvent*)event
