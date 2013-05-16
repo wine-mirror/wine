@@ -515,3 +515,25 @@ typedef struct tagRMTPACK
     ULONG cArray;
     [size_is(cArray)] VARIANT *rgArray;
 } RMTPACK;
+
+typedef struct tagDBDATE {
+	SHORT year;
+	USHORT month;
+	USHORT day;
+} DBDATE;
+
+typedef struct tagDBTIME {
+	USHORT hour;
+	USHORT minute;
+	USHORT second;
+} DBTIME;
+
+typedef struct tagDBTIMESTAMP {
+	SHORT year;
+	USHORT month;
+	USHORT day;
+	USHORT hour;
+	USHORT minute;
+	USHORT second;
+	ULONG fraction;
+} DBTIMESTAMP;
