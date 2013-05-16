@@ -2447,6 +2447,24 @@ static void test_converttobytes(void)
     ok(!memcmp(byte_src, dst, 2 ), "bytes differ\n");
 }
 
+static void test_converttodbdate(void)
+{
+    DBLENGTH dst_len;
+    HRESULT hr;
+    DBDATE ts = {2013, 5, 14};
+    DBDATE dst;
+    DBSTATUS dst_status;
+
+    dst_len = 0;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_DBDATE, DBTYPE_DBDATE, sizeof(ts), &dst_len, &ts, &dst, 2, 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(DBDATE), "got %ld\n", dst_len);
+    ok(!memcmp(&ts, &dst, sizeof(DBDATE) ), "bytes differ\n");
+
+}
+
+
 static void test_converttovar(void)
 {
     static WCHAR strW[] = {'t','e','s','t',0};
@@ -2601,6 +2619,7 @@ START_TEST(convert)
     test_converttoui8();
     test_converttovar();
     test_converttobytes();
+    test_converttodbdate();
     test_getconversionsize();
 
     IDataConvert_Release(convert);

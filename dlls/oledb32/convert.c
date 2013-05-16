@@ -131,6 +131,8 @@ static int get_length(DBTYPE type)
     case DBTYPE_R8:
     case DBTYPE_DATE:
         return 8;
+    case DBTYPE_DBDATE:
+        return sizeof(DBDATE);
     case DBTYPE_DBTIMESTAMP:
 	return sizeof(DBTIMESTAMP);
     case DBTYPE_CY:
@@ -410,6 +412,16 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
             break;
         }
         default: FIXME("Unimplemented conversion %04x -> DATE\n", src_type); return E_NOTIMPL;
+        }
+        break;
+    }
+    case DBTYPE_DBDATE:
+    {
+        DBDATE *d=dst;
+        switch (src_type)
+        {
+        case DBTYPE_DBDATE: memcpy(d, src, sizeof(DBDATE));  hr = S_OK; break;
+        default: FIXME("Unimplemented conversion %04x -> DBDATE\n", src_type); return  E_NOTIMPL;
         }
         break;
     }
