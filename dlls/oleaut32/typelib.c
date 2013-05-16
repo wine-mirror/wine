@@ -7089,6 +7089,19 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
         result = ITypeInfoImpl_GetDispatchRefTypeInfo((ITypeInfo *)iface, &href_dispatch, ppTInfo);
     } else {
         TLBRefType *ref_type;
+        UINT i;
+
+        for(i = 0; i < This->pTypeLib->TypeInfoCount; ++i)
+        {
+            if (This->pTypeLib->typeinfos[i]->hreftype == hRefType)
+            {
+                result = S_OK;
+                *ppTInfo = (ITypeInfo*)This->pTypeLib->typeinfos[i];
+                ITypeInfo_AddRef(*ppTInfo);
+                goto end;
+            }
+        }
+
         LIST_FOR_EACH_ENTRY(ref_type, &This->pTypeLib->ref_list, TLBRefType, entry)
         {
             if(ref_type->reference == hRefType)
