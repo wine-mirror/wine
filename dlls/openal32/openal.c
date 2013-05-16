@@ -107,6 +107,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 #undef LOADFUNC
         break;
     case DLL_PROCESS_DETACH:
+        if (reserved) break;
         DeleteCriticalSection(&openal_cs);
     }
 
