@@ -93,7 +93,7 @@ vgafix.fon: fixedsys.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 $(srcdir)/fixedsys.ttf 15,1252,8
 
 jvgafix.fon: fixedsys_jp.ttf
-	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 $(srcdir)/fixedsys_jp.ttf 18,932,8
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 160 $(srcdir)/fixedsys_jp.ttf 18,932,8
 
 sserife.fon: ms_sans_serif.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 129 $(srcdir)/ms_sans_serif.ttf 13,1252,5 16,1252,7 20,1252,8
