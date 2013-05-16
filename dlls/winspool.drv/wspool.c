@@ -105,20 +105,6 @@ BOOL load_backend(void)
 }
 
 /******************************************************************************
- * unload_backend [internal]
- *
- */
-static void unload_backend(void)
-{
-    EnterCriticalSection(&backend_cs);
-    backend = NULL;
-    FreeLibrary(hlocalspl);
-    LeaveCriticalSection(&backend_cs);
-    DeleteCriticalSection(&backend_cs);
-}
-
-
-/******************************************************************************
  *  DllMain
  *
  * Winspool entry point.
@@ -135,7 +121,9 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD reason, LPVOID lpReserved)
       break;
     }
     case DLL_PROCESS_DETACH:
-      unload_backend();
+      if (lpReserved) break;
+      DeleteCriticalSection(&backend_cs);
+      FreeLibrary(hlocalspl);
       break;
   }
 
