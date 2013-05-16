@@ -657,6 +657,55 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
                                forWindow:self];
     }
 
+    // Determine if, among Wine windows, this window is directly above or below
+    // a given other Wine window with no other Wine window intervening.
+    // Intervening non-Wine windows are ignored.
+    - (BOOL) isOrdered:(NSWindowOrderingMode)orderingMode relativeTo:(WineWindow*)otherWindow
+    {
+        NSNumber* windowNumber;
+        NSNumber* otherWindowNumber;
+        NSArray* windowNumbers;
+        NSUInteger windowIndex, otherWindowIndex, lowIndex, highIndex, i;
+
+        if (![self isVisible] || ![otherWindow isVisible])
+            return FALSE;
+
+        windowNumber = [NSNumber numberWithInteger:[self windowNumber]];
+        otherWindowNumber = [NSNumber numberWithInteger:[otherWindow windowNumber]];
+        windowNumbers = [[self class] windowNumbersWithOptions:0];
+        windowIndex = [windowNumbers indexOfObject:windowNumber];
+        otherWindowIndex = [windowNumbers indexOfObject:otherWindowNumber];
+
+        if (windowIndex == NSNotFound || otherWindowIndex == NSNotFound)
+            return FALSE;
+
+        if (orderingMode == NSWindowAbove)
+        {
+            lowIndex = windowIndex;
+            highIndex = otherWindowIndex;
+        }
+        else if (orderingMode == NSWindowBelow)
+        {
+            lowIndex = otherWindowIndex;
+            highIndex = windowIndex;
+        }
+        else
+            return FALSE;
+
+        if (highIndex <= lowIndex)
+            return FALSE;
+
+        for (i = lowIndex + 1; i < highIndex; i++)
+        {
+            NSInteger interveningWindowNumber = [[windowNumbers objectAtIndex:i] integerValue];
+            NSWindow* interveningWindow = [NSApp windowWithWindowNumber:interveningWindowNumber];
+            if ([interveningWindow isKindOfClass:[WineWindow class]])
+                return FALSE;
+        }
+
+        return TRUE;
+    }
+
     /* Returns whether or not the window was ordered in, which depends on if
        its frame intersects any screen. */
     - (BOOL) orderBelow:(WineWindow*)prev orAbove:(WineWindow*)next
@@ -665,6 +714,8 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         BOOL on_screen = frame_intersects_screens([self frame], [NSScreen screens]);
         if (on_screen)
         {
+            BOOL needAdjustWindowLevels = FALSE;
+
             [controller transformProcessToForeground];
 
             NSDisableScreenUpdates();
@@ -675,19 +726,24 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
                     [self setLevel:[latentParentWindow level]];
                 [latentParentWindow addChildWindow:self ordered:NSWindowAbove];
                 self.latentParentWindow = nil;
+                needAdjustWindowLevels = TRUE;
             }
             if (prev || next)
             {
                 WineWindow* other = [prev isVisible] ? prev : next;
                 NSWindowOrderingMode orderingMode = [prev isVisible] ? NSWindowBelow : NSWindowAbove;
 
-                // This window level may not be right for this window based
-                // on floating-ness, fullscreen-ness, etc.  But we set it
-                // temporarily to allow us to order the windows properly.
-                // Then the levels get fixed by -adjustWindowLevels.
-                if ([self level] != [other level])
-                    [self setLevel:[other level]];
-                [self orderWindow:orderingMode relativeTo:[other windowNumber]];
+                if (![self isOrdered:orderingMode relativeTo:other])
+                {
+                    // This window level may not be right for this window based
+                    // on floating-ness, fullscreen-ness, etc.  But we set it
+                    // temporarily to allow us to order the windows properly.
+                    // Then the levels get fixed by -adjustWindowLevels.
+                    if ([self level] != [other level])
+                        [self setLevel:[other level]];
+                    [self orderWindow:orderingMode relativeTo:[other windowNumber]];
+                    needAdjustWindowLevels = TRUE;
+                }
             }
             else
             {
@@ -697,8 +753,10 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
                 if (next && [self level] < [next level])
                     [self setLevel:[next level]];
                 [self orderFront:nil];
+                needAdjustWindowLevels = TRUE;
             }
-            [controller adjustWindowLevels];
+            if (needAdjustWindowLevels)
+                [controller adjustWindowLevels];
 
             NSEnableScreenUpdates();
 
