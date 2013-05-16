@@ -150,12 +150,20 @@ static HRESULT to_int(VARIANT *v, int *ret)
         *ret = V_I4(v);
         break;
     case VT_R8: {
-        double n = round(V_R8(v));
+        double n = floor(V_R8(v)+0.5);
+        INT32 i;
+
         if(!is_int32(n)) {
             FIXME("%lf is out of int range\n", n);
             return E_FAIL;
         }
-        *ret = n;
+
+        /* Round half to even */
+        i = n;
+        if(i%2 && n-V_R8(v) == 0.5)
+            i--;
+
+        *ret = i;
         break;
     }
     case VT_BOOL:
