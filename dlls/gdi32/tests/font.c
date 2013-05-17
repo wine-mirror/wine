@@ -4821,21 +4821,21 @@ static void test_vertical_font(void)
     num = pAddFontResourceExA(ttf_name, FR_PRIVATE, 0);
     ok(num == 2, "AddFontResourceExA should add 2 fonts from vertical.ttf\n");
 
-    check_vertical_font("@WineTestVertical", &installed, &selected, &gm, &hgi);
-    ok(installed, "@WineTestVertical is not installed\n");
-    ok(selected, "@WineTestVertical is not selected\n");
+    check_vertical_font("WineTestVertical", &installed, &selected, &gm, &hgi);
+    ok(installed, "WineTestVertical is not installed\n");
+    ok(selected, "WineTestVertical is not selected\n");
     ok(gm.gmBlackBoxX > gm.gmBlackBoxY,
        "gmBlackBoxX(%u) should be greater than gmBlackBoxY(%u) if horizontal\n",
        gm.gmBlackBoxX, gm.gmBlackBoxY);
 
-    check_vertical_font("@@WineTestVertical", &installed, &selected, &gm, &vgi);
-    ok(installed, "@@WineTestVertical is not installed\n");
-    ok(selected, "@@WineTestVertical is not selected\n");
-    ok(gm.gmBlackBoxX < gm.gmBlackBoxY,
+    check_vertical_font("@WineTestVertical", &installed, &selected, &gm, &vgi);
+    ok(installed, "@WineTestVertical is not installed\n");
+    ok(selected, "@WineTestVertical is not selected\n");
+    todo_wine ok(gm.gmBlackBoxX > gm.gmBlackBoxY,
        "gmBlackBoxX(%u) should be less than gmBlackBoxY(%u) if vertical\n",
        gm.gmBlackBoxX, gm.gmBlackBoxY);
 
-    ok(hgi == vgi, "different glyph h:%u v:%u\n", hgi, vgi);
+    todo_wine ok(hgi != vgi, "same glyph h:%u v:%u\n", hgi, vgi);
 
     ret = pRemoveFontResourceExA(ttf_name, FR_PRIVATE, 0);
     ok(ret, "RemoveFontResourceEx() error %d\n", GetLastError());
