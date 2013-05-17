@@ -149,9 +149,9 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD fdwReason, LPVOID fImpLoad)
         case DLL_PROCESS_ATTACH:
         break;
     case DLL_PROCESS_DETACH:
+        if (fImpLoad) break;
         if (SHDOCVW_hshell32) FreeLibrary(SHDOCVW_hshell32);
-        if(ieframe_instance)
-            FreeLibrary(ieframe_instance);
+        if (ieframe_instance) FreeLibrary(ieframe_instance);
         break;
     }
     return TRUE;
