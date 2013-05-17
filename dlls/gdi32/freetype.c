@@ -5841,6 +5841,8 @@ static DWORD freetype_GetGlyphIndices( PHYSDEV dev, LPCWSTR lpstr, INT count, LP
             }
             pgi[i] = default_char;
         }
+        else
+            pgi[i] = get_GSUB_vert_glyph(physdev->font, pgi[i]);
     }
     LeaveCriticalSection( &freetype_cs );
     return count;

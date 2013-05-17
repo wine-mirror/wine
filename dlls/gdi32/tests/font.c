@@ -4835,7 +4835,7 @@ static void test_vertical_font(void)
        "gmBlackBoxX(%u) should be less than gmBlackBoxY(%u) if vertical\n",
        gm.gmBlackBoxX, gm.gmBlackBoxY);
 
-    todo_wine ok(hgi != vgi, "same glyph h:%u v:%u\n", hgi, vgi);
+    ok(hgi != vgi, "same glyph h:%u v:%u\n", hgi, vgi);
 
     ret = pRemoveFontResourceExA(ttf_name, FR_PRIVATE, 0);
     ok(ret, "RemoveFontResourceEx() error %d\n", GetLastError());
