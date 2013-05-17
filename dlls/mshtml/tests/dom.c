@@ -7439,6 +7439,7 @@ static void test_quirks_mode(void)
 {
     run_domtest("<html></html>", check_quirks_mode);
     run_domtest("<!DOCTYPE html>\n<html></html>", check_strict_mode);
+    run_domtest("<!-- comment --><!DOCTYPE html>\n<html></html>", check_quirks_mode);
 }
 
 START_TEST(dom)
