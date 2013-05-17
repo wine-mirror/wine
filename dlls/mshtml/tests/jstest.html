@@ -179,6 +179,17 @@ function test_forin() {
     ok(cnt > 100, "cnt = " + cnt);
 }
 
+function test_customtag() {
+    document.body.innerHTML = 'test<unk><br>';
+
+    var children = document.body.childNodes;
+
+    ok(children.length === 3, "children.length = " + children.length);
+    ok(children[0].data === "test", "children[0].data = " + children[0].data);
+    ok(children[1].tagName === "UNK", "children[1].tagName = " + children[1].tagName);
+    ok(children[2].tagName === "BR", "children[2].tagName = " + children[2].tagName);
+}
+
 var globalVar = false;
 
 function runTests() {
@@ -200,6 +211,7 @@ function runTests() {
     test_arg_conv();
     test_override_functions();
     test_forin();
+    test_customtag();
 
     var r = window.execScript("globalVar = true;");
     ok(r === undefined, "execScript returned " + r);
