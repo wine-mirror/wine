@@ -2429,7 +2429,7 @@ void MENU_EndMenu( HWND hwnd )
 {
     POPUPMENU *menu;
     menu = top_popup_hmenu ? MENU_GetMenu( top_popup_hmenu ) : NULL;
-    if (menu && hwnd == menu->hwndOwner) EndMenu();
+    if (menu && (hwnd == menu->hWnd || hwnd == menu->hwndOwner)) EndMenu();
 }
 
 /***********************************************************************
