@@ -40,17 +40,14 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     switch (fdwReason)
     {
         case DLL_PROCESS_ATTACH:
-        {
             DisableThreadLibraryCalls(hinstDLL);
             /* FIXME: for now, we act as if the pcsc daemon is always started */
             g_startedEvent = CreateEventA(NULL,TRUE,TRUE,NULL);
             break;
-        }
         case DLL_PROCESS_DETACH:
-        {
+            if (lpvReserved) break;
             CloseHandle(g_startedEvent);
             break;
-        }
     }
 
     return TRUE;
