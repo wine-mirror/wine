@@ -190,6 +190,28 @@ function test_customtag() {
     ok(children[2].tagName === "BR", "children[2].tagName = " + children[2].tagName);
 }
 
+function test_whitespace_nodes() {
+    document.body.innerHTML = '<table id="tid"> <tr> \t<td>\n \t<div></div> </td>\n </tr> </table>';
+
+    var t = document.getElementById("tid");
+    ok(t.childNodes.length === 1, "t.childNodes.length = " + t.childNodes.length);
+    ok(t.childNodes[0].tagName === "TBODY", "t.childNodes[0].tagName = " + t.childNodes[0].tagName);
+
+    var row = t.rows[0];
+    ok(row.childNodes.length === 1, "row.childNodes.length = " + row.childNodes.length);
+    ok(row.childNodes[0].tagName === "TD", "row.childNodes[0].tagName = " + row.childNodes[0].tagName);
+
+    var cell = row.cells[0];
+    ok(cell.childNodes.length === 1, "cell.childNodes.length = " + cell.childNodes.length);
+
+
+    document.body.innerHTML = '<table id="tid"> x<tr> \tx<td>\n \tx<div></div> </td>\n </tr> </table>';
+
+    t = document.getElementById("tid");
+    ok(t.rows[0].cells[0].childNodes.length === 2,
+        "t.rows[0].cells[0].childNodes.length = " + t.rows[0].cells[0].childNodes.length);
+}
+
 var globalVar = false;
 
 function runTests() {
@@ -212,6 +234,7 @@ function runTests() {
     test_override_functions();
     test_forin();
     test_customtag();
+    test_whitespace_nodes();
 
     var r = window.execScript("globalVar = true;");
     ok(r === undefined, "execScript returned " + r);
