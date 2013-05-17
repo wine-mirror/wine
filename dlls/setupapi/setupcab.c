@@ -114,14 +114,6 @@ static BOOL LoadCABINETDll(void)
     return TRUE;
 }
 
-static void UnloadCABINETDll(void)
-{
-  if (CABINET_hInstance) {
-    FreeLibrary(CABINET_hInstance);
-    CABINET_hInstance = 0;
-  }
-}
-
 /* FDICreate callbacks */
 
 static void * CDECL sc_cb_alloc(ULONG cb)
@@ -701,7 +693,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         SETUPAPI_hInstance = hinstDLL;
         break;
     case DLL_PROCESS_DETACH:
-        UnloadCABINETDll();
+        if (lpvReserved) break;
+        if (CABINET_hInstance) FreeLibrary(CABINET_hInstance);
         break;
     }
 
