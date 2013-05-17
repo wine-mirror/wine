@@ -332,6 +332,8 @@ UINT msi_parse_command_line( MSIPACKAGE *package, LPCWSTR szCommandLine,
         len = ptr2 - ptr;
         if (!len) return ERROR_INVALID_COMMAND_LINE;
 
+        while (ptr[len - 1] == ' ') len--;
+
         prop = msi_alloc( (len + 1) * sizeof(WCHAR) );
         memcpy( prop, ptr, len * sizeof(WCHAR) );
         prop[len] = 0;
