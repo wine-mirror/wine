@@ -139,7 +139,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
             break;
 
 	case DLL_PROCESS_DETACH:
-
+            if (reserved) break;
 	    DeleteObject( PSDRV_DefaultFont );
 	    HeapDestroy( PSDRV_Heap );
             break;
