@@ -51,6 +51,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
         load_mapi_providers();
         break;
     case DLL_PROCESS_DETACH:
+        if (fImpLoad) break;
 	TRACE("DLL_PROCESS_DETACH: %d objects remaining\n", MAPI_ObjectCount);
         unload_mapi_providers();
 	break;
