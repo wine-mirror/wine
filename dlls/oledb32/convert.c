@@ -534,9 +534,18 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         }
         break;
         case DBTYPE_VARIANT:
-            VariantInit(&tmp);
-            if ((hr = VariantChangeType(&tmp, (VARIANT*)src, 0, VT_BSTR)) == S_OK)
-                *d = V_BSTR(&tmp);
+            if(V_VT((VARIANT*)src) == VT_NULL)
+            {
+                *dst_status = DBSTATUS_S_ISNULL;
+                *dst_len = get_length(DBTYPE_BSTR);
+                return S_OK;
+            }
+            else
+            {
+                VariantInit(&tmp);
+                if ((hr = VariantChangeType(&tmp, (VARIANT*)src, 0, VT_BSTR)) == S_OK)
+                    *d = V_BSTR(&tmp);
+            }
             break;
         default: FIXME("Unimplemented conversion %04x -> BSTR\n", src_type); return E_NOTIMPL;
         }

@@ -977,6 +977,14 @@ static void test_converttobstr(void)
     ok(!lstrcmpW(b, dst), "got %s\n", wine_dbgstr_w(dst));
     SysFreeString(dst);
     SysFreeString(b);
+
+    V_VT(&v) = VT_NULL;
+    dst = (void*)0x1234;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_VARIANT, DBTYPE_BSTR, 0, &dst_len, &v, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_ISNULL, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(BSTR), "got %ld\n", dst_len);
+    ok(dst == (void*)0x1234, "got %p\n", dst);
 }
 
 static void test_converttowstr(void)
