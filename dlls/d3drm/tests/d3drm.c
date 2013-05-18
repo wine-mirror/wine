@@ -856,41 +856,41 @@ static void test_Face(void)
         ok(count == 3, "Wrong number of vertices %d (must be 3)\n", count);
         ok(U1(v2[0]).x == U1(v1[0]).x, "Wrong component v2[0].x = %f (expected %f)\n",
            U1(v2[0]).x, U1(v1[0]).x);
-        ok(U1(v2[0]).y == U1(v1[0]).y, "Wrong component v2[0].y = %f (expected %f)\n",
-           U1(v2[0]).y, U1(v1[0]).y);
-        ok(U1(v2[0]).z == U1(v1[0]).z, "Wrong component v2[0].z = %f (expected %f)\n",
-           U1(v2[0]).z, U1(v1[0]).z);
+        ok(U2(v2[0]).y == U2(v1[0]).y, "Wrong component v2[0].y = %f (expected %f)\n",
+           U2(v2[0]).y, U2(v1[0]).y);
+        ok(U3(v2[0]).z == U3(v1[0]).z, "Wrong component v2[0].z = %f (expected %f)\n",
+           U3(v2[0]).z, U3(v1[0]).z);
         ok(U1(v2[1]).x == U1(v1[1]).x, "Wrong component v2[1].x = %f (expected %f)\n",
            U1(v2[1]).x, U1(v1[1]).x);
-        ok(U1(v2[1]).y == U1(v1[1]).y, "Wrong component v2[1].y = %f (expected %f)\n",
-           U1(v2[1]).y, U1(v1[1]).y);
-        ok(U1(v2[1]).z == U1(v1[1]).z, "Wrong component v2[1].z = %f (expected %f)\n",
-           U1(v2[1]).z, U1(v1[1]).z);
+        ok(U2(v2[1]).y == U2(v1[1]).y, "Wrong component v2[1].y = %f (expected %f)\n",
+           U2(v2[1]).y, U2(v1[1]).y);
+        ok(U3(v2[1]).z == U3(v1[1]).z, "Wrong component v2[1].z = %f (expected %f)\n",
+           U3(v2[1]).z, U3(v1[1]).z);
         ok(U1(v2[2]).x == U1(v1[2]).x, "Wrong component v2[2].x = %f (expected %f)\n",
            U1(v2[2]).x, U1(v1[2]).x);
-        ok(U1(v2[2]).y == U1(v1[2]).y, "Wrong component v2[2].y = %f (expected %f)\n",
-           U1(v2[2]).y, U1(v1[2]).y);
-        ok(U1(v2[2]).z == U1(v1[2]).z, "Wrong component v2[2].z = %f (expected %f)\n",
-           U1(v2[2]).z, U1(v1[2]).z);
+        ok(U2(v2[2]).y == U2(v1[2]).y, "Wrong component v2[2].y = %f (expected %f)\n",
+           U2(v2[2]).y, U2(v1[2]).y);
+        ok(U3(v2[2]).z == U3(v1[2]).z, "Wrong component v2[2].z = %f (expected %f)\n",
+           U3(v2[2]).z, U3(v1[2]).z);
 
         ok(U1(n2[0]).x == U1(n1[0]).x, "Wrong component n2[0].x = %f (expected %f)\n",
            U1(n2[0]).x, U1(n1[0]).x);
-        ok(U1(n2[0]).y == U1(n1[0]).y, "Wrong component n2[0].y = %f (expected %f)\n",
-           U1(n2[0]).y, U1(n1[0]).y);
-        ok(U1(n2[0]).z == U1(n1[0]).z, "Wrong component n2[0].z = %f (expected %f)\n",
-           U1(n2[0]).z, U1(n1[0]).z);
+        ok(U2(n2[0]).y == U2(n1[0]).y, "Wrong component n2[0].y = %f (expected %f)\n",
+           U2(n2[0]).y, U2(n1[0]).y);
+        ok(U3(n2[0]).z == U3(n1[0]).z, "Wrong component n2[0].z = %f (expected %f)\n",
+           U3(n2[0]).z, U3(n1[0]).z);
         ok(U1(n2[1]).x == U1(n1[1]).x, "Wrong component n2[1].x = %f (expected %f)\n",
            U1(n2[1]).x, U1(n1[1]).x);
-        ok(U1(n2[1]).y == U1(n1[1]).y, "Wrong component n2[1].y = %f (expected %f)\n",
-           U1(n2[1]).y, U1(n1[1]).y);
-        ok(U1(n2[1]).z == U1(n1[1]).z, "Wrong component n2[1].z = %f (expected %f)\n",
-           U1(n2[1]).z, U1(n1[1]).z);
+        ok(U2(n2[1]).y == U2(n1[1]).y, "Wrong component n2[1].y = %f (expected %f)\n",
+           U2(n2[1]).y, U2(n1[1]).y);
+        ok(U3(n2[1]).z == U3(n1[1]).z, "Wrong component n2[1].z = %f (expected %f)\n",
+           U3(n2[1]).z, U3(n1[1]).z);
         ok(U1(n2[2]).x == U1(n1[2]).x, "Wrong component n2[2].x = %f (expected %f)\n",
            U1(n2[2]).x, U1(n1[2]).x);
-        ok(U1(n2[2]).y == U1(n1[2]).y, "Wrong component n2[2].y = %f (expected %f)\n",
-           U1(n2[2]).y, U1(n1[2]).y);
-        ok(U1(n2[2]).z == U1(n1[2]).z, "Wrong component n2[2].z = %f (expected %f)\n",
-           U1(n2[2]).z, U1(n1[2]).z);
+        ok(U2(n2[2]).y == U2(n1[2]).y, "Wrong component n2[2].y = %f (expected %f)\n",
+           U2(n2[2]).y, U2(n1[2]).y);
+        ok(U3(n2[2]).z == U3(n1[2]).z, "Wrong component n2[2].z = %f (expected %f)\n",
+           U3(n2[2]).z, U3(n1[2]).z);
 
         IDirect3DRMFace_Release(face);
         IDirect3DRMFaceArray_Release(array1);
