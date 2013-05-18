@@ -7,7 +7,7 @@
 @ stub GetAddSitesDisplayUrl
 @ stub ImportExportPFX
 @ stub LaunchAddSitesDialog
-@ stub LaunchConnectionDialog
+@ stdcall LaunchConnectionDialog(long)
 @ stdcall LaunchInternetControlPanel(long)
 @ stub LaunchPerSitePrivacyActionDialog
 @ stub LaunchPopupWindowManagementDialog

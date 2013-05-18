@@ -212,11 +212,21 @@ BOOL WINAPI LaunchInternetControlPanel(HWND parent)
 }
 
 /*********************************************************************
+ * LaunchConnectionDialog (inetcpl.@)
+ *
+ */
+BOOL WINAPI LaunchConnectionDialog(HWND hParent)
+{
+    FIXME("(%p): stub\n", hParent);
+    return FALSE;
+}
+
+/*********************************************************************
  * LaunchInternetControlPanel (inetcpl.@)
  *
  */
 BOOL WINAPI LaunchPrivacyDialog(HWND hParent)
 {
-    FIXME(": stub\n");
+    FIXME("(%p): stub\n", hParent);
     return FALSE;
 }
