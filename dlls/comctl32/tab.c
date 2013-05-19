@@ -1023,37 +1023,18 @@ static void TAB_SetupScrolling(
     /*
      * Calculate the position of the scroll control.
      */
-    if(infoPtr->dwStyle & TCS_VERTICAL)
-    {
-      controlPos.right = clientRect->right;
-      controlPos.left  = controlPos.right - 2 * GetSystemMetrics(SM_CXHSCROLL);
+    controlPos.right = clientRect->right;
+    controlPos.left  = controlPos.right - 2 * GetSystemMetrics(SM_CXHSCROLL);
 
-      if (infoPtr->dwStyle & TCS_BOTTOM)
-      {
-        controlPos.top    = clientRect->bottom - infoPtr->tabHeight;
-        controlPos.bottom = controlPos.top + GetSystemMetrics(SM_CYHSCROLL);
-      }
-      else
-      {
-        controlPos.bottom = clientRect->top + infoPtr->tabHeight;
-        controlPos.top    = controlPos.bottom - GetSystemMetrics(SM_CYHSCROLL);
-      }
+    if (infoPtr->dwStyle & TCS_BOTTOM)
+    {
+      controlPos.top    = clientRect->bottom - infoPtr->tabHeight;
+      controlPos.bottom = controlPos.top + GetSystemMetrics(SM_CYHSCROLL);
     }
     else
     {
-      controlPos.right = clientRect->right;
-      controlPos.left  = controlPos.right - 2 * GetSystemMetrics(SM_CXHSCROLL);
-
-      if (infoPtr->dwStyle & TCS_BOTTOM)
-      {
-        controlPos.top    = clientRect->bottom - infoPtr->tabHeight;
-        controlPos.bottom = controlPos.top + GetSystemMetrics(SM_CYHSCROLL);
-      }
-      else
-      {
-        controlPos.bottom = clientRect->top + infoPtr->tabHeight;
-        controlPos.top    = controlPos.bottom - GetSystemMetrics(SM_CYHSCROLL);
-      }
+      controlPos.bottom = clientRect->top + infoPtr->tabHeight;
+      controlPos.top    = controlPos.bottom - GetSystemMetrics(SM_CYHSCROLL);
     }
 
     /*
