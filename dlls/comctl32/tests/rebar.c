@@ -124,7 +124,9 @@ static HWND build_toolbar(int nr, HWND hParent)
     return hToolbar;
 }
 
-static LRESULT CALLBACK MyWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+static int g_parent_measureitem;
+
+static LRESULT CALLBACK parent_wndproc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch (msg)
     {
@@ -134,6 +136,9 @@ static LRESULT CALLBACK MyWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
                 if (lpnm->code == RBN_HEIGHTCHANGE)
                     GetClientRect(lpnm->hwndFrom, &height_change_notify_rect);
             }
+            break;
+        case WM_MEASUREITEM:
+            g_parent_measureitem++;
             break;
     }
     return DefWindowProcA(hWnd, msg, wParam, lParam);
@@ -1056,7 +1061,7 @@ static BOOL register_parent_wnd_class(void)
     wc.hbrBackground = GetSysColorBrush(COLOR_WINDOW);
     wc.lpszMenuName = NULL;
     wc.lpszClassName = "MyTestWnd";
-    wc.lpfnWndProc = MyWndProc;
+    wc.lpfnWndProc = parent_wndproc;
 
     return RegisterClassA(&wc);
 }
@@ -1106,6 +1111,20 @@ static void test_showband(void)
     DestroyWindow(hRebar);
 }
 
+static void test_notification(void)
+{
+    MEASUREITEMSTRUCT mis;
+    HWND rebar;
+
+    rebar = create_rebar_control();
+
+    g_parent_measureitem = 0;
+    SendMessageA(rebar, WM_MEASUREITEM, 0, (LPARAM)&mis);
+    ok(g_parent_measureitem == 1, "got %d\n", g_parent_measureitem);
+
+    DestroyWindow(rebar);
+}
+
 START_TEST(rebar)
 {
     HMODULE hComctl32;
@@ -1132,6 +1151,7 @@ START_TEST(rebar)
     test_bandinfo();
     test_colors();
     test_showband();
+    test_notification();
 
     if(!is_font_installed("System") || !is_font_installed("Tahoma"))
     {

@@ -46,7 +46,6 @@
  *   - RB_SETTOOLTIPS
  *   - WM_CHARTOITEM
  *   - WM_LBUTTONDBLCLK
- *   - WM_MEASUREITEM
  *   - WM_PALETTECHANGED
  *   - WM_QUERYNEWPALETTE
  *   - WM_RBUTTONDOWN
@@ -3723,6 +3722,7 @@ REBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_COMMAND:
 	case WM_DRAWITEM:
 	case WM_NOTIFY:
+        case WM_MEASUREITEM:
             return SendMessageW(REBAR_GetNotifyParent (infoPtr), uMsg, wParam, lParam);
 
 
@@ -3747,8 +3747,6 @@ REBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_LBUTTONUP:
 	    return REBAR_LButtonUp (infoPtr);
-
-/*      case WM_MEASUREITEM:    supported according to ControlSpy */
 
 	case WM_MOUSEMOVE:
 	    return REBAR_MouseMove (infoPtr, lParam);
