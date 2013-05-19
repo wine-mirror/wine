@@ -50,6 +50,7 @@ enum format_type {
     FORMAT_ARGBF16,/* float 16 */
     FORMAT_ARGBF,  /* float */
     FORMAT_DXT,
+    FORMAT_INDEX,
     FORMAT_UNKNOWN
 };
 
@@ -63,7 +64,7 @@ struct pixel_format_desc {
     UINT block_byte_count;
     enum format_type type;
     void (*from_rgba)(const struct vec4 *src, struct vec4 *dst);
-    void (*to_rgba)(const struct vec4 *src, struct vec4 *dst);
+    void (*to_rgba)(const struct vec4 *src, struct vec4 *dst, const PALETTEENTRY *palette);
 };
 
 HRESULT map_view_of_file(LPCWSTR filename, LPVOID *buffer, DWORD *length) DECLSPEC_HIDDEN;
@@ -80,11 +81,11 @@ void copy_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slice_pitch,
 void convert_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slice_pitch,
     const struct volume *src_size, const struct pixel_format_desc *src_format,
     BYTE *dst, UINT dst_row_pitch, UINT dst_slice_pitch, const struct volume *dst_size,
-    const struct pixel_format_desc *dst_format, D3DCOLOR color_key) DECLSPEC_HIDDEN;
+    const struct pixel_format_desc *dst_format, D3DCOLOR color_key, const PALETTEENTRY *palette) DECLSPEC_HIDDEN;
 void point_filter_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slice_pitch,
     const struct volume *src_size, const struct pixel_format_desc *src_format,
     BYTE *dst, UINT dst_row_pitch, UINT dst_slice_pitch, const struct volume *dst_size,
-    const struct pixel_format_desc *dst_format, D3DCOLOR color_key) DECLSPEC_HIDDEN;
+    const struct pixel_format_desc *dst_format, D3DCOLOR color_key, const PALETTEENTRY *palette) DECLSPEC_HIDDEN;
 
 HRESULT load_texture_from_dds(IDirect3DTexture9 *texture, const void *src_data, const PALETTEENTRY *palette,
     DWORD filter, D3DCOLOR color_key, const D3DXIMAGE_INFO *src_info) DECLSPEC_HIDDEN;

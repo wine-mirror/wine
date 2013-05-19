@@ -1025,7 +1025,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileInMemory(IDirect3DSurface9 *pDestSurface,
     D3DXIMAGE_INFO imginfo;
     HRESULT hr;
 
-    IWICImagingFactory *factory;
+    IWICImagingFactory *factory = NULL;
     IWICBitmapDecoder *decoder;
     IWICBitmapFrameDecode *bitmapframe;
     IWICStream *stream;
@@ -1084,6 +1084,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileInMemory(IDirect3DSurface9 *pDestSurface,
     if (FAILED(IWICImagingFactory_CreateStream(factory, &stream)))
     {
         IWICImagingFactory_Release(factory);
+        factory = NULL;
         goto cleanup_err;
     }
 
@@ -1092,7 +1093,6 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileInMemory(IDirect3DSurface9 *pDestSurface,
     hr = IWICImagingFactory_CreateDecoderFromStream(factory, (IStream*)stream, NULL, 0, &decoder);
 
     IWICStream_Release(stream);
-    IWICImagingFactory_Release(factory);
 
     if (FAILED(hr))
         goto cleanup_err;
@@ -1113,6 +1113,8 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileInMemory(IDirect3DSurface9 *pDestSurface,
     {
         BYTE *buffer;
         DWORD pitch;
+        PALETTEENTRY *palette = NULL;
+        WICColor *colors = NULL;
 
         pitch = formatdesc->bytes_per_pixel * wicrect.Width;
         buffer = HeapAlloc(GetProcessHeap(), 0, pitch * wicrect.Height);
@@ -1120,13 +1122,51 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileInMemory(IDirect3DSurface9 *pDestSurface,
         hr = IWICBitmapFrameDecode_CopyPixels(bitmapframe, &wicrect, pitch,
                                               pitch * wicrect.Height, buffer);
 
+        if (SUCCEEDED(hr) && (formatdesc->type == FORMAT_INDEX))
+        {
+            IWICPalette *wic_palette = NULL;
+            UINT nb_colors;
+
+            hr = IWICImagingFactory_CreatePalette(factory, &wic_palette);
+            if (SUCCEEDED(hr))
+                hr = IWICBitmapFrameDecode_CopyPalette(bitmapframe, wic_palette);
+            if (SUCCEEDED(hr))
+                hr = IWICPalette_GetColorCount(wic_palette, &nb_colors);
+            if (SUCCEEDED(hr))
+            {
+                colors = HeapAlloc(GetProcessHeap(), 0, nb_colors * sizeof(colors));
+                palette = HeapAlloc(GetProcessHeap(), 0, nb_colors * sizeof(palette));
+                if (!colors || !palette)
+                    hr = E_OUTOFMEMORY;
+            }
+            if (SUCCEEDED(hr))
+                hr = IWICPalette_GetColors(wic_palette, nb_colors, colors, &nb_colors);
+            if (SUCCEEDED(hr))
+            {
+                UINT i;
+
+                /* Convert colors from WICColor (ARGB) to PALETTEENTRY (ABGR) */
+                for (i = 0; i < nb_colors; i++)
+                {
+                    palette[i].peRed   = (colors[i] >> 16) & 0xff;
+                    palette[i].peGreen = (colors[i] >> 8) & 0xff;
+                    palette[i].peBlue  = colors[i] & 0xff;
+                    palette[i].peFlags = (colors[i] >> 24) & 0xff; /* peFlags is the alpha component in DX8 and higher */
+                }
+            }
+            if (wic_palette)
+                IWICPalette_Release(wic_palette);
+        }
+
         if (SUCCEEDED(hr))
         {
             hr = D3DXLoadSurfaceFromMemory(pDestSurface, pDestPalette, pDestRect,
                                            buffer, imginfo.Format, pitch,
-                                           NULL, &rect, dwFilter, Colorkey);
+                                           palette, &rect, dwFilter, Colorkey);
         }
 
+        HeapFree(GetProcessHeap(), 0, colors);
+        HeapFree(GetProcessHeap(), 0, palette);
         HeapFree(GetProcessHeap(), 0, buffer);
     }
 
@@ -1136,6 +1176,9 @@ cleanup_bmp:
     IWICBitmapDecoder_Release(decoder);
 
 cleanup_err:
+    if (factory)
+        IWICImagingFactory_Release(factory);
+
     CoUninitialize();
 
     if (imginfo.ImageFileFormat == D3DXIFF_DIB)
@@ -1466,7 +1509,8 @@ void copy_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slice_pitch,
  */
 void convert_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slice_pitch, const struct volume *src_size,
         const struct pixel_format_desc *src_format, BYTE *dst, UINT dst_row_pitch, UINT dst_slice_pitch,
-        const struct volume *dst_size, const struct pixel_format_desc *dst_format, D3DCOLOR color_key)
+        const struct volume *dst_size, const struct pixel_format_desc *dst_format, D3DCOLOR color_key,
+        const PALETTEENTRY *palette)
 {
     struct argb_conversion_info conv_info, ck_conv_info;
     const struct pixel_format_desc *ck_format = NULL;
@@ -1520,7 +1564,7 @@ void convert_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slice_pit
 
                     format_to_vec4(src_format, &pixel, &color);
                     if (src_format->to_rgba)
-                        src_format->to_rgba(&color, &tmp);
+                        src_format->to_rgba(&color, &tmp, palette);
                     else
                         tmp = color;
 
@@ -1565,7 +1609,8 @@ void convert_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slice_pit
  */
 void point_filter_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slice_pitch, const struct volume *src_size,
         const struct pixel_format_desc *src_format, BYTE *dst, UINT dst_row_pitch, UINT dst_slice_pitch,
-        const struct volume *dst_size, const struct pixel_format_desc *dst_format, D3DCOLOR color_key)
+        const struct volume *dst_size, const struct pixel_format_desc *dst_format, D3DCOLOR color_key,
+        const PALETTEENTRY *palette)
 {
     struct argb_conversion_info conv_info, ck_conv_info;
     const struct pixel_format_desc *ck_format = NULL;
@@ -1619,7 +1664,7 @@ void point_filter_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slic
 
                     format_to_vec4(src_format, &pixel, &color);
                     if (src_format->to_rgba)
-                        src_format->to_rgba(&color, &tmp);
+                        src_format->to_rgba(&color, &tmp, palette);
                     else
                         tmp = color;
 
@@ -1767,7 +1812,8 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
     }
     else /* Stretching or format conversion. */
     {
-        if (srcformatdesc->type != FORMAT_ARGB || destformatdesc->type != FORMAT_ARGB)
+        if (((srcformatdesc->type != FORMAT_ARGB) && (srcformatdesc->type != FORMAT_INDEX)) ||
+            (destformatdesc->type != FORMAT_ARGB))
         {
             FIXME("Format conversion missing %#x -> %#x\n", src_format, surfdesc.Format);
             return E_NOTIMPL;
@@ -1779,7 +1825,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
         if ((filter & 0xf) == D3DX_FILTER_NONE)
         {
             convert_argb_pixels(src_memory, src_pitch, 0, &src_size, srcformatdesc,
-                    lockrect.pBits, lockrect.Pitch, 0, &dst_size, destformatdesc, color_key);
+                    lockrect.pBits, lockrect.Pitch, 0, &dst_size, destformatdesc, color_key, src_palette);
         }
         else /* if ((filter & 0xf) == D3DX_FILTER_POINT) */
         {
@@ -1789,7 +1835,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
             /* Always apply a point filter until D3DX_FILTER_LINEAR,
              * D3DX_FILTER_TRIANGLE and D3DX_FILTER_BOX are implemented. */
             point_filter_argb_pixels(src_memory, src_pitch, 0, &src_size, srcformatdesc,
-                    lockrect.pBits, lockrect.Pitch, 0, &dst_size, destformatdesc, color_key);
+                    lockrect.pBits, lockrect.Pitch, 0, &dst_size, destformatdesc, color_key, src_palette);
         }
 
         IDirect3DSurface9_UnlockRect(dst_surface);
@@ -2064,7 +2110,7 @@ HRESULT WINAPI D3DXSaveSurfaceToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE
             if (SUCCEEDED(hr))
             {
                 convert_argb_pixels(locked_rect.pBits, locked_rect.Pitch, 0, &size, src_format_desc,
-                    dst_data, dst_pitch, 0, &size, dst_format_desc, 0);
+                    dst_data, dst_pitch, 0, &size, dst_format_desc, 0, NULL);
                 IDirect3DSurface9_UnlockRect(src_surface);
             }
 

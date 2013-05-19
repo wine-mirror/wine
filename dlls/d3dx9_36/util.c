@@ -28,12 +28,22 @@ static void la_from_rgba(const struct vec4 *rgba, struct vec4 *la)
     la->w = rgba->w;
 }
 
-static void la_to_rgba(const struct vec4 *la, struct vec4 *rgba)
+static void la_to_rgba(const struct vec4 *la, struct vec4 *rgba, const PALETTEENTRY *palette)
 {
     rgba->x = la->x;
     rgba->y = la->x;
     rgba->z = la->x;
     rgba->w = la->w;
+}
+
+static void index_to_rgba(const struct vec4 *index, struct vec4 *rgba, const PALETTEENTRY *palette)
+{
+    ULONG idx = (ULONG)(index->x * 255.0f + 0.5f);
+
+    rgba->x = palette[idx].peRed / 255.0f;
+    rgba->y = palette[idx].peGreen / 255.0f;
+    rgba->z = palette[idx].peBlue / 255.0f;
+    rgba->w = palette[idx].peFlags / 255.0f; /* peFlags is the alpha component in DX8 and higher */
 }
 
 /************************************************************
@@ -73,7 +83,7 @@ static const struct pixel_format_desc formats[] =
     {D3DFMT_DXT5,          { 0,  0,  0,  0}, { 0,  0,  0,  0},  1, 4, 4, 16, FORMAT_DXT,     NULL,         NULL      },
     {D3DFMT_A16B16G16R16F, {16, 16, 16, 16}, {48,  0, 16, 32},  8, 1, 1,  8, FORMAT_ARGBF16, NULL,         NULL      },
     {D3DFMT_A32B32G32R32F, {32, 32, 32, 32}, {96,  0, 32, 64}, 16, 1, 1, 16, FORMAT_ARGBF,   NULL,         NULL      },
-    {D3DFMT_P8,            { 8,  8,  8,  8}, { 0,  0,  0,  0},  1, 1, 1,  1, FORMAT_UNKNOWN, NULL,         NULL      },
+    {D3DFMT_P8,            { 8,  8,  8,  8}, { 0,  0,  0,  0},  1, 1, 1,  1, FORMAT_INDEX,   NULL,         index_to_rgba},
     /* marks last element */
     {D3DFMT_UNKNOWN,       { 0,  0,  0,  0}, { 0,  0,  0,  0},  0, 1, 1,  0, FORMAT_UNKNOWN, NULL,         NULL      },
 };

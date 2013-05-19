@@ -185,7 +185,9 @@ HRESULT WINAPI D3DXLoadVolumeFromMemory(IDirect3DVolume9 *dst_volume,
     {
         const BYTE *src_addr;
 
-        if (src_format_desc->type != FORMAT_ARGB || dst_format_desc->type != FORMAT_ARGB)
+
+        if (((src_format_desc->type != FORMAT_ARGB) && (src_format_desc->type != FORMAT_INDEX)) ||
+            (dst_format_desc->type != FORMAT_ARGB))
         {
             FIXME("Pixel format conversion not implemented %#x -> %#x\n",
                     src_format_desc->format, dst_format_desc->format);
@@ -203,7 +205,8 @@ HRESULT WINAPI D3DXLoadVolumeFromMemory(IDirect3DVolume9 *dst_volume,
         if ((filter & 0xf) == D3DX_FILTER_NONE)
         {
             convert_argb_pixels(src_memory, src_row_pitch, src_slice_pitch, &src_size, src_format_desc,
-                    locked_box.pBits, locked_box.RowPitch, locked_box.SlicePitch, &dst_size, dst_format_desc, color_key);
+                    locked_box.pBits, locked_box.RowPitch, locked_box.SlicePitch, &dst_size, dst_format_desc, color_key,
+                    src_palette);
         }
         else
         {
@@ -211,7 +214,8 @@ HRESULT WINAPI D3DXLoadVolumeFromMemory(IDirect3DVolume9 *dst_volume,
                 FIXME("Unhandled filter %#x.\n", filter);
 
             point_filter_argb_pixels(src_addr, src_row_pitch, src_slice_pitch, &src_size, src_format_desc,
-                    locked_box.pBits, locked_box.RowPitch, locked_box.SlicePitch, &dst_size, dst_format_desc, color_key);
+                    locked_box.pBits, locked_box.RowPitch, locked_box.SlicePitch, &dst_size, dst_format_desc, color_key,
+                    src_palette);
         }
 
         IDirect3DVolume9_UnlockBox(dst_volume);
