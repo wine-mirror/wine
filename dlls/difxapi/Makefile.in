@@ -1,0 +1,3 @@
+MODULE = difxapi.dll
+
+@MAKE_DLL_RULES@

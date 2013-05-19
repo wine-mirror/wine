@@ -1,0 +1,10 @@
+@ stub DIFXAPISetLogCallbackA
+@ stub DIFXAPISetLogCallbackW
+@ stub DriverPackageGetPathA
+@ stub DriverPackageGetPathW
+@ stub DriverPackageInstallA
+@ stub DriverPackageInstallW
+@ stub DriverPackagePreinstallA
+@ stub DriverPackagePreinstallW
+@ stub DriverPackageUninstallA
+@ stub DriverPackageUninstallW

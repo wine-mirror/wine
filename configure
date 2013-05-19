@@ -15806,6 +15806,7 @@ wine_fn_config_test dlls/ddrawex/tests ddrawex_test
 wine_fn_config_dll devenum enable_devenum po
 wine_fn_config_test dlls/devenum/tests devenum_test
 wine_fn_config_dll dhcpcsvc enable_dhcpcsvc
+wine_fn_config_dll difxapi enable_difxapi
 wine_fn_config_dll dinput enable_dinput implib,po,staticimplib
 wine_fn_config_test dlls/dinput/tests dinput_test
 wine_fn_config_dll dinput8 enable_dinput8 implib
