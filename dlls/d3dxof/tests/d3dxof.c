@@ -84,6 +84,15 @@ static char empty_bzip_file[] = "xof 0302bzip0064\x11\x00\x00\x00\x01\x00\x05\x0
 static char empty_cmp_file[]  = "xof 0302cmp 0064";
 static char empty_xxxx_file[] = "xof 0302xxxx0064";
 
+static char templates_bad_file_type1[]      = "xOf 0302txt 0064\n";
+static char templates_bad_file_version[]    = "xof 0102txt 0064\n";
+static char templates_bad_file_type2[]      = "xof 0302foo 0064\n";
+static char templates_bad_file_float_size[] = "xof 0302txt 0050\n";
+
+static char templates_parse_error[] =
+"xof 0302txt 0064"
+"foobar;\n";
+
 static char object_noname[] =
 "xof 0302txt 0064\n"
 "Header\n"
@@ -91,7 +100,7 @@ static char object_noname[] =
 "1; 2; 3;\n"
 "}\n";
 
-static char template_syntax_empty_array[] =
+static char template_syntax_array_mixed[] =
 "xof 0302txt 0064\n"
 "template Buffer\n"
 "{\n"
@@ -139,22 +148,6 @@ static char object_syntax_string_with_separator[] =
 "{\n"
 "\"foo;bar\";\n"
 "}\n";
-
-static char templates_bad_file_type1[] =
-"xOf 0302txt 0064\n";
-
-static char templates_bad_file_version[] =
-"xof 0102txt 0064\n";
-
-static char templates_bad_file_type2[] =
-"xof 0302foo 0064\n";
-
-static char templates_bad_file_float_size[] =
-"xof 0302txt 0050\n";
-
-static char templates_parse_error[] =
-"xof 0302txt 0064"
-"foobar;\n";
 
 static void init_function_pointers(void)
 {
@@ -592,7 +585,7 @@ static void test_syntax(void)
         return;
     }
 
-    hr = IDirectXFile_RegisterTemplates(lpDirectXFile, template_syntax_empty_array, sizeof(template_syntax_empty_array) - 1);
+    hr = IDirectXFile_RegisterTemplates(lpDirectXFile, template_syntax_array_mixed, sizeof(template_syntax_array_mixed) - 1);
     ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
 
     dxflm.lpMemory = &object_syntax_empty_array_semicolon;
