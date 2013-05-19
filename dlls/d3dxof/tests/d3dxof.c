@@ -1,7 +1,7 @@
 /*
  * Some unit tests for d3dxof
  *
- * Copyright (C) 2008 Christian Costa
+ * Copyright (C) 2008, 2013 Christian Costa
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -24,6 +24,19 @@
 #include "wine/test.h"
 #include "initguid.h"
 #include "dxfile.h"
+
+#define I2(x) x,0
+#define I4(x) x,0,0,0
+
+#define TOKEN_NAME         I2(1)
+#define TOKEN_INTEGER      I2(3)
+#define TOKEN_INTEGER_LIST I2(6)
+#define TOKEN_OBRACE       I2(10)
+#define TOKEN_CBRACE       I2(11)
+#define TOKEN_COMMA        I2(19)
+#define TOKEN_SEMICOLON    I2(20)
+
+#define SEMICOLON_5X TOKEN_SEMICOLON, TOKEN_SEMICOLON, TOKEN_SEMICOLON, TOKEN_SEMICOLON, TOKEN_SEMICOLON
 
 static inline void debugstr_guid( char* buf, CONST GUID *id )
 {
@@ -127,6 +140,15 @@ static char object_syntax_semicolon_txt[] =
 "5;\n"
 "}\n";
 
+static char object_syntax_semicolon_bin[] = {
+'x','o','f',' ','0','3','0','2','b','i','n',' ','0','0','6','4',
+TOKEN_NAME, /* size */ I4(6), /* name */ 'B','u','f','f','e','r', TOKEN_OBRACE,
+TOKEN_INTEGER, I4(3), TOKEN_SEMICOLON,
+TOKEN_INTEGER, I4(0), TOKEN_SEMICOLON, TOKEN_INTEGER, I4(1), TOKEN_SEMICOLON, TOKEN_INTEGER, I4(2), TOKEN_SEMICOLON,
+TOKEN_INTEGER, I4(5), TOKEN_SEMICOLON,
+TOKEN_CBRACE
+};
+
 static char object_syntax_comma_txt[] =
 "xof 0302txt 0064\n"
 "Buffer\n"
@@ -135,6 +157,15 @@ static char object_syntax_comma_txt[] =
 "0, 1, 2,\n"
 "5,\n"
 "}\n";
+
+static char object_syntax_comma_bin[] = {
+'x','o','f',' ','0','3','0','2','b','i','n',' ','0','0','6','4',
+TOKEN_NAME, /* size */ I4(6), /* name */ 'B','u','f','f','e','r', TOKEN_OBRACE,
+TOKEN_INTEGER, I4(3), TOKEN_COMMA,
+TOKEN_INTEGER, I4(0), TOKEN_COMMA, TOKEN_INTEGER, I4(1), TOKEN_COMMA, TOKEN_INTEGER, I4(2), TOKEN_COMMA,
+TOKEN_INTEGER, I4(5), TOKEN_COMMA,
+TOKEN_CBRACE
+};
 
 static char object_syntax_multi_semicolons_txt[] =
 "xof 0302txt 0064\n"
@@ -145,6 +176,15 @@ static char object_syntax_multi_semicolons_txt[] =
 "5;;;;;\n"
 "}\n";
 
+static char object_syntax_multi_semicolons_bin[] = {
+'x','o','f',' ','0','3','0','2','b','i','n',' ','0','0','6','4',
+TOKEN_NAME, /* size */ I4(6), /* name */ 'B','u','f','f','e','r', TOKEN_OBRACE,
+TOKEN_INTEGER, I4(3), SEMICOLON_5X,
+TOKEN_INTEGER, I4(0), SEMICOLON_5X, TOKEN_INTEGER, I4(1), SEMICOLON_5X, TOKEN_INTEGER, I4(2), SEMICOLON_5X,
+TOKEN_INTEGER, I4(5), SEMICOLON_5X,
+TOKEN_CBRACE
+};
+
 static char object_syntax_multi_commas_txt[] =
 "xof 0302txt 0064\n"
 "Buffer\n"
@@ -153,6 +193,15 @@ static char object_syntax_multi_commas_txt[] =
 "0, 1,, 2;\n"
 "5;\n"
 "}\n";
+
+static char object_syntax_multi_commas_bin[] = {
+'x','o','f',' ','0','3','0','2','b','i','n',' ','0','0','6','4',
+TOKEN_NAME, /* size */ I4(6), /* name */ 'B','u','f','f','e','r', TOKEN_OBRACE,
+TOKEN_INTEGER, I4(3), TOKEN_SEMICOLON,
+TOKEN_INTEGER, I4(0), TOKEN_COMMA, TOKEN_INTEGER, I4(1), TOKEN_COMMA, TOKEN_COMMA, TOKEN_INTEGER, I4(2), TOKEN_SEMICOLON,
+TOKEN_INTEGER, I4(5), TOKEN_SEMICOLON,
+TOKEN_CBRACE
+};
 
 static char object_syntax_multi_semicolons_and_comma_txt[] =
 "xof 0302txt 0064\n"
@@ -163,6 +212,15 @@ static char object_syntax_multi_semicolons_and_comma_txt[] =
 "5;;;;;,\n"
 "}\n";
 
+static char object_syntax_multi_semicolons_and_comma_bin[] = {
+'x','o','f',' ','0','3','0','2','b','i','n',' ','0','0','6','4',
+TOKEN_NAME, /* size */ I4(6), /* name */ 'B','u','f','f','e','r', TOKEN_OBRACE,
+TOKEN_INTEGER, I4(3), SEMICOLON_5X, TOKEN_COMMA,
+TOKEN_INTEGER, I4(0), SEMICOLON_5X, TOKEN_COMMA, TOKEN_INTEGER, I4(1), SEMICOLON_5X, TOKEN_COMMA, TOKEN_INTEGER, I4(2), SEMICOLON_5X, TOKEN_COMMA,
+TOKEN_INTEGER, I4(5), SEMICOLON_5X, TOKEN_COMMA,
+TOKEN_CBRACE
+};
+
 static char object_syntax_comma_and_semicolon_txt[] =
 "xof 0302txt 0064\n"
 "Buffer\n"
@@ -171,6 +229,15 @@ static char object_syntax_comma_and_semicolon_txt[] =
 "0, 1,; 2;\n"
 "5;\n"
 "}\n";
+
+static char object_syntax_comma_and_semicolon_bin[] = {
+'x','o','f',' ','0','3','0','2','b','i','n',' ','0','0','6','4',
+TOKEN_NAME, /* size */ I4(6), /* name */ 'B','u','f','f','e','r', TOKEN_OBRACE,
+TOKEN_INTEGER, I4(3), TOKEN_SEMICOLON,
+TOKEN_INTEGER, I4(0), TOKEN_COMMA, TOKEN_INTEGER, I4(1), TOKEN_COMMA, TOKEN_SEMICOLON, TOKEN_INTEGER, I4(2), TOKEN_SEMICOLON,
+TOKEN_INTEGER, I4(5), TOKEN_SEMICOLON,
+TOKEN_CBRACE
+};
 
 static char object_syntax_no_ending_separator_txt[] =
 "xof 0302txt 0064\n"
@@ -181,6 +248,15 @@ static char object_syntax_no_ending_separator_txt[] =
 "5\n"
 "}\n";
 
+static char object_syntax_no_ending_separator_bin[] = {
+'x','o','f',' ','0','3','0','2','b','i','n',' ','0','0','6','4',
+TOKEN_NAME, /* size */ I4(6), /* name */ 'B','u','f','f','e','r', TOKEN_OBRACE,
+TOKEN_INTEGER, I4(3), TOKEN_SEMICOLON,
+TOKEN_INTEGER, I4(0), TOKEN_COMMA, TOKEN_INTEGER, I4(1), TOKEN_COMMA, TOKEN_INTEGER, I4(2), TOKEN_SEMICOLON,
+TOKEN_INTEGER, I4(5),
+TOKEN_CBRACE
+};
+
 static char object_syntax_array_no_separator_txt[] =
 "xof 0302txt 0064\n"
 "Buffer\n"
@@ -189,6 +265,45 @@ static char object_syntax_array_no_separator_txt[] =
 "0 1 2;\n"
 "5;\n"
 "}\n";
+
+static char object_syntax_array_no_separator_bin[] = {
+'x','o','f',' ','0','3','0','2','b','i','n',' ','0','0','6','4',
+TOKEN_NAME, /* size */ I4(6), /* name */ 'B','u','f','f','e','r', TOKEN_OBRACE,
+TOKEN_INTEGER, I4(3), TOKEN_SEMICOLON,
+TOKEN_INTEGER, I4(0), TOKEN_INTEGER, I4(1), TOKEN_INTEGER, I4(2), TOKEN_SEMICOLON,
+TOKEN_INTEGER, I4(5), TOKEN_SEMICOLON,
+TOKEN_CBRACE
+};
+
+static char object_syntax_full_integer_list_bin[] = {
+'x','o','f',' ','0','3','0','2','b','i','n',' ','0','0','6','4',
+TOKEN_NAME, /* size */ I4(6), /* name */ 'B','u','f','f','e','r', TOKEN_OBRACE,
+TOKEN_INTEGER, I4(3), TOKEN_SEMICOLON,
+TOKEN_INTEGER_LIST, I4(3), I4(0), I4(1), I4(2),
+TOKEN_INTEGER, I4(5), TOKEN_SEMICOLON,
+TOKEN_CBRACE
+};
+
+static char object_syntax_mixed_integer_list_bin[] = {
+'x','o','f',' ','0','3','0','2','b','i','n',' ','0','0','6','4',
+TOKEN_NAME, /* size */ I4(6), /* name */ 'B','u','f','f','e','r', TOKEN_OBRACE,
+TOKEN_INTEGER_LIST, I4(5), I4(3), I4(0), I4(1), I4(2), I4(5),
+TOKEN_CBRACE
+};
+
+static char object_syntax_integer_list_semicolon_bin[] = {
+'x','o','f',' ','0','3','0','2','b','i','n',' ','0','0','6','4',
+TOKEN_NAME, /* size */ I4(6), /* name */ 'B','u','f','f','e','r', TOKEN_OBRACE,
+TOKEN_INTEGER_LIST, I4(5), I4(3), I4(0), I4(1), I4(2), I4(5), TOKEN_SEMICOLON,
+TOKEN_CBRACE
+};
+
+static char object_syntax_integer_list_comma_bin[] = {
+'x','o','f',' ','0','3','0','2','b','i','n',' ','0','0','6','4',
+TOKEN_NAME, /* size */ I4(6), /* name */ 'B','u','f','f','e','r', TOKEN_OBRACE,
+TOKEN_INTEGER_LIST, I4(5), I4(3), I4(0), I4(1), I4(2), I4(5), TOKEN_COMMA,
+TOKEN_CBRACE
+};
 
 static char template_syntax_string[] =
 "xof 0302txt 0064\n"
@@ -751,34 +866,74 @@ static void test_syntax_semicolon_comma(void)
     /* Test semicolon separators in text mode */
     ret = test_buffer_object(dxfile, object_syntax_semicolon_txt, sizeof(object_syntax_semicolon_txt) - 1);
     todo_wine ok(ret == DXFILE_OK, "test_buffer_object failed with %#x\n", ret);
+    /* Test semicolon separators in binary mode */
+    ret = test_buffer_object(dxfile, object_syntax_semicolon_bin, sizeof(object_syntax_semicolon_bin));
+    todo_wine ok(ret == DXFILE_OK, "test_buffer_object failed with %#x\n", ret);
 
     /* Test comma separators in text mode */
     ret = test_buffer_object(dxfile, object_syntax_comma_txt, sizeof(object_syntax_comma_txt) - 1);
     ok(ret == DXFILE_OK, "test_buffer_object failed with %#x\n", ret);
+    /* Test comma separators in binary mode */
+    ret = test_buffer_object(dxfile, object_syntax_comma_bin, sizeof(object_syntax_comma_bin));
+    todo_wine ok(ret == DXFILE_OK, "test_buffer_object failed with %#x\n", ret);
 
     /* Test multi-semicolons separators in text mode */
     ret = test_buffer_object(dxfile, object_syntax_multi_semicolons_txt, sizeof(object_syntax_multi_semicolons_txt) - 1);
+    todo_wine ok(ret == DXFILE_OK, "test_buffer_object failed with %#x\n", ret);
+    /* Test multi-semicolons separators in binary mode */
+    ret = test_buffer_object(dxfile, object_syntax_multi_semicolons_bin, sizeof(object_syntax_multi_semicolons_bin));
     todo_wine ok(ret == DXFILE_OK, "test_buffer_object failed with %#x\n", ret);
 
     /* Test multi-commas separators in text mode */
     ret = test_buffer_object(dxfile, object_syntax_multi_commas_txt, sizeof(object_syntax_multi_semicolons_txt) - 1);
     ok(ret == DXFILEERR_PARSEERROR, "test_buffer_object returned %#x, expected %#x\n", ret, DXFILEERR_PARSEERROR);
+    /* Test multi-commas separators in binary mode */
+    ret = test_buffer_object(dxfile, object_syntax_multi_commas_bin, sizeof(object_syntax_multi_semicolons_bin));
+    ok(ret == DXFILEERR_PARSEERROR, "test_buffer_object returned %#x, expected %#x\n", ret, DXFILEERR_PARSEERROR);
 
     /* Test multi-semicolons + single comma separators in text mode */
     ret = test_buffer_object(dxfile, object_syntax_multi_semicolons_and_comma_txt, sizeof(object_syntax_multi_semicolons_and_comma_txt) - 1);
+    todo_wine ok(ret == DXFILE_OK, "test_buffer_object failed with %#x\n", ret);
+    /* Test multi-semicolons + single comma separators in binary mode */
+    ret = test_buffer_object(dxfile, object_syntax_multi_semicolons_and_comma_bin, sizeof(object_syntax_multi_semicolons_and_comma_bin));
     todo_wine ok(ret == DXFILE_OK, "test_buffer_object failed with %#x\n", ret);
 
     /* Test comma + semicolon separators in text mode */
     ret = test_buffer_object(dxfile, object_syntax_comma_and_semicolon_txt, sizeof(object_syntax_comma_and_semicolon_txt) - 1);
     ok(ret == DXFILEERR_PARSEERROR, "test_buffer_object returned %#x, expected %#x\n", ret, DXFILEERR_PARSEERROR);
+    /* Test comma + semicolon separators in binary mode */
+    ret = test_buffer_object(dxfile, object_syntax_comma_and_semicolon_bin, sizeof(object_syntax_comma_and_semicolon_bin));
+    ok(ret == DXFILEERR_PARSEERROR, "test_buffer_object returned %#x, expected %#x\n", ret, DXFILEERR_PARSEERROR);
 
     /* Test no ending separator in text mode */
     ret = test_buffer_object(dxfile, object_syntax_no_ending_separator_txt, sizeof(object_syntax_no_ending_separator_txt) - 1);
     todo_wine ok(ret == DXFILEERR_PARSEERROR, "test_buffer_object returned %#x, expected %#x\n", ret, DXFILEERR_PARSEERROR);
+    /* Test no ending separator in binary mode */
+    ret = test_buffer_object(dxfile, object_syntax_no_ending_separator_bin, sizeof(object_syntax_no_ending_separator_bin));
+    ok(ret == DXFILEERR_PARSEERROR, "test_buffer_object returned %#x, expected %#x\n", ret, DXFILEERR_PARSEERROR);
 
     /* Test no array separator in text mode */
     ret = test_buffer_object(dxfile, object_syntax_array_no_separator_txt, sizeof(object_syntax_array_no_separator_txt) - 1);
     todo_wine ok(ret == DXFILEERR_PARSEERROR, "test_buffer_object returned %#x, expected %#x\n", ret, DXFILEERR_PARSEERROR);
+    /* Test no array separator in binary mode */
+    ret = test_buffer_object(dxfile, object_syntax_array_no_separator_bin, sizeof(object_syntax_array_no_separator_bin));
+    ok(ret == DXFILEERR_PARSEERROR, "test_buffer_object returned %#x, expected %#x\n", ret, DXFILEERR_PARSEERROR);
+
+    /* Test object with a single integer list in binary mode */
+    ret = test_buffer_object(dxfile, object_syntax_full_integer_list_bin, sizeof(object_syntax_full_integer_list_bin));
+    todo_wine ok(ret == DXFILE_OK, "test_buffer_object failed with %#x\n", ret);
+
+    /* Test object with mixed integer list and integers + single comma separators in binary mode */
+    ret = test_buffer_object(dxfile, object_syntax_mixed_integer_list_bin, sizeof(object_syntax_mixed_integer_list_bin));
+    ok(ret == DXFILE_OK, "test_buffer_object failed with %#x\n", ret);
+
+    /* Test integer list followed by a semicolon in binary mode */
+    ret = test_buffer_object(dxfile, object_syntax_integer_list_semicolon_bin, sizeof(object_syntax_integer_list_semicolon_bin));
+    todo_wine ok(ret == DXFILEERR_PARSEERROR, "test_buffer_object returned %#x, expected %#x\n", ret, DXFILEERR_PARSEERROR);
+
+    /* Test integer list followed by a comma in binary mode */
+    ret = test_buffer_object(dxfile, object_syntax_integer_list_comma_bin, sizeof(object_syntax_integer_list_comma_bin));
+    ok(ret == DXFILEERR_PARSEERROR, "test_buffer_object returned %#x, expected %#x\n", ret, DXFILEERR_PARSEERROR);
 
     IDirectXFile_Release(dxfile);
 }
