@@ -1216,6 +1216,7 @@ enum wined3d_display_rotation
 
 #define WINED3D_LEGACY_DEPTH_BIAS                               0x00000001
 #define WINED3D_NO3D                                            0x00000002
+#define WINED3D_VIDMEM_ACCOUNTING                               0x00000004
 
 #define WINED3D_RESZ_CODE                                       0x7fa05000
 

@@ -84,6 +84,8 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
         void *parent, const struct wined3d_parent_ops *parent_ops,
         const struct wined3d_resource_ops *resource_ops)
 {
+    const struct wined3d *d3d = device->wined3d;
+
     resource->ref = 1;
     resource->device = device;
     resource->type = type;
@@ -124,7 +126,7 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
             + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1));
 
     /* Check that we have enough video ram left */
-    if (pool == WINED3D_POOL_DEFAULT)
+    if (pool == WINED3D_POOL_DEFAULT && d3d->flags & WINED3D_VIDMEM_ACCOUNTING)
     {
         if (size > wined3d_device_get_available_texture_mem(device))
         {
@@ -142,13 +144,14 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
 
 void resource_cleanup(struct wined3d_resource *resource)
 {
+    const struct wined3d *d3d = resource->device->wined3d;
     struct private_data *data;
     struct list *e1, *e2;
     HRESULT hr;
 
     TRACE("Cleaning up resource %p.\n", resource);
 
-    if (resource->pool == WINED3D_POOL_DEFAULT)
+    if (resource->pool == WINED3D_POOL_DEFAULT && d3d->flags & WINED3D_VIDMEM_ACCOUNTING)
     {
         TRACE("Decrementing device memory pool by %u.\n", resource->size);
         adapter_adjust_memory(resource->device->adapter, 0 - resource->size);

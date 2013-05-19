@@ -5234,7 +5234,7 @@ HRESULT ddraw_init(struct ddraw *ddraw, enum wined3d_device_type device_type)
     ddraw->numIfaces = 1;
     ddraw->ref7 = 1;
 
-    flags = WINED3D_LEGACY_DEPTH_BIAS;
+    flags = WINED3D_LEGACY_DEPTH_BIAS | WINED3D_VIDMEM_ACCOUNTING;
     if (DefaultSurfaceType != DDRAW_SURFACE_TYPE_OPENGL)
         flags |= WINED3D_NO3D;
 
