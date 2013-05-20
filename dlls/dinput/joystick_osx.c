@@ -111,6 +111,7 @@ struct JoystickImpl
     CFMutableArrayRef      elementCFArrayRef;
     ObjProps               **propmap;
     FFDeviceObjectReference ff;
+    struct list effects;
 };
 
 static inline JoystickImpl *impl_from_IDirectInputDevice8A(IDirectInputDevice8A *iface)
@@ -123,6 +124,24 @@ static inline JoystickImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice8W 
     return CONTAINING_RECORD(CONTAINING_RECORD(CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8W_iface),
            JoystickGenericImpl, base), JoystickImpl, generic);
 }
+
+typedef struct _EffectImpl {
+    IDirectInputEffect IDirectInputEffect_iface;
+    LONG ref;
+
+    JoystickImpl *device;
+    FFEffectObjectReference effect;
+    GUID guid;
+
+    struct list entry;
+} EffectImpl;
+
+static EffectImpl *impl_from_IDirectInputEffect(IDirectInputEffect *iface)
+{
+    return CONTAINING_RECORD(iface, EffectImpl, IDirectInputEffect_iface);
+}
+
+static const IDirectInputEffectVtbl EffectVtbl;
 
 static const GUID DInput_Wine_OsX_Joystick_GUID = { /* 59CAD8F6-E617-41E2-8EB7-47B23EEEDC5A */
   0x59CAD8F6, 0xE617, 0x41E2, {0x8E, 0xB7, 0x47, 0xB2, 0x3E, 0xEE, 0xDC, 0x5A}
@@ -831,6 +850,7 @@ static HRESULT alloc_device(REFGUID rguid, IDirectInputImpl *dinput,
     newDevice->generic.name = HeapAlloc(GetProcessHeap(),0,strlen(name) + 1);
     strcpy(newDevice->generic.name, name);
 
+    list_init(&newDevice->effects);
     device = get_device_ref(index);
     if(get_ff(device, &newDevice->ff) == S_OK){
         newDevice->generic.devcaps.dwFlags |= DIDC_FORCEFEEDBACK;
@@ -1038,6 +1058,82 @@ static HRESULT joydev_create_device(IDirectInputImpl *dinput, REFGUID rguid, REF
     return DIERR_DEVICENOTREG;
 }
 
+static CFUUIDRef effect_win_to_mac(const GUID *effect)
+{
+#define DO_MAP(X) \
+    if(IsEqualGUID(&GUID_##X, effect)) \
+        return kFFEffectType_##X##_ID;
+    DO_MAP(ConstantForce)
+    DO_MAP(RampForce)
+    DO_MAP(Square)
+    DO_MAP(Sine)
+    DO_MAP(Triangle)
+    DO_MAP(SawtoothUp)
+    DO_MAP(SawtoothDown)
+    DO_MAP(Spring)
+    DO_MAP(Damper)
+    DO_MAP(Inertia)
+    DO_MAP(Friction)
+    DO_MAP(CustomForce)
+#undef DO_MAP
+    WARN("Unknown effect GUID! %s\n", debugstr_guid(effect));
+    return 0;
+}
+
+static HRESULT WINAPI JoystickWImpl_CreateEffect(IDirectInputDevice8W *iface,
+        const GUID *type, const DIEFFECT *params, IDirectInputEffect **out,
+        IUnknown *outer)
+{
+    JoystickImpl *This = impl_from_IDirectInputDevice8W(iface);
+    EffectImpl *effect;
+    HRESULT hr;
+
+    TRACE("%p %s %p %p %p\n", iface, debugstr_guid(type), params, out, outer);
+
+    if(!This->ff){
+        TRACE("No force feedback support\n");
+        *out = NULL;
+        return S_OK;
+    }
+
+    if(outer)
+        WARN("aggregation not implemented\n");
+
+    effect = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*This));
+    effect->IDirectInputEffect_iface.lpVtbl = &EffectVtbl;
+    effect->ref = 1;
+    effect->guid = *type;
+    effect->device = This;
+
+    /* Mac's FFEFFECT and Win's DIEFFECT are binary identical. */
+    hr = FFDeviceCreateEffect(This->ff, effect_win_to_mac(type),
+            (FFEFFECT*)params, &effect->effect);
+    if(FAILED(hr)){
+        WARN("FFDeviceCreateEffect failed: %08x\n", hr);
+        HeapFree(GetProcessHeap(), 0, effect);
+        return hr;
+    }
+
+    list_add_tail(&This->effects, &effect->entry);
+    *out = &effect->IDirectInputEffect_iface;
+
+    TRACE("allocated effect: %p\n", effect);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI JoystickAImpl_CreateEffect(IDirectInputDevice8A *iface,
+        const GUID *type, const DIEFFECT *params, IDirectInputEffect **out,
+        IUnknown *outer)
+{
+    JoystickImpl *This = impl_from_IDirectInputDevice8A(iface);
+
+    TRACE("%p %s %p %p %p\n", iface, debugstr_guid(type), params, out, outer);
+
+    return JoystickWImpl_CreateEffect(&This->generic.base.IDirectInputDevice8W_iface,
+            type, params, out, outer);
+}
+
 const struct dinput_device joystick_osx_device = {
   "Wine OS X joystick driver",
   joydev_enum_deviceA,
@@ -1065,7 +1161,7 @@ static const IDirectInputDevice8AVtbl JoystickAvt =
     JoystickAGenericImpl_GetDeviceInfo,
     IDirectInputDevice2AImpl_RunControlPanel,
     IDirectInputDevice2AImpl_Initialize,
-    IDirectInputDevice2AImpl_CreateEffect,
+    JoystickAImpl_CreateEffect,
     IDirectInputDevice2AImpl_EnumEffects,
     IDirectInputDevice2AImpl_GetEffectInfo,
     IDirectInputDevice2AImpl_GetForceFeedbackState,
@@ -1101,7 +1197,7 @@ static const IDirectInputDevice8WVtbl JoystickWvt =
     JoystickWGenericImpl_GetDeviceInfo,
     IDirectInputDevice2WImpl_RunControlPanel,
     IDirectInputDevice2WImpl_Initialize,
-    IDirectInputDevice2WImpl_CreateEffect,
+    JoystickWImpl_CreateEffect,
     IDirectInputDevice2WImpl_EnumEffects,
     IDirectInputDevice2WImpl_GetEffectInfo,
     IDirectInputDevice2WImpl_GetForceFeedbackState,
@@ -1115,6 +1211,136 @@ static const IDirectInputDevice8WVtbl JoystickWvt =
     JoystickWGenericImpl_BuildActionMap,
     JoystickWGenericImpl_SetActionMap,
     IDirectInputDevice8WImpl_GetImageInfo
+};
+
+static HRESULT WINAPI effect_QueryInterface(IDirectInputEffect *iface,
+        const GUID *guid, void **out)
+{
+    EffectImpl *This = impl_from_IDirectInputEffect(iface);
+
+    TRACE("%p %s %p\n", This, debugstr_guid(guid), out);
+
+    if(IsEqualIID(guid, &IID_IDirectInputEffect)){
+        *out = iface;
+        IDirectInputEffect_AddRef(iface);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI effect_AddRef(IDirectInputEffect *iface)
+{
+    EffectImpl *This = impl_from_IDirectInputEffect(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+    TRACE("%p, ref is now: %u\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI effect_Release(IDirectInputEffect *iface)
+{
+    EffectImpl *This = impl_from_IDirectInputEffect(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+    TRACE("%p, ref is now: %u\n", This, ref);
+
+    if(!ref){
+        list_remove(&This->entry);
+        FFDeviceReleaseEffect(This->device->ff, This->effect);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI effect_Initialize(IDirectInputEffect *iface, HINSTANCE hinst,
+        DWORD version, const GUID *guid)
+{
+    EffectImpl *This = impl_from_IDirectInputEffect(iface);
+    TRACE("%p %p 0x%x, %s\n", This, hinst, version, debugstr_guid(guid));
+    return S_OK;
+}
+
+static HRESULT WINAPI effect_GetEffectGuid(IDirectInputEffect *iface, GUID *out)
+{
+    EffectImpl *This = impl_from_IDirectInputEffect(iface);
+    TRACE("%p %p\n", This, out);
+    *out = This->guid;
+    return S_OK;
+}
+
+static HRESULT WINAPI effect_GetParameters(IDirectInputEffect *iface,
+        DIEFFECT *effect, DWORD flags)
+{
+    EffectImpl *This = impl_from_IDirectInputEffect(iface);
+    TRACE("%p %p 0x%x\n", This, effect, flags);
+    return FFEffectGetParameters(This->effect, (FFEFFECT*)effect, flags);
+}
+
+static HRESULT WINAPI effect_SetParameters(IDirectInputEffect *iface,
+        const DIEFFECT *effect, DWORD flags)
+{
+    EffectImpl *This = impl_from_IDirectInputEffect(iface);
+    TRACE("%p %p 0x%x\n", This, effect, flags);
+    return FFEffectSetParameters(This->effect, (FFEFFECT*)effect, flags);
+}
+
+static HRESULT WINAPI effect_Start(IDirectInputEffect *iface, DWORD iterations,
+        DWORD flags)
+{
+    EffectImpl *This = impl_from_IDirectInputEffect(iface);
+    TRACE("%p 0x%x 0x%x\n", This, iterations, flags);
+    return FFEffectStart(This->effect, iterations, flags);
+}
+
+static HRESULT WINAPI effect_Stop(IDirectInputEffect *iface)
+{
+    EffectImpl *This = impl_from_IDirectInputEffect(iface);
+    TRACE("%p\n", This);
+    return FFEffectStop(This->effect);
+}
+
+static HRESULT WINAPI effect_GetEffectStatus(IDirectInputEffect *iface, DWORD *flags)
+{
+    EffectImpl *This = impl_from_IDirectInputEffect(iface);
+    TRACE("%p %p\n", This, flags);
+    return FFEffectGetEffectStatus(This->effect, (UInt32*)flags);
+}
+
+static HRESULT WINAPI effect_Download(IDirectInputEffect *iface)
+{
+    EffectImpl *This = impl_from_IDirectInputEffect(iface);
+    TRACE("%p\n", This);
+    return FFEffectDownload(This->effect);
+}
+
+static HRESULT WINAPI effect_Unload(IDirectInputEffect *iface)
+{
+    EffectImpl *This = impl_from_IDirectInputEffect(iface);
+    TRACE("%p\n", This);
+    return FFEffectUnload(This->effect);
+}
+
+static HRESULT WINAPI effect_Escape(IDirectInputEffect *iface, DIEFFESCAPE *escape)
+{
+    EffectImpl *This = impl_from_IDirectInputEffect(iface);
+    TRACE("%p %p\n", This, escape);
+    return FFEffectEscape(This->effect, (FFEFFESCAPE*)escape);
+}
+
+static const IDirectInputEffectVtbl EffectVtbl = {
+    effect_QueryInterface,
+    effect_AddRef,
+    effect_Release,
+    effect_Initialize,
+    effect_GetEffectGuid,
+    effect_GetParameters,
+    effect_SetParameters,
+    effect_Start,
+    effect_Stop,
+    effect_GetEffectStatus,
+    effect_Download,
+    effect_Unload,
+    effect_Escape
 };
 
 #else /* HAVE_IOHIDMANAGERCREATE */
