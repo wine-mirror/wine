@@ -1861,6 +1861,7 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
         KeQueryTickCount( &count );  /* initialize the global KeTickCount */
         break;
     case DLL_PROCESS_DETACH:
+        if (reserved) break;
         RtlRemoveVectoredExceptionHandler( handler );
         break;
     }
