@@ -789,6 +789,13 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
     {
         VARIANT *v = dst;
 
+        if(src_status == DBSTATUS_S_ISNULL)
+        {
+            *dst_status = DBSTATUS_S_ISNULL;
+            *dst_len = 0;
+            return S_OK;
+        }
+
         switch(src_type)
         {
         case DBTYPE_BOOL:

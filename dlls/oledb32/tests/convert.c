@@ -2601,6 +2601,14 @@ static void test_converttovar(void)
     ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
     ok(V_VT(&dst) == VT_DATE, "got %d\n", V_VT(&dst));
     ok( (float)V_DATE(&dst) == 41409.0, "got %f\n", V_DATE(&dst));
+
+    /* src_status = DBSTATUS_S_ISNULL */
+    i4 = 123;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_I4, DBTYPE_VARIANT, sizeof(i4), &dst_len, &i4, &dst, sizeof(dst), DBSTATUS_S_ISNULL, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_ISNULL, "got %08x\n", dst_status);
+    ok(dst_len == 0, "got %ld\n", dst_len);
+
 }
 
 static void test_converttotimestamp(void)
