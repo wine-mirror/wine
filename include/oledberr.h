@@ -33,6 +33,8 @@
 #define DB_E_BADCOMPAREOP                   0x80040e27
 #define DB_E_BADSTATUSVALUE                 0x80040e28
 
+#define DB_E_CONCURRENCYVIOLATION            0x80040e38
+
 #define DB_E_DATAOVERFLOW                   0x80040e57
 
 #define DB_E_MISMATCHEDPROVIDER             0x80040e75
