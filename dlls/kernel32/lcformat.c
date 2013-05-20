@@ -1975,7 +1975,9 @@ static BOOL NLS_EnumCalendarInfoAW(void *calinfoproc, LCID locale,
   {
     do				/* loop until there's no error */
     {
-      if (unicode)
+      if (caltype & CAL_RETURN_NUMBER)
+        ret = GetCalendarInfoW(locale, calendar, caltype, NULL, bufSz / sizeof(WCHAR), (LPDWORD)buf);
+      else if (unicode)
         ret = GetCalendarInfoW(locale, calendar, caltype, buf, bufSz / sizeof(WCHAR), NULL);
       else ret = GetCalendarInfoA(locale, calendar, caltype, (CHAR*)buf, bufSz / sizeof(CHAR), NULL);
 
