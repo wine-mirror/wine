@@ -118,8 +118,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
   case DLL_THREAD_ATTACH:
     break;
   case DLL_PROCESS_DETACH:
-    msvcrt_free_popen_data();
     msvcrt_free_io();
+    if (lpvReserved) break;
+    msvcrt_free_popen_data();
     msvcrt_free_mt_locks();
     msvcrt_free_console();
     msvcrt_free_args();
