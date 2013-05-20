@@ -245,11 +245,13 @@ done:
 }
 
 /* build a complete fake dll from scratch */
-static BOOL build_fake_dll( HANDLE file )
+static BOOL build_fake_dll( HANDLE file, const WCHAR *name )
 {
+    static const WCHAR dotexeW[] = { '.','e','x','e',0 };
     IMAGE_DOS_HEADER *dos;
     IMAGE_NT_HEADERS *nt;
     struct dll_info info;
+    const WCHAR *ext;
     BYTE *buffer;
     BOOL ret = FALSE;
     DWORD lfanew = (sizeof(*dos) + sizeof(fakedll_signature) + 15) & ~15;
@@ -279,7 +281,7 @@ static BOOL build_fake_dll( HANDLE file )
     nt->FileHeader.Machine = IMAGE_FILE_MACHINE_I386;
 #endif
     nt->FileHeader.TimeDateStamp = 0;
-    nt->FileHeader.Characteristics = IMAGE_FILE_DLL;
+    nt->FileHeader.Characteristics = 0;
     nt->OptionalHeader.MajorLinkerVersion = 1;
     nt->OptionalHeader.MinorLinkerVersion = 0;
     nt->OptionalHeader.MajorOperatingSystemVersion = 1;
@@ -311,6 +313,9 @@ static BOOL build_fake_dll( HANDLE file )
 
     nt->OptionalHeader.AddressOfEntryPoint = info.mem_pos;
     nt->OptionalHeader.BaseOfCode          = info.mem_pos;
+
+    ext = strrchrW( name, '.' );
+    if (!ext || strcmpiW( ext, dotexeW )) nt->FileHeader.Characteristics |= IMAGE_FILE_DLL;
 
     if (nt->FileHeader.Characteristics & IMAGE_FILE_DLL)
     {
@@ -963,7 +968,7 @@ BOOL create_fake_dll( const WCHAR *name, const WCHAR *source )
     else
     {
         WARN( "fake dll %s not found for %s\n", debugstr_w(source), debugstr_w(name) );
-        ret = build_fake_dll( h );
+        ret = build_fake_dll( h, name );
     }
 
     CloseHandle( h );
