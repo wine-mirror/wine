@@ -2603,6 +2603,26 @@ static void test_converttovar(void)
     ok( (float)V_DATE(&dst) == 41409.0, "got %f\n", V_DATE(&dst));
 }
 
+static void test_converttotimestamp(void)
+{
+    DBTIMESTAMP ts = {2013, 5, 14, 2, 4, 12, 0};
+    DBTIMESTAMP dst;
+    DBSTATUS dst_status;
+    DBLENGTH dst_len;
+    VARIANT var;
+    HRESULT hr;
+
+    VariantInit(&var);
+    V_VT(&var) = VT_DATE;
+    V_DATE(&var) = 41408.086250;
+    dst_len = 0x1234;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_VARIANT, DBTYPE_DBTIMESTAMP, 0, &dst_len, &var, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
+    ok(!memcmp(&ts, &dst, sizeof(ts)), "Wrong timestamp\n");
+}
+
 START_TEST(convert)
 {
     HRESULT hr;
@@ -2638,6 +2658,7 @@ START_TEST(convert)
     test_converttobytes();
     test_converttodbdate();
     test_getconversionsize();
+    test_converttotimestamp();
 
     IDataConvert_Release(convert);
 

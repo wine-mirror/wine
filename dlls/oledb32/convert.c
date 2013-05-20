@@ -445,6 +445,24 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
             d->fraction = st.wMilliseconds * 1000000;
             break;
         }
+        case DBTYPE_VARIANT:
+        {
+            if( V_VT((VARIANT*)src) == VT_DATE)
+            {
+                SYSTEMTIME st;
+                hr = (VariantTimeToSystemTime( V_DATE((VARIANT*)src), &st) ? S_OK : E_FAIL);
+                d->year = st.wYear;
+                d->month = st.wMonth;
+                d->day = st.wDay;
+                d->hour = st.wHour;
+                d->minute = st.wMinute;
+                d->second = st.wSecond;
+                d->fraction = st.wMilliseconds * 1000000;
+                break;
+            }
+            else
+                FIXME("Unimplemented variant type %d -> DBTIMESTAMP\n", V_VT((VARIANT*)src));
+        }
         default: FIXME("Unimplemented conversion %04x -> DBTIMESTAMP\n", src_type); return E_NOTIMPL;
         }
         break;
