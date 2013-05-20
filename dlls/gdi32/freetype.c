@@ -5905,7 +5905,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
           font->font_desc.matrix.eM21, font->font_desc.matrix.eM22);
 
     if(format & GGO_GLYPH_INDEX) {
-        glyph_index = get_GSUB_vert_glyph(incoming_font,glyph);
+        glyph_index = glyph;
         original_index = glyph;
 	format &= ~GGO_GLYPH_INDEX;
     } else {
