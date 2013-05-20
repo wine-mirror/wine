@@ -55,9 +55,8 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
 	break;
     case DLL_PROCESS_DETACH:
         MSACM_UnregisterAllDrivers();
+        if (lpvReserved) break;
         HeapDestroy(MSACM_hHeap);
-        MSACM_hHeap = NULL;
-        MSACM_hInstance32 = NULL;
 	break;
     default:
 	break;
