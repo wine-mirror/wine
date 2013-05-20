@@ -651,13 +651,13 @@ static INT find_joystick_devices(void)
     return  joystick_devices_count;
 }
 
-static BOOL joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi, DWORD version, int id)
+static HRESULT joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi, DWORD version, int id)
 {
-    if (id >= find_joystick_devices()) return FALSE;
+    if (id >= find_joystick_devices()) return E_FAIL;
 
     if (dwFlags & DIEDFL_FORCEFEEDBACK) {
         WARN("force feedback not supported\n");
-        return FALSE;
+        return S_FALSE;
     }
 
     if ((dwDevType == 0) ||
@@ -679,22 +679,22 @@ static BOOL joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
         get_osx_device_name(id, lpddi->tszProductName, MAX_PATH);
 
         lpddi->guidFFDriver = GUID_NULL;
-        return TRUE;
+        return S_OK;
     }
 
-    return FALSE;
+    return S_FALSE;
 }
 
-static BOOL joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEW lpddi, DWORD version, int id)
+static HRESULT joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEW lpddi, DWORD version, int id)
 {
     char name[MAX_PATH];
     char friendly[32];
 
-    if (id >= find_joystick_devices()) return FALSE;
+    if (id >= find_joystick_devices()) return E_FAIL;
 
     if (dwFlags & DIEDFL_FORCEFEEDBACK) {
         WARN("force feedback not supported\n");
-        return FALSE;
+        return S_FALSE;
     }
 
     if ((dwDevType == 0) ||
@@ -716,10 +716,10 @@ static BOOL joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
 
         MultiByteToWideChar(CP_ACP, 0, name, -1, lpddi->tszProductName, MAX_PATH);
         lpddi->guidFFDriver = GUID_NULL;
-        return TRUE;
+        return S_OK;
     }
 
-    return FALSE;
+    return S_FALSE;
 }
 
 static HRESULT alloc_device(REFGUID rguid, IDirectInputImpl *dinput,

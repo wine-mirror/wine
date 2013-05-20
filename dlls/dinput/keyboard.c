@@ -184,10 +184,10 @@ static void fill_keyboard_dideviceinstanceW(LPDIDEVICEINSTANCEW lpddi, DWORD ver
     memcpy(lpddi, &ddi, (dwSize < sizeof(ddi) ? dwSize : sizeof(ddi)));
 }
  
-static BOOL keyboarddev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi, DWORD version, int id)
+static HRESULT keyboarddev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi, DWORD version, int id)
 {
   if (id != 0)
-    return FALSE;
+    return E_FAIL;
 
   if ((dwDevType == 0) ||
       ((dwDevType == DIDEVTYPE_KEYBOARD) && (version < 0x0800)) ||
@@ -196,16 +196,16 @@ static BOOL keyboarddev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEI
  
     fill_keyboard_dideviceinstanceA(lpddi, version);
     
-    return TRUE;
+    return S_OK;
   }
 
-  return FALSE;
+  return S_FALSE;
 }
 
-static BOOL keyboarddev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEW lpddi, DWORD version, int id)
+static HRESULT keyboarddev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEW lpddi, DWORD version, int id)
 {
   if (id != 0)
-    return FALSE;
+    return E_FAIL;
 
   if ((dwDevType == 0) ||
       ((dwDevType == DIDEVTYPE_KEYBOARD) && (version < 0x0800)) ||
@@ -214,10 +214,10 @@ static BOOL keyboarddev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEI
 
     fill_keyboard_dideviceinstanceW(lpddi, version);
     
-    return TRUE;
+    return S_OK;
   }
 
-  return FALSE;
+  return S_FALSE;
 }
 
 static SysKeyboardImpl *alloc_device(REFGUID rguid, IDirectInputImpl *dinput)

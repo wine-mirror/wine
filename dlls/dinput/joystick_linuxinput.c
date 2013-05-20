@@ -363,54 +363,54 @@ static void fill_joystick_dideviceinstanceW(LPDIDEVICEINSTANCEW lpddi, DWORD ver
     MultiByteToWideChar(CP_ACP, 0, joydevs[id].name, -1, lpddi->tszProductName, MAX_PATH);
 }
 
-static BOOL joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi, DWORD version, int id)
+static HRESULT joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi, DWORD version, int id)
 {
   find_joydevs();
 
   if (id >= have_joydevs) {
-    return FALSE;
+    return E_FAIL;
   }
 
   if (!((dwDevType == 0) ||
         ((dwDevType == DIDEVTYPE_JOYSTICK) && (version > 0x0300 && version < 0x0800)) ||
         (((dwDevType == DI8DEVCLASS_GAMECTRL) || (dwDevType == DI8DEVTYPE_JOYSTICK)) && (version >= 0x0800))))
-    return FALSE;
+    return S_FALSE;
 
 #ifndef HAVE_STRUCT_FF_EFFECT_DIRECTION
   if (dwFlags & DIEDFL_FORCEFEEDBACK)
-    return FALSE;
+    return S_FALSE;
 #endif
 
   if (!(dwFlags & DIEDFL_FORCEFEEDBACK) || joydevs[id].has_ff) {
     fill_joystick_dideviceinstanceA(lpddi, version, id);
-    return TRUE;
+    return S_OK;
   }
-  return FALSE;
+  return S_FALSE;
 }
 
-static BOOL joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEW lpddi, DWORD version, int id)
+static HRESULT joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEW lpddi, DWORD version, int id)
 {
   find_joydevs();
 
   if (id >= have_joydevs) {
-    return FALSE;
+    return E_FAIL;
   }
 
   if (!((dwDevType == 0) ||
         ((dwDevType == DIDEVTYPE_JOYSTICK) && (version > 0x0300 && version < 0x0800)) ||
         (((dwDevType == DI8DEVCLASS_GAMECTRL) || (dwDevType == DI8DEVTYPE_JOYSTICK)) && (version >= 0x0800))))
-    return FALSE;
+    return S_FALSE;
 
 #ifndef HAVE_STRUCT_FF_EFFECT_DIRECTION
   if (dwFlags & DIEDFL_FORCEFEEDBACK)
-    return FALSE;
+    return S_FALSE;
 #endif
 
   if (!(dwFlags & DIEDFL_FORCEFEEDBACK) || joydevs[id].has_ff) {
     fill_joystick_dideviceinstanceW(lpddi, version, id);
-    return TRUE;
+    return S_OK;
   }
-  return FALSE;
+  return S_FALSE;
 }
 
 static JoystickImpl *alloc_device(REFGUID rguid, IDirectInputImpl *dinput, unsigned short index)
