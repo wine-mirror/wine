@@ -5915,7 +5915,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
     FT_Matrix transMat = identityMat;
     FT_Matrix transMatUnrotated;
     BOOL needsTransform = FALSE;
-    BOOL tategaki = (font->GSUB_Table != NULL);
+    BOOL tategaki = (font->name[0] == '@');
     UINT original_index;
     LONG avgAdvance = 0;
     FT_Fixed em_scale;
