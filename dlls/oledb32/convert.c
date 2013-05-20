@@ -421,6 +421,21 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         switch (src_type)
         {
         case DBTYPE_DBDATE: memcpy(d, src, sizeof(DBDATE));  hr = S_OK; break;
+        case DBTYPE_VARIANT:
+            if( V_VT((VARIANT*)src) == VT_DATE)
+            {
+                SYSTEMTIME st;
+                hr = (VariantTimeToSystemTime( V_DATE((VARIANT*)src), &st) ? S_OK : E_FAIL);
+                d->year = st.wYear;
+                d->month = st.wMonth;
+                d->day = st.wDay;
+            }
+            else
+            {
+                FIXME("Unimplemented variant type %d -> DBDATE\n", V_VT((VARIANT*)src));
+                return E_NOTIMPL;
+            }
+            break;
         default: FIXME("Unimplemented conversion %04x -> DBDATE\n", src_type); return  E_NOTIMPL;
         }
         break;
@@ -446,7 +461,6 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
             break;
         }
         case DBTYPE_VARIANT:
-        {
             if( V_VT((VARIANT*)src) == VT_DATE)
             {
                 SYSTEMTIME st;
@@ -458,11 +472,13 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
                 d->minute = st.wMinute;
                 d->second = st.wSecond;
                 d->fraction = st.wMilliseconds * 1000000;
-                break;
             }
             else
+            {
                 FIXME("Unimplemented variant type %d -> DBTIMESTAMP\n", V_VT((VARIANT*)src));
-        }
+                return E_NOTIMPL;
+            }
+            break;
         default: FIXME("Unimplemented conversion %04x -> DBTIMESTAMP\n", src_type); return E_NOTIMPL;
         }
         break;

@@ -2462,6 +2462,7 @@ static void test_converttodbdate(void)
     DBDATE ts = {2013, 5, 14};
     DBDATE dst;
     DBSTATUS dst_status;
+    VARIANT var;
 
     dst_len = 0;
     hr = IDataConvert_DataConvert(convert, DBTYPE_DBDATE, DBTYPE_DBDATE, sizeof(ts), &dst_len, &ts, &dst, 2, 0, &dst_status, 0, 0, 0);
@@ -2470,6 +2471,15 @@ static void test_converttodbdate(void)
     ok(dst_len == sizeof(DBDATE), "got %ld\n", dst_len);
     ok(!memcmp(&ts, &dst, sizeof(DBDATE) ), "bytes differ\n");
 
+    VariantInit(&var);
+    V_VT(&var) = VT_DATE;
+    V_DATE(&var) = 41408.086250;
+    dst_len = 0;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_VARIANT, DBTYPE_DBDATE, sizeof(var), &dst_len, &var, &dst, 2, 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(DBDATE), "got %ld\n", dst_len);
+    ok(!memcmp(&ts, &dst, sizeof(DBDATE) ), "bytes differ\n");
 }
 
 
