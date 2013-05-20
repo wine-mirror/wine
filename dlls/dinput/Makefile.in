@@ -1,7 +1,7 @@
 MODULE    = dinput.dll
 IMPORTLIB = dinput
 IMPORTS   = dxguid uuid comctl32 ole32 user32 advapi32
-EXTRALIBS = @IOKITLIB@
+EXTRALIBS = @IOKITLIB@ @FORCEFEEDBACKLIB@
 
 C_SRCS = \
 	config.c \

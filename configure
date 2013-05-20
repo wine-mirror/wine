@@ -693,6 +693,7 @@ DISKARBITRATIONLIB
 LDEXECFLAGS
 CORESERVICESLIB
 APPLICATIONSERVICESLIB
+FORCEFEEDBACKLIB
 IOKITLIB
 COREFOUNDATIONLIB
 LIBWINE_RULES
@@ -6589,6 +6590,8 @@ clean::
         COREFOUNDATIONLIB="-framework CoreFoundation"
 
     IOKITLIB="-framework IOKit -framework CoreFoundation"
+
+    FORCEFEEDBACKLIB="-framework ForceFeedback -framework CoreFoundation"
 
     APPLICATIONSERVICESLIB="-framework ApplicationServices"
 

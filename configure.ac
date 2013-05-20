@@ -741,6 +741,7 @@ clean::
     dnl declare needed frameworks
     AC_SUBST(COREFOUNDATIONLIB,"-framework CoreFoundation")
     AC_SUBST(IOKITLIB,"-framework IOKit -framework CoreFoundation")
+    AC_SUBST(FORCEFEEDBACKLIB,"-framework ForceFeedback -framework CoreFoundation")
     AC_SUBST(APPLICATIONSERVICESLIB,"-framework ApplicationServices")
     AC_SUBST(CORESERVICESLIB,"-framework CoreServices")
     case $host_os in
