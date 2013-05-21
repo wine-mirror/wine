@@ -184,6 +184,13 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         return DB_E_UNSUPPORTEDCONVERSION;
     }
 
+    if(src_status == DBSTATUS_S_ISNULL)
+    {
+        *dst_status = DBSTATUS_S_ISNULL;
+        *dst_len = 0;
+        return S_OK;
+    }
+
     if(src_type == DBTYPE_STR)
     {
         BSTR b;
@@ -804,13 +811,6 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
     case DBTYPE_VARIANT:
     {
         VARIANT *v = dst;
-
-        if(src_status == DBSTATUS_S_ISNULL)
-        {
-            *dst_status = DBSTATUS_S_ISNULL;
-            *dst_len = 0;
-            return S_OK;
-        }
 
         switch(src_type)
         {

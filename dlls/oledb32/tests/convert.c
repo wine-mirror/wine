@@ -884,6 +884,14 @@ todo_wine
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     ok(dst_len == sizeof(i4), "got %ld\n", dst_len);
     ok(i4 == 10, "got %08x\n", i4);
+
+    /* src_status = DBSTATUS_S_ISNULL */
+    i4 = 0x12345678;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_I4, DBTYPE_I4, 0, &dst_len, src, &i4, sizeof(i4), DBSTATUS_S_ISNULL, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_ISNULL, "got %08x\n", dst_status);
+    ok(dst_len == 0, "got %ld\n", dst_len);
+
 }
 
 static void test_converttoi8(void)
