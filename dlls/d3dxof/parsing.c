@@ -1141,6 +1141,7 @@ static BOOL parse_object_members_list(parse_buffer * buf)
   {
     ULONG k;
     ULONG nb_elems = 1;
+    BOOL basic_type = TRUE;
 
     buf->pxo->members[i].name = pt->members[i].name;
     buf->pxo->members[i].start = buf->cur_pos_data;
@@ -1157,26 +1158,12 @@ static BOOL parse_object_members_list(parse_buffer * buf)
 
     for (k = 0; k < nb_elems; k++)
     {
-      if (buf->txt && k)
-      {
-        token = check_TOKEN(buf);
-        if (token == TOKEN_COMMA)
-        {
-          get_TOKEN(buf);
-        }
-        else
-        {
-          /* Allow comma omission */
-          if (!((token == TOKEN_FLOAT) || (token == TOKEN_INTEGER)))
-            return FALSE;
-        }
-      }
-
       if (pt->members[i].type == TOKEN_NAME)
       {
         ULONG j;
 
         TRACE("Found sub-object %s\n", buf->pdxf->xtemplates[pt->members[i].idx_template].name);
+        basic_type = FALSE;
         buf->level++;
         /* To do template lookup */
         for (j = 0; j < buf->pdxf->nb_xtemplates; j++)
@@ -1270,23 +1257,26 @@ static BOOL parse_object_members_list(parse_buffer * buf)
           }
         }
         else
-	{
+        {
           FIXME("Unexpected token %d\n", token);
           return FALSE;
         }
       }
+
+      if (basic_type)
+      {
+        /* Handle separator only for basic types */
+        token = check_TOKEN(buf);
+        if ((token != TOKEN_COMMA) && (token != TOKEN_SEMICOLON))
+          return FALSE;
+        /* Allow multi-semicolons + single comma separator */
+        while (check_TOKEN(buf) == TOKEN_SEMICOLON)
+          get_TOKEN(buf);
+        if (check_TOKEN(buf) == TOKEN_COMMA)
+          get_TOKEN(buf);
+      }
     }
 
-    /* Empty arrays can have the semicolon at the end or not so remove it if any and skip next check */
-    if (!nb_elems && (check_TOKEN(buf) == TOKEN_SEMICOLON))
-      get_TOKEN(buf);
-
-    if (nb_elems && buf->txt && (check_TOKEN(buf) != TOKEN_CBRACE) && (check_TOKEN(buf) != TOKEN_NAME))
-    {
-      token = get_TOKEN(buf);
-      if ((token != TOKEN_SEMICOLON) && (token != TOKEN_COMMA))
-        return FALSE;
-    }
     buf->pxo->members[i].size = buf->cur_pos_data - buf->pxo->members[i].start;
   }
 
