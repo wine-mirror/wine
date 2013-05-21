@@ -456,4 +456,12 @@ Call ok(getVT(CInt(36.50)) = "VT_I2", "getVT(CInt(36.50)) = " & getVT(CInt(36.50
 Call ok(CInt(36.75) = 37, "CInt(36.75) = " & CInt(36.75))
 Call ok(getVT(CInt(36.75)) = "VT_I2", "getVT(CInt(36.75)) = " & getVT(CInt(36.75)))
 
+
+Call ok(CBool(5) = true, "CBool(5) = " & CBool(5))
+Call ok(getVT(CBool(5)) = "VT_BOOL", "getVT(CBool(5)) = " & getVT(CBool(5)))
+Call ok(CBool(0) = false, "CBool(0) = " & CBool(0))
+Call ok(getVT(CBool(0)) = "VT_BOOL", "getVT(CBool(0)) = " & getVT(CBool(0)))
+Call ok(CBool(-5) = true, "CBool(-5) = " & CBool(-5))
+Call ok(getVT(CBool(-5)) = "VT_BOOL", "getVT(CBool(-5)) = " & getVT(CBool(-5)))
+
 Call reportSuccess()
