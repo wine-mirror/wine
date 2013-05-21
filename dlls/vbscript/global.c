@@ -378,8 +378,18 @@ static HRESULT Global_CCur(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARI
 
 static HRESULT Global_CInt(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    int val;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_variant(arg));
+
+    assert(args_cnt == 1);
+
+    hres = to_int(arg, &val);
+    if(FAILED(hres))
+        return hres;
+
+    return return_int(res, val);
 }
 
 static HRESULT Global_CLng(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
