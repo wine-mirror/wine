@@ -220,8 +220,9 @@ static WPARAM map_wparam_char_WtoA( WPARAM wParam, DWORD len )
 {
     WCHAR wch = wParam;
     BYTE ch[2];
+    DWORD cp = get_input_codepage();
 
-    RtlUnicodeToMultiByteN( (LPSTR)ch, len, &len, &wch, sizeof(wch) );
+    len = WideCharToMultiByte( cp, 0, &wch, 1, (LPSTR)ch, len, NULL, NULL );
     if (len == 2)
         return MAKEWPARAM( (ch[0] << 8) | ch[1], HIWORD(wParam) );
     else
@@ -827,9 +828,8 @@ static LRESULT WINPROC_CallProcWtoA( winproc_callback_t callback, HWND hwnd, UIN
         {
             WCHAR wch = wParam;
             char ch[2];
-            DWORD len;
-
-            RtlUnicodeToMultiByteN( ch, 2, &len, &wch, sizeof(wch) );
+            DWORD cp = get_input_codepage();
+            DWORD len = WideCharToMultiByte( cp, 0, &wch, 1, ch, 2, NULL, NULL );
             ret = callback( hwnd, msg, (BYTE)ch[0], lParam, result, arg );
             if (len == 2) ret = callback( hwnd, msg, (BYTE)ch[1], lParam, result, arg );
         }

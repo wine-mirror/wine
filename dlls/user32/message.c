@@ -584,6 +584,10 @@ static BOOL CALLBACK broadcast_message_callback( HWND hwnd, LPARAM lparam )
     return TRUE;
 }
 
+DWORD get_input_codepage( void )
+{
+    return CP_ACP;
+}
 
 /***********************************************************************
  *		map_wparam_AtoW
@@ -594,6 +598,7 @@ BOOL map_wparam_AtoW( UINT message, WPARAM *wparam, enum wm_char_mapping mapping
 {
     char ch[2];
     WCHAR wch[2];
+    DWORD cp = get_input_codepage();
 
     wch[0] = wch[1] = 0;
     switch(message)
@@ -612,7 +617,7 @@ BOOL map_wparam_AtoW( UINT message, WPARAM *wparam, enum wm_char_mapping mapping
             {
                 ch[0] = low;
                 ch[1] = HIBYTE(*wparam);
-                RtlMultiByteToUnicodeN( wch, sizeof(wch), NULL, ch, 2 );
+                MultiByteToWideChar( cp, 0, ch, 2, wch, 2 );
                 TRACE( "map %02x,%02x -> %04x mapping %u\n", (BYTE)ch[0], (BYTE)ch[1], wch[0], mapping );
                 if (data) data->lead_byte[mapping] = 0;
             }
@@ -620,14 +625,14 @@ BOOL map_wparam_AtoW( UINT message, WPARAM *wparam, enum wm_char_mapping mapping
             {
                 ch[0] = data->lead_byte[mapping];
                 ch[1] = low;
-                RtlMultiByteToUnicodeN( wch, sizeof(wch), NULL, ch, 2 );
+                MultiByteToWideChar( cp, 0, ch, 2, wch, 2 );
                 TRACE( "map stored %02x,%02x -> %04x mapping %u\n", (BYTE)ch[0], (BYTE)ch[1], wch[0], mapping );
                 data->lead_byte[mapping] = 0;
             }
             else if (!IsDBCSLeadByte( low ))
             {
                 ch[0] = low;
-                RtlMultiByteToUnicodeN( wch, sizeof(wch), NULL, ch, 1 );
+                MultiByteToWideChar( cp, 0, ch, 1, wch, 2 );
                 TRACE( "map %02x -> %04x\n", (BYTE)ch[0], wch[0] );
                 if (data) data->lead_byte[mapping] = 0;
             }
@@ -655,14 +660,14 @@ BOOL map_wparam_AtoW( UINT message, WPARAM *wparam, enum wm_char_mapping mapping
     case WM_MENUCHAR:
         ch[0] = LOBYTE(*wparam);
         ch[1] = HIBYTE(*wparam);
-        RtlMultiByteToUnicodeN( wch, sizeof(wch), NULL, ch, 2 );
+        MultiByteToWideChar( cp, 0, ch, 2, wch, 2 );
         *wparam = MAKEWPARAM(wch[0], wch[1]);
         break;
     case WM_IME_CHAR:
         ch[0] = HIBYTE(*wparam);
         ch[1] = LOBYTE(*wparam);
-        if (ch[0]) RtlMultiByteToUnicodeN( wch, sizeof(wch[0]), NULL, ch, 2 );
-        else RtlMultiByteToUnicodeN( wch, sizeof(wch[0]), NULL, ch + 1, 1 );
+        if (ch[0]) MultiByteToWideChar( cp, 0, ch, 2, wch, 2 );
+        else MultiByteToWideChar( cp, 0, ch + 1, 1, wch, 1 );
         *wparam = MAKEWPARAM(wch[0], HIWORD(*wparam));
         break;
     }
@@ -677,9 +682,10 @@ BOOL map_wparam_AtoW( UINT message, WPARAM *wparam, enum wm_char_mapping mapping
  */
 static void map_wparam_WtoA( MSG *msg, BOOL remove )
 {
-    BYTE ch[2];
+    BYTE ch[4];
     WCHAR wch[2];
     DWORD len;
+    DWORD cp = get_input_codepage();
 
     switch(msg->message)
     {
@@ -688,7 +694,7 @@ static void map_wparam_WtoA( MSG *msg, BOOL remove )
         {
             wch[0] = LOWORD(msg->wParam);
             ch[0] = ch[1] = 0;
-            RtlUnicodeToMultiByteN( (LPSTR)ch, 2, &len, wch, sizeof(wch[0]) );
+            len = WideCharToMultiByte( cp, 0, wch, 1, (LPSTR)ch, 2, NULL, NULL );
             if (len == 2)  /* DBCS char */
             {
                 struct wm_char_mapping_data *data = get_user_thread_info()->wmchar_data;
@@ -716,13 +722,13 @@ static void map_wparam_WtoA( MSG *msg, BOOL remove )
         wch[0] = LOWORD(msg->wParam);
         wch[1] = HIWORD(msg->wParam);
         ch[0] = ch[1] = 0;
-        RtlUnicodeToMultiByteN( (LPSTR)ch, 2, NULL, wch, sizeof(wch) );
+        WideCharToMultiByte( cp, 0, wch, 2, (LPSTR)ch, 4, NULL, NULL );
         msg->wParam = MAKEWPARAM( ch[0] | (ch[1] << 8), 0 );
         break;
     case WM_IME_CHAR:
         wch[0] = LOWORD(msg->wParam);
         ch[0] = ch[1] = 0;
-        RtlUnicodeToMultiByteN( (LPSTR)ch, 2, &len, wch, sizeof(wch[0]) );
+        len = WideCharToMultiByte( cp, 0, wch, 1, (LPSTR)ch, 2, NULL, NULL );
         if (len == 2)
             msg->wParam = MAKEWPARAM( (ch[0] << 8) | ch[1], HIWORD(msg->wParam) );
         else
