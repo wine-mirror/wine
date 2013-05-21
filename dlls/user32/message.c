@@ -586,7 +586,14 @@ static BOOL CALLBACK broadcast_message_callback( HWND hwnd, LPARAM lparam )
 
 DWORD get_input_codepage( void )
 {
-    return CP_ACP;
+    DWORD cp;
+    int ret;
+    HKL hkl = GetKeyboardLayout( 0 );
+
+    ret = GetLocaleInfoW( LOWORD(hkl), LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
+                          (WCHAR *)&cp, sizeof(cp) / sizeof(WCHAR) );
+    if (!ret) cp = CP_ACP;
+    return cp;
 }
 
 /***********************************************************************
