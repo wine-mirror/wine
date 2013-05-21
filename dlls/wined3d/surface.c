@@ -4563,7 +4563,7 @@ void d3dfmt_p8_init_palette(const struct wined3d_surface *surface, BYTE table[25
 
     if (!pal)
     {
-        ERR("This code should never get entered for DirectDraw!, expect problems\n");
+        FIXME("No palette set.\n");
         if (index_in_alpha)
         {
             /* Guarantees that memory representation remains correct after sysmem<->texture transfers even if
