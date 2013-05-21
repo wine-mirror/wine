@@ -7,6 +7,7 @@
  * Copyright (C) 2010 Tony Wasserka
  * Copyright (C) 2011 Dylan Smith
  * Copyright (C) 2011 Michael Mc Donnell
+ * Copyright (C) 2013 Christian Costa
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -2632,6 +2633,9 @@ struct mesh_data {
     DWORD num_materials;
     D3DXMATERIAL *materials;
     DWORD *material_indices;
+
+    struct ID3DXSkinInfo *skin_info;
+    DWORD nb_bones;
 };
 
 static HRESULT parse_texture_filename(ID3DXFileData *filedata, LPSTR *filename_out)
@@ -3099,6 +3103,64 @@ end:
     return hr;
 }
 
+static HRESULT parse_skin_mesh_info(ID3DXFileData *filedata, struct mesh_data *mesh_data, DWORD index)
+{
+    HRESULT hr;
+    SIZE_T data_size;
+    const BYTE *data;
+
+    TRACE("(%p, %p, %u)\n", filedata, mesh_data, index);
+
+    hr = filedata->lpVtbl->Lock(filedata, &data_size, (const void**)&data);
+    if (FAILED(hr)) return hr;
+
+    hr = E_FAIL;
+
+    if (!mesh_data->skin_info) {
+        if (data_size < sizeof(WORD) * 3) {
+            WARN("truncated data (%ld bytes)\n", data_size);
+            goto end;
+        }
+        /* Skip nMaxSkinWeightsPerVertex and nMaxSkinWeightsPerFace */
+        data += 2 * sizeof(WORD);
+        mesh_data->nb_bones = *(WORD*)data;
+        hr = D3DXCreateSkinInfoFVF(mesh_data->num_vertices, mesh_data->fvf, mesh_data->nb_bones, &mesh_data->skin_info);
+        if (FAILED(hr))
+            goto end;
+    } else {
+        const char *name;
+        DWORD nb_influences;
+
+        /* FIXME: String must be retrieved directly instead of through a pointer once ID3DXFILE is fixed */
+        name = *(const char**)data;
+        data += sizeof(char*);
+
+        nb_influences = *(DWORD*)data;
+        data += sizeof(DWORD);
+
+        if (data_size < (sizeof(char*) + sizeof(DWORD) + nb_influences * (sizeof(DWORD) + sizeof(FLOAT)) + 16 * sizeof(FLOAT))) {
+            WARN("truncated data (%ld bytes)\n", data_size);
+            goto end;
+        }
+
+        hr = mesh_data->skin_info->lpVtbl->SetBoneName(mesh_data->skin_info, index, name);
+        if (SUCCEEDED(hr))
+            hr = mesh_data->skin_info->lpVtbl->SetBoneInfluence(mesh_data->skin_info, index, nb_influences,
+                     (const DWORD*)data, (const FLOAT*)(data + nb_influences * sizeof(DWORD)));
+        if (SUCCEEDED(hr))
+            hr = mesh_data->skin_info->lpVtbl->SetBoneOffsetMatrix(mesh_data->skin_info, index,
+                     (const D3DMATRIX*)(data + nb_influences * (sizeof(DWORD) + sizeof(FLOAT))));
+        if (FAILED(hr))
+            goto end;
+    }
+
+    hr = D3D_OK;
+
+end:
+    filedata->lpVtbl->Unlock(filedata);
+    return hr;
+}
+
 /* for provide_flags parameters */
 #define PROVIDE_MATERIALS 0x1
 #define PROVIDE_SKININFO  0x2
@@ -3114,6 +3176,7 @@ static HRESULT parse_mesh(ID3DXFileData *filedata, struct mesh_data *mesh_data, 
     ID3DXFileData *child;
     DWORD i;
     SIZE_T nb_children;
+    DWORD nb_skin_weigths_info = 0;
 
     /*
      * template Mesh {
@@ -3236,15 +3299,35 @@ static HRESULT parse_mesh(ID3DXFileData *filedata, struct mesh_data *mesh_data, 
             hr = parse_material_list(child, mesh_data);
         } else if (provide_flags & PROVIDE_SKININFO) {
             if (IsEqualGUID(&type, &DXFILEOBJ_XSkinMeshHeader)) {
-                FIXME("Skin mesh loading not implemented.\n");
-                hr = E_NOTIMPL;
-                goto end;
+                if (mesh_data->skin_info) {
+                    WARN("Skin mesh header already encountered\n");
+                    hr = E_FAIL;
+                    goto end;
+                }
+                hr = parse_skin_mesh_info(child, mesh_data, 0);
+                if (FAILED(hr))
+                    goto end;
             } else if (IsEqualGUID(&type, &DXFILEOBJ_SkinWeights)) {
-                /* ignored without XSkinMeshHeader */
+                if (!mesh_data->skin_info) {
+                    WARN("Skin weigths found but skin mesh header not encountered yet\n");
+                    hr = E_FAIL;
+                    goto end;
+                }
+                hr = parse_skin_mesh_info(child, mesh_data, nb_skin_weigths_info);
+                if (FAILED(hr))
+                    goto end;
+                nb_skin_weigths_info++;
             }
         }
         if (FAILED(hr))
             goto end;
+    }
+
+    if (mesh_data->skin_info && (nb_skin_weigths_info != mesh_data->nb_bones)) {
+        WARN("Mismatch between nb skin weights info %u encountered and nb bones %u from skin mesh header\n",
+             nb_skin_weigths_info, mesh_data->nb_bones);
+        hr = E_FAIL;
+        goto end;
     }
 
     hr = D3D_OK;
@@ -3571,7 +3654,7 @@ HRESULT WINAPI D3DXLoadSkinMeshFromXof(struct ID3DXFileData *filedata, DWORD opt
     if (num_materials_out) *num_materials_out = mesh_data.num_materials;
     if (materials_out) *materials_out = materials;
     if (effects_out) *effects_out = effects;
-    if (skin_info_out) *skin_info_out = NULL;
+    if (skin_info_out) *skin_info_out = mesh_data.skin_info;
 
     hr = D3D_OK;
 cleanup:
@@ -3580,6 +3663,8 @@ cleanup:
         if (adjacency) ID3DXBuffer_Release(adjacency);
         if (materials) ID3DXBuffer_Release(materials);
         if (effects) ID3DXBuffer_Release(effects);
+        if (mesh_data.skin_info) mesh_data.skin_info->lpVtbl->Release(mesh_data.skin_info);
+        if (skin_info_out) *skin_info_out = NULL;
     }
     HeapFree(GetProcessHeap(), 0, mesh_data.vertices);
     HeapFree(GetProcessHeap(), 0, mesh_data.num_tri_per_face);
