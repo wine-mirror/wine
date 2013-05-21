@@ -908,6 +908,54 @@ done:
     DestroyWindow(window);
 }
 
+static void test_vidmem_accounting(void)
+{
+    IDirect3DDevice9Ex *device;
+    unsigned int i;
+    HWND window;
+    HRESULT hr = D3D_OK;
+    ULONG ref;
+    UINT vidmem_start, vidmem_end;
+    INT diff;
+    IDirect3DTexture9 *textures[20];
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    vidmem_start = IDirect3DDevice9_GetAvailableTextureMem(device);
+    memset(textures, 0, sizeof(textures));
+    for (i = 0; i < 20 && SUCCEEDED(hr); i++)
+    {
+        hr = IDirect3DDevice9_CreateTexture(device, 1024, 1024, 1, D3DUSAGE_RENDERTARGET,
+                D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &textures[i], NULL);
+        /* No D3DERR_OUTOFVIDEOMEMORY in d3d9ex */
+        ok(SUCCEEDED(hr) || hr == E_OUTOFMEMORY, "Failed to create texture, hr %#x.\n", hr);
+    }
+    vidmem_end = IDirect3DDevice9_GetAvailableTextureMem(device);
+
+    diff = vidmem_start - vidmem_end;
+    diff = abs(diff);
+    ok(diff < 1024 * 1024, "Expected a video memory difference of less than 1 MB, got %u MB.\n",
+            diff / 1024 / 1024);
+
+    for (i = 0; i < 20; i++)
+    {
+        if (textures[i])
+            IDirect3DTexture9_Release(textures[i]);
+    }
+
+    ref = IDirect3DDevice9_Release(device);
+    ok(ref == 0, "The device was not properly freed: refcount %u.\n", ref);
+
+done:
+    DestroyWindow(window);
+}
+
 START_TEST(d3d9ex)
 {
     d3d9_handle = LoadLibraryA("d3d9.dll");
@@ -935,4 +983,5 @@ START_TEST(d3d9ex)
     test_texture_sysmem_create();
     test_reset();
     test_reset_resources();
+    test_vidmem_accounting();
 }

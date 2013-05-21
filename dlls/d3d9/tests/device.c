@@ -6396,6 +6396,63 @@ done:
 
 }
 
+static void test_vidmem_accounting(void)
+{
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d9;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr = D3D_OK;
+    IDirect3DTexture9 *textures[20];
+    unsigned int i;
+    UINT vidmem_start, vidmem_end, diff;
+
+    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create IDirect3D9 object, skipping tests.\n");
+        return;
+    }
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(d3d9, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d9);
+        DestroyWindow(window);
+        return;
+    }
+
+    vidmem_start = IDirect3DDevice9_GetAvailableTextureMem(device);
+    memset(textures, 0, sizeof(textures));
+    for (i = 0; i < sizeof(textures) / sizeof(*textures) && SUCCEEDED(hr); i++)
+    {
+        hr = IDirect3DDevice9_CreateTexture(device, 1024, 1024, 1, D3DUSAGE_RENDERTARGET,
+                D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &textures[i], NULL);
+        /* D3DERR_OUTOFVIDEOMEMORY is returned when the card runs out of video memory
+         * E_FAIL is returned on address space or system memory exhaustion */
+        ok(SUCCEEDED(hr) || hr == D3DERR_OUTOFVIDEOMEMORY || hr == E_OUTOFMEMORY,
+                "Failed to create texture, hr %#x.\n", hr);
+    }
+    vidmem_end = IDirect3DDevice9_GetAvailableTextureMem(device);
+
+    ok(vidmem_start > vidmem_end, "Expected available texture memory to decrease during texture creation.\n");
+    diff = vidmem_start - vidmem_end;
+    ok(diff > 1024 * 1024 * 2 * i, "Expected a video memory difference of at least %u MB, got %u MB.\n",
+            2 * i, diff / 1024 / 1024);
+
+    for (i = 0; i < sizeof(textures) / sizeof(*textures); i++)
+    {
+        if (textures[i])
+            IDirect3DTexture9_Release(textures[i]);
+    }
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d9);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     HMODULE d3d9_handle = LoadLibraryA( "d3d9.dll" );
@@ -6485,6 +6542,7 @@ START_TEST(device)
         test_swvp_buffer();
         test_rtpatch();
         test_npot_textures();
+        test_vidmem_accounting();
     }
 
 out:
