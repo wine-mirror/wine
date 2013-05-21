@@ -878,6 +878,7 @@ static UINT HANDLE_CustomType50( MSIPACKAGE *package, const WCHAR *source, const
     TRACE("exe %s arg %s\n", debugstr_w(exe), debugstr_w(arg));
 
     handle = execute_command( exe, arg, szCRoot );
+    msi_free( exe );
     msi_free( arg );
     if (handle == INVALID_HANDLE_VALUE) return ERROR_SUCCESS;
     return wait_process_handle( package, type, handle, action );
