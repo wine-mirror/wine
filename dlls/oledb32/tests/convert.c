@@ -2464,6 +2464,21 @@ static void test_getconversionsize(void)
     todo_wine ok(dst_len == 110, "%ld\n", dst_len);
     VariantClear(&var);
 
+    dst_len = 0;
+    src_len = 20;
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(strW);
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_VARIANT, DBTYPE_BYTES, &src_len, &dst_len, &var);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(dst_len == 2, "%ld\n", dst_len);
+    VariantClear(&var);
+
+    dst_len = 0;
+    src_len = 20;
+    V_VT(&var) = VT_NULL;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_VARIANT, DBTYPE_BYTES, &src_len, &dst_len, &var);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    VariantClear(&var);
 }
 
 static void test_converttobytes(void)

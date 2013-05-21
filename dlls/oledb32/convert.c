@@ -121,7 +121,7 @@ static int get_length(DBTYPE type)
     case DBTYPE_UI2:
         return 2;
     case DBTYPE_BOOL:
-	return sizeof(VARIANT_BOOL);
+        return sizeof(VARIANT_BOOL);
     case DBTYPE_I4:
     case DBTYPE_UI4:
     case DBTYPE_R4:
@@ -143,6 +143,7 @@ static int get_length(DBTYPE type)
         return sizeof(FILETIME);
     case DBTYPE_GUID:
         return sizeof(GUID);
+    case DBTYPE_BYTES:
     case DBTYPE_WSTR:
     case DBTYPE_STR:
     case DBTYPE_BYREF | DBTYPE_WSTR:
@@ -1359,6 +1360,26 @@ static HRESULT WINAPI convert_GetConversionSize(IDataConvert* iface,
             break;
         default:
             FIXME("unimplemented for %04x -> DBTYPE_WSTR\n", src_type);
+            return E_NOTIMPL;
+        }
+    }
+    break;
+    case DBTYPE_BYTES:
+    {
+        switch (src_type)
+        {
+        case DBTYPE_VARIANT:
+        {
+            if(V_VT((VARIANT*)src) == VT_BSTR)
+                *dst_len = (SysStringLen(V_BSTR((VARIANT*)src))) / sizeof(WCHAR);
+            else
+                WARN("DBTYPE_BYTES->DBTYPE_VARIANT(%d) unimplemented\n", V_VT((VARIANT*)src));
+
+            return S_OK;
+        }
+        break;
+        default:
+            FIXME("unimplemented for %04x -> DBTYPE_BYTES\n", src_type);
             return E_NOTIMPL;
         }
     }
