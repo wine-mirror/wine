@@ -12354,6 +12354,32 @@ $as_echo "$ac_cv_cflags__fno_strict_aliasing" >&6; }
 if test $ac_cv_cflags__fno_strict_aliasing = yes; then :
   EXTRACFLAGS="$EXTRACFLAGS -fno-strict-aliasing"
 fi
+    saved_CFLAGS=$CFLAGS
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=unknown-warning-option" >&5
+$as_echo_n "checking whether the compiler supports -Werror=unknown-warning-option... " >&6; }
+if ${ac_cv_cflags__Werror_unknown_warning_option+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -Werror=unknown-warning-option"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main(int argc, char **argv) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_cflags__Werror_unknown_warning_option=yes
+else
+  ac_cv_cflags__Werror_unknown_warning_option=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Werror_unknown_warning_option" >&5
+$as_echo "$ac_cv_cflags__Werror_unknown_warning_option" >&6; }
+if test $ac_cv_cflags__Werror_unknown_warning_option = yes; then :
+  CFLAGS="$CFLAGS -Werror=unknown-warning-option"
+fi
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wdeclaration-after-statement" >&5
 $as_echo_n "checking whether the compiler supports -Wdeclaration-after-statement... " >&6; }
 if ${ac_cv_cflags__Wdeclaration_after_statement+:} false; then :
@@ -12530,6 +12556,117 @@ if test $ac_cv_cflags__Wwrite_strings = yes; then :
   EXTRACFLAGS="$EXTRACFLAGS -Wwrite-strings"
 fi
 
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wpointer-arith" >&5
+$as_echo_n "checking whether the compiler supports -Wpointer-arith... " >&6; }
+if ${ac_cv_cflags__Wpointer_arith+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -Wpointer-arith"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main(int argc, char **argv) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_cflags__Wpointer_arith=yes
+else
+  ac_cv_cflags__Wpointer_arith=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wpointer_arith" >&5
+$as_echo "$ac_cv_cflags__Wpointer_arith" >&6; }
+if test $ac_cv_cflags__Wpointer_arith = yes; then :
+  saved_string_h_CFLAGS=$CFLAGS
+      CFLAGS="$CFLAGS -Wpointer-arith -Werror"
+      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for broken string.h that generates warnings with -Wpointer-arith" >&5
+$as_echo_n "checking for broken string.h that generates warnings with -Wpointer-arith... " >&6; }
+if ${ac_cv_c_string_h_warnings+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <string.h>
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_c_string_h_warnings=no
+else
+  ac_cv_c_string_h_warnings=yes
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_string_h_warnings" >&5
+$as_echo "$ac_cv_c_string_h_warnings" >&6; }
+      test "$ac_cv_c_string_h_warnings" = yes || EXTRACFLAGS="$EXTRACFLAGS -Wpointer-arith"
+      CFLAGS=$saved_string_h_CFLAGS
+fi
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wlogical-op" >&5
+$as_echo_n "checking whether the compiler supports -Wlogical-op... " >&6; }
+if ${ac_cv_cflags__Wlogical_op+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -Wlogical-op"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main(int argc, char **argv) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_cflags__Wlogical_op=yes
+else
+  ac_cv_cflags__Wlogical_op=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wlogical_op" >&5
+$as_echo "$ac_cv_cflags__Wlogical_op" >&6; }
+if test $ac_cv_cflags__Wlogical_op = yes; then :
+  saved_string_h_CFLAGS=$CFLAGS
+      CFLAGS="$CFLAGS -Wlogical-op -Werror"
+      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for broken string.h that generates warnings with -Wlogical-op" >&5
+$as_echo_n "checking for broken string.h that generates warnings with -Wlogical-op... " >&6; }
+if ${ac_cv_c_logicalop_noisy+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <string.h>
+char*f(const char *h,char n) {return strchr(h,n);}
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_c_logicalop_noisy=no
+else
+  ac_cv_c_logicalop_noisy=yes
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_logicalop_noisy" >&5
+$as_echo "$ac_cv_c_logicalop_noisy" >&6; }
+      CFLAGS=$saved_string_h_CFLAGS
+      test "$ac_cv_c_logicalop_noisy" = yes || EXTRACFLAGS="$EXTRACFLAGS -Wlogical-op"
+fi
+
+  CFLAGS=$saved_CFLAGS
+
     for ac_flag in $CFLAGS; do
     case $ac_flag in
       -g) case $host_os in
@@ -12667,72 +12804,6 @@ if test $ac_cv_cflags__Wno_format = yes; then :
   EXTRACFLAGS="$EXTRACFLAGS -Wno-format"
 fi ;;
   esac
-
-    saved_CFLAGS="$CFLAGS"
-  CFLAGS="$CFLAGS -Wpointer-arith -Werror"
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for broken string.h that generates warnings with -Wpointer-arith" >&5
-$as_echo_n "checking for broken string.h that generates warnings with -Wpointer-arith... " >&6; }
-if ${ac_cv_c_string_h_warnings+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <string.h>
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ac_cv_c_string_h_warnings=no
-else
-  ac_cv_c_string_h_warnings=yes
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_string_h_warnings" >&5
-$as_echo "$ac_cv_c_string_h_warnings" >&6; }
-  CFLAGS="$saved_CFLAGS"
-  if test "$ac_cv_c_string_h_warnings" = "no"
-  then
-    EXTRACFLAGS="$EXTRACFLAGS -Wpointer-arith"
-  fi
-
-    saved_CFLAGS="$CFLAGS"
-  CFLAGS="$CFLAGS -Wlogical-op -Werror"
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for broken string.h that generates warnings with -Wlogical-op" >&5
-$as_echo_n "checking for broken string.h that generates warnings with -Wlogical-op... " >&6; }
-if ${ac_cv_c_logicalop_noisy+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <string.h>
-int
-main ()
-{
-char*f(const char *h,char n) {return strchr(h,n);}
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ac_cv_c_logicalop_noisy=no
-else
-  ac_cv_c_logicalop_noisy=yes
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_logicalop_noisy" >&5
-$as_echo "$ac_cv_c_logicalop_noisy" >&6; }
-  CFLAGS="$saved_CFLAGS"
-  if test "$ac_cv_c_logicalop_noisy" = "no"
-  then
-    EXTRACFLAGS="$EXTRACFLAGS -Wlogical-op"
-  fi
 
     if test "x$enable_maintainer_mode" = "xyes"
   then

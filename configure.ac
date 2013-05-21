@@ -1770,6 +1770,9 @@ then
   dnl Check for some compiler flags
   WINE_TRY_CFLAGS([-fno-builtin],[AC_SUBST(BUILTINFLAG,"-fno-builtin")])
   WINE_TRY_CFLAGS([-fno-strict-aliasing])
+  dnl clang needs to be told to fail on unknown options
+  saved_CFLAGS=$CFLAGS
+  WINE_TRY_CFLAGS([-Werror=unknown-warning-option],[CFLAGS="$CFLAGS -Werror=unknown-warning-option"])
   WINE_TRY_CFLAGS([-Wdeclaration-after-statement])
   WINE_TRY_CFLAGS([-Wempty-body])
   WINE_TRY_CFLAGS([-Wignored-qualifiers])
@@ -1777,6 +1780,27 @@ then
   WINE_TRY_CFLAGS([-Wtype-limits])
   WINE_TRY_CFLAGS([-Wunused-but-set-parameter])
   WINE_TRY_CFLAGS([-Wwrite-strings])
+
+  dnl Check for noisy string.h
+  WINE_TRY_CFLAGS([-Wpointer-arith],
+     [saved_string_h_CFLAGS=$CFLAGS
+      CFLAGS="$CFLAGS -Wpointer-arith -Werror"
+      AC_CACHE_CHECK([for broken string.h that generates warnings with -Wpointer-arith], ac_cv_c_string_h_warnings,
+          AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <string.h>]])],[ac_cv_c_string_h_warnings=no],[ac_cv_c_string_h_warnings=yes]))
+      test "$ac_cv_c_string_h_warnings" = yes || EXTRACFLAGS="$EXTRACFLAGS -Wpointer-arith"
+      CFLAGS=$saved_string_h_CFLAGS])
+
+  dnl Check for noisy string.h on logical ops
+  WINE_TRY_CFLAGS([-Wlogical-op],
+     [saved_string_h_CFLAGS=$CFLAGS
+      CFLAGS="$CFLAGS -Wlogical-op -Werror"
+      AC_CACHE_CHECK([for broken string.h that generates warnings with -Wlogical-op], ac_cv_c_logicalop_noisy,
+          AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <string.h>
+char*f(const char *h,char n) {return strchr(h,n);}]])],[ac_cv_c_logicalop_noisy=no],[ac_cv_c_logicalop_noisy=yes]))
+      CFLAGS=$saved_string_h_CFLAGS
+      test "$ac_cv_c_logicalop_noisy" = yes || EXTRACFLAGS="$EXTRACFLAGS -Wlogical-op"])
+
+  CFLAGS=$saved_CFLAGS
 
   dnl On Darwin, prefer stabs; everywhere else, default to dwarf-2 debug info
   for ac_flag in $CFLAGS; do
@@ -1798,28 +1822,6 @@ then
   case $host in
     x86_64-*mingw32*|x86_64-*cygwin*) WINE_TRY_CFLAGS([-Wno-format]) ;;
   esac
-
-  dnl Check for noisy string.h
-  saved_CFLAGS="$CFLAGS"
-  CFLAGS="$CFLAGS -Wpointer-arith -Werror"
-  AC_CACHE_CHECK([for broken string.h that generates warnings with -Wpointer-arith], ac_cv_c_string_h_warnings,
-      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <string.h>]], [[]])],[ac_cv_c_string_h_warnings=no],[ac_cv_c_string_h_warnings=yes]))
-  CFLAGS="$saved_CFLAGS"
-  if test "$ac_cv_c_string_h_warnings" = "no"
-  then
-    EXTRACFLAGS="$EXTRACFLAGS -Wpointer-arith"
-  fi
-
-  dnl Check for noisy string.h on logical ops
-  saved_CFLAGS="$CFLAGS"
-  CFLAGS="$CFLAGS -Wlogical-op -Werror"
-  AC_CACHE_CHECK([for broken string.h that generates warnings with -Wlogical-op], ac_cv_c_logicalop_noisy,
-      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <string.h>]], [[char*f(const char *h,char n) {return strchr(h,n);}]])],[ac_cv_c_logicalop_noisy=no],[ac_cv_c_logicalop_noisy=yes]))
-  CFLAGS="$saved_CFLAGS"
-  if test "$ac_cv_c_logicalop_noisy" = "no"
-  then
-    EXTRACFLAGS="$EXTRACFLAGS -Wlogical-op"
-  fi
 
   dnl Enable -Werror for maintainer mode
   if test "x$enable_maintainer_mode" = "xyes"
