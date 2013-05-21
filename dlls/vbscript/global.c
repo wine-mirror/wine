@@ -429,7 +429,7 @@ static HRESULT Global_CBool(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VAR
         val = V_R8(arg) > 0.0 || V_R8(arg) < 0.0;
         break;
     default:
-        ERR("Not a numeric vaule: %s\n", debugstr_variant(arg));
+        ERR("Not a numeric value: %s\n", debugstr_variant(arg));
         return E_FAIL;
     }
 
