@@ -7301,6 +7301,7 @@ static BOOL get_glyph_index_linked(GdiFont *font, UINT c, GdiFont **linked_font,
             return TRUE;
         }
     }
+    *glyph = get_default_char_index(font);
     return FALSE;
 }
 
