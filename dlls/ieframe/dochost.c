@@ -310,6 +310,10 @@ HRESULT dochost_object_available(DocHost *This, IUnknown *doc)
             push_ready_state_task(This, READYSTATE_COMPLETE);
         if(ready_state != READYSTATE_COMPLETE || This->doc_navigate)
             advise_prop_notif(This, TRUE);
+    }else if(!This->doc_navigate) {
+        /* If we can't get document's ready state, there is not much we can do.
+         * Assume that document is complete at this point. */
+        push_ready_state_task(This, READYSTATE_COMPLETE);
     }
 
     return S_OK;
