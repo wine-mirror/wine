@@ -114,8 +114,6 @@ static inline BOOL is_strcmp( const struct complex_expr *expr )
             (expr->left->type == EXPR_SVAL && expr->right->type == EXPR_PROPVAL));
 }
 
-static HRESULT eval_cond( const struct table *, UINT, const struct expr *, LONGLONG * );
-
 static HRESULT eval_binary( const struct table *table, UINT row, const struct complex_expr *expr,
                             LONGLONG *val )
 {
@@ -211,8 +209,7 @@ static HRESULT eval_propval( const struct table *table, UINT row, const struct p
     return get_value( table, row, column, val );
 }
 
-static HRESULT eval_cond( const struct table *table, UINT row, const struct expr *cond,
-                          LONGLONG *val )
+HRESULT eval_cond( const struct table *table, UINT row, const struct expr *cond, LONGLONG *val )
 {
     if (!cond)
     {
@@ -249,7 +246,7 @@ static HRESULT execute_view( struct view *view )
     if (view->table->fill)
     {
         clear_table( view->table );
-        view->table->fill( view->table );
+        view->table->fill( view->table, view->cond );
     }
     if (!view->table->num_rows) return S_OK;
 

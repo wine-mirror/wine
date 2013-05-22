@@ -344,7 +344,8 @@ struct table *grab_table( const WCHAR *name )
 }
 
 struct table *create_table( const WCHAR *name, UINT num_cols, const struct column *columns,
-                            UINT num_rows, BYTE *data, void (*fill)(struct table *) )
+                            UINT num_rows, BYTE *data,
+                            enum fill_status (*fill)(struct table *, const struct expr *cond) )
 {
     struct table *table;
 
