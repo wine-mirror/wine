@@ -43,8 +43,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wbemprox);
 
-static const WCHAR class_logicaldisk2W[] =
-    {'C','I','M','_','L','o','g','i','c','a','l','D','i','s','k',0};
 static const WCHAR class_baseboardW[] =
     {'W','i','n','3','2','_','B','a','s','e','B','o','a','r','d',0};
 static const WCHAR class_biosW[] =
@@ -59,6 +57,8 @@ static const WCHAR class_diskpartitionW[] =
     {'W','i','n','3','2','_','D','i','s','k','P','a','r','t','i','t','i','o','n',0};
 static const WCHAR class_logicaldiskW[] =
     {'W','i','n','3','2','_','L','o','g','i','c','a','l','D','i','s','k',0};
+static const WCHAR class_logicaldisk2W[] =
+    {'C','I','M','_','L','o','g','i','c','a','l','D','i','s','k',0};
 static const WCHAR class_networkadapterW[] =
     {'W','i','n','3','2','_','N','e','t','w','o','r','k','A','d','a','p','t','e','r',0};
 static const WCHAR class_osW[] =
@@ -328,6 +328,7 @@ static const struct column col_process[] =
     { prop_commandlineW, CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_descriptionW, CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_handleW,      CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
+    { prop_nameW,        CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_pprocessidW,  CIM_UINT32, VT_I4 },
     { prop_processidW,   CIM_UINT32, VT_I4 },
     { prop_threadcountW, CIM_UINT32, VT_I4 },
@@ -558,6 +559,7 @@ struct record_process
     const WCHAR *commandline;
     const WCHAR *description;
     const WCHAR *handle;
+    const WCHAR *name;
     UINT32       pprocess_id;
     UINT32       process_id;
     UINT32       thread_count;
@@ -1040,6 +1042,7 @@ static void fill_process( struct table *table )
         rec->description  = heap_strdupW( entry.szExeFile );
         sprintfW( handle, fmtW, entry.th32ProcessID );
         rec->handle       = heap_strdupW( handle );
+        rec->name         = heap_strdupW( entry.szExeFile );
         rec->process_id   = entry.th32ProcessID;
         rec->pprocess_id  = entry.th32ParentProcessID;
         rec->thread_count = entry.cntThreads;
@@ -1449,8 +1452,8 @@ static struct table builtin_classes[] =
     { class_compsysW, SIZEOF(col_compsys), col_compsys, 0, NULL, fill_compsys },
     { class_diskdriveW, SIZEOF(col_diskdrive), col_diskdrive, SIZEOF(data_diskdrive), (BYTE *)data_diskdrive },
     { class_diskpartitionW, SIZEOF(col_diskpartition), col_diskpartition, 0, NULL, fill_diskpartition },
-    { class_logicaldisk2W, SIZEOF(col_logicaldisk), col_logicaldisk, 0, NULL, fill_logicaldisk },
     { class_logicaldiskW, SIZEOF(col_logicaldisk), col_logicaldisk, 0, NULL, fill_logicaldisk },
+    { class_logicaldisk2W, SIZEOF(col_logicaldisk), col_logicaldisk, 0, NULL, fill_logicaldisk },
     { class_networkadapterW, SIZEOF(col_networkadapter), col_networkadapter, 0, NULL, fill_networkadapter },
     { class_osW, SIZEOF(col_os), col_os, 0, NULL, fill_os },
     { class_paramsW, SIZEOF(col_param), col_param, SIZEOF(data_param), (BYTE *)data_param },
