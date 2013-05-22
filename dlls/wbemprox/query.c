@@ -246,7 +246,11 @@ static HRESULT execute_view( struct view *view )
     UINT i, j = 0, len;
 
     if (!view->table) return S_OK;
-    if (view->table->fill && !view->table->data) view->table->fill( view->table );
+    if (view->table->fill)
+    {
+        clear_table( view->table );
+        view->table->fill( view->table );
+    }
     if (!view->table->num_rows) return S_OK;
 
     len = min( view->table->num_rows, 16 );

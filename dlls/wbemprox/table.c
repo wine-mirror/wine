@@ -263,7 +263,7 @@ HRESULT get_method( const struct table *table, const WCHAR *name, class_method *
 
 }
 
-static void clear_table( struct table *table )
+void clear_table( struct table *table )
 {
     UINT i, j, type;
     LONGLONG val;
