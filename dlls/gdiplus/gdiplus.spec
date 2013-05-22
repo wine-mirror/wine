@@ -455,7 +455,7 @@
 455 stdcall GdipReleaseDC(ptr ptr)
 456 stdcall GdipRemovePropertyItem(ptr long)
 457 stdcall GdipResetClip(ptr)
-458 stub GdipResetImageAttributes
+458 stdcall GdipResetImageAttributes(ptr long)
 459 stdcall GdipResetLineTransform(ptr)
 460 stdcall GdipResetPageTransform(ptr)
 461 stdcall GdipResetPath(ptr)

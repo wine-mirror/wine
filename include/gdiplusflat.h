@@ -458,6 +458,8 @@ GpStatus WINGDIPAPI GdipSetImageAttributesToIdentity(GpImageAttributes*,
     ColorAdjustType);
 GpStatus WINGDIPAPI GdipSetImageAttributesWrapMode(GpImageAttributes*,WrapMode,
     ARGB,BOOL);
+GpStatus WINGDIPAPI GdipResetImageAttributes(GpImageAttributes*,
+    ColorAdjustType);
 
 /* LinearGradientBrush */
 GpStatus WINGDIPAPI GdipCreateLineBrush(GDIPCONST GpPointF*,GDIPCONST GpPointF*,
