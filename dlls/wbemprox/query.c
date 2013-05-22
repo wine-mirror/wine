@@ -245,7 +245,9 @@ static HRESULT execute_view( struct view *view )
 {
     UINT i, j = 0, len;
 
-    if (!view->table || !view->table->num_rows) return S_OK;
+    if (!view->table) return S_OK;
+    if (view->table->fill && !view->table->data) view->table->fill( view->table );
+    if (!view->table->num_rows) return S_OK;
 
     len = min( view->table->num_rows, 16 );
     if (!(view->result = heap_alloc( len * sizeof(UINT) ))) return E_OUTOFMEMORY;

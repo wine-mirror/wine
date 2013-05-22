@@ -336,7 +336,6 @@ struct table *grab_table( const WCHAR *name )
     {
         if (!strcmpiW( table->name, name ))
         {
-            if (table->fill && !table->data) table->fill( table );
             TRACE("returning %p\n", table);
             return addref_table( table );
         }
