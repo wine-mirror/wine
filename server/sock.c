@@ -978,8 +978,7 @@ DECL_HANDLER(set_socket_event)
 
     sock_reselect( sock );
 
-    if (sock->mask)
-        sock->state |= FD_WINE_NONBLOCKING;
+    sock->state |= FD_WINE_NONBLOCKING;
 
     /* if a network event is pending, signal the event object
        it is possible that FD_CONNECT or FD_ACCEPT network events has happened
