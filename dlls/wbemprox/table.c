@@ -263,26 +263,30 @@ HRESULT get_method( const struct table *table, const WCHAR *name, class_method *
 
 }
 
+void free_row_values( const struct table *table, UINT row )
+{
+    UINT i, type;
+    LONGLONG val;
+
+    for (i = 0; i < table->num_cols; i++)
+    {
+        if (!(table->columns[i].type & COL_FLAG_DYNAMIC)) continue;
+
+        type = table->columns[i].type & COL_TYPE_MASK;
+        if (type == CIM_STRING || type == CIM_DATETIME || (type & CIM_FLAG_ARRAY))
+        {
+            if (get_value( table, row, i, &val ) == S_OK) heap_free( (void *)(INT_PTR)val );
+        }
+    }
+}
+
 void clear_table( struct table *table )
 {
-    UINT i, j, type;
-    LONGLONG val;
+    UINT i;
 
     if (!table->data) return;
 
-    for (i = 0; i < table->num_rows; i++)
-    {
-        for (j = 0; j < table->num_cols; j++)
-        {
-            if (!(table->columns[j].type & COL_FLAG_DYNAMIC)) continue;
-
-            type = table->columns[j].type & COL_TYPE_MASK;
-            if (type == CIM_STRING || type == CIM_DATETIME || (type & CIM_FLAG_ARRAY))
-            {
-                if (get_value( table, i, j, &val ) == S_OK) heap_free( (void *)(INT_PTR)val );
-            }
-        }
-    }
+    for (i = 0; i < table->num_rows; i++) free_row_values( table, i );
     if (table->fill)
     {
         table->num_rows = 0;
@@ -295,10 +299,7 @@ void free_columns( struct column *columns, UINT num_cols )
 {
     UINT i;
 
-    for (i = 0; i < num_cols; i++)
-    {
-        heap_free( (WCHAR *)columns[i].name );
-    }
+    for (i = 0; i < num_cols; i++) { heap_free( (WCHAR *)columns[i].name ); }
     heap_free( columns );
 }
 

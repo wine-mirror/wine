@@ -682,13 +682,32 @@ static const struct record_stdregprov data_stdregprov[] =
     { reg_enum_key, reg_enum_values, reg_get_stringvalue }
 };
 
+/* check if row matches condition and update status */
+static BOOL match_row( const struct table *table, UINT row, const struct expr *cond, enum fill_status *status )
+{
+    LONGLONG val;
+    if (!cond)
+    {
+        *status = FILL_STATUS_UNFILTERED;
+        return TRUE;
+    }
+    if (eval_cond( table, row, cond, &val ) != S_OK)
+    {
+        *status = FILL_STATUS_FAILED;
+        return FALSE;
+    }
+    *status = FILL_STATUS_FILTERED;
+    return val != 0;
+}
+
 static enum fill_status fill_cdromdrive( struct table *table, const struct expr *cond )
 {
     static const WCHAR fmtW[] = {'%','c',':',0};
     WCHAR drive[3], root[] = {'A',':','\\',0};
     struct record_cdromdrive *rec;
-    UINT i, num_rows = 0, offset = 0, count = 1;
+    UINT i, row = 0, offset = 0, count = 1;
     DWORD drives = GetLogicalDrives();
+    enum fill_status status = FILL_STATUS_UNFILTERED;
 
     if (!(table->data = heap_alloc( count * sizeof(*rec) ))) return FILL_STATUS_FAILED;
 
@@ -700,7 +719,7 @@ static enum fill_status fill_cdromdrive( struct table *table, const struct expr 
             if (GetDriveTypeW( root ) != DRIVE_CDROM)
                 continue;
 
-            if (num_rows > count)
+            if (row > count)
             {
                 BYTE *data;
                 count *= 2;
@@ -713,13 +732,18 @@ static enum fill_status fill_cdromdrive( struct table *table, const struct expr 
             rec->drive        = heap_strdupW( drive );
             rec->name         = cdromdrive_nameW;
             rec->pnpdevice_id = cdromdrive_pnpdeviceidW;
+            if (!match_row( table, row, cond, &status ))
+            {
+                free_row_values( table, row );
+                continue;
+            }
             offset += sizeof(*rec);
-            num_rows++;
+            row++;
         }
     }
-    TRACE("created %u rows\n", num_rows);
-    table->num_rows = num_rows;
-    return FILL_STATUS_UNFILTERED;
+    TRACE("created %u rows\n", row);
+    table->num_rows = row;
+    return status;
 }
 
 static UINT get_processor_count(void)
@@ -768,7 +792,7 @@ static UINT64 get_total_physical_memory(void)
 static WCHAR *get_computername(void)
 {
     WCHAR *ret;
-    DWORD size=MAX_COMPUTERNAME_LENGTH;
+    DWORD size = MAX_COMPUTERNAME_LENGTH;
 
     if (!(ret = heap_alloc( size * sizeof(WCHAR) ))) return NULL;
     GetComputerNameW( ret, &size );
@@ -778,6 +802,8 @@ static WCHAR *get_computername(void)
 static enum fill_status fill_compsys( struct table *table, const struct expr *cond )
 {
     struct record_computersystem *rec;
+    enum fill_status status = FILL_STATUS_UNFILTERED;
+    UINT row = 0;
 
     if (!(table->data = heap_alloc( sizeof(*rec) ))) return FILL_STATUS_FAILED;
 
@@ -791,10 +817,12 @@ static enum fill_status fill_compsys( struct table *table, const struct expr *co
     rec->num_logical_processors = get_logical_processor_count();
     rec->num_processors         = get_processor_count();
     rec->total_physical_memory  = get_total_physical_memory();
+    if (!match_row( table, row, cond, &status )) free_row_values( table, row );
+    else row++;
 
-    TRACE("created 1 row\n");
-    table->num_rows = 1;
-    return FILL_STATUS_UNFILTERED;
+    TRACE("created %u rows\n", row);
+    table->num_rows = row;
+    return status;
 }
 
 static WCHAR *get_filesystem( const WCHAR *root )
@@ -834,9 +862,10 @@ static enum fill_status fill_diskpartition( struct table *table, const struct ex
         {'D','i','s','k',' ','#','%','u',',',' ','P','a','r','t','i','t','i','o','n',' ','#','0',0};
     WCHAR device_id[32], root[] = {'A',':','\\',0};
     struct record_diskpartition *rec;
-    UINT i, num_rows = 0, offset = 0, count = 4, type, index = 0;
+    UINT i, row = 0, offset = 0, count = 4, type, index = 0;
     UINT64 size = 1024 * 1024 * 1024;
     DWORD drives = GetLogicalDrives();
+    enum fill_status status = FILL_STATUS_UNFILTERED;
 
     if (!(table->data = heap_alloc( count * sizeof(*rec) ))) return FILL_STATUS_FAILED;
 
@@ -849,7 +878,7 @@ static enum fill_status fill_diskpartition( struct table *table, const struct ex
             if (type != DRIVE_FIXED && type != DRIVE_REMOVABLE)
                 continue;
 
-            if (num_rows > count)
+            if (row > count)
             {
                 BYTE *data;
                 count *= 2;
@@ -868,14 +897,19 @@ static enum fill_status fill_diskpartition( struct table *table, const struct ex
             rec->size           = size;
             rec->startingoffset = 0;
             rec->type           = get_filesystem( root );
+            if (!match_row( table, row, cond, &status ))
+            {
+                free_row_values( table, row );
+                continue;
+            }
             offset += sizeof(*rec);
-            num_rows++;
+            row++;
             index++;
         }
     }
-    TRACE("created %u rows\n", num_rows);
-    table->num_rows = num_rows;
-    return FILL_STATUS_UNFILTERED;
+    TRACE("created %u rows\n", row);
+    table->num_rows = row;
+    return status;
 }
 
 static enum fill_status fill_logicaldisk( struct table *table, const struct expr *cond )
@@ -883,9 +917,10 @@ static enum fill_status fill_logicaldisk( struct table *table, const struct expr
     static const WCHAR fmtW[] = {'%','c',':',0};
     WCHAR device_id[3], root[] = {'A',':','\\',0};
     struct record_logicaldisk *rec;
-    UINT i, num_rows = 0, offset = 0, count = 4, type;
+    UINT i, row = 0, offset = 0, count = 4, type;
     UINT64 size = 1024 * 1024 * 1024;
     DWORD drives = GetLogicalDrives();
+    enum fill_status status = FILL_STATUS_UNFILTERED;
 
     if (!(table->data = heap_alloc( count * sizeof(*rec) ))) return FILL_STATUS_FAILED;
 
@@ -898,7 +933,7 @@ static enum fill_status fill_logicaldisk( struct table *table, const struct expr
             if (type != DRIVE_FIXED && type != DRIVE_CDROM && type != DRIVE_REMOVABLE)
                 continue;
 
-            if (num_rows > count)
+            if (row > count)
             {
                 BYTE *data;
                 count *= 2;
@@ -913,13 +948,18 @@ static enum fill_status fill_logicaldisk( struct table *table, const struct expr
             rec->freespace  = get_freespace( root, &size );
             rec->name       = heap_strdupW( device_id );
             rec->size       = size;
+            if (!match_row( table, row, cond, &status ))
+            {
+                free_row_values( table, row );
+                continue;
+            }
             offset += sizeof(*rec);
-            num_rows++;
+            row++;
         }
     }
-    TRACE("created %u rows\n", num_rows);
-    table->num_rows = num_rows;
-    return FILL_STATUS_UNFILTERED;
+    TRACE("created %u rows\n", row);
+    table->num_rows = row;
+    return status;
 }
 
 static UINT16 get_connection_status( IF_OPER_STATUS status )
@@ -971,8 +1011,9 @@ static enum fill_status fill_networkadapter( struct table *table, const struct e
     WCHAR device_id[11];
     struct record_networkadapter *rec;
     IP_ADAPTER_ADDRESSES *aa, *buffer;
-    UINT num_rows = 0, offset = 0;
+    UINT row = 0, offset = 0, count = 0;
     DWORD size = 0, ret;
+    enum fill_status status = FILL_STATUS_UNFILTERED;
 
     ret = GetAdaptersAddresses( AF_UNSPEC, 0, NULL, NULL, &size );
     if (ret != ERROR_BUFFER_OVERFLOW) return FILL_STATUS_FAILED;
@@ -983,8 +1024,8 @@ static enum fill_status fill_networkadapter( struct table *table, const struct e
         heap_free( buffer );
         return FILL_STATUS_FAILED;
     }
-    for (aa = buffer; aa; aa = aa->Next) num_rows++;
-    if (!(table->data = heap_alloc( sizeof(*rec) * num_rows )))
+    for (aa = buffer; aa; aa = aa->Next) count++;
+    if (!(table->data = heap_alloc( sizeof(*rec) * count )))
     {
         heap_free( buffer );
         return FILL_STATUS_FAILED;
@@ -1001,13 +1042,19 @@ static enum fill_status fill_networkadapter( struct table *table, const struct e
         rec->netconnection_status = get_connection_status( aa->OperStatus );
         rec->pnpdevice_id         = networkadapter_pnpdeviceidW;
         rec->speed                = 1000000;
+        if (!match_row( table, row, cond, &status ))
+        {
+            free_row_values( table, row );
+            continue;
+        }
         offset += sizeof(*rec);
+        row++;
     }
-    TRACE("created %u rows\n", num_rows);
-    table->num_rows = num_rows;
+    TRACE("created %u rows\n", row);
+    table->num_rows = row;
 
     heap_free( buffer );
-    return FILL_STATUS_UNFILTERED;
+    return status;
 }
 
 static WCHAR *get_cmdline( DWORD process_id )
@@ -1024,7 +1071,7 @@ static enum fill_status fill_process( struct table *table, const struct expr *co
     PROCESSENTRY32W entry;
     HANDLE snap;
     enum fill_status status = FILL_STATUS_FAILED;
-    UINT num_rows = 0, offset = 0, count = 8;
+    UINT row = 0, offset = 0, count = 8;
 
     snap = CreateToolhelp32Snapshot( TH32CS_SNAPPROCESS, 0 );
     if (snap == INVALID_HANDLE_VALUE) return FILL_STATUS_FAILED;
@@ -1035,7 +1082,7 @@ static enum fill_status fill_process( struct table *table, const struct expr *co
 
     do
     {
-        if (num_rows > count)
+        if (row > count)
         {
             BYTE *data;
             count *= 2;
@@ -1053,12 +1100,17 @@ static enum fill_status fill_process( struct table *table, const struct expr *co
         rec->pprocess_id  = entry.th32ParentProcessID;
         rec->thread_count = entry.cntThreads;
         rec->get_owner    = process_get_owner;
+        if (!match_row( table, row, cond, &status ))
+        {
+            free_row_values( table, row );
+            continue;
+        }
         offset += sizeof(*rec);
-        num_rows++;
+        row++;
     } while (Process32NextW( snap, &entry ));
 
-    TRACE("created %u rows\n", num_rows);
-    table->num_rows = num_rows;
+    TRACE("created %u rows\n", row);
+    table->num_rows = row;
     status = FILL_STATUS_UNFILTERED;
 
 done:
@@ -1144,6 +1196,7 @@ static enum fill_status fill_processor( struct table *table, const struct expr *
     WCHAR device_id[14], processor_id[17], manufacturer[13], name[49] = {0};
     struct record_processor *rec;
     UINT i, offset = 0, maxclockspeed, num_logical_processors, count = get_processor_count();
+    enum fill_status status = FILL_STATUS_UNFILTERED;
 
     if (!(table->data = heap_alloc( sizeof(*rec) * count ))) return FILL_STATUS_FAILED;
 
@@ -1167,12 +1220,17 @@ static enum fill_status fill_processor( struct table *table, const struct expr *
         rec->num_logical_processors = num_logical_processors;
         rec->processor_id           = heap_strdupW( processor_id );
         rec->unique_id              = NULL;
+        if (!match_row( table, i, cond, &status ))
+        {
+            free_row_values( table, i );
+            continue;
+        }
         offset += sizeof(*rec);
     }
 
     TRACE("created %u rows\n", count);
     table->num_rows = count;
-    return FILL_STATUS_UNFILTERED;
+    return status;
 }
 
 static WCHAR *get_lastbootuptime(void)
@@ -1213,6 +1271,8 @@ static WCHAR *get_systemdirectory(void)
 static enum fill_status fill_os( struct table *table, const struct expr *cond )
 {
     struct record_operatingsystem *rec;
+    enum fill_status status = FILL_STATUS_UNFILTERED;
+    UINT row = 0;
 
     if (!(table->data = heap_alloc( sizeof(*rec) ))) return FILL_STATUS_FAILED;
 
@@ -1228,10 +1288,12 @@ static enum fill_status fill_os( struct table *table, const struct expr *cond )
     rec->suitemask        = 272;     /* Single User + Terminal */
     rec->systemdirectory  = get_systemdirectory();
     rec->version          = os_versionW;
+    if (!match_row( table, row, cond, &status )) free_row_values( table, row );
+    else row++;
 
-    TRACE("created 1 row\n");
-    table->num_rows = 1;
-    return FILL_STATUS_UNFILTERED;
+    TRACE("created %u rows\n", row);
+    table->num_rows = row;
+    return status;
 }
 
 static const WCHAR *get_service_type( DWORD type )
@@ -1276,7 +1338,6 @@ static const WCHAR *get_service_state( DWORD state )
         return unknownW;
     }
 }
-
 static const WCHAR *get_service_startmode( DWORD mode )
 {
     static const WCHAR bootW[] = {'B','o','o','t',0};
@@ -1298,7 +1359,6 @@ static const WCHAR *get_service_startmode( DWORD mode )
         return unknownW;
     }
 }
-
 static QUERY_SERVICE_CONFIGW *query_service_config( SC_HANDLE manager, const WCHAR *name )
 {
     QUERY_SERVICE_CONFIGW *config = NULL;
@@ -1326,7 +1386,7 @@ static enum fill_status fill_service( struct table *table, const struct expr *co
     SERVICE_STATUS_PROCESS *status;
     WCHAR sysnameW[MAX_COMPUTERNAME_LENGTH + 1];
     DWORD len = sizeof(sysnameW) / sizeof(sysnameW[0]);
-    UINT i, num_rows = 0, offset = 0, size = 256, needed, count;
+    UINT i, row = 0, offset = 0, size = 256, needed, count;
     enum fill_status fill_status = FILL_STATUS_FAILED;
     BOOL ret;
 
@@ -1350,6 +1410,7 @@ static enum fill_status fill_service( struct table *table, const struct expr *co
     if (!(table->data = heap_alloc( sizeof(*rec) * count ))) goto done;
 
     GetComputerNameW( sysnameW, &len );
+    fill_status = FILL_STATUS_UNFILTERED;
 
     for (i = 0; i < count; i++)
     {
@@ -1373,13 +1434,17 @@ static enum fill_status fill_service( struct table *table, const struct expr *co
         rec->start_service  = service_start_service;
         rec->stop_service   = service_stop_service;
         heap_free( config );
+        if (!match_row( table, row, cond, &fill_status ))
+        {
+            free_row_values( table, row );
+            continue;
+        }
         offset += sizeof(*rec);
-        num_rows++;
+        row++;
     }
 
-    TRACE("created %u rows\n", num_rows);
-    table->num_rows = num_rows;
-    fill_status = FILL_STATUS_UNFILTERED;
+    TRACE("created %u rows\n", row);
+    table->num_rows = row;
 
 done:
     CloseServiceHandle( manager );
@@ -1399,7 +1464,6 @@ static UINT32 get_bits_per_pixel( UINT *hres, UINT *vres )
     ReleaseDC( NULL, hdc );
     return ret;
 }
-
 static WCHAR *get_pnpdeviceid( DXGI_ADAPTER_DESC *desc )
 {
     static const WCHAR fmtW[] =
@@ -1423,6 +1487,8 @@ static enum fill_status fill_videocontroller( struct table *table, const struct 
     DXGI_ADAPTER_DESC desc;
     UINT hres = 1024, vres = 768, vidmem = 512 * 1024 * 1024;
     const WCHAR *name = videocontroller_deviceidW;
+    enum fill_status status = FILL_STATUS_UNFILTERED;
+    UINT row = 0;
 
     if (!(table->data = heap_alloc( sizeof(*rec) ))) return FILL_STATUS_FAILED;
     memset (&desc, 0, sizeof(desc));
@@ -1449,13 +1515,15 @@ done:
     rec->device_id             = videocontroller_deviceidW;
     rec->name                  = heap_strdupW( name );
     rec->pnpdevice_id          = get_pnpdeviceid( &desc );
+    if (!match_row( table, row, cond, &status )) free_row_values( table, row );
+    else row++;
 
-    TRACE("created 1 row\n");
-    table->num_rows = 1;
+    TRACE("created %u rows\n", row);
+    table->num_rows = row;
 
     if (adapter) IDXGIAdapter_Release( adapter );
     if (factory) IDXGIFactory_Release( factory );
-    return FILL_STATUS_UNFILTERED;
+    return status;
 }
 
 static struct table builtin_classes[] =

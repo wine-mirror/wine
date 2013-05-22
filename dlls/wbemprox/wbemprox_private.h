@@ -178,6 +178,7 @@ struct table *create_table( const WCHAR *, UINT, const struct column *, UINT, BY
                             enum fill_status (*)(struct table *, const struct expr *) ) DECLSPEC_HIDDEN;
 BOOL add_table( struct table * ) DECLSPEC_HIDDEN;
 void free_columns( struct column *, UINT ) DECLSPEC_HIDDEN;
+void free_row_values( const struct table *, UINT ) DECLSPEC_HIDDEN;
 void clear_table( struct table * ) DECLSPEC_HIDDEN;
 void free_table( struct table * ) DECLSPEC_HIDDEN;
 UINT get_type_size( CIMTYPE ) DECLSPEC_HIDDEN;
