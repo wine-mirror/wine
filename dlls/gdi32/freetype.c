@@ -5817,6 +5817,25 @@ static FT_UInt get_glyph_index(const GdiFont *font, UINT glyph)
     return glyphId;
 }
 
+static FT_UInt get_default_char_index(GdiFont *font)
+{
+    FT_UInt default_char;
+
+    if (FT_IS_SFNT(font->ft_face))
+    {
+        TT_OS2 *pOS2 = pFT_Get_Sfnt_Table(font->ft_face, ft_sfnt_os2);
+        default_char = (pOS2->usDefaultChar ? get_glyph_index(font, pOS2->usDefaultChar) : 0);
+    }
+    else
+    {
+        TEXTMETRICW textm;
+        get_text_metrics(font, &textm);
+        default_char = textm.tmDefaultChar;
+    }
+
+    return default_char;
+}
+
 /*************************************************************
  * freetype_GetGlyphIndices
  */
@@ -5849,17 +5868,7 @@ static DWORD freetype_GetGlyphIndices( PHYSDEV dev, LPCWSTR lpstr, INT count, LP
         {
             if (!got_default)
             {
-                if (FT_IS_SFNT(physdev->font->ft_face))
-                {
-                    TT_OS2 *pOS2 = pFT_Get_Sfnt_Table(physdev->font->ft_face, ft_sfnt_os2);
-                    default_char = (pOS2->usDefaultChar ? get_glyph_index(physdev->font, pOS2->usDefaultChar) : 0);
-                }
-                else
-                {
-                    TEXTMETRICW textm;
-                    get_text_metrics(physdev->font, &textm);
-                    default_char = textm.tmDefaultChar;
-                }
+                default_char = get_default_char_index(physdev->font);
                 got_default = TRUE;
             }
             pgi[i] = default_char;
