@@ -2156,16 +2156,16 @@ static void test_classesroot(void)
     ok(res == ERROR_SUCCESS, "RegSetValueExA failed: %d, GLE=%x\n", res, GetLastError());
 
     /* try to find the value in user's classes */
-    res = RegQueryValueExA(hkcr, "val0", NULL, &type, (LPBYTE)buffer, &size);
+    res = RegQueryValueExA(hkey, "val0", NULL, &type, (LPBYTE)buffer, &size);
     ok(res == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", res);
     ok(!strcmp( buffer, "hkcr" ), "value set to '%s'\n", buffer );
 
     /* modify the value in user's classes */
-    res = RegSetValueExA(hkcr, "val0", 0, REG_SZ, (const BYTE *)"user", sizeof("user"));
+    res = RegSetValueExA(hkey, "val0", 0, REG_SZ, (const BYTE *)"user", sizeof("user"));
     ok(res == ERROR_SUCCESS, "RegSetValueExA failed: %d, GLE=%x\n", res, GetLastError());
 
     /* check if the value is also modified in hkcr */
-    res = RegQueryValueExA(hkey, "val0", NULL, &type, (LPBYTE)buffer, &size);
+    res = RegQueryValueExA(hkcr, "val0", NULL, &type, (LPBYTE)buffer, &size);
     ok(res == ERROR_SUCCESS, "RegQueryValueExA failed: %d, GLE=%x\n", res, GetLastError());
     ok(!strcmp( buffer, "user" ), "value set to '%s'\n", buffer );
 
