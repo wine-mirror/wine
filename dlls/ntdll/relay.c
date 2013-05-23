@@ -320,8 +320,68 @@ static inline void RELAY_PrintArgs( const INT_PTR *args, int nb_args, unsigned i
     }
 }
 
-extern LONGLONG CDECL call_entry_point( void *func, int nb_args, const INT_PTR *args, int flags );
+static void print_timestamp(void)
+{
+    ULONG ticks = NtGetTickCount();
+    DPRINTF( "%3u.%03u:", ticks / 1000, ticks % 1000 );
+}
+
+/***********************************************************************
+ *           relay_trace_entry
+ *
+ * stack points to the return address, i.e. the first argument is stack[1].
+ */
+void * WINAPI relay_trace_entry( struct relay_descr *descr, unsigned int idx, const INT_PTR *stack )
+{
+    WORD ordinal = LOWORD(idx);
+    BYTE nb_args = LOBYTE(HIWORD(idx));
+    struct relay_private_data *data = descr->private;
+    struct relay_entry_point *entry_point = data->entry_points + ordinal;
+
+    if (TRACE_ON(relay))
+    {
+        if (TRACE_ON(timestamp)) print_timestamp();
+
+        if (entry_point->name)
+            DPRINTF( "%04x:Call %s.%s(", GetCurrentThreadId(), data->dllname, entry_point->name );
+        else
+            DPRINTF( "%04x:Call %s.%u(", GetCurrentThreadId(), data->dllname, data->base + ordinal );
+        RELAY_PrintArgs( stack + 1, nb_args, descr->arg_types[ordinal] );
+        DPRINTF( ") ret=%08lx\n", stack[0] );
+    }
+    return entry_point->orig_func;
+}
+
+/***********************************************************************
+ *           relay_trace_exit
+ */
+void WINAPI relay_trace_exit( struct relay_descr *descr, unsigned int idx,
+                              const INT_PTR *stack, LONGLONG retval )
+{
+    WORD ordinal = LOWORD(idx);
+    BYTE flags   = HIBYTE(HIWORD(idx));
+    struct relay_private_data *data = descr->private;
+    struct relay_entry_point *entry_point = data->entry_points + ordinal;
+
+    if (!TRACE_ON(relay)) return;
+
+    if (TRACE_ON(timestamp)) print_timestamp();
+
+    if (entry_point->name)
+        DPRINTF( "%04x:Ret  %s.%s()", GetCurrentThreadId(), data->dllname, entry_point->name );
+    else
+        DPRINTF( "%04x:Ret  %s.%u()", GetCurrentThreadId(), data->dllname, data->base + ordinal );
+
+    if (flags & 1)  /* 64-bit return value */
+        DPRINTF( " retval=%08x%08x ret=%08lx\n",
+                 (UINT)(retval >> 32), (UINT)retval, stack[0] );
+    else
+        DPRINTF( " retval=%08lx ret=%08lx\n", (UINT_PTR)retval, stack[0] );
+}
+
 #ifdef __i386__
+
+extern LONGLONG CDECL call_entry_point( void *func, int nb_args, const INT_PTR *args, int flags );
 __ASM_GLOBAL_FUNC( call_entry_point,
                    "pushl %ebp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
@@ -355,139 +415,17 @@ __ASM_GLOBAL_FUNC( call_entry_point,
                    __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
                    __ASM_CFI(".cfi_same_value %ebp\n\t")
                    "ret" )
-#elif defined(__arm__)
-__ASM_GLOBAL_FUNC( call_entry_point,
-                   ".arm\n\t"
-                   "push {r4, r5, LR}\n\t"
-                   "mov r4, r0\n\t"
-                   "mov r5, SP\n\t"
-                   "lsl r3, r1, #2\n\t"
-                   "cmp r3, #0\n\t"
-                   "beq 5f\n\t"
-                   "sub SP, SP, r3\n\t"
-                   "tst r1, #1\n\t"
-                   "subeq SP, SP, #4\n\t"
-                   "1:\tsub r3, r3, #4\n\t"
-                   "ldr r0, [r2, r3]\n\t"
-                   "str r0, [SP, r3]\n\t"
-                   "cmp r3, #0\n\t"
-                   "bgt 1b\n\t"
-                   "cmp r1, #1\n\t"
-                   "bgt 2f\n\t"
-                   "pop {r0}\n\t"
-                   "b 5f\n\t"
-                   "2:\tcmp r1, #2\n\t"
-                   "bgt 3f\n\t"
-                   "pop {r0-r1}\n\t"
-                   "b 5f\n\t"
-                   "3:\tcmp r1, #3\n\t"
-                   "bgt 4f\n\t"
-                   "pop {r0-r2}\n\t"
-                   "b 5f\n\t"
-                   "4:\tpop {r0-r3}\n\t"
-                   "5:\tblx r4\n\t"
-                   "mov SP, r5\n\t"
-                   "pop {r4, r5, PC}" )
-#else
-__ASM_GLOBAL_FUNC( call_entry_point,
-                   "pushq %rbp\n\t"
-                   __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
-                   __ASM_CFI(".cfi_rel_offset %rbp,0\n\t")
-                   "movq %rsp,%rbp\n\t"
-                   __ASM_CFI(".cfi_def_cfa_register %rbp\n\t")
-                   "pushq %rsi\n\t"
-                   __ASM_CFI(".cfi_rel_offset %rsi,-8\n\t")
-                   "pushq %rdi\n\t"
-                   __ASM_CFI(".cfi_rel_offset %rdi,-16\n\t")
-                   "movq %rcx,%rax\n\t"
-                   "movq $4,%rcx\n\t"
-                   "cmp %rcx,%rdx\n\t"
-                   "cmovgq %rdx,%rcx\n\t"
-                   "leaq 0(,%rcx,8),%rdx\n\t"
-                   "subq %rdx,%rsp\n\t"
-                   "andq $~15,%rsp\n\t"
-                   "movq %rsp,%rdi\n\t"
-                   "movq %r8,%rsi\n\t"
-                   "rep; movsq\n\t"
-                   "movq 0(%rsp),%rcx\n\t"
-                   "movq 8(%rsp),%rdx\n\t"
-                   "movq 16(%rsp),%r8\n\t"
-                   "movq 24(%rsp),%r9\n\t"
-                   "movq %rcx,%xmm0\n\t"
-                   "movq %rdx,%xmm1\n\t"
-                   "movq %r8,%xmm2\n\t"
-                   "movq %r9,%xmm3\n\t"
-                   "callq *%rax\n\t"
-                   "leaq -16(%rbp),%rsp\n\t"
-                   "popq %rdi\n\t"
-                   __ASM_CFI(".cfi_same_value %rdi\n\t")
-                   "popq %rsi\n\t"
-                   __ASM_CFI(".cfi_same_value %rsi\n\t")
-                   __ASM_CFI(".cfi_def_cfa_register %rsp\n\t")
-                   "popq %rbp\n\t"
-                   __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
-                   __ASM_CFI(".cfi_same_value %rbp\n\t")
-                   "ret")
-#endif
 
-
-static void print_timestamp(void)
-{
-    ULONG ticks = NtGetTickCount();
-    DPRINTF( "%3u.%03u:", ticks / 1000, ticks % 1000 );
-}
-
-
-/***********************************************************************
- *           relay_call
- *
- * stack points to the return address, i.e. the first argument is stack[1].
- */
 static LONGLONG WINAPI relay_call( struct relay_descr *descr, unsigned int idx, const INT_PTR *stack )
 {
-    LONGLONG ret;
-    WORD ordinal = LOWORD(idx);
     BYTE nb_args = LOBYTE(HIWORD(idx));
     BYTE flags   = HIBYTE(HIWORD(idx));
-    struct relay_private_data *data = descr->private;
-    struct relay_entry_point *entry_point = data->entry_points + ordinal;
-
-    if (!TRACE_ON(relay))
-        ret = call_entry_point( entry_point->orig_func, nb_args, stack + 1, flags );
-    else
-    {
-        if (TRACE_ON(timestamp))
-            print_timestamp();
-        if (entry_point->name)
-            DPRINTF( "%04x:Call %s.%s(", GetCurrentThreadId(), data->dllname, entry_point->name );
-        else
-            DPRINTF( "%04x:Call %s.%u(", GetCurrentThreadId(), data->dllname, data->base + ordinal );
-        RELAY_PrintArgs( stack + 1, nb_args, descr->arg_types[ordinal] );
-        DPRINTF( ") ret=%08lx\n", stack[0] );
-
-        ret = call_entry_point( entry_point->orig_func, nb_args, stack + 1, flags );
-
-        if (TRACE_ON(timestamp))
-            print_timestamp();
-        if (entry_point->name)
-            DPRINTF( "%04x:Ret  %s.%s()", GetCurrentThreadId(), data->dllname, entry_point->name );
-        else
-            DPRINTF( "%04x:Ret  %s.%u()", GetCurrentThreadId(), data->dllname, data->base + ordinal );
-
-        if (flags & 1)  /* 64-bit return value */
-            DPRINTF( " retval=%08x%08x ret=%08lx\n",
-                     (UINT)(ret >> 32), (UINT)ret, stack[0] );
-        else
-            DPRINTF( " retval=%08lx ret=%08lx\n", (UINT_PTR)ret, stack[0] );
-    }
+    void *func = relay_trace_entry( descr, idx, stack );
+    LONGLONG ret = call_entry_point( func, nb_args, stack + 1, flags );
+    relay_trace_exit( descr, idx, stack, ret );
     return ret;
 }
 
-
-/***********************************************************************
- *           relay_call_regs
- */
-#ifdef __i386__
 void WINAPI __regs_relay_call_regs( struct relay_descr *descr, unsigned int idx,
                                     unsigned int orig_eax, unsigned int ret_addr,
                                     CONTEXT *context )
@@ -532,7 +470,6 @@ void WINAPI __regs_relay_call_regs( struct relay_descr *descr, unsigned int idx,
 
     call_entry_point( orig_func + 12 + *(int *)(orig_func + 1), nb_args, args_copy, 0 );
 
-
     if (TRACE_ON(relay))
     {
         if (entry_point->name)
@@ -553,14 +490,118 @@ void WINAPI __regs_relay_call_regs( struct relay_descr *descr, unsigned int idx,
 extern void WINAPI relay_call_regs(void);
 DEFINE_REGS_ENTRYPOINT( relay_call_regs, 4 )
 
-#else  /* __i386__ */
+#elif defined(__arm__)
 
-void WINAPI relay_call_regs( struct relay_descr *descr, INT_PTR idx, INT_PTR *stack )
+extern LONGLONG CDECL call_entry_point( void *func, int nb_args, const INT_PTR *args, int flags );
+__ASM_GLOBAL_FUNC( call_entry_point,
+                   ".arm\n\t"
+                   "push {r4, r5, LR}\n\t"
+                   "mov r4, r0\n\t"
+                   "mov r5, SP\n\t"
+                   "lsl r3, r1, #2\n\t"
+                   "cmp r3, #0\n\t"
+                   "beq 5f\n\t"
+                   "sub SP, SP, r3\n\t"
+                   "tst r1, #1\n\t"
+                   "subeq SP, SP, #4\n\t"
+                   "1:\tsub r3, r3, #4\n\t"
+                   "ldr r0, [r2, r3]\n\t"
+                   "str r0, [SP, r3]\n\t"
+                   "cmp r3, #0\n\t"
+                   "bgt 1b\n\t"
+                   "cmp r1, #1\n\t"
+                   "bgt 2f\n\t"
+                   "pop {r0}\n\t"
+                   "b 5f\n\t"
+                   "2:\tcmp r1, #2\n\t"
+                   "bgt 3f\n\t"
+                   "pop {r0-r1}\n\t"
+                   "b 5f\n\t"
+                   "3:\tcmp r1, #3\n\t"
+                   "bgt 4f\n\t"
+                   "pop {r0-r2}\n\t"
+                   "b 5f\n\t"
+                   "4:\tpop {r0-r3}\n\t"
+                   "5:\tblx r4\n\t"
+                   "mov SP, r5\n\t"
+                   "pop {r4, r5, PC}" )
+
+static LONGLONG WINAPI relay_call( struct relay_descr *descr, unsigned int idx, const INT_PTR *stack )
+{
+    BYTE nb_args = LOBYTE(HIWORD(idx));
+    BYTE flags   = HIBYTE(HIWORD(idx));
+    void *func = relay_trace_entry( descr, idx, stack );
+    LONGLONG ret = call_entry_point( func, nb_args, stack + 1, flags );
+    relay_trace_exit( descr, idx, stack, ret );
+    return ret;
+}
+
+static void WINAPI relay_call_regs( struct relay_descr *descr, INT_PTR idx, INT_PTR *stack )
 {
     assert(0);  /* should never be called */
 }
 
-#endif  /* __i386__ */
+#elif defined(__x86_64__)
+
+extern LONGLONG CDECL call_entry_point( void *func, int nb_args, const INT_PTR *args, int flags );
+__ASM_GLOBAL_FUNC( call_entry_point,
+                   "pushq %rbp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
+                   __ASM_CFI(".cfi_rel_offset %rbp,0\n\t")
+                   "movq %rsp,%rbp\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register %rbp\n\t")
+                   "pushq %rsi\n\t"
+                   __ASM_CFI(".cfi_rel_offset %rsi,-8\n\t")
+                   "pushq %rdi\n\t"
+                   __ASM_CFI(".cfi_rel_offset %rdi,-16\n\t")
+                   "movq %rcx,%rax\n\t"
+                   "movq $4,%rcx\n\t"
+                   "cmp %rcx,%rdx\n\t"
+                   "cmovgq %rdx,%rcx\n\t"
+                   "leaq 0(,%rcx,8),%rdx\n\t"
+                   "subq %rdx,%rsp\n\t"
+                   "andq $~15,%rsp\n\t"
+                   "movq %rsp,%rdi\n\t"
+                   "movq %r8,%rsi\n\t"
+                   "rep; movsq\n\t"
+                   "movq 0(%rsp),%rcx\n\t"
+                   "movq 8(%rsp),%rdx\n\t"
+                   "movq 16(%rsp),%r8\n\t"
+                   "movq 24(%rsp),%r9\n\t"
+                   "movq %rcx,%xmm0\n\t"
+                   "movq %rdx,%xmm1\n\t"
+                   "movq %r8,%xmm2\n\t"
+                   "movq %r9,%xmm3\n\t"
+                   "callq *%rax\n\t"
+                   "leaq -16(%rbp),%rsp\n\t"
+                   "popq %rdi\n\t"
+                   __ASM_CFI(".cfi_same_value %rdi\n\t")
+                   "popq %rsi\n\t"
+                   __ASM_CFI(".cfi_same_value %rsi\n\t")
+                   __ASM_CFI(".cfi_def_cfa_register %rsp\n\t")
+                   "popq %rbp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
+                   __ASM_CFI(".cfi_same_value %rbp\n\t")
+                   "ret")
+
+static LONGLONG WINAPI relay_call( struct relay_descr *descr, unsigned int idx, const INT_PTR *stack )
+{
+    BYTE nb_args = LOBYTE(HIWORD(idx));
+    BYTE flags   = HIBYTE(HIWORD(idx));
+    void *func = relay_trace_entry( descr, idx, stack );
+    LONGLONG ret = call_entry_point( func, nb_args, stack + 1, flags );
+    relay_trace_exit( descr, idx, stack, ret );
+    return ret;
+}
+
+static void WINAPI relay_call_regs( struct relay_descr *descr, INT_PTR idx, INT_PTR *stack )
+{
+    assert(0);  /* should never be called */
+}
+
+#else
+#error Not supported on this CPU
+#endif
 
 
 /***********************************************************************
@@ -645,7 +686,7 @@ void RELAY_SetupDLL( HMODULE module )
     }
 }
 
-#else  /* __i386__ || __x86_64__ */
+#else  /* __i386__ || __x86_64__ || __arm__ */
 
 FARPROC RELAY_GetProcAddress( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
                               DWORD exp_size, FARPROC proc, DWORD ordinal, const WCHAR *user )
@@ -657,7 +698,7 @@ void RELAY_SetupDLL( HMODULE module )
 {
 }
 
-#endif  /* __i386__ || __x86_64__ */
+#endif  /* __i386__ || __x86_64__ || __arm__ */
 
 
 /***********************************************************************/
