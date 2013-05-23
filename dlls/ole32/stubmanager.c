@@ -173,6 +173,7 @@ struct ifstub *stub_manager_find_ifstub(struct stub_manager *m, REFIID iid, MSHL
 struct stub_manager *new_stub_manager(APARTMENT *apt, IUnknown *object)
 {
     struct stub_manager *sm;
+    HRESULT hres;
 
     assert( apt );
     
@@ -218,6 +219,16 @@ struct stub_manager *new_stub_manager(APARTMENT *apt, IUnknown *object)
      */
     sm->extrefs = 0;
 
+    /*
+     * NOTE: According to tests, creating a stub causes two AddConnection calls followed by
+     * one ReleaseConnection call (with fLastReleaseCloses=FALSE).
+     */
+    hres = IUnknown_QueryInterface(object, &IID_IExternalConnection, (void**)&sm->extern_conn);
+    if(SUCCEEDED(hres))
+        IExternalConnection_AddConnection(sm->extern_conn, EXTCONN_STRONG, 0);
+    else
+        sm->extern_conn = NULL;
+
     EnterCriticalSection(&apt->cs);
     sm->oid = apt->oidc++;
     list_add_head(&apt->stubmgrs, &sm->entry);
@@ -240,6 +251,11 @@ static void stub_manager_delete(struct stub_manager *m)
     {
         struct ifstub *ifstub = LIST_ENTRY(cursor, struct ifstub, entry);
         stub_manager_delete_ifstub(m, ifstub);
+    }
+
+    if(m->extern_conn) {
+        IExternalConnection_ReleaseConnection(m->extern_conn, EXTCONN_STRONG, 0, TRUE);
+        IExternalConnection_Release(m->extern_conn);
     }
 
     CoTaskMemFree(m->oxid_info.psa);

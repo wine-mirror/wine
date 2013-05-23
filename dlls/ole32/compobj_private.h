@@ -98,6 +98,8 @@ struct stub_manager
     ULONG             next_ipid;  /* currently unused (LOCK) */
     OXID_INFO         oxid_info;  /* string binding, ipid of rem unknown and other information (RO) */
 
+    IExternalConnection *extern_conn;
+
     /* We need to keep a count of the outstanding marshals, so we can enforce the
      * marshalling rules (ie, you can only unmarshal normal marshals once). Note
      * that these counts do NOT include unmarshalled interfaces, once a stream is
