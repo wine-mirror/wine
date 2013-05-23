@@ -1164,6 +1164,36 @@ static HRESULT WINAPI JoystickAImpl_CreateEffect(IDirectInputDevice8A *iface,
             type, params, out, outer);
 }
 
+static HRESULT WINAPI JoystickWImpl_SendForceFeedbackCommand(IDirectInputDevice8W *iface,
+        DWORD flags)
+{
+    JoystickImpl *This = impl_from_IDirectInputDevice8W(iface);
+    HRESULT hr;
+
+    TRACE("%p 0x%x\n", This, flags);
+
+    if(!This->ff)
+        return DI_NOEFFECT;
+
+    hr = osx_to_win32_hresult(FFDeviceSendForceFeedbackCommand(This->ff, flags));
+    if(FAILED(hr)){
+        WARN("FFDeviceSendForceFeedbackCommand failed: %08x\n", hr);
+        return hr;
+    }
+
+    return S_OK;
+}
+
+static HRESULT WINAPI JoystickAImpl_SendForceFeedbackCommand(IDirectInputDevice8A *iface,
+        DWORD flags)
+{
+    JoystickImpl *This = impl_from_IDirectInputDevice8A(iface);
+
+    TRACE("%p 0x%x\n", This, flags);
+
+    return JoystickWImpl_SendForceFeedbackCommand(&This->generic.base.IDirectInputDevice8W_iface, flags);
+}
+
 const struct dinput_device joystick_osx_device = {
   "Wine OS X joystick driver",
   joydev_enum_deviceA,
@@ -1195,7 +1225,7 @@ static const IDirectInputDevice8AVtbl JoystickAvt =
     IDirectInputDevice2AImpl_EnumEffects,
     IDirectInputDevice2AImpl_GetEffectInfo,
     IDirectInputDevice2AImpl_GetForceFeedbackState,
-    IDirectInputDevice2AImpl_SendForceFeedbackCommand,
+    JoystickAImpl_SendForceFeedbackCommand,
     IDirectInputDevice2AImpl_EnumCreatedEffectObjects,
     IDirectInputDevice2AImpl_Escape,
     JoystickAGenericImpl_Poll,
@@ -1231,7 +1261,7 @@ static const IDirectInputDevice8WVtbl JoystickWvt =
     IDirectInputDevice2WImpl_EnumEffects,
     IDirectInputDevice2WImpl_GetEffectInfo,
     IDirectInputDevice2WImpl_GetForceFeedbackState,
-    IDirectInputDevice2WImpl_SendForceFeedbackCommand,
+    JoystickWImpl_SendForceFeedbackCommand,
     IDirectInputDevice2WImpl_EnumCreatedEffectObjects,
     IDirectInputDevice2WImpl_Escape,
     JoystickWGenericImpl_Poll,
