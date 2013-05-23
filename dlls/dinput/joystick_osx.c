@@ -841,6 +841,15 @@ static const char *osx_ff_axis_name(UInt8 axis)
     return ret;
 }
 
+static int osx_axis_has_ff(FFCAPABILITIES *ffcaps, UInt8 axis)
+{
+    int i;
+    for(i = 0; i < ffcaps->numFfAxes; ++i)
+        if(ffcaps->ffAxes[i] == axis)
+            return 1;
+    return 0;
+}
+
 static HRESULT alloc_device(REFGUID rguid, IDirectInputImpl *dinput,
                             JoystickImpl **pdev, unsigned short index)
 {
@@ -939,24 +948,46 @@ static HRESULT alloc_device(REFGUID rguid, IDirectInputImpl *dinput,
 
     for (i = 0; i < newDevice->generic.devcaps.dwAxes; i++)
     {
-        int wine_obj = -1;
+        int wine_obj = -1, has_ff = 0;
         switch (axis_map[i])
         {
-            case kHIDUsage_GD_X: wine_obj = 0; break;
-            case kHIDUsage_GD_Y: wine_obj = 1; break;
-            case kHIDUsage_GD_Z: wine_obj = 2; break;
-            case kHIDUsage_GD_Rx: wine_obj = 3; break;
-            case kHIDUsage_GD_Ry: wine_obj = 4; break;
-            case kHIDUsage_GD_Rz: wine_obj = 5; break;
+            case kHIDUsage_GD_X:
+                wine_obj = 0;
+                has_ff = (newDevice->ff != 0) && osx_axis_has_ff(&ffcaps, FFJOFS_X);
+                break;
+            case kHIDUsage_GD_Y:
+                wine_obj = 1;
+                has_ff = (newDevice->ff != 0) && osx_axis_has_ff(&ffcaps, FFJOFS_Y);
+                break;
+            case kHIDUsage_GD_Z:
+                wine_obj = 2;
+                has_ff = (newDevice->ff != 0) && osx_axis_has_ff(&ffcaps, FFJOFS_Z);
+                break;
+            case kHIDUsage_GD_Rx:
+                wine_obj = 3;
+                has_ff = (newDevice->ff != 0) && osx_axis_has_ff(&ffcaps, FFJOFS_RX);
+                break;
+            case kHIDUsage_GD_Ry:
+                wine_obj = 4;
+                has_ff = (newDevice->ff != 0) && osx_axis_has_ff(&ffcaps, FFJOFS_RY);
+                break;
+            case kHIDUsage_GD_Rz:
+                wine_obj = 5;
+                has_ff = (newDevice->ff != 0) && osx_axis_has_ff(&ffcaps, FFJOFS_RZ);
+                break;
             case kHIDUsage_GD_Slider:
                 wine_obj = 6 + slider_count;
+                has_ff = (newDevice->ff != 0) && osx_axis_has_ff(&ffcaps, FFJOFS_SLIDER(slider_count));
                 slider_count++;
                 break;
         }
         if (wine_obj < 0 ) continue;
 
         memcpy(&df->rgodf[idx], &c_dfDIJoystick2.rgodf[wine_obj], df->dwObjSize);
-        df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(wine_obj) | DIDFT_ABSAXIS;
+        df->rgodf[idx].dwType = DIDFT_MAKEINSTANCE(wine_obj) | DIDFT_ABSAXIS;
+        if(has_ff)
+            df->rgodf[idx].dwFlags |= DIDOI_FFACTUATOR;
+        ++idx;
     }
 
     for (i = 0; i < newDevice->generic.devcaps.dwPOVs; i++)
