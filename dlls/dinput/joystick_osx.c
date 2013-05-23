@@ -147,6 +147,35 @@ static const GUID DInput_Wine_OsX_Joystick_GUID = { /* 59CAD8F6-E617-41E2-8EB7-4
   0x59CAD8F6, 0xE617, 0x41E2, {0x8E, 0xB7, 0x47, 0xB2, 0x3E, 0xEE, 0xDC, 0x5A}
 };
 
+static HRESULT osx_to_win32_hresult(HRESULT in)
+{
+    /* OSX returns 16-bit COM runtime errors, which we should
+     * convert to win32 */
+    switch(in){
+    case 0x80000001:
+        return E_NOTIMPL;
+    case 0x80000002:
+        return E_OUTOFMEMORY;
+    case 0x80000003:
+        return E_INVALIDARG;
+    case 0x80000004:
+        return E_NOINTERFACE;
+    case 0x80000005:
+        return E_POINTER;
+    case 0x80000006:
+        return E_HANDLE;
+    case 0x80000007:
+        return E_ABORT;
+    case 0x80000008:
+        return E_FAIL;
+    case 0x80000009:
+        return E_ACCESSDENIED;
+    case 0x8000FFFF:
+        return E_UNEXPECTED;
+    }
+    return in;
+}
+
 static void CFSetApplierFunctionCopyToCFArray(const void *value, void *context)
 {
     CFArrayAppendValue( ( CFMutableArrayRef ) context, value );
@@ -203,7 +232,7 @@ static HRESULT get_ff(IOHIDDeviceRef device, FFDeviceObjectReference *ret)
     if(!ret)
         return FFIsForceFeedback(service) == FF_OK ? S_OK : S_FALSE;
 
-    return FFCreateDevice(service, ret);
+    return osx_to_win32_hresult(FFCreateDevice(service, ret));
 }
 
 static CFMutableDictionaryRef creates_osx_device_match(int usage)
@@ -1106,8 +1135,8 @@ static HRESULT WINAPI JoystickWImpl_CreateEffect(IDirectInputDevice8W *iface,
     effect->device = This;
 
     /* Mac's FFEFFECT and Win's DIEFFECT are binary identical. */
-    hr = FFDeviceCreateEffect(This->ff, effect_win_to_mac(type),
-            (FFEFFECT*)params, &effect->effect);
+    hr = osx_to_win32_hresult(FFDeviceCreateEffect(This->ff,
+                effect_win_to_mac(type), (FFEFFECT*)params, &effect->effect));
     if(FAILED(hr)){
         WARN("FFDeviceCreateEffect failed: %08x\n", hr);
         HeapFree(GetProcessHeap(), 0, effect);
@@ -1273,7 +1302,7 @@ static HRESULT WINAPI effect_GetParameters(IDirectInputEffect *iface,
 {
     EffectImpl *This = impl_from_IDirectInputEffect(iface);
     TRACE("%p %p 0x%x\n", This, effect, flags);
-    return FFEffectGetParameters(This->effect, (FFEFFECT*)effect, flags);
+    return osx_to_win32_hresult(FFEffectGetParameters(This->effect, (FFEFFECT*)effect, flags));
 }
 
 static HRESULT WINAPI effect_SetParameters(IDirectInputEffect *iface,
@@ -1281,7 +1310,7 @@ static HRESULT WINAPI effect_SetParameters(IDirectInputEffect *iface,
 {
     EffectImpl *This = impl_from_IDirectInputEffect(iface);
     TRACE("%p %p 0x%x\n", This, effect, flags);
-    return FFEffectSetParameters(This->effect, (FFEFFECT*)effect, flags);
+    return osx_to_win32_hresult(FFEffectSetParameters(This->effect, (FFEFFECT*)effect, flags));
 }
 
 static HRESULT WINAPI effect_Start(IDirectInputEffect *iface, DWORD iterations,
@@ -1289,42 +1318,42 @@ static HRESULT WINAPI effect_Start(IDirectInputEffect *iface, DWORD iterations,
 {
     EffectImpl *This = impl_from_IDirectInputEffect(iface);
     TRACE("%p 0x%x 0x%x\n", This, iterations, flags);
-    return FFEffectStart(This->effect, iterations, flags);
+    return osx_to_win32_hresult(FFEffectStart(This->effect, iterations, flags));
 }
 
 static HRESULT WINAPI effect_Stop(IDirectInputEffect *iface)
 {
     EffectImpl *This = impl_from_IDirectInputEffect(iface);
     TRACE("%p\n", This);
-    return FFEffectStop(This->effect);
+    return osx_to_win32_hresult(FFEffectStop(This->effect));
 }
 
 static HRESULT WINAPI effect_GetEffectStatus(IDirectInputEffect *iface, DWORD *flags)
 {
     EffectImpl *This = impl_from_IDirectInputEffect(iface);
     TRACE("%p %p\n", This, flags);
-    return FFEffectGetEffectStatus(This->effect, (UInt32*)flags);
+    return osx_to_win32_hresult(FFEffectGetEffectStatus(This->effect, (UInt32*)flags));
 }
 
 static HRESULT WINAPI effect_Download(IDirectInputEffect *iface)
 {
     EffectImpl *This = impl_from_IDirectInputEffect(iface);
     TRACE("%p\n", This);
-    return FFEffectDownload(This->effect);
+    return osx_to_win32_hresult(FFEffectDownload(This->effect));
 }
 
 static HRESULT WINAPI effect_Unload(IDirectInputEffect *iface)
 {
     EffectImpl *This = impl_from_IDirectInputEffect(iface);
     TRACE("%p\n", This);
-    return FFEffectUnload(This->effect);
+    return osx_to_win32_hresult(FFEffectUnload(This->effect));
 }
 
 static HRESULT WINAPI effect_Escape(IDirectInputEffect *iface, DIEFFESCAPE *escape)
 {
     EffectImpl *This = impl_from_IDirectInputEffect(iface);
     TRACE("%p %p\n", This, escape);
-    return FFEffectEscape(This->effect, (FFEFFESCAPE*)escape);
+    return osx_to_win32_hresult(FFEffectEscape(This->effect, (FFEFFESCAPE*)escape));
 }
 
 static const IDirectInputEffectVtbl EffectVtbl = {
