@@ -39,6 +39,7 @@
 #include "rpc.h"
 #include "winerror.h"
 #include "winreg.h"
+#include "servprov.h"
 #include "wine/unicode.h"
 
 #include "compobj_private.h"
@@ -1806,6 +1807,7 @@ HRESULT RPC_GetLocalClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
     LARGE_INTEGER  seekto;
     ULARGE_INTEGER newpos;
     int            tries = 0;
+    IServiceProvider *local_server;
 
     static const int MAXTRIES = 30; /* 30 seconds */
 
@@ -1865,8 +1867,11 @@ HRESULT RPC_GetLocalClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
     seekto.u.LowPart = 0;seekto.u.HighPart = 0;
     hres = IStream_Seek(pStm,seekto,STREAM_SEEK_SET,&newpos);
     
-    TRACE("unmarshalling classfactory\n");
-    hres = CoUnmarshalInterface(pStm,&IID_IClassFactory,ppv);
+    TRACE("unmarshalling local server\n");
+    hres = CoUnmarshalInterface(pStm, &IID_IServiceProvider, (void**)&local_server);
+    if(SUCCEEDED(hres))
+        hres = IServiceProvider_QueryService(local_server, rclsid, iid, ppv);
+    IServiceProvider_Release(local_server);
 out:
     IStream_Release(pStm);
     return hres;
@@ -1927,7 +1932,7 @@ static DWORD WINAPI local_server_thread(LPVOID param)
             }
         }
 
-        TRACE("marshalling IClassFactory to client\n");
+        TRACE("marshalling LocalServer to client\n");
         
         hres = IStream_Stat(pStm,&ststg,STATFLAG_NONAME);
         if (hres)
@@ -1957,7 +1962,7 @@ static DWORD WINAPI local_server_thread(LPVOID param)
 
         FlushFileBuffers(hPipe);
         DisconnectNamedPipe(hPipe);
-        TRACE("done marshalling IClassFactory\n");
+        TRACE("done marshalling LocalServer\n");
 
         if (!multi_use)
         {

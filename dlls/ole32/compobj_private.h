@@ -40,6 +40,7 @@
 
 struct apartment;
 typedef struct apartment APARTMENT;
+typedef struct LocalServer LocalServer;
 
 DEFINE_OLEGUID( CLSID_DfMarshal, 0x0000030b, 0, 0 );
 
@@ -137,6 +138,7 @@ struct apartment
   struct list loaded_dlls; /* list of dlls loaded by this apartment (CS cs) */
   DWORD host_apt_tid;      /* thread ID of apartment hosting objects of differing threading model (CS cs) */
   HWND host_apt_hwnd;      /* handle to apartment window of host apartment (CS cs) */
+  LocalServer *local_server; /* A marshallable object exposing local servers (CS cs) */
 
   /* FIXME: OIDs should be given out by RPCSS */
   OID oidc;                /* object ID counter, starts at 1, zero is invalid OID (CS cs) */
@@ -311,5 +313,15 @@ extern UINT ole_private_data_clipboard_format DECLSPEC_HIDDEN;
 
 extern LSTATUS create_classes_key(HKEY, const WCHAR *, REGSAM, HKEY *) DECLSPEC_HIDDEN;
 extern LSTATUS open_classes_key(HKEY, const WCHAR *, REGSAM, HKEY *) DECLSPEC_HIDDEN;
+
+static inline void *heap_alloc(size_t len)
+{
+    return HeapAlloc(GetProcessHeap(), 0, len);
+}
+
+static inline BOOL heap_free(void *mem)
+{
+    return HeapFree(GetProcessHeap(), 0, mem);
+}
 
 #endif /* __WINE_OLE_COMPOBJ_H */

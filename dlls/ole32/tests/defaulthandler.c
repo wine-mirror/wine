@@ -274,11 +274,9 @@ static void test_default_handler_run(void)
     CoRevokeClassObject(class_reg);
     todo_wine CHECK_CALLED(CF_QueryInterface_IMarshal);
 
-    SET_EXPECT(CF_QueryInterface_IMarshal);
     hres = CoRegisterClassObject(&test_server_clsid, (IUnknown*)&ClassFactory,
             CLSCTX_LOCAL_SERVER, 0, &class_reg);
     ok(hres == S_OK, "CoRegisterClassObject failed: %x\n", hres);
-    todo_wine CHECK_NOT_CALLED(CF_QueryInterface_IMarshal);
 
     hres = OleCreateDefaultHandler(&test_server_clsid, NULL, &IID_IUnknown, (void**)&unk);
     ok(hres == S_OK, "OleCreateDefaultHandler failed: %x\n", hres);
