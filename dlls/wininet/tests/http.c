@@ -3461,19 +3461,16 @@ static void test_cert_struct(HINTERNET req)
     BOOL res;
 
     static const char ex_subject[] =
-        "US\r\n"
-        "Minnesota\r\n"
-        "Saint Paul\r\n"
-        "WineHQ\r\n"
-        "test.winehq.org\r\n"
-        "webmaster@winehq.org";
+        "0mJuv1t-1CFypQkyTZwfvjHHBAbnUndG\r\n"
+        "GT98380011\r\n"
+        "See www.rapidssl.com/resources/cps (c)13\r\n"
+        "Domain Control Validated - RapidSSL(R)\r\n"
+        "*.winehq.org";
 
     static const char ex_issuer[] =
         "US\r\n"
-        "Minnesota\r\n"
-        "WineHQ\r\n"
-        "test.winehq.org\r\n"
-        "webmaster@winehq.org";
+        "\"GeoTrust, Inc.\"\r\n"
+        "RapidSSL CA";
 
     memset(&info, 0x5, sizeof(info));
 
@@ -3841,9 +3838,9 @@ static void test_security_flags(void)
 static void test_secure_connection(void)
 {
     static const WCHAR gizmo5[] = {'G','i','z','m','o','5',0};
-    static const WCHAR testbot[] = {'t','e','s','t','b','o','t','.','w','i','n','e','h','q','.','o','r','g',0};
+    static const WCHAR testsite[] = {'t','e','s','t','.','w','i','n','e','h','q','.','o','r','g',0};
     static const WCHAR get[] = {'G','E','T',0};
-    static const WCHAR slash[] = {'/',0};
+    static const WCHAR testpage[] = {'/','t','e','s','t','s','/','h','e','l','l','o','.','h','t','m','l',0};
     HINTERNET ses, con, req;
     DWORD size, flags;
     INTERNET_CERTIFICATE_INFOA *certificate_structA = NULL;
@@ -3853,12 +3850,12 @@ static void test_secure_connection(void)
     ses = InternetOpen("Gizmo5", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
     ok(ses != NULL, "InternetOpen failed\n");
 
-    con = InternetConnect(ses, "testbot.winehq.org",
+    con = InternetConnect(ses, "test.winehq.org",
                           INTERNET_DEFAULT_HTTPS_PORT, NULL, NULL,
                           INTERNET_SERVICE_HTTP, 0, 0);
     ok(con != NULL, "InternetConnect failed\n");
 
-    req = HttpOpenRequest(con, "GET", "/", NULL, NULL, NULL,
+    req = HttpOpenRequest(con, "GET", "/tests/hello.html", NULL, NULL, NULL,
                           INTERNET_FLAG_SECURE, 0);
     ok(req != NULL, "HttpOpenRequest failed\n");
 
@@ -3937,12 +3934,12 @@ static void test_secure_connection(void)
     ses = InternetOpenW(gizmo5, INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
     ok(ses != NULL, "InternetOpen failed\n");
 
-    con = InternetConnectW(ses, testbot,
+    con = InternetConnectW(ses, testsite,
                           INTERNET_DEFAULT_HTTPS_PORT, NULL, NULL,
                           INTERNET_SERVICE_HTTP, 0, 0);
     ok(con != NULL, "InternetConnect failed\n");
 
-    req = HttpOpenRequestW(con, get, slash, NULL, NULL, NULL,
+    req = HttpOpenRequestW(con, get, testpage, NULL, NULL, NULL,
                           INTERNET_FLAG_SECURE, 0);
     ok(req != NULL, "HttpOpenRequest failed\n");
 
