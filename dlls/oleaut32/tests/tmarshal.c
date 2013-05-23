@@ -151,6 +151,60 @@ static void end_host_object(DWORD tid, HANDLE thread)
     CloseHandle(thread);
 }
 
+static int external_connections;
+
+static HRESULT WINAPI ExternalConnection_QueryInterface(IExternalConnection *iface, REFIID riid, void **ppv)
+{
+    ok(0, "unxpected call\n");
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ExternalConnection_AddRef(IExternalConnection *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ExternalConnection_Release(IExternalConnection *iface)
+{
+    return 1;
+}
+
+static DWORD WINAPI ExternalConnection_AddConnection(IExternalConnection *iface, DWORD extconn, DWORD reserved)
+{
+    trace("add connection\n");
+
+    ok(extconn == EXTCONN_STRONG, "extconn = %d\n", extconn);
+    ok(!reserved, "reserved = %x\n", reserved);
+    return ++external_connections;
+}
+
+static DWORD WINAPI ExternalConnection_ReleaseConnection(IExternalConnection *iface, DWORD extconn,
+        DWORD reserved, BOOL fLastReleaseCloses)
+{
+    trace("release connection\n");
+
+    ok(extconn == EXTCONN_STRONG, "extconn = %d\n", extconn);
+    ok(!reserved, "reserved = %x\n", reserved);
+
+    /* This may need to be adjusted if we'll add more complex tests. */
+    if(--external_connections)
+        ok(!fLastReleaseCloses, "fLastReleaseCloses = %x\n", fLastReleaseCloses);
+    else
+        ok(fLastReleaseCloses, "fLastReleaseCloses = %x\n", fLastReleaseCloses);
+    return external_connections;
+}
+
+static const IExternalConnectionVtbl ExternalConnectionVtbl = {
+    ExternalConnection_QueryInterface,
+    ExternalConnection_AddRef,
+    ExternalConnection_Release,
+    ExternalConnection_AddConnection,
+    ExternalConnection_ReleaseConnection
+};
+
+static IExternalConnection ExternalConnection = { &ExternalConnectionVtbl };
+
 static ItestDual TestDual, TestDualDisp;
 
 static HRESULT WINAPI TestSecondIface_QueryInterface(ITestSecondIface *iface, REFIID riid, void **ppv)
@@ -182,6 +236,67 @@ static const ITestSecondIfaceVtbl TestSecondIfaceVtbl = {
 
 static ITestSecondIface TestSecondIface = { &TestSecondIfaceVtbl };
 
+static HRESULT WINAPI TestSecondDisp_QueryInterface(ITestSecondDisp *iface, REFIID riid, void **ppv)
+{
+    return ItestDual_QueryInterface(&TestDual, riid, ppv);
+}
+
+static ULONG WINAPI TestSecondDisp_AddRef(ITestSecondDisp *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI TestSecondDisp_Release(ITestSecondDisp *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI TestSecondDisp_GetTypeInfoCount(ITestSecondDisp *iface, UINT *pctinfo)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TestSecondDisp_GetTypeInfo(ITestSecondDisp *iface, UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TestSecondDisp_GetIDsOfNames(ITestSecondDisp *iface, REFIID riid, LPOLESTR *rgszNames,
+        UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TestSecondDisp_Invoke(ITestSecondDisp *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
+        WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo,
+        UINT *puArgErr)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TestSecondDisp_test(ITestSecondDisp *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static ITestSecondDispVtbl TestSecondDispVtbl = {
+    TestSecondDisp_QueryInterface,
+    TestSecondDisp_AddRef,
+    TestSecondDisp_Release,
+    TestSecondDisp_GetTypeInfoCount,
+    TestSecondDisp_GetTypeInfo,
+    TestSecondDisp_GetIDsOfNames,
+    TestSecondDisp_Invoke,
+    TestSecondDisp_test
+};
+
+static ITestSecondDisp TestSecondDisp = { &TestSecondDispVtbl };
+
 static HRESULT WINAPI TestDual_QueryInterface(ItestDual *iface, REFIID riid, void **ppvObject)
 {
     if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDispatch)) {
@@ -192,6 +307,13 @@ static HRESULT WINAPI TestDual_QueryInterface(ItestDual *iface, REFIID riid, voi
         return S_OK;
     }else if(IsEqualGUID(riid, &IID_ITestSecondIface)) {
         *ppvObject = &TestSecondIface;
+        return S_OK;
+    }else if(IsEqualGUID(riid, &IID_ITestSecondDisp)) {
+        *ppvObject = &TestSecondDisp;
+        return S_OK;
+    }else if (IsEqualGUID(riid, &IID_IExternalConnection)) {
+        trace("QI external connection\n");
+        *ppvObject = &ExternalConnection;
         return S_OK;
     }
 
@@ -1704,6 +1826,86 @@ static void test_libattr(void)
     ITypeLib_Release(pTypeLib);
 }
 
+static void test_external_connection(void)
+{
+    IStream *stream, *stream2;
+    ITestSecondDisp *second;
+    ItestDual *iface;
+    HANDLE thread;
+    DWORD tid;
+    HRESULT hres;
+
+    static const LARGE_INTEGER zero;
+
+    trace("Testing IExternalConnection...\n");
+
+    external_connections = 0;
+
+    /* Marshaling an interface increases external connection count. */
+    hres = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hres == S_OK, "CreateStreamOnHGlobal failed: %08x\n", hres);
+    tid = start_host_object(stream, &IID_ItestDual, (IUnknown*)&TestDual, MSHLFLAGS_NORMAL, &thread);
+    ok(external_connections == 1, "external_connections = %d\n", external_connections);
+
+    IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
+    hres = CoUnmarshalInterface(stream, &IID_ItestDual, (void**)&iface);
+    ok(hres == S_OK, "CoUnmarshalInterface failed: %08x\n", hres);
+    ok(external_connections == 1, "external_connections = %d\n", external_connections);
+
+    IStream_Release(stream);
+    ok(external_connections == 1, "external_connections = %d\n", external_connections);
+
+    /* Creating a stub for new iface does not cause new external connection. */
+    hres = ItestDual_QueryInterface(iface, &IID_ITestSecondDisp, (void**)&second);
+    ok(hres == S_OK, "Could not get ITestSecondDisp iface: %08x\n", hres);
+    ok(external_connections == 1, "external_connections = %d\n", external_connections);
+
+    ITestSecondDisp_Release(second);
+    ok(external_connections == 1, "external_connections = %d\n", external_connections);
+
+    ItestDual_Release(iface);
+    ok(external_connections == 0, "external_connections = %d\n", external_connections);
+
+    end_host_object(tid, thread);
+
+    /* A test with direct CoMarshalInterface call. */
+    hres = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hres == S_OK, "CreateStreamOnHGlobal failed: %08x\n", hres);
+
+    hres = CoMarshalInterface(stream, &IID_ItestDual, (IUnknown*)&TestDual, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok(hres == S_OK, "CoMarshalInterface failed: %08x\n", hres);
+    ok(external_connections == 1, "external_connections = %d\n", external_connections);
+
+    IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
+    hres = CoReleaseMarshalData(stream);
+    ok(hres == S_OK, "CoReleaseMarshalData failed: %08x\n", hres);
+    ok(external_connections == 0, "external_connections = %d\n", external_connections);
+
+    /* Two separated marshal data are still one external connection. */
+    hres = CreateStreamOnHGlobal(NULL, TRUE, &stream2);
+    ok(hres == S_OK, "CreateStreamOnHGlobal failed: %08x\n", hres);
+
+    IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
+    hres = CoMarshalInterface(stream, &IID_ItestDual, (IUnknown*)&TestDual, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok(hres == S_OK, "CoMarshalInterface failed: %08x\n", hres);
+    ok(external_connections == 1, "external_connections = %d\n", external_connections);
+
+    hres = CoMarshalInterface(stream2, &IID_ItestDual, (IUnknown*)&TestDual, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok(hres == S_OK, "CoMarshalInterface failed: %08x\n", hres);
+    ok(external_connections == 1, "external_connections = %d\n", external_connections);
+
+    IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
+    hres = CoReleaseMarshalData(stream);
+    ok(hres == S_OK, "CoReleaseMarshalData failed: %08x\n", hres);
+    ok(external_connections == 1, "external_connections = %d\n", external_connections);
+
+    IStream_Seek(stream2, zero, STREAM_SEEK_SET, NULL);
+    hres = CoReleaseMarshalData(stream2);
+    ok(hres == S_OK, "CoReleaseMarshalData failed: %08x\n", hres);
+    ok(external_connections == 0, "external_connections = %d\n", external_connections);
+
+}
+
 START_TEST(tmarshal)
 {
     HRESULT hr;
@@ -1724,6 +1926,7 @@ START_TEST(tmarshal)
     test_DispCallFunc();
     test_StaticWidget();
     test_libattr();
+    test_external_connection();
 
     hr = UnRegisterTypeLib(&LIBID_TestTypelib, 1, 0, LOCALE_NEUTRAL,
                            sizeof(void*) == 8 ? SYS_WIN64 : SYS_WIN32);

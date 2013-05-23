@@ -75,6 +75,17 @@ library TestTypelib
 
     [
         odl,
+        oleautomation,
+        dual,
+        uuid(3f7e06fe-0bce-46f0-8b7d-3a68393c7967)
+    ]
+    interface ITestSecondDisp : IDispatch
+    {
+        HRESULT test();
+    }
+
+    [
+        odl,
         uuid(a1f8cae3-c947-4c5f-b57d-c87b9b5f3586),
         oleautomation,
         dual
