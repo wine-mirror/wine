@@ -1131,6 +1131,18 @@ static HRESULT osx_set_autocenter(JoystickImpl *This,
     return hr;
 }
 
+static HRESULT osx_set_ffgain(JoystickImpl *This, const DIPROPDWORD *header)
+{
+    UInt32 v;
+    HRESULT hr;
+    if(!This->ff)
+        return DIERR_UNSUPPORTED;
+    v = header->dwData;
+    hr = osx_to_win32_hresult(FFDeviceSetForceFeedbackProperty(This->ff, FFPROP_FFGAIN, &v));
+    TRACE("returning: %08x\n", hr);
+    return hr;
+}
+
 static HRESULT WINAPI JoystickWImpl_SetProperty(IDirectInputDevice8W *iface,
         const GUID *prop, const DIPROPHEADER *header)
 {
@@ -1142,6 +1154,8 @@ static HRESULT WINAPI JoystickWImpl_SetProperty(IDirectInputDevice8W *iface,
     {
     case (DWORD_PTR)DIPROP_AUTOCENTER:
         return osx_set_autocenter(This, (const DIPROPDWORD *)header);
+    case (DWORD_PTR)DIPROP_FFGAIN:
+        return osx_set_ffgain(This, (const DIPROPDWORD *)header);
     }
 
     return JoystickWGenericImpl_SetProperty(iface, prop, header);
@@ -1158,6 +1172,8 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(IDirectInputDevice8A *iface,
     {
     case (DWORD_PTR)DIPROP_AUTOCENTER:
         return osx_set_autocenter(This, (const DIPROPDWORD *)header);
+    case (DWORD_PTR)DIPROP_FFGAIN:
+        return osx_set_ffgain(This, (const DIPROPDWORD *)header);
     }
 
     return JoystickAGenericImpl_SetProperty(iface, prop, header);
