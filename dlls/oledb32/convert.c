@@ -428,6 +428,27 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         switch (src_type)
         {
         case DBTYPE_DBDATE: memcpy(d, src, sizeof(DBDATE));  hr = S_OK; break;
+        case DBTYPE_BSTR:
+        {
+            VARIANT var;
+            BSTR s = *(WCHAR**)src;
+
+            VariantInit(&var);
+            V_VT(&var) = VT_BSTR;
+            V_BSTR(&var) = SysAllocString(s);
+
+            if ((hr = VariantChangeType(&var, &var, 0, VT_DATE)) == S_OK)
+            {
+                SYSTEMTIME st;
+                hr = (VariantTimeToSystemTime( V_DATE(&var), &st) ? S_OK : E_FAIL);
+                d->year = st.wYear;
+                d->month = st.wMonth;
+                d->day = st.wDay;
+            }
+
+            VariantClear(&var);
+        }
+        break;
         case DBTYPE_VARIANT:
             if( V_VT((VARIANT*)src) == VT_DATE)
             {
