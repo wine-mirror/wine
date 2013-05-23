@@ -416,15 +416,64 @@ __ASM_GLOBAL_FUNC( call_entry_point,
                    __ASM_CFI(".cfi_same_value %ebp\n\t")
                    "ret" )
 
-static LONGLONG WINAPI relay_call( struct relay_descr *descr, unsigned int idx, const INT_PTR *stack )
-{
-    BYTE nb_args = LOBYTE(HIWORD(idx));
-    BYTE flags   = HIBYTE(HIWORD(idx));
-    void *func = relay_trace_entry( descr, idx, stack );
-    LONGLONG ret = call_entry_point( func, nb_args, stack + 1, flags );
-    relay_trace_exit( descr, idx, stack, ret );
-    return ret;
-}
+extern LONGLONG WINAPI relay_call( struct relay_descr *descr, unsigned int idx, const INT_PTR *stack );
+__ASM_GLOBAL_FUNC( relay_call,
+                   "pushl %ebp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                   __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+                   "movl %esp,%ebp\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+                   "pushl %esi\n\t"
+                  __ASM_CFI(".cfi_rel_offset %esi,-4\n\t")
+                   "pushl %edi\n\t"
+                  __ASM_CFI(".cfi_rel_offset %edi,-8\n\t")
+                   "pushl %ecx\n\t"
+                  __ASM_CFI(".cfi_rel_offset %ecx,-12\n\t")
+                   /* trace the parameters */
+                   "pushl 16(%ebp)\n\t"
+                   "pushl 12(%ebp)\n\t"
+                   "pushl 8(%ebp)\n\t"
+                   "call " __ASM_NAME("relay_trace_entry") "\n\t"
+                   /* copy the arguments*/
+                   "movzbl 14(%ebp),%ecx\n\t"  /* number of args */
+                   "jecxz 1f\n\t"
+                   "leal 0(,%ecx,4),%edx\n\t"
+                   "subl %edx,%esp\n\t"
+                   "andl $~15,%esp\n\t"
+                   "movl 16(%ebp),%esi\n\t"
+                   "addl $4,%esi\n\t"
+                   "movl %esp,%edi\n\t"
+                   "cld\n\t"
+                   "rep; movsl\n\t"
+                   "testb $2,15(%ebp)\n\t"  /* (flags & 2) -> thiscall */
+                   "jz 1f\n\t"
+                   "popl %ecx\n"
+                   /* call the entry point */
+                   "1:\tcall *%eax\n\t"
+                   "movl %eax,%esi\n\t"
+                   "movl %edx,%edi\n\t"
+                   /* trace the return value */
+                   "leal -20(%ebp),%esp\n\t"
+                   "pushl %edx\n\t"
+                   "pushl %eax\n\t"
+                   "pushl 16(%ebp)\n\t"
+                   "pushl 12(%ebp)\n\t"
+                   "pushl 8(%ebp)\n\t"
+                   "call " __ASM_NAME("relay_trace_exit") "\n\t"
+                   /* restore return value and return */
+                   "leal -12(%ebp),%esp\n\t"
+                   "movl %esi,%eax\n\t"
+                   "movl %edi,%edx\n\t"
+                   "popl %ecx\n\t"
+                   __ASM_CFI(".cfi_same_value %ecx\n\t")
+                   "popl %edi\n\t"
+                   __ASM_CFI(".cfi_same_value %edi\n\t")
+                   "popl %esi\n\t"
+                   __ASM_CFI(".cfi_same_value %esi\n\t")
+                   "popl %ebp\n\t"
+                   __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
+                   __ASM_CFI(".cfi_same_value %ebp\n\t")
+                   "ret $12" )
 
 void WINAPI __regs_relay_call_regs( struct relay_descr *descr, unsigned int idx,
                                     unsigned int orig_eax, unsigned int ret_addr,
