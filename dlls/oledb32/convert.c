@@ -957,6 +957,25 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         }
         break;
     }
+    case DBTYPE_BYTES | DBTYPE_BYREF:
+    {
+        BYTE **d = dst;
+
+        switch(src_type)
+        {
+        case DBTYPE_BYTES:
+            *d = CoTaskMemAlloc(src_len);
+            if(*d) memcpy(*d, src, src_len);
+            else hr = E_OUTOFMEMORY;
+
+            *dst_len = src_len;
+            *dst_status = DBSTATUS_S_OK;
+            return S_OK;
+        default: FIXME("Unimplemented conversion %04x -> DBTYPE_BYTES | DBTYPE_BYREF\n", src_type); return E_NOTIMPL;
+        }
+        break;
+    }
+    break;
 
     default:
         FIXME("Unimplemented conversion %04x -> %04x\n", src_type, dst_type);
