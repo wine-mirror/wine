@@ -1118,6 +1118,7 @@ static HRESULT WINAPI JoystickWImpl_CreateEffect(IDirectInputDevice8W *iface,
     HRESULT hr;
 
     TRACE("%p %s %p %p %p\n", iface, debugstr_guid(type), params, out, outer);
+    dump_DIEFFECT(params, type, 0);
 
     if(!This->ff){
         TRACE("No force feedback support\n");
@@ -1310,6 +1311,7 @@ static HRESULT WINAPI effect_SetParameters(IDirectInputEffect *iface,
 {
     EffectImpl *This = impl_from_IDirectInputEffect(iface);
     TRACE("%p %p 0x%x\n", This, effect, flags);
+    dump_DIEFFECT(effect, &This->guid, flags);
     return osx_to_win32_hresult(FFEffectSetParameters(This->effect, (FFEFFECT*)effect, flags));
 }
 
