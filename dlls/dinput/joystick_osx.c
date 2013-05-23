@@ -1118,6 +1118,51 @@ static HRESULT joydev_create_device(IDirectInputImpl *dinput, REFGUID rguid, REF
     return DIERR_DEVICENOTREG;
 }
 
+static HRESULT osx_set_autocenter(JoystickImpl *This,
+        const DIPROPDWORD *header)
+{
+    UInt32 v;
+    HRESULT hr;
+    if(!This->ff)
+        return DIERR_UNSUPPORTED;
+    v = header->dwData;
+    hr = osx_to_win32_hresult(FFDeviceSetForceFeedbackProperty(This->ff, FFPROP_AUTOCENTER, &v));
+    TRACE("returning: %08x\n", hr);
+    return hr;
+}
+
+static HRESULT WINAPI JoystickWImpl_SetProperty(IDirectInputDevice8W *iface,
+        const GUID *prop, const DIPROPHEADER *header)
+{
+    JoystickImpl *This = impl_from_IDirectInputDevice8W(iface);
+
+    TRACE("%p %s %p\n", This, debugstr_guid(prop), header);
+
+    switch(LOWORD(prop))
+    {
+    case (DWORD_PTR)DIPROP_AUTOCENTER:
+        return osx_set_autocenter(This, (const DIPROPDWORD *)header);
+    }
+
+    return JoystickWGenericImpl_SetProperty(iface, prop, header);
+}
+
+static HRESULT WINAPI JoystickAImpl_SetProperty(IDirectInputDevice8A *iface,
+        const GUID *prop, const DIPROPHEADER *header)
+{
+    JoystickImpl *This = impl_from_IDirectInputDevice8A(iface);
+
+    TRACE("%p %s %p\n", This, debugstr_guid(prop), header);
+
+    switch(LOWORD(prop))
+    {
+    case (DWORD_PTR)DIPROP_AUTOCENTER:
+        return osx_set_autocenter(This, (const DIPROPDWORD *)header);
+    }
+
+    return JoystickAGenericImpl_SetProperty(iface, prop, header);
+}
+
 static CFUUIDRef effect_win_to_mac(const GUID *effect)
 {
 #define DO_MAP(X) \
@@ -1240,7 +1285,7 @@ static const IDirectInputDevice8AVtbl JoystickAvt =
     JoystickAGenericImpl_GetCapabilities,
     IDirectInputDevice2AImpl_EnumObjects,
     JoystickAGenericImpl_GetProperty,
-    JoystickAGenericImpl_SetProperty,
+    JoystickAImpl_SetProperty,
     IDirectInputDevice2AImpl_Acquire,
     IDirectInputDevice2AImpl_Unacquire,
     JoystickAGenericImpl_GetDeviceState,
@@ -1276,7 +1321,7 @@ static const IDirectInputDevice8WVtbl JoystickWvt =
     JoystickWGenericImpl_GetCapabilities,
     IDirectInputDevice2WImpl_EnumObjects,
     JoystickWGenericImpl_GetProperty,
-    JoystickWGenericImpl_SetProperty,
+    JoystickWImpl_SetProperty,
     IDirectInputDevice2WImpl_Acquire,
     IDirectInputDevice2WImpl_Unacquire,
     JoystickWGenericImpl_GetDeviceState,
