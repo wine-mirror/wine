@@ -191,6 +191,13 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         return S_OK;
     }
 
+    if(dst == NULL && get_length(dst_type) != 0)
+    {
+        *dst_len = get_length(src_type);
+        *dst_status = DBSTATUS_S_OK;
+        return S_OK;
+    }
+
     if(src_type == DBTYPE_STR)
     {
         BSTR b;
