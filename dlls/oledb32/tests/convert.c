@@ -1017,6 +1017,7 @@ static void test_converttowstr(void)
     static const WCHAR hexunpacked_w[] = {'5','7','0','0','6','9','0','0','6','E','0','0','6','5','0','0','0','0','0','0', 0 };
     static const WCHAR hexpacked_w[] = {'W','i','n','e', 0 };
     BSTR b;
+    VARIANT v;
 
     memset(dst, 0xcc, sizeof(dst));
     dst_len = 0x1234;
@@ -1470,6 +1471,24 @@ static void test_converttowstr(void)
     ok(dst_len == 0, "got %ld\n", dst_len);
     ok(dst[0] == 0, "not null terminated\n");
     ok(dst[1] == 0xcccc, "clobbered buffer\n");
+
+    b = SysAllocStringLen(NULL, 0);
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = b;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_VARIANT, DBTYPE_WSTR, 0, &dst_len, &v, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == 0, "got %ld\n", dst_len);
+    ok(dst != NULL, "got %p\n", dst);
+    ok(dst != b, "got %p src %p\n", dst, b);
+    ok(!lstrcmpW(b, dst), "got %s\n", wine_dbgstr_w(dst));
+    VariantClear(&v);
+
+    V_VT(&v) = VT_NULL;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_VARIANT, DBTYPE_WSTR, 0, &dst_len, &v, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_ISNULL, "got %08x\n", dst_status);
+    ok(dst_len == 0, "got %ld\n", dst_len);
 }
 
 static void test_converttostr(void)

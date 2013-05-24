@@ -787,7 +787,8 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         hr = IDataConvert_DataConvert(iface, src_type, DBTYPE_BSTR, src_len, &bstr_len,
                                       src, &b, sizeof(BSTR), src_status, dst_status,
                                       precision, scale, flags);
-        if(hr != S_OK) return hr;
+        if(hr != S_OK || *dst_status == DBSTATUS_S_ISNULL)
+            return hr;
         bstr_len = SysStringLen(b);
         *dst_len = bstr_len * sizeof(WCHAR); /* Doesn't include size for '\0' */
         *dst_status = DBSTATUS_S_OK;
