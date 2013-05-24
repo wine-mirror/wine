@@ -8110,64 +8110,109 @@ static HRESULT WINAPI ICreateTypeLib2_fnSetName(ICreateTypeLib2 *iface,
         LPOLESTR name)
 {
     ITypeLibImpl *This = impl_from_ICreateTypeLib2(iface);
-    FIXME("%p %s - stub\n", This, wine_dbgstr_w(name));
-    return E_NOTIMPL;
+
+    TRACE("%p %s\n", This, wine_dbgstr_w(name));
+
+    if (!name)
+        return E_INVALIDARG;
+
+    SysFreeString(This->Name);
+    This->Name = SysAllocString(name);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ICreateTypeLib2_fnSetVersion(ICreateTypeLib2 *iface,
         WORD majorVerNum, WORD minorVerNum)
 {
     ITypeLibImpl *This = impl_from_ICreateTypeLib2(iface);
-    FIXME("%p %d %d - stub\n", This, majorVerNum, minorVerNum);
-    return E_NOTIMPL;
+
+    TRACE("%p %d %d\n", This, majorVerNum, minorVerNum);
+
+    This->LibAttr.wMajorVerNum = majorVerNum;
+    This->LibAttr.wMinorVerNum = minorVerNum;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ICreateTypeLib2_fnSetGuid(ICreateTypeLib2 *iface,
         REFGUID guid)
 {
     ITypeLibImpl *This = impl_from_ICreateTypeLib2(iface);
-    FIXME("%p %s - stub\n", This, debugstr_guid(guid));
-    return E_NOTIMPL;
+
+    TRACE("%p %s\n", This, debugstr_guid(guid));
+
+    memcpy(&This->LibAttr.guid, guid, sizeof(GUID));
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ICreateTypeLib2_fnSetDocString(ICreateTypeLib2 *iface,
         LPOLESTR doc)
 {
     ITypeLibImpl *This = impl_from_ICreateTypeLib2(iface);
-    FIXME("%p %s - stub\n", This, wine_dbgstr_w(doc));
-    return E_NOTIMPL;
+
+    TRACE("%p %s\n", This, wine_dbgstr_w(doc));
+
+    if (!doc)
+        return E_INVALIDARG;
+
+    SysFreeString(This->DocString);
+    This->DocString = SysAllocString(doc);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ICreateTypeLib2_fnSetHelpFileName(ICreateTypeLib2 *iface,
         LPOLESTR helpFileName)
 {
     ITypeLibImpl *This = impl_from_ICreateTypeLib2(iface);
-    FIXME("%p %s - stub\n", This, wine_dbgstr_w(helpFileName));
-    return E_NOTIMPL;
+
+    TRACE("%p %s\n", This, wine_dbgstr_w(helpFileName));
+
+    if (!helpFileName)
+        return E_INVALIDARG;
+
+    SysFreeString(This->HelpFile);
+    This->HelpFile = SysAllocString(helpFileName);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ICreateTypeLib2_fnSetHelpContext(ICreateTypeLib2 *iface,
         DWORD helpContext)
 {
     ITypeLibImpl *This = impl_from_ICreateTypeLib2(iface);
-    FIXME("%p %d - stub\n", This, helpContext);
-    return E_NOTIMPL;
+
+    TRACE("%p %d\n", This, helpContext);
+
+    This->dwHelpContext = helpContext;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ICreateTypeLib2_fnSetLcid(ICreateTypeLib2 *iface,
         LCID lcid)
 {
     ITypeLibImpl *This = impl_from_ICreateTypeLib2(iface);
-    FIXME("%p %x - stub\n", This, lcid);
-    return E_NOTIMPL;
+
+    TRACE("%p %x\n", This, lcid);
+
+    This->LibAttr.lcid = lcid;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ICreateTypeLib2_fnSetLibFlags(ICreateTypeLib2 *iface,
         UINT libFlags)
 {
     ITypeLibImpl *This = impl_from_ICreateTypeLib2(iface);
-    FIXME("%p %x - stub\n", This, libFlags);
-    return E_NOTIMPL;
+
+    TRACE("%p %x\n", This, libFlags);
+
+    This->LibAttr.wLibFlags = libFlags;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ICreateTypeLib2_fnSaveAllChanges(ICreateTypeLib2 *iface)
@@ -8205,8 +8250,15 @@ static HRESULT WINAPI ICreateTypeLib2_fnSetHelpStringDll(ICreateTypeLib2 *iface,
         LPOLESTR filename)
 {
     ITypeLibImpl *This = impl_from_ICreateTypeLib2(iface);
-    FIXME("%p %s - stub\n", This, wine_dbgstr_w(filename));
-    return E_NOTIMPL;
+    TRACE("%p %s\n", This, wine_dbgstr_w(filename));
+
+    if (!filename)
+        return E_INVALIDARG;
+
+    SysFreeString(This->HelpStringDll);
+    This->HelpStringDll = SysAllocString(filename);
+
+    return S_OK;
 }
 
 static const ICreateTypeLib2Vtbl CreateTypeLib2Vtbl = {
