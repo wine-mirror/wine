@@ -5,7 +5,9 @@
  *		      1999  Rein Klazes
  *		      2000  Francois Jacques
  *		      2001  Huw D M Davies for CodeWeavers
+ *		      2004  Alastair Bridgewater
  *		      2005  Robert Shearman, for CodeWeavers
+ *		      2013  Andrew Eikum for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -985,6 +987,7 @@ typedef struct tagITypeLibImpl
 {
     ITypeLib2 ITypeLib2_iface;
     ITypeComp ITypeComp_iface;
+    ICreateTypeLib2 ICreateTypeLib2_iface;
     LONG ref;
     TLIBATTR LibAttr;            /* guid,lcid,syskind,version,flags */
     LCID lcid;
@@ -1017,6 +1020,7 @@ typedef struct tagITypeLibImpl
 
 static const ITypeLib2Vtbl tlbvt;
 static const ITypeCompVtbl tlbtcvt;
+static const ICreateTypeLib2Vtbl CreateTypeLib2Vtbl;
 
 static inline ITypeLibImpl *impl_from_ITypeLib2(ITypeLib2 *iface)
 {
@@ -1031,6 +1035,11 @@ static inline ITypeLibImpl *impl_from_ITypeLib(ITypeLib *iface)
 static inline ITypeLibImpl *impl_from_ITypeComp( ITypeComp *iface )
 {
     return CONTAINING_RECORD(iface, ITypeLibImpl, ITypeComp_iface);
+}
+
+static inline ITypeLibImpl *impl_from_ICreateTypeLib2( ICreateTypeLib2 *iface )
+{
+    return CONTAINING_RECORD(iface, ITypeLibImpl, ICreateTypeLib2_iface);
 }
 
 /* ITypeLib methods */
@@ -1106,6 +1115,7 @@ typedef struct tagITypeInfoImpl
 {
     ITypeInfo2 ITypeInfo2_iface;
     ITypeComp ITypeComp_iface;
+    ICreateTypeInfo2 ICreateTypeInfo2_iface;
     LONG ref;
     BOOL not_attached_to_typelib;
     TYPEATTR TypeAttr ;         /* _lots_ of type information. */
@@ -1148,8 +1158,14 @@ static inline ITypeInfoImpl *impl_from_ITypeInfo( ITypeInfo *iface )
     return impl_from_ITypeInfo2((ITypeInfo2*)iface);
 }
 
+static inline ITypeInfoImpl *info_impl_from_ICreateTypeInfo2( ICreateTypeInfo2 *iface )
+{
+    return CONTAINING_RECORD(iface, ITypeInfoImpl, ICreateTypeInfo2_iface);
+}
+
 static const ITypeInfo2Vtbl tinfvt;
 static const ITypeCompVtbl  tcompvt;
+static const ICreateTypeInfo2Vtbl CreateTypeInfo2Vtbl;
 
 static ITypeInfoImpl* ITypeInfoImpl_Constructor(void);
 static void ITypeInfoImpl_Destroy(ITypeInfoImpl *This);
@@ -3024,6 +3040,7 @@ static ITypeLibImpl* TypeLibImpl_Constructor(void)
 
     pTypeLibImpl->ITypeLib2_iface.lpVtbl = &tlbvt;
     pTypeLibImpl->ITypeComp_iface.lpVtbl = &tlbtcvt;
+    pTypeLibImpl->ICreateTypeLib2_iface.lpVtbl = &CreateTypeLib2Vtbl;
     pTypeLibImpl->ref = 1;
 
     list_init(&pTypeLibImpl->implib_list);
@@ -4253,6 +4270,11 @@ static HRESULT WINAPI ITypeLib2_fnQueryInterface(ITypeLib2 *iface, REFIID riid, 
     {
         *ppv = &This->ITypeLib2_iface;
     }
+    else if(IsEqualIID(riid, &IID_ICreateTypeLib) ||
+             IsEqualIID(riid, &IID_ICreateTypeLib2))
+    {
+        *ppv = &This->ICreateTypeLib2_iface;
+    }
     else
     {
         *ppv = NULL;
@@ -5078,6 +5100,7 @@ static ITypeInfoImpl* ITypeInfoImpl_Constructor(void)
     {
       pTypeInfoImpl->ITypeInfo2_iface.lpVtbl = &tinfvt;
       pTypeInfoImpl->ITypeComp_iface.lpVtbl = &tcompvt;
+      pTypeInfoImpl->ICreateTypeInfo2_iface.lpVtbl = &CreateTypeInfo2Vtbl;
       pTypeInfoImpl->ref = 0;
       pTypeInfoImpl->hreftype = -1;
       pTypeInfoImpl->TypeAttr.memidConstructor = MEMBERID_NIL;
@@ -5104,6 +5127,9 @@ static HRESULT WINAPI ITypeInfo_fnQueryInterface(
             IsEqualIID(riid,&IID_ITypeInfo)||
             IsEqualIID(riid,&IID_ITypeInfo2))
         *ppvObject = This;
+    else if(IsEqualIID(riid, &IID_ICreateTypeInfo) ||
+             IsEqualIID(riid, &IID_ICreateTypeInfo2))
+        *ppvObject = &This->ICreateTypeInfo2_iface;
 
     if(*ppvObject){
         ITypeInfo2_AddRef(iface);
@@ -8048,4 +8074,525 @@ static const ITypeCompVtbl tcompvt =
 
     ITypeComp_fnBind,
     ITypeComp_fnBindType
+};
+
+static HRESULT WINAPI ICreateTypeLib2_fnQueryInterface(ICreateTypeLib2 *iface,
+        REFIID riid, void **object)
+{
+    ITypeLibImpl *This = impl_from_ICreateTypeLib2(iface);
+
+    return ITypeLib2_QueryInterface((ITypeLib2*)This, riid, object);
+}
+
+static ULONG WINAPI ICreateTypeLib2_fnAddRef(ICreateTypeLib2 *iface)
+{
+    ITypeLibImpl *This = impl_from_ICreateTypeLib2(iface);
+
+    return ITypeLib2_AddRef((ITypeLib2*)This);
+}
+
+static ULONG WINAPI ICreateTypeLib2_fnRelease(ICreateTypeLib2 *iface)
+{
+    ITypeLibImpl *This = impl_from_ICreateTypeLib2(iface);
+
+    return ITypeLib2_Release((ITypeLib2*)This);
+}
+
+static HRESULT WINAPI ICreateTypeLib2_fnCreateTypeInfo(ICreateTypeLib2 *iface,
+        LPOLESTR name, TYPEKIND kind, ICreateTypeInfo **ctinfo)
+{
+    ITypeLibImpl *This = impl_from_ICreateTypeLib2(iface);
+    FIXME("%p %s %d %p - stub\n", This, wine_dbgstr_w(name), kind, ctinfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeLib2_fnSetName(ICreateTypeLib2 *iface,
+        LPOLESTR name)
+{
+    ITypeLibImpl *This = impl_from_ICreateTypeLib2(iface);
+    FIXME("%p %s - stub\n", This, wine_dbgstr_w(name));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeLib2_fnSetVersion(ICreateTypeLib2 *iface,
+        WORD majorVerNum, WORD minorVerNum)
+{
+    ITypeLibImpl *This = impl_from_ICreateTypeLib2(iface);
+    FIXME("%p %d %d - stub\n", This, majorVerNum, minorVerNum);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeLib2_fnSetGuid(ICreateTypeLib2 *iface,
+        REFGUID guid)
+{
+    ITypeLibImpl *This = impl_from_ICreateTypeLib2(iface);
+    FIXME("%p %s - stub\n", This, debugstr_guid(guid));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeLib2_fnSetDocString(ICreateTypeLib2 *iface,
+        LPOLESTR doc)
+{
+    ITypeLibImpl *This = impl_from_ICreateTypeLib2(iface);
+    FIXME("%p %s - stub\n", This, wine_dbgstr_w(doc));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeLib2_fnSetHelpFileName(ICreateTypeLib2 *iface,
+        LPOLESTR helpFileName)
+{
+    ITypeLibImpl *This = impl_from_ICreateTypeLib2(iface);
+    FIXME("%p %s - stub\n", This, wine_dbgstr_w(helpFileName));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeLib2_fnSetHelpContext(ICreateTypeLib2 *iface,
+        DWORD helpContext)
+{
+    ITypeLibImpl *This = impl_from_ICreateTypeLib2(iface);
+    FIXME("%p %d - stub\n", This, helpContext);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeLib2_fnSetLcid(ICreateTypeLib2 *iface,
+        LCID lcid)
+{
+    ITypeLibImpl *This = impl_from_ICreateTypeLib2(iface);
+    FIXME("%p %x - stub\n", This, lcid);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeLib2_fnSetLibFlags(ICreateTypeLib2 *iface,
+        UINT libFlags)
+{
+    ITypeLibImpl *This = impl_from_ICreateTypeLib2(iface);
+    FIXME("%p %x - stub\n", This, libFlags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeLib2_fnSaveAllChanges(ICreateTypeLib2 *iface)
+{
+    ITypeLibImpl *This = impl_from_ICreateTypeLib2(iface);
+    FIXME("%p - stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeLib2_fnDeleteTypeInfo(ICreateTypeLib2 *iface,
+        LPOLESTR name)
+{
+    ITypeLibImpl *This = impl_from_ICreateTypeLib2(iface);
+    FIXME("%p %s - stub\n", This, wine_dbgstr_w(name));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeLib2_fnSetCustData(ICreateTypeLib2 *iface,
+        REFGUID guid, VARIANT *varVal)
+{
+    ITypeLibImpl *This = impl_from_ICreateTypeLib2(iface);
+    FIXME("%p %s %p - stub\n", This, debugstr_guid(guid), varVal);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeLib2_fnSetHelpStringContext(ICreateTypeLib2 *iface,
+        ULONG helpStringContext)
+{
+    ITypeLibImpl *This = impl_from_ICreateTypeLib2(iface);
+    FIXME("%p %u - stub\n", This, helpStringContext);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeLib2_fnSetHelpStringDll(ICreateTypeLib2 *iface,
+        LPOLESTR filename)
+{
+    ITypeLibImpl *This = impl_from_ICreateTypeLib2(iface);
+    FIXME("%p %s - stub\n", This, wine_dbgstr_w(filename));
+    return E_NOTIMPL;
+}
+
+static const ICreateTypeLib2Vtbl CreateTypeLib2Vtbl = {
+    ICreateTypeLib2_fnQueryInterface,
+    ICreateTypeLib2_fnAddRef,
+    ICreateTypeLib2_fnRelease,
+    ICreateTypeLib2_fnCreateTypeInfo,
+    ICreateTypeLib2_fnSetName,
+    ICreateTypeLib2_fnSetVersion,
+    ICreateTypeLib2_fnSetGuid,
+    ICreateTypeLib2_fnSetDocString,
+    ICreateTypeLib2_fnSetHelpFileName,
+    ICreateTypeLib2_fnSetHelpContext,
+    ICreateTypeLib2_fnSetLcid,
+    ICreateTypeLib2_fnSetLibFlags,
+    ICreateTypeLib2_fnSaveAllChanges,
+    ICreateTypeLib2_fnDeleteTypeInfo,
+    ICreateTypeLib2_fnSetCustData,
+    ICreateTypeLib2_fnSetHelpStringContext,
+    ICreateTypeLib2_fnSetHelpStringDll
+};
+
+static HRESULT WINAPI ICreateTypeInfo2_fnQueryInterface(ICreateTypeInfo2 *iface,
+        REFIID riid, void **object)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+
+    return ITypeInfo2_QueryInterface((ITypeInfo2*)This, riid, object);
+}
+
+static ULONG WINAPI ICreateTypeInfo2_fnAddRef(ICreateTypeInfo2 *iface)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+
+    return ITypeInfo2_AddRef((ITypeInfo2*)This);
+}
+
+static ULONG WINAPI ICreateTypeInfo2_fnRelease(ICreateTypeInfo2 *iface)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+
+    return ITypeInfo2_Release((ITypeInfo2*)This);
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnSetGuid(ICreateTypeInfo2 *iface,
+        REFGUID guid)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %s - stub\n", This, debugstr_guid(guid));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnSetTypeFlags(ICreateTypeInfo2 *iface,
+        UINT typeFlags)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %x - stub\n", This, typeFlags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnSetDocString(ICreateTypeInfo2 *iface,
+        LPOLESTR strDoc)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %s - stub\n", This, wine_dbgstr_w(strDoc));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnSetHelpContext(ICreateTypeInfo2 *iface,
+        DWORD helpContext)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %d - stub\n", This, helpContext);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnSetVersion(ICreateTypeInfo2 *iface,
+        WORD majorVerNum, WORD minorVerNum)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %d %d - stub\n", This, majorVerNum, minorVerNum);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnAddRefTypeInfo(ICreateTypeInfo2 *iface,
+        ITypeInfo *typeInfo, HREFTYPE *refType)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %p %p - stub\n", This, typeInfo, refType);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(ICreateTypeInfo2 *iface,
+        UINT index, FUNCDESC *funcDesc)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %u %p - stub\n", This, index, funcDesc);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnAddImplType(ICreateTypeInfo2 *iface,
+        UINT index, HREFTYPE refType)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %u %d - stub\n", This, index, refType);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnSetImplTypeFlags(ICreateTypeInfo2 *iface,
+        UINT index, INT implTypeFlags)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %u %x - stub\n", This, index, implTypeFlags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnSetAlignment(ICreateTypeInfo2 *iface,
+        WORD alignment)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %d - stub\n", This, alignment);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnSetSchema(ICreateTypeInfo2 *iface,
+        LPOLESTR schema)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %s - stub\n", This, wine_dbgstr_w(schema));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(ICreateTypeInfo2 *iface,
+        UINT index, VARDESC *varDesc)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %u %p - stub\n", This, index, varDesc);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncAndParamNames(ICreateTypeInfo2 *iface,
+        UINT index, LPOLESTR *names, UINT numNames)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %u %p %u - stub\n", This, index, names, numNames);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnSetVarName(ICreateTypeInfo2 *iface,
+        UINT index, LPOLESTR name)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %u %s - stub\n", This, index, wine_dbgstr_w(name));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnSetTypeDescAlias(ICreateTypeInfo2 *iface,
+        TYPEDESC *tdescAlias)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %p - stub\n", This, tdescAlias);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnDefineFuncAsDllEntry(ICreateTypeInfo2 *iface,
+        UINT index, LPOLESTR dllName, LPOLESTR procName)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %u %s %s - stub\n", This, index, wine_dbgstr_w(dllName), wine_dbgstr_w(procName));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncDocString(ICreateTypeInfo2 *iface,
+        UINT index, LPOLESTR docString)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %u %s - stub\n", This, index, wine_dbgstr_w(docString));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnSetVarDocString(ICreateTypeInfo2 *iface,
+        UINT index, LPOLESTR docString)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %u %s - stub\n", This, index, wine_dbgstr_w(docString));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncHelpContext(ICreateTypeInfo2 *iface,
+        UINT index, DWORD helpContext)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %u %d - stub\n", This, index, helpContext);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnSetVarHelpContext(ICreateTypeInfo2 *iface,
+        UINT index, DWORD helpContext)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %u %d - stub\n", This, index, helpContext);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnSetMops(ICreateTypeInfo2 *iface,
+        UINT index, BSTR bstrMops)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %u %s - stub\n", This, index, wine_dbgstr_w(bstrMops));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnSetTypeIdldesc(ICreateTypeInfo2 *iface,
+        IDLDESC *idlDesc)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %p - stub\n", This, idlDesc);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(ICreateTypeInfo2 *iface)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p - stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnDeleteFuncDesc(ICreateTypeInfo2 *iface,
+        UINT index)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %u - stub\n", This, index);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnDeleteFuncDescByMemId(ICreateTypeInfo2 *iface,
+        MEMBERID memid, INVOKEKIND invKind)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %x %d - stub\n", This, memid, invKind);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnDeleteVarDesc(ICreateTypeInfo2 *iface,
+        UINT index)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %u - stub\n", This, index);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnDeleteVarDescByMemId(ICreateTypeInfo2 *iface,
+        MEMBERID memid)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %x - stub\n", This, memid);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnDeleteImplType(ICreateTypeInfo2 *iface,
+        UINT index)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %u - stub\n", This, index);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnSetCustData(ICreateTypeInfo2 *iface,
+        REFGUID guid, VARIANT *varVal)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %s %p - stub\n", This, debugstr_guid(guid), varVal);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncCustData(ICreateTypeInfo2 *iface,
+        UINT index, REFGUID guid, VARIANT *varVal)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %u %s %p - stub\n", This, index, debugstr_guid(guid), varVal);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnSetParamCustData(ICreateTypeInfo2 *iface,
+        UINT funcIndex, UINT paramIndex, REFGUID guid, VARIANT *varVal)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %u %u %s %p - stub\n", This, funcIndex, paramIndex, debugstr_guid(guid), varVal);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnSetVarCustData(ICreateTypeInfo2 *iface,
+        UINT index, REFGUID guid, VARIANT *varVal)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %u %s %p - stub\n", This, index, debugstr_guid(guid), varVal);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnSetImplTypeCustData(ICreateTypeInfo2 *iface,
+        UINT index, REFGUID guid, VARIANT *varVal)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %u %s %p - stub\n", This, index, debugstr_guid(guid), varVal);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnSetHelpStringContext(ICreateTypeInfo2 *iface,
+        ULONG helpStringContext)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %u - stub\n", This, helpStringContext);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncHelpStringContext(ICreateTypeInfo2 *iface,
+        UINT index, ULONG helpStringContext)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %u %u - stub\n", This, index, helpStringContext);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnSetVarHelpStringContext(ICreateTypeInfo2 *iface,
+        UINT index, ULONG helpStringContext)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %u %u - stub\n", This, index, helpStringContext);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnInvalidate(ICreateTypeInfo2 *iface)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p - stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICreateTypeInfo2_fnSetName(ICreateTypeInfo2 *iface,
+        LPOLESTR name)
+{
+    ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    FIXME("%p %s - stub\n", This, wine_dbgstr_w(name));
+    return E_NOTIMPL;
+}
+
+static const ICreateTypeInfo2Vtbl CreateTypeInfo2Vtbl = {
+    ICreateTypeInfo2_fnQueryInterface,
+    ICreateTypeInfo2_fnAddRef,
+    ICreateTypeInfo2_fnRelease,
+    ICreateTypeInfo2_fnSetGuid,
+    ICreateTypeInfo2_fnSetTypeFlags,
+    ICreateTypeInfo2_fnSetDocString,
+    ICreateTypeInfo2_fnSetHelpContext,
+    ICreateTypeInfo2_fnSetVersion,
+    ICreateTypeInfo2_fnAddRefTypeInfo,
+    ICreateTypeInfo2_fnAddFuncDesc,
+    ICreateTypeInfo2_fnAddImplType,
+    ICreateTypeInfo2_fnSetImplTypeFlags,
+    ICreateTypeInfo2_fnSetAlignment,
+    ICreateTypeInfo2_fnSetSchema,
+    ICreateTypeInfo2_fnAddVarDesc,
+    ICreateTypeInfo2_fnSetFuncAndParamNames,
+    ICreateTypeInfo2_fnSetVarName,
+    ICreateTypeInfo2_fnSetTypeDescAlias,
+    ICreateTypeInfo2_fnDefineFuncAsDllEntry,
+    ICreateTypeInfo2_fnSetFuncDocString,
+    ICreateTypeInfo2_fnSetVarDocString,
+    ICreateTypeInfo2_fnSetFuncHelpContext,
+    ICreateTypeInfo2_fnSetVarHelpContext,
+    ICreateTypeInfo2_fnSetMops,
+    ICreateTypeInfo2_fnSetTypeIdldesc,
+    ICreateTypeInfo2_fnLayOut,
+    ICreateTypeInfo2_fnDeleteFuncDesc,
+    ICreateTypeInfo2_fnDeleteFuncDescByMemId,
+    ICreateTypeInfo2_fnDeleteVarDesc,
+    ICreateTypeInfo2_fnDeleteVarDescByMemId,
+    ICreateTypeInfo2_fnDeleteImplType,
+    ICreateTypeInfo2_fnSetCustData,
+    ICreateTypeInfo2_fnSetFuncCustData,
+    ICreateTypeInfo2_fnSetParamCustData,
+    ICreateTypeInfo2_fnSetVarCustData,
+    ICreateTypeInfo2_fnSetImplTypeCustData,
+    ICreateTypeInfo2_fnSetHelpStringContext,
+    ICreateTypeInfo2_fnSetFuncHelpStringContext,
+    ICreateTypeInfo2_fnSetVarHelpStringContext,
+    ICreateTypeInfo2_fnInvalidate,
+    ICreateTypeInfo2_fnSetName
 };
