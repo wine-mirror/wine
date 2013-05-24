@@ -669,10 +669,13 @@ static LRESULT WINAPI ie_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
         return 0;
     case WM_SHOWWINDOW:
         TRACE("WM_SHOWWINDOW %lx\n", wparam);
-        if(wparam)
+        if(wparam) {
             IWebBrowser2_AddRef(&This->IWebBrowser2_iface);
-        else
+            InterlockedIncrement(&This->extern_ref);
+        }else {
+            release_extern_ref(This, TRUE);
             IWebBrowser2_Release(&This->IWebBrowser2_iface);
+        }
         break;
     case WM_DESTROY:
         return iewnd_OnDestroy(This);

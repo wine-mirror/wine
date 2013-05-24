@@ -713,6 +713,31 @@ static inline InternetExplorer *impl_from_IExternalConnection(IExternalConnectio
     return CONTAINING_RECORD(iface, InternetExplorer, IExternalConnection_iface);
 }
 
+/*
+ * Document may keep references to InternetExplorer object causing circular references.
+ * We keep track of external references and release the document object when all
+ * external references are released. A visible main window is also considered as
+ * an external reference.
+ */
+DWORD release_extern_ref(InternetExplorer *This, BOOL last_closes)
+{
+    LONG ref = InterlockedDecrement(&This->extern_ref);
+
+    TRACE("ref = %d\n", ref);
+
+    if(ref)
+        return ref;
+
+    if(!last_closes) {
+        WARN("Last external connection released with FALSE last_closes.\n");
+        return ref;
+    }
+
+    if(This->doc_host)
+        deactivate_document(&This->doc_host->doc_host);
+    return ref;
+}
+
 static HRESULT WINAPI ExternalConnection_QueryInterface(IExternalConnection *iface, REFIID riid, void **ppv)
 {
     InternetExplorer *This = impl_from_IExternalConnection(iface);
@@ -734,16 +759,26 @@ static ULONG WINAPI ExternalConnection_Release(IExternalConnection *iface)
 static DWORD WINAPI ExternalConnection_AddConnection(IExternalConnection *iface, DWORD extconn, DWORD reserved)
 {
     InternetExplorer *This = impl_from_IExternalConnection(iface);
-    FIXME("(%p)\n", This);
-    return 2;
+
+    TRACE("(%p)->(%x %x)\n", This, extconn, reserved);
+
+    if(extconn != EXTCONN_STRONG)
+        return 0;
+
+    return InterlockedIncrement(&This->extern_ref);
 }
 
 static DWORD WINAPI ExternalConnection_ReleaseConnection(IExternalConnection *iface, DWORD extconn,
         DWORD reserved, BOOL fLastReleaseCloses)
 {
     InternetExplorer *This = impl_from_IExternalConnection(iface);
-    FIXME("(%p)\n", This);
-    return 1;
+
+    TRACE("(%p)->(%x %x %x)\n", This, extconn, reserved, fLastReleaseCloses);
+
+    if(extconn != EXTCONN_STRONG)
+        return 0;
+
+    return release_extern_ref(This, fLastReleaseCloses);
 }
 
 static const IExternalConnectionVtbl ExternalConnectionVtbl = {

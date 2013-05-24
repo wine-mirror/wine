@@ -229,6 +229,7 @@ struct InternetExplorer {
     HlinkFrame hlink_frame;
 
     LONG ref;
+    LONG extern_ref;
 
     HWND frame_hwnd;
     HWND status_hwnd;
@@ -288,6 +289,7 @@ LRESULT process_dochost_tasks(DocHost*) DECLSPEC_HIDDEN;
 void InternetExplorer_WebBrowser_Init(InternetExplorer*) DECLSPEC_HIDDEN;
 HRESULT update_ie_statustext(InternetExplorer*, LPCWSTR) DECLSPEC_HIDDEN;
 void released_obj(void) DECLSPEC_HIDDEN;
+DWORD release_extern_ref(InternetExplorer*,BOOL) DECLSPEC_HIDDEN;
 
 void register_iewindow_class(void) DECLSPEC_HIDDEN;
 void unregister_iewindow_class(void) DECLSPEC_HIDDEN;
