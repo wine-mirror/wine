@@ -35,7 +35,7 @@
 49 stdcall AtlRegisterClassCategoriesHelper(ptr ptr long)
 50 stdcall AtlIPersistStreamInit_Load(ptr ptr ptr ptr)
 51 stdcall AtlIPersistStreamInit_Save(ptr long ptr ptr ptr)
-52 stub AtlIPersistPropertyBag_Load
+52 stdcall AtlIPersistPropertyBag_Load(ptr ptr ptr ptr ptr)
 53 stub AtlIPersistPropertyBag_Save
 54 stdcall AtlGetObjectSourceInterface(ptr ptr ptr ptr ptr)
 56 stdcall AtlLoadTypeLib(long wstr ptr ptr)

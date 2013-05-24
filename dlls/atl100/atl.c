@@ -275,6 +275,18 @@ HRESULT WINAPI AtlIPersistStreamInit_Save(LPSTREAM pStm, BOOL fClearDirty,
 }
 
 /***********************************************************************
+ *           AtlIPersistPropertyBag_Load      [atl100.@]
+ */
+HRESULT WINAPI AtlIPersistPropertyBag_Load(LPPROPERTYBAG pPropBag, LPERRORLOG pErrorLog,
+                                           ATL_PROPMAP_ENTRY *pMap, void *pThis,
+                                           IUnknown *pUnk)
+{
+    FIXME("(%p, %p, %p, %p, %p)\n", pPropBag, pErrorLog, pMap, pThis, pUnk);
+
+    return S_OK;
+}
+
+/***********************************************************************
  *           AtlModuleAddTermFunc            [atl100.@]
  */
 HRESULT WINAPI AtlModuleAddTermFunc(_ATL_MODULE *pM, _ATL_TERMFUNC *pFunc, DWORD_PTR dw)
