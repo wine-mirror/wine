@@ -179,16 +179,16 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
 
     *dst_status = DBSTATUS_E_BADACCESSOR;
 
-    if(IDataConvert_CanConvert(iface, src_type, dst_type) != S_OK)
-    {
-        return DB_E_UNSUPPORTEDCONVERSION;
-    }
-
     if(src_status == DBSTATUS_S_ISNULL)
     {
         *dst_status = DBSTATUS_S_ISNULL;
         *dst_len = 0;
         return S_OK;
+    }
+
+    if(IDataConvert_CanConvert(iface, src_type, dst_type) != S_OK)
+    {
+        return DB_E_UNSUPPORTEDCONVERSION;
     }
 
     if(dst == NULL && get_length(dst_type) != 0)

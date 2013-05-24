@@ -2714,6 +2714,21 @@ static void test_converttotimestamp(void)
     SysFreeString(bstr);
 }
 
+static void test_converttoiunknown(void)
+{
+    HRESULT hr;
+    DBSTATUS dst_status;
+    DBLENGTH dst_len;
+    IUnknown *dst = NULL;
+    static WCHAR strW[] = {'t','e','s','t',0};
+
+    dst_len = 0x1234;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_WSTR, DBTYPE_IUNKNOWN, sizeof(strW), &dst_len, strW, dst, sizeof(dst), DBSTATUS_S_ISNULL, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_ISNULL, "got %08x\n", dst_status);
+    ok(dst_len == 0, "got %ld\n", dst_len);
+}
+
 START_TEST(convert)
 {
     HRESULT hr;
@@ -2751,6 +2766,7 @@ START_TEST(convert)
     test_converttodbdate();
     test_getconversionsize();
     test_converttotimestamp();
+    test_converttoiunknown();
 
     IDataConvert_Release(convert);
 
