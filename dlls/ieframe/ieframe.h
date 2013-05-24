@@ -214,15 +214,8 @@ struct WebBrowser {
     DocHost doc_host;
 };
 
-typedef struct {
-    DocHost doc_host;
-
-    LONG ref;
-
-    InternetExplorer *ie;
-} IEDocHost;
-
 struct InternetExplorer {
+    DocHost doc_host;
     IWebBrowser2 IWebBrowser2_iface;
     IExternalConnection IExternalConnection_iface;
     IServiceProvider IServiceProvider_iface;
@@ -237,7 +230,6 @@ struct InternetExplorer {
     BOOL nohome;
 
     struct list entry;
-    IEDocHost *doc_host;
 };
 
 void WebBrowser_OleObject_Init(WebBrowser*) DECLSPEC_HIDDEN;
