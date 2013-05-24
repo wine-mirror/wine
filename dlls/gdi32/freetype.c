@@ -5918,6 +5918,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
     FT_Bitmap ft_bitmap;
     FT_Error err;
     INT left, right, top = 0, bottom = 0, adv;
+    INT origin_x = 0, origin_y = 0;
     FT_Angle angle = 0;
     FT_Int load_flags = FT_LOAD_DEFAULT | FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH;
     double widthRatio = 1.0;
@@ -5926,6 +5927,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
     FT_Matrix transMatTategaki;
     BOOL needsTransform = FALSE;
     BOOL tategaki = (font->name[0] == '@');
+    BOOL vertical_metrics;
     UINT original_index;
     LONG avgAdvance = 0;
     FT_Fixed em_scale;
@@ -6084,7 +6086,14 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
         needsTransform = TRUE;
     }
 
+    vertical_metrics = (tategaki && FT_HAS_VERTICAL(ft_face));
+    /* there is a freetype bug where vertical metrics are only
+       properly scaled and correct in 2.4.0 or greater */
+    if ((vertical_metrics) && (FT_Version.major < 2 || (FT_Version.major == 2 && FT_Version.minor < 4)))
+        vertical_metrics = FALSE;
+
     if (needsTransform || format != GGO_BITMAP) load_flags |= FT_LOAD_NO_BITMAP;
+    if (vertical_metrics) load_flags |= FT_LOAD_VERTICAL_LAYOUT;
 
     err = pFT_Load_Glyph(ft_face, glyph_index, load_flags);
 
@@ -6135,6 +6144,8 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 	bottom = (metrics.horiBearingY - metrics.height) & -64;
 	lpgm->gmCellIncX = adv;
 	lpgm->gmCellIncY = 0;
+        origin_x = left;
+        origin_y = top;
     } else {
         INT xc, yc;
 	FT_Vector vec;
@@ -6163,6 +6174,43 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 	bottom = bottom & -64;
 	top = (top + 63) & -64;
 
+        if (tategaki)
+        {
+            for(xc = 0; xc < 2; xc++)
+            {
+                for(yc = 0; yc < 2; yc++)
+                {
+                    if (vertical_metrics)
+                    {
+                        vec.x = metrics.vertBearingY + xc * metrics.height;
+                        vec.y = metrics.horiBearingX - yc * (metrics.vertBearingX * 2);
+                    }
+                    else
+                    {
+                        vec.x = metrics.horiBearingY - xc * metrics.height;
+                        vec.y = metrics.horiBearingX + yc * metrics.width;
+                    }
+
+                    TRACE ("Vec %ld,%ld\n", vec.x>>6, vec.y>>6);
+                    pFT_Vector_Transform(&vec, &transMat);
+                    if(xc == 0 && yc == 0) {
+                        origin_x = vec.x;
+                        origin_y = vec.y;
+                    } else {
+                        if(vec.x < origin_x) origin_x = vec.x;
+                        if(vec.y > origin_y) origin_y = vec.y;
+                    }
+                }
+            }
+            origin_x = origin_x & -64;
+            origin_y = (origin_y + 63) & -64;
+        }
+        else
+        {
+            origin_x = left;
+            origin_y = top;
+        }
+
 	TRACE("transformed box: (%d,%d - %d,%d)\n", left, top, right, bottom);
 	vec.x = metrics.horiAdvance;
 	vec.y = 0;
@@ -6177,7 +6225,10 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 	    lpgm->gmCellIncX = pFT_MulFix(vec.x, em_scale) * 2;
 	}
 
-        vec.x = metrics.horiAdvance;
+        if (vertical_metrics)
+            vec.x = metrics.vertAdvance;
+        else
+            vec.x = metrics.horiAdvance;
         vec.y = 0;
         pFT_Vector_Transform(&vec, &transMatUnrotated);
         if (!avgAdvance || vec.y)
@@ -6192,8 +6243,8 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 
     lpgm->gmBlackBoxX = (right - left) >> 6;
     lpgm->gmBlackBoxY = (top - bottom) >> 6;
-    lpgm->gmptGlyphOrigin.x = left >> 6;
-    lpgm->gmptGlyphOrigin.y = top >> 6;
+    lpgm->gmptGlyphOrigin.x = origin_x >> 6;
+    lpgm->gmptGlyphOrigin.y = origin_y >> 6;
     abc->abcA = left >> 6;
     abc->abcB = (right - left) >> 6;
     abc->abcC = adv - abc->abcA - abc->abcB;
