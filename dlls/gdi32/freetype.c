@@ -5923,6 +5923,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
     double widthRatio = 1.0;
     FT_Matrix transMat = identityMat;
     FT_Matrix transMatUnrotated;
+    FT_Matrix transMatTategaki;
     BOOL needsTransform = FALSE;
     BOOL tategaki = (font->name[0] == '@');
     UINT original_index;
@@ -6015,17 +6016,43 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 
     /* Rotation transform */
     transMatUnrotated = transMat;
-    if(font->orientation && !tategaki) {
+    transMatTategaki = transMat;
+    if(font->orientation || tategaki) {
         FT_Matrix rotationMat;
+        FT_Matrix taterotationMat;
         FT_Vector vecAngle;
-        angle = FT_FixedFromFloat((double)font->orientation / 10.0);
-        pFT_Vector_Unit(&vecAngle, angle);
-        rotationMat.xx = vecAngle.x;
-        rotationMat.xy = -vecAngle.y;
-        rotationMat.yx = -rotationMat.xy;
-        rotationMat.yy = rotationMat.xx;
-        
-        pFT_Matrix_Multiply(&rotationMat, &transMat);
+
+        double orient = font->orientation / 10.0;
+        double tate_orient = 0.f;
+
+        if (tategaki)
+            tate_orient = ((font->orientation+900)%3600)/10.0;
+        else
+            tate_orient = font->orientation/10.0;
+
+        if (orient)
+        {
+            angle = FT_FixedFromFloat(orient);
+            pFT_Vector_Unit(&vecAngle, angle);
+            rotationMat.xx = vecAngle.x;
+            rotationMat.xy = -vecAngle.y;
+            rotationMat.yx = -rotationMat.xy;
+            rotationMat.yy = rotationMat.xx;
+
+            pFT_Matrix_Multiply(&rotationMat, &transMat);
+        }
+
+        if (tate_orient)
+        {
+            angle = FT_FixedFromFloat(tate_orient);
+            pFT_Vector_Unit(&vecAngle, angle);
+            taterotationMat.xx = vecAngle.x;
+            taterotationMat.xy = -vecAngle.y;
+            taterotationMat.yx = -taterotationMat.xy;
+            taterotationMat.yy = taterotationMat.xx;
+            pFT_Matrix_Multiply(&taterotationMat, &transMatTategaki);
+        }
+
         needsTransform = TRUE;
     }
 
@@ -6039,6 +6066,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
         worldMat.yy = FT_FixedFromFloat(font->font_desc.matrix.eM22);
         pFT_Matrix_Multiply(&worldMat, &transMat);
         pFT_Matrix_Multiply(&worldMat, &transMatUnrotated);
+        pFT_Matrix_Multiply(&worldMat, &transMatTategaki);
         needsTransform = TRUE;
     }
 
@@ -6052,6 +6080,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
         extraMat.yy = FT_FixedFromFIXED(lpmat->eM22);
         pFT_Matrix_Multiply(&extraMat, &transMat);
         pFT_Matrix_Multiply(&extraMat, &transMatUnrotated);
+        pFT_Matrix_Multiply(&extraMat, &transMatTategaki);
         needsTransform = TRUE;
     }
 
@@ -6117,7 +6146,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 	        vec.x = metrics.horiBearingX + xc * metrics.width;
 		vec.y = metrics.horiBearingY - yc * metrics.height;
 		TRACE("Vec %ld,%ld\n", vec.x, vec.y);
-		pFT_Vector_Transform(&vec, &transMat);
+		pFT_Vector_Transform(&vec, &transMatTategaki);
 		if(xc == 0 && yc == 0) {
 		    left = right = vec.x;
 		    top = bottom = vec.y;
@@ -6224,7 +6253,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 	    ft_bitmap.buffer = buf;
 
 	    if(needsTransform)
-		pFT_Outline_Transform(&ft_face->glyph->outline, &transMat);
+		pFT_Outline_Transform(&ft_face->glyph->outline, &transMatTategaki);
 
 	    pFT_Outline_Translate(&ft_face->glyph->outline, -left, -bottom );
 
@@ -6280,7 +6309,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
             ft_bitmap.buffer = buf;
 
             if(needsTransform)
-                pFT_Outline_Transform(&ft_face->glyph->outline, &transMat);
+                pFT_Outline_Transform(&ft_face->glyph->outline, &transMatTategaki);
 
             pFT_Outline_Translate(&ft_face->glyph->outline, -left, -bottom );
 
@@ -6385,7 +6414,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
             rgb = (format == WINE_GGO_HRGB_BITMAP || format == WINE_GGO_VRGB_BITMAP);
 
             if ( needsTransform )
-                pFT_Outline_Transform (&ft_face->glyph->outline, &transMat);
+                pFT_Outline_Transform (&ft_face->glyph->outline, &transMatTategaki);
 
             if ( pFT_Library_SetLcdFilter )
                 pFT_Library_SetLcdFilter( library, lcdfilter );
@@ -6484,7 +6513,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 	if(buflen == 0) buf = NULL;
 
 	if (needsTransform && buf) {
-		pFT_Outline_Transform(outline, &transMat);
+		pFT_Outline_Transform(outline, &transMatTategaki);
 	}
 
         for(contour = 0; contour < outline->n_contours; contour++) {
