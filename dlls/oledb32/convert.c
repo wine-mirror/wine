@@ -995,6 +995,49 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
             memcpy(d, src, min(src_len, dst_max_len));
 
             return S_OK;
+        case DBTYPE_VARIANT:
+        {
+            if(V_VT((VARIANT*)src) == VT_NULL)
+            {
+                *dst_status = DBSTATUS_S_ISNULL;
+                *dst_len = 0;
+                return S_OK;
+            }
+            else
+            {
+                switch(V_VT((VARIANT*)src))
+                {
+                case VT_UI1 | VT_ARRAY:
+                {
+                    LONG l;
+                    BYTE *data = NULL;
+
+                    hr = SafeArrayGetUBound(V_ARRAY((VARIANT*)src), 1, &l);
+                    if(FAILED(hr))
+                        return hr;
+
+                    hr = SafeArrayAccessData(V_ARRAY((VARIANT*)src), (VOID**)&data);
+                    if(FAILED(hr))
+                    {
+                        ERR("SafeArrayAccessData Failed = 0x%08x\n", hr);
+                        return hr;
+                    }
+
+                    *dst_len = l+1;
+                    *dst_status = DBSTATUS_S_OK;
+                    memcpy(d, data, *dst_len);
+
+                    SafeArrayUnaccessData(V_ARRAY((VARIANT*)src));
+                    return S_OK;
+                }
+                break;
+                default:
+                    FIXME("Unimplemented variant type %d -> BYTES\n", V_VT((VARIANT*)src));
+                    return E_NOTIMPL;
+                }
+            }
+        }
+        break;
         default: FIXME("Unimplemented conversion %04x -> DBTYPE_BYTES\n", src_type); return E_NOTIMPL;
         }
         break;

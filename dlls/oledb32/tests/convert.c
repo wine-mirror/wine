@@ -2500,8 +2500,12 @@ static void test_converttobytes(void)
     DBLENGTH dst_len;
     HRESULT hr;
     BYTE byte_src[] = {0, 1, 2, 4, 5};
+    BYTE byte_dst[] = {0, 0, 0, 0, 0};
     BYTE dst[10] = {0};
     DBSTATUS dst_status;
+    VARIANT v;
+    SAFEARRAY *psa = NULL;
+    SAFEARRAYBOUND rgsabound[1];
 
     dst_len = 0;
     hr = IDataConvert_DataConvert(convert, DBTYPE_BYTES, DBTYPE_BYTES, sizeof(byte_src), &dst_len, byte_src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
@@ -2516,6 +2520,27 @@ static void test_converttobytes(void)
     ok(dst_status == DBSTATUS_S_TRUNCATED, "got %08x\n", dst_status);
     ok(dst_len == sizeof(byte_src), "got %ld\n", dst_len);
     ok(!memcmp(byte_src, dst, 2 ), "bytes differ\n");
+
+    V_VT(&v) = VT_NULL;
+    dst_len = 0;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_VARIANT, DBTYPE_BYTES, sizeof(v), &dst_len, &v, &dst, 2, 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_ISNULL, "got %08x\n", dst_status);
+    ok(dst_len == 0, "got %ld\n", dst_len);
+
+    dst_len = 0;
+    rgsabound[0].lLbound = 0;
+    rgsabound[0].cElements = 4;
+    psa = SafeArrayCreate(VT_UI1,1,rgsabound);
+
+    V_VT(&v) = VT_ARRAY|VT_UI1;
+    V_ARRAY(&v) = psa;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_VARIANT, DBTYPE_BYTES, sizeof(v), &dst_len, &v, &dst, 10, 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(dst_len == 4, "%ld\n", dst_len);
+    ok(!memcmp(byte_dst, dst, dst_len), "bytes differ\n");
+    VariantClear(&v);
+
 }
 
 static void test_converttobytesbyref(void)
