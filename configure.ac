@@ -3283,6 +3283,7 @@ fi \
 fr \
 he \
 hi \
+hr \
 hu \
 it \
 ja \
