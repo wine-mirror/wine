@@ -1926,6 +1926,44 @@ static void test_RegistryQuota(void)
        "Expected GetSystemRegistryQuota to return TRUE, got %d\n", ret);
 }
 
+static void test_TerminateProcess(void)
+{
+    static char cmdline[] = "winver.exe";
+    PROCESS_INFORMATION pi;
+    STARTUPINFO si;
+    DWORD ret;
+    HANDLE dummy, thread;
+
+    memset(&si, 0, sizeof(si));
+    si.cb = sizeof(si);
+    SetLastError(0xdeadbeef);
+    ret = CreateProcess(NULL, cmdline, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi);
+    ok(ret, "CreateProcess error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    thread = CreateRemoteThread(pi.hProcess, NULL, 0, (void *)0xdeadbeef, NULL, CREATE_SUSPENDED, &ret);
+    ok(thread != 0, "CreateRemoteThread error %d\n", GetLastError());
+
+    /* create a not closed thread handle duplicate in the target process */
+    SetLastError(0xdeadbeef);
+    ret = DuplicateHandle(GetCurrentProcess(), thread, pi.hProcess, &dummy,
+                          0, FALSE, DUPLICATE_SAME_ACCESS);
+    ok(ret, "DuplicateHandle error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = TerminateThread(thread, 0);
+    ok(ret, "TerminateThread error %u\n", GetLastError());
+    CloseHandle(thread);
+
+    SetLastError(0xdeadbeef);
+    ret = TerminateProcess(pi.hProcess, 0);
+todo_wine
+    ok(ret, "TerminateProcess error %u\n", GetLastError());
+
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+}
+
 START_TEST(process)
 {
     int b = init();
@@ -1937,6 +1975,7 @@ START_TEST(process)
         doChild(myARGV[2], (myARGC == 3) ? NULL : myARGV[3]);
         return;
     }
+    test_TerminateProcess();
     test_Startup();
     test_CommandLine();
     test_Directory();
