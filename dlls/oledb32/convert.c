@@ -1305,7 +1305,6 @@ static HRESULT WINAPI convert_GetConversionSize(IDataConvert* iface,
     switch (dst_type)
     {
     case DBTYPE_STR:
-    {
         switch (src_type)
         {
         case DBTYPE_VARIANT:
@@ -1326,26 +1325,16 @@ static HRESULT WINAPI convert_GetConversionSize(IDataConvert* iface,
             FIXME("unimplemented for %04x -> DBTYPE_STR\n", src_type);
             return E_NOTIMPL;
         }
-    }
-    break;
+        break;
     case DBTYPE_WSTR:
-    {
         switch (src_type)
         {
         case DBTYPE_VARIANT:
-        {
-            VARIANT v;
-
-            VariantInit(&v);
-            if ((hr = VariantChangeType(&v, (VARIANT*)src, 0, VT_BSTR)) == S_OK)
-            {
-                *dst_len = (SysStringLen(V_BSTR(&v)) + 1) * sizeof(WCHAR);
-                VariantClear(&v);
-            }
+            if(V_VT((VARIANT*)src) == VT_BSTR)
+                *dst_len = (SysStringLen(V_BSTR((VARIANT*)src))+1) * sizeof(WCHAR);
             else
-                return hr;
-        }
-        break;
+                WARN("DBTYPE_BYTES->DBTYPE_VARIANT(%d) unimplemented\n", V_VT((VARIANT*)src));
+            break;
         case DBTYPE_STR:
             if(src_len)
                 *dst_len = (*src_len + 1) * sizeof(WCHAR);
@@ -1362,28 +1351,21 @@ static HRESULT WINAPI convert_GetConversionSize(IDataConvert* iface,
             FIXME("unimplemented for %04x -> DBTYPE_WSTR\n", src_type);
             return E_NOTIMPL;
         }
-    }
-    break;
+        break;
     case DBTYPE_BYTES:
-    {
         switch (src_type)
         {
         case DBTYPE_VARIANT:
-        {
             if(V_VT((VARIANT*)src) == VT_BSTR)
                 *dst_len = (SysStringLen(V_BSTR((VARIANT*)src))) / sizeof(WCHAR);
             else
                 WARN("DBTYPE_BYTES->DBTYPE_VARIANT(%d) unimplemented\n", V_VT((VARIANT*)src));
-
-            return S_OK;
-        }
-        break;
+            break;
         default:
             FIXME("unimplemented for %04x -> DBTYPE_BYTES\n", src_type);
             return E_NOTIMPL;
         }
-    }
-    break;
+        break;
     default:
         FIXME("unimplemented for conversion %d->%d\n", src_type, dst_type);
         return E_NOTIMPL;

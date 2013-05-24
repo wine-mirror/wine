@@ -2461,7 +2461,6 @@ static void test_getconversionsize(void)
     V_I4(&var) = 4;
     hr = IDataConvert_GetConversionSize(convert, DBTYPE_VARIANT, DBTYPE_WSTR, &src_len, &dst_len, &var);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
     VariantClear(&var);
 
     dst_len = 0;
