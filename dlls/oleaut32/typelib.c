@@ -1652,6 +1652,18 @@ static inline TLBCustData *TLB_get_custdata_by_guid(struct list *custdata_list, 
     return NULL;
 }
 
+static inline ITypeInfoImpl *TLB_get_typeinfo_by_name(ITypeInfoImpl **typeinfos,
+        UINT n, const OLECHAR *name)
+{
+    while(n){
+        if(!lstrcmpiW((*typeinfos)->Name, name))
+            return *typeinfos;
+        ++typeinfos;
+        --n;
+    }
+    return NULL;
+}
+
 static TLBVarDesc *TLBVarDesc_Constructor(UINT n)
 {
     TLBVarDesc *ret;
@@ -5051,31 +5063,25 @@ static HRESULT WINAPI ITypeLibComp_fnBindType(
     ITypeComp ** ppTComp)
 {
     ITypeLibImpl *This = impl_from_ITypeComp(iface);
-    int i;
+    ITypeInfoImpl *info;
 
     TRACE("(%s, %x, %p, %p)\n", debugstr_w(szName), lHash, ppTInfo, ppTComp);
 
     if(!szName || !ppTInfo || !ppTComp)
         return E_INVALIDARG;
 
-    for(i = 0; i < This->TypeInfoCount; ++i)
-    {
-        ITypeInfoImpl *pTypeInfo = This->typeinfos[i];
-        /* FIXME: should use lHash to do the search */
-        if (pTypeInfo->Name && !strcmpiW(pTypeInfo->Name, szName))
-        {
-            TRACE("returning %p\n", pTypeInfo);
-            *ppTInfo = (ITypeInfo *)&pTypeInfo->ITypeInfo2_iface;
-            ITypeInfo_AddRef(*ppTInfo);
-            *ppTComp = &pTypeInfo->ITypeComp_iface;
-            ITypeComp_AddRef(*ppTComp);
-            return S_OK;
-        }
+    info = TLB_get_typeinfo_by_name(This->typeinfos, This->TypeInfoCount, szName);
+    if(!info){
+        *ppTInfo = NULL;
+        *ppTComp = NULL;
+        return S_OK;
     }
 
-    TRACE("not found\n");
-    *ppTInfo = NULL;
-    *ppTComp = NULL;
+    *ppTInfo = (ITypeInfo *)&info->ITypeInfo2_iface;
+    ITypeInfo_AddRef(*ppTInfo);
+    *ppTComp = &info->ITypeComp_iface;
+    ITypeComp_AddRef(*ppTComp);
+
     return S_OK;
 }
 
@@ -8102,8 +8108,68 @@ static HRESULT WINAPI ICreateTypeLib2_fnCreateTypeInfo(ICreateTypeLib2 *iface,
         LPOLESTR name, TYPEKIND kind, ICreateTypeInfo **ctinfo)
 {
     ITypeLibImpl *This = impl_from_ICreateTypeLib2(iface);
-    FIXME("%p %s %d %p - stub\n", This, wine_dbgstr_w(name), kind, ctinfo);
-    return E_NOTIMPL;
+    ITypeInfoImpl *info;
+    HRESULT hres;
+
+    TRACE("%p %s %d %p\n", This, wine_dbgstr_w(name), kind, ctinfo);
+
+    if (!ctinfo || !name)
+        return E_INVALIDARG;
+
+    info = TLB_get_typeinfo_by_name(This->typeinfos, This->TypeInfoCount, name);
+    if (info)
+        return TYPE_E_NAMECONFLICT;
+
+    if (This->typeinfos)
+        This->typeinfos = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->typeinfos,
+                sizeof(ITypeInfoImpl*) * (This->TypeInfoCount + 1));
+    else
+        This->typeinfos = heap_alloc_zero(sizeof(ITypeInfoImpl*));
+
+    info = This->typeinfos[This->TypeInfoCount] = ITypeInfoImpl_Constructor();
+
+    info->pTypeLib = This;
+    info->Name = SysAllocString(name);
+    info->index = This->TypeInfoCount;
+    info->TypeAttr.typekind = kind;
+    info->TypeAttr.cbAlignment = 4;
+
+    switch(info->TypeAttr.typekind) {
+    case TKIND_ENUM:
+    case TKIND_INTERFACE:
+    case TKIND_DISPATCH:
+    case TKIND_COCLASS:
+        info->TypeAttr.cbSizeInstance = 4;
+        break;
+    case TKIND_RECORD:
+    case TKIND_UNION:
+        info->TypeAttr.cbSizeInstance = 0;
+        break;
+    case TKIND_MODULE:
+        info->TypeAttr.cbSizeInstance = 2;
+        break;
+    case TKIND_ALIAS:
+        info->TypeAttr.cbSizeInstance = -0x75;
+        break;
+    default:
+        FIXME("unrecognized typekind %d\n", info->TypeAttr.typekind);
+        info->TypeAttr.cbSizeInstance = 0xdeadbeef;
+        break;
+    }
+
+    hres = ITypeInfo2_QueryInterface(&info->ITypeInfo2_iface,
+            &IID_ICreateTypeInfo, (void **)ctinfo);
+    if (FAILED(hres)) {
+        SysFreeString(info->Name);
+        ITypeInfo2_Release(&info->ITypeInfo2_iface);
+        return hres;
+    }
+
+    info->hreftype = info->index * sizeof(MSFT_TypeInfoBase);
+
+    ++This->TypeInfoCount;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ICreateTypeLib2_fnSetName(ICreateTypeLib2 *iface,
