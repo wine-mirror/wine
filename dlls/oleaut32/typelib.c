@@ -8307,40 +8307,68 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetGuid(ICreateTypeInfo2 *iface,
         REFGUID guid)
 {
     ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
-    FIXME("%p %s - stub\n", This, debugstr_guid(guid));
-    return E_NOTIMPL;
+
+    TRACE("%p %s\n", This, debugstr_guid(guid));
+
+    memcpy(&This->TypeAttr.guid, guid, sizeof(GUID));
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ICreateTypeInfo2_fnSetTypeFlags(ICreateTypeInfo2 *iface,
         UINT typeFlags)
 {
     ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
-    FIXME("%p %x - stub\n", This, typeFlags);
-    return E_NOTIMPL;
+
+    TRACE("%p %x\n", This, typeFlags);
+
+    if (typeFlags & TYPEFLAG_FDUAL)
+        typeFlags |= TYPEFLAG_FDISPATCHABLE;
+
+    This->TypeAttr.wTypeFlags = typeFlags;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ICreateTypeInfo2_fnSetDocString(ICreateTypeInfo2 *iface,
-        LPOLESTR strDoc)
+        LPOLESTR doc)
 {
     ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
-    FIXME("%p %s - stub\n", This, wine_dbgstr_w(strDoc));
-    return E_NOTIMPL;
+
+    TRACE("%p %s\n", This, wine_dbgstr_w(doc));
+
+    if (!doc)
+        return E_INVALIDARG;
+
+    SysFreeString(This->DocString);
+    This->DocString = SysAllocString(doc);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ICreateTypeInfo2_fnSetHelpContext(ICreateTypeInfo2 *iface,
         DWORD helpContext)
 {
     ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
-    FIXME("%p %d - stub\n", This, helpContext);
-    return E_NOTIMPL;
+
+    TRACE("%p %d\n", This, helpContext);
+
+    This->dwHelpContext = helpContext;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ICreateTypeInfo2_fnSetVersion(ICreateTypeInfo2 *iface,
         WORD majorVerNum, WORD minorVerNum)
 {
     ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
-    FIXME("%p %d %d - stub\n", This, majorVerNum, minorVerNum);
-    return E_NOTIMPL;
+
+    TRACE("%p %d %d\n", This, majorVerNum, minorVerNum);
+
+    This->TypeAttr.wMajorVerNum = majorVerNum;
+    This->TypeAttr.wMinorVerNum = minorVerNum;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ICreateTypeInfo2_fnAddRefTypeInfo(ICreateTypeInfo2 *iface,
@@ -8379,16 +8407,28 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetAlignment(ICreateTypeInfo2 *iface,
         WORD alignment)
 {
     ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
-    FIXME("%p %d - stub\n", This, alignment);
-    return E_NOTIMPL;
+
+    TRACE("%p %d\n", This, alignment);
+
+    This->TypeAttr.cbAlignment = alignment;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ICreateTypeInfo2_fnSetSchema(ICreateTypeInfo2 *iface,
         LPOLESTR schema)
 {
     ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
-    FIXME("%p %s - stub\n", This, wine_dbgstr_w(schema));
-    return E_NOTIMPL;
+
+    TRACE("%p %s\n", This, wine_dbgstr_w(schema));
+
+    if (!schema)
+        return E_INVALIDARG;
+
+    SysFreeString(This->TypeAttr.lpstrSchema);
+    This->TypeAttr.lpstrSchema = SysAllocString(schema);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(ICreateTypeInfo2 *iface,
@@ -8475,8 +8515,16 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetTypeIdldesc(ICreateTypeInfo2 *iface,
         IDLDESC *idlDesc)
 {
     ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
-    FIXME("%p %p - stub\n", This, idlDesc);
-    return E_NOTIMPL;
+
+    TRACE("%p %p\n", This, idlDesc);
+
+    if (!idlDesc)
+        return E_INVALIDARG;
+
+    This->TypeAttr.idldescType.dwReserved = idlDesc->dwReserved;
+    This->TypeAttr.idldescType.wIDLFlags = idlDesc->wIDLFlags;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(ICreateTypeInfo2 *iface)
@@ -8570,8 +8618,12 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetHelpStringContext(ICreateTypeInfo2 *
         ULONG helpStringContext)
 {
     ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
-    FIXME("%p %u - stub\n", This, helpStringContext);
-    return E_NOTIMPL;
+
+    TRACE("%p %u\n", This, helpStringContext);
+
+    This->dwHelpStringContext = helpStringContext;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncHelpStringContext(ICreateTypeInfo2 *iface,
@@ -8601,8 +8653,16 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetName(ICreateTypeInfo2 *iface,
         LPOLESTR name)
 {
     ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
-    FIXME("%p %s - stub\n", This, wine_dbgstr_w(name));
-    return E_NOTIMPL;
+
+    TRACE("%p %s\n", This, wine_dbgstr_w(name));
+
+    if (!name)
+        return E_INVALIDARG;
+
+    SysFreeString(This->Name);
+    This->Name = SysAllocString(name);
+
+    return S_OK;
 }
 
 static const ICreateTypeInfo2Vtbl CreateTypeInfo2Vtbl = {
