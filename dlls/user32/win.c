@@ -1682,7 +1682,7 @@ failed:
 /***********************************************************************
  *		CreateWindowExA (USER32.@)
  */
-HWND WINAPI CreateWindowExA( DWORD exStyle, LPCSTR className,
+HWND WINAPI DECLSPEC_HOTPATCH CreateWindowExA( DWORD exStyle, LPCSTR className,
                                  LPCSTR windowName, DWORD style, INT x,
                                  INT y, INT width, INT height,
                                  HWND parent, HMENU menu,
@@ -1719,7 +1719,7 @@ HWND WINAPI CreateWindowExA( DWORD exStyle, LPCSTR className,
 /***********************************************************************
  *		CreateWindowExW (USER32.@)
  */
-HWND WINAPI CreateWindowExW( DWORD exStyle, LPCWSTR className,
+HWND WINAPI DECLSPEC_HOTPATCH CreateWindowExW( DWORD exStyle, LPCWSTR className,
                                  LPCWSTR windowName, DWORD style, INT x,
                                  INT y, INT width, INT height,
                                  HWND parent, HMENU menu,
