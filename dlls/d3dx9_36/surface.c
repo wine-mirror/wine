@@ -1134,8 +1134,8 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileInMemory(IDirect3DSurface9 *pDestSurface,
                 hr = IWICPalette_GetColorCount(wic_palette, &nb_colors);
             if (SUCCEEDED(hr))
             {
-                colors = HeapAlloc(GetProcessHeap(), 0, nb_colors * sizeof(colors));
-                palette = HeapAlloc(GetProcessHeap(), 0, nb_colors * sizeof(palette));
+                colors = HeapAlloc(GetProcessHeap(), 0, nb_colors * sizeof(colors[0]));
+                palette = HeapAlloc(GetProcessHeap(), 0, nb_colors * sizeof(palette[0]));
                 if (!colors || !palette)
                     hr = E_OUTOFMEMORY;
             }
