@@ -957,8 +957,10 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
             for(i =0; i < size; i++,p++)
             {
                 hr = SafeArrayPutElement(psa, &i, &p);
-                if(FAILED(hr))
+                if(FAILED(hr)) {
+                   SafeArrayDestroy (psa);
                    return hr;
+                }
             }
 
             V_VT(v) = VT_ARRAY|VT_UI1;
