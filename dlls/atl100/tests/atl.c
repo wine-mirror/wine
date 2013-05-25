@@ -359,6 +359,12 @@ static void test_cp(void)
     DWORD cookie = 0;
     HRESULT hres;
 
+    hres = AtlAdvise(NULL, (IUnknown*)0xdeed0000, &CLSID_Test, &cookie);
+    ok(hres == E_INVALIDARG, "expect E_INVALIDARG, returned %08x\n", hres);
+
+    hres = AtlUnadvise(NULL, &CLSID_Test, 0xdeadbeef);
+    ok(hres == E_INVALIDARG, "expect E_INVALIDARG, returned %08x\n", hres);
+
     hres = AtlAdvise((IUnknown*)&ConnectionPointContainer, (IUnknown*)0xdead0000, &CLSID_Test, &cookie);
     ok(hres == S_OK, "AtlAdvise failed: %08x\n", hres);
     ok(cookie == 0xdeadbeef, "cookie = %x\n", cookie);

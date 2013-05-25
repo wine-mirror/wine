@@ -51,6 +51,9 @@ HRESULT WINAPI AtlAdvise(IUnknown *pUnkCP, IUnknown *pUnk, const IID *iid, DWORD
 
     TRACE("%p %p %p %p\n", pUnkCP, pUnk, iid, pdw);
 
+    if(!pUnkCP)
+        return E_INVALIDARG;
+
     hres = IUnknown_QueryInterface(pUnkCP, &IID_IConnectionPointContainer, (void**)&container);
     if(FAILED(hres))
         return hres;
@@ -75,6 +78,9 @@ HRESULT WINAPI AtlUnadvise(IUnknown *pUnkCP, const IID *iid, DWORD dw)
     HRESULT hres;
 
     TRACE("%p %p %d\n", pUnkCP, iid, dw);
+
+    if(!pUnkCP)
+        return E_INVALIDARG;
 
     hres = IUnknown_QueryInterface(pUnkCP, &IID_IConnectionPointContainer, (void**)&container);
     if(FAILED(hres))
