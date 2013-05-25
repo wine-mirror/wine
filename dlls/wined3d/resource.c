@@ -169,8 +169,7 @@ void resource_cleanup(struct wined3d_resource *resource)
     resource->allocatedMemory = 0;
     resource->heapMemory = 0;
 
-    if (resource->device)
-        device_resource_released(resource->device, resource);
+    device_resource_released(resource->device, resource);
 }
 
 void resource_unload(struct wined3d_resource *resource)
