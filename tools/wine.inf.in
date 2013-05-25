@@ -3005,8 +3005,9 @@ HKR,Parameters,"ServiceDll",,"%11%\srvsvc.dll"
 
 [Services]
 HKLM,%CurrentVersion%\RunServices,"winemenubuilder",2,"%11%\winemenubuilder.exe -a -r"
-HKLM,"System\CurrentControlSet\Services\VxD\MSTCP",,16
+HKLM,"System\CurrentControlSet\Services\Eventlog\Application",,16
 HKLM,"System\CurrentControlSet\Services\Tcpip\Parameters",,16
+HKLM,"System\CurrentControlSet\Services\VxD\MSTCP",,16
 HKLM,"System\CurrentControlSet\Services\Winsock\Parameters",,16
 HKLM,"System\CurrentControlSet\Services\Winsock2\Parameters\Protocol_Catalog9\Catalog_Entries",,16
 
