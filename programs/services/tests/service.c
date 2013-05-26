@@ -328,6 +328,7 @@ static void test_service(void)
     ok(res, "StartService failed: %u\n", GetLastError());
     if(!res) {
         DeleteService(service_handle);
+        CloseServiceHandle(service_handle);
         return;
     }
     expect_event("RUNNING");
@@ -368,6 +369,7 @@ static inline void test_no_stop(void)
     ok(res, "StartService failed: %u\n", GetLastError());
     if(!res) {
         DeleteService(service_handle);
+        CloseServiceHandle(service_handle);
         return;
     }
     expect_event("RUNNING");
