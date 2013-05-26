@@ -494,11 +494,23 @@ DWORD WINAPI VerFindFile16( UINT16 flags, LPSTR lpszFilename,
                             LPSTR lpszDestDir, UINT16 *lpuDestDirLen )
 {
     UINT curDirLen, destDirLen;
-    DWORD retv = VerFindFileA( flags, lpszFilename, lpszWinDir, lpszAppDir,
-                                 lpszCurDir, &curDirLen, lpszDestDir, &destDirLen );
+    UINT *pcurDirLen = NULL, *pdestDirLen = NULL;
+    DWORD retv;
 
-    *lpuCurDirLen = (UINT16)curDirLen;
-    *lpuDestDirLen = (UINT16)destDirLen;
+    if (lpuCurDirLen) {
+        curDirLen = *lpuCurDirLen;
+        pcurDirLen = &curDirLen;
+    }
+    if (lpuDestDirLen) {
+        destDirLen = *lpuDestDirLen;
+        pdestDirLen = &destDirLen;
+    }
+    retv = VerFindFileA( flags, lpszFilename, lpszWinDir, lpszAppDir,
+                                lpszCurDir, pcurDirLen, lpszDestDir, pdestDirLen );
+    if (lpuCurDirLen)
+        *lpuCurDirLen = (UINT16)curDirLen;
+    if (lpuDestDirLen)
+        *lpuDestDirLen = (UINT16)destDirLen;
     return retv;
 }
 
