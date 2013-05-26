@@ -4176,6 +4176,8 @@ static void test_WSARecv(void)
     todo_wine ok(!bret && (GetLastError() == ERROR_NETNAME_DELETED || broken(GetLastError() == ERROR_IO_INCOMPLETE) /* win9x */),
         "Did not get disconnect event: %d, error %d\n", bret, GetLastError());
     ok(bytesReturned == 0, "Bytes received is %d\n", bytesReturned);
+    closesocket(dest);
+    dest = INVALID_SOCKET;
 
     src = WSASocketW(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, 0);
     ok(src != INVALID_SOCKET, "failed to create socket %d\n", WSAGetLastError());
