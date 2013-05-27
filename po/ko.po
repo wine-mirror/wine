@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-12-18 18:50+0900\n"
+"PO-Revision-Date: 2013-04-15 10:56+0900\n"
 "Last-Translator: YunSong Hwang <hys545@dreamwiz.com>\n"
 "Language-Team: none\n"
 "Language: Korean\n"
@@ -8257,16 +8257,12 @@ msgid "Don't install"
 msgstr "설치 안  함"
 
 #: urlmon.rc:40
-#, fuzzy
-#| msgid ""
-#| "When installed, ActiveX has full access to your computer.Do not click "
-#| "install unless you have absolute trust in the above source."
 msgid ""
 "When installed, an ActiveX component has full access to your computer. Do "
 "not click install unless you have absolute trust in the above source."
 msgstr ""
-"설치할 때,ActiveX는 당신의 컴퓨터에 완전한 접근권한을 가질 것입니다. 당신이"
-"이 원본을 완전히 신뢰하지 않는다면 설치를 클릭하지 마십시오."
+"설치할 때,ActiveX 구성요소는 당신의 컴퓨터에 완전한 접근권한을 가질 것입니"
+"다. 당신이이 원본을 완전히 신뢰하지 않는다면 설치를 클릭하지 마십시오."
 
 #: urlmon.rc:48
 msgid "Installation of component failed: %08x"
@@ -10156,10 +10152,8 @@ msgid "Connection-specific DNS suffix"
 msgstr "연결에 지정된 DNS 접미사"
 
 #: ipconfig.rc:33
-#, fuzzy
-#| msgid "IP address"
 msgid "IPv4 address"
-msgstr "IP 주소"
+msgstr "IPv4 주소"
 
 #: ipconfig.rc:34
 msgid "Hostname"
@@ -10202,10 +10196,8 @@ msgid "Default gateway"
 msgstr "기본 게이트웨이"
 
 #: ipconfig.rc:47
-#, fuzzy
-#| msgid "IP address"
 msgid "IPv6 address"
-msgstr "IP 주소"
+msgstr "IPv6 주소"
 
 #: net.rc:27
 msgid ""
@@ -10343,7 +10335,7 @@ msgstr "활성화된 연결"
 
 #: netstat.rc:28
 msgid "Proto"
-msgstr "프로토콜"
+msgstr "프로토"
 
 #: netstat.rc:29
 msgid "Local Address"
@@ -10358,124 +10350,96 @@ msgid "State"
 msgstr "상태"
 
 #: netstat.rc:32
-#, fuzzy
-#| msgid "Interfaces"
 msgid "Interface Statistics"
-msgstr "인터페이스"
+msgstr "인터페이스 통계"
 
 #: netstat.rc:33
 msgid "Sent"
-msgstr ""
+msgstr "보냄"
 
 #: netstat.rc:34
 msgid "Received"
-msgstr ""
+msgstr "응답받음"
 
 #: netstat.rc:35
-#, fuzzy
-#| msgid "bytes"
 msgid "Bytes"
 msgstr "바이트"
 
 #: netstat.rc:36
 msgid "Unicast packets"
-msgstr ""
+msgstr "유니캐스트 패킷"
 
 #: netstat.rc:37
 msgid "Non-unicast packets"
-msgstr ""
+msgstr "유니캐스트가 아닌 패킷"
 
 #: netstat.rc:38
-#, fuzzy
-#| msgid "Disclaimer"
 msgid "Discards"
-msgstr "거부"
+msgstr "폐기"
 
 #: netstat.rc:39
-#, fuzzy
-#| msgid "Error"
 msgid "Errors"
 msgstr "오류"
 
 #: netstat.rc:40
-#, fuzzy
-#| msgid "Unknown port.\n"
 msgid "Unknown protocols"
-msgstr "알 수 없는 포트.\n"
+msgstr "알 수 없는 프로토콜"
 
 #: netstat.rc:41
 msgid "TCP Statistics for IPv4"
-msgstr ""
+msgstr "IPv4의 TCP 상태"
 
 #: netstat.rc:42
-#, fuzzy
-#| msgid "Active Connections"
 msgid "Active Opens"
-msgstr "활성화된 연결"
+msgstr "활성화된 열림"
 
 #: netstat.rc:43
 msgid "Passive Opens"
-msgstr ""
+msgstr "수동적인 열림"
 
 #: netstat.rc:44
-#, fuzzy
-#| msgid "Active Connections"
 msgid "Failed Connection Attempts"
-msgstr "활성화된 연결"
+msgstr "연결 시도 실패"
 
 #: netstat.rc:45
-#, fuzzy
-#| msgid "Active Connections"
 msgid "Reset Connections"
-msgstr "활성화된 연결"
+msgstr "연결 재설정"
 
 #: netstat.rc:46
-#, fuzzy
-#| msgid "Active Connections"
 msgid "Current Connections"
-msgstr "활성화된 연결"
+msgstr "현재 연결"
 
 #: netstat.rc:47
-#, fuzzy
-#| msgid "Segment locked.\n"
 msgid "Segments Received"
-msgstr "세그멘트가 잠김.\n"
+msgstr "세그멘트가 응답함"
 
 #: netstat.rc:48
-#, fuzzy
-#| msgid "Segment locked.\n"
 msgid "Segments Sent"
-msgstr "세그멘트가 잠김.\n"
+msgstr "세그멘트가 보내짐"
 
 #: netstat.rc:49
 msgid "Segments Retransmitted"
-msgstr ""
+msgstr "세그멘트가 다시 보내짐"
 
 #: netstat.rc:50
 msgid "UDP Statistics for IPv4"
-msgstr ""
+msgstr "IPv4의 UDP 상태"
 
 #: netstat.rc:51
-#, fuzzy
-#| msgid "Segment locked.\n"
 msgid "Datagrams Received"
-msgstr "세그멘트가 잠김.\n"
+msgstr "데이터그램을 받음"
 
 #: netstat.rc:52
-#, fuzzy
-#| msgid "Local Port"
 msgid "No Ports"
-msgstr "지역 포트"
+msgstr "포트가 없음"
 
 #: netstat.rc:53
-#, fuzzy
-#| msgid "Decoding Error"
 msgid "Receive Errors"
-msgstr "디코딩 오류"
+msgstr "받는 중에 오류 발생"
 
 #: netstat.rc:54
 msgid "Datagrams Sent"
-msgstr ""
+msgstr "데이터그램을 보냄"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
