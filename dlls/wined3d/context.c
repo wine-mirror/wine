@@ -2149,6 +2149,7 @@ void context_apply_blit_state(struct wined3d_context *context, const struct wine
         }
         else
         {
+            context->current_fbo = NULL;
             context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
             rt_mask = context_generate_rt_mask_from_surface(rt);
         }
