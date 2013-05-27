@@ -2239,10 +2239,8 @@ struct wined3d_vertex_declaration
     struct wined3d_vertex_declaration_element *elements;
     UINT element_count;
 
-    DWORD                   streams[MAX_STREAMS];
-    UINT                    num_streams;
-    BOOL                    position_transformed;
-    BOOL                    half_float_conv_needed;
+    BOOL position_transformed;
+    BOOL half_float_conv_needed;
 };
 
 struct wined3d_saved_states
