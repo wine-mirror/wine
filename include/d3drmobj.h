@@ -162,7 +162,7 @@ typedef void (__cdecl *D3DRMDEVICE3UPDATECALLBACK)(struct IDirect3DRMDevice3 *de
         int count, D3DRECT *rects);
 typedef int (__cdecl *D3DRMUSERVISUALCALLBACK)(struct IDirect3DRMUserVisual *visual, void *ctx,
         D3DRMUSERVISUALREASON reason, struct IDirect3DRMDevice *device, struct IDirect3DRMViewport *viewport);
-typedef HRESULT (__cdecl *D3DRMLOADTEXTURECALLBACK)(char *tex_name, void *arg, LPDIRECT3DRMTEXTURE *);
+typedef HRESULT (__cdecl *D3DRMLOADTEXTURECALLBACK)(char *tex_name, void *arg, struct IDirect3DRMTexture **texture);
 typedef HRESULT (__cdecl *D3DRMLOADTEXTURE3CALLBACK)(char *tex_name, void *arg, LPDIRECT3DRMTEXTURE3 *);
 typedef void (__cdecl *D3DRMLOADCALLBACK)(struct IDirect3DRMObject *object, REFIID objectguid, void *arg);
 typedef HRESULT (__cdecl *D3DRMDOWNSAMPLECALLBACK)(struct IDirect3DRMTexture3 *texture, void *ctx,
@@ -1113,7 +1113,7 @@ DECLARE_INTERFACE_(IDirect3DRMFrame,IDirect3DRMVisual)
     STDMETHOD(GetRotation)(THIS_ IDirect3DRMFrame *reference, D3DVECTOR *axis, D3DVALUE *return_theta) PURE;
     STDMETHOD(GetScene)(THIS_ IDirect3DRMFrame **scene) PURE;
     STDMETHOD_(D3DRMSORTMODE, GetSortMode)(THIS) PURE;
-    STDMETHOD(GetTexture)(THIS_ LPDIRECT3DRMTEXTURE *) PURE;
+    STDMETHOD(GetTexture)(THIS_ struct IDirect3DRMTexture **texture) PURE;
     STDMETHOD(GetTransform)(THIS_ D3DRMMATRIX4D return_matrix) PURE;
     STDMETHOD(GetVelocity)(THIS_ IDirect3DRMFrame *reference, D3DVECTOR *return_velocity, BOOL with_rotation) PURE;
     STDMETHOD(GetOrientation)(THIS_ IDirect3DRMFrame *reference, D3DVECTOR *dir, D3DVECTOR *up) PURE;
@@ -1138,7 +1138,7 @@ DECLARE_INTERFACE_(IDirect3DRMFrame,IDirect3DRMVisual)
     STDMETHOD(SetSceneBackground)(THIS_ D3DCOLOR) PURE;
     STDMETHOD(SetSceneBackgroundRGB)(THIS_ D3DVALUE red, D3DVALUE green, D3DVALUE blue) PURE;
     STDMETHOD(SetSceneBackgroundDepth)(THIS_ IDirectDrawSurface *surface) PURE;
-    STDMETHOD(SetSceneBackgroundImage)(THIS_ LPDIRECT3DRMTEXTURE) PURE;
+    STDMETHOD(SetSceneBackgroundImage)(THIS_ struct IDirect3DRMTexture *texture) PURE;
     STDMETHOD(SetSceneFogEnable)(THIS_ BOOL) PURE;
     STDMETHOD(SetSceneFogColor)(THIS_ D3DCOLOR) PURE;
     STDMETHOD(SetSceneFogMode)(THIS_ D3DRMFOGMODE) PURE;
@@ -1152,7 +1152,7 @@ DECLARE_INTERFACE_(IDirect3DRMFrame,IDirect3DRMVisual)
     STDMETHOD(SetPosition)(THIS_ IDirect3DRMFrame *reference, D3DVALUE x, D3DVALUE y, D3DVALUE z) PURE;
     STDMETHOD(SetRotation)(THIS_ IDirect3DRMFrame *reference, D3DVALUE x, D3DVALUE y, D3DVALUE z, D3DVALUE theta) PURE;
     STDMETHOD(SetSortMode)(THIS_ D3DRMSORTMODE) PURE;
-    STDMETHOD(SetTexture)(THIS_ LPDIRECT3DRMTEXTURE) PURE;
+    STDMETHOD(SetTexture)(THIS_ struct IDirect3DRMTexture *texture) PURE;
     STDMETHOD(SetTextureTopology)(THIS_ BOOL wrap_u, BOOL wrap_v) PURE;
     STDMETHOD(SetVelocity)(THIS_ IDirect3DRMFrame *reference,
             D3DVALUE x, D3DVALUE y, D3DVALUE z, BOOL with_rotation) PURE;
@@ -1346,7 +1346,7 @@ DECLARE_INTERFACE_(IDirect3DRMFrame2,IDirect3DRMFrame)
     STDMETHOD(GetRotation)(THIS_ IDirect3DRMFrame *reference, D3DVECTOR *axis, D3DVALUE *return_theta) PURE;
     STDMETHOD(GetScene)(THIS_ IDirect3DRMFrame **scene) PURE;
     STDMETHOD_(D3DRMSORTMODE, GetSortMode)(THIS) PURE;
-    STDMETHOD(GetTexture)(THIS_ LPDIRECT3DRMTEXTURE *) PURE;
+    STDMETHOD(GetTexture)(THIS_ struct IDirect3DRMTexture **texture) PURE;
     STDMETHOD(GetTransform)(THIS_ D3DRMMATRIX4D return_matrix) PURE;
     STDMETHOD(GetVelocity)(THIS_ IDirect3DRMFrame *reference, D3DVECTOR *return_velocity, BOOL with_rotation) PURE;
     STDMETHOD(GetOrientation)(THIS_ IDirect3DRMFrame *reference, D3DVECTOR *dir, D3DVECTOR *up) PURE;
@@ -1371,7 +1371,7 @@ DECLARE_INTERFACE_(IDirect3DRMFrame2,IDirect3DRMFrame)
     STDMETHOD(SetSceneBackground)(THIS_ D3DCOLOR) PURE;
     STDMETHOD(SetSceneBackgroundRGB)(THIS_ D3DVALUE red, D3DVALUE green, D3DVALUE blue) PURE;
     STDMETHOD(SetSceneBackgroundDepth)(THIS_ IDirectDrawSurface *surface) PURE;
-    STDMETHOD(SetSceneBackgroundImage)(THIS_ LPDIRECT3DRMTEXTURE) PURE;
+    STDMETHOD(SetSceneBackgroundImage)(THIS_ struct IDirect3DRMTexture *texture) PURE;
     STDMETHOD(SetSceneFogEnable)(THIS_ BOOL) PURE;
     STDMETHOD(SetSceneFogColor)(THIS_ D3DCOLOR) PURE;
     STDMETHOD(SetSceneFogMode)(THIS_ D3DRMFOGMODE) PURE;
@@ -1385,7 +1385,7 @@ DECLARE_INTERFACE_(IDirect3DRMFrame2,IDirect3DRMFrame)
     STDMETHOD(SetPosition)(THIS_ IDirect3DRMFrame *reference, D3DVALUE x, D3DVALUE y, D3DVALUE z) PURE;
     STDMETHOD(SetRotation)(THIS_ IDirect3DRMFrame *reference, D3DVALUE x, D3DVALUE y, D3DVALUE z, D3DVALUE theta) PURE;
     STDMETHOD(SetSortMode)(THIS_ D3DRMSORTMODE) PURE;
-    STDMETHOD(SetTexture)(THIS_ LPDIRECT3DRMTEXTURE) PURE;
+    STDMETHOD(SetTexture)(THIS_ struct IDirect3DRMTexture *texture) PURE;
     STDMETHOD(SetTextureTopology)(THIS_ BOOL wrap_u, BOOL wrap_v) PURE;
     STDMETHOD(SetVelocity)(THIS_ IDirect3DRMFrame *reference,
             D3DVALUE x, D3DVALUE y, D3DVALUE z, BOOL with_rotation) PURE;
@@ -1921,7 +1921,7 @@ DECLARE_INTERFACE_(IDirect3DRMMesh,IDirect3DRMVisual)
     STDMETHOD(SetGroupMapping)(THIS_ D3DRMGROUPINDEX id, D3DRMMAPPING value) PURE;
     STDMETHOD(SetGroupQuality)(THIS_ D3DRMGROUPINDEX id, D3DRMRENDERQUALITY value) PURE;
     STDMETHOD(SetGroupMaterial)(THIS_ D3DRMGROUPINDEX id, LPDIRECT3DRMMATERIAL value) PURE;
-    STDMETHOD(SetGroupTexture)(THIS_ D3DRMGROUPINDEX id, LPDIRECT3DRMTEXTURE value) PURE;
+    STDMETHOD(SetGroupTexture)(THIS_ D3DRMGROUPINDEX id, struct IDirect3DRMTexture *texture) PURE;
     STDMETHOD_(unsigned, GetGroupCount)(THIS) PURE;
     STDMETHOD(GetGroup)(THIS_ D3DRMGROUPINDEX id, unsigned *vCount, unsigned *fCount, unsigned *vPerFace,
         DWORD *fDataSize, unsigned *fData) PURE;
@@ -1930,7 +1930,7 @@ DECLARE_INTERFACE_(IDirect3DRMMesh,IDirect3DRMVisual)
     STDMETHOD_(D3DRMMAPPING, GetGroupMapping)(THIS_ D3DRMGROUPINDEX id) PURE;
     STDMETHOD_(D3DRMRENDERQUALITY, GetGroupQuality)(THIS_ D3DRMGROUPINDEX id) PURE;
     STDMETHOD(GetGroupMaterial)(THIS_ D3DRMGROUPINDEX id, LPDIRECT3DRMMATERIAL *returnPtr) PURE;
-    STDMETHOD(GetGroupTexture)(THIS_ D3DRMGROUPINDEX id, LPDIRECT3DRMTEXTURE *returnPtr) PURE;
+    STDMETHOD(GetGroupTexture)(THIS_ D3DRMGROUPINDEX id, struct IDirect3DRMTexture **texture) PURE;
 };
 #undef INTERFACE
 
@@ -2285,7 +2285,7 @@ DECLARE_INTERFACE_(IDirect3DRMFace,IDirect3DRMObject)
     STDMETHOD(AddVertexAndNormalIndexed)(THIS_ DWORD vertex, DWORD normal) PURE;
     STDMETHOD(SetColorRGB)(THIS_ D3DVALUE, D3DVALUE, D3DVALUE) PURE;
     STDMETHOD(SetColor)(THIS_ D3DCOLOR) PURE;
-    STDMETHOD(SetTexture)(THIS_ LPDIRECT3DRMTEXTURE) PURE;
+    STDMETHOD(SetTexture)(THIS_ struct IDirect3DRMTexture *texture) PURE;
     STDMETHOD(SetTextureCoordinates)(THIS_ DWORD vertex, D3DVALUE u, D3DVALUE v) PURE;
     STDMETHOD(SetMaterial)(THIS_ LPDIRECT3DRMMATERIAL) PURE;
     STDMETHOD(SetTextureTopology)(THIS_ BOOL wrap_u, BOOL wrap_v) PURE;
@@ -2294,7 +2294,7 @@ DECLARE_INTERFACE_(IDirect3DRMFace,IDirect3DRMObject)
     STDMETHOD(GetTextureCoordinates)(THIS_ DWORD vertex, D3DVALUE *u, D3DVALUE *v) PURE;
     STDMETHOD(GetTextureTopology)(THIS_ BOOL *wrap_u, BOOL *wrap_v) PURE;
     STDMETHOD(GetNormal)(THIS_ D3DVECTOR *) PURE;
-    STDMETHOD(GetTexture)(THIS_ LPDIRECT3DRMTEXTURE *) PURE;
+    STDMETHOD(GetTexture)(THIS_ struct IDirect3DRMTexture **texture) PURE;
     STDMETHOD(GetMaterial)(THIS_ LPDIRECT3DRMMATERIAL *) PURE;
     STDMETHOD_(int, GetVertexCount)(THIS) PURE;
     STDMETHOD_(int, GetVertexIndex)(THIS_ DWORD which) PURE;
@@ -2518,7 +2518,7 @@ DECLARE_INTERFACE_(IDirect3DRMMeshBuilder,IDirect3DRMVisual)
     STDMETHOD(ReserveSpace)(THIS_ DWORD vertex_Count, DWORD normal_count, DWORD face_count) PURE;
     STDMETHOD(SetColorRGB)(THIS_ D3DVALUE red, D3DVALUE green, D3DVALUE blue) PURE;
     STDMETHOD(SetColor)(THIS_ D3DCOLOR) PURE;
-    STDMETHOD(SetTexture)(THIS_ LPDIRECT3DRMTEXTURE) PURE;
+    STDMETHOD(SetTexture)(THIS_ struct IDirect3DRMTexture *texture) PURE;
     STDMETHOD(SetMaterial)(THIS_ LPDIRECT3DRMMATERIAL) PURE;
     STDMETHOD(SetTextureTopology)(THIS_ BOOL wrap_u, BOOL wrap_v) PURE;
     STDMETHOD(SetQuality)(THIS_ D3DRMRENDERQUALITY) PURE;
@@ -2689,7 +2689,7 @@ DECLARE_INTERFACE_(IDirect3DRMMeshBuilder2,IDirect3DRMMeshBuilder)
     STDMETHOD(ReserveSpace)(THIS_ DWORD vertex_Count, DWORD normal_count, DWORD face_count) PURE;
     STDMETHOD(SetColorRGB)(THIS_ D3DVALUE red, D3DVALUE green, D3DVALUE blue) PURE;
     STDMETHOD(SetColor)(THIS_ D3DCOLOR) PURE;
-    STDMETHOD(SetTexture)(THIS_ LPDIRECT3DRMTEXTURE) PURE;
+    STDMETHOD(SetTexture)(THIS_ struct IDirect3DRMTexture *texture) PURE;
     STDMETHOD(SetMaterial)(THIS_ LPDIRECT3DRMMATERIAL) PURE;
     STDMETHOD(SetTextureTopology)(THIS_ BOOL wrap_u, BOOL wrap_v) PURE;
     STDMETHOD(SetQuality)(THIS_ D3DRMRENDERQUALITY) PURE;

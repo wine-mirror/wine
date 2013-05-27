@@ -317,24 +317,20 @@ static HRESULT WINAPI IDirect3DRMImpl_CreateUserVisual(IDirect3DRM* iface, D3DRM
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMImpl_LoadTexture(IDirect3DRM* iface, const char* filename,
-                                                  LPDIRECT3DRMTEXTURE* Texture)
+static HRESULT WINAPI IDirect3DRMImpl_LoadTexture(IDirect3DRM *iface,
+        const char *filename, IDirect3DRMTexture **texture)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM(iface);
+    FIXME("iface %p, filename %s, texture %p stub!\n", iface, debugstr_a(filename), texture);
 
-    FIXME("(%p/%p)->(%s,%p): stub\n", iface, This, filename, Texture);
-
-    return Direct3DRMTexture_create(&IID_IDirect3DRMTexture, (IUnknown **)Texture);
+    return Direct3DRMTexture_create(&IID_IDirect3DRMTexture, (IUnknown **)texture);
 }
 
-static HRESULT WINAPI IDirect3DRMImpl_LoadTextureFromResource(IDirect3DRM* iface, HRSRC rs,
-                                                              LPDIRECT3DRMTEXTURE* Texture)
+static HRESULT WINAPI IDirect3DRMImpl_LoadTextureFromResource(IDirect3DRM *iface,
+        HRSRC resource, IDirect3DRMTexture **texture)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM(iface);
+    FIXME("iface %p, resource %p, texture %p stub!\n", iface, resource, texture);
 
-    FIXME("(%p/%p)->(%p,%p): stub\n", iface, This, rs, Texture);
-
-    return Direct3DRMTexture_create(&IID_IDirect3DRMTexture, (IUnknown **)Texture);
+    return Direct3DRMTexture_create(&IID_IDirect3DRMTexture, (IUnknown **)texture);
 }
 
 static HRESULT WINAPI IDirect3DRMImpl_SetSearchPath(IDirect3DRM* iface, LPCSTR path)

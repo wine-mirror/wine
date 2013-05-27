@@ -451,7 +451,7 @@ static void test_MeshBuilder(void)
         unsigned nb_vertices, nb_faces, nb_face_vertices;
         DWORD data_size;
         LPDIRECT3DRMMATERIAL material = (LPDIRECT3DRMMATERIAL)0xdeadbeef;
-        LPDIRECT3DRMTEXTURE texture = (LPDIRECT3DRMTEXTURE)0xdeadbeef;
+        IDirect3DRMTexture *texture = (IDirect3DRMTexture *)0xdeadbeef;
         D3DVALUE values[3];
 
         nb_groups = IDirect3DRMMesh_GetGroupCount(mesh);
@@ -1435,7 +1435,7 @@ static void test_Texture(void)
 {
     HRESULT hr;
     IDirect3DRM *d3drm;
-    LPDIRECT3DRMTEXTURE pTexture;
+    IDirect3DRMTexture *texture;
     D3DRMIMAGE initimg = {
         2, 2, 1, 1, 32,
         TRUE, 2 * sizeof(DWORD), NULL, NULL,
@@ -1449,23 +1449,23 @@ static void test_Texture(void)
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
 
     initimg.buffer1 = &pixel;
-    hr = IDirect3DRM_CreateTexture(d3drm, &initimg, &pTexture);
+    hr = IDirect3DRM_CreateTexture(d3drm, &initimg, &texture);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMTexture interface (hr = %x)\n", hr);
 
-    hr = IDirect3DRMTexture_GetClassName(pTexture, NULL, cname);
+    hr = IDirect3DRMTexture_GetClassName(texture, NULL, cname);
     ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    hr = IDirect3DRMTexture_GetClassName(pTexture, NULL, NULL);
+    hr = IDirect3DRMTexture_GetClassName(texture, NULL, NULL);
     ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
     size = 1;
-    hr = IDirect3DRMTexture_GetClassName(pTexture, &size, cname);
+    hr = IDirect3DRMTexture_GetClassName(texture, &size, cname);
     ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
     size = sizeof(cname);
-    hr = IDirect3DRMTexture_GetClassName(pTexture, &size, cname);
+    hr = IDirect3DRMTexture_GetClassName(texture, &size, cname);
     ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
     ok(size == sizeof("Texture"), "wrong size: %u\n", size);
     ok(!strcmp(cname, "Texture"), "Expected cname to be \"Texture\", but got \"%s\"\n", cname);
 
-    IDirect3DRMTexture_Release(pTexture);
+    IDirect3DRMTexture_Release(texture);
 
     IDirect3DRM_Release(d3drm);
 }

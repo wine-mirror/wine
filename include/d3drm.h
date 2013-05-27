@@ -87,8 +87,8 @@ DECLARE_INTERFACE_(IDirect3DRM,IUnknown)
         D3DVALUE dx, D3DVALUE dy, D3DVALUE dz, D3DVALUE ux, D3DVALUE uy, D3DVALUE uz, D3DVALUE ou, D3DVALUE ov,
         D3DVALUE su, D3DVALUE sv, IDirect3DRMWrap **wrap) PURE;
     STDMETHOD(CreateUserVisual)(THIS_ D3DRMUSERVISUALCALLBACK, LPVOID pArg, LPDIRECT3DRMUSERVISUAL *) PURE;
-    STDMETHOD(LoadTexture)(THIS_ const char *, LPDIRECT3DRMTEXTURE *) PURE;
-    STDMETHOD(LoadTextureFromResource)(THIS_ HRSRC rs, LPDIRECT3DRMTEXTURE *) PURE;
+    STDMETHOD(LoadTexture)(THIS_ const char *filename, IDirect3DRMTexture **texture) PURE;
+    STDMETHOD(LoadTextureFromResource)(THIS_ HRSRC resource, IDirect3DRMTexture **texture) PURE;
     STDMETHOD(SetSearchPath)(THIS_ LPCSTR) PURE;
     STDMETHOD(AddSearchPath)(THIS_ LPCSTR) PURE;
     STDMETHOD(GetSearchPath)(THIS_ DWORD *size_return, LPSTR path_return) PURE;

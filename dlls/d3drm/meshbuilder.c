@@ -658,8 +658,8 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_SetColor(IDirect3DRMMeshBuilde
     return IDirect3DRMMeshBuilder3_SetColor(&This->IDirect3DRMMeshBuilder3_iface, color);
 }
 
-static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_SetTexture(IDirect3DRMMeshBuilder2* iface,
-                                                             LPDIRECT3DRMTEXTURE texture)
+static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_SetTexture(IDirect3DRMMeshBuilder2 *iface,
+        IDirect3DRMTexture *texture)
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder2(iface);
     LPDIRECT3DRMTEXTURE3 texture3 = NULL;
@@ -2169,7 +2169,7 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_CreateMesh(IDirect3DRMMeshBuil
                 hr = IDirect3DRMMesh_SetGroupMaterial(*mesh, group, (LPDIRECT3DRMMATERIAL)This->materials[k].material);
             if (SUCCEEDED(hr) && This->materials[k].texture)
             {
-                LPDIRECT3DRMTEXTURE texture;
+                IDirect3DRMTexture *texture;
 
                 IDirect3DRMTexture3_QueryInterface(This->materials[k].texture, &IID_IDirect3DRMTexture, (LPVOID*)&texture);
                 hr = IDirect3DRMMesh_SetGroupTexture(*mesh, group, texture);
@@ -2857,8 +2857,8 @@ static HRESULT WINAPI IDirect3DRMMeshImpl_SetGroupMaterial(IDirect3DRMMesh* ifac
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshImpl_SetGroupTexture(IDirect3DRMMesh* iface,
-                                                          D3DRMGROUPINDEX id, LPDIRECT3DRMTEXTURE texture)
+static HRESULT WINAPI IDirect3DRMMeshImpl_SetGroupTexture(IDirect3DRMMesh *iface,
+        D3DRMGROUPINDEX id, IDirect3DRMTexture *texture)
 {
     IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
 
@@ -2981,8 +2981,8 @@ static HRESULT WINAPI IDirect3DRMMeshImpl_GetGroupMaterial(IDirect3DRMMesh* ifac
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshImpl_GetGroupTexture(IDirect3DRMMesh* iface,
-                                                          D3DRMGROUPINDEX id, LPDIRECT3DRMTEXTURE *texture)
+static HRESULT WINAPI IDirect3DRMMeshImpl_GetGroupTexture(IDirect3DRMMesh *iface,
+        D3DRMGROUPINDEX id, IDirect3DRMTexture **texture)
 {
     IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
 
