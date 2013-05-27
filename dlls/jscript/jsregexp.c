@@ -333,8 +333,50 @@ static HRESULT RegExp_lastIndex(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
 static HRESULT RegExp_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    RegExpInstance *regexp;
+    unsigned len, f;
+    jsstr_t *ret;
+    WCHAR *ptr;
+
+    TRACE("\n");
+
+    if(!is_vclass(jsthis, JSCLASS_REGEXP)) {
+        FIXME("Not a RegExp\n");
+        return E_NOTIMPL;
+    }
+
+    regexp = regexp_from_vdisp(jsthis);
+
+    if(!r)
+        return S_OK;
+
+    len = jsstr_length(regexp->str) + 2;
+
+    f = regexp->jsregexp->flags;
+    if(f & REG_FOLD)
+        len++;
+    if(f & REG_GLOB)
+        len++;
+    if(f & REG_MULTILINE)
+        len++;
+
+    ptr = jsstr_alloc_buf(len, &ret);
+    if(!ptr)
+        return E_OUTOFMEMORY;
+
+    *ptr++ = '/';
+    ptr += jsstr_flush(regexp->str, ptr);
+    *ptr++ = '/';
+
+    if(f & REG_FOLD)
+        *ptr++ = 'i';
+    if(f & REG_GLOB)
+        *ptr++ = 'g';
+    if(f & REG_MULTILINE)
+        *ptr++ = 'm';
+
+    *r = jsval_string(ret);
+    return S_OK;
 }
 
 static HRESULT create_match_array(script_ctx_t *ctx, jsstr_t *input_str,
