@@ -3385,6 +3385,54 @@ todo_wine {
     ITypeLib_Release(tl);
 }
 
+static void test_TypeInfo2_GetContainingTypeLib(void)
+{
+    static const WCHAR test[] = {'t','e','s','t','.','t','l','b',0};
+    static OLECHAR testTI[] = {'t','e','s','t','T','y','p','e','I','n','f','o',0};
+
+    ICreateTypeLib2 *ctl2;
+    ICreateTypeInfo *cti;
+    ITypeInfo2 *ti2;
+    ITypeLib *tl;
+    UINT Index;
+    HRESULT hr;
+
+    hr = CreateTypeLib2(SYS_WIN32, test, &ctl2);
+    ok_ole_success(hr, CreateTypeLib2);
+
+    hr = ICreateTypeLib2_CreateTypeInfo(ctl2, testTI, TKIND_DISPATCH, &cti);
+    ok_ole_success(hr, ICreateTypeLib2_CreateTypeInfo);
+
+    hr = ICreateTypeInfo_QueryInterface(cti, &IID_ITypeInfo2, (void**)&ti2);
+    ok_ole_success(hr, ICreateTypeInfo2_QueryInterface);
+
+    tl = NULL;
+    Index = 888;
+    hr = ITypeInfo2_GetContainingTypeLib(ti2, &tl, &Index);
+    ok_ole_success(hr, ITypeInfo2_GetContainingTypeLib);
+    ok(tl != NULL, "ITypeInfo2_GetContainingTypeLib returned empty TypeLib");
+    ok(Index == 0, "ITypeInfo2_GetContainingTypeLib returned Index = %u, expected 0\n", Index);
+    if(tl) ITypeLib_Release(tl);
+
+    tl = NULL;
+    hr = ITypeInfo2_GetContainingTypeLib(ti2, &tl, NULL);
+    ok_ole_success(hr, ITypeInfo2_GetContainingTypeLib);
+    ok(tl != NULL, "ITypeInfo2_GetContainingTypeLib returned empty TypeLib");
+    if(tl) ITypeLib_Release(tl);
+
+    Index = 888;
+    hr = ITypeInfo2_GetContainingTypeLib(ti2, NULL, &Index);
+    ok_ole_success(hr, ITypeInfo2_GetContainingTypeLib);
+    ok(Index == 0, "ITypeInfo2_GetContainingTypeLib returned Index = %u, expected 0\n", Index);
+
+    hr = ITypeInfo2_GetContainingTypeLib(ti2, NULL, NULL);
+    ok_ole_success(hr, ITypeInfo2_GetContainingTypeLib);
+
+    ITypeInfo2_Release(ti2);
+    ICreateTypeInfo_Release(cti);
+    ICreateTypeLib2_Release(ctl2);
+}
+
 START_TEST(typelib)
 {
     const char *filename;
@@ -3416,4 +3464,5 @@ START_TEST(typelib)
     test_register_typelib(FALSE);
     test_create_typelibs();
     test_LoadTypeLib();
+    test_TypeInfo2_GetContainingTypeLib();
 }

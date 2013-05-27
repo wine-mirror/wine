@@ -3707,9 +3707,12 @@ static HRESULT WINAPI ITypeInfo2_fnGetContainingTypeLib(
 
     TRACE("(%p,%p,%p)\n", iface, ppTLib, pIndex);
 
-    *ppTLib = (ITypeLib *)&This->typelib->ITypeLib2_iface;
-    ICreateTypeLib_AddRef((ICreateTypeLib*)This->typelib);
-    *pIndex = This->typeinfo->typekind >> 16;
+    if (ppTLib)
+    {
+        *ppTLib = (ITypeLib *)&This->typelib->ITypeLib2_iface;
+        ICreateTypeLib2_AddRef(&This->typelib->ICreateTypeLib2_iface);
+    }
+    if (pIndex) *pIndex = This->typeinfo->typekind >> 16;
 
     return S_OK;
 }
