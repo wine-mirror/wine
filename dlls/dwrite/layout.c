@@ -1021,6 +1021,7 @@ HRESULT create_textformat(const WCHAR *family_name, IDWriteFontCollection *colle
     This->format.weight = weight;
     This->format.style = style;
     This->format.size = size;
+    This->format.stretch = stretch;
 
     if (collection)
     {
