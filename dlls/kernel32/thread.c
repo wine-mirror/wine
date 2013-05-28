@@ -357,18 +357,14 @@ BOOL WINAPI GetThreadPriorityBoost(
 /**********************************************************************
  * SetThreadPriorityBoost [KERNEL32.@]  Sets priority boost for thread.
  *
- * Priority boost is not implemented. This function always returns
- * FALSE and sets last error to ERROR_CALL_NOT_IMPLEMENTED
- *
- * RETURNS
- *    Always returns FALSE to indicate a failure
+ * Priority boost is not implemented, but we return TRUE
+ * anyway because some games crash otherwise.
  */
 BOOL WINAPI SetThreadPriorityBoost(
     HANDLE hthread, /* [in] Handle to thread */
     BOOL disable)   /* [in] TRUE to disable priority boost */
 {
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    return TRUE;
 }
 
 
