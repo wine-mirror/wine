@@ -6021,10 +6021,11 @@ HRESULT compile_state_table(struct StateEntry *StateTable, APPLYSTATEFUNC **dev_
                         cur[i].state, handlers + 1);
             }
 
-            if(StateTable[cur[i].state].representative &&
-            StateTable[cur[i].state].representative != cur[i].content.representative) {
-                FIXME("State %u has different representatives in different pipeline parts\n",
-                    cur[i].state);
+            if (StateTable[cur[i].state].representative
+                    && StateTable[cur[i].state].representative != cur[i].content.representative)
+            {
+                FIXME("State %s (%#x) has different representatives in different pipeline parts.\n",
+                        debug_d3dstate(cur[i].state), cur[i].state);
             }
             StateTable[cur[i].state].representative = cur[i].content.representative;
         }
