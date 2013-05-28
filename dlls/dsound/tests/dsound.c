@@ -1348,6 +1348,15 @@ static HRESULT test_invalid_fmts(LPGUID lpGuid)
         rc = IDirectSoundBuffer_SetFormat(primary, &wfx);
         ok(rc == S_OK, "SetFormat: %08x\n", rc);
 
+        rc = IDirectSoundBuffer_GetFormat(primary, &wfx, sizeof(wfx), NULL);
+        ok(rc == S_OK, "GetFormat: %08x\n", rc);
+        ok(wfx.wFormatTag == WAVE_FORMAT_PCM, "format: 0x%x\n", wfx.wFormatTag);
+        ok(wfx.nChannels == 2, "channels: %u\n", wfx.nChannels);
+        ok(wfx.nSamplesPerSec == 44100, "rate: %u\n", wfx.nSamplesPerSec);
+        ok(wfx.wBitsPerSample == 16, "bps: %u\n", wfx.wBitsPerSample);
+        ok(wfx.nBlockAlign == 4, "blockalign: %u\n", wfx.nBlockAlign);
+        ok(wfx.nAvgBytesPerSec == 44100 * 4 + 1, "avgbytes: %u\n", wfx.nAvgBytesPerSec);
+
         wfx.nChannels = 2;
         wfx.nSamplesPerSec = 44100;
         wfx.wBitsPerSample = 16;
@@ -1356,6 +1365,15 @@ static HRESULT test_invalid_fmts(LPGUID lpGuid)
         rc = IDirectSoundBuffer_SetFormat(primary, &wfx);
         ok(rc == S_OK, "SetFormat: %08x\n", rc);
 
+        rc = IDirectSoundBuffer_GetFormat(primary, &wfx, sizeof(wfx), NULL);
+        ok(rc == S_OK, "GetFormat: %08x\n", rc);
+        ok(wfx.wFormatTag == WAVE_FORMAT_PCM, "format: 0x%x\n", wfx.wFormatTag);
+        ok(wfx.nChannels == 2, "channels: %u\n", wfx.nChannels);
+        ok(wfx.nSamplesPerSec == 44100, "rate: %u\n", wfx.nSamplesPerSec);
+        ok(wfx.wBitsPerSample == 16, "bps: %u\n", wfx.wBitsPerSample);
+        ok(wfx.nBlockAlign == 4, "blockalign: %u\n", wfx.nBlockAlign);
+        ok(wfx.nAvgBytesPerSec == 44100 * 4 - 1, "avgbytes: %u\n", wfx.nAvgBytesPerSec);
+
         wfx.nChannels = 2;
         wfx.nSamplesPerSec = 44100;
         wfx.wBitsPerSample = 16;
@@ -1363,6 +1381,33 @@ static HRESULT test_invalid_fmts(LPGUID lpGuid)
         wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign + 1;
         rc = IDirectSoundBuffer_SetFormat(primary, &wfx);
         ok(rc == S_OK, "SetFormat: %08x\n", rc);
+
+        rc = IDirectSoundBuffer_GetFormat(primary, &wfx, sizeof(wfx), NULL);
+        ok(rc == S_OK, "GetFormat: %08x\n", rc);
+        ok(wfx.wFormatTag == WAVE_FORMAT_PCM, "format: 0x%x\n", wfx.wFormatTag);
+        ok(wfx.nChannels == 2, "channels: %u\n", wfx.nChannels);
+        ok(wfx.nSamplesPerSec == 44100, "rate: %u\n", wfx.nSamplesPerSec);
+        ok(wfx.wBitsPerSample == 16, "bps: %u\n", wfx.wBitsPerSample);
+        ok(wfx.nBlockAlign == 4, "blockalign: %u\n", wfx.nBlockAlign);
+        ok(wfx.nAvgBytesPerSec == 44100 * 4 + 1, "avgbytes: %u\n", wfx.nAvgBytesPerSec);
+
+        wfx.wFormatTag = WAVE_FORMAT_ALAW;
+        wfx.nChannels = 2;
+        wfx.nSamplesPerSec = 44100;
+        wfx.wBitsPerSample = 16;
+        wfx.nBlockAlign = wfx.nChannels * wfx.wBitsPerSample / 8;
+        wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign;
+        rc = IDirectSoundBuffer_SetFormat(primary, &wfx);
+        ok(rc == S_OK, "SetFormat: %08x\n", rc);
+
+        rc = IDirectSoundBuffer_GetFormat(primary, &wfx, sizeof(wfx), NULL);
+        ok(rc == S_OK, "GetFormat: %08x\n", rc);
+        ok(wfx.wFormatTag == WAVE_FORMAT_ALAW, "format: 0x%x\n", wfx.wFormatTag);
+        ok(wfx.nChannels == 2, "channels: %u\n", wfx.nChannels);
+        ok(wfx.nSamplesPerSec == 44100, "rate: %u\n", wfx.nSamplesPerSec);
+        ok(wfx.wBitsPerSample == 16, "bps: %u\n", wfx.wBitsPerSample);
+        ok(wfx.nBlockAlign == 4, "blockalign: %u\n", wfx.nBlockAlign);
+        ok(wfx.nAvgBytesPerSec == 44100 * 4, "avgbytes: %u\n", wfx.nAvgBytesPerSec);
 
         fmtex.Format.cbSize = sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX);
         fmtex.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
@@ -1377,6 +1422,19 @@ static HRESULT test_invalid_fmts(LPGUID lpGuid)
         rc = IDirectSoundBuffer_SetFormat(primary, (WAVEFORMATEX*)&fmtex);
         ok(rc == S_OK, "SetFormat: %08x\n", rc);
 
+        rc = IDirectSoundBuffer_GetFormat(primary, (WAVEFORMATEX*)&fmtex, sizeof(fmtex), NULL);
+        ok(rc == S_OK, "GetFormat: %08x\n", rc);
+        ok(fmtex.Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE, "format: 0x%x\n", fmtex.Format.wFormatTag);
+        ok(fmtex.Format.nChannels == 2, "channels: %u\n", fmtex.Format.nChannels);
+        ok(fmtex.Format.nSamplesPerSec == 44100, "rate: %u\n", fmtex.Format.nSamplesPerSec);
+        ok(fmtex.Format.wBitsPerSample == 16, "bps: %u\n", fmtex.Format.wBitsPerSample);
+        ok(fmtex.Format.nBlockAlign == 4, "blockalign: %u\n", fmtex.Format.nBlockAlign);
+        ok(fmtex.Format.nAvgBytesPerSec == 44100 * 4, "avgbytes: %u\n", fmtex.Format.nAvgBytesPerSec);
+        ok(fmtex.Samples.wValidBitsPerSample == 0 || /* <= XP */
+                fmtex.Samples.wValidBitsPerSample == 16, /* >= Vista */
+                "validbits: %u\n", fmtex.Samples.wValidBitsPerSample);
+        ok(IsEqualGUID(&fmtex.SubFormat, &KSDATAFORMAT_SUBTYPE_PCM), "subtype incorrect\n");
+
         fmtex.Format.cbSize = sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX);
         fmtex.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
         fmtex.Format.nChannels = 2;
@@ -1389,6 +1447,17 @@ static HRESULT test_invalid_fmts(LPGUID lpGuid)
         fmtex.SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
         rc = IDirectSoundBuffer_SetFormat(primary, (WAVEFORMATEX*)&fmtex);
         ok(rc == S_OK, "SetFormat: %08x\n", rc);
+
+        rc = IDirectSoundBuffer_GetFormat(primary, (WAVEFORMATEX*)&fmtex, sizeof(fmtex), NULL);
+        ok(rc == S_OK, "GetFormat: %08x\n", rc);
+        ok(fmtex.Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE, "format: 0x%x\n", fmtex.Format.wFormatTag);
+        ok(fmtex.Format.nChannels == 2, "channels: %u\n", fmtex.Format.nChannels);
+        ok(fmtex.Format.nSamplesPerSec == 44100, "rate: %u\n", fmtex.Format.nSamplesPerSec);
+        ok(fmtex.Format.wBitsPerSample == 24, "bps: %u\n", fmtex.Format.wBitsPerSample);
+        ok(fmtex.Format.nBlockAlign == 6, "blockalign: %u\n", fmtex.Format.nBlockAlign);
+        ok(fmtex.Format.nAvgBytesPerSec == 44100 * 6, "avgbytes: %u\n", fmtex.Format.nAvgBytesPerSec);
+        ok(fmtex.Samples.wValidBitsPerSample == 20, "validbits: %u\n", fmtex.Samples.wValidBitsPerSample);
+        ok(IsEqualGUID(&fmtex.SubFormat, &KSDATAFORMAT_SUBTYPE_PCM), "subtype incorrect\n");
 
         fmtex.Format.cbSize = sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX);
         fmtex.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
