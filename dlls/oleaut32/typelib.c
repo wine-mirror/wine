@@ -1697,7 +1697,12 @@ static TLBParDesc *TLBParDesc_Constructor(UINT n)
     return ret;
 }
 
-static TLBFuncDesc *TLBFuncDesc_Constructor(UINT n)
+static void TLBFuncDesc_Constructor(TLBFuncDesc *func_desc)
+{
+    list_init(&func_desc->custdata_list);
+}
+
+static TLBFuncDesc *TLBFuncDesc_Alloc(UINT n)
 {
     TLBFuncDesc *ret;
 
@@ -1706,7 +1711,7 @@ static TLBFuncDesc *TLBFuncDesc_Constructor(UINT n)
         return NULL;
 
     while(n){
-        list_init(&ret[n-1].custdata_list);
+        TLBFuncDesc_Constructor(&ret[n-1]);
         --n;
     }
 
@@ -2093,7 +2098,7 @@ MSFT_DoFuncs(TLBContext*     pcx,
 
     MSFT_ReadLEDWords(&infolen, sizeof(INT), pcx, offset);
 
-    *pptfd = TLBFuncDesc_Constructor(cFuncs);
+    *pptfd = TLBFuncDesc_Alloc(cFuncs);
     ptfd = *pptfd;
     for ( i = 0; i < cFuncs ; i++ )
     {
@@ -3725,7 +3730,7 @@ static void SLTG_DoFuncs(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI,
     unsigned short i;
     TLBFuncDesc *pFuncDesc;
 
-    pTI->funcdescs = TLBFuncDesc_Constructor(cFuncs);
+    pTI->funcdescs = TLBFuncDesc_Alloc(cFuncs);
 
     pFuncDesc = pTI->funcdescs;
     for(pFunc = (SLTG_Function*)pFirstItem, i = 0; i < cFuncs && pFunc != (SLTG_Function*)0xFFFF;
@@ -5339,6 +5344,27 @@ static HRESULT TLB_CopyElemDesc( const ELEMDESC *src, ELEMDESC *dest, char **buf
     return S_OK;
 }
 
+static HRESULT TLB_SanitizeBSTR(BSTR str)
+{
+    UINT len = SysStringLen(str), i;
+    for (i = 0; i < len; ++i)
+        if (str[i] > 0x7f)
+            str[i] = '?';
+    return S_OK;
+}
+
+static HRESULT TLB_SanitizeVariant(VARIANT *var)
+{
+    if (V_VT(var) == VT_INT)
+        return VariantChangeType(var, var, 0, VT_I4);
+    else if (V_VT(var) == VT_UINT)
+        return VariantChangeType(var, var, 0, VT_UI4);
+    else if (V_VT(var) == VT_BSTR)
+        return TLB_SanitizeBSTR(V_BSTR(var));
+
+    return S_OK;
+}
+
 static void TLB_FreeElemDesc( ELEMDESC *elemdesc )
 {
     if (elemdesc->u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT)
@@ -5368,6 +5394,8 @@ static HRESULT TLB_AllocAndInitFuncDesc( const FUNCDESC *src, FUNCDESC **dest_pt
     if (dispinterface)    /* overwrite funckind */
         dest->funckind = FUNC_DISPATCH;
     buffer = (char *)(dest + 1);
+
+    dest->oVft = dest->oVft & 0xFFFC;
 
     if (dest->cScodes) {
         dest->lprgscode = (SCODE *)buffer;
@@ -6713,7 +6741,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                 if (FAILED(hres)) goto func_fail; /* FIXME: we don't free changed types here */
             }
 
-            hres = DispCallFunc(pIUnk, func_desc->oVft, func_desc->callconv,
+            hres = DispCallFunc(pIUnk, func_desc->oVft & 0xFFFC, func_desc->callconv,
                                 V_VT(&varresult), func_desc->cParams, rgvt,
                                 prgpvarg, &varresult);
 
@@ -7885,7 +7913,7 @@ HRESULT WINAPI CreateDispTypeInfo(
     pTIIface->TypeAttr.wTypeFlags = 0;
     pTIIface->hreftype = 0;
 
-    pTIIface->funcdescs = TLBFuncDesc_Constructor(pidata->cMembers);
+    pTIIface->funcdescs = TLBFuncDesc_Alloc(pidata->cMembers);
     pFuncDesc = pTIIface->funcdescs;
     for(func = 0; func < pidata->cMembers; func++) {
         METHODDATA *md = pidata->pmethdata + func;
@@ -8578,8 +8606,120 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(ICreateTypeInfo2 *iface,
         UINT index, FUNCDESC *funcDesc)
 {
     ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
-    FIXME("%p %u %p - stub\n", This, index, funcDesc);
-    return E_NOTIMPL;
+    TLBFuncDesc tmp_func_desc, *func_desc;
+    int buf_size, i;
+    char *buffer;
+    HRESULT hres;
+
+    TRACE("%p %u %p\n", This, index, funcDesc);
+
+    if (!funcDesc || funcDesc->oVft & 3)
+        return E_INVALIDARG;
+
+    switch (This->TypeAttr.typekind) {
+    case TKIND_MODULE:
+        if (funcDesc->funckind != FUNC_STATIC)
+            return TYPE_E_BADMODULEKIND;
+        break;
+    case TKIND_DISPATCH:
+        if (funcDesc->funckind != FUNC_DISPATCH)
+            return TYPE_E_BADMODULEKIND;
+        break;
+    default:
+        if (funcDesc->funckind != FUNC_PUREVIRTUAL)
+            return TYPE_E_BADMODULEKIND;
+    }
+
+    if (index > This->TypeAttr.cFuncs)
+        return TYPE_E_ELEMENTNOTFOUND;
+
+    if (funcDesc->invkind & (INVOKE_PROPERTYPUT | INVOKE_PROPERTYPUTREF) &&
+            !funcDesc->cParams)
+        return TYPE_E_INCONSISTENTPROPFUNCS;
+
+    memset(&tmp_func_desc, 0, sizeof(tmp_func_desc));
+    TLBFuncDesc_Constructor(&tmp_func_desc);
+
+    tmp_func_desc.funcdesc = *funcDesc;
+
+    if (tmp_func_desc.funcdesc.oVft != 0)
+        tmp_func_desc.funcdesc.oVft |= 1;
+
+    if (funcDesc->cScodes) {
+        tmp_func_desc.funcdesc.lprgscode = heap_alloc(sizeof(SCODE) * funcDesc->cScodes);
+        memcpy(tmp_func_desc.funcdesc.lprgscode, funcDesc->lprgscode, sizeof(SCODE) * funcDesc->cScodes);
+    } else
+        tmp_func_desc.funcdesc.lprgscode = NULL;
+
+    buf_size = TLB_SizeElemDesc(&funcDesc->elemdescFunc);
+    for (i = 0; i < funcDesc->cParams; ++i) {
+        buf_size += sizeof(ELEMDESC);
+        buf_size += TLB_SizeElemDesc(funcDesc->lprgelemdescParam + i);
+    }
+    tmp_func_desc.funcdesc.lprgelemdescParam = heap_alloc(buf_size);
+    buffer = (char*)(tmp_func_desc.funcdesc.lprgelemdescParam + funcDesc->cParams);
+
+    hres = TLB_CopyElemDesc(&funcDesc->elemdescFunc, &tmp_func_desc.funcdesc.elemdescFunc, &buffer);
+    if (FAILED(hres)) {
+        heap_free(tmp_func_desc.funcdesc.lprgelemdescParam);
+        heap_free(tmp_func_desc.funcdesc.lprgscode);
+        return hres;
+    }
+
+    for (i = 0; i < funcDesc->cParams; ++i) {
+        hres = TLB_CopyElemDesc(funcDesc->lprgelemdescParam + i,
+                tmp_func_desc.funcdesc.lprgelemdescParam + i, &buffer);
+        if (FAILED(hres)) {
+            heap_free(tmp_func_desc.funcdesc.lprgelemdescParam);
+            heap_free(tmp_func_desc.funcdesc.lprgscode);
+            return hres;
+        }
+        if (tmp_func_desc.funcdesc.lprgelemdescParam[i].u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT &&
+                tmp_func_desc.funcdesc.lprgelemdescParam[i].tdesc.vt != VT_VARIANT &&
+                tmp_func_desc.funcdesc.lprgelemdescParam[i].tdesc.vt != VT_USERDEFINED){
+            hres = TLB_SanitizeVariant(&tmp_func_desc.funcdesc.lprgelemdescParam[i].u.paramdesc.pparamdescex->varDefaultValue);
+            if (FAILED(hres)) {
+                heap_free(tmp_func_desc.funcdesc.lprgelemdescParam);
+                heap_free(tmp_func_desc.funcdesc.lprgscode);
+                return hres;
+            }
+        }
+    }
+
+    tmp_func_desc.pParamDesc = TLBParDesc_Constructor(funcDesc->cParams);
+
+    if (This->funcdescs) {
+        This->funcdescs = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->funcdescs,
+                sizeof(TLBFuncDesc) * (This->TypeAttr.cFuncs + 1));
+
+        if (index < This->TypeAttr.cFuncs) {
+            memmove(This->funcdescs + index + 1, This->funcdescs + index,
+                    (This->TypeAttr.cFuncs - index) * sizeof(TLBFuncDesc));
+            func_desc = This->funcdescs + index;
+        } else
+            func_desc = This->funcdescs + This->TypeAttr.cFuncs;
+
+        /* move custdata lists to the new memory location */
+        for(i = 0; i < This->TypeAttr.cFuncs + 1; ++i){
+            if(index != i){
+                TLBFuncDesc *fd = &This->funcdescs[i];
+                if(fd->custdata_list.prev == fd->custdata_list.next)
+                    list_init(&fd->custdata_list);
+                else{
+                    fd->custdata_list.prev->next = &fd->custdata_list;
+                    fd->custdata_list.next->prev = &fd->custdata_list;
+                }
+            }
+        }
+    } else
+        func_desc = This->funcdescs = heap_alloc(sizeof(TLBFuncDesc));
+
+    memcpy(func_desc, &tmp_func_desc, sizeof(tmp_func_desc));
+    list_init(&func_desc->custdata_list);
+
+    ++This->TypeAttr.cFuncs;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ICreateTypeInfo2_fnAddImplType(ICreateTypeInfo2 *iface,
