@@ -8888,8 +8888,16 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncHelpContext(ICreateTypeInfo2 *if
         UINT index, DWORD helpContext)
 {
     ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
-    FIXME("%p %u %d - stub\n", This, index, helpContext);
-    return E_NOTIMPL;
+    TLBFuncDesc *func_desc = &This->funcdescs[index];
+
+    TRACE("%p %u %d\n", This, index, helpContext);
+
+    if(index >= This->TypeAttr.cFuncs)
+        return TYPE_E_ELEMENTNOTFOUND;
+
+    func_desc->helpcontext = helpContext;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ICreateTypeInfo2_fnSetVarHelpContext(ICreateTypeInfo2 *iface,
