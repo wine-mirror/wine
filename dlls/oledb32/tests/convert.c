@@ -2575,6 +2575,7 @@ static void test_converttovar(void)
     INT i4;
     LARGE_INTEGER i8;
     VARIANT_BOOL boolean = VARIANT_TRUE;
+    FLOAT fvalue = 543.21f;
 
     V_VT(&dst) = VT_EMPTY;
     dst_len = 0;
@@ -2607,6 +2608,16 @@ static void test_converttovar(void)
     ok(V_VT(&dst) == VT_DECIMAL, "got %d\n", V_VT(&dst));
     ok(S(U(V_DECIMAL(&dst))).scale == 0 && S(U(V_DECIMAL(&dst))).sign == 0 &&
        V_DECIMAL(&dst).Hi32 == 0 && U1(V_DECIMAL(&dst)).Lo64 == 12345, "Not Equal\n");
+
+    V_VT(&dst) = VT_EMPTY;
+    dst_len = 0;
+    dst_status = DBSTATUS_S_DEFAULT;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_R4, DBTYPE_VARIANT, sizeof(fvalue), &dst_len, &fvalue, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
+    ok(V_VT(&dst) == VT_R4, "got %d\n", V_VT(&dst));
+    ok(V_R4(&dst) == 543.21f, "got %f\n", V_R4(&dst));
 
     V_VT(&dst) = VT_EMPTY;
     dst_len = 0;
