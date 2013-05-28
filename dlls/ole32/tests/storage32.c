@@ -1962,7 +1962,9 @@ static void test_access(void)
     IStorage_Release(stg);
 
     hr = StgOpenStorage(fileW, NULL, STGM_DIRECT_SWMR | STGM_READ | STGM_SHARE_DENY_NONE, NULL, 0, &stg);
-    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK || broken(hr == STG_E_INVALIDFLAG), "got %08x\n", hr);
+    if(hr != S_OK)
+       return;
 
     test_file_access(fileA, create);
 
