@@ -662,7 +662,7 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_SetTexture(IDirect3DRMMeshBuil
         IDirect3DRMTexture *texture)
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder2(iface);
-    LPDIRECT3DRMTEXTURE3 texture3 = NULL;
+    IDirect3DRMTexture3 *texture3 = NULL;
     HRESULT hr = D3DRM_OK;
 
     if (texture)
@@ -1815,8 +1815,8 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_SetColor(IDirect3DRMMeshBuilde
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_SetTexture(IDirect3DRMMeshBuilder3* iface,
-                                                             LPDIRECT3DRMTEXTURE3 texture)
+static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_SetTexture(IDirect3DRMMeshBuilder3 *iface,
+        IDirect3DRMTexture3 *texture)
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
 
