@@ -450,7 +450,7 @@ static void test_MeshBuilder(void)
         DWORD nb_groups;
         unsigned nb_vertices, nb_faces, nb_face_vertices;
         DWORD data_size;
-        LPDIRECT3DRMMATERIAL material = (LPDIRECT3DRMMATERIAL)0xdeadbeef;
+        IDirect3DRMMaterial *material = (IDirect3DRMMaterial *)0xdeadbeef;
         IDirect3DRMTexture *texture = (IDirect3DRMTexture *)0xdeadbeef;
         D3DVALUE values[3];
 

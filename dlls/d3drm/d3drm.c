@@ -217,13 +217,14 @@ static HRESULT WINAPI IDirect3DRMImpl_CreateLightRGB(IDirect3DRM *iface, D3DRMLI
     return IDirect3DRM3_CreateLightRGB(&d3drm->IDirect3DRM3_iface, type, red, green, blue, light);
 }
 
-static HRESULT WINAPI IDirect3DRMImpl_CreateMaterial(IDirect3DRM* iface, D3DVALUE power, LPDIRECT3DRMMATERIAL * material)
+static HRESULT WINAPI IDirect3DRMImpl_CreateMaterial(IDirect3DRM *iface,
+        D3DVALUE power, IDirect3DRMMaterial **material)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM(iface);
+    IDirect3DRMImpl *d3drm = impl_from_IDirect3DRM(iface);
 
-    TRACE("(%p/%p)->(%f,%p)\n", iface, This, power, material);
+    TRACE("iface %p, power %.8e, material %p.\n", iface, power, material);
 
-    return IDirect3DRM3_CreateMaterial(&This->IDirect3DRM3_iface, power, (LPDIRECT3DRMMATERIAL2*)material);
+    return IDirect3DRM3_CreateMaterial(&d3drm->IDirect3DRM3_iface, power, (IDirect3DRMMaterial2 **)material);
 }
 
 static HRESULT WINAPI IDirect3DRMImpl_CreateDevice(IDirect3DRM *iface,
@@ -594,14 +595,14 @@ static HRESULT WINAPI IDirect3DRM2Impl_CreateLightRGB(IDirect3DRM2 *iface, D3DRM
     return IDirect3DRM3_CreateLightRGB(&d3drm->IDirect3DRM3_iface, type, red, green, blue, light);
 }
 
-static HRESULT WINAPI IDirect3DRM2Impl_CreateMaterial(IDirect3DRM2* iface, D3DVALUE power,
-                                                      LPDIRECT3DRMMATERIAL * material)
+static HRESULT WINAPI IDirect3DRM2Impl_CreateMaterial(IDirect3DRM2 *iface,
+        D3DVALUE power, IDirect3DRMMaterial **material)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM2(iface);
+    IDirect3DRMImpl *d3drm = impl_from_IDirect3DRM2(iface);
 
-    TRACE("(%p/%p)->(%f,%p)\n", iface, This, power, material);
+    TRACE("iface %p, power %.8e, material %p.\n", iface, power, material);
 
-    return IDirect3DRM3_CreateMaterial(&This->IDirect3DRM3_iface, power, (LPDIRECT3DRMMATERIAL2*)material);
+    return IDirect3DRM3_CreateMaterial(&d3drm->IDirect3DRM3_iface, power, (IDirect3DRMMaterial2 **)material);
 }
 
 static HRESULT WINAPI IDirect3DRM2Impl_CreateDevice(IDirect3DRM2 *iface,

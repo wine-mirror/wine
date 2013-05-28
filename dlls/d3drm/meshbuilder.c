@@ -675,14 +675,15 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_SetTexture(IDirect3DRMMeshBuil
     return hr;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_SetMaterial(IDirect3DRMMeshBuilder2* iface,
-                                                              LPDIRECT3DRMMATERIAL material)
+static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_SetMaterial(IDirect3DRMMeshBuilder2 *iface,
+        IDirect3DRMMaterial *material)
 {
-    IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder2(iface);
+    IDirect3DRMMeshBuilderImpl *d3drm = impl_from_IDirect3DRMMeshBuilder2(iface);
 
-    TRACE("(%p)->(%p)\n", This, material);
+    TRACE("iface %p, material %p.\n", iface, material);
 
-    return IDirect3DRMMeshBuilder3_SetMaterial(&This->IDirect3DRMMeshBuilder3_iface, (LPDIRECT3DRMMATERIAL2)material);
+    return IDirect3DRMMeshBuilder3_SetMaterial(&d3drm->IDirect3DRMMeshBuilder3_iface,
+            (IDirect3DRMMaterial2 *)material);
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_SetTextureTopology(IDirect3DRMMeshBuilder2* iface,
@@ -2166,7 +2167,8 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_CreateMesh(IDirect3DRMMeshBuil
             if (SUCCEEDED(hr))
                 hr = IDirect3DRMMesh_SetGroupColor(*mesh, group, This->materials[k].color);
             if (SUCCEEDED(hr))
-                hr = IDirect3DRMMesh_SetGroupMaterial(*mesh, group, (LPDIRECT3DRMMATERIAL)This->materials[k].material);
+                hr = IDirect3DRMMesh_SetGroupMaterial(*mesh, group,
+                        (IDirect3DRMMaterial *)This->materials[k].material);
             if (SUCCEEDED(hr) && This->materials[k].texture)
             {
                 IDirect3DRMTexture *texture;
@@ -2836,23 +2838,23 @@ static HRESULT WINAPI IDirect3DRMMeshImpl_SetGroupQuality(IDirect3DRMMesh* iface
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshImpl_SetGroupMaterial(IDirect3DRMMesh* iface,
-                                                           D3DRMGROUPINDEX id, LPDIRECT3DRMMATERIAL material)
+static HRESULT WINAPI IDirect3DRMMeshImpl_SetGroupMaterial(IDirect3DRMMesh *iface,
+        D3DRMGROUPINDEX id, IDirect3DRMMaterial *material)
 {
-    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+    IDirect3DRMMeshImpl *mesh = impl_from_IDirect3DRMMesh(iface);
 
-    TRACE("(%p)->(%u,%p)\n", This, id, material);
+    TRACE("iface %p, id %#x, material %p.\n", iface, id, material);
 
-    if (id >= This->nb_groups)
+    if (id >= mesh->nb_groups)
         return D3DRMERR_BADVALUE;
 
-    if (This->groups[id].material)
-        IDirect3DRMMaterial2_Release(This->groups[id].material);
+    if (mesh->groups[id].material)
+        IDirect3DRMMaterial2_Release(mesh->groups[id].material);
 
-    This->groups[id].material = (LPDIRECT3DRMMATERIAL2)material;
+    mesh->groups[id].material = (IDirect3DRMMaterial2 *)material;
 
     if (material)
-        IDirect3DRMMaterial2_AddRef(This->groups[id].material);
+        IDirect3DRMMaterial2_AddRef(mesh->groups[id].material);
 
     return D3DRM_OK;
 }
@@ -2960,21 +2962,21 @@ static D3DRMRENDERQUALITY WINAPI IDirect3DRMMeshImpl_GetGroupQuality(IDirect3DRM
     return 0;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshImpl_GetGroupMaterial(IDirect3DRMMesh* iface,
-                                                           D3DRMGROUPINDEX id, LPDIRECT3DRMMATERIAL *material)
+static HRESULT WINAPI IDirect3DRMMeshImpl_GetGroupMaterial(IDirect3DRMMesh *iface,
+        D3DRMGROUPINDEX id, IDirect3DRMMaterial **material)
 {
-    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+    IDirect3DRMMeshImpl *mesh = impl_from_IDirect3DRMMesh(iface);
 
-    TRACE("(%p)->(%u,%p)\n", This, id, material);
+    TRACE("iface %p, id %#x, material %p.\n", iface, id, material);
 
-    if (id >= This->nb_groups)
+    if (id >= mesh->nb_groups)
         return D3DRMERR_BADVALUE;
 
     if (!material)
         return E_POINTER;
 
-    if (This->groups[id].material)
-        IDirect3DRMTexture_QueryInterface(This->groups[id].material, &IID_IDirect3DRMMaterial, (void**)material);
+    if (mesh->groups[id].material)
+        IDirect3DRMTexture_QueryInterface(mesh->groups[id].material, &IID_IDirect3DRMMaterial, (void **)material);
     else
         *material = NULL;
 

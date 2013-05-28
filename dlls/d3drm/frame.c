@@ -1246,12 +1246,9 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_GetAxes(IDirect3DRMFrame2 *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_GetMaterial(IDirect3DRMFrame2* iface,
-                                                        LPDIRECT3DRMMATERIAL *material)
+static HRESULT WINAPI IDirect3DRMFrame2Impl_GetMaterial(IDirect3DRMFrame2 *iface, IDirect3DRMMaterial **material)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, material);
+    FIXME("iface %p, material %p stub!\n", iface, material);
 
     return E_NOTIMPL;
 }
