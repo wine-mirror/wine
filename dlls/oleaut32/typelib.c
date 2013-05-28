@@ -5730,11 +5730,10 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeOfImplType(
       /* only valid on dual interfaces;
          retrieve the associated TKIND_INTERFACE handle for the current TKIND_DISPATCH
       */
-      if( This->TypeAttr.typekind != TKIND_DISPATCH) return E_INVALIDARG;
 
       if (This->TypeAttr.wTypeFlags & TYPEFLAG_FDUAL)
       {
-        *pRefType = -1;
+          *pRefType = -2;
       }
       else
       {
@@ -7083,44 +7082,44 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
     if(!ppTInfo)
         return E_INVALIDARG;
 
-    if ((This->hreftype != -1) && (This->hreftype == hRefType))
+    if ((INT)hRefType < 0) {
+        ITypeInfoImpl *pTypeInfoImpl;
+
+        if (!(This->TypeAttr.wTypeFlags & TYPEFLAG_FDUAL) ||
+                !(This->TypeAttr.typekind == TKIND_INTERFACE ||
+                    This->TypeAttr.typekind == TKIND_DISPATCH))
+            return TYPE_E_ELEMENTNOTFOUND;
+
+        /* when we meet a DUAL typeinfo, we must create the alternate
+        * version of it.
+        */
+        pTypeInfoImpl = ITypeInfoImpl_Constructor();
+
+        *pTypeInfoImpl = *This;
+        pTypeInfoImpl->ref = 0;
+
+        if (This->TypeAttr.typekind == TKIND_INTERFACE)
+            pTypeInfoImpl->TypeAttr.typekind = TKIND_DISPATCH;
+        else
+            pTypeInfoImpl->TypeAttr.typekind = TKIND_INTERFACE;
+
+        *ppTInfo = (ITypeInfo *)&pTypeInfoImpl->ITypeInfo2_iface;
+        /* the AddRef implicitly adds a reference to the parent typelib, which
+         * stops the copied data from being destroyed until the new typeinfo's
+         * refcount goes to zero, but we need to signal to the new instance to
+         * not free its data structures when it is destroyed */
+        pTypeInfoImpl->not_attached_to_typelib = TRUE;
+
+        ITypeInfo_AddRef(*ppTInfo);
+
+        result = S_OK;
+    }
+    else if (This->hreftype == hRefType)
     {
         *ppTInfo = (ITypeInfo *)&This->ITypeInfo2_iface;
         ITypeInfo_AddRef(*ppTInfo);
         result = S_OK;
-    }
-    else if (hRefType == -1 &&
-	(This->TypeAttr.typekind   == TKIND_DISPATCH) &&
-	(This->TypeAttr.wTypeFlags &  TYPEFLAG_FDUAL))
-    {
-	  /* when we meet a DUAL dispinterface, we must create the interface
-	  * version of it.
-	  */
-	  ITypeInfoImpl *pTypeInfoImpl = ITypeInfoImpl_Constructor();
-
-
-	  /* the interface version contains the same information as the dispinterface
-	   * copy the contents of the structs.
-	   */
-	  *pTypeInfoImpl = *This;
-	  pTypeInfoImpl->ref = 0;
-
-	  /* change the type to interface */
-	  pTypeInfoImpl->TypeAttr.typekind = TKIND_INTERFACE;
-
-	  *ppTInfo = (ITypeInfo*) pTypeInfoImpl;
-
-	  /* the AddRef implicitly adds a reference to the parent typelib, which
-	   * stops the copied data from being destroyed until the new typeinfo's
-	   * refcount goes to zero, but we need to signal to the new instance to
-	   * not free its data structures when it is destroyed */
-	  pTypeInfoImpl->not_attached_to_typelib = TRUE;
-
-	  ITypeInfo_AddRef(*ppTInfo);
-
-	  result = S_OK;
-
-    } else if ((hRefType != -1) && (hRefType & DISPATCH_HREF_MASK) &&
+    } else if ((hRefType & DISPATCH_HREF_MASK) &&
         (This->TypeAttr.typekind   == TKIND_DISPATCH))
     {
         HREFTYPE href_dispatch = hRefType;
@@ -8399,8 +8398,27 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetTypeFlags(ICreateTypeInfo2 *iface,
 
     TRACE("%p %x\n", This, typeFlags);
 
-    if (typeFlags & TYPEFLAG_FDUAL)
-        typeFlags |= TYPEFLAG_FDISPATCHABLE;
+    if (typeFlags & TYPEFLAG_FDUAL) {
+        static const WCHAR stdole2tlb[] = { 's','t','d','o','l','e','2','.','t','l','b',0 };
+        ITypeLib *stdole;
+        ITypeInfo *dispatch;
+        HREFTYPE hreftype;
+        HRESULT hres;
+
+        hres = LoadTypeLib(stdole2tlb, &stdole);
+        if(FAILED(hres))
+            return hres;
+
+        hres = ITypeLib_GetTypeInfoOfGuid(stdole, &IID_IDispatch, &dispatch);
+        ITypeLib_Release(stdole);
+        if(FAILED(hres))
+            return hres;
+
+        hres = ICreateTypeInfo2_AddRefTypeInfo(iface, dispatch, &hreftype);
+        ITypeInfo_Release(dispatch);
+        if(FAILED(hres))
+            return hres;
+    }
 
     This->TypeAttr.wTypeFlags = typeFlags;
 
@@ -8627,6 +8645,9 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddImplType(ICreateTypeInfo2 *iface,
     impl_type->hRef = refType;
 
     ++This->TypeAttr.cImplTypes;
+
+    if((refType & (~0x3)) == (This->pTypeLib->dispatch_href & (~0x3)))
+        This->TypeAttr.wTypeFlags |= TYPEFLAG_FDISPATCHABLE;
 
     return S_OK;
 }
