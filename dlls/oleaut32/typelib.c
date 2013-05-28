@@ -1713,7 +1713,12 @@ static TLBFuncDesc *TLBFuncDesc_Constructor(UINT n)
     return ret;
 }
 
-static TLBImplType *TLBImplType_Constructor(UINT n)
+static void TLBImplType_Constructor(TLBImplType *impl)
+{
+    list_init(&impl->custdata_list);
+}
+
+static TLBImplType *TLBImplType_Alloc(UINT n)
 {
     TLBImplType *ret;
 
@@ -1722,7 +1727,7 @@ static TLBImplType *TLBImplType_Constructor(UINT n)
         return NULL;
 
     while(n){
-        list_init(&ret[n-1].custdata_list);
+        TLBImplType_Constructor(&ret[n-1]);
         --n;
     }
 
@@ -2369,7 +2374,7 @@ static void MSFT_DoImplTypes(TLBContext *pcx, ITypeInfoImpl *pTI, int count,
 
     TRACE_(typelib)("\n");
 
-    pTI->impltypes = TLBImplType_Constructor(count);
+    pTI->impltypes = TLBImplType_Alloc(count);
     pImpl = pTI->impltypes;
     for(i=0;i<count;i++){
         if(offset<0) break; /* paranoia */
@@ -2465,13 +2470,13 @@ static ITypeInfoImpl * MSFT_DoTypeInfo(
 
             if (tiBase.datatype1 != -1)
             {
-                ptiRet->impltypes = TLBImplType_Constructor(1);
+                ptiRet->impltypes = TLBImplType_Alloc(1);
                 ptiRet->impltypes[0].hRef = tiBase.datatype1;
                 MSFT_DoRefType(pcx, pLibInfo, tiBase.datatype1);
             }
             break;
         default:
-            ptiRet->impltypes = TLBImplType_Constructor(1);
+            ptiRet->impltypes = TLBImplType_Alloc(1);
             MSFT_DoRefType(pcx, pLibInfo, tiBase.datatype1);
             ptiRet->impltypes[0].hRef = tiBase.datatype1;
             break;
@@ -3585,7 +3590,7 @@ static char *SLTG_DoImpls(char *pBlk, ITypeInfoImpl *pTI,
     }
 
     info = (SLTG_ImplInfo*)pBlk;
-    pTI->impltypes = TLBImplType_Constructor(pTI->TypeAttr.cImplTypes);
+    pTI->impltypes = TLBImplType_Alloc(pTI->TypeAttr.cImplTypes);
     pImplType = pTI->impltypes;
     while(1) {
 	sltg_get_typelib_ref(ref_lookup, info->ref, &pImplType->hRef);
@@ -7936,7 +7941,7 @@ HRESULT WINAPI CreateDispTypeInfo(
     pTIClass->TypeAttr.wTypeFlags = 0;
     pTIClass->hreftype = sizeof(MSFT_TypeInfoBase);
 
-    pTIClass->impltypes = TLBImplType_Constructor(1);
+    pTIClass->impltypes = TLBImplType_Alloc(1);
 
     ref = heap_alloc_zero(sizeof(*ref));
     ref->pImpTLInfo = TLB_REF_INTERNAL;
@@ -8563,8 +8568,67 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddImplType(ICreateTypeInfo2 *iface,
         UINT index, HREFTYPE refType)
 {
     ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
-    FIXME("%p %u %d - stub\n", This, index, refType);
-    return E_NOTIMPL;
+    TLBImplType *impl_type;
+
+    TRACE("%p %u %d\n", This, index, refType);
+
+    switch(This->TypeAttr.typekind){
+        case TKIND_COCLASS: {
+            if (index == -1) {
+                FIXME("Unhandled index: -1\n");
+                return E_NOTIMPL;
+            }
+
+            if(index != This->TypeAttr.cImplTypes)
+                return TYPE_E_ELEMENTNOTFOUND;
+
+            break;
+        }
+        case TKIND_INTERFACE:
+        case TKIND_DISPATCH:
+            if (index != 0 || This->TypeAttr.cImplTypes)
+                return TYPE_E_ELEMENTNOTFOUND;
+            break;
+        default:
+            FIXME("Unimplemented typekind: %d\n", This->TypeAttr.typekind);
+            return E_NOTIMPL;
+    }
+
+    if (This->impltypes){
+        UINT i;
+
+        This->impltypes = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->impltypes,
+                sizeof(TLBImplType) * (This->TypeAttr.cImplTypes + 1));
+
+        if (index < This->TypeAttr.cImplTypes) {
+            memmove(This->impltypes + index + 1, This->impltypes + index,
+                    (This->TypeAttr.cImplTypes - index) * sizeof(TLBImplType));
+            impl_type = This->impltypes + index;
+        } else
+            impl_type = This->impltypes + This->TypeAttr.cImplTypes;
+
+        /* move custdata lists to the new memory location */
+        for(i = 0; i < This->TypeAttr.cImplTypes + 1; ++i){
+            if(index != i){
+                TLBImplType *it = &This->impltypes[i];
+                if(it->custdata_list.prev == it->custdata_list.next)
+                    list_init(&it->custdata_list);
+                else{
+                    it->custdata_list.prev->next = &it->custdata_list;
+                    it->custdata_list.next->prev = &it->custdata_list;
+                }
+            }
+        }
+    } else
+        impl_type = This->impltypes = heap_alloc(sizeof(TLBImplType));
+
+    memset(impl_type, 0, sizeof(TLBImplType));
+    TLBImplType_Constructor(impl_type);
+    impl_type->hRef = refType;
+
+    ++This->TypeAttr.cImplTypes;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ICreateTypeInfo2_fnSetImplTypeFlags(ICreateTypeInfo2 *iface,
