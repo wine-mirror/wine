@@ -1055,6 +1055,7 @@ typedef struct tagTLBRefType
 			       it the format is SLTG.  -2 indicates to
 			       use guid */
 
+    TYPEKIND tkind;
     GUID guid;              /* guid of the referenced type */
                             /* if index == TLB_REF_USE_GUID */
 
@@ -2337,7 +2338,7 @@ static void MSFT_DoRefType(TLBContext *pcx, ITypeLibImpl *pTL,
                 break;
 
         if(&pImpLib->entry != &pcx->pLibInfo->implib_list){
-            ref->reference = offset;
+            ref->reference = offset & (~0x3);
             ref->pImpTLInfo = pImpLib;
             if(impinfo.flags & MSFT_IMPINFO_OFFSET_IS_GUID) {
                 MSFT_ReadGuid(&ref->guid, impinfo.oGuid, pcx);
@@ -7121,22 +7122,27 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
         result = ITypeInfoImpl_GetDispatchRefTypeInfo((ITypeInfo *)iface, &href_dispatch, ppTInfo);
     } else {
         TLBRefType *ref_type;
+        ITypeLib *pTLib = NULL;
         UINT i;
 
-        for(i = 0; i < This->pTypeLib->TypeInfoCount; ++i)
-        {
-            if (This->pTypeLib->typeinfos[i]->hreftype == hRefType)
+        if(!(hRefType & 0x1)){
+            for(i = 0; i < This->pTypeLib->TypeInfoCount; ++i)
             {
-                result = S_OK;
-                *ppTInfo = (ITypeInfo*)This->pTypeLib->typeinfos[i];
-                ITypeInfo_AddRef(*ppTInfo);
-                goto end;
+                if (This->pTypeLib->typeinfos[i]->hreftype == (hRefType&(~0x3)))
+                {
+                    result = S_OK;
+                    *ppTInfo = (ITypeInfo*)&This->pTypeLib->typeinfos[i]->ITypeInfo2_iface;
+                    ITypeInfo_AddRef(*ppTInfo);
+                    goto end;
+                }
             }
+            result = TYPE_E_ELEMENTNOTFOUND;
+            goto end;
         }
 
         LIST_FOR_EACH_ENTRY(ref_type, &This->pTypeLib->ref_list, TLBRefType, entry)
         {
-            if(ref_type->reference == hRefType)
+            if(ref_type->reference == (hRefType & (~0x3)))
                 break;
         }
         if(&ref_type->entry == &This->pTypeLib->ref_list)
@@ -7144,46 +7150,44 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
             FIXME("Can't find pRefType for ref %x\n", hRefType);
             goto end;
         }
-        if(hRefType != -1) {
-            ITypeLib *pTLib = NULL;
 
-            if(ref_type->pImpTLInfo == TLB_REF_INTERNAL) {
-	        UINT Index;
-		result = ITypeInfo2_GetContainingTypeLib(iface, &pTLib, &Index);
-	    } else {
-                if(ref_type->pImpTLInfo->pImpTypeLib) {
-		    TRACE("typeinfo in imported typelib that is already loaded\n");
-                    pTLib = (ITypeLib*)&ref_type->pImpTLInfo->pImpTypeLib->ITypeLib2_iface;
+        if(ref_type->pImpTLInfo == TLB_REF_INTERNAL) {
+            UINT Index;
+            TRACE("internal reference\n");
+            result = ITypeInfo2_GetContainingTypeLib(iface, &pTLib, &Index);
+        } else {
+            if(ref_type->pImpTLInfo->pImpTypeLib) {
+                TRACE("typeinfo in imported typelib that is already loaded\n");
+                pTLib = (ITypeLib*)&ref_type->pImpTLInfo->pImpTypeLib->ITypeLib2_iface;
+                ITypeLib_AddRef(pTLib);
+                result = S_OK;
+            } else {
+                TRACE("typeinfo in imported typelib that isn't already loaded\n");
+                result = LoadRegTypeLib( &ref_type->pImpTLInfo->guid,
+                                         ref_type->pImpTLInfo->wVersionMajor,
+                                         ref_type->pImpTLInfo->wVersionMinor,
+                                         ref_type->pImpTLInfo->lcid,
+                                         &pTLib);
+
+                if(FAILED(result)) {
+                    BSTR libnam=SysAllocString(ref_type->pImpTLInfo->name);
+                    result=LoadTypeLib(libnam, &pTLib);
+                    SysFreeString(libnam);
+                }
+                if(SUCCEEDED(result)) {
+                    ref_type->pImpTLInfo->pImpTypeLib = impl_from_ITypeLib(pTLib);
                     ITypeLib_AddRef(pTLib);
-		    result = S_OK;
-		} else {
-		    TRACE("typeinfo in imported typelib that isn't already loaded\n");
-                    result = LoadRegTypeLib( &ref_type->pImpTLInfo->guid,
-                                             ref_type->pImpTLInfo->wVersionMajor,
-                                             ref_type->pImpTLInfo->wVersionMinor,
-                                             ref_type->pImpTLInfo->lcid,
-					     &pTLib);
-
-                    if(FAILED(result)) {
-                        BSTR libnam=SysAllocString(ref_type->pImpTLInfo->name);
-			result=LoadTypeLib(libnam, &pTLib);
-			SysFreeString(libnam);
-		    }
-		    if(SUCCEEDED(result)) {
-                        ref_type->pImpTLInfo->pImpTypeLib = impl_from_ITypeLib(pTLib);
-                        ITypeLib_AddRef(pTLib);
-		    }
-		}
-	    }
-	    if(SUCCEEDED(result)) {
-                if(ref_type->index == TLB_REF_USE_GUID)
-                    result = ITypeLib_GetTypeInfoOfGuid(pTLib, &ref_type->guid, ppTInfo);
-		else
-                    result = ITypeLib_GetTypeInfo(pTLib, ref_type->index, ppTInfo);
-	    }
-	    if (pTLib != NULL)
-                ITypeLib_Release(pTLib);
-	}
+                }
+            }
+        }
+        if(SUCCEEDED(result)) {
+            if(ref_type->index == TLB_REF_USE_GUID)
+                result = ITypeLib_GetTypeInfoOfGuid(pTLib, &ref_type->guid, ppTInfo);
+            else
+                result = ITypeLib_GetTypeInfo(pTLib, ref_type->index, ppTInfo);
+        }
+        if (pTLib != NULL)
+            ITypeLib_Release(pTLib);
     }
 
 end:
@@ -7875,6 +7879,7 @@ HRESULT WINAPI CreateDispTypeInfo(
     pTIIface->TypeAttr.cImplTypes = 0;
     pTIIface->TypeAttr.cVars = 0;
     pTIIface->TypeAttr.wTypeFlags = 0;
+    pTIIface->hreftype = 0;
 
     pTIIface->funcdescs = TLBFuncDesc_Constructor(pidata->cMembers);
     pFuncDesc = pTIIface->funcdescs;
@@ -7929,6 +7934,7 @@ HRESULT WINAPI CreateDispTypeInfo(
     pTIClass->TypeAttr.cImplTypes = 1;
     pTIClass->TypeAttr.cVars = 0;
     pTIClass->TypeAttr.wTypeFlags = 0;
+    pTIClass->hreftype = sizeof(MSFT_TypeInfoBase);
 
     pTIClass->impltypes = TLBImplType_Constructor(1);
 
@@ -8441,8 +8447,108 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddRefTypeInfo(ICreateTypeInfo2 *iface,
         ITypeInfo *typeInfo, HREFTYPE *refType)
 {
     ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
-    FIXME("%p %p %p - stub\n", This, typeInfo, refType);
-    return E_NOTIMPL;
+    UINT index;
+    ITypeLib *container;
+    TLBRefType *ref_type;
+    TLBImpLib *implib;
+    TYPEATTR *typeattr;
+    TLIBATTR *libattr;
+    HRESULT hres;
+
+    TRACE("%p %p %p\n", This, typeInfo, refType);
+
+    if (!typeInfo || !refType)
+        return E_INVALIDARG;
+
+    hres = ITypeInfo_GetContainingTypeLib(typeInfo, &container, &index);
+    if (FAILED(hres))
+        return hres;
+
+    if (container == (ITypeLib*)&This->pTypeLib->ITypeLib2_iface) {
+        ITypeInfoImpl *target = impl_from_ITypeInfo(typeInfo);
+
+        ITypeLib_Release(container);
+
+        *refType = target->hreftype;
+
+        return S_OK;
+    }
+
+    hres = ITypeLib_GetLibAttr(container, &libattr);
+    if (FAILED(hres)) {
+        ITypeLib_Release(container);
+        return hres;
+    }
+
+    LIST_FOR_EACH_ENTRY(implib, &This->pTypeLib->implib_list, TLBImpLib, entry){
+        if(IsEqualGUID(&implib->guid, &libattr->guid) &&
+                implib->lcid == libattr->lcid &&
+                implib->wVersionMajor == libattr->wMajorVerNum &&
+                implib->wVersionMinor == libattr->wMinorVerNum)
+            break;
+    }
+
+    if(&implib->entry == &This->pTypeLib->implib_list){
+        implib = heap_alloc_zero(sizeof(TLBImpLib));
+
+        if((ITypeLib2Vtbl*)container->lpVtbl == &tlbvt){
+            const ITypeLibImpl *our_container = impl_from_ITypeLib2((ITypeLib2*)container);
+            implib->name = SysAllocString(our_container->path);
+        }else{
+            hres = QueryPathOfRegTypeLib(&libattr->guid, libattr->wMajorVerNum,
+                    libattr->wMinorVerNum, libattr->lcid, &implib->name);
+            if(FAILED(hres)){
+                implib->name = NULL;
+                TRACE("QueryPathOfRegTypeLib failed, no name stored: %08x\n", hres);
+            }
+        }
+
+        implib->guid = libattr->guid;
+        implib->lcid = libattr->lcid;
+        implib->wVersionMajor = libattr->wMajorVerNum;
+        implib->wVersionMinor = libattr->wMinorVerNum;
+
+        list_add_tail(&This->pTypeLib->implib_list, &implib->entry);
+    }
+
+    ITypeLib_ReleaseTLibAttr(container, libattr);
+    ITypeLib_Release(container);
+
+    hres = ITypeInfo_GetTypeAttr(typeInfo, &typeattr);
+    if (FAILED(hres))
+        return hres;
+
+    index = 0;
+    LIST_FOR_EACH_ENTRY(ref_type, &This->pTypeLib->ref_list, TLBRefType, entry){
+        if(ref_type->index == TLB_REF_USE_GUID &&
+                IsEqualGUID(&ref_type->guid, &typeattr->guid) &&
+                ref_type->tkind == typeattr->typekind)
+            break;
+        ++index;
+    }
+
+    if(&ref_type->entry == &This->pTypeLib->ref_list){
+        ref_type = heap_alloc_zero(sizeof(TLBRefType));
+
+        ref_type->tkind = typeattr->typekind;
+        ref_type->pImpTLInfo = implib;
+        ref_type->reference = index * sizeof(MSFT_ImpInfo);
+
+        ref_type->index = TLB_REF_USE_GUID;
+
+        ref_type->guid = typeattr->guid;
+
+        list_add_tail(&This->pTypeLib->ref_list, &ref_type->entry);
+    }
+
+    ITypeInfo_ReleaseTypeAttr(typeInfo, typeattr);
+
+    *refType = ref_type->reference | 0x1;
+
+    if(IsEqualGUID(&ref_type->guid, &IID_IDispatch))
+        This->pTypeLib->dispatch_href = *refType;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(ICreateTypeInfo2 *iface,
