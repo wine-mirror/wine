@@ -2,6 +2,7 @@
  * Explorer desktop support
  *
  * Copyright 2006 Alexandre Julliard
+ * Copyright 2013 Hans Leidekker for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,9 +23,12 @@
 #include "wine/port.h"
 #include <stdio.h>
 
+#define COBJMACROS
 #define OEMRESOURCE
 #include <windows.h>
 #include <rpc.h>
+#include <shlobj.h>
+#include <shellapi.h>
 
 #include "wine/gdi_driver.h"
 #include "wine/unicode.h"
@@ -38,6 +42,300 @@ WINE_DEFAULT_DEBUG_CHANNEL(explorer);
 
 static HMODULE graphics_driver;
 static BOOL using_root;
+
+struct launcher
+{
+    WCHAR *path;
+    HICON  icon;
+    WCHAR *title;
+};
+
+static WCHAR *desktop_folder;
+static WCHAR *desktop_folder_public;
+
+static int icon_cx, icon_cy, icon_offset_cx, icon_offset_cy;
+static int title_cx, title_cy, title_offset_cx, title_offset_cy;
+static int desktop_width, launcher_size, launchers_per_row;
+
+static struct launcher **launchers;
+static unsigned int nb_launchers, nb_allocated;
+
+static RECT get_icon_rect( unsigned int index )
+{
+    RECT rect;
+    unsigned int row = index / launchers_per_row;
+    unsigned int col = index % launchers_per_row;
+
+    rect.left   = col * launcher_size + icon_offset_cx;
+    rect.right  = rect.left + icon_cx;
+    rect.top    = row * launcher_size + icon_offset_cy;
+    rect.bottom = rect.top + icon_cy;
+    return rect;
+}
+
+static RECT get_title_rect( unsigned int index )
+{
+    RECT rect;
+    unsigned int row = index / launchers_per_row;
+    unsigned int col = index % launchers_per_row;
+
+    rect.left   = col * launcher_size + title_offset_cx;
+    rect.right  = rect.left + title_cx;
+    rect.top    = row * launcher_size + title_offset_cy;
+    rect.bottom = rect.top + title_cy;
+    return rect;
+}
+
+static const struct launcher *launcher_from_point( int x, int y )
+{
+    RECT icon, title;
+    unsigned int index = x / launcher_size + (y / launcher_size) * launchers_per_row;
+
+    if (index >= nb_launchers) return NULL;
+
+    icon = get_icon_rect( index );
+    title = get_title_rect( index );
+    if ((x < icon.left || x > icon.right || y < icon.top || y > icon.bottom) &&
+        (x < title.left || x > title.right || y < title.top || y > title.bottom)) return NULL;
+    return launchers[index];
+}
+
+static void draw_launchers( HDC hdc, RECT update_rect )
+{
+    COLORREF color = SetTextColor( hdc, RGB(255,255,255) ); /* FIXME: depends on background color */
+    int mode = SetBkMode( hdc, TRANSPARENT );
+    unsigned int i;
+    LOGFONTW lf;
+    HFONT font;
+
+    SystemParametersInfoW( SPI_GETICONTITLELOGFONT, sizeof(lf), &lf, 0 );
+    font = SelectObject( hdc, CreateFontIndirectW( &lf ) );
+
+    for (i = 0; i < nb_launchers; i++)
+    {
+        RECT dummy, icon = get_icon_rect( i ), title = get_title_rect( i );
+
+        if (IntersectRect( &dummy, &icon, &update_rect ))
+            DrawIconEx( hdc, icon.left, icon.top, launchers[i]->icon, icon_cx, icon_cy,
+                        0, 0, DI_DEFAULTSIZE|DI_NORMAL );
+
+        if (IntersectRect( &dummy, &title, &update_rect ))
+            DrawTextW( hdc, launchers[i]->title, -1, &title,
+                       DT_CENTER|DT_WORDBREAK|DT_EDITCONTROL|DT_END_ELLIPSIS );
+    }
+
+    SelectObject( hdc, font );
+    SetTextColor( hdc, color );
+    SetBkMode( hdc, mode );
+}
+
+static void do_launch( const struct launcher *launcher )
+{
+    static const WCHAR openW[] = {'o','p','e','n',0};
+    ShellExecuteW( NULL, openW, launcher->path, NULL, NULL, 0 );
+}
+
+static WCHAR *append_path( const WCHAR *path, const WCHAR *filename, int len_filename )
+{
+    int len_path = strlenW( path );
+    WCHAR *ret;
+
+    if (len_filename == -1) len_filename = strlenW( filename );
+    if (!(ret = HeapAlloc( GetProcessHeap(), 0, (len_path + len_filename + 2) * sizeof(WCHAR) )))
+        return NULL;
+    memcpy( ret, path, len_path * sizeof(WCHAR) );
+    ret[len_path] = '\\';
+    memcpy( ret + len_path + 1, filename, len_filename * sizeof(WCHAR) );
+    ret[len_path + 1 + len_filename] = 0;
+    return ret;
+}
+
+static IShellLinkW *load_shelllink( const WCHAR *path )
+{
+    HRESULT hr;
+    IShellLinkW *link;
+    IPersistFile *file;
+
+    hr = CoCreateInstance( &CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, &IID_IShellLinkW,
+                           (void **)&link );
+    if (FAILED( hr )) return NULL;
+
+    hr = IShellLinkW_QueryInterface( link, &IID_IPersistFile, (void **)&file );
+    if (FAILED( hr ))
+    {
+        IShellLinkW_Release( link );
+        return NULL;
+    }
+    hr = IPersistFile_Load( file, path, 0 );
+    IPersistFile_Release( file );
+    if (FAILED( hr ))
+    {
+        IShellLinkW_Release( link );
+        return NULL;
+    }
+    return link;
+}
+
+static HICON extract_icon( IShellLinkW *link )
+{
+    WCHAR tmp_path[MAX_PATH], icon_path[MAX_PATH], target_path[MAX_PATH];
+    HICON icon = NULL;
+    int index;
+
+    tmp_path[0] = 0;
+    IShellLinkW_GetIconLocation( link, tmp_path, MAX_PATH, &index );
+    ExpandEnvironmentStringsW( tmp_path, icon_path, MAX_PATH );
+
+    if (icon_path[0]) ExtractIconExW( icon_path, index, &icon, NULL, 1 );
+    if (!icon)
+    {
+        tmp_path[0] = 0;
+        IShellLinkW_GetPath( link, tmp_path, MAX_PATH, NULL, SLGP_RAWPATH );
+        ExpandEnvironmentStringsW( tmp_path, target_path, MAX_PATH );
+        ExtractIconExW( target_path, index, &icon, NULL, 1 );
+    }
+    return icon;
+}
+
+static WCHAR *build_title( const WCHAR *filename, int len )
+{
+    const WCHAR *p;
+    WCHAR *ret;
+
+    if (len == -1) len = strlenW( filename );
+    for (p = filename + len - 1; p >= filename; p--)
+    {
+        if (*p == '.')
+        {
+            len = p - filename;
+            break;
+        }
+    }
+    if (!(ret = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) ))) return NULL;
+    memcpy( ret, filename, len * sizeof(WCHAR) );
+    ret[len] = 0;
+    return ret;
+}
+
+static BOOL add_launcher( const WCHAR *folder, const WCHAR *filename, int len_filename )
+{
+    struct launcher *launcher;
+    IShellLinkW *link;
+
+    if (nb_launchers == nb_allocated)
+    {
+        unsigned int count = nb_allocated * 2;
+        struct launcher **tmp = HeapReAlloc( GetProcessHeap(), 0, launchers, count * sizeof(*tmp) );
+        if (!tmp) return FALSE;
+        launchers = tmp;
+        nb_allocated = count;
+    }
+
+    if (!(launcher = HeapAlloc( GetProcessHeap(), 0, sizeof(*launcher) ))) return FALSE;
+    if (!(launcher->path = append_path( folder, filename, len_filename ))) goto error;
+    if (!(link = load_shelllink( launcher->path ))) goto error;
+
+    launcher->icon = extract_icon( link );
+    launcher->title = build_title( filename, len_filename );
+    IShellLinkW_Release( link );
+    if (launcher->icon && launcher->title)
+    {
+        launchers[nb_launchers++] = launcher;
+        return TRUE;
+    }
+    HeapFree( GetProcessHeap(), 0, launcher->title );
+    DestroyIcon( launcher->icon );
+
+error:
+    HeapFree( GetProcessHeap(), 0, launcher->path );
+    HeapFree( GetProcessHeap(), 0, launcher );
+    return FALSE;
+}
+
+static BOOL get_icon_text_metrics( HWND hwnd, TEXTMETRICW *tm )
+{
+    BOOL ret;
+    HDC hdc;
+    LOGFONTW lf;
+    HFONT hfont;
+
+    hdc = GetDC( hwnd );
+    SystemParametersInfoW( SPI_GETICONTITLELOGFONT, sizeof(lf), &lf, 0 );
+    hfont = SelectObject( hdc, CreateFontIndirectW( &lf ) );
+    ret = GetTextMetricsW( hdc, tm );
+    SelectObject( hdc, hfont );
+    ReleaseDC( hwnd, hdc );
+    return ret;
+}
+
+static void add_folder( const WCHAR *folder )
+{
+    static const WCHAR lnkW[] = {'\\','*','.','l','n','k',0};
+    int len = strlenW( folder ) + strlenW( lnkW );
+    WIN32_FIND_DATAW data;
+    HANDLE handle;
+    WCHAR *glob;
+
+    if (!(glob = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) ))) return;
+    strcpyW( glob, folder );
+    strcatW( glob, lnkW );
+
+    if ((handle = FindFirstFileW( glob, &data )) != INVALID_HANDLE_VALUE)
+    {
+        do { add_launcher( folder, data.cFileName, -1 ); } while (FindNextFileW( handle, &data ));
+        FindClose( handle );
+    }
+    HeapFree( GetProcessHeap(), 0, glob );
+}
+
+#define BORDER_SIZE  4
+#define PADDING_SIZE 4
+#define TITLE_CHARS  14
+
+static void initialize_launchers( HWND hwnd )
+{
+    HRESULT hr, init;
+    TEXTMETRICW tm;
+    int icon_size;
+
+    if (!(get_icon_text_metrics( hwnd, &tm ))) return;
+
+    icon_cx = GetSystemMetrics( SM_CXICON );
+    icon_cy = GetSystemMetrics( SM_CYICON );
+    icon_size = max( icon_cx, icon_cy );
+    title_cy = tm.tmHeight * 2;
+    title_cx = max( tm.tmAveCharWidth * TITLE_CHARS, icon_size + PADDING_SIZE + title_cy );
+    launcher_size = BORDER_SIZE + title_cx + BORDER_SIZE;
+    icon_offset_cx = (launcher_size - icon_cx) / 2;
+    icon_offset_cy = BORDER_SIZE + (icon_size - icon_cy) / 2;
+    title_offset_cx = BORDER_SIZE;
+    title_offset_cy = BORDER_SIZE + icon_size + PADDING_SIZE;
+    desktop_width = GetSystemMetrics( SM_CXSCREEN );
+    launchers_per_row = desktop_width / launcher_size;
+
+    hr = SHGetKnownFolderPath( &FOLDERID_Desktop, 0, NULL, &desktop_folder );
+    if (FAILED( hr ))
+    {
+        WINE_ERR("Could not get user desktop folder\n");
+        return;
+    }
+    hr = SHGetKnownFolderPath( &FOLDERID_PublicDesktop, 0, NULL, &desktop_folder_public );
+    if (FAILED( hr ))
+    {
+        WINE_ERR("Could not get public desktop folder\n");
+        CoTaskMemFree( desktop_folder );
+        return;
+    }
+    if ((launchers = HeapAlloc( GetProcessHeap(), 0, 2 * sizeof(struct launcher) )))
+    {
+        nb_allocated = 2;
+
+        init = CoInitialize( NULL );
+        add_folder( desktop_folder );
+        add_folder( desktop_folder_public );
+        if (SUCCEEDED( init )) CoUninitialize();
+    }
+}
 
 /* screen saver handler */
 static BOOL start_screensaver( void )
@@ -92,11 +390,22 @@ static LRESULT WINAPI desktop_wnd_proc( HWND hwnd, UINT message, WPARAM wp, LPAR
             SystemParametersInfoW( SPI_SETDESKWALLPAPER, 0, NULL, FALSE );
         return 0;
 
+    case WM_LBUTTONDBLCLK:
+        {
+            const struct launcher *launcher = launcher_from_point( (short)LOWORD(lp), (short)HIWORD(lp) );
+            if (launcher) do_launch( launcher );
+        }
+        return 0;
+
     case WM_PAINT:
         {
             PAINTSTRUCT ps;
             BeginPaint( hwnd, &ps );
-            if (!using_root && ps.fErase) PaintDesktop( ps.hdc );
+            if (!using_root)
+            {
+                if (ps.fErase) PaintDesktop( ps.hdc );
+                draw_launchers( ps.hdc, ps.rcPaint );
+            }
             EndPaint( hwnd, &ps );
         }
         return 0;
@@ -327,6 +636,7 @@ void manage_desktop( WCHAR *arg )
         initialize_display_settings( hwnd );
         initialize_appbar();
         initialize_systray( graphics_driver, using_root );
+        initialize_launchers( hwnd );
 
         if ((shell32 = LoadLibraryA( "shell32.dll" )) &&
             (pShellDDEInit = (void *)GetProcAddress( shell32, (LPCSTR)188)))
