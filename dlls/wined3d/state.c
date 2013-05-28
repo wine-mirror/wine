@@ -267,21 +267,6 @@ static void state_zfunc(struct wined3d_context *context, const struct wined3d_st
 
     if (!depth_func) return;
 
-    if (depth_func == GL_EQUAL || depth_func == GL_NOTEQUAL)
-    {
-        static BOOL once;
-        /* There are a few issues with this: First, our inability to
-         * select a proper Z depth, most of the time we're stuck with
-         * D24S8, even if the app selects D32 or D16. There seem to be
-         * some other precision problems which have to be debugged to
-         * make NOTEQUAL and EQUAL work properly. */
-        if (!once)
-        {
-            once = TRUE;
-            FIXME("D3DCMP_NOTEQUAL and D3DCMP_EQUAL do not work correctly yet.\n");
-        }
-    }
-
     gl_info->gl_ops.gl.p_glDepthFunc(depth_func);
     checkGLcall("glDepthFunc");
 }
