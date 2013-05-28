@@ -5658,13 +5658,13 @@ static void vp_ffp_get_caps(const struct wined3d_gl_info *gl_info, struct wined3
     caps->max_active_lights = gl_info->limits.lights;
     caps->max_vertex_blend_matrices = gl_info->limits.blends;
     caps->max_vertex_blend_matrix_index = 0;
-    /* FIXME: Add  D3DVTXPCAPS_TWEENING, D3DVTXPCAPS_TEXGEN_SPHEREMAP */
     caps->vertex_processing_caps = WINED3DVTXPCAPS_DIRECTIONALLIGHTS
             | WINED3DVTXPCAPS_MATERIALSOURCE7
             | WINED3DVTXPCAPS_POSITIONALLIGHTS
             | WINED3DVTXPCAPS_LOCALVIEWER
             | WINED3DVTXPCAPS_VERTEXFOG
-            | WINED3DVTXPCAPS_TEXGEN;
+            | WINED3DVTXPCAPS_TEXGEN
+            | WINED3DVTXPCAPS_TEXGEN_SPHEREMAP;
     caps->fvf_caps = WINED3DFVFCAPS_PSIZE | 0x0008; /* 8 texture coords */
     caps->max_user_clip_planes = gl_info->limits.clipplanes;
     caps->raster_caps = 0;
