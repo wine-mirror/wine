@@ -165,7 +165,6 @@ enum {
     APP_DEACTIVATED,
     APP_QUIT_REQUESTED,
     DISPLAYS_CHANGED,
-    IM_SET_CURSOR_POS,
     IM_SET_TEXT,
     KEY_PRESS,
     KEY_RELEASE,
@@ -208,11 +207,8 @@ typedef struct macdrv_event {
         }                                           displays_changed;
         struct {
             void           *data;
-            unsigned int    pos;
-        }                                           im_set_cursor_pos;
-        struct {
-            void           *data;
             CFStringRef     text;       /* new text or NULL if just completing existing text */
+            unsigned int    cursor_pos;
             unsigned int    complete;   /* is completing text? */
         }                                           im_set_text;
         struct {

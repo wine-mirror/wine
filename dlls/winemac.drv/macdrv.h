@@ -202,7 +202,6 @@ extern void IME_RegisterClasses(HINSTANCE hImeInst) DECLSPEC_HIDDEN;
 extern BOOL macdrv_process_text_input(UINT vkey, UINT scan, UINT repeat, const BYTE *key_state,
                                       void *himc) DECLSPEC_HIDDEN;
 
-extern void macdrv_im_set_cursor_pos(const macdrv_event *event) DECLSPEC_HIDDEN;
 extern void macdrv_im_set_text(const macdrv_event *event) DECLSPEC_HIDDEN;
 extern BOOL query_ime_char_rect(macdrv_query* query) DECLSPEC_HIDDEN;
 

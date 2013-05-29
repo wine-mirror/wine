@@ -356,14 +356,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
             event->im_set_text.data = [window imeData];
             event->im_set_text.text = (CFStringRef)[[markedText string] copy];
             event->im_set_text.complete = FALSE;
-
-            [[window queue] postEvent:event];
-
-            macdrv_release_event(event);
-
-            event = macdrv_create_event(IM_SET_CURSOR_POS, window);
-            event->im_set_cursor_pos.data = [window imeData];
-            event->im_set_cursor_pos.pos = markedTextSelection.location;
+            event->im_set_text.cursor_pos = markedTextSelection.location;
 
             [[window queue] postEvent:event];
 

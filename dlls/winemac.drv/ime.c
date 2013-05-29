@@ -940,15 +940,14 @@ UINT WINAPI ImeEnumRegisterWord(REGISTERWORDENUMPROCW lpfnEnumProc, LPCWSTR lpsz
     return 0;
 }
 
-BOOL WINAPI ImeSetCompositionString(HIMC hIMC, DWORD dwIndex, LPCVOID lpComp, DWORD dwCompLen,
-                                    LPCVOID lpRead, DWORD dwReadLen)
+static BOOL IME_SetCompositionString(void* hIMC, DWORD dwIndex, LPCVOID lpComp, DWORD dwCompLen, DWORD cursor_pos, BOOL cursor_valid)
 {
     LPINPUTCONTEXT lpIMC;
     DWORD flags = 0;
     WCHAR wParam  = 0;
     LPIMEPRIVATE myPrivate;
 
-    TRACE("(%p, %d, %p, %d, %p, %d):\n", hIMC, dwIndex, lpComp, dwCompLen, lpRead, dwReadLen);
+    TRACE("(%p, %d, %p, %d):\n", hIMC, dwIndex, lpComp, dwCompLen);
 
     /*
      * Explanation:
@@ -956,9 +955,6 @@ BOOL WINAPI ImeSetCompositionString(HIMC hIMC, DWORD dwIndex, LPCVOID lpComp, DW
      *  of the composition buffer.
      * TODO: set the Cocoa window's marked text string and tell text input context
      */
-
-    if (lpRead && dwReadLen)
-        FIXME("Reading string unimplemented\n");
 
     lpIMC = LockRealIMC(hIMC);
 
@@ -985,8 +981,8 @@ BOOL WINAPI ImeSetCompositionString(HIMC hIMC, DWORD dwIndex, LPCVOID lpComp, DW
             ImmDestroyIMCC(lpIMC->hCompStr);
             lpIMC->hCompStr = newCompStr;
 
-             wParam = ((const WCHAR*)lpComp)[0];
-             flags |= GCS_COMPCLAUSE | GCS_COMPATTR | GCS_DELTASTART;
+            wParam = ((const WCHAR*)lpComp)[0];
+            flags |= GCS_COMPCLAUSE | GCS_COMPATTR | GCS_DELTASTART;
         }
         else
         {
@@ -994,6 +990,16 @@ BOOL WINAPI ImeSetCompositionString(HIMC hIMC, DWORD dwIndex, LPCVOID lpComp, DW
             ImmDestroyIMCC(lpIMC->hCompStr);
             lpIMC->hCompStr = newCompStr;
         }
+
+        if (cursor_valid)
+        {
+            LPCOMPOSITIONSTRING compstr;
+            compstr = ImmLockIMCC(lpIMC->hCompStr);
+            compstr->dwCursorPos = cursor_pos;
+            ImmUnlockIMCC(lpIMC->hCompStr);
+            flags |= GCS_CURSORPOS;
+        }
+
     }
 
     GenerateIMEMessage(hIMC, WM_IME_COMPOSITION, wParam, flags);
@@ -1003,44 +1009,23 @@ BOOL WINAPI ImeSetCompositionString(HIMC hIMC, DWORD dwIndex, LPCVOID lpComp, DW
     return TRUE;
 }
 
+BOOL WINAPI ImeSetCompositionString(HIMC hIMC, DWORD dwIndex, LPCVOID lpComp, DWORD dwCompLen,
+                                    LPCVOID lpRead, DWORD dwReadLen)
+{
+    TRACE("(%p, %d, %p, %d, %p, %d):\n", hIMC, dwIndex, lpComp, dwCompLen, lpRead, dwReadLen);
+
+    if (lpRead && dwReadLen)
+        FIXME("Reading string unimplemented\n");
+
+    return IME_SetCompositionString(hIMC, dwIndex, lpComp, dwCompLen, 0, FALSE);
+}
+
 DWORD WINAPI ImeGetImeMenuItems(HIMC hIMC, DWORD dwFlags, DWORD dwType, LPIMEMENUITEMINFOW lpImeParentMenu,
                                 LPIMEMENUITEMINFOW lpImeMenu, DWORD dwSize)
 {
     FIXME("(%p, %x %x %p %p %x): stub\n", hIMC, dwFlags, dwType, lpImeParentMenu, lpImeMenu, dwSize);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return 0;
-}
-
-static void IME_SetCursorPos(void* hIMC, DWORD pos)
-{
-    LPINPUTCONTEXT lpIMC;
-    LPCOMPOSITIONSTRING compstr;
-
-    if (!hSelectedFrom)
-        return;
-
-    lpIMC = LockRealIMC(hIMC);
-    if (!lpIMC)
-        return;
-
-    compstr = ImmLockIMCC(lpIMC->hCompStr);
-    if (!compstr)
-    {
-        UnlockRealIMC(hIMC);
-        return;
-    }
-
-    compstr->dwCursorPos = pos;
-    ImmUnlockIMCC(lpIMC->hCompStr);
-    UnlockRealIMC(hIMC);
-    GenerateIMEMessage(FROM_MACDRV, WM_IME_COMPOSITION, pos, GCS_CURSORPOS);
-    return;
-}
-
-
-static void IME_SetCompositionString(void* hIMC, LPCVOID lpComp, DWORD dwCompLen)
-{
-    ImeSetCompositionString(hIMC, SCS_SETSTR, lpComp, dwCompLen, NULL, 0);
 }
 
 static void IME_NotifyComplete(void* hIMC)
@@ -1437,23 +1422,6 @@ void IME_RegisterClasses(HINSTANCE hImeInst)
     WM_MSIME_DOCUMENTFEED = RegisterWindowMessageA("MSIMEDocumentFeed");
 }
 
-
-/***********************************************************************
- *              macdrv_im_set_cursor_pos
- */
-void macdrv_im_set_cursor_pos(const macdrv_event *event)
-{
-    HWND hwnd = macdrv_get_window_hwnd(event->window);
-    void *himc = event->im_set_cursor_pos.data;
-
-    TRACE("win %p/%p himc %p pos %u\n", hwnd, event->window, himc, event->im_set_cursor_pos.pos);
-
-    if (!himc) himc = RealIMC(FROM_MACDRV);
-
-    IME_SetCursorPos(himc, event->im_set_cursor_pos.pos);
-}
-
-
 /***********************************************************************
  *              macdrv_im_set_text
  */
@@ -1481,7 +1449,8 @@ void macdrv_im_set_text(const macdrv_event *event)
         }
 
         if (himc)
-            IME_SetCompositionString(himc, chars, length * sizeof(*chars));
+            IME_SetCompositionString(himc, SCS_SETSTR, chars, length * sizeof(*chars),
+                event->im_set_text.cursor_pos, !event->im_set_text.complete);
         else
         {
             INPUT input;
