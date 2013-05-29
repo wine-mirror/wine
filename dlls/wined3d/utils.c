@@ -2588,6 +2588,8 @@ const char *debug_d3dstate(DWORD state)
         return "STATE_BASEVERTEXINDEX";
     if (STATE_IS_FRAMEBUFFER(state))
         return "STATE_FRAMEBUFFER";
+    if (STATE_IS_POINT_SIZE_ENABLE(state))
+        return "STATE_POINT_SIZE_ENABLE";
 
     return wine_dbg_sprintf("UNKNOWN_STATE(%#x)", state);
 }
@@ -3530,6 +3532,7 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_state *state, const struct
     {
         memset(settings, 0, sizeof(*settings));
 
+        settings->point_size = state->gl_primitive_type == GL_POINTS;
         if (!state->render_states[WINED3D_RS_FOGENABLE])
             settings->fog_mode = WINED3D_FFP_VS_FOG_OFF;
         else if (state->render_states[WINED3D_RS_FOGTABLEMODE] != WINED3D_FOG_NONE)
@@ -3552,6 +3555,7 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_state *state, const struct
     settings->normalize = settings->normal && state->render_states[WINED3D_RS_NORMALIZENORMALS];
     settings->lighting = !!state->render_states[WINED3D_RS_LIGHTING];
     settings->localviewer = !!state->render_states[WINED3D_RS_LOCALVIEWER];
+    settings->point_size = state->gl_primitive_type == GL_POINTS;
 
     if (state->render_states[WINED3D_RS_COLORVERTEX] && (si->use_map & (1 << WINED3D_FFP_DIFFUSE)))
     {

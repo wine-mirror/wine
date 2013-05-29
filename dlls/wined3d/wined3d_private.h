@@ -1007,7 +1007,10 @@ extern glMultiTexCoordFunc multi_texcoord_funcs[WINED3D_FFP_EMIT_COUNT] DECLSPEC
 #define STATE_FRAMEBUFFER (STATE_BASEVERTEXINDEX + 1)
 #define STATE_IS_FRAMEBUFFER(a) ((a) == STATE_FRAMEBUFFER)
 
-#define STATE_HIGHEST (STATE_FRAMEBUFFER)
+#define STATE_POINT_SIZE_ENABLE (STATE_FRAMEBUFFER + 1)
+#define STATE_IS_POINT_SIZE_ENABLE(a) ((a) == STATE_POINT_SIZE_ENABLE)
+
+#define STATE_HIGHEST (STATE_POINT_SIZE_ENABLE)
 
 enum fogsource {
     FOGSOURCE_FFP,
@@ -1717,9 +1720,10 @@ struct wined3d_ffp_vs_settings
     DWORD normalize       : 1;
     DWORD lighting        : 1;
     DWORD localviewer     : 1;
+    DWORD point_size      : 1;
     DWORD fog_mode        : 2;
     DWORD texcoords       : 8;  /* MAX_TEXTURES */
-    DWORD padding         : 18;
+    DWORD padding         : 17;
 
     BYTE texgen[MAX_TEXTURES];
 };

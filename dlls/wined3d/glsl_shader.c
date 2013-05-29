@@ -5007,10 +5007,13 @@ static GLhandleARB shader_glsl_generate_ffp_vertex_shader(struct wined3d_shader_
             break;
     }
 
-    shader_addline(buffer, "gl_PointSize = gl_Point.size / sqrt(gl_Point.distanceConstantAttenuation"
-            " + gl_Point.distanceLinearAttenuation * length(ec_pos.xyz)"
-            " + gl_Point.distanceQuadraticAttenuation * dot(ec_pos.xyz, ec_pos.xyz));\n");
-    shader_addline(buffer, "gl_PointSize = clamp(gl_PointSize, gl_Point.sizeMin, gl_Point.sizeMax);\n");
+    if (settings->point_size)
+    {
+        shader_addline(buffer, "gl_PointSize = gl_Point.size / sqrt(gl_Point.distanceConstantAttenuation"
+                " + gl_Point.distanceLinearAttenuation * length(ec_pos.xyz)"
+                " + gl_Point.distanceQuadraticAttenuation * dot(ec_pos.xyz, ec_pos.xyz));\n");
+        shader_addline(buffer, "gl_PointSize = clamp(gl_PointSize, gl_Point.sizeMin, gl_Point.sizeMax);\n");
+    }
 
     shader_addline(buffer, "}\n");
 
@@ -6871,6 +6874,7 @@ static const struct StateEntryTemplate glsl_vertex_pipe_vp_states[] =
     {STATE_SAMPLER(7),                                           {0,                                                          NULL                   }, ARB_TEXTURE_NON_POWER_OF_TWO },
     {STATE_SAMPLER(7),                                           {0,                                                          NULL                   }, WINED3D_GL_NORMALIZED_TEXRECT},
     {STATE_SAMPLER(7),                                           {STATE_SAMPLER(7),                                           sampler_texmatrix      }, WINED3D_GL_EXT_NONE          },
+    {STATE_POINT_SIZE_ENABLE,                                    {STATE_RENDER(WINED3D_RS_FOGENABLE),                         NULL                   }, WINED3D_GL_EXT_NONE          },
     {0 /* Terminate */,                                          {0,                                                          NULL                   }, WINED3D_GL_EXT_NONE          },
 };
 

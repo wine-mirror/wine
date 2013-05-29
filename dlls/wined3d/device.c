@@ -3981,10 +3981,17 @@ HRESULT CDECL wined3d_device_clear(struct wined3d_device *device, DWORD rect_cou
 void CDECL wined3d_device_set_primitive_type(struct wined3d_device *device,
         enum wined3d_primitive_type primitive_type)
 {
+    GLenum gl_primitive_type, prev;
+
     TRACE("device %p, primitive_type %s\n", device, debug_d3dprimitivetype(primitive_type));
 
     device->updateStateBlock->changed.primitive_type = TRUE;
-    device->updateStateBlock->state.gl_primitive_type = gl_primitive_type_from_d3d(primitive_type);
+    gl_primitive_type = gl_primitive_type_from_d3d(primitive_type);
+    prev = device->updateStateBlock->state.gl_primitive_type;
+    device->updateStateBlock->state.gl_primitive_type = gl_primitive_type;
+    if (!device->isRecordingState && gl_primitive_type != prev
+            && (gl_primitive_type == GL_POINTS || prev == GL_POINTS))
+        device_invalidate_state(device, STATE_POINT_SIZE_ENABLE);
 }
 
 void CDECL wined3d_device_get_primitive_type(const struct wined3d_device *device,
