@@ -1717,6 +1717,8 @@ static LRESULT CALLBACK ShellView_WndProc(HWND hWnd, UINT uMessage, WPARAM wPara
 				break;
 
 	  case WM_GETDLGCODE:   return SendMessageW(pThis->hWndList, uMessage, 0, 0);
+          case WM_SETFONT:      return SendMessageW(pThis->hWndList, WM_SETFONT, wParam, lParam);
+          case WM_GETFONT:      return SendMessageW(pThis->hWndList, WM_GETFONT, wParam, lParam);
 
 	  case WM_DESTROY:	
 	  			RevokeDragDrop(pThis->hWnd);
