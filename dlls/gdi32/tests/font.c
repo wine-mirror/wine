@@ -3077,19 +3077,13 @@ static void test_text_metrics(const LOGFONT *lf, const NEWTEXTMETRIC *ntm)
     ret = GetFontData(hdc, MS_OS2_TAG, 0, &tt_os2, size);
     ok(ret == size, "GetFontData should return %u not %u\n", size, ret);
 
-    ascent = GET_BE_WORD(tt_os2.usWinAscent);
-    descent = GET_BE_WORD(tt_os2.usWinDescent);
-    cell_height = ascent + descent;
-    ok(ntm->ntmCellHeight == cell_height, "%s: ntmCellHeight %u != %u, os2.usWinAscent/os2.usWinDescent %u/%u\n",
-       font_name, ntm->ntmCellHeight, cell_height, ascent, descent);
-
     SetLastError(0xdeadbeef);
     ret = GetTextMetricsA(hdc, &tmA);
     ok(ret, "GetTextMetricsA error %u\n", GetLastError());
 
     if(!get_first_last_from_cmap(hdc, &cmap_first, &cmap_last, &cmap_type))
     {
-        skip("Unable to retrieve first and last glyphs from cmap\n");
+        skip("%s is not a Windows font, OS/2 metrics may be invalid.\n",font_name);
     }
     else
     {
@@ -3098,6 +3092,12 @@ static void test_text_metrics(const LOGFONT *lf, const NEWTEXTMETRIC *ntm)
         UINT os2_first_char, os2_last_char, default_char, break_char;
         USHORT version;
         TEXTMETRICW tmW;
+
+        ascent = GET_BE_WORD(tt_os2.usWinAscent);
+        descent = GET_BE_WORD(tt_os2.usWinDescent);
+        cell_height = ascent + descent;
+        ok(ntm->ntmCellHeight == cell_height, "%s: ntmCellHeight %u != %u, os2.usWinAscent/os2.usWinDescent %u/%u\n",
+           font_name, ntm->ntmCellHeight, cell_height, ascent, descent);
 
         version = GET_BE_WORD(tt_os2.version);
 
