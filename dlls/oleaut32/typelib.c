@@ -8796,8 +8796,19 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetImplTypeFlags(ICreateTypeInfo2 *ifac
         UINT index, INT implTypeFlags)
 {
     ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
-    FIXME("%p %u %x - stub\n", This, index, implTypeFlags);
-    return E_NOTIMPL;
+    TLBImplType *impl_type = &This->impltypes[index];
+
+    TRACE("%p %u %x\n", This, index, implTypeFlags);
+
+    if (This->TypeAttr.typekind != TKIND_COCLASS)
+        return TYPE_E_BADMODULEKIND;
+
+    if (index >= This->TypeAttr.cImplTypes)
+        return TYPE_E_ELEMENTNOTFOUND;
+
+    impl_type->implflags = implTypeFlags;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ICreateTypeInfo2_fnSetAlignment(ICreateTypeInfo2 *iface,
