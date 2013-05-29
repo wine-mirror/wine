@@ -115,15 +115,15 @@ static BOOL init_opengl(void)
 
     for (i = 0; i < sizeof(opengl_func_names)/sizeof(opengl_func_names[0]); i++)
     {
-        if (!(((void **)&opengl_funcs.gl)[i] = wine_dlsym( osmesa_handle, opengl_func_names[i], NULL, 0 )))
+        if (!(((void **)&opengl_funcs.gl)[i] = wine_dlsym( osmesa_handle, opengl_func_names[i], buffer, sizeof(buffer) )))
         {
-            ERR( "%s not found in %s, disabling.\n", opengl_func_names[i], SONAME_LIBOSMESA );
+            ERR( "%s not found in %s (%s), disabling.\n", opengl_func_names[i], SONAME_LIBOSMESA, buffer );
             goto failed;
         }
     }
-#define LOAD_FUNCPTR(f) do if (!(p##f = (void *)wine_dlsym( osmesa_handle, #f, NULL, 0 ))) \
+#define LOAD_FUNCPTR(f) do if (!(p##f = (void *)wine_dlsym( osmesa_handle, #f, buffer, sizeof(buffer) ))) \
     { \
-        ERR( "%s not found in %s, disabling.\n", #f, SONAME_LIBOSMESA ); \
+        ERR( "%s not found in %s (%s), disabling.\n", #f, SONAME_LIBOSMESA, buffer ); \
         goto failed; \
     } while(0)
 
