@@ -1338,7 +1338,7 @@ static HRESULT WINAPI convert_GetConversionSize(IDataConvert* iface,
             if(V_VT((VARIANT*)src) == VT_BSTR)
                 *dst_len = (SysStringLen(V_BSTR((VARIANT*)src))+1) * sizeof(WCHAR);
             else
-                WARN("DBTYPE_BYTES->DBTYPE_VARIANT(%d) unimplemented\n", V_VT((VARIANT*)src));
+                WARN("DBTYPE_VARIANT(%d)->DBTYPE_WSTR unimplemented\n", V_VT((VARIANT*)src));
             break;
         case DBTYPE_STR:
             if(src_len)
@@ -1364,7 +1364,7 @@ static HRESULT WINAPI convert_GetConversionSize(IDataConvert* iface,
             if(V_VT((VARIANT*)src) == VT_BSTR)
                 *dst_len = (SysStringLen(V_BSTR((VARIANT*)src))) / sizeof(WCHAR);
             else
-                WARN("DBTYPE_BYTES->DBTYPE_VARIANT(%d) unimplemented\n", V_VT((VARIANT*)src));
+                WARN("DBTYPE_VARIANT(%d)->DBTYPE_BYTES unimplemented\n", V_VT((VARIANT*)src));
             break;
         default:
             FIXME("unimplemented for %04x -> DBTYPE_BYTES\n", src_type);
