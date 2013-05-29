@@ -350,7 +350,7 @@ DECLARE_INTERFACE_(IDirect3DRM3,IUnknown)
     STDMETHOD(CreateLight)(THIS_ D3DRMLIGHTTYPE type, D3DCOLOR color, IDirect3DRMLight **light) PURE;
     STDMETHOD(CreateLightRGB)(THIS_ D3DRMLIGHTTYPE type, D3DVALUE r, D3DVALUE g, D3DVALUE b,
             IDirect3DRMLight **light) PURE;
-    STDMETHOD(CreateMaterial)(THIS_ D3DVALUE, LPDIRECT3DRMMATERIAL2 *) PURE;
+    STDMETHOD(CreateMaterial)(THIS_ D3DVALUE, IDirect3DRMMaterial2 **material) PURE;
     STDMETHOD(CreateDevice)(THIS_ DWORD width, DWORD height, IDirect3DRMDevice3 **device) PURE;
     STDMETHOD(CreateDeviceFromSurface)(THIS_ GUID *guid, IDirectDraw *ddraw,
             IDirectDrawSurface *surface, IDirect3DRMDevice3 **device) PURE;

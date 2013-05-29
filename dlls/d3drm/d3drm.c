@@ -997,20 +997,17 @@ static HRESULT WINAPI IDirect3DRM3Impl_CreateLightRGB(IDirect3DRM3 *iface, D3DRM
     return hr;
 }
 
-static HRESULT WINAPI IDirect3DRM3Impl_CreateMaterial(IDirect3DRM3* iface, D3DVALUE power,
-                                                      LPDIRECT3DRMMATERIAL2* material)
+static HRESULT WINAPI IDirect3DRM3Impl_CreateMaterial(IDirect3DRM3 *iface,
+        D3DVALUE power, IDirect3DRMMaterial2 **material)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM3(iface);
-    HRESULT ret;
+    HRESULT hr;
 
-    TRACE("(%p/%p)->(%f,%p)\n", iface, This, power, material);
+    TRACE("iface %p, power %.8e, material %p.\n", iface, power, material);
 
-    ret = Direct3DRMMaterial_create(material);
-
-    if (SUCCEEDED(ret))
+    if (SUCCEEDED(hr = Direct3DRMMaterial_create(material)))
         IDirect3DRMMaterial2_SetPower(*material, power);
 
-    return ret;
+    return hr;
 }
 
 static HRESULT WINAPI IDirect3DRM3Impl_CreateDevice(IDirect3DRM3 *iface,

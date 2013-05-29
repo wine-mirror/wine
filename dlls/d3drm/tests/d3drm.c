@@ -1356,7 +1356,7 @@ static void test_Material2(void)
     HRESULT hr;
     IDirect3DRM *d3drm;
     IDirect3DRM3 *d3drm3;
-    LPDIRECT3DRMMATERIAL2 pMaterial2;
+    IDirect3DRMMaterial2 *material2;
     D3DVALUE r, g, b;
     DWORD size;
     CHAR cname[64] = {0};
@@ -1371,61 +1371,61 @@ static void test_Material2(void)
         return;
     }
 
-    hr = IDirect3DRM3_CreateMaterial(d3drm3, 18.5f, &pMaterial2);
+    hr = IDirect3DRM3_CreateMaterial(d3drm3, 18.5f, &material2);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMMaterial2 interface (hr = %x)\n", hr);
 
-    hr = IDirect3DRMMaterial2_GetClassName(pMaterial2, NULL, cname);
+    hr = IDirect3DRMMaterial2_GetClassName(material2, NULL, cname);
     ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    hr = IDirect3DRMMaterial2_GetClassName(pMaterial2, NULL, NULL);
+    hr = IDirect3DRMMaterial2_GetClassName(material2, NULL, NULL);
     ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
     size = 1;
-    hr = IDirect3DRMMaterial2_GetClassName(pMaterial2, &size, cname);
+    hr = IDirect3DRMMaterial2_GetClassName(material2, &size, cname);
     ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
     size = sizeof(cname);
-    hr = IDirect3DRMMaterial2_GetClassName(pMaterial2, &size, cname);
+    hr = IDirect3DRMMaterial2_GetClassName(material2, &size, cname);
     ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
     ok(size == sizeof("Material"), "wrong size: %u\n", size);
     ok(!strcmp(cname, "Material"), "Expected cname to be \"Material\", but got \"%s\"\n", cname);
 
-    r = IDirect3DRMMaterial2_GetPower(pMaterial2);
+    r = IDirect3DRMMaterial2_GetPower(material2);
     ok(r == 18.5f, "wrong power (%f)\n", r);
 
-    hr = IDirect3DRMMaterial2_GetEmissive(pMaterial2, &r, &g, &b);
+    hr = IDirect3DRMMaterial2_GetEmissive(material2, &r, &g, &b);
     ok(hr == D3DRM_OK, "Cannot get emissive (hr = %x)\n", hr);
     ok(r == 0.0f && g == 0.0f && b == 0.0f, "wrong emissive r=%f g=%f b=%f, expected r=0.0 g=0.0 b=0.0\n", r, g, b);
 
-    hr = IDirect3DRMMaterial2_GetSpecular(pMaterial2, &r, &g, &b);
+    hr = IDirect3DRMMaterial2_GetSpecular(material2, &r, &g, &b);
     ok(hr == D3DRM_OK, "Cannot get emissive (hr = %x)\n", hr);
     ok(r == 1.0f && g == 1.0f && b == 1.0f, "wrong specular r=%f g=%f b=%f, expected r=1.0 g=1.0 b=1.0\n", r, g, b);
 
-    hr = IDirect3DRMMaterial2_GetAmbient(pMaterial2, &r, &g, &b);
+    hr = IDirect3DRMMaterial2_GetAmbient(material2, &r, &g, &b);
     ok(hr == D3DRM_OK, "Cannot get emissive (hr = %x)\n", hr);
     ok(r == 0.0f && g == 0.0f && b == 0.0f, "wrong ambient r=%f g=%f b=%f, expected r=0.0 g=0.0 b=0.0\n", r, g, b);
 
-    hr = IDirect3DRMMaterial2_SetPower(pMaterial2, 5.87f);
+    hr = IDirect3DRMMaterial2_SetPower(material2, 5.87f);
     ok(hr == D3DRM_OK, "Cannot set power (hr = %x)\n", hr);
-    r = IDirect3DRMMaterial2_GetPower(pMaterial2);
+    r = IDirect3DRMMaterial2_GetPower(material2);
     ok(r == 5.87f, "wrong power (%f)\n", r);
 
-    hr = IDirect3DRMMaterial2_SetEmissive(pMaterial2, 0.5f, 0.5f, 0.5f);
+    hr = IDirect3DRMMaterial2_SetEmissive(material2, 0.5f, 0.5f, 0.5f);
     ok(hr == D3DRM_OK, "Cannot set emissive (hr = %x)\n", hr);
-    hr = IDirect3DRMMaterial2_GetEmissive(pMaterial2, &r, &g, &b);
+    hr = IDirect3DRMMaterial2_GetEmissive(material2, &r, &g, &b);
     ok(hr == D3DRM_OK, "Cannot get emissive (hr = %x)\n", hr);
     ok(r == 0.5f && g == 0.5f && b == 0.5f, "wrong emissive r=%f g=%f b=%f, expected r=0.5 g=0.5 b=0.5\n", r, g, b);
 
-    hr = IDirect3DRMMaterial2_SetSpecular(pMaterial2, 0.6f, 0.6f, 0.6f);
+    hr = IDirect3DRMMaterial2_SetSpecular(material2, 0.6f, 0.6f, 0.6f);
     ok(hr == D3DRM_OK, "Cannot set specular (hr = %x)\n", hr);
-    hr = IDirect3DRMMaterial2_GetSpecular(pMaterial2, &r, &g, &b);
+    hr = IDirect3DRMMaterial2_GetSpecular(material2, &r, &g, &b);
     ok(hr == D3DRM_OK, "Cannot get specular (hr = %x)\n", hr);
     ok(r == 0.6f && g == 0.6f && b == 0.6f, "wrong specular r=%f g=%f b=%f, expected r=0.6 g=0.6 b=0.6\n", r, g, b);
 
-    hr = IDirect3DRMMaterial2_SetAmbient(pMaterial2, 0.7f, 0.7f, 0.7f);
+    hr = IDirect3DRMMaterial2_SetAmbient(material2, 0.7f, 0.7f, 0.7f);
     ok(hr == D3DRM_OK, "Cannot set ambient (hr = %x)\n", hr);
-    hr = IDirect3DRMMaterial2_GetAmbient(pMaterial2, &r, &g, &b);
+    hr = IDirect3DRMMaterial2_GetAmbient(material2, &r, &g, &b);
     ok(hr == D3DRM_OK, "Cannot get ambient (hr = %x)\n", hr);
     ok(r == 0.7f && g == 0.7f && b == 0.7f, "wrong ambient r=%f g=%f b=%f, expected r=0.7 g=0.7 b=0.7\n", r, g, b);
 
-    IDirect3DRMMaterial2_Release(pMaterial2);
+    IDirect3DRMMaterial2_Release(material2);
 
     IDirect3DRM3_Release(d3drm3);
     IDirect3DRM_Release(d3drm);

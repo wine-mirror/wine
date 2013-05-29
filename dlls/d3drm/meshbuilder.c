@@ -1832,18 +1832,18 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_SetTexture(IDirect3DRMMeshBuil
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_SetMaterial(IDirect3DRMMeshBuilder3* iface,
-                                                              LPDIRECT3DRMMATERIAL2 material)
+static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_SetMaterial(IDirect3DRMMeshBuilder3 *iface,
+        IDirect3DRMMaterial2 *material)
 {
-    IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
+    IDirect3DRMMeshBuilderImpl *mesh_builder = impl_from_IDirect3DRMMeshBuilder3(iface);
 
-    TRACE("(%p)->(%p)\n", This, material);
+    TRACE("iface %p, material %p.\n", iface, material);
 
     if (material)
         IDirect3DRMTexture2_AddRef(material);
-    if (This->material)
-        IDirect3DRMTexture2_Release(This->material);
-    This->material = material;
+    if (mesh_builder->material)
+        IDirect3DRMTexture2_Release(mesh_builder->material);
+    mesh_builder->material = material;
 
     return D3DRM_OK;
 }

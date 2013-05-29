@@ -1676,14 +1676,14 @@ DECLARE_INTERFACE_(IDirect3DRMFrame3,IDirect3DRMVisual)
     STDMETHOD(GetBox)(THIS_ D3DRMBOX *box) PURE;
     STDMETHOD_(BOOL, GetBoxEnable)(THIS) PURE;
     STDMETHOD(GetAxes)(THIS_ D3DVECTOR *dir, D3DVECTOR *up);
-    STDMETHOD(GetMaterial)(THIS_ LPDIRECT3DRMMATERIAL2 *) PURE;
+    STDMETHOD(GetMaterial)(THIS_ struct IDirect3DRMMaterial2 **material) PURE;
     STDMETHOD_(BOOL, GetInheritAxes)(THIS);
     STDMETHOD(GetHierarchyBox)(THIS_ D3DRMBOX *box) PURE;
     STDMETHOD(SetBox)(THIS_ D3DRMBOX *box) PURE;
     STDMETHOD(SetBoxEnable)(THIS_ BOOL) PURE;
     STDMETHOD(SetAxes)(THIS_ D3DVALUE dx, D3DVALUE dy, D3DVALUE dz, D3DVALUE ux, D3DVALUE uy, D3DVALUE uz);
     STDMETHOD(SetInheritAxes)(THIS_ BOOL inherit_from_parent);
-    STDMETHOD(SetMaterial)(THIS_ LPDIRECT3DRMMATERIAL2) PURE;
+    STDMETHOD(SetMaterial)(THIS_ struct IDirect3DRMMaterial2 *material) PURE;
     STDMETHOD(SetQuaternion)(THIS_ IDirect3DRMFrame3 *reference, D3DRMQUATERNION *q) PURE;
     STDMETHOD(RayPick)(THIS_ IDirect3DRMFrame3 *reference, D3DRMRAY *ray, DWORD flags,
             struct IDirect3DRMPicked2Array **return_visuals) PURE;
@@ -2397,7 +2397,7 @@ DECLARE_INTERFACE_(IDirect3DRMFace2,IDirect3DRMObject)
     STDMETHOD(SetColor)(THIS_ D3DCOLOR) PURE;
     STDMETHOD(SetTexture)(THIS_ struct IDirect3DRMTexture3 *texture) PURE;
     STDMETHOD(SetTextureCoordinates)(THIS_ DWORD vertex, D3DVALUE u, D3DVALUE v) PURE;
-    STDMETHOD(SetMaterial)(THIS_ LPDIRECT3DRMMATERIAL2) PURE;
+    STDMETHOD(SetMaterial)(THIS_ struct IDirect3DRMMaterial2 *material) PURE;
     STDMETHOD(SetTextureTopology)(THIS_ BOOL wrap_u, BOOL wrap_v) PURE;
     STDMETHOD(GetVertex)(THIS_ DWORD index, D3DVECTOR *vertex, D3DVECTOR *normal) PURE;
     STDMETHOD(GetVertices)(THIS_ DWORD *vertex_count, D3DVECTOR *coords, D3DVECTOR *normals);
@@ -2405,7 +2405,7 @@ DECLARE_INTERFACE_(IDirect3DRMFace2,IDirect3DRMObject)
     STDMETHOD(GetTextureTopology)(THIS_ BOOL *wrap_u, BOOL *wrap_v) PURE;
     STDMETHOD(GetNormal)(THIS_ D3DVECTOR *) PURE;
     STDMETHOD(GetTexture)(THIS_ struct IDirect3DRMTexture3 **texture) PURE;
-    STDMETHOD(GetMaterial)(THIS_ LPDIRECT3DRMMATERIAL2 *) PURE;
+    STDMETHOD(GetMaterial)(THIS_ struct IDirect3DRMMaterial2 **material) PURE;
     STDMETHOD_(int, GetVertexCount)(THIS) PURE;
     STDMETHOD_(int, GetVertexIndex)(THIS_ DWORD which) PURE;
     STDMETHOD_(int, GetTextureCoordinateIndex)(THIS_ DWORD which) PURE;
@@ -2870,7 +2870,7 @@ DECLARE_INTERFACE_(IDirect3DRMMeshBuilder3,IDirect3DRMVisual)
     STDMETHOD(SetColorRGB)(THIS_ D3DVALUE red, D3DVALUE green, D3DVALUE blue) PURE;
     STDMETHOD(SetColor)(THIS_ D3DCOLOR) PURE;
     STDMETHOD(SetTexture)(THIS_ struct IDirect3DRMTexture3 *texture) PURE;
-    STDMETHOD(SetMaterial)(THIS_ LPDIRECT3DRMMATERIAL2) PURE;
+    STDMETHOD(SetMaterial)(THIS_ struct IDirect3DRMMaterial2 *material) PURE;
     STDMETHOD(SetTextureTopology)(THIS_ BOOL wrap_u, BOOL wrap_v) PURE;
     STDMETHOD(SetQuality)(THIS_ D3DRMRENDERQUALITY) PURE;
     STDMETHOD(SetPerspective)(THIS_ BOOL) PURE;
