@@ -409,18 +409,16 @@ static BOOL ui_sequence_exists( MSIPACKAGE *package )
     static const WCHAR query [] = {
         'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
         '`','I','n','s','t','a','l','l','U','I','S','e','q','u','e','n','c','e','`',' ',
-        'W','H','E','R','E',' ','`','S','e','q','u','e','n','c','e','`',' ','>',' ','0',' ',
-        'O','R','D','E','R',' ','B','Y',' ','`','S','e','q','u','e','n','c','e','`',0};
+        'W','H','E','R','E',' ','`','S','e','q','u','e','n','c','e','`',' ','>',' ','0',0};
     MSIQUERY *view;
-    UINT rc;
+    DWORD count = 0;
 
-    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
-    if (rc == ERROR_SUCCESS)
+    if (!(MSI_DatabaseOpenViewW( package->db, query, &view )))
     {
-        msiobj_release(&view->hdr);
-        return TRUE;
+        MSI_IterateRecords( view, &count, NULL, package );
+        msiobj_release( &view->hdr );
     }
-    return FALSE;
+    return count != 0;
 }
 
 UINT msi_set_sourcedir_props(MSIPACKAGE *package, BOOL replace)
