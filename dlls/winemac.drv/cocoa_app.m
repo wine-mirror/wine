@@ -205,8 +205,23 @@ int macdrv_err_on;
 
             mainMenu = [[[NSMenu alloc] init] autorelease];
 
+            // Application menu
             submenu = [[[NSMenu alloc] initWithTitle:@"Wine"] autorelease];
             bundleName = [[NSBundle mainBundle] objectForInfoDictionaryKey:(NSString*)kCFBundleNameKey];
+
+            if ([bundleName length])
+                title = [NSString stringWithFormat:@"Hide %@", bundleName];
+            else
+                title = @"Hide";
+            item = [submenu addItemWithTitle:title action:@selector(hide:) keyEquivalent:@""];
+
+            item = [submenu addItemWithTitle:@"Hide Others" action:@selector(hideOtherApplications:) keyEquivalent:@"h"];
+            [item setKeyEquivalentModifierMask:NSCommandKeyMask | NSAlternateKeyMask];
+
+            item = [submenu addItemWithTitle:@"Show All" action:@selector(unhideAllApplications:) keyEquivalent:@""];
+
+            [submenu addItem:[NSMenuItem separatorItem]];
+
             if ([bundleName length])
                 title = [NSString stringWithFormat:@"Quit %@", bundleName];
             else
@@ -218,6 +233,7 @@ int macdrv_err_on;
             [item setSubmenu:submenu];
             [mainMenu addItem:item];
 
+            // Window menu
             submenu = [[[NSMenu alloc] initWithTitle:@"Window"] autorelease];
             [submenu addItemWithTitle:@"Minimize" action:@selector(performMiniaturize:) keyEquivalent:@""];
             [submenu addItemWithTitle:@"Zoom" action:@selector(performZoom:) keyEquivalent:@""];
