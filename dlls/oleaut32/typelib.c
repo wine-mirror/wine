@@ -1739,6 +1739,40 @@ static TLBImplType *TLBImplType_Alloc(UINT n)
     return ret;
 }
 
+static HRESULT TLB_set_custdata(struct list *custdata_list, REFGUID guid, VARIANT *var)
+{
+    TLBCustData *cust_data;
+
+    switch(V_VT(var)){
+    case VT_I4:
+    case VT_R4:
+    case VT_UI4:
+    case VT_INT:
+    case VT_UINT:
+    case VT_HRESULT:
+    case VT_BSTR:
+        break;
+    default:
+        return DISP_E_BADVARTYPE;
+    }
+
+    cust_data = TLB_get_custdata_by_guid(custdata_list, guid);
+
+    if (!cust_data) {
+        cust_data = heap_alloc(sizeof(TLBCustData));
+        if (!cust_data)
+            return E_OUTOFMEMORY;
+
+        cust_data->guid = *guid;
+        VariantInit(&cust_data->data);
+
+        list_add_tail(custdata_list, &cust_data->entry);
+    }else
+        VariantClear(&cust_data->data);
+
+    return VariantCopy(&cust_data->data, var);
+}
+
 /**********************************************************************
  *
  *  Functions for reading MSFT typelibs (those created by CreateTypeLib2)
@@ -9031,8 +9065,13 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetCustData(ICreateTypeInfo2 *iface,
         REFGUID guid, VARIANT *varVal)
 {
     ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
-    FIXME("%p %s %p - stub\n", This, debugstr_guid(guid), varVal);
-    return E_NOTIMPL;
+
+    TRACE("%p %s %p\n", This, debugstr_guid(guid), varVal);
+
+    if (!guid || !varVal)
+        return E_INVALIDARG;
+
+    return TLB_set_custdata(&This->custdata_list, guid, varVal);
 }
 
 static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncCustData(ICreateTypeInfo2 *iface,
