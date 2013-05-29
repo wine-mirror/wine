@@ -1118,7 +1118,7 @@ static UINT HANDLE_CustomType53_54( MSIPACKAGE *package, const WCHAR *source, co
     return wait_thread_handle( info );
 }
 
-static BOOL action_type_matches_script( MSIPACKAGE *package, UINT type, UINT script )
+static BOOL action_type_matches_script( UINT type, UINT script )
 {
     switch (script)
     {
@@ -1212,7 +1212,7 @@ UINT ACTION_CustomAction(MSIPACKAGE *package, LPCWSTR action, UINT script, BOOL 
         if (type & msidbCustomActionTypeNoImpersonate)
             WARN("msidbCustomActionTypeNoImpersonate not handled\n");
 
-        if (!execute || !action_type_matches_script( package, type, script ))
+        if (!execute || !action_type_matches_script( type, script ))
         {
             rc = defer_custom_action( package, action, type );
             goto end;
