@@ -1783,6 +1783,14 @@ HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device,
     TRACE("... Range(%f), Falloff(%f), Theta(%f), Phi(%f)\n",
             light->range, light->falloff, light->theta, light->phi);
 
+    /* Update the live definitions if the light is currently assigned a glIndex. */
+    if (object->glIndex != -1 && !device->isRecordingState)
+    {
+        if (object->OriginalParms.type != light->type)
+            device_invalidate_state(device, STATE_LIGHT_TYPE);
+        device_invalidate_state(device, STATE_ACTIVELIGHT(object->glIndex));
+    }
+
     /* Save away the information. */
     object->OriginalParms = *light;
 
@@ -1854,10 +1862,6 @@ HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device,
         default:
             FIXME("Unrecognized light type %#x.\n", light->type);
     }
-
-    /* Update the live definitions if the light is currently assigned a glIndex. */
-    if (object->glIndex != -1 && !device->isRecordingState)
-        device_invalidate_state(device, STATE_ACTIVELIGHT(object->glIndex));
 
     return WINED3D_OK;
 }
@@ -1932,7 +1936,10 @@ HRESULT CDECL wined3d_device_set_light_enable(struct wined3d_device *device, UIN
         if (light_info->glIndex != -1)
         {
             if (!device->isRecordingState)
+            {
+                device_invalidate_state(device, STATE_LIGHT_TYPE);
                 device_invalidate_state(device, STATE_ACTIVELIGHT(light_info->glIndex));
+            }
 
             device->updateStateBlock->state.lights[light_info->glIndex] = NULL;
             light_info->glIndex = -1;
@@ -1978,7 +1985,10 @@ HRESULT CDECL wined3d_device_set_light_enable(struct wined3d_device *device, UIN
 
             /* i == light_info->glIndex */
             if (!device->isRecordingState)
+            {
+                device_invalidate_state(device, STATE_LIGHT_TYPE);
                 device_invalidate_state(device, STATE_ACTIVELIGHT(i));
+            }
         }
     }
 

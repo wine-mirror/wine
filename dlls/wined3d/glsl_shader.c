@@ -6729,13 +6729,6 @@ static void glsl_vertex_pipe_shader(struct wined3d_context *context,
     context->select_shader = 1;
 }
 
-static void glsl_vertex_pipe_light(struct wined3d_context *context,
-        const struct wined3d_state *state, DWORD state_id)
-{
-    light(context, state, state_id);
-    context->select_shader = 1;
-}
-
 static const struct StateEntryTemplate glsl_vertex_pipe_vp_states[] =
 {
     {STATE_VDECL,                                                {STATE_VDECL,                                                vertexdeclaration      }, WINED3D_GL_EXT_NONE          },
@@ -6776,14 +6769,15 @@ static const struct StateEntryTemplate glsl_vertex_pipe_vp_states[] =
     {STATE_CLIPPLANE(30),                                        {STATE_CLIPPLANE(30),                                        clipplane              }, WINED3D_GL_EXT_NONE          },
     {STATE_CLIPPLANE(31),                                        {STATE_CLIPPLANE(31),                                        clipplane              }, WINED3D_GL_EXT_NONE          },
     /* Lights */
-    {STATE_ACTIVELIGHT(0),                                       {STATE_ACTIVELIGHT(0),                                       glsl_vertex_pipe_light }, WINED3D_GL_EXT_NONE          },
-    {STATE_ACTIVELIGHT(1),                                       {STATE_ACTIVELIGHT(1),                                       glsl_vertex_pipe_light }, WINED3D_GL_EXT_NONE          },
-    {STATE_ACTIVELIGHT(2),                                       {STATE_ACTIVELIGHT(2),                                       glsl_vertex_pipe_light }, WINED3D_GL_EXT_NONE          },
-    {STATE_ACTIVELIGHT(3),                                       {STATE_ACTIVELIGHT(3),                                       glsl_vertex_pipe_light }, WINED3D_GL_EXT_NONE          },
-    {STATE_ACTIVELIGHT(4),                                       {STATE_ACTIVELIGHT(4),                                       glsl_vertex_pipe_light }, WINED3D_GL_EXT_NONE          },
-    {STATE_ACTIVELIGHT(5),                                       {STATE_ACTIVELIGHT(5),                                       glsl_vertex_pipe_light }, WINED3D_GL_EXT_NONE          },
-    {STATE_ACTIVELIGHT(6),                                       {STATE_ACTIVELIGHT(6),                                       glsl_vertex_pipe_light }, WINED3D_GL_EXT_NONE          },
-    {STATE_ACTIVELIGHT(7),                                       {STATE_ACTIVELIGHT(7),                                       glsl_vertex_pipe_light }, WINED3D_GL_EXT_NONE          },
+    {STATE_LIGHT_TYPE,                                           {STATE_RENDER(WINED3D_RS_FOGENABLE),                         NULL                   }, WINED3D_GL_EXT_NONE          },
+    {STATE_ACTIVELIGHT(0),                                       {STATE_ACTIVELIGHT(0),                                       light                  }, WINED3D_GL_EXT_NONE          },
+    {STATE_ACTIVELIGHT(1),                                       {STATE_ACTIVELIGHT(1),                                       light                  }, WINED3D_GL_EXT_NONE          },
+    {STATE_ACTIVELIGHT(2),                                       {STATE_ACTIVELIGHT(2),                                       light                  }, WINED3D_GL_EXT_NONE          },
+    {STATE_ACTIVELIGHT(3),                                       {STATE_ACTIVELIGHT(3),                                       light                  }, WINED3D_GL_EXT_NONE          },
+    {STATE_ACTIVELIGHT(4),                                       {STATE_ACTIVELIGHT(4),                                       light                  }, WINED3D_GL_EXT_NONE          },
+    {STATE_ACTIVELIGHT(5),                                       {STATE_ACTIVELIGHT(5),                                       light                  }, WINED3D_GL_EXT_NONE          },
+    {STATE_ACTIVELIGHT(6),                                       {STATE_ACTIVELIGHT(6),                                       light                  }, WINED3D_GL_EXT_NONE          },
+    {STATE_ACTIVELIGHT(7),                                       {STATE_ACTIVELIGHT(7),                                       light                  }, WINED3D_GL_EXT_NONE          },
     /* Viewport */
     {STATE_VIEWPORT,                                             {STATE_VIEWPORT,                                             viewport_vertexpart    }, WINED3D_GL_EXT_NONE          },
     /* Transform states */

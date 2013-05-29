@@ -2572,6 +2572,8 @@ const char *debug_d3dstate(DWORD state)
         return "STATE_VERTEXSHADERCONSTANT";
     if (STATE_IS_PIXELSHADERCONSTANT(state))
         return "STATE_PIXELSHADERCONSTANT";
+    if (STATE_IS_LIGHT_TYPE(state))
+        return "STATE_LIGHT_TYPE";
     if (STATE_IS_ACTIVELIGHT(state))
         return wine_dbg_sprintf("STATE_ACTIVELIGHT(%#x)", state - STATE_ACTIVELIGHT(0));
     if (STATE_IS_SCISSORRECT(state))

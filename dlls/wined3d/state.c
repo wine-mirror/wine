@@ -5167,6 +5167,7 @@ const struct StateEntryTemplate vp_ffp_states[] =
     { STATE_CLIPPLANE(30),                                { STATE_CLIPPLANE(30),                                clipplane           }, WINED3D_GL_EXT_NONE             },
     { STATE_CLIPPLANE(31),                                { STATE_CLIPPLANE(31),                                clipplane           }, WINED3D_GL_EXT_NONE             },
       /* Lights */
+    { STATE_LIGHT_TYPE,                                   { STATE_LIGHT_TYPE,                                   state_nop           }, WINED3D_GL_EXT_NONE             },
     { STATE_ACTIVELIGHT(0),                               { STATE_ACTIVELIGHT(0),                               light               }, WINED3D_GL_EXT_NONE             },
     { STATE_ACTIVELIGHT(1),                               { STATE_ACTIVELIGHT(1),                               light               }, WINED3D_GL_EXT_NONE             },
     { STATE_ACTIVELIGHT(2),                               { STATE_ACTIVELIGHT(2),                               light               }, WINED3D_GL_EXT_NONE             },
@@ -5862,6 +5863,7 @@ static void validate_state_table(struct StateEntry *state_table)
         STATE_GEOMETRY_SHADER,
         STATE_PIXELSHADER,
         STATE_VIEWPORT,
+        STATE_LIGHT_TYPE,
         STATE_SCISSORRECT,
         STATE_FRONTFACE,
         STATE_POINTSPRITECOORDORIGIN,
