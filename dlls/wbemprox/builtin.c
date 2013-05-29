@@ -51,6 +51,8 @@ static const WCHAR class_cdromdriveW[] =
     {'W','i','n','3','2','_','C','D','R','O','M','D','r','i','v','e',0};
 static const WCHAR class_compsysW[] =
     {'W','i','n','3','2','_','C','o','m','p','u','t','e','r','S','y','s','t','e','m',0};
+static const WCHAR class_directoryW[] =
+    {'W','i','n','3','2','_','D','i','r','e','c','t','o','r','y',0};
 static const WCHAR class_diskdriveW[] =
     {'W','i','n','3','2','_','D','i','s','k','D','r','i','v','e',0};
 static const WCHAR class_diskpartitionW[] =
@@ -77,14 +79,16 @@ static const WCHAR class_sounddeviceW[] =
 static const WCHAR class_videocontrollerW[] =
     {'W','i','n','3','2','_','V','i','d','e','o','C','o','n','t','r','o','l','l','e','r',0};
 
-static const WCHAR prop_adaptertypeW[] =
-    {'A','d','a','p','t','e','r','T','y','p','e',0};
 static const WCHAR prop_acceptpauseW[] =
     {'A','c','c','e','p','t','P','a','u','s','e',0};
 static const WCHAR prop_acceptstopW[] =
     {'A','c','c','e','p','t','S','t','o','p',0};
+static const WCHAR prop_accessmaskW[] =
+    {'A','c','c','e','s','s','M','a','s','k',0};
 static const WCHAR prop_adapterramW[] =
     {'A','d','a','p','t','e','r','R','A','M',0};
+static const WCHAR prop_adaptertypeW[] =
+    {'A','d','a','p','t','e','r','T','y','p','e',0};
 static const WCHAR prop_bootableW[] =
     {'B','o','o','t','a','b','l','e',0};
 static const WCHAR prop_bootpartitionW[] =
@@ -257,6 +261,11 @@ static const struct column col_compsys[] =
     { prop_numlogicalprocessorsW, CIM_UINT32, VT_I4 },
     { prop_numprocessorsW,        CIM_UINT32, VT_I4 },
     { prop_totalphysicalmemoryW,  CIM_UINT64 }
+};
+static const struct column col_directory[] =
+{
+    { prop_accessmaskW, CIM_UINT32 },
+    { prop_nameW,       CIM_STRING|COL_FLAG_KEY }
 };
 static const struct column col_diskdrive[] =
 {
@@ -488,6 +497,11 @@ struct record_computersystem
     UINT32       num_logical_processors;
     UINT32       num_processors;
     UINT64       total_physical_memory;
+};
+struct record_directory
+{
+    UINT32       accessmask;
+    const WCHAR *name;
 };
 struct record_diskdrive
 {
@@ -856,6 +870,238 @@ static UINT64 get_freespace( const WCHAR *dir, UINT64 *disksize )
     return free.QuadPart;
 }
 
+struct dirstack
+{
+    WCHAR **dirs;
+    UINT   *len_dirs;
+    UINT    num_dirs;
+    UINT    num_allocated;
+};
+
+static struct dirstack *alloc_dirstack( UINT size )
+{
+    struct dirstack *dirstack;
+
+    if (!(dirstack = heap_alloc( sizeof(*dirstack) ))) return NULL;
+    if (!(dirstack->dirs = heap_alloc( sizeof(WCHAR *) * size )))
+    {
+        heap_free( dirstack );
+        return NULL;
+    }
+    if (!(dirstack->len_dirs = heap_alloc( sizeof(UINT) * size )))
+    {
+        heap_free( dirstack->dirs );
+        heap_free( dirstack );
+        return NULL;
+    }
+    dirstack->num_dirs = 0;
+    dirstack->num_allocated = size;
+    return dirstack;
+}
+
+static void free_dirstack( struct dirstack *dirstack )
+{
+    UINT i;
+    for (i = 0; i < dirstack->num_dirs; i++) heap_free( dirstack->dirs[i] );
+    heap_free( dirstack->dirs );
+    heap_free( dirstack->len_dirs );
+    heap_free( dirstack );
+}
+
+static BOOL push_dir( struct dirstack *dirstack, WCHAR *dir, UINT len )
+{
+    UINT size, i = dirstack->num_dirs;
+
+    if (i == dirstack->num_allocated)
+    {
+        WCHAR **tmp;
+        UINT *len_tmp;
+
+        size = dirstack->num_allocated * 2;
+        if (!(tmp = heap_realloc( dirstack->dirs, size * sizeof(WCHAR *) ))) return FALSE;
+        dirstack->dirs = tmp;
+        if (!(len_tmp = heap_realloc( dirstack->len_dirs, size * sizeof(UINT) ))) return FALSE;
+        dirstack->len_dirs = len_tmp;
+        dirstack->num_allocated = size;
+    }
+    dirstack->dirs[i] = dir;
+    dirstack->len_dirs[i] = len;
+    dirstack->num_dirs++;
+    return TRUE;
+}
+
+static WCHAR *pop_dir( struct dirstack *dirstack, UINT *len )
+{
+    if (!dirstack->num_dirs)
+    {
+        *len = 0;
+        return NULL;
+    }
+    dirstack->num_dirs--;
+    *len = dirstack->len_dirs[dirstack->num_dirs];
+    return dirstack->dirs[dirstack->num_dirs];
+}
+
+static const WCHAR *peek_dir( struct dirstack *dirstack )
+{
+    if (!dirstack->num_dirs) return NULL;
+    return dirstack->dirs[dirstack->num_dirs - 1];
+}
+
+static WCHAR *build_glob( WCHAR drive, const WCHAR *path, UINT len )
+{
+    UINT i = 0;
+    WCHAR *ret;
+
+    if (!(ret = heap_alloc( (len + 6) * sizeof(WCHAR) ))) return NULL;
+    ret[i++] = drive;
+    ret[i++] = ':';
+    ret[i++] = '\\';
+    if (path)
+    {
+        memcpy( ret + i, path, len * sizeof(WCHAR) );
+        i += len;
+        ret[i++] = '\\';
+    }
+    ret[i++] = '*';
+    ret[i] = 0;
+    return ret;
+}
+
+static WCHAR *build_dirname( WCHAR drive, const WCHAR *path )
+{
+    UINT i = 0, len = 0;
+    const WCHAR *p;
+    WCHAR *ret;
+
+    for (p = path; *p; p++)
+    {
+        if (*p == '\\') len += 2;
+        else len++;
+    };
+    if (!(ret = heap_alloc( (len + 5) * sizeof(WCHAR) ))) return NULL;
+    ret[i++] = drive;
+    ret[i++] = ':';
+    ret[i++] = '\\';
+    ret[i++] = '\\';
+    for (p = path; *p; p++)
+    {
+        if (*p != '\\') ret[i++] = *p;
+        else
+        {
+            ret[i++] = '\\';
+            ret[i++] = '\\';
+        }
+    }
+    ret[i] = 0;
+    return ret;
+}
+
+static WCHAR *append_path( const WCHAR *path, const WCHAR *segment, UINT *len )
+{
+    UINT len_path = 0, len_segment = strlenW( segment );
+    WCHAR *ret;
+
+    *len = 0;
+    if (path) len_path = strlenW( path );
+    if (!(ret = heap_alloc( (len_path + len_segment + 2) * sizeof(WCHAR) ))) return NULL;
+    if (path)
+    {
+        memcpy( ret, path, len_path * sizeof(WCHAR) );
+        ret[len_path] = '\\';
+        *len += len_path + 1;
+    }
+    memcpy( ret + *len, segment, len_segment * sizeof(WCHAR) );
+    *len += len_segment;
+    ret[*len] = 0;
+    return ret;
+}
+
+static enum fill_status fill_directory( struct table *table, const struct expr *cond )
+{
+    static const WCHAR dotW[] = {'.',0}, dotdotW[] = {'.','.',0};
+    struct record_directory *rec;
+    UINT i, len, row = 0, offset = 0, count = 4;
+    WCHAR *glob = NULL, *path = NULL, *new_path, root[] = {'A',':','\\',0};
+    DWORD drives = GetLogicalDrives();
+    WIN32_FIND_DATAW data;
+    HANDLE handle;
+    struct dirstack *dirstack = alloc_dirstack(2);
+    enum fill_status status = FILL_STATUS_UNFILTERED;
+
+    if (!(table->data = heap_alloc( count * sizeof(*rec) ))) return FILL_STATUS_FAILED;
+
+    for (i = 0; i < sizeof(drives); i++)
+    {
+        if (!(drives & (1 << i))) continue;
+
+        root[0] = 'A' + i;
+        if (GetDriveTypeW( root ) != DRIVE_FIXED) continue;
+
+        for (;;)
+        {
+            path = pop_dir( dirstack, &len );
+            if (!(glob = build_glob( root[0], path, len )))
+            {
+                status = FILL_STATUS_FAILED;
+                goto done;
+            }
+            if ((handle = FindFirstFileW( glob, &data )) != INVALID_HANDLE_VALUE)
+            {
+                do
+                {
+                    if (row > count)
+                    {
+                        BYTE *data;
+                        count *= 2;
+                        if (!(data = heap_realloc( table->data, count * sizeof(*rec) )))
+                        {
+                            status = FILL_STATUS_FAILED;
+                            goto done;
+                        }
+                        table->data = data;
+                    }
+                    if (!(data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ||
+                        !strcmpW( data.cFileName, dotW ) || !strcmpW( data.cFileName, dotdotW ))
+                        continue;
+
+                    new_path = append_path( path, data.cFileName, &len );
+                    if (!(push_dir( dirstack, new_path, len )))
+                    {
+                        heap_free( new_path );
+                        status = FILL_STATUS_FAILED;
+                        goto done;
+                    }
+                    rec = (struct record_directory *)(table->data + offset);
+                    rec->accessmask = FILE_ALL_ACCESS;
+                    rec->name       = build_dirname( root[0], new_path );
+                    if (!match_row( table, row, cond, &status ))
+                    {
+                        free_row_values( table, row );
+                        continue;
+                    }
+                    offset += sizeof(*rec);
+                    row++;
+                }
+                while (FindNextFileW( handle, &data ));
+                FindClose( handle );
+            }
+            if (!peek_dir( dirstack )) break;
+            heap_free( glob );
+            heap_free( path );
+        }
+    }
+
+done:
+    free_dirstack( dirstack );
+    heap_free( glob );
+    heap_free( path );
+
+    TRACE("created %u rows\n", row);
+    table->num_rows = row;
+    return status;
+}
+
 static enum fill_status fill_diskpartition( struct table *table, const struct expr *cond )
 {
     static const WCHAR fmtW[] =
@@ -1143,10 +1389,7 @@ static void regs_to_str( unsigned int *regs, unsigned int len, WCHAR *buffer )
     unsigned int i;
     unsigned char *p = (unsigned char *)regs;
 
-    for (i = 0; i < len; i++)
-    {
-        buffer[i] = *p++;
-    }
+    for (i = 0; i < len; i++) { buffer[i] = *p++; }
     buffer[i] = 0;
 }
 static void get_processor_manufacturer( WCHAR *manufacturer )
@@ -1532,6 +1775,7 @@ static struct table builtin_classes[] =
     { class_biosW, SIZEOF(col_bios), col_bios, SIZEOF(data_bios), (BYTE *)data_bios },
     { class_cdromdriveW, SIZEOF(col_cdromdrive), col_cdromdrive, 0, NULL, fill_cdromdrive },
     { class_compsysW, SIZEOF(col_compsys), col_compsys, 0, NULL, fill_compsys },
+    { class_directoryW, SIZEOF(col_directory), col_directory, 0, NULL, fill_directory },
     { class_diskdriveW, SIZEOF(col_diskdrive), col_diskdrive, SIZEOF(data_diskdrive), (BYTE *)data_diskdrive },
     { class_diskpartitionW, SIZEOF(col_diskpartition), col_diskpartition, 0, NULL, fill_diskpartition },
     { class_logicaldiskW, SIZEOF(col_logicaldisk), col_logicaldisk, 0, NULL, fill_logicaldisk },
