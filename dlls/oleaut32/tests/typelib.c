@@ -3250,6 +3250,13 @@ static void test_SetFuncAndParamNames(void)
     hr = ICreateTypeInfo_SetFuncAndParamNames(cti, 2, propW, 1);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    hr = ICreateTypeInfo_AddFuncDesc(cti, 3, &funcdesc);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* getter name again */
+    hr = ICreateTypeInfo_SetFuncAndParamNames(cti, 3, propW, 1);
+    ok(hr == TYPE_E_AMBIGUOUSNAME, "got 0x%08x\n", hr);
+
     ICreateTypeInfo_Release(cti);
     ICreateTypeLib2_Release(ctl);
     DeleteFileA(filenameA);

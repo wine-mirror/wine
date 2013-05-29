@@ -8840,8 +8840,45 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncAndParamNames(ICreateTypeInfo2 *
         UINT index, LPOLESTR *names, UINT numNames)
 {
     ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
-    FIXME("%p %u %p %u - stub\n", This, index, names, numNames);
-    return E_NOTIMPL;
+    TLBFuncDesc *func_desc = &This->funcdescs[index];
+    int i;
+
+    TRACE("%p %u %p %u\n", This, index, names, numNames);
+
+    if (!names)
+        return E_INVALIDARG;
+
+    if (index >= This->TypeAttr.cFuncs || numNames == 0)
+        return TYPE_E_ELEMENTNOTFOUND;
+
+    if (func_desc->funcdesc.invkind & (INVOKE_PROPERTYPUT | INVOKE_PROPERTYPUTREF)){
+        if(numNames > func_desc->funcdesc.cParams)
+            return TYPE_E_ELEMENTNOTFOUND;
+    } else
+        if(numNames > func_desc->funcdesc.cParams + 1)
+            return TYPE_E_ELEMENTNOTFOUND;
+
+    for(i = 0; i < This->TypeAttr.cFuncs; ++i) {
+        TLBFuncDesc *iter = &This->funcdescs[i];
+        if (iter->Name && !strcmpW(iter->Name, *names)) {
+            if (iter->funcdesc.invkind & (INVOKE_PROPERTYPUT | INVOKE_PROPERTYPUTREF | INVOKE_PROPERTYGET) &&
+                    func_desc->funcdesc.invkind & (INVOKE_PROPERTYPUT | INVOKE_PROPERTYPUTREF | INVOKE_PROPERTYGET) &&
+                    func_desc->funcdesc.invkind != iter->funcdesc.invkind)
+                continue;
+            return TYPE_E_AMBIGUOUSNAME;
+        }
+    }
+
+    SysFreeString(func_desc->Name);
+    func_desc->Name = SysAllocString(*names);
+
+    for (i = 1; i < numNames; ++i) {
+        TLBParDesc *par_desc = func_desc->pParamDesc + i - 1;
+        SysFreeString(par_desc->Name);
+        par_desc->Name = SysAllocString(*(names + i));
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ICreateTypeInfo2_fnSetVarName(ICreateTypeInfo2 *iface,
