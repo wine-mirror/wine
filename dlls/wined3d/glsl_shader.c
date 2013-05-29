@@ -4937,7 +4937,8 @@ static GLhandleARB shader_glsl_generate_ffp_vertex_shader(struct wined3d_shader_
 
     shader_addline(buffer, "vec4 ec_pos = gl_ModelViewMatrix * gl_Vertex;\n");
     shader_addline(buffer, "gl_Position = gl_ProjectionMatrix * ec_pos;\n");
-    shader_addline(buffer, "gl_ClipVertex = ec_pos;\n");
+    if (settings->clipping)
+        shader_addline(buffer, "gl_ClipVertex = ec_pos;\n");
     shader_addline(buffer, "ec_pos /= ec_pos.w;\n");
 
     if (!settings->normal)

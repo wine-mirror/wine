@@ -3532,6 +3532,8 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_state *state, const struct
     {
         memset(settings, 0, sizeof(*settings));
 
+        settings->clipping = state->render_states[WINED3D_RS_CLIPPING]
+                && state->render_states[WINED3D_RS_CLIPPLANEENABLE];
         settings->point_size = state->gl_primitive_type == GL_POINTS;
         if (!state->render_states[WINED3D_RS_FOGENABLE])
             settings->fog_mode = WINED3D_FFP_VS_FOG_OFF;
@@ -3551,6 +3553,8 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_state *state, const struct
         return;
     }
 
+    settings->clipping = state->render_states[WINED3D_RS_CLIPPING]
+            && state->render_states[WINED3D_RS_CLIPPLANEENABLE];
     settings->normal = !!(si->use_map & (1 << WINED3D_FFP_NORMAL));
     settings->normalize = settings->normal && state->render_states[WINED3D_RS_NORMALIZENORMALS];
     settings->lighting = !!state->render_states[WINED3D_RS_LIGHTING];

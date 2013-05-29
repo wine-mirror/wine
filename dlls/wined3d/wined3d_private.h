@@ -1716,6 +1716,7 @@ struct wined3d_ffp_vs_settings
     DWORD ambient_source  : 2;
     DWORD specular_source : 2;
 
+    DWORD clipping        : 1;
     DWORD normal          : 1;
     DWORD normalize       : 1;
     DWORD lighting        : 1;
@@ -1723,7 +1724,7 @@ struct wined3d_ffp_vs_settings
     DWORD point_size      : 1;
     DWORD fog_mode        : 2;
     DWORD texcoords       : 8;  /* MAX_TEXTURES */
-    DWORD padding         : 17;
+    DWORD padding         : 16;
 
     BYTE texgen[MAX_TEXTURES];
 };
