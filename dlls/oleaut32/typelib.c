@@ -1119,6 +1119,7 @@ typedef struct tagITypeInfoImpl
     ICreateTypeInfo2 ICreateTypeInfo2_iface;
     LONG ref;
     BOOL not_attached_to_typelib;
+    BOOL needs_layout;
     TYPEATTR TypeAttr ;         /* _lots_ of type information. */
     ITypeLibImpl * pTypeLib;        /* back pointer to typelib */
     int index;                  /* index in this typelib; */
@@ -5608,6 +5609,9 @@ static HRESULT WINAPI ITypeInfo_fnGetFuncDesc( ITypeInfo2 *iface, UINT index,
     if (!ppFuncDesc)
         return E_INVALIDARG;
 
+    if (This->needs_layout)
+        ICreateTypeInfo2_LayOut(&This->ICreateTypeInfo2_iface);
+
     if (This->TypeAttr.typekind == TKIND_DISPATCH)
         hr = ITypeInfoImpl_GetInternalDispatchFuncDesc((ITypeInfo *)iface, index,
                                                        &internal_funcdesc, NULL,
@@ -5701,6 +5705,9 @@ static HRESULT WINAPI ITypeInfo_fnGetVarDesc( ITypeInfo2 *iface, UINT index,
 
     if(index >= This->TypeAttr.cVars)
         return TYPE_E_ELEMENTNOTFOUND;
+
+    if (This->needs_layout)
+        ICreateTypeInfo2_LayOut(&This->ICreateTypeInfo2_iface);
 
     return TLB_AllocAndInitVarDesc(&pVDesc->vardesc, ppVarDesc);
 }
@@ -7175,12 +7182,6 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
         ITypeInfo_AddRef(*ppTInfo);
 
         result = S_OK;
-    }
-    else if (This->hreftype == hRefType)
-    {
-        *ppTInfo = (ITypeInfo *)&This->ITypeInfo2_iface;
-        ITypeInfo_AddRef(*ppTInfo);
-        result = S_OK;
     } else if ((hRefType & DISPATCH_HREF_MASK) &&
         (This->TypeAttr.typekind   == TKIND_DISPATCH))
     {
@@ -8457,6 +8458,8 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetTypeFlags(ICreateTypeInfo2 *iface,
         UINT typeFlags)
 {
     ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
+    WORD old_flags;
+    HRESULT hres;
 
     TRACE("%p %x\n", This, typeFlags);
 
@@ -8482,7 +8485,14 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetTypeFlags(ICreateTypeInfo2 *iface,
             return hres;
     }
 
+    old_flags = This->TypeAttr.wTypeFlags;
     This->TypeAttr.wTypeFlags = typeFlags;
+
+    hres = ICreateTypeInfo2_LayOut(iface);
+    if (FAILED(hres)) {
+        This->TypeAttr.wTypeFlags = old_flags;
+        return hres;
+    }
 
     return S_OK;
 }
@@ -8753,6 +8763,8 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(ICreateTypeInfo2 *iface,
 
     ++This->TypeAttr.cFuncs;
 
+    This->needs_layout = TRUE;
+
     return S_OK;
 }
 
@@ -8761,6 +8773,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddImplType(ICreateTypeInfo2 *iface,
 {
     ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
     TLBImplType *impl_type;
+    HRESULT hres;
 
     TRACE("%p %u %d\n", This, index, refType);
 
@@ -8822,6 +8835,10 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddImplType(ICreateTypeInfo2 *iface,
 
     if((refType & (~0x3)) == (This->pTypeLib->dispatch_href & (~0x3)))
         This->TypeAttr.wTypeFlags |= TYPEFLAG_FDISPATCHABLE;
+
+    hres = ICreateTypeInfo2_LayOut(iface);
+    if (FAILED(hres))
+        return hres;
 
     return S_OK;
 }
@@ -9017,8 +9034,117 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetTypeIdldesc(ICreateTypeInfo2 *iface,
 static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(ICreateTypeInfo2 *iface)
 {
     ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
-    FIXME("%p - stub\n", This);
-    return E_NOTIMPL;
+    ITypeInfo *tinfo;
+    TLBFuncDesc *func_desc;
+    UINT user_vft = 0, i, depth = 0;
+    HRESULT hres = S_OK;
+
+    TRACE("%p\n", This);
+
+    This->needs_layout = FALSE;
+
+    hres = ICreateTypeInfo2_QueryInterface(iface, &IID_ITypeInfo, (LPVOID*)&tinfo);
+    if (FAILED(hres))
+        return hres;
+
+    if (This->TypeAttr.typekind == TKIND_INTERFACE) {
+        ITypeInfo *inh;
+        TYPEATTR *attr;
+        HREFTYPE inh_href;
+
+        hres = ITypeInfo_GetRefTypeOfImplType(tinfo, 0, &inh_href);
+
+        if (SUCCEEDED(hres)) {
+            hres = ITypeInfo_GetRefTypeInfo(tinfo, inh_href, &inh);
+
+            if (SUCCEEDED(hres)) {
+                hres = ITypeInfo_GetTypeAttr(inh, &attr);
+                if (FAILED(hres)) {
+                    ITypeInfo_Release(inh);
+                    ITypeInfo_Release(tinfo);
+                    return hres;
+                }
+                This->TypeAttr.cbSizeVft = attr->cbSizeVft * 4 / sizeof(void*);
+                ITypeInfo_ReleaseTypeAttr(inh, attr);
+
+                do{
+                    ++depth;
+                    hres = ITypeInfo_GetRefTypeOfImplType(inh, 0, &inh_href);
+                    if(SUCCEEDED(hres)){
+                        ITypeInfo *next;
+                        hres = ITypeInfo_GetRefTypeInfo(inh, inh_href, &next);
+                        if(SUCCEEDED(hres)){
+                            ITypeInfo_Release(inh);
+                            inh = next;
+                        }
+                    }
+                }while(SUCCEEDED(hres));
+                hres = S_OK;
+
+                ITypeInfo_Release(inh);
+            } else if (hres == TYPE_E_ELEMENTNOTFOUND) {
+                This->TypeAttr.cbSizeVft = 0;
+                hres = S_OK;
+            } else {
+                ITypeInfo_Release(tinfo);
+                return hres;
+            }
+        } else if (hres == TYPE_E_ELEMENTNOTFOUND) {
+            This->TypeAttr.cbSizeVft = 0;
+            hres = S_OK;
+        } else {
+            ITypeInfo_Release(tinfo);
+            return hres;
+        }
+    } else if (This->TypeAttr.typekind == TKIND_DISPATCH)
+        This->TypeAttr.cbSizeVft = 7 * sizeof(void*);
+    else
+        This->TypeAttr.cbSizeVft = 0;
+
+    func_desc = This->funcdescs;
+    i = 0;
+    while (i < This->TypeAttr.cFuncs) {
+        if (!(func_desc->funcdesc.oVft & 0x1))
+            func_desc->funcdesc.oVft = This->TypeAttr.cbSizeVft;
+
+        if ((func_desc->funcdesc.oVft & 0xFFFC) > user_vft)
+            user_vft = func_desc->funcdesc.oVft & 0xFFFC;
+
+        This->TypeAttr.cbSizeVft += sizeof(void*);
+
+        if (func_desc->funcdesc.memid == MEMBERID_NIL) {
+            TLBFuncDesc *iter;
+            UINT j = 0;
+            BOOL reset = FALSE;
+
+            func_desc->funcdesc.memid = 0x60000000 + (depth << 16) + i;
+
+            iter = This->funcdescs;
+            while (j < This->TypeAttr.cFuncs) {
+                if (iter != func_desc && iter->funcdesc.memid == func_desc->funcdesc.memid) {
+                    if (!reset) {
+                        func_desc->funcdesc.memid = 0x60000000 + (depth << 16) + This->TypeAttr.cFuncs;
+                        reset = TRUE;
+                    } else
+                        ++func_desc->funcdesc.memid;
+                    iter = This->funcdescs;
+                    j = 0;
+                } else {
+                    ++iter;
+                    ++j;
+                }
+            }
+        }
+
+        ++func_desc;
+        ++i;
+    }
+
+    if (user_vft > This->TypeAttr.cbSizeVft)
+        This->TypeAttr.cbSizeVft = user_vft + sizeof(void*);
+
+    ITypeInfo_Release(tinfo);
+    return hres;
 }
 
 static HRESULT WINAPI ICreateTypeInfo2_fnDeleteFuncDesc(ICreateTypeInfo2 *iface,
