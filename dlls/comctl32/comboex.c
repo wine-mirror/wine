@@ -1607,6 +1607,15 @@ static LRESULT COMBOEX_Size (COMBOEX_INFO *infoPtr, INT width, INT height)
     return 0;
 }
 
+static LRESULT COMBOEX_SetFont( COMBOEX_INFO *infoPtr, HFONT font, BOOL redraw )
+{
+    infoPtr->font = font;
+    SendMessageW( infoPtr->hwndCombo, WM_SETFONT, (WPARAM)font, 0 );
+    if (infoPtr->hwndEdit) SendMessageW( infoPtr->hwndEdit, WM_SETFONT, (WPARAM)font, 0 );
+    COMBOEX_ReSize( infoPtr );
+    if (redraw) InvalidateRect( infoPtr->hwndCombo, NULL, TRUE );
+    return 0;
+}
 
 static LRESULT COMBOEX_SetRedraw(const COMBOEX_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
@@ -2135,6 +2144,12 @@ COMBOEX_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_SIZE:
 	    return COMBOEX_Size (infoPtr, LOWORD(lParam), HIWORD(lParam));
+
+        case WM_GETFONT:
+	    return (LRESULT)infoPtr->font;
+
+	case WM_SETFONT:
+	    return COMBOEX_SetFont( infoPtr, (HFONT)wParam, LOWORD(lParam) != 0 );
 
         case WM_SETREDRAW:
             return COMBOEX_SetRedraw(infoPtr, wParam, lParam);
