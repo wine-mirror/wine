@@ -1612,8 +1612,8 @@ static void test_GetProcessVersion(void)
     si.cb = sizeof(si);
     si.dwFlags = STARTF_USESHOWWINDOW;
     si.wShowWindow = SW_HIDE;
-    ret = CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
     SetLastError(0xdeadbeef);
+    ret = CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
     ok(ret, "CreateProcess error %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
