@@ -26,6 +26,7 @@
 
 #include "macdrv.h"
 #include "winuser.h"
+#include "winreg.h"
 #include "wine/server.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(macdrv);
@@ -40,6 +41,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(macdrv);
 C_ASSERT(NUM_EVENT_TYPES <= sizeof(macdrv_event_mask) * 8);
 
 DWORD thread_data_tls_index = TLS_OUT_OF_INDEXES;
+
+int topmost_float_inactive = TOPMOST_FLOAT_INACTIVE_NONFULLSCREEN;
 
 
 /**************************************************************************
@@ -91,6 +94,67 @@ static void set_app_icon(void)
 
 
 /***********************************************************************
+ *              get_config_key
+ *
+ * Get a config key from either the app-specific or the default config
+ */
+static inline DWORD get_config_key(HKEY defkey, HKEY appkey, const char *name,
+                                   char *buffer, DWORD size)
+{
+    if (appkey && !RegQueryValueExA(appkey, name, 0, NULL, (LPBYTE)buffer, &size)) return 0;
+    if (defkey && !RegQueryValueExA(defkey, name, 0, NULL, (LPBYTE)buffer, &size)) return 0;
+    return ERROR_FILE_NOT_FOUND;
+}
+
+
+/***********************************************************************
+ *              setup_options
+ *
+ * Set up the Mac driver options.
+ */
+static void setup_options(void)
+{
+    char buffer[MAX_PATH + 16];
+    HKEY hkey, appkey = 0;
+    DWORD len;
+
+    /* @@ Wine registry key: HKCU\Software\Wine\Mac Driver */
+    if (RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Mac Driver", &hkey)) hkey = 0;
+
+    /* open the app-specific key */
+
+    len = GetModuleFileNameA(0, buffer, MAX_PATH);
+    if (len && len < MAX_PATH)
+    {
+        HKEY tmpkey;
+        char *p, *appname = buffer;
+        if ((p = strrchr(appname, '/'))) appname = p + 1;
+        if ((p = strrchr(appname, '\\'))) appname = p + 1;
+        strcat(appname, "\\Mac Driver");
+        /* @@ Wine registry key: HKCU\Software\Wine\AppDefaults\app.exe\Mac Driver */
+        if (!RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\AppDefaults", &tmpkey))
+        {
+            if (RegOpenKeyA(tmpkey, appname, &appkey)) appkey = 0;
+            RegCloseKey(tmpkey);
+        }
+    }
+
+    if (!get_config_key(hkey, appkey, "WindowsFloatWhenInactive", buffer, sizeof(buffer)))
+    {
+        if (!strcmp(buffer, "none"))
+            topmost_float_inactive = TOPMOST_FLOAT_INACTIVE_NONE;
+        else if (!strcmp(buffer, "all"))
+            topmost_float_inactive = TOPMOST_FLOAT_INACTIVE_ALL;
+        else
+            topmost_float_inactive = TOPMOST_FLOAT_INACTIVE_NONFULLSCREEN;
+    }
+
+    if (appkey) RegCloseKey(appkey);
+    if (hkey) RegCloseKey(hkey);
+}
+
+
+/***********************************************************************
  *              process_attach
  */
 static BOOL process_attach(void)
@@ -101,6 +165,8 @@ static BOOL process_attach(void)
     status = SessionGetInfo(callerSecuritySession, NULL, &attributes);
     if (status != noErr || !(attributes & sessionHasGraphicAccess))
         return FALSE;
+
+    setup_options();
 
     if ((thread_data_tls_index = TlsAlloc()) == TLS_OUT_OF_INDEXES) return FALSE;
 

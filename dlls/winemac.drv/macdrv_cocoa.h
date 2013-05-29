@@ -111,6 +111,12 @@ enum {
     DRAG_OP_EVERY   = UINT32_MAX
 };
 
+enum {
+    TOPMOST_FLOAT_INACTIVE_NONE,
+    TOPMOST_FLOAT_INACTIVE_NONFULLSCREEN,
+    TOPMOST_FLOAT_INACTIVE_ALL,
+};
+
 
 typedef struct macdrv_opaque_window* macdrv_window;
 typedef struct macdrv_opaque_event_queue* macdrv_event_queue;
@@ -129,6 +135,7 @@ struct macdrv_display {
 
 /* main */
 extern int macdrv_err_on;
+extern int topmost_float_inactive DECLSPEC_HIDDEN;
 
 extern int macdrv_start_cocoa_app(unsigned long long tickcount) DECLSPEC_HIDDEN;
 extern void macdrv_window_rejected_focus(const struct macdrv_event *event) DECLSPEC_HIDDEN;

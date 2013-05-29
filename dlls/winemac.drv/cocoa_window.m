@@ -577,20 +577,23 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
     - (NSInteger) minimumLevelForActive:(BOOL)active
     {
+        NSScreen* screen;
+        BOOL fullscreen;
         NSInteger level;
 
-        if (self.floating)
+        screen = screen_covered_by_rect([self frame], [NSScreen screens]);
+        fullscreen = (screen != nil);
+
+        if (self.floating && (active || topmost_float_inactive == TOPMOST_FLOAT_INACTIVE_ALL ||
+                              (topmost_float_inactive == TOPMOST_FLOAT_INACTIVE_NONFULLSCREEN && !fullscreen)))
             level = NSFloatingWindowLevel;
         else
             level = NSNormalWindowLevel;
 
         if (active)
         {
-            BOOL fullscreen, captured;
-            NSScreen* screen;
+            BOOL captured;
 
-            screen = screen_covered_by_rect([self frame], [NSScreen screens]);
-            fullscreen = (screen != nil);
             captured = (screen || [self screen]) && [[WineApplicationController sharedController] areDisplaysCaptured];
 
             if (captured || fullscreen)
