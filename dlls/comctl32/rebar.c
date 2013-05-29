@@ -1052,14 +1052,6 @@ REBAR_MoveChildWindows (const REBAR_INFO *infoPtr, UINT start, UINT endplus)
 		lpBand->rcChild = rbcz.rcChild;  /* *** ??? */
             }
 
-	    /* native (IE4 in "Favorites" frame **1) does:
-	     *   SetRect (&rc, -1, -1, -1, -1)
-	     *   EqualRect (&rc,band->rc???)
-	     *   if ret==0
-	     *     CopyRect (band->rc????, &rc)
-	     *     set flag outside of loop
-	     */
-
 	    GetClassNameW (lpBand->hwndChild, szClassName, sizeof(szClassName)/sizeof(szClassName[0]));
 	    if (!lstrcmpW (szClassName, strComboBox) ||
 		!lstrcmpW (szClassName, WC_COMBOBOXEXW)) {
@@ -1111,15 +1103,6 @@ REBAR_MoveChildWindows (const REBAR_INFO *infoPtr, UINT start, UINT endplus)
 
     if (infoPtr->DoRedraw)
 	UpdateWindow (infoPtr->hwndSelf);
-
-    /* native (from **1 above) does:
-     *      UpdateWindow(rebar)
-     *      REBAR_ForceResize
-     *      RBN_HEIGHTCHANGE if necessary
-     *      if ret from any EqualRect was 0
-     *         Goto "BeginDeferWindowPos"
-     */
-
 }
 
 /* Returns the next visible band (the first visible band in [i+1; infoPtr->uNumBands) )
@@ -3314,29 +3297,6 @@ REBAR_NCCreate (HWND hwnd, const CREATESTRUCTW *cs)
         infoPtr->hFont = infoPtr->hDefaultFont = tfont;
     }
 
-/* native does:
-	    GetSysColor (numerous);
-	    GetSysColorBrush (numerous) (see WM_SYSCOLORCHANGE);
-	   *GetStockObject (SYSTEM_FONT);
-	   *SetWindowLong (hwnd, 0, info ptr);
-	   *WM_NOTIFYFORMAT;
-	   *SetWindowLong (hwnd, GWL_STYLE, style+0x10000001);
-                                    WS_VISIBLE = 0x10000000;
-                                    CCS_TOP    = 0x00000001;
-	   *SystemParametersInfo (SPI_GETNONCLIENTMETRICS...);
-	   *CreateFontIndirect (lfCaptionFont from above);
-	    GetDC ();
-	    SelectObject (hdc, fontabove);
-	    GetTextMetrics (hdc, );    guessing is tmHeight
-	    SelectObject (hdc, oldfont);
-	    ReleaseDC ();
-	    GetWindowRect ();
-	    MapWindowPoints (0, parent, rectabove, 2);
-	    GetWindowRect ();
-	    GetClientRect ();
-	    ClientToScreen (clientrect);
-	    SetWindowPos (hwnd, 0, 0, 0, 0, 0, SWP_NOZORDER);
- */
     return TRUE;
 }
 

@@ -1003,23 +1003,13 @@ static LRESULT COMBOEX_Create (HWND hwnd, CREATESTRUCTA const *cs)
     /* (allow space for the icons).                                     */
 
     infoPtr->hwndCombo = CreateWindowW (WC_COMBOBOXW, NIL,
-			 /* following line added to match native */
                          WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_VSCROLL |
                          CBS_NOINTEGRALHEIGHT | CBS_DROPDOWNLIST |
-			 /* was base and is necessary */
 			 WS_CHILD | WS_VISIBLE | CBS_OWNERDRAWFIXED |
 			 GetWindowLongW (hwnd, GWL_STYLE),
 			 cs->y, cs->x, cs->cx, cs->cy, hwnd,
 			 (HMENU) GetWindowLongPtrW (hwnd, GWLP_ID),
 			 (HINSTANCE)GetWindowLongPtrW (hwnd, GWLP_HINSTANCE), NULL);
-
-    /*
-     * native does the following at this point according to trace:
-     *  GetWindowThreadProcessId(hwndCombo,0)
-     *  GetCurrentThreadId()
-     *  GetWindowThreadProcessId(hwndCombo, &???)
-     *  GetCurrentProcessId()
-     */
 
     SetWindowSubclass(infoPtr->hwndCombo, COMBOEX_ComboWndProc, COMBO_SUBCLASSID,
                       (DWORD_PTR)hwnd);
@@ -1037,12 +1027,6 @@ static LRESULT COMBOEX_Create (HWND hwnd, CREATESTRUCTA const *cs)
 		    (HMENU) GetWindowLongPtrW (hwnd, GWLP_ID),
 		    (HINSTANCE)GetWindowLongPtrW (hwnd, GWLP_HINSTANCE), NULL);
 
-	/* native does the following at this point according to trace:
-	 *  GetWindowThreadProcessId(hwndEdit,0)
-	 *  GetCurrentThreadId()
-	 *  GetWindowThreadProcessId(hwndEdit, &???)
-	 *  GetCurrentProcessId()
-	 */
 	SetWindowSubclass(infoPtr->hwndEdit, COMBOEX_EditWndProc, EDIT_SUBCLASSID,
 	                  (DWORD_PTR)hwnd);
 
@@ -1117,19 +1101,6 @@ static LRESULT COMBOEX_Command (COMBOEX_INFO *infoPtr, WPARAM wParam)
         return SendMessageW (parent, WM_COMMAND, wParam, (LPARAM)infoPtr->hwndSelf);
     case CBN_CLOSEUP:
 	SendMessageW (parent, WM_COMMAND, wParam, (LPARAM)infoPtr->hwndSelf);
-	/*
-	 * from native trace of first dropdown after typing in URL in IE4
-	 *  CB_GETCURSEL(Combo)
-	 *  GetWindowText(Edit)
-	 *  CB_GETCURSEL(Combo)
-	 *  CB_GETCOUNT(Combo)
-	 *  CB_GETITEMDATA(Combo, n)
-	 *  WM_NOTIFY(parent, CBEN_ENDEDITA|W)
-	 *  CB_GETCURSEL(Combo)
-	 *  CB_SETCURSEL(COMBOEX, n)
-	 *  SetFocus(Combo)
-	 * the rest is supposition
-	 */
 	ShowWindow (infoPtr->hwndEdit, SW_SHOW);
 	InvalidateRect (infoPtr->hwndCombo, 0, TRUE);
 	if (infoPtr->hwndEdit) InvalidateRect (infoPtr->hwndEdit, 0, TRUE);
@@ -1215,17 +1186,6 @@ static LRESULT COMBOEX_Command (COMBOEX_INFO *infoPtr, WPARAM wParam)
 	return SendMessageW (parent, WM_COMMAND, wParam, (LPARAM)infoPtr->hwndSelf);
 
     case CBN_KILLFOCUS:
-	/*
-	 * from native trace:
-	 *
-	 *  pass to parent
-	 *  WM_GETTEXT(Edit, 104)
-	 *  CB_GETCURSEL(Combo) rets -1
-	 *  WM_NOTIFY(CBEN_ENDEDITA) with CBENF_KILLFOCUS
-	 *  CB_GETCURSEL(Combo)
-	 *  InvalidateRect(Combo, 0, 0)
-	 *  return 0
-	 */
 	SendMessageW (parent, WM_COMMAND, wParam, (LPARAM)infoPtr->hwndSelf);
 	if (infoPtr->flags & WCBE_ACTEDIT) {
 	    GetWindowTextW (infoPtr->hwndEdit, wintext, 260);
@@ -1724,9 +1684,6 @@ COMBOEX_EditWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
 	    return DefSubclassProc(hwnd, uMsg, wParam, lParam);
 
 	case WM_ERASEBKGND:
-	    /*
-	     * The following was determined by traces of the native
-	     */
             hDC = (HDC) wParam;
 	    obkc = SetBkColor (hDC, comctl32_color.clrWindow);
             GetClientRect (hwnd, &rect);
@@ -1742,23 +1699,6 @@ COMBOEX_EditWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
 	    switch ((INT)wParam)
 	    {
 	    case VK_ESCAPE:
-		/* native version seems to do following for COMBOEX */
-		/*
-		 *   GetWindowTextW(Edit,&?, 0x104)             x
-		 *   CB_GETCURSEL to Combo rets -1              x
-		 *   WM_NOTIFY to COMBOEX parent (rebar)        x
-		 *     (CBEN_ENDEDIT{A|W}
-		 *      fChanged = FALSE                        x
-		 *      inewSelection = -1                      x
-		 *      txt="www.hoho"                          x
-		 *      iWhy = 3                                x
-		 *   CB_GETCURSEL to Combo rets -1              x
-		 *   InvalidateRect(Combo, 0)                   x
-		 *   WM_SETTEXT to Edit                         x
-		 *   EM_SETSEL to Edit (0,0)                    x
-		 *   EM_SETSEL to Edit (0,-1)                   x
-		 *   RedrawWindow(Combo, 0, 0, 5)               x
-		 */
 		TRACE("special code for VK_ESCAPE\n");
 
 		GetWindowTextW (infoPtr->hwndEdit, edit_text, 260);
@@ -1783,27 +1723,6 @@ COMBOEX_EditWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
 		break;
 
 	    case VK_RETURN:
-		/* native version seems to do following for COMBOEX */
-		/*
-		 *   GetWindowTextW(Edit,&?, 0x104)             x
-		 *   CB_GETCURSEL to Combo  rets -1             x
-		 *   CB_GETCOUNT to Combo  rets 0
-		 *   if >0 loop
-		 *       CB_GETITEMDATA to match
-		 * *** above 3 lines simulated by FindItem      x
-		 *   WM_NOTIFY to COMBOEX parent (rebar)        x
-		 *     (CBEN_ENDEDIT{A|W}                       x
-		 *        fChanged = TRUE (-1)                  x
-		 *        iNewSelection = -1 or selected        x
-		 *        txt=                                  x
-		 *        iWhy = 2 (CBENF_RETURN)               x
-		 *   CB_GETCURSEL to Combo  rets -1             x
-		 *   if -1 send CB_SETCURSEL to Combo -1        x
-		 *   InvalidateRect(Combo, 0, 0)                x
-		 *   SetFocus(Edit)                             x
-		 *   CallWindowProc(406615a8, Edit, 0x100, 0xd, 0x1c0001)
-		 */
-
 		TRACE("special code for VK_RETURN\n");
 
 		GetWindowTextW (infoPtr->hwndEdit, edit_text, 260);
@@ -1923,9 +1842,6 @@ COMBOEX_ComboWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
 	    return DefSubclassProc(hwnd, uMsg, wParam, lParam);
 
     case WM_ERASEBKGND:
-	    /*
-	     * The following was determined by traces of the native
-	     */
             hDC = (HDC) wParam;
 	    obkc = SetBkColor (hDC, comctl32_color.clrWindow);
             GetClientRect (hwnd, &rect);
@@ -1994,18 +1910,6 @@ COMBOEX_ComboWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
 		return 0;
 
 	    case EN_KILLFOCUS:
-		/*
-		 * Native does:
-		 *
-		 *  GetFocus() retns AA
-		 *  GetWindowTextW(Edit)
-		 *  CB_GETCURSEL(Combo) (got -1)
-		 *  WM_NOTIFY(CBEN_ENDEDITA) with CBENF_KILLFOCUS
-		 *  CB_GETCURSEL(Combo) (got -1)
-		 *  InvalidateRect(Combo, 0, 0)
-		 *  WM_KILLFOCUS(Combo, AA)
-		 *  return 0;
-		 */
 		focusedhwnd = GetFocus();
 		if (infoPtr->flags & WCBE_ACTEDIT) {
 		    GetWindowTextW (infoPtr->hwndEdit, edit_text, 260);
@@ -2025,21 +1929,6 @@ COMBOEX_ComboWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
 		return 0;
 
 	    case EN_SETFOCUS: {
-		/*
-		 * For EN_SETFOCUS this issues the same calls and messages
-		 *  as the native seems to do.
-		 *
-		 * for some cases however native does the following:
-		 *   (noticed after SetFocus during LBUTTONDOWN on
-		 *    on dropdown arrow)
-		 *  WM_GETTEXTLENGTH (Edit);
-		 *  WM_GETTEXT (Edit, len+1, str);
-		 *  EM_SETSEL (Edit, 0, 0);
-		 *  WM_GETTEXTLENGTH (Edit);
-		 *  WM_GETTEXT (Edit, len+1, str);
-		 *  EM_SETSEL (Edit, 0, len);
-		 *  WM_NOTIFY (parent, CBEN_BEGINEDIT)
-		 */
 		NMHDR hdr;
 
 		SendMessageW (infoPtr->hwndEdit, EM_SETSEL, 0, 0);
@@ -2051,10 +1940,6 @@ COMBOEX_ComboWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
 	        }
 
 	    case EN_CHANGE: {
-		/*
-		 * For EN_CHANGE this issues the same calls and messages
-		 *  as the native seems to do.
-		 */
 		LPCWSTR lastwrk;
                 cmp_func_t cmptext = get_cmp_func(infoPtr);
 
@@ -2090,37 +1975,6 @@ COMBOEX_ComboWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
 	        }
 
 	    case LBN_SELCHANGE:
-		/*
-		 * Therefore from traces there is no additional code here
-		 */
-
-		/*
-		 * Using native COMCTL32 gets the following:
-		 *  1 == SHDOCVW.DLL  issues call/message
-		 *  2 == COMCTL32.DLL  issues call/message
-		 *  3 == WINE  issues call/message
-		 *
-		 *
-		 * for LBN_SELCHANGE:
-		 *    1  CB_GETCURSEL(ComboEx)
-		 *    1  CB_GETDROPPEDSTATE(ComboEx)
-		 *    1  CallWindowProc( *2* for WM_COMMAND(LBN_SELCHANGE)
-		 *    2  CallWindowProc( *3* for WM_COMMAND(LBN_SELCHANGE)
-		 **   call CBRollUp( xxx, TRUE for LBN_SELCHANGE, TRUE)
-		 *    3  WM_COMMAND(ComboEx, CBN_SELENDOK)
-		 *      WM_USER+49(ComboLB, 1,0)  <=============!!!!!!!!!!!
-		 *    3  ShowWindow(ComboLB, SW_HIDE)
-		 *    3  RedrawWindow(Combo,  RDW_UPDATENOW)
-		 *    3  WM_COMMAND(ComboEX, CBN_CLOSEUP)
-		 **   end of CBRollUp
-		 *    3  WM_COMMAND(ComboEx, CBN_SELCHANGE)  (echo to parent)
-		 *    ?  LB_GETCURSEL              <==|
-		 *    ?  LB_GETTEXTLEN                |
-		 *    ?  LB_GETTEXT                   | Needs to be added to
-		 *    ?  WM_CTLCOLOREDIT(ComboEx)     | Combo processing
-		 *    ?  LB_GETITEMDATA               |
-		 *    ?  WM_DRAWITEM(ComboEx)      <==|
-		 */
 	    default:
 		break;
 	    }/* fall through */
