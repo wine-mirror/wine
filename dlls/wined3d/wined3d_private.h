@@ -1214,6 +1214,7 @@ extern const struct fragment_pipeline glsl_fragment_pipe DECLSPEC_HIDDEN;
 
 extern const struct wined3d_vertex_pipe_ops none_vertex_pipe DECLSPEC_HIDDEN;
 extern const struct wined3d_vertex_pipe_ops ffp_vertex_pipe DECLSPEC_HIDDEN;
+extern const struct wined3d_vertex_pipe_ops glsl_vertex_pipe DECLSPEC_HIDDEN;
 
 /* "Base" state table */
 HRESULT compile_state_table(struct StateEntry *StateTable, APPLYSTATEFUNC **dev_multistate_funcs,
@@ -1680,6 +1681,7 @@ struct ffp_frag_desc
 };
 
 extern const struct wine_rb_functions wined3d_ffp_frag_program_rb_functions DECLSPEC_HIDDEN;
+extern const struct wine_rb_functions wined3d_ffp_vertex_program_rb_functions DECLSPEC_HIDDEN;
 extern const struct wined3d_parent_ops wined3d_null_parent_ops DECLSPEC_HIDDEN;
 
 void gen_ffp_frag_op(const struct wined3d_context *context, const struct wined3d_state *state,
@@ -1688,6 +1690,48 @@ const struct ffp_frag_desc *find_ffp_frag_shader(const struct wine_rb_tree *frag
         const struct ffp_frag_settings *settings) DECLSPEC_HIDDEN;
 void add_ffp_frag_shader(struct wine_rb_tree *shaders, struct ffp_frag_desc *desc) DECLSPEC_HIDDEN;
 void wined3d_get_draw_rect(const struct wined3d_state *state, RECT *rect) DECLSPEC_HIDDEN;
+
+enum wined3d_ffp_vs_fog_mode
+{
+    WINED3D_FFP_VS_FOG_OFF      = 0,
+    WINED3D_FFP_VS_FOG_FOGCOORD = 1,
+    WINED3D_FFP_VS_FOG_DEPTH    = 2,
+    WINED3D_FFP_VS_FOG_RANGE    = 3,
+};
+
+#define WINED3D_FFP_TCI_SHIFT               16
+#define WINED3D_FFP_TCI_MASK                0xff
+
+#define WINED3D_FFP_LIGHT_TYPE_SHIFT(idx)   (3 * (idx))
+#define WINED3D_FFP_LIGHT_TYPE_MASK         0x7
+
+struct wined3d_ffp_vs_settings
+{
+    DWORD light_type      : 24; /* MAX_ACTIVE_LIGHTS, 8 * 3 */
+    DWORD diffuse_source  : 2;
+    DWORD emission_source : 2;
+    DWORD ambient_source  : 2;
+    DWORD specular_source : 2;
+
+    DWORD normal          : 1;
+    DWORD normalize       : 1;
+    DWORD lighting        : 1;
+    DWORD localviewer     : 1;
+    DWORD fog_mode        : 2;
+    DWORD texcoords       : 8;  /* MAX_TEXTURES */
+    DWORD padding         : 18;
+
+    BYTE texgen[MAX_TEXTURES];
+};
+
+struct wined3d_ffp_vs_desc
+{
+    struct wine_rb_entry entry;
+    struct wined3d_ffp_vs_settings settings;
+};
+
+void wined3d_ffp_get_vs_settings(const struct wined3d_state *state, const struct wined3d_stream_info *si,
+        struct wined3d_ffp_vs_settings *settings) DECLSPEC_HIDDEN;
 
 struct wined3d
 {
@@ -2565,6 +2609,45 @@ void state_fogstartend(struct wined3d_context *context,
 void state_fog_fragpart(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 void state_srgbwrite(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
+
+void sampler_texmatrix(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
+void state_specularenable(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
+void transform_world(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
+void transform_view(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
+void transform_projection(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
+void transform_texture(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
+void state_ambient(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
+void viewport_vertexpart(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
+void state_clipping(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
+void light(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
+void state_fog_vertexpart(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
+void vertexdeclaration(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
+void clipplane(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
+void state_psizemin_w(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
+void state_psizemin_ext(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
+void state_psizemin_arb(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
+void state_pointsprite_w(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
+void state_pointsprite(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
+void state_pscale(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 
 BOOL getColorBits(const struct wined3d_format *format,

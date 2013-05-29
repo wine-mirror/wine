@@ -2316,6 +2316,14 @@ static enum wined3d_pci_device wined3d_guess_card(const struct wined3d_gl_info *
     return select_card_fallback_nvidia(gl_info);
 }
 
+static const struct wined3d_vertex_pipe_ops *select_vertex_implementation(const struct wined3d_gl_info *gl_info,
+        const struct wined3d_shader_backend_ops *shader_backend_ops)
+{
+    if (shader_backend_ops == &glsl_shader_backend)
+        return &glsl_vertex_pipe;
+    return &ffp_vertex_pipe;
+}
+
 static const struct fragment_pipeline *select_fragment_implementation(const struct wined3d_gl_info *gl_info,
         const struct wined3d_shader_backend_ops *shader_backend_ops)
 {
@@ -2843,7 +2851,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     checkGLcall("extension detection");
 
     adapter->shader_backend = select_shader_backend(gl_info);
-    adapter->vertex_pipe = &ffp_vertex_pipe;
+    adapter->vertex_pipe = select_vertex_implementation(gl_info, adapter->shader_backend);
     adapter->fragment_pipe = select_fragment_implementation(gl_info, adapter->shader_backend);
     adapter->blitter = select_blit_implementation(gl_info, adapter->shader_backend);
 

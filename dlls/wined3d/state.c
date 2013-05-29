@@ -271,7 +271,7 @@ static void state_zfunc(struct wined3d_context *context, const struct wined3d_st
     checkGLcall("glDepthFunc");
 }
 
-static void state_ambient(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+void state_ambient(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     float col[4];
@@ -587,7 +587,7 @@ static void shaderconstant(struct wined3d_context *context, const struct wined3d
     context->load_constants = 1;
 }
 
-static void state_clipping(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+void state_clipping(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     DWORD enable  = 0xffffffff;
@@ -654,7 +654,7 @@ static void state_clipping(struct wined3d_context *context, const struct wined3d
     checkGLcall("clip plane disable");
 }
 
-static void state_specularenable(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+void state_specularenable(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     /* Originally this used glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL,GL_SEPARATE_SPECULAR_COLOR)
@@ -950,7 +950,7 @@ static void state_stencilwrite(struct wined3d_context *context, const struct win
     checkGLcall("glStencilMask");
 }
 
-static void state_fog_vertexpart(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+void state_fog_vertexpart(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
@@ -1431,7 +1431,7 @@ static void state_normalize(struct wined3d_context *context, const struct wined3
     }
 }
 
-static void state_psizemin_w(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+void state_psizemin_w(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     union {
         DWORD d;
@@ -1451,7 +1451,7 @@ static void state_psizemin_w(struct wined3d_context *context, const struct wined
 
 }
 
-static void state_psizemin_ext(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+void state_psizemin_ext(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     union
@@ -1474,7 +1474,7 @@ static void state_psizemin_ext(struct wined3d_context *context, const struct win
     checkGLcall("glPointParameterfEXT(...)");
 }
 
-static void state_psizemin_arb(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+void state_psizemin_arb(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     union
@@ -1497,7 +1497,7 @@ static void state_psizemin_arb(struct wined3d_context *context, const struct win
     checkGLcall("glPointParameterfARB(...)");
 }
 
-static void state_pscale(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+void state_pscale(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     /* TODO: Group this with the viewport */
@@ -1672,7 +1672,7 @@ static void state_lastpixel(struct wined3d_context *context, const struct wined3
     }
 }
 
-static void state_pointsprite_w(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+void state_pointsprite_w(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     static BOOL warned;
 
@@ -1685,7 +1685,7 @@ static void state_pointsprite_w(struct wined3d_context *context, const struct wi
     }
 }
 
-static void state_pointsprite(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+void state_pointsprite(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
@@ -3295,7 +3295,7 @@ void tex_alphaop(struct wined3d_context *context, const struct wined3d_state *st
     }
 }
 
-static void transform_texture(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+void transform_texture(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     DWORD texUnit = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
     const struct wined3d_device *device = context->swapchain->device;
@@ -3599,7 +3599,7 @@ static void tex_bumpenvlscale(struct wined3d_context *context, const struct wine
         context->load_constants = 1;
 }
 
-static void sampler_texmatrix(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+void sampler_texmatrix(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const DWORD sampler = state_id - STATE_SAMPLER(0);
     const struct wined3d_texture *texture = state->textures[sampler];
@@ -3763,7 +3763,7 @@ static void shader_bumpenvmat(struct wined3d_context *context, const struct wine
         context->load_constants = 1;
 }
 
-static void transform_world(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+void transform_world(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
@@ -3791,7 +3791,7 @@ static void transform_world(struct wined3d_context *context, const struct wined3
     }
 }
 
-static void clipplane(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+void clipplane(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     UINT index = state_id - STATE_CLIPPLANE(0);
@@ -3919,7 +3919,7 @@ static void state_vertexblend(struct wined3d_context *context, const struct wine
     }
 }
 
-static void transform_view(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+void transform_view(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_light_info *light = NULL;
@@ -3978,7 +3978,7 @@ static void transform_view(struct wined3d_context *context, const struct wined3d
     }
 }
 
-static void transform_projection(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+void transform_projection(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
@@ -4536,7 +4536,7 @@ static void vdecl_miscpart(struct wined3d_context *context, const struct wined3d
     streamsrc(context, state, STATE_STREAMSRC);
 }
 
-static void vertexdeclaration(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+void vertexdeclaration(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_device *device = context->swapchain->device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
@@ -4698,10 +4698,13 @@ static void viewport_miscpart(struct wined3d_context *context, const struct wine
                 vp.width, vp.height);
     }
 
+    if (!isStateDirty(context, STATE_RENDER(WINED3D_RS_POINTSCALEENABLE)))
+        state_pscale(context, state, STATE_RENDER(WINED3D_RS_POINTSCALEENABLE));
+
     checkGLcall("glViewport");
 }
 
-static void viewport_vertexpart(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+void viewport_vertexpart(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     if (!isStateDirty(context, STATE_TRANSFORM(WINED3D_TS_PROJECTION)))
         transform_projection(context, state, STATE_TRANSFORM(WINED3D_TS_PROJECTION));
@@ -4711,7 +4714,7 @@ static void viewport_vertexpart(struct wined3d_context *context, const struct wi
     context->load_constants = 1;
 }
 
-static void light(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+void light(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     UINT Index = state_id - STATE_ACTIVELIGHT(0);

@@ -3521,6 +3521,102 @@ const struct wine_rb_functions wined3d_ffp_frag_program_rb_functions =
     ffp_frag_program_key_compare,
 };
 
+void wined3d_ffp_get_vs_settings(const struct wined3d_state *state, const struct wined3d_stream_info *si,
+        struct wined3d_ffp_vs_settings *settings)
+{
+    unsigned int coord_idx, i;
+
+    if (si->position_transformed)
+    {
+        memset(settings, 0, sizeof(*settings));
+
+        if (!state->render_states[WINED3D_RS_FOGENABLE])
+            settings->fog_mode = WINED3D_FFP_VS_FOG_OFF;
+        else if (state->render_states[WINED3D_RS_FOGTABLEMODE] != WINED3D_FOG_NONE)
+            settings->fog_mode = WINED3D_FFP_VS_FOG_DEPTH;
+        else
+            settings->fog_mode = WINED3D_FFP_VS_FOG_FOGCOORD;
+
+        for (i = 0; i < MAX_TEXTURES; ++i)
+        {
+            coord_idx = state->texture_states[i][WINED3D_TSS_TEXCOORD_INDEX];
+            if (coord_idx < MAX_TEXTURES && (si->use_map & (1 << (WINED3D_FFP_TEXCOORD0 + coord_idx))))
+                settings->texcoords |= 1 << i;
+            settings->texgen[i] = (state->texture_states[i][WINED3D_TSS_TEXCOORD_INDEX] >> WINED3D_FFP_TCI_SHIFT)
+                    & WINED3D_FFP_TCI_MASK;
+        }
+        return;
+    }
+
+    settings->normal = !!(si->use_map & (1 << WINED3D_FFP_NORMAL));
+    settings->normalize = settings->normal && state->render_states[WINED3D_RS_NORMALIZENORMALS];
+    settings->lighting = !!state->render_states[WINED3D_RS_LIGHTING];
+    settings->localviewer = !!state->render_states[WINED3D_RS_LOCALVIEWER];
+
+    if (state->render_states[WINED3D_RS_COLORVERTEX] && (si->use_map & (1 << WINED3D_FFP_DIFFUSE)))
+    {
+        settings->diffuse_source = state->render_states[WINED3D_RS_DIFFUSEMATERIALSOURCE];
+        settings->emission_source = state->render_states[WINED3D_RS_EMISSIVEMATERIALSOURCE];
+        settings->ambient_source = state->render_states[WINED3D_RS_AMBIENTMATERIALSOURCE];
+        settings->specular_source = state->render_states[WINED3D_RS_SPECULARMATERIALSOURCE];
+    }
+    else
+    {
+        settings->diffuse_source = WINED3D_MCS_MATERIAL;
+        settings->emission_source = WINED3D_MCS_MATERIAL;
+        settings->ambient_source = WINED3D_MCS_MATERIAL;
+        settings->specular_source = WINED3D_MCS_MATERIAL;
+    }
+
+    settings->texcoords = 0;
+    for (i = 0; i < MAX_TEXTURES; ++i)
+    {
+        coord_idx = state->texture_states[i][WINED3D_TSS_TEXCOORD_INDEX];
+        if (coord_idx < MAX_TEXTURES && (si->use_map & (1 << (WINED3D_FFP_TEXCOORD0 + coord_idx))))
+            settings->texcoords |= 1 << i;
+        settings->texgen[i] = (state->texture_states[i][WINED3D_TSS_TEXCOORD_INDEX] >> WINED3D_FFP_TCI_SHIFT)
+                & WINED3D_FFP_TCI_MASK;
+    }
+
+    settings->light_type = 0;
+    for (i = 0; i < MAX_ACTIVE_LIGHTS; ++i)
+    {
+        if (state->lights[i])
+            settings->light_type |= (state->lights[i]->OriginalParms.type
+                    & WINED3D_FFP_LIGHT_TYPE_MASK) << WINED3D_FFP_LIGHT_TYPE_SHIFT(i);
+    }
+
+    if (!state->render_states[WINED3D_RS_FOGENABLE])
+        settings->fog_mode = WINED3D_FFP_VS_FOG_OFF;
+    else if (state->render_states[WINED3D_RS_FOGTABLEMODE] != WINED3D_FOG_NONE)
+        settings->fog_mode = WINED3D_FFP_VS_FOG_DEPTH;
+    else if (state->render_states[WINED3D_RS_FOGVERTEXMODE] == WINED3D_FOG_NONE)
+        settings->fog_mode = WINED3D_FFP_VS_FOG_FOGCOORD;
+    else if (state->render_states[WINED3D_RS_RANGEFOGENABLE])
+        settings->fog_mode = WINED3D_FFP_VS_FOG_RANGE;
+    else
+        settings->fog_mode = WINED3D_FFP_VS_FOG_DEPTH;
+
+    settings->padding = 0;
+}
+
+static int wined3d_ffp_vertex_program_key_compare(const void *key, const struct wine_rb_entry *entry)
+{
+    const struct wined3d_ffp_vs_settings *ka = key;
+    const struct wined3d_ffp_vs_settings *kb = &WINE_RB_ENTRY_VALUE(entry,
+            const struct wined3d_ffp_vs_desc, entry)->settings;
+
+    return memcmp(ka, kb, sizeof(*ka));
+}
+
+const struct wine_rb_functions wined3d_ffp_vertex_program_rb_functions =
+{
+    wined3d_rb_alloc,
+    wined3d_rb_realloc,
+    wined3d_rb_free,
+    wined3d_ffp_vertex_program_key_compare,
+};
+
 UINT wined3d_log2i(UINT32 x)
 {
     static const UINT l[] =
