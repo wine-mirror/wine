@@ -7353,12 +7353,12 @@ static void test_update_region(void)
 
     rgn1 = CreateRectRgn(0, 0, 0, 0);
     ok(GetUpdateRgn(parent, rgn1, FALSE) == NULLREGION,
-            "has invalid area after ValidRgn(NULL)\n");
+            "has invalid area after ValidateRgn(NULL)\n");
     GetUpdateRgn(hwnd, rgn1, FALSE);
     rgn2 = CreateRectRgnIndirect(&rc);
     ok(EqualRgn(rgn1, rgn2), "assigned and retrieved update regions are different\n");
     ok(GetUpdateRgn(child, rgn2, FALSE) == NULLREGION,
-            "has invalid area after ValidRgn(NULL)\n");
+            "has invalid area after ValidateRgn(NULL)\n");
 
     SetWindowPos(hwnd, 0, wnd_orig.x, wnd_orig.y,  0, 0,
             SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSIZE);
