@@ -3410,14 +3410,14 @@ static void test_TypeInfo2_GetContainingTypeLib(void)
     Index = 888;
     hr = ITypeInfo2_GetContainingTypeLib(ti2, &tl, &Index);
     ok_ole_success(hr, ITypeInfo2_GetContainingTypeLib);
-    ok(tl != NULL, "ITypeInfo2_GetContainingTypeLib returned empty TypeLib");
+    ok(tl != NULL, "ITypeInfo2_GetContainingTypeLib returned empty TypeLib\n");
     ok(Index == 0, "ITypeInfo2_GetContainingTypeLib returned Index = %u, expected 0\n", Index);
     if(tl) ITypeLib_Release(tl);
 
     tl = NULL;
     hr = ITypeInfo2_GetContainingTypeLib(ti2, &tl, NULL);
     ok_ole_success(hr, ITypeInfo2_GetContainingTypeLib);
-    ok(tl != NULL, "ITypeInfo2_GetContainingTypeLib returned empty TypeLib");
+    ok(tl != NULL, "ITypeInfo2_GetContainingTypeLib returned empty TypeLib\n");
     if(tl) ITypeLib_Release(tl);
 
     Index = 888;
