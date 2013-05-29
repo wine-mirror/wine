@@ -110,7 +110,6 @@ typedef struct tagLookInInfo
  */
 
 /* Draw item constant */
-#define ICONWIDTH 18
 #define XTEXTOFFSET 3
 
 /* AddItem flags*/
@@ -3182,7 +3181,8 @@ static void FILEDLG95_LOOKIN_Init(HWND hwndCombo)
   IShellFolder	*psfRoot, *psfDrives;
   IEnumIDList	*lpeRoot, *lpeDrives;
   LPITEMIDLIST	pidlDrives, pidlTmp, pidlTmp1, pidlAbsTmp;
-
+  HDC hdc;
+  TEXTMETRICW tm;
   LookInInfos *liInfos = MemAlloc(sizeof(LookInInfos));
 
   TRACE("\n");
@@ -3191,10 +3191,15 @@ static void FILEDLG95_LOOKIN_Init(HWND hwndCombo)
 
   SetPropA(hwndCombo, LookInInfosStr, liInfos);
 
+  hdc = GetDC( hwndCombo );
+  SelectObject( hdc, (HFONT)SendMessageW( hwndCombo, WM_GETFONT, 0, 0 ));
+  GetTextMetricsW( hdc, &tm );
+  ReleaseDC( hwndCombo, hdc );
+
   /* set item height for both text field and listbox */
-  CBSetItemHeight(hwndCombo,-1,GetSystemMetrics(SM_CYSMICON));
-  CBSetItemHeight(hwndCombo,0,GetSystemMetrics(SM_CYSMICON));
-   
+  CBSetItemHeight( hwndCombo, -1, max( tm.tmHeight, GetSystemMetrics(SM_CYSMICON) ));
+  CBSetItemHeight( hwndCombo, 0, max( tm.tmHeight, GetSystemMetrics(SM_CYSMICON) ));
+
   /* Turn on the extended UI for the combo box like Windows does */
   CBSetExtendedUI(hwndCombo, TRUE);
 
@@ -3269,6 +3274,8 @@ static LRESULT FILEDLG95_LOOKIN_DrawItem(LPDRAWITEMSTRUCT pDIStruct)
   TEXTMETRICW tm;
   LPSFOLDER tmpFolder;
   LookInInfos *liInfos = GetPropA(pDIStruct->hwndItem,LookInInfosStr);
+  UINT shgfi_flags = SHGFI_PIDL | SHGFI_OPENICON | SHGFI_SYSICONINDEX | SHGFI_DISPLAYNAME;
+  UINT icon_width, icon_height;
 
   TRACE("\n");
 
@@ -3280,25 +3287,24 @@ static LRESULT FILEDLG95_LOOKIN_DrawItem(LPDRAWITEMSTRUCT pDIStruct)
     return 0;
 
 
+  icon_width = GetSystemMetrics(SM_CXICON);
+  icon_height = GetSystemMetrics(SM_CYICON);
+  if (pDIStruct->rcItem.bottom - pDIStruct->rcItem.top < icon_height)
+  {
+      icon_width = GetSystemMetrics(SM_CXSMICON);
+      icon_height = GetSystemMetrics(SM_CYSMICON);
+      shgfi_flags |= SHGFI_SMALLICON;
+  }
+
   if(pDIStruct->itemID == liInfos->uSelectedItem)
   {
     ilItemImage = (HIMAGELIST) SHGetFileInfoW ((LPCWSTR) tmpFolder->pidlItem,
-                                               0,
-                                               &sfi,
-                                               sizeof (sfi),
-                                               SHGFI_PIDL | SHGFI_SMALLICON |
-                                               SHGFI_OPENICON | SHGFI_SYSICONINDEX    |
-                                               SHGFI_DISPLAYNAME );
+                                               0, &sfi, sizeof (sfi), shgfi_flags );
   }
   else
   {
     ilItemImage = (HIMAGELIST) SHGetFileInfoW ((LPCWSTR) tmpFolder->pidlItem,
-                                                  0,
-                                                  &sfi,
-                                                  sizeof (sfi),
-                                                  SHGFI_PIDL | SHGFI_SMALLICON |
-                                                  SHGFI_SYSICONINDEX |
-                                                  SHGFI_DISPLAYNAME);
+                                               0, &sfi, sizeof (sfi), shgfi_flags );
   }
 
   /* Is this item selected ? */
@@ -3320,11 +3326,7 @@ static LRESULT FILEDLG95_LOOKIN_DrawItem(LPDRAWITEMSTRUCT pDIStruct)
   {
     iIndentation = 0;
     ilItemImage = (HIMAGELIST) SHGetFileInfoW ((LPCWSTR) tmpFolder->pidlItem,
-                                                0,
-                                                &sfi,
-                                                sizeof (sfi),
-                                                SHGFI_PIDL | SHGFI_SMALLICON | SHGFI_OPENICON
-                                                | SHGFI_SYSICONINDEX | SHGFI_DISPLAYNAME  );
+                                               0, &sfi, sizeof (sfi), shgfi_flags );
 
   }
   else
@@ -3334,17 +3336,17 @@ static LRESULT FILEDLG95_LOOKIN_DrawItem(LPDRAWITEMSTRUCT pDIStruct)
   /* Draw text and icon */
 
   /* Initialise the icon display area */
-  rectIcon.left = pDIStruct->rcItem.left + ICONWIDTH/2 * iIndentation;
-  rectIcon.top = pDIStruct->rcItem.top;
-  rectIcon.right = rectIcon.left + ICONWIDTH;
-  rectIcon.bottom = pDIStruct->rcItem.bottom;
+  rectIcon.left = pDIStruct->rcItem.left + 1 + icon_width/2 * iIndentation;
+  rectIcon.top = (pDIStruct->rcItem.top + pDIStruct->rcItem.bottom - icon_height) / 2;
+  rectIcon.right = rectIcon.left + icon_width + XTEXTOFFSET;
+  rectIcon.bottom = (pDIStruct->rcItem.top + pDIStruct->rcItem.bottom + icon_height) / 2;
 
   /* Initialise the text display area */
   GetTextMetricsW(pDIStruct->hDC, &tm);
   rectText.left = rectIcon.right;
   rectText.top =
 	  (pDIStruct->rcItem.top + pDIStruct->rcItem.bottom - tm.tmHeight) / 2;
-  rectText.right = pDIStruct->rcItem.right + XTEXTOFFSET;
+  rectText.right = pDIStruct->rcItem.right;
   rectText.bottom =
 	  (pDIStruct->rcItem.top + pDIStruct->rcItem.bottom + tm.tmHeight) / 2;
 

@@ -452,6 +452,7 @@ static HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
 
     /* Set view window control id to 5002 */
     SetWindowLongPtrW(hwndView, GWLP_ID, lst2);
+    SendMessageW( hwndView, WM_SETFONT, SendMessageW( GetParent(hwndView), WM_GETFONT, 0, 0 ), FALSE );
 
     /* Select the new folder in the Look In combo box of the Open file dialog */
     FILEDLG95_LOOKIN_SelectItem(fodInfos->DlgInfos.hwndLookInCB,fodInfos->ShellInfos.pidlAbsCurrent);
