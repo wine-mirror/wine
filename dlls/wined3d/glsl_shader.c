@@ -4977,7 +4977,7 @@ static GLhandleARB shader_glsl_generate_ffp_vertex_shader(struct wined3d_shader_
                 shader_addline(buffer, "r = reflect(normalize(ec_pos.xyz), normal);\n");
                 shader_addline(buffer, "m = 2.0 * length(vec3(r.x, r.y, r.z + 1.0));\n");
                 shader_addline(buffer, "gl_TexCoord[%u] = gl_TextureMatrix[%u]"
-                        " * vec4(r.x / m + 0.5, r.y / m + 0.5, 0.0, 1.0);", i, i);
+                        " * vec4(r.x / m + 0.5, r.y / m + 0.5, 0.0, 1.0);\n", i, i);
                 break;
 
             default:
