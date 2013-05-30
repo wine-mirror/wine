@@ -647,7 +647,6 @@ static WORD parse_TOKEN(parse_buffer * buf)
       char c;
       if (!read_bytes(buf, &c, 1))
         return TOKEN_NONE;
-      /*TRACE("char = '%c'\n", is_space(c) ? ' ' : c);*/
       if ((c == '#') || (c == '/'))
       {
         /* Handle comment (# or //) */
@@ -766,16 +765,14 @@ static WORD parse_TOKEN(parse_buffer * buf)
       case TOKEN_NAME:
         {
           DWORD count;
-          char strname[100];
+          char *name = (char*)buf->value;
 
           if (!read_bytes(buf, &count, 4))
             return TOKEN_ERROR;
-          if (!read_bytes(buf, strname, count))
+          if (!read_bytes(buf, name, count))
             return TOKEN_ERROR;
-          strname[count] = 0;
-          /*TRACE("name = %s\n", strname);*/
-
-          strcpy((char*)buf->value, strname);
+          name[count] = 0;
+          TRACE("name = %s\n", name);
         }
         break;
       case TOKEN_INTEGER:
@@ -784,7 +781,7 @@ static WORD parse_TOKEN(parse_buffer * buf)
 
           if (!read_bytes(buf, &integer, 4))
             return TOKEN_ERROR;
-          /*TRACE("integer = %ld\n", integer);*/
+          TRACE("integer = %u\n", integer);
 
           *(DWORD*)buf->value = integer;
         }
@@ -799,7 +796,7 @@ static WORD parse_TOKEN(parse_buffer * buf)
           sprintf(strguid, CLSIDFMT, class_id.Data1, class_id.Data2, class_id.Data3, class_id.Data4[0],
             class_id.Data4[1], class_id.Data4[2], class_id.Data4[3], class_id.Data4[4], class_id.Data4[5],
             class_id.Data4[6], class_id.Data4[7]);
-          /*TRACE("guid = {%s}\n", strguid);*/
+          TRACE("guid = %s\n", strguid);
 
           *(GUID*)buf->value = class_id;
         }
@@ -808,19 +805,19 @@ static WORD parse_TOKEN(parse_buffer * buf)
         {
           DWORD count;
           WORD tmp_token;
-          char strname[100];
+          char *string = (char*)buf->value;
+
           if (!read_bytes(buf, &count, 4))
             return TOKEN_ERROR;
-          if (!read_bytes(buf, strname, count))
+          if (!read_bytes(buf, string, count))
             return TOKEN_ERROR;
-          strname[count] = 0;
+          string[count] = 0;
           if (!read_bytes(buf, &tmp_token, 2))
             return TOKEN_ERROR;
           if ((tmp_token != TOKEN_COMMA) && (tmp_token != TOKEN_SEMICOLON))
             ERR("No comma or semicolon (got %d)\n", tmp_token);
-          /*TRACE("name = %s\n", strname);*/
+          TRACE("string = %s\n", string);
 
-          strcpy((char*)buf->value, strname);
           token = TOKEN_LPSTR;
         }
         break;
