@@ -360,8 +360,6 @@ MSVCRT_intptr_t CDECL _cwait(int *status, MSVCRT_intptr_t pid, int action)
   HANDLE hPid = (HANDLE)pid;
   int doserrno;
 
-  action = action; /* Remove warning */
-
   if (!WaitForSingleObject(hPid, INFINITE))
   {
     if (status)
