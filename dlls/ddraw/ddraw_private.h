@@ -56,6 +56,10 @@ struct FvfToDecl
     struct wined3d_vertex_declaration *decl;
 };
 
+#define DDRAW_INITIALIZED       0x00000001
+#define DDRAW_D3D_INITIALIZED   0x00000002
+#define DDRAW_RESTORE_MODE      0x00000004
+
 struct ddraw
 {
     /* Interfaces */
@@ -71,12 +75,10 @@ struct ddraw
 
     /* See comment in IDirectDraw::AddRef */
     LONG                    ref7, ref4, ref2, ref3, ref1, numIfaces;
-    BOOL initialized;
 
     struct wined3d *wined3d;
     struct wined3d_device *wined3d_device;
-    BOOL d3d_initialized;
-    BOOL restore_mode;
+    DWORD flags;
 
     struct ddraw_surface *primary;
     RECT primary_lock;

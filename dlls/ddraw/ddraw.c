@@ -392,7 +392,7 @@ void ddraw_destroy_swapchain(struct ddraw *ddraw)
             }
         }
 
-        ddraw->d3d_initialized = FALSE;
+        ddraw->flags &= ~DDRAW_D3D_INITIALIZED;
     }
     else
     {
@@ -586,11 +586,11 @@ static HRESULT ddraw_attach_d3d_device(struct ddraw *ddraw,
 
     /* Set this NOW, otherwise creating the depth stencil surface will cause a
      * recursive loop until ram or emulated video memory is full. */
-    ddraw->d3d_initialized = TRUE;
+    ddraw->flags |= DDRAW_D3D_INITIALIZED;
     hr = wined3d_device_init_3d(ddraw->wined3d_device, swapchain_desc);
     if (FAILED(hr))
     {
-        ddraw->d3d_initialized = FALSE;
+        ddraw->flags &= ~DDRAW_D3D_INITIALIZED;
         return hr;
     }
 
@@ -1025,7 +1025,7 @@ static HRESULT WINAPI ddraw7_SetDisplayMode(IDirectDraw7 *iface, DWORD width, DW
     /* TODO: Lose the primary surface. */
     if (SUCCEEDED(hr = wined3d_set_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &mode)))
     {
-        ddraw->restore_mode = TRUE;
+        ddraw->flags |= DDRAW_RESTORE_MODE;
         restore_mode = TRUE;
     }
 
@@ -1088,7 +1088,7 @@ static HRESULT WINAPI ddraw7_RestoreDisplayMode(IDirectDraw7 *iface)
 
     wined3d_mutex_lock();
 
-    if (!ddraw->restore_mode)
+    if (!(ddraw->flags & DDRAW_RESTORE_MODE))
     {
         wined3d_mutex_unlock();
         return DD_OK;
@@ -1102,7 +1102,7 @@ static HRESULT WINAPI ddraw7_RestoreDisplayMode(IDirectDraw7 *iface)
 
     if (SUCCEEDED(hr = wined3d_set_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &original_mode)))
     {
-        ddraw->restore_mode = FALSE;
+        ddraw->flags &= ~DDRAW_RESTORE_MODE;
         restore_mode = FALSE;
     }
 
@@ -1687,7 +1687,7 @@ static HRESULT WINAPI ddraw7_Initialize(IDirectDraw7 *iface, GUID *guid)
 
     TRACE("iface %p, guid %s.\n", iface, debugstr_guid(guid));
 
-    if (ddraw->initialized)
+    if (ddraw->flags & DDRAW_INITIALIZED)
         return DDERR_ALREADYINITIALIZED;
 
     /* FIXME: To properly take the GUID into account we should call
@@ -1695,7 +1695,7 @@ static HRESULT WINAPI ddraw7_Initialize(IDirectDraw7 *iface, GUID *guid)
     if (guid)
         FIXME("Ignoring guid %s.\n", debugstr_guid(guid));
 
-    ddraw->initialized = TRUE;
+    ddraw->flags |= DDRAW_INITIALIZED;
     return DD_OK;
 }
 
@@ -4473,7 +4473,7 @@ static HRESULT WINAPI d3d7_EvictManagedTextures(IDirect3D7 *iface)
     TRACE("iface %p!\n", iface);
 
     wined3d_mutex_lock();
-    if (ddraw->d3d_initialized)
+    if (ddraw->flags & DDRAW_D3D_INITIALIZED)
         wined3d_device_evict_managed_resources(ddraw->wined3d_device);
     wined3d_mutex_unlock();
 
