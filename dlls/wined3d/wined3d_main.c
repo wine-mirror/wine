@@ -85,6 +85,7 @@ struct wined3d_settings wined3d_settings =
     ~0U,            /* No VS shader model limit by default. */
     ~0U,            /* No GS shader model limit by default. */
     ~0U,            /* No PS shader model limit by default. */
+    FALSE,          /* 3D support enabled by default. */
 };
 
 /* Do not call while under the GL lock. */
@@ -99,6 +100,9 @@ struct wined3d * CDECL wined3d_create(UINT version, DWORD flags)
         ERR("Failed to allocate wined3d object memory.\n");
         return NULL;
     }
+
+    if (version == 7 && wined3d_settings.no_3d)
+        flags |= WINED3D_NO3D;
 
     hr = wined3d_init(object, version, flags);
     if (FAILED(hr))
@@ -309,6 +313,12 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
             TRACE("Limiting GS shader model to %u.\n", wined3d_settings.max_sm_gs);
         if (!get_config_key_dword(hkey, appkey, "MaxShaderModelPS", &wined3d_settings.max_sm_ps))
             TRACE("Limiting PS shader model to %u.\n", wined3d_settings.max_sm_ps);
+        if (!get_config_key(hkey, appkey, "DirectDrawRenderer", buffer, size)
+                && !strcmp(buffer, "gdi"))
+        {
+            TRACE("Disabling 3D support.\n");
+            wined3d_settings.no_3d = TRUE;
+        }
     }
 
     if (appkey) RegCloseKey( appkey );

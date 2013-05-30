@@ -366,7 +366,7 @@ void ddraw_destroy_swapchain(struct ddraw *ddraw)
     wined3d_swapchain_decref(ddraw->wined3d_swapchain);
     ddraw->wined3d_swapchain = NULL;
 
-    if (DefaultSurfaceType == DDRAW_SURFACE_TYPE_OPENGL)
+    if (!(ddraw->flags & DDRAW_NO3D))
     {
         UINT i;
 
@@ -629,7 +629,7 @@ static HRESULT ddraw_create_swapchain(struct ddraw *ddraw, HWND window, BOOL win
     swapchain_desc.device_window = window;
     swapchain_desc.windowed = windowed;
 
-    if (DefaultSurfaceType == DDRAW_SURFACE_TYPE_OPENGL)
+    if (!(ddraw->flags & DDRAW_NO3D))
         hr = ddraw_attach_d3d_device(ddraw, &swapchain_desc);
     else
         hr = wined3d_device_init_gdi(ddraw->wined3d_device, &swapchain_desc);
@@ -850,7 +850,7 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND windo
 
     if (This->wined3d_swapchain)
     {
-        if (DefaultSurfaceType != DDRAW_SURFACE_TYPE_GDI)
+        if (!(This->flags & DDRAW_NO3D))
         {
             restore_state = TRUE;
 
@@ -1206,13 +1206,6 @@ static HRESULT WINAPI ddraw7_GetCaps(IDirectDraw7 *iface, DDCAPS *DriverCaps, DD
     caps.dwSSBCKeyCaps = winecaps.ddraw_caps.ssb_color_key_caps;
     caps.dwSSBFXCaps = winecaps.ddraw_caps.ssb_fx_caps;
 
-    /* Even if wined3d supports 3D rendering, remove the cap if ddraw is
-     * configured not to use it. */
-    if (DefaultSurfaceType == DDRAW_SURFACE_TYPE_GDI)
-    {
-        caps.dwCaps &= ~DDCAPS_3D;
-        caps.ddsCaps.dwCaps &= ~(DDSCAPS_3DDEVICE | DDSCAPS_MIPMAP | DDSCAPS_TEXTURE | DDSCAPS_ZBUFFER);
-    }
     if (winecaps.ddraw_caps.stride_align)
     {
         caps.dwCaps |= DDCAPS_ALIGNSTRIDE;
@@ -2469,9 +2462,9 @@ static HRESULT ddraw_create_surface(struct ddraw *ddraw, DDSURFACEDESC2 *pDDSD,
         DDRAW_dump_surface_desc(pDDSD);
     }
 
-    if ((pDDSD->ddsCaps.dwCaps & DDSCAPS_3DDEVICE) && DefaultSurfaceType != DDRAW_SURFACE_TYPE_OPENGL)
+    if ((pDDSD->ddsCaps.dwCaps & DDSCAPS_3DDEVICE) && (ddraw->flags & DDRAW_NO3D))
     {
-        WARN("The application requests a 3D capable surface, but a non-OpenGL surface type was set in the registry.\n");
+        WARN("The application requests a 3D capable surface, but the ddraw object was created without 3D support.\n");
         /* Do not fail surface creation, only fail 3D device creation. */
     }
 
@@ -5219,6 +5212,7 @@ static const struct wined3d_device_parent_ops ddraw_wined3d_device_parent_ops =
 
 HRESULT ddraw_init(struct ddraw *ddraw, enum wined3d_device_type device_type)
 {
+    WINED3DCAPS caps;
     DWORD flags;
     HRESULT hr;
 
@@ -5235,19 +5229,26 @@ HRESULT ddraw_init(struct ddraw *ddraw, enum wined3d_device_type device_type)
     ddraw->ref7 = 1;
 
     flags = WINED3D_LEGACY_DEPTH_BIAS | WINED3D_VIDMEM_ACCOUNTING;
-    if (DefaultSurfaceType != DDRAW_SURFACE_TYPE_OPENGL)
-        flags |= WINED3D_NO3D;
-
     if (!(ddraw->wined3d = wined3d_create(7, flags)))
     {
-        if ((flags & WINED3D_NO3D) || !(ddraw->wined3d = wined3d_create(7, flags | WINED3D_NO3D)))
+        if (!(ddraw->wined3d = wined3d_create(7, flags | WINED3D_NO3D)))
         {
             WARN("Failed to create a wined3d object.\n");
             return E_FAIL;
         }
+    }
 
+    if (FAILED(hr = wined3d_get_device_caps(ddraw->wined3d, WINED3DADAPTER_DEFAULT, device_type, &caps)))
+    {
+        ERR("Failed to get device caps, hr %#x.\n", hr);
+        wined3d_decref(ddraw->wined3d);
+        return E_FAIL;
+    }
+
+    if (!(caps.ddraw_caps.caps & WINEDDCAPS_3D))
+    {
         WARN("Created a wined3d object without 3D support.\n");
-        DefaultSurfaceType = DDRAW_SURFACE_TYPE_GDI;
+        ddraw->flags |= DDRAW_NO3D;
     }
 
     hr = wined3d_device_create(ddraw->wined3d, WINED3DADAPTER_DEFAULT, device_type,

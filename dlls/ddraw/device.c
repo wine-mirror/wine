@@ -6741,7 +6741,7 @@ HRESULT d3d_device_create(struct ddraw *ddraw, struct ddraw_surface *target,
     TRACE("ddraw %p, target %p, version %u, device %p, outer_unknown %p.\n",
             ddraw, target, version, device, outer_unknown);
 
-    if (DefaultSurfaceType != DDRAW_SURFACE_TYPE_OPENGL)
+    if (ddraw->flags & DDRAW_NO3D)
     {
         ERR_(winediag)("The application wants to create a Direct3D device, "
                 "but the current DirectDrawRenderer does not support this.\n");

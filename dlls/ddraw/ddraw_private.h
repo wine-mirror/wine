@@ -37,14 +37,7 @@
 #include "wine/list.h"
 #include "wine/wined3d.h"
 
-enum ddraw_surface_type
-{
-    DDRAW_SURFACE_TYPE_OPENGL,
-    DDRAW_SURFACE_TYPE_GDI,
-};
-
 extern const struct wined3d_parent_ops ddraw_null_wined3d_parent_ops DECLSPEC_HIDDEN;
-extern enum ddraw_surface_type DefaultSurfaceType DECLSPEC_HIDDEN;
 extern DWORD force_refresh_rate DECLSPEC_HIDDEN;
 
 /*****************************************************************************
@@ -59,6 +52,7 @@ struct FvfToDecl
 #define DDRAW_INITIALIZED       0x00000001
 #define DDRAW_D3D_INITIALIZED   0x00000002
 #define DDRAW_RESTORE_MODE      0x00000004
+#define DDRAW_NO3D              0x00000008
 
 struct ddraw
 {

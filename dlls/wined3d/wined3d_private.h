@@ -268,6 +268,7 @@ struct wined3d_settings
     unsigned int max_sm_vs;
     unsigned int max_sm_gs;
     unsigned int max_sm_ps;
+    BOOL no_3d;
 };
 
 extern struct wined3d_settings wined3d_settings DECLSPEC_HIDDEN;
