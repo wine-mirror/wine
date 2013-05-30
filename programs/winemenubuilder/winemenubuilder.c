@@ -3013,7 +3013,7 @@ static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link
 {
     char *link_name = NULL, *icon_name = NULL;
     DWORD csidl = -1;
-    LPWSTR urlPath;
+    LPWSTR urlPath = NULL;
     char *escaped_urlPath = NULL;
     HRESULT hr;
     HANDLE hSem = NULL;
