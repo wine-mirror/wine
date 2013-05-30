@@ -1262,7 +1262,7 @@ static BOOL parse_object_members_list(parse_buffer * buf)
         }
         else
         {
-          FIXME("Unexpected token %d\n", token);
+          WARN("Unexpected token %d\n", token);
           return FALSE;
         }
       }
