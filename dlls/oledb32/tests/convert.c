@@ -2716,11 +2716,51 @@ static void test_converttovar(void)
     ok(S(cy2).Lo == S(cy).Lo && S(cy2).Hi == S(cy).Hi, "got %d,%d\n", S(cy2).Lo, S(cy2).Hi);
 
     dst_len = 0x1234;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_BYTES, DBTYPE_VARIANT, sizeof(byte_src), &dst_len, &byte_src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
+    ok(V_VT(&dst) == (VT_ARRAY|VT_UI1), "got %d\n", V_VT(&dst));
+    if(V_VT(&dst) == (VT_ARRAY|VT_UI1))
+    {
+        LONG l;
+
+        hr = SafeArrayGetUBound(V_ARRAY(&dst), 1, &l);
+        ok(hr == S_OK, "got %08x\n", hr);
+        ok(l == 4, "got %d\n", l);  /* 5 elements */
+    }
+    VariantClear(&dst);
+
+    dst_len = 0x1234;
     hr = IDataConvert_DataConvert(convert, DBTYPE_BYTES, DBTYPE_VARIANT, 0, &dst_len, &byte_src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
     ok(V_VT(&dst) == (VT_ARRAY|VT_UI1), "got %d\n", V_VT(&dst));
+    if(V_VT(&dst) == (VT_ARRAY|VT_UI1))
+    {
+        LONG l;
+
+        hr = SafeArrayGetUBound(V_ARRAY(&dst), 1, &l);
+        ok(hr == S_OK, "got %08x\n", hr);
+        ok(l == -1, "got %d\n", l);  /* 0 elements */
+    }
+    VariantClear(&dst);
+
+    dst_len = 0x1234;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_BYTES, DBTYPE_VARIANT, 2, &dst_len, &byte_src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
+    ok(V_VT(&dst) == (VT_ARRAY|VT_UI1), "got %d\n", V_VT(&dst));
+    if(V_VT(&dst) == (VT_ARRAY|VT_UI1))
+    {
+        LONG l;
+
+        hr = SafeArrayGetUBound(V_ARRAY(&dst), 1, &l);
+        ok(hr == S_OK, "got %08x\n", hr);
+        ok(l == 1, "got %d\n", l);  /* 2 elements */
+    }
     VariantClear(&dst);
 
     dst_len = 0x1234;

@@ -950,18 +950,15 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         case DBTYPE_BYTES:
         {
             LONG i;
-            LONG size;
             SAFEARRAY *psa = NULL;
             SAFEARRAYBOUND rgsabound[1];
             unsigned char *p = src;
 
-            size = min(src_len, dst_max_len);
-
             rgsabound[0].lLbound = 0;
-            rgsabound[0].cElements = size;
+            rgsabound[0].cElements = src_len;
 
             psa = SafeArrayCreate(VT_UI1,1,rgsabound);
-            for(i =0; i < size; i++,p++)
+            for(i =0; i < src_len; i++,p++)
             {
                 hr = SafeArrayPutElement(psa, &i, &p);
                 if(FAILED(hr)) {
