@@ -127,6 +127,7 @@ typedef struct {
   BOOL txt;
   DWORD list_nb_elements;
   BOOL list_type_float;
+  BOOL list_separator;
   ULONG cur_pos_data;
   LPBYTE cur_pstrings;
   BYTE value[100];

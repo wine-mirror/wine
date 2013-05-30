@@ -743,16 +743,26 @@ static WORD parse_TOKEN(parse_buffer * buf)
 
     if (buf->list_nb_elements)
     {
-      token = buf->list_type_float ? TOKEN_FLOAT : TOKEN_INTEGER;
-      buf->list_nb_elements--;
-        {
-          DWORD integer;
+      if (buf->list_separator)
+      {
+        buf->list_nb_elements--;
+        buf->list_separator = FALSE;
+        /* Insert separarator between each values and since list does not accept separator at the end
+           use a comma so any extra separator will generate an error */
+        token = TOKEN_COMMA;
+      }
+      else
+      {
+        DWORD value;
 
-          if (!read_bytes(buf, &integer, 4))
-            return TOKEN_ERROR;
+        if (!read_bytes(buf, &value, 4))
+          return TOKEN_ERROR;
+        *(DWORD*)buf->value = value;
 
-          *(DWORD*)buf->value = integer;
-        }
+        buf->list_separator = TRUE;
+        /* Convert list into a serie of their basic type counterpart */
+        token = buf->list_type_float ? TOKEN_FLOAT : TOKEN_INTEGER;
+      }
       dump_TOKEN(token);
       return token;
     }
@@ -1287,10 +1297,6 @@ static BOOL parse_object_parts(parse_buffer * buf, BOOL allow_optional)
   if (allow_optional)
   {
     buf->pxo->size = buf->cur_pos_data - buf->pxo->pos_data;
-
-    /* Skip trailing semicolon */
-    while (check_TOKEN(buf) == TOKEN_SEMICOLON)
-      get_TOKEN(buf);
 
     while (1)
     {

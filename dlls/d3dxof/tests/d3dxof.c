@@ -921,11 +921,11 @@ static void test_syntax_semicolon_comma(void)
 
     /* Test object with a single integer list in binary mode */
     ret = test_buffer_object(dxfile, object_syntax_full_integer_list_bin, sizeof(object_syntax_full_integer_list_bin));
-    todo_wine ok(ret == DXFILE_OK, "test_buffer_object failed with %#x\n", ret);
+    ok(ret == DXFILE_OK, "test_buffer_object failed with %#x\n", ret);
 
     /* Test object with mixed integer list and integers + single comma separators in binary mode */
     ret = test_buffer_object(dxfile, object_syntax_mixed_integer_list_bin, sizeof(object_syntax_mixed_integer_list_bin));
-    todo_wine ok(ret == DXFILE_OK, "test_buffer_object failed with %#x\n", ret);
+    ok(ret == DXFILE_OK, "test_buffer_object failed with %#x\n", ret);
 
     /* Test integer list followed by a semicolon in binary mode */
     ret = test_buffer_object(dxfile, object_syntax_integer_list_semicolon_bin, sizeof(object_syntax_integer_list_semicolon_bin));
