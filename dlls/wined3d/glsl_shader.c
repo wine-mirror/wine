@@ -4836,7 +4836,7 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_shader_buffer *buffer
     shader_addline(buffer, "vec3 ambient = gl_LightModel.ambient.xyz;\n");
     shader_addline(buffer, "vec3 diffuse = vec3(0.0);\n");
     shader_addline(buffer, "vec4 specular = vec4(0.0);\n");
-    shader_addline(buffer, "vec3 dir, dst, half;\n");
+    shader_addline(buffer, "vec3 dir, dst;\n");
     shader_addline(buffer, "float att, t;\n");
 
     ambient = shader_glsl_ffp_mcs(settings->ambient_source, "gl_FrontMaterial.ambient");
@@ -4846,7 +4846,6 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_shader_buffer *buffer
 
     for (i = 0; i < MAX_ACTIVE_LIGHTS; ++i)
     {
-
         light_type = (settings->light_type >> WINED3D_FFP_LIGHT_TYPE_SHIFT(i)) & WINED3D_FFP_LIGHT_TYPE_MASK;
         switch (light_type)
         {
