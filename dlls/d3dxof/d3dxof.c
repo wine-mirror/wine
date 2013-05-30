@@ -291,10 +291,9 @@ static HRESULT WINAPI IDirectXFileImpl_RegisterTemplates(IDirectXFile* iface, LP
   HRESULT hr;
   LPBYTE decomp_buffer = NULL;
 
+  ZeroMemory(&buf, sizeof(buf));
   buf.buffer = pvData;
   buf.rem_bytes = cbSize;
-  buf.txt = FALSE;
-  buf.token_present = FALSE;
   buf.pdxf = This;
 
   TRACE("(%p/%p)->(%p,%d)\n", This, iface, pvData, cbSize);

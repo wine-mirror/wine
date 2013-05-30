@@ -125,6 +125,8 @@ typedef struct {
   WORD current_token;
   BOOL token_present;
   BOOL txt;
+  DWORD list_nb_elements;
+  BOOL list_type_float;
   ULONG cur_pos_data;
   LPBYTE cur_pstrings;
   BYTE value[100];

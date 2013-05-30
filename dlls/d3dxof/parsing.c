@@ -717,10 +717,7 @@ static WORD parse_TOKEN(parse_buffer * buf)
   }
   else
   {
-    static int nb_elem;
-    static int is_float;
-
-    if (!nb_elem)
+    if (!buf->list_nb_elements)
     {
       if (!read_bytes(buf, &token, 2))
         return TOKEN_NONE;
@@ -728,26 +725,26 @@ static WORD parse_TOKEN(parse_buffer * buf)
       /* Convert integer and float list into separate elements */
       if (token == TOKEN_INTEGER_LIST)
       {
-        if (!read_bytes(buf, &nb_elem, 4))
+        if (!read_bytes(buf, &buf->list_nb_elements, 4))
           return TOKEN_ERROR;
         token = TOKEN_INTEGER;
-        is_float = FALSE;
-        TRACE("Integer list (TOKEN_INTEGER_LIST) of size %d\n", nb_elem);
+        buf->list_type_float = FALSE;
+        TRACE("Integer list (TOKEN_INTEGER_LIST) of size %d\n", buf->list_nb_elements);
       }
       else if (token == TOKEN_FLOAT_LIST)
       {
-        if (!read_bytes(buf, &nb_elem, 4))
+        if (!read_bytes(buf, &buf->list_nb_elements, 4))
           return TOKEN_ERROR;
         token = TOKEN_FLOAT;
-        is_float = TRUE;
-        TRACE("Float list (TOKEN_FLOAT_LIST) of size %d\n", nb_elem);
+        buf->list_type_float = TRUE;
+        TRACE("Float list (TOKEN_FLOAT_LIST) of size %d\n", buf->list_nb_elements);
       }
     }
 
-    if (nb_elem)
+    if (buf->list_nb_elements)
     {
-      token = is_float ? TOKEN_FLOAT : TOKEN_INTEGER;
-      nb_elem--;
+      token = buf->list_type_float ? TOKEN_FLOAT : TOKEN_INTEGER;
+      buf->list_nb_elements--;
         {
           DWORD integer;
 
