@@ -982,6 +982,12 @@ typedef struct tagTLBImpLib
     struct list entry;
 } TLBImpLib;
 
+typedef struct tagTLBString {
+    BSTR str;
+    UINT offset;
+    struct list entry;
+} TLBString;
+
 /* internal ITypeLib data */
 typedef struct tagITypeLibImpl
 {
@@ -995,10 +1001,12 @@ typedef struct tagITypeLibImpl
     /* strings can be stored in tlb as multibyte strings BUT they are *always*
      * exported to the application as a UNICODE string.
      */
+    struct list string_list;
+
     BSTR Name;
-    BSTR DocString;
-    BSTR HelpFile;
-    BSTR HelpStringDll;
+    const TLBString *DocString;
+    const TLBString *HelpFile;
+    const TLBString *HelpStringDll;
     DWORD dwHelpContext;
     int TypeInfoCount;          /* nr of typeinfo's in librarry */
     struct tagITypeInfoImpl **typeinfos;
@@ -1087,8 +1095,8 @@ typedef struct tagTLBFuncDesc
     TLBParDesc *pParamDesc; /* array with param names and custom data */
     int helpcontext;
     int HelpStringContext;
-    BSTR HelpString;
-    BSTR Entry;            /* if IS_INTRESOURCE true, it's numeric; if -1 it isn't present */
+    const TLBString *HelpString;
+    const TLBString *Entry;            /* if IS_INTRESOURCE true, it's numeric; if -1 it isn't present */
     struct list custdata_list;
 } TLBFuncDesc;
 
@@ -1099,7 +1107,7 @@ typedef struct tagTLBVarDesc
     BSTR Name;             /* the name of this variable */
     int HelpContext;
     int HelpStringContext;
-    BSTR HelpString;
+    const TLBString *HelpString;
     struct list custdata_list;
 } TLBVarDesc;
 
@@ -1128,8 +1136,9 @@ typedef struct tagITypeInfoImpl
      * so why should we do it in unicode?
      */
     BSTR Name;
-    BSTR DocString;
-    BSTR DllName;
+    const TLBString *DocString;
+    const TLBString *DllName;
+    const TLBString *Schema;
     DWORD dwHelpContext;
     DWORD dwHelpStringContext;
 
@@ -1184,6 +1193,11 @@ typedef struct tagTLBContext
 
 
 static void MSFT_DoRefType(TLBContext *pcx, ITypeLibImpl *pTL, int offset);
+
+static inline BSTR TLB_get_bstr(const TLBString *str)
+{
+    return str != NULL ? str->str : NULL;
+}
 
 /*
  debug
@@ -1315,8 +1329,15 @@ static void dump_TLBFuncDescOne(const TLBFuncDesc * pfd)
 
   dump_FUNCDESC(&(pfd->funcdesc));
 
-  MESSAGE("\thelpstring: %s\n", debugstr_w(pfd->HelpString));
-  MESSAGE("\tentry: %s\n", (pfd->Entry == (void *)-1) ? "invalid" : debugstr_w(pfd->Entry));
+  MESSAGE("\thelpstring: %s\n", debugstr_w(TLB_get_bstr(pfd->HelpString)));
+  if(pfd->Entry == NULL)
+      MESSAGE("\tentry: (null)\n");
+  else if(pfd->Entry == (void*)-1)
+      MESSAGE("\tentry: invalid\n");
+  else if(IS_INTRESOURCE(pfd->Entry))
+      MESSAGE("\tentry: %p\n", pfd->Entry);
+  else
+      MESSAGE("\tentry: %s\n", debugstr_w(TLB_get_bstr(pfd->Entry)));
 }
 static void dump_TLBFuncDesc(const TLBFuncDesc * pfd, UINT n)
 {
@@ -1456,14 +1477,14 @@ static void dump_DispParms(const DISPPARAMS * pdp)
 static void dump_TypeInfo(const ITypeInfoImpl * pty)
 {
     TRACE("%p ref=%u\n", pty, pty->ref);
-    TRACE("%s %s\n", debugstr_w(pty->Name), debugstr_w(pty->DocString));
+    TRACE("%s %s\n", debugstr_w(pty->Name), debugstr_w(TLB_get_bstr(pty->DocString)));
     TRACE("attr:%s\n", debugstr_guid(&(pty->TypeAttr.guid)));
     TRACE("kind:%s\n", typekind_desc[pty->TypeAttr.typekind]);
     TRACE("fct:%u var:%u impl:%u\n",
       pty->TypeAttr.cFuncs, pty->TypeAttr.cVars, pty->TypeAttr.cImplTypes);
     TRACE("wTypeFlags: 0x%04x\n", pty->TypeAttr.wTypeFlags);
     TRACE("parent tlb:%p index in TLB:%u\n",pty->pTypeLib, pty->index);
-    if (pty->TypeAttr.typekind == TKIND_MODULE) TRACE("dllname:%s\n", debugstr_w(pty->DllName));
+    if (pty->TypeAttr.typekind == TKIND_MODULE) TRACE("dllname:%s\n", debugstr_w(TLB_get_bstr(pty->DllName)));
     if (TRACE_ON(ole))
         dump_TLBFuncDesc(pty->funcdescs, pty->TypeAttr.cFuncs);
     dump_TLBVarDesc(pty->vardescs, pty->TypeAttr.cVars);
@@ -1774,6 +1795,30 @@ static HRESULT TLB_set_custdata(struct list *custdata_list, REFGUID guid, VARIAN
     return VariantCopy(&cust_data->data, var);
 }
 
+static TLBString *TLB_append_str(struct list *string_list, BSTR new_str)
+{
+    TLBString *str;
+
+    LIST_FOR_EACH_ENTRY(str, string_list, TLBString, entry) {
+        if (strcmpW(str->str, new_str) == 0)
+            return str;
+    }
+
+    str = heap_alloc(sizeof(TLBString));
+    if (!str)
+        return NULL;
+
+    str->str = SysAllocString(new_str);
+    if (!str->str) {
+        heap_free(str);
+        return NULL;
+    }
+
+    list_add_tail(string_list, &str->entry);
+
+    return str;
+}
+
 /**********************************************************************
  *
  *  Functions for reading MSFT typelibs (those created by CreateTypeLib2)
@@ -1898,36 +1943,20 @@ static BSTR MSFT_ReadName( TLBContext *pcx, int offset)
     return bstrName;
 }
 
-static BSTR MSFT_ReadString( TLBContext *pcx, int offset)
+static TLBString *MSFT_ReadString( TLBContext *pcx, int offset)
 {
-    char * string;
-    INT16 length;
-    int lengthInChars;
-    BSTR bstr = NULL;
+    TLBString *tlbstr;
 
-    if(offset<0) return NULL;
-    MSFT_ReadLEWords(&length, sizeof(INT16), pcx, pcx->pTblDir->pStringtab.offset+offset);
-    if(length <= 0) return 0;
-    string = heap_alloc_zero(length +1);
-    MSFT_Read(string, length, pcx, DO_NOT_SEEK);
-    string[length]='\0';
-
-    lengthInChars = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS,
-                                        string, -1, NULL, 0);
-
-    /* no invalid characters in string */
-    if (lengthInChars)
-    {
-        bstr = SysAllocStringByteLen(NULL, lengthInChars * sizeof(WCHAR));
-
-        /* don't check for invalid character since this has been done previously */
-        MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, string, -1, bstr, lengthInChars);
+    LIST_FOR_EACH_ENTRY(tlbstr, &pcx->pLibInfo->string_list, TLBString, entry) {
+        if (tlbstr->offset == offset) {
+            TRACE_(typelib)("%s\n", debugstr_w(tlbstr->str));
+            return tlbstr;
+        }
     }
-    heap_free(string);
 
-    TRACE_(typelib)("%s %d\n", debugstr_w(bstr), lengthInChars);
-    return bstr;
+    return NULL;
 }
+
 /*
  * read a value and fill a VARIANT structure
  */
@@ -2172,13 +2201,13 @@ MSFT_DoFuncs(TLBContext*     pcx,
             {
                 if (!IS_INTRESOURCE(pFuncRec->oEntry))
                     ERR("ordinal 0x%08x invalid, IS_INTRESOURCE is false\n", pFuncRec->oEntry);
-                ptfd->Entry = (BSTR)(DWORD_PTR)LOWORD(pFuncRec->oEntry);
+                ptfd->Entry = (TLBString*)(DWORD_PTR)LOWORD(pFuncRec->oEntry);
             }
             else
                 ptfd->Entry = MSFT_ReadString(pcx, pFuncRec->oEntry);
         }
         else
-            ptfd->Entry = (BSTR)-1;
+            ptfd->Entry = (TLBString*)-1;
 
         if (optional > FIELD_OFFSET(MSFT_FuncRecord, HelpStringContext))
             ptfd->HelpStringContext = pFuncRec->HelpStringContext;
@@ -2532,6 +2561,51 @@ static ITypeInfoImpl * MSFT_DoTypeInfo(
       dump_TypeInfo(ptiRet);
 
     return ptiRet;
+}
+
+static HRESULT MSFT_ReadAllStrings(TLBContext *pcx)
+{
+    char *string;
+    INT16 len_str, len_piece;
+    int offs = 0, lengthInChars;
+
+    MSFT_Seek(pcx, pcx->pTblDir->pStringtab.offset);
+    while (1) {
+        TLBString *tlbstr;
+
+        if (offs >= pcx->pTblDir->pStringtab.length)
+            return S_OK;
+
+        MSFT_ReadLEWords(&len_str, sizeof(INT16), pcx, DO_NOT_SEEK);
+        len_piece = len_str + sizeof(INT16);
+        if(len_piece % 4)
+            len_piece = (len_piece + 4) & ~0x3;
+        if(len_piece < 8)
+            len_piece = 8;
+
+        string = heap_alloc(len_piece + 1);
+        MSFT_Read(string, len_piece - sizeof(INT16), pcx, DO_NOT_SEEK);
+        string[len_str] = '\0';
+
+        lengthInChars = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS,
+                                            string, -1, NULL, 0);
+        if (!lengthInChars) {
+            heap_free(string);
+            return E_UNEXPECTED;
+        }
+
+        tlbstr = heap_alloc(sizeof(TLBString));
+
+        tlbstr->offset = offs;
+        tlbstr->str = SysAllocStringByteLen(NULL, lengthInChars * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, string, -1, tlbstr->str, lengthInChars);
+
+        heap_free(string);
+
+        list_add_tail(&pcx->pLibInfo->string_list, &tlbstr->entry);
+
+        offs += len_piece;
+    }
 }
 
 /* Because type library parsing has some degree of overhead, and some apps repeatedly load the same
@@ -3103,6 +3177,7 @@ static ITypeLibImpl* TypeLibImpl_Constructor(void)
 
     list_init(&pTypeLibImpl->implib_list);
     list_init(&pTypeLibImpl->custdata_list);
+    list_init(&pTypeLibImpl->string_list);
     list_init(&pTypeLibImpl->ref_list);
     pTypeLibImpl->dispatch_href = -1;
 
@@ -3161,6 +3236,8 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
 	heap_free(pTypeLibImpl);
 	return NULL;
     }
+
+    MSFT_ReadAllStrings(&cx);
 
     /* now fill our internal data */
     /* TLIBATTR fields */
@@ -3341,18 +3418,23 @@ static BOOL TLB_GUIDFromString(const char *str, GUID *guid)
   return TRUE;
 }
 
-static WORD SLTG_ReadString(const char *ptr, BSTR *pBstr)
+static WORD SLTG_ReadString(const char *ptr, const TLBString **pStr, ITypeLibImpl *lib)
 {
     WORD bytelen;
     DWORD len;
+    BSTR tmp_str;
 
-    *pBstr = NULL;
+    *pStr = NULL;
     bytelen = *(const WORD*)ptr;
     if(bytelen == 0xffff) return 2;
+
     len = MultiByteToWideChar(CP_ACP, 0, ptr + 2, bytelen, NULL, 0);
-    *pBstr = SysAllocStringLen(NULL, len);
-    if (*pBstr)
-        len = MultiByteToWideChar(CP_ACP, 0, ptr + 2, bytelen, *pBstr, len);
+    tmp_str = SysAllocStringLen(NULL, len);
+    if (*tmp_str) {
+        MultiByteToWideChar(CP_ACP, 0, ptr + 2, bytelen, tmp_str, len);
+        *pStr = TLB_append_str(&lib->string_list, tmp_str);
+        SysFreeString(tmp_str);
+    }
     return bytelen + 2;
 }
 
@@ -3386,9 +3468,9 @@ static DWORD SLTG_ReadLibBlk(LPVOID pLibBlk, ITypeLibImpl *pTypeLibImpl)
     }
     ptr += 2;
 
-    ptr += SLTG_ReadString(ptr, &pTypeLibImpl->DocString);
+    ptr += SLTG_ReadString(ptr, &pTypeLibImpl->DocString, pTypeLibImpl);
 
-    ptr += SLTG_ReadString(ptr, &pTypeLibImpl->HelpFile);
+    ptr += SLTG_ReadString(ptr, &pTypeLibImpl->HelpFile, pTypeLibImpl);
 
     pTypeLibImpl->dwHelpContext = *(DWORD*)ptr;
     ptr += 4;
@@ -4365,6 +4447,7 @@ static ULONG WINAPI ITypeLib2_fnRelease( ITypeLib2 *iface)
     {
       TLBImpLib *pImpLib, *pImpLibNext;
       TLBRefType *ref_type;
+      TLBString *tlbstr, *tlbstr_next;
       void *cursor2;
       int i;
 
@@ -4383,14 +4466,10 @@ static ULONG WINAPI ITypeLib2_fnRelease( ITypeLib2 *iface)
       SysFreeString(This->Name);
       This->Name = NULL;
 
-      SysFreeString(This->DocString);
-      This->DocString = NULL;
-
-      SysFreeString(This->HelpFile);
-      This->HelpFile = NULL;
-
-      SysFreeString(This->HelpStringDll);
-      This->HelpStringDll = NULL;
+      LIST_FOR_EACH_ENTRY_SAFE(tlbstr, tlbstr_next, &This->string_list, TLBString, entry) {
+          list_remove(&tlbstr->entry);
+          heap_free(tlbstr);
+      }
 
       TLB_FreeCustData(&This->custdata_list);
 
@@ -4597,7 +4676,7 @@ static HRESULT WINAPI ITypeLib2_fnGetDocumentation(
         {
             if (This->DocString)
             {
-                if(!(*pBstrDocString = SysAllocString(This->DocString)))
+                if(!(*pBstrDocString = SysAllocString(TLB_get_bstr(This->DocString))))
                     goto memerr2;
             }
             else if (This->Name)
@@ -4616,7 +4695,7 @@ static HRESULT WINAPI ITypeLib2_fnGetDocumentation(
         {
             if (This->HelpFile)
             {
-                if(!(*pBstrHelpFile = SysAllocString(This->HelpFile)))
+                if(!(*pBstrHelpFile = SysAllocString(TLB_get_bstr(This->HelpFile))))
                     goto memerr3;
             }
             else
@@ -4843,11 +4922,11 @@ static HRESULT WINAPI ITypeLib2_fnGetDocumentation2(
     {
       /* documentation for the typelib */
       if(pbstrHelpString)
-        *pbstrHelpString=SysAllocString(This->DocString);
+        *pbstrHelpString=SysAllocString(TLB_get_bstr(This->DocString));
       if(pdwHelpStringContext)
         *pdwHelpStringContext=This->dwHelpContext;
       if(pbstrHelpStringDll)
-        *pbstrHelpStringDll=SysAllocString(This->HelpStringDll);
+        *pbstrHelpStringDll=SysAllocString(TLB_get_bstr(This->HelpStringDll));
 
       result = S_OK;
     }
@@ -5216,12 +5295,6 @@ static void ITypeInfoImpl_Destroy(ITypeInfoImpl *This)
     SysFreeString(This->Name);
     This->Name = NULL;
 
-    SysFreeString(This->DocString);
-    This->DocString = NULL;
-
-    SysFreeString(This->DllName);
-    This->DllName = NULL;
-
     for (i = 0; i < This->TypeAttr.cFuncs; ++i)
     {
         int j;
@@ -5240,9 +5313,6 @@ static void ITypeInfoImpl_Destroy(ITypeInfoImpl *This)
         heap_free(pFInfo->funcdesc.lprgelemdescParam);
         heap_free(pFInfo->pParamDesc);
         TLB_FreeCustData(&pFInfo->custdata_list);
-        if (!IS_INTRESOURCE(pFInfo->Entry) && pFInfo->Entry != (BSTR)-1)
-            SysFreeString(pFInfo->Entry);
-        SysFreeString(pFInfo->HelpString);
         SysFreeString(pFInfo->Name);
     }
     heap_free(This->funcdescs);
@@ -5257,7 +5327,6 @@ static void ITypeInfoImpl_Destroy(ITypeInfoImpl *This)
         }
         TLB_FreeCustData(&pVInfo->custdata_list);
         SysFreeString(pVInfo->Name);
-        SysFreeString(pVInfo->HelpString);
     }
     heap_free(This->vardescs);
 
@@ -7007,11 +7076,11 @@ static HRESULT WINAPI ITypeInfo_fnGetDocumentation( ITypeInfo2 *iface,
         if(pBstrName)
             *pBstrName=SysAllocString(This->Name);
         if(pBstrDocString)
-            *pBstrDocString=SysAllocString(This->DocString);
+            *pBstrDocString=SysAllocString(TLB_get_bstr(This->DocString));
         if(pdwHelpContext)
             *pdwHelpContext=This->dwHelpContext;
         if(pBstrHelpFile)
-            *pBstrHelpFile=SysAllocString(This->pTypeLib->HelpFile);
+            *pBstrHelpFile=SysAllocString(TLB_get_bstr(This->pTypeLib->HelpFile));
         return S_OK;
     }else {/* for a member */
         pFDesc = TLB_get_funcdesc_by_memberid(This->funcdescs, This->TypeAttr.cFuncs, memid);
@@ -7019,9 +7088,11 @@ static HRESULT WINAPI ITypeInfo_fnGetDocumentation( ITypeInfo2 *iface,
             if(pBstrName)
               *pBstrName = SysAllocString(pFDesc->Name);
             if(pBstrDocString)
-              *pBstrDocString=SysAllocString(pFDesc->HelpString);
+              *pBstrDocString=SysAllocString(TLB_get_bstr(pFDesc->HelpString));
             if(pdwHelpContext)
               *pdwHelpContext=pFDesc->helpcontext;
+            if(pBstrHelpFile)
+              *pBstrHelpFile = SysAllocString(TLB_get_bstr(This->pTypeLib->HelpFile));
             return S_OK;
         }
         pVDesc = TLB_get_vardesc_by_memberid(This->vardescs, This->TypeAttr.cVars, memid);
@@ -7029,11 +7100,11 @@ static HRESULT WINAPI ITypeInfo_fnGetDocumentation( ITypeInfo2 *iface,
             if(pBstrName)
               *pBstrName = SysAllocString(pVDesc->Name);
             if(pBstrDocString)
-              *pBstrDocString=SysAllocString(pVDesc->HelpString);
+              *pBstrDocString=SysAllocString(TLB_get_bstr(pVDesc->HelpString));
             if(pdwHelpContext)
               *pdwHelpContext=pVDesc->HelpContext;
             if(pBstrHelpFile)
-              *pBstrHelpFile = SysAllocString(This->pTypeLib->HelpFile);
+              *pBstrHelpFile = SysAllocString(TLB_get_bstr(This->pTypeLib->HelpFile));
             return S_OK;
         }
     }
@@ -7085,11 +7156,11 @@ static HRESULT WINAPI ITypeInfo_fnGetDllEntry( ITypeInfo2 *iface, MEMBERID memid
 		dump_TLBFuncDescOne(pFDesc);
 
 	    if (pBstrDllName)
-		*pBstrDllName = SysAllocString(This->DllName);
+		*pBstrDllName = SysAllocString(TLB_get_bstr(This->DllName));
 
             if (!IS_INTRESOURCE(pFDesc->Entry) && (pFDesc->Entry != (void*)-1)) {
 		if (pBstrName)
-		    *pBstrName = SysAllocString(pFDesc->Entry);
+		    *pBstrName = SysAllocString(TLB_get_bstr(pFDesc->Entry));
 		if (pwOrdinal)
 		    *pwOrdinal = -1;
 		return S_OK;
@@ -7725,29 +7796,29 @@ static HRESULT WINAPI ITypeInfo2_fnGetDocumentation2(
             *pdwHelpStringContext=This->dwHelpStringContext;
         if(pbstrHelpStringDll)
             *pbstrHelpStringDll=
-                SysAllocString(This->pTypeLib->HelpStringDll);/* FIXME */
+                SysAllocString(TLB_get_bstr(This->pTypeLib->HelpStringDll));/* FIXME */
         return S_OK;
     }else {/* for a member */
         pFDesc = TLB_get_funcdesc_by_memberid(This->funcdescs, This->TypeAttr.cFuncs, memid);
         if(pFDesc){
             if(pbstrHelpString)
-                *pbstrHelpString=SysAllocString(pFDesc->HelpString);
+                *pbstrHelpString=SysAllocString(TLB_get_bstr(pFDesc->HelpString));
             if(pdwHelpStringContext)
                 *pdwHelpStringContext=pFDesc->HelpStringContext;
             if(pbstrHelpStringDll)
                 *pbstrHelpStringDll=
-                    SysAllocString(This->pTypeLib->HelpStringDll);/* FIXME */
+                    SysAllocString(TLB_get_bstr(This->pTypeLib->HelpStringDll));/* FIXME */
             return S_OK;
         }
         pVDesc = TLB_get_vardesc_by_memberid(This->vardescs, This->TypeAttr.cVars, memid);
         if(pVDesc){
             if(pbstrHelpString)
-                *pbstrHelpString=SysAllocString(pVDesc->HelpString);
+                *pbstrHelpString=SysAllocString(TLB_get_bstr(pVDesc->HelpString));
             if(pdwHelpStringContext)
                 *pdwHelpStringContext=pVDesc->HelpStringContext;
             if(pbstrHelpStringDll)
                 *pbstrHelpStringDll=
-                    SysAllocString(This->pTypeLib->HelpStringDll);/* FIXME */
+                    SysAllocString(TLB_get_bstr(This->pTypeLib->HelpStringDll));/* FIXME */
             return S_OK;
         }
     }
@@ -8296,8 +8367,7 @@ static HRESULT WINAPI ICreateTypeLib2_fnSetDocString(ICreateTypeLib2 *iface,
     if (!doc)
         return E_INVALIDARG;
 
-    SysFreeString(This->DocString);
-    This->DocString = SysAllocString(doc);
+    This->DocString = TLB_append_str(&This->string_list, doc);
 
     return S_OK;
 }
@@ -8312,8 +8382,7 @@ static HRESULT WINAPI ICreateTypeLib2_fnSetHelpFileName(ICreateTypeLib2 *iface,
     if (!helpFileName)
         return E_INVALIDARG;
 
-    SysFreeString(This->HelpFile);
-    This->HelpFile = SysAllocString(helpFileName);
+    This->HelpFile = TLB_append_str(&This->string_list, helpFileName);
 
     return S_OK;
 }
@@ -8394,8 +8463,7 @@ static HRESULT WINAPI ICreateTypeLib2_fnSetHelpStringDll(ICreateTypeLib2 *iface,
     if (!filename)
         return E_INVALIDARG;
 
-    SysFreeString(This->HelpStringDll);
-    This->HelpStringDll = SysAllocString(filename);
+    This->HelpStringDll = TLB_append_str(&This->string_list, filename);
 
     return S_OK;
 }
@@ -8507,8 +8575,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetDocString(ICreateTypeInfo2 *iface,
     if (!doc)
         return E_INVALIDARG;
 
-    SysFreeString(This->DocString);
-    This->DocString = SysAllocString(doc);
+    This->DocString = TLB_append_str(&This->pTypeLib->string_list, doc);
 
     return S_OK;
 }
@@ -8884,8 +8951,9 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetSchema(ICreateTypeInfo2 *iface,
     if (!schema)
         return E_INVALIDARG;
 
-    SysFreeString(This->TypeAttr.lpstrSchema);
-    This->TypeAttr.lpstrSchema = SysAllocString(schema);
+    This->Schema = TLB_append_str(&This->pTypeLib->string_list, schema);
+
+    This->TypeAttr.lpstrSchema = This->Schema->str;
 
     return S_OK;
 }
