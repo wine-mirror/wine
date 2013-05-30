@@ -168,11 +168,9 @@ static HRESULT WINAPI IDirect3DRMImpl_CreateFace(IDirect3DRM* iface, IDirect3DRM
     return Direct3DRMFace_create(&IID_IDirect3DRMFace, (IUnknown **)face);
 }
 
-static HRESULT WINAPI IDirect3DRMImpl_CreateAnimation(IDirect3DRM* iface, LPDIRECT3DRMANIMATION * ppAnimation)
+static HRESULT WINAPI IDirect3DRMImpl_CreateAnimation(IDirect3DRM *iface, IDirect3DRMAnimation **animation)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM(iface);
-
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, ppAnimation);
+    FIXME("iface %p, animation %p stub!\n", iface, animation);
 
     return E_NOTIMPL;
 }
@@ -544,12 +542,9 @@ static HRESULT WINAPI IDirect3DRM2Impl_CreateFace(IDirect3DRM2 *iface, IDirect3D
     return Direct3DRMFace_create(&IID_IDirect3DRMFace, (IUnknown **)face);
 }
 
-static HRESULT WINAPI IDirect3DRM2Impl_CreateAnimation(IDirect3DRM2* iface,
-                                                       LPDIRECT3DRMANIMATION * ppAnimation)
+static HRESULT WINAPI IDirect3DRM2Impl_CreateAnimation(IDirect3DRM2 *iface, IDirect3DRMAnimation **animation)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM2(iface);
-
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, ppAnimation);
+    FIXME("iface %p, animation %p stub!\n", iface, animation);
 
     return E_NOTIMPL;
 }

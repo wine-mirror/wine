@@ -62,7 +62,7 @@ DECLARE_INTERFACE_(IDirect3DRM,IUnknown)
     STDMETHOD(CreateMesh)(THIS_ IDirect3DRMMesh **mesh) PURE;
     STDMETHOD(CreateMeshBuilder)(THIS_ IDirect3DRMMeshBuilder **mesh_builder) PURE;
     STDMETHOD(CreateFace)(THIS_ IDirect3DRMFace **face) PURE;
-    STDMETHOD(CreateAnimation)(THIS_ LPDIRECT3DRMANIMATION *) PURE;
+    STDMETHOD(CreateAnimation)(THIS_ IDirect3DRMAnimation **animation) PURE;
     STDMETHOD(CreateAnimationSet)(THIS_ LPDIRECT3DRMANIMATIONSET *) PURE;
     STDMETHOD(CreateTexture)(THIS_ D3DRMIMAGE *image, IDirect3DRMTexture **texture) PURE;
     STDMETHOD(CreateLight)(THIS_ D3DRMLIGHTTYPE type, D3DCOLOR color, IDirect3DRMLight **light) PURE;
@@ -201,7 +201,7 @@ DECLARE_INTERFACE_(IDirect3DRM2,IUnknown)
     STDMETHOD(CreateMesh)(THIS_ IDirect3DRMMesh **mesh) PURE;
     STDMETHOD(CreateMeshBuilder)(THIS_ IDirect3DRMMeshBuilder2 **mesh_builder) PURE;
     STDMETHOD(CreateFace)(THIS_ IDirect3DRMFace **face) PURE;
-    STDMETHOD(CreateAnimation)(THIS_ LPDIRECT3DRMANIMATION *) PURE;
+    STDMETHOD(CreateAnimation)(THIS_ IDirect3DRMAnimation **animation) PURE;
     STDMETHOD(CreateAnimationSet)(THIS_ LPDIRECT3DRMANIMATIONSET *) PURE;
     STDMETHOD(CreateTexture)(THIS_ D3DRMIMAGE *image, IDirect3DRMTexture2 **texture) PURE;
     STDMETHOD(CreateLight)(THIS_ D3DRMLIGHTTYPE type, D3DCOLOR color, IDirect3DRMLight **light) PURE;
