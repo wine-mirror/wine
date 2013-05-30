@@ -3042,6 +3042,23 @@ static void test_string_functions(void)
     expect(2, linesfilled);
     char_height = bounds.Height - char_bounds.Height;
 
+    /* Measure the first line. */
+    status = GdipMeasureString(graphics, teststring, 4, font, &rc, NULL, &bounds, &codepointsfitted, &linesfilled);
+    expect(Ok, status);
+    expectf(0.0, bounds.X);
+    expectf(0.0, bounds.Y);
+    expect(4, codepointsfitted);
+    expect(1, linesfilled);
+
+    /* Give just enough space to fit the first line. */
+    rc.Width = bounds.Width;
+    status = GdipMeasureString(graphics, teststring, 5, font, &rc, NULL, &bounds, &codepointsfitted, &linesfilled);
+    expect(Ok, status);
+    expectf(0.0, bounds.X);
+    expectf(0.0, bounds.Y);
+    todo_wine expect(5, codepointsfitted);
+    todo_wine expect(1, linesfilled);
+
     /* Cut off everything after the first space. */
     rc.Width = char_bounds.Width + char_width * 2.1;
 
