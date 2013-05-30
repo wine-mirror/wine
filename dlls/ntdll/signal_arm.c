@@ -221,7 +221,7 @@ __ASM_STDCALL_FUNC( RtlCaptureContext, 4,
                     "str IP, [r0, #0x34]\n\t"  /* context->Ip */
                     "str SP, [r0, #0x38]\n\t"  /* context->Sp */
                     "str LR, [r0, #0x3c]\n\t"  /* context->Lr */
-                    "str LR, [r0, #0x40]\n\t"  /* context->Pc */
+                    "str PC, [r0, #0x40]\n\t"  /* context->Pc */
                     "mrs r1, CPSR\n\t"
                     "str r1, [r0, #0x44]\n\t"  /* context->Cpsr */
                     "mov PC, LR\n"
