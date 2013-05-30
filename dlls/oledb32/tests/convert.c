@@ -2382,6 +2382,8 @@ static void test_getconversionsize(void)
     static WCHAR strW[] = {'t','e','s','t',0};
     static char strTest[] = "test";
     VARIANT var;
+    SAFEARRAY *psa = NULL;
+    SAFEARRAYBOUND rgsabound[1];
 
     /* same way as CanConvert fails here */
     dst_len = 0;
@@ -2477,6 +2479,19 @@ static void test_getconversionsize(void)
     V_VT(&var) = VT_NULL;
     hr = IDataConvert_GetConversionSize(convert, DBTYPE_VARIANT, DBTYPE_BYTES, &src_len, &dst_len, &var);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+    VariantClear(&var);
+
+    dst_len = 0;
+    src_len = 20;
+    rgsabound[0].lLbound = 0;
+    rgsabound[0].cElements = 1802;
+    psa = SafeArrayCreate(VT_UI1,1,rgsabound);
+
+    V_VT(&var) = VT_ARRAY|VT_UI1;
+    V_ARRAY(&var) = psa;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_VARIANT, DBTYPE_BYTES, &src_len, &dst_len, &var);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(dst_len == 1802, "%ld\n", dst_len);
     VariantClear(&var);
 }
 
