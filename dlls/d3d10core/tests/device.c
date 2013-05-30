@@ -762,6 +762,42 @@ static void test_create_rasterizer_state(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_create_predicate(void)
+{
+    D3D10_QUERY_DESC query_desc;
+    ID3D10Predicate *predicate;
+    ID3D10Device *device;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+
+    hr = ID3D10Device_CreatePredicate(device, NULL, &predicate);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    query_desc.Query = D3D10_QUERY_OCCLUSION;
+    query_desc.MiscFlags = 0;
+    hr = ID3D10Device_CreatePredicate(device, &query_desc, &predicate);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    query_desc.Query = D3D10_QUERY_OCCLUSION_PREDICATE;
+    hr = ID3D10Device_CreatePredicate(device, &query_desc, &predicate);
+    ok(SUCCEEDED(hr), "Failed to create predicate, hr %#x.\n", hr);
+    ID3D10Predicate_Release(predicate);
+
+    query_desc.Query = D3D10_QUERY_SO_OVERFLOW_PREDICATE;
+    hr = ID3D10Device_CreatePredicate(device, &query_desc, &predicate);
+    ok(SUCCEEDED(hr), "Failed to create predicate, hr %#x.\n", hr);
+    ID3D10Predicate_Release(predicate);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(device)
 {
     test_device_interfaces();
@@ -775,4 +811,5 @@ START_TEST(device)
     test_create_blend_state();
     test_create_depthstencil_state();
     test_create_rasterizer_state();
+    test_create_predicate();
 }
