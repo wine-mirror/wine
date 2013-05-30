@@ -995,8 +995,13 @@ typedef struct tagITypeLibImpl
     ITypeComp ITypeComp_iface;
     ICreateTypeLib2 ICreateTypeLib2_iface;
     LONG ref;
-    TLIBATTR LibAttr;            /* guid,lcid,syskind,version,flags */
+    GUID guid;
     LCID lcid;
+    SYSKIND syskind;
+    WORD ver_major;
+    WORD ver_minor;
+    WORD libflags;
+    LCID set_lcid;
 
     /* strings can be stored in tlb as multibyte strings BUT they are *always*
      * exported to the application as a UNICODE string.
@@ -2512,7 +2517,7 @@ static ITypeInfoImpl * MSFT_DoTypeInfo(
 /* fill in the typeattr fields */
 
     MSFT_ReadGuid(&ptiRet->TypeAttr.guid, tiBase.posguid, pcx);
-    ptiRet->TypeAttr.lcid=pLibInfo->LibAttr.lcid;   /* FIXME: correct? */
+    ptiRet->TypeAttr.lcid=pLibInfo->set_lcid;   /* FIXME: correct? */
     ptiRet->TypeAttr.lpstrSchema=NULL;              /* reserved */
     ptiRet->TypeAttr.cbSizeInstance=tiBase.size;
     ptiRet->TypeAttr.typekind=tiBase.typekind & 0xF;
@@ -3276,14 +3281,14 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
 
     /* now fill our internal data */
     /* TLIBATTR fields */
-    MSFT_ReadGuid(&pTypeLibImpl->LibAttr.guid, tlbHeader.posguid, &cx);
+    MSFT_ReadGuid(&pTypeLibImpl->guid, tlbHeader.posguid, &cx);
 
-    pTypeLibImpl->LibAttr.lcid = tlbHeader.lcid2;
-    pTypeLibImpl->LibAttr.syskind = tlbHeader.varflags & 0x0f; /* check the mask */
-    pTypeLibImpl->LibAttr.wMajorVerNum = LOWORD(tlbHeader.version);
-    pTypeLibImpl->LibAttr.wMinorVerNum = HIWORD(tlbHeader.version);
-    pTypeLibImpl->LibAttr.wLibFlags = (WORD) tlbHeader.flags & 0xffff;/* check mask */
+    pTypeLibImpl->syskind = tlbHeader.varflags & 0x0f; /* check the mask */
+    pTypeLibImpl->ver_major = LOWORD(tlbHeader.version);
+    pTypeLibImpl->ver_minor = HIWORD(tlbHeader.version);
+    pTypeLibImpl->libflags = (WORD) tlbHeader.flags & 0xffff;/* check mask */
 
+    pTypeLibImpl->set_lcid = tlbHeader.lcid2;
     pTypeLibImpl->lcid = tlbHeader.lcid;
 
     /* name, eventually add to a hash table */
@@ -3527,27 +3532,27 @@ static DWORD SLTG_ReadLibBlk(LPVOID pLibBlk, ITypeLibImpl *pTypeLibImpl)
     pTypeLibImpl->dwHelpContext = *(DWORD*)ptr;
     ptr += 4;
 
-    pTypeLibImpl->LibAttr.syskind = *(WORD*)ptr;
+    pTypeLibImpl->syskind = *(WORD*)ptr;
     ptr += 2;
 
     if(SUBLANGID(*(WORD*)ptr) == SUBLANG_NEUTRAL)
-        pTypeLibImpl->lcid = pTypeLibImpl->LibAttr.lcid = MAKELCID(MAKELANGID(PRIMARYLANGID(*(WORD*)ptr),0),0);
+        pTypeLibImpl->lcid = pTypeLibImpl->set_lcid = MAKELCID(MAKELANGID(PRIMARYLANGID(*(WORD*)ptr),0),0);
     else
-        pTypeLibImpl->lcid = pTypeLibImpl->LibAttr.lcid = 0;
+        pTypeLibImpl->lcid = pTypeLibImpl->set_lcid = 0;
     ptr += 2;
 
     ptr += 4; /* skip res12 */
 
-    pTypeLibImpl->LibAttr.wLibFlags = *(WORD*)ptr;
+    pTypeLibImpl->libflags = *(WORD*)ptr;
     ptr += 2;
 
-    pTypeLibImpl->LibAttr.wMajorVerNum = *(WORD*)ptr;
+    pTypeLibImpl->ver_major = *(WORD*)ptr;
     ptr += 2;
 
-    pTypeLibImpl->LibAttr.wMinorVerNum = *(WORD*)ptr;
+    pTypeLibImpl->ver_minor = *(WORD*)ptr;
     ptr += 2;
 
-    memcpy(&pTypeLibImpl->LibAttr.guid, ptr, sizeof(GUID));
+    memcpy(&pTypeLibImpl->guid, ptr, sizeof(GUID));
     ptr += sizeof(GUID);
 
     return ptr - (char*)pLibBlk;
@@ -4661,7 +4666,13 @@ static HRESULT WINAPI ITypeLib2_fnGetLibAttr(
     *attr = heap_alloc(sizeof(**attr));
     if (!*attr) return E_OUTOFMEMORY;
 
-    **attr = This->LibAttr;
+    (*attr)->guid = This->guid;
+    (*attr)->lcid = This->set_lcid;
+    (*attr)->syskind = This->syskind;
+    (*attr)->wMajorVerNum = This->ver_major;
+    (*attr)->wMinorVerNum = This->ver_minor;
+    (*attr)->wLibFlags = This->libflags;
+
     return S_OK;
 }
 
@@ -8382,8 +8393,8 @@ static HRESULT WINAPI ICreateTypeLib2_fnSetVersion(ICreateTypeLib2 *iface,
 
     TRACE("%p %d %d\n", This, majorVerNum, minorVerNum);
 
-    This->LibAttr.wMajorVerNum = majorVerNum;
-    This->LibAttr.wMinorVerNum = minorVerNum;
+    This->ver_major = majorVerNum;
+    This->ver_minor = minorVerNum;
 
     return S_OK;
 }
@@ -8395,7 +8406,7 @@ static HRESULT WINAPI ICreateTypeLib2_fnSetGuid(ICreateTypeLib2 *iface,
 
     TRACE("%p %s\n", This, debugstr_guid(guid));
 
-    memcpy(&This->LibAttr.guid, guid, sizeof(GUID));
+    memcpy(&This->guid, guid, sizeof(GUID));
 
     return S_OK;
 }
@@ -8449,7 +8460,7 @@ static HRESULT WINAPI ICreateTypeLib2_fnSetLcid(ICreateTypeLib2 *iface,
 
     TRACE("%p %x\n", This, lcid);
 
-    This->LibAttr.lcid = lcid;
+    This->set_lcid = lcid;
 
     return S_OK;
 }
@@ -8461,7 +8472,7 @@ static HRESULT WINAPI ICreateTypeLib2_fnSetLibFlags(ICreateTypeLib2 *iface,
 
     TRACE("%p %x\n", This, libFlags);
 
-    This->LibAttr.wLibFlags = libFlags;
+    This->libflags = libFlags;
 
     return S_OK;
 }
