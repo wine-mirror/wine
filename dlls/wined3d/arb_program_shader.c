@@ -3662,16 +3662,17 @@ static GLuint shader_arb_generate_pshader(const struct wined3d_shader *shader,
 
     if (reg_maps->shader_version.major < 3)
     {
-        switch(args->super.fog) {
-            case FOG_OFF:
+        switch (args->super.fog)
+        {
+            case WINED3D_FFP_PS_FOG_OFF:
                 break;
-            case FOG_LINEAR:
+            case WINED3D_FFP_PS_FOG_LINEAR:
                 shader_addline(buffer, "OPTION ARB_fog_linear;\n");
                 break;
-            case FOG_EXP:
+            case WINED3D_FFP_PS_FOG_EXP:
                 shader_addline(buffer, "OPTION ARB_fog_exp;\n");
                 break;
-            case FOG_EXP2:
+            case WINED3D_FFP_PS_FOG_EXP2:
                 shader_addline(buffer, "OPTION ARB_fog_exp2;\n");
                 break;
         }
@@ -6208,11 +6209,12 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, con
 
     shader_addline(&buffer, "!!ARBfp1.0\n");
 
-    switch(settings->fog) {
-        case FOG_OFF:                                                         break;
-        case FOG_LINEAR: shader_addline(&buffer, "OPTION ARB_fog_linear;\n"); break;
-        case FOG_EXP:    shader_addline(&buffer, "OPTION ARB_fog_exp;\n");    break;
-        case FOG_EXP2:   shader_addline(&buffer, "OPTION ARB_fog_exp2;\n");   break;
+    switch (settings->fog)
+    {
+        case WINED3D_FFP_PS_FOG_OFF:                                                         break;
+        case WINED3D_FFP_PS_FOG_LINEAR: shader_addline(&buffer, "OPTION ARB_fog_linear;\n"); break;
+        case WINED3D_FFP_PS_FOG_EXP:    shader_addline(&buffer, "OPTION ARB_fog_exp;\n");    break;
+        case WINED3D_FFP_PS_FOG_EXP2:   shader_addline(&buffer, "OPTION ARB_fog_exp2;\n");   break;
         default: FIXME("Unexpected fog setting %d\n", settings->fog);
     }
 

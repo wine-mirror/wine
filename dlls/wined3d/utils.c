@@ -3307,13 +3307,13 @@ void gen_ffp_frag_op(const struct wined3d_context *context, const struct wined3d
 
     if (!state->render_states[WINED3D_RS_FOGENABLE])
     {
-        settings->fog = FOG_OFF;
+        settings->fog = WINED3D_FFP_PS_FOG_OFF;
     }
     else if (state->render_states[WINED3D_RS_FOGTABLEMODE] == WINED3D_FOG_NONE)
     {
         if (use_vs(state) || state->vertex_declaration->position_transformed)
         {
-            settings->fog = FOG_LINEAR;
+            settings->fog = WINED3D_FFP_PS_FOG_LINEAR;
         }
         else
         {
@@ -3321,13 +3321,13 @@ void gen_ffp_frag_op(const struct wined3d_context *context, const struct wined3d
             {
                 case WINED3D_FOG_NONE:
                 case WINED3D_FOG_LINEAR:
-                    settings->fog = FOG_LINEAR;
+                    settings->fog = WINED3D_FFP_PS_FOG_LINEAR;
                     break;
                 case WINED3D_FOG_EXP:
-                    settings->fog = FOG_EXP;
+                    settings->fog = WINED3D_FFP_PS_FOG_EXP;
                     break;
                 case WINED3D_FOG_EXP2:
-                    settings->fog = FOG_EXP2;
+                    settings->fog = WINED3D_FFP_PS_FOG_EXP2;
                     break;
             }
         }
@@ -3337,13 +3337,13 @@ void gen_ffp_frag_op(const struct wined3d_context *context, const struct wined3d
         switch (state->render_states[WINED3D_RS_FOGTABLEMODE])
         {
             case WINED3D_FOG_LINEAR:
-                settings->fog = FOG_LINEAR;
+                settings->fog = WINED3D_FFP_PS_FOG_LINEAR;
                 break;
             case WINED3D_FOG_EXP:
-                settings->fog = FOG_EXP;
+                settings->fog = WINED3D_FFP_PS_FOG_EXP;
                 break;
             case WINED3D_FOG_EXP2:
-                settings->fog = FOG_EXP2;
+                settings->fog = WINED3D_FFP_PS_FOG_EXP2;
                 break;
         }
     }

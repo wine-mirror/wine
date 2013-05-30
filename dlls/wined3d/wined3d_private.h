@@ -734,11 +734,12 @@ enum vertexprocessing_mode {
 
 #define WINED3D_CONST_NUM_UNUSED ~0U
 
-enum fogmode {
-    FOG_OFF,
-    FOG_LINEAR,
-    FOG_EXP,
-    FOG_EXP2
+enum wined3d_ffp_ps_fog_mode
+{
+    WINED3D_FFP_PS_FOG_OFF,
+    WINED3D_FFP_PS_FOG_LINEAR,
+    WINED3D_FFP_PS_FOG_EXP,
+    WINED3D_FFP_PS_FOG_EXP2,
 };
 
 /* Stateblock dependent parameters which have to be hardcoded
@@ -764,7 +765,7 @@ enum wined3d_shader_tex_types
 struct ps_compile_args {
     struct color_fixup_desc     color_fixup[MAX_FRAGMENT_SAMPLERS];
     enum vertexprocessing_mode  vp_mode;
-    enum fogmode                fog;
+    enum wined3d_ffp_ps_fog_mode fog;
     WORD                        tex_transform; /* ps 1.0-1.3, 4 textures */
     WORD                        tex_types; /* ps 1.0 - 1.4, 6 textures */
     WORD                        srgb_correction;
@@ -1672,9 +1673,10 @@ struct texture_stage_op
     unsigned                padding : 10;
 };
 
-struct ffp_frag_settings {
-    struct texture_stage_op     op[MAX_TEXTURES];
-    enum fogmode fog;
+struct ffp_frag_settings
+{
+    struct texture_stage_op op[MAX_TEXTURES];
+    enum wined3d_ffp_ps_fog_mode fog;
     /* Use shorts instead of chars to get dword alignment */
     unsigned short sRGB_write;
     unsigned short emul_clipplanes;

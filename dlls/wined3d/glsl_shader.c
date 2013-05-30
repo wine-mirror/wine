@@ -4420,24 +4420,24 @@ static void shader_glsl_generate_srgb_write_correction(struct wined3d_shader_buf
     shader_addline(buffer, "gl_FragData[0] = clamp(gl_FragData[0], 0.0, 1.0);\n");
 }
 
-static void shader_glsl_generate_fog_code(struct wined3d_shader_buffer *buffer, enum fogmode mode)
+static void shader_glsl_generate_fog_code(struct wined3d_shader_buffer *buffer, enum wined3d_ffp_ps_fog_mode mode)
 {
     switch (mode)
     {
-        case FOG_OFF:
+        case WINED3D_FFP_PS_FOG_OFF:
             return;
 
-        case FOG_LINEAR:
+        case WINED3D_FFP_PS_FOG_LINEAR:
             /* Fog = (gl_Fog.end - gl_FogFragCoord) / (gl_Fog.end - gl_Fog.start) */
             shader_addline(buffer, "float Fog = (gl_Fog.end - gl_FogFragCoord) / (gl_Fog.end - gl_Fog.start);\n");
             break;
 
-        case FOG_EXP:
+        case WINED3D_FFP_PS_FOG_EXP:
             /* Fog = e^-(gl_Fog.density * gl_FogFragCoord) */
             shader_addline(buffer, "float Fog = exp(-gl_Fog.density * gl_FogFragCoord);\n");
             break;
 
-        case FOG_EXP2:
+        case WINED3D_FFP_PS_FOG_EXP2:
             /* Fog = e^-((gl_Fog.density * gl_FogFragCoord)^2) */
             shader_addline(buffer, "float Fog = exp(-gl_Fog.density * gl_Fog.density * gl_FogFragCoord * gl_FogFragCoord);\n");
             break;

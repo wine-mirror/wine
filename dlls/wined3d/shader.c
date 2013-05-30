@@ -2154,7 +2154,7 @@ void find_ps_compile_args(const struct wined3d_state *state,
             args->vp_mode = vertexshader;
         else
             args->vp_mode = fixedfunction;
-        args->fog = FOG_OFF;
+        args->fog = WINED3D_FFP_PS_FOG_OFF;
     }
     else
     {
@@ -2166,27 +2166,27 @@ void find_ps_compile_args(const struct wined3d_state *state,
                 case WINED3D_FOG_NONE:
                     if (device->stream_info.position_transformed || use_vs(state))
                     {
-                        args->fog = FOG_LINEAR;
+                        args->fog = WINED3D_FFP_PS_FOG_LINEAR;
                         break;
                     }
 
                     switch (state->render_states[WINED3D_RS_FOGVERTEXMODE])
                     {
                         case WINED3D_FOG_NONE: /* Fall through. */
-                        case WINED3D_FOG_LINEAR: args->fog = FOG_LINEAR; break;
-                        case WINED3D_FOG_EXP:    args->fog = FOG_EXP;    break;
-                        case WINED3D_FOG_EXP2:   args->fog = FOG_EXP2;   break;
+                        case WINED3D_FOG_LINEAR: args->fog = WINED3D_FFP_PS_FOG_LINEAR; break;
+                        case WINED3D_FOG_EXP:    args->fog = WINED3D_FFP_PS_FOG_EXP;    break;
+                        case WINED3D_FOG_EXP2:   args->fog = WINED3D_FFP_PS_FOG_EXP2;   break;
                     }
                     break;
 
-                case WINED3D_FOG_LINEAR: args->fog = FOG_LINEAR; break;
-                case WINED3D_FOG_EXP:    args->fog = FOG_EXP;    break;
-                case WINED3D_FOG_EXP2:   args->fog = FOG_EXP2;   break;
+                case WINED3D_FOG_LINEAR: args->fog = WINED3D_FFP_PS_FOG_LINEAR; break;
+                case WINED3D_FOG_EXP:    args->fog = WINED3D_FFP_PS_FOG_EXP;    break;
+                case WINED3D_FOG_EXP2:   args->fog = WINED3D_FFP_PS_FOG_EXP2;   break;
             }
         }
         else
         {
-            args->fog = FOG_OFF;
+            args->fog = WINED3D_FFP_PS_FOG_OFF;
         }
     }
 }
