@@ -929,12 +929,9 @@ static HRESULT WINAPI IDirect3DRM3Impl_CreateFace(IDirect3DRM3 *iface, IDirect3D
     return Direct3DRMFace_create(&IID_IDirect3DRMFace2, (IUnknown **)face);
 }
 
-static HRESULT WINAPI IDirect3DRM3Impl_CreateAnimation(IDirect3DRM3* iface,
-                                                       LPDIRECT3DRMANIMATION2* Animation)
+static HRESULT WINAPI IDirect3DRM3Impl_CreateAnimation(IDirect3DRM3 *iface, IDirect3DRMAnimation2 **animation)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM3(iface);
-
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, Animation);
+    FIXME("iface %p, animation %p stub!\n", iface, animation);
 
     return E_NOTIMPL;
 }

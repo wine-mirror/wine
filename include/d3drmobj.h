@@ -4031,10 +4031,10 @@ DECLARE_INTERFACE_(IDirect3DRMAnimationSet2, IDirect3DRMObject)
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMAnimationSet2 methods ***/
-    STDMETHOD(AddAnimation)(THIS_ LPDIRECT3DRMANIMATION2 aid) PURE;
+    STDMETHOD(AddAnimation)(THIS_ IDirect3DRMAnimation2 *animation) PURE;
     STDMETHOD(Load)(THIS_ void *source, void *object_id, D3DRMLOADOPTIONS flags,
             D3DRMLOADTEXTURE3CALLBACK cb, void *ctx, IDirect3DRMFrame3 *parent_frame)PURE;
-    STDMETHOD(DeleteAnimation)(THIS_ LPDIRECT3DRMANIMATION2 aid) PURE;
+    STDMETHOD(DeleteAnimation)(THIS_ IDirect3DRMAnimation2 *animation) PURE;
     STDMETHOD(SetTime)(THIS_ D3DVALUE time) PURE;
     STDMETHOD(GetAnimations)(THIS_ LPDIRECT3DRMANIMATIONARRAY *) PURE;
 };
@@ -4369,7 +4369,7 @@ DECLARE_INTERFACE_(IDirect3DRMAnimationArray, IDirect3DRMArray)
     /*** IDirect3DRMArray methods ***/
     STDMETHOD_(DWORD, GetSize)(THIS) PURE;
     /*** IDirect3DRMAnimationArray methods ***/
-    STDMETHOD(GetElement)(THIS_ DWORD index, LPDIRECT3DRMANIMATION2 *) PURE;
+    STDMETHOD(GetElement)(THIS_ DWORD index, IDirect3DRMAnimation2 **element) PURE;
 };
 #undef INTERFACE
 

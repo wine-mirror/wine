@@ -344,7 +344,7 @@ DECLARE_INTERFACE_(IDirect3DRM3,IUnknown)
     STDMETHOD(CreateMesh)(THIS_ IDirect3DRMMesh **mesh) PURE;
     STDMETHOD(CreateMeshBuilder)(THIS_ IDirect3DRMMeshBuilder3 **mesh_builder) PURE;
     STDMETHOD(CreateFace)(THIS_ IDirect3DRMFace2 **face) PURE;
-    STDMETHOD(CreateAnimation)(THIS_ LPDIRECT3DRMANIMATION2 *) PURE;
+    STDMETHOD(CreateAnimation)(THIS_ IDirect3DRMAnimation2 **animation) PURE;
     STDMETHOD(CreateAnimationSet)(THIS_ LPDIRECT3DRMANIMATIONSET2 *) PURE;
     STDMETHOD(CreateTexture)(THIS_ D3DRMIMAGE *image, IDirect3DRMTexture3 **texture) PURE;
     STDMETHOD(CreateLight)(THIS_ D3DRMLIGHTTYPE type, D3DCOLOR color, IDirect3DRMLight **light) PURE;
