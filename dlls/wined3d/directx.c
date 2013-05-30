@@ -1177,6 +1177,7 @@ static const struct gpu_description gpu_description_table[] =
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD2600,         "ATI Mobility Radeon HD 2600",      DRIVER_AMD_R600,         256 },
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD2900,         "ATI Radeon HD 2900 XT",            DRIVER_AMD_R600,         512 },
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD3200,         "ATI Radeon HD 3200 Graphics",      DRIVER_AMD_R600,         128 },
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD4200M,        "ATI Mobility Radeon HD 4200",      DRIVER_AMD_R600,         256 },
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD4350,         "ATI Radeon HD 4350",               DRIVER_AMD_R600,         256 },
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD4600,         "ATI Radeon HD 4600 Series",        DRIVER_AMD_R600,         512 },
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD4700,         "ATI Radeon HD 4700 Series",        DRIVER_AMD_R600,         512 },
@@ -1812,6 +1813,7 @@ static enum wined3d_pci_device select_card_amd_binary(const struct wined3d_gl_in
             {"HD 4550", CARD_AMD_RADEON_HD4350},    /* Radeon RV710 */
             {"HD 4350", CARD_AMD_RADEON_HD4350},    /* Radeon RV710 */
             /* R600/R700 integrated */
+            {"HD 4200M", CARD_AMD_RADEON_HD4200M},
             {"HD 3300", CARD_AMD_RADEON_HD3200},
             {"HD 3200", CARD_AMD_RADEON_HD3200},
             {"HD 3100", CARD_AMD_RADEON_HD3200},
@@ -1987,7 +1989,7 @@ static enum wined3d_pci_device select_card_amd_mesa(const struct wined3d_gl_info
         {"RV730",       CARD_AMD_RADEON_HD4600},
         {"RV710",       CARD_AMD_RADEON_HD4350},
         /* R600/R700 integrated */
-        {"RS880",       CARD_AMD_RADEON_HD3200},
+        {"RS880",       CARD_AMD_RADEON_HD4200M},
         {"RS780",       CARD_AMD_RADEON_HD3200},
         /* R600 */
         {"R680",        CARD_AMD_RADEON_HD2900},
