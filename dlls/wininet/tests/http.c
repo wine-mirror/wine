@@ -2835,13 +2835,13 @@ static void test_cache_read_gzipped(int port)
     buf[size] = 0;
     ok(!strncmp(buf, content, size), "incorrect page content: %s\n", buf);
 
-    size = sizeof(buf);
+    size = sizeof(buf)-1;
     ret = HttpQueryInfoA(req, HTTP_QUERY_CONTENT_TYPE, buf, &size, 0);
     ok(ret, "HttpQueryInfo(HTTP_QUERY_CONTENT_TYPE) failed: %d\n", GetLastError());
     buf[size] = 0;
     ok(!strncmp(text_html, buf, size), "buf = %s\n", buf);
 
-    size = sizeof(buf);
+    size = sizeof(buf)-1;
     ret = HttpQueryInfoA(req, HTTP_QUERY_RAW_HEADERS_CRLF, buf, &size, 0);
     ok(ret, "HttpQueryInfo(HTTP_QUERY_CONTENT_TYPE) failed: %d\n", GetLastError());
     buf[size] = 0;
@@ -2858,7 +2858,7 @@ static void test_cache_read_gzipped(int port)
     ret = HttpSendRequest(req, "Accept-Encoding: gzip", -1, NULL, 0);
     ok(ret, "HttpSendRequest failed with error %u\n", GetLastError());
     size = 0;
-    while(InternetReadFile(req, buf+size, sizeof(buf)-size, &read) && read)
+    while(InternetReadFile(req, buf+size, sizeof(buf)-1-size, &read) && read)
         size += read;
     todo_wine ok(size == 10, "read %d bytes of data\n", size);
     buf[size] = 0;
@@ -2870,7 +2870,7 @@ static void test_cache_read_gzipped(int port)
             "HttpQueryInfo(HTTP_QUERY_CONTENT_ENCODING) returned %d, %d\n",
             ret, GetLastError());
 
-    size = sizeof(buf);
+    size = sizeof(buf)-1;
     ret = HttpQueryInfoA(req, HTTP_QUERY_CONTENT_TYPE, buf, &size, 0);
     todo_wine ok(ret, "HttpQueryInfo(HTTP_QUERY_CONTENT_TYPE) failed: %d\n", GetLastError());
     buf[size] = 0;
@@ -2888,7 +2888,7 @@ static void test_cache_read_gzipped(int port)
     ret = HttpSendRequest(req, "Accept-Encoding: gzip", -1, NULL, 0);
     ok(ret, "HttpSendRequest failed with error %u\n", GetLastError());
     size = 0;
-    while(InternetReadFile(req, buf+size, sizeof(buf)-size, &read) && read)
+    while(InternetReadFile(req, buf+size, sizeof(buf)-1-size, &read) && read)
         size += read;
     ok(size == 31, "read %d bytes of data\n", size);
     InternetCloseHandle(req);
@@ -2903,7 +2903,7 @@ static void test_cache_read_gzipped(int port)
     ret = HttpSendRequest(req, "Accept-Encoding: gzip", -1, NULL, 0);
     ok(ret, "HttpSendRequest failed with error %u\n", GetLastError());
     size = 0;
-    while(InternetReadFile(req, buf+size, sizeof(buf)-size, &read) && read)
+    while(InternetReadFile(req, buf+size, sizeof(buf)-1-size, &read) && read)
         size += read;
     todo_wine ok(size == 31, "read %d bytes of data\n", size);
 
