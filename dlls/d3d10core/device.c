@@ -1532,8 +1532,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateQuery(ID3D10Device *iface,
     if (!object)
         return E_OUTOFMEMORY;
 
-    hr = d3d10_query_init(object);
-    if (FAILED(hr))
+    if (FAILED(hr = d3d10_query_init(object, FALSE)))
     {
         WARN("Failed to initialize query, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
@@ -1549,9 +1548,34 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateQuery(ID3D10Device *iface,
 static HRESULT STDMETHODCALLTYPE d3d10_device_CreatePredicate(ID3D10Device *iface,
         const D3D10_QUERY_DESC *desc, ID3D10Predicate **predicate)
 {
-    FIXME("iface %p, desc %p, predicate %p stub!\n", iface, desc, predicate);
+    struct d3d10_query *object;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, desc %p, predicate %p.\n", iface, desc, predicate);
+
+    if (!desc)
+        return E_INVALIDARG;
+
+    if (desc->Query != D3D10_QUERY_OCCLUSION_PREDICATE && desc->Query != D3D10_QUERY_SO_OVERFLOW_PREDICATE)
+    {
+        WARN("Query type %#x is not a predicate.\n", desc->Query);
+        return E_INVALIDARG;
+    }
+
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = d3d10_query_init(object, TRUE)))
+    {
+        WARN("Failed to initialize predicate, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created predicate %p.\n", object);
+    *predicate = (ID3D10Predicate *)&object->ID3D10Query_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_device_CreateCounter(ID3D10Device *iface,

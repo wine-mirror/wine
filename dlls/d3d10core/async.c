@@ -33,9 +33,12 @@ static inline struct d3d10_query *impl_from_ID3D10Query(ID3D10Query *iface)
 
 static HRESULT STDMETHODCALLTYPE d3d10_query_QueryInterface(ID3D10Query *iface, REFIID riid, void **object)
 {
+    struct d3d10_query *query = impl_from_ID3D10Query(iface);
+
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
 
-    if (IsEqualGUID(riid, &IID_ID3D10Query)
+    if ((IsEqualGUID(riid, &IID_ID3D10Predicate) && query->predicate)
+            || IsEqualGUID(riid, &IID_ID3D10Query)
             || IsEqualGUID(riid, &IID_ID3D10Asynchronous)
             || IsEqualGUID(riid, &IID_ID3D10DeviceChild)
             || IsEqualGUID(riid, &IID_IUnknown))
@@ -162,10 +165,11 @@ static const struct ID3D10QueryVtbl d3d10_query_vtbl =
     d3d10_query_GetDesc,
 };
 
-HRESULT d3d10_query_init(struct d3d10_query *query)
+HRESULT d3d10_query_init(struct d3d10_query *query, BOOL predicate)
 {
     query->ID3D10Query_iface.lpVtbl = &d3d10_query_vtbl;
     query->refcount = 1;
+    query->predicate = predicate;
 
     return S_OK;
 }
