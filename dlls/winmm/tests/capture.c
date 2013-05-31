@@ -649,10 +649,12 @@ static void wave_in_tests(void)
     rc = waveInMessage((HWAVEIN)WAVE_MAPPER, DRVM_MAPPER_PREFERRED_GET,
             (DWORD_PTR)&preferred, (DWORD_PTR)&status);
     ok((ndev == 0 && (rc == MMSYSERR_NODRIVER || rc == MMSYSERR_BADDEVICEID)) ||
+            rc == MMSYSERR_NOTSUPPORTED ||
             rc == MMSYSERR_NOERROR, "waveInMessage(DRVM_MAPPER_PREFERRED_GET) failed: %u\n", rc);
 
-    ok((ndev == 0 && (preferred == -1 || broken(preferred != -1))) ||
-            preferred < ndev, "Got invalid preferred device: 0x%x\n", preferred);
+    if(rc != MMSYSERR_NOTSUPPORTED)
+        ok((ndev == 0 && (preferred == -1 || broken(preferred != -1))) ||
+                preferred < ndev, "Got invalid preferred device: 0x%x\n", preferred);
 
     rc=waveInGetDevCapsA(ndev+1,&capsA,sizeof(capsA));
     ok(rc==MMSYSERR_BADDEVICEID,
