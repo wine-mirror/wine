@@ -2364,6 +2364,7 @@ static RPC_STATUS rpcrt4_ncacn_http_open(RpcConnection* Connection)
     static const WCHAR wszColon[] = {':',0};
     static const WCHAR wszAcceptType[] = {'a','p','p','l','i','c','a','t','i','o','n','/','r','p','c',0};
     LPCWSTR wszAcceptTypes[] = { wszAcceptType, NULL };
+    DWORD flags;
     WCHAR *url;
     RPC_STATUS status;
     BOOL secure;
@@ -2403,20 +2404,19 @@ static RPC_STATUS rpcrt4_ncacn_http_open(RpcConnection* Connection)
              (httpc->common.QOS->qos->AdditionalSecurityInfoType == RPC_C_AUTHN_INFO_TYPE_HTTP) &&
              (httpc->common.QOS->qos->u.HttpCredentials->Flags & RPC_C_HTTP_FLAG_USE_SSL);
 
-    httpc->in_request = HttpOpenRequestW(httpc->session, wszVerbIn, url, NULL, NULL,
-                                         wszAcceptTypes,
-                                         (secure ? INTERNET_FLAG_SECURE : 0)|INTERNET_FLAG_KEEP_CONNECTION|INTERNET_FLAG_PRAGMA_NOCACHE,
-                                         (DWORD_PTR)httpc->async_data);
+    flags = INTERNET_FLAG_KEEP_CONNECTION | INTERNET_FLAG_PRAGMA_NOCACHE | INTERNET_FLAG_NO_CACHE_WRITE;
+    if (secure) flags |= INTERNET_FLAG_SECURE;
+
+    httpc->in_request = HttpOpenRequestW(httpc->session, wszVerbIn, url, NULL, NULL, wszAcceptTypes,
+                                         flags, (DWORD_PTR)httpc->async_data);
     if (!httpc->in_request)
     {
         ERR("HttpOpenRequestW failed with error %d\n", GetLastError());
         HeapFree(GetProcessHeap(), 0, url);
         return RPC_S_SERVER_UNAVAILABLE;
     }
-    httpc->out_request = HttpOpenRequestW(httpc->session, wszVerbOut, url, NULL, NULL,
-                                          wszAcceptTypes,
-                                          (secure ? INTERNET_FLAG_SECURE : 0)|INTERNET_FLAG_KEEP_CONNECTION|INTERNET_FLAG_PRAGMA_NOCACHE,
-                                          (DWORD_PTR)httpc->async_data);
+    httpc->out_request = HttpOpenRequestW(httpc->session, wszVerbOut, url, NULL, NULL, wszAcceptTypes,
+                                          flags, (DWORD_PTR)httpc->async_data);
     HeapFree(GetProcessHeap(), 0, url);
     if (!httpc->out_request)
     {
