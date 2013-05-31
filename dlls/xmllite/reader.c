@@ -1300,6 +1300,9 @@ static HRESULT reader_parse_pi(xmlreader *reader)
     case XmlReadResumeState_PITarget:
         hr = reader_parse_pitarget(reader, &target);
         if (FAILED(hr)) return hr;
+        reader_set_strvalue(reader, StringValue_LocalName, &target);
+        reader_set_strvalue(reader, StringValue_QualifiedName, &target);
+        reader_set_strvalue(reader, StringValue_Value, &strval_empty);
         reader->resumestate = XmlReadResumeState_PIBody;
     default:
         ;
@@ -1313,9 +1316,6 @@ static HRESULT reader_parse_pi(xmlreader *reader)
         reader_skipn(reader, 2);
         reader->nodetype = XmlNodeType_ProcessingInstruction;
         reader->resumestate = XmlReadResumeState_Initial;
-        reader_set_strvalue(reader, StringValue_LocalName, &target);
-        reader_set_strvalue(reader, StringValue_QualifiedName, &target);
-        reader_set_strvalue(reader, StringValue_Value, &strval_empty);
         return S_OK;
     }
 
@@ -1348,8 +1348,6 @@ static HRESULT reader_parse_pi(xmlreader *reader)
                 reader->resumestate = XmlReadResumeState_Initial;
                 reader->resume[XmlReadResume_Body] = NULL;
                 reader_init_strvalue(start, ptr-start, &value);
-                reader_set_strvalue(reader, StringValue_LocalName, &target);
-                reader_set_strvalue(reader, StringValue_QualifiedName, &target);
                 reader_set_strvalue(reader, StringValue_Value, &value);
                 return S_OK;
             }
