@@ -1734,7 +1734,12 @@ static inline ITypeInfoImpl *TLB_get_typeinfo_by_name(ITypeInfoImpl **typeinfos,
     return NULL;
 }
 
-static TLBVarDesc *TLBVarDesc_Constructor(UINT n)
+static void TLBVarDesc_Constructor(TLBVarDesc *var_desc)
+{
+    list_init(&var_desc->custdata_list);
+}
+
+static TLBVarDesc *TLBVarDesc_Alloc(UINT n)
 {
     TLBVarDesc *ret;
 
@@ -1743,7 +1748,7 @@ static TLBVarDesc *TLBVarDesc_Constructor(UINT n)
         return NULL;
 
     while(n){
-        list_init(&ret[n-1].custdata_list);
+        TLBVarDesc_Constructor(&ret[n-1]);
         --n;
     }
 
@@ -2451,7 +2456,7 @@ static void MSFT_DoVars(TLBContext *pcx, ITypeInfoImpl *pTI, int cFuncs,
 
     TRACE_(typelib)("\n");
 
-    ptvd = *pptvd = TLBVarDesc_Constructor(cVars);
+    ptvd = *pptvd = TLBVarDesc_Alloc(cVars);
     MSFT_ReadLEDWords(&infolen,sizeof(INT), pcx, offset);
     MSFT_ReadLEDWords(&recoffset,sizeof(INT), pcx, offset + infolen +
                       ((cFuncs+cVars)*2+cFuncs + 1)*sizeof(INT));
@@ -3876,7 +3881,7 @@ static void SLTG_DoVars(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI, unsign
   unsigned short i;
   WORD *pType;
 
-  pVarDesc = pTI->vardescs = TLBVarDesc_Constructor(cVars);
+  pVarDesc = pTI->vardescs = TLBVarDesc_Alloc(cVars);
 
   for(pItem = (SLTG_Variable *)pFirstItem, i = 0; i < cVars;
       pItem = (SLTG_Variable *)(pBlk + pItem->next), i++, ++pVarDesc) {
@@ -9113,8 +9118,47 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(ICreateTypeInfo2 *iface,
         UINT index, VARDESC *varDesc)
 {
     ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
-    FIXME("%p %u %p - stub\n", This, index, varDesc);
-    return E_NOTIMPL;
+    TLBVarDesc *var_desc;
+
+    TRACE("%p %u %p\n", This, index, varDesc);
+
+    if (This->vardescs){
+        UINT i;
+
+        This->vardescs = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->vardescs,
+                sizeof(TLBVarDesc) * (This->cVars + 1));
+
+        if (index < This->cVars) {
+            memmove(This->vardescs + index + 1, This->vardescs + index,
+                    (This->cVars - index) * sizeof(TLBVarDesc));
+            var_desc = This->vardescs + index;
+        } else
+            var_desc = This->vardescs + This->cVars;
+
+        /* move custdata lists to the new memory location */
+        for(i = 0; i < This->cVars + 1; ++i){
+            if(index != i){
+                TLBVarDesc *var = &This->vardescs[i];
+                if(var->custdata_list.prev == var->custdata_list.next)
+                    list_init(&var->custdata_list);
+                else{
+                    var->custdata_list.prev->next = &var->custdata_list;
+                    var->custdata_list.next->prev = &var->custdata_list;
+                }
+            }
+        }
+    } else
+        var_desc = This->vardescs = heap_alloc(sizeof(TLBVarDesc));
+
+    memset(var_desc, 0, sizeof(TLBVarDesc));
+    TLBVarDesc_Constructor(var_desc);
+    var_desc->vardesc = *varDesc;
+
+    ++This->cVars;
+
+    This->needs_layout = TRUE;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncAndParamNames(ICreateTypeInfo2 *iface,
