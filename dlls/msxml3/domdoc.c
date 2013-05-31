@@ -2997,7 +2997,7 @@ static HRESULT WINAPI domdoc_setProperty(
              lstrcmpiW(p, PropertyResolveExternalsW) == 0)
     {
         /* Ignore */
-        FIXME("Ignoring property %s, value %d\n", debugstr_w(p), V_BOOL(&value));
+        FIXME("Ignoring property %s, value %s\n", debugstr_w(p), debugstr_variant(&value));
         return S_OK;
     }
 
