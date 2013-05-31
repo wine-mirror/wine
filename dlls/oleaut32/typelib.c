@@ -9220,8 +9220,16 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetVarHelpContext(ICreateTypeInfo2 *ifa
         UINT index, DWORD helpContext)
 {
     ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
-    FIXME("%p %u %d - stub\n", This, index, helpContext);
-    return E_NOTIMPL;
+    TLBVarDesc *var_desc = &This->vardescs[index];
+
+    TRACE("%p %u %d\n", This, index, helpContext);
+
+    if(index >= This->cVars)
+        return TYPE_E_ELEMENTNOTFOUND;
+
+    var_desc->HelpContext = helpContext;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ICreateTypeInfo2_fnSetMops(ICreateTypeInfo2 *iface,
