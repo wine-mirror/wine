@@ -1409,6 +1409,11 @@ static HRESULT test_invalid_fmts(LPGUID lpGuid)
         ok(wfx.nBlockAlign == 4, "blockalign: %u\n", wfx.nBlockAlign);
         ok(wfx.nAvgBytesPerSec == 44100 * 4, "avgbytes: %u\n", wfx.nAvgBytesPerSec);
 
+        if(!gotdx8){
+            win_skip("Not doing the WAVE_FORMAT_EXTENSIBLE tests\n");
+            goto done;
+        }
+
         fmtex.Format.cbSize = sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX);
         fmtex.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
         fmtex.Format.nChannels = 2;
@@ -1475,6 +1480,7 @@ static HRESULT test_invalid_fmts(LPGUID lpGuid)
         IDirectSoundBuffer_Release(primary);
     }
 
+done:
     IDirectSound_Release(dso);
 
     return S_OK;
