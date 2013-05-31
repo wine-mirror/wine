@@ -1072,7 +1072,7 @@ run_tests (char *logname, char *outdir)
     }
     report (R_DELTA, 0, "Running: Done");
 
-    report (R_STATUS, "Cleaning up");
+    report (R_STATUS, "Cleaning up - %u failures", failures);
     CloseHandle( logfile );
     logfile = 0;
     if (!outdir)
@@ -1353,7 +1353,7 @@ int main( int argc, char *argv[] )
                 if (!send_file (logname) && !DeleteFileA(logname))
                     report (R_WARNING, "Can't remove logfile: %u", GetLastError());
         } else run_tests (logname, outdir);
-        report (R_STATUS, "Finished");
+        report (R_STATUS, "Finished - %u failures", failures);
     }
     if (poweroff)
     {
