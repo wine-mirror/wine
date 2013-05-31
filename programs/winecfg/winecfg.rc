@@ -130,7 +130,7 @@ BEGIN
     LTEXT           "",IDC_ABT_PANEL_TEXT,160,43,140,8
     CONTROL         "",IDC_ABT_WEB_LINK,"SysLink", LWS_TRANSPARENT, 105,53,106,8
     LTEXT           "This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.",
-                    IDC_ABT_LICENSE_TEXT,105,64,145,60
+                    IDC_ABT_LICENSE_TEXT,105,64,145,66
     GROUPBOX        "Windows registration information", IDC_STATIC, 15, 155, 230, 55
     LTEXT           "&Owner:", IDC_STATIC, 22, 171, 40, 20
     EDITTEXT        IDC_ABT_OWNER, 75, 171, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
