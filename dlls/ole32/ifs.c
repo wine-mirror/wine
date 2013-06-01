@@ -78,7 +78,7 @@ static int SetSpyedBlockTableLength ( DWORD NewLength )
 	LPVOID *NewSpyedBlocks;
 
 	if (!Malloc32.SpyedBlocks) NewSpyedBlocks = LocalAlloc(LMEM_ZEROINIT, NewLength * sizeof(PVOID));
-	else NewSpyedBlocks = LocalReAlloc(Malloc32.SpyedBlocks, NewLength * sizeof(PVOID), LMEM_ZEROINIT);
+	else NewSpyedBlocks = LocalReAlloc(Malloc32.SpyedBlocks, NewLength * sizeof(PVOID), LMEM_ZEROINIT | LMEM_MOVEABLE);
 	if (NewSpyedBlocks) {
 		Malloc32.SpyedBlocks = NewSpyedBlocks;
 		Malloc32.SpyedBlockTableLength = NewLength;
