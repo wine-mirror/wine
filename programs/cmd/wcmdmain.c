@@ -1813,7 +1813,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
     static const WCHAR forCmd[] = {'f','o','r'};
     static const WCHAR ifCmd[]  = {'i','f'};
     static const WCHAR ifElse[] = {'e','l','s','e'};
-    BOOL      inRem = FALSE;
+    BOOL      inOneLine = FALSE;
     BOOL      inFor = FALSE;
     BOOL      inIn  = FALSE;
     BOOL      inIf  = FALSE;
@@ -1910,9 +1910,10 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
       if (curStringLen == 0 && curCopyTo == curString) {
         static const WCHAR forDO[] = {'d','o'};
 
-        /* If command starts with 'rem ', ignore any &&, ( etc. */
-        if (WCMD_keyword_ws_found(remCmd, sizeof(remCmd)/sizeof(remCmd[0]), curPos)) {
-          inRem = TRUE;
+        /* If command starts with 'rem ' or identifies a label, ignore any &&, ( etc. */
+        if (WCMD_keyword_ws_found(remCmd, sizeof(remCmd)/sizeof(remCmd[0]), curPos) ||
+            *curPos == ':') {
+          inOneLine = TRUE;
 
         } else if (WCMD_keyword_ws_found(forCmd, sizeof(forCmd)/sizeof(forCmd[0]), curPos)) {
           inFor = TRUE;
@@ -1971,11 +1972,12 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
         }
       }
 
-      /* Nothing 'ends' a REM statement and &&, quotes etc are ineffective,
-         so just use the default processing ie skip character specific
-         matching below                                                    */
-      if (!inRem) thisChar = *curPos;
-      else        thisChar = 'X';  /* Character with no special processing */
+      /* Nothing 'ends' a one line statement (e.g. REM or :labels mean
+         the &&, quotes and redirection etc are ineffective, so just force
+         the use of the default processing by skipping character specific
+         matching below)                                                   */
+      if (!inOneLine) thisChar = *curPos;
+      else            thisChar = 'X';  /* Character with no special processing */
 
       lastWasWhiteSpace = FALSE; /* Will be reset below */
       lastWasCaret = FALSE;
@@ -2225,7 +2227,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
         WCHAR *extraData;
 
         WINE_TRACE("Need to read more data as outstanding brackets or carets\n");
-        inRem = FALSE;
+        inOneLine = FALSE;
         prevDelim = CMD_NONE;
         inQuotes = 0;
         memset(extraSpace, 0x00, (MAXSTRING+1) * sizeof(WCHAR));

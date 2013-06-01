@@ -2538,17 +2538,72 @@ echo %ErrorLevel% should still be 7
 
 echo ------------ Testing GOTO ------------
 if a==a goto dest1
+echo FAILURE at dest 1
 :dest1
 echo goto with no leading space worked
+if a==a goto :dest1b
+echo FAILURE at dest 1b
+:dest1b
+echo goto with colon and no leading space worked
 if b==b goto dest2
+echo FAILURE at dest 2
  :dest2
 echo goto with a leading space worked
 if c==c goto dest3
+echo FAILURE at dest 3
 	:dest3
 echo goto with a leading tab worked
 if d==d goto dest4
+echo FAILURE at dest 4
 :dest4@space@
 echo goto with a following space worked
+if e==e goto dest5
+echo FAILURE at dest 5
+:dest5&& echo FAILURE
+echo goto with following amphersands worked
+
+del failure.txt >nul 2>&1
+if f==f goto dest6
+echo FAILURE at dest 6
+:dest6>FAILURE.TXT
+if exist FAILURE.TXT echo FAILURE at dest 6 as file exists
+echo goto with redirections worked
+del FAILURE.TXT >nul 2>&1
+
+:: some text that is ignored | dir >cmd_output | another test
+if exist cmd_output echo FAILURE at dest 6 as file exists
+echo Ignoring double colons worked
+del cmd_output >nul 2>&1
+
+rem goto a label which does not exist issues an error message and
+rem acts the same as goto :EOF, and ensure ::label is never matched
+del testgoto.bat >nul 2>&1
+echo goto :dest7 ^>nul 2^>^&1 >> testgoto.bat
+echo echo FAILURE at dest 7 - Should have not found label and issued an error plus ended the batch>> testgoto.bat
+echo ::dest7>> testgoto.bat
+echo echo FAILURE at dest 7 - Incorrectly went to label >> testgoto.bat
+call testgoto.bat
+del testgoto.bat >nul 2>&1
+
+del testgoto.bat >nul 2>&1
+echo goto ::dest8 ^>nul 2^>^&1 >> testgoto.bat
+echo echo FAILURE at dest 8 - Should have not found label and issued an error plus ended the batch>> testgoto.bat
+echo ::dest8>> testgoto.bat
+echo echo FAILURE at dest 8 - Incorrectly went to label >> testgoto.bat
+call testgoto.bat
+del testgoto.bat >nul 2>&1
+
+if g==g goto dest9
+echo FAILURE at dest 9
+:dest91
+echo FAILURE at dest 91
+@   :     dest9>rubbish
+echo label with mixed whitespace and no echo worked
+
+if h==h goto :dest10:this is ignored
+echo FAILURE at dest 10
+:dest10:this is also ignored
+echo Correctly ignored trailing information
 
 echo ------------ Testing PATH ------------
 set WINE_backup_path=%path%

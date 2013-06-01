@@ -1294,9 +1294,15 @@ errorlevel zero, good@or_broken@errorlevel nonzero, bad
 7 should still be 7
 ------------ Testing GOTO ------------
 goto with no leading space worked
+goto with colon and no leading space worked
 goto with a leading space worked
 goto with a leading tab worked
 goto with a following space worked
+goto with following amphersands worked
+goto with redirections worked
+Ignoring double colons worked
+label with mixed whitespace and no echo worked
+Correctly ignored trailing information
 ------------ Testing PATH ------------
 PATH=original
 PATH=try2
