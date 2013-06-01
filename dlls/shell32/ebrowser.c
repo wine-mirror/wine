@@ -1214,7 +1214,7 @@ static HRESULT WINAPI IExplorerBrowser_fnBrowseToObject(IExplorerBrowser *iface,
     TRACE("%p (%p, 0x%x)\n", This, punk, uFlags);
 
     if(!punk)
-        return IExplorerBrowser_fnBrowseToIDList(iface, NULL, uFlags);
+        return IExplorerBrowser_BrowseToIDList(iface, NULL, uFlags);
 
     hr = SHGetIDListFromObject(punk, &pidl);
     if(SUCCEEDED(hr))
@@ -1292,21 +1292,21 @@ static HRESULT WINAPI IShellBrowser_fnQueryInterface(IShellBrowser *iface,
 {
     ExplorerBrowserImpl *This = impl_from_IShellBrowser(iface);
     TRACE("%p\n", This);
-    return IUnknown_QueryInterface((IUnknown*) This, riid, ppvObject);
+    return IExplorerBrowser_QueryInterface(&This->IExplorerBrowser_iface, riid, ppvObject);
 }
 
 static ULONG WINAPI IShellBrowser_fnAddRef(IShellBrowser *iface)
 {
     ExplorerBrowserImpl *This = impl_from_IShellBrowser(iface);
     TRACE("%p\n", This);
-    return IUnknown_AddRef((IUnknown*) This);
+    return IExplorerBrowser_AddRef(&This->IExplorerBrowser_iface);
 }
 
 static ULONG WINAPI IShellBrowser_fnRelease(IShellBrowser *iface)
 {
     ExplorerBrowserImpl *This = impl_from_IShellBrowser(iface);
     TRACE("%p\n", This);
-    return IUnknown_Release((IUnknown*) This);
+    return IExplorerBrowser_Release(&This->IExplorerBrowser_iface);
 }
 
 static HRESULT WINAPI IShellBrowser_fnGetWindow(IShellBrowser *iface, HWND *phwnd)
@@ -1396,7 +1396,7 @@ static HRESULT WINAPI IShellBrowser_fnBrowseObject(IShellBrowser *iface,
     ExplorerBrowserImpl *This = impl_from_IShellBrowser(iface);
     TRACE("%p (%p, %x)\n", This, pidl, wFlags);
 
-    return IExplorerBrowser_fnBrowseToIDList((IExplorerBrowser*)This, pidl, wFlags);
+    return IExplorerBrowser_BrowseToIDList(&This->IExplorerBrowser_iface, pidl, wFlags);
 }
 
 static HRESULT WINAPI IShellBrowser_fnGetViewStateStream(IShellBrowser *iface,
@@ -1500,21 +1500,21 @@ static HRESULT WINAPI ICommDlgBrowser3_fnQueryInterface(ICommDlgBrowser3 *iface,
 {
     ExplorerBrowserImpl *This = impl_from_ICommDlgBrowser3(iface);
     TRACE("%p\n", This);
-    return IUnknown_QueryInterface((IUnknown*) This, riid, ppvObject);
+    return IExplorerBrowser_QueryInterface(&This->IExplorerBrowser_iface, riid, ppvObject);
 }
 
 static ULONG WINAPI ICommDlgBrowser3_fnAddRef(ICommDlgBrowser3 *iface)
 {
     ExplorerBrowserImpl *This = impl_from_ICommDlgBrowser3(iface);
     TRACE("%p\n", This);
-    return IUnknown_AddRef((IUnknown*) This);
+    return IExplorerBrowser_AddRef(&This->IExplorerBrowser_iface);
 }
 
 static ULONG WINAPI ICommDlgBrowser3_fnRelease(ICommDlgBrowser3 *iface)
 {
     ExplorerBrowserImpl *This = impl_from_ICommDlgBrowser3(iface);
     TRACE("%p\n", This);
-    return IUnknown_Release((IUnknown*) This);
+    return IExplorerBrowser_Release(&This->IExplorerBrowser_iface);
 }
 
 static HRESULT WINAPI ICommDlgBrowser3_fnOnDefaultCommand(ICommDlgBrowser3 *iface,
@@ -1549,7 +1549,7 @@ static HRESULT WINAPI ICommDlgBrowser3_fnOnDefaultCommand(ICommDlgBrowser3 *ifac
             /* Handle folders by browsing to them. */
             if(_ILIsFolder(pidl_child) || _ILIsDrive(pidl_child) || _ILIsSpecialFolder(pidl_child))
             {
-                IExplorerBrowser_BrowseToIDList((IExplorerBrowser*)This, pidl_child, SBSP_RELATIVE);
+                IExplorerBrowser_BrowseToIDList(&This->IExplorerBrowser_iface, pidl_child, SBSP_RELATIVE);
                 ret = S_OK;
             }
             GlobalUnlock(medium.u.hGlobal);
@@ -1694,21 +1694,21 @@ static HRESULT WINAPI IObjectWithSite_fnQueryInterface(IObjectWithSite *iface,
 {
     ExplorerBrowserImpl *This = impl_from_IObjectWithSite(iface);
     TRACE("%p\n", This);
-    return IUnknown_QueryInterface((IUnknown*)This, riid, ppvObject);
+    return IExplorerBrowser_QueryInterface(&This->IExplorerBrowser_iface, riid, ppvObject);
 }
 
 static ULONG WINAPI IObjectWithSite_fnAddRef(IObjectWithSite *iface)
 {
     ExplorerBrowserImpl *This = impl_from_IObjectWithSite(iface);
     TRACE("%p\n", This);
-    return IUnknown_AddRef((IUnknown*)This);
+    return IExplorerBrowser_AddRef(&This->IExplorerBrowser_iface);
 }
 
 static ULONG WINAPI IObjectWithSite_fnRelease(IObjectWithSite *iface)
 {
     ExplorerBrowserImpl *This = impl_from_IObjectWithSite(iface);
     TRACE("%p\n", This);
-    return IUnknown_Release((IUnknown*)This);
+    return IExplorerBrowser_Release(&This->IExplorerBrowser_iface);
 }
 
 static HRESULT WINAPI IObjectWithSite_fnSetSite(IObjectWithSite *iface, IUnknown *punk_site)
@@ -1784,14 +1784,14 @@ static ULONG WINAPI NSTCEvents_fnAddRef(INameSpaceTreeControlEvents *iface)
 {
     ExplorerBrowserImpl *This = impl_from_INameSpaceTreeControlEvents(iface);
     TRACE("%p\n", This);
-    return IUnknown_AddRef((IUnknown*)This);
+    return IExplorerBrowser_AddRef(&This->IExplorerBrowser_iface);
 }
 
 static ULONG WINAPI NSTCEvents_fnRelease(INameSpaceTreeControlEvents *iface)
 {
     ExplorerBrowserImpl *This = impl_from_INameSpaceTreeControlEvents(iface);
     TRACE("%p\n", This);
-    return IUnknown_Release((IUnknown*)This);
+    return IExplorerBrowser_Release(&This->IExplorerBrowser_iface);
 }
 
 static HRESULT WINAPI NSTCEvents_fnOnItemClick(INameSpaceTreeControlEvents *iface,
@@ -1843,7 +1843,7 @@ static HRESULT WINAPI NSTCEvents_fnOnSelectionChanged(INameSpaceTreeControlEvent
     hr = IShellItemArray_GetItemAt(psiaSelection, 0, &psi);
     if(SUCCEEDED(hr))
     {
-        hr = IExplorerBrowser_BrowseToObject((IExplorerBrowser*)This,
+        hr = IExplorerBrowser_BrowseToObject(&This->IExplorerBrowser_iface,
                                              (IUnknown*)psi, SBSP_DEFBROWSER);
         IShellItem_Release(psi);
     }
@@ -1996,21 +1996,21 @@ static HRESULT WINAPI IInputObject_fnQueryInterface(IInputObject *iface,
 {
     ExplorerBrowserImpl *This = impl_from_IInputObject(iface);
     TRACE("%p\n", This);
-    return IUnknown_QueryInterface((IUnknown*)This, riid, ppvObject);
+    return IExplorerBrowser_QueryInterface(&This->IExplorerBrowser_iface, riid, ppvObject);
 }
 
 static ULONG WINAPI IInputObject_fnAddRef(IInputObject *iface)
 {
     ExplorerBrowserImpl *This = impl_from_IInputObject(iface);
     TRACE("%p\n", This);
-    return IUnknown_AddRef((IUnknown*)This);
+    return IExplorerBrowser_AddRef(&This->IExplorerBrowser_iface);
 }
 
 static ULONG WINAPI IInputObject_fnRelease(IInputObject *iface)
 {
     ExplorerBrowserImpl *This = impl_from_IInputObject(iface);
     TRACE("%p\n", This);
-    return IUnknown_Release((IUnknown*)This);
+    return IExplorerBrowser_Release(&This->IExplorerBrowser_iface);
 }
 
 static HRESULT WINAPI IInputObject_fnUIActivateIO(IInputObject *iface, BOOL fActivate, MSG *pMsg)
@@ -2071,8 +2071,8 @@ HRESULT WINAPI ExplorerBrowser_Constructor(IUnknown *pUnkOuter, REFIID riid, voi
     list_init(&eb->event_clients);
     list_init(&eb->travellog);
 
-    ret = IExplorerBrowser_QueryInterface((IExplorerBrowser*)eb, riid, ppv);
-    IExplorerBrowser_Release((IExplorerBrowser*)eb);
+    ret = IExplorerBrowser_QueryInterface(&eb->IExplorerBrowser_iface, riid, ppv);
+    IExplorerBrowser_Release(&eb->IExplorerBrowser_iface);
 
     TRACE("--(%p)\n", ppv);
     return ret;
