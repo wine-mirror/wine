@@ -251,17 +251,9 @@ static void test_heap(void)
         gbl = GlobalAlloc(GMEM_FIXED, init_size);
         SetLastError(MAGIC_DEAD);
         hsecond = GlobalReAlloc(gbl, size + init_size, 0);
-        if (hsecond != gbl) {
-            todo_wine
-            ok(hsecond == gbl || (hsecond == NULL && GetLastError() == ERROR_NOT_ENOUGH_MEMORY),
-               "got %p with %x (expected %p or NULL) @%ld\n", hsecond, GetLastError(), gbl, size);
-            GlobalFree(hsecond);
-        }
-        else {
-            ok(hsecond == gbl || (hsecond == NULL && GetLastError() == ERROR_NOT_ENOUGH_MEMORY),
-               "got %p with %x (expected %p or NULL) @%ld\n", hsecond, GetLastError(), gbl, size);
-            GlobalFree(gbl);
-        }
+        ok(hsecond == gbl || (hsecond == NULL && GetLastError() == ERROR_NOT_ENOUGH_MEMORY),
+           "got %p with %x (expected %p or NULL) @%ld\n", hsecond, GetLastError(), gbl, size);
+        GlobalFree(gbl);
     }
 
     /* GMEM_FIXED block can be relocated with GMEM_MOVEABLE */
@@ -418,17 +410,9 @@ static void test_heap(void)
         gbl = LocalAlloc(LMEM_FIXED, init_size);
         SetLastError(MAGIC_DEAD);
         hsecond = LocalReAlloc(gbl, size + init_size, 0);
-        if (hsecond != gbl) {
-            todo_wine
-            ok(hsecond == gbl || (hsecond == NULL && GetLastError() == ERROR_NOT_ENOUGH_MEMORY),
-               "got %p with %x (expected %p or NULL) @%ld\n", hsecond, GetLastError(), gbl, size);
-            LocalFree(hsecond);
-        }
-        else {
-            ok(hsecond == gbl || (hsecond == NULL && GetLastError() == ERROR_NOT_ENOUGH_MEMORY),
-               "got %p with %x (expected %p or NULL) @%ld\n", hsecond, GetLastError(), gbl, size);
-            LocalFree(gbl);
-        }
+        ok(hsecond == gbl || (hsecond == NULL && GetLastError() == ERROR_NOT_ENOUGH_MEMORY),
+           "got %p with %x (expected %p or NULL) @%ld\n", hsecond, GetLastError(), gbl, size);
+        LocalFree(gbl);
     }
 
     /* LMEM_FIXED memory can be relocated with LMEM_MOVEABLE */

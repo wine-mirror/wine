@@ -646,6 +646,8 @@ HGLOBAL WINAPI GlobalReAlloc(
       if(ISPOINTER(hmem))
       {
          /* reallocate fixed memory */
+         if (!(flags & GMEM_MOVEABLE))
+            heap_flags |= HEAP_REALLOC_IN_PLACE_ONLY;
          hnew=HeapReAlloc(GetProcessHeap(), heap_flags, hmem, size);
       }
       else
