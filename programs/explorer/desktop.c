@@ -444,13 +444,13 @@ static void initialize_launchers( HWND hwnd )
     desktop_width = GetSystemMetrics( SM_CXSCREEN );
     launchers_per_row = desktop_width / launcher_size;
 
-    hr = SHGetKnownFolderPath( &FOLDERID_Desktop, 0, NULL, &desktop_folder );
+    hr = SHGetKnownFolderPath( &FOLDERID_Desktop, KF_FLAG_CREATE, NULL, &desktop_folder );
     if (FAILED( hr ))
     {
         WINE_ERR("Could not get user desktop folder\n");
         return;
     }
-    hr = SHGetKnownFolderPath( &FOLDERID_PublicDesktop, 0, NULL, &desktop_folder_public );
+    hr = SHGetKnownFolderPath( &FOLDERID_PublicDesktop, KF_FLAG_CREATE, NULL, &desktop_folder_public );
     if (FAILED( hr ))
     {
         WINE_ERR("Could not get public desktop folder\n");
