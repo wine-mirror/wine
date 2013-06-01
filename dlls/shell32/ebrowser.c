@@ -1414,9 +1414,8 @@ static HRESULT WINAPI IShellBrowser_fnGetControlWindow(IShellBrowser *iface,
                                                        UINT id, HWND *phwnd)
 {
     ExplorerBrowserImpl *This = impl_from_IShellBrowser(iface);
-    TRACE("%p (%d, %p)\n", This, id, phwnd);
-
-    /* Not implemented. */
+    TRACE("(%p)->(%d, %p)\n", This, id, phwnd);
+    if (phwnd) *phwnd = NULL;
     return E_NOTIMPL;
 }
 
