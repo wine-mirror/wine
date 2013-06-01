@@ -122,7 +122,7 @@ static BOOL GRPFILE_ReadFileToBuffer(LPCSTR path, HLOCAL *phBuffer,
     {
       size += len;
       hNewBuffer = LocalReAlloc(hBuffer, size + MALLOCHUNK + 1,
-				LMEM_FIXED);
+				LMEM_MOVEABLE);
       if (!hNewBuffer)
 	{
 	  LocalFree(hBuffer);
