@@ -363,6 +363,7 @@ for %%i in ("d e" f) do echo %%~dpi
 for %%i in ("g h" i) do echo %%~sdi
 for %%i in ("g h" i) do echo %%~dsi
 for %%i in ("j k" l.eh) do echo '%%~xsi'
+for %%i in ("") do echo '%%~i,%%~fi,%%~di,%%~pi,%%~ni,%%~xi,%%~si,%%~ai,%%~ti,%%~zi'
 
 echo --- in parameters
 for %%i in ("A B" C) do call :echoFun %%i

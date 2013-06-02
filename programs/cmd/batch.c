@@ -514,11 +514,13 @@ void WCMD_HandleTildaModifiers(WCHAR **start, BOOL atExecute)
   /* After this, we need full information on the file,
     which is valid not to exist.  */
   if (!skipFileParsing) {
-    if (GetFullPathNameW(outputparam, MAX_PATH, fullfilename, NULL) == 0)
-      return;
-
-    exists = GetFileAttributesExW(fullfilename, GetFileExInfoStandard,
-                                  &fileInfo);
+    if (GetFullPathNameW(outputparam, MAX_PATH, fullfilename, NULL) == 0) {
+      exists = FALSE;
+      fullfilename[0] = 0x00;
+    } else {
+      exists = GetFileAttributesExW(fullfilename, GetFileExInfoStandard,
+                                    &fileInfo);
+    }
 
     /* 2. Handle 'a' : Output attributes (File doesn't have to exist) */
     if (memchrW(firstModifier, 'a', modifierLen) != NULL) {
