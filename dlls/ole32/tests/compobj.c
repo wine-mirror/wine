@@ -431,6 +431,12 @@ static void test_CoGetClassObject(void)
     CloseHandle(info.wait);
     CloseHandle(info.stop);
 
+    if (!pRegOverridePredefKey)
+    {
+        win_skip("RegOverridePredefKey not available\n");
+        return;
+    }
+
     pCoInitializeEx(NULL, COINIT_MULTITHREADED);
 
     hr = CoGetClassObject(rclsid, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void **)&pUnk);
