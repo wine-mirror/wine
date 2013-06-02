@@ -64,3 +64,15 @@ DWORD WINAPI DriverPackageUninstallW(LPCWSTR inf, DWORD flags, PCINSTALLERINFO_W
     if (reboot) *reboot = FALSE;
     return ERROR_SUCCESS;
 }
+
+DWORD WINAPI DriverPackageGetPathA(LPCSTR inf, CHAR *dest, DWORD *count)
+{
+    FIXME("(%s, %p, %p) stub\n", wine_dbgstr_a(inf), dest, count);
+    return ERROR_UNSUPPORTED_TYPE;
+}
+
+DWORD WINAPI DriverPackageGetPathW(LPCWSTR inf, WCHAR *dest, DWORD *count)
+{
+    FIXME("(%s, %p, %p) stub\n", wine_dbgstr_w(inf), dest, count);
+    return ERROR_UNSUPPORTED_TYPE;
+}
