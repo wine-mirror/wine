@@ -5510,7 +5510,7 @@ static void test_VarCat(void)
             /* Determine the error code for the vt combination */
             ok(hres == expected_error_num,
                 "VarCat: %d, %d returned error, 0x%X expected 0x%X.\n",
-                leftvt, rightvt, expected_error_num, hres);
+                leftvt, rightvt, hres, expected_error_num);
 
             /* Check types are correct */
             ok(V_VT(&result) == resultvt,
