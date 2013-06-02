@@ -1,5 +1,5 @@
-@ stub DIFXAPISetLogCallbackA
-@ stub DIFXAPISetLogCallbackW
+@ stdcall DIFXAPISetLogCallbackA(ptr ptr)
+@ stdcall DIFXAPISetLogCallbackW(ptr ptr)
 @ stdcall DriverPackageGetPathA(str ptr ptr)
 @ stdcall DriverPackageGetPathW(wstr ptr ptr)
 @ stdcall DriverPackageInstallA(str long ptr ptr)

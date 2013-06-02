@@ -76,3 +76,13 @@ DWORD WINAPI DriverPackageGetPathW(LPCWSTR inf, WCHAR *dest, DWORD *count)
     FIXME("(%s, %p, %p) stub\n", wine_dbgstr_w(inf), dest, count);
     return ERROR_UNSUPPORTED_TYPE;
 }
+
+VOID WINAPI DIFXAPISetLogCallbackA(DIFXAPILOGCALLBACK_A cb, VOID *ctx)
+{
+    FIXME("(%p, %p) stub\n", cb, ctx);
+}
+
+VOID WINAPI DIFXAPISetLogCallbackW(DIFXAPILOGCALLBACK_W cb, VOID *ctx)
+{
+    FIXME("(%p, %p) stub\n", cb, ctx);
+}
