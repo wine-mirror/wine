@@ -1,3 +1,6 @@
 MODULE = difxapi.dll
 
+C_SRCS = \
+	main.c
+
 @MAKE_DLL_RULES@

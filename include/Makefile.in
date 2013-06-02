@@ -246,6 +246,7 @@ SRCDIR_INCLUDES = \
 	devguid.h \
 	devpkey.h \
 	devpropdef.h \
+	difxapi.h \
 	digitalv.h \
 	dinput.h \
 	dinputd.h \

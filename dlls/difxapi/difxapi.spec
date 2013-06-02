@@ -4,7 +4,7 @@
 @ stub DriverPackageGetPathW
 @ stub DriverPackageInstallA
 @ stub DriverPackageInstallW
-@ stub DriverPackagePreinstallA
-@ stub DriverPackagePreinstallW
+@ stdcall DriverPackagePreinstallA(str long)
+@ stdcall DriverPackagePreinstallW(wstr long)
 @ stub DriverPackageUninstallA
 @ stub DriverPackageUninstallW
