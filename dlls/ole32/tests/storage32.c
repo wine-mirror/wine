@@ -3071,11 +3071,13 @@ if (hr == S_OK) {
 
     /* reader mode */
     hr = StgOpenStorage(fileW, NULL, STGM_DIRECT_SWMR | STGM_READ | STGM_SHARE_DENY_NONE, NULL, 0, &stg);
-    ok(hr == S_OK, "got %08x\n", hr);
-
-    hr = IStorage_QueryInterface(stg, &IID_IDirectWriterLock, (void**)&dwlock);
-    ok(hr == E_NOINTERFACE, "got %08x\n", hr);
-    IStorage_Release(stg);
+    ok(hr == S_OK || broken(hr == STG_E_INVALIDFLAG), "got %08x\n", hr);
+    if(hr == S_OK)
+    {
+       hr = IStorage_QueryInterface(stg, &IID_IDirectWriterLock, (void**)&dwlock);
+       ok(hr == E_NOINTERFACE, "got %08x\n", hr);
+       IStorage_Release(stg);
+    }
 
     /* writer mode */
     hr = StgOpenStorage(fileW, NULL, STGM_DIRECT_SWMR | STGM_READWRITE | STGM_SHARE_DENY_WRITE, NULL, 0, &stg);
