@@ -6,5 +6,5 @@
 @ stdcall DriverPackageInstallW(wstr long ptr ptr)
 @ stdcall DriverPackagePreinstallA(str long)
 @ stdcall DriverPackagePreinstallW(wstr long)
-@ stub DriverPackageUninstallA
-@ stub DriverPackageUninstallW
+@ stdcall DriverPackageUninstallA(str long ptr ptr)
+@ stdcall DriverPackageUninstallW(wstr long ptr ptr)

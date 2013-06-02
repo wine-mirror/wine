@@ -50,3 +50,17 @@ DWORD WINAPI DriverPackageInstallW(LPCWSTR inf, DWORD flags, PCINSTALLERINFO_W i
     if (reboot) *reboot = FALSE;
     return ERROR_SUCCESS;
 }
+
+DWORD WINAPI DriverPackageUninstallA(LPCSTR inf, DWORD flags, PCINSTALLERINFO_A info, BOOL *reboot)
+{
+    FIXME("(%s, %u, %p, %p) stub\n", wine_dbgstr_a(inf), flags, info, reboot);
+    if (reboot) *reboot = FALSE;
+    return ERROR_SUCCESS;
+}
+
+DWORD WINAPI DriverPackageUninstallW(LPCWSTR inf, DWORD flags, PCINSTALLERINFO_W info, BOOL *reboot)
+{
+    FIXME("(%s, %u, %p, %p) stub\n", wine_dbgstr_w(inf), flags, info, reboot);
+    if (reboot) *reboot = FALSE;
+    return ERROR_SUCCESS;
+}
