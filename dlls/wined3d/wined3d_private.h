@@ -2076,24 +2076,6 @@ struct fbo_entry
     GLuint id;
 };
 
-enum wined3d_container_type
-{
-    WINED3D_CONTAINER_NONE = 0,
-    WINED3D_CONTAINER_SWAPCHAIN,
-    WINED3D_CONTAINER_TEXTURE,
-};
-
-struct wined3d_subresource_container
-{
-    enum wined3d_container_type type;
-    union
-    {
-        struct wined3d_swapchain *swapchain;
-        struct wined3d_texture *texture;
-        void *base;
-    } u;
-};
-
 struct wined3d_surface_ops
 {
     HRESULT (*surface_private_setup)(struct wined3d_surface *surface);
@@ -2106,7 +2088,8 @@ struct wined3d_surface
 {
     struct wined3d_resource resource;
     const struct wined3d_surface_ops *surface_ops;
-    struct wined3d_subresource_container container;
+    struct wined3d_texture *container;
+    struct wined3d_swapchain *swapchain;
     struct wined3d_palette *palette; /* D3D7 style palette handling */
     DWORD draw_binding;
 
@@ -2188,8 +2171,8 @@ void surface_prepare_texture(struct wined3d_surface *surface,
         struct wined3d_context *context, BOOL srgb) DECLSPEC_HIDDEN;
 void surface_set_compatible_renderbuffer(struct wined3d_surface *surface,
         const struct wined3d_surface *rt) DECLSPEC_HIDDEN;
-void surface_set_container(struct wined3d_surface *surface,
-        enum wined3d_container_type type, void *container) DECLSPEC_HIDDEN;
+void surface_set_container(struct wined3d_surface *surface, struct wined3d_texture *container) DECLSPEC_HIDDEN;
+void surface_set_swapchain(struct wined3d_surface *surface, struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
 void surface_set_texture_name(struct wined3d_surface *surface, GLuint name, BOOL srgb_name) DECLSPEC_HIDDEN;
 void surface_set_texture_target(struct wined3d_surface *surface, GLenum target, GLint level) DECLSPEC_HIDDEN;
 void surface_translate_drawable_coords(const struct wined3d_surface *surface, HWND window, RECT *rect) DECLSPEC_HIDDEN;

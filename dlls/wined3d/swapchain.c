@@ -42,8 +42,7 @@ static void swapchain_cleanup(struct wined3d_swapchain *swapchain)
      * is the last buffer to be destroyed, FindContext() depends on that. */
     if (swapchain->front_buffer)
     {
-        if (swapchain->front_buffer->container.type == WINED3D_CONTAINER_SWAPCHAIN)
-            surface_set_container(swapchain->front_buffer, WINED3D_CONTAINER_NONE, NULL);
+        surface_set_swapchain(swapchain->front_buffer, NULL);
         if (wined3d_surface_decref(swapchain->front_buffer))
             WARN("Something's still holding the front buffer (%p).\n", swapchain->front_buffer);
         swapchain->front_buffer = NULL;
@@ -55,8 +54,7 @@ static void swapchain_cleanup(struct wined3d_swapchain *swapchain)
 
         while (i--)
         {
-            if (swapchain->back_buffers[i]->container.type == WINED3D_CONTAINER_SWAPCHAIN)
-                surface_set_container(swapchain->back_buffers[i], WINED3D_CONTAINER_NONE, NULL);
+            surface_set_swapchain(swapchain->back_buffers[i], NULL);
             if (wined3d_surface_decref(swapchain->back_buffers[i]))
                 WARN("Something's still holding back buffer %u (%p).\n", i, swapchain->back_buffers[i]);
         }
@@ -898,8 +896,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
         goto err;
     }
 
-    if (swapchain->front_buffer->container.type == WINED3D_CONTAINER_NONE)
-        surface_set_container(swapchain->front_buffer, WINED3D_CONTAINER_SWAPCHAIN, swapchain);
+    surface_set_swapchain(swapchain->front_buffer, swapchain);
     if (!(device->wined3d->flags & WINED3D_NO3D))
         surface_modify_location(swapchain->front_buffer, SFLAG_INDRAWABLE, TRUE);
 
@@ -1007,8 +1004,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
                 WARN("Failed to create back buffer %u, hr %#x.\n", i, hr);
                 goto err;
             }
-            if (swapchain->back_buffers[i]->container.type == WINED3D_CONTAINER_NONE)
-                surface_set_container(swapchain->back_buffers[i], WINED3D_CONTAINER_SWAPCHAIN, swapchain);
+            surface_set_swapchain(swapchain->back_buffers[i], swapchain);
         }
     }
 
@@ -1027,8 +1023,6 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
                 WARN("Failed to create the auto depth stencil, hr %#x.\n", hr);
                 goto err;
             }
-
-            surface_set_container(device->auto_depth_stencil, WINED3D_CONTAINER_NONE, NULL);
         }
     }
 
@@ -1059,7 +1053,7 @@ err:
         {
             if (swapchain->back_buffers[i])
             {
-                surface_set_container(swapchain->back_buffers[i], WINED3D_CONTAINER_NONE, NULL);
+                surface_set_swapchain(swapchain->back_buffers[i], NULL);
                 wined3d_surface_decref(swapchain->back_buffers[i]);
             }
         }
@@ -1079,7 +1073,7 @@ err:
 
     if (swapchain->front_buffer)
     {
-        surface_set_container(swapchain->front_buffer, WINED3D_CONTAINER_NONE, NULL);
+        surface_set_swapchain(swapchain->front_buffer, NULL);
         wined3d_surface_decref(swapchain->front_buffer);
     }
 

@@ -7245,8 +7245,8 @@ static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, 
     const struct wined3d_gl_info *gl_info = context->gl_info;
     GLenum textype;
 
-    if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
-        textype = surface->container.u.texture->target;
+    if (surface->container)
+        textype = surface->container->target;
     else
         textype = surface->texture_target;
 
@@ -7429,8 +7429,7 @@ HRESULT arbfp_blit_surface(struct wined3d_device *device, DWORD filter,
     arbfp_blit_unset(context->gl_info);
 
     if (wined3d_settings.strict_draw_ordering
-            || (dst_surface->container.type == WINED3D_CONTAINER_SWAPCHAIN
-            && (dst_surface->container.u.swapchain->front_buffer == dst_surface)))
+            || (dst_surface->swapchain && (dst_surface->swapchain->front_buffer == dst_surface)))
         context->gl_info->gl_ops.gl.p_glFlush(); /* Flush to ensure ordering across contexts. */
 
     context_release(context);

@@ -124,14 +124,11 @@ void surface_update_draw_binding(struct wined3d_surface *surface)
         surface->draw_binding = SFLAG_INTEXTURE;
 }
 
-void surface_set_container(struct wined3d_surface *surface, enum wined3d_container_type type, void *container)
+void surface_set_swapchain(struct wined3d_surface *surface, struct wined3d_swapchain *swapchain)
 {
-    TRACE("surface %p, container %p.\n", surface, container);
+    TRACE("surface %p, swapchain %p.\n", surface, swapchain);
 
-    if (!container && type != WINED3D_CONTAINER_NONE)
-        ERR("Setting NULL container of type %#x.\n", type);
-
-    if (type == WINED3D_CONTAINER_SWAPCHAIN)
+    if (swapchain)
     {
         surface->get_drawable_size = get_drawable_size_swapchain;
     }
@@ -153,8 +150,33 @@ void surface_set_container(struct wined3d_surface *surface, enum wined3d_contain
         }
     }
 
-    surface->container.type = type;
-    surface->container.u.base = container;
+    surface->swapchain = swapchain;
+    surface_update_draw_binding(surface);
+}
+
+void surface_set_container(struct wined3d_surface *surface, struct wined3d_texture *container)
+{
+    TRACE("surface %p, container %p.\n", surface, container);
+
+    if (!surface->swapchain)
+    {
+        switch (wined3d_settings.offscreen_rendering_mode)
+        {
+            case ORM_FBO:
+                surface->get_drawable_size = get_drawable_size_fbo;
+                break;
+
+            case ORM_BACKBUFFER:
+                surface->get_drawable_size = get_drawable_size_backbuffer;
+                break;
+
+            default:
+                ERR("Unhandled offscreen rendering mode %#x.\n", wined3d_settings.offscreen_rendering_mode);
+                return;
+        }
+    }
+
+    surface->container = container;
     surface_update_draw_binding(surface);
 }
 
@@ -358,9 +380,9 @@ void draw_textured_quad(const struct wined3d_surface *src_surface, struct wined3
 
     /* We changed the filtering settings on the texture. Inform the
      * container about this to get the filters reset properly next draw. */
-    if (src_surface->container.type == WINED3D_CONTAINER_TEXTURE)
+    if (src_surface->container)
     {
-        struct wined3d_texture *texture = src_surface->container.u.texture;
+        struct wined3d_texture *texture = src_surface->container;
         texture->texture_rgb.states[WINED3DTEXSTA_MAGFILTER] = WINED3D_TEXF_POINT;
         texture->texture_rgb.states[WINED3DTEXSTA_MINFILTER] = WINED3D_TEXF_POINT;
         texture->texture_rgb.states[WINED3DTEXSTA_MIPFILTER] = WINED3D_TEXF_NONE;
@@ -597,9 +619,9 @@ static void surface_bind(struct wined3d_surface *surface, struct wined3d_context
 {
     TRACE("surface %p, context %p, srgb %#x.\n", surface, context, srgb);
 
-    if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
+    if (surface->container)
     {
-        struct wined3d_texture *texture = surface->container.u.texture;
+        struct wined3d_texture *texture = surface->container;
 
         TRACE("Passing to container (%p).\n", texture);
         texture->texture_ops->texture_bind(texture, context, srgb);
@@ -988,8 +1010,7 @@ static void surface_unmap(struct wined3d_surface *surface)
         goto done;
     }
 
-    if (surface->container.type == WINED3D_CONTAINER_SWAPCHAIN
-            && surface->container.u.swapchain->front_buffer == surface)
+    if (surface->swapchain && surface->swapchain->front_buffer == surface)
     {
         if (!surface->dirtyRect.left && !surface->dirtyRect.top
                 && surface->dirtyRect.right == surface->resource.width
@@ -1248,7 +1269,7 @@ static void surface_blt_fbo(const struct wined3d_device *device, enum wined3d_te
 
     if (wined3d_settings.strict_draw_ordering
             || (dst_location == SFLAG_INDRAWABLE
-            && dst_surface->container.u.swapchain->front_buffer == dst_surface))
+            && dst_surface->swapchain->front_buffer == dst_surface))
         gl_info->gl_ops.gl.p_glFlush();
 
     context_release(context);
@@ -1563,15 +1584,12 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
         goto fallback;
     }
 
-    if (src_surface && src_surface->container.type == WINED3D_CONTAINER_SWAPCHAIN)
-        src_swapchain = src_surface->container.u.swapchain;
+    if (src_surface)
+        src_swapchain = src_surface->swapchain;
     else
         src_swapchain = NULL;
 
-    if (dst_surface->container.type == WINED3D_CONTAINER_SWAPCHAIN)
-        dst_swapchain = dst_surface->container.u.swapchain;
-    else
-        dst_swapchain = NULL;
+    dst_swapchain = dst_surface->swapchain;
 
     /* This isn't strictly needed. FBO blits for example could deal with
      * cross-swapchain blits by first downloading the source to a texture
@@ -1879,7 +1897,7 @@ static void surface_unload(struct wined3d_resource *resource)
 
     /* If we're in a texture, the texture name belongs to the texture.
      * Otherwise, destroy it. */
-    if (surface->container.type != WINED3D_CONTAINER_TEXTURE)
+    if (!surface->container)
     {
         gl_info->gl_ops.gl.p_glDeleteTextures(1, &surface->texture_name);
         surface->texture_name = 0;
@@ -1987,14 +2005,8 @@ static void gdi_surface_realize_palette(struct wined3d_surface *surface)
     /* Update the image because of the palette change. Some games like e.g.
      * Red Alert call SetEntries a lot to implement fading. */
     /* Tell the swapchain to update the screen. */
-    if (surface->container.type == WINED3D_CONTAINER_SWAPCHAIN)
-    {
-        struct wined3d_swapchain *swapchain = surface->container.u.swapchain;
-        if (surface == swapchain->front_buffer)
-        {
-            x11_copy_to_screen(swapchain, NULL);
-        }
-    }
+    if (surface->swapchain && surface == surface->swapchain->front_buffer)
+        x11_copy_to_screen(surface->swapchain, NULL);
 }
 
 static void gdi_surface_map(struct wined3d_surface *surface, const RECT *rect, DWORD flags)
@@ -2024,14 +2036,8 @@ static void gdi_surface_unmap(struct wined3d_surface *surface)
     TRACE("surface %p.\n", surface);
 
     /* Tell the swapchain to update the screen. */
-    if (surface->container.type == WINED3D_CONTAINER_SWAPCHAIN)
-    {
-        struct wined3d_swapchain *swapchain = surface->container.u.swapchain;
-        if (surface == swapchain->front_buffer)
-        {
-            x11_copy_to_screen(swapchain, &surface->lockedRect);
-        }
-    }
+    if (surface->swapchain && surface == surface->swapchain->front_buffer)
+        x11_copy_to_screen(surface->swapchain, &surface->lockedRect);
 
     memset(&surface->lockedRect, 0, sizeof(RECT));
 }
@@ -2786,11 +2792,11 @@ void surface_set_compatible_renderbuffer(struct wined3d_surface *surface, const 
 
 GLenum surface_get_gl_buffer(const struct wined3d_surface *surface)
 {
-    const struct wined3d_swapchain *swapchain = surface->container.u.swapchain;
+    const struct wined3d_swapchain *swapchain = surface->swapchain;
 
     TRACE("surface %p.\n", surface);
 
-    if (surface->container.type != WINED3D_CONTAINER_SWAPCHAIN)
+    if (!swapchain)
     {
         ERR("Surface %p is not on a swapchain.\n", surface);
         return GL_NONE;
@@ -2842,10 +2848,10 @@ void surface_add_dirty_rect(struct wined3d_surface *surface, const struct wined3
     }
 
     /* if the container is a texture then mark it dirty. */
-    if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
+    if (surface->container)
     {
         TRACE("Passing to container.\n");
-        wined3d_texture_set_dirty(surface->container.u.texture, TRUE);
+        wined3d_texture_set_dirty(surface->container, TRUE);
     }
 }
 
@@ -2967,22 +2973,14 @@ ULONG CDECL wined3d_surface_incref(struct wined3d_surface *surface)
 {
     ULONG refcount;
 
-    TRACE("Surface %p, container %p of type %#x.\n",
-            surface, surface->container.u.base, surface->container.type);
+    TRACE("surface %p, swapchain %p, container %p.\n",
+            surface, surface->swapchain, surface->container);
 
-    switch (surface->container.type)
-    {
-        case WINED3D_CONTAINER_TEXTURE:
-            return wined3d_texture_incref(surface->container.u.texture);
+    if (surface->swapchain)
+        return wined3d_swapchain_incref(surface->swapchain);
 
-        case WINED3D_CONTAINER_SWAPCHAIN:
-            return wined3d_swapchain_incref(surface->container.u.swapchain);
-
-        default:
-            ERR("Unhandled container type %#x.\n", surface->container.type);
-        case WINED3D_CONTAINER_NONE:
-            break;
-    }
+    if (surface->container)
+        return wined3d_texture_incref(surface->container);
 
     refcount = InterlockedIncrement(&surface->resource.ref);
     TRACE("%p increasing refcount to %u.\n", surface, refcount);
@@ -2995,22 +2993,14 @@ ULONG CDECL wined3d_surface_decref(struct wined3d_surface *surface)
 {
     ULONG refcount;
 
-    TRACE("Surface %p, container %p of type %#x.\n",
-            surface, surface->container.u.base, surface->container.type);
+    TRACE("surface %p, swapchain %p, container %p.\n",
+            surface, surface->swapchain, surface->container);
 
-    switch (surface->container.type)
-    {
-        case WINED3D_CONTAINER_TEXTURE:
-            return wined3d_texture_decref(surface->container.u.texture);
+    if (surface->swapchain)
+        return wined3d_swapchain_decref(surface->swapchain);
 
-        case WINED3D_CONTAINER_SWAPCHAIN:
-            return wined3d_swapchain_decref(surface->container.u.swapchain);
-
-        default:
-            ERR("Unhandled container type %#x.\n", surface->container.type);
-        case WINED3D_CONTAINER_NONE:
-            break;
-    }
+    if (surface->container)
+        return wined3d_texture_decref(surface->container);
 
     refcount = InterlockedDecrement(&surface->resource.ref);
     TRACE("%p decreasing refcount to %u.\n", surface, refcount);
@@ -4065,7 +4055,7 @@ HRESULT CDECL wined3d_surface_flip(struct wined3d_surface *surface, struct wined
             WARN("Ignoring flags %#x.\n", flags);
     }
 
-    if (surface->container.type == WINED3D_CONTAINER_SWAPCHAIN)
+    if (surface->swapchain)
     {
         ERR("Not supported on swapchain surfaces.\n");
         return WINEDDERR_NOTFLIPPABLE;
@@ -4094,9 +4084,9 @@ void surface_internal_preload(struct wined3d_surface *surface, enum WINED3DSRGB 
 
     TRACE("iface %p, srgb %#x.\n", surface, srgb);
 
-    if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
+    if (surface->container)
     {
-        struct wined3d_texture *texture = surface->container.u.texture;
+        struct wined3d_texture *texture = surface->container;
 
         TRACE("Passing to container (%p).\n", texture);
         texture->texture_ops->texture_preload(texture, srgb);
@@ -4422,9 +4412,9 @@ static void surface_prepare_texture_internal(struct wined3d_surface *surface,
 /* Context activation is done by the caller. */
 void surface_prepare_texture(struct wined3d_surface *surface, struct wined3d_context *context, BOOL srgb)
 {
-    if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
+    if (surface->container)
     {
-        struct wined3d_texture *texture = surface->container.u.texture;
+        struct wined3d_texture *texture = surface->container;
         UINT sub_count = texture->level_count * texture->layer_count;
         UINT i;
 
@@ -4532,8 +4522,7 @@ static void flush_to_framebuffer_drawpixels(struct wined3d_surface *surface,
     checkGLcall("glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)");
 
     if (wined3d_settings.strict_draw_ordering
-            || (surface->container.type == WINED3D_CONTAINER_SWAPCHAIN
-            && surface->container.u.swapchain->front_buffer == surface))
+            || (surface->swapchain && surface->swapchain->front_buffer == surface))
         gl_info->gl_ops.gl.p_glFlush();
 
     context_release(context);
@@ -4849,8 +4838,8 @@ static void fb_copy_to_texture_direct(struct wined3d_surface *dst_surface, struc
     RECT dst_rect = *dst_rect_in;
     GLenum dst_target;
 
-    if (dst_surface->container.type == WINED3D_CONTAINER_TEXTURE)
-        dst_target = dst_surface->container.u.texture->target;
+    if (dst_surface->container)
+        dst_target = dst_surface->container->target;
     else
         dst_target = dst_surface->texture_target;
 
@@ -4957,7 +4946,6 @@ static void fb_copy_to_texture_hwstretch(struct wined3d_surface *dst_surface, st
         const RECT *src_rect, const RECT *dst_rect_in, enum wined3d_texture_filter_type filter)
 {
     struct wined3d_device *device = dst_surface->resource.device;
-    struct wined3d_swapchain *src_swapchain = NULL;
     GLuint src, backup = 0;
     float left, right, top, bottom; /* Texture coordinates */
     UINT fbwidth = src_surface->resource.width;
@@ -5055,9 +5043,7 @@ static void fb_copy_to_texture_hwstretch(struct wined3d_surface *dst_surface, st
             wined3d_gl_min_mip_filter(minMipLookup, filter, WINED3D_TEXF_NONE));
     checkGLcall("glTexParameteri");
 
-    if (src_surface->container.type == WINED3D_CONTAINER_SWAPCHAIN)
-        src_swapchain = src_surface->container.u.swapchain;
-    if (!src_swapchain || src_surface == src_swapchain->back_buffers[0])
+    if (!src_surface->swapchain || src_surface == src_surface->swapchain->back_buffers[0])
     {
         src = backup ? backup : src_surface->texture_name;
     }
@@ -5236,8 +5222,7 @@ void surface_translate_drawable_coords(const struct wined3d_surface *surface, HW
 {
     UINT drawable_height;
 
-    if (surface->container.type == WINED3D_CONTAINER_SWAPCHAIN
-            && surface == surface->container.u.swapchain->front_buffer)
+    if (surface->swapchain && surface == surface->swapchain->front_buffer)
     {
         POINT offset = {0, 0};
         RECT windowsize;
@@ -5318,8 +5303,7 @@ static void surface_blt_to_drawable(const struct wined3d_device *device,
     device->blitter->unset_shader(context->gl_info);
 
     if (wined3d_settings.strict_draw_ordering
-            || (dst_surface->container.type == WINED3D_CONTAINER_SWAPCHAIN
-            && (dst_surface->container.u.swapchain->front_buffer == dst_surface)))
+            || (dst_surface->swapchain && dst_surface->swapchain->front_buffer == dst_surface))
         gl_info->gl_ops.gl.p_glFlush(); /* Flush to ensure ordering across contexts. */
 
     context_release(context);
@@ -5349,7 +5333,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(struct wined3d_surface *dst_surfa
 {
     struct wined3d_device *device = dst_surface->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    struct wined3d_swapchain *srcSwapchain = NULL, *dstSwapchain = NULL;
+    struct wined3d_swapchain *src_swapchain, *dst_swapchain;
 
     TRACE("dst_surface %p, dst_rect %s, src_surface %p, src_rect %s, flags %#x, blt_fx %p, filter %s.\n",
             dst_surface, wine_dbgstr_rect(dst_rect), src_surface, wine_dbgstr_rect(src_rect),
@@ -5362,8 +5346,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(struct wined3d_surface *dst_surfa
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (dst_surface->container.type == WINED3D_CONTAINER_SWAPCHAIN)
-        dstSwapchain = dst_surface->container.u.swapchain;
+    dst_swapchain = dst_surface->swapchain;
 
     if (src_surface)
     {
@@ -5373,12 +5356,15 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(struct wined3d_surface *dst_surfa
             return WINED3DERR_INVALIDCALL;
         }
 
-        if (src_surface->container.type == WINED3D_CONTAINER_SWAPCHAIN)
-            srcSwapchain = src_surface->container.u.swapchain;
+        src_swapchain = src_surface->swapchain;
+    }
+    else
+    {
+        src_swapchain = NULL;
     }
 
     /* Early sort out of cases where no render target is used */
-    if (!dstSwapchain && !srcSwapchain
+    if (!dst_swapchain && !src_swapchain
             && src_surface != device->fb.render_targets[0]
             && dst_surface != device->fb.render_targets[0])
     {
@@ -5394,31 +5380,31 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(struct wined3d_surface *dst_surfa
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (dstSwapchain && dstSwapchain == srcSwapchain)
+    if (dst_swapchain && dst_swapchain == src_swapchain)
     {
         FIXME("Implement hardware blit between two surfaces on the same swapchain\n");
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (dstSwapchain && srcSwapchain)
+    if (dst_swapchain && src_swapchain)
     {
         FIXME("Implement hardware blit between two different swapchains\n");
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (dstSwapchain)
+    if (dst_swapchain)
     {
         /* Handled with regular texture -> swapchain blit */
         if (src_surface == device->fb.render_targets[0])
             TRACE("Blit from active render target to a swapchain\n");
     }
-    else if (srcSwapchain && dst_surface == device->fb.render_targets[0])
+    else if (src_swapchain && dst_surface == device->fb.render_targets[0])
     {
         FIXME("Implement blit from a swapchain to the active render target\n");
         return WINED3DERR_INVALIDCALL;
     }
 
-    if ((srcSwapchain || src_surface == device->fb.render_targets[0]) && !dstSwapchain)
+    if ((src_swapchain || src_surface == device->fb.render_targets[0]) && !dst_swapchain)
     {
         /* Blit from render target to texture */
         BOOL stretchx;
@@ -5605,10 +5591,10 @@ void surface_modify_ds_location(struct wined3d_surface *surface,
     if (((surface->flags & SFLAG_INTEXTURE) && !(location & SFLAG_INTEXTURE))
             || (!(surface->flags & SFLAG_INTEXTURE) && (location & SFLAG_INTEXTURE)))
     {
-        if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
+        if (surface->container)
         {
             TRACE("Passing to container.\n");
-            wined3d_texture_set_dirty(surface->container.u.texture, TRUE);
+            wined3d_texture_set_dirty(surface->container, TRUE);
         }
     }
 
@@ -5797,10 +5783,10 @@ void surface_modify_location(struct wined3d_surface *surface, DWORD location, BO
         if (((surface->flags & SFLAG_INTEXTURE) && !(location & SFLAG_INTEXTURE))
                 || ((surface->flags & SFLAG_INSRGBTEX) && !(location & SFLAG_INSRGBTEX)))
         {
-            if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
+            if (surface->container)
             {
                 TRACE("Passing to container.\n");
-                wined3d_texture_set_dirty(surface->container.u.texture, TRUE);
+                wined3d_texture_set_dirty(surface->container, TRUE);
             }
         }
         surface->flags &= ~SFLAG_LOCATIONS;
@@ -5819,10 +5805,10 @@ void surface_modify_location(struct wined3d_surface *surface, DWORD location, BO
     {
         if ((surface->flags & (SFLAG_INTEXTURE | SFLAG_INSRGBTEX)) && (location & (SFLAG_INTEXTURE | SFLAG_INSRGBTEX)))
         {
-            if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
+            if (surface->container)
             {
                 TRACE("Passing to container\n");
-                wined3d_texture_set_dirty(surface->container.u.texture, TRUE);
+                wined3d_texture_set_dirty(surface->container, TRUE);
             }
         }
         surface->flags &= ~location;
@@ -6267,10 +6253,11 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location, c
 
 BOOL surface_is_offscreen(const struct wined3d_surface *surface)
 {
-    struct wined3d_swapchain *swapchain = surface->container.u.swapchain;
+    struct wined3d_swapchain *swapchain;
 
     /* Not on a swapchain - must be offscreen */
-    if (surface->container.type != WINED3D_CONTAINER_SWAPCHAIN) return TRUE;
+    if (!(swapchain = surface->swapchain))
+        return TRUE;
 
     /* The front buffer is always onscreen */
     if (surface == swapchain->front_buffer) return FALSE;
@@ -6292,8 +6279,8 @@ static void ffp_blit_p8_upload_palette(const struct wined3d_surface *surface, co
     BOOL colorkey_active = (surface->CKeyFlags & WINEDDSD_CKSRCBLT) != 0;
     GLenum target;
 
-    if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
-        target = surface->container.u.texture->target;
+    if (surface->container)
+        target = surface->container->target;
     else
         target = surface->texture_target;
 
@@ -6310,8 +6297,8 @@ static HRESULT ffp_blit_set(void *blit_priv, struct wined3d_context *context, co
     const struct wined3d_gl_info *gl_info = context->gl_info;
     GLenum target;
 
-    if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
-        target = surface->container.u.texture->target;
+    if (surface->container)
+        target = surface->container->target;
     else
         target = surface->texture_target;
 
@@ -7190,7 +7177,7 @@ static HRESULT surface_init(struct wined3d_surface *surface, UINT alignment, UIN
     }
 
     /* "Standalone" surface. */
-    surface_set_container(surface, WINED3D_CONTAINER_NONE, NULL);
+    surface_set_container(surface, NULL);
 
     list_init(&surface->overlays);
 
