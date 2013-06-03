@@ -4564,7 +4564,7 @@ DECLARE_INTERFACE_(IDirect3DRMInterpolator, IDirect3DRMObject)
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMInterpolator methods ***/
     STDMETHOD(AttachObject)(THIS_ IDirect3DRMObject *object) PURE;
-    STDMETHOD(GetAttachedObjects)(THIS_ LPDIRECT3DRMOBJECTARRAY *) PURE;
+    STDMETHOD(GetAttachedObjects)(THIS_ IDirect3DRMObjectArray **array) PURE;
     STDMETHOD(DetachObject)(THIS_ IDirect3DRMObject *object) PURE;
     STDMETHOD(SetIndex)(THIS_ D3DVALUE) PURE;
     STDMETHOD_(D3DVALUE, GetIndex)(THIS) PURE;
