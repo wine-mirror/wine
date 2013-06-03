@@ -1957,7 +1957,6 @@ static void test_TerminateProcess(void)
 
     SetLastError(0xdeadbeef);
     ret = TerminateProcess(pi.hProcess, 0);
-todo_wine
     ok(ret, "TerminateProcess error %u\n", GetLastError());
 
     CloseHandle(pi.hProcess);
