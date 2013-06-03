@@ -136,6 +136,17 @@ static const struct wined3d_format_channels formats[] =
     /* Unsure about them, could not find a Windows driver that supports them */
     {WINED3DFMT_R16,                       16,  0,  0,  0,   0,  0,  0,  0,    2,   0,     0},
     {WINED3DFMT_AL16,                       0,  0,  0, 16,   0,  0,  0, 16,    4,   0,     0},
+    /* Typeless */
+    {WINED3DFMT_R8_TYPELESS,                8,  0,  0,  0,   0,  0,  0,  0,    1,   0,     0},
+    {WINED3DFMT_R8G8_TYPELESS,              8,  8,  0,  0,   0,  8,  0,  0,    2,   0,     0},
+    {WINED3DFMT_R8G8B8A8_TYPELESS,          8,  8,  8,  8,   0,  8, 16, 24,    4,   0,     0},
+    {WINED3DFMT_R16_TYPELESS,              16,  0,  0,  0,   0,  0,  0,  0,    2,   0,     0},
+    {WINED3DFMT_R16G16_TYPELESS,           16, 16,  0,  0,   0, 16,  0,  0,    4,   0,     0},
+    {WINED3DFMT_R16G16B16A16_TYPELESS,     16, 16, 16, 16,   0, 16, 32, 48,    8,   0,     0},
+    {WINED3DFMT_R32_TYPELESS,              32,  0,  0,  0,   0,  0,  0,  0,    4,   0,     0},
+    {WINED3DFMT_R32G32_TYPELESS,           32, 32,  0,  0,   0, 32,  0,  0,    8,   0,     0},
+    {WINED3DFMT_R32G32B32_TYPELESS,        32, 32, 32,  0,   0, 32, 64,  0,   12,   0,     0},
+    {WINED3DFMT_R32G32B32A32_TYPELESS,     32, 32, 32, 32,   0, 32, 64, 96,   16,   0,     0},
 };
 
 struct wined3d_format_base_flags
