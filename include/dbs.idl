@@ -347,6 +347,112 @@ enum DBPROPENUM
     DBPROP_NOTIFYROWSETCHANGED             = 0x000000d3,
 };
 
+enum DBPROPENUM15 {
+    DBPROP_FILTERCOMPAREOPS                = 0x000000d1,
+    DBPROP_FINDCOMPAREOPS                  = 0x000000d2,
+    DBPROP_IChapteredRowset                = 0x000000ca,
+    DBPROP_IDBAsynchStatus                 = 0x000000cb,
+    DBPROP_IRowsetFind                     = 0x000000cc,
+    DBPROP_IRowsetView                     = 0x000000d4,
+    DBPROP_IViewChapter                    = 0x000000d5,
+    DBPROP_IViewFilter                     = 0x000000d6,
+    DBPROP_IViewRowset                     = 0x000000d7,
+    DBPROP_IViewSort                       = 0x000000d8,
+    DBPROP_INIT_ASYNCH                     = 0x000000c8,
+    DBPROP_MAXOPENCHAPTERS                 = 0x000000c7,
+    DBPROP_MAXORSINFILTER                  = 0x000000cd,
+    DBPROP_MAXSORTCOLUMNS                  = 0x000000ce,
+    DBPROP_ROWSET_ASYNCH                   = 0x000000c9,
+    DBPROP_SORTONINDEX                     = 0x000000cf
+};
+
+enum DBPROPENUM20 {
+    DBPROP_IMultipleResults                = 0x000000d9,
+    DBPROP_DATASOURCE_TYPE                 = 0x000000fb,
+    MDPROP_AXES                            = 0x000000fc,
+    MDPROP_FLATTENING_SUPPORT              = 0x000000fd,
+    MDPROP_MDX_JOINCUBES                   = 0x000000fe,
+    MDPROP_NAMED_LEVELS                    = 0x000000ff,
+    MDPROP_RANGEROWSET                     = 0x00000100,
+    MDPROP_MDX_SLICER                      = 0x000000da,
+    MDPROP_MDX_CUBEQUALIFICATION           = 0x000000db,
+    MDPROP_MDX_OUTERREFERENCE              = 0x000000dc,
+    MDPROP_MDX_QUERYBYPROPERTY             = 0x000000dd,
+    MDPROP_MDX_CASESUPPORT                 = 0x000000de,
+    MDPROP_MDX_STRING_COMPOP               = 0x000000e0,
+    MDPROP_MDX_DESCFLAGS                   = 0x000000e1,
+    MDPROP_MDX_SET_FUNCTIONS               = 0x000000e2,
+    MDPROP_MDX_MEMBER_FUNCTIONS            = 0x000000e3,
+    MDPROP_MDX_NUMERIC_FUNCTIONS           = 0x000000e4,
+    MDPROP_MDX_FORMULAS                    = 0x000000e5,
+    MDPROP_AGGREGATECELL_UPDATE            = 0x000000e6,
+    MDPROP_MDX_AGGREGATECELL_UPDATE        = MDPROP_AGGREGATECELL_UPDATE,
+    MDPROP_MDX_OBJQUALIFICATION            = 0x00000105,
+    MDPROP_MDX_NONMEASURE_EXPRESSIONS      = 0x00000106,
+    DBPROP_ACCESSORDER                     = 0x000000e7,
+    DBPROP_BOOKMARKINFO                    = 0x000000e8,
+    DBPROP_INIT_CATALOG                    = 0x000000e9,
+    DBPROP_ROW_BULKOPS                     = 0x000000ea,
+    DBPROP_PROVIDERFRIENDLYNAME            = 0x000000eb,
+    DBPROP_LOCKMODE                        = 0x000000ec,
+    DBPROP_MULTIPLECONNECTIONS             = 0x000000ed,
+    DBPROP_UNIQUEROWS                      = 0x000000ee,
+    DBPROP_SERVERDATAONINSERT              = 0x000000ef,
+    DBPROP_STORAGEFLAGS                    = 0x000000f0,
+    DBPROP_CONNECTIONSTATUS                = 0x000000f4,
+    DBPROP_ALTERCOLUMN                     = 0x000000f5,
+    DBPROP_COLUMNLCID                      = 0x000000f6,
+    DBPROP_RESETDATASOURCE                 = 0x000000f7,
+    DBPROP_INIT_OLEDBSERVICES              = 0x000000f8,
+    DBPROP_IRowsetRefresh                  = 0x000000f9,
+    DBPROP_SERVERNAME                      = 0x000000fa,
+    DBPROP_IParentRowset                   = 0x00000101,
+    DBPROP_HIDDENCOLUMNS                   = 0x00000102,
+    DBPROP_PROVIDERMEMORY                  = 0x00000103,
+    DBPROP_CLIENTCURSOR                    = 0x00000104
+};
+
+
+enum DBPROPENUM21 {
+    DBPROP_TRUSTEE_USERNAME                = 0x000000f1,
+    DBPROP_TRUSTEE_AUTHENTICATION          = 0x000000f2,
+    DBPROP_TRUSTEE_NEWAUTHENTICATION       = 0x000000f3,
+    DBPROP_IRow                            = 0x00000107,
+    DBPROP_IRowChange                      = 0x00000108,
+    DBPROP_IRowSchemaChange                = 0x00000109,
+    DBPROP_IGetRow                         = 0x0000010a,
+    DBPROP_IScopedOperations               = 0x0000010b,
+    DBPROP_IBindResource                   = 0x0000010c,
+    DBPROP_ICreateRow                      = 0x0000010d,
+    DBPROP_INIT_BINDFLAGS                  = 0x0000010e,
+    DBPROP_INIT_LOCKOWNER                  = 0x0000010f,
+    DBPROP_GENERATEURL                     = 0x00000111,
+    DBPROP_IDBBinderProperties             = 0x00000112,
+    DBPROP_IColumnsInfo2                   = 0x00000113,
+    DBPROP_IRegisterProvider               = 0x00000114,
+    DBPROP_IGetSession                     = 0x00000115,
+    DBPROP_IGetSourceRow                   = 0x00000116,
+    DBPROP_IRowsetCurrentIndex             = 0x00000117,
+    DBPROP_OPENROWSETSUPPORT               = 0x00000118,
+    DBPROP_COL_ISLONG                      = 0x00000119
+};
+
+enum DBPROPENUM25 {
+    DBPROP_COL_SEED                        = 0x0000011a,
+    DBPROP_COL_INCREMENT                   = 0x0000011b,
+    DBPROP_INIT_GENERALTIMEOUT             = 0x0000011c,
+    DBPROP_COMSERVICES                     = 0x0000011d
+};
+
+enum DBPROPENUM26 {
+    DBPROP_OUTPUTSTREAM                    = 0x0000011e,
+    DBPROP_OUTPUTENCODING                  = 0x0000011f,
+    DBPROP_TABLESTATISTICS                 = 0x00000120,
+    DBPROP_SKIPROWCOUNTRESULTS             = 0x00000123,
+    DBPROP_IRowsetBookmark                 = 0x00000124,
+    MDPROP_VISUALMODE                      = 0x00000125,
+};
+
 cpp_quote("#ifdef DBINITCONSTANTS")
 cpp_quote("#ifdef __cplusplus")
 cpp_quote("#define DEFINE_DBGUID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \\")
