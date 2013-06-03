@@ -4692,6 +4692,7 @@ static void fillGLAttribFuncs(const struct wined3d_gl_info *gl_info)
     position_funcs[WINED3D_FFP_EMIT_DEC3N]       = invalid_func;
     position_funcs[WINED3D_FFP_EMIT_FLOAT16_2]   = invalid_func;
     position_funcs[WINED3D_FFP_EMIT_FLOAT16_4]   = invalid_func;
+    position_funcs[WINED3D_FFP_EMIT_INVALID]     = invalid_func;
 
     diffuse_funcs[WINED3D_FFP_EMIT_FLOAT1]       = invalid_func;
     diffuse_funcs[WINED3D_FFP_EMIT_FLOAT2]       = invalid_func;
@@ -4710,6 +4711,7 @@ static void fillGLAttribFuncs(const struct wined3d_gl_info *gl_info)
     diffuse_funcs[WINED3D_FFP_EMIT_DEC3N]        = invalid_func;
     diffuse_funcs[WINED3D_FFP_EMIT_FLOAT16_2]    = invalid_func;
     diffuse_funcs[WINED3D_FFP_EMIT_FLOAT16_4]    = invalid_func;
+    diffuse_funcs[WINED3D_FFP_EMIT_INVALID]      = invalid_func;
 
     /* No 4 component entry points here */
     specular_funcs[WINED3D_FFP_EMIT_FLOAT1]      = invalid_func;
@@ -4744,6 +4746,7 @@ static void fillGLAttribFuncs(const struct wined3d_gl_info *gl_info)
     specular_funcs[WINED3D_FFP_EMIT_DEC3N]       = invalid_func;
     specular_funcs[WINED3D_FFP_EMIT_FLOAT16_2]   = invalid_func;
     specular_funcs[WINED3D_FFP_EMIT_FLOAT16_4]   = invalid_func;
+    specular_funcs[WINED3D_FFP_EMIT_INVALID]     = invalid_func;
 
     /* Only 3 component entry points here. Test how others behave. Float4 normals are used
      * by one of our tests, trying to pass it to the pixel shader, which fails on Windows.
@@ -4765,6 +4768,7 @@ static void fillGLAttribFuncs(const struct wined3d_gl_info *gl_info)
     normal_funcs[WINED3D_FFP_EMIT_DEC3N]          = invalid_func;
     normal_funcs[WINED3D_FFP_EMIT_FLOAT16_2]      = invalid_func;
     normal_funcs[WINED3D_FFP_EMIT_FLOAT16_4]      = invalid_func;
+    normal_funcs[WINED3D_FFP_EMIT_INVALID]        = invalid_func;
 
     multi_texcoord_funcs[WINED3D_FFP_EMIT_FLOAT1]    = (glMultiTexCoordFunc)GL_EXTCALL(glMultiTexCoord1fvARB);
     multi_texcoord_funcs[WINED3D_FFP_EMIT_FLOAT2]    = (glMultiTexCoordFunc)GL_EXTCALL(glMultiTexCoord2fvARB);
@@ -4790,6 +4794,7 @@ static void fillGLAttribFuncs(const struct wined3d_gl_info *gl_info)
         multi_texcoord_funcs[WINED3D_FFP_EMIT_FLOAT16_2] = invalid_texcoord_func;
         multi_texcoord_funcs[WINED3D_FFP_EMIT_FLOAT16_4] = invalid_texcoord_func;
     }
+    multi_texcoord_funcs[WINED3D_FFP_EMIT_INVALID]   = invalid_texcoord_func;
 }
 
 static void wined3d_adapter_init_fb_cfgs(struct wined3d_adapter *adapter, HDC dc)

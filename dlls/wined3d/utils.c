@@ -120,6 +120,9 @@ static const struct wined3d_format_channels formats[] =
     {WINED3DFMT_VERTEXDATA,                 0,  0,  0,  0,   0,  0,  0,  0,    0,   0,     0},
     {WINED3DFMT_R16_UINT,                  16,  0,  0,  0,   0,  0,  0,  0,    2,   0,     0},
     {WINED3DFMT_R32_UINT,                  32,  0,  0,  0,   0,  0,  0,  0,    4,   0,     0},
+    {WINED3DFMT_R32G32_UINT,               32, 32,  0,  0,   0, 32,  0,  0,    8,   0,     0},
+    {WINED3DFMT_R32G32B32_UINT,            32, 32, 32,  0,   0, 32, 64,  0,   12,   0,     0},
+    {WINED3DFMT_R32G32B32A32_UINT,         32, 32, 32, 32,   0, 32, 64, 96,   16,   0,     0},
     {WINED3DFMT_R16G16B16A16_SNORM,        16, 16, 16, 16,   0, 16, 32, 48,    8,   0,     0},
     /* Vendor-specific formats */
     {WINED3DFMT_ATI2N,                      0,  0,  0,  0,   0,  0,  0,  0,    1,   0,     0},
@@ -218,7 +221,11 @@ static const struct wined3d_format_vertex_info format_vertex_info[] =
     {WINED3DFMT_R10G10B10A2_UINT,   WINED3D_FFP_EMIT_UDEC3,     3, GL_UNSIGNED_SHORT, 3, GL_FALSE, sizeof(short int)},
     {WINED3DFMT_R10G10B10A2_SNORM,  WINED3D_FFP_EMIT_DEC3N,     3, GL_SHORT,          3, GL_TRUE,  sizeof(short int)},
     {WINED3DFMT_R16G16_FLOAT,       WINED3D_FFP_EMIT_FLOAT16_2, 2, GL_FLOAT,          2, GL_FALSE, sizeof(GLhalfNV)},
-    {WINED3DFMT_R16G16B16A16_FLOAT, WINED3D_FFP_EMIT_FLOAT16_4, 4, GL_FLOAT,          4, GL_FALSE, sizeof(GLhalfNV)}
+    {WINED3DFMT_R16G16B16A16_FLOAT, WINED3D_FFP_EMIT_FLOAT16_4, 4, GL_FLOAT,          4, GL_FALSE, sizeof(GLhalfNV)},
+    {WINED3DFMT_R32_UINT,           WINED3D_FFP_EMIT_INVALID,   1, GL_UNSIGNED_INT,   1, GL_FALSE, sizeof(UINT)},
+    {WINED3DFMT_R32G32_UINT,        WINED3D_FFP_EMIT_INVALID,   2, GL_UNSIGNED_INT,   2, GL_FALSE, sizeof(UINT)},
+    {WINED3DFMT_R32G32B32_UINT,     WINED3D_FFP_EMIT_INVALID,   3, GL_UNSIGNED_INT,   3, GL_FALSE, sizeof(UINT)},
+    {WINED3DFMT_R32G32B32A32_UINT,  WINED3D_FFP_EMIT_INVALID,   4, GL_UNSIGNED_INT,   4, GL_FALSE, sizeof(UINT)},
 };
 
 struct wined3d_format_texture_info

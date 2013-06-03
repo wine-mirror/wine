@@ -901,7 +901,8 @@ enum wined3d_ffp_emit_idx
     WINED3D_FFP_EMIT_DEC3N = 14,
     WINED3D_FFP_EMIT_FLOAT16_2 = 15,
     WINED3D_FFP_EMIT_FLOAT16_4 = 16,
-    WINED3D_FFP_EMIT_COUNT = 17
+    WINED3D_FFP_EMIT_INVALID = 17,
+    WINED3D_FFP_EMIT_COUNT = 18
 };
 
 struct wined3d_bo_address
