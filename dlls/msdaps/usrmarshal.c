@@ -1060,3 +1060,39 @@ HRESULT __RPC_STUB IRowsetNotify_OnRowsetChange_Stub(IRowsetNotify* This, IRowse
     TRACE("(%p)->(%p %d %d %d)\n", This, rowset, reason, phase, cantdeny);
     return IRowsetNotify_OnRowsetChange(This, rowset, reason, phase, cantdeny);
 }
+
+
+HRESULT CALLBACK ISourcesRowset_GetSourcesRowset_Proxy(ISourcesRowset* This, IUnknown *pUnkOuter, REFIID riid, ULONG cPropertySets,
+                              DBPROPSET rgProperties[], IUnknown **ppSourcesRowset)
+{
+    HRESULT hr;
+    IErrorInfo *error;
+
+    TRACE("(%p)->(%p %s %d %p %p)\n", This, pUnkOuter, debugstr_guid(riid), cPropertySets, rgProperties, ppSourcesRowset);
+
+    hr = ISourcesRowset_RemoteGetSourcesRowset_Proxy(This, pUnkOuter, riid, cPropertySets, rgProperties, ppSourcesRowset, 0, NULL, &error);
+    if(error)
+    {
+        SetErrorInfo(0, error);
+        IErrorInfo_Release(error);
+    }
+
+    return hr;
+}
+
+HRESULT __RPC_STUB ISourcesRowset_GetSourcesRowset_Stub(ISourcesRowset* This, IUnknown *pUnkOuter, REFIID riid, ULONG cPropertySets,
+                                 DBPROPSET *rgProperties, IUnknown **ppSourcesRowset, ULONG cTotalProps, DBPROPSTATUS *rgPropStatus,
+                                 IErrorInfo **ppErrorInfoRem)
+{
+    HRESULT hr;
+
+    TRACE("(%p)->(%p %s %d %p %p %d %p %p)\n", This, pUnkOuter, debugstr_guid(riid), cPropertySets, rgProperties, ppSourcesRowset,
+                                cTotalProps, rgPropStatus, ppErrorInfoRem);
+
+    *ppErrorInfoRem = NULL;
+    hr = ISourcesRowset_GetSourcesRowset(This, pUnkOuter, riid, cPropertySets, rgProperties, ppSourcesRowset);
+    if(FAILED(hr))
+        GetErrorInfo(0, ppErrorInfoRem);
+
+    return hr;
+}
