@@ -115,7 +115,7 @@ BOOL WCMD_keyword_ws_found(const WCHAR *keyword, int len, const WCHAR *ptr);
 void WCMD_HandleTildaModifiers(WCHAR **start, BOOL atExecute);
 
 void WCMD_splitpath(const WCHAR* path, WCHAR* drv, WCHAR* dir, WCHAR* name, WCHAR* ext);
-void WCMD_strip_quotes(WCHAR *cmd);
+WCHAR *WCMD_strip_quotes(WCHAR *cmd);
 WCHAR *WCMD_LoadMessage(UINT id);
 void WCMD_strsubstW(WCHAR *start, const WCHAR* next, const WCHAR* insert, int len);
 BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars, LPDWORD charsRead);

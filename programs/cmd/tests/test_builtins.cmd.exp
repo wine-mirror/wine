@@ -251,6 +251,13 @@ foo
 ''
 'foo@space@'
 'foo@tab@'
+'value@space@'
+'value'
+'jim fred'
+'"jim" fred'
+'jim fred'
+'jim'
+'apple"banana"grape'
 ------------ Testing variable expansion ------------
 ~dp0 should be directory containing batch file
 @pwd@\

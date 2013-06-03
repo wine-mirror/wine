@@ -496,20 +496,23 @@ BOOL WCMD_keyword_ws_found(const WCHAR *keyword, int len, const WCHAR *ptr) {
 /*************************************************************************
  * WCMD_strip_quotes
  *
- *	Remove first and last quote WCHARacters, preserving all other text
+ *  Remove first and last quote WCHARacters, preserving all other text
+ *  Returns the location of the final quote
  */
-void WCMD_strip_quotes(WCHAR *cmd) {
-  WCHAR *src = cmd + 1, *dest = cmd, *lastq = NULL;
+WCHAR *WCMD_strip_quotes(WCHAR *cmd) {
+  WCHAR *src = cmd + 1, *dest = cmd, *lastq = NULL, *lastquote;
   while((*dest=*src) != '\0') {
       if (*src=='\"')
           lastq=dest;
       dest++, src++;
   }
+  lastquote = lastq;
   if (lastq) {
       dest=lastq++;
       while ((*dest++=*lastq++) != 0)
           ;
   }
+  return lastquote;
 }
 
 

@@ -4038,8 +4038,13 @@ void WCMD_setshow_env (WCHAR *s) {
 
     s += 2;
     while (*s && (*s==' ' || *s=='\t')) s++;
-    if (*s=='\"')
-        WCMD_strip_quotes(s);
+    /* set /P "var=value"jim ignores anything after the last quote */
+    if (*s=='\"') {
+      WCHAR *lastquote;
+      lastquote = WCMD_strip_quotes(s);
+      if (lastquote) *lastquote = 0x00;
+      WINE_TRACE("set: Stripped command line '%s'\n", wine_dbgstr_w(s));
+    }
 
     /* If no parameter, or no '=' sign, return an error */
     if (!(*s) || ((p = strchrW (s, '=')) == NULL )) {
@@ -4104,8 +4109,14 @@ void WCMD_setshow_env (WCHAR *s) {
   } else {
     DWORD gle;
 
-    if (*s=='\"')
-        WCMD_strip_quotes(s);
+    /* set "var=value"jim ignores anything after the last quote */
+    if (*s=='\"') {
+      WCHAR *lastquote;
+      lastquote = WCMD_strip_quotes(s);
+      if (lastquote) *lastquote = 0x00;
+      WINE_TRACE("set: Stripped command line '%s'\n", wine_dbgstr_w(s));
+    }
+
     p = strchrW (s, '=');
     if (p == NULL) {
       env = GetEnvironmentStringsW();

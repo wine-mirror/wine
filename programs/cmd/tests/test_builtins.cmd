@@ -286,6 +286,24 @@ set WINE_FOO=foo@space@
 echo '%WINE_FOO%'
 set WINE_FOO=foo@tab@
 echo '%WINE_FOO%'
+rem Space symbol must appear in `var`
+set WINE_FOO=value@space@
+echo '%WINE_FOO%'
+rem Space symbol must NOT appear in `var`
+set "WINE_FOO=value"@space@
+echo '%WINE_FOO%'
+rem Mixed examples:
+set WINE_FOO=jim fred
+echo '%WINE_FOO%'
+set WINE_FOO="jim" fred
+echo '%WINE_FOO%'
+set "WINE_FOO=jim fred"
+echo '%WINE_FOO%'
+set "WINE_FOO=jim" fred
+echo '%WINE_FOO%'
+rem Only the final quote ends the string
+set "WINE_FOO=apple"banana"grape"orange
+echo '%WINE_FOO%'
 set WINE_FOO=
 
 echo ------------ Testing variable expansion ------------
