@@ -86,7 +86,7 @@ DECLARE_INTERFACE_(IDirect3DRM,IUnknown)
     STDMETHOD(CreateWrap)(THIS_ D3DRMWRAPTYPE type, IDirect3DRMFrame *reference, D3DVALUE ox, D3DVALUE oy, D3DVALUE oz,
         D3DVALUE dx, D3DVALUE dy, D3DVALUE dz, D3DVALUE ux, D3DVALUE uy, D3DVALUE uz, D3DVALUE ou, D3DVALUE ov,
         D3DVALUE su, D3DVALUE sv, IDirect3DRMWrap **wrap) PURE;
-    STDMETHOD(CreateUserVisual)(THIS_ D3DRMUSERVISUALCALLBACK, LPVOID pArg, LPDIRECT3DRMUSERVISUAL *) PURE;
+    STDMETHOD(CreateUserVisual)(THIS_ D3DRMUSERVISUALCALLBACK cb, void *ctx, IDirect3DRMUserVisual **visual) PURE;
     STDMETHOD(LoadTexture)(THIS_ const char *filename, IDirect3DRMTexture **texture) PURE;
     STDMETHOD(LoadTextureFromResource)(THIS_ HRSRC resource, IDirect3DRMTexture **texture) PURE;
     STDMETHOD(SetSearchPath)(THIS_ LPCSTR) PURE;
@@ -225,7 +225,7 @@ DECLARE_INTERFACE_(IDirect3DRM2,IUnknown)
     STDMETHOD(CreateWrap)(THIS_ D3DRMWRAPTYPE type, IDirect3DRMFrame *reference, D3DVALUE ox, D3DVALUE oy, D3DVALUE oz,
         D3DVALUE dx, D3DVALUE dy, D3DVALUE dz, D3DVALUE ux, D3DVALUE uy, D3DVALUE uz, D3DVALUE ou, D3DVALUE ov,
         D3DVALUE su, D3DVALUE sv, IDirect3DRMWrap **wrap) PURE;
-    STDMETHOD(CreateUserVisual)(THIS_ D3DRMUSERVISUALCALLBACK, LPVOID pArg, LPDIRECT3DRMUSERVISUAL *) PURE;
+    STDMETHOD(CreateUserVisual)(THIS_ D3DRMUSERVISUALCALLBACK cb, void *ctx, IDirect3DRMUserVisual **visual) PURE;
     STDMETHOD(LoadTexture)(THIS_ const char *filename, IDirect3DRMTexture2 **texture) PURE;
     STDMETHOD(LoadTextureFromResource)(THIS_ HMODULE module, const char *resource_name,
             const char *resource_type, IDirect3DRMTexture2 **texture) PURE;
@@ -368,7 +368,7 @@ DECLARE_INTERFACE_(IDirect3DRM3,IUnknown)
             D3DVALUE ox, D3DVALUE oy, D3DVALUE oz, D3DVALUE dx, D3DVALUE dy, D3DVALUE dz,
             D3DVALUE ux, D3DVALUE uy, D3DVALUE uz, D3DVALUE ou, D3DVALUE ov, D3DVALUE su, D3DVALUE sv,
             IDirect3DRMWrap **wrap) PURE;
-    STDMETHOD(CreateUserVisual)(THIS_ D3DRMUSERVISUALCALLBACK, LPVOID pArg, LPDIRECT3DRMUSERVISUAL *) PURE;
+    STDMETHOD(CreateUserVisual)(THIS_ D3DRMUSERVISUALCALLBACK cb, void *ctx, IDirect3DRMUserVisual **visual) PURE;
     STDMETHOD(LoadTexture)(THIS_ const char *filename, IDirect3DRMTexture3 **texture) PURE;
     STDMETHOD(LoadTextureFromResource)(THIS_ HMODULE module, const char *resource_name,
             const char *resource_type, IDirect3DRMTexture3 **texture) PURE;

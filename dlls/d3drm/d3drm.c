@@ -305,11 +305,10 @@ static HRESULT WINAPI IDirect3DRMImpl_CreateWrap(IDirect3DRM *iface, D3DRMWRAPTY
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMImpl_CreateUserVisual(IDirect3DRM* iface, D3DRMUSERVISUALCALLBACK cb, LPVOID pArg, LPDIRECT3DRMUSERVISUAL * ppUserVisual)
+static HRESULT WINAPI IDirect3DRMImpl_CreateUserVisual(IDirect3DRM *iface,
+        D3DRMUSERVISUALCALLBACK cb, void *ctx, IDirect3DRMUserVisual **visual)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM(iface);
-
-    FIXME("(%p/%p)->(%p,%p,%p): stub\n", iface, This, cb, pArg, ppUserVisual);
+    FIXME("iface %p, cb %p, ctx %p visual %p stub!\n", iface, cb, ctx, visual);
 
     return E_NOTIMPL;
 }
@@ -677,13 +676,10 @@ static HRESULT WINAPI IDirect3DRM2Impl_CreateWrap(IDirect3DRM2 *iface, D3DRMWRAP
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRM2Impl_CreateUserVisual(IDirect3DRM2* iface,
-                                                        D3DRMUSERVISUALCALLBACK cb, LPVOID pArg,
-                                                        LPDIRECT3DRMUSERVISUAL * ppUserVisual)
+static HRESULT WINAPI IDirect3DRM2Impl_CreateUserVisual(IDirect3DRM2 *iface,
+        D3DRMUSERVISUALCALLBACK cb, void *ctx, IDirect3DRMUserVisual **visual)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM2(iface);
-
-    FIXME("(%p/%p)->(%p,%p,%p): stub\n", iface, This, cb, pArg, ppUserVisual);
+    FIXME("iface %p, cb %p, ctx %p, visual %p stub!\n", iface, cb, ctx, visual);
 
     return E_NOTIMPL;
 }
@@ -1074,13 +1070,10 @@ static HRESULT WINAPI IDirect3DRM3Impl_CreateWrap(IDirect3DRM3 *iface, D3DRMWRAP
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRM3Impl_CreateUserVisual(IDirect3DRM3* iface,
-                                                        D3DRMUSERVISUALCALLBACK cb, LPVOID arg,
-                                                        LPDIRECT3DRMUSERVISUAL* UserVisual)
+static HRESULT WINAPI IDirect3DRM3Impl_CreateUserVisual(IDirect3DRM3 *iface,
+        D3DRMUSERVISUALCALLBACK cb, void *ctx, IDirect3DRMUserVisual **visual)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM3(iface);
-
-    FIXME("(%p/%p)->(%p,%p,%p): stub\n", iface, This, cb, arg, UserVisual);
+    FIXME("iface %p, cb %p, ctx %p, visual %p stub!\n", iface, cb, ctx, visual);
 
     return E_NOTIMPL;
 }
