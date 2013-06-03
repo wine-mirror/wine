@@ -2237,6 +2237,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
 
         if (!useNumbers && !doFileset) {
             WCHAR fullitem[MAX_PATH];
+            int prefixlen = 0;
 
             /* Now build the item to use / search for in the specified directory,
                as it is fully qualified in the /R case */
@@ -2245,11 +2246,12 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
               strcatW(fullitem, slashW);
               strcatW(fullitem, item);
             } else {
+              WCHAR *prefix = strrchrW(item, '\\');
+              if (prefix) prefixlen = (prefix - item) + 1;
               strcpyW(fullitem, item);
             }
 
             if (strpbrkW (fullitem, wildcards)) {
-
               hff = FindFirstFileW(fullitem, &fd);
               if (hff != INVALID_HANDLE_VALUE) {
                 do {
@@ -2270,7 +2272,9 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
                           strcatW(fullitem, slashW);
                           strcatW(fullitem, fd.cFileName);
                       } else {
-                          strcpyW(fullitem, fd.cFileName);
+                          if (prefixlen) lstrcpynW(fullitem, item, prefixlen + 1);
+                          fullitem[prefixlen] = 0x00;
+                          strcatW(fullitem, fd.cFileName);
                       }
                       doExecuted = TRUE;
 

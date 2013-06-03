@@ -1017,7 +1017,22 @@ for /R %%i in (baz* fred* jim) do call temp.bat %%i
 call :ValidateExpected
 
 echo for /R passed
-cd .. & rd /s/Q foobar
+echo --- Complex wildcards unix and windows slash
+cd ..
+echo Windows slashs, valid path
+for %%f in (foobar\baz\bazbaz) do echo ASIS: %%f
+for %%f in (foobar\baz\*) do echo WC  : %%f
+echo Windows slashs, invalid path
+for %%f in (foobar\jim\bazbaz) do echo ASIS: %%f
+for %%f in (foobar\jim\*) do echo WC  : %%f
+echo Unix slashs, valid path
+for %%f in (foobar/baz/bazbaz) do echo ASIS: %%f
+for %%f in (foobar/baz/*) do echo WC  : %%f
+echo Unix slashs, invalid path
+for %%f in (foobar/jim/bazbaz) do echo ASIS: %%f
+for %%f in (foobar/jim/*) do echo WC  : %%f
+echo Done
+rd /s/Q foobar
 echo --- for /L
 rem Some cases loop forever writing 0s, like e.g. (1,0,1), (1,a,3) or (a,b,c); those can't be tested here
 for /L %%i in (1,2,0) do echo %%i
