@@ -27,6 +27,7 @@
 #include "ole2.h"
 #include "msdadc.h"
 #include "msdasc.h"
+#include "shlobj.h"
 
 #include "wine/test.h"
 
@@ -36,6 +37,8 @@ static void test_GetDataSource(WCHAR *initstring)
     IDBInitialize *dbinit = NULL;
     HRESULT hr;
 
+    trace("Data Source: %s\n", wine_dbgstr_w(initstring));
+
     hr = CoCreateInstance(&CLSID_MSDAINITIALIZE, NULL, CLSCTX_INPROC_SERVER, &IID_IDataInitialize,(void**)&datainit);
     ok(hr == S_OK, "got %08x\n", hr);
 
@@ -44,11 +47,43 @@ static void test_GetDataSource(WCHAR *initstring)
     if(SUCCEEDED(hr))
     {
         IDBProperties *props = NULL;
+        IMalloc *ppM = NULL;
+
+        hr = SHGetMalloc(&ppM);
+        if (FAILED(hr))
+        {
+            ok(0, "Couldn't get IMalloc object.\n");
+            goto end;
+        }
 
         hr = IDBInitialize_QueryInterface(dbinit, &IID_IDBProperties, (void**)&props);
         ok(hr == S_OK, "got %08x\n", hr);
         if(SUCCEEDED(hr))
+        {
+            ULONG cnt;
+            DBPROPINFOSET *pInfoset;
+            OLECHAR *ary;
+
+            hr = IDBProperties_GetPropertyInfo(props, 0, NULL, &cnt, &pInfoset, &ary);
+            todo_wine ok(hr == S_OK, "got %08x\n", hr);
+            if(hr == S_OK)
+            {
+                ULONG i;
+                for(i =0; i < pInfoset->cPropertyInfos; i++)
+                {
+                    trace("(0x%04x) '%s' %d\n", pInfoset->rgPropertyInfos[i].dwPropertyID, wine_dbgstr_w(pInfoset->rgPropertyInfos[i].pwszDescription),
+                                             pInfoset->rgPropertyInfos[i].vtType);
+                }
+
+                IMalloc_Free(ppM, ary);
+            }
+
             IDBProperties_Release(props);
+        }
+
+        IMalloc_Release(ppM);
+
+end:
         IDBInitialize_Release(dbinit);
     }
 
