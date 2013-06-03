@@ -635,14 +635,12 @@ static UINT ACTION_ProcessUISequence(MSIPACKAGE *package)
 /********************************************************
  * ACTION helper functions and functions that perform the actions
  *******************************************************/
-static BOOL ACTION_HandleCustomAction( MSIPACKAGE* package, LPCWSTR action,
-                                       UINT* rc, UINT script, BOOL force )
+static BOOL ACTION_HandleCustomAction( MSIPACKAGE *package, LPCWSTR action, UINT *rc, UINT script )
 {
     BOOL ret=FALSE;
     UINT arc;
 
-    arc = ACTION_CustomAction(package, action, script, force);
-
+    arc = ACTION_CustomAction( package, action, script );
     if (arc != ERROR_CALL_NOT_IMPLEMENTED)
     {
         *rc = arc;
@@ -7650,7 +7648,7 @@ UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action, UINT script)
     handled = ACTION_HandleStandardAction(package, action, &rc);
 
     if (!handled)
-        handled = ACTION_HandleCustomAction(package, action, &rc, script, TRUE);
+        handled = ACTION_HandleCustomAction(package, action, &rc, script);
 
     if (!handled)
     {
@@ -7672,7 +7670,7 @@ UINT ACTION_PerformUIAction(MSIPACKAGE *package, const WCHAR *action, UINT scrip
     handled = ACTION_HandleStandardAction(package, action, &rc);
 
     if (!handled)
-        handled = ACTION_HandleCustomAction(package, action, &rc, script, FALSE);
+        handled = ACTION_HandleCustomAction(package, action, &rc, script);
 
     if( !handled && ACTION_DialogBox(package, action) == ERROR_SUCCESS )
         handled = TRUE;
