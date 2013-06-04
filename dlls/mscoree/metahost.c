@@ -1210,30 +1210,14 @@ HRESULT CLRMetaHost_CreateInstance(REFIID riid, void **ppobj)
     return ICLRMetaHost_QueryInterface(&GlobalCLRMetaHost.ICLRMetaHost_iface, riid, ppobj);
 }
 
-static MonoAssembly* mono_assembly_search_hook_fn(MonoAssemblyName *aname, char **assemblies_path, void *user_data)
+HRESULT get_file_from_strongname(WCHAR* stringnameW, WCHAR* assemblies_path, int path_length)
 {
-    loaded_mono *mono = user_data;
     HRESULT hr=S_OK;
-    MonoAssembly *result=NULL;
-    char *stringname=NULL;
-    LPWSTR stringnameW;
-    int stringnameW_size;
     IAssemblyCache *asmcache;
     ASSEMBLY_INFO info;
-    WCHAR path[MAX_PATH];
-    char *pathA;
-    MonoImageOpenStatus stat;
     static WCHAR fusiondll[] = {'f','u','s','i','o','n',0};
     HMODULE hfusion=NULL;
     static HRESULT (WINAPI *pCreateAssemblyCache)(IAssemblyCache**,DWORD);
-
-    stringname = mono->mono_stringify_assembly_name(aname);
-
-    TRACE("%s\n", debugstr_a(stringname));
-
-    if (!stringname) return NULL;
-
-    /* FIXME: We should search the given paths before the GAC. */
 
     if (!pCreateAssemblyCache)
     {
@@ -1252,28 +1236,52 @@ static MonoAssembly* mono_assembly_search_hook_fn(MonoAssemblyName *aname, char 
 
     if (SUCCEEDED(hr))
     {
-        stringnameW_size = MultiByteToWideChar(CP_UTF8, 0, stringname, -1, NULL, 0);
+        info.cbAssemblyInfo = sizeof(info);
+        info.pszCurrentAssemblyPathBuf = assemblies_path;
+        info.cchBuf = path_length;
+        assemblies_path[0] = 0;
 
-        stringnameW = HeapAlloc(GetProcessHeap(), 0, stringnameW_size * sizeof(WCHAR));
-        if (stringnameW)
-            MultiByteToWideChar(CP_UTF8, 0, stringname, -1, stringnameW, stringnameW_size);
-        else
-            hr = E_OUTOFMEMORY;
-
-        if (SUCCEEDED(hr))
-        {
-            info.cbAssemblyInfo = sizeof(info);
-            info.pszCurrentAssemblyPathBuf = path;
-            info.cchBuf = MAX_PATH;
-            path[0] = 0;
-
-            hr = IAssemblyCache_QueryAssemblyInfo(asmcache, 0, stringnameW, &info);
-        }
-
-        HeapFree(GetProcessHeap(), 0, stringnameW);
+        hr = IAssemblyCache_QueryAssemblyInfo(asmcache, 0, stringnameW, &info);
 
         IAssemblyCache_Release(asmcache);
     }
+
+    return hr;
+}
+
+static MonoAssembly* mono_assembly_search_hook_fn(MonoAssemblyName *aname, char **assemblies_path, void *user_data)
+{
+    loaded_mono *mono = user_data;
+    HRESULT hr;
+    MonoAssembly *result=NULL;
+    char *stringname=NULL;
+    LPWSTR stringnameW;
+    int stringnameW_size;
+    WCHAR path[MAX_PATH];
+    char *pathA;
+    MonoImageOpenStatus stat;
+
+    stringname = mono->mono_stringify_assembly_name(aname);
+
+    TRACE("%s\n", debugstr_a(stringname));
+
+    if (!stringname) return NULL;
+
+    /* FIXME: We should search the given paths before the GAC. */
+
+    stringnameW_size = MultiByteToWideChar(CP_UTF8, 0, stringname, -1, NULL, 0);
+
+    stringnameW = HeapAlloc(GetProcessHeap(), 0, stringnameW_size * sizeof(WCHAR));
+    if (stringnameW)
+    {
+        MultiByteToWideChar(CP_UTF8, 0, stringname, -1, stringnameW, stringnameW_size);
+
+        hr = get_file_from_strongname(stringnameW, path, MAX_PATH);
+
+        HeapFree(GetProcessHeap(), 0, stringnameW);
+    }
+    else
+        hr = E_OUTOFMEMORY;
 
     if (SUCCEEDED(hr))
     {
