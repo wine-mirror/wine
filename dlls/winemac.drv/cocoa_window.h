@@ -29,6 +29,7 @@
     BOOL disabled;
     BOOL noActivate;
     BOOL floating;
+    BOOL pendingMinimize;
     WineWindow* latentParentWindow;
 
     void* hwnd;

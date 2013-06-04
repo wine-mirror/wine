@@ -636,10 +636,16 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         }
         [self setCollectionBehavior:behavior];
 
+        pendingMinimize = FALSE;
         if (state->minimized && ![self isMiniaturized])
         {
-            ignore_windowMiniaturize = TRUE;
-            [self miniaturize:nil];
+            if ([self isVisible])
+            {
+                ignore_windowMiniaturize = TRUE;
+                [self miniaturize:nil];
+            }
+            else
+                pendingMinimize = TRUE;
         }
         else if (!state->minimized && [self isMiniaturized])
         {
@@ -754,6 +760,13 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
             if (needAdjustWindowLevels)
                 [controller adjustWindowLevels];
 
+            if (pendingMinimize)
+            {
+                ignore_windowMiniaturize = TRUE;
+                [self miniaturize:nil];
+                pendingMinimize = FALSE;
+            }
+
             NSEnableScreenUpdates();
 
             /* Cocoa may adjust the frame when the window is ordered onto the screen.
@@ -770,6 +783,8 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
     - (void) doOrderOut
     {
+        if ([self isMiniaturized])
+            pendingMinimize = TRUE;
         self.latentParentWindow = [self parentWindow];
         [latentParentWindow removeChildWindow:self];
         [self orderOut:nil];
@@ -948,6 +963,13 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         [self orderFront:nil];
         [controller adjustWindowLevels];
 
+        if (pendingMinimize)
+        {
+            ignore_windowMiniaturize = TRUE;
+            [self miniaturize:nil];
+            pendingMinimize = FALSE;
+        }
+
         NSEnableScreenUpdates();
 
         causing_becomeKeyWindow = TRUE;
@@ -1057,6 +1079,13 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
             [self setLevel:[front level]];
         [self orderFront:nil];
         [controller adjustWindowLevels];
+
+        if (pendingMinimize)
+        {
+            ignore_windowMiniaturize = TRUE;
+            [self miniaturize:nil];
+            pendingMinimize = FALSE;
+        }
     }
 
     - (void) sendEvent:(NSEvent*)event
