@@ -1235,6 +1235,7 @@ HRESULT RuntimeHost_Destroy(RuntimeHost *This)
 
 HRESULT create_monodata(REFIID riid, LPVOID *ppObj )
 {
+    static const WCHAR wszAssembly[] = {'A','s','s','e','m','b','l','y',0};
     static const WCHAR wszCodebase[] = {'C','o','d','e','B','a','s','e',0};
     static const WCHAR wszClass[] = {'C','l','a','s','s',0};
     static const WCHAR wszFileSlash[] = {'f','i','l','e',':','/','/','/',0};
@@ -1246,11 +1247,12 @@ HRESULT create_monodata(REFIID riid, LPVOID *ppObj )
     ICLRRuntimeInfo *info = NULL;
     RuntimeHost *host;
     HRESULT hr;
-    HKEY key;
+    HKEY key, subkey;
     LONG res;
     int offset = 0;
+    DWORD numKeys, keyLength;
     WCHAR codebase[MAX_PATH + 8];
-    WCHAR classname[350];
+    WCHAR classname[350], subkeyName[256];
     WCHAR filename[MAX_PATH];
 
     DWORD dwBufLen = 350;
@@ -1277,18 +1279,39 @@ HRESULT create_monodata(REFIID riid, LPVOID *ppObj )
 
     dwBufLen = MAX_PATH + 8;
     res = RegGetValueW( key, NULL, wszCodebase, RRF_RT_REG_SZ, NULL, codebase, &dwBufLen);
-    if(res != ERROR_SUCCESS)
+    if(res == ERROR_SUCCESS)
     {
-        WARN("CodeBase value cannot be found.\n");
-        hr = CLASS_E_CLASSNOTAVAILABLE;
-        goto cleanup;
+        /* Strip file:/// */
+        if(strncmpW(codebase, wszFileSlash, strlenW(wszFileSlash)) == 0)
+            offset = strlenW(wszFileSlash);
+
+        strcpyW(filename, codebase + offset);
     }
-
-    /* Strip file:/// */
-    if(strncmpW(codebase, wszFileSlash, strlenW(wszFileSlash)) == 0)
-        offset = strlenW(wszFileSlash);
-
-    strcpyW(filename, codebase + offset);
+    else
+    {
+        hr = CLASS_E_CLASSNOTAVAILABLE;
+        WARN("CodeBase value cannot be found, trying Assembly.\n");
+        /* get the last subkey of InprocServer32 */
+        res = RegQueryInfoKeyW(key, 0, 0, 0, &numKeys, 0, 0, 0, 0, 0, 0, 0);
+        if (res != ERROR_SUCCESS || numKeys == 0)
+            goto cleanup;
+        numKeys--;
+        keyLength = sizeof(subkeyName) / sizeof(WCHAR);
+        res = RegEnumKeyExW(key, numKeys, subkeyName, &keyLength, 0, 0, 0, 0);
+        if (res != ERROR_SUCCESS)
+            goto cleanup;
+        res = RegOpenKeyExW(key, subkeyName, 0, KEY_READ, &subkey);
+        if (res != ERROR_SUCCESS)
+            goto cleanup;
+        dwBufLen = MAX_PATH + 8;
+        res = RegGetValueW(subkey, NULL, wszAssembly, RRF_RT_REG_SZ, NULL, codebase, &dwBufLen);
+        RegCloseKey(subkey);
+        if (res != ERROR_SUCCESS)
+            goto cleanup;
+        hr = get_file_from_strongname(codebase, filename, MAX_PATH);
+        if (!SUCCEEDED(hr))
+            goto cleanup;
+    }
 
     TRACE("codebase (%s)\n", debugstr_w(filename));
 
