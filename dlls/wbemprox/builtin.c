@@ -714,16 +714,35 @@ static BOOL match_row( const struct table *table, UINT row, const struct expr *c
     return val != 0;
 }
 
+static BOOL resize_table( struct table *table, UINT row_count, UINT row_size )
+{
+    if (!table->num_rows_allocated)
+    {
+        if (!(table->data = heap_alloc( row_count * row_size ))) return FALSE;
+        table->num_rows_allocated = row_count;
+        return TRUE;
+    }
+    if (row_count >= table->num_rows_allocated)
+    {
+        BYTE *data;
+        UINT count = table->num_rows_allocated * 2;
+        if (!(data = heap_realloc( table->data, count * row_size ))) return FALSE;
+        table->data = data;
+        table->num_rows_allocated = count;
+    }
+    return TRUE;
+}
+
 static enum fill_status fill_cdromdrive( struct table *table, const struct expr *cond )
 {
     static const WCHAR fmtW[] = {'%','c',':',0};
     WCHAR drive[3], root[] = {'A',':','\\',0};
     struct record_cdromdrive *rec;
-    UINT i, row = 0, offset = 0, count = 1;
+    UINT i, row = 0, offset = 0;
     DWORD drives = GetLogicalDrives();
     enum fill_status status = FILL_STATUS_UNFILTERED;
 
-    if (!(table->data = heap_alloc( count * sizeof(*rec) ))) return FILL_STATUS_FAILED;
+    if (!resize_table( table, 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
 
     for (i = 0; i < sizeof(drives); i++)
     {
@@ -733,13 +752,8 @@ static enum fill_status fill_cdromdrive( struct table *table, const struct expr 
             if (GetDriveTypeW( root ) != DRIVE_CDROM)
                 continue;
 
-            if (row > count)
-            {
-                BYTE *data;
-                count *= 2;
-                if (!(data = heap_realloc( table->data, count * sizeof(*rec) ))) return FILL_STATUS_FAILED;
-                table->data = data;
-            }
+            if (!resize_table( table, row + 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
+
             rec = (struct record_cdromdrive *)(table->data + offset);
             rec->device_id    = cdromdrive_pnpdeviceidW;
             sprintfW( drive, fmtW, 'A' + i );
@@ -1082,7 +1096,7 @@ static enum fill_status fill_directory( struct table *table, const struct expr *
 {
     static const WCHAR dotW[] = {'.',0}, dotdotW[] = {'.','.',0};
     struct record_directory *rec;
-    UINT i, len, row = 0, offset = 0, count = 4, num_expected_rows;
+    UINT i, len, row = 0, offset = 0, num_expected_rows;
     WCHAR *glob = NULL, *path = NULL, *new_path, root[] = {'A',':','\\',0};
     DWORD drives = GetLogicalDrives();
     WIN32_FIND_DATAW data;
@@ -1090,7 +1104,7 @@ static enum fill_status fill_directory( struct table *table, const struct expr *
     struct dirstack *dirstack = alloc_dirstack(2);
     enum fill_status status = FILL_STATUS_UNFILTERED;
 
-    if (!(table->data = heap_alloc( count * sizeof(*rec) ))) return FILL_STATUS_FAILED;
+    if (!resize_table( table, 4, sizeof(*rec) )) return FILL_STATUS_FAILED;
 
     for (i = 0; i < sizeof(drives); i++)
     {
@@ -1114,16 +1128,10 @@ static enum fill_status fill_directory( struct table *table, const struct expr *
             {
                 do
                 {
-                    if (row > count)
+                    if (!resize_table( table, row + 1, sizeof(*rec) ))
                     {
-                        BYTE *data;
-                        count *= 2;
-                        if (!(data = heap_realloc( table->data, count * sizeof(*rec) )))
-                        {
-                            status = FILL_STATUS_FAILED;
-                            goto done;
-                        }
-                        table->data = data;
+                        status = FILL_STATUS_FAILED;
+                        goto done;
                     }
                     if (!(data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ||
                         !strcmpW( data.cFileName, dotW ) || !strcmpW( data.cFileName, dotdotW ))
@@ -1210,12 +1218,12 @@ static enum fill_status fill_diskpartition( struct table *table, const struct ex
         {'D','i','s','k',' ','#','%','u',',',' ','P','a','r','t','i','t','i','o','n',' ','#','0',0};
     WCHAR device_id[32], root[] = {'A',':','\\',0};
     struct record_diskpartition *rec;
-    UINT i, row = 0, offset = 0, count = 4, type, index = 0;
+    UINT i, row = 0, offset = 0, type, index = 0;
     UINT64 size = 1024 * 1024 * 1024;
     DWORD drives = GetLogicalDrives();
     enum fill_status status = FILL_STATUS_UNFILTERED;
 
-    if (!(table->data = heap_alloc( count * sizeof(*rec) ))) return FILL_STATUS_FAILED;
+    if (!resize_table( table, 4, sizeof(*rec) )) return FILL_STATUS_FAILED;
 
     for (i = 0; i < sizeof(drives); i++)
     {
@@ -1226,13 +1234,8 @@ static enum fill_status fill_diskpartition( struct table *table, const struct ex
             if (type != DRIVE_FIXED && type != DRIVE_REMOVABLE)
                 continue;
 
-            if (row > count)
-            {
-                BYTE *data;
-                count *= 2;
-                if (!(data = heap_realloc( table->data, count * sizeof(*rec) ))) return FILL_STATUS_FAILED;
-                table->data = data;
-            }
+            if (!resize_table( table, row + 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
+
             rec = (struct record_diskpartition *)(table->data + offset);
             rec->bootable       = (i == 2) ? -1 : 0;
             rec->bootpartition  = (i == 2) ? -1 : 0;
@@ -1265,12 +1268,12 @@ static enum fill_status fill_logicaldisk( struct table *table, const struct expr
     static const WCHAR fmtW[] = {'%','c',':',0};
     WCHAR device_id[3], root[] = {'A',':','\\',0};
     struct record_logicaldisk *rec;
-    UINT i, row = 0, offset = 0, count = 4, type;
+    UINT i, row = 0, offset = 0, type;
     UINT64 size = 1024 * 1024 * 1024;
     DWORD drives = GetLogicalDrives();
     enum fill_status status = FILL_STATUS_UNFILTERED;
 
-    if (!(table->data = heap_alloc( count * sizeof(*rec) ))) return FILL_STATUS_FAILED;
+    if (!resize_table( table, 4, sizeof(*rec) )) return FILL_STATUS_FAILED;
 
     for (i = 0; i < sizeof(drives); i++)
     {
@@ -1281,13 +1284,8 @@ static enum fill_status fill_logicaldisk( struct table *table, const struct expr
             if (type != DRIVE_FIXED && type != DRIVE_CDROM && type != DRIVE_REMOVABLE)
                 continue;
 
-            if (row > count)
-            {
-                BYTE *data;
-                count *= 2;
-                if (!(data = heap_realloc( table->data, count * sizeof(*rec) ))) return FILL_STATUS_FAILED;
-                table->data = data;
-            }
+            if (!resize_table( table, row + 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
+
             rec = (struct record_logicaldisk *)(table->data + offset);
             sprintfW( device_id, fmtW, 'A' + i );
             rec->device_id  = heap_strdupW( device_id );
@@ -1419,24 +1417,19 @@ static enum fill_status fill_process( struct table *table, const struct expr *co
     PROCESSENTRY32W entry;
     HANDLE snap;
     enum fill_status status = FILL_STATUS_FAILED;
-    UINT row = 0, offset = 0, count = 8;
+    UINT row = 0, offset = 0;
 
     snap = CreateToolhelp32Snapshot( TH32CS_SNAPPROCESS, 0 );
     if (snap == INVALID_HANDLE_VALUE) return FILL_STATUS_FAILED;
 
     entry.dwSize = sizeof(entry);
     if (!Process32FirstW( snap, &entry )) goto done;
-    if (!(table->data = heap_alloc( count * sizeof(*rec) ))) goto done;
+    if (!resize_table( table, 8, sizeof(*rec) )) goto done;
 
     do
     {
-        if (row > count)
-        {
-            BYTE *data;
-            count *= 2;
-            if (!(data = heap_realloc( table->data, count * sizeof(*rec) ))) goto done;
-            table->data = data;
-        }
+        if (!resize_table( table, row + 1, sizeof(*rec) )) goto done;
+
         rec = (struct record_process *)(table->data + offset);
         rec->caption      = heap_strdupW( entry.szExeFile );
         rec->commandline  = get_cmdline( entry.th32ProcessID );
@@ -1752,7 +1745,7 @@ static enum fill_status fill_service( struct table *table, const struct expr *co
                                      &count, NULL, NULL );
         if (!ret) goto done;
     }
-    if (!(table->data = heap_alloc( sizeof(*rec) * count ))) goto done;
+    if (!resize_table( table, count, sizeof(*rec) )) goto done;
 
     GetComputerNameW( sysnameW, &len );
     fill_status = FILL_STATUS_UNFILTERED;
@@ -1873,25 +1866,25 @@ done:
 
 static struct table builtin_classes[] =
 {
-    { class_baseboardW, SIZEOF(col_baseboard), col_baseboard, SIZEOF(data_baseboard), (BYTE *)data_baseboard },
-    { class_biosW, SIZEOF(col_bios), col_bios, SIZEOF(data_bios), (BYTE *)data_bios },
-    { class_cdromdriveW, SIZEOF(col_cdromdrive), col_cdromdrive, 0, NULL, fill_cdromdrive },
-    { class_compsysW, SIZEOF(col_compsys), col_compsys, 0, NULL, fill_compsys },
-    { class_directoryW, SIZEOF(col_directory), col_directory, 0, NULL, fill_directory },
-    { class_diskdriveW, SIZEOF(col_diskdrive), col_diskdrive, SIZEOF(data_diskdrive), (BYTE *)data_diskdrive },
-    { class_diskpartitionW, SIZEOF(col_diskpartition), col_diskpartition, 0, NULL, fill_diskpartition },
-    { class_logicaldiskW, SIZEOF(col_logicaldisk), col_logicaldisk, 0, NULL, fill_logicaldisk },
-    { class_logicaldisk2W, SIZEOF(col_logicaldisk), col_logicaldisk, 0, NULL, fill_logicaldisk },
-    { class_networkadapterW, SIZEOF(col_networkadapter), col_networkadapter, 0, NULL, fill_networkadapter },
-    { class_osW, SIZEOF(col_os), col_os, 0, NULL, fill_os },
-    { class_paramsW, SIZEOF(col_param), col_param, SIZEOF(data_param), (BYTE *)data_param },
-    { class_processW, SIZEOF(col_process), col_process, 0, NULL, fill_process },
-    { class_processorW, SIZEOF(col_processor), col_processor, 0, NULL, fill_processor },
-    { class_qualifiersW, SIZEOF(col_qualifier), col_qualifier, SIZEOF(data_qualifier), (BYTE *)data_qualifier },
-    { class_serviceW, SIZEOF(col_service), col_service, 0, NULL, fill_service },
-    { class_sounddeviceW, SIZEOF(col_sounddevice), col_sounddevice, SIZEOF(data_sounddevice), (BYTE *)data_sounddevice },
-    { class_stdregprovW, SIZEOF(col_stdregprov), col_stdregprov, SIZEOF(data_stdregprov), (BYTE *)data_stdregprov },
-    { class_videocontrollerW, SIZEOF(col_videocontroller), col_videocontroller, 0, NULL, fill_videocontroller }
+    { class_baseboardW, SIZEOF(col_baseboard), col_baseboard, SIZEOF(data_baseboard), 0, (BYTE *)data_baseboard },
+    { class_biosW, SIZEOF(col_bios), col_bios, SIZEOF(data_bios), 0, (BYTE *)data_bios },
+    { class_cdromdriveW, SIZEOF(col_cdromdrive), col_cdromdrive, 0, 0, NULL, fill_cdromdrive },
+    { class_compsysW, SIZEOF(col_compsys), col_compsys, 0, 0, NULL, fill_compsys },
+    { class_directoryW, SIZEOF(col_directory), col_directory, 0, 0, NULL, fill_directory },
+    { class_diskdriveW, SIZEOF(col_diskdrive), col_diskdrive, SIZEOF(data_diskdrive), 0, (BYTE *)data_diskdrive },
+    { class_diskpartitionW, SIZEOF(col_diskpartition), col_diskpartition, 0, 0, NULL, fill_diskpartition },
+    { class_logicaldiskW, SIZEOF(col_logicaldisk), col_logicaldisk, 0, 0, NULL, fill_logicaldisk },
+    { class_logicaldisk2W, SIZEOF(col_logicaldisk), col_logicaldisk, 0, 0, NULL, fill_logicaldisk },
+    { class_networkadapterW, SIZEOF(col_networkadapter), col_networkadapter, 0, 0, NULL, fill_networkadapter },
+    { class_osW, SIZEOF(col_os), col_os, 0, 0, NULL, fill_os },
+    { class_paramsW, SIZEOF(col_param), col_param, SIZEOF(data_param), 0, (BYTE *)data_param },
+    { class_processW, SIZEOF(col_process), col_process, 0, 0, NULL, fill_process },
+    { class_processorW, SIZEOF(col_processor), col_processor, 0, 0, NULL, fill_processor },
+    { class_qualifiersW, SIZEOF(col_qualifier), col_qualifier, SIZEOF(data_qualifier), 0, (BYTE *)data_qualifier },
+    { class_serviceW, SIZEOF(col_service), col_service, 0, 0, NULL, fill_service },
+    { class_sounddeviceW, SIZEOF(col_sounddevice), col_sounddevice, SIZEOF(data_sounddevice), 0, (BYTE *)data_sounddevice },
+    { class_stdregprovW, SIZEOF(col_stdregprov), col_stdregprov, SIZEOF(data_stdregprov), 0, (BYTE *)data_stdregprov },
+    { class_videocontrollerW, SIZEOF(col_videocontroller), col_videocontroller, 0, 0, NULL, fill_videocontroller }
 };
 
 void init_table_list( void )

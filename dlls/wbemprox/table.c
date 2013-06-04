@@ -290,6 +290,7 @@ void clear_table( struct table *table )
     if (table->fill)
     {
         table->num_rows = 0;
+        table->num_rows_allocated = 0;
         heap_free( table->data );
         table->data = NULL;
     }
@@ -345,20 +346,21 @@ struct table *grab_table( const WCHAR *name )
 }
 
 struct table *create_table( const WCHAR *name, UINT num_cols, const struct column *columns,
-                            UINT num_rows, BYTE *data,
+                            UINT num_rows, UINT num_allocated, BYTE *data,
                             enum fill_status (*fill)(struct table *, const struct expr *cond) )
 {
     struct table *table;
 
     if (!(table = heap_alloc( sizeof(*table) ))) return NULL;
-    table->name     = heap_strdupW( name );
-    table->num_cols = num_cols;
-    table->columns  = columns;
-    table->num_rows = num_rows;
-    table->data     = data;
-    table->fill     = fill;
-    table->flags    = TABLE_FLAG_DYNAMIC;
-    table->refs     = 0;
+    table->name               = heap_strdupW( name );
+    table->num_cols           = num_cols;
+    table->columns            = columns;
+    table->num_rows           = num_rows;
+    table->num_rows_allocated = num_allocated;
+    table->data               = data;
+    table->fill               = fill;
+    table->flags              = TABLE_FLAG_DYNAMIC;
+    table->refs               = 0;
     list_init( &table->entry );
     return table;
 }

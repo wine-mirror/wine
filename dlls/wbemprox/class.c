@@ -781,7 +781,7 @@ static HRESULT create_signature_table( IEnumWbemClassObject *iter, WCHAR *name )
     hr = create_signature_columns_and_data( iter, &num_cols, &columns, &row );
     if (hr != S_OK) return hr;
 
-    if (!(table = create_table( name, num_cols, columns, 1, row, NULL )))
+    if (!(table = create_table( name, num_cols, columns, 1, 1, row, NULL )))
     {
         free_columns( columns, num_cols );
         heap_free( row );
