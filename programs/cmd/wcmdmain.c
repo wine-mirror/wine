@@ -1048,7 +1048,6 @@ void WCMD_run_program (WCHAR *command, BOOL called)
   BOOL  extensionsupplied = FALSE;
   BOOL  launched = FALSE;
   BOOL  status;
-  BOOL  assumeInternal = FALSE;
   DWORD len;
   static const WCHAR envPath[] = {'P','A','T','H','\0'};
   static const WCHAR delims[] = {'/','\\',':','\0'};
@@ -1168,20 +1167,8 @@ void WCMD_run_program (WCHAR *command, BOOL called)
       }
     }
 
-   /* Internal programs won't be picked up by this search, so even
-      though not found, try one last createprocess and wait for it
-      to complete.
-      Note: Ideally we could tell between a console app (wait) and a
-      windows app, but the API's for it fail in this case           */
-    if (!found && pathposn == NULL) {
-        WINE_TRACE("ASSUMING INTERNAL\n");
-        assumeInternal = TRUE;
-    } else {
-        WINE_TRACE("Found as %s\n", wine_dbgstr_w(thisDir));
-    }
-
     /* Once found, launch it */
-    if (found || assumeInternal) {
+    if (found) {
       STARTUPINFOW st;
       PROCESS_INFORMATION pe;
       SHFILEINFOW psfi;
@@ -1190,6 +1177,8 @@ void WCMD_run_program (WCHAR *command, BOOL called)
       WCHAR *ext = strrchrW( thisDir, '.' );
       static const WCHAR batExt[] = {'.','b','a','t','\0'};
       static const WCHAR cmdExt[] = {'.','c','m','d','\0'};
+
+      WINE_TRACE("Found as %s\n", wine_dbgstr_w(thisDir));
 
       /* Special case BAT and CMD */
       if (ext && (!strcmpiW(ext, batExt) || !strcmpiW(ext, cmdExt))) {
@@ -1214,7 +1203,7 @@ void WCMD_run_program (WCHAR *command, BOOL called)
 
         /* Launch the process and if a CUI wait on it to complete
            Note: Launching internal wine processes cannot specify a full path to exe */
-        status = CreateProcessW(assumeInternal?NULL : thisDir,
+        status = CreateProcessW(thisDir,
                                 command, NULL, NULL, TRUE, 0, NULL, NULL, &st, &pe);
         heap_free(st.lpReserved2);
         if ((opt_c || opt_k) && !opt_s && !status
@@ -1231,7 +1220,7 @@ void WCMD_run_program (WCHAR *command, BOOL called)
 
         /* Always wait when non-interactive (cmd /c or in batch program),
            or for console applications                                    */
-        if (assumeInternal || !interactive || (console && !HIWORD(console)))
+        if (!interactive || (console && !HIWORD(console)))
             WaitForSingleObject (pe.hProcess, INFINITE);
         GetExitCodeProcess (pe.hProcess, &errorlevel);
         if (errorlevel == STILL_ACTIVE) errorlevel = 0;
