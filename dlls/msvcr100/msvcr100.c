@@ -484,6 +484,11 @@ size_t CDECL _aligned_msize(void *p, size_t alignment, size_t offset)
     return _msize(*alloc_ptr)-alignment-sizeof(void*);
 }
 
+int CDECL MSVCR100_atoi(const char *str)
+{
+    return _atoi_l(str, NULL);
+}
+
 /*********************************************************************
  *  DllMain (MSVCR100.@)
  */

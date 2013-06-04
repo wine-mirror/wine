@@ -1283,7 +1283,7 @@
 @ cdecl -arch=arm,x86_64 atanf(float) msvcrt.atanf
 @ cdecl atexit(ptr) msvcrt.atexit
 @ cdecl atof(str) msvcrt.atof
-@ cdecl atoi(str) msvcrt.atoi
+@ cdecl atoi(str) msvcr100.atoi ##don't forward to msvcrt
 @ cdecl atol(str) msvcrt.atol
 @ cdecl bsearch(ptr ptr long long ptr) msvcrt.bsearch
 @ cdecl bsearch_s(ptr ptr long long ptr ptr) msvcrt.bsearch_s

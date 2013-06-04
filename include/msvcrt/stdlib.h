@@ -182,6 +182,7 @@ int           __cdecl abs(int);
 int           __cdecl atexit(void (*)(void));
 double        __cdecl atof(const char*);
 int           __cdecl atoi(const char*);
+int           __cdecl _atoi_l(const char*,_locale_t);
 __msvcrt_long __cdecl atol(const char*);
 void*         __cdecl calloc(size_t,size_t);
 #ifndef __i386__

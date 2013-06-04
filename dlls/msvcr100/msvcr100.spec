@@ -1629,7 +1629,7 @@
 @ cdecl -arch=arm,x86_64 atan2f(float float) msvcrt.atan2f
 @ cdecl atexit(ptr) msvcrt.atexit
 @ cdecl atof(str) msvcrt.atof
-@ cdecl atoi(str) msvcrt.atoi
+@ cdecl atoi(str) MSVCR100_atoi
 @ cdecl atol(str) msvcrt.atol
 @ cdecl bsearch(ptr ptr long long ptr) msvcrt.bsearch
 @ cdecl bsearch_s(ptr ptr long long ptr ptr) msvcrt.bsearch_s

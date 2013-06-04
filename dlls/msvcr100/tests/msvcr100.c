@@ -75,6 +75,7 @@ static size_t (__cdecl *p_fread_s)(void*,size_t,size_t,size_t,FILE*);
 static void* (__cdecl *p__aligned_offset_malloc)(size_t, size_t, size_t);
 static void (__cdecl *p__aligned_free)(void*);
 static size_t (__cdecl *p__aligned_msize)(void*, size_t, size_t);
+static int (__cdecl *p_atoi)(const char*);
 
 /* make sure we use the correct errno */
 #undef errno
@@ -104,6 +105,7 @@ static BOOL init(void)
     SET(p__aligned_offset_malloc, "_aligned_offset_malloc");
     SET(p__aligned_free, "_aligned_free");
     SET(p__aligned_msize, "_aligned_msize");
+    SET(p_atoi, "atoi");
 
     return TRUE;
 }
@@ -358,6 +360,23 @@ static void test__aligned_msize(void)
     p__aligned_free(mem);
 }
 
+static void test_atoi(void)
+{
+    int r;
+
+    r = p_atoi("0");
+    ok(r == 0, "atoi(0) = %d\n", r);
+
+    r = p_atoi("-1");
+    ok(r == -1, "atoi(-1) = %d\n", r);
+
+    r = p_atoi("1");
+    ok(r == 1, "atoi(1) = %d\n", r);
+
+    r = p_atoi("4294967296");
+    ok(r == 2147483647, "atoi(4294967296) = %d\n", r);
+}
+
 START_TEST(msvcr100)
 {
     if (!init())
@@ -367,4 +386,5 @@ START_TEST(msvcr100)
     test_wmemmove_s();
     test_fread_s();
     test__aligned_msize();
+    test_atoi();
 }

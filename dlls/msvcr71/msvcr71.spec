@@ -684,7 +684,7 @@
 @ cdecl atan2(double double) msvcrt.atan2
 @ cdecl atexit(ptr) msvcrt.atexit
 @ cdecl atof(str) msvcrt.atof
-@ cdecl atoi(str) msvcrt.atoi
+@ cdecl atoi(str) msvcr100.atoi #don't forward to msvcrt
 @ cdecl atol(str) msvcrt.atol
 @ cdecl bsearch(ptr ptr long long ptr) msvcrt.bsearch
 @ cdecl calloc(long long) msvcrt.calloc

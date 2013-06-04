@@ -2521,6 +2521,23 @@ static void test__wcstoi64(void)
     return;
 }
 
+static void test_atoi(void)
+{
+    int r;
+
+    r = atoi("0");
+    ok(r == 0, "atoi(0) = %d\n", r);
+
+    r = atoi("-1");
+    ok(r == -1, "atoi(-1) = %d\n", r);
+
+    r = atoi("1");
+    ok(r == 1, "atoi(1) = %d\n", r);
+
+    r = atoi("4294967296");
+    ok(r == 0, "atoi(4294967296) = %d\n", r);
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -2620,4 +2637,5 @@ START_TEST(string)
     test__atodbl();
     test__stricmp();
     test__wcstoi64();
+    test_atoi();
 }

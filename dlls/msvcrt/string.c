@@ -893,7 +893,27 @@ int __cdecl MSVCRT__atoi_l(const char *str, MSVCRT__locale_t locale)
  */
 int __cdecl MSVCRT_atoi(const char *str)
 {
-    return MSVCRT__atoi_l(str, NULL);
+    BOOL minus = FALSE;
+    int ret = 0;
+
+    if(!str)
+        return 0;
+
+    while(isspace(*str)) str++;
+
+    if(*str == '+') {
+        str++;
+    }else if(*str == '-') {
+        minus = TRUE;
+        str++;
+    }
+
+    while(*str>='0' && *str<='9') {
+        ret = ret*10+*str-'0';
+        str++;
+    }
+
+    return minus ? -ret : ret;
 }
 
 /*********************************************************************
