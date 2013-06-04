@@ -1202,6 +1202,8 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
     - (void)windowDidDeminiaturize:(NSNotification *)notification
     {
+        WineApplicationController* controller = [WineApplicationController sharedController];
+
         if (!ignore_windowDeminiaturize)
         {
             macdrv_event* event;
@@ -1218,7 +1220,15 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
         ignore_windowDeminiaturize = FALSE;
 
-        [[WineApplicationController sharedController] adjustWindowLevels];
+        [controller adjustWindowLevels];
+
+        if (!self.disabled && !self.noActivate)
+        {
+            causing_becomeKeyWindow = TRUE;
+            [self makeKeyWindow];
+            causing_becomeKeyWindow = FALSE;
+            [controller windowGotFocus:self];
+        }
     }
 
     - (void) windowDidEndLiveResize:(NSNotification *)notification
