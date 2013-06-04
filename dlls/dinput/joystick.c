@@ -301,7 +301,7 @@ HRESULT WINAPI JoystickWGenericImpl_SetProperty(LPDIRECTINPUTDEVICE8W iface, REF
                     remap_props.lMin = pr->lMin;
                     remap_props.lMax = pr->lMax;
 
-                    switch (This->base.data_format.offsets[i]) {
+                    switch (This->base.data_format.wine_df->rgodf[i].dwOfs) {
                     case DIJOFS_X        : This->js.lX  = joystick_map_axis(&remap_props, This->js.lX); break;
                     case DIJOFS_Y        : This->js.lY  = joystick_map_axis(&remap_props, This->js.lY); break;
                     case DIJOFS_Z        : This->js.lZ  = joystick_map_axis(&remap_props, This->js.lZ); break;
