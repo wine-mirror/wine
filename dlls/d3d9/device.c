@@ -3259,23 +3259,23 @@ static void CDECL device_parent_mode_changed(struct wined3d_device_parent *devic
 }
 
 static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_parent *device_parent,
-        void *container_parent, UINT width, UINT height, enum wined3d_format_id format, DWORD usage,
-        enum wined3d_pool pool, UINT sub_resource_idx, struct wined3d_surface **surface)
+        void *container_parent, const struct wined3d_resource_desc *desc, UINT sub_resource_idx,
+        struct wined3d_surface **surface)
 {
     struct d3d9_device *device = device_from_device_parent(device_parent);
     struct d3d9_surface *d3d_surface;
     BOOL lockable = TRUE;
     HRESULT hr;
 
-    TRACE("device_parent %p, container_parent %p, width %u, height %u, format %#x, usage %#x,\n"
-            "\tpool %#x, sub_resource_idx %u, surface %p.\n",
-            device_parent, container_parent, width, height, format, usage, pool, sub_resource_idx, surface);
+    TRACE("device_parent %p, container_parent %p, desc %p, sub_resource_idx %u, surface %p.\n",
+            device_parent, container_parent, desc, sub_resource_idx, surface);
 
-    if (pool == WINED3D_POOL_DEFAULT && !(usage & D3DUSAGE_DYNAMIC))
+    if (desc->pool == WINED3D_POOL_DEFAULT && !(desc->usage & WINED3DUSAGE_DYNAMIC))
         lockable = FALSE;
 
-    if (FAILED(hr = d3d9_device_create_surface(device, width, height, d3dformat_from_wined3dformat(format),
-            lockable, FALSE, (IDirect3DSurface9 **)&d3d_surface, usage, pool, D3DMULTISAMPLE_NONE, 0)))
+    if (FAILED(hr = d3d9_device_create_surface(device, desc->width, desc->height,
+            d3dformat_from_wined3dformat(desc->format), lockable, FALSE, (IDirect3DSurface9 **)&d3d_surface,
+            desc->usage, desc->pool, desc->multisample_type, desc->multisample_quality)))
     {
         WARN("Failed to create surface, hr %#x.\n", hr);
         return hr;

@@ -1831,17 +1831,17 @@ static void CDECL device_parent_mode_changed(struct wined3d_device_parent *devic
 }
 
 static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_parent *device_parent,
-        void *container_parent, UINT width, UINT height, enum wined3d_format_id format, DWORD usage,
-        enum wined3d_pool pool, UINT sub_resource_idx, struct wined3d_surface **surface)
+        void *container_parent, const struct wined3d_resource_desc *desc, UINT sub_resource_idx,
+        struct wined3d_surface **surface)
 {
     struct d3d10_device *device = device_from_wined3d_device_parent(device_parent);
 
-    TRACE("device_parent %p, container_parent %p, width %u, height %u, format %#x, usage %#x,\n"
-            "\tpool %#x, sub_resource_idx %u, surface %p.\n",
-            device_parent, container_parent, width, height, format, usage, pool, sub_resource_idx, surface);
+    TRACE("device_parent %p, container_parent %p, desc %p, sub_resource_idx %u, surface %p.\n",
+            device_parent, container_parent, desc, sub_resource_idx, surface);
 
-    return wined3d_surface_create(device->wined3d_device, width, height, format, usage, pool,
-            WINED3D_MULTISAMPLE_NONE, 0, 0, container_parent, &d3d10_null_wined3d_parent_ops, surface);
+    return wined3d_surface_create(device->wined3d_device, desc->width, desc->height, desc->format,
+            desc->usage, desc->pool, desc->multisample_type, desc->multisample_quality, 0,
+            container_parent, &d3d10_null_wined3d_parent_ops, surface);
 }
 
 static HRESULT CDECL device_parent_create_swapchain_surface(struct wined3d_device_parent *device_parent,

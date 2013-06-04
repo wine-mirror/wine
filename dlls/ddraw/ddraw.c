@@ -5094,8 +5094,8 @@ static void CDECL device_parent_mode_changed(struct wined3d_device_parent *devic
 }
 
 static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_parent *device_parent,
-        void *container_parent, UINT width, UINT height, enum wined3d_format_id format, DWORD usage,
-        enum wined3d_pool pool, UINT sub_resource_idx, struct wined3d_surface **surface)
+        void *container_parent, const struct wined3d_resource_desc *wined3d_desc, UINT sub_resource_idx,
+        struct wined3d_surface **surface)
 {
     struct ddraw *ddraw = ddraw_from_device_parent(device_parent);
     struct ddraw_surface *tex_root = container_parent;
@@ -5103,9 +5103,8 @@ static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_
     struct ddraw_surface *ddraw_surface;
     HRESULT hr;
 
-    TRACE("device_parent %p, container_parent %p, width %u, height %u, format %#x, usage %#x,\n"
-            "\tpool %#x, sub_resource_idx %u, surface %p.\n",
-            device_parent, container_parent, width, height, format, usage, pool, sub_resource_idx, surface);
+    TRACE("device_parent %p, container_parent %p, wined3d_desc %p, sub_resource_idx %u, surface %p.\n",
+            device_parent, container_parent, wined3d_desc, sub_resource_idx, surface);
 
     /* The ddraw root surface is created before the wined3d texture. */
     if (!sub_resource_idx)
@@ -5114,8 +5113,8 @@ static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_
         goto done;
     }
 
-    desc.dwWidth = width;
-    desc.dwHeight = height;
+    desc.dwWidth = wined3d_desc->width;
+    desc.dwHeight = wined3d_desc->height;
 
     /* FIXME: Validate that format, usage, pool, etc. really make sense. */
     if (FAILED(hr = ddraw_create_surface(ddraw, &desc, &ddraw_surface, tex_root->version)))

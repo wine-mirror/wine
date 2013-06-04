@@ -760,8 +760,8 @@ static HRESULT cubetexture_init(struct wined3d_texture *texture, UINT edge_lengt
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct wined3d_format *format = wined3d_get_format(gl_info, format_id);
+    struct wined3d_resource_desc desc;
     unsigned int i, j;
-    UINT tmp_w;
     HRESULT hr;
 
     /* TODO: It should only be possible to create textures for formats
@@ -836,7 +836,8 @@ static HRESULT cubetexture_init(struct wined3d_texture *texture, UINT edge_lengt
     texture->target = GL_TEXTURE_CUBE_MAP_ARB;
 
     /* Generate all the surfaces. */
-    tmp_w = edge_length;
+    wined3d_resource_get_desc(&texture->resource, &desc);
+    desc.resource_type = WINED3D_RTYPE_SURFACE;
     for (i = 0; i < texture->level_count; ++i)
     {
         /* Create the 6 faces. */
@@ -855,7 +856,7 @@ static HRESULT cubetexture_init(struct wined3d_texture *texture, UINT edge_lengt
             struct wined3d_surface *surface;
 
             if (FAILED(hr = device->device_parent->ops->create_texture_surface(device->device_parent,
-                    parent, tmp_w, tmp_w, format_id, usage, pool, idx, &surface)))
+                    parent, &desc, idx, &surface)))
             {
                 FIXME("(%p) Failed to create surface, hr %#x.\n", texture, hr);
                 wined3d_texture_cleanup(texture);
@@ -867,7 +868,8 @@ static HRESULT cubetexture_init(struct wined3d_texture *texture, UINT edge_lengt
             texture->sub_resources[idx] = &surface->resource;
             TRACE("Created surface level %u @ %p.\n", i, surface);
         }
-        tmp_w = max(1, tmp_w >> 1);
+        desc.width = max(1, desc.width >> 1);
+        desc.height = desc.width;
     }
 
     return WINED3D_OK;
@@ -879,8 +881,8 @@ static HRESULT texture_init(struct wined3d_texture *texture, UINT width, UINT he
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct wined3d_format *format = wined3d_get_format(gl_info, format_id);
+    struct wined3d_resource_desc desc;
     UINT pow2_width, pow2_height;
-    UINT tmp_w, tmp_h;
     unsigned int i;
     HRESULT hr;
 
@@ -1005,15 +1007,15 @@ static HRESULT texture_init(struct wined3d_texture *texture, UINT width, UINT he
     TRACE("xf(%f) yf(%f)\n", texture->pow2_matrix[0], texture->pow2_matrix[5]);
 
     /* Generate all the surfaces. */
-    tmp_w = width;
-    tmp_h = height;
+    wined3d_resource_get_desc(&texture->resource, &desc);
+    desc.resource_type = WINED3D_RTYPE_SURFACE;
     for (i = 0; i < texture->level_count; ++i)
     {
         struct wined3d_surface *surface;
 
         /* Use the callback to create the texture surface. */
         if (FAILED(hr = device->device_parent->ops->create_texture_surface(device->device_parent,
-                parent, tmp_w, tmp_h, format->id, usage, pool, i, &surface)))
+                parent, &desc, i, &surface)))
         {
             FIXME("Failed to create surface %p, hr %#x\n", texture, hr);
             wined3d_texture_cleanup(texture);
@@ -1025,8 +1027,8 @@ static HRESULT texture_init(struct wined3d_texture *texture, UINT width, UINT he
         texture->sub_resources[i] = &surface->resource;
         TRACE("Created surface level %u @ %p.\n", i, surface);
         /* Calculate the next mipmap level. */
-        tmp_w = max(1, tmp_w >> 1);
-        tmp_h = max(1, tmp_h >> 1);
+        desc.width = max(1, desc.width >> 1);
+        desc.height = max(1, desc.height >> 1);
     }
 
     return WINED3D_OK;
