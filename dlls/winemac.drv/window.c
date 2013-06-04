@@ -1500,7 +1500,7 @@ void macdrv_window_frame_changed(HWND hwnd, CGRect frame)
 
     if (!hwnd) return;
     if (!(data = get_win_data(hwnd))) return;
-    if (!data->on_screen)
+    if (!data->on_screen || data->minimized)
     {
         release_win_data(data);
         return;

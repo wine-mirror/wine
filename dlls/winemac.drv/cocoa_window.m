@@ -1229,6 +1229,8 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
             causing_becomeKeyWindow = FALSE;
             [controller windowGotFocus:self];
         }
+
+        [self windowDidResize:notification];
     }
 
     - (void) windowDidEndLiveResize:(NSNotification *)notification
