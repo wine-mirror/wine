@@ -5631,7 +5631,7 @@ static HRESULT d3dx9_parse_effect(struct ID3DXBaseEffectImpl *base, const char *
         hr = d3dx9_parse_resource(base, data, &ptr);
         if (hr != D3D_OK)
         {
-            WARN("Failed to parse data\n");
+            WARN("Failed to parse resource\n");
             goto err_out;
         }
     }
