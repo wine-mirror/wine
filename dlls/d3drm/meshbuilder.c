@@ -612,15 +612,12 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_AddFace(IDirect3DRMMeshBuilder
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_AddFaces(IDirect3DRMMeshBuilder2* iface,
-                                                           DWORD vcount, D3DVECTOR *vertices,
-                                                           DWORD ncount, D3DVECTOR *normals,
-                                                           DWORD *data,
-                                                           LPDIRECT3DRMFACEARRAY* pFaceArray)
+static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_AddFaces(IDirect3DRMMeshBuilder2 *iface,
+        DWORD vertex_count, D3DVECTOR *vertices, DWORD normal_count, D3DVECTOR *normals,
+        DWORD *face_data, IDirect3DRMFaceArray **array)
 {
-    IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder2(iface);
-
-    FIXME("(%p)->(%d,%p,%d,%p,%p,%p): stub\n", This, vcount, vertices, ncount, normals, data, pFaceArray);
+    FIXME("iface %p, vertex_count %u, vertices %p, normal_count %u, normals %p, face_data %p, array %p stub!\n",
+            iface, vertex_count, vertices, normal_count, normals, face_data, array);
 
     return E_NOTIMPL;
 }
@@ -771,12 +768,10 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_SetVertexColorRGB(IDirect3DRMM
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_GetFaces(IDirect3DRMMeshBuilder2* iface,
-                                                           LPDIRECT3DRMFACEARRAY* pFaceArray)
+static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_GetFaces(IDirect3DRMMeshBuilder2 *iface,
+        IDirect3DRMFaceArray **array)
 {
-    IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder2(iface);
-
-    FIXME("(%p)->(%p): stub\n", This, pFaceArray);
+    FIXME("iface %p, array %p stub!\n", iface, array);
 
     return E_NOTIMPL;
 }
@@ -1765,16 +1760,12 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_AddFace(IDirect3DRMMeshBuilder
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_AddFaces(IDirect3DRMMeshBuilder3* iface,
-                                                           DWORD vcount, D3DVECTOR* vertices,
-                                                           DWORD ncount, D3DVECTOR* normals,
-                                                           DWORD* data,
-                                                           LPDIRECT3DRMFACEARRAY* FaceArray)
+static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_AddFaces(IDirect3DRMMeshBuilder3 *iface,
+        DWORD vertex_count, D3DVECTOR *vertices, DWORD normal_count, D3DVECTOR *normals,
+        DWORD *face_data, IDirect3DRMFaceArray **array)
 {
-    IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
-
-    FIXME("(%p)->(%d,%p,%d,%p,%p,%p): stub\n", This, vcount, vertices, ncount,
-          normals, data, FaceArray);
+    FIXME("iface %p, vertex_count %u, vertices %p, normal_count %u, normals %p, face_data %p array %p stub!\n",
+            iface, vertex_count, vertices, normal_count, normals, face_data, array);
 
     return E_NOTIMPL;
 }
@@ -1939,12 +1930,10 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_SetVertexColorRGB(IDirect3DRMM
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_GetFaces(IDirect3DRMMeshBuilder3* iface,
-                                                           LPDIRECT3DRMFACEARRAY* FaceArray)
+static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_GetFaces(IDirect3DRMMeshBuilder3 *iface,
+        IDirect3DRMFaceArray **array)
 {
-    IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
-
-    FIXME("(%p)->(%p): stub\n", This, FaceArray);
+    FIXME("iface %p, array %p stub!\n", iface, array);
 
     return E_NOTIMPL;
 }

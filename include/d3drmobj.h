@@ -2513,8 +2513,8 @@ DECLARE_INTERFACE_(IDirect3DRMMeshBuilder,IDirect3DRMVisual)
     STDMETHOD(AddMeshBuilder)(THIS_ IDirect3DRMMeshBuilder *mesh_builder) PURE;
     STDMETHOD(AddFrame)(THIS_ IDirect3DRMFrame *frame) PURE;
     STDMETHOD(AddFace)(THIS_ IDirect3DRMFace *face) PURE;
-    STDMETHOD(AddFaces)(THIS_ DWORD vcount, D3DVECTOR *vertices, DWORD ncount, D3DVECTOR *normals, DWORD *data,
-        LPDIRECT3DRMFACEARRAY*) PURE;
+    STDMETHOD(AddFaces)(THIS_ DWORD vertex_count, D3DVECTOR *vertices, DWORD normal_count,
+            D3DVECTOR *normals, DWORD *face_data, struct IDirect3DRMFaceArray **array) PURE;
     STDMETHOD(ReserveSpace)(THIS_ DWORD vertex_Count, DWORD normal_count, DWORD face_count) PURE;
     STDMETHOD(SetColorRGB)(THIS_ D3DVALUE red, D3DVALUE green, D3DVALUE blue) PURE;
     STDMETHOD(SetColor)(THIS_ D3DCOLOR) PURE;
@@ -2528,7 +2528,7 @@ DECLARE_INTERFACE_(IDirect3DRMMeshBuilder,IDirect3DRMVisual)
     STDMETHOD(SetTextureCoordinates)(THIS_ DWORD index, D3DVALUE u, D3DVALUE v) PURE;
     STDMETHOD(SetVertexColor)(THIS_ DWORD index, D3DCOLOR) PURE;
     STDMETHOD(SetVertexColorRGB)(THIS_ DWORD index, D3DVALUE red, D3DVALUE green, D3DVALUE blue) PURE;
-    STDMETHOD(GetFaces)(THIS_ LPDIRECT3DRMFACEARRAY*) PURE;
+    STDMETHOD(GetFaces)(THIS_ struct IDirect3DRMFaceArray **array) PURE;
     STDMETHOD(GetVertices)(THIS_ DWORD *vcount, D3DVECTOR *vertices, DWORD *ncount, D3DVECTOR *normals,
         DWORD *face_data_size, DWORD *face_data) PURE;
     STDMETHOD(GetTextureCoordinates)(THIS_ DWORD index, D3DVALUE *u, D3DVALUE *v) PURE;
@@ -2684,8 +2684,8 @@ DECLARE_INTERFACE_(IDirect3DRMMeshBuilder2,IDirect3DRMMeshBuilder)
     STDMETHOD(AddMeshBuilder)(THIS_ IDirect3DRMMeshBuilder *mesh_builder) PURE;
     STDMETHOD(AddFrame)(THIS_ IDirect3DRMFrame *frame) PURE;
     STDMETHOD(AddFace)(THIS_ IDirect3DRMFace *face) PURE;
-    STDMETHOD(AddFaces)(THIS_ DWORD vcount, D3DVECTOR *vertices, DWORD ncount, D3DVECTOR *normals, DWORD *data,
-        LPDIRECT3DRMFACEARRAY*) PURE;
+    STDMETHOD(AddFaces)(THIS_ DWORD vertex_count, D3DVECTOR *vertices, DWORD normal_count,
+            D3DVECTOR *normals, DWORD *face_data, struct IDirect3DRMFaceArray **array) PURE;
     STDMETHOD(ReserveSpace)(THIS_ DWORD vertex_Count, DWORD normal_count, DWORD face_count) PURE;
     STDMETHOD(SetColorRGB)(THIS_ D3DVALUE red, D3DVALUE green, D3DVALUE blue) PURE;
     STDMETHOD(SetColor)(THIS_ D3DCOLOR) PURE;
@@ -2699,7 +2699,7 @@ DECLARE_INTERFACE_(IDirect3DRMMeshBuilder2,IDirect3DRMMeshBuilder)
     STDMETHOD(SetTextureCoordinates)(THIS_ DWORD index, D3DVALUE u, D3DVALUE v) PURE;
     STDMETHOD(SetVertexColor)(THIS_ DWORD index, D3DCOLOR) PURE;
     STDMETHOD(SetVertexColorRGB)(THIS_ DWORD index, D3DVALUE red, D3DVALUE green, D3DVALUE blue) PURE;
-    STDMETHOD(GetFaces)(THIS_ LPDIRECT3DRMFACEARRAY*) PURE;
+    STDMETHOD(GetFaces)(THIS_ struct IDirect3DRMFaceArray **array) PURE;
     STDMETHOD(GetVertices)(THIS_ DWORD *vcount, D3DVECTOR *vertices, DWORD *ncount, D3DVECTOR *normals,
         DWORD *face_data_size, DWORD *face_data) PURE;
     STDMETHOD(GetTextureCoordinates)(THIS_ DWORD index, D3DVALUE *u, D3DVALUE *v) PURE;
@@ -2864,8 +2864,8 @@ DECLARE_INTERFACE_(IDirect3DRMMeshBuilder3,IDirect3DRMVisual)
     STDMETHOD(AddMeshBuilder)(THIS_ IDirect3DRMMeshBuilder3 *mesh_builder, DWORD flags) PURE;
     STDMETHOD(AddFrame)(THIS_ IDirect3DRMFrame3 *frame) PURE;
     STDMETHOD(AddFace)(THIS_ IDirect3DRMFace2 *face) PURE;
-    STDMETHOD(AddFaces)(THIS_ DWORD vcount, D3DVECTOR *vertices, DWORD ncount, D3DVECTOR *normals, DWORD *data,
-        LPDIRECT3DRMFACEARRAY*) PURE;
+    STDMETHOD(AddFaces)(THIS_ DWORD vertex_count, D3DVECTOR *vertices, DWORD normal_count,
+            D3DVECTOR *normals, DWORD *face_data, struct IDirect3DRMFaceArray **array) PURE;
     STDMETHOD(ReserveSpace)(THIS_ DWORD vertex_Count, DWORD normal_count, DWORD face_count) PURE;
     STDMETHOD(SetColorRGB)(THIS_ D3DVALUE red, D3DVALUE green, D3DVALUE blue) PURE;
     STDMETHOD(SetColor)(THIS_ D3DCOLOR) PURE;
@@ -2879,7 +2879,7 @@ DECLARE_INTERFACE_(IDirect3DRMMeshBuilder3,IDirect3DRMVisual)
     STDMETHOD(SetTextureCoordinates)(THIS_ DWORD index, D3DVALUE u, D3DVALUE v) PURE;
     STDMETHOD(SetVertexColor)(THIS_ DWORD index, D3DCOLOR) PURE;
     STDMETHOD(SetVertexColorRGB)(THIS_ DWORD index, D3DVALUE red, D3DVALUE green, D3DVALUE blue) PURE;
-    STDMETHOD(GetFaces)(THIS_ LPDIRECT3DRMFACEARRAY*) PURE;
+    STDMETHOD(GetFaces)(THIS_ struct IDirect3DRMFaceArray **array) PURE;
     STDMETHOD(GetGeometry)(THIS_ DWORD *vcount, D3DVECTOR *vertices, DWORD *ncount, D3DVECTOR *normals,
         DWORD *face_data_size, DWORD *face_data) PURE;
     STDMETHOD(GetTextureCoordinates)(THIS_ DWORD index, D3DVALUE *u, D3DVALUE *v) PURE;
