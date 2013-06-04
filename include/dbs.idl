@@ -482,6 +482,32 @@ cpp_quote("#define DBPROMPT_COMPLETE            0x02")
 cpp_quote("#define DBPROMPT_COMPLETEREQUIRED    0x03")
 cpp_quote("#define DBPROMPT_NOPROMPT            0x04")
 
+cpp_quote("#define DBPROPVAL_STGM_READ                 OF_READ")
+cpp_quote("#define DBPROPVAL_STGM_WRITE                OF_WRITE")
+cpp_quote("#define DBPROPVAL_STGM_READWRITE            OF_READWRITE")
+cpp_quote("#define DBPROPVAL_STGM_SHARE_DENY_NONE      OF_SHARE_DENY_NONE")
+cpp_quote("#define DBPROPVAL_STGM_SHARE_DENY_READ      OF_SHARE_DENY_READ")
+cpp_quote("#define DBPROPVAL_STGM_SHARE_DENY_WRITE     OF_SHARE_DENY_WRITE)")
+cpp_quote("#define DBPROPVAL_STGM_SHARE_EXCLUSIVE      OF_SHARE_EXCLUSIVE")
+cpp_quote("#define DBPROPVAL_STGM_DIRECT               0x00010000")
+cpp_quote("#define DBPROPVAL_STGM_TRANSACTED           0x00020000")
+cpp_quote("#define DBPROPVAL_STGM_CREATE               OF_CREATE")
+cpp_quote("#define DBPROPVAL_STGM_CONVERT              0x00040000")
+cpp_quote("#define DBPROPVAL_STGM_FAILIFTHERE          0x00080000")
+cpp_quote("#define DBPROPVAL_STGM_PRIORITY             0x00100000")
+cpp_quote("#define DBPROPVAL_STGM_DELETEONRELEASE      0x00200000")
+cpp_quote("#define DBPROPVAL_GB_COLLATE                __MSABI_LONG(0x00000010)")
+cpp_quote("#define DBPROPVAL_CS_UNINITIALIZED          __MSABI_LONG(0x00000000)")
+cpp_quote("#define DBPROPVAL_CS_INITIALIZED            __MSABI_LONG(0x00000001)")
+cpp_quote("#define DBPROPVAL_CS_COMMUNICATIONFAILURE   __MSABI_LONG(0x00000002)")
+
+cpp_quote("#define DBPROPVAL_RD_RESETALL               __MSABI_LONG(0xffffffff)")
+cpp_quote("#define DBPROPVAL_OS_RESOURCEPOOLING        __MSABI_LONG(0x00000001)")
+cpp_quote("#define DBPROPVAL_OS_TXNENLISTMENT          __MSABI_LONG(0x00000002)")
+cpp_quote("#define DBPROPVAL_OS_CLIENTCURSOR           __MSABI_LONG(0x00000004)")
+cpp_quote("#define DBPROPVAL_OS_ENABLEALL              __MSABI_LONG(0xffffffff)")
+cpp_quote("#define DBPROPVAL_BI_CROSSROWSET            __MSABI_LONG(0x00000001)")
+
 
 typedef struct tagDBCOLUMNACCESS
 {
