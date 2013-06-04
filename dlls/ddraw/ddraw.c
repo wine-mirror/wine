@@ -5139,16 +5139,13 @@ static const struct wined3d_parent_ops ddraw_frontbuffer_parent_ops =
 };
 
 static HRESULT CDECL device_parent_create_swapchain_surface(struct wined3d_device_parent *device_parent,
-        void *container_parent, UINT width, UINT height, enum wined3d_format_id format_id, DWORD usage,
-        enum wined3d_multisample_type multisample_type, DWORD multisample_quality, struct wined3d_surface **surface)
+        void *container_parent, const struct wined3d_resource_desc *desc, struct wined3d_surface **surface)
 {
     struct ddraw *ddraw = ddraw_from_device_parent(device_parent);
     HRESULT hr;
 
-    TRACE("device_parent %p, container_parent %p, width %u, height %u, format_id %#x, usage %#x,\n"
-            "\tmultisample_type %#x, multisample_quality %u, surface %p.\n",
-            device_parent, container_parent, width, height, format_id, usage,
-            multisample_type, multisample_quality, surface);
+    TRACE("device_parent %p, container_parent %p, desc %p, surface %p.\n",
+            device_parent, container_parent, desc, surface);
 
     if (ddraw->wined3d_frontbuffer)
     {
@@ -5156,8 +5153,8 @@ static HRESULT CDECL device_parent_create_swapchain_surface(struct wined3d_devic
         return E_FAIL;
     }
 
-    if (SUCCEEDED(hr = wined3d_surface_create(ddraw->wined3d_device, width, height, format_id, usage,
-            WINED3D_POOL_DEFAULT, multisample_type, multisample_quality, WINED3D_SURFACE_MAPPABLE,
+    if (SUCCEEDED(hr = wined3d_surface_create(ddraw->wined3d_device, desc->width, desc->height, desc->format,
+            desc->usage, desc->pool, desc->multisample_type, desc->multisample_quality, WINED3D_SURFACE_MAPPABLE,
             ddraw, &ddraw_frontbuffer_parent_ops, surface)))
         ddraw->wined3d_frontbuffer = *surface;
 

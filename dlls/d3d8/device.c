@@ -2914,21 +2914,18 @@ static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_
 }
 
 static HRESULT CDECL device_parent_create_swapchain_surface(struct wined3d_device_parent *device_parent,
-        void *container_parent, UINT width, UINT height, enum wined3d_format_id format_id, DWORD usage,
-        enum wined3d_multisample_type multisample_type, DWORD multisample_quality, struct wined3d_surface **surface)
+        void *container_parent, const struct wined3d_resource_desc *desc, struct wined3d_surface **surface)
 {
     struct d3d8_device *device = device_from_device_parent(device_parent);
     struct d3d8_surface *d3d_surface;
     HRESULT hr;
 
-    TRACE("device_parent %p, container_parent %p, width %u, height %u, format_id %#x, usage %#x,\n"
-            "\tmultisample_type %#x, multisample_quality %u, surface %p.\n",
-            device_parent, container_parent, width, height, format_id, usage,
-            multisample_type, multisample_quality, surface);
+    TRACE("device_parent %p, container_parent %p, desc %p, surface %p.\n",
+            device_parent, container_parent, desc, surface);
 
-    if (FAILED(hr = d3d8_device_create_surface(device, width, height, d3dformat_from_wined3dformat(format_id),
-            TRUE, FALSE, (IDirect3DSurface8 **)&d3d_surface, usage, D3DPOOL_DEFAULT, multisample_type,
-            multisample_quality)))
+    if (FAILED(hr = d3d8_device_create_surface(device, desc->width, desc->height,
+            d3dformat_from_wined3dformat(desc->format), TRUE, FALSE, (IDirect3DSurface8 **)&d3d_surface,
+            desc->usage, desc->pool, desc->multisample_type, desc->multisample_quality)))
     {
         WARN("Failed to create surface, hr %#x.\n", hr);
         return hr;

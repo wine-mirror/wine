@@ -5002,13 +5002,23 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
 
     if (swapchain_desc->enable_auto_depth_stencil && !device->auto_depth_stencil)
     {
+        struct wined3d_resource_desc surface_desc;
+
         TRACE("Creating the depth stencil buffer\n");
 
+        surface_desc.resource_type = WINED3D_RTYPE_SURFACE;
+        surface_desc.format = swapchain_desc->auto_depth_stencil_format;
+        surface_desc.multisample_type = swapchain_desc->multisample_type;
+        surface_desc.multisample_quality = swapchain_desc->multisample_quality;
+        surface_desc.usage = WINED3DUSAGE_DEPTHSTENCIL;
+        surface_desc.pool = WINED3D_POOL_DEFAULT;
+        surface_desc.width = swapchain_desc->backbuffer_width;
+        surface_desc.height = swapchain_desc->backbuffer_height;
+        surface_desc.depth = 1;
+        surface_desc.size = 0;
+
         if (FAILED(hr = device->device_parent->ops->create_swapchain_surface(device->device_parent,
-                device->device_parent, swapchain_desc->backbuffer_width, swapchain_desc->backbuffer_height,
-                swapchain_desc->auto_depth_stencil_format, WINED3DUSAGE_DEPTHSTENCIL,
-                swapchain_desc->multisample_type, swapchain_desc->multisample_quality,
-                &device->auto_depth_stencil)))
+                device->device_parent, &surface_desc, &device->auto_depth_stencil)))
         {
             ERR("Failed to create the depth stencil buffer, hr %#x.\n", hr);
             return WINED3DERR_INVALIDCALL;

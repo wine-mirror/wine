@@ -817,6 +817,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
         struct wined3d_swapchain_desc *desc, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_adapter *adapter = device->adapter;
+    struct wined3d_resource_desc surface_desc;
     const struct wined3d_format *format;
     struct wined3d_display_mode mode;
     BOOL displaymode_set = FALSE;
@@ -886,11 +887,20 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
     swapchain_update_render_to_fbo(swapchain);
 
     TRACE("Creating front buffer.\n");
-    if (FAILED(hr = device->device_parent->ops->create_swapchain_surface(device->device_parent, parent,
-            swapchain->desc.backbuffer_width, swapchain->desc.backbuffer_height,
-            swapchain->desc.backbuffer_format, WINED3DUSAGE_RENDERTARGET,
-            swapchain->desc.multisample_type, swapchain->desc.multisample_quality,
-            &swapchain->front_buffer)))
+
+    surface_desc.resource_type = WINED3D_RTYPE_SURFACE;
+    surface_desc.format = swapchain->desc.backbuffer_format;
+    surface_desc.multisample_type = swapchain->desc.multisample_type;
+    surface_desc.multisample_quality = swapchain->desc.multisample_quality;
+    surface_desc.usage = WINED3DUSAGE_RENDERTARGET;
+    surface_desc.pool = WINED3D_POOL_DEFAULT;
+    surface_desc.width = swapchain->desc.backbuffer_width;
+    surface_desc.height = swapchain->desc.backbuffer_height;
+    surface_desc.depth = 1;
+    surface_desc.size = 0;
+
+    if (FAILED(hr = device->device_parent->ops->create_swapchain_surface(device->device_parent,
+            parent, &surface_desc, &swapchain->front_buffer)))
     {
         WARN("Failed to create front buffer, hr %#x.\n", hr);
         goto err;
@@ -995,11 +1005,8 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
         for (i = 0; i < swapchain->desc.backbuffer_count; ++i)
         {
             TRACE("Creating back buffer %u.\n", i);
-            if (FAILED(hr = device->device_parent->ops->create_swapchain_surface(device->device_parent, parent,
-                    swapchain->desc.backbuffer_width, swapchain->desc.backbuffer_height,
-                    swapchain->desc.backbuffer_format, WINED3DUSAGE_RENDERTARGET,
-                    swapchain->desc.multisample_type, swapchain->desc.multisample_quality,
-                    &swapchain->back_buffers[i])))
+            if (FAILED(hr = device->device_parent->ops->create_swapchain_surface(device->device_parent,
+                    parent, &surface_desc, &swapchain->back_buffers[i])))
             {
                 WARN("Failed to create back buffer %u, hr %#x.\n", i, hr);
                 goto err;
@@ -1014,11 +1021,11 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
         TRACE("Creating depth/stencil buffer.\n");
         if (!device->auto_depth_stencil)
         {
+            surface_desc.format = swapchain->desc.auto_depth_stencil_format;
+            surface_desc.usage = WINED3DUSAGE_DEPTHSTENCIL;
+
             if (FAILED(hr = device->device_parent->ops->create_swapchain_surface(device->device_parent,
-                    device->device_parent, swapchain->desc.backbuffer_width, swapchain->desc.backbuffer_height,
-                    swapchain->desc.auto_depth_stencil_format, WINED3DUSAGE_DEPTHSTENCIL,
-                    swapchain->desc.multisample_type, swapchain->desc.multisample_quality,
-                    &device->auto_depth_stencil)))
+                    device->device_parent, &surface_desc, &device->auto_depth_stencil)))
             {
                 WARN("Failed to create the auto depth stencil, hr %#x.\n", hr);
                 goto err;

@@ -1845,8 +1845,7 @@ static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_
 }
 
 static HRESULT CDECL device_parent_create_swapchain_surface(struct wined3d_device_parent *device_parent,
-        void *container_parent, UINT width, UINT height, enum wined3d_format_id format_id, DWORD usage,
-        enum wined3d_multisample_type multisample_type, DWORD multisample_quality, struct wined3d_surface **surface)
+        void *container_parent, const struct wined3d_resource_desc *wined3d_desc, struct wined3d_surface **surface)
 {
     struct d3d10_device *device = device_from_wined3d_device_parent(device_parent);
     struct wined3d_resource *sub_resource;
@@ -1854,20 +1853,18 @@ static HRESULT CDECL device_parent_create_swapchain_surface(struct wined3d_devic
     D3D10_TEXTURE2D_DESC desc;
     HRESULT hr;
 
-    FIXME("device_parent %p, container_parent %p, width %u, height %u, format_id %#x, usage %#x,\n"
-            "\tmultisample_type %#x, multisample_quality %u, surface %p partial stub!\n",
-            device_parent, container_parent, width, height, format_id, usage,
-            multisample_type, multisample_quality, surface);
+    FIXME("device_parent %p, container_parent %p, wined3d_desc %p, surface %p partial stub!\n",
+            device_parent, container_parent, wined3d_desc, surface);
 
     FIXME("Implement DXGI<->wined3d usage conversion\n");
 
-    desc.Width = width;
-    desc.Height = height;
+    desc.Width = wined3d_desc->width;
+    desc.Height = wined3d_desc->height;
     desc.MipLevels = 1;
     desc.ArraySize = 1;
-    desc.Format = dxgi_format_from_wined3dformat(format_id);
-    desc.SampleDesc.Count = multisample_type ? multisample_type : 1;
-    desc.SampleDesc.Quality = multisample_quality;
+    desc.Format = dxgi_format_from_wined3dformat(wined3d_desc->format);
+    desc.SampleDesc.Count = wined3d_desc->multisample_type ? wined3d_desc->multisample_type : 1;
+    desc.SampleDesc.Quality = wined3d_desc->multisample_quality;
     desc.Usage = D3D10_USAGE_DEFAULT;
     desc.BindFlags = D3D10_BIND_RENDER_TARGET;
     desc.CPUAccessFlags = 0;
