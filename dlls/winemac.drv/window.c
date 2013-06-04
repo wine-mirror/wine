@@ -962,7 +962,7 @@ void CDECL macdrv_SetWindowStyle(HWND hwnd, INT offset, STYLESTRUCT *style)
 {
     struct macdrv_win_data *data;
 
-    TRACE("%p, %d, %p\n", hwnd, offset, style);
+    TRACE("hwnd %p offset %d styleOld 0x%08x styleNew 0x%08x\n", hwnd, offset, style->styleOld, style->styleNew);
 
     if (hwnd == GetDesktopWindow()) return;
     if (!(data = get_win_data(hwnd))) return;
