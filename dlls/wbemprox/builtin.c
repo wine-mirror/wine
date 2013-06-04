@@ -839,37 +839,6 @@ static enum fill_status fill_compsys( struct table *table, const struct expr *co
     return status;
 }
 
-static WCHAR *get_filesystem( const WCHAR *root )
-{
-    static const WCHAR ntfsW[] = {'N','T','F','S',0};
-    WCHAR buffer[MAX_PATH + 1];
-
-    if (GetVolumeInformationW( root, NULL, 0, NULL, NULL, NULL, buffer, MAX_PATH + 1 ))
-        return heap_strdupW( buffer );
-    return heap_strdupW( ntfsW );
-}
-
-static UINT64 get_freespace( const WCHAR *dir, UINT64 *disksize )
-{
-    WCHAR root[] = {'\\','\\','.','\\','A',':',0};
-    ULARGE_INTEGER free;
-    DISK_GEOMETRY_EX info;
-    HANDLE handle;
-
-    free.QuadPart = 512 * 1024 * 1024;
-    GetDiskFreeSpaceExW( dir, NULL, NULL, &free );
-
-    root[4] = dir[0];
-    handle = CreateFileW( root, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0 );
-    if (handle != INVALID_HANDLE_VALUE)
-    {
-        if (DeviceIoControl( handle, IOCTL_DISK_GET_DRIVE_GEOMETRY_EX, NULL, 0, &info, sizeof(info), NULL, NULL ))
-            *disksize = info.DiskSize.QuadPart;
-        CloseHandle( handle );
-    }
-    return free.QuadPart;
-}
-
 struct dirstack
 {
     WCHAR **dirs;
@@ -899,10 +868,16 @@ static struct dirstack *alloc_dirstack( UINT size )
     return dirstack;
 }
 
-static void free_dirstack( struct dirstack *dirstack )
+static void clear_dirstack( struct dirstack *dirstack )
 {
     UINT i;
     for (i = 0; i < dirstack->num_dirs; i++) heap_free( dirstack->dirs[i] );
+    dirstack->num_dirs = 0;
+}
+
+static void free_dirstack( struct dirstack *dirstack )
+{
+    clear_dirstack( dirstack );
     heap_free( dirstack->dirs );
     heap_free( dirstack->len_dirs );
     heap_free( dirstack );
@@ -911,6 +886,8 @@ static void free_dirstack( struct dirstack *dirstack )
 static BOOL push_dir( struct dirstack *dirstack, WCHAR *dir, UINT len )
 {
     UINT size, i = dirstack->num_dirs;
+
+    if (!dir) return FALSE;
 
     if (i == dirstack->num_allocated)
     {
@@ -957,7 +934,7 @@ static WCHAR *build_glob( WCHAR drive, const WCHAR *path, UINT len )
     ret[i++] = drive;
     ret[i++] = ':';
     ret[i++] = '\\';
-    if (path)
+    if (path && len)
     {
         memcpy( ret + i, path, len * sizeof(WCHAR) );
         i += len;
@@ -968,7 +945,7 @@ static WCHAR *build_glob( WCHAR drive, const WCHAR *path, UINT len )
     return ret;
 }
 
-static WCHAR *build_dirname( WCHAR drive, const WCHAR *path )
+static WCHAR *build_name( WCHAR drive, const WCHAR *path )
 {
     UINT i = 0, len = 0;
     const WCHAR *p;
@@ -997,6 +974,90 @@ static WCHAR *build_dirname( WCHAR drive, const WCHAR *path )
     return ret;
 }
 
+static WCHAR *build_dirname( const WCHAR *path, UINT *ret_len )
+{
+    const WCHAR *p = path, *start;
+    UINT len, i;
+    WCHAR *ret;
+
+    if (!isalphaW( p[0] ) || p[1] != ':' || p[2] != '\\' || p[3] != '\\' || !p[4]) return NULL;
+    start = path + 4;
+    len = strlenW( start );
+    p = start + len - 1;
+    if (*p == '\\') return NULL;
+
+    while (p >= start && *p != '\\') { len--; p--; };
+    while (p >= start && *p == '\\') { len--; p--; };
+
+    if (!(ret = heap_alloc( (len + 1) * sizeof(WCHAR) ))) return NULL;
+    for (i = 0, p = start; p < start + len; p++)
+    {
+        if (p[0] == '\\' && p[1] == '\\')
+        {
+            ret[i++] = '\\';
+            p++;
+        }
+        else ret[i++] = *p;
+    }
+    ret[i] = 0;
+    *ret_len = i;
+    return ret;
+}
+
+static BOOL seen_dir( struct dirstack *dirstack, const WCHAR *path )
+{
+    UINT i;
+    for (i = 0; i < dirstack->num_dirs; i++) if (!strcmpW( dirstack->dirs[i], path )) return TRUE;
+    return FALSE;
+}
+
+/* optimize queries of the form WHERE Name='...' [OR Name='...']* */
+static UINT seed_dirs( struct dirstack *dirstack, const struct expr *cond, WCHAR root, UINT *count )
+{
+    const struct expr *left = cond->u.expr.left, *right = cond->u.expr.right;
+
+    if (cond->type != EXPR_COMPLEX) return *count = 0;
+    if (cond->u.expr.op == OP_EQ)
+    {
+        UINT len;
+        WCHAR *path;
+        const WCHAR *str = NULL;
+
+        if (left->type == EXPR_PROPVAL && right->type == EXPR_SVAL &&
+            !strcmpW( left->u.propval->name, prop_nameW ) &&
+            toupperW( right->u.sval[0] ) == toupperW( root ))
+        {
+            str = right->u.sval;
+        }
+        else if (left->type == EXPR_SVAL && right->type == EXPR_PROPVAL &&
+                 !strcmpW( right->u.propval->name, prop_nameW ) &&
+                 toupperW( left->u.sval[0] ) == toupperW( root ))
+        {
+            str = left->u.sval;
+        }
+        if (str && (path = build_dirname( str, &len )))
+        {
+            if (seen_dir( dirstack, path ))
+            {
+                heap_free( path );
+                return ++*count;
+            }
+            else if (push_dir( dirstack, path, len )) return ++*count;
+            heap_free( path );
+            return *count = 0;
+        }
+    }
+    else if (cond->u.expr.op == OP_OR)
+    {
+        UINT left_count = 0, right_count = 0;
+
+        if (!(seed_dirs( dirstack, left, root, &left_count ))) return *count = 0;
+        if (!(seed_dirs( dirstack, right, root, &right_count ))) return *count = 0;
+        return *count += left_count + right_count;
+    }
+    return *count = 0;
+}
+
 static WCHAR *append_path( const WCHAR *path, const WCHAR *segment, UINT *len )
 {
     UINT len_path = 0, len_segment = strlenW( segment );
@@ -1005,7 +1066,7 @@ static WCHAR *append_path( const WCHAR *path, const WCHAR *segment, UINT *len )
     *len = 0;
     if (path) len_path = strlenW( path );
     if (!(ret = heap_alloc( (len_path + len_segment + 2) * sizeof(WCHAR) ))) return NULL;
-    if (path)
+    if (path && len_path)
     {
         memcpy( ret, path, len_path * sizeof(WCHAR) );
         ret[len_path] = '\\';
@@ -1021,7 +1082,7 @@ static enum fill_status fill_directory( struct table *table, const struct expr *
 {
     static const WCHAR dotW[] = {'.',0}, dotdotW[] = {'.','.',0};
     struct record_directory *rec;
-    UINT i, len, row = 0, offset = 0, count = 4;
+    UINT i, len, row = 0, offset = 0, count = 4, num_expected_rows;
     WCHAR *glob = NULL, *path = NULL, *new_path, root[] = {'A',':','\\',0};
     DWORD drives = GetLogicalDrives();
     WIN32_FIND_DATAW data;
@@ -1037,6 +1098,9 @@ static enum fill_status fill_directory( struct table *table, const struct expr *
 
         root[0] = 'A' + i;
         if (GetDriveTypeW( root ) != DRIVE_FIXED) continue;
+
+        num_expected_rows = 0;
+        if (!seed_dirs( dirstack, cond, root[0], &num_expected_rows )) clear_dirstack( dirstack );
 
         for (;;)
         {
@@ -1074,11 +1138,18 @@ static enum fill_status fill_directory( struct table *table, const struct expr *
                     }
                     rec = (struct record_directory *)(table->data + offset);
                     rec->accessmask = FILE_ALL_ACCESS;
-                    rec->name       = build_dirname( root[0], new_path );
+                    rec->name       = build_name( root[0], new_path );
                     if (!match_row( table, row, cond, &status ))
                     {
                         free_row_values( table, row );
                         continue;
+                    }
+                    else if (num_expected_rows && row == num_expected_rows - 1)
+                    {
+                        row++;
+                        FindClose( handle );
+                        status = FILL_STATUS_FILTERED;
+                        goto done;
                     }
                     offset += sizeof(*rec);
                     row++;
@@ -1100,6 +1171,37 @@ done:
     TRACE("created %u rows\n", row);
     table->num_rows = row;
     return status;
+}
+
+static WCHAR *get_filesystem( const WCHAR *root )
+{
+    static const WCHAR ntfsW[] = {'N','T','F','S',0};
+    WCHAR buffer[MAX_PATH + 1];
+
+    if (GetVolumeInformationW( root, NULL, 0, NULL, NULL, NULL, buffer, MAX_PATH + 1 ))
+        return heap_strdupW( buffer );
+    return heap_strdupW( ntfsW );
+}
+
+static UINT64 get_freespace( const WCHAR *dir, UINT64 *disksize )
+{
+    WCHAR root[] = {'\\','\\','.','\\','A',':',0};
+    ULARGE_INTEGER free;
+    DISK_GEOMETRY_EX info;
+    HANDLE handle;
+
+    free.QuadPart = 512 * 1024 * 1024;
+    GetDiskFreeSpaceExW( dir, NULL, NULL, &free );
+
+    root[4] = dir[0];
+    handle = CreateFileW( root, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0 );
+    if (handle != INVALID_HANDLE_VALUE)
+    {
+        if (DeviceIoControl( handle, IOCTL_DISK_GET_DRIVE_GEOMETRY_EX, NULL, 0, &info, sizeof(info), NULL, NULL ))
+            *disksize = info.DiskSize.QuadPart;
+        CloseHandle( handle );
+    }
+    return free.QuadPart;
 }
 
 static enum fill_status fill_diskpartition( struct table *table, const struct expr *cond )
