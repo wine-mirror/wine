@@ -2240,6 +2240,13 @@ static void MSFT_ResolveReferencedTypes(TLBContext *pcx, ITypeInfoImpl *pTI, TYP
     }
 }
 
+static int TLB_is_propgetput(INVOKEKIND invkind)
+{
+    return (invkind == INVOKE_PROPERTYGET ||
+        invkind == INVOKE_PROPERTYPUT ||
+        invkind == INVOKE_PROPERTYPUTREF);
+}
+
 static void
 MSFT_DoFuncs(TLBContext*     pcx,
 	    ITypeInfoImpl*  pTI,
@@ -2294,13 +2301,6 @@ MSFT_DoFuncs(TLBContext*     pcx,
         MSFT_ReadLEDWords(&nameoffset, sizeof(INT), pcx,
                           offset + infolen + (cFuncs + cVars + i + 1) * sizeof(INT));
 
-        /* nameoffset is sometimes -1 on the second half of a propget/propput
-         * pair of functions */
-        if ((nameoffset == -1) && (i > 0))
-            ptfd->Name = ptfd_prev->Name;
-        else
-            ptfd->Name = MSFT_ReadName(pcx, nameoffset);
-
         /* read the function information record */
         MSFT_ReadLEDWords(&reclength, sizeof(pFuncRec->Info), pcx, recoffset);
 
@@ -2350,6 +2350,15 @@ MSFT_DoFuncs(TLBContext*     pcx,
         ptfd->funcdesc.cParamsOpt =   pFuncRec->nroargs ;
         ptfd->funcdesc.oVft       =   pFuncRec->VtableOffset & ~1;
         ptfd->funcdesc.wFuncFlags =   LOWORD(pFuncRec->Flags) ;
+
+        /* nameoffset is sometimes -1 on the second half of a propget/propput
+         * pair of functions */
+        if ((nameoffset == -1) && (i > 0) &&
+                TLB_is_propgetput(ptfd_prev->funcdesc.invkind) &&
+                TLB_is_propgetput(ptfd->funcdesc.invkind))
+            ptfd->Name = ptfd_prev->Name;
+        else
+            ptfd->Name = MSFT_ReadName(pcx, nameoffset);
 
         MSFT_GetTdesc(pcx,
 		      pFuncRec->DataType,
