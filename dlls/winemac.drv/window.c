@@ -535,6 +535,8 @@ static void destroy_cocoa_window(struct macdrv_win_data *data)
     data->color_key = CLR_INVALID;
     if (data->surface) window_surface_release(data->surface);
     data->surface = NULL;
+    if (data->unminimized_surface) window_surface_release(data->unminimized_surface);
+    data->unminimized_surface = NULL;
 }
 
 
@@ -1108,6 +1110,11 @@ BOOL CDECL macdrv_UpdateLayeredWindow(HWND hwnd, const UPDATELAYEREDWINDOWINFO *
         set_window_surface(data->cocoa_window, data->surface);
         if (surface) window_surface_release(surface);
         surface = data->surface;
+        if (data->unminimized_surface)
+        {
+            window_surface_release(data->unminimized_surface);
+            data->unminimized_surface = NULL;
+        }
     }
     else set_surface_use_alpha(surface, TRUE);
 
@@ -1333,7 +1340,23 @@ void CDECL macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags,
     if (!data->ulw_layered)
     {
         if (surface) window_surface_add_ref(surface);
-        set_window_surface(data->cocoa_window, surface);
+        if (new_style & WS_MINIMIZE)
+        {
+            if (!data->unminimized_surface && data->surface)
+            {
+                data->unminimized_surface = data->surface;
+                window_surface_add_ref(data->unminimized_surface);
+            }
+        }
+        else
+        {
+            set_window_surface(data->cocoa_window, surface);
+            if (data->unminimized_surface)
+            {
+                window_surface_release(data->unminimized_surface);
+                data->unminimized_surface = NULL;
+            }
+        }
         if (data->surface) window_surface_release(data->surface);
         data->surface = surface;
     }

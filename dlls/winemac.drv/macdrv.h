@@ -135,6 +135,7 @@ struct macdrv_win_data
     BOOL                per_pixel_alpha : 1;    /* is window using per-pixel alpha? */
     BOOL                minimized : 1;          /* is window minimized? */
     struct window_surface *surface;
+    struct window_surface *unminimized_surface;
 };
 
 extern struct macdrv_win_data *get_win_data(HWND hwnd) DECLSPEC_HIDDEN;
