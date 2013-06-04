@@ -708,7 +708,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
     {
         WineApplicationController* controller = [WineApplicationController sharedController];
         BOOL on_screen = frame_intersects_screens([self frame], [NSScreen screens]);
-        if (on_screen)
+        if (on_screen && ![self isMiniaturized])
         {
             BOOL needAdjustWindowLevels = FALSE;
 
