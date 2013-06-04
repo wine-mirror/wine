@@ -377,7 +377,7 @@ static void free_path( struct path *path )
     heap_free( path );
 }
 
-static HRESULT create_instance_enum( const struct path *path, IEnumWbemClassObject **iter )
+static WCHAR *query_from_path( const struct path *path )
 {
     static const WCHAR selectW[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','%','s',' ',
@@ -385,22 +385,30 @@ static HRESULT create_instance_enum( const struct path *path, IEnumWbemClassObje
     static const WCHAR select_allW[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',0};
     WCHAR *query;
-    HRESULT hr;
     UINT len;
 
     if (path->filter)
     {
         len = path->class_len + path->filter_len + SIZEOF(selectW);
-        if (!(query = heap_alloc( len * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
+        if (!(query = heap_alloc( len * sizeof(WCHAR) ))) return NULL;
         sprintfW( query, selectW, path->class, path->filter );
     }
     else
     {
         len = path->class_len + SIZEOF(select_allW);
-        if (!(query = heap_alloc( len * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
+        if (!(query = heap_alloc( len * sizeof(WCHAR) ))) return NULL;
         strcpyW( query, select_allW );
         strcatW( query, path->class );
     }
+    return query;
+}
+
+static HRESULT create_instance_enum( const struct path *path, IEnumWbemClassObject **iter )
+{
+    WCHAR *query;
+    HRESULT hr;
+
+    if (!(query = query_from_path( path ))) return E_OUTOFMEMORY;
     hr = exec_query( query, iter );
     heap_free( query );
     return hr;
@@ -778,10 +786,12 @@ static HRESULT WINAPI wbem_services_ExecMethod(
     IWbemClassObject **ppOutParams,
     IWbemCallResult **ppCallResult )
 {
-    IWbemClassObject *obj;
-    struct table *table;
-    class_method *func;
+    IEnumWbemClassObject *result = NULL;
+    IWbemClassObject *obj = NULL;
+    struct query *query = NULL;
     struct path *path;
+    WCHAR *str;
+    class_method *func;
     HRESULT hr;
 
     TRACE("%p, %s, %s, %08x, %p, %p, %p, %p\n", iface, debugstr_w(strObjectPath),
@@ -789,28 +799,40 @@ static HRESULT WINAPI wbem_services_ExecMethod(
 
     if (lFlags) FIXME("flags %08x not supported\n", lFlags);
 
-    if ((hr = get_object( strObjectPath, &obj ))) return hr;
-    if ((hr = parse_path( strObjectPath, &path )) != S_OK)
+    if ((hr = parse_path( strObjectPath, &path )) != S_OK) return hr;
+    if (!(str = query_from_path( path )))
     {
-        IWbemClassObject_Release( obj );
-        return hr;
+        hr = E_OUTOFMEMORY;
+        goto done;
     }
-    table = grab_table( path->class );
-    free_path( path );
-    if (!table)
+    if (!(query = create_query()))
     {
-        IWbemClassObject_Release( obj );
-        return WBEM_E_NOT_FOUND;
+        hr = E_OUTOFMEMORY;
+        goto done;
     }
-    hr = get_method( table, strMethodName, &func );
-    release_table( table );
-    if (hr != S_OK)
-    {
-        IWbemClassObject_Release( obj );
-        return hr;
-    }
+    hr = parse_query( str, &query->view, &query->mem );
+    if (hr != S_OK) goto done;
+
+    hr = execute_view( query->view );
+    if (hr != S_OK) goto done;
+
+    hr = EnumWbemClassObject_create( NULL, query, (void **)&result );
+    if (hr != S_OK) goto done;
+
+    hr = create_class_object( query->view->table->name, result, 0, NULL, &obj );
+    if (hr != S_OK) goto done;
+
+    hr = get_method( query->view->table, strMethodName, &func );
+    if (hr != S_OK) goto done;
+
     hr = func( obj, pInParams, ppOutParams );
-    IWbemClassObject_Release( obj );
+
+done:
+    if (result) IEnumWbemClassObject_Release( result );
+    if (obj) IWbemClassObject_Release( obj );
+    free_query( query );
+    free_path( path );
+    heap_free( str );
     return hr;
 }
 

@@ -163,6 +163,8 @@ struct query
     struct list mem;
 };
 
+struct query *create_query(void) DECLSPEC_HIDDEN;
+void free_query( struct query * ) DECLSPEC_HIDDEN;
 struct query *addref_query( struct query * ) DECLSPEC_HIDDEN;
 void release_query( struct query *query ) DECLSPEC_HIDDEN;
 HRESULT exec_query( const WCHAR *, IEnumWbemClassObject ** ) DECLSPEC_HIDDEN;
@@ -170,6 +172,7 @@ HRESULT parse_query( const WCHAR *, struct view **, struct list * ) DECLSPEC_HID
 HRESULT create_view( const struct property *, const WCHAR *, const struct expr *,
                      struct view ** ) DECLSPEC_HIDDEN;
 void destroy_view( struct view * ) DECLSPEC_HIDDEN;
+HRESULT execute_view( struct view * ) DECLSPEC_HIDDEN;
 void init_table_list( void ) DECLSPEC_HIDDEN;
 struct table *grab_table( const WCHAR * ) DECLSPEC_HIDDEN;
 struct table *addref_table( struct table * ) DECLSPEC_HIDDEN;

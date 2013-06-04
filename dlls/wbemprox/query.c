@@ -238,7 +238,7 @@ HRESULT eval_cond( const struct table *table, UINT row, const struct expr *cond,
     return WBEM_E_INVALID_QUERY;
 }
 
-static HRESULT execute_view( struct view *view )
+HRESULT execute_view( struct view *view )
 {
     UINT i, j = 0, len;
 
@@ -272,7 +272,7 @@ static HRESULT execute_view( struct view *view )
     return S_OK;
 }
 
-static struct query *create_query(void)
+struct query *create_query(void)
 {
     struct query *query;
 
@@ -282,15 +282,13 @@ static struct query *create_query(void)
     return query;
 }
 
-static void free_query( struct query *query )
+void free_query( struct query *query )
 {
     struct list *mem, *next;
 
+    if (!query) return;
     destroy_view( query->view );
-    LIST_FOR_EACH_SAFE( mem, next, &query->mem )
-    {
-        heap_free( mem );
-    }
+    LIST_FOR_EACH_SAFE( mem, next, &query->mem ) { heap_free( mem ); }
     heap_free( query );
 }
 
