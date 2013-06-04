@@ -2310,6 +2310,8 @@ MSFT_DoFuncs(TLBContext*     pcx,
 
         /* size without argument data */
         optional = reclength - pFuncRec->nrargs*sizeof(MSFT_ParameterInfo);
+        if (pFuncRec->FKCCIC & 0x1000)
+            optional -= pFuncRec->nrargs * sizeof(INT);
 
         if (optional > FIELD_OFFSET(MSFT_FuncRecord, HelpContext))
             ptfd->helpcontext = pFuncRec->HelpContext;
