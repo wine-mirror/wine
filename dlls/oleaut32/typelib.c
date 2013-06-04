@@ -8579,11 +8579,1258 @@ static HRESULT WINAPI ICreateTypeLib2_fnSetLibFlags(ICreateTypeLib2 *iface,
     return S_OK;
 }
 
+typedef struct tagWMSFT_SegContents {
+    DWORD len;
+    void *data;
+} WMSFT_SegContents;
+
+typedef struct tagWMSFT_TLBFile {
+    MSFT_Header header;
+    WMSFT_SegContents typeinfo_seg;
+    WMSFT_SegContents impfile_seg;
+    WMSFT_SegContents impinfo_seg;
+    WMSFT_SegContents ref_seg;
+    WMSFT_SegContents lib_seg;
+    WMSFT_SegContents guid_seg;
+    WMSFT_SegContents res07_seg;
+    WMSFT_SegContents name_seg;
+    WMSFT_SegContents string_seg;
+    WMSFT_SegContents typdesc_seg;
+    WMSFT_SegContents arraydesc_seg;
+    WMSFT_SegContents custdata_seg;
+    WMSFT_SegContents cdguids_seg;
+    MSFT_SegDir segdir;
+    WMSFT_SegContents aux_seg;
+} WMSFT_TLBFile;
+
+static HRESULT WMSFT_compile_strings(ITypeLibImpl *This,
+        WMSFT_TLBFile *file)
+{
+    TLBString *str;
+    UINT last_offs;
+    char *data;
+
+    file->string_seg.len = 0;
+    LIST_FOR_EACH_ENTRY(str, &This->string_list, TLBString, entry) {
+        int size;
+
+        size = WideCharToMultiByte(CP_ACP, 0, str->str, strlenW(str->str), NULL, 0, NULL, NULL);
+        if (size == 0)
+            return E_UNEXPECTED;
+
+        size += sizeof(INT16);
+        if (size % 4)
+            size = (size + 4) & ~0x3;
+        if (size < 8)
+            size = 8;
+
+        file->string_seg.len += size;
+
+        /* temporarily use str->offset to store the length of the aligned,
+         * converted string */
+        str->offset = size;
+    }
+
+    file->string_seg.data = data = heap_alloc(file->string_seg.len);
+
+    last_offs = 0;
+    LIST_FOR_EACH_ENTRY(str, &This->string_list, TLBString, entry) {
+        int size;
+
+        size = WideCharToMultiByte(CP_ACP, 0, str->str, strlenW(str->str),
+                data + sizeof(INT16), file->string_seg.len - last_offs - sizeof(INT16), NULL, NULL);
+        if (size == 0) {
+            heap_free(file->string_seg.data);
+            return E_UNEXPECTED;
+        }
+
+        *((INT16*)data) = size;
+
+        memset(data + sizeof(INT16) + size, 0x57, str->offset - size - sizeof(INT16));
+
+        size = str->offset;
+        data += size;
+        str->offset = last_offs;
+        last_offs += size;
+    }
+
+    return S_OK;
+}
+
+static HRESULT WMSFT_compile_names(ITypeLibImpl *This,
+        WMSFT_TLBFile *file)
+{
+    TLBString *str;
+    UINT last_offs;
+    char *data;
+    MSFT_NameIntro *last_intro = NULL;
+
+    file->header.nametablecount = 0;
+    file->header.nametablechars = 0;
+
+    file->name_seg.len = 0;
+    LIST_FOR_EACH_ENTRY(str, &This->name_list, TLBString, entry) {
+        int size;
+
+        size = strlenW(str->str);
+        file->header.nametablechars += size;
+        file->header.nametablecount++;
+
+        size = WideCharToMultiByte(CP_ACP, 0, str->str, size, NULL, 0, NULL, NULL);
+        if (size == 0)
+            return E_UNEXPECTED;
+
+        size += sizeof(MSFT_NameIntro);
+        if (size % 4)
+            size = (size + 4) & ~0x3;
+        if (size < 8)
+            size = 8;
+
+        file->name_seg.len += size;
+
+        /* temporarily use str->offset to store the length of the aligned,
+         * converted string */
+        str->offset = size;
+    }
+
+    file->name_seg.data = data = heap_alloc(file->name_seg.len);
+
+    last_offs = 0;
+    LIST_FOR_EACH_ENTRY(str, &This->name_list, TLBString, entry) {
+        int size;
+        MSFT_NameIntro *intro = (MSFT_NameIntro*)data;
+
+        size = WideCharToMultiByte(CP_ACP, 0, str->str, strlenW(str->str),
+                data + sizeof(MSFT_NameIntro),
+                file->name_seg.len - last_offs - sizeof(MSFT_NameIntro), NULL, NULL);
+        if (size == 0) {
+            heap_free(file->name_seg.data);
+            return E_UNEXPECTED;
+        }
+        data[sizeof(MSFT_NameIntro) + size] = '\0';
+
+        intro->hreftype = -1; /* TODO? */
+        intro->next_hash = -1;
+        intro->namelen = size & 0xFF;
+        /* TODO: namelen & 0xFF00 == ??? maybe HREF type indicator? */
+        intro->namelen |= LHashValOfNameSysA(This->syskind,
+                This->lcid, data + sizeof(MSFT_NameIntro)) << 16;
+
+        memset(data + sizeof(MSFT_NameIntro) + size, 0x57,
+                str->offset - size - sizeof(MSFT_NameIntro));
+
+        /* update str->offset to actual value to use in other
+         * compilation functions that require positions within
+         * the string table */
+        last_intro = intro;
+        size = str->offset;
+        data += size;
+        str->offset = last_offs;
+        last_offs += size;
+    }
+
+    if(last_intro)
+        last_intro->hreftype = 0; /* last one is 0? */
+
+    return S_OK;
+}
+
+static HRESULT WMSFT_compile_guids(ITypeLibImpl *This, WMSFT_TLBFile *file)
+{
+    TLBGuid *guid;
+    MSFT_GuidEntry *entry;
+    DWORD offs;
+
+    file->guid_seg.len = sizeof(MSFT_GuidEntry) * list_count(&This->guid_list);
+    file->guid_seg.data = heap_alloc(file->guid_seg.len);
+
+    entry = file->guid_seg.data;
+    offs = 0;
+    LIST_FOR_EACH_ENTRY(guid, &This->guid_list, TLBGuid, entry){
+        memcpy(&entry->guid, &guid->guid, sizeof(GUID));
+        entry->hreftype = 0xFFFFFFFF; /* TODO */
+        entry->next_hash = 0xFFFFFFFF; /* TODO? */
+
+        guid->offset = offs;
+
+        offs += sizeof(MSFT_GuidEntry);
+        ++entry;
+    }
+
+    --entry;
+    entry->next_hash = 0; /* last one has 0? */
+
+    return S_OK;
+}
+
+static DWORD WMSFT_encode_variant(VARIANT *value, WMSFT_TLBFile *file)
+{
+    VARIANT v = *value;
+    VARTYPE arg_type = V_VT(value);
+    int mask = 0;
+    HRESULT hres;
+    DWORD ret = file->custdata_seg.len;
+
+    if(arg_type == VT_INT)
+        arg_type = VT_I4;
+    if(arg_type == VT_UINT)
+        arg_type = VT_UI4;
+
+    v = *value;
+    if(V_VT(value) != arg_type) {
+        hres = VariantChangeType(&v, value, 0, arg_type);
+        if(FAILED(hres)){
+            ERR("VariantChangeType failed: %08x\n", hres);
+            return -1;
+        }
+    }
+
+    /* Check if default value can be stored in-place */
+    switch(arg_type){
+    case VT_I4:
+    case VT_UI4:
+        mask = 0x3ffffff;
+        if(V_UI4(&v) > 0x3ffffff)
+            break;
+        /* fall through */
+    case VT_I1:
+    case VT_UI1:
+    case VT_BOOL:
+        if(!mask)
+            mask = 0xff;
+        /* fall through */
+    case VT_I2:
+    case VT_UI2:
+        if(!mask)
+            mask = 0xffff;
+        return ((0x80 + 0x4 * V_VT(value)) << 24) | (V_UI4(&v) & mask);
+    }
+
+    /* have to allocate space in custdata_seg */
+    switch(arg_type) {
+    case VT_I4:
+    case VT_R4:
+    case VT_UI4:
+    case VT_INT:
+    case VT_UINT:
+    case VT_HRESULT:
+    case VT_PTR: {
+        /* Construct the data to be allocated */
+        int *data;
+
+        if(file->custdata_seg.data){
+            file->custdata_seg.data = heap_realloc(file->custdata_seg.data, file->custdata_seg.len + sizeof(int) * 2);
+            data = (int *)(((char *)file->custdata_seg.data) + file->custdata_seg.len);
+            file->custdata_seg.len += sizeof(int) * 2;
+        }else{
+            file->custdata_seg.len = sizeof(int) * 2;
+            data = file->custdata_seg.data = heap_alloc(file->custdata_seg.len);
+        }
+
+        data[0] = V_VT(value) + (V_UI4(&v) << 16);
+        data[1] = (V_UI4(&v) >> 16) + 0x57570000;
+
+        /* TODO: Check if the encoded data is already present in custdata_seg */
+
+        return ret;
+    }
+
+    case VT_BSTR: {
+        int i, len = (6+SysStringLen(V_BSTR(&v))+3) & ~0x3;
+        char *data;
+
+        if(file->custdata_seg.data){
+            file->custdata_seg.data = heap_realloc(file->custdata_seg.data, file->custdata_seg.len + len);
+            data = ((char *)file->custdata_seg.data) + file->custdata_seg.len;
+            file->custdata_seg.len += len;
+        }else{
+            file->custdata_seg.len = len;
+            data = file->custdata_seg.data = heap_alloc(file->custdata_seg.len);
+        }
+
+        *((unsigned short *)data) = V_VT(value);
+        *((unsigned int *)(data+2)) = SysStringLen(V_BSTR(&v));
+        for(i=0; i<SysStringLen(V_BSTR(&v)); i++) {
+            if(V_BSTR(&v)[i] <= 0x7f)
+                data[i+6] = V_BSTR(&v)[i];
+            else
+                data[i+6] = '?';
+        }
+        WideCharToMultiByte(CP_ACP, 0, V_BSTR(&v), SysStringLen(V_BSTR(&v)), &data[6], len-6, NULL, NULL);
+        for(i=6+SysStringLen(V_BSTR(&v)); i<len; i++)
+            data[i] = 0x57;
+
+        /* TODO: Check if the encoded data is already present in custdata_seg */
+
+        return ret;
+    }
+    default:
+        FIXME("Argument type not yet handled\n");
+        return -1;
+    }
+}
+
+static DWORD WMSFT_append_typedesc(TYPEDESC *desc, WMSFT_TLBFile *file, DWORD *out_mix, INT16 *out_size);
+
+static DWORD WMSFT_append_arraydesc(ARRAYDESC *desc, WMSFT_TLBFile *file)
+{
+    DWORD offs = file->arraydesc_seg.len;
+    DWORD *encoded;
+    USHORT i;
+
+    /* TODO: we should check for duplicates, but that's harder because each
+     * chunk is variable length (really we should store TYPEDESC and ARRAYDESC
+     * at the library-level) */
+
+    file->arraydesc_seg.len += (2 + desc->cDims * 2) * sizeof(DWORD);
+    if(!file->arraydesc_seg.data)
+        file->arraydesc_seg.data = heap_alloc(file->arraydesc_seg.len);
+    else
+        file->arraydesc_seg.data = heap_realloc(file->arraydesc_seg.data, file->arraydesc_seg.len);
+    encoded = (DWORD*)((char *)file->arraydesc_seg.data) + offs;
+
+    encoded[0] = WMSFT_append_typedesc(&desc->tdescElem, file, NULL, NULL);
+    encoded[1] = desc->cDims | ((desc->cDims * 2 * sizeof(DWORD)) << 16);
+    for(i = 0; i < desc->cDims; ++i){
+        encoded[2 + i * 2] =  desc->rgbounds[i].cElements;
+        encoded[2 + i * 2 + 1] = desc->rgbounds[i].lLbound;
+    }
+
+    return offs;
+}
+
+static DWORD WMSFT_append_typedesc(TYPEDESC *desc, WMSFT_TLBFile *file, DWORD *out_mix, INT16 *out_size)
+{
+    DWORD junk;
+    INT16 junk2;
+    DWORD offs = 0;
+    DWORD encoded[2];
+    VARTYPE vt = desc->vt & VT_TYPEMASK, subtype;
+    char *data;
+
+    if(!out_mix)
+        out_mix = &junk;
+    if(!out_size)
+        out_size = &junk2;
+
+    switch(vt){
+    case VT_INT:
+        subtype = VT_I4;
+        break;
+    case VT_UINT:
+        subtype = VT_UI4;
+        break;
+    case VT_VOID:
+        subtype = VT_EMPTY;
+        break;
+    default:
+        subtype = vt;
+        break;
+    }
+
+    switch(vt){
+    case VT_INT:
+    case VT_UINT:
+    case VT_I1:
+    case VT_UI1:
+    case VT_I2:
+    case VT_UI2:
+    case VT_I4:
+    case VT_UI4:
+    case VT_BOOL:
+    case VT_R4:
+    case VT_ERROR:
+    case VT_BSTR:
+    case VT_HRESULT:
+    case VT_CY:
+    case VT_VOID:
+    case VT_VARIANT:
+        *out_mix = subtype;
+        return 0x80000000 | (subtype << 16) | desc->vt;
+    }
+
+    if(vt == VT_PTR || vt == VT_SAFEARRAY){
+        DWORD mix;
+        encoded[1] = WMSFT_append_typedesc(desc->u.lptdesc, file, &mix, out_size);
+        encoded[0] = desc->vt | ((mix | VT_BYREF) << 16);
+        *out_mix = 0x7FFF;
+        *out_size += 2 * sizeof(DWORD);
+    }else if(vt == VT_CARRAY){
+        encoded[0] = desc->vt | (0x7FFE << 16);
+        encoded[1] = WMSFT_append_arraydesc(desc->u.lpadesc, file);
+        *out_mix = 0x7FFE;
+    }else if(vt == VT_USERDEFINED){
+        encoded[0] = desc->vt | (0x7FFF << 16);
+        encoded[1] = desc->u.hreftype;
+        *out_mix = 0x7FFF; /* FIXME: Should get TYPEKIND of the hreftype, e.g. TKIND_ENUM => VT_I4 */
+    }else{
+        FIXME("Don't know what to do! VT: 0x%x\n", desc->vt);
+        *out_mix = desc->vt;
+        return 0x80000000 | (desc->vt << 16) | desc->vt;
+    }
+
+    data = file->typdesc_seg.data;
+    while(offs < file->typdesc_seg.len){
+        if(!memcmp(&data[offs], encoded, sizeof(encoded)))
+            return offs;
+        offs += sizeof(encoded);
+    }
+
+    file->typdesc_seg.len += sizeof(encoded);
+    if(!file->typdesc_seg.data)
+        data = file->typdesc_seg.data = heap_alloc(file->typdesc_seg.len);
+    else
+        data = file->typdesc_seg.data = heap_realloc(file->typdesc_seg.data, file->typdesc_seg.len);
+
+    memcpy(&data[offs], encoded, sizeof(encoded));
+
+    return offs;
+}
+
+static DWORD WMSFT_compile_custdata(struct list *custdata_list, WMSFT_TLBFile *file)
+{
+    WMSFT_SegContents *cdguids_seg = &file->cdguids_seg;
+    DWORD ret = cdguids_seg->len, offs;
+    MSFT_CDGuid *cdguid = cdguids_seg->data;
+    TLBCustData *cd;
+
+    if(list_empty(custdata_list))
+        return -1;
+
+    cdguids_seg->len += sizeof(MSFT_CDGuid) * list_count(custdata_list);
+    if(!cdguids_seg->data){
+        cdguid = cdguids_seg->data = heap_alloc(cdguids_seg->len);
+    }else
+        cdguids_seg->data = heap_realloc(cdguids_seg->data, cdguids_seg->len);
+
+    offs = ret + sizeof(MSFT_CDGuid);
+    LIST_FOR_EACH_ENTRY(cd, custdata_list, TLBCustData, entry){
+        cdguid->GuidOffset = cd->guid->offset;
+        cdguid->DataOffset = WMSFT_encode_variant(&cd->data, file);
+        cdguid->next = offs;
+        offs += sizeof(MSFT_CDGuid);
+        ++cdguid;
+    }
+
+    --cdguid;
+    cdguid->next = -1;
+
+    return ret;
+}
+
+static DWORD WMSFT_compile_typeinfo_aux(ITypeInfoImpl *info,
+        WMSFT_TLBFile *file)
+{
+    WMSFT_SegContents *aux_seg = &file->aux_seg;
+    DWORD ret = aux_seg->len, i, j, recorded_size = 0, extra_size = 0;
+    MSFT_VarRecord *varrecord;
+    MSFT_FuncRecord *funcrecord;
+    MEMBERID *memid;
+    DWORD *name, *offsets, offs;
+
+    for(i = 0; i < info->cFuncs; ++i){
+        TLBFuncDesc *desc = &info->funcdescs[i];
+
+        recorded_size += 6 * sizeof(INT); /* mandatory fields */
+
+        /* optional fields */
+        /* TODO: oArgCustData - FuncSetCustData not impl yet */
+        if(!list_empty(&desc->custdata_list))
+            recorded_size += 7 * sizeof(INT);
+        else if(desc->HelpStringContext != 0)
+            recorded_size += 6 * sizeof(INT);
+        /* res9? resA? */
+        else if(desc->Entry)
+            recorded_size += 3 * sizeof(INT);
+        else if(desc->HelpString)
+            recorded_size += 2 * sizeof(INT);
+        else if(desc->helpcontext)
+            recorded_size += sizeof(INT);
+
+        recorded_size += desc->funcdesc.cParams * sizeof(MSFT_ParameterInfo);
+
+        for(j = 0; j < desc->funcdesc.cParams; ++j){
+            if(desc->funcdesc.lprgelemdescParam[j].u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT){
+                recorded_size += desc->funcdesc.cParams * sizeof(INT);
+                break;
+            }
+        }
+
+        extra_size += 2 * sizeof(INT); /* memberid, name offs */
+    }
+
+    for(i = 0; i < info->cVars; ++i){
+        TLBVarDesc *desc = &info->vardescs[i];
+
+        recorded_size += 5 * sizeof(INT); /* mandatory fields */
+
+        /* optional fields */
+        if(desc->HelpStringContext != 0)
+            recorded_size += 5 * sizeof(INT);
+        else if(!list_empty(&desc->custdata_list))
+            recorded_size += 4 * sizeof(INT);
+        /* res9? */
+        else if(desc->HelpString)
+            recorded_size += 2 * sizeof(INT);
+        else if(desc->HelpContext != 0)
+            recorded_size += sizeof(INT);
+
+        extra_size += 2 * sizeof(INT); /* memberid, name offs */
+    }
+
+    if(!recorded_size && !extra_size)
+        return ret;
+
+    extra_size += sizeof(INT); /* total aux size for this typeinfo */
+
+    aux_seg->len += recorded_size + extra_size;
+
+    aux_seg->len += sizeof(INT) * (info->cVars + info->cFuncs); /* offsets at the end */
+
+    if(aux_seg->data)
+        aux_seg->data = heap_realloc(aux_seg->data, aux_seg->len);
+    else
+        aux_seg->data = heap_alloc(aux_seg->len);
+
+    *((DWORD*)((char *)aux_seg->data + ret)) = recorded_size;
+
+    offsets = (DWORD*)((char *)aux_seg->data + ret + recorded_size + extra_size);
+    offs = 0;
+
+    funcrecord = (MSFT_FuncRecord*)(((char *)aux_seg->data) + ret + sizeof(INT));
+    for(i = 0; i < info->cFuncs; ++i){
+        TLBFuncDesc *desc = &info->funcdescs[i];
+        DWORD size = 6 * sizeof(INT), paramdefault_size = 0, *paramdefault;
+
+        funcrecord->funcdescsize = sizeof(desc->funcdesc) + desc->funcdesc.cParams * sizeof(ELEMDESC);
+        funcrecord->DataType = WMSFT_append_typedesc(&desc->funcdesc.elemdescFunc.tdesc, file, NULL, &funcrecord->funcdescsize);
+        funcrecord->Flags = desc->funcdesc.wFuncFlags;
+        funcrecord->VtableOffset = desc->funcdesc.oVft;
+
+        /* FKCCIC:
+         * XXXX XXXX XXXX XXXX  XXXX XXXX XXXX XXXX
+         *                                      ^^^funckind
+         *                                 ^^^ ^invkind
+         *                                ^has_cust_data
+         *                           ^^^^callconv
+         *                         ^has_param_defaults
+         *                        ^oEntry_is_intresource
+         */
+        funcrecord->FKCCIC =
+            desc->funcdesc.funckind |
+            (desc->funcdesc.invkind << 3) |
+            (list_empty(&desc->custdata_list) ? 0 : 0x80) |
+            (desc->funcdesc.callconv << 8);
+
+        if(desc->Entry && desc->Entry != (TLBString*)-1 && IS_INTRESOURCE(desc->Entry))
+            funcrecord->FKCCIC |= 0x2000;
+
+        for(j = 0; j < desc->funcdesc.cParams; ++j){
+            if(desc->funcdesc.lprgelemdescParam[j].u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT){
+                paramdefault_size = sizeof(INT) * desc->funcdesc.cParams;
+                funcrecord->funcdescsize += sizeof(PARAMDESCEX);
+            }
+        }
+        if(paramdefault_size > 0)
+            funcrecord->FKCCIC |= 0x1000;
+
+        funcrecord->nrargs = desc->funcdesc.cParams;
+        funcrecord->nroargs = desc->funcdesc.cParamsOpt;
+
+        /* optional fields */
+        /* res9? resA? */
+        if(!list_empty(&desc->custdata_list)){
+            size += 7 * sizeof(INT);
+            funcrecord->HelpContext = desc->helpcontext;
+            if(desc->HelpString)
+                funcrecord->oHelpString = desc->HelpString->offset;
+            else
+                funcrecord->oHelpString = -1;
+            if(!desc->Entry)
+                funcrecord->oEntry = -1;
+            else if(IS_INTRESOURCE(desc->Entry))
+                funcrecord->oEntry = LOWORD(desc->Entry);
+            else
+                funcrecord->oEntry = desc->Entry->offset;
+            funcrecord->res9 = -1;
+            funcrecord->resA = -1;
+            funcrecord->HelpStringContext = desc->HelpStringContext;
+            funcrecord->oCustData = WMSFT_compile_custdata(&desc->custdata_list, file);
+        }else if(desc->HelpStringContext != 0){
+            size += 6 * sizeof(INT);
+            funcrecord->HelpContext = desc->helpcontext;
+            if(desc->HelpString)
+                funcrecord->oHelpString = desc->HelpString->offset;
+            else
+                funcrecord->oHelpString = -1;
+            if(!desc->Entry)
+                funcrecord->oEntry = -1;
+            else if(IS_INTRESOURCE(desc->Entry))
+                funcrecord->oEntry = LOWORD(desc->Entry);
+            else
+                funcrecord->oEntry = desc->Entry->offset;
+            funcrecord->res9 = -1;
+            funcrecord->resA = -1;
+            funcrecord->HelpStringContext = desc->HelpStringContext;
+        }else if(desc->Entry){
+            size += 3 * sizeof(INT);
+            funcrecord->HelpContext = desc->helpcontext;
+            if(desc->HelpString)
+                funcrecord->oHelpString = desc->HelpString->offset;
+            else
+                funcrecord->oHelpString = -1;
+            if(!desc->Entry)
+                funcrecord->oEntry = -1;
+            else if(IS_INTRESOURCE(desc->Entry))
+                funcrecord->oEntry = LOWORD(desc->Entry);
+            else
+                funcrecord->oEntry = desc->Entry->offset;
+        }else if(desc->HelpString){
+            size += 2 * sizeof(INT);
+            funcrecord->HelpContext = desc->helpcontext;
+            funcrecord->oHelpString = desc->HelpString->offset;
+        }else if(desc->helpcontext){
+            size += sizeof(INT);
+            funcrecord->HelpContext = desc->helpcontext;
+        }
+
+        paramdefault = (DWORD*)((char *)funcrecord + size);
+        size += paramdefault_size;
+
+        for(j = 0; j < desc->funcdesc.cParams; ++j){
+            MSFT_ParameterInfo *info = (MSFT_ParameterInfo*)(((char *)funcrecord) + size);
+
+            info->DataType = WMSFT_append_typedesc(&desc->funcdesc.lprgelemdescParam[j].tdesc, file, NULL, &funcrecord->funcdescsize);
+            if(desc->pParamDesc[j].Name)
+                info->oName = desc->pParamDesc[j].Name->offset;
+            else
+                info->oName = -1;
+            info->Flags = desc->funcdesc.lprgelemdescParam[j].u.paramdesc.wParamFlags;
+
+            if(paramdefault_size){
+                if(desc->funcdesc.lprgelemdescParam[j].u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT)
+                    *paramdefault = WMSFT_encode_variant(&desc->funcdesc.lprgelemdescParam[j].u.paramdesc.pparamdescex->varDefaultValue, file);
+                else if(paramdefault_size)
+                    *paramdefault = -1;
+                ++paramdefault;
+            }
+
+            size += sizeof(MSFT_ParameterInfo);
+        }
+
+        funcrecord->Info = size | (i << 16); /* is it just the index? */
+
+        *offsets = offs;
+        offs += size;
+        ++offsets;
+
+        funcrecord = (MSFT_FuncRecord*)(((char*)funcrecord) + size);
+    }
+
+    varrecord = (MSFT_VarRecord*)funcrecord;
+    for(i = 0; i < info->cVars; ++i){
+        TLBVarDesc *desc = &info->vardescs[i];
+        DWORD size = 5 * sizeof(INT);
+
+        varrecord->vardescsize = sizeof(desc->vardesc);
+        varrecord->DataType = WMSFT_append_typedesc(&desc->vardesc.elemdescVar.tdesc, file, NULL, &varrecord->vardescsize);
+        varrecord->Flags = desc->vardesc.wVarFlags;
+        varrecord->VarKind = desc->vardesc.varkind;
+
+        if(desc->vardesc.varkind == VAR_CONST){
+            varrecord->vardescsize += sizeof(VARIANT);
+            varrecord->OffsValue = WMSFT_encode_variant(desc->vardesc.u.lpvarValue, file);
+        }else
+            varrecord->OffsValue = desc->vardesc.u.oInst;
+
+        /* res9? */
+        if(desc->HelpStringContext != 0){
+            size += 5 * sizeof(INT);
+            varrecord->HelpContext = desc->HelpContext;
+            if(desc->HelpString)
+                varrecord->HelpString = desc->HelpString->offset;
+            else
+                varrecord->HelpString = -1;
+            varrecord->res9 = -1;
+            varrecord->oCustData = WMSFT_compile_custdata(&desc->custdata_list, file);
+            varrecord->HelpStringContext = desc->HelpStringContext;
+        }else if(!list_empty(&desc->custdata_list)){
+            size += 4 * sizeof(INT);
+            varrecord->HelpContext = desc->HelpContext;
+            if(desc->HelpString)
+                varrecord->HelpString = desc->HelpString->offset;
+            else
+                varrecord->HelpString = -1;
+            varrecord->res9 = -1;
+            varrecord->oCustData = WMSFT_compile_custdata(&desc->custdata_list, file);
+        }else if(desc->HelpString){
+            size += 2 * sizeof(INT);
+            varrecord->HelpContext = desc->HelpContext;
+            if(desc->HelpString)
+                varrecord->HelpString = desc->HelpString->offset;
+            else
+                varrecord->HelpString = -1;
+        }else if(desc->HelpContext != 0){
+            size += sizeof(INT);
+            varrecord->HelpContext = desc->HelpContext;
+        }
+
+        varrecord->Info = size | (i << 16);
+
+        *offsets = offs;
+        offs += size;
+        ++offsets;
+
+        varrecord = (MSFT_VarRecord*)(((char*)varrecord) + size);
+    }
+
+    memid = (MEMBERID*)varrecord;
+    for(i = 0; i < info->cFuncs; ++i){
+        TLBFuncDesc *desc = &info->funcdescs[i];
+        *memid = desc->funcdesc.memid;
+        ++memid;
+    }
+    for(i = 0; i < info->cVars; ++i){
+        TLBVarDesc *desc = &info->vardescs[i];
+        *memid = desc->vardesc.memid;
+        ++memid;
+    }
+
+    name = (UINT*)memid;
+    for(i = 0; i < info->cFuncs; ++i){
+        TLBFuncDesc *desc = &info->funcdescs[i];
+        if(desc->Name)
+            *name = desc->Name->offset;
+        else
+            *name = -1;
+        ++name;
+    }
+    for(i = 0; i < info->cVars; ++i){
+        TLBVarDesc *desc = &info->vardescs[i];
+        if(desc->Name)
+            *name = desc->Name->offset;
+        else
+            *name = -1;
+        ++name;
+    }
+
+    return ret;
+}
+
+typedef struct tagWMSFT_RefChunk {
+    DWORD href;
+    DWORD res04;
+    DWORD res08;
+    DWORD next;
+} WMSFT_RefChunk;
+
+static DWORD WMSFT_compile_typeinfo_ref(ITypeInfoImpl *info, WMSFT_TLBFile *file)
+{
+    DWORD offs = file->ref_seg.len, i;
+    WMSFT_RefChunk *chunk;
+
+    file->ref_seg.len += info->cImplTypes * sizeof(WMSFT_RefChunk);
+    if(!file->ref_seg.data)
+        file->ref_seg.data = heap_alloc(file->ref_seg.len);
+    else
+        file->ref_seg.data = heap_realloc(file->ref_seg.data, file->ref_seg.len);
+
+    chunk = (WMSFT_RefChunk*)((char*)file->ref_seg.data + offs);
+
+    for(i = 0; i < info->cImplTypes; ++i){
+        chunk->href = info->impltypes[i].hRef;
+        chunk->res04 = info->impltypes[i].implflags;
+        chunk->res08 = -1;
+        if(i < info->cImplTypes - 1)
+            chunk->next = offs + sizeof(WMSFT_RefChunk) * (i + 1);
+        else
+            chunk->next = -1;
+        ++chunk;
+    }
+
+    return offs;
+}
+
+static DWORD WMSFT_compile_typeinfo(ITypeInfoImpl *info, INT16 index, WMSFT_TLBFile *file, char *data)
+{
+    DWORD size;
+
+    size = sizeof(MSFT_TypeInfoBase);
+
+    if(data){
+        MSFT_TypeInfoBase *base = (void*)data;
+        if(info->wTypeFlags & TYPEFLAG_FDUAL)
+            base->typekind = TKIND_DISPATCH;
+        else
+            base->typekind = info->typekind;
+        base->typekind |= index << 16; /* TODO: There are some other flags here */
+        base->typekind |= (info->cbAlignment << 11) | (info->cbAlignment << 6);
+        base->memoffset = WMSFT_compile_typeinfo_aux(info, file);
+        base->res2 = 0;
+        base->res3 = 0;
+        base->res4 = 3;
+        base->res5 = 0;
+        base->cElement = (info->cVars << 16) | info->cFuncs;
+        base->res7 = 0;
+        base->res8 = 0;
+        base->res9 = 0;
+        base->resA = 0;
+        if(info->guid)
+            base->posguid = info->guid->offset;
+        else
+            base->posguid = -1;
+        base->flags = info->wTypeFlags;
+        if(info->Name)
+            base->NameOffset = info->Name->offset;
+        else
+            base->NameOffset = -1;
+        base->version = (info->wMinorVerNum << 16) | info->wMajorVerNum;
+        if(info->DocString)
+            base->docstringoffs = info->DocString->offset;
+        else
+            base->docstringoffs = -1;
+        base->helpstringcontext = info->dwHelpStringContext;
+        base->helpcontext = info->dwHelpContext;
+        base->oCustData = WMSFT_compile_custdata(&info->custdata_list, file);
+        base->cImplTypes = info->cImplTypes;
+        base->cbSizeVft = info->cbSizeVft;
+        base->size = info->cbSizeInstance;
+        if(info->typekind == TKIND_COCLASS){
+            base->datatype1 = WMSFT_compile_typeinfo_ref(info, file);
+        }else if(info->typekind == TKIND_ALIAS){
+            base->datatype1 = WMSFT_append_typedesc(&info->tdescAlias, file, NULL, NULL);
+        }else if(info->typekind == TKIND_MODULE){
+            if(info->DllName)
+                base->datatype1 = info->DllName->offset;
+            else
+                base->datatype1 = -1;
+        }else{
+            if(info->cImplTypes > 0)
+                base->datatype1 = info->impltypes[0].hRef;
+            else
+                base->datatype1 = -1;
+        }
+        base->datatype2 = index; /* FIXME: i think there's more here */
+        base->res18 = 0;
+        base->res19 = -1;
+    }
+
+    return size;
+}
+
+static void WMSFT_compile_typeinfo_seg(ITypeLibImpl *This, WMSFT_TLBFile *file, DWORD *junk)
+{
+    UINT i;
+
+    file->typeinfo_seg.len = 0;
+    for(i = 0; i < This->TypeInfoCount; ++i){
+        ITypeInfoImpl *info = This->typeinfos[i];
+        *junk = file->typeinfo_seg.len;
+        ++junk;
+        file->typeinfo_seg.len += WMSFT_compile_typeinfo(info, i, NULL, NULL);
+    }
+
+    file->typeinfo_seg.data = heap_alloc(file->typeinfo_seg.len);
+    memset(file->typeinfo_seg.data, 0x96, file->typeinfo_seg.len);
+
+    file->aux_seg.len = 0;
+    file->aux_seg.data = NULL;
+
+    file->typeinfo_seg.len = 0;
+    for(i = 0; i < This->TypeInfoCount; ++i){
+        ITypeInfoImpl *info = This->typeinfos[i];
+        file->typeinfo_seg.len += WMSFT_compile_typeinfo(info, i, file,
+                ((char *)file->typeinfo_seg.data) + file->typeinfo_seg.len);
+    }
+}
+
+typedef struct tagWMSFT_ImpFile {
+    INT guid_offs;
+    LCID lcid;
+    DWORD version;
+} WMSFT_ImpFile;
+
+static void WMSFT_compile_impfile(ITypeLibImpl *This, WMSFT_TLBFile *file)
+{
+    TLBImpLib *implib;
+    WMSFT_ImpFile *impfile;
+    char *data;
+    DWORD last_offs = 0;
+
+    file->impfile_seg.len = 0;
+    LIST_FOR_EACH_ENTRY(implib, &This->implib_list, TLBImpLib, entry){
+        int size = 0;
+
+        if(implib->name){
+            WCHAR *path = strrchrW(implib->name, '\\');
+            if(path)
+                ++path;
+            else
+                path = implib->name;
+            size = WideCharToMultiByte(CP_ACP, 0, path, strlenW(path), NULL, 0, NULL, NULL);
+            if (size == 0)
+                ERR("failed to convert wide string: %s\n", debugstr_w(path));
+        }
+
+        size += sizeof(INT16);
+        if (size % 4)
+            size = (size + 4) & ~0x3;
+        if (size < 8)
+            size = 8;
+
+        file->impfile_seg.len += sizeof(WMSFT_ImpFile) + size;
+    }
+
+    data = file->impfile_seg.data = heap_alloc(file->impfile_seg.len);
+
+    LIST_FOR_EACH_ENTRY(implib, &This->implib_list, TLBImpLib, entry){
+        int strlen = 0, size;
+
+        impfile = (WMSFT_ImpFile*)data;
+        impfile->guid_offs = implib->guid->offset;
+        impfile->lcid = implib->lcid;
+        impfile->version = (implib->wVersionMinor << 16) | implib->wVersionMajor;
+
+        data += sizeof(WMSFT_ImpFile);
+
+        if(implib->name){
+            WCHAR *path= strrchrW(implib->name, '\\');
+            if(path)
+                ++path;
+            else
+                path = implib->name;
+            strlen = WideCharToMultiByte(CP_ACP, 0, path, strlenW(path),
+                    data + sizeof(INT16), file->impfile_seg.len - last_offs - sizeof(INT16), NULL, NULL);
+            if (strlen == 0)
+                ERR("failed to convert wide string: %s\n", debugstr_w(path));
+        }
+
+        *((INT16*)data) = (strlen << 2) | 1; /* FIXME: is that a flag, or what? */
+
+        size = strlen + sizeof(INT16);
+        if (size % 4)
+            size = (size + 4) & ~0x3;
+        if (size < 8)
+            size = 8;
+        memset(data + sizeof(INT16) + strlen, 0x57, size - strlen - sizeof(INT16));
+
+        data += size;
+        implib->offset = last_offs;
+        last_offs += size + sizeof(WMSFT_ImpFile);
+    }
+}
+
+static void WMSFT_compile_impinfo(ITypeLibImpl *This, WMSFT_TLBFile *file)
+{
+    MSFT_ImpInfo *info;
+    TLBRefType *ref_type;
+    UINT i = 0;
+
+    WMSFT_compile_impfile(This, file);
+
+    file->impinfo_seg.len = sizeof(MSFT_ImpInfo) * list_count(&This->ref_list);
+    info = file->impinfo_seg.data = heap_alloc(file->impinfo_seg.len);
+
+    LIST_FOR_EACH_ENTRY(ref_type, &This->ref_list, TLBRefType, entry){
+        info->flags = i | ((ref_type->tkind & 0xFF) << 24);
+        if(ref_type->index == TLB_REF_USE_GUID){
+            info->flags |= MSFT_IMPINFO_OFFSET_IS_GUID;
+            info->oGuid = ref_type->guid->offset;
+        }else
+            info->oGuid = ref_type->index;
+        info->oImpFile = ref_type->pImpTLInfo->offset;
+        ++i;
+        ++info;
+    }
+}
+
+static void WMSFT_compile_lib(ITypeLibImpl *This, WMSFT_TLBFile *file)
+{
+    /* TODO: What actually goes here? */
+    file->lib_seg.len = 0x80;
+    file->lib_seg.data = heap_alloc(file->lib_seg.len);
+    memset(file->lib_seg.data, 0xFF, file->lib_seg.len);
+
+#if 0
+    /* sometimes, first element is offset to last guid, for some reason */
+    if(This->guid)
+        *(DWORD*)file->lib_seg.data =
+            (list_count(&This->guid_list) - 1) * sizeof(MSFT_GuidEntry);
+#endif
+}
+
+static void WMSFT_compile_res07(ITypeLibImpl *This, WMSFT_TLBFile *file)
+{
+    /* TODO: What actually goes here?
+     * Wild speculation:
+     * It's something to do with the Name table (and string table?). When you
+     * add a new name, the offset to that name from within the Name table gets
+     * stuck somewhere in res07, apparently starting at the end of the segment
+     * then moving backwards at a rate of 3 bytes per char in the Name. */
+    file->res07_seg.len = 0x200;
+    file->res07_seg.data = heap_alloc(file->res07_seg.len);
+    memset(file->res07_seg.data, 0xFF, file->res07_seg.len);
+}
+
+static void tmp_fill_segdir_seg(MSFT_pSeg *segdir, WMSFT_SegContents *contents, DWORD *running_offset)
+{
+    if(contents && contents->len){
+        segdir->offset = *running_offset;
+        segdir->length = contents->len;
+        *running_offset += segdir->length;
+    }else{
+        segdir->offset = -1;
+        segdir->length = 0;
+    }
+
+    /* TODO: do these ever change? */
+    segdir->res08 = -1;
+    segdir->res0c = 0xf;
+}
+
+static void WMSFT_write_segment(HANDLE outfile, WMSFT_SegContents *segment)
+{
+    DWORD written;
+    if(segment)
+        WriteFile(outfile, segment->data, segment->len, &written, NULL);
+}
+
+static HRESULT WMSFT_fixup_typeinfos(ITypeLibImpl *This, WMSFT_TLBFile *file,
+        DWORD file_len)
+{
+    DWORD i;
+    MSFT_TypeInfoBase *base = (MSFT_TypeInfoBase *)file->typeinfo_seg.data;
+
+    for(i = 0; i < This->TypeInfoCount; ++i){
+        base->memoffset += file_len;
+        ++base;
+    }
+
+    return S_OK;
+}
+
+static void WMSFT_free_file(WMSFT_TLBFile *file)
+{
+    HeapFree(GetProcessHeap(), 0, file->typeinfo_seg.data);
+    HeapFree(GetProcessHeap(), 0, file->lib_seg.data);
+    HeapFree(GetProcessHeap(), 0, file->guid_seg.data);
+    HeapFree(GetProcessHeap(), 0, file->ref_seg.data);
+    HeapFree(GetProcessHeap(), 0, file->impinfo_seg.data);
+    HeapFree(GetProcessHeap(), 0, file->impfile_seg.data);
+    HeapFree(GetProcessHeap(), 0, file->res07_seg.data);
+    HeapFree(GetProcessHeap(), 0, file->name_seg.data);
+    HeapFree(GetProcessHeap(), 0, file->string_seg.data);
+    HeapFree(GetProcessHeap(), 0, file->typdesc_seg.data);
+    HeapFree(GetProcessHeap(), 0, file->arraydesc_seg.data);
+    HeapFree(GetProcessHeap(), 0, file->custdata_seg.data);
+    HeapFree(GetProcessHeap(), 0, file->cdguids_seg.data);
+    HeapFree(GetProcessHeap(), 0, file->aux_seg.data);
+}
+
 static HRESULT WINAPI ICreateTypeLib2_fnSaveAllChanges(ICreateTypeLib2 *iface)
 {
     ITypeLibImpl *This = impl_from_ICreateTypeLib2(iface);
-    FIXME("%p - stub\n", This);
-    return E_NOTIMPL;
+    WMSFT_TLBFile file;
+    DWORD written, junk_size, junk_offs, running_offset;
+    BOOL br;
+    HANDLE outfile;
+    HRESULT hres;
+    DWORD *junk;
+
+    TRACE("%p\n", This);
+
+    memset(&file, 0, sizeof(file));
+
+    file.header.magic1 = 0x5446534D;
+    file.header.magic2 = 0x00010002;
+    file.header.lcid = This->set_lcid ? This->set_lcid : MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US);
+    file.header.lcid2 = This->set_lcid;
+    file.header.varflags = 0x41; /* TODO?? */
+    if (This->HelpFile)
+        file.header.varflags |= 0x10;
+    if (This->HelpStringDll)
+        file.header.varflags |= HELPDLLFLAG;
+    file.header.version = (This->ver_major << 16) | This->ver_minor;
+    file.header.flags = This->libflags;
+    file.header.helpstringcontext = 0; /* TODO - SetHelpStringContext not implemented yet */
+    file.header.helpcontext = This->dwHelpContext;
+    file.header.res44 = 0x20;
+    file.header.res48 = 0x80;
+    file.header.dispatchpos = This->dispatch_href;
+
+    /* do name and string compilation to get offsets for other compilations */
+    hres = WMSFT_compile_names(This, &file);
+    if (FAILED(hres)){
+        WMSFT_free_file(&file);
+        return hres;
+    }
+
+    hres = WMSFT_compile_strings(This, &file);
+    if (FAILED(hres)){
+        WMSFT_free_file(&file);
+        return hres;
+    }
+
+    hres = WMSFT_compile_guids(This, &file);
+    if (FAILED(hres)){
+        WMSFT_free_file(&file);
+        return hres;
+    }
+
+    if(This->HelpFile)
+        file.header.helpfile = This->HelpFile->offset;
+    else
+        file.header.helpfile = -1;
+
+    if(This->DocString)
+        file.header.helpstring = This->DocString->offset;
+    else
+        file.header.helpstring = -1;
+
+    /* do some more segment compilation */
+    file.header.nimpinfos = list_count(&This->ref_list);
+    file.header.nrtypeinfos = This->TypeInfoCount;
+
+    if(This->Name)
+        file.header.NameOffset = This->Name->offset;
+    else
+        file.header.NameOffset = -1;
+
+    file.header.CustomDataOffset = -1; /* TODO SetCustData not impl yet */
+
+    if(This->guid)
+        file.header.posguid = This->guid->offset;
+    else
+        file.header.posguid = -1;
+
+    junk_size = file.header.nrtypeinfos * sizeof(DWORD);
+    if(file.header.varflags & HELPDLLFLAG)
+        junk_size += sizeof(DWORD);
+    if(junk_size){
+        junk = heap_alloc_zero(junk_size);
+        if(file.header.varflags & HELPDLLFLAG){
+            *junk = This->HelpStringDll->offset;
+            junk_offs = 1;
+        }else
+            junk_offs = 0;
+    }else{
+        junk = NULL;
+        junk_offs = 0;
+    }
+
+    WMSFT_compile_typeinfo_seg(This, &file, junk + junk_offs);
+    WMSFT_compile_impinfo(This, &file);
+    WMSFT_compile_lib(This, &file);
+    WMSFT_compile_res07(This, &file);
+
+    running_offset = 0;
+
+    TRACE("header at: 0x%x\n", running_offset);
+    running_offset += sizeof(file.header);
+
+    TRACE("junk at: 0x%x\n", running_offset);
+    running_offset += junk_size;
+
+    TRACE("segdir at: 0x%x\n", running_offset);
+    running_offset += sizeof(file.segdir);
+
+    TRACE("typeinfo at: 0x%x\n", running_offset);
+    tmp_fill_segdir_seg(&file.segdir.pTypeInfoTab, &file.typeinfo_seg, &running_offset);
+
+    TRACE("libtab at: 0x%x\n", running_offset);
+    tmp_fill_segdir_seg(&file.segdir.pLibtab, &file.lib_seg, &running_offset);
+
+    TRACE("guidtab at: 0x%x\n", running_offset);
+    tmp_fill_segdir_seg(&file.segdir.pGuidTab, &file.guid_seg, &running_offset);
+
+    TRACE("reftab at: 0x%x\n", running_offset);
+    tmp_fill_segdir_seg(&file.segdir.pRefTab, &file.ref_seg, &running_offset);
+
+    TRACE("impinfo at: 0x%x\n", running_offset);
+    tmp_fill_segdir_seg(&file.segdir.pImpInfo, &file.impinfo_seg, &running_offset);
+
+    TRACE("impfiles at: 0x%x\n", running_offset);
+    tmp_fill_segdir_seg(&file.segdir.pImpFiles, &file.impfile_seg, &running_offset);
+
+    TRACE("res07 at: 0x%x\n", running_offset);
+    tmp_fill_segdir_seg(&file.segdir.res07, &file.res07_seg, &running_offset);
+
+    TRACE("nametab at: 0x%x\n", running_offset);
+    tmp_fill_segdir_seg(&file.segdir.pNametab, &file.name_seg, &running_offset);
+
+    TRACE("stringtab at: 0x%x\n", running_offset);
+    tmp_fill_segdir_seg(&file.segdir.pStringtab, &file.string_seg, &running_offset);
+
+    TRACE("typdesc at: 0x%x\n", running_offset);
+    tmp_fill_segdir_seg(&file.segdir.pTypdescTab, &file.typdesc_seg, &running_offset);
+
+    TRACE("arraydescriptions at: 0x%x\n", running_offset);
+    tmp_fill_segdir_seg(&file.segdir.pArrayDescriptions, &file.arraydesc_seg, &running_offset);
+
+    TRACE("custdata at: 0x%x\n", running_offset);
+    tmp_fill_segdir_seg(&file.segdir.pCustData, &file.custdata_seg, &running_offset);
+
+    TRACE("cdguids at: 0x%x\n", running_offset);
+    tmp_fill_segdir_seg(&file.segdir.pCDGuids, &file.cdguids_seg, &running_offset);
+
+    TRACE("res0e at: 0x%x\n", running_offset);
+    tmp_fill_segdir_seg(&file.segdir.res0e, NULL, &running_offset);
+
+    TRACE("res0f at: 0x%x\n", running_offset);
+    tmp_fill_segdir_seg(&file.segdir.res0f, NULL, &running_offset);
+
+    TRACE("aux_seg at: 0x%x\n", running_offset);
+
+    WMSFT_fixup_typeinfos(This, &file, running_offset);
+
+    outfile = CreateFileW(This->path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+            FILE_ATTRIBUTE_NORMAL, 0);
+    if (outfile == INVALID_HANDLE_VALUE){
+        WMSFT_free_file(&file);
+        return TYPE_E_IOERROR;
+    }
+
+    br = WriteFile(outfile, &file.header, sizeof(file.header), &written, NULL);
+    if (!br) {
+        WMSFT_free_file(&file);
+        CloseHandle(outfile);
+        return TYPE_E_IOERROR;
+    }
+
+    br = WriteFile(outfile, junk, junk_size, &written, NULL);
+    if (!br) {
+        WMSFT_free_file(&file);
+        CloseHandle(outfile);
+        return TYPE_E_IOERROR;
+    }
+
+    br = WriteFile(outfile, &file.segdir, sizeof(file.segdir), &written, NULL);
+    if (!br) {
+        WMSFT_free_file(&file);
+        CloseHandle(outfile);
+        return TYPE_E_IOERROR;
+    }
+
+    WMSFT_write_segment(outfile, &file.typeinfo_seg);
+    WMSFT_write_segment(outfile, &file.lib_seg);
+    WMSFT_write_segment(outfile, &file.guid_seg);
+    WMSFT_write_segment(outfile, &file.ref_seg);
+    WMSFT_write_segment(outfile, &file.impinfo_seg);
+    WMSFT_write_segment(outfile, &file.impfile_seg);
+    WMSFT_write_segment(outfile, &file.res07_seg);
+    WMSFT_write_segment(outfile, &file.name_seg);
+    WMSFT_write_segment(outfile, &file.string_seg);
+    WMSFT_write_segment(outfile, &file.typdesc_seg);
+    WMSFT_write_segment(outfile, &file.arraydesc_seg);
+    WMSFT_write_segment(outfile, &file.custdata_seg);
+    WMSFT_write_segment(outfile, &file.cdguids_seg);
+    WMSFT_write_segment(outfile, &file.aux_seg);
+
+    WMSFT_free_file(&file);
+
+    CloseHandle(outfile);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ICreateTypeLib2_fnDeleteTypeInfo(ICreateTypeLib2 *iface,
