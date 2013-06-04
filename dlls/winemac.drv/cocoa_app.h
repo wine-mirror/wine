@@ -81,6 +81,8 @@ enum {
     NSTimeInterval lastEventTapEventTime;
 
     NSImage* applicationIcon;
+
+    BOOL beenActive;
 }
 
 @property (nonatomic) CGEventSourceKeyboardType keyboardType;

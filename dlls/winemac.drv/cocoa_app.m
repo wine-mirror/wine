@@ -1707,7 +1707,7 @@ int macdrv_err_on;
 
         [self adjustWindowLevels:YES];
 
-        if (![self frontWineWindow])
+        if (beenActive && ![self frontWineWindow])
         {
             for (WineWindow* window in [NSApp windows])
             {
@@ -1718,6 +1718,7 @@ int macdrv_err_on;
                 }
             }
         }
+        beenActive = TRUE;
 
         // If a Wine process terminates abruptly while it has the display captured
         // and switched to a different resolution, Mac OS X will uncapture the
