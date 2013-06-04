@@ -37,6 +37,7 @@
 #include "winternl.h"
 #include "winioctl.h"
 #include "winsvc.h"
+#include "winver.h"
 
 #include "wine/debug.h"
 #include "wbemprox_private.h"
@@ -51,6 +52,8 @@ static const WCHAR class_cdromdriveW[] =
     {'W','i','n','3','2','_','C','D','R','O','M','D','r','i','v','e',0};
 static const WCHAR class_compsysW[] =
     {'W','i','n','3','2','_','C','o','m','p','u','t','e','r','S','y','s','t','e','m',0};
+static const WCHAR class_datafileW[] =
+    {'C','I','M','_','D','a','t','a','F','i','l','e',0};
 static const WCHAR class_directoryW[] =
     {'W','i','n','3','2','_','D','i','r','e','c','t','o','r','y',0};
 static const WCHAR class_diskdriveW[] =
@@ -262,10 +265,15 @@ static const struct column col_compsys[] =
     { prop_numprocessorsW,        CIM_UINT32, VT_I4 },
     { prop_totalphysicalmemoryW,  CIM_UINT64 }
 };
+static const struct column col_datafile[] =
+{
+    { prop_nameW,    CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
+    { prop_versionW, CIM_STRING|COL_FLAG_DYNAMIC }
+};
 static const struct column col_directory[] =
 {
     { prop_accessmaskW, CIM_UINT32 },
-    { prop_nameW,       CIM_STRING|COL_FLAG_KEY }
+    { prop_nameW,       CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY }
 };
 static const struct column col_diskdrive[] =
 {
@@ -497,6 +505,11 @@ struct record_computersystem
     UINT32       num_logical_processors;
     UINT32       num_processors;
     UINT64       total_physical_memory;
+};
+struct record_datafile
+{
+    const WCHAR *name;
+    const WCHAR *version;
 };
 struct record_directory
 {
@@ -1090,6 +1103,121 @@ static WCHAR *append_path( const WCHAR *path, const WCHAR *segment, UINT *len )
     *len += len_segment;
     ret[*len] = 0;
     return ret;
+}
+
+static WCHAR *get_file_version( const WCHAR *filename )
+{
+    static const WCHAR slashW[] = {'\\',0}, fmtW[] = {'%','u','.','%','u','.','%','u','.','%','u',0};
+    VS_FIXEDFILEINFO *info;
+    DWORD size;
+    void *block;
+    WCHAR *ret;
+
+    if (!(ret = heap_alloc( (4 * 5 + sizeof(fmtW) / sizeof(fmtW[0])) * sizeof(WCHAR) ))) return NULL;
+    if (!(size = GetFileVersionInfoSizeW( filename, NULL )) || !(block = heap_alloc( size )))
+    {
+        heap_free( ret );
+        return NULL;
+    }
+    if (!GetFileVersionInfoW( filename, 0, size, block ) ||
+        !VerQueryValueW( block, slashW, (void **)&info, &size ))
+    {
+        heap_free( block );
+        heap_free( ret );
+        return NULL;
+    }
+    sprintfW( ret, fmtW, info->dwFileVersionMS >> 16, info->dwFileVersionMS & 0xffff,
+                         info->dwFileVersionLS >> 16, info->dwFileVersionLS & 0xffff );
+    heap_free( block );
+    return ret;
+}
+
+static enum fill_status fill_datafile( struct table *table, const struct expr *cond )
+{
+    static const WCHAR dotW[] = {'.',0}, dotdotW[] = {'.','.',0};
+    struct record_datafile *rec;
+    UINT i, len, row = 0, offset = 0, num_expected_rows;
+    WCHAR *glob = NULL, *path = NULL, *new_path, root[] = {'A',':','\\',0};
+    DWORD drives = GetLogicalDrives();
+    WIN32_FIND_DATAW data;
+    HANDLE handle;
+    struct dirstack *dirstack = alloc_dirstack(2);
+    enum fill_status status = FILL_STATUS_UNFILTERED;
+
+    if (!resize_table( table, 8, sizeof(*rec) )) return FILL_STATUS_FAILED;
+
+    for (i = 0; i < sizeof(drives); i++)
+    {
+        if (!(drives & (1 << i))) continue;
+
+        root[0] = 'A' + i;
+        if (GetDriveTypeW( root ) != DRIVE_FIXED) continue;
+
+        num_expected_rows = 0;
+        if (!seed_dirs( dirstack, cond, root[0], &num_expected_rows )) clear_dirstack( dirstack );
+
+        for (;;)
+        {
+            path = pop_dir( dirstack, &len );
+            if (!(glob = build_glob( root[0], path, len )))
+            {
+                status = FILL_STATUS_FAILED;
+                goto done;
+            }
+            if ((handle = FindFirstFileW( glob, &data )) != INVALID_HANDLE_VALUE)
+            {
+                do
+                {
+                    if (!resize_table( table, row + 1, sizeof(*rec) ))
+                    {
+                        status = FILL_STATUS_FAILED;
+                        goto done;
+                    }
+                    if (!strcmpW( data.cFileName, dotW ) || !strcmpW( data.cFileName, dotdotW )) continue;
+                    new_path = append_path( path, data.cFileName, &len );
+
+                    if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+                    {
+                        if (push_dir( dirstack, new_path, len )) continue;
+                        heap_free( new_path );
+                        status = FILL_STATUS_FAILED;
+                        goto done;
+                    }
+                    rec = (struct record_datafile *)(table->data + offset);
+                    rec->name    = build_name( root[0], new_path );
+                    rec->version = get_file_version( rec->name );
+                    if (!match_row( table, row, cond, &status ))
+                    {
+                        free_row_values( table, row );
+                        continue;
+                    }
+                    else if (num_expected_rows && row == num_expected_rows - 1)
+                    {
+                        row++;
+                        FindClose( handle );
+                        status = FILL_STATUS_FILTERED;
+                        goto done;
+                    }
+                    offset += sizeof(*rec);
+                    row++;
+                }
+                while (FindNextFileW( handle, &data ));
+                FindClose( handle );
+            }
+            if (!peek_dir( dirstack )) break;
+            heap_free( glob );
+            heap_free( path );
+        }
+    }
+
+done:
+    free_dirstack( dirstack );
+    heap_free( glob );
+    heap_free( path );
+
+    TRACE("created %u rows\n", row);
+    table->num_rows = row;
+    return status;
 }
 
 static enum fill_status fill_directory( struct table *table, const struct expr *cond )
@@ -1870,6 +1998,7 @@ static struct table builtin_classes[] =
     { class_biosW, SIZEOF(col_bios), col_bios, SIZEOF(data_bios), 0, (BYTE *)data_bios },
     { class_cdromdriveW, SIZEOF(col_cdromdrive), col_cdromdrive, 0, 0, NULL, fill_cdromdrive },
     { class_compsysW, SIZEOF(col_compsys), col_compsys, 0, 0, NULL, fill_compsys },
+    { class_datafileW, SIZEOF(col_datafile), col_datafile, 0, 0, NULL, fill_datafile },
     { class_directoryW, SIZEOF(col_directory), col_directory, 0, 0, NULL, fill_directory },
     { class_diskdriveW, SIZEOF(col_diskdrive), col_diskdrive, SIZEOF(data_diskdrive), 0, (BYTE *)data_diskdrive },
     { class_diskpartitionW, SIZEOF(col_diskpartition), col_diskpartition, 0, 0, NULL, fill_diskpartition },
