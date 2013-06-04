@@ -537,7 +537,7 @@ static const WCHAR font_mutex_nameW[] = {'_','_','W','I','N','E','_','F','O','N'
 static const WCHAR szDefaultFallbackLink[] = {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f',0};
 static BOOL use_default_fallback = FALSE;
 
-static BOOL get_glyph_index_linked(GdiFont *font, UINT c, GdiFont **linked_font, FT_UInt *glyph);
+static BOOL get_glyph_index_linked(GdiFont *font, UINT c, GdiFont **linked_font, FT_UInt *glyph, BOOL *vert);
 static BOOL get_outline_text_metrics(GdiFont *font);
 static BOOL get_bitmap_text_metrics(GdiFont *font);
 static BOOL get_text_metrics(GdiFont *font, LPTEXTMETRICW ptm);
@@ -585,7 +585,6 @@ static const WCHAR internal_system_link[] = {'S','o','f','t','w','a','r','e','\\
 /* These are all structures needed for the GSUB table */
 
 #define GSUB_TAG MS_MAKE_TAG('G', 'S', 'U', 'B')
-#define TATEGAKI_LOWER_BOUND  0x02F1
 
 typedef struct {
     DWORD version;
@@ -5903,6 +5902,55 @@ static inline BYTE get_max_level( UINT format )
     return 255;
 }
 
+static const struct { WCHAR lower; WCHAR upper;} unrotate_ranges[] =
+    {
+        {0x0000, 0x10FF},
+        /* Hangul Jamo */
+        {0x1200, 0x17FF},
+        /* Mongolian  */
+        {0x18B0, 0x1FFF},
+        /* General Punctuation */
+        {0x2070, 0x209F},
+        /* Currency Symbols */
+        /* Combining Diacritical Marks for Symbols */
+        /* Letterlike Symbols */
+        {0x2150, 0x245F},
+        /* Enclosed Alphanumerics */
+        {0x2500, 0x259F},
+        /* Geometric Shapes */
+        /* Miscellaneous Symbols */
+        /* Dingbats */
+        /* Miscellaneous Mathematical Symbols-A */
+        /* Supplemental Arrows-A */
+        {0x2800, 0x2E7F},
+        /* East Asian scripts and symbols */
+        {0xA000, 0xABFF},
+        /* Hangul Syllables */
+        /* Hangul Jamo Extended-B */
+        {0xD800, 0xF8FF},
+        /* CJK Compatibility Ideographs */
+        {0xFB00, 0xFE0F},
+        /* Vertical Forms */
+        /* Combining Half Marks */
+        /* CJK Compatibility Forms */
+        {0xFE50, 0xFEFF},
+        /* Halfwidth and Fullwidth Forms  */
+        {0xFFEF, 0xFFFF},
+    };
+
+static BOOL check_unicode_tategaki(WCHAR uchar)
+{
+    int i;
+    for (i = 0 ;; i++)
+    {
+        if (uchar < unrotate_ranges[i].lower)
+            return TRUE;
+
+        if (uchar >= unrotate_ranges[i].lower && uchar  <= unrotate_ranges[i].upper)
+            return FALSE;
+    }
+}
+
 static const BYTE masks[8] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
 
 static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
@@ -5943,20 +5991,23 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
         glyph_index = glyph;
         original_index = glyph;
 	format &= ~GGO_GLYPH_INDEX;
+        /* TODO: Window also turns off tategaki for glyphs passed in by index
+            if their unicode code points fall outside of the range that is
+            rotated. */
     } else {
-        get_glyph_index_linked(incoming_font, glyph, &font, &glyph_index);
+        BOOL vert;
+        get_glyph_index_linked(incoming_font, glyph, &font, &glyph_index, &vert);
         ft_face = font->ft_face;
         original_index = glyph_index;
+        /* We know what unicode ranges get rotated */
+        if (!vert && tategaki)
+            tategaki = check_unicode_tategaki(glyph);
     }
 
     if(format & GGO_UNHINTED) {
         load_flags |= FT_LOAD_NO_HINTING;
         format &= ~GGO_UNHINTED;
     }
-
-    /* tategaki never appears to happen to lower glyph index */
-    if (glyph_index < TATEGAKI_LOWER_BOUND )
-        tategaki = FALSE;
 
     if(original_index >= font->gmsize * GM_BLOCK_SIZE) {
 	font->gmsize = (original_index / GM_BLOCK_SIZE + 1);
@@ -7348,9 +7399,9 @@ static BOOL load_child_font(GdiFont *font, CHILD_FONT *child)
     return TRUE;
 }
 
-static BOOL get_glyph_index_linked(GdiFont *font, UINT c, GdiFont **linked_font, FT_UInt *glyph)
+static BOOL get_glyph_index_linked(GdiFont *font, UINT c, GdiFont **linked_font, FT_UInt *glyph, BOOL* vert)
 {
-    FT_UInt g;
+    FT_UInt g,o;
     CHILD_FONT *child_font;
 
     if(font->base_font)
@@ -7360,7 +7411,9 @@ static BOOL get_glyph_index_linked(GdiFont *font, UINT c, GdiFont **linked_font,
 
     if((*glyph = get_glyph_index(font, c)))
     {
+        o = *glyph;
         *glyph = get_GSUB_vert_glyph(font, *glyph);
+        *vert = (o != *glyph);
         return TRUE;
     }
 
@@ -7373,15 +7426,18 @@ static BOOL get_glyph_index_linked(GdiFont *font, UINT c, GdiFont **linked_font,
         if(!child_font->font->ft_face)
             continue;
         g = get_glyph_index(child_font->font, c);
+        o = g;
         g = get_GSUB_vert_glyph(child_font->font, g);
         if(g)
         {
             *glyph = g;
             *linked_font = child_font->font;
+            *vert = (o != g);
             return TRUE;
         }
     }
     *glyph = get_default_char_index(font);
+    *vert = FALSE;
     return FALSE;
 }
 
