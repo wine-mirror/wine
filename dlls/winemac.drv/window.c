@@ -93,7 +93,6 @@ static inline BOOL can_activate_window(HWND hwnd)
 
     if (!(style & WS_VISIBLE)) return FALSE;
     if ((style & (WS_POPUP|WS_CHILD)) == WS_CHILD) return FALSE;
-    if (style & WS_MINIMIZE) return FALSE;
     if (GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_NOACTIVATE) return FALSE;
     if (hwnd == GetDesktopWindow()) return FALSE;
     if (GetWindowRect(hwnd, &rect) && IsRectEmpty(&rect)) return FALSE;
@@ -1548,14 +1547,15 @@ void macdrv_window_frame_changed(HWND hwnd, CGRect frame)
  */
 void macdrv_window_got_focus(HWND hwnd, const macdrv_event *event)
 {
+    LONG style = GetWindowLongW(hwnd, GWL_STYLE);
+
     if (!hwnd) return;
 
     TRACE("win %p/%p serial %lu enabled %d visible %d style %08x focus %p active %p fg %p\n",
           hwnd, event->window, event->window_got_focus.serial, IsWindowEnabled(hwnd),
-          IsWindowVisible(hwnd), GetWindowLongW(hwnd, GWL_STYLE), GetFocus(),
-          GetActiveWindow(), GetForegroundWindow());
+          IsWindowVisible(hwnd), style, GetFocus(), GetActiveWindow(), GetForegroundWindow());
 
-    if (can_activate_window(hwnd))
+    if (can_activate_window(hwnd) && !(style & WS_MINIMIZE))
     {
         /* simulate a mouse click on the caption to find out
          * whether the window wants to be activated */
