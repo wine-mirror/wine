@@ -123,7 +123,7 @@ static HRESULT WINAPI ID3DXSpriteImpl_GetDevice(struct ID3DXSprite *iface, struc
 {
     ID3DXSpriteImpl *This = impl_from_ID3DXSprite(iface);
 
-    TRACE("(%p)->(%p): relay\n", This, device);
+    TRACE("(%p)->(%p)\n", This, device);
 
     if(device==NULL) return D3DERR_INVALIDCALL;
     *device=This->device;
@@ -258,7 +258,8 @@ static HRESULT WINAPI ID3DXSpriteImpl_Begin(ID3DXSprite *iface, DWORD flags)
 {
     ID3DXSpriteImpl *This = impl_from_ID3DXSprite(iface);
     HRESULT hr;
-    TRACE("(%p): relay\n", This);
+
+    TRACE("(%p)->(%#x)\n", This, flags);
 
     if(flags>D3DXSPRITE_FLAGLIMIT || This->ready) return D3DERR_INVALIDCALL;
 
@@ -384,7 +385,8 @@ static HRESULT WINAPI ID3DXSpriteImpl_Flush(ID3DXSprite *iface)
     ID3DXSpriteImpl *This = impl_from_ID3DXSprite(iface);
     SPRITEVERTEX *vertices;
     int i, count=0, start;
-    TRACE("(%p)->(): relay\n", This);
+
+    TRACE("(%p)->()\n", This);
 
     if(!This->ready) return D3DERR_INVALIDCALL;
     if(!This->sprite_count) return D3D_OK;
@@ -456,7 +458,7 @@ static HRESULT WINAPI ID3DXSpriteImpl_End(ID3DXSprite *iface)
 {
     ID3DXSpriteImpl *This = impl_from_ID3DXSprite(iface);
 
-    TRACE("(%p)->(): relay\n", This);
+    TRACE("(%p)->()\n", This);
 
     if(!This->ready) return D3DERR_INVALIDCALL;
 
@@ -534,7 +536,7 @@ HRESULT WINAPI D3DXCreateSprite(struct IDirect3DDevice9 *device, struct ID3DXSpr
     ID3DXSpriteImpl *object;
     D3DCAPS9 caps;
 
-    TRACE("(%p, %p): relay\n", device, sprite);
+    TRACE("(%p, %p)\n", device, sprite);
 
     if(device==NULL || sprite==NULL) return D3DERR_INVALIDCALL;
 
