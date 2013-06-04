@@ -374,11 +374,9 @@ static HRESULT WINAPI IDirect3DRMImpl_SetDefaultTextureShades(IDirect3DRM* iface
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMImpl_GetDevices(IDirect3DRM* iface, LPDIRECT3DRMDEVICEARRAY * ppDeviceArray)
+static HRESULT WINAPI IDirect3DRMImpl_GetDevices(IDirect3DRM *iface, IDirect3DRMDeviceArray **array)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM(iface);
-
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, ppDeviceArray);
+    FIXME("iface %p, array %p stub!\n", iface, array);
 
     return E_NOTIMPL;
 }
@@ -747,12 +745,9 @@ static HRESULT WINAPI IDirect3DRM2Impl_SetDefaultTextureShades(IDirect3DRM2* ifa
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRM2Impl_GetDevices(IDirect3DRM2* iface,
-                                                  LPDIRECT3DRMDEVICEARRAY * ppDeviceArray)
+static HRESULT WINAPI IDirect3DRM2Impl_GetDevices(IDirect3DRM2 *iface, IDirect3DRMDeviceArray **array)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM2(iface);
-
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, ppDeviceArray);
+    FIXME("iface %p, array %p stub!\n", iface, array);
 
     return E_NOTIMPL;
 }
@@ -1141,12 +1136,9 @@ static HRESULT WINAPI IDirect3DRM3Impl_SetDefaultTextureShades(IDirect3DRM3* ifa
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRM3Impl_GetDevices(IDirect3DRM3* iface,
-                                                  LPDIRECT3DRMDEVICEARRAY* DeviceArray)
+static HRESULT WINAPI IDirect3DRM3Impl_GetDevices(IDirect3DRM3 *iface, IDirect3DRMDeviceArray **array)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM3(iface);
-
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, DeviceArray);
+    FIXME("iface %p, array %p stub!\n", iface, array);
 
     return E_NOTIMPL;
 }

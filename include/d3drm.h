@@ -94,7 +94,7 @@ DECLARE_INTERFACE_(IDirect3DRM,IUnknown)
     STDMETHOD(GetSearchPath)(THIS_ DWORD *size_return, LPSTR path_return) PURE;
     STDMETHOD(SetDefaultTextureColors)(THIS_ DWORD) PURE;
     STDMETHOD(SetDefaultTextureShades)(THIS_ DWORD) PURE;
-    STDMETHOD(GetDevices)(THIS_ LPDIRECT3DRMDEVICEARRAY *) PURE;
+    STDMETHOD(GetDevices)(THIS_ IDirect3DRMDeviceArray **array) PURE;
     STDMETHOD(GetNamedObject)(THIS_ const char *name, IDirect3DRMObject **object) PURE;
     STDMETHOD(EnumerateObjects)(THIS_ D3DRMOBJECTCALLBACK, LPVOID) PURE;
     STDMETHOD(Load)(THIS_ void *source, void *object_id, IID **iids, DWORD iid_count, D3DRMLOADOPTIONS flags,
@@ -234,7 +234,7 @@ DECLARE_INTERFACE_(IDirect3DRM2,IUnknown)
     STDMETHOD(GetSearchPath)(THIS_ DWORD *size_return, LPSTR path_return) PURE;
     STDMETHOD(SetDefaultTextureColors)(THIS_ DWORD) PURE;
     STDMETHOD(SetDefaultTextureShades)(THIS_ DWORD) PURE;
-    STDMETHOD(GetDevices)(THIS_ LPDIRECT3DRMDEVICEARRAY *) PURE;
+    STDMETHOD(GetDevices)(THIS_ IDirect3DRMDeviceArray **array) PURE;
     STDMETHOD(GetNamedObject)(THIS_ const char *name, IDirect3DRMObject **object) PURE;
     STDMETHOD(EnumerateObjects)(THIS_ D3DRMOBJECTCALLBACK, LPVOID) PURE;
     STDMETHOD(Load)(THIS_ void *source, void *object_id, IID **iids, DWORD iid_count, D3DRMLOADOPTIONS flags,
@@ -377,7 +377,7 @@ DECLARE_INTERFACE_(IDirect3DRM3,IUnknown)
     STDMETHOD(GetSearchPath)(THIS_ DWORD *size_return, LPSTR path_return) PURE;
     STDMETHOD(SetDefaultTextureColors)(THIS_ DWORD) PURE;
     STDMETHOD(SetDefaultTextureShades)(THIS_ DWORD) PURE;
-    STDMETHOD(GetDevices)(THIS_ LPDIRECT3DRMDEVICEARRAY *) PURE;
+    STDMETHOD(GetDevices)(THIS_ IDirect3DRMDeviceArray **array) PURE;
     STDMETHOD(GetNamedObject)(THIS_ const char *name, IDirect3DRMObject **object) PURE;
     STDMETHOD(EnumerateObjects)(THIS_ D3DRMOBJECTCALLBACK, LPVOID) PURE;
     STDMETHOD(Load)(THIS_ void *source, void *object_id, IID **iids, DWORD iid_count, D3DRMLOADOPTIONS flags,
