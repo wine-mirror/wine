@@ -685,14 +685,13 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_AddVisual(IDirect3DRMFrame2 *iface, 
     return IDirect3DRMFrame3_AddVisual(&frame->IDirect3DRMFrame3_iface, (IUnknown *)visual);
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_GetChildren(IDirect3DRMFrame2* iface,
-                                                        LPDIRECT3DRMFRAMEARRAY *children)
+static HRESULT WINAPI IDirect3DRMFrame2Impl_GetChildren(IDirect3DRMFrame2 *iface, IDirect3DRMFrameArray **children)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
+    IDirect3DRMFrameImpl *frame = impl_from_IDirect3DRMFrame2(iface);
 
-    TRACE("(%p/%p)->(%p)\n", iface, This, children);
+    TRACE("iface %p, children %p.\n", iface, children);
 
-    return IDirect3DRMFrame3_GetChildren(&This->IDirect3DRMFrame3_iface, children);
+    return IDirect3DRMFrame3_GetChildren(&frame->IDirect3DRMFrame3_iface, children);
 }
 
 static D3DCOLOR WINAPI IDirect3DRMFrame2Impl_GetColor(IDirect3DRMFrame2* iface)
@@ -1683,8 +1682,7 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_AddVisual(IDirect3DRMFrame3* iface, 
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_GetChildren(IDirect3DRMFrame3* iface,
-                                                        LPDIRECT3DRMFRAMEARRAY *children)
+static HRESULT WINAPI IDirect3DRMFrame3Impl_GetChildren(IDirect3DRMFrame3 *iface, IDirect3DRMFrameArray **children)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
     IDirect3DRMFrameArrayImpl* obj;

@@ -911,7 +911,7 @@ static void test_Frame(void)
     IDirect3DRMFrame *pFrameP1;
     IDirect3DRMFrame *pFrameP2;
     IDirect3DRMFrame *pFrameTmp;
-    LPDIRECT3DRMFRAMEARRAY pArray;
+    IDirect3DRMFrameArray *frame_array;
     IDirect3DRMMeshBuilder *mesh_builder;
     IDirect3DRMVisual *visual1;
     IDirect3DRMVisual *visual_tmp;
@@ -951,18 +951,18 @@ static void test_Frame(void)
     ok(pFrameTmp == NULL, "pFrameTmp = %p\n", pFrameTmp);
     CHECK_REFCOUNT(pFrameC, 1);
 
-    pArray = NULL;
-    hr = IDirect3DRMFrame_GetChildren(pFrameC, &pArray);
+    frame_array = NULL;
+    hr = IDirect3DRMFrame_GetChildren(pFrameC, &frame_array);
     ok(hr == D3DRM_OK, "Cannot get children (hr = %x)\n", hr);
-    ok(pArray != NULL, "pArray = %p\n", pArray);
-    if (pArray)
+    ok(!!frame_array, "frame_array = %p\n", frame_array);
+    if (frame_array)
     {
-        count = IDirect3DRMFrameArray_GetSize(pArray);
+        count = IDirect3DRMFrameArray_GetSize(frame_array);
         ok(count == 0, "count = %u\n", count);
-        hr = IDirect3DRMFrameArray_GetElement(pArray, 0, &pFrameTmp);
+        hr = IDirect3DRMFrameArray_GetElement(frame_array, 0, &pFrameTmp);
         ok(hr == D3DRMERR_BADVALUE, "Should have returned D3DRMERR_BADVALUE (hr = %x)\n", hr);
         ok(pFrameTmp == NULL, "pFrameTmp = %p\n", pFrameTmp);
-        IDirect3DRMFrameArray_Release(pArray);
+        IDirect3DRMFrameArray_Release(frame_array);
     }
 
     hr = IDirect3DRM_CreateFrame(d3drm, NULL, &pFrameP1);
@@ -993,17 +993,17 @@ static void test_Frame(void)
     CHECK_REFCOUNT(pFrameP1, 1);
     CHECK_REFCOUNT(pFrameC, 2);
 
-    pArray = NULL;
-    hr = IDirect3DRMFrame_GetChildren(pFrameP1, &pArray);
+    frame_array = NULL;
+    hr = IDirect3DRMFrame_GetChildren(pFrameP1, &frame_array);
     ok(hr == D3DRM_OK, "Cannot get children (hr = %x)\n", hr);
     /* In some older version of d3drm, creating IDirect3DRMFrameArray object with GetChildren does not increment refcount of children frames */
     ok((get_refcount((IUnknown*)pFrameC) == 3) || broken(get_refcount((IUnknown*)pFrameC) == 2),
             "Invalid refcount. Expected 3 (or 2) got %d\n", get_refcount((IUnknown*)pFrameC));
-    if (pArray)
+    if (frame_array)
     {
-        count = IDirect3DRMFrameArray_GetSize(pArray);
+        count = IDirect3DRMFrameArray_GetSize(frame_array);
         ok(count == 1, "count = %u\n", count);
-        hr = IDirect3DRMFrameArray_GetElement(pArray, 0, &pFrameTmp);
+        hr = IDirect3DRMFrameArray_GetElement(frame_array, 0, &pFrameTmp);
         ok(hr == D3DRM_OK, "Cannot get element (hr = %x)\n", hr);
         ok(pFrameTmp == pFrameC, "pFrameTmp = %p\n", pFrameTmp);
         ok((get_refcount((IUnknown*)pFrameC) == 4) || broken(get_refcount((IUnknown*)pFrameC) == 3),
@@ -1011,7 +1011,7 @@ static void test_Frame(void)
         IDirect3DRMFrame_Release(pFrameTmp);
         ok((get_refcount((IUnknown*)pFrameC) == 3) || broken(get_refcount((IUnknown*)pFrameC) == 2),
                 "Invalid refcount. Expected 3 (or 2) got %d\n", get_refcount((IUnknown*)pFrameC));
-        IDirect3DRMFrameArray_Release(pArray);
+        IDirect3DRMFrameArray_Release(frame_array);
         CHECK_REFCOUNT(pFrameC, 2);
     }
 
@@ -1029,32 +1029,32 @@ static void test_Frame(void)
     ok(hr == D3DRM_OK, "Cannot add child frame (hr = %x)\n", hr);
     CHECK_REFCOUNT(pFrameC, 2);
 
-    pArray = NULL;
-    hr = IDirect3DRMFrame_GetChildren(pFrameP2, &pArray);
+    frame_array = NULL;
+    hr = IDirect3DRMFrame_GetChildren(pFrameP2, &frame_array);
     ok(hr == D3DRM_OK, "Cannot get children (hr = %x)\n", hr);
-    if (pArray)
+    if (frame_array)
     {
-        count = IDirect3DRMFrameArray_GetSize(pArray);
+        count = IDirect3DRMFrameArray_GetSize(frame_array);
         ok(count == 1, "count = %u\n", count);
-        hr = IDirect3DRMFrameArray_GetElement(pArray, 0, &pFrameTmp);
+        hr = IDirect3DRMFrameArray_GetElement(frame_array, 0, &pFrameTmp);
         ok(hr == D3DRM_OK, "Cannot get element (hr = %x)\n", hr);
         ok(pFrameTmp == pFrameC, "pFrameTmp = %p\n", pFrameTmp);
         IDirect3DRMFrame_Release(pFrameTmp);
-        IDirect3DRMFrameArray_Release(pArray);
+        IDirect3DRMFrameArray_Release(frame_array);
     }
 
-    pArray = NULL;
-    hr = IDirect3DRMFrame_GetChildren(pFrameP1, &pArray);
+    frame_array = NULL;
+    hr = IDirect3DRMFrame_GetChildren(pFrameP1, &frame_array);
     ok(hr == D3DRM_OK, "Cannot get children (hr = %x)\n", hr);
-    if (pArray)
+    if (frame_array)
     {
-        count = IDirect3DRMFrameArray_GetSize(pArray);
+        count = IDirect3DRMFrameArray_GetSize(frame_array);
         ok(count == 0, "count = %u\n", count);
         pFrameTmp = (void*)0xdeadbeef;
-        hr = IDirect3DRMFrameArray_GetElement(pArray, 0, &pFrameTmp);
+        hr = IDirect3DRMFrameArray_GetElement(frame_array, 0, &pFrameTmp);
         ok(hr == D3DRMERR_BADVALUE, "Should have returned D3DRMERR_BADVALUE (hr = %x)\n", hr);
         ok(pFrameTmp == NULL, "pFrameTmp = %p\n", pFrameTmp);
-        IDirect3DRMFrameArray_Release(pArray);
+        IDirect3DRMFrameArray_Release(frame_array);
     }
 
     pFrameTmp = (void*)0xdeadbeef;
@@ -1069,18 +1069,18 @@ static void test_Frame(void)
     ok(hr == D3DRM_OK, "Cannot add child frame (hr = %x)\n", hr);
     CHECK_REFCOUNT(pFrameC, 2);
 
-    pArray = NULL;
-    hr = IDirect3DRMFrame_GetChildren(pFrameP2, &pArray);
+    frame_array = NULL;
+    hr = IDirect3DRMFrame_GetChildren(pFrameP2, &frame_array);
     ok(hr == D3DRM_OK, "Cannot get children (hr = %x)\n", hr);
-    if (pArray)
+    if (frame_array)
     {
-        count = IDirect3DRMFrameArray_GetSize(pArray);
+        count = IDirect3DRMFrameArray_GetSize(frame_array);
         ok(count == 1, "count = %u\n", count);
-        hr = IDirect3DRMFrameArray_GetElement(pArray, 0, &pFrameTmp);
+        hr = IDirect3DRMFrameArray_GetElement(frame_array, 0, &pFrameTmp);
         ok(hr == D3DRM_OK, "Cannot get element (hr = %x)\n", hr);
         ok(pFrameTmp == pFrameC, "pFrameTmp = %p\n", pFrameTmp);
         IDirect3DRMFrame_Release(pFrameTmp);
-        IDirect3DRMFrameArray_Release(pArray);
+        IDirect3DRMFrameArray_Release(frame_array);
     }
 
     /* Delete child */
@@ -1088,18 +1088,18 @@ static void test_Frame(void)
     ok(hr == D3DRM_OK, "Cannot delete child frame (hr = %x)\n", hr);
     CHECK_REFCOUNT(pFrameC, 1);
 
-    pArray = NULL;
-    hr = IDirect3DRMFrame_GetChildren(pFrameP2, &pArray);
+    frame_array = NULL;
+    hr = IDirect3DRMFrame_GetChildren(pFrameP2, &frame_array);
     ok(hr == D3DRM_OK, "Cannot get children (hr = %x)\n", hr);
-    if (pArray)
+    if (frame_array)
     {
-        count = IDirect3DRMFrameArray_GetSize(pArray);
+        count = IDirect3DRMFrameArray_GetSize(frame_array);
         ok(count == 0, "count = %u\n", count);
         pFrameTmp = (void*)0xdeadbeef;
-        hr = IDirect3DRMFrameArray_GetElement(pArray, 0, &pFrameTmp);
+        hr = IDirect3DRMFrameArray_GetElement(frame_array, 0, &pFrameTmp);
         ok(hr == D3DRMERR_BADVALUE, "Should have returned D3DRMERR_BADVALUE (hr = %x)\n", hr);
         ok(pFrameTmp == NULL, "pFrameTmp = %p\n", pFrameTmp);
-        IDirect3DRMFrameArray_Release(pArray);
+        IDirect3DRMFrameArray_Release(frame_array);
     }
 
     pFrameTmp = (void*)0xdeadbeef;
@@ -1116,22 +1116,22 @@ static void test_Frame(void)
     ok(hr == D3DRM_OK, "Cannot add child frame (hr = %x)\n", hr);
     CHECK_REFCOUNT(pFrameP1, 3);
 
-    pArray = NULL;
-    hr = IDirect3DRMFrame_GetChildren(pFrameP2, &pArray);
+    frame_array = NULL;
+    hr = IDirect3DRMFrame_GetChildren(pFrameP2, &frame_array);
     ok(hr == D3DRM_OK, "Cannot get children (hr = %x)\n", hr);
-    if (pArray)
+    if (frame_array)
     {
-        count = IDirect3DRMFrameArray_GetSize(pArray);
+        count = IDirect3DRMFrameArray_GetSize(frame_array);
         ok(count == 2, "count = %u\n", count);
-        hr = IDirect3DRMFrameArray_GetElement(pArray, 0, &pFrameTmp);
+        hr = IDirect3DRMFrameArray_GetElement(frame_array, 0, &pFrameTmp);
         ok(hr == D3DRM_OK, "Cannot get element (hr = %x)\n", hr);
         ok(pFrameTmp == pFrameC, "pFrameTmp = %p\n", pFrameTmp);
         IDirect3DRMFrame_Release(pFrameTmp);
-        hr = IDirect3DRMFrameArray_GetElement(pArray, 1, &pFrameTmp);
+        hr = IDirect3DRMFrameArray_GetElement(frame_array, 1, &pFrameTmp);
         ok(hr == D3DRM_OK, "Cannot get element (hr = %x)\n", hr);
         ok(pFrameTmp == pFrameP1, "pFrameTmp = %p\n", pFrameTmp);
         IDirect3DRMFrame_Release(pFrameTmp);
-        IDirect3DRMFrameArray_Release(pArray);
+        IDirect3DRMFrameArray_Release(frame_array);
     }
 
     /* [Add/Delete]Visual with NULL pointer */
