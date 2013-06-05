@@ -8339,6 +8339,35 @@ static const ITypeCompVtbl tcompvt =
     ITypeComp_fnBindType
 };
 
+HRESULT WINAPI CreateTypeLib2(SYSKIND syskind, LPCOLESTR szFile,
+        ICreateTypeLib2** ppctlib)
+{
+    ITypeLibImpl *This;
+    HRESULT hres;
+
+    TRACE("(%d,%s,%p)\n", syskind, debugstr_w(szFile), ppctlib);
+
+    if (!szFile) return E_INVALIDARG;
+
+    This = TypeLibImpl_Constructor();
+    if (!This)
+        return E_OUTOFMEMORY;
+
+    This->lcid = GetSystemDefaultLCID();
+    This->syskind = syskind;
+
+    This->path = heap_alloc((lstrlenW(szFile) + 1) * sizeof(WCHAR));
+    if (!This->path) {
+        ITypeLib2_Release((ITypeLib2*)This);
+        return E_OUTOFMEMORY;
+    }
+    lstrcpyW(This->path, szFile);
+
+    hres = ITypeLib2_QueryInterface((ITypeLib2*)This, &IID_ICreateTypeLib2, (LPVOID*)ppctlib);
+    ITypeLib2_Release((ITypeLib2*)This);
+    return hres;
+}
+
 static HRESULT WINAPI ICreateTypeLib2_fnQueryInterface(ICreateTypeLib2 *iface,
         REFIID riid, void **object)
 {
@@ -10811,3 +10840,33 @@ static const ICreateTypeInfo2Vtbl CreateTypeInfo2Vtbl = {
     ICreateTypeInfo2_fnInvalidate,
     ICreateTypeInfo2_fnSetName
 };
+
+/******************************************************************************
+ * ClearCustData (OLEAUT32.171)
+ *
+ * Clear a custom data type's data.
+ *
+ * PARAMS
+ *  lpCust [I] The custom data type instance
+ *
+ * RETURNS
+ *  Nothing.
+ */
+void WINAPI ClearCustData(CUSTDATA *lpCust)
+{
+    if (lpCust && lpCust->cCustData)
+    {
+        if (lpCust->prgCustData)
+        {
+            DWORD i;
+
+            for (i = 0; i < lpCust->cCustData; i++)
+                VariantClear(&lpCust->prgCustData[i].varValue);
+
+            /* FIXME - Should be using a per-thread IMalloc */
+            heap_free(lpCust->prgCustData);
+            lpCust->prgCustData = NULL;
+        }
+        lpCust->cCustData = 0;
+    }
+}
