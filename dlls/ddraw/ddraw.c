@@ -814,10 +814,6 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND windo
         This->focuswindow = NULL;
     }
 
-    if ((This->cooperative_level & DDSCL_EXCLUSIVE)
-            && (window != This->dest_window || !(cooplevel & DDSCL_EXCLUSIVE)))
-        wined3d_device_release_focus_window(This->wined3d_device);
-
     if ((cooplevel & DDSCL_FULLSCREEN) != (This->cooperative_level & DDSCL_FULLSCREEN) || window != This->dest_window)
     {
         if (This->cooperative_level & DDSCL_FULLSCREEN)
@@ -830,18 +826,6 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND windo
             wined3d_get_adapter_display_mode(This->wined3d, WINED3DADAPTER_DEFAULT, &display_mode, NULL);
             wined3d_device_setup_fullscreen_window(This->wined3d_device, window,
                     display_mode.width, display_mode.height);
-        }
-    }
-
-    if ((cooplevel & DDSCL_EXCLUSIVE)
-            && (window != This->dest_window || !(This->cooperative_level & DDSCL_EXCLUSIVE)))
-    {
-        hr = wined3d_device_acquire_focus_window(This->wined3d_device, window);
-        if (FAILED(hr))
-        {
-            ERR("Failed to acquire focus window, hr %#x.\n", hr);
-            wined3d_mutex_unlock();
-            return hr;
         }
     }
 
@@ -894,6 +878,22 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND windo
 
         wined3d_stateblock_apply(stateblock);
         wined3d_stateblock_decref(stateblock);
+    }
+
+    if ((This->cooperative_level & DDSCL_EXCLUSIVE)
+            && (window != This->dest_window || !(cooplevel & DDSCL_EXCLUSIVE)))
+        wined3d_device_release_focus_window(This->wined3d_device);
+
+    if ((cooplevel & DDSCL_EXCLUSIVE)
+            && (window != This->dest_window || !(This->cooperative_level & DDSCL_EXCLUSIVE)))
+    {
+        hr = wined3d_device_acquire_focus_window(This->wined3d_device, window);
+        if (FAILED(hr))
+        {
+            ERR("Failed to acquire focus window, hr %#x.\n", hr);
+            wined3d_mutex_unlock();
+            return hr;
+        }
     }
 
     /* Unhandled flags */
