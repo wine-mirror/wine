@@ -1507,6 +1507,69 @@ static void test_MDI_create(HWND parent, HWND mdi_client, INT_PTR first_id)
     DestroyWindow(mdi_child);
 }
 
+static void test_MDI_child_stack(HWND mdi_client)
+{
+    HWND child_1, child_2, child_3, child_4;
+    HWND stack[4];
+    MDICREATESTRUCTA cs;
+
+    cs.szClass = "MDI_child_Class_1";
+    cs.szTitle = "MDI child";
+    cs.hOwner  = GetModuleHandleA(0);
+    cs.x       = CW_USEDEFAULT;
+    cs.y       = CW_USEDEFAULT;
+    cs.cx      = CW_USEDEFAULT;
+    cs.cy      = CW_USEDEFAULT;
+    cs.style   = 0;
+    cs.lParam  = (LPARAM)mdi_lParam_test_message;
+
+    assert(child_1 = (HWND)SendMessageA(mdi_client, WM_MDICREATE, 0, (LPARAM)&cs));
+    assert(child_2 = (HWND)SendMessageA(mdi_client, WM_MDICREATE, 0, (LPARAM)&cs));
+    assert(child_3 = (HWND)SendMessageA(mdi_client, WM_MDICREATE, 0, (LPARAM)&cs));
+    assert(child_4 = (HWND)SendMessageA(mdi_client, WM_MDICREATE, 0, (LPARAM)&cs));
+
+    stack[0] = (HWND)SendMessageA(mdi_client, WM_MDIGETACTIVE, 0, 0);
+    stack[1] = GetWindow(stack[0], GW_HWNDNEXT);
+    stack[2] = GetWindow(stack[1], GW_HWNDNEXT);
+    stack[3] = GetWindow(stack[2], GW_HWNDNEXT);
+    trace("Initial MDI child stack: %p->%p->%p->%p\n", stack[0], stack[1], stack[2], stack[3]);
+    ok(stack[0] == child_4 && stack[1] == child_3 &&
+        stack[2] == child_2 && stack[3] == child_1,
+        "Unexpected initial order, should be: %p->%p->%p->%p\n",
+            child_4, child_3, child_2, child_1);
+
+    trace("Activate child next to %p\n", child_3);
+    SendMessage(mdi_client, WM_MDINEXT, (WPARAM)child_3, 0);
+
+    stack[0] = (HWND)SendMessageA(mdi_client, WM_MDIGETACTIVE, 0, 0);
+    stack[1] = GetWindow(stack[0], GW_HWNDNEXT);
+    stack[2] = GetWindow(stack[1], GW_HWNDNEXT);
+    stack[3] = GetWindow(stack[2], GW_HWNDNEXT);
+todo_wine
+    ok(stack[0] == child_2 && stack[1] == child_4 &&
+        stack[2] == child_1 && stack[3] == child_3,
+        "Broken MDI child stack:\nexpected: %p->%p->%p->%p, but got: %p->%p->%p->%p\n",
+            child_2, child_4, child_1, child_3, stack[0], stack[1], stack[2], stack[3]);
+
+    trace("Activate child previous to %p\n", child_1);
+    SendMessage(mdi_client, WM_MDINEXT, (WPARAM)child_1, 1);
+
+    stack[0] = (HWND)SendMessageA(mdi_client, WM_MDIGETACTIVE, 0, 0);
+    stack[1] = GetWindow(stack[0], GW_HWNDNEXT);
+    stack[2] = GetWindow(stack[1], GW_HWNDNEXT);
+    stack[3] = GetWindow(stack[2], GW_HWNDNEXT);
+todo_wine
+    ok(stack[0] == child_4 && stack[1] == child_2 &&
+        stack[2] == child_1 && stack[3] == child_3,
+        "Broken MDI child stack:\nexpected: %p->%p->%p->%p, but got: %p->%p->%p->%p\n",
+            child_4, child_2, child_1, child_3, stack[0], stack[1], stack[2], stack[3]);
+
+    DestroyWindow(child_1);
+    DestroyWindow(child_2);
+    DestroyWindow(child_3);
+    DestroyWindow(child_4);
+}
+
 /**********************************************************************
  * MDI_ChildGetMinMaxInfo (copied from windows/mdi.c)
  *
@@ -1787,6 +1850,17 @@ static LRESULT WINAPI mdi_main_wnd_procA(HWND hwnd, UINT msg, WPARAM wparam, LPA
                                          &client_cs);
             assert(mdi_client);
             test_MDI_create(hwnd, mdi_client, client_cs.idFirstChild);
+            DestroyWindow(mdi_client);
+
+            /* Test child window stack management */
+            mdi_client = CreateWindowExA(0, "mdiclient",
+                                         NULL,
+                                         WS_CHILD,
+                                         0, 0, rc.right, rc.bottom,
+                                         hwnd, 0, GetModuleHandle(0),
+                                         &client_cs);
+            assert(mdi_client);
+            test_MDI_child_stack(mdi_client);
             DestroyWindow(mdi_client);
             break;
         }
