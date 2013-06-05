@@ -7441,8 +7441,6 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
                     goto end;
                 }
             }
-            result = TYPE_E_ELEMENTNOTFOUND;
-            goto end;
         }
 
         LIST_FOR_EACH_ENTRY(ref_type, &This->pTypeLib->ref_list, TLBRefType, entry)
