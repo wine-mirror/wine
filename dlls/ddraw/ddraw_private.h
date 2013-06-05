@@ -53,6 +53,7 @@ struct FvfToDecl
 #define DDRAW_D3D_INITIALIZED   0x00000002
 #define DDRAW_RESTORE_MODE      0x00000004
 #define DDRAW_NO3D              0x00000008
+#define DDRAW_SCL_DDRAW1        0x00000010
 
 struct ddraw
 {

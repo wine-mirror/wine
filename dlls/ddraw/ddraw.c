@@ -4,6 +4,7 @@
  * Copyright 2000-2001 TransGaming Technologies Inc.
  * Copyright 2006 Stefan Dösinger
  * Copyright 2008 Denver Gingerich
+ * Copyright 2007-2008, 2011, 2013 Stefan Dösinger for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -653,6 +654,75 @@ static HRESULT ddraw_create_swapchain(struct ddraw *ddraw, HWND window, BOOL win
 }
 
 /*****************************************************************************
+ * IDirectDraw7::RestoreDisplayMode
+ *
+ * Restores the display mode to what it was at creation time. Basically.
+ *
+ * Returns
+ *  DD_OK on success
+ *  DDERR_NOEXCLUSIVE mode if the device isn't in fullscreen mode
+ *
+ *****************************************************************************/
+static HRESULT WINAPI ddraw7_RestoreDisplayMode(IDirectDraw7 *iface)
+{
+    struct ddraw *ddraw = impl_from_IDirectDraw7(iface);
+    HRESULT hr;
+
+    TRACE("iface %p.\n", iface);
+
+    wined3d_mutex_lock();
+
+    if (!(ddraw->flags & DDRAW_RESTORE_MODE))
+    {
+        wined3d_mutex_unlock();
+        return DD_OK;
+    }
+
+    if (exclusive_ddraw && exclusive_ddraw != ddraw)
+    {
+        wined3d_mutex_unlock();
+        return DDERR_NOEXCLUSIVEMODE;
+    }
+
+    if (SUCCEEDED(hr = wined3d_set_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &original_mode)))
+    {
+        ddraw->flags &= ~DDRAW_RESTORE_MODE;
+        restore_mode = FALSE;
+    }
+
+    wined3d_mutex_unlock();
+
+    return hr;
+}
+
+static HRESULT WINAPI ddraw4_RestoreDisplayMode(IDirectDraw4 *iface)
+{
+    struct ddraw *ddraw = impl_from_IDirectDraw4(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return ddraw7_RestoreDisplayMode(&ddraw->IDirectDraw7_iface);
+}
+
+static HRESULT WINAPI ddraw2_RestoreDisplayMode(IDirectDraw2 *iface)
+{
+    struct ddraw *ddraw = impl_from_IDirectDraw2(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return ddraw7_RestoreDisplayMode(&ddraw->IDirectDraw7_iface);
+}
+
+static HRESULT WINAPI ddraw1_RestoreDisplayMode(IDirectDraw *iface)
+{
+    struct ddraw *ddraw = impl_from_IDirectDraw(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return ddraw7_RestoreDisplayMode(&ddraw->IDirectDraw7_iface);
+}
+
+/*****************************************************************************
  * IDirectDraw7::SetCooperativeLevel
  *
  * Sets the cooperative level for the DirectDraw object, and the window
@@ -696,15 +766,16 @@ static HRESULT ddraw_create_swapchain(struct ddraw *ddraw, HWND window, BOOL win
  *   (Probably others too, have to investigate)
  *
  *****************************************************************************/
-static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND window, DWORD cooplevel)
+static HRESULT WINAPI ddraw_set_cooperative_level(struct ddraw *ddraw, HWND window,
+        DWORD cooplevel, BOOL restore_mode_on_normal)
 {
-    struct ddraw *This = impl_from_IDirectDraw7(iface);
     struct wined3d_surface *rt = NULL, *ds = NULL;
     struct wined3d_stateblock *stateblock;
     BOOL restore_state = FALSE;
     HRESULT hr;
 
-    TRACE("iface %p, window %p, flags %#x.\n", iface, window, cooplevel);
+    TRACE("ddraw %p, window %p, flags %#x, restore_mode_on_normal %x.\n", ddraw, window, cooplevel,
+            restore_mode_on_normal);
     DDRAW_dump_cooperativelevel(cooplevel);
 
     wined3d_mutex_lock();
@@ -745,7 +816,7 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND windo
             return DDERR_INVALIDPARAMS;
         }
 
-        hr = ddraw_set_focus_window(This, window);
+        hr = ddraw_set_focus_window(ddraw, window);
         wined3d_mutex_unlock();
         return hr;
     }
@@ -763,7 +834,7 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND windo
         {
             HWND device_window;
 
-            if (!This->focuswindow && !(cooplevel & DDSCL_SETFOCUSWINDOW))
+            if (!ddraw->focuswindow && !(cooplevel & DDSCL_SETFOCUSWINDOW))
             {
                 WARN("No focus window set.\n");
                 wined3d_mutex_unlock();
@@ -785,8 +856,8 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND windo
 
             /* Native apparently leaks the created device window if setting the
              * focus window below fails. */
-            This->cooperative_level |= DDSCL_CREATEDEVICEWINDOW;
-            This->devicewindow = device_window;
+            ddraw->cooperative_level |= DDSCL_CREATEDEVICEWINDOW;
+            ddraw->devicewindow = device_window;
 
             if (cooplevel & DDSCL_SETFOCUSWINDOW)
             {
@@ -796,7 +867,7 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND windo
                     return DDERR_NOHWND;
                 }
 
-                if (FAILED(hr = ddraw_set_focus_window(This, window)))
+                if (FAILED(hr = ddraw_set_focus_window(ddraw, window)))
                 {
                     wined3d_mutex_unlock();
                     return hr;
@@ -808,37 +879,37 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND windo
     }
     else
     {
-        if (This->cooperative_level & DDSCL_CREATEDEVICEWINDOW)
-            DestroyWindow(This->devicewindow);
-        This->devicewindow = NULL;
-        This->focuswindow = NULL;
+        if (ddraw->cooperative_level & DDSCL_CREATEDEVICEWINDOW)
+            DestroyWindow(ddraw->devicewindow);
+        ddraw->devicewindow = NULL;
+        ddraw->focuswindow = NULL;
     }
 
-    if ((cooplevel & DDSCL_FULLSCREEN) != (This->cooperative_level & DDSCL_FULLSCREEN) || window != This->dest_window)
+    if ((cooplevel & DDSCL_FULLSCREEN) != (ddraw->cooperative_level & DDSCL_FULLSCREEN) || window != ddraw->dest_window)
     {
-        if (This->cooperative_level & DDSCL_FULLSCREEN)
-            wined3d_device_restore_fullscreen_window(This->wined3d_device, This->dest_window);
+        if (ddraw->cooperative_level & DDSCL_FULLSCREEN)
+            wined3d_device_restore_fullscreen_window(ddraw->wined3d_device, ddraw->dest_window);
 
         if (cooplevel & DDSCL_FULLSCREEN)
         {
             struct wined3d_display_mode display_mode;
 
-            wined3d_get_adapter_display_mode(This->wined3d, WINED3DADAPTER_DEFAULT, &display_mode, NULL);
-            wined3d_device_setup_fullscreen_window(This->wined3d_device, window,
+            wined3d_get_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &display_mode, NULL);
+            wined3d_device_setup_fullscreen_window(ddraw->wined3d_device, window,
                     display_mode.width, display_mode.height);
         }
     }
 
-    if (cooplevel & DDSCL_MULTITHREADED && !(This->cooperative_level & DDSCL_MULTITHREADED))
-        wined3d_device_set_multithreaded(This->wined3d_device);
+    if (cooplevel & DDSCL_MULTITHREADED && !(ddraw->cooperative_level & DDSCL_MULTITHREADED))
+        wined3d_device_set_multithreaded(ddraw->wined3d_device);
 
-    if (This->wined3d_swapchain)
+    if (ddraw->wined3d_swapchain)
     {
-        if (!(This->flags & DDRAW_NO3D))
+        if (!(ddraw->flags & DDRAW_NO3D))
         {
             restore_state = TRUE;
 
-            if (FAILED(hr = wined3d_stateblock_create(This->wined3d_device, WINED3D_SBT_ALL, &stateblock)))
+            if (FAILED(hr = wined3d_stateblock_create(ddraw->wined3d_device, WINED3D_SBT_ALL, &stateblock)))
             {
                 ERR("Failed to create stateblock, hr %#x.\n", hr);
                 wined3d_mutex_unlock();
@@ -846,33 +917,33 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND windo
             }
 
             wined3d_stateblock_capture(stateblock);
-            rt = wined3d_device_get_render_target(This->wined3d_device, 0);
-            if (rt == This->wined3d_frontbuffer)
+            rt = wined3d_device_get_render_target(ddraw->wined3d_device, 0);
+            if (rt == ddraw->wined3d_frontbuffer)
                 rt = NULL;
             else if (rt)
                 wined3d_surface_incref(rt);
 
-            if ((ds = wined3d_device_get_depth_stencil(This->wined3d_device)))
+            if ((ds = wined3d_device_get_depth_stencil(ddraw->wined3d_device)))
                 wined3d_surface_incref(ds);
         }
 
-        ddraw_destroy_swapchain(This);
+        ddraw_destroy_swapchain(ddraw);
     }
 
-    if (FAILED(hr = ddraw_create_swapchain(This, window, !(cooplevel & DDSCL_FULLSCREEN))))
+    if (FAILED(hr = ddraw_create_swapchain(ddraw, window, !(cooplevel & DDSCL_FULLSCREEN))))
         ERR("Failed to create swapchain, hr %#x.\n", hr);
 
     if (restore_state)
     {
         if (ds)
         {
-            wined3d_device_set_depth_stencil(This->wined3d_device, ds);
+            wined3d_device_set_depth_stencil(ddraw->wined3d_device, ds);
             wined3d_surface_decref(ds);
         }
 
         if (rt)
         {
-            wined3d_device_set_render_target(This->wined3d_device, 0, rt, FALSE);
+            wined3d_device_set_render_target(ddraw->wined3d_device, 0, rt, FALSE);
             wined3d_surface_decref(rt);
         }
 
@@ -880,14 +951,22 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND windo
         wined3d_stateblock_decref(stateblock);
     }
 
-    if ((This->cooperative_level & DDSCL_EXCLUSIVE)
-            && (window != This->dest_window || !(cooplevel & DDSCL_EXCLUSIVE)))
-        wined3d_device_release_focus_window(This->wined3d_device);
+    if (!(cooplevel & DDSCL_EXCLUSIVE) && (ddraw->cooperative_level & DDSCL_EXCLUSIVE)
+            && restore_mode_on_normal)
+    {
+        hr = ddraw7_RestoreDisplayMode(&ddraw->IDirectDraw7_iface);
+        if (FAILED(hr))
+            ERR("RestoreDisplayMode failed\n");
+    }
+
+    if ((ddraw->cooperative_level & DDSCL_EXCLUSIVE)
+            && (window != ddraw->dest_window || !(cooplevel & DDSCL_EXCLUSIVE)))
+        wined3d_device_release_focus_window(ddraw->wined3d_device);
 
     if ((cooplevel & DDSCL_EXCLUSIVE)
-            && (window != This->dest_window || !(This->cooperative_level & DDSCL_EXCLUSIVE)))
+            && (window != ddraw->dest_window || !(ddraw->cooperative_level & DDSCL_EXCLUSIVE)))
     {
-        hr = wined3d_device_acquire_focus_window(This->wined3d_device, window);
+        hr = wined3d_device_acquire_focus_window(ddraw->wined3d_device, window);
         if (FAILED(hr))
         {
             ERR("Failed to acquire focus window, hr %#x.\n", hr);
@@ -897,25 +976,35 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND windo
     }
 
     /* Unhandled flags */
-    if(cooplevel & DDSCL_ALLOWREBOOT)
-        WARN("(%p) Unhandled flag DDSCL_ALLOWREBOOT, harmless\n", This);
-    if(cooplevel & DDSCL_ALLOWMODEX)
-        WARN("(%p) Unhandled flag DDSCL_ALLOWMODEX, harmless\n", This);
-    if(cooplevel & DDSCL_FPUSETUP)
-        WARN("(%p) Unhandled flag DDSCL_FPUSETUP, harmless\n", This);
+    if (cooplevel & DDSCL_ALLOWREBOOT)
+        WARN("Unhandled flag DDSCL_ALLOWREBOOT, harmless\n");
+    if (cooplevel & DDSCL_ALLOWMODEX)
+        WARN("Unhandled flag DDSCL_ALLOWMODEX, harmless\n");
+    if (cooplevel & DDSCL_FPUSETUP)
+        WARN("Unhandled flag DDSCL_FPUSETUP, harmless\n");
 
     if (cooplevel & DDSCL_EXCLUSIVE)
-        exclusive_ddraw = This;
-    else if (exclusive_ddraw == This)
+        exclusive_ddraw = ddraw;
+    else if (exclusive_ddraw == ddraw)
         exclusive_ddraw = NULL;
 
     /* Store the cooperative_level */
-    This->cooperative_level = cooplevel;
-    This->dest_window = window;
+    ddraw->cooperative_level = cooplevel;
+    ddraw->dest_window = window;
+
     TRACE("SetCooperativeLevel retuning DD_OK\n");
     wined3d_mutex_unlock();
 
     return DD_OK;
+}
+
+static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND window, DWORD flags)
+{
+    struct ddraw *ddraw = impl_from_IDirectDraw7(iface);
+
+    TRACE("iface %p, window %p, flags %#x.\n", iface, window, flags);
+
+    return ddraw_set_cooperative_level(ddraw, window, flags, !(ddraw->flags & DDRAW_SCL_DDRAW1));
 }
 
 static HRESULT WINAPI ddraw4_SetCooperativeLevel(IDirectDraw4 *iface, HWND window, DWORD flags)
@@ -924,7 +1013,7 @@ static HRESULT WINAPI ddraw4_SetCooperativeLevel(IDirectDraw4 *iface, HWND windo
 
     TRACE("iface %p, window %p, flags %#x.\n", iface, window, flags);
 
-    return ddraw7_SetCooperativeLevel(&ddraw->IDirectDraw7_iface, window, flags);
+    return ddraw_set_cooperative_level(ddraw, window, flags, !(ddraw->flags & DDRAW_SCL_DDRAW1));
 }
 
 static HRESULT WINAPI ddraw2_SetCooperativeLevel(IDirectDraw2 *iface, HWND window, DWORD flags)
@@ -933,16 +1022,20 @@ static HRESULT WINAPI ddraw2_SetCooperativeLevel(IDirectDraw2 *iface, HWND windo
 
     TRACE("iface %p, window %p, flags %#x.\n", iface, window, flags);
 
-    return ddraw7_SetCooperativeLevel(&ddraw->IDirectDraw7_iface, window, flags);
+    return ddraw_set_cooperative_level(ddraw, window, flags, !(ddraw->flags & DDRAW_SCL_DDRAW1));
 }
 
 static HRESULT WINAPI ddraw1_SetCooperativeLevel(IDirectDraw *iface, HWND window, DWORD flags)
 {
     struct ddraw *ddraw = impl_from_IDirectDraw(iface);
+    HRESULT hr;
 
     TRACE("iface %p, window %p, flags %#x.\n", iface, window, flags);
 
-    return ddraw7_SetCooperativeLevel(&ddraw->IDirectDraw7_iface, window, flags);
+    hr = ddraw_set_cooperative_level(ddraw, window, flags, FALSE);
+    if (SUCCEEDED(hr))
+        ddraw->flags |= DDRAW_SCL_DDRAW1;
+    return hr;
 }
 
 /*****************************************************************************
@@ -1067,75 +1160,6 @@ static HRESULT WINAPI ddraw1_SetDisplayMode(IDirectDraw *iface, DWORD width, DWO
     TRACE("iface %p, width %u, height %u, bpp %u.\n", iface, width, height, bpp);
 
     return ddraw7_SetDisplayMode(&ddraw->IDirectDraw7_iface, width, height, bpp, 0, 0);
-}
-
-/*****************************************************************************
- * IDirectDraw7::RestoreDisplayMode
- *
- * Restores the display mode to what it was at creation time. Basically.
- *
- * Returns
- *  DD_OK on success
- *  DDERR_NOEXCLUSIVE mode if the device isn't in fullscreen mode
- *
- *****************************************************************************/
-static HRESULT WINAPI ddraw7_RestoreDisplayMode(IDirectDraw7 *iface)
-{
-    struct ddraw *ddraw = impl_from_IDirectDraw7(iface);
-    HRESULT hr;
-
-    TRACE("iface %p.\n", iface);
-
-    wined3d_mutex_lock();
-
-    if (!(ddraw->flags & DDRAW_RESTORE_MODE))
-    {
-        wined3d_mutex_unlock();
-        return DD_OK;
-    }
-
-    if (exclusive_ddraw && exclusive_ddraw != ddraw)
-    {
-        wined3d_mutex_unlock();
-        return DDERR_NOEXCLUSIVEMODE;
-    }
-
-    if (SUCCEEDED(hr = wined3d_set_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &original_mode)))
-    {
-        ddraw->flags &= ~DDRAW_RESTORE_MODE;
-        restore_mode = FALSE;
-    }
-
-    wined3d_mutex_unlock();
-
-    return hr;
-}
-
-static HRESULT WINAPI ddraw4_RestoreDisplayMode(IDirectDraw4 *iface)
-{
-    struct ddraw *ddraw = impl_from_IDirectDraw4(iface);
-
-    TRACE("iface %p.\n", iface);
-
-    return ddraw7_RestoreDisplayMode(&ddraw->IDirectDraw7_iface);
-}
-
-static HRESULT WINAPI ddraw2_RestoreDisplayMode(IDirectDraw2 *iface)
-{
-    struct ddraw *ddraw = impl_from_IDirectDraw2(iface);
-
-    TRACE("iface %p.\n", iface);
-
-    return ddraw7_RestoreDisplayMode(&ddraw->IDirectDraw7_iface);
-}
-
-static HRESULT WINAPI ddraw1_RestoreDisplayMode(IDirectDraw *iface)
-{
-    struct ddraw *ddraw = impl_from_IDirectDraw(iface);
-
-    TRACE("iface %p.\n", iface);
-
-    return ddraw7_RestoreDisplayMode(&ddraw->IDirectDraw7_iface);
 }
 
 /*****************************************************************************
