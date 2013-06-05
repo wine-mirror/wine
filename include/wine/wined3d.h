@@ -2371,9 +2371,8 @@ void __cdecl wined3d_swapchain_set_window(struct wined3d_swapchain *swapchain, H
 
 HRESULT __cdecl wined3d_texture_add_dirty_region(struct wined3d_texture *texture,
         UINT layer, const struct wined3d_box *dirty_region);
-HRESULT __cdecl wined3d_texture_create_2d(struct wined3d_device *device, UINT width, UINT height,
-        UINT level_count, DWORD usage, enum wined3d_format_id format_id, enum wined3d_pool pool, void *parent,
-        const struct wined3d_parent_ops *parent_ops, struct wined3d_texture **texture);
+HRESULT __cdecl wined3d_texture_create_2d(struct wined3d_device *device, const struct wined3d_resource_desc *desc,
+        UINT level_count, void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_texture **texture);
 HRESULT __cdecl wined3d_texture_create_3d(struct wined3d_device *device, UINT width, UINT height, UINT depth,
         UINT level_count, DWORD usage, enum wined3d_format_id format_id, enum wined3d_pool pool, void *parent,
         const struct wined3d_parent_ops *parent_ops, struct wined3d_texture **texture);

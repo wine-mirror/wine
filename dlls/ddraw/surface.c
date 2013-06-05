@@ -5588,6 +5588,7 @@ static const struct wined3d_parent_ops ddraw_texture_wined3d_parent_ops =
 HRESULT ddraw_surface_create_texture(struct ddraw_surface *surface)
 {
     const DDSURFACEDESC2 *desc = &surface->surface_desc;
+    struct wined3d_resource_desc wined3d_desc;
     struct ddraw_surface *mip, **attach;
     struct wined3d_resource *resource;
     enum wined3d_format_id format;
@@ -5615,11 +5616,26 @@ HRESULT ddraw_surface_create_texture(struct ddraw_surface *surface)
 
     format = PixelFormat_DD2WineD3D(&surface->surface_desc.u4.ddpfPixelFormat);
     if (desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
+    {
         hr = wined3d_texture_create_cube(surface->ddraw->wined3d_device, desc->dwWidth,
                 levels, 0, format, pool, surface, &ddraw_texture_wined3d_parent_ops, &surface->wined3d_texture);
+    }
     else
-        hr = wined3d_texture_create_2d(surface->ddraw->wined3d_device, desc->dwWidth, desc->dwHeight,
-                levels, 0, format, pool, surface, &ddraw_texture_wined3d_parent_ops, &surface->wined3d_texture);
+    {
+        wined3d_desc.resource_type = WINED3D_RTYPE_TEXTURE;
+        wined3d_desc.format = format;
+        wined3d_desc.multisample_type = WINED3D_MULTISAMPLE_NONE;
+        wined3d_desc.multisample_quality = 0;
+        wined3d_desc.usage = 0;
+        wined3d_desc.pool = pool;
+        wined3d_desc.width = desc->dwWidth;
+        wined3d_desc.height = desc->dwHeight;
+        wined3d_desc.depth = 1;
+        wined3d_desc.size = 0;
+
+        hr = wined3d_texture_create_2d(surface->ddraw->wined3d_device, &wined3d_desc, levels,
+                surface, &ddraw_texture_wined3d_parent_ops, &surface->wined3d_texture);
+    }
 
     if (FAILED(hr))
     {
