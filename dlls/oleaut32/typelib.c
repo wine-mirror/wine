@@ -6054,8 +6054,11 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeOfImplType(
     {
         if(index >= This->cImplTypes)
             hr = TYPE_E_ELEMENTNOTFOUND;
-        else
+        else{
             *pRefType = This->impltypes[index].hRef;
+            if(This->typekind == TKIND_INTERFACE)
+                *pRefType |= 0x2;
+        }
     }
 
     if(TRACE_ON(ole))
