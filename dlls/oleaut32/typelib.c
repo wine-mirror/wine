@@ -1223,8 +1223,6 @@ typedef struct tagTLBContext
 } TLBContext;
 
 
-static void MSFT_DoRefType(TLBContext *pcx, ITypeLibImpl *pTL, int offset);
-
 static inline BSTR TLB_get_bstr(const TLBString *str)
 {
     return str != NULL ? str->str : NULL;
@@ -2206,38 +2204,7 @@ static void MSFT_GetTdesc(TLBContext *pcx, INT type, TYPEDESC *pTd,
     else
         *pTd=pcx->pLibInfo->pTypeDesc[type/(2*sizeof(INT))];
 
-    if(pTd->vt == VT_USERDEFINED)
-      MSFT_DoRefType(pcx, pTI->pTypeLib, pTd->u.hreftype);
-
     TRACE_(typelib)("vt type = %X\n", pTd->vt);
-}
-
-static void MSFT_ResolveReferencedTypes(TLBContext *pcx, ITypeInfoImpl *pTI, TYPEDESC *lpTypeDesc)
-{
-    /* resolve referenced type if any */
-    while (lpTypeDesc)
-    {
-        switch (lpTypeDesc->vt)
-        {
-        case VT_PTR:
-            lpTypeDesc = lpTypeDesc->u.lptdesc;
-            break;
-
-        case VT_CARRAY:
-            lpTypeDesc = & (lpTypeDesc->u.lpadesc->tdescElem);
-            break;
-
-        case VT_USERDEFINED:
-            MSFT_DoRefType(pcx, pTI->pTypeLib,
-                           lpTypeDesc->u.hreftype);
-
-            lpTypeDesc = NULL;
-            break;
-
-        default:
-            lpTypeDesc = NULL;
-        }
-    }
 }
 
 static int TLB_is_propgetput(INVOKEKIND invkind)
@@ -2364,7 +2331,6 @@ MSFT_DoFuncs(TLBContext*     pcx,
 		      pFuncRec->DataType,
 		      &ptfd->funcdesc.elemdescFunc.tdesc,
 		      pTI);
-        MSFT_ResolveReferencedTypes(pcx, pTI, &ptfd->funcdesc.elemdescFunc.tdesc);
 
         /* do the parameters/arguments */
         if(pFuncRec->nrargs)
@@ -2396,8 +2362,6 @@ MSFT_DoFuncs(TLBContext*     pcx,
                     ptfd->pParamDesc[j].Name =
                         MSFT_ReadName( pcx, paraminfo.oName );
                 TRACE_(typelib)("param[%d] = %s\n", j, debugstr_w(TLB_get_bstr(ptfd->pParamDesc[j].Name)));
-
-                MSFT_ResolveReferencedTypes(pcx, pTI, &elemdesc->tdesc);
 
                 /* default value */
                 if ( (elemdesc->u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT) &&
@@ -2501,63 +2465,7 @@ static void MSFT_DoVars(TLBContext *pcx, ITypeInfoImpl *pTI, int cFuncs,
                 pVarRec->OffsValue, pcx);
         } else
             ptvd->vardesc.u.oInst=pVarRec->OffsValue;
-        MSFT_ResolveReferencedTypes(pcx, pTI, &ptvd->vardesc.elemdescVar.tdesc);
         recoffset += reclength;
-    }
-}
-
-/* fill in data for a hreftype (offset). When the referenced type is contained
- * in the typelib, it's just an (file) offset in the type info base dir.
- * If comes from import, it's an offset+1 in the ImpInfo table
- * */
-static void MSFT_DoRefType(TLBContext *pcx, ITypeLibImpl *pTL,
-                          int offset)
-{
-    TLBRefType *ref;
-
-    TRACE_(typelib)("TLB context %p, TLB offset %x\n", pcx, offset);
-
-    LIST_FOR_EACH_ENTRY(ref, &pTL->ref_list, TLBRefType, entry)
-    {
-        if(ref->reference == offset) return;
-    }
-
-    ref = heap_alloc_zero(sizeof(TLBRefType));
-    list_add_tail(&pTL->ref_list, &ref->entry);
-
-    if(!MSFT_HREFTYPE_INTHISFILE( offset)) {
-        /* external typelib */
-        MSFT_ImpInfo impinfo;
-        TLBImpLib *pImpLib;
-
-        TRACE_(typelib)("offset %x, masked offset %x\n", offset, offset + (offset & 0xfffffffc));
-
-        MSFT_ReadLEDWords(&impinfo, sizeof(impinfo), pcx,
-                          pcx->pTblDir->pImpInfo.offset + (offset & 0xfffffffc));
-
-        LIST_FOR_EACH_ENTRY(pImpLib, &pcx->pLibInfo->implib_list, TLBImpLib, entry)
-            if(pImpLib->offset==impinfo.oImpFile)
-                break;
-
-        if(&pImpLib->entry != &pcx->pLibInfo->implib_list){
-            ref->reference = offset & (~0x3);
-            ref->pImpTLInfo = pImpLib;
-            if(impinfo.flags & MSFT_IMPINFO_OFFSET_IS_GUID) {
-                ref->guid = MSFT_ReadGuid(impinfo.oGuid, pcx);
-                TRACE("importing by guid %s\n", debugstr_guid(TLB_get_guidref(ref->guid)));
-                ref->index = TLB_REF_USE_GUID;
-            } else
-                ref->index = impinfo.oGuid;
-        }else{
-            ERR("Cannot find a reference\n");
-            ref->reference = -1;
-            ref->pImpTLInfo = TLB_REF_NOT_FOUND;
-        }
-    }else{
-        /* in this typelib */
-        ref->index = MSFT_HREFTYPE_INDEX(offset);
-        ref->reference = offset;
-        ref->pImpTLInfo = TLB_REF_INTERNAL;
     }
 }
 
@@ -2576,7 +2484,6 @@ static void MSFT_DoImplTypes(TLBContext *pcx, ITypeInfoImpl *pTI, int count,
     for(i=0;i<count;i++){
         if(offset<0) break; /* paranoia */
         MSFT_ReadLEDWords(&refrec,sizeof(refrec),pcx,offset+pcx->pTblDir->pRefTab.offset);
-        MSFT_DoRefType(pcx, pTI->pTypeLib, refrec.reftype);
         pImpl->hRef = refrec.reftype;
         pImpl->implflags=refrec.flags;
         MSFT_CustData(pcx, refrec.oCustData, &pImpl->custdata_list);
@@ -2668,12 +2575,10 @@ static ITypeInfoImpl * MSFT_DoTypeInfo(
             {
                 ptiRet->impltypes = TLBImplType_Alloc(1);
                 ptiRet->impltypes[0].hRef = tiBase.datatype1;
-                MSFT_DoRefType(pcx, pLibInfo, tiBase.datatype1);
             }
             break;
         default:
             ptiRet->impltypes = TLBImplType_Alloc(1);
-            MSFT_DoRefType(pcx, pLibInfo, tiBase.datatype1);
             ptiRet->impltypes[0].hRef = tiBase.datatype1;
             break;
        }
@@ -2733,6 +2638,46 @@ static HRESULT MSFT_ReadAllStrings(TLBContext *pcx)
 
         offs += len_piece;
     }
+}
+
+static HRESULT MSFT_ReadAllRefs(TLBContext *pcx)
+{
+    TLBRefType *ref;
+    int offs = 0;
+
+    MSFT_Seek(pcx, pcx->pTblDir->pImpInfo.offset);
+    while (offs < pcx->pTblDir->pImpInfo.length) {
+        MSFT_ImpInfo impinfo;
+        TLBImpLib *pImpLib;
+
+        MSFT_ReadLEDWords(&impinfo, sizeof(impinfo), pcx, DO_NOT_SEEK);
+
+        ref = heap_alloc_zero(sizeof(TLBRefType));
+        list_add_tail(&pcx->pLibInfo->ref_list, &ref->entry);
+
+        LIST_FOR_EACH_ENTRY(pImpLib, &pcx->pLibInfo->implib_list, TLBImpLib, entry)
+            if(pImpLib->offset==impinfo.oImpFile)
+                break;
+
+        if(&pImpLib->entry != &pcx->pLibInfo->implib_list){
+            ref->reference = offs;
+            ref->pImpTLInfo = pImpLib;
+            if(impinfo.flags & MSFT_IMPINFO_OFFSET_IS_GUID) {
+                ref->guid = MSFT_ReadGuid(impinfo.oGuid, pcx);
+                TRACE("importing by guid %s\n", debugstr_guid(TLB_get_guidref(ref->guid)));
+                ref->index = TLB_REF_USE_GUID;
+            } else
+                ref->index = impinfo.oGuid;
+        }else{
+            ERR("Cannot find a reference\n");
+            ref->reference = -1;
+            ref->pImpTLInfo = TLB_REF_NOT_FOUND;
+        }
+
+        offs += sizeof(impinfo);
+    }
+
+    return S_OK;
 }
 
 /* Because type library parsing has some degree of overhead, and some apps repeatedly load the same
@@ -3501,9 +3446,9 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
         }
     }
 
+    MSFT_ReadAllRefs(&cx);
+
     pTypeLibImpl->dispatch_href = tlbHeader.dispatchpos;
-    if(pTypeLibImpl->dispatch_href != -1)
-        MSFT_DoRefType(&cx, pTypeLibImpl, pTypeLibImpl->dispatch_href);
 
     /* type infos */
     if(tlbHeader.nrtypeinfos >= 0 )
