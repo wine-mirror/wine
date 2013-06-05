@@ -738,23 +738,21 @@ static HRESULT WINAPI ddraw1_RestoreDisplayMode(IDirectDraw *iface)
  * fixme, be sure to run again with a +ddraw trace.
  *
  * What is known about cooperative levels (See the ddraw modes test):
- * DDSCL_EXCLUSIVE and DDSCL_FULLSCREEN must be used with each other
- * DDSCL_NORMAL is not compatible with DDSCL_EXCLUSIVE or DDSCL_FULLSCREEN
+ * DDSCL_EXCLUSIVE requires DDSCL_FULLSCREEN.
+ * DDSCL_NORMAL is not compatible with DDSCL_EXCLUSIVE.
+ * Unlike what msdn claims, DDSCL_NORMAL | DDSCL_FULLSCREEN is allowed.
  * DDSCL_SETFOCUSWINDOW can be passed only in DDSCL_NORMAL mode, but after that
- * DDSCL_FULLSCREEN can be activated
- * DDSCL_SETFOCUSWINDOW may only be used with DDSCL_NOWINDOWCHANGES
+ * DDSCL_EXCLUSIVE can be activated.
+ * DDSCL_SETFOCUSWINDOW may only be used with DDSCL_NOWINDOWCHANGES or
+ * DDSCL_CREATEDEVICEWINDOW.
  *
  * Handled flags: DDSCL_NORMAL, DDSCL_FULLSCREEN, DDSCL_EXCLUSIVE,
+ *                DDSCL_CREATEDEVICEWINDOW, DDSCL_SETDEVICEWINDOW
  *                DDSCL_SETFOCUSWINDOW (partially),
  *                DDSCL_MULTITHREADED (work in progress)
+ *                DDSCL_FPUPRESERVE (see device.c)
  *
- * Unhandled flags, which should be implemented
- *  DDSCL_SETDEVICEWINDOW: Sets a window specially used for rendering (I don't
- *  expect any difference to a normal window for wine)
- *  DDSCL_CREATEDEVICEWINDOW: Tells ddraw to create its own window for
- *  rendering (Possible test case: Half-Life)
- *
- * Unsure about these: DDSCL_FPUSETUP DDSCL_FPURESERVE
+ * Unsure about this: DDSCL_FPUSETUP
  *
  * These don't seem very important for wine:
  *  DDSCL_ALLOWREBOOT, DDSCL_NOWINDOWCHANGES, DDSCL_ALLOWMODEX
