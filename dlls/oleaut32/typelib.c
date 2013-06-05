@@ -2392,12 +2392,7 @@ MSFT_DoFuncs(TLBContext*     pcx,
                 elemdesc->u.paramdesc.wParamFlags = paraminfo.Flags;
 
                 /* name */
-                if (paraminfo.oName == -1)
-                    /* this occurs for [propput] or [propget] methods, so
-                     * we should just set the name of the parameter to the
-                     * name of the method. */
-                    ptfd->pParamDesc[j].Name = ptfd->Name;
-                else
+                if (paraminfo.oName != -1)
                     ptfd->pParamDesc[j].Name =
                         MSFT_ReadName( pcx, paraminfo.oName );
                 TRACE_(typelib)("param[%d] = %s\n", j, debugstr_w(TLB_get_bstr(ptfd->pParamDesc[j].Name)));
@@ -5959,29 +5954,38 @@ static HRESULT WINAPI ITypeInfo_fnGetNames( ITypeInfo2 *iface, MEMBERID memid,
     const TLBVarDesc *pVDesc;
     int i;
     TRACE("(%p) memid=0x%08x Maxname=%d\n", This, memid, cMaxNames);
+
+    if(!rgBstrNames)
+        return E_INVALIDARG;
+
+    *pcNames = 0;
+
     pFDesc = TLB_get_funcdesc_by_memberid(This->funcdescs, This->cFuncs, memid);
     if(pFDesc)
     {
-      /* function found, now return function and parameter names */
-      for(i=0; i<cMaxNames && i <= pFDesc->funcdesc.cParams; i++)
-      {
-        if(!i)
-	  *rgBstrNames=SysAllocString(TLB_get_bstr(pFDesc->Name));
-        else
-          rgBstrNames[i]=SysAllocString(TLB_get_bstr(pFDesc->pParamDesc[i-1].Name));
-      }
-      *pcNames=i;
+        if(!cMaxNames || !pFDesc->Name)
+            return S_OK;
+
+        *rgBstrNames = SysAllocString(TLB_get_bstr(pFDesc->Name));
+        ++(*pcNames);
+
+        for(i = 0; i < pFDesc->funcdesc.cParams; ++i){
+            if(*pcNames >= cMaxNames || !pFDesc->pParamDesc[i].Name)
+                return S_OK;
+            rgBstrNames[*pcNames] = SysAllocString(TLB_get_bstr(pFDesc->pParamDesc[i].Name));
+            ++(*pcNames);
+        }
+        return S_OK;
+    }
+
+    pVDesc = TLB_get_vardesc_by_memberid(This->vardescs, This->cVars, memid);
+    if(pVDesc)
+    {
+      *rgBstrNames=SysAllocString(TLB_get_bstr(pVDesc->Name));
+      *pcNames=1;
     }
     else
     {
-      pVDesc = TLB_get_vardesc_by_memberid(This->vardescs, This->cVars, memid);
-      if(pVDesc)
-      {
-        *rgBstrNames=SysAllocString(TLB_get_bstr(pVDesc->Name));
-        *pcNames=1;
-      }
-      else
-      {
         if(This->impltypes &&
 	   (This->typekind==TKIND_INTERFACE || This->typekind==TKIND_DISPATCH)) {
           /* recursive search */
@@ -6002,7 +6006,6 @@ static HRESULT WINAPI ITypeInfo_fnGetNames( ITypeInfo2 *iface, MEMBERID memid,
 	}
         *pcNames=0;
         return TYPE_E_ELEMENTNOTFOUND;
-      }
     }
     return S_OK;
 }
