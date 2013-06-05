@@ -4838,11 +4838,6 @@ static HRESULT WINAPI ITypeLib2_fnGetDocumentation(
                 if(!(*pBstrDocString = SysAllocString(TLB_get_bstr(This->DocString))))
                     goto memerr2;
             }
-            else if (This->Name)
-            {
-                if(!(*pBstrDocString = SysAllocString(TLB_get_bstr(This->Name))))
-                    goto memerr2;
-            }
             else
                 *pBstrDocString = NULL;
         }
