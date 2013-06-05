@@ -2146,7 +2146,7 @@ static void test_redundant_mode_set(void)
 
     hr = IDirectDraw2_SetDisplayMode(ddraw, surface_desc.dwWidth, surface_desc.dwHeight,
             U1(surface_desc.ddpfPixelFormat).dwRGBBitCount, 0, 0);
-    ok(SUCCEEDED(hr), "SetDipslayMode failed, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#x.\n", hr);
 
     GetWindowRect(window, &r);
     r.right /= 2;
@@ -2159,7 +2159,7 @@ static void test_redundant_mode_set(void)
 
     hr = IDirectDraw2_SetDisplayMode(ddraw, surface_desc.dwWidth, surface_desc.dwHeight,
             U1(surface_desc.ddpfPixelFormat).dwRGBBitCount, 0, 0);
-    ok(SUCCEEDED(hr), "SetDipslayMode failed, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#x.\n", hr);
 
     GetWindowRect(window, &s);
     ok(EqualRect(&r, &s), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
@@ -2274,7 +2274,7 @@ static void test_coop_level_mode_set(void)
     screen_size.cy = 0;
 
     hr = IDirectDraw2_SetDisplayMode(ddraw, 640, 480, 32, 0, 0);
-    ok(SUCCEEDED(hr), "SetDipslayMode failed, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#x.\n", hr);
 
     ok(!*expect_messages, "Expected message %#x, but didn't receive it.\n", *expect_messages);
     expect_messages = NULL;
@@ -2400,7 +2400,7 @@ static void test_coop_level_mode_set(void)
 
     hr = IDirectDraw2_SetDisplayMode(ddraw, 640, 480, 32, 0, 0);
     ok(SUCCEEDED(hr) || broken(hr == DDERR_NOEXCLUSIVEMODE) /* NT4 testbot */,
-        "SetDipslayMode failed, hr %#x.\n", hr);
+        "SetDisplayMode failed, hr %#x.\n", hr);
     if (hr == DDERR_NOEXCLUSIVEMODE)
     {
         win_skip("Broken SetDisplayMode(), skipping remaining tests.\n");
@@ -2531,7 +2531,7 @@ static void test_coop_level_mode_set(void)
     screen_size.cy = 0;
 
     hr = IDirectDraw2_SetDisplayMode(ddraw, 640, 480, 32, 0, 0);
-    ok(SUCCEEDED(hr), "SetDipslayMode failed, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#x.\n", hr);
 
     ok(!*expect_messages, "Expected message %#x, but didn't receive it.\n", *expect_messages);
     expect_messages = NULL;
@@ -2766,7 +2766,7 @@ static void test_coop_level_mode_set_multi(void)
      * release. */
     hr = IDirectDraw2_SetDisplayMode(ddraw1, 800, 600, 32, 0, 0);
     ok(SUCCEEDED(hr) || broken(hr == DDERR_NOEXCLUSIVEMODE) /* NT4 testbot */,
-            "SetDipslayMode failed, hr %#x.\n", hr);
+            "SetDisplayMode failed, hr %#x.\n", hr);
     if (hr == DDERR_NOEXCLUSIVEMODE)
     {
         win_skip("Broken SetDisplayMode(), skipping test.\n");
@@ -2790,7 +2790,7 @@ static void test_coop_level_mode_set_multi(void)
      * the initial mode, before the first SetDisplayMode() call. */
     ddraw1 = create_ddraw();
     hr = IDirectDraw2_SetDisplayMode(ddraw1, 800, 600, 32, 0, 0);
-    ok(SUCCEEDED(hr), "SetDipslayMode failed, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#x.\n", hr);
     w = GetSystemMetrics(SM_CXSCREEN);
     ok(w == 800, "Got unexpected screen width %u.\n", w);
     h = GetSystemMetrics(SM_CYSCREEN);
@@ -2798,7 +2798,7 @@ static void test_coop_level_mode_set_multi(void)
 
     ddraw2 = create_ddraw();
     hr = IDirectDraw2_SetDisplayMode(ddraw2, 640, 480, 32, 0, 0);
-    ok(SUCCEEDED(hr), "SetDipslayMode failed, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#x.\n", hr);
     w = GetSystemMetrics(SM_CXSCREEN);
     ok(w == 640, "Got unexpected screen width %u.\n", w);
     h = GetSystemMetrics(SM_CYSCREEN);
@@ -2821,7 +2821,7 @@ static void test_coop_level_mode_set_multi(void)
     /* Regardless of release ordering. */
     ddraw1 = create_ddraw();
     hr = IDirectDraw2_SetDisplayMode(ddraw1, 800, 600, 32, 0, 0);
-    ok(SUCCEEDED(hr), "SetDipslayMode failed, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#x.\n", hr);
     w = GetSystemMetrics(SM_CXSCREEN);
     ok(w == 800, "Got unexpected screen width %u.\n", w);
     h = GetSystemMetrics(SM_CYSCREEN);
@@ -2829,7 +2829,7 @@ static void test_coop_level_mode_set_multi(void)
 
     ddraw2 = create_ddraw();
     hr = IDirectDraw2_SetDisplayMode(ddraw2, 640, 480, 32, 0, 0);
-    ok(SUCCEEDED(hr), "SetDipslayMode failed, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#x.\n", hr);
     w = GetSystemMetrics(SM_CXSCREEN);
     ok(w == 640, "Got unexpected screen width %u.\n", w);
     h = GetSystemMetrics(SM_CYSCREEN);
@@ -2853,7 +2853,7 @@ static void test_coop_level_mode_set_multi(void)
     ddraw1 = create_ddraw();
     ddraw2 = create_ddraw();
     hr = IDirectDraw2_SetDisplayMode(ddraw2, 640, 480, 32, 0, 0);
-    ok(SUCCEEDED(hr), "SetDipslayMode failed, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#x.\n", hr);
     w = GetSystemMetrics(SM_CXSCREEN);
     ok(w == 640, "Got unexpected screen width %u.\n", w);
     h = GetSystemMetrics(SM_CYSCREEN);
@@ -2877,7 +2877,7 @@ static void test_coop_level_mode_set_multi(void)
      * restoring the display mode. */
     ddraw1 = create_ddraw();
     hr = IDirectDraw2_SetDisplayMode(ddraw1, 800, 600, 32, 0, 0);
-    ok(SUCCEEDED(hr), "SetDipslayMode failed, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#x.\n", hr);
     w = GetSystemMetrics(SM_CXSCREEN);
     ok(w == 800, "Got unexpected screen width %u.\n", w);
     h = GetSystemMetrics(SM_CYSCREEN);
@@ -2885,7 +2885,7 @@ static void test_coop_level_mode_set_multi(void)
 
     ddraw2 = create_ddraw();
     hr = IDirectDraw2_SetDisplayMode(ddraw2, 640, 480, 32, 0, 0);
-    ok(SUCCEEDED(hr), "SetDipslayMode failed, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#x.\n", hr);
     w = GetSystemMetrics(SM_CXSCREEN);
     ok(w == 640, "Got unexpected screen width %u.\n", w);
     h = GetSystemMetrics(SM_CYSCREEN);
@@ -2911,7 +2911,7 @@ static void test_coop_level_mode_set_multi(void)
     /* Exclusive mode blocks mode setting on other ddraw objects in general. */
     ddraw1 = create_ddraw();
     hr = IDirectDraw2_SetDisplayMode(ddraw1, 800, 600, 32, 0, 0);
-    ok(SUCCEEDED(hr), "SetDipslayMode failed, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#x.\n", hr);
     w = GetSystemMetrics(SM_CXSCREEN);
     ok(w == 800, "Got unexpected screen width %u.\n", w);
     h = GetSystemMetrics(SM_CYSCREEN);
