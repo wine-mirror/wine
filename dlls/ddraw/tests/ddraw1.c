@@ -2391,11 +2391,37 @@ static void test_coop_level_mode_set(void)
             fullscreen_rect.left, fullscreen_rect.top, fullscreen_rect.right, fullscreen_rect.bottom,
             r.left, r.top, r.right, r.bottom);
 
+    /* Unlike ddraw2-7, changing from EXCLUSIVE to NORMAL does not restore the resolution */
+    hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
+    hr = IDirectDraw_SetDisplayMode(ddraw, 640, 480, 32);
+    ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#x.\n", hr);
+
+    hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
+
+    hr = IDirectDraw_CreateSurface(ddraw, &ddsd, &primary, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n",hr);
+    hr = IDirectDrawSurface_GetSurfaceDesc(primary, &ddsd);
+    ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
+    ok(ddsd.dwWidth == s.right - s.left, "Expected surface width %u, got %u.\n",
+            s.right - s.left, ddsd.dwWidth);
+    ok(ddsd.dwHeight == s.bottom - s.top, "Expected surface height %u, got %u.\n",
+            s.bottom - s.top, ddsd.dwHeight);
+    IDirectDrawSurface_Release(primary);
+    hr = IDirectDraw_RestoreDisplayMode(ddraw);
+    ok(SUCCEEDED(hr), "RestoreDisplayMode failed, hr %#x.\n", hr);
+
     ref = IDirectDraw_Release(ddraw);
     ok(ref == 0, "The ddraw object was not properly freed: refcount %u.\n", ref);
 
     GetWindowRect(window, &r);
-    ok(EqualRect(&r, &fullscreen_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
+    ok(EqualRect(&r, &s), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
             fullscreen_rect.left, fullscreen_rect.top, fullscreen_rect.right, fullscreen_rect.bottom,
             r.left, r.top, r.right, r.bottom);
 

@@ -2019,7 +2019,7 @@ static void test_redundant_mode_set(void)
     DestroyWindow(window);
 }
 
-static SIZE screen_size;
+static SIZE screen_size, screen_size2;
 
 static LRESULT CALLBACK mode_set_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
@@ -2032,6 +2032,17 @@ static LRESULT CALLBACK mode_set_proc(HWND hwnd, UINT message, WPARAM wparam, LP
     return test_proc(hwnd, message, wparam, lparam);
 }
 
+static LRESULT CALLBACK mode_set_proc2(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
+{
+    if (message == WM_SIZE)
+    {
+        screen_size2.cx = GetSystemMetrics(SM_CXSCREEN);
+        screen_size2.cy = GetSystemMetrics(SM_CYSCREEN);
+    }
+
+    return test_proc(hwnd, message, wparam, lparam);
+}
+
 static void test_coop_level_mode_set(void)
 {
     IDirectDrawSurface7 *primary;
@@ -2039,7 +2050,7 @@ static void test_coop_level_mode_set(void)
     IDirectDraw7 *ddraw;
     DDSURFACEDESC2 ddsd;
     WNDCLASSA wc = {0};
-    HWND window;
+    HWND window, window2;
     HRESULT hr;
     ULONG ref;
 
@@ -2067,8 +2078,13 @@ static void test_coop_level_mode_set(void)
     wc.lpfnWndProc = mode_set_proc;
     wc.lpszClassName = "ddraw_test_wndproc_wc";
     ok(RegisterClassA(&wc), "Failed to register window class.\n");
+    wc.lpfnWndProc = mode_set_proc2;
+    wc.lpszClassName = "ddraw_test_wndproc_wc2";
+    ok(RegisterClassA(&wc), "Failed to register window class.\n");
 
     window = CreateWindowA("ddraw_test_wndproc_wc", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 100, 100, 0, 0, 0, 0);
+    window2 = CreateWindowA("ddraw_test_wndproc_wc2", "ddraw_test", WS_OVERLAPPEDWINDOW,
             0, 0, 100, 100, 0, 0, 0, 0);
 
     SetRect(&fullscreen_rect, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
@@ -2437,17 +2453,132 @@ static void test_coop_level_mode_set(void)
             fullscreen_rect.left, fullscreen_rect.top, fullscreen_rect.right, fullscreen_rect.bottom,
             r.left, r.top, r.right, r.bottom);
 
-    ref = IDirectDraw7_Release(ddraw);
-    ok(ref == 0, "The ddraw object was not properly freed: refcount %u.\n", ref);
+    /* Changing the coop level from EXCLUSIVE to NORMAL restores the screen resolution */
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
+    hr = IDirectDraw7_SetDisplayMode(ddraw, 640, 480, 32, 0, 0);
+    ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#x.\n", hr);
+
+    expect_messages = exclusive_messages;
+    screen_size.cx = 0;
+    screen_size.cy = 0;
+
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
+
+    ok(!*expect_messages, "Expected message %#x, but didn't receive it.\n", *expect_messages);
+    expect_messages = NULL;
+    ok(screen_size.cx == fullscreen_rect.right && screen_size.cy == fullscreen_rect.bottom,
+            "Expected screen size %ux%u, got %ux%u.\n",
+            fullscreen_rect.right, fullscreen_rect.bottom, screen_size.cx, screen_size.cy);
 
     GetWindowRect(window, &r);
     ok(EqualRect(&r, &fullscreen_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
             fullscreen_rect.left, fullscreen_rect.top, fullscreen_rect.right, fullscreen_rect.bottom,
             r.left, r.top, r.right, r.bottom);
 
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
+
+    hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &primary, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n",hr);
+    hr = IDirectDrawSurface7_GetSurfaceDesc(primary, &ddsd);
+    ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
+    ok(ddsd.dwWidth == fullscreen_rect.right - fullscreen_rect.left, "Expected surface width %u, got %u.\n",
+            fullscreen_rect.right - fullscreen_rect.left, ddsd.dwWidth);
+    ok(ddsd.dwHeight == fullscreen_rect.bottom - fullscreen_rect.top, "Expected surface height %u, got %u.\n",
+            fullscreen_rect.bottom - fullscreen_rect.top, ddsd.dwHeight);
+    IDirectDrawSurface7_Release(primary);
+
+    /* The screen restore is a property of DDSCL_EXCLUSIVE  */
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL | DDSCL_FULLSCREEN);
+    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
+    hr = IDirectDraw7_SetDisplayMode(ddraw, 640, 480, 32, 0, 0);
+    ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#x.\n", hr);
+
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
+
+    hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &primary, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n",hr);
+    hr = IDirectDrawSurface7_GetSurfaceDesc(primary, &ddsd);
+    ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
+    ok(ddsd.dwWidth == s.right - s.left, "Expected surface width %u, got %u.\n",
+            s.right - s.left, ddsd.dwWidth);
+    ok(ddsd.dwHeight == s.bottom - s.top, "Expected surface height %u, got %u.\n",
+            s.bottom - s.top, ddsd.dwHeight);
+    IDirectDrawSurface7_Release(primary);
+
+    hr = IDirectDraw_RestoreDisplayMode(ddraw);
+    ok(SUCCEEDED(hr), "RestoreDisplayMode failed, hr %#x.\n", hr);
+
+    /* If the window is changed at the same time, messages are sent to the new window. */
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
+    hr = IDirectDraw7_SetDisplayMode(ddraw, 640, 480, 32, 0, 0);
+    ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#x.\n", hr);
+
+    expect_messages = exclusive_messages;
+    screen_size.cx = 0;
+    screen_size.cy = 0;
+    screen_size2.cx = 0;
+    screen_size2.cy = 0;
+
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw, window2, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
+
+    ok(!*expect_messages, "Expected message %#x, but didn't receive it.\n", *expect_messages);
+    expect_messages = NULL;
+    ok(!screen_size.cx && !screen_size.cy, "Got unxpected screen size %ux%u.\n",
+            screen_size.cx, screen_size.cy);
+    ok(screen_size2.cx == fullscreen_rect.right && screen_size2.cy == fullscreen_rect.bottom,
+            "Expected screen size 2 %ux%u, got %ux%u.\n",
+            fullscreen_rect.right, fullscreen_rect.bottom, screen_size2.cx, screen_size2.cy);
+
+    GetWindowRect(window, &r);
+    ok(EqualRect(&r, &s), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
+            s.left, s.top, s.right, s.bottom,
+            r.left, r.top, r.right, r.bottom);
+    GetWindowRect(window2, &r);
+    ok(EqualRect(&r, &fullscreen_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
+            fullscreen_rect.left, fullscreen_rect.top, fullscreen_rect.right, fullscreen_rect.bottom,
+            r.left, r.top, r.right, r.bottom);
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
+
+    hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &primary, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n",hr);
+    hr = IDirectDrawSurface7_GetSurfaceDesc(primary, &ddsd);
+    ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
+    ok(ddsd.dwWidth == fullscreen_rect.right - fullscreen_rect.left, "Expected surface width %u, got %u.\n",
+            fullscreen_rect.right - fullscreen_rect.left, ddsd.dwWidth);
+    ok(ddsd.dwHeight == fullscreen_rect.bottom - fullscreen_rect.top, "Expected surface height %u, got %u.\n",
+            fullscreen_rect.bottom - fullscreen_rect.top, ddsd.dwHeight);
+    IDirectDrawSurface7_Release(primary);
+
+    ref = IDirectDraw7_Release(ddraw);
+    ok(ref == 0, "The ddraw object was not properly freed: refcount %u.\n", ref);
+
+    GetWindowRect(window, &r);
+    ok(EqualRect(&r, &s), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
+            s.left, s.top, s.right, s.bottom,
+            r.left, r.top, r.right, r.bottom);
+
     expect_messages = NULL;
     DestroyWindow(window);
+    DestroyWindow(window2);
     UnregisterClassA("ddraw_test_wndproc_wc", GetModuleHandleA(NULL));
+    UnregisterClassA("ddraw_test_wndproc_wc2", GetModuleHandleA(NULL));
 }
 
 static void test_coop_level_mode_set_multi(void)
@@ -2908,6 +3039,144 @@ static void test_clear_rect_count(void)
     DestroyWindow(window);
 }
 
+static BOOL test_mode_restored(IDirectDraw7 *ddraw, HWND window)
+{
+    DDSURFACEDESC2 ddsd1, ddsd2;
+    HRESULT hr;
+
+    memset(&ddsd1, 0, sizeof(ddsd1));
+    ddsd1.dwSize = sizeof(ddsd1);
+    hr = IDirectDraw7_GetDisplayMode(ddraw, &ddsd1);
+    ok(SUCCEEDED(hr), "GetDisplayMode failed, hr %#x.\n", hr);
+
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
+    hr = IDirectDraw7_SetDisplayMode(ddraw, 640, 480, 32, 0, 0);
+    ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#x.\n", hr);
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
+
+    memset(&ddsd2, 0, sizeof(ddsd2));
+    ddsd2.dwSize = sizeof(ddsd2);
+    hr = IDirectDraw7_GetDisplayMode(ddraw, &ddsd2);
+    ok(SUCCEEDED(hr), "GetDisplayMode failed, hr %#x.\n", hr);
+    hr = IDirectDraw7_RestoreDisplayMode(ddraw);
+    ok(SUCCEEDED(hr), "RestoreDisplayMode failed, hr %#x.\n", hr);
+
+    return ddsd1.dwWidth == ddsd2.dwWidth && ddsd1.dwHeight == ddsd2.dwHeight;
+}
+
+static void test_coop_level_versions(void)
+{
+    HWND window;
+    IDirectDraw *ddraw;
+    HRESULT hr;
+    BOOL restored;
+    IDirectDrawSurface *surface;
+    IDirectDraw7 *ddraw7;
+    DDSURFACEDESC ddsd;
+
+    window = CreateWindowA("static", "ddraw_test1", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+
+    if (!(ddraw7 = create_ddraw()))
+        goto done;
+    /* Newly created ddraw objects restore the mode on ddraw2+::SetCooperativeLevel(NORMAL) */
+    restored = test_mode_restored(ddraw7, window);
+    ok(restored, "Display mode not restored in new ddraw object\n");
+
+    /* A failing ddraw1::SetCooperativeLevel call does not have an effect */
+    hr = IDirectDraw7_QueryInterface(ddraw7, &IID_IDirectDraw, (void **)&ddraw);
+    ok(SUCCEEDED(hr), "QueryInterface failed, hr %#x.\n", hr);
+
+    hr = IDirectDraw_SetCooperativeLevel(ddraw, NULL, DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE);
+    ok(FAILED(hr), "SetCooperativeLevel returned %#x, expected failure.\n", hr);
+    restored = test_mode_restored(ddraw7, window);
+    ok(restored, "Display mode not restored after bad ddraw1::SetCooperativeLevel call\n");
+
+    /* A successful one does */
+    hr = IDirectDraw_SetCooperativeLevel(ddraw, NULL, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
+    restored = test_mode_restored(ddraw7, window);
+    ok(!restored, "Display mode restored after good ddraw1::SetCooperativeLevel call\n");
+
+    IDirectDraw_Release(ddraw);
+    IDirectDraw7_Release(ddraw7);
+
+    if (!(ddraw7 = create_ddraw()))
+        goto done;
+    hr = IDirectDraw7_QueryInterface(ddraw7, &IID_IDirectDraw, (void **)&ddraw);
+    ok(SUCCEEDED(hr), "QueryInterface failed, hr %#x.\n", hr);
+
+    hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_SETFOCUSWINDOW);
+    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
+    restored = test_mode_restored(ddraw7, window);
+    ok(!restored, "Display mode restored after ddraw1::SetCooperativeLevel(SETFOCUSWINDOW) call\n");
+
+    IDirectDraw_Release(ddraw);
+    IDirectDraw7_Release(ddraw7);
+
+    /* A failing call does not restore the ddraw2+ behavior */
+    if (!(ddraw7 = create_ddraw()))
+        goto done;
+    hr = IDirectDraw7_QueryInterface(ddraw7, &IID_IDirectDraw, (void **)&ddraw);
+    ok(SUCCEEDED(hr), "QueryInterface failed, hr %#x.\n", hr);
+
+    hr = IDirectDraw_SetCooperativeLevel(ddraw, NULL, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
+    hr = IDirectDraw_SetCooperativeLevel(ddraw, NULL, DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE);
+    ok(FAILED(hr), "SetCooperativeLevel returned %#x, expected failure.\n", hr);
+    restored = test_mode_restored(ddraw7, window);
+    ok(!restored, "Display mode restored after good-bad ddraw1::SetCooperativeLevel() call sequence\n");
+
+    IDirectDraw_Release(ddraw);
+    IDirectDraw7_Release(ddraw7);
+
+    /* Neither does a sequence of successful calls with the new interface */
+    if (!(ddraw7 = create_ddraw()))
+        goto done;
+    hr = IDirectDraw7_QueryInterface(ddraw7, &IID_IDirectDraw, (void **)&ddraw);
+    ok(SUCCEEDED(hr), "QueryInterface failed, hr %#x.\n", hr);
+
+    hr = IDirectDraw_SetCooperativeLevel(ddraw, NULL, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw7, window, DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE);
+    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw7, window, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
+
+    restored = test_mode_restored(ddraw7, window);
+    ok(!restored, "Display mode restored after ddraw1-ddraw7 SetCooperativeLevel() call sequence\n");
+    IDirectDraw_Release(ddraw);
+    IDirectDraw7_Release(ddraw7);
+
+    /* ddraw1::CreateSurface does not triger the ddraw1 behavior */
+    if (!(ddraw7 = create_ddraw()))
+        goto done;
+    hr = IDirectDraw7_QueryInterface(ddraw7, &IID_IDirectDraw, (void **)&ddraw);
+    ok(SUCCEEDED(hr), "QueryInterface failed, hr %#x.\n", hr);
+
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw7, window, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
+    ddsd.dwWidth = ddsd.dwHeight = 8;
+    hr = IDirectDraw_CreateSurface(ddraw, &ddsd, &surface, NULL);
+    ok(SUCCEEDED(hr), "CreateSurface failed, hr %#x.\n", hr);
+    IDirectDrawSurface_Release(surface);
+    restored = test_mode_restored(ddraw7, window);
+    ok(restored, "Display mode not restored after ddraw1::CreateSurface() call\n");
+
+    IDirectDraw_Release(ddraw);
+    IDirectDraw7_Release(ddraw7);
+
+done:
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw7)
 {
     HMODULE module = GetModuleHandleA("ddraw.dll");
@@ -2942,4 +3211,5 @@ START_TEST(ddraw7)
     test_coop_level_multi_window();
     test_draw_strided();
     test_clear_rect_count();
+    test_coop_level_versions();
 }
