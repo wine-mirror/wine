@@ -319,12 +319,9 @@ static HRESULT WINAPI IDirect3DRMDevice2Impl_SetTextureQuality(IDirect3DRMDevice
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMDevice2Impl_GetViewports(IDirect3DRMDevice2* iface,
-                                                          LPDIRECT3DRMVIEWPORTARRAY *return_views)
+static HRESULT WINAPI IDirect3DRMDevice2Impl_GetViewports(IDirect3DRMDevice2 *iface, IDirect3DRMViewportArray **array)
 {
-    IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice2(iface);
-
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, return_views);
+    FIXME("iface %p, array %p stub!\n", iface, array);
 
     return E_NOTIMPL;
 }
@@ -751,12 +748,9 @@ static HRESULT WINAPI IDirect3DRMDevice3Impl_SetTextureQuality(IDirect3DRMDevice
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMDevice3Impl_GetViewports(IDirect3DRMDevice3* iface,
-                                                          LPDIRECT3DRMVIEWPORTARRAY *return_views)
+static HRESULT WINAPI IDirect3DRMDevice3Impl_GetViewports(IDirect3DRMDevice3 *iface, IDirect3DRMViewportArray **array)
 {
-    IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice3(iface);
-
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, return_views);
+    FIXME("iface %p, array %p stub!\n", iface, array);
 
     return E_NOTIMPL;
 }
