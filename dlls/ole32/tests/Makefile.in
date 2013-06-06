@@ -11,6 +11,7 @@ C_SRCS = \
 	marshal.c \
 	moniker.c \
 	ole2.c \
+	ole_server.c \
 	propvariant.c \
 	stg_prop.c \
 	storage32.c \
