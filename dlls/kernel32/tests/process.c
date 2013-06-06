@@ -2048,7 +2048,7 @@ static void test_DuplicateHandle(void)
     f = CreateFile("CONIN$", GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
     if (!is_console(f))
     {
-        skip("DuplicateHandle on console handle");
+        skip("DuplicateHandle on console handle\n");
         CloseHandle(f);
         return;
     }
