@@ -94,6 +94,8 @@ struct JoystickData {
 #define IDC_FFSELECTCOMBO   2009
 #define IDC_FFEFFECTLIST    2010
 
+#define ICO_MAIN            100
+
 /* constants */
 #define TEST_POLL_TIME      100
 

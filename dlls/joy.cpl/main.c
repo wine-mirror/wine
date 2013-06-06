@@ -1009,6 +1009,7 @@ LONG CALLBACK CPlApplet(HWND hwnd, UINT command, LPARAM lParam1, LPARAM lParam2)
         {
             CPLINFO *appletInfo = (CPLINFO *) lParam2;
 
+            appletInfo->idIcon = ICO_MAIN;
             appletInfo->idName = IDS_CPL_NAME;
             appletInfo->idInfo = IDS_CPL_INFO;
             appletInfo->lData = 0;
