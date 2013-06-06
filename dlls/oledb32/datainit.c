@@ -298,7 +298,7 @@ struct dbproperty {
 
 static const WCHAR conn_timeout[] = {'C','o','n','n','e','c','t',' ','T','i','m','e','o','u','t',0};
 static const WCHAR datasourceW[] = {'D','a','t','a',' ','S','o','u','r','c','e',0};
-static const WCHAR extemdedW[] = {'E','x','t','e','n','d','e','d',' ','P','r','o','p','e','r','t','i','e','s',0};
+static const WCHAR extendedW[] = {'E','x','t','e','n','d','e','d',' ','P','r','o','p','e','r','t','i','e','s',0};
 static const WCHAR gen_timeout[] = {'G','e','n','e','r','a','l',' ','T','i','m','e','o','u','t',0};
 static const WCHAR initcatW[] = {'I','n','i','t','i','a','l',' ','C','a','t','a','l','o','g',0};
 static const WCHAR localeIDW[] = {'L','o','c','a','l','e',' ','I','d','e','n','t','i','f','i','e','r',0};
@@ -306,7 +306,7 @@ static const WCHAR locationW[] = {'L','o','c','a','t','i','o','n',0};
 static const WCHAR modeW[] = {'M','o','d','e',0};
 static const WCHAR oledbservW[] = {'O','L','E',' ','D','B',' ','S','e','r','v','i','c','i','e','s',0};
 static const WCHAR passwordW[] = {'P','a','s','s','w','o','r','d',0};
-static const WCHAR persiststW[] = {'P','e','r','s','i','s','t',' ','S','e','c','u','r','i','t','y',' ','I','n','f','o',0};
+static const WCHAR persistW[]  = {'P','e','r','s','i','s','t',' ','S','e','c','u','r','i','t','y',' ','I','n','f','o',0};
 static const WCHAR promptW[] = {'P','r','o','m','p','t',0};
 static const WCHAR useridW[] = {'U','s','e','r',' ','I','D',0};
 static const WCHAR winhandleW[] = {'W','i','n','d','o','w',' ','H','a','n','d','l','e',0};
@@ -314,7 +314,7 @@ static const WCHAR winhandleW[] = {'W','i','n','d','o','w',' ','H','a','n','d','
 static const struct dbproperty dbproperties[] = {
     { conn_timeout,DBPROP_INIT_TIMEOUT,                    DBPROPOPTIONS_OPTIONAL, VT_I4 },
     { datasourceW, DBPROP_INIT_DATASOURCE,                 DBPROPOPTIONS_REQUIRED, VT_BSTR },
-    { extemdedW,   DBPROP_INIT_PROVIDERSTRING,             DBPROPOPTIONS_REQUIRED, VT_BSTR },
+    { extendedW,   DBPROP_INIT_PROVIDERSTRING,             DBPROPOPTIONS_REQUIRED, VT_BSTR },
     { gen_timeout, DBPROP_INIT_GENERALTIMEOUT,             DBPROPOPTIONS_OPTIONAL, VT_I4 },
     { initcatW,    DBPROP_CATALOGLOCATION,                 DBPROPOPTIONS_OPTIONAL, VT_BSTR },
     { localeIDW,   DBPROP_INIT_LCID,                       DBPROPOPTIONS_OPTIONAL, VT_I4 },
@@ -322,11 +322,16 @@ static const struct dbproperty dbproperties[] = {
     { modeW,       DBPROP_INIT_MODE,                       DBPROPOPTIONS_OPTIONAL, VT_I4 },
     { oledbservW,  DBPROP_INIT_OLEDBSERVICES,              DBPROPOPTIONS_OPTIONAL, VT_I4 },
     { passwordW,   DBPROP_AUTH_PASSWORD,                   DBPROPOPTIONS_OPTIONAL, VT_BSTR },
-    { persiststW,  DBPROP_AUTH_PERSIST_SENSITIVE_AUTHINFO, DBPROPOPTIONS_OPTIONAL, VT_BOOL },
+    { persistW,    DBPROP_AUTH_PERSIST_SENSITIVE_AUTHINFO, DBPROPOPTIONS_OPTIONAL, VT_BOOL },
     { promptW,     DBPROP_INIT_PROMPT,                     DBPROPOPTIONS_OPTIONAL, VT_I2 },
     { useridW,     DBPROP_AUTH_USERID,                     DBPROPOPTIONS_OPTIONAL, VT_BSTR },
+#ifndef _WIN64
     { winhandleW,  DBPROP_INIT_HWND,                       DBPROPOPTIONS_OPTIONAL, VT_I4 },
+#else
+    { winhandleW,  DBPROP_INIT_HWND,                       DBPROPOPTIONS_OPTIONAL, VT_I8 },
+#endif
 };
+
 
 static HRESULT set_dbpropset(BSTR name, BSTR value, DBPROPSET **propset)
 {
