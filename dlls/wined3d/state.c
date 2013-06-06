@@ -946,7 +946,7 @@ static void state_stencilwrite(struct wined3d_context *context, const struct win
     checkGLcall("glStencilMask");
 }
 
-void state_fog_vertexpart(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+static void state_fog_vertexpart(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
 

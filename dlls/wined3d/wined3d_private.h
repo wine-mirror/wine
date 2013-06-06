@@ -2626,8 +2626,6 @@ void state_clipping(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 void light(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
-void state_fog_vertexpart(struct wined3d_context *context,
-        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 void vertexdeclaration(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 void clipplane(struct wined3d_context *context,
