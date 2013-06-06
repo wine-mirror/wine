@@ -575,6 +575,41 @@ int macdrv_err_on;
         [self adjustWindowLevels:[NSApp isActive]];
     }
 
+    - (void) updateFullscreenWindows
+    {
+        if (capture_displays_for_fullscreen && [NSApp isActive])
+        {
+            BOOL anyFullscreen = FALSE;
+            NSNumber* windowNumber;
+            for (windowNumber in [NSWindow windowNumbersWithOptions:0])
+            {
+                WineWindow* window = (WineWindow*)[NSApp windowWithWindowNumber:[windowNumber integerValue]];
+                if ([window isKindOfClass:[WineWindow class]] && window.fullscreen)
+                {
+                    anyFullscreen = TRUE;
+                    break;
+                }
+            }
+
+            if (anyFullscreen)
+            {
+                if ([self areDisplaysCaptured] || CGCaptureAllDisplays() == CGDisplayNoErr)
+                    displaysCapturedForFullscreen = TRUE;
+            }
+            else if (displaysCapturedForFullscreen)
+            {
+                if ([originalDisplayModes count] || CGReleaseAllDisplays() == CGDisplayNoErr)
+                    displaysCapturedForFullscreen = FALSE;
+            }
+        }
+    }
+
+    - (void) activeSpaceDidChange
+    {
+        [self updateFullscreenWindows];
+        [self adjustWindowLevels];
+    }
+
     - (void) sendDisplaysChanged:(BOOL)activating
     {
         macdrv_event* event;
@@ -680,7 +715,8 @@ int macdrv_err_on;
             if ([originalDisplayModes count] == 1) // If this is the last changed display, do a blanket reset
             {
                 CGRestorePermanentDisplayConfiguration();
-                CGReleaseAllDisplays();
+                if (!displaysCapturedForFullscreen)
+                    CGReleaseAllDisplays();
                 [originalDisplayModes removeAllObjects];
                 ret = TRUE;
             }
@@ -695,7 +731,8 @@ int macdrv_err_on;
         }
         else
         {
-            if ([originalDisplayModes count] || CGCaptureAllDisplays() == CGDisplayNoErr)
+            if ([originalDisplayModes count] || displaysCapturedForFullscreen ||
+                CGCaptureAllDisplays() == CGDisplayNoErr)
             {
                 if (CGDisplaySetDisplayMode(displayID, mode, NULL) == CGDisplayNoErr)
                 {
@@ -705,7 +742,8 @@ int macdrv_err_on;
                 else if (![originalDisplayModes count])
                 {
                     CGRestorePermanentDisplayConfiguration();
-                    CGReleaseAllDisplays();
+                    if (!displaysCapturedForFullscreen)
+                        CGReleaseAllDisplays();
                 }
             }
         }
@@ -720,7 +758,7 @@ int macdrv_err_on;
 
     - (BOOL) areDisplaysCaptured
     {
-        return ([originalDisplayModes count] > 0);
+        return ([originalDisplayModes count] > 0 || displaysCapturedForFullscreen);
     }
 
     - (void) hideCursor
@@ -851,11 +889,12 @@ int macdrv_err_on;
             NSRunningApplication* app;
             NSRunningApplication* otherValidApp = nil;
 
-            if ([originalDisplayModes count])
+            if ([originalDisplayModes count] || displaysCapturedForFullscreen)
             {
                 CGRestorePermanentDisplayConfiguration();
                 CGReleaseAllDisplays();
                 [originalDisplayModes removeAllObjects];
+                displaysCapturedForFullscreen = FALSE;
             }
 
             for (app in [[NSWorkspace sharedWorkspace] runningApplications])
@@ -1661,6 +1700,12 @@ int macdrv_err_on;
                 lastTargetWindow = nil;
             if (window == self.mouseCaptureWindow)
                 self.mouseCaptureWindow = nil;
+            if ([window isKindOfClass:[WineWindow class]] && [(WineWindow*)window isFullscreen])
+            {
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0), dispatch_get_main_queue(), ^{
+                    [self updateFullscreenWindows];
+                });
+            }
         }];
 
         [nc addObserver:self
@@ -1673,7 +1718,7 @@ int macdrv_err_on;
         [NSTextInputContext self];
 
         [wsnc addObserver:self
-                 selector:@selector(adjustWindowLevels)
+                 selector:@selector(activeSpaceDidChange)
                      name:NSWorkspaceActiveSpaceDidChangeNotification
                    object:nil];
     }
@@ -1705,6 +1750,7 @@ int macdrv_err_on;
     {
         [self activateCursorClipping];
 
+        [self updateFullscreenWindows];
         [self adjustWindowLevels:YES];
 
         if (beenActive && ![self frontWineWindow])

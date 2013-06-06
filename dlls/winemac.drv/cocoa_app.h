@@ -66,6 +66,7 @@ enum {
     NSUInteger unmatchedMouseDowns;
 
     NSMutableDictionary* originalDisplayModes;
+    BOOL displaysCapturedForFullscreen;
 
     NSArray*    cursorFrames;
     int         cursorFrame;
@@ -109,6 +110,7 @@ enum {
 
     - (WineWindow*) frontWineWindow;
     - (void) adjustWindowLevels;
+    - (void) updateFullscreenWindows;
 
     - (BOOL) handleEvent:(NSEvent*)anEvent;
     - (void) didSendEvent:(NSEvent*)anEvent;

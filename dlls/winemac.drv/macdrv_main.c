@@ -38,11 +38,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(macdrv);
 #define kCFCoreFoundationVersionNumber10_7      635.00
 #endif
 
+#define IS_OPTION_TRUE(ch) \
+    ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
+
 C_ASSERT(NUM_EVENT_TYPES <= sizeof(macdrv_event_mask) * 8);
 
 DWORD thread_data_tls_index = TLS_OUT_OF_INDEXES;
 
 int topmost_float_inactive = TOPMOST_FLOAT_INACTIVE_NONFULLSCREEN;
+int capture_displays_for_fullscreen = 0;
 
 
 /**************************************************************************
@@ -148,6 +152,9 @@ static void setup_options(void)
         else
             topmost_float_inactive = TOPMOST_FLOAT_INACTIVE_NONFULLSCREEN;
     }
+
+    if (!get_config_key(hkey, appkey, "CaptureDisplaysForFullscreen", buffer, sizeof(buffer)))
+        capture_displays_for_fullscreen = IS_OPTION_TRUE(buffer[0]);
 
     if (appkey) RegCloseKey(appkey);
     if (hkey) RegCloseKey(hkey);

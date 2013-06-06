@@ -450,7 +450,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
 @implementation WineWindow
 
-    @synthesize disabled, noActivate, floating, latentParentWindow, hwnd, queue;
+    @synthesize disabled, noActivate, floating, fullscreen, latentParentWindow, hwnd, queue;
     @synthesize surface, surface_mutex;
     @synthesize shape, shapeChangedSinceLastDraw;
     @synthesize colorKeyed, colorKeyRed, colorKeyGreen, colorKeyBlue;
@@ -513,11 +513,18 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         [window setContentView:contentView];
         [window setInitialFirstResponder:contentView];
 
+        [[NSNotificationCenter defaultCenter] addObserver:window
+                                                 selector:@selector(updateFullscreen)
+                                                     name:NSApplicationDidChangeScreenParametersNotification
+                                                   object:NSApp];
+        [window updateFullscreen];
+
         return window;
     }
 
     - (void) dealloc
     {
+        [[NSNotificationCenter defaultCenter] removeObserver:self];
         [liveResizeDisplayTimer invalidate];
         [liveResizeDisplayTimer release];
         [queue release];
@@ -570,12 +577,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
     - (NSInteger) minimumLevelForActive:(BOOL)active
     {
-        NSScreen* screen;
-        BOOL fullscreen;
         NSInteger level;
-
-        screen = screen_covered_by_rect([self frame], [NSScreen screens]);
-        fullscreen = (screen != nil);
 
         if (self.floating && (active || topmost_float_inactive == TOPMOST_FLOAT_INACTIVE_ALL ||
                               (topmost_float_inactive == TOPMOST_FLOAT_INACTIVE_NONFULLSCREEN && !fullscreen)))
@@ -587,7 +589,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         {
             BOOL captured;
 
-            captured = (screen || [self screen]) && [[WineApplicationController sharedController] areDisplaysCaptured];
+            captured = (fullscreen || [self screen]) && [[WineApplicationController sharedController] areDisplaysCaptured];
 
             if (captured || fullscreen)
             {
@@ -717,6 +719,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         if (on_screen && ![self isMiniaturized])
         {
             BOOL needAdjustWindowLevels = FALSE;
+            BOOL wasVisible = [self isVisible];
 
             [controller transformProcessToForeground];
 
@@ -758,7 +761,11 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
                 needAdjustWindowLevels = TRUE;
             }
             if (needAdjustWindowLevels)
+            {
+                if (!wasVisible && fullscreen && [self isOnActiveSpace])
+                    [controller updateFullscreenWindows];
                 [controller adjustWindowLevels];
+            }
 
             if (pendingMinimize)
             {
@@ -783,13 +790,36 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
     - (void) doOrderOut
     {
+        WineApplicationController* controller = [WineApplicationController sharedController];
+        BOOL wasVisible = [self isVisible];
+        BOOL wasOnActiveSpace = [self isOnActiveSpace];
+
         if ([self isMiniaturized])
             pendingMinimize = TRUE;
         self.latentParentWindow = [self parentWindow];
         [latentParentWindow removeChildWindow:self];
         [self orderOut:nil];
-        [[WineApplicationController sharedController] adjustWindowLevels];
+        if (wasVisible && wasOnActiveSpace && fullscreen)
+            [controller updateFullscreenWindows];
+        [controller adjustWindowLevels];
         [NSApp removeWindowsItem:self];
+    }
+
+    - (void) updateFullscreen
+    {
+        NSRect contentRect = [self contentRectForFrameRect:[self frame]];
+        BOOL nowFullscreen = (screen_covered_by_rect(contentRect, [NSScreen screens]) != nil);
+
+        if (nowFullscreen != fullscreen)
+        {
+            WineApplicationController* controller = [WineApplicationController sharedController];
+
+            fullscreen = nowFullscreen;
+            if ([self isVisible] && [self isOnActiveSpace])
+                [controller updateFullscreenWindows];
+
+            [controller adjustWindowLevels];
+        }
     }
 
     - (BOOL) setFrameIfOnScreen:(NSRect)contentRect
@@ -829,14 +859,10 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
                 else
                     [self setFrame:frame display:YES];
 
+                [self updateFullscreen];
+
                 if (on_screen)
                 {
-                    BOOL fullscreen = (screen_covered_by_rect(frame, screens) != nil);
-                    BOOL oldFullscreen = (screen_covered_by_rect(oldFrame, screens) != nil);
-
-                    if (fullscreen != oldFullscreen)
-                        [[WineApplicationController sharedController] adjustWindowLevels];
-
                     /* In case Cocoa adjusted the frame we tried to set, generate a frame-changed
                        event.  The back end will ignore it if nothing actually changed. */
                     [self windowDidResize:nil];
@@ -929,6 +955,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         WineApplicationController* controller = [WineApplicationController sharedController];
         NSArray* screens;
         WineWindow* front;
+        BOOL wasVisible = [self isVisible];
 
         [controller transformProcessToForeground];
 
@@ -961,6 +988,8 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         if (front && [self level] < [front level])
             [self setLevel:[front level]];
         [self orderFront:nil];
+        if (!wasVisible && fullscreen && [self isOnActiveSpace])
+            [controller updateFullscreenWindows];
         [controller adjustWindowLevels];
 
         if (pendingMinimize)
@@ -1071,6 +1100,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
     {
         WineApplicationController* controller = [WineApplicationController sharedController];
         WineWindow* front = [controller frontWineWindow];
+        BOOL wasVisible = [self isVisible];
 
         if (![self isKeyWindow] && !self.disabled && !self.noActivate)
             [controller windowGotFocus:self];
@@ -1078,6 +1108,8 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         if (front && [self level] < [front level])
             [self setLevel:[front level]];
         [self orderFront:nil];
+        if (!wasVisible && fullscreen && [self isOnActiveSpace])
+            [controller updateFullscreenWindows];
         [controller adjustWindowLevels];
 
         if (pendingMinimize)
@@ -1220,6 +1252,8 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
         ignore_windowDeminiaturize = FALSE;
 
+        if (fullscreen && [self isOnActiveSpace])
+            [controller updateFullscreenWindows];
         [controller adjustWindowLevels];
 
         if (!self.disabled && !self.noActivate)
@@ -1238,6 +1272,12 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         [liveResizeDisplayTimer invalidate];
         [liveResizeDisplayTimer release];
         liveResizeDisplayTimer = nil;
+    }
+
+    - (void)windowDidMiniaturize:(NSNotification *)notification
+    {
+        if (fullscreen && [self isOnActiveSpace])
+            [[WineApplicationController sharedController] updateFullscreenWindows];
     }
 
     - (void)windowDidMove:(NSNotification *)notification
@@ -1281,6 +1321,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         macdrv_release_event(event);
 
         [[[self contentView] inputContext] invalidateCharacterCoordinates];
+        [self updateFullscreen];
     }
 
     - (BOOL)windowShouldClose:(id)sender
