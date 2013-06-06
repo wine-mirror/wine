@@ -1153,19 +1153,17 @@ static const struct wined3d_resource_ops texture3d_resource_ops =
     texture3d_unload,
 };
 
-static HRESULT volumetexture_init(struct wined3d_texture *texture, UINT width, UINT height,
-        UINT depth, UINT levels, struct wined3d_device *device, DWORD usage, enum wined3d_format_id format_id,
-        enum wined3d_pool pool, void *parent, const struct wined3d_parent_ops *parent_ops)
+static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct wined3d_resource_desc *desc,
+        UINT levels, struct wined3d_device *device, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    struct wined3d_resource_desc desc;
     UINT tmp_w, tmp_h, tmp_d;
     unsigned int i;
     HRESULT hr;
 
     /* TODO: It should only be possible to create textures for formats
      * that are reported as supported. */
-    if (WINED3DFMT_UNKNOWN >= format_id)
+    if (WINED3DFMT_UNKNOWN >= desc->format)
     {
         WARN("(%p) : Texture cannot be created with a format of WINED3DFMT_UNKNOWN.\n", texture);
         return WINED3DERR_INVALIDCALL;
@@ -1178,7 +1176,7 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, UINT width, U
     }
 
     /* Calculate levels for mip mapping. */
-    if (usage & WINED3DUSAGE_AUTOGENMIPMAP)
+    if (desc->usage & WINED3DUSAGE_AUTOGENMIPMAP)
     {
         if (!gl_info->supported[SGIS_GENERATE_MIPMAP])
         {
@@ -1196,7 +1194,7 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, UINT width, U
     }
     else if (!levels)
     {
-        levels = wined3d_log2i(max(max(width, height), depth)) + 1;
+        levels = wined3d_log2i(max(max(desc->width, desc->height), desc->depth)) + 1;
         TRACE("Calculated levels = %u.\n", levels);
     }
 
@@ -1204,40 +1202,32 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, UINT width, U
     {
         UINT pow2_w, pow2_h, pow2_d;
         pow2_w = 1;
-        while (pow2_w < width) pow2_w <<= 1;
+        while (pow2_w < desc->width)
+            pow2_w <<= 1;
         pow2_h = 1;
-        while (pow2_h < height) pow2_h <<= 1;
+        while (pow2_h < desc->height)
+            pow2_h <<= 1;
         pow2_d = 1;
-        while (pow2_d < depth) pow2_d <<= 1;
+        while (pow2_d < desc->depth)
+            pow2_d <<= 1;
 
-        if (pow2_w != width || pow2_h != height || pow2_d != depth)
+        if (pow2_w != desc->width || pow2_h != desc->height || pow2_d != desc->depth)
         {
-            if (pool == WINED3D_POOL_SCRATCH)
+            if (desc->pool == WINED3D_POOL_SCRATCH)
             {
                 WARN("Creating a scratch NPOT volume texture despite lack of HW support.\n");
             }
             else
             {
-                WARN("Attempted to create a NPOT volume texture (%u,%u,%u) without GL support.\n",
-                        width, height, depth);
+                WARN("Attempted to create a NPOT volume texture (%u, %u, %u) without GL support.\n",
+                        desc->width, desc->height, desc->depth);
                 return WINED3DERR_INVALIDCALL;
             }
         }
     }
 
-    desc.resource_type = WINED3D_RTYPE_VOLUME_TEXTURE;
-    desc.format = format_id;
-    desc.multisample_type = WINED3D_MULTISAMPLE_NONE;
-    desc.multisample_quality = 0;
-    desc.usage = usage;
-    desc.pool = pool;
-    desc.width = width;
-    desc.height = height;
-    desc.depth = depth;
-    desc.size = 0;
-
     if (FAILED(hr = wined3d_texture_init(texture, &texture3d_ops, 1, levels,
-            &desc, device, parent, parent_ops, &texture3d_resource_ops)))
+            desc, device, parent, parent_ops, &texture3d_resource_ops)))
     {
         WARN("Failed to initialize texture, returning %#x.\n", hr);
         return hr;
@@ -1250,9 +1240,9 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, UINT width, U
     texture->target = GL_TEXTURE_3D;
 
     /* Generate all the surfaces. */
-    tmp_w = width;
-    tmp_h = height;
-    tmp_d = depth;
+    tmp_w = desc->width;
+    tmp_h = desc->height;
+    tmp_d = desc->depth;
 
     for (i = 0; i < texture->level_count; ++i)
     {
@@ -1260,7 +1250,7 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, UINT width, U
 
         /* Create the volume. */
         hr = device->device_parent->ops->create_volume(device->device_parent, parent,
-                tmp_w, tmp_h, tmp_d, format_id, pool, usage, &volume);
+                tmp_w, tmp_h, tmp_d, desc->format, desc->pool, desc->usage, &volume);
         if (FAILED(hr))
         {
             ERR("Creating a volume for the volume texture failed, hr %#x.\n", hr);
@@ -1311,17 +1301,14 @@ HRESULT CDECL wined3d_texture_create_2d(struct wined3d_device *device, const str
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_texture_create_3d(struct wined3d_device *device, UINT width, UINT height, UINT depth,
-        UINT level_count, DWORD usage, enum wined3d_format_id format_id, enum wined3d_pool pool, void *parent,
-        const struct wined3d_parent_ops *parent_ops, struct wined3d_texture **texture)
+HRESULT CDECL wined3d_texture_create_3d(struct wined3d_device *device, const struct wined3d_resource_desc *desc,
+        UINT level_count, void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_texture **texture)
 {
     struct wined3d_texture *object;
     HRESULT hr;
 
-    TRACE("device %p, width %u, height %u, depth %u, level_count %u, usage %#x\n",
-            device, width, height, depth, level_count, usage);
-    TRACE("format %s, pool %#x, parent %p, parent_ops %p, texture %p.\n",
-            debug_d3dformat(format_id), pool, parent, parent_ops, texture);
+    TRACE("device %p, desc %p, level_count %u, parent %p, parent_ops %p, texture %p.\n",
+            device, desc, level_count, parent, parent_ops, texture);
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
@@ -1330,9 +1317,7 @@ HRESULT CDECL wined3d_texture_create_3d(struct wined3d_device *device, UINT widt
         return WINED3DERR_OUTOFVIDEOMEMORY;
     }
 
-    hr = volumetexture_init(object, width, height, depth, level_count,
-            device, usage, format_id, pool, parent, parent_ops);
-    if (FAILED(hr))
+    if (FAILED(hr = volumetexture_init(object, desc, level_count, device, parent, parent_ops)))
     {
         WARN("Failed to initialize volumetexture, returning %#x\n", hr);
         HeapFree(GetProcessHeap(), 0, object);

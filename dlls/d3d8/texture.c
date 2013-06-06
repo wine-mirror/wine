@@ -1257,15 +1257,26 @@ HRESULT cubetexture_init(struct d3d8_texture *texture, struct d3d8_device *devic
 HRESULT volumetexture_init(struct d3d8_texture *texture, struct d3d8_device *device,
         UINT width, UINT height, UINT depth, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool)
 {
+    struct wined3d_resource_desc desc;
     HRESULT hr;
 
     texture->IDirect3DBaseTexture8_iface.lpVtbl = (const IDirect3DBaseTexture8Vtbl *)&Direct3DVolumeTexture8_Vtbl;
     texture->refcount = 1;
 
+    desc.resource_type = WINED3D_RTYPE_VOLUME_TEXTURE;
+    desc.format = wined3dformat_from_d3dformat(format);
+    desc.multisample_type = WINED3D_MULTISAMPLE_NONE;
+    desc.multisample_quality = 0;
+    desc.usage = usage & WINED3DUSAGE_MASK;
+    desc.pool = pool;
+    desc.width = width;
+    desc.height = height;
+    desc.depth = depth;
+    desc.size = 0;
+
     wined3d_mutex_lock();
-    hr = wined3d_texture_create_3d(device->wined3d_device, width, height, depth, levels,
-            usage & WINED3DUSAGE_MASK, wined3dformat_from_d3dformat(format), pool, texture,
-            &d3d8_texture_wined3d_parent_ops, &texture->wined3d_texture);
+    hr = wined3d_texture_create_3d(device->wined3d_device, &desc, levels,
+            texture, &d3d8_texture_wined3d_parent_ops, &texture->wined3d_texture);
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {

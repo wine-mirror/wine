@@ -252,7 +252,7 @@
 
 @ cdecl wined3d_texture_add_dirty_region(ptr long ptr)
 @ cdecl wined3d_texture_create_2d(ptr ptr long ptr ptr ptr)
-@ cdecl wined3d_texture_create_3d(ptr long long long long long long long ptr ptr ptr)
+@ cdecl wined3d_texture_create_3d(ptr ptr long ptr ptr ptr)
 @ cdecl wined3d_texture_create_cube(ptr ptr long ptr ptr ptr)
 @ cdecl wined3d_texture_decref(ptr)
 @ cdecl wined3d_texture_generate_mipmaps(ptr)
