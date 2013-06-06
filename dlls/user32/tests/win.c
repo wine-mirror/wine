@@ -1545,7 +1545,6 @@ static void test_MDI_child_stack(HWND mdi_client)
     stack[1] = GetWindow(stack[0], GW_HWNDNEXT);
     stack[2] = GetWindow(stack[1], GW_HWNDNEXT);
     stack[3] = GetWindow(stack[2], GW_HWNDNEXT);
-todo_wine
     ok(stack[0] == child_2 && stack[1] == child_4 &&
         stack[2] == child_1 && stack[3] == child_3,
         "Broken MDI child stack:\nexpected: %p->%p->%p->%p, but got: %p->%p->%p->%p\n",
@@ -1558,7 +1557,6 @@ todo_wine
     stack[1] = GetWindow(stack[0], GW_HWNDNEXT);
     stack[2] = GetWindow(stack[1], GW_HWNDNEXT);
     stack[3] = GetWindow(stack[2], GW_HWNDNEXT);
-todo_wine
     ok(stack[0] == child_4 && stack[1] == child_2 &&
         stack[2] == child_1 && stack[3] == child_3,
         "Broken MDI child stack:\nexpected: %p->%p->%p->%p, but got: %p->%p->%p->%p\n",

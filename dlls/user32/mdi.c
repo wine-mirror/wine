@@ -1156,8 +1156,11 @@ LRESULT MDIClientWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 
       case WM_MDINEXT: /* lParam != 0 means previous window */
       {
-        HWND next = MDI_GetWindow( ci, WIN_GetFullHandle( (HWND)wParam ), !lParam, 0 );
+        HWND hwnd = wParam ? WIN_GetFullHandle((HWND)wParam) : ci->hwndActiveChild;
+        HWND next = MDI_GetWindow( ci, hwnd, !lParam, 0 );
         MDI_SwitchActiveChild( ci, next, TRUE );
+        if(!lParam)
+            SetWindowPos(hwnd, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE);
 	break;
       }
 
