@@ -2657,7 +2657,7 @@ static HRESULT parse_texture_filename(ID3DXFileData *filedata, LPSTR *filename_o
     hr = filedata->lpVtbl->Lock(filedata, &data_size, (const void**)&data);
     if (FAILED(hr)) return hr;
 
-    /* FIXME: String must be retreive directly instead through a pointer once ID3DXFILE is fixed */
+    /* FIXME: String must be retrieved directly instead of through a pointer once ID3DXFILE is fixed */
     if (data_size < sizeof(LPSTR)) {
         WARN("truncated data (%lu bytes)\n", data_size);
         filedata->lpVtbl->Unlock(filedata);
@@ -2864,10 +2864,7 @@ static HRESULT parse_material_list(ID3DXFileData *filedata, struct mesh_data *me
     if (num_materials != mesh->num_materials) {
         WARN("only %u of %u materials defined\n", num_materials, mesh->num_materials);
         hr = E_FAIL;
-        goto end;
     }
-
-    hr = D3D_OK;
 
 end:
     filedata->lpVtbl->Unlock(filedata);
@@ -3125,8 +3122,6 @@ static HRESULT parse_skin_mesh_info(ID3DXFileData *filedata, struct mesh_data *m
         data += 2 * sizeof(WORD);
         mesh_data->nb_bones = *(WORD*)data;
         hr = D3DXCreateSkinInfoFVF(mesh_data->num_vertices, mesh_data->fvf, mesh_data->nb_bones, &mesh_data->skin_info);
-        if (FAILED(hr))
-            goto end;
     } else {
         const char *name;
         DWORD nb_influences;
@@ -3150,11 +3145,7 @@ static HRESULT parse_skin_mesh_info(ID3DXFileData *filedata, struct mesh_data *m
         if (SUCCEEDED(hr))
             hr = mesh_data->skin_info->lpVtbl->SetBoneOffsetMatrix(mesh_data->skin_info, index,
                      (const D3DMATRIX*)(data + nb_influences * (sizeof(DWORD) + sizeof(FLOAT))));
-        if (FAILED(hr))
-            goto end;
     }
-
-    hr = D3D_OK;
 
 end:
     filedata->lpVtbl->Unlock(filedata);
