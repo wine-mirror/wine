@@ -276,7 +276,7 @@ HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d10_devic
     wined3d_desc.size = 0;
 
     if (FAILED(hr = wined3d_texture_create_2d(device->wined3d_device, &wined3d_desc, desc->MipLevels,
-            texture, &d3d10_texture2d_wined3d_parent_ops, &texture->wined3d_texture)))
+            0, texture, &d3d10_texture2d_wined3d_parent_ops, &texture->wined3d_texture)))
     {
         WARN("Failed to create wined3d texture, hr %#x.\n", hr);
         if (texture->dxgi_surface)

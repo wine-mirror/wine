@@ -1310,6 +1310,7 @@ HRESULT texture_init(struct d3d9_texture *texture, struct d3d9_device *device,
         UINT width, UINT height, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool)
 {
     struct wined3d_resource_desc desc;
+    DWORD surface_flags = 0;
     HRESULT hr;
 
     texture->IDirect3DBaseTexture9_iface.lpVtbl = (const IDirect3DBaseTexture9Vtbl *)&d3d9_texture_2d_vtbl;
@@ -1326,8 +1327,11 @@ HRESULT texture_init(struct d3d9_texture *texture, struct d3d9_device *device,
     desc.depth = 1;
     desc.size = 0;
 
+    if (pool != D3DPOOL_DEFAULT || (usage & D3DUSAGE_DYNAMIC))
+        surface_flags |= WINED3D_SURFACE_MAPPABLE;
+
     wined3d_mutex_lock();
-    hr = wined3d_texture_create_2d(device->wined3d_device, &desc, levels,
+    hr = wined3d_texture_create_2d(device->wined3d_device, &desc, levels, surface_flags,
             texture, &d3d9_texture_wined3d_parent_ops, &texture->wined3d_texture);
     wined3d_mutex_unlock();
     if (FAILED(hr))
@@ -1346,6 +1350,7 @@ HRESULT cubetexture_init(struct d3d9_texture *texture, struct d3d9_device *devic
         UINT edge_length, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool)
 {
     struct wined3d_resource_desc desc;
+    DWORD surface_flags = 0;
     HRESULT hr;
 
     texture->IDirect3DBaseTexture9_iface.lpVtbl = (const IDirect3DBaseTexture9Vtbl *)&d3d9_texture_cube_vtbl;
@@ -1362,8 +1367,11 @@ HRESULT cubetexture_init(struct d3d9_texture *texture, struct d3d9_device *devic
     desc.depth = 1;
     desc.size = 0;
 
+    if (pool != D3DPOOL_DEFAULT || (usage & D3DUSAGE_DYNAMIC))
+        surface_flags |= WINED3D_SURFACE_MAPPABLE;
+
     wined3d_mutex_lock();
-    hr = wined3d_texture_create_cube(device->wined3d_device, &desc, levels,
+    hr = wined3d_texture_create_cube(device->wined3d_device, &desc, levels, surface_flags,
             texture, &d3d9_texture_wined3d_parent_ops, &texture->wined3d_texture);
     wined3d_mutex_unlock();
     if (FAILED(hr))

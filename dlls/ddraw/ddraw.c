@@ -2471,20 +2471,20 @@ static HRESULT WINAPI ddraw7_StartModeTest(IDirectDraw7 *iface, SIZE *Modes, DWO
  *  DD_OK on success
  *
  *****************************************************************************/
-static HRESULT ddraw_create_surface(struct ddraw *ddraw, DDSURFACEDESC2 *pDDSD,
-        struct ddraw_surface **surface, UINT version)
+static HRESULT ddraw_create_surface(struct ddraw *ddraw, DDSURFACEDESC2 *desc,
+        DWORD flags, struct ddraw_surface **surface, UINT version)
 {
     HRESULT hr;
 
-    TRACE("ddraw %p, surface_desc %p, surface %p.\n", ddraw, pDDSD, surface);
+    TRACE("ddraw %p, desc %p, flags %#x, surface %p.\n", ddraw, desc, flags, surface);
 
     if (TRACE_ON(ddraw))
     {
         TRACE("Requesting surface desc:\n");
-        DDRAW_dump_surface_desc(pDDSD);
+        DDRAW_dump_surface_desc(desc);
     }
 
-    if ((pDDSD->ddsCaps.dwCaps & DDSCAPS_3DDEVICE) && (ddraw->flags & DDRAW_NO3D))
+    if ((desc->ddsCaps.dwCaps & DDSCAPS_3DDEVICE) && (ddraw->flags & DDRAW_NO3D))
     {
         WARN("The application requests a 3D capable surface, but the ddraw object was created without 3D support.\n");
         /* Do not fail surface creation, only fail 3D device creation. */
@@ -2498,7 +2498,7 @@ static HRESULT ddraw_create_surface(struct ddraw *ddraw, DDSURFACEDESC2 *pDDSD,
         return DDERR_OUTOFVIDEOMEMORY;
     }
 
-    if (FAILED(hr = ddraw_surface_init(*surface, ddraw, pDDSD, version)))
+    if (FAILED(hr = ddraw_surface_init(*surface, ddraw, desc, flags, version)))
     {
         WARN("Failed to initialize surface, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, *surface);
@@ -2603,6 +2603,12 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
     HRESULT hr;
     DDSURFACEDESC2 desc2;
     const DWORD sysvidmem = DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY;
+    /* Some applications assume surfaces will always be mapped at the same
+     * address. Some of those also assume that this address is valid even when
+     * the surface isn't mapped, and that updates done this way will be
+     * visible on the screen. The game Nox is such an application,
+     * Commandos: Behind Enemy Lines is another. */
+    const DWORD flags = WINED3D_SURFACE_MAPPABLE | WINED3D_SURFACE_PIN_SYSMEM;
 
     TRACE("ddraw %p, surface_desc %p, surface %p, outer_unknown %p.\n", ddraw, DDSD, surface, UnkOuter);
 
@@ -2804,7 +2810,7 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
     }
 
     /* Create the first surface */
-    if (FAILED(hr = ddraw_create_surface(ddraw, &desc2, &object, version)))
+    if (FAILED(hr = ddraw_create_surface(ddraw, &desc2, flags, &object, version)))
     {
         WARN("ddraw_create_surface failed, hr %#x.\n", hr);
         return hr;
@@ -2831,7 +2837,7 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
         {
             struct ddraw_surface *object2 = NULL;
 
-            if (FAILED(hr = ddraw_create_surface(ddraw, &desc2, &object2, version)))
+            if (FAILED(hr = ddraw_create_surface(ddraw, &desc2, flags, &object2, version)))
             {
                 if (version == 7)
                     IDirectDrawSurface7_Release(&object->IDirectDrawSurface7_iface);
@@ -2860,7 +2866,7 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
 
     /* Create a WineD3DTexture if a texture was requested */
     if (desc2.ddsCaps.dwCaps & DDSCAPS_TEXTURE)
-        ddraw_surface_create_texture(object);
+        ddraw_surface_create_texture(object, flags);
 
     return hr;
 }
@@ -5117,7 +5123,7 @@ static void CDECL device_parent_mode_changed(struct wined3d_device_parent *devic
 
 static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_parent *device_parent,
         void *container_parent, const struct wined3d_resource_desc *wined3d_desc, UINT sub_resource_idx,
-        struct wined3d_surface **surface)
+        DWORD flags, struct wined3d_surface **surface)
 {
     struct ddraw *ddraw = ddraw_from_device_parent(device_parent);
     struct ddraw_surface *tex_root = container_parent;
@@ -5125,8 +5131,8 @@ static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_
     struct ddraw_surface *ddraw_surface;
     HRESULT hr;
 
-    TRACE("device_parent %p, container_parent %p, wined3d_desc %p, sub_resource_idx %u, surface %p.\n",
-            device_parent, container_parent, wined3d_desc, sub_resource_idx, surface);
+    TRACE("device_parent %p, container_parent %p, wined3d_desc %p, sub_resource_idx %u, flags %#x, surface %p.\n",
+            device_parent, container_parent, wined3d_desc, sub_resource_idx, flags, surface);
 
     /* The ddraw root surface is created before the wined3d texture. */
     if (!sub_resource_idx)
@@ -5139,7 +5145,7 @@ static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_
     desc.dwHeight = wined3d_desc->height;
 
     /* FIXME: Validate that format, usage, pool, etc. really make sense. */
-    if (FAILED(hr = ddraw_create_surface(ddraw, &desc, &ddraw_surface, tex_root->version)))
+    if (FAILED(hr = ddraw_create_surface(ddraw, &desc, flags, &ddraw_surface, tex_root->version)))
         return hr;
 
 done:

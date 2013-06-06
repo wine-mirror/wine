@@ -212,8 +212,8 @@ struct d3d8_surface
 };
 
 HRESULT surface_init(struct d3d8_surface *surface, struct d3d8_device *device, UINT width, UINT height,
-        D3DFORMAT format, BOOL lockable, BOOL discard, DWORD usage, D3DPOOL pool,
-        D3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality) DECLSPEC_HIDDEN;
+        D3DFORMAT format, DWORD flags, DWORD usage, D3DPOOL pool, D3DMULTISAMPLE_TYPE multisample_type,
+        DWORD multisample_quality) DECLSPEC_HIDDEN;
 struct d3d8_surface *unsafe_impl_from_IDirect3DSurface8(IDirect3DSurface8 *iface) DECLSPEC_HIDDEN;
 
 struct d3d8_vertexbuffer

@@ -1832,15 +1832,15 @@ static void CDECL device_parent_mode_changed(struct wined3d_device_parent *devic
 
 static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_parent *device_parent,
         void *container_parent, const struct wined3d_resource_desc *desc, UINT sub_resource_idx,
-        struct wined3d_surface **surface)
+        DWORD flags, struct wined3d_surface **surface)
 {
     struct d3d10_device *device = device_from_wined3d_device_parent(device_parent);
 
-    TRACE("device_parent %p, container_parent %p, desc %p, sub_resource_idx %u, surface %p.\n",
-            device_parent, container_parent, desc, sub_resource_idx, surface);
+    TRACE("device_parent %p, container_parent %p, desc %p, sub_resource_idx %u, flags %#x, surface %p.\n",
+            device_parent, container_parent, desc, sub_resource_idx, flags, surface);
 
     return wined3d_surface_create(device->wined3d_device, desc->width, desc->height, desc->format,
-            desc->usage, desc->pool, desc->multisample_type, desc->multisample_quality, 0,
+            desc->usage, desc->pool, desc->multisample_type, desc->multisample_quality, flags,
             container_parent, &d3d10_null_wined3d_parent_ops, surface);
 }
 
