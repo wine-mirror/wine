@@ -327,6 +327,46 @@ static char object_syntax_string_with_separator[] =
 "\"foo;bar\";\n"
 "}\n";
 
+static char templates_complex_object[] =
+"xof 0302txt 0064\n"
+"template Vector\n"
+"{\n"
+"<3D82AB5E-62DA-11CF-AB39-0020AF71E433>\n"
+"FLOAT x;\n"
+"FLOAT y;\n"
+"FLOAT z;\n"
+"}\n"
+"template MeshFace\n"
+"{\n"
+"<3D82AB5F-62DA-11CF-AB39-0020AF71E433>\n"
+"DWORD nFaceVertexIndices;\n"
+"array DWORD faceVertexIndices[nFaceVertexIndices];\n"
+"}\n"
+"template Mesh\n"
+"{\n"
+"<3D82AB44-62DA-11CF-AB39-0020AF71E433>\n"
+"DWORD nVertices;\n"
+"array Vector vertices[nVertices];\n"
+"DWORD nFaces;\n"
+"array MeshFace faces[nFaces];\n"
+"[...]\n"
+"}\n";
+
+static char object_complex[] =
+"xof 0302txt 0064\n"
+"Mesh Object\n"
+"{\n"
+"4;;;,\n"
+"1.0;;;, 0.0;;;, 0.0;;;,\n"
+"0.0;;;, 1.0;;;, 0.0;;;,\n"
+"0.0;;;, 0.0;;;, 1.0;;;,\n"
+"1.0;;;, 1.0;;;, 1.0;;;,\n"
+"3;;;,\n"
+"3;;;, 0;;;, 1;;;, 2;;;,\n"
+"3;;;, 1;;;, 2;;;, 3;;;,\n"
+"3;;;, 3;;;, 1;;;, 2;;;,\n"
+"}\n";
+
 static void init_function_pointers(void)
 {
     /* We have to use LoadLibrary as no d3dxof functions are referenced directly */
@@ -938,6 +978,42 @@ static void test_syntax_semicolon_comma(void)
     IDirectXFile_Release(dxfile);
 }
 
+static void test_complex_object(void)
+{
+    HRESULT ret;
+    IDirectXFile *dxfile = NULL;
+    IDirectXFileEnumObject *enum_object;
+    IDirectXFileData *file_data;
+    DXFILELOADMEMORY load_info;
+
+    if (!pDirectXFileCreate)
+    {
+        win_skip("DirectXFileCreate is not available\n");
+        return;
+    }
+
+    ret = pDirectXFileCreate(&dxfile);
+    ok(ret == DXFILE_OK, "DirectXFileCreate failed with %#x\n", ret);
+    if (!dxfile)
+    {
+        skip("Couldn't create DirectXFile interface\n");
+        return;
+    }
+
+    ret = IDirectXFile_RegisterTemplates(dxfile, templates_complex_object, sizeof(templates_complex_object) - 1);
+    ok(ret == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates failed with %#x\n", ret);
+
+    load_info.lpMemory = object_complex;
+    load_info.dSize = sizeof(object_complex) - 1;
+    ret = IDirectXFile_CreateEnumObject(dxfile, &load_info, DXFILELOAD_FROMMEMORY, &enum_object);
+    ok(ret == DXFILE_OK, "IDirectXFile_CreateEnumObject failed with %#x\n", ret);
+    ret = IDirectXFileEnumObject_GetNextDataObject(enum_object, &file_data);
+    ok(ret == DXFILE_OK, "IDirectXFileEnumObject_GetNextDataObject failed with %#x\n", ret);
+
+    IDirectXFileData_Release(file_data);
+    IDirectXFileEnumObject_Release(enum_object);
+    IDirectXFile_Release(dxfile);
+}
 /* Set it to 1 to expand the string when dumping the object. This is useful when there is
  * only one string in a sub-object (very common). Use with care, this may lead to a crash. */
 #define EXPAND_STRING 0
@@ -1122,6 +1198,7 @@ START_TEST(d3dxof)
     test_getname();
     test_syntax();
     test_syntax_semicolon_comma();
+    test_complex_object();
     test_dump();
 
     FreeLibrary(hd3dxof);
