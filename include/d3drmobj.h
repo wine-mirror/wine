@@ -4036,7 +4036,7 @@ DECLARE_INTERFACE_(IDirect3DRMAnimationSet2, IDirect3DRMObject)
             D3DRMLOADTEXTURE3CALLBACK cb, void *ctx, IDirect3DRMFrame3 *parent_frame)PURE;
     STDMETHOD(DeleteAnimation)(THIS_ IDirect3DRMAnimation2 *animation) PURE;
     STDMETHOD(SetTime)(THIS_ D3DVALUE time) PURE;
-    STDMETHOD(GetAnimations)(THIS_ LPDIRECT3DRMANIMATIONARRAY *) PURE;
+    STDMETHOD(GetAnimations)(THIS_ struct IDirect3DRMAnimationArray **array) PURE;
 };
 #undef INTERFACE
 
