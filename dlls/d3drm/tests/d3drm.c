@@ -915,7 +915,7 @@ static void test_Frame(void)
     IDirect3DRMMeshBuilder *mesh_builder;
     IDirect3DRMVisual *visual1;
     IDirect3DRMVisual *visual_tmp;
-    LPDIRECT3DRMVISUALARRAY pVisualArray;
+    IDirect3DRMVisualArray *visual_array;
     IDirect3DRMLight *light1;
     IDirect3DRMLight *light_tmp;
     LPDIRECT3DRMLIGHTARRAY pLightArray;
@@ -1154,18 +1154,18 @@ static void test_Frame(void)
     CHECK_REFCOUNT(pFrameP1, 3);
     CHECK_REFCOUNT(visual1, 2);
 
-    pVisualArray = NULL;
-    hr = IDirect3DRMFrame_GetVisuals(pFrameP1, &pVisualArray);
+    visual_array = NULL;
+    hr = IDirect3DRMFrame_GetVisuals(pFrameP1, &visual_array);
     ok(hr == D3DRM_OK, "Cannot get visuals (hr = %x)\n", hr);
-    if (pVisualArray)
+    if (visual_array)
     {
-        count = IDirect3DRMVisualArray_GetSize(pVisualArray);
+        count = IDirect3DRMVisualArray_GetSize(visual_array);
         ok(count == 1, "count = %u\n", count);
-        hr = IDirect3DRMVisualArray_GetElement(pVisualArray, 0, &visual_tmp);
+        hr = IDirect3DRMVisualArray_GetElement(visual_array, 0, &visual_tmp);
         ok(hr == D3DRM_OK, "Cannot get element (hr = %x)\n", hr);
         ok(visual_tmp == visual1, "visual_tmp = %p\n", visual_tmp);
         IDirect3DRMVisual_Release(visual_tmp);
-        IDirect3DRMVisualArray_Release(pVisualArray);
+        IDirect3DRMVisualArray_Release(visual_array);
     }
 
     /* Delete Visual */

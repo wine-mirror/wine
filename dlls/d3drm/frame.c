@@ -819,8 +819,7 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_GetOrientation(IDirect3DRMFrame2 *if
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_GetVisuals(IDirect3DRMFrame2* iface,
-                                                       LPDIRECT3DRMVISUALARRAY *visuals)
+static HRESULT WINAPI IDirect3DRMFrame2Impl_GetVisuals(IDirect3DRMFrame2 *iface, IDirect3DRMVisualArray **visuals)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
     IDirect3DRMVisualArrayImpl* obj;
