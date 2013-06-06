@@ -557,6 +557,21 @@ static HRESULT CDECL reset_enum_callback(struct wined3d_resource *resource)
     {
         struct d3d9_surface *surface;
 
+        if (desc.resource_type == WINED3D_RTYPE_TEXTURE)
+        {
+            IUnknown *parent = wined3d_resource_get_parent(resource);
+            IDirect3DBaseTexture9 *texture;
+
+            if (SUCCEEDED(IUnknown_QueryInterface(parent, &IID_IDirect3DBaseTexture9, (void **)&texture)))
+            {
+                IDirect3DBaseTexture9_Release(texture);
+                WARN("Texture %p (resource %p) in pool D3DPOOL_DEFAULT blocks the Reset call.\n", texture, resource);
+                return D3DERR_INVALIDCALL;
+            }
+
+            return D3D_OK;
+        }
+
         if (desc.resource_type != WINED3D_RTYPE_SURFACE)
         {
             WARN("Resource %p in pool D3DPOOL_DEFAULT blocks the Reset call.\n", resource);
@@ -3302,29 +3317,33 @@ static HRESULT CDECL device_parent_create_swapchain_surface(struct wined3d_devic
         void *container_parent, const struct wined3d_resource_desc *desc, struct wined3d_surface **surface)
 {
     struct d3d9_device *device = device_from_device_parent(device_parent);
+    struct wined3d_resource_desc texture_desc;
     struct d3d9_surface *d3d_surface;
+    struct wined3d_texture *texture;
     HRESULT hr;
 
     TRACE("device_parent %p, container_parent %p, desc %p, surface %p.\n",
             device_parent, container_parent, desc, surface);
 
-    if (FAILED(hr = d3d9_device_create_surface(device, desc->width, desc->height,
-            d3dformat_from_wined3dformat(desc->format), WINED3D_SURFACE_MAPPABLE, (IDirect3DSurface9 **)&d3d_surface,
-            desc->usage, desc->pool, desc->multisample_type, desc->multisample_quality)))
+    if (container_parent == device_parent)
+        container_parent = &device->IDirect3DDevice9Ex_iface;
+
+    texture_desc = *desc;
+    texture_desc.resource_type = WINED3D_RTYPE_TEXTURE;
+    if (FAILED(hr = wined3d_texture_create_2d(device->wined3d_device, &texture_desc, 1,
+            WINED3D_SURFACE_MAPPABLE, container_parent, &d3d9_null_wined3d_parent_ops, &texture)))
     {
-        WARN("Failed to create surface, hr %#x.\n", hr);
+        WARN("Failed to create texture, hr %#x.\n", hr);
         return hr;
     }
 
-    *surface = d3d_surface->wined3d_surface;
+    *surface = wined3d_surface_from_resource(wined3d_texture_get_sub_resource(texture, 0));
     wined3d_surface_incref(*surface);
+    wined3d_texture_decref(texture);
 
-    if (container_parent == device_parent)
-        d3d_surface->container = (IUnknown *)&device->IDirect3DDevice9Ex_iface;
-    else
-        d3d_surface->container = container_parent;
-    /* Implicit surfaces are created with an refcount of 0 */
-    IDirect3DSurface9_Release(&d3d_surface->IDirect3DSurface9_iface);
+    d3d_surface = wined3d_surface_get_parent(*surface);
+    d3d_surface->forwardReference = NULL;
+    d3d_surface->parent_device = &device->IDirect3DDevice9Ex_iface;
 
     return hr;
 }
