@@ -769,7 +769,7 @@ void manage_desktop( WCHAR *arg )
         initialize_display_settings( hwnd );
         initialize_appbar();
         initialize_systray( graphics_driver, using_root );
-        initialize_launchers( hwnd );
+        if (!using_root) initialize_launchers( hwnd );
 
         if ((shell32 = LoadLibraryA( "shell32.dll" )) &&
             (pShellDDEInit = (void *)GetProcAddress( shell32, (LPCSTR)188)))
