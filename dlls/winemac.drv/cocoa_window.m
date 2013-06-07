@@ -710,6 +710,55 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         return TRUE;
     }
 
+    - (void) order:(NSWindowOrderingMode)mode childWindow:(WineWindow*)child relativeTo:(WineWindow*)other
+    {
+        NSMutableArray* windowNumbers;
+        NSNumber* childWindowNumber;
+        NSUInteger otherIndex;
+        NSMutableArray* children;
+
+        // Get the z-order from the window server and modify it to reflect the
+        // requested window ordering.
+        windowNumbers = [[[[self class] windowNumbersWithOptions:0] mutableCopy] autorelease];
+        childWindowNumber = [NSNumber numberWithInteger:[child windowNumber]];
+        [windowNumbers removeObject:childWindowNumber];
+        otherIndex = [windowNumbers indexOfObject:[NSNumber numberWithInteger:[other windowNumber]]];
+        [windowNumbers insertObject:childWindowNumber atIndex:otherIndex + (mode == NSWindowAbove ? 0 : 1)];
+
+        // Get our child windows and sort them in the reverse of the desired
+        // z-order (back-to-front).
+        children = [[[self childWindows] mutableCopy] autorelease];
+        [children sortWithOptions:NSSortStable
+                  usingComparator:^NSComparisonResult(id obj1, id obj2){
+            NSNumber* window1Number = [NSNumber numberWithInteger:[obj1 windowNumber]];
+            NSNumber* window2Number = [NSNumber numberWithInteger:[obj2 windowNumber]];
+            NSUInteger index1 = [windowNumbers indexOfObject:window1Number];
+            NSUInteger index2 = [windowNumbers indexOfObject:window2Number];
+            if (index1 == NSNotFound)
+            {
+                if (index2 == NSNotFound)
+                    return NSOrderedSame;
+                else
+                    return NSOrderedAscending;
+            }
+            else if (index2 == NSNotFound)
+                return NSOrderedDescending;
+            else if (index1 < index2)
+                return NSOrderedDescending;
+            else if (index2 < index1)
+                return NSOrderedAscending;
+
+            return NSOrderedSame;
+        }];
+
+        // Remove all of the child windows and re-add them back-to-front so they
+        // are in the desired order.
+        for (other in children)
+            [self removeChildWindow:other];
+        for (other in children)
+            [self addChildWindow:other ordered:NSWindowAbove];
+    }
+
     /* Returns whether or not the window was ordered in, which depends on if
        its frame intersects any screen. */
     - (BOOL) orderBelow:(WineWindow*)prev orAbove:(WineWindow*)next
@@ -740,6 +789,9 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
                 if (![self isOrdered:orderingMode relativeTo:other])
                 {
+                    WineWindow* parent = (WineWindow*)[self parentWindow];
+                    WineWindow* otherParent = (WineWindow*)[other parentWindow];
+
                     // This window level may not be right for this window based
                     // on floating-ness, fullscreen-ness, etc.  But we set it
                     // temporarily to allow us to order the windows properly.
@@ -747,6 +799,13 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
                     if ([self level] != [other level])
                         [self setLevel:[other level]];
                     [self orderWindow:orderingMode relativeTo:[other windowNumber]];
+
+                    // The above call to -[NSWindow orderWindow:relativeTo:] won't
+                    // reorder windows which are both children of the same parent
+                    // relative to each other, so do that separately.
+                    if (parent && parent == otherParent)
+                        [parent order:orderingMode childWindow:self relativeTo:other];
+
                     needAdjustWindowLevels = TRUE;
                 }
             }
