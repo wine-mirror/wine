@@ -4328,7 +4328,7 @@ static HRESULT WINAPI ddraw_surface7_SetSurfaceDesc(IDirectDrawSurface7 *iface, 
     if (DDSD->dwFlags & DDSD_PIXELFORMAT)
     {
         enum wined3d_format_id current_format_id;
-        format_id = PixelFormat_DD2WineD3D(&DDSD->u4.ddpfPixelFormat);
+        format_id = wined3dformat_from_ddrawformat(&DDSD->u4.ddpfPixelFormat);
 
         if (format_id == WINED3DFMT_UNKNOWN)
         {
@@ -4336,7 +4336,7 @@ static HRESULT WINAPI ddraw_surface7_SetSurfaceDesc(IDirectDrawSurface7 *iface, 
             wined3d_mutex_unlock();
             return DDERR_INVALIDPARAMS;
         }
-        current_format_id = PixelFormat_DD2WineD3D(&This->surface_desc.u4.ddpfPixelFormat);
+        current_format_id = wined3dformat_from_ddrawformat(&This->surface_desc.u4.ddpfPixelFormat);
         if (format_id != current_format_id)
         {
             TRACE("Surface format changed from %#x to %#x.\n", current_format_id, format_id);
@@ -4345,7 +4345,7 @@ static HRESULT WINAPI ddraw_surface7_SetSurfaceDesc(IDirectDrawSurface7 *iface, 
     }
     else
     {
-        format_id = PixelFormat_DD2WineD3D(&This->surface_desc.u4.ddpfPixelFormat);
+        format_id = wined3dformat_from_ddrawformat(&This->surface_desc.u4.ddpfPixelFormat);
     }
 
     if (update_wined3d)
@@ -5613,7 +5613,7 @@ HRESULT ddraw_surface_create_texture(struct ddraw_surface *surface, DWORD surfac
     else
         pool = WINED3D_POOL_DEFAULT;
 
-    wined3d_desc.format = PixelFormat_DD2WineD3D(&surface->surface_desc.u4.ddpfPixelFormat);
+    wined3d_desc.format = wined3dformat_from_ddrawformat(&surface->surface_desc.u4.ddpfPixelFormat);
     wined3d_desc.multisample_type = WINED3D_MULTISAMPLE_NONE;
     wined3d_desc.multisample_quality = 0;
     wined3d_desc.usage = 0;
@@ -5753,7 +5753,7 @@ HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw,
         desc->ddsCaps.dwCaps |= DDSCAPS_LOCALVIDMEM;
     }
 
-    format = PixelFormat_DD2WineD3D(&desc->u4.ddpfPixelFormat);
+    format = wined3dformat_from_ddrawformat(&desc->u4.ddpfPixelFormat);
     if (format == WINED3DFMT_UNKNOWN)
     {
         WARN("Unsupported / unknown pixelformat.\n");

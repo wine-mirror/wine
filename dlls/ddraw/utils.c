@@ -349,20 +349,8 @@ void PixelFormat_WineD3DtoDD(DDPIXELFORMAT *DDPixelFormat, enum wined3d_format_i
         DDRAW_dump_pixelformat(DDPixelFormat);
     }
 }
-/*****************************************************************************
- * PixelFormat_DD2WineD3D
- *
- * Reads a DDPIXELFORMAT structure and returns the equivalent wined3d
- * format ID.
- *
- * Params:
- *  DDPixelFormat: The source format
- *
- * Returns:
- *  The wined3d format ID equivalent to the DDraw format
- *  WINED3DFMT_UNKNOWN if a matching format wasn't found
- *****************************************************************************/
-enum wined3d_format_id PixelFormat_DD2WineD3D(const DDPIXELFORMAT *DDPixelFormat)
+
+enum wined3d_format_id wined3dformat_from_ddrawformat(const DDPIXELFORMAT *DDPixelFormat)
 {
     TRACE("Convert a DirectDraw Pixelformat to a WineD3D Pixelformat\n");
     if(TRACE_ON(ddraw))
