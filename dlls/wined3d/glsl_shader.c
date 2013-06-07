@@ -3515,8 +3515,11 @@ static void shader_glsl_tex(const struct wined3d_shader_instruction *ins)
             sample_flags |= WINED3D_GLSL_SAMPLE_PROJECTED;
             mask = WINED3DSP_WRITEMASK_3;
         }
-    } else {
-        if (ins->flags & WINED3DSI_TEXLD_PROJECT)
+    }
+    else
+    {
+        if ((ins->flags & WINED3DSI_TEXLD_PROJECT)
+                && ins->ctx->reg_maps->sampler_type[sampler_idx] != WINED3DSTT_CUBE)
         {
             /* ps 2.0 texldp instruction always divides by the fourth component. */
             sample_flags |= WINED3D_GLSL_SAMPLE_PROJECTED;
