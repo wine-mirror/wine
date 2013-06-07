@@ -1132,7 +1132,8 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
             [[self firstResponder] keyDown:event];
         else
         {
-            if ([event type] == NSLeftMouseDown)
+            if ([event type] == NSLeftMouseDown &&
+                (([event modifierFlags] & (NSShiftKeyMask | NSControlKeyMask| NSAlternateKeyMask | NSCommandKeyMask)) != NSCommandKeyMask))
             {
                 /* Since our windows generally claim they can't be made key, clicks
                    in their title bars are swallowed by the theme frame stuff.  So,
