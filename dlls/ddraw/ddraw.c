@@ -1375,7 +1375,7 @@ static HRESULT WINAPI ddraw7_GetDisplayMode(IDirectDraw7 *iface, DDSURFACEDESC2 
     DDSD->u2.dwRefreshRate = 60;
     DDSD->ddsCaps.dwCaps = 0;
     DDSD->u4.ddpfPixelFormat.dwSize = sizeof(DDSD->u4.ddpfPixelFormat);
-    PixelFormat_WineD3DtoDD(&DDSD->u4.ddpfPixelFormat, mode.format_id);
+    ddrawformat_from_wined3dformat(&DDSD->u4.ddpfPixelFormat, mode.format_id);
     DDSD->u1.lPitch = mode.width * DDSD->u4.ddpfPixelFormat.u1.dwRGBBitCount / 8;
 
     if(TRACE_ON(ddraw))
@@ -2115,7 +2115,7 @@ static HRESULT WINAPI ddraw7_EnumDisplayModes(IDirectDraw7 *iface, DWORD Flags,
             BOOL found = FALSE;
             unsigned i;
 
-            PixelFormat_WineD3DtoDD(&pixelformat, mode.format_id);
+            ddrawformat_from_wined3dformat(&pixelformat, mode.format_id);
             if (DDSD)
             {
                 if (DDSD->dwFlags & DDSD_WIDTH && mode.width != DDSD->dwWidth)
@@ -2717,7 +2717,7 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
         desc2.dwFlags |= DDSD_PIXELFORMAT;
         desc2.u4.ddpfPixelFormat.dwSize=sizeof(DDPIXELFORMAT);
 
-        PixelFormat_WineD3DtoDD(&desc2.u4.ddpfPixelFormat, mode.format_id);
+        ddrawformat_from_wined3dformat(&desc2.u4.ddpfPixelFormat, mode.format_id);
     }
 
     /* No Width or no Height? Use the original screen size
@@ -4428,7 +4428,7 @@ static HRESULT WINAPI d3d7_EnumZBufferFormats(IDirect3D7 *iface, REFCLSID device
 
             memset(&pformat, 0, sizeof(pformat));
             pformat.dwSize = sizeof(pformat);
-            PixelFormat_WineD3DtoDD(&pformat, formats[i]);
+            ddrawformat_from_wined3dformat(&pformat, formats[i]);
 
             TRACE("Enumerating wined3d format %#x.\n", formats[i]);
             hr = callback(&pformat, context);
