@@ -5405,7 +5405,7 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct wined3d_shader_buf
     shader_addline(buffer, "void main()\n{\n");
 
     if (lowest_disabled_stage < 7 && settings->emul_clipplanes)
-        shader_addline(buffer, "if (any(lessThan(gl_texCoord[7], vec4(0.0)))) discard;\n");
+        shader_addline(buffer, "if (any(lessThan(gl_TexCoord[7], vec4(0.0)))) discard;\n");
 
     /* Generate texture sampling instructions) */
     for (stage = 0; stage < MAX_TEXTURES && settings->op[stage].cop != WINED3D_TOP_DISABLE; ++stage)
