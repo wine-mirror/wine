@@ -3504,7 +3504,8 @@ static void test_SetFileValidData(void)
 
     if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &token) ||
         !LookupPrivilegeValue(NULL, SE_MANAGE_VOLUME_NAME, &privs.Privileges[0].Luid) ||
-        !AdjustTokenPrivileges(token, FALSE, &privs, sizeof(privs), NULL, NULL))
+        !AdjustTokenPrivileges(token, FALSE, &privs, sizeof(privs), NULL, NULL) ||
+        GetLastError() == ERROR_NOT_ALL_ASSIGNED)
     {
         win_skip("cannot enable SE_MANAGE_VOLUME_NAME privilege\n");
         CloseHandle(token);
