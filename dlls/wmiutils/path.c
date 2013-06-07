@@ -420,15 +420,18 @@ static HRESULT parse_text( struct path *path, ULONG mode, const WCHAR *text )
         path->flags |= WBEMPATH_INFO_PATH_HAD_SERVER;
     }
     p = q;
-    if (*q && *q != '\\' && *q != '/' && *q != ':')
+    if (strchrW( p, '\\' ) || strchrW( p, '/' ))
     {
-        path->num_namespaces = 1;
-        q++;
-    }
-    while (*q && *q != ':')
-    {
-        if (*q == '\\' || *q == '/') path->num_namespaces++;
-        q++;
+        if (*q != '\\' && *q != '/' && *q != ':')
+        {
+            path->num_namespaces = 1;
+            q++;
+        }
+        while (*q && *q != ':')
+        {
+            if (*q == '\\' || *q == '/') path->num_namespaces++;
+            q++;
+        }
     }
     if (path->num_namespaces)
     {
