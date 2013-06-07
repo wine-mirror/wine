@@ -2538,6 +2538,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,wbem,wmic.exe
 11,wbem,wmiutils.dll
 16422,Internet Explorer,iexplore.exe
+16427,System\OLE DB,oledb32.dll
 11,,*
 
 [SystemIni]
