@@ -1424,16 +1424,50 @@ int macdrv_err_on;
 
     - (void) handleMouseButton:(NSEvent*)theEvent
     {
-        WineWindow* window;
+        WineWindow* window = (WineWindow*)[theEvent window];
+        NSEventType type = [theEvent type];
+
+        if ([window isKindOfClass:[WineWindow class]] &&
+            type == NSLeftMouseDown &&
+            (([theEvent modifierFlags] & (NSShiftKeyMask | NSControlKeyMask| NSAlternateKeyMask | NSCommandKeyMask)) != NSCommandKeyMask))
+        {
+            NSWindowButton windowButton;
+            BOOL broughtWindowForward = TRUE;
+
+            /* Any left-click on our window anyplace other than the close or
+               minimize buttons will bring it forward. */
+            for (windowButton = NSWindowCloseButton;
+                 windowButton <= NSWindowMiniaturizeButton;
+                 windowButton++)
+            {
+                NSButton* button = [window standardWindowButton:windowButton];
+                if (button)
+                {
+                    NSPoint point = [button convertPoint:[theEvent locationInWindow] fromView:nil];
+                    if ([button mouse:point inRect:[button bounds]])
+                    {
+                        broughtWindowForward = FALSE;
+                        break;
+                    }
+                }
+            }
+
+            if (broughtWindowForward)
+            {
+                // Clicking on a child window does not normally reorder it with
+                // respect to its siblings, but we want it to.  We have to do it
+                // manually.
+                NSWindow* parent = [window parentWindow];
+                [parent removeChildWindow:window];
+                [parent addChildWindow:window ordered:NSWindowAbove];
+            }
+        }
 
         if (mouseCaptureWindow)
             window = mouseCaptureWindow;
-        else
-            window = (WineWindow*)[theEvent window];
 
         if ([window isKindOfClass:[WineWindow class]])
         {
-            NSEventType type = [theEvent type];
             BOOL pressed = (type == NSLeftMouseDown || type == NSRightMouseDown || type == NSOtherMouseDown);
             CGPoint pt = CGEventGetLocation([theEvent CGEvent]);
             BOOL process;
