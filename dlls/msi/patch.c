@@ -551,7 +551,6 @@ static UINT set_patch_offsets( MSIDATABASE *db )
         pos = patch_offset_list_create();
         patch_offset_get_files( db, last_sequence, pos );
         patch_offset_get_patches( db, last_sequence, pos );
-        if (pos->count)
         {
             UINT offset = db->media_transform_offset - pos->min;
             last_sequence = offset + pos->max;
@@ -559,7 +558,8 @@ static UINT set_patch_offsets( MSIDATABASE *db )
             /* FIXME: this is for the patch table, which is not yet properly transformed */
             last_sequence += pos->min;
             pos->offset_to_apply = offset;
-            patch_offset_modify_db( db, pos );
+            if (pos->count)
+                patch_offset_modify_db( db, pos );
 
             MSI_RecordSetInteger( rec, 2, last_sequence );
             r = MSI_ViewModify( view, MSIMODIFY_UPDATE, rec );
