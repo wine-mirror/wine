@@ -3571,7 +3571,8 @@ static void test_events(int useMessages)
         goto end;
     }
 
-    ok(!set_blocking(src, TRUE), "set_blocking failed, error %d\n", WSAGetLastError());
+    ret = set_blocking(src, TRUE);
+    ok(!ret, "set_blocking failed, error %d\n", WSAGetLastError());
 
     src2 = socket(AF_INET, SOCK_STREAM, 0);
     if (src2 == INVALID_SOCKET)
@@ -3580,7 +3581,8 @@ static void test_events(int useMessages)
         goto end;
     }
 
-    ok(!set_blocking(src2, TRUE), "set_blocking failed, error %d\n", WSAGetLastError());
+    ret = set_blocking(src2, TRUE);
+    ok(!ret, "set_blocking failed, error %d\n", WSAGetLastError());
 
     len = sizeof(BOOL);
     if (getsockopt(src, SOL_SOCKET, SO_OOBINLINE, (void *)&bret, &len) == SOCKET_ERROR)
@@ -4013,7 +4015,8 @@ static void test_events(int useMessages)
             goto end;
         }
 
-        ok(!set_blocking(src, TRUE), "set_blocking failed, error %d\n", WSAGetLastError());
+        ret = set_blocking(src, TRUE);
+        ok(!ret, "set_blocking failed, error %d\n", WSAGetLastError());
 
         ret = WSAAsyncSelect(src2, hWnd, WM_SOCKET, 0);
         if (ret)
@@ -4022,7 +4025,8 @@ static void test_events(int useMessages)
             goto end;
         }
 
-        ok(!set_blocking(src2, TRUE), "set_blocking failed, error %d\n", WSAGetLastError());
+        ret = set_blocking(src2, TRUE);
+        ok(!ret, "set_blocking failed, error %d\n", WSAGetLastError());
     }
     else
     {
@@ -4033,7 +4037,8 @@ static void test_events(int useMessages)
             goto end;
         }
 
-        ok(!set_blocking(src, TRUE), "set_blocking failed, error %d\n", WSAGetLastError());
+        ret = set_blocking(src, TRUE);
+        ok(!ret, "set_blocking failed, error %d\n", WSAGetLastError());
 
         ret = WSAEventSelect(src2, hEvent2, 0);
         if (ret)
@@ -4042,7 +4047,8 @@ static void test_events(int useMessages)
             goto end;
         }
 
-        ok(!set_blocking(src2, TRUE), "set_blocking failed, error %d\n", WSAGetLastError());
+        ret = set_blocking(src2, TRUE);
+        ok(!ret, "set_blocking failed, error %d\n", WSAGetLastError());
     }
 
 end:
