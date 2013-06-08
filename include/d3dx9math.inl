@@ -1029,10 +1029,13 @@ static inline D3DXVECTOR3* D3DXVec3Add(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv1
 
 static inline D3DXVECTOR3* D3DXVec3Cross(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv1, CONST D3DXVECTOR3 *pv2)
 {
+    D3DXVECTOR3 temp;
+
     if ( !pout || !pv1 || !pv2) return NULL;
-    pout->x = (pv1->y) * (pv2->z) - (pv1->z) * (pv2->y);
-    pout->y = (pv1->z) * (pv2->x) - (pv1->x) * (pv2->z);
-    pout->z = (pv1->x) * (pv2->y) - (pv1->y) * (pv2->x);
+    temp.x = (pv1->y) * (pv2->z) - (pv1->z) * (pv2->y);
+    temp.y = (pv1->z) * (pv2->x) - (pv1->x) * (pv2->z);
+    temp.z = (pv1->x) * (pv2->y) - (pv1->y) * (pv2->x);
+    *pout = temp;
     return pout;
 }
 
