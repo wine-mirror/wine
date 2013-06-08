@@ -125,6 +125,8 @@ typedef struct FileDialogImpl {
     HWND cctrls_hwnd;
     struct list cctrls;
     UINT_PTR cctrl_next_dlgid;
+
+    GUID client_guid;
 } FileDialogImpl;
 
 /**************************************************************************
@@ -2032,8 +2034,9 @@ static HRESULT WINAPI IFileDialog2_fnClose(IFileDialog2 *iface, HRESULT hr)
 static HRESULT WINAPI IFileDialog2_fnSetClientGuid(IFileDialog2 *iface, REFGUID guid)
 {
     FileDialogImpl *This = impl_from_IFileDialog2(iface);
-    FIXME("stub - %p (%s)\n", This, debugstr_guid(guid));
-    return E_NOTIMPL;
+    TRACE("%p (%s)\n", This, debugstr_guid(guid));
+    This->client_guid = *guid;
+    return S_OK;
 }
 
 static HRESULT WINAPI IFileDialog2_fnClearClientData(IFileDialog2 *iface)
@@ -3626,6 +3629,8 @@ static HRESULT FileDialog_constructor(IUnknown *pUnkOuter, REFIID riid, void **p
     fdimpl->set_filename = NULL;
     fdimpl->default_ext = NULL;
     fdimpl->custom_cancelbutton = fdimpl->custom_filenamelabel = NULL;
+
+    fdimpl->client_guid = GUID_NULL;
 
     /* FIXME: The default folder setting should be restored for the
      * application if it was previously set. */

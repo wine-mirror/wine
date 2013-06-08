@@ -1392,6 +1392,7 @@ static void test_customize(void)
     if(FAILED(hr))
     {
         skip("Skipping IFileDialogCustomize tests.\n");
+        IFileDialog_Release(pfod);
         return;
     }
 
@@ -1897,6 +1898,30 @@ static void test_customize(void)
     ok(!ref, "Refcount not zero (%d).\n", ref);
 }
 
+static void test_persistent_state(void)
+{
+    IFileDialog *fd;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IFileDialog, (void**)&fd);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+if (0)
+{
+    /* crashes at least on Win8 */
+    hr = IFileDialog_SetClientGuid(fd, NULL);
+}
+
+    hr = IFileDialog_SetClientGuid(fd, &IID_IUnknown);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IFileDialog_SetClientGuid(fd, &IID_NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    IFileDialog_Release(fd);
+}
+
 START_TEST(itemdlg)
 {
     OleInitialize(NULL);
@@ -1908,6 +1933,7 @@ START_TEST(itemdlg)
         test_advise();
         test_filename();
         test_customize();
+        test_persistent_state();
     }
     else
         skip("Skipping all Item Dialog tests.\n");
