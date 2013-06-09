@@ -457,7 +457,7 @@ static void initialize_launchers( HWND hwnd )
         CoTaskMemFree( desktop_folder );
         return;
     }
-    if ((launchers = HeapAlloc( GetProcessHeap(), 0, 2 * sizeof(struct launcher) )))
+    if ((launchers = HeapAlloc( GetProcessHeap(), 0, 2 * sizeof(launchers[0]) )))
     {
         nb_allocated = 2;
 
