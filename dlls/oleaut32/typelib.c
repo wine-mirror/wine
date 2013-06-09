@@ -9771,6 +9771,7 @@ static HRESULT WINAPI ICreateTypeLib2_fnSaveAllChanges(ICreateTypeLib2 *iface)
             FILE_ATTRIBUTE_NORMAL, 0);
     if (outfile == INVALID_HANDLE_VALUE){
         WMSFT_free_file(&file);
+        heap_free(junk);
         return TYPE_E_IOERROR;
     }
 
@@ -9778,10 +9779,12 @@ static HRESULT WINAPI ICreateTypeLib2_fnSaveAllChanges(ICreateTypeLib2 *iface)
     if (!br) {
         WMSFT_free_file(&file);
         CloseHandle(outfile);
+        heap_free(junk);
         return TYPE_E_IOERROR;
     }
 
     br = WriteFile(outfile, junk, junk_size, &written, NULL);
+    heap_free(junk);
     if (!br) {
         WMSFT_free_file(&file);
         CloseHandle(outfile);
