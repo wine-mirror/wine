@@ -3506,7 +3506,7 @@ static WORD SLTG_ReadString(const char *ptr, const TLBString **pStr, ITypeLibImp
 
     len = MultiByteToWideChar(CP_ACP, 0, ptr + 2, bytelen, NULL, 0);
     tmp_str = SysAllocStringLen(NULL, len);
-    if (*tmp_str) {
+    if (tmp_str) {
         MultiByteToWideChar(CP_ACP, 0, ptr + 2, bytelen, tmp_str, len);
         *pStr = TLB_append_str(&lib->string_list, tmp_str);
         SysFreeString(tmp_str);
