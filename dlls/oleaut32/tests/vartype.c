@@ -482,6 +482,7 @@ static HRESULT (WINAPI *pVarDecSub)(const DECIMAL*,const DECIMAL*,DECIMAL*);
 static HRESULT (WINAPI *pVarDecMul)(const DECIMAL*,const DECIMAL*,DECIMAL*);
 static HRESULT (WINAPI *pVarDecDiv)(const DECIMAL*,const DECIMAL*,DECIMAL*);
 static HRESULT (WINAPI *pVarDecCmp)(const DECIMAL*,const DECIMAL*);
+static HRESULT (WINAPI *pVarDecCmpR8)(const DECIMAL*,double);
 static HRESULT (WINAPI *pVarDecNeg)(const DECIMAL*,DECIMAL*);
 
 static HRESULT (WINAPI *pVarBoolFromUI1)(BYTE,VARIANT_BOOL*);
@@ -4258,6 +4259,8 @@ static void test_VarDecFromCy(void)
 #define MATH1(func) hres = p##func(&l, &out)
 #undef MATH2
 #define MATH2(func) hres = p##func(&l, &r, &out)
+#undef MATH3
+#define MATH3(func) hres = p##func(&l, r)
 
 static void test_VarDecAbs(void)
 {
@@ -4552,6 +4555,36 @@ static void test_VarDecCmp(void)
   SETDEC(out,0,DECIMAL_NEG,-1,-1); SETDEC(l,0,DECIMAL_NEG,0,0); MATH1(VarDecCmp); EXPECT_GT;
   SETDEC(out,0,DECIMAL_NEG,-1,-1); SETDEC(l,0,DECIMAL_NEG,-1,-1); MATH1(VarDecCmp); EXPECT_EQ;
 
+}
+
+static void test_VarDecCmpR8(void)
+{
+  HRESULT hres;
+  DECIMAL l;
+  double r;
+
+  CHECKPTR(VarDecCmpR8);
+
+  SETDEC(l,0,0,0,1); r = 0.0;  MATH3(VarDecCmpR8); EXPECT_GT;
+  SETDEC(l,0,0,0,1); r = 0.1;  MATH3(VarDecCmpR8); EXPECT_GT;
+  SETDEC(l,0,0,0,1); r = -0.1; MATH3(VarDecCmpR8); EXPECT_GT;
+
+  SETDEC(l,0,DECIMAL_NEG,0,1); r = 0.0;  MATH3(VarDecCmpR8); EXPECT_LT;
+  SETDEC(l,0,DECIMAL_NEG,0,1); r = 0.1;  MATH3(VarDecCmpR8); EXPECT_LT;
+  SETDEC(l,0,DECIMAL_NEG,0,1); r = -0.1; MATH3(VarDecCmpR8); EXPECT_LT;
+
+  SETDEC(l,0,0,0,0); r = 0.0;  MATH3(VarDecCmpR8); EXPECT_EQ;
+  SETDEC(l,0,0,0,0); r = 0.1;  MATH3(VarDecCmpR8); EXPECT_LT;
+  SETDEC(l,0,0,0,0); r = -0.1; MATH3(VarDecCmpR8); EXPECT_GT;
+
+  SETDEC(l,0,DECIMAL_NEG,0,0); r = 0.0;  MATH3(VarDecCmpR8); EXPECT_EQ;
+  SETDEC(l,0,DECIMAL_NEG,0,0); r = 0.1;  MATH3(VarDecCmpR8); EXPECT_LT;
+  SETDEC(l,0,DECIMAL_NEG,0,0); r = -0.1; MATH3(VarDecCmpR8); EXPECT_GT;
+
+  SETDEC(l,0,0,0,1);             r = DECIMAL_NEG; MATH3(VarDecCmpR8); EXPECT_LT;
+  SETDEC(l,0,DECIMAL_NEG,0,0);   r = DECIMAL_NEG; MATH3(VarDecCmpR8); EXPECT_LT;
+  SETDEC(l,0,0,-1,-1);           r = DECIMAL_NEG; MATH3(VarDecCmpR8); EXPECT_GT;
+  SETDEC(l,0,DECIMAL_NEG,-1,-1); r = DECIMAL_NEG; MATH3(VarDecCmpR8); EXPECT_LT;
 }
 
 /*
@@ -6358,6 +6391,7 @@ START_TEST(vartype)
   test_VarDecAdd();
   test_VarDecSub();
   test_VarDecCmp();
+  test_VarDecCmpR8();
   test_VarDecMul();
   test_VarDecDiv();
 
