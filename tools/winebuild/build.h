@@ -229,7 +229,7 @@ extern char *xstrdup( const char *str );
 extern char *strupper(char *s);
 extern int strendswith(const char* str, const char* end);
 extern char *strmake(const char* fmt, ...) __attribute__((__format__ (__printf__, 1, 2 )));
-extern struct strarray *strarray_init(void);
+extern struct strarray *strarray_fromstring( const char *str, const char *delim );
 extern void strarray_add( struct strarray *array, ... );
 extern void strarray_addv( struct strarray *array, char * const *argv );
 extern void strarray_free( struct strarray *array );
@@ -246,7 +246,7 @@ extern int output( const char *format, ... )
 extern void output_cfi( const char *format, ... )
    __attribute__ ((__format__ (__printf__, 1, 2)));
 extern void spawn( struct strarray *array );
-extern char *find_tool( const char *name, const char * const *names );
+extern struct strarray *find_tool( const char *name, const char * const *names );
 extern struct strarray *get_as_command(void);
 extern struct strarray *get_ld_command(void);
 extern const char *get_nm_command(void);
@@ -357,9 +357,9 @@ extern FILE *output_file;
 extern const char *output_file_name;
 extern char **lib_path;
 
-extern char *as_command;
-extern char *ld_command;
-extern char *nm_command;
+extern struct strarray *as_command;
+extern struct strarray *ld_command;
+extern struct strarray *nm_command;
 extern char *cpu_option;
 
 #endif  /* __WINE_BUILD_H */

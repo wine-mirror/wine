@@ -1322,7 +1322,7 @@ void output_imports( DLLSPEC *spec )
 /* output an import library for a Win32 module and additional object files */
 void output_import_lib( DLLSPEC *spec, char **argv )
 {
-    struct strarray *args = strarray_init();
+    struct strarray *args;
     char *def_file;
 
     if (target_platform != PLATFORM_WINDOWS)
@@ -1336,14 +1336,15 @@ void output_import_lib( DLLSPEC *spec, char **argv )
     fclose( output_file );
     output_file = NULL;
 
-    strarray_add( args, find_tool( "dlltool", NULL ), "-k", "-l", output_file_name, "-d", def_file, NULL );
+    args = find_tool( "dlltool", NULL );
+    strarray_add( args, "-k", "-l", output_file_name, "-d", def_file, NULL );
     spawn( args );
     strarray_free( args );
 
     if (argv[0])
     {
-        args = strarray_init();
-        strarray_add( args, find_tool( "ar", NULL ), "rs", output_file_name, NULL );
+        args = find_tool( "ar", NULL );
+        strarray_add( args, "rs", output_file_name, NULL );
         strarray_addv( args, argv );
         spawn( args );
         strarray_free( args );

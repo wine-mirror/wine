@@ -84,9 +84,9 @@ const char *output_file_name = NULL;
 static const char *output_file_source_name;
 static int fake_module;
 
-char *as_command = NULL;
-char *ld_command = NULL;
-char *nm_command = NULL;
+struct strarray *as_command = NULL;
+struct strarray *ld_command = NULL;
+struct strarray *nm_command = NULL;
 char *cpu_option = NULL;
 
 static int nb_res_files;
@@ -474,7 +474,7 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
             set_exec_mode( MODE_IMPLIB );
             break;
         case LONG_OPT_ASCMD:
-            as_command = xstrdup( optarg );
+            as_command = strarray_fromstring( optarg, " " );
             break;
         case LONG_OPT_FAKE_MODULE:
             fake_module = 1;
@@ -486,10 +486,10 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
             spec->characteristics |= IMAGE_FILE_LARGE_ADDRESS_AWARE;
             break;
         case LONG_OPT_LDCMD:
-            ld_command = xstrdup( optarg );
+            ld_command = strarray_fromstring( optarg, " " );
             break;
         case LONG_OPT_NMCMD:
-            nm_command = xstrdup( optarg );
+            nm_command = strarray_fromstring( optarg, " " );
             break;
         case LONG_OPT_NXCOMPAT:
             if (optarg[0] == 'n' || optarg[0] == 'N')

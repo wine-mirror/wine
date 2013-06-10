@@ -680,8 +680,8 @@ void output_res_o_file( DLLSPEC *spec )
     close( fd );
     free( output_buffer );
 
-    args = strarray_init();
-    strarray_add( args, find_tool( "windres", NULL ), "-i", res_file, "-o", output_file_name, NULL );
+    args = find_tool( "windres", NULL );
+    strarray_add( args, "-i", res_file, "-o", output_file_name, NULL );
     spawn( args );
     strarray_free( args );
 
