@@ -105,7 +105,7 @@ static StorageInternalImpl* StorageInternalImpl_Construct(StorageBaseImpl* paren
 static void StorageImpl_Destroy(StorageBaseImpl* iface);
 static void StorageImpl_Invalidate(StorageBaseImpl* iface);
 static HRESULT StorageImpl_Flush(StorageBaseImpl* iface);
-static BOOL StorageImpl_ReadBigBlock(StorageImpl* This, ULONG blockIndex, void* buffer);
+static HRESULT StorageImpl_ReadBigBlock(StorageImpl* This, ULONG blockIndex, void* buffer, ULONG *read );
 static BOOL StorageImpl_WriteBigBlock(StorageImpl* This, ULONG blockIndex, const void* buffer);
 static void StorageImpl_SetNextBlockInChain(StorageImpl* This, ULONG blockIndex, ULONG nextBlock);
 static HRESULT StorageImpl_LoadFileHeader(StorageImpl* This);
@@ -3080,12 +3080,12 @@ static ULONG StorageImpl_GetNextFreeBigBlock(
 {
   ULONG depotBlockIndexPos;
   BYTE depotBuffer[MAX_BIG_BLOCK_SIZE];
-  BOOL success;
   ULONG depotBlockOffset;
   ULONG blocksPerDepot    = This->bigBlockSize / sizeof(ULONG);
   ULONG nextBlockIndex    = BLOCK_SPECIAL;
   int   depotIndex        = 0;
   ULONG freeBlock         = BLOCK_UNUSED;
+  ULONG read;
   ULARGE_INTEGER neededSize;
   STATSTG statstg;
 
@@ -3175,9 +3175,9 @@ static ULONG StorageImpl_GetNextFreeBigBlock(
       }
     }
 
-    success = StorageImpl_ReadBigBlock(This, depotBlockIndexPos, depotBuffer);
+    StorageImpl_ReadBigBlock(This, depotBlockIndexPos, depotBuffer, &read);
 
-    if (success)
+    if (read)
     {
       while ( ( (depotBlockOffset/sizeof(ULONG) ) < blocksPerDepot) &&
               ( nextBlockIndex != BLOCK_UNUSED))
@@ -3257,7 +3257,7 @@ static ULONG Storage32Impl_GetExtDepotBlock(StorageImpl* This, ULONG depotIndex)
   {
     extBlockIndex = This->extBigBlockDepotLocations[extBlockCount];
 
-    StorageImpl_ReadBigBlock(This, extBlockIndex, depotBuffer);
+    StorageImpl_ReadBigBlock(This, extBlockIndex, depotBuffer, NULL);
 
     num_blocks = This->bigBlockSize / 4;
 
@@ -3419,7 +3419,7 @@ static HRESULT StorageImpl_GetNextBlockInChain(
   ULONG depotBlockCount  = offsetInDepot / This->bigBlockSize;
   ULONG depotBlockOffset = offsetInDepot % This->bigBlockSize;
   BYTE depotBuffer[MAX_BIG_BLOCK_SIZE];
-  BOOL success;
+  ULONG read;
   ULONG depotBlockIndexPos;
   int index, num_blocks;
 
@@ -3451,9 +3451,9 @@ static HRESULT StorageImpl_GetNextBlockInChain(
       depotBlockIndexPos = Storage32Impl_GetExtDepotBlock(This, depotBlockCount);
     }
 
-    success = StorageImpl_ReadBigBlock(This, depotBlockIndexPos, depotBuffer);
+    StorageImpl_ReadBigBlock(This, depotBlockIndexPos, depotBuffer, &read);
 
-    if (!success)
+    if (!read)
       return STG_E_READFAULT;
 
     num_blocks = This->bigBlockSize / 4;
@@ -4035,26 +4035,30 @@ HRESULT StorageImpl_WriteDirEntry(
   return StorageImpl_WriteRawDirEntry(This, index, currentEntry);
 }
 
-static BOOL StorageImpl_ReadBigBlock(
+static HRESULT StorageImpl_ReadBigBlock(
   StorageImpl* This,
   ULONG          blockIndex,
-  void*          buffer)
+  void*          buffer,
+  ULONG*         out_read)
 {
   ULARGE_INTEGER ulOffset;
   DWORD  read=0;
+  HRESULT hr;
 
   ulOffset.u.HighPart = 0;
   ulOffset.u.LowPart = StorageImpl_GetBigBlockOffset(This, blockIndex);
 
-  StorageImpl_ReadAt(This, ulOffset, buffer, This->bigBlockSize, &read);
+  hr = StorageImpl_ReadAt(This, ulOffset, buffer, This->bigBlockSize, &read);
 
-  if (read && read < This->bigBlockSize)
+  if (SUCCEEDED(hr) &&  read < This->bigBlockSize)
   {
     /* File ends during this block; fill the rest with 0's. */
     memset((LPBYTE)buffer+read, 0, This->bigBlockSize-read);
   }
 
-  return (read != 0);
+  if (out_read) *out_read = read;
+
+  return hr;
 }
 
 static BOOL StorageImpl_ReadDWordFromBigBlock(
@@ -6222,7 +6226,7 @@ HRESULT BlockChainStream_ReadAt(BlockChainStream* This,
     {
       if (!cachedBlock->read)
       {
-        if (!StorageImpl_ReadBigBlock(This->parentStorage, cachedBlock->sector, cachedBlock->data))
+        if (FAILED(StorageImpl_ReadBigBlock(This->parentStorage, cachedBlock->sector, cachedBlock->data, NULL)))
           return STG_E_READFAULT;
 
         cachedBlock->read = 1;
@@ -6306,7 +6310,7 @@ HRESULT BlockChainStream_WriteAt(BlockChainStream* This,
     {
       if (!cachedBlock->read && bytesToWrite != This->parentStorage->bigBlockSize)
       {
-        if (!StorageImpl_ReadBigBlock(This->parentStorage, cachedBlock->sector, cachedBlock->data))
+        if (FAILED(StorageImpl_ReadBigBlock(This->parentStorage, cachedBlock->sector, cachedBlock->data, NULL)))
           return STG_E_READFAULT;
       }
 
