@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef __WINE_D3D9_H
-#define __WINE_D3D9_H
+#ifndef _D3D9_H_
+#define _D3D9_H_
 
 #ifndef DIRECT3D_VERSION
 #define DIRECT3D_VERSION  0x0900
@@ -2042,4 +2042,4 @@ IDirect3D9* WINAPI Direct3DCreate9(UINT SDKVersion);
 #endif /* defined(__cplusplus) */
 
 
-#endif /* __WINE_D3D9_H */
+#endif /* _D3D9_H_ */
