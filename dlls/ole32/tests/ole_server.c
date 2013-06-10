@@ -329,7 +329,7 @@ static HANDLE start_server(const char *argv0)
     PROCESS_INFORMATION pi;
     STARTUPINFO si;
     SECURITY_ATTRIBUTES sa;
-    char **argv, cmdline[MAX_PATH * 2];
+    char cmdline[MAX_PATH * 2];
     BOOL ret;
 
     memset(&si, 0, sizeof(si));
@@ -343,7 +343,6 @@ static HANDLE start_server(const char *argv0)
     sa.lpSecurityDescriptor = NULL;
     sa.bInheritHandle = TRUE;
 
-    winetest_get_mainargs(&argv);
     sprintf(cmdline, "\"%s\" ole_server -server", argv0);
     ret = CreateProcess(argv0, cmdline, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi);
     ok(ret, "CreateProcess(%s) error %d\n", cmdline, GetLastError());
@@ -364,20 +363,13 @@ START_TEST(ole_server)
     HANDLE mapping, done_event, init_done_event, process;
     struct winetest_info *info;
     int argc;
-    char **argv, *argv0, *ext;
+    char **argv;
 
     mapping = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 4096, "winetest_ole_server");
     ok(mapping != 0, "CreateFileMapping failed\n");
     info = MapViewOfFile(mapping, FILE_MAP_READ|FILE_MAP_WRITE, 0, 0, 4096);
 
     argc = winetest_get_mainargs(&argv);
-    argv0 = strrchr(argv[0], '\\');
-    if (!argv0) argv0 = strrchr(argv[0], '/');
-    if (!argv0) argv0 = argv[0];
-    else argv0++;
-    argv0 = strdup(argv0);
-    ext = strrchr(argv0, '.');
-    if (ext && !lstrcmpi(ext, ".so")) *ext = 0;
 
     done_event = CreateEvent(NULL, TRUE, FALSE, "ole_server_done_event");
     ok(done_event != 0, "CreateEvent error %d\n", GetLastError());
