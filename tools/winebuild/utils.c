@@ -373,13 +373,15 @@ struct strarray *find_tool( const char *name, const char * const *names )
 
 struct strarray *get_as_command(void)
 {
-    static int as_is_clang = 0;
     struct strarray *args;
 
-    if (!as_command)
+    if (cc_command)
     {
-        as_command = find_tool( "clang", NULL );
-        if (as_command) as_is_clang = 1;
+        args = strarray_copy( cc_command );
+        strarray_add( args, "-xassembler", "-c", NULL );
+        if (force_pointer_size)
+            strarray_add_one( args, (force_pointer_size == 8) ? "-m64" : "-m32" );
+        return args;
     }
 
     if (!as_command)
@@ -393,13 +395,7 @@ struct strarray *get_as_command(void)
 
     args = strarray_copy( as_command );
 
-    if (as_is_clang)
-    {
-        strarray_add( args, "-xassembler", "-c", NULL );
-        if (force_pointer_size)
-            strarray_add_one( args, (force_pointer_size == 8) ? "-m64" : "-m32" );
-    }
-    else if (force_pointer_size)
+    if (force_pointer_size)
     {
         switch (target_platform)
         {

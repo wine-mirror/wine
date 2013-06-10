@@ -67,6 +67,10 @@ Specify the target CPU and platform on which the generated code will
 be built. The target specification is in the standard autoconf format
 as returned by config.sub.
 .TP
+.BI \--cc-cmd= cc-command
+Specify the C compiler to use to compile assembly files; the default
+is to instead use the assembler specified with \fB--as-cmd\fR.
+.TP
 .BI \-d,\ --delay-lib= name
 Set the delayed import mode for the specified library, which must be
 one of the libraries imported with the \fB-l\fR option. Delayed mode

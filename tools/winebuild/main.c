@@ -85,6 +85,7 @@ static const char *output_file_source_name;
 static int fake_module;
 
 struct strarray *as_command = NULL;
+struct strarray *cc_command = NULL;
 struct strarray *ld_command = NULL;
 struct strarray *nm_command = NULL;
 char *cpu_option = NULL;
@@ -241,6 +242,7 @@ static const char usage_str[] =
 "Options:\n"
 "       --as-cmd=AS           Command to use for assembling (default: as)\n"
 "   -b, --target=TARGET       Specify target CPU and platform for cross-compiling\n"
+"       --cc-cmd=CC           C compiler to use for assembling (default: fall back to --as-cmd)\n"
 "   -d, --delay-lib=LIB       Import the specified library in delayed mode\n"
 "   -D SYM                    Ignored for C flags compatibility\n"
 "   -e, --entry=FUNC          Set the DLL entry point function (default: DllMain)\n"
@@ -286,6 +288,7 @@ enum long_options_values
     LONG_OPT_EXE,
     LONG_OPT_IMPLIB,
     LONG_OPT_ASCMD,
+    LONG_OPT_CCCMD,
     LONG_OPT_EXTERNAL_SYMS,
     LONG_OPT_FAKE_MODULE,
     LONG_OPT_LARGE_ADDRESS_AWARE,
@@ -307,6 +310,7 @@ static const struct option long_options[] =
     { "exe",           0, 0, LONG_OPT_EXE },
     { "implib",        0, 0, LONG_OPT_IMPLIB },
     { "as-cmd",        1, 0, LONG_OPT_ASCMD },
+    { "cc-cmd",        1, 0, LONG_OPT_CCCMD },
     { "external-symbols", 0, 0, LONG_OPT_EXTERNAL_SYMS },
     { "fake-module",   0, 0, LONG_OPT_FAKE_MODULE },
     { "large-address-aware", 0, 0, LONG_OPT_LARGE_ADDRESS_AWARE },
@@ -475,6 +479,9 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
             break;
         case LONG_OPT_ASCMD:
             as_command = strarray_fromstring( optarg, " " );
+            break;
+        case LONG_OPT_CCCMD:
+            cc_command = strarray_fromstring( optarg, " " );
             break;
         case LONG_OPT_FAKE_MODULE:
             fake_module = 1;
