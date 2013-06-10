@@ -789,6 +789,26 @@ static void test_WinHttpAddHeaders(void)
 
 }
 
+static void CALLBACK cert_error(HINTERNET handle, DWORD_PTR ctx, DWORD status, LPVOID buf, DWORD len)
+{
+    DWORD flags = *(DWORD *)buf;
+
+    if (!flags)
+    {
+        trace("WINHTTP_CALLBACK_STATUS_FLAG_SECURITY_CHANNEL_ERROR\n");
+        return;
+    }
+#define X(x) if (flags & x) trace("%s\n", #x);
+    X(WINHTTP_CALLBACK_STATUS_FLAG_CERT_REV_FAILED)
+    X(WINHTTP_CALLBACK_STATUS_FLAG_INVALID_CERT)
+    X(WINHTTP_CALLBACK_STATUS_FLAG_CERT_REVOKED)
+    X(WINHTTP_CALLBACK_STATUS_FLAG_INVALID_CA)
+    X(WINHTTP_CALLBACK_STATUS_FLAG_CERT_CN_INVALID)
+    X(WINHTTP_CALLBACK_STATUS_FLAG_CERT_DATE_INVALID)
+    X(WINHTTP_CALLBACK_STATUS_FLAG_CERT_WRONG_USAGE)
+#undef X
+}
+
 static void test_secure_connection(void)
 {
     static const WCHAR google[] = {'w','w','w','.','g','o','o','g','l','e','.','c','o','m',0};
@@ -833,6 +853,8 @@ static void test_secure_connection(void)
 
     req = WinHttpOpenRequest(con, NULL, NULL, NULL, NULL, NULL, WINHTTP_FLAG_SECURE);
     ok(req != NULL, "failed to open a request %u\n", GetLastError());
+
+    WinHttpSetStatusCallback(req, cert_error, WINHTTP_CALLBACK_STATUS_SECURE_FAILURE, 0);
 
     ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
     ok(ret, "failed to send request %u\n", GetLastError());
