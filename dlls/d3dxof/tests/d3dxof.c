@@ -24,6 +24,7 @@
 #include "wine/test.h"
 #include "initguid.h"
 #include "dxfile.h"
+#include "rmxftmpl.h"
 
 #define I2(x) x,0
 #define I4(x) x,0,0,0
@@ -1014,6 +1015,32 @@ static void test_complex_object(void)
     IDirectXFileEnumObject_Release(enum_object);
     IDirectXFile_Release(dxfile);
 }
+
+static void test_standard_templates(void)
+{
+    HRESULT ret;
+    IDirectXFile *dxfile = NULL;
+
+    if (!pDirectXFileCreate)
+    {
+        win_skip("DirectXFileCreate is not available\n");
+        return;
+    }
+
+    ret = pDirectXFileCreate(&dxfile);
+    ok(ret == DXFILE_OK, "DirectXFileCreate failed with %#x\n", ret);
+    if (!dxfile)
+    {
+        skip("Couldn't create DirectXFile interface\n");
+        return;
+    }
+
+    ret = IDirectXFile_RegisterTemplates(dxfile, D3DRM_XTEMPLATES, D3DRM_XTEMPLATE_BYTES);
+    ok(ret == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates failed with %#x\n", ret);
+
+    IDirectXFile_Release(dxfile);
+}
+
 /* Set it to 1 to expand the string when dumping the object. This is useful when there is
  * only one string in a sub-object (very common). Use with care, this may lead to a crash. */
 #define EXPAND_STRING 0
@@ -1199,6 +1226,7 @@ START_TEST(d3dxof)
     test_syntax();
     test_syntax_semicolon_comma();
     test_complex_object();
+    test_standard_templates();
     test_dump();
 
     FreeLibrary(hd3dxof);
