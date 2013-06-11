@@ -1466,7 +1466,6 @@ static void test_CompareStringA(void)
     memset(a, 'a', sizeof(a));
     SetLastError(0xdeadbeef);
     ret = CompareStringA(lcid, 0, a, sizeof(a), a, sizeof(a));
-    todo_wine
     ok (GetLastError() == 0xdeadbeef && ret == CSTR_EQUAL,
         "ret %d, error %d, expected value %d\n", ret, GetLastError(), CSTR_EQUAL);
 }

@@ -2979,7 +2979,7 @@ INT WINAPI CompareStringA(LCID lcid, DWORD flags,
     WCHAR *buf1W = NtCurrentTeb()->StaticUnicodeBuffer;
     WCHAR *buf2W = buf1W + 130;
     LPWSTR str1W, str2W;
-    INT len1W, len2W, ret;
+    INT len1W = 0, len2W = 0, ret;
     UINT locale_cp = CP_ACP;
 
     if (!str1 || !str2)
@@ -2994,7 +2994,7 @@ INT WINAPI CompareStringA(LCID lcid, DWORD flags,
 
     if (len1)
     {
-        len1W = MultiByteToWideChar(locale_cp, 0, str1, len1, buf1W, 130);
+        if (len1 <= 130) len1W = MultiByteToWideChar(locale_cp, 0, str1, len1, buf1W, 130);
         if (len1W)
             str1W = buf1W;
         else
@@ -3017,7 +3017,7 @@ INT WINAPI CompareStringA(LCID lcid, DWORD flags,
 
     if (len2)
     {
-        len2W = MultiByteToWideChar(locale_cp, 0, str2, len2, buf2W, 130);
+        if (len2 <= 130) len2W = MultiByteToWideChar(locale_cp, 0, str2, len2, buf2W, 130);
         if (len2W)
             str2W = buf2W;
         else
