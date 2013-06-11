@@ -39,6 +39,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_constants);
 WINE_DECLARE_DEBUG_CHANNEL(d3d);
 
+/* sRGB correction constants */
+static const float srgb_cmp = 0.0031308f;
+static const float srgb_mul_low = 12.92f;
+static const float srgb_pow = 0.41666f;
+static const float srgb_mul_high = 1.055f;
+static const float srgb_sub_high = 0.055f;
+
 static BOOL shader_is_pshader_version(enum wined3d_shader_type type)
 {
     return type == WINED3D_SHADER_TYPE_PIXEL;

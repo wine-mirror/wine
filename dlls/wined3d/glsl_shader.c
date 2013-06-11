@@ -47,6 +47,9 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 #define WINED3D_GLSL_SAMPLE_LOD         0x4
 #define WINED3D_GLSL_SAMPLE_GRAD        0x8
 
+static const float srgb_const0[] = {0.41666f, 1.055f, 0.055f, 12.92f};  /* pow, mul_high, sub_high, mul_low */
+static const float srgb_const1[] = {0.0031308f, 0.0f, 0.0f, 0.0f};      /* cmp */
+
 struct glsl_dst_param
 {
     char reg_name[150];
@@ -240,6 +243,64 @@ static const char *shader_glsl_get_prefix(enum wined3d_shader_type type)
             FIXME("Unhandled shader type %#x.\n", type);
             return "unknown";
     }
+}
+
+/* This should be equivalent to using the %.8e format specifier, but always
+ * using '.' as decimal separator. This doesn't handle +/-INF or NAN, since
+ * the GLSL parser wouldn't be able to handle those anyway. */
+static void shader_glsl_ftoa(float value, char *s)
+{
+    int x, frac, exponent;
+    const char *sign = "";
+    double d;
+
+    d = value;
+    if (copysignf(1.0f, value) < 0.0f)
+    {
+        d = -d;
+        sign = "-";
+    }
+
+    if (d == 0.0f)
+    {
+        x = 0;
+        frac = 0;
+        exponent = 0;
+    }
+    else
+    {
+        double t, diff;
+
+        exponent = floorf(log10f(d));
+        d /= pow(10.0, exponent);
+
+        x = d;
+        t = (d - x) * 100000000;
+        frac = t;
+        diff = t - frac;
+
+        if ((diff > 0.5) || (diff == 0.5 && (frac & 1)))
+        {
+            if (++frac >= 100000000)
+            {
+                frac = 0;
+                ++x;
+            }
+        }
+    }
+
+    sprintf(s, "%s%d.%08de%+03d", sign, x, frac, exponent);
+}
+
+static void shader_glsl_append_imm_vec4(struct wined3d_shader_buffer *buffer, const float *values)
+{
+    char str[4][16];
+
+    shader_glsl_ftoa(values[0], str[0]);
+    shader_glsl_ftoa(values[1], str[1]);
+    shader_glsl_ftoa(values[2], str[2]);
+    shader_glsl_ftoa(values[3], str[3]);
+    shader_addline(buffer, "vec4(%s, %s, %s, %s)", str[0], str[1], str[2], str[3]);
 }
 
 /* Extract a line from the info log.
@@ -1206,10 +1267,12 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
 
         if (ps_args->srgb_correction)
         {
-            shader_addline(buffer, "const vec4 srgb_const0 = vec4(%.8e, %.8e, %.8e, %.8e);\n",
-                    srgb_pow, srgb_mul_high, srgb_sub_high, srgb_mul_low);
-            shader_addline(buffer, "const vec4 srgb_const1 = vec4(%.8e, 0.0, 0.0, 0.0);\n",
-                    srgb_cmp);
+            shader_addline(buffer, "const vec4 srgb_const0 = ");
+            shader_glsl_append_imm_vec4(buffer, srgb_const0);
+            shader_addline(buffer, ";\n");
+            shader_addline(buffer, "const vec4 srgb_const1 = ");
+            shader_glsl_append_imm_vec4(buffer, srgb_const1);
+            shader_addline(buffer, ";\n");
         }
         if (reg_maps->vpos || reg_maps->usesdsy)
         {
@@ -1221,13 +1284,21 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
             }
             else
             {
-                /* This happens because we do not have proper tracking of the constant registers that are
-                 * actually used, only the max limit of the shader version
-                 */
+                float ycorrection[] =
+                {
+                    context->render_offscreen ? 0.0f : fb->render_targets[0]->resource.height,
+                    context->render_offscreen ? 1.0f : -1.0f,
+                    0.0f,
+                    0.0f,
+                };
+
+                /* This happens because we do not have proper tracking of the
+                 * constant registers that are actually used, only the max
+                 * limit of the shader version. */
                 FIXME("Cannot find a free uniform for vpos correction params\n");
-                shader_addline(buffer, "const vec4 ycorrection = vec4(%f, %f, 0.0, 0.0);\n",
-                        context->render_offscreen ? 0.0f : fb->render_targets[0]->resource.height,
-                        context->render_offscreen ? 1.0f : -1.0f);
+                shader_addline(buffer, "const vec4 ycorrection = ");
+                shader_glsl_append_imm_vec4(buffer, ycorrection);
+                shader_addline(buffer, ";\n");
             }
             shader_addline(buffer, "vec4 vpos;\n");
         }
@@ -1261,10 +1332,9 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     {
         LIST_FOR_EACH_ENTRY(lconst, &shader->constantsF, struct wined3d_shader_lconst, entry)
         {
-            const float *value;
-            value = (const float *)lconst->value;
-            shader_addline(buffer, "const vec4 %s_lc%u = vec4(%.8e, %.8e, %.8e, %.8e);\n",
-                    prefix, lconst->idx, value[0], value[1], value[2], value[3]);
+            shader_addline(buffer, "const vec4 %s_lc%u = ", prefix, lconst->idx);
+            shader_glsl_append_imm_vec4(buffer, (const float *)lconst->value);
+            shader_addline(buffer, ";\n");
         }
     }
 
@@ -1388,6 +1458,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
     const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
     const char *prefix = shader_glsl_get_prefix(version->type);
     struct glsl_src_param rel_param0, rel_param1;
+    char imm_str[4][16];
 
     if (reg->idx[0].offset != ~0U && reg->idx[0].rel_addr)
         shader_glsl_add_src_param(ins, reg->idx[0].rel_addr, WINED3DSP_WRITEMASK_0, &rel_param0);
@@ -1583,7 +1654,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
                     switch (reg->data_type)
                     {
                         case WINED3D_DATA_FLOAT:
-                            sprintf(register_name, "%.8e", *(const float *)reg->immconst_data);
+                            shader_glsl_ftoa(*(const float *)reg->immconst_data, register_name);
                             break;
                         case WINED3D_DATA_INT:
                             sprintf(register_name, "%#x", reg->immconst_data[0]);
@@ -1603,9 +1674,12 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
                     switch (reg->data_type)
                     {
                         case WINED3D_DATA_FLOAT:
-                            sprintf(register_name, "vec4(%.8e, %.8e, %.8e, %.8e)",
-                                    *(const float *)&reg->immconst_data[0], *(const float *)&reg->immconst_data[1],
-                                    *(const float *)&reg->immconst_data[2], *(const float *)&reg->immconst_data[3]);
+                            shader_glsl_ftoa(*(const float *)&reg->immconst_data[0], imm_str[0]);
+                            shader_glsl_ftoa(*(const float *)&reg->immconst_data[1], imm_str[1]);
+                            shader_glsl_ftoa(*(const float *)&reg->immconst_data[2], imm_str[2]);
+                            shader_glsl_ftoa(*(const float *)&reg->immconst_data[3], imm_str[3]);
+                            sprintf(register_name, "vec4(%s, %s, %s, %s)",
+                                    imm_str[0], imm_str[1], imm_str[2], imm_str[3]);
                             break;
                         case WINED3D_DATA_INT:
                             sprintf(register_name, "ivec4(%#x, %#x, %#x, %#x)",
@@ -5399,10 +5473,12 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct wined3d_shader_buf
 
     if (settings->sRGB_write)
     {
-        shader_addline(buffer, "const vec4 srgb_const0 = vec4(%.8e, %.8e, %.8e, %.8e);\n",
-                srgb_pow, srgb_mul_high, srgb_sub_high, srgb_mul_low);
-        shader_addline(buffer, "const vec4 srgb_const1 = vec4(%.8e, 0.0, 0.0, 0.0);\n",
-                srgb_cmp);
+        shader_addline(buffer, "const vec4 srgb_const0 = ");
+        shader_glsl_append_imm_vec4(buffer, srgb_const0);
+        shader_addline(buffer, ";\n");
+        shader_addline(buffer, "const vec4 srgb_const1 = ");
+        shader_glsl_append_imm_vec4(buffer, srgb_const1);
+        shader_addline(buffer, ";\n");
     }
 
     shader_addline(buffer, "void main()\n{\n");
