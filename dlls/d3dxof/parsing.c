@@ -811,7 +811,6 @@ static WORD parse_TOKEN(parse_buffer * buf)
       case TOKEN_STRING:
         {
           DWORD count;
-          WORD tmp_token;
           char *string = (char*)buf->value;
 
           if (!read_bytes(buf, &count, 4))
@@ -819,10 +818,6 @@ static WORD parse_TOKEN(parse_buffer * buf)
           if (!read_bytes(buf, string, count))
             return TOKEN_ERROR;
           string[count] = 0;
-          if (!read_bytes(buf, &tmp_token, 2))
-            return TOKEN_ERROR;
-          if ((tmp_token != TOKEN_COMMA) && (tmp_token != TOKEN_SEMICOLON))
-            ERR("No comma or semicolon (got %d)\n", tmp_token);
           TRACE("string = %s\n", string);
 
           token = TOKEN_LPSTR;

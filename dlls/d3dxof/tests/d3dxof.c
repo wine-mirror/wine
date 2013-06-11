@@ -30,6 +30,7 @@
 #define I4(x) x,0,0,0
 
 #define TOKEN_NAME         I2(1)
+#define TOKEN_STRING       I2(2)
 #define TOKEN_INTEGER      I2(3)
 #define TOKEN_INTEGER_LIST I2(6)
 #define TOKEN_OBRACE       I2(10)
@@ -327,6 +328,13 @@ static char object_syntax_string_with_separator[] =
 "{\n"
 "\"foo;bar\";\n"
 "}\n";
+
+static char object_syntax_string_bin[] = {
+'x','o','f',' ','0','3','0','2','b','i','n',' ','0','0','6','4',
+TOKEN_NAME, /* size */ I4(8), /* name */ 'F','i','l','e','n','a','m','e', TOKEN_OBRACE,
+TOKEN_STRING, /* size */ I4(6), /* string */ 'f','o','o','b','a','r', TOKEN_SEMICOLON,
+TOKEN_CBRACE
+};
 
 static char templates_complex_object[] =
 "xof 0302txt 0064\n"
@@ -846,6 +854,21 @@ static void test_syntax(void)
     ok(hr == DXFILE_OK, "IDirectXFileData_GetData: %x\n", hr);
     ok(size == sizeof(char*), "Got wrong data size %d\n", size);
     ok(!strcmp(*string, "foo;bar"), "Got string %s, expected foo;bar\n", *string);
+    if (hr == DXFILE_OK)
+        IDirectXFileData_Release(lpdxfd);
+    IDirectXFileEnumObject_Release(lpdxfeo);
+
+    /* Test string in binary mode */
+    dxflm.lpMemory = &object_syntax_string_bin;
+    dxflm.dSize = sizeof(object_syntax_string_bin);
+    hr = IDirectXFile_CreateEnumObject(lpDirectXFile, &dxflm, DXFILELOAD_FROMMEMORY, &lpdxfeo);
+    ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
+    hr = IDirectXFileEnumObject_GetNextDataObject(lpdxfeo, &lpdxfd);
+    ok(hr == DXFILE_OK, "IDirectXFileEnumObject_GetNextDataObject: %x\n", hr);
+    hr = IDirectXFileData_GetData(lpdxfd, NULL, &size, (void**)&string);
+    ok(hr == DXFILE_OK, "IDirectXFileData_GetData: %x\n", hr);
+    ok(size == sizeof(char*), "Got wrong data size %d\n", size);
+    ok(!strcmp(*string, "foobar"), "Got string %s, expected foobar\n", *string);
     if (hr == DXFILE_OK)
         IDirectXFileData_Release(lpdxfd);
     IDirectXFileEnumObject_Release(lpdxfeo);
