@@ -1328,6 +1328,7 @@ static const struct comparestringa_entry comparestringa_data[] = {
 static void test_CompareStringA(void)
 {
   int ret, i;
+  char a[256];
   LCID lcid = MAKELCID(MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT), SORT_DEFAULT);
 
   for (i = 0; i < sizeof(comparestringa_data)/sizeof(struct comparestringa_entry); i++)
@@ -1461,6 +1462,13 @@ static void test_CompareStringA(void)
     todo_wine ok(ret == CSTR_LESS_THAN, "\'\\xB9\' character should be greater than \'a\'\n");
     ret = CompareStringA(lcid, 0, "\xB9", 1, "b", 1);
     ok(ret == CSTR_LESS_THAN, "\'\\xB9\' character should be smaller than \'b\'\n");
+
+    memset(a, 'a', sizeof(a));
+    SetLastError(0xdeadbeef);
+    ret = CompareStringA(lcid, 0, a, sizeof(a), a, sizeof(a));
+    todo_wine
+    ok (GetLastError() == 0xdeadbeef && ret == CSTR_EQUAL,
+        "ret %d, error %d, expected value %d\n", ret, GetLastError(), CSTR_EQUAL);
 }
 
 static void test_LCMapStringA(void)
