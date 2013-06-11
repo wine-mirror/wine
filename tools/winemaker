@@ -1121,7 +1121,6 @@ sub source_scan_project_file($$$)
 
     if ((@$project_settings[$T_FLAGS] & $TF_NOMSVCRT) == 0) {
         push @{@$project_settings[$T_CEXTRA]},"-mno-cygwin";
-        push @{@$project_settings[$T_CXXEXTRA]},"-mno-cygwin";
         if ($opt_arch != $OPT_ARCH_DEFAULT) {
             push @{@$project_settings[$T_CEXTRA]},"-m$opt_arch";
             push @{@$project_settings[$T_CXXEXTRA]},"-m$opt_arch";
@@ -1681,7 +1680,6 @@ sub source_scan_directory($$$$)
 
   if ((@$project_settings[$T_FLAGS] & $TF_NOMSVCRT) == 0) {
     push @{@$project_settings[$T_CEXTRA]},"-mno-cygwin";
-    push @{@$project_settings[$T_CXXEXTRA]},"-mno-cygwin";
       if ($opt_arch != $OPT_ARCH_DEFAULT) {
         push @{@$project_settings[$T_CEXTRA]},"-m$opt_arch";
         push @{@$project_settings[$T_CXXEXTRA]},"-m$opt_arch";
