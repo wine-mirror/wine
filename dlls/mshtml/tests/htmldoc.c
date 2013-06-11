@@ -5862,6 +5862,7 @@ static void test_open_window(IHTMLDocument2 *doc, BOOL do_block)
 
         hres = IHTMLWindow2_close(new_window);
         ok(hres == S_OK, "close failed: %08x\n", hres);
+        IHTMLWindow2_Release(new_window);
     }
 
     IHTMLWindow2_Release(window);
