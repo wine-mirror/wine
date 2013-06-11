@@ -545,21 +545,7 @@ static BOOL pendingRename(void)
         } else
         {
             /* Delete the file or directory */
-            if( (res=GetFileAttributesW(src))!=INVALID_FILE_ATTRIBUTES )
-            {
-                if( (res&FILE_ATTRIBUTE_DIRECTORY)==0 )
-                {
-                    /* It's a file */
-                    DeleteFileW(src);
-                } else
-                {
-                    /* It's a directory */
-                    RemoveDirectoryW(src);
-                }
-            } else
-            {
-                WINE_ERR("couldn't get file attributes (%d)\n", GetLastError() );
-            }
+            if (!RemoveDirectoryW( src ) && GetLastError() == ERROR_DIRECTORY) DeleteFileW( src );
         }
     }
 
