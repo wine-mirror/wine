@@ -296,34 +296,54 @@ struct dbproperty {
     VARTYPE type;
 };
 
+static const WCHAR asyncW[]  = {'A','s','y','n','c','h','r','o','n','o','u','s',' ','P','r','o','c','e','s','s','i','n','g',0};
+static const WCHAR bindW[]  = {'B','i','n','d',' ','F','l','a','g','s',0};
+static const WCHAR cacheW[]  = {'C','a','c','h','e',' ','A','u','t','h','e','n','i','c','a','t','i','o','n',0};
 static const WCHAR conn_timeout[] = {'C','o','n','n','e','c','t',' ','T','i','m','e','o','u','t',0};
 static const WCHAR datasourceW[] = {'D','a','t','a',' ','S','o','u','r','c','e',0};
+static const WCHAR encryptW[] = {'E','n','c','r','y','p','t',' ','P','a','s','s','w','o','r','d',0};
 static const WCHAR extendedW[] = {'E','x','t','e','n','d','e','d',' ','P','r','o','p','e','r','t','i','e','s',0};
 static const WCHAR gen_timeout[] = {'G','e','n','e','r','a','l',' ','T','i','m','e','o','u','t',0};
+static const WCHAR impersonW[] = {'I','m','p','e','r','s','o','n','a','t','i','o','n',' ','L','e','v','e','l',0};
 static const WCHAR initcatW[] = {'I','n','i','t','i','a','l',' ','C','a','t','a','l','o','g',0};
+static const WCHAR integratedW[] = {'I','n','t','e','g','r','a','t','e','d',' ','S','e','c','u','r','i','t','y',0};
 static const WCHAR localeIDW[] = {'L','o','c','a','l','e',' ','I','d','e','n','t','i','f','i','e','r',0};
 static const WCHAR locationW[] = {'L','o','c','a','t','i','o','n',0};
+static const WCHAR lockownerW[] = {'L','o','c','k',' ','O','w','n','e','r',0};
+static const WCHAR maskpassW[] = {'M','a','s','k',' ','P','a','s','s','w','o','r','d',0};
 static const WCHAR modeW[] = {'M','o','d','e',0};
 static const WCHAR oledbservW[] = {'O','L','E',' ','D','B',' ','S','e','r','v','i','c','i','e','s',0};
 static const WCHAR passwordW[] = {'P','a','s','s','w','o','r','d',0};
 static const WCHAR persistW[]  = {'P','e','r','s','i','s','t',' ','S','e','c','u','r','i','t','y',' ','I','n','f','o',0};
+static const WCHAR persistEncW[]  = {'P','e','r','s','i','s','t',' ','E','n','c','r','y','p','t','e','d',0};
 static const WCHAR promptW[] = {'P','r','o','m','p','t',0};
+static const WCHAR protectW[]  = {'P','r','o','t','e','c','t','i','o','n',' ','l','e','v','e','l',0};
 static const WCHAR useridW[] = {'U','s','e','r',' ','I','D',0};
 static const WCHAR winhandleW[] = {'W','i','n','d','o','w',' ','H','a','n','d','l','e',0};
 
 static const struct dbproperty dbproperties[] = {
+    { asyncW,      DBPROP_INIT_ASYNCH,                     DBPROPOPTIONS_OPTIONAL, VT_I4 },
+    { bindW,       DBPROP_INIT_BINDFLAGS,                  DBPROPOPTIONS_OPTIONAL, VT_I4 },
+    { cacheW,      DBPROP_AUTH_CACHE_AUTHINFO,             DBPROPOPTIONS_OPTIONAL, VT_BOOL },
     { conn_timeout,DBPROP_INIT_TIMEOUT,                    DBPROPOPTIONS_OPTIONAL, VT_I4 },
     { datasourceW, DBPROP_INIT_DATASOURCE,                 DBPROPOPTIONS_REQUIRED, VT_BSTR },
     { extendedW,   DBPROP_INIT_PROVIDERSTRING,             DBPROPOPTIONS_REQUIRED, VT_BSTR },
+    { encryptW,    DBPROP_AUTH_ENCRYPT_PASSWORD,           DBPROPOPTIONS_REQUIRED, VT_BOOL },
     { gen_timeout, DBPROP_INIT_GENERALTIMEOUT,             DBPROPOPTIONS_OPTIONAL, VT_I4 },
+    { impersonW,   DBPROP_INIT_IMPERSONATION_LEVEL,        DBPROPOPTIONS_OPTIONAL, VT_I4 },
     { initcatW,    DBPROP_CATALOGLOCATION,                 DBPROPOPTIONS_OPTIONAL, VT_BSTR },
+    { integratedW, DBPROP_AUTH_INTEGRATED,                 DBPROPOPTIONS_OPTIONAL, VT_BSTR },
     { localeIDW,   DBPROP_INIT_LCID,                       DBPROPOPTIONS_OPTIONAL, VT_I4 },
     { locationW,   DBPROP_INIT_LOCATION,                   DBPROPOPTIONS_OPTIONAL, VT_BSTR },
+    { lockownerW,  DBPROP_INIT_LOCKOWNER,                  DBPROPOPTIONS_OPTIONAL, VT_BSTR },
+    { maskpassW,   DBPROP_AUTH_MASK_PASSWORD,              DBPROPOPTIONS_OPTIONAL, VT_BOOL },
     { modeW,       DBPROP_INIT_MODE,                       DBPROPOPTIONS_OPTIONAL, VT_I4 },
     { oledbservW,  DBPROP_INIT_OLEDBSERVICES,              DBPROPOPTIONS_OPTIONAL, VT_I4 },
     { passwordW,   DBPROP_AUTH_PASSWORD,                   DBPROPOPTIONS_OPTIONAL, VT_BSTR },
+    { persistEncW, DBPROP_AUTH_PERSIST_ENCRYPTED,          DBPROPOPTIONS_OPTIONAL, VT_BOOL },
     { persistW,    DBPROP_AUTH_PERSIST_SENSITIVE_AUTHINFO, DBPROPOPTIONS_OPTIONAL, VT_BOOL },
     { promptW,     DBPROP_INIT_PROMPT,                     DBPROPOPTIONS_OPTIONAL, VT_I2 },
+    { protectW,    DBPROP_INIT_PROTECTION_LEVEL,           DBPROPOPTIONS_OPTIONAL, VT_I4 },
     { useridW,     DBPROP_AUTH_USERID,                     DBPROPOPTIONS_OPTIONAL, VT_BSTR },
 #ifndef _WIN64
     { winhandleW,  DBPROP_INIT_HWND,                       DBPROPOPTIONS_OPTIONAL, VT_I4 },
