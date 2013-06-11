@@ -1344,7 +1344,8 @@ then
     ac_save_CPPFLAGS="$CPPFLAGS"
     WINE_PACKAGE_FLAGS(GNUTLS,[gnutls])
     AC_CHECK_HEADER(gnutls/gnutls.h,
-        [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <gnutls/gnutls.h>]], [[static typeof(gnutls_mac_get_key_size) *func; if (func) return 0;]])],
+        [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <gnutls/gnutls.h>
+#include <gnutls/crypto.h>]], [[static typeof(gnutls_mac_get_key_size) *func; if (func) return 0;]])],
             [WINE_CHECK_SONAME(gnutls,gnutls_global_init,,[GNUTLS_CFLAGS=""],[$GNUTLS_LIBS])])],
         [GNUTLS_CFLAGS=""])
     CPPFLAGS="$ac_save_CPPFLAGS"

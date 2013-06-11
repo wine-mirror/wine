@@ -25,6 +25,7 @@
 #include <stdarg.h>
 #ifdef SONAME_LIBGNUTLS
 #include <gnutls/gnutls.h>
+#include <gnutls/crypto.h>
 #endif
 
 #include "windef.h"

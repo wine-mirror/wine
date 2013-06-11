@@ -10200,6 +10200,7 @@ if test "x$ac_cv_header_gnutls_gnutls_h" = xyes; then :
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <gnutls/gnutls.h>
+#include <gnutls/crypto.h>
 int
 main ()
 {
