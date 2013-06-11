@@ -376,6 +376,24 @@ static char object_complex[] =
 "3;;;, 3;;;, 1;;;, 2;;;,\n"
 "}\n";
 
+static char template_using_index_color_lower[] =
+"xof 0302txt 0064\n"
+"template MeshVertexColors\n"
+"{\n"
+"<1630B821-7842-11cf-8F52-0040333594A3>\n"
+"DWORD nVertexColors;\n"
+"array indexColor vertexColors[nVertexColors];\n"
+"}\n";
+
+static char template_using_index_color_upper[] =
+"xof 0302txt 0064\n"
+"template MeshVertexColors\n"
+"{\n"
+"<1630B821-7842-11cf-8F52-0040333594A3>\n"
+"DWORD nVertexColors;\n"
+"array IndexColor vertexColors[nVertexColors];\n"
+"}\n";
+
 static void init_function_pointers(void)
 {
     /* We have to use LoadLibrary as no d3dxof functions are referenced directly */
@@ -1064,6 +1082,34 @@ static void test_standard_templates(void)
     IDirectXFile_Release(dxfile);
 }
 
+static void test_type_index_color(void)
+{
+    HRESULT ret;
+    IDirectXFile *dxfile = NULL;
+
+    if (!pDirectXFileCreate)
+    {
+        win_skip("DirectXFileCreate is not available\n");
+        return;
+    }
+
+    ret = pDirectXFileCreate(&dxfile);
+    ok(ret == DXFILE_OK, "DirectXFileCreate failed with %#x\n", ret);
+    if (!dxfile)
+    {
+        skip("Couldn't create DirectXFile interface\n");
+        return;
+    }
+
+    /* Test that 'indexColor' can be used (same as IndexedColor in standard templates) and is case sensitive */
+    ret = IDirectXFile_RegisterTemplates(dxfile, template_using_index_color_lower, sizeof(template_using_index_color_lower) - 1);
+    todo_wine ok(ret == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates failed with %#x\n", ret);
+    ret = IDirectXFile_RegisterTemplates(dxfile, template_using_index_color_upper, sizeof(template_using_index_color_upper) - 1);
+    ok(ret == DXFILEERR_PARSEERROR, "IDirectXFileImpl_RegisterTemplates returned %#x instead of %#x\n", ret, DXFILEERR_PARSEERROR);
+
+    IDirectXFile_Release(dxfile);
+}
+
 /* Set it to 1 to expand the string when dumping the object. This is useful when there is
  * only one string in a sub-object (very common). Use with care, this may lead to a crash. */
 #define EXPAND_STRING 0
@@ -1250,6 +1296,7 @@ START_TEST(d3dxof)
     test_syntax_semicolon_comma();
     test_complex_object();
     test_standard_templates();
+    test_type_index_color();
     test_dump();
 
     FreeLibrary(hd3dxof);

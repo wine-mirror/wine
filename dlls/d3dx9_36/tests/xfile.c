@@ -62,6 +62,24 @@ static char object_noname[] =
 "1; 2; 3;\n"
 "}\n";
 
+static char template_using_index_color_lower[] =
+"xof 0302txt 0064\n"
+"template MeshVertexColors\n"
+"{\n"
+"<1630B821-7842-11cf-8F52-0040333594A3>\n"
+"DWORD nVertexColors;\n"
+"array indexColor vertexColors[nVertexColors];\n"
+"}\n";
+
+static char template_using_index_color_upper[] =
+"xof 0302txt 0064\n"
+"template MeshVertexColors\n"
+"{\n"
+"<1630B821-7842-11cf-8F52-0040333594A3>\n"
+"DWORD nVertexColors;\n"
+"array IndexColor vertexColors[nVertexColors];\n"
+"}\n";
+
 static void test_templates(void)
 {
     ID3DXFile *d3dxfile;
@@ -207,7 +225,23 @@ static void test_getname(void)
     data_object->lpVtbl->Release(data_object);
     enum_object->lpVtbl->Release(enum_object);
     d3dxfile->lpVtbl->Release(d3dxfile);
+}
 
+static void test_type_index_color(void)
+{
+    ID3DXFile *d3dxfile;
+    HRESULT ret;
+
+    ret = D3DXFileCreate(&d3dxfile);
+    ok(ret == S_OK, "D3DXCreateFile failed with %#x\n", ret);
+
+    /* Test that 'indexColor' can be used (same as IndexedColor in standard templates) and is case sensitive */
+    ret = d3dxfile->lpVtbl->RegisterTemplates(d3dxfile, template_using_index_color_lower, sizeof(template_using_index_color_lower) - 1);
+    todo_wine ok(ret == S_OK, "RegisterTemplates failed with %#x\n", ret);
+    ret = d3dxfile->lpVtbl->RegisterTemplates(d3dxfile, template_using_index_color_upper, sizeof(template_using_index_color_upper) - 1);
+    ok(ret == D3DXFERR_PARSEERROR, "RegisterTemplates returned %#x instead of %#x\n", ret, D3DXFERR_PARSEERROR);
+
+    d3dxfile->lpVtbl->Release(d3dxfile);
 }
 
 static inline void debugstr_guid(char* buf, const GUID *id)
@@ -361,5 +395,6 @@ START_TEST(xfile)
     test_templates();
     test_lock_unlock();
     test_getname();
+    test_type_index_color();
     test_dump();
 }
