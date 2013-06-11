@@ -26,15 +26,62 @@
 #define PT_ROAMING      0x00000002
 #define PT_MANDATORY    0x00000004
 
+typedef enum _GPO_LINK {
+    GPLinkUnknown = 0,
+    GPLinkMachine,
+    GPLinkSite,
+    GPLinkDomain,
+    GPLinkOrganizationalUnit
+} GPO_LINK, *PGPO_LINK;
+
+typedef struct _GROUP_POLICY_OBJECTA {
+    DWORD dwOptions;
+    DWORD dwVersion;
+    LPSTR lpDSPath;
+    LPSTR lpFileSysPath;
+    LPSTR lpDisplayName;
+    CHAR szGPOName[50];
+    GPO_LINK GPOLink;
+    LPARAM lParam;
+    struct _GROUP_POLICY_OBJECTA *pNext;
+    struct _GROUP_POLICY_OBJECTA *pPrev;
+    LPSTR lpExtensions;
+    LPARAM lParam2;
+    LPSTR lpLink;
+} GROUP_POLICY_OBJECTA, *PGROUP_POLICY_OBJECTA;
+
+typedef struct _GROUP_POLICY_OBJECTW {
+    DWORD dwOptions;
+    DWORD dwVersion;
+    LPWSTR lpDSPath;
+    LPWSTR lpFileSysPath;
+    LPWSTR lpDisplayName;
+    WCHAR szGPOName[50];
+    GPO_LINK GPOLink;
+    LPARAM lParam;
+    struct _GROUP_POLICY_OBJECTW *pNext;
+    struct _GROUP_POLICY_OBJECTW *pPrev;
+    LPWSTR lpExtensions;
+    LPARAM lParam2;
+    LPWSTR lpLink;
+} GROUP_POLICY_OBJECTW, *PGROUP_POLICY_OBJECTW;
+
+DECL_WINELIB_TYPE_AW(GROUP_POLICY_OBJECT)
+DECL_WINELIB_TYPE_AW(PGROUP_POLICY_OBJECT)
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 BOOL WINAPI CreateEnvironmentBlock(LPVOID*,HANDLE,BOOL);
 BOOL WINAPI DestroyEnvironmentBlock(LPVOID);
+HANDLE WINAPI EnterCriticalPolicySection(BOOL);
 BOOL WINAPI ExpandEnvironmentStringsForUserA(HANDLE,LPCSTR,LPSTR,DWORD);
 BOOL WINAPI ExpandEnvironmentStringsForUserW(HANDLE,LPCWSTR,LPWSTR,DWORD);
 #define     ExpandEnvironmentStringsForUser WINELIB_NAME_AW(ExpandEnvironmentStringsForUser)
+DWORD WINAPI GetAppliedGPOListW(DWORD,LPCWSTR,PSID,GUID*,PGROUP_POLICY_OBJECTW*);
+DWORD WINAPI GetAppliedGPOListA(DWORD,LPCSTR,PSID,GUID*,PGROUP_POLICY_OBJECTA*);
+#define      GetAppliedGPOList WINELIB_NAME_AW(GetAppliedGPOList)
 BOOL WINAPI GetUserProfileDirectoryA(HANDLE,LPSTR,LPDWORD);
 BOOL WINAPI GetUserProfileDirectoryW(HANDLE,LPWSTR,LPDWORD);
 #define     GetUserProfileDirectory WINELIB_NAME_AW(GetUserProfileDirectory)
@@ -45,6 +92,7 @@ BOOL WINAPI GetAllUsersProfileDirectoryA(LPSTR,LPDWORD);
 BOOL WINAPI GetAllUsersProfileDirectoryW(LPWSTR,LPDWORD);
 #define     GetAllUsersProfileDirectory WINELIB_NAME_AW(GetAllUsersProfileDirectory)
 BOOL WINAPI GetProfileType(DWORD*);
+BOOL WINAPI LeaveCriticalPolicySection(HANDLE);
 BOOL WINAPI LoadUserProfileA(HANDLE,LPPROFILEINFOA);
 BOOL WINAPI LoadUserProfileW(HANDLE,LPPROFILEINFOW);
 #define     LoadUserProfile WINELIB_NAME_AW(LoadUserProfile)
