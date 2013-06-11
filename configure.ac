@@ -288,6 +288,7 @@ AC_CHECK_PROGS(RSVG, rsvg, false)
 AC_CHECK_PROGS(CONVERT, convert, false)
 AC_CHECK_PROGS(ICOTOOL, icotool, false)
 AC_CHECK_PROGS(MSGFMT, msgfmt, false)
+WINE_PATH_PKG_CONFIG
 
 if test "x$enable_maintainer_mode" != "xyes"
 then
