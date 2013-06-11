@@ -61,6 +61,8 @@ static const struct
 #undef GUID_NAME
 };
 
+static LONG obj_ref, class_ref, server_locks;
+
 static const char *debugstr_guid(const GUID *guid)
 {
     static char buf[50];
@@ -118,6 +120,8 @@ static ULONG WINAPI UnknownImpl_AddRef(IUnknown *iface)
     UnknownImpl *This = impl_from_IUnknown(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
+    InterlockedIncrement(&obj_ref);
+
     trace("server: unknown_AddRef: %p, ref %u\n", iface, ref);
     return ref;
 }
@@ -126,6 +130,8 @@ static ULONG WINAPI UnknownImpl_Release(IUnknown *iface)
 {
     UnknownImpl *This = impl_from_IUnknown(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
+
+    InterlockedDecrement(&obj_ref);
 
     trace("server: unknown_Release: %p, ref %u\n", iface, ref);
     if (ref == 0) HeapFree(GetProcessHeap(), 0, This);
@@ -176,6 +182,8 @@ static ULONG WINAPI ClassFactoryImpl_AddRef(IClassFactory *iface)
     ClassFactoryImpl *This = impl_from_IClassFactory(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
+    InterlockedIncrement(&class_ref);
+
     trace("server: factory_AddRef: %p, ref %u\n", iface, ref);
     return ref;
 }
@@ -184,6 +192,8 @@ static ULONG WINAPI ClassFactoryImpl_Release(IClassFactory *iface)
 {
     ClassFactoryImpl *This = impl_from_IClassFactory(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
+
+    InterlockedDecrement(&class_ref);
 
     trace("server: factory_Release: %p, ref %u\n", iface, ref);
     return ref;
@@ -203,7 +213,8 @@ static HRESULT WINAPI ClassFactoryImpl_CreateInstance(IClassFactory *iface,
     if (!unknown) return E_OUTOFMEMORY;
 
     unknown->IUnknown_iface.lpVtbl = &UnknownImpl_Vtbl;
-    unknown->ref = 1;
+    unknown->ref = 0;
+    IUnknown_AddRef(&unknown->IUnknown_iface);
 
     hr = IUnknown_QueryInterface(&unknown->IUnknown_iface, iid, ppv);
     IUnknown_Release(&unknown->IUnknown_iface);
@@ -213,7 +224,6 @@ static HRESULT WINAPI ClassFactoryImpl_CreateInstance(IClassFactory *iface,
 
 static HRESULT WINAPI ClassFactoryImpl_LockServer(IClassFactory *iface, BOOL lock)
 {
-    static LONG server_locks;
     ULONG ref = lock ? InterlockedIncrement(&server_locks) : InterlockedDecrement(&server_locks);
 
     trace("server: factory_LockServer: %p,%d, ref %u\n", iface, lock, ref);
@@ -257,6 +267,11 @@ static void ole_server(void)
 
             trace("server: waiting for requests\n");
             WaitForSingleObject(done_event, INFINITE);
+
+            /* 1 remainining class ref is supposed to be cleared by CoRevokeClassObject */
+            ok(class_ref == 1, "expected 1 class refs, got %d\n", class_ref);
+            ok(!obj_ref, "expected 0 object refs, got %d\n", obj_ref);
+            ok(!server_locks, "expected 0 server locks, got %d\n", server_locks);
 
             CloseHandle(done_event);
             CloseHandle(init_done_event);
