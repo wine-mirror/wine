@@ -2168,6 +2168,7 @@ void CDECL X11DRV_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flag
 
     if (data->embedded) goto done;
     if (data->whole_window == root_window) goto done;
+    if (data->client_window) goto done;
     if (!client_side_graphics && !layered) goto done;
 
     surface_rect = get_surface_rect( visible_rect );
