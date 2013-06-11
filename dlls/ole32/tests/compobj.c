@@ -444,8 +444,9 @@ static void test_CoGetClassObject(void)
     {
         IUnknown_Release(pUnk);
 
-        res = RegOpenKeyExA(HKEY_CURRENT_USER, "Software\\Classes", 0, KEY_ALL_ACCESS, &hkey);
-        ok(!res, "RegOpenKeyExA returned %d\n", res);
+        res = RegCreateKeyEx(HKEY_CURRENT_USER, "Software\\Classes", 0, NULL, 0,
+                             KEY_ALL_ACCESS, NULL, &hkey, NULL);
+        ok(!res, "RegCreateKeyEx returned %d\n", res);
 
         res = pRegOverridePredefKey(HKEY_CLASSES_ROOT, hkey);
         ok(!res, "RegOverridePredefKey returned %d\n", res);
@@ -780,8 +781,9 @@ static void test_CoGetPSClsid(void)
     hr = CoGetPSClsid(&IID_IClassFactory, &clsid);
     ok_ole_success(hr, "CoGetPSClsid");
 
-    res = RegOpenKeyExA(HKEY_CURRENT_USER, "Software\\Classes", 0, KEY_ALL_ACCESS, &hkey);
-    ok(!res, "RegOpenKeyExA returned %d\n", res);
+    res = RegCreateKeyEx(HKEY_CURRENT_USER, "Software\\Classes", 0, NULL, 0,
+                         KEY_ALL_ACCESS, NULL, &hkey, NULL);
+    ok(!res, "RegCreateKeyEx returned %d\n", res);
 
     res = pRegOverridePredefKey(HKEY_CLASSES_ROOT, hkey);
     ok(!res, "RegOverridePredefKey returned %d\n", res);
