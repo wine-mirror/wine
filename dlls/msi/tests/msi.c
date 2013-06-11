@@ -834,6 +834,27 @@ static const char ci2_file_dat[] =
     "File\tFile\n"
     "augustus\taugustus\taugustus\t500\t\t\t8192\t1";
 
+static const char cl_custom_action_dat[] =
+    "Action\tType\tSource\tTarget\tISComments\n"
+    "s72\ti2\tS64\tS0\tS255\n"
+    "CustomAction\tAction\n"
+    "TestCommandlineProp\t19\t\tTest1\t\n";
+
+static const char cl_install_exec_seq_dat[] =
+    "Action\tCondition\tSequence\n"
+    "s72\tS255\tI2\n"
+    "InstallExecuteSequence\tAction\n"
+    "LaunchConditions\t\t100\n"
+    "ValidateProductID\t\t700\n"
+    "CostInitialize\t\t800\n"
+    "FileCost\t\t900\n"
+    "CostFinalize\t\t1000\n"
+    "TestCommandlineProp\tP=\"one\"\t1100\n"
+    "InstallInitialize\t\t1500\n"
+    "ProcessComponents\t\t1600\n"
+    "InstallValidate\t\t1400\n"
+    "InstallFinalize\t\t5000\n";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -954,6 +975,19 @@ static const msi_table ci2_tables[] =
     ADD_TABLE(install_exec_seq),
     ADD_TABLE(lus0_media),
     ADD_TABLE(property),
+};
+
+static const msi_table cl_tables[] =
+{
+    ADD_TABLE(component),
+    ADD_TABLE(directory),
+    ADD_TABLE(feature),
+    ADD_TABLE(feature_comp),
+    ADD_TABLE(file),
+    ADD_TABLE(cl_custom_action),
+    ADD_TABLE(cl_install_exec_seq),
+    ADD_TABLE(media),
+    ADD_TABLE(property)
 };
 
 static void write_file(const CHAR *filename, const char *data, int data_size)
@@ -8721,6 +8755,8 @@ static void test_MsiOpenProduct(void)
     UINT r;
     REGSAM access = KEY_ALL_ACCESS;
 
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
     GetCurrentDirectoryA(MAX_PATH, path);
     lstrcatA(path, "\\");
 
@@ -8998,21 +9034,6 @@ static void test_MsiOpenProduct(void)
                          (const BYTE *)"winetest.msi", 13);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
-    /* LocalPackage has just the package name */
-    hprod = 0xdeadbeef;
-    r = MsiOpenProductA(prodcode, &hprod);
-    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
-    {
-        skip("Not enough rights to perform tests\n");
-        goto error;
-    }
-    ok(r == ERROR_INSTALL_PACKAGE_OPEN_FAILED || r == ERROR_SUCCESS,
-       "Expected ERROR_INSTALL_PACKAGE_OPEN_FAILED or ERROR_SUCCESS, got %d\n", r);
-    if (r == ERROR_SUCCESS)
-        MsiCloseHandle(hprod);
-    else
-        ok(hprod == 0xdeadbeef, "Expected hprod to be unchanged\n");
-
     lstrcpyA(val, path);
     lstrcatA(val, "\\winetest.msi");
     res = RegSetValueExA(props, "LocalPackage", 0, REG_SZ,
@@ -9028,7 +9049,6 @@ static void test_MsiOpenProduct(void)
        "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
     ok(hprod == 0xdeadbeef, "Expected hprod to be unchanged\n");
 
-error:
     RegDeleteValueA(props, "LocalPackage");
     delete_key(props, "", access & KEY_WOW64_64KEY);
     RegCloseKey(props);
@@ -14001,6 +14021,166 @@ error:
     RemoveDirectory("msitest");
 }
 
+static void test_command_line_parsing(void)
+{
+    UINT r;
+    const char *cmd;
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+
+    create_test_files();
+    create_database(msifile, cl_tables, sizeof(cl_tables)/sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    cmd = " ";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    cmd = "=";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_INVALID_COMMAND_LINE, "Expected ERROR_INVALID_COMMAND_LINE, got %u\n", r);
+
+    cmd = "==";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_INVALID_COMMAND_LINE, "Expected ERROR_INVALID_COMMAND_LINE, got %u\n", r);
+
+    cmd = "one";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_INVALID_COMMAND_LINE, "Expected ERROR_INVALID_COMMAND_LINE, got %u\n", r);
+
+    cmd = "=one";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_INVALID_COMMAND_LINE, "Expected ERROR_INVALID_COMMAND_LINE, got %u\n", r);
+
+    cmd = "P=";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    cmd = "  P=";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    cmd = "P=  ";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    cmd = "P=\"";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_INVALID_COMMAND_LINE, "Expected ERROR_INVALID_COMMAND_LINE, got %u\n", r);
+
+    cmd = "P=\"\"";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    cmd = "P=\"\"\"";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_INVALID_COMMAND_LINE, "Expected ERROR_INVALID_COMMAND_LINE, got %u\n", r);
+
+    cmd = "P=\"\"\"\"";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    cmd = "P=\" ";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_INVALID_COMMAND_LINE, "Expected ERROR_INVALID_COMMAND_LINE, got %u\n", r);
+
+    cmd = "P= \"";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_INVALID_COMMAND_LINE, "Expected ERROR_INVALID_COMMAND_LINE, got %u\n", r);
+
+    cmd = "P= \"\" ";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    cmd = "P=\"  \"";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    cmd = "P=one";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
+
+    cmd = "P= one";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
+
+    cmd = "P=\"one";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_INVALID_COMMAND_LINE, "Expected ERROR_INVALID_COMMAND_LINE, got %u\n", r);
+
+    cmd = "P=one\"";
+    r = MsiInstallProductA(msifile, cmd);
+    todo_wine ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    cmd = "P=\"one\"";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
+
+    cmd = "P= \"one\" ";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
+
+    cmd = "P=\"one\"\"";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_INVALID_COMMAND_LINE, "Expected ERROR_INVALID_COMMAND_LINE, got %u\n", r);
+
+    cmd = "P=\"\"one\"";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_INVALID_COMMAND_LINE, "Expected ERROR_INVALID_COMMAND_LINE, got %u\n", r);
+
+    cmd = "P=\"\"one\"\"";
+    r = MsiInstallProductA(msifile, cmd);
+    todo_wine ok(r == ERROR_INVALID_COMMAND_LINE, "Expected ERROR_INVALID_COMMAND_LINE, got %u\n", r);
+
+    cmd = "P=\"one two\"";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    cmd = "P=\"\"\"one\"\" two\"";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    cmd = "P=\"\"\"one\"\" two\" Q=three";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    cmd = "P=\"\" Q=\"two\"";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    cmd = "P=\"one\" Q=\"two\"";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
+
+    cmd = "P=\"one=two\"";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    cmd = "Q=\"\" P=\"one\"";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
+
+    cmd = "P=\"\"\"one\"\"\" Q=\"two\"";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    cmd = "P=\"one \"\"two\"\"\" Q=\"three\"";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    cmd = "P=\"\"\"one\"\" two\" Q=\"three\"";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    DeleteFile(msifile);
+    delete_test_files();
+}
+
 START_TEST(msi)
 {
     DWORD len;
@@ -14062,6 +14242,7 @@ START_TEST(msi)
     test_setpropertyfolder();
     test_sourcedir_props();
     test_concurrentinstall();
+    test_command_line_parsing();
 
     SetCurrentDirectoryA(prev_path);
 }
