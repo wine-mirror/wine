@@ -586,7 +586,7 @@ static void test_notification_query_async( IWbemServices *services )
     ok( sink_refs > prev_sink_refs, "got %u refs\n", sink_refs );
 
     hr =  IWbemServices_CancelAsyncCall( services, &sink );
-    ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK || broken(hr == WBEM_E_NOT_FOUND), "got %08x\n", hr );
 
     SysFreeString( wql );
     SysFreeString( query );
