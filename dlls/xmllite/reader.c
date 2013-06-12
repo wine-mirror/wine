@@ -2256,7 +2256,7 @@ static HRESULT WINAPI xmlreader_GetLocalName(IXmlReader* iface, LPCWSTR *name, U
 
     TRACE("(%p)->(%p %p)\n", This, name, len);
     *name = This->strvalues[StringValue_LocalName].str;
-    *len  = This->strvalues[StringValue_LocalName].len;
+    if (len) *len = This->strvalues[StringValue_LocalName].len;
     return S_OK;
 }
 

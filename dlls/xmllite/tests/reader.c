@@ -1364,13 +1364,20 @@ static void test_read_cdata(void)
 
             ok(type == XmlNodeType_CDATA, "got %d for %s\n", type, test->xml);
 
+            str_exp = a2w(test->name);
+
             len = 1;
             str = NULL;
             hr = IXmlReader_GetLocalName(reader, &str, &len);
             ok(hr == S_OK, "got 0x%08x\n", hr);
             ok(len == strlen(test->name), "got %u\n", len);
-            str_exp = a2w(test->name);
             ok(!lstrcmpW(str, str_exp), "got %s\n", wine_dbgstr_w(str));
+
+            str = NULL;
+            hr = IXmlReader_GetLocalName(reader, &str, NULL);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            ok(!lstrcmpW(str, str_exp), "got %s\n", wine_dbgstr_w(str));
+
             free_str(str_exp);
 
             len = 1;
