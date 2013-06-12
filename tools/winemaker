@@ -21,7 +21,7 @@ use strict;
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 #
 
-my $version="0.8.3";
+my $version="0.8.4";
 
 use Cwd;
 use File::Basename;
@@ -683,6 +683,11 @@ sub source_scan_project_file($$$)
                         # Additional Include Directories
                         $sfilet=$1;
                         $sfilet=~s/\\/\//g;
+                        my @compinc=split /\/+/, $sfilet;
+                        my $realinc=search_from($path, \@compinc);
+                        if (defined $realinc) {
+                            $sfilet=$realinc;
+                        }
                         if ($sfilet=~/^\w:/) {
                             print STDERR "warning: Can't fix path $sfilet\n"
                         } else {
@@ -894,6 +899,11 @@ sub source_scan_project_file($$$)
                         $sfilet=~s/\\\\/\\/g; #remove double backslash
                         $sfilet=~s/^\.\\//; #remove starting 'this directory'
                         $sfilet=~s/\\/\//g; #make slashes out of backslashes
+                        my @compsrc=split(/\/+/, $sfilet);
+                        my $realsrc=search_from($path, \@compsrc);
+                        if (defined $realsrc) {
+                            $sfilet=$realsrc;
+                        }
                         if ($sfilet =~ /\.c$/i and $sfilet !~ /\.(dbg|spec)\.c$/) {
                             push @sources_c,$sfilet;
                         } elsif ($sfilet =~ /\.cpp$/i) {
@@ -961,6 +971,11 @@ sub source_scan_project_file($$$)
                         $configt=~s/\\/\//g;
                         my @addincl = split(/\s*;\s*/, $configt);
                         foreach $configt (@addincl) {
+                            my @compinc=split(/\/+/, $configt);
+                            my $realinc=search_from($path, \@compinc);
+                            if (defined $realinc) {
+                                $configt=$realinc;
+                            }
                             push @{@$project_settings[$T_INCLUDE_PATH]},"-I".$configt;
                         }
                     }
