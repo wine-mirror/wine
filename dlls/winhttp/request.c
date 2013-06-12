@@ -1270,8 +1270,10 @@ static BOOL query_auth_schemes( request_t *request, DWORD level, LPDWORD support
             return FALSE;
         }
         scheme = auth_scheme_from_header( buffer );
-        if (first && index == 1) *first = scheme;
-        *supported |= scheme;
+        if (first && index == 1)
+            *first = *supported = scheme;
+        else
+            *supported |= scheme;
 
         heap_free( buffer );
         ret = TRUE;
