@@ -1862,7 +1862,6 @@ sub search_from($$)
   my $path=$_[1];
   my $real_path="";
 
-  $dirname =~ s/(\.\/)+//;
   if ($dirname eq "" or $dirname eq "." or $dirname eq "./") {
     $dirname=cwd;
   } elsif ($dirname !~ m+^/+) {
