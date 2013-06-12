@@ -31,6 +31,7 @@
 #include "objbase.h"
 #include "tapi.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(tapi);
 
@@ -313,18 +314,8 @@ DWORD WINAPI lineGetConfRelatedCalls(HCALL hCall, LPLINECALLLIST lpCallList)
     return 0;
 }
 
-typedef struct tagTAPI_CountryInfo
-{
-    DWORD  dwCountryID;
-    DWORD  dwCountryCode;
-    LPSTR  lpCountryName;
-    LPSTR  lpSameAreaRule;
-    LPSTR  lpLongDistanceRule;
-    LPSTR  lpInternationalRule;
-} TAPI_CountryInfo;
-
 /***********************************************************************
- *		lineGetCountry (TAPI32.@)
+ *		lineGetCountryA (TAPI32.@)
  */
 DWORD WINAPI lineGetCountryA(DWORD dwCountryID, DWORD dwAPIVersion, LPLINECOUNTRYLIST lpLineCountryList)
 {
@@ -484,11 +475,139 @@ DWORD WINAPI lineGetCountryA(DWORD dwCountryID, DWORD dwAPIVersion, LPLINECOUNTR
 }
 
 /***********************************************************************
- *		lineGetCountry (TAPI32.@)
+ *		lineGetCountryW (TAPI32.@)
  */
-DWORD WINAPI lineGetCountryW(DWORD dwCountryID, DWORD dwAPIVersion, LPLINECOUNTRYLIST lpLineCountryList)
+DWORD WINAPI lineGetCountryW(DWORD id, DWORD version, LPLINECOUNTRYLIST list)
 {
-    return lineGetCountryA(dwCountryID, dwAPIVersion, lpLineCountryList);
+    static const WCHAR country_listW[] =
+        {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+         'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+         'T','e','l','e','p','h','o','n','y','\\','C','o','u','n','t','r','y',' ','L','i','s','t',0};
+    static const WCHAR international_ruleW[] =
+        {'I','n','t','e','r','n','a','t','i','o','n','a','l','R','u','l','e',0};
+    static const WCHAR longdistance_ruleW[] =
+        {'L','o','n','g','D','i','s','t','a','n','c','e','R','u','l','e',0};
+    static const WCHAR samearea_ruleW[] =
+        {'S','a','m','e','A','r','e','a','R','u','l','e',0};
+    static const WCHAR nameW[] =
+        {'N','a','m','e',0};
+    static const WCHAR country_codeW[] =
+        {'C','o','u','n','t','r','y','C','o','d','e',0};
+    DWORD total_size, offset, i, num_countries, max_subkey_len;
+    LINECOUNTRYENTRY *entry;
+    WCHAR *subkey_name;
+    HKEY hkey;
+
+    if (!list) return LINEERR_INVALPOINTER;
+    TRACE("(%08x, %08x, %p(%d))\n", id, version, list, list->dwTotalSize);
+
+    if (RegOpenKeyW(HKEY_LOCAL_MACHINE, country_listW, &hkey) != ERROR_SUCCESS)
+        return LINEERR_INIFILECORRUPT;
+
+    total_size = list->dwTotalSize;
+    offset = sizeof(LINECOUNTRYLIST);
+    if (total_size < offset) return LINEERR_STRUCTURETOOSMALL;
+
+    memset(list, 0, total_size);
+    list->dwTotalSize         = total_size;
+    list->dwUsedSize          = offset;
+    list->dwNumCountries      = 0;
+    list->dwCountryListSize   = 0;
+    list->dwCountryListOffset = offset;
+
+    entry = (LINECOUNTRYENTRY *)(list + 1);
+
+    if (RegQueryInfoKeyW(hkey, NULL, NULL, NULL, &num_countries, &max_subkey_len,
+                         NULL, NULL, NULL, NULL, NULL, NULL) != ERROR_SUCCESS)
+    {
+        RegCloseKey(hkey);
+        return LINEERR_OPERATIONFAILED;
+    }
+    if (id) offset = sizeof(LINECOUNTRYENTRY);
+    else offset += num_countries * sizeof(LINECOUNTRYENTRY);
+
+    max_subkey_len++;
+    if (!(subkey_name = HeapAlloc(GetProcessHeap(), 0, max_subkey_len * sizeof(WCHAR))))
+    {
+        RegCloseKey(hkey);
+        return LINEERR_NOMEM;
+    }
+    for (i = 0; i < num_countries; i++)
+    {
+        DWORD len, size, size_int, size_long, size_name, size_same;
+        HKEY hsubkey;
+
+        if (RegEnumKeyW(hkey, i, subkey_name, max_subkey_len) != ERROR_SUCCESS) continue;
+        if (id && (atoiW(subkey_name) != id)) continue;
+        if (RegOpenKeyW(hkey, subkey_name, &hsubkey) != ERROR_SUCCESS) continue;
+
+        RegQueryValueExW(hsubkey, international_ruleW, NULL, NULL, NULL, &size_int);
+        len = size_int;
+
+        RegQueryValueExW(hsubkey, longdistance_ruleW, NULL, NULL, NULL, &size_long);
+        len += size_long;
+
+        RegQueryValueExW(hsubkey, nameW, NULL, NULL, NULL, &size_name);
+        len += size_name;
+
+        RegQueryValueExW(hsubkey, samearea_ruleW, NULL, NULL, NULL, &size_same);
+        len += size_same;
+
+        if (total_size < offset + len)
+        {
+            offset += len;
+            RegCloseKey(hsubkey);
+            if (id) break;
+            continue;
+        }
+        list->dwNumCountries++;
+        list->dwCountryListSize += sizeof(LINECOUNTRYENTRY);
+        list->dwUsedSize += len + sizeof(LINECOUNTRYENTRY);
+
+        if (id) i = 0;
+        entry[i].dwCountryID = atoiW(subkey_name);
+        size = sizeof(DWORD);
+        RegQueryValueExW(hsubkey, country_codeW, NULL, NULL, (BYTE *)&entry[i].dwCountryCode, &size);
+        entry[i].dwNextCountryID = 0;
+
+        if (i > 0) entry[i - 1].dwNextCountryID = entry[i].dwCountryID;
+
+        /* add country name */
+        entry[i].dwCountryNameSize = size_name;
+        entry[i].dwCountryNameOffset = offset;
+        RegQueryValueExW(hsubkey, nameW, NULL, NULL, (BYTE *)list + offset, &size_name);
+        offset += size_name;
+
+        /* add Same Area Rule */
+        entry[i].dwSameAreaRuleSize = size_same;
+        entry[i].dwSameAreaRuleOffset = offset;
+        RegQueryValueExW(hsubkey, samearea_ruleW, NULL, NULL, (BYTE *)list + offset, &size_same);
+        offset += size_same;
+
+        /* add Long Distance Rule */
+        entry[i].dwLongDistanceRuleSize = size_long;
+        entry[i].dwLongDistanceRuleOffset = offset;
+        RegQueryValueExW(hsubkey, longdistance_ruleW, NULL, NULL, (BYTE *)list + offset, &size_long);
+        offset += size_long;
+
+        /* add Long Distance Rule */
+        entry[i].dwInternationalRuleSize = size_int;
+        entry[i].dwInternationalRuleOffset = offset;
+        RegQueryValueExW(hsubkey, international_ruleW, NULL, NULL, (BYTE *)list + offset, &size_int);
+        offset += size_int;
+        RegCloseKey(hsubkey);
+
+        TRACE("added country %s at %p\n",
+              debugstr_w((const WCHAR *)((const char *)list + entry[i].dwCountryNameOffset)), &entry[i]);
+        if (id) break;
+    }
+    list->dwNeededSize = offset;
+
+    TRACE("%d available %d required\n", total_size, offset);
+
+    HeapFree(GetProcessHeap(), 0, subkey_name);
+    RegCloseKey(hkey);
+    return 0;
 }
 
 /***********************************************************************
