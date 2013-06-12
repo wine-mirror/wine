@@ -1881,7 +1881,7 @@ static void test_basic_request(int port, const WCHAR *verb, const WCHAR *path)
 {
     HINTERNET ses, con, req;
     char buffer[0x100];
-    DWORD count, status, size;
+    DWORD count, status, size, supported, first, target;
     BOOL ret;
 
     ses = WinHttpOpen(test_useragent, 0, NULL, NULL, 0);
@@ -1904,6 +1904,13 @@ static void test_basic_request(int port, const WCHAR *verb, const WCHAR *path)
     ok(ret, "failed to query status code %u\n", GetLastError());
     ok(status == 200, "request failed unexpectedly %u\n", status);
 
+    supported = first = target = 0xffff;
+    ret = WinHttpQueryAuthSchemes(req, &supported, &first, &target);
+    ok(!ret, "unexpected success\n");
+    ok(supported == 0xffff, "got %x\n", supported);
+    ok(first == 0xffff, "got %x\n", first);
+    ok(target == 0xffff, "got %x\n", target);
+
     count = 0;
     memset(buffer, 0, sizeof(buffer));
     ret = WinHttpReadData(req, buffer, sizeof buffer, &count);
@@ -1922,7 +1929,7 @@ static void test_basic_authentication(int port)
     static const WCHAR userW[] = {'u','s','e','r',0};
     static const WCHAR passW[] = {'p','w','d',0};
     HINTERNET ses, con, req;
-    DWORD status, size, error;
+    DWORD status, size, error, supported, first, target;
     BOOL ret;
 
     ses = WinHttpOpen(test_useragent, 0, NULL, NULL, 0);
@@ -1933,6 +1940,13 @@ static void test_basic_authentication(int port)
 
     req = WinHttpOpenRequest(con, NULL, authW, NULL, NULL, NULL, 0);
     ok(req != NULL, "failed to open a request %u\n", GetLastError());
+
+    supported = first = target = 0xffff;
+    ret = WinHttpQueryAuthSchemes(req, &supported, &first, &target);
+    ok(!ret, "unexpected success\n");
+    ok(supported == 0xffff, "got %x\n", supported);
+    ok(first == 0xffff, "got %x\n", first);
+    ok(target == 0xffff, "got %x\n", target);
 
     ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
     ok(ret, "failed to send request %u\n", GetLastError());
