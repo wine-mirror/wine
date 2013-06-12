@@ -2465,6 +2465,11 @@ static void test_proxy_direct(int port)
     ok(sz == lstrlenW(passwordW), "got %u\n", sz);
 
     r = HttpSendRequest(hr, NULL, 0, NULL, 0);
+    if (!r)
+    {
+        win_skip("skipping proxy tests on broken wininet\n");
+        goto done;
+    }
     ok(r, "HttpSendRequest failed %u\n", GetLastError());
     sz = sizeof buffer;
     r = HttpQueryInfo(hr, HTTP_QUERY_STATUS_CODE, buffer, &sz, NULL);
