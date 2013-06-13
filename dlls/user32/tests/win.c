@@ -1524,13 +1524,13 @@ static void test_MDI_child_stack(HWND mdi_client)
     cs.lParam  = (LPARAM)mdi_lParam_test_message;
 
     child_1 = (HWND)SendMessageA(mdi_client, WM_MDICREATE, 0, (LPARAM)&cs);
-    ok(child_1 != 0, "expected child_1 to be non NULL");
+    ok(child_1 != 0, "expected child_1 to be non NULL\n");
     child_2 = (HWND)SendMessageA(mdi_client, WM_MDICREATE, 0, (LPARAM)&cs);
-    ok(child_2 != 0, "expected child_2 to be non NULL");
+    ok(child_2 != 0, "expected child_2 to be non NULL\n");
     child_3 = (HWND)SendMessageA(mdi_client, WM_MDICREATE, 0, (LPARAM)&cs);
-    ok(child_3 != 0, "expected child_3 to be non NULL");
+    ok(child_3 != 0, "expected child_3 to be non NULL\n");
     child_4 = (HWND)SendMessageA(mdi_client, WM_MDICREATE, 0, (LPARAM)&cs);
-    ok(child_4 != 0, "expected child_4 to be non NULL");
+    ok(child_4 != 0, "expected child_4 to be non NULL\n");
 
     stack[0] = (HWND)SendMessageA(mdi_client, WM_MDIGETACTIVE, 0, 0);
     stack[1] = GetWindow(stack[0], GW_HWNDNEXT);
