@@ -8358,13 +8358,13 @@ HRESULT WINAPI CreateTypeLib2(SYSKIND syskind, LPCOLESTR szFile,
 
     This->path = heap_alloc((lstrlenW(szFile) + 1) * sizeof(WCHAR));
     if (!This->path) {
-        ITypeLib2_Release((ITypeLib2*)This);
+        ITypeLib2_Release(&This->ITypeLib2_iface);
         return E_OUTOFMEMORY;
     }
     lstrcpyW(This->path, szFile);
 
-    hres = ITypeLib2_QueryInterface((ITypeLib2*)This, &IID_ICreateTypeLib2, (LPVOID*)ppctlib);
-    ITypeLib2_Release((ITypeLib2*)This);
+    hres = ITypeLib2_QueryInterface(&This->ITypeLib2_iface, &IID_ICreateTypeLib2, (LPVOID*)ppctlib);
+    ITypeLib2_Release(&This->ITypeLib2_iface);
     return hres;
 }
 
@@ -8373,21 +8373,21 @@ static HRESULT WINAPI ICreateTypeLib2_fnQueryInterface(ICreateTypeLib2 *iface,
 {
     ITypeLibImpl *This = impl_from_ICreateTypeLib2(iface);
 
-    return ITypeLib2_QueryInterface((ITypeLib2*)This, riid, object);
+    return ITypeLib2_QueryInterface(&This->ITypeLib2_iface, riid, object);
 }
 
 static ULONG WINAPI ICreateTypeLib2_fnAddRef(ICreateTypeLib2 *iface)
 {
     ITypeLibImpl *This = impl_from_ICreateTypeLib2(iface);
 
-    return ITypeLib2_AddRef((ITypeLib2*)This);
+    return ITypeLib2_AddRef(&This->ITypeLib2_iface);
 }
 
 static ULONG WINAPI ICreateTypeLib2_fnRelease(ICreateTypeLib2 *iface)
 {
     ITypeLibImpl *This = impl_from_ICreateTypeLib2(iface);
 
-    return ITypeLib2_Release((ITypeLib2*)This);
+    return ITypeLib2_Release(&This->ITypeLib2_iface);
 }
 
 static HRESULT WINAPI ICreateTypeLib2_fnCreateTypeInfo(ICreateTypeLib2 *iface,
@@ -9883,21 +9883,21 @@ static HRESULT WINAPI ICreateTypeInfo2_fnQueryInterface(ICreateTypeInfo2 *iface,
 {
     ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
 
-    return ITypeInfo2_QueryInterface((ITypeInfo2*)This, riid, object);
+    return ITypeInfo2_QueryInterface(&This->ITypeInfo2_iface, riid, object);
 }
 
 static ULONG WINAPI ICreateTypeInfo2_fnAddRef(ICreateTypeInfo2 *iface)
 {
     ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
 
-    return ITypeInfo2_AddRef((ITypeInfo2*)This);
+    return ITypeInfo2_AddRef(&This->ITypeInfo2_iface);
 }
 
 static ULONG WINAPI ICreateTypeInfo2_fnRelease(ICreateTypeInfo2 *iface)
 {
     ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
 
-    return ITypeInfo2_Release((ITypeInfo2*)This);
+    return ITypeInfo2_Release(&This->ITypeInfo2_iface);
 }
 
 static HRESULT WINAPI ICreateTypeInfo2_fnSetGuid(ICreateTypeInfo2 *iface,
