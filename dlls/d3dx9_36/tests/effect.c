@@ -2662,6 +2662,26 @@ static void test_effect_variable_names(IDirect3DDevice9 *device)
     ok(!count, "Release failed %u\n", count);
 }
 
+static void test_effect_compilation_errors(IDirect3DDevice9 *device)
+{
+    ID3DXEffect *effect;
+    ID3DXBuffer *compilation_errors;
+    HRESULT hr;
+
+    /* Test binary effect */
+    compilation_errors = (ID3DXBuffer*)0xdeadbeef;
+    hr = D3DXCreateEffect(NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, &compilation_errors);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXCreateEffect failed, got %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    ok(!compilation_errors, "Returned %p\n", compilation_errors);
+
+    compilation_errors = (ID3DXBuffer*)0xdeadbeef;
+    hr = D3DXCreateEffect(device, test_effect_variable_names_blob,
+            sizeof(test_effect_variable_names_blob), NULL, NULL, 0, NULL, &effect, &compilation_errors);
+    ok(hr == D3D_OK, "D3DXCreateEffect failed, got %#x, expected %#x\n", hr, D3D_OK);
+    ok(!compilation_errors, "Returned %p\n", compilation_errors);
+    effect->lpVtbl->Release(effect);
+}
+
 START_TEST(effect)
 {
     HWND wnd;
@@ -2698,6 +2718,7 @@ START_TEST(effect)
     test_create_effect_compiler();
     test_effect_parameter_value(device);
     test_effect_variable_names(device);
+    test_effect_compilation_errors(device);
 
     count = IDirect3DDevice9_Release(device);
     ok(count == 0, "The device was not properly freed: refcount %u\n", count);

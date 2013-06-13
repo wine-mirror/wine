@@ -5768,6 +5768,9 @@ HRESULT WINAPI D3DXCreateEffectEx(struct IDirect3DDevice9 *device, const void *s
     FIXME("(%p, %p, %u, %p, %p, %p, %#x, %p, %p, %p): semi-stub\n", device, srcdata, srcdatalen, defines, include,
         skip_constants, flags, pool, effect, compilation_errors);
 
+    if (compilation_errors)
+        *compilation_errors = NULL;
+
     if (!device || !srcdata)
         return D3DERR_INVALIDCALL;
 
