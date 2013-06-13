@@ -825,6 +825,18 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
             return SEC_E_INTERNAL_ERROR;
         }
 
+        if (pszTargetName)
+        {
+            UINT len = WideCharToMultiByte( CP_UNIXCP, 0, pszTargetName, -1, NULL, 0, NULL, NULL );
+            char *target = HeapAlloc( GetProcessHeap(), 0, len );
+
+            if (target)
+            {
+                WideCharToMultiByte( CP_UNIXCP, 0, pszTargetName, -1, target, len, NULL, NULL );
+                schan_imp_set_session_target( ctx->session, target );
+                HeapFree( GetProcessHeap(), 0, target );
+            }
+        }
         phNewContext->dwLower = handle;
         phNewContext->dwUpper = 0;
     }

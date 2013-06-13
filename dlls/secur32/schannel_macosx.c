@@ -734,6 +734,15 @@ void schan_imp_set_session_transport(schan_imp_session session,
     s->transport = t;
 }
 
+void schan_imp_set_session_target(schan_imp_session session, const char *target)
+{
+    struct mac_session *s = (struct mac_session*)session;
+
+    TRACE("(%p/%p, %s)\n", s, s->context, debugstr_a(target));
+
+    SSLSetPeerDomainName( s->context, target, strlen(target) );
+}
+
 SECURITY_STATUS schan_imp_handshake(schan_imp_session session)
 {
     struct mac_session *s = (struct mac_session*)session;
