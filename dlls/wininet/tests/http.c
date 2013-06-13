@@ -3629,16 +3629,19 @@ static void test_cert_struct(HINTERNET req)
     BOOL res;
 
     static const char ex_subject[] =
-        "0mJuv1t-1CFypQkyTZwfvjHHBAbnUndG\r\n"
-        "GT98380011\r\n"
-        "See www.rapidssl.com/resources/cps (c)13\r\n"
-        "Domain Control Validated - RapidSSL(R)\r\n"
-        "*.winehq.org";
+        "US\r\n"
+        "Minnesota\r\n"
+        "Saint Paul\r\n"
+        "WineHQ\r\n"
+        "test.winehq.com\r\n"
+        "webmaster@winehq.org";
 
     static const char ex_issuer[] =
         "US\r\n"
-        "\"GeoTrust, Inc.\"\r\n"
-        "RapidSSL CA";
+        "Minnesota\r\n"
+        "WineHQ\r\n"
+        "test.winehq.com\r\n"
+        "webmaster@winehq.org";
 
     memset(&info, 0x5, sizeof(info));
 
@@ -3731,7 +3734,7 @@ static void test_security_flags(void)
     pInternetSetStatusCallbackA(ses, &callback);
 
     SET_EXPECT(INTERNET_STATUS_HANDLE_CREATED);
-    conn = InternetConnectA(ses, "test.winehq.org", INTERNET_DEFAULT_HTTPS_PORT,
+    conn = InternetConnectA(ses, "test.winehq.com", INTERNET_DEFAULT_HTTPS_PORT,
                             NULL, NULL, INTERNET_SERVICE_HTTP, INTERNET_FLAG_SECURE, 0xdeadbeef);
     ok(conn != NULL, "InternetConnect failed with error %u\n", GetLastError());
     CHECK_NOTIFIED(INTERNET_STATUS_HANDLE_CREATED);
@@ -3755,7 +3758,7 @@ static void test_security_flags(void)
     }
 
     test_secflags_option(req, 0);
-    test_security_info("https://test.winehq.org/data/some_file.html?q", ERROR_INTERNET_ITEM_NOT_FOUND, 0);
+    test_security_info("https://test.winehq.com/data/some_file.html?q", ERROR_INTERNET_ITEM_NOT_FOUND, 0);
 
     set_secflags(req, TRUE, SECURITY_FLAG_IGNORE_REVOCATION);
     test_secflags_option(req, SECURITY_FLAG_IGNORE_REVOCATION);
@@ -3788,8 +3791,8 @@ static void test_security_flags(void)
     WaitForSingleObject(hCompleteEvent, INFINITE);
     ok(req_error == ERROR_SUCCESS, "req_error = %d\n", req_error);
 
-    todo_wine CHECK_NOT_NOTIFIED(INTERNET_STATUS_RESOLVING_NAME);
-    todo_wine CHECK_NOT_NOTIFIED(INTERNET_STATUS_NAME_RESOLVED);
+    CHECK_NOTIFIED(INTERNET_STATUS_RESOLVING_NAME);
+    CHECK_NOTIFIED(INTERNET_STATUS_NAME_RESOLVED);
     CHECK_NOTIFIED(INTERNET_STATUS_CONNECTING_TO_SERVER);
     CHECK_NOTIFIED(INTERNET_STATUS_CONNECTED_TO_SERVER);
     CHECK_NOTIFIED(INTERNET_STATUS_SENDING_REQUEST);
@@ -3926,7 +3929,7 @@ static void test_security_flags(void)
             |SECURITY_FLAG_STRENGTH_STRONG|0x1800000);
 
     test_cert_struct(req);
-    test_security_info("https://test.winehq.org/data/some_file.html?q", 0, 0x1800000);
+    test_security_info("https://test.winehq.com/data/some_file.html?q", 0, 0x1800000);
 
     res = InternetReadFile(req, buf, sizeof(buf), &size);
     ok(res, "InternetReadFile failed: %u\n", GetLastError());
@@ -3946,7 +3949,7 @@ static void test_security_flags(void)
     pInternetSetStatusCallbackA(ses, &callback);
 
     SET_EXPECT(INTERNET_STATUS_HANDLE_CREATED);
-    conn = InternetConnectA(ses, "test.winehq.org", INTERNET_DEFAULT_HTTPS_PORT,
+    conn = InternetConnectA(ses, "test.winehq.com", INTERNET_DEFAULT_HTTPS_PORT,
                             NULL, NULL, INTERNET_SERVICE_HTTP, INTERNET_FLAG_SECURE, 0xdeadbeef);
     ok(conn != NULL, "InternetConnect failed with error %u\n", GetLastError());
     CHECK_NOTIFIED(INTERNET_STATUS_HANDLE_CREATED);
@@ -3998,7 +4001,7 @@ static void test_security_flags(void)
 
     CloseHandle(hCompleteEvent);
 
-    test_security_info("http://test.winehq.org/data/some_file.html?q", ERROR_INTERNET_ITEM_NOT_FOUND, 0);
+    test_security_info("http://test.winehq.com/data/some_file.html?q", ERROR_INTERNET_ITEM_NOT_FOUND, 0);
     test_security_info("file:///c:/dir/file.txt", ERROR_INTERNET_ITEM_NOT_FOUND, 0);
     test_security_info("xxx:///c:/dir/file.txt", ERROR_INTERNET_ITEM_NOT_FOUND, 0);
 }
