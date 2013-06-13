@@ -4335,6 +4335,9 @@ static void test_VarDecAdd(void)
   ok(hres == DISP_E_OVERFLOW,"Expected overflow, got (%d,%d,%d,(%8x,%8x)x) hres 0x%08x\n",
      S(U(out)).scale, S(U(out)).sign, out.Hi32, S1(U1(out)).Mid32, S1(U1(out)).Lo32, hres);
 
+  SETDEC(l,3,128,0,123456); SETDEC64(r,0,0,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF);
+  MATH2(VarDecAdd); todo_wine EXPECTDEC64(0,0,-1,0xFFFFFFFF,0xFFFFFF84);
+
   /* Promotes to the highest scale, so here the results are in the scale of 2 */
   SETDEC(l,2,0,0,0);   SETDEC(r,0,0,0,0); MATH2(VarDecAdd); EXPECTDEC(2,0,0,0);
   SETDEC(l,2,0,0,100); SETDEC(r,0,0,0,1); MATH2(VarDecAdd); EXPECTDEC(2,0,0,200);
@@ -4555,6 +4558,8 @@ static void test_VarDecCmp(void)
   SETDEC(out,0,DECIMAL_NEG,-1,-1); SETDEC(l,0,DECIMAL_NEG,0,0); MATH1(VarDecCmp); EXPECT_GT;
   SETDEC(out,0,DECIMAL_NEG,-1,-1); SETDEC(l,0,DECIMAL_NEG,-1,-1); MATH1(VarDecCmp); EXPECT_EQ;
 
+  SETDEC(l,3,0,0,123456); SETDEC64(out,0,0,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF);
+  MATH1(VarDecCmp); todo_wine EXPECT_LT;
 }
 
 static void test_VarDecCmpR8(void)
