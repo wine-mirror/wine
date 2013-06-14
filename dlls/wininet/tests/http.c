@@ -3622,26 +3622,43 @@ static void release_cert_info(INTERNET_CERTIFICATE_INFOA *info)
     LocalFree(info->lpszEncryptionAlgName);
 }
 
-static void test_cert_struct(HINTERNET req)
+typedef struct {
+    const char *ex_subject;
+    const char *ex_issuer;
+} cert_struct_test_t;
+
+static const cert_struct_test_t test_winehq_org_cert = {
+    "0mJuv1t-1CFypQkyTZwfvjHHBAbnUndG\r\n"
+    "GT98380011\r\n"
+    "See www.rapidssl.com/resources/cps (c)13\r\n"
+    "Domain Control Validated - RapidSSL(R)\r\n"
+    "*.winehq.org",
+
+    "US\r\n"
+    "\"GeoTrust, Inc.\"\r\n"
+    "RapidSSL CA"
+};
+
+static const cert_struct_test_t test_winehq_com_cert = {
+    "US\r\n"
+    "Minnesota\r\n"
+    "Saint Paul\r\n"
+    "WineHQ\r\n"
+    "test.winehq.com\r\n"
+    "webmaster@winehq.org",
+
+    "US\r\n"
+    "Minnesota\r\n"
+    "WineHQ\r\n"
+    "test.winehq.com\r\n"
+    "webmaster@winehq.org"
+};
+
+static void test_cert_struct(HINTERNET req, const cert_struct_test_t *test)
 {
     INTERNET_CERTIFICATE_INFOA info;
     DWORD size;
     BOOL res;
-
-    static const char ex_subject[] =
-        "US\r\n"
-        "Minnesota\r\n"
-        "Saint Paul\r\n"
-        "WineHQ\r\n"
-        "test.winehq.com\r\n"
-        "webmaster@winehq.org";
-
-    static const char ex_issuer[] =
-        "US\r\n"
-        "Minnesota\r\n"
-        "WineHQ\r\n"
-        "test.winehq.com\r\n"
-        "webmaster@winehq.org";
 
     memset(&info, 0x5, sizeof(info));
 
@@ -3650,8 +3667,8 @@ static void test_cert_struct(HINTERNET req)
     ok(res, "InternetQueryOption failed: %u\n", GetLastError());
     ok(size == sizeof(info), "size = %u\n", size);
 
-    ok(!strcmp(info.lpszSubjectInfo, ex_subject), "lpszSubjectInfo = %s\n", info.lpszSubjectInfo);
-    ok(!strcmp(info.lpszIssuerInfo, ex_issuer), "lpszIssuerInfo = %s\n", info.lpszIssuerInfo);
+    ok(!strcmp(info.lpszSubjectInfo, test->ex_subject), "lpszSubjectInfo = %s\n", info.lpszSubjectInfo);
+    ok(!strcmp(info.lpszIssuerInfo, test->ex_issuer), "lpszIssuerInfo = %s\n", info.lpszIssuerInfo);
     ok(!info.lpszSignatureAlgName, "lpszSignatureAlgName = %s\n", info.lpszSignatureAlgName);
     ok(!info.lpszEncryptionAlgName, "lpszEncryptionAlgName = %s\n", info.lpszEncryptionAlgName);
     ok(!info.lpszProtocolName, "lpszProtocolName = %s\n", info.lpszProtocolName);
@@ -3850,7 +3867,7 @@ static void test_security_flags(void)
     CLEAR_NOTIFIED(INTERNET_STATUS_DETECTING_PROXY);
 
     if(req_error != ERROR_INTERNET_SEC_CERT_REV_FAILED) {
-        win_skip("Unexpected cert errors, skipping security flags tests\n");
+        win_skip("Unexpected cert errors %u, skipping security flags tests\n", req_error);
 
         close_async_handle(ses, hCompleteEvent, 3);
         CloseHandle(hCompleteEvent);
@@ -3891,7 +3908,7 @@ static void test_security_flags(void)
 
     test_request_flags(req, INTERNET_REQFLAG_NO_HEADERS);
     test_secflags_option(req, SECURITY_FLAG_IGNORE_REVOCATION|0x1800000);
-    test_security_info("https://test.winehq.org/data/some_file.html?q", ERROR_INTERNET_ITEM_NOT_FOUND, 0);
+    test_security_info("https://test.winehq.com/data/some_file.html?q", ERROR_INTERNET_ITEM_NOT_FOUND, 0);
 
     set_secflags(req, FALSE, SECURITY_FLAG_IGNORE_UNKNOWN_CA);
     test_secflags_option(req, 0x1800000|SECURITY_FLAG_IGNORE_REVOCATION|SECURITY_FLAG_IGNORE_UNKNOWN_CA
@@ -3928,7 +3945,7 @@ static void test_security_flags(void)
     test_secflags_option(req, SECURITY_FLAG_SECURE|SECURITY_FLAG_IGNORE_UNKNOWN_CA|SECURITY_FLAG_IGNORE_REVOCATION
             |SECURITY_FLAG_STRENGTH_STRONG|0x1800000);
 
-    test_cert_struct(req);
+    test_cert_struct(req, &test_winehq_com_cert);
     test_security_info("https://test.winehq.com/data/some_file.html?q", 0, 0x1800000);
 
     res = InternetReadFile(req, buf, sizeof(buf), &size);
@@ -4038,32 +4055,7 @@ static void test_secure_connection(void)
     ok(ret, "InternetQueryOption failed: %d\n", GetLastError());
     ok(flags & SECURITY_FLAG_SECURE, "expected secure flag to be set\n");
 
-    ret = InternetQueryOptionA(req, INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT,
-                               NULL, &size);
-    ok(ret || GetLastError() == ERROR_INSUFFICIENT_BUFFER, "InternetQueryOption failed: %d\n", GetLastError());
-    ok(size == sizeof(INTERNET_CERTIFICATE_INFOA), "size = %d\n", size);
-    certificate_structA = HeapAlloc(GetProcessHeap(), 0, size);
-    ret = InternetQueryOption(req, INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT,
-                              certificate_structA, &size);
-    ok(ret, "InternetQueryOption failed: %d\n", GetLastError());
-    if (ret)
-    {
-        ok(certificate_structA->lpszSubjectInfo &&
-           strlen(certificate_structA->lpszSubjectInfo) > 1,
-           "expected a non-empty subject name\n");
-        ok(certificate_structA->lpszIssuerInfo &&
-           strlen(certificate_structA->lpszIssuerInfo) > 1,
-           "expected a non-empty issuer name\n");
-        ok(!certificate_structA->lpszSignatureAlgName,
-           "unexpected signature algorithm name\n");
-        ok(!certificate_structA->lpszEncryptionAlgName,
-           "unexpected encryption algorithm name\n");
-        ok(!certificate_structA->lpszProtocolName,
-           "unexpected protocol name\n");
-        ok(certificate_structA->dwKeySize, "expected a non-zero key size\n");
-        release_cert_info(certificate_structA);
-    }
-    HeapFree(GetProcessHeap(), 0, certificate_structA);
+    test_cert_struct(req, &test_winehq_org_cert);
 
     /* Querying the same option through InternetQueryOptionW still results in
      * ASCII strings being returned.
@@ -4111,7 +4103,7 @@ static void test_secure_connection(void)
     ok(con != NULL, "InternetConnect failed\n");
 
     req = HttpOpenRequestW(con, get, testpage, NULL, NULL, NULL,
-                          INTERNET_FLAG_SECURE, 0);
+                          INTERNET_FLAG_SECURE|INTERNET_FLAG_RELOAD, 0);
     ok(req != NULL, "HttpOpenRequest failed\n");
 
     ret = HttpSendRequest(req, NULL, 0, NULL, 0);
@@ -4120,7 +4112,7 @@ static void test_secure_connection(void)
     size = sizeof(flags);
     ret = InternetQueryOption(req, INTERNET_OPTION_SECURITY_FLAGS, &flags, &size);
     ok(ret, "InternetQueryOption failed: %d\n", GetLastError());
-    ok(flags & SECURITY_FLAG_SECURE, "expected secure flag to be set\n");
+    ok(flags & SECURITY_FLAG_SECURE, "expected secure flag to be set, got %x\n", flags);
 
     ret = InternetQueryOptionA(req, INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT,
                                NULL, &size);
