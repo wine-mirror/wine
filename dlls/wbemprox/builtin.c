@@ -102,6 +102,8 @@ static const WCHAR prop_captionW[] =
     {'C','a','p','t','i','o','n',0};
 static const WCHAR prop_classW[] =
     {'C','l','a','s','s',0};
+static const WCHAR prop_codesetW[] =
+    {'C','o','d','e','S','e','t',0};
 static const WCHAR prop_commandlineW[] =
     {'C','o','m','m','a','n','d','L','i','n','e',0};
 static const WCHAR prop_cpustatusW[] =
@@ -322,6 +324,7 @@ static const struct column col_networkadapter[] =
 static const struct column col_os[] =
 {
     { prop_captionW,          CIM_STRING },
+    { prop_codesetW,          CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_csdversionW,       CIM_STRING },
     { prop_lastbootuptimeW,   CIM_DATETIME|COL_FLAG_DYNAMIC },
     { prop_osarchitectureW,   CIM_STRING },
@@ -565,6 +568,7 @@ struct record_networkadapter
 struct record_operatingsystem
 {
     const WCHAR *caption;
+    const WCHAR *codeset;
     const WCHAR *csdversion;
     const WCHAR *lastbootuptime;
     const WCHAR *osarchitecture;
@@ -1752,6 +1756,13 @@ static WCHAR *get_systemdirectory(void)
     Wow64RevertWow64FsRedirection( redir );
     return ret;
 }
+static WCHAR *get_codeset(void)
+{
+    static const WCHAR fmtW[] = {'%','u',0};
+    WCHAR *ret = heap_alloc( 11 * sizeof(WCHAR) );
+    if (ret) sprintfW( ret, fmtW, GetACP() );
+    return ret;
+}
 
 static enum fill_status fill_os( struct table *table, const struct expr *cond )
 {
@@ -1763,6 +1774,7 @@ static enum fill_status fill_os( struct table *table, const struct expr *cond )
 
     rec = (struct record_operatingsystem *)table->data;
     rec->caption          = os_captionW;
+    rec->codeset          = get_codeset();
     rec->csdversion       = os_csdversionW;
     rec->lastbootuptime   = get_lastbootuptime();
     rec->osarchitecture   = get_osarchitecture();
