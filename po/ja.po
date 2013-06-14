@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2013-01-17 20:12+0900\n"
+"PO-Revision-Date: 2013-06-14 21:16+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Japanese\n"
@@ -8226,7 +8226,7 @@ msgstr "エラー"
 
 #: shlwapi.rc:40
 msgid "Don't show me th&is message again"
-msgstr "今後はこのメッセージを表示しない(&i)"
+msgstr "今後はこのメッセージを表示しない(&I)"
 
 #: shlwapi.rc:27
 msgid "%d bytes"
@@ -8351,7 +8351,7 @@ msgstr "ウィンドウの一覧(&M)..."
 
 #: wineps.rc:28
 msgid "Paper Si&ze:"
-msgstr "用紙サイズ(&z):"
+msgstr "用紙サイズ(&Z):"
 
 #: wineps.rc:36
 msgid "Duplex:"
@@ -10420,77 +10420,59 @@ msgstr "不明なプロトコル"
 
 #: netstat.rc:41
 msgid "TCP Statistics for IPv4"
-msgstr ""
+msgstr "TCP 統計値 (IPv4)"
 
 #: netstat.rc:42
-#, fuzzy
-#| msgid "Active Connections"
 msgid "Active Opens"
-msgstr "アクティブな接続"
+msgstr "能動的な開始"
 
 #: netstat.rc:43
 msgid "Passive Opens"
-msgstr ""
+msgstr "受動的な開始"
 
 #: netstat.rc:44
-#, fuzzy
-#| msgid "Active Connections"
 msgid "Failed Connection Attempts"
-msgstr "アクティブな接続"
+msgstr "失敗した接続の試行"
 
 #: netstat.rc:45
-#, fuzzy
-#| msgid "Active Connections"
 msgid "Reset Connections"
-msgstr "アクティブな接続"
+msgstr "リセットされた接続"
 
 #: netstat.rc:46
-#, fuzzy
-#| msgid "Active Connections"
 msgid "Current Connections"
-msgstr "アクティブな接続"
+msgstr "現在の接続"
 
 #: netstat.rc:47
-#, fuzzy
-#| msgid "Segment locked.\n"
 msgid "Segments Received"
-msgstr "セグメントはロックされています。\n"
+msgstr "受信セグメント"
 
 #: netstat.rc:48
-#, fuzzy
-#| msgid "Segment locked.\n"
 msgid "Segments Sent"
-msgstr "セグメントはロックされています。\n"
+msgstr "送信セグメント"
 
 #: netstat.rc:49
 msgid "Segments Retransmitted"
-msgstr ""
+msgstr "再送信セグメント"
 
 #: netstat.rc:50
 msgid "UDP Statistics for IPv4"
-msgstr ""
+msgstr "UDP 統計値 (IPv4)"
 
 #: netstat.rc:51
-#, fuzzy
-#| msgid "Segment locked.\n"
 msgid "Datagrams Received"
-msgstr "セグメントはロックされています。\n"
+msgstr "受信データグラム"
 
 #: netstat.rc:52
-#, fuzzy
-#| msgid "Local Port"
 msgid "No Ports"
-msgstr "ローカル ポート"
+msgstr "ポートなし"
 
 #: netstat.rc:53
-#, fuzzy
-#| msgid "Decoding Error"
 msgid "Receive Errors"
-msgstr "デコード エラー"
+msgstr "受信エラー"
 
 #: netstat.rc:54
 msgid "Datagrams Sent"
-msgstr ""
+msgstr "送信データグラム"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
@@ -11380,7 +11362,7 @@ msgstr "検索(&F)...\tCtrl+F"
 
 #: regedit.rc:61
 msgid "Find Ne&xt\tF3"
-msgstr "次の検索候補(&x)\tF3"
+msgstr "次の検索候補(&X)\tF3"
 
 #: regedit.rc:65
 msgid "Status &Bar"
