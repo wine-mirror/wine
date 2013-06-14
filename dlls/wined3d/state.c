@@ -4574,7 +4574,7 @@ void vertexdeclaration(struct wined3d_context *context, const struct wined3d_sta
                 && !isStateDirty(context, STATE_TRANSFORM(WINED3D_TS_VIEW)))
             transform_world(context, state, STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(0)));
         if (!isStateDirty(context, STATE_RENDER(WINED3D_RS_COLORVERTEX)))
-            state_colormat(context, state, STATE_RENDER(WINED3D_RS_COLORVERTEX));
+            context_apply_state(context, state, STATE_RENDER(WINED3D_RS_COLORVERTEX));
         if (!isStateDirty(context, STATE_RENDER(WINED3D_RS_LIGHTING)))
             state_lighting(context, state, STATE_RENDER(WINED3D_RS_LIGHTING));
 
