@@ -168,6 +168,8 @@ static const WCHAR prop_modelW[] =
     {'M','o','d','e','l',0};
 static const WCHAR prop_netconnectionstatusW[] =
     {'N','e','t','C','o','n','n','e','c','t','i','o','n','S','t','a','t','u','s',0};
+static const WCHAR prop_numcoresW[] =
+    {'N','u','m','b','e','r','O','f','C','o','r','e','s',0};
 static const WCHAR prop_numlogicalprocessorsW[] =
     {'N','u','m','b','e','r','O','f','L','o','g','i','c','a','l','P','r','o','c','e','s','s','o','r','s',0};
 static const WCHAR prop_numprocessorsW[] =
@@ -363,6 +365,7 @@ static const struct column col_processor[] =
     { prop_manufacturerW,         CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_maxclockspeedW,        CIM_UINT32, VT_I4 },
     { prop_nameW,                 CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_numcoresW,             CIM_UINT32, VT_I4 },
     { prop_numlogicalprocessorsW, CIM_UINT32, VT_I4 },
     { prop_processoridW,          CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_uniqueidW,             CIM_STRING }
@@ -605,6 +608,7 @@ struct record_processor
     const WCHAR *manufacturer;
     UINT32       maxclockspeed;
     const WCHAR *name;
+    UINT32       num_cores;
     UINT32       num_logical_processors;
     const WCHAR *processor_id;
     const WCHAR *unique_id;
@@ -799,13 +803,14 @@ static UINT get_processor_count(void)
     return info.NumberOfProcessors;
 }
 
-static UINT get_logical_processor_count(void)
+static UINT get_logical_processor_count( UINT *num_cores )
 {
     SYSTEM_LOGICAL_PROCESSOR_INFORMATION *info;
     UINT i, j, count = 0;
     NTSTATUS status;
     ULONG len;
 
+    if (num_cores) *num_cores = get_processor_count();
     status = NtQuerySystemInformation( SystemLogicalProcessorInformation, NULL, 0, &len );
     if (status != STATUS_INFO_LENGTH_MISMATCH) return get_processor_count();
 
@@ -816,10 +821,17 @@ static UINT get_logical_processor_count(void)
         heap_free( info );
         return get_processor_count();
     }
+    if (num_cores) *num_cores = 0;
     for (i = 0; i < len / sizeof(*info); i++)
     {
-        if (info[i].Relationship != RelationProcessorCore) continue;
-        for (j = 0; j < sizeof(ULONG_PTR); j++) if (info[i].ProcessorMask & (1 << j)) count++;
+        if (info[i].Relationship == RelationProcessorCore)
+        {
+            for (j = 0; j < sizeof(ULONG_PTR); j++) if (info[i].ProcessorMask & (1 << j)) count++;
+        }
+        else if (info[i].Relationship == RelationProcessorPackage && num_cores)
+        {
+            for (j = 0; j < sizeof(ULONG_PTR); j++) if (info[i].ProcessorMask & (1 << j)) (*num_cores)++;
+        }
     }
     heap_free( info );
     return count;
@@ -859,7 +871,7 @@ static enum fill_status fill_compsys( struct table *table, const struct expr *co
     rec->manufacturer           = compsys_manufacturerW;
     rec->model                  = compsys_modelW;
     rec->name                   = get_computername();
-    rec->num_logical_processors = get_logical_processor_count();
+    rec->num_logical_processors = get_logical_processor_count( NULL );
     rec->num_processors         = get_processor_count();
     rec->total_physical_memory  = get_total_physical_memory();
     if (!match_row( table, row, cond, &status )) free_row_values( table, row );
@@ -1672,7 +1684,7 @@ static enum fill_status fill_processor( struct table *table, const struct expr *
     static const WCHAR fmtW[] = {'C','P','U','%','u',0};
     WCHAR device_id[14], processor_id[17], manufacturer[13], name[49] = {0};
     struct record_processor *rec;
-    UINT i, offset = 0, maxclockspeed, num_logical_processors, count = get_processor_count();
+    UINT i, offset = 0, maxclockspeed, num_cores, num_logical_processors, count = get_processor_count();
     enum fill_status status = FILL_STATUS_UNFILTERED;
 
     if (!resize_table( table, count, sizeof(*rec) )) return FILL_STATUS_FAILED;
@@ -1682,7 +1694,8 @@ static enum fill_status fill_processor( struct table *table, const struct expr *
     get_processor_name( name );
 
     maxclockspeed = get_processor_maxclockspeed();
-    num_logical_processors = get_logical_processor_count() / count;
+    num_logical_processors = get_logical_processor_count( &num_cores ) / count;
+    num_cores /= count;
 
     for (i = 0; i < count; i++)
     {
@@ -1695,6 +1708,7 @@ static enum fill_status fill_processor( struct table *table, const struct expr *
         rec->manufacturer           = heap_strdupW( manufacturer );
         rec->maxclockspeed          = maxclockspeed;
         rec->name                   = heap_strdupW( name );
+        rec->num_cores              = num_cores;
         rec->num_logical_processors = num_logical_processors;
         rec->processor_id           = heap_strdupW( processor_id );
         rec->unique_id              = NULL;
