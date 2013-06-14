@@ -206,6 +206,8 @@ static const WCHAR prop_serialnumberW[] =
     {'S','e','r','i','a','l','N','u','m','b','e','r',0};
 static const WCHAR prop_servicepackmajorW[] =
     {'S','e','r','v','i','c','e','P','a','c','k','M','a','j','o','r','V','e','r','s','i','o','n',0};
+static const WCHAR prop_servicepackminorW[] =
+    {'S','e','r','v','i','c','e','P','a','c','k','M','i','n','o','r','V','e','r','s','i','o','n',0};
 static const WCHAR prop_servicetypeW[] =
     {'S','e','r','v','i','c','e','T','y','p','e',0};
 static const WCHAR prop_startmodeW[] =
@@ -338,6 +340,7 @@ static const struct column col_os[] =
     { prop_osproductsuiteW,   CIM_UINT32, VT_I4 },
     { prop_ostypeW,           CIM_UINT16, VT_I4 },
     { prop_servicepackmajorW, CIM_UINT16, VT_I4 },
+    { prop_servicepackminorW, CIM_UINT16, VT_I4 },
     { prop_suitemaskW,        CIM_UINT32, VT_I4 },
     { prop_systemdirectoryW,  CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_versionW,          CIM_STRING }
@@ -584,6 +587,7 @@ struct record_operatingsystem
     UINT32       osproductsuite;
     UINT16       ostype;
     UINT16       servicepackmajor;
+    UINT16       servicepackminor;
     UINT32       suitemask;
     const WCHAR *systemdirectory;
     const WCHAR *version;
@@ -1804,6 +1808,7 @@ static enum fill_status fill_os( struct table *table, const struct expr *cond )
     rec->osproductsuite   = 2461140; /* Windows XP Professional  */
     rec->ostype           = 18;      /* WINNT */
     rec->servicepackmajor = 3;
+    rec->servicepackminor = 0;
     rec->suitemask        = 272;     /* Single User + Terminal */
     rec->systemdirectory  = get_systemdirectory();
     rec->version          = os_versionW;
