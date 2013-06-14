@@ -192,6 +192,8 @@ static const WCHAR prop_ostypeW[] =
     {'O','S','T','y','p','e',0};
 static const WCHAR prop_parameterW[] =
     {'P','a','r','a','m','e','t','e','r',0};
+static const WCHAR prop_physicaladapterW[] =
+    {'P','h','y','s','i','c','a','l','A','d','a','p','t','e','r',0};
 static const WCHAR prop_pnpdeviceidW[] =
     {'P','N','P','D','e','v','i','c','e','I','D',0};
 static const WCHAR prop_pprocessidW[] =
@@ -326,6 +328,7 @@ static const struct column col_networkadapter[] =
     { prop_macaddressW,          CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_manufacturerW,        CIM_STRING },
     { prop_netconnectionstatusW, CIM_UINT16, VT_I4 },
+    { prop_physicaladapterW,     CIM_BOOLEAN },
     { prop_pnpdeviceidW,         CIM_STRING },
     { prop_speedW,               CIM_UINT64 }
 };
@@ -576,6 +579,7 @@ struct record_networkadapter
     const WCHAR *mac_address;
     const WCHAR *manufacturer;
     UINT16       netconnection_status;
+    int          physicaladapter;
     const WCHAR *pnpdevice_id;
     UINT64       speed;
 };
@@ -1499,7 +1503,7 @@ static WCHAR *get_mac_address( const BYTE *addr, DWORD len )
     sprintfW( ret, fmtW, addr[0], addr[1], addr[2], addr[3], addr[4], addr[5] );
     return ret;
 }
-static const WCHAR *get_adaptertype( DWORD type )
+static const WCHAR *get_adaptertype( DWORD type, int *physical )
 {
     static const WCHAR ethernetW[] = {'E','t','h','e','r','n','e','t',' ','8','0','2','.','3',0};
     static const WCHAR wirelessW[] = {'W','i','r','e','l','e','s','s',0};
@@ -1508,13 +1512,12 @@ static const WCHAR *get_adaptertype( DWORD type )
 
     switch (type)
     {
-    case IF_TYPE_ETHERNET_CSMACD: return ethernetW;
-    case IF_TYPE_IEEE80211:       return wirelessW;
-    case IF_TYPE_IEEE1394:        return firewireW;
-    case IF_TYPE_TUNNEL:          return tunnelW;
-    default: break;
+    case IF_TYPE_ETHERNET_CSMACD: *physical = -1; return ethernetW;
+    case IF_TYPE_IEEE80211:       *physical = -1; return wirelessW;
+    case IF_TYPE_IEEE1394:        *physical = -1; return firewireW;
+    case IF_TYPE_TUNNEL:          *physical = 0; return tunnelW;
+    default:                      *physical = 0; return NULL;
     }
-    return NULL;
 }
 
 static enum fill_status fill_networkadapter( struct table *table, const struct expr *cond )
@@ -1525,6 +1528,7 @@ static enum fill_status fill_networkadapter( struct table *table, const struct e
     IP_ADAPTER_ADDRESSES *aa, *buffer;
     UINT row = 0, offset = 0, count = 0;
     DWORD size = 0, ret;
+    int physical;
     enum fill_status status = FILL_STATUS_UNFILTERED;
 
     ret = GetAdaptersAddresses( AF_UNSPEC, 0, NULL, NULL, &size );
@@ -1546,12 +1550,13 @@ static enum fill_status fill_networkadapter( struct table *table, const struct e
     {
         rec = (struct record_networkadapter *)(table->data + offset);
         sprintfW( device_id, fmtW, aa->u.s.IfIndex );
-        rec->adaptertype          = get_adaptertype( aa->IfType );
+        rec->adaptertype          = get_adaptertype( aa->IfType, &physical );
         rec->device_id            = heap_strdupW( device_id );
         rec->interface_index      = aa->u.s.IfIndex;
         rec->mac_address          = get_mac_address( aa->PhysicalAddress, aa->PhysicalAddressLength );
         rec->manufacturer         = compsys_manufacturerW;
         rec->netconnection_status = get_connection_status( aa->OperStatus );
+        rec->physicaladapter      = physical;
         rec->pnpdevice_id         = networkadapter_pnpdeviceidW;
         rec->speed                = 1000000;
         if (!match_row( table, row, cond, &status ))
