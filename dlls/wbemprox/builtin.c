@@ -158,6 +158,8 @@ static const WCHAR prop_intvalueW[] =
     {'I','n','t','e','g','e','r','V','a','l','u','e',0};
 static const WCHAR prop_lastbootuptimeW[] =
     {'L','a','s','t','B','o','o','t','U','p','T','i','m','e',0};
+static const WCHAR prop_localeW[] =
+    {'L','o','c','a','l','e',0};
 static const WCHAR prop_macaddressW[] =
     {'M','A','C','A','d','d','r','e','s','s',0};
 static const WCHAR prop_manufacturerW[] =
@@ -330,6 +332,7 @@ static const struct column col_os[] =
     { prop_countrycodeW,      CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_csdversionW,       CIM_STRING },
     { prop_lastbootuptimeW,   CIM_DATETIME|COL_FLAG_DYNAMIC },
+    { prop_localeW,           CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_osarchitectureW,   CIM_STRING },
     { prop_oslanguageW,       CIM_UINT32, VT_I4 },
     { prop_osproductsuiteW,   CIM_UINT32, VT_I4 },
@@ -575,6 +578,7 @@ struct record_operatingsystem
     const WCHAR *countrycode;
     const WCHAR *csdversion;
     const WCHAR *lastbootuptime;
+    const WCHAR *locale;
     const WCHAR *osarchitecture;
     UINT32       oslanguage;
     UINT32       osproductsuite;
@@ -1773,6 +1777,12 @@ static WCHAR *get_countrycode(void)
     if (ret) GetLocaleInfoW( LOCALE_SYSTEM_DEFAULT, LOCALE_ICOUNTRY, ret, 6 );
     return ret;
 }
+static WCHAR *get_locale(void)
+{
+    WCHAR *ret = heap_alloc( 5 * sizeof(WCHAR) );
+    if (ret) GetLocaleInfoW( LOCALE_SYSTEM_DEFAULT, LOCALE_ILANGUAGE, ret, 5 );
+    return ret;
+}
 
 static enum fill_status fill_os( struct table *table, const struct expr *cond )
 {
@@ -1788,8 +1798,9 @@ static enum fill_status fill_os( struct table *table, const struct expr *cond )
     rec->countrycode      = get_countrycode();
     rec->csdversion       = os_csdversionW;
     rec->lastbootuptime   = get_lastbootuptime();
+    rec->locale           = get_locale();
     rec->osarchitecture   = get_osarchitecture();
-    rec->oslanguage       = MAKELANGID( LANG_ENGLISH, SUBLANG_ENGLISH_US );
+    rec->oslanguage       = GetSystemDefaultLangID();
     rec->osproductsuite   = 2461140; /* Windows XP Professional  */
     rec->ostype           = 18;      /* WINNT */
     rec->servicepackmajor = 3;
