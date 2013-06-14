@@ -2095,8 +2095,9 @@ struct wined3d_surface
 
     DWORD flags;
 
-    UINT                      pow2Width;
-    UINT                      pow2Height;
+    UINT pitch;
+    UINT pow2Width;
+    UINT pow2Height;
 
     /* A method to retrieve the drawable size. Not in the Vtable to make it changeable */
     void (*get_drawable_size)(const struct wined3d_context *context, UINT *width, UINT *height);

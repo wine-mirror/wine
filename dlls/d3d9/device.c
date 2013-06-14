@@ -766,7 +766,7 @@ static HRESULT WINAPI d3d9_device_CreateTexture(IDirect3DDevice9Ex *iface,
 
         resource = wined3d_texture_get_sub_resource(object->wined3d_texture, 0);
         surface = wined3d_resource_get_parent(resource);
-        wined3d_surface_set_mem(surface->wined3d_surface, *shared_handle);
+        wined3d_surface_set_mem(surface->wined3d_surface, *shared_handle, 0);
     }
 
     TRACE("Created texture %p.\n", object);

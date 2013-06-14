@@ -2332,7 +2332,7 @@ HRESULT __cdecl wined3d_surface_releasedc(struct wined3d_surface *surface, HDC d
 HRESULT __cdecl wined3d_surface_restore(struct wined3d_surface *surface);
 HRESULT __cdecl wined3d_surface_set_color_key(struct wined3d_surface *surface,
         DWORD flags, const struct wined3d_color_key *color_key);
-HRESULT __cdecl wined3d_surface_set_mem(struct wined3d_surface *surface, void *mem);
+HRESULT __cdecl wined3d_surface_set_mem(struct wined3d_surface *surface, void *mem, UINT pitch);
 HRESULT __cdecl wined3d_surface_set_overlay_position(struct wined3d_surface *surface, LONG x, LONG y);
 void __cdecl wined3d_surface_set_palette(struct wined3d_surface *surface, struct wined3d_palette *palette);
 DWORD __cdecl wined3d_surface_set_priority(struct wined3d_surface *surface, DWORD new_priority);

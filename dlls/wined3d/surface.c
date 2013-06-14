@@ -101,7 +101,7 @@ static void surface_cleanup(struct wined3d_surface *surface)
     }
 
     if (surface->flags & SFLAG_USERPTR)
-        wined3d_surface_set_mem(surface, NULL);
+        wined3d_surface_set_mem(surface, NULL, 0);
     if (surface->overlay_dest)
         list_remove(&surface->overlay_entry);
 
@@ -3202,6 +3202,9 @@ DWORD CDECL wined3d_surface_get_pitch(const struct wined3d_surface *surface)
 
     TRACE("surface %p.\n", surface);
 
+    if (surface->pitch)
+        return surface->pitch;
+
     if (format->flags & WINED3DFMT_FLAG_BLOCKS)
     {
         /* Since compressed formats are block based, pitch means the amount of
@@ -3221,7 +3224,7 @@ DWORD CDECL wined3d_surface_get_pitch(const struct wined3d_surface *surface)
     return pitch;
 }
 
-HRESULT CDECL wined3d_surface_set_mem(struct wined3d_surface *surface, void *mem)
+HRESULT CDECL wined3d_surface_set_mem(struct wined3d_surface *surface, void *mem, UINT pitch)
 {
     TRACE("surface %p, mem %p.\n", surface, mem);
 
@@ -3289,6 +3292,8 @@ HRESULT CDECL wined3d_surface_set_mem(struct wined3d_surface *surface, void *mem
 
         surface_modify_location(surface, SFLAG_INSYSMEM, TRUE);
     }
+
+    surface->pitch = pitch;
 
     return WINED3D_OK;
 }

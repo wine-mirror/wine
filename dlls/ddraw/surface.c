@@ -4233,7 +4233,7 @@ static HRESULT WINAPI ddraw_surface7_SetSurfaceDesc(IDirectDrawSurface7 *iface, 
             | DDSD_HEIGHT | DDSD_PITCH | DDSD_CAPS;
     enum wined3d_format_id format_id;
     BOOL update_wined3d = FALSE;
-    UINT width, height;
+    UINT pitch, width, height;
 
     TRACE("iface %p, surface_desc %p, flags %#x.\n", iface, DDSD, Flags);
 
@@ -4293,6 +4293,7 @@ static HRESULT WINAPI ddraw_surface7_SetSurfaceDesc(IDirectDrawSurface7 *iface, 
             TRACE("Surface pitch changed from %u to %u.\n", This->surface_desc.u1.lPitch, DDSD->u1.lPitch);
             update_wined3d = TRUE;
         }
+        pitch = DDSD->u1.lPitch;
         width = DDSD->dwWidth;
     }
     else if (DDSD->dwFlags & DDSD_PITCH)
@@ -4302,6 +4303,7 @@ static HRESULT WINAPI ddraw_surface7_SetSurfaceDesc(IDirectDrawSurface7 *iface, 
     }
     else
     {
+        pitch = This->surface_desc.u1.lPitch;
         width = This->surface_desc.dwWidth;
     }
 
@@ -4370,8 +4372,7 @@ static HRESULT WINAPI ddraw_surface7_SetSurfaceDesc(IDirectDrawSurface7 *iface, 
 
     if (DDSD->dwFlags & DDSD_LPSURFACE && DDSD->lpSurface)
     {
-        hr = wined3d_surface_set_mem(This->wined3d_surface, DDSD->lpSurface);
-        if (FAILED(hr))
+        if (FAILED(hr = wined3d_surface_set_mem(This->wined3d_surface, DDSD->lpSurface, pitch)))
         {
             /* No need for a trace here, wined3d does that for us */
             switch(hr)
@@ -5843,8 +5844,15 @@ HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw,
     }
     if (desc->dwFlags & DDSD_LPSURFACE)
     {
-        hr = wined3d_surface_set_mem(surface->wined3d_surface, desc->lpSurface);
-        if (FAILED(hr))
+        UINT pitch = 0;
+
+        if (desc->dwFlags & DDSD_PITCH)
+        {
+            pitch = desc->u1.lPitch;
+            surface->surface_desc.u1.lPitch = pitch;
+        }
+
+        if (FAILED(hr = wined3d_surface_set_mem(surface->wined3d_surface, desc->lpSurface, pitch)))
         {
             ERR("Failed to set surface memory, hr %#x.\n", hr);
             wined3d_surface_decref(surface->wined3d_surface);
