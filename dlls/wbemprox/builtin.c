@@ -92,6 +92,8 @@ static const WCHAR prop_adapterramW[] =
     {'A','d','a','p','t','e','r','R','A','M',0};
 static const WCHAR prop_adaptertypeW[] =
     {'A','d','a','p','t','e','r','T','y','p','e',0};
+static const WCHAR prop_addresswidthW[] =
+    {'A','d','d','r','e','s','s','W','i','d','t','h',0};
 static const WCHAR prop_bootableW[] =
     {'B','o','o','t','a','b','l','e',0};
 static const WCHAR prop_bootpartitionW[] =
@@ -354,6 +356,7 @@ static const struct column col_process[] =
 };
 static const struct column col_processor[] =
 {
+    { prop_addresswidthW,         CIM_UINT16, VT_I4 },
     { prop_cpustatusW,            CIM_UINT16 },
     { prop_deviceidW,             CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
     { prop_familyW,               CIM_UINT16, VT_I4 },
@@ -595,6 +598,7 @@ struct record_process
 };
 struct record_processor
 {
+    UINT16       addresswidth;
     UINT16       cpu_status;
     const WCHAR *device_id;
     UINT16       family;
@@ -1655,6 +1659,13 @@ static UINT get_processor_maxclockspeed( void )
     }
     return ret;
 }
+static const WCHAR *get_osarchitecture(void)
+{
+    SYSTEM_INFO info;
+    GetNativeSystemInfo( &info );
+    if (info.u.s.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64) return os_64bitW;
+    return os_32bitW;
+}
 
 static enum fill_status fill_processor( struct table *table, const struct expr *cond )
 {
@@ -1676,6 +1687,7 @@ static enum fill_status fill_processor( struct table *table, const struct expr *
     for (i = 0; i < count; i++)
     {
         rec = (struct record_processor *)(table->data + offset);
+        rec->addresswidth           = get_osarchitecture() == os_32bitW ? 32 : 64;
         rec->cpu_status             = 1; /* CPU Enabled */
         sprintfW( device_id, fmtW, i );
         rec->device_id              = heap_strdupW( device_id );
@@ -1714,13 +1726,6 @@ static WCHAR *get_lastbootuptime(void)
     RtlTimeToTimeFields( &ti.liKeBootTime, &tf );
     sprintfW( ret, fmtW, tf.Year, tf.Month, tf.Day, tf.Hour, tf.Minute, tf.Second, tf.Milliseconds * 1000 );
     return ret;
-}
-static const WCHAR *get_osarchitecture(void)
-{
-    SYSTEM_INFO info;
-    GetNativeSystemInfo( &info );
-    if (info.u.s.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64) return os_64bitW;
-    return os_32bitW;
 }
 static WCHAR *get_systemdirectory(void)
 {
