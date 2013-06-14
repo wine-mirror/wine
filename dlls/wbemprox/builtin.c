@@ -846,7 +846,7 @@ static enum fill_status fill_compsys( struct table *table, const struct expr *co
     enum fill_status status = FILL_STATUS_UNFILTERED;
     UINT row = 0;
 
-    if (!(table->data = heap_alloc( sizeof(*rec) ))) return FILL_STATUS_FAILED;
+    if (!resize_table( table, 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
 
     rec = (struct record_computersystem *)table->data;
     rec->description            = compsys_descriptionW;
@@ -1499,7 +1499,7 @@ static enum fill_status fill_networkadapter( struct table *table, const struct e
         return FILL_STATUS_FAILED;
     }
     for (aa = buffer; aa; aa = aa->Next) count++;
-    if (!(table->data = heap_alloc( sizeof(*rec) * count )))
+    if (!resize_table( table, count, sizeof(*rec) ))
     {
         heap_free( buffer );
         return FILL_STATUS_FAILED;
@@ -1664,7 +1664,7 @@ static enum fill_status fill_processor( struct table *table, const struct expr *
     UINT i, offset = 0, maxclockspeed, num_logical_processors, count = get_processor_count();
     enum fill_status status = FILL_STATUS_UNFILTERED;
 
-    if (!(table->data = heap_alloc( sizeof(*rec) * count ))) return FILL_STATUS_FAILED;
+    if (!resize_table( table, count, sizeof(*rec) )) return FILL_STATUS_FAILED;
 
     get_processor_id( processor_id );
     get_processor_manufacturer( manufacturer );
@@ -1740,7 +1740,7 @@ static enum fill_status fill_os( struct table *table, const struct expr *cond )
     enum fill_status status = FILL_STATUS_UNFILTERED;
     UINT row = 0;
 
-    if (!(table->data = heap_alloc( sizeof(*rec) ))) return FILL_STATUS_FAILED;
+    if (!resize_table( table, 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
 
     rec = (struct record_operatingsystem *)table->data;
     rec->caption          = os_captionW;
@@ -1956,7 +1956,8 @@ static enum fill_status fill_videocontroller( struct table *table, const struct 
     enum fill_status status = FILL_STATUS_UNFILTERED;
     UINT row = 0;
 
-    if (!(table->data = heap_alloc( sizeof(*rec) ))) return FILL_STATUS_FAILED;
+    if (!resize_table( table, 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
+
     memset (&desc, 0, sizeof(desc));
     hr = CreateDXGIFactory( &IID_IDXGIFactory, (void **)&factory );
     if (FAILED(hr)) goto done;
