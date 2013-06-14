@@ -1193,6 +1193,7 @@ struct fragment_pipeline
 
 struct wined3d_vertex_caps
 {
+    BOOL xyzrhw;
     DWORD max_active_lights;
     DWORD max_vertex_blend_matrices;
     DWORD max_vertex_blend_matrix_index;
@@ -1606,6 +1607,7 @@ struct wined3d_d3d_limits
 struct wined3d_d3d_info
 {
     struct wined3d_d3d_limits limits;
+    BOOL xyzrhw;
     BOOL vs_clipping;
     DWORD valid_rt_mask;
 };
@@ -1723,6 +1725,7 @@ struct wined3d_ffp_vs_settings
     DWORD ambient_source  : 2;
     DWORD specular_source : 2;
 
+    DWORD transformed     : 1;
     DWORD clipping        : 1;
     DWORD normal          : 1;
     DWORD normalize       : 1;
@@ -1731,7 +1734,7 @@ struct wined3d_ffp_vs_settings
     DWORD point_size      : 1;
     DWORD fog_mode        : 2;
     DWORD texcoords       : 8;  /* MAX_TEXTURES */
-    DWORD padding         : 16;
+    DWORD padding         : 15;
 
     BYTE texgen[MAX_TEXTURES];
 };

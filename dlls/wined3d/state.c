@@ -5641,6 +5641,7 @@ static void ffp_free(struct wined3d_device *device) {}
 
 static void vp_ffp_get_caps(const struct wined3d_gl_info *gl_info, struct wined3d_vertex_caps *caps)
 {
+    caps->xyzrhw = FALSE;
     caps->max_active_lights = gl_info->limits.lights;
     caps->max_vertex_blend_matrices = gl_info->limits.blends;
     caps->max_vertex_blend_matrix_index = 0;

@@ -5011,11 +5011,20 @@ static GLhandleARB shader_glsl_generate_ffp_vertex_shader(struct wined3d_shader_
     shader_addline(buffer, "float m;\n");
     shader_addline(buffer, "vec3 r;\n");
 
-    shader_addline(buffer, "vec4 ec_pos = gl_ModelViewMatrix * gl_Vertex;\n");
-    shader_addline(buffer, "gl_Position = gl_ProjectionMatrix * ec_pos;\n");
-    if (settings->clipping)
-        shader_addline(buffer, "gl_ClipVertex = ec_pos;\n");
-    shader_addline(buffer, "ec_pos /= ec_pos.w;\n");
+    if (settings->transformed)
+    {
+        shader_addline(buffer, "vec4 ec_pos = vec4(gl_Vertex.xyz, 1.0);\n");
+        shader_addline(buffer, "gl_Position = gl_ProjectionMatrix * ec_pos;\n");
+        shader_addline(buffer, "if (gl_Vertex.w != 0.0) gl_Position /= gl_Vertex.w;\n");
+    }
+    else
+    {
+        shader_addline(buffer, "vec4 ec_pos = gl_ModelViewMatrix * gl_Vertex;\n");
+        shader_addline(buffer, "gl_Position = gl_ProjectionMatrix * ec_pos;\n");
+        if (settings->clipping)
+            shader_addline(buffer, "gl_ClipVertex = ec_pos;\n");
+        shader_addline(buffer, "ec_pos /= ec_pos.w;\n");
+    }
 
     if (!settings->normal)
         shader_addline(buffer, "vec3 normal = vec3(0.0);\n");
@@ -6737,6 +6746,7 @@ static void glsl_vertex_pipe_vp_enable(const struct wined3d_gl_info *gl_info, BO
 
 static void glsl_vertex_pipe_vp_get_caps(const struct wined3d_gl_info *gl_info, struct wined3d_vertex_caps *caps)
 {
+    caps->xyzrhw = TRUE;
     caps->max_active_lights = gl_info->limits.lights;
     caps->max_vertex_blend_matrices = 0;
     caps->max_vertex_blend_matrix_index = 0;

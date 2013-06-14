@@ -332,14 +332,11 @@ void device_update_stream_info(struct wined3d_device *device, const struct wined
         slow_mask |= -!gl_info->supported[ARB_VERTEX_ARRAY_BGRA]
                 & ((1 << WINED3D_FFP_DIFFUSE) | (1 << WINED3D_FFP_SPECULAR));
 
-        if ((stream_info->position_transformed || (stream_info->use_map & slow_mask)) && !stream_info->all_vbo)
-        {
+        if (((stream_info->position_transformed && !device->adapter->d3d_info.xyzrhw)
+                || (stream_info->use_map & slow_mask)) && !stream_info->all_vbo)
             device->useDrawStridedSlow = TRUE;
-        }
         else
-        {
             device->useDrawStridedSlow = FALSE;
-        }
     }
 
     if (prev_all_vbo != stream_info->all_vbo)
