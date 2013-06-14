@@ -106,6 +106,8 @@ static const WCHAR prop_codesetW[] =
     {'C','o','d','e','S','e','t',0};
 static const WCHAR prop_commandlineW[] =
     {'C','o','m','m','a','n','d','L','i','n','e',0};
+static const WCHAR prop_countrycodeW[] =
+    {'C','o','u','n','t','r','y','C','o','d','e',0};
 static const WCHAR prop_cpustatusW[] =
     {'C','p','u','S','t','a','t','u','s',0};
 static const WCHAR prop_csdversionW[] =
@@ -325,6 +327,7 @@ static const struct column col_os[] =
 {
     { prop_captionW,          CIM_STRING },
     { prop_codesetW,          CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_countrycodeW,      CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_csdversionW,       CIM_STRING },
     { prop_lastbootuptimeW,   CIM_DATETIME|COL_FLAG_DYNAMIC },
     { prop_osarchitectureW,   CIM_STRING },
@@ -569,6 +572,7 @@ struct record_operatingsystem
 {
     const WCHAR *caption;
     const WCHAR *codeset;
+    const WCHAR *countrycode;
     const WCHAR *csdversion;
     const WCHAR *lastbootuptime;
     const WCHAR *osarchitecture;
@@ -1763,6 +1767,12 @@ static WCHAR *get_codeset(void)
     if (ret) sprintfW( ret, fmtW, GetACP() );
     return ret;
 }
+static WCHAR *get_countrycode(void)
+{
+    WCHAR *ret = heap_alloc( 6 * sizeof(WCHAR) );
+    if (ret) GetLocaleInfoW( LOCALE_SYSTEM_DEFAULT, LOCALE_ICOUNTRY, ret, 6 );
+    return ret;
+}
 
 static enum fill_status fill_os( struct table *table, const struct expr *cond )
 {
@@ -1775,6 +1785,7 @@ static enum fill_status fill_os( struct table *table, const struct expr *cond )
     rec = (struct record_operatingsystem *)table->data;
     rec->caption          = os_captionW;
     rec->codeset          = get_codeset();
+    rec->countrycode      = get_countrycode();
     rec->csdversion       = os_csdversionW;
     rec->lastbootuptime   = get_lastbootuptime();
     rec->osarchitecture   = get_osarchitecture();
