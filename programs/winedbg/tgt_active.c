@@ -946,7 +946,8 @@ static BOOL tgt_process_active_close_process(struct dbg_process* pcs, BOOL kill)
             ContinueDebugEvent(dbg_curr_pid, dbg_curr_tid, DBG_CONTINUE);
         }
     }
-    else
+
+    if (!kill)
     {
         if (!DebugActiveProcessStop(pcs->pid)) return FALSE;
     }
