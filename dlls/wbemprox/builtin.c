@@ -88,6 +88,8 @@ static const WCHAR prop_acceptstopW[] =
     {'A','c','c','e','p','t','S','t','o','p',0};
 static const WCHAR prop_accessmaskW[] =
     {'A','c','c','e','s','s','M','a','s','k',0};
+static const WCHAR prop_adapterdactypeW[] =
+    {'A','d','a','p','t','e','r','D','A','C','T','y','p','e',0};
 static const WCHAR prop_adapterramW[] =
     {'A','d','a','p','t','e','r','R','A','M',0};
 static const WCHAR prop_adaptertypeW[] =
@@ -421,6 +423,7 @@ static const struct column col_stdregprov[] =
 };
 static const struct column col_videocontroller[] =
 {
+    { prop_adapterdactypeW,       CIM_STRING },
     { prop_adapterramW,           CIM_UINT32, VT_I4 },
     { prop_currentbitsperpixelW,  CIM_UINT32 },
     { prop_currenthorizontalresW, CIM_UINT32 },
@@ -487,6 +490,8 @@ static const WCHAR os_versionW[] =
     {'5','.','1','.','2','6','0','0',0};
 static const WCHAR sounddevice_productnameW[] =
     {'W','i','n','e',' ','A','u','d','i','o',' ','D','e','v','i','c','e',0};
+static const WCHAR videocontroller_dactypeW[] =
+    {'I','n','t','e','g','r','a','t','e','d',' ','R','A','M','D','A','C',0};
 static const WCHAR videocontroller_deviceidW[] =
     {'V','i','d','e','o','C','o','n','t','r','o','l','l','e','r','1',0};
 
@@ -668,6 +673,7 @@ struct record_stdregprov
 };
 struct record_videocontroller
 {
+    const WCHAR *adapter_dactype;
     UINT32       adapter_ram;
     UINT32       current_bitsperpixel;
     UINT32       current_horizontalres;
@@ -2032,6 +2038,7 @@ static enum fill_status fill_videocontroller( struct table *table, const struct 
 
 done:
     rec = (struct record_videocontroller *)table->data;
+    rec->adapter_dactype       = videocontroller_dactypeW;
     rec->adapter_ram           = vidmem;
     rec->current_bitsperpixel  = get_bits_per_pixel( &hres, &vres );
     rec->current_horizontalres = hres;
