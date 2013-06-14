@@ -2410,7 +2410,7 @@ LONG WINAPI DocumentPropertiesW(HWND hWnd, HANDLE hPrinter,
 	if(ret < 0) return ret;
 	pDevModeOutputA = HeapAlloc(GetProcessHeap(), 0, ret);
     }
-    pDevModeInputA = DEVMODEdupWtoA(pDevModeInput);
+    pDevModeInputA = (fMode & DM_IN_BUFFER) ? DEVMODEdupWtoA(pDevModeInput) : NULL;
     ret = DocumentPropertiesA(hWnd, hPrinter, pDeviceNameA, pDevModeOutputA,
 			      pDevModeInputA, fMode);
     if(pDevModeOutput) {
