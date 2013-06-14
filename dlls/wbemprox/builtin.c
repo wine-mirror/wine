@@ -416,6 +416,7 @@ static const struct column col_service[] =
 };
 static const struct column col_sounddevice[] =
 {
+    { prop_nameW,        CIM_STRING },
     { prop_productnameW, CIM_STRING }
 };
 static const struct column col_stdregprov[] =
@@ -667,6 +668,7 @@ struct record_service
 };
 struct record_sounddevice
 {
+    const WCHAR *name;
     const WCHAR *productname;
 };
 struct record_stdregprov
@@ -736,7 +738,7 @@ static const struct record_qualifier data_qualifier[] =
 };
 static const struct record_sounddevice data_sounddevice[] =
 {
-    { sounddevice_productnameW }
+    { sounddevice_productnameW, sounddevice_productnameW }
 };
 static const struct record_stdregprov data_stdregprov[] =
 {
