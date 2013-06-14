@@ -4628,7 +4628,7 @@ static HRESULT WINAPI ITypeLib2_fnGetTypeInfo(
     if(index >= This->TypeInfoCount)
         return TYPE_E_ELEMENTNOTFOUND;
 
-    *ppTInfo = (ITypeInfo*)This->typeinfos[index];
+    *ppTInfo = (ITypeInfo *)&This->typeinfos[index]->ITypeInfo2_iface;
     ITypeInfo_AddRef(*ppTInfo);
 
     return S_OK;
@@ -4676,7 +4676,7 @@ static HRESULT WINAPI ITypeLib2_fnGetTypeInfoOfGuid(
 
     for(i = 0; i < This->TypeInfoCount; ++i){
         if(IsEqualIID(TLB_get_guid_null(This->typeinfos[i]->guid), guid)){
-            *ppTInfo = (ITypeInfo*)This->typeinfos[i];
+            *ppTInfo = (ITypeInfo *)&This->typeinfos[i]->ITypeInfo2_iface;
             ITypeInfo_AddRef(*ppTInfo);
             return S_OK;
         }
@@ -4918,8 +4918,8 @@ static HRESULT WINAPI ITypeLib2_fnFindName(
 
         continue;
 ITypeLib2_fnFindName_exit:
-        ITypeInfo_AddRef((ITypeInfo*)pTInfo);
-        ppTInfo[count]=(LPTYPEINFO)pTInfo;
+        ITypeInfo2_AddRef(&pTInfo->ITypeInfo2_iface);
+        ppTInfo[count] = (ITypeInfo *)&pTInfo->ITypeInfo2_iface;
         count++;
     }
     TRACE("found %d typeinfos\n", count);
@@ -5253,7 +5253,7 @@ static HRESULT WINAPI ITypeLibComp_fnBind(
                     return hr;
 
                 *pDescKind = DESCKIND_IMPLICITAPPOBJ;
-                *ppTInfo = (ITypeInfo *)pTypeInfo;
+                *ppTInfo = (ITypeInfo *)&pTypeInfo->ITypeInfo2_iface;
                 ITypeInfo_AddRef(*ppTInfo);
                 return S_OK;
             }
@@ -8195,7 +8195,7 @@ HRESULT WINAPI CreateDispTypeInfo(
 
     dump_TypeInfo(pTIClass);
 
-    *pptinfo = (ITypeInfo*)pTIClass;
+    *pptinfo = (ITypeInfo *)&pTIClass->ITypeInfo2_iface;
 
     ITypeInfo_AddRef(*pptinfo);
     ITypeLib2_Release(&pTypeLibImpl->ITypeLib2_iface);
@@ -8208,21 +8208,21 @@ static HRESULT WINAPI ITypeComp_fnQueryInterface(ITypeComp * iface, REFIID riid,
 {
     ITypeInfoImpl *This = info_impl_from_ITypeComp(iface);
 
-    return ITypeInfo_QueryInterface((ITypeInfo *)This, riid, ppv);
+    return ITypeInfo2_QueryInterface(&This->ITypeInfo2_iface, riid, ppv);
 }
 
 static ULONG WINAPI ITypeComp_fnAddRef(ITypeComp * iface)
 {
     ITypeInfoImpl *This = info_impl_from_ITypeComp(iface);
 
-    return ITypeInfo_AddRef((ITypeInfo *)This);
+    return ITypeInfo2_AddRef(&This->ITypeInfo2_iface);
 }
 
 static ULONG WINAPI ITypeComp_fnRelease(ITypeComp * iface)
 {
     ITypeInfoImpl *This = info_impl_from_ITypeComp(iface);
 
-    return ITypeInfo_Release((ITypeInfo *)This);
+    return ITypeInfo2_Release(&This->ITypeInfo2_iface);
 }
 
 static HRESULT WINAPI ITypeComp_fnBind(
