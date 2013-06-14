@@ -403,7 +403,7 @@ static const struct column col_stdregprov[] =
 };
 static const struct column col_videocontroller[] =
 {
-    { prop_adapterramW,           CIM_UINT32 },
+    { prop_adapterramW,           CIM_UINT32, VT_I4 },
     { prop_currentbitsperpixelW,  CIM_UINT32 },
     { prop_currenthorizontalresW, CIM_UINT32 },
     { prop_currentverticalresW,   CIM_UINT32 },
