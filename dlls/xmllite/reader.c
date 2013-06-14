@@ -80,6 +80,7 @@ typedef enum
 typedef enum
 {
     StringValue_LocalName,
+    StringValue_Prefix,
     StringValue_QualifiedName,
     StringValue_Value,
     StringValue_Last
@@ -1749,6 +1750,7 @@ static HRESULT reader_parse_element(xmlreader *reader)
         reader->nodetype = XmlNodeType_Element;
         reader->resumestate = XmlReadResumeState_Initial;
         reader_set_strvalue(reader, StringValue_LocalName, &local);
+        reader_set_strvalue(reader, StringValue_Prefix, &prefix);
         reader_set_strvalue(reader, StringValue_QualifiedName, &qname);
         break;
     }
@@ -2260,12 +2262,14 @@ static HRESULT WINAPI xmlreader_GetLocalName(IXmlReader* iface, LPCWSTR *name, U
     return S_OK;
 }
 
-static HRESULT WINAPI xmlreader_GetPrefix(IXmlReader* iface,
-                                          LPCWSTR *prefix,
-                                          UINT *prefix_length)
+static HRESULT WINAPI xmlreader_GetPrefix(IXmlReader* iface, LPCWSTR *prefix, UINT *len)
 {
-    FIXME("(%p %p %p): stub\n", iface, prefix, prefix_length);
-    return E_NOTIMPL;
+    xmlreader *This = impl_from_IXmlReader(iface);
+
+    TRACE("(%p)->(%p %p)\n", This, prefix, len);
+    *prefix = This->strvalues[StringValue_Prefix].str;
+    if (len) *len = This->strvalues[StringValue_Prefix].len;
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlreader_GetValue(IXmlReader* iface, const WCHAR **value, UINT *len)
