@@ -30,3 +30,14 @@ coclass OLEDB_CONVERSIONLIBRARY
     interface IDataConvert;
     interface IDCInfo;
 }
+
+[
+    helpstring("OLE DB Error Collection Service"),
+    threading(both),
+    progid("MSDAER.1"),
+    vi_progid("MSDAER"),
+    uuid(C8B522CF-5CF3-11CE-ADE5-00AA0044773D)
+]
+coclass OLEDB_MSDAER
+{
+}

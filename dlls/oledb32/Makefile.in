@@ -5,6 +5,7 @@ IMPORTS   = uuid oleaut32 ole32 user32 advapi32
 C_SRCS = \
 	convert.c \
 	datainit.c \
+	errorinfo.c \
 	main.c
 
 IDL_I_SRCS = convert.idl

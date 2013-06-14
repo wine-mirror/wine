@@ -125,16 +125,24 @@ static void test_errorinfo(void)
     IUnknown *unk = NULL;
 
     hr = CoCreateInstance(&CSLID_MSDAER, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown,(void**)&unk);
-    todo_wine ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08x\n", hr);
     if(hr == S_OK)
     {
         IErrorInfo *errorinfo;
+        IErrorRecords *errrecs;
 
         hr = IUnknown_QueryInterface(unk, &IID_IErrorInfo, (void**)&errorinfo);
         ok(hr == S_OK, "got %08x\n", hr);
         if(hr == S_OK)
         {
             IErrorInfo_Release(errorinfo);
+        }
+
+        hr = IUnknown_QueryInterface(unk, &IID_IErrorRecords, (void**)&errrecs);
+        ok(hr == S_OK, "got %08x\n", hr);
+        if(hr == S_OK)
+        {
+            IErrorRecords_Release(errrecs);
         }
 
         IUnknown_Release(unk);
