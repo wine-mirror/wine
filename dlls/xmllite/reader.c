@@ -189,6 +189,7 @@ typedef struct
     struct list elements;
     strval strvalues[StringValue_Last];
     UINT depth;
+    BOOL empty_element;
     WCHAR *resume[XmlReadResume_Last]; /* pointers used to resume reader */
 } xmlreader;
 
@@ -364,6 +365,7 @@ static void reader_clear_elements(xmlreader *reader)
         reader_free(reader, elem);
     }
     list_init(&reader->elements);
+    reader->empty_element = FALSE;
 }
 
 static HRESULT reader_inc_depth(xmlreader *reader)
@@ -397,6 +399,7 @@ static HRESULT reader_push_element(xmlreader *reader, strval *qname)
     }
 
     list_add_head(&reader->elements, &elem->entry);
+    reader->empty_element = FALSE;
     return hr;
 }
 
@@ -1221,6 +1224,14 @@ static inline int is_namechar(WCHAR ch)
     return (ch == ':') || is_ncnamechar(ch);
 }
 
+static XmlNodeType reader_get_nodetype(const xmlreader *reader)
+{
+    /* When we're on attribute always return attribute type, container node type is kept.
+       Note that container is not necessarily an element, and attribute doesn't mean it's
+       an attribute in XML spec terms. */
+    return reader->attr ? XmlNodeType_Attribute : reader->nodetype;
+}
+
 /* [4] NameStartChar ::= ":" | [A-Z] | "_" | [a-z] | [#xC0-#xD6] | [#xD8-#xF6] | [#xF8-#x2FF] | [#x370-#x37D] |
                             [#x37F-#x1FFF] | [#x200C-#x200D] | [#x2070-#x218F] | [#x2C00-#x2FEF] | [#x3001-#xD7FF] |
                             [#xF900-#xFDCF] | [#xFDF0-#xFFFD] | [#x10000-#xEFFFF]
@@ -1699,6 +1710,7 @@ static HRESULT reader_parse_stag(xmlreader *reader, strval *prefix, strval *loca
     {
         /* skip '/>' */
         reader_skipn(reader, 2);
+        reader->empty_element = TRUE;
         return S_OK;
     }
 
@@ -2235,10 +2247,7 @@ static HRESULT WINAPI xmlreader_GetNodeType(IXmlReader* iface, XmlNodeType *node
     xmlreader *This = impl_from_IXmlReader(iface);
     TRACE("(%p)->(%p)\n", This, node_type);
 
-    /* When we're on attribute always return attribute type, container node type is kept.
-       Note that container is not necessarily an element, and attribute doesn't mean it's
-       an attribute in XML spec terms. */
-    *node_type = This->attr ? XmlNodeType_Attribute : This->nodetype;
+    *node_type = reader_get_nodetype(This);
     return This->state == XmlReadState_Closed ? S_FALSE : S_OK;
 }
 
@@ -2402,8 +2411,11 @@ static BOOL WINAPI xmlreader_IsDefault(IXmlReader* iface)
 
 static BOOL WINAPI xmlreader_IsEmptyElement(IXmlReader* iface)
 {
-    FIXME("(%p): stub\n", iface);
-    return E_NOTIMPL;
+    xmlreader *This = impl_from_IXmlReader(iface);
+    TRACE("(%p)\n", This);
+    /* Empty elements are not placed in stack, it's stored as a global reader flag that makes sense
+       when current node is start tag of an element */
+    return (reader_get_nodetype(This) == XmlNodeType_Element) ? This->empty_element : FALSE;
 }
 
 static HRESULT WINAPI xmlreader_GetLineNumber(IXmlReader* iface, UINT *lineNumber)
@@ -2583,6 +2595,7 @@ HRESULT WINAPI CreateXmlReader(REFIID riid, void **obj, IMalloc *imalloc)
     reader->attr = NULL;
     list_init(&reader->elements);
     reader->depth = 0;
+    reader->empty_element = FALSE;
     memset(reader->resume, 0, sizeof(reader->resume));
 
     for (i = 0; i < StringValue_Last; i++)

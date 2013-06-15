@@ -1518,6 +1518,51 @@ static void test_read_text(void)
     IXmlReader_Release(reader);
 }
 
+struct test_entry_empty {
+    const char *xml;
+    BOOL empty;
+};
+
+static struct test_entry_empty empty_element_tests[] = {
+    { "<a></a>", FALSE },
+    { "<a/>", TRUE },
+    { NULL }
+};
+
+static void test_isemptyelement(void)
+{
+    struct test_entry_empty *test = empty_element_tests;
+    IXmlReader *reader;
+    HRESULT hr;
+
+    hr = pCreateXmlReader(&IID_IXmlReader, (void**)&reader, NULL);
+    ok(hr == S_OK, "S_OK, got %08x\n", hr);
+
+    while (test->xml)
+    {
+        XmlNodeType type;
+        IStream *stream;
+        BOOL ret;
+
+        stream = create_stream_on_data(test->xml, strlen(test->xml)+1);
+        hr = IXmlReader_SetInput(reader, (IUnknown*)stream);
+        ok(hr == S_OK, "got %08x\n", hr);
+
+        type = XmlNodeType_None;
+        hr = IXmlReader_Read(reader, &type);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(type == XmlNodeType_Element, "got %d\n", type);
+
+        ret = IXmlReader_IsEmptyElement(reader);
+        ok(ret == test->empty, "got %d, expected %d. xml=%s\n", ret, test->empty, test->xml);
+
+        IStream_Release(stream);
+        test++;
+    }
+
+    IXmlReader_Release(reader);
+}
+
 START_TEST(reader)
 {
     HRESULT r;
@@ -1539,6 +1584,7 @@ START_TEST(reader)
     test_read_pi();
     test_read_dtd();
     test_read_element();
+    test_isemptyelement();
     test_read_text();
     test_read_full();
     test_read_pending();
