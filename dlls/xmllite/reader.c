@@ -53,7 +53,8 @@ typedef enum
     XmlReadInState_DTD_Misc,
     XmlReadInState_Element,
     XmlReadInState_Content,
-    XmlReadInState_MiscEnd
+    XmlReadInState_MiscEnd, /* optional Misc at the end of a document */
+    XmlReadInState_Eof
 } XmlReaderInternalState;
 
 /* This state denotes where parsing was interrupted by input problem.
@@ -65,7 +66,8 @@ typedef enum
     XmlReadResumeState_PIBody,
     XmlReadResumeState_CDATA,
     XmlReadResumeState_Comment,
-    XmlReadResumeState_STag
+    XmlReadResumeState_STag,
+    XmlReadResumeState_CharData
 } XmlReaderResumeState;
 
 /* saved pointer index to resume from particular input position */
@@ -73,7 +75,7 @@ typedef enum
 {
     XmlReadResume_Name,  /* PITarget, name for NCName, prefix for QName */
     XmlReadResume_Local, /* local for QName */
-    XmlReadResume_Body,  /* PI body, comment text, CDATA text */
+    XmlReadResume_Body,  /* PI body, comment text, CDATA text, CharData text */
     XmlReadResume_Last
 } XmlReaderResume;
 
@@ -1788,6 +1790,10 @@ static HRESULT reader_parse_endtag(xmlreader *reader)
 
     reader_pop_element(reader);
 
+    /* It was a root element, the rest is expected as Misc */
+    if (list_empty(&reader->elements))
+        reader->instate = XmlReadInState_MiscEnd;
+
     reader->nodetype = XmlNodeType_EndElement;
     reader_set_strvalue(reader, StringValue_LocalName, &local);
     reader_set_strvalue(reader, StringValue_QualifiedName, &qname);
@@ -1867,8 +1873,48 @@ static HRESULT reader_parse_reference(xmlreader *reader)
 /* [14] CharData ::= [^<&]* - ([^<&]* ']]>' [^<&]*) */
 static HRESULT reader_parse_chardata(xmlreader *reader)
 {
-    FIXME("CharData not supported\n");
-    return E_NOTIMPL;
+    WCHAR *start, *ptr;
+
+    if (reader->resume[XmlReadResume_Body])
+    {
+        start = reader->resume[XmlReadResume_Body];
+        ptr = reader_get_cur(reader);
+    }
+    else
+    {
+        reader_shrink(reader);
+        ptr = start = reader_get_cur(reader);
+        /* There's no text */
+        if (!*ptr || *ptr == '<') return S_OK;
+        reader->nodetype = XmlNodeType_Text;
+        reader->resume[XmlReadResume_Body] = start;
+        reader->resumestate = XmlReadResumeState_CharData;
+        reader_set_strvalue(reader, StringValue_LocalName, &strval_empty);
+        reader_set_strvalue(reader, StringValue_QualifiedName, &strval_empty);
+        reader_set_strvalue(reader, StringValue_Value, NULL);
+    }
+
+    while (*ptr)
+    {
+        /* CDATA closing sequence ']]>' is not allowed */
+        if (ptr[0] == ']' && ptr[1] == ']' && ptr[2] == '>')
+            return WC_E_CDSECTEND;
+
+        /* Found next markup part */
+        if (ptr[0] == '<')
+        {
+            strval value;
+
+            reader_init_strvalue(start, ptr-start, &value);
+            reader_set_strvalue(reader, StringValue_Value, &value);
+            return S_OK;
+        }
+
+        reader_skipn(reader, 1);
+        ptr++;
+    }
+
+    return S_OK;
 }
 
 /* [43] content ::= CharData? ((element | Reference | CDSect | PI | Comment) CharData?)* */
@@ -1889,6 +1935,8 @@ static HRESULT reader_parse_content(xmlreader *reader)
         case XmlReadResumeState_PIBody:
         case XmlReadResumeState_PITarget:
             return reader_parse_pi(reader);
+        case XmlReadResumeState_CharData:
+            return reader_parse_chardata(reader);
         default:
             ERR("unknown resume state %d\n", reader->resumestate);
         }
@@ -1986,6 +2034,15 @@ static HRESULT reader_parse_nextnode(xmlreader *reader)
             return reader_parse_element(reader);
         case XmlReadInState_Content:
             return reader_parse_content(reader);
+        case XmlReadInState_MiscEnd:
+            hr = reader_parse_misc(reader);
+            if (FAILED(hr)) return hr;
+
+            if (hr == S_FALSE)
+                reader->instate = XmlReadInState_Eof;
+            return hr;
+        case XmlReadInState_Eof:
+            return S_FALSE;
         default:
             FIXME("internal state %d not handled\n", reader->instate);
             return E_NOTIMPL;

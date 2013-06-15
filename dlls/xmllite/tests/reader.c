@@ -1418,6 +1418,106 @@ static void test_read_cdata(void)
     IXmlReader_Release(reader);
 }
 
+static struct test_entry text_tests[] = {
+    { "<a>simple text</a>", "", "simple text", S_OK },
+    { "<a>text ]]> text</a>", "", "", WC_E_CDSECTEND },
+    { NULL }
+};
+
+static void test_read_text(void)
+{
+    struct test_entry *test = text_tests;
+    IXmlReader *reader;
+    HRESULT hr;
+
+    hr = pCreateXmlReader(&IID_IXmlReader, (void**)&reader, NULL);
+    ok(hr == S_OK, "S_OK, got %08x\n", hr);
+
+    while (test->xml)
+    {
+        XmlNodeType type;
+        IStream *stream;
+
+        stream = create_stream_on_data(test->xml, strlen(test->xml)+1);
+        hr = IXmlReader_SetInput(reader, (IUnknown*)stream);
+        ok(hr == S_OK, "got %08x\n", hr);
+
+        type = XmlNodeType_None;
+        hr = IXmlReader_Read(reader, &type);
+
+        /* read one more to get to CDATA */
+        if (type == XmlNodeType_Element)
+        {
+            type = XmlNodeType_None;
+            hr = IXmlReader_Read(reader, &type);
+        }
+
+        if (test->hr_broken)
+            ok(hr == test->hr || broken(hr == test->hr_broken), "got %08x for %s\n", hr, test->xml);
+        else
+            ok(hr == test->hr, "got %08x for %s\n", hr, test->xml);
+        if (hr == S_OK)
+        {
+            const WCHAR *str;
+            WCHAR *str_exp;
+            UINT len;
+
+            ok(type == XmlNodeType_Text, "got %d for %s\n", type, test->xml);
+
+            str_exp = a2w(test->name);
+
+            len = 1;
+            str = NULL;
+            hr = IXmlReader_GetLocalName(reader, &str, &len);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            ok(len == strlen(test->name), "got %u\n", len);
+            ok(!lstrcmpW(str, str_exp), "got %s\n", wine_dbgstr_w(str));
+
+            str = NULL;
+            hr = IXmlReader_GetLocalName(reader, &str, NULL);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            ok(!lstrcmpW(str, str_exp), "got %s\n", wine_dbgstr_w(str));
+
+            free_str(str_exp);
+
+            len = 1;
+            str = NULL;
+            hr = IXmlReader_GetQualifiedName(reader, &str, &len);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            ok(len == strlen(test->name), "got %u\n", len);
+            str_exp = a2w(test->name);
+            ok(!lstrcmpW(str, str_exp), "got %s\n", wine_dbgstr_w(str));
+            free_str(str_exp);
+
+            /* value */
+            len = 1;
+            str = NULL;
+            hr = IXmlReader_GetValue(reader, &str, &len);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+
+            str_exp = a2w(test->value);
+            if (test->todo)
+            {
+            todo_wine {
+                ok(len == strlen(test->value), "got %u\n", len);
+                ok(!lstrcmpW(str, str_exp), "got %s\n", wine_dbgstr_w(str));
+            }
+            }
+            else
+            {
+                ok(len == strlen(test->value), "got %u\n", len);
+                ok(!lstrcmpW(str, str_exp), "got %s\n", wine_dbgstr_w(str));
+            }
+            free_str(str_exp);
+        }
+
+        IStream_Release(stream);
+        test++;
+    }
+
+    IXmlReader_Release(reader);
+}
+
 START_TEST(reader)
 {
     HRESULT r;
@@ -1439,6 +1539,7 @@ START_TEST(reader)
     test_read_pi();
     test_read_dtd();
     test_read_element();
+    test_read_text();
     test_read_full();
     test_read_pending();
     test_readvaluechunk();
