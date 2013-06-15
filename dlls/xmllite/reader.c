@@ -2406,7 +2406,7 @@ static HRESULT WINAPI xmlreader_GetBaseUri(IXmlReader* iface,
 static BOOL WINAPI xmlreader_IsDefault(IXmlReader* iface)
 {
     FIXME("(%p): stub\n", iface);
-    return E_NOTIMPL;
+    return FALSE;
 }
 
 static BOOL WINAPI xmlreader_IsEmptyElement(IXmlReader* iface)
