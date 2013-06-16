@@ -2,7 +2,7 @@
 use utf8;
 use strict;
 
-# Copyright 2000-2004 Francois Gouget for CodeWeavers
+# Copyright 2000-2004 François Gouget for CodeWeavers
 # Copyright 2004 Dimitrie O. Paun
 # Copyright 2009-2012 André Hentschel
 #
@@ -2669,7 +2669,7 @@ $opt_no_banner=0;
 sub print_banner()
 {
   print "Winemaker $version\n";
-  print "Copyright 2000-2004 Francois Gouget <fgouget\@codeweavers.com> for CodeWeavers\n";
+  print "Copyright 2000-2004 François Gouget <fgouget\@codeweavers.com> for CodeWeavers\n";
   print "Copyright 2004 Dimitrie O. Paun\n";
   print "Copyright 2009-2012 André Hentschel\n";
 }
@@ -2692,6 +2692,8 @@ sub usage()
   print STDERR "\tPlease read the manual page before use.\n";
   exit (2);
 }
+
+binmode(STDOUT, ":utf8");
 
 target_init(\@global_settings);
 
