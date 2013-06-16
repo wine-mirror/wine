@@ -229,7 +229,7 @@ static inline float __port_nan(void)
 int fstatvfs( int fd, struct statvfs *buf );
 #endif
 
-#ifndef HAVE_GETOPT_LONG
+#ifndef HAVE_GETOPT_LONG_ONLY
 extern char *optarg;
 extern int optind;
 extern int opterr;
@@ -252,7 +252,7 @@ extern int getopt_long (int ___argc, char *const *___argv,
 extern int getopt_long_only (int ___argc, char *const *___argv,
                              const char *__shortopts,
                              const struct option *__longopts, int *__longind);
-#endif  /* HAVE_GETOPT_LONG */
+#endif  /* HAVE_GETOPT_LONG_ONLY */
 
 #ifndef HAVE_FFS
 int ffs( int x );
