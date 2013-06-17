@@ -88,7 +88,7 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
     /* set button font */
     for (i = IDOK; i <= IDCONTINUE; i++)
         /* no close button */
-        if (i != IDCANCEL)
+        if (i != IDCLOSE)
             SendDlgItemMessageW (hwnd, i, WM_SETFONT, (WPARAM)hFont, 0);
 
     /* set text font */
