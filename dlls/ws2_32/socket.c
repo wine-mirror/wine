@@ -98,7 +98,7 @@
 
 #ifdef HAVE_NETIPX_IPX_H
 # include <netipx/ipx.h>
-# define HAVE_IPX
+# define HAS_IPX
 #elif defined(HAVE_LINUX_IPX_H)
 # ifdef HAVE_ASM_TYPES_H
 #  include <asm/types.h>
@@ -107,7 +107,7 @@
 #  include <linux/types.h>
 # endif
 # include <linux/ipx.h>
-# define HAVE_IPX
+# define HAS_IPX
 #endif
 
 #ifdef HAVE_LINUX_IRDA_H
@@ -115,7 +115,7 @@
 #  include <linux/types.h>
 # endif
 # include <linux/irda.h>
-# define HAVE_IRDA
+# define HAS_IRDA
 #endif
 
 #ifdef HAVE_POLL_H
@@ -153,7 +153,7 @@
 #include "wine/exception.h"
 #include "wine/unicode.h"
 
-#ifdef HAVE_IPX
+#ifdef HAS_IPX
 # include "wsnwlink.h"
 #endif
 
@@ -438,7 +438,7 @@ static const int ws_af_map[][2] =
     MAP_OPTION( AF_UNSPEC ),
     MAP_OPTION( AF_INET ),
     MAP_OPTION( AF_INET6 ),
-#ifdef HAVE_IPX
+#ifdef HAS_IPX
     MAP_OPTION( AF_IPX ),
 #endif
 #ifdef AF_IRDA
@@ -1218,11 +1218,11 @@ static inline BOOL supported_pf(int pf)
     case WS_AF_INET:
     case WS_AF_INET6:
         return TRUE;
-#ifdef HAVE_IPX
+#ifdef HAS_IPX
     case WS_AF_IPX:
         return TRUE;
 #endif
-#ifdef HAVE_IRDA
+#ifdef HAS_IRDA
     case WS_AF_IRDA:
         return TRUE;
 #endif
@@ -1244,7 +1244,7 @@ static unsigned int ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr, int wsadd
 
     switch (wsaddr->sa_family)
     {
-#ifdef HAVE_IPX
+#ifdef HAS_IPX
     case WS_AF_IPX:
         {
             const struct WS_sockaddr_ipx* wsipx=(const struct WS_sockaddr_ipx*)wsaddr;
@@ -1302,7 +1302,7 @@ static unsigned int ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr, int wsadd
         memcpy(&uin->sin_addr,&win->sin_addr,4); /* 4 bytes = 32 address bits */
         break;
     }
-#ifdef HAVE_IRDA
+#ifdef HAS_IRDA
     case WS_AF_IRDA: {
         struct sockaddr_irda *uin = (struct sockaddr_irda *)uaddr;
         const SOCKADDR_IRDA *win = (const SOCKADDR_IRDA *)wsaddr;
@@ -1335,12 +1335,12 @@ static unsigned int ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr, int wsadd
         case sizeof(struct WS_sockaddr_in):
             uaddrlen = sizeof(struct sockaddr_in);
             break;
-#ifdef HAVE_IPX
+#ifdef HAS_IPX
         case sizeof(struct WS_sockaddr_ipx):
             uaddrlen = sizeof(struct sockaddr_ipx);
             break;
 #endif
-#ifdef HAVE_IRDA
+#ifdef HAS_IRDA
         case sizeof(SOCKADDR_IRDA):
             uaddrlen = sizeof(struct sockaddr_irda);
             break;
@@ -1364,7 +1364,7 @@ static BOOL is_sockaddr_bound(const struct sockaddr *uaddr, int uaddrlen)
 {
     switch (uaddr->sa_family)
     {
-#ifdef HAVE_IPX
+#ifdef HAS_IPX
         case AF_IPX:
             FIXME("don't know how to tell if IPX socket is bound, assuming it is!\n");
             return TRUE;
@@ -1396,7 +1396,7 @@ static int ws_sockaddr_u2ws(const struct sockaddr* uaddr, struct WS_sockaddr* ws
 
     switch(uaddr->sa_family)
     {
-#ifdef HAVE_IPX
+#ifdef HAS_IPX
     case AF_IPX:
         {
             const struct sockaddr_ipx* uipx=(const struct sockaddr_ipx*)uaddr;
@@ -1436,7 +1436,7 @@ static int ws_sockaddr_u2ws(const struct sockaddr* uaddr, struct WS_sockaddr* ws
         }
         break;
 #endif
-#ifdef HAVE_IRDA
+#ifdef HAS_IRDA
     case AF_IRDA: {
         const struct sockaddr_irda *uin = (const struct sockaddr_irda *)uaddr;
         SOCKADDR_IRDA *win = (SOCKADDR_IRDA *)wsaddr;
@@ -1772,7 +1772,7 @@ static int WS2_send( int fd, struct ws2_async *wsa )
             return -1;
         }
 
-#if defined(HAVE_IPX) && defined(SOL_IPX)
+#if defined(HAS_IPX) && defined(SOL_IPX)
         if(wsa->addr->sa_family == WS_AF_IPX)
         {
             struct sockaddr_ipx* uipx = (struct sockaddr_ipx*)hdr.msg_name;
@@ -2806,7 +2806,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             return SOCKET_ERROR;
         } /* end switch(optname) */
     }/* end case WS_SOL_SOCKET */
-#ifdef HAVE_IPX
+#ifdef HAS_IPX
     case NSPROTO_IPX:
     {
         struct WS_sockaddr_ipx addr;
@@ -2872,7 +2872,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
     } /* end case NSPROTO_IPX */
 #endif
 
-#ifdef HAVE_IRDA
+#ifdef HAS_IRDA
     case WS_SOL_IRLMP:
         switch(optname)
         {
@@ -4342,7 +4342,7 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         }
         break; /* case WS_SOL_SOCKET */
 
-#ifdef HAVE_IPX
+#ifdef HAS_IPX
     case NSPROTO_IPX:
         switch(optname)
         {
