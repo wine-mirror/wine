@@ -697,11 +697,14 @@ BOOL NC_DrawSysButton (HWND hwnd, HDC hdc, BOOL down)
     if (hIcon)
     {
         RECT rect;
+        POINT pt;
         DWORD style = GetWindowLongW( hwnd, GWL_STYLE );
         DWORD ex_style = GetWindowLongW( hwnd, GWL_EXSTYLE );
 
         NC_GetInsideRect( hwnd, COORDS_WINDOW, &rect, style, ex_style );
-        DrawIconEx (hdc, rect.left + 2, rect.top + 1, hIcon,
+        pt.x = rect.left + 2;
+        pt.y = (rect.top + GetSystemMetrics(SM_CYCAPTION) - GetSystemMetrics(SM_CYSMICON)) / 2;
+        DrawIconEx (hdc, pt.x, pt.y, hIcon,
                     GetSystemMetrics(SM_CXSMICON),
                     GetSystemMetrics(SM_CYSMICON), 0, 0, DI_NORMAL);
     }
