@@ -5012,7 +5012,12 @@ static void test_stock_fonts(void)
             }
 
             /* FIXME: Remove once Wine is fixed */
-            if (td[i][j].dpi != 96) todo_wine
+            if (td[i][j].dpi != 96 &&
+                /* MS Sans Serif for 120 dpi and higher should include 12 pixel bitmap set */
+                ((!strcmp(td[i][j].face_name, "MS Sans Serif") && td[i][j].height == 12) ||
+                /* System for 120 dpi and higher should include 20 pixel bitmap set */
+                (!strcmp(td[i][j].face_name, "System") && td[i][j].height > 16)))
+            todo_wine
             ok(height == td[i][j].height_pixels, "%d(%d): expected height %d, got %d\n", i, j, td[i][j].height_pixels, height);
             else
             ok(height == td[i][j].height_pixels, "%d(%d): expected height %d, got %d\n", i, j, td[i][j].height_pixels, height);

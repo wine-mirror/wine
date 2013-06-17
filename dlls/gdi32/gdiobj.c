@@ -597,6 +597,49 @@ BOOL GDI_dec_ref_count( HGDIOBJ handle )
     return entry != NULL;
 }
 
+/******************************************************************************
+ *      get_dpi   (internal)
+ *
+ * get the dpi from the registry
+ */
+static int get_dpi( void )
+{
+    static const WCHAR dpi_key_name[] = {'S','o','f','t','w','a','r','e','\\','F','o','n','t','s','\0'};
+    static const WCHAR dpi_value_name[] = {'L','o','g','P','i','x','e','l','s','\0'};
+    static int dpi = -1;
+    HKEY hkey;
+
+    if (dpi != -1) return dpi;
+
+    if (RegOpenKeyW(HKEY_CURRENT_CONFIG, dpi_key_name, &hkey) == ERROR_SUCCESS)
+    {
+        DWORD type, size;
+        int new_dpi;
+
+        size = sizeof(new_dpi);
+        if (RegQueryValueExW(hkey, dpi_value_name, NULL, &type, (void *)&new_dpi, &size) == ERROR_SUCCESS)
+        {
+            if (type == REG_DWORD && new_dpi != 0)
+                dpi = new_dpi;
+        }
+        RegCloseKey(hkey);
+    }
+    if (dpi <= 0) dpi = 96;
+    return dpi;
+}
+
+
+static HFONT create_scaled_font( const LOGFONTW *deffont )
+{
+    LOGFONTW lf;
+    LONG height;
+
+    lf = *deffont;
+    height = abs(lf.lfHeight) * get_dpi() / 96;
+    lf.lfHeight = deffont->lfHeight < 0 ? -height : height;
+
+    return CreateFontIndirectW( &lf );
+}
 
 /***********************************************************************
  *           DllMain
@@ -636,10 +679,10 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 
     /* language-dependent stock fonts */
     deffonts = get_default_fonts(get_default_charset());
-    stock_objects[SYSTEM_FONT]         = CreateFontIndirectW( &deffonts->SystemFont );
-    stock_objects[DEVICE_DEFAULT_FONT] = CreateFontIndirectW( &deffonts->DeviceDefaultFont );
+    stock_objects[SYSTEM_FONT]         = create_scaled_font( &deffonts->SystemFont );
+    stock_objects[DEVICE_DEFAULT_FONT] = create_scaled_font( &deffonts->DeviceDefaultFont );
     stock_objects[SYSTEM_FIXED_FONT]   = CreateFontIndirectW( &deffonts->SystemFixedFont );
-    stock_objects[DEFAULT_GUI_FONT]    = CreateFontIndirectW( &deffonts->DefaultGuiFont );
+    stock_objects[DEFAULT_GUI_FONT]    = create_scaled_font( &deffonts->DefaultGuiFont );
 
     stock_objects[DC_BRUSH]     = CreateBrushIndirect( &DCBrush );
     stock_objects[DC_PEN]       = CreatePenIndirect( &DCPen );
