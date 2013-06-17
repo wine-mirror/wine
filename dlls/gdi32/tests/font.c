@@ -4900,7 +4900,7 @@ static void test_east_asian_font_selection(void)
     ReleaseDC(NULL, hdc);
 }
 
-static int get_font_dpi(const LOGFONT *lf)
+static int get_font_dpi(const LOGFONT *lf, int *height)
 {
     HDC hdc = CreateCompatibleDC(0);
     HFONT hfont;
@@ -4914,6 +4914,7 @@ static int get_font_dpi(const LOGFONT *lf)
     ret = GetTextMetrics(hdc, &tm);
     ok(ret, "GetTextMetrics failed\n");
     ret = tm.tmDigitizedAspectX;
+    if (height) *height = tm.tmHeight;
 
     DeleteDC(hdc);
     DeleteObject(hfont);
@@ -4930,49 +4931,49 @@ static void test_stock_fonts(void)
     };
     static const struct test_data
     {
-        int charset, weight, height, dpi;
+        int charset, weight, height, height_pixels, dpi;
         const char face_name[LF_FACESIZE];
     } td[][11] =
     {
         { /* ANSI_FIXED_FONT */
-            { DEFAULT_CHARSET, FW_NORMAL, 12, 96, "Courier" },
-            { DEFAULT_CHARSET, FW_NORMAL, 12, 120, "Courier" },
+            { DEFAULT_CHARSET, FW_NORMAL, 12, 13, 96, "Courier" },
+            { DEFAULT_CHARSET, FW_NORMAL, 12, 13, 120, "Courier" },
             { 0 }
         },
         { /* ANSI_VAR_FONT */
-            { DEFAULT_CHARSET, FW_NORMAL, 12, 96, "MS Sans Serif" },
-            { DEFAULT_CHARSET, FW_NORMAL, 12, 120, "MS Sans Serif" },
+            { DEFAULT_CHARSET, FW_NORMAL, 12, 13, 96, "MS Sans Serif" },
+            { DEFAULT_CHARSET, FW_NORMAL, 12, 13, 120, "MS Sans Serif" },
             { 0 }
         },
         { /* SYSTEM_FONT */
-            { SHIFTJIS_CHARSET, FW_NORMAL, 18, 96, "System" },
-            { SHIFTJIS_CHARSET, FW_NORMAL, 22, 120, "System" },
-            { HANGEUL_CHARSET, FW_NORMAL, 16, 96, "System" },
-            { HANGEUL_CHARSET, FW_NORMAL, 20, 120, "System" },
-            { DEFAULT_CHARSET, FW_BOLD, 16, 96, "System" },
-            { DEFAULT_CHARSET, FW_BOLD, 20, 120, "System" },
+            { SHIFTJIS_CHARSET, FW_NORMAL, 18, 18, 96, "System" },
+            { SHIFTJIS_CHARSET, FW_NORMAL, 22, 22, 120, "System" },
+            { HANGEUL_CHARSET, FW_NORMAL, 16, 16, 96, "System" },
+            { HANGEUL_CHARSET, FW_NORMAL, 20, 20, 120, "System" },
+            { DEFAULT_CHARSET, FW_BOLD, 16, 16, 96, "System" },
+            { DEFAULT_CHARSET, FW_BOLD, 20, 20, 120, "System" },
             { 0 }
         },
         { /* DEVICE_DEFAULT_FONT */
-            { SHIFTJIS_CHARSET, FW_NORMAL, 18, 96, "System" },
-            { SHIFTJIS_CHARSET, FW_NORMAL, 22, 120, "System" },
-            { HANGEUL_CHARSET, FW_NORMAL, 16, 96, "System" },
-            { HANGEUL_CHARSET, FW_NORMAL, 20, 120, "System" },
-            { DEFAULT_CHARSET, FW_BOLD, 16, 96, "System" },
-            { DEFAULT_CHARSET, FW_BOLD, 20, 120, "System" },
+            { SHIFTJIS_CHARSET, FW_NORMAL, 18, 18, 96, "System" },
+            { SHIFTJIS_CHARSET, FW_NORMAL, 22, 22, 120, "System" },
+            { HANGEUL_CHARSET, FW_NORMAL, 16, 16, 96, "System" },
+            { HANGEUL_CHARSET, FW_NORMAL, 20, 20, 120, "System" },
+            { DEFAULT_CHARSET, FW_BOLD, 16, 16, 96, "System" },
+            { DEFAULT_CHARSET, FW_BOLD, 20, 20, 120, "System" },
             { 0 }
         },
         { /* DEFAULT_GUI_FONT */
-            { SHIFTJIS_CHARSET, FW_NORMAL, -12, 96, "?MS UI Gothic" },
-            { SHIFTJIS_CHARSET, FW_NORMAL, -15, 120, "?MS UI Gothic" },
-            { HANGEUL_CHARSET, FW_NORMAL, -12, 96, "?Gulim" },
-            { HANGEUL_CHARSET, FW_NORMAL, -15, 120, "?Gulim" },
-            { GB2312_CHARSET, FW_NORMAL, -12, 96, "?SimHei" },
-            { GB2312_CHARSET, FW_NORMAL, -15, 120, "?SimHei" },
-            { CHINESEBIG5_CHARSET, FW_NORMAL, -12, 96, "?MingLiU" },
-            { CHINESEBIG5_CHARSET, FW_NORMAL, -15, 120, "?MingLiU" },
-            { DEFAULT_CHARSET, FW_NORMAL, -11, 96, "MS Shell Dlg" },
-            { DEFAULT_CHARSET, FW_NORMAL, -13, 120, "MS Shell Dlg" },
+            { SHIFTJIS_CHARSET, FW_NORMAL, -12, 15, 96, "?MS UI Gothic" },
+            { SHIFTJIS_CHARSET, FW_NORMAL, -15, 18, 120, "?MS UI Gothic" },
+            { HANGEUL_CHARSET, FW_NORMAL, -12, 15, 96, "?Gulim" },
+            { HANGEUL_CHARSET, FW_NORMAL, -15, 18, 120, "?Gulim" },
+            { GB2312_CHARSET, FW_NORMAL, -12, 15, 96, "?SimHei" },
+            { GB2312_CHARSET, FW_NORMAL, -15, 18, 120, "?SimHei" },
+            { CHINESEBIG5_CHARSET, FW_NORMAL, -12, 15, 96, "?MingLiU" },
+            { CHINESEBIG5_CHARSET, FW_NORMAL, -15, 18, 120, "?MingLiU" },
+            { DEFAULT_CHARSET, FW_NORMAL, -11, 13, 96, "MS Shell Dlg" },
+            { DEFAULT_CHARSET, FW_NORMAL, -13, 16, 120, "MS Shell Dlg" },
             { 0 }
         }
     };
@@ -4982,7 +4983,7 @@ static void test_stock_fonts(void)
     {
         HFONT hfont;
         LOGFONT lf;
-        int ret;
+        int ret, height;
 
         hfont = GetStockObject(font[i]);
         ok(hfont != 0, "%d: GetStockObject(%d) failed\n", i, font[i]);
@@ -5002,13 +5003,19 @@ static void test_stock_fonts(void)
                 continue;
             }
 
-            ret = get_font_dpi(&lf);
+            ret = get_font_dpi(&lf, &height);
             if (ret != td[i][j].dpi)
             {
                 trace("%d(%d): font %s %d dpi doesn't match test data %d\n",
                       i, j, lf.lfFaceName, ret, td[i][j].dpi);
                 continue;
             }
+
+            /* FIXME: Remove once Wine is fixed */
+            if (td[i][j].dpi != 96) todo_wine
+            ok(height == td[i][j].height_pixels, "%d(%d): expected height %d, got %d\n", i, j, td[i][j].height_pixels, height);
+            else
+            ok(height == td[i][j].height_pixels, "%d(%d): expected height %d, got %d\n", i, j, td[i][j].height_pixels, height);
 
             ok(td[i][j].weight == lf.lfWeight, "%d(%d): expected lfWeight %d, got %d\n", i, j, td[i][j].weight, lf.lfWeight);
             ok(td[i][j].height == lf.lfHeight, "%d(%d): expected lfHeight %d, got %d\n", i, j, td[i][j].height, lf.lfHeight);
