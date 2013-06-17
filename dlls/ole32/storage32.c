@@ -6226,7 +6226,8 @@ HRESULT BlockChainStream_ReadAt(BlockChainStream* This,
     {
       if (!cachedBlock->read)
       {
-        if (FAILED(StorageImpl_ReadBigBlock(This->parentStorage, cachedBlock->sector, cachedBlock->data, NULL)))
+        ULONG read;
+        if (FAILED(StorageImpl_ReadBigBlock(This->parentStorage, cachedBlock->sector, cachedBlock->data, &read)) && !read)
           return STG_E_READFAULT;
 
         cachedBlock->read = 1;
@@ -6310,7 +6311,8 @@ HRESULT BlockChainStream_WriteAt(BlockChainStream* This,
     {
       if (!cachedBlock->read && bytesToWrite != This->parentStorage->bigBlockSize)
       {
-        if (FAILED(StorageImpl_ReadBigBlock(This->parentStorage, cachedBlock->sector, cachedBlock->data, NULL)))
+        ULONG read;
+        if (FAILED(StorageImpl_ReadBigBlock(This->parentStorage, cachedBlock->sector, cachedBlock->data, &read)) && !read)
           return STG_E_READFAULT;
       }
 
