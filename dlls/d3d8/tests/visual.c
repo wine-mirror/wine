@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2005 Henri Verbeet
- * Copyright (C) 2007 Stefan Dösinger(for CodeWeavers)
+ * Copyright (C) 2007, 2009, 2011-2013 Stefan Dösinger(for CodeWeavers)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -3220,6 +3220,173 @@ static void zenable_test(IDirect3DDevice8 *device)
     }
 }
 
+static void fog_special_test(IDirect3DDevice8 *device)
+{
+    static const struct
+    {
+        struct vec3 position;
+        D3DCOLOR diffuse;
+    }
+    quad[] =
+    {
+        {{ -1.0f,  -1.0f,  0.0f}, 0xff00ff00},
+        {{  1.0f,  -1.0f,  1.0f}, 0xff00ff00},
+        {{ -1.0f,   1.0f,  0.0f}, 0xff00ff00},
+        {{  1.0f,   1.0f,  1.0f}, 0xff00ff00}
+    };
+    static const struct
+    {
+        DWORD vertexmode, tablemode;
+        BOOL vs, ps;
+        D3DCOLOR color_left, color_right;
+    }
+    tests[] =
+    {
+        {D3DFOG_LINEAR, D3DFOG_NONE,   FALSE, FALSE, 0x00ff0000, 0x00ff0000},
+        {D3DFOG_LINEAR, D3DFOG_NONE,   FALSE, TRUE,  0x00ff0000, 0x00ff0000},
+        {D3DFOG_LINEAR, D3DFOG_NONE,   TRUE,  FALSE, 0x00ff0000, 0x00ff0000},
+        {D3DFOG_LINEAR, D3DFOG_NONE,   TRUE,  TRUE,  0x00ff0000, 0x00ff0000},
+
+        {D3DFOG_NONE,   D3DFOG_LINEAR, FALSE, FALSE, 0x0000ff00, 0x00ff0000},
+        {D3DFOG_NONE,   D3DFOG_LINEAR, FALSE, TRUE,  0x0000ff00, 0x00ff0000},
+        {D3DFOG_NONE,   D3DFOG_LINEAR, TRUE,  FALSE, 0x0000ff00, 0x00ff0000},
+        {D3DFOG_NONE,   D3DFOG_LINEAR, TRUE,  TRUE,  0x0000ff00, 0x00ff0000},
+    };
+    static const DWORD pixel_shader_code[] =
+    {
+        0xffff0101,                                 /* ps.1.1               */
+        0x00000001, 0x800f0000, 0x90e40000,         /* mov r0, v0           */
+        0x0000ffff
+    };
+    static const DWORD vertex_decl[] =
+    {
+        D3DVSD_STREAM(0),
+        D3DVSD_REG(0, D3DVSDT_FLOAT3),              /* position, v0         */
+        D3DVSD_REG(1, D3DVSDT_D3DCOLOR),            /* diffuse color, v1    */
+        D3DVSD_END()
+    };
+    static const DWORD vertex_shader_code[] =
+    {
+        0xfffe0101,                                 /* vs.1.1               */
+        0x00000001, 0xc00f0000, 0x90e40000,         /* mov oPos, v0         */
+        0x00000001, 0xd00f0000, 0x90e40001,         /* mov oD0, v1          */
+        0x0000ffff
+    };
+    union
+    {
+        float f;
+        DWORD d;
+    } conv;
+    DWORD color;
+    HRESULT hr;
+    unsigned int i;
+    DWORD ps, vs;
+    D3DCAPS8 caps;
+
+    hr = IDirect3DDevice8_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (caps.VertexShaderVersion >= D3DVS_VERSION(1, 1))
+    {
+        hr = IDirect3DDevice8_CreateVertexShader(device, vertex_decl, vertex_shader_code, &vs, 0);
+        ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+    }
+    else
+    {
+        skip("Vertex Shaders not supported, skipping some fog tests.\n");
+        vs = 0;
+    }
+    if (caps.PixelShaderVersion >= D3DPS_VERSION(1, 1))
+    {
+        hr = IDirect3DDevice8_CreatePixelShader(device, pixel_shader_code, &ps);
+        ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    }
+    else
+    {
+        skip("Pixel Shaders not supported, skipping some fog tests.\n");
+        ps = 0;
+    }
+
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGENABLE, TRUE);
+    ok(SUCCEEDED(hr), "Failed to enable fog, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGCOLOR, 0xffff0000);
+    ok(SUCCEEDED(hr), "Failed to set fog color, hr %#x.\n", hr);
+
+    conv.f = 0.5f;
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGSTART, conv.d);
+    ok(SUCCEEDED(hr), "Failed to set fog start, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGEND, conv.d);
+    ok(SUCCEEDED(hr), "Failed to set fog end, hr %#x.\n", hr);
+
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); i++)
+    {
+        hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff0000ff, 0.0f, 0);
+        ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);
+
+        if (!tests[i].vs)
+        {
+            hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
+            ok(SUCCEEDED(hr), "Failed to set fvf, hr %#x.\n", hr);
+        }
+        else if (vs)
+        {
+            hr = IDirect3DDevice8_SetVertexShader(device, vs);
+            ok(SUCCEEDED(hr), "Failed to set vertex shader, hr %#x.\n", hr);
+        }
+        else
+        {
+            continue;
+        }
+
+        if (!tests[i].ps)
+        {
+            hr = IDirect3DDevice8_SetPixelShader(device, 0);
+            ok(SUCCEEDED(hr), "Failed to set pixel shader, hr %#x.\n", hr);
+        }
+        else if (ps)
+        {
+            hr = IDirect3DDevice8_SetPixelShader(device, ps);
+            ok(SUCCEEDED(hr), "Failed to set pixel shader, hr %#x.\n", hr);
+        }
+        else
+        {
+            continue;
+        }
+
+        hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGVERTEXMODE, tests[i].vertexmode);
+        ok(SUCCEEDED(hr), "Failed to set fogvertexmode, hr %#x.\n", hr);
+        hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGTABLEMODE, tests[i].tablemode);
+        ok(SUCCEEDED(hr), "Failed to set fogtablemode, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice8_BeginScene(device);
+        ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+        hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+        ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+        hr = IDirect3DDevice8_EndScene(device);
+        ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+        color = getPixelColor(device, 310, 240);
+        ok(color_match(color, tests[i].color_left, 1),
+                "Expected left color 0x%08x, got 0x%08x, case %u.\n", tests[i].color_left, color, i);
+        color = getPixelColor(device, 330, 240);
+        ok(color_match(color, tests[i].color_right, 1),
+                "Expected right color 0x%08x, got 0x%08x, case %u.\n", tests[i].color_right, color, i);
+
+        hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+        ok(SUCCEEDED(hr), "Failed to present backbuffer, hr %#x.\n", hr);
+    }
+
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGENABLE, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable fog, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetPixelShader(device, 0);
+    ok(SUCCEEDED(hr), "Failed to set pixel shader, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetVertexShader(device, 0);
+    ok(SUCCEEDED(hr), "Failed to set vertex shader, hr %#x.\n", hr);
+    if (vs)
+        IDirect3DDevice8_DeleteVertexShader(device, vs);
+    if (ps)
+        IDirect3DDevice8_DeletePixelShader(device, ps);
+}
+
 START_TEST(visual)
 {
     IDirect3DDevice8 *device_ptr;
@@ -3303,6 +3470,7 @@ START_TEST(visual)
     multisample_copy_rects_test(device_ptr);
     zenable_test(device_ptr);
     resz_test(device_ptr);
+    fog_special_test(device_ptr);
 
 cleanup:
     if(device_ptr) {
