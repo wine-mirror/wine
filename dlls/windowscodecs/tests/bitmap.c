@@ -651,15 +651,15 @@ static void test_CreateBitmapFromHBITMAP(void)
     hbmp = create_dib(3, 3, 8, NULL, data_8bpp_rgb_dib);
     ok(hbmp != 0, "failed to create bitmap\n");
 
-    hr = IWICImagingFactory_CreateBitmapFromHBITMAP(factory, 0, 0, WICBitmapCacheOnLoad, &bitmap);
+    hr = IWICImagingFactory_CreateBitmapFromHBITMAP(factory, 0, 0, WICBitmapIgnoreAlpha, &bitmap);
 todo_wine
     ok(hr == WINCODEC_ERR_WIN32ERROR || hr == 0x88980003 /*XP*/, "expected WINCODEC_ERR_WIN32ERROR, got %#x\n", hr);
 
-    hr = IWICImagingFactory_CreateBitmapFromHBITMAP(factory, hbmp, 0, WICBitmapCacheOnLoad, NULL);
+    hr = IWICImagingFactory_CreateBitmapFromHBITMAP(factory, hbmp, 0, WICBitmapIgnoreAlpha, NULL);
 todo_wine
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
 
-    hr = IWICImagingFactory_CreateBitmapFromHBITMAP(factory, hbmp, 0, WICBitmapCacheOnLoad, &bitmap);
+    hr = IWICImagingFactory_CreateBitmapFromHBITMAP(factory, hbmp, 0, WICBitmapIgnoreAlpha, &bitmap);
 todo_wine
     ok(hr == S_OK, "CreateBitmapFromHBITMAP error %#x\n", hr);
     if (hr != S_OK) return;
@@ -691,7 +691,7 @@ todo_wine
     ok(hpal != 0, "CreatePalette failed\n");
 
     hbmp = create_dib(3, 3, 8, pal, data_8bpp_pal_dib);
-    hr = IWICImagingFactory_CreateBitmapFromHBITMAP(factory, hbmp, hpal, WICBitmapCacheOnLoad, &bitmap);
+    hr = IWICImagingFactory_CreateBitmapFromHBITMAP(factory, hbmp, hpal, WICBitmapIgnoreAlpha, &bitmap);
     ok(hr == S_OK, "CreateBitmapFromHBITMAP error %#x\n", hr);
 
     IWICBitmap_GetPixelFormat(bitmap, &format);
@@ -731,7 +731,7 @@ todo_wine
     ok(hpal != 0, "CreatePalette failed\n");
 
     hbmp = create_dib(3, 3, 8, pal, data_8bpp_pal_dib);
-    hr = IWICImagingFactory_CreateBitmapFromHBITMAP(factory, hbmp, hpal, WICBitmapCacheOnLoad, &bitmap);
+    hr = IWICImagingFactory_CreateBitmapFromHBITMAP(factory, hbmp, hpal, WICBitmapIgnoreAlpha, &bitmap);
     ok(hr == S_OK, "CreateBitmapFromHBITMAP error %#x\n", hr);
 
     IWICBitmap_GetPixelFormat(bitmap, &format);
