@@ -2094,6 +2094,7 @@ HANDLE16 WINAPI LoadImage16(HINSTANCE16 hinst, LPCSTR name, UINT16 type, INT16 c
 {
     HGLOBAL16 handle;
     HRSRC16 hRsrc, hGroupRsrc;
+    DWORD size;
 
     if (!hinst || (flags & LR_LOADFROMFILE))
     {
@@ -2129,7 +2130,6 @@ HANDLE16 WINAPI LoadImage16(HINSTANCE16 hinst, LPCSTR name, UINT16 type, INT16 c
         BITMAPFILEHEADER header;
         WCHAR path[MAX_PATH], filename[MAX_PATH];
         HANDLE file;
-        DWORD size;
 
         filename[0] = 0;
         if (!(hRsrc = FindResource16( hinst, name, (LPCSTR)RT_BITMAP ))) return 0;
@@ -2186,7 +2186,8 @@ HANDLE16 WINAPI LoadImage16(HINSTANCE16 hinst, LPCSTR name, UINT16 type, INT16 c
 
         if (!(handle = LoadResource16( hinst, hRsrc ))) return 0;
         bits = LockResource16( handle );
-        hIcon = CreateIconFromResourceEx16( bits, 0, type == IMAGE_ICON, 0x00030000, cx, cy, flags );
+        size = SizeofResource16( hinst, hRsrc );
+        hIcon = CreateIconFromResourceEx16( bits, size, type == IMAGE_ICON, 0x00030000, cx, cy, flags );
         FreeResource16( handle );
 
         if (hIcon && (flags & LR_SHARED)) add_shared_icon( hinst, hRsrc, hGroupRsrc, hIcon );
@@ -2734,7 +2735,7 @@ WORD WINAPI GetIconID16( HGLOBAL16 hResource, DWORD resType )
  */
 HICON16 WINAPI LoadIconHandler16( HGLOBAL16 hResource, BOOL16 bNew )
 {
-    return CreateIconFromResourceEx16( LockResource16( hResource ), 0, TRUE,
+    return CreateIconFromResourceEx16( LockResource16( hResource ), 0xffff, TRUE,
                                        bNew ? 0x00030000 : 0x00020000, 0, 0, LR_DEFAULTCOLOR );
 }
 
