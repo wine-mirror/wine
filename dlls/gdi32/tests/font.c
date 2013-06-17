@@ -976,7 +976,7 @@ static void test_bitmap_font_metrics(void)
 
                     /* Don't run the max char width test on System/ANSI_CHARSET.  We have extra characters in our font
                        that make the max width bigger */
-                    if(strcmp(lf.lfFaceName, "System") || lf.lfCharSet != ANSI_CHARSET)
+                    if ((strcmp(lf.lfFaceName, "System") || lf.lfCharSet != ANSI_CHARSET) && tm.tmDigitizedAspectX == 96)
                         ok(tm.tmMaxCharWidth == fd[i].max_char_width, "%s(%d): tm.tmMaxCharWidth %d != %d\n", fd[i].face_name, height, tm.tmMaxCharWidth, fd[i].max_char_width);
                 }
                 else
