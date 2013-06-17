@@ -368,7 +368,7 @@ static HRESULT set_dbpropset(BSTR name, BSTR value, DBPROPSET **propset)
 
         n = (min+max)/2;
 
-        r = strcmpW(dbproperties[n].name, name);
+        r = strcmpiW(dbproperties[n].name, name);
         if (!r)
             break;
 

@@ -97,6 +97,7 @@ static void test_database(void)
          'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y',';',
          'P','e','r','s','i','s','t',' ','S','e','c','u','r','i','t','y',' ','I','n','f','o','=','F','a','l','s','e',';',0};
     static WCHAR initstring_default[] = {'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y',';',0};
+    static WCHAR initstring_lower[] = {'d','a','t','a',' ','s','o','u','r','c','e','=','d','u','m','m','y',';',0};
     IDataInitialize *datainit = NULL;
     HRESULT hr;
 
@@ -111,6 +112,7 @@ static void test_database(void)
     test_GetDataSource(NULL);
     test_GetDataSource(initstring_jet);
     test_GetDataSource(initstring_default);
+    test_GetDataSource(initstring_lower);
 }
 
 START_TEST(database)
