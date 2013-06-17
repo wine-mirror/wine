@@ -3177,6 +3177,103 @@ done:
     DestroyWindow(window);
 }
 
+static void test_fog_special(void)
+{
+    static struct
+    {
+        struct vec3 position;
+        D3DCOLOR diffuse;
+    }
+    quad[] =
+    {
+        {{ -1.0f,   1.0f,  0.0f}, 0xff00ff00},
+        {{  1.0f,   1.0f,  1.0f}, 0xff00ff00},
+        {{ -1.0f,  -1.0f,  0.0f}, 0xff00ff00},
+        {{  1.0f,  -1.0f,  1.0f}, 0xff00ff00},
+    };
+    static const struct
+    {
+        DWORD vertexmode, tablemode;
+        D3DCOLOR color_left, color_right;
+    }
+    tests[] =
+    {
+        {D3DFOG_LINEAR, D3DFOG_NONE,    0x00ff0000, 0x00ff0000},
+        {D3DFOG_NONE,   D3DFOG_LINEAR,  0x0000ff00, 0x00ff0000},
+    };
+    union
+    {
+        float f;
+        DWORD d;
+    } conv;
+    D3DCOLOR color;
+    HRESULT hr;
+    unsigned int i;
+    HWND window;
+    IDirect3DDevice7 *device;
+    IDirectDrawSurface7 *rt;
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create D3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice7_GetRenderTarget(device, &rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_FOGENABLE, TRUE);
+    ok(SUCCEEDED(hr), "Failed to enable fog, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_FOGCOLOR, 0xffff0000);
+    ok(SUCCEEDED(hr), "Failed to set fog color, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_ZENABLE, D3DZB_FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
+
+    conv.f = 0.5f;
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_FOGSTART, conv.d);
+    ok(SUCCEEDED(hr), "Failed to set fog start, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_FOGEND, conv.d);
+    ok(SUCCEEDED(hr), "Failed to set fog end, hr %#x.\n", hr);
+
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); i++)
+    {
+        hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x000000ff, 1.0f, 0);
+        ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_FOGVERTEXMODE, tests[i].vertexmode);
+        ok(SUCCEEDED(hr), "Failed to set fogvertexmode, hr %#x.\n", hr);
+        hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_FOGTABLEMODE, tests[i].tablemode);
+        ok(SUCCEEDED(hr), "Failed to set fogtablemode, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice7_BeginScene(device);
+        ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+        hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ | D3DFVF_DIFFUSE, quad, 4, 0);
+        ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+        hr = IDirect3DDevice7_EndScene(device);
+        ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+        color = get_surface_color(rt, 310, 240);
+        ok(compare_color(color, tests[i].color_left, 1),
+                "Expected left color 0x%08x, got 0x%08x, case %u.\n", tests[i].color_left, color, i);
+        color = get_surface_color(rt, 330, 240);
+        ok(compare_color(color, tests[i].color_right, 1),
+                "Expected right color 0x%08x, got 0x%08x, case %u.\n", tests[i].color_right, color, i);
+    }
+
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_FOGENABLE, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable fog, hr %#x.\n", hr);
+
+    IDirectDrawSurface7_Release(rt);
+    IDirect3DDevice7_Release(device);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw7)
 {
     HMODULE module = GetModuleHandleA("ddraw.dll");
@@ -3212,4 +3309,5 @@ START_TEST(ddraw7)
     test_draw_strided();
     test_clear_rect_count();
     test_coop_level_versions();
+    test_fog_special();
 }
