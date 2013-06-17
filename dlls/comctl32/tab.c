@@ -1898,7 +1898,6 @@ TAB_DrawItemInterior(const TAB_INFO *infoPtr, HDC hdc, INT iItem, RECT *drawRect
     /* Draw the text */
     if(infoPtr->dwStyle & TCS_VERTICAL) /* if we are vertical rotate the text and each character */
     {
-      static const WCHAR ArialW[] = { 'A','r','i','a','l',0 };
       LOGFONTW logfont;
       HFONT hFont = 0;
       INT nEscapement = 900;
@@ -1911,21 +1910,11 @@ TAB_DrawItemInterior(const TAB_INFO *infoPtr, HDC hdc, INT iItem, RECT *drawRect
       }
 
       /* to get a font with the escapement and orientation we are looking for, we need to */
-      /* call CreateFontIndirectA, which requires us to set the values of the logfont we pass in */
+      /* call CreateFontIndirect, which requires us to set the values of the logfont we pass in */
       if (!GetObjectW((infoPtr->hFont) ?
-                infoPtr->hFont : GetStockObject(SYSTEM_FONT),
+                infoPtr->hFont : GetStockObject(DEFAULT_GUI_FONT),
                 sizeof(LOGFONTW),&logfont))
-      {
-        INT iPointSize = 9;
-
-        lstrcpyW(logfont.lfFaceName, ArialW);
-        logfont.lfHeight = -MulDiv(iPointSize, GetDeviceCaps(hdc, LOGPIXELSY),
-                                    72);
-        logfont.lfWeight = FW_NORMAL;
-        logfont.lfItalic = 0;
-        logfont.lfUnderline = 0;
-        logfont.lfStrikeOut = 0;
-      }
+        GetStockObject(DEFAULT_GUI_FONT);
 
       logfont.lfEscapement = nEscapement;
       logfont.lfOrientation = nOrientation;
