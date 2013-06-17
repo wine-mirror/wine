@@ -43,7 +43,7 @@
 # include <linux/input.h>
 # undef SW_MAX
 # if defined(EVIOCGBIT) && defined(EV_ABS) && defined(BTN_PINKIE)
-#  define HAVE_CORRECT_LINUXINPUT_H
+#  define HAS_PROPER_HEADER
 # endif
 #endif
 #ifdef HAVE_SYS_POLL_H
@@ -65,7 +65,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
-#ifdef HAVE_CORRECT_LINUXINPUT_H
+#ifdef HAS_PROPER_HEADER
 
 #define EVDEVPREFIX "/dev/input/event"
 #define EVDEVDRIVER " (event)"
@@ -1478,7 +1478,7 @@ static const IDirectInputDevice8WVtbl JoystickWvt =
     IDirectInputDevice8WImpl_GetImageInfo
 };
 
-#else  /* HAVE_CORRECT_LINUXINPUT_H */
+#else  /* HAS_PROPER_HEADER */
 
 const struct dinput_device joystick_linuxinput_device = {
   "Wine Linux-input joystick driver",
@@ -1487,4 +1487,4 @@ const struct dinput_device joystick_linuxinput_device = {
   NULL
 };
 
-#endif  /* HAVE_CORRECT_LINUXINPUT_H */
+#endif  /* HAS_PROPER_HEADER */
