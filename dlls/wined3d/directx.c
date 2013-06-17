@@ -4682,12 +4682,18 @@ static void WINE_GLAPI warn_no_specular_func(const void *data)
     WARN("GL_EXT_secondary_color not supported\n");
 }
 
-static void fillGLAttribFuncs(const struct wined3d_gl_info *gl_info)
+static void wined3d_adapter_init_ffp_attrib_ops(const struct wined3d_adapter *adapter)
 {
+    const struct wined3d_d3d_info *d3d_info = &adapter->d3d_info;
+    const struct wined3d_gl_info *gl_info = &adapter->gl_info;
+
     position_funcs[WINED3D_FFP_EMIT_FLOAT1]      = invalid_func;
     position_funcs[WINED3D_FFP_EMIT_FLOAT2]      = invalid_func;
     position_funcs[WINED3D_FFP_EMIT_FLOAT3]      = (glAttribFunc)gl_info->gl_ops.gl.p_glVertex3fv;
-    position_funcs[WINED3D_FFP_EMIT_FLOAT4]      = position_float4;
+    if (!d3d_info->xyzrhw)
+        position_funcs[WINED3D_FFP_EMIT_FLOAT4]  = position_float4;
+    else
+        position_funcs[WINED3D_FFP_EMIT_FLOAT4]  = (glAttribFunc)gl_info->gl_ops.gl.p_glVertex4fv;
     position_funcs[WINED3D_FFP_EMIT_D3DCOLOR]    = position_d3dcolor;
     position_funcs[WINED3D_FFP_EMIT_UBYTE4]      = invalid_func;
     position_funcs[WINED3D_FFP_EMIT_SHORT2]      = invalid_func;
@@ -5031,7 +5037,7 @@ static BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, UINT ordinal)
 
     WineD3D_ReleaseFakeGLContext(&fake_gl_ctx);
 
-    fillGLAttribFuncs(&adapter->gl_info);
+    wined3d_adapter_init_ffp_attrib_ops(adapter);
 
     return TRUE;
 }
