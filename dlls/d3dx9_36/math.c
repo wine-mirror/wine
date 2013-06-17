@@ -102,13 +102,6 @@ D3DXMATRIX * WINAPI D3DXMatrixAffineTransformation(D3DXMATRIX *out, FLOAT scalin
 
     D3DXMatrixIdentity(out);
 
-    if (rotationcenter)
-    {
-        out->u.m[3][0] = -rotationcenter->x;
-        out->u.m[3][1] = -rotationcenter->y;
-        out->u.m[3][2] = -rotationcenter->z;
-    }
-
     if (rotation)
     {
         FLOAT temp00, temp01, temp02, temp10, temp11, temp12, temp20, temp21, temp22;
@@ -135,15 +128,12 @@ D3DXMATRIX * WINAPI D3DXMatrixAffineTransformation(D3DXMATRIX *out, FLOAT scalin
 
         if (rotationcenter)
         {
-            FLOAT x, y, z;
-
-            x = out->u.m[3][0];
-            y = out->u.m[3][1];
-            z = out->u.m[3][2];
-
-            out->u.m[3][0] = x * temp00 + y * temp10 + z * temp20;
-            out->u.m[3][1] = x * temp01 + y * temp11 + z * temp21;
-            out->u.m[3][2] = x * temp02 + y * temp12 + z * temp22;
+            out->u.m[3][0] = rotationcenter->x * (1.0f - temp00) - rotationcenter->y * temp10
+                    - rotationcenter->z * temp20;
+            out->u.m[3][1] = rotationcenter->y * (1.0f - temp11) - rotationcenter->x * temp01
+                    - rotationcenter->z * temp21;
+            out->u.m[3][2] = rotationcenter->z * (1.0f - temp22) - rotationcenter->x * temp02
+                    - rotationcenter->y * temp12;
         }
     }
     else
@@ -151,13 +141,6 @@ D3DXMATRIX * WINAPI D3DXMatrixAffineTransformation(D3DXMATRIX *out, FLOAT scalin
         out->u.m[0][0] = scaling;
         out->u.m[1][1] = scaling;
         out->u.m[2][2] = scaling;
-    }
-
-    if (rotationcenter)
-    {
-        out->u.m[3][0] += rotationcenter->x;
-        out->u.m[3][1] += rotationcenter->y;
-        out->u.m[3][2] += rotationcenter->z;
     }
 
     if (translation)
