@@ -5098,6 +5098,42 @@ static void test_max_height(void)
     return;
 }
 
+static void test_vertical_order(void)
+{
+    struct enum_font_data efd;
+    LOGFONTA lf;
+    HDC hdc;
+    int i, j;
+
+    hdc = CreateCompatibleDC(0);
+    ok(hdc != NULL, "CreateCompatibleDC failed\n");
+
+    memset(&lf, 0, sizeof(lf));
+    lf.lfCharSet = DEFAULT_CHARSET;
+    lf.lfClipPrecision = CLIP_DEFAULT_PRECIS;
+    lf.lfHeight = 16;
+    lf.lfWidth = 16;
+    lf.lfQuality = DEFAULT_QUALITY;
+    lf.lfItalic = FALSE;
+    lf.lfWeight = FW_DONTCARE;
+    efd.total = 0;
+    EnumFontFamiliesExA(hdc, &lf, enum_font_data_proc, (LPARAM)&efd, 0);
+    for (i = 0; i < efd.total; i++)
+    {
+        if (efd.lf[i].lfFaceName[0] != '@') continue;
+        for (j = 0; j < efd.total; j++)
+        {
+            if (!strcmp(efd.lf[i].lfFaceName + 1, efd.lf[j].lfFaceName))
+            {
+                ok(i > j,"Found vertical font %s before its horizontal version\n", efd.lf[i].lfFaceName);
+                break;
+            }
+        }
+    }
+    DeleteDC( hdc );
+}
+
+
 START_TEST(font)
 {
     init();
@@ -5155,6 +5191,7 @@ START_TEST(font)
     test_fullname2();
     test_east_asian_font_selection();
     test_max_height();
+    test_vertical_order();
 
     /* These tests should be last test until RemoveFontResource
      * is properly implemented.
