@@ -1181,8 +1181,6 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
     - (void) sendEvent:(NSEvent*)event
     {
-        WineApplicationController* controller = [WineApplicationController sharedController];
-
         /* NSWindow consumes certain key-down events as part of Cocoa's keyboard
            interface control.  For example, Control-Tab switches focus among
            views.  We want to bypass that feature, so directly route key-down
@@ -1190,21 +1188,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         if ([event type] == NSKeyDown)
             [[self firstResponder] keyDown:event];
         else
-        {
-            if ([event type] == NSLeftMouseDown &&
-                (([event modifierFlags] & (NSShiftKeyMask | NSControlKeyMask| NSAlternateKeyMask | NSCommandKeyMask)) != NSCommandKeyMask))
-            {
-                /* Since our windows generally claim they can't be made key, clicks
-                   in their title bars are swallowed by the theme frame stuff.  So,
-                   we hook directly into the event stream and assume that any click
-                   in the window will activate it, if Wine and the Win32 program
-                   accept. */
-                if (![self isKeyWindow] && !self.disabled && !self.noActivate)
-                    [controller windowGotFocus:self];
-            }
-
             [super sendEvent:event];
-        }
     }
 
 

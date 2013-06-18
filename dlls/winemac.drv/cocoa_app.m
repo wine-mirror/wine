@@ -1426,6 +1426,7 @@ int macdrv_err_on;
     {
         WineWindow* window = (WineWindow*)[theEvent window];
         NSEventType type = [theEvent type];
+        BOOL broughtWindowForward = FALSE;
 
         if ([window isKindOfClass:[WineWindow class]] &&
             !window.disabled && !window.noActivate &&
@@ -1433,7 +1434,8 @@ int macdrv_err_on;
             (([theEvent modifierFlags] & (NSShiftKeyMask | NSControlKeyMask| NSAlternateKeyMask | NSCommandKeyMask)) != NSCommandKeyMask))
         {
             NSWindowButton windowButton;
-            BOOL broughtWindowForward = TRUE;
+
+            broughtWindowForward = TRUE;
 
             /* Any left-click on our window anyplace other than the close or
                minimize buttons will bring it forward. */
@@ -1538,6 +1540,8 @@ int macdrv_err_on;
 
                 macdrv_release_event(event);
             }
+            else if (broughtWindowForward && ![window isKeyWindow])
+                [self windowGotFocus:window];
         }
 
         // Since mouse button events deliver absolute cursor position, the
