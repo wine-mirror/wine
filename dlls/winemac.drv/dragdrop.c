@@ -307,12 +307,11 @@ static DWORD drag_operations_to_dropeffects(uint32_t ops)
  */
 static uint32_t dropeffect_to_drag_operation(DWORD effect, uint32_t ops)
 {
-    switch (effect)
-    {
-        case DROPEFFECT_COPY: return (ops & DRAG_OP_COPY) ? DRAG_OP_COPY : DRAG_OP_GENERIC;
-        case DROPEFFECT_MOVE: return DRAG_OP_MOVE;
-        case DROPEFFECT_LINK: return (ops & DRAG_OP_LINK) ? DRAG_OP_LINK : DRAG_OP_GENERIC;
-    }
+    if (effect & DROPEFFECT_LINK && ops & DRAG_OP_LINK) return DRAG_OP_LINK;
+    if (effect & DROPEFFECT_COPY && ops & DRAG_OP_COPY) return DRAG_OP_COPY;
+    if (effect & DROPEFFECT_MOVE && ops & DRAG_OP_MOVE) return DRAG_OP_MOVE;
+    if (effect & DROPEFFECT_LINK && ops & DRAG_OP_GENERIC) return DRAG_OP_GENERIC;
+    if (effect & DROPEFFECT_COPY && ops & DRAG_OP_GENERIC) return DRAG_OP_GENERIC;
 
     return DRAG_OP_NONE;
 }
