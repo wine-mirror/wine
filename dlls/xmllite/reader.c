@@ -246,6 +246,7 @@ typedef struct
     struct list elements;
     strval strvalues[StringValue_Last];
     UINT depth;
+    UINT max_depth;
     BOOL empty_element;
     WCHAR *resume[XmlReadResume_Last]; /* pointers used to resume reader */
 } xmlreader;
@@ -427,9 +428,13 @@ static void reader_clear_elements(xmlreader *reader)
 
 static HRESULT reader_inc_depth(xmlreader *reader)
 {
-    /* FIXME: handle XmlReaderProperty_MaxElementDepth property */
-    reader->depth++;
+    if (++reader->depth > reader->max_depth) return SC_E_MAXELEMENTDEPTH;
     return S_OK;
+}
+
+static void reader_dec_depth(xmlreader *reader)
+{
+    if (reader->depth > 1) reader->depth--;
 }
 
 static HRESULT reader_push_element(xmlreader *reader, strval *qname)
@@ -469,6 +474,7 @@ static void reader_pop_element(xmlreader *reader)
         list_remove(&elem->entry);
         reader_free_strvalued(reader, &elem->qname);
         reader_free(reader, elem);
+        reader_dec_depth(reader);
     }
 }
 
@@ -1137,6 +1143,7 @@ static HRESULT reader_parse_xmldecl(xmlreader *reader)
     if (reader_cmp(reader, declcloseW)) return WC_E_XMLDECL;
     reader_skipn(reader, 2);
 
+    reader_inc_depth(reader);
     reader->nodetype = XmlNodeType_XmlDeclaration;
     reader_set_strvalue(reader, StringValue_LocalName, &strval_empty);
     reader_set_strvalue(reader, StringValue_QualifiedName, &strval_empty);
@@ -2659,6 +2666,7 @@ HRESULT WINAPI CreateXmlReader(REFIID riid, void **obj, IMalloc *imalloc)
     reader->attr = NULL;
     list_init(&reader->elements);
     reader->depth = 0;
+    reader->max_depth = 256;
     reader->empty_element = FALSE;
     memset(reader->resume, 0, sizeof(reader->resume));
 

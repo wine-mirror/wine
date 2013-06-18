@@ -742,7 +742,6 @@ static void test_read_xmldeclaration(void)
 
     hr = IXmlReader_GetDepth(reader, &count);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-todo_wine
     ok(count == 1, "Expected 1, got %d\n", count);
 
     hr = IXmlReader_MoveToElement(reader);
@@ -1166,16 +1165,20 @@ static void test_read_element(void)
     ok(hr == S_OK, "got %08x\n", hr);
     ok(depth == 0, "got %d\n", depth);
 
+    type = XmlNodeType_None;
     hr = IXmlReader_Read(reader, &type);
     ok(hr == S_OK, "got %08x\n", hr);
+    ok(type == XmlNodeType_Element, "got %d\n", type);
 
     depth = 1;
     hr = IXmlReader_GetDepth(reader, &depth);
     ok(hr == S_OK, "got %08x\n", hr);
     ok(depth == 0, "got %d\n", depth);
 
+    type = XmlNodeType_None;
     hr = IXmlReader_Read(reader, &type);
     ok(hr == S_OK, "got %08x\n", hr);
+    ok(type == XmlNodeType_Element, "got %d\n", type);
 
     depth = 0;
     hr = IXmlReader_GetDepth(reader, &depth);
