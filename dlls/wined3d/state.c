@@ -1043,8 +1043,13 @@ void state_fogstartend(struct wined3d_context *context, const struct wined3d_sta
             fogstart = tmpvalue.f;
             tmpvalue.d = state->render_states[WINED3D_RS_FOGEND];
             fogend = tmpvalue.f;
-            /* In GL, fogstart == fogend disables fog, in D3D everything's fogged.*/
-            if(fogstart == fogend) {
+            /* Special handling for fogstart == fogend. In d3d with vertex
+             * fog, everything is fogged. With table fog, everything with
+             * fog_coord < fog_start is unfogged, and fog_coord > fog_start
+             * is fogged. Windows drivers disagree when fog_coord == fog_start. */
+            if (state->render_states[WINED3D_RS_FOGTABLEMODE] == WINED3D_FOG_NONE
+                    && fogstart == fogend)
+            {
                 fogstart = -INFINITY;
                 fogend = 0.0f;
             }
@@ -1072,6 +1077,8 @@ void state_fog_fragpart(struct wined3d_context *context, const struct wined3d_st
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     enum fogsource new_source;
+    DWORD fogstart = state->render_states[WINED3D_RS_FOGSTART];
+    DWORD fogend = state->render_states[WINED3D_RS_FOGEND];
 
     TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
 
@@ -1217,7 +1224,7 @@ void state_fog_fragpart(struct wined3d_context *context, const struct wined3d_st
 
     glEnableWINE(GL_FOG);
     checkGLcall("glEnable GL_FOG");
-    if (new_source != context->fog_source)
+    if (new_source != context->fog_source || fogstart == fogend)
     {
         context->fog_source = new_source;
         state_fogstartend(context, state, STATE_RENDER(WINED3D_RS_FOGSTART));

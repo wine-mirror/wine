@@ -7086,6 +7086,8 @@ static void glsl_fragment_pipe_fog(struct wined3d_context *context,
 {
     BOOL use_vshader = use_vs(state);
     enum fogsource new_source;
+    DWORD fogstart = state->render_states[WINED3D_RS_FOGSTART];
+    DWORD fogend = state->render_states[WINED3D_RS_FOGEND];
 
     context->select_shader = 1;
     context->load_constants = 1;
@@ -7107,7 +7109,7 @@ static void glsl_fragment_pipe_fog(struct wined3d_context *context,
         new_source = FOGSOURCE_FFP;
     }
 
-    if (new_source != context->fog_source)
+    if (new_source != context->fog_source || fogstart == fogend)
     {
         context->fog_source = new_source;
         state_fogstartend(context, state, STATE_RENDER(WINED3D_RS_FOGSTART));
