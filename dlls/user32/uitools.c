@@ -1690,6 +1690,7 @@ static BOOL UITOOLS_DrawState(HDC hdc, HBRUSH hbr, DRAWSTATEPROC func, LPARAM lp
     SetBkColor(memdc, RGB(255, 255, 255));
     SetTextColor(memdc, RGB(0, 0, 0));
     hfsave  = SelectObject(memdc, GetCurrentObject(hdc, OBJ_FONT));
+    SetLayout( memdc, GetLayout( hdc ));
 
     /* DST_COMPLEX may draw text as well,
      * so we must be sure that correct font is selected
