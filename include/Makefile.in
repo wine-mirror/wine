@@ -288,6 +288,7 @@ SRCDIR_INCLUDES = \
 	dyngraph.idl \
 	errorrep.h \
 	errors.h \
+	errrec.idl \
 	evcode.h \
 	evntprov.h \
 	evntrace.h \

@@ -66,6 +66,7 @@ typedef DWORD_PTR DBHASHVALUE;
 #include "rowchg.idl"
 #include "binres.idl"
 #include "crtrow.idl"
+#include "errrec.idl"
 
 cpp_quote("#include <accctrl.h>")
 
