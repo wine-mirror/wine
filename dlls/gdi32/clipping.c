@@ -148,14 +148,21 @@ INT nulldrv_ExtSelectClipRgn( PHYSDEV dev, HRGN rgn, INT mode )
 
     if (!rgn)
     {
-        if (mode != RGN_COPY)
+        switch (mode)
         {
+        case RGN_COPY:
+            if (dc->hClipRgn) DeleteObject( dc->hClipRgn );
+            dc->hClipRgn = 0;
+            ret = SIMPLEREGION;
+            break;
+
+        case RGN_DIFF:
+            return ERROR;
+
+        default:
             FIXME("Unimplemented: hrgn NULL in mode: %d\n", mode);
             return ERROR;
         }
-        if (dc->hClipRgn) DeleteObject( dc->hClipRgn );
-        dc->hClipRgn = 0;
-        ret = SIMPLEREGION;
     }
     else
     {
