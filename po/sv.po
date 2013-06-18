@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-06-06 21:20+0300\n"
+"PO-Revision-Date: 2013-06-19 00:18+0300\n"
 "Last-Translator: Lauri Kenttä <lauri.kentta@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Swedish\n"
@@ -744,7 +744,7 @@ msgstr "Utskriftsformat"
 
 #: comdlg32.rc:432
 msgid "&Tray:"
-msgstr ""
+msgstr "&Fack:"
 
 #: comdlg32.rc:435 wineps.rc:32
 msgid "&Portrait"
@@ -860,7 +860,7 @@ msgstr "Lista"
 
 #: comdlg32.rc:44 cryptui.rc:193
 msgid "Details"
-msgstr "Detaljerat"
+msgstr "Detaljer"
 
 #: comdlg32.rc:45
 msgid "Browse to Desktop"
@@ -3042,7 +3042,7 @@ msgstr "Koreanska (Johab)"
 
 #: gdi32.rc:40
 msgid "Symbol"
-msgstr ""
+msgstr "Symboler"
 
 #: gdi32.rc:41
 msgid "OEM/DOS"
@@ -3050,7 +3050,7 @@ msgstr "OEM/DOS"
 
 #: gdi32.rc:42 wldap32.rc:107
 msgid "Other"
-msgstr ""
+msgstr "Annan"
 
 #: gphoto2.rc:27
 msgid "Files on Camera"
@@ -3455,10 +3455,8 @@ msgid "Test Force Feedback"
 msgstr "Testa kraftåterkoppling"
 
 #: joy.rc:64
-#, fuzzy
-#| msgid "Available formats"
 msgid "Available Effects"
-msgstr "Tillgängliga format"
+msgstr "Tillgängliga effekter"
 
 #: joy.rc:66
 msgid ""
@@ -3528,7 +3526,7 @@ msgstr "Oterminerad strängkonstant"
 
 #: jscript.rc:39
 msgid "'return' statement outside of function"
-msgstr ""
+msgstr "'return' utanför funktion"
 
 #: jscript.rc:40
 msgid "Can't have 'break' outside of loop"
@@ -5152,7 +5150,7 @@ msgstr "Ingen symbol för personifiering.\n"
 
 #: winerror.mc:1956
 msgid "Can't disable mandatory group.\n"
-msgstr "Kan inte avaktivera obligatorisk grupp.\n"
+msgstr "Kan inte inaktivera obligatorisk grupp.\n"
 
 #: winerror.mc:1961
 msgid "No logon servers available.\n"
@@ -5236,7 +5234,7 @@ msgstr "Lösenord utgånget.\n"
 
 #: winerror.mc:2061
 msgid "Account disabled.\n"
-msgstr "Kontot avaktiverat.\n"
+msgstr "Kontot inaktiverat.\n"
 
 #: winerror.mc:2066
 msgid "No security ID mapped.\n"
@@ -5272,11 +5270,11 @@ msgstr "Felaktig ärvd ACL.\n"
 
 #: winerror.mc:2106
 msgid "Server disabled.\n"
-msgstr "Servern avaktiverad.\n"
+msgstr "Servern inaktiverad.\n"
 
 #: winerror.mc:2111
 msgid "Server not disabled.\n"
-msgstr "Servern ej avaktiverad.\n"
+msgstr "Servern ej inaktiverad.\n"
 
 #: winerror.mc:2116
 msgid "Invalid ID authority.\n"
@@ -8237,20 +8235,16 @@ msgid "Security Warning"
 msgstr "Säkerhetsvarning"
 
 #: urlmon.rc:32
-#, fuzzy
-#| msgid "Do you want to continue anyway?"
 msgid "Do you want to install this software?"
-msgstr "Vill du fortsätta ändå?"
+msgstr "Vill du installera denna programvara?"
 
 #: urlmon.rc:34 explorer.rc:29
 msgid "Location:"
 msgstr "Plats:"
 
 #: urlmon.rc:36
-#, fuzzy
-#| msgid "Install/Uninstall"
 msgid "Don't install"
-msgstr "Installera/Avinstallera"
+msgstr "Installera inte"
 
 #: urlmon.rc:40
 msgid ""
@@ -8259,22 +8253,16 @@ msgid ""
 msgstr ""
 
 #: urlmon.rc:48
-#, fuzzy
-#| msgid "Installation package failed to open.\n"
 msgid "Installation of component failed: %08x"
-msgstr "Installationspaketet öppnades inte.\n"
+msgstr "Installation av komponenten misslyckades: %08x"
 
 #: urlmon.rc:49
-#, fuzzy
-#| msgid "&Install"
 msgid "Install (%d)"
-msgstr "&Installera"
+msgstr "Installera (%d)"
 
 #: urlmon.rc:50
-#, fuzzy
-#| msgid "&Install"
 msgid "Install"
-msgstr "&Installera"
+msgstr "Installera"
 
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
 msgctxt "window"
@@ -9002,7 +8990,7 @@ msgstr "Lyckades"
 
 #: wldap32.rc:28
 msgid "Operations Error"
-msgstr ""
+msgstr "Operationsfel"
 
 #: wldap32.rc:29
 msgid "Protocol Error"
@@ -9995,10 +9983,8 @@ msgid "Wine Command Prompt"
 msgstr "Wine kommandoprompt"
 
 #: cmd.rc:349
-#, fuzzy
-#| msgid "CMD Version %1!S!\n"
 msgid "Wine CMD Version %1!S!\n"
-msgstr "CMD Version %1!S!\n"
+msgstr "Wine CMD version %1!S!\n"
 
 #: cmd.rc:350
 msgid "More? "
@@ -10038,10 +10024,8 @@ msgid "Expected an operand.\n"
 msgstr ""
 
 #: cmd.rc:359
-#, fuzzy
-#| msgid "Unexpected network error.\n"
 msgid "Expected an operator.\n"
-msgstr "Oväntat nätverksfel.\n"
+msgstr "Operator förväntades.\n"
 
 #: cmd.rc:360
 msgid "Mismatch in parentheses.\n"
@@ -10100,10 +10084,8 @@ msgid "Connection-specific DNS suffix"
 msgstr "Anslutningsspecifikt DNS-suffix"
 
 #: ipconfig.rc:33
-#, fuzzy
-#| msgid "IP address"
 msgid "IPv4 address"
-msgstr "IP-adress"
+msgstr "IPv4-adress"
 
 #: ipconfig.rc:34
 msgid "Hostname"
@@ -10146,10 +10128,8 @@ msgid "Default gateway"
 msgstr "Förvald gateway"
 
 #: ipconfig.rc:47
-#, fuzzy
-#| msgid "IP address"
 msgid "IPv6 address"
-msgstr "IP-adress"
+msgstr "IPv6-adress"
 
 #: net.rc:27
 msgid ""
@@ -10282,152 +10262,116 @@ msgid "The following services are running:\n"
 msgstr "Följande tjänster körs:\n"
 
 #: netstat.rc:27
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Active Connections"
-msgstr "LAN-anslutning"
+msgstr "Aktiva anslutningar"
 
 #: netstat.rc:28
 msgid "Proto"
-msgstr ""
+msgstr "Proto"
 
 #: netstat.rc:29
-#, fuzzy
-#| msgid "Email Address"
 msgid "Local Address"
-msgstr "E-postadress"
+msgstr "Lokal adress"
 
 #: netstat.rc:30
-#, fuzzy
-#| msgid "Street Address"
 msgid "Foreign Address"
-msgstr "Postadress"
+msgstr "Fjärradress"
 
 #: netstat.rc:31
-#, fuzzy
-#| msgid "Status"
 msgid "State"
-msgstr "Status"
+msgstr "Tillstånd"
 
 #: netstat.rc:32
-#, fuzzy
-#| msgid "Interfaces"
 msgid "Interface Statistics"
-msgstr "Gränssnitt"
+msgstr "Gränssnittsstatistik"
 
 #: netstat.rc:33
 msgid "Sent"
-msgstr ""
+msgstr "Skickade"
 
 #: netstat.rc:34
 msgid "Received"
-msgstr ""
+msgstr "Mottagna"
 
 #: netstat.rc:35
-#, fuzzy
-#| msgid "bytes"
 msgid "Bytes"
-msgstr "byte"
+msgstr "Byte"
 
 #: netstat.rc:36
 msgid "Unicast packets"
-msgstr ""
+msgstr "Unicast-paket"
 
 #: netstat.rc:37
 msgid "Non-unicast packets"
-msgstr ""
+msgstr "Icke-unicast-paket"
 
 #: netstat.rc:38
-#, fuzzy
-#| msgid "Disclaimer"
 msgid "Discards"
-msgstr "Ansvarsfriskrivning"
+msgstr "Ignorerade"
 
 #: netstat.rc:39
-#, fuzzy
-#| msgid "Error"
 msgid "Errors"
 msgstr "Fel"
 
 #: netstat.rc:40
-#, fuzzy
-#| msgid "Unknown port.\n"
 msgid "Unknown protocols"
-msgstr "Okänd port.\n"
+msgstr "Okända protokoll"
 
 #: netstat.rc:41
 msgid "TCP Statistics for IPv4"
-msgstr ""
+msgstr "TCP-statistik för IPv4"
 
 #: netstat.rc:42
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Active Opens"
-msgstr "LAN-anslutning"
+msgstr "Öppna aktiva"
 
 #: netstat.rc:43
 msgid "Passive Opens"
-msgstr ""
+msgstr "Öppna passiva"
 
 #: netstat.rc:44
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Failed Connection Attempts"
-msgstr "LAN-anslutning"
+msgstr "Misslyckade anslutningsförsök"
 
 #: netstat.rc:45
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Reset Connections"
-msgstr "LAN-anslutning"
+msgstr "Återställda anslutningar"
 
 #: netstat.rc:46
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Current Connections"
-msgstr "LAN-anslutning"
+msgstr "Aktuella anslutningar"
 
 #: netstat.rc:47
-#, fuzzy
-#| msgid "Segment locked.\n"
 msgid "Segments Received"
-msgstr "Segment låst.\n"
+msgstr "Mottagna segment"
 
 #: netstat.rc:48
-#, fuzzy
-#| msgid "Segment locked.\n"
 msgid "Segments Sent"
-msgstr "Segment låst.\n"
+msgstr "Skickade segment"
 
 #: netstat.rc:49
 msgid "Segments Retransmitted"
-msgstr ""
+msgstr "Återöverförda segment"
 
 #: netstat.rc:50
 msgid "UDP Statistics for IPv4"
-msgstr ""
+msgstr "UDP-statistik för IPv4"
 
 #: netstat.rc:51
-#, fuzzy
-#| msgid "Segment locked.\n"
 msgid "Datagrams Received"
-msgstr "Segment låst.\n"
+msgstr "Mottagna datagram"
 
 #: netstat.rc:52
-#, fuzzy
-#| msgid "Local Port"
 msgid "No Ports"
-msgstr "Lokal port"
+msgstr "Inga portar"
 
 #: netstat.rc:53
-#, fuzzy
-#| msgid "Error"
 msgid "Receive Errors"
-msgstr "Fel"
+msgstr "Mottagna fel"
 
 #: netstat.rc:54
 msgid "Datagrams Sent"
-msgstr ""
+msgstr "Skickade datagram"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
@@ -10576,7 +10520,7 @@ msgstr ""
 #: notepad.rc:136 wordpad.rc:288
 msgctxt "accelerator Save"
 msgid "S"
-msgstr ""
+msgstr "S"
 
 #: notepad.rc:137
 msgctxt "accelerator Paste"
@@ -13384,7 +13328,7 @@ msgstr "Misslyckades med att spara"
 
 #: winedbg.rc:41
 msgid "Loading detailed information, please wait..."
-msgstr ""
+msgstr "Hämtar detaljerna, var god vänta..."
 
 #: winefile.rc:26
 msgid "&Open\tEnter"
@@ -13576,22 +13520,16 @@ msgid "Not yet implemented"
 msgstr "Inte implementerat ännu"
 
 #: winefile.rc:106
-#, fuzzy
-#| msgid "Creation failed.\n"
 msgid "Creation date"
-msgstr "Kunde inte skapa.\n"
+msgstr "Skapad"
 
 #: winefile.rc:107
-#, fuzzy
-#| msgid "Access denied.\n"
 msgid "Access date"
-msgstr "Åtkomst nekad.\n"
+msgstr "Åtkommen"
 
 #: winefile.rc:108
-#, fuzzy
-#| msgid "Certification Path"
 msgid "Modification date"
-msgstr "Certifieringssökväg"
+msgstr "Modifierad"
 
 #: winefile.rc:109
 msgid "Index/Inode"
