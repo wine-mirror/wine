@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2013-01-23 20:00+0300\n"
+"PO-Revision-Date: 2013-06-18 22:58+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -13643,22 +13643,16 @@ msgid "Not yet implemented"
 msgstr "Dar nerealizuota"
 
 #: winefile.rc:106
-#, fuzzy
-#| msgid "Creation failed.\n"
 msgid "Creation date"
-msgstr "Nepavyko sukurti.\n"
+msgstr "Sukūrimo data"
 
 #: winefile.rc:107
-#, fuzzy
-#| msgid "Access denied.\n"
 msgid "Access date"
-msgstr "Prieiga nesuteikta.\n"
+msgstr "Kreipties data"
 
 #: winefile.rc:108
-#, fuzzy
-#| msgid "Certification Path"
 msgid "Modification date"
-msgstr "Liudijimo kelias"
+msgstr "Pakeitimo data"
 
 #: winefile.rc:109
 msgid "Index/Inode"
