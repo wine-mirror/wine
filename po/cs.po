@@ -13762,15 +13762,15 @@ msgid "Not yet implemented"
 msgstr "Zatím neimplementováno"
 
 #: winefile.rc:106
-msgid "CDate"
+msgid "Creation date"
 msgstr "Datum vytvoření"
 
 #: winefile.rc:107
-msgid "ADate"
+msgid "Access date"
 msgstr "Datum posledního přístupu"
 
 #: winefile.rc:108
-msgid "MDate"
+msgid "Modification date"
 msgstr "Datum poslední modifikace"
 
 #: winefile.rc:109

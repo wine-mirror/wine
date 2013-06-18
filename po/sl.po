@@ -13738,16 +13738,22 @@ msgid "Not yet implemented"
 msgstr "Ni še podprto"
 
 #: winefile.rc:106
-msgid "CDate"
-msgstr "CDatum"
+#, fuzzy
+#| msgid "Creation failed.\n"
+msgid "Creation date"
+msgstr "Ustvarjanje je spodletelo.\n"
 
 #: winefile.rc:107
-msgid "ADate"
-msgstr "ADatum"
+#, fuzzy
+#| msgid "Access denied.\n"
+msgid "Access date"
+msgstr "Dostop je zavrnjen.\n"
 
 #: winefile.rc:108
-msgid "MDate"
-msgstr "MDatum"
+#, fuzzy
+#| msgid "Certification Path"
+msgid "Modification date"
+msgstr "Pot potrdila"
 
 #: winefile.rc:109
 msgid "Index/Inode"

@@ -13702,16 +13702,22 @@ msgid "Not yet implemented"
 msgstr "Ikke implementeret endnu"
 
 #: winefile.rc:106
-msgid "CDate"
-msgstr "O-dato"
+#, fuzzy
+#| msgid "Creation failed.\n"
+msgid "Creation date"
+msgstr "Åbning mislykkede.\n"
 
 #: winefile.rc:107
-msgid "ADate"
-msgstr "A-dato"
+#, fuzzy
+#| msgid "Access denied.\n"
+msgid "Access date"
+msgstr "Adgang nægtet.\n"
 
 #: winefile.rc:108
-msgid "MDate"
-msgstr "M-dato"
+#, fuzzy
+#| msgid "Certification Path"
+msgid "Modification date"
+msgstr "Certificeringssti"
 
 #: winefile.rc:109
 msgid "Index/Inode"

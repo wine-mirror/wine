@@ -13643,16 +13643,22 @@ msgid "Not yet implemented"
 msgstr "Dar nerealizuota"
 
 #: winefile.rc:106
-msgid "CDate"
-msgstr "KData"
+#, fuzzy
+#| msgid "Creation failed.\n"
+msgid "Creation date"
+msgstr "Nepavyko sukurti.\n"
 
 #: winefile.rc:107
-msgid "ADate"
-msgstr "PData"
+#, fuzzy
+#| msgid "Access denied.\n"
+msgid "Access date"
+msgstr "Prieiga nesuteikta.\n"
 
 #: winefile.rc:108
-msgid "MDate"
-msgstr "MData"
+#, fuzzy
+#| msgid "Certification Path"
+msgid "Modification date"
+msgstr "Liudijimo kelias"
 
 #: winefile.rc:109
 msgid "Index/Inode"

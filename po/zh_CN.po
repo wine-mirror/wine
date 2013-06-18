@@ -13144,15 +13144,15 @@ msgid "Not yet implemented"
 msgstr "尚未实现"
 
 #: winefile.rc:106
-msgid "CDate"
+msgid "Creation date"
 msgstr "创建日期"
 
 #: winefile.rc:107
-msgid "ADate"
+msgid "Access date"
 msgstr "访问日期"
 
 #: winefile.rc:108
-msgid "MDate"
+msgid "Modification date"
 msgstr "修改日期"
 
 #: winefile.rc:109

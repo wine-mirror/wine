@@ -13047,16 +13047,20 @@ msgid "Not yet implemented"
 msgstr "Ne jam funkcias"
 
 #: winefile.rc:106
-msgid "CDate"
-msgstr "NDato"
+#, fuzzy
+#| msgid "Creation failed.\n"
+msgid "Creation date"
+msgstr "Kreado malsukcesis.\n"
 
 #: winefile.rc:107
-msgid "ADate"
-msgstr "ADato"
+msgid "Access date"
+msgstr ""
 
 #: winefile.rc:108
-msgid "MDate"
-msgstr "MDato"
+#, fuzzy
+#| msgid "Certification Path"
+msgid "Modification date"
+msgstr "&Atestila vojo"
 
 #: winefile.rc:109
 msgid "Index/Inode"

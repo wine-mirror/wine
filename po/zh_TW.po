@@ -13501,16 +13501,22 @@ msgid "Not yet implemented"
 msgstr "尚未實作"
 
 #: winefile.rc:106
-msgid "CDate"
-msgstr "CDate"
+#, fuzzy
+#| msgid "Creation failed.\n"
+msgid "Creation date"
+msgstr "建立失敗。\n"
 
 #: winefile.rc:107
-msgid "ADate"
-msgstr "ADate"
+#, fuzzy
+#| msgid "Access denied.\n"
+msgid "Access date"
+msgstr "存取被拒。\n"
 
 #: winefile.rc:108
-msgid "MDate"
-msgstr "MDate"
+#, fuzzy
+#| msgid "Certification Path"
+msgid "Modification date"
+msgstr "憑證路徑"
 
 #: winefile.rc:109
 msgid "Index/Inode"

@@ -13623,16 +13623,16 @@ msgid "Not yet implemented"
 msgstr "Not yet implemented"
 
 #: winefile.rc:106
-msgid "CDate"
-msgstr "CDate"
+msgid "Creation date"
+msgstr "Creation date"
 
 #: winefile.rc:107
-msgid "ADate"
-msgstr "ADate"
+msgid "Access date"
+msgstr "Access date"
 
 #: winefile.rc:108
-msgid "MDate"
-msgstr "MDate"
+msgid "Modification date"
+msgstr "Modification date"
 
 #: winefile.rc:109
 msgid "Index/Inode"

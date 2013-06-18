@@ -13538,16 +13538,22 @@ msgid "Not yet implemented"
 msgstr "Henüz tamamlanmadı"
 
 #: winefile.rc:106
-msgid "CDate"
-msgstr "OTarihi"
+#, fuzzy
+#| msgid "Expiration Date"
+msgid "Creation date"
+msgstr "Son Kullanma Tarihi"
 
 #: winefile.rc:107
-msgid "ADate"
-msgstr "ETarihi"
+#, fuzzy
+#| msgid "Access denied.\n"
+msgid "Access date"
+msgstr "Erişim engellendi.\n"
 
 #: winefile.rc:108
-msgid "MDate"
-msgstr "DTarihi"
+#, fuzzy
+#| msgid "Certification Path"
+msgid "Modification date"
+msgstr "Sertifika Yolu"
 
 #: winefile.rc:109
 msgid "Index/Inode"

@@ -13897,15 +13897,15 @@ msgid "Not yet implemented"
 msgstr "Neimplementat încă"
 
 #: winefile.rc:106
-msgid "CDate"
+msgid "Creation date"
 msgstr "Ultima schimbare de stare (ctime)"
 
 #: winefile.rc:107
-msgid "ADate"
+msgid "Access date"
 msgstr "Ultima accesare"
 
 #: winefile.rc:108
-msgid "MDate"
+msgid "Modification date"
 msgstr "Ultima modificare"
 
 #: winefile.rc:109

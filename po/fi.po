@@ -13603,15 +13603,15 @@ msgid "Not yet implemented"
 msgstr "Ei vielä toteutettu"
 
 #: winefile.rc:106
-msgid "CDate"
+msgid "Creation date"
 msgstr "Luotu"
 
 #: winefile.rc:107
-msgid "ADate"
+msgid "Access date"
 msgstr "Käytetty"
 
 #: winefile.rc:108
-msgid "MDate"
+msgid "Modification date"
 msgstr "Muokattu"
 
 #: winefile.rc:109

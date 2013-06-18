@@ -13713,16 +13713,22 @@ msgid "Not yet implemented"
 msgstr "Nincs implementálva"
 
 #: winefile.rc:106
-msgid "CDate"
-msgstr "LDátum"
+#, fuzzy
+#| msgid "Creation failed.\n"
+msgid "Creation date"
+msgstr "Létrehozás sikertelen.\n"
 
 #: winefile.rc:107
-msgid "ADate"
-msgstr "ADátum"
+#, fuzzy
+#| msgid "Access denied.\n"
+msgid "Access date"
+msgstr "Hozzáférés megtagadva.\n"
 
 #: winefile.rc:108
-msgid "MDate"
-msgstr "MDátum"
+#, fuzzy
+#| msgid "Certification Path"
+msgid "Modification date"
+msgstr "Tanusítási sablon útvonal"
 
 #: winefile.rc:109
 msgid "Index/Inode"

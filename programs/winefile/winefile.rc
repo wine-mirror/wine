@@ -103,9 +103,9 @@ STRINGTABLE
 {
     IDS_COL_NAME            "Name"
     IDS_COL_SIZE            "Size"
-    IDS_COL_CDATE           "CDate"
-    IDS_COL_ADATE           "ADate"
-    IDS_COL_MDATE           "MDate"
+    IDS_COL_CDATE           "Creation date"
+    IDS_COL_ADATE           "Access date"
+    IDS_COL_MDATE           "Modification date"
     IDS_COL_IDX             "Index/Inode"
     IDS_COL_LINKS           "Links"
     IDS_COL_ATTR            "Attributes"

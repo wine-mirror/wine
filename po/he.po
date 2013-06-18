@@ -13848,16 +13848,19 @@ msgid "Not yet implemented"
 msgstr "לא מוטמע עדיין"
 
 #: winefile.rc:106
-msgid "CDate"
-msgstr "ת.יצירה"
+#, fuzzy
+msgid "Creation date"
+msgstr "פתיחת קובץ.\n"
 
 #: winefile.rc:107
-msgid "ADate"
-msgstr "ת.גישה"
+#, fuzzy
+msgid "Access date"
+msgstr "הגישה נדחתה.\n"
 
 #: winefile.rc:108
-msgid "MDate"
-msgstr "ת.שינוי"
+#, fuzzy
+msgid "Modification date"
+msgstr "אישור"
 
 #: winefile.rc:109
 msgid "Index/Inode"

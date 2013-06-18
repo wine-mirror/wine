@@ -13179,17 +13179,17 @@ msgstr "Nén co possibe"
 
 #: winefile.rc:106
 #, fuzzy
-msgid "CDate"
+msgid "Creation date"
 msgstr "&Date"
 
 #: winefile.rc:107
 #, fuzzy
-msgid "ADate"
+msgid "Access date"
 msgstr "&Date"
 
 #: winefile.rc:108
 #, fuzzy
-msgid "MDate"
+msgid "Modification date"
 msgstr "&Date"
 
 #: winefile.rc:109

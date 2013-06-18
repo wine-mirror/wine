@@ -13908,17 +13908,17 @@ msgstr "Nije jos u programu"
 
 #: winefile.rc:106
 #, fuzzy
-msgid "CDate"
+msgid "Creation date"
 msgstr "&Datum"
 
 #: winefile.rc:107
 #, fuzzy
-msgid "ADate"
+msgid "Access date"
 msgstr "&Datum"
 
 #: winefile.rc:108
 #, fuzzy
-msgid "MDate"
+msgid "Modification date"
 msgstr "&Datum"
 
 #: winefile.rc:109

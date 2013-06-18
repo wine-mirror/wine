@@ -13579,16 +13579,22 @@ msgid "Not yet implemented"
 msgstr "아직 구현안됨"
 
 #: winefile.rc:106
-msgid "CDate"
-msgstr "시(CDate)"
+#, fuzzy
+#| msgid "Creation failed.\n"
+msgid "Creation date"
+msgstr "만들기 실패함.\n"
 
 #: winefile.rc:107
-msgid "ADate"
-msgstr "초(ADate)"
+#, fuzzy
+#| msgid "Access denied.\n"
+msgid "Access date"
+msgstr "접근이 금지되었습니다.\n"
 
 #: winefile.rc:108
-msgid "MDate"
-msgstr "분(MDate)"
+#, fuzzy
+#| msgid "Certification Path"
+msgid "Modification date"
+msgstr "인증서 경로"
 
 #: winefile.rc:109
 msgid "Index/Inode"

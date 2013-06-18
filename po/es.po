@@ -13806,16 +13806,22 @@ msgid "Not yet implemented"
 msgstr "Aún no implementado"
 
 #: winefile.rc:106
-msgid "CDate"
-msgstr "FechaC"
+#, fuzzy
+#| msgid "Creation failed.\n"
+msgid "Creation date"
+msgstr "La creación ha fallado.\n"
 
 #: winefile.rc:107
-msgid "ADate"
-msgstr "FechaA"
+#, fuzzy
+#| msgid "Access denied.\n"
+msgid "Access date"
+msgstr "Acceso denegado.\n"
 
 #: winefile.rc:108
-msgid "MDate"
-msgstr "FechaM"
+#, fuzzy
+#| msgid "Certification Path"
+msgid "Modification date"
+msgstr "Trayectoria de Certificación"
 
 #: winefile.rc:109
 msgid "Index/Inode"
