@@ -20,6 +20,7 @@
 
 #define COBJMACROS
 
+#include <stdio.h>
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
@@ -97,6 +98,62 @@ static const WCHAR ltW[] = {'<',0};
 static const WCHAR gtW[] = {'>',0};
 static const WCHAR commentW[] = {'<','!','-','-',0};
 static const WCHAR piW[] = {'<','?',0};
+
+static const char *debugstr_nodetype(XmlNodeType nodetype)
+{
+    static const char* type_names[] =
+    {
+        "None",
+        "Element",
+        "Attribute",
+        "Text",
+        "CDATA",
+        "",
+        "",
+        "ProcessingInstruction",
+        "Comment",
+        "",
+        "DocumentType",
+        "",
+        "",
+        "Whitespace",
+        "",
+        "EndElement",
+        "",
+        "XmlDeclaration"
+    };
+
+    if (nodetype > _XmlNodeType_Last)
+    {
+        static char buf[25];
+        sprintf(buf, "unknown type=%d", nodetype);
+        return buf;
+    }
+    return type_names[nodetype];
+}
+
+static const char *debugstr_prop(XmlReaderProperty prop)
+{
+    static const char* prop_names[] =
+    {
+        "MultiLanguage",
+        "ConformanceLevel",
+        "RandomAccess",
+        "XmlResolver",
+        "DtdProcessing",
+        "ReadState",
+        "MaxElementDepth",
+        "MaxEntityExpansion"
+    };
+
+    if (prop > _XmlReaderProperty_Last)
+    {
+        static char buf[25];
+        sprintf(buf, "unknown property=%d", prop);
+        return buf;
+    }
+    return prop_names[prop];
+}
 
 struct xml_encoding_data
 {
@@ -1983,6 +2040,9 @@ static HRESULT reader_parse_nextnode(xmlreader *reader)
 {
     HRESULT hr;
 
+    if (!is_reader_pending(reader))
+        reader_clear_attrs(reader);
+
     while (1)
     {
         switch (reader->instate)
@@ -2184,7 +2244,7 @@ static HRESULT WINAPI xmlreader_GetProperty(IXmlReader* iface, UINT property, LO
 {
     xmlreader *This = impl_from_IXmlReader(iface);
 
-    TRACE("(%p %u %p)\n", This, property, value);
+    TRACE("(%p)->(%s %p)\n", This, debugstr_prop(property), value);
 
     if (!value) return E_INVALIDARG;
 
@@ -2208,7 +2268,7 @@ static HRESULT WINAPI xmlreader_SetProperty(IXmlReader* iface, UINT property, LO
 {
     xmlreader *This = impl_from_IXmlReader(iface);
 
-    TRACE("(%p %u %lu)\n", iface, property, value);
+    TRACE("(%p)->(%s %lu)\n", This, debugstr_prop(property), value);
 
     switch (property)
     {
@@ -2237,7 +2297,11 @@ static HRESULT WINAPI xmlreader_Read(IXmlReader* iface, XmlNodeType *nodetype)
     hr = reader_parse_nextnode(This);
     if (oldtype == XmlNodeType_None && This->nodetype != oldtype)
         This->state = XmlReadState_Interactive;
-    if (hr == S_OK) *nodetype = This->nodetype;
+    if (hr == S_OK)
+    {
+        TRACE("node type %s\n", debugstr_nodetype(This->nodetype));
+        *nodetype = This->nodetype;
+    }
 
     return hr;
 }
