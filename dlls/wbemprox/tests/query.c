@@ -583,7 +583,7 @@ static void test_notification_query_async( IWbemServices *services )
     prev_sink_refs = sink_refs;
     hr = IWbemServices_ExecNotificationQueryAsync( services, wql, query, 0, NULL, &sink );
     ok( hr == S_OK || broken(hr == WBEM_E_NOT_FOUND), "got %08x\n", hr );
-    ok( sink_refs > prev_sink_refs, "got %u refs\n", sink_refs );
+    ok( sink_refs > prev_sink_refs || broken(!sink_refs), "got %u refs\n", sink_refs );
 
     hr =  IWbemServices_CancelAsyncCall( services, &sink );
     ok( hr == S_OK || broken(hr == WBEM_E_NOT_FOUND), "got %08x\n", hr );
