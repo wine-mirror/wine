@@ -28,8 +28,13 @@
 #include "msdadc.h"
 #include "msdasc.h"
 #include "shlobj.h"
+#include "initguid.h"
 
 #include "wine/test.h"
+
+DEFINE_GUID(CSLID_MSDAER, 0xc8b522cf,0x5cf3,0x11ce,0xad,0xe5,0x00,0xaa,0x00,0x44,0x77,0x3d);
+
+static WCHAR initstring_default[] = {'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y',';',0};
 
 static void test_GetDataSource(WCHAR *initstring)
 {
@@ -96,7 +101,6 @@ static void test_database(void)
          'J','e','t','.','O','L','E','D','B','.','4','.','0',';',
          'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y',';',
          'P','e','r','s','i','s','t',' ','S','e','c','u','r','i','t','y',' ','I','n','f','o','=','F','a','l','s','e',';',0};
-    static WCHAR initstring_default[] = {'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y',';',0};
     static WCHAR initstring_lower[] = {'d','a','t','a',' ','s','o','u','r','c','e','=','d','u','m','m','y',';',0};
     IDataInitialize *datainit = NULL;
     HRESULT hr;
@@ -115,11 +119,71 @@ static void test_database(void)
     test_GetDataSource(initstring_lower);
 }
 
+static void test_errorinfo(void)
+{
+    HRESULT hr;
+    IUnknown *unk = NULL;
+
+    hr = CoCreateInstance(&CSLID_MSDAER, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown,(void**)&unk);
+    todo_wine ok(hr == S_OK, "got %08x\n", hr);
+    if(hr == S_OK)
+    {
+        IErrorInfo *errorinfo;
+
+        hr = IUnknown_QueryInterface(unk, &IID_IErrorInfo, (void**)&errorinfo);
+        ok(hr == S_OK, "got %08x\n", hr);
+        if(hr == S_OK)
+        {
+            IErrorInfo_Release(errorinfo);
+        }
+
+        IUnknown_Release(unk);
+    }
+}
+
+static void test_initializationstring(void)
+{
+    static WCHAR initstring_msdasql[] = {'P','r','o','v','i','d','e','r','=','M','S','D','A','S','Q','L','.','1',';',
+         'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y', 0};
+    static WCHAR initstring_sqloledb[] = {'P','r','o','v','i','d','e','r','=','S','Q','L','O','L','E','D','B','.','1',';',
+         'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y', 0};
+    IDataInitialize *datainit = NULL;
+    IDBInitialize *dbinit = NULL;
+    HRESULT hr;
+    WCHAR *initstring = NULL;
+
+    hr = CoCreateInstance(&CLSID_MSDAINITIALIZE, NULL, CLSCTX_INPROC_SERVER, &IID_IDataInitialize,(void**)&datainit);
+    ok(hr == S_OK, "got %08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        hr = IDataInitialize_GetDataSource(datainit, NULL, CLSCTX_INPROC_SERVER, initstring_default,
+                                                                &IID_IDBInitialize, (IUnknown**)&dbinit);
+        if(SUCCEEDED(hr))
+        {
+            hr = IDataInitialize_GetInitializationString(datainit, (IUnknown*)dbinit, 0, &initstring);
+            ok(hr == S_OK, "got %08x\n", hr);
+            if(hr == S_OK)
+            {
+                trace("Init String: %s\n", wine_dbgstr_w(initstring));
+                todo_wine ok(!lstrcmpW(initstring_msdasql, initstring) ||
+                             !lstrcmpW(initstring_sqloledb, initstring), "got %s\n", wine_dbgstr_w(initstring));
+                CoTaskMemFree(initstring);
+            }
+
+            IDBInitialize_Release(dbinit);
+        }
+
+        IDataInitialize_Release(datainit);
+    }
+}
+
 START_TEST(database)
 {
     OleInitialize(NULL);
 
     test_database();
+    test_errorinfo();
+    test_initializationstring();
 
     OleUninitialize();
 }
