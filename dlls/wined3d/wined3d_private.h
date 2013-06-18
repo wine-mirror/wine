@@ -62,6 +62,7 @@
 #define WINED3D_QUIRK_BROKEN_RGBA16             0x00000040
 #define WINED3D_QUIRK_INFO_LOG_SPAM             0x00000080
 #define WINED3D_QUIRK_LIMITED_TEX_FILTERING     0x00000100
+#define WINED3D_QUIRK_BROKEN_ARB_FOG            0x00000200
 
 /* Texture format fixups */
 

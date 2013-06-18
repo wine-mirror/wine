@@ -791,6 +791,101 @@ static BOOL match_r200(const struct wined3d_gl_info *gl_info, const char *gl_ren
     return FALSE;
 }
 
+static BOOL match_broken_arb_fog(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
+        enum wined3d_gl_vendor gl_vendor, enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
+{
+    DWORD data[4];
+    GLuint tex, fbo;
+    GLenum status;
+    float color[4] = {0.0f, 1.0f, 0.0f, 0.0f};
+    GLuint prog;
+    GLint err_pos;
+    static const char *program_code =
+        "!!ARBfp1.0\n"
+        "OPTION ARB_fog_linear;\n"
+        "MOV result.color, {1.0, 0.0, 0.0, 0.0};\n"
+        "END\n";
+
+    if (wined3d_settings.offscreen_rendering_mode != ORM_FBO)
+        return FALSE;
+    if (!gl_info->supported[ARB_FRAGMENT_PROGRAM])
+        return FALSE;
+
+    gl_info->gl_ops.gl.p_glGenTextures(1, &tex);
+    gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D, tex);
+    gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    gl_info->gl_ops.gl.p_glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, 4, 1, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL);
+    checkGLcall("glTexImage2D");
+
+    gl_info->fbo_ops.glGenFramebuffers(1, &fbo);
+    gl_info->fbo_ops.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    gl_info->fbo_ops.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
+    checkGLcall("glFramebufferTexture2D");
+
+    status = gl_info->fbo_ops.glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (status != GL_FRAMEBUFFER_COMPLETE) ERR("FBO status %#x\n", status);
+    checkGLcall("glCheckFramebufferStatus");
+
+    gl_info->gl_ops.gl.p_glClearColor(0.0f, 0.0f, 1.0f, 0.0f);
+    gl_info->gl_ops.gl.p_glClear(GL_COLOR_BUFFER_BIT);
+    checkGLcall("glClear");
+    gl_info->gl_ops.gl.p_glViewport(0, 0, 4, 1);
+    checkGLcall("glViewport");
+
+    gl_info->gl_ops.gl.p_glEnable(GL_FOG);
+    gl_info->gl_ops.gl.p_glFogf(GL_FOG_START, 0.5f);
+    gl_info->gl_ops.gl.p_glFogf(GL_FOG_END, 0.5f);
+    gl_info->gl_ops.gl.p_glFogi(GL_FOG_MODE, GL_LINEAR);
+    gl_info->gl_ops.gl.p_glHint(GL_FOG_HINT, GL_NICEST);
+    gl_info->gl_ops.gl.p_glFogfv(GL_FOG_COLOR, color);
+    checkGLcall("fog setup");
+
+    GL_EXTCALL(glGenProgramsARB(1, &prog));
+    GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, prog));
+    GL_EXTCALL(glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
+            strlen(program_code), program_code));
+    gl_info->gl_ops.gl.p_glEnable(GL_FRAGMENT_PROGRAM_ARB);
+    checkGLcall("Test fragment program setup");
+
+    gl_info->gl_ops.gl.p_glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &err_pos);
+    if (err_pos != -1)
+    {
+        const char *error_str;
+        error_str = (const char *)gl_info->gl_ops.gl.p_glGetString(GL_PROGRAM_ERROR_STRING_ARB);
+        FIXME("Fog test program error at position %d: %s\n\n", err_pos, debugstr_a(error_str));
+    }
+
+    gl_info->gl_ops.gl.p_glBegin(GL_TRIANGLE_STRIP);
+    gl_info->gl_ops.gl.p_glVertex3f(-1.0f, -1.0f,  0.0f);
+    gl_info->gl_ops.gl.p_glVertex3f( 1.0f, -1.0f,  1.0f);
+    gl_info->gl_ops.gl.p_glVertex3f(-1.0f,  1.0f,  0.0f);
+    gl_info->gl_ops.gl.p_glVertex3f( 1.0f,  1.0f,  1.0f);
+    gl_info->gl_ops.gl.p_glEnd();
+    checkGLcall("ARBfp fog test draw");
+
+    gl_info->gl_ops.gl.p_glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, data);
+    checkGLcall("glGetTexImage");
+    data[0] &= 0x00ffffff;
+    data[1] &= 0x00ffffff;
+    data[2] &= 0x00ffffff;
+    data[3] &= 0x00ffffff;
+
+    gl_info->fbo_ops.glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D, 0);
+
+    gl_info->fbo_ops.glDeleteFramebuffers(1, &fbo);
+    gl_info->gl_ops.gl.p_glDeleteTextures(1, &tex);
+    gl_info->gl_ops.gl.p_glDisable(GL_FOG);
+    GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, 0));
+    gl_info->gl_ops.gl.p_glDisable(GL_FRAGMENT_PROGRAM_ARB);
+    GL_EXTCALL(glDeleteProgramsARB(1, &prog));
+    checkGLcall("ARBfp fog test teardown");
+
+    TRACE("Fog test data: %08x %08x %08x %08x\n", data[0], data[1], data[2], data[3]);
+    return data[0] != 0x00ff0000 || data[3] != 0x0000ff00;
+}
+
 static void quirk_apple_glsl_constants(struct wined3d_gl_info *gl_info)
 {
     /* MacOS needs uniforms for relative addressing offsets. This can accumulate to quite a few uniforms.
@@ -914,6 +1009,11 @@ static void quirk_r200_constants(struct wined3d_gl_info *gl_info)
     gl_info->reserved_arb_constants = max(gl_info->reserved_arb_constants, 1);
 }
 
+static void quirk_broken_arb_fog(struct wined3d_gl_info *gl_info)
+{
+    gl_info->quirks |= WINED3D_QUIRK_BROKEN_ARB_FOG;
+}
+
 struct driver_quirk
 {
     BOOL (*match)(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
@@ -998,6 +1098,11 @@ static const struct driver_quirk quirk_table[] =
         match_r200,
         quirk_r200_constants,
         "r200 vertex shader constants"
+    },
+    {
+        match_broken_arb_fog,
+        quirk_broken_arb_fog,
+        "ARBfp fogstart == fogend workaround"
     },
 };
 
