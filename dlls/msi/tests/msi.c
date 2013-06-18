@@ -4010,8 +4010,15 @@ static void test_MsiGetFileVersion(void)
     lstrcpyA(lang, "lang");
     r = MsiGetFileVersionA(path, version, &versz, lang, &langsz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    if (langchecksz && !langsz)
+    {
+        win_skip("broken MsiGetFileVersionA detected\n");
+        HeapFree(GetProcessHeap(), 0, vercheck);
+        HeapFree(GetProcessHeap(), 0, langcheck);
+        return;
+    }
     ok(versz == verchecksz, "Expected %d, got %d\n", verchecksz, versz);
-    ok(strstr(lang, langcheck) != NULL, "Expected %s in %s\n", langcheck, lang);
+    ok(strstr(lang, langcheck) != NULL, "Expected \"%s\" in \"%s\"\n", langcheck, lang);
     ok(!lstrcmpA(version, vercheck),
         "Expected %s, got %s\n", vercheck, version);
 
@@ -4029,7 +4036,7 @@ static void test_MsiGetFileVersion(void)
     lstrcpyA(lang, "lang");
     r = MsiGetFileVersionA(path, NULL, NULL, lang, &langsz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok(strstr(lang, langcheck) != NULL, "Expected %s in %s\n", langcheck, lang);
+    ok(strstr(lang, langcheck) != NULL, "Expected \"%s\" in \"%s\"\n", langcheck, lang);
 
     /* check neither version nor language */
     r = MsiGetFileVersionA(path, NULL, NULL, NULL, NULL);
@@ -4053,7 +4060,7 @@ static void test_MsiGetFileVersion(void)
     r = MsiGetFileVersionA(path, version, &versz, NULL, NULL);
     ok(r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", r);
     ok(!strncmp(version, vercheck, 4),
-       "Expected first 4 characters of %s, got %s\n", vercheck, version);
+       "Expected first 4 characters of \"%s\", got \"%s\"\n", vercheck, version);
     ok(versz == verchecksz, "Expected %d, got %d\n", verchecksz, versz);
 
     /* pcchLangBuf not big enough */
@@ -4062,7 +4069,7 @@ static void test_MsiGetFileVersion(void)
     r = MsiGetFileVersionA(path, NULL, NULL, lang, &langsz);
     ok(r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", r);
     ok(!strncmp(lang, langcheck, 2),
-       "Expected first character of %s, got %s\n", langcheck, lang);
+       "Expected first character of \"%s\", got \"%s\"\n", langcheck, lang);
     ok(langsz >= langchecksz, "Expected %d >= %d\n", langsz, langchecksz);
 
     /* pcchVersionBuf big enough, pcchLangBuf not big enough */
@@ -4072,7 +4079,7 @@ static void test_MsiGetFileVersion(void)
     r = MsiGetFileVersionA(path, version, &versz, NULL, &langsz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(versz == verchecksz, "Expected %d, got %d\n", verchecksz, versz);
-    ok(!lstrcmpA(version, vercheck), "Expected %s, got %s\n", vercheck, version);
+    ok(!lstrcmpA(version, vercheck), "Expected \"%s\", got \"%s\"\n", vercheck, version);
     ok(langsz >= langchecksz && langsz < MAX_PATH, "Expected %d >= %d\n", langsz, langchecksz);
 
     /* pcchVersionBuf not big enough, pcchLangBuf big enough */
