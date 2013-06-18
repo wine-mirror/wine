@@ -1899,7 +1899,7 @@ TAB_DrawItemInterior(const TAB_INFO *infoPtr, HDC hdc, INT iItem, RECT *drawRect
     if(infoPtr->dwStyle & TCS_VERTICAL) /* if we are vertical rotate the text and each character */
     {
       LOGFONTW logfont;
-      HFONT hFont = 0;
+      HFONT hFont;
       INT nEscapement = 900;
       INT nOrientation = 900;
 
@@ -1911,10 +1911,8 @@ TAB_DrawItemInterior(const TAB_INFO *infoPtr, HDC hdc, INT iItem, RECT *drawRect
 
       /* to get a font with the escapement and orientation we are looking for, we need to */
       /* call CreateFontIndirect, which requires us to set the values of the logfont we pass in */
-      if (!GetObjectW((infoPtr->hFont) ?
-                infoPtr->hFont : GetStockObject(DEFAULT_GUI_FONT),
-                sizeof(LOGFONTW),&logfont))
-        GetStockObject(DEFAULT_GUI_FONT);
+      if (!GetObjectW(infoPtr->hFont, sizeof(logfont), &logfont))
+        GetObjectW(GetStockObject(DEFAULT_GUI_FONT), sizeof(logfont), &logfont);
 
       logfont.lfEscapement = nEscapement;
       logfont.lfOrientation = nOrientation;
