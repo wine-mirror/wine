@@ -1428,6 +1428,7 @@ int macdrv_err_on;
         NSEventType type = [theEvent type];
 
         if ([window isKindOfClass:[WineWindow class]] &&
+            !window.disabled && !window.noActivate &&
             type == NSLeftMouseDown &&
             (([theEvent modifierFlags] & (NSShiftKeyMask | NSControlKeyMask| NSAlternateKeyMask | NSCommandKeyMask)) != NSCommandKeyMask))
         {

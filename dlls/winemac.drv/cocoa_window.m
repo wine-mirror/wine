@@ -136,8 +136,8 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
 @interface WineWindow ()
 
-@property (nonatomic) BOOL disabled;
-@property (nonatomic) BOOL noActivate;
+@property (readwrite, nonatomic) BOOL disabled;
+@property (readwrite, nonatomic) BOOL noActivate;
 @property (readwrite, nonatomic) BOOL floating;
 @property (retain, nonatomic) NSWindow* latentParentWindow;
 
