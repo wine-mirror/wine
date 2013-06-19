@@ -189,7 +189,7 @@ msgstr "應用程式"
 msgid ""
 "Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
 "entry for this program from the registry?"
-msgstr "無法執行移除程式「%s」。 您想將這個移除程式從註冊表中刪除嗎？"
+msgstr "無法執行移除程式 %s。 您想將這個移除程式從註冊表中刪除嗎？"
 
 #: appwiz.rc:33
 msgid "Not specified"
@@ -256,7 +256,7 @@ msgstr "交錯(&I)"
 
 #: avifil32.rc:48 msvfw32.rc:48
 msgid "frames"
-msgstr "畫格數"
+msgstr "影格數"
 
 #: avifil32.rc:49
 msgid "Current format:"
@@ -3263,7 +3263,7 @@ msgstr "空白頁面(&B)"
 
 #: inetcpl.rc:53
 msgid "Browsing history"
-msgstr "瀏覽紀錄"
+msgstr "瀏覽記錄"
 
 #: inetcpl.rc:54
 msgid "You can delete cached pages, cookies and other data."
@@ -3279,7 +3279,7 @@ msgstr "設定(&S)…"
 
 #: inetcpl.rc:65
 msgid "Delete browsing history"
-msgstr "刪除瀏覽紀錄"
+msgstr "刪除瀏覽記錄"
 
 #: inetcpl.rc:68
 msgid ""
@@ -3404,7 +3404,7 @@ msgstr "已停用"
 msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
-msgstr ""
+msgstr "停用或啟用裝置之後，已連線的搖桿將無法更新，直到您重新啟動這個小程式。"
 
 #: joy.rc:47
 msgid "Test Joystick"
@@ -3472,15 +3472,15 @@ msgstr "語法錯誤"
 
 #: jscript.rc:34
 msgid "Expected ';'"
-msgstr "預期為『；』"
+msgstr "預期為 ;"
 
 #: jscript.rc:35
 msgid "Expected '('"
-msgstr "預期為『(』"
+msgstr "預期為 ("
 
 #: jscript.rc:36
 msgid "Expected ')'"
-msgstr "預期為『)』"
+msgstr "預期為 )"
 
 #: jscript.rc:37
 msgid "Invalid character"
@@ -3492,15 +3492,15 @@ msgstr "未終結的字串常數"
 
 #: jscript.rc:39
 msgid "'return' statement outside of function"
-msgstr ""
+msgstr "return 敘述位於函式之外"
 
 #: jscript.rc:40
 msgid "Can't have 'break' outside of loop"
-msgstr "在迴圈之外不可有『break』"
+msgstr "在迴圈之外不可有 break"
 
 #: jscript.rc:41
 msgid "Can't have 'continue' outside of loop"
-msgstr "在迴圈之外不可有『continue』"
+msgstr "在迴圈之外不可有 continue"
 
 #: jscript.rc:42
 msgid "Label redefined"
@@ -3524,7 +3524,7 @@ msgstr "預期為函式"
 
 #: jscript.rc:46
 msgid "'[object]' is not a date object"
-msgstr "『[object]』並非日期物件"
+msgstr "[object] 並非日期物件"
 
 #: jscript.rc:48
 msgid "Object expected"
@@ -3536,7 +3536,7 @@ msgstr "不合法的指派"
 
 #: jscript.rc:50
 msgid "'|' is undefined"
-msgstr "『|』未定義"
+msgstr "| 未定義"
 
 #: jscript.rc:51
 msgid "Boolean object expected"
@@ -3860,7 +3860,7 @@ msgstr "網路寫入錯誤。\n"
 
 #: winerror.mc:371
 msgid "No process slots.\n"
-msgstr "沒有進程插槽。\n"
+msgstr "沒有行程插槽。\n"
 
 #: winerror.mc:376
 msgid "Too many semaphores.\n"
@@ -3964,11 +3964,11 @@ msgstr "找不到程序。\n"
 
 #: winerror.mc:506
 msgid "No children to wait for.\n"
-msgstr "沒有要等待的子進程。\n"
+msgstr "沒有要等待的子行程。\n"
 
 #: winerror.mc:511
 msgid "Child process has not completed.\n"
-msgstr "子進程未已完成。\n"
+msgstr "子行程未已完成。\n"
 
 #: winerror.mc:516
 msgid "Invalid use of direct access handle.\n"
@@ -4023,8 +4023,6 @@ msgid "Same drive.\n"
 msgstr "相同儲存裝置。\n"
 
 #: winerror.mc:586
-#, fuzzy
-#| msgid "Not toplevel directory.\n"
 msgid "Not top-level directory.\n"
 msgstr "並非最上層目錄。\n"
 
@@ -4318,7 +4316,7 @@ msgstr "號誌太多貼文。\n"
 
 #: winerror.mc:951
 msgid "Read/WriteProcessMemory partially completed.\n"
-msgstr "讀取/寫入進程記憶體已部分完成。\n"
+msgstr "讀取/寫入行程記憶體已部分完成。\n"
 
 #: winerror.mc:956
 msgid "The oplock wasn't granted.\n"
@@ -4526,7 +4524,7 @@ msgstr "服務限定的錯誤。\n"
 
 #: winerror.mc:1211
 msgid "Process aborted.\n"
-msgstr "進程已取消。\n"
+msgstr "行程已取消。\n"
 
 #: winerror.mc:1216
 msgid "Service dependency failed.\n"
@@ -4582,7 +4580,7 @@ msgstr "無法偵測到驅動程式的失敗。\n"
 
 #: winerror.mc:1281
 msgid "Process abort cannot be detected.\n"
-msgstr "無法偵測到進程中止。\n"
+msgstr "無法偵測到行程中止。\n"
 
 #: winerror.mc:1286
 msgid "No recovery program for service.\n"
@@ -5322,7 +5320,7 @@ msgstr "不當的描述元格式。\n"
 
 #: winerror.mc:2211
 msgid "Not a logon process.\n"
-msgstr "不是個登錄進程。\n"
+msgstr "不是個登錄行程。\n"
 
 #: winerror.mc:2216
 msgid "Logon session ID exists.\n"
@@ -6566,7 +6564,7 @@ msgstr "重試傳送(&T):"
 
 #: localui.rc:29
 msgid "'%s' is not a valid port name"
-msgstr "「%s」不是有效的連接埠名稱"
+msgstr "%s 不是有效的連接埠名稱"
 
 #: localui.rc:30
 msgid "Port %s already exists"
@@ -6786,7 +6784,7 @@ msgstr "壓縮品質(&Q)："
 
 #: msvfw32.rc:46
 msgid "&Key Frame Every"
-msgstr "關鍵畫格/每(&K)"
+msgstr "關鍵影格/每(&K)"
 
 #: msvfw32.rc:50
 msgid "&Data Rate"
@@ -6798,7 +6796,7 @@ msgstr "kB/s"
 
 #: msvfw32.rc:25
 msgid "Full Frames (Uncompressed)"
-msgstr "全畫格(未壓縮)"
+msgstr "完整影格(未壓縮)"
 
 #: msvidc32.rc:26
 msgid "Wine Video 1 video codec"
@@ -7315,7 +7313,7 @@ msgstr "複製原廠檔案："
 
 #: setupapi.rc:28
 msgid "The file '%1' on %2 is needed"
-msgstr "需要檔案「%1」存於 %2"
+msgstr "需要檔案 %1 存於 %2"
 
 #: setupapi.rc:29 ipconfig.rc:31
 msgid "Unknown"
@@ -7755,7 +7753,7 @@ msgstr "關於 %s"
 
 #: shell32.rc:320
 msgid "Wine &license"
-msgstr "使用許可(&l)"
+msgstr "使用許可(&L)"
 
 #: shell32.rc:325
 msgid "Running on %s"
@@ -7769,7 +7767,7 @@ msgstr "Wine 開發人員:"
 msgid ""
 "Type the name of a program, folder, document, or Internet resource, and Wine "
 "will open it for you."
-msgstr "輸入程式，目錄，檔案或者Internet資源名，Wine將為您開啟它。"
+msgstr "輸入程式，目錄，檔案或者 Internet 資源名，Wine 將為您開啟它。"
 
 #: shell32.rc:335
 msgid "&Open:"
@@ -7900,7 +7898,7 @@ msgstr "印表套頁"
 
 #: shell32.rc:211 winhlp32.rc:45
 msgid "History"
-msgstr "紀錄"
+msgstr "記錄"
 
 #: shell32.rc:212
 msgid "Program Files"
@@ -8016,7 +8014,7 @@ msgstr "確認資料夾的刪除"
 
 #: shell32.rc:170
 msgid "Are you sure you want to delete '%1'?"
-msgstr "確定要刪除『%1』？"
+msgstr "確定要刪除 %1？"
 
 #: shell32.rc:171
 msgid "Are you sure you want to delete these %1 items?"
@@ -8032,7 +8030,7 @@ msgid ""
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"這個資料夾已經含有名為『%1』的檔案。\n"
+"這個資料夾已經含有名為 %1 的檔案。\n"
 "\n"
 "您要置換它嗎？"
 
@@ -8043,11 +8041,11 @@ msgstr "確定要刪除已選項目？"
 #: shell32.rc:174
 msgid ""
 "Are you sure that you want to send '%1' and all its content to the Trash?"
-msgstr "您確定要將『%1』和它的所有內容送到回收筒？"
+msgstr "您確定要將 %1 和它的所有內容送到回收筒？"
 
 #: shell32.rc:173
 msgid "Are you sure that you want to send '%1' to the Trash?"
-msgstr "您確定要將『%1』送到回收筒？"
+msgstr "您確定要將 %1 送到回收筒？"
 
 #: shell32.rc:175
 msgid "Are you sure that you want to send these %1 items to the Trash?"
@@ -8055,7 +8053,7 @@ msgstr "您確定要將這 %1 個項目送到回收筒？"
 
 #: shell32.rc:176
 msgid "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
-msgstr "項目『%1』未送到回收筒。您要代之以刪除它嗎？"
+msgstr "項目 %1 未送到回收筒。您要代之以刪除它嗎？"
 
 #: shell32.rc:183
 msgid ""
@@ -8065,7 +8063,7 @@ msgid ""
 "selected folder they will be replaced. Do you still want to move or copy\n"
 "the folder?"
 msgstr ""
-"這個資料夾已經含有名為『%1』的資料夾。\n"
+"這個資料夾已經含有名為 %1 的資料夾。\n"
 "\n"
 "如果在目的資料夾中的檔案，和在已選資料夾中\n"
 "的檔案同名，那麼它們將被置換。您仍然要移動或複製\n"
@@ -8097,7 +8095,7 @@ msgstr "沒有任何 Windows 程式被組配以開啟這種型態的檔案。"
 
 #: shell32.rc:243
 msgid "Are you sure you wish to permanently delete '%1'?"
-msgstr "您確定希望永久刪除『%1』？"
+msgstr "您確定希望永久刪除 %1？"
 
 #: shell32.rc:244
 msgid "Are you sure you wish to permanently delete these %1 items?"
@@ -8198,44 +8196,36 @@ msgid "Security Warning"
 msgstr "安全警告"
 
 #: urlmon.rc:32
-#, fuzzy
-#| msgid "Do you want to continue anyway?"
 msgid "Do you want to install this software?"
-msgstr "您無論如何都要繼續？"
+msgstr "您要安裝這個軟體？"
 
 #: urlmon.rc:34 explorer.rc:29
 msgid "Location:"
 msgstr "位址："
 
 #: urlmon.rc:36
-#, fuzzy
-#| msgid "Install/Uninstall"
 msgid "Don't install"
-msgstr "安裝/移除"
+msgstr "不要安裝"
 
 #: urlmon.rc:40
 msgid ""
 "When installed, an ActiveX component has full access to your computer. Do "
 "not click install unless you have absolute trust in the above source."
 msgstr ""
+"ActiveX 組成在安裝之後就能任意存取您的電腦。除非您絕對信賴以上的來源，否則不"
+"要按下安裝。"
 
 #: urlmon.rc:48
-#, fuzzy
-#| msgid "Installation transform failed to apply.\n"
 msgid "Installation of component failed: %08x"
-msgstr "無法套用安裝變換。\n"
+msgstr "無法安裝組成：%08x"
 
 #: urlmon.rc:49
-#, fuzzy
-#| msgid "&Install"
 msgid "Install (%d)"
-msgstr "安裝(&I)"
+msgstr "安裝 (%d)"
 
 #: urlmon.rc:50
-#, fuzzy
-#| msgid "&Install"
 msgid "Install"
-msgstr "安裝(&I)"
+msgstr "安裝"
 
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
 msgctxt "window"
@@ -8563,7 +8553,7 @@ msgstr "裝置驅動程式有問題。驅動程式已關閉。發生無法存取
 
 #: winmm.rc:76
 msgid "Cannot use 'all' as the device name with the specified command."
-msgstr "無法使用『all』做為指定命令的裝置名稱。"
+msgstr "無法使用 all 做為指定命令的裝置名稱。"
 
 #: winmm.rc:77
 msgid ""
@@ -8617,7 +8607,7 @@ msgid ""
 "The device driver is already in use. To share it, use the 'shareable' "
 "parameter with each 'open' command."
 msgstr ""
-"裝置驅動程式已在使用中。要分享它，請使用『shareable』參數於每個『open』命令。"
+"裝置驅動程式已在使用中。要分享它，請使用 shareable 參數於每個 open 命令。"
 
 #: winmm.rc:87
 msgid ""
@@ -8659,11 +8649,11 @@ msgstr "無法儲存未命名的檔案。請提供一個檔名。"
 
 #: winmm.rc:94
 msgid "You must specify an alias when using the 'new' parameter."
-msgstr "使用『new』參數時，您必須指定別名。"
+msgstr "使用 new 參數時，您必須指定別名。"
 
 #: winmm.rc:95
 msgid "Cannot use the 'notify' flag with auto-opened devices."
-msgstr "無法於自動開啟的裝置使用『notify』旗標。"
+msgstr "無法於自動開啟的裝置使用 notify 旗標。"
 
 #: winmm.rc:96
 msgid "Cannot use a filename with the specified device."
@@ -8881,7 +8871,7 @@ msgstr "輸出檔案名稱(&O)："
 
 #: winspool.rc:28
 msgid "The output file already exists. Click OK to overwrite."
-msgstr "輸出檔案已存在, 按「確定」以覆寫。"
+msgstr "輸出檔案已存在，按「確定」以覆寫。"
 
 #: winspool.rc:29
 msgid "Unable to create the output file."
@@ -9469,7 +9459,7 @@ msgstr ""
 "(包含目前儲存裝置字母) (如同指令提示符號 $p$g)。\n"
 "\n"
 "提示字串也可以經由改變 PROMPT 環境變數而變更，\n"
-"因此命令『SET PROMPT=文字』與『PROMPT 文字』具有相同的效果。\n"
+"因此命令 SET PROMPT=text 與 PROMPT text 具有相同的效果。\n"
 
 #: cmd.rc:153
 msgid ""
@@ -9834,7 +9824,7 @@ msgstr "缺少用於延伸檔名 %1 的檔案關聯\n"
 
 #: cmd.rc:321
 msgid "No open command associated with file type '%1'\n"
-msgstr "沒有與檔案類型『%1』相關聯的開啟命令\n"
+msgstr "沒有與檔案類型 %1 相關聯的開啟命令\n"
 
 #: cmd.rc:322
 msgid "Overwrite %1?"
@@ -9886,7 +9876,7 @@ msgstr "環境變數 %1 未定義\n"
 
 #: cmd.rc:336 xcopy.rc:38
 msgid "Failed to open '%1'\n"
-msgstr "開啟「%1」失敗\n"
+msgstr "開啟 %1 失敗\n"
 
 #: cmd.rc:337
 msgid "Cannot call batch label outside of a batch script\n"
@@ -9942,10 +9932,8 @@ msgid "Wine Command Prompt"
 msgstr "Wine 命令提示符號"
 
 #: cmd.rc:349
-#, fuzzy
-#| msgid "CMD Version %1!S!\n"
 msgid "Wine CMD Version %1!S!\n"
-msgstr "CMD 版本 %1!S!\n"
+msgstr "Wine CMD 版本 %1!S!\n"
 
 #: cmd.rc:350
 msgid "More? "
@@ -9974,31 +9962,31 @@ msgstr " (是|否|全部)"
 #: cmd.rc:356
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
-msgstr ""
+msgstr "無法識別 %1 為內部、外部命令或是批次命令稿。\n"
 
 #: cmd.rc:357
 msgid "Division by zero error.\n"
-msgstr ""
+msgstr "被零除的錯誤。\n"
 
 #: cmd.rc:358
 msgid "Expected an operand.\n"
-msgstr ""
+msgstr "預期為一個運算元。\n"
 
 #: cmd.rc:359
-#, fuzzy
-#| msgid "Unexpected network error.\n"
 msgid "Expected an operator.\n"
-msgstr "未預期的網路錯誤。\n"
+msgstr "預期為一個運算子。\n"
 
 #: cmd.rc:360
 msgid "Mismatch in parentheses.\n"
-msgstr ""
+msgstr "小括號不匹配。\n"
 
 #: cmd.rc:361
 msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"
 msgstr ""
+"不當的數字形式 - 必須是十進位 (12)、\n"
+" 十六進位 (0x34) 或八進位 (056) 之一。\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -10018,7 +10006,7 @@ msgstr "用法：主機名稱\n"
 
 #: hostname.rc:28
 msgid "Error: Invalid option '%c'.\n"
-msgstr "錯誤：無效的選項『%c』。\n"
+msgstr "錯誤：無效的選項 %c。\n"
 
 #: hostname.rc:29
 msgid ""
@@ -10047,10 +10035,8 @@ msgid "Connection-specific DNS suffix"
 msgstr "特定連線的 DNS 字尾"
 
 #: ipconfig.rc:33
-#, fuzzy
-#| msgid "IP address"
 msgid "IPv4 address"
-msgstr "IP 位址"
+msgstr "IPv4 位址"
 
 #: ipconfig.rc:34
 msgid "Hostname"
@@ -10093,10 +10079,8 @@ msgid "Default gateway"
 msgstr "預設閘道"
 
 #: ipconfig.rc:47
-#, fuzzy
-#| msgid "IP address"
 msgid "IPv6 address"
-msgstr "IP 位址"
+msgstr "IPv6 位址"
 
 #: net.rc:27
 msgid ""
@@ -10110,11 +10094,11 @@ msgid ""
 msgstr ""
 "這個命令的語法是：\n"
 "\n"
-"NET 命令 [引數]\n"
+"NET command [引數]\n"
 "    或\n"
-"NET 命令 /HELP\n"
+"NET command /HELP\n"
 "\n"
-"其中『命令』可以是 HELP, START, STOP 或 USE 之一。\n"
+"其中 command 可以是 HELP, START, STOP 或 USE 之一。\n"
 
 #: net.rc:28
 msgid ""
@@ -10127,9 +10111,9 @@ msgid ""
 msgstr ""
 "這個命令的語法是：\n"
 "\n"
-"NET START [服務]\n"
+"NET START [service]\n"
 "\n"
-"如果『服務』被省略，就顯示執行中服務的清單，否則『服務』表示要啟動的服務名"
+"如果 service 被省略，就顯示執行中服務的清單，否則 service 表示要啟動的服務名"
 "稱。\n"
 
 #: net.rc:29
@@ -10142,9 +10126,9 @@ msgid ""
 msgstr ""
 "這個命令的語法是：\n"
 "\n"
-"NET STOP 服務\n"
+"NET STOP service\n"
 "\n"
-"其中『服務』是要停止的服務名稱。\n"
+"其中 service 是要停止的服務名稱。\n"
 
 #: net.rc:30
 msgid "Stopping dependent service: %1\n"
@@ -10229,152 +10213,116 @@ msgid "The following services are running:\n"
 msgstr "下列服務正在執行：\n"
 
 #: netstat.rc:27
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Active Connections"
-msgstr "區域網路連線"
+msgstr "作用中的連線"
 
 #: netstat.rc:28
 msgid "Proto"
-msgstr ""
+msgstr "協定"
 
 #: netstat.rc:29
-#, fuzzy
-#| msgid "Email Address"
 msgid "Local Address"
-msgstr "電子郵件地址"
+msgstr "內部地址"
 
 #: netstat.rc:30
-#, fuzzy
-#| msgid "Street Address"
 msgid "Foreign Address"
-msgstr "街道地址"
+msgstr "外部地址"
 
 #: netstat.rc:31
-#, fuzzy
-#| msgid "Status"
 msgid "State"
 msgstr "狀態"
 
 #: netstat.rc:32
-#, fuzzy
-#| msgid "Interfaces"
 msgid "Interface Statistics"
-msgstr "介面"
+msgstr "介面統計"
 
 #: netstat.rc:33
 msgid "Sent"
-msgstr ""
+msgstr "已發送"
 
 #: netstat.rc:34
 msgid "Received"
-msgstr ""
+msgstr "已接收"
 
 #: netstat.rc:35
-#, fuzzy
-#| msgid "bytes"
 msgid "Bytes"
 msgstr "位元組"
 
 #: netstat.rc:36
 msgid "Unicast packets"
-msgstr ""
+msgstr "單點傳送封包"
 
 #: netstat.rc:37
 msgid "Non-unicast packets"
-msgstr ""
+msgstr "非單點傳送封包"
 
 #: netstat.rc:38
-#, fuzzy
-#| msgid "Disclaimer"
 msgid "Discards"
-msgstr "免責聲明"
+msgstr "丟棄"
 
 #: netstat.rc:39
-#, fuzzy
-#| msgid "Error"
 msgid "Errors"
 msgstr "錯誤"
 
 #: netstat.rc:40
-#, fuzzy
-#| msgid "Unknown port.\n"
 msgid "Unknown protocols"
-msgstr "不明通訊埠。\n"
+msgstr "不明協定"
 
 #: netstat.rc:41
 msgid "TCP Statistics for IPv4"
-msgstr ""
+msgstr "IPv4 的 TCP 統計"
 
 #: netstat.rc:42
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Active Opens"
-msgstr "區域網路連線"
+msgstr "主動的開啟"
 
 #: netstat.rc:43
 msgid "Passive Opens"
-msgstr ""
+msgstr "被動的開啟"
 
 #: netstat.rc:44
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Failed Connection Attempts"
-msgstr "區域網路連線"
+msgstr "失敗的連線嘗試"
 
 #: netstat.rc:45
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Reset Connections"
-msgstr "區域網路連線"
+msgstr "重置的連線"
 
 #: netstat.rc:46
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Current Connections"
-msgstr "區域網路連線"
+msgstr "目前的連線"
 
 #: netstat.rc:47
-#, fuzzy
-#| msgid "Segment locked.\n"
 msgid "Segments Received"
-msgstr "已鎖定資料段。\n"
+msgstr "已接收資料段"
 
 #: netstat.rc:48
-#, fuzzy
-#| msgid "Segment locked.\n"
 msgid "Segments Sent"
-msgstr "已鎖定資料段。\n"
+msgstr "已發送資料段"
 
 #: netstat.rc:49
 msgid "Segments Retransmitted"
-msgstr ""
+msgstr "已重新傳送的資料段"
 
 #: netstat.rc:50
 msgid "UDP Statistics for IPv4"
-msgstr ""
+msgstr "IPv4 的 UDP 統計"
 
 #: netstat.rc:51
-#, fuzzy
-#| msgid "Segment locked.\n"
 msgid "Datagrams Received"
-msgstr "已鎖定資料段。\n"
+msgstr "已接收的資料包"
 
 #: netstat.rc:52
-#, fuzzy
-#| msgid "Local Port"
 msgid "No Ports"
-msgstr "本機連接埠"
+msgstr "無連接埠"
 
 #: netstat.rc:53
-#, fuzzy
-#| msgid "Decoding Error"
 msgid "Receive Errors"
-msgstr "解碼錯誤"
+msgstr "接收的錯誤"
 
 #: netstat.rc:54
 msgid "Datagrams Sent"
-msgstr ""
+msgstr "已發送的資料包"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
@@ -10558,7 +10506,7 @@ msgstr "(未命名)"
 
 #: notepad.rc:74 winedbg.rc:38
 msgid "Text files (*.txt)"
-msgstr "文本檔案 (*.txt)"
+msgstr "純文字檔案 (*.txt)"
 
 #: notepad.rc:77
 msgid ""
@@ -10566,7 +10514,7 @@ msgid ""
 "\n"
 "Do you want to create a new file?"
 msgstr ""
-"檔案「%s」不存在\n"
+"檔案 %s 不存在\n"
 "\n"
 "您想新增一個檔案嗎？"
 
@@ -10576,13 +10524,13 @@ msgid ""
 "\n"
 "Would you like to save the changes?"
 msgstr ""
-"檔案「%s」正文已更改\n"
+"檔案 %s 正文已更改\n"
 "\n"
 "是否儲存更改？"
 
 #: notepad.rc:80
 msgid "'%s' could not be found."
-msgstr "找不到「%s」。"
+msgstr "找不到 %s。"
 
 #: notepad.rc:82
 msgid "Unicode (UTF-16)"
@@ -10638,11 +10586,11 @@ msgstr "&CoCreateInstance 參數"
 
 #: oleview.rc:41
 msgid "&In-process server"
-msgstr "同進程伺服器(&I)"
+msgstr "同行程伺服器(&I)"
 
 #: oleview.rc:42
 msgid "In-process &handler"
-msgstr "同進程處理常式(&H)"
+msgstr "同行程處理常式(&H)"
 
 #: oleview.rc:43
 msgid "&Local server"
@@ -10706,7 +10654,7 @@ msgstr "另存為(&S)…"
 
 #: oleview.rc:84
 msgid "&Group by type kind"
-msgstr "按類型分組(&G)"
+msgstr "依類型分組(&G)"
 
 #: oleview.rc:154
 msgid "Connect to another machine"
@@ -10726,11 +10674,11 @@ msgstr "系統設定"
 
 #: oleview.rc:169
 msgid "&Enable Distributed COM"
-msgstr "啟用分散式COM(&E)"
+msgstr "啟用分散式 COM(&E)"
 
 #: oleview.rc:170
 msgid "Enable &Remote Connections (Win95 only)"
-msgstr "啟用遠端連線(&R)(限Win95)"
+msgstr "啟用遠端連線(&R)(限 Win95)"
 
 #: oleview.rc:171
 msgid ""
@@ -10738,7 +10686,7 @@ msgid ""
 "They have no effect on Wine performance."
 msgstr ""
 "這些設定只改變註冊表內的值。\n"
-"它對Wine的性能沒有影響。"
+"它對 Wine 的性能沒有影響。"
 
 #: oleview.rc:178
 msgid "Default Interface Viewer"
@@ -10859,11 +10807,11 @@ msgstr "顯示程式資訊、版本號及版權"
 
 #: oleview.rc:113
 msgid "Ask for an in-process server when calling CoGetClassObject"
-msgstr "呼叫 CoGetClassObject 時要求一個同進程伺服器"
+msgstr "呼叫 CoGetClassObject 時要求一個同行程伺服器"
 
 #: oleview.rc:114
 msgid "Ask for an in-process handler when calling CoGetClassObject"
-msgstr "呼叫 CoGetClassObject 時要求一個同進程處理常式"
+msgstr "呼叫 CoGetClassObject 時要求一個同行程處理常式"
 
 #: oleview.rc:115
 msgid "Ask for a local server when calling CoGetClassObject"
@@ -10879,7 +10827,7 @@ msgstr "物件類型"
 
 #: oleview.rc:129
 msgid "Grouped by Component Category"
-msgstr "按元件類型分組"
+msgstr "依元件類型分組"
 
 #: oleview.rc:130
 msgid "OLE 1.0 Objects"
@@ -10951,7 +10899,7 @@ msgstr "關閉視窗"
 
 #: oleview.rc:126
 msgid "Group typeinfos by kind"
-msgstr "按類別分組"
+msgstr "依類別分組"
 
 #: progman.rc:30
 msgid "&New..."
@@ -11111,11 +11059,11 @@ msgstr "資訊"
 
 #: progman.rc:65
 msgid "Delete group `%s'?"
-msgstr "是否刪除程式群組「%s」？"
+msgstr "是否刪除程式群組 %s？"
 
 #: progman.rc:66
 msgid "Delete program `%s'?"
-msgstr "是否刪除程式「%s」？"
+msgstr "是否刪除程式 %s？"
 
 #: progman.rc:67
 msgid "Not implemented"
@@ -11123,18 +11071,18 @@ msgstr "未實作"
 
 #: progman.rc:68
 msgid "Error reading `%s'."
-msgstr "讀取檔案「%s」時發生錯誤。"
+msgstr "讀取檔案 %s 時發生錯誤。"
 
 #: progman.rc:69
 msgid "Error writing `%s'."
-msgstr "寫入檔案「%s」時發生錯誤。"
+msgstr "寫入檔案 %s 時發生錯誤。"
 
 #: progman.rc:72
 msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
 msgstr ""
-"無法開啟群組檔案「%s」。\n"
+"無法開啟群組檔案 %s。\n"
 "是否繼續嘗試？"
 
 #: progman.rc:74
@@ -11147,11 +11095,11 @@ msgstr "在 %s 中發現未知特性"
 
 #: progman.rc:76
 msgid "File `%s' exists. Not overwritten."
-msgstr "檔案「%s」已經存在。不覆蓋已有檔案。"
+msgstr "檔案 %s 已經存在。不覆蓋已有檔案。"
 
 #: progman.rc:77
 msgid "Save group as `%s to prevent overwriting original files."
-msgstr "將程式組儲存為「%s」可以避免復蓋已有的檔案。"
+msgstr "將程式組儲存為 %s 可以避免復蓋已有的檔案。"
 
 #: progman.rc:81
 msgid "Libraries (*.dll)"
@@ -11496,11 +11444,11 @@ msgstr "新增一個新的雙字組值"
 
 #: regedit.rc:150
 msgid "Imports a text file into the registry"
-msgstr "將文本檔案匯入註冊表"
+msgstr "將純文字檔案匯入註冊表"
 
 #: regedit.rc:152
 msgid "Exports all or part of the registry to a text file"
-msgstr "將註冊表導出到文本檔案"
+msgstr "將註冊表導出到純文字檔案"
 
 #: regedit.rc:153
 msgid "Prints all or part of the registry"
@@ -11512,7 +11460,7 @@ msgstr "顯示程式資訊、版本號及版權"
 
 #: regedit.rc:178
 msgid "Can't query value '%s'"
-msgstr "無法查詢數值「%s」"
+msgstr "無法查詢數值 %s"
 
 #: regedit.rc:179
 msgid "Can't edit keys of this type (%u)"
@@ -11528,11 +11476,11 @@ msgstr "確認刪除數值"
 
 #: regedit.rc:182
 msgid "Are you sure you want to delete value '%s'?"
-msgstr "您確認要刪除這個數值嗎「%s」？"
+msgstr "您確認要刪除這個數值 %s 嗎？"
 
 #: regedit.rc:186
 msgid "Search string '%s' not found"
-msgstr "找不到搜尋的字串「%s」"
+msgstr "找不到搜尋的字串 %s"
 
 #: regedit.rc:183
 msgid "Are you sure you want to delete these values?"
@@ -11548,7 +11496,7 @@ msgstr "新索引鍵 #%d"
 
 #: regedit.rc:177
 msgid "Can't query key '%s'"
-msgstr "無法查詢索引鍵「%s」"
+msgstr "無法查詢索引鍵 %s"
 
 #: regedit.rc:149
 msgid "Adds a new multi-string value"
@@ -11573,7 +11521,7 @@ msgstr "無法翻譯指定的 Unix 檔名到 DOS 檔名。"
 
 #: taskkill.rc:27
 msgid "Usage: taskkill [/?] [/f] [/im ProcessName | /pid ProcessID]\n"
-msgstr "用法：taskkill [/?] [/f] [/im 進程名稱 | /pid 進程識別號]\n"
+msgstr "用法：taskkill [/?] [/f] [/im 行程名稱 | /pid 行程識別號]\n"
 
 #: taskkill.rc:28
 msgid "Error: Unknown or invalid command line option specified.\n"
@@ -11597,36 +11545,36 @@ msgstr "錯誤：選項 /im 和 /pid 彼此互斥。\n"
 
 #: taskkill.rc:33
 msgid "Close message sent to top-level windows of process with PID %1!u!.\n"
-msgstr "已發送關閉訊息給具有 PID %1!u! 的進程的最上層視窗。\n"
+msgstr "已發送關閉訊息給具有 PID %1!u! 的行程的最上層視窗。\n"
 
 #: taskkill.rc:34
 msgid ""
 "Close message sent to top-level windows of process \"%1\" with PID %2!u!.\n"
-msgstr "已發送關閉訊息給具有 PID %2!u! 的進程「%1」的最上層視窗。\n"
+msgstr "已發送關閉訊息給具有 PID %2!u! 的行程 %1 的最上層視窗。\n"
 
 #: taskkill.rc:35
 msgid "Process with PID %1!u! was forcibly terminated.\n"
-msgstr "具有 PID %1!u! 的進程已被強制終止。\n"
+msgstr "具有 PID %1!u! 的行程已被強制終止。\n"
 
 #: taskkill.rc:36
 msgid "Process \"%1\" with PID %2!u! was forcibly terminated.\n"
-msgstr "具有 PID %2!u! 的進程「%1」已被強制終止。\n"
+msgstr "具有 PID %2!u! 的行程 %1 已被強制終止。\n"
 
 #: taskkill.rc:37
 msgid "Error: Could not find process \"%1\".\n"
-msgstr "錯誤：找不到進程「%1」。\n"
+msgstr "錯誤：找不到行程 %1。\n"
 
 #: taskkill.rc:38
 msgid "Error: Unable to enumerate the process list.\n"
-msgstr "錯誤：無法列舉進程清單。\n"
+msgstr "錯誤：無法列舉行程清單。\n"
 
 #: taskkill.rc:39
 msgid "Error: Unable to terminate process \"%1\".\n"
-msgstr "錯誤：無法終止進程「%1」。\n"
+msgstr "錯誤：無法終止行程 %1。\n"
 
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
-msgstr "錯誤：不允許進程自我終止。\n"
+msgstr "錯誤：不允許行程自我終止。\n"
 
 #: taskmgr.rc:37 taskmgr.rc:108
 msgid "&New Task (Run...)"
@@ -11678,7 +11626,7 @@ msgstr "選擇行(&S)…"
 
 #: taskmgr.rc:69 taskmgr.rc:258
 msgid "&CPU History"
-msgstr "&CPU 紀錄"
+msgstr "&CPU 記錄"
 
 #: taskmgr.rc:71 taskmgr.rc:259
 msgid "&One Graph, All CPUs"
@@ -11726,15 +11674,15 @@ msgstr "結束工作(&E)"
 
 #: taskmgr.rc:130
 msgid "&Go To Process"
-msgstr "跳到進程(&G)"
+msgstr "跳到行程(&G)"
 
 #: taskmgr.rc:149 taskmgr.rc:363
 msgid "&End Process"
-msgstr "結束進程(&E)"
+msgstr "結束行程(&E)"
 
 #: taskmgr.rc:150
 msgid "End Process &Tree"
-msgstr "結束進程樹(&T)"
+msgstr "結束行程樹(&T)"
 
 #: taskmgr.rc:152 winedbg.rc:29
 msgid "&Debug"
@@ -11774,7 +11722,7 @@ msgstr "新工作(&N)…"
 
 #: taskmgr.rc:364
 msgid "&Show processes from all users"
-msgstr "顯示所有使用者的進程(&S)"
+msgstr "顯示所有使用者的行程(&S)"
 
 #: taskmgr.rc:372
 msgid "CPU usage"
@@ -11810,7 +11758,7 @@ msgstr "執行緒"
 
 #: taskmgr.rc:380 taskmgr.rc:263
 msgid "Processes"
-msgstr "進程"
+msgstr "行程"
 
 #: taskmgr.rc:387 taskmgr.rc:396 taskmgr.rc:405
 msgid "Total"
@@ -11838,11 +11786,11 @@ msgstr "非置換頁"
 
 #: taskmgr.rc:414
 msgid "CPU usage history"
-msgstr "CPU 使用紀錄"
+msgstr "CPU 使用記錄"
 
 #: taskmgr.rc:415
 msgid "Memory usage history"
-msgstr "記憶體使用紀錄"
+msgstr "記憶體使用記錄"
 
 #: taskmgr.rc:428 taskmgr.rc:327
 msgid "Debug Channels"
@@ -11856,7 +11804,7 @@ msgstr "處理器親和度"
 msgid ""
 "The Processor Affinity setting controls which CPUs the process will be "
 "allowed to execute on."
-msgstr "處理器親和度設定控制各進程使用CPU分配情況。"
+msgstr "處理器親和度設定控制各行程使用 CPU 分配情況。"
 
 #: taskmgr.rc:446
 msgid "CPU 0"
@@ -11993,7 +11941,7 @@ msgstr "選擇顯示行"
 #: taskmgr.rc:519
 msgid ""
 "Select the columns that will appear on the Process page of the Task Manager."
-msgstr "請選擇工作管理員中進程分頁的顯示行。"
+msgstr "請選擇工作管理員中行程分頁的顯示行。"
 
 #: taskmgr.rc:521
 msgid "&Image Name"
@@ -12001,7 +11949,7 @@ msgstr "程式名稱(&I)"
 
 #: taskmgr.rc:523
 msgid "&PID (Process Identifier)"
-msgstr "&PID (進程編號)"
+msgstr "&PID (行程編號)"
 
 #: taskmgr.rc:525
 msgid "&CPU Usage"
@@ -12165,7 +12113,7 @@ msgstr "視窗最大化"
 
 #: taskmgr.rc:209
 msgid "Cascades the windows diagonally on the desktop"
-msgstr "在桌面上按對角線將視窗疊放"
+msgstr "在桌面上依對角線將視窗疊放"
 
 #: taskmgr.rc:210
 msgid "Brings the window front, but does not switch to it"
@@ -12185,11 +12133,11 @@ msgstr "結束工作管理員"
 
 #: taskmgr.rc:215
 msgid "Shows 16-bit tasks under the associated ntvdm.exe"
-msgstr "顯示 16-位元工作及有關的ntvdm.exe"
+msgstr "顯示 16 位元工作及有關的 ntvdm.exe"
 
 #: taskmgr.rc:216
 msgid "Select which columns will be visible on the Process page"
-msgstr "選擇在進程分頁的顯示行"
+msgstr "選擇在行程分頁的顯示行"
 
 #: taskmgr.rc:217
 msgid "Displays kernel time in the performance graphs"
@@ -12197,11 +12145,11 @@ msgstr "在效能圖表上顯示核心使用時間"
 
 #: taskmgr.rc:219
 msgid "A single history graph shows total CPU usage"
-msgstr "在一張紀錄圖表顯示所有CPU用量"
+msgstr "在一張記錄圖表顯示所有 CPU 用量"
 
 #: taskmgr.rc:220
 msgid "Each CPU has its own history graph"
-msgstr "每一個CPU有自己的紀錄圖表"
+msgstr "每一個 CPU 有自己的記錄圖表"
 
 #: taskmgr.rc:222
 msgid "Brings a task to the foreground, switch focus to that task"
@@ -12221,43 +12169,43 @@ msgstr "取消工作管理員隱藏狀態"
 
 #: taskmgr.rc:230
 msgid "Removes the process from the system"
-msgstr "將進程從系統中移除"
+msgstr "將行程從系統中移除"
 
 #: taskmgr.rc:232
 msgid "Removes this process and all descendants from the system"
-msgstr "將進程及其附屬進程從系統中移除"
+msgstr "將行程及其附屬行程從系統中移除"
 
 #: taskmgr.rc:233
 msgid "Attaches the debugger to this process"
-msgstr "將除錯器接到本進程"
+msgstr "將除錯器接到本行程"
 
 #: taskmgr.rc:235
 msgid "Controls which processors the process will be allowed to run on"
-msgstr "控制各進程使用那個處理器"
+msgstr "控制各行程使用那個處理器"
 
 #: taskmgr.rc:237
 msgid "Sets process to the REALTIME priority class"
-msgstr "將進程設為即時優先等級"
+msgstr "將行程設為即時優先等級"
 
 #: taskmgr.rc:238
 msgid "Sets process to the HIGH priority class"
-msgstr "將進程設為高優先級"
+msgstr "將行程設為高優先級"
 
 #: taskmgr.rc:240
 msgid "Sets process to the ABOVE NORMAL priority class"
-msgstr "將進程設為中等以上優先級"
+msgstr "將行程設為中等以上優先級"
 
 #: taskmgr.rc:242
 msgid "Sets process to the NORMAL priority class"
-msgstr "將進程設為中等優先級"
+msgstr "將行程設為中等優先級"
 
 #: taskmgr.rc:244
 msgid "Sets process to the BELOW NORMAL priority class"
-msgstr "將進程設為中等以下優先級"
+msgstr "將行程設為中等以下優先級"
 
 #: taskmgr.rc:245
 msgid "Sets process to the LOW priority class"
-msgstr "將進程設為低優先級"
+msgstr "將行程設為低優先級"
 
 #: taskmgr.rc:247
 msgid "Controls Debug Channels"
@@ -12273,7 +12221,7 @@ msgstr "CPU 使用率: %3d%%"
 
 #: taskmgr.rc:266
 msgid "Processes: %d"
-msgstr "進程：%d"
+msgstr "行程：%d"
 
 #: taskmgr.rc:267
 msgid "Mem Usage: %1!u!kB / %2!u!kB"
@@ -12353,7 +12301,7 @@ msgid ""
 "cause undesired results including system instability. Are you\n"
 "sure you want to change the priority class?"
 msgstr ""
-"警告：變更這個進程的優先權類別也許會\n"
+"警告：變更這個行程的優先權類別也許會\n"
 "造成預料之外的結果像是系統的不穩定。\n"
 "您確定要變更優先權類別嗎？"
 
@@ -12369,31 +12317,31 @@ msgid ""
 "data before it is terminated. Are you sure you want to\n"
 "terminate the process?"
 msgstr ""
-"警告：終止進程可以造成 undesired\n"
+"警告：終止行程可以造成 undesired\n"
 "結果包含失真的資料和系統 instability。\n"
-"進程將無法被給定的 chance 到儲存它的狀態或\n"
+"行程將無法被給定的 chance 到儲存它的狀態或\n"
 "資料之前它被終止。確定要\n"
-"終止進程？"
+"終止行程？"
 
 #: taskmgr.rc:311
 msgid "Unable to Terminate Process"
-msgstr "無法終止進程"
+msgstr "無法終止行程"
 
 #: taskmgr.rc:313
 msgid ""
 "WARNING: Debugging this process may result in loss of data.\n"
 "Are you sure you wish to attach the debugger?"
 msgstr ""
-"警告：對這個進程偵錯也許會導致資料失真。\n"
+"警告：對這個行程偵錯也許會導致資料失真。\n"
 "您確定希望要附加除錯程式？"
 
 #: taskmgr.rc:314
 msgid "Unable to Debug Process"
-msgstr "無法對進程進行除錯"
+msgstr "無法對行程進行除錯"
 
 #: taskmgr.rc:315
 msgid "The process must have affinity with at least one processor"
-msgstr "進程必須有具備至少一個處理器的近似者"
+msgstr "行程必須有具備至少一個處理器的近似者"
 
 #: taskmgr.rc:316
 msgid "Invalid Option"
@@ -12401,7 +12349,7 @@ msgstr "無效的選項"
 
 #: taskmgr.rc:317
 msgid "Unable to Access or Set Process Affinity"
-msgstr "無法存取或設定進程近似者"
+msgstr "無法存取或設定行程近似者"
 
 #: taskmgr.rc:322
 msgid "System Idle Process"
@@ -12429,7 +12377,7 @@ msgid ""
 "executable.\n"
 "Do you want to remove the uninstall entry from the registry?"
 msgstr ""
-"移除指令執行失敗「%s」, 可能是找不到可執行程式。\n"
+"移除指令執行 %s 失敗，可能是找不到可執行程式。\n"
 "您要將這項移除指令從註冊表中刪除嗎？"
 
 #: view.rc:33
@@ -12469,7 +12417,7 @@ msgid ""
 msgstr ""
 "正在模擬關機，但此程式沒有反應。\n"
 "\n"
-"如果您中斷進程，可能會遺失尚未儲存的資料。"
+"如果您中斷行程，可能會遺失尚未儲存的資料。"
 
 #: wineboot.rc:39
 msgid "Wine"
@@ -12486,8 +12434,8 @@ msgid ""
 "Free Software Foundation; either version 2.1 of the License, or (at your "
 "option) any later version."
 msgstr ""
-"這個程式是自由軟體；您可以遵照自由軟體基金會所制定的 GNU LGPL 2.1 版或者更新"
-"版本的許可條款來修改和重新散布這個程式。"
+"這個程式是自由軟體； 您可以遵照自由軟體基金會所制定的 GNU LGPL 2.1 版或者更新"
+"版本的許可條款， 來修改和重新散布這個程式。"
 
 #: winecfg.rc:134
 msgid "Windows registration information"
@@ -12511,8 +12459,8 @@ msgid ""
 "linked to the Libraries and Graphics tabs to allow you to change system-wide "
 "or per-application settings in those tabs as well."
 msgstr ""
-"Wine 可以對不同程式偽裝成不同版本的 Windows。「函式庫」與「顯示」分頁將連結到"
-"這個分頁，除了調整預設設定，也能調整個別程式的設定。"
+"Wine 可以對不同程式偽裝成不同版本的 Windows。 「函式庫」與「顯示」分頁將連結"
+"到這個分頁， 除了調整預設設定， 也能調整個別程式的設定。"
 
 #: winecfg.rc:150
 msgid "&Add application..."
@@ -13073,7 +13021,7 @@ msgstr "啟用(&E)"
 
 #: wineconsole.rc:72
 msgid "Command history"
-msgstr "指令紀錄"
+msgstr "指令記錄"
 
 #: wineconsole.rc:73
 msgid "&Number of recalled commands:"
@@ -13353,23 +13301,23 @@ msgstr "檔案詳細清單(&A)"
 
 #: winefile.rc:51
 msgid "&Sort by Name"
-msgstr "按檔案名排列(&S)"
+msgstr "依檔案名排列(&S)"
 
 #: winefile.rc:52
 msgid "Sort &by Type"
-msgstr "按類型排列(&B)"
+msgstr "依類型排列(&B)"
 
 #: winefile.rc:53
 msgid "Sort by Si&ze"
-msgstr "按大小排列(&Z)"
+msgstr "依大小排列(&Z)"
 
 #: winefile.rc:54
 msgid "Sort by &Date"
-msgstr "按日期排列(&D)"
+msgstr "依日期排列(&D)"
 
 #: winefile.rc:56
 msgid "Filter by&..."
-msgstr "篩選依照…(&.)"
+msgstr "篩選依據…(&.)"
 
 #: winefile.rc:63
 msgid "&Drive Bar"
@@ -13401,7 +13349,7 @@ msgstr "選擇目的地"
 
 #: winefile.rc:135
 msgid "By File Type"
-msgstr "按類型"
+msgstr "依類型"
 
 #: winefile.rc:140
 msgid "File type"
@@ -13501,22 +13449,16 @@ msgid "Not yet implemented"
 msgstr "尚未實作"
 
 #: winefile.rc:106
-#, fuzzy
-#| msgid "Creation failed.\n"
 msgid "Creation date"
-msgstr "建立失敗。\n"
+msgstr "建立日期"
 
 #: winefile.rc:107
-#, fuzzy
-#| msgid "Access denied.\n"
 msgid "Access date"
-msgstr "存取被拒。\n"
+msgstr "存取日期"
 
 #: winefile.rc:108
-#, fuzzy
-#| msgid "Certification Path"
 msgid "Modification date"
-msgstr "憑證路徑"
+msgstr "變更日期"
 
 #: winefile.rc:109
 msgid "Index/Inode"
@@ -13699,7 +13641,7 @@ msgstr "Wine 說明"
 
 #: winhlp32.rc:83
 msgid "Error while reading the help file `%s'"
-msgstr "載入說明檔案「%s」時發生錯誤"
+msgstr "載入說明檔案 %s 時發生錯誤"
 
 #: winhlp32.rc:85
 msgid "Summary"
@@ -13715,7 +13657,7 @@ msgstr "說明檔案 (*.hlp)"
 
 #: winhlp32.rc:89
 msgid "Cannot find '%s'. Do you want to find this file yourself?"
-msgstr "無法開啟檔案「%s」。 您想要自己搜尋這個檔案嗎？"
+msgstr "無法開啟檔案 %s。 您想要自己搜尋這個檔案嗎？"
 
 #: winhlp32.rc:90
 msgid "Cannot find a richedit implementation... Aborting"
@@ -13759,11 +13701,11 @@ msgstr "找下一個(&N)\tF3"
 
 #: wordpad.rc:54
 msgid "Read-&only"
-msgstr "唯讀(&O))"
+msgstr "唯讀(&O)"
 
 #: wordpad.rc:55
 msgid "&Modified"
-msgstr "已修改(&M)"
+msgstr "已變更(&M)"
 
 #: wordpad.rc:57
 msgid "E&xtras"
@@ -13791,7 +13733,7 @@ msgstr "擷取文字(&G)"
 
 #: wordpad.rc:69 wordpad.rc:262
 msgid "&Format Bar"
-msgstr "格式工具列(&F)"
+msgstr "格式列(&F)"
 
 #: wordpad.rc:70 wordpad.rc:263
 msgid "&Ruler"
@@ -13811,7 +13753,7 @@ msgstr "格式(&O)"
 
 #: wordpad.rc:82 wordpad.rc:105
 msgid "&Bullet points"
-msgstr "子彈點(&B)"
+msgstr "要點(&B)"
 
 #: wordpad.rc:83 wordpad.rc:106
 msgid "&Paragraph..."
@@ -13899,11 +13841,11 @@ msgstr "關閉自動換列(&N)"
 
 #: wordpad.rc:258
 msgid "Wrap text by the &window border"
-msgstr "按視窗寬度(&W)"
+msgstr "依視窗寬度(&W)"
 
 #: wordpad.rc:259
 msgid "Wrap text by the &margin"
-msgstr "按紙張寬度(&M)"
+msgstr "依紙張寬度(&M)"
 
 #: wordpad.rc:260
 msgid "Toolbars"
@@ -13982,7 +13924,7 @@ msgstr "中"
 
 #: wordpad.rc:156
 msgid "Text"
-msgstr "文本文字"
+msgstr "純文字"
 
 #: wordpad.rc:157
 msgid "Rich text"
@@ -14045,7 +13987,7 @@ msgstr "文件"
 
 #: wordpad.rc:181
 msgid "Save changes to '%s'?"
-msgstr "儲存變更到「%s」？"
+msgstr "儲存變更到 %s？"
 
 #: wordpad.rc:182
 msgid "Finished searching the document."
@@ -14103,7 +14045,7 @@ msgstr "無效的參數數量 - 使用 xcopy /? 以獲得說明\n"
 
 #: xcopy.rc:28
 msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
-msgstr "無效的參數『%1』- 使用 xcopy /? 以獲得說明\n"
+msgstr "無效的參數 %1 - 使用 xcopy /? 以獲得說明\n"
 
 #: xcopy.rc:29
 msgid "Press <Enter> to begin copying\n"
@@ -14123,7 +14065,7 @@ msgid ""
 "on the target?\n"
 "(F - File, D - Directory)\n"
 msgstr ""
-"『%1』是一個在目標上的\n"
+"%1 是一個在目標上的\n"
 "檔名或目錄？\n"
 "(F - 檔案，D - 目錄)\n"
 
@@ -14137,11 +14079,11 @@ msgstr "是否覆蓋 %1？ (Yes|No|All)\n"
 
 #: xcopy.rc:37
 msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
-msgstr "將『%1』複製到『%2』時失敗並獲得 r/c %3!d!\n"
+msgstr "將 %1 複製到 %2 時失敗並獲得 r/c %3!d!\n"
 
 #: xcopy.rc:39
 msgid "Failed during reading of '%1'\n"
-msgstr "在讀取『%1』的期間發生了失敗\n"
+msgstr "在讀取 %1 的期間發生了失敗\n"
 
 #: xcopy.rc:43
 msgctxt "File key"
