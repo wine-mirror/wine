@@ -2246,12 +2246,11 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
             src_data = mem;
             dst_data = surface->resource.allocatedMemory;
             TRACE("(%p) : Repacking the surface data from pitch %d to pitch %d\n", surface, src_pitch, dst_pitch);
-            for (y = 1; y < surface->resource.height; ++y)
+            for (y = 0; y < surface->resource.height; ++y)
             {
-                /* skip the first row */
+                memcpy(dst_data, src_data, dst_pitch);
                 src_data += src_pitch;
                 dst_data += dst_pitch;
-                memcpy(dst_data, src_data, dst_pitch);
             }
 
             HeapFree(GetProcessHeap(), 0, mem);
