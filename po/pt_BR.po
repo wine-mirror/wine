@@ -1192,7 +1192,7 @@ msgid ""
 "Make sure that your user name\n"
 "and password are correct."
 msgstr ""
-"Certifique-se de que nome de usuário\n"
+"Certifique-se que o nome do usuário\n"
 "e senha estão corretos."
 
 #: credui.rc:32
@@ -1714,7 +1714,7 @@ msgstr "Verificação de Servidor de Licença"
 
 #: crypt32.rc:152 cryptui.rc:143
 msgid "Smart Card Logon"
-msgstr "Logon de Smart Card"
+msgstr "Logon com Cartão Inteligente"
 
 #: crypt32.rc:153 cryptui.rc:139
 msgid "Digital Rights"
@@ -2360,11 +2360,11 @@ msgstr "Selecione o formato que deseja utilizar:"
 
 #: cryptui.rc:405
 msgid "&DER-encoded X.509 (*.cer)"
-msgstr "&DER-codificado X.509 (.cer)"
+msgstr "X.509 codificado em &DER (.cer)"
 
 #: cryptui.rc:407
 msgid "Ba&se64-encoded X.509 (*.cer):"
-msgstr "Ba&se64-codificado X.509 (.cer):"
+msgstr "X.509 codificado em Ba&se64 (.cer):"
 
 #: cryptui.rc:409
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (*.p7b)"
@@ -2865,11 +2865,11 @@ msgstr "O arquivo especificado já existe. Deseja substituí-lo?"
 
 #: cryptui.rc:153
 msgid "DER-Encoded Binary X.509 (*.cer)"
-msgstr "Binário DER-Codificado X.509 (*.cer)"
+msgstr "Binário X.509 codificado em DER (*.cer)"
 
 #: cryptui.rc:154
 msgid "Base64-Encoded X.509 (*.cer)"
-msgstr "Base64-Codificado X.509 (*.cer)"
+msgstr "X.509 codificado em Base64 (*.cer)"
 
 #: cryptui.rc:157
 msgid "CMS/PKCS #7 Messages (*.p7b)"
@@ -2917,7 +2917,7 @@ msgstr "Digite Palavra Chave"
 
 #: cryptui.rc:170
 msgid "You may password-protect a private key."
-msgstr "Você pode proteger uma chave privada com uma palavra chave."
+msgstr "Você pode proteger uma chave privada com senha."
 
 #: cryptui.rc:171
 msgid "The passwords do not match."
@@ -3010,7 +3010,7 @@ msgstr "Grego"
 
 #: gdi32.rc:29
 msgid "Turkish"
-msgstr "Turquês"
+msgstr "Turco"
 
 #: gdi32.rc:30
 msgid "Hebrew"
@@ -3464,18 +3464,20 @@ msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
 msgstr ""
+"Depois de habilitar/desabilitar um dispositivo, os controles conectados não "
+"serão atualizados até que o applet seja reaberto."
 
 #: joy.rc:47
 msgid "Test Joystick"
-msgstr ""
+msgstr "Testar Controle"
 
 #: joy.rc:51
 msgid "Buttons"
-msgstr ""
+msgstr "Botões"
 
 #: joy.rc:60
 msgid "Test Force Feedback"
-msgstr ""
+msgstr "Testar Force Feedback"
 
 #: joy.rc:64
 msgid "Available Effects"
@@ -3486,6 +3488,8 @@ msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
 msgstr ""
+"Pressione qualquer botão no controle para ativar o efeito escolhido. A "
+"direção do efeito pode ser alterada usando o direcional do controle."
 
 #: joy.rc:28
 msgid "Game Controllers"
@@ -3545,19 +3549,19 @@ msgstr "Caractere inválido"
 
 #: jscript.rc:38
 msgid "Unterminated string constant"
-msgstr "Constante de string não terminada"
+msgstr "String constante não terminada"
 
 #: jscript.rc:39
 msgid "'return' statement outside of function"
-msgstr ""
+msgstr "'return' fora de função"
 
 #: jscript.rc:40
 msgid "Can't have 'break' outside of loop"
-msgstr "Não pode haver 'break' fora de um loop"
+msgstr "Não pode haver 'break' fora de um laço"
 
 #: jscript.rc:41
 msgid "Can't have 'continue' outside of loop"
-msgstr "Não pode haver 'continue' fora de um loop"
+msgstr "Não pode haver 'continue' fora de um laço"
 
 #: jscript.rc:42
 msgid "Label redefined"
@@ -3637,7 +3641,7 @@ msgstr "Tamanho do vetor tem que ser um inteiro finito positivo"
 
 #: jscript.rc:61
 msgid "Array object expected"
-msgstr "Objeto Vetor esperado"
+msgstr "Objeto tipo vetor esperado"
 
 #: winerror.mc:26
 msgid "Success.\n"
@@ -3645,7 +3649,7 @@ msgstr "Sucesso.\n"
 
 #: winerror.mc:31
 msgid "Invalid function.\n"
-msgstr "função inválida.\n"
+msgstr "Função inválida.\n"
 
 #: winerror.mc:36
 msgid "File not found.\n"
@@ -3657,7 +3661,7 @@ msgstr "Caminho não encontrado.\n"
 
 #: winerror.mc:46
 msgid "Too many open files.\n"
-msgstr "Demasiados arquivos abertos.\n"
+msgstr "Muitos arquivos abertos.\n"
 
 #: winerror.mc:51
 msgid "Access denied.\n"
@@ -3969,7 +3973,7 @@ msgstr "Transbordamento de dados.\n"
 
 #: winerror.mc:441
 msgid "No more search handles.\n"
-msgstr "Não há mais handles de busca.\n"
+msgstr "Não há mais manipuladores de busca.\n"
 
 #: winerror.mc:446
 msgid "Invalid target handle.\n"
@@ -4609,7 +4613,7 @@ msgstr "O serviço já existe.\n"
 
 #: winerror.mc:1246
 msgid "System running last-known-good config.\n"
-msgstr "O sistema está usando a última boa configuração conhecida.\n"
+msgstr "O sistema está usando a última configuração boa conhecida.\n"
 
 #: winerror.mc:1251
 msgid "Service dependency deleted.\n"
@@ -4617,7 +4621,7 @@ msgstr "Dependência de serviço excluída.\n"
 
 #: winerror.mc:1256
 msgid "Boot already accepted as last-good config.\n"
-msgstr "Boot já aceito como a última boa configuração.\n"
+msgstr "Boot já aceito como a última configuração boa.\n"
 
 #: winerror.mc:1261
 msgid "Service not started since last boot.\n"
@@ -4693,7 +4697,7 @@ msgstr "Mídia alterada.\n"
 
 #: winerror.mc:1351
 msgid "I/O bus reset.\n"
-msgstr "Reinício do bus de E/S.\n"
+msgstr "Reinício do barramento de E/S.\n"
 
 #: winerror.mc:1356
 msgid "No media in drive.\n"
@@ -5537,7 +5541,7 @@ msgstr "Manipulador de tabela aceleradora inválido.\n"
 
 #: winerror.mc:2416
 msgid "Invalid hook handle.\n"
-msgstr "Manipulador de hook inválido.\n"
+msgstr "Manipulador de gancho inválido.\n"
 
 #: winerror.mc:2421
 msgid "Invalid DWP handle.\n"
@@ -5625,7 +5629,7 @@ msgstr "DC não encontrado.\n"
 
 #: winerror.mc:2526
 msgid "Invalid hook filter.\n"
-msgstr "Filtro de hook inválido.\n"
+msgstr "Filtro de gancho inválido.\n"
 
 #: winerror.mc:2531
 msgid "Invalid filter procedure.\n"
@@ -5637,11 +5641,11 @@ msgstr "Procedimento de gancho necessita de descritor de módulo.\n"
 
 #: winerror.mc:2541
 msgid "Global-only hook procedure.\n"
-msgstr "Procedimento de hook apenas global.\n"
+msgstr "Procedimento de gancho apenas global.\n"
 
 #: winerror.mc:2546
 msgid "Journal hook already set.\n"
-msgstr "Journal hook já ativado.\n"
+msgstr "Gancho de eventos já ativado.\n"
 
 #: winerror.mc:2551
 msgid "Hook procedure not installed.\n"
@@ -5686,7 +5690,7 @@ msgstr "Tela já bloqueada.\n"
 
 #: winerror.mc:2601
 msgid "Window handles have different parents.\n"
-msgstr "Os handles das janelas têm pais diferentes.\n"
+msgstr "Os manipuladores das janelas têm pais diferentes.\n"
 
 #: winerror.mc:2606
 msgid "Not a child window.\n"
@@ -6306,7 +6310,7 @@ msgstr "A conta expirou.\n"
 
 #: winerror.mc:3381
 msgid "Redirector has open handles.\n"
-msgstr "O redirecionador tem handles abertos.\n"
+msgstr "O redirecionador tem manipuladores abertos.\n"
 
 #: winerror.mc:3386
 msgid "Printer driver already installed.\n"
@@ -6374,7 +6378,7 @@ msgstr "Informação de confiança do domínio inconsistente.\n"
 
 #: winerror.mc:3466
 msgid "Server has open handles.\n"
-msgstr "O servidor tem handles abertos.\n"
+msgstr "O servidor tem manipuladores abertos.\n"
 
 #: winerror.mc:3471
 msgid "Resource data not found.\n"
@@ -6410,7 +6414,7 @@ msgstr "Vínculo incompleto.\n"
 
 #: winerror.mc:3511
 msgid "RPC comm failure.\n"
-msgstr "Falha no RPC comm.\n"
+msgstr "Falha de comunicação em RPC.\n"
 
 #: winerror.mc:3516
 msgid "Unsupported authorization level.\n"
@@ -6786,7 +6790,7 @@ msgstr ""
 "\t/q{|n|b|r|f|n+|b+|b-}\n"
 "Registrar Serviço MSI:\n"
 "\t/y\n"
-"Desregistrar Serviço MSI:\n"
+"Cancelar registro de Serviço MSI:\n"
 "\t/z\n"
 "Mostrar esta ajuda:\n"
 "\t/help\n"
@@ -8229,7 +8233,7 @@ msgstr ""
 "qualquer versão posterior.\n"
 "\n"
 "O Wine é distribuído na esperança de que seja útil, mas SEM QUALQUER "
-"GARANTIA; nem sequer a garantia implícita de MERCANTIBILIDADE ou FEITO PARA "
+"GARANTIA; nem sequer a garantia implícita de COMERCIALIZAÇÃO ou FEITO PARA "
 "UM PROPÓSITO ESPECÍFICO. Veja a GNU Lesser General Public License para mais "
 "detalhes.\n"
 "\n"
@@ -8544,8 +8548,9 @@ msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
 "on the system. Use MIDI Mapper to edit the setup."
 msgstr ""
-"A configuração atual do MIDI Mapper refere-se a um dispositivo MIDI que não "
-"está instalado no sistema. Use MIDI Mapper para editar a configuração."
+"A configuração atual do Mapeador MIDI refere-se a um dispositivo MIDI que "
+"não está instalado no sistema. Use o Mapeador MIDI para editar a "
+"configuração."
 
 #: winmm.rc:53
 msgid ""
@@ -8990,9 +8995,9 @@ msgid ""
 "on the system. Use the MIDI Mapper option from the Control Panel to edit the "
 "setup."
 msgstr ""
-"A configuração atual do MIDI Mapper refere-se a um dispositivo MIDI que não "
-"está instalado em seu sistema. Use a opção MIDI Mapper do Painel de Controle "
-"para editar a configuração."
+"A configuração atual do Mapeador MIDI refere-se a um dispositivo MIDI que "
+"não está instalado em seu sistema. Use a opção do Mapeador MIDI do Painel de "
+"Controle para editar a configuração."
 
 #: winmm.rc:126
 msgid "An error occurred with the specified port."
@@ -10012,7 +10017,8 @@ msgstr "Mais..."
 
 #: cmd.rc:324
 msgid "Line in Batch processing possibly truncated. Using:\n"
-msgstr "Linha no processamento do Batch possivelmente truncada. Usando:\n"
+msgstr ""
+"Linha no processamento do arquivo de lote possivelmente truncada. Usando:\n"
 
 #: cmd.rc:326
 msgid "Argument missing\n"
@@ -10139,14 +10145,16 @@ msgstr " (Sim|Não|Tudo)"
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
 msgstr ""
+"Não é possível reconhecer '%1' como um comando interno, externo ou arquivo "
+"de lotes.\n"
 
 #: cmd.rc:357
 msgid "Division by zero error.\n"
-msgstr ""
+msgstr "Erro de divisão por zero.\n"
 
 #: cmd.rc:358
 msgid "Expected an operand.\n"
-msgstr ""
+msgstr "Esperado um operando.\n"
 
 #: cmd.rc:359
 msgid "Expected an operator.\n"
@@ -10154,13 +10162,15 @@ msgstr "Um operador é esperado.\n"
 
 #: cmd.rc:360
 msgid "Mismatch in parentheses.\n"
-msgstr ""
+msgstr "Incompatibilidade de parênteses.\n"
 
 #: cmd.rc:361
 msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"
 msgstr ""
+"Número mal-formado - deve ser decimal (12),\n"
+" hexadecimal (0x34) ou octal (056).\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -10396,7 +10406,7 @@ msgstr "Conexões Ativas"
 
 #: netstat.rc:28
 msgid "Proto"
-msgstr ""
+msgstr "Proto"
 
 #: netstat.rc:29
 msgid "Local Address"
@@ -10416,11 +10426,11 @@ msgstr "Estatísticas de Interface"
 
 #: netstat.rc:33
 msgid "Sent"
-msgstr ""
+msgstr "Enviado"
 
 #: netstat.rc:34
 msgid "Received"
-msgstr ""
+msgstr "Recebido"
 
 #: netstat.rc:35
 msgid "Bytes"
@@ -10448,7 +10458,7 @@ msgstr "Protocolos desconhecidos"
 
 #: netstat.rc:41
 msgid "TCP Statistics for IPv4"
-msgstr ""
+msgstr "Estatísticas TCP para IPv4"
 
 #: netstat.rc:42
 msgid "Active Opens"
@@ -10456,7 +10466,7 @@ msgstr "Abertas Ativas"
 
 #: netstat.rc:43
 msgid "Passive Opens"
-msgstr ""
+msgstr "Abertas Passivas"
 
 #: netstat.rc:44
 msgid "Failed Connection Attempts"
@@ -10491,10 +10501,8 @@ msgid "Datagrams Received"
 msgstr "Datagramas Recebidos"
 
 #: netstat.rc:52
-#, fuzzy
-#| msgid "Local Port"
 msgid "No Ports"
-msgstr "Porta Local"
+msgstr "Nenhuma Porta"
 
 #: netstat.rc:53
 msgid "Receive Errors"
@@ -10502,7 +10510,7 @@ msgstr "Erros de Recepção"
 
 #: netstat.rc:54
 msgid "Datagrams Sent"
-msgstr ""
+msgstr "Datagramas Enviados"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
@@ -12688,7 +12696,7 @@ msgstr "Configurações de Janela"
 
 #: winecfg.rc:161
 msgid "Automatically capture the &mouse in full-screen windows"
-msgstr "Capturar o &mouse automaticamente em janelas em tela-cheia"
+msgstr "Capturar o &mouse automaticamente em janelas em tela cheia"
 
 #: winecfg.rc:162
 msgid "Allow the window manager to &decorate the windows"
@@ -13665,22 +13673,16 @@ msgid "Not yet implemented"
 msgstr "Ainda não implementado"
 
 #: winefile.rc:106
-#, fuzzy
-#| msgid "Creation failed.\n"
 msgid "Creation date"
-msgstr "Falha ao criar.\n"
+msgstr "Data de criação"
 
 #: winefile.rc:107
-#, fuzzy
-#| msgid "Access denied.\n"
 msgid "Access date"
-msgstr "Acesso negado.\n"
+msgstr "Data de acesso"
 
 #: winefile.rc:108
-#, fuzzy
-#| msgid "Certification Path"
 msgid "Modification date"
-msgstr "Caminho de Certificação"
+msgstr "Data de modificação"
 
 #: winefile.rc:109
 msgid "Index/Inode"
