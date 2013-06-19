@@ -12763,6 +12763,7 @@ static void unbound_sampler_test(IDirect3DDevice9 *device)
     IDirect3DPixelShader9 *ps, *ps_cube, *ps_volume;
     IDirect3DSurface9 *rt, *old_rt;
     DWORD color;
+    D3DCAPS9 caps;
 
     static const DWORD ps_code[] =
     {
@@ -12804,6 +12805,14 @@ static void unbound_sampler_test(IDirect3DDevice9 *device)
         { 1.0f,  -1.0f,  0.1f,   0.0f,   1.0f},
         { 1.0f,   1.0f,  0.1f,   1.0f,   1.0f}
     };
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "GetDeviceCaps failed, hr %#x.\n", hr);
+    if (!(caps.TextureCaps & D3DPTEXTURECAPS_CUBEMAP) || !(caps.TextureCaps & D3DPTEXTURECAPS_VOLUMEMAP))
+    {
+        skip("No cube / volume textures support, skipping the unbound sampler test.\n");
+        return;
+    }
 
     hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
     ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTextureStage failed, %#x.\n", hr);
