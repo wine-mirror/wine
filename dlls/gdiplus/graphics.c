@@ -2099,7 +2099,7 @@ static void get_font_hfont(GpGraphics *graphics, GDIPCONST GpFont *font,
                       (pt[2].X-pt[0].X)*(pt[2].X-pt[0].X));
 
     get_log_fontW(font, graphics, &lfw);
-    lfw.lfHeight = gdip_round(font_height * rel_height);
+    lfw.lfHeight = -gdip_round(font_height * rel_height);
     unscaled_font = CreateFontIndirectW(&lfw);
 
     SelectObject(hdc, unscaled_font);

@@ -3901,7 +3901,6 @@ todo_wine
             match = fabs(1.0 - margin / rect.X) <= 0.05;
             ok(match, "Expected %f, got %f\n", margin, rect.X);
             match = fabs(1.0 - font_height / rect.Height) <= 0.1;
-todo_wine
             ok(match, "Expected %f, got %f\n", font_height, rect.Height);
             match = fabs(1.0 - bounds.Width / (rect.Width + margin * 2.0)) <= 0.05;
             ok(match, "Expected %f, got %f\n", bounds.Width, rect.Width + margin * 2.0);
