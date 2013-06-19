@@ -100,11 +100,19 @@ static BOOL init(void)
         SET(_Yarn_char_c_str, "?_C_str@?$_Yarn@D@std@@QEBAPEBDXZ");
         SET(_Yarn_char_empty, "?_Empty@?$_Yarn@D@std@@QEBA_NXZ");
     }else {
+#ifdef __arm__
+        SET(_Yarn_char_ctor_cstr, "??0?$_Yarn@D@std@@QAA@PBD@Z");
+        SET(_Yarn_char_copy_ctor, "??0?$_Yarn@D@std@@QAA@ABV01@@Z");
+        SET(_Yarn_char_dtor, "??1?$_Yarn@D@std@@QAA@XZ");
+        SET(_Yarn_char_c_str, "?_C_str@?$_Yarn@D@std@@QBAPBDXZ");
+        SET(_Yarn_char_empty, "?_Empty@?$_Yarn@D@std@@QBA_NXZ");
+#else
         SET(_Yarn_char_ctor_cstr, "??0?$_Yarn@D@std@@QAE@PBD@Z");
         SET(_Yarn_char_copy_ctor, "??0?$_Yarn@D@std@@QAE@ABV01@@Z");
         SET(_Yarn_char_dtor, "??1?$_Yarn@D@std@@QAE@XZ");
         SET(_Yarn_char_c_str, "?_C_str@?$_Yarn@D@std@@QBEPBDXZ");
         SET(_Yarn_char_empty, "?_Empty@?$_Yarn@D@std@@QBE_NXZ");
+#endif /* __arm__ */
     }
 
     init_thiscall_thunk();
