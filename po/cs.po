@@ -1198,7 +1198,7 @@ msgstr "Připojuji se k %s"
 
 #: credui.rc:29
 msgid "Logon unsuccessful"
-msgstr "Přihlášení proběhlo úspěšně"
+msgstr "Přihlášení proběhlo neúspěšně"
 
 #: credui.rc:30
 msgid ""
@@ -1415,19 +1415,19 @@ msgstr ""
 
 #: crypt32.rc:74
 msgid "Title"
-msgstr ""
+msgstr "Titul"
 
 #: crypt32.rc:75
 msgid "Given Name"
-msgstr ""
+msgstr "Křesní jméno"
 
 #: crypt32.rc:76
 msgid "Initials"
-msgstr ""
+msgstr "Iniciály"
 
 #: crypt32.rc:77
 msgid "Surname"
-msgstr ""
+msgstr "Příjmení"
 
 #: crypt32.rc:78
 msgid "Domain Component"
@@ -1752,7 +1752,7 @@ msgstr ""
 
 #: crypt32.rc:158 cryptui.rc:129
 msgid "File Recovery"
-msgstr ""
+msgstr "Obnovení souboru"
 
 #: crypt32.rc:159 cryptui.rc:134
 msgid "Root List Signer"
@@ -1784,7 +1784,7 @@ msgstr ""
 
 #: crypt32.rc:170
 msgid "Personal"
-msgstr ""
+msgstr "Osobní"
 
 #: crypt32.rc:171
 msgid "Intermediate Certification Authorities"
@@ -1792,7 +1792,7 @@ msgstr ""
 
 #: crypt32.rc:172
 msgid "Other People"
-msgstr ""
+msgstr "Ostatní"
 
 #: crypt32.rc:173
 msgid "Trusted Publishers"
@@ -1812,7 +1812,7 @@ msgstr ""
 
 #: crypt32.rc:181
 msgid "Certificate Serial Number="
-msgstr ""
+msgstr "Sériové číslo certifikátu"
 
 #: crypt32.rc:182
 msgid "Other Name="
@@ -1820,11 +1820,11 @@ msgstr ""
 
 #: crypt32.rc:183
 msgid "Email Address="
-msgstr ""
+msgstr "Emailová adresa"
 
 #: crypt32.rc:184
 msgid "DNS Name="
-msgstr ""
+msgstr "Jméno DNS="
 
 #: crypt32.rc:185
 msgid "Directory Address"
@@ -1836,11 +1836,11 @@ msgstr ""
 
 #: crypt32.rc:187
 msgid "IP Address="
-msgstr ""
+msgstr "IP Adresa="
 
 #: crypt32.rc:188
 msgid "Mask="
-msgstr ""
+msgstr "Maska="
 
 #: crypt32.rc:189
 msgid "Registered ID="
@@ -1879,7 +1879,7 @@ msgstr ""
 
 #: crypt32.rc:196
 msgid "Information Not Available"
-msgstr ""
+msgstr "Informace nejsou dostupné"
 
 #: crypt32.rc:197
 msgid "Authority Info Access"
@@ -1916,7 +1916,7 @@ msgstr ""
 
 #: crypt32.rc:205
 msgid "Full Name"
-msgstr ""
+msgstr "Celé jméno"
 
 #: crypt32.rc:206
 msgid "RDN Name"
@@ -1960,15 +1960,15 @@ msgstr ""
 
 #: crypt32.rc:216 taskmgr.rc:397
 msgid "Available"
-msgstr ""
+msgstr "Dostupné"
 
 #: crypt32.rc:217
 msgid "Not Available"
-msgstr ""
+msgstr "Nedostupné"
 
 #: crypt32.rc:218
 msgid "Meets Criteria="
-msgstr ""
+msgstr "Splňuje kritéria="
 
 #: crypt32.rc:219 cryptui.rc:163 oleaut32.rc:29 wininet.rc:80 ipconfig.rc:44
 msgid "Yes"
@@ -2032,7 +2032,7 @@ msgstr ""
 
 #: crypt32.rc:234
 msgid "Signature"
-msgstr ""
+msgstr "Podpis"
 
 #: crypt32.rc:235
 msgid "SSL CA"
@@ -2184,7 +2184,7 @@ msgstr ""
 
 #: cryptui.rc:265 cryptui.rc:66
 msgid "Select Certificate Store"
-msgstr ""
+msgstr "Vybrat uložení certifikátu"
 
 #: cryptui.rc:268
 msgid "Select the certificate store you want to use:"
@@ -2192,7 +2192,7 @@ msgstr ""
 
 #: cryptui.rc:271
 msgid "&Show physical stores"
-msgstr ""
+msgstr "&Zobrazit úložiště"
 
 #: cryptui.rc:277 cryptui.rc:288 cryptui.rc:305 cryptui.rc:319 cryptui.rc:68
 msgid "Certificate Import Wizard"
