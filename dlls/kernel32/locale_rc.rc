@@ -192,6 +192,8 @@
 
 #include "nls/hin.nls"   /* 0x0439  LANG_HINDI, SUBLANG_DEFAULT */
 
+#include "nls/gae.nls"   /* 0x083c  LANG_IRISH, SUBLANG_IRISH_IRELAND */
+
 #include "nls/msl.nls"   /* 0x043e  LANG_MALAY, SUBLANG_MALAY_MALAYSIA */
 #include "nls/msb.nls"   /* 0x083e  LANG_MALAY, SUBLANG_MALAY_BRUNEI_DARUSSALAM */
 
@@ -234,6 +236,7 @@
 
 #include "nls/brf.nls"   /* 0x047e  LANG_BRETON, SUBLANG_DEFAULT */
 
+#include "nls/gdh.nls"   /* 0x0491  LANG_SCOTTISH_GAELIC, SUBLANG_SCOTTISH_GAELIC */
 
 /* Wine extensions */
 
@@ -243,8 +246,6 @@
 
 #include "nls/wal.nls"   /* 0x0490  LANG_WALON, SUBLANG_DEFAULT */
 
-#include "nls/cor.nls"   /* 0x0491  LANG_CORNISH, SUBLANG_DEFAULT */
+#include "nls/cor.nls"   /* 0x0492  LANG_CORNISH, SUBLANG_DEFAULT */
 
-#include "nls/gae.nls"   /* 0x0494  LANG_GAELIC, SUBLANG_GAELIC */
-#include "nls/gdh.nls"   /* 0x0894  LANG_GAELIC, SUBLANG_GAELIC_SCOTTISH */
-#include "nls/gdv.nls"   /* 0x0c94  LANG_GAELIC, SUBLANG_GAELIC_MANX */
+#include "nls/gdv.nls"   /* 0x0494  LANG_MANX_GAELIC, SUBLANG_MANX_GAELIC */

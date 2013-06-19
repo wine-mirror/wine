@@ -128,6 +128,7 @@
 #define LANG_RUSSIAN        0x19
 #define LANG_SAMI           0x3b
 #define LANG_SANSKRIT       0x4f
+#define LANG_SCOTTISH_GAELIC 0x91
 #define LANG_SERBIAN        0x1a
 #define LANG_SERBIAN_NEUTRAL      0x7c1a
 #define LANG_SINDHI         0x59
@@ -175,8 +176,8 @@
 /* non standard; keep the number high enough (but < 0xff) */
 #define LANG_ESPERANTO			 0x8f
 #define LANG_WALON			 0x90
-#define LANG_CORNISH                     0x91
-#define LANG_GAELIC                      0x94
+#define LANG_CORNISH                     0x92
+#define LANG_MANX_GAELIC                 0x94
 
 /* Sublanguage definitions */
 #define SUBLANG_NEUTRAL                  0x00    /* language neutral */
@@ -338,6 +339,7 @@
 #define SUBLANG_SAMI_SKOLT_FINLAND         0x08
 #define SUBLANG_SAMI_INARI_FINLAND         0x09
 #define SUBLANG_SANSKRIT_INDIA             0x01
+#define SUBLANG_SCOTTISH_GAELIC            0x01
 #define SUBLANG_SERBIAN_BOSNIA_HERZEGOVINA_LATIN 0x06
 #define SUBLANG_SERBIAN_BOSNIA_HERZEGOVINA_CYRILLIC 0x07
 #define SUBLANG_SERBIAN_CROATIA            0x01
@@ -425,9 +427,7 @@
 #define SUBLANG_RUSSIAN_MOLDAVIA           0x02
 #define SUBLANG_CROATIAN                   SUBLANG_CROATIAN_CROATIA
 #define SUBLANG_LITHUANIAN_CLASSIC         0x02
-#define SUBLANG_GAELIC                     0x01
-#define SUBLANG_GAELIC_SCOTTISH            0x02
-#define SUBLANG_GAELIC_MANX                0x03
+#define SUBLANG_MANX_GAELIC                0x01
 
 
 /*

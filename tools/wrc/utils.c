@@ -436,9 +436,9 @@ static const struct lang2cp lang2cps[] =
     { LANG_FINNISH,        SUBLANG_NEUTRAL,              1252 },
     { LANG_FRENCH,         SUBLANG_NEUTRAL,              1252 },
     { LANG_FRISIAN,        SUBLANG_NEUTRAL,              1252 },
-#ifdef LANG_GAELIC
-    { LANG_GAELIC,         SUBLANG_NEUTRAL,              1252 },
-#endif /* LANG_GAELIC */
+#ifdef LANG_MANX_GAELIC
+    { LANG_MANX_GAELIC,    SUBLANG_NEUTRAL,              1252 },
+#endif /* LANG_MANX_GAELIC */
     { LANG_GALICIAN,       SUBLANG_NEUTRAL,              1252 },
     { LANG_GEORGIAN,       SUBLANG_NEUTRAL,              0    },
     { LANG_GERMAN,         SUBLANG_NEUTRAL,              1252 },
@@ -495,6 +495,7 @@ static const struct lang2cp lang2cps[] =
     { LANG_RUSSIAN,        SUBLANG_NEUTRAL,              1251 },
     { LANG_SAMI,           SUBLANG_NEUTRAL,              1252 },
     { LANG_SANSKRIT,       SUBLANG_NEUTRAL,              0    },
+    { LANG_SCOTTISH_GAELIC,SUBLANG_NEUTRAL,              1252 },
     { LANG_SERBIAN,        SUBLANG_NEUTRAL,              1250 },
     { LANG_SERBIAN,        SUBLANG_SERBIAN_CYRILLIC,     1251 },
     { LANG_SINHALESE,      SUBLANG_NEUTRAL,              0    },

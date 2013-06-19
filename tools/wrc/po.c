@@ -280,6 +280,8 @@ static const struct
     { LANG_HUNGARIAN,      SUBLANG_HUNGARIAN_HUNGARY,           "hu_HU" },
     { LANG_ICELANDIC,      SUBLANG_NEUTRAL,                     "is" },
     { LANG_ICELANDIC,      SUBLANG_ICELANDIC_ICELAND,           "is_IS" },
+    { LANG_IRISH,          SUBLANG_NEUTRAL,                     "ga" },
+    { LANG_IRISH,          SUBLANG_IRISH_IRELAND,               "ga_IE" },
     { LANG_ITALIAN,        SUBLANG_NEUTRAL,                     "it" },
     { LANG_ITALIAN,        SUBLANG_ITALIAN,                     "it_IT" },
     { LANG_ITALIAN,        SUBLANG_ITALIAN_SWISS,               "it_CH" },
@@ -304,6 +306,8 @@ static const struct
     { LANG_ROMANIAN,       SUBLANG_ROMANIAN_ROMANIA,            "ro_RO" },
     { LANG_RUSSIAN,        SUBLANG_NEUTRAL,                     "ru" },
     { LANG_RUSSIAN,        SUBLANG_RUSSIAN_RUSSIA,              "ru_RU" },
+    { LANG_SCOTTISH_GAELIC,SUBLANG_NEUTRAL,                     "gd" },
+    { LANG_SCOTTISH_GAELIC,SUBLANG_SCOTTISH_GAELIC,             "gd_GB" },
     { LANG_SERBIAN,        SUBLANG_NEUTRAL,                     "hr" },
     { LANG_SERBIAN,        SUBLANG_SERBIAN_CROATIA,             "hr_HR" },
     { LANG_SERBIAN,        SUBLANG_SERBIAN_LATIN,               "sr_RS@latin" },
@@ -410,11 +414,8 @@ static const struct
     { LANG_CORNISH,        SUBLANG_NEUTRAL,                     "kw" },
     { LANG_CORNISH,        SUBLANG_DEFAULT,                     "kw_GB" },
 #endif
-#ifdef LANG_GAELIC
-    { LANG_GAELIC,         SUBLANG_NEUTRAL,                     "ga" },
-    { LANG_GAELIC,         SUBLANG_GAELIC,                      "ga_IE" },
-    { LANG_GAELIC,         SUBLANG_GAELIC_SCOTTISH,             "gd_GB" },
-    { LANG_GAELIC,         SUBLANG_GAELIC_MANX,                 "gv_GB" },
+#ifdef LANG_MANX_GAELIC
+    { LANG_MANX_GAELIC,    SUBLANG_MANX_GAELIC,                 "gv_GB" },
 #endif
 };
 
