@@ -10179,8 +10179,9 @@ static void texop_test(IDirect3DDevice9 *device)
         ok(SUCCEEDED(hr), "Present failed with 0x%08x\n", hr);
     }
 
-    if (texture) IDirect3DTexture9_Release(texture);
-    if (vertex_declaration) IDirect3DVertexDeclaration9_Release(vertex_declaration);
+    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
+    IDirect3DTexture9_Release(texture);
+    IDirect3DVertexDeclaration9_Release(vertex_declaration);
 }
 
 static void yuv_color_test(IDirect3DDevice9 *device) {
