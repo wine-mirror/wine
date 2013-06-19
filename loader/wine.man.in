@@ -294,20 +294,17 @@ Please add entries to this list for applications you currently run, if
 there is no entry for this application.
 .PP
 Bug reports may be posted to Wine Bugzilla
-.I http://bugs.winehq.org
+.IR http://bugs.winehq.org .
 If you want to post a bug report, please see
-.I http://wiki.winehq.org/Bugs
-in the 
-.B wine 
-source to see what information is necessary
+.IR http://wiki.winehq.org/Bugs .
 .PP
-Problems and suggestions with this manpage please also report to
-.I http://bugs.winehq.org
+Problems and suggestions with this manpage can also be reported on
+.IR http://bugs.winehq.org .
 .SH AVAILABILITY
 The most recent public version of 
 .B wine
 can be downloaded from
-.I http://www.winehq.org/download
+.IR http://www.winehq.org/download .
 .PP
 The latest snapshot of the code may be obtained via GIT.  For information
 on how to do this, please see
@@ -326,7 +323,7 @@ For further information about
 development, you might want to subscribe to the 
 .B wine 
 mailing lists at
-.I http://www.winehq.org/forums
+.IR http://www.winehq.org/forums .
 
 .SH "SEE ALSO"
 .BR wineserver (1),
