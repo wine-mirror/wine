@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2013-01-31 04:40+0100\n"
+"PO-Revision-Date: 2013-06-19 11:34+0200\n"
 "Last-Translator: Julian Rüger\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -13721,22 +13721,16 @@ msgid "Not yet implemented"
 msgstr "Noch nicht implementiert"
 
 #: winefile.rc:106
-#, fuzzy
-#| msgid "Creation failed.\n"
 msgid "Creation date"
-msgstr "Erstellung fehlgeschlagen.\n"
+msgstr "Erstellungsdatum"
 
 #: winefile.rc:107
-#, fuzzy
-#| msgid "Access denied.\n"
 msgid "Access date"
-msgstr "Zugriff verweigert.\n"
+msgstr "Zugriffsdatum"
 
 #: winefile.rc:108
-#, fuzzy
-#| msgid "Certification Path"
 msgid "Modification date"
-msgstr "Zertifizierungspfad"
+msgstr "Änderungsdatum"
 
 #: winefile.rc:109
 msgid "Index/Inode"
