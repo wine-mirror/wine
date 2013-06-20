@@ -2190,43 +2190,6 @@ static HRESULT WINAPI d3d_device2_Index(IDirect3DDevice2 *iface, WORD index)
 }
 
 /*****************************************************************************
- * IDirect3DDevice3::End
- *
- * Ends a draw begun with IDirect3DDevice3::Begin or
- * IDirect3DDevice::BeginIndexed. The vertices specified with
- * IDirect3DDevice::Vertex or IDirect3DDevice::Index are drawn using
- * the IDirect3DDevice7::DrawPrimitive method. So far only
- * non-indexed mode is supported
- *
- * Version 2 and 3
- *
- * Params:
- *  Flags: Some flags, as usual. Don't know which are defined
- *
- * Returns:
- *  The return value of IDirect3DDevice7::DrawPrimitive
- *
- *****************************************************************************/
-static HRESULT WINAPI d3d_device3_End(IDirect3DDevice3 *iface, DWORD flags)
-{
-    struct d3d_device *device = impl_from_IDirect3DDevice3(iface);
-
-    TRACE("iface %p, flags %#x.\n", iface, flags);
-
-    return IDirect3DDevice7_DrawPrimitive(&device->IDirect3DDevice7_iface, device->primitive_type,
-            device->vertex_type, device->sysmem_vertex_buffer, device->nb_vertices, device->render_flags);
-}
-
-static HRESULT WINAPI d3d_device2_End(IDirect3DDevice2 *iface, DWORD flags)
-{
-    struct d3d_device *device = impl_from_IDirect3DDevice2(iface);
-
-    TRACE("iface %p, flags %#x.\n", iface, flags);
-
-    return d3d_device3_End(&device->IDirect3DDevice3_iface, flags);
-}
-
-/*****************************************************************************
  * IDirect3DDevice7::GetRenderState
  *
  * Returns the value of a render state. The possible render states are
@@ -3545,7 +3508,7 @@ static HRESULT WINAPI d3d_device2_DrawPrimitive(IDirect3DDevice2 *iface,
             return DDERR_INVALIDPARAMS;  /* Should never happen */
     }
 
-    return IDirect3DDevice7_DrawPrimitive(&device->IDirect3DDevice7_iface,
+    return d3d_device3_DrawPrimitive(&device->IDirect3DDevice3_iface,
             primitive_type, fvf, vertices, vertex_count, flags);
 }
 
@@ -3728,8 +3691,45 @@ static HRESULT WINAPI d3d_device2_DrawIndexedPrimitive(IDirect3DDevice2 *iface,
             return DDERR_INVALIDPARAMS;  /* Should never happen */
     }
 
-    return IDirect3DDevice7_DrawIndexedPrimitive(&device->IDirect3DDevice7_iface,
+    return d3d_device3_DrawIndexedPrimitive(&device->IDirect3DDevice3_iface,
             primitive_type, fvf, vertices, vertex_count, indices, index_count, flags);
+}
+
+/*****************************************************************************
+ * IDirect3DDevice3::End
+ *
+ * Ends a draw begun with IDirect3DDevice3::Begin or
+ * IDirect3DDevice::BeginIndexed. The vertices specified with
+ * IDirect3DDevice::Vertex or IDirect3DDevice::Index are drawn using
+ * the IDirect3DDevice3::DrawPrimitive method. So far only
+ * non-indexed mode is supported
+ *
+ * Version 2 and 3
+ *
+ * Params:
+ *  Flags: Some flags, as usual. Don't know which are defined
+ *
+ * Returns:
+ *  The return value of IDirect3DDevice3::DrawPrimitive
+ *
+ *****************************************************************************/
+static HRESULT WINAPI d3d_device3_End(IDirect3DDevice3 *iface, DWORD flags)
+{
+    struct d3d_device *device = impl_from_IDirect3DDevice3(iface);
+
+    TRACE("iface %p, flags %#x.\n", iface, flags);
+
+    return d3d_device3_DrawPrimitive(&device->IDirect3DDevice3_iface, device->primitive_type,
+            device->vertex_type, device->sysmem_vertex_buffer, device->nb_vertices, device->render_flags);
+}
+
+static HRESULT WINAPI d3d_device2_End(IDirect3DDevice2 *iface, DWORD flags)
+{
+    struct d3d_device *device = impl_from_IDirect3DDevice2(iface);
+
+    TRACE("iface %p, flags %#x.\n", iface, flags);
+
+    return d3d_device3_End(&device->IDirect3DDevice3_iface, flags);
 }
 
 /*****************************************************************************
