@@ -1127,8 +1127,6 @@ static void test_depth_blit(void)
     ok(SUCCEEDED(hr), "Failed to enable z testing, hr %#x.\n", hr);
     hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_ZFUNC, D3DCMP_LESSEQUAL);
     ok(SUCCEEDED(hr), "Failed to set the z function, hr %#x.\n", hr);
-    hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
-    ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
 
     U1(d3drect).x1 = U2(d3drect).y1 = 0;
     U3(d3drect).x2 = ddsd_existing.dwWidth; U4(d3drect).y2 = ddsd_existing.dwHeight;
@@ -3243,8 +3241,6 @@ static void test_draw_strided(void)
     hr = IDirect3DViewport3_Clear2(viewport, 1, &clear_rect, D3DCLEAR_TARGET, 0x00000000, 0.0f, 0);
     ok(SUCCEEDED(hr), "Failed to clear the viewport, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
-    ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
     hr = IDirect3DDevice3_BeginScene(device);
     ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
 
