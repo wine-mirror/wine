@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1998-2004 Lionel Ulmer
  * Copyright (c) 2002-2005 Christian Costa
- * Copyright (c) 2006-2009, 2011-2012 Stefan Dösinger
+ * Copyright (c) 2006-2009, 2011-2013 Stefan Dösinger
  * Copyright (c) 2008 Alexander Dorofeyev
  *
  * This library is free software; you can redistribute it and/or
@@ -2445,6 +2445,10 @@ static HRESULT WINAPI d3d_device3_GetRenderState(IDirect3DDevice3 *iface,
             return D3D_OK;
         }
 
+        case D3DRENDERSTATE_LIGHTING:
+            *value = 0xffffffff;
+            return D3D_OK;
+
         default:
             return IDirect3DDevice7_GetRenderState(&device->IDirect3DDevice7_iface, state, value);
     }
@@ -2799,6 +2803,10 @@ static HRESULT WINAPI d3d_device3_SetRenderState(IDirect3DDevice3 *iface,
             hr = D3D_OK;
             break;
         }
+
+        case D3DRENDERSTATE_LIGHTING:
+            hr = D3D_OK;
+            break;
 
         default:
             hr = IDirect3DDevice7_SetRenderState(&device->IDirect3DDevice7_iface, state, value);
@@ -3475,6 +3483,22 @@ static HRESULT WINAPI d3d_device7_DrawPrimitive_FPUPreserve(IDirect3DDevice7 *if
     return hr;
 }
 
+static void setup_lighting(const struct d3d_device *device, DWORD fvf, DWORD flags)
+{
+    BOOL enable;
+
+    /* Ignore the D3DFVF_XYZRHW case here, wined3d takes care of that */
+    if (flags & D3DDP_DONOTLIGHT)
+        enable = FALSE;
+    else if (!(fvf & D3DFVF_NORMAL))
+        enable = FALSE;
+    else
+        enable = TRUE;
+
+    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_LIGHTING, enable);
+}
+
+
 static HRESULT WINAPI d3d_device3_DrawPrimitive(IDirect3DDevice3 *iface,
         D3DPRIMITIVETYPE primitive_type, DWORD fvf, void *vertices, DWORD vertex_count,
         DWORD flags)
@@ -3483,6 +3507,8 @@ static HRESULT WINAPI d3d_device3_DrawPrimitive(IDirect3DDevice3 *iface,
 
     TRACE("iface %p, primitive_type %#x, fvf %#x, vertices %p, vertex_count %u, flags %#x.\n",
             iface, primitive_type, fvf, vertices, vertex_count, flags);
+
+    setup_lighting(device, fvf, flags);
 
     return IDirect3DDevice7_DrawPrimitive(&device->IDirect3DDevice7_iface,
             primitive_type, fvf, vertices, vertex_count, flags);
@@ -3665,6 +3691,8 @@ static HRESULT WINAPI d3d_device3_DrawIndexedPrimitive(IDirect3DDevice3 *iface,
     TRACE("iface %p, primitive_type %#x, fvf %#x, vertices %p, vertex_count %u, "
             "indices %p, index_count %u, flags %#x.\n",
             iface, primitive_type, fvf, vertices, vertex_count, indices, index_count, flags);
+
+    setup_lighting(device, fvf, flags);
 
     return IDirect3DDevice7_DrawIndexedPrimitive(&device->IDirect3DDevice7_iface,
             primitive_type, fvf, vertices, vertex_count, indices, index_count, flags);
@@ -3972,6 +4000,8 @@ static HRESULT WINAPI d3d_device3_DrawPrimitiveStrided(IDirect3DDevice3 *iface,
     TRACE("iface %p, primitive_type %#x, FVF %#x, strided_data %p, vertex_count %u, flags %#x.\n",
             iface, PrimitiveType, VertexType, D3DDrawPrimStrideData, VertexCount, Flags);
 
+    setup_lighting(device, VertexType, Flags);
+
     return IDirect3DDevice7_DrawPrimitiveStrided(&device->IDirect3DDevice7_iface,
             PrimitiveType, VertexType, D3DDrawPrimStrideData, VertexCount, Flags);
 }
@@ -4097,6 +4127,8 @@ static HRESULT WINAPI d3d_device3_DrawIndexedPrimitiveStrided(IDirect3DDevice3 *
     TRACE("iface %p, primitive_type %#x, FVF %#x, strided_data %p, vertex_count %u, indices %p, index_count %u, flags %#x.\n",
             iface, PrimitiveType, VertexType, D3DDrawPrimStrideData, VertexCount, Indices, IndexCount, Flags);
 
+    setup_lighting(device, VertexType, Flags);
+
     return IDirect3DDevice7_DrawIndexedPrimitiveStrided(&device->IDirect3DDevice7_iface,
             PrimitiveType, VertexType, D3DDrawPrimStrideData, VertexCount, Indices, IndexCount, Flags);
 }
@@ -4188,6 +4220,8 @@ static HRESULT WINAPI d3d_device3_DrawPrimitiveVB(IDirect3DDevice3 *iface, D3DPR
 
     TRACE("iface %p, primitive_type %#x, vb %p, start_vertex %u, vertex_count %u, flags %#x.\n",
             iface, PrimitiveType, D3DVertexBuf, StartVertex, NumVertices, Flags);
+
+    setup_lighting(device, vb->fvf, Flags);
 
     return IDirect3DDevice7_DrawPrimitiveVB(&device->IDirect3DDevice7_iface,
             PrimitiveType, &vb->IDirect3DVertexBuffer7_iface, StartVertex, NumVertices, Flags);
@@ -4319,6 +4353,8 @@ static HRESULT WINAPI d3d_device3_DrawIndexedPrimitiveVB(IDirect3DDevice3 *iface
 
     TRACE("iface %p, primitive_type %#x, vb %p, indices %p, index_count %u, flags %#x.\n",
             iface, PrimitiveType, D3DVertexBuf, Indices, IndexCount, Flags);
+
+    setup_lighting(device, vb->fvf, Flags);
 
     return IDirect3DDevice7_DrawIndexedPrimitiveVB(&device->IDirect3DDevice7_iface, PrimitiveType,
             &vb->IDirect3DVertexBuffer7_iface, 0, IndexCount, Indices, IndexCount, Flags);

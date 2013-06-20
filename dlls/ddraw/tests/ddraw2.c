@@ -902,13 +902,6 @@ static void test_depth_blit(void)
         {0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00},
         {0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00},
     };
-    static const BOOL todo[4][4] =
-    {
-        {FALSE, FALSE, TRUE, TRUE},
-        {FALSE, FALSE, TRUE, TRUE},
-        {TRUE,  TRUE,  TRUE, TRUE},
-        {TRUE,  TRUE,  TRUE, TRUE},
-    };
     DDSURFACEDESC ddsd_new, ddsd_existing;
 
     IDirect3DDevice2 *device;
@@ -1056,12 +1049,8 @@ static void test_depth_blit(void)
             unsigned int x = 80 * ((2 * j) + 1);
             unsigned int y = 60 * ((2 * i) + 1);
             color = get_surface_color(rt, x, y);
-            if (todo[i][j])
-                todo_wine ok(compare_color(color, expected_colors[i][j], 1),
-                        "Expected color 0x%08x at %u,%u, got 0x%08x.\n", expected_colors[i][j], x, y, color);
-            else
-                ok(compare_color(color, expected_colors[i][j], 1),
-                        "Expected color 0x%08x at %u,%u, got 0x%08x.\n", expected_colors[i][j], x, y, color);
+            ok(compare_color(color, expected_colors[i][j], 1),
+                    "Expected color 0x%08x at %u,%u, got 0x%08x.\n", expected_colors[i][j], x, y, color);
         }
     }
     IDirectDrawSurface_Release(rt);
