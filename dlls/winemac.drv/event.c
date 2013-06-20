@@ -44,6 +44,7 @@ static const char *dbgstr_event(int type)
         "MOUSE_MOVED_ABSOLUTE",
         "MOUSE_SCROLL",
         "QUERY_EVENT",
+        "RELEASE_CAPTURE",
         "STATUS_ITEM_CLICKED",
         "WINDOW_CLOSE_REQUESTED",
         "WINDOW_DID_MINIMIZE",
@@ -104,6 +105,7 @@ static macdrv_event_mask get_event_mask(DWORD mask)
     if (mask & QS_SENDMESSAGE)
     {
         event_mask |= event_mask_for_type(QUERY_EVENT);
+        event_mask |= event_mask_for_type(RELEASE_CAPTURE);
     }
 
     return event_mask;
@@ -201,6 +203,9 @@ void macdrv_handle_event(const macdrv_event *event)
         break;
     case QUERY_EVENT:
         macdrv_query_event(hwnd, event);
+        break;
+    case RELEASE_CAPTURE:
+        macdrv_release_capture(hwnd, event);
         break;
     case STATUS_ITEM_CLICKED:
         macdrv_status_item_clicked(event);

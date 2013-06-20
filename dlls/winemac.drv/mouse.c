@@ -918,3 +918,26 @@ void macdrv_mouse_scroll(HWND hwnd, const macdrv_event *event)
                      event->mouse_scroll.x, event->mouse_scroll.y,
                      event->mouse_scroll.x_scroll, FALSE, event->mouse_scroll.time_ms);
 }
+
+
+/***********************************************************************
+ *              macdrv_release_capture
+ *
+ * Handler for RELEASE_CAPTURE events.
+ */
+void macdrv_release_capture(HWND hwnd, const macdrv_event *event)
+{
+    struct macdrv_thread_data *thread_data = macdrv_thread_data();
+    HWND capture = GetCapture();
+    HWND capture_top = GetAncestor(capture, GA_ROOT);
+
+    TRACE("win %p/%p thread_data->capture_window %p GetCapture() %p in %p\n", hwnd,
+          event->window, thread_data->capture_window, capture, capture_top);
+
+    if (event->window == thread_data->capture_window && hwnd == capture_top)
+    {
+        ReleaseCapture();
+        if (!PostMessageW(capture, WM_CANCELMODE, 0, 0))
+            WARN("failed to post WM_CANCELMODE; error 0x%08x\n", GetLastError());
+    }
+}

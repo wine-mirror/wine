@@ -1719,6 +1719,7 @@ int macdrv_err_on;
     {
         NSNotificationCenter* nc = [NSNotificationCenter defaultCenter];
         NSNotificationCenter* wsnc = [[NSWorkspace sharedWorkspace] notificationCenter];
+        NSDistributedNotificationCenter* dnc = [NSDistributedNotificationCenter defaultCenter];
 
         [nc addObserverForName:NSWindowDidBecomeKeyNotification
                         object:nil
@@ -1760,6 +1761,17 @@ int macdrv_err_on;
                  selector:@selector(activeSpaceDidChange)
                      name:NSWorkspaceActiveSpaceDidChangeNotification
                    object:nil];
+
+        [nc addObserver:self
+               selector:@selector(releaseMouseCapture)
+                   name:NSMenuDidBeginTrackingNotification
+                 object:nil];
+
+        [dnc        addObserver:self
+                       selector:@selector(releaseMouseCapture)
+                           name:@"com.apple.HIToolbox.beginMenuTrackingNotification"
+                         object:nil
+             suspensionBehavior:NSNotificationSuspensionBehaviorDrop];
     }
 
     - (BOOL) inputSourceIsInputMethod
@@ -1779,6 +1791,26 @@ int macdrv_err_on;
         }
 
         return inputSourceIsInputMethod;
+    }
+
+    - (void) releaseMouseCapture
+    {
+        // This might be invoked on a background thread by the distributed
+        // notification center.  Shunt it to the main thread.
+        if (![NSThread isMainThread])
+        {
+            dispatch_async(dispatch_get_main_queue(), ^{ [self releaseMouseCapture]; });
+            return;
+        }
+
+        if (mouseCaptureWindow)
+        {
+            macdrv_event* event;
+
+            event = macdrv_create_event(RELEASE_CAPTURE, mouseCaptureWindow);
+            [mouseCaptureWindow.queue postEvent:event];
+            macdrv_release_event(event);
+        }
     }
 
 
@@ -1850,6 +1882,8 @@ int macdrv_err_on;
         [eventQueuesLock unlock];
 
         macdrv_release_event(event);
+
+        [self releaseMouseCapture];
     }
 
     - (NSApplicationTerminateReply) applicationShouldTerminate:(NSApplication *)sender
