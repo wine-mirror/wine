@@ -587,6 +587,7 @@ static void show_window(struct macdrv_win_data *data)
     HWND next = NULL;
     macdrv_window prev_window = NULL;
     macdrv_window next_window = NULL;
+    BOOL activate = FALSE;
 
     /* find window that this one must be after */
     prev = GetWindow(data->hwnd, GW_HWNDPREV);
@@ -605,12 +606,16 @@ static void show_window(struct macdrv_win_data *data)
     TRACE("win %p/%p below %p/%p above %p/%p\n",
           data->hwnd, data->cocoa_window, prev, prev_window, next, next_window);
 
-    data->on_screen = macdrv_order_cocoa_window(data->cocoa_window, prev_window, next_window);
+    if (!prev_window)
+        activate = activate_on_focus_time && (GetTickCount() - activate_on_focus_time < 2000);
+    data->on_screen = macdrv_order_cocoa_window(data->cocoa_window, prev_window, next_window, activate);
     if (data->on_screen)
     {
         HWND hwndFocus = GetFocus();
         if (hwndFocus && (data->hwnd == hwndFocus || IsChild(data->hwnd, hwndFocus)))
             macdrv_SetFocus(hwndFocus);
+        if (activate)
+            activate_on_focus_time = 0;
     }
 }
 
@@ -861,6 +866,7 @@ void CDECL macdrv_SetFocus(HWND hwnd)
         BOOL activate = activate_on_focus_time && (GetTickCount() - activate_on_focus_time < 2000);
         /* Set Mac focus */
         macdrv_give_cocoa_window_focus(data->cocoa_window, activate);
+        activate_on_focus_time = 0;
     }
 
     release_win_data(data);

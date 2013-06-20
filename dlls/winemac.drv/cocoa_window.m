@@ -761,7 +761,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
     /* Returns whether or not the window was ordered in, which depends on if
        its frame intersects any screen. */
-    - (BOOL) orderBelow:(WineWindow*)prev orAbove:(WineWindow*)next
+    - (BOOL) orderBelow:(WineWindow*)prev orAbove:(WineWindow*)next activate:(BOOL)activate
     {
         WineApplicationController* controller = [WineApplicationController sharedController];
         BOOL on_screen = frame_intersects_screens([self frame], [NSScreen screens]);
@@ -771,6 +771,9 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
             BOOL wasVisible = [self isVisible];
 
             [controller transformProcessToForeground];
+
+            if (activate)
+                [NSApp activateIgnoringOtherApps:YES];
 
             NSDisableScreenUpdates();
 
@@ -1627,14 +1630,15 @@ void macdrv_set_cocoa_window_title(macdrv_window w, const unsigned short* title,
  * (i.e. if its frame intersects with a screen).  Otherwise, false.
  */
 int macdrv_order_cocoa_window(macdrv_window w, macdrv_window prev,
-        macdrv_window next)
+        macdrv_window next, int activate)
 {
     WineWindow* window = (WineWindow*)w;
     __block BOOL on_screen;
 
     OnMainThread(^{
         on_screen = [window orderBelow:(WineWindow*)prev
-                               orAbove:(WineWindow*)next];
+                               orAbove:(WineWindow*)next
+                              activate:activate];
     });
 
     return on_screen;
