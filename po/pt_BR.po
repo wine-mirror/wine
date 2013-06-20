@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-08-16 00:01-0300\n"
-"Last-Translator: Gustavo Henrique Milaré <gugamilare@gmail.com>\n"
+"PO-Revision-Date: 2013-06-19 23:36-0300\n"
+"Last-Translator: Bruno Jesus <00cpxxx@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Portuguese (Brazil)\n"
 "MIME-Version: 1.0\n"
@@ -36,7 +36,7 @@ msgid ""
 "Remove."
 msgstr ""
 "O software a seguir pode ser automaticamente removido. Para remover um "
-"programa ou modificar os seus componentes instalados, selecione-o na lista e "
+"programa ou modificar seus componentes instalados, selecione-o na lista e "
 "clique em Adicionar/Remover."
 
 #: appwiz.rc:64
@@ -791,7 +791,7 @@ msgstr "Arquivos do &tipo:"
 
 #: comdlg32.rc:469
 msgid "Open as &read-only"
-msgstr "Abrir como &somente-leitura"
+msgstr "Abrir como &somente leitura"
 
 #: comdlg32.rc:471 comdlg32.rc:489 shdoclc.rc:124 shell32.rc:96
 msgid "&Open"
@@ -831,7 +831,7 @@ msgstr ""
 
 #: comdlg32.rc:33
 msgid "Invalid character(s) in path"
-msgstr "Caractere(s) inválidos no caminho"
+msgstr "Caractere(s) inválido(s) no caminho"
 
 #: comdlg32.rc:34
 msgid ""
@@ -927,7 +927,7 @@ msgstr "Vermelho"
 
 #: comdlg32.rc:127 wordpad.rc:124
 msgid "Lime"
-msgstr "Verde-limão"
+msgstr "Verde limão"
 
 #: comdlg32.rc:128 wordpad.rc:125
 msgid "Yellow"
@@ -975,7 +975,7 @@ msgstr ""
 
 #: comdlg32.rc:60
 msgid "The 'Number of copies' field cannot be empty."
-msgstr "O campo 'Número de cópias' não pode ser vazio."
+msgstr "O campo 'Número de cópias' não pode ficar vazio."
 
 #: comdlg32.rc:62
 msgid ""
@@ -1014,7 +1014,7 @@ msgid ""
 "Before you can perform printer-related tasks such as page setup or printing "
 "a document, you need to install a printer. Please install one and retry."
 msgstr ""
-"Antes de realizar tarefas relacionadas com a impressora tais como "
+"Antes de realizar tarefas relacionadas com impressoras tais como "
 "configuração de páginas ou imprimir um documento, é necessário instalar uma "
 "impressora. Por favor, instale uma e tente novamente."
 
@@ -1112,11 +1112,11 @@ msgstr "Aquecendo; "
 
 #: comdlg32.rc:97
 msgid "Toner low; "
-msgstr "Pouco toner; "
+msgstr "Pouco tôner; "
 
 #: comdlg32.rc:98
 msgid "No toner; "
-msgstr "Sem toner; "
+msgstr "Sem tôner; "
 
 #: comdlg32.rc:99
 msgid "Page punt; "
@@ -1185,7 +1185,7 @@ msgstr "Conectando a %s"
 
 #: credui.rc:29
 msgid "Logon unsuccessful"
-msgstr "Logon mal sucedido"
+msgstr "Logon malsucedido"
 
 #: credui.rc:30
 msgid ""
@@ -1245,7 +1245,7 @@ msgstr "Políticas de Certificados"
 
 #: crypt32.rc:35
 msgid "Subject Key Identifier"
-msgstr "Identificador da Chave do Sujeito"
+msgstr "Identificador da Chave"
 
 #: crypt32.rc:36
 msgid "CRL Reason Code"
@@ -1277,7 +1277,7 @@ msgstr "Confiança Sim ou Não"
 
 #: crypt32.rc:43
 msgid "Email Address"
-msgstr "Endereço de E-mail"
+msgstr "Endereço de e-mail"
 
 #: crypt32.rc:44
 msgid "Unstructured Name"
@@ -1354,19 +1354,19 @@ msgstr "URL Base Netscape"
 
 #: crypt32.rc:62
 msgid "Netscape Revocation URL"
-msgstr "URL Revogação Netscape"
+msgstr "URL de Revogação Netscape"
 
 #: crypt32.rc:63
 msgid "Netscape CA Revocation URL"
-msgstr "URL da Revogação da AC Netscape"
+msgstr "URL de Revogação da AC Netscape"
 
 #: crypt32.rc:64
 msgid "Netscape Cert Renewal URL"
-msgstr "URL Renovação de Certificados Netscape"
+msgstr "URL de Renovação de Certificados Netscape"
 
 #: crypt32.rc:65
 msgid "Netscape CA Policy URL"
-msgstr "URL da Política da AC Netscape"
+msgstr "URL de Política da AC Netscape"
 
 #: crypt32.rc:66
 msgid "Netscape SSL ServerName"
@@ -1498,11 +1498,11 @@ msgstr "Políticas do Aplicativo"
 
 #: crypt32.rc:98
 msgid "Application Policy Mappings"
-msgstr "Mapeamento das Políticas da Aplicativo"
+msgstr "Mapeamento das Políticas do Aplicativo"
 
 #: crypt32.rc:99
 msgid "Application Policy Constraints"
-msgstr "Restrições da Política da Aplicativo"
+msgstr "Restrições de Política do Aplicativo"
 
 #: crypt32.rc:100
 msgid "CMC Data"
@@ -1538,11 +1538,11 @@ msgstr "PKCS 7 Assinado"
 
 #: crypt32.rc:108
 msgid "PKCS 7 Enveloped"
-msgstr "PKCS 7 Envolvido"
+msgstr "PKCS 7 Envelopado"
 
 #: crypt32.rc:109
 msgid "PKCS 7 Signed Enveloped"
-msgstr "PKCS 7 Assinado e Envolvido"
+msgstr "PKCS 7 Assinado e Envelopado"
 
 #: crypt32.rc:110
 msgid "PKCS 7 Digested"
@@ -1582,7 +1582,7 @@ msgstr "OID de Raiz de Empresa"
 
 #: crypt32.rc:119
 msgid "Dummy Signer"
-msgstr "Assinador Falso"
+msgstr "Assinante Falso"
 
 #: crypt32.rc:120
 msgid "Encrypted Private Key"
@@ -1602,11 +1602,11 @@ msgstr "Id da transação"
 
 #: crypt32.rc:124
 msgid "Sender Nonce"
-msgstr "Expedidor Nonce"
+msgstr "Nonce do Remetente"
 
 #: crypt32.rc:125
 msgid "Recipient Nonce"
-msgstr "Recipiente Nonce"
+msgstr "Nonce do Recipiente"
 
 #: crypt32.rc:126
 msgid "Reg Info"
@@ -1702,7 +1702,7 @@ msgstr "Verificação de Componentes de Sistema do Windows OEM"
 
 #: crypt32.rc:149 cryptui.rc:133
 msgid "Embedded Windows System Component Verification"
-msgstr "Verificação de Componentes de Sistema do Windows Embebido"
+msgstr "Verificação de Componentes de Sistema do Windows Embutido"
 
 #: crypt32.rc:150 cryptui.rc:140
 msgid "Key Pack Licenses"
@@ -1734,7 +1734,7 @@ msgstr "Assinatura de Documento"
 
 #: crypt32.rc:157
 msgid "IP security IKE intermediate"
-msgstr "Segurança IP intermédia IKE"
+msgstr "Segurança IP intermediária IKE"
 
 #: crypt32.rc:158 cryptui.rc:129
 msgid "File Recovery"
@@ -1742,7 +1742,7 @@ msgstr "Recuperação de Arquivos"
 
 #: crypt32.rc:159 cryptui.rc:134
 msgid "Root List Signer"
-msgstr "Assinador de Lista Raiz"
+msgstr "Assinante de Lista Raiz"
 
 #: crypt32.rc:160
 msgid "All application policies"
@@ -1774,15 +1774,15 @@ msgstr "Pessoal"
 
 #: crypt32.rc:171
 msgid "Intermediate Certification Authorities"
-msgstr "Autoridades de Certificação Intermédias"
+msgstr "Autoridades de Certificação Intermediárias"
 
 #: crypt32.rc:172
 msgid "Other People"
-msgstr "Outras pessoas"
+msgstr "Outras Pessoas"
 
 #: crypt32.rc:173
 msgid "Trusted Publishers"
-msgstr "Publicadores Confiáveis"
+msgstr "Editores Confiáveis"
 
 #: crypt32.rc:174
 msgid "Untrusted Certificates"
@@ -2160,7 +2160,7 @@ msgstr "Selecione o conjunto de certificados que deseja usar:"
 
 #: cryptui.rc:271
 msgid "&Show physical stores"
-msgstr "&Mostrar conjuntos físicos"
+msgstr "&Mostrar armazenamentos físicos"
 
 #: cryptui.rc:277 cryptui.rc:288 cryptui.rc:305 cryptui.rc:319 cryptui.rc:68
 msgid "Certificate Import Wizard"
@@ -2352,7 +2352,7 @@ msgstr "&Não, não exportar a chave privada"
 
 #: cryptui.rc:396
 msgid "&Confirm password:"
-msgstr "&Confirmar palavra chave:"
+msgstr "&Confirmar senha:"
 
 #: cryptui.rc:404
 msgid "Select the format you want to use:"
@@ -2388,7 +2388,7 @@ msgstr "Ativar criptografia &forte"
 
 #: cryptui.rc:419
 msgid "Delete the private &key if the export is successful"
-msgstr "&Apagar a chave privada se a exportação for bem sucedida"
+msgstr "&Apagar a chave privada se a exportação for bem-sucedida"
 
 #: cryptui.rc:436
 msgid "Completing the Certificate Export Wizard"
@@ -2436,7 +2436,7 @@ msgstr "Todos os propósitos deste certificado não foram verificados."
 
 #: cryptui.rc:34
 msgid "This certificate is intended for the following purposes:"
-msgstr "Este certificado é intencionado com os seguintes propósitos::"
+msgstr "Este certificado é intencionado com os seguintes propósitos:"
 
 #: cryptui.rc:35
 msgid "Issued to: "
@@ -2629,7 +2629,7 @@ msgstr "Determinado pelo programa"
 
 #: cryptui.rc:85
 msgid "Please select a store"
-msgstr "Por favor, selecione um conjunto"
+msgstr "Por favor, selecione um armazenamento"
 
 #: cryptui.rc:86
 msgid "Certificate Store Selected"
@@ -2661,7 +2661,7 @@ msgstr "Troca de Informações Pessoais"
 
 #: cryptui.rc:96
 msgid "The import was successful."
-msgstr "A importação foi bem sucedida."
+msgstr "A importação foi bem-sucedida."
 
 #: cryptui.rc:97
 msgid "The import failed."
@@ -2893,7 +2893,7 @@ msgstr "Exportar Chaves"
 
 #: cryptui.rc:165
 msgid "The export was successful."
-msgstr "A exportação foi bem sucedida."
+msgstr "A exportação foi bem-sucedida."
 
 #: cryptui.rc:166
 msgid "The export failed."
@@ -2913,7 +2913,7 @@ msgstr ""
 
 #: cryptui.rc:169
 msgid "Enter Password"
-msgstr "Digite Palavra Chave"
+msgstr "Digite a Senha"
 
 #: cryptui.rc:170
 msgid "You may password-protect a private key."
@@ -2921,7 +2921,7 @@ msgstr "Você pode proteger uma chave privada com senha."
 
 #: cryptui.rc:171
 msgid "The passwords do not match."
-msgstr "As palavras chave não coincidem."
+msgstr "As senhas não coincidem."
 
 #: cryptui.rc:172
 msgid "Note: The private key for this certificate could not be opened."
@@ -2986,7 +2986,7 @@ msgstr "Objeto"
 
 #: dxdiagn.rc:25
 msgid "Regional Setting"
-msgstr "Configurações Regionais"
+msgstr "Configuração Regional"
 
 #: dxdiagn.rc:26
 msgid "%1!u!MB used, %2!u!MB available"
@@ -3196,7 +3196,7 @@ msgstr "Avançar"
 
 #: iccvid.rc:25 iccvid.rc:26
 msgid "Cinepak Video codec"
-msgstr "Codec Video Cinepak"
+msgstr "Codec de vídeo Cinepak"
 
 #: ieframe.rc:25 shell32.rc:111 notepad.rc:26 oleview.rc:27 oleview.rc:77
 #: progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25 winhlp32.rc:28
@@ -3441,7 +3441,7 @@ msgstr "Alta"
 
 #: joy.rc:33
 msgid "Joysticks"
-msgstr ""
+msgstr "Controles"
 
 #: joy.rc:36 winecfg.rc:204
 msgid "&Disable"
@@ -3845,7 +3845,7 @@ msgstr "Fila de impressão cheia.\n"
 
 #: winerror.mc:276
 msgid "No spool space.\n"
-msgstr "Sem espaço spool.\n"
+msgstr "Sem espaço no spool.\n"
 
 #: winerror.mc:281
 msgid "Print canceled.\n"
@@ -4077,7 +4077,7 @@ msgstr "Tentativa de tornar SUBST um drive já em JOIN.\n"
 
 #: winerror.mc:576
 msgid "Drive is busy.\n"
-msgstr "Drive ocupada.\n"
+msgstr "Unidade ocupada.\n"
 
 #: winerror.mc:581
 msgid "Same drive.\n"
@@ -4125,7 +4125,7 @@ msgstr "Lista DosSemMuxWait inválida.\n"
 
 #: winerror.mc:636
 msgid "Volume label too long.\n"
-msgstr "Rótulo de volume muito longa.\n"
+msgstr "Rótulo de volume muito longo.\n"
 
 #: winerror.mc:641
 msgid "Too many TCBs.\n"
@@ -4277,7 +4277,7 @@ msgstr "Anel para pilha 2 em uso.\n"
 
 #: winerror.mc:826
 msgid "Error in use of filename wildcards.\n"
-msgstr "Erro no uso de wildcards de nomes de arquivos.\n"
+msgstr "Erro no uso de caracteres coringa nos nomes de arquivo.\n"
 
 #: winerror.mc:831
 msgid "Invalid signal number.\n"
@@ -4369,7 +4369,7 @@ msgstr "Atributos estendidos não suportados.\n"
 
 #: winerror.mc:941
 msgid "Mutex not owned by caller.\n"
-msgstr "Chamador não controla Mutex.\n"
+msgstr "Chamador não possui o Mutex.\n"
 
 #: winerror.mc:946
 msgid "Too many posts to semaphore.\n"
@@ -4417,7 +4417,7 @@ msgstr "Operação E/S abortada.\n"
 
 #: winerror.mc:1001
 msgid "Overlapped I/O incomplete.\n"
-msgstr "Overlapped E/S incompleto.\n"
+msgstr "E/S sobreposta incompleta.\n"
 
 #: winerror.mc:1006
 msgid "Overlapped I/O pending.\n"
@@ -4769,7 +4769,7 @@ msgstr "Falha na reinicialização do disco rígido.\n"
 
 #: winerror.mc:1441
 msgid "End of tape media.\n"
-msgstr "Fim do mídia de fita.\n"
+msgstr "Fim da mídia de fita.\n"
 
 #: winerror.mc:1446
 msgid "Not enough server memory.\n"
@@ -4905,11 +4905,11 @@ msgstr "Falha ao mover o arquivo substituto.\n"
 
 #: winerror.mc:1611
 msgid "The journal is being deleted.\n"
-msgstr "O journal está sendo excluído.\n"
+msgstr "O registro está sendo excluído.\n"
 
 #: winerror.mc:1616
 msgid "The journal is not active.\n"
-msgstr "O journal não está ativo.\n"
+msgstr "O registro não está ativo.\n"
 
 #: winerror.mc:1621
 msgid "Potential matching file found.\n"
@@ -4917,7 +4917,7 @@ msgstr "Arquivo correspondente em potencial encontrado.\n"
 
 #: winerror.mc:1626
 msgid "The journal entry was deleted.\n"
-msgstr "A entrada do journal foi excluída.\n"
+msgstr "A entrada do registro foi excluída.\n"
 
 #: winerror.mc:1631
 msgid "Invalid device name.\n"
@@ -4949,7 +4949,7 @@ msgstr "Perfil de conexão à rede corrompido.\n"
 
 #: winerror.mc:1666
 msgid "Not a container.\n"
-msgstr "Não é um container.\n"
+msgstr "Não é um contêiner.\n"
 
 #: winerror.mc:1671
 msgid "Extended error.\n"
@@ -5153,7 +5153,7 @@ msgstr "Chave de sessão do usuário local.\n"
 
 #: winerror.mc:1926
 msgid "Password too complex for LM.\n"
-msgstr "Palavra-passe demasiado complexa para a LM.\n"
+msgstr "Senha muito complexa para a LM.\n"
 
 #: winerror.mc:1931
 msgid "Unknown revision.\n"
@@ -5277,7 +5277,7 @@ msgstr "LUIDs esgotados.\n"
 
 #: winerror.mc:2081
 msgid "Invalid sub authority.\n"
-msgstr "Sub autoridade inválida.\n"
+msgstr "Sub-autoridade inválida.\n"
 
 #: winerror.mc:2086
 msgid "Invalid ACL.\n"
@@ -5561,7 +5561,7 @@ msgstr "Janela atribuída a outra linha de execução.\n"
 
 #: winerror.mc:2441
 msgid "Hotkey already registered.\n"
-msgstr "Hotkey já registrada.\n"
+msgstr "Tecla de atalho já registrada.\n"
 
 #: winerror.mc:2446
 msgid "Class already exists.\n"
@@ -5593,7 +5593,7 @@ msgstr "ID de caixa de listagem não encontrada.\n"
 
 #: winerror.mc:2481
 msgid "No wildcard characters.\n"
-msgstr "Nenhum caractere wildcard.\n"
+msgstr "Nenhum caractere coringa.\n"
 
 #: winerror.mc:2486
 msgid "Clipboard not open.\n"
@@ -5601,7 +5601,7 @@ msgstr "Área de transferência fechada.\n"
 
 #: winerror.mc:2491
 msgid "Hotkey not registered.\n"
-msgstr "Hotkey não registrada.\n"
+msgstr "Tecla de atalho não registrada.\n"
 
 #: winerror.mc:2496
 msgid "Not a dialog window.\n"
@@ -6246,11 +6246,11 @@ msgstr "Manipulador de contexto danificado.\n"
 
 #: winerror.mc:3301
 msgid "Binding handle mismatch.\n"
-msgstr "Vínculo do handle diferente.\n"
+msgstr "Vínculo do manipulador diferente.\n"
 
 #: winerror.mc:3306
 msgid "Cannot get call handle.\n"
-msgstr "Não é possível buscar handle da chamada.\n"
+msgstr "Não é possível buscar o manipulador da chamada.\n"
 
 #: winerror.mc:3311
 msgid "Null reference pointer.\n"
@@ -6362,7 +6362,7 @@ msgstr "Sem mais vínculos.\n"
 
 #: winerror.mc:3446
 msgid "Can't logon with interdomain trust account.\n"
-msgstr "Não é possível logar com conta confiável inter domínio.\n"
+msgstr "Não é possível logar com conta confiável entre domínios.\n"
 
 #: winerror.mc:3451
 msgid "Can't logon with workstation trust account.\n"
@@ -6442,7 +6442,7 @@ msgstr "Linha de execução não cancelada.\n"
 
 #: winerror.mc:3546
 msgid "Invalid handle operation.\n"
-msgstr "Operação em handle inválida.\n"
+msgstr "Operação em manipulador inválida.\n"
 
 #: winerror.mc:3551
 msgid "Wrong serializing package version.\n"
@@ -6490,7 +6490,7 @@ msgstr "Tamanho de formulário inválido.\n"
 
 #: winerror.mc:3606
 msgid "Already awaiting printer handle.\n"
-msgstr "Já à espera de handle da impressora.\n"
+msgstr "Já à espera de manipulador da impressora.\n"
 
 #: winerror.mc:3611
 msgid "Printer deleted.\n"
@@ -6866,7 +6866,7 @@ msgstr "Imagens Completas (Descomprimidas)"
 
 #: msvidc32.rc:26
 msgid "Wine Video 1 video codec"
-msgstr "codec video Wine Video 1"
+msgstr "Codec de vídeo Wine Video 1"
 
 #: oleacc.rc:27
 msgid "unknown object"
@@ -7018,7 +7018,7 @@ msgstr "item de contorno"
 
 #: oleacc.rc:64
 msgid "page tab"
-msgstr "tab de página"
+msgstr "aba de página"
 
 #: oleacc.rc:65
 msgid "property page"
@@ -8453,7 +8453,7 @@ msgstr ""
 
 #: winmm.rc:33
 msgid "The specified device handle is invalid."
-msgstr "O handle do dispositivo especificado é inválido."
+msgstr "O manipulador do dispositivo especificado é inválido."
 
 #: winmm.rc:34
 msgid "There is no driver installed on your system!"
@@ -8508,8 +8508,8 @@ msgid ""
 "The wave header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
 msgstr ""
-"O cabeçalho do wave não está preparado. Use a função Preparar para preparar "
-"o cabeçalho e tente novamente."
+"O cabeçalho do wave não foi preparado. Use a função Preparar para preparar o "
+"cabeçalho e tente novamente."
 
 #: winmm.rc:45
 msgid ""
@@ -9754,6 +9754,33 @@ msgid ""
 "/ProgIDOpen  Open a document using the specified progID.\n"
 "/?           Display this help and exit.\n"
 msgstr ""
+"Inicia um programa ou abre um arquivo no programa normalmente usado para a "
+"extensão determinada.\n"
+"Uso:\n"
+"start [opções] endereço_do_programa [...]\n"
+"start [opções] endereço_do_documento\n"
+"\n"
+"Opções:\n"
+"\"title\"      Especifica o título da janela da janela filha.\n"
+"/d directory Inicia o programa no diretório especificado.\n"
+"/b           Não criar um console novo para o programa.\n"
+"/i           Inicia o programa com variáveis de ambinete novas.\n"
+"/min         Inicia o programa minimizado.\n"
+"/max         Inicia o programa maximizado.\n"
+"/low         Inicia o programa com prioridade baixa.\n"
+"/normal      Inicia o programa com prioridade normal.\n"
+"/high        Inicia o programa com prioridade alta.\n"
+"/realtime    Inicia o programa com prioridade de tempo real.\n"
+"/abovenormal Inicia o programa com prioridade acima do normal.\n"
+"/belownormal Inicia o programa com prioridade abaixo do normal.\n"
+"/node n      Inicia o programa no nó NUMA especificado.\n"
+"/affinity mask Inicia o programa com a máscara de afinidade especificada.\n"
+"/wait        Aguarda o fim do programa iniciado e retorna com seu código de "
+"saída.\n"
+"/unix        Usa o caminho Unix do arquivo e inicia-o como o windows "
+"explorer.\n"
+"/ProgIDOpen  Abre um documento usando o progID especificado.\n"
+"/?           Exibe essa ajuda e retorna.\n"
 
 #: cmd.rc:211
 msgid "TIME sets or shows the current system time.\n"
@@ -9977,7 +10004,7 @@ msgstr ""
 "START\t\tInicia um programa ou abre um documento no programa associado\n"
 "TIME\t\tConfigura ou mostra a hora atual do sistema\n"
 "TITLE\t\tConfigura o título da janela de comando CMD\n"
-"TYPE\t\tMostra o conteúdo de um arquivo texto\n"
+"TYPE\t\tMostra o conteúdo de um arquivo de texto\n"
 "VER\t\tMostra a versão atual do CMD\n"
 "VOL\t\tMostra o rótulo do volume de uma unidade de disco\n"
 "XCOPY\t\tCopia arquivos ou árvores de diretórios para um destino\n"
@@ -10083,7 +10110,7 @@ msgstr "A verificação é %1\n"
 
 #: cmd.rc:342
 msgid "Verify must be ON or OFF\n"
-msgstr "Verify deve ser ON ou OFF\n"
+msgstr "Verificação deve ser ON ou OFF\n"
 
 #: cmd.rc:343
 msgid "Parameter error\n"
@@ -10328,11 +10355,11 @@ msgstr "Não foi possível parar o serviço %1\n"
 
 #: net.rc:32
 msgid "Could not get handle to service control manager.\n"
-msgstr "Não foi possível entregar o handle ao gerenciador de serviços.\n"
+msgstr "Não foi possível entregar o manipulador ao gerenciador de serviços.\n"
 
 #: net.rc:33
 msgid "Could not get handle to service.\n"
-msgstr "Não foi possível entregar o handle ao serviço.\n"
+msgstr "Não foi possível entregar o manipulador ao serviço.\n"
 
 #: net.rc:34
 msgid "The %1 service is starting.\n"
@@ -10438,11 +10465,11 @@ msgstr "Bytes"
 
 #: netstat.rc:36
 msgid "Unicast packets"
-msgstr ""
+msgstr "Pacotes unicast"
 
 #: netstat.rc:37
 msgid "Non-unicast packets"
-msgstr ""
+msgstr "Pacotes não unicast"
 
 #: netstat.rc:38
 msgid "Discards"
@@ -10802,7 +10829,7 @@ msgstr "Criar Instância &em..."
 
 #: oleview.rc:51
 msgid "&Release Instance"
-msgstr "Li&bertar Instância"
+msgstr "Li&berar Instância"
 
 #: oleview.rc:53
 msgid "Copy C&LSID to clipboard"
@@ -10999,7 +11026,7 @@ msgstr "Pedir um servidor interno ao processo ao chamar CoGetClassObject"
 
 #: oleview.rc:114
 msgid "Ask for an in-process handler when calling CoGetClassObject"
-msgstr "Pedir um handler interno ao processo ao chamar CoGetClassObject"
+msgstr "Pedir um manipulador interno ao processo ao chamar CoGetClassObject"
 
 #: oleview.rc:115
 msgid "Ask for a local server when calling CoGetClassObject"
@@ -11639,7 +11666,7 @@ msgstr "Adiciona um novo valor palavra dupla"
 
 #: regedit.rc:150
 msgid "Imports a text file into the registry"
-msgstr "Importa um arquivo texto para o registro"
+msgstr "Importa um arquivo de texto para o registro"
 
 #: regedit.rc:152
 msgid "Exports all or part of the registry to a text file"
@@ -14026,7 +14053,7 @@ msgstr "Formato de parágrafo"
 
 #: wordpad.rc:224
 msgid "Indentation"
-msgstr "Identação"
+msgstr "Indentação"
 
 #: wordpad.rc:225 wordpad.rc:148
 msgid "Left"
@@ -14166,11 +14193,11 @@ msgstr "Anterior"
 # Abreviated due to small space available
 #: wordpad.rc:165
 msgid "Two pages"
-msgstr "Duas pág"
+msgstr "Duas pág."
 
 #: wordpad.rc:166
 msgid "One page"
-msgstr "Uma pág"
+msgstr "Uma pág."
 
 #: wordpad.rc:167
 msgid "Zoom in"
