@@ -1302,6 +1302,7 @@ static enum fill_status fill_directory( struct table *table, const struct expr *
                 {
                     if (!resize_table( table, row + 1, sizeof(*rec) ))
                     {
+                        FindClose( handle );
                         status = FILL_STATUS_FAILED;
                         goto done;
                     }
@@ -1313,6 +1314,7 @@ static enum fill_status fill_directory( struct table *table, const struct expr *
                     if (!(push_dir( dirstack, new_path, len )))
                     {
                         heap_free( new_path );
+                        FindClose( handle );
                         status = FILL_STATUS_FAILED;
                         goto done;
                     }
