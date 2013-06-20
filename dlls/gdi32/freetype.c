@@ -1173,69 +1173,74 @@ static void LoadSubstList(void)
 }
 
 
-/*****************************************************************
- *       get_name_table_entry
- *
- * Supply the platform, encoding, language and name ids in req
- * and if the name exists the function will fill in the string
- * and string_len members.  The string is owned by FreeType so
- * don't free it.  Returns TRUE if the name is found else FALSE.
- */
-static BOOL get_name_table_entry(FT_Face ft_face, FT_SfntName *req)
+static int match_name_table_language( const FT_SfntName *name, LANGID lang )
+{
+    LANGID name_lang;
+
+    switch (name->platform_id)
+    {
+    case TT_PLATFORM_MICROSOFT:
+        switch (name->encoding_id)
+        {
+        case TT_MS_ID_UNICODE_CS:
+        case TT_MS_ID_SYMBOL_CS:
+            name_lang = name->language_id;
+            break;
+        default:
+            return 0;
+        }
+        break;
+    default:
+        return 0;
+    }
+    if (name_lang == lang) return 3;
+    if (PRIMARYLANGID( name_lang ) == PRIMARYLANGID( lang )) return 2;
+    if (name_lang == MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT )) return 1;
+    return 0;
+}
+
+static WCHAR *copy_name_table_string( const FT_SfntName *name )
+{
+    WCHAR *ret;
+    int i;
+
+    ret = HeapAlloc( GetProcessHeap(), 0, name->string_len + sizeof(WCHAR) );
+    for (i = 0; i < name->string_len / 2; i++)
+        ret[i] = (name->string[i * 2] << 8) | name->string[i * 2 + 1];
+    ret[i] = 0;
+    return ret;
+}
+
+static WCHAR *get_face_name(FT_Face ft_face, FT_UShort name_id, LANGID language_id)
 {
     FT_SfntName name;
     FT_UInt num_names, name_index;
+    int res, best_lang = 0, best_index = -1;
 
-    if(FT_IS_SFNT(ft_face))
+    if (!FT_IS_SFNT(ft_face)) return NULL;
+
+    num_names = pFT_Get_Sfnt_Name_Count( ft_face );
+
+    for (name_index = 0; name_index < num_names; name_index++)
     {
-        num_names = pFT_Get_Sfnt_Name_Count(ft_face);
-
-        for(name_index = 0; name_index < num_names; name_index++)
+        if (pFT_Get_Sfnt_Name( ft_face, name_index, &name )) continue;
+        if (name.name_id != name_id) continue;
+        res = match_name_table_language( &name, language_id );
+        if (res > best_lang)
         {
-            if(!pFT_Get_Sfnt_Name(ft_face, name_index, &name))
-            {
-                if((name.platform_id == req->platform_id) &&
-                   ((name.encoding_id == TT_MS_ID_UNICODE_CS) || (name.encoding_id == TT_MS_ID_SYMBOL_CS)) &&
-                   (name.language_id == req->language_id) &&
-                   (name.name_id     == req->name_id))
-                {
-                    req->string = name.string;
-                    req->string_len = name.string_len;
-                    return TRUE;
-                }
-            }
+            best_lang = res;
+            best_index = name_index;
         }
     }
-    req->string = NULL;
-    req->string_len = 0;
-    return FALSE;
-}
 
-static WCHAR *get_face_name(FT_Face ft_face, FT_UShort name_id, FT_UShort language_id)
-{
-    WCHAR *ret = NULL;
-    FT_SfntName name;
-
-    name.platform_id = TT_PLATFORM_MICROSOFT;
-    name.language_id = language_id;
-    name.name_id     = name_id;
-
-    if(get_name_table_entry(ft_face, &name))
+    if (best_index != -1 && !pFT_Get_Sfnt_Name( ft_face, best_index, &name ))
     {
-        FT_UInt i;
-
-        /* String is not nul terminated and string_len is a byte length. */
-        ret = HeapAlloc(GetProcessHeap(), 0, name.string_len + 2);
-        for(i = 0; i < name.string_len / 2; i++)
-        {
-            WORD *tmp = (WORD *)&name.string[i * 2];
-            ret[i] = GET_BE_WORD(*tmp);
-        }
-        ret[i] = 0;
-        TRACE("Got localised name %s\n", debugstr_w(ret));
+        WCHAR *ret = copy_name_table_string( &name );
+        TRACE( "name %u found platform %u lang %04x %s\n",
+               name_id, name.platform_id, name.language_id, debugstr_w( ret ));
+        return ret;
     }
-
-    return ret;
+    return NULL;
 }
 
 static inline BOOL faces_equal( const Face *f1, const Face *f2 )
@@ -1614,7 +1619,7 @@ static WCHAR *prepend_at(WCHAR *family)
 
 static void get_family_names( FT_Face ft_face, WCHAR **name, WCHAR **english, BOOL vertical )
 {
-    *english = get_face_name( ft_face, TT_NAME_ID_FONT_FAMILY, TT_MS_LANGID_ENGLISH_UNITED_STATES );
+    *english = get_face_name( ft_face, TT_NAME_ID_FONT_FAMILY, MAKELANGID(LANG_ENGLISH,SUBLANG_DEFAULT) );
     if (!*english) *english = towstr( CP_ACP, ft_face->family_name );
 
     *name = get_face_name( ft_face, TT_NAME_ID_FONT_FAMILY, GetSystemDefaultLCID() );
@@ -1777,16 +1782,9 @@ static Face *create_face( FT_Face ft_face, FT_Long face_index, const char *file,
 
     face->refcount = 1;
     face->StyleName = get_face_name( ft_face, TT_NAME_ID_FONT_SUBFAMILY, GetSystemDefaultLangID() );
-    if (!face->StyleName)
-        face->StyleName = get_face_name( ft_face, TT_NAME_ID_FONT_SUBFAMILY, TT_MS_LANGID_ENGLISH_UNITED_STATES );
-    if (!face->StyleName)
-    {
-        face->StyleName = towstr( CP_ACP, ft_face->style_name );
-    }
+    if (!face->StyleName) face->StyleName = towstr( CP_ACP, ft_face->style_name );
 
     face->FullName = get_face_name( ft_face, TT_NAME_ID_FULL_NAME, GetSystemDefaultLangID() );
-    if (!face->FullName)
-        face->FullName = get_face_name( ft_face, TT_NAME_ID_FULL_NAME, TT_MS_LANGID_ENGLISH_UNITED_STATES );
     if (flags & ADDFONT_VERTICAL_FONT)
         face->FullName = prepend_at( face->FullName );
 
@@ -6998,8 +6996,6 @@ static BOOL get_outline_text_metrics(GdiFont *font)
 
     style_nameW = get_face_name( ft_face, TT_NAME_ID_FONT_SUBFAMILY, GetSystemDefaultLangID() );
     if (!style_nameW)
-        style_nameW = get_face_name( ft_face, TT_NAME_ID_FONT_SUBFAMILY, TT_MS_LANGID_ENGLISH_UNITED_STATES );
-    if (!style_nameW)
     {
         FIXME("failed to read style_nameW for font %s!\n", wine_dbgstr_w(font->name));
         style_nameW = towstr( CP_ACP, ft_face->style_name );
@@ -7007,8 +7003,6 @@ static BOOL get_outline_text_metrics(GdiFont *font)
     lensty = (strlenW(style_nameW) + 1) * sizeof(WCHAR);
 
     face_nameW = get_face_name( ft_face, TT_NAME_ID_FULL_NAME, GetSystemDefaultLangID() );
-    if (!face_nameW)
-        face_nameW = get_face_name( ft_face, TT_NAME_ID_FULL_NAME, TT_MS_LANGID_ENGLISH_UNITED_STATES );
     if (!face_nameW)
     {
         FIXME("failed to read face_nameW for font %s!\n", wine_dbgstr_w(font->name));
@@ -7018,8 +7012,6 @@ static BOOL get_outline_text_metrics(GdiFont *font)
     lenface = (strlenW(face_nameW) + 1) * sizeof(WCHAR);
 
     full_nameW = get_face_name( ft_face, TT_NAME_ID_UNIQUE_ID, GetSystemDefaultLangID() );
-    if (!full_nameW)
-        full_nameW = get_face_name( ft_face, TT_NAME_ID_UNIQUE_ID, TT_MS_LANGID_ENGLISH_UNITED_STATES );
     if (!full_nameW)
     {
         WCHAR fake_nameW[] = {'f','a','k','e',' ','n','a','m','e', 0};
