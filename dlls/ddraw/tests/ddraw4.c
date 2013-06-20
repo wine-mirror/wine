@@ -3450,6 +3450,241 @@ done:
     DestroyWindow(window);
 }
 
+static void test_lighting_interface_versions(void)
+{
+    static D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
+    IDirect3DMaterial3 *emissive;
+    IDirect3DViewport3 *viewport;
+    IDirect3DDevice3 *device;
+    IDirectDrawSurface4 *rt;
+    IDirect3D3 *d3d;
+    D3DCOLOR color;
+    HWND window;
+    HRESULT hr;
+    D3DMATERIALHANDLE mat_handle;
+    D3DMATERIAL mat_desc;
+    DWORD rs;
+    unsigned int i;
+    ULONG ref;
+    static D3DVERTEX quad[] =
+    {
+        {{-1.0f}, { 1.0f}, {0.0f}, {1.0f}, {0.0f}, {0.0f}},
+        {{ 1.0f}, { 1.0f}, {0.0f}, {1.0f}, {0.0f}, {0.0f}},
+        {{-1.0f}, {-1.0f}, {0.0f}, {1.0f}, {0.0f}, {0.0f}},
+        {{ 1.0f}, {-1.0f}, {0.0f}, {1.0f}, {0.0f}, {0.0f}},
+    };
+
+#define FVF_COLORVERTEX (D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_DIFFUSE | D3DFVF_SPECULAR)
+    static struct
+    {
+        struct vec3 position;
+        struct vec3 normal;
+        DWORD diffuse, specular;
+    }
+    quad2[] =
+    {
+        {{-1.0f,  1.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, 0xffff0000, 0xff808080},
+        {{ 1.0f,  1.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, 0xffff0000, 0xff808080},
+        {{-1.0f, -1.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, 0xffff0000, 0xff808080},
+        {{ 1.0f, -1.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, 0xffff0000, 0xff808080},
+    };
+
+    static D3DLVERTEX lquad[] =
+    {
+        {{-1.0f}, { 1.0f}, {0.0f}, 0, {0xffff0000}, {0xff808080}},
+        {{ 1.0f}, { 1.0f}, {0.0f}, 0, {0xffff0000}, {0xff808080}},
+        {{-1.0f}, {-1.0f}, {0.0f}, 0, {0xffff0000}, {0xff808080}},
+        {{ 1.0f}, {-1.0f}, {0.0f}, 0, {0xffff0000}, {0xff808080}},
+    };
+
+#define FVF_LVERTEX2 (D3DFVF_LVERTEX & ~D3DFVF_RESERVED1)
+    static struct
+    {
+        struct vec3 position;
+        DWORD diffuse, specular;
+        struct vec2 texcoord;
+    }
+    lquad2[] =
+    {
+        {{-1.0f,  1.0f, 0.0f}, 0xffff0000, 0xff808080},
+        {{ 1.0f,  1.0f, 0.0f}, 0xffff0000, 0xff808080},
+        {{-1.0f, -1.0f, 0.0f}, 0xffff0000, 0xff808080},
+        {{ 1.0f, -1.0f, 0.0f}, 0xffff0000, 0xff808080},
+    };
+
+    static D3DTLVERTEX tlquad[] =
+    {
+        {{   0.0f}, { 480.0f}, {0.0f}, {1.0f}, {0xff0000ff}, {0xff808080}},
+        {{   0.0f}, {   0.0f}, {0.0f}, {1.0f}, {0xff0000ff}, {0xff808080}},
+        {{ 640.0f}, { 480.0f}, {0.0f}, {1.0f}, {0xff0000ff}, {0xff808080}},
+        {{ 640.0f}, {   0.0f}, {0.0f}, {1.0f}, {0xff0000ff}, {0xff808080}},
+    };
+
+#define FVF_TLVERTEX2 (D3DFVF_XYZRHW | D3DFVF_NORMAL | D3DFVF_DIFFUSE | D3DFVF_SPECULAR)
+    static struct
+    {
+        struct vec4 position;
+        struct vec3 normal;
+        DWORD diffuse, specular;
+    }
+    tlquad2[] =
+    {
+        {{   0.0f,  480.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 0.0f}, 0xff0000ff, 0xff808080},
+        {{   0.0f,    0.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 0.0f}, 0xff0000ff, 0xff808080},
+        {{ 640.0f,  480.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 0.0f}, 0xff0000ff, 0xff808080},
+        {{ 640.0f,    0.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 0.0f}, 0xff0000ff, 0xff808080},
+    };
+
+    static const struct
+    {
+        DWORD vertextype;
+        void *data;
+        DWORD d3drs_lighting, d3drs_specular;
+        DWORD draw_flags;
+        D3DCOLOR color;
+    }
+    tests[] =
+    {
+        /* Lighting is enabled when all of these conditions are met:
+         * 1) No pretransformed position(D3DFVF_XYZRHW)
+         * 2) Normals are available (D3DFVF_NORMAL)
+         * 3) D3DDP_DONOTLIGHT is not set.
+         *
+         * D3DRENDERSTATE_LIGHTING is ignored, it is not defined
+         * in this d3d version */
+
+        /* 0 */
+        { D3DFVF_VERTEX,    quad,       FALSE,  FALSE,  0,                  0x0000ff00},
+        { D3DFVF_VERTEX,    quad,       TRUE,   FALSE,  0,                  0x0000ff00},
+        { D3DFVF_VERTEX,    quad,       FALSE,  FALSE,  D3DDP_DONOTLIGHT,   0x00ffffff},
+        { D3DFVF_VERTEX,    quad,       TRUE,   FALSE,  D3DDP_DONOTLIGHT,   0x00ffffff},
+        { D3DFVF_VERTEX,    quad,       FALSE,  TRUE,   0,                  0x0000ff00},
+        { D3DFVF_VERTEX,    quad,       TRUE,   TRUE,   0,                  0x0000ff00},
+        { D3DFVF_VERTEX,    quad,       FALSE,  TRUE,   D3DDP_DONOTLIGHT,   0x00ffffff},
+        { D3DFVF_VERTEX,    quad,       TRUE,   TRUE,   D3DDP_DONOTLIGHT,   0x00ffffff},
+
+        /* 8 */
+        { FVF_COLORVERTEX,  quad2,      FALSE,  FALSE,  0,                  0x0000ff00},
+        { FVF_COLORVERTEX,  quad2,      TRUE,   FALSE,  0,                  0x0000ff00},
+        { FVF_COLORVERTEX,  quad2,      FALSE,  FALSE,  D3DDP_DONOTLIGHT,   0x00ff0000},
+        { FVF_COLORVERTEX,  quad2,      TRUE,   FALSE,  D3DDP_DONOTLIGHT,   0x00ff0000},
+        /* The specular color in the vertex is ignored because
+         * D3DRENDERSTATE_COLORVERTEX is not enabled */
+        { FVF_COLORVERTEX,  quad2,      FALSE,  TRUE,   0,                  0x0000ff00},
+        { FVF_COLORVERTEX,  quad2,      TRUE,   TRUE,   0,                  0x0000ff00},
+        { FVF_COLORVERTEX,  quad2,      FALSE,  TRUE,   D3DDP_DONOTLIGHT,   0x00ff8080},
+        { FVF_COLORVERTEX,  quad2,      TRUE,   TRUE,   D3DDP_DONOTLIGHT,   0x00ff8080},
+
+        /* 16 */
+        { D3DFVF_LVERTEX,   lquad,      FALSE,  FALSE,  0,                  0x00ff0000},
+        { D3DFVF_LVERTEX,   lquad,      TRUE,   FALSE,  0,                  0x00ff0000},
+        { D3DFVF_LVERTEX,   lquad,      FALSE,  FALSE,  D3DDP_DONOTLIGHT,   0x00ff0000},
+        { D3DFVF_LVERTEX,   lquad,      TRUE,   FALSE,  D3DDP_DONOTLIGHT,   0x00ff0000},
+        { D3DFVF_LVERTEX,   lquad,      FALSE,  TRUE,   0,                  0x00ff8080},
+        { D3DFVF_LVERTEX,   lquad,      TRUE,   TRUE,   0,                  0x00ff8080},
+        { D3DFVF_LVERTEX,   lquad,      FALSE,  TRUE,   D3DDP_DONOTLIGHT,   0x00ff8080},
+        { D3DFVF_LVERTEX,   lquad,      TRUE,   TRUE,   D3DDP_DONOTLIGHT,   0x00ff8080},
+
+        /* 24 */
+        { FVF_LVERTEX2,     lquad2,     FALSE,  FALSE,  0,                  0x00ff0000},
+        { FVF_LVERTEX2,     lquad2,     TRUE,   FALSE,  0,                  0x00ff0000},
+        { FVF_LVERTEX2,     lquad2,     FALSE,  FALSE,  D3DDP_DONOTLIGHT,   0x00ff0000},
+        { FVF_LVERTEX2,     lquad2,     TRUE,   FALSE,  D3DDP_DONOTLIGHT,   0x00ff0000},
+        { FVF_LVERTEX2,     lquad2,     FALSE,  TRUE,   0,                  0x00ff8080},
+        { FVF_LVERTEX2,     lquad2,     TRUE,   TRUE,   0,                  0x00ff8080},
+        { FVF_LVERTEX2,     lquad2,     FALSE,  TRUE,   D3DDP_DONOTLIGHT,   0x00ff8080},
+        { FVF_LVERTEX2,     lquad2,     TRUE,   TRUE,   D3DDP_DONOTLIGHT,   0x00ff8080},
+
+        /* 32 */
+        { D3DFVF_TLVERTEX,  tlquad,     FALSE,  FALSE,  0,                  0x000000ff},
+        { D3DFVF_TLVERTEX,  tlquad,     TRUE,   FALSE,  0,                  0x000000ff},
+        { D3DFVF_TLVERTEX,  tlquad,     FALSE,  FALSE,  D3DDP_DONOTLIGHT,   0x000000ff},
+        { D3DFVF_TLVERTEX,  tlquad,     TRUE,   FALSE,  D3DDP_DONOTLIGHT,   0x000000ff},
+        { D3DFVF_TLVERTEX,  tlquad,     FALSE,  TRUE,   0,                  0x008080ff},
+        { D3DFVF_TLVERTEX,  tlquad,     TRUE,   TRUE,   0,                  0x008080ff},
+        { D3DFVF_TLVERTEX,  tlquad,     FALSE,  TRUE,   D3DDP_DONOTLIGHT,   0x008080ff},
+        { D3DFVF_TLVERTEX,  tlquad,     TRUE,   TRUE,   D3DDP_DONOTLIGHT,   0x008080ff},
+
+        /* 40 */
+        { FVF_TLVERTEX2,    tlquad2,    FALSE,  FALSE,  0,                  0x000000ff},
+        { FVF_TLVERTEX2,    tlquad2,    TRUE,   FALSE,  0,                  0x000000ff},
+        { FVF_TLVERTEX2,    tlquad2,    FALSE,  FALSE,  D3DDP_DONOTLIGHT,   0x000000ff},
+        { FVF_TLVERTEX2,    tlquad2,    TRUE,   FALSE,  D3DDP_DONOTLIGHT,   0x000000ff},
+        { FVF_TLVERTEX2,    tlquad2,    FALSE,  TRUE,   0,                  0x008080ff},
+        { FVF_TLVERTEX2,    tlquad2,    TRUE,   TRUE,   0,                  0x008080ff},
+        { FVF_TLVERTEX2,    tlquad2,    FALSE,  TRUE,   D3DDP_DONOTLIGHT,   0x008080ff},
+        { FVF_TLVERTEX2,    tlquad2,    TRUE,   TRUE,   D3DDP_DONOTLIGHT,   0x008080ff},
+    };
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create D3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+    hr = IDirect3DDevice3_GetDirect3D(device, &d3d);
+    ok(SUCCEEDED(hr), "Failed to get IDirect3D3 interface, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice3_GetRenderTarget(device, &rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+
+    viewport = create_viewport(device, 0, 0, 640, 480);
+    hr = IDirect3DDevice3_SetCurrentViewport(device, viewport);
+    ok(SUCCEEDED(hr), "Failed to set current viewport, hr %#x.\n", hr);
+
+    memset(&mat_desc, 0, sizeof(mat_desc));
+    mat_desc.dwSize = sizeof(mat_desc);
+    mat_desc.dcvEmissive.g = 1.0f;
+    hr = IDirect3D3_CreateMaterial(d3d, &emissive, NULL);
+    ok(SUCCEEDED(hr), "Failed to create material, hr %#x.\n", hr);
+    hr = IDirect3DMaterial3_SetMaterial(emissive, &mat_desc);
+    ok(SUCCEEDED(hr), "Failed to set material, hr %#x.\n", hr);
+    hr = IDirect3DMaterial3_GetHandle(emissive, device, &mat_handle);
+    ok(SUCCEEDED(hr), "Failed to get material handle, hr %#x.\n", hr);
+    hr = IDirect3DDevice3_SetLightState(device, D3DLIGHTSTATE_MATERIAL, mat_handle);
+    ok(SUCCEEDED(hr), "Failed to set material state, hr %#x.\n", hr);
+    hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_ZENABLE, D3DZB_FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable z test, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice3_GetRenderState(device, D3DRENDERSTATE_SPECULARENABLE, &rs);
+    ok(SUCCEEDED(hr), "Failed to get specularenable render state, hr %#x.\n", hr);
+    ok(rs == FALSE, "Initial D3DRENDERSTATE_SPECULARENABLE is %#x, expected FALSE.\n", rs);
+
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); i++)
+    {
+        hr = IDirect3DViewport3_Clear2(viewport, 1, &clear_rect, D3DCLEAR_TARGET, 0xff202020, 0.0f, 0);
+        ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_LIGHTING, tests[i].d3drs_lighting);
+        ok(SUCCEEDED(hr), "Failed to set lighting render state, hr %#x.\n", hr);
+        hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_SPECULARENABLE,
+                tests[i].d3drs_specular);
+        ok(SUCCEEDED(hr), "Failed to set specularenable render state, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice3_BeginScene(device);
+        ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+        hr = IDirect3DDevice2_DrawPrimitive(device, D3DPT_TRIANGLESTRIP,
+                tests[i].vertextype, tests[i].data, 4, tests[i].draw_flags | D3DDP_WAIT);
+        hr = IDirect3DDevice3_EndScene(device);
+        ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+        color = get_surface_color(rt, 320, 240);
+        ok(compare_color(color, tests[i].color, 1),
+                "Got unexpected color 0x%08x, expected 0x%08x, test %u.\n",
+                color, tests[i].color, i);
+    }
+
+    IDirect3DMaterial3_Release(emissive);
+    IDirectDrawSurface4_Release(rt);
+    ref = IDirect3DDevice3_Release(device);
+    ok(ref == 0, "Device not properly released, refcount %u.\n", ref);
+    ref = IDirect3D3_Release(d3d);
+    ok(ref == 0, "D3d not properly released, refcount %u.\n", ref);
+}
+
 START_TEST(ddraw4)
 {
     test_process_vertices();
@@ -3478,4 +3713,5 @@ START_TEST(ddraw4)
     test_draw_strided();
     test_clear_rect_count();
     test_coop_level_versions();
+    test_lighting_interface_versions();
 }

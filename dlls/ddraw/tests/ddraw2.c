@@ -3214,6 +3214,167 @@ done:
     DestroyWindow(window);
 }
 
+static void test_lighting_interface_versions(void)
+{
+    static D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
+    IDirect3DMaterial2 *emissive, *background;
+    IDirect3DViewport2 *viewport;
+    IDirect3DDevice2 *device;
+    IDirectDrawSurface *rt;
+    IDirectDraw2 *ddraw;
+    IDirect3D2 *d3d;
+    D3DCOLOR color;
+    HWND window;
+    HRESULT hr;
+    D3DMATERIALHANDLE mat_handle;
+    D3DMATERIAL mat_desc;
+    DWORD rs;
+    unsigned int i;
+    ULONG ref;
+    static D3DVERTEX quad[] =
+    {
+        {{-1.0f}, { 1.0f}, {0.0f}, {1.0f}, {0.0f}, {0.0f}},
+        {{ 1.0f}, { 1.0f}, {0.0f}, {1.0f}, {0.0f}, {0.0f}},
+        {{-1.0f}, {-1.0f}, {0.0f}, {1.0f}, {0.0f}, {0.0f}},
+        {{ 1.0f}, {-1.0f}, {0.0f}, {1.0f}, {0.0f}, {0.0f}},
+    };
+    static D3DLVERTEX lquad[] =
+    {
+        {{-1.0f}, { 1.0f}, {0.0f}, 0, {0xffff0000}, {0xff808080}},
+        {{ 1.0f}, { 1.0f}, {0.0f}, 0, {0xffff0000}, {0xff808080}},
+        {{-1.0f}, {-1.0f}, {0.0f}, 0, {0xffff0000}, {0xff808080}},
+        {{ 1.0f}, {-1.0f}, {0.0f}, 0, {0xffff0000}, {0xff808080}},
+    };
+    static D3DTLVERTEX tlquad[] =
+    {
+        {{   0.0f}, { 480.0f}, {0.0f}, {1.0f}, {0xff0000ff}, {0xff808080}},
+        {{   0.0f}, {   0.0f}, {0.0f}, {1.0f}, {0xff0000ff}, {0xff808080}},
+        {{ 640.0f}, { 480.0f}, {0.0f}, {1.0f}, {0xff0000ff}, {0xff808080}},
+        {{ 640.0f}, {   0.0f}, {0.0f}, {1.0f}, {0xff0000ff}, {0xff808080}},
+    };
+    static const struct
+    {
+        D3DVERTEXTYPE vertextype;
+        void *data;
+        DWORD d3drs_lighting, d3drs_specular;
+        DWORD draw_flags;
+        D3DCOLOR color;
+    }
+    tests[] =
+    {
+        /* Lighting is enabled when D3DVT_VERTEX is used and D3DDP_DONOTLIGHT is not
+         * set. D3DVT_VERTEX has diffuse = 0xffffffff and specular = 0x00000000, as
+         * in later d3d versions */
+        { D3DVT_VERTEX,     quad,   FALSE,  FALSE,  0,                  0x0000ff00},
+        { D3DVT_VERTEX,     quad,   TRUE,   FALSE,  0,                  0x0000ff00},
+        { D3DVT_VERTEX,     quad,   FALSE,  FALSE,  D3DDP_DONOTLIGHT,   0x00ffffff},
+        { D3DVT_VERTEX,     quad,   TRUE,   FALSE,  D3DDP_DONOTLIGHT,   0x00ffffff},
+        { D3DVT_VERTEX,     quad,   FALSE,  TRUE,   0,                  0x0000ff00},
+        { D3DVT_VERTEX,     quad,   TRUE,   TRUE,   0,                  0x0000ff00},
+        { D3DVT_VERTEX,     quad,   FALSE,  TRUE,   D3DDP_DONOTLIGHT,   0x00ffffff},
+        { D3DVT_VERTEX,     quad,   TRUE,   TRUE,   D3DDP_DONOTLIGHT,   0x00ffffff},
+
+        { D3DVT_LVERTEX,    lquad,  FALSE,  FALSE,  0,                  0x00ff0000},
+        { D3DVT_LVERTEX,    lquad,  TRUE,   FALSE,  0,                  0x00ff0000},
+        { D3DVT_LVERTEX,    lquad,  FALSE,  FALSE,  D3DDP_DONOTLIGHT,   0x00ff0000},
+        { D3DVT_LVERTEX,    lquad,  TRUE,   FALSE,  D3DDP_DONOTLIGHT,   0x00ff0000},
+        { D3DVT_LVERTEX,    lquad,  FALSE,  TRUE,   0,                  0x00ff8080},
+        { D3DVT_LVERTEX,    lquad,  TRUE,   TRUE,   0,                  0x00ff8080},
+        { D3DVT_LVERTEX,    lquad,  FALSE,  TRUE,   D3DDP_DONOTLIGHT,   0x00ff8080},
+        { D3DVT_LVERTEX,    lquad,  TRUE,   TRUE,   D3DDP_DONOTLIGHT,   0x00ff8080},
+
+        { D3DVT_TLVERTEX,   tlquad, FALSE,  FALSE,  0,                  0x000000ff},
+        { D3DVT_TLVERTEX,   tlquad, TRUE,   FALSE,  0,                  0x000000ff},
+        { D3DVT_TLVERTEX,   tlquad, FALSE,  FALSE,  D3DDP_DONOTLIGHT,   0x000000ff},
+        { D3DVT_TLVERTEX,   tlquad, TRUE,   FALSE,  D3DDP_DONOTLIGHT,   0x000000ff},
+        { D3DVT_TLVERTEX,   tlquad, FALSE,  TRUE,   0,                  0x008080ff},
+        { D3DVT_TLVERTEX,   tlquad, TRUE,   TRUE,   0,                  0x008080ff},
+        { D3DVT_TLVERTEX,   tlquad, FALSE,  TRUE,   D3DDP_DONOTLIGHT,   0x008080ff},
+        { D3DVT_TLVERTEX,   tlquad, TRUE,   TRUE,   D3DDP_DONOTLIGHT,   0x008080ff},
+    };
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(ddraw = create_ddraw()))
+    {
+        skip("Failed to create ddraw object, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+    if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create D3D device, skipping test.\n");
+        IDirectDraw2_Release(ddraw);
+        DestroyWindow(window);
+        return;
+    }
+    hr = IDirectDraw2_QueryInterface(ddraw, &IID_IDirect3D2, (void **)&d3d);
+    ok(SUCCEEDED(hr), "Failed to get IDirect3D2 interface, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice2_GetRenderTarget(device, &rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+
+    viewport = create_viewport(device, 0, 0, 640, 480);
+    hr = IDirect3DDevice2_SetCurrentViewport(device, viewport);
+    ok(SUCCEEDED(hr), "Failed to set current viewport, hr %#x.\n", hr);
+
+    memset(&mat_desc, 0, sizeof(mat_desc));
+    mat_desc.dwSize = sizeof(mat_desc);
+    mat_desc.dcvEmissive.g = 1.0f;
+    hr = IDirect3D2_CreateMaterial(d3d, &emissive, NULL);
+    ok(SUCCEEDED(hr), "Failed to create material, hr %#x.\n", hr);
+    hr = IDirect3DMaterial2_SetMaterial(emissive, &mat_desc);
+    ok(SUCCEEDED(hr), "Failed to set material, hr %#x.\n", hr);
+    hr = IDirect3DMaterial2_GetHandle(emissive, device, &mat_handle);
+    ok(SUCCEEDED(hr), "Failed to get material handle, hr %#x.\n", hr);
+    hr = IDirect3DDevice2_SetLightState(device, D3DLIGHTSTATE_MATERIAL, mat_handle);
+    ok(SUCCEEDED(hr), "Failed to set material state, hr %#x.\n", hr);
+    hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_ZENABLE, D3DZB_FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable z test, hr %#x.\n", hr);
+
+    background = create_diffuse_material(device, 0.1f, 0.1f, 0.1f, 0.1f);
+    hr = IDirect3DMaterial2_GetHandle(background, device, &mat_handle);
+    ok(SUCCEEDED(hr), "Failed to get material handle, hr %#x.\n", hr);
+    hr = IDirect3DViewport2_SetBackground(viewport, mat_handle);
+    ok(SUCCEEDED(hr), "Failed to set background material, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice2_GetRenderState(device, D3DRENDERSTATE_SPECULARENABLE, &rs);
+    ok(SUCCEEDED(hr), "Failed to get specularenable render state, hr %#x.\n", hr);
+    ok(rs == TRUE, "Initial D3DRENDERSTATE_SPECULARENABLE is %#x, expected TRUE.\n", rs);
+
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); i++)
+    {
+        hr = IDirect3DViewport2_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
+        ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_LIGHTING, tests[i].d3drs_lighting);
+        ok(SUCCEEDED(hr), "Failed to set lighting render state, hr %#x.\n", hr);
+        hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_SPECULARENABLE,
+                tests[i].d3drs_specular);
+        ok(SUCCEEDED(hr), "Failed to set specularenable render state, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice2_BeginScene(device);
+        ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+        hr = IDirect3DDevice2_DrawPrimitive(device, D3DPT_TRIANGLESTRIP,
+                tests[i].vertextype, tests[i].data, 4, tests[i].draw_flags | D3DDP_WAIT);
+        hr = IDirect3DDevice2_EndScene(device);
+        ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+        color = get_surface_color(rt, 320, 240);
+        ok(compare_color(color, tests[i].color, 1),
+                "Got unexpected color 0x%08x, expected 0x%08x, test %u.\n",
+                color, tests[i].color, i);
+    }
+
+    IDirect3DMaterial2_Release(background);
+    IDirect3DMaterial2_Release(emissive);
+    IDirectDrawSurface_Release(rt);
+    IDirect3DDevice2_Release(device);
+    IDirect3D2_Release(d3d);
+    ref = IDirectDraw2_Release(ddraw);
+    ok(ref == 0, "Ddraw object not properly released, refcount %u.\n", ref);
+}
+
 START_TEST(ddraw2)
 {
     test_coop_level_create_device_window();
@@ -3239,4 +3400,5 @@ START_TEST(ddraw2)
     test_coop_level_multi_window();
     test_clear_rect_count();
     test_coop_level_versions();
+    test_lighting_interface_versions();
 }
