@@ -1190,7 +1190,8 @@ msgid ""
 msgstr ""
 "開啟大寫鎖定可能導致您輸入錯誤的密碼。\n"
 "\n"
-"請在輸入密碼前按下 Caps Lock 鍵，解除大寫鎖定。"
+"請在輸入密碼前按下 Caps Lock 鍵，解除\n"
+"大寫鎖定。"
 
 #: credui.rc:31
 msgid "Caps Lock is On"
@@ -3095,11 +3096,11 @@ msgstr "我的最愛(&I)"
 
 #: hhctrl.rc:33
 msgid "Hide &Tabs"
-msgstr "隱藏分頁標籤(&T)"
+msgstr "隱藏分頁(&T)"
 
 #: hhctrl.rc:34
 msgid "Show &Tabs"
-msgstr "顯示分頁標籤(&T)"
+msgstr "顯示分頁(&T)"
 
 #: hhctrl.rc:39
 msgid "Show"
@@ -3263,7 +3264,7 @@ msgstr "空白頁面(&B)"
 
 #: inetcpl.rc:53
 msgid "Browsing history"
-msgstr "瀏覽記錄"
+msgstr "瀏覽歷程"
 
 #: inetcpl.rc:54
 msgid "You can delete cached pages, cookies and other data."
@@ -3279,7 +3280,7 @@ msgstr "設定(&S)…"
 
 #: inetcpl.rc:65
 msgid "Delete browsing history"
-msgstr "刪除瀏覽記錄"
+msgstr "刪除瀏覽歷程"
 
 #: inetcpl.rc:68
 msgid ""
@@ -3303,7 +3304,7 @@ msgid ""
 "History\n"
 "List of websites you have accessed."
 msgstr ""
-"歷史記錄\n"
+"歷程\n"
 "您曾存取過的網站清單。"
 
 #: inetcpl.rc:74
@@ -3504,11 +3505,11 @@ msgstr "在迴圈之外不可有 continue"
 
 #: jscript.rc:42
 msgid "Label redefined"
-msgstr "標籤重複定義"
+msgstr "標貼重複定義"
 
 #: jscript.rc:43
 msgid "Label not found"
-msgstr "找不到標籤"
+msgstr "找不到標貼"
 
 #: jscript.rc:44
 msgid "Conditional compilation is turned off"
@@ -3952,7 +3953,7 @@ msgstr "無效的層級。\n"
 
 #: winerror.mc:491
 msgid "No volume label.\n"
-msgstr "沒有卷冊標籤。\n"
+msgstr "沒有卷冊標貼。\n"
 
 #: winerror.mc:496
 msgid "Module not found.\n"
@@ -3968,7 +3969,7 @@ msgstr "沒有要等待的子行程。\n"
 
 #: winerror.mc:511
 msgid "Child process has not completed.\n"
-msgstr "子行程未已完成。\n"
+msgstr "子行程還未完成。\n"
 
 #: winerror.mc:516
 msgid "Invalid use of direct access handle.\n"
@@ -4064,7 +4065,7 @@ msgstr "DosSemMuxWait 清單無效。\n"
 
 #: winerror.mc:636
 msgid "Volume label too long.\n"
-msgstr "卷冊標籤太長。\n"
+msgstr "卷冊標貼太長。\n"
 
 #: winerror.mc:641
 msgid "Too many TCBs.\n"
@@ -6012,7 +6013,7 @@ msgstr "不受支援的轉送語法。\n"
 
 #: winerror.mc:3086
 msgid "Invalid tag.\n"
-msgstr "無效的標定。\n"
+msgstr "無效的標籤。\n"
 
 #: winerror.mc:3091
 msgid "Invalid array bounds.\n"
@@ -7500,7 +7501,7 @@ msgstr "倒回"
 
 #: shdoclc.rc:196
 msgid "Trace Tags"
-msgstr "追蹤標記"
+msgstr "追蹤標籤"
 
 #: shdoclc.rc:197
 msgid "Resource Failures"
@@ -7898,7 +7899,7 @@ msgstr "印表套頁"
 
 #: shell32.rc:211 winhlp32.rc:45
 msgid "History"
-msgstr "記錄"
+msgstr "歷程"
 
 #: shell32.rc:212
 msgid "Program Files"
@@ -9311,10 +9312,10 @@ msgstr ""
 "GOTO 命令在批次檔內將執行順序轉移到另一個\n"
 "敘述。\n"
 "\n"
-"做為 GOTO 目標之用的標籤長度最多可以是 255 字元，\n"
+"做為 GOTO 目標之用的標貼長度最多可以是 255 字元，\n"
 "但是不可以包含空格 (這是與其他作業系統不同的\n"
-"地方)。如果兩個以上相同的標籤存在於批次檔中，\n"
-"將會一律執行第一個。試圖前往不存在的標籤會\n"
+"地方)。如果兩個以上相同的標貼存在於批次檔中，\n"
+"將會一律執行第一個。試圖前往不存在的標貼會\n"
 "終止批次檔的執行。\n"
 "\n"
 "GOTO 用於互動模式中將沒有任何效果。\n"
@@ -9355,11 +9356,11 @@ msgid ""
 "The command will prompt you for the new volume label for the given drive.\n"
 "You can display the disk volume label with the VOL command.\n"
 msgstr ""
-"LABEL 用於設定磁碟卷冊標籤。\n"
+"LABEL 用於設定磁碟卷冊標貼。\n"
 "\n"
 "語法：LABEL [裝置代號:]\n"
-"命令將向您提示詢問新的卷冊標籤用於給定的儲存裝置。\n"
-"您可以利用 VOL 命令來顯示磁碟卷冊標籤。\n"
+"命令將向您提示詢問新的卷冊標貼用於給定的儲存裝置。\n"
+"您可以利用 VOL 命令來顯示磁碟卷冊標貼。\n"
 
 #: cmd.rc:103
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
@@ -9624,7 +9625,7 @@ msgstr "VER 顯示您正在執行的 cmd 版本。\n"
 
 #: cmd.rc:231
 msgid "VOL shows the volume label of a disk device.\n"
-msgstr "VOL 顯示磁碟裝置的卷冊標籤。\n"
+msgstr "VOL 顯示磁碟裝置的卷冊標貼。\n"
 
 #: cmd.rc:235
 msgid ""
@@ -9798,7 +9799,7 @@ msgstr ""
 "TITLE\t\t設定用於 CMD 作業階段的視窗標題\n"
 "TYPE\t\t印出文字檔的內容\n"
 "VER\t\t顯示目前的 CMD 版本\n"
-"VOL\t\t顯示磁碟裝置的卷冊標籤\n"
+"VOL\t\t顯示磁碟裝置的卷冊標貼\n"
 "XCOPY\t\t複製來源檔案或樹狀目錄到目的地\n"
 "EXIT\t\t關閉 CMD\n"
 "\n"
@@ -9880,7 +9881,7 @@ msgstr "開啟 %1 失敗\n"
 
 #: cmd.rc:337
 msgid "Cannot call batch label outside of a batch script\n"
-msgstr "無法呼叫批次命令稿外部的批次標籤\n"
+msgstr "無法呼叫批次命令稿外部的批次標貼\n"
 
 #: cmd.rc:338 xcopy.rc:42
 msgctxt "All key"
@@ -9917,7 +9918,7 @@ msgstr ""
 
 #: cmd.rc:345
 msgid "Volume label (11 characters, <Enter> for none)?"
-msgstr "卷冊標籤 (11 個字元，<Enter> 表示沒有)？"
+msgstr "卷冊標貼 (11 個字元，<Enter> 表示沒有)？"
 
 #: cmd.rc:346
 msgid "PATH not found\n"
@@ -9949,7 +9950,7 @@ msgstr "位於儲存裝置 %1!c! 的卷冊為 %2\n"
 
 #: cmd.rc:353
 msgid "Volume in drive %1!c! has no label.\n"
-msgstr "位於儲存裝置 %1!c! 的卷冊沒有任何標籤。\n"
+msgstr "位於儲存裝置 %1!c! 的卷冊沒有任何標貼。\n"
 
 #: cmd.rc:354
 msgid " (Yes|No)"
@@ -10622,7 +10623,7 @@ msgstr "複製 C&LSID 到剪貼簿"
 
 #: oleview.rc:54
 msgid "Copy &HTML object Tag to clipboard"
-msgstr "複製 &HTML 物件標記到剪貼簿"
+msgstr "複製 &HTML 物件標籤到剪貼簿"
 
 #: oleview.rc:60
 msgid "&Expert mode"
@@ -11626,7 +11627,7 @@ msgstr "選擇行(&S)…"
 
 #: taskmgr.rc:69 taskmgr.rc:258
 msgid "&CPU History"
-msgstr "&CPU 記錄"
+msgstr "&CPU 歷程"
 
 #: taskmgr.rc:71 taskmgr.rc:259
 msgid "&One Graph, All CPUs"
@@ -11786,11 +11787,11 @@ msgstr "非置換頁"
 
 #: taskmgr.rc:414
 msgid "CPU usage history"
-msgstr "CPU 使用記錄"
+msgstr "CPU 使用歷程"
 
 #: taskmgr.rc:415
 msgid "Memory usage history"
-msgstr "記憶體使用記錄"
+msgstr "記憶體使用歷程"
 
 #: taskmgr.rc:428 taskmgr.rc:327
 msgid "Debug Channels"
@@ -12145,11 +12146,11 @@ msgstr "在效能圖表上顯示核心使用時間"
 
 #: taskmgr.rc:219
 msgid "A single history graph shows total CPU usage"
-msgstr "在一張記錄圖表顯示所有 CPU 用量"
+msgstr "在一張歷程圖表顯示所有 CPU 用量"
 
 #: taskmgr.rc:220
 msgid "Each CPU has its own history graph"
-msgstr "每一個 CPU 有自己的記錄圖表"
+msgstr "每一個 CPU 有自己的歷程圖表"
 
 #: taskmgr.rc:222
 msgid "Brings a task to the foreground, switch focus to that task"
@@ -12317,11 +12318,10 @@ msgid ""
 "data before it is terminated. Are you sure you want to\n"
 "terminate the process?"
 msgstr ""
-"警告：終止行程可以造成 undesired\n"
-"結果包含失真的資料和系統 instability。\n"
-"行程將無法被給定的 chance 到儲存它的狀態或\n"
-"資料之前它被終止。確定要\n"
-"終止行程？"
+"警告：終止行程可能造成預料之外的\n"
+"結果像是資料的漏失與系統的不穩定。\n"
+"行程將無法有機會於終止之前能夠儲存\n"
+"它的狀態或資料。您確定要終止行程嗎？"
 
 #: taskmgr.rc:311
 msgid "Unable to Terminate Process"
@@ -12599,7 +12599,7 @@ msgstr "瀏覽(&W)…"
 
 #: winecfg.rc:244
 msgid "&Label:"
-msgstr "標籤(&L)："
+msgstr "標貼(&L)："
 
 #: winecfg.rc:246
 msgid "S&erial:"
@@ -13021,7 +13021,7 @@ msgstr "啟用(&E)"
 
 #: wineconsole.rc:72
 msgid "Command history"
-msgstr "指令記錄"
+msgstr "指令歷程"
 
 #: wineconsole.rc:73
 msgid "&Number of recalled commands:"
@@ -13753,7 +13753,7 @@ msgstr "格式(&O)"
 
 #: wordpad.rc:82 wordpad.rc:105
 msgid "&Bullet points"
-msgstr "要點(&B)"
+msgstr "項目符號(&B)"
 
 #: wordpad.rc:83 wordpad.rc:106
 msgid "&Paragraph..."
@@ -13761,7 +13761,7 @@ msgstr "段落(&P)…"
 
 #: wordpad.rc:84
 msgid "&Tabs..."
-msgstr "標籤(&T)…"
+msgstr "分頁(&T)…"
 
 #: wordpad.rc:85
 msgid "Backgroun&d"
@@ -13821,11 +13821,11 @@ msgstr "對齊"
 
 #: wordpad.rc:239
 msgid "Tabs"
-msgstr "標籤"
+msgstr "分頁"
 
 #: wordpad.rc:242
 msgid "Tab stops"
-msgstr "標籤停點"
+msgstr "定位停點"
 
 #: wordpad.rc:248
 msgid "Remove al&l"
