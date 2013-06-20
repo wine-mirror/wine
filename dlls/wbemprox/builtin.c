@@ -1273,10 +1273,12 @@ static enum fill_status fill_directory( struct table *table, const struct expr *
     DWORD drives = GetLogicalDrives();
     WIN32_FIND_DATAW data;
     HANDLE handle;
-    struct dirstack *dirstack = alloc_dirstack(2);
+    struct dirstack *dirstack;
     enum fill_status status = FILL_STATUS_UNFILTERED;
 
     if (!resize_table( table, 4, sizeof(*rec) )) return FILL_STATUS_FAILED;
+
+    dirstack = alloc_dirstack(2);
 
     for (i = 0; i < sizeof(drives); i++)
     {
