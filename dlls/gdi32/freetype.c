@@ -1622,6 +1622,38 @@ static void load_face(HKEY hkey_face, WCHAR *face_name, Family *family, void *bu
     }
 }
 
+/* move vertical fonts after their horizontal counterpart */
+/* assumes that font_list is already sorted by family name */
+static void reorder_vertical_fonts(void)
+{
+    Family *family, *next, *vert_family;
+    struct list *ptr, *vptr;
+    struct list vertical_families = LIST_INIT( vertical_families );
+
+    LIST_FOR_EACH_ENTRY_SAFE( family, next, &font_list, Family, entry )
+    {
+        if (family->FamilyName[0] != '@') continue;
+        list_remove( &family->entry );
+        list_add_tail( &vertical_families, &family->entry );
+    }
+
+    ptr = list_head( &font_list );
+    vptr = list_head( &vertical_families );
+    while (ptr && vptr)
+    {
+        family = LIST_ENTRY( ptr, Family, entry );
+        vert_family = LIST_ENTRY( vptr, Family, entry );
+        if (strcmpiW( family->FamilyName, vert_family->FamilyName + 1 ) > 0)
+        {
+            list_remove( vptr );
+            list_add_before( ptr, vptr );
+            vptr = list_head( &vertical_families );
+        }
+        else ptr = list_next( &font_list, ptr );
+    }
+    list_move_tail( &font_list, &vertical_families );
+}
+
 static void load_font_list_from_cache(HKEY hkey_font_cache)
 {
     DWORD size, family_index = 0;
@@ -1672,6 +1704,8 @@ static void load_font_list_from_cache(HKEY hkey_font_cache)
         release_family( family );
         size = sizeof(buffer);
     }
+
+    reorder_vertical_fonts();
 }
 
 static LONG create_font_cache_key(HKEY *hkey, DWORD *disposition)
