@@ -164,7 +164,7 @@ static void setup_options(void)
 /***********************************************************************
  *              process_attach
  */
-static BOOL process_attach(void)
+static BOOL process_attach( HINSTANCE instance )
 {
     SessionAttributeBits attributes;
     OSStatus status;
@@ -186,6 +186,7 @@ static BOOL process_attach(void)
 
     set_app_icon();
     macdrv_clipboard_process_attach();
+    IME_RegisterClasses( instance );
 
     return TRUE;
 }
@@ -279,8 +280,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved)
     switch(reason)
     {
     case DLL_PROCESS_ATTACH:
-        IME_RegisterClasses(hinst);
-        ret = process_attach();
+        ret = process_attach( hinst );
         break;
     case DLL_THREAD_DETACH:
         thread_detach();
