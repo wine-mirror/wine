@@ -1325,6 +1325,19 @@ static int match_name_table_language( const FT_SfntName *name, LANGID lang )
         if (name->language_id >= sizeof(mac_langid_table)/sizeof(mac_langid_table[0])) return 0;
         name_lang = mac_langid_table[name->language_id];
         break;
+    case TT_PLATFORM_APPLE_UNICODE:
+        switch (name->encoding_id)
+        {
+        case TT_APPLE_ID_DEFAULT:
+        case TT_APPLE_ID_ISO_10646:
+        case TT_APPLE_ID_UNICODE_2_0:
+            if (name->language_id >= sizeof(mac_langid_table)/sizeof(mac_langid_table[0])) return 0;
+            name_lang = mac_langid_table[name->language_id];
+            break;
+        default:
+            return 0;
+        }
+        break;
     default:
         return 0;
     }
@@ -1342,6 +1355,7 @@ static WCHAR *copy_name_table_string( const FT_SfntName *name )
 
     switch (name->platform_id)
     {
+    case TT_PLATFORM_APPLE_UNICODE:
     case TT_PLATFORM_MICROSOFT:
         ret = HeapAlloc( GetProcessHeap(), 0, name->string_len + sizeof(WCHAR) );
         for (i = 0; i < name->string_len / 2; i++)
