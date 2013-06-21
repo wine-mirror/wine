@@ -2193,6 +2193,24 @@ static void test__mbslwr_s(void)
        buffer);
 }
 
+static void test__mbstok(void)
+{
+    const unsigned char delim[] = "t";
+
+    char str[] = "!.!test";
+    unsigned char *ret;
+
+    strtok(str, "!");
+
+    ret = _mbstok(NULL, delim);
+    /* most versions of msvcrt use the same buffer for strtok and _mbstok */
+    ok(!ret || broken((char*)ret==str+4),
+            "_mbstok(NULL, \"t\") = %p, expected NULL (%p)\n", ret, str);
+
+    ret = _mbstok(NULL, delim);
+    ok(!ret, "_mbstok(NULL, \"t\") = %p, expected NULL\n", ret);
+}
+
 static void test__ultoa_s(void)
 {
     errno_t ret;
@@ -2615,6 +2633,7 @@ START_TEST(string)
     test_mbctombb();
     test_ismbclegal();
     test_strtok();
+    test__mbstok();
     test_wcscpy_s();
     test__wcsupr_s();
     test_strtol();
