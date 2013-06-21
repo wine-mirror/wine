@@ -1,12 +1,12 @@
-The Wine development release 1.6-rc2 is now available.
+The Wine development release 1.6-rc3 is now available.
 
 What's new in this release (see below for details):
   - Bug fixes only, we are in code freeze.
 
 The source is available from the following locations:
 
-  http://prdownloads.sourceforge.net/wine/wine-1.6-rc2.tar.bz2
-  http://mirrors.ibiblio.org/wine/source/1.6/wine-1.6-rc2.tar.bz2
+  http://prdownloads.sourceforge.net/wine/wine-1.6-rc3.tar.bz2
+  http://mirrors.ibiblio.org/wine/source/1.6/wine-1.6-rc3.tar.bz2
 
 Binary packages for various distributions will be available from:
 
@@ -22,159 +22,182 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 1.6-rc2 (total 28):
+Bugs fixed in 1.6-rc3 (total 30):
 
-  15493  Clamwin doesn't clear status window (dogfood)
-  17325  Multiwinia locks up when you exit it
-  17588  Strong Bad's Cool Game only shows black screen
-  18152  lseek* without effect on file stream
-  21774  Perfect World International: sometimes audio is missing
-  21890  running vc2005: compiler is out of heap space
-  23653  gmax crashes if you select opengl, wgl complains glBufferRegionEnabled missing from linux opengl?
-  23773  No application close "cross" icon displayed for ForteAgent
-  23896  SQLyog ignores checkboxes.
-  24402  winegcc does not properly pass cmdline args, e.g. -Wb,--as-cmd="as --32"
-  24935  Capella 7: Virtual keyboard not shown correctly
-  25176  CSI: Fatal Conspiracy Demo crashes on startup
-  25344  Nero 7: Crashed when installing.
-  25366  Sacred 2 Fallen Angel requires d3dx9_36.dll.D3DXSaveTextureToFileA
-  26598  Iconoclasts does not start
-  26853  CSI: Fatal Conspiracy demo: no splash screen without native d3dx9
-  30163  Arabic is not displayed correctly
-  30681  Microsoft SQL Server Management Studio Express 2008 installer fails (some .NET assemblies are not updated/patched by .NET service packs containing .msp)
-  32661  Word 2003: formulas are invisible
-  32872  Compilation broken if clang is installed, but not used for compilation.
-  33227  Icebreakers demo: launcher doesn't appear correctly
-  33649  wine-1.5.30 - "./configure --with-gnutls" fails with gnutls-3.2.0 - conftest.c:160:15: error: 'gnutls_mac_get_key_size' undeclared
-  33700  Shade: Wrath of Angels demo crashes after the intro video
-  33727  Microsoft SQL Server Management Studio Express 2005: cannot control server service with builtin wmiutils (purist)
-  33735  Soldier Of Fortune 3: Disabling GLSL required to play game without graphics issues
-  33741  Xara Designer Pro crashes when selecting Text
-  33748  API-MS-Win-Core-ProcessThreads-L1-1-0.dll failed to initialize
-  33780  configure --without-xml --with-dbus fails because of bad AC_REQUIRE logic
+  18355  Evochron Legends doesn't start
+  19149  GTA2 hangs up after some time
+  19938  GuitarPro: Prints empty tabs
+  21238  Stranded II: Bitmap loading errors
+  21749  Sierra watcher 3g crashes
+  23119  Crystal Disk Mark 3.0 crashes
+  23499  Opti Drive Control crashes at startup if a user has no access to the drive
+  25346  JASC PSP 8 fails to install
+  27628  Pride of Nations Demo / builtin d3dx9_36:  'Failed loading thumbnail game region textures' (purist)
+  28078  1914 Shells of Fury: text rendering issue
+  28128  Sacred Underworld 2.28 requires MouseWarpOverride=false
+  28219  Multiple installers misbehave due to unresolved _BrowseProperty (TargetPath/SelectionPath property handling) (Guitar Hero World Tour, BioEdit)
+  29052  Incorrect handling of lit vertices causes models to render black in The Longest Journey
+  30019  The Chosen (Well of Souls) demo - terrible performance in mid-game
+  30935  Regression: TextPad toolbar icons black
+  31009  MS Paint does not open png and jpeg files any more
+  31616  Touhou Kaikeidou ~ Marine Benefit runs at 3FPS instead of 60 and stops responding after Character Selection
+  32911  Adobe FrameMaker 8 installer aborts with compressed file extraction error
+  33210  Disabled buttons text is mirrored when using RTL layout
+  33212  Menu font no longer changes with DPI setting
+  33338  Oxford English Dictionary crashes on start
+  33467  Cannot bring Mac application in front of a Wine application in full screen mode
+  33496  pylotro - LOTRO doesn't shows after successful login
+  33555  Peachtree Quantum 2010 Accountant Edition post-install COM inproc server registration hangs on PEB lock (process exit)
+  33682  ACT! 6 cannot start under Wine 1.5.31
+  33786  System.InvalidCastException when launching map in Dungeons
+  33800  Naver LINE crashes after login
+  33821  Command and Conquer Generals fails to install
+  33824  Guitar Pro 5: Some fonts become very small
+  33843  Dungeon Siege: In full screen mouse moves screen
 
 ----------------------------------------------------------------
 
-Changes since 1.6-rc1:
+Changes since 1.6-rc2:
 
-Akihiro Sagawa (1):
-      po: Update Japanese translation.
-
-Alexandre Julliard (10):
-      winebuild: Split the names of the as and ld commands to allow arguments.
-      winebuild: Add an option to use the C compiler to assemble files.
-      winegcc: Pass the C compiler name to winebuild.
-      oleaut32: Remove redundant declaration of CLSID_PSFactoryBuffer.
-      wineboot: Don't print an error when failing to delete a file.
-      winex11: Don't use a surface if there is a client window.
-      mshtml/tests: Fix a reference leak.
-      wine.inf: Explicitly register the 32-bit stdole2.tlb under SysWOW64.
-      secur32: Set the SSL server name to enable the SNI extension.
-      wininet/tests: Use test.winehq.com for invalid certs tests.
-
-Alexandre Rostovtsev (2):
-      configure: In gnutls-3.2, gnutls_mac_get_key_size() moved to crypto.h.
-      configure: Always check for pkg-config.
+Alexandre Julliard (17):
+      widl: Avoid short printf formats with int variables.
+      user.exe: Always pass a resource size to CreateIconFromResourceEx16.
+      inetcomm: Only set the command type when the command expects a reply.
+      windowscodecs/tests: Pass the correct constant to IWICImagingFactory_CreateBitmapFromHBITMAP.
+      user32: Check the correct id for the close button when setting the font.
+      user32: Make the default non-client metrics scalable with the resolution.
+      user32: Center the icon in the caption bar.
+      user32: Use the current DC layout in DrawState when drawing to an intermediate bitmap.
+      winefile: Avoid abbreviations in column names.
+      Use the official Microsoft definitions for Gaelic languages.
+      make_unicode: Cache files under their full path name to avoid conflicts.
+      gdi32: Improve font name localization by not requiring a strict language match.
+      gdi32: Add support for loading name strings in Macintosh format.
+      gdi32: Add support for loading name strings in Apple Unicode format.
+      gdi32: Put vertical font families after their horizontal counterpart in the font list.
+      winemac.drv: Don't register IME classes before the dll is initialized.
+      po: Remove obsolete msgids from Dutch translation.
 
 Alistair Leslie-Hughes (3):
-      dbs.idl: Add DBPROPVAL defines.
-      oleaut32/tests: Add DECIMAL tests.
-      oledb32: Add remaining INIT Properties.
+      oledb32: Properties aren't case sensitive.
+      wine.inf: Install msdaps.dll into the correct directory.
+      oledb32: Add more database tests.
 
-André Hentschel (6):
-      ws2_32/tests: Don't test functions directly when reporting WSAGetLastError().
-      oleaut32/tests: Add tests for VarDecCmpR8 (gcov).
-      winemaker: Don't add -mno-cygwin to CXXEXTRA per default.
-      winemaker: Don't destroy relative paths.
-      winemaker: Add includes separately for vcproj files.
-      winemaker: Try to find the real case of a given filename or path from project files.
+André Hentschel (5):
+      include: Check for getopt_long_only instead of getopt_long.
+      wineoss.drv: Don't use autoheader styled define.
+      winemaker: Use utf-8 for stdout.
+      dinput: Don't use autoheader styled define.
+      ws2_32: Don't use autoheader styled define.
 
-Aric Stewart (4):
-      gdi32: Update Arabic font defaults.
-      ole32: Not all uses of StorageImpl_ReadBigBlock fail if no bytes are read.
-      fonts: Include Arabic characters in Tahoma.
-      fonts: Include Arabic characters in Tahoma Bold.
+Aric Stewart (2):
+      ole32: Do not fail if partial blocks are read.
+      gdi32/tests: Add a test case for vertical fonts enumeration order.
 
-Austin English (1):
-      api-ms-win-core-processthreads-l1-1-0: Add stub dll.
+Aurimas Fišeras (1):
+      po: Update Lithuanian translation.
 
-Christian Costa (4):
-      d3dxof: Add test for standard templates.
-      d3dxof: Fix string handling in binary mode + tests.
-      d3dxof/tests: Add test for case sensitive 'indexColor' type.
-      d3dx9_36: Set compilation_errors to NULL when no error encountered + tests.
+Bernhard Übelacker (1):
+      winedbg: Call DebugActiveProcessStop when detaching.
 
-Daniel Jelinski (1):
-      msi: Update LastSequence for empty media as well.
+Bruno Jesus (3):
+      po: Update Brazilian Portuguese translation.
+      po: Update Brazilian Portuguese translation.
+      po: Update Brazilian Portuguese translation.
+
+Caibin Chen (1):
+      po: Update Simplified Chinese translation.
 
 Dmitry Timoshkov (7):
-      ole32/tests: Remove redundant code.
-      ole32/tests: Add a test for local server interaction using an in-process handler.
-      ole32/tests: Test remaining class, object and server reference counts at server exit.
-      ole32/tests: Make sure that key "Software\\Classes" exists under HKEY_CURRENT_USER.
-      oleaut32: Do not rely on vtable placement in the implementation structure.
-      oleaut32: Do not rely on vtable placement in the implementation structure.
-      winspool.drv: Avoid converting garbage if there was no DEVMODE passed in.
+      comctl32: Use default GUI font as a fallback instead of a (non-existent) Arial.
+      gdi32/tests: Skip the bitmap font max width test on not 96 dpi resolutions.
+      gdi32/tests: Add a test for default font height scaling with screen resolution changes.
+      gdi32: Scale default GUI fonts to match screen resolution changes.
+      gdi32: ExtSelectClipRgn(hdc, 0, RGN_DIFF) is supposed to fail.
+      comctl32: Fix broken logic for retrieving default font properties.
+      gdiplus: get_font_hfont() should ask gdi32 to match font height against the character height instead of cell height.
 
-Francois Gouget (2):
-      ddraw: Remove WINAPI on static functions where not needed.
-      user32/tests: Add a trailing '\n' to a few ok() calls.
+Frédéric Delanoy (2):
+      loader: Remove copy-paste error in BUGS section of wine manpage.
+      loader: Update French translation of wine manpage.
 
-Hans Leidekker (18):
-      winhttp/tests: Trace certificate errors.
-      msi/tests: Move some tests around to avoid timeouts on the testbot.
-      msi/tests: Move some more tests and remove a useless test.
-      wininet/tests: Avoid proxy test failures on old wininet.
+Hans Leidekker (4):
       wbemprox/tests: Mark a test result as broken.
-      winhttp/tests: Test query schemes.
-      tapi32: Properly implement lineGetCountryW.
-      wbemprox: Always use resize_table to allocate memory for table data.
-      wbemprox: Override variant conversion for Win32_VideoController.AdapterRAM.
-      wbemprox: Implement Win32_Processor.AddressWidth.
-      wbemprox: Implement Win32_Processor.NumberOfCores.
-      wbemprox: Implement Win32_OperatingSystem.CodeSet.
-      wbemprox: Implement Win32_OperatingSystem.CountryCode.
-      wbemprox: Implement Win32_OperatingSystem.Locale.
-      wbemprox: Implement Win32_OperatingSystem.ServicePackMinorVersion.
-      wbemprox: Implement Win32_VideoController.AdapterDACType.
-      wbemprox: Implement Win32_NetworkAdapter.PhysicalAdapter.
-      wbemprox: Implement Win32_SoundDevice.Name.
+      msi/tests: Avoid test failures caused by broken MsiGetFileVersionA.
+      msi: Restrict the match on files from cabinets to the disk ID.
+      wintrust/tests: Replace the self-signed certificate with one that expires in ten years.
 
-Henri Verbeet (4):
-      wined3d: Introduce a helper function for printing floats in GLSL shaders.
-      wined3d: Allow a custom pitch to be specified in wined3d_surface_set_mem().
-      wined3d: Don't use state_colormat() with the GLSL vertex pipe.
-      wined3d: Handle pre-transformed vertices in the GLSL vertex pipe.
+Henri Verbeet (1):
+      wined3d: Avoid the position_float4() fixup if the vertex pipe can handle pre-transformed vertices itself.
 
-Jacek Caban (3):
-      d3d9.h: Make include guard compatible with PSDK headers.
-      userenv.h: Added a few missing declarations.
-      wininet/tests: Added more cert struct tests.
+Jacek Caban (2):
+      dwmapi.h: Added some missing declarations.
+      dwmapi: Added DwmGetCompositionTimingInfo stub.
 
-Karol Herbst (1):
-      wined3d: Add Nvidia GeForce GTX 770M.
+Julian Rüger (1):
+      po: Update German translation.
 
-Marcus Meissner (5):
-      explorer: Fixed wrong heapalloc size (Coverity).
-      oleaut32: Fixed incorrect pointer deref (Coverity).
-      oleaut32: Avoid memory leaking junk (Coverity).
-      user32/tests: Remove side effects from assert()s.
-      winhttp: Initialize schemes (Coverity).
+Kamil Pošvic (1):
+      po: Update Czech translation.
 
-Maxime Lombard (1):
-      wined3d: Add Nvidia GeForce GTX 670MX.
+Ken Thomases (8):
+      winemac: Don't bring disabled or no-activate windows forward when clicked.
+      winemac: Don't give windows focus on click if the click was sent to Wine.
+      winemac: Cope with apps which return multiple DROPEFFECTs from IDropTarget::DragEnter() and DragOver().
+      winemac: Don't complain that WM_MACDRV_ACTIVATE_ON_FOLLOWING_FOCUS is unrecognized.
+      winemac: Also activate if a window is ordered front shortly after tray icon clicked.
+      winemac: Forcibly release mouse capture for clicks in Mac menu bar or app deactivation.
+      winemac: Fix off-by-one errors when indexing into pixel_formats array with 1-based pixel format number.
+      winemac: Avoid overdriving single-buffered GL if possible; the system throttles us.
 
-Nikolay Sivov (3):
-      xmllite: It's acceptable to have NULL length pointer in GetLocalName().
-      riched20: Use helpers from header instead of internal functions.
-      comdlg32: Store client GUID with SetClientGuid().
+Lauri Kenttä (1):
+      po: Update Swedish translation.
 
-Nozomi Kodama (1):
-      d3dx9: Fix the case output = input in D3DXVec3Cross.
+Marcus Meissner (2):
+      wbemprox: Add missing FindClose() (Coverity).
+      wbemprox: Fixed leaking dirstack (Coverity).
 
-Tatyana Fokina (2):
-      kernel32/tests: Add test with a large string for CompareStringA.
-      kernel32: Check the size of the string in CompareStringA.
+Matteo Bruni (3):
+      wined3d: Fix NP2 surface repacking in surface_download_data.
+      d3d9/tests: Reset texture 0 to NULL at the end of texop_test().
+      d3d9/tests: Skip unbound_sampler_test if cube or volume textures aren't supported.
+
+Nikolay Sivov (1):
+      po: Update Russian translation.
+
+Pavel Borecki (1):
+      po: Update Czech translation.
+
+Piotr Caban (3):
+      msvcrt: Don't call invalid parameter handler when string to be tokenized and context are not set in mbstok.
+      msvcrt: Add some _mbstok tests.
+      msvcrt: Don't forward memchr to ntdll.
+
+Rico Schüller (1):
+      d3dx9: Apply rotationcenter only when a rotation is done.
+
+Roger Koot (1):
+      po: Update Dutch translation.
+
+Stefan Dösinger (11):
+      wined3d: Pass fogstart==fogend to GL in fog table mode.
+      wined3d: Work around broken FFP fog with ARB shaders.
+      d3d9/tests: Add a test for fog_start == fog_end.
+      d3d8/tests: Add a test for fog_start == fog_end.
+      ddraw/tests: Add a test for fog_start == fog_end.
+      ddraw: SPECULARENABLE defaults to true in IDirect3DDevice2.
+      ddraw: Send device2_Draw* through device3_Draw*.
+      ddraw: Device2 and Device3 do not have a lighting render state.
+      ddraw/tests: Test lighting control in different interface versions.
+      ddraw/tests: Get rid of D3DRENDERSTATE_LIGHTING hacks in ddraw4.c.
+      wined3d: Fix the TMP_COLOR optimization with custom fog.
+
+Stefan Leichter (1):
+      msvcp100/tests: Fix dynamically loaded functions for platform arm.
+
+Wei-Lun Chao (2):
+      po: Update Chinese (Taiwan) translation.
+      po: Update Chinese (Taiwan) translation.
 
 --
 Alexandre Julliard
