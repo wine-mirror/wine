@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-12-07 20:30+0100\n"
-"Last-Translator: Hans Leidekker <hans@codeweavers.com>\n"
+"PO-Revision-Date: 2013-06-21 15:34+0100\n"
+"Last-Translator: Roger Koot <roger.koot@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Dutch\n"
 "MIME-Version: 1.0\n"
@@ -40,9 +40,8 @@ msgstr ""
 "lijst en druk op Wijzigen/Verwijderen."
 
 #: appwiz.rc:64
-#, fuzzy
 msgid "&Support Information"
-msgstr "Support Informatie"
+msgstr "Onder&steuning"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 msgid "&Modify..."
@@ -55,7 +54,7 @@ msgstr "&Verwijderen"
 
 #: appwiz.rc:72
 msgid "Support Information"
-msgstr "Support Informatie"
+msgstr "Ondersteuning"
 
 #: appwiz.rc:75 avifil32.rc:51 comctl32.rc:52 comdlg32.rc:226 comdlg32.rc:256
 #: comdlg32.rc:299 comdlg32.rc:353 comdlg32.rc:392 comdlg32.rc:446
@@ -160,13 +159,11 @@ msgid "Cancel"
 msgstr "Annuleren"
 
 #: appwiz.rc:112
-#, fuzzy
 #| msgid "Wine Gecko Installer"
 msgid "Wine Mono Installer"
-msgstr "Wine-Gecko-Installatie"
+msgstr "Wine-Mono-Installatie"
 
 #: appwiz.rc:115
-#, fuzzy
 #| msgid ""
 #| "Wine could not find a Gecko package which is needed for applications "
 #| "embedding HTML to work correctly. Wine can automatically download and "
@@ -183,17 +180,16 @@ msgid ""
 "href=\"http://wiki.winehq.org/Mono\">http://wiki.winehq.org/Mono</a> for "
 "details."
 msgstr ""
-"Wine kon geen Gecko-pakket vinden. Gecko is nodig voor programma's die "
-"gebruik maken van embedded HTML. Wine kan het automatisch voor u downloaden "
-"en installeren.\n"
+"Wine kon geen Mono-pakket vinden. Mono is nodig voor programma's die gebruik "
+"maken van het .NET raamwerk . Wine kan het automatisch voor u downloaden en "
+"installeren.\n"
 "\n"
 "Noot: Het wordt aanbevolen om distributiepakketten te gebruiken. Zie <a href="
-"\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> voor "
-"details."
+"\"http://wiki.winehq.org/Mono\">http://wiki.winehq.org/Mono</a> voor details."
 
 #: appwiz.rc:28
 msgid "Add/Remove Programs"
-msgstr "Software"
+msgstr "Programma's Toevoegen/Verwijderen"
 
 #: appwiz.rc:29
 msgid ""
@@ -212,8 +208,8 @@ msgid ""
 "Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
 "entry for this program from the registry?"
 msgstr ""
-"Het programma '%s' kan niet verwijderd worden van het systeem. Wilt u het "
-"verwijderen uit het register?"
+"Het deïnstallatie-programma '%s' kan niet gestart worden. Wilt u de "
+"deïnstallatie-informatie verwijderen uit het register?"
 
 #: appwiz.rc:33
 msgid "Not specified"
@@ -338,11 +334,11 @@ msgstr "Assistent"
 
 #: comctl32.rc:65
 msgid "< &Back"
-msgstr "< V&orige"
+msgstr "< &Vorige"
 
 #: comctl32.rc:66
 msgid "&Next >"
-msgstr "&Volgende >"
+msgstr "Volge&nde >"
 
 #: comctl32.rc:67
 msgid "Finish"
@@ -428,7 +424,7 @@ msgstr "Bestands&naam:"
 
 #: comdlg32.rc:157 comdlg32.rc:179
 msgid "&Directories:"
-msgstr "&Zoeken in:"
+msgstr "&Mappen:"
 
 #: comdlg32.rc:160 comdlg32.rc:182
 msgid "List Files of &Type:"
@@ -645,7 +641,7 @@ msgstr "&Zoek naar:"
 
 #: comdlg32.rc:315 comdlg32.rc:336
 msgid "Match &Whole Word Only"
-msgstr "Heel &woord"
+msgstr "Geheel &woord"
 
 #: comdlg32.rc:316 comdlg32.rc:337
 msgid "Match &Case"
@@ -833,7 +829,7 @@ msgid ""
 "File does not exist.\n"
 "Do you want to create file?"
 msgstr ""
-"Dit bestand bestaat nog niet\n"
+"Dit bestand bestaat nog niet.\n"
 "Wilt u het bestand aanmaken?"
 
 #: comdlg32.rc:32
@@ -862,7 +858,7 @@ msgstr "Het pad bestaat niet"
 
 #: comdlg32.rc:36
 msgid "File does not exist"
-msgstr "Kan het bestand niet vinden"
+msgstr "Het bestand bestaat niet"
 
 #: comdlg32.rc:41
 msgid "Up One Level"
@@ -978,7 +974,7 @@ msgstr ""
 
 #: comdlg32.rc:56
 msgid "The 'from' entry cannot exceed the 'to' entry."
-msgstr "De VAN ingave kan niet groter zijn dan de TO waarde."
+msgstr "De VAN ingave kan niet groter zijn dan de TOT waarde."
 
 #: comdlg32.rc:58
 msgid ""
@@ -993,12 +989,12 @@ msgid "The 'Number of copies' field cannot be empty."
 msgstr "Het invoerveld 'Aantal kopieën' kan niet leeg zijn."
 
 #: comdlg32.rc:62
-#, fuzzy
 msgid ""
 "This large number of copies is not supported by your printer.\n"
 "Please enter a value between 1 and %d."
 msgstr ""
-"Zoveel exemplaren kan de printer niet in een keer aan, het maximum is %d"
+"Uw printer ondersteunt dergelijke hoeveelheid kopieen niet.\n"
+"Voer een waarde tussen 1 en %d in."
 
 #: comdlg32.rc:63
 msgid "A printer error occurred."
@@ -1409,7 +1405,7 @@ msgstr "Gemeenschappelijke Naam"
 
 #: crypt32.rc:72
 msgid "Locality"
-msgstr "Localiteit"
+msgstr "Plaats"
 
 #: crypt32.rc:73
 msgid "State or Province"
@@ -2107,9 +2103,8 @@ msgid "Certification Path"
 msgstr "Certificatie pad"
 
 #: cryptui.rc:211
-#, fuzzy
 msgid "Certification path"
-msgstr "Certification &pad"
+msgstr "Certificatie &pad"
 
 #: cryptui.rc:214
 msgid "&View Certificate"
@@ -2218,7 +2213,6 @@ msgid "B&rowse..."
 msgstr "Bladeren..."
 
 #: cryptui.rc:294
-#, fuzzy
 msgid ""
 "Note: The following file formats may contain more than one certificate, "
 "certificate revocation list, or certificate trust list:"
@@ -2227,13 +2221,11 @@ msgstr ""
 "certificaat terugroeplijst of certificaat vertrouwenslijst bevatten:"
 
 #: cryptui.rc:296
-#, fuzzy
 #| msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
 msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (*.p7b)"
 msgstr "Cryptographisch berichtsyntaxis standaard/PKCS #7 berichten (.p7b)"
 
 #: cryptui.rc:298
-#, fuzzy
 #| msgid "Personal Information Exchange/PKCS #12 (.pfx, .p12)"
 msgid "Personal Information Exchange/PKCS #12 (*.pfx; *.p12)"
 msgstr "Persoonlijke informatie uitwisseling/PKCS #12 (.pfx, .p12)"
@@ -2381,16 +2373,14 @@ msgid "Select the format you want to use:"
 msgstr "Selecteer het formaat dat u wilt gebruiken:"
 
 #: cryptui.rc:405
-#, fuzzy
 #| msgid "&DER-encoded X.509 (.cer)"
 msgid "&DER-encoded X.509 (*.cer)"
-msgstr "&DER-encoded X.509 (.cer)"
+msgstr "&DER-geëncodeerde X.509 (.cer)"
 
 #: cryptui.rc:407
-#, fuzzy
 #| msgid "Ba&se64-encoded X.509 (.cer):"
 msgid "Ba&se64-encoded X.509 (*.cer):"
-msgstr "Ba&se64-encoded X.509 (.cer):"
+msgstr "Ba&se64-geëncodeerde X.509 (.cer):"
 
 #: cryptui.rc:409
 #, fuzzy
@@ -2652,10 +2642,9 @@ msgid "Please select a file."
 msgstr "Selecteer een bestand."
 
 #: cryptui.rc:82
-#, fuzzy
 msgid "The file format is not recognized. Please select another file."
 msgstr ""
-"Het bestandsformaat wordt niet herkend. Selecteer aub. een ander bestand."
+"Het bestandsformaat wordt niet herkend. Selecteer aub een ander bestand."
 
 #: cryptui.rc:83
 msgid "Could not open "
@@ -2894,9 +2883,8 @@ msgid "Specify the name of the file in which the content will be saved."
 msgstr "Geef de naam van het bestand waarin de inhoud zal worden opgeslagen."
 
 #: cryptui.rc:152
-#, fuzzy
 msgid "The specified file already exists. Do you want to replace it?"
-msgstr "Het gekozen bestand bestaat reeds. Wilt u het overschrijven?"
+msgstr "Het gespecifeerde bestand bestaat reeds. Wilt u het vervangen?"
 
 #: cryptui.rc:153
 msgid "DER-Encoded Binary X.509 (*.cer)"
@@ -3320,29 +3308,24 @@ msgid "Address"
 msgstr "Adres"
 
 #: ieframe.rc:78
-#, fuzzy
 msgid "Searching for %s"
-msgstr "Instellingen voor %s"
+msgstr "Zoeken naar %s"
 
 #: ieframe.rc:79
-#, fuzzy
 msgid "Start downloading %s"
-msgstr "Downloaden van %s..."
+msgstr "Start downloaden van %s..."
 
 #: ieframe.rc:80
-#, fuzzy
 msgid "Downloading %s"
-msgstr "Bezig met downloaden..."
+msgstr "%s downloaden..."
 
 #: ieframe.rc:81
-#, fuzzy
 msgid "Asking for %s"
-msgstr "Instellingen voor %s"
+msgstr "Vraagt om %s"
 
 #: inetcpl.rc:46
-#, fuzzy
 msgid "Home page"
-msgstr " Startpagina "
+msgstr "Homepage"
 
 #: inetcpl.rc:47
 msgid "You can choose the address that will be used as your home page."
@@ -3361,13 +3344,13 @@ msgid "&Blank page"
 msgstr "&Lege pagina"
 
 #: inetcpl.rc:53
-#, fuzzy
 msgid "Browsing history"
-msgstr " Browsing history "
+msgstr "Browsegeschiedenis"
 
 #: inetcpl.rc:54
 msgid "You can delete cached pages, cookies and other data."
 msgstr ""
+"U kunt tijdelijke opgeslagen pagina's, cookies en andere data verwijderen."
 
 #: inetcpl.rc:56
 msgid "Delete &files..."
@@ -3485,65 +3468,64 @@ msgstr "Hoog"
 
 #: joy.rc:33
 msgid "Joysticks"
-msgstr ""
+msgstr "Joysticks"
 
 #: joy.rc:36 winecfg.rc:204
 msgid "&Disable"
 msgstr "&Uitzetten"
 
 #: joy.rc:37
-#, fuzzy
 #| msgid "&enable"
 msgid "&Enable"
-msgstr "&aan"
+msgstr "Activ&eren"
 
 #: joy.rc:38
-#, fuzzy
 #| msgid "Disconnected"
 msgid "Connected"
-msgstr "Verbinding verbroken"
+msgstr "Verbonden"
 
 #: joy.rc:40
-#, fuzzy
 #| msgid "&Disable"
 msgid "Disabled"
-msgstr "&Uitzetten"
+msgstr "Deactiveren"
 
 #: joy.rc:42
 msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
 msgstr ""
+"Na het uit- of inschakelen van een apparaat zullen de aangesloten joysticks "
+"niet vernieuwd worden totdat U deze applet herstart."
 
 #: joy.rc:47
 msgid "Test Joystick"
-msgstr ""
+msgstr "Test Joystick"
 
 #: joy.rc:51
 msgid "Buttons"
-msgstr ""
+msgstr "Knoppen"
 
 #: joy.rc:60
 msgid "Test Force Feedback"
-msgstr ""
+msgstr "Test Force Feedback"
 
 #: joy.rc:64
-#, fuzzy
 #| msgid "Available formats"
 msgid "Available Effects"
-msgstr "Beschikbare formaten"
+msgstr "Beschikbare effecten"
 
 #: joy.rc:66
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
 msgstr ""
+"Druk op een knop op de controller om het gewenste effect te activeren. De "
+"richting van het effect kan veranderd worden met de assen van de controller."
 
 #: joy.rc:28
-#, fuzzy
 #| msgid "Create Control"
 msgid "Game Controllers"
-msgstr "Creëren"
+msgstr "Spelbesturing"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
@@ -3558,9 +3540,8 @@ msgid "Subscript out of range"
 msgstr "Index buiten bereik"
 
 #: jscript.rc:28
-#, fuzzy
 msgid "Object required"
-msgstr "Object verwacht"
+msgstr "Object noodzakelijk"
 
 #: jscript.rc:29
 msgid "Automation server can't create object"
@@ -3595,10 +3576,9 @@ msgid "Expected ')'"
 msgstr "')' verwacht"
 
 #: jscript.rc:37
-#, fuzzy
 #| msgid "Invalid parameter.\n"
 msgid "Invalid character"
-msgstr "Ongeldige parameter.\n"
+msgstr "Ongeldig teken"
 
 #: jscript.rc:38
 msgid "Unterminated string constant"
@@ -3606,24 +3586,23 @@ msgstr "Onafgesloten tekenreeksconstante"
 
 #: jscript.rc:39
 msgid "'return' statement outside of function"
-msgstr ""
+msgstr "'return' verklaring buiten functie"
 
 #: jscript.rc:40
 msgid "Can't have 'break' outside of loop"
-msgstr ""
+msgstr "'break' kan zich niet buiten loop bevinden"
 
 #: jscript.rc:41
 msgid "Can't have 'continue' outside of loop"
-msgstr ""
+msgstr "'continue' kan zich niet buiten loop bevinden"
 
 #: jscript.rc:42
 msgid "Label redefined"
-msgstr ""
+msgstr "Label hergedefinieerd"
 
 #: jscript.rc:43
-#, fuzzy
 msgid "Label not found"
-msgstr "Bestand niet gevonden"
+msgstr "Label niet gevonden"
 
 #: jscript.rc:44
 msgid "Conditional compilation is turned off"
@@ -3658,9 +3637,8 @@ msgid "Boolean object expected"
 msgstr "Boolean object verwacht"
 
 #: jscript.rc:52
-#, fuzzy
 msgid "Cannot delete '|'"
-msgstr "Kan niet voltooien\n"
+msgstr "Kan '|' niet verwijderen"
 
 #: jscript.rc:53
 msgid "VBArray object expected"
@@ -3683,16 +3661,14 @@ msgid "URI to be decoded is incorrect"
 msgstr "De te decoderen URI is niet correct"
 
 #: jscript.rc:58
-#, fuzzy
 #| msgid "Enumeration value out of range.\n"
 msgid "Number of fraction digits is out of range"
-msgstr "Opsommingsaantal buiten bereik.\n"
+msgstr "Aantal getallen achter de komma buiten bereik."
 
 #: jscript.rc:59
-#, fuzzy
 #| msgid "Subscript out of range"
 msgid "Precision is out of range"
-msgstr "Index buiten bereik"
+msgstr "Precisie is buiten bereik"
 
 #: jscript.rc:60
 msgid "Array length must be a finite positive integer"
@@ -4252,7 +4228,7 @@ msgstr "Bestand bestaat al.\n"
 
 #: winerror.mc:721
 msgid "Invalid flag number.\n"
-msgstr "Olgeldig vlagnumer.\n"
+msgstr "Ongeldig vlagnumer.\n"
 
 #: winerror.mc:726
 msgid "Semaphore name not found.\n"
@@ -4756,7 +4732,7 @@ msgstr "Media veranderd.\n"
 
 #: winerror.mc:1351
 msgid "I/O bus reset.\n"
-msgstr ""
+msgstr "I/O bus reset.\n"
 
 #: winerror.mc:1356
 msgid "No media in drive.\n"
@@ -5699,8 +5675,9 @@ msgid "Hook procedure needs module handle.\n"
 msgstr "Hook procedure heeft modulehandle nodig.\n"
 
 #: winerror.mc:2541
+#, fuzzy
 msgid "Global-only hook procedure.\n"
-msgstr ""
+msgstr "'Global-only' haak procedure.\n"
 
 #: winerror.mc:2546
 msgid "Journal hook already set.\n"
@@ -5848,9 +5825,8 @@ msgid "Event log file changed.\n"
 msgstr "Gebeurtenislogbestand veranderd.\n"
 
 #: winerror.mc:2726
-#, fuzzy
 msgid "Installer service failed.\n"
-msgstr "Installatieservice gaf een fout.\n"
+msgstr "Installatieservice gefaald.\n"
 
 #: winerror.mc:2731
 msgid "Installation aborted by user.\n"
@@ -6779,12 +6755,11 @@ msgid "Done"
 msgstr "Klaar"
 
 #: msi.rc:27
-#, fuzzy
 msgid ""
 "The specified installation package could not be opened. Please check the "
 "file path and try again."
 msgstr ""
-"Het opgegeven installatie pakket kon niet worden geopend.  Verifieer het "
+"Het opgegeven installatiepakket kon niet worden geopend.  Verifieer het "
 "bestandspad en probeer opnieuw."
 
 #: msi.rc:28
@@ -6949,7 +6924,6 @@ msgid "&Data Rate"
 msgstr "&Data Snelheid"
 
 #: msvfw32.rc:52
-#, fuzzy
 msgid "kB/s"
 msgstr "kB/sec"
 
@@ -8039,7 +8013,7 @@ msgstr "Favorieten"
 
 #: shell32.rc:203
 msgid "StartUp"
-msgstr ""
+msgstr "Opstarten"
 
 #: shell32.rc:204
 msgid "Start Menu"
@@ -8083,33 +8057,28 @@ msgid "My Pictures"
 msgstr "Mijn Afbeeldingen"
 
 #: shell32.rc:215
-#, fuzzy
 msgid "Common Files"
-msgstr "Gemeenschappelijke Naam"
+msgstr "Gemeenschappelijke Bestanden"
 
 #: shell32.rc:216 shell32.rc:147 shell32.rc:232
 msgid "Documents"
 msgstr "Documenten"
 
 #: shell32.rc:217
-#, fuzzy
 msgid "Administrative Tools"
-msgstr "Administratieve Tools"
+msgstr "Administratief gereedschap"
 
 #: shell32.rc:218
-#, fuzzy
 msgid "Music"
-msgstr "Mijn Muziek"
+msgstr "Muziek"
 
 #: shell32.rc:219
-#, fuzzy
 msgid "Pictures"
-msgstr "Mijn Afbeeldingen"
+msgstr "Afbeeldingen"
 
 #: shell32.rc:220
-#, fuzzy
 msgid "Videos"
-msgstr "Mijn Videos"
+msgstr "Videos"
 
 #: shell32.rc:213
 msgid "Program Files (x86)"
@@ -8124,12 +8093,10 @@ msgid "Links"
 msgstr "Links"
 
 #: shell32.rc:223
-#, fuzzy
 msgid "Slide Shows"
 msgstr "Diashows"
 
 #: shell32.rc:224
-#, fuzzy
 msgid "Playlists"
 msgstr "Afspeellijsten"
 
@@ -8146,22 +8113,18 @@ msgid "Model"
 msgstr "Model"
 
 #: shell32.rc:225
-#, fuzzy
 msgid "Sample Music"
 msgstr "Voorbeelden van muziek"
 
 #: shell32.rc:226
-#, fuzzy
 msgid "Sample Pictures"
 msgstr "Voorbeelden van afbeeldingen"
 
 #: shell32.rc:227
-#, fuzzy
 msgid "Sample Playlists"
 msgstr "Voorbeelden van afspeellijsten"
 
 #: shell32.rc:228
-#, fuzzy
 msgid "Sample Videos"
 msgstr "Voorbeelden van video's"
 
@@ -8322,7 +8285,6 @@ msgid "Confirm overwrite"
 msgstr "Bevestig overschrijven"
 
 #: shell32.rc:265
-#, fuzzy
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -8338,22 +8300,10 @@ msgid ""
 "along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 msgstr ""
-"start.exe versie 0.2 Copyright (C) 2003, Dan Kegel\n"
-"This program is free software; you can redistribute it and/or\n"
-"modify it under the terms of the GNU Lesser Public License\n"
-"as published by the Free Software Foundation; either version 2.1\n"
-"of the License, or (at your option) any later version.\n"
-"\n"
-"This program is distributed in the hope that it will be useful,\n"
-"but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
-"GNU Lesser Public License for more details.\n"
-"\n"
-"You should have received a copy of the GNU Lesser Public License\n"
-"along with this program; if not, write to the Free Software\n"
-"Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.\n"
-"\n"
-"Bekijk het COPYING.LIB bestand voor informatie over de licentie.\n"
+"Dit programma is gratis software; u kunt het verspreiden en/of aanpassen "
+"binnen de voorwaarden van de GNU Lesser General Public License zoals "
+"gepubliceerd door de Free Software Foundation; versie 2.1 van de licentie, "
+"of (naar keuze) een latere versie."
 
 #: shell32.rc:253
 msgid "Wine License"
@@ -8388,51 +8338,49 @@ msgstr " min"
 #: shlwapi.rc:30
 msgctxt "time unit: seconds"
 msgid " sec"
-msgstr ""
+msgstr "sec"
 
 #: urlmon.rc:29 wininet.rc:74
 msgid "Security Warning"
 msgstr "Veiligheidswaarschuwing"
 
 #: urlmon.rc:32
-#, fuzzy
 #| msgid "Do you want to continue anyway?"
 msgid "Do you want to install this software?"
-msgstr "Wilt u toch doorgaan?"
+msgstr "Wilt U deze software installeren?"
 
 #: urlmon.rc:34 explorer.rc:29
 msgid "Location:"
 msgstr "Locatie:"
 
 #: urlmon.rc:36
-#, fuzzy
 #| msgid "Install/Uninstall"
 msgid "Don't install"
-msgstr "Installeren/Verwijderen"
+msgstr "Niet installeren"
 
 #: urlmon.rc:40
 msgid ""
 "When installed, an ActiveX component has full access to your computer. Do "
 "not click install unless you have absolute trust in the above source."
 msgstr ""
+"Indien geinstalleerd, heeft een ActiveX component volledige toegang tot uw "
+"computer. Klik niet op install als u bovenstaande bron niet volledig "
+"vertrouwt."
 
 #: urlmon.rc:48
-#, fuzzy
 #| msgid "Installation transform failed to apply.\n"
 msgid "Installation of component failed: %08x"
-msgstr "Installatietransformatie kon niet worden toegepast.\n"
+msgstr "Installatie van onderdeel mislukt: %08x"
 
 #: urlmon.rc:49
-#, fuzzy
 #| msgid "&Install"
 msgid "Install (%d)"
-msgstr "&Installeren"
+msgstr "Installeer (%d)"
 
 #: urlmon.rc:50
-#, fuzzy
 #| msgid "&Install"
 msgid "Install"
-msgstr "&Installeren"
+msgstr "Installeer"
 
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
 msgctxt "window"
@@ -9168,9 +9116,8 @@ msgid "&Output File Name:"
 msgstr "&Bestandsnaam:"
 
 #: winspool.rc:28
-#, fuzzy
 msgid "The output file already exists. Click OK to overwrite."
-msgstr "Het afdrukbestand bestaat al. Klik OK om het te overschrijven."
+msgstr "Het uitvoerbestand bestaat al. Klik OK om het te overschrijven."
 
 #: winspool.rc:29
 msgid "Unable to create the output file."
@@ -9883,6 +9830,34 @@ msgid ""
 "/ProgIDOpen  Open a document using the specified progID.\n"
 "/?           Display this help and exit.\n"
 msgstr ""
+"Start een programma, of open een document in het programma dat normaal voor "
+"deze extensie gebruikt wordt.\n"
+"Gebruik:\n"
+"start [opties] programma-naam [...]\n"
+"start [opties] document-naam\n"
+"\n"
+"Opties:\n"
+"\"titel\"      Specificeer de titel van het \"child\" venster.\n"
+"/d map Start het programma in de gespecificeerde map.\n"
+"/b        Creeer geen nieuwe console voor het programma.\n"
+"/i        Start het programma met verse omgevingsvariabelen.\n"
+"/min      Start het programma geminimaliseerd op.\n"
+"/max     Start het programma gemaximaliseerd op.\n"
+"/low      Start het programma met lage prioriteit op.\n"
+"/normal      Start het programma met normale prioriteit op.\n"
+"/high      Start het programma met hoge prioriteit op.\n"
+"/realtime     Start het programma met \"realtime\" prioriteit op.\n"
+"/abovenormal Start het programma in \"abovenormal\" prioriteit op.\n"
+"/belownormal Start het programma in \"belownormal\" prioriteit op.\n"
+"/node n      Start het programma op de gespecificeerde NUMA node.\n"
+"/affinity mask Start het program met het gespecificeerde affiniteitsmasker "
+"mask.\n"
+"/wait        Wacht tot het gestarte programma beeindigd is, dan afsluiten "
+"met de exit code.\n"
+"/unix        Gebruik een Unix bestandsnaam en start het bestand zoals "
+"windows explorer.\n"
+"/ProgIDOpen  Open een document met het specificeerde progID.\n"
+"/?           Toon deze hulp en eindig.\n"
 
 #: cmd.rc:211
 msgid "TIME sets or shows the current system time.\n"
@@ -10121,9 +10096,8 @@ msgstr ""
 "type HELP <opdracht> voor meer informatie over bovengenoemde opdrachten.\n"
 
 #: cmd.rc:317
-#, fuzzy
 msgid "Are you sure?"
-msgstr "Bent u zeker"
+msgstr "Bent u zeker?"
 
 #: cmd.rc:318 xcopy.rc:40
 msgctxt "Yes key"
@@ -10144,9 +10118,8 @@ msgid "No open command associated with file type '%1'\n"
 msgstr "Geen open commando verbonden met bestandstype '%1'\n"
 
 #: cmd.rc:322
-#, fuzzy
 msgid "Overwrite %1?"
-msgstr "Overschrijf %1"
+msgstr "Overschrijf %1?"
 
 #: cmd.rc:323
 msgid "More..."
@@ -10207,9 +10180,8 @@ msgid "A"
 msgstr "A"
 
 #: cmd.rc:339
-#, fuzzy
 msgid "Delete %1?"
-msgstr "Verwijderen"
+msgstr "Verwijder %1?"
 
 #: cmd.rc:340
 msgid "Echo is %1\n"
@@ -10228,19 +10200,17 @@ msgid "Parameter error\n"
 msgstr "Parameter onjuist\n"
 
 #: cmd.rc:344
-#, fuzzy
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
 msgstr ""
-"Schijf in drive %1!c! is %2\n"
-"Het serienummer van de schijf is %3!04x!-%4!04x!\n"
+"Volume in schijfstation %1!c! is %2\n"
+"Het serienummer van het volume is %3!04x!-%4!04x!\n"
 "\n"
 
 #: cmd.rc:345
-#, fuzzy
 msgid "Volume label (11 characters, <Enter> for none)?"
-msgstr "Schijf naam (11 karakters, ENTER voor geen)?"
+msgstr "Volume naam (11 karakters, ENTER voor geen)?"
 
 #: cmd.rc:346
 msgid "PATH not found\n"
@@ -10255,10 +10225,9 @@ msgid "Wine Command Prompt"
 msgstr "Wine Command Prompt"
 
 #: cmd.rc:349
-#, fuzzy
 #| msgid "CMD Version %1!S!\n"
 msgid "Wine CMD Version %1!S!\n"
-msgstr "CMD versie %1!S!\n"
+msgstr "Wine CMD versie %1!S!\n"
 
 #: cmd.rc:350
 msgid "More? "
@@ -10270,50 +10239,50 @@ msgstr "De invoerregel is te lang.\n"
 
 #: cmd.rc:352
 msgid "Volume in drive %1!c! is %2\n"
-msgstr ""
+msgstr "Volume in schijfstation %1!c! is %2\n"
 
 #: cmd.rc:353
 msgid "Volume in drive %1!c! has no label.\n"
-msgstr ""
+msgstr "Volume in schijfstation %1!c! heeft geen label.\n"
 
 #: cmd.rc:354
-#, fuzzy
 msgid " (Yes|No)"
-msgstr "%1? (Ja|Nee)\n"
+msgstr "(Ja|Nee)"
 
 #: cmd.rc:355
-#, fuzzy
 msgid " (Yes|No|All)"
-msgstr "%1? (Ja|Nee)\n"
+msgstr "(Ja|Nee|Alles)"
 
 #: cmd.rc:356
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
 msgstr ""
+"'%1' niet herkend als intern of extern commando dan wel batchbestand.\n"
 
 #: cmd.rc:357
 msgid "Division by zero error.\n"
-msgstr ""
+msgstr "Delen door nul fout.\n"
 
 #: cmd.rc:358
 msgid "Expected an operand.\n"
-msgstr ""
+msgstr "Verwacht een operand.\n"
 
 #: cmd.rc:359
-#, fuzzy
 #| msgid "Unexpected network error.\n"
 msgid "Expected an operator.\n"
-msgstr "Onverwachte netwerk fout.\n"
+msgstr "Verwacht een operator.\n"
 
 #: cmd.rc:360
 msgid "Mismatch in parentheses.\n"
-msgstr ""
+msgstr "Ongepaarde haakjes.\n"
 
 #: cmd.rc:361
 msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"
 msgstr ""
+"Misvormd nummer - moet of decimaal(12),\n"
+" hexadecimaal(0x34) of octaal(056) zijn.\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -10364,10 +10333,9 @@ msgid "Connection-specific DNS suffix"
 msgstr "Verbindings-specifiek DNS-achtervoegsel"
 
 #: ipconfig.rc:33
-#, fuzzy
 #| msgid "IP address"
 msgid "IPv4 address"
-msgstr "IP-adres"
+msgstr "IPv4-adres"
 
 #: ipconfig.rc:34
 msgid "Hostname"
@@ -10410,10 +10378,9 @@ msgid "Default gateway"
 msgstr "Standaard gateway"
 
 #: ipconfig.rc:47
-#, fuzzy
 #| msgid "IP address"
 msgid "IPv6 address"
-msgstr "IP-adres"
+msgstr "IPv6-adres"
 
 #: net.rc:27
 msgid ""
@@ -10546,152 +10513,134 @@ msgid "The following services are running:\n"
 msgstr "De volgende services draaien:\n"
 
 #: netstat.rc:27
-#, fuzzy
 #| msgid "LAN Connection"
 msgid "Active Connections"
-msgstr "LAN Verbinding"
+msgstr "Actieve verbindingen"
 
 #: netstat.rc:28
 msgid "Proto"
-msgstr ""
+msgstr "Proto"
 
 #: netstat.rc:29
-#, fuzzy
 #| msgid "Email Address"
 msgid "Local Address"
-msgstr "E-mailadres"
+msgstr "Locaal adres"
 
 #: netstat.rc:30
-#, fuzzy
 #| msgid "Street Address"
 msgid "Foreign Address"
-msgstr "Straat/Adres"
+msgstr "Buitenlands adres"
 
 #: netstat.rc:31
-#, fuzzy
 #| msgid "Status"
 msgid "State"
-msgstr "Status"
+msgstr "Staat"
 
 #: netstat.rc:32
-#, fuzzy
 #| msgid "Interfaces"
 msgid "Interface Statistics"
-msgstr "Interfaces"
+msgstr "Interface Statistieken"
 
 #: netstat.rc:33
 msgid "Sent"
-msgstr ""
+msgstr "Verzonden"
 
 #: netstat.rc:34
 msgid "Received"
-msgstr ""
+msgstr "Ontvangen"
 
 #: netstat.rc:35
-#, fuzzy
 #| msgid "bytes"
 msgid "Bytes"
-msgstr "bytes"
+msgstr "Bytes"
 
 #: netstat.rc:36
 msgid "Unicast packets"
-msgstr ""
+msgstr "Unicast pakketten"
 
 #: netstat.rc:37
 msgid "Non-unicast packets"
-msgstr ""
+msgstr "Niet-Unicast pakketten"
 
 #: netstat.rc:38
-#, fuzzy
 #| msgid "Disclaimer"
 msgid "Discards"
-msgstr "Disclaimer"
+msgstr "Weggegooid"
 
 #: netstat.rc:39
-#, fuzzy
 #| msgid "Error"
 msgid "Errors"
-msgstr "Fout"
+msgstr "Fouten"
 
 #: netstat.rc:40
-#, fuzzy
 #| msgid "Unknown port.\n"
 msgid "Unknown protocols"
-msgstr "Onbekende poort.\n"
+msgstr "Onbekende protocollen."
 
 #: netstat.rc:41
 msgid "TCP Statistics for IPv4"
-msgstr ""
+msgstr "TCP Statistieken voor IPv4"
 
 #: netstat.rc:42
-#, fuzzy
 #| msgid "LAN Connection"
 msgid "Active Opens"
-msgstr "LAN Verbinding"
+msgstr "Actieve openingen"
 
 #: netstat.rc:43
 msgid "Passive Opens"
-msgstr ""
+msgstr "Passieve openingen"
 
 #: netstat.rc:44
-#, fuzzy
 #| msgid "LAN Connection"
 msgid "Failed Connection Attempts"
-msgstr "LAN Verbinding"
+msgstr "Mislukte verbindingspogingen"
 
 #: netstat.rc:45
-#, fuzzy
 #| msgid "LAN Connection"
 msgid "Reset Connections"
-msgstr "LAN Verbinding"
+msgstr "Opnieuw verbinden"
 
 #: netstat.rc:46
-#, fuzzy
 #| msgid "LAN Connection"
 msgid "Current Connections"
-msgstr "LAN Verbinding"
+msgstr "Huidige verbindingen"
 
 #: netstat.rc:47
-#, fuzzy
 #| msgid "Segment locked.\n"
 msgid "Segments Received"
-msgstr "Segment vergrendeld.\n"
+msgstr "Ontvangen Segmenten"
 
 #: netstat.rc:48
-#, fuzzy
 #| msgid "Segment locked.\n"
 msgid "Segments Sent"
-msgstr "Segment vergrendeld.\n"
+msgstr "Verzonden Segmenten"
 
 #: netstat.rc:49
 msgid "Segments Retransmitted"
-msgstr ""
+msgstr "Herzonden segmenten"
 
 #: netstat.rc:50
 msgid "UDP Statistics for IPv4"
-msgstr ""
+msgstr "UDP Statistieken voor IPv4"
 
 #: netstat.rc:51
-#, fuzzy
 #| msgid "Segment locked.\n"
 msgid "Datagrams Received"
-msgstr "Segment vergrendeld.\n"
+msgstr "Ontvangen Datagrammen."
 
 #: netstat.rc:52
-#, fuzzy
 #| msgid "Local Port"
 msgid "No Ports"
-msgstr "Lokale poort"
+msgstr "Geen poorten"
 
 #: netstat.rc:53
-#, fuzzy
 #| msgid "Decoding Error"
 msgid "Receive Errors"
-msgstr "Decodeerfout"
+msgstr "Ontvangstfouten"
 
 #: netstat.rc:54
 msgid "Datagrams Sent"
-msgstr ""
+msgstr "Verzonden datagrammen"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
@@ -10787,9 +10736,8 @@ msgid "&Footer:"
 msgstr "&Voettekst:"
 
 #: notepad.rc:104
-#, fuzzy
 msgid "Margins (millimeters)"
-msgstr "&Marges (millimeter):"
+msgstr "Marges (millimeter)"
 
 #: notepad.rc:105
 msgid "&Left:"
@@ -10821,7 +10769,7 @@ msgstr "F"
 #: notepad.rc:132 wordpad.rc:277
 msgctxt "accelerator Replace"
 msgid "H"
-msgstr ""
+msgstr "H"
 
 #: notepad.rc:133 wordpad.rc:286
 msgctxt "accelerator New"
@@ -10836,27 +10784,27 @@ msgstr "O"
 #: notepad.rc:135 regedit.rc:321 wordpad.rc:289
 msgctxt "accelerator Print"
 msgid "P"
-msgstr ""
+msgstr "P"
 
 #: notepad.rc:136 wordpad.rc:288
 msgctxt "accelerator Save"
 msgid "S"
-msgstr ""
+msgstr "S"
 
 #: notepad.rc:137
 msgctxt "accelerator Paste"
 msgid "V"
-msgstr ""
+msgstr "V"
 
 #: notepad.rc:138 wordpad.rc:279
 msgctxt "accelerator Cut"
 msgid "X"
-msgstr ""
+msgstr "X"
 
 #: notepad.rc:139 wordpad.rc:281
 msgctxt "accelerator Undo"
 msgid "Z"
-msgstr ""
+msgstr "Z"
 
 #: notepad.rc:66
 msgid "Page &p"
@@ -11612,7 +11560,6 @@ msgid "&About Registry Editor"
 msgstr "&Info"
 
 #: regedit.rc:88
-#, fuzzy
 msgid "Modify Binary Data..."
 msgstr "Binaire data wijzigen"
 
@@ -12117,12 +12064,10 @@ msgid "&Show processes from all users"
 msgstr "&Toon processen van alle gebruikers"
 
 #: taskmgr.rc:372
-#, fuzzy
 msgid "CPU usage"
 msgstr "CPU-gebruik"
 
 #: taskmgr.rc:373
-#, fuzzy
 msgid "Mem usage"
 msgstr "Geheugengebruik"
 
@@ -12136,12 +12081,10 @@ msgid "Commit charge (K)"
 msgstr "Commit Charge (K)"
 
 #: taskmgr.rc:376
-#, fuzzy
 msgid "Physical memory (K)"
 msgstr "Fysiek geheugen (K)"
 
 #: taskmgr.rc:377
-#, fuzzy
 msgid "Kernel memory (K)"
 msgstr "Kernelgeheugen (K)"
 
@@ -12182,12 +12125,10 @@ msgid "Nonpaged"
 msgstr "Niet in swap"
 
 #: taskmgr.rc:414
-#, fuzzy
 msgid "CPU usage history"
 msgstr "Geschiedenis van het CPU-gebruik"
 
 #: taskmgr.rc:415
-#, fuzzy
 msgid "Memory usage history"
 msgstr "Geschiedenis van het geheugengebruik"
 
@@ -12849,9 +12790,8 @@ msgstr ""
 "of (naar keuze) een latere versie."
 
 #: winecfg.rc:134
-#, fuzzy
 msgid "Windows registration information"
-msgstr " Windows registratie-informatie "
+msgstr "Windows registratie-informatie "
 
 #: winecfg.rc:135
 msgid "&Owner:"
@@ -12862,9 +12802,8 @@ msgid "Organi&zation:"
 msgstr "Organisatie:"
 
 #: winecfg.rc:145
-#, fuzzy
 msgid "Application settings"
-msgstr " Toepassingsinstellingen "
+msgstr "Toepassingsinstellingen"
 
 #: winecfg.rc:146
 #, fuzzy
@@ -12897,7 +12836,7 @@ msgstr " Vensterinstellingen "
 
 #: winecfg.rc:161
 msgid "Automatically capture the &mouse in full-screen windows"
-msgstr ""
+msgstr "Indien volledig scherm, vang de &muis automatisch af"
 
 #: winecfg.rc:162
 msgid "Allow the window manager to &decorate the windows"
@@ -12916,9 +12855,8 @@ msgid "Desktop &size:"
 msgstr "Afmetingen:"
 
 #: winecfg.rc:171
-#, fuzzy
 msgid "Screen resolution"
-msgstr " Scherm&resolutie "
+msgstr " Schermresolutie "
 
 #: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
@@ -12960,17 +12898,16 @@ msgid "Edit Override"
 msgstr "Override bewerken"
 
 #: winecfg.rc:199
-#, fuzzy
 msgid "Load order"
 msgstr " Laadvolgorde "
 
 #: winecfg.rc:200
 msgid "&Builtin (Wine)"
-msgstr ""
+msgstr "Inge&bouwd (Wine)"
 
 #: winecfg.rc:201
 msgid "&Native (Windows)"
-msgstr ""
+msgstr "Wi&ndows (MSWindows)"
 
 #: winecfg.rc:202
 msgid "Bui&ltin then Native"
@@ -12985,9 +12922,8 @@ msgid "Select Drive Letter"
 msgstr "Selecteer Stationsletter"
 
 #: winecfg.rc:223
-#, fuzzy
 msgid "Drive mappings"
-msgstr " Stations "
+msgstr " Stations-toewijzingen"
 
 #: winecfg.rc:224
 msgid ""
@@ -13015,7 +12951,7 @@ msgstr "Toon uitgebreid"
 
 #: winecfg.rc:240
 msgid "De&vice:"
-msgstr ""
+msgstr "A&pparaat:"
 
 #: winecfg.rc:242
 msgid "Bro&wse..."
@@ -13035,37 +12971,35 @@ msgstr "Toon \".\" bestanden"
 
 #: winecfg.rc:256
 msgid "Driver diagnostics"
-msgstr ""
+msgstr "Aansturingsdiagnostiek"
 
 #: winecfg.rc:258
-#, fuzzy
 msgid "Defaults"
-msgstr " Defaults "
+msgstr "Standaardinstellingen"
 
 #: winecfg.rc:259
 msgid "Output device:"
-msgstr ""
+msgstr "Uitvoer apparaat:"
 
 #: winecfg.rc:260
 msgid "Voice output device:"
-msgstr ""
+msgstr "Stemuitvoer:"
 
 #: winecfg.rc:261
 msgid "Input device:"
-msgstr ""
+msgstr "Invoer apparaat:"
 
 #: winecfg.rc:262
 msgid "Voice input device:"
-msgstr ""
+msgstr "Steminvoer:"
 
 #: winecfg.rc:267
 msgid "&Test Sound"
 msgstr "Geluidstest"
 
 #: winecfg.rc:274
-#, fuzzy
 msgid "Appearance"
-msgstr " Uiterlijk "
+msgstr "Uiterlijk"
 
 #: winecfg.rc:275
 msgid "&Theme:"
@@ -13084,9 +13018,8 @@ msgid "C&olor:"
 msgstr "Kleur:"
 
 #: winecfg.rc:290
-#, fuzzy
 msgid "Folders"
-msgstr "Persoonlijke map"
+msgstr "Mappen"
 
 #: winecfg.rc:293
 msgid "&Link to:"
@@ -13186,15 +13119,15 @@ msgstr "native"
 
 #: winecfg.rc:54
 msgid "builtin"
-msgstr ""
+msgstr "ingebouwd"
 
 #: winecfg.rc:55
 msgid "native, builtin"
-msgstr ""
+msgstr "windows, ingebouwd"
 
 #: winecfg.rc:56
 msgid "builtin, native"
-msgstr ""
+msgstr "ingebouwd, windows"
 
 #: winecfg.rc:57
 msgid "disabled"
@@ -13217,9 +13150,8 @@ msgid "Select an executable file"
 msgstr "Selecteer een uitvoerbaar bestand"
 
 #: winecfg.rc:66
-#, fuzzy
 msgid "Autodetect"
-msgstr "&Automatisch instellen"
+msgstr "&Automatisch detecteren"
 
 #: winecfg.rc:67
 msgid "Local hard disk"
@@ -13471,21 +13403,18 @@ msgid "&Color"
 msgstr "&Kleur"
 
 #: wineconsole.rc:97
-#, fuzzy
 msgid "Configuration"
-msgstr " Configuratie "
+msgstr "Configuratie"
 
 #: wineconsole.rc:100
 msgid "Buffer zone"
 msgstr "Bufferzone"
 
 #: wineconsole.rc:101
-#, fuzzy
 msgid "&Width:"
 msgstr "&Breedte :"
 
 #: wineconsole.rc:104
-#, fuzzy
 msgid "&Height:"
 msgstr "&Hoogte :"
 
@@ -13494,12 +13423,10 @@ msgid "Window size"
 msgstr "Venstergrootte"
 
 #: wineconsole.rc:109
-#, fuzzy
 msgid "W&idth:"
 msgstr "B&reedte :"
 
 #: wineconsole.rc:112
-#, fuzzy
 msgid "H&eight:"
 msgstr "H&oogte :"
 
@@ -13517,7 +13444,7 @@ msgstr "Versie"
 
 #: wineconsole.rc:125
 msgid "Console parameters"
-msgstr ""
+msgstr "Console parameters"
 
 #: wineconsole.rc:128
 msgid "Retain these settings for later sessions"
@@ -13655,7 +13582,6 @@ msgstr ""
 "worden. Excuses voor het ongemak."
 
 #: winedbg.rc:55
-#, fuzzy
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
@@ -13663,20 +13589,18 @@ msgid ""
 msgstr ""
 "Dit kan veroorzaakt worden door een probleem in het programma of een fout in "
 "Wine. U kunt zoeken op <a href=\"http://appdb.winehq.org\">Application "
-"Database</a> naar tips over het draaien van dit programma.\n"
+"Database</a> naar tips voor dit programma.\n"
 "\n"
 "Als dit probleem niet optreedt onder Windows en nog niet is gerapporteerd, "
 "dan kunt u <a href=\"http://wiki.winehq.org/Bugs\">een bug rapporteren</a>."
 
 #: winedbg.rc:58
-#, fuzzy
 msgid "Show &Details"
-msgstr "&Details"
+msgstr "Toon &Details"
 
 #: winedbg.rc:63
-#, fuzzy
 msgid "Program Error Details"
-msgstr "Programma Fout"
+msgstr "Programmafout details"
 
 #: winedbg.rc:70
 msgid ""
@@ -13685,6 +13609,10 @@ msgid ""
 "button, then <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a> "
 "and attach that file to the report."
 msgstr ""
+"Indien dit probleem zich niet voordoet onder Windows en het probleem is nog "
+"niet gerapporteed, dan kunt U gedetailleerde informatie in een bestand "
+"opslaan met de \"Opslaan als\" knop. Dit bestand kunt U via <a href=\"http://"
+"wiki.winehq.org/Bugs\">file a bug report</a> versturen."
 
 #: winedbg.rc:35
 msgid "Wine program crash"
@@ -13699,13 +13627,12 @@ msgid "(unidentified)"
 msgstr "(onbekend)"
 
 #: winedbg.rc:40
-#, fuzzy
 msgid "Saving failed"
-msgstr "Openen mislukt\n"
+msgstr "Opslaan mislukt"
 
 #: winedbg.rc:41
 msgid "Loading detailed information, please wait..."
-msgstr ""
+msgstr "Even geduld a.u.b. Gedetailleerde informatie wordt geladen..."
 
 #: winefile.rc:26
 msgid "&Open\tEnter"
@@ -13861,14 +13788,13 @@ msgid "&Compressed"
 msgstr "Ge&comprimeerd"
 
 #: winefile.rc:178
-#, fuzzy
 msgid "Version information"
-msgstr "&Versie-informatie"
+msgstr "Versie-informatie"
 
 #: winefile.rc:194
 msgctxt "accelerator Fullscreen"
 msgid "S"
-msgstr ""
+msgstr "S"
 
 #: winefile.rc:87
 msgid "Applying font settings"
@@ -13899,22 +13825,19 @@ msgid "Not yet implemented"
 msgstr "Nog niet geimplementeerd"
 
 #: winefile.rc:106
-#, fuzzy
 #| msgid "Creation failed.\n"
 msgid "Creation date"
-msgstr "Openen mislukt.\n"
+msgstr "Aanmaakdatum"
 
 #: winefile.rc:107
-#, fuzzy
 #| msgid "Access denied.\n"
 msgid "Access date"
-msgstr "Toegang geweigerd.\n"
+msgstr "Toegangsdatum"
 
 #: winefile.rc:108
-#, fuzzy
 #| msgid "Certification Path"
 msgid "Modification date"
-msgstr "Certificatie pad"
+msgstr "Wijzigingsdatum"
 
 #: winefile.rc:109
 msgid "Index/Inode"
@@ -13980,7 +13903,6 @@ msgid "Fastest Times"
 msgstr "Snelste tijden"
 
 #: winemine.rc:58
-#, fuzzy
 msgid "Fastest times"
 msgstr "Snelste tijden"
 
@@ -14094,7 +14016,7 @@ msgstr "Zoeken"
 
 #: winhlp32.rc:78
 msgid "Wine Help"
-msgstr ""
+msgstr "Wine Help"
 
 #: winhlp32.rc:83
 msgid "Error while reading the help file `%s'"
@@ -14125,22 +14047,19 @@ msgid "Help topics: "
 msgstr "Help-onderwerpen: "
 
 #: wmic.rc:25
-#, fuzzy
 #| msgid "Error: Invalid command line parameters\n"
 msgid "Error: Command line not supported\n"
-msgstr "Fout: Foutieve commandoregel-parameters\n"
+msgstr "Fout: Commandoregel niet ondersteund\n"
 
 #: wmic.rc:26
-#, fuzzy
 #| msgid "Property set not found.\n"
 msgid "Error: Alias not found\n"
-msgstr "Verzameling eigenschappen niet gevonden.\n"
+msgstr "Fout: Alias niet gevonden.\n"
 
 #: wmic.rc:27
-#, fuzzy
 #| msgid "Error: Invalid key name\n"
 msgid "Error: Invalid query\n"
-msgstr "Fout: Foutieve sleutelnaam\n"
+msgstr "Fout: Foutieve zoekopdracht\n"
 
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
@@ -14151,9 +14070,8 @@ msgid "R&edo\tCtrl+Y"
 msgstr "Opn&ieuw\tCtrl+Y"
 
 #: wordpad.rc:47
-#, fuzzy
 msgid "&Clear\tDel"
-msgstr "&Verwijderen\tDEL"
+msgstr "&Clear\tDEL"
 
 #: wordpad.rc:48
 msgid "&Select all\tCtrl+A"
@@ -14217,7 +14135,7 @@ msgstr "&Opmaak"
 
 #: wordpad.rc:82 wordpad.rc:105
 msgid "&Bullet points"
-msgstr ""
+msgstr "&Opsommingstekens"
 
 #: wordpad.rc:83 wordpad.rc:106
 msgid "&Paragraph..."
@@ -14318,17 +14236,17 @@ msgstr "Gereedschapsbalken"
 #: wordpad.rc:273
 msgctxt "accelerator Align Left"
 msgid "L"
-msgstr ""
+msgstr "L"
 
 #: wordpad.rc:274
 msgctxt "accelerator Align Center"
 msgid "E"
-msgstr ""
+msgstr "E"
 
 #: wordpad.rc:275
 msgctxt "accelerator Align Right"
 msgid "R"
-msgstr ""
+msgstr "R"
 
 #: wordpad.rc:282
 msgctxt "accelerator Redo"
@@ -14343,12 +14261,12 @@ msgstr "B"
 #: wordpad.rc:284
 msgctxt "accelerator Italic"
 msgid "I"
-msgstr ""
+msgstr "I"
 
 #: wordpad.rc:285
 msgctxt "accelerator Underline"
 msgid "U"
-msgstr ""
+msgstr "U"
 
 #: wordpad.rc:136
 msgid "All documents (*.*)"
@@ -14470,14 +14388,12 @@ msgstr ""
 "verloren zal gaan. Weet u zeker dat u dit wilt?"
 
 #: wordpad.rc:187
-#, fuzzy
 msgid "Invalid number format."
-msgstr "Foutief nummerformaat"
+msgstr "Foutief nummerformaat."
 
 #: wordpad.rc:188
-#, fuzzy
 msgid "OLE storage documents are not supported."
-msgstr "OLE storage documenten worden niet ondersteund"
+msgstr "OLE opslag documenten worden niet ondersteund"
 
 #: wordpad.rc:189
 msgid "Could not save the file."
@@ -14496,9 +14412,8 @@ msgid "You do not have access to open the file."
 msgstr "Onvoldoende rechten om het bestand te openen."
 
 #: wordpad.rc:193
-#, fuzzy
 msgid "Printing not implemented."
-msgstr "Printen is nog niet geïmplementeerd"
+msgstr "Printen is niet geïmplementeerd."
 
 #: wordpad.rc:194
 msgid "Cannot add more than 32 tab stops."
@@ -14513,12 +14428,10 @@ msgid "Invalid number of parameters - Use xcopy /? for help\n"
 msgstr "Onjuist aantal parameters - Gebruik xcopy /? om hulp te krijgen\n"
 
 #: xcopy.rc:28
-#, fuzzy
 msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
 msgstr "Onjuiste parameter '%1' -  Gebruik xcopy /? voor hulp\n"
 
 #: xcopy.rc:29
-#, fuzzy
 msgid "Press <Enter> to begin copying\n"
 msgstr "Druk op <enter> om te beginnen met kopiëren\n"
 
