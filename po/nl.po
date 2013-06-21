@@ -159,19 +159,10 @@ msgid "Cancel"
 msgstr "Annuleren"
 
 #: appwiz.rc:112
-#| msgid "Wine Gecko Installer"
 msgid "Wine Mono Installer"
 msgstr "Wine-Mono-Installatie"
 
 #: appwiz.rc:115
-#| msgid ""
-#| "Wine could not find a Gecko package which is needed for applications "
-#| "embedding HTML to work correctly. Wine can automatically download and "
-#| "install it for you.\n"
-#| "\n"
-#| "Note: it is recommended to use your distribution's packages instead. See "
-#| "<a href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> "
-#| "for details."
 msgid ""
 "Wine could not find a Mono package which is needed for .NET applications to "
 "work correctly. Wine can automatically download and install it for you.\n"
@@ -2221,12 +2212,10 @@ msgstr ""
 "certificaat terugroeplijst of certificaat vertrouwenslijst bevatten:"
 
 #: cryptui.rc:296
-#| msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
 msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (*.p7b)"
 msgstr "Cryptographisch berichtsyntaxis standaard/PKCS #7 berichten (.p7b)"
 
 #: cryptui.rc:298
-#| msgid "Personal Information Exchange/PKCS #12 (.pfx, .p12)"
 msgid "Personal Information Exchange/PKCS #12 (*.pfx; *.p12)"
 msgstr "Persoonlijke informatie uitwisseling/PKCS #12 (.pfx, .p12)"
 
@@ -2373,12 +2362,10 @@ msgid "Select the format you want to use:"
 msgstr "Selecteer het formaat dat u wilt gebruiken:"
 
 #: cryptui.rc:405
-#| msgid "&DER-encoded X.509 (.cer)"
 msgid "&DER-encoded X.509 (*.cer)"
 msgstr "&DER-geëncodeerde X.509 (.cer)"
 
 #: cryptui.rc:407
-#| msgid "Ba&se64-encoded X.509 (.cer):"
 msgid "Ba&se64-encoded X.509 (*.cer):"
 msgstr "Ba&se64-geëncodeerde X.509 (.cer):"
 
@@ -3475,17 +3462,14 @@ msgid "&Disable"
 msgstr "&Uitzetten"
 
 #: joy.rc:37
-#| msgid "&enable"
 msgid "&Enable"
 msgstr "Activ&eren"
 
 #: joy.rc:38
-#| msgid "Disconnected"
 msgid "Connected"
 msgstr "Verbonden"
 
 #: joy.rc:40
-#| msgid "&Disable"
 msgid "Disabled"
 msgstr "Deactiveren"
 
@@ -3510,7 +3494,6 @@ msgid "Test Force Feedback"
 msgstr "Test Force Feedback"
 
 #: joy.rc:64
-#| msgid "Available formats"
 msgid "Available Effects"
 msgstr "Beschikbare effecten"
 
@@ -3523,7 +3506,6 @@ msgstr ""
 "richting van het effect kan veranderd worden met de assen van de controller."
 
 #: joy.rc:28
-#| msgid "Create Control"
 msgid "Game Controllers"
 msgstr "Spelbesturing"
 
@@ -3576,7 +3558,6 @@ msgid "Expected ')'"
 msgstr "')' verwacht"
 
 #: jscript.rc:37
-#| msgid "Invalid parameter.\n"
 msgid "Invalid character"
 msgstr "Ongeldig teken"
 
@@ -3661,12 +3642,10 @@ msgid "URI to be decoded is incorrect"
 msgstr "De te decoderen URI is niet correct"
 
 #: jscript.rc:58
-#| msgid "Enumeration value out of range.\n"
 msgid "Number of fraction digits is out of range"
 msgstr "Aantal getallen achter de komma buiten bereik."
 
 #: jscript.rc:59
-#| msgid "Subscript out of range"
 msgid "Precision is out of range"
 msgstr "Precisie is buiten bereik"
 
@@ -8345,7 +8324,6 @@ msgid "Security Warning"
 msgstr "Veiligheidswaarschuwing"
 
 #: urlmon.rc:32
-#| msgid "Do you want to continue anyway?"
 msgid "Do you want to install this software?"
 msgstr "Wilt U deze software installeren?"
 
@@ -8354,7 +8332,6 @@ msgid "Location:"
 msgstr "Locatie:"
 
 #: urlmon.rc:36
-#| msgid "Install/Uninstall"
 msgid "Don't install"
 msgstr "Niet installeren"
 
@@ -8368,17 +8345,14 @@ msgstr ""
 "vertrouwt."
 
 #: urlmon.rc:48
-#| msgid "Installation transform failed to apply.\n"
 msgid "Installation of component failed: %08x"
 msgstr "Installatie van onderdeel mislukt: %08x"
 
 #: urlmon.rc:49
-#| msgid "&Install"
 msgid "Install (%d)"
 msgstr "Installeer (%d)"
 
 #: urlmon.rc:50
-#| msgid "&Install"
 msgid "Install"
 msgstr "Installeer"
 
@@ -10225,7 +10199,6 @@ msgid "Wine Command Prompt"
 msgstr "Wine Command Prompt"
 
 #: cmd.rc:349
-#| msgid "CMD Version %1!S!\n"
 msgid "Wine CMD Version %1!S!\n"
 msgstr "Wine CMD versie %1!S!\n"
 
@@ -10268,7 +10241,6 @@ msgid "Expected an operand.\n"
 msgstr "Verwacht een operand.\n"
 
 #: cmd.rc:359
-#| msgid "Unexpected network error.\n"
 msgid "Expected an operator.\n"
 msgstr "Verwacht een operator.\n"
 
@@ -10333,7 +10305,6 @@ msgid "Connection-specific DNS suffix"
 msgstr "Verbindings-specifiek DNS-achtervoegsel"
 
 #: ipconfig.rc:33
-#| msgid "IP address"
 msgid "IPv4 address"
 msgstr "IPv4-adres"
 
@@ -10378,7 +10349,6 @@ msgid "Default gateway"
 msgstr "Standaard gateway"
 
 #: ipconfig.rc:47
-#| msgid "IP address"
 msgid "IPv6 address"
 msgstr "IPv6-adres"
 
@@ -10513,7 +10483,6 @@ msgid "The following services are running:\n"
 msgstr "De volgende services draaien:\n"
 
 #: netstat.rc:27
-#| msgid "LAN Connection"
 msgid "Active Connections"
 msgstr "Actieve verbindingen"
 
@@ -10522,22 +10491,18 @@ msgid "Proto"
 msgstr "Proto"
 
 #: netstat.rc:29
-#| msgid "Email Address"
 msgid "Local Address"
 msgstr "Locaal adres"
 
 #: netstat.rc:30
-#| msgid "Street Address"
 msgid "Foreign Address"
 msgstr "Buitenlands adres"
 
 #: netstat.rc:31
-#| msgid "Status"
 msgid "State"
 msgstr "Staat"
 
 #: netstat.rc:32
-#| msgid "Interfaces"
 msgid "Interface Statistics"
 msgstr "Interface Statistieken"
 
@@ -10550,7 +10515,6 @@ msgid "Received"
 msgstr "Ontvangen"
 
 #: netstat.rc:35
-#| msgid "bytes"
 msgid "Bytes"
 msgstr "Bytes"
 
@@ -10563,17 +10527,14 @@ msgid "Non-unicast packets"
 msgstr "Niet-Unicast pakketten"
 
 #: netstat.rc:38
-#| msgid "Disclaimer"
 msgid "Discards"
 msgstr "Weggegooid"
 
 #: netstat.rc:39
-#| msgid "Error"
 msgid "Errors"
 msgstr "Fouten"
 
 #: netstat.rc:40
-#| msgid "Unknown port.\n"
 msgid "Unknown protocols"
 msgstr "Onbekende protocollen."
 
@@ -10582,7 +10543,6 @@ msgid "TCP Statistics for IPv4"
 msgstr "TCP Statistieken voor IPv4"
 
 #: netstat.rc:42
-#| msgid "LAN Connection"
 msgid "Active Opens"
 msgstr "Actieve openingen"
 
@@ -10591,27 +10551,22 @@ msgid "Passive Opens"
 msgstr "Passieve openingen"
 
 #: netstat.rc:44
-#| msgid "LAN Connection"
 msgid "Failed Connection Attempts"
 msgstr "Mislukte verbindingspogingen"
 
 #: netstat.rc:45
-#| msgid "LAN Connection"
 msgid "Reset Connections"
 msgstr "Opnieuw verbinden"
 
 #: netstat.rc:46
-#| msgid "LAN Connection"
 msgid "Current Connections"
 msgstr "Huidige verbindingen"
 
 #: netstat.rc:47
-#| msgid "Segment locked.\n"
 msgid "Segments Received"
 msgstr "Ontvangen Segmenten"
 
 #: netstat.rc:48
-#| msgid "Segment locked.\n"
 msgid "Segments Sent"
 msgstr "Verzonden Segmenten"
 
@@ -10624,17 +10579,14 @@ msgid "UDP Statistics for IPv4"
 msgstr "UDP Statistieken voor IPv4"
 
 #: netstat.rc:51
-#| msgid "Segment locked.\n"
 msgid "Datagrams Received"
 msgstr "Ontvangen Datagrammen."
 
 #: netstat.rc:52
-#| msgid "Local Port"
 msgid "No Ports"
 msgstr "Geen poorten"
 
 #: netstat.rc:53
-#| msgid "Decoding Error"
 msgid "Receive Errors"
 msgstr "Ontvangstfouten"
 
@@ -13825,17 +13777,14 @@ msgid "Not yet implemented"
 msgstr "Nog niet geimplementeerd"
 
 #: winefile.rc:106
-#| msgid "Creation failed.\n"
 msgid "Creation date"
 msgstr "Aanmaakdatum"
 
 #: winefile.rc:107
-#| msgid "Access denied.\n"
 msgid "Access date"
 msgstr "Toegangsdatum"
 
 #: winefile.rc:108
-#| msgid "Certification Path"
 msgid "Modification date"
 msgstr "Wijzigingsdatum"
 
@@ -14047,17 +13996,14 @@ msgid "Help topics: "
 msgstr "Help-onderwerpen: "
 
 #: wmic.rc:25
-#| msgid "Error: Invalid command line parameters\n"
 msgid "Error: Command line not supported\n"
 msgstr "Fout: Commandoregel niet ondersteund\n"
 
 #: wmic.rc:26
-#| msgid "Property set not found.\n"
 msgid "Error: Alias not found\n"
 msgstr "Fout: Alias niet gevonden.\n"
 
 #: wmic.rc:27
-#| msgid "Error: Invalid key name\n"
 msgid "Error: Invalid query\n"
 msgstr "Fout: Foutieve zoekopdracht\n"
 
