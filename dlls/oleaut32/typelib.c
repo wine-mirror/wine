@@ -7433,18 +7433,21 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
                 ITypeLib_AddRef(pTLib);
                 result = S_OK;
             } else {
-                TRACE("typeinfo in imported typelib that isn't already loaded\n");
-                result = LoadRegTypeLib( TLB_get_guid_null(ref_type->pImpTLInfo->guid),
-                                         ref_type->pImpTLInfo->wVersionMajor,
-                                         ref_type->pImpTLInfo->wVersionMinor,
-                                         ref_type->pImpTLInfo->lcid,
-                                         &pTLib);
+                BSTR libnam;
 
-                if(FAILED(result)) {
-                    BSTR libnam=SysAllocString(ref_type->pImpTLInfo->name);
-                    result=LoadTypeLib(libnam, &pTLib);
-                    SysFreeString(libnam);
-                }
+                TRACE("typeinfo in imported typelib that isn't already loaded\n");
+
+                result = query_typelib_path(TLB_get_guid_null(ref_type->pImpTLInfo->guid),
+                        ref_type->pImpTLInfo->wVersionMajor,
+                        ref_type->pImpTLInfo->wVersionMinor,
+                        This->pTypeLib->syskind,
+                        ref_type->pImpTLInfo->lcid, &libnam);
+                if(FAILED(result))
+                    libnam = SysAllocString(ref_type->pImpTLInfo->name);
+
+                result = LoadTypeLib(libnam, &pTLib);
+                SysFreeString(libnam);
+
                 if(SUCCEEDED(result)) {
                     ref_type->pImpTLInfo->pImpTypeLib = impl_from_ITypeLib(pTLib);
                     ITypeLib_AddRef(pTLib);

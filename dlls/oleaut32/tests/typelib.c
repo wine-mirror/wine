@@ -1550,6 +1550,11 @@ static void test_CreateTypeLib(void) {
     hres = ITypeLib_GetTypeInfoOfGuid(stdole, &IID_IUnknown, &unknown);
     ok(hres == S_OK, "got %08x\n", hres);
 
+    hres = ITypeInfo_GetTypeAttr(unknown, &typeattr);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(typeattr->cbSizeVft == 3 * sizeof(void*), "Got wrong cbSizeVft: %u\n", typeattr->cbSizeVft);
+    ITypeInfo_ReleaseTypeAttr(unknown, typeattr);
+
     hres = ITypeLib_GetTypeInfoOfGuid(stdole, &IID_IDispatch, &dispatch);
     ok(hres == S_OK, "got %08x\n", hres);
 
@@ -1683,6 +1688,17 @@ static void test_CreateTypeLib(void) {
     hres = ITypeInfo_GetRefTypeOfImplType(interface1, 0, &hreftype);
     ok(hres == S_OK, "got %08x\n", hres);
     ok(hreftype == 3, "hreftype = %d\n", hreftype);
+
+    hres = ITypeInfo_GetRefTypeInfo(interface1, hreftype, &ti);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ITypeInfo_GetTypeAttr(ti, &typeattr);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(typeattr->cbSizeVft == 12 || broken(typeattr->cbSizeVft == 24) /* xp64 */,
+            "retrieved IUnknown gave wrong cbSizeVft: %u\n", typeattr->cbSizeVft);
+    ITypeInfo_ReleaseTypeAttr(ti, typeattr);
+
+    ITypeInfo_Release(ti);
 
     hres = ITypeInfo_GetRefTypeOfImplType(interface1, -1, &hreftype);
     ok(hres == TYPE_E_ELEMENTNOTFOUND, "got %08x\n", hres);
