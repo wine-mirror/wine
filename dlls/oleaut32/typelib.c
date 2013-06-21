@@ -1005,6 +1005,7 @@ typedef struct tagITypeLibImpl
     TLBGuid *guid;
     LCID lcid;
     SYSKIND syskind;
+    int ptr_size;
     WORD ver_major;
     WORD ver_minor;
     WORD libflags;
@@ -1244,6 +1245,20 @@ static inline const GUID *TLB_get_guidref(const TLBGuid *guid)
 static inline const GUID *TLB_get_guid_null(const TLBGuid *guid)
 {
     return guid != NULL ? &guid->guid : &GUID_NULL;
+}
+
+static int get_ptr_size(SYSKIND syskind)
+{
+    switch(syskind){
+    case SYS_WIN64:
+        return 8;
+    case SYS_WIN32:
+    case SYS_MAC:
+    case SYS_WIN16:
+        return 4;
+    }
+    WARN("Unhandled syskind: 0x%x\n", syskind);
+    return 4;
 }
 
 /*
@@ -3340,6 +3355,7 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
     pTypeLibImpl->guid = MSFT_ReadGuid(tlbHeader.posguid, &cx);
 
     pTypeLibImpl->syskind = tlbHeader.varflags & 0x0f; /* check the mask */
+    pTypeLibImpl->ptr_size = get_ptr_size(pTypeLibImpl->syskind);
     pTypeLibImpl->ver_major = LOWORD(tlbHeader.version);
     pTypeLibImpl->ver_minor = HIWORD(tlbHeader.version);
     pTypeLibImpl->libflags = (WORD) tlbHeader.flags & 0xffff;/* check mask */
@@ -3589,6 +3605,7 @@ static DWORD SLTG_ReadLibBlk(LPVOID pLibBlk, ITypeLibImpl *pTypeLibImpl)
     ptr += 4;
 
     pTypeLibImpl->syskind = *(WORD*)ptr;
+    pTypeLibImpl->ptr_size = get_ptr_size(pTypeLibImpl->syskind);
     ptr += 2;
 
     if(SUBLANGID(*(WORD*)ptr) == SUBLANG_NEUTRAL)
@@ -4163,7 +4180,7 @@ static void SLTG_ProcessDispatch(char *pBlk, ITypeInfoImpl *pTI,
   /* this is necessary to cope with MSFT typelibs that set cFuncs to the number
    * of dispinterface functions including the IDispatch ones, so
    * ITypeInfo::GetFuncDesc takes the real value for cFuncs from cbSizeVft */
-  pTI->cbSizeVft = pTI->cFuncs * sizeof(void *);
+  pTI->cbSizeVft = pTI->cFuncs * pTI->pTypeLib->ptr_size;
 
   heap_free(ref_lookup);
   if (TRACE_ON(typelib))
@@ -5518,7 +5535,7 @@ static HRESULT WINAPI ITypeInfo_fnGetTypeAttr( ITypeInfo2 *iface,
 
     if((*ppTypeAttr)->typekind == TKIND_DISPATCH) {
         /* This should include all the inherited funcs */
-        (*ppTypeAttr)->cFuncs = (*ppTypeAttr)->cbSizeVft / sizeof(void *);
+        (*ppTypeAttr)->cFuncs = (*ppTypeAttr)->cbSizeVft / This->pTypeLib->ptr_size;
         /* This is always the size of IDispatch's vtbl */
         (*ppTypeAttr)->cbSizeVft = sizeof(IDispatchVtbl);
         (*ppTypeAttr)->wTypeFlags &= ~TYPEFLAG_FOLEAUTOMATION;
@@ -8378,6 +8395,7 @@ HRESULT WINAPI CreateTypeLib2(SYSKIND syskind, LPCOLESTR szFile,
 
     This->lcid = GetSystemDefaultLCID();
     This->syskind = syskind;
+    This->ptr_size = get_ptr_size(syskind);
 
     This->path = heap_alloc((lstrlenW(szFile) + 1) * sizeof(WCHAR));
     if (!This->path) {
@@ -10601,7 +10619,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(ICreateTypeInfo2 *iface)
                     ITypeInfo_Release(tinfo);
                     return hres;
                 }
-                This->cbSizeVft = attr->cbSizeVft * 4 / sizeof(void*);
+                This->cbSizeVft = attr->cbSizeVft;
                 ITypeInfo_ReleaseTypeAttr(inh, attr);
 
                 do{
@@ -10634,7 +10652,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(ICreateTypeInfo2 *iface)
             return hres;
         }
     } else if (This->typekind == TKIND_DISPATCH)
-        This->cbSizeVft = 7 * sizeof(void*);
+        This->cbSizeVft = 7 * This->pTypeLib->ptr_size;
     else
         This->cbSizeVft = 0;
 
@@ -10647,7 +10665,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(ICreateTypeInfo2 *iface)
         if ((func_desc->funcdesc.oVft & 0xFFFC) > user_vft)
             user_vft = func_desc->funcdesc.oVft & 0xFFFC;
 
-        This->cbSizeVft += sizeof(void*);
+        This->cbSizeVft += This->pTypeLib->ptr_size;
 
         if (func_desc->funcdesc.memid == MEMBERID_NIL) {
             TLBFuncDesc *iter;
@@ -10678,7 +10696,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(ICreateTypeInfo2 *iface)
     }
 
     if (user_vft > This->cbSizeVft)
-        This->cbSizeVft = user_vft + sizeof(void*);
+        This->cbSizeVft = user_vft + This->pTypeLib->ptr_size;
 
     ITypeInfo_Release(tinfo);
     return hres;
