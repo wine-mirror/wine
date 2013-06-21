@@ -66,6 +66,7 @@
 #include "winnls.h"
 #include "winreg.h"
 #include "winuser.h"
+#include "winternl.h"
 #include "lzexpand.h"
 
 #include "wine/unicode.h"
@@ -3128,6 +3129,7 @@ static HRESULT TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath
     LPVOID pBase = NULL;
     DWORD dwTLBLength = 0;
     IUnknown *pFile = NULL;
+    HANDLE h;
 
     *ppTypeLib = NULL;
 
@@ -3161,6 +3163,24 @@ static HRESULT TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath
     }
 
     if(file != pszFileName) heap_free(file);
+
+    h = CreateFileW(pszPath, GENERIC_READ, 0, NULL, OPEN_ALWAYS,
+            FILE_ATTRIBUTE_NORMAL, NULL);
+    if(h != INVALID_HANDLE_VALUE){
+        FILE_NAME_INFORMATION *info;
+        char data[MAX_PATH * sizeof(WCHAR) + sizeof(info->FileNameLength)];
+        BOOL br;
+
+        info = (FILE_NAME_INFORMATION*)data;
+        /* GetFileInformationByHandleEx returns the path of the file without
+         * WOW64 redirection */
+        br = GetFileInformationByHandleEx(h, FileNameInfo, data, sizeof(data));
+        if(br){
+            info->FileName[info->FileNameLength / sizeof(WCHAR)] = 0;
+            lstrcpynW(pszPath + 2, info->FileName, cchPath - 2);
+        }
+        CloseHandle(h);
+    }
 
     TRACE_(typelib)("File %s index %d\n", debugstr_w(pszPath), index);
 
