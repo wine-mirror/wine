@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-06-16 13:52-0500\n"
+"PO-Revision-Date: 2013-06-21 09:30-0700\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "Language: Chinese (PRC)\n"
@@ -200,7 +200,7 @@ msgstr "应用程序"
 msgid ""
 "Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
 "entry for this program from the registry?"
-msgstr "不能运行卸载程序 '%s'。 你想把这个卸载程序从注册表中删除吗?"
+msgstr "不能运行卸载程序 '%s'。您想把这个卸载条目从注册表中删除吗?"
 
 #: appwiz.rc:33
 msgid "Not specified"
@@ -9808,6 +9808,13 @@ msgid ""
 "\n"
 "Where 'command' is one of HELP, START, STOP or USE.\n"
 msgstr ""
+"本命令格式为:\n"
+"\n"
+"NET 命令 [参数]\n"
+"    -或-\n"
+"NET 命令 /HELP\n"
+"\n"
+"其中“命令”为 HELP、START、STOP 或 USE 其中之一。\n"
 
 #: net.rc:28
 msgid ""
@@ -9818,6 +9825,12 @@ msgid ""
 "Displays the list of running services if 'service' is omitted. Otherwise "
 "'service' is the name of the service to start.\n"
 msgstr ""
+"本命令格式为:\n"
+"\n"
+"NET START [服务]\n"
+"\n"
+"如果没有指定“服务”，则显示所有正在运行的服务清单。否则“服务”为要启动的服务的"
+"名称。\n"
 
 #: net.rc:29
 msgid ""
@@ -9827,10 +9840,15 @@ msgid ""
 "\n"
 "Where 'service' is the name of the service to stop.\n"
 msgstr ""
+"本命令的格式为:\n"
+"\n"
+"NET STOP 服务\n"
+"\n"
+"其中“服务”为要停止的服务的名称。\n"
 
 #: net.rc:30
 msgid "Stopping dependent service: %1\n"
-msgstr ""
+msgstr "正在停止依赖的服务: %1\n"
 
 #: net.rc:31
 msgid "Could not stop service %1\n"
@@ -9838,19 +9856,19 @@ msgstr "不能停止服务 %1\n"
 
 #: net.rc:32
 msgid "Could not get handle to service control manager.\n"
-msgstr ""
+msgstr "无法获取服务控制管理器的句柄。\n"
 
 #: net.rc:33
 msgid "Could not get handle to service.\n"
-msgstr ""
+msgstr "无法获取服务的句柄。\n"
 
 #: net.rc:34
 msgid "The %1 service is starting.\n"
-msgstr ""
+msgstr "正在启动服务 %1。\n"
 
 #: net.rc:35
 msgid "The %1 service was started successfully.\n"
-msgstr ""
+msgstr "服务 %1 启动成功。\n"
 
 #: net.rc:36
 msgid "The %1 service failed to start.\n"
@@ -9858,11 +9876,11 @@ msgstr "服务 %1 启动失败。\n"
 
 #: net.rc:37
 msgid "The %1 service is stopping.\n"
-msgstr "服务 %1 正在停止。\n"
+msgstr "正在停止服务 %1。\n"
 
 #: net.rc:38
 msgid "The %1 service was stopped successfully.\n"
-msgstr ""
+msgstr "服务 %1 停止成功。\n"
 
 #: net.rc:39
 msgid "The %1 service failed to stop.\n"
@@ -9870,7 +9888,7 @@ msgstr "服务 %1 停止失败。\n"
 
 #: net.rc:41
 msgid "There are no entries in the list.\n"
-msgstr ""
+msgstr "列表中没有内容。\n"
 
 #: net.rc:42
 msgid ""
@@ -9878,10 +9896,13 @@ msgid ""
 "Status  Local   Remote\n"
 "---------------------------------------------------------------\n"
 msgstr ""
+"\n"
+"状态    本地    远程\n"
+"---------------------------------------------------------------\n"
 
 #: net.rc:43
 msgid "%1      %2      %3      Open resources: %4!u!\n"
-msgstr ""
+msgstr "%1      %2      %3      打开资源: %4!u!\n"
 
 #: net.rc:45
 msgid "Paused"
@@ -9905,145 +9926,119 @@ msgstr "正在重新连接"
 
 #: net.rc:40
 msgid "The following services are running:\n"
-msgstr ""
+msgstr "下列服务正在运行:\n"
 
 #: netstat.rc:27
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Active Connections"
-msgstr "局域网连接"
+msgstr "活跃连接"
 
 #: netstat.rc:28
 msgid "Proto"
-msgstr ""
+msgstr "协议"
 
 #: netstat.rc:29
-#, fuzzy
-#| msgid "Local hard disk"
 msgid "Local Address"
-msgstr "本地硬盘"
+msgstr "本地地址"
 
 #: netstat.rc:30
 msgid "Foreign Address"
-msgstr ""
+msgstr "远程地址"
 
 #: netstat.rc:31
-#, fuzzy
-#| msgid "Status"
 msgid "State"
 msgstr "状态"
 
 #: netstat.rc:32
-#, fuzzy
-#| msgid "Interfaces"
 msgid "Interface Statistics"
-msgstr "界面"
+msgstr "接口统计"
 
 #: netstat.rc:33
 msgid "Sent"
-msgstr ""
+msgstr "送出"
 
 #: netstat.rc:34
 msgid "Received"
-msgstr ""
+msgstr "收到"
 
 #: netstat.rc:35
-#, fuzzy
-#| msgid "bytes"
 msgid "Bytes"
 msgstr "字节"
 
 #: netstat.rc:36
 msgid "Unicast packets"
-msgstr ""
+msgstr "单播数据包"
 
 #: netstat.rc:37
 msgid "Non-unicast packets"
-msgstr ""
+msgstr "多播数据包"
 
 #: netstat.rc:38
 msgid "Discards"
-msgstr ""
+msgstr "丢弃数据包"
 
 #: netstat.rc:39
-#, fuzzy
-#| msgid "Error"
 msgid "Errors"
 msgstr "错误"
 
 #: netstat.rc:40
-#, fuzzy
-#| msgid "Unknown port.\n"
 msgid "Unknown protocols"
-msgstr "未知端口。\n"
+msgstr "未知协议"
 
 #: netstat.rc:41
 msgid "TCP Statistics for IPv4"
-msgstr ""
+msgstr "IPv4 TCP 统计"
 
 #: netstat.rc:42
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Active Opens"
-msgstr "局域网连接"
+msgstr "主动打开连接数"
 
 #: netstat.rc:43
 msgid "Passive Opens"
-msgstr ""
+msgstr "被动打开连接数"
 
 #: netstat.rc:44
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Failed Connection Attempts"
-msgstr "局域网连接"
+msgstr "连接失败次数"
 
 #: netstat.rc:45
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Reset Connections"
-msgstr "局域网连接"
+msgstr "连接重置次数"
 
 #: netstat.rc:46
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Current Connections"
-msgstr "局域网连接"
+msgstr "当前连接数"
 
 #: netstat.rc:47
 msgid "Segments Received"
-msgstr ""
+msgstr "收到报文段数"
 
 #: netstat.rc:48
 msgid "Segments Sent"
-msgstr ""
+msgstr "送出报文段数"
 
 #: netstat.rc:49
 msgid "Segments Retransmitted"
-msgstr ""
+msgstr "重传报文段数"
 
 #: netstat.rc:50
 msgid "UDP Statistics for IPv4"
-msgstr ""
+msgstr "IPv4 UDP 统计"
 
 #: netstat.rc:51
 msgid "Datagrams Received"
-msgstr ""
+msgstr "收到数据报数"
 
 #: netstat.rc:52
-#, fuzzy
-#| msgid "Local Port"
 msgid "No Ports"
-msgstr "本地端口"
+msgstr "没有端口"
 
 #: netstat.rc:53
-#, fuzzy
-#| msgid "Error"
 msgid "Receive Errors"
-msgstr "错误"
+msgstr "接收错误数"
 
 #: netstat.rc:54
 msgid "Datagrams Sent"
-msgstr ""
+msgstr "送出数据报数"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
@@ -10100,7 +10095,7 @@ msgstr "全选(&A)\tCtrl+A"
 
 #: notepad.rc:47
 msgid "&Time/Date\tF5"
-msgstr "插入日期、时间(&T)\tF5"
+msgstr "插入日期/时间(&T)\tF5"
 
 #: notepad.rc:49
 msgid "&Wrap long lines"
@@ -10132,11 +10127,11 @@ msgstr "页面设置"
 
 #: notepad.rc:99
 msgid "&Header:"
-msgstr "页眉(&H)："
+msgstr "页眉(&H):"
 
 #: notepad.rc:101
 msgid "&Footer:"
-msgstr "页脚(&F)："
+msgstr "页脚(&F):"
 
 #: notepad.rc:104
 msgid "Margins (millimeters)"
@@ -10144,35 +10139,35 @@ msgstr "边距(毫米)"
 
 #: notepad.rc:105
 msgid "&Left:"
-msgstr "左(&L)："
+msgstr "左(&L):"
 
 #: notepad.rc:107
 msgid "&Top:"
-msgstr "上(&T)："
+msgstr "上(&T):"
 
 #: notepad.rc:123
 msgid "Encoding:"
-msgstr "编码："
+msgstr "编码:"
 
 #: notepad.rc:129 wordpad.rc:278
 msgctxt "accelerator Select All"
 msgid "A"
-msgstr ""
+msgstr "A"
 
 #: notepad.rc:130 wordpad.rc:280
 msgctxt "accelerator Copy"
 msgid "C"
-msgstr ""
+msgstr "C"
 
 #: notepad.rc:131 regedit.rc:320 wordpad.rc:276
 msgctxt "accelerator Find"
 msgid "F"
-msgstr ""
+msgstr "F"
 
 #: notepad.rc:132 wordpad.rc:277
 msgctxt "accelerator Replace"
 msgid "H"
-msgstr ""
+msgstr "H"
 
 #: notepad.rc:133 wordpad.rc:286
 msgctxt "accelerator New"
@@ -10187,27 +10182,27 @@ msgstr "O"
 #: notepad.rc:135 regedit.rc:321 wordpad.rc:289
 msgctxt "accelerator Print"
 msgid "P"
-msgstr ""
+msgstr "P"
 
 #: notepad.rc:136 wordpad.rc:288
 msgctxt "accelerator Save"
 msgid "S"
-msgstr ""
+msgstr "S"
 
 #: notepad.rc:137
 msgctxt "accelerator Paste"
 msgid "V"
-msgstr ""
+msgstr "V"
 
 #: notepad.rc:138 wordpad.rc:279
 msgctxt "accelerator Cut"
 msgid "X"
-msgstr ""
+msgstr "X"
 
 #: notepad.rc:139 wordpad.rc:281
 msgctxt "accelerator Undo"
 msgid "Z"
-msgstr ""
+msgstr "Z"
 
 #: notepad.rc:66
 msgid "Page &p"
@@ -10305,11 +10300,11 @@ msgstr "&CoCreateInstance 参数"
 
 #: oleview.rc:41
 msgid "&In-process server"
-msgstr ""
+msgstr "进程内服务器(&I)"
 
 #: oleview.rc:42
 msgid "In-process &handler"
-msgstr ""
+msgstr "进程内处理函数(&H)"
 
 #: oleview.rc:43
 msgid "&Local server"
@@ -10329,7 +10324,7 @@ msgstr "创建实例(&I)"
 
 #: oleview.rc:50
 msgid "Create Instance &On..."
-msgstr "创建实例在(&O)..."
+msgstr "创建实例于(&O)..."
 
 #: oleview.rc:51
 msgid "&Release Instance"
@@ -10381,11 +10376,11 @@ msgstr "连接到另外一台计算机"
 
 #: oleview.rc:157
 msgid "&Machine name:"
-msgstr "计算机名称(&M)："
+msgstr "计算机名称(&M):"
 
 #: oleview.rc:165
 msgid "System Configuration"
-msgstr "系统设置"
+msgstr "系统配置"
 
 #: oleview.rc:168
 msgid "System Settings"
@@ -10404,20 +10399,20 @@ msgid ""
 "These settings change only registry values.\n"
 "They have no effect on Wine performance."
 msgstr ""
-"这些设置只改变寄存器值(register values)。\n"
+"这些设置只改变注册表的值。\n"
 "它对Wine的性能没有影响。"
 
 #: oleview.rc:178
 msgid "Default Interface Viewer"
-msgstr "默认界面查看器"
+msgstr "默认接口查看器"
 
 #: oleview.rc:181
 msgid "Interface"
-msgstr "界面"
+msgstr "接口"
 
 #: oleview.rc:183
 msgid "IID:"
-msgstr "IID："
+msgstr "IID:"
 
 #: oleview.rc:186
 msgid "&View Type Info"
@@ -10425,19 +10420,19 @@ msgstr "查看类型信息(&V)"
 
 #: oleview.rc:191
 msgid "IPersist Interface Viewer"
-msgstr "IPersist 界面查看器"
+msgstr "IPersist 接口查看器"
 
 #: oleview.rc:194 oleview.rc:206
 msgid "Class Name:"
-msgstr "类别名称："
+msgstr "类名:"
 
 #: oleview.rc:196 oleview.rc:208
 msgid "CLSID:"
-msgstr "CLSID："
+msgstr "CLSID:"
 
 #: oleview.rc:203
 msgid "IPersistStream Interface Viewer"
-msgstr "IPersistStream 界面查看器"
+msgstr "IPersistStream 接口查看器"
 
 #: oleview.rc:93 oleview.rc:94
 msgid "OleView"
@@ -10461,7 +10456,7 @@ msgstr "TypeLib 文件 (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
 
 #: oleview.rc:103
 msgid "Bind to file via a File Moniker"
-msgstr "通过文件绰号绑定到文件"
+msgstr "通过文件标记绑定到文件"
 
 #: oleview.rc:104
 msgid "Open a TypeLib file and view the contents"
@@ -10485,7 +10480,7 @@ msgstr "创建当前选定对象实例"
 
 #: oleview.rc:109
 msgid "Create an instance of the selected object on a specific machine"
-msgstr "创建当前选定对象在指定计算机的实例"
+msgstr "在指定机器上创建当前选定对象的实例"
 
 #: oleview.rc:110
 msgid "Release the currently selected object instance"
@@ -10526,19 +10521,19 @@ msgstr "显示程序信息、版本号及版权"
 
 #: oleview.rc:113
 msgid "Ask for an in-process server when calling CoGetClassObject"
-msgstr ""
+msgstr "调用 CoGetClassObject 时请求进程内服务器"
 
 #: oleview.rc:114
 msgid "Ask for an in-process handler when calling CoGetClassObject"
-msgstr ""
+msgstr "调用 CoGetClassObject 时请求进程内处理函数"
 
 #: oleview.rc:115
 msgid "Ask for a local server when calling CoGetClassObject"
-msgstr "呼叫 CoGetClassObject 时请求本地服务器"
+msgstr "调用 CoGetClassObject 时请求本地服务器"
 
 #: oleview.rc:116
 msgid "Ask for a remote server when calling CoGetClassObject"
-msgstr "呼叫 CoGetClassObject 时请求远程服务器"
+msgstr "调用 CoGetClassObject 时请求远程服务器"
 
 #: oleview.rc:128
 msgid "ObjectClasses"
@@ -10582,7 +10577,7 @@ msgstr "注册表"
 
 #: oleview.rc:139
 msgid "Implementation"
-msgstr "实行"
+msgstr "实现"
 
 #: oleview.rc:140
 msgid "Activation"
@@ -10606,7 +10601,7 @@ msgstr "LoadTypeLib( %1 ) 失败 ($%2!x!)"
 
 #: oleview.rc:149
 msgid "Inherited Interfaces"
-msgstr "继承的界面"
+msgstr "继承的接口"
 
 #: oleview.rc:124
 msgid "Save as an .IDL or .H file"
@@ -10778,11 +10773,11 @@ msgstr "信息"
 
 #: progman.rc:65
 msgid "Delete group `%s'?"
-msgstr "是否删除程序组 `%s'？"
+msgstr "是否删除程序组 “%s”？"
 
 #: progman.rc:66
 msgid "Delete program `%s'?"
-msgstr "是否删除程序组 `%s'?"
+msgstr "是否删除程序组 “%s”?"
 
 #: progman.rc:67
 msgid "Not implemented"
@@ -10790,18 +10785,18 @@ msgstr "尚未实现"
 
 #: progman.rc:68
 msgid "Error reading `%s'."
-msgstr "读取文件 %s 时发生错误。"
+msgstr "读取文件 “%s” 时发生错误。"
 
 #: progman.rc:69
 msgid "Error writing `%s'."
-msgstr "写入文件 %s 时发生错误。"
+msgstr "写入文件 “%s” 时发生错误。"
 
 #: progman.rc:72
 msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
 msgstr ""
-"不能打开组文件 `%s' 。\n"
+"不能打开组文件 “%s” 。\n"
 "是否继续尝试？"
 
 #: progman.rc:74
@@ -10814,11 +10809,11 @@ msgstr "在 %s 中发现未知特性"
 
 #: progman.rc:76
 msgid "File `%s' exists. Not overwritten."
-msgstr "文件 %s 已经存在。不覆盖已有文件。"
+msgstr "文件 “%s” 已经存在。不覆盖已有文件。"
 
 #: progman.rc:77
 msgid "Save group as `%s to prevent overwriting original files."
-msgstr "将程序组保存为 %s 可以避免复盖已有的文件。"
+msgstr "将程序组保存为 “%s” 可以避免复盖已有的文件。"
 
 #: progman.rc:81
 msgid "Libraries (*.dll)"
@@ -10839,41 +10834,45 @@ msgid ""
 "REG [ ADD | DELETE | QUERY ]\n"
 "REG command /?\n"
 msgstr ""
+"本命令格式为:\n"
+"\n"
+"REG [ ADD | DELETE | QUERY ]\n"
+"REG 命令 /?\n"
 
 #: reg.rc:28
 msgid ""
 "REG ADD key_name [/v value_name | /ve] [/t type] [/s separator] [/d data] [/"
 "f]\n"
-msgstr ""
+msgstr "REG ADD 键名 [/v 值名 | /ve] [/t 类型] [/s 分隔符] [/d 数据] [/f]\n"
 
 #: reg.rc:29
 msgid "REG DELETE key_name [/v value_name | /ve | /va] [/f]\n"
-msgstr ""
+msgstr "REG DELETE 键名 [/v 值名 | /ve | /va] [/f]\n"
 
 #: reg.rc:30
 msgid "REG QUERY key_name [/v value_name | /ve] [/s]\n"
-msgstr ""
+msgstr "REG QUERY 键名 [/v 值名 | /ve] [/s]\n"
 
 #: reg.rc:31
 msgid "The operation completed successfully\n"
-msgstr ""
+msgstr "操作完成\n"
 
 #: reg.rc:32
 msgid "Error: Invalid key name\n"
-msgstr ""
+msgstr "错误：键名无效\n"
 
 #: reg.rc:33
 msgid "Error: Invalid command line parameters\n"
-msgstr ""
+msgstr "错误：命令行参数无效\n"
 
 #: reg.rc:34
 msgid "Error: Unable to add keys to remote machine\n"
-msgstr ""
+msgstr "错误：无法将键添加到远程机器\n"
 
 #: reg.rc:35
 msgid ""
 "Error: The system was unable to find the specified registry key or value\n"
-msgstr ""
+msgstr "错误：系统无法找到指定的注册表键或值\n"
 
 #: regedit.rc:31
 msgid "&Registry"
@@ -10953,15 +10952,15 @@ msgstr "导出注册表"
 
 #: regedit.rc:217
 msgid "S&elected branch:"
-msgstr "指定分支(&E)："
+msgstr "指定分支(&E):"
 
 #: regedit.rc:226
 msgid "Find:"
-msgstr "查找："
+msgstr "查找:"
 
 #: regedit.rc:228
 msgid "Find in:"
-msgstr "在这找："
+msgstr "在这找:"
 
 #: regedit.rc:229
 msgid "Keys"
@@ -10985,7 +10984,7 @@ msgstr "添加收藏"
 
 #: regedit.rc:242 regedit.rc:253
 msgid "Name:"
-msgstr "名称："
+msgstr "名称:"
 
 #: regedit.rc:250
 msgid "Remove Favorite"
@@ -10997,11 +10996,11 @@ msgstr "编辑字符串"
 
 #: regedit.rc:264 regedit.rc:277 regedit.rc:293 regedit.rc:306
 msgid "Value name:"
-msgstr "值名称："
+msgstr "值名称:"
 
 #: regedit.rc:266 regedit.rc:279 regedit.rc:295 regedit.rc:308
 msgid "Value data:"
-msgstr "值数据："
+msgstr "值数据:"
 
 #: regedit.rc:274
 msgid "Edit DWORD"
@@ -11190,7 +11189,7 @@ msgstr "确认删除值"
 
 #: regedit.rc:182
 msgid "Are you sure you want to delete value '%s'?"
-msgstr "你确认要删除值 '%s' 吗?"
+msgstr "您确认要删除值 '%s' 吗?"
 
 #: regedit.rc:186
 msgid "Search string '%s' not found"
@@ -11198,7 +11197,7 @@ msgstr "未找到字符串 '%s'"
 
 #: regedit.rc:183
 msgid "Are you sure you want to delete these values?"
-msgstr "你确认要删除这些值吗?"
+msgstr "您确认要删除这些值吗?"
 
 #: regedit.rc:184
 msgid "New Key #%d"
@@ -11226,67 +11225,69 @@ msgid ""
 "specified file.\n"
 "ShellExecuteEx failed"
 msgstr ""
+"无法启动程序，或者没有为指定文件关联应用程序。\n"
+"ShellExecuteEx 失败"
 
 #: start.rc:54
 msgid "Could not translate the specified Unix filename to a DOS filename."
-msgstr ""
+msgstr "无法将指定 Unix 文件名转换为 DOS 文件名。"
 
 #: taskkill.rc:27
 msgid "Usage: taskkill [/?] [/f] [/im ProcessName | /pid ProcessID]\n"
-msgstr ""
+msgstr "用法：taskkill [/?] [/f] [/im 进程名 | /pid 进程ID]\n"
 
 #: taskkill.rc:28
 msgid "Error: Unknown or invalid command line option specified.\n"
-msgstr ""
+msgstr "错误：指定的命令行选项未知或无效。\n"
 
 #: taskkill.rc:29
 msgid "Error: Invalid command line parameter specified.\n"
-msgstr ""
+msgstr "错误：指定的命令行参数未知或无效。\n"
 
 #: taskkill.rc:30
 msgid "Error: One of options /im or /pid must be specified.\n"
-msgstr ""
+msgstr "错误：必须指定 /im 或 /pid 选项。\n"
 
 #: taskkill.rc:31
 msgid "Error: Option %1 expects a command line parameter.\n"
-msgstr ""
+msgstr "错误：选项 %1 需要命令行参数值。\n"
 
 #: taskkill.rc:32
 msgid "Error: Options /im and /pid are mutually exclusive.\n"
-msgstr ""
+msgstr "错误：选项 /im 和 /pid 不能共存。\n"
 
 #: taskkill.rc:33
 msgid "Close message sent to top-level windows of process with PID %1!u!.\n"
-msgstr ""
+msgstr "关闭消息已发送到 PID 为 %1!u! 的进程的顶级窗口。\n"
 
 #: taskkill.rc:34
 msgid ""
 "Close message sent to top-level windows of process \"%1\" with PID %2!u!.\n"
-msgstr ""
+msgstr "关闭消息已发送到 PID 为 %2!u! 的进程 \"%1\" 的顶级窗口。\n"
 
 #: taskkill.rc:35
 msgid "Process with PID %1!u! was forcibly terminated.\n"
-msgstr ""
+msgstr "已经强行结束 PID 为 %1!u! 的进程。\n"
 
 #: taskkill.rc:36
 msgid "Process \"%1\" with PID %2!u! was forcibly terminated.\n"
-msgstr ""
+msgstr "已经强行结束 PID 为 %2!u! 的进程 \"%1\"。\n"
 
 #: taskkill.rc:37
 msgid "Error: Could not find process \"%1\".\n"
-msgstr ""
+msgstr "错误：找不到进程 \"%1\"。\n"
 
 #: taskkill.rc:38
 msgid "Error: Unable to enumerate the process list.\n"
-msgstr ""
+msgstr "错误：无法列举进程清单。\n"
 
 #: taskkill.rc:39
 msgid "Error: Unable to terminate process \"%1\".\n"
-msgstr ""
+msgstr "错误：无法结束进程 \"%1\"。\n"
 
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
-msgstr ""
+msgstr "错误：不允许结束本进程。\n"
 
 #: taskmgr.rc:37 taskmgr.rc:108
 msgid "&New Task (Run...)"
@@ -11402,7 +11403,7 @@ msgstr "调试(&D)"
 
 #: taskmgr.rc:154
 msgid "Set &Priority"
-msgstr "指定优先权(&P)"
+msgstr "指定优先级(&P)"
 
 #: taskmgr.rc:156
 msgid "&Realtime"
@@ -11418,7 +11419,7 @@ msgstr "低于正常(&B)"
 
 #: taskmgr.rc:169
 msgid "Set &Affinity..."
-msgstr "亲和度指定(&A)..."
+msgstr "关联 CPU(&A)..."
 
 #: taskmgr.rc:170
 msgid "Edit Debug &Channels..."
@@ -11438,11 +11439,11 @@ msgstr "显示所有用户的进程(&S)"
 
 #: taskmgr.rc:372
 msgid "CPU usage"
-msgstr "CPU 用量"
+msgstr "CPU 负载率"
 
 #: taskmgr.rc:373
 msgid "Mem usage"
-msgstr "内存用量"
+msgstr "内存占用"
 
 #: taskmgr.rc:374
 msgid "Totals"
@@ -11498,11 +11499,11 @@ msgstr "未分页"
 
 #: taskmgr.rc:414
 msgid "CPU usage history"
-msgstr "CPU 用量历史"
+msgstr "CPU 负载率历史"
 
 #: taskmgr.rc:415
 msgid "Memory usage history"
-msgstr "内存用量历史"
+msgstr "内存占用历史"
 
 #: taskmgr.rc:428 taskmgr.rc:327
 msgid "Debug Channels"
@@ -11510,13 +11511,13 @@ msgstr "调试频道"
 
 #: taskmgr.rc:439
 msgid "Processor Affinity"
-msgstr "处理器亲和度"
+msgstr "处理器关联"
 
 #: taskmgr.rc:444
 msgid ""
 "The Processor Affinity setting controls which CPUs the process will be "
 "allowed to execute on."
-msgstr "处理器亲和度决定了各进程允许运行在哪些 CPU 上。"
+msgstr "处理器关联决定了各进程允许运行在哪些 CPU 上。"
 
 #: taskmgr.rc:446
 msgid "CPU 0"
@@ -11653,7 +11654,7 @@ msgstr "选择列项"
 #: taskmgr.rc:519
 msgid ""
 "Select the columns that will appear on the Process page of the Task Manager."
-msgstr "选择任务管理器中“进程”标签页显示哪些列。"
+msgstr "选择任务管理器中进程标签页显示哪些列。"
 
 #: taskmgr.rc:521
 msgid "&Image Name"
@@ -11665,7 +11666,7 @@ msgstr "&PID (进程编号)"
 
 #: taskmgr.rc:525
 msgid "&CPU Usage"
-msgstr "&CPU 用量"
+msgstr "&CPU 负载率"
 
 #: taskmgr.rc:527
 msgid "CPU Tim&e"
@@ -11673,15 +11674,15 @@ msgstr "CPU 时间(&T)"
 
 #: taskmgr.rc:529
 msgid "&Memory Usage"
-msgstr "内存用量(&M)"
+msgstr "内存占用(&M)"
 
 #: taskmgr.rc:531
 msgid "Memory Usage &Delta"
-msgstr "内存用量差值(&D)"
+msgstr "内存占用差值(&D)"
 
 #: taskmgr.rc:533
 msgid "Pea&k Memory Usage"
-msgstr "内存用量峰值(&K)"
+msgstr "内存占用峰值(&K)"
 
 #: taskmgr.rc:535
 msgid "Page &Faults"
@@ -11725,7 +11726,7 @@ msgstr "未分页池(&O)"
 
 #: taskmgr.rc:555
 msgid "Base P&riority"
-msgstr "基本优先权(&R)"
+msgstr "基本优先级(&R)"
 
 #: taskmgr.rc:557
 msgid "&Handle Count"
@@ -11793,15 +11794,15 @@ msgstr "显示每个任务的详细信息"
 
 #: taskmgr.rc:196
 msgid "Updates the display twice per second"
-msgstr "每秒更新显示两次"
+msgstr "每秒更新两次"
 
 #: taskmgr.rc:197
 msgid "Updates the display every two seconds"
-msgstr "每两秒更新显示一次"
+msgstr "每两秒更新一次"
 
 #: taskmgr.rc:198
 msgid "Updates the display every four seconds"
-msgstr "每四秒更新显示一次"
+msgstr "每四秒更新一次"
 
 #: taskmgr.rc:203
 msgid "Does not automatically update"
@@ -11929,15 +11930,15 @@ msgstr "性能"
 
 #: taskmgr.rc:265
 msgid "CPU Usage: %3d%%"
-msgstr ""
+msgstr "CPU 负载率: %3d%%"
 
 #: taskmgr.rc:266
 msgid "Processes: %d"
-msgstr ""
+msgstr "进程数: %d"
 
 #: taskmgr.rc:267
 msgid "Mem Usage: %1!u!kB / %2!u!kB"
-msgstr ""
+msgstr "内存占用: %1!u!kB / %2!u!kB"
 
 #: taskmgr.rc:272
 msgid "Image Name"
@@ -11945,27 +11946,27 @@ msgstr "映像名字"
 
 #: taskmgr.rc:273
 msgid "PID"
-msgstr ""
+msgstr "PID"
 
 #: taskmgr.rc:274
 msgid "CPU"
-msgstr ""
+msgstr "CPU"
 
 #: taskmgr.rc:275
 msgid "CPU Time"
-msgstr ""
+msgstr "CPU 时间"
 
 #: taskmgr.rc:276
 msgid "Mem Usage"
-msgstr ""
+msgstr "内存占用"
 
 #: taskmgr.rc:277
 msgid "Mem Delta"
-msgstr ""
+msgstr "内存占用差值"
 
 #: taskmgr.rc:278
 msgid "Peak Mem Usage"
-msgstr ""
+msgstr "内存占用峰值"
 
 #: taskmgr.rc:279
 msgid "Page Faults"
@@ -11973,36 +11974,35 @@ msgstr "页错误"
 
 #: taskmgr.rc:280
 msgid "USER Objects"
-msgstr ""
+msgstr "用户对象"
 
 #: taskmgr.rc:283
 msgid "Session ID"
-msgstr ""
+msgstr "会话 ID"
 
 #: taskmgr.rc:284
 msgid "Username"
-msgstr ""
+msgstr "用户名"
 
 #: taskmgr.rc:285
 msgid "PF Delta"
-msgstr ""
+msgstr "页错误差值"
 
 #: taskmgr.rc:286
 msgid "VM Size"
-msgstr ""
+msgstr "虚拟内存大小"
 
 #: taskmgr.rc:287
-#, fuzzy
 msgid "Paged Pool"
-msgstr "向下翻页"
+msgstr "已分页池"
 
 #: taskmgr.rc:288
 msgid "NP Pool"
-msgstr ""
+msgstr "未分页池"
 
 #: taskmgr.rc:289
 msgid "Base Pri"
-msgstr ""
+msgstr "基本优先级"
 
 #: taskmgr.rc:301
 msgid "Task Manager Warning"
@@ -12014,10 +12014,12 @@ msgid ""
 "cause undesired results including system instability. Are you\n"
 "sure you want to change the priority class?"
 msgstr ""
+"警告：改变此进程优先级可能导致意料之外的后果，例如系统不稳定。\n"
+"您确定要改变优先权吗？"
 
 #: taskmgr.rc:305
 msgid "Unable to Change Priority"
-msgstr ""
+msgstr "无法更改优先级"
 
 #: taskmgr.rc:310
 msgid ""
@@ -12027,44 +12029,48 @@ msgid ""
 "data before it is terminated. Are you sure you want to\n"
 "terminate the process?"
 msgstr ""
+"警告：结束此进程可能会导致意料之外的后果，例如数据丢失或者系统不稳定。此\n"
+"进程可能在被结束之前来不及保存它的状态和数据。您确定要结束这个进程吗？"
 
 #: taskmgr.rc:311
 msgid "Unable to Terminate Process"
-msgstr ""
+msgstr "无法结束进程"
 
 #: taskmgr.rc:313
 msgid ""
 "WARNING: Debugging this process may result in loss of data.\n"
 "Are you sure you wish to attach the debugger?"
 msgstr ""
+"警告：调试此进程可能会导致数据丢失。\n"
+"您确定要连接调试器吗？"
 
 #: taskmgr.rc:314
 msgid "Unable to Debug Process"
-msgstr ""
+msgstr "无法调试进程"
 
 #: taskmgr.rc:315
 msgid "The process must have affinity with at least one processor"
-msgstr ""
+msgstr "必须为进程关联至少一个处理器"
 
 #: taskmgr.rc:316
 msgid "Invalid Option"
-msgstr ""
+msgstr "无效选项"
 
 #: taskmgr.rc:317
 msgid "Unable to Access or Set Process Affinity"
-msgstr ""
+msgstr "无法获取或设置进程分配"
 
 #: taskmgr.rc:322
 msgid "System Idle Process"
-msgstr ""
+msgstr "系统空闲进程"
 
 #: taskmgr.rc:323
 msgid "Not Responding"
-msgstr ""
+msgstr "没有响应"
 
 #: taskmgr.rc:324
 msgid "Running"
-msgstr ""
+msgstr "正在运行"
 
 #: taskmgr.rc:325
 msgid "Task"
@@ -12081,7 +12087,7 @@ msgid ""
 "Do you want to remove the uninstall entry from the registry?"
 msgstr ""
 "卸载命令 '%s' 运行失败，可能是找不到可执行程序。\n"
-"你想把这项卸载命令从注册表中删除吗？"
+"您想把这项卸载命令从注册表中删除吗？"
 
 #: view.rc:33
 msgid "&Pan"
@@ -12120,7 +12126,7 @@ msgid ""
 msgstr ""
 "正在模拟关机，但是这个程序没有响应。\n"
 "\n"
-"如果你中断进程，有可能丢失没有保存的数据。"
+"如果您中断进程，有可能丢失没有保存的数据。"
 
 #: wineboot.rc:39
 msgid "Wine"
@@ -12137,6 +12143,9 @@ msgid ""
 "Free Software Foundation; either version 2.1 of the License, or (at your "
 "option) any later version."
 msgstr ""
+"本程序为自由软件，您可以遵照自由软件基金会出版的 GNU 较宽松通用公共许可证协议"
+"（LGPL）\n"
+"来对其进行添加、修改和重新发布。许可协议版本为2.1，您也可以选择采用更高版本。"
 
 #: winecfg.rc:134
 msgid "Windows registration information"
