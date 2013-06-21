@@ -278,7 +278,7 @@ struct shader_arb_ctx_priv
     BOOL                                muted;
     unsigned int                        num_loops, loop_depth, num_ifcs;
     int                                 aL;
-    BOOL                                custom_linear_fog;
+    BOOL                                ps_post_process;
 
     unsigned int                        vs_clipplanes;
     BOOL                                footer_written;
@@ -1161,8 +1161,7 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
             break;
 
         case WINED3DSPR_COLOROUT:
-            if ((ctx->cur_ps_args->super.srgb_correction || ctx->custom_linear_fog)
-                    && !reg->idx[0].offset)
+            if (ctx->ps_post_process && !reg->idx[0].offset)
             {
                 strcpy(register_name, "TMP_COLOR");
             }
@@ -1852,9 +1851,9 @@ static void shader_hw_mov(const struct wined3d_shader_instruction *ins)
     }
     else if (ins->dst[0].reg.type == WINED3DSPR_COLOROUT && !ins->dst[0].reg.idx[0].offset && pshader)
     {
-        if (ctx->cur_ps_args->super.srgb_correction && shader->u.ps.color0_mov)
+        if (ctx->ps_post_process && shader->u.ps.color0_mov)
         {
-            shader_addline(buffer, "#mov handled in srgb write code\n");
+            shader_addline(buffer, "#mov handled in srgb write or fog code\n");
             return;
         }
         shader_hw_map2gl(ins);
@@ -3585,6 +3584,7 @@ static GLuint shader_arb_generate_pshader(const struct wined3d_shader *shader,
     struct arb_pshader_private *shader_priv = shader->backend_data;
     GLint errPos;
     DWORD map;
+    BOOL custom_linear_fog = FALSE;
 
     char srgbtmp[4][4];
     unsigned int i, found = 0;
@@ -3632,7 +3632,7 @@ static GLuint shader_arb_generate_pshader(const struct wined3d_shader *shader,
     priv_ctx.cur_np2fixup_info = &compiled->np2fixup_info;
     init_ps_input(shader, args, &priv_ctx);
     list_init(&priv_ctx.control_frames);
-    priv_ctx.custom_linear_fog = FALSE;
+    priv_ctx.ps_post_process = args->super.srgb_correction;
 
     /* Avoid enabling NV_fragment_program* if we do not need it.
      *
@@ -3687,7 +3687,8 @@ static GLuint shader_arb_generate_pshader(const struct wined3d_shader *shader,
             case WINED3D_FFP_PS_FOG_LINEAR:
                 if (gl_info->quirks & WINED3D_QUIRK_BROKEN_ARB_FOG)
                 {
-                    priv_ctx.custom_linear_fog = TRUE;
+                    custom_linear_fog = TRUE;
+                    priv_ctx.ps_post_process = TRUE;
                     break;
                 }
                 shader_addline(buffer, "OPTION ARB_fog_linear;\n");
@@ -3719,7 +3720,7 @@ static GLuint shader_arb_generate_pshader(const struct wined3d_shader *shader,
     }
     else
     {
-        if (args->super.srgb_correction || priv_ctx.custom_linear_fog)
+        if (priv_ctx.ps_post_process)
         {
             if (shader->u.ps.color0_mov)
             {
@@ -3870,7 +3871,7 @@ static GLuint shader_arb_generate_pshader(const struct wined3d_shader *shader,
                                   priv_ctx.target_version >= NV2);
     }
 
-    if (priv_ctx.custom_linear_fog)
+    if (custom_linear_fog)
         arbfp_add_linear_fog(buffer, fragcolor, "TA");
 
     if(strcmp(fragcolor, "result.color")) {
