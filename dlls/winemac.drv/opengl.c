@@ -1555,7 +1555,7 @@ static BOOL macdrv_wglBindTexImageARB(struct wgl_pbuffer *pbuffer, int iBuffer)
     switch (iBuffer)
     {
         case WGL_FRONT_LEFT_ARB:
-            if (pixel_formats[pbuffer->format].stereo)
+            if (pixel_formats[pbuffer->format - 1].stereo)
                 source = GL_FRONT_LEFT;
             else
                 source = GL_FRONT;
@@ -1564,7 +1564,7 @@ static BOOL macdrv_wglBindTexImageARB(struct wgl_pbuffer *pbuffer, int iBuffer)
             source = GL_FRONT_RIGHT;
             break;
         case WGL_BACK_LEFT_ARB:
-            if (pixel_formats[pbuffer->format].stereo)
+            if (pixel_formats[pbuffer->format - 1].stereo)
                 source = GL_BACK_LEFT;
             else
                 source = GL_BACK;
@@ -1943,7 +1943,7 @@ static struct wgl_pbuffer *macdrv_wglCreatePbufferARB(HDC hdc, int iPixelFormat,
     TRACE("hdc %p iPixelFormat %d iWidth %d iHeight %d piAttribList %p\n",
           hdc, iPixelFormat, iWidth, iHeight, piAttribList);
 
-    if (!is_valid_pixel_format(iPixelFormat) || !pixel_formats[iPixelFormat].pbuffer)
+    if (!is_valid_pixel_format(iPixelFormat) || !pixel_formats[iPixelFormat - 1].pbuffer)
     {
         WARN("invalid pixel format %d\n", iPixelFormat);
         SetLastError(ERROR_INVALID_PIXEL_FORMAT);
