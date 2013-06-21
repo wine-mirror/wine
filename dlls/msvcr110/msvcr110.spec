@@ -1544,7 +1544,7 @@
 @ stub _mbsspnp_l
 @ cdecl _mbsstr(str str) msvcrt._mbsstr
 @ stub _mbsstr_l
-@ cdecl _mbstok(str str) msvcrt._mbstok
+@ cdecl _mbstok(str str) msvcr100._mbstok #don't forward to msvcrt
 @ cdecl _mbstok_l(str str ptr) msvcrt._mbstok_l
 @ cdecl _mbstok_s(str str ptr) msvcrt._mbstok_s
 @ cdecl _mbstok_s_l(str str ptr ptr) msvcrt._mbstok_s_l

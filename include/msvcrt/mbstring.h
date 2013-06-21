@@ -102,6 +102,7 @@ size_t         __cdecl _mbsspn(const unsigned char*,const unsigned char*);
 unsigned char* __cdecl _mbsspnp(const unsigned char*,const unsigned char*);
 unsigned char* __cdecl _mbsstr(const unsigned char*,const unsigned char*);
 unsigned char* __cdecl _mbstok(unsigned char*,const unsigned char*);
+unsigned char* __cdecl _mbstok_l(unsigned char*,const unsigned char*,_locale_t);
 unsigned char* __cdecl _mbsupr(unsigned char*);
 
 #ifndef _MBLEADTRAIL_DEFINED

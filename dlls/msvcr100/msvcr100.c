@@ -25,6 +25,7 @@
 #include "stdlib.h"
 #include "errno.h"
 #include "malloc.h"
+#include "mbstring.h"
 #include "limits.h"
 #include "sys/stat.h"
 #include "windef.h"
@@ -487,6 +488,11 @@ size_t CDECL _aligned_msize(void *p, size_t alignment, size_t offset)
 int CDECL MSVCR100_atoi(const char *str)
 {
     return _atoi_l(str, NULL);
+}
+
+unsigned char* CDECL MSVCR100__mbstok(unsigned char *str, const unsigned char *delim)
+{
+    return _mbstok_l(str, delim, NULL);
 }
 
 /*********************************************************************

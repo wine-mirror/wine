@@ -1149,7 +1149,12 @@ unsigned char* CDECL _mbstok_l(unsigned char *str,
  */
 unsigned char* CDECL _mbstok(unsigned char *str, const unsigned char *delim)
 {
-    return _mbstok_s_l(str, delim, &msvcrt_get_thread_data()->mbstok_next, NULL);
+    thread_data_t *data = msvcrt_get_thread_data();
+
+    if(!str && !data->mbstok_next)
+        return NULL;
+
+    return _mbstok_s_l(str, delim, &data->mbstok_next, NULL);
 }
 
 /*********************************************************************
