@@ -1616,6 +1616,14 @@ char* __cdecl MSVCRT_strchr(const char *str, int c)
 }
 
 /*********************************************************************
+ *                  memchr   (MSVCRT.@)
+ */
+void* __cdecl MSVCRT_memchr(const void *ptr, int c, MSVCRT_size_t n)
+{
+    return memchr(ptr, c, n);
+}
+
+/*********************************************************************
  *                  strncmp   (MSVCRT.@)
  */
 int __cdecl MSVCRT_strncmp(const char *str1, const char *str2, MSVCRT_size_t len)
