@@ -338,6 +338,7 @@ HDC WINAPI CreateMetaFileW( LPCWSTR filename )
         if (!WriteFile( hFile, physDev->mh, sizeof(*physDev->mh), NULL,
 			NULL )) {
             free_dc_ptr( dc );
+            CloseHandle (hFile );
             return 0;
 	}
 	physDev->hFile = hFile;
