@@ -409,6 +409,7 @@ HDC WINAPI CreateEnhMetaFileW(
         }
         if (!WriteFile( hFile, physDev->emh, size, NULL, NULL )) {
             free_dc_ptr( dc );
+            CloseHandle( hFile );
             return 0;
 	}
 	physDev->hFile = hFile;
