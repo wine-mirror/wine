@@ -1373,7 +1373,7 @@ LPVOID VFWAPI ICSeqCompressFrame(PCOMPVARS pc, UINT uiFlags, LPVOID lpBits, BOOL
     icComp->lFrameNum = pc->lFrame++;
     icComp->lpOutput = pc->lpBitsOut;
     icComp->lpPrev = pc->lpBitsPrev;
-    ret = ICSendMessage(pc->hic, ICM_COMPRESS, (DWORD_PTR)icComp, sizeof(icComp));
+    ret = ICSendMessage(pc->hic, ICM_COMPRESS, (DWORD_PTR)icComp, sizeof(*icComp));
 
     if (icComp->dwFlags & AVIIF_KEYFRAME)
     {
