@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2013-06-21 15:34+0100\n"
+"PO-Revision-Date: 2013-06-22 18:30+0100\n"
 "Last-Translator: Roger Koot <roger.koot@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Dutch\n"
@@ -2875,11 +2875,11 @@ msgstr "Het gespecifeerde bestand bestaat reeds. Wilt u het vervangen?"
 
 #: cryptui.rc:153
 msgid "DER-Encoded Binary X.509 (*.cer)"
-msgstr "DER-Encoded Binary X.509 (*.cer)"
+msgstr "DER-geëncodeerde Binary X.509 (*.cer)"
 
 #: cryptui.rc:154
 msgid "Base64-Encoded X.509 (*.cer)"
-msgstr "Base64-geëncodeerd X.509 (*.cer)"
+msgstr "Base64-geëncodeerde X.509 (*.cer)"
 
 #: cryptui.rc:157
 msgid "CMS/PKCS #7 Messages (*.p7b)"
@@ -3067,7 +3067,7 @@ msgstr "Hangul(Johab)"
 
 #: gdi32.rc:40
 msgid "Symbol"
-msgstr "Symbol"
+msgstr "Symbool"
 
 #: gdi32.rc:41
 msgid "OEM/DOS"
@@ -3300,11 +3300,11 @@ msgstr "Zoeken naar %s"
 
 #: ieframe.rc:79
 msgid "Start downloading %s"
-msgstr "Start downloaden van %s..."
+msgstr "Start downloaden van %s"
 
 #: ieframe.rc:80
 msgid "Downloading %s"
-msgstr "%s downloaden..."
+msgstr "%s downloaden"
 
 #: ieframe.rc:81
 msgid "Asking for %s"
@@ -3483,7 +3483,7 @@ msgstr ""
 
 #: joy.rc:47
 msgid "Test Joystick"
-msgstr "Test Joystick"
+msgstr "Joystick testen"
 
 #: joy.rc:51
 msgid "Buttons"
@@ -3491,7 +3491,7 @@ msgstr "Knoppen"
 
 #: joy.rc:60
 msgid "Test Force Feedback"
-msgstr "Test Force Feedback"
+msgstr "Force Feedback Testen"
 
 #: joy.rc:64
 msgid "Available Effects"
@@ -3643,7 +3643,7 @@ msgstr "De te decoderen URI is niet correct"
 
 #: jscript.rc:58
 msgid "Number of fraction digits is out of range"
-msgstr "Aantal getallen achter de komma buiten bereik."
+msgstr "Aantal getallen achter de komma buiten bereik"
 
 #: jscript.rc:59
 msgid "Precision is out of range"
@@ -6738,7 +6738,7 @@ msgid ""
 "The specified installation package could not be opened. Please check the "
 "file path and try again."
 msgstr ""
-"Het opgegeven installatiepakket kon niet worden geopend.  Verifieer het "
+"Het opgegeven installatiepakket kon niet worden geopend. Verifieer het "
 "bestandspad en probeer opnieuw."
 
 #: msi.rc:28
@@ -8317,7 +8317,7 @@ msgstr " min"
 #: shlwapi.rc:30
 msgctxt "time unit: seconds"
 msgid " sec"
-msgstr "sec"
+msgstr " sec"
 
 #: urlmon.rc:29 wininet.rc:74
 msgid "Security Warning"
@@ -10178,8 +10178,7 @@ msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
 msgstr ""
-"Volume in schijfstation %1!c! is %2\n"
-"Het serienummer van het volume is %3!04x!-%4!04x!\n"
+"Het Volume Serienummer is %1!04x!-%2!04x!\n"
 "\n"
 
 #: cmd.rc:345
@@ -10220,11 +10219,11 @@ msgstr "Volume in schijfstation %1!c! heeft geen label.\n"
 
 #: cmd.rc:354
 msgid " (Yes|No)"
-msgstr "(Ja|Nee)"
+msgstr " (Ja|Nee)"
 
 #: cmd.rc:355
 msgid " (Yes|No|All)"
-msgstr "(Ja|Nee|Alles)"
+msgstr " (Ja|Nee|Alles)"
 
 #: cmd.rc:356
 msgid ""
@@ -10536,7 +10535,7 @@ msgstr "Fouten"
 
 #: netstat.rc:40
 msgid "Unknown protocols"
-msgstr "Onbekende protocollen."
+msgstr "Onbekende protocollen"
 
 #: netstat.rc:41
 msgid "TCP Statistics for IPv4"
@@ -10580,7 +10579,7 @@ msgstr "UDP Statistieken voor IPv4"
 
 #: netstat.rc:51
 msgid "Datagrams Received"
-msgstr "Ontvangen Datagrammen."
+msgstr "Ontvangen Datagrammen"
 
 #: netstat.rc:52
 msgid "No Ports"
@@ -12743,7 +12742,7 @@ msgstr ""
 
 #: winecfg.rc:134
 msgid "Windows registration information"
-msgstr "Windows registratie-informatie "
+msgstr "Windows registratie-informatie"
 
 #: winecfg.rc:135
 msgid "&Owner:"
@@ -12782,7 +12781,6 @@ msgid "&Windows Version:"
 msgstr "Windowsversie:"
 
 #: winecfg.rc:160
-#, fuzzy
 msgid "Window settings"
 msgstr " Vensterinstellingen "
 
@@ -12808,7 +12806,7 @@ msgstr "Afmetingen:"
 
 #: winecfg.rc:171
 msgid "Screen resolution"
-msgstr " Schermresolutie "
+msgstr "Schermresolutie "
 
 #: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
@@ -12817,7 +12815,7 @@ msgstr "Dit is een tekstvoorbeeld in Tahoma met puntgrootte 10"
 #: winecfg.rc:182
 #, fuzzy
 msgid "DLL overrides"
-msgstr " DLL Overrides "
+msgstr "DLL Overrides "
 
 #: winecfg.rc:183
 msgid ""
@@ -12851,7 +12849,7 @@ msgstr "Override bewerken"
 
 #: winecfg.rc:199
 msgid "Load order"
-msgstr " Laadvolgorde "
+msgstr "Laadvolgorde "
 
 #: winecfg.rc:200
 msgid "&Builtin (Wine)"
@@ -12875,7 +12873,7 @@ msgstr "Selecteer Stationsletter"
 
 #: winecfg.rc:223
 msgid "Drive mappings"
-msgstr " Stations-toewijzingen"
+msgstr "Stations-toewijzingen"
 
 #: winecfg.rc:224
 msgid ""
@@ -13338,9 +13336,8 @@ msgid "Command history"
 msgstr "Geschiedenis"
 
 #: wineconsole.rc:73
-#, fuzzy
 msgid "&Number of recalled commands:"
-msgstr "&Aantal te bewaren opdrachten :"
+msgstr "&Aantal te bewaren opdrachten:"
 
 #: wineconsole.rc:76
 msgid "&Remove doubles"
@@ -13679,7 +13676,6 @@ msgid "By File Type"
 msgstr "Per Bestandstype"
 
 #: winefile.rc:140
-#, fuzzy
 msgid "File type"
 msgstr "Bestandstype"
 
@@ -14001,7 +13997,7 @@ msgstr "Fout: Commandoregel niet ondersteund\n"
 
 #: wmic.rc:26
 msgid "Error: Alias not found\n"
-msgstr "Fout: Alias niet gevonden.\n"
+msgstr "Fout: Alias niet gevonden\n"
 
 #: wmic.rc:27
 msgid "Error: Invalid query\n"
@@ -14339,7 +14335,7 @@ msgstr "Foutief nummerformaat."
 
 #: wordpad.rc:188
 msgid "OLE storage documents are not supported."
-msgstr "OLE opslag documenten worden niet ondersteund"
+msgstr "OLE opslag documenten worden niet ondersteund."
 
 #: wordpad.rc:189
 msgid "Could not save the file."
