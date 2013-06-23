@@ -1103,7 +1103,7 @@ static void test_type_index_color(void)
 
     /* Test that 'indexColor' can be used (same as IndexedColor in standard templates) and is case sensitive */
     ret = IDirectXFile_RegisterTemplates(dxfile, template_using_index_color_lower, sizeof(template_using_index_color_lower) - 1);
-    todo_wine ok(ret == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates failed with %#x\n", ret);
+    ok(ret == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates failed with %#x\n", ret);
     ret = IDirectXFile_RegisterTemplates(dxfile, template_using_index_color_upper, sizeof(template_using_index_color_upper) - 1);
     ok(ret == DXFILEERR_PARSEERROR, "IDirectXFileImpl_RegisterTemplates returned %#x instead of %#x\n", ret, DXFILEERR_PARSEERROR);
 

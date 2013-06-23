@@ -237,7 +237,7 @@ static void test_type_index_color(void)
 
     /* Test that 'indexColor' can be used (same as IndexedColor in standard templates) and is case sensitive */
     ret = d3dxfile->lpVtbl->RegisterTemplates(d3dxfile, template_using_index_color_lower, sizeof(template_using_index_color_lower) - 1);
-    todo_wine ok(ret == S_OK, "RegisterTemplates failed with %#x\n", ret);
+    ok(ret == S_OK, "RegisterTemplates failed with %#x\n", ret);
     ret = d3dxfile->lpVtbl->RegisterTemplates(d3dxfile, template_using_index_color_upper, sizeof(template_using_index_color_upper) - 1);
     ok(ret == D3DXFERR_PARSEERROR, "RegisterTemplates returned %#x instead of %#x\n", ret, D3DXFERR_PARSEERROR);
 

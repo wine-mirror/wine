@@ -46,6 +46,9 @@ static HRESULT IDirectXFileDataReferenceImpl_Create(IDirectXFileDataReferenceImp
 static HRESULT IDirectXFileEnumObjectImpl_Create(IDirectXFileEnumObjectImpl** ppObj);
 static HRESULT IDirectXFileSaveObjectImpl_Create(IDirectXFileSaveObjectImpl** ppObj);
 
+#define TOKEN_DWORD       41
+#define TOKEN_FLOAT       42
+
 HRESULT IDirectXFileImpl_Create(IUnknown* pUnkOuter, LPVOID* ppObj)
 {
     IDirectXFileImpl* object;
@@ -61,6 +64,17 @@ HRESULT IDirectXFileImpl_Create(IUnknown* pUnkOuter, LPVOID* ppObj)
 
     object->IDirectXFile_iface.lpVtbl = &IDirectXFile_Vtbl;
     object->ref = 1;
+
+    /* Reserve first template to handle the case sensitive legacy type indexColor */
+    object->nb_xtemplates = 1;
+    strcpy(object->xtemplates[0].name, "indexColor");
+    object->xtemplates[0].nb_members = 2;
+    object->xtemplates[0].members[0].type = TOKEN_DWORD;
+    object->xtemplates[0].members[0].nb_dims = 0;
+    object->xtemplates[0].members[1].type = TOKEN_FLOAT;
+    object->xtemplates[0].members[1].nb_dims = 1;
+    object->xtemplates[0].members[1].dim_fixed[0] = TRUE;
+    object->xtemplates[0].members[1].dim_value[0] = 4;
 
     *ppObj = &object->IDirectXFile_iface;
 
@@ -252,7 +266,7 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
   {
     ULONG i;
     TRACE("Registered templates (%d):\n", This->nb_xtemplates);
-    for (i = 0; i < This->nb_xtemplates; i++)
+    for (i = 1; i < This->nb_xtemplates; i++)
       DPRINTF("%s - %s\n", This->xtemplates[i].name, debugstr_guid(&This->xtemplates[i].class_id));
   }
 
@@ -330,7 +344,7 @@ static HRESULT WINAPI IDirectXFileImpl_RegisterTemplates(IDirectXFile* iface, LP
   {
     ULONG i;
     TRACE("Registered templates (%d):\n", This->nb_xtemplates);
-    for (i = 0; i < This->nb_xtemplates; i++)
+    for (i = 1; i < This->nb_xtemplates; i++)
       DPRINTF("%s - %s\n", This->xtemplates[i].name, debugstr_guid(&This->xtemplates[i].class_id));
   }
 

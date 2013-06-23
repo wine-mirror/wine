@@ -961,17 +961,25 @@ static BOOL parse_template_members_list(parse_buffer * buf)
     if (check_TOKEN(buf) == TOKEN_NAME)
     {
       cur_member->type = get_TOKEN(buf);
-      cur_member->idx_template = 0;
-      while (cur_member->idx_template < buf->pdxf->nb_xtemplates)
+      if (!strcmp((char*)buf->value, "indexColor"))
       {
-        if (!strcasecmp((char*)buf->value, buf->pdxf->xtemplates[cur_member->idx_template].name))
-          break;
-        cur_member->idx_template++;
+        /* Case sensitive legacy type indexColor is described in the first template */
+        cur_member->idx_template = 0;
       }
-      if (cur_member->idx_template == buf->pdxf->nb_xtemplates)
+      else
       {
-        ERR("Reference to a nonexistent template '%s'\n", (char*)buf->value);
-        return FALSE;
+        cur_member->idx_template = 1;
+        while (cur_member->idx_template < buf->pdxf->nb_xtemplates)
+        {
+          if (!strcasecmp((char*)buf->value, buf->pdxf->xtemplates[cur_member->idx_template].name))
+            break;
+          cur_member->idx_template++;
+        }
+        if (cur_member->idx_template == buf->pdxf->nb_xtemplates)
+        {
+          WARN("Reference to a nonexistent template '%s'\n", (char*)buf->value);
+          return FALSE;
+        }
       }
     }
     else if (is_primitive_type(check_TOKEN(buf)))
