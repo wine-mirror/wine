@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.TH WINEMAKER 1 "mai 2010" "@PACKAGE_STRING@" "Manuel des développeurs de Wine"
+.TH WINEMAKER 1 "jan 2012" "@PACKAGE_STRING@" "Manuel des développeurs de Wine"
 .SH NOM
 winemaker \- générer une infrastructure de construction pour la compilation de programmes Windows sur UNIX
 .SH SYNOPSIS
@@ -17,7 +17,7 @@ winemaker \- générer une infrastructure de construction pour la compilation de
 ]
 .br
   [
-.BR               "--guiexe " "| " "--windows " "| " "--cuiexe " "| " "--console " "| " "--dll "
+.BR               "--guiexe " "| " "--windows " "| " "--cuiexe " "| " "--console " "| " "--dll " "| " "--lib "
 ]
 .br
   [
@@ -48,7 +48,7 @@ processus de conversion de vos sources Windows en programmes Winelib.
 -\ renommer vos fichiers sources et répertoires en minuscules s'ils ont été
 convertis en majuscules durant le transfert.
 .PP
--\ convertir les fins de ligne DOS en fins de lignes UNIX (CRLF vers LF).
+-\ convertir les fins de ligne DOS en fins de ligne UNIX (CRLF vers LF).
 .PP
 -\ balayer les directives d'inclusion et les références aux fichiers
 de ressources pour y remplacer les backslashs par des slashs.
@@ -61,7 +61,7 @@ avec la casse correcte si nécessaire.
 .PP
 .RB "-\ " winemaker
 recherchera également d'autres problèmes plus exotiques comme l'emploi
-de «\ #pragma pack\ », l'utilisation de «\ afxres.h\ » dans des projets
+de « #pragma pack », l'utilisation de « afxres.h » dans des projets
 non MFC, etc. Quand il trouve de tels points nébuleux, il émettra des
 avertissements.
 .PP
@@ -104,12 +104,12 @@ Renommer tous les fichiers et répertoires en minuscules.
 .B --lower-uppercase
 Ne renommer que les fichiers et répertoires qui ont un nom composé
 uniquement de majuscules.
-Ainsi, «\ HELLO.C\ » serait renommé, mais pas «\ World.c\ ».
+Ainsi, « HELLO.C » serait renommé, mais pas « World.c ».
 .TP
 .B --lower-none
 Ne pas renommer de fichiers et répertoires en minuscules. Notez que cela
 n'empêche pas le renommage d'un fichier si son extension ne peut être traitée
-telle quelle, comme par exemple «\ .Cxx\ ». Comportement par défaut.
+telle quelle, comme par exemple « .Cxx ». Comportement par défaut.
 .TP
 .B "--lower-include "
 Convertir en minuscules les noms de fichiers associés à des directives
@@ -132,10 +132,14 @@ Présumer une application en mode console quand une cible exécutable ou une cib
 type inconnu est rencontrée.
 .TP
 .B --dll
-Présumer une bibliothèque quand une cible d'un type inconnu est rencontrée (c.-à-d.
-si
+Présumer une DLL quand une cible d'un type inconnu est rencontrée (c.-à-d. si
 .B winemaker
-ne peut déterminer s'il s'agit d'un exécutable ou d'une bibliothèque).
+ne peut déterminer s'il s'agit d'un exécutable, d'une DLL ou d'une bibliothèque statique).
+.TP
+.B --lib
+Présumer une bibliothèque statique quand une cible d'un type inconnu est rencontrée (c.-à-d. si
+.B winemaker
+ne peut déterminer s'il s'agit d'un exécutable, d'une DLL ou d'une bibliothèque statique).
 .TP
 .B --mfc
 Spécifier que les cibles utilisent les MFC. Dans ce cas,
@@ -147,7 +151,7 @@ et lie la cible avec la bibliothèque MFC.
 Spécifier que les cibles n'utilisent pas les MFC. Cette option empêche
 l'utilisation des bibliothèques MFC même si
 .B winemaker
-rencontre des fichiers «\ stdafx.cpp\ » ou «\ stdafx.h\ » qui activeraient
+rencontre des fichiers « stdafx.cpp » ou « stdafx.h » qui activeraient
 les MFC automatiquement en temps normal si ni --nomfc ni --mfc n'était
 spécifiée.
 .TP
@@ -189,7 +193,7 @@ demandera de confirmer la liste de cibles pour chaque répertoire, et ensuite
 de fournir des options spécifiques de répertoire et/ou de cible.
 .TP
 .BR --single-target " nom"
-Spécifier qu'il n'y a qu'une seule cible, appelée «\ nom\ ».
+Spécifier qu'il n'y a qu'une seule cible, appelée « nom ».
 .TP
 .B --generated-files
 Générer le Makefile. Comportement par défaut.
@@ -213,7 +217,7 @@ Recherche des fichiers sources dans le répertoire courant et ses
 sous-répertoires. Quand un fichier ou répertoire a un nom composé
 uniquement de majuscules, le renomme en minuscules. Ensuite, adapte tous
 ces fichiers sources pour une compilation avec Winelib, et génère des
-Makefiles. «\ -DSTRICT\ » spécifie que la macro STRICT doit
+Makefiles. « -DSTRICT » spécifie que la macro STRICT doit
 être définie lors de la compilation des sources.
 Finalement, un Makefile est créé.
 .PP
