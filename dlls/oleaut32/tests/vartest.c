@@ -57,8 +57,6 @@ static WCHAR sz12_true[32];
 #define CHECKPTR(func) p##func = (void*)GetProcAddress(hOleaut32, #func); \
   if (!p##func) { win_skip("function " # func " not available, not testing it\n"); return; }
 
-/* Have IRecordInfo data type? */
-static int HAVE_OLEAUT32_RECORD = 0;
 /* Have I8/UI8 data type? */
 static int HAVE_OLEAUT32_I8 = 0;
 
@@ -126,8 +124,6 @@ static void init(void)
   HAVE_OLEAUT32_I8 = HAVE_FUNC(VarI8FromI1);
   if (!HAVE_OLEAUT32_I8)
       skip("No support for I8 and UI8 data types\n");
-
-  HAVE_OLEAUT32_RECORD = HAVE_FUNC(SafeArraySetRecordInfo);
 
 #undef HAVE_FUNC
 }
@@ -404,8 +400,7 @@ static int IsValidVariantClearVT(VARTYPE vt, VARTYPE extraFlags)
        extraFlags == (VT_ARRAY|VT_BYREF)))
     ret = 1; /* ok */
 
-  if ((vt == VT_RECORD && !HAVE_OLEAUT32_RECORD) ||
-      ((vt == VT_I8 || vt == VT_UI8) && !HAVE_OLEAUT32_I8))
+  if (!HAVE_OLEAUT32_I8 && (vt == VT_I8 || vt == VT_UI8))
     ret = 0; /* Old versions of oleaut32 */
   return ret;
 }
@@ -2042,8 +2037,7 @@ static void test_VarNot(void)
                     hExpected = S_OK;
                 break;
             case VT_RECORD:
-                if (HAVE_OLEAUT32_RECORD)
-                    hExpected = DISP_E_TYPEMISMATCH;
+                hExpected = DISP_E_TYPEMISMATCH;
                 break;
             case VT_UNKNOWN: case VT_BSTR: case VT_DISPATCH: case VT_ERROR:
                 hExpected = DISP_E_TYPEMISMATCH;
