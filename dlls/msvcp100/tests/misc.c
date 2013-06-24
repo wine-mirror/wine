@@ -111,12 +111,21 @@ static BOOL init(void)
         SET(p__Container_base12__Getpfirst, "?_Getpfirst@_Container_base12@std@@QEBAPEAPEAU_Iterator_base12@2@XZ");
         SET(p__Container_base12__Swap_all, "?_Swap_all@_Container_base12@std@@QEAAXAEAU12@@Z");
     }else {
+#ifdef __arm__
+        SET(p__Container_base12_copy_ctor, "??0_Container_base12@std@@QAA@ABU01@@Z");
+        SET(p__Container_base12_ctor, "??0_Container_base12@std@@QAE@XZ");
+        SET(p__Container_base12__Orphan_all, "?_Orphan_all@_Container_base12@std@@QAAXXZ");
+        SET(p__Container_base12_dtor, "??1_Container_base12@std@@QAA@XZ");
+        SET(p__Container_base12__Getpfirst, "?_Getpfirst@_Container_base12@std@@QBAPAPAU_Iterator_base12@2@XZ");
+        SET(p__Container_base12__Swap_all, "?_Swap_all@_Container_base12@std@@QAAXAAU12@@Z");
+#else
         SET(p__Container_base12_copy_ctor, "??0_Container_base12@std@@QAE@ABU01@@Z");
         SET(p__Container_base12_ctor, "??0_Container_base12@std@@QAE@XZ");
         SET(p__Container_base12__Orphan_all, "?_Orphan_all@_Container_base12@std@@QAEXXZ");
         SET(p__Container_base12_dtor, "??1_Container_base12@std@@QAE@XZ");
         SET(p__Container_base12__Getpfirst, "?_Getpfirst@_Container_base12@std@@QBEPAPAU_Iterator_base12@2@XZ");
         SET(p__Container_base12__Swap_all, "?_Swap_all@_Container_base12@std@@QAEXAAU12@@Z");
+#endif /* __arm__ */
     }
 
     init_thiscall_thunk();
