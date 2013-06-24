@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2013-06-21 09:30-0700\n"
+"PO-Revision-Date: 2013-06-24 09:18-0700\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "Language: Chinese (PRC)\n"
@@ -11351,7 +11351,7 @@ msgstr "每一个 C&PU 各一张图"
 
 #: taskmgr.rc:76 taskmgr.rc:261
 msgid "&Show Kernel Times"
-msgstr "显示内核时间(&S)"
+msgstr "显示内核耗时(&S)"
 
 #: taskmgr.rc:80 taskmgr.rc:96 taskmgr.rc:123 winefile.rc:73
 msgid "Tile &Horizontally"
@@ -11491,11 +11491,11 @@ msgstr "系统缓存"
 
 #: taskmgr.rc:406
 msgid "Paged"
-msgstr "已分页"
+msgstr "可换页"
 
 #: taskmgr.rc:407
 msgid "Nonpaged"
-msgstr "未分页"
+msgstr "不可换页"
 
 #: taskmgr.rc:414
 msgid "CPU usage history"
@@ -11670,7 +11670,7 @@ msgstr "&CPU 负载率"
 
 #: taskmgr.rc:527
 msgid "CPU Tim&e"
-msgstr "CPU 时间(&T)"
+msgstr "CPU 耗时(&T)"
 
 #: taskmgr.rc:529
 msgid "&Memory Usage"
@@ -11718,11 +11718,11 @@ msgstr "虚拟内存大小(&V)"
 
 #: taskmgr.rc:551
 msgid "Pa&ged Pool"
-msgstr "已分页池(&G)"
+msgstr "可换页池(&G)"
 
 #: taskmgr.rc:553
 msgid "N&on-paged Pool"
-msgstr "未分页池(&O)"
+msgstr "不可换页池(&O)"
 
 #: taskmgr.rc:555
 msgid "Base P&riority"
@@ -11854,7 +11854,7 @@ msgstr "选择在“进程”标签页显示的列项"
 
 #: taskmgr.rc:217
 msgid "Displays kernel time in the performance graphs"
-msgstr "在性能图上显示内核时间"
+msgstr "在性能图上显示内核耗时"
 
 #: taskmgr.rc:219
 msgid "A single history graph shows total CPU usage"
@@ -11954,7 +11954,7 @@ msgstr "CPU"
 
 #: taskmgr.rc:275
 msgid "CPU Time"
-msgstr "CPU 时间"
+msgstr "CPU 耗时"
 
 #: taskmgr.rc:276
 msgid "Mem Usage"
@@ -11994,11 +11994,11 @@ msgstr "虚拟内存大小"
 
 #: taskmgr.rc:287
 msgid "Paged Pool"
-msgstr "已分页池"
+msgstr "可换页池"
 
 #: taskmgr.rc:288
 msgid "NP Pool"
-msgstr "未分页池"
+msgstr "不可换页池"
 
 #: taskmgr.rc:289
 msgid "Base Pri"
@@ -12087,7 +12087,7 @@ msgid ""
 "Do you want to remove the uninstall entry from the registry?"
 msgstr ""
 "卸载命令 '%s' 运行失败，可能是找不到可执行程序。\n"
-"您想把这项卸载命令从注册表中删除吗？"
+"您想把这项卸载条目从注册表中删除吗？"
 
 #: view.rc:33
 msgid "&Pan"
@@ -12144,8 +12144,8 @@ msgid ""
 "option) any later version."
 msgstr ""
 "本程序为自由软件，您可以遵照自由软件基金会出版的 GNU 较宽松通用公共许可证协议"
-"（LGPL）\n"
-"来对其进行添加、修改和重新发布。许可协议版本为2.1，您也可以选择采用更高版本。"
+"（LGPL）来对其进行添加、修改和重新发布。许可协议版本为2.1，您也可以选择采用更"
+"新的版本。"
 
 #: winecfg.rc:134
 msgid "Windows registration information"
