@@ -61,8 +61,6 @@ static WCHAR sz12_true[32];
 static int HAVE_OLEAUT32_RECORD = 0;
 /* Have I8/UI8 data type? */
 static int HAVE_OLEAUT32_I8 = 0;
-/* Is this an ancient version with support for only I2/I4/R4/R8/DATE? */
-static int IS_ANCIENT = 0;
 
 /* When comparing floating point values we cannot expect an exact match
  * because the rounding errors depend on the exact algorithm.
@@ -130,7 +128,6 @@ static void init(void)
       skip("No support for I8 and UI8 data types\n");
 
   HAVE_OLEAUT32_RECORD = HAVE_FUNC(SafeArraySetRecordInfo);
-  IS_ANCIENT = (!HAVE_FUNC(VarI1FromI2));
 
 #undef HAVE_FUNC
 }
@@ -470,8 +467,7 @@ static void test_VariantClear(void)
   V_VT(&v) = VT_UI4;
   V_UI4(&v) = ~0u;
   hres = VariantClear(&v);
-  ok((hres == S_OK && V_VT(&v) == VT_EMPTY) ||
-     (IS_ANCIENT && hres == DISP_E_BADVARTYPE && V_VT(&v) == VT_UI4),
+  ok((hres == S_OK && V_VT(&v) == VT_EMPTY),
      "VariantClear: Type set to %d, res %08x\n", V_VT(&v), hres);
   ok(V_UI4(&v) == ~0u, "VariantClear: Overwrote value\n");
 
@@ -479,7 +475,7 @@ static void test_VariantClear(void)
    * Also demonstrates that null pointers in 'v' are not dereferenced.
    * Individual variant tests should test VariantClear() with non-NULL values.
    */
-  for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]) && !IS_ANCIENT; i++)
+  for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]); i++)
   {
     VARTYPE vt;
 
@@ -589,7 +585,7 @@ static void test_VariantCopy(void)
    */
 
   /* vSrc == vDst */
-  for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]) && !IS_ANCIENT; i++)
+  for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]); i++)
   {
     for (vt = 0; vt <= VT_BSTR_BLOB; vt++)
     {
@@ -617,7 +613,7 @@ static void test_VariantCopy(void)
   memset(&vSrc, 0, sizeof(vSrc));
   V_VT(&vSrc) = VT_UI1;
 
-  for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]) && !IS_ANCIENT; i++)
+  for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]); i++)
   {
     for (vt = 0; vt <= VT_BSTR_BLOB; vt++)
     {
@@ -643,7 +639,7 @@ static void test_VariantCopy(void)
   }
 
   /* Test that VariantClear() checks vSrc for validity before copying */
-  for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]) && !IS_ANCIENT; i++)
+  for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]); i++)
   {
     for (vt = 0; vt <= VT_BSTR_BLOB; vt++)
     {
@@ -720,7 +716,7 @@ static void test_VariantCopyInd(void)
   memset(buffer, 0, sizeof(buffer));
 
   /* vSrc == vDst */
-  for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]) && !IS_ANCIENT; i++)
+  for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]); i++)
   {
     if (ExtraFlags[i] & VT_ARRAY)
       continue; /* Native crashes on NULL safearray */
@@ -771,7 +767,7 @@ static void test_VariantCopyInd(void)
   V_VT(&vSrc) = VT_UI1|VT_BYREF;
   V_BYREF(&vSrc) = &buffer;
 
-  for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]) && !IS_ANCIENT; i++)
+  for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]); i++)
   {
     for (vt = 0; vt <= VT_BSTR_BLOB; vt++)
     {
@@ -797,7 +793,7 @@ static void test_VariantCopyInd(void)
   }
 
   /* bad src */
-  for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]) && !IS_ANCIENT; i++)
+  for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]); i++)
   {
     if (ExtraFlags[i] & VT_ARRAY)
       continue; /* Native crashes on NULL safearray */
