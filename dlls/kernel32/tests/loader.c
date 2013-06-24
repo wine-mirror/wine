@@ -374,6 +374,7 @@ static void test_Loader(void)
         if (hlib)
         {
             MEMORY_BASIC_INFORMATION info;
+            void *ptr;
 
             ok( td[i].errors[0] == ERROR_SUCCESS, "%d: should have failed\n", i );
 
@@ -392,6 +393,15 @@ static void test_Loader(void)
             else
                 ok(info.Protect == PAGE_READONLY, "%d: %x != PAGE_READONLY\n", i, info.Protect);
             ok(info.Type == SEC_IMAGE, "%d: %x != SEC_IMAGE\n", i, info.Type);
+
+            SetLastError(0xdeadbeef);
+            ptr = VirtualAlloc(hlib, si.dwPageSize, MEM_COMMIT, info.Protect);
+            /* FIXME: Remove once Wine is fixed */
+            if (ptr) todo_wine
+            ok(!ptr, "%d: VirtualAlloc should fail\n", i);
+            else ok(!ptr, "%d: VirtualAlloc should fail\n", i);
+todo_wine
+            ok(GetLastError() == ERROR_ACCESS_DENIED, "%d: expected ERROR_ACCESS_DENIED, got %d\n", i, GetLastError());
 
             SetLastError(0xdeadbeef);
             size = VirtualQuery((char *)hlib + info.RegionSize, &info, sizeof(info));
@@ -471,6 +481,17 @@ static void test_Loader(void)
                     size = ALIGN_SIZE((ULONG_PTR)start, si.dwPageSize) - (ULONG_PTR)start;
                     ok(memcmp(start, filler, size), "%d: alignment should not be cleared\n", i);
                 }
+
+                SetLastError(0xdeadbeef);
+                ptr = VirtualAlloc((char *)hlib + section.VirtualAddress, si.dwPageSize, MEM_COMMIT, info.Protect);
+                /* FIXME: Remove once Wine is fixed */
+                if (ptr) todo_wine
+                ok(!ptr, "%d: VirtualAlloc should fail\n", i);
+                else ok(!ptr, "%d: VirtualAlloc should fail\n", i);
+todo_wine
+                ok(GetLastError() == ERROR_ACCESS_DENIED || GetLastError() == ERROR_INVALID_ADDRESS,
+                   "%d: expected ERROR_ACCESS_DENIED, got %d\n", i, GetLastError());
+
             }
 
             SetLastError(0xdeadbeef);
