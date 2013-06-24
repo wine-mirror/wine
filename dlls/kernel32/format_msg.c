@@ -127,7 +127,7 @@ static LPCWSTR format_insert( BOOL unicode_caller, int insert, LPCWSTR format,
                               DWORD flags, struct format_args *args,
                               LPWSTR *result )
 {
-    static const WCHAR fmt_lu[] = {'%','l','u',0};
+    static const WCHAR fmt_u[] = {'%','u',0};
     WCHAR *wstring = NULL, *p, fmt[256];
     ULONG_PTR arg;
     int size;
@@ -167,7 +167,7 @@ static LPCWSTR format_insert( BOOL unicode_caller, int insert, LPCWSTR format,
     {
         if (*format == '*')
         {
-            p += sprintfW( p, fmt_lu, get_arg( insert, flags, args ));
+            p += sprintfW( p, fmt_u, get_arg( insert, flags, args ));
             insert = -1;
             format++;
         }
@@ -180,7 +180,7 @@ static LPCWSTR format_insert( BOOL unicode_caller, int insert, LPCWSTR format,
         *p++ = *format++;
         if (*format == '*')
         {
-            p += sprintfW( p, fmt_lu, get_arg( insert, flags, args ));
+            p += sprintfW( p, fmt_u, get_arg( insert, flags, args ));
             insert = -1;
             format++;
         }
