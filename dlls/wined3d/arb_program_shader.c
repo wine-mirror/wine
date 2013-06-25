@@ -1630,8 +1630,8 @@ static void pshader_hw_cnd(const struct wined3d_shader_instruction *ins)
     shader_arb_get_dst_param(ins, dst, dst_name);
     shader_arb_get_src_param(ins, &ins->src[1], 1, src_name[1]);
 
-    /* The coissue flag changes the semantic of the cnd instruction in <= 1.3 shaders */
-    if (shader_version <= WINED3D_SHADER_VERSION(1, 3) && ins->coissue)
+    if (shader_version <= WINED3D_SHADER_VERSION(1, 3) && ins->coissue
+            && ins->dst->write_mask != WINED3DSP_WRITEMASK_3)
     {
         shader_addline(buffer, "MOV%s %s, %s;\n", shader_arb_get_modifier(ins), dst_name, src_name[1]);
     }

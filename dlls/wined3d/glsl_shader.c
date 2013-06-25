@@ -3029,14 +3029,11 @@ static void shader_glsl_cnd(const struct wined3d_shader_instruction *ins)
         shader_glsl_add_src_param(ins, &ins->src[1], write_mask, &src1_param);
         shader_glsl_add_src_param(ins, &ins->src[2], write_mask, &src2_param);
 
-        /* Fun: The D3DSI_COISSUE flag changes the semantic of the cnd instruction for < 1.4 shaders */
-        if (ins->coissue)
-        {
+        if (ins->coissue && ins->dst->write_mask != WINED3DSP_WRITEMASK_3)
             shader_addline(ins->ctx->buffer, "%s /* COISSUE! */);\n", src1_param.param_str);
-        } else {
+        else
             shader_addline(ins->ctx->buffer, "%s > 0.5 ? %s : %s);\n",
                     src0_param.param_str, src1_param.param_str, src2_param.param_str);
-        }
         return;
     }
 
