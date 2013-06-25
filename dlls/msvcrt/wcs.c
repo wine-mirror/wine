@@ -69,6 +69,14 @@ MSVCRT_wchar_t* CDECL MSVCRT__wcsdup( const MSVCRT_wchar_t* str )
   return ret;
 }
 
+INT CDECL MSVCRT__wcsicmp_l(const MSVCRT_wchar_t *str1, const MSVCRT_wchar_t *str2, MSVCRT__locale_t locale)
+{
+    if(!MSVCRT_CHECK_PMT(str1 != NULL) || !MSVCRT_CHECK_PMT(str2 != NULL))
+        return MSVCRT__NLSCMPERROR;
+
+    return strcmpiW(str1, str2);
+}
+
 /*********************************************************************
  *		_wcsicmp (MSVCRT.@)
  */
