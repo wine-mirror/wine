@@ -1985,7 +1985,7 @@ msgstr "Assinatura de Certificados"
 
 #: crypt32.rc:227
 msgid "Off-line CRL Signing"
-msgstr "Assinatura CRL Off-line"
+msgstr "Assinatura CRL Offline"
 
 #: crypt32.rc:228
 msgid "CRL Signing"
@@ -3505,7 +3505,7 @@ msgstr "Argumento ou chamada de procedimento inválida"
 
 #: jscript.rc:27
 msgid "Subscript out of range"
-msgstr "Subscript fora de alcance"
+msgstr "Índice fora do intervalo"
 
 #: jscript.rc:28
 msgid "Object required"
@@ -4373,7 +4373,7 @@ msgstr "Chamador não possui o Mutex.\n"
 
 #: winerror.mc:946
 msgid "Too many posts to semaphore.\n"
-msgstr "Demasiados posts ao semáforo.\n"
+msgstr "Muitas mensagens ao semáforo.\n"
 
 #: winerror.mc:951
 msgid "Read/WriteProcessMemory partially completed.\n"
@@ -4381,11 +4381,11 @@ msgstr "Read/WriteProcessMemory parcialmente completo.\n"
 
 #: winerror.mc:956
 msgid "The oplock wasn't granted.\n"
-msgstr "O oplock não foi garantido.\n"
+msgstr "O bloqueio não foi garantido.\n"
 
 #: winerror.mc:961
 msgid "Invalid oplock message received.\n"
-msgstr "Mensagem inválida de oplock recebida.\n"
+msgstr "Mensagem inválida de bloqueio recebida.\n"
 
 #: winerror.mc:966
 msgid "Message 0x%1 not found in file %2.\n"
@@ -4777,7 +4777,7 @@ msgstr "Memória do servidor insuficiente.\n"
 
 #: winerror.mc:1451
 msgid "Possible deadlock.\n"
-msgstr "Possível deadlock.\n"
+msgstr "Possível bloqueio.\n"
 
 #: winerror.mc:1456
 msgid "Incorrect alignment.\n"
@@ -9343,7 +9343,7 @@ msgstr ""
 "\n"
 "  +   Define um atributo.\n"
 "  -   Limpa um atributo.\n"
-"  R   Atributo de arquivo somente-leitura.\n"
+"  R   Atributo de arquivo somente leitura.\n"
 "  A   Atributo de arquivo.\n"
 "  S   Atributo de arquivo de sistema.\n"
 "  H   Atribute de arquivo oculto.\n"
@@ -9764,7 +9764,7 @@ msgstr ""
 "\"title\"      Especifica o título da janela da janela filha.\n"
 "/d directory Inicia o programa no diretório especificado.\n"
 "/b           Não criar um console novo para o programa.\n"
-"/i           Inicia o programa com variáveis de ambinete novas.\n"
+"/i           Inicia o programa com variáveis de ambiente novas.\n"
 "/min         Inicia o programa minimizado.\n"
 "/max         Inicia o programa maximizado.\n"
 "/low         Inicia o programa com prioridade baixa.\n"
@@ -10196,7 +10196,7 @@ msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"
 msgstr ""
-"Número mal-formado - deve ser decimal (12),\n"
+"Número malformado - deve ser decimal (12),\n"
 " hexadecimal (0x34) ou octal (056).\n"
 
 #: dxdiag.rc:27
@@ -11534,7 +11534,7 @@ msgstr "Editar Multi-frase"
 
 #: regedit.rc:134
 msgid "Contains commands for working with the whole registry"
-msgstr "Contém comandos para trabalhar com o Registro inteiro"
+msgstr "Contém comandos para trabalhar com o registro inteiro"
 
 #: regedit.rc:135
 msgid "Contains commands for editing values or keys"
