@@ -1142,6 +1142,7 @@ static void test_keyExchange_baseDSS(HCRYPTPROV hProv, const struct keyExchange_
         /* Import the public key and convert it into a shared key */
         result = CryptImportKey(hProv, pubKeyBuffer2, pubKeyLen2, privKey1, 0, &sessionKey1);
         ok((!result && GetLastError() ==  ERROR_INVALID_PARAMETER) ||
+            broken(!result && GetLastError() ==  NTE_BAD_DATA) || /* Vista.64 */
             broken(!result && GetLastError() ==  NTE_BAD_TYPE) || /* Win2K-W2K8, Win7.64 */
             broken(!result && GetLastError() ==  NTE_BAD_ALGID) || /* W7SP164 (32 bit dssenh) */
             broken(result), /* WinNT4 */
