@@ -33,7 +33,14 @@
 #define DB_E_BADCOMPAREOP                   0x80040e27
 #define DB_E_BADSTATUSVALUE                 0x80040e28
 
-#define DB_E_CONCURRENCYVIOLATION            0x80040e38
+#define DB_E_CONCURRENCYVIOLATION           0x80040e38
+
+#define DB_E_TABLEINUSE                     0x80040e40
+#define DB_E_NOLOCALE                       0x80040e41
+#define DB_E_BADRECORDNUM                   0x80040e42
+#define DB_E_BOOKMARKSKIPPED                0x80040e43
+#define DB_E_BADPROPERTYVALUE               0x80040e44
+#define DB_E_INVALID                        0x80040e45
 
 #define DB_E_DATAOVERFLOW                   0x80040e57
 
