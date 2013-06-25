@@ -357,6 +357,7 @@ BOOL WCUSER_ValidateFont(const struct inner_data* data, const LOGFONTW* lf)
 {
     return (lf->lfPitchAndFamily & 3) == FIXED_PITCH &&
         /* (lf->lfPitchAndFamily & 0xF0) == FF_MODERN && */
+        lf->lfFaceName[0] != '@' &&
         (lf->lfCharSet == DEFAULT_CHARSET || lf->lfCharSet == g_uiDefaultCharset);
 }
 
