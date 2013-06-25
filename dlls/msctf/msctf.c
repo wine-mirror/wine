@@ -651,3 +651,11 @@ HRESULT WINAPI TF_CreateLangBarMgr(ITfLangBarMgr **pppbm)
     TRACE("\n");
     return LangBarMgr_Constructor(NULL,(IUnknown**)pppbm);
 }
+
+HRESULT WINAPI TF_CreateLangBarItemMgr(ITfLangBarItemMgr **pplbim)
+{
+    FIXME("stub %p\n", pplbim);
+    *pplbim = NULL;
+
+    return E_NOTIMPL;
+}
