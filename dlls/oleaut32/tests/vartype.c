@@ -63,8 +63,7 @@ static HMODULE hOleaut32;
 #define HAVE_OLEAUT32_I8      HAVE_FUNC(VarI8FromI1)
 /* Have proper locale conversions? */
 #define HAVE_OLEAUT32_LOCALES (HAVE_FUNC(GetVarConversionLocaleSetting) && HAVE_OLEAUT32_I8)
-/* Is this an ancient version with support for only I2/I4/R4/R8/DATE? */
-#define IS_ANCIENT (!HAVE_FUNC(VarI1FromI2))
+
 /* Is vt a type unavailable to ancient versions? */
 #define IS_MODERN_VTYPE(vt) (vt==VT_VARIANT||vt==VT_DECIMAL|| \
     vt==VT_I1||vt==VT_UI2||vt==VT_UI4||vt == VT_INT||vt == VT_UINT)
@@ -160,16 +159,11 @@ static HMODULE hOleaut32;
   VariantInit(&vDst); \
   V_VT(&vSrc) = vt; \
   (val(&vSrc)) = in; \
-  if (!IS_ANCIENT) { \
-    TYPETEST(VT_I1, V_I1(&vDst), fs); \
-    TYPETEST(VT_UI2, V_UI2(&vDst), fs); \
-    TYPETEST(VT_UI4, V_UI4(&vDst), fs); \
-    TYPETEST(VT_INT, V_INT(&vDst), fs); \
-    TYPETEST(VT_UINT, V_UINT(&vDst), fs); \
-  } else {  \
-    BADVAR(VT_I1); BADVAR(VT_UI2); BADVAR(VT_UI4); \
-    BADVAR(VT_INT); BADVAR(VT_UINT); \
-  } \
+  TYPETEST(VT_I1, V_I1(&vDst), fs); \
+  TYPETEST(VT_UI2, V_UI2(&vDst), fs); \
+  TYPETEST(VT_UI4, V_UI4(&vDst), fs); \
+  TYPETEST(VT_INT, V_INT(&vDst), fs); \
+  TYPETEST(VT_UINT, V_UINT(&vDst), fs); \
   TYPETEST(VT_UI1, V_UI1(&vDst), fs); \
   TYPETEST(VT_I2, V_I2(&vDst), fs); \
   TYPETEST(VT_I4, V_I4(&vDst), fs); \
@@ -187,9 +181,7 @@ static HMODULE hOleaut32;
   VariantInit(&vDst); \
   V_VT(&vSrc) = vt; \
   (val(&vSrc)) = in; \
-  if (!IS_ANCIENT) { \
-    TYPETEST(vtneg, valneg(&vDst), fs); \
-  }
+  TYPETEST(vtneg, valneg(&vDst), fs);
 
 #define INITIAL_TYPETESTI8(vt, val) \
   VariantInit(&vSrc); \
@@ -248,7 +240,7 @@ static HMODULE hOleaut32;
   MISMATCH(VT_DISPATCH); \
   MISMATCH(VT_ERROR); \
   MISMATCH(VT_UNKNOWN); \
-  if (!IS_ANCIENT) { MISMATCH(VT_VARIANT); } else { BADVAR(VT_VARIANT); } \
+  MISMATCH(VT_VARIANT); \
   if (HAVE_OLEAUT32_RECORD) \
   { \
     MISMATCH(VT_RECORD); \
@@ -842,10 +834,7 @@ static void test_VarI1FromStr(void)
 
 static void test_VarI1Copy(void)
 {
-  if (!IS_ANCIENT)
-  {
-      COPYTEST(1, VT_I1, V_I1(&vSrc), V_I1(&vDst), V_I1REF(&vSrc), V_I1REF(&vDst), "%d");
-  }
+  COPYTEST(1, VT_I1, V_I1(&vSrc), V_I1(&vDst), V_I1REF(&vSrc), V_I1REF(&vDst), "%d");
 }
 
 static void test_VarI1ChangeTypeEx(void)
@@ -856,12 +845,9 @@ static void test_VarI1ChangeTypeEx(void)
 
   in = 1;
 
-  if (!IS_ANCIENT)
-  {
-      INITIAL_TYPETEST(VT_I1, V_I1, "%d");
-      COMMON_TYPETEST;
-      NEGATIVE_TYPETEST(VT_I1, V_I1, "%d", VT_UI1, V_UI1);
-  }
+  INITIAL_TYPETEST(VT_I1, V_I1, "%d");
+  COMMON_TYPETEST;
+  NEGATIVE_TYPETEST(VT_I1, V_I1, "%d", VT_UI1, V_UI1);
 }
 
 #undef CONV_TYPE
@@ -1615,10 +1601,7 @@ static void test_VarUI2FromStr(void)
 
 static void test_VarUI2Copy(void)
 {
-  if (!IS_ANCIENT)
-  {
-      COPYTEST(1, VT_UI2, V_UI2(&vSrc), V_UI2(&vDst), V_UI2REF(&vSrc), V_UI2REF(&vDst), "%d");
-  }
+  COPYTEST(1, VT_UI2, V_UI2(&vSrc), V_UI2(&vDst), V_UI2REF(&vSrc), V_UI2REF(&vDst), "%d");
 }
 
 static void test_VarUI2ChangeTypeEx(void)
@@ -1629,12 +1612,9 @@ static void test_VarUI2ChangeTypeEx(void)
 
   in = 1;
 
-  if (!IS_ANCIENT)
-  {
-    INITIAL_TYPETEST(VT_UI2, V_UI2, "%d");
-    COMMON_TYPETEST;
-    NEGATIVE_TYPETEST(VT_UI2, V_UI2, "%d", VT_I2, V_I2);
-  }
+  INITIAL_TYPETEST(VT_UI2, V_UI2, "%d");
+  COMMON_TYPETEST;
+  NEGATIVE_TYPETEST(VT_UI2, V_UI2, "%d", VT_I2, V_I2);
 }
 
 /*
@@ -2103,10 +2083,7 @@ static void test_VarUI4FromStr(void)
 
 static void test_VarUI4Copy(void)
 {
-  if (!IS_ANCIENT)
-  {
-      COPYTEST(1u, VT_UI4, V_UI4(&vSrc), V_UI4(&vDst), V_UI4REF(&vSrc), V_UI4REF(&vDst), "%u");
-  }
+  COPYTEST(1u, VT_UI4, V_UI4(&vSrc), V_UI4(&vDst), V_UI4REF(&vSrc), V_UI4REF(&vDst), "%u");
 }
 
 static void test_VarUI4ChangeTypeEx(void)
@@ -2117,12 +2094,9 @@ static void test_VarUI4ChangeTypeEx(void)
 
   in = 1;
 
-  if (!IS_ANCIENT)
-  {
-    INITIAL_TYPETEST(VT_UI4, V_UI4, "%u");
-    COMMON_TYPETEST;
-    NEGATIVE_TYPETEST(VT_UI4, V_UI4, "%u", VT_I4, V_I4);
-  }
+  INITIAL_TYPETEST(VT_UI4, V_UI4, "%u");
+  COMMON_TYPETEST;
+  NEGATIVE_TYPETEST(VT_UI4, V_UI4, "%u", VT_I4, V_I4);
 }
 
 /*
@@ -4870,12 +4844,9 @@ static void test_VarBoolChangeTypeEx(void)
   V_VT(&vSrc) = VT_BOOL;
   V_BOOL(&vSrc) = 1;
 
-  if (!IS_ANCIENT)
-  {
-      BOOL_STR(VARIANT_ALPHABOOL, szTrue);
-      V_BOOL(&vSrc) = 0;
-      BOOL_STR(VARIANT_ALPHABOOL, szFalse);
-  }
+  BOOL_STR(VARIANT_ALPHABOOL, szTrue);
+  V_BOOL(&vSrc) = 0;
+  BOOL_STR(VARIANT_ALPHABOOL, szFalse);
 
   if (HAVE_OLEAUT32_LOCALES)
   {
@@ -5762,8 +5733,6 @@ static void test_IUnknownChangeTypeEx(void)
       else if (vt  >= VT_I2 && vt <= VT_UINT && vt != (VARTYPE)15)
         hExpected = DISP_E_TYPEMISMATCH;
     }
-    if (IS_ANCIENT && IS_MODERN_VTYPE(vt))
-        hExpected = DISP_E_BADVARTYPE;
 
     hres = VariantChangeTypeEx(&vDst, &vSrc, lcid, 0, vt);
     ok(hres == hExpected,
@@ -5915,8 +5884,6 @@ static void test_ErrorChangeTypeEx(void)
       else if (vt <= VT_UINT && vt != (VARTYPE)15)
         hExpected = DISP_E_TYPEMISMATCH;
     }
-    if (IS_ANCIENT && IS_MODERN_VTYPE(vt))
-        hExpected = DISP_E_BADVARTYPE;
 
     ok(hres == hExpected,
      "change err: vt %d expected 0x%08x, got 0x%08x\n", vt, hExpected, hres);
@@ -5958,9 +5925,6 @@ static void test_EmptyChangeTypeEx(void)
     }
     else if (vt <= VT_UINT && vt != (VARTYPE)15)
       hExpected = S_OK;
-
-    if (IS_ANCIENT && IS_MODERN_VTYPE(vt))
-        hExpected = DISP_E_BADVARTYPE;
 
     hres = VariantChangeTypeEx(&vDst, &vSrc, lcid, 0, vt);
 
@@ -6008,9 +5972,6 @@ static void test_NullChangeTypeEx(void)
               vt == VT_UNKNOWN || vt == VT_ERROR ||
               (vt <= VT_UINT && vt != (VARTYPE)15))
       hExpected = DISP_E_TYPEMISMATCH;
-
-    if (IS_ANCIENT && IS_MODERN_VTYPE(vt))
-        hExpected = DISP_E_BADVARTYPE;
 
     hres = VariantChangeTypeEx(&vDst, &vSrc, lcid, 0, vt);
 
