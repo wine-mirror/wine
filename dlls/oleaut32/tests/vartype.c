@@ -53,8 +53,6 @@ static HMODULE hOleaut32;
 /* Is a given function exported from oleaut32? */
 #define HAVE_FUNC(func) ((void*)GetProcAddress(hOleaut32, #func) != NULL)
 
-/* Have CY data type? */
-#define HAVE_OLEAUT32_CY      HAVE_FUNC(VarCyAdd)
 /* Have I8/UI8 data type? */
 #define HAVE_OLEAUT32_I8      HAVE_FUNC(VarI8FromI1)
 /* Have proper locale conversions? */
@@ -201,13 +199,10 @@ static HMODULE hOleaut32;
      (V_BOOL(&vDst) == VARIANT_TRUE || (V_VT(&vSrc) == VT_BOOL && V_BOOL(&vDst) == 1)), \
      "->VT_BOOL hres=0x%X, type=%d (should be VT_BOOL), value %d (should be VARIANT_TRUE)\n", \
      hres, V_VT(&vDst), V_BOOL(&vDst)); \
-  if (HAVE_OLEAUT32_CY) \
-  { \
-    hres = VariantChangeTypeEx(&vDst, &vSrc, 0, 0, VT_CY); \
-    ok(hres == S_OK && V_VT(&vDst) == VT_CY && V_CY(&vDst).int64 == CY_MULTIPLIER, \
-       "->VT_CY hres=0x%X, type=%d (should be VT_CY), value (%08x,%08x) (should be CY_MULTIPLIER)\n", \
-       hres, V_VT(&vDst), S(V_CY(&vDst)).Hi, S(V_CY(&vDst)).Lo); \
-  } \
+  hres = VariantChangeTypeEx(&vDst, &vSrc, 0, 0, VT_CY); \
+  ok(hres == S_OK && V_VT(&vDst) == VT_CY && V_CY(&vDst).int64 == CY_MULTIPLIER, \
+     "->VT_CY hres=0x%X, type=%d (should be VT_CY), value (%08x,%08x) (should be CY_MULTIPLIER)\n", \
+     hres, V_VT(&vDst), S(V_CY(&vDst)).Hi, S(V_CY(&vDst)).Lo); \
   if (V_VT(&vSrc) != VT_DATE) \
   { \
     hres = VariantChangeTypeEx(&vDst, &vSrc, 0, 0, VT_BSTR); \
