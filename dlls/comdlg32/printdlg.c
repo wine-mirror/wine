@@ -3994,8 +3994,11 @@ static UINT_PTR CALLBACK pdlgex_hook_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM
         PRINTDLGW *pd = (PRINTDLGW *)lp;
         struct callback_data *cb = (struct callback_data *)pd->lCustData;
 
-        cb->callback->lpVtbl->SelectionChange(cb->callback);
-        cb->callback->lpVtbl->InitDone(cb->callback);
+        if (cb->callback)
+        {
+            cb->callback->lpVtbl->SelectionChange(cb->callback);
+            cb->callback->lpVtbl->InitDone(cb->callback);
+        }
     }
     else
     {
