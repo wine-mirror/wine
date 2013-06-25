@@ -361,6 +361,11 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         case DBTYPE_BSTR:        hr = VarR8FromStr(*(WCHAR**)src, LOCALE_USER_DEFAULT, 0, d); break;
         case DBTYPE_BOOL:        hr = VarR8FromBool(*(VARIANT_BOOL*)src, d);     break;
         case DBTYPE_DECIMAL:     hr = VarR8FromDec((DECIMAL*)src, d);            break;
+        case DBTYPE_VARIANT:
+            VariantInit(&tmp);
+            if ((hr = VariantChangeType(&tmp, (VARIANT*)src, 0, VT_R8)) == S_OK)
+                *d = V_R8(&tmp);
+            break;
         default: FIXME("Unimplemented conversion %04x -> R8\n", src_type); return E_NOTIMPL;
         }
         break;
