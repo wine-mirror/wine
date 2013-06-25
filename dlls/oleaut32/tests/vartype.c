@@ -53,8 +53,6 @@ static HMODULE hOleaut32;
 /* Is a given function exported from oleaut32? */
 #define HAVE_FUNC(func) ((void*)GetProcAddress(hOleaut32, #func) != NULL)
 
-/* Have IRecordInfo data type? */
-#define HAVE_OLEAUT32_RECORD  HAVE_FUNC(SafeArraySetRecordInfo)
 /* Have DECIMAL data type with new error checking? */
 #define HAVE_OLEAUT32_DECIMAL HAVE_FUNC(VarDecAdd)
 /* Have CY data type? */
@@ -241,10 +239,7 @@ static HMODULE hOleaut32;
   MISMATCH(VT_ERROR); \
   MISMATCH(VT_UNKNOWN); \
   MISMATCH(VT_VARIANT); \
-  if (HAVE_OLEAUT32_RECORD) \
-  { \
-    MISMATCH(VT_RECORD); \
-  } \
+  MISMATCH(VT_RECORD); \
   BADVAR(VT_VOID); \
   BADVAR(VT_HRESULT); \
   BADVAR(VT_SAFEARRAY); \
@@ -5727,8 +5722,7 @@ static void test_IUnknownChangeTypeEx(void)
       }
       else if (vt == VT_RECORD)
       {
-        if (HAVE_OLEAUT32_RECORD)
-          hExpected = DISP_E_TYPEMISMATCH;
+        hExpected = DISP_E_TYPEMISMATCH;
       }
       else if (vt  >= VT_I2 && vt <= VT_UINT && vt != (VARTYPE)15)
         hExpected = DISP_E_TYPEMISMATCH;
@@ -5878,8 +5872,7 @@ static void test_ErrorChangeTypeEx(void)
       }
       else if (vt == VT_RECORD)
       {
-        if (HAVE_OLEAUT32_RECORD)
-          hExpected = DISP_E_TYPEMISMATCH;
+        hExpected = DISP_E_TYPEMISMATCH;
       }
       else if (vt <= VT_UINT && vt != (VARTYPE)15)
         hExpected = DISP_E_TYPEMISMATCH;
@@ -5915,8 +5908,7 @@ static void test_EmptyChangeTypeEx(void)
     }
     else if (vt == VT_RECORD)
     {
-      if (HAVE_OLEAUT32_RECORD)
-        hExpected = DISP_E_TYPEMISMATCH;
+      hExpected = DISP_E_TYPEMISMATCH;
     }
     else if (vt == VT_VARIANT || vt == VT_DISPATCH ||
               vt == VT_UNKNOWN || vt == VT_ERROR)
@@ -5961,8 +5953,7 @@ static void test_NullChangeTypeEx(void)
     }
     else if (vt == VT_RECORD)
     {
-      if (HAVE_OLEAUT32_RECORD)
-        hExpected = DISP_E_TYPEMISMATCH;
+      hExpected = DISP_E_TYPEMISMATCH;
     }
     else if (vt == VT_NULL)
     {
