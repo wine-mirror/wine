@@ -53,8 +53,6 @@ static HMODULE hOleaut32;
 /* Is a given function exported from oleaut32? */
 #define HAVE_FUNC(func) ((void*)GetProcAddress(hOleaut32, #func) != NULL)
 
-/* Have DECIMAL data type with new error checking? */
-#define HAVE_OLEAUT32_DECIMAL HAVE_FUNC(VarDecAdd)
 /* Have CY data type? */
 #define HAVE_OLEAUT32_CY      HAVE_FUNC(VarCyAdd)
 /* Have I8/UI8 data type? */
@@ -110,13 +108,10 @@ static HMODULE hOleaut32;
 #define CONVERT_DEC64(func,scl,sgn,hi,mid,lo) SETDEC64(in,scl,sgn,hi,mid,lo); hres = p##func(&in, &out)
 
 #define CONVERT_BADDEC(func) \
-  if (HAVE_OLEAUT32_DECIMAL) \
-  { \
-    CONVERT_DEC(func,29,0,0,0);   EXPECT_INVALID; \
-    CONVERT_DEC(func,0,0x1,0,0);  EXPECT_INVALID; \
-    CONVERT_DEC(func,0,0x40,0,0); EXPECT_INVALID; \
-    CONVERT_DEC(func,0,0x7f,0,0); EXPECT_INVALID; \
-  }
+  CONVERT_DEC(func,29,0,0,0);   EXPECT_INVALID; \
+  CONVERT_DEC(func,0,0x1,0,0);  EXPECT_INVALID; \
+  CONVERT_DEC(func,0,0x40,0,0); EXPECT_INVALID; \
+  CONVERT_DEC(func,0,0x7f,0,0); EXPECT_INVALID;
 
 #define CONVERT_STR(func,str,flags) \
   SetLastError(0); \
@@ -221,16 +216,13 @@ static HMODULE hOleaut32;
        "->VT_BSTR hres=0x%X, type=%d (should be VT_BSTR), *bstr='%c'\n", \
        hres, V_VT(&vDst), V_BSTR(&vDst) ? *V_BSTR(&vDst) : '?'); \
   } \
-  if (HAVE_OLEAUT32_DECIMAL) \
-  { \
-    hres = VariantChangeTypeEx(&vDst, &vSrc, 0, 0, VT_DECIMAL); \
-    ok(hres == S_OK && V_VT(&vDst) == VT_DECIMAL && \
-       S(U(V_DECIMAL(&vDst))).sign == 0 && S(U(V_DECIMAL(&vDst))).scale == 0 && \
-       V_DECIMAL(&vDst).Hi32 == 0 && U1(V_DECIMAL(&vDst)).Lo64 == (ULONGLONG)in, \
-       "->VT_DECIMAL hres=0x%X, type=%d (should be VT_DECIMAL), sign=%d, scale=%d, hi=%u, lo=(%8x %8x),\n", \
-       hres, V_VT(&vDst), S(U(V_DECIMAL(&vDst))).sign, S(U(V_DECIMAL(&vDst))).scale, \
-       V_DECIMAL(&vDst).Hi32, S1(U1(V_DECIMAL(&vDst))).Mid32, S1(U1(V_DECIMAL(&vDst))).Lo32); \
-  } \
+  hres = VariantChangeTypeEx(&vDst, &vSrc, 0, 0, VT_DECIMAL); \
+  ok(hres == S_OK && V_VT(&vDst) == VT_DECIMAL && \
+     S(U(V_DECIMAL(&vDst))).sign == 0 && S(U(V_DECIMAL(&vDst))).scale == 0 && \
+     V_DECIMAL(&vDst).Hi32 == 0 && U1(V_DECIMAL(&vDst)).Lo64 == (ULONGLONG)in, \
+     "->VT_DECIMAL hres=0x%X, type=%d (should be VT_DECIMAL), sign=%d, scale=%d, hi=%u, lo=(%8x %8x),\n", \
+     hres, V_VT(&vDst), S(U(V_DECIMAL(&vDst))).sign, S(U(V_DECIMAL(&vDst))).scale, \
+     V_DECIMAL(&vDst).Hi32, S1(U1(V_DECIMAL(&vDst))).Mid32, S1(U1(V_DECIMAL(&vDst))).Lo32); \
   hres = VariantChangeTypeEx(&vDst, &vSrc, 0, 0, VT_EMPTY); \
   ok(hres == S_OK && V_VT(&vDst) == VT_EMPTY, "->VT_EMPTY hres=0x%X, type=%d (should be VT_EMPTY)\n", hres, V_VT(&vDst)); \
   hres = VariantChangeTypeEx(&vDst, &vSrc, 0, 0, VT_NULL); \
@@ -4705,14 +4697,10 @@ static void test_VarBoolFromDec(void)
   CHECKPTR(VarBoolFromDec);
   CONVERT_BADDEC(VarBoolFromDec);
 
-  if (HAVE_OLEAUT32_DECIMAL)
-  {
-    /* Early versions of oleaut32 don't catch these errors */
-    CONVERT_DEC(VarBoolFromDec,29,0,0,0);   EXPECT_INVALID;
-    CONVERT_DEC(VarBoolFromDec,0,0x1,0,0);  EXPECT_INVALID;
-    CONVERT_DEC(VarBoolFromDec,0,0x40,0,0); EXPECT_INVALID;
-    CONVERT_DEC(VarBoolFromDec,0,0x7f,0,0); EXPECT_INVALID;
-  }
+  CONVERT_DEC(VarBoolFromDec,29,0,0,0);   EXPECT_INVALID;
+  CONVERT_DEC(VarBoolFromDec,0,0x1,0,0);  EXPECT_INVALID;
+  CONVERT_DEC(VarBoolFromDec,0,0x40,0,0); EXPECT_INVALID;
+  CONVERT_DEC(VarBoolFromDec,0,0x7f,0,0); EXPECT_INVALID;
 
   CONVERT_DEC(VarBoolFromDec,0,0x80,0,1); EXPECT(VARIANT_TRUE);
   CONVERT_DEC(VarBoolFromDec,0,0,0,0);    EXPECT(VARIANT_FALSE);
