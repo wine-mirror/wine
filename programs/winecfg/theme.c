@@ -1106,7 +1106,7 @@ static void on_select_font(HWND hDlg)
     cf.lStructSize = sizeof(CHOOSEFONTW);
     cf.hwndOwner = hDlg;
     cf.lpLogFont = &(metrics[index].lf);
-    cf.Flags = CF_SCREENFONTS | CF_INITTOLOGFONTSTRUCT | CF_NOSCRIPTSEL;
+    cf.Flags = CF_SCREENFONTS | CF_INITTOLOGFONTSTRUCT | CF_NOSCRIPTSEL | CF_NOVERTFONTS;
 
     ChooseFontW(&cf);
 }
