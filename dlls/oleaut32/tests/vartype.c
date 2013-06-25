@@ -50,13 +50,10 @@ static HMODULE hOleaut32;
   if (!p##func) { \
     win_skip("function " # func " not available, not testing it\n"); return; }
 
-/* Is a given function exported from oleaut32? */
-#define HAVE_FUNC(func) ((void*)GetProcAddress(hOleaut32, #func) != NULL)
-
-/* Have I8/UI8 data type? */
-#define HAVE_OLEAUT32_I8      HAVE_FUNC(VarI8FromI1)
-/* Have proper locale conversions? */
-#define HAVE_OLEAUT32_LOCALES (HAVE_FUNC(GetVarConversionLocaleSetting) && HAVE_OLEAUT32_I8)
+/* Has I8/UI8 data type? */
+static BOOL has_i8;
+/* Has proper locale conversions? */
+static BOOL has_locales;
 
 /* Is vt a type unavailable to ancient versions? */
 #define IS_MODERN_VTYPE(vt) (vt==VT_VARIANT||vt==VT_DECIMAL|| \
@@ -161,7 +158,7 @@ static HMODULE hOleaut32;
   TYPETEST(VT_R4, V_R4(&vDst), fs); \
   TYPETEST(VT_R8, V_R8(&vDst), fs); \
   TYPETEST(VT_DATE, V_DATE(&vDst), fs); \
-  if (HAVE_OLEAUT32_I8) \
+  if (has_i8) \
   { \
     TYPETEST(VT_I8, V_I8(&vDst), fs); \
     TYPETEST(VT_UI8, V_UI8(&vDst), fs); \
@@ -2314,7 +2311,7 @@ static void test_VarI8Copy(void)
   VARIANTARG vSrc, vDst;
   LONGLONG in = 1;
 
-  if (!HAVE_OLEAUT32_I8)
+  if (!has_i8)
   {
     win_skip("I8 and UI8 data types are not available\n");
     return;
@@ -2345,7 +2342,7 @@ static void test_VarI8ChangeTypeEx(void)
   LONG64 in;
   VARIANTARG vSrc, vDst;
 
-  if (!HAVE_OLEAUT32_I8)
+  if (!has_i8)
   {
     win_skip("I8 and UI8 data types are not available\n");
     return;
@@ -2583,7 +2580,7 @@ static void test_VarUI8Copy(void)
   VARIANTARG vSrc, vDst;
   ULONGLONG in = 1;
 
-  if (!HAVE_OLEAUT32_I8)
+  if (!has_i8)
   {
     win_skip("I8 and UI8 data types are not available\n");
     return;
@@ -2614,7 +2611,7 @@ static void test_VarUI8ChangeTypeEx(void)
   ULONG64 in;
   VARIANTARG vSrc, vDst;
 
-  if (!HAVE_OLEAUT32_I8)
+  if (!has_i8)
   {
     win_skip("I8 and UI8 data types are not available\n");
     return;
@@ -3474,7 +3471,7 @@ static void test_VarDateChangeTypeEx(void)
   VariantClear(&vDst);
 
   lcid = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
-  if (HAVE_OLEAUT32_LOCALES)
+  if (has_locales)
   {
     hres = VariantChangeTypeEx(&vDst, &vSrc, lcid, VARIANT_NOUSEROVERRIDE|VARIANT_USE_NLS, VT_BSTR);
     ok(hres == S_OK && V_VT(&vDst) == VT_BSTR && V_BSTR(&vDst) && !lstrcmpW(V_BSTR(&vDst), sz25570Nls), 
@@ -4757,7 +4754,7 @@ static void test_VarBoolFromStr(void)
   /* And is still not case sensitive */
   CONVERT_STR(VarBoolFromStr,"False",0); EXPECT(VARIANT_FALSE);
 
-  if (HAVE_OLEAUT32_LOCALES)
+  if (has_locales)
   {
     /* French is rejected without VARIANT_LOCALBOOL */
     CONVERT_STR(VarBoolFromStr,"faux",0); EXPECT_MISMATCH;
@@ -4777,7 +4774,7 @@ static void test_VarBoolFromStr(void)
   CONVERT_STR(VarBoolFromStr,"-1",0); EXPECT(VARIANT_TRUE);
   CONVERT_STR(VarBoolFromStr,"+1",0); EXPECT(VARIANT_TRUE);
 
-  if (HAVE_OLEAUT32_LOCALES)
+  if (has_locales)
   {
     /* Numeric strings are read as floating point numbers. The line below fails
      * because '.' is not a valid decimal separator for Polish numbers */
@@ -4826,7 +4823,7 @@ static void test_VarBoolChangeTypeEx(void)
   V_BOOL(&vSrc) = 0;
   BOOL_STR(VARIANT_ALPHABOOL, szFalse);
 
-  if (HAVE_OLEAUT32_LOCALES)
+  if (has_locales)
   {
     lcid = MAKELCID(MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT), SORT_DEFAULT);
 
@@ -5700,7 +5697,7 @@ static void test_IUnknownChangeTypeEx(void)
     {
       if (vt == VT_I8 || vt == VT_UI8)
       {
-        if (HAVE_OLEAUT32_I8)
+        if (has_i8)
           hExpected = DISP_E_TYPEMISMATCH;
       }
       else if (vt == VT_RECORD)
@@ -5850,7 +5847,7 @@ static void test_ErrorChangeTypeEx(void)
     {
       if (vt == VT_I8 || vt == VT_UI8)
       {
-        if (HAVE_OLEAUT32_I8)
+        if (has_i8)
           hExpected = DISP_E_TYPEMISMATCH;
       }
       else if (vt == VT_RECORD)
@@ -5886,7 +5883,7 @@ static void test_EmptyChangeTypeEx(void)
 
     if (vt == VT_I8 || vt == VT_UI8)
     {
-      if (HAVE_OLEAUT32_I8)
+      if (has_i8)
         hExpected = S_OK;
     }
     else if (vt == VT_RECORD)
@@ -5931,7 +5928,7 @@ static void test_NullChangeTypeEx(void)
 
     if (vt == VT_I8 || vt == VT_UI8)
     {
-      if (HAVE_OLEAUT32_I8)
+      if (has_i8)
         hExpected = DISP_E_TYPEMISMATCH;
     }
     else if (vt == VT_RECORD)
@@ -6090,6 +6087,9 @@ static void test_bstr_cache(void)
 START_TEST(vartype)
 {
   hOleaut32 = GetModuleHandleA("oleaut32.dll");
+
+  has_i8 = GetProcAddress(hOleaut32, "VarI8FromI1") != NULL;
+  has_locales = has_i8 && GetProcAddress(hOleaut32, "GetVarConversionLocaleSetting") != NULL;
 
   trace("LCIDs: System=0x%08x, User=0x%08x\n", GetSystemDefaultLCID(),
         GetUserDefaultLCID());
