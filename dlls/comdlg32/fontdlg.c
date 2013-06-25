@@ -221,7 +221,7 @@ BOOL WINAPI ChooseFontW(LPCHOOSEFONTW lpChFont)
     if (TRACE_ON(commdlg))
         _dump_cf_flags(lpChFont->Flags);
 
-    if (lpChFont->Flags & (CF_SELECTSCRIPT | CF_NOVERTFONTS ))
+    if (lpChFont->Flags & CF_SELECTSCRIPT)
         FIXME(": unimplemented flag (ignored)\n");
 
     return DialogBoxIndirectParamW(COMDLG32_hInstance, template,
@@ -274,7 +274,7 @@ BOOL WINAPI ChooseFontA(LPCHOOSEFONTA lpChFont)
     }
     if (TRACE_ON(commdlg))
         _dump_cf_flags(lpChFont->Flags);
-    if (lpChFont->Flags & (CF_SELECTSCRIPT | CF_NOVERTFONTS ))
+    if (lpChFont->Flags & CF_SELECTSCRIPT)
         FIXME(": unimplemented flag (ignored)\n");
 
     return DialogBoxIndirectParamA(COMDLG32_hInstance, template,
@@ -324,6 +324,9 @@ static INT AddFontFamily(const ENUMLOGFONTEXW *lpElfex, const NEWTEXTMETRICEXW *
             return 1;
     if (lpcf->Flags & CF_TTONLY)
         if (!(nFontType & TRUETYPE_FONTTYPE))
+            return 1;
+    if (lpcf->Flags & CF_NOVERTFONTS)
+        if (lplf->lfFaceName[0] == '@')
             return 1;
 
     if (e) e->added++;
