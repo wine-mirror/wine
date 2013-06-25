@@ -217,13 +217,16 @@ static LPVOID WINAPI IMalloc_fnRealloc(LPMALLOC iface,LPVOID pv,DWORD cb) {
 	        IMallocSpy_Release(Malloc32.pSpy);
 		Malloc32.SpyReleasePending = FALSE;
 		Malloc32.pSpy = NULL;
+		LeaveCriticalSection(&IMalloc32_SpyCS);
 	    }
 
 	    if (0==cb) {
-	        /* PreRealloc can force Realloc to fail */
-                LeaveCriticalSection(&IMalloc32_SpyCS);
+		/* PreRealloc can force Realloc to fail */
+		if (Malloc32.pSpy)
+		    LeaveCriticalSection(&IMalloc32_SpyCS);
 		return NULL;
 	    }
+
 	    pv = pRealMemory;
 	}
 
