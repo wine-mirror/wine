@@ -2679,12 +2679,30 @@ if (0) /* crashes on some win2k systems */
     ok( !ret, "expected failure\n" );
     ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
 }
-    url = NULL;
+    url = (WCHAR *)0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = WinHttpDetectAutoProxyConfigUrl( WINHTTP_AUTO_DETECT_TYPE_DNS_A, &url );
     error = GetLastError();
     if (!ret)
+    {
         ok( error == ERROR_WINHTTP_AUTODETECTION_FAILED, "got %u\n", error );
+        ok( url == (WCHAR *)0xdeadbeef, "got %p\n", url );
+    }
+    else
+    {
+        trace("%s\n", wine_dbgstr_w(url));
+        GlobalFree( url );
+    }
+
+    url = (WCHAR *)0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = WinHttpDetectAutoProxyConfigUrl( WINHTTP_AUTO_DETECT_TYPE_DHCP, &url );
+    error = GetLastError();
+    if (!ret)
+    {
+        ok( error == ERROR_WINHTTP_AUTODETECTION_FAILED, "got %u\n", error );
+        ok( url == (WCHAR *)0xdeadbeef, "got %p\n", url );
+    }
     else
     {
         trace("%s\n", wine_dbgstr_w(url));
