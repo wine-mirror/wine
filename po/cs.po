@@ -1026,7 +1026,7 @@ msgid ""
 "Before you can perform printer-related tasks such as page setup or printing "
 "a document, you need to install a printer. Please install one and retry."
 msgstr ""
-"Před provedením akce související s tiskárou jako je nastavení vzhledu "
+"Před provedením akce související s tiskárnou jako je nastavení vzhledu "
 "stránky nebo tisk dokumentu je nejdříve nutné instalovat tiskárnu. "
 "Nainstalujte ji prosím a opakujte akci."
 
@@ -1671,7 +1671,7 @@ msgstr ""
 
 #: crypt32.rc:138
 msgid "Secure Email"
-msgstr "Zabezečený e-mail"
+msgstr "Zabezpečený e-mail"
 
 #: crypt32.rc:139
 msgid "Time Stamping"
@@ -3527,7 +3527,7 @@ msgstr "Očekáváno „)“"
 
 #: jscript.rc:37
 msgid "Invalid character"
-msgstr "Chytný znak"
+msgstr "Chybný znak"
 
 #: jscript.rc:38
 msgid "Unterminated string constant"
@@ -3584,7 +3584,7 @@ msgstr ""
 
 #: jscript.rc:51
 msgid "Boolean object expected"
-msgstr "Očekáván Booleánský objekt"
+msgstr "Očekáván boolean objekt"
 
 #: jscript.rc:52
 msgid "Cannot delete '|'"
@@ -5780,7 +5780,7 @@ msgstr "Žádné nestránkované systémové prostředky.\n"
 
 #: winerror.mc:2656
 msgid "No paged system resources.\n"
-msgstr "Žádné stránkováné systémové prostředky.\n"
+msgstr "Žádné stránkované systémové prostředky.\n"
 
 #: winerror.mc:2661
 msgid "No working set quota.\n"
@@ -8750,7 +8750,7 @@ msgstr "Ovladač zařízení není připraven."
 
 #: winmm.rc:74
 msgid "A problem occurred in initializing MCI. Try restarting Windows."
-msgstr "Při inicialiazaci MCI došlo k problémům. Zkuste zrestartovat Windows."
+msgstr "Při inicializaci MCI došlo k problémům. Zkuste restartovat Windows."
 
 #: winmm.rc:75
 msgid ""
@@ -8974,7 +8974,7 @@ msgid ""
 "All wave devices that can record files in the current format are in use. "
 "Wait until a wave device is free, and then try again."
 msgstr ""
-"Všechna wave zařízení, která by mohla nahrávat oubory s tímto formátem jsou "
+"Všechna wave zařízení, která by mohla nahrávat soubory s tímto formátem jsou "
 "používána. Vyčkejte na uvolnění zařízení a zkuste to znovu."
 
 #: winmm.rc:111
@@ -9438,13 +9438,12 @@ msgid ""
 "Changes to default directory, environment variables etc made within a\n"
 "called procedure are inherited by the caller.\n"
 msgstr ""
-"CALL <dávkový soubor> je užíván ke spuštění příkazů\n"
-"z jiného dávkového souboru. Když se běh volaného dávkového souboru ukončí, "
-"kontrola se vrátí\n"
+"CALL <dávkový soubor> je užíván ke spuštění příkazů z jiného dávkového\n"
+"souboru. Když se běh volaného dávkového souboru ukončí, obsluha se vrátí\n"
 "volajícímu souboru. Příkaz CALL může předávat parametry\n"
 "volané proceduře.\n"
 "\n"
-"Změny v defaultním adresáři, proměnných prostředí atd., udělané\n"
+"Změny výchozího adresáře, proměnných prostředí atd. provedené\n"
 "volanou procedurou jsou zděděny volajícím.\n"
 
 #: cmd.rc:40
@@ -9825,7 +9824,7 @@ msgid ""
 "if redirected). No check is made that the file is readable text.\n"
 msgstr ""
 "TYPE <soubor> vypíše <soubor> na konzolové zařízení (nebo jinam,\n"
-"je-li výstup přeměrován). Není zjišťováno, bude-li vypsán čitelný text.\n"
+"je-li výstup přesměrován). Není zjišťováno, bude-li vypsán čitelný text.\n"
 
 #: cmd.rc:226
 #, fuzzy
@@ -11380,7 +11379,7 @@ msgstr "&DWORD položka"
 
 #: regedit.rc:51 regedit.rc:102
 msgid "&Multi-String Value"
-msgstr "&Víceřetězcová položka"
+msgstr "&Více-řetězcová položka"
 
 #: regedit.rc:52 regedit.rc:103
 msgid "&Expandable String Value"
@@ -11492,7 +11491,7 @@ msgstr "Šestnáctkový"
 
 #: regedit.rc:283
 msgid "Decimal"
-msgstr "Desitkový"
+msgstr "Desítkový"
 
 #: regedit.rc:290
 msgid "Edit Binary"
@@ -11500,7 +11499,7 @@ msgstr "Úprava binární položky"
 
 #: regedit.rc:303
 msgid "Edit Multi-String"
-msgstr "Úprava víceřetězcové položky"
+msgstr "Úprava více-řetězcové položky"
 
 #: regedit.rc:134
 msgid "Contains commands for working with the whole registry"
@@ -11521,7 +11520,7 @@ msgstr "Obsahuje příkazy pro přístup k často užívaným klíčům"
 #: regedit.rc:138
 msgid ""
 "Contains commands for displaying help and information about registry editor"
-msgstr "Obsahuje příkazy pro zobrazení nápovědy a informacío editoru registru"
+msgstr "Obsahuje příkazy pro zobrazení nápovědy a informací o editoru registru"
 
 #: regedit.rc:139
 msgid "Contains commands for creating new keys or values"
@@ -11561,7 +11560,7 @@ msgstr "(hodnota nenastavena)"
 
 #: regedit.rc:203
 msgid "(cannot display value)"
-msgstr "(není možné zobazit hodnotu)"
+msgstr "(není možné zobrazit hodnotu)"
 
 #: regedit.rc:204
 msgid "(unknown %d)"
@@ -11689,7 +11688,7 @@ msgstr "Nelze najít klíč '%s'"
 
 #: regedit.rc:149
 msgid "Adds a new multi-string value"
-msgstr "Přidá novou víceřetězcovou položku"
+msgstr "Přidá novou více-řetězcovou položku"
 
 #: regedit.rc:171
 msgid "Exports selected branch of the registry to a text file"
@@ -12558,7 +12557,7 @@ msgstr "Úloha"
 
 #: uninstaller.rc:26
 msgid "Wine Application Uninstaller"
-msgstr "Deinstalátor"
+msgstr "Wine odinstalátor aplikací"
 
 #: uninstaller.rc:27
 msgid ""
@@ -12566,8 +12565,9 @@ msgid ""
 "executable.\n"
 "Do you want to remove the uninstall entry from the registry?"
 msgstr ""
-"Spuštění příkazu %s selhalo, možná příčína je chybějící aplikace.\n"
-"Přejete si odstranit instalační záznam z registru?"
+"Spuštění odinstalačního příkazu %s selhalo, možná příčína je chybějící "
+"aplikace.\n"
+"Přejete si odstranit odinstalační záznam z registru?"
 
 #: view.rc:33
 msgid "&Pan"
@@ -12731,7 +12731,7 @@ msgstr "Úprava nastavení knihovny"
 
 #: winecfg.rc:199
 msgid "Load order"
-msgstr "Pořadí nahravání"
+msgstr "Pořadí nahrávání"
 
 #: winecfg.rc:200
 msgid "&Builtin (Wine)"
@@ -13102,7 +13102,7 @@ msgstr "Písmo titulku aktivního okna"
 
 #: winecfg.rc:104
 msgid "Inactive Title Bar"
-msgstr "Pozadí titulku neaktivného okna"
+msgstr "Pozadí titulku neaktivního okna"
 
 #: winecfg.rc:105
 msgid "Inactive Title Text"
@@ -13162,7 +13162,7 @@ msgstr "Přechod titulku aktivního okna"
 
 #: winecfg.rc:119
 msgid "Inactive Title Bar Gradient"
-msgstr "Přechod titulku neaktivného okna"
+msgstr "Přechod titulku neaktivního okna"
 
 #: winecfg.rc:120
 msgid "Menu Highlight"
@@ -13311,7 +13311,7 @@ msgstr "Hl&edat"
 
 #: wineconsole.rc:36
 msgid "Setup - Default settings"
-msgstr "Setup - Defaultní nastavení"
+msgstr "Setup - Výchozí nastavení"
 
 #: wineconsole.rc:37
 msgid "Setup - Current settings"
@@ -13323,7 +13323,7 @@ msgstr "Chyba nastavení"
 
 #: wineconsole.rc:39
 msgid "Screen buffer size must be greater or equal to the window's one"
-msgstr "Zásobník obrazovky musí být větší nebo stejně velký jakzásobník okna"
+msgstr "Zásobník obrazovky musí být větší nebo stejně velký jako zásobník okna"
 
 #: wineconsole.rc:34
 #, fuzzy
