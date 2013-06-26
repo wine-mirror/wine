@@ -92,6 +92,7 @@ my @allfiles =
     [ 10029, "VENDORS/MICSFT/MAC/LATIN2.TXT",     0, "Mac Latin 2" ],
     [ 10079, "VENDORS/MICSFT/MAC/ICELAND.TXT",    0, "Mac Icelandic" ],
     [ 10081, "VENDORS/MICSFT/MAC/TURKISH.TXT",    0, "Mac Turkish" ],
+    [ 10082, "VENDORS/APPLE/CROATIAN.TXT",        0, "Mac Croatian" ],
     [ 20127, undef,                               0, "US-ASCII (7bit)" ],
     [ 20866, "VENDORS/MISC/KOI8-R.TXT",           0, "Russian KOI8" ],
     [ 20932, "OBSOLETE/EASTASIA/JIS/JIS0208.TXT", 0, "EUC-JP" ],
