@@ -10,6 +10,7 @@ INSTALLDIRS = $(DESTDIR)$(libdir)
 C_SRCS = \
 	c_037.c \
 	c_10000.c \
+	c_10001.c \
 	c_10006.c \
 	c_10007.c \
 	c_10029.c \

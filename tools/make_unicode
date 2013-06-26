@@ -80,6 +80,7 @@ my @allfiles =
     [ 1258,  "VENDORS/MICSFT/WindowsBestFit/bestfit1258.txt", 0, "ANSI/OEM Viet Nam" ],
     [ 1361,  "OBSOLETE/EASTASIA/KSC/JOHAB.TXT",   0, "Korean Johab" ],
     [ 10000, "VENDORS/MICSFT/MAC/ROMAN.TXT",      0, "Mac Roman" ],
+    [ 10001, "VENDORS/APPLE/JAPANESE.TXT",        0, "Mac Japanese" ],
     [ 10006, "VENDORS/MICSFT/MAC/GREEK.TXT",      0, "Mac Greek" ],
     [ 10007, "VENDORS/MICSFT/MAC/CYRILLIC.TXT",   0, "Mac Cyrillic" ],
     [ 10029, "VENDORS/MICSFT/MAC/LATIN2.TXT",     0, "Mac Latin 2" ],
@@ -539,6 +540,18 @@ sub read_codepage_file($)
         }
         # 0x12 0x3456
         if (/^0x([0-9a-fA-F]+)\s+0x([0-9a-fA-F]+)\s+(\#.*)?/)
+        {
+            add_mapping( hex $1, hex $2 );
+            next;
+        }
+        # 0x12 0x3456+0x7890
+        if (/^0x([0-9a-fA-F]+)\s+0x([0-9a-fA-F]+)\+.*\s+(\#.*)?/)
+        {
+            add_mapping( hex $1, hex $2 );
+            next;
+        }
+        # 0x12 <LR>+0x3456
+        if (/^0x([0-9a-fA-F]+)\s+<[LR]+>\+0x([0-9a-fA-F]+)\s+(\#.*)?/)
         {
             add_mapping( hex $1, hex $2 );
             next;
@@ -1999,6 +2012,12 @@ sub HANDLE_FILE(@)
     elsif ($filename =~ /\/bestfit/)
     {
         read_bestfit_file( $filename );
+    }
+    elsif ($codepage == 10001)
+    {
+        read_codepage_file( $filename );
+        # add Shift-JIS mappings
+        read_bestfit_file( "VENDORS/MICSFT/WindowsBestFit/bestfit932.txt" );
     }
     else
     {
