@@ -55,8 +55,6 @@ static SAFEARRAY* (WINAPI *pSafeArrayCreateVector)(VARTYPE,LONG,ULONG);
 /* Is a given function exported from oleaut32? */
 #define HAVE_FUNC(func) ((void*)GetProcAddress(hOleaut32, #func) != NULL)
 
-/* Have R8 data type? */
-#define HAVE_OLEAUT32_R8      HAVE_FUNC(VarR8FromI1)
 /* Have I8/UI8 data type? */
 #define HAVE_OLEAUT32_I8      HAVE_FUNC(VarI8FromI1)
 /* Have INT_PTR/UINT_PTR type? */
@@ -178,9 +176,7 @@ static DWORD SAFEARRAY_GetVTSize(VARTYPE vt)
     case VT_UI4:
     case VT_R4:
     case VT_ERROR:    return sizeof(LONG);
-    case VT_R8:
-      if (HAVE_OLEAUT32_R8)
-        return sizeof(LONG64);
+    case VT_R8:       return sizeof(LONG64);
     case VT_I8:
     case VT_UI8:
       if (HAVE_OLEAUT32_I8)
