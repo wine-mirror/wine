@@ -156,21 +156,10 @@ msgid "Cancel"
 msgstr "Скасувати"
 
 #: appwiz.rc:112
-#, fuzzy
-#| msgid "Wine Gecko Installer"
 msgid "Wine Mono Installer"
-msgstr "Встановлювач Wine Gecko"
+msgstr "Встановлювач Wine Mono"
 
 #: appwiz.rc:115
-#, fuzzy
-#| msgid ""
-#| "Wine could not find a Gecko package which is needed for applications "
-#| "embedding HTML to work correctly. Wine can automatically download and "
-#| "install it for you.\n"
-#| "\n"
-#| "Note: it is recommended to use your distribution's packages instead. See "
-#| "<a href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> "
-#| "for details."
 msgid ""
 "Wine could not find a Mono package which is needed for .NET applications to "
 "work correctly. Wine can automatically download and install it for you.\n"
@@ -179,13 +168,12 @@ msgid ""
 "href=\"http://wiki.winehq.org/Mono\">http://wiki.winehq.org/Mono</a> for "
 "details."
 msgstr ""
-"Wine не може знайти пакунок Gecko, який потрібний для коректної роботи "
-"додатків з підтримкою HTML. Wine може автоматично завантажити та встановити "
-"його для Вас.\n"
+"Wine не може знайти пакунок Mono, який потрібний для коректної роботи .NET "
+"додатків. Wine може автоматично завантажити та встановити його для Вас.\n"
 "\n"
 "Зауважте: Рекомендується використати пакет з вашого дистрибутиву. Детальніше "
-"читайте <a href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/"
-"Gecko</a>."
+"читайте <a href=\"http://wiki.winehq.org/Mono\">http://wiki.winehq.org/Mono</"
+"a>"
 
 #: appwiz.rc:28
 msgid "Add/Remove Programs"
@@ -195,7 +183,7 @@ msgstr "Встановлення/Видалення Програм"
 msgid ""
 "Allows you to install new software, or remove existing software from your "
 "computer."
-msgstr "Дозволяє встановити нове ПЗ та видалити наявне з вашого комп'ютера."
+msgstr "Дозволяє встановити нове та видалити наявне ПЗ з вашого комп'ютера."
 
 #: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
 msgid "Applications"
@@ -467,7 +455,7 @@ msgstr "В&иділення"
 
 #: comdlg32.rc:203
 msgid "&Pages"
-msgstr "&Сторінки"
+msgstr "&Стор."
 
 #: comdlg32.rc:206 comdlg32.rc:228
 msgid "&Setup"
@@ -1219,7 +1207,7 @@ msgstr "Caps Lock включений"
 
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
-msgstr "Ідентифікатор ключа органу"
+msgstr "Ідентифікатор ключа повноважень"
 
 #: crypt32.rc:28
 msgid "Key Attributes"
@@ -1231,7 +1219,7 @@ msgstr "Обмеження використання ключа"
 
 #: crypt32.rc:30
 msgid "Subject Alternative Name"
-msgstr "Альтернативна назва предмету"
+msgstr "Альтернативна назва суб’єкта"
 
 #: crypt32.rc:31
 msgid "Issuer Alternative Name"
@@ -1251,7 +1239,7 @@ msgstr "Політика Сертифікатів"
 
 #: crypt32.rc:35
 msgid "Subject Key Identifier"
-msgstr "Ідентифікатор ключа предмету"
+msgstr "Ідентифікатор ключа суб’єкта"
 
 #: crypt32.rc:36
 msgid "CRL Reason Code"
@@ -1267,7 +1255,7 @@ msgstr "Розширене Використання Ключа"
 
 #: crypt32.rc:39
 msgid "Authority Information Access"
-msgstr "Інформаційний доступ органу"
+msgstr "Доступ до інформації про повноваження"
 
 #: crypt32.rc:40
 msgid "Certificate Extensions"
@@ -1279,7 +1267,7 @@ msgstr "Наступне розташування оновлення"
 
 #: crypt32.rc:42
 msgid "Yes or No Trust"
-msgstr "Довіряти чи Не довіряти"
+msgstr "Довіряти чи Ні"
 
 #: crypt32.rc:43
 msgid "Email Address"
@@ -1460,7 +1448,7 @@ msgstr ""
 
 #: crypt32.rc:87
 msgid "OS Version"
-msgstr "Версія OS"
+msgstr "Версія ОС"
 
 #: crypt32.rc:88
 msgid "Enrollment CSP"
@@ -1692,7 +1680,7 @@ msgstr ""
 
 #: crypt32.rc:145
 msgid "Encrypting File System"
-msgstr ""
+msgstr "Зашифрована Файлова Система"
 
 #: crypt32.rc:146 cryptui.rc:130
 msgid "Windows Hardware Driver Verification"
@@ -1708,7 +1696,7 @@ msgstr "Перевірка системних компонентів OEM Windows
 
 #: crypt32.rc:149 cryptui.rc:133
 msgid "Embedded Windows System Component Verification"
-msgstr "Перевірка системних компонентів Embedded Windows"
+msgstr "Перевірка вбудованих системних компонентів Windows"
 
 #: crypt32.rc:150 cryptui.rc:140
 msgid "Key Pack Licenses"
@@ -1879,7 +1867,7 @@ msgstr "Метод доступу="
 #: crypt32.rc:199
 msgctxt "Online Certificate Status Protocol"
 msgid "OCSP"
-msgstr ""
+msgstr "Онлайн протокол стану сертифікату (OCSP)"
 
 #: crypt32.rc:200
 msgid "CA Issuers"
@@ -2193,7 +2181,7 @@ msgstr ""
 "\n"
 "Сертифікат може бути використаний для вашої ідентифікації або ідентифікації "
 "комп'ютера, з яким ви з'єднані. Також він може бути використаний для "
-"завірення і для підписуваня повідомлень. Сховищами сертифікатів є колекції "
+"завірення і для підписуваня повідомлень. Сховища сертифікатів - це збірки "
 "сертифікатів, списки анульованих сертифікатів та списки довірених "
 "сертифікатів.\n"
 "\n"
@@ -2222,10 +2210,8 @@ msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (*.p7b)"
 msgstr "Повідомлення CMS/PKCS #7 (*.p7b)"
 
 #: cryptui.rc:298
-#, fuzzy
-#| msgid "Personal Information Exchange/PKCS #12 (.pfx, .p12)"
 msgid "Personal Information Exchange/PKCS #12 (*.pfx; *.p12)"
-msgstr "Обмін особистою інформацією/PKCS #12 (.pfx, .p12)"
+msgstr "Обмін особистою інформацією/PKCS #12 (*.pfx; *.p12)"
 
 #: cryptui.rc:300 cryptui.rc:78 cryptui.rc:159
 msgid "Microsoft Serialized Certificate Store (*.sst)"
@@ -2387,10 +2373,8 @@ msgid "&Include all certificates in the certification path if possible"
 msgstr "&Включити всі сертифікати за сертифікаційним шляхом якщо можливо"
 
 #: cryptui.rc:413
-#, fuzzy
-#| msgid "&Personal Information Exchange/PKCS #12 (.pfx)"
 msgid "&Personal Information Exchange/PKCS #12 (*.pfx)"
-msgstr "&Обмін особистою інформацією/PKCS #12 (.pfx)"
+msgstr "&Обмін особистою інформацією/PKCS #12 (*.pfx)"
 
 #: cryptui.rc:415
 msgid "Incl&ude all certificates in the certification path if possible"
@@ -3429,85 +3413,79 @@ msgstr "Користувацькі"
 
 #: inetcpl.rc:32
 msgid "Very Low"
-msgstr "Дуже Низько"
+msgstr "Дуже Слабкі"
 
 #: inetcpl.rc:33
 msgid "Low"
-msgstr "Низька"
+msgstr "Слабкі"
 
 #: inetcpl.rc:34
 msgid "Medium"
-msgstr "Середній"
+msgstr "Середні"
 
 #: inetcpl.rc:35
 msgid "Increased"
-msgstr "Збільшений"
+msgstr "Збільшені"
 
 #: inetcpl.rc:36
 msgid "High"
-msgstr "Висока"
+msgstr "Високі"
 
 #: joy.rc:33
 msgid "Joysticks"
-msgstr ""
+msgstr "Джойстик"
 
 #: joy.rc:36 winecfg.rc:204
 msgid "&Disable"
 msgstr "Вим&кнути"
 
 #: joy.rc:37
-#, fuzzy
-#| msgid "&enable"
 msgid "&Enable"
-msgstr "вв&імкнути"
+msgstr "&Увімкнути"
 
 #: joy.rc:38
-#, fuzzy
-#| msgid "Disconnected"
 msgid "Connected"
-msgstr "Від'єднано"
+msgstr "Під'єднано"
 
 #: joy.rc:40
-#, fuzzy
-#| msgid "&Disable"
 msgid "Disabled"
-msgstr "Вим&кнути"
+msgstr "Вимкнений"
 
 #: joy.rc:42
 msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
 msgstr ""
+"Після увімкнення чи вимкнення пристрою, під’єднаний джойстик не буде "
+"оновлений, поки Ви не перезавантажите цей аптлет."
 
 #: joy.rc:47
 msgid "Test Joystick"
-msgstr ""
+msgstr "Випробувати Джойстик"
 
 #: joy.rc:51
 msgid "Buttons"
-msgstr ""
+msgstr "Кнопки"
 
 #: joy.rc:60
 msgid "Test Force Feedback"
 msgstr ""
 
 #: joy.rc:64
-#, fuzzy
-#| msgid "Available formats"
 msgid "Available Effects"
-msgstr "Доступні формати"
+msgstr "Доступні Ефекти"
 
 #: joy.rc:66
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
 msgstr ""
+"Натисніть будь-яку клавішу контролера щоб активувати обраний ефект. Напрямок "
+"ефекту можна змінити віссю контролера."
 
 #: joy.rc:28
-#, fuzzy
-#| msgid "Create Control"
 msgid "Game Controllers"
-msgstr "Створити елемент управління"
+msgstr "Ігрові Контролери"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
@@ -3558,10 +3536,8 @@ msgid "Expected ')'"
 msgstr "Очікується ')'"
 
 #: jscript.rc:37
-#, fuzzy
-#| msgid "Invalid parameter.\n"
 msgid "Invalid character"
-msgstr "Невірний параметр.\n"
+msgstr "Невірний символ"
 
 #: jscript.rc:38
 msgid "Unterminated string constant"
@@ -3645,13 +3621,11 @@ msgstr "URI, що буде закодований, некоректний"
 
 #: jscript.rc:58
 msgid "Number of fraction digits is out of range"
-msgstr ""
+msgstr "Кількість знаків після коми поза діапазоном"
 
 #: jscript.rc:59
-#, fuzzy
-#| msgid "Subscript out of range"
 msgid "Precision is out of range"
-msgstr "Індекс поза діапазоном"
+msgstr "Точність поза діапазоном"
 
 #: jscript.rc:60
 msgid "Array length must be a finite positive integer"
@@ -3863,7 +3837,7 @@ msgstr "Черга друку заповнена.\n"
 
 #: winerror.mc:276
 msgid "No spool space.\n"
-msgstr ""
+msgstr "Нема буферизованого місця.\n"
 
 #: winerror.mc:281
 msgid "Print canceled.\n"
@@ -4539,7 +4513,7 @@ msgstr ""
 
 #: winerror.mc:1131
 msgid "Dependent services are running.\n"
-msgstr ""
+msgstr "Працюють залежні служби.\n"
 
 #: winerror.mc:1136
 msgid "Invalid service control.\n"
@@ -4607,7 +4581,7 @@ msgstr "Процес перервано.\n"
 
 #: winerror.mc:1216
 msgid "Service dependency failed.\n"
-msgstr ""
+msgstr "невдала сервісна залежність.\n"
 
 #: winerror.mc:1221
 msgid "Service login failed.\n"
@@ -4623,7 +4597,7 @@ msgstr ""
 
 #: winerror.mc:1236
 msgid "Service marked for delete.\n"
-msgstr ""
+msgstr "Служба позначена на видалення.\n"
 
 #: winerror.mc:1241
 msgid "Service exists.\n"
@@ -4631,7 +4605,7 @@ msgstr "Сервіс існує.\n"
 
 #: winerror.mc:1246
 msgid "System running last-known-good config.\n"
-msgstr ""
+msgstr "Система працює згідно останньої відомої справної конфігурації.\n"
 
 #: winerror.mc:1251
 msgid "Service dependency deleted.\n"
@@ -4639,11 +4613,11 @@ msgstr "Сервісна залежність видалена.\n"
 
 #: winerror.mc:1256
 msgid "Boot already accepted as last-good config.\n"
-msgstr ""
+msgstr "Завантаження вже прийняте як остання успішна конфігурація.\n"
 
 #: winerror.mc:1261
 msgid "Service not started since last boot.\n"
-msgstr ""
+msgstr "Служба не запускалася з часів останнього завантаження.\n"
 
 #: winerror.mc:1266
 msgid "Duplicate service name.\n"
@@ -6331,7 +6305,7 @@ msgstr ""
 
 #: winerror.mc:3386
 msgid "Printer driver already installed.\n"
-msgstr ""
+msgstr "Драйвер принтера вже встановлений.\n"
 
 #: winerror.mc:3391
 msgid "Unknown port.\n"
@@ -6363,7 +6337,7 @@ msgstr "Принтер вже існує.\n"
 
 #: winerror.mc:3426
 msgid "Invalid printer command.\n"
-msgstr ""
+msgstr "Невірна команда принтера.\n"
 
 #: winerror.mc:3431
 msgid "Invalid data type.\n"
@@ -6403,15 +6377,15 @@ msgstr ""
 
 #: winerror.mc:3476
 msgid "Resource type not found.\n"
-msgstr ""
+msgstr "Тип ресурсу не знайдений.\n"
 
 #: winerror.mc:3481
 msgid "Resource name not found.\n"
-msgstr ""
+msgstr "Ім’я ресурсу не знайдене.\n"
 
 #: winerror.mc:3486
 msgid "Resource language not found.\n"
-msgstr ""
+msgstr "Мова ресурсу не знайдена.\n"
 
 #: winerror.mc:3491
 msgid "Not enough quota.\n"
@@ -6447,7 +6421,7 @@ msgstr ""
 
 #: winerror.mc:3531
 msgid "UUID is local only.\n"
-msgstr ""
+msgstr "UUID тільки локальний.\n"
 
 #: winerror.mc:3536
 msgid "Security package error.\n"
@@ -6455,7 +6429,7 @@ msgstr ""
 
 #: winerror.mc:3541
 msgid "Thread not canceled.\n"
-msgstr "Друк скасовано.\n"
+msgstr "Виконання потоку не відмінено.\n"
 
 #: winerror.mc:3546
 msgid "Invalid handle operation.\n"
@@ -8322,20 +8296,16 @@ msgid "Security Warning"
 msgstr "Попередження безпеки"
 
 #: urlmon.rc:32
-#, fuzzy
-#| msgid "Do you want to continue anyway?"
 msgid "Do you want to install this software?"
-msgstr "Продовжити попри все?"
+msgstr "Встановити це ПЗ?"
 
 #: urlmon.rc:34 explorer.rc:29
 msgid "Location:"
 msgstr "Розміщення:"
 
 #: urlmon.rc:36
-#, fuzzy
-#| msgid "Install/Uninstall"
 msgid "Don't install"
-msgstr "Встановлення/Видалення"
+msgstr "Не встановлювати"
 
 #: urlmon.rc:40
 msgid ""
@@ -8344,22 +8314,16 @@ msgid ""
 msgstr ""
 
 #: urlmon.rc:48
-#, fuzzy
-#| msgid "Installation transform failed to apply.\n"
 msgid "Installation of component failed: %08x"
-msgstr "Не вдалось застосувати перетворення встановлення.\n"
+msgstr "Встановлення компонента не вдалося: %08x"
 
 #: urlmon.rc:49
-#, fuzzy
-#| msgid "&Install"
 msgid "Install (%d)"
-msgstr "&Встановити"
+msgstr "Встановити (%d)"
 
 #: urlmon.rc:50
-#, fuzzy
-#| msgid "&Install"
 msgid "Install"
-msgstr "&Встановити"
+msgstr "Встановити"
 
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
 msgctxt "window"
@@ -9920,9 +9884,7 @@ msgstr ""
 "EXIT завершує поточну сесію командного рядка та повертає вас\n"
 "до операційної системи чи оболонки, з якої ви запустили cmd.\n"
 
-# FIXME: Missing CHOICE
 #: cmd.rc:315
-#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -9968,6 +9930,7 @@ msgstr ""
 "ATTRIB\t\tВідображення чи зміна атрибутів файлу DOS\n"
 "CALL\t\tЗапуск пакетного файлу всередині іншого\n"
 "CD (CHDIR)\tЗміна поточної теки за замовчуванням\n"
+"CHOICE\t\tОчікування на натиснення клавіші з обраного переліку\n"
 "CLS\t\tОчищення екрану консолі\n"
 "COPY\t\tКопіювання файлу\n"
 "CTTY\t\tЗміна пристрою вводу/виводу\n"
@@ -10129,10 +10092,8 @@ msgid "Wine Command Prompt"
 msgstr "Командний рядок Wine"
 
 #: cmd.rc:349
-#, fuzzy
-#| msgid "CMD Version %1!S!\n"
 msgid "Wine CMD Version %1!S!\n"
-msgstr "Версія CMD %1!S!\n"
+msgstr "Версія Wine CMD %1!S!\n"
 
 #: cmd.rc:350
 msgid "More? "
@@ -10162,10 +10123,12 @@ msgstr " (Так|Ні|Всі)"
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
 msgstr ""
+"Не можу визначити '%1' як внутрішню або зовнішню команду, чи пакетний "
+"сценарій (скрипт).\n"
 
 #: cmd.rc:357
 msgid "Division by zero error.\n"
-msgstr ""
+msgstr "Помилка Ділення на нуль.\n"
 
 #: cmd.rc:358
 msgid "Expected an operand.\n"
@@ -10186,6 +10149,8 @@ msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"
 msgstr ""
+"Неправильно сформоване число - має бути або десятковим (12),\n"
+" або шістнадцятковим (0x34), або вісімковим (056).\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -10198,7 +10163,7 @@ msgstr ""
 
 #: explorer.rc:28
 msgid "Wine Explorer"
-msgstr "Оглядач Інтернету Wine"
+msgstr "Оглядач Wine"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
@@ -10230,17 +10195,15 @@ msgstr "%1 адаптер %2\n"
 
 #: ipconfig.rc:30
 msgid "Ethernet"
-msgstr ""
+msgstr "Ethernet"
 
 #: ipconfig.rc:32
 msgid "Connection-specific DNS suffix"
 msgstr "DNS-суфікс підключення"
 
 #: ipconfig.rc:33
-#, fuzzy
-#| msgid "IP address"
 msgid "IPv4 address"
-msgstr "IP-адреса"
+msgstr "IPv4-адреса"
 
 #: ipconfig.rc:34
 msgid "Hostname"
@@ -10283,10 +10246,8 @@ msgid "Default gateway"
 msgstr "Шлюз за замовчуванням"
 
 #: ipconfig.rc:47
-#, fuzzy
-#| msgid "IP address"
 msgid "IPv6 address"
-msgstr "IP-адреса"
+msgstr "IPv6-адреса"
 
 #: net.rc:27
 msgid ""
@@ -10419,26 +10380,20 @@ msgid "The following services are running:\n"
 msgstr "Запущені наступні служби:\n"
 
 #: netstat.rc:27
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Active Connections"
-msgstr "Підключення по локальній мережі"
+msgstr "Активні Підключення"
 
 #: netstat.rc:28
 msgid "Proto"
 msgstr ""
 
 #: netstat.rc:29
-#, fuzzy
-#| msgid "Email Address"
 msgid "Local Address"
-msgstr "Адреса Ел. Пошти"
+msgstr "Локальна Адреса"
 
 #: netstat.rc:30
-#, fuzzy
-#| msgid "Street Address"
 msgid "Foreign Address"
-msgstr "Вулиця"
+msgstr "Зовнішня Адреса"
 
 #: netstat.rc:31
 #, fuzzy
@@ -10447,24 +10402,20 @@ msgid "State"
 msgstr "Стан"
 
 #: netstat.rc:32
-#, fuzzy
-#| msgid "Interfaces"
 msgid "Interface Statistics"
-msgstr "Інтерфейси"
+msgstr "Статистика Інтерфейсів"
 
 #: netstat.rc:33
 msgid "Sent"
-msgstr ""
+msgstr "Відправлено"
 
 #: netstat.rc:34
 msgid "Received"
-msgstr ""
+msgstr "Отримано"
 
 #: netstat.rc:35
-#, fuzzy
-#| msgid "bytes"
 msgid "Bytes"
-msgstr "байт"
+msgstr "Байт"
 
 #: netstat.rc:36
 msgid "Unicast packets"
@@ -10481,20 +10432,16 @@ msgid "Discards"
 msgstr "Відмова"
 
 #: netstat.rc:39
-#, fuzzy
-#| msgid "Error"
 msgid "Errors"
-msgstr "Помилка"
+msgstr "Помилки"
 
 #: netstat.rc:40
-#, fuzzy
-#| msgid "Unknown port.\n"
 msgid "Unknown protocols"
-msgstr "Невідомий порт.\n"
+msgstr "Невідомий протокол"
 
 #: netstat.rc:41
 msgid "TCP Statistics for IPv4"
-msgstr ""
+msgstr "Статистика TCP для IPv4"
 
 #: netstat.rc:42
 #, fuzzy
@@ -10507,42 +10454,32 @@ msgid "Passive Opens"
 msgstr ""
 
 #: netstat.rc:44
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Failed Connection Attempts"
-msgstr "Підключення по локальній мережі"
+msgstr "Провалених Спроб Підключення"
 
 #: netstat.rc:45
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Reset Connections"
-msgstr "Підключення по локальній мережі"
+msgstr "Скинутих Підключень"
 
 #: netstat.rc:46
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Current Connections"
-msgstr "Підключення по локальній мережі"
+msgstr "Поточних Підключень"
 
 #: netstat.rc:47
-#, fuzzy
-#| msgid "Segment locked.\n"
 msgid "Segments Received"
-msgstr "Сегмент заблокований.\n"
+msgstr "Отримано Сегментів"
 
 #: netstat.rc:48
-#, fuzzy
-#| msgid "Segment locked.\n"
 msgid "Segments Sent"
-msgstr "Сегмент заблокований.\n"
+msgstr "Відправлено Сегментів"
 
 #: netstat.rc:49
 msgid "Segments Retransmitted"
-msgstr ""
+msgstr "Повторно відправлено Сегментів"
 
 #: netstat.rc:50
 msgid "UDP Statistics for IPv4"
-msgstr ""
+msgstr "Статистика UDP для IPv4"
 
 #: netstat.rc:51
 #, fuzzy
@@ -10551,16 +10488,12 @@ msgid "Datagrams Received"
 msgstr "Сегмент заблокований.\n"
 
 #: netstat.rc:52
-#, fuzzy
-#| msgid "Local Port"
 msgid "No Ports"
-msgstr "Локальний порт"
+msgstr "Нема портів"
 
 #: netstat.rc:53
-#, fuzzy
-#| msgid "Decoding Error"
 msgid "Receive Errors"
-msgstr "Помилка декодування"
+msgstr "Помилка отримання"
 
 #: netstat.rc:54
 msgid "Datagrams Sent"
@@ -11980,7 +11913,7 @@ msgstr "Викорис. ЦП"
 
 #: taskmgr.rc:373
 msgid "Mem usage"
-msgstr "Викорис. пам'яті"
+msgstr "Викор. пам'яті"
 
 #: taskmgr.rc:374
 msgid "Totals"
@@ -11988,15 +11921,15 @@ msgstr "Всього"
 
 #: taskmgr.rc:375
 msgid "Commit charge (K)"
-msgstr "Виділення пам'яті (K)"
+msgstr "Виділено пам'яті (кБ)"
 
 #: taskmgr.rc:376
 msgid "Physical memory (K)"
-msgstr "Фізична пам'ять (K)"
+msgstr "Фізична пам'ять (кБ)"
 
 #: taskmgr.rc:377
 msgid "Kernel memory (K)"
-msgstr "Пам'ять ядра (K)"
+msgstr "Пам'ять ядра (кБ)"
 
 #: taskmgr.rc:378 taskmgr.rc:290
 msgid "Handles"
@@ -12028,11 +11961,11 @@ msgstr "Системний кеш"
 
 #: taskmgr.rc:406
 msgid "Paged"
-msgstr "Вивантажувана"
+msgstr "Вивантаж."
 
 #: taskmgr.rc:407
 msgid "Nonpaged"
-msgstr "Невивантажувана"
+msgstr "Невивантаж."
 
 #: taskmgr.rc:414
 msgid "CPU usage history"
@@ -12738,7 +12671,7 @@ msgstr "Параметри вікна"
 
 #: winecfg.rc:161
 msgid "Automatically capture the &mouse in full-screen windows"
-msgstr ""
+msgstr "Автоматично захоплювати &мишу у повноекранних вікнах"
 
 #: winecfg.rc:162
 msgid "Allow the window manager to &decorate the windows"
@@ -12774,8 +12707,8 @@ msgid ""
 "(provided by Wine) or native (taken from Windows or provided by the "
 "application)."
 msgstr ""
-"Тут вказується, яку донамічно під'єднувану бібліотеку (DLL) використовувати: "
-"вбудовану в Wine або сторонню (з Windows)."
+"Тут вказується, яку динамічно під'єднувану бібліотеку (DLL) використовувати: "
+"вбудовану в Wine або сторонню (з Windows, чи надану разом з програмою)."
 
 #: winecfg.rc:185
 msgid "&New override for library:"
@@ -12830,7 +12763,7 @@ msgid ""
 "Failed to connect to the mount manager, the drive configuration cannot be "
 "edited."
 msgstr ""
-"Неможливо з'єднатися з mount manager, конфігурація дисків не буде "
+"Неможливо з'єднатися з менеджером монтування, конфігурація дисків не буде "
 "редагуватися."
 
 #: winecfg.rc:227
@@ -13050,9 +12983,8 @@ msgid "Select an executable file"
 msgstr "Виберіть виконуваний файл"
 
 #: winecfg.rc:66
-#, fuzzy
 msgid "Autodetect"
-msgstr "Автови&значення"
+msgstr "Автовизначення"
 
 #: winecfg.rc:67
 msgid "Local hard disk"
@@ -13500,6 +13432,10 @@ msgid ""
 "button, then <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a> "
 "and attach that file to the report."
 msgstr ""
+"Якщо ця проблема відсутня з-під Windows, і про неї ще не повідомлено, Ви "
+"можете зберегти детальну інформацію у файл, використовуючи кнопку \"Save As"
+"\", і потім <a href=\"http://wiki.winehq.org/Bugs\">відзвітувати про "
+"помилку</a>, долучивши збережений файл до звіту."
 
 #: winedbg.rc:35
 msgid "Wine program crash"
@@ -13587,7 +13523,7 @@ msgstr "Панель &дисків"
 
 #: winefile.rc:65
 msgid "F&ull Screen\tCtrl+Shift+S"
-msgstr "В&есь екран\tCtrl+Shift+S"
+msgstr "На в&есь екран\tCtrl+Shift+S"
 
 #: winefile.rc:71
 msgid "New &Window"
@@ -13651,7 +13587,7 @@ msgstr "Останні зміни:"
 
 #: winefile.rc:168
 msgid "Cop&yright:"
-msgstr ""
+msgstr "Авторське право:"
 
 #: winefile.rc:170
 msgid "Size:"
@@ -13733,7 +13669,7 @@ msgstr "%1 з %2 вільно"
 #: winefile.rc:115
 msgctxt "unit kilobyte"
 msgid "kB"
-msgstr "КБ"
+msgstr "кБ"
 
 #: winefile.rc:116
 msgctxt "unit megabyte"
@@ -13787,7 +13723,7 @@ msgstr "Кращий час"
 
 #: winemine.rc:58
 msgid "Fastest times"
-msgstr "Кращі часи"
+msgstr "Найращі результати"
 
 #: winemine.rc:59
 msgid "Beginner"
@@ -13835,7 +13771,7 @@ msgstr "Ніхто"
 
 #: winemine.rc:29
 msgid "Copyright 2000 Joshua Thielen"
-msgstr "Copyright 2000 Joshua Thielen"
+msgstr "Авторське право 2000 Joshua Thielen"
 
 #: winhlp32.rc:32
 msgid "Printer &setup..."
@@ -13930,22 +13866,16 @@ msgid "Help topics: "
 msgstr "Розділи Довідки: "
 
 #: wmic.rc:25
-#, fuzzy
-#| msgid "Error: Invalid command line parameters\n"
 msgid "Error: Command line not supported\n"
-msgstr "Помилка: неправильні параметри командного рядка\n"
+msgstr "Помилка: Командний рядок не підтримується\n"
 
 #: wmic.rc:26
-#, fuzzy
-#| msgid "Property set not found.\n"
 msgid "Error: Alias not found\n"
-msgstr "Набір властивостей не знайдено.\n"
+msgstr "Помилка: Псевдонім не знайдено.\n"
 
 #: wmic.rc:27
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "Error: Invalid query\n"
-msgstr "Помилка: неправильне ім'я ключа\n"
+msgstr "Помилка: невірний запит\n"
 
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
@@ -14287,7 +14217,7 @@ msgstr "Неможливо зберегти файл."
 
 #: wordpad.rc:190
 msgid "You do not have access to save the file."
-msgstr "У вас немає доступу на збереження файлу."
+msgstr "Ви не маєте доступу для збереження файлу."
 
 #: wordpad.rc:191
 msgid "Could not open the file."
