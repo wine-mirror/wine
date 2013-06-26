@@ -66,9 +66,6 @@ static SAFEARRAY* (WINAPI *pSafeArrayCreateVector)(VARTYPE,LONG,ULONG);
 /* Have INT_PTR/UINT_PTR type? */
 static BOOL HAVE_OLEAUT32_INT_PTR;
 
-/* very old version? */
-#define IS_ANCIENT (!HAVE_FUNC(VarI1FromI2))
-
 #define START_REF_COUNT 1
 #define RECORD_SIZE 64
 #define RECORD_SIZE_FAIL 17
@@ -481,10 +478,7 @@ static void test_safearray(void)
 	a = SafeArrayCreate(vttypes[i].vt, 1, &bound);
 
 	ok((!a && !vttypes[i].elemsize) ||
-	   (a && vttypes[i].elemsize == a->cbElements) ||
-	   (IS_ANCIENT && (vttypes[i].vt == VT_DECIMAL || vttypes[i].vt == VT_I1 ||
-	    vttypes[i].vt == VT_UI2 || vttypes[i].vt == VT_UI4 || vttypes[i].vt == VT_INT ||
-	    vttypes[i].vt == VT_UINT)),
+	   (a && vttypes[i].elemsize == a->cbElements),
 	   "SAC(%d,1,[1,0]), %p result %d, expected %d\n",
 	   vttypes[i].vt,a,(a?a->cbElements:0),vttypes[i].elemsize);
 
@@ -684,8 +678,7 @@ static void test_SafeArrayAllocDestroyDescriptor(void)
   ok(hres == E_INVALIDARG, "0 dimensions gave hres 0x%x\n", hres);
 
   hres = SafeArrayAllocDescriptor(65536, &sa);
-  ok(IS_ANCIENT || hres == E_INVALIDARG,
-     "65536 dimensions gave hres 0x%x\n", hres);
+  ok(hres == E_INVALIDARG, "65536 dimensions gave hres 0x%x\n", hres);
 
   if (0)
   {
@@ -757,7 +750,7 @@ static void test_SafeArrayCreateLockDestroy(void)
   ok(sa == NULL, "NULL bounds didn't fail\n");
 */
   sa = SafeArrayCreate(VT_UI1, 65536, sab);
-  ok(IS_ANCIENT || !sa, "Max bounds didn't fail\n");
+  ok(!sa, "Max bounds didn't fail\n");
 
   memset(sab, 0, sizeof(sab));
 
@@ -776,9 +769,7 @@ static void test_SafeArrayCreateLockDestroy(void)
       sa = SafeArrayCreate(vt, dimension, sab);
 
       if (dwLen)
-        ok(sa || (IS_ANCIENT && (vt == VT_DECIMAL || vt == VT_I1 || vt == VT_UI2 ||
-           vt == VT_UI4 || vt == VT_INT || vt == VT_UINT)),
-           "VARTYPE %d (@%d dimensions) failed\n", vt, dimension);
+        ok(sa != NULL, "VARTYPE %d (@%d dimensions) failed\n", vt, dimension);
       else
         ok(sa == NULL || vt == VT_R8,
            "VARTYPE %d (@%d dimensions) succeeded!\n", vt, dimension);
@@ -806,7 +797,7 @@ static void test_SafeArrayCreateLockDestroy(void)
           {
             VARTYPE aVt;
 
-            ok(IS_ANCIENT || sa->fFeatures & FADF_HAVEVARTYPE,
+            ok(sa->fFeatures & FADF_HAVEVARTYPE,
                "Non interface type should have FADF_HAVEVARTYPE\n");
             if (pSafeArrayGetVartype)
             {
@@ -818,8 +809,7 @@ static void test_SafeArrayCreateLockDestroy(void)
         }
         else
         {
-          ok(IS_ANCIENT || sa->fFeatures & FADF_HAVEIID,
-             "Interface type should have FADF_HAVEIID\n");
+          ok(sa->fFeatures & FADF_HAVEIID, "Interface type should have FADF_HAVEIID\n");
           if (pSafeArraySetIID)
           {
             hres = pSafeArraySetIID(sa, &IID_IUnknown);
