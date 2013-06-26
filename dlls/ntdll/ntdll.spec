@@ -604,7 +604,7 @@
 @ stdcall RtlFormatMessage(ptr long long long long ptr ptr long)
 @ stdcall RtlFreeAnsiString(long)
 @ stdcall RtlFreeHandle(ptr ptr)
-@ stdcall RtlFreeHeap(long long long)
+@ stdcall RtlFreeHeap(long long ptr)
 @ stdcall RtlFreeOemString(ptr)
 # @ stub RtlFreeRangeList
 @ stdcall RtlFreeSid (long)

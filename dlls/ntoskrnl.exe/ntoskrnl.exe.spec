@@ -1025,7 +1025,7 @@
 @ stub RtlFindUnicodePrefix
 @ stdcall RtlFormatCurrentUserKeyPath(ptr) ntdll.RtlFormatCurrentUserKeyPath
 @ stdcall RtlFreeAnsiString(long) ntdll.RtlFreeAnsiString
-@ stdcall RtlFreeHeap(long long long) ntdll.RtlFreeHeap
+@ stdcall RtlFreeHeap(long long ptr) ntdll.RtlFreeHeap
 @ stdcall RtlFreeOemString(ptr) ntdll.RtlFreeOemString
 @ stub RtlFreeRangeList
 @ stdcall RtlFreeUnicodeString(ptr) ntdll.RtlFreeUnicodeString
