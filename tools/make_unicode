@@ -88,6 +88,7 @@ my @allfiles =
     [ 10008, "VENDORS/APPLE/CHINSIMP.TXT",        0, "Mac Simplified Chinese" ],
     [ 10010, "VENDORS/APPLE/ROMANIAN.TXT",        0, "Mac Romanian" ],
     [ 10017, "VENDORS/APPLE/CYRILLIC.TXT",        0, "Mac Ukrainian" ],
+    [ 10021, "VENDORS/APPLE/THAI.TXT",            0, "Mac Thai" ],
     [ 10029, "VENDORS/MICSFT/MAC/LATIN2.TXT",     0, "Mac Latin 2" ],
     [ 10079, "VENDORS/MICSFT/MAC/ICELAND.TXT",    0, "Mac Icelandic" ],
     [ 10081, "VENDORS/MICSFT/MAC/TURKISH.TXT",    0, "Mac Turkish" ],
