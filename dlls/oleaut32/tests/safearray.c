@@ -52,13 +52,10 @@ static SAFEARRAY* (WINAPI *pSafeArrayCreateVector)(VARTYPE,LONG,ULONG);
 
 #define GETPTR(func) p##func = (void*)GetProcAddress(hOleaut32, #func)
 
-/* Is a given function exported from oleaut32? */
-#define HAVE_FUNC(func) ((void*)GetProcAddress(hOleaut32, #func) != NULL)
-
-/* Have I8/UI8 data type? */
-#define HAVE_OLEAUT32_I8      HAVE_FUNC(VarI8FromI1)
-/* Have INT_PTR/UINT_PTR type? */
-static BOOL HAVE_OLEAUT32_INT_PTR;
+/* Has I8/UI8 data type? */
+static BOOL has_i8;
+/* Has INT_PTR/UINT_PTR type? */
+static BOOL has_int_ptr;
 
 #define START_REF_COUNT 1
 #define RECORD_SIZE 64
@@ -179,14 +176,14 @@ static DWORD SAFEARRAY_GetVTSize(VARTYPE vt)
     case VT_R8:       return sizeof(LONG64);
     case VT_I8:
     case VT_UI8:
-      if (HAVE_OLEAUT32_I8)
+      if (has_i8)
         return sizeof(LONG64);
       break;
     case VT_INT:
     case VT_UINT:     return sizeof(INT);
     case VT_INT_PTR:
     case VT_UINT_PTR: 
-      if (HAVE_OLEAUT32_INT_PTR)
+      if (has_int_ptr)
         return sizeof(UINT_PTR);
       break;
     case VT_CY:       return sizeof(CY);
@@ -212,13 +209,13 @@ static void check_for_VT_INT_PTR(void)
     if (a) {
         HRESULT hres;
         trace("VT_INT_PTR is supported\n");
-        HAVE_OLEAUT32_INT_PTR = TRUE;
+        has_int_ptr = TRUE;
         hres = SafeArrayDestroy(a);
         ok(hres == S_OK, "got 0x%08x\n", hres);
     }
     else {
         trace("VT_INT_PTR is not supported\n");
-        HAVE_OLEAUT32_INT_PTR = FALSE;
+        has_int_ptr = FALSE;
     }        
 }
 
@@ -459,7 +456,7 @@ static void test_safearray(void)
 	ok(hres == S_OK,"SAD failed with hres %x\n", hres);
 
 	for (i=0;i<sizeof(vttypes)/sizeof(vttypes[0]);i++) {
-	if ((i == VT_I8 || i == VT_UI8) && HAVE_OLEAUT32_I8)
+	if ((i == VT_I8 || i == VT_UI8) && has_i8)
 	{
 	  vttypes[i].elemsize = sizeof(LONG64);
 	}
@@ -1785,6 +1782,8 @@ static void test_SafeArrayDestroyData (void)
 START_TEST(safearray)
 {
     hOleaut32 = GetModuleHandleA("oleaut32.dll");
+
+    has_i8 = GetProcAddress(hOleaut32, "VarI8FromI1") != NULL;
 
     GETPTR(SafeArrayAllocDescriptorEx);
     GETPTR(SafeArrayCopyData);
