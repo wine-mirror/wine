@@ -59,8 +59,6 @@ static SAFEARRAY* (WINAPI *pSafeArrayCreateVector)(VARTYPE,LONG,ULONG);
 #define HAVE_OLEAUT32_R8      HAVE_FUNC(VarR8FromI1)
 /* Have I8/UI8 data type? */
 #define HAVE_OLEAUT32_I8      HAVE_FUNC(VarI8FromI1)
-/* Have the decimal type? */
-#define HAVE_OLEAUT32_DECIMAL HAVE_FUNC(VarDecAdd)
 /* Have INT_PTR/UINT_PTR type? */
 static BOOL HAVE_OLEAUT32_INT_PTR;
 
@@ -201,10 +199,7 @@ static DWORD SAFEARRAY_GetVTSize(VARTYPE vt)
     case VT_DISPATCH: return sizeof(LPDISPATCH);
     case VT_VARIANT:  return sizeof(VARIANT);
     case VT_UNKNOWN:  return sizeof(LPUNKNOWN);
-    case VT_DECIMAL:
-      if (HAVE_OLEAUT32_DECIMAL)
-        return sizeof(DECIMAL);
-      break;
+    case VT_DECIMAL:  return sizeof(DECIMAL);
   }
   return 0;
 }
