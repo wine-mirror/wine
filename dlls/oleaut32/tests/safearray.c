@@ -55,8 +55,6 @@ static SAFEARRAY* (WINAPI *pSafeArrayCreateVector)(VARTYPE,LONG,ULONG);
 /* Is a given function exported from oleaut32? */
 #define HAVE_FUNC(func) ((void*)GetProcAddress(hOleaut32, #func) != NULL)
 
-/* Have IRecordInfo data type? */
-#define HAVE_OLEAUT32_RECORD  HAVE_FUNC(SafeArraySetRecordInfo)
 /* Have R8 data type? */
 #define HAVE_OLEAUT32_R8      HAVE_FUNC(VarR8FromI1)
 /* Have I8/UI8 data type? */
@@ -484,8 +482,6 @@ static void test_safearray(void)
 
 	if (a)
 	{
-	  if (!HAVE_OLEAUT32_RECORD)
-	    vttypes[i].expflags = 0;
 	  ok(a->fFeatures == (vttypes[i].expflags | vttypes[i].addflags),
 	     "SAC of %d returned feature flags %x, expected %x\n",
 	  vttypes[i].vt, a->fFeatures,
