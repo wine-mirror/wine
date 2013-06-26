@@ -310,6 +310,8 @@ my @joining_table = (0) x 65536;
 my @direction_table = ();
 my @decomp_table = ();
 my @compose_table = ();
+my $default_char;
+my $default_wchar;
 
 my %joining_forms =
 (
@@ -495,8 +497,30 @@ sub READ_DEFAULTS($)
 
 
 ################################################################
-# parse the input file
-sub READ_FILE($)
+# define a new lead byte
+sub add_lead_byte($)
+{
+    my $ch = shift;
+    push @lead_bytes, $ch;
+    $cp2uni[$ch] = 0;
+}
+
+################################################################
+# define a new char mapping
+sub add_mapping($$)
+{
+    my ($cp, $uni) = @_;
+    $cp2uni[$cp] = $uni unless defined($cp2uni[$cp]);
+    $uni2cp[$uni] = $cp unless defined($uni2cp[$uni]);
+    if ($cp > 0xff && !defined($cp2uni[$cp >> 8]))
+    {
+        add_lead_byte( $cp >> 8 );
+    }
+}
+
+################################################################
+# parse a standard codepage file
+sub read_codepage_file($)
 {
     my $name = shift;
     my $INPUT = open_data_file( $MAPPINGS, $name );
@@ -510,22 +534,13 @@ sub READ_FILE($)
 
         if (/^0x([0-9a-fA-F]+)\s+\#DBCS LEAD BYTE/)
         {
-            my $cp = hex $1;
-            push @lead_bytes,$cp;
-            $cp2uni[$cp] = 0;
+            add_lead_byte( hex $1 );
             next;
         }
+        # 0x12 0x3456
         if (/^0x([0-9a-fA-F]+)\s+0x([0-9a-fA-F]+)\s+(\#.*)?/)
         {
-            my $cp = hex $1;
-            my $uni = hex $2;
-            $cp2uni[$cp] = $uni unless defined($cp2uni[$cp]);
-            $uni2cp[$uni] = $cp unless defined($uni2cp[$uni]);
-            if ($cp > 0xff && !defined($cp2uni[$cp >> 8]))
-            {
-                push @lead_bytes,$cp >> 8;
-                $cp2uni[$cp >> 8] = 0;
-            }
+            add_mapping( hex $1, hex $2 );
             next;
         }
         die "$name: Unrecognized line $_\n";
@@ -1847,17 +1862,45 @@ sub DUMP_COMPOSE_TABLES($)
     save_file($filename);
 }
 
+################################################################
+# output a codepage definition file from the global tables
+sub output_codepage_file($$$$)
+{
+    my ($codepage, $filename, $comment, $has_glyphs) = @_;
+
+    my $output = sprintf "libs/wine/c_%03d.c", $codepage;
+    open OUTPUT,">$output.new" or die "Cannot create $output";
+
+    printf "Building %s from %s (%s)\n", $output, $filename || "hardcoded data", $comment;
+
+    # dump all tables
+
+    printf OUTPUT "/* code page %03d (%s) */\n", $codepage, $comment;
+    if ($filename)
+    {
+        print OUTPUT "/* generated from $MAPPINGS/$filename */\n";
+        print OUTPUT "/* DO NOT EDIT!! */\n\n";
+    }
+    else
+    {
+        printf OUTPUT "/* Automatically generated; DO NOT EDIT!! */\n\n";
+    }
+    printf OUTPUT "#include \"wine/unicode.h\"\n\n";
+
+    if (!@lead_bytes) { dump_sbcs_table( $codepage, $has_glyphs, $comment, $default_char, $default_wchar ); }
+    else { dump_dbcs_table( $codepage, $comment, $default_char, $default_wchar, get_lb_ranges() ); }
+    close OUTPUT;
+    save_file($output);
+}
 
 ################################################################
-# handle a "bestfit" Windows mapping file
-
-sub handle_bestfit_file($$$)
+# read a "bestfit" Windows mapping file
+sub read_bestfit_file($)
 {
-    my ($filename, $has_glyphs, $comment) = @_;
+    my ($filename) = @_;
     my $state = "";
-    my ($codepage, $width, $def, $defw, $count);
+    my ($codepage, $width, $count);
     my ($lb_cur, $lb_end);
-    my @lb_ranges = ();
 
     my $INPUT = open_data_file( $MAPPINGS, $filename ) or die "Cannot open $filename";
 
@@ -1876,8 +1919,8 @@ sub handle_bestfit_file($$$)
         if (/^CPINFO\s+(\d+)\s+0x([0-9a-fA-f]+)\s+0x([0-9a-fA-F]+)/)
         {
             $width = $1;
-            $def = hex $2;
-            $defw = hex $3;
+            $default_char = hex $2;
+            $default_wchar = hex $3;
             next;
         }
         if (/^(MBTABLE|WCTABLE|DBCSRANGE|DBCSTABLE)\s+(\d+)/)
@@ -1906,12 +1949,7 @@ sub handle_bestfit_file($$$)
             {
                 my $start = hex $1;
                 my $end = hex $2;
-                push @lb_ranges, $start, $end;
-                for (my $i = $start; $i <= $end; $i++)
-                {
-                    push @lead_bytes, $i;
-                    $cp2uni[$i] = 0;
-                }
+                for (my $i = $start; $i <= $end; $i++) { add_lead_byte( $i ); }
                 $lb_cur = $start;
                 $lb_end = $end;
                 next;
@@ -1932,23 +1970,6 @@ sub handle_bestfit_file($$$)
         die "$filename: Unrecognized line $_\n";
     }
     close $INPUT;
-
-    my $output = sprintf "libs/wine/c_%03d.c", $codepage;
-    open OUTPUT,">$output.new" or die "Cannot create $output";
-
-    printf "Building %s from %s (%s)\n", $output, $filename, $comment;
-
-    # dump all tables
-
-    printf OUTPUT "/* code page %03d (%s) */\n", $codepage, $comment;
-    printf OUTPUT "/* generated from $MAPPINGS/$filename */\n";
-    printf OUTPUT "/* DO NOT EDIT!! */\n\n";
-    printf OUTPUT "#include \"wine/unicode.h\"\n\n";
-
-    if ($width == 1) { dump_sbcs_table( $codepage, $has_glyphs, $comment, $def, $defw ); }
-    else { dump_dbcs_table( $codepage, $comment, $def, $defw, @lb_ranges ); }
-    close OUTPUT;
-    save_file($output);
 }
 
 
@@ -1956,47 +1977,36 @@ sub handle_bestfit_file($$$)
 # read an input file and generate the corresponding .c file
 sub HANDLE_FILE(@)
 {
-    my ($codepage,$filename,$has_glyphs,$comment) = @_;
+    my ($codepage,$filename,$has_glyphs,$comment,$def,$defw) = @_;
 
     @cp2uni = ();
     @lead_bytes = ();
     @uni2cp = ();
+    $default_char = $def || $DEF_CHAR;
+    $default_wchar = $defw || $DEF_CHAR;
 
-    # symbol codepage file is special
-    if ($codepage == 20932) { READ_JIS0208_FILE( $filename ); }
-    elsif ($codepage == 20127) { fill_20127_codepage(); }
+    # some codepage files are special
+    if ($codepage == 20932)
+    {
+        READ_JIS0208_FILE( $filename );
+        ADD_DEFAULT_MAPPINGS();
+    }
+    elsif ($codepage == 20127)
+    {
+        fill_20127_codepage();
+        ADD_DEFAULT_MAPPINGS();
+    }
     elsif ($filename =~ /\/bestfit/)
     {
-        handle_bestfit_file( $filename, $has_glyphs, $comment );
-        return;
-    }
-    else { READ_FILE( $filename ); }
-
-    ADD_DEFAULT_MAPPINGS();
-
-    my $output = sprintf "libs/wine/c_%03d.c", $codepage;
-    open OUTPUT,">$output.new" or die "Cannot create $output";
-
-    printf "Building %s from %s (%s)\n", $output, $filename || "hardcoded data", $comment;
-
-    # dump all tables
-
-    printf OUTPUT "/* code page %03d (%s) */\n", $codepage, $comment;
-    if ($filename)
-    {
-        print OUTPUT "/* generated from $MAPPINGS/$filename */\n";
-        print OUTPUT "/* DO NOT EDIT!! */\n\n";
+        read_bestfit_file( $filename );
     }
     else
     {
-        printf OUTPUT "/* Automatically generated; DO NOT EDIT!! */\n\n";
+        read_codepage_file( $filename );
+        ADD_DEFAULT_MAPPINGS();
     }
-    printf OUTPUT "#include \"wine/unicode.h\"\n\n";
 
-    if (!@lead_bytes) { dump_sbcs_table( $codepage, $has_glyphs, $comment, $DEF_CHAR, $DEF_CHAR ); }
-    else { dump_dbcs_table( $codepage, $comment, $DEF_CHAR, $DEF_CHAR, get_lb_ranges() ); }
-    close OUTPUT;
-    save_file($output);
+    output_codepage_file( $codepage, $filename, $comment, $has_glyphs );
 }
 
 
