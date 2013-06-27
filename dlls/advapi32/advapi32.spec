@@ -664,8 +664,8 @@
 @ stdcall RegisterTraceGuidsW(ptr ptr ptr long ptr wstr wstr ptr)
 # @ stub RemoveTraceCallback
 # @ stub RemoveUsersFromEncryptedFile
-@ stdcall ReportEventA (long long long long ptr long long str ptr)
-@ stdcall ReportEventW (long long long long ptr long long wstr ptr)
+@ stdcall ReportEventA(long long long long ptr long long ptr ptr)
+@ stdcall ReportEventW(long long long long ptr long long ptr ptr)
 @ stdcall RevertToSelf()
 @ stdcall SaferCloseLevel(ptr)
 @ stdcall SaferComputeTokenFromLevel(ptr ptr ptr long ptr)
