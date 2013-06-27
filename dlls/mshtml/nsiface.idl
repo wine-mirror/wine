@@ -3756,13 +3756,6 @@ interface nsIDocumentObserver : nsIMutationObserver
 
 [
     object,
-    uuid(c61eac14-5f7a-4481-965e-7eaa6effa85f),
-    local
-]
-interface nsCycleCollectionISupports {}
-
-[
-    object,
     uuid(3682dd99-8560-44f4-9b8f-ccce9d7b96fb),
     local
 ]
@@ -3786,3 +3779,5 @@ interface nsIPluginInstance : nsISupports
 {
     nsresult GetDOMElement(nsIDOMElement **aDOMElement);
 }
+
+cpp_quote("DEFINE_GUID(IID_nsCycleCollectionISupports, 0xc61eac14,0x5f7a,0x4481,0x96,0x5e,0x7e,0xaa,0x6e,0xff,0xa8,0x5f);")
