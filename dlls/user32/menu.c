@@ -3356,6 +3356,9 @@ void MENU_TrackMouseMenuBar( HWND hWnd, INT ht, POINT pt )
     if (IsMenu(hMenu))
     {
 	MENU_InitTracking( hWnd, hMenu, FALSE, wFlags );
+
+        /* fetch the window menu again, it may have changed */
+        hMenu = (ht == HTSYSMENU) ? get_win_sys_menu( hWnd ) : GetMenu( hWnd );
 	MENU_TrackMenu( hMenu, wFlags, pt.x, pt.y, hWnd, NULL );
 	MENU_ExitTracking(hWnd, FALSE);
     }
@@ -3395,6 +3398,9 @@ void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam, WCHAR wChar)
     if (!IsMenu( hTrackMenu )) return;
 
     MENU_InitTracking( hwnd, hTrackMenu, FALSE, wFlags );
+
+    /* fetch the window menu again, it may have changed */
+    hTrackMenu = (wParam & HTSYSMENU) ? get_win_sys_menu( hwnd ) : GetMenu( hwnd );
 
     if( wChar && wChar != ' ' )
     {
