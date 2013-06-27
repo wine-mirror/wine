@@ -1904,6 +1904,24 @@ static void test_external_connection(void)
     ok(hres == S_OK, "CoReleaseMarshalData failed: %08x\n", hres);
     ok(external_connections == 0, "external_connections = %d\n", external_connections);
 
+    /* Weak table marshaling does not increment external connections */
+    hres = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hres == S_OK, "CreateStreamOnHGlobal failed: %08x\n", hres);
+
+    hres = CoMarshalInterface(stream, &IID_ItestDual, (IUnknown*)&TestDual, MSHCTX_INPROC, NULL, MSHLFLAGS_TABLEWEAK);
+    ok(hres == S_OK, "CoMarshalInterface failed: %08x\n", hres);
+    ok(external_connections == 0, "external_connections = %d\n", external_connections);
+
+    IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
+    hres = CoUnmarshalInterface(stream, &IID_ItestDual, (void**)&iface);
+    ok(hres == S_OK, "CoUnmarshalInterface failed: %08x\n", hres);
+    ok(external_connections == 0, "external_connections = %d\n", external_connections);
+    ItestDual_Release(iface);
+
+    IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
+    hres = CoReleaseMarshalData(stream);
+    ok(hres == S_OK, "CoReleaseMarshalData failed: %08x\n", hres);
+    ok(external_connections == 0, "external_connections = %d\n", external_connections);
 }
 
 START_TEST(tmarshal)
