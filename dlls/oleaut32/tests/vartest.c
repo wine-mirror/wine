@@ -58,7 +58,7 @@ static WCHAR sz12_true[32];
   if (!p##func) { win_skip("function " # func " not available, not testing it\n"); return; }
 
 /* Has I8/UI8 data type? */
-static int has_i8 = 0;
+static BOOL has_i8;
 
 /* When comparing floating point values we cannot expect an exact match
  * because the rounding errors depend on the exact algorithm.
