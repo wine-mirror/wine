@@ -433,6 +433,8 @@ void __wine_load_dos_exe( LPCSTR filename, LPCSTR cmdline )
         }
     }
 
+    AllocConsole();
+
     if (MZ_DoLoadImage( hFile, filename, NULL, 0 ))
     {
         DWORD err = MZ_Launch( dos_cmdtail, dos_length );
