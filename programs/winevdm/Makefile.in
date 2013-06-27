@@ -1,5 +1,5 @@
 MODULE    = winevdm.exe
-APPMODE   = -mconsole
+APPMODE   = -mwindows
 IMPORTS   = user32 kernel
 
 C_SRCS = \
