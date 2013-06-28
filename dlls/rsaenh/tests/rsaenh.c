@@ -840,7 +840,6 @@ static void test_3des112(void)
       result = CryptDecrypt(hKey, 0, TRUE, 0, pbData, &dwLen);
       ok(result, "%08x\n", GetLastError());
       ok(dwLen==cTestData[i].enclen,"length incorrect, got %d, expected %d\n",dwLen,cTestData[i].enclen);
-todo_wine
       ok(memcmp(pbData,cTestData[i].decstr,cTestData[1].enclen)==0,"decryption incorrect %d\n",i);
       if((dwLen != cTestData[i].enclen) ||
          memcmp(pbData,cTestData[i].decstr,cTestData[i].enclen))
@@ -1019,7 +1018,6 @@ static void test_3des(void)
       result = CryptDecrypt(hKey, 0, TRUE, 0, pbData, &dwLen);
       ok(result, "%08x\n", GetLastError());
       ok(dwLen==cTestData[i].enclen,"length incorrect, got %d, expected %d\n",dwLen,cTestData[i].enclen);
-todo_wine
       ok(memcmp(pbData,cTestData[i].decstr,cTestData[1].enclen)==0,"decryption incorrect %d\n",i);
       if((dwLen != cTestData[i].enclen) ||
          memcmp(pbData,cTestData[i].decstr,cTestData[i].enclen))

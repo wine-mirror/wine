@@ -2380,11 +2380,13 @@ BOOL WINAPI RSAENH_CPDecrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
                     *pdwDataLen -= pbData[*pdwDataLen-1];
                 else {
                     SetLastError(NTE_BAD_DATA);
+                    setup_key(pCryptKey);
                     return FALSE;
                 }
             }
             else {
                 SetLastError(NTE_BAD_DATA);
+                setup_key(pCryptKey);
                 return FALSE;
             }
         }
