@@ -719,7 +719,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
         // Get the z-order from the window server and modify it to reflect the
         // requested window ordering.
-        windowNumbers = [[[[self class] windowNumbersWithOptions:0] mutableCopy] autorelease];
+        windowNumbers = [[[[self class] windowNumbersWithOptions:NSWindowNumberListAllSpaces] mutableCopy] autorelease];
         childWindowNumber = [NSNumber numberWithInteger:[child windowNumber]];
         [windowNumbers removeObject:childWindowNumber];
         otherIndex = [windowNumbers indexOfObject:[NSNumber numberWithInteger:[other windowNumber]]];
