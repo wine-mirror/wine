@@ -227,7 +227,7 @@ static void test_play(HWND hwnd)
     if(!err) trace("CD length %s\n", buf);
 
     if(err) { /* MCIERR_HARDWARE when given a blank disk */
-        skip("status length %s (blank disk?)\n", dbg_mcierr(ok_hw));
+        skip("status length %s (blank disk?)\n", dbg_mcierr(err));
         return;
     }
 
