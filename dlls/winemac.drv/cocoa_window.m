@@ -1182,24 +1182,11 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         }
     }
 
-    - (void) sendEvent:(NSEvent*)event
-    {
-        /* NSWindow consumes certain key-down events as part of Cocoa's keyboard
-           interface control.  For example, Control-Tab switches focus among
-           views.  We want to bypass that feature, so directly route key-down
-           events to -keyDown:. */
-        if ([event type] == NSKeyDown)
-            [[self firstResponder] keyDown:event];
-        else
-            [super sendEvent:event];
-    }
-
 
     /*
      * ---------- NSResponder method overrides ----------
      */
-    - (void) keyDown:(NSEvent *)theEvent { [self postKeyEvent:theEvent]; }
-    - (void) keyUp:(NSEvent *)theEvent   { [self postKeyEvent:theEvent]; }
+    - (void) keyDown:(NSEvent *)theEvent { /* Need an implementation to avoid beeps */ }
 
     - (void) flagsChanged:(NSEvent *)theEvent
     {
