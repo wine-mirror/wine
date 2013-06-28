@@ -441,7 +441,7 @@ again:
 
 BOOL schan_imp_allocate_certificate_credentials(schan_credentials *c)
 {
-    int ret = pgnutls_certificate_allocate_credentials((gnutls_certificate_credentials*)&c->credentials);
+    int ret = pgnutls_certificate_allocate_credentials((gnutls_certificate_credentials_t*)&c->credentials);
     if (ret != GNUTLS_E_SUCCESS)
         pgnutls_perror(ret);
     return (ret == GNUTLS_E_SUCCESS);
