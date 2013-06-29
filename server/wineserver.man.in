@@ -1,4 +1,3 @@
-.\" -*- nroff -*-
 .TH WINESERVER 1 "October 2005" "@PACKAGE_STRING@" "Windows on Unix"
 .SH NAME
 wineserver \- the Wine server
@@ -23,8 +22,8 @@ Set the debug level to
 extra verbose debugging. If
 .I n
 is not specified, the default is 1. The debug output will be sent to
-stderr. \fBwine\fR(1) will automatically set the debug level when
-starting \fBwineserver\fR if the +server option is set in the
+stderr. \fBwine\fR(1) will automatically enable normal level debugging
+when starting \fBwineserver\fR if the +server option is set in the
 WINEDEBUG variable.
 .TP
 .BR \-f ", " --foreground
@@ -88,7 +87,7 @@ Directory containing user specific data managed by
 .BR wine .
 .TP
 .BI /tmp/.wine- uid
-The directory containing the server Unix socket and the lock
+Directory containing the server Unix socket and the lock
 file. These files are created in a subdirectory generated from the
 WINEPREFIX directory device and inode numbers.
 .SH AUTHORS
@@ -98,16 +97,16 @@ is Alexandre Julliard. Many other people have contributed new features
 and bug fixes. Please check the file Changelog in the Wine
 distribution for the complete details.
 .SH BUGS
-If you find a bug, please submit a bug report at
+If you find a bug, please submit a bug report on the
 .UR http://bugs.winehq.org
-.BR http://bugs.winehq.org .
-.UE
+.B Wine bug tracker
+.UE .
 .SH AVAILABILITY
 .B wineserver
 is part of the Wine distribution, which is available through WineHQ,
-the Wine development headquarters, at
+the
 .UR http://www.winehq.org/
-.BR http://www.winehq.org/ .
-.UE
+.B Wine development headquarters
+.UE .
 .SH "SEE ALSO"
 .BR wine (1).
