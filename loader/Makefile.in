@@ -46,7 +46,7 @@ wine-installed: main.o Makefile.in wine_info.plist
 	$(CC) -o $@ $(LDEXECFLAGS) main.o $(LIBWINE) $(LIBPORT) $(LIBPTHREAD) $(EXTRALIBS) $(LDFLAGS) $(LDRPATH_INSTALL)
 
 wine_info.plist: wine_info.plist.in
-	LC_ALL=C sed -e 's,@PACKAGE_VERSION\@,@PACKAGE_VERSION@,g' $< >$@ || ($(RM) $@ && false)
+	LC_ALL=C sed -e 's,@PACKAGE_VERSION\@,@PACKAGE_VERSION@,g' $(srcdir)/wine_info.plist.in >$@ || ($(RM) $@ && false)
 
 $(EXTRA_BINARIES:%=__install__%): $(EXTRA_BINARIES) $(DESTDIR)$(bindir) dummy
 	f=`expr $@ : '__install__\(.*\)'` && $(INSTALL_PROGRAM) $$f $(DESTDIR)$(bindir)/$$f
