@@ -3448,7 +3448,7 @@ static void test_lighting_interface_versions(void)
     ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
 
     memset(&material, 0, sizeof(material));
-    material.emissive.g = 1.0f;
+    U2(U3(material).emissive).g = 1.0f;
     hr = IDirect3DDevice7_SetMaterial(device, &material);
     ok(SUCCEEDED(hr), "Failed set material, hr %#x.\n", hr);
     hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_ZENABLE, D3DZB_FALSE);

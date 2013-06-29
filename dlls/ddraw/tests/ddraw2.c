@@ -3320,7 +3320,7 @@ static void test_lighting_interface_versions(void)
 
     memset(&mat_desc, 0, sizeof(mat_desc));
     mat_desc.dwSize = sizeof(mat_desc);
-    mat_desc.dcvEmissive.g = 1.0f;
+    U2(U3(mat_desc).dcvEmissive).g = 1.0f;
     hr = IDirect3D2_CreateMaterial(d3d, &emissive, NULL);
     ok(SUCCEEDED(hr), "Failed to create material, hr %#x.\n", hr);
     hr = IDirect3DMaterial2_SetMaterial(emissive, &mat_desc);
