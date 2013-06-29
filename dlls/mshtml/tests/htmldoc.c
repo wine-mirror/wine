@@ -263,7 +263,7 @@ static const char *debugstr_guid(REFIID riid)
     if(!riid)
         return "(null)";
 
-    sprintf(buf, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+    sprintf(buf, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
             riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
             riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
             riid->Data4[5], riid->Data4[6], riid->Data4[7]);
@@ -1113,7 +1113,12 @@ static HRESULT WINAPI WinInetHttpInfo_QueryInterface(
         REFIID riid,
         void **ppvObject)
 {
-    ok(0, "unexpected call\n");
+    *ppvObject = NULL;
+
+    if(IsEqualGUID(&IID_IGetBindHandle, riid))
+        return E_NOINTERFACE;
+
+    ok(0, "unexpected call %s\n", debugstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -1169,6 +1174,8 @@ static const IWinInetHttpInfoVtbl WinInetHttpInfoVtbl = {
 
 static IWinInetHttpInfo WinInetHttpInfo = { &WinInetHttpInfoVtbl };
 
+DEFINE_GUID(IID_unk_binding, 0xf3d8f080,0xa5eb,0x476f,0x9d,0x19,0xa5,0xef,0x24,0xe5,0xc2,0xe6);
+
 static HRESULT WINAPI Binding_QueryInterface(IBinding *iface, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(&IID_IUnknown, riid)) {
@@ -1181,7 +1188,12 @@ static HRESULT WINAPI Binding_QueryInterface(IBinding *iface, REFIID riid, void 
         return S_OK;
     }
 
-    ok(0, "unexpected call\n");
+    if(IsEqualGUID(&IID_unk_binding, riid)) {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    ok(0, "unexpected call %s\n", debugstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -2930,6 +2942,9 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
 
             return E_NOTIMPL;
 
+        case 134: /* TODO */
+        case 136: /* TODO */
+        case 139: /* TODO */
         case 143: /* TODO */
         case 144: /* TODO */
             return E_NOTIMPL;
@@ -3230,13 +3245,14 @@ static IDispatch EventDispatch = { &EventDispatchVtbl };
 static HRESULT WINAPI TravelLog_QueryInterface(ITravelLog *iface, REFIID riid, void **ppv)
 {
     static const IID IID_IIETravelLog2 = {0xb67cefd2,0xe3f1,0x478a,{0x9b,0xfa,0xd8,0x93,0x70,0x37,0x5e,0x94}};
+    static const IID IID_unk_travellog = {0x6afc8b7f,0xbc17,0x4a95,{0x90,0x2f,0x6f,0x5c,0xb5,0x54,0xc3,0xd8}};
 
     if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_ITravelLog, riid)) {
         *ppv = iface;
         return S_OK;
     }
 
-    if(!IsEqualGUID(&IID_IIETravelLog2, riid))
+    if(!IsEqualGUID(&IID_IIETravelLog2, riid) && !IsEqualGUID(&IID_unk_travellog, riid))
         ok(0, "unexpected call %s\n", debugstr_guid(riid));
 
     *ppv = NULL;
@@ -3370,7 +3386,7 @@ static HRESULT  WINAPI DocObjectService_FireBeforeNavigate2(IDocObjectService *i
 
     ok(!pDispatch, "pDispatch = %p\n", pDispatch);
     ok(!strcmp_wa(lpszUrl, nav_url), "lpszUrl = %s, expected %s\n", wine_dbgstr_w(lpszUrl), nav_url);
-    ok(dwFlags == 0x40 || !dwFlags, "dwFlags = %x\n", dwFlags);
+    ok(dwFlags == 0x40 || !dwFlags || dwFlags == 0x50, "dwFlags = %x\n", dwFlags);
     ok(!lpszFrameName, "lpszFrameName = %s\n", wine_dbgstr_w(lpszFrameName));
     ok(!pPostData, "pPostData = %p\n", pPostData);
     ok(!cbPostData, "cbPostData = %d\n", cbPostData);
@@ -4916,6 +4932,7 @@ DEFINE_GUID(IID_IThumbnailView, 0x7BB0B520,0xB1A7,0x11D2,0xBB,0x23,0x00,0xC0,0x4
 DEFINE_GUID(IID_IRenMailEditor, 0x000670BA,0x0000,0x0000,0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
 DEFINE_GUID(IID_unk4, 0x305104a6,0x98b5,0x11cf,0xbb,0x82,0x00,0xaa,0x00,0xbd,0xce,0x0b);
 DEFINE_GUID(IID_IDocHostUIHandlerPriv, 0xf0d241d1,0x5d0e,0x4e85,0xbc,0xb4,0xfa,0xd7,0xf7,0xc5,0x52,0x8c);
+DEFINE_GUID(IID_unk5, 0x5f95accc,0xd7a1,0x4574,0xbc,0xcb,0x69,0x71,0x35,0xbc,0x41,0xde);
 
 static HRESULT QueryInterface(REFIID riid, void **ppv)
 {
@@ -4955,6 +4972,8 @@ static HRESULT QueryInterface(REFIID riid, void **ppv)
         return E_NOINTERFACE; /* ? */
     else if(IsEqualGUID(&IID_unk4, riid))
         return E_NOINTERFACE; /* ? */
+    else if(IsEqualGUID(&IID_unk5, riid))
+        return E_NOINTERFACE; /* IE10 */
     else if(IsEqualGUID(&IID_IDocHostUIHandlerPriv, riid))
         return E_NOINTERFACE; /* ? */
     else
