@@ -5,13 +5,15 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2013-06-14 21:16+0900\n"
-"Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
-"Language-Team: none\n"
+"PO-Revision-Date: 2013-07-02 23:19+0900\n"
+"Last-Translator: Akira Nakagawa <matyapiro31@yahoo.co.jp>\n"
+"Language-Team: 日本語 <>\n"
 "Language: Japanese\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 1.5.4\n"
 
 #: appwiz.rc:55
 msgid "Install/Uninstall"
@@ -950,7 +952,7 @@ msgstr "白"
 
 #: comdlg32.rc:52
 msgid "Unreadable Entry"
-msgstr ""
+msgstr "読み込めない値"
 
 #: comdlg32.rc:54
 msgid ""
@@ -1273,7 +1275,7 @@ msgstr "次回更新場所"
 
 #: crypt32.rc:42
 msgid "Yes or No Trust"
-msgstr ""
+msgstr "信頼する(はい または いいえ)"
 
 #: crypt32.rc:43
 msgid "Email Address"
@@ -1313,7 +1315,7 @@ msgstr "S/MIME機能"
 
 #: crypt32.rc:52
 msgid "Prefer Signed Data"
-msgstr ""
+msgstr "署名済みデータを優先"
 
 #: crypt32.rc:53 cryptdlg.rc:31
 msgctxt "Certification Practice Statement"
@@ -1322,7 +1324,7 @@ msgstr "CPS"
 
 #: crypt32.rc:54 cryptdlg.rc:32
 msgid "User Notice"
-msgstr ""
+msgstr "使用者への通知"
 
 #: crypt32.rc:55
 msgid "On-line Certificate Status Protocol"
@@ -1430,143 +1432,143 @@ msgstr "シリアル番号"
 
 #: crypt32.rc:81
 msgid "CA Version"
-msgstr ""
+msgstr "CA バージョン"
 
 #: crypt32.rc:82
 msgid "Cross CA Version"
-msgstr ""
+msgstr "クロス CA バージョン"
 
 #: crypt32.rc:83
 msgid "Serialized Signature Serial Number"
-msgstr ""
+msgstr "整序された署名の順番"
 
 #: crypt32.rc:84
 msgid "Principal Name"
-msgstr ""
+msgstr "主要名称"
 
 #: crypt32.rc:85
 msgid "Windows Product Update"
-msgstr ""
+msgstr "Windows 製品のアップデート"
 
 #: crypt32.rc:86
 msgid "Enrollment Name Value Pair"
-msgstr ""
+msgstr "登録名と値の対"
 
 #: crypt32.rc:87
 msgid "OS Version"
-msgstr ""
+msgstr "OSのバージョン"
 
 #: crypt32.rc:88
 msgid "Enrollment CSP"
-msgstr ""
+msgstr "登録CSP"
 
 #: crypt32.rc:89
 msgid "CRL Number"
-msgstr ""
+msgstr "CRL ナンバー"
 
 #: crypt32.rc:90
 msgid "Delta CRL Indicator"
-msgstr ""
+msgstr "デルタ CRL インディケータ"
 
 #: crypt32.rc:91
 msgid "Issuing Distribution Point"
-msgstr ""
+msgstr "公開配布ポイント"
 
 #: crypt32.rc:92
 msgid "Freshest CRL"
-msgstr ""
+msgstr "最新のCRL"
 
 #: crypt32.rc:93
 msgid "Name Constraints"
-msgstr ""
+msgstr "名前の制約"
 
 #: crypt32.rc:94
 msgid "Policy Mappings"
-msgstr ""
+msgstr "ポリシーの表示"
 
 #: crypt32.rc:95
 msgid "Policy Constraints"
-msgstr ""
+msgstr "ポリシーの制約"
 
 #: crypt32.rc:96
 msgid "Cross-Certificate Distribution Points"
-msgstr ""
+msgstr "複数の署名の配布ポイント"
 
 #: crypt32.rc:97
 msgid "Application Policies"
-msgstr ""
+msgstr "アプリケーションのポリシー"
 
 #: crypt32.rc:98
 msgid "Application Policy Mappings"
-msgstr ""
+msgstr "アプリケーションのポリシーの表示"
 
 #: crypt32.rc:99
 msgid "Application Policy Constraints"
-msgstr ""
+msgstr "アプリケーションのポリシーの制約"
 
 #: crypt32.rc:100
 msgid "CMC Data"
-msgstr ""
+msgstr "CMC データ"
 
 #: crypt32.rc:101
 msgid "CMC Response"
-msgstr ""
+msgstr "CMC レスポンス"
 
 #: crypt32.rc:102
 msgid "Unsigned CMC Request"
-msgstr ""
+msgstr "非署名CMCの要求"
 
 #: crypt32.rc:103
 msgid "CMC Status Info"
-msgstr ""
+msgstr "CMC ステータス 情報"
 
 #: crypt32.rc:104
 msgid "CMC Extensions"
-msgstr ""
+msgstr "CMC 拡張"
 
 #: crypt32.rc:105
 msgid "CMC Attributes"
-msgstr ""
+msgstr "CMC 属性"
 
 #: crypt32.rc:106
 msgid "PKCS 7 Data"
-msgstr ""
+msgstr "PKCS 7 データ"
 
 #: crypt32.rc:107
 msgid "PKCS 7 Signed"
-msgstr ""
+msgstr "署名付きのPKCS 7"
 
 #: crypt32.rc:108
 msgid "PKCS 7 Enveloped"
-msgstr ""
+msgstr "保護されたPKCS 7"
 
 #: crypt32.rc:109
 msgid "PKCS 7 Signed Enveloped"
-msgstr ""
+msgstr "保護された署名付きのPKCS 7"
 
 #: crypt32.rc:110
 msgid "PKCS 7 Digested"
-msgstr ""
+msgstr "ダイジェストのPKCS 7"
 
 #: crypt32.rc:111
 msgid "PKCS 7 Encrypted"
-msgstr ""
+msgstr "暗号化されたPKCS 7"
 
 #: crypt32.rc:112
 msgid "Previous CA Certificate Hash"
-msgstr ""
+msgstr "以前のCA 署名のハッシュ"
 
 #: crypt32.rc:113
 msgid "Virtual Base CRL Number"
-msgstr ""
+msgstr "仮想CRLナンバー"
 
 #: crypt32.rc:114
 msgid "Next CRL Publish"
-msgstr ""
+msgstr "次のCRL 公開"
 
 #: crypt32.rc:115
 msgid "CA Encryption Certificate"
-msgstr ""
+msgstr "CA 暗号証明書"
 
 #: crypt32.rc:116 cryptui.rc:145
 msgid "Key Recovery Agent"
@@ -1574,15 +1576,15 @@ msgstr "キー回復エージェント"
 
 #: crypt32.rc:117
 msgid "Certificate Template Information"
-msgstr ""
+msgstr "証明書テンプレート情報"
 
 #: crypt32.rc:118
 msgid "Enterprise Root OID"
-msgstr ""
+msgstr "エンタープライズ ルート OID"
 
 #: crypt32.rc:119
 msgid "Dummy Signer"
-msgstr ""
+msgstr "ダミーの署名"
 
 #: crypt32.rc:120
 msgid "Encrypted Private Key"
@@ -1594,7 +1596,7 @@ msgstr "公開された CRL の場所"
 
 #: crypt32.rc:122
 msgid "Enforce Certificate Chain Policy"
-msgstr ""
+msgstr "証明書チェーンのポリシーを適用"
 
 #: crypt32.rc:123
 msgid "Transaction Id"
@@ -1847,7 +1849,7 @@ msgstr "CA"
 
 #: crypt32.rc:193
 msgid "End Entity"
-msgstr ""
+msgstr "終了値"
 
 #: crypt32.rc:194
 msgid "Path Length Constraint="
@@ -2037,15 +2039,15 @@ msgstr "ポリシー識別子: "
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
-msgstr ""
+msgstr "ポリシーの修飾子 情報"
 
 #: cryptdlg.rc:30
 msgid "Policy Qualifier Id="
-msgstr ""
+msgstr "ポリシーの修飾子 Id="
 
 #: cryptdlg.rc:33
 msgid "Qualifier"
-msgstr ""
+msgstr "修飾子"
 
 #: cryptdlg.rc:34
 msgid "Notice Reference"
@@ -2211,7 +2213,7 @@ msgstr "Cryptographic Message Syntax Standard/PKCS #7 メッセージ (*.p7b)"
 
 #: cryptui.rc:298
 msgid "Personal Information Exchange/PKCS #12 (*.pfx; *.p12)"
-msgstr ""
+msgstr "個人情報交換ファイル/PKCS #12 (*.pfx; *.p12)"
 
 #: cryptui.rc:300 cryptui.rc:78 cryptui.rc:159
 msgid "Microsoft Serialized Certificate Store (*.sst)"
@@ -2353,15 +2355,15 @@ msgstr "形式を選択してください:"
 
 #: cryptui.rc:405
 msgid "&DER-encoded X.509 (*.cer)"
-msgstr "&DER符号化された X.509 (*.cer)"
+msgstr "DER符号化された X.509(&D) (*.cer)"
 
 #: cryptui.rc:407
 msgid "Ba&se64-encoded X.509 (*.cer):"
-msgstr "Ba&se64符号化された X.509 (*.cer):"
+msgstr "Base64で符号化された X.509(&S) (*.cer):"
 
 #: cryptui.rc:409
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (*.p7b)"
-msgstr "&Cryptographic Message Syntax Standard/PKCS #7 メッセージ (*.p7b)"
+msgstr "暗号メッセージ構文/PKCS #7 メッセージ(&C) (*.p7b)"
 
 #: cryptui.rc:411
 msgid "&Include all certificates in the certification path if possible"
@@ -2369,7 +2371,7 @@ msgstr "可能ならば証明パス中のすべての証明書を含める(&I)"
 
 #: cryptui.rc:413
 msgid "&Personal Information Exchange/PKCS #12 (*.pfx)"
-msgstr ""
+msgstr "個人情報交換ファイル(&P)/PKCS #12 (*.pfx)"
 
 #: cryptui.rc:415
 msgid "Incl&ude all certificates in the certification path if possible"
@@ -2587,7 +2589,7 @@ msgstr "X.509 証明書 (*.cer; *.crt)"
 
 #: cryptui.rc:75
 msgid "Personal Information Exchange (*.pfx; *.p12)"
-msgstr ""
+msgstr "個人情報交換ファイル (*.pfx; *.p12)"
 
 #: cryptui.rc:76 cryptui.rc:155
 msgid "Certificate Revocation List (*.crl)"
@@ -2647,7 +2649,7 @@ msgstr "CMS/PKCS #7 メッセージ"
 
 #: cryptui.rc:94
 msgid "Personal Information Exchange"
-msgstr ""
+msgstr "個人情報変換ファイル"
 
 #: cryptui.rc:96
 msgid "The import was successful."
@@ -2861,7 +2863,7 @@ msgstr "CMS/PKCS #7 メッセージ (*.p7b)"
 
 #: cryptui.rc:158
 msgid "Personal Information Exchange (*.pfx)"
-msgstr ""
+msgstr "個人情報変換ファイル (*.pfx)"
 
 #: cryptui.rc:160
 msgid "File Format"
@@ -7324,7 +7326,7 @@ msgstr "ボー レート"
 
 #: serialui.rc:30
 msgid "Parity"
-msgstr "パリティ"
+msgstr "パリティ(等価性)"
 
 #: serialui.rc:32
 msgid "Flow Control"
@@ -7910,48 +7912,48 @@ msgstr "プログラム"
 
 #: shell32.rc:201
 msgid "My Documents"
-msgstr ""
+msgstr "マイドキュメント"
 
 #: shell32.rc:202
 msgid "Favorites"
-msgstr ""
+msgstr "お気に入り"
 
 #: shell32.rc:203
 msgid "StartUp"
-msgstr ""
+msgstr "スタートアップ"
 
 #: shell32.rc:204
 msgid "Start Menu"
-msgstr ""
+msgstr "スタートメニュー"
 
 #: shell32.rc:205
 msgid "My Music"
-msgstr ""
+msgstr "マイミュージック"
 
 #: shell32.rc:206
 msgid "My Videos"
-msgstr ""
+msgstr "マイビデオ"
 
 #: shell32.rc:207
 msgctxt "directory"
 msgid "Desktop"
-msgstr ""
+msgstr "デスクトップ"
 
 #: shell32.rc:208
 msgid "NetHood"
-msgstr ""
+msgstr "ネットワーク内"
 
 #: shell32.rc:209
 msgid "Templates"
-msgstr ""
+msgstr "テンプレート"
 
 #: shell32.rc:210
 msgid "PrintHood"
-msgstr ""
+msgstr "プリンタ内"
 
 #: shell32.rc:211 winhlp32.rc:45
 msgid "History"
-msgstr ""
+msgstr "ヒストリ"
 
 #: shell32.rc:212
 msgid "Program Files"
@@ -7959,7 +7961,7 @@ msgstr "Program Files"
 
 #: shell32.rc:214
 msgid "My Pictures"
-msgstr ""
+msgstr "マイピクチャ"
 
 #: shell32.rc:215
 msgid "Common Files"
@@ -7967,23 +7969,23 @@ msgstr "Common Files"
 
 #: shell32.rc:216 shell32.rc:147 shell32.rc:232
 msgid "Documents"
-msgstr ""
+msgstr "ドキュメント"
 
 #: shell32.rc:217
 msgid "Administrative Tools"
-msgstr ""
+msgstr "管理者用ツール"
 
 #: shell32.rc:218
 msgid "Music"
-msgstr ""
+msgstr "ミュージック"
 
 #: shell32.rc:219
 msgid "Pictures"
-msgstr ""
+msgstr "ピクチャ"
 
 #: shell32.rc:220
 msgid "Videos"
-msgstr ""
+msgstr "ビデオ"
 
 #: shell32.rc:213
 msgid "Program Files (x86)"
@@ -7991,19 +7993,19 @@ msgstr "Program Files (x86)"
 
 #: shell32.rc:221
 msgid "Contacts"
-msgstr ""
+msgstr "連絡先"
 
 #: shell32.rc:222 winefile.rc:110
 msgid "Links"
-msgstr ""
+msgstr "リンク"
 
 #: shell32.rc:223
 msgid "Slide Shows"
-msgstr ""
+msgstr "スライドショー"
 
 #: shell32.rc:224
 msgid "Playlists"
-msgstr ""
+msgstr "プレイリスト"
 
 #: shell32.rc:148 taskmgr.rc:326
 msgid "Status"
@@ -8019,35 +8021,35 @@ msgstr "機種名"
 
 #: shell32.rc:225
 msgid "Sample Music"
-msgstr ""
+msgstr "サンプルミュージック"
 
 #: shell32.rc:226
 msgid "Sample Pictures"
-msgstr ""
+msgstr "サンプルピクチャ"
 
 #: shell32.rc:227
 msgid "Sample Playlists"
-msgstr ""
+msgstr "サンプルプレイリスト"
 
 #: shell32.rc:228
 msgid "Sample Videos"
-msgstr ""
+msgstr "サンプルビデオ"
 
 #: shell32.rc:229
 msgid "Saved Games"
-msgstr ""
+msgstr "保存済みのゲーム"
 
 #: shell32.rc:230
 msgid "Searches"
-msgstr ""
+msgstr "検索"
 
 #: shell32.rc:231
 msgid "Users"
-msgstr ""
+msgstr "ユーザー"
 
 #: shell32.rc:233
 msgid "Downloads"
-msgstr ""
+msgstr "ダウンロード"
 
 #: shell32.rc:166
 msgid "Unable to create new Folder: Permission denied."
@@ -10082,7 +10084,7 @@ msgstr "Wine コマンド プロンプト"
 
 #: cmd.rc:349
 msgid "Wine CMD Version %1!S!\n"
-msgstr ""
+msgstr "Wine CMD バージョン %1!S!\n"
 
 #: cmd.rc:350
 msgid "More? "
@@ -10368,7 +10370,7 @@ msgstr "アクティブな接続"
 
 #: netstat.rc:28
 msgid "Proto"
-msgstr ""
+msgstr "合意"
 
 #: netstat.rc:29
 msgid "Local Address"
@@ -11010,15 +11012,15 @@ msgstr "インターフェイス"
 
 #: oleview.rc:138
 msgid "Registry"
-msgstr ""
+msgstr "レジストリ"
 
 #: oleview.rc:139
 msgid "Implementation"
-msgstr ""
+msgstr "実装"
 
 #: oleview.rc:140
 msgid "Activation"
-msgstr ""
+msgstr "発動"
 
 #: oleview.rc:142
 msgid "CoGetClassObject failed."
@@ -12542,7 +12544,7 @@ msgstr ""
 
 #: view.rc:33
 msgid "&Pan"
-msgstr "パン(&P)"
+msgstr "移動(&P)"
 
 #: view.rc:35
 msgid "&Scale to Window"
@@ -13301,7 +13303,7 @@ msgstr "それぞれの文字は %1!u! ピクセルの幅、%2!u! ピクセル�
 
 #: wineconsole.rc:35
 msgid "This is a test"
-msgstr "これはテスト"
+msgstr "これはテストです。"
 
 #: wineconsole.rc:41
 msgid "wineconsole: Couldn't parse event id\n"
@@ -13634,7 +13636,7 @@ msgstr "変更日"
 
 #: winefile.rc:109
 msgid "Index/Inode"
-msgstr ""
+msgstr "索引・Inode"
 
 #: winefile.rc:114
 msgid "%1 of %2 free"
