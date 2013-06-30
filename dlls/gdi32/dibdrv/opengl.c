@@ -121,7 +121,7 @@ static BOOL init_opengl(void)
             goto failed;
         }
     }
-#define LOAD_FUNCPTR(f) do if (!(p##f = (void *)wine_dlsym( osmesa_handle, #f, buffer, sizeof(buffer) ))) \
+#define LOAD_FUNCPTR(f) do if (!(p##f = wine_dlsym( osmesa_handle, #f, buffer, sizeof(buffer) ))) \
     { \
         ERR( "%s not found in %s (%s), disabling.\n", #f, SONAME_LIBOSMESA, buffer ); \
         goto failed; \
