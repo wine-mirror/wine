@@ -34,7 +34,7 @@ msgid ""
 "to modify its installed components, select it from the list and click Modify/"
 "Remove."
 msgstr ""
-"Urmatoarele programe pot fi îndepărtate automat. Pentru a îndepărta un "
+"Următoarele programe pot fi îndepărtate automat. Pentru a îndepărta un "
 "program sau pentru ai modifica componentele instalate, alegeți programul din "
 "listă și apăsați pe „Modifică/&șterge”."
 
@@ -76,7 +76,7 @@ msgstr "OK"
 #: appwiz.rc:76
 msgid "The following information can be used to get technical support for %s:"
 msgstr ""
-"Următoarele informații pot fi folosite la obținerea de asistență technică "
+"Următoarele informații pot fi folosite la obținerea de asistență tehnică "
 "pentru „%s”:"
 
 #: appwiz.rc:77
@@ -248,7 +248,7 @@ msgstr "&Opțiuni..."
 
 #: avifil32.rc:46
 msgid "&Interleave every"
-msgstr "Ȋ&ntrețese fiecare"
+msgstr "&Întrețese fiecare"
 
 #: avifil32.rc:48 msvfw32.rc:48
 msgid "frames"
@@ -320,7 +320,7 @@ msgstr "&Termină"
 
 #: comctl32.rc:78
 msgid "Customize Toolbar"
-msgstr "Personalizare toolbar"
+msgstr "Personalizare bara de unelte"
 
 #: comctl32.rc:81 cryptui.rc:348 ieframe.rc:40 oleview.rc:80 oleview.rc:185
 #: oleview.rc:198 oleview.rc:210 taskmgr.rc:139
@@ -363,7 +363,7 @@ msgstr "<- &Șterge"
 
 #: comctl32.rc:90
 msgid "&Toolbar buttons:"
-msgstr "Butoane &toolbar:"
+msgstr "Bu&toane de bară de unelte:"
 
 #: comctl32.rc:39
 msgid "Separator"
@@ -601,7 +601,7 @@ msgstr "&Adaugă culori personalizate"
 
 #: comdlg32.rc:303
 msgid "&Define Custom Colors >>"
-msgstr "&Definește colori personalizate >>"
+msgstr "&Definește culori personalizate >>"
 
 #: comdlg32.rc:310 regedit.rc:223 regedit.rc:233
 msgid "Find"
@@ -850,7 +850,7 @@ msgstr "Detalii"
 
 #: comdlg32.rc:45
 msgid "Browse to Desktop"
-msgstr "Navigează la birou"
+msgstr "Navighează la birou"
 
 #: comdlg32.rc:109
 msgid "Regular"
@@ -953,7 +953,7 @@ msgid ""
 "Margins overlap or fall outside Paper boundaries.\n"
 "Please reenter margins."
 msgstr ""
-"Marginile se suprapun sau sunt in afara hârtiei.\n"
+"Marginile se suprapun sau sunt în afara hârtiei.\n"
 "Introduceți vă rog din nou marginile."
 
 #: comdlg32.rc:60
@@ -999,7 +999,7 @@ msgid ""
 msgstr ""
 "Trebuie să instalați o imprimantă înainte de a executa activități în "
 "referință cu imprimanta ca spre exemplu setări pagină sau tipărirea unui "
-"document. Instalați va rog o imprimantă și reincercați."
+"document. Instalați va rog o imprimantă și reîncercați."
 
 #: comdlg32.rc:137
 msgid "Select a font size between %1!d! and %2!d! points."
@@ -1035,7 +1035,7 @@ msgstr "Eroare; "
 
 #: comdlg32.rc:82
 msgid "Pending deletion; "
-msgstr "Aștept stergerea; "
+msgstr "Aștept ștergerea; "
 
 #: comdlg32.rc:83
 msgid "Paper jam; "
@@ -1087,7 +1087,7 @@ msgstr "Procesez; "
 
 #: comdlg32.rc:95
 msgid "Initializing; "
-msgstr "Initializez; "
+msgstr "Inițializez; "
 
 #: comdlg32.rc:96
 msgid "Warming up; "
@@ -1186,7 +1186,7 @@ msgstr ""
 "Cu tasta Caps Lock activată este foarte probabil că veți introduce parola "
 "greșit.\n"
 "\n"
-"Inainte de a introduce parola apăsați tasta Caps Lock pentru a dezactiva\n"
+"Înainte de a introduce parola apăsați tasta Caps Lock pentru a dezactiva\n"
 "scrierea cu majuscule."
 
 #: credui.rc:31
@@ -1788,7 +1788,7 @@ msgstr "Nume alternativ="
 
 #: crypt32.rc:183
 msgid "Email Address="
-msgstr "Addresa de e-mail="
+msgstr "Adresa de e-mail="
 
 #: crypt32.rc:184
 msgid "DNS Name="
@@ -1967,7 +1967,7 @@ msgstr "Semnare certificat"
 
 #: crypt32.rc:227
 msgid "Off-line CRL Signing"
-msgstr "Semnare CRL offline"
+msgstr "Semnare CRL deconectată"
 
 #: crypt32.rc:228
 msgid "CRL Signing"
@@ -3761,7 +3761,7 @@ msgstr ""
 
 #: winerror.mc:206
 msgid "End of file.\n"
-msgstr "Sfîrșit de fișier.\n"
+msgstr "Sfârșit de fișier.\n"
 
 #: winerror.mc:211 winerror.mc:436
 msgid "Disk full.\n"
@@ -5143,7 +5143,7 @@ msgstr "Adresa de repertoar.\n"
 
 #: winerror.mc:1841
 msgid "Service already registered.\n"
-msgstr "Serviciul este deja registrat.\n"
+msgstr "Serviciul este deja înregistrat.\n"
 
 #: winerror.mc:1846
 msgid "Service not found.\n"
@@ -6831,7 +6831,7 @@ msgstr "'%s' nu este un nume valid de port"
 
 #: localui.rc:30
 msgid "Port %s already exists"
-msgstr "Portul %s existsă deja"
+msgstr "Portul %s există deja"
 
 #: localui.rc:31
 msgid "This port has no options to configure"
@@ -6997,7 +6997,7 @@ msgid ""
 "Copyright 2002 by Michael Guennewig"
 msgstr ""
 "Codecul video Wine MS-RLE\n"
-"Copyright 2002 by Michael Günnewig"
+"Copyright 2002 Michael Günnewig"
 
 #: msvfw32.rc:30
 msgid "Video Compression"
@@ -7029,7 +7029,7 @@ msgstr "Rata de &date"
 
 #: msvfw32.rc:52
 msgid "kB/s"
-msgstr "kO/s"
+msgstr "ko/s"
 
 #: msvfw32.rc:25
 msgid "Full Frames (Uncompressed)"
@@ -7349,7 +7349,7 @@ msgstr "Afișează ca pictogramă"
 
 #: oledlg.rc:68 setupapi.rc:58
 msgid "Browse..."
-msgstr "Navigează..."
+msgstr "Navighează..."
 
 #: oledlg.rc:69
 msgid "File:"
@@ -7553,7 +7553,7 @@ msgid ""
 "make sure the correct drive is selected below"
 msgstr ""
 "Introduceți discul de instalare al producătorului\n"
-"și asigurațivă că unitatea corectă a fost selectată mai jos"
+"și asigurați-vă că unitatea corectă a fost selectată mai jos"
 
 #: setupapi.rc:54
 msgid "Copy manufacturer's files from:"
@@ -7601,7 +7601,7 @@ msgstr "Selecte&ază tot"
 
 #: shdoclc.rc:49
 msgid "Create Shor&tcut"
-msgstr "Crează s&curtătură"
+msgstr "Creează s&curtătură"
 
 #: shdoclc.rc:50 shdoclc.rc:81 shdoclc.rc:134 shdoclc.rc:161 shdoclc.rc:185
 msgid "Add to &Favorites..."
@@ -7836,7 +7836,7 @@ msgstr "Defilare în jos"
 
 #: shdoclc.rc:232
 msgid "Left Edge"
-msgstr "Marginea stîngă"
+msgstr "Marginea stângă"
 
 #: shdoclc.rc:233
 msgid "Right Edge"
@@ -7852,7 +7852,7 @@ msgstr "Pagină mai la dreapta"
 
 #: shdoclc.rc:238
 msgid "Scroll Left"
-msgstr "Defilează la stînga"
+msgstr "Defilează la stânga"
 
 #: shdoclc.rc:239
 msgid "Scroll Right"
@@ -7944,7 +7944,7 @@ msgstr ""
 
 #: shell32.rc:95
 msgid "E&xplore"
-msgstr "E&xploreză"
+msgstr "E&xplorează"
 
 #: shell32.rc:98
 msgid "C&ut"
@@ -7952,7 +7952,7 @@ msgstr "Dec&upează"
 
 #: shell32.rc:101
 msgid "Create &Link"
-msgstr "Crează &link"
+msgstr "Creează &link"
 
 #: shell32.rc:103 regedit.rc:91
 msgid "&Rename"
@@ -8231,7 +8231,7 @@ msgstr "Model"
 
 #: shell32.rc:225
 msgid "Sample Music"
-msgstr "Eșantioane de musică"
+msgstr "Eșantioane de muzică"
 
 #: shell32.rc:226
 msgid "Sample Pictures"
@@ -8251,7 +8251,7 @@ msgstr "Jocuri salvate"
 
 #: shell32.rc:230
 msgid "Searches"
-msgstr "Cautări"
+msgstr "Căutări"
 
 #: shell32.rc:231
 msgid "Users"
@@ -9595,7 +9595,7 @@ msgstr "COPY <fișier> copiază un fișier.\n"
 
 #: cmd.rc:46
 msgid "CTTY changes the input/output device.\n"
-msgstr "CTTY schimbă dispozitivul de intrăre/ieșire.\n"
+msgstr "CTTY schimbă dispozitivul de intrare/ieșire.\n"
 
 #: cmd.rc:47
 msgid "DATE shows or changes the system date.\n"
@@ -9643,7 +9643,7 @@ msgid ""
 "not exist in wine's cmd.\n"
 msgstr ""
 "Comanda FOR se utilizează pentru a executa o comandă pentru fiecare set\n"
-"de fișere.\n"
+"de fișiere.\n"
 "\n"
 "Sintaxă: FOR %variabilă IN (set) DO comandă\n"
 "\n"
@@ -9806,7 +9806,7 @@ msgstr ""
 "\n"
 "Următoarele șiruri de caractere au semnificație specială:\n"
 "\n"
-"$$  Semnul dollar       $_   Salt de rând       $b  Bara verticală (|)\n"
+"$$  Semnul dolar        $_   Salt de rând       $b  Bara verticală (|)\n"
 "$d  Data curentă        $e   Escape             $g  Semnul >\n"
 "$l  Semnul <            $n   Unitatea curenta   $p  Calea curentă\n"
 "$q  Semnul egal         $t   Ora curentă        $v  Versiunea de cmd\n"
@@ -9867,7 +9867,7 @@ msgid ""
 msgstr ""
 "SET afișează sau schimbă variabilele de mediu ale cmd.\n"
 "\n"
-"SET fără parametri afișează variabilele de mediu currente.\n"
+"SET fără parametri afișează variabilele de mediu curente.\n"
 "\n"
 "Pentru a crea sau modifica o variabilă de mediu, sintaxa este:\n"
 "\n"
@@ -10695,7 +10695,7 @@ msgstr "&Șterge\tDel"
 
 #: notepad.rc:46
 msgid "Select &all\tCtrl+A"
-msgstr "S&electeză tot\tCtrl+A"
+msgstr "S&electează tot\tCtrl+A"
 
 #: notepad.rc:47
 msgid "&Time/Date\tF5"
@@ -10874,7 +10874,7 @@ msgid ""
 "Continue?"
 msgstr ""
 "%1\n"
-"Acest document conține caractere unicode care se v-or pierde\n"
+"Acest document conține caractere unicode care se vor pierde\n"
 "dacă salvați acest fișier în codificarea %2.\n"
 "Pentru a reține aceste caractere dați clic pe „Renunță” și apoi\n"
 "alegeți una din opțiunile unicode din lista de selecție a codificării.\n"
@@ -11005,8 +11005,8 @@ msgid ""
 "These settings change only registry values.\n"
 "They have no effect on Wine performance."
 msgstr ""
-"These settings changes only register values.\n"
-"It has no effect on Wine performance."
+"Aceste setări schimbă doar valori în registru.\n"
+"Nu au nici un efect asupra performanței în Wine."
 
 #: oleview.rc:178
 msgid "Default Interface Viewer"
@@ -12485,7 +12485,7 @@ msgstr "Selectați coloanele care vor fi vizibile pe pagina Proces"
 
 #: taskmgr.rc:217
 msgid "Displays kernel time in the performance graphs"
-msgstr "Afișează timpur nucleului în graficele de funcționare"
+msgstr "Afișează timpul nucleului în graficele de funcționare"
 
 #: taskmgr.rc:219
 msgid "A single history graph shows total CPU usage"
@@ -12569,7 +12569,7 @@ msgstr "Procese: %d"
 
 #: taskmgr.rc:267
 msgid "Mem Usage: %1!u!kB / %2!u!kB"
-msgstr "Utilizare memorie: %1!u!kO / %2!u!kO"
+msgstr "Utilizare memorie: %1!u!ko / %2!u!ko"
 
 #: taskmgr.rc:272
 msgid "Image Name"
@@ -13055,7 +13055,7 @@ msgstr "Setări Wine"
 
 #: winecfg.rc:43
 msgid "Theme files (*.msstyles; *.theme)"
-msgstr "Fișere de tematică (*.msstyles; *.theme)"
+msgstr "Fișiere de tematică (*.msstyles; *.theme)"
 
 #: winecfg.rc:44
 msgid "Select a theme file"
@@ -13094,8 +13094,8 @@ msgid ""
 "Changing the load order of this library is not recommended.\n"
 "Are you sure you want to do this?"
 msgstr ""
-"Nu se recomandează schimbarea ordinei de încărcare pentru această librărie.\n"
-"Doriți întradevăr să schimbați ordinea de încărcare?"
+"Nu se recomandă schimbarea ordini de încărcare pentru această librărie.\n"
+"Doriți într-adevăr să schimbați ordinea de încărcare?"
 
 #: winecfg.rc:52
 msgid "Warning: system library"
@@ -13165,7 +13165,7 @@ msgid ""
 msgstr ""
 "Nu mai puteți adăuga nici o unitate.\n"
 "\n"
-"Fiecare unitate trebuie să aibă o literă de la A la Z associată cu ea. Acest "
+"Fiecare unitate trebuie să aibă o literă de la A la Z asociată cu ea. Acest "
 "fapt limitează numărul de unități la 26."
 
 #: winecfg.rc:72
@@ -13182,7 +13182,7 @@ msgstr ""
 "Sunteți sigur că vreți să ștergeți unitatea C?\n"
 "\n"
 "Foarte multe aplicații Windows presupun că unitatea C există! Dacă nu, vor "
-"termina în mod neașteptat! Dacă executați stergerea nu uitați să recreați "
+"termina în mod neașteptat! Dacă executați ștergerea nu uitați să recreați "
 "unitatea C!"
 
 #: winecfg.rc:74
@@ -13581,7 +13581,7 @@ msgstr "Afișează &detalii"
 
 #: winedbg.rc:63
 msgid "Program Error Details"
-msgstr "Detalli eroare de program"
+msgstr "Detalii eroare de program"
 
 #: winedbg.rc:70
 msgid ""
@@ -13823,17 +13823,17 @@ msgstr "%1 din %2 liberi"
 #: winefile.rc:115
 msgctxt "unit kilobyte"
 msgid "kB"
-msgstr "kO"
+msgstr "ko"
 
 #: winefile.rc:116
 msgctxt "unit megabyte"
 msgid "MB"
-msgstr "MO"
+msgstr "Mo"
 
 #: winefile.rc:117
 msgctxt "unit gigabyte"
 msgid "GB"
-msgstr "GO"
+msgstr "Go"
 
 #: winemine.rc:34
 msgid "&Game"
@@ -14192,7 +14192,7 @@ msgstr "Despărțire rânduri"
 
 #: wordpad.rc:257
 msgid "&No line wrapping"
-msgstr "Fără desparțire râ&nduri"
+msgstr "Fără despărțire râ&nduri"
 
 #: wordpad.rc:258
 msgid "Wrap text by the &window border"
@@ -14505,7 +14505,7 @@ msgstr ""
 "[/W]  Solicită confirmarea înainte de a începe copierea.\n"
 "[/T]  Creează o structură de directoare goale, dar nu copiază fișiere.\n"
 "[/Y]  Nu solicita confirmarea la suprascrierea fișierelor.\n"
-"[/-Y] Solicită confirmarea la suprascrierea fișierelo.r\n"
+"[/-Y] Solicită confirmarea la suprascrierea fișierelor.\n"
 "[/P]  Solicită confirmarea înainte de copierea fiecărui fișier sursă.\n"
 "[/N]  Copiază utilizând prescurtări de nume.\n"
 "[/U]  Copiază numai fișierele care există deja în destinație.\n"
