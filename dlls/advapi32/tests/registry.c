@@ -2341,6 +2341,29 @@ static void test_classesroot(void)
     ok(res == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", res);
     ok(!strcmp( buffer, "hkcr" ), "value set to '%s'\n", buffer );
 
+    /* cleanup */
+    RegCloseKey( hkeysub1 );
+    RegCloseKey( hklmsub1 );
+
+    /* delete subkey1 from hkcr (should point at user's classes) */
+    res = RegDeleteKey(hkcr, "subkey1");
+    ok(res == ERROR_SUCCESS, "RegDeleteKey failed: %d\n", res);
+
+    /* confirm key was removed in hkey but not hklm */
+    res = RegOpenKeyExA(hkey, "subkey1", 0, KEY_READ, &hkeysub1);
+    ok(res == ERROR_FILE_NOT_FOUND, "test key found in user's classes: %d\n", res);
+    res = RegOpenKeyExA(hklm, "subkey1", 0, KEY_READ, &hklmsub1);
+    ok(res == ERROR_SUCCESS, "test key not found in hklm: %d\n", res);
+
+    /* delete subkey1 from hkcr again (which should now point at hklm) */
+    res = RegDeleteKey(hkcr, "subkey1");
+    ok(res == ERROR_SUCCESS, "RegDeleteKey failed: %d\n", res);
+
+    /* confirm hkey was removed in hklm */
+    RegCloseKey( hklmsub1 );
+    res = RegOpenKeyExA(hklm, "subkey1", 0, KEY_READ, &hklmsub1);
+    ok(res == ERROR_FILE_NOT_FOUND, "test key found in hklm: %d\n", res);
+
     /* final cleanup */
     delete_key( hkey );
     delete_key( hklm );
