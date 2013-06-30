@@ -142,8 +142,9 @@ static void test_aggregation(void)
 
     hres = CoCreateInstance(&CLSID_Registrar, (IUnknown*)0xdeadbeef, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IUnknown, (void**)&unk);
-    ok(hres == CLASS_E_NOAGGREGATION, "CoCreateInstance failed: %08x, expected CLASS_E_NOAGGREGATION\n", hres);
-    ok(!unk, "unk = %p\n", unk);
+    ok(hres == CLASS_E_NOAGGREGATION || broken(hres == E_INVALIDARG),
+            "CoCreateInstance failed: %08x, expected CLASS_E_NOAGGREGATION\n", hres);
+    ok(!unk || unk == (IUnknown*)0xdeadbeef, "unk = %p\n", unk);
 }
 
 START_TEST(registrar)
