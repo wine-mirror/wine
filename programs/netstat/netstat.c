@@ -189,7 +189,7 @@ static void NETSTAT_eth_stats(void)
     size = sizeof(MIB_IFTABLE);
     do
     {
-        table = (PMIB_IFTABLE)HeapAlloc(GetProcessHeap(), 0, size);
+        table = HeapAlloc(GetProcessHeap(), 0, size);
         err = GetIfTable(table, &size, FALSE);
         if (err != NO_ERROR) HeapFree(GetProcessHeap(), 0, table);
     } while (err == ERROR_INSUFFICIENT_BUFFER);
@@ -246,7 +246,7 @@ static void NETSTAT_tcp_table(void)
     size = sizeof(MIB_TCPTABLE);
     do
     {
-        table = (PMIB_TCPTABLE)HeapAlloc(GetProcessHeap(), 0, size);
+        table = HeapAlloc(GetProcessHeap(), 0, size);
         err = GetTcpTable(table, &size, TRUE);
         if (err != NO_ERROR) HeapFree(GetProcessHeap(), 0, table);
     } while (err == ERROR_INSUFFICIENT_BUFFER);
@@ -301,7 +301,7 @@ static void NETSTAT_udp_table(void)
     size = sizeof(MIB_UDPTABLE);
     do
     {
-        table = (PMIB_UDPTABLE)HeapAlloc(GetProcessHeap(), 0, size);
+        table = HeapAlloc(GetProcessHeap(), 0, size);
         err = GetUdpTable(table, &size, TRUE);
         if (err != NO_ERROR) HeapFree(GetProcessHeap(), 0, table);
     } while (err == ERROR_INSUFFICIENT_BUFFER);
