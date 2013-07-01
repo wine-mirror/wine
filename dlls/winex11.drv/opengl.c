@@ -922,6 +922,7 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, struct wgl_
       break ;
     default:
       FIXME("unsupported %x WGL Attribute\n", iWGLAttr[cur]);
+      cur++;
       break;
     }
     ++cur;
