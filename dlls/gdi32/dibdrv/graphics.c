@@ -267,16 +267,16 @@ static int get_arc_points( PHYSDEV dev, const RECT *rect, POINT start, POINT end
                 points[pos].y = rect->top + height/2 + points[i % count].y;
                 break;
             case 1:
-                points[pos].x = rect->left + width/2 - points[count - 1 - i % count].x;
+                points[pos].x = rect->right-1 - width/2 - points[count - 1 - i % count].x;
                 points[pos].y = rect->top + height/2 + points[count - 1 - i % count].y;
                 break;
             case 2:
-                points[pos].x = rect->left + width/2 - points[i % count].x;
-                points[pos].y = rect->top + height/2 - points[i % count].y;
+                points[pos].x = rect->right-1 - width/2 - points[i % count].x;
+                points[pos].y = rect->bottom-1 - height/2 - points[i % count].y;
                 break;
             case 3:
                 points[pos].x = rect->left + width/2 + points[count - 1 - i % count].x;
-                points[pos].y = rect->top + height/2 - points[count - 1 - i % count].y;
+                points[pos].y = rect->bottom-1 - height/2 - points[count - 1 - i % count].y;
                 break;
             }
         }
@@ -289,14 +289,14 @@ static int get_arc_points( PHYSDEV dev, const RECT *rect, POINT start, POINT end
             {
             case 0:
                 points[pos].x = rect->left + width/2 + points[i % count].x;
-                points[pos].y = rect->top + height/2 - points[i % count].y;
+                points[pos].y = rect->bottom-1 - height/2 - points[i % count].y;
                 break;
             case 1:
-                points[pos].x = rect->left + width/2 - points[count - 1 - i % count].x;
-                points[pos].y = rect->top + height/2 - points[count - 1 - i % count].y;
+                points[pos].x = rect->right-1 - width/2 - points[count - 1 - i % count].x;
+                points[pos].y = rect->bottom-1 - height/2 - points[count - 1 - i % count].y;
                 break;
             case 2:
-                points[pos].x = rect->left + width/2 - points[i % count].x;
+                points[pos].x = rect->right-1 - width/2 - points[i % count].x;
                 points[pos].y = rect->top + height/2 + points[i % count].y;
                 break;
             case 3:
