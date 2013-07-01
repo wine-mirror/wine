@@ -1006,7 +1006,8 @@ static void test_rcp_rsq(IDirect3DDevice8 *device)
         { 1.0f,  1.0f, 0.0f},
     };
 
-    const DWORD rcp_test[] = {
+    static const DWORD rcp_test[] =
+    {
         0xfffe0101,                                         /* vs.1.1 */
 
         0x0009fffe, 0x30303030, 0x30303030,                 /* Shaders have to have a minimal size. */
@@ -1019,7 +1020,8 @@ static void test_rcp_rsq(IDirect3DDevice8 *device)
         0x0000ffff                                          /* END */
     };
 
-    const DWORD rsq_test[] = {
+    static const DWORD rsq_test[] =
+    {
         0xfffe0101,                                         /* vs.1.1 */
 
         0x0009fffe, 0x30303030, 0x30303030,                 /* Shaders have to have a minimal size. */
