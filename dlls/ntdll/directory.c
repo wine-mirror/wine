@@ -247,6 +247,13 @@ static inline unsigned int max_dir_info_size( FILE_INFORMATION_CLASS class )
     return dir_info_size( class, MAX_DIR_ENTRY_LEN );
 }
 
+static inline BOOL has_wildcard( const UNICODE_STRING *mask )
+{
+    return (!mask ||
+            memchrW( mask->Buffer, '*', mask->Length / sizeof(WCHAR) ) ||
+            memchrW( mask->Buffer, '?', mask->Length / sizeof(WCHAR) ));
+}
+
 
 /* support for a directory queue for filesystem searches */
 
@@ -1823,6 +1830,7 @@ static int read_directory_getdirentries( int fd, IO_STATUS_BLOCK *io, void *buff
                 last_info = NULL;
                 goto restart;
             }
+            if (!has_wildcard( mask )) break;
             /* if we have to return but the buffer contains more data, restart with a smaller size */
             if (res > 0 && (single_entry || io->Information + max_dir_info_size(class) > length))
             {
@@ -2000,13 +2008,6 @@ done:
 }
 
 
-static inline WCHAR *mempbrkW( const WCHAR *ptr, const WCHAR *accept, size_t n )
-{
-    const WCHAR *end;
-    for (end = ptr + n; ptr < end; ptr++) if (strchrW( accept, *ptr )) return (WCHAR *)ptr;
-    return NULL;
-}
-
 /******************************************************************************
  *  NtQueryDirectoryFile	[NTDLL.@]
  *  ZwQueryDirectoryFile	[NTDLL.@]
@@ -2021,7 +2022,6 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
                                       BOOLEAN restart_scan )
 {
     int cwd, fd, needs_close;
-    static const WCHAR wszWildcards[] = { '*','?',0 };
 
     TRACE("(%p %p %p %p %p %p 0x%08x 0x%08x 0x%08x %s 0x%08x\n",
           handle, event, apc_routine, apc_context, io, buffer,
@@ -2068,7 +2068,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
         if ((read_directory_vfat( fd, io, buffer, length, single_entry,
                                   mask, restart_scan, info_class )) != -1) goto done;
 #endif
-        if (mask && !mempbrkW( mask->Buffer, wszWildcards, mask->Length / sizeof(WCHAR) ) &&
+        if (!has_wildcard( mask ) &&
             read_directory_stat( fd, io, buffer, length, single_entry,
                                  mask, restart_scan, info_class ) != -1) goto done;
 #ifdef USE_GETDENTS
