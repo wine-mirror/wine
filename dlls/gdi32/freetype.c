@@ -7605,6 +7605,8 @@ static BOOL get_glyph_index_linked(GdiFont *font, UINT c, GdiFont **linked_font,
         return TRUE;
     }
 
+    if (c < 32) goto done;  /* don't check linked fonts for control characters */
+
     LIST_FOR_EACH_ENTRY(child_font, &font->child_fonts, CHILD_FONT, entry)
     {
         if(!child_font->font)
@@ -7624,6 +7626,8 @@ static BOOL get_glyph_index_linked(GdiFont *font, UINT c, GdiFont **linked_font,
             return TRUE;
         }
     }
+
+done:
     *glyph = get_default_char_index(font);
     *vert = FALSE;
     return FALSE;
