@@ -381,6 +381,7 @@ struct strarray *get_as_command(void)
         strarray_add( args, "-xassembler", "-c", NULL );
         if (force_pointer_size)
             strarray_add_one( args, (force_pointer_size == 8) ? "-m64" : "-m32" );
+        if (cpu_option) strarray_add_one( args, strmake("-mcpu=%s", cpu_option) );
         return args;
     }
 
