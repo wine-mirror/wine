@@ -2488,7 +2488,8 @@ static void z_range_test(IDirect3DDevice9 *device)
     IDirect3DVertexShader9 *shader;
     IDirect3DVertexDeclaration9 *decl;
     D3DCAPS9 caps;
-    const DWORD shader_code[] = {
+    static const DWORD shader_code[] =
+    {
         0xfffe0101,                                     /* vs_1_1           */
         0x0000001f, 0x80000000, 0x900f0000,             /* dcl_position v0  */
         0x00000001, 0xc00f0000, 0x90e40000,             /* mov oPos, v0     */
@@ -4688,7 +4689,8 @@ static void texdepth_test(IDirect3DDevice9 *device)
     const float texdepth_test_data5[] = { 1.00, -0.1, 0.0, 0.0};
     const float texdepth_test_data6[] = { 1.00,  0.5, 0.0, 0.0};
     const float texdepth_test_data7[] = { 0.50,  0.0, 0.0, 0.0};
-    DWORD shader_code[] = {
+    static const DWORD shader_code[] =
+    {
         0xffff0104,                                                                 /* ps_1_4               */
         0x00000051, 0xa00f0001, 0x00000000, 0x00000000, 0x3f800000, 0x3f800000,     /* def c1, 0, 0, 1, 1   */
         0x00000001, 0x800f0005, 0xa0e40000,                                         /* mov r5, c0           */
@@ -4919,20 +4921,22 @@ static void texkill_test(IDirect3DDevice9 *device)
          1.0,    1.0,   0.0,    0.9,   -0.1,   -0.1,    0.9,
     };
 
-    DWORD shader_code_11[] = {
-    0xffff0101,                                                             /* ps_1_1                     */
-    0x00000051, 0xa00f0000, 0x3f800000, 0x00000000, 0x00000000, 0x3f800000, /* def c0, 1.0, 0.0, 0.0, 1.0 */
-    0x00000041, 0xb00f0000,                                                 /* texkill t0                 */
-    0x00000001, 0x800f0000, 0xa0e40000,                                     /* mov r0, c0                 */
-    0x0000ffff                                                              /* end                        */
+    static const DWORD shader_code_11[] =
+    {
+        0xffff0101,                                                             /* ps_1_1                     */
+        0x00000051, 0xa00f0000, 0x3f800000, 0x00000000, 0x00000000, 0x3f800000, /* def c0, 1.0, 0.0, 0.0, 1.0 */
+        0x00000041, 0xb00f0000,                                                 /* texkill t0                 */
+        0x00000001, 0x800f0000, 0xa0e40000,                                     /* mov r0, c0                 */
+        0x0000ffff                                                              /* end                        */
     };
-    DWORD shader_code_20[] = {
-    0xffff0200,                                                             /* ps_2_0                     */
-    0x0200001f, 0x80000000, 0xb00f0000,                                     /* dcl t0                     */
-    0x05000051, 0xa00f0000, 0x00000000, 0x00000000, 0x3f800000, 0x3f800000, /* def c0, 0.0, 0.0, 1.0, 1.0 */
-    0x01000041, 0xb00f0000,                                                 /* texkill t0                 */
-    0x02000001, 0x800f0800, 0xa0e40000,                                     /* mov oC0, c0                */
-    0x0000ffff                                                              /* end                        */
+    static const DWORD shader_code_20[] =
+    {
+        0xffff0200,                                                             /* ps_2_0                     */
+        0x0200001f, 0x80000000, 0xb00f0000,                                     /* dcl t0                     */
+        0x05000051, 0xa00f0000, 0x00000000, 0x00000000, 0x3f800000, 0x3f800000, /* def c0, 0.0, 0.0, 1.0, 1.0 */
+        0x01000041, 0xb00f0000,                                                 /* texkill t0                 */
+        0x02000001, 0x800f0800, 0xa0e40000,                                     /* mov oC0, c0                */
+        0x0000ffff                                                              /* end                        */
     };
 
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff00ff00, 0.0, 0);
@@ -5070,13 +5074,15 @@ static void x8l8v8u8_test(IDirect3DDevice9 *device)
     IDirect3DPixelShader9 *shader2;
     D3DLOCKED_RECT lr;
     DWORD color;
-    DWORD shader_code[] = {
+    static const DWORD shader_code[] =
+    {
         0xffff0101,                             /* ps_1_1       */
         0x00000042, 0xb00f0000,                 /* tex t0       */
         0x00000001, 0x800f0000, 0xb0e40000,     /* mov r0, t0   */
         0x0000ffff                              /* end          */
     };
-    DWORD shader_code2[] = {
+    static const DWORD shader_code2[] =
+    {
         0xffff0101,                             /* ps_1_1       */
         0x00000042, 0xb00f0000,                 /* tex t0       */
         0x00000001, 0x800f0000, 0xb0ff0000,     /* mov r0, t0.w */
@@ -5280,7 +5286,8 @@ static void test_constant_clamp_vs(IDirect3DDevice9 *device)
     IDirect3DVertexDeclaration9 *decl;
     HRESULT hr;
     DWORD color;
-    DWORD shader_code_11[] =  {
+    static const DWORD shader_code_11[] =
+    {
         0xfffe0101,                                         /* vs_1_1           */
         0x0000001f, 0x80000000, 0x900f0000,                 /* dcl_position v0  */
         0x00000001, 0x800f0001, 0xa0e40001,                 /* mov r1, c1       */
@@ -5288,7 +5295,8 @@ static void test_constant_clamp_vs(IDirect3DDevice9 *device)
         0x00000001, 0xc00f0000, 0x90e40000,                 /* mov oPos, v0     */
         0x0000ffff                                          /* end              */
     };
-    DWORD shader_code_11_2[] =  {
+    static const DWORD shader_code_11_2[] =
+    {
         0xfffe0101,                                         /* vs_1_1           */
         0x00000051, 0xa00f0001, 0x3fa00000, 0xbf000000, 0xbfc00000, 0x3f800000, /* dcl ... */
         0x00000051, 0xa00f0002, 0xbf000000, 0x3fa00000, 0x40000000, 0x3f800000, /* dcl ... */
@@ -5298,7 +5306,8 @@ static void test_constant_clamp_vs(IDirect3DDevice9 *device)
         0x00000001, 0xc00f0000, 0x90e40000,                 /* mov oPos, v0     */
         0x0000ffff                                          /* end              */
     };
-    DWORD shader_code_20[] =  {
+    static const DWORD shader_code_20[] =
+    {
         0xfffe0200,                                         /* vs_2_0           */
         0x0200001f, 0x80000000, 0x900f0000,                 /* dcl_position v0  */
         0x02000001, 0x800f0001, 0xa0e40001,                 /* mov r1, c1       */
@@ -5306,7 +5315,8 @@ static void test_constant_clamp_vs(IDirect3DDevice9 *device)
         0x02000001, 0xc00f0000, 0x90e40000,                 /* mov oPos, v0     */
         0x0000ffff                                          /* end              */
     };
-    DWORD shader_code_20_2[] =  {
+    static const DWORD shader_code_20_2[] =
+    {
         0xfffe0200,                                         /* vs_2_0           */
         0x05000051, 0xa00f0001, 0x3fa00000, 0xbf000000, 0xbfc00000, 0x3f800000,
         0x05000051, 0xa00f0002, 0xbf000000, 0x3fa00000, 0x40000000, 0x3f800000,
@@ -5436,33 +5446,36 @@ static void constant_clamp_ps_test(IDirect3DDevice9 *device)
     IDirect3DPixelShader9 *shader_11, *shader_12, *shader_14, *shader_20;
     HRESULT hr;
     DWORD color;
-    DWORD shader_code_11[] =  {
+    static const DWORD shader_code_11[] =
+    {
         0xffff0101,                                         /* ps_1_1           */
         0x00000001, 0x800f0001, 0xa0e40001,                 /* mov r1, c1       */
         0x00000002, 0x800f0000, 0x80e40001, 0xa0e40002,     /* add r0, r1, c2   */
         0x0000ffff                                          /* end              */
     };
-    DWORD shader_code_12[] =  {
+    static const DWORD shader_code_12[] =
+    {
         0xffff0102,                                         /* ps_1_2           */
         0x00000001, 0x800f0001, 0xa0e40001,                 /* mov r1, c1       */
         0x00000002, 0x800f0000, 0x80e40001, 0xa0e40002,     /* add r0, r1, c2   */
         0x0000ffff                                          /* end              */
     };
-    /* Skip 1.3 shaders because we have only 4 quads(ok, could make them smaller if needed).
-     * 1.2 and 1.4 shaders behave the same, so it's unlikely that 1.3 shaders are different.
-     * During development of this test, 1.3 shaders were verified too
-     */
-    DWORD shader_code_14[] =  {
+    /* Skip 1.3 shaders because we have only 4 quads (ok, could make them
+     * smaller if needed). 1.2 and 1.4 shaders behave the same, so it's
+     * unlikely that 1.3 shaders are different. During development of this
+     * test, 1.3 shaders were verified too. */
+    static const DWORD shader_code_14[] =
+    {
         0xffff0104,                                         /* ps_1_4           */
-        /* Try to make one constant local. It gets clamped too, although the binary contains
-         * the bigger numbers
-         */
+        /* Try to make one constant local. It gets clamped too, although the
+         * binary contains the bigger numbers. */
         0x00000051, 0xa00f0002, 0xbf000000, 0x3fa00000, 0x40000000, 0x3f800000, /* def c2, -0.5, 1.25, 2, 1 */
         0x00000001, 0x800f0001, 0xa0e40001,                 /* mov r1, c1       */
         0x00000002, 0x800f0000, 0x80e40001, 0xa0e40002,     /* add r0, r1, c2   */
         0x0000ffff                                          /* end              */
     };
-    DWORD shader_code_20[] =  {
+    static const DWORD shader_code_20[] =
+    {
         0xffff0200,                                         /* ps_2_0           */
         0x02000001, 0x800f0001, 0xa0e40001,                 /* mov r1, c1       */
         0x03000002, 0x800f0000, 0x80e40001, 0xa0e40002,     /* add r0, r1, c2   */
@@ -5700,11 +5713,12 @@ static void cnd_test(IDirect3DDevice9 *device)
     IDirect3DPixelShader9 *shader_11_coissue_2, *shader_12_coissue_2, *shader_13_coissue_2, *shader_14_coissue_2;
     HRESULT hr;
     DWORD color;
-    /* ps 1.x shaders are rather picky with writemasks and source swizzles. The dp3 is
-     * used to copy r0.r to all components of r1, then copy r1.a to r0.a. Essentially it
-     * does a mov r0.a, r0.r, which isn't allowed as-is in 1.x pixel shaders.
-     */
-    DWORD shader_code_11[] =  {
+    /* ps 1.x shaders are rather picky with writemasks and source swizzles.
+     * The dp3 is used to copy r0.r to all components of r1, then copy r1.a to
+     * r0.a. Essentially it does a mov r0.a, r0.r, which isn't allowed as-is
+     * in 1.x pixel shaders. */
+    static const DWORD shader_code_11[] =
+    {
         0xffff0101,                                                                 /* ps_1_1               */
         0x00000051, 0xa00f0000, 0x3f800000, 0x00000000, 0x00000000, 0x00000000,     /* def c0, 1, 0, 0, 0   */
         0x00000040, 0xb00f0000,                                                     /* texcoord t0          */
@@ -5714,7 +5728,8 @@ static void cnd_test(IDirect3DDevice9 *device)
         0x00000050, 0x800f0000, 0x80ff0000, 0xa0e40001, 0xa0e40002,                 /* cnd r0, r0.a, c1, c2 */
         0x0000ffff                                                                  /* end                  */
     };
-    DWORD shader_code_12[] =  {
+    static const DWORD shader_code_12[] =
+    {
         0xffff0102,                                                                 /* ps_1_2               */
         0x00000051, 0xa00f0000, 0x3f800000, 0x00000000, 0x00000000, 0x00000000,     /* def c0, 1, 0, 0, 0   */
         0x00000040, 0xb00f0000,                                                     /* texcoord t0          */
@@ -5724,7 +5739,8 @@ static void cnd_test(IDirect3DDevice9 *device)
         0x00000050, 0x800f0000, 0x80ff0000, 0xa0e40001, 0xa0e40002,                 /* cnd r0, r0.a, c1, c2 */
         0x0000ffff                                                                  /* end                  */
     };
-    DWORD shader_code_13[] =  {
+    static const DWORD shader_code_13[] =
+    {
         0xffff0103,                                                                 /* ps_1_3               */
         0x00000051, 0xa00f0000, 0x3f800000, 0x00000000, 0x00000000, 0x00000000,     /* def c0, 1, 0, 0, 0   */
         0x00000040, 0xb00f0000,                                                     /* texcoord t0          */
@@ -5734,7 +5750,8 @@ static void cnd_test(IDirect3DDevice9 *device)
         0x00000050, 0x800f0000, 0x80ff0000, 0xa0e40001, 0xa0e40002,                 /* cnd r0, r0.a, c1, c2 */
         0x0000ffff                                                                  /* end                  */
     };
-    DWORD shader_code_14[] =  {
+    static const DWORD shader_code_14[] =
+    {
         0xffff0104,                                                                 /* ps_1_3               */
         0x00000051, 0xa00f0000, 0x00000000, 0x00000000, 0x00000000, 0x3f800000,     /* def c0, 0, 0, 0, 1   */
         0x00000040, 0x80070000, 0xb0e40000,                                         /* texcrd r0, t0        */
@@ -5755,7 +5772,8 @@ static void cnd_test(IDirect3DDevice9 *device)
      * constants are clamped to [-1;1], a 2.0 is constructed by adding c0.r(=1.0) to c0.r into r1.r,
      * then r1(2.0, 0.0, 0.0, 0.0) is passed to dp3(explained above).
      */
-    DWORD shader_code_11_coissue[] =  {
+    static const DWORD shader_code_11_coissue[] =
+    {
         0xffff0101,                                                             /* ps_1_1                   */
         0x00000051, 0xa00f0000, 0x3f800000, 0x00000000, 0x00000000, 0x00000000, /* def c0, 1, 0, 0, 0       */
         0x00000051, 0xa00f0003, 0x3f000000, 0x3f000000, 0x3f000000, 0x00000000, /* def c3, 0.5, 0.5, 0.5, 0 */
@@ -5768,7 +5786,8 @@ static void cnd_test(IDirect3DDevice9 *device)
         0x40000050, 0x80070000, 0x80ff0000, 0xa0e40001, 0xa0e40002,             /* +cnd r0.xyz, r0.a, c1, c2*/
         0x0000ffff                                                              /* end                      */
     };
-    DWORD shader_code_11_coissue_2[] =  {
+    static const DWORD shader_code_11_coissue_2[] =
+    {
         0xffff0101,                                                             /* ps_1_1                   */
         0x00000051, 0xa00f0000, 0x3f800000, 0x00000000, 0x00000000, 0x00000000, /* def c0, 1, 0, 0, 0       */
         0x00000051, 0xa00f0003, 0x3f000000, 0x3f000000, 0x3f000000, 0x00000000, /* def c3, 0.5, 0.5, 0.5, 0 */
@@ -5783,7 +5802,8 @@ static void cnd_test(IDirect3DDevice9 *device)
         0x00000001, 0x80070000, 0x80ff0000,                                     /* mov r0.xyz, r0.a         */
         0x0000ffff                                                              /* end                      */
     };
-    DWORD shader_code_12_coissue[] =  {
+    static const DWORD shader_code_12_coissue[] =
+    {
         0xffff0102,                                                             /* ps_1_2                   */
         0x00000051, 0xa00f0000, 0x3f800000, 0x00000000, 0x00000000, 0x00000000, /* def c0, 1, 0, 0, 0       */
         0x00000051, 0xa00f0003, 0x3f000000, 0x3f000000, 0x3f000000, 0x00000000, /* def c3, 0.5, 0.5, 0.5, 0 */
@@ -5796,7 +5816,8 @@ static void cnd_test(IDirect3DDevice9 *device)
         0x40000050, 0x80070000, 0x80ff0000, 0xa0e40001, 0xa0e40002,             /* +cnd r0.xyz, r0.a, c1, c2*/
         0x0000ffff                                                              /* end                      */
     };
-    DWORD shader_code_12_coissue_2[] =  {
+    static const DWORD shader_code_12_coissue_2[] =
+    {
         0xffff0102,                                                             /* ps_1_2                   */
         0x00000051, 0xa00f0000, 0x3f800000, 0x00000000, 0x00000000, 0x00000000, /* def c0, 1, 0, 0, 0       */
         0x00000051, 0xa00f0003, 0x3f000000, 0x3f000000, 0x3f000000, 0x00000000, /* def c3, 0.5, 0.5, 0.5, 0 */
@@ -5811,7 +5832,8 @@ static void cnd_test(IDirect3DDevice9 *device)
         0x00000001, 0x80070000, 0x80ff0000,                                     /* mov r0.xyz, r0.a         */
         0x0000ffff                                                              /* end                      */
     };
-    DWORD shader_code_13_coissue[] =  {
+    static const DWORD shader_code_13_coissue[] =
+    {
         0xffff0103,                                                             /* ps_1_3                   */
         0x00000051, 0xa00f0000, 0x3f800000, 0x00000000, 0x00000000, 0x00000000, /* def c0, 1, 0, 0, 0       */
         0x00000051, 0xa00f0003, 0x3f000000, 0x3f000000, 0x3f000000, 0x00000000, /* def c3, 0.5, 0.5, 0.5, 0 */
@@ -5824,7 +5846,8 @@ static void cnd_test(IDirect3DDevice9 *device)
         0x40000050, 0x80070000, 0x80ff0000, 0xa0e40001, 0xa0e40002,             /* +cnd r0.xyz, r0.a, c1, c2*/
         0x0000ffff                                                              /* end                      */
     };
-    DWORD shader_code_13_coissue_2[] =  {
+    static const DWORD shader_code_13_coissue_2[] =
+    {
         0xffff0103,                                                             /* ps_1_3                   */
         0x00000051, 0xa00f0000, 0x3f800000, 0x00000000, 0x00000000, 0x00000000, /* def c0, 1, 0, 0, 0       */
         0x00000051, 0xa00f0003, 0x3f000000, 0x3f000000, 0x3f000000, 0x00000000, /* def c3, 0.5, 0.5, 0.5, 0 */
@@ -5839,10 +5862,10 @@ static void cnd_test(IDirect3DDevice9 *device)
         0x00000001, 0x80070000, 0x80ff0000,                                     /* mov r0.xyz, r0.a         */
         0x0000ffff                                                              /* end                      */
     };
-    /* ps_1_4 does not have a different cnd behavior, just pass the [0;1] texcrd result to cnd, it will
-     * compare against 0.5
-     */
-    DWORD shader_code_14_coissue[] =  {
+    /* ps_1_4 does not have a different cnd behavior, just pass the [0;1]
+     * texcrd result to cnd, it will compare against 0.5. */
+    static const DWORD shader_code_14_coissue[] =
+    {
         0xffff0104,                                                             /* ps_1_4                   */
         0x00000051, 0xa00f0000, 0x00000000, 0x00000000, 0x00000000, 0x3f800000, /* def c0, 0, 0, 0, 1       */
         0x00000040, 0x80070000, 0xb0e40000,                                     /* texcrd r0.xyz, t0        */
@@ -5850,7 +5873,8 @@ static void cnd_test(IDirect3DDevice9 *device)
         0x40000050, 0x80070000, 0x80e40000, 0xa0e40001, 0xa0e40002,             /* +cnd r0.xyz, r0, c1, c2  */
         0x0000ffff                                                              /* end                      */
     };
-    DWORD shader_code_14_coissue_2[] =  {
+    static const DWORD shader_code_14_coissue_2[] =
+    {
         0xffff0104,                                                             /* ps_1_4                   */
         0x00000051, 0xa00f0000, 0x00000000, 0x00000000, 0x00000000, 0x3f800000, /* def c0, 0, 0, 0, 1       */
         0x00000040, 0x80070000, 0xb0e40000,                                     /* texcrd r0.xyz, t0        */
@@ -6206,8 +6230,10 @@ static void cnd_test(IDirect3DDevice9 *device)
     IDirect3DPixelShader9_Release(shader_11);
 }
 
-static void nested_loop_test(IDirect3DDevice9 *device) {
-    const DWORD shader_code[] = {
+static void nested_loop_test(IDirect3DDevice9 *device)
+{
+    static const DWORD shader_code[] =
+    {
         0xffff0300,                                                             /* ps_3_0               */
         0x05000051, 0xa00f0000, 0x00000000, 0x00000000, 0x00000000, 0x3f800000, /* def c0, 0, 0, 0, 1   */
         0x05000051, 0xa00f0001, 0x3d000000, 0x00000000, 0x00000000, 0x00000000, /* def c1, 1/32, 0, 0, 0*/
@@ -6221,7 +6247,8 @@ static void nested_loop_test(IDirect3DDevice9 *device) {
         0x02000001, 0x800f0800, 0x80e40000,                                     /* mov oC0, r0          */
         0x0000ffff                                                              /* end                  */
     };
-    const DWORD vshader_code[] = {
+    static const DWORD vshader_code[] =
+    {
         0xfffe0300,                                                             /* vs_3_0               */
         0x0200001f, 0x80000000, 0x900f0000,                                     /* dcl_position v0      */
         0x0200001f, 0x80000000, 0xe00f0000,                                     /* dcl_position o0      */
@@ -6300,40 +6327,47 @@ struct hugeVertex
     DWORD diffuse, specular;
 };
 
-static void pretransformed_varying_test(IDirect3DDevice9 *device) {
+static void pretransformed_varying_test(IDirect3DDevice9 *device)
+{
     /* dcl_position: fails to compile */
-    const DWORD blendweight_code[] = {
+    static const DWORD blendweight_code[] =
+    {
         0xffff0300,                             /* ps_3_0                   */
         0x0200001f, 0x80000001, 0x900f0000,     /* dcl_blendweight, v0      */
         0x02000001, 0x800f0800, 0x90e40000,     /* mov oC0, v0              */
         0x0000ffff                              /* end                      */
     };
-    const DWORD blendindices_code[] = {
+    static const DWORD blendindices_code[] =
+    {
         0xffff0300,                             /* ps_3_0                   */
         0x0200001f, 0x80000002, 0x900f0000,     /* dcl_blendindices, v0     */
         0x02000001, 0x800f0800, 0x90e40000,     /* mov oC0, v0              */
         0x0000ffff                              /* end                      */
     };
-    const DWORD normal_code[] = {
+    static const DWORD normal_code[] =
+    {
         0xffff0300,                             /* ps_3_0                   */
         0x0200001f, 0x80000003, 0x900f0000,     /* dcl_normal, v0           */
         0x02000001, 0x800f0800, 0x90e40000,     /* mov oC0, v0              */
         0x0000ffff                              /* end                      */
     };
     /* psize: fails? */
-    const DWORD texcoord0_code[] = {
+    static const DWORD texcoord0_code[] =
+    {
         0xffff0300,                             /* ps_3_0                   */
         0x0200001f, 0x80000005, 0x900f0000,     /* dcl_texcoord0, v0        */
         0x02000001, 0x800f0800, 0x90e40000,     /* mov oC0, v0              */
         0x0000ffff                              /* end                      */
     };
-    const DWORD tangent_code[] = {
+    static const DWORD tangent_code[] =
+    {
         0xffff0300,                             /* ps_3_0                   */
         0x0200001f, 0x80000006, 0x900f0000,     /* dcl_tangent, v0          */
         0x02000001, 0x800f0800, 0x90e40000,     /* mov oC0, v0              */
         0x0000ffff                              /* end                      */
     };
-    const DWORD binormal_code[] = {
+    static const DWORD binormal_code[] =
+    {
         0xffff0300,                             /* ps_3_0                   */
         0x0200001f, 0x80000007, 0x900f0000,     /* dcl_binormal, v0         */
         0x02000001, 0x800f0800, 0x90e40000,     /* mov oC0, v0              */
@@ -6341,25 +6375,29 @@ static void pretransformed_varying_test(IDirect3DDevice9 *device) {
     };
     /* tessfactor: fails */
     /* positiont: fails */
-    const DWORD color_code[] = {
+    static const DWORD color_code[] =
+    {
         0xffff0300,                             /* ps_3_0                   */
         0x0200001f, 0x8000000a, 0x900f0000,     /* dcl_color0, v0           */
         0x02000001, 0x800f0800, 0x90e40000,     /* mov oC0, v0              */
         0x0000ffff                              /* end                      */
     };
-    const DWORD fog_code[] = {
+    static const DWORD fog_code[] =
+    {
         0xffff0300,                             /* ps_3_0                   */
         0x0200001f, 0x8000000b, 0x900f0000,     /* dcl_fog, v0              */
         0x02000001, 0x800f0800, 0x90e40000,     /* mov oC0, v0              */
         0x0000ffff                              /* end                      */
     };
-    const DWORD depth_code[] = {
+    static const DWORD depth_code[] =
+    {
         0xffff0300,                             /* ps_3_0                   */
         0x0200001f, 0x8000000c, 0x900f0000,     /* dcl_depth, v0            */
         0x02000001, 0x800f0800, 0x90e40000,     /* mov oC0, v0              */
         0x0000ffff                              /* end                      */
     };
-    const DWORD specular_code[] = {
+    static const DWORD specular_code[] =
+    {
         0xffff0300,                             /* ps_3_0                   */
         0x0200001f, 0x8001000a, 0x900f0000,     /* dcl_color1, v0           */
         0x02000001, 0x800f0800, 0x90e40000,     /* mov oC0, v0              */
@@ -6528,7 +6566,8 @@ static void pretransformed_varying_test(IDirect3DDevice9 *device) {
 
 static void test_compare_instructions(IDirect3DDevice9 *device)
 {
-    DWORD shader_sge_vec_code[] = {
+    static const DWORD shader_sge_vec_code[] =
+    {
         0xfffe0101,                                         /* vs_1_1                   */
         0x0000001f, 0x80000000, 0x900f0000,                 /* dcl_position v0          */
         0x00000001, 0xc00f0000, 0x90e40000,                 /* mov oPos, v0             */
@@ -6536,7 +6575,8 @@ static void test_compare_instructions(IDirect3DDevice9 *device)
         0x0000000d, 0xd00f0000, 0x80e40000, 0xa0e40001,     /* sge oD0, r0, c1          */
         0x0000ffff                                          /* end                      */
     };
-    DWORD shader_slt_vec_code[] = {
+    static const DWORD shader_slt_vec_code[] =
+    {
         0xfffe0101,                                         /* vs_1_1                   */
         0x0000001f, 0x80000000, 0x900f0000,                 /* dcl_position v0          */
         0x00000001, 0xc00f0000, 0x90e40000,                 /* mov oPos, v0             */
@@ -6544,7 +6584,8 @@ static void test_compare_instructions(IDirect3DDevice9 *device)
         0x0000000c, 0xd00f0000, 0x80e40000, 0xa0e40001,     /* slt oD0, r0, c1          */
         0x0000ffff                                          /* end                      */
     };
-    DWORD shader_sge_scalar_code[] = {
+    static const DWORD shader_sge_scalar_code[] =
+    {
         0xfffe0101,                                         /* vs_1_1                   */
         0x0000001f, 0x80000000, 0x900f0000,                 /* dcl_position v0          */
         0x00000001, 0xc00f0000, 0x90e40000,                 /* mov oPos, v0             */
@@ -6554,7 +6595,8 @@ static void test_compare_instructions(IDirect3DDevice9 *device)
         0x0000000d, 0xd0040000, 0x80aa0000, 0xa0000001,     /* slt oD0.b, r0.b, c1.g    */
         0x0000ffff                                          /* end                      */
     };
-    DWORD shader_slt_scalar_code[] = {
+    static const DWORD shader_slt_scalar_code[] =
+    {
         0xfffe0101,                                         /* vs_1_1                   */
         0x0000001f, 0x80000000, 0x900f0000,                 /* dcl_position v0          */
         0x00000001, 0xc00f0000, 0x90e40000,                 /* mov oPos, v0             */
@@ -8065,10 +8107,14 @@ static void test_vshader_float16(IDirect3DDevice9 *device)
     IDirect3DVertexDeclaration9 *vdecl = NULL;
     IDirect3DVertexBuffer9 *buffer = NULL;
     IDirect3DVertexShader9 *shader;
-    DWORD shader_code[] = {
-        0xfffe0101, 0x0000001f, 0x80000000, 0x900f0000, 0x0000001f, 0x8000000a,
-        0x900f0001, 0x00000001, 0xc00f0000, 0x90e40000, 0x00000001, 0xd00f0000,
-        0x90e40001, 0x0000ffff
+    static const DWORD shader_code[] =
+    {
+        0xfffe0101,                             /* vs_1_1           */
+        0x0000001f, 0x80000000, 0x900f0000,     /* dcl_position v0  */
+        0x0000001f, 0x8000000a, 0x900f0001,     /* dcl_color v1     */
+        0x00000001, 0xc00f0000, 0x90e40000,     /* mov oPos, v0     */
+        0x00000001, 0xd00f0000, 0x90e40001,     /* mov oD0, v1      */
+        0x0000ffff,
     };
     struct vertex_float16color quad[] = {
         { -1.0,   -1.0,     0.1,        0x3c000000, 0x00000000 }, /* green */
@@ -8317,7 +8363,8 @@ static void vFace_register_test(IDirect3DDevice9 *device)
 {
     HRESULT hr;
     DWORD color;
-    const DWORD shader_code[] = {
+    static const DWORD shader_code[] =
+    {
         0xffff0300,                                                             /* ps_3_0                     */
         0x05000051, 0xa00f0000, 0x00000000, 0x3f800000, 0x00000000, 0x00000000, /* def c0, 0.0, 1.0, 0.0, 0.0 */
         0x05000051, 0xa00f0001, 0x3f800000, 0x00000000, 0x00000000, 0x00000000, /* def c1, 1.0, 0.0, 0.0, 0.0 */
@@ -8327,7 +8374,8 @@ static void vFace_register_test(IDirect3DDevice9 *device)
         0x02000001, 0x800f0800, 0x80e40000,                                     /* mov oC0, r0                */
         0x0000ffff                                                              /* END                        */
     };
-    const DWORD vshader_code[] = {
+    static const DWORD vshader_code[] =
+    {
         0xfffe0300,                                                             /* vs_3_0               */
         0x0200001f, 0x80000000, 0x900f0000,                                     /* dcl_position v0      */
         0x0200001f, 0x80000000, 0xe00f0000,                                     /* dcl_position o0      */
@@ -8896,28 +8944,31 @@ static void vpos_register_test(IDirect3DDevice9 *device)
 {
     HRESULT hr;
     DWORD color;
-    const DWORD shader_code[] = {
-    0xffff0300,                                                             /* ps_3_0                     */
-    0x0200001f, 0x80000000, 0x90031000,                                     /* dcl vPos.xy                */
-    0x03000002, 0x80030000, 0x90541000, 0xa1fe0000,                         /* sub r0.xy, vPos.xy, c0.zw  */
-    0x02000001, 0x800f0001, 0xa0e40000,                                     /* mov r1, c0                 */
-    0x02000001, 0x80080002, 0xa0550000,                                     /* mov r2.a, c0.y             */
-    0x02000001, 0x80010002, 0xa0550000,                                     /* mov r2.r, c0.y             */
-    0x04000058, 0x80020002, 0x80000000, 0x80000001, 0x80550001,             /* cmp r2.g, r0.x, r1.x, r1.y */
-    0x04000058, 0x80040002, 0x80550000, 0x80000001, 0x80550001,             /* cmp r2.b, r0.y, r1.x, r1.y */
-    0x02000001, 0x800f0800, 0x80e40002,                                     /* mov oC0, r2                */
-    0x0000ffff                                                              /* end                        */
+    static const DWORD shader_code[] =
+    {
+        0xffff0300,                                                             /* ps_3_0                     */
+        0x0200001f, 0x80000000, 0x90031000,                                     /* dcl vPos.xy                */
+        0x03000002, 0x80030000, 0x90541000, 0xa1fe0000,                         /* sub r0.xy, vPos.xy, c0.zw  */
+        0x02000001, 0x800f0001, 0xa0e40000,                                     /* mov r1, c0                 */
+        0x02000001, 0x80080002, 0xa0550000,                                     /* mov r2.a, c0.y             */
+        0x02000001, 0x80010002, 0xa0550000,                                     /* mov r2.r, c0.y             */
+        0x04000058, 0x80020002, 0x80000000, 0x80000001, 0x80550001,             /* cmp r2.g, r0.x, r1.x, r1.y */
+        0x04000058, 0x80040002, 0x80550000, 0x80000001, 0x80550001,             /* cmp r2.b, r0.y, r1.x, r1.y */
+        0x02000001, 0x800f0800, 0x80e40002,                                     /* mov oC0, r2                */
+        0x0000ffff                                                              /* end                        */
     };
-    const DWORD shader_frac_code[] = {
-    0xffff0300,                                                             /* ps_3_0                     */
-    0x05000051, 0xa00f0000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, /* def c0, 0.0, 0.0, 0.0, 0.0 */
-    0x0200001f, 0x80000000, 0x90031000,                                     /* dcl vPos.xy                */
-    0x02000001, 0x800f0000, 0xa0e40000,                                     /* mov r0, c0                 */
-    0x02000013, 0x80030000, 0x90541000,                                     /* frc r0.xy, vPos.xy         */
-    0x02000001, 0x800f0800, 0x80e40000,                                     /* mov oC0, r0                */
-    0x0000ffff                                                              /* end                        */
+    static const DWORD shader_frac_code[] =
+    {
+        0xffff0300,                                                             /* ps_3_0                     */
+        0x05000051, 0xa00f0000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, /* def c0, 0.0, 0.0, 0.0, 0.0 */
+        0x0200001f, 0x80000000, 0x90031000,                                     /* dcl vPos.xy                */
+        0x02000001, 0x800f0000, 0xa0e40000,                                     /* mov r0, c0                 */
+        0x02000013, 0x80030000, 0x90541000,                                     /* frc r0.xy, vPos.xy         */
+        0x02000001, 0x800f0800, 0x80e40000,                                     /* mov oC0, r0                */
+        0x0000ffff                                                              /* end                        */
     };
-    const DWORD vshader_code[] = {
+    static const DWORD vshader_code[] =
+    {
         0xfffe0300,                                                             /* vs_3_0               */
         0x0200001f, 0x80000000, 0x900f0000,                                     /* dcl_position v0      */
         0x0200001f, 0x80000000, 0xe00f0000,                                     /* dcl_position o0      */
@@ -9877,7 +9928,7 @@ static void stream_test(IDirect3DDevice9 *device)
     DWORD ind;
     unsigned i;
 
-    const DWORD shader_code[] =
+    static const DWORD shader_code[] =
     {
         0xfffe0101,                                     /* vs_1_1 */
         0x0000001f, 0x80000000, 0x900f0000,             /* dcl_position v0 */
@@ -10784,15 +10835,18 @@ static void alphatest_test(IDirect3DDevice9 *device) {
     hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF failed with 0x%08x\n", hr);
 
-    for(j = 0; j < 2; j++) {
-        if(j == 1) {
-            /* Try a pixel shader instead of fixed function. The wined3d code may emulate
-             * the alpha test either for performance reasons(floating point RTs) or to work
-             * around driver bugs(Geforce 7x00 cards on MacOS). There may be a different
-             * codepath for ffp and shader in this case, and the test should cover both
-             */
+    for (j = 0; j < 2; ++j)
+    {
+        if (j == 1)
+        {
+            /* Try a pixel shader instead of fixed function. The wined3d code
+             * may emulate the alpha test either for performance reasons
+             * (floating point RTs) or to work around driver bugs (GeForce
+             * 7x00 cards on MacOS). There may be a different codepath for ffp
+             * and shader in this case, and the test should cover both. */
             IDirect3DPixelShader9 *ps;
-            DWORD shader_code[] = {
+            static const DWORD shader_code[] =
+            {
                 0xffff0101,                                 /* ps_1_1           */
                 0x00000001, 0x800f0000, 0x90e40000,         /* mov r0, v0       */
                 0x0000ffff                                  /* end              */
@@ -10877,8 +10931,10 @@ static void alphatest_test(IDirect3DDevice9 *device) {
     ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader failed with 0x%08x\n", hr);
 }
 
-static void sincos_test(IDirect3DDevice9 *device) {
-    const DWORD sin_shader_code[] = {
+static void sincos_test(IDirect3DDevice9 *device)
+{
+    static const DWORD sin_shader_code[] =
+    {
         0xfffe0200,                                                                 /* vs_2_0                       */
         0x0200001f, 0x80000000, 0x900f0000,                                         /* dcl_position v0              */
         0x05000051, 0xa00f0002, 0x40490fdb, 0x3f800000, 0x00000000, 0x3f59999a,     /* def c2, 3.14159, 1, 0, 0.85  */
@@ -10889,7 +10945,8 @@ static void sincos_test(IDirect3DDevice9 *device) {
         0x02000001, 0xd00f0000, 0xa0a60002,                                         /* mov oD0, c2.zyzz             */
         0x0000ffff                                                                  /* end                          */
     };
-    const DWORD cos_shader_code[] = {
+    static const DWORD cos_shader_code[] =
+    {
         0xfffe0200,                                                                 /* vs_2_0                       */
         0x0200001f, 0x80000000, 0x900f0000,                                         /* dcl_position v0              */
         0x05000051, 0xa00f0002, 0x40490fdb, 0x3f800000, 0x00000000, 0x3f59999a,     /* def c2, 3.14159, 1, 0, 0.85  */
@@ -10954,8 +11011,10 @@ static void sincos_test(IDirect3DDevice9 *device) {
     IDirect3DVertexShader9_Release(cos_shader);
 }
 
-static void loop_index_test(IDirect3DDevice9 *device) {
-    const DWORD shader_code[] = {
+static void loop_index_test(IDirect3DDevice9 *device)
+{
+    static const DWORD shader_code[] =
+    {
         0xfffe0200,                                                 /* vs_2_0                   */
         0x0200001f, 0x80000000, 0x900f0000,                         /* dcl_position v0          */
         0x02000001, 0x800f0000, 0xa0e40000,                         /* mov r0, c0               */
@@ -11053,8 +11112,10 @@ static void loop_index_test(IDirect3DDevice9 *device) {
     IDirect3DVertexShader9_Release(shader);
 }
 
-static void sgn_test(IDirect3DDevice9 *device) {
-    const DWORD shader_code[] = {
+static void sgn_test(IDirect3DDevice9 *device)
+{
+    static const DWORD shader_code[] =
+    {
         0xfffe0200,                                                             /* vs_2_0                       */
         0x0200001f, 0x80000000, 0x900f0000,                                     /* dcl_position o0              */
         0x05000051, 0xa00f0000, 0xbf000000, 0x00000000, 0x3f000000, 0x41400000, /* def c0, -0.5, 0.0, 0.5, 12.0 */
@@ -12406,13 +12467,14 @@ static void clip_planes_test(IDirect3DDevice9 *device)
 {
     const float plane0[4] = {0.0f, 1.0f, 0.0f, 0.5f / 480.0f}; /* a quarter-pixel offset */
 
-    const DWORD shader_code[] = {
-        0xfffe0200, /* vs_2_0 */
-        0x0200001f, 0x80000000, 0x900f0000, /* dcl_position v0 */
-        0x0200001f, 0x8000000a, 0x900f0001, /* dcl_color0 v1 */
-        0x02000001, 0xc00f0000, 0x90e40000, /* mov oPos, v0 */
-        0x02000001, 0xd00f0000, 0x90e40001, /* mov oD0, v1 */
-        0x0000ffff /* end */
+    static const DWORD shader_code[] =
+    {
+        0xfffe0200,                             /* vs_2_0 */
+        0x0200001f, 0x80000000, 0x900f0000,     /* dcl_position v0 */
+        0x0200001f, 0x8000000a, 0x900f0001,     /* dcl_color0 v1 */
+        0x02000001, 0xc00f0000, 0x90e40000,     /* mov oPos, v0 */
+        0x02000001, 0xd00f0000, 0x90e40001,     /* mov oD0, v1 */
+        0x0000ffff                              /* end */
     };
     IDirect3DVertexShader9 *shader;
 

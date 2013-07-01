@@ -42,7 +42,7 @@ static const DWORD simple_vs[] =
     0x0000ffff,                                                             /* end                          */
 };
 
-static DWORD simple_ps[] =
+static const DWORD simple_ps[] =
 {
     0xffff0101,                                                             /* ps_1_1                       */
     0x00000051, 0xa00f0001, 0x3f800000, 0x00000000, 0x00000000, 0x00000000, /* def c1 = 1.0, 0.0, 0.0, 0.0  */
@@ -2024,7 +2024,8 @@ static void test_null_stream(void)
     HRESULT hr;
     IDirect3DVertexShader9 *shader = NULL;
     IDirect3DVertexDeclaration9 *decl = NULL;
-    DWORD shader_code[] = {
+    static const DWORD shader_code[] =
+    {
         0xfffe0101,                             /* vs_1_1           */
         0x0000001f, 0x80000000, 0x900f0000,     /* dcl_position v0  */
         0x00000001, 0xc00f0000, 0x90e40000,     /* mov oPos, v0     */
