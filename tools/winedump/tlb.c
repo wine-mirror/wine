@@ -82,19 +82,19 @@ static const void *tlb_read(int size) {
 
 static int tlb_read_int(void)
 {
-    const int *ret = (const int*)tlb_read(sizeof(int));
+    const int *ret = tlb_read(sizeof(int));
     return ret ? *ret : -1;
 }
 
 static int tlb_read_short(void)
 {
-    const short *ret = (const short*)tlb_read(sizeof(short));
+    const short *ret = tlb_read(sizeof(short));
     return ret ? *ret : -1;
 }
 
 static int tlb_read_byte(void)
 {
-    const unsigned char *ret = (const unsigned char*)tlb_read(sizeof(char));
+    const unsigned char *ret = tlb_read(sizeof(char));
     return ret ? *ret : -1;
 }
 
