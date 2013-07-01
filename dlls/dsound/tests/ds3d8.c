@@ -709,7 +709,7 @@ static HRESULT test_secondary8(LPGUID lpGuid, int play,
                 rc=IDirectSoundBuffer_SetPan(secondary,-1000);
                 ok(rc==DS_OK,"IDirectSoundBuffer_SetPan(secondary) failed: %08x\n",rc);
                 rc=IDirectSoundBuffer_GetPan(secondary,&pan);
-                ok(rc==DS_OK,"IDirectSoundBuffer_SetPan(secondary) failed: %08x\n",rc);
+                ok(rc==DS_OK,"IDirectSoundBuffer_GetPan(secondary) failed: %08x\n",rc);
                 ok(pan==-1000,"secondary: wrong pan %d instead of -1000\n",
                    pan);
 
