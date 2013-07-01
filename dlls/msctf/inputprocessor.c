@@ -739,7 +739,7 @@ static HRESULT WINAPI IPPSource_UnadviseSink(ITfSource *iface, DWORD pdwCookie)
     if (get_Cookie_magic(pdwCookie)!=COOKIE_MAGIC_IPPSINK)
         return E_INVALIDARG;
 
-    sink = (InputProcessorProfilesSink*)remove_Cookie(pdwCookie);
+    sink = remove_Cookie(pdwCookie);
     if (!sink)
         return CONNECT_E_NOCONNECTION;
 

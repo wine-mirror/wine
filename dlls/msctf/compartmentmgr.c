@@ -617,7 +617,7 @@ static HRESULT WINAPI CompartmentSource_UnadviseSink(ITfSource *iface, DWORD pdw
     if (get_Cookie_magic(pdwCookie)!=COOKIE_MAGIC_COMPARTMENTSINK)
         return E_INVALIDARG;
 
-    sink = (CompartmentSink*)remove_Cookie(pdwCookie);
+    sink = remove_Cookie(pdwCookie);
     if (!sink)
         return CONNECT_E_NOCONNECTION;
 

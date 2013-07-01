@@ -662,7 +662,7 @@ static HRESULT WINAPI ThreadMgrSource_UnadviseSink(ITfSource *iface, DWORD pdwCo
     if (get_Cookie_magic(pdwCookie)!=COOKIE_MAGIC_TMSINK)
         return E_INVALIDARG;
 
-    sink = (ThreadMgrSink*)remove_Cookie(pdwCookie);
+    sink = remove_Cookie(pdwCookie);
     if (!sink)
         return CONNECT_E_NOCONNECTION;
 
