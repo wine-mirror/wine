@@ -87,7 +87,7 @@ static void dump_obj_locator( const rtti_object_locator *ptr )
 static void dump_obj_locator( const rtti_object_locator *ptr )
 {
     int i;
-    char *base = ptr->signature == 0 ? (char*)RtlPcToFileHeader((void*)ptr, (void**)&base) : (char*)ptr - ptr->object_locator;
+    char *base = ptr->signature == 0 ? RtlPcToFileHeader((void*)ptr, (void**)&base) : (char*)ptr - ptr->object_locator;
     const rtti_object_hierarchy *h = (const rtti_object_hierarchy*)(base + ptr->type_hierarchy);
     const type_info *type_descriptor = (const type_info*)(base + ptr->type_descriptor);
 
@@ -864,7 +864,7 @@ const type_info* CDECL MSVCRT___RTtypeid(void *cppobj)
         char *base;
 
         if(obj_locator->signature == 0)
-            base = (char*)RtlPcToFileHeader((void*)obj_locator, (void**)&base);
+            base = RtlPcToFileHeader((void*)obj_locator, (void**)&base);
         else
             base = (char*)obj_locator - obj_locator->object_locator;
 
@@ -992,7 +992,7 @@ void* CDECL MSVCRT___RTDynamicCast(void *cppobj, int unknown,
         if (TRACE_ON(msvcrt)) dump_obj_locator(obj_locator);
 
         if(obj_locator->signature == 0)
-            base = (char*)RtlPcToFileHeader((void*)obj_locator, (void**)&base);
+            base = RtlPcToFileHeader((void*)obj_locator, (void**)&base);
         else
             base = (char*)obj_locator - obj_locator->object_locator;
 
