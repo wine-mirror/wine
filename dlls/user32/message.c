@@ -3683,12 +3683,17 @@ void WINAPI PostQuitMessage( INT exit_code )
 }
 
 /* check for driver events if we detect that the app is not properly consuming messages */
-static inline void check_for_driver_events(void)
+static inline void check_for_driver_events( UINT msg )
 {
     if (get_user_thread_info()->message_count > 200)
     {
         flush_window_surfaces( FALSE );
         USER_Driver->pMsgWaitForMultipleObjectsEx( 0, NULL, 0, QS_ALLINPUT, 0 );
+    }
+    else if (msg == WM_TIMER || msg == WM_SYSTIMER)
+    {
+        /* driver events should have priority over timers, so make sure we'll check for them soon */
+        get_user_thread_info()->message_count += 100;
     }
     else get_user_thread_info()->message_count++;
 }
@@ -3701,7 +3706,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH PeekMessageW( MSG *msg_out, HWND hwnd, UINT first,
     MSG msg;
 
     USER_CheckNotLock();
-    check_for_driver_events();
+    check_for_driver_events( 0 );
 
     if (!peek_message( &msg, hwnd, first, last, flags, 0 ))
     {
@@ -3712,6 +3717,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH PeekMessageW( MSG *msg_out, HWND hwnd, UINT first,
         /* if we received driver events, check again for a pending message */
         if (ret == WAIT_TIMEOUT || !peek_message( &msg, hwnd, first, last, flags, 0 )) return FALSE;
     }
+
+    check_for_driver_events( msg.message );
 
     /* copy back our internal safe copy of message data to msg_out.
      * msg_out is a variable from the *program*, so it can't be used
@@ -3748,7 +3755,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetMessageW( MSG *msg, HWND hwnd, UINT first, UINT
     unsigned int mask = QS_POSTMESSAGE | QS_SENDMESSAGE;  /* Always selected */
 
     USER_CheckNotLock();
-    check_for_driver_events();
+    check_for_driver_events( 0 );
 
     if (first || last)
     {
@@ -3766,6 +3773,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetMessageW( MSG *msg, HWND hwnd, UINT first, UINT
         flush_window_surfaces( TRUE );
         wow_handlers.wait_message( 1, &server_queue, INFINITE, mask, 0 );
     }
+    check_for_driver_events( msg->message );
 
     return (msg->message != WM_QUIT);
 }
