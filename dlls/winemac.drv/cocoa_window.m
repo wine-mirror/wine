@@ -158,6 +158,8 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 @property (assign, nonatomic) void* imeData;
 @property (nonatomic) BOOL commandDone;
 
+    - (void) updateColorSpace;
+
 @end
 
 
@@ -256,18 +258,25 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
             pendingGlContexts = [[NSMutableArray alloc] init];
         [pendingGlContexts addObject:context];
         [self setNeedsDisplay:YES];
+        [(WineWindow*)[self window] updateColorSpace];
     }
 
     - (void) removeGLContext:(WineOpenGLContext*)context
     {
         [glContexts removeObjectIdenticalTo:context];
         [pendingGlContexts removeObjectIdenticalTo:context];
+        [(WineWindow*)[self window] updateColorSpace];
     }
 
     - (void) updateGLContexts
     {
         for (WineOpenGLContext* context in glContexts)
             context.needsUpdate = TRUE;
+    }
+
+    - (BOOL) hasGLContext
+    {
+        return [glContexts count] || [pendingGlContexts count];
     }
 
     - (BOOL) acceptsFirstMouse:(NSEvent*)theEvent
@@ -919,7 +928,10 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
                 if (NSEqualSizes(frame.size, oldFrame.size))
                     [self setFrameOrigin:frame.origin];
                 else
+                {
                     [self setFrame:frame display:YES];
+                    [self updateColorSpace];
+                }
 
                 [self updateFullscreen];
 
@@ -1032,6 +1044,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
             [self setFrameTopLeftPoint:NSMakePoint(NSMinX(frame), NSMaxY(frame))];
             frame = [self constrainFrameRect:[self frame] toScreen:primaryScreen];
             [self setFrame:frame display:YES];
+            [self updateColorSpace];
         }
 
         if (activate)
@@ -1180,6 +1193,37 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
             [self miniaturize:nil];
             pendingMinimize = FALSE;
         }
+    }
+
+    // We normally use the generic/calibrated RGB color space for the window,
+    // rather than the device color space, to avoid expensive color conversion
+    // which slows down drawing.  However, for windows displaying OpenGL, having
+    // a different color space than the screen greatly reduces frame rates, often
+    // limiting it to the display refresh rate.
+    //
+    // To avoid this, we switch back to the screen color space whenever the
+    // window is covered by a view with an attached OpenGL context.
+    - (void) updateColorSpace
+    {
+        NSRect contentRect = [[self contentView] frame];
+        BOOL coveredByGLView = FALSE;
+        for (WineContentView* view in [[self contentView] subviews])
+        {
+            if ([view hasGLContext])
+            {
+                NSRect frame = [view convertRect:[view bounds] toView:nil];
+                if (NSContainsRect(frame, contentRect))
+                {
+                    coveredByGLView = TRUE;
+                    break;
+                }
+            }
+        }
+
+        if (coveredByGLView)
+            [self setColorSpace:nil];
+        else
+            [self setColorSpace:[NSColorSpace genericRGBColorSpace]];
     }
 
 
@@ -1872,6 +1916,7 @@ macdrv_view macdrv_create_view(macdrv_window w, CGRect rect)
                    name:NSApplicationDidChangeScreenParametersNotification
                  object:NSApp];
         [[window contentView] addSubview:view];
+        [window updateColorSpace];
     });
 
     [pool release];
@@ -1890,6 +1935,7 @@ void macdrv_dispose_view(macdrv_view v)
 
     OnMainThread(^{
         NSNotificationCenter* nc = [NSNotificationCenter defaultCenter];
+        WineWindow* window = (WineWindow*)[view window];
 
         [nc removeObserver:view
                       name:NSViewGlobalFrameDidChangeNotification
@@ -1899,6 +1945,7 @@ void macdrv_dispose_view(macdrv_view v)
                     object:NSApp];
         [view removeFromSuperview];
         [view release];
+        [window updateColorSpace];
     });
 
     [pool release];
@@ -1923,11 +1970,15 @@ void macdrv_set_view_window_and_frame(macdrv_view v, macdrv_window w, CGRect rec
         BOOL changedWindow = (window && window != [view window]);
         NSRect newFrame = NSRectFromCGRect(rect);
         NSRect oldFrame = [view frame];
+        BOOL needUpdateWindowColorSpace = FALSE;
 
         if (changedWindow)
         {
+            WineWindow* oldWindow = (WineWindow*)[view window];
             [view removeFromSuperview];
+            [oldWindow updateColorSpace];
             [[window contentView] addSubview:view];
+            needUpdateWindowColorSpace = TRUE;
         }
 
         if (!NSEqualRects(oldFrame, newFrame))
@@ -1941,7 +1992,11 @@ void macdrv_set_view_window_and_frame(macdrv_view v, macdrv_window w, CGRect rec
             else
                 [view setFrame:newFrame];
             [view setNeedsDisplay:YES];
+            needUpdateWindowColorSpace = TRUE;
         }
+
+        if (needUpdateWindowColorSpace)
+            [(WineWindow*)[view window] updateColorSpace];
     });
 
     [pool release];
