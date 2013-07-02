@@ -712,8 +712,8 @@ static void test_MapViewOfFile(void)
     ok(info.BaseAddress == ptr, "BaseAddress should have been %p but was %p instead\n", ptr, info.BaseAddress);
     ok(info.AllocationBase == ptr, "AllocationBase should have been %p but was %p instead\n", ptr, info.AllocationBase);
     ok(info.RegionSize == 0x10000, "RegionSize should have been 0x10000 but was 0x%lx\n", info.RegionSize);
-    ok(info.State == MEM_COMMIT, "State should have been MEM_RESERVE instead of 0x%x\n", info.State);
-    ok(info.Protect == PAGE_READONLY, "Protect should have been 0 instead of 0x%x\n", info.Protect);
+    ok(info.State == MEM_COMMIT, "State should have been MEM_COMMIT instead of 0x%x\n", info.State);
+    ok(info.Protect == PAGE_READONLY, "Protect should have been PAGE_READONLY instead of 0x%x\n", info.Protect);
     if (info.Type == MEM_PRIVATE)  /* win9x is different for uncommitted mappings */
     {
         ok(info.AllocationProtect == PAGE_NOACCESS,
