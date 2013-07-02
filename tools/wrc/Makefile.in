@@ -29,7 +29,7 @@ wrc$(EXEEXT): $(OBJS) $(LIBWPP)
 wrc-installed: $(OBJS) $(LIBWPP)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(ALL_LIBS) $(LDFLAGS) $(LDRPATH_INSTALL)
 
-install install-dev:: wrc-installed $(DESTDIR)$(bindir)
+install install-dev:: wrc-installed $(DESTDIR)$(bindir) install-man-pages
 	$(INSTALL_PROGRAM) wrc-installed $(DESTDIR)$(bindir)/wrc$(EXEEXT)
 
 uninstall::

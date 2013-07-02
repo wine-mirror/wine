@@ -166,6 +166,8 @@ uninstall-man-pages::
 install:: @WOW64_DISABLE@ $(MANPAGE:.man=.man.in install-man-pages)
 uninstall:: @WOW64_DISABLE@ $(MANPAGE:.man=.man.in uninstall-man-pages)
 
+.PHONY: install-man-pages uninstall-man-pages
+
 # Rules for cleaning
 
 $(EXTRASUBDIRS:%=%/__clean__): dummy

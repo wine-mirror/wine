@@ -23,7 +23,7 @@ all: $(PROGRAMS)
 winebuild$(EXEEXT): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBPORT) $(LDFLAGS)
 
-install install-dev:: $(PROGRAMS) $(DESTDIR)$(bindir)
+install install-dev:: $(PROGRAMS) $(DESTDIR)$(bindir) install-man-pages
 	$(INSTALL_PROGRAM) winebuild$(EXEEXT) $(DESTDIR)$(bindir)/winebuild$(EXEEXT)
 
 uninstall::

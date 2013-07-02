@@ -34,7 +34,7 @@ all: $(PROGRAMS)
 winedump$(EXEEXT): $(OBJS)
 	$(CC) $(CFLAGS) -o winedump$(EXEEXT) $(OBJS) $(LIBPORT) $(LDFLAGS)
 
-install install-dev:: $(PROGRAMS) $(DESTDIR)$(bindir)
+install install-dev:: $(PROGRAMS) $(DESTDIR)$(bindir) install-man-pages
 	$(INSTALL_PROGRAM) winedump$(EXEEXT) $(DESTDIR)$(bindir)/winedump$(EXEEXT)
 	$(INSTALL_SCRIPT) $(srcdir)/function_grep.pl $(DESTDIR)$(bindir)/function_grep.pl
 

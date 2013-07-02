@@ -25,7 +25,7 @@ wmc$(EXEEXT): $(OBJS)
 wmc-installed: $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(ALL_LIBS) $(LDFLAGS) $(LDRPATH_INSTALL)
 
-install install-dev:: wmc-installed $(DESTDIR)$(bindir)
+install install-dev:: wmc-installed $(DESTDIR)$(bindir) install-man-pages
 	$(INSTALL_PROGRAM) wmc-installed $(DESTDIR)$(bindir)/wmc$(EXEEXT)
 
 uninstall::

@@ -51,9 +51,9 @@ wine_info.plist: wine_info.plist.in
 $(EXTRA_BINARIES:%=__install__%): $(EXTRA_BINARIES) $(DESTDIR)$(bindir) dummy
 	f=`expr $@ : '__install__\(.*\)'` && $(INSTALL_PROGRAM) $$f $(DESTDIR)$(bindir)/$$f
 
-.PHONY: install-man-pages $(EXTRA_BINARIES:%=__install__%)
+.PHONY: $(EXTRA_BINARIES:%=__install__%)
 
-install install-lib:: wine-installed $(DESTDIR)$(bindir) $(EXTRA_BINARIES:%=__install__%)
+install install-lib:: wine-installed $(DESTDIR)$(bindir) $(EXTRA_BINARIES:%=__install__%) @WOW64_DISABLE@ install-man-pages
 	$(INSTALL_PROGRAM) wine-installed $(DESTDIR)$(bindir)/$(MAIN_BINARY)
 
 install-man-pages:: $(EXTRA_MANPAGES) $(INSTALLDIRS) dummy
