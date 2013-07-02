@@ -2988,9 +2988,12 @@ static void load_extensions(void)
     register_extension("WGL_EXT_extensions_string");
     opengl_funcs.ext.p_wglGetExtensionsStringEXT = macdrv_wglGetExtensionsStringEXT;
 
-    register_extension("WGL_EXT_swap_control");
-    opengl_funcs.ext.p_wglSwapIntervalEXT = macdrv_wglSwapIntervalEXT;
-    opengl_funcs.ext.p_wglGetSwapIntervalEXT = macdrv_wglGetSwapIntervalEXT;
+    if (allow_vsync)
+    {
+        register_extension("WGL_EXT_swap_control");
+        opengl_funcs.ext.p_wglSwapIntervalEXT = macdrv_wglSwapIntervalEXT;
+        opengl_funcs.ext.p_wglGetSwapIntervalEXT = macdrv_wglGetSwapIntervalEXT;
+    }
 
     /* Presumably identical to [W]GL_ARB_framebuffer_sRGB, above, but clients may
        check for either, so register them separately. */
@@ -3245,7 +3248,7 @@ static BOOL create_context(struct wgl_context *context, CGLContextObj share)
        only make sense for double-buffered contexts, though.  In theory, for
        single-buffered contexts, there's no such thing as a swap.  But OS X
        will synchronize flushes of single-buffered contexts if this is set. */
-    if (pf->double_buffer)
+    if (pf->double_buffer && allow_vsync)
         swap_interval = 1;
     else
         swap_interval = 0;

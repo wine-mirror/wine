@@ -48,6 +48,7 @@ DWORD thread_data_tls_index = TLS_OUT_OF_INDEXES;
 int topmost_float_inactive = TOPMOST_FLOAT_INACTIVE_NONFULLSCREEN;
 int capture_displays_for_fullscreen = 0;
 BOOL skip_single_buffer_flushes = FALSE;
+BOOL allow_vsync = TRUE;
 
 
 /**************************************************************************
@@ -159,6 +160,9 @@ static void setup_options(void)
 
     if (!get_config_key(hkey, appkey, "SkipSingleBufferFlushes", buffer, sizeof(buffer)))
         skip_single_buffer_flushes = IS_OPTION_TRUE(buffer[0]);
+
+    if (!get_config_key(hkey, appkey, "AllowVerticalSync", buffer, sizeof(buffer)))
+        allow_vsync = IS_OPTION_TRUE(buffer[0]);
 
     if (appkey) RegCloseKey(appkey);
     if (hkey) RegCloseKey(hkey);
