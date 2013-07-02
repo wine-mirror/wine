@@ -4421,10 +4421,16 @@ static void EDIT_ImeComposition(HWND hwnd, LPARAM CompFlag, EDITSTATE *es)
         return;
 
     if (CompFlag & GCS_RESULTSTR)
+    {
         EDIT_GetResultStr(hIMC, es);
-    if (CompFlag & GCS_COMPSTR)
-        EDIT_GetCompositionStr(hIMC, CompFlag, es);
-    cursor = ImmGetCompositionStringW(hIMC, GCS_CURSORPOS, 0, 0);
+        cursor = 0;
+    }
+    else
+    {
+        if (CompFlag & GCS_COMPSTR)
+            EDIT_GetCompositionStr(hIMC, CompFlag, es);
+        cursor = ImmGetCompositionStringW(hIMC, GCS_CURSORPOS, 0, 0);
+    }
     ImmReleaseContext(hwnd, hIMC);
     EDIT_SetCaretPos(es, es->selection_start + cursor, es->flags & EF_AFTER_WRAP);
 }
