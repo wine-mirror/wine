@@ -324,7 +324,8 @@ static void test_safearray(void)
         a->rgsabound[1].cElements = 4;
         a->rgsabound[1].lLbound = 1;
         a->cbElements = 2;
-        SafeArrayAllocData(a);
+        hres = SafeArrayAllocData(a);
+        ok(hres == S_OK, "SafeArrayAllocData failed with hres %x\n", hres);
 
         indices[0] = 4;
         indices[1] = 2;
