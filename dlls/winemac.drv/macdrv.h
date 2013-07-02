@@ -35,6 +35,9 @@
 #include "wine/gdi_driver.h"
 
 
+extern BOOL skip_single_buffer_flushes DECLSPEC_HIDDEN;
+
+
 extern const char* debugstr_cf(CFTypeRef t) DECLSPEC_HIDDEN;
 
 static inline CGRect cgrect_from_rect(RECT rect)

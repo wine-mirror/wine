@@ -3051,9 +3051,10 @@ static BOOL init_opengl(void)
 #define REDIRECT(func) \
     do { p##func = opengl_funcs.gl.p_##func; opengl_funcs.gl.p_##func = macdrv_##func; } while(0)
     REDIRECT(glCopyPixels);
-    REDIRECT(glFlush);
     REDIRECT(glReadPixels);
     REDIRECT(glViewport);
+    if (skip_single_buffer_flushes)
+        REDIRECT(glFlush);
 #undef REDIRECT
 
     /* redirect some OpenGL extension functions */
