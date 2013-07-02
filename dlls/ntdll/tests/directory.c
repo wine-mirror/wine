@@ -261,6 +261,8 @@ static void test_NtQueryDirectoryFile(void)
     for (i = 0; testfiles[i].name; i++)
     {
         UNICODE_STRING mask;
+
+        if (testfiles[i].nameW[0] == '.') continue;  /* . and .. as masks are broken on Windows */
         mask.Buffer = testfiles[i].nameW;
         mask.Length = mask.MaximumLength = lstrlenW(testfiles[i].nameW) * sizeof(WCHAR);
         test_flags_NtQueryDirectoryFile(&attr, testdirA, &mask, FALSE, TRUE);
