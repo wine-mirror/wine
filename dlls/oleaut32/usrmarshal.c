@@ -1070,15 +1070,16 @@ unsigned char * WINAPI LPSAFEARRAY_UserUnmarshal(ULONG *pFlags, unsigned char *B
     Buffer += sizeof(wiresab[0]) * wiresa->cDims;
 
     if(vt)
+    {
         *ppsa = SafeArrayCreateEx(vt, wiresa->cDims, wiresab, NULL);
+        if (!*ppsa) RpcRaiseException(E_OUTOFMEMORY);
+    }
     else
     {
-        SafeArrayAllocDescriptor(wiresa->cDims, ppsa);
-        if(*ppsa)
-            memcpy((*ppsa)->rgsabound, wiresab, sizeof(SAFEARRAYBOUND) * wiresa->cDims);
+        if (FAILED(SafeArrayAllocDescriptor(wiresa->cDims, ppsa)))
+            RpcRaiseException(E_OUTOFMEMORY);
+        memcpy((*ppsa)->rgsabound, wiresab, sizeof(SAFEARRAYBOUND) * wiresa->cDims);
     }
-    if (!*ppsa)
-        RpcRaiseException(E_OUTOFMEMORY);
 
     /* be careful about which flags we set since they could be a security
      * risk */
