@@ -152,6 +152,7 @@ static void end_host_object(DWORD tid, HANDLE thread)
 }
 
 static int external_connections;
+static BOOL expect_last_release_closes;
 
 static HRESULT WINAPI ExternalConnection_QueryInterface(IExternalConnection *iface, REFIID riid, void **ppv)
 {
@@ -187,12 +188,9 @@ static DWORD WINAPI ExternalConnection_ReleaseConnection(IExternalConnection *if
     ok(extconn == EXTCONN_STRONG, "extconn = %d\n", extconn);
     ok(!reserved, "reserved = %x\n", reserved);
 
-    /* This may need to be adjusted if we'll add more complex tests. */
-    if(--external_connections)
-        ok(!fLastReleaseCloses, "fLastReleaseCloses = %x\n", fLastReleaseCloses);
-    else
-        ok(fLastReleaseCloses, "fLastReleaseCloses = %x\n", fLastReleaseCloses);
-    return external_connections;
+    ok(fLastReleaseCloses == expect_last_release_closes, "fLastReleaseCloses = %x, expected %x\n",
+       fLastReleaseCloses, expect_last_release_closes);
+    return --external_connections;
 }
 
 static const IExternalConnectionVtbl ExternalConnectionVtbl = {
@@ -1842,6 +1840,7 @@ static void test_external_connection(void)
     external_connections = 0;
 
     /* Marshaling an interface increases external connection count. */
+    expect_last_release_closes = FALSE;
     hres = CreateStreamOnHGlobal(NULL, TRUE, &stream);
     ok(hres == S_OK, "CreateStreamOnHGlobal failed: %08x\n", hres);
     tid = start_host_object(stream, &IID_ItestDual, (IUnknown*)&TestDual, MSHLFLAGS_NORMAL, &thread);
@@ -1855,14 +1854,17 @@ static void test_external_connection(void)
     IStream_Release(stream);
     ok(external_connections == 1, "external_connections = %d\n", external_connections);
 
-    /* Creating a stub for new iface does not cause new external connection. */
+    /* Creating a stub for new iface causes new external connection. */
     hres = ItestDual_QueryInterface(iface, &IID_ITestSecondDisp, (void**)&second);
     ok(hres == S_OK, "Could not get ITestSecondDisp iface: %08x\n", hres);
-    ok(external_connections == 1, "external_connections = %d\n", external_connections);
+    todo_wine
+    ok(external_connections == 2, "external_connections = %d\n", external_connections);
 
     ITestSecondDisp_Release(second);
-    ok(external_connections == 1, "external_connections = %d\n", external_connections);
+    todo_wine
+    ok(external_connections == 2, "external_connections = %d\n", external_connections);
 
+    expect_last_release_closes = TRUE;
     ItestDual_Release(iface);
     ok(external_connections == 0, "external_connections = %d\n", external_connections);
 
@@ -1872,10 +1874,12 @@ static void test_external_connection(void)
     hres = CreateStreamOnHGlobal(NULL, TRUE, &stream);
     ok(hres == S_OK, "CreateStreamOnHGlobal failed: %08x\n", hres);
 
+    expect_last_release_closes = FALSE;
     hres = CoMarshalInterface(stream, &IID_ItestDual, (IUnknown*)&TestDual, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
     ok(hres == S_OK, "CoMarshalInterface failed: %08x\n", hres);
     ok(external_connections == 1, "external_connections = %d\n", external_connections);
 
+    expect_last_release_closes = TRUE;
     IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
     hres = CoReleaseMarshalData(stream);
     ok(hres == S_OK, "CoReleaseMarshalData failed: %08x\n", hres);
@@ -1885,6 +1889,7 @@ static void test_external_connection(void)
     hres = CreateStreamOnHGlobal(NULL, TRUE, &stream2);
     ok(hres == S_OK, "CreateStreamOnHGlobal failed: %08x\n", hres);
 
+    expect_last_release_closes = FALSE;
     IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
     hres = CoMarshalInterface(stream, &IID_ItestDual, (IUnknown*)&TestDual, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
     ok(hres == S_OK, "CoMarshalInterface failed: %08x\n", hres);
@@ -1899,6 +1904,7 @@ static void test_external_connection(void)
     ok(hres == S_OK, "CoReleaseMarshalData failed: %08x\n", hres);
     ok(external_connections == 1, "external_connections = %d\n", external_connections);
 
+    expect_last_release_closes = TRUE;
     IStream_Seek(stream2, zero, STREAM_SEEK_SET, NULL);
     hres = CoReleaseMarshalData(stream2);
     ok(hres == S_OK, "CoReleaseMarshalData failed: %08x\n", hres);
