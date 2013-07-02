@@ -41,7 +41,7 @@ all: makedep$(EXEEXT) $(PROGRAMS)
 
 @MAKE_RULES@
 
-makedep$(EXEEXT) $(EXEEXT:%=makedep): makedep.o
+makedep $(EXEEXT:%=makedep%): makedep.o
 	$(CC) $(CFLAGS) -o $@ makedep.o $(LDFLAGS)
 
 make_ctests$(EXEEXT): make_ctests.o

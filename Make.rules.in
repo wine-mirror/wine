@@ -25,9 +25,10 @@ IDL_GEN_HEADERS = $(IDL_H_SRCS:.idl=.h) $(IDL_C_SRCS:.idl=.h) $(IDL_I_SRCS:.idl=
                   $(IDL_P_SRCS:.idl=.h) $(IDL_S_SRCS:.idl=.h)
 
 CLEAN_FILES   = *.o *.a *.so *.mo *.ln *.res *.fake core
-CLEAN_TARGETS = $(IDL_GEN_C_SRCS) $(IDL_GEN_HEADERS) $(IDL_TLB_SRCS:.idl=.tlb) $(IDL_P_SRCS:%=dlldata.c) \
+CLEAN_TARGETS = $(IDL_GEN_C_SRCS) $(IDL_GEN_HEADERS) \
+                $(IDL_TLB_SRCS:.idl=.tlb) $(IDL_P_SRCS:.idl=_p.c dlldata.c) \
                 $(BISON_SRCS:.y=.tab.c) $(BISON_SRCS:.y=.tab.h) $(LEX_SRCS:.l=.yy.c) \
-                $(PO_SRCS:%=rsrc.pot) $(MC_SRCS:%=msg.pot) $(XTEMPLATE_SRCS:.x=.h)
+                $(PO_SRCS:.rc=.res rsrc.pot) $(MC_SRCS:.mc=.res msg.pot) $(XTEMPLATE_SRCS:.x=.h)
 
 OBJS = $(C_SRCS:.c=.o) $(BISON_SRCS:.y=.tab.o) $(LEX_SRCS:.l=.yy.o) $(IDL_GEN_C_SRCS:.c=.o) $(OBJC_SRCS:.m=.o) \
        $(IDL_R_SRCS:.idl=_r.res) $(IDL_TLB_RES) $(RC_SRCS:.rc=.res) $(MC_SRCS:.mc=.res) $(EXTRA_OBJS)
@@ -162,8 +163,8 @@ install-man-pages:: $(MANPAGE) $(DESTDIR)$(mandir)/man$(prog_manext)
 uninstall-man-pages::
 	$(RM) $(DESTDIR)$(mandir)/man$(prog_manext)/$(MANPAGE:.man=).$(prog_manext)
 
-install:: @WOW64_DISABLE@ $(MANPAGE:%=install-man-pages)
-uninstall:: @WOW64_DISABLE@ $(MANPAGE:%=uninstall-man-pages)
+install:: @WOW64_DISABLE@ $(MANPAGE:.man=.man.in install-man-pages)
+uninstall:: @WOW64_DISABLE@ $(MANPAGE:.man=.man.in uninstall-man-pages)
 
 # Rules for cleaning
 
