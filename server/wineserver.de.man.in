@@ -1,4 +1,3 @@
-.\" -*- nroff -*-
 .TH WINESERVER 1 "Oktober 2005" "@PACKAGE_STRING@" "Windows on Unix"
 .SH NAME
 wineserver \- der Wine Server
@@ -24,8 +23,8 @@ detaillierte Ausgabe. Wenn
 .I n
 nicht angegeben wird, ist 1 der Standardwert. Die Debugausgabe wird
 an stderr geleitet. \fBwine\fR(1) wird beim Start von \fBwineserver\fR
-automatisch das Debuglevel setzen, wenn +server in der Umgebungsvariable
-WINEDEBUG angegeben ist.
+automatisch das Debuglevel auf normal setzen, wenn +server in der
+Umgebungsvariable WINEDEBUG angegeben ist.
 .TP
 .BR \-f ", " --foreground
 Lässt den Server zur vereinfachten Fehlersuche im Vordergrund laufen,
@@ -36,7 +35,7 @@ Zeigt den Hilfetext an.
 .TP
 \fB\-k\fI[n]\fR, \fB--kill\fI[=n]
 Beendet den momentan laufenden
-.B wineserver ,
+.BR wineserver ,
 optional mit Signal \fIn\fR. Wenn kein Signal angegeben wurde, wird
 SIGINT, gefolgt von einem SIGKILL gesendet. Die zu beendende Instanz von
 \fBwineserver\fR wird durch die Umgebungsvariable WINEPREFIX bestimmt.
@@ -98,16 +97,15 @@ Der ursprüngliche Autor von
 ist Alexandre Julliard. Viele andere Personen haben neue Funktionen hinzugefügt
 und Fehler behoben. Details finden Sie in der Datei Changelog.
 .SH FEHLER
-Wenn Sie einen Fehler finden, melden Sie ihn bitte unter
+Wenn Sie einen Fehler finden, melden Sie ihn bitte im
 .UR http://bugs.winehq.org
-.BR http://bugs.winehq.org .
-.UE
+.B Wine Bugtracker
+.UE .
 .SH VERFÜGBARKEIT
 .B wineserver
-ist Teil der Wine-Distribution, verfügbar im WineHQ, dem Hauptquartier der
-Wine-Entwicklung, unter
+ist Teil der Wine-Distribution, verfügbar im WineHQ, dem
 .UR http://www.winehq.org/
-.BR http://www.winehq.org/ .
-.UE
+.B  Hauptquartier der Wine-Entwicklung
+.UE .
 .SH "SIEHE AUCH"
 .BR wine (1).
