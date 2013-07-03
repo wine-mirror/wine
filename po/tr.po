@@ -5,9 +5,9 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2013-06-24 11:42+0200\n"
+"PO-Revision-Date: 2013-07-04 00:10+0200\n"
 "Last-Translator: Volkan Gezer <volkangezer@gmail.com>\n"
-"Language-Team: none\n"
+"Language-Team: Turkish <kde-l10n-tr@kde.org>\n"
 "Language: Turkish\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -719,7 +719,7 @@ msgstr "&Seçim"
 
 #: comdlg32.rc:383
 msgid "&from:"
-msgstr "&Başlangıç:"
+msgstr "&başlangıç:"
 
 #: comdlg32.rc:384
 msgid "&to:"
@@ -2354,11 +2354,11 @@ msgstr "Kullanmak biçimi seçin:"
 
 #: cryptui.rc:405
 msgid "&DER-encoded X.509 (*.cer)"
-msgstr "&DER-encoded X.509 (*.cer)"
+msgstr "&DER-Kodlu X.509 (*.cer)"
 
 #: cryptui.rc:407
 msgid "Ba&se64-encoded X.509 (*.cer):"
-msgstr "Ba&se64-encoded X.509 (*.cer):"
+msgstr "Ba&se64-Kodlu X.509 (*.cer):"
 
 #: cryptui.rc:409
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (*.p7b)"
@@ -2434,7 +2434,7 @@ msgstr "Bu sertifika aşağıdaki isteklerde amaçlanıyor:"
 
 #: cryptui.rc:35
 msgid "Issued to: "
-msgstr "Verilen:"
+msgstr "Verilen: "
 
 #: cryptui.rc:36
 msgid "Issued by: "
@@ -2442,7 +2442,7 @@ msgstr "Veren: "
 
 #: cryptui.rc:37
 msgid "Valid from "
-msgstr "Geçerlilik başlangıcı"
+msgstr "Geçerlilik başlangıcı "
 
 #: cryptui.rc:38
 msgid " to "
@@ -7926,7 +7926,7 @@ msgstr "Sık Kullanılanlar"
 
 #: shell32.rc:203
 msgid "StartUp"
-msgstr "Başlangı"
+msgstr "Başlangıç"
 
 #: shell32.rc:204
 msgid "Start Menu"
