@@ -1042,8 +1042,10 @@ static void test_SHGetStockIconInfo(void)
 
         if (atleast_win7 && (i == (SIID_MAX_ICONS - 1)) && broken(hr == E_INVALIDARG))
         {
-            /* off by one windows bug: there are SIID_MAX_ICONS icons from 0 upto
-               SIID_MAX_ICONS-1 on win8, but the last one is missing on win7 */
+            /* Off by one windows bug: there are SIID_MAX_ICONS icons from 0
+             * up to SIID_MAX_ICONS-1 on Windows 8, but the last one is missing
+             * on Windows 7.
+             */
             trace("%3d: got E_INVALIDARG (windows bug: off by one)\n", i);
         }
         else if (atleast_win7 && (i < (SIID_MAX_ICONS)))

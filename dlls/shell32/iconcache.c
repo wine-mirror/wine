@@ -880,11 +880,11 @@ INT WINAPI SHGetIconOverlayIndexW(LPCWSTR pszIconPath, INT iIconIndex)
 /****************************************************************************
  * SHGetStockIconInfo [SHELL32.@]
  *
- * Receive informations for builtin icons
+ * Receive information for builtin icons
  *
  * PARAMS
- *  id      [I]  selected icon-id to get informations
- *  flags   [I]  select informations to receive
+ *  id      [I]  selected icon-id to get information for
+ *  flags   [I]  selects the information to receive
  *  sii     [IO] SHSTOCKICONINFO structure to fill
  *
  * RETURNS

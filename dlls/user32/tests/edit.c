@@ -2628,7 +2628,7 @@ static void test_EM_GETHANDLE(void)
     len = SendMessageA(hEdit, WM_GETTEXTLENGTH, 0, 0);
     ok((r == 1) && (len == lstrlenA(str1)), "got %d and %d (expected 1 and %d)\n", r, len, lstrlenA(str1));
 
-    /* everything is normal upto EM_GETHANDLE */
+    /* everything is normal up to EM_GETHANDLE */
     hmem = (HGLOBAL) SendMessage(hEdit, EM_GETHANDLE, 0, 0);
     /* Some messages still work while other messages fail.
        After LocalFree the memory handle, messages can crash the app */
