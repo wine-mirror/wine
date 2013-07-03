@@ -5,15 +5,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2013-07-02 23:19+0900\n"
-"Last-Translator: Akira Nakagawa <matyapiro31@yahoo.co.jp>\n"
+"PO-Revision-Date: 2013-07-03 23:54+0900\n"
+"Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: 日本語 <>\n"
 "Language: Japanese\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 1.5.4\n"
 
 #: appwiz.rc:55
 msgid "Install/Uninstall"
@@ -7912,48 +7911,48 @@ msgstr "プログラム"
 
 #: shell32.rc:201
 msgid "My Documents"
-msgstr "マイドキュメント"
+msgstr "My Documents"
 
 #: shell32.rc:202
 msgid "Favorites"
-msgstr "お気に入り"
+msgstr "Favorites"
 
 #: shell32.rc:203
 msgid "StartUp"
-msgstr "スタートアップ"
+msgstr "StartUp"
 
 #: shell32.rc:204
 msgid "Start Menu"
-msgstr "スタートメニュー"
+msgstr "Start Menu"
 
 #: shell32.rc:205
 msgid "My Music"
-msgstr "マイミュージック"
+msgstr "My Music"
 
 #: shell32.rc:206
 msgid "My Videos"
-msgstr "マイビデオ"
+msgstr "My Videos"
 
 #: shell32.rc:207
 msgctxt "directory"
 msgid "Desktop"
-msgstr "デスクトップ"
+msgstr "Desktop"
 
 #: shell32.rc:208
 msgid "NetHood"
-msgstr "ネットワーク内"
+msgstr "NetHood"
 
 #: shell32.rc:209
 msgid "Templates"
-msgstr "テンプレート"
+msgstr "Templates"
 
 #: shell32.rc:210
 msgid "PrintHood"
-msgstr "プリンタ内"
+msgstr "PrintHood"
 
 #: shell32.rc:211 winhlp32.rc:45
 msgid "History"
-msgstr "ヒストリ"
+msgstr "History"
 
 #: shell32.rc:212
 msgid "Program Files"
@@ -7961,7 +7960,7 @@ msgstr "Program Files"
 
 #: shell32.rc:214
 msgid "My Pictures"
-msgstr "マイピクチャ"
+msgstr "My Pictures"
 
 #: shell32.rc:215
 msgid "Common Files"
@@ -7969,23 +7968,23 @@ msgstr "Common Files"
 
 #: shell32.rc:216 shell32.rc:147 shell32.rc:232
 msgid "Documents"
-msgstr "ドキュメント"
+msgstr "Documents"
 
 #: shell32.rc:217
 msgid "Administrative Tools"
-msgstr "管理者用ツール"
+msgstr "Administrative Tools"
 
 #: shell32.rc:218
 msgid "Music"
-msgstr "ミュージック"
+msgstr "Music"
 
 #: shell32.rc:219
 msgid "Pictures"
-msgstr "ピクチャ"
+msgstr "Pictures"
 
 #: shell32.rc:220
 msgid "Videos"
-msgstr "ビデオ"
+msgstr "Videos"
 
 #: shell32.rc:213
 msgid "Program Files (x86)"
@@ -7993,19 +7992,19 @@ msgstr "Program Files (x86)"
 
 #: shell32.rc:221
 msgid "Contacts"
-msgstr "連絡先"
+msgstr "Contacs"
 
 #: shell32.rc:222 winefile.rc:110
 msgid "Links"
-msgstr "リンク"
+msgstr "Links"
 
 #: shell32.rc:223
 msgid "Slide Shows"
-msgstr "スライドショー"
+msgstr "Slide Shows"
 
 #: shell32.rc:224
 msgid "Playlists"
-msgstr "プレイリスト"
+msgstr "Playlists"
 
 #: shell32.rc:148 taskmgr.rc:326
 msgid "Status"
@@ -8021,35 +8020,35 @@ msgstr "機種名"
 
 #: shell32.rc:225
 msgid "Sample Music"
-msgstr "サンプルミュージック"
+msgstr "Sample Music"
 
 #: shell32.rc:226
 msgid "Sample Pictures"
-msgstr "サンプルピクチャ"
+msgstr "Sample Pictures"
 
 #: shell32.rc:227
 msgid "Sample Playlists"
-msgstr "サンプルプレイリスト"
+msgstr "Sample Playlists"
 
 #: shell32.rc:228
 msgid "Sample Videos"
-msgstr "サンプルビデオ"
+msgstr "Sample Videos"
 
 #: shell32.rc:229
 msgid "Saved Games"
-msgstr "保存済みのゲーム"
+msgstr "Saved Games"
 
 #: shell32.rc:230
 msgid "Searches"
-msgstr "検索"
+msgstr "Searches"
 
 #: shell32.rc:231
 msgid "Users"
-msgstr "ユーザー"
+msgstr "Users"
 
 #: shell32.rc:233
 msgid "Downloads"
-msgstr "ダウンロード"
+msgstr "Downloads"
 
 #: shell32.rc:166
 msgid "Unable to create new Folder: Permission denied."
