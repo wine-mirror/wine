@@ -230,13 +230,7 @@ static BOOL init_function_ptrs(void)
 {
     HMODULE hMlang;
 
-    hMlang = LoadLibraryA("mlang.dll");
-    if (!hMlang)
-    {
-        skip("mlang not available\n");
-        return FALSE;
-    }
-
+    hMlang = GetModuleHandleA("mlang.dll");
     pConvertINetMultiByteToUnicode = (void *)GetProcAddress(hMlang, "ConvertINetMultiByteToUnicode");
     pConvertINetUnicodeToMultiByte = (void *)GetProcAddress(hMlang, "ConvertINetUnicodeToMultiByte");
     pRfc1766ToLcidA = (void *)GetProcAddress(hMlang, "Rfc1766ToLcidA");
