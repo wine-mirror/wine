@@ -31,6 +31,7 @@
 #define WINE_GLAPI
 #endif
 
+#include <assert.h>
 #include <stdarg.h>
 #include <math.h>
 #include <limits.h>
@@ -2621,19 +2622,17 @@ struct wined3d_cs_list
     struct list blocks;
 };
 
-struct wined3d_cs_block
+#define WINED3D_CS_QUEUE_SIZE 0x100000
+struct wined3d_cs_queue
 {
-    struct list entry;
-    UINT pos;
-     /* FIXME? The size is somewhat arbitrary. It's big enough for huge
-      * shader constant set calls though */
-    BYTE data[sizeof(float) * 4 * 256 * 2];
+    LONG head, tail;
+    BYTE data[WINED3D_CS_QUEUE_SIZE];
 };
 
 struct wined3d_cs_ops
 {
     void *(*require_space)(struct wined3d_cs *cs, size_t size);
-    void (*submit)(struct wined3d_cs *cs);
+    void (*submit)(struct wined3d_cs *cs, size_t size);
     void (*finish)(struct wined3d_cs *cs);
 };
 
@@ -2644,14 +2643,9 @@ struct wined3d_cs
     struct wined3d_state state;
     HANDLE thread;
     DWORD thread_id;
-    DWORD tls_idx;
     struct wined3d_surface *onscreen_depth_stencil;
 
-    size_t data_size;
-    void *data;
-
-    struct wined3d_cs_list free_list;
-    struct wined3d_cs_list exec_list;
+    struct wined3d_cs_queue queue;
 
     LONG pending_presents;
 };
