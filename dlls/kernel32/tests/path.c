@@ -1275,7 +1275,17 @@ static void test_GetShortPathNameW(void)
     ok( length, "GetShortPathNameW returned 0.\n" );
     ret = GetShortPathNameW( path, short_path, length );
     ok( ret, "GetShortPathNameW returned 0.\n" );
+
     lstrcatW( short_path, name );
+
+    /* GetShortPathName for a non-existent short file name should fail */
+    SetLastError(0xdeadbeef);
+    length = GetShortPathNameW( short_path, path, 0 );
+todo_wine
+    ok(!length, "GetShortPathNameW should fail\n");
+todo_wine
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+
     file = CreateFileW( short_path, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
     ok( file != INVALID_HANDLE_VALUE, "File was not created.\n" );
 
