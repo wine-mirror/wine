@@ -320,8 +320,6 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
         {
             TRACE("Enabling multithreaded command stream.\n");
             wined3d_settings.cs_multithreaded = TRUE;
-            TRACE("Enforcing strict draw ordering for multithreaded command stream.\n");
-            wined3d_settings.strict_draw_ordering = TRUE;
         }
     }
 
