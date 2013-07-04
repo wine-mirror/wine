@@ -958,13 +958,6 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
 
     TRACE("buffer %p, offset %u, size %u, data %p, flags %#x\n", buffer, offset, size, data, flags);
 
-    if (wined3d_settings.cs_multithreaded)
-    {
-        FIXME("Waiting for cs.\n");
-        wined3d_cs_emit_glfinish(device->cs);
-        device->cs->ops->finish(device->cs);
-    }
-
     flags = wined3d_resource_sanitize_map_flags(&buffer->resource, flags);
     /* Filter redundant WINED3D_MAP_DISCARD maps. The 3DMark2001 multitexture
      * fill rate test seems to depend on this. When we map a buffer with
@@ -994,6 +987,13 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
                 struct wined3d_device *device = buffer->resource.device;
                 struct wined3d_context *context;
                 const struct wined3d_gl_info *gl_info;
+
+                if (wined3d_settings.cs_multithreaded)
+                {
+                    FIXME("waiting for cs\n");
+                    wined3d_cs_emit_glfinish(device->cs);
+                    device->cs->ops->finish(device->cs);
+                }
 
                 context = context_acquire(device, NULL);
                 gl_info = context->gl_info;
@@ -1054,6 +1054,12 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
             buffer->flags |= WINED3D_BUFFER_DISCARD;
         else if (!(flags & WINED3D_MAP_NOOVERWRITE))
             buffer->flags |= WINED3D_BUFFER_SYNC;
+    }
+
+    if (!(flags & WINED3D_MAP_NOOVERWRITE) && wined3d_settings.cs_multithreaded)
+    {
+        FIXME("waiting for cs.\n");
+        device->cs->ops->finish(device->cs);
     }
 
     base = buffer->map_ptr ? buffer->map_ptr : buffer->resource.heap_memory;
