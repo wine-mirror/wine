@@ -21,6 +21,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <assert.h>
 #include "wine/test.h"
 #include "windef.h"
 #include "winbase.h"
@@ -558,9 +559,10 @@ static void test_ShortPathCase(const char *tmpdir, const char *dirname,
 {
     char buf[MAX_PATH], shortbuf[MAX_PATH];
     HANDLE hndl;
-    int i;
+    size_t i;
 
-    snprintf(buf,sizeof(buf),"%s\\%s\\%s",tmpdir,dirname,filename);
+    assert(strlen(tmpdir) + strlen(dirname) + strlen(filename) + 2 < sizeof(buf));
+    sprintf(buf,"%s\\%s\\%s",tmpdir,dirname,filename);
     GetShortPathNameA(buf,shortbuf,sizeof(shortbuf));
     hndl = CreateFileA(shortbuf,GENERIC_READ|GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
     ok(hndl!=INVALID_HANDLE_VALUE,"CreateFileA failed (%d)\n",GetLastError());
