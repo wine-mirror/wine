@@ -4361,9 +4361,49 @@ static const selection_ns_t selection_ns_data[] = {
     { NULL }
 };
 
+typedef struct {
+    const char *query;
+    const char *list;
+} xpath_test_t;
+
+static const xpath_test_t xpath_test[] = {
+    { "*/a", "E1.E1.E2.D1 E1.E2.E2.D1 E1.E4.E2.D1" },
+    { "*/b", "E2.E1.E2.D1 E2.E2.E2.D1 E2.E4.E2.D1" },
+    { "*/c", "E3.E1.E2.D1 E3.E2.E2.D1" },
+    { "*/d", "E4.E1.E2.D1 E4.E2.E2.D1 E4.E4.E2.D1" },
+    { "//a", "E1.E1.E2.D1 E1.E2.E2.D1 E1.E4.E2.D1" },
+    { "//b", "E2.E1.E2.D1 E2.E2.E2.D1 E2.E4.E2.D1" },
+    { "//c", "E3.E1.E2.D1 E3.E2.E2.D1" },
+    { "//d", "E4.E1.E2.D1 E4.E2.E2.D1 E4.E4.E2.D1" },
+    { "//c[@type]", "E3.E2.E2.D1" },
+    { "//c[@type]/ancestor::node()[1]", "E2.E2.D1" },
+    { "//c[@type]/ancestor-or-self::node()[1]", "E3.E2.E2.D1" },
+    { "//c[@type]/attribute::node()[1]", "A'type'.E3.E2.E2.D1" },
+    { "//c[@type]/child::node()[1]", "T1.E3.E2.E2.D1"  },
+    { "//c[@type]/descendant::node()[1]", "T1.E3.E2.E2.D1" },
+    { "//c[@type]/descendant-or-self::node()[1]", "E3.E2.E2.D1" },
+    { "//c[@type]/following::node()[1]", "E4.E2.E2.D1" },
+    { "//c[@type]/following-sibling::node()[1]", "E4.E2.E2.D1" },
+    { "//c[@type]/parent::node()[1]", "E2.E2.D1" },
+    { "//c[@type]/preceding::node()[1]", "T1.E2.E2.E2.D1" },
+    { "//c[@type]/self::node()[1]", "E3.E2.E2.D1" },
+    { "child::*", "E1.E2.D1 E2.E2.D1 E3.E2.D1 E4.E2.D1" },
+    { "child::node()", "E1.E2.D1 E2.E2.D1 E3.E2.D1 E4.E2.D1" },
+    { "child::text()", "" },
+    { "child::*/..", "E2.D1" },
+    { "child::*//@*/..", "E2.E5.E1.E2.D1 E3.E2.E2.D1" },
+    { "self::node()", "E2.D1" },
+    { "ancestor::node()", "D1" },
+    { "elem[c][last()]/a", "E1.E2.E2.D1"},
+    { "ancestor-or-self::node()[1]", "E2.D1" },
+    { "((//a)[1])[last()]", "E1.E1.E2.D1" },
+    { NULL }
+};
+
 static void test_XPath(void)
 {
     const selection_ns_t *ptr = selection_ns_data;
+    const xpath_test_t *xptest = xpath_test;
     VARIANT var;
     VARIANT_BOOL b;
     IXMLDOMDocument2 *doc;
@@ -4405,6 +4445,26 @@ static void test_XPath(void)
     hr = IXMLDOMNodeList_reset(list);
     EXPECT_HR(hr, S_OK);
     expect_list_and_release(list, "E2.D1");
+
+    /* peform xpath tests */
+    for ( ; xptest->query ; xptest++ )
+    {
+        char *str;
+
+        hr = IXMLDOMNode_selectNodes(rootNode, _bstr_(xptest->query), &list);
+        ok(hr == S_OK, "query evaluation failed for query=%s", xptest->query);
+
+        if (hr != S_OK)
+            continue;
+
+        str = list_to_string(list);
+
+        ok(strcmp(str, xptest->list)==0, "query=%s, invalid node list: %s, expected %s\n",
+            xptest->query, str, xptest->list);
+
+        if (list)
+            IXMLDOMNodeList_Release(list);
+    }
 
 if (0)
 {
