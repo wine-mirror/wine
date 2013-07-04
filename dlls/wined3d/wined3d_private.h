@@ -2724,6 +2724,8 @@ void wined3d_cs_emit_blt(struct wined3d_cs *cs, struct wined3d_surface *dst_surf
         const RECT *dst_rect, struct wined3d_surface *src_surface,
         const RECT *src_rect, DWORD flags, const WINEDDBLTFX *fx,
         enum wined3d_texture_filter_type filter) DECLSPEC_HIDDEN;
+void wined3d_cs_emit_clear_rtv(struct wined3d_cs *cs, struct wined3d_rendertarget_view *view,
+        const RECT *rect, const struct wined3d_color *color) DECLSPEC_HIDDEN;
 
 /* Direct3D terminology with little modifications. We do not have an issued state
  * because only the driver knows about it, but we have a created state because d3d

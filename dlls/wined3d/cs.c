@@ -75,6 +75,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_LIGHT,
     WINED3D_CS_OP_SET_LIGHT_ENABLE,
     WINED3D_CS_OP_BLT,
+    WINED3D_CS_OP_CLEAR_RTV,
     WINED3D_CS_OP_STOP,
 };
 
@@ -351,6 +352,14 @@ struct wined3d_cs_blt
     DWORD flags;
     WINEDDBLTFX fx;
     enum wined3d_texture_filter_type filter;
+};
+
+struct wined3d_cs_clear_rtv
+{
+    enum wined3d_cs_op opcode;
+    struct wined3d_rendertarget_view *view;
+    RECT rect;
+    struct wined3d_color color;
 };
 
 /* FIXME: The list synchronization probably isn't particularly fast. */
@@ -1766,6 +1775,32 @@ void wined3d_cs_emit_blt(struct wined3d_cs *cs, struct wined3d_surface *dst_surf
     cs->ops->submit(cs);
 }
 
+static UINT wined3d_cs_exec_clear_rtv(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_clear_rtv *op = data;
+    struct wined3d_resource *resource = op->view->resource;
+
+    resource = wined3d_texture_get_sub_resource(wined3d_texture_from_resource(resource), op->view->sub_resource_idx);
+
+    surface_color_fill(surface_from_resource(resource), &op->rect, &op->color);
+
+    return sizeof(*op);
+}
+
+void wined3d_cs_emit_clear_rtv(struct wined3d_cs *cs, struct wined3d_rendertarget_view *view,
+        const RECT *rect, const struct wined3d_color *color)
+{
+    struct wined3d_cs_clear_rtv *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_CLEAR_RTV;
+    op->view = view;
+    op->rect = *rect;
+    op->color = *color;
+
+    cs->ops->submit(cs);
+}
+
 static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
 {
     /* WINED3D_CS_OP_FENCE                      */ wined3d_cs_exec_fence,
@@ -1807,6 +1842,7 @@ static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_LIGHT                  */ wined3d_cs_exec_set_light,
     /* WINED3D_CS_OP_SET_LIGHT_ENABLE           */ wined3d_cs_exec_set_light_enable,
     /* WINED3D_CS_OP_BLT                        */ wined3d_cs_exec_blt,
+    /* WINED3D_CS_OP_CLEAR_RTV                  */ wined3d_cs_exec_clear_rtv,
 };
 
 static void *wined3d_cs_st_require_space(struct wined3d_cs *cs, size_t size)
