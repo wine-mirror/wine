@@ -4521,6 +4521,64 @@ static void test_bitmapfromgraphics(void)
     GdipDisposeImage((GpImage*)bitmap);
 }
 
+static void test_clipping(void)
+{
+    HDC hdc;
+    GpStatus status;
+    GpGraphics *graphics;
+    GpRegion *region;
+    GpMatrix *matrix;
+    GpRectF rect;
+
+    hdc = CreateCompatibleDC(0);
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+
+    status = GdipCreateRegion(&region);
+    expect(Ok, status);
+    status = GdipSetEmpty(region);
+    expect(Ok, status);
+
+    rect.X = rect.Y = 100.0;
+    rect.Width = rect.Height = 100.0;
+    status = GdipCombineRegionRect(region, &rect, CombineModeUnion);
+    expect(Ok, status);
+    status = GdipSetClipRegion(graphics, region, CombineModeReplace);
+    expect(Ok, status);
+
+    status = GdipGetClipBounds(graphics, &rect);
+    expect(Ok, status);
+    expectf(100.0, rect.X);
+    expectf(100.0, rect.Y);
+    expectf(100.0, rect.Width);
+    expectf(100.0, rect.Height);
+
+    status = GdipCreateMatrix(&matrix);
+    expect(Ok, status);
+    status = GdipScaleMatrix(matrix, 2.0, 4.0, MatrixOrderAppend);
+    expect(Ok, status);
+    status = GdipTranslateMatrix(matrix, 10.0, 20.0, MatrixOrderAppend);
+    expect(Ok, status);
+    status = GdipSetWorldTransform(graphics, matrix);
+    expect(Ok, status);
+
+    status = GdipGetClipBounds(graphics, &rect);
+    expect(Ok, status);
+todo_wine
+    expectf(45.0, rect.X);
+todo_wine
+    expectf(20.0, rect.Y);
+todo_wine
+    expectf(50.0, rect.Width);
+todo_wine
+    expectf(25.0, rect.Height);
+
+    GdipDeleteMatrix(matrix);
+    GdipDeleteRegion(region);
+    GdipDeleteGraphics(graphics);
+    DeleteDC(hdc);
+}
+
 START_TEST(graphics)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -4547,6 +4605,7 @@ START_TEST(graphics)
 
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
+    test_clipping();
     test_measured_extra_space();
     test_measure_string();
     test_font_height_scaling();
