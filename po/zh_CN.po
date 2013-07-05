@@ -12190,7 +12190,7 @@ msgstr "窗口设置"
 
 #: winecfg.rc:161
 msgid "Automatically capture the &mouse in full-screen windows"
-msgstr ""
+msgstr "全屏模式下自动捕获光标(&M)"
 
 #: winecfg.rc:162
 msgid "Allow the window manager to &decorate the windows"
@@ -12214,7 +12214,7 @@ msgstr "屏幕分辨率"
 
 #: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
-msgstr ""
+msgstr "这是使用 10 号 Tahoma 字体的示例文本"
 
 #: winecfg.rc:182
 msgid "DLL overrides"
@@ -12321,15 +12321,15 @@ msgstr "显示隐藏文件(&D)"
 
 #: winecfg.rc:256
 msgid "Driver diagnostics"
-msgstr ""
+msgstr "驱动程序诊断"
 
 #: winecfg.rc:258
 msgid "Defaults"
-msgstr ""
+msgstr "默认值"
 
 #: winecfg.rc:259
 msgid "Output device:"
-msgstr ""
+msgstr "输出设备："
 
 #: winecfg.rc:260
 msgid "Voice output device:"
@@ -12337,7 +12337,7 @@ msgstr ""
 
 #: winecfg.rc:261
 msgid "Input device:"
-msgstr ""
+msgstr "输入设备："
 
 #: winecfg.rc:262
 msgid "Voice input device:"
@@ -12437,7 +12437,7 @@ msgstr "Wine 设置：针对 %s"
 
 #: winecfg.rc:81
 msgid "Selected driver: %s"
-msgstr ""
+msgstr "选中的驱动：%s"
 
 #: winecfg.rc:82
 msgid "(None)"
@@ -12445,7 +12445,7 @@ msgstr "(无)"
 
 #: winecfg.rc:83
 msgid "Audio test failed!"
-msgstr ""
+msgstr "音频测试失败！"
 
 #: winecfg.rc:85
 msgid "(System default)"
@@ -12517,7 +12517,7 @@ msgstr "软盘"
 
 #: winecfg.rc:70
 msgid "CD-ROM"
-msgstr ""
+msgstr "光驱"
 
 #: winecfg.rc:71
 msgid ""
@@ -12918,7 +12918,7 @@ msgstr "程序错误"
 msgid ""
 "The program %s has encountered a serious problem and needs to close. We are "
 "sorry for the inconvenience."
-msgstr ""
+msgstr "程序 %s 遇到严重的问题需要关闭。我们对此造成的不便表示抱歉。"
 
 #: winedbg.rc:55
 msgid ""
@@ -12926,6 +12926,8 @@ msgid ""
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
 "Database</a> for tips about running this application."
 msgstr ""
+"这可能是由程序的问题或者 Wine 的缺陷造成的。你可能需要查看 <a href=\"http://"
+"appdb.winehq.org\">Application Databa</a> 来获取运行该应用的相关技巧。"
 
 #: winedbg.rc:58
 msgid "Show &Details"
@@ -12942,18 +12944,21 @@ msgid ""
 "button, then <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a> "
 "and attach that file to the report."
 msgstr ""
+"若该问题在 Windows 不会出现并且未曾被报告过，您可以使用“另存为”按钮将详细信息"
+"保存为一个文件，然后<a href=\"http://wiki.winehq.org/Bugs\">新建一个错误报告"
+"</a>并且附带上该文件。"
 
 #: winedbg.rc:35
 msgid "Wine program crash"
-msgstr ""
+msgstr "Wine 程序崩溃"
 
 #: winedbg.rc:36
 msgid "Internal errors - invalid parameters received"
-msgstr ""
+msgstr "内部错误 - 收到无效参数"
 
 #: winedbg.rc:37
 msgid "(unidentified)"
-msgstr ""
+msgstr "（未被识别的）"
 
 #: winedbg.rc:40
 msgid "Saving failed"
@@ -12961,7 +12966,7 @@ msgstr "保存失败"
 
 #: winedbg.rc:41
 msgid "Loading detailed information, please wait..."
-msgstr ""
+msgstr "正在载入详细信息，请稍候……"
 
 #: winefile.rc:26
 msgid "&Open\tEnter"
@@ -13061,7 +13066,7 @@ msgstr "文件类型"
 
 #: winefile.rc:141
 msgid "&Directories"
-msgstr ""
+msgstr "目录(&D)"
 
 #: winefile.rc:143
 msgid "&Programs"
@@ -13073,11 +13078,11 @@ msgstr "文档(&M)"
 
 #: winefile.rc:147
 msgid "&Other files"
-msgstr ""
+msgstr "其他文件(&O)"
 
 #: winefile.rc:149
 msgid "Show Hidden/&System Files"
-msgstr ""
+msgstr "显示隐藏文件/系统文件(&S)"
 
 #: winefile.rc:160
 msgid "&File Name:"
@@ -13085,11 +13090,11 @@ msgstr "文件名(&F)："
 
 #: winefile.rc:162
 msgid "Full &Path:"
-msgstr ""
+msgstr "完整路径(&P)："
 
 #: winefile.rc:164
 msgid "Last Change:"
-msgstr ""
+msgstr "最后更改："
 
 #: winefile.rc:168
 msgid "Cop&yright:"
@@ -13101,11 +13106,11 @@ msgstr "大小:"
 
 #: winefile.rc:174
 msgid "H&idden"
-msgstr ""
+msgstr "隐藏(&I)"
 
 #: winefile.rc:175
 msgid "&Archive"
-msgstr ""
+msgstr "存档(&A)"
 
 #: winefile.rc:176
 msgid "&System"
@@ -13122,31 +13127,31 @@ msgstr "版本信息"
 #: winefile.rc:194
 msgctxt "accelerator Fullscreen"
 msgid "S"
-msgstr ""
+msgstr "S"
 
 #: winefile.rc:87
 msgid "Applying font settings"
-msgstr ""
+msgstr "应用字体设置"
 
 #: winefile.rc:88
 msgid "Error while selecting new font."
-msgstr ""
+msgstr "选取新字体时发生错误。"
 
 #: winefile.rc:93
 msgid "Wine File Manager"
-msgstr ""
+msgstr "Wine 文件管理器"
 
 #: winefile.rc:95
 msgid "root fs"
-msgstr ""
+msgstr "root fs"
 
 #: winefile.rc:96
 msgid "unixfs"
-msgstr ""
+msgstr "unixfs"
 
 #: winefile.rc:98
 msgid "Shell"
-msgstr ""
+msgstr "Shell"
 
 #: winefile.rc:99 winhlp32.rc:107 winhlp32.rc:82
 msgid "Not yet implemented"
@@ -13166,30 +13171,30 @@ msgstr "修改日期"
 
 #: winefile.rc:109
 msgid "Index/Inode"
-msgstr ""
+msgstr "索引/Inode"
 
 #: winefile.rc:114
 msgid "%1 of %2 free"
-msgstr ""
+msgstr "%2 中剩余 %1"
 
 #: winefile.rc:115
 msgctxt "unit kilobyte"
 msgid "kB"
-msgstr ""
+msgstr "kB"
 
 #: winefile.rc:116
 msgctxt "unit megabyte"
 msgid "MB"
-msgstr ""
+msgstr "MB"
 
 #: winefile.rc:117
 msgctxt "unit gigabyte"
 msgid "GB"
-msgstr ""
+msgstr "GB"
 
 #: winemine.rc:34
 msgid "&Game"
-msgstr ""
+msgstr "游戏(&G)"
 
 #: winemine.rc:35
 msgid "&New\tF2"
@@ -13197,7 +13202,7 @@ msgstr "新游戏(&N)\tF2"
 
 #: winemine.rc:37
 msgid "Question &Marks"
-msgstr ""
+msgstr "问号(&M)"
 
 #: winemine.rc:39
 msgid "&Beginner"
@@ -13564,37 +13569,37 @@ msgstr "工具栏"
 #: wordpad.rc:273
 msgctxt "accelerator Align Left"
 msgid "L"
-msgstr ""
+msgstr "L"
 
 #: wordpad.rc:274
 msgctxt "accelerator Align Center"
 msgid "E"
-msgstr ""
+msgstr "E"
 
 #: wordpad.rc:275
 msgctxt "accelerator Align Right"
 msgid "R"
-msgstr ""
+msgstr "R"
 
 #: wordpad.rc:282
 msgctxt "accelerator Redo"
 msgid "Y"
-msgstr ""
+msgstr "Y"
 
 #: wordpad.rc:283
 msgctxt "accelerator Bold"
 msgid "B"
-msgstr ""
+msgstr "B"
 
 #: wordpad.rc:284
 msgctxt "accelerator Italic"
 msgid "I"
-msgstr ""
+msgstr "I"
 
 #: wordpad.rc:285
 msgctxt "accelerator Underline"
 msgid "U"
-msgstr ""
+msgstr "U"
 
 #: wordpad.rc:136
 msgid "All documents (*.*)"
@@ -13751,23 +13756,23 @@ msgstr "启动写字板失败"
 
 #: xcopy.rc:27
 msgid "Invalid number of parameters - Use xcopy /? for help\n"
-msgstr ""
+msgstr "无效参数个数 - 使用 xcopy /? 获取帮助\n"
 
 #: xcopy.rc:28
 msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
-msgstr ""
+msgstr "无效参数 ‘%1’ - 使用 xcopy /? 获取帮助\n"
 
 #: xcopy.rc:29
 msgid "Press <Enter> to begin copying\n"
-msgstr ""
+msgstr "请按 <Enter> 开始复制\n"
 
 #: xcopy.rc:30
 msgid "%1!d! file(s) would be copied\n"
-msgstr ""
+msgstr "%1!d! 个文件将会被复制\n"
 
 #: xcopy.rc:31
 msgid "%1!d! file(s) copied\n"
-msgstr ""
+msgstr "已复制 %1!d! 个文件\n"
 
 #: xcopy.rc:34
 msgid ""
@@ -13775,14 +13780,17 @@ msgid ""
 "on the target?\n"
 "(F - File, D - Directory)\n"
 msgstr ""
+"%1 是一个在目标路径上的\n"
+"文件名还是目录？\n"
+"（F - 文件，D - 目录）\n"
 
 #: xcopy.rc:35
 msgid "%1? (Yes|No)\n"
-msgstr ""
+msgstr "%1？（Yes|No）\n"
 
 #: xcopy.rc:36
 msgid "Overwrite %1? (Yes|No|All)\n"
-msgstr ""
+msgstr "是否覆盖 %1？（Yes|No|All）\n"
 
 #: xcopy.rc:37
 msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
@@ -13790,17 +13798,17 @@ msgstr ""
 
 #: xcopy.rc:39
 msgid "Failed during reading of '%1'\n"
-msgstr ""
+msgstr "读取‘%1’失败\n"
 
 #: xcopy.rc:43
 msgctxt "File key"
 msgid "F"
-msgstr ""
+msgstr "F"
 
 #: xcopy.rc:44
 msgctxt "Directory key"
 msgid "D"
-msgstr ""
+msgstr "D"
 
 #: xcopy.rc:77
 msgid ""
