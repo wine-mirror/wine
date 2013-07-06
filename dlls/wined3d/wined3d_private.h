@@ -2725,6 +2725,10 @@ void wined3d_cs_emit_clear_rtv(struct wined3d_cs *cs, struct wined3d_rendertarge
 void *wined3d_cs_emit_resource_map(struct wined3d_cs *cs, struct wined3d_resource *resource,
         DWORD flags) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_resource_unmap(struct wined3d_cs *cs, struct wined3d_resource *resource) DECLSPEC_HIDDEN;
+void wined3d_cs_emit_query_issue(struct wined3d_cs *cs, struct wined3d_query *query,
+        DWORD flags) DECLSPEC_HIDDEN;
+void wined3d_cs_emit_query_get_data(struct wined3d_cs *cs, struct wined3d_query *query, void *data,
+        UINT data_size, DWORD flags, HRESULT *ret) DECLSPEC_HIDDEN;
 
 /* Direct3D terminology with little modifications. We do not have an issued state
  * because only the driver knows about it, but we have a created state because d3d

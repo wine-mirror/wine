@@ -68,6 +68,8 @@ enum wined3d_cs_op
     WINED3D_CS_OP_CLEAR_RTV,
     WINED3D_CS_OP_RESOURCE_MAP,
     WINED3D_CS_OP_RESOURCE_UNMAP,
+    WINED3D_CS_OP_QUERY_ISSUE,
+    WINED3D_CS_OP_QUERY_GET_DATA,
     WINED3D_CS_OP_STOP,
 };
 
@@ -372,6 +374,23 @@ struct wined3d_cs_skip
 {
     enum wined3d_cs_op opcode;
     DWORD size;
+};
+
+struct wined3d_cs_query_issue
+{
+    enum wined3d_cs_op opcode;
+    struct wined3d_query *query;
+    DWORD flags;
+};
+
+struct wined3d_cs_query_get_data
+{
+    enum wined3d_cs_op opcode;
+    struct wined3d_query *query;
+    void *data;
+    UINT data_size;
+    DWORD flags;
+    HRESULT *ret;
 };
 
 static void wined3d_cs_submit(struct wined3d_cs *cs, size_t size)
@@ -1797,6 +1816,58 @@ void wined3d_cs_emit_resource_unmap(struct wined3d_cs *cs, struct wined3d_resour
     cs->ops->submit(cs, sizeof(*op));
 }
 
+static UINT wined3d_cs_exec_query_issue(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_query_issue *op = data;
+
+    op->query->query_ops->query_issue(op->query, op->flags);
+
+    return sizeof(*op);
+}
+
+void wined3d_cs_emit_query_issue(struct wined3d_cs *cs, struct wined3d_query *query, DWORD flags)
+{
+    struct wined3d_cs_query_issue *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_QUERY_ISSUE;
+    op->query = query;
+    op->flags = flags;
+
+    cs->ops->submit(cs, sizeof(*op));
+}
+
+static UINT wined3d_cs_exec_query_get_data(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_query_get_data *op = data;
+    struct wined3d_query *query = op->query;
+
+    *op->ret = query->query_ops->query_get_data(query, op->data, op->data_size, op->flags);
+
+    return sizeof(*op);
+}
+
+void wined3d_cs_emit_query_get_data(struct wined3d_cs *cs, struct wined3d_query *query, void *data,
+        UINT data_size, DWORD flags, HRESULT *ret)
+{
+    struct wined3d_cs_query_get_data *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_QUERY_GET_DATA;
+    op->query = query;
+    op->data = data;
+    op->data_size = data_size;
+    op->flags = flags;
+    op->ret = ret;
+
+    cs->ops->submit(cs, sizeof(*op));
+
+    if (wined3d_settings.cs_multithreaded)
+        FIXME("Query handling is not particularly fast yet\n");
+
+    cs->ops->finish(cs);
+}
+
 static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
 {
     /* WINED3D_CS_OP_NOP                        */ wined3d_cs_exec_nop,
@@ -1843,6 +1914,8 @@ static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_CLEAR_RTV                  */ wined3d_cs_exec_clear_rtv,
     /* WINED3D_CS_OP_RESOURCE_MAP               */ wined3d_cs_exec_resource_map,
     /* WINED3D_CS_OP_RESOURCE_UNMAP             */ wined3d_cs_exec_resource_unmap,
+    /* WINED3D_CS_OP_QUERY_ISSUE                */ wined3d_cs_exec_query_issue,
+    /* WINED3D_CS_OP_QUERY_GET_DATA             */ wined3d_cs_exec_query_get_data,
 };
 
 static void *wined3d_cs_mt_require_space(struct wined3d_cs *cs, size_t size)

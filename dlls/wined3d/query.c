@@ -275,10 +275,14 @@ ULONG CDECL wined3d_query_decref(struct wined3d_query *query)
 HRESULT CDECL wined3d_query_get_data(struct wined3d_query *query,
         void *data, UINT data_size, DWORD flags)
 {
+    HRESULT hr;
     TRACE("query %p, data %p, data_size %u, flags %#x.\n",
             query, data, data_size, flags);
 
-    return query->query_ops->query_get_data(query, data, data_size, flags);
+    wined3d_cs_emit_query_get_data(query->device->cs, query, data, data_size,
+            flags, &hr);
+
+    return hr;
 }
 
 UINT CDECL wined3d_query_get_data_size(const struct wined3d_query *query)
@@ -292,7 +296,7 @@ HRESULT CDECL wined3d_query_issue(struct wined3d_query *query, DWORD flags)
 {
     TRACE("query %p, flags %#x.\n", query, flags);
 
-    query->query_ops->query_issue(query, flags);
+    wined3d_cs_emit_query_issue(query->device->cs, query, flags);
     return WINED3D_OK;
 }
 
