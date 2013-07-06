@@ -69,7 +69,6 @@ enum wined3d_cs_op
     WINED3D_CS_OP_RESOURCE_MAP,
     WINED3D_CS_OP_RESOURCE_UNMAP,
     WINED3D_CS_OP_QUERY_ISSUE,
-    WINED3D_CS_OP_QUERY_GET_DATA,
     WINED3D_CS_OP_STOP,
 };
 
@@ -381,16 +380,6 @@ struct wined3d_cs_query_issue
     enum wined3d_cs_op opcode;
     struct wined3d_query *query;
     DWORD flags;
-};
-
-struct wined3d_cs_query_get_data
-{
-    enum wined3d_cs_op opcode;
-    struct wined3d_query *query;
-    void *data;
-    UINT data_size;
-    DWORD flags;
-    HRESULT *ret;
 };
 
 static void wined3d_cs_submit(struct wined3d_cs *cs, size_t size)
@@ -1823,8 +1812,9 @@ static UINT wined3d_cs_exec_query_issue(struct wined3d_cs *cs, const void *data)
 
     query->query_ops->query_issue(query, op->flags);
 
-    if (op->flags & WINED3DISSUE_END)
-        InterlockedIncrement(&query->counter_worker);
+    if (wined3d_settings.cs_multithreaded && op->flags & WINED3DISSUE_END
+            && list_empty(&query->poll_list_entry))
+        list_add_tail(&cs->query_poll_list, &query->poll_list_entry);
 
     return sizeof(*op);
 }
@@ -1839,37 +1829,6 @@ void wined3d_cs_emit_query_issue(struct wined3d_cs *cs, struct wined3d_query *qu
     op->flags = flags;
 
     cs->ops->submit(cs, sizeof(*op));
-}
-
-static UINT wined3d_cs_exec_query_get_data(struct wined3d_cs *cs, const void *data)
-{
-    const struct wined3d_cs_query_get_data *op = data;
-    struct wined3d_query *query = op->query;
-
-    *op->ret = query->query_ops->query_get_data(query, op->data, op->data_size, op->flags);
-
-    return sizeof(*op);
-}
-
-void wined3d_cs_emit_query_get_data(struct wined3d_cs *cs, struct wined3d_query *query, void *data,
-        UINT data_size, DWORD flags, HRESULT *ret)
-{
-    struct wined3d_cs_query_get_data *op;
-
-    op = cs->ops->require_space(cs, sizeof(*op));
-    op->opcode = WINED3D_CS_OP_QUERY_GET_DATA;
-    op->query = query;
-    op->data = data;
-    op->data_size = data_size;
-    op->flags = flags;
-    op->ret = ret;
-
-    cs->ops->submit(cs, sizeof(*op));
-
-    if (wined3d_settings.cs_multithreaded)
-        FIXME("Query handling is not particularly fast yet\n");
-
-    cs->ops->finish(cs);
 }
 
 static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
@@ -1919,7 +1878,6 @@ static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_RESOURCE_MAP               */ wined3d_cs_exec_resource_map,
     /* WINED3D_CS_OP_RESOURCE_UNMAP             */ wined3d_cs_exec_resource_unmap,
     /* WINED3D_CS_OP_QUERY_ISSUE                */ wined3d_cs_exec_query_issue,
-    /* WINED3D_CS_OP_QUERY_GET_DATA             */ wined3d_cs_exec_query_get_data,
 };
 
 static void *wined3d_cs_mt_require_space(struct wined3d_cs *cs, size_t size)
@@ -2034,17 +1992,45 @@ void wined3d_cs_switch_onscreen_ds(struct wined3d_cs *cs,
     wined3d_surface_incref(cs->onscreen_depth_stencil);
 }
 
+static inline void poll_queries(struct wined3d_cs *cs)
+{
+    struct wined3d_query *query, *cursor;
+
+    LIST_FOR_EACH_ENTRY_SAFE(query, cursor, &cs->query_poll_list, struct wined3d_query, poll_list_entry)
+    {
+        BOOL ret;
+
+        ret = query->query_ops->query_poll(query);
+        if (ret)
+        {
+            list_remove(&query->poll_list_entry);
+            list_init(&query->poll_list_entry);
+            InterlockedIncrement(&query->counter_retrieved);
+        }
+    }
+}
+
 static DWORD WINAPI wined3d_cs_run(void *thread_param)
 {
     struct wined3d_cs *cs = thread_param;
     enum wined3d_cs_op opcode;
     LONG tail;
+    char poll = 0;
 
     TRACE("Started.\n");
 
+    list_init(&cs->query_poll_list);
     cs->thread_id = GetCurrentThreadId();
     for (;;)
     {
+        if (poll == 10)
+        {
+            poll = 0;
+            poll_queries(cs);
+        }
+        else
+            poll++;
+
         if (*((volatile LONG *)&cs->queue.head) == cs->queue.tail)
         {
             continue;
