@@ -2735,6 +2735,7 @@ void wined3d_cs_emit_query_issue(struct wined3d_cs *cs, struct wined3d_query *qu
         DWORD flags) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_query_get_data(struct wined3d_cs *cs, struct wined3d_query *query, void *data,
         UINT data_size, DWORD flags, HRESULT *ret) DECLSPEC_HIDDEN;
+void wined3d_cs_emit_query_destroy(struct wined3d_cs *cs, struct wined3d_query *query) DECLSPEC_HIDDEN;
 
 /* Direct3D terminology with little modifications. We do not have an issued state
  * because only the driver knows about it, but we have a created state because d3d
@@ -2768,6 +2769,8 @@ struct wined3d_query
     LONG                     counter_main, counter_retrieved;
     struct list              poll_list_entry;
 };
+
+void wined3d_query_destroy(struct wined3d_query *query) DECLSPEC_HIDDEN;
 
 /* TODO: Add tests and support for FLOAT16_4 POSITIONT, D3DCOLOR position, other
  * fixed function semantics as D3DCOLOR or FLOAT16 */
