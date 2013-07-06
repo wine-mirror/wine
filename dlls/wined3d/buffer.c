@@ -191,7 +191,10 @@ static void buffer_create_buffer_object(struct wined3d_buffer *This, struct wine
     if (This->flags & WINED3D_BUFFER_DOUBLEBUFFER)
         buffer_invalidate_bo_range(This, 0, 0);
     else
+    {
         wined3d_resource_free_sysmem(&This->resource);
+        This->resource.map_heap_memory = NULL;
+    }
 
     return;
 
@@ -1044,7 +1047,6 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
                         buffer_get_sysmem(buffer, context);
                     }
                     TRACE("New pointer is %p.\n", buffer->resource.heap_memory);
-                    buffer->map_ptr = NULL;
                 }
                 context_release(context);
             }
@@ -1062,7 +1064,7 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
         device->cs->ops->finish(device->cs);
     }
 
-    base = buffer->map_ptr ? buffer->map_ptr : buffer->resource.heap_memory;
+    base = buffer->map_ptr ? buffer->map_ptr : buffer->resource.map_heap_memory;
     *data = base + offset;
 
     TRACE("Returning memory at %p (base %p, offset %u).\n", *data, base, offset);
