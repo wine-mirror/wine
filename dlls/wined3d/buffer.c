@@ -41,7 +41,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 #define VB_MAXFULLCONVERSIONS 5       /* Number of full conversions before we stop converting */
 #define VB_RESETFULLCONVS     20      /* Reset full conversion counts after that number of draws */
 
-static void buffer_invalidate_bo_range(struct wined3d_buffer *buffer, UINT offset, UINT size)
+void buffer_invalidate_bo_range(struct wined3d_buffer *buffer, UINT offset, UINT size)
 {
     if (!offset && !size)
         goto invalidate_all;
@@ -979,9 +979,9 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
          * being uploaded in that case. Two such applications are Port Royale
          * and Darkstar One. */
         if (flags & WINED3D_MAP_DISCARD)
-            buffer_invalidate_bo_range(buffer, 0, 0);
+            wined3d_cs_emit_buffer_invalidate_bo_range(device->cs, buffer, 0, 0);
         else if (!(flags & WINED3D_MAP_READONLY))
-            buffer_invalidate_bo_range(buffer, offset, size);
+            wined3d_cs_emit_buffer_invalidate_bo_range(device->cs, buffer, offset, size);
 
         if (!(buffer->flags & WINED3D_BUFFER_DOUBLEBUFFER))
         {

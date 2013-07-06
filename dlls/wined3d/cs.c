@@ -70,6 +70,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_RESOURCE_MAP,
     WINED3D_CS_OP_RESOURCE_UNMAP,
     WINED3D_CS_OP_BUFFER_SWAP_MEM,
+    WINED3D_CS_OP_BUFFER_INVALIDATE_RANGE,
     WINED3D_CS_OP_QUERY_ISSUE,
     WINED3D_CS_OP_QUERY_DESTROY,
     WINED3D_CS_OP_UPDATE_SURFACE,
@@ -390,6 +391,13 @@ struct wined3d_cs_buffer_swap_mem
     enum wined3d_cs_op opcode;
     struct wined3d_buffer *buffer;
     BYTE *mem;
+};
+
+struct wined3d_cs_buffer_invalidate_bo_range
+{
+    enum wined3d_cs_op opcode;
+    struct wined3d_buffer *buffer;
+    UINT offset, size;
 };
 
 struct wined3d_cs_skip
@@ -2273,6 +2281,28 @@ void wined3d_cs_emit_buffer_swap_mem(struct wined3d_cs *cs, struct wined3d_buffe
     cs->ops->submit(cs, sizeof(*op));
 }
 
+static UINT wined3d_cs_exec_buffer_invalidate_bo_range(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_buffer_invalidate_bo_range *op = data;
+
+    buffer_invalidate_bo_range(op->buffer, op->offset, op->size);
+    return sizeof(*op);
+}
+
+void wined3d_cs_emit_buffer_invalidate_bo_range(struct wined3d_cs *cs,
+        struct wined3d_buffer *buffer, UINT offset, UINT size)
+{
+    struct wined3d_cs_buffer_invalidate_bo_range *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_BUFFER_INVALIDATE_RANGE;
+    op->buffer = buffer;
+    op->offset = offset;
+    op->size = size;
+
+    cs->ops->submit(cs, sizeof(*op));
+}
+
 static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
 {
     /* WINED3D_CS_OP_NOP                        */ wined3d_cs_exec_nop,
@@ -2321,6 +2351,7 @@ static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_RESOURCE_MAP               */ wined3d_cs_exec_resource_map,
     /* WINED3D_CS_OP_RESOURCE_UNMAP             */ wined3d_cs_exec_resource_unmap,
     /* WINED3D_CS_OP_BUFFER_SWAP_MEM            */ wined3d_cs_exec_buffer_swap_mem,
+    /* WINED3D_CS_OP_BUFFER_INVALIDATE_RANGE    */ wined3d_cs_exec_buffer_invalidate_bo_range,
     /* WINED3D_CS_OP_QUERY_ISSUE                */ wined3d_cs_exec_query_issue,
     /* WINED3D_CS_OP_QUERY_DESTROY              */ wined3d_cs_exec_query_destroy,
     /* WINED3D_CS_OP_UPDATE_SURFACE             */ wined3d_cs_exec_update_surface,
