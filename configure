@@ -16153,6 +16153,7 @@ wine_fn_config_dll psapi enable_psapi implib
 wine_fn_config_test dlls/psapi/tests psapi_test
 wine_fn_config_dll pstorec enable_pstorec
 wine_fn_config_dll qcap enable_qcap
+wine_fn_config_test dlls/qcap/tests qcap_test
 wine_fn_config_dll qedit enable_qedit
 wine_fn_config_test dlls/qedit/tests qedit_test
 wine_fn_config_dll qmgr enable_qmgr
