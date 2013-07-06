@@ -69,6 +69,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_RESOURCE_CHANGED,
     WINED3D_CS_OP_RESOURCE_MAP,
     WINED3D_CS_OP_RESOURCE_UNMAP,
+    WINED3D_CS_OP_BUFFER_SWAP_MEM,
     WINED3D_CS_OP_QUERY_ISSUE,
     WINED3D_CS_OP_QUERY_DESTROY,
     WINED3D_CS_OP_UPDATE_SURFACE,
@@ -382,6 +383,13 @@ struct wined3d_cs_resource_changed
     struct wined3d_resource *resource;
     struct wined3d_gl_bo *swap_buffer;
     void *swap_heap_memory;
+};
+
+struct wined3d_cs_buffer_swap_mem
+{
+    enum wined3d_cs_op opcode;
+    struct wined3d_buffer *buffer;
+    BYTE *mem;
 };
 
 struct wined3d_cs_skip
@@ -2237,6 +2245,34 @@ void wined3d_cs_emit_evict_resource(struct wined3d_cs *cs, struct wined3d_resour
     cs->ops->submit(cs, sizeof(*op));
 }
 
+static UINT wined3d_cs_exec_buffer_swap_mem(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_buffer_swap_mem *op = data;
+    struct wined3d_buffer *buffer = op->buffer;
+
+    wined3d_resource_free_sysmem(&buffer->resource);
+    buffer->resource.heap_memory = op->mem;
+
+    if (!buffer->buffer_object && buffer->resource.bind_count)
+    {
+        device_invalidate_state(cs->device, STATE_STREAMSRC);
+        device_invalidate_state(cs->device, STATE_INDEXBUFFER);
+    }
+    return sizeof(*op);
+}
+
+void wined3d_cs_emit_buffer_swap_mem(struct wined3d_cs *cs, struct wined3d_buffer *buffer, BYTE *mem)
+{
+    struct wined3d_cs_buffer_swap_mem *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_BUFFER_SWAP_MEM;
+    op->buffer = buffer;
+    op->mem = mem;
+
+    cs->ops->submit(cs, sizeof(*op));
+}
+
 static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
 {
     /* WINED3D_CS_OP_NOP                        */ wined3d_cs_exec_nop,
@@ -2257,11 +2293,11 @@ static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_INDEX_BUFFER           */ wined3d_cs_exec_set_index_buffer,
     /* WINED3D_CS_OP_SET_CONSTANT_BUFFER        */ wined3d_cs_exec_set_constant_buffer,
     /* WINED3D_CS_OP_SET_TEXTURE                */ wined3d_cs_exec_set_texture,
+    /* WINED3D_CS_OP_SET_SHADER_RESOURCE_VIEW   */ wined3d_cs_exec_set_shader_resource_view,
     /* WINED3D_CS_OP_SET_SAMPLER                */ wined3d_cs_exec_set_sampler,
     /* WINED3D_CS_OP_SET_SHADER                 */ wined3d_cs_exec_set_shader,
     /* WINED3D_CS_OP_SET_RENDER_STATE           */ wined3d_cs_exec_set_render_state,
     /* WINED3D_CS_OP_SET_TEXTURE_STATE          */ wined3d_cs_exec_set_texture_state,
-    /* WINED3D_CS_OP_SET_SHADER_RESOURCE_VIEW   */ wined3d_cs_exec_set_shader_resource_view,
     /* WINED3D_CS_OP_SET_SAMPLER_STATE          */ wined3d_cs_exec_set_sampler_state,
     /* WINED3D_CS_OP_SET_TRANSFORM              */ wined3d_cs_exec_set_transform,
     /* WINED3D_CS_OP_SET_CLIP_PLANE             */ wined3d_cs_exec_set_clip_plane,
@@ -2284,6 +2320,7 @@ static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_RESOURCE_CHANGED           */ wined3d_cs_exec_resource_changed,
     /* WINED3D_CS_OP_RESOURCE_MAP               */ wined3d_cs_exec_resource_map,
     /* WINED3D_CS_OP_RESOURCE_UNMAP             */ wined3d_cs_exec_resource_unmap,
+    /* WINED3D_CS_OP_BUFFER_SWAP_MEM            */ wined3d_cs_exec_buffer_swap_mem,
     /* WINED3D_CS_OP_QUERY_ISSUE                */ wined3d_cs_exec_query_issue,
     /* WINED3D_CS_OP_QUERY_DESTROY              */ wined3d_cs_exec_query_destroy,
     /* WINED3D_CS_OP_UPDATE_SURFACE             */ wined3d_cs_exec_update_surface,
