@@ -279,6 +279,12 @@ HRESULT CDECL wined3d_query_get_data(struct wined3d_query *query,
     TRACE("query %p, data %p, data_size %u, flags %#x.\n",
             query, data, data_size, flags);
 
+    if (query->counter_main != query->counter_worker)
+    {
+        TRACE("D3DISSUE_END command not submitted to GL yet\n");
+        return S_FALSE;
+    }
+
     wined3d_cs_emit_query_get_data(query->device->cs, query, data, data_size,
             flags, &hr);
 
@@ -295,6 +301,9 @@ UINT CDECL wined3d_query_get_data_size(const struct wined3d_query *query)
 HRESULT CDECL wined3d_query_issue(struct wined3d_query *query, DWORD flags)
 {
     TRACE("query %p, flags %#x.\n", query, flags);
+
+    if (flags & WINED3DISSUE_END)
+        query->counter_main++;
 
     wined3d_cs_emit_query_issue(query->device->cs, query, flags);
     return WINED3D_OK;

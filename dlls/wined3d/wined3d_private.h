@@ -2757,6 +2757,8 @@ struct wined3d_query
     enum wined3d_query_type type;
     DWORD data_size;
     void                     *extendedData;
+
+    LONG                     counter_main, counter_worker;
 };
 
 /* TODO: Add tests and support for FLOAT16_4 POSITIONT, D3DCOLOR position, other
