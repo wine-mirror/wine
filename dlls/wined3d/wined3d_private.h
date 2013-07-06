@@ -2634,8 +2634,11 @@ struct wined3d_cs_queue
 struct wined3d_cs_ops
 {
     void *(*require_space)(struct wined3d_cs *cs, size_t size);
+    void *(*require_space_prio)(struct wined3d_cs *cs, size_t size);
     void (*submit)(struct wined3d_cs *cs, size_t size);
+    void (*submit_prio)(struct wined3d_cs *cs, size_t size);
     void (*finish)(struct wined3d_cs *cs);
+    void (*finish_prio)(struct wined3d_cs *cs);
 };
 
 struct wined3d_cs
@@ -2647,7 +2650,7 @@ struct wined3d_cs
     DWORD thread_id;
     struct wined3d_surface *onscreen_depth_stencil;
 
-    struct wined3d_cs_queue queue;
+    struct wined3d_cs_queue queue, prio_queue;
 
     LONG pending_presents;
     struct list query_poll_list;
