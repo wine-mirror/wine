@@ -926,7 +926,6 @@ void buffer_internal_preload(struct wined3d_buffer *buffer, struct wined3d_conte
 
 void CDECL wined3d_buffer_preload(struct wined3d_buffer *buffer)
 {
-    struct wined3d_context *context;
     struct wined3d_device *device = buffer->resource.device;
 
     if (buffer->resource.map_count)
@@ -935,16 +934,7 @@ void CDECL wined3d_buffer_preload(struct wined3d_buffer *buffer)
         return;
     }
 
-    if (wined3d_settings.cs_multithreaded)
-    {
-        FIXME("Waiting for cs.\n");
-        wined3d_cs_emit_glfinish(device->cs);
-        device->cs->ops->finish(device->cs);
-    }
-
-    context = context_acquire(buffer->resource.device, NULL);
-    buffer_internal_preload(buffer, context, NULL);
-    context_release(context);
+    wined3d_cs_emit_buffer_preload(device->cs, buffer);
 }
 
 struct wined3d_resource * CDECL wined3d_buffer_get_resource(struct wined3d_buffer *buffer)

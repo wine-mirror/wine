@@ -71,6 +71,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_RESOURCE_UNMAP,
     WINED3D_CS_OP_BUFFER_SWAP_MEM,
     WINED3D_CS_OP_BUFFER_INVALIDATE_RANGE,
+    WINED3D_CS_OP_BUFFER_PRELOAD,
     WINED3D_CS_OP_QUERY_ISSUE,
     WINED3D_CS_OP_QUERY_DESTROY,
     WINED3D_CS_OP_UPDATE_SURFACE,
@@ -450,6 +451,12 @@ struct wined3d_cs_evict_resource
 {
     enum wined3d_cs_op opcode;
     struct wined3d_resource *resource;
+};
+
+struct wined3d_cs_buffer_preload
+{
+    enum wined3d_cs_op opcode;
+    struct wined3d_buffer *buffer;
 };
 
 static void wined3d_cs_mt_submit(struct wined3d_cs *cs, size_t size)
@@ -2303,6 +2310,29 @@ void wined3d_cs_emit_buffer_invalidate_bo_range(struct wined3d_cs *cs,
     cs->ops->submit(cs, sizeof(*op));
 }
 
+static UINT wined3d_cs_exec_buffer_preload(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_buffer_preload *op = data;
+    struct wined3d_context *context;
+
+    context = context_acquire(cs->device, NULL);
+    buffer_internal_preload(op->buffer, context, NULL);
+    context_release(context);
+
+    return sizeof(*op);
+}
+
+void wined3d_cs_emit_buffer_preload(struct wined3d_cs *cs, struct wined3d_buffer *buffer)
+{
+    struct wined3d_cs_buffer_preload *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_BUFFER_PRELOAD;
+    op->buffer = buffer;
+
+    cs->ops->submit(cs, sizeof(*op));
+}
+
 static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
 {
     /* WINED3D_CS_OP_NOP                        */ wined3d_cs_exec_nop,
@@ -2352,6 +2382,7 @@ static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_RESOURCE_UNMAP             */ wined3d_cs_exec_resource_unmap,
     /* WINED3D_CS_OP_BUFFER_SWAP_MEM            */ wined3d_cs_exec_buffer_swap_mem,
     /* WINED3D_CS_OP_BUFFER_INVALIDATE_RANGE    */ wined3d_cs_exec_buffer_invalidate_bo_range,
+    /* WINED3D_CS_OP_BUFFER_PRELOAD             */ wined3d_cs_exec_buffer_preload,
     /* WINED3D_CS_OP_QUERY_ISSUE                */ wined3d_cs_exec_query_issue,
     /* WINED3D_CS_OP_QUERY_DESTROY              */ wined3d_cs_exec_query_destroy,
     /* WINED3D_CS_OP_UPDATE_SURFACE             */ wined3d_cs_exec_update_surface,

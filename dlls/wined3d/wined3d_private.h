@@ -2784,6 +2784,7 @@ void wined3d_cs_emit_buffer_swap_mem(struct wined3d_cs *cs, struct wined3d_buffe
         BYTE *mem) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_buffer_invalidate_bo_range(struct wined3d_cs *cs,
         struct wined3d_buffer *buffer, UINT offset, UINT size) DECLSPEC_HIDDEN;
+void wined3d_cs_emit_buffer_preload(struct wined3d_cs *cs, struct wined3d_buffer *buffer) DECLSPEC_HIDDEN;
 
 /* Direct3D terminology with little modifications. We do not have an issued state
  * because only the driver knows about it, but we have a created state because d3d
