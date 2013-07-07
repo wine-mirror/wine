@@ -3197,8 +3197,12 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
         for (i = 0, map = context->stream_info.use_map; map; map >>= 1, ++i)
         {
             if (map & 1)
-                buffer_mark_used(state->streams[context->stream_info.elements[i].stream_idx].buffer);
+                buffer_internal_preload(state->streams[context->stream_info.elements[i].stream_idx].buffer,
+                        context, state);
         }
+        /* PreLoad may kick buffers out of vram. */
+        if (isStateDirty(context, STATE_STREAMSRC))
+            context_update_stream_info(context, state);
     }
     if (state->index_buffer)
     {

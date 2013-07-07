@@ -711,7 +711,7 @@ static void buffer_direct_upload(struct wined3d_buffer *This, const struct wined
     checkGLcall("glUnmapBuffer");
 }
 
-void buffer_mark_used(struct wined3d_buffer *buffer)
+static void buffer_mark_used(struct wined3d_buffer *buffer)
 {
     buffer->flags &= ~(WINED3D_BUFFER_SYNC | WINED3D_BUFFER_DISCARD);
 }
