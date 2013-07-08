@@ -2630,6 +2630,8 @@ __ASM_STDCALL_FUNC( ExitProcess, 4, /* Shrinker depend on this particular ExitPr
 
 void WINAPI process_ExitProcess( DWORD status )
 {
+    ULONG magic;
+    LdrLockLoaderLock( 0, 0, &magic );
     RtlAcquirePebLock();
     NtTerminateProcess(0, status);
     LdrShutdownProcess();
