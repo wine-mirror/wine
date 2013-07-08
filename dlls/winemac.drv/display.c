@@ -797,6 +797,12 @@ BOOL macdrv_SetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp)
 
     TRACE("dev %p ramp %p\n", dev, ramp);
 
+    if (!allow_set_gamma)
+    {
+        TRACE("disallowed by registry setting\n");
+        return FALSE;
+    }
+
     if (macdrv_get_displays(&displays, &num_displays))
     {
         WARN("failed to get Mac displays\n");
