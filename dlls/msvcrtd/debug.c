@@ -58,6 +58,7 @@ void * CDECL MSVCRTD_operator_new_dbg(MSVCRT_size_t nSize, int nBlockUse,
         return NULL;
     case _FREE_BLOCK:
         FIXME("Native code throws an exception here\n");
+        return NULL;
     case _CRT_BLOCK:
     case _IGNORE_BLOCK:
         ERR("Not allowed nBlockUse value: %d\n", _BLOCK_TYPE(nBlockUse));
