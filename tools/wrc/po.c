@@ -338,7 +338,7 @@ static const struct
     { LANG_LATVIAN,        SUBLANG_NEUTRAL,                     "lv" },
     { LANG_LATVIAN,        SUBLANG_LATVIAN_LATVIA,              "lv_LV" },
     { LANG_LITHUANIAN,     SUBLANG_NEUTRAL,                     "lt" },
-    { LANG_LITHUANIAN,     SUBLANG_LITHUANIAN_LITHUANIA,        "lt_LT" },
+    { LANG_LITHUANIAN,     SUBLANG_LITHUANIAN,                  "lt_LT" },
     { LANG_PERSIAN,        SUBLANG_NEUTRAL,                     "fa" },
     { LANG_PERSIAN,        SUBLANG_PERSIAN_IRAN,                "fa_IR" },
     { LANG_ARMENIAN,       SUBLANG_NEUTRAL,                     "hy" },
