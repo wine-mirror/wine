@@ -28,7 +28,7 @@ msgstr ""
 
 #: appwiz.rc:59
 msgid "&Install..."
-msgstr "&Instalovat…"
+msgstr "&Instalovat..."
 
 #: appwiz.rc:62
 msgid ""
@@ -46,7 +46,7 @@ msgstr "I&nformace o podpoře"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 msgid "&Modify..."
-msgstr "Změnit…"
+msgstr "Změnit..."
 
 #: appwiz.rc:66 appwiz.rc:42 cryptui.rc:343 msacm32.rc:37 winecfg.rc:191
 #: winecfg.rc:228 wordpad.rc:245
@@ -236,11 +236,11 @@ msgstr "Z&měnit/Odebrat"
 
 #: appwiz.rc:48
 msgid "Downloading..."
-msgstr "Probíhá stahování…"
+msgstr "Probíhá stahování..."
 
 #: appwiz.rc:49
 msgid "Installing..."
-msgstr "Probíhá instalace…"
+msgstr "Probíhá instalace..."
 
 #: appwiz.rc:50
 msgid ""
@@ -260,7 +260,7 @@ msgstr "&Vyberte datový proud:"
 
 #: avifil32.rc:45 wordpad.rc:73
 msgid "&Options..."
-msgstr "Volby…"
+msgstr "Volby..."
 
 #: avifil32.rc:46
 msgid "&Interleave every"
@@ -304,7 +304,7 @@ msgstr "nekomprimované"
 
 #: browseui.rc:25
 msgid "Canceling..."
-msgstr "Probíhá zrušování…"
+msgstr "Probíhá zrušování..."
 
 #: comctl32.rc:49 winefile.rc:157
 msgid "Properties for %s"
@@ -430,7 +430,7 @@ msgstr "&Pouze pro čtení"
 
 #: comdlg32.rc:173
 msgid "Save As..."
-msgstr "Uložit jako…"
+msgstr "Uložit jako..."
 
 #: comdlg32.rc:186 comdlg32.rc:141
 msgid "Save As"
@@ -774,7 +774,7 @@ msgstr "&Dolní:"
 
 #: comdlg32.rc:448
 msgid "P&rinter..."
-msgstr "Tiskárna…"
+msgstr "Tiskárna..."
 
 #: comdlg32.rc:456
 msgid "Look &in:"
@@ -2068,7 +2068,7 @@ msgstr "Obecné"
 
 #: cryptui.rc:188
 msgid "&Install Certificate..."
-msgstr "&Nainstalovat certifikát…"
+msgstr "&Nainstalovat certifikát..."
 
 #: cryptui.rc:189
 msgid "Issuer &Statement"
@@ -2084,7 +2084,7 @@ msgstr "&Upravit vlastnosti"
 
 #: cryptui.rc:203
 msgid "&Copy to File..."
-msgstr "&Kopírovat do souboru…"
+msgstr "&Kopírovat do souboru..."
 
 #: cryptui.rc:207
 msgid "Certification Path"
@@ -2136,7 +2136,7 @@ msgstr "Pr&o tento certifikát povolit pouze tyto účely:"
 
 #: cryptui.rc:250
 msgid "Add &Purpose..."
-msgstr "&Přidat účel…"
+msgstr "&Přidat účel..."
 
 #: cryptui.rc:254
 msgid "Add Purpose"
@@ -2186,7 +2186,7 @@ msgstr "&Název souboru:"
 
 #: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:295
 msgid "B&rowse..."
-msgstr "P&rocházet…"
+msgstr "P&rocházet..."
 
 #: cryptui.rc:294
 msgid ""
@@ -2244,15 +2244,15 @@ msgstr "Zamýšlený účel:"
 
 #: cryptui.rc:341
 msgid "&Import..."
-msgstr "&Importovat…"
+msgstr "&Importovat..."
 
 #: cryptui.rc:342 regedit.rc:109
 msgid "&Export..."
-msgstr "&Exportovat…"
+msgstr "&Exportovat..."
 
 #: cryptui.rc:344
 msgid "&Advanced..."
-msgstr "&Pokročilé…"
+msgstr "&Pokročilé..."
 
 #: cryptui.rc:345
 msgid "Certificate intended purposes"
@@ -3023,15 +3023,15 @@ msgstr "Přenášení"
 
 #: gphoto2.rc:43
 msgid "Transferring... Please Wait"
-msgstr "Probíhá přenos… čekejte prosím"
+msgstr "Probíhá přenos... čekejte prosím"
 
 #: gphoto2.rc:48
 msgid "Connecting to camera"
-msgstr "Probíhá připojování k fotoaparátu…"
+msgstr "Probíhá připojování k fotoaparátu..."
 
 #: gphoto2.rc:52
 msgid "Connecting to camera... Please Wait"
-msgstr "Probíhá připojování k fotoaparátu… čekejte prosím"
+msgstr "Probíhá připojování k fotoaparátu... čekejte prosím"
 
 #: hhctrl.rc:56
 msgid "S&ync"
@@ -3143,7 +3143,7 @@ msgstr "&Okno"
 
 #: ieframe.rc:31 view.rc:30 winhlp32.rc:29
 msgid "&Open..."
-msgstr "&Otevřít…"
+msgstr "&Otevřít..."
 
 #: ieframe.rc:33 notepad.rc:30 wordpad.rc:31
 msgid "Save &as..."
@@ -3155,7 +3155,7 @@ msgstr "&Formát tisku..."
 
 #: ieframe.rc:36
 msgid "Pr&int..."
-msgstr "&Tisk…"
+msgstr "&Tisk..."
 
 #: ieframe.rc:37 wordpad.rc:34
 msgid "Print previe&w"
@@ -3179,7 +3179,7 @@ msgstr "&Oblíbené"
 
 #: ieframe.rc:52 regedit.rc:73
 msgid "&Add to Favorites..."
-msgstr "Přidat k oblíbeným…"
+msgstr "Přidat k oblíbeným..."
 
 #: ieframe.rc:57
 msgid "&About Internet Explorer"
@@ -3204,7 +3204,7 @@ msgstr "Domů"
 
 #: ieframe.rc:68 winhlp32.rc:66
 msgid "Print..."
-msgstr "Tisk…"
+msgstr "Tisk..."
 
 #: ieframe.rc:73
 msgid "Address"
@@ -3256,11 +3256,11 @@ msgstr "Můžete vymazat mezipaměť stránek, cookies a další data."
 
 #: inetcpl.rc:56
 msgid "Delete &files..."
-msgstr "Smazat soubory…"
+msgstr "Smazat soubory..."
 
 #: inetcpl.rc:57
 msgid "&Settings..."
-msgstr "&Nastavení…"
+msgstr "&Nastavení..."
 
 #: inetcpl.rc:65
 msgid "Delete browsing history"
@@ -3326,11 +3326,11 @@ msgstr ""
 
 #: inetcpl.rc:111
 msgid "Certificates..."
-msgstr "Certifikáty…"
+msgstr "Certifikáty..."
 
 #: inetcpl.rc:112
 msgid "Publishers..."
-msgstr "Vydavatelé…"
+msgstr "Vydavatelé..."
 
 #: inetcpl.rc:28
 msgid "Internet Settings"
@@ -6610,7 +6610,7 @@ msgstr "Výběr zvuku"
 
 #: msacm32.rc:36 winedbg.rc:73
 msgid "&Save As..."
-msgstr "&Uložit jako…"
+msgstr "&Uložit jako..."
 
 #: msacm32.rc:39
 msgid "&Format:"
@@ -6642,7 +6642,7 @@ msgstr "Dokument HTML"
 
 #: mshtml.rc:26
 msgid "Downloading from %s..."
-msgstr "Probíhá stahování z %s…"
+msgstr "Probíhá stahování z %s..."
 
 #: mshtml.rc:25
 msgid "Done"
@@ -6739,7 +6739,7 @@ msgstr "&Kodek"
 
 #: msvfw32.rc:39
 msgid "Con&figure..."
-msgstr "Nastavit…"
+msgstr "Nastavit..."
 
 #: msvfw32.rc:40
 msgid "&About"
@@ -7071,7 +7071,7 @@ msgstr "Vytvořit ze souboru"
 
 #: oledlg.rc:65
 msgid "&Add Control..."
-msgstr "Přidat propojení…"
+msgstr "Přidat propojení..."
 
 #: oledlg.rc:66
 msgid "Display As Icon"
@@ -7079,7 +7079,7 @@ msgstr "Zobrazit jako ikonu"
 
 #: oledlg.rc:68 setupapi.rc:58
 msgid "Browse..."
-msgstr "Procházet…"
+msgstr "Procházet..."
 
 #: oledlg.rc:69
 msgid "File:"
@@ -7112,7 +7112,7 @@ msgstr "&Zobrazit jako ikonu"
 
 #: oledlg.rc:92
 msgid "Change &Icon..."
-msgstr "Změnit &ikonu…"
+msgstr "Změnit &ikonu..."
 
 #: oledlg.rc:25
 msgid "Insert a new %s object into your document"
@@ -7207,7 +7207,7 @@ msgstr "Skenování"
 
 #: sane.rc:44
 msgid "SCANNING... Please Wait"
-msgstr "Probíhá skenování… čekejte prosím"
+msgstr "Probíhá skenování... čekejte prosím"
 
 #: sane.rc:31
 msgctxt "unit: pixels"
@@ -7260,7 +7260,7 @@ msgstr "Stop bity"
 
 #: setupapi.rc:36
 msgid "Copying Files..."
-msgstr "Probíhá kopírování souborů…"
+msgstr "Probíhá kopírování souborů..."
 
 #: setupapi.rc:42
 msgid "Destination:"
@@ -7304,7 +7304,7 @@ msgstr "Vpřed"
 
 #: shdoclc.rc:41
 msgid "&Save Background As..."
-msgstr "&Uložit pozadí jako…"
+msgstr "&Uložit pozadí jako..."
 
 #: shdoclc.rc:42
 msgid "Set As Back&ground"
@@ -7328,7 +7328,7 @@ msgstr "Vytvořit zástupce"
 
 #: shdoclc.rc:50 shdoclc.rc:81 shdoclc.rc:134 shdoclc.rc:161 shdoclc.rc:185
 msgid "Add to &Favorites..."
-msgstr "Přidat do oblíbených…"
+msgstr "Přidat do oblíbených..."
 
 #: shdoclc.rc:51
 msgid "&View Source"
@@ -7352,7 +7352,7 @@ msgstr "Otevřít odkaz v &novém okně"
 
 #: shdoclc.rc:65 shdoclc.rc:126 shdoclc.rc:148 shdoclc.rc:172
 msgid "Save Target &As..."
-msgstr "Uložit cíl j&ako…"
+msgstr "Uložit cíl j&ako..."
 
 #: shdoclc.rc:66 shdoclc.rc:127 shdoclc.rc:149 shdoclc.rc:173
 msgid "&Print Target"
@@ -7364,15 +7364,15 @@ msgstr "Zobrazit obrázek"
 
 #: shdoclc.rc:69 shdoclc.rc:176
 msgid "&Save Picture As..."
-msgstr "&Uložit obrázek jako…"
+msgstr "&Uložit obrázek jako..."
 
 #: shdoclc.rc:70
 msgid "&E-mail Picture..."
-msgstr "&Poslat obrázek e-mailem…"
+msgstr "&Poslat obrázek e-mailem..."
 
 #: shdoclc.rc:71
 msgid "Pr&int Picture..."
-msgstr "Vyt&isknout obrázek…"
+msgstr "Vyt&isknout obrázek..."
 
 #: shdoclc.rc:72
 msgid "&Go to My Pictures"
@@ -7384,7 +7384,7 @@ msgstr "Nastavit jako pozadí Plochy"
 
 #: shdoclc.rc:74 shdoclc.rc:154 shdoclc.rc:178
 msgid "Set as &Desktop Item..."
-msgstr "Nastavit jako položku Plochy…"
+msgstr "Nastavit jako položku Plochy..."
 
 #: shdoclc.rc:76 shdoclc.rc:90 shdoclc.rc:114 shdoclc.rc:156 shdoclc.rc:180
 #: user32.rc:57 wordpad.rc:101
@@ -7459,7 +7459,7 @@ msgstr "Vyjmout"
 
 #: shdoclc.rc:152
 msgid "&Save Video As..."
-msgstr "&Uložit videozáznam jako…"
+msgstr "&Uložit videozáznam jako..."
 
 #: shdoclc.rc:163 shdoclc.rc:187
 msgid "Play"
@@ -7749,7 +7749,7 @@ msgstr "&Otevřít:"
 #: shell32.rc:339 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:234
 #: winefile.rc:130
 msgid "&Browse..."
-msgstr "&Procházet…"
+msgstr "&Procházet..."
 
 #: shell32.rc:135 shell32.rc:139 winefile.rc:105
 msgid "Size"
@@ -8268,7 +8268,7 @@ msgstr "Vybrat okno"
 
 #: user32.rc:69
 msgid "&More Windows..."
-msgstr "&Více oken…"
+msgstr "&Více oken..."
 
 #: wineps.rc:28
 msgid "Paper Si&ze:"
@@ -9199,7 +9199,7 @@ msgstr "Digi&tální"
 
 #: clock.rc:32 notepad.rc:50 winecfg.rc:289 winefile.rc:60 wordpad.rc:81
 msgid "&Font..."
-msgstr "&Písmo…"
+msgstr "&Písmo..."
 
 #: clock.rc:34
 msgid "&Without Titlebar"
@@ -9809,7 +9809,7 @@ msgstr "Přepsat %1?"
 
 #: cmd.rc:323
 msgid "More..."
-msgstr "Více…"
+msgstr "Více..."
 
 #: cmd.rc:324
 msgid "Line in Batch processing possibly truncated. Using:\n"
@@ -9902,7 +9902,7 @@ msgstr "(proměnná) PATH nenalezena\n"
 
 #: cmd.rc:347
 msgid "Press any key to continue... "
-msgstr "Pro pokračování stiskněte libovolnou klávesu…"
+msgstr "Pro pokračování stiskněte libovolnou klávesu..."
 
 #: cmd.rc:348
 msgid "Wine Command Prompt"
@@ -10181,7 +10181,7 @@ msgstr "Nastala chyba sítě"
 
 #: net.rc:48
 msgid "Connection is being made"
-msgstr "Probíhá navazování spojení…"
+msgstr "Probíhá navazování spojení..."
 
 #: net.rc:49
 msgid "Reconnecting"
@@ -10309,7 +10309,7 @@ msgstr "&Nový\tCtrl+N"
 
 #: notepad.rc:28 wordpad.rc:29
 msgid "&Open...\tCtrl+O"
-msgstr "&Otevřít…\tCtrl+O"
+msgstr "&Otevřít...\tCtrl+O"
 
 #: notepad.rc:29 wordpad.rc:30
 msgid "&Save\tCtrl+S"
@@ -10321,11 +10321,11 @@ msgstr "&Tisk...\tCtrl+P"
 
 #: notepad.rc:33 wordpad.rc:35
 msgid "Page Se&tup..."
-msgstr "Nastavení stránky…"
+msgstr "Nastavení stránky..."
 
 #: notepad.rc:34
 msgid "P&rinter Setup..."
-msgstr "Nastavení tiskárny…"
+msgstr "Nastavení tiskárny..."
 
 #: notepad.rc:38 regedit.rc:40 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
 msgid "&Edit"
@@ -10547,7 +10547,7 @@ msgstr "&Přiřadit k souboru"
 
 #: oleview.rc:30
 msgid "&View TypeLib..."
-msgstr "Zobrazit TypeLib…"
+msgstr "Zobrazit TypeLib..."
 
 #: oleview.rc:32
 msgid "&System Configuration"
@@ -10591,7 +10591,7 @@ msgstr "Vytvořit instanci"
 
 #: oleview.rc:50
 msgid "Create Instance &On..."
-msgstr "Vytvořit instanci na…"
+msgstr "Vytvořit instanci na..."
 
 #: oleview.rc:51
 msgid "&Release Instance"
@@ -10885,7 +10885,7 @@ msgstr "Seskupit „typeinfos“ dle druhu"
 
 #: progman.rc:30
 msgid "&New..."
-msgstr "&Nový…"
+msgstr "&Nový..."
 
 #: progman.rc:31
 msgid "O&pen\tEnter"
@@ -10905,7 +10905,7 @@ msgstr "V&lastnosti\tAlt+Enter"
 
 #: progman.rc:37
 msgid "&Execute..."
-msgstr "Spustit…"
+msgstr "Spustit..."
 
 #: progman.rc:39
 msgid "E&xit Windows"
@@ -11009,7 +11009,7 @@ msgstr "Spustit &minimalizovaný"
 
 #: progman.rc:180
 msgid "Change &icon..."
-msgstr "Změnit ikonu…"
+msgstr "Změnit ikonu..."
 
 #: progman.rc:189
 msgid "Change Icon"
@@ -11557,7 +11557,7 @@ msgstr "Chyba: samoukončení procesu není dovoleno.\n"
 
 #: taskmgr.rc:37 taskmgr.rc:108
 msgid "&New Task (Run...)"
-msgstr "&Nová úloha (Spustit…)"
+msgstr "&Nová úloha (Spustit...)"
 
 #: taskmgr.rc:39
 msgid "E&xit Task Manager"
@@ -11601,7 +11601,7 @@ msgstr "&Pozastaveno"
 
 #: taskmgr.rc:68 taskmgr.rc:256
 msgid "&Select Columns..."
-msgstr "Vybrat sloupce…"
+msgstr "Vybrat sloupce..."
 
 #: taskmgr.rc:69 taskmgr.rc:258
 msgid "&CPU History"
@@ -11685,7 +11685,7 @@ msgstr ""
 
 #: taskmgr.rc:169
 msgid "Set &Affinity..."
-msgstr "Nastavit přiřazení…"
+msgstr "Nastavit přiřazení..."
 
 #: taskmgr.rc:170
 msgid "Edit Debug &Channels..."
@@ -11697,7 +11697,7 @@ msgstr "Správce úloh"
 
 #: taskmgr.rc:351
 msgid "&New Task..."
-msgstr "&Nová úloha…"
+msgstr "&Nová úloha..."
 
 #: taskmgr.rc:364
 msgid "&Show processes from all users"
@@ -13254,7 +13254,7 @@ msgstr "Uložení se nezdařilo"
 
 #: winedbg.rc:41
 msgid "Loading detailed information, please wait..."
-msgstr "Probíhá nahrávání podrobných informací, čekejte prosím…"
+msgstr "Probíhá nahrávání podrobných informací, čekejte prosím..."
 
 #: winefile.rc:26
 msgid "&Open\tEnter"
@@ -13314,7 +13314,7 @@ msgstr "Třídit podle &data"
 
 #: winefile.rc:56
 msgid "Filter by&..."
-msgstr "Třídit dle…"
+msgstr "Třídit dle..."
 
 #: winefile.rc:63
 msgid "&Drive Bar"
@@ -13574,7 +13574,7 @@ msgstr "Copyright 2000 Joshua Thielen"
 
 #: winhlp32.rc:32
 msgid "Printer &setup..."
-msgstr "Nastavení tisku…"
+msgstr "Nastavení tisku..."
 
 #: winhlp32.rc:39
 msgid "&Annotate..."
@@ -13586,7 +13586,7 @@ msgstr "&Záložka"
 
 #: winhlp32.rc:42
 msgid "&Define..."
-msgstr "Přidat…"
+msgstr "Přidat..."
 
 #: winhlp32.rc:46 winhlp32.rc:67
 msgid "Fonts"
@@ -13618,7 +13618,7 @@ msgstr "O &aplikaci Nápověda Wine"
 
 #: winhlp32.rc:64
 msgid "Annotation..."
-msgstr "Komentář…"
+msgstr "Komentář..."
 
 #: winhlp32.rc:65
 msgid "Copy"
