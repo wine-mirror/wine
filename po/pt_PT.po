@@ -6399,7 +6399,7 @@ msgid "No more bindings.\n"
 msgstr "Sem mais bindings.\n"
 
 #: winerror.mc:3446
-msgid "Can't logon with interdomain trust account.\n"
+msgid "Can't logon with inter-domain trust account.\n"
 msgstr "Não consegue ligar com conta confiável interdomínio.\n"
 
 #: winerror.mc:3451

@@ -6389,7 +6389,7 @@ msgid "No more bindings.\n"
 msgstr "Nincs több bind kötés.\n"
 
 #: winerror.mc:3446
-msgid "Can't logon with interdomain trust account.\n"
+msgid "Can't logon with inter-domain trust account.\n"
 msgstr "Nem lehet bejelentkezni a belső domain biztonsági fiókból.\n"
 
 #: winerror.mc:3451

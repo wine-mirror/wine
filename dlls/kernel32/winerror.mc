@@ -3441,7 +3441,7 @@ No more bindings.
 MessageId=1807
 SymbolicName=ERROR_NOLOGON_INTERDOMAIN_TRUST_ACCOUNT
 Language=ENU
-Can't logon with interdomain trust account.
+Can't logon with inter-domain trust account.
 .
 MessageId=1808
 SymbolicName=ERROR_NOLOGON_WORKSTATION_TRUST_ACCOUNT

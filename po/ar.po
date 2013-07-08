@@ -6328,7 +6328,7 @@ msgid "No more bindings.\n"
 msgstr "لا يوجد مرابط إضافية.\n"
 
 #: winerror.mc:3446
-msgid "Can't logon with interdomain trust account.\n"
+msgid "Can't logon with inter-domain trust account.\n"
 msgstr "لم يتمكن من الولوج إلى الرابط الداخلي مع حساب موثوق.\n"
 
 #: winerror.mc:3451

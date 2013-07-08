@@ -6376,7 +6376,7 @@ msgid "No more bindings.\n"
 msgstr "Il n'y a plus de liaisons.\n"
 
 #: winerror.mc:3446
-msgid "Can't logon with interdomain trust account.\n"
+msgid "Can't logon with inter-domain trust account.\n"
 msgstr "Ne peut se connecter avec un compte d'approbation inter-domaines.\n"
 
 #: winerror.mc:3451

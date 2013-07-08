@@ -6574,7 +6574,7 @@ msgid "No more bindings.\n"
 msgstr "Ingen flere bindinger.\n"
 
 #: winerror.mc:3446
-msgid "Can't logon with interdomain trust account.\n"
+msgid "Can't logon with inter-domain trust account.\n"
 msgstr "Klarte ikke logge på med pålitelighetskonto for flere domerer.\n"
 
 #: winerror.mc:3451

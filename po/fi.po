@@ -6342,7 +6342,7 @@ msgid "No more bindings.\n"
 msgstr "Ei enempää sidoksia.\n"
 
 #: winerror.mc:3446
-msgid "Can't logon with interdomain trust account.\n"
+msgid "Can't logon with inter-domain trust account.\n"
 msgstr "Toimialueiden välisellä luottamustilillä ei voi kirjautua.\n"
 
 #: winerror.mc:3451

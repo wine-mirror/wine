@@ -6403,7 +6403,7 @@ msgid "No more bindings.\n"
 msgstr "Nessun legame più.\n"
 
 #: winerror.mc:3446
-msgid "Can't logon with interdomain trust account.\n"
+msgid "Can't logon with inter-domain trust account.\n"
 msgstr "Logon impossibile con account di fiducia interdominio.\n"
 
 #: winerror.mc:3451

@@ -6353,7 +6353,7 @@ msgid "No more bindings.\n"
 msgstr "Nėra daugiau saistymų.\n"
 
 #: winerror.mc:3446
-msgid "Can't logon with interdomain trust account.\n"
+msgid "Can't logon with inter-domain trust account.\n"
 msgstr "Negalima prisijungti su tarpsritine patikima paskyra.\n"
 
 #: winerror.mc:3451

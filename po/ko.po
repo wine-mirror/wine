@@ -6337,7 +6337,7 @@ msgid "No more bindings.\n"
 msgstr "더 이상의 바인딩은 없음.\n"
 
 #: winerror.mc:3446
-msgid "Can't logon with interdomain trust account.\n"
+msgid "Can't logon with inter-domain trust account.\n"
 msgstr "내부 도메인의 신뢰된 계정에 로그온할 수 없습니다.\n"
 
 #: winerror.mc:3451

@@ -6391,7 +6391,7 @@ msgid "No more bindings.\n"
 msgstr "Ni več vezav.\n"
 
 #: winerror.mc:3446
-msgid "Can't logon with interdomain trust account.\n"
+msgid "Can't logon with inter-domain trust account.\n"
 msgstr "Ni se mogoče prijaviti z računom meddomenskega zaupanja.\n"
 
 #: winerror.mc:3451

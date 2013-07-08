@@ -6402,7 +6402,7 @@ msgid "No more bindings.\n"
 msgstr "No hi ha més lligaments.\n"
 
 #: winerror.mc:3446
-msgid "Can't logon with interdomain trust account.\n"
+msgid "Can't logon with inter-domain trust account.\n"
 msgstr ""
 "No es pot iniciar la sessió amb compte de confiança de diversos dominis.\n"
 
