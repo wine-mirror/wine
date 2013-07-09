@@ -1117,6 +1117,8 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         [queue postEvent:event];
 
         macdrv_release_event(event);
+
+        [controller noteKey:keyCode pressed:pressed];
     }
 
     - (void) postKeyEvent:(NSEvent *)theEvent
@@ -1243,7 +1245,6 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
      * ---------- NSResponder method overrides ----------
      */
     - (void) keyDown:(NSEvent *)theEvent { [self postKeyEvent:theEvent]; }
-    - (void) keyUp:(NSEvent *)theEvent   { [self postKeyEvent:theEvent]; }
 
     - (void) flagsChanged:(NSEvent *)theEvent
     {

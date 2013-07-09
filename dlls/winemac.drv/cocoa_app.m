@@ -1280,6 +1280,25 @@ int macdrv_err_on;
         return TRUE;
     }
 
+    - (BOOL) isKeyPressed:(uint16_t)keyCode
+    {
+        int bits = sizeof(pressedKeyCodes[0]) * 8;
+        int index = keyCode / bits;
+        uint32_t mask = 1 << (keyCode % bits);
+        return (pressedKeyCodes[index] & mask) != 0;
+    }
+
+    - (void) noteKey:(uint16_t)keyCode pressed:(BOOL)pressed
+    {
+        int bits = sizeof(pressedKeyCodes[0]) * 8;
+        int index = keyCode / bits;
+        uint32_t mask = 1 << (keyCode % bits);
+        if (pressed)
+            pressedKeyCodes[index] |= mask;
+        else
+            pressedKeyCodes[index] &= ~mask;
+    }
+
     - (void) handleMouseMove:(NSEvent*)anEvent
     {
         WineWindow* targetWindow;
@@ -1691,6 +1710,17 @@ int macdrv_err_on;
         {
             [self handleScrollWheel:anEvent];
             ret = mouseCaptureWindow != nil;
+        }
+        else if (type == NSKeyUp)
+        {
+            uint16_t keyCode = [anEvent keyCode];
+            if ([self isKeyPressed:keyCode])
+            {
+                WineWindow* window = (WineWindow*)[anEvent window];
+                [self noteKey:keyCode pressed:FALSE];
+                if ([window isKindOfClass:[WineWindow class]])
+                    [window postKeyEvent:anEvent];
+            }
         }
 
         return ret;

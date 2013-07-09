@@ -54,6 +54,7 @@ enum {
     NSEvent* lastFlagsChanged;
     BOOL inputSourceIsInputMethod;
     BOOL inputSourceIsInputMethodValid;
+    uint32_t pressedKeyCodes[128 / 32];
 
     CGFloat primaryScreenHeight;
     BOOL primaryScreenHeightValid;
@@ -105,6 +106,7 @@ enum {
     - (BOOL) waitUntilQueryDone:(int*)done timeout:(NSDate*)timeout processEvents:(BOOL)processEvents;
 
     - (void) keyboardSelectionDidChange;
+    - (void) noteKey:(uint16_t)keyCode pressed:(BOOL)pressed;
 
     - (void) flipRect:(NSRect*)rect;
 

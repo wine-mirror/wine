@@ -68,4 +68,6 @@
     - (NSInteger) minimumLevelForActive:(BOOL)active;
     - (void) updateFullscreen;
 
+    - (void) postKeyEvent:(NSEvent *)theEvent;
+
 @end
