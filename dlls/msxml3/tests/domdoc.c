@@ -4452,7 +4452,7 @@ static void test_XPath(void)
         char *str;
 
         hr = IXMLDOMNode_selectNodes(rootNode, _bstr_(xptest->query), &list);
-        ok(hr == S_OK, "query evaluation failed for query=%s", xptest->query);
+        ok(hr == S_OK, "query evaluation failed for query=%s\n", xptest->query);
 
         if (hr != S_OK)
             continue;
