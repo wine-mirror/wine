@@ -28,16 +28,11 @@ msgid "&Install..."
 msgstr "安装(&I)..."
 
 #: appwiz.rc:62
-#, fuzzy
-#| msgid ""
-#| "The following software can be automatically removed. To remove a program "
-#| "or to modify its installed components, select it from the list and click "
-#| "Change/Remove."
 msgid ""
 "The following software can be automatically removed. To remove a program or "
 "to modify its installed components, select it from the list and click Modify/"
 "Remove."
-msgstr "下列软件可以自动卸载。 按'添加/删除'可卸载选定程序或者调整已安装部件。"
+msgstr "下列软件可以自动卸载。 按'修改/删除'可卸载选定程序或者调整已安装部件。"
 
 #: appwiz.rc:64
 msgid "&Support Information"
@@ -154,21 +149,10 @@ msgid "Cancel"
 msgstr "取消"
 
 #: appwiz.rc:112
-#, fuzzy
-#| msgid "Wine Gecko Installer"
 msgid "Wine Mono Installer"
-msgstr "Wine Gecko 安装"
+msgstr "Wine Mono 安装"
 
 #: appwiz.rc:115
-#, fuzzy
-#| msgid ""
-#| "Wine could not find a Gecko package which is needed for applications "
-#| "embedding HTML to work correctly. Wine can automatically download and "
-#| "install it for you.\n"
-#| "\n"
-#| "Note: it is recommended to use your distribution's packages instead. See "
-#| "<a href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> "
-#| "for details."
 msgid ""
 "Wine could not find a Mono package which is needed for .NET applications to "
 "work correctly. Wine can automatically download and install it for you.\n"
@@ -177,10 +161,10 @@ msgid ""
 "href=\"http://wiki.winehq.org/Mono\">http://wiki.winehq.org/Mono</a> for "
 "details."
 msgstr ""
-"Wine 未找到到用于支持嵌入 HTML 的 Gecko 引擎。Wine 可以自动并下载安装它。\n"
+"Wine 未找到到用于支持 .NET 应用的 Mono 组件。Wine 可以自动并下载安装它。\n"
 "\n"
 "注意: 推荐您安装为发行版定制的软件包。具体请参看 <a href=\"http://wiki."
-"winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a>。"
+"winehq.org/Mono\">http://wiki.winehq.org/Mono</a>。"
 
 #: appwiz.rc:28
 msgid "Add/Remove Programs"
@@ -3366,10 +3350,8 @@ msgid "Connected"
 msgstr "连接断开"
 
 #: joy.rc:40
-#, fuzzy
-#| msgid "&Disable"
 msgid "Disabled"
-msgstr "停用(&D)"
+msgstr "停用"
 
 #: joy.rc:42
 msgid ""
@@ -3456,10 +3438,8 @@ msgid "Expected ')'"
 msgstr ""
 
 #: jscript.rc:37
-#, fuzzy
-#| msgid "Invalid parameter.\n"
 msgid "Invalid character"
-msgstr "无效参数。\n"
+msgstr "无效字符"
 
 #: jscript.rc:38
 msgid "Unterminated string constant"
@@ -8168,10 +8148,8 @@ msgid "Security Warning"
 msgstr "安全警告"
 
 #: urlmon.rc:32
-#, fuzzy
-#| msgid "Do you want to continue anyway?"
 msgid "Do you want to install this software?"
-msgstr "还是要继续吗？"
+msgstr "是否安装该软件？"
 
 #: urlmon.rc:34 explorer.rc:29
 msgid "Location:"
@@ -8190,22 +8168,16 @@ msgid ""
 msgstr ""
 
 #: urlmon.rc:48
-#, fuzzy
-#| msgid "Installation failure.\n"
 msgid "Installation of component failed: %08x"
-msgstr "安装失败。\n"
+msgstr "安装组件失败：%08x"
 
 #: urlmon.rc:49
-#, fuzzy
-#| msgid "&Install"
 msgid "Install (%d)"
-msgstr "安装(&I)"
+msgstr "安装 (%d)"
 
 #: urlmon.rc:50
-#, fuzzy
-#| msgid "&Install"
 msgid "Install"
-msgstr "安装(&I)"
+msgstr "安装"
 
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
 msgctxt "window"
@@ -9671,11 +9643,11 @@ msgstr ""
 
 #: cmd.rc:354
 msgid " (Yes|No)"
-msgstr ""
+msgstr " (是(Y)|否(N))"
 
 #: cmd.rc:355
 msgid " (Yes|No|All)"
-msgstr ""
+msgstr " (是(Y)|否(N)|全部(A))"
 
 #: cmd.rc:356
 msgid ""
@@ -13377,22 +13349,16 @@ msgid "Help topics: "
 msgstr "帮助主题： "
 
 #: wmic.rc:25
-#, fuzzy
-#| msgid "Operation not supported.\n"
 msgid "Error: Command line not supported\n"
-msgstr "不支持此操作。\n"
+msgstr "错误：不支持此命令行\n"
 
 #: wmic.rc:26
-#, fuzzy
-#| msgid "Property set not found.\n"
 msgid "Error: Alias not found\n"
-msgstr "找不到属性集。\n"
+msgstr "错误：找不到该别名\n"
 
 #: wmic.rc:27
-#, fuzzy
-#| msgid "Invalid query syntax.\n"
 msgid "Error: Invalid query\n"
-msgstr "请求语法无效。\n"
+msgstr "错误：无效查询\n"
 
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
@@ -13782,15 +13748,15 @@ msgid ""
 msgstr ""
 "%1 是一个在目标路径上的\n"
 "文件名还是目录？\n"
-"（F - 文件，D - 目录）\n"
+"(F - 文件，D - 目录)\n"
 
 #: xcopy.rc:35
 msgid "%1? (Yes|No)\n"
-msgstr "%1？（Yes|No）\n"
+msgstr "%1？(是(Y)|否(N))\n"
 
 #: xcopy.rc:36
 msgid "Overwrite %1? (Yes|No|All)\n"
-msgstr "是否覆盖 %1？（Yes|No|All）\n"
+msgstr "是否覆盖 %1？(是(Y)|否(N)|全部(A))\n"
 
 #: xcopy.rc:37
 msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
