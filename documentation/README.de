@@ -113,12 +113,9 @@ Vergessen Sie nicht, erst alle früheren Wine-Installationen zu entfernen.
 Führen Sie vor der Installation entweder "dpkg -r wine", "rpm -e wine" oder
 "make uninstall" aus.
 
+Nach der Installation können Sie das "winecfg" Tool ausführen.
 Die Konfigurations-Hinweise finden Sie im Support-Bereich
 von http://www.winehq.org.
-
-Im Falle von Library-Ladefehlern (z.B. "Error while loading shared libraries:
-libntdll.so") fügen Sie bitte den Library-Pfad zur Datei /etc/ld.so.conf hinzu
-und führen Sie ldconfig als root aus.
 
 6. AUSFÜHREN VON PROGRAMMEN
 
@@ -135,10 +132,7 @@ Beispiel: Um Notepad auszuführen:
     wine ~/.wine/drive_c/windows/notepad.exe  (die Dateinamen-Syntax
                                               von Unix benutzend)
 
-        wine notepad.exe lesmich.txt (Programmaufruf mit Parametern)
-
-Hinweis: Der Pfad zur Datei wird auch zum Pfad hinzugefügt, wenn ein
-         vollständiger Dateiname auf der Kommandozeile angegeben wird.
+    wine notepad.exe liesmich.txt (Programmaufruf mit Parametern)
 
 Wine ist nicht perfekt, daher können manche Programme abstürzen.
 In diesem Fall bekommen Sie einen Log vom Absturz, den Sie beifügen sollten,
@@ -148,7 +142,7 @@ wenn Sie den Fehler melden.
 
 WWW:    Eine große Anzahl an Informationen findet sich im WineHQ unter
         http://www.winehq.org/ : Verschiedene Wine Guides,
-        Applikations-Datenbank, Fehlerverfolgungs-System.
+        Applikations-Datenbank, Bugtracker.
         Das ist vermutlich der beste Ausgangspunkt.
 
 FAQ:    Die FAQ zu Wine befindet sich unter http://www.winehq.org/FAQ
@@ -167,7 +161,7 @@ IRC:    Online-Hilfe wird Ihnen im Chat-Kanal #WineHQ unter
         irc.freenode.net gewährt.
 
 Git:    Der aktuelle Wine-Entwicklungs-Zweig ist über Git verfügbar.
-        Besuchen Sie http://www.winehq.org/site/git für weitere Informationen.
+        Besuchen Sie http://www.winehq.org/git für weitere Informationen.
 
 Wenn Sie etwas hinzufügen oder einen Fehler beheben, senden Sie den Patch bitte
 (vorzugsweise mit git-format-patch) an die Liste wine-patches@winehq.org, um ihn
