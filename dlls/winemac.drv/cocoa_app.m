@@ -1692,12 +1692,6 @@ int macdrv_err_on;
             [self handleScrollWheel:anEvent];
             ret = mouseCaptureWindow != nil;
         }
-        else if (type == NSKeyDown || type == NSKeyUp)
-        {
-            WineWindow* window = (WineWindow*)[anEvent window];
-            if ([window isKindOfClass:[WineWindow class]])
-                [window postKeyEvent:anEvent];
-        }
 
         return ret;
     }

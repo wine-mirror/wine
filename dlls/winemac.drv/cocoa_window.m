@@ -1195,6 +1195,18 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         }
     }
 
+    - (void) sendEvent:(NSEvent*)event
+    {
+        /* NSWindow consumes certain key-down events as part of Cocoa's keyboard
+           interface control.  For example, Control-Tab switches focus among
+           views.  We want to bypass that feature, so directly route key-down
+           events to -keyDown:. */
+        if ([event type] == NSKeyDown)
+            [[self firstResponder] keyDown:event];
+        else
+            [super sendEvent:event];
+    }
+
     // We normally use the generic/calibrated RGB color space for the window,
     // rather than the device color space, to avoid expensive color conversion
     // which slows down drawing.  However, for windows displaying OpenGL, having
@@ -1230,7 +1242,8 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
     /*
      * ---------- NSResponder method overrides ----------
      */
-    - (void) keyDown:(NSEvent *)theEvent { /* Need an implementation to avoid beeps */ }
+    - (void) keyDown:(NSEvent *)theEvent { [self postKeyEvent:theEvent]; }
+    - (void) keyUp:(NSEvent *)theEvent   { [self postKeyEvent:theEvent]; }
 
     - (void) flagsChanged:(NSEvent *)theEvent
     {
