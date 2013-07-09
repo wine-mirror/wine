@@ -10455,143 +10455,116 @@ msgid "The following services are running:\n"
 msgstr "The following services are running:\n"
 
 #: netstat.rc:27
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Active Connections"
-msgstr "חיבור רשת מקומית"
+msgstr "Active Connections"
 
 #: netstat.rc:28
 msgid "Proto"
-msgstr ""
+msgstr "Proto"
 
 #: netstat.rc:29
-#, fuzzy
-#| msgid "Email Address="
 msgid "Local Address"
-msgstr "כתובת דוא״ל="
+msgstr "Local Address"
 
 #: netstat.rc:30
-#, fuzzy
-#| msgid "Address"
 msgid "Foreign Address"
-msgstr "כתובת"
+msgstr "Foreign Address"
 
 #: netstat.rc:31
-#, fuzzy
-#| msgid "Status"
 msgid "State"
-msgstr "מצב"
+msgstr "State"
 
 #: netstat.rc:32
-#, fuzzy
-#| msgid "Interfaces"
 msgid "Interface Statistics"
-msgstr "מנשקים"
+msgstr "Interface Statistics"
 
 #: netstat.rc:33
 msgid "Sent"
-msgstr ""
+msgstr "Sent"
 
 #: netstat.rc:34
 msgid "Received"
-msgstr ""
+msgstr "Received"
 
 #: netstat.rc:35
-#, fuzzy
-#| msgid "bytes"
 msgid "Bytes"
-msgstr "בתים"
+msgstr "Bytes"
 
 #: netstat.rc:36
 msgid "Unicast packets"
-msgstr ""
+msgstr "Unicast packets"
 
 #: netstat.rc:37
 msgid "Non-unicast packets"
-msgstr ""
+msgstr "Non-unicast packets"
 
 #: netstat.rc:38
 msgid "Discards"
-msgstr ""
+msgstr "Discards"
 
 #: netstat.rc:39
-#, fuzzy
-#| msgid "Error"
 msgid "Errors"
-msgstr "שגיאה"
+msgstr "Errors"
 
 #: netstat.rc:40
-#, fuzzy
 msgid "Unknown protocols"
-msgstr "שגיאה בלתי ידוע.\n"
+msgstr "Unknown protocols"
 
 #: netstat.rc:41
 msgid "TCP Statistics for IPv4"
-msgstr ""
+msgstr "TCP Statistics for IPv4"
 
 #: netstat.rc:42
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Active Opens"
-msgstr "חיבור רשת מקומית"
+msgstr "Active Opens"
 
 #: netstat.rc:43
 msgid "Passive Opens"
-msgstr ""
+msgstr "Passive Opens"
 
 #: netstat.rc:44
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Failed Connection Attempts"
-msgstr "חיבור רשת מקומית"
+msgstr "Failed Connection Attempts"
 
 #: netstat.rc:45
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Reset Connections"
-msgstr "חיבור רשת מקומית"
+msgstr "Reset Connections"
 
 #: netstat.rc:46
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Current Connections"
-msgstr "חיבור רשת מקומית"
+msgstr "Current Connections"
 
 #: netstat.rc:47
 msgid "Segments Received"
-msgstr ""
+msgstr "Segments Received"
 
 #: netstat.rc:48
 msgid "Segments Sent"
-msgstr ""
+msgstr "Segments Sent"
 
 #: netstat.rc:49
 msgid "Segments Retransmitted"
-msgstr ""
+msgstr "Segments Retransmitted"
 
 #: netstat.rc:50
 msgid "UDP Statistics for IPv4"
-msgstr ""
+msgstr "UDP Statistics for IPv4"
 
 #: netstat.rc:51
 msgid "Datagrams Received"
-msgstr ""
+msgstr "Datagrams Received"
 
 #: netstat.rc:52
-#, fuzzy
-#| msgid "Local Port"
 msgid "No Ports"
-msgstr "פתחה מקומית"
+msgstr "No Ports"
 
 #: netstat.rc:53
-#, fuzzy
-#| msgid "Decoding Error"
 msgid "Receive Errors"
-msgstr "שגיאת פענוח"
+msgstr "Receive Errors"
 
 #: netstat.rc:54
 msgid "Datagrams Sent"
-msgstr ""
+msgstr "Datagrams Sent"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
