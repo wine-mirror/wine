@@ -590,38 +590,15 @@ IDI_WINDOWSM            ICON windowsm.ico
  Version
 */
 
-VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,1
- PRODUCTVERSION 1,0,0,1
- FILEFLAGSMASK 0x3fL
-#ifdef _DEBUG
- FILEFLAGS 0x1L
-#else
- FILEFLAGS 0x0L
-#endif
- FILEOS 0x40004L
- FILETYPE 0x1L
- FILESUBTYPE 0x0L
-BEGIN
-    BLOCK "StringFileInfo"
-    BEGIN
-        BLOCK "040904b0"
-        BEGIN
-            VALUE "CompanyName", "Brian Palmer\0"
-            VALUE "FileDescription", "Task Manager by Brian Palmer\0"
-            VALUE "FileVersion", "1.0.0.1\0"
-            VALUE "InternalName", "taskmgr\0"
-            VALUE "LegalCopyright", "Copyright © Brian Palmer 2000\0"
-            VALUE "OriginalFilename", "taskmgr.exe\0"
-            VALUE "ProductName", "Task Manager by Brian Palmer\0"
-            VALUE "ProductVersion", "1.0.0.1\0"
-        END
-    END
-    BLOCK "VarFileInfo"
-    BEGIN
-        VALUE "Translation", 0x409, 1200
-    END
-END
+#define WINE_FILEVERSION 1,0,0,1
+#define WINE_FILEVERSION_STR "1.0.0.1"
+#define WINE_FILETYPE VFT_APP
+#define WINE_FILEDESCRIPTION_STR "Wine Task Manager"
+#define WINE_FILENAME "taskmgr"
+#define WINE_FILENAME_STR "taskmgr.exe"
+#define WINE_PRODUCTNAME_STR "Task Manager by Brian Palmer"
+
+#include "wine/wine_common_ver.rc"
 
 /*
  Bitmap
