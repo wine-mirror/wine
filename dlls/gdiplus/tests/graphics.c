@@ -4529,6 +4529,9 @@ static void test_clipping(void)
     GpRegion *region;
     GpMatrix *matrix;
     GpRectF rect;
+    HRGN hrgn;
+    int ret;
+    RECT rc;
 
     hdc = CreateCompatibleDC(0);
     status = GdipCreateFromHDC(hdc, &graphics);
@@ -4547,6 +4550,17 @@ static void test_clipping(void)
     expect(Ok, status);
 
     status = GdipGetClipBounds(graphics, &rect);
+    expect(Ok, status);
+    expectf(100.0, rect.X);
+    expectf(100.0, rect.Y);
+    expectf(100.0, rect.Width);
+    expectf(100.0, rect.Height);
+
+    status = GdipSetEmpty(region);
+    expect(Ok, status);
+    status = GdipGetClip(graphics, region);
+    expect(Ok, status);
+    status = GdipGetRegionBounds(region, graphics, &rect);
     expect(Ok, status);
     expectf(100.0, rect.X);
     expectf(100.0, rect.Y);
@@ -4572,6 +4586,127 @@ todo_wine
     expectf(50.0, rect.Width);
 todo_wine
     expectf(25.0, rect.Height);
+
+    status = GdipSetEmpty(region);
+    expect(Ok, status);
+    status = GdipGetClip(graphics, region);
+    expect(Ok, status);
+    status = GdipGetRegionBounds(region, graphics, &rect);
+    expect(Ok, status);
+todo_wine
+    expectf(45.0, rect.X);
+todo_wine
+    expectf(20.0, rect.Y);
+todo_wine
+    expectf(50.0, rect.Width);
+todo_wine
+    expectf(25.0, rect.Height);
+
+    status = GdipGetRegionHRgn(region, NULL, &hrgn);
+    expect(Ok, status);
+    ret = GetRgnBox(hrgn, &rc);
+    ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
+todo_wine
+    ok(rc.left == 45 && rc.top == 20 && rc.right == 95 && rc.bottom == 45,
+       "expected 45,20-95,45, got %d,%d-%d,%d\n", rc.left, rc.top, rc.right, rc.bottom);
+    DeleteObject(hrgn);
+
+    status = GdipGetRegionHRgn(region, graphics, &hrgn);
+    expect(Ok, status);
+    ret = GetRgnBox(hrgn, &rc);
+    ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
+todo_wine
+    ok(rc.left == 100 && rc.top == 100 && rc.right == 200 && rc.bottom == 200,
+       "expected 100,100-200,200, got %d,%d-%d,%d\n", rc.left, rc.top, rc.right, rc.bottom);
+    DeleteObject(hrgn);
+
+    status = GdipSetPageScale(graphics, 2.0);
+    expect(Ok, status);
+
+    status = GdipGetClipBounds(graphics, &rect);
+    expect(Ok, status);
+todo_wine
+    expectf(45.0, rect.X);
+todo_wine
+    expectf(20.0, rect.Y);
+todo_wine
+    expectf(50.0, rect.Width);
+todo_wine
+    expectf(25.0, rect.Height);
+
+    status = GdipSetEmpty(region);
+    expect(Ok, status);
+    status = GdipGetClip(graphics, region);
+    expect(Ok, status);
+    status = GdipGetRegionBounds(region, graphics, &rect);
+    expect(Ok, status);
+todo_wine
+    expectf(45.0, rect.X);
+todo_wine
+    expectf(20.0, rect.Y);
+todo_wine
+    expectf(50.0, rect.Width);
+todo_wine
+    expectf(25.0, rect.Height);
+
+    status = GdipGetRegionHRgn(region, NULL, &hrgn);
+    expect(Ok, status);
+    ret = GetRgnBox(hrgn, &rc);
+    ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
+todo_wine
+    ok(rc.left == 45 && rc.top == 20 && rc.right == 95 && rc.bottom == 45,
+       "expected 45,20-95,45, got %d,%d-%d,%d\n", rc.left, rc.top, rc.right, rc.bottom);
+    DeleteObject(hrgn);
+
+    status = GdipGetRegionHRgn(region, graphics, &hrgn);
+    expect(Ok, status);
+    ret = GetRgnBox(hrgn, &rc);
+    ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
+todo_wine
+    ok(rc.left == 100 && rc.top == 100 && rc.right == 200 && rc.bottom == 200,
+       "expected 100,100-200,200, got %d,%d-%d,%d\n", rc.left, rc.top, rc.right, rc.bottom);
+    DeleteObject(hrgn);
+
+    GdipSetPageUnit(graphics, UnitPoint);
+    expect(Ok, status);
+
+    status = GdipGetClipBounds(graphics, &rect);
+    expect(Ok, status);
+todo_wine
+    ok((rect.X == 13.75 && rect.Y == 4.375 && rect.Width == 18.75 && rect.Height == 9.375) ||
+       broken(rect.X == 45.0 && rect.Y == 20.0 && rect.Width == 50.0 && rect.Height == 25.0) /* before Win7 */,
+       "expected 13.75,4.375-18.75,9.375, got %.2f,%.2f-%.2f,%.2f\n", rect.X, rect.Y, rect.Width, rect.Height);
+
+    status = GdipSetEmpty(region);
+    expect(Ok, status);
+    status = GdipGetClip(graphics, region);
+    expect(Ok, status);
+    status = GdipGetRegionBounds(region, graphics, &rect);
+    expect(Ok, status);
+todo_wine
+    ok((rect.X == 13.75 && rect.Y == 4.375 && rect.Width == 18.75 && rect.Height == 9.375) ||
+       broken(rect.X == 45.0 && rect.Y == 20.0 && rect.Width == 50.0 && rect.Height == 25.0) /* before Win7 */,
+       "expected 13.75,4.375-18.75,9.375, got %.2f,%.2f-%.2f,%.2f\n", rect.X, rect.Y, rect.Width, rect.Height);
+
+    status = GdipGetRegionHRgn(region, NULL, &hrgn);
+    expect(Ok, status);
+    ret = GetRgnBox(hrgn, &rc);
+    ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
+todo_wine
+    ok((rc.left == 14 && rc.top == 5 && rc.right == 33 && rc.bottom == 14) ||
+       broken(rc.left == 45 && rc.top == 20 && rc.right == 95 && rc.bottom == 45) /* before Win7 */,
+       "expected 14,5-33,14, got %d,%d-%d,%d\n", rc.left, rc.top, rc.right, rc.bottom);
+    DeleteObject(hrgn);
+
+    status = GdipGetRegionHRgn(region, graphics, &hrgn);
+    expect(Ok, status);
+    ret = GetRgnBox(hrgn, &rc);
+    ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
+todo_wine
+    ok((rc.left == 100 && rc.top == 100 && rc.right == 200 && rc.bottom == 200) ||
+      broken(rc.left == 267 && rc.top == 267 && rc.right == 534 && rc.bottom == 534) /* before Win7 */,
+       "expected 100,100-200,200, got %d,%d-%d,%d\n", rc.left, rc.top, rc.right, rc.bottom);
+    DeleteObject(hrgn);
 
     GdipDeleteMatrix(matrix);
     GdipDeleteRegion(region);
