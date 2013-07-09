@@ -35,6 +35,8 @@ STRINGTABLE
     IDS_DEVENUM_MIDEFAULT  "Default MidiOut Device"
 }
 
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+
 #define WINE_FILEDESCRIPTION_STR "Wine Device Enumerator Library"
 #define WINE_FILENAME_STR "devenum.dll"
 #define WINE_FILEVERSION 6,5,1,902
