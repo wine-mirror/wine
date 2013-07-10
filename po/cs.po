@@ -12405,7 +12405,7 @@ msgstr ""
 
 #: wineboot.rc:39
 msgid "Wine"
-msgstr ""
+msgstr "Wine"
 
 #: wineboot.rc:43
 msgid "The Wine configuration in %s is being updated, please wait..."
