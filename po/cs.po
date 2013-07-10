@@ -2430,6 +2430,7 @@ msgid "This certificate has expired or is not yet valid."
 msgstr "Platnost tohoto certifikátu vypršela, nebo ještě nezačala."
 
 #: cryptui.rc:41
+#, fuzzy
 msgid "This certificate's validity period exceeds that of its issuer."
 msgstr "Období platnosti certifikátu"
 
@@ -2542,6 +2543,7 @@ msgid "File to Import"
 msgstr "Soubor k importu"
 
 #: cryptui.rc:71
+#, fuzzy
 msgid "Specify the file you want to import."
 msgstr "Zadejte "
 
