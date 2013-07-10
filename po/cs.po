@@ -10115,7 +10115,7 @@ msgstr "Probíhá zastavování závislé služby: %1\n"
 
 #: net.rc:31
 msgid "Could not stop service %1\n"
-msgstr "Službu %a nelze zastavit\n"
+msgstr "Službu %1 nelze zastavit\n"
 
 #: net.rc:32
 msgid "Could not get handle to service control manager.\n"
@@ -13463,7 +13463,7 @@ msgstr ""
 
 #: winefile.rc:114
 msgid "%1 of %2 free"
-msgstr "%s z %s volné"
+msgstr "%1 z %2 volné"
 
 #: winefile.rc:115
 msgctxt "unit kilobyte"
