@@ -429,7 +429,7 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids,
     }
 
     *guids = HeapAlloc(GetProcessHeap(), 0, ndevices * sizeof(GUID));
-    if(!*ids){
+    if(!*guids){
         HeapFree(GetProcessHeap(), 0, *ids);
         HeapFree(GetProcessHeap(), 0, devices);
         return E_OUTOFMEMORY;
