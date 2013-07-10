@@ -11,15 +11,13 @@ UnderlineWidth: 50
 Ascent: 12
 Descent: 3
 LayerCount: 2
-Layer: 0 0 "Back"  1
-Layer: 1 0 "Fore"  0
+Layer: 0 0 "Back" 1
+Layer: 1 0 "Fore" 0
 NeedsXUIDChange: 1
 FSType: 8
 OS2Version: 1
 OS2_WeightWidthSlopeOnly: 0
 OS2_UseTypoMetrics: 0
-CreationTime: 1360066805
-ModificationTime: 1360586676
 PfmFamily: 49
 TTFWeight: 400
 TTFWidth: 5
@@ -2266,8 +2264,8 @@ BDFChar: 224 8364 8 1 6 1 10
 r;?Kjr;?Kjr;6Np
 BDFChar: 225 8218 8 1 6 1 10
 r;?Kjr;?Kjr;6Np
-BDFChar: 226 402 8 1 6 1 10
-r;?Kjr;?Kjr;6Np
+BDFChar: 226 402 8 2 5 0 9
+0OS;X?smAM@))aB
 BDFChar: 227 8222 8 1 6 1 10
 r;?Kjr;?Kjr;6Np
 BDFChar: 228 8230 8 1 6 1 10
@@ -2280,16 +2278,16 @@ BDFChar: 231 710 8 1 6 1 10
 r;?Kjr;?Kjr;6Np
 BDFChar: 232 8240 8 1 6 1 10
 r;?Kjr;?Kjr;6Np
-BDFChar: 233 352 8 1 6 1 10
-r;?Kjr;?Kjr;6Np
+BDFChar: 233 352 8 1 7 0 11
+CcDEB`l;s;#0+Z1
 BDFChar: 234 8249 8 1 6 1 10
 r;?Kjr;?Kjr;6Np
 BDFChar: 235 8250 8 1 6 1 10
 r;?Kjr;?Kjr;6Np
-BDFChar: 236 338 8 1 6 1 10
-r;?Kjr;?Kjr;6Np
-BDFChar: 237 381 8 1 6 1 10
-r;?Kjr;?Kjr;6Np
+BDFChar: 236 338 8 0 7 0 8
+J'?-\ccjVW56(Z`
+BDFChar: 237 381 8 1 7 0 10
+CcDFo"q2>&@)2aA
 BDFChar: 238 8216 8 1 6 1 10
 r;?Kjr;?Kjr;6Np
 BDFChar: 239 8217 8 1 6 1 10
@@ -2308,13 +2306,13 @@ BDFChar: 245 732 8 1 6 1 10
 r;?Kjr;?Kjr;6Np
 BDFChar: 246 8482 8 1 6 1 10
 r;?Kjr;?Kjr;6Np
-BDFChar: 247 353 8 1 6 1 10
-r;?Kjr;?Kjr;6Np
-BDFChar: 248 339 8 1 6 1 10
-r;?Kjr;?Kjr;6Np
-BDFChar: 249 382 8 1 6 1 10
-r;?Kjr;?Kjr;6Np
-BDFChar: 250 376 8 1 6 1 10
-r;?Kjr;?Kjr;6Np
+BDFChar: 247 353 8 1 6 0 9
+CcDE>b[<+Ab]j*f
+BDFChar: 248 339 8 0 7 0 6
+IbWW6f\:iT
+BDFChar: 249 382 8 1 6 0 9
+CcDFm$lC[+_#+04
+BDFChar: 250 376 8 1 6 0 11
+bfg(2bfn:U0JG17
 EndBitmapFont
 EndSplineFont

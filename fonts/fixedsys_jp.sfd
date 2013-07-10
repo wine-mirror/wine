@@ -11,15 +11,13 @@ UnderlineWidth: 0
 Ascent: 16
 Descent: 2
 LayerCount: 2
-Layer: 0 0 "Back"  1
-Layer: 1 0 "Fore"  0
+Layer: 0 0 "Back" 1
+Layer: 1 0 "Fore" 0
 XUID: [1021 516 2032022868 7388451]
 FSType: 8
 OS2Version: 1
 OS2_WeightWidthSlopeOnly: 0
 OS2_UseTypoMetrics: 1
-CreationTime: 1360244595
-ModificationTime: 1366561299
 PfmFamily: 49
 TTFWeight: 400
 TTFWidth: 5
@@ -49,12 +47,12 @@ NameList: Adobe Glyph List
 DisplaySize: 18
 AntiAlias: 0
 FitToEm: 1
-WinInfo: 64 16 6
+WinInfo: 0 32 17
 OnlyBitmaps: 1
 BeginPrivate: 0
 EndPrivate
 TeXData: 1 0 0 346030 173015 115343 0 1048576 115343 783286 444596 497025 792723 393216 433062 380633 303038 157286 324010 404750 52429 2506097 1059062 262144
-BeginChars: 65536 224
+BeginChars: 65536 252
 
 StartChar: space
 Encoding: 32 32 0
@@ -1084,7 +1082,7 @@ StartChar: uni00A0
 Encoding: 160 160 128
 Width: 8
 VWidth: 0
-Flags: HW
+Flags: W
 LayerCount: 2
 EndChar
 
@@ -1847,8 +1845,232 @@ VWidth: 0
 Flags: W
 LayerCount: 2
 EndChar
+
+StartChar: OE
+Encoding: 338 338 224
+Width: 8
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: oe
+Encoding: 339 339 225
+Width: 8
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Scaron
+Encoding: 352 352 226
+Width: 8
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: scaron
+Encoding: 353 353 227
+Width: 8
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Ydieresis
+Encoding: 376 376 228
+Width: 8
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: longs
+Encoding: 383 383 229
+Width: 8
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Zcaron
+Encoding: 381 381 230
+Width: 8
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: zcaron
+Encoding: 382 382 231
+Width: 8
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: florin
+Encoding: 402 402 232
+Width: 8
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: circumflex
+Encoding: 710 710 233
+Width: 8
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: tilde
+Encoding: 732 732 234
+Width: 8
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: dagger
+Encoding: 8224 8224 235
+Width: 8
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: daggerdbl
+Encoding: 8225 8225 236
+Width: 8
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: quotesinglbase
+Encoding: 8218 8218 237
+Width: 8
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: quotedblbase
+Encoding: 8222 8222 238
+Width: 8
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: quotedblleft
+Encoding: 8220 8220 239
+Width: 8
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: quotedblright
+Encoding: 8221 8221 240
+Width: 8
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: quoteleft
+Encoding: 8216 8216 241
+Width: 8
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: quoteright
+Encoding: 8217 8217 242
+Width: 8
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: endash
+Encoding: 8211 8211 243
+Width: 8
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: emdash
+Encoding: 8212 8212 244
+Width: 8
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: bullet
+Encoding: 8226 8226 245
+Width: 8
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: ellipsis
+Encoding: 8230 8230 246
+Width: 8
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: perthousand
+Encoding: 8240 8240 247
+Width: 8
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: guilsinglleft
+Encoding: 8249 8249 248
+Width: 8
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: guilsinglright
+Encoding: 8250 8250 249
+Width: 8
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Euro
+Encoding: 8364 8364 250
+Width: 8
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: trademark
+Encoding: 8482 8482 251
+Width: 8
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
 EndChars
-BitmapFont: 18 225 16 2 1
+BitmapFont: 18 252 16 2 1
 BDFChar: 0 32 8 2 2 0 0
 z
 BDFChar: 1 33 8 3 4 0 13
@@ -2297,5 +2519,61 @@ BDFChar: 222 254 8 1 6 -1 12
 r;?Kjr;?Kjr;?Kjr;6Np
 BDFChar: 223 255 8 1 6 -1 12
 r;?Kjr;?Kjr;?Kjr;6Np
+BDFChar: 224 338 8 0 6 0 12
+IZTYQOIVDoOH>QcIK0?J
+BDFChar: 225 339 8 0 6 0 6
+I$0YaOHOtk
+BDFChar: 226 352 8 1 7 0 15
+-kHA<7"U"U0F.d_Jq?BM
+BDFChar: 227 353 8 1 5 0 9
+:`oaWLk'FMLi<=o
+BDFChar: 228 376 8 1 7 0 14
+-iejN6prFO-kHq$&.fBQ
+BDFChar: 229 383 8 3 5 0 9
+@"<cXJ:N0#J:IV"
+BDFChar: 230 381 8 1 7 0 15
+-kHCX!X&W3#S8+$5X9l!
+BDFChar: 231 382 8 1 5 0 9
+:`oc5#S8+DJG9*E
+BDFChar: 232 402 8 0 5 0 9
+$kNt0&.fBa&7>J<
+BDFChar: 233 710 8 1 5 12 14
++Adjo
+BDFChar: 234 732 8 1 6 13 14
+A=*>s
+BDFChar: 235 8224 8 1 5 1 14
++<VdL+<^G%+<VdL+<UXa
+BDFChar: 236 8225 8 1 5 1 14
++<VdLp`L\%p`L\%+<UXa
+BDFChar: 237 8218 8 2 3 0 2
+5X9i"
+BDFChar: 238 8222 8 1 5 0 2
+84\gB
+BDFChar: 239 8220 8 1 5 12 14
+OH<!5
+BDFChar: 240 8221 8 1 5 12 14
+84\gB
+BDFChar: 241 8216 8 3 4 12 14
+J:Klb
+BDFChar: 242 8217 8 2 3 12 14
+5X9i"
+BDFChar: 243 8211 8 2 5 6 6
+n,NFg
+BDFChar: 244 8212 8 1 6 6 6
+qu?]s
+BDFChar: 245 8226 8 2 5 4 7
+@.<Yn
+BDFChar: 246 8230 8 1 7 0 0
+OoPI^
+BDFChar: 247 8240 8 0 7 0 11
+7&6c[:_4a!<E5<A
+BDFChar: 248 8249 8 2 5 0 6
+&0O5g5TgU<
+BDFChar: 249 8250 8 2 5 0 6
+J3Y4g+@(GW
+BDFChar: 250 8364 8 1 6 0 8
+3(/;lJG=X_2uipY
+BDFChar: 251 8482 8 0 6 9 13
+l:srD8cShk
 EndBitmapFont
 EndSplineFont
