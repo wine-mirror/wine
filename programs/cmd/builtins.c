@@ -400,6 +400,7 @@ void WCMD_choice (const WCHAR * args) {
     while (TRUE) {
 
         /* FIXME: Add support for option /T */
+        answer[1] = 0; /* terminate single character string */
         WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), answer, 1, &count);
 
         if (!opt_s)
