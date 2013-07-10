@@ -693,10 +693,16 @@ static void test_create_fail(void)
     test_create_and_fail(manifest2, wrong_depmanifest1, 0 );
 }
 
+struct dllredirect_keyed_data
+{
+    ULONG size;
+    ULONG unk;
+    DWORD res[3];
+};
+
 static void test_find_dll_redirection(HANDLE handle, LPCWSTR libname, ULONG exid, int line)
 {
     ACTCTX_SECTION_KEYED_DATA data;
-    DWORD *p;
     BOOL ret;
 
     memset(&data, 0xfe, sizeof(data));
@@ -717,10 +723,19 @@ static void test_find_dll_redirection(HANDLE handle, LPCWSTR libname, ULONG exid
     ok_(__FILE__, line)(data.lpData != NULL, "data.lpData == NULL\n");
     ok_(__FILE__, line)(data.ulLength == 20, "data.ulLength=%u\n", data.ulLength);
 
-    p = data.lpData;
-    if(ret && p) todo_wine {
-        ok_(__FILE__, line)(p[0] == 20 && p[1] == 2 && p[2] == 0 && p[3] == 0 && p[4] == 0,
-           "wrong data %u,%u,%u,%u,%u\n",p[0], p[1], p[2], p[3], p[4]);
+    if (data.lpData)
+    {
+        struct dllredirect_keyed_data *dlldata = (struct dllredirect_keyed_data*)data.lpData;
+todo_wine
+        ok_(__FILE__, line)(dlldata->size == data.ulLength, "got wrong size %d\n", dlldata->size);
+
+if (dlldata->size == data.ulLength)
+{
+        ok_(__FILE__, line)(dlldata->unk == 2, "got wrong field value %d\n", dlldata->unk);
+        ok_(__FILE__, line)(dlldata->res[0] == 0, "got wrong res[0] value %d\n", dlldata->res[0]);
+        ok_(__FILE__, line)(dlldata->res[1] == 0, "got wrong res[1] value %d\n", dlldata->res[1]);
+        ok_(__FILE__, line)(dlldata->res[2] == 0, "got wrong res[2] value %d\n", dlldata->res[2]);
+}
     }
 
     ok_(__FILE__, line)(data.lpSectionGlobalData == NULL, "data.lpSectionGlobalData != NULL\n");
@@ -763,8 +778,20 @@ static void test_find_dll_redirection(HANDLE handle, LPCWSTR libname, ULONG exid
     pReleaseActCtx(handle);
 }
 
+struct wndclass_keyed_data
+{
+    DWORD size;
+    DWORD reserved;
+    DWORD classname_len;
+    DWORD classname_offset;
+    DWORD modulename_len;
+    DWORD modulename_offset; /* offset relative to section base */
+    WCHAR strdata[1];
+};
+
 static void test_find_window_class(HANDLE handle, LPCWSTR clsname, ULONG exid, int line)
 {
+    struct wndclass_keyed_data *wnddata;
     ACTCTX_SECTION_KEYED_DATA data;
     BOOL ret;
 
@@ -781,16 +808,55 @@ static void test_find_window_class(HANDLE handle, LPCWSTR clsname, ULONG exid, i
         return;
     }
 
+    wnddata = (struct wndclass_keyed_data*)data.lpData;
+
     ok_(__FILE__, line)(data.cbSize == sizeof(data), "data.cbSize=%u\n", data.cbSize);
     ok_(__FILE__, line)(data.ulDataFormatVersion == 1, "data.ulDataFormatVersion=%u\n", data.ulDataFormatVersion);
     ok_(__FILE__, line)(data.lpData != NULL, "data.lpData == NULL\n");
-    /* ok_(__FILE__, line)(data.ulLength == ??, "data.ulLength=%u\n", data.ulLength); */
+todo_wine
+    ok_(__FILE__, line)(wnddata->size == FIELD_OFFSET(struct wndclass_keyed_data, strdata), "got %d for header size\n", wnddata->size);
+    if (data.lpData && wnddata->size == FIELD_OFFSET(struct wndclass_keyed_data, strdata))
+    {
+        static const WCHAR verW[] = {'6','.','5','.','4','.','3','!',0};
+        WCHAR buff[50];
+        WCHAR *ptr;
+        ULONG len;
+
+        ok_(__FILE__, line)(wnddata->reserved == 0, "got reserved as %d\n", wnddata->reserved);
+        /* redirect class name (versioned or not) is stored just after header data */
+        ok_(__FILE__, line)(wnddata->classname_offset == wnddata->size, "got name offset as %d\n", wnddata->classname_offset);
+        ok_(__FILE__, line)(wnddata->modulename_len > 0, "got module name length as %d\n", wnddata->modulename_len);
+
+        /* expected versioned name */
+        lstrcpyW(buff, verW);
+        lstrcatW(buff, clsname);
+        ptr = (WCHAR*)((BYTE*)wnddata + wnddata->size);
+        ok_(__FILE__, line)(!lstrcmpW(ptr, buff), "got wrong class name %s, expected %s\n", wine_dbgstr_w(ptr), wine_dbgstr_w(buff));
+        ok_(__FILE__, line)(lstrlenW(ptr)*sizeof(WCHAR) == wnddata->classname_len,
+            "got wrong class name length %d, expected %d\n", wnddata->classname_len, lstrlenW(ptr));
+
+        /* data length is simply header length + string data length including nulls */
+        len = wnddata->size + wnddata->classname_len + wnddata->modulename_len + 2*sizeof(WCHAR);
+        ok_(__FILE__, line)(data.ulLength == len, "got wrong data length %d, expected %d\n", data.ulLength, len);
+
+        if (data.ulSectionTotalLength > wnddata->modulename_offset)
+        {
+            WCHAR *modulename, *sectionptr;
+
+            /* just compare pointers */
+            modulename = (WCHAR*)((BYTE*)wnddata + wnddata->size + wnddata->classname_len + sizeof(WCHAR));
+            sectionptr = (WCHAR*)((BYTE*)data.lpSectionBase + wnddata->modulename_offset);
+            ok_(__FILE__, line)(modulename == sectionptr, "got wrong name offset %p, expected %p\n", sectionptr, modulename);
+        }
+    }
+
     ok_(__FILE__, line)(data.lpSectionGlobalData == NULL, "data.lpSectionGlobalData != NULL\n");
     ok_(__FILE__, line)(data.ulSectionGlobalDataLength == 0, "data.ulSectionGlobalDataLength=%u\n",
        data.ulSectionGlobalDataLength);
     ok_(__FILE__, line)(data.lpSectionBase != NULL, "data.lpSectionBase == NULL\n");
-    /* ok_(__FILE__, line)(data.ulSectionTotalLength == 0, "data.ulSectionTotalLength=%u\n",
-       data.ulSectionTotalLength); FIXME */
+todo_wine
+    ok_(__FILE__, line)(data.ulSectionTotalLength > 0, "data.ulSectionTotalLength=%u\n",
+       data.ulSectionTotalLength);
     ok_(__FILE__, line)(data.hActCtx == NULL, "data.hActCtx=%p\n", data.hActCtx);
     ok_(__FILE__, line)(data.ulAssemblyRosterIndex == exid, "data.ulAssemblyRosterIndex=%u, expected %u\n",
        data.ulAssemblyRosterIndex, exid);
