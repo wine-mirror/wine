@@ -1,7 +1,6 @@
 EXTRADEFS = -DCOM_NO_WINDOWS_H
 TESTDLL   = sti.dll
-IMPORTS   = ole32
-EXTRALIBS = -luuid
+IMPORTS   = uuid ole32
 
 C_SRCS = \
 	sti.c

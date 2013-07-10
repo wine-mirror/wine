@@ -3,7 +3,6 @@
 # Each individual makefile should define the following variables:
 # TESTDLL      : the dll to test
 # C_SRCS       : list of C test programs
-# EXTRALIBS    : extra libraries to link in (optional)
 # EXTRADEFS    : extra symbol definitions, like -DWINELIB (optional)
 #
 # plus all variables required by the global Make.rules.in
@@ -19,7 +18,7 @@ WINETEST_EXE = $(TESTDLL:%.dll=%)_test-stripped.exe$(DLLEXT)
 WINETEST_RES = $(top_builddir)/programs/winetest/$(TESTDLL:%.dll=%)_test.res
 RUNTESTFLAGS = -q -P wine -M $(TESTDLL) -T $(top_builddir) -p $(TESTPROGRAM)
 
-ALL_LIBS     = $(IMPORTS:%=-l%) $(EXTRALIBS) $(LDFLAGS) $(LIBS)
+ALL_LIBS     = $(IMPORTS:%=-l%) $(LDFLAGS) $(LIBS)
 EXTRA_OBJS   = testlist.o
 
 CROSSTEST    = $(TESTDLL:%.dll=%)_crosstest.exe
