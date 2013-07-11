@@ -173,7 +173,7 @@ msgstr ""
 "\n"
 "Зауважте: Рекомендується використати пакет з вашого дистрибутиву. Детальніше "
 "читайте <a href=\"http://wiki.winehq.org/Mono\">http://wiki.winehq.org/Mono</"
-"a>"
+"a>."
 
 #: appwiz.rc:28
 msgid "Add/Remove Programs"
