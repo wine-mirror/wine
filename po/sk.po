@@ -13884,12 +13884,12 @@ msgstr ""
 #: xcopy.rc:43
 msgctxt "File key"
 msgid "F"
-msgstr "F"
+msgstr ""
 
 #: xcopy.rc:44
 msgctxt "Directory key"
 msgid "D"
-msgstr "D"
+msgstr ""
 
 #: xcopy.rc:77
 msgid ""
