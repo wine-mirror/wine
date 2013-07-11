@@ -13852,12 +13852,12 @@ msgstr "Čitanje '%1' datoteke nije uspjelo\n"
 #: xcopy.rc:43
 msgctxt "File key"
 msgid "F"
-msgstr "D"
+msgstr ""
 
 #: xcopy.rc:44
 msgctxt "Directory key"
 msgid "D"
-msgstr "F"
+msgstr ""
 
 #: xcopy.rc:77
 msgid ""
