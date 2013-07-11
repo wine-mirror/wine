@@ -13,7 +13,6 @@ Descent: 2
 LayerCount: 2
 Layer: 0 0 "Back" 1
 Layer: 1 0 "Fore" 0
-NeedsXUIDChange: 1
 FSType: 8
 OS2Version: 0
 OS2_WeightWidthSlopeOnly: 0
@@ -3584,7 +3583,7 @@ Flags: W
 LayerCount: 2
 EndChar
 EndChars
-BitmapFont: 13 499 11 2 1
+BitmapFont: 13 498 11 2 1
 BDFChar: 0 32 8 0 0 0 0
 z
 BDFChar: 1 33 8 4 4 0 8

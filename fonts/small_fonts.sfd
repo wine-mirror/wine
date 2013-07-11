@@ -13,7 +13,6 @@ Descent: 2
 LayerCount: 2
 Layer: 0 0 "Back" 1
 Layer: 1 0 "Fore" 0
-NeedsXUIDChange: 1
 XUID: [1021 180 78732788 213171]
 FSType: 8
 OS2Version: 0
@@ -4070,7 +4069,7 @@ Flags: W
 LayerCount: 2
 EndChar
 EndChars
-BitmapFont: 11 514 9 2 1
+BitmapFont: 11 513 9 2 1
 BDFChar: 0 65 7 1 6 0 6
 0JH$gG_C_M
 BDFChar: 1 33 2 1 1 0 6

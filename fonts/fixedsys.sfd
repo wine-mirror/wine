@@ -13,7 +13,6 @@ Descent: 3
 LayerCount: 2
 Layer: 0 0 "Back" 1
 Layer: 1 0 "Fore" 0
-NeedsXUIDChange: 1
 FSType: 8
 OS2Version: 1
 OS2_WeightWidthSlopeOnly: 0

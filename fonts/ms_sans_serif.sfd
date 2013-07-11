@@ -13,7 +13,6 @@ Descent: 2
 LayerCount: 2
 Layer: 0 0 "Back" 1
 Layer: 1 0 "Fore" 0
-NeedsXUIDChange: 1
 FSType: 8
 OS2Version: 0
 OS2_WeightWidthSlopeOnly: 0
@@ -3826,7 +3825,7 @@ Flags: W
 LayerCount: 2
 EndChar
 EndChars
-BitmapFont: 13 519 11 2 1
+BitmapFont: 13 518 11 2 1
 BDFChar: 0 32 3 0 0 0 0
 z
 BDFChar: 1 33 3 1 1 0 8
@@ -4860,7 +4859,7 @@ LkpkCM"i(m
 BDFChar: 517 8362 8 0 6 0 7
 nqsHIWiDeb
 EndBitmapFont
-BitmapFont: 16 519 13 3 1 FontForge
+BitmapFont: 16 518 13 3 1 FontForge
 BDFChar: 0 32 3 0 0 0 0
 z
 BDFChar: 1 33 3 1 1 0 9
@@ -5892,7 +5891,7 @@ LkpkCLktgK+92BA
 BDFChar: 517 8362 9 1 7 0 9
 nqsHIWiE)!U7M>b
 EndBitmapFont
-BitmapFont: 20 519 16 4 1 FontForge
+BitmapFont: 20 518 16 4 1 FontForge
 BDFChar: 0 32 4 0 0 0 0
 z
 BDFChar: 1 33 4 2 2 0 11

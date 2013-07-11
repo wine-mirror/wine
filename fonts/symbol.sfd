@@ -71,7 +71,7 @@ ShortTable: maxp 16
   0
 EndShort
 LangName: 1033 "" "" "Regular" "WineSymbol:Version 0.001" "" "Version 0.001 February 3, 2009, initial release" "" "" "Wine" "Jon Parshall for CodeWeavers" "" "http://www.winehq.org" "http://www.codeweavers.com" "This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.+AAoACgAA-This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.+AAoACgAA-A copy of the GNU Lesser General Public License is included in the Wine distribution in the file COPYING.LIB. If you did not receive this copy, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA." "http://www.gnu.org/licenses/lgpl.html"
-GaspTable: 1 65535 2
+GaspTable: 1 65535 2 0
 Encoding: Custom
 UnicodeInterp: none
 NameList: Adobe Glyph List
@@ -83,7 +83,7 @@ BeginChars: 257 192
 
 StartChar: .notdef
 Encoding: 255 711 0
-AltUni2: 002020.ffffffff.0 0000fc.ffffffff.0 0000fb.ffffffff.0 0000f9.ffffffff.0 0000fa.ffffffff.0 0000f5.ffffffff.0 0000f6.ffffffff.0 0000f4.ffffffff.0 0000f2.ffffffff.0 0000f3.ffffffff.0 0000f1.ffffffff.0 0000ef.ffffffff.0 0000ee.ffffffff.0 0000ec.ffffffff.0 0000ed.ffffffff.0 0000eb.ffffffff.0 0000ea.ffffffff.0 0000e8.ffffffff.0 0000e9.ffffffff.0 0000e7.ffffffff.0 0000e5.ffffffff.0 0000e3.ffffffff.0 0000e4.ffffffff.0 0000e2.ffffffff.0 0000e0.ffffffff.0 0000e1.ffffffff.0 0000dc.ffffffff.0 0000d6.ffffffff.0 0000d1.ffffffff.0 0000c9.ffffffff.0 0000c7.ffffffff.0 0000c5.ffffffff.0 0000c4.ffffffff.0 00007f.ffffffff.0 00001f.ffffffff.0 00001e.ffffffff.0 00001c.ffffffff.0 00001b.ffffffff.0 00001a.ffffffff.0 000019.ffffffff.0 000018.ffffffff.0 000017.ffffffff.0 000016.ffffffff.0 000015.ffffffff.0 000014.ffffffff.0 000013.ffffffff.0 000012.ffffffff.0 000011.ffffffff.0 000010.ffffffff.0 00000f.ffffffff.0 00000e.ffffffff.0 00000c.ffffffff.0 00000b.ffffffff.0 00000a.ffffffff.0 000007.ffffffff.0 000006.ffffffff.0 000005.ffffffff.0 000004.ffffffff.0 000003.ffffffff.0 000002.ffffffff.0 000001.ffffffff.0
+AltUni2: 000001.ffffffff.0 000002.ffffffff.0 000003.ffffffff.0 000004.ffffffff.0 000005.ffffffff.0 000006.ffffffff.0 000007.ffffffff.0 00000a.ffffffff.0 00000b.ffffffff.0 00000c.ffffffff.0 00000e.ffffffff.0 00000f.ffffffff.0 000010.ffffffff.0 000011.ffffffff.0 000012.ffffffff.0 000013.ffffffff.0 000014.ffffffff.0 000015.ffffffff.0 000016.ffffffff.0 000017.ffffffff.0 000018.ffffffff.0 000019.ffffffff.0 00001a.ffffffff.0 00001b.ffffffff.0 00001c.ffffffff.0 00001e.ffffffff.0 00001f.ffffffff.0 00007f.ffffffff.0 0000c4.ffffffff.0 0000c5.ffffffff.0 0000c7.ffffffff.0 0000c9.ffffffff.0 0000d1.ffffffff.0 0000d6.ffffffff.0 0000dc.ffffffff.0 0000e1.ffffffff.0 0000e0.ffffffff.0 0000e2.ffffffff.0 0000e4.ffffffff.0 0000e3.ffffffff.0 0000e5.ffffffff.0 0000e7.ffffffff.0 0000e9.ffffffff.0 0000e8.ffffffff.0 0000ea.ffffffff.0 0000eb.ffffffff.0 0000ed.ffffffff.0 0000ec.ffffffff.0 0000ee.ffffffff.0 0000ef.ffffffff.0 0000f1.ffffffff.0 0000f3.ffffffff.0 0000f2.ffffffff.0 0000f4.ffffffff.0 0000f6.ffffffff.0 0000f5.ffffffff.0 0000fa.ffffffff.0 0000f9.ffffffff.0 0000fb.ffffffff.0 0000fc.ffffffff.0 002020.ffffffff.0
 Width: 1229
 Flags: W
 LayerCount: 2
@@ -104,7 +104,7 @@ EndChar
 
 StartChar: uni001D
 Encoding: 29 29 1
-AltUni2: 00000d.ffffffff.0 000008.ffffffff.0 000000.ffffffff.0
+AltUni2: 000000.ffffffff.0 000008.ffffffff.0 00000d.ffffffff.0
 Width: 0
 Flags: W
 LayerCount: 2
@@ -5565,7 +5565,7 @@ EndChar
 StartChar: bracelefttp
 Encoding: 236 207 173
 Width: 1012
-Flags: HW
+Flags: W
 LayerCount: 2
 Fore
 SplineSet
@@ -5582,7 +5582,7 @@ EndChar
 StartChar: braceleftmid
 Encoding: 237 204 174
 Width: 1012
-Flags: HW
+Flags: W
 LayerCount: 2
 Fore
 SplineSet
@@ -5610,7 +5610,7 @@ EndChar
 StartChar: braceleftbt
 Encoding: 238 211 175
 Width: 1012
-Flags: HW
+Flags: W
 LayerCount: 2
 Fore
 SplineSet
@@ -5627,7 +5627,7 @@ EndChar
 StartChar: braceex
 Encoding: 239 212 176
 Width: 1012
-Flags: HW
+Flags: W
 LayerCount: 2
 Fore
 SplineSet
@@ -5733,7 +5733,7 @@ EndChar
 StartChar: integraltp
 Encoding: 243 219 180
 Width: 1405
-Flags: HW
+Flags: W
 LayerCount: 2
 Fore
 SplineSet
@@ -5762,7 +5762,7 @@ EndChar
 StartChar: integralex
 Encoding: 244 217 181
 Width: 1405
-Flags: HW
+Flags: W
 LayerCount: 2
 Fore
 SplineSet
@@ -5904,7 +5904,7 @@ EndChar
 StartChar: bracerighttp
 Encoding: 252 184 189
 Width: 1012
-Flags: HW
+Flags: W
 LayerCount: 2
 Fore
 SplineSet
@@ -5921,7 +5921,7 @@ EndChar
 StartChar: bracerightmid
 Encoding: 253 733 190
 Width: 1012
-Flags: HW
+Flags: W
 LayerCount: 2
 Fore
 SplineSet
@@ -5949,7 +5949,7 @@ EndChar
 StartChar: bracerightbt
 Encoding: 254 731 191
 Width: 1012
-Flags: HW
+Flags: W
 LayerCount: 2
 Fore
 SplineSet

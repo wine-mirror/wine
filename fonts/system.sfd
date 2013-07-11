@@ -13,7 +13,6 @@ Descent: 3
 LayerCount: 2
 Layer: 0 0 "Back" 1
 Layer: 1 0 "Fore" 0
-NeedsXUIDChange: 1
 FSType: 8
 OS2Version: 0
 OS2_WeightWidthSlopeOnly: 0
@@ -4066,7 +4065,7 @@ Flags: W
 LayerCount: 2
 EndChar
 EndChars
-BitmapFont: 16 550 13 3 1
+BitmapFont: 16 549 13 3 1
 BDFChar: 0 32 4 14 14 0 0
 z
 BDFChar: 1 33 4 1 2 0 9
@@ -5166,7 +5165,7 @@ BDFChar: 547 1116 8 1 6 0 9
 BDFChar: 548 1119 8 1 6 -2 6
 bfn;Tbfou=0E;(Q
 EndBitmapFont
-BitmapFont: 18 550 16 2 1
+BitmapFont: 18 549 16 2 1
 BDFChar: 0 32 6 0 0 0 0
 z
 BDFChar: 1 33 7 3 3 0 13

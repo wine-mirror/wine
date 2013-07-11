@@ -102,7 +102,7 @@ TtfTable: VDMX 1504
 !=/YK
 EndTtf
 LangName: 1033 "" "" "" "Wine Tahoma Bold" "" "Version 0.001" "" "(C) 2004 Larry Snyder Based on Bitstream Vera Sans (C) Bitstream Inc." "" "" "" "http://www.winehq.org" "" "This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.+AAoACgAA-This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.+AAoACgAA-You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA+AAoA" "http://www.gnu.org/licenses/lgpl.html"
-GaspTable: 3 8 0 16 1 65535 3
+GaspTable: 3 8 0 16 1 65535 3 0
 Encoding: UnicodeBmp
 UnicodeInterp: none
 NameList: Adobe Glyph List
@@ -10071,7 +10071,7 @@ SplineSet
  374.667 173.333 458.333 127 571 127 c 0
  659.667 126.333 732.667 172.667 790 266 c 0
  829.765 331.328 849.119 375.661 855 471 c 1
- 854.531 471 546 471 546 471 c 25
+ 546 471 l 25
  546 471 252 471 253.356 471.062 c 1
 253.045 633 m 1
  252 633 528 633 528 633 c 25
