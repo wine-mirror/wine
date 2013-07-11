@@ -13073,17 +13073,17 @@ msgstr ""
 #: winefile.rc:115
 msgctxt "unit kilobyte"
 msgid "kB"
-msgstr ""
+msgstr "kB"
 
 #: winefile.rc:116
 msgctxt "unit megabyte"
 msgid "MB"
-msgstr ""
+msgstr "MB"
 
 #: winefile.rc:117
 msgctxt "unit gigabyte"
 msgid "GB"
-msgstr ""
+msgstr "GB"
 
 #: winemine.rc:34
 msgid "&Game"
@@ -13571,7 +13571,7 @@ msgstr "Paĝoj"
 #: wordpad.rc:172
 msgctxt "unit: centimeter"
 msgid "cm"
-msgstr ""
+msgstr "cm"
 
 #: wordpad.rc:173
 msgctxt "unit: inch"
