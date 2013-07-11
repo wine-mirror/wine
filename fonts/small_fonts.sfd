@@ -3941,8 +3941,136 @@ Width: 11
 Flags: W
 LayerCount: 2
 EndChar
+
+StartChar: afii10051
+Encoding: 1026 1026 497
+Width: 8
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: afii10060
+Encoding: 1035 1035 498
+Width: 8
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: afii10058
+Encoding: 1033 1033 499
+Width: 8
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: afii10059
+Encoding: 1034 1034 500
+Width: 8
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: afii10052
+Encoding: 1027 1027 501
+Width: 11
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: afii10061
+Encoding: 1036 1036 502
+Width: 7
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: uni040D
+Encoding: 1037 1037 503
+Width: 8
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: afii10145
+Encoding: 1039 1039 504
+Width: 7
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: afii10099
+Encoding: 1106 1106 505
+Width: 5
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: afii10108
+Encoding: 1115 1115 506
+Width: 5
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: afii10106
+Encoding: 1113 1113 507
+Width: 6
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: afii10107
+Encoding: 1114 1114 508
+Width: 6
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: afii10109
+Encoding: 1116 1116 509
+Width: 5
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: uni045D
+Encoding: 1117 1117 510
+Width: 5
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: afii10100
+Encoding: 1107 1107 511
+Width: 4
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: afii10193
+Encoding: 1119 1119 512
+Width: 4
+VWidth: 0
+Flags: W
+LayerCount: 2
+EndChar
 EndChars
-BitmapFont: 11 498 9 2 1
+BitmapFont: 11 514 9 2 1
 BDFChar: 0 65 7 1 6 0 6
 0JH$gG_C_M
 BDFChar: 1 33 2 1 1 0 6
@@ -4937,5 +5065,37 @@ BDFChar: 495 63742 3 1 2 0 8
 5X7S"5X7S"J,fQL
 BDFChar: 496 63741 3 1 2 -2 8
 J:N0#5_+B8J:N.M
+BDFChar: 497 1026 8 0 6 -1 6
+p`M+C+sJ36
+BDFChar: 498 1035 8 0 6 0 6
+p`M[C+sJ32
+BDFChar: 499 1033 8 0 6 0 6
+E)9A9;Gs"b
+BDFChar: 500 1034 8 0 6 0 6
+OH>S%P*2=8
+BDFChar: 501 1027 11 1 5 0 8
+&0UauJ:N0#J,fQL
+BDFChar: 502 1036 7 1 5 0 8
+&0QdjTYR4^L]@DT
+BDFChar: 503 1037 8 1 6 0 8
+5Tl#EPa%u>_uKc;
+BDFChar: 504 1039 7 1 5 -2 6
+LkpkCLktgK+92BA
+BDFChar: 505 1106 5 0 4 -1 6
+5i>IP84Z8_
+BDFChar: 506 1115 5 0 4 0 6
+5i>IP84Z8O
+BDFChar: 507 1113 6 0 5 0 4
+E)9Y9QiI*d
+BDFChar: 508 1114 6 1 5 0 4
+TV1eQYQ+Y'
+BDFChar: 509 1116 5 1 4 0 6
++@)$]^n?bh
+BDFChar: 510 1117 5 1 4 0 6
+5Tl/MYgAI3
+BDFChar: 511 1107 4 1 3 0 6
++@+k8J:N.M
+BDFChar: 512 1119 4 1 3 -2 4
+TV.sNi'9O-
 EndBitmapFont
 EndSplineFont
