@@ -12323,131 +12323,131 @@ msgstr ""
 
 #: taskmgr.rc:446
 msgid "CPU 0"
-msgstr "Prosessor 0"
+msgstr "CPU 0"
 
 #: taskmgr.rc:448
 msgid "CPU 1"
-msgstr "Prosessor 1"
+msgstr "CPU 1"
 
 #: taskmgr.rc:450
 msgid "CPU 2"
-msgstr "Prosessor 2"
+msgstr "CPU 2"
 
 #: taskmgr.rc:452
 msgid "CPU 3"
-msgstr "Prosessor 3"
+msgstr "CPU 3"
 
 #: taskmgr.rc:454
 msgid "CPU 4"
-msgstr "Prosessor 4"
+msgstr "CPU 4"
 
 #: taskmgr.rc:456
 msgid "CPU 5"
-msgstr "Prosessor 5"
+msgstr "CPU 5"
 
 #: taskmgr.rc:458
 msgid "CPU 6"
-msgstr "Prosessor 6"
+msgstr "CPU 6"
 
 #: taskmgr.rc:460
 msgid "CPU 7"
-msgstr "Prosessor 7"
+msgstr "CPU 7"
 
 #: taskmgr.rc:462
 msgid "CPU 8"
-msgstr "Prosessor 8"
+msgstr "CPU 8"
 
 #: taskmgr.rc:464
 msgid "CPU 9"
-msgstr "Prosessor 9"
+msgstr "CPU 9"
 
 #: taskmgr.rc:466
 msgid "CPU 10"
-msgstr "Prosessor 10"
+msgstr "CPU 10"
 
 #: taskmgr.rc:468
 msgid "CPU 11"
-msgstr "Prosessor 11"
+msgstr "CPU 11"
 
 #: taskmgr.rc:470
 msgid "CPU 12"
-msgstr "Prosessor 12"
+msgstr "CPU 12"
 
 #: taskmgr.rc:472
 msgid "CPU 13"
-msgstr "Prosessor 13"
+msgstr "CPU 13"
 
 #: taskmgr.rc:474
 msgid "CPU 14"
-msgstr "Prosessor 14"
+msgstr "CPU 14"
 
 #: taskmgr.rc:476
 msgid "CPU 15"
-msgstr "Prosessor 15"
+msgstr "CPU 15"
 
 #: taskmgr.rc:478
 msgid "CPU 16"
-msgstr "Prosessor 16"
+msgstr "CPU 16"
 
 #: taskmgr.rc:480
 msgid "CPU 17"
-msgstr "Prosessor 17"
+msgstr "CPU 17"
 
 #: taskmgr.rc:482
 msgid "CPU 18"
-msgstr "Prosessor 18"
+msgstr "CPU 18"
 
 #: taskmgr.rc:484
 msgid "CPU 19"
-msgstr "Prosessor 19"
+msgstr "CPU 19"
 
 #: taskmgr.rc:486
 msgid "CPU 20"
-msgstr "Prosessor 20"
+msgstr "CPU 20"
 
 #: taskmgr.rc:488
 msgid "CPU 21"
-msgstr "Prosessor 21"
+msgstr "CPU 21"
 
 #: taskmgr.rc:490
 msgid "CPU 22"
-msgstr "Prosessor 22"
+msgstr "CPU 22"
 
 #: taskmgr.rc:492
 msgid "CPU 23"
-msgstr "Prosessor 23"
+msgstr "CPU 23"
 
 #: taskmgr.rc:494
 msgid "CPU 24"
-msgstr "Prosessor 24"
+msgstr "CPU 24"
 
 #: taskmgr.rc:496
 msgid "CPU 25"
-msgstr "Prosessor 25"
+msgstr "CPU 25"
 
 #: taskmgr.rc:498
 msgid "CPU 26"
-msgstr "Prosessor 26"
+msgstr "CPU 26"
 
 #: taskmgr.rc:500
 msgid "CPU 27"
-msgstr "Prosessor 27"
+msgstr "CPU 27"
 
 #: taskmgr.rc:502
 msgid "CPU 28"
-msgstr "Prosessor 28"
+msgstr "CPU 28"
 
 #: taskmgr.rc:504
 msgid "CPU 29"
-msgstr "Prosessor 29"
+msgstr "CPU 29"
 
 #: taskmgr.rc:506
 msgid "CPU 30"
-msgstr "Prosessor 30"
+msgstr "CPU 30"
 
 #: taskmgr.rc:508
 msgid "CPU 31"
-msgstr "Prosessor 31"
+msgstr "CPU 31"
 
 #: taskmgr.rc:514
 msgid "Select Columns"
