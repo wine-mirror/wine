@@ -12053,131 +12053,131 @@ msgstr ""
 
 #: taskmgr.rc:446
 msgid "CPU 0"
-msgstr ""
+msgstr "CPU 0"
 
 #: taskmgr.rc:448
 msgid "CPU 1"
-msgstr ""
+msgstr "CPU 1"
 
 #: taskmgr.rc:450
 msgid "CPU 2"
-msgstr ""
+msgstr "CPU 2"
 
 #: taskmgr.rc:452
 msgid "CPU 3"
-msgstr ""
+msgstr "CPU 3"
 
 #: taskmgr.rc:454
 msgid "CPU 4"
-msgstr ""
+msgstr "CPU 4"
 
 #: taskmgr.rc:456
 msgid "CPU 5"
-msgstr ""
+msgstr "CPU 5"
 
 #: taskmgr.rc:458
 msgid "CPU 6"
-msgstr ""
+msgstr "CPU 6"
 
 #: taskmgr.rc:460
 msgid "CPU 7"
-msgstr ""
+msgstr "CPU 7"
 
 #: taskmgr.rc:462
 msgid "CPU 8"
-msgstr ""
+msgstr "CPU 8"
 
 #: taskmgr.rc:464
 msgid "CPU 9"
-msgstr ""
+msgstr "CPU 9"
 
 #: taskmgr.rc:466
 msgid "CPU 10"
-msgstr ""
+msgstr "CPU 10"
 
 #: taskmgr.rc:468
 msgid "CPU 11"
-msgstr ""
+msgstr "CPU 11"
 
 #: taskmgr.rc:470
 msgid "CPU 12"
-msgstr ""
+msgstr "CPU 12"
 
 #: taskmgr.rc:472
 msgid "CPU 13"
-msgstr ""
+msgstr "CPU 13"
 
 #: taskmgr.rc:474
 msgid "CPU 14"
-msgstr ""
+msgstr "CPU 14"
 
 #: taskmgr.rc:476
 msgid "CPU 15"
-msgstr ""
+msgstr "CPU 15"
 
 #: taskmgr.rc:478
 msgid "CPU 16"
-msgstr ""
+msgstr "CPU 16"
 
 #: taskmgr.rc:480
 msgid "CPU 17"
-msgstr ""
+msgstr "CPU 17"
 
 #: taskmgr.rc:482
 msgid "CPU 18"
-msgstr ""
+msgstr "CPU 18"
 
 #: taskmgr.rc:484
 msgid "CPU 19"
-msgstr ""
+msgstr "CPU 19"
 
 #: taskmgr.rc:486
 msgid "CPU 20"
-msgstr ""
+msgstr "CPU 20"
 
 #: taskmgr.rc:488
 msgid "CPU 21"
-msgstr ""
+msgstr "CPU 21"
 
 #: taskmgr.rc:490
 msgid "CPU 22"
-msgstr ""
+msgstr "CPU 22"
 
 #: taskmgr.rc:492
 msgid "CPU 23"
-msgstr ""
+msgstr "CPU 23"
 
 #: taskmgr.rc:494
 msgid "CPU 24"
-msgstr ""
+msgstr "CPU 24"
 
 #: taskmgr.rc:496
 msgid "CPU 25"
-msgstr ""
+msgstr "CPU 25"
 
 #: taskmgr.rc:498
 msgid "CPU 26"
-msgstr ""
+msgstr "CPU 26"
 
 #: taskmgr.rc:500
 msgid "CPU 27"
-msgstr ""
+msgstr "CPU 27"
 
 #: taskmgr.rc:502
 msgid "CPU 28"
-msgstr ""
+msgstr "CPU 28"
 
 #: taskmgr.rc:504
 msgid "CPU 29"
-msgstr ""
+msgstr "CPU 29"
 
 #: taskmgr.rc:506
 msgid "CPU 30"
-msgstr ""
+msgstr "CPU 30"
 
 #: taskmgr.rc:508
 msgid "CPU 31"
-msgstr ""
+msgstr "CPU 31"
 
 #: taskmgr.rc:514
 msgid "Select Columns"
