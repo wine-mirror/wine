@@ -11513,7 +11513,7 @@ msgstr "&Info"
 
 #: regedit.rc:88
 msgid "Modify Binary Data..."
-msgstr "Binaire data wijzigen"
+msgstr "Binaire data wijzigen..."
 
 #: regedit.rc:215
 msgid "Export registry"
@@ -12783,7 +12783,7 @@ msgstr "Windowsversie:"
 
 #: winecfg.rc:160
 msgid "Window settings"
-msgstr " Vensterinstellingen "
+msgstr "Vensterinstellingen"
 
 #: winecfg.rc:161
 msgid "Automatically capture the &mouse in full-screen windows"
@@ -12807,7 +12807,7 @@ msgstr "Afmetingen:"
 
 #: winecfg.rc:171
 msgid "Screen resolution"
-msgstr "Schermresolutie "
+msgstr "Schermresolutie"
 
 #: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
@@ -12850,7 +12850,7 @@ msgstr "Override bewerken"
 
 #: winecfg.rc:199
 msgid "Load order"
-msgstr "Laadvolgorde "
+msgstr "Laadvolgorde"
 
 #: winecfg.rc:200
 msgid "&Builtin (Wine)"
