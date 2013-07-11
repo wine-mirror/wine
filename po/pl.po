@@ -3452,7 +3452,7 @@ msgstr "Joysticki"
 
 #: joy.rc:36 winecfg.rc:204
 msgid "&Disable"
-msgstr "Wyłą&cz "
+msgstr "Wyłą&cz"
 
 #: joy.rc:37
 msgid "&Enable"
