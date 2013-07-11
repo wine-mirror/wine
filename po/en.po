@@ -9307,7 +9307,7 @@ msgstr ""
 
 #: clock.rc:29
 msgid "Ana&log"
-msgstr "Ana&log"
+msgstr "Ana&logue"
 
 #: clock.rc:30
 msgid "Digi&tal"
