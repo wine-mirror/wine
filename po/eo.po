@@ -8093,7 +8093,7 @@ msgstr "%d bajtoj"
 #: shlwapi.rc:28
 msgctxt "time unit: hours"
 msgid " hr"
-msgstr " hr"
+msgstr " h"
 
 #: shlwapi.rc:29
 msgctxt "time unit: minutes"
