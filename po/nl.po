@@ -8264,6 +8264,7 @@ msgid "Confirm overwrite"
 msgstr "Bevestig overschrijven"
 
 #: shell32.rc:265
+#, fuzzy
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -13531,6 +13532,7 @@ msgstr ""
 "worden. Excuses voor het ongemak."
 
 #: winedbg.rc:55
+#, fuzzy
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
