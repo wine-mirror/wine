@@ -716,11 +716,11 @@ msgstr "Sele&kcija"
 
 #: comdlg32.rc:383
 msgid "&from:"
-msgstr "&od"
+msgstr "&od:"
 
 #: comdlg32.rc:384
 msgid "&to:"
-msgstr "&do"
+msgstr "&do:"
 
 #: comdlg32.rc:410 winecfg.rc:286
 msgid "Si&ze:"
@@ -1358,7 +1358,7 @@ msgstr "Netscape CA URL za opoziv"
 
 #: crypt32.rc:64
 msgid "Netscape Cert Renewal URL"
-msgstr "Netscape URL za obnavljanje cert."
+msgstr "Netscape URL za obnavljanje cert"
 
 #: crypt32.rc:65
 msgid "Netscape CA Policy URL"
@@ -4366,7 +4366,7 @@ msgstr "Primljena neispravna poruka za oportunističko zaključavanje.\n"
 
 #: winerror.mc:966
 msgid "Message 0x%1 not found in file %2.\n"
-msgstr "Poruka 0x%1 nije pronađena u datoteci %2\n"
+msgstr "Poruka 0x%1 nije pronađena u datoteci %2.\n"
 
 #: winerror.mc:971
 msgid "Invalid address.\n"
@@ -4898,7 +4898,7 @@ msgstr "Unos u dnevniku je izbrisan.\n"
 
 #: winerror.mc:1631
 msgid "Invalid device name.\n"
-msgstr "Neispravno ime uređaja\n"
+msgstr "Neispravno ime uređaja.\n"
 
 #: winerror.mc:1636
 msgid "Connection unavailable.\n"
@@ -6697,7 +6697,7 @@ msgid ""
 "The specified installation package could not be opened. Please check the "
 "file path and try again."
 msgstr ""
-"Instalacijski paket se nije mogao otvoriti.  Provjerite putanju datoteke i "
+"Instalacijski paket se nije mogao otvoriti. Provjerite putanju datoteke i "
 "pokušajte ponovo."
 
 #: msi.rc:28
@@ -8899,7 +8899,7 @@ msgstr "&Naziv odredišne datoteke:"
 #: winspool.rc:28
 msgid "The output file already exists. Click OK to overwrite."
 msgstr ""
-"Odredišna datoteka već postoji.  Kliknite na gumb 'U redu' kako bi je "
+"Odredišna datoteka već postoji. Kliknite na gumb 'U redu' kako bi je "
 "zamjenili."
 
 #: winspool.rc:29
@@ -10777,7 +10777,7 @@ msgstr "Atributi grupe programa"
 
 #: progman.rc:153
 msgid "&Group file:"
-msgstr "Datoteka g&rupe"
+msgstr "Datoteka g&rupe:"
 
 #: progman.rc:165
 msgid "Program Attributes"
@@ -10789,7 +10789,7 @@ msgstr "&Naredbena linija:"
 
 #: progman.rc:171
 msgid "&Working directory:"
-msgstr "Trenutni direktori&j"
+msgstr "Trenutni direktori&j:"
 
 #: progman.rc:173
 msgid "&Key combination:"
@@ -12218,8 +12218,8 @@ msgid ""
 "linked to the Libraries and Graphics tabs to allow you to change system-wide "
 "or per-application settings in those tabs as well."
 msgstr ""
-"Wine može imitirati različite verzije Windowsa za pojedini program.  Ovaj "
-"tab je povezan sa tabovima Biblioteke i Grafika kako bi dozvolio sistemske "
+"Wine može imitirati različite verzije Windowsa za pojedini program. Ovaj tab "
+"je povezan sa tabovima Biblioteke i Grafika kako bi dozvolio sistemske "
 "promjene ili za podešavanje aplikacija u tim istim tabovima."
 
 #: winecfg.rc:150
@@ -12381,19 +12381,19 @@ msgstr "Podrazumijevano"
 
 #: winecfg.rc:259
 msgid "Output device:"
-msgstr "Izlazni uređaj"
+msgstr "Izlazni uređaj:"
 
 #: winecfg.rc:260
 msgid "Voice output device:"
-msgstr "Izlazni uređaj za glas"
+msgstr "Izlazni uređaj za glas:"
 
 #: winecfg.rc:261
 msgid "Input device:"
-msgstr "Ulazni uređaj"
+msgstr "Ulazni uređaj:"
 
 #: winecfg.rc:262
 msgid "Voice input device:"
-msgstr "Ulazni uređdaj za glas"
+msgstr "Ulazni uređdaj za glas:"
 
 #: winecfg.rc:267
 msgid "&Test Sound"
@@ -12413,7 +12413,7 @@ msgstr "&Instaliraj temu..."
 
 #: winecfg.rc:282
 msgid "It&em:"
-msgstr "Stavka"
+msgstr "Stavka:"
 
 #: winecfg.rc:284
 msgid "C&olor:"
@@ -12787,7 +12787,7 @@ msgstr "Povijest naredbi"
 
 #: wineconsole.rc:73
 msgid "&Number of recalled commands:"
-msgstr "Broj povučen&ih naredbi"
+msgstr "Broj povučen&ih naredbi:"
 
 #: wineconsole.rc:76
 msgid "&Remove doubles"
@@ -12811,7 +12811,7 @@ msgstr "Tampon zona"
 
 #: wineconsole.rc:101
 msgid "&Width:"
-msgstr "&Širina"
+msgstr "&Širina:"
 
 #: wineconsole.rc:104
 msgid "&Height:"
@@ -12823,7 +12823,7 @@ msgstr "Veličina rozora"
 
 #: wineconsole.rc:109
 msgid "W&idth:"
-msgstr "Š&irina"
+msgstr "Š&irina:"
 
 #: wineconsole.rc:112
 msgid "H&eight:"
@@ -13022,7 +13022,7 @@ msgstr "&Otvori\tUnesi"
 
 #: winefile.rc:30
 msgid "Re&name..."
-msgstr "&Preimenuj"
+msgstr "&Preimenuj..."
 
 #: winefile.rc:31
 msgid "Propert&ies\tAlt+Enter"
@@ -13183,7 +13183,7 @@ msgstr "Primjenjujem postavke fonta"
 
 #: winefile.rc:88
 msgid "Error while selecting new font."
-msgstr "Pogreška prilikom odabira novog fonta"
+msgstr "Pogreška prilikom odabira novog fonta."
 
 #: winefile.rc:93
 msgid "Wine File Manager"
@@ -13437,11 +13437,11 @@ msgstr ""
 
 #: wmic.rc:26
 msgid "Error: Alias not found\n"
-msgstr "Greška: zamjensko ime nije pronađen.\n"
+msgstr "Greška: Zamjensko ime nije pronađen\n"
 
 #: wmic.rc:27
 msgid "Error: Invalid query\n"
-msgstr "Error: Neispravan upit.\n"
+msgstr "Error: Neispravan upit\n"
 
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
@@ -13924,5 +13924,5 @@ msgstr ""
 "[/D | /D:m-d-y] Kopiraj nove ili izmjenjene datoteke nakon određenog "
 "datuma.\n"
 "\t\tAko datum nije unesen, kopiraj samo ako je odredište starije\n"
-"\t\tod izvora\n"
+"\t\tod izvora.\n"
 "\n"
