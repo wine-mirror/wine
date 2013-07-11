@@ -13843,7 +13843,7 @@ msgstr "Zamjeniti %1? (Da|Ne|Sve)\n"
 
 #: xcopy.rc:37
 msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
-msgstr "Kopiranje '%1' u '%'' nije uspjelo sa r/c %3!d!\n"
+msgstr "Kopiranje '%1' u '%2' nije uspjelo sa r/c %3!d!\n"
 
 #: xcopy.rc:39
 msgid "Failed during reading of '%1'\n"
