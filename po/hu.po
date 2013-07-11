@@ -13741,7 +13741,7 @@ msgstr "%1/%2"
 #: winefile.rc:115
 msgctxt "unit kilobyte"
 msgid "kB"
-msgstr "KB"
+msgstr "kB"
 
 #: winefile.rc:116
 msgctxt "unit megabyte"
