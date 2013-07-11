@@ -12969,6 +12969,7 @@ msgstr ""
 "se zbog neugodnosti."
 
 #: winedbg.rc:55
+#, fuzzy
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
