@@ -2109,7 +2109,7 @@ msgstr "É&tat du certificat :"
 
 #: cryptui.rc:221
 msgid "Disclaimer"
-msgstr "Avis de non-responsabilité"
+msgstr "Clause de non-responsabilité"
 
 #: cryptui.rc:228
 msgid "More &Info"
@@ -3476,7 +3476,8 @@ msgid ""
 "updated here until you restart this applet."
 msgstr ""
 "Après l'activation ou désactivation d'un périphérique, la liste des "
-"joysticks connectés ne sera pas mise à jour à moins de redémarrer l'applet."
+"joysticks connectés ne sera pas mise à jour à moins de redémarrer cette "
+"applet."
 
 #: joy.rc:47
 msgid "Test Joystick"
@@ -8987,7 +8988,7 @@ msgid ""
 "No wave device that can record files in the current format is installed. Use "
 "the Drivers option to install the wave device."
 msgstr ""
-"Aucun périphérique audio capable d'enregistrer des fichiers sous le format "
+"Aucun périphérique audio capable d'enregistrer des fichiers dans le format "
 "en cours n'a été installé."
 
 #: winmm.rc:117
@@ -9647,7 +9648,8 @@ msgid ""
 "of a previous command before it scrolls off the screen.\n"
 msgstr ""
 "PAUSE affiche un message à l'écran demandant à l'utilisateur d'appuyer sur "
-"une touche.\n"
+"une\n"
+"touche.\n"
 "\n"
 "Principalement utilisé dans des fichiers batchs pour permettre à "
 "l'utilisateur\n"
@@ -11878,7 +11880,7 @@ msgstr "Erreur : impossible de terminer le processus « %1 ».\n"
 
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
-msgstr "Erreur : un processus ne peut pas s'auto-terminer.\n"
+msgstr "Erreur : un processus ne peut pas se terminer lui-même.\n"
 
 #: taskmgr.rc:37 taskmgr.rc:108
 msgid "&New Task (Run...)"
@@ -13171,7 +13173,7 @@ msgstr "Lettre"
 
 #: winecfg.rc:75
 msgid "Drive Mapping"
-msgstr "Assignation de lecteur"
+msgstr "Dossier cible"
 
 #: winecfg.rc:76
 msgid ""
