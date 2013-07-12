@@ -14193,11 +14193,11 @@ msgstr "Anterior"
 # Abreviated due to small space available
 #: wordpad.rc:165
 msgid "Two pages"
-msgstr "Duas pág."
+msgstr "Duas páginas"
 
 #: wordpad.rc:166
 msgid "One page"
-msgstr "Uma pág."
+msgstr "Uma página"
 
 #: wordpad.rc:167
 msgid "Zoom in"
