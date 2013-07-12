@@ -12042,15 +12042,15 @@ msgstr "Totaux"
 
 #: taskmgr.rc:375
 msgid "Commit charge (K)"
-msgstr "Charge dédiée (Kio)"
+msgstr "Charge dédiée (K)"
 
 #: taskmgr.rc:376
 msgid "Physical memory (K)"
-msgstr "Mémoire physique (Kio)"
+msgstr "Mémoire physique (K)"
 
 #: taskmgr.rc:377
 msgid "Kernel memory (K)"
-msgstr "Mémoire noyau (Kio)"
+msgstr "Mémoire noyau (K)"
 
 #: taskmgr.rc:378 taskmgr.rc:290
 msgid "Handles"
