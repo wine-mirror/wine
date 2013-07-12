@@ -2550,7 +2550,7 @@ msgstr "OID を 1.2.3.4 形式で入力してください"
 
 #: cryptui.rc:65
 msgid "The OID you entered already exists."
-msgstr "入力した OID はすでに存在します"
+msgstr "入力した OID はすでに存在します。"
 
 #: cryptui.rc:67
 msgid "Please select a certificate store."
@@ -9705,7 +9705,7 @@ msgstr ""
 "\n"
 "オプション:\n"
 "\"タイトル\"   子ウィンドウのタイトルを指定します。\n"
-"/d directory プログラムを指定したディレクトリで開始します。 \n"
+"/d directory プログラムを指定したディレクトリで開始します。\n"
 "/b           プログラムで新しいコンソールを作成しません。\n"
 "/i           初期の環境変数でプログラムを開始します。\n"
 "/min         最小化状態でプログラムを開始します。\n"
