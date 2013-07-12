@@ -9953,10 +9953,12 @@ msgid "Volume in drive %1!c! has no label.\n"
 msgstr "位於儲存裝置 %1!c! 的卷冊沒有任何標貼。\n"
 
 #: cmd.rc:354
+#, fuzzy
 msgid " (Yes|No)"
 msgstr " (是|否)"
 
 #: cmd.rc:355
+#, fuzzy
 msgid " (Yes|No|All)"
 msgstr " (是|否|全部)"
 
