@@ -3530,7 +3530,7 @@ msgstr "끝나지 않은 문자열 상수"
 
 #: jscript.rc:39
 msgid "'return' statement outside of function"
-msgstr "함수 밖에 'return'문장이 있음 "
+msgstr "함수 밖에 'return'문장이 있음"
 
 #: jscript.rc:40
 msgid "Can't have 'break' outside of loop"
@@ -9691,8 +9691,9 @@ msgstr ""
 "/node n      지정한 NUMA 노드로 프로그램을 시작합니다.\n"
 "/affinity 마스크 지정한 친화도 마스크로 프로그램을 시작합니다.\n"
 "/wait        시작된 프로그램이 끝나기를 기다리고,프로그램이 끝났을때 종료코드"
-"로 끝납니다 /unix        유닉스 파일이름을 사용하고, 윈도우즈 탐색기같이 파일"
-"을 시작합니다.\n"
+"로 끝납니다.\n"
+"/unix        유닉스 파일이름을 사용하고, 윈도우즈 탐색기같이 파일을 시작합니"
+"다.\n"
 "/ProgIDOpen  지정한 progID를 사용해서 문서를 엽니다.\n"
 "/?           도움말을 보여주고 끝냅니다.\n"
 
@@ -10094,7 +10095,7 @@ msgstr "연산자가 요구됩니다.\n"
 
 #: cmd.rc:360
 msgid "Mismatch in parentheses.\n"
-msgstr "괄호가 일치하지 않습니다\n"
+msgstr "괄호가 일치하지 않습니다.\n"
 
 #: cmd.rc:361
 msgid ""
