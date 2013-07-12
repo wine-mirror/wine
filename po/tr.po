@@ -9622,9 +9622,7 @@ msgstr ""
 
 #: cmd.rc:157
 msgid "RENAME <filename> renames a file.\n"
-msgstr ""
-"RENAME <dosyaadı> bir dosyayı yeniden adlandırır.\n"
-"\n"
+msgstr "RENAME <dosyaadı> bir dosyayı yeniden adlandırır.\n"
 
 #: cmd.rc:159
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
@@ -9842,8 +9840,7 @@ msgid ""
 msgstr ""
 "CHOICE bir metin görüntüler ve Kullanıcı seçilebilir listeden\n"
 "izin verilen bir tuşa basıncaya kadar bekler.\n"
-"CHOICE çoğu zaman bir toplu dosyada menü seçimi inşası için\n"
-"kullanılır.\n"
+"CHOICE çoğu zaman bir toplu dosyada menü seçimi inşası için kullanılır.\n"
 
 #: cmd.rc:277
 msgid ""
