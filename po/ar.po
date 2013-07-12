@@ -8295,7 +8295,7 @@ msgstr "&معلومات حول واين"
 
 #: user32.rc:46
 msgid "&Close\tCtrl+F4"
-msgstr "&إغلاق\tAlt+F4"
+msgstr "&إغلاق\tCtrl+F4"
 
 #: user32.rc:48
 msgid "Nex&t\tCtrl+F6"
