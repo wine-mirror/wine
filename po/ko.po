@@ -10002,7 +10002,7 @@ msgstr "배치 스크립트 밖의 배치 라벨은 불러올수 없습니다\n"
 #: cmd.rc:338 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
-msgstr "A"
+msgstr "모두"
 
 #: cmd.rc:339
 msgid "Delete %1?"
