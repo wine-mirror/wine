@@ -1035,15 +1035,15 @@ msgstr "جاهز"
 
 #: comdlg32.rc:80
 msgid "Paused; "
-msgstr "متوقف"
+msgstr "متوقف; "
 
 #: comdlg32.rc:81
 msgid "Error; "
-msgstr "خطأ"
+msgstr "خطأ; "
 
 #: comdlg32.rc:82
 msgid "Pending deletion; "
-msgstr "إلغاء الإرسال;"
+msgstr "إلغاء الإرسال; "
 
 #: comdlg32.rc:83
 msgid "Paper jam; "
