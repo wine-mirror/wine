@@ -1,5 +1,4 @@
-.\" -*- nroff -*-
-.TH WINE 1 "October 2005" "@PACKAGE_STRING@" "Windows On Unix"
+.TH WINE 1 "July 2013" "@PACKAGE_STRING@" "Windows On Unix"
 .SH NAME
 wine \- run Windows programs on Unix
 .SH SYNOPSIS
@@ -16,8 +15,8 @@ PROGRAM/ARGUMENTS
 section of the man page.
 .SH DESCRIPTION
 .B wine
-loads and runs the given program, where the program is a DOS, Windows
-3.x, or Win32 executable (x86 binaries only).
+loads and runs the given program, which can be a DOS, Windows
+3.x, Win32 or Win64 executable (on 64-bit systems).
 .PP
 For debugging wine, use
 .B winedbg
