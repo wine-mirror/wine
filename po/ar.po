@@ -767,7 +767,7 @@ msgstr "الأس&فل:"
 
 #: comdlg32.rc:448
 msgid "P&rinter..."
-msgstr "الطاب&عة"
+msgstr "الطاب&عة..."
 
 #: comdlg32.rc:456
 msgid "Look &in:"
@@ -2076,7 +2076,7 @@ msgstr "تحري&ر الخصائص..."
 
 #: cryptui.rc:203
 msgid "&Copy to File..."
-msgstr "ا&نسخ إلى ملف ..."
+msgstr "ا&نسخ إلى ملف..."
 
 #: cryptui.rc:207
 msgid "Certification Path"
@@ -3101,7 +3101,7 @@ msgstr "ت&حديث"
 
 #: hhctrl.rc:62 winhlp32.rc:31
 msgid "&Print..."
-msgstr "&طباعة"
+msgstr "&طباعة..."
 
 #: hhctrl.rc:28 taskmgr.rc:89
 msgid "&Contents"
@@ -3301,7 +3301,7 @@ msgstr "ح&ذف الملفات..."
 
 #: inetcpl.rc:57
 msgid "&Settings..."
-msgstr "الإعدادات"
+msgstr "الإعدادات..."
 
 #: inetcpl.rc:65
 msgid "Delete browsing history"
@@ -7143,7 +7143,7 @@ msgstr "اعرض كرمز"
 
 #: oledlg.rc:68 setupapi.rc:58
 msgid "Browse..."
-msgstr "استعرض"
+msgstr "استعرض..."
 
 #: oledlg.rc:69
 msgid "File:"
@@ -7325,7 +7325,7 @@ msgstr "نبضات التوقف"
 
 #: setupapi.rc:36
 msgid "Copying Files..."
-msgstr "يجري نسخ الملفات ..."
+msgstr "يجري نسخ الملفات..."
 
 #: setupapi.rc:42
 msgid "Destination:"
@@ -9925,7 +9925,7 @@ msgstr "الكتابة فوق %1 ؟"
 
 #: cmd.rc:323
 msgid "More..."
-msgstr "أكثر ..."
+msgstr "أكثر..."
 
 #: cmd.rc:324
 msgid "Line in Batch processing possibly truncated. Using:\n"
@@ -10018,7 +10018,7 @@ msgstr "المسار غير موجود\n"
 
 #: cmd.rc:347
 msgid "Press any key to continue... "
-msgstr "اضغط أي مفتاح للاستمرار ..."
+msgstr "اضغط أي مفتاح للاستمرار..."
 
 #: cmd.rc:348
 msgid "Wine Command Prompt"
@@ -10655,11 +10655,11 @@ msgstr ""
 
 #: oleview.rc:29
 msgid "&Bind to file..."
-msgstr "ا&ربط إلى ملف ..."
+msgstr "ا&ربط إلى ملف..."
 
 #: oleview.rc:30
 msgid "&View TypeLib..."
-msgstr "ا&عرض مكتبة النوع ..."
+msgstr "ا&عرض مكتبة النوع..."
 
 #: oleview.rc:32
 msgid "&System Configuration"
@@ -10703,7 +10703,7 @@ msgstr "إنشاء مر&حلة"
 
 #: oleview.rc:50
 msgid "Create Instance &On..."
-msgstr "إنشاء مرحل&ة في ..."
+msgstr "إنشاء مرحل&ة في..."
 
 #: oleview.rc:51
 msgid "&Release Instance"
@@ -11120,7 +11120,7 @@ msgstr "الت&صغير عند التشغيل"
 
 #: progman.rc:180
 msgid "Change &icon..."
-msgstr "تغيير ا&لرمز ..."
+msgstr "تغيير ا&لرمز..."
 
 #: progman.rc:189
 msgid "Change Icon"
@@ -11317,7 +11317,7 @@ msgstr "تق&سيم"
 
 #: regedit.rc:74
 msgid "&Remove Favorite..."
-msgstr "إ&زالة المفضلة ..."
+msgstr "إ&زالة المفضلة..."
 
 #: regedit.rc:79
 msgid "&About Registry Editor"
@@ -11716,7 +11716,7 @@ msgstr "متو&قفة"
 
 #: taskmgr.rc:68 taskmgr.rc:256
 msgid "&Select Columns..."
-msgstr "ا&ختر أعمدة ..."
+msgstr "ا&ختر أعمدة..."
 
 #: taskmgr.rc:69 taskmgr.rc:258
 msgid "&CPU History"
@@ -12521,7 +12521,7 @@ msgstr "واين"
 
 #: wineboot.rc:43
 msgid "The Wine configuration in %s is being updated, please wait..."
-msgstr "يجري تحديث إعدادات واين في %s ، يرجى الانتظار ..."
+msgstr "يجري تحديث إعدادات واين في %s ، يرجى الانتظار..."
 
 #: winecfg.rc:132
 msgid ""
@@ -12562,7 +12562,7 @@ msgstr ""
 
 #: winecfg.rc:150
 msgid "&Add application..."
-msgstr "أ&ضف تطبيقًا ..."
+msgstr "أ&ضف تطبيقًا..."
 
 #: winecfg.rc:151
 msgid "&Remove application"
@@ -13358,7 +13358,7 @@ msgstr "خطأ في الحفظ"
 
 #: winedbg.rc:41
 msgid "Loading detailed information, please wait..."
-msgstr "يجري تحميل المعلومات التفصيلية ، برجاء الانتظار ..."
+msgstr "يجري تحميل المعلومات التفصيلية ، برجاء الانتظار..."
 
 #: winefile.rc:26
 msgid "&Open\tEnter"
@@ -13390,7 +13390,7 @@ msgstr "وصل قرص ال&شبكة..."
 
 #: winefile.rc:42
 msgid "&Disconnect Network Drive"
-msgstr "ف&صل قرص الشبكة..."
+msgstr "ف&صل قرص الشبكة"
 
 #: winefile.rc:48
 msgid "&Name"
@@ -13694,7 +13694,7 @@ msgstr "&عرّف..."
 
 #: winhlp32.rc:46 winhlp32.rc:67
 msgid "Fonts"
-msgstr "ال&خطوط..."
+msgstr "ال&خطوط"
 
 #: winhlp32.rc:48 winhlp32.rc:69
 msgid "Small"
