@@ -980,6 +980,8 @@ msgid ""
 "This large number of copies is not supported by your printer.\n"
 "Please enter a value between 1 and %d."
 msgstr ""
+"This large number of copies is not supported by your printer.\n"
+"Please enter a value between 1 and %d."
 
 #: comdlg32.rc:63
 msgid "A printer error occurred."
@@ -1059,7 +1061,7 @@ msgstr "Out of paper; "
 
 #: comdlg32.rc:85
 msgid "Feed paper manual; "
-msgstr ""
+msgstr "Feed paper manual; "
 
 #: comdlg32.rc:86
 msgid "Paper problem; "
@@ -1131,7 +1133,7 @@ msgstr "The printer door is open; "
 
 #: comdlg32.rc:103
 msgid "Print server unknown; "
-msgstr ""
+msgstr "Print server unknown; "
 
 #: comdlg32.rc:104
 msgid "Power save mode; "
@@ -1180,7 +1182,7 @@ msgstr "Connecting to %s"
 
 #: credui.rc:29
 msgid "Logon unsuccessful"
-msgstr ""
+msgstr "Logon unsuccessful"
 
 #: credui.rc:30
 msgid ""
@@ -2415,7 +2417,7 @@ msgstr ""
 
 #: cryptui.rc:31
 msgid "This certificate could not be validated to a trusted root certificate."
-msgstr ""
+msgstr "This certificate could not be validated to a trusted root certificate."
 
 #: cryptui.rc:32
 msgid "This certificate's issuer could not be found."
@@ -2871,7 +2873,7 @@ msgstr "File Format"
 
 #: cryptui.rc:161
 msgid "Include all certificates in certificate path"
-msgstr ""
+msgstr "Include all certificates in certificate path"
 
 #: cryptui.rc:162
 msgid "Export keys"
@@ -6904,7 +6906,7 @@ msgstr "menu item"
 
 #: oleacc.rc:40
 msgid "tool tip"
-msgstr ""
+msgstr "tool tip"
 
 #: oleacc.rc:41
 msgid "application"
@@ -6940,7 +6942,7 @@ msgstr "separator"
 
 #: oleacc.rc:49
 msgid "tool bar"
-msgstr ""
+msgstr "tool bar"
 
 #: oleacc.rc:50
 msgid "status bar"
@@ -7052,7 +7054,7 @@ msgstr "dial"
 
 #: oleacc.rc:77
 msgid "hot key field"
-msgstr ""
+msgstr "hot key field"
 
 #: oleacc.rc:78
 msgid "slider"
@@ -7076,7 +7078,7 @@ msgstr "equation"
 
 #: oleacc.rc:83
 msgid "drop down button"
-msgstr ""
+msgstr "drop down button"
 
 #: oleacc.rc:84
 msgid "menu button"
@@ -7084,7 +7086,7 @@ msgstr "menu button"
 
 #: oleacc.rc:85
 msgid "grid drop down button"
-msgstr ""
+msgstr "grid drop down button"
 
 #: oleacc.rc:86
 msgid "white space"
@@ -7363,6 +7365,8 @@ msgid ""
 "Insert the manufacturer's installation disk, and then\n"
 "make sure the correct drive is selected below"
 msgstr ""
+"Insert the manufacturer's installation disk, and then\n"
+"make sure the correct drive is selected below"
 
 #: setupapi.rc:54
 msgid "Copy manufacturer's files from:"
@@ -8226,7 +8230,7 @@ msgstr "Wine Licence"
 
 #: shell32.rc:155
 msgid "Trash"
-msgstr ""
+msgstr "Trash"
 
 #: shlwapi.rc:35 user32.rc:68 regedit.rc:176 winecfg.rc:84 winefile.rc:94
 msgid "Error"
@@ -8243,7 +8247,7 @@ msgstr "%d bytes"
 #: shlwapi.rc:28
 msgctxt "time unit: hours"
 msgid " hr"
-msgstr ""
+msgstr " hr"
 
 #: shlwapi.rc:29
 msgctxt "time unit: minutes"
@@ -10094,11 +10098,11 @@ msgstr "The input line is too long.\n"
 
 #: cmd.rc:352
 msgid "Volume in drive %1!c! is %2\n"
-msgstr ""
+msgstr "Volume in drive %1!c! is %2\n"
 
 #: cmd.rc:353
 msgid "Volume in drive %1!c! has no label.\n"
-msgstr ""
+msgstr "Volume in drive %1!c! has no label.\n"
 
 #: cmd.rc:354
 msgid " (Yes|No)"
@@ -10902,7 +10906,7 @@ msgstr "Open a TypeLib file and view the contents"
 
 #: oleview.rc:105
 msgid "Change machine wide Distributed COM settings"
-msgstr ""
+msgstr "Change machine wide Distributed COM settings"
 
 #: oleview.rc:106
 msgid "Run the Wine registry editor"
@@ -11052,7 +11056,7 @@ msgstr "Close window"
 
 #: oleview.rc:126
 msgid "Group typeinfos by kind"
-msgstr ""
+msgstr "Group typeinfos by kind"
 
 #: progman.rc:30
 msgid "&New..."
@@ -11470,28 +11474,29 @@ msgstr "Edit Multi-String"
 
 #: regedit.rc:134
 msgid "Contains commands for working with the whole registry"
-msgstr ""
+msgstr "Contains commands for working with the whole registry"
 
 #: regedit.rc:135
 msgid "Contains commands for editing values or keys"
-msgstr ""
+msgstr "Contains commands for editing values or keys"
 
 #: regedit.rc:136
 msgid "Contains commands for customizing the registry window"
-msgstr ""
+msgstr "Contains commands for customizing the registry window"
 
 #: regedit.rc:137
 msgid "Contains commands for accessing frequently used keys"
-msgstr ""
+msgstr "Contains commands for accessing frequently used keys"
 
 #: regedit.rc:138
 msgid ""
 "Contains commands for displaying help and information about registry editor"
 msgstr ""
+"Contains commands for displaying help and information about registry editor"
 
 #: regedit.rc:139
 msgid "Contains commands for creating new keys or values"
-msgstr ""
+msgstr "Contains commands for creating new keys or values"
 
 #: regedit.rc:124
 msgid "Data"
@@ -11611,7 +11616,7 @@ msgstr "Prints all or part of the registry"
 
 #: regedit.rc:155
 msgid "Displays program information, version number and copyright"
-msgstr ""
+msgstr "Displays program information, version number and copyright"
 
 #: regedit.rc:178
 msgid "Can't query value '%s'"
@@ -11627,7 +11632,7 @@ msgstr "Value is too big (%u)"
 
 #: regedit.rc:181
 msgid "Confirm Value Delete"
-msgstr ""
+msgstr "Confirm Value Delete"
 
 #: regedit.rc:182
 msgid "Are you sure you want to delete value '%s'?"
@@ -11659,7 +11664,7 @@ msgstr "Adds a new multi-string value"
 
 #: regedit.rc:171
 msgid "Exports selected branch of the registry to a text file"
-msgstr ""
+msgstr "Exports selected branch of the registry to a text file"
 
 #: start.rc:52
 msgid ""
@@ -11895,15 +11900,15 @@ msgstr "Totals"
 
 #: taskmgr.rc:375
 msgid "Commit charge (K)"
-msgstr ""
+msgstr "Commit charge (K)"
 
 #: taskmgr.rc:376
 msgid "Physical memory (K)"
-msgstr ""
+msgstr "Physical memory (K)"
 
 #: taskmgr.rc:377
 msgid "Kernel memory (K)"
-msgstr ""
+msgstr "Kernel memory (K)"
 
 #: taskmgr.rc:378 taskmgr.rc:290
 msgid "Handles"
@@ -12245,7 +12250,7 @@ msgstr "Updates the display twice per second"
 
 #: taskmgr.rc:197
 msgid "Updates the display every two seconds"
-msgstr ""
+msgstr "Updates the display every two seconds"
 
 #: taskmgr.rc:198
 msgid "Updates the display every four seconds"
@@ -12277,7 +12282,7 @@ msgstr "Cascades the windows diagonally on the desktop"
 
 #: taskmgr.rc:210
 msgid "Brings the window front, but does not switch to it"
-msgstr ""
+msgstr "Brings the window front, but does not switch to it"
 
 #: taskmgr.rc:211
 msgid "Displays Task Manager help topics"
@@ -13292,7 +13297,7 @@ msgstr "Configuration error"
 
 #: wineconsole.rc:39
 msgid "Screen buffer size must be greater or equal to the window's one"
-msgstr ""
+msgstr "Screen buffer size must be greater or equal to the window's one"
 
 #: wineconsole.rc:34
 msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
