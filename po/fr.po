@@ -9193,7 +9193,7 @@ msgstr "Syntaxe DN invalide"
 
 #: wldap32.rc:62
 msgid "Is Leaf"
-msgstr "Est une feuille"
+msgstr "L'objet est une feuille"
 
 #: wldap32.rc:63
 msgid "Alias Dereference Problem"
@@ -9245,7 +9245,7 @@ msgstr "Violation de classe d'objet"
 
 #: wldap32.rc:93
 msgid "Not allowed on Non-leaf"
-msgstr "Interdit sur des non-feuilles"
+msgstr "Interdit sur les objets non-feuille"
 
 #: wldap32.rc:94
 msgid "Not allowed on RDN"
