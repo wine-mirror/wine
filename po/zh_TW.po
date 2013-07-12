@@ -9528,7 +9528,7 @@ msgid ""
 "if called from the command line.\n"
 msgstr ""
 "SHIFT 在批次檔中用來從參數列表的前端移除一個\n"
-"參數，因此參數 2 會成為參數 1 ...等等。如果從命令列呼叫它，\n"
+"參數，因此參數 2 會成為參數 1... 等等。如果從命令列呼叫它，\n"
 "將不會有任何效果。\n"
 
 #: cmd.rc:186 start.rc:50
@@ -9926,7 +9926,7 @@ msgstr "找不到 PATH\n"
 
 #: cmd.rc:347
 msgid "Press any key to continue... "
-msgstr "按下任何鍵繼續..."
+msgstr "按下任何鍵繼續... "
 
 #: cmd.rc:348
 msgid "Wine Command Prompt"
