@@ -63,10 +63,7 @@ preceding it with an @ sign.\n"
   WCMD_FOR,
 "The FOR command is used to execute a command for each of a set of files.\n\
 \n\
-Syntax: FOR %variable IN (set) DO command\n\
-\n\
-The requirement to double the % sign when using FOR in a batch file does\n\
-not exist in wine's cmd.\n"
+Syntax: FOR %variable IN (set) DO command\n"
 
   WCMD_GOTO,
 "The GOTO command transfers execution to another statement within a\n\

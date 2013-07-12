@@ -9334,7 +9334,7 @@ msgstr "Lus gevonden bij het verwerken van verwijzingen"
 msgid "Referral hop limit exceeded"
 msgstr "Overschrijding van limiet op verwijzingen"
 
-#: attrib.rc:27 cmd.rc:325
+#: attrib.rc:27 cmd.rc:322
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -9342,7 +9342,7 @@ msgstr ""
 "Nog niet geïmplementeerd\n"
 "\n"
 
-#: attrib.rc:28 cmd.rc:328
+#: attrib.rc:28 cmd.rc:325
 msgid "%1: File Not Found\n"
 msgstr "%1: Bestand niet gevonden\n"
 
@@ -9504,24 +9504,18 @@ msgid "ERASE <filename> deletes a file or set of files.\n"
 msgstr ""
 "ERASE <bestandsnaam> verwijdert een bestand of een verzameling bestanden.\n"
 
-#: cmd.rc:69
+#: cmd.rc:66
 msgid ""
 "The FOR command is used to execute a command for each of a set of files.\n"
 "\n"
 "Syntax: FOR %variable IN (set) DO command\n"
-"\n"
-"The requirement to double the % sign when using FOR in a batch file does\n"
-"not exist in wine's cmd.\n"
 msgstr ""
 "De FOR opdracht wordt gebruikt om een opdracht uit te voeren voor ieder\n"
 "van een verzameling bestanden.\n"
 "\n"
 "Syntax: FOR %variabele IN (verzameling) DO opdracht\n"
-"\n"
-"In cmd is het niet vereist om het %-teken in een FOR opdracht in een\n"
-"batchbestand te verdubbelen.\n"
 
-#: cmd.rc:81
+#: cmd.rc:78
 msgid ""
 "The GOTO command transfers execution to another statement within a\n"
 "batch file.\n"
@@ -9548,7 +9542,7 @@ msgstr ""
 "\n"
 "GOTO heeft geen effect als het in een interactieve sessie wordt gebruikt.\n"
 
-#: cmd.rc:84
+#: cmd.rc:81
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
@@ -9556,7 +9550,7 @@ msgstr ""
 "HELP <opdracht> toont een korte uitleg over een onderwerp.\n"
 "Help zonder argument laat alle ingebouwde opdrachten van CMD zien.\n"
 
-#: cmd.rc:94
+#: cmd.rc:91
 msgid ""
 "IF is used to conditionally execute a command.\n"
 "\n"
@@ -9577,7 +9571,7 @@ msgstr ""
 "dubbele aanhalingstekens staan. De vergelijking is niet gevoelig voor het\n"
 "onderscheid tussen hoofd- en kleine letters.\n"
 
-#: cmd.rc:100
+#: cmd.rc:97
 msgid ""
 "LABEL is used to set a disk volume label.\n"
 "\n"
@@ -9592,15 +9586,15 @@ msgstr ""
 "schijf.\n"
 "U kunt het label van een schijf tonen met behulp van de VOL opdracht.\n"
 
-#: cmd.rc:103
+#: cmd.rc:100
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
 msgstr "MD <naam> is de korte versie van MKDIR. Het maakt een map aan.\n"
 
-#: cmd.rc:104
+#: cmd.rc:101
 msgid "MKDIR <name> creates a subdirectory.\n"
 msgstr "MKDIR <naam> maakt een map aan.\n"
 
-#: cmd.rc:111
+#: cmd.rc:108
 msgid ""
 "MOVE relocates a file or directory to a new point within the file system.\n"
 "\n"
@@ -9619,7 +9613,7 @@ msgstr ""
 "MOVE werkt niet als de oude en nieuwe locaties zich op verschillende\n"
 "DOS-schijven bevinden.\n"
 
-#: cmd.rc:122
+#: cmd.rc:119
 msgid ""
 "PATH displays or changes the cmd search path.\n"
 "\n"
@@ -9641,7 +9635,7 @@ msgstr ""
 "omgevingsvariabele, bij voorbeeld:\n"
 "PATH %PATH%;c:\\temp\n"
 
-#: cmd.rc:128
+#: cmd.rc:125
 msgid ""
 "PAUSE displays a message on the screen asking the user to press a key.\n"
 "\n"
@@ -9656,7 +9650,7 @@ msgstr ""
 "de uitvoer van een voorafgaande opdracht te bekijken, voordat het van het\n"
 "scherm schuift.\n"
 
-#: cmd.rc:149
+#: cmd.rc:146
 msgid ""
 "PROMPT sets the command-line prompt.\n"
 "\n"
@@ -9700,7 +9694,7 @@ msgstr ""
 "dus de opdracht 'SET PROMPT=tekenreeks' heeft hetzelfde effect als 'PROMPT\n"
 "tekenreeks'.\n"
 
-#: cmd.rc:153
+#: cmd.rc:150
 #, fuzzy
 msgid ""
 "A command line beginning with REM (followed by a space) performs no\n"
@@ -9710,24 +9704,24 @@ msgstr ""
 "uitgevoerd, en kan daarom worden gebruikt als een commentaar-regel in een\n"
 "batchbestand.\n"
 
-#: cmd.rc:156
+#: cmd.rc:153
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
 msgstr ""
 "REN <bestandsnaam> is de korte versie van RENAME. Het hernoemt een bestand.\n"
 
-#: cmd.rc:157
+#: cmd.rc:154
 msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <bestandsnaam> hernoemt een bestand.\n"
 
-#: cmd.rc:159
+#: cmd.rc:156
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
 msgstr "RD <mapnaam> is de korte versie van RMDIR. Het verwijdert een map.\n"
 
-#: cmd.rc:160
+#: cmd.rc:157
 msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgstr "RMDIR <mapnaam> verwijdert een map.\n"
 
-#: cmd.rc:204
+#: cmd.rc:201
 #, fuzzy
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
@@ -9765,7 +9759,7 @@ msgstr ""
 "Win32 implementatie. Merk op dat het niet mogelijk is om de omgevings-\n"
 "variabelen van het onderliggende besturingssysteem te wijzigen vanuit cmd.\n"
 
-#: cmd.rc:209
+#: cmd.rc:206
 msgid ""
 "SHIFT is used in a batch file to remove one parameter from the head of\n"
 "the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
@@ -9776,7 +9770,7 @@ msgstr ""
 "enzovoort. Deze opdracht heeft geen effect als hij wordt aangeroepen vanaf\n"
 "de opdrachtregel.\n"
 
-#: cmd.rc:186 start.rc:50
+#: cmd.rc:183 start.rc:50
 msgid ""
 "Start a program, or open a document in the program normally used for files "
 "with that suffix.\n"
@@ -9834,16 +9828,16 @@ msgstr ""
 "/ProgIDOpen  Open een document met het specificeerde progID.\n"
 "/?           Toon deze hulp en eindig.\n"
 
-#: cmd.rc:211
+#: cmd.rc:208
 msgid "TIME sets or shows the current system time.\n"
 msgstr "TIME wijzigt of toont de systeemtijd.\n"
 
-#: cmd.rc:213
+#: cmd.rc:210
 #, fuzzy
 msgid "TITLE <string> sets the window title for the cmd window.\n"
 msgstr "Wijzigt de naam van het cmd-venster, syntax: TITLE [tekenreeks]\n"
 
-#: cmd.rc:217
+#: cmd.rc:214
 msgid ""
 "TYPE <filename> copies <filename> to the console device (or elsewhere\n"
 "if redirected). No check is made that the file is readable text.\n"
@@ -9851,7 +9845,7 @@ msgstr ""
 "TYPE <bestandsnaam> kopieert <bestandsnaam> naar het uitvoerapparaat.\n"
 "Er wordt niet gecontroleerd of het bestand leesbare tekst bevat.\n"
 
-#: cmd.rc:226
+#: cmd.rc:223
 #, fuzzy
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
@@ -9871,15 +9865,15 @@ msgstr ""
 "\n"
 "De verify-schakelaar heeft geen functie binnen Wine.\n"
 
-#: cmd.rc:229
+#: cmd.rc:226
 msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER toont de versie van cmd die u draait.\n"
 
-#: cmd.rc:231
+#: cmd.rc:228
 msgid "VOL shows the volume label of a disk device.\n"
 msgstr "VOL toont het label van een schijf.\n"
 
-#: cmd.rc:235
+#: cmd.rc:232
 msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file\n"
 "which were introduced by a preceding SETLOCAL.\n"
@@ -9887,7 +9881,7 @@ msgstr ""
 "ENDLOCAL beëindigt de localisatie van omgevingswijzigingen in een\n"
 "batchbestand die werd begonnen door een voorafgaande SETLOCAL opdracht.\n"
 
-#: cmd.rc:243
+#: cmd.rc:240
 msgid ""
 "SETLOCAL starts localization of environment changes in a batch file.\n"
 "\n"
@@ -9903,7 +9897,7 @@ msgstr ""
 "opdracht (of tot het eind van het bestand, welke eerst komst),\n"
 "waar de vorige omgevingsvariabelen worden teruggezet.\n"
 
-#: cmd.rc:246
+#: cmd.rc:243
 msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
@@ -9911,14 +9905,14 @@ msgstr ""
 "PUSHD <mapnaam> bewaart de huidige map op een\n"
 "stapel, en verandert dan de huidige map naar de opgegeven naam.\n"
 
-#: cmd.rc:248
+#: cmd.rc:245
 #, fuzzy
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
 msgstr ""
 "POPD verandert de huidige map naar de meest recente die\n"
 "op de stapel werd gezet met PUSHD.\n"
 
-#: cmd.rc:256
+#: cmd.rc:253
 #, fuzzy
 msgid ""
 "ASSOC shows or modifies file extension associations.\n"
@@ -9939,7 +9933,7 @@ msgstr ""
 "Zonder bestandstype achter het '=' teken wordt de huidige associatie "
 "verwijderd, als deze bestaat.\n"
 
-#: cmd.rc:267
+#: cmd.rc:264
 #, fuzzy
 msgid ""
 "FTYPE shows or modifies open commands associated with file types.\n"
@@ -9965,12 +9959,12 @@ msgstr ""
 "Zonder 'open' opdracht achter het '=' teken wordt de opdracht die "
 "geassocieerd is met het gespecificeerde bestandstype verwijderd.\n"
 
-#: cmd.rc:269
+#: cmd.rc:266
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr ""
 "MORE toont de uitvoer van programma's of herleidde invoer per bladzijde.\n"
 
-#: cmd.rc:273
+#: cmd.rc:270
 msgid ""
 "CHOICE displays a text and waits, until the User\n"
 "presses an allowed Key from a selectable list.\n"
@@ -9981,7 +9975,7 @@ msgstr ""
 "CHOICE wordt hoofdzakelijk gebruikt om een selectie uit een menu te maken\n"
 "in een batch bestand.\n"
 
-#: cmd.rc:277
+#: cmd.rc:274
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
@@ -9989,7 +9983,7 @@ msgstr ""
 "EXIT beëindigt de lopende sessie en keert terug\n"
 "naar het besturingssysteem of de schil van waaruit cmd werd gestart.\n"
 
-#: cmd.rc:315
+#: cmd.rc:312
 #, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
@@ -10070,111 +10064,111 @@ msgstr ""
 "\n"
 "type HELP <opdracht> voor meer informatie over bovengenoemde opdrachten.\n"
 
-#: cmd.rc:317
+#: cmd.rc:314
 msgid "Are you sure?"
 msgstr "Bent u zeker?"
 
-#: cmd.rc:318 xcopy.rc:40
+#: cmd.rc:315 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "J"
 
-#: cmd.rc:319 xcopy.rc:41
+#: cmd.rc:316 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: cmd.rc:320
+#: cmd.rc:317
 msgid "File association missing for extension %1\n"
 msgstr "Bestandsassociatie ontbreekt voor extensie %1\n"
 
-#: cmd.rc:321
+#: cmd.rc:318
 msgid "No open command associated with file type '%1'\n"
 msgstr "Geen open commando verbonden met bestandstype '%1'\n"
 
-#: cmd.rc:322
+#: cmd.rc:319
 msgid "Overwrite %1?"
 msgstr "Overschrijf %1?"
 
-#: cmd.rc:323
+#: cmd.rc:320
 msgid "More..."
 msgstr "Meer..."
 
-#: cmd.rc:324
+#: cmd.rc:321
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "Regel in Batch proces mogelijk afgebroken. We gebruiken:\n"
 
-#: cmd.rc:326
+#: cmd.rc:323
 msgid "Argument missing\n"
 msgstr "Argument ontbreekt\n"
 
-#: cmd.rc:327
+#: cmd.rc:324
 msgid "Syntax error\n"
 msgstr "Fout in de syntax\n"
 
-#: cmd.rc:329
+#: cmd.rc:326
 msgid "No help available for %1\n"
 msgstr "Geen help beschikbaar voor %1\n"
 
-#: cmd.rc:330
+#: cmd.rc:327
 msgid "Target to GOTO not found\n"
 msgstr "Doel opgegeven bij GOTO niet gevonden\n"
 
-#: cmd.rc:331
+#: cmd.rc:328
 msgid "Current Date is %1\n"
 msgstr "Huidige datum is %1\n"
 
-#: cmd.rc:332
+#: cmd.rc:329
 msgid "Current Time is %1\n"
 msgstr "Huidige tijd is %1\n"
 
-#: cmd.rc:333
+#: cmd.rc:330
 msgid "Enter new date: "
 msgstr "Voer de nieuwe datum in: "
 
-#: cmd.rc:334
+#: cmd.rc:331
 msgid "Enter new time: "
 msgstr "voer de nieuwe tijd in: "
 
-#: cmd.rc:335
+#: cmd.rc:332
 msgid "Environment variable %1 not defined\n"
 msgstr "Omgevingsvariable %1 niet gedefinieerd\n"
 
-#: cmd.rc:336 xcopy.rc:38
+#: cmd.rc:333 xcopy.rc:38
 msgid "Failed to open '%1'\n"
 msgstr "Openen van '%1' is mislukt\n"
 
-#: cmd.rc:337
+#: cmd.rc:334
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr ""
 "Onmogelijk om een batch label aan te roepen van buiten een batch script\n"
 
-#: cmd.rc:338 xcopy.rc:42
+#: cmd.rc:335 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "A"
 
-#: cmd.rc:339
+#: cmd.rc:336
 msgid "Delete %1?"
 msgstr "Verwijder %1?"
 
-#: cmd.rc:340
+#: cmd.rc:337
 msgid "Echo is %1\n"
 msgstr "Echo staat %1\n"
 
-#: cmd.rc:341
+#: cmd.rc:338
 msgid "Verify is %1\n"
 msgstr "Verify staat %1\n"
 
-#: cmd.rc:342
+#: cmd.rc:339
 msgid "Verify must be ON or OFF\n"
 msgstr "Verify moet ON of OFF zijn\n"
 
-#: cmd.rc:343
+#: cmd.rc:340
 msgid "Parameter error\n"
 msgstr "Parameter onjuist\n"
 
-#: cmd.rc:344
+#: cmd.rc:341
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
@@ -10182,73 +10176,73 @@ msgstr ""
 "Het Volume Serienummer is %1!04x!-%2!04x!\n"
 "\n"
 
-#: cmd.rc:345
+#: cmd.rc:342
 msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "Volume naam (11 karakters, ENTER voor geen)?"
 
-#: cmd.rc:346
+#: cmd.rc:343
 msgid "PATH not found\n"
 msgstr "PATH niet gevonden\n"
 
-#: cmd.rc:347
+#: cmd.rc:344
 msgid "Press any key to continue... "
 msgstr "Druk op een willekeurige toets om verder te gaan... "
 
-#: cmd.rc:348
+#: cmd.rc:345
 msgid "Wine Command Prompt"
 msgstr "Wine Command Prompt"
 
-#: cmd.rc:349
+#: cmd.rc:346
 msgid "Wine CMD Version %1!S!\n"
 msgstr "Wine CMD versie %1!S!\n"
 
-#: cmd.rc:350
+#: cmd.rc:347
 msgid "More? "
 msgstr "Meer? "
 
-#: cmd.rc:351
+#: cmd.rc:348
 msgid "The input line is too long.\n"
 msgstr "De invoerregel is te lang.\n"
 
-#: cmd.rc:352
+#: cmd.rc:349
 msgid "Volume in drive %1!c! is %2\n"
 msgstr "Volume in schijfstation %1!c! is %2\n"
 
-#: cmd.rc:353
+#: cmd.rc:350
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr "Volume in schijfstation %1!c! heeft geen label.\n"
 
-#: cmd.rc:354
+#: cmd.rc:351
 msgid " (Yes|No)"
 msgstr " (Ja|Nee)"
 
-#: cmd.rc:355
+#: cmd.rc:352
 msgid " (Yes|No|All)"
 msgstr " (Ja|Nee|Alles)"
 
-#: cmd.rc:356
+#: cmd.rc:353
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
 msgstr ""
 "'%1' niet herkend als intern of extern commando dan wel batchbestand.\n"
 
-#: cmd.rc:357
+#: cmd.rc:354
 msgid "Division by zero error.\n"
 msgstr "Delen door nul fout.\n"
 
-#: cmd.rc:358
+#: cmd.rc:355
 msgid "Expected an operand.\n"
 msgstr "Verwacht een operand.\n"
 
-#: cmd.rc:359
+#: cmd.rc:356
 msgid "Expected an operator.\n"
 msgstr "Verwacht een operator.\n"
 
-#: cmd.rc:360
+#: cmd.rc:357
 msgid "Mismatch in parentheses.\n"
 msgstr "Ongepaarde haakjes.\n"
 
-#: cmd.rc:361
+#: cmd.rc:358
 msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"

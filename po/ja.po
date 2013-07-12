@@ -9244,7 +9244,7 @@ msgstr "紹介の取り扱い中にループです"
 msgid "Referral hop limit exceeded"
 msgstr "紹介のホップ数が限界を超えました"
 
-#: attrib.rc:27 cmd.rc:325
+#: attrib.rc:27 cmd.rc:322
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -9252,7 +9252,7 @@ msgstr ""
 "まだ実装されていません\n"
 "\n"
 
-#: attrib.rc:28 cmd.rc:328
+#: attrib.rc:28 cmd.rc:325
 msgid "%1: File Not Found\n"
 msgstr "%1: ファイルが見つかりません\n"
 
@@ -9412,24 +9412,18 @@ msgstr ""
 msgid "ERASE <filename> deletes a file or set of files.\n"
 msgstr "ERASE <ファイル名> はファイルやファイル群を削除します。\n"
 
-#: cmd.rc:69
+#: cmd.rc:66
 msgid ""
 "The FOR command is used to execute a command for each of a set of files.\n"
 "\n"
 "Syntax: FOR %variable IN (set) DO command\n"
-"\n"
-"The requirement to double the % sign when using FOR in a batch file does\n"
-"not exist in wine's cmd.\n"
 msgstr ""
 "FOR コマンドはそれぞれのファイルに対してコマンドを実行する\n"
 "場合に使用します。\n"
 "\n"
 "構文: FOR %変数 IN (セット) DO コマンド\n"
-"\n"
-"cmd内に存在しないバッチファイル中でFORを使用する場合は%記号\n"
-"を二重にする必要があります。\n"
 
-#: cmd.rc:81
+#: cmd.rc:78
 msgid ""
 "The GOTO command transfers execution to another statement within a\n"
 "batch file.\n"
@@ -9453,7 +9447,7 @@ msgstr ""
 "\n"
 "GOTO は対話モードで使用された場合は意味を持ちません。\n"
 
-#: cmd.rc:84
+#: cmd.rc:81
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
@@ -9461,7 +9455,7 @@ msgstr ""
 "HELP <コマンド> はトピックに対する簡潔なヘルプの詳細を表示します。\n"
 "引数なしの HELP はすべての CMD 内蔵コマンドを表示します。\n"
 
-#: cmd.rc:94
+#: cmd.rc:91
 msgid ""
 "IF is used to conditionally execute a command.\n"
 "\n"
@@ -9481,7 +9475,7 @@ msgstr ""
 "2番目の形式において、文字列1と文字列2はダブルクオートで囲われ\n"
 "ていなければなりません。大文字と小文字は区別されません。\n"
 
-#: cmd.rc:100
+#: cmd.rc:97
 msgid ""
 "LABEL is used to set a disk volume label.\n"
 "\n"
@@ -9495,15 +9489,15 @@ msgstr ""
 "コマンドを実行すると指定したドライブの新しいボリューム名を要求します。\n"
 "ディスクのボリューム ラベルは VOL コマンドで表示できます。\n"
 
-#: cmd.rc:103
+#: cmd.rc:100
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
 msgstr "MD <名前> は MKDIR の短縮版です。サブディレクトリを作成します。\n"
 
-#: cmd.rc:104
+#: cmd.rc:101
 msgid "MKDIR <name> creates a subdirectory.\n"
 msgstr "MKDIR <名前> はサブディレクトリを作成します。\n"
 
-#: cmd.rc:111
+#: cmd.rc:108
 msgid ""
 "MOVE relocates a file or directory to a new point within the file system.\n"
 "\n"
@@ -9521,7 +9515,7 @@ msgstr ""
 "\n"
 "MOVE では移動元と移動先のドライブ レターが異なる場合、移動は失敗します。\n"
 
-#: cmd.rc:122
+#: cmd.rc:119
 msgid ""
 "PATH displays or changes the cmd search path.\n"
 "\n"
@@ -9543,7 +9537,7 @@ msgstr ""
 "例えば：\n"
 "PATH %PATH%;c:\\temp\n"
 
-#: cmd.rc:128
+#: cmd.rc:125
 msgid ""
 "PAUSE displays a message on the screen asking the user to press a key.\n"
 "\n"
@@ -9555,7 +9549,7 @@ msgstr ""
 "これは主にバッチ ファイル中で実行されたコマンドの結果がスクロールする前\n"
 "にユーザが読めるようにしたい場合に有用です。\n"
 
-#: cmd.rc:149
+#: cmd.rc:146
 msgid ""
 "PROMPT sets the command-line prompt.\n"
 "\n"
@@ -9597,7 +9591,7 @@ msgstr ""
 "プロンプトはPROMPT環境変数を編集することでも変更できます。\n"
 "したがって、'SET PROMPT=文字列'と'PROMPT 文字列'の効果は同じです。\n"
 
-#: cmd.rc:153
+#: cmd.rc:150
 msgid ""
 "A command line beginning with REM (followed by a space) performs no\n"
 "action, and can therefore be used as a comment in a batch file.\n"
@@ -9605,24 +9599,24 @@ msgstr ""
 "REM(と直後のスペース)で始まるコマンドは実行されません。\n"
 "したがって、バッチファイル中のコメントとして使用できます。\n"
 
-#: cmd.rc:156
+#: cmd.rc:153
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
 msgstr "REN <ファイル名> は RENAME の短縮版です。ファイルを変名します。\n"
 
-#: cmd.rc:157
+#: cmd.rc:154
 msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <ファイル名> はファイルを変名します。\n"
 
-#: cmd.rc:159
+#: cmd.rc:156
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
 msgstr ""
 "RD <ディレクトリ> は RMDIR の短縮版です。サブディレクトリを削除します。\n"
 
-#: cmd.rc:160
+#: cmd.rc:157
 msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgstr "RMDIR <ディレクトリ> はサブディレクトリを削除します。\n"
 
-#: cmd.rc:204
+#: cmd.rc:201
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
 "\n"
@@ -9658,7 +9652,7 @@ msgstr ""
 "れています。cmd内からOSの環境変数を変更することができないこと\n"
 "に注意して下さい。\n"
 
-#: cmd.rc:209
+#: cmd.rc:206
 msgid ""
 "SHIFT is used in a batch file to remove one parameter from the head of\n"
 "the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
@@ -9668,7 +9662,7 @@ msgstr ""
 "に使用します。つまり、パラメータ2がパラメータ1になります。コマンドライン\n"
 "から呼ばれたときには何も起こりません。\n"
 
-#: cmd.rc:186 start.rc:50
+#: cmd.rc:183 start.rc:50
 msgid ""
 "Start a program, or open a document in the program normally used for files "
 "with that suffix.\n"
@@ -9725,15 +9719,15 @@ msgstr ""
 "/ProgIDOpen  文書を指定した progID を用いて開きます。\n"
 "/?           このヘルプを表示し、終了します。\n"
 
-#: cmd.rc:211
+#: cmd.rc:208
 msgid "TIME sets or shows the current system time.\n"
 msgstr "TIME は現在の時刻を設定または表示します。\n"
 
-#: cmd.rc:213
+#: cmd.rc:210
 msgid "TITLE <string> sets the window title for the cmd window.\n"
 msgstr "TITLE <文字列> は cmd ウィンドウのウィンドウ タイトルを設定します。\n"
 
-#: cmd.rc:217
+#: cmd.rc:214
 msgid ""
 "TYPE <filename> copies <filename> to the console device (or elsewhere\n"
 "if redirected). No check is made that the file is readable text.\n"
@@ -9742,7 +9736,7 @@ msgstr ""
 "された所)にコピーします。ファイルが可読なテキスト ファイルかどうかチェック\n"
 "されません。\n"
 
-#: cmd.rc:226
+#: cmd.rc:223
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
@@ -9761,15 +9755,15 @@ msgstr ""
 "\n"
 "Wine環境では照合フラグは意味を持ちません。\n"
 
-#: cmd.rc:229
+#: cmd.rc:226
 msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER は動作しているcmdのバージョンを表示します。\n"
 
-#: cmd.rc:231
+#: cmd.rc:228
 msgid "VOL shows the volume label of a disk device.\n"
 msgstr "VOL はディスク デバイスのボリューム ラベルを表示します。\n"
 
-#: cmd.rc:235
+#: cmd.rc:232
 msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file\n"
 "which were introduced by a preceding SETLOCAL.\n"
@@ -9777,7 +9771,7 @@ msgstr ""
 "ENDLOCAL は先行する SETLOCAL によって開始されたバッチ ファイルでの環境\n"
 "変更の局所化を終了します。\n"
 
-#: cmd.rc:243
+#: cmd.rc:240
 msgid ""
 "SETLOCAL starts localization of environment changes in a batch file.\n"
 "\n"
@@ -9792,7 +9786,7 @@ msgstr ""
 "ENDLOCAL が現れる(または、ファイルの終端に到達するかのいずれか早いほう)\n"
 "まで保持されます。終了時点で以前の環境設定が復元されます。\n"
 
-#: cmd.rc:246
+#: cmd.rc:243
 msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
@@ -9800,13 +9794,13 @@ msgstr ""
 "PUSHD <ディレクトリ名> はカレント ディレクトリをスタック上に保存し、カ\n"
 "レント ディレクトリを指定されたディレクトリに変更します。\n"
 
-#: cmd.rc:248
+#: cmd.rc:245
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
 msgstr ""
 "POPD は PUSHD で最後に保存されたディレクトリにカレント ディレクトリを変更しま"
 "す。\n"
 
-#: cmd.rc:256
+#: cmd.rc:253
 msgid ""
 "ASSOC shows or modifies file extension associations.\n"
 "\n"
@@ -9826,7 +9820,7 @@ msgstr ""
 "ファイル タイプを等号のあとに指定しない場合は現在の関連付けがあれば削除しま"
 "す。\n"
 
-#: cmd.rc:267
+#: cmd.rc:264
 msgid ""
 "FTYPE shows or modifies open commands associated with file types.\n"
 "\n"
@@ -9851,11 +9845,11 @@ msgstr ""
 "等号のあとに何もオープン コマンドを指定しない場合は、指定したファイル タイプ"
 "に対するコマンド文字列を削除します。\n"
 
-#: cmd.rc:269
+#: cmd.rc:266
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr "MORE はファイルの出力やパイプ化された入力を表示します。\n"
 
-#: cmd.rc:273
+#: cmd.rc:270
 msgid ""
 "CHOICE displays a text and waits, until the User\n"
 "presses an allowed Key from a selectable list.\n"
@@ -9865,7 +9859,7 @@ msgstr ""
 "すまで待機します。\n"
 "CHOICE は主にバッチ ファイルでメニュー選択を構築するために使われます。\n"
 
-#: cmd.rc:277
+#: cmd.rc:274
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
@@ -9873,7 +9867,7 @@ msgstr ""
 "EXIT は現在のコマンドセッションを終了してcmdを呼び出したOSまたはシェルに戻し"
 "ます。\n"
 
-#: cmd.rc:315
+#: cmd.rc:312
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -9954,110 +9948,110 @@ msgstr ""
 "上記のコマンドに関する詳細を表示するには HELP <コマンド名> と入力して下さ"
 "い。\n"
 
-#: cmd.rc:317
+#: cmd.rc:314
 msgid "Are you sure?"
 msgstr "よろしいですか?"
 
-#: cmd.rc:318 xcopy.rc:40
+#: cmd.rc:315 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "Y"
 
-#: cmd.rc:319 xcopy.rc:41
+#: cmd.rc:316 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: cmd.rc:320
+#: cmd.rc:317
 msgid "File association missing for extension %1\n"
 msgstr "拡張子 %1 に対するファイル関連付けがありません\n"
 
-#: cmd.rc:321
+#: cmd.rc:318
 msgid "No open command associated with file type '%1'\n"
 msgstr "ファイル タイプ '%1' に関連付けられた開くコマンドがありません\n"
 
-#: cmd.rc:322
+#: cmd.rc:319
 msgid "Overwrite %1?"
 msgstr "上書き %1?"
 
-#: cmd.rc:323
+#: cmd.rc:320
 msgid "More..."
 msgstr "続く..."
 
-#: cmd.rc:324
+#: cmd.rc:321
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "バッチ処理の行が切り落とされた可能性があります。対象行:\n"
 
-#: cmd.rc:326
+#: cmd.rc:323
 msgid "Argument missing\n"
 msgstr "引数がありません\n"
 
-#: cmd.rc:327
+#: cmd.rc:324
 msgid "Syntax error\n"
 msgstr "構文エラー\n"
 
-#: cmd.rc:329
+#: cmd.rc:326
 msgid "No help available for %1\n"
 msgstr "%1 に対するヘルプはありません\n"
 
-#: cmd.rc:330
+#: cmd.rc:327
 msgid "Target to GOTO not found\n"
 msgstr "GOTO の対象が見つかりません\n"
 
-#: cmd.rc:331
+#: cmd.rc:328
 msgid "Current Date is %1\n"
 msgstr "現在の日付は %1\n"
 
-#: cmd.rc:332
+#: cmd.rc:329
 msgid "Current Time is %1\n"
 msgstr "現在の時刻は %1\n"
 
-#: cmd.rc:333
+#: cmd.rc:330
 msgid "Enter new date: "
 msgstr "新しい日付を入力してください: "
 
-#: cmd.rc:334
+#: cmd.rc:331
 msgid "Enter new time: "
 msgstr "新しい時刻を入力してください: "
 
-#: cmd.rc:335
+#: cmd.rc:332
 msgid "Environment variable %1 not defined\n"
 msgstr "環境変数 %1 は定義されていません\n"
 
-#: cmd.rc:336 xcopy.rc:38
+#: cmd.rc:333 xcopy.rc:38
 msgid "Failed to open '%1'\n"
 msgstr "'%1' を開けません\n"
 
-#: cmd.rc:337
+#: cmd.rc:334
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "バッチ スクリプトの外からバッチ ラベルを呼び出すことはできません\n"
 
-#: cmd.rc:338 xcopy.rc:42
+#: cmd.rc:335 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "A"
 
-#: cmd.rc:339
+#: cmd.rc:336
 msgid "Delete %1?"
 msgstr "削除 %1?"
 
-#: cmd.rc:340
+#: cmd.rc:337
 msgid "Echo is %1\n"
 msgstr "Echo は %1\n"
 
-#: cmd.rc:341
+#: cmd.rc:338
 msgid "Verify is %1\n"
 msgstr "Verify は %1\n"
 
-#: cmd.rc:342
+#: cmd.rc:339
 msgid "Verify must be ON or OFF\n"
 msgstr "Verify は ON か OFF で指定してください\n"
 
-#: cmd.rc:343
+#: cmd.rc:340
 msgid "Parameter error\n"
 msgstr "パラメータ エラー\n"
 
-#: cmd.rc:344
+#: cmd.rc:341
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
@@ -10065,72 +10059,72 @@ msgstr ""
 "ボリューム シリアル番号は %1!04x!-%2!04x!\n"
 "\n"
 
-#: cmd.rc:345
+#: cmd.rc:342
 msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "ボリューム ラベル(半角11文字、<Enter>で無指定)?"
 
-#: cmd.rc:346
+#: cmd.rc:343
 msgid "PATH not found\n"
 msgstr "PATH が見つかりません\n"
 
-#: cmd.rc:347
+#: cmd.rc:344
 msgid "Press any key to continue... "
 msgstr "続けるには何かキーを押して下さい... "
 
-#: cmd.rc:348
+#: cmd.rc:345
 msgid "Wine Command Prompt"
 msgstr "Wine コマンド プロンプト"
 
-#: cmd.rc:349
+#: cmd.rc:346
 msgid "Wine CMD Version %1!S!\n"
 msgstr "Wine CMD バージョン %1!S!\n"
 
-#: cmd.rc:350
+#: cmd.rc:347
 msgid "More? "
 msgstr "続行? "
 
-#: cmd.rc:351
+#: cmd.rc:348
 msgid "The input line is too long.\n"
 msgstr "入力行が長すぎます。\n"
 
-#: cmd.rc:352
+#: cmd.rc:349
 msgid "Volume in drive %1!c! is %2\n"
 msgstr "ドライブ %1!c! のボリューム ラベルは %2 です\n"
 
-#: cmd.rc:353
+#: cmd.rc:350
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr "ドライブ %1!c! のボリューム ラベルがありません。\n"
 
-#: cmd.rc:354
+#: cmd.rc:351
 msgid " (Yes|No)"
 msgstr " (Yes|No)"
 
-#: cmd.rc:355
+#: cmd.rc:352
 msgid " (Yes|No|All)"
 msgstr " (Yes|No|All)"
 
-#: cmd.rc:356
+#: cmd.rc:353
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
 msgstr "%1 を内部または外部コマンド、バッチ スクリプトとして認識できません。\n"
 
-#: cmd.rc:357
+#: cmd.rc:354
 msgid "Division by zero error.\n"
 msgstr "0 による除算エラー。\n"
 
-#: cmd.rc:358
+#: cmd.rc:355
 msgid "Expected an operand.\n"
 msgstr "被演算子がありません。\n"
 
-#: cmd.rc:359
+#: cmd.rc:356
 msgid "Expected an operator.\n"
 msgstr "演算子がありません。\n"
 
-#: cmd.rc:360
+#: cmd.rc:357
 msgid "Mismatch in parentheses.\n"
 msgstr "括弧が対応していません。\n"
 
-#: cmd.rc:361
+#: cmd.rc:358
 msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"
