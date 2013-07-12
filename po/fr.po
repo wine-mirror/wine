@@ -9474,7 +9474,7 @@ msgstr "DATE affiche ou modifie la date système.\n"
 
 #: cmd.rc:48
 msgid "DEL <filename> deletes a file or set of files.\n"
-msgstr "DEL <fichiers> efface un fichier ou un groupe de fichiers.\n"
+msgstr "DEL <fichier> efface un fichier ou un groupe de fichiers.\n"
 
 #: cmd.rc:49
 msgid "DIR lists the contents of a directory.\n"
@@ -9502,7 +9502,7 @@ msgstr ""
 
 #: cmd.rc:61
 msgid "ERASE <filename> deletes a file or set of files.\n"
-msgstr "ERASE <fichiers> efface un ou plusieurs fichiers.\n"
+msgstr "ERASE <fichier> efface un ou plusieurs fichiers.\n"
 
 #: cmd.rc:69
 msgid ""
@@ -9719,11 +9719,11 @@ msgstr "RENAME <fichier> renomme un fichier.\n"
 
 #: cmd.rc:159
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
-msgstr "RD est la version courte de RMDIR. Elle efface un répertoire.\n"
+msgstr "RD <rép> est la version courte de RMDIR. Elle efface un répertoire.\n"
 
 #: cmd.rc:160
 msgid "RMDIR <dir> deletes a subdirectory.\n"
-msgstr "RMDIR efface un sous-répertoire.\n"
+msgstr "RMDIR <rép> efface un sous-répertoire.\n"
 
 #: cmd.rc:204
 msgid ""
