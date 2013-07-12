@@ -9693,7 +9693,7 @@ msgstr ""
 "\n"
 "Notez qu'entrer la commande PROMPT sans texte d'invite remet l'invite\n"
 "à sa valeur par défaut, à savoir le répertoire courant (incluant la lettre\n"
-"du lecteur courant) suivi d'un signe « plus grand que » (>).\n"
+"du lecteur courant) suivi d'un signe « plus grand que » (>).\n"
 "(c.-à-d. la commande PROMPT $p$g).\n"
 "\n"
 "L'invite peut aussi être adaptée en modifiant la variable d'environnement\n"
@@ -10279,7 +10279,7 @@ msgstr "Usage : hostname\n"
 
 #: hostname.rc:28
 msgid "Error: Invalid option '%c'.\n"
-msgstr "Erreur : option « %c » invalide.\n"
+msgstr "Erreur : option « %c » invalide.\n"
 
 #: hostname.rc:29
 msgid ""
