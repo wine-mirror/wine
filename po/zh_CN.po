@@ -3338,16 +3338,12 @@ msgid "&Disable"
 msgstr "停用(&D)"
 
 #: joy.rc:37
-#, fuzzy
-#| msgid "&enable"
 msgid "&Enable"
 msgstr "启用(&E)"
 
 #: joy.rc:38
-#, fuzzy
-#| msgid "Disconnected"
 msgid "Connected"
-msgstr "连接断开"
+msgstr "已连接"
 
 #: joy.rc:40
 msgid "Disabled"
@@ -3372,10 +3368,8 @@ msgid "Test Force Feedback"
 msgstr ""
 
 #: joy.rc:64
-#, fuzzy
-#| msgid "Available formats"
 msgid "Available Effects"
-msgstr "可选格式"
+msgstr "可选效果"
 
 #: joy.rc:66
 msgid ""
@@ -3384,10 +3378,8 @@ msgid ""
 msgstr ""
 
 #: joy.rc:28
-#, fuzzy
-#| msgid "Create Control"
 msgid "Game Controllers"
-msgstr "建立控件"
+msgstr "游戏控制器"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
@@ -3526,10 +3518,8 @@ msgid "Number of fraction digits is out of range"
 msgstr ""
 
 #: jscript.rc:59
-#, fuzzy
-#| msgid "Print range"
 msgid "Precision is out of range"
-msgstr "打印范围"
+msgstr "精度超出范围"
 
 #: jscript.rc:60
 msgid "Array length must be a finite positive integer"
@@ -3568,9 +3558,8 @@ msgid "Invalid handle.\n"
 msgstr ""
 
 #: winerror.mc:61
-#, fuzzy
 msgid "Memory trashed.\n"
-msgstr "内存监视器。\n"
+msgstr "内存已回收。\n"
 
 #: winerror.mc:66
 msgid "Not enough memory.\n"
@@ -3666,16 +3655,15 @@ msgstr "读取错误。\n"
 
 #: winerror.mc:181
 msgid "General failure.\n"
-msgstr ""
+msgstr "一般性错误。\n"
 
 #: winerror.mc:186
 msgid "Sharing violation.\n"
 msgstr ""
 
 #: winerror.mc:191
-#, fuzzy
 msgid "Lock violation.\n"
-msgstr "位置。\n"
+msgstr ""
 
 #: winerror.mc:196
 msgid "Wrong disk.\n"
@@ -4070,9 +4058,8 @@ msgid "Resource in use.\n"
 msgstr "资源已被占用。\n"
 
 #: winerror.mc:696
-#, fuzzy
 msgid "Cancel violation.\n"
-msgstr "信息。\n"
+msgstr ""
 
 #: winerror.mc:701
 msgid "Atomic locks not supported.\n"
@@ -4539,9 +4526,8 @@ msgid "Driver failure cannot be detected.\n"
 msgstr ""
 
 #: winerror.mc:1281
-#, fuzzy
 msgid "Process abort cannot be detected.\n"
-msgstr "结束进程(&E)。\n"
+msgstr "进程中止未被检测到。\n"
 
 #: winerror.mc:1286
 msgid "No recovery program for service.\n"
@@ -5018,9 +5004,8 @@ msgid "The site does not exist.\n"
 msgstr "站点不存在。\n"
 
 #: winerror.mc:1881
-#, fuzzy
 msgid "The domain controller already exists.\n"
-msgstr "端口 %s 已经存在。\n"
+msgstr "该域控制器已存在。\n"
 
 #: winerror.mc:1886
 msgid "Supported only when connected.\n"
@@ -5259,9 +5244,8 @@ msgid "No such domain.\n"
 msgstr ""
 
 #: winerror.mc:2181
-#, fuzzy
 msgid "Domain already exists.\n"
-msgstr "端口 %s 已经存在。\n"
+msgstr "域名已存在。\n"
 
 #: winerror.mc:2186
 msgid "Domain limit exceeded.\n"
@@ -5437,9 +5421,8 @@ msgid "Invalid menu handle.\n"
 msgstr ""
 
 #: winerror.mc:2406
-#, fuzzy
 msgid "Invalid cursor handle.\n"
-msgstr "数字格式无效。\n"
+msgstr "无效光标句柄。\n"
 
 #: winerror.mc:2411
 msgid "Invalid accelerator table handle.\n"
@@ -5470,14 +5453,12 @@ msgid "Hotkey already registered.\n"
 msgstr "热键已被注册。\n"
 
 #: winerror.mc:2446
-#, fuzzy
 msgid "Class already exists.\n"
-msgstr "端口 %s 已经存在。\n"
+msgstr "该类已存在。\n"
 
 #: winerror.mc:2451
-#, fuzzy
 msgid "Class does not exist.\n"
-msgstr "路径不存在。\n"
+msgstr "该类不存在。\n"
 
 #: winerror.mc:2456
 #, fuzzy
@@ -5785,9 +5766,8 @@ msgid "Failed to open installation log file.\n"
 msgstr ""
 
 #: winerror.mc:2836
-#, fuzzy
 msgid "Installation language not supported.\n"
-msgstr "不支持 OLE 储存文件。\n"
+msgstr "不被支持的安装语言。\n"
 
 #: winerror.mc:2841
 msgid "Installation transform failed to apply.\n"
@@ -5930,14 +5910,12 @@ msgid "RPC server not listening.\n"
 msgstr ""
 
 #: winerror.mc:3011
-#, fuzzy
 msgid "Unknown manager type.\n"
-msgstr "不明类型。\n"
+msgstr "未知管理员类型。\n"
 
 #: winerror.mc:3016
-#, fuzzy
 msgid "Unknown interface.\n"
-msgstr "不明来源。\n"
+msgstr "未知接口。\n"
 
 #: winerror.mc:3021
 msgid "No bindings.\n"
@@ -6064,9 +6042,8 @@ msgid "Can't perform operation.\n"
 msgstr ""
 
 #: winerror.mc:3181
-#, fuzzy
 msgid "Endpoints not registered.\n"
-msgstr "退出注册表编辑器。\n"
+msgstr "终点尚未注册。\n"
 
 #: winerror.mc:3186
 msgid "Nothing to export.\n"
@@ -6388,9 +6365,8 @@ msgid "Wrong pipe version.\n"
 msgstr ""
 
 #: winerror.mc:3576
-#, fuzzy
 msgid "Group member not found.\n"
-msgstr "路径 %s 没找到。\n"
+msgstr "无法找到该群组成员。\n"
 
 #: winerror.mc:3581
 msgid "Can't create endpoint mapper DB.\n"
@@ -6429,9 +6405,8 @@ msgid "User must change password.\n"
 msgstr ""
 
 #: winerror.mc:3626
-#, fuzzy
 msgid "Domain controller not found.\n"
-msgstr "找不到文件。\n"
+msgstr "找不到域控制器。\n"
 
 #: winerror.mc:3631
 msgid "Account locked out.\n"
@@ -6500,29 +6475,24 @@ msgid "The interface could not be exported.\n"
 msgstr "不能导出接口。\n"
 
 #: winerror.mc:3711
-#, fuzzy
 msgid "The profile could not be added.\n"
-msgstr "找不到“%s”。"
+msgstr "无法添加该档案。\n"
 
 #: winerror.mc:3716
-#, fuzzy
 msgid "The profile element could not be added.\n"
-msgstr "找不到“%s”。"
+msgstr "无法添加该档案元素。\n"
 
 #: winerror.mc:3721
-#, fuzzy
 msgid "The profile element could not be removed.\n"
-msgstr "找不到“%s”。"
+msgstr "无法删除该档案元素。\n"
 
 #: winerror.mc:3726
-#, fuzzy
 msgid "The group element could not be added.\n"
-msgstr "找不到“%s”。"
+msgstr "无法添加该群组元素。\n"
 
 #: winerror.mc:3731
-#, fuzzy
 msgid "The group element could not be removed.\n"
-msgstr "找不到“%s”。"
+msgstr "无法删除该群组元素。\n"
 
 #: winerror.mc:3736
 msgid "The username could not be found.\n"
@@ -8156,10 +8126,8 @@ msgid "Location:"
 msgstr "位置:"
 
 #: urlmon.rc:36
-#, fuzzy
-#| msgid "Install/Uninstall"
 msgid "Don't install"
-msgstr "安装/卸载"
+msgstr "不要安装"
 
 #: urlmon.rc:40
 msgid ""
@@ -12305,7 +12273,7 @@ msgstr "输出设备："
 
 #: winecfg.rc:260
 msgid "Voice output device:"
-msgstr ""
+msgstr "语音输出设备："
 
 #: winecfg.rc:261
 msgid "Input device:"
@@ -12313,7 +12281,7 @@ msgstr "输入设备："
 
 #: winecfg.rc:262
 msgid "Voice input device:"
-msgstr ""
+msgstr "语音输入设备："
 
 #: winecfg.rc:267
 msgid "&Test Sound"
