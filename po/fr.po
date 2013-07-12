@@ -5156,7 +5156,7 @@ msgstr "Tous les privilèges n'ont pas été accordés.\n"
 
 #: winerror.mc:1911
 msgid "Some security IDs not mapped.\n"
-msgstr "Mappage partiel des ID de sécurité.\n"
+msgstr "Certains IDs de sécurité n'ont pas de correspondance.\n"
 
 #: winerror.mc:1916
 msgid "No quotas for account.\n"
@@ -5280,7 +5280,7 @@ msgstr "Compte utilisateur désactivé.\n"
 
 #: winerror.mc:2066
 msgid "No security ID mapped.\n"
-msgstr "Aucun mappage d'ID de sécurité.\n"
+msgstr "Aucune correspondance pour les IDs de sécurité.\n"
 
 #: winerror.mc:2071
 msgid "Too many LUIDs requested.\n"
@@ -5389,7 +5389,7 @@ msgstr "Erreur interne.\n"
 
 #: winerror.mc:2201
 msgid "Generic access types not mapped.\n"
-msgstr "Types d'accès génériques non mappés.\n"
+msgstr "Pas de correspondance pour les types d'accès génériques.\n"
 
 #: winerror.mc:2206
 msgid "Bad descriptor format.\n"
@@ -5501,7 +5501,7 @@ msgstr "Membre invalide.\n"
 
 #: winerror.mc:2346
 msgid "Too many SIDs.\n"
-msgstr "Trop d'ID de sécurité (SID).\n"
+msgstr "Trop de SIDs.\n"
 
 #: winerror.mc:2351
 msgid "Cross-encrypted LM password required.\n"
