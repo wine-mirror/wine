@@ -5993,7 +5993,7 @@ msgstr "UUID de chaîne invalide.\n"
 
 #: winerror.mc:2961
 msgid "Invalid endpoint format.\n"
-msgstr "Format du point d'extrémité invalide.\n"
+msgstr "Format du point de terminaison invalide.\n"
 
 #: winerror.mc:2966
 msgid "Invalid network address.\n"
@@ -6001,7 +6001,7 @@ msgstr "Adresse réseau invalide.\n"
 
 #: winerror.mc:2971
 msgid "No endpoint found.\n"
-msgstr "Point d'extrémité introuvable.\n"
+msgstr "Point de terminaison introuvable.\n"
 
 #: winerror.mc:2976
 msgid "Invalid timeout value.\n"
@@ -6049,7 +6049,7 @@ msgstr "Pas de séquence de protocole.\n"
 
 #: winerror.mc:3031
 msgid "Can't create endpoint.\n"
-msgstr "Ne peut créer de point d'extrémité.\n"
+msgstr "Ne peut créer le point de terminaison.\n"
 
 #: winerror.mc:3036
 msgid "Out of resources.\n"
@@ -6113,7 +6113,7 @@ msgstr "Pas d'adresse réseau.\n"
 
 #: winerror.mc:3116
 msgid "Duplicate endpoint.\n"
-msgstr "Point d'extrémité dupliqué.\n"
+msgstr "Point de terminaison dupliqué.\n"
 
 #: winerror.mc:3121
 msgid "Unknown authentication type.\n"
@@ -6165,7 +6165,7 @@ msgstr "Ne peut effectuer l'opération.\n"
 
 #: winerror.mc:3181
 msgid "Endpoints not registered.\n"
-msgstr "Points d'extrémité non enregistrés.\n"
+msgstr "Points de terminaison non enregistrés.\n"
 
 #: winerror.mc:3186
 msgid "Nothing to export.\n"
@@ -6487,7 +6487,7 @@ msgstr "Membre de groupe introuvable.\n"
 #: winerror.mc:3581
 msgid "Can't create endpoint mapper DB.\n"
 msgstr ""
-"Impossible de créer la base de données de mappeur de points d'extrémités.\n"
+"Impossible de créer la base de données du mappeur de point de terminaison.\n"
 
 #: winerror.mc:3586
 msgid "Invalid object.\n"
