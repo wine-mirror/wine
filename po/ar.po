@@ -2429,11 +2429,11 @@ msgstr "مصدرة بواسطة: "
 
 #: cryptui.rc:37
 msgid "Valid from "
-msgstr "صالحة من"
+msgstr "صالحة من "
 
 #: cryptui.rc:38
 msgid " to "
-msgstr "إلى"
+msgstr " إلى "
 
 #: cryptui.rc:39
 msgid "This certificate has an invalid signature."
@@ -2600,7 +2600,7 @@ msgstr "لم يتم تحديد صيغة الملف ، اخترا ملفًا آخ
 
 #: cryptui.rc:83
 msgid "Could not open "
-msgstr "لا يمكن فتحه"
+msgstr "لا يمكن فتحه "
 
 #: cryptui.rc:84
 msgid "Determined by the program"
@@ -7206,7 +7206,7 @@ msgstr "أضف متحكمًا"
 
 #: oledlg.rc:34
 msgid "Inserts the contents of the clipboard into your document as %s."
-msgstr "أضف المحتوى الموجود في الحافظة إلى المستند كـ %s. "
+msgstr "أضف المحتوى الموجود في الحافظة إلى المستند كـ %s."
 
 #: oledlg.rc:35
 msgid ""
@@ -8420,7 +8420,7 @@ msgstr ""
 msgid ""
 "This function is not supported. Use the Capabilities function to determine "
 "which functions and messages the driver supports."
-msgstr "هذه الوظيفة غير مدعومة ، اختر وظيفة مناسبة تناسب عتادك . "
+msgstr "هذه الوظيفة غير مدعومة ، اختر وظيفة مناسبة تناسب عتادك ."
 
 #: winmm.rc:37
 msgid "An error number was specified that is not defined in the system."
@@ -9172,7 +9172,7 @@ msgstr "لم يتمكن من الاتصال بخادوم LDAP"
 
 #: wldap32.rc:119
 msgid "Operation not supported by this version of the LDAP protocol"
-msgstr "العملية غير مدعومة بواسطة هذه الإصدار من بروتوكول LDAP "
+msgstr "العملية غير مدعومة بواسطة هذه الإصدار من بروتوكول LDAP"
 
 #: wldap32.rc:120
 msgid "Specified control was not found in message"
@@ -10010,7 +10010,7 @@ msgstr ""
 
 #: cmd.rc:345
 msgid "Volume label (11 characters, <Enter> for none)?"
-msgstr "اسم القسم ( 11 محرفًا ) أو أضغط مفتاح الإدخال لتركه فارغًا ؟ "
+msgstr "اسم القسم ( 11 محرفًا ) أو أضغط مفتاح الإدخال لتركه فارغًا ؟"
 
 #: cmd.rc:346
 msgid "PATH not found\n"
@@ -10018,7 +10018,7 @@ msgstr "المسار غير موجود\n"
 
 #: cmd.rc:347
 msgid "Press any key to continue... "
-msgstr "اضغط أي مفتاح للاستمرار..."
+msgstr "اضغط أي مفتاح للاستمرار... "
 
 #: cmd.rc:348
 msgid "Wine Command Prompt"
@@ -10030,7 +10030,7 @@ msgstr "سطر أوامر واين - الإصدارة %1!S!\n"
 
 #: cmd.rc:350
 msgid "More? "
-msgstr "إضافي؟"
+msgstr "إضافي؟ "
 
 #: cmd.rc:351
 msgid "The input line is too long.\n"
@@ -10880,7 +10880,7 @@ msgstr "التنقل بين نمطي الخبير و المبتدئ"
 #: oleview.rc:118
 msgid ""
 "Toggle the display of component categories that are not meant to be visible"
-msgstr "التنقل في عرض تصنيف المكونات المراد عرضها "
+msgstr "التنقل في عرض تصنيف المكونات المراد عرضها"
 
 #: oleview.rc:119
 msgid "Show or hide the toolbar"
@@ -12473,7 +12473,7 @@ msgid ""
 msgstr ""
 "فشل تطبيق أمر الإزالة '%s' قد تكون أداة الإزالة غير موجودة أو أن البرنامج "
 "حذف بطريقة أخرى.\n"
-"هل ترغب بإزالة هذا الخيار من السجل ؟ "
+"هل ترغب بإزالة هذا الخيار من السجل ؟"
 
 #: view.rc:33
 msgid "&Pan"
@@ -12582,7 +12582,7 @@ msgstr "التقا&ط آلي للفأرة في وضع ملء الشاشة"
 
 #: winecfg.rc:162
 msgid "Allow the window manager to &decorate the windows"
-msgstr "السّماح لمدير النّواف&ذ بتأطيرها "
+msgstr "السّماح لمدير النّواف&ذ بتأطيرها"
 
 #: winecfg.rc:163
 msgid "Allow the &window manager to control the windows"
