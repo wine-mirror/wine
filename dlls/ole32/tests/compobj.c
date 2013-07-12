@@ -22,6 +22,7 @@
 #define CONST_VTABLE
 
 #include <stdarg.h>
+#include <stdio.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -43,6 +44,11 @@ static HRESULT (WINAPI * pCoGetTreatAsClass)(REFCLSID clsidOld, LPCLSID pClsidNe
 static HRESULT (WINAPI * pCoGetContextToken)(ULONG_PTR *token);
 static LONG (WINAPI * pRegOverridePredefKey)(HKEY key, HKEY override);
 
+static BOOL   (WINAPI *pActivateActCtx)(HANDLE,ULONG_PTR*);
+static HANDLE (WINAPI *pCreateActCtxW)(PCACTCTXW);
+static BOOL   (WINAPI *pDeactivateActCtx)(DWORD,ULONG_PTR);
+static void   (WINAPI *pReleaseActCtx)(HANDLE);
+
 #define ok_ole_success(hr, func) ok(hr == S_OK, func " failed with error 0x%08x\n", hr)
 #define ok_more_than_one_lock() ok(cLocks > 0, "Number of locks should be > 0, but actually is %d\n", cLocks)
 #define ok_no_locks() ok(cLocks == 0, "Number of locks should be 0, but actually is %d\n", cLocks)
@@ -56,6 +62,7 @@ static WCHAR wszCLSID_StdFont[] =
     '{','0','b','e','3','5','2','0','3','-','8','f','9','1','-','1','1','c','e','-',
     '9','d','e','3','-','0','0','a','a','0','0','4','b','b','8','5','1','}',0
 };
+static const WCHAR progidW[] = {'P','r','o','g','I','d','.','P','r','o','g','I','d',0};
 
 static const IID IID_IWineTest =
 {
@@ -70,6 +77,18 @@ static const CLSID CLSID_WineOOPTest = {
     0x4fd0,
     {0xa1, 0xa2, 0x5d, 0x5a, 0x36, 0x54, 0xd3, 0xbd}
 }; /* 5201163f-8164-4fd0-a1a2-5d5a3654d3bd */
+
+static const char *debugstr_guid(REFIID riid)
+{
+    static char buf[50];
+
+    sprintf(buf, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
+            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
+            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
+
+    return buf;
+}
 
 static LONG cLocks;
 
@@ -143,10 +162,87 @@ static const IClassFactoryVtbl TestClassFactory_Vtbl =
 
 static IClassFactory Test_ClassFactory = { &TestClassFactory_Vtbl };
 
+static WCHAR manifest_path[MAX_PATH];
+
+static BOOL create_manifest_file(const char *filename, const char *manifest)
+{
+    int manifest_len;
+    DWORD size;
+    HANDLE file;
+    WCHAR path[MAX_PATH];
+
+    MultiByteToWideChar( CP_ACP, 0, filename, -1, path, MAX_PATH );
+    GetFullPathNameW(path, sizeof(manifest_path)/sizeof(WCHAR), manifest_path, NULL);
+
+    manifest_len = strlen(manifest);
+    file = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+                       FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError());
+    if(file == INVALID_HANDLE_VALUE)
+        return FALSE;
+    WriteFile(file, manifest, manifest_len, &size, NULL);
+    CloseHandle(file);
+
+    return TRUE;
+}
+
+static HANDLE activate_context(const char *manifest, ULONG_PTR *cookie)
+{
+    WCHAR path[MAX_PATH];
+    ACTCTXW actctx;
+    HANDLE handle;
+    BOOL ret;
+
+    if (!pCreateActCtxW) return NULL;
+
+    create_manifest_file("file.manifest", manifest);
+
+    MultiByteToWideChar( CP_ACP, 0, "file.manifest", -1, path, MAX_PATH );
+    memset(&actctx, 0, sizeof(ACTCTXW));
+    actctx.cbSize = sizeof(ACTCTXW);
+    actctx.lpSource = path;
+
+    handle = pCreateActCtxW(&actctx);
+    ok(handle != INVALID_HANDLE_VALUE, "handle == INVALID_HANDLE_VALUE, error %u\n", GetLastError());
+
+    ok(actctx.cbSize == sizeof(ACTCTXW), "actctx.cbSize=%d\n", actctx.cbSize);
+    ok(actctx.dwFlags == 0, "actctx.dwFlags=%d\n", actctx.dwFlags);
+    ok(actctx.lpSource == path, "actctx.lpSource=%p\n", actctx.lpSource);
+    ok(actctx.wProcessorArchitecture == 0, "actctx.wProcessorArchitecture=%d\n", actctx.wProcessorArchitecture);
+    ok(actctx.wLangId == 0, "actctx.wLangId=%d\n", actctx.wLangId);
+    ok(actctx.lpAssemblyDirectory == NULL, "actctx.lpAssemblyDirectory=%p\n", actctx.lpAssemblyDirectory);
+    ok(actctx.lpResourceName == NULL, "actctx.lpResourceName=%p\n", actctx.lpResourceName);
+    ok(actctx.lpApplicationName == NULL, "actctx.lpApplicationName=%p\n", actctx.lpApplicationName);
+    ok(actctx.hModule == NULL, "actctx.hModule=%p\n", actctx.hModule);
+
+    DeleteFileA("file.manifest");
+
+    ret = pActivateActCtx(handle, cookie);
+    ok(ret, "ActivateActCtx failed: %u\n", GetLastError());
+
+    return handle;
+}
+
+static const char actctx_manifest[] =
+"<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">"
+"<assemblyIdentity version=\"1.2.3.4\"  name=\"Wine.Test\" type=\"win32\""
+" publicKeyToken=\"6595b6414666f1df\" />"
+"<file name=\"testlib.dll\">"
+"    <comClass description=\"Test com class\""
+"              clsid=\"{12345678-1234-1234-1234-56789abcdef0}\""
+"              progid=\"ProgId.ProgId\""
+"    />"
+"</file>"
+"</assembly>";
+
 static void test_ProgIDFromCLSID(void)
 {
+    ULONG_PTR cookie = 0;
     LPWSTR progid;
-    HRESULT hr = ProgIDFromCLSID(&CLSID_StdFont, &progid);
+    HANDLE handle;
+    HRESULT hr;
+
+    hr = ProgIDFromCLSID(&CLSID_StdFont, &progid);
     ok(hr == S_OK, "ProgIDFromCLSID failed with error 0x%08x\n", hr);
     if (hr == S_OK)
     {
@@ -161,10 +257,27 @@ static void test_ProgIDFromCLSID(void)
 
     hr = ProgIDFromCLSID(&CLSID_StdFont, NULL);
     ok(hr == E_INVALIDARG, "ProgIDFromCLSID should return E_INVALIDARG instead of 0x%08x\n", hr);
+
+    if ((handle = activate_context(actctx_manifest, &cookie)))
+    {
+        hr = ProgIDFromCLSID(&CLSID_non_existent, &progid);
+todo_wine
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        if (hr == S_OK)
+        {
+            ok(!lstrcmpiW(progid, progidW), "got %s\n", wine_dbgstr_w(progid));
+            CoTaskMemFree(progid);
+        }
+
+        pDeactivateActCtx(0, cookie);
+        pReleaseActCtx(handle);
+    }
 }
 
 static void test_CLSIDFromProgID(void)
 {
+    ULONG_PTR cookie = 0;
+    HANDLE handle;
     CLSID clsid;
     HRESULT hr = CLSIDFromProgID(stdfont, &clsid);
     ok(hr == S_OK, "CLSIDFromProgID failed with error 0x%08x\n", hr);
@@ -186,6 +299,27 @@ static void test_CLSIDFromProgID(void)
     hr = CLSIDFromProgID(wszNonExistent, &clsid);
     ok(hr == CO_E_CLASSSTRING, "CLSIDFromProgID on nonexistent ProgID should have returned CO_E_CLASSSTRING instead of 0x%08x\n", hr);
     ok(IsEqualCLSID(&clsid, &CLSID_NULL), "CLSIDFromProgID should have set clsid to all-zeros on failure\n");
+
+    /* fails without proper context */
+    memset(&clsid, 0xcc, sizeof(clsid));
+    hr = CLSIDFromProgID(progidW, &clsid);
+    ok(hr == CO_E_CLASSSTRING, "got 0x%08x\n", hr);
+    ok(IsEqualCLSID(&clsid, &CLSID_NULL), "wrong clsid\n");
+
+    if ((handle = activate_context(actctx_manifest, &cookie)))
+    {
+        clsid = CLSID_NULL;
+        hr = CLSIDFromProgID(progidW, &clsid);
+todo_wine
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        if (hr == S_OK)
+            /* it returns generated CLSID here */
+            ok(!IsEqualCLSID(&clsid, &CLSID_non_existent) && !IsEqualCLSID(&clsid, &CLSID_NULL),
+                "got wrong clsid %s\n", debugstr_guid(&clsid));
+
+        pDeactivateActCtx(0, cookie);
+        pReleaseActCtx(handle);
+    }
 }
 
 static void test_CLSIDFromString(void)
@@ -1568,16 +1702,30 @@ static void test_CoInitializeEx(void)
     OleUninitialize();
 }
 
-START_TEST(compobj)
+static void init_funcs(void)
 {
-    HMODULE hOle32 = GetModuleHandle("ole32");
-    HMODULE hAdvapi32 = GetModuleHandle("advapi32");
+    HMODULE hOle32 = GetModuleHandleA("ole32");
+    HMODULE hAdvapi32 = GetModuleHandleA("advapi32");
+    HMODULE hkernel32 = GetModuleHandleA("kernel32");
+
     pCoGetObjectContext = (void*)GetProcAddress(hOle32, "CoGetObjectContext");
     pCoSwitchCallContext = (void*)GetProcAddress(hOle32, "CoSwitchCallContext");
     pCoGetTreatAsClass = (void*)GetProcAddress(hOle32,"CoGetTreatAsClass");
     pCoGetContextToken = (void*)GetProcAddress(hOle32, "CoGetContextToken");
     pRegOverridePredefKey = (void*)GetProcAddress(hAdvapi32, "RegOverridePredefKey");
-    if (!(pCoInitializeEx = (void*)GetProcAddress(hOle32, "CoInitializeEx")))
+    pCoInitializeEx = (void*)GetProcAddress(hOle32, "CoInitializeEx");
+
+    pActivateActCtx = (void*)GetProcAddress(hkernel32, "ActivateActCtx");
+    pCreateActCtxW = (void*)GetProcAddress(hkernel32, "CreateActCtxW");
+    pDeactivateActCtx = (void*)GetProcAddress(hkernel32, "DeactivateActCtx");
+    pReleaseActCtx = (void*)GetProcAddress(hkernel32, "ReleaseActCtx");
+}
+
+START_TEST(compobj)
+{
+    init_funcs();
+
+    if (!pCoInitializeEx)
     {
         trace("You need DCOM95 installed to run this test\n");
         return;
