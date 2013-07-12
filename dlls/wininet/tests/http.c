@@ -1840,6 +1840,7 @@ struct server_info {
 };
 
 static int test_cache_gzip;
+static const char *send_buffer;
 
 static DWORD CALLBACK server_thread(LPVOID param)
 {
@@ -2080,6 +2081,8 @@ static DWORD CALLBACK server_thread(LPVOID param)
             else
                 send(c, notokmsg, sizeof(notokmsg)-1, 0);
         }
+        if (strstr(buffer, "GET /send_from_buffer"))
+            send(c, send_buffer, strlen(send_buffer), 0);
         if (strstr(buffer, "GET /test_premature_disconnect"))
             trace("closing connection\n");
 
@@ -3336,6 +3339,10 @@ static void test_HttpQueryInfo(int port)
     hr = HttpOpenRequest(hc, NULL, "/testD", NULL, NULL, NULL, 0, 0);
     ok(hr != NULL, "HttpOpenRequest failed\n");
 
+    size = sizeof(buffer);
+    ret = HttpQueryInfo(hr, HTTP_QUERY_STATUS_TEXT, buffer, &size, &index);
+    ok(!ret && GetLastError() == ERROR_HTTP_HEADER_NOT_FOUND, "HttpQueryInfo failed %u\n", GetLastError());
+
     ret = HttpSendRequest(hr, NULL, 0, NULL, 0);
     ok(ret, "HttpSendRequest failed\n");
 
@@ -3562,6 +3569,66 @@ static void test_options(int port)
     InternetCloseHandle(ses);
 }
 
+typedef struct {
+    const char *response_text;
+    int status_code;
+    const char *status_text;
+    const char *raw_headers;
+} http_status_test_t;
+
+static const http_status_test_t http_status_tests[] = {
+    {
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Length: 1\r\n"
+        "\r\nx",
+        200,
+        "OK"
+    },
+    {
+        "HTTP/1.1 404 Fail\r\n"
+        "Content-Length: 1\r\n"
+        "\r\nx",
+        404,
+        "Fail"
+    }
+};
+
+static void test_http_status(int port)
+{
+    HINTERNET ses, con, req;
+    char buf[1000];
+    DWORD i, size;
+    BOOL res;
+
+    for(i=0; i < sizeof(http_status_tests)/sizeof(*http_status_tests); i++) {
+        send_buffer = http_status_tests[i].response_text;
+
+        ses = InternetOpen(NULL, INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+        ok(ses != NULL, "InternetOpen failed\n");
+
+        con = InternetConnect(ses, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+        ok(con != NULL, "InternetConnect failed\n");
+
+        req = HttpOpenRequest(con, NULL, "/send_from_buffer", NULL, NULL, NULL, 0, 0);
+        ok(req != NULL, "HttpOpenRequest failed\n");
+
+        res = HttpSendRequest(req, NULL, 0, NULL, 0);
+        ok(res, "HttpSendRequest failed\n");
+
+        test_status_code(req, http_status_tests[i].status_code);
+
+        size = sizeof(buf);
+        res = HttpQueryInfo(req, HTTP_QUERY_STATUS_TEXT, buf, &size, NULL);
+        ok(res, "HttpQueryInfo failed: %u\n", GetLastError());
+        ok(!strcmp(buf, http_status_tests[i].status_text), "[%u] Unexpected status text \"%s\", expected \"%s\"\n",
+           i, buf, http_status_tests[i].status_text);
+
+        InternetCloseHandle(req);
+        InternetCloseHandle(con);
+        InternetCloseHandle(ses);
+    }
+}
+
 static void test_http_connection(void)
 {
     struct server_info si;
@@ -3602,6 +3669,7 @@ static void test_http_connection(void)
     test_conn_close(si.port);
     test_no_cache(si.port);
     test_cache_read_gzipped(si.port);
+    test_http_status(si.port);
     test_premature_disconnect(si.port);
     test_connection_closing(si.port);
 
