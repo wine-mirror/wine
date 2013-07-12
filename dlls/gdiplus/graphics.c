@@ -349,7 +349,7 @@ static void gdi_alpha_blend(GpGraphics *graphics, INT dst_x, INT dst_y, INT dst_
 
 static GpStatus get_clip_hrgn(GpGraphics *graphics, HRGN *hrgn)
 {
-    return GdipGetRegionHRgn(graphics->clip, NULL, hrgn);
+    return GdipGetRegionHRgn(graphics->clip, graphics, hrgn);
 }
 
 /* Draw non-premultiplied ARGB data to the given graphics object */
