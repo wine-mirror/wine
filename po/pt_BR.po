@@ -1293,7 +1293,7 @@ msgstr "Digesto da Mensagem"
 
 #: crypt32.rc:47
 msgid "Signing Time"
-msgstr "Tempo de Assinatura"
+msgstr "Hora da Assinatura"
 
 #: crypt32.rc:48
 msgid "Counter Sign"
@@ -1301,7 +1301,7 @@ msgstr "Contra Assinar"
 
 #: crypt32.rc:49
 msgid "Challenge Password"
-msgstr "Desafiar Senha"
+msgstr "Senha de Desafio"
 
 #: crypt32.rc:50
 msgid "Unstructured Address"
@@ -1334,7 +1334,7 @@ msgstr "Emissor de Certificados Autorizados"
 
 #: crypt32.rc:57
 msgid "Certification Template Name"
-msgstr "Nome de Certificação por Template"
+msgstr "Nome do Modelo da Certificação"
 
 #: crypt32.rc:58
 msgid "Certificate Type"
@@ -1574,7 +1574,7 @@ msgstr "Agente de Recuperação de Chaves"
 
 #: crypt32.rc:117
 msgid "Certificate Template Information"
-msgstr "Informação do Template do Certificado"
+msgstr "Informação do Modelo do Certificado"
 
 #: crypt32.rc:118
 msgid "Enterprise Root OID"
@@ -4129,7 +4129,7 @@ msgstr "Rótulo de volume muito longo.\n"
 
 #: winerror.mc:641
 msgid "Too many TCBs.\n"
-msgstr "Demasiados TCBs.\n"
+msgstr "TCBs demais.\n"
 
 #: winerror.mc:646
 msgid "Signal refused.\n"
@@ -6802,15 +6802,15 @@ msgstr "entre a pasta que contém %s"
 
 #: msi.rc:58
 msgid "install source for feature missing"
-msgstr "faltando fonte de instalação para característica"
+msgstr "faltando fonte de instalação para funcionalidade"
 
 #: msi.rc:59
 msgid "network drive for feature missing"
-msgstr "faltando drive de rede para característica"
+msgstr "faltando drive de rede para funcionalidade"
 
 #: msi.rc:60
 msgid "feature from:"
-msgstr "origem da característica:"
+msgstr "origem da funcionalidade:"
 
 #: msi.rc:61
 msgid "choose which folder contains %s"
@@ -6818,14 +6818,14 @@ msgstr "escolha a pasta que contém %s"
 
 #: msrle32.rc:28
 msgid "Wine MS-RLE video codec"
-msgstr "Wine MS-RLE codificador/decodificador de vídeo"
+msgstr "Codec de vídeo Wine MS-RLE"
 
 #: msrle32.rc:29
 msgid ""
 "Wine MS-RLE video codec\n"
 "Copyright 2002 by Michael Guennewig"
 msgstr ""
-"Wine MS-RLE codificador/decodificador de vídeo\n"
+"Codec de vídeo Wine MS-RLE\n"
 "Direitos autorais 2002 por Michael Günnewig"
 
 #: msvfw32.rc:30
@@ -6850,7 +6850,7 @@ msgstr "&Qualidade de compressão:"
 
 #: msvfw32.rc:46
 msgid "&Key Frame Every"
-msgstr "&Imagem Chave a Cada"
+msgstr "&Quadro Chave a Cada"
 
 #: msvfw32.rc:50
 msgid "&Data Rate"
@@ -6862,7 +6862,7 @@ msgstr "kB/s"
 
 #: msvfw32.rc:25
 msgid "Full Frames (Uncompressed)"
-msgstr "Imagens Completas (Descomprimidas)"
+msgstr "Imagens Completas (não comprimidas)"
 
 #: msvidc32.rc:26
 msgid "Wine Video 1 video codec"
@@ -7969,7 +7969,7 @@ msgstr "Rede"
 
 #: shell32.rc:209
 msgid "Templates"
-msgstr "Modelo"
+msgstr "Modelos"
 
 #: shell32.rc:210
 msgid "PrintHood"
@@ -8383,7 +8383,7 @@ msgstr "&Tamanho do papel:"
 
 #: wineps.rc:36
 msgid "Duplex:"
-msgstr "Duplex:"
+msgstr "Frente e verso:"
 
 #: wininet.rc:39 wininet.rc:59
 msgid "Realm"
@@ -8411,7 +8411,7 @@ msgstr "Conexão LAN"
 
 #: wininet.rc:26
 msgid "The certificate is issued by an unknown or untrusted publisher."
-msgstr "O certificado é entrega por um editor desconhecido ou desconfiável."
+msgstr "O certificado é emitido por um editor desconhecido ou não confiável."
 
 #: wininet.rc:27
 msgid "The date on the certificate is invalid."
@@ -9526,8 +9526,8 @@ msgstr ""
 "IF [NOT] texto1==texto2 comando\n"
 "IF [NOT] ERRORLEVEL número comando\n"
 "\n"
-"Na segunda forma do comando, texto1 e texto2 devem estar entre aspas\n"
-"duplas. A comparação não diferencia maiúsculas de minúsculas.\n"
+"Na segunda forma do comando, texto1 e texto2 devem estar entre aspas.\n"
+"A comparação não diferencia maiúsculas de minúsculas.\n"
 
 #: cmd.rc:97
 msgid ""
@@ -9565,9 +9565,9 @@ msgstr ""
 "arquivos.\n"
 "\n"
 "Se o item sendo movido é um diretório então todos os arquivos e\n"
-"subdiretórios abaixo do item são movidos com o mesmo.\n"
+"subdiretórios abaixo do item são movidos também.\n"
 "\n"
-"MOVE falhará se o local antigo e o novo local estão em diferentes unidades.\n"
+"MOVE falhará se o local antigo e o novo local estão em unidades diferentes.\n"
 
 #: cmd.rc:119
 msgid ""
@@ -10096,11 +10096,11 @@ msgstr "Excluir %1?"
 
 #: cmd.rc:337
 msgid "Echo is %1\n"
-msgstr "O eco é %1\n"
+msgstr "O eco está %1\n"
 
 #: cmd.rc:338
 msgid "Verify is %1\n"
-msgstr "A verificação é %1\n"
+msgstr "A verificação está %1\n"
 
 #: cmd.rc:339
 msgid "Verify must be ON or OFF\n"
@@ -12659,7 +12659,7 @@ msgstr "Wine"
 #: wineboot.rc:43
 msgid "The Wine configuration in %s is being updated, please wait..."
 msgstr ""
-"A configuração do Wine em %s está sendo atualizada, por favor aguarde..."
+"A configuração do Wine em %s está sendo atualizada, por favor, aguarde..."
 
 #: winecfg.rc:132
 msgid ""
@@ -13396,7 +13396,7 @@ msgid ""
 "wineconsole: Starting program %s failed.\n"
 "The command is invalid.\n"
 msgstr ""
-"wineconsole: Falha ao inicializar programa %s.\n"
+"wineconsole: Falha ao iniciar programa %s.\n"
 "O comando é inválido.\n"
 
 #: wineconsole.rc:47
@@ -14391,7 +14391,7 @@ msgstr ""
 "\tmais arquivos.\n"
 "[/S]  Copiar diretórios e subdiretórios.\n"
 "[/E]  Copiar diretórios e subdiretórios, incluindo os vazios.\n"
-"[/Q]  Não mostrar nomes durante a cópia, ie modo silencioso.\n"
+"[/Q]  Não mostrar nomes durante a cópia, isso é, modo silencioso.\n"
 "[/F]  Mostrar por completo os nomes de fonte e destino durante a cópia.\n"
 "[/L]  Simular a operação, mostrando os nomes que seriam copiados.\n"
 "[/W]  Alerta antes de iniciar a operação de cópia.\n"
