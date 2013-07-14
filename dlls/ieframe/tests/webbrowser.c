@@ -2052,7 +2052,7 @@ static void test_ie_funcs(IWebBrowser2 *wb)
     IDispatch *disp;
     VARIANT_BOOL b;
     int i;
-    LONG hwnd;
+    SHANDLE_PTR hwnd;
     HRESULT hres;
     BSTR sName;
 
@@ -2061,7 +2061,7 @@ static void test_ie_funcs(IWebBrowser2 *wb)
     hwnd = 0xdeadbeef;
     hres = IWebBrowser2_get_HWND(wb, &hwnd);
     ok(hres == E_FAIL, "get_HWND failed: %08x, expected E_FAIL\n", hres);
-    ok(hwnd == 0, "unexpected hwnd %x\n", hwnd);
+    ok(hwnd == 0, "unexpected hwnd %p\n", (PVOID)hwnd);
 
     /* MenuBar */
 
