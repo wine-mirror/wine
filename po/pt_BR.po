@@ -3705,7 +3705,7 @@ msgstr "Sem memória.\n"
 
 #: winerror.mc:101
 msgid "Invalid drive.\n"
-msgstr "Drive inválido.\n"
+msgstr "Unidade inválida.\n"
 
 #: winerror.mc:106
 msgid "Can't delete current directory.\n"
@@ -3953,11 +3953,11 @@ msgstr "Limite de usuários do semáforo.\n"
 
 #: winerror.mc:411
 msgid "Insert disk for drive %1.\n"
-msgstr "Insira o disco para o drive %1.\n"
+msgstr "Insira o disco para a unidade %1.\n"
 
 #: winerror.mc:416
 msgid "Drive locked.\n"
-msgstr "Drive trancado.\n"
+msgstr "Unidade trancada.\n"
 
 #: winerror.mc:421
 msgid "Broken pipe.\n"
@@ -4041,39 +4041,39 @@ msgstr "Pesquisa negativa.\n"
 
 #: winerror.mc:531
 msgid "Drive is a JOIN target.\n"
-msgstr "Drive é um alvo de JOIN.\n"
+msgstr "Unidade é um alvo de JOIN.\n"
 
 #: winerror.mc:536
 msgid "Drive is already JOINed.\n"
-msgstr "Drive já está em JOIN.\n"
+msgstr "Unidade já está em JOIN.\n"
 
 #: winerror.mc:541
 msgid "Drive is already SUBSTed.\n"
-msgstr "Drive já está em SUBST.\n"
+msgstr "Unidade já está em SUBST.\n"
 
 #: winerror.mc:546
 msgid "Drive is not JOINed.\n"
-msgstr "Drive não está em JOIN.\n"
+msgstr "Unidade não está em JOIN.\n"
 
 #: winerror.mc:551
 msgid "Drive is not SUBSTed.\n"
-msgstr "Drive não está em SUBST.\n"
+msgstr "Unidade não está em SUBST.\n"
 
 #: winerror.mc:556
 msgid "Attempt to JOIN onto a JOINed drive.\n"
-msgstr "Tentativa de tornar JOIN um drive já em JOIN.\n"
+msgstr "Tentativa de efetuar JOIN em uma unidade já em JOIN.\n"
 
 #: winerror.mc:561
 msgid "Attempt to SUBST onto a SUBSTed drive.\n"
-msgstr "Tentativa de tornar SUBST um drive já em SUBST.\n"
+msgstr "Tentativa de efetuar SUBST em uma unidade já em SUBST.\n"
 
 #: winerror.mc:566
 msgid "Attempt to JOIN to a SUBSTed drive.\n"
-msgstr "Tentativa de tornar JOIN um drive já em SUBST.\n"
+msgstr "Tentativa de efetuar JOIN em uma unidade já em SUBST.\n"
 
 #: winerror.mc:571
 msgid "Attempt to SUBST to a JOINed drive.\n"
-msgstr "Tentativa de tornar SUBST um drive já em JOIN.\n"
+msgstr "Tentativa de efetuar SUBST em uma unidade já em JOIN.\n"
 
 #: winerror.mc:576
 msgid "Drive is busy.\n"
@@ -4081,7 +4081,7 @@ msgstr "Unidade ocupada.\n"
 
 #: winerror.mc:581
 msgid "Same drive.\n"
-msgstr "Mesmo drive.\n"
+msgstr "Mesma unidade.\n"
 
 #: winerror.mc:586
 msgid "Not top-level directory.\n"
@@ -4701,7 +4701,7 @@ msgstr "Reinício do barramento de E/S.\n"
 
 #: winerror.mc:1356
 msgid "No media in drive.\n"
-msgstr "Nenhuma mídia no drive.\n"
+msgstr "Nenhuma mídia na unidade.\n"
 
 #: winerror.mc:1361
 msgid "No Unicode translation.\n"
@@ -6806,7 +6806,7 @@ msgstr "faltando fonte de instalação para funcionalidade"
 
 #: msi.rc:59
 msgid "network drive for feature missing"
-msgstr "faltando drive de rede para funcionalidade"
+msgstr "faltando unidade de rede para funcionalidade"
 
 #: msi.rc:60
 msgid "feature from:"
@@ -7382,7 +7382,7 @@ msgid ""
 "make sure the correct drive is selected below"
 msgstr ""
 "Insira o disco de instalação do fabricante, depois\n"
-"verifique se o drive correto está selecionado"
+"verifique se a unidade correta está selecionada"
 
 #: setupapi.rc:54
 msgid "Copy manufacturer's files from:"
@@ -8869,7 +8869,7 @@ msgid ""
 "change drives."
 msgstr ""
 "Não é possível acessar o arquivo especificado ou o dispositivo MCI porque o "
-"aplicativo não pode mudar o drive."
+"aplicativo não pode mudar de unidade."
 
 #: winmm.rc:105
 msgid "Specify a device or driver name that is less than 79 characters."
@@ -9539,7 +9539,7 @@ msgid ""
 msgstr ""
 "LABEL é usado para rotular um volume do disco.\n"
 "\n"
-"Sintaxe: LABEL [drive:]\n"
+"Sintaxe: LABEL [unidade:]\n"
 "O comando LABEL pedirá um novo rótulo para a unidade especificada.\n"
 "Você pode mostrar o rótulo do disco com o comando VOL.\n"
 
@@ -9640,8 +9640,9 @@ msgstr ""
 "$l    Sinal de menor (<)  $n    Unidade atual       $p    Caminho atual\n"
 "$q    Sinal de igual (=)  $t    Hora atual          $v    Versão do cmd\n"
 "\n"
-"Note que entrar no comando PROMPT sem parâmetros reconfigura o prompt ao\n"
-"padrão, que é o diretório atual (que inclui a letra do drive atual) seguido\n"
+"Note que entrar no PROMPT de comando sem parâmetros reconfigura o prompt ao\n"
+"padrão, que é o diretório atual (incluindo a letra da unidade atual) "
+"seguido\n"
 "de um sinal de maior (>).\n"
 "(equivalente a um comando PROMPT $p$g).\n"
 "\n"
