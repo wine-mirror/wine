@@ -59,6 +59,7 @@ NetBSD-Info:
 
 Mac OS X Info:
   Sie benötigen mindestens Xcode 2.4 um richtig unter x86 kompilieren zu können.
+  Der Mac Treiber benötigt mindestens OS X 10.6 und kompiliert nicht unter 10.5.
 
 Unterstützte Dateisysteme:
   Wine sollte auf den meisten Dateisystemen laufen. Kompatibilitätsprobleme
