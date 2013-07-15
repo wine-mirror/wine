@@ -154,7 +154,11 @@ static inline char *get_text(HWND dialog, WORD id)
     HWND item = GetDlgItem(dialog, id);
     int len = GetWindowTextLengthA(item) + 1;
     char *result = len ? HeapAlloc(GetProcessHeap(), 0, len) : NULL;
-    if (!result || GetWindowTextA(item, result, len) == 0) return NULL;
+    if (!result) return NULL;
+    if (GetWindowTextA(item, result, len) == 0) {
+        HeapFree (GetProcessHeap(), 0, result);
+        return NULL;
+    }
     return result;
 }
 
@@ -163,7 +167,11 @@ static inline WCHAR *get_textW(HWND dialog, WORD id)
     HWND item = GetDlgItem(dialog, id);
     int len = GetWindowTextLengthW(item) + 1;
     WCHAR *result = len ? HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR)) : NULL;
-    if (!result || GetWindowTextW(item, result, len) == 0) return NULL;
+    if (!result) return NULL;
+    if(GetWindowTextW(item, result, len) == 0) {
+        HeapFree (GetProcessHeap(), 0, result);
+        return NULL;
+    }
     return result;
 }
 
