@@ -54,6 +54,7 @@ NetBSD info:
 
 Mac OS X info:
   You need Xcode 2.4 or later to build properly on x86.
+  The Mac driver requires OS X 10.6 or later and won't be built on 10.5.
 
 
 Supported file systems:
