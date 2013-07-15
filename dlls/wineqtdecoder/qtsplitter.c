@@ -884,6 +884,10 @@ static HRESULT QT_Process_Video_Track(QTSplitter* filter, Track trk)
     int t;
     DWORD outputWidth, outputHeight, outputDepth;
     Fixed trackWidth, trackHeight;
+    Media videoMedia;
+    long sampleCount;
+    TimeValue64 duration;
+    TimeScale timeScale;
 
     ZeroMemory(&amt, sizeof(amt));
     amt.formattype = FORMAT_VideoInfo;
@@ -951,6 +955,12 @@ static HRESULT QT_Process_Video_Track(QTSplitter* filter, Track trk)
         ERR("Failed to set Visual Context\n");
         return E_FAIL;
     }
+
+    videoMedia = GetTrackMedia(trk);
+    sampleCount = GetMediaSampleCount(videoMedia);
+    timeScale = GetMediaTimeScale(videoMedia);
+    duration = GetMediaDisplayDuration(videoMedia);
+    pvi->AvgTimePerFrame = (100000.0 * sampleCount * timeScale) / duration;
 
     piOutput.dir = PINDIR_OUTPUT;
     piOutput.pFilter = &filter->filter.IBaseFilter_iface;
