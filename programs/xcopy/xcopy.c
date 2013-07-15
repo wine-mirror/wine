@@ -291,6 +291,7 @@ static BOOL XCOPY_ProcessExcludeFile(WCHAR* filename, WCHAR* endOfName) {
     if (!feof(inFile)) {
         XCOPY_wprintf(XCOPY_LoadMessage(STRING_READFAIL), filename);
         *endOfName = endChar;
+        fclose(inFile);
         return TRUE;
     }
 
