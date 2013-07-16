@@ -2,20 +2,21 @@
 .SH NAME
 regsvr32 \- Wine DLL Registration Server
 .SH SYNOPSIS
-.BR "regsvr32 [/u] [/s] [/n] [/i [:cmdline]] dllname"
+.B regsvr32
+.RB [ /u "] [" /s "] [" /n "] [" /i "[\fB:\fIcmdline\fR]] " \fIdllname
 .SH DESCRIPTION
 .B regsvr32
 is the Wine dll registration server, designed to be compatible with its Microsoft Windows counterpart.
 By default, it will register the given dll.
 .SH COMMANDS
-.IP "\fl/u dllname\fR"
+.IP \fB/u
 Unregister the specified dll.
-.IP "\fl/s\fR"
+.IP \fB/s
 Run regsvr32 silently (will not show any GUI dialogs).
-.IP "\fl/i\fR"
-Call DllInstall passing it an optional [cmdline]. When used with /u calls DllUninstall.
-.IP "\fl/n\fR"
-Do not call DllRegisterServer; this option must be used with [/i].
+.IP \fB/i
+Call DllInstall passing it an optional \fIcmdline\fR. When used with \fB/u\fR calls DllUninstall.
+.IP \fB/n
+Do not call DllRegisterServer; this option must be used with \fB/i\fR.
 .SH BUGS
 Bugs can be reported on the
 .UR http://bugs.winehq.org
