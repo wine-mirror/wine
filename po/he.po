@@ -9434,6 +9434,24 @@ msgid ""
 "  /S  Processes matching files in the current folder and all subfolders.\n"
 "  /D  Processes folders as well.\n"
 msgstr ""
+"ATTRIB - Displays or changes file attributes.\n"
+"\n"
+"Syntax:\n"
+"ATTRIB [+R | -R] [+A | -A ] [+S | -S] [+H | -H] [drive:][path][filename]\n"
+"       [/S [/D]]\n"
+"\n"
+"Where:\n"
+"\n"
+"  +   Sets an attribute.\n"
+"  -   Clears an attribute.\n"
+"  R   Read-only file attribute.\n"
+"  A   Archive file attribute.\n"
+"  S   System file attribute.\n"
+"  H   Hidden file attribute.\n"
+"  [drive:][path][filename]\n"
+"      Specifies a file or files for attrib to process.\n"
+"  /S  Processes matching files in the current folder and all subfolders.\n"
+"  /D  Processes folders as well.\n"
 
 #: clock.rc:29
 msgid "Ana&log"
@@ -9827,6 +9845,32 @@ msgid ""
 "/ProgIDOpen  Open a document using the specified progID.\n"
 "/?           Display this help and exit.\n"
 msgstr ""
+"Start a program, or open a document in the program normally used for files "
+"with that suffix.\n"
+"Usage:\n"
+"start [options] program_filename [...]\n"
+"start [options] document_filename\n"
+"\n"
+"Options:\n"
+"\"title\"      Specifies the title of the child windows.\n"
+"/d directory Start the program in the specified directory.\n"
+"/b           Don't create a new console for the program.\n"
+"/i           Start the program with fresh environment variables.\n"
+"/min         Start the program minimized.\n"
+"/max         Start the program maximized.\n"
+"/low         Start the program in the idle priority class.\n"
+"/normal      Start the program in the normal priority class.\n"
+"/high        Start the program in the high priority class.\n"
+"/realtime    Start the program in the realtime priority class.\n"
+"/abovenormal Start the program in the abovenormal priority class.\n"
+"/belownormal Start the program in the belownormal priority class.\n"
+"/node n      Start the program on the specified NUMA node.\n"
+"/affinity mask Start the program with the specified affinity mask.\n"
+"/wait        Wait for the started program to finish, then exit with its exit "
+"code.\n"
+"/unix        Use a Unix filename and start the file like windows explorer.\n"
+"/ProgIDOpen  Open a document using the specified progID.\n"
+"/?           Display this help and exit.\n"
 
 #: cmd.rc:208
 msgid "TIME sets or shows the current system time.\n"
@@ -9917,6 +9961,14 @@ msgid ""
 "Specifying no file type after the equal sign removes the current "
 "association, if any.\n"
 msgstr ""
+"ASSOC shows or modifies file extension associations.\n"
+"\n"
+"Syntax: ASSOC [.ext[=[fileType]]]\n"
+"\n"
+"ASSOC without parameters displays current file associations.\n"
+"If used with only a file extension, displays the current association.\n"
+"Specifying no file type after the equal sign removes the current "
+"association, if any.\n"
 
 #: cmd.rc:264
 msgid ""
@@ -9931,6 +9983,16 @@ msgid ""
 "Specifying no open command after the equal sign removes the command string "
 "associated to the specified file type.\n"
 msgstr ""
+"FTYPE shows or modifies open commands associated with file types.\n"
+"\n"
+"Syntax: FTYPE [fileType[=[openCommand]]]\n"
+"\n"
+"Without parameters, shows the file types for which open command strings are "
+"currently defined.\n"
+"If used with only a file type, displays the associated open command string, "
+"if any.\n"
+"Specifying no open command after the equal sign removes the command string "
+"associated to the specified file type.\n"
 
 #: cmd.rc:266
 msgid "MORE displays output of files or piped input in pages.\n"
@@ -10177,11 +10239,11 @@ msgstr "The input line is too long.\n"
 
 #: cmd.rc:349
 msgid "Volume in drive %1!c! is %2\n"
-msgstr ""
+msgstr "Volume in drive %1!c! is %2\n"
 
 #: cmd.rc:350
 msgid "Volume in drive %1!c! has no label.\n"
-msgstr ""
+msgstr "Volume in drive %1!c! has no label.\n"
 
 #: cmd.rc:351
 msgid " (Yes|No)"
@@ -10195,28 +10257,31 @@ msgstr " (Yes|No|All)"
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
 msgstr ""
+"Can't recognize '%1' as an internal or external command, or batch script.\n"
 
 #: cmd.rc:354
 msgid "Division by zero error.\n"
-msgstr ""
+msgstr "Division by zero error.\n"
 
 #: cmd.rc:355
 msgid "Expected an operand.\n"
-msgstr ""
+msgstr "Expected an operand.\n"
 
 #: cmd.rc:356
 msgid "Expected an operator.\n"
-msgstr ""
+msgstr "Expected an operator.\n"
 
 #: cmd.rc:357
 msgid "Mismatch in parentheses.\n"
-msgstr ""
+msgstr "Mismatch in parentheses.\n"
 
 #: cmd.rc:358
 msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"
 msgstr ""
+"Badly formed number - must be one of decimal (12),\n"
+" hexadecimal (0x34) or octal (056).\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -10267,10 +10332,8 @@ msgid "Connection-specific DNS suffix"
 msgstr "Connection-specific DNS suffix"
 
 #: ipconfig.rc:33
-#, fuzzy
-#| msgid "IP Address="
 msgid "IPv4 address"
-msgstr "כתובת IP="
+msgstr "IPv4 address"
 
 #: ipconfig.rc:34
 msgid "Hostname"
@@ -10313,10 +10376,8 @@ msgid "Default gateway"
 msgstr "Default gateway"
 
 #: ipconfig.rc:47
-#, fuzzy
-#| msgid "IP Address="
 msgid "IPv6 address"
-msgstr "כתובת IP="
+msgstr "IPv6 address"
 
 #: net.rc:27
 msgid ""
@@ -14041,21 +14102,16 @@ msgid "Help topics: "
 msgstr "נושאי העזרה: "
 
 #: wmic.rc:25
-#, fuzzy
-#| msgid "Error: Invalid command line parameters\n"
 msgid "Error: Command line not supported\n"
-msgstr "Error: Invalid command line parameters\n"
+msgstr "Error: Command line not supported\n"
 
 #: wmic.rc:26
-#, fuzzy
 msgid "Error: Alias not found\n"
-msgstr "PATH not found.\n"
+msgstr "Error: Alias not found\n"
 
 #: wmic.rc:27
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "Error: Invalid query\n"
-msgstr "Error: Invalid key name\n"
+msgstr "Error: Invalid query\n"
 
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
