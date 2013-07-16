@@ -94,8 +94,7 @@ WINEPREFIX directory device and inode numbers.
 The original author of
 .B wineserver
 is Alexandre Julliard. Many other people have contributed new features
-and bug fixes. Please check the file Changelog in the Wine
-distribution for the complete details.
+and bug fixes. For a complete list, see the git commit logs.
 .SH BUGS
 Bugs can be reported on the
 .UR http://bugs.winehq.org
