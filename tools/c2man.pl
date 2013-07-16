@@ -1200,7 +1200,7 @@ sub output_spec($)
     "",
     $contribstring,
     "Note: This list may not be complete.",
-    "For a complete listing, see the Files \"AUTHORS\" and \"Changelog\" in the Wine source tree.",
+    "For a complete listing, see the git commit logs and the File \"AUTHORS\" in the Wine source tree.",
     "",
   );
 
@@ -1850,8 +1850,8 @@ sub output_master_index_files()
     "implements a given API call. Authors of each dll are listed in the overview ",
     "section for that dll. Additional contributors who have updated source files ",
     "but have not entered their names in a copyright statement are noted by an ",
-    "entry in the file \"Changelog\" from the Wine source code distribution.",
-      ""
+    "entry in the git commit logs.",
+    ""
   );
 
   # Read in all dlls from the database of dll names
