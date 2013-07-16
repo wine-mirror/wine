@@ -2,22 +2,27 @@
 .SH NAME
 msiexec \- Wine MSI Installer
 .SH SYNOPSIS
-.BR "msiexec "\fIcommand\fR " \fI{required parameter}\fR \fI[optional parameter]\fR"...
+.B msiexec
+.I command
+.RI { "required parameter" }
+.RI [ "optional parameter" ]...
 .SH DESCRIPTION
 .B msiexec
 is the Wine MSI installer, which is command line
 compatible with its Microsoft Windows counterpart.
 .SH INSTALL OPTIONS
-.IP "\fl/i {package|productcode} [property=foobar]\fR"
+.IP \fB/i\ \fR{\fIpackage\fR|\fIproductcode\fR}\ \fR[\fIproperty\fR=\fIfoobar\fR]
 Install {package|productcode} with property=foobar.
-.IP "\fl/a {package|productcode} [property=foobar]\fR"
+.IP \fB/a\ \fR{\fIpackage\fR|\fIproductcode\fR}\ \fR[\fIproperty\fR=\fIfoobar\fR]
 Install {package|productcode} in administrator (network) mode.
-.IP "\fx/x {package|productcode} [property=foobar]\fR"
+.IP \fB/x\ \fR{\fIpackage\fR|\fIproductcode\fR}\ \fR[\fIproperty\fR=\fIfoobar\fR]
 Uninstall {package|productcode} with property=foobar.
-.IP "\fx/uninstall {package|productcode} [property=foobar]\fR"
-Same as /x.
+.IP \fB/uninstall\ \fR{\fIpackage\fR|\fIproductcode\fR}\ \fR[\fIproperty\fR=\fIfoobar\fR]
+Same as \fB/x\fR.
 .SH REPAIR OPTIONS
-.IP "\fl/f [p|o|e|d|c|a|u|m|s|v] {package|productcode}\fR"
+.IP \fB/f\fR\ \
+\fR[\fBp\fR|\fBo\fR|\fBe\fR|\fBd\fR|\fBc\fR|\fBa\fR|\fBu\fR|\fBm\fR|\fBs\fR|\fBv\fR]\ \
+\fR{\fIpackage\fR|\fIproductcode\fR}
 Repair an installation. Default options are \'omus\'
 .IP "\flp\fR"
 Reinstall the file if it is missing.
@@ -40,24 +45,26 @@ Overwrite any conflicting shortcuts.
 .IP "\flv\fR"
 Recache the local installation package from the source installation package.
 .SH PATCHING
-.IP "\fx/p {patch} [property=foobar]\fR"
-Apply {patch}. This should not be used with any of the above options.
-.SH UI CONTOL
-.IP "\fx/q{|n|b|r|f}\fR"
+.IP \fB/p\ \fR{\fIpatch\fR}\ \fR[\fIproperty\fR=\fIfoobar\fR]
+Apply \fIpatch\fR. This should not be used with any of the above options.
+.SH UI CONTROL
+.IP \fB/q\fR[\fBn\fR|\fBb\fR|\fBr\fR|\fBf\fR]
 These options allow changing the behavior of the UI when installing MSI packages.
-.IP "\fx/q\fR"
+.IP \fB/q\fR
 Show no UI.
-.IP "\fx/qn\fR"
-Same as /q.
-.IP "\fx/qb\fR"
+.IP \fB/qn
+Same as \fB/q\fR.
+.IP \fB/qb
 Show a basic UI.
-.IP "\fx/qr\fR"
+.IP \fB/qr
 Shows a reduced user UI.
-.IP "\fx/qf\fR"
+.IP \fB/qf
 Shows a full UI.
 .SH LOGGING
-.IP "\fl/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] {logfile}\fR"
-Enable logging to {logfile}. Defaults are \'iwearmo\'.
+.IP \fB/l\fR[\fB*\fR]\
+[\fBi\fR|\fBw\fR|\fBe\fR|\fBa\fR|\fBr\fR|\fBu\fR|\fBc\fR|\fBm\fR|\fBo\fR|\fBp\fR|\fBv\fR]\
+[\fB+\fR|\fB!\fR]\ {\fIlogfile\fR}
+Enable logging to \fIlogfile\fR. Defaults are \'iwearmo\'.
 .IP "\fl*\fR"
 Enable all logging options except \'v\' and \'x\'.
 .IP "\fli\fR"
@@ -89,16 +96,17 @@ Append logging to existing file.
 .IP "\fl! \fR"
 Flush each line to log.
 .SH OTHER OPTIONS
-.IP "\fx/h\fR"
+.IP \fB/h
 Show help.
-.IP "\fx/j[u|m] {package|productcode} [/t transform] [/g languageid] \fR"
-Advertise {package} optionally with /t {transform} and /g {languageid}.
-.IP "\fx/y\fR"
+.IP "\fB/j\fR[\fBu\fR|\fBm\fR] {\fIpackage\fR|\fIproductcode\fR} \
+[\fB/t \fItransform\fR] [\fB/g \fIlanguageid\fR]"
+Advertise \fIpackage\fR optionally with \fB/t \fItransform\fR and \fB/g \fIlanguageid\fR.
+.IP \fB/y
 Register MSI service.
-.IP "\fx/z\fR"
+.IP \fB/z
 Unregister MSI service.
-.IP "\fx/?\fR"
-Same as /h.
+.IP \fB/?
+Same as \fB/h\fR.
 
 .SH BUGS
 Bugs can be reported on the
