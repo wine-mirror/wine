@@ -477,9 +477,8 @@ can be a decimal number or a hex number preceded by "0x".
 .B winebuild
 has been worked on by many people over the years. The main authors are
 Robert J. Amstadt, Alexandre Julliard, Martin von Loewis, Ulrich
-Weigand and Eric Youngdale. Many other Wine developers have
-contributed, please check the file Changelog in the Wine distribution
-for the complete details.
+Weigand and Eric Youngdale. Many other people have contributed new features
+and bug fixes. For a complete list, see the git commit logs.
 .SH BUGS
 It is not yet possible to use a PE-format dll in an import
 specification; only Wine dlls can be imported.
