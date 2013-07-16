@@ -2,7 +2,8 @@
 .SH NAME
 notepad \- Wine text editor
 .SH SYNOPSIS
-.BR "notepad "\fI[text\ file]\fR "
+.B notepad
+.RI [ text\ file ]
 .SH DESCRIPTION
 .B notepad
 is the Wine text editor, designed to be compatible with its Microsoft Windows counterpart.
