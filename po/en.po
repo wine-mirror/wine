@@ -11476,7 +11476,7 @@ msgstr "Contains commands for editing values or keys"
 
 #: regedit.rc:136
 msgid "Contains commands for customizing the registry window"
-msgstr "Contains commands for customizing the registry window"
+msgstr "Contains commands for customising the registry window"
 
 #: regedit.rc:137
 msgid "Contains commands for accessing frequently used keys"
