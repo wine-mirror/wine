@@ -2,31 +2,29 @@
 .SH NAME
 wineboot \- perform Wine initialization, startup, and shutdown tasks
 .SH SYNOPSIS
-.BR "wineboot "\fI[OPTION]\fR "
+.B wineboot
+.RI [ options ]
 .SH DESCRIPTION
 .B wineboot
 performs the initial creation and setup of a WINEPREFIX for wine(1). It can also perform a simulated
 reboot or shutdown to any applications running within the WINEPREFIX.
-.SH "SEE ALSO"
-.BR wine(1)
 .SH "OPTIONS"
-.IP \-h,\ \-\-help
+.IP \fB\-h\fR,\fB\ \-\-help
 Display help message.
-.IP \-e,\ \-\-end\-session
+.IP \fB\-e\fR,\fB\ \-\-end\-session
 End the current session cleanly.
-.IP \-f,\ \-\-force
+.IP \fB\-f\fR,\fB\ \-\-force
 Force exit for processes that don't exit cleanly
-.IP \-i,\ \-\-init
+.IP \fB\-i\fR,\fB\ \-\-init
 Initialize the WINEPREFIX.
-.IP \-k,\  \-\-kill
+.IP \fB\-k\fR,\fB\ \-\-kill
 Kill running processes without any cleanup.
-.IP \-r,\ \-\-restart
+.IP \fB\-r\fR,\fB\ \-\-restart
 Restart only, don't do normal startup operations.
-.IP \-s,\ \-\-shutdown
+.IP \fB\-s\fR,\fB\ \-\-shutdown
 Shutdown only, don't reboot.
-.IP \-u,\ \-\-update
+.IP \fB\-u\fR,\fB\ \-\-update
 Update the WINEPREFIX.
-
 .SH BUGS
 Bugs can be reported on the
 .UR http://bugs.winehq.org
