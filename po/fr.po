@@ -8919,50 +8919,46 @@ msgstr ""
 "La commande spécifiée nécessite un paramètre entier. Veuillez en fournir un."
 
 #: winmm.rc:108
-#, fuzzy
 msgid ""
 "All wave devices that can play files in the current format are in use. Wait "
 "until a wave device is free, and then try again."
 msgstr ""
-"Tous les périphériques audio capables de jouer des fichiers sous ce format "
-"sont en cours d'utilisation. Attendez qu'un périphérique audio soit libre, "
+"Tous les périphériques audio capables de jouer des fichiers dans ce format "
+"sont en cours d'utilisation. Attendez qu'un périphérique audio se libère, "
 "puis essayez à nouveau."
 
 #: winmm.rc:109
-#, fuzzy
 msgid ""
 "Cannot set the current wave device for play back because it is in use. Wait "
 "until the device is free, and then try again."
 msgstr ""
-"Le périphérique audio de lecture est en cours d'utilisation. Attendez qu'il "
-"soit disponible, puis essayez à nouveau."
+"Impossible de sélectionner le périphérique audio actuel pour la lecture car "
+"il est en cours d'utilisation. Attendez qu'il se libère, puis essayez à "
+"nouveau."
 
 #: winmm.rc:110
-#, fuzzy
 msgid ""
 "All wave devices that can record files in the current format are in use. "
 "Wait until a wave device is free, and then try again."
 msgstr ""
-"Tous les périphériques audio capables d'enregistrer des fichiers sous ce "
-"format sont en cours d'utilisation. Attendez qu'un périphérique audio soit "
-"libre, puis essayez à nouveau."
+"Tous les périphériques audio capables d'enregistrer des fichiers dans ce "
+"format sont en cours d'utilisation. Attendez qu'un périphérique audio se "
+"libère, puis essayez à nouveau."
 
 #: winmm.rc:111
-#, fuzzy
 msgid ""
 "Cannot set the current wave device for recording because it is in use. Wait "
 "until the device is free, and then try again."
 msgstr ""
-"Le périphérique audio d'enregistrement est en cours d'utilisation. Attendez "
-"qu'il soit libre, puis essayez à nouveau."
+"Impossible de sélectionner le périphérique audio actuel pour "
+"l'enregistrement car il est en cours d'utilisation. Attendez qu'il se "
+"libère, puis essayez à nouveau."
 
 #: winmm.rc:112
-#, fuzzy
 msgid "Any compatible waveform playback device may be used."
 msgstr "N'importe quel périphérique audio de lecture peut être utilisé."
 
 #: winmm.rc:113
-#, fuzzy
 msgid "Any compatible waveform recording device may be used."
 msgstr "N'importe quel périphérique audio d'enregistrement peut être utilisé."
 
@@ -8972,8 +8968,8 @@ msgid ""
 "No wave device that can play files in the current format is installed. Use "
 "the Drivers option to install the wave device."
 msgstr ""
-"Aucun périphérique audio capable de jouer des fichiers sous le format en "
-"cours n'a été installé."
+"Aucun périphérique audio capable de jouer des fichiers dans le format en "
+"cours n'est présent. "
 
 #: winmm.rc:115
 msgid ""
@@ -8989,7 +8985,7 @@ msgid ""
 "the Drivers option to install the wave device."
 msgstr ""
 "Aucun périphérique audio capable d'enregistrer des fichiers dans le format "
-"en cours n'a été installé."
+"en cours n'est présent."
 
 #: winmm.rc:117
 msgid ""
