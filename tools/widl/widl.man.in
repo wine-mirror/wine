@@ -120,7 +120,7 @@ Ignored, present for midl compatibility.
 Generate empty stubs for call_as/local methods in an object interface and
 write them to \fIfile\fR.
 .PP
-.SH Debug
+.SH DEBUG
 Debug level \fIn\fR is a bitmask with the following meaning:
     * 0x01 Tell which resource is parsed (verbose mode)
     * 0x02 Dump internal structures
@@ -129,16 +129,24 @@ Debug level \fIn\fR is a bitmask with the following meaning:
     * 0x10 Preprocessor lex messages
     * 0x20 Preprocessor yacc trace
 .SH BUGS
-.B widl
-is incomplete.  Please file bug reports for this application at
-.I http://bugs.winehq.org.
+Bugs can be reported on the
+.UR http://bugs.winehq.org
+.B Wine bug tracker
+.UE .
 .SH AUTHORS
 .B widl
 was originally written by Ove Kaaven.  It has been improved by Rob Shearman,
 Dan Hipschman, and others.  For a complete list, see the git commit logs.
 This man page was originally written by Hannu Valtonen and then updated by
 Dan Hipschman.
+.SH AVAILABILITY
+.B widl
+is part of the Wine distribution, which is available through WineHQ,
+the
+.UR http://www.winehq.org/
+.B Wine development headquarters
+.UE .
 .SH "SEE ALSO"
-The Winelib User Guide
-.nf
-The Wine Developers Guide
+.UR http://www.winehq.org/help
+.B Wine documentation and support
+.UE .

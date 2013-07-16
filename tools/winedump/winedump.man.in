@@ -213,13 +213,25 @@ source tree.
 .SH BUGS
 C++ name demangling is not fully in sync with the implementation in msvcrt.
 It might be useful to submit your C++ name to the testsuite for msvcrt.
+.PP
+Bugs can be reported on the
+.UR http://bugs.winehq.org
+.B Wine bug tracker
+.UE .
 .SH AUTHORS
 Jon P. Griffiths <jon_p_griffiths at yahoo dot com>
 .nf
 Michael Stefaniuc <mstefani at redhat dot com>
+.SH AVAILABILITY
+.B winedump
+is part of the Wine distribution, which is available through WineHQ,
+the
+.UR http://www.winehq.org/
+.B Wine development headquarters
+.UE .
 .SH "SEE ALSO"
-.BR winedump "'s README file"
-.nf
-The Winelib User Guide
-.nf
-The Wine Developers Guide
+.BR wine (1)
+.br
+.UR http://www.winehq.org/help
+.B Wine documentation and support
+.UE .

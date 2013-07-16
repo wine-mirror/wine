@@ -257,7 +257,7 @@ debugger
 .TP 
 .I @dlldir@
 Directory containing 
-.BR wine 's
+.BR wine
 shared libraries 
 .TP
 .I $WINEPREFIX/dosdevices
@@ -287,43 +287,28 @@ license is in the file
 in the top-level directory of the source distribution.
 .SH BUGS
 .PP
-A status report on many applications is available from
-.IR http://appdb.winehq.org .
+A status report on many applications is available from the
+.UR http://appdb.winehq.org
+.B Wine Application Database
+.UE .
 Please add entries to this list for applications you currently run, if
-there is no entry for this application.
+necessary.
 .PP
-Bug reports may be posted to Wine Bugzilla
-.IR http://bugs.winehq.org .
-If you want to post a bug report, please see
-.IR http://wiki.winehq.org/Bugs .
-.PP
-Problems and suggestions with this manpage can also be reported on
-.IR http://bugs.winehq.org .
+Bugs can be reported on the
+.UR http://bugs.winehq.org
+.B Wine bug tracker
+.UE .
 .SH AVAILABILITY
 The most recent public version of 
 .B wine
-can be downloaded from
-.IR http://www.winehq.org/download .
-.PP
-The latest snapshot of the code may be obtained via GIT.  For information
-on how to do this, please see
-.I
-http://www.winehq.org/site/git
-.PP
-WineHQ, the
-.B wine
-development headquarters, is at
-.IR http://www.winehq.org .
-This website contains a great deal of information about
-.BR wine .
-.PP
-For further information about 
-.B wine
-development, you might want to subscribe to the 
-.B wine 
-mailing lists at
-.IR http://www.winehq.org/forums .
-
+is available through WineHQ, the
+.UR http://www.winehq.org/
+.B Wine development headquarters
+.UE .
 .SH "SEE ALSO"
 .BR wineserver (1),
-.BR winedbg (1)
+.BR winedbg (1),
+.br
+.UR http://www.winehq.org/help
+.B Wine documentation and support
+.UE .

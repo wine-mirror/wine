@@ -16,5 +16,21 @@ Run regsvr32 silently (will not show any GUI dialogs).
 Call DllInstall passing it an optional [cmdline]. When used with /u calls DllUninstall.
 .IP "\fl/n\fR"
 Do not call DllRegisterServer; this option must be used with [/i].
+.SH BUGS
+Bugs can be reported on the
+.UR http://bugs.winehq.org
+.B Wine bug tracker
+.UE .
+.SH AVAILABILITY
+.B regsvr32
+is part of the Wine distribution, which is available through WineHQ,
+the
+.UR http://www.winehq.org/
+.B Wine development headquarters
+.UE .
 .SH "SEE ALSO"
-.BR wine(1)
+.BR wine (1),
+.br
+.UR http://www.winehq.org/help
+.B Wine documentation and support
+.UE .

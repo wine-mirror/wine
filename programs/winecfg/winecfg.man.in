@@ -9,5 +9,21 @@ is the Wine configuration editor. It allows you to change several settings, such
 (native versus builtin), enable a virtual desktop, setup disk drives, and change the Wine audio driver,
 among others. Many of these settings can be made on a per application basis, for example, preferring native
 riched20.dll for wordpad.exe, but not for notepad.exe.
+.SH BUGS
+Bugs can be reported on the
+.UR http://bugs.winehq.org
+.B Wine bug tracker
+.UE .
+.SH AVAILABILITY
+.B winecfg
+is part of the Wine distribution, which is available through WineHQ,
+the
+.UR http://www.winehq.org/
+.B Wine development headquarters
+.UE .
 .SH "SEE ALSO"
-.BR wine(1)
+.BR wine (1),
+.br
+.UR http://www.winehq.org/help
+.B Wine documentation and support
+.UE .

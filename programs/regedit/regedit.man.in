@@ -2,7 +2,7 @@
 .SH NAME
 regedit \- Wine registry editor
 .SH SYNOPSIS
-.BR "regedit "\fI[text file]\fR "
+.BR "regedit "\fI[text\ file]\fR "
 .SH DESCRIPTION
 .B regedit
 is the Wine registry editor, designed to be compatible with its Microsoft Windows counterpart.
@@ -14,19 +14,35 @@ The switches are case\-insensitive and can be prefixed either by '\-' or '/'.
 \fB\-E\fR \fIfile\fR [\fIregpath\fR]
 Exports the content of the specified registry key to the specified \fIfile\fR. It exports
 the whole registry if no key is specified.
-.IP "\-D " regpath
+.IP \fB\-D\fR\ regpath
 Deletes the specified registry key.
-.IP \-S
+.IP \fB\-S\fR
 Run regedit silently (ignored, CLI mode is always silent). This exists for compatibility with Windows regedit.
-.IP \-V
+.IP \fB\-V\fR
 Run regedit in advanced mode (ignored). This exists for compatibility with Windows regedit.
-.IP  "\-L " location
+.IP  \fB\-L\fR\ location
 Specifies the location of the system.dat registry file (ignored). This exists for compatibility with Windows regedit.
-.IP "\-R " location
+.IP \fB\-R\fR\ location
 Specifies the location of the user.dat registry file (ignored). This exists for compatibility with Windows regedit.
-.IP  \-?
+.IP \fB\-?\fR
 Prints a help message. Any other options are ignored.
-.IP  \-C \fIfile.reg\fR
+.IP \fB\-C\fR\ \fIfile.reg\fR
 Create registry from \fIfile\fR (unimplemented).
+.SH BUGS
+Bugs can be reported on the
+.UR http://bugs.winehq.org
+.B Wine bug tracker
+.UE .
+.SH AVAILABILITY
+.B regedit
+is part of the Wine distribution, which is available through WineHQ,
+the
+.UR http://www.winehq.org/
+.B Wine development headquarters
+.UE .
 .SH "SEE ALSO"
-.BR wine(1)
+.BR wine (1),
+.br
+.UR http://www.winehq.org/help
+.B Wine documentation and support
+.UE .

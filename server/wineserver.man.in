@@ -97,7 +97,7 @@ is Alexandre Julliard. Many other people have contributed new features
 and bug fixes. Please check the file Changelog in the Wine
 distribution for the complete details.
 .SH BUGS
-If you find a bug, please submit a bug report on the
+Bugs can be reported on the
 .UR http://bugs.winehq.org
 .B Wine bug tracker
 .UE .
@@ -109,4 +109,8 @@ the
 .B Wine development headquarters
 .UE .
 .SH "SEE ALSO"
-.BR wine (1).
+.BR wine (1),
+.br
+.UR http://www.winehq.org/help
+.B Wine documentation and support
+.UE .

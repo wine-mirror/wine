@@ -78,13 +78,27 @@ due to lack of support for these features in the ELF version of gcc.
 Static linking is not currently supported against Wine's DLL. As a
 result, the -static, --static, and -Wl,-static options will generate
 an error.
+.PP
+Bugs can be reported on the
+.UR http://bugs.winehq.org
+.B Wine bug tracker
+.UE .
 .SH AUTHORS
 .B winegcc
 was written by Dimitrie O. Paun.
+.SH AVAILABILITY
+.B winegcc
+is part of the Wine distribution, which is available through WineHQ,
+the
+.UR http://www.winehq.org/
+.B Wine development headquarters
+.UE .
 .SH "SEE ALSO"
-.BR gcc(1),
-.BR winebuild(1),
-.BR wrc(1),
-.BR wine(1),
-.BR "Winelib User Guide",
-.BR "Wine Developers Guide".
+.BR gcc (1),
+.BR winebuild (1),
+.BR wrc (1),
+.BR wine (1),
+.br
+.UR http://www.winehq.org/help
+.B Wine documentation and support
+.UE .

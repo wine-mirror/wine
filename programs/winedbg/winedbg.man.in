@@ -408,17 +408,25 @@ Since no user input is possible, no commands are available.
 When used in \fBgdb\fR proxy mode, \fBWINE_GDB\fR specifies the name
 (and the path) of the executable to be used for \fBgdb\fR. \fB"gdb"\fR
 is used by default.
-.SH FILES
-No specific files are used (yet).
-.SH BUGS
-A lot.
 .SH AUTHORS
 The first version was written by Eric Youngdale.
 .PP
 See Wine developers list for the rest of contributors.
+.SH BUGS
+Bugs can be reported on the
+.UR http://bugs.winehq.org
+.B Wine bug tracker
+.UE .
+.SH AVAILABILITY
+.B winedbg
+is part of the Wine distribution, which is available through WineHQ,
+the
+.UR http://www.winehq.org/
+.B Wine development headquarters
+.UE .
 .SH "SEE ALSO"
-.BR winedbg " README file"
-.nf
-The Winelib User Guide
-.nf
-The Wine Developers Guide
+.BR wine (1),
+.br
+.UR http://www.winehq.org/help
+.B Wine documentation and support
+.UE .

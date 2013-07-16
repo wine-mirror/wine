@@ -220,7 +220,6 @@ $ make
 .PP
 
 .SH TODO / BUGS
-.PP
 In some cases you will have to edit the Makefile or source files by yourself.
 .PP
 Assuming that the windows executable/library is available, we could
@@ -235,20 +234,26 @@ executable: it must either be in the current directory or in the
 .PP
 Winemaker does not support message files and the message compiler yet.
 .PP
-
-.SH SEE ALSO
-.PP
-The Winelib User Guide:
-.PP
-http://www.winehq.org/docs/winelib-guide/index
-.PP
-.BR wine (1)
-.PP
-
+Bugs can be reported on the
+.UR http://bugs.winehq.org
+.B Wine bug tracker
+.UE .
 .SH AUTHORS
 François Gouget for CodeWeavers
-.PP
+.br
 Dimitrie O. Paun
-.PP
+.br
 André Hentschel
-.PP
+.SH AVAILABILITY
+.B winemaker
+is part of the Wine distribution, which is available through WineHQ,
+the
+.UR http://www.winehq.org/
+.B Wine development headquarters
+.UE .
+.SH SEE ALSO
+.BR wine (1),
+.br
+.UR http://www.winehq.org/help
+.B Wine documentation and support
+.UE .

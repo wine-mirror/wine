@@ -484,20 +484,22 @@ for the complete details.
 It is not yet possible to use a PE-format dll in an import
 specification; only Wine dlls can be imported.
 .PP
-If you find a bug, please submit a bug report at
+Bugs can be reported on the
 .UR http://bugs.winehq.org
-.B http://bugs.winehq.org.
-.UE
+.B Wine bug tracker
+.UE .
 .SH AVAILABILITY
 .B winebuild
-is part of the wine distribution, which is available through WineHQ,
+is part of the Wine distribution, which is available through WineHQ,
 the
-.B wine
-development headquarters, at
 .UR http://www.winehq.org/
-.B http://www.winehq.org/.
-.UE
+.B Wine development headquarters
+.UE .
 .SH "SEE ALSO"
 .BR wine (1),
 .BR winegcc (1),
-.BR wrc (1).
+.BR wrc (1),
+.br
+.UR http://www.winehq.org/help
+.B Wine documentation and support
+.UE .
