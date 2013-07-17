@@ -1,9 +1,9 @@
-.\" -*- nroff -*-
 .TH WINEBUILD 1 "October 2005" "@PACKAGE_STRING@" "Wine Developers Manual"
 .SH NAME
 winebuild \- Wine dll builder
 .SH SYNOPSIS
-.BI winebuild\  [options]\ [input\ files]
+.B winebuild
+.RI [ options ]\ [ inputfile ...]
 .SH DESCRIPTION
 .B winebuild
 generates the assembly files that are necessary to build a Wine dll,
@@ -21,7 +21,7 @@ what you want winebuild to generate.
 .BI \--dll
 Build an assembly file from a .spec file (see \fBSPEC FILE SYNTAX\fR
 for details), or from a standard Windows .def file. The .spec/.def
-file is specified via the -E option. The resulting file must be
+file is specified via the \fB-E\fR option. The resulting file must be
 assembled and linked to the other object files to build a working Wine
 dll.  In this mode, the
 .I input files
@@ -33,22 +33,22 @@ other dlls.
 .TP
 .BI \--exe
 Build an assembly file for an executable. This is basically the same as
-the --dll mode except that it doesn't require a .spec/.def file as input,
+the \fB--dll\fR mode except that it doesn't require a .spec/.def file as input,
 since an executable need not export functions. Some executables however
 do export functions, and for those a .spec/.def file can be specified via
-the -E option. The executable is named from the .spec/.def file name if 
-present, or explicitly through the -F option. The resulting file must be 
+the \fB-E\fR option. The executable is named from the .spec/.def file name if
+present, or explicitly through the \fB-F\fR option. The resulting file must be
 assembled and linked to the other object files to build a working Wine 
 executable, and all the other object files must be listed as
 .I input files.
 .TP
 .BI \--def
 Build a .def file from a spec file. The .spec file is specified via the
--E option. This is used when building dlls with a PE (Win32) compiler.
+\fB-E\fR option. This is used when building dlls with a PE (Win32) compiler.
 .TP
 .BI \--implib
 Build a PE import library from a spec file. The .spec file is
-specified via the -E option.
+specified via the \fB-E\fR option.
 .TP
 .B \--resources
 Generate a .o file containing all the input resources. This is useful
@@ -62,7 +62,7 @@ so there's no need for an intermediate .o file.
 Specify the command to use to compile assembly files; the default is
 \fBas\fR.
 .TP
-.BI \-b,\ --target= cpu-manufacturer[-kernel]-os
+.BI \-b,\ --target= cpu-manufacturer\fR[\fB-\fIkernel\fR]\fB-\fIos
 Specify the target CPU and platform on which the generated code will
 be built. The target specification is in the standard autoconf format
 as returned by config.sub.
@@ -154,7 +154,7 @@ Import the specified library, looking for a corresponding
 option.
 .TP
 .B \-m16, -m32, -m64
-Generate 16-bit, 32-bit, respectively 64-bit code.
+Generate respectively 16-bit, 32-bit or 64-bit code.
 .TP
 .BI \-M,\ --main-module= module
 When building a 16-bit dll, set the name of its 32-bit counterpart to
@@ -171,20 +171,20 @@ KRNL386.EXE. It shouldn't be needed otherwise.
 Specify the command to use to get the list of undefined symbols; the
 default is \fBnm\fR.
 .TP
-.BI --nxcompat= yes|no
+.BI --nxcompat= yes\fR|\fIno
 Specify whether the module is compatible with no-exec support. The
 default is yes.
 .TP
 .BI \-o,\ --output= file
 Set the name of the output file (default is standard output). If the
-output file name end in \fB.o\fR, the text output is sent to a
+output file name ends in .o, the text output is sent to a
 temporary file that is then assembled to produce the specified .o
 file.
 .TP
 .BI \-r,\ --res= rsrc.res
 Load resources from the specified binary resource file. The
 \fIrsrc.res\fR file can be produced from a source resource file with
-.BR wrc(1)
+.BR wrc (1)
 (or with a Windows resource compiler).
 .br
 This option is only necessary for Win16 resource files, the Win32 ones
@@ -197,7 +197,7 @@ option will also work for Win32 files).
 .B --save-temps
 Do not delete the various temporary files that \fBwinebuild\fR generates.
 .TP
-.BI --subsystem= subsystem[:major[.minor]]
+.BI --subsystem= subsystem\fR[\fB:\fImajor\fR[\fB.\fIminor\fR]]
 Set the subsystem of the executable, which can be one of the following:
 .br
 .B console
@@ -227,7 +227,7 @@ library to be included when resolving imports.
 .TP
 .B \-v, --verbose
 Display the various subcommands being invoked by
-.B winebuild.
+.BR winebuild .
 .TP
 .B \--version
 Display the program version and exit.
@@ -296,10 +296,10 @@ accessed through GetProcAddress.
 The entry point will be imported by ordinal instead of by name. The
 name is still exported.
 .TP
-.BI -arch= cpu[,cpu]
+.BI -arch= cpu\fR[\fB,\fIcpu\fR]
 The entry point is only available on the specified CPU
 architecture(s). The names \fBwin32\fR and \fBwin64\fR match all
-32-bit, respectively 64-bit, CPU architectures. In 16-bit dlls,
+32-bit or 64-bit CPU architectures respectively. In 16-bit dlls,
 specifying \fB-arch=win32\fR causes the entry point to be exported
 from the 32-bit wrapper module.
 .SS "Function ordinals"
