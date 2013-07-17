@@ -1,4 +1,3 @@
-.\" -*- nroff -*-
 .TH WINEMAKER 1 "jan 2012" "@PACKAGE_STRING@" "Manuel des développeurs de Wine"
 .SH NOM
 winemaker \- générer une infrastructure de construction pour la compilation de programmes Windows sur UNIX
@@ -152,7 +151,7 @@ Spécifier que les cibles n'utilisent pas les MFC. Cette option empêche
 l'utilisation des bibliothèques MFC même si
 .B winemaker
 rencontre des fichiers « stdafx.cpp » ou « stdafx.h » qui activeraient
-les MFC automatiquement en temps normal si ni --nomfc ni --mfc n'était
+les MFC automatiquement en temps normal si ni \fB--nomfc\fR ni \fB--mfc\fR n'était
 spécifiée.
 .TP
 .BI -D macro "\fR[=\fIdéfn\fR]"
@@ -177,7 +176,8 @@ Ajouter la bibliothèque spécifiée à la liste globale de bibliothèques à ut
 .TP
 .B --nodlls
 Ne pas utiliser l'ensemble standard de bibliothèques Winelib pour les imports,
-c.-à-d. que toute DLL utilisée par votre code doit être explicitement spécifiée à l'aide d'options -i.
+c.-à-d. que toute DLL utilisée par votre code doit être explicitement spécifiée à l'aide d'options
+\fB-i\fR.
 L'ensemble standard de bibliothèques est\ : odbc32.dll, odbccp32.dll, ole32.dll,
 oleaut32.dll et winspool.drv.
 .TP
@@ -193,7 +193,7 @@ demandera de confirmer la liste de cibles pour chaque répertoire, et ensuite
 de fournir des options spécifiques de répertoire et/ou de cible.
 .TP
 .BR --single-target " nom"
-Spécifier qu'il n'y a qu'une seule cible, appelée « nom ».
+Spécifier qu'il n'y a qu'une seule cible, appelée \fInom\fR.
 .TP
 .B --generated-files
 Générer le Makefile. Comportement par défaut.
