@@ -9,7 +9,7 @@ ou do X11. A biblioteca também pode ser usada para portar código
 Win32 em executáveis nativos Unix.
 
 Wine é software livre, liberado segundo a GNU LGPL; veja o arquivo 
-LICENÇA para detalhes.
+LICENSE para detalhes.
 
 
 2. INÍCIO RÁPIDO
@@ -86,7 +86,7 @@ Bibliotecas de suporte opcionais:
   32 e 64 bits) veja http://wiki.winehq.org/Wine64 para mais detalhes.
 
 
-4.COMPILAÇÃO
+4. COMPILAÇÃO
 
 No caso de escolher não usar o wineinstall, execute os comandos a seguir
 para construir o Wine:
@@ -121,7 +121,7 @@ Veja a área de suporte em http://www.winehq.org/ para dicas de configuração.
 Ao invocar o Wine, você pode especificar o caminho completo do executável,
 ou somente um nome de arquivo.
 
-Por exemplo:  para executar o bloco de notas:
+Por exemplo, para executar o bloco de notas:
 	wine notepad                    (usando o caminho de pesquisa como
 	wine notepad.exe                 especificado no registro para
 	                                 encontrar o arquivo)
