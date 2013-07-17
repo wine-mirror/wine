@@ -1,18 +1,17 @@
-.\" -*- nroff -*-
 .TH WIDL 1 "October 2007" "@PACKAGE_STRING@" "Wine Developers Manual"
 .SH NAME
 widl \- Wine Interface Definition Language (IDL) compiler
 .SH SYNOPSIS
 .B widl
-[\fIoptions\fR] \fIinfile\fR.idl
+[\fIoptions\fR] \fIIDL_file\fR
 .br
 .B widl
-[\fIoptions\fR] \fB--dlldata-only\fR \fIname1\fR [\fIname2\fR ...]
+[\fIoptions\fR] \fB--dlldata-only\fR \fIname1\fR [\fIname2\fR...]
 .SH DESCRIPTION
 When no options are used the program will generate a header file, and possibly
 client and server stubs, proxy and dlldata files, a typelib, and a UUID file,
 depending on the contents of the IDL file.  If any of the options \fB-c\fR,
-\fB-h\fR, \fB-p\fR, \fB-s\fR, \fB-t\fR, \fB-u\fR, or \fB--local-stubs\fR are given,
+\fB-h\fR, \fB-p\fR, \fB-s\fR, \fB-t\fR, \fB-u\fR or \fB--local-stubs\fR is given,
 .B widl
 will only generate the requested files, and no others.  When run with
 \fB--dlldata-only\fR, widl will only generate a dlldata file, and it will
@@ -35,10 +34,10 @@ Print version number and exit.
 Set the name of the output file. When generating multiple output
 files, this sets only the base name of the file; the respective output
 files are then named \fIname\fR.h, \fIname\fR_p.c, etc.
-.IP "\fB-b \fIcpu-manufacturer[-kernel]-os\fR"
+.IP "\fB-b \fIcpu-manufacturer\fR[\fB-\fIkernel\fR]\fB-\fIos\fR"
 Set the target architecture when cross-compiling. The target
 specification is in the standard autoconf format as returned by
-config.sub.
+\fBconfig.sub\fR.
 .PP
 .B Header options:
 .IP "\fB-h\fR"
@@ -52,7 +51,7 @@ Generate a type library. The default output filename is
 \fIinfile\fB.tlb\fR.  If the output file name ends in \fB.res\fR, a
 binary resource file containing the type library is generated instead.
 .IP "\fB-m32, -m64\fR"
-Generate a Win32, respectively Win64, type library.
+Generate a Win32 or Win64 type library respectively.
 .PP
 .B UUID file options:
 .IP "\fB-u\fR"
@@ -78,8 +77,8 @@ Prefix to put on the name of server stubs.
 .IP "\fB-s\fR"
 Generate a server stub file. The default output filename is
 \fIinfile\fB_s.c\fR.
-.IP "\fB--win32, --win64\fR"
-Only generate 32-bit, respectively 64-bit code (the default is to
+.IP "\fB--win32\fR, \fB--win64\fR"
+Only generate 32-bit or 64-bit code respectively (the default is to
 generate both 32-bit and 64-bit versions into the same destination
 file).
 .PP
@@ -90,7 +89,7 @@ Generate a registration script. The default output filename is
 binary resource file containing the script is generated instead.
 .PP
 .B Dlldata file options:
-.IP "\fB--dlldata-only\fI name1 [name2...]"
+.IP "\fB--dlldata-only\fI name1 \fR[\fIname2\fR...]"
 Regenerate the dlldata file from scratch using the specified proxy
 names. The default output filename is \fBdlldata.c\fR.
 .PP
@@ -98,7 +97,7 @@ names. The default output filename is \fBdlldata.c\fR.
 .IP "\fB-I \fIpath\fR"
 Add a header search directory to path. Multiple search
 directories are allowed.
-.IP "\fB-D \fIid\fR[=\fIval\fR]"
+.IP "\fB-D \fIid\fR[\f\fB=\fIval\fR]"
 Define preprocessor macro \fIid\fR with value \fIval\fR.
 .IP "\fB-E\fR"
 Preprocess only.
@@ -111,7 +110,7 @@ Enable pedantic warnings.
 .IP "\fB-d \fIn\fR"
 Set debug level to the non negative integer \fIn\fR.  If
 prefixed with \fB0x\fR, it will be interpreted as an hexadecimal
-number.  For the meaning of values, see the \fBDebug\fR section.
+number.  For the meaning of values, see the \fBDEBUG\fR section.
 .PP
 .B Miscellaneous options:
 .IP "\fB-app_config\fR"
@@ -135,7 +134,7 @@ Bugs can be reported on the
 .UE .
 .SH AUTHORS
 .B widl
-was originally written by Ove Kaaven.  It has been improved by Rob Shearman,
+was originally written by Ove Kåven.  It has been improved by Rob Shearman,
 Dan Hipschman, and others.  For a complete list, see the git commit logs.
 This man page was originally written by Hannu Valtonen and then updated by
 Dan Hipschman.
