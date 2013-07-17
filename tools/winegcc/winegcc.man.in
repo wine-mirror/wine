@@ -1,9 +1,9 @@
-.\" -*- nroff -*-
 .TH WINEGCC 1 "October 2005" "@PACKAGE_STRING@" "Wine Developers Manual"
 .SH NAME
 winegcc \- Wine C and C++ MinGW Compatible Compiler
 .SH SYNOPSIS
-.BR "winegcc "\fI[options]\fR " \fIinfile\fR"...
+.B winegcc
+.RI [ options "] " infile\fR...
 .SH DESCRIPTION
 .B winegcc 
 is a gcc wrapper which tries to provide a MinGW compatible compiler 
@@ -43,11 +43,11 @@ for Win32.
 This option passes '--subsystem console' to winebuild, to build
 console applications. It is the default.
 .IP \fB-mno-cygwin\fR
-Use Wine's implementation of MSVCRT, instead of linking against
-the host system's libc. This is necessary for the vast majority
+Use Wine implementation of MSVCRT, instead of linking against
+the host system libc. This is necessary for the vast majority
 of Win32 applications, as they typically depend on various features
 of MSVCRT. This switch is also used by the MinGW compiler to link
-against MSVCRT on Windows, instead of linking against Cygwin's
+against MSVCRT on Windows, instead of linking against Cygwin
 libc. Sharing the syntax with MinGW makes it very easy to write 
 Makefiles that work under Wine, MinGW+MSYS, or MinGW+Cygwin.
 .IP \fB-municode\fR
@@ -64,8 +64,8 @@ any default libraries used by the backend compiler. The -mwindows
 option augments the list of default libraries as described above.
 .IP \fB-nostartfiles\fR
 Do not add the winecrt0 library when linking.
-.IP \fB-Wb,option\fR
-Pass option as an option to winebuild.  If option contains 
+.IP \fB-Wb,\fIoption\fR
+Pass an option to winebuild.  If \fIoption\fR contains
 commas, it is split into multiple options at the commas.
 .SH DEFINES
 winegcc defines __WINE__, for code that needs to know when it is
@@ -75,7 +75,7 @@ __WIN32__, __WINNT, and __WINNT__ for compatibility with MinGW.
 The dllimport/dllexport attributes are not supported at the moment,
 due to lack of support for these features in the ELF version of gcc.
 .PP
-Static linking is not currently supported against Wine's DLL. As a
+Static linking is not currently supported against Wine DLLs. As a
 result, the -static, --static, and -Wl,-static options will generate
 an error.
 .PP
