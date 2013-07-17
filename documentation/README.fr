@@ -58,6 +58,7 @@ Informations NetBSD :
 
 Informations Mac OS X :
   Xcode 2.4 ou ultérieur est nécessaire pour compiler Wine sous x86.
+  Le pilote Mac requiert OS X 10.6 ou ultérieur et ne pourra être construit sous 10.5.
 
 
 Systèmes de fichiers pris en charge :
