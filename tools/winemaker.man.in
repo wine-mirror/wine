@@ -1,4 +1,3 @@
-.\" -*- nroff -*-
 .TH WINEMAKER 1 "Jan 2012" "@PACKAGE_STRING@" "Wine Developers Manual"
 .SH NAME
 winemaker \- generate a build infrastructure for compiling Windows programs on Unix
@@ -48,7 +47,7 @@ In order to do this winemaker can perform the following operations:
 - rename your source files and directories to lowercase in the event they
 got all uppercased during the transfer.
 .PP
-- perform Dos to Unix (CRLF to LF) conversions.
+- perform DOS to Unix (CRLF to LF) conversions.
 .PP
 - scan the include statements and resource file references to replace the
 backslashes with forward slashes.
@@ -84,7 +83,7 @@ makes changes. This is the default.
 Tells winemaker not to backup modified source files.
 .TP
 .B --nosource-fix
-Directs winemaker not to try fixing the source files (e.g. Dos to Unix
+Directs winemaker not to try fixing the source files (e.g. DOS to Unix
 conversion). This prevents complaints if the files are readonly.
 .TP
 .B --lower-all
@@ -136,7 +135,7 @@ MFC library.
 .B --nomfc
 Specifies that targets are not MFC-based. This option disables use of MFC libraries
 even if winemaker encounters files "stdafx.cpp" or "stdafx.h" that would cause it
-to enable MFC automatically if neither --nomfc nor --mfc was specified.
+to enable MFC automatically if neither \fB--nomfc\fR nor \fB--mfc\fR was specified.
 .TP
 .BI -D macro "\fR[=\fIdefn\fR]"
 Adds the specified macro definition to the global list of macro definitions.
@@ -159,7 +158,7 @@ Adds the specified library to the global list of libraries to link with.
 .B --nodlls
 This option tells winemaker not to use the standard set of winelib libraries
 for imports. That is, any DLL your code uses must be explicitly passed to
-winemaker with -i options.
+winemaker with \fB-i\fR options.
 The standard set of libraries is: odbc32.dll, odbccp32.dll, ole32.dll,
 oleaut32.dll and winspool.drv.
 .TP
@@ -172,8 +171,8 @@ Puts winemaker in interactive mode. In this mode winemaker will ask you to
 confirm each directory's list of targets, and then to provide directory and
 target specific options.
 .TP
-.BR --single-target " name"
-Specifies that there is only one target, and that it is called "name".
+.BI --single-target " name"
+Specifies that there is only one target, called \fIname\fR.
 .TP
 .B --generated-files
 Tells winemaker to generate the Makefile. This is the default.
