@@ -1,32 +1,32 @@
-.\" -*- nroff -*-
 .TH WRC 1 "October 2005" "@PACKAGE_STRING@" "Wine Developers Manual"
 .SH NAME
 wrc \- Wine Resource Compiler
 .SH SYNOPSIS
-.BI "wrc " "[options] " "[inputfiles]"
+.B wrc
+.RI [ options ]\ [ inputfile ...]
 .SH DESCRIPTION
 .B wrc
-compiles resources from \fBinputfile\fR
+compiles resources from \fIinputfile\fR
 into win16 and win32 compatible binary format.
 .PP
-The source\-file is preprocessed with a builtin ANSI\-C compatible
+The source file is preprocessed with a builtin ANSI\-C compatible
 preprocessor before the resources are compiled. See \fBPREPROCESSOR\fR
 below.
 .PP
 .B wrc
-takes a series of \fBinputfile\fR as argument. The resources are read from 
-standard input if no inputfile is given. If the output file is not 
-specified with \fI-o\fR, then \fBwrc\fR will write the output to 
-\fBinputfile.res\fR with \fB.rc\fR stripped, or to \fBwrc.tab.res\fR if 
+takes a series of \fIinputfile\fR as argument. The resources are read from
+standard input if no inputfile is given. If the output file is not
+specified with \fB-o\fR, then \fBwrc\fR will write the output to
+\fIinputfile.res\fR with \fI.rc\fR stripped, or to \fIwrc.tab.res\fR if
 no inputfile was given.
 .SH OPTIONS
 .TP
-.BI \-b,\ --target= cpu-manufacturer[-kernel]-os
+.BI \-b,\ --target= cpu-manufacturer\fR[\fI\fB-\fIkernel\fR]\fB-\fIos
 Specify the target CPU and platform on which the generated code will
 be built. The target specification is in the standard autoconf format
-as returned by config.sub.
+as returned by \fBconfig.sub\fR.
 .TP
-.I \fB\-D\fR, \fB\-\-define\fR=\fIid[=val]\fR
+.I \fB\-D\fR, \fB\-\-define\fR=\fIid\fR[\fB=\fIval\fR]
 Define preprocessor identifier \fIid\fR to (optionally) value \fIval\fR.
 See also
 .B PREPROCESSOR
@@ -56,14 +56,14 @@ The name of the input file. If this option is not used, then \fBwrc\fR
 will use the first non-option argument as the input file name. If there 
 are no non-option arguments, then \fBwrc\fR will read from standard input.
 .TP
-.I \fB\-I\fR, \fB\-\-include\-dir\fR=\fIfile\fR
-Add \fIpath\fR to include search directories. \fIPath\fR may contain
+.I \fB\-I\fR, \fB\-\-include\-dir\fR=\fIpath\fR
+Add \fIpath\fR to include search directories. \fIpath\fR may contain
 multiple directories, separated with ':'. It is allowed to specify
-\fI\-I\fR multiple times. Include files are searched in the order in
-with the \fI\-I\fR options were specified.
+\fB\-I\fR multiple times. Include files are searched in the order in
+which the \fB\-I\fR options were specified.
 .br
 The search is compatible with gcc, in which '<>' quoted filenames are
-searched exclusively via the \fI\-I\fR set path, whereas the '""' quoted
+searched exclusively via the \fB\-I\fR set path, whereas the '""' quoted
 filenames are first tried to be opened in the current directory. Also
 resource statements with file references are located in the same way.
 .TP
@@ -71,18 +71,18 @@ resource statements with file references are located in the same way.
 Sets the input format. Valid options are 'rc' or 'rc16'. Setting the
 input to 'rc16' disables the recognition of win32 keywords.
 .TP
-.I \fB\-l\fR, \fB\-\-language\fR=\fIlan\fR
-Set default language to \fIlan\fR. Default is the neutral language 0
+.I \fB\-l\fR, \fB\-\-language\fR=\fIlang\fR
+Set default language to \fIlang\fR. Default is the neutral language 0
 (i.e. "LANGUAGE 0, 0").
 .TP
 .B \-m16, -m32, -m64
-Generate resources for 16-bit, 32-bit, respectively 64-bit
-platforms. The only difference between 32-bit and 64-bit is whether
+Generate resources for 16-bit, 32-bit or 64-bit platforms respectively.
+The only difference between 32-bit and 64-bit is whether
 the _WIN64 preprocessor symbol is defined.
 .TP
 .I \fB\-\-nostdinc\fR
 Do not search the standard include path, look for include files only
-in the directories explicitly specified with the \fI\-I\fR option.
+in the directories explicitly specified with the \fB\-I\fR option.
 .TP
 .I \fB\-\-no\-use\-temp\-file\fR
 Ignored for compatibility with \fIwindres\fR.
@@ -100,7 +100,7 @@ format defaults to \fBres\fR.
 In \fBpo\fR mode, if an output file name is specified it must match a
 known language name, like \fBen_US.po\fR; only resources for the
 specified language are output. If no output file name is specified, a
-separate .po file is created for every language encountered in the
+separate \fI.po\fR file is created for every language encountered in the
 input.
 .TP
 .I \fB\-\-pedantic\fR
@@ -110,7 +110,7 @@ be discovered with this option.
 .I \fB\-\-po-dir=\fIdir\fR
 Enable the generation of resource translations based on mo files
 loaded from the specified directory. That directory must follow the
-gettext convention, in particular in must contain one .mo file for
+gettext convention, in particular it must contain one \fI.mo\fR file for
 each language, and a LINGUAS file listing the available languages.
 .TP
 .I \fB\-r\fR
@@ -133,10 +133,10 @@ below.
 Ignored for compatibility with \fIwindres\fR.
 .TP
 .I \fB\-v\fR, \fB\-\-verbose\fR
-Turns on verbose mode (equivalent to -d 1).
+Turns on verbose mode (equivalent to \fB-d 1\fR).
 .TP
 .I \fB\-\-version\fR
-Print version end exit.
+Print version and exit.
 .SH PREPROCESSOR
 The preprocessor is ANSI\-C compatible with some of the extensions of 
 the gcc preprocessor. 
