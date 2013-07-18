@@ -34,6 +34,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 typedef struct BitmapClipper {
     IWICBitmapClipper IWICBitmapClipper_iface;
     LONG ref;
+    IWICBitmapSource *source;
+    WICRect rect;
+    CRITICAL_SECTION lock; /* must be held when initialized */
 } BitmapClipper;
 
 static inline BitmapClipper *impl_from_IWICBitmapClipper(IWICBitmapClipper *iface)
@@ -84,6 +87,9 @@ static ULONG WINAPI BitmapClipper_Release(IWICBitmapClipper *iface)
 
     if (ref == 0)
     {
+        This->lock.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection(&This->lock);
+        if (This->source) IWICBitmapSource_Release(This->source);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -91,10 +97,22 @@ static ULONG WINAPI BitmapClipper_Release(IWICBitmapClipper *iface)
 }
 
 static HRESULT WINAPI BitmapClipper_GetSize(IWICBitmapClipper *iface,
-    UINT *puiWidth, UINT *puiHeight)
+    UINT *width, UINT *height)
 {
-    FIXME("(%p,%p,%p): stub\n", iface, puiWidth, puiHeight);
-    return E_NOTIMPL;
+    BitmapClipper *This = impl_from_IWICBitmapClipper(iface);
+
+    TRACE("(%p,%p,%p)\n", iface, width, height);
+
+    if (!width || !height)
+        return E_INVALIDARG;
+
+    if (!This->source)
+        return WINCODEC_ERR_WRONGSTATE;
+
+    *width = This->rect.Width;
+    *height = This->rect.Height;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI BitmapClipper_GetPixelFormat(IWICBitmapClipper *iface,
@@ -128,8 +146,37 @@ static HRESULT WINAPI BitmapClipper_CopyPixels(IWICBitmapClipper *iface,
 static HRESULT WINAPI BitmapClipper_Initialize(IWICBitmapClipper *iface,
     IWICBitmapSource *source, const WICRect *rc)
 {
-    FIXME("(%p,%p,%p): stub\n", iface, source, rc);
-    return E_NOTIMPL;
+    BitmapClipper *This = impl_from_IWICBitmapClipper(iface);
+    UINT width, height;
+    HRESULT hr = S_OK;
+
+    TRACE("(%p,%p,%p)\n", iface, source, rc);
+
+    EnterCriticalSection(&This->lock);
+
+    if (This->source)
+    {
+        hr = WINCODEC_ERR_WRONGSTATE;
+        goto end;
+    }
+
+    hr = IWICBitmapSource_GetSize(source, &width, &height);
+    if (FAILED(hr)) goto end;
+
+    if  ((rc->X + rc->Width > width) || (rc->Y + rc->Height > height))
+    {
+        hr = E_INVALIDARG;
+        goto end;
+    }
+
+    This->rect = *rc;
+    This->source = source;
+    IWICBitmapSource_AddRef(This->source);
+
+end:
+    LeaveCriticalSection(&This->lock);
+
+    return hr;
 }
 
 static const IWICBitmapClipperVtbl BitmapClipper_Vtbl = {
@@ -153,6 +200,9 @@ HRESULT BitmapClipper_Create(IWICBitmapClipper **clipper)
 
     This->IWICBitmapClipper_iface.lpVtbl = &BitmapClipper_Vtbl;
     This->ref = 1;
+    This->source = NULL;
+    InitializeCriticalSection(&This->lock);
+    This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": BitmapClipper.lock");
 
     *clipper = &This->IWICBitmapClipper_iface;
 

@@ -769,6 +769,46 @@ todo_wine
     DeleteObject(hpal);
 }
 
+static void test_clipper(void)
+{
+    IWICBitmapClipper *clipper;
+    UINT height, width;
+    IWICBitmap *bitmap;
+    WICRect rect;
+    HRESULT hr;
+
+    hr = IWICImagingFactory_CreateBitmap(factory, 10, 10, &GUID_WICPixelFormat24bppBGR,
+        WICBitmapCacheOnLoad, &bitmap);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IWICImagingFactory_CreateBitmapClipper(factory, &clipper);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    rect.X = rect.Y = 0;
+    rect.Width = rect.Height = 11;
+    hr = IWICBitmapClipper_Initialize(clipper, (IWICBitmapSource*)bitmap, &rect);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    rect.X = rect.Y = 5;
+    rect.Width = rect.Height = 6;
+    hr = IWICBitmapClipper_Initialize(clipper, (IWICBitmapSource*)bitmap, &rect);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    rect.X = rect.Y = 5;
+    rect.Width = rect.Height = 5;
+    hr = IWICBitmapClipper_Initialize(clipper, (IWICBitmapSource*)bitmap, &rect);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    width = height = 0;
+    hr = IWICBitmapClipper_GetSize(clipper, &width, &height);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(width == 5, "got %d\n", width);
+    ok(height == 5, "got %d\n", height);
+
+    IWICBitmapClipper_Release(clipper);
+    IWICBitmap_Release(bitmap);
+}
+
 START_TEST(bitmap)
 {
     HRESULT hr;
@@ -784,6 +824,7 @@ START_TEST(bitmap)
     test_CreateBitmapFromMemory();
     test_CreateBitmapFromHICON();
     test_CreateBitmapFromHBITMAP();
+    test_clipper();
 
     IWICImagingFactory_Release(factory);
 
