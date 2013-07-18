@@ -1,12 +1,19 @@
-The Wine development release 1.6-rc5 is now available.
+The Wine team is proud to announce that the stable release Wine 1.6
+is now available.
 
-What's new in this release (see below for details):
-  - Bug fixes only, we are in code freeze.
+This release represents 16 months of development effort and around
+10,000 individual changes. The main highlights are the new Mac driver,
+the full support for window transparency, and the new Mono package for
+.NET applications support.
+
+It also contains a lot of improvements across the board, as well as
+support for many new applications and games. See the release notes
+below for a summary of the major changes.
 
 The source is available from the following locations:
 
-  http://prdownloads.sourceforge.net/wine/wine-1.6-rc5.tar.bz2
-  http://mirrors.ibiblio.org/wine/source/1.6/wine-1.6-rc5.tar.bz2
+  http://prdownloads.sourceforge.net/wine/wine-1.6.tar.bz2
+  http://mirrors.ibiblio.org/wine/source/1.6/wine-1.6.tar.bz2
 
 Binary packages for various distributions will be available from:
 
@@ -22,278 +29,419 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 1.6-rc5 (total 54):
+What's new in Wine 1.6
+======================
 
-   6691  TomTom Home doesn't find files it has downloaded in temporary directory
-  13371  SlingPlayer 1.5 fails to install due to DLL function crash
-  14154  Cyrillic chars in chm help displayed incorrectly.
-  15710  Using OSS audio causes PCM device to be muted
-  16510  Sony ICRecorder version 3.1.02 doesn't install
-  17833  Winedbg crash with gecko with debug symbols
-  19745  Direct download (no Google Updater) install of Google Earth 5 fails.  (Also affects ChromeFrameInstaller.)
-  19824  Vim welcome text does not appear on start [dogfood]
-  20135  Future Pinball: Process still alive after exiting
-  20445  WMP10: Crash on changing tab
-  21043  ArtRage 2.5 : Sluggishness in cursor moves
-  21200  HotWheels Stunt Track Driver: On-Screen Mouse Cursor stuck to top left of screen
-  21279  EastWest Symphonic Orchestra Silver Edition: Install Fails with pagefault at VST Plugins lookup
-  21303  Game Maker 8: Freezes at "Please wait while page is loading"...
-  22027  Symantec LiveUpdate 3.5 will not load
-  22307  Depth of field blur effects lag behind animation in Dragon Age: Origins
-  22588  Starcraft 2 Editor doesn't render anything on the terrain view
-  22672  A-10 Cuba! crash in introduction screen forbiding to play the game
-  23228  Mavis Beacon Teaches Typing 5: Random pagefault during Rhythm typing game
-  23749  SpongeBob SquarePants: Diner Dash 2 - can't start free trial without native shdcocvw
-  23882  AvP hangs/crashes with GLSL out of memory.
-  24538  EasyToon 1.9.9 beta 3: patterns are not smooth
-  25175  Big Fish Games game manager shows blank window
-  25648  ie8 does not navigate to web pages or obey home page setting
-  25787  MYST V Demo: Black screen after into movies
-  25846  Page fault on read access when running GoogleChromePortable_8.0.552.237_online.paf.exe
-  26435  Dragon Age: Origins has no sound... unless you edit DragonAge.ini and change SoundDisabled to 0
-  27875  Chasys Draw IES: Sillently exits at installation start
-  27876  System Mechanic: Installer window fails to show itself
-  27935  Dora's Carnival 2: Boardwalk Adventure doesn't show 'play free trial' button
-  28691  Korg M1 DLE main display corrupted
-  29284  AntiVir 9 installer is missing some images
-  29518  Trimble Planning installer hangs
-  30343  Metatrader 4, Installation crash
-  30360  PDF Xchange Viewer 2.5.201 Crashing When Saving any PDF file
-  31390  MetaTrader 4 crashes when opening mail
-  31507  midiInOpen x64 crash due to callback address 32-bit truncation
-  31932  No video in SlingPlayer 1.3
-  32024  Eziriz .net Reactor crashes without native gdiplus
-  32149  Notepad .Net cannot open files
-  32158  .Net 3.0 (dotnet30): multiple crashes in ServiceModelReg.exe during install
-  32868  Remove wine/documentation/ChangeLog* from the distribution
-  33147  Steam fails to run on FreeBSD
-  33593  joystick.c change causes lotro to crash if Wacom Cintiq attached
-  33789  Japanese are displayed vertical in 1.6rc1 but not previous version even it should be display horizontally
-  33840  Internet Explorer 7 all printing broken
-  33898  AliWangwang(TradeManager) can't save password
-  33901  Arabic full-translated Wine
-  33905  compile error with assembler support problem for ARM
-  33909  loader/Makefile.in not compatible with BSD make
-  33913  Radio button rendering broken with ClientSideGraphics=y
-  33920  Visual CertExam Suite installer crashes
-  33930  loader/Makefile.in not compatible with BSD make
-  33934  Ballistic game: mouse no longer works
 
-----------------------------------------------------------------
+*** User interface
 
-Changes since 1.6-rc4:
+- Window transparency is supported, including both color keying and
+  alpha blending transparency.
 
-Akihiro Sagawa (1):
-      po: Use English shell path names in Japanese locale.
+- All window rendering is done on the client-side using the DIB engine
+  (except for OpenGL rendering). This means that rendering to windows
+  or bitmaps gives identical results.
 
-Akira Nakagawa (2):
-      wine.desktop: Add Japanese title.
-      po: Update Japanese translation.
+- Common dialogs correctly scale with the screen DPI resolution.
 
-Alexandre Julliard (33):
-      winebuild: Pass the -mcpu option to the C compiler also.
-      gdi32: Fix off-by-one error in the extent of arcs when the size is even.
-      gdi32: Don't load linked fonts only to look up control characters.
-      ntdll: Leave NtQueryDirectoryFile early when a non-wildcard mask is used in the getdirentries case.
-      ntdll/tests: Add some tests for NtQueryDirectoryFile with a non-wildcard mask.
-      ntdll/tests: Don't test . and .. masks, they don't work on Windows.
-      makefiles: Avoid wildcard substitutions that are broken in BSD make.
-      makefiles: Make sure to install manpages for the install-lib and install-dev cases.
-      user32: Check for driver events more quickly once we start getting timer messages.
-      kernel32: Acquire the loader lock before shutting down the process.
-      taskmgr: Convert version resource to the standard format.
-      browseui: Use neutral language for the version resource.
-      crypt32: Use neutral language for the version resource.
-      devenum: Use neutral language for the version resource.
-      dxdiagn: Use neutral language for the version resource.
-      joy.cpl: Use neutral language for the version resource.
-      localspl: Use neutral language for the version resource.
-      mapi32: Use neutral language for the version resource.
-      mpr: Use neutral language for the version resource.
-      oleacc: Use neutral language for the version resource.
-      shlwapi: Use neutral language for the version resource.
-      wininet: Use neutral language for the version resource.
-      winspool: Use neutral language for the version resource.
-      makefiles: Don't allow extra libraries in tests.
-      AUTHORS: Regenerate the authors list from git using a .mailmap file.
-      documentation: Remove the old changelog files.
-      fonts: Add some missing glyphs to the Sans Serif font.
-      fonts: Add some missing glyphs to the System font.
-      fonts: Add some missing glyphs to the System Fixed fonts.
-      fonts: Add some missing Cyrillic glyphs to the Courier font.
-      fonts: Add some missing Cyrillic glyphs to the Small font.
-      fonts: Update fonts with a more recent fontforge.
-      po: Add missing strings to the English neutral translation.
+- In virtual desktop mode, shortcuts placed in the Desktop folder are
+  displayed on the desktop, and can be used to launch applications.
 
-Andrew Eikum (1):
-      winecoreaudio.drv: Fix copy-paste typo.
+- The HTML Help control has better support for non-ASCII characters,
+  and for multiple help windows.
 
-André Hentschel (8):
-      netstat: Remove superfluous casts.
-      gdi32: Remove superfluous cast.
-      winedump: Remove superfluous casts.
-      msctf: Remove superfluous casts.
-      dmusic: Remove superfluous cast.
-      msvcrt: Remove superfluous casts.
-      msvcrtd: Add missing return (Coverity).
-      readme: Update German translation.
+- Custom painting and images are better supported in listview
+  controls.
 
-Austin English (1):
-      loader: Fix Makefile for BSD make.
+- Input validation is improved in the date and calendar controls.
 
-Damjan Jovanovic (1):
-      qcap/tests: Add a smart tee filter test.
 
-Dmitry Timoshkov (8):
-      kernel32/tests: Fix a couple of typos.
-      kernel32/tests: Fix compilation with a PSDK compiler.
-      kernel32/tests: Add a test for GetShortPathName called for a non-existent short file name.
-      gdiplus/tests: Add GdipGetClipBounds tests.
-      gdiplus: Add more clipping region tests.
-      gdiplus/tests: Add tests for a sample 100x100 rectangle region.
-      gdiplus/tests: Add another set of clipping region tests.
-      Revert "gdiplus: Ignore gdiplus page and world transformations when creating a gdi32 clipping region.".
+*** Mac driver
 
-François Gouget (55):
-      ddraw/tests: Fix compilation on systems that don't support nameless unions.
-      comctl32/tests: Use ok(0) to report unexpected function calls instead of assert(0).
-      twain_32/tests: Generate an error and skip instead of assert()-ing when the setup fails.
-      setupapi/tests: Remove a pointless use of assert().
-      mlang/tests: We already link with mlang.dll so there is no need to do a LoadLibrary() on it.
-      Assorted spelling fixes.
-      po: Use three dots instead of the Unicode ellipsis character.
-      po: Use three dots instead of the Unicode ellipsis character.
-      kernel32: Fix spelling of the 'inter-domain' error message.
-      include: Remove some non-standard sublang synonyms.
-      msxml3/tests: Add a trailing '\n' to an ok() call.
-      po: Update the Hebrew 'translations' for the netstat command line tool.
-      po: Fix a couple of formatting directives in the Czech translation.
-      po: Fix some typography issues in the Czech translation.
-      po: Fix the Czech translation so optional arguments are enclosed in square brackets.
-      po: Translate Wine to Czech.
-      po: Mark two incomplete Czech translations as fuzzy.
-      po: Translate some command keys to Czech.
-      po: Translate some measurement units to Esperanto.
-      po: Fix the Esperanto hour abbreviation.
-      po: Fix some typography issues in the Croatian translation.
-      po: Fuzzy a Croatian translation that does not match the English string.
-      po: Remove a couple of key translations that don't match the corresponding question.
-      po: Fix a formatting directive in the Croatian translation.
-      po: Translate the task manager's CPU affinity labels to Hungarian.
-      po: Fix the Hungarian kilobyte symbol.
-      po: Tweak the Norwegian Bokmål translation for the task manager's affinity labels.
-      po: Add a trailing full stop to an Ukrainian translation.
-      po: Remove an extraneous trailing space in a Polish translation.
-      po: Remove a couple of key translations from the Slovak translation.
-      po: Mark a couple of incorrect Dutch translations as fuzzy.
-      po: Fix some typography issues in the Dutch translation.
-      po: Don't abbreviate the Portuguese (Brazil) print preview button labels.
-      po: Fix the French 'endpoint' translation.
-      po: Fix a couple of linefeed issues in the Turkish translation.
-      po: Fix some non-breaking space issues around double quotes in the French translation.
-      po: Tweak a couple of French translations regarding WLDAP leaf objects.
-      po: Tweak the French task manager's memory labels.
-      po: Tweak the 'mapping' and SID French translations.
-      po: Fix the French DEL, ERASE, RD and RMDIR usage messages.
-      po: Some French translation tweaks.
-      po: Fix some typography issues in the Korean translation.
-      po: Fix the 'All key' Korean translation.
-      po: Fix a couple of typography issues in the Japanese translation.
-      po: Fix some typography issues in the Traditional Chinese translation.
-      po: Fuzzy a couple of Traditional Chinese prompt messages.
-      po: Tweak the Arabic license notice.
-      po: Fix an accelerator key specification in the Arabic translation.
-      po: Remove the spaces preceding the ellipses in the Arabic translation.
-      po: Adjust the trailing colons and the spaces around them in the Arabic translation.
-      po: Adjust the trailing ellipses and the spaces around them in the Arabic translation.
-      po: Make the trailing semi-colons of the print error messages consistent in the Arabic translation.
-      po: Fix some leading and trailing space issues in the Arabic translation.
-      po: Remove spaces before linefeeds in the Arabic translation.
-      cmd: Remove an invalid comment in the FOR a usage message.
+- A native Mac OS X driver is implemented, for better integration with
+  the Mac desktop environment. The full range of driver features are
+  supported, including OpenGL, window management, clipboard, drag &
+  drop, system tray, etc.
 
-Frédéric Delanoy (3):
-      server: Clarify wineserver manpage -d option.
-      server: Update French translation of wineserver manpage.
-      loader: Indicate that wine can run 64-bit apps in the manpage.
+- X11 is no longer needed on Mac OS X, but the X11 driver is still
+  supported, e.g. when running remotely.
 
-George Stephanos (1):
-      advapi32/tests: RegDeleteKey tests for merged view of HKCR.
+Note: the Mac driver requires Mac OS X 10.6 or later, it cannot be
+      built or used on 10.5.
 
-Henri Verbeet (2):
-      d3d9/tests: Make shader bytecode static const.
-      d3d8/tests: Make shader bytecode static const.
+- FontConfig is no longer needed on Mac OS X and is disabled by
+  default, system fonts are enumerated using the Core Text API
+  instead.
 
-Hwang YunSong (황윤성) (1):
-      po: Update Korean translation.
 
-Jacek Caban (4):
-      mshtml/tests: Fixed htmldoc tests on IE10.
-      mshtml/tests: Fixed script tests on IE10.
-      oleaut32: Fixed duplicated UUIDs and relevant tests.
-      wininet/tests: Added HTTP status header tests.
+*** X11 driver
 
-Jactry Zeng (3):
-      po: Update Simplified Chinese translation.
-      po: Update Simplified Chinese translation.
-      po: Update Simplified Chinese translation.
+- X11 server-side font rendering is no longer supported. All fonts are
+  rendered client-side using FreeType.
 
-John Chadwick (1):
-      msxml3/tests: Add additional xpath conformance tests.
+- The big lock around all X11 calls has been removed, we rely on the X
+  libraries internal locking for thread safety.
 
-Julian Rüger (1):
-      server: Update German translation of manpage.
+- XRandR versions 1.2 and 1.3 are supported.
 
-Ken Sharp (1):
-      po: Update English neutral translation.
 
-Ken Thomases (7):
-      winemac: Use screen color space for windows covered by OpenGL views.
-      winemac: Force swap interval to 0 for single-buffered contexts to avoid vsync'ed flushes.
-      winemac: Add registry setting to control glFlush() skipping for single-buffer contexts and disable it by default.
-      winemac: Add registry setting to disable vertical sync.
-      winemac: Add registry setting to control setting display gamma ramp.
-      Revert "winemac: Dispatch key events directly to window to be sure to get key-up events.".
-      winemac: Dispatch key-up events directly to window to be sure to get them.
+*** Graphics
 
-Marcus Meissner (3):
-      oleaut32: Check a return value (Coverity).
-      oleaut32/tests: Test return of SafeArrayAllocData (Coverity).
-      cmd: null terminate answer string (Coverity).
+- There are significant performance improvements in the DIB engine,
+  particularly for text rendering, bitmap stretching, alpha blending,
+  and gradients.
 
-Michael Stefaniuc (3):
-      atl/tests: Mark a WinNT result as broken.
-      po: Fix some errors in the Romanian translation.
-      dsound/tests: Fix copy&paste error in ok() message.
+- Bounds tracking is supported for all graphics primitives, to enable
+  copying only the modified portions of a bitmap.
 
-Mosaab Alzoubi (2):
-      wine.desktop: Add Arabic title.
-      po: Update Arabic translation.
+- OpenGL rendering is supported in device-independent bitmaps using libOSMesa.
 
-Nikolay Sivov (3):
-      kernel32/tests: Some tests for activation context data structures.
-      kernel32/tests: Some tests for FindActCtxSectionGuid().
-      ole32/tests: Tests for CLSIDFromProgID() and ProgIDFromCLSID(), regarding activation context.
+- Brush dithering is implemented in the DIB engine.
 
-Pavel Borecki (1):
-      po: Update Czech translation.
+- Path gradients are implemented in GdiPlus.
 
-Piotr Caban (1):
-      gdiplus: Add support for more string formats while getting font name.
+- More image codecs features are implemented, including JPEG encoding,
+  palette formats, and meta-data support for various image types.
 
-Qian Hong (3):
-      rsaenh/tests: Added more key state tests.
-      rsaenh: Restore key state even after decrypting a block of bad data.
-      user32: Properly update caret position after result string is committed.
 
-Ričardas Barkauskas (1):
-      winex11.drv: When skipping unknown attribute also skip its value.
+*** Text and fonts
 
-Stefan Leichter (2):
-      msvcp100/tests: Fix dynamically loaded functions for platform arm.
-      mmdevapi/tests: Fix a crash when function IMMDevice_Activate fails.
+- Sub-pixel font anti-aliasing is supported in the DIB engine, using
+  the system anti-aliasing configuration from FontConfig.
 
-Volkan Gezer (1):
-      po: Update Turkish translation
+- Dynamic loading of scalable font resources is supported.
+
+- Text layout in Uniscribe supports character-specific position
+  adjustments. Right-to-left text handling is also improved.
+
+- There is an initial implementation of the DirectWrite text layout
+  engine.
+
+- Built-in fonts are more complete, with the addition of FixedSys and
+  Wingdings fonts, more high-resolution pixel fonts, and a wider range
+  of glyphs in the existing fonts, notably Arabic glyphs in Tahoma.
+
+- Bi-directional text support is improved in the RichEdit control.
+
+
+*** Input devices
+
+- The raw input API is supported for keyboard and mouse input.
+
+- There is a joystick applet in the control panel, to allow
+  configuring joysticks and testing their behavior.
+
+- Force feedback is supported for Mac OS X joysticks.
+
+
+*** Kernel
+
+- DOSBox is tried first when running a DOS application. The Wine DOS
+  support is only used as a fallback when DOSBox cannot be found, and
+  will be removed in a future release.
+
+- A monotonic time counter is used on platforms that support it, to
+  make timers more robust against system time changes.
+
+- File times are reported with nanosecond resolution.
+
+- Wine can be configured to report the Windows version as 'Windows 8'.
+
+
+*** .NET support
+
+- The Mono runtime is packaged as an MSI file, and its installation
+  can be managed from the "Add/Remove Programs" control panel. It is
+  automatically installed on Wine prefix updates.
+
+- .NET mixed mode assemblies are supported.
+
+- The Microsoft .NET 4.0 runtime can be installed for cases where Mono
+  is not good enough yet.
+
+
+*** OLE / COM
+
+- The typelib writer is reimplemented for better compatibility.
+
+- OLE DB supports more data types and conversions.
+
+- OLE automation manages a cache of string allocations for better
+  performance and compatibility.
+
+
+*** Internet and networking
+
+- HTTPS connections use GnuTLS (or Secure Transport on Mac OS X).
+  OpenSSL is no longer used.
+
+- The TLS 1.1 and TLS 1.2 protocols are enabled by default, with
+  automatic fallback to TLS 1.0. The SSL2 protocol is disabled by
+  default.
+
+- Security certificate validation errors are handled better.
+
+- NTLM and Negotiate authentication protocols are supported.
+
+- ActiveX controls can be downloaded and installed automatically.
+
+- Internet proxy bypass is supported, and can be enabled either
+  through the registry or with the no_proxy environment variable.
+
+- Broadcast packets can be received on interface-bound sockets, which
+  is needed for some networked multi-player games.
+
+- The Server Name Indication TLS extension is supported.
+
+- Persistent cookies are supported, and URL cache files are managed
+  better. The Internet control panel allows clearing saved cookies and
+  cache files.
+
+- Punycode encoding for Internationalized Domain Names is supported.
+
+- JavaScript performance is improved. The built-in JavaScript engine
+  is preferred over the Gecko one in most cases.
+
+- Many more built-in functions of VBScript are implemented. Regular
+  expressions are also supported.
+
+- The Gecko engine is updated to the version from Firefox 21.
+
+- The Gecko and Mono installers are cached upon download, to allow
+  installation in multiple Wine prefixes without additional downloads.
+
+
+*** Direct3D
+
+- The Direct3D 9Ex implementation is more complete. In particular:
+  - IDirect3DDevice9Ex::PresentEx is implemented.
+  - IDirect3DDevice9Ex::ResetEx is implemented.
+  - Various Direct3D 9Ex display mode handling functions are implemented.
+  - Direct3D 9Ex style video memory accounting is implemented.
+
+- Like the X11 driver, WineD3D no longer uses the big X11 lock when
+  making GL calls.
+
+- The WineD3D graphics card database is updated to recognize more
+  graphics cards.
+
+- The fallback card detection code for unrecognized graphics cards is
+  improved. This results in a more reasonable card being reported when
+  the graphics card is not already in the WineD3D database.
+
+- WineD3D has GLSL based implementations of Direct3D fixed-function
+  vertex and fragment processing. In some cases this allows
+  functionality that's not present in fixed-function OpenGL to be
+  implemented, in other cases it allows functionality to be
+  implemented in a more efficient way.
+
+- On drivers that support it, GL_ARB_debug_output is used to get more
+  detailed debugging output from the OpenGL driver.
+
+- On drivers that support it, GL_ARB_framebuffer_sRGB is used for
+  rendering to frame buffers in the sRGB color space.
+
+- On drivers that support it, GL_ARB_instanced_arrays is used for more
+  efficient instanced drawing.
+
+- On drivers that support it, and return useful information,
+  GL_ARB_internalformat_query2 is used for more accurate reporting of
+  surface / texture format capabilities.
+
+- There is an initial implementation of a HLSL compiler.
+
+- Improvements to various parts of the D3DX9 implementation, including:
+  - The surface and texture handling functions. This includes code for
+    loading, saving, filling, and rendering to surfaces and textures.
+  - The effects framework.
+  - The constant table implementation.
+  - A number of spherical harmonics functions have been implemented.
+  - Support for .x files.
+
+- Improvements to the Direct3D 10 implementation, including:
+  - Support for more shader model 4 opcodes and register types.
+  - Support for shader model 4 indirect addressing.
+  - Initial geometry shader support.
+  - Improved binary effect parsing.
+  - Support for Direct3D 10 style instanced draws, using
+    GL_ARB_draw_instanced.
+
+
+*** DirectDraw
+
+- Vertex buffers are created with WINED3DUSAGE_DYNAMIC when locked with
+  DDLOCK_DISCARDCONTENTS, resulting in improved performance in some cases.
+
+- The 2D-only fallback in WineD3D for using DirectDraw without a
+  working OpenGL implementation is more robust. Note that this still
+  isn't a recommended configuration.
+
+
+*** Audio and video
+
+- DirectSound has a better resampler.
+
+- Audio device enumeration is improved, and multi-channel devices are
+  better supported.
+
+- VMR-9 video rendering is implemented.
+
+
+*** Printer support
+
+- The PPD files of already installed printers are automatically
+  refreshed when needed.
+
+- Printing resolution can be configured from the print dialog.
+
+- Simulated italic fonts can be printed.
+
+- On Mac OS X, the default paper size is retrieved from the system
+  configuration.
+
+
+*** Internationalization
+
+- Japanese vertical text is correctly supported.
+
+- Translated font names are used when there is a match for the current
+  language.
+
+- Wine is translated to French, German, Spanish, Italian, Dutch,
+  Swedish, Finnish, Portuguese, Catalan, Hungarian, Polish, Danish,
+  Russian, Slovenian, Lithuanian, Chinese, Japanese, Korean, and
+  Arabic. It has partial translations for another fifteen languages.
+
+- Various additional Mac OS code pages are supported, namely Japanese,
+  Traditional Chinese, Korean, Simplified Chinese, Romanian,
+  Ukrainian, Thai, and Croatian code pages. This improves support for
+  loading translated font names from Mac OS font files.
+
+
+*** Built-in applications
+
+- The new 'netstat' application displays information about active
+  network connections.
+
+- The 'cabarc' application supports multi-cabinet archives.
+
+- The 'attrib' application supports recursing in sub-directories.
+
+- The 'ipconfig' application can display IPv6 addresses.
+
+- The 'start' application allows setting process priority and affinity.
+
+- The 'cmd' application support arithmetic variable expansion,
+  comparison operators, and various extra features in 'for' loops.
+
+- All graphical built-in applications have a 256x256 icon for use with
+  the Mac driver.
+
+
+*** Build environment
+
+- The configure script uses pkg-config when possible to find library
+  dependencies. Compiler and linker flags can be passed explicitly for
+  each dependency to override pkg-config where necessary.
+
+- The IDL compiler supports nameless structs and unions and generates
+  portable C code for them.
+
+- The IDL compiler generates the same header guards as the Microsoft
+  one for better header compatibility.
+
+- Generated assembler files are built by invoking the C compiler when
+  possible, for better compatibility with the Clang tool chain.
+
+- The Winedump tool can display the contents of typelib files.
+
+- The Fnt2bdf tool has been removed since X11 server-side fonts are no
+  longer used.
+
+
+*** Platform-specific changes
+
+- On Linux, dynamic device management supports the UDisks2 service.
+
+- On Mac OS X, the Recycle Bin is mapped to the Mac OS Trash.
+
+- Debugging support for ARM platforms is improved, including the
+  ability to display ARM assembly in the Wine debugger, and support
+  for relay tracing.
+
+- Building Wine for the ARM64 platform is supported.
+
+- There is preliminary support for building Wine for Android using the
+  Android NDK.
+
+- The DragonFly FreeBSD variant is supported.
+
+- The Alpha and Sparc platforms are no longer supported.
+
+
+*** Miscellaneous
+
+- XML namespaces are better supported. XML parsing is also implemented
+  in the XMLLite library.
+
+- Windows Management Instrumentation (WMI) is implemented, with a wide
+  range of WBEM system classes.
+
+- A number of forwarding libraries are added to support the API Sets
+  feature added in Windows 8.
+
+- More of the latest functions of the C runtime are implemented,
+  particularly the locale functions. Exception handling and RTTI are
+  supported on 64-bit.
+
+- The standard C++ class libraries are more complete, particularly the
+  math functions and the stream classes.
+
+
+*** New external dependencies
+
+- LibOSMesa is used for OpenGL rendering to device-independent bitmaps.
+
+
+*** Useful configuration options
+
+Note: More details about these and other configuration options can be
+      found at http://wiki.winehq.org/UsefulRegistryKeys
+
+- Client-side window rendering can be disabled if necessary by setting
+  "ClientSideGraphics" to "N" under HKCU\Software\Wine\X11 Driver.
+
+- On Mac OS X, in case an application doesn't work properly with the
+  Mac driver, it is possible to go back to the X11 driver by setting
+  "Graphics" to "x11" under HKCU\Software\Wine\Drivers.
+
+- Some X11 compositors do not cope properly with transparent windows
+  that use non-rectangular shapes. In that case, window shaping can be
+  disabled by setting "ShapeLayeredWindows" to "N" under
+  HKCU\Software\Wine\X11 Driver.
+
+- The "VertexShaderMode" and "PixelShaderMode" settings under
+  HKCU\Software\Wine\Direct3D have been replaced by the "MaxShaderModelVS",
+  "MaxShaderModelGS" and "MaxShaderModelPS" (DWORD) settings. These allow
+  limiting the maximum supported shader model version. Setting these to 0
+  disables support for the corresponding shader type, like "VertexShaderMode"
+  and "PixelShaderMode" did.
+
+- The default value for the "AlwaysOffscreen" setting under
+  HKCU\Software\Wine\Direct3D is "enabled". It can still be disabled
+  by setting it to "disabled".
+
+
+*** Known issues
+
+- The addition of DirectWrite causes Steam to be unable to display
+  text. This can be fixed either by setting dwrite.dll to disabled for
+  steam.exe using Winecfg, or by running Steam with the -no-dwrite
+  option.
+
+- The removal of the big X11 lock can reveal locking bugs in old Xlib
+  versions, notably on RHEL 5. The only solution is to upgrade the X
+  libraries.
 
 --
 Alexandre Julliard
