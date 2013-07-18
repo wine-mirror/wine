@@ -131,10 +131,19 @@ static HRESULT WINAPI BitmapClipper_GetPixelFormat(IWICBitmapClipper *iface,
 }
 
 static HRESULT WINAPI BitmapClipper_GetResolution(IWICBitmapClipper *iface,
-    double *dpi_x, double *dpi_y)
+    double *dpiX, double *dpiY)
 {
-    FIXME("(%p,%p,%p): stub\n", iface, dpi_x, dpi_y);
-    return E_NOTIMPL;
+    BitmapClipper *This = impl_from_IWICBitmapClipper(iface);
+
+    TRACE("(%p,%p,%p)\n", iface, dpiX, dpiY);
+
+    if (!dpiX || !dpiY)
+        return E_INVALIDARG;
+
+    if (!This->source)
+        return WINCODEC_ERR_WRONGSTATE;
+
+    return IWICBitmapSource_GetResolution(This->source, dpiX, dpiY);
 }
 
 static HRESULT WINAPI BitmapClipper_CopyPalette(IWICBitmapClipper *iface,
