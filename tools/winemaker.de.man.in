@@ -1,7 +1,7 @@
 .\" -*- nroff -*-
-.TH WINEMAKER 1 "Januar 2012" "@PACKAGE_STRING@" "Wine Developers Manual"
+.TH WINEMAKER 1 "Januar 2012" "@PACKAGE_STRING@" "Wine Entwicklerhandbuch"
 .SH NAME
-winemaker \- Erzeugt eine Buildumgebung um Windows Programme unter Unix zu kompilieren
+winemaker \- Erzeugt eine Build-Infrastruktur, um Windows Programme unter Unix zu kompilieren
 .SH ÜBERSICHT
 .B "winemaker "
 [
@@ -40,175 +40,183 @@ winemaker \- Erzeugt eine Buildumgebung um Windows Programme unter Unix zu kompi
 .SH BESCHREIBUNG
 .PP
 .B winemaker
-ist ein Perl Script um Ihnen das konvertieren von Windows Quellcode
-zu einem Winelib Programm zu erleichtern.
+ist ein Perl-Script um Ihnen das Konvertieren von Windows-Quellcode
+zu einem Winelib-Programm zu erleichtern.
 .PP
-Um diese zu tun kann winemaker folgendes vornehmen:
+Zu diesem Zweck beherrscht Winemaker folgende Operationen:
 .PP
-- Quellcodedateien und Verzeichnisse in Kleinbuchstaben umbennen falls
-alle Buchstaben groß sind.
+- Quellcodedateien und Verzeichnisse in Kleinbuchstaben umbenennen, falls
+diese beim Übertragen komplett in Großbuchstaben angekommen sind.
 .PP
-- DOS zu Unix konvertierung (CRLF to LF).
+- Konvertierung von DOS- zu Unix-Zeilenenden (CRLF nach LF).
 .PP
-- include Anweisungen und Resource Referenzen durchsuchen um Backslashes
+- Include-Anweisungen und Resourcenreferenzen durchsuchen, um Backslashes
 durch Slashes zu ersetzen.
 .PP
-- während des oberen Schrittes wird winemaker auch nach der angegebenen Datei
-im Includepfad suchen um die entsprechende Zeile falls nötig mit der jeweiligen Schreibweise
-zu korriegieren.
+- Während des obigen Schrittes wird Winemaker ebenfalls nach der angegebenen Datei
+im Includepfad suchen und die entsprechende Zeile, falls nötig, mit der korrekten
+Groß-/Kleinschreibweise austauschen.
 .PP
-- winemaker wird ebenso andere exotische Probleme wie die Benutzung von
+- Winemaker wird ebenso andere, exotischere Probleme wie die Benutzung von
 '#pragma pack', 'afxres.h' in nicht-MFC-Projekten und mehr untersuchen.
-Sollte irgendwas ungwöhnliches vorkommen wird winemaker Sie warnen.
+Sollte etwas ungwöhnliches vorkommen, wird Winemaker Sie warnen.
 .PP
-- winemaker kann auch eine ganze Verzeichnisstruktur auf einmal durchsuchen,
-schätzen was die ausführbaren Dateien und Bibliotheken sind die Sie neu erstellen
-möchten und dazu die Quellcodedateien zuordnen.
+- Winemaker kann eine ganze Verzeichnisstruktur auf einmal durchsuchen,
+schätzen welche ausführbaren Dateien und Bibliotheken Sie zu erstellen
+gedenken, diese den passenden Quelldateien zuordnen und entsprechende Makefiles
+generieren.
 .PP
-- letzendlich wird winemaker eine Makefile für den normalen gebrauch erstellen.
+- letztendlich wird Winemaker eine globale Makefile für den normalen Gebrauch erzeugen.
 .PP
-- MFC-basierte Projekte werden erkannt und es werden angepasste Dateien erstellt.
+- Winemaker erkennt MFC-basierte Projekte und erstellt angepasste Dateien.
 .PP
-- Existierende Projektdateien können von winemaker gelesen werden.
-Unterstützt werden dsp, dsw, vcproj und sln Dateien.
+- Existierende Projektdateien können von Winemaker gelesen werden.
+Unterstützt sind dsp, dsw, vcproj und sln-Dateien.
 .PP
 .SH ARGUMENTE
 .TP
 .B --nobanner
-Schaltet das anzeigen des Banners aus.
+Unterdrückt die Anzeige des Banners.
 .TP
 .B --backup
-Lässt winemaker Backups von allen Quellcodedateien erstellen an denen
+Lässt Winemaker Backups von allen Quellcodedateien anlegen, an denen
 Änderungen vorgenommen werden. Diese Option ist Standard.
 .TP
 .B --nobackup
-Lässt winemaker keine Backups erstellen.
+Lässt Winemaker keine Backups anlegen.
 .TP
 .B --nosource-fix
-Lässt winemaker keine Quellcodedateien ändern (z.B. DOS zu Unix Konvertierung)
-Das kann Meldungen bei schreibgeschützten Dateien verhindern.
+Weist Winemaker an, keine Quellcodedateien zu ändern (z.B. DOS zu Unix
+Konvertierung). Verhindert Fehlermeldungen bei schreibgeschützten Dateien.
 .TP
 .B --lower-all
 Alle Dateien und Verzeichnisse werden in Kleinschreibung umbenannt.
 .TP
 .B --lower-uppercase
-Alle Dateien und Verzeichnisse die komplett groß geschrieben sind werden
+Nur Dateien und Verzeichnisse, die komplett groß geschrieben sind, werden
 in Kleinschreibung umbenannt.
-Also "HALLO.C" würde umbenannt werden, "Welt.c" jedoch nicht.
+"HALLO.C" würde beispielsweise umbenannt werden, "Welt.c" jedoch nicht.
 .TP
 .B --lower-none
 Keine Dateien und Verzeichnisse werden in Kleinschreibung umbenannt.
-Achtung: Dies verhindert nicht die Umbennenung von Dateien, deren Erweiterung
-nicht verarbeiten lassen, wie z.B. ".Cxx". Diese Option ist Standard.
-.TP
-.B "--lower-include "
-Wenn die Datei zu einer include Anweisung (oder einer Resource Referenz)
-nicht auffindbar ist, wird der Dateiname in Kleinschreibung umbenannt.
+Beachten Sie, dass dies nicht die Umbenennung von Dateien verhindert, deren
+Erweiterungen nicht unverändert verarbeitet werden können, z.B. ".Cxx".
 Diese Option ist Standard.
 .TP
+.B "--lower-include "
+Wenn die Datei zu einer Include-Anweisung (oder einer anderen Form von
+Dateireferenz für Resourcen) nicht auffindbar ist, wird der Dateiname in
+Kleinschreibung umbenannt. Diese Option ist Standard.
+.TP
 .B "--nolower-include "
-Wenn die Datei zu einer include Anweisung (oder einer Resource Referenz)
-nicht auffindbar ist, wird keine Änderung vorgenommen.
+Es werden keine Änderungen an Include-Anweisungen oder Referenzen vorgenommen,
+wenn die entsprechende Datei nicht auffindbar ist.
 .TP
 .BR "--guiexe " "| " "--windows"
-Gibt den Typ(grafisch) der zu erstellenden Anwendung an.
+Legt fest, dass für jedes gefundene, ausführbare Target, oder Target unbekannten
+Typs angenommen wird, dass es sich um eine grafische Anwendung handelt.
 Diese Option ist Standard.
 .TP
 .BR "--cuiexe " "| " "--console"
-Gibt den Typ(Konsole) der zu erstellenden Anwendung an.
+Legt fest, dass für jedes gefundene, ausführbare Target, oder Target unbekannten
+Typs angenommen wird, dass es sich um eine Konsolenanwendung handelt.
 .TP
 .B --dll
-winemaker wird im Zweifelsfall annehmen, dass es sich um eine DLL handelt.
+Winemaker wird im Zweifelsfall annehmen, dass es sich bei einem unbekannten
+Target um eine DLL handelt.
 .TP
 .B --lib
-winemaker wird im Zweifelsfall annehmen, dass es sich um eine statische Bibliothek handelt.
+Winemaker wird im Zweifelsfall annehmen, dass es sich bei einem unbekannten
+Target um eine statische Bibliothek handelt.
 .TP
 .B --mfc
-Teilt winemaker mit, dass es sich um MFC-basierten Quellcode handelt.
-In solch einem Fall passt winemaker Pfade für Header und Bibliotheken entsprechend an
-und kompiliert gegen die MFC Bibliothek.
+Teilt Winemaker mit, dass es sich um MFC-basierte Ziele handelt. In solch einem
+Fall passt Winemaker Pfade für Header und Bibliotheken entsprechend an und
+verlinkt die Ziele mit der MFC-Bibliothek.
 .TP
 .B --nomfc
-Teilt winemaker mit, dass es sich nicht um MFC-basierten Quellcode handelt.
-Selbst wenn winemaker dateien wie "stdafx.cpp" oder "stdafx.h" bemerkt, was automatisch
-MFC aktivieren würde, wenn weder --nomfc noch --mfc angegeben wurden.
+Teilt Winemaker mit, dass es sich nicht um MFC-basierte Ziele handelt. Diese
+Option verhindert die Benutzung von MFC-Bibliotheken, selbst wenn Winemaker
+Dateien wie "stdafx.cpp" oder "stdafx.h" begegnet, was normalerweise automatisch
+MFC aktivieren würde, wenn weder \fB--nomfc\fR noch \fB--mfc\fR angegeben wurden.
 .TP
 .BI -D macro "\fR[=\fIdefn\fR]"
-Verwendet diese Makrodefinition global.
+Fügt diese Makrodefinition zur globalen Makroliste hinzu.
 .TP
 .BI -I dir
-Verwendet den Pfad als globalen Include-Pfad.
+Hängt das angegebene Verzeichnis dem globalen Include-Pfad an.
 .TP
 .BI -P dir
-Verwendet den Pfad als globalen DLL-Pfad.
+Hängt das angegebene Verzeichnis dem globalen DLL-Pfad an.
 .TP
 .BI -i dll
-Fügt eine Winelib Bibliothek zu der globalen Liste der zu importierenden
-Winelib Bibliotheken hinzu.
+Fügt die angegebene Winelib-Bibliothek zur globalen Liste der zu importierenden
+Winelib-Bibliotheken hinzu.
 .TP
 .BI -L dir
-Verwendet den Pfad als globalen Bibliotheks-Pfad.
+Hängt das angegebene Verzeichnis dem globalen Bibliotheks-Pfad an.
 .TP
 .BI -l library
-Fügt eine Bibliothek zu der globalen Liste der zu importierenden
+Fügt die angegebene Bibliothek zur globalen Liste der zu verlinkenden
 Bibliotheken hinzu.
 .TP
 .B --nodlls
-Dieso Option teil winemakr mit, nicht die Standard Winelib Bibliotheken zu importieren.
-Also muss jede DLL die der Quellcode nutzt explizit mit -i an winemaker übergeben werden.
-Die Standard Bibliotheken sind: odbc32.dll, odbccp32.dll, ole32.dll,
+Diese Option teilt Winemaker mit, nicht den Standardsatz an Winelib-Bibliotheken
+zu importieren. Dies bedeutet, dass jede DLL, die Ihr Quellcode nutzt, explizit
+mit \fB-i\fR an Winemaker übergeben werden muss.
+Die Standard-Bibliotheken sind: odbc32.dll, odbccp32.dll, ole32.dll,
 oleaut32.dll und winspool.drv.
 .TP
 .B --nomsvcrt
-Dies hindert winegcc gegen msvcrt zu kompilieren.
-Nutzen Sie diese Option bei cpp-Dateien mit einem <string> include.
+Setzt einige Optionen, die winegcc daran hindern, gegen msvcrt zu kompilieren.
+Nutzen Sie diese Option bei cpp-Dateien, die <string> einbinden.
 .TP
 .B --interactive
-Versetzt winemaker in einen interaktiven Modus. In diesem Modus wird winemaker
-Sie für jede Targetliste in jedem Verzeichniss nach Bestätigung fragen und nach jeweils
-speziellen Optionen fragen.
+Versetzt Winemaker in einen interaktiven Modus. In diesem Modus wird Winemaker
+Sie für die Targetliste jedes Verzeichnisses nach Bestätigung und jeweils
+target- und verzeichnisspezifischen Optionen fragen.
 .TP
-.B --single-target name
-Es gibt nur ein Target namens "name".
+.BI --single-target " name"
+Gibt an, dass es nur ein einziges Target gibt, namens \fIname\fR.
 .TP
 .B --generated-files
-Eine Makefile soll erzeugt werden. Diese Option ist Standard.
+Weist Winemaker an, eine Makefile zu erzeugen. Diese Option ist Standard.
 .TP
 .B --nogenerated-files
-Keine Makefile erstellen.
+Weist Winemaker an, keine Makefile zu erzeugen.
 .TP
 .B --wine32
-Ein 32-Bit Target erstellen. Das ist nützlich unter wow64 Systemen.
-Ohne dieser Option wird die Standard Architektur genutzt.
+Weist Winemaker an, ein 32-Bit Target zu erstellen. Dies ist nützlich bei
+wow64-Systemen. Ohne diese Option wird die Standardarchitektur benutzt.
 
 .SH BEISPIELE
 .PP
-Ein typischer winemaker aufruf:
+Ein typischer Winemaker Aufruf:
 .PP
 $ winemaker --lower-uppercase -DSTRICT .
 .PP
-Damit scannt winemaker das aktuelle Verzeichnis und die Unterverzeichnisse nach
-Quellcodedateien. Jede Datei und jedes Verzeichnis das in Großbuchstaben geschrieben
-ist wird in Kleinbuchstaben umbenannt. Danach werden alle Quellcodedateien an die
-kompilierung mit Winelib angepasst und Makefiles erzeugt.
-'-DSTRICT' gibt an, dass das STRICT Makro gesetzt sein muss wenn man diesen Quellcode
-kompiliert. Letztendlich wird winemaker die globale Makefile erzeugen.
+Damit scannt Winemaker das aktuelle Verzeichnis und die Unterverzeichnisse nach
+Quellcodedateien. Jede Datei und jedes Verzeichnis, das ganz in Großbuchstaben
+geschrieben ist, wird in Kleinbuchstaben umbenannt. Danach werden alle Quellcodedateien
+an die Kompilierung mit Winelib angepasst und Makefiles erzeugt.
+'-DSTRICT' gibt an, dass das STRICT-Makro gesetzt sein muss, um diesen Quellcode
+zu kompilieren. Letztendlich wird Winemaker die globale Makefile erzeugen.
 .PP
 Der nächste Schritt wäre dann:
 .PP
 $ make
 .PP
-Wenn Sie hier Compiler Fehler sehen (was nicht unwahrscheinlich für ein einigermaßen
-großes Projekt), dann sollten Sie einen Blick in den Winelib User Guide werfen um
-für die Problemlösung ein paar Tipps zu finden.
+Wenn Sie an diesem Punkt Compilerfehler erhalten (was recht wahrscheinlich ist,
+ab einer gewissen Projektgröße), sollten Sie den Winelib User Guide zu Rate
+ziehen, um Problemlösungen und Tipps zu finden.
 .PP
-Bei einem MFC-basierten Projekt müssen Sie stattdessen folgenden Befehl ausführen:
+Bei einem MFC-basierten Projekt sollten Sie stattdessen folgenden Befehl ausführen:
 .PP
 $ winemaker --lower-uppercase --mfc .
 .br
 $ make
 .PP
-Mit einer existierenden Projektdatei folgenden Befehl ausführen:
+Mit einer existierenden Projektdatei lautet der passende Befehl:
 .PP
 $ winemaker meinprojekt.dsp
 .br
@@ -217,33 +225,41 @@ $ make
 
 .SH TODO / FEHLER
 .PP
-In einigen Fällen müssen Sie die Makefile oder den Quellcode nachbearbeiten.
+In einigen Fällen werden Sie die Makefile oder den Quellcode von Hand
+nachbearbeiten müssen.
 .PP
-Für den Fall das die Binärdateien schon vorhanden sind könnten wir winedump
-nutzen um die Art (grafisch oder Konsole), die benötigten Bibliotheken und welche
-Funktionen exportiert werden (bei den Bibliotheken). Wir könnten all diese Informationen
-für das Winelib Projekt verwenden.
+Angenommen, die fertigen Windows-Bibliotheken oder Binärdateien sind vorhanden,
+könnte mit winedump ermittelt werden, um welche Art von ausführbarer Datei es
+sich handelt (grafisch oder Konsole), gegen welche Bibliotheken sie gelinkt
+sind und welche Funktionen exportiert werden (bei Bibliotheken). All diese
+Informationen könnten dann für das Winelib-Projekt verwendet werden.
 .PP
-Weiterhin ist winemaker nicht sehr gut darin die Bibliothek zu finden, die die
-Anwendung enthält. Sie muss entweder im aktuellen Verzeichnis sein oder in
-.IR LD_LIBRARY_PATH .
+Weiterhin ist Winemaker nicht sehr gut darin, die Bibliothek zu finden, die
+die Anwendung enthält: Sie muss entweder im aktuellen Verzeichnis oder im
+.IR LD_LIBRARY_PATH liegen.
 .PP
 Winemaker unterstützt noch keine Messagedateien und deren Compiler.
 .PP
-
-.SH SIEHE AUCH
-.PP
-Den Winelib User Guide:
-.PP
-http://www.winehq.org/docs/winelib-guide/index
-.PP
-.BR wine (1)
-.PP
-
+Fehler können im
+.UR http://bugs.winehq.org
+.B Wine Bugtracker
+.UE
+gemeldet werden.
 .SH AUTOREN
-François Gouget for CodeWeavers
-.PP
+François Gouget für CodeWeavers
+.br
 Dimitrie O. Paun
-.PP
+.br
 André Hentschel
-.PP
+.SH VERFÜGBARKEIT
+.B Winemaker
+ist Teil der Wine-Distribution, verfügbar im WineHQ, dem
+.UR http://www.winehq.org/
+.B Hauptquartier der Wine-Entwicklung
+.UE .
+.SH SIEHE AUCH
+.BR wine (1),
+.br
+.UR http://www.winehq.org/help
+.B Wine-Dokumentation und Support
+.UE .
