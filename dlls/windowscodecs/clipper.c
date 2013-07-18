@@ -118,8 +118,16 @@ static HRESULT WINAPI BitmapClipper_GetSize(IWICBitmapClipper *iface,
 static HRESULT WINAPI BitmapClipper_GetPixelFormat(IWICBitmapClipper *iface,
     WICPixelFormatGUID *format)
 {
-    FIXME("(%p,%p): stub\n", iface, format);
-    return E_NOTIMPL;
+    BitmapClipper *This = impl_from_IWICBitmapClipper(iface);
+    TRACE("(%p,%p)\n", iface, format);
+
+    if (!format)
+        return E_INVALIDARG;
+
+    if (!This->source)
+        return WINCODEC_ERR_WRONGSTATE;
+
+    return IWICBitmapSource_GetPixelFormat(This->source, format);
 }
 
 static HRESULT WINAPI BitmapClipper_GetResolution(IWICBitmapClipper *iface,
