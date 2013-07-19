@@ -284,7 +284,6 @@ static void test_local_gif_palette(void)
 
     /* global palette */
     hr = IWICBitmapDecoder_CopyPalette(decoder, palette);
-todo_wine
     ok(hr == S_OK || broken(hr == WINCODEC_ERR_FRAMEMISSING), "CopyPalette %#x\n", hr);
     if (hr == S_OK)
     {
