@@ -1923,13 +1923,12 @@ static void test_CreateFileMapping_protection(void)
 
             SetLastError(0xdeadbeef);
             ptr = VirtualAlloc(base, si.dwPageSize, MEM_COMMIT, td[i].prot);
+            ok(!ptr, "%d: VirtualAlloc(%02x) should fail\n", i, td[i].prot);
             /* FIXME: remove once Wine is fixed */
             if (td[i].prot == PAGE_WRITECOPY || td[i].prot == PAGE_EXECUTE_WRITECOPY)
-            ok(!ptr, "%d: VirtualAlloc(%02x) should fail\n", i, td[i].prot);
+todo_wine
+            ok(GetLastError() == ERROR_ACCESS_DENIED, "%d: expected ERROR_ACCESS_DENIED, got %d\n", i, GetLastError());
             else
-todo_wine
-            ok(!ptr, "%d: VirtualAlloc(%02x) should fail\n", i, td[i].prot);
-todo_wine
             ok(GetLastError() == ERROR_ACCESS_DENIED, "%d: expected ERROR_ACCESS_DENIED, got %d\n", i, GetLastError());
 
             SetLastError(0xdeadbeef);
@@ -2427,13 +2426,12 @@ static void test_mapping(void)
                 /*trace("map %#x, view %#x, requested prot %#x\n", page_prot[i], view[j].prot, page_prot[k]);*/
                 SetLastError(0xdeadbeef);
                 ptr = VirtualAlloc(base, si.dwPageSize, MEM_COMMIT, page_prot[k]);
+                ok(!ptr, "VirtualAlloc(%02x) should fail\n", page_prot[k]);
                 /* FIXME: remove once Wine is fixed */
                 if (page_prot[k] == PAGE_WRITECOPY || page_prot[k] == PAGE_EXECUTE_WRITECOPY)
-                ok(!ptr, "VirtualAlloc(%02x) should fail\n", page_prot[k]);
+todo_wine
+                ok(GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
                 else
-todo_wine
-                ok(!ptr, "VirtualAlloc(%02x) should fail\n", page_prot[k]);
-todo_wine
                 ok(GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
             }
 

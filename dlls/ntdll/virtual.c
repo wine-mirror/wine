@@ -1974,6 +1974,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
     else  /* commit the pages */
     {
         if (!(view = VIRTUAL_FindView( base, size ))) status = STATUS_NOT_MAPPED_VIEW;
+        else if (view->mapping && (view->protect & VPROT_COMMITTED)) status = STATUS_ALREADY_COMMITTED;
         else if (!VIRTUAL_SetProt( view, base, size, vprot )) status = STATUS_ACCESS_DENIED;
         else if (view->mapping && !(view->protect & VPROT_COMMITTED))
         {
