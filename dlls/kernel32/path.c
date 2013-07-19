@@ -441,8 +441,6 @@ DWORD WINAPI GetShortPathNameW( LPCWSTR longpath, LPWSTR shortpath, DWORD shortl
     DWORD               tmplen;
     WIN32_FIND_DATAW    wfd;
     HANDLE              goit;
-    UNICODE_STRING      ustr;
-    WCHAR               ustr_buf[8+1+3+1];
 
     TRACE("%s\n", debugstr_w(longpath));
 
@@ -465,10 +463,6 @@ DWORD WINAPI GetShortPathNameW( LPCWSTR longpath, LPWSTR shortpath, DWORD shortl
         sp = lp = 2;
     }
 
-    ustr.Buffer = ustr_buf;
-    ustr.Length = 0;
-    ustr.MaximumLength = sizeof(ustr_buf);
-
     while (longpath[lp])
     {
         /* check for path delimiters and reproduce them */
@@ -485,29 +479,21 @@ DWORD WINAPI GetShortPathNameW( LPCWSTR longpath, LPWSTR shortpath, DWORD shortl
             continue;
         }
 
-        for (p = longpath + lp; *p && *p != '/' && *p != '\\'; p++);
+        p = longpath + lp;
+        if (lp == 0 && p[0] == '.' && (p[1] == '/' || p[1] == '\\'))
+        {
+            tmpshortpath[sp++] = *p++;
+            tmpshortpath[sp++] = *p++;
+        }
+        for (; *p && *p != '/' && *p != '\\'; p++);
         tmplen = p - (longpath + lp);
         lstrcpynW(tmpshortpath + sp, longpath + lp, tmplen + 1);
-        /* Check, if the current element is a valid dos name */
-        if (tmplen <= 8+1+3)
-        {
-            BOOLEAN spaces;
-            memcpy(ustr_buf, longpath + lp, tmplen * sizeof(WCHAR));
-            ustr_buf[tmplen] = '\0';
-            ustr.Length = tmplen * sizeof(WCHAR);
-            if (RtlIsNameLegalDOS8Dot3(&ustr, NULL, &spaces) && !spaces)
-            {
-                sp += tmplen;
-                lp += tmplen;
-                continue;
-            }
-        }
 
         /* Check if the file exists and use the existing short file name */
         goit = FindFirstFileW(tmpshortpath, &wfd);
         if (goit == INVALID_HANDLE_VALUE) goto notfound;
         FindClose(goit);
-        strcpyW(tmpshortpath + sp, wfd.cAlternateFileName);
+        strcpyW(tmpshortpath + sp, wfd.cAlternateFileName[0] ? wfd.cAlternateFileName : wfd.cFileName);
         sp += strlenW(tmpshortpath + sp);
         lp += tmplen;
     }

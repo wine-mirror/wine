@@ -1281,9 +1281,7 @@ static void test_GetShortPathNameW(void)
     /* GetShortPathName for a non-existent short file name should fail */
     SetLastError(0xdeadbeef);
     length = GetShortPathNameW( short_path, path, 0 );
-todo_wine
     ok(!length, "GetShortPathNameW should fail\n");
-todo_wine
     ok(GetLastError() == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
 
     file = CreateFileW( short_path, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
