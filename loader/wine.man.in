@@ -2,8 +2,8 @@
 .SH NAME
 wine \- run Windows programs on Unix
 .SH SYNOPSIS
-.BI "wine " program
-[arguments ... ]
+.B wine
+.IR "program " [ arguments ]
 .br
 .B wine --help
 .br
@@ -47,27 +47,25 @@ or in Unix format
 You may pass arguments to the program being executed by adding them to the
 end of the command line invoking
 .B wine
-(such as: wine notepad C:\(rs\(rsTEMP\(rs\(rsREADME.TXT).
+(such as: \fIwine notepad C:\(rs\(rsTEMP\(rs\(rsREADME.TXT\fR).
 Note that you need to '\(rs' escape special characters (and spaces) when invoking Wine via
 a shell, e.g.
 .PP
 wine C:\(rs\(rsProgram\(rs Files\(rs\(rsMyPrg\(rs\(rstest.exe
 .PP
-.SH ENVIRONMENT VARIABLES
+.SH ENVIRONMENT
 .B wine
-makes the environment variables of the shell from which
-.B wine
-is started accessible to the windows/dos processes started. So use the
+makes the environment variables of the shell from which it
+is started accessible to the Windows/DOS processes started. So use the
 appropriate syntax for your shell to enter environment variables you need.
 .TP 
-.I WINEPREFIX
-If set, the content of this variable is taken as the name of the directory where
-.B wine
-stores its data (the default is 
+.B WINEPREFIX
+If set, the contents of this variable is taken as the name of the directory where
+Wine stores its data (the default is
 .IR $HOME/.wine ).
 This directory is also used to identify the socket which is used to
 communicate with the
-.IR wineserver .
+.BR wineserver .
 All 
 .B wine
 processes using the same 
@@ -75,34 +73,34 @@ processes using the same
 (i.e.: same user) share certain things like registry, shared memory,
 and config file.
 By setting 
-.I WINEPREFIX
+.B WINEPREFIX
 to different values for different 
 .B wine
 processes, it is possible to run a number of truly independent 
 .B wine
 processes. 
 .TP
-.I WINESERVER
+.B WINESERVER
 Specifies the path and name of the
 .B wineserver
 binary. If not set, Wine will try to load
-.BR @bindir@/wineserver ,
+.IR @bindir@/wineserver ,
 and if this doesn't exist it will then look for a file named
 "wineserver" in the path and in a few other likely locations.
 .TP
-.I WINELOADER
+.B WINELOADER
 Specifies the path and name of the
 .B wine
 binary to use to launch new Windows processes. If not set, Wine will
 try to load
-.BR @bindir@/wine ,
+.IR @bindir@/wine ,
 and if this doesn't exist it will then look for a file named "wine" in
 the path and in a few other likely locations.
 .TP
-.I WINEDEBUG
+.B WINEDEBUG
 Turns debugging messages on or off. The syntax of the variable is
 of the form
-.RI [ class ][+/-] channel [,[ class2 ][+/-] channel2 ].
+.RI [ class ][\fB+\fR|\fB-\fR] channel [,[ class2 ][\fB+\fR|\fB-\fR] channel2 ]
 .RS +7
 .PP
 .I class
@@ -116,12 +114,11 @@ If
 .I class
 is not specified, all debugging messages for the specified
 channel are turned on.  Each channel will print messages about a particular
-component of 
-.BR wine .
-The following character can be either + or - to switch the specified
+component of Wine.
+The following character can be either \fB+\fR or \fB-\fR to switch the specified
 channel on or off respectively.  If there is no
 .I class
-part before it, a leading + can be omitted. Note that spaces are not
+part before it, a leading \fB+\fR\fR can be omitted. Note that spaces are not
 allowed anywhere in the string.
 .PP
 Examples:
@@ -150,24 +147,21 @@ For more information on debugging messages, see the
 chapter of the Wine User Guide.
 .RE
 .TP
-.I WINEDLLPATH
+.B WINEDLLPATH
 Specifies the path(s) in which to search for builtin dlls and Winelib
 applications. This is a list of directories separated by ":". In
 addition to any directory specified in
-.IR WINEDLLPATH ,
+.BR WINEDLLPATH ,
 Wine will also look in
-.BR @dlldir@ .
+.IR @dlldir@ .
 .TP
-.I WINEDLLOVERRIDES
+.B WINEDLLOVERRIDES
 Defines the override type and load order of dlls used in the loading
 process for any dll. There are currently two types of libraries that can be loaded
-into a process' address space: native windows dlls
-.RI ( native ),
-.B wine 
-internal dlls
-.RI ( builtin ).
+into a process address space: native windows dlls
+.RI ( native ") and Wine internal dlls (" builtin ).
 The type may be abbreviated with the first letter of the type
-.RI ( n ", " b ).
+.RI ( n " or " b ).
 The library may also be disabled (''). Each sequence of orders must be separated by commas.
 .RS
 .PP
@@ -181,9 +175,9 @@ different libraries by separating the entries by ";".
 The load order for a 16-bit dll is always defined by the load order of
 the 32-bit dll that contains it (which can be identified by looking at
 the symbolic link of the 16-bit .dll.so file). For instance if
-ole32.dll is configured as builtin, storage.dll will be loaded as
-builtin too, since the 32-bit ole32.dll contains the 16-bit
-storage.dll.
+\fIole32.dll\fR is configured as builtin, \fIstorage.dll\fR will be loaded as
+builtin too, since the 32-bit \fIole32.dll\fR contains the 16-bit
+\fIstorage.dll\fR.
 .PP
 Examples:
 .TP
@@ -195,16 +189,16 @@ the builtin version if the native load fails.
 WINEDLLOVERRIDES="comdlg32,shell32=n;c:\(rs\(rsfoo\(rs\(rsbar\(rs\(rsbaz=b"
 .br
 Try to load the libraries comdlg32 and shell32 as native windows dlls. Furthermore, if 
-an application request to load c:\(rsfoo\(rsbar\(rsbaz.dll load the builtin library baz. 
+an application request to load \fIc:\(rsfoo\(rsbar\(rsbaz.dll\fR load the builtin library \fIbaz\fR.
 .TP
 WINEDLLOVERRIDES="comdlg32=b,n;shell32=b;comctl32=n;oleaut32="
 .br
 Try to load comdlg32 as builtin first and try the native version if
 the builtin load fails; load shell32 always as builtin and comctl32
-always as native. Oleaut32 will be disabled.
+always as native; oleaut32 will be disabled.
 .RE
 .TP
-.I WINEARCH
+.B WINEARCH
 Specifies the Windows architecture to support. It can be set either to
 .B win32
 (support only 32-bit applications), or to
@@ -214,76 +208,64 @@ Specifies the Windows architecture to support. It can be set either to
 The architecture supported by a given Wine prefix is set at prefix
 creation time and cannot be changed afterwards. When running with an
 existing prefix, Wine will refuse to start if
-.I WINEARCH
+.B WINEARCH
 doesn't match the prefix architecture.
 .TP
-.I DISPLAY
+.B DISPLAY
 Specifies the X11 display to use.
 .TP
-OSS sound driver configuration variables
+OSS sound driver configuration variables:
 .TP
-.I AUDIODEV
+.B AUDIODEV
 Set the device for audio input / output. Default
-.BR /dev/dsp .
+.IR /dev/dsp .
 .TP
-.I MIXERDEV
+.B MIXERDEV
 Set the device for mixer controls. Default
-.BR /dev/mixer .
+.IR /dev/mixer .
 .TP
-.I MIDIDEV
+.B MIDIDEV
 Set the MIDI (sequencer) device. Default
-.BR /dev/sequencer .
+.IR /dev/sequencer .
 .SH FILES
 .TP
 .I @bindir@/wine
-The 
-.B wine 
-program loader.
+The Wine program loader.
 .TP
 .I @bindir@/wineconsole
-The 
-.B wine 
-program loader for CUI (console) applications.
+The Wine program loader for CUI (console) applications.
 .TP
 .I @bindir@/wineserver
-The 
-.B wine 
-server 
-.TP 
+The Wine server
+.TP
 .I @bindir@/winedbg
-The 
-.B wine 
-debugger
-.TP 
+The Wine debugger
+.TP
 .I @dlldir@
-Directory containing 
-.BR wine
-shared libraries 
+Directory containing Wine shared libraries
 .TP
 .I $WINEPREFIX/dosdevices
 Directory containing the DOS device mappings. Each file in that
 directory is a symlink to the Unix device file implementing a given
-device. For instance, if COM1 is mapped to /dev/ttyS0 you'd have a
-symlink of the form $WINEPREFIX/dosdevices/com1 -> /dev/ttyS0.
+device. For instance, if COM1 is mapped to \fI/dev/ttyS0\fR you'd have a
+symlink of the form \fI$WINEPREFIX/dosdevices/com1\fR -> \fI/dev/ttyS0\fR.
 .br
 DOS drives are also specified with symlinks; for instance if drive D:
-corresponds to the CDROM mounted at /mnt/cdrom, you'd have a symlink
-$WINEPREFIX/dosdevices/d: -> /mnt/cdrom. The Unix device corresponding
+corresponds to the CDROM mounted at \fI/mnt/cdrom\fR, you'd have a symlink
+\fI$WINEPREFIX/dosdevices/d:\fR -> \fI/mnt/cdrom\fR. The Unix device corresponding
 to a DOS drive can be specified the same way, except with '::' instead
 of ':'. So for the previous example, if the CDROM device is mounted
-from /dev/hdc, the corresponding symlink would be
-$WINEPREFIX/dosdevices/d:: -> /dev/hdc.
+from \fI/dev/hdc\fR, the corresponding symlink would be
+\fI$WINEPREFIX/dosdevices/d::\fR -> \fI/dev/hdc\fR.
 .SH AUTHORS
-.B wine
-is available thanks to the work of many developers. For a listing
-of the authors, please see the file 
-.B AUTHORS
+Wine is available thanks to the work of many developers. For a listing
+of the authors, please see the file
+.I AUTHORS
 in the top-level directory of the source distribution.
 .SH COPYRIGHT
-.B wine
-can be distributed under the terms of the LGPL license. A copy of the
+Wine can be distributed under the terms of the LGPL license. A copy of the
 license is in the file
-.B COPYING.LIB
+.I COPYING.LIB
 in the top-level directory of the source distribution.
 .SH BUGS
 .PP
