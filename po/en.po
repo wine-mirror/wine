@@ -969,7 +969,7 @@ msgid ""
 "Please reenter margins."
 msgstr ""
 "Margins overlap or fall outside Paper boundaries.\n"
-"Please reenter margins."
+"Please re-enter margins."
 
 #: comdlg32.rc:60
 msgid "The 'Number of copies' field cannot be empty."
@@ -6348,15 +6348,15 @@ msgstr "No more bindings.\n"
 
 #: winerror.mc:3446
 msgid "Can't logon with inter-domain trust account.\n"
-msgstr "Can't logon with inter-domain trust account.\n"
+msgstr "Can't log on with inter-domain trust account.\n"
 
 #: winerror.mc:3451
 msgid "Can't logon with workstation trust account.\n"
-msgstr "Can't logon with workstation trust account.\n"
+msgstr "Can't log on with workstation trust account.\n"
 
 #: winerror.mc:3456
 msgid "Can't logon with server trust account.\n"
-msgstr "Can't logon with server trust account.\n"
+msgstr "Can't log on with server trust account.\n"
 
 #: winerror.mc:3461
 msgid "Domain trust information inconsistent.\n"
@@ -8689,7 +8689,7 @@ msgid ""
 "device name is spelled correctly."
 msgstr ""
 "Cannot find the specified device. Make sure it is installed or that the "
-"device name is spelled correctly."
+"device name is spelt correctly."
 
 #: winmm.rc:83
 msgid ""
