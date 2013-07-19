@@ -2624,30 +2624,14 @@ __ASM_STDCALL_FUNC( ExitProcess, 4, /* Shrinker depend on this particular ExitPr
                    ".byte 0x6A, 0x00\n\t" /* pushl $0 */
                    ".byte 0x68, 0x00, 0x00, 0x00, 0x00\n\t" /* pushl $0 - 4 bytes immediate */
                    "pushl 8(%ebp)\n\t"
-                   "call " __ASM_NAME("process_ExitProcess") __ASM_STDCALL(4) "\n\t"
+                   "call " __ASM_NAME("RtlExitUserProcess") __ASM_STDCALL(4) "\n\t"
                    "leave\n\t"
                    "ret $4" )
-
-void WINAPI process_ExitProcess( DWORD status )
-{
-    ULONG magic;
-    LdrLockLoaderLock( 0, 0, &magic );
-    RtlAcquirePebLock();
-    NtTerminateProcess(0, status);
-    LdrShutdownProcess();
-    NtTerminateProcess(GetCurrentProcess(), status);
-    exit(status);
-}
-
 #else
 
 void WINAPI ExitProcess( DWORD status )
 {
-    RtlAcquirePebLock();
-    NtTerminateProcess(0, status);
-    LdrShutdownProcess();
-    NtTerminateProcess(GetCurrentProcess(), status);
-    exit(status);
+    RtlExitUserProcess( status );
 }
 
 #endif

@@ -2392,6 +2392,20 @@ void WINAPI LdrShutdownProcess(void)
     process_detach();
 }
 
+
+/******************************************************************
+ *		RtlExitUserProcess (NTDLL.@)
+ */
+void WINAPI RtlExitUserProcess( DWORD status )
+{
+    RtlEnterCriticalSection( &loader_section );
+    RtlAcquirePebLock();
+    NtTerminateProcess( 0, status );
+    LdrShutdownProcess();
+    NtTerminateProcess( GetCurrentProcess(), status );
+    exit( status );
+}
+
 /******************************************************************
  *		LdrShutdownThread (NTDLL.@)
  *

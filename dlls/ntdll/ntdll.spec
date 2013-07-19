@@ -568,6 +568,7 @@
 @ stdcall RtlEqualString(ptr ptr long)
 @ stdcall RtlEqualUnicodeString(ptr ptr long)
 @ stdcall RtlEraseUnicodeString(ptr)
+@ stdcall RtlExitUserProcess(long)
 @ stdcall RtlExitUserThread(long)
 @ stdcall RtlExpandEnvironmentStrings_U(ptr ptr ptr ptr)
 @ stub RtlExtendHeap
