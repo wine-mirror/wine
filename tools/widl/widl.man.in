@@ -97,7 +97,7 @@ names. The default output filename is \fBdlldata.c\fR.
 .IP "\fB-I \fIpath\fR"
 Add a header search directory to path. Multiple search
 directories are allowed.
-.IP "\fB-D \fIid\fR[\f\fB=\fIval\fR]"
+.IP "\fB-D \fIid\fR[\fB=\fIval\fR]"
 Define preprocessor macro \fIid\fR with value \fIval\fR.
 .IP "\fB-E\fR"
 Preprocess only.
