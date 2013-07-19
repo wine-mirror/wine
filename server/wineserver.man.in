@@ -2,7 +2,8 @@
 .SH NAME
 wineserver \- the Wine server
 .SH SYNOPSIS
-.BI wineserver\  [options]
+.B wineserver
+.RI [ options ]
 .SH DESCRIPTION
 .B wineserver
 is a daemon process that provides to Wine roughly the same services
@@ -15,7 +16,7 @@ useful to start \fBwineserver\fR explicitly with different options, as
 explained below.
 .SH OPTIONS
 .TP
-\fB\-d\fI[n]\fR, \fB--debug\fI[=n]
+\fB\-d\fR[\fIn\fR], \fB--debug\fR[\fB=\fIn\fR]
 Set the debug level to
 .IR n .
 0 means no debugging information, 1 is the normal level, and 2 is for
@@ -33,7 +34,7 @@ instance when running it under a debugger.
 .BR \-h ", " --help
 Display a help message.
 .TP
-\fB\-k\fI[n]\fR, \fB--kill\fI[=n]
+\fB\-k\fR[\fIn\fR], \fB--kill\fR[\fB=\fIn\fR]
 Kill the currently running
 .BR wineserver ,
 optionally by sending signal \fIn\fR. If no signal is specified, sends
@@ -41,7 +42,7 @@ a SIGINT first and then a SIGKILL.  The instance of \fBwineserver\fR
 that is killed is selected based on the WINEPREFIX environment
 variable.
 .TP
-\fB\-p\fI[n]\fR, \fB--persistent\fI[=n]
+\fB\-p\fR[\fIn\fR], \fB--persistent\fR[\fB=\fIn\fR]
 Specify the \fBwineserver\fR persistence delay, i.e. the amount of
 time that the server will keep running when all client processes have
 terminated. This avoids the cost of shutting down and starting again
