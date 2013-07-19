@@ -1163,16 +1163,13 @@ static void attach_implicitly_loaded_dlls( LPVOID reserved )
  *		process_detach
  *
  * Send DLL process detach notifications.  See the comment about calling
- * sequence at process_attach.  Unless the bForceDetach flag
- * is set, only DLLs with zero refcount are notified.
+ * sequence at process_attach.
  */
-static void process_detach( BOOL bForceDetach, LPVOID lpReserved )
+static void process_detach(void)
 {
     PLIST_ENTRY mark, entry;
     PLDR_MODULE mod;
 
-    RtlEnterCriticalSection( &loader_section );
-    if (bForceDetach) process_detaching = 1;
     mark = &NtCurrentTeb()->Peb->LdrData->InInitializationOrderModuleList;
     do
     {
@@ -1183,21 +1180,19 @@ static void process_detach( BOOL bForceDetach, LPVOID lpReserved )
             /* Check whether to detach this DLL */
             if ( !(mod->Flags & LDR_PROCESS_ATTACHED) )
                 continue;
-            if ( mod->LoadCount && !bForceDetach )
+            if ( mod->LoadCount && !process_detaching )
                 continue;
 
             /* Call detach notification */
             mod->Flags &= ~LDR_PROCESS_ATTACHED;
             MODULE_InitDLL( CONTAINING_RECORD(mod, WINE_MODREF, ldr), 
-                            DLL_PROCESS_DETACH, lpReserved );
+                            DLL_PROCESS_DETACH, ULongToPtr(process_detaching) );
 
             /* Restart at head of WINE_MODREF list, as entries might have
                been added and/or removed while performing the call ... */
             break;
         }
     } while (entry != mark);
-
-    RtlLeaveCriticalSection( &loader_section );
 }
 
 /*************************************************************************
@@ -1215,7 +1210,6 @@ NTSTATUS MODULE_DllThreadAttach( LPVOID lpReserved )
 
     /* don't do any attach calls if process is exiting */
     if (process_detaching) return STATUS_SUCCESS;
-    /* FIXME: there is still a race here */
 
     RtlEnterCriticalSection( &loader_section );
 
@@ -2394,7 +2388,8 @@ BOOLEAN WINAPI RtlDllShutdownInProgress(void)
 void WINAPI LdrShutdownProcess(void)
 {
     TRACE("()\n");
-    process_detach( TRUE, (LPVOID)1 );
+    process_detaching = 1;
+    process_detach();
 }
 
 /******************************************************************
@@ -2410,7 +2405,6 @@ void WINAPI LdrShutdownThread(void)
 
     /* don't do any detach calls if process is exiting */
     if (process_detaching) return;
-    /* FIXME: there is still a race here */
 
     RtlEnterCriticalSection( &loader_section );
 
@@ -2537,41 +2531,36 @@ static void MODULE_DecRefCount( WINE_MODREF *wm )
  */
 NTSTATUS WINAPI LdrUnloadDll( HMODULE hModule )
 {
+    WINE_MODREF *wm;
     NTSTATUS retv = STATUS_SUCCESS;
+
+    if (process_detaching) return retv;
 
     TRACE("(%p)\n", hModule);
 
     RtlEnterCriticalSection( &loader_section );
 
-    /* if we're stopping the whole process (and forcing the removal of all
-     * DLLs) the library will be freed anyway
-     */
-    if (!process_detaching)
+    free_lib_count++;
+    if ((wm = get_modref( hModule )) != NULL)
     {
-        WINE_MODREF *wm;
+        TRACE("(%s) - START\n", debugstr_w(wm->ldr.BaseDllName.Buffer));
 
-        free_lib_count++;
-        if ((wm = get_modref( hModule )) != NULL)
+        /* Recursively decrement reference counts */
+        MODULE_DecRefCount( wm );
+
+        /* Call process detach notifications */
+        if ( free_lib_count <= 1 )
         {
-            TRACE("(%s) - START\n", debugstr_w(wm->ldr.BaseDllName.Buffer));
-
-            /* Recursively decrement reference counts */
-            MODULE_DecRefCount( wm );
-
-            /* Call process detach notifications */
-            if ( free_lib_count <= 1 )
-            {
-                process_detach( FALSE, NULL );
-                MODULE_FlushModrefs();
-            }
-
-            TRACE("END\n");
+            process_detach();
+            MODULE_FlushModrefs();
         }
-        else
-            retv = STATUS_DLL_NOT_FOUND;
 
-        free_lib_count--;
+        TRACE("END\n");
     }
+    else
+        retv = STATUS_DLL_NOT_FOUND;
+
+    free_lib_count--;
 
     RtlLeaveCriticalSection( &loader_section );
 
