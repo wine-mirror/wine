@@ -141,6 +141,8 @@ static const WCHAR szVia[] = { 'V','i','a',0 };
 static const WCHAR szWarning[] = { 'W','a','r','n','i','n','g',0 };
 static const WCHAR szWWW_Authenticate[] = { 'W','W','W','-','A','u','t','h','e','n','t','i','c','a','t','e',0 };
 
+static const WCHAR emptyW[] = {0};
+
 #define HTTP_REFERER    szReferer
 #define HTTP_ACCEPT     szAccept
 #define HTTP_USERAGENT  szUser_Agent
@@ -3874,6 +3876,8 @@ BOOL WINAPI HttpQueryInfoA(HINTERNET hHttpRequest, DWORD dwInfoLevel,
     DWORD len;
     WCHAR* bufferW;
 
+    TRACE("%p %x\n", hHttpRequest, dwInfoLevel);
+
     if((dwInfoLevel & HTTP_QUERY_FLAG_NUMBER) ||
        (dwInfoLevel & HTTP_QUERY_FLAG_SYSTEMTIME))
     {
@@ -5857,9 +5861,8 @@ static DWORD HTTP_GetResponseHeaders(http_request_t *request, INT *len)
 
             /* split the status code from the status text */
             status_text = strchrW( status_code, ' ' );
-            if( !status_text )
-                goto lend;
-            *status_text++=0;
+            if( status_text )
+                *status_text++=0;
 
             request->status_code = atoiW(status_code);
 
@@ -5891,11 +5894,12 @@ static DWORD HTTP_GetResponseHeaders(http_request_t *request, INT *len)
     heap_free(request->statusText);
 
     request->version = heap_strdupW(buffer);
-    request->statusText = heap_strdupW(status_text);
+    request->statusText = heap_strdupW(status_text ? status_text : emptyW);
 
     /* Restore the spaces */
     *(status_code-1) = ' ';
-    *(status_text-1) = ' ';
+    if (status_text)
+        *(status_text-1) = ' ';
 
     /* Parse each response line */
     do
