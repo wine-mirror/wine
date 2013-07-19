@@ -51,6 +51,29 @@ static GpStatus draw_driver_string(GpGraphics *graphics, GDIPCONST UINT16 *text,
                                    GDIPCONST GpBrush *brush, GDIPCONST PointF *positions,
                                    INT flags, GDIPCONST GpMatrix *matrix);
 
+static GpStatus get_graphics_transform(GpGraphics *graphics, GpCoordinateSpace dst_space,
+        GpCoordinateSpace src_space, GpMatrix *matrix);
+
+static void transform_rectf(GpGraphics *graphics, GpCoordinateSpace dst_space,
+        GpCoordinateSpace src_space, GpRectF *rect)
+{
+    GpPointF pt[3];
+
+    pt[0].X = rect->X;
+    pt[0].Y = rect->Y;
+    pt[1].X = rect->X + rect->Width;
+    pt[1].Y = rect->Y;
+    pt[2].X = rect->X;
+    pt[2].Y = rect->Y + rect->Height;
+    GdipTransformPoints(graphics, dst_space, src_space, pt, 3);
+    rect->X = pt[0].X;
+    rect->Y = pt[0].Y;
+    rect->Width = sqrt((pt[1].Y - pt[0].Y) * (pt[1].Y - pt[0].Y) +
+                     (pt[1].X - pt[0].X) * (pt[1].X - pt[0].X));
+    rect->Height = sqrt((pt[2].Y - pt[0].Y) * (pt[2].Y - pt[0].Y) +
+                      (pt[2].X - pt[0].X) * (pt[2].X - pt[0].X));
+}
+
 /* Converts from gdiplus path point type to gdi path point type. */
 static BYTE convert_path_point_type(BYTE type)
 {
@@ -283,9 +306,6 @@ static void restore_dc(GpGraphics *graphics, INT state)
     RestoreDC(graphics->hdc, state);
 }
 
-static GpStatus get_graphics_transform(GpGraphics *graphics, GpCoordinateSpace dst_space,
-        GpCoordinateSpace src_space, GpMatrix *matrix);
-
 /* This helper applies all the changes that the points listed in ptf need in
  * order to be drawn on the device context.  In the end, this should include at
  * least:
@@ -349,7 +369,8 @@ static void gdi_alpha_blend(GpGraphics *graphics, INT dst_x, INT dst_y, INT dst_
 
 static GpStatus get_clip_hrgn(GpGraphics *graphics, HRGN *hrgn)
 {
-    return GdipGetRegionHRgn(graphics->clip, graphics, hrgn);
+    /* clipping region is in device coords */
+    return GdipGetRegionHRgn(graphics->clip, NULL, hrgn);
 }
 
 /* Draw non-premultiplied ARGB data to the given graphics object */
@@ -4046,6 +4067,8 @@ GpStatus WINGDIPAPI GdipFlush(GpGraphics *graphics, GpFlushIntention intention)
  */
 GpStatus WINGDIPAPI GdipGetClipBounds(GpGraphics *graphics, GpRectF *rect)
 {
+    GpStatus status;
+
     TRACE("(%p, %p)\n", graphics, rect);
 
     if(!graphics)
@@ -4054,7 +4077,11 @@ GpStatus WINGDIPAPI GdipGetClipBounds(GpGraphics *graphics, GpRectF *rect)
     if(graphics->busy)
         return ObjectBusy;
 
-    return GdipGetRegionBounds(graphics->clip, graphics, rect);
+    status = GdipGetRegionBounds(graphics->clip, graphics, rect);
+    if (status == Ok)
+        transform_rectf(graphics, CoordinateSpaceWorld, CoordinateSpaceDevice, rect);
+
+    return status;
 }
 
 /*****************************************************************************
@@ -5397,11 +5424,15 @@ GpStatus WINGDIPAPI GdipSetClipHrgn(GpGraphics *graphics, HRGN hrgn, CombineMode
     if(!graphics)
         return InvalidParameter;
 
+    if(graphics->busy)
+        return ObjectBusy;
+
+    /* hrgn is already in device units */
     status = GdipCreateRegionHrgn(hrgn, &region);
     if(status != Ok)
         return status;
 
-    status = GdipSetClipRegion(graphics, region, mode);
+    status = GdipCombineRegionRegion(graphics->clip, region, mode);
 
     GdipDeleteRegion(region);
     return status;
@@ -5409,6 +5440,9 @@ GpStatus WINGDIPAPI GdipSetClipHrgn(GpGraphics *graphics, HRGN hrgn, CombineMode
 
 GpStatus WINGDIPAPI GdipSetClipPath(GpGraphics *graphics, GpPath *path, CombineMode mode)
 {
+    GpStatus status;
+    GpPath *clip_path;
+
     TRACE("(%p, %p, %d)\n", graphics, path, mode);
 
     if(!graphics)
@@ -5417,7 +5451,20 @@ GpStatus WINGDIPAPI GdipSetClipPath(GpGraphics *graphics, GpPath *path, CombineM
     if(graphics->busy)
         return ObjectBusy;
 
-    return GdipCombineRegionPath(graphics->clip, path, mode);
+    status = GdipClonePath(path, &clip_path);
+    if (status == Ok)
+    {
+        GpMatrix world_to_device;
+
+        get_graphics_transform(graphics, CoordinateSpaceDevice,
+                               CoordinateSpaceWorld, &world_to_device);
+        status = GdipTransformPath(clip_path, &world_to_device);
+        if (status == Ok)
+            GdipCombineRegionPath(graphics->clip, clip_path, mode);
+
+        GdipDeletePath(clip_path);
+    }
+    return status;
 }
 
 GpStatus WINGDIPAPI GdipSetClipRect(GpGraphics *graphics, REAL x, REAL y,
@@ -5438,6 +5485,7 @@ GpStatus WINGDIPAPI GdipSetClipRect(GpGraphics *graphics, REAL x, REAL y,
     rect.Y = y;
     rect.Width  = width;
     rect.Height = height;
+    transform_rectf(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, &rect);
 
     return GdipCombineRegionRect(graphics->clip, &rect, mode);
 }
@@ -5460,6 +5508,9 @@ GpStatus WINGDIPAPI GdipSetClipRectI(GpGraphics *graphics, INT x, INT y,
 GpStatus WINGDIPAPI GdipSetClipRegion(GpGraphics *graphics, GpRegion *region,
                                       CombineMode mode)
 {
+    GpStatus status;
+    GpRegion *clip;
+
     TRACE("(%p, %p, %d)\n", graphics, region, mode);
 
     if(!graphics || !region)
@@ -5468,7 +5519,19 @@ GpStatus WINGDIPAPI GdipSetClipRegion(GpGraphics *graphics, GpRegion *region,
     if(graphics->busy)
         return ObjectBusy;
 
-    return GdipCombineRegionRegion(graphics->clip, region, mode);
+    status = GdipCloneRegion(region, &clip);
+    if (status == Ok)
+    {
+        GpMatrix world_to_device;
+
+        get_graphics_transform(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, &world_to_device);
+        status = GdipTransformRegion(clip, &world_to_device);
+        if (status == Ok)
+            status = GdipCombineRegionRegion(graphics->clip, clip, mode);
+
+        GdipDeleteRegion(clip);
+    }
+    return status;
 }
 
 GpStatus WINGDIPAPI GdipSetMetafileDownLevelRasterizationLimit(GpMetafile *metafile,
@@ -5726,6 +5789,7 @@ GpStatus WINGDIPAPI GdipGetClip(GpGraphics *graphics, GpRegion *region)
 {
     GpRegion *clip;
     GpStatus status;
+    GpMatrix device_to_world;
 
     TRACE("(%p, %p)\n", graphics, region);
 
@@ -5737,6 +5801,14 @@ GpStatus WINGDIPAPI GdipGetClip(GpGraphics *graphics, GpRegion *region)
 
     if((status = GdipCloneRegion(graphics->clip, &clip)) != Ok)
         return status;
+
+    get_graphics_transform(graphics, CoordinateSpaceWorld, CoordinateSpaceDevice, &device_to_world);
+    status = GdipTransformRegion(clip, &device_to_world);
+    if (status != Ok)
+    {
+        GdipDeleteRegion(clip);
+        return status;
+    }
 
     /* free everything except root node and header */
     delete_element(&region->node);

@@ -4594,7 +4594,6 @@ static void test_clipping(void)
 
     status = GdipGetClipBounds(graphics, &rect);
     expect(Ok, status);
-todo_wine
     ok(rect.X == 45.0 && rect.Y == 20.0 && rect.Width == 50.0 && rect.Height == 25.0,
        "expected 45.0,20.0-50.0,25.0, got %.2f,%.2f-%.2f,%.2f\n", rect.X, rect.Y, rect.Width, rect.Height);
 
@@ -4604,7 +4603,6 @@ todo_wine
     expect(Ok, status);
     status = GdipGetRegionBounds(region, graphics, &rect);
     expect(Ok, status);
-todo_wine
     ok(rect.X == 45.0 && rect.Y == 20.0 && rect.Width == 50.0 && rect.Height == 25.0,
        "expected 45.0,20.0-50.0,25.0, got %.2f,%.2f-%.2f,%.2f\n", rect.X, rect.Y, rect.Width, rect.Height);
 
@@ -4617,7 +4615,6 @@ todo_wine
     expect(Ok, status);
     ret = GetRgnBox(hrgn, &rc);
     ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
-todo_wine
     ok(rc.left == 45 && rc.top == 20 && rc.right == 95 && rc.bottom == 45,
        "expected 45,20-95,45, got %d,%d-%d,%d\n", rc.left, rc.top, rc.right, rc.bottom);
     DeleteObject(hrgn);
@@ -4626,7 +4623,6 @@ todo_wine
     expect(Ok, status);
     ret = GetRgnBox(hrgn, &rc);
     ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
-todo_wine
     ok(rc.left == 100 && rc.top == 100 && rc.right == 200 && rc.bottom == 200,
        "expected 100,100-200,200, got %d,%d-%d,%d\n", rc.left, rc.top, rc.right, rc.bottom);
     DeleteObject(hrgn);
@@ -4670,7 +4666,6 @@ todo_wine
 
     status = GdipGetClipBounds(graphics, &rect);
     expect(Ok, status);
-todo_wine
     ok(rect.X == 45.0 && rect.Y == 20.0 && rect.Width == 50.0 && rect.Height == 25.0,
        "expected 45.0,20.0-50.0,25.0, got %.2f,%.2f-%.2f,%.2f\n", rect.X, rect.Y, rect.Width, rect.Height);
 
@@ -4680,7 +4675,6 @@ todo_wine
     expect(Ok, status);
     status = GdipGetRegionBounds(region, graphics, &rect);
     expect(Ok, status);
-todo_wine
     ok(rect.X == 45.0 && rect.Y == 20.0 && rect.Width == 50.0 && rect.Height == 25.0,
        "expected 45.0,20.0-50.0,25.0, got %.2f,%.2f-%.2f,%.2f\n", rect.X, rect.Y, rect.Width, rect.Height);
 
@@ -4693,7 +4687,6 @@ todo_wine
     expect(Ok, status);
     ret = GetRgnBox(hrgn, &rc);
     ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
-todo_wine
     ok(rc.left == 45 && rc.top == 20 && rc.right == 95 && rc.bottom == 45,
        "expected 45,20-95,45, got %d,%d-%d,%d\n", rc.left, rc.top, rc.right, rc.bottom);
     DeleteObject(hrgn);
@@ -4702,7 +4695,6 @@ todo_wine
     expect(Ok, status);
     ret = GetRgnBox(hrgn, &rc);
     ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
-todo_wine
     ok(rc.left == 100 && rc.top == 100 && rc.right == 200 && rc.bottom == 200,
        "expected 100,100-200,200, got %d,%d-%d,%d\n", rc.left, rc.top, rc.right, rc.bottom);
     DeleteObject(hrgn);
@@ -4746,7 +4738,6 @@ todo_wine
 
     status = GdipGetClipBounds(graphics, &rect);
     expect(Ok, status);
-todo_wine
     ok((rect.X == 13.75 && rect.Y == 4.375 && rect.Width == 18.75 && rect.Height == 9.375) ||
        broken(rect.X == 45.0 && rect.Y == 20.0 && rect.Width == 50.0 && rect.Height == 25.0) /* before Win7 */,
        "expected 13.75,4.375-18.75,9.375, got %.2f,%.2f-%.2f,%.2f\n", rect.X, rect.Y, rect.Width, rect.Height);
@@ -4757,8 +4748,9 @@ todo_wine
     expect(Ok, status);
     status = GdipGetRegionBounds(region, graphics, &rect);
     expect(Ok, status);
-todo_wine
     ok((rect.X == 13.75 && rect.Y == 4.375 && rect.Width == 18.75 && rect.Height == 9.375) ||
+       /* rounding under Wine is slightly different */
+       (rect.X == 14.0 && rect.Y == 4.0 && rect.Width == 19.0 && rect.Height == 10.0) /* Wine */ ||
        broken(rect.X == 45.0 && rect.Y == 20.0 && rect.Width == 50.0 && rect.Height == 25.0) /* before Win7 */,
        "expected 13.75,4.375-18.75,9.375, got %.2f,%.2f-%.2f,%.2f\n", rect.X, rect.Y, rect.Width, rect.Height);
 
@@ -4771,8 +4763,9 @@ todo_wine
     expect(Ok, status);
     ret = GetRgnBox(hrgn, &rc);
     ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
-todo_wine
     ok((rc.left == 14 && rc.top == 5 && rc.right == 33 && rc.bottom == 14) ||
+       /* rounding under Wine is slightly different */
+       (rc.left == 14 && rc.top == 4 && rc.right == 33 && rc.bottom == 14) /* Wine */ ||
        broken(rc.left == 45 && rc.top == 20 && rc.right == 95 && rc.bottom == 45) /* before Win7 */,
        "expected 14,5-33,14, got %d,%d-%d,%d\n", rc.left, rc.top, rc.right, rc.bottom);
     DeleteObject(hrgn);
@@ -4781,7 +4774,6 @@ todo_wine
     expect(Ok, status);
     ret = GetRgnBox(hrgn, &rc);
     ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
-todo_wine
     ok((rc.left == 100 && rc.top == 100 && rc.right == 200 && rc.bottom == 200) ||
       broken(rc.left == 267 && rc.top == 267 && rc.right == 534 && rc.bottom == 534) /* before Win7 */,
        "expected 100,100-200,200, got %d,%d-%d,%d\n", rc.left, rc.top, rc.right, rc.bottom);
@@ -4962,7 +4954,6 @@ static void test_clipping_2(void)
     expect(Ok, status);
     ret = GetRgnBox(hrgn, &rc);
     ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
-todo_wine
     ok((rc.left == 7200 && rc.top == 7200 && rc.right == 14400 && rc.bottom == 14400) ||
        broken(rc.left == 100 && rc.top == 100 && rc.right == 200 && rc.bottom == 200) /* before Win7 */,
        "expected 7200,7200-14400,14400, got %d,%d-%d,%d\n", rc.left, rc.top, rc.right, rc.bottom);
@@ -4971,7 +4962,6 @@ todo_wine
     expect(Ok, status);
     ret = GetRgnBox(hrgn, &rc);
     ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
-todo_wine
     ok((rc.left == 9600 && rc.top == 9600 && rc.right == 19200 && rc.bottom == 19200) ||
        broken(rc.left == 134 && rc.top == 134 && rc.right == 267 && rc.bottom == 267) /* before Win7 */,
        "expected 9600,9600-19200,19200, got %d,%d-%d,%d\n", rc.left, rc.top, rc.right, rc.bottom);
@@ -5053,7 +5043,6 @@ todo_wine
     expect(Ok, status);
     ret = GetRgnBox(hrgn, &rc);
     ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
-todo_wine
     ok((rc.left == 75 && rc.top == 75 && rc.right == 150 && rc.bottom == 150) ||
        broken(rc.left == 2 && rc.top == 2 && rc.right == 3 && rc.bottom == 3) /* before Win7 */,
        "expected 75,75-150,150, got %d,%d-%d,%d\n", rc.left, rc.top, rc.right, rc.bottom);
@@ -5062,7 +5051,6 @@ todo_wine
     expect(Ok, status);
     ret = GetRgnBox(hrgn, &rc);
     ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
-todo_wine
     ok((rc.left == 100 && rc.top == 100 && rc.right == 200 && rc.bottom == 200) ||
        broken(rc.left == 2 && rc.top == 2 && rc.right == 3 && rc.bottom == 3) /* before Win7 */,
        "expected 100,100-200,200, got %d,%d-%d,%d\n", rc.left, rc.top, rc.right, rc.bottom);
@@ -5099,7 +5087,6 @@ todo_wine
     expect(Ok, status);
     ret = GetRgnBox(hrgn, &rc);
     ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
-todo_wine
     ok(rc.left == 65 && rc.top == 65 && rc.right == 140 && rc.bottom == 140,
        "expected 65,65-140,140, got %d,%d-%d,%d\n", rc.left, rc.top, rc.right, rc.bottom);
     DeleteObject(hrgn);
@@ -5107,7 +5094,6 @@ todo_wine
     expect(Ok, status);
     ret = GetRgnBox(hrgn, &rc);
     ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
-todo_wine
     ok(rc.left == 100 && rc.top == 100 && rc.right == 200 && rc.bottom == 200,
        "expected 100,100-200,200, got %d,%d-%d,%d\n", rc.left, rc.top, rc.right, rc.bottom);
     DeleteObject(hrgn);
@@ -5137,7 +5123,6 @@ todo_wine
     expect(Ok, status);
     ret = GetRgnBox(hrgn, &rc);
     ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
-todo_wine
     ok(rc.left == 300 && rc.top == 150 && rc.right == 600 && rc.bottom == 300,
        "expected 300,150-600,300, got %d,%d-%d,%d\n", rc.left, rc.top, rc.right, rc.bottom);
     DeleteObject(hrgn);
@@ -5145,7 +5130,6 @@ todo_wine
     expect(Ok, status);
     ret = GetRgnBox(hrgn, &rc);
     ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
-todo_wine
     ok(rc.left == 100 && rc.top == 100 && rc.right == 200 && rc.bottom == 200,
        "expected 100,100-200,200, got %d,%d-%d,%d\n", rc.left, rc.top, rc.right, rc.bottom);
     DeleteObject(hrgn);
@@ -5170,7 +5154,6 @@ todo_wine
     expect(Ok, status);
     ret = GetRgnBox(hrgn, &rc);
     ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
-todo_wine
     ok((rc.left == 150 && rc.top == 75 && rc.right == 300 && rc.bottom == 150) ||
        broken(rc.left == 300 && rc.top == 150 && rc.right == 600 && rc.bottom == 300) /* before Win7 */,
        "expected 150,75-300,150, got %d,%d-%d,%d\n", rc.left, rc.top, rc.right, rc.bottom);
@@ -5179,7 +5162,6 @@ todo_wine
     expect(Ok, status);
     ret = GetRgnBox(hrgn, &rc);
     ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
-todo_wine
     ok((rc.left == 100 && rc.top == 100 && rc.right == 200 && rc.bottom == 200) ||
        broken(rc.left == 200 && rc.top == 200 && rc.right == 400 && rc.bottom == 400) /* before Win7 */,
        "expected 100,100-200,200, got %d,%d-%d,%d\n", rc.left, rc.top, rc.right, rc.bottom);
