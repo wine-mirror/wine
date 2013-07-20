@@ -707,7 +707,9 @@ static void test_BeginContainer2(void)
     status = GdipEndContainer(graphics, cont2);
     expect(Ok, status);
 
-    GdipGetClipBounds(graphics, &clip);
+    status = GdipGetClipBounds(graphics, &clip);
+    expect(Ok, status);
+
     ok(fabs(defClip[0] - clip.X) < 0.0001 &&
             fabs(defClip[1] - clip.Y) < 0.0001 &&
             fabs(defClip[2] - clip.Width) < 0.0001 &&
