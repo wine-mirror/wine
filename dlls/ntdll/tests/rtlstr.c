@@ -1935,7 +1935,7 @@ static void test_RtlHashUnicodeString(void)
 
     if (!pRtlHashUnicodeString)
     {
-        skip("RtlHashUnicodeString is not available\n");
+        win_skip("RtlHashUnicodeString is not available\n");
         return;
     }
 

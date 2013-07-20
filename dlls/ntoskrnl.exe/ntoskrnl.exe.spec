@@ -1046,7 +1046,7 @@
 @ stdcall RtlGetSaclSecurityDescriptor(ptr ptr ptr ptr) ntdll.RtlGetSaclSecurityDescriptor
 @ stub RtlGetSetBootStatusData
 @ stdcall RtlGetVersion(ptr) ntdll.RtlGetVersion
-@ stub RtlHashUnicodeString
+@ stdcall RtlHashUnicodeString(ptr long long ptr) ntdll.RtlHashUnicodeString
 @ stdcall RtlImageDirectoryEntryToData(long long long ptr) ntdll.RtlImageDirectoryEntryToData
 @ stdcall RtlImageNtHeader(long) ntdll.RtlImageNtHeader
 @ stdcall RtlInitAnsiString(ptr str) ntdll.RtlInitAnsiString

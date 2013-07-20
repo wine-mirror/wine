@@ -257,4 +257,8 @@ extern mode_t FILE_umask DECLSPEC_HIDDEN;
                        "ret $(4*" #args ")" ) /* fake ret to make copy protections happy */
 #endif
 
+#define HASH_STRING_ALGORITHM_DEFAULT  0
+#define HASH_STRING_ALGORITHM_X65599   1
+#define HASH_STRING_ALGORITHM_INVALID  0xffffffff
+
 #endif

@@ -2138,3 +2138,28 @@ NTSTATUS WINAPI RtlStringFromGUID(const GUID* guid, UNICODE_STRING *str)
 
   return STATUS_SUCCESS;
 }
+
+/******************************************************************************
+ * RtlHashUnicodeString [NTDLL.@]
+ */
+NTSTATUS WINAPI RtlHashUnicodeString(PCUNICODE_STRING string, BOOLEAN case_insensitive, ULONG alg, ULONG *hash)
+{
+    unsigned int i;
+
+    if (!string || !hash) return STATUS_INVALID_PARAMETER;
+
+    switch (alg)
+    {
+    case HASH_STRING_ALGORITHM_DEFAULT:
+    case HASH_STRING_ALGORITHM_X65599:
+        break;
+    default:
+        return STATUS_INVALID_PARAMETER;
+    }
+
+    *hash = 0;
+    for (i = 0; i < string->Length/sizeof(WCHAR); i++)
+        *hash = *hash*65599 + (case_insensitive ? toupperW(string->Buffer[i]) : string->Buffer[i]);
+
+    return STATUS_SUCCESS;
+}
