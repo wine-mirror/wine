@@ -1,10 +1,9 @@
-.\" -*- nroff -*-
-.TH WINE 1 "juin 2013" "@PACKAGE_STRING@" "Windows sur Unix"
+.TH WINE 1 "juillet 2013" "@PACKAGE_STRING@" "Windows sur Unix"
 .SH NOM
 wine \- exécuter des programmes Windows sur Unix
 .SH SYNOPSIS
-.BI "wine " programme
-[arguments ... ]
+.B wine
+.IR "programme " [ arguments ]
 .br
 .B wine --help
 .br
@@ -17,7 +16,7 @@ de la page de manuel.
 .SH DESCRIPTION
 .B wine
 charge et exécute le programme indiqué, qui peut être un exécutable DOS, Windows
-3.x ou Win32 (binaires x86 uniquement).
+3.x, Win32 ou Win64 (sur les systèmes 64 bits).
 .PP
 Pour déboguer wine, utilisez plutôt
 .BR winedbg .
@@ -45,28 +44,26 @@ ou au format Unix
 Vous pouvez passer des arguments au programme exécuté en les ajoutant
 à la fin de la ligne de commande invoquant
 .B wine
-(par exemple : wine notepad C:\(rs\(rsTEMP\(rs\(rsLISEZMOI.TXT).
+(par exemple : \fIwine notepad C:\(rs\(rsTEMP\(rs\(rsLISEZMOI.TXT\fR).
 Notez que vous devrez protéger les caractères spéciaux (et les espaces)
 en utilisant un '\(rs' lorsque vous invoquez Wine depuis
 un shell, par exemple :
 .PP
 wine C:\(rs\(rsProgram\(rs Files\(rs\(rsMonProg\(rs\(rstest.exe
 .PP
-.SH VARIABLES D'ENVIRONNEMENT
+.SH ENVIRONNEMENT
 .B wine
-passe les variables d'environnement du shell depuis lequel
-.B wine
+passe les variables d'environnement du shell depuis lequel il
 est lancé au processus Windows/DOS exécuté. Utilisez donc la syntaxe appropriée
 à votre shell pour déclarer les variables d'environnement dont vous avez besoin.
 .TP
-.I WINEPREFIX
+.B WINEPREFIX
 Si définie, le contenu de cette variable est pris comme le nom du répertoire où
-.B wine
-stocke ses données (la valeur par défaut est
+Wine stocke ses données (la valeur par défaut est
 .IR $HOME/.wine ).
 Ce répertoire est également utilisé pour identifier le socket utilisé pour
 communiquer avec
-.IR wineserver .
+.BR wineserver .
 Tous les processus
 .B wine
 utilisant le même
@@ -74,33 +71,33 @@ utilisant le même
 (c'est-à-dire le même utilisateur) partagent certains éléments comme la base de registre,
 la mémoire partagée et les objets du noyau.
 En donnant à
-.I WINEPREFIX
+.B WINEPREFIX
 une valeur spécifique pour différents processus
 .BR wine ,
 il est possible d'exécuter plusieurs sessions de
 .B wine
 totalement indépendantes.
 .TP
-.I WINESERVER
+.B WINESERVER
 Spécifie le chemin et le nom de l'exécutable
 .BR wineserver .
 Si cette variable n'est pas définie, Wine essaiera de charger
-.B @bindir@/wineserver
+.I @bindir@/wineserver
 ou, à défaut, un fichier nommé
 « wineserver » dans le chemin système ou quelques autres emplacements potentiels.
 .TP
-.I WINELOADER
+.B WINELOADER
 Spécifie le chemin et le nom de l'exécutable
 .B wine
 à utiliser pour exécuter de nouveaux processus Windows. Si pas définie, Wine
 essaiera de charger
-.B @bindir@/wine
+.I @bindir@/wine
 ou, à défaut, un fichier nommé
 « wine » dans le chemin système ou quelques autres emplacements potentiels.
 .TP
-.I WINEDEBUG
+.B WINEDEBUG
 Active ou désactive les messages de débogage. La syntaxe est :
-.RI [ classe ][+/-] canal [,[ classe2 ][+/-] canal2 ].
+.RI [ classe ][\fB+\fR|\fB-\fR] canal [,[ classe2 ][\fB+\fR|\fB-\fR] canal2 ]
 .RS +7
 .PP
 La
@@ -113,12 +110,11 @@ ou
 .BR trace .
 Si elle n'est pas spécifiée, tous les messages de débogage pour le canal
 associé seront activés. Chaque canal imprimera des messages à propos
-d'un composant particulier de
-.BR wine .
-Le caractère suivant peut être + ou - pour activer/désactiver
+d'un composant particulier de Wine.
+Le caractère suivant peut être \fB+\fR ou \fB-\fR pour activer/désactiver
 le canal spécifié. Si aucune
 .I classe
-n'est spécifiée, le caractère + peut être omis. Notez que les espaces ne sont pas
+n'est spécifiée, le caractère \fB+\fR peut être omis. Notez que les espaces ne sont pas
 autorisées dans cette chaîne de caractères.
 .PP
 Exemples :
@@ -147,25 +143,22 @@ Pour plus d'informations sur les messages de débogage, référez-vous au chapit
 du guide de l'utilisateur de Wine.
 .RE
 .TP
-.I WINEDLLPATH
+.B WINEDLLPATH
 Spécifie le(s) chemin(s) où chercher les DLL intégrées et les applications
 Winelib. C'est une liste de répertoires séparés par des « : ». En plus des
 répertoires spécifiés dans
-.IR WINEDLLPATH ,
+.BR WINEDLLPATH ,
 Wine utilisera aussi le répertoire
-.BR @dlldir@ .
+.IR @dlldir@ .
 .TP
-.I WINEDLLOVERRIDES
+.B WINEDLLOVERRIDES
 Définit le type de remplacement et l'ordre de chargement des DLL utilisées lors du
 processus de chargement d'une DLL. Deux types de bibliothèques peuvent actuellement
 être chargés dans l'espace d'adressage d'un processus : les DLL natives de
 Windows
-.RI ( native ),
-et les DLL intégrées à
-.B wine
-.RI ( builtin ).
+.RI ( native ") et les DLL intégrées à Wine (" builtin ).
 Le type peut être abrégé avec la première lettre du type
-.RI ( n ", " b ).
+.RI ( n " ou " b ).
 La bibliothèque peut également être désactivée (''). Les séquences d'ordres
 doivent être séparées par des virgules.
 .RS
@@ -181,8 +174,8 @@ entrées par « ; ».
 L'ordre de chargement pour une DLL 16 bits est toujours défini par l'ordre de
 chargement de la DLL 32 bits qui la contient (qui peut être identifié en
 observant le lien symbolique du fichier .dll.so 16 bits). Par exemple, si
-ole32.dll est configurée comme builtin, storage.dll sera également chargée comme
-builtin puisque la DLL 32 bits ole32.dll contient la DLL 16 bits storage.dll.
+\fIole32.dll\fR est configurée comme builtin, \fIstorage.dll\fR sera également chargée comme
+builtin puisque la DLL 32 bits \fIole32.dll\fR contient la DLL 16 bits \fIstorage.dll\fR.
 .PP
 Exemples :
 .TP
@@ -194,17 +187,17 @@ intégrée en cas d'échec.
 WINEDLLOVERRIDES="comdlg32,shell32=n;c:\(rs\(rsfoo\(rs\(rsbar\(rs\(rsbaz=b"
 .br
 Charge les bibliothèques windows natives comdlg32 et shell32. De plus, si une
-application demande le chargement de  c:\(rsfoo\(rsbar\(rsbaz.dll, charge la
-bibliothèque intégrée baz.
+application demande le chargement de \fIc:\(rsfoo\(rsbar\(rsbaz.dll\fR, charge la
+bibliothèque intégrée \fIbaz\fR.
 .TP
 WINEDLLOVERRIDES="comdlg32=b,n;shell32=b;comctl32=n;oleaut32="
 .br
 Charge la bibliothèque intégrée comdlg32, ou la version native en cas
 d'échec ; charge la version intégrée de shell32 et la version native de
-comctl32. Oleaut32 sera désactivée.
+comctl32 ; oleaut32 sera désactivée.
 .RE
 .TP
-.I WINEARCH
+.B WINEARCH
 Spécifie l'architecture Windows à prendre en charge. Peut être
 .B win32
 (prise en charge des applications 32 bits uniquement), ou
@@ -215,112 +208,86 @@ L'architecture prise en charge par un préfixe Wine donné est déterminée
 au moment de sa création et ne peut être modifiée ultérieurement.
 Si vous exécutez Wine avec un préfixe préexistant, il refusera de démarrer
 si
-.I WINEARCH
+.B WINEARCH
 ne correspond pas à l'architecture du préfixe.
 .TP
-.I DISPLAY
+.B DISPLAY
 Spécifie l'affichage X11 à utiliser.
 .TP
-Variables de configuration du pilote audio OSS
+Variables de configuration du pilote audio OSS :
 .TP
-.I AUDIODEV
+.B AUDIODEV
 Définit le périphérique pour les entrées/sorties audio, par défaut
-.BR /dev/dsp .
+.IR /dev/dsp .
 .TP
-.I MIXERDEV
+.B MIXERDEV
 Définit le périphérique pour les contrôles du mixeur, par défaut
-.BR /dev/mixer .
+.IR /dev/mixer .
 .TP
-.I MIDIDEV
+.B MIDIDEV
 Définit le périphérique pour le séquenceur MIDI, par défaut
-.BR /dev/sequencer .
+.IR /dev/sequencer .
 .SH FICHIERS
 .TP
 .I @bindir@/wine
-Le chargeur de programme de
-.BR wine .
+Le chargeur de programme de Wine.
 .TP
 .I @bindir@/wineconsole
-Le chargeur de programme de
-.B wine
-pour les applications en mode console (CUI).
+Le chargeur de programme de Wine pour les applications en mode console (CUI).
 .TP
 .I @bindir@/wineserver
-Le serveur
-.BR wine .
+Le serveur Wine.
 .TP
 .I @bindir@/winedbg
-Le débogueur de
-.BR wine .
+Le débogueur de Wine.
 .TP
 .I @dlldir@
-Répertoire contenant les bibliothèques partagées de
-.BR wine .
+Répertoire contenant les bibliothèques partagées de Wine.
 .TP
 .I $WINEPREFIX/dosdevices
 Répertoire contenant le mapping des périphériques DOS. Chaque fichier dans ce
 répertoire est un lien symbolique vers le fichier périphérique Unix qui implémente
-un périphérique donné. Par exemple, si COM1 est mappé sur /dev/ttyS0, vous aurez un
-lien symbolique de la forme $WINEPREFIX/dosdevices/com1 -> /dev/ttyS0.
+un périphérique donné. Par exemple, si COM1 est mappé sur \fI/dev/ttyS0\fR, vous aurez un
+lien symbolique de la forme \fI$WINEPREFIX/dosdevices/com1\fR -> \fI/dev/ttyS0\fR.
 .br
 Les lecteurs DOS sont aussi définis à l'aide de liens symboliques ; par exemple, si le
-lecteur D: correspond au CDROM monté sur /mnt/cdrom, vous aurez un lien symbolique
-$WINEPREFIX/dosdevices/d: -> /mnt/cdrom. Le périphérique Unix correspondant à un lecteur
+lecteur D: correspond au CDROM monté sur \fI/mnt/cdrom\fR, vous aurez un lien symbolique
+\fI$WINEPREFIX/dosdevices/d:\fR -> \fI/mnt/cdrom\fR. Le périphérique Unix correspondant à un lecteur
 DOS peut être spécifié de la même façon, à l'exception du fait qu'il faut utiliser « :: » à
 la place de « : ». Dans l'exemple précédent, si le lecteur CDROM est monté depuis /dev/hdc,
-le lien symbolique correspondant sera
-$WINEPREFIX/dosdevices/d:: -> /dev/hdc.
+le lien symbolique correspondant sera \fI$WINEPREFIX/dosdevices/d::\fR -> \fI/dev/hdc\fR.
 .SH AUTEURS
-.B wine
-est disponible grâce au travail de nombreux développeurs. Pour une liste
+Wine est disponible grâce au travail de nombreux développeurs. Pour une liste
 des auteurs, référez-vous au fichier
-.B AUTHORS
+.I AUTHORS
 à la racine de la distribution des sources.
 .SH COPYRIGHT
-.B wine
-peut être distribué sous les termes de la licence LGPL. Une copie de cette
+Wine peut être distribué selon les termes de la licence LGPL. Une copie de cette
 licence se trouve dans le fichier
-.B COPYING.LIB
+.I COPYING.LIB
 à la racine de la distribution des sources.
-.SH BOGUES
+.SH BUGS
 .PP
-Un rapport sur la compatibilité de nombreuses applications est disponible sur
-.IR http://appdb.winehq.org .
+Un rapport sur la compatibilité de nombreuses applications est disponible sur la
+.UR http://appdb.winehq.org
+.B base de données d'applications de Wine
+.UE .
 N'hésitez pas à y ajouter des entrées pour les applications que vous
-exécutez actuellement, s'il n'y en a pas déjà.
+exécutez actuellement, si nécessaire.
 .PP
-Les rapports de bogues peuvent être soumis (en anglais) sur le Bugzilla de Wine
-.IR http://bugs.winehq.org .
-Pour plus d'informations, consultez
-.IR http://wiki.winehq.org/Bugs .
-.PP
-Les problèmes et suggestions concernant cette page du manuel peuvent également être rapportés sur
-.IR http://bugs.winehq.org .
+Les bugs peuvent être signalés (en anglais) sur le
+.UR http://bugs.winehq.org
+.B système de suivi des problèmes de Wine
+.UE .
 .SH DISPONIBILITÉ
-La version publique la plus récente de
-.B wine
-peut être téléchargée depuis
-.IR http://www.winehq.org/download .
-.PP
-Le code source le plus récent peut être obtenu en utilisant
-.IR git .
-Pour des informations détaillées, voyez
-.IR http://www.winehq.org/site/git .
-.PP
-WineHQ, le quartier général du développement de
-.B wine
-est situé sur
-.IR http://www.winehq.org .
-Le site Web contient de nombreuses informations sur
-.BR wine .
-.PP
-Pour plus d'informations sur le développement de
-.BR wine ,
-vous pouvez vous inscrire sur les listes de diffusion de
-.B wine
-sur
-.IR http://www.winehq.org/forums .
-
+La version publique la plus récente de Wine est disponible sur WineHQ, le
+.UR http://www.winehq.org/
+.B quartier général du développement de Wine
+.UE .
 .SH "VOIR AUSSI"
 .BR wineserver (1),
-.BR winedbg (1)
+.BR winedbg (1),
+.br
+.UR http://www.winehq.org/help
+.B Documentation et support de Wine
+.UE .
