@@ -79,13 +79,12 @@ Poprzez ustawianie
 na inne wartości dla różnych procesów
 .B wine
 jest możliwe uruchamianie kilka prawdziwie niezależnych procesów
-.B wine
-.
+.BR wine .
 .TP
 .I WINESERVER
 Określa ścieżkę i nazwę programu binarnego
 .B wineserver
-. Jeżeli nie ustawione, Wine będzie próbował załadować
+Jeżeli nie ustawione, Wine będzie próbował załadować
 .BR @bindir@/wineserver
 i jeśli zakończy się to niepowodzeniem to będzie szukał pliku o nazwie
 "wineserver" w podanej ścieżce i kilku innych miejscach prawdopodobnego występowania.
