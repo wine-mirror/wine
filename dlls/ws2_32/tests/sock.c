@@ -2357,6 +2357,85 @@ static void test_errors(void)
     ok ( (ret == 0), "closesocket failed unexpectedly: %d\n", WSAGetLastError());
 }
 
+static void test_listen(void)
+{
+    SOCKET fdA, fdB;
+    int ret;
+    struct sockaddr_in address;
+
+    memset(&address, 0, sizeof(address));
+    address.sin_addr.s_addr = inet_addr("127.0.0.1");
+    address.sin_family = AF_INET;
+    address.sin_port = htons(SERVERPORT);
+
+    /* invalid socket tests */
+    SetLastError(0xdeadbeef);
+    ok ((listen(0, 0) == SOCKET_ERROR), "listen did not fail\n");
+    ret = WSAGetLastError();
+todo_wine
+    ok (ret == WSAENOTSOCK, "expected 10038, received %d\n", ret);
+
+    SetLastError(0xdeadbeef);
+    ok ((listen(0xdeadbeef, 0) == SOCKET_ERROR), "listen did not fail\n");
+    ret = WSAGetLastError();
+todo_wine
+    ok (ret == WSAENOTSOCK, "expected 10038, received %d\n", ret);
+
+    /* tcp tests */
+    fdA = socket(AF_INET, SOCK_STREAM, 0);
+    ok ((fdA != INVALID_SOCKET), "socket failed unexpectedly: %d\n", WSAGetLastError() );
+
+    fdB = socket(AF_INET, SOCK_STREAM, 0);
+    ok ((fdB != INVALID_SOCKET), "socket failed unexpectedly: %d\n", WSAGetLastError() );
+
+todo_wine {
+    SetLastError(0xdeadbeef);
+    ok ((listen(fdA, -2) == SOCKET_ERROR), "listen did not fail\n");
+    ret = WSAGetLastError();
+    ok (ret == WSAEINVAL, "expected 10022, received %d\n", ret);
+
+    SetLastError(0xdeadbeef);
+    ok ((listen(fdA, 1) == SOCKET_ERROR), "listen did not fail\n");
+    ret = WSAGetLastError();
+    ok (ret == WSAEINVAL, "expected 10022, received %d\n", ret);
+
+    SetLastError(0xdeadbeef);
+    ok ((listen(fdA, SOMAXCONN) == SOCKET_ERROR), "listen did not fail\n");
+    ret = WSAGetLastError();
+    ok (ret == WSAEINVAL, "expected 10022, received %d\n", ret);
+
+    ok (!bind(fdA, (struct sockaddr*) &address, sizeof(address)), "bind failed\n");
+
+    SetLastError(0xdeadbeef);
+    ok (bind(fdB, (struct sockaddr*) &address, sizeof(address)), "bind should have failed\n");
+    ok (ret == WSAEINVAL, "expected 10022, received %d\n", ret);
+}
+    ok (!listen(fdA, 0), "listen failed\n");
+    ok (!listen(fdA, SOMAXCONN), "double listen failed\n");
+todo_wine {
+    SetLastError(0xdeadbeef);
+    ok ((listen(fdB, SOMAXCONN) == SOCKET_ERROR), "listen did not fail\n");
+    ret = WSAGetLastError();
+    ok (ret == WSAEINVAL, "expected 10022, received %d\n", ret);
+}
+    ret = closesocket(fdB);
+    ok (ret == 0, "closesocket failed unexpectedly: %d\n", ret);
+
+    fdB = socket(AF_INET, SOCK_STREAM, 0);
+    ok ((fdB != INVALID_SOCKET), "socket failed unexpectedly: %d\n", WSAGetLastError() );
+
+todo_wine {
+    SetLastError(0xdeadbeef);
+    ok (bind(fdB, (struct sockaddr*) &address, sizeof(address)), "bind should have failed\n");
+    ret = WSAGetLastError();
+    ok (ret == WSAEADDRINUSE, "expected 10048, received %d\n", ret);
+}
+    ret = closesocket(fdA);
+    ok (ret == 0, "closesocket failed unexpectedly: %d\n", ret);
+    ret = closesocket(fdB);
+    ok (ret == 0, "closesocket failed unexpectedly: %d\n", ret);
+}
+
 static void test_select(void)
 {
     SOCKET fdRead, fdWrite;
@@ -6098,6 +6177,7 @@ START_TEST( sock )
     test_WSAStringToAddressW();
 
     test_errors();
+    test_listen();
     test_select();
     test_accept();
     test_getpeername();
