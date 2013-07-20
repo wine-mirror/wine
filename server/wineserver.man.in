@@ -25,7 +25,7 @@ extra verbose debugging. If
 is not specified, the default is 1. The debug output will be sent to
 stderr. \fBwine\fR(1) will automatically enable normal level debugging
 when starting \fBwineserver\fR if the +server option is set in the
-WINEDEBUG variable.
+\fBWINEDEBUG\fR variable.
 .TP
 .BR \-f ", " --foreground
 Make the server remain in the foreground for easier debugging, for
@@ -38,8 +38,8 @@ Display a help message.
 Kill the currently running
 .BR wineserver ,
 optionally by sending signal \fIn\fR. If no signal is specified, sends
-a SIGINT first and then a SIGKILL.  The instance of \fBwineserver\fR
-that is killed is selected based on the WINEPREFIX environment
+a \fBSIGINT\fR first and then a \fBSIGKILL\fR.  The instance of \fBwineserver\fR
+that is killed is selected based on the \fBWINEPREFIX\fR environment
 variable.
 .TP
 \fB\-p\fR[\fIn\fR], \fB--persistent\fR[\fB=\fIn\fR]
@@ -57,9 +57,9 @@ Display version information and exit.
 Wait until the currently running
 .B wineserver
 terminates.
-.SH ENVIRONMENT VARIABLES
+.SH ENVIRONMENT
 .TP
-.I WINEPREFIX
+.B WINEPREFIX
 If set, the content of this variable is taken as the name of the directory where
 .B wineserver
 stores its data (the default is \fI$HOME/.wine\fR). All
@@ -69,11 +69,11 @@ processes using the same
 (i.e.: same user) share certain things like registry, shared memory
 and kernel objects.
 By setting
-.I WINEPREFIX
+.B WINEPREFIX
 to different values for different Wine processes, it is possible to
 run a number of truly independent Wine sessions.
 .TP
-.I WINESERVER
+.B WINESERVER
 Specifies the path and name of the
 .B wineserver
 binary that will be launched automatically by \fBwine\fR. If not set,
@@ -90,7 +90,7 @@ Directory containing user specific data managed by
 .BI /tmp/.wine- uid
 Directory containing the server Unix socket and the lock
 file. These files are created in a subdirectory generated from the
-WINEPREFIX directory device and inode numbers.
+\fBWINEPREFIX\fR directory device and inode numbers.
 .SH AUTHORS
 The original author of
 .B wineserver
