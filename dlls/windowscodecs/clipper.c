@@ -149,8 +149,17 @@ static HRESULT WINAPI BitmapClipper_GetResolution(IWICBitmapClipper *iface,
 static HRESULT WINAPI BitmapClipper_CopyPalette(IWICBitmapClipper *iface,
     IWICPalette *palette)
 {
-    FIXME("(%p,%p): stub\n", iface, palette);
-    return E_NOTIMPL;
+    BitmapClipper *This = impl_from_IWICBitmapClipper(iface);
+
+    TRACE("(%p,%p)\n", iface, palette);
+
+    if (!palette)
+        return E_INVALIDARG;
+
+    if (!This->source)
+        return WINCODEC_ERR_WRONGSTATE;
+
+    return IWICBitmapSource_CopyPalette(This->source, palette);
 }
 
 static HRESULT WINAPI BitmapClipper_CopyPixels(IWICBitmapClipper *iface,
