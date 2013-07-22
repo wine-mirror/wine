@@ -4496,7 +4496,7 @@ static HRESULT d3dx9_parse_sampler(struct d3dx_sampler *sampler, const char *dat
         hr = d3dx9_parse_state(&states[i], data, ptr, objects);
         if (hr != D3D_OK)
         {
-            WARN("Failed to parse state\n");
+            WARN("Failed to parse state %u\n", i);
             goto err_out;
         }
     }
@@ -4535,7 +4535,7 @@ static HRESULT d3dx9_parse_value(struct d3dx_parameter *param, void *value, cons
             hr = d3dx9_parse_value(member, value ? (char *)value + old_size : NULL, data, ptr, objects);
             if (hr != D3D_OK)
             {
-                WARN("Failed to parse value\n");
+                WARN("Failed to parse value %u\n", i);
                 return hr;
             }
 
@@ -4564,7 +4564,7 @@ static HRESULT d3dx9_parse_value(struct d3dx_parameter *param, void *value, cons
                 hr = d3dx9_parse_value(member, (char *)value + old_size, data, ptr, objects);
                 if (hr != D3D_OK)
                 {
-                    WARN("Failed to parse value\n");
+                    WARN("Failed to parse value %u\n", i);
                     return hr;
                 }
 
@@ -4910,7 +4910,7 @@ static HRESULT d3dx9_parse_effect_typedef(struct d3dx_parameter *param, const ch
             hr = d3dx9_parse_effect_typedef(member, data, ptr, param, flags);
             if (hr != D3D_OK)
             {
-                WARN("Failed to parse member\n");
+                WARN("Failed to parse member %u\n", i);
                 goto err_out;
             }
 
@@ -4945,7 +4945,7 @@ static HRESULT d3dx9_parse_effect_typedef(struct d3dx_parameter *param, const ch
             hr = d3dx9_parse_effect_typedef(member, data, ptr, NULL, flags);
             if (hr != D3D_OK)
             {
-                WARN("Failed to parse member\n");
+                WARN("Failed to parse member %u\n", i);
                 goto err_out;
             }
 
@@ -5198,7 +5198,7 @@ static HRESULT d3dx9_parse_effect_pass(struct d3dx_pass *pass, const char *data,
             hr = d3dx9_parse_effect_annotation(annotation, data, ptr, objects);
             if (hr != D3D_OK)
             {
-                WARN("Failed to parse annotations\n");
+                WARN("Failed to parse annotation %u\n", i);
                 goto err_out;
             }
         }
@@ -5219,7 +5219,7 @@ static HRESULT d3dx9_parse_effect_pass(struct d3dx_pass *pass, const char *data,
             hr = d3dx9_parse_state(&states[i], data, ptr, objects);
             if (hr != D3D_OK)
             {
-                WARN("Failed to parse annotations\n");
+                WARN("Failed to parse annotation %u\n", i);
                 goto err_out;
             }
         }
@@ -5306,7 +5306,7 @@ static HRESULT d3dx9_parse_effect_technique(struct d3dx_technique *technique, co
             hr = d3dx9_parse_effect_annotation(annotation, data, ptr, objects);
             if (hr != D3D_OK)
             {
-                WARN("Failed to parse annotations\n");
+                WARN("Failed to parse annotation %u\n", i);
                 goto err_out;
             }
         }
@@ -5338,7 +5338,7 @@ static HRESULT d3dx9_parse_effect_technique(struct d3dx_technique *technique, co
             hr = d3dx9_parse_effect_pass(pass, data, ptr, objects);
             if (hr != D3D_OK)
             {
-                WARN("Failed to parse passes\n");
+                WARN("Failed to parse pass %u\n", i);
                 goto err_out;
             }
         }
@@ -5558,7 +5558,7 @@ static HRESULT d3dx9_parse_effect(struct ID3DXBaseEffectImpl *base, const char *
             hr = d3dx9_parse_effect_parameter(parameter, data, &ptr, objects);
             if (hr != D3D_OK)
             {
-                WARN("Failed to parse parameter\n");
+                WARN("Failed to parse parameter %u\n", i);
                 goto err_out;
             }
         }
@@ -5590,7 +5590,7 @@ static HRESULT d3dx9_parse_effect(struct ID3DXBaseEffectImpl *base, const char *
             hr = d3dx9_parse_effect_technique(technique, data, &ptr, objects);
             if (hr != D3D_OK)
             {
-                WARN("Failed to parse technique\n");
+                WARN("Failed to parse technique %u\n", i);
                 goto err_out;
             }
         }
@@ -5619,7 +5619,7 @@ static HRESULT d3dx9_parse_effect(struct ID3DXBaseEffectImpl *base, const char *
         hr = d3dx9_parse_data(param, &ptr, base->effect->device);
         if (hr != D3D_OK)
         {
-            WARN("Failed to parse data\n");
+            WARN("Failed to parse data %u\n", i);
             goto err_out;
         }
     }
@@ -5631,7 +5631,7 @@ static HRESULT d3dx9_parse_effect(struct ID3DXBaseEffectImpl *base, const char *
         hr = d3dx9_parse_resource(base, data, &ptr);
         if (hr != D3D_OK)
         {
-            WARN("Failed to parse resource\n");
+            WARN("Failed to parse resource %u\n", i);
             goto err_out;
         }
     }
