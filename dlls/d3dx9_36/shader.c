@@ -610,11 +610,6 @@ static inline BOOL is_vertex_shader(DWORD version)
     return (version & 0xffff0000) == 0xfffe0000;
 }
 
-static inline struct ctab_constant *constant_from_handle(D3DXHANDLE handle)
-{
-    return (struct ctab_constant *)handle;
-}
-
 static inline D3DXHANDLE handle_from_constant(struct ctab_constant *constant)
 {
     return (D3DXHANDLE)constant;
@@ -708,42 +703,22 @@ static struct ctab_constant *get_constant_by_name(struct ID3DXConstantTableImpl 
     return NULL;
 }
 
-static struct ctab_constant *is_valid_sub_constant(struct ctab_constant *parent, struct ctab_constant *constant)
+static struct ctab_constant *is_valid_sub_constant(struct ctab_constant *parent, D3DXHANDLE handle)
 {
+    struct ctab_constant *c;
     UINT i, count;
 
-    /* all variable have at least elements = 1, but no elements */
+    /* all variable have at least elements = 1, but not always elements */
     if (!parent->constants) return NULL;
 
-    if (parent->desc.Elements > 1) count = parent->desc.Elements;
-    else count = parent->desc.StructMembers;
-
+    count = parent->desc.Elements > 1 ? parent->desc.Elements : parent->desc.StructMembers;
     for (i = 0; i < count; ++i)
     {
-        if (&parent->constants[i] == constant)
-            return constant;
+        if (handle_from_constant(&parent->constants[i]) == handle)
+            return &parent->constants[i];
 
-        if (is_valid_sub_constant(&parent->constants[i], constant))
-            return constant;
-    }
-
-    return NULL;
-}
-
-static inline struct ctab_constant *is_valid_constant(struct ID3DXConstantTableImpl *table, D3DXHANDLE handle)
-{
-    struct ctab_constant *c = constant_from_handle(handle);
-    UINT i;
-
-    if (!c) return NULL;
-
-    for (i = 0; i < table->desc.Constants; ++i)
-    {
-        if (&table->constants[i] == c)
-            return c;
-
-        if (is_valid_sub_constant(&table->constants[i], c))
-            return c;
+        c = is_valid_sub_constant(&parent->constants[i], handle);
+        if (c) return c;
     }
 
     return NULL;
@@ -751,11 +726,21 @@ static inline struct ctab_constant *is_valid_constant(struct ID3DXConstantTableI
 
 static inline struct ctab_constant *get_valid_constant(struct ID3DXConstantTableImpl *table, D3DXHANDLE handle)
 {
-    struct ctab_constant *constant = is_valid_constant(table, handle);
+    struct ctab_constant *c;
+    UINT i;
 
-    if (!constant) constant = get_constant_by_name(table, NULL, handle);
+    if (!handle) return NULL;
 
-    return constant;
+    for (i = 0; i < table->desc.Constants; ++i)
+    {
+        if (handle_from_constant(&table->constants[i]) == handle)
+            return &table->constants[i];
+
+        c = is_valid_sub_constant(&table->constants[i], handle);
+        if (c) return c;
+    }
+
+    return get_constant_by_name(table, NULL, handle);
 }
 
 static inline void set_float_shader_constant(struct ID3DXConstantTableImpl *table, IDirect3DDevice9 *device,
