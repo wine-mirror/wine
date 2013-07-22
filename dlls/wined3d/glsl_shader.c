@@ -5082,7 +5082,11 @@ static GLhandleARB shader_glsl_generate_ffp_vertex_shader(struct wined3d_shader_
             break;
 
         case WINED3D_FFP_VS_FOG_DEPTH:
-            shader_addline(buffer, "gl_FogFragCoord = ec_pos.z;\n");
+            if (settings->ortho_fog)
+                /* Need to undo the [0.0 - 1.0] -> [-1.0 - 1.0] transformation from D3D to GL coordinates. */
+                shader_addline(buffer, "gl_FogFragCoord = gl_Position.z * 0.5 + 0.5;\n");
+            else
+                shader_addline(buffer, "gl_FogFragCoord = ec_pos.z;\n");
             break;
 
         default:
@@ -6814,6 +6818,16 @@ static void glsl_vertex_pipe_shader(struct wined3d_context *context,
     context->select_shader = 1;
 }
 
+static void glsl_vertex_pipe_projection(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id)
+{
+    /* Table fog behavior depends on the projection matrix. */
+    if (state->render_states[WINED3D_RS_FOGENABLE]
+            && state->render_states[WINED3D_RS_FOGTABLEMODE] != WINED3D_FOG_NONE)
+        context->select_shader = 1;
+    transform_projection(context, state, state_id);
+}
+
 static const struct StateEntryTemplate glsl_vertex_pipe_vp_states[] =
 {
     {STATE_VDECL,                                                {STATE_VDECL,                                                vertexdeclaration      }, WINED3D_GL_EXT_NONE          },
@@ -6867,7 +6881,7 @@ static const struct StateEntryTemplate glsl_vertex_pipe_vp_states[] =
     {STATE_VIEWPORT,                                             {STATE_VIEWPORT,                                             viewport_vertexpart    }, WINED3D_GL_EXT_NONE          },
     /* Transform states */
     {STATE_TRANSFORM(WINED3D_TS_VIEW),                           {STATE_TRANSFORM(WINED3D_TS_VIEW),                           transform_view         }, WINED3D_GL_EXT_NONE          },
-    {STATE_TRANSFORM(WINED3D_TS_PROJECTION),                     {STATE_TRANSFORM(WINED3D_TS_PROJECTION),                     transform_projection   }, WINED3D_GL_EXT_NONE          },
+    {STATE_TRANSFORM(WINED3D_TS_PROJECTION),                     {STATE_TRANSFORM(WINED3D_TS_PROJECTION),                     glsl_vertex_pipe_projection}, WINED3D_GL_EXT_NONE      },
     {STATE_TRANSFORM(WINED3D_TS_TEXTURE0),                       {STATE_TEXTURESTAGE(0, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), NULL                   }, WINED3D_GL_EXT_NONE          },
     {STATE_TRANSFORM(WINED3D_TS_TEXTURE1),                       {STATE_TEXTURESTAGE(1, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), NULL                   }, WINED3D_GL_EXT_NONE          },
     {STATE_TRANSFORM(WINED3D_TS_TEXTURE2),                       {STATE_TEXTURESTAGE(2, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), NULL                   }, WINED3D_GL_EXT_NONE          },
