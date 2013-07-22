@@ -23,7 +23,7 @@ use strict;
 
 # base URLs for www.unicode.org files
 my $MAPPINGS = "http://www.unicode.org/Public/MAPPINGS";
-my $UNIDATA = "http://www.unicode.org/Public/6.0.0/ucd";
+my $UNIDATA = "http://www.unicode.org/Public/6.2.0/ucd";
 my $REPORTS = "http://www.unicode.org/reports";
 my $RFCS = "http://www.rfc-editor.org/rfc";
 
@@ -217,7 +217,10 @@ my %break_types =
     "BA"  => 0x0022,
     "SA"  => 0x0023,
     "AI"  => 0x0024,
-    "B2"  => 0x0025
+    "B2"  => 0x0025,
+    "HL"  => 0x0026,
+    "CJ"  => 0x0027,
+    "RI"  => 0x0028,
 );
 
 my %categories =
