@@ -1900,6 +1900,611 @@ static void test_get_shader_constant_variables(void)
     ok(count == 0, "Release failed, got %u, expected %u\n", count, 0);
 }
 
+#define REGISTER_OUTPUT_SIZE 48
+
+enum Type {SetFloat, SetInt, SetBool, SetIntArray, SetBoolArray, SetFloatArray, SetMatrix,
+    SetMatrixTranspose, SetMatrixArray, SetMatrixTransposeArray, SetVector, SetVectorArray,
+    SetValue, SetMatrixPointerArray, SetMatrixTransposePointerArray};
+
+struct registerset_test
+{
+    enum Type type;
+    UINT in_index;
+    UINT in_count_min;
+    UINT in_count_max;
+    UINT out_count;
+    DWORD out[REGISTER_OUTPUT_SIZE];
+};
+
+struct registerset_constants
+{
+    LPCSTR fullname;
+    D3DXCONSTANT_DESC desc;
+    UINT ctaboffset;
+};
+
+static const DWORD registerset_test_input[][REGISTER_OUTPUT_SIZE] =
+{
+    /* float */
+    {0x40000123, 0x00000000, 0x40800123, 0x40a00123,
+    0x40c00123, 0x40e00123, 0x41000123, 0x41100123,
+    0x41200123, 0x41300123, 0x41400123, 0x41500123,
+    0x41600123, 0x41700123, 0x41800123, 0x41900123,
+    0x41a00123, 0x41b00123, 0x41c00123, 0x41d00123,
+    0x00000000, 0x41f00123, 0x42000123, 0x42100123,
+    0x00000000, 0x42300123, 0x42400123, 0x42500123,
+    0x42600123, 0x42700123, 0x42800123, 0x42900123,
+    0x43000123, 0x43100123, 0x43200123, 0x43300123,
+    0x43400123, 0x43500123, 0x43600123, 0x43700123,
+    0x43800123, 0x43900123, 0x43a00123, 0x43b00123,
+    0x43c00123, 0x43d00123, 0x43e00123, 0x43f00123},
+    /* int */
+    {0x00000002, 0x00000003, 0x00000004, 0x00000005,
+    0x00000000, 0x00000007, 0x00000008, 0x00000009,
+    0x0000000a, 0x0000000b, 0x0000000c, 0x0000000d,
+    0x0000000e, 0x0000000f, 0x00000010, 0x00000011,
+    0x00000012, 0x00000000, 0x00000000, 0x00000015,
+    0x00000016, 0x00000017, 0x00000018, 0x00000019,
+    0x0000001a, 0x0000001b, 0x0000001c, 0x0000001d,
+    0x0000001e, 0x0000001f, 0x00000020, 0x00000021,
+    0x00000022, 0x00000023, 0x00000024, 0x00000025,
+    0x00000026, 0x00000027, 0x00000028, 0x00000029,
+    0x0000002a, 0x0000002b, 0x0000002c, 0x0000002d,
+    0x0000002e, 0x0000002f, 0x00000030, 0x00000031},
+};
+
+/*
+ * fxc.exe /Tvs_3_0
+ */
+#if 0
+bool b = 1;
+int n = 8;
+float f = 5.1;
+int nf = 11;
+bool bf = 1;
+float4 main(float4 pos : POSITION) : POSITION
+{
+    float4 tmp = 0;
+    int i;
+    if (b) for (i = 0; i < n; i++) tmp.x += pos.z * f * nf;
+    else for (i = 0; i < n; i++) tmp.y += pos.y * f * bf;
+    return tmp;
+}
+#endif
+static const DWORD registerset_blob_scalar[] =
+{
+0xfffe0300, 0x0051fffe, 0x42415443, 0x0000001c, 0x0000010f, 0xfffe0300, 0x00000005, 0x0000001c,
+0x00000100, 0x00000108, 0x00000080, 0x00000000, 0x00000001, 0x00000084, 0x00000094, 0x00000098,
+0x00020002, 0x00000001, 0x00000084, 0x0000009c, 0x000000ac, 0x00000002, 0x00000001, 0x000000b0,
+0x000000c0, 0x000000d0, 0x00000001, 0x00000001, 0x000000d4, 0x000000e4, 0x000000f4, 0x00010002,
+0x00000001, 0x000000d4, 0x000000f8, 0xabab0062, 0x00010000, 0x00010001, 0x00000001, 0x00000000,
+0xffffffff, 0xab006662, 0x3f800000, 0x00000000, 0x00000000, 0x00000000, 0xabab0066, 0x00030000,
+0x00010001, 0x00000001, 0x00000000, 0x40a33333, 0x00000000, 0x00000000, 0x00000000, 0xabab006e,
+0x00020000, 0x00010001, 0x00000001, 0x00000000, 0x00000008, 0x00000000, 0x00000001, 0x00000000,
+0xab00666e, 0x41300000, 0x00000000, 0x00000000, 0x00000000, 0x335f7376, 0x4d00305f, 0x6f726369,
+0x74666f73, 0x29522820, 0x534c4820, 0x6853204c, 0x72656461, 0x6d6f4320, 0x656c6970, 0x2e392072,
+0x392e3932, 0x332e3235, 0x00313131, 0x05000051, 0xa00f0003, 0x00000000, 0x00000000, 0x00000000,
+0x00000000, 0x0200001f, 0x80000000, 0x900f0000, 0x0200001f, 0x80000000, 0xe00f0000, 0x01000028,
+0xe0e40800, 0x03000005, 0x80010000, 0xa0000000, 0x90aa0000, 0x02000001, 0x80010001, 0xa0000003,
+0x01000026, 0xf0e40000, 0x04000004, 0x80010001, 0x80000000, 0xa0000001, 0x80000001, 0x00000027,
+0x02000001, 0x80020001, 0xa0000003, 0x0000002a, 0x03000005, 0x80010000, 0xa0000000, 0x90550000,
+0x02000001, 0x80020001, 0xa0000003, 0x01000026, 0xf0e40000, 0x04000004, 0x80020001, 0x80000000,
+0xa0000002, 0x80550001, 0x00000027, 0x02000001, 0x80010001, 0xa0000003, 0x0000002b, 0x02000001,
+0xe0030000, 0x80e40001, 0x02000001, 0xe00c0000, 0xa0000003, 0x0000ffff,
+};
+
+static const struct registerset_constants registerset_constants_scalar_float[] =
+{
+    {"f", {"f", D3DXRS_FLOAT4, 0, 1, D3DXPC_SCALAR, D3DXPT_FLOAT, 1, 1, 1, 0, 4, NULL}, 48},
+};
+
+static const struct registerset_test registerset_test_scalar_float[] =
+{
+    {SetFloat, 0, 0, 0, 4, {0x40000123}},
+    {SetInt, 1, 0, 0, 4, {0x40000000}},
+    {SetBool, 1, 0, 0, 4, {0x3f800000}},
+    {SetIntArray},
+    {SetIntArray, 1, 1, REGISTER_OUTPUT_SIZE, 4, {0x40000000}},
+    {SetBoolArray},
+    {SetBoolArray, 1, 1, REGISTER_OUTPUT_SIZE, 4, {0x3f800000}},
+    {SetFloatArray},
+    {SetFloatArray, 0, 1, REGISTER_OUTPUT_SIZE, 4, {0x40000123}},
+    {SetValue, 0, 0, 3},
+    {SetValue, 0, 4, REGISTER_OUTPUT_SIZE * 4, 4, {0x40000123}},
+    {SetVector, 0, 0, 0, 4, {0x40000123}},
+    {SetVectorArray},
+    {SetVectorArray, 0, 1, REGISTER_OUTPUT_SIZE / 4, 4, {0x40000123}},
+    {SetMatrix, 0, 0, 0, 4, {0x40000123},},
+    {SetMatrixArray},
+    {SetMatrixArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 4, {0x40000123}},
+    {SetMatrixTranspose, 0, 0, 0, 4, {0x40000123},},
+    {SetMatrixTransposeArray},
+    {SetMatrixTransposeArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 4, {0x40000123}},
+    {SetMatrixPointerArray},
+    {SetMatrixPointerArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 4, {0x40000123}},
+    {SetMatrixTransposePointerArray},
+    {SetMatrixTransposePointerArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 4, {0x40000123}},
+};
+
+static const struct registerset_constants registerset_constants_scalar_int[] =
+{
+    {"n", {"n", D3DXRS_INT4, 0, 1, D3DXPC_SCALAR, D3DXPT_INT, 1, 1, 1, 0, 4, NULL}, 57},
+};
+
+static const struct registerset_test registerset_test_scalar_int[] =
+{
+    {SetFloat, 0, 0, 0, 4,
+        {0x00000002, 0x00000000, 0x00000001}},
+    {SetInt, 1, 0, 0, 4,
+        {0x00000002, 0x00000000, 0x00000001}},
+    {SetBool, 1, 0, 0, 4,
+        {0x00000001, 0x00000000, 0x00000001}},
+    {SetIntArray},
+    {SetIntArray, 1, 1, REGISTER_OUTPUT_SIZE, 4,
+        {0x00000002, 0x00000000, 0x00000001}},
+    {SetBoolArray},
+    {SetBoolArray, 1, 1, REGISTER_OUTPUT_SIZE, 4,
+        {0x00000001, 0x00000000, 0x00000001}},
+    {SetFloatArray},
+    {SetFloatArray, 0, 1, REGISTER_OUTPUT_SIZE, 4,
+        {0x00000002, 0x00000000, 0x00000001}},
+    {SetValue, 1, 0, 3},
+    {SetValue, 1, 4, REGISTER_OUTPUT_SIZE * 4, 4,
+        {0x00000002, 0x00000000, 0x00000001}},
+    {SetVector, 0, 0, 0, 4,
+        {0x00000002, 0x00000000, 0x00000001},},
+    {SetVectorArray},
+    {SetVectorArray, 0, 1, REGISTER_OUTPUT_SIZE / 4, 4,
+        {0x00000002, 0x00000000, 0x00000001}},
+    {SetMatrix, 0, 0, 0, 4,
+        {0x00000002, 0x00000000, 0x00000001}},
+    {SetMatrixArray},
+    {SetMatrixArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 4,
+        {0x00000002, 0x00000000, 0x00000001}},
+    {SetMatrixTranspose, 0, 0, 0, 4,
+        {0x00000002, 0x00000000, 0x00000001}},
+    {SetMatrixTransposeArray},
+    {SetMatrixTransposeArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 4,
+        {0x00000002, 0x00000000, 0x00000001}},
+    {SetMatrixPointerArray},
+    {SetMatrixPointerArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 4,
+        {0x00000002, 0x00000000, 0x00000001}},
+    {SetMatrixTransposePointerArray},
+    {SetMatrixTransposePointerArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 4,
+        {0x00000002, 0x00000000, 0x00000001}},
+};
+
+static const struct registerset_constants registerset_constants_scalar_int_float[] =
+{
+    {"nf", {"nf", D3DXRS_FLOAT4, 1, 1, D3DXPC_SCALAR, D3DXPT_INT, 1, 1, 1, 0, 4, NULL}, 62},
+};
+
+static const struct registerset_test registerset_test_scalar_int_float[] =
+{
+    {SetFloat, 0, 0, 0, 4, {0x40000000}},
+    {SetInt, 1, 0, 0, 4, {0x40000000}},
+    {SetBool, 1, 0, 0, 4, {0x3f800000}},
+    {SetIntArray},
+    {SetIntArray, 1, 1, REGISTER_OUTPUT_SIZE, 4, {0x40000000}},
+    {SetBoolArray},
+    {SetBoolArray, 1, 1, REGISTER_OUTPUT_SIZE, 4, {0x3f800000}},
+    {SetFloatArray},
+    {SetFloatArray, 0, 1, REGISTER_OUTPUT_SIZE, 4, {0x40000000}},
+    {SetValue, 1, 0, 3},
+    {SetValue, 1, 4, REGISTER_OUTPUT_SIZE * 4, 4, {0x40000000}},
+    {SetVector, 0, 0, 0, 4, {0x40000000}},
+    {SetVectorArray},
+    {SetVectorArray, 0, 1, REGISTER_OUTPUT_SIZE / 4, 4, {0x40000000}},
+    {SetMatrix, 0, 0, 0, 4, {0x40000000}},
+    {SetMatrixArray},
+    {SetMatrixArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 4, {0x40000000}},
+    {SetMatrixTranspose, 0, 0, 0, 4, {0x40000000}},
+    {SetMatrixTransposeArray},
+    {SetMatrixTransposeArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 4, {0x40000000}},
+    {SetMatrixPointerArray},
+    {SetMatrixPointerArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 4, {0x40000000}},
+    {SetMatrixTransposePointerArray},
+    {SetMatrixTransposePointerArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 4, {0x40000000}},
+};
+
+static const struct registerset_constants registerset_constants_scalar_bool_float[] =
+{
+    {"bf", {"bf", D3DXRS_FLOAT4, 2, 1, D3DXPC_SCALAR, D3DXPT_BOOL, 1, 1, 1, 0, 4, NULL}, 39},
+};
+
+static const struct registerset_test registerset_scalar_bool_float[] =
+{
+    {SetFloat, 0, 0, 0, 4, {0x3f800000}},
+    {SetInt, 1, 0, 0, 4, {0x3f800000}},
+    {SetBool, 1, 0, 0, 4, {0x3f800000}},
+    {SetIntArray},
+    {SetIntArray, 1, 1, REGISTER_OUTPUT_SIZE, 4, {0x3f800000}},
+    {SetBoolArray},
+    {SetBoolArray, 1, 1, REGISTER_OUTPUT_SIZE, 4, {0x3f800000}},
+    {SetFloatArray},
+    {SetFloatArray, 0, 1, REGISTER_OUTPUT_SIZE, 4, {0x3f800000}},
+    {SetValue, 1, 0, 3},
+    {SetValue, 1, 4, REGISTER_OUTPUT_SIZE * 4, 4, {0x3f800000}},
+    {SetVector, 0, 0, 0, 4, {0x3f800000}},
+    {SetVectorArray},
+    {SetVectorArray, 0, 1, REGISTER_OUTPUT_SIZE / 4, 4, {0x3f800000}},
+    {SetMatrix, 0, 0, 0, 4, {0x3f800000}},
+    {SetMatrixArray},
+    {SetMatrixArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 4, {0x3f800000}},
+    {SetMatrixTranspose, 0, 0, 0, 4, {0x3f800000}},
+    {SetMatrixTransposeArray},
+    {SetMatrixTransposeArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 4, {0x3f800000}},
+    {SetMatrixPointerArray},
+    {SetMatrixPointerArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 4, {0x3f800000}},
+    {SetMatrixTransposePointerArray},
+    {SetMatrixTransposePointerArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 4, {0x3f800000}},
+};
+
+static const struct registerset_constants registerset_constants_scalar_bool[] =
+{
+    {"b", {"b", D3DXRS_BOOL, 0, 1, D3DXPC_SCALAR, D3DXPT_BOOL, 1, 1, 1, 0, 4, NULL}, 37},
+};
+
+static const struct registerset_test registerset_test_scalar_bool[] =
+{
+    {SetFloat, 0, 0, 0, 1, {0x00000001}},
+    {SetInt, 1, 0, 0, 1, {0x00000001}},
+    {SetBool, 1, 0, 0, 1, {0x00000002}},
+    {SetIntArray},
+    {SetIntArray, 1, 1, REGISTER_OUTPUT_SIZE, 1, {0x00000001}},
+    {SetBoolArray},
+    {SetBoolArray, 1, 1, REGISTER_OUTPUT_SIZE, 1, {0x00000002}},
+    {SetFloatArray},
+    {SetFloatArray, 0, 1, REGISTER_OUTPUT_SIZE, 1, {0x00000001}},
+    {SetValue, 1, 0, 3},
+    {SetValue, 1, 4, REGISTER_OUTPUT_SIZE * 4, 1, {0x00000002}},
+    {SetVector, 0, 0, 0, 1, {0x00000001}},
+    {SetVectorArray},
+    {SetVectorArray, 0, 1, REGISTER_OUTPUT_SIZE / 4, 1, {0x00000001}},
+    {SetMatrix, 0, 0, 0, 1, {0x00000001}},
+    {SetMatrixArray},
+    {SetMatrixArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 1, {0x00000001}},
+    {SetMatrixTranspose, 0, 0, 0, 1, {0x00000001}},
+    {SetMatrixTransposeArray},
+    {SetMatrixTransposeArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 1, {0x00000001}},
+    {SetMatrixPointerArray},
+    {SetMatrixPointerArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 1, {0x00000001}},
+    {SetMatrixTransposePointerArray},
+    {SetMatrixTransposePointerArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 1, {0x00000001}},
+};
+
+static const struct
+{
+    const char *name;
+    const char *var;
+    UINT start;
+    D3DXREGISTER_SET regset;
+    const DWORD *blob;
+    const struct registerset_test *tests;
+    UINT test_count;
+    const struct registerset_constants *constants;
+    UINT constant_count;
+}
+registerset_data[] =
+{
+    /* scalar */
+    {"float", "f", 0, D3DXRS_FLOAT4, registerset_blob_scalar, registerset_test_scalar_float,
+        sizeof(registerset_test_scalar_float) / sizeof(*registerset_test_scalar_float),
+        registerset_constants_scalar_float,
+        sizeof(registerset_constants_scalar_float) / sizeof(*registerset_constants_scalar_float)},
+    {"int", "n", 0, D3DXRS_INT4, registerset_blob_scalar, registerset_test_scalar_int,
+        sizeof(registerset_test_scalar_int) / sizeof(*registerset_test_scalar_int),
+        registerset_constants_scalar_int,
+        sizeof(registerset_constants_scalar_int) / sizeof(*registerset_constants_scalar_int)},
+    {"int float", "nf", 4, D3DXRS_FLOAT4, registerset_blob_scalar, registerset_test_scalar_int_float,
+        sizeof(registerset_test_scalar_int_float) / sizeof(*registerset_test_scalar_int_float),
+        registerset_constants_scalar_int_float,
+        sizeof(registerset_constants_scalar_int_float) / sizeof(*registerset_constants_scalar_int_float)},
+    {"bool float", "bf", 8, D3DXRS_FLOAT4, registerset_blob_scalar, registerset_scalar_bool_float,
+        sizeof(registerset_scalar_bool_float) / sizeof(*registerset_scalar_bool_float),
+        registerset_constants_scalar_bool_float,
+        sizeof(registerset_constants_scalar_bool_float) / sizeof(*registerset_constants_scalar_bool_float)},
+    {"bool", "b", 0, D3DXRS_BOOL, registerset_blob_scalar, registerset_test_scalar_bool,
+        sizeof(registerset_test_scalar_bool) / sizeof(*registerset_test_scalar_bool),
+        registerset_constants_scalar_bool,
+        sizeof(registerset_constants_scalar_bool) / sizeof(*registerset_constants_scalar_bool)},
+};
+
+static void registerset_clear(IDirect3DDevice9 *device)
+{
+    DWORD zero[1024];
+    HRESULT hr;
+
+    memset(zero, 0xde, 4096);
+
+    hr = IDirect3DDevice9_SetVertexShaderConstantF(device, 0, (FLOAT*)zero, 256);
+    ok(hr == D3D_OK, "Clear failed, got %08x, expected %08x\n", hr, D3D_OK);
+
+    hr = IDirect3DDevice9_SetPixelShaderConstantF(device, 0, (FLOAT*)zero, 224);
+    ok(hr == D3D_OK, "Clear failed, got %08x, expected %08x\n", hr, D3D_OK);
+
+    hr = IDirect3DDevice9_SetVertexShaderConstantB(device, 0, (BOOL*)zero, 16);
+    ok(hr == D3D_OK, "Clear failed, got %08x, expected %08x\n", hr, D3D_OK);
+
+    hr = IDirect3DDevice9_SetPixelShaderConstantB(device, 0, (BOOL*)zero, 16);
+    ok(hr == D3D_OK, "Clear failed, got %08x, expected %08x\n", hr, D3D_OK);
+
+    hr = IDirect3DDevice9_SetVertexShaderConstantI(device, 0, (INT*)zero, 16);
+    ok(hr == D3D_OK, "Clear failed, got %08x, expected %08x\n", hr, D3D_OK);
+
+    hr = IDirect3DDevice9_SetPixelShaderConstantI(device, 0, (INT*)zero, 16);
+    ok(hr == D3D_OK, "Clear failed, got %08x, expected %08x\n", hr, D3D_OK);
+}
+
+static UINT registerset_compare(IDirect3DDevice9 *device, BOOL is_vs, D3DXREGISTER_SET regset,
+        UINT start, UINT in_count, const DWORD *expected)
+{
+    DWORD ret[1024] = {0};
+    HRESULT hr;
+    UINT count = 1024, i, err = 0;
+
+    memset(ret, 0xde, 4096);
+
+    /* get shader constants */
+    switch (regset)
+    {
+        case D3DXRS_BOOL:
+            count = 16;
+            if (is_vs) hr = IDirect3DDevice9_GetVertexShaderConstantB(device, 0, (BOOL*)ret, 16);
+            else hr = IDirect3DDevice9_GetPixelShaderConstantB(device, 0, (BOOL*)ret, 16);
+            ok(hr == D3D_OK, "Get*ShaderConstantB failed, got %08x\n", hr);
+            break;
+
+        case D3DXRS_INT4:
+            count = 256;
+            if (is_vs) hr = IDirect3DDevice9_GetVertexShaderConstantI(device, 0, (INT*)ret, 16);
+            else hr = IDirect3DDevice9_GetPixelShaderConstantI(device, 0, (INT*)ret, 16);
+            ok(hr == D3D_OK, "Get*ShaderConstantI failed, got %08x\n", hr);
+            break;
+
+        case D3DXRS_FLOAT4:
+            if (is_vs) hr = IDirect3DDevice9_GetVertexShaderConstantF(device, 0, (FLOAT*)ret, 256);
+            else
+            {
+                count = 896;
+                hr = IDirect3DDevice9_GetPixelShaderConstantF(device, 0, (FLOAT*)ret, 224);
+            }
+            ok(hr == D3D_OK, "Get*ShaderConstantF failed, got %08x\n", hr);
+            break;
+
+        default:
+            ok(0, "This should not happen!\n");
+            break;
+    }
+
+    /* compare shader constants */
+    for (i = 0; i < count; ++i)
+    {
+        DWORD value = 0xdededede;
+        if (i >= start && i < start + in_count) value = expected[i - start];
+
+        ok(ret[i] == value, "Get*ShaderConstant failed, %u got 0x%x(%f) expected 0x%x(%f)\n", i,
+                ret[i], ((FLOAT *)ret)[i], value, *((FLOAT *)&value));
+        if (ret[i] != value) err++;
+    }
+
+    registerset_clear(device);
+    return err;
+}
+
+static HRESULT registerset_apply(ID3DXConstantTable *ctable, IDirect3DDevice9 *device, D3DXHANDLE constant,
+        UINT index, DWORD count, enum Type type)
+{
+    const DWORD *in = registerset_test_input[index];
+    const D3DXMATRIX *inp[REGISTER_OUTPUT_SIZE / 16];
+    unsigned int i;
+
+    /* overlap, to see the difference between Array and PointerArray */
+    for (i = 0; i < REGISTER_OUTPUT_SIZE / 16; i++)
+    {
+        inp[i] = (D3DXMATRIX *)&in[i * 15];
+    }
+
+    switch (type)
+    {
+        case SetInt:
+            return ID3DXConstantTable_SetInt(ctable, device, constant, *((INT *)in));
+        case SetFloat:
+            return ID3DXConstantTable_SetFloat(ctable, device, constant, *((FLOAT *)in));
+        case SetBool:
+            return ID3DXConstantTable_SetBool(ctable, device, constant, *((BOOL *)in));
+        case SetIntArray:
+            return ID3DXConstantTable_SetIntArray(ctable, device, constant, (INT *)in, count);
+        case SetBoolArray:
+            return ID3DXConstantTable_SetBoolArray(ctable, device, constant, (BOOL *)in, count);
+        case SetFloatArray:
+            return ID3DXConstantTable_SetFloatArray(ctable, device, constant, (FLOAT *)in, count);
+        case SetMatrix:
+            return ID3DXConstantTable_SetMatrix(ctable, device, constant, (D3DXMATRIX *)in);
+        case SetMatrixTranspose:
+            return ID3DXConstantTable_SetMatrixTranspose(ctable, device, constant, (D3DXMATRIX *)in);
+        case SetMatrixArray:
+            return ID3DXConstantTable_SetMatrixArray(ctable, device, constant, (D3DXMATRIX *)in, count);
+        case SetMatrixTransposeArray:
+            return ID3DXConstantTable_SetMatrixTransposeArray(ctable, device, constant, (D3DXMATRIX *)in, count);
+        case SetVector:
+            return ID3DXConstantTable_SetVector(ctable, device, constant, (D3DXVECTOR4 *)in);
+        case SetVectorArray:
+            return ID3DXConstantTable_SetVectorArray(ctable, device, constant, (D3DXVECTOR4 *)in, count);
+        case SetValue:
+            return ID3DXConstantTable_SetValue(ctable, device, constant, in, count);
+        case SetMatrixPointerArray:
+            return ID3DXConstantTable_SetMatrixPointerArray(ctable, device, constant, inp, count);
+        case SetMatrixTransposePointerArray:
+            return ID3DXConstantTable_SetMatrixTransposePointerArray(ctable, device, constant, inp, count);
+    }
+
+    ok(0, "This should not happen!\n");
+    return D3D_OK;
+}
+
+static void test_registerset(void)
+{
+    UINT k;
+    HWND wnd;
+    IDirect3D9 *d3d;
+    IDirect3DDevice9 *device;
+    D3DPRESENT_PARAMETERS d3dpp;
+    HRESULT hr;
+    ULONG count;
+    D3DCAPS9 caps;
+
+    /* Create the device to use for our tests */
+    wnd = CreateWindow("static", "d3dx9_test", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    if (!wnd)
+    {
+        skip("Couldn't create application window\n");
+        return;
+    }
+    if (!d3d)
+    {
+        skip("Couldn't create IDirect3D9 object\n");
+        DestroyWindow(wnd);
+        return;
+    }
+
+    ZeroMemory(&d3dpp, sizeof(d3dpp));
+    d3dpp.Windowed   = TRUE;
+    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wnd, D3DCREATE_MIXED_VERTEXPROCESSING, &d3dpp, &device);
+    if (FAILED(hr))
+    {
+        skip("Failed to create IDirect3DDevice9 object %#x\n", hr);
+        IDirect3D9_Release(d3d);
+        DestroyWindow(wnd);
+        return;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (caps.VertexShaderVersion < D3DVS_VERSION(3, 0)
+            || caps.PixelShaderVersion < D3DPS_VERSION(3, 0))
+    {
+        skip("Skipping: Test requires VS >= 3 and PS >= 3.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(wnd);
+        return;
+    }
+
+    registerset_clear(device);
+
+    for(k = 0; k < sizeof(registerset_data) / sizeof(*registerset_data); ++k)
+    {
+        LPCSTR tablename = registerset_data[k].name;
+        LPCSTR name = registerset_data[k].var;
+        ID3DXConstantTable *ctable;
+        D3DXCONSTANTTABLE_DESC tdesc;
+        D3DXHANDLE constant;
+        UINT i;
+        BOOL is_vs;
+        DWORD *ctab;
+
+        hr = D3DXGetShaderConstantTable(registerset_data[k].blob, &ctable);
+        ok(hr == D3D_OK, "D3DXGetShaderConstantTable \"%s\" failed, got %08x, expected %08x\n", tablename, hr, D3D_OK);
+
+        hr = ID3DXConstantTable_GetDesc(ctable, &tdesc);
+        ok(hr == D3D_OK, "GetDesc \"%s\" failed, got %08x, expected %08x\n", tablename, hr, D3D_OK);
+
+        ctab = ID3DXConstantTable_GetBufferPointer(ctable);
+        ok(ctab[0] == registerset_data[k].blob[3], "ID3DXConstantTable_GetBufferPointer failed\n");
+
+        is_vs = (tdesc.Version & 0xFFFF0000) == 0xFFFE0000;
+
+        for (i = 0; i < registerset_data[k].constant_count; ++i)
+        {
+            LPCSTR fullname = registerset_data[k].constants[i].fullname;
+            const D3DXCONSTANT_DESC *expected_desc = &registerset_data[k].constants[i].desc;
+            D3DXCONSTANT_DESC desc;
+            UINT nr = 0;
+            UINT ctaboffset = registerset_data[k].constants[i].ctaboffset;
+
+            constant = ID3DXConstantTable_GetConstantByName(ctable, NULL, fullname);
+            ok(constant != NULL, "GetConstantByName \"%s\" failed\n", fullname);
+
+            hr = ID3DXConstantTable_GetConstantDesc(ctable, constant, &desc, &nr);
+            ok(hr == D3D_OK, "GetConstantDesc \"%s\" failed, got %08x, expected %08x\n", fullname, hr, D3D_OK);
+
+            ok(!strcmp(expected_desc->Name, desc.Name), "GetConstantDesc \"%s\" failed, got \"%s\", expected \"%s\"\n",
+                    fullname, desc.Name, expected_desc->Name);
+            ok(expected_desc->RegisterSet == desc.RegisterSet, "GetConstantDesc \"%s\" failed, got %#x, expected %#x\n",
+                    fullname, desc.RegisterSet, expected_desc->RegisterSet);
+            ok(expected_desc->RegisterIndex == desc.RegisterIndex,
+                    "GetConstantDesc \"%s\" failed, got %u, expected %u\n",
+                    fullname, desc.RegisterIndex, expected_desc->RegisterIndex);
+            ok(expected_desc->RegisterCount == desc.RegisterCount,
+                    "GetConstantDesc \"%s\" failed, got %u, expected %u\n",
+                    fullname, desc.RegisterCount, expected_desc->RegisterCount);
+            ok(expected_desc->Class == desc.Class, "GetConstantDesc \"%s\" failed, got %u, expected %u\n",
+                    fullname, desc.Class, expected_desc->Class);
+            ok(expected_desc->Type == desc.Type, "GetConstantDesc \"%s\" failed, got %#x, expected %#x\n",
+                    fullname, desc.Type, expected_desc->Type);
+            ok(expected_desc->Rows == desc.Rows, "GetConstantDesc \"%s\" failed, got %#x, expected %#x\n",
+                    fullname, desc.Rows, expected_desc->Rows);
+            ok(expected_desc->Columns == desc.Columns, "GetConstantDesc \"%s\" failed, got %u, expected %u\n",
+                    fullname, desc.Columns, expected_desc->Columns);
+            ok(expected_desc->Elements == desc.Elements, "GetConstantDesc \"%s\" failed, got %u, expected %u\n",
+                    fullname, desc.Elements, expected_desc->Elements);
+            ok(expected_desc->StructMembers == desc.StructMembers,
+                    "GetConstantDesc \"%s\" failed, got %u, expected %u\n",
+                    fullname, desc.StructMembers, expected_desc->StructMembers);
+            ok(expected_desc->Bytes == desc.Bytes, "GetConstantDesc \"%s\" failed, got %u, expected %u\n",
+                    fullname, desc.Bytes, expected_desc->Bytes);
+            if (ctaboffset)
+            {
+                ok(ctaboffset == (DWORD *)desc.DefaultValue - ctab,
+                        "GetConstantDesc \"%s\" failed, got %u, expected %u\n",
+                        fullname, (UINT)((DWORD *)desc.DefaultValue - ctab), ctaboffset);
+            }
+        }
+
+        constant = ID3DXConstantTable_GetConstantByName(ctable, NULL, name);
+        ok(constant != NULL, "GetConstantByName \"%s\" \"%s\" failed\n", tablename, name);
+
+        for (i = 0; i < registerset_data[k].test_count; ++i)
+        {
+            const struct registerset_test *test = &registerset_data[k].tests[i];
+            UINT ret;
+
+            hr = registerset_apply(ctable, device, constant, test->in_index, test->in_count_min, test->type);
+            ok(hr == D3D_OK, "Set* \"%s\" index %u, count %u failed, got %x, expected %x\n", tablename, i,
+                    test->in_count_min, hr, D3D_OK);
+
+            ret = registerset_compare(device, is_vs, registerset_data[k].regset,
+                    registerset_data[k].start, test->out_count, test->out);
+            ok(ret == 0, "Get*ShaderConstant \"%s\" index %u, count %u failed\n", tablename, i, test->in_count_min);
+
+            if (test->in_count_max > test->in_count_min)
+            {
+                hr = registerset_apply(ctable, device, constant, test->in_index, test->in_count_max, test->type);
+                ok(hr == D3D_OK, "Set* \"%s\" index %u, count %u failed, got %x, expected %x\n", tablename, i,
+                        test->in_count_max, hr, D3D_OK);
+
+                ret = registerset_compare(device, is_vs, registerset_data[k].regset,
+                        registerset_data[k].start, test->out_count, test->out);
+                ok(ret == 0, "Get*ShaderConstant \"%s\" index %u, count %u failed\n", tablename, i, test->in_count_max);
+            }
+        }
+
+        count = ID3DXConstantTable_Release(ctable);
+        ok(count == 0, "Release \"%s\" failed, got %u, expected %u\n", tablename, count, 0);
+    }
+
+    /* Release resources */
+    count = IDirect3DDevice9_Release(device);
+    ok(count == 0, "The Direct3D device reference count was %u, should be 0\n", count);
+
+    count = IDirect3D9_Release(d3d);
+    ok(count == 0, "The Direct3D object referenct count was %u, should be 0\n", count);
+
+    if (wnd) DestroyWindow(wnd);
+}
+
 START_TEST(shader)
 {
     test_get_shader_size();
@@ -1911,4 +2516,5 @@ START_TEST(shader)
     test_get_sampler_index();
     test_get_shader_samplers();
     test_get_shader_constant_variables();
+    test_registerset();
 }
