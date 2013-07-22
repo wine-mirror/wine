@@ -95,7 +95,7 @@ my @allfiles =
     [ 10082, "VENDORS/APPLE/CROATIAN.TXT",        0, "Mac Croatian" ],
     [ 20127, undef,                               0, "US-ASCII (7bit)" ],
     [ 20866, "VENDORS/MISC/KOI8-R.TXT",           0, "Russian KOI8" ],
-    [ 20932, "OBSOLETE/EASTASIA/JIS/JIS0208.TXT", 0, "EUC-JP" ],
+    [ 20932, "OBSOLETE/EASTASIA/JIS/JIS0208.TXT", 0, "EUC-JP", 0x3f, 0x30fb  ],
     [ 21866, "VENDORS/MISC/KOI8-U.TXT",           0, "Ukrainian KOI8" ],
     [ 28591, "ISO8859/8859-1.TXT",                0, "ISO 8859-1 Latin 1" ],
     [ 28592, "ISO8859/8859-2.TXT",                0, "ISO 8859-2 Latin 2 (East European)" ],
