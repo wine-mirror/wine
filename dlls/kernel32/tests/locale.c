@@ -2995,7 +2995,7 @@ static void test_GetStringTypeW(void)
                                     C1_SPACE | C1_BLANK,
                                     C1_SPACE | C1_BLANK};
 
-    static const WCHAR undefined[] = {0x378, 0x379, 0x604, 0xfff8, 0xfffe};
+    static const WCHAR undefined[] = {0x378, 0x379, 0x5ff, 0xfff8, 0xfffe};
 
                                   /* Lu, Ll, Lt */
     static const WCHAR alpha[] = {0x47, 0x67, 0x1c5};
