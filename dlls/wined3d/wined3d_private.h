@@ -1737,7 +1737,8 @@ struct wined3d_ffp_vs_settings
     DWORD point_size      : 1;
     DWORD fog_mode        : 2;
     DWORD texcoords       : 8;  /* MAX_TEXTURES */
-    DWORD padding         : 15;
+    DWORD ortho_fog       : 1;
+    DWORD padding         : 14;
 
     BYTE texgen[MAX_TEXTURES];
 };

@@ -3614,10 +3614,19 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_state *state, const struct
                     & WINED3D_FFP_LIGHT_TYPE_MASK) << WINED3D_FFP_LIGHT_TYPE_SHIFT(i);
     }
 
+    settings->ortho_fog = 0;
     if (!state->render_states[WINED3D_RS_FOGENABLE])
         settings->fog_mode = WINED3D_FFP_VS_FOG_OFF;
     else if (state->render_states[WINED3D_RS_FOGTABLEMODE] != WINED3D_FOG_NONE)
+    {
         settings->fog_mode = WINED3D_FFP_VS_FOG_DEPTH;
+
+        if (state->transforms[WINED3D_TS_PROJECTION].u.m[0][3] == 0.0f
+                && state->transforms[WINED3D_TS_PROJECTION].u.m[1][3] == 0.0f
+                && state->transforms[WINED3D_TS_PROJECTION].u.m[2][3] == 0.0f
+                && state->transforms[WINED3D_TS_PROJECTION].u.m[3][3] == 1.0f)
+            settings->ortho_fog = 1;
+    }
     else if (state->render_states[WINED3D_RS_FOGVERTEXMODE] == WINED3D_FOG_NONE)
         settings->fog_mode = WINED3D_FFP_VS_FOG_FOGCOORD;
     else if (state->render_states[WINED3D_RS_RANGEFOGENABLE])
