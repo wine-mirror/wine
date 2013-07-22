@@ -42,7 +42,7 @@ winemaker \- generate a build infrastructure for compiling Windows programs on U
 is a perl script designed to help you bootstrap the
 process of converting your Windows sources to Winelib programs.
 .PP
-In order to do this winemaker can perform the following operations:
+In order to do this \fBwinemaker\fR can perform the following operations:
 .PP
 - rename your source files and directories to lowercase in the event they
 got all uppercased during the transfer.
@@ -52,23 +52,23 @@ got all uppercased during the transfer.
 - scan the include statements and resource file references to replace the
 backslashes with forward slashes.
 .PP
-- during the above step winemaker will also perform a case insensitive search
+- during the above step \fBwinemaker\fR will also perform a case insensitive search
 of the referenced file in the include path and rewrite the include statement
 with the right case if necessary.
 .PP
-- winemaker will also check other more exotic issues like '#pragma pack'
-usage, use of "afxres.h" in non MFC projects, and more. Whenever it
-encounters something out of the ordinary, winemaker will warn you about it.
+- \fBwinemaker\fR will also check other more exotic issues like \fI#pragma pack\fR
+usage, use of \fIafxres.h\fR in non MFC projects, and more. Whenever it
+encounters something out of the ordinary, it will warn you about it.
 .PP
-- winemaker can also scan a complete directory tree at once, guess what are
+- \fBwinemaker\fR can also scan a complete directory tree at once, guess what are
 the executables and libraries you are trying to build, match them with
-source files, and generate the corresponding Makefile.
+source files, and generate the corresponding \fIMakefile\fR.
 .PP
-- finally winemaker will generate a global Makefile for normal use.
+- finally \fBwinemaker\fR will generate a global \fIMakefile\fR for normal use.
 .PP
-- winemaker knows about MFC-based project and will generate customized files.
+- \fBwinemaker\fR knows about MFC-based project and will generate customized files.
 .PP
-- winemaker can read existing project files. It supports dsp, dsw, vcproj and sln files.
+- \fBwinemaker\fR can read existing project files. It supports dsp, dsw, vcproj and sln files.
 .PP
 .SH OPTIONS
 .TP
@@ -130,7 +130,7 @@ Specify that targets are not MFC-based. This option disables use of MFC librarie
 even if \fBwinemaker\fR encounters files \fIstdafx.cpp\fR or \fIstdafx.h\fR that would cause it
 to enable MFC automatically if neither \fB--nomfc\fR nor \fB--mfc\fR was specified.
 .TP
-.BI -D macro "\fR[=\fIdefn\fR]"
+.BI -D macro "\fR[\fB=\fIdefn\fR]"
 Add the specified macro definition to the global list of macro definitions.
 .TP
 .BI -I dir
@@ -178,16 +178,16 @@ Without that option the default architecture is used.
 
 .SH EXAMPLES
 .PP
-Here is a typical winemaker use:
+Here is a typical \fBwinemaker\fR use:
 .PP
 $ winemaker --lower-uppercase -DSTRICT .
 .PP
-The above tells winemaker to scan the current directory and its
+The above tells \fBwinemaker\fR to scan the current directory and its
 subdirectories for source files. Whenever if finds a file or directory which
 name is all uppercase, it should rename it to lowercase. It should then fix
-all these source files for compilation with Winelib and generate Makefiles.
-The '-DSTRICT' specifies that the STRICT macro must be set when compiling
-these sources. Finally winemaker will create a Makefile.
+all these source files for compilation with Winelib and generate \fIMakefile\fRs.
+The \fB-DSTRICT\fR specifies that the \fBSTRICT\fR macro must be set when compiling
+these sources. Finally a \fIMakefile\fR will be created.
 .PP
 The next step would be:
 .PP
@@ -214,16 +214,16 @@ $ make
 In some cases you will have to edit the \fIMakefile\fR or source files manually.
 .PP
 Assuming that the windows executable/library is available, we could
-use winedump to determine what kind of executable it is (graphical
+use \fBwinedump\fR to determine what kind of executable it is (graphical
 or console), which libraries it is linked with, and which functions it
 exports (for libraries). We could then restore all these settings for the
 corresponding Winelib target.
 .PP
-Furthermore winemaker is not very good at finding the library containing the
+Furthermore \fBwinemaker\fR is not very good at finding the library containing the
 executable: it must either be in the current directory or in the
-.IR LD_LIBRARY_PATH .
+.BR LD_LIBRARY_PATH .
 .PP
-Winemaker does not support message files and the message compiler yet.
+\fBwinemaker\fR does not support message files and the message compiler yet.
 .PP
 Bugs can be reported on the
 .UR http://bugs.winehq.org
