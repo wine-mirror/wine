@@ -23,6 +23,7 @@
 #include <math.h>
 
 #define COBJMACROS
+#define CONST_VTABLE
 
 #include "windef.h"
 #include "objbase.h"
@@ -42,6 +43,80 @@ static const char *debugstr_guid(const GUID *guid)
             guid->Data4[5], guid->Data4[6], guid->Data4[7]);
     return buf;
 }
+
+static HRESULT WINAPI bitmapsource_QueryInterface(IWICBitmapSource *iface, REFIID iid, void **ppv)
+{
+    if (IsEqualIID(&IID_IUnknown, iid) ||
+        IsEqualIID(&IID_IWICBitmapSource, iid))
+    {
+        *ppv = iface;
+    }
+    else
+    {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    return S_OK;
+}
+
+static ULONG WINAPI bitmapsource_AddRef(IWICBitmapSource *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI bitmapsource_Release(IWICBitmapSource *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI bitmapsource_GetSize(IWICBitmapSource *iface, UINT *width, UINT *height)
+{
+    *width = *height = 10;
+    return S_OK;
+}
+
+static HRESULT WINAPI bitmapsource_GetPixelFormat(IWICBitmapSource *iface,
+    WICPixelFormatGUID *format)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI bitmapsource_GetResolution(IWICBitmapSource *iface,
+    double *dpiX, double *dpiY)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI bitmapsource_CopyPalette(IWICBitmapSource *iface,
+    IWICPalette *palette)
+{
+    return E_NOTIMPL;
+}
+
+static WICRect g_rect;
+static BOOL called_CopyPixels;
+
+static HRESULT WINAPI bitmapsource_CopyPixels(IWICBitmapSource *iface,
+    const WICRect *rc, UINT stride, UINT buffer_size, BYTE *buffer)
+{
+    if (rc) g_rect = *rc;
+    called_CopyPixels = TRUE;
+    return S_OK;
+}
+
+static const IWICBitmapSourceVtbl sourcevtbl = {
+    bitmapsource_QueryInterface,
+    bitmapsource_AddRef,
+    bitmapsource_Release,
+    bitmapsource_GetSize,
+    bitmapsource_GetPixelFormat,
+    bitmapsource_GetResolution,
+    bitmapsource_CopyPalette,
+    bitmapsource_CopyPixels
+};
+
+static IWICBitmapSource bitmapsource = { &sourcevtbl };
 
 static HBITMAP create_dib(int width, int height, int bpp, LOGPALETTE *pal, const void *data)
 {
@@ -774,6 +849,7 @@ static void test_clipper(void)
     IWICBitmapClipper *clipper;
     UINT height, width;
     IWICBitmap *bitmap;
+    BYTE buffer[500];
     WICRect rect;
     HRESULT hr;
 
@@ -807,6 +883,71 @@ static void test_clipper(void)
 
     IWICBitmapClipper_Release(clipper);
     IWICBitmap_Release(bitmap);
+
+    /* CopyPixels */
+    hr = IWICImagingFactory_CreateBitmapClipper(factory, &clipper);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    rect.X = rect.Y = 5;
+    rect.Width = rect.Height = 5;
+    hr = IWICBitmapClipper_Initialize(clipper, &bitmapsource, &rect);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    rect.X = rect.Y = 0;
+    rect.Width = rect.Height = 2;
+
+    /* passed rectangle is relative to clipper rectangle, underlying source gets intersected
+       rectangle */
+    memset(&g_rect, 0, sizeof(g_rect));
+    called_CopyPixels = FALSE;
+    hr = IWICBitmapClipper_CopyPixels(clipper, &rect, 0, sizeof(buffer), buffer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(called_CopyPixels, "CopyPixels not called\n");
+    ok(g_rect.X == 5 && g_rect.Y == 5 && g_rect.Width == 2 && g_rect.Height == 2,
+        "got wrong rectangle (%d,%d)-(%d,%d)\n", g_rect.X, g_rect.Y, g_rect.Width, g_rect.Height);
+
+    /* whole clipping rectangle */
+    memset(&g_rect, 0, sizeof(g_rect));
+    called_CopyPixels = FALSE;
+
+    rect.X = rect.Y = 0;
+    rect.Width = rect.Height = 5;
+
+    hr = IWICBitmapClipper_CopyPixels(clipper, &rect, 0, sizeof(buffer), buffer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(called_CopyPixels, "CopyPixels not called\n");
+    ok(g_rect.X == 5 && g_rect.Y == 5 && g_rect.Width == 5 && g_rect.Height == 5,
+        "got wrong rectangle (%d,%d)-(%d,%d)\n", g_rect.X, g_rect.Y, g_rect.Width, g_rect.Height);
+
+    /* larger than clipping rectangle */
+    memset(&g_rect, 0, sizeof(g_rect));
+    called_CopyPixels = FALSE;
+
+    rect.X = rect.Y = 0;
+    rect.Width = rect.Height = 20;
+
+    hr = IWICBitmapClipper_CopyPixels(clipper, &rect, 0, sizeof(buffer), buffer);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(!called_CopyPixels, "CopyPixels called\n");
+
+    rect.X = rect.Y = 5;
+    rect.Width = rect.Height = 5;
+
+    hr = IWICBitmapClipper_CopyPixels(clipper, &rect, 0, sizeof(buffer), buffer);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(!called_CopyPixels, "CopyPixels called\n");
+
+    /* null rectangle */
+    memset(&g_rect, 0, sizeof(g_rect));
+    called_CopyPixels = FALSE;
+
+    hr = IWICBitmapClipper_CopyPixels(clipper, NULL, 0, sizeof(buffer), buffer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(called_CopyPixels, "CopyPixels not called\n");
+    ok(g_rect.X == 5 && g_rect.Y == 5 && g_rect.Width == 5 && g_rect.Height == 5,
+        "got wrong rectangle (%d,%d)-(%d,%d)\n", g_rect.X, g_rect.Y, g_rect.Width, g_rect.Height);
+
+    IWICBitmapClipper_Release(clipper);
 }
 
 START_TEST(bitmap)

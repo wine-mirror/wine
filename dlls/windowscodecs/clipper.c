@@ -165,8 +165,32 @@ static HRESULT WINAPI BitmapClipper_CopyPalette(IWICBitmapClipper *iface,
 static HRESULT WINAPI BitmapClipper_CopyPixels(IWICBitmapClipper *iface,
     const WICRect *rc, UINT stride, UINT buffer_size, BYTE *buffer)
 {
-    FIXME("(%p,%p,%u,%u,%p): stub\n", iface, rc, stride, buffer_size, buffer);
-    return E_NOTIMPL;
+    BitmapClipper *This = impl_from_IWICBitmapClipper(iface);
+    WICRect rect;
+
+    TRACE("(%p,%p,%u,%u,%p)\n", iface, rc, stride, buffer_size, buffer);
+
+    if (!This->source)
+        return WINCODEC_ERR_WRONGSTATE;
+
+    if (rc)
+    {
+        rect = *rc;
+
+        /* transform to source coordinates */
+        rect.X += This->rect.X;
+        rect.Y += This->rect.Y;
+
+        if ((rect.X + rect.Width > This->rect.X + This->rect.Width) ||
+            (rect.Y + rect.Height > This->rect.Y + This->rect.Height))
+            return E_INVALIDARG;
+
+        rc = &rect;
+    }
+    else
+        rc = &This->rect;
+
+    return IWICBitmapSource_CopyPixels(This->source, rc, stride, buffer_size, buffer);
 }
 
 static HRESULT WINAPI BitmapClipper_Initialize(IWICBitmapClipper *iface,
