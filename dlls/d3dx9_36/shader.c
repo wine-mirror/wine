@@ -1554,58 +1554,63 @@ static HRESULT parse_ctab_constant_type(const char *ctab, DWORD typeoffset, stru
     }
     else
     {
-        WORD offsetdiff = 0;
+        WORD offsetdiff = type->Columns * type->Rows;
+        BOOL fail = FALSE;
 
-        switch (type->Class)
+        size = type->Columns * type->Rows;
+
+        switch (regset)
         {
-            case D3DXPC_SCALAR:
-            case D3DXPC_VECTOR:
-                offsetdiff = 1;
+            case D3DXRS_BOOL:
+                fail = type->Class != D3DXPC_SCALAR && type->Class != D3DXPC_VECTOR
+                        && type->Class != D3DXPC_MATRIX_ROWS && type->Class != D3DXPC_MATRIX_COLUMNS;
+                break;
+
+            case D3DXRS_FLOAT4:
+            case D3DXRS_INT4:
+                switch (type->Class)
+                {
+                    case D3DXPC_VECTOR:
+                        size = 1;
+                        /* fall through */
+                    case D3DXPC_SCALAR:
+                        offsetdiff = type->Rows * 4;
+                        break;
+
+                    case D3DXPC_MATRIX_ROWS:
+                        offsetdiff = type->Rows * 4;
+                        size = is_element ? type->Rows : max(type->Rows, type->Columns);
+                        break;
+
+                    case D3DXPC_MATRIX_COLUMNS:
+                        offsetdiff = type->Columns * 4;
+                        size = type->Columns;
+                        break;
+
+                    default:
+                        fail = TRUE;
+                        break;
+                }
+                break;
+
+            case D3DXRS_SAMPLER:
                 size = 1;
-                break;
-
-            case D3DXPC_MATRIX_ROWS:
-                size = is_element ? type->Rows : max(type->Rows, type->Columns);
-                offsetdiff = type->Rows;
-                break;
-
-            case D3DXPC_MATRIX_COLUMNS:
-                size = type->Columns;
-                offsetdiff = type->Columns;
-                break;
-
-            case D3DXPC_OBJECT:
-                size = 1;
+                fail = type->Class != D3DXPC_OBJECT;
                 break;
 
             default:
-                FIXME("Unhandled type class %s\n", debug_d3dxparameter_class(type->Class));
+                fail = TRUE;
                 break;
         }
 
-        /* offset in bytes => offsetdiff * components(4) * sizeof(DWORD) */
-        if (offset) *offset += offsetdiff * 4 * 4;
-
-        /* int and bool registerset have different sizes */
-        if (regset == D3DXRS_INT4 || regset == D3DXRS_BOOL)
+        if (fail)
         {
-            switch (type->Class)
-            {
-                case D3DXPC_SCALAR:
-                case D3DXPC_VECTOR:
-                    size = type->Columns;
-                    break;
-
-                case D3DXPC_MATRIX_ROWS:
-                case D3DXPC_MATRIX_COLUMNS:
-                    size = 4 * type->Columns;
-                    break;
-
-                default:
-                    FIXME("Unhandled type class %s\n", debug_d3dxparameter_class(type->Class));
-                    break;
-            }
+            FIXME("Unhandled register set %s, type class %s\n", debug_d3dxparameter_registerset(regset),
+                    debug_d3dxparameter_class(type->Class));
         }
+
+        /* offset in bytes => offsetdiff * sizeof(DWORD) */
+        if (offset) *offset += offsetdiff * 4;
     }
 
     constant->desc.RegisterCount = max(0, min(max - index, size));
@@ -1719,6 +1724,18 @@ HRESULT WINAPI D3DXGetShaderConstantTableEx(const DWORD *byte_code, DWORD flags,
                 offset ? &offset : NULL, constant_info[i].Name, constant_info[i].RegisterSet);
         if (hr != D3D_OK)
             goto error;
+
+        /*
+         * Set the register count, it may differ for D3DXRS_INT4, because somehow
+         * it makes the assumption that the register size is 1 instead of 4, so the
+         * count is 4 times bigger. This holds true only for toplevel shader
+         * constants. The count of elements and members is always based on a
+         * register size of 4.
+         */
+        if (object->constants[i].desc.RegisterSet == D3DXRS_INT4)
+        {
+            object->constants[i].desc.RegisterCount = constant_info[i].RegisterCount;
+        }
     }
 
     *constant_table = &object->ID3DXConstantTable_iface;
