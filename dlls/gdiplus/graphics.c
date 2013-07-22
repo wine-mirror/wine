@@ -4068,6 +4068,7 @@ GpStatus WINGDIPAPI GdipFlush(GpGraphics *graphics, GpFlushIntention intention)
 GpStatus WINGDIPAPI GdipGetClipBounds(GpGraphics *graphics, GpRectF *rect)
 {
     GpStatus status;
+    GpRegion *clip;
 
     TRACE("(%p, %p)\n", graphics, rect);
 
@@ -4077,10 +4078,14 @@ GpStatus WINGDIPAPI GdipGetClipBounds(GpGraphics *graphics, GpRectF *rect)
     if(graphics->busy)
         return ObjectBusy;
 
-    status = GdipGetRegionBounds(graphics->clip, graphics, rect);
-    if (status == Ok)
-        transform_rectf(graphics, CoordinateSpaceWorld, CoordinateSpaceDevice, rect);
+    status = GdipCreateRegion(&clip);
+    if (status != Ok) return status;
 
+    status = GdipGetClip(graphics, clip);
+    if (status == Ok)
+        status = GdipGetRegionBounds(clip, graphics, rect);
+
+    GdipDeleteRegion(clip);
     return status;
 }
 

@@ -4741,6 +4741,8 @@ static void test_clipping(void)
     status = GdipGetClipBounds(graphics, &rect);
     expect(Ok, status);
     ok((rect.X == 13.75 && rect.Y == 4.375 && rect.Width == 18.75 && rect.Height == 9.375) ||
+       /* rounding under Wine is slightly different */
+       (rect.X == 14.0 && rect.Y == 4.0 && rect.Width == 19.0 && rect.Height == 10.0) /* Wine */ ||
        broken(rect.X == 45.0 && rect.Y == 20.0 && rect.Width == 50.0 && rect.Height == 25.0) /* before Win7 */,
        "expected 13.75,4.375-18.75,9.375, got %.2f,%.2f-%.2f,%.2f\n", rect.X, rect.Y, rect.Width, rect.Height);
 
@@ -4885,9 +4887,7 @@ static void test_clipping(void)
     status = GdipGetClipBounds(graphics, &rect);
     expect(Ok, status);
     expectf_(20.612978, rect.X, 1.0);
-todo_wine
     expectf_(-6.256012, rect.Y, 1.5);
-todo_wine
     expectf_(25.612978, rect.Width, 1.0);
     expectf_(12.806489, rect.Height, 1.0);
 
@@ -4989,13 +4989,10 @@ todo_wine
 
     status = GdipGetClipBounds(graphics, &rect);
     expect(Ok, status);
-todo_wine
-    expectf(-28.100956, rect.X);
-    expectf(7.806488, rect.Y);
-todo_wine
-    expectf(25.612978, rect.Width);
-todo_wine
-    expectf(12.806489, rect.Height);
+    expectf_(-28.100956, rect.X, 1.0);
+    expectf_(7.806488, rect.Y, 1.5);
+    expectf_(25.612978, rect.Width, 1.0);
+    expectf_(12.806489, rect.Height, 1.0);
 
     status = GdipSetEmpty(region);
     expect(Ok, status);
@@ -5063,8 +5060,9 @@ todo_wine
     expect(Ok, status);
     ret = GetRgnBox(hrgn, &rc);
     ok(ret == COMPLEXREGION, "expected COMPLEXREGION, got %d\n", ret);
-todo_wine
-    ok(rc.left == 4500 && rc.top == 351 && rc.right == 8728 && rc.bottom == 3407,
+    ok((rc.left == 4500 && rc.top == 351 && rc.right == 8728 && rc.bottom == 3407) ||
+       /* rounding under Wine is slightly different */
+       (rc.left == 4499 && rc.top == 351 && rc.right == 8728 && rc.bottom == 3407) /* Wine */,
        "expected (4500,351)-(8728,3407), got (%d,%d)-(%d,%d)\n", rc.left, rc.top, rc.right, rc.bottom);
     DeleteObject(hrgn);
 
