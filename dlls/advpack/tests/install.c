@@ -242,7 +242,7 @@ static void test_LaunchINFSectionEx(void)
     lstrcat(cmdline, CURR_DIR);
     lstrcat(cmdline, "\\test.inf\",\"DefaultInstall\",\"c:,imacab.cab\",\"4\"");
     hr = pLaunchINFSectionEx(NULL, NULL, cmdline, 0);
-    todo_wine ok(hr == 0, "Expected 0, got %d\n", hr);
+    ok(hr == 0, "Expected 0, got %d\n", hr);
 
     /* The 'No UI' flag seems to have no effect whatsoever on Windows.
      * So only do this test in interactive mode.
