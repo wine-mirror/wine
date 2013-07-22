@@ -1329,6 +1329,7 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
     /* Destroy the shader backend. Note that this has to happen after all shaders are destroyed. */
     device->blitter->free_private(device);
     device->shader_backend->shader_free_private(device);
+    destroy_dummy_textures(device, gl_info);
 
     /* Release the buffers (with sanity checks)*/
     if (device->onscreen_depth_stencil)
