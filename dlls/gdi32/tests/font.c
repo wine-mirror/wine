@@ -1207,7 +1207,7 @@ static void test_text_extents(void)
 {
     static const WCHAR wt[] = {'O','n','e','\n','t','w','o',' ','3',0};
     LPINT extents;
-    INT i, len, fit1, fit2;
+    INT i, len, fit1, fit2, extents2[3];
     LOGFONTA lf;
     TEXTMETRICA tm;
     HDC hdc;
@@ -1269,7 +1269,6 @@ static void test_text_extents(void)
     GetTextExtentExPointW(hdc, wt, 2, 0, NULL, NULL, &sz1);
     ok(sz1.cx == sz2.cx && sz1.cy == sz2.cy,
        "GetTextExtentExPointW with lpnFit and alpDx both NULL returns incorrect results\n");
-    HeapFree(GetProcessHeap(), 0, extents);
 
     /* extents functions fail with -ve counts (the interesting case being -1) */
     ret = GetTextExtentPointA(hdc, "o", -1, &sz);
@@ -1314,6 +1313,27 @@ static void test_text_extents(void)
 
     hfont = SelectObject(hdc, hfont);
     DeleteObject(hfont);
+
+    /* non-MM_TEXT mapping mode */
+    lf.lfHeight = 2000;
+    hfont = CreateFontIndirectA(&lf);
+    hfont = SelectObject(hdc, hfont);
+
+    SetMapMode( hdc, MM_HIMETRIC );
+    ret = GetTextExtentExPointW(hdc, wt, 3, 0, NULL, extents, &sz);
+    ok(ret, "got %d\n", ret);
+    ok(sz.cx == extents[2], "got %d vs %d\n", sz.cx, extents[2]);
+
+    ret = GetTextExtentExPointW(hdc, wt, 3, extents[1], &fit1, extents2, &sz2);
+    ok(ret, "got %d\n", ret);
+    ok(fit1 == 2, "got %d\n", fit1);
+    ok(sz2.cx == sz.cx, "got %d vs %d\n", sz2.cx, sz.cx);
+    for(i = 0; i < 2; i++)
+        ok(extents2[i] == extents[i], "%d: %d, %d\n", i, extents2[i], extents[i]);
+
+    hfont = SelectObject(hdc, hfont);
+    DeleteObject(hfont);
+    HeapFree(GetProcessHeap(), 0, extents);
     ReleaseDC(NULL, hdc);
 }
 

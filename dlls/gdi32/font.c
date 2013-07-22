@@ -1186,7 +1186,7 @@ BOOL WINAPI GetTextExtentExPointI( HDC hdc, const WORD *indices, INT count, INT 
             for (i = 0; i < count; i++)
             {
                 unsigned int dx = abs( INTERNAL_XDSTOWS( dc, pos[i] )) + (i + 1) * dc->charExtra;
-                if (dx > (unsigned int)max_ext) break;
+                if (nfit && dx > (unsigned int)max_ext) break;
                 if (dxs) dxs[i] = dx;
             }
             if (nfit) *nfit = i;
@@ -1323,7 +1323,7 @@ BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count, INT max_ext,
             for (i = 0; i < count; i++)
             {
                 unsigned int dx = abs( INTERNAL_XDSTOWS( dc, pos[i] )) + (i + 1) * dc->charExtra;
-                if (dx > (unsigned int)max_ext) break;
+                if (nfit && dx > (unsigned int)max_ext) break;
 		if (dxs) dxs[i] = dx;
             }
             if (nfit) *nfit = i;
