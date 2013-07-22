@@ -196,6 +196,12 @@ static void test_RtlInitUnicodeStringEx(void)
     UNICODE_STRING uni;
     NTSTATUS result;
 
+    if (!pRtlInitUnicodeStringEx)
+    {
+        win_skip("RtlInitUnicodeStringEx is not available\n");
+        return;
+    }
+
     teststring2 = HeapAlloc(GetProcessHeap(), 0, (TESTSTRING2_LEN + 1) * sizeof(WCHAR));
     memset(teststring2, 'X', TESTSTRING2_LEN * sizeof(WCHAR));
     teststring2[TESTSTRING2_LEN] = '\0';
@@ -409,6 +415,12 @@ static void test_RtlDuplicateUnicodeString(void)
     STRING dest_ansi_str;
     NTSTATUS result;
     unsigned int test_num;
+
+    if (!pRtlDuplicateUnicodeString)
+    {
+        win_skip("RtlDuplicateUnicodeString is not available\n");
+        return;
+    }
 
     for (test_num = 0; test_num < NB_DUPL_USTR; test_num++) {
 	source_str.Length        = dupl_ustr[test_num].source_Length;
@@ -1184,6 +1196,12 @@ static void test_RtlFindCharInUnicodeString(void)
     unsigned int idx;
     unsigned int test_num;
 
+    if (!pRtlFindCharInUnicodeString)
+    {
+        win_skip("RtlFindCharInUnicodeString is not available\n");
+        return;
+    }
+
     for (test_num = 0; test_num < NB_FIND_CH_IN_USTR; test_num++) {
 	if (find_ch_in_ustr[test_num].main_str != NULL) {
 	    main_str.Length        = strlen(find_ch_in_ustr[test_num].main_str) * sizeof(WCHAR);
@@ -1714,6 +1732,12 @@ static void test_RtlIsTextUnicode(void)
     int flags;
     int i;
 
+    if (!pRtlIsTextUnicode)
+    {
+        win_skip("RtlIsTextUnicode is not available\n");
+        return;
+    }
+
     ok(!pRtlIsTextUnicode(ascii, sizeof(ascii), NULL), "ASCII text detected as Unicode\n");
 
     res = pRtlIsTextUnicode(unicode, sizeof(unicode), NULL);
@@ -1843,6 +1867,12 @@ static void test_RtlGUIDFromString(void)
   UNICODE_STRING str;
   NTSTATUS ret;
 
+  if (!pRtlGUIDFromString)
+  {
+      win_skip("RtlGUIDFromString is not available\n");
+      return;
+  }
+
   str.Length = str.MaximumLength = sizeof(szGuid) - sizeof(WCHAR);
   str.Buffer = (LPWSTR)szGuid;
 
@@ -1861,6 +1891,12 @@ static void test_RtlStringFromGUID(void)
 {
   UNICODE_STRING str;
   NTSTATUS ret;
+
+  if (!pRtlStringFromGUID)
+  {
+      win_skip("RtlStringFromGUID is not available\n");
+      return;
+  }
 
   str.Length = str.MaximumLength = 0;
   str.Buffer = NULL;
@@ -1955,18 +1991,12 @@ START_TEST(rtlstr)
 	test_RtlAppendUnicodeStringToString();
     }
 
-    if (pRtlInitUnicodeStringEx)
-        test_RtlInitUnicodeStringEx();
-    if (pRtlDuplicateUnicodeString)
-        test_RtlDuplicateUnicodeString();
-    if (pRtlFindCharInUnicodeString)
-        test_RtlFindCharInUnicodeString();
-    if (pRtlGUIDFromString)
-        test_RtlGUIDFromString();
-    if (pRtlStringFromGUID)
-        test_RtlStringFromGUID();
-    if (pRtlIsTextUnicode)
-        test_RtlIsTextUnicode();
+    test_RtlInitUnicodeStringEx();
+    test_RtlDuplicateUnicodeString();
+    test_RtlFindCharInUnicodeString();
+    test_RtlGUIDFromString();
+    test_RtlStringFromGUID();
+    test_RtlIsTextUnicode();
     if(0)
     {
 	test_RtlUpcaseUnicodeChar();
