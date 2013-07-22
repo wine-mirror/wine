@@ -2963,6 +2963,270 @@ static const struct registerset_test registerset_test_vector_array_int_float[] =
         {0x40000000, 0x40c00000, 0x41200000, 0x00000000, 0x00000000, 0x40e00000, 0x41300000}},
 };
 
+/*
+ * fxc.exe /Tvs_3_0
+ */
+#if 0
+bool3x2 cb = {1, 0, 1, 1, 0, 1};
+int3x2 cn = {4, 5, 6, 7, 8, 9};
+float3x2 cf = {15.1, 15.2, 15.3, 15.4, 15.5, 15.6};
+bool3x2 cbf = {1, 1, 0, 1, 0, 1};
+int3x2 cnf = {30, 31, 33, 32, 34, 36};
+float4 main(float4 pos : POSITION) : POSITION
+{
+    float4 tmp = 0;
+    int i;
+    if (cb._32) for (i = 0; i < cn._31; i++) tmp.x += pos.z * cf._31 * cbf._32;
+    else for (i = 0; i < cn._32; i++) tmp.y += pos.y * cf._32 * cnf._32;
+    return tmp;
+}
+#endif
+static const DWORD registerset_blob_column[] =
+{
+0xfffe0300, 0x0066fffe, 0x42415443, 0x0000001c, 0x00000163, 0xfffe0300, 0x00000005, 0x0000001c,
+0x00000100, 0x0000015c, 0x00000080, 0x00000000, 0x00000006, 0x00000084, 0x00000094, 0x000000ac,
+0x00020002, 0x00000002, 0x00000084, 0x000000b0, 0x000000d0, 0x00000002, 0x00000002, 0x000000d4,
+0x000000e4, 0x00000104, 0x00000001, 0x00000006, 0x00000108, 0x00000118, 0x00000138, 0x00040002,
+0x00000002, 0x00000108, 0x0000013c, 0xab006263, 0x00010003, 0x00020003, 0x00000001, 0x00000000,
+0xffffffff, 0x00000000, 0xffffffff, 0xffffffff, 0x00000000, 0xffffffff, 0x00666263, 0x3f800000,
+0x00000000, 0x00000000, 0x00000000, 0x3f800000, 0x3f800000, 0x3f800000, 0x00000000, 0xab006663,
+0x00030003, 0x00020003, 0x00000001, 0x00000000, 0x4171999a, 0x4174cccd, 0x41780000, 0x00000000,
+0x41733333, 0x41766666, 0x4179999a, 0x00000000, 0xab006e63, 0x00020003, 0x00020003, 0x00000001,
+0x00000000, 0x00000004, 0x00000006, 0x00000008, 0x00000000, 0x00000005, 0x00000007, 0x00000009,
+0x00000000, 0x00666e63, 0x41f00000, 0x42040000, 0x42080000, 0x00000000, 0x41f80000, 0x42000000,
+0x42100000, 0x00000000, 0x335f7376, 0x4d00305f, 0x6f726369, 0x74666f73, 0x29522820, 0x534c4820,
+0x6853204c, 0x72656461, 0x6d6f4320, 0x656c6970, 0x2e392072, 0x392e3932, 0x332e3235, 0x00313131,
+0x05000051, 0xa00f0006, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0200001f, 0x80000000,
+0x900f0000, 0x0200001f, 0x80000000, 0xe00f0000, 0x01000028, 0xe0e40805, 0x03000005, 0x80010000,
+0xa0aa0000, 0x90aa0000, 0x02000001, 0x80010001, 0xa0000006, 0x01000026, 0xf0e40004, 0x04000004,
+0x80010001, 0x80000000, 0xa0aa0003, 0x80000001, 0x00000027, 0x02000001, 0x80020001, 0xa0000006,
+0x0000002a, 0x03000005, 0x80010000, 0xa0aa0001, 0x90550000, 0x02000001, 0x80020001, 0xa0000006,
+0x01000026, 0xf0e40005, 0x04000004, 0x80020001, 0x80000000, 0xa0aa0005, 0x80550001, 0x00000027,
+0x02000001, 0x80010001, 0xa0000006, 0x0000002b, 0x02000001, 0xe0030000, 0x80e40001, 0x02000001,
+0xe00c0000, 0xa0000006, 0x0000ffff,
+};
+
+static const struct registerset_constants registerset_constants_column_float[] =
+{
+    {"cf", {"cf", D3DXRS_FLOAT4, 0, 2, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 3, 2, 1, 0, 24, NULL}, 57},
+};
+
+static const struct registerset_test registerset_blob_column_float[] =
+{
+    {SetInt},
+    {SetBool},
+    {SetFloat},
+    {SetIntArray, 1, 0, 5},
+    {SetIntArray, 1, 6, REGISTER_OUTPUT_SIZE, 8,
+        {0x40000000, 0x40800000, 0x00000000, 0x00000000, 0x40400000, 0x40a00000, 0x40e00000}},
+    {SetBoolArray, 1, 0, 5},
+    {SetBoolArray, 1, 6, REGISTER_OUTPUT_SIZE, 8,
+        {0x3f800000, 0x3f800000, 0x00000000, 0x00000000, 0x3f800000, 0x3f800000, 0x3f800000}},
+    {SetFloatArray, 0, 0, 5},
+    {SetFloatArray, 0, 6, REGISTER_OUTPUT_SIZE, 8,
+        {0x40000123, 0x40800123, 0x40c00123, 0x00000000, 0x00000000, 0x40a00123, 0x40e00123}},
+    {SetValue, 0, 0, 23},
+    {SetValue, 0, 24, REGISTER_OUTPUT_SIZE * 4, 8,
+        {0x40000123, 0x40800123, 0x40c00123, 0x00000000, 0x00000000, 0x40a00123, 0x40e00123}},
+    {SetVector},
+    {SetVectorArray, 0, 0, 1},
+    {SetVectorArray, 0, 2, REGISTER_OUTPUT_SIZE / 4, 8,
+        {0x40000123, 0x40c00123, 0x41200123, 0x00000000, 0x00000000, 0x40e00123, 0x41300123}},
+    {SetMatrix, 0, 0, 0, 8,
+        {0x40000123, 0x40c00123, 0x41200123, 0x00000000, 0x00000000, 0x40e00123, 0x41300123}},
+    {SetMatrixArray},
+    {SetMatrixArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 8,
+        {0x40000123, 0x40c00123, 0x41200123, 0x00000000, 0x00000000, 0x40e00123, 0x41300123}},
+    {SetMatrixTranspose, 0, 0, 0, 8,
+        {0x40000123, 0x00000000, 0x40800123, 0x00000000, 0x40c00123, 0x40e00123, 0x41000123}},
+    {SetMatrixTransposeArray},
+    {SetMatrixTransposeArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 8,
+        {0x40000123, 0x00000000, 0x40800123, 0x00000000, 0x40c00123, 0x40e00123, 0x41000123}},
+    {SetMatrixPointerArray},
+    {SetMatrixPointerArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 8,
+        {0x40000123, 0x40c00123, 0x41200123, 0x00000000, 0x00000000, 0x40e00123, 0x41300123}},
+    {SetMatrixTransposePointerArray},
+    {SetMatrixTransposePointerArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 8,
+        {0x40000123, 0x00000000, 0x40800123, 0x00000000, 0x40c00123, 0x40e00123, 0x41000123}},
+};
+
+static const struct registerset_constants registerset_constants_column_int[] =
+{
+    {"cn", {"cn", D3DXRS_INT4, 0, 6, D3DXPC_MATRIX_COLUMNS, D3DXPT_INT, 3, 2, 1, 0, 24, NULL}, 70},
+};
+
+static const struct registerset_test registerset_blob_column_int[] =
+{
+    {SetInt},
+    {SetBool},
+    {SetFloat},
+    {SetIntArray, 1, 0, 5},
+    {SetIntArray, 1, 6, REGISTER_OUTPUT_SIZE, 8,
+        {0x00000002, 0x00000004, 0x00000000, 0x00000000, 0x00000003, 0x00000005, 0x00000007}},
+    {SetBoolArray, 1, 0, 5},
+    {SetBoolArray, 1, 6, REGISTER_OUTPUT_SIZE, 8,
+        {0x00000001, 0x00000001, 0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000001}},
+    {SetFloatArray, 0, 0, 5},
+    {SetFloatArray, 0, 6, REGISTER_OUTPUT_SIZE, 8,
+        {0x00000002, 0x00000004, 0x00000006, 0x00000000, 0x00000000, 0x00000005, 0x00000007}},
+    {SetValue, 1, 0, 23},
+    {SetValue, 1, 24, REGISTER_OUTPUT_SIZE * 4, 8,
+        {0x00000002, 0x00000004, 0x00000000, 0x00000000, 0x00000003, 0x00000005, 0x00000007}},
+    {SetVector},
+    {SetVectorArray, 0, 0, 1},
+    {SetVectorArray, 0, 2, REGISTER_OUTPUT_SIZE / 4, 8,
+        {0x00000002, 0x00000006, 0x0000000a, 0x00000000, 0x00000000, 0x00000007, 0x0000000b}},
+    {SetMatrix, 0, 0, 0, 8,
+        {0x00000002, 0x00000006, 0x0000000a, 0x00000000, 0x00000000, 0x00000007, 0x0000000b}},
+    {SetMatrixArray},
+    {SetMatrixArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 8,
+        {0x00000002, 0x00000006, 0x0000000a, 0x00000000, 0x00000000, 0x00000007, 0x0000000b}},
+    {SetMatrixTranspose, 0, 0, 0, 8,
+        {0x00000002, 0x00000000, 0x00000004, 0x00000000, 0x00000006, 0x00000007, 0x00000008}},
+    {SetMatrixTransposeArray},
+    {SetMatrixTransposeArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 8,
+        {0x00000002, 0x00000000, 0x00000004, 0x00000000, 0x00000006, 0x00000007, 0x00000008}},
+    {SetMatrixPointerArray},
+    {SetMatrixPointerArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 8,
+        {0x00000002, 0x00000006, 0x0000000a, 0x00000000, 0x00000000, 0x00000007, 0x0000000b}},
+    {SetMatrixTransposePointerArray},
+    {SetMatrixTransposePointerArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 8,
+        {0x00000002, 0x00000000, 0x00000004, 0x00000000, 0x00000006, 0x00000007, 0x00000008}},
+};
+
+static const struct registerset_constants registerset_constants_column_bool[] =
+{
+    {"cb", {"cb", D3DXRS_BOOL, 0, 6, D3DXPC_MATRIX_COLUMNS, D3DXPT_BOOL, 3, 2, 1, 0, 24, NULL}, 37},
+};
+
+static const struct registerset_test registerset_test_column_bool[] =
+{
+    {SetInt},
+    {SetBool},
+    {SetFloat},
+    {SetIntArray, 1, 0, 5},
+    {SetIntArray, 1, 6, REGISTER_OUTPUT_SIZE, 6,
+        {0x00000001, 0x00000001, 0x00000000, 0x00000001, 0x00000001, 0x00000001}},
+    {SetBoolArray, 1, 0, 5},
+    {SetBoolArray, 1, 6, REGISTER_OUTPUT_SIZE, 6,
+        {0x00000002, 0x00000004, 0x00000000, 0x00000003, 0x00000005, 0x00000007}},
+    {SetFloatArray, 0, 0, 5},
+    {SetFloatArray, 0, 6, REGISTER_OUTPUT_SIZE, 6,
+        {0x00000001, 0x00000001, 0x00000001, 0x00000000, 0x00000001, 0x00000001}},
+    {SetValue, 1, 0, 23},
+    {SetValue, 1, 24, REGISTER_OUTPUT_SIZE * 4, 6,
+        {0x00000002, 0x00000004, 0x00000000, 0x00000003, 0x00000005, 0x00000007}},
+    {SetVector},
+    {SetVectorArray, 0, 0, 1},
+    {SetVectorArray, 0, 2, REGISTER_OUTPUT_SIZE / 4, 6,
+        {0x00000001, 0x00000001, 0x00000001, 0x00000000, 0x00000001, 0x00000001}},
+    {SetMatrix, 0, 0, 0, 6,
+        {0x00000001, 0x00000001, 0x00000001, 0x00000000, 0x00000001, 0x00000001}},
+    {SetMatrixArray},
+    {SetMatrixArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 6,
+        {0x00000001, 0x00000001, 0x00000001, 0x00000000, 0x00000001, 0x00000001}},
+    {SetMatrixTranspose, 0, 0, 0, 6,
+        {0x00000001, 0x00000000, 0x00000001, 0x00000001, 0x00000001, 0x00000001}},
+    {SetMatrixTransposeArray},
+    {SetMatrixTransposeArray, 0, 1, REGISTER_OUTPUT_SIZE / 4, 6,
+        {0x00000001, 0x00000000, 0x00000001, 0x00000001, 0x00000001, 0x00000001}},
+    {SetMatrixPointerArray},
+    {SetMatrixPointerArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 6,
+        {0x00000001, 0x00000001, 0x00000001, 0x00000000, 0x00000001, 0x00000001}},
+    {SetMatrixTransposePointerArray},
+    {SetMatrixTransposePointerArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 6,
+        {0x00000001, 0x00000000, 0x00000001, 0x00000001, 0x00000001, 0x00000001}},
+};
+
+static const struct registerset_constants registerset_constants_column_int_float[] =
+{
+    {"cnf", {"cnf", D3DXRS_FLOAT4, 4, 2, D3DXPC_MATRIX_COLUMNS, D3DXPT_INT, 3, 2, 1, 0, 24, NULL}, 79},
+};
+
+static const struct registerset_test registerset_test_column_int_float[] =
+{
+    {SetInt},
+    {SetBool},
+    {SetFloat},
+    {SetIntArray, 1, 0, 5},
+    {SetIntArray, 1, 6, REGISTER_OUTPUT_SIZE, 8,
+        {0x40000000, 0x40800000, 0x00000000, 0x00000000, 0x40400000, 0x40a00000, 0x40e00000}},
+    {SetBoolArray, 1, 0, 5},
+    {SetBoolArray, 1, 6, REGISTER_OUTPUT_SIZE, 8,
+        {0x3f800000, 0x3f800000, 0x00000000, 0x00000000, 0x3f800000, 0x3f800000, 0x3f800000}},
+    {SetFloatArray, 0, 0, 5},
+    {SetFloatArray, 0, 6, REGISTER_OUTPUT_SIZE, 8,
+        {0x40000000, 0x40800000, 0x40c00000, 0x00000000, 0x00000000, 0x40a00000, 0x40e00000}},
+    {SetValue, 1, 0, 23},
+    {SetValue, 1, 24, REGISTER_OUTPUT_SIZE * 4, 8,
+        {0x40000000, 0x40800000, 0x00000000, 0x00000000, 0x40400000, 0x40a00000, 0x40e00000}},
+    {SetVector},
+    {SetVectorArray, 0, 0, 1},
+    {SetValue, 0, 0, 23},
+    {SetVectorArray, 0, 2, REGISTER_OUTPUT_SIZE / 4, 8,
+        {0x40000000, 0x40c00000, 0x41200000, 0x00000000, 0x00000000, 0x40e00000, 0x41300000}},
+    {SetMatrix, 0, 0, 0, 8,
+        {0x40000000, 0x40c00000, 0x41200000, 0x00000000, 0x00000000, 0x40e00000, 0x41300000}},
+    {SetMatrixArray},
+    {SetMatrixArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 8,
+        {0x40000000, 0x40c00000, 0x41200000, 0x00000000, 0x00000000, 0x40e00000, 0x41300000}},
+    {SetMatrixTranspose, 0, 0, 0, 8,
+        {0x40000000, 0x00000000, 0x40800000, 0x00000000, 0x40c00000, 0x40e00000, 0x41000000}},
+    {SetMatrixTransposeArray},
+    {SetMatrixTransposeArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 8,
+        {0x40000000, 0x00000000, 0x40800000, 0x00000000, 0x40c00000, 0x40e00000, 0x41000000}},
+    {SetMatrixPointerArray},
+    {SetMatrixPointerArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 8,
+        {0x40000000, 0x40c00000, 0x41200000, 0x00000000, 0x00000000, 0x40e00000, 0x41300000}},
+    {SetMatrixTransposePointerArray},
+    {SetMatrixTransposePointerArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 8,
+        {0x40000000, 0x00000000, 0x40800000, 0x00000000, 0x40c00000, 0x40e00000, 0x41000000}},
+};
+
+static const struct registerset_constants registerset_constants_column_bool_float[] =
+{
+    {"cbf", {"cbf", D3DXRS_FLOAT4, 2, 2, D3DXPC_MATRIX_COLUMNS, D3DXPT_BOOL, 3, 2, 1, 0, 24, NULL}, 44},
+};
+
+static const struct registerset_test registerset_test_column_bool_float[] =
+{
+    {SetInt},
+    {SetBool},
+    {SetFloat},
+    {SetIntArray, 1, 0, 5},
+    {SetIntArray, 1, 6, REGISTER_OUTPUT_SIZE, 8,
+        {0x3f800000, 0x3f800000, 0x00000000, 0x00000000, 0x3f800000, 0x3f800000, 0x3f800000}},
+    {SetBoolArray, 1, 0, 5},
+    {SetBoolArray, 1, 6, REGISTER_OUTPUT_SIZE, 8,
+        {0x3f800000, 0x3f800000, 0x00000000, 0x00000000, 0x3f800000, 0x3f800000, 0x3f800000}},
+    {SetFloatArray, 0, 0, 5},
+    {SetFloatArray, 0, 6, REGISTER_OUTPUT_SIZE, 8,
+        {0x3f800000, 0x3f800000, 0x3f800000, 0x00000000, 0x00000000, 0x3f800000, 0x3f800000}},
+    {SetValue, 1, 0, 23},
+    {SetValue, 1, 24, REGISTER_OUTPUT_SIZE * 4, 8,
+        {0x3f800000, 0x3f800000, 0x00000000, 0x00000000, 0x3f800000, 0x3f800000, 0x3f800000}},
+    {SetVector},
+    {SetVectorArray, 0, 0, 1},
+    {SetVectorArray, 0, 2, REGISTER_OUTPUT_SIZE / 4, 8,
+        {0x3f800000, 0x3f800000, 0x3f800000, 0x00000000, 0x00000000, 0x3f800000, 0x3f800000}},
+    {SetMatrix, 0, 0, 0, 8,
+        {0x3f800000, 0x3f800000, 0x3f800000, 0x00000000, 0x00000000, 0x3f800000, 0x3f800000}},
+    {SetMatrixArray},
+    {SetMatrixArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 8,
+        {0x3f800000, 0x3f800000, 0x3f800000, 0x00000000, 0x00000000, 0x3f800000, 0x3f800000}},
+    {SetMatrixTranspose, 0, 0, 0, 8,
+        {0x3f800000, 0x00000000, 0x3f800000, 0x00000000, 0x3f800000, 0x3f800000, 0x3f800000}},
+    {SetMatrixTransposeArray},
+    {SetMatrixTransposeArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 8,
+        {0x3f800000, 0x00000000, 0x3f800000, 0x00000000, 0x3f800000, 0x3f800000, 0x3f800000}},
+    {SetMatrixPointerArray},
+    {SetMatrixPointerArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 8,
+        {0x3f800000, 0x3f800000, 0x3f800000, 0x00000000, 0x00000000, 0x3f800000, 0x3f800000}},
+    {SetMatrixTransposePointerArray},
+    {SetMatrixTransposePointerArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 8,
+        {0x3f800000, 0x00000000, 0x3f800000, 0x00000000, 0x3f800000, 0x3f800000, 0x3f800000}},
+};
+
 static const struct
 {
     const char *name;
@@ -3065,6 +3329,29 @@ registerset_data[] =
         sizeof(registerset_test_vector_array_int_float) / sizeof(*registerset_test_vector_array_int_float),
         registerset_constants_vector_array_int_float,
         sizeof(registerset_constants_vector_array_int_float) / sizeof(*registerset_constants_vector_array_int_float)},
+    /* matrix column */
+    {"float c3x2", "cf", 0, D3DXRS_FLOAT4, registerset_blob_column, registerset_blob_column_float,
+        sizeof(registerset_blob_column_float) / sizeof(*registerset_blob_column_float),
+        registerset_constants_column_float,
+        sizeof(registerset_constants_column_float) / sizeof(*registerset_constants_column_float)},
+    {"int c3x2", "cn", 0, D3DXRS_INT4, registerset_blob_column, registerset_blob_column_int,
+        sizeof(registerset_blob_column_int) / sizeof(*registerset_blob_column_int),
+        registerset_constants_column_int,
+        sizeof(registerset_constants_column_int) / sizeof(*registerset_constants_column_int)},
+    {"bool c3x2", "cb", 0, D3DXRS_BOOL, registerset_blob_column, registerset_test_column_bool,
+        sizeof(registerset_test_column_bool) / sizeof(*registerset_test_column_bool),
+        registerset_constants_column_bool,
+        sizeof(registerset_constants_column_bool) / sizeof(*registerset_constants_column_bool)},
+    {"bool float c3x2", "cbf", 8, D3DXRS_FLOAT4, registerset_blob_column,
+        registerset_test_column_bool_float,
+        sizeof(registerset_test_column_bool_float) / sizeof(*registerset_test_column_bool_float),
+        registerset_constants_column_bool_float,
+        sizeof(registerset_constants_column_bool_float) / sizeof(*registerset_constants_column_bool_float)},
+    {"int float c3x2", "cnf", 16, D3DXRS_FLOAT4, registerset_blob_column,
+        registerset_test_column_int_float,
+        sizeof(registerset_test_column_int_float) / sizeof(*registerset_test_column_int_float),
+        registerset_constants_column_int_float,
+        sizeof(registerset_constants_column_int_float) / sizeof(*registerset_constants_column_int_float)},
 };
 
 static void registerset_clear(IDirect3DDevice9 *device)
