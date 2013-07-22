@@ -73,115 +73,107 @@ source files, and generate the corresponding Makefile.
 .SH OPTIONS
 .TP
 .B --nobanner
-Disables the printing of the banner.
+Disable the printing of the banner.
 .TP
 .B --backup
-Directs winemaker to perform a backup of all the source files in which it
-makes changes. This is the default.
+Perform a backup of all the modified source files. This is the default.
 .TP
 .B --nobackup
-Tells winemaker not to backup modified source files.
+Do not backup modified source files.
 .TP
 .B --nosource-fix
-Directs winemaker not to try fixing the source files (e.g. DOS to Unix
+Do no try to fix the source files (e.g. DOS to Unix
 conversion). This prevents complaints if the files are readonly.
 .TP
 .B --lower-all
-Tells winemaker to rename all files and directories to lowercase.
+Rename all files and directories to lowercase.
 .TP
 .B --lower-uppercase
-Tells winemaker to only rename files and directories that have an all
-uppercase name.
-So "HELLO.C" would be renamed but not "World.c".
+Only rename files and directories that have an all uppercase name.
+So \fIHELLO.C\fR would be renamed but not \fIWorld.c\fR.
 .TP
 .B --lower-none
-Tells winemaker not to rename files and directories to lower case. Note
+Do not rename files and directories to lower case. Note
 that this does not prevent the renaming of a file if its extension cannot
 be handled as is, e.g. ".Cxx". This is the default.
 .TP
-.B "--lower-include "
-Tells winemaker that if it does not find the file corresponding to an
-include statement (or other form of file reference for resource files),
-then it should convert that filename to lowercase. This is the default.
+.B --lower-include
+When the file corresponding to an include statement (or other form of file reference
+for resource files) cannot be found, convert that filename to lowercase. This is the default.
 .TP
-.B "--nolower-include "
-Tells winemaker not to modify the include statement if it cannot find the
-referenced file.
+.B --nolower-include
+Do not modify the include statement if the referenced file cannot be found.
 .TP
 .BR "--guiexe " "| " "--windows"
-Specifies that whenever winemaker finds an executable target, or a target of
-unknown type, it should assume that it is a graphical application.
-This is the default.
+Assume a graphical application when an executable target or a target of
+unknown type is found. This is the default.
 .TP
 .BR "--cuiexe " "| " "--console"
-Specifies that whenever winemaker finds an executable target, or a target of
-unknown type, it should assume that it is a console application.
+Assume a console application when an executable target or a target of
+unknown type is found.
 .TP
 .B --dll
-This option tells winemaker that whenever it finds a target of unknown type,
-i.e. for which it does not know whether it is an executable, a dll, or a static library,
-it should assume it is a dll.
+Assume a dll when a target of unknown type is found, i.e. when \fBwinemaker\fR is unable to
+determine whether it is an executable, a dll, or a static library,
 .TP
 .B --lib
-This option tells winemaker that whenever it finds a target of unknown type,
-i.e. for which it does not know whether it is an executable, a dll, or a static library,
-it should assume it is a static library.
+Assume a static library when a target of unknown type is found, i.e. when \fBwinemaker\fR is
+unable to determine whether it is an executable, a dll, or a static library,
 .TP
 .B --mfc
-Specifies that the targets are MFC based. In such a case winemaker adapts
+Specify that the targets are MFC based. In such a case \fBwinemaker\fR adapts
 the include and library paths accordingly, and links the target with the
 MFC library.
 .TP
 .B --nomfc
-Specifies that targets are not MFC-based. This option disables use of MFC libraries
-even if winemaker encounters files "stdafx.cpp" or "stdafx.h" that would cause it
+Specify that targets are not MFC-based. This option disables use of MFC libraries
+even if \fBwinemaker\fR encounters files \fIstdafx.cpp\fR or \fIstdafx.h\fR that would cause it
 to enable MFC automatically if neither \fB--nomfc\fR nor \fB--mfc\fR was specified.
 .TP
 .BI -D macro "\fR[=\fIdefn\fR]"
-Adds the specified macro definition to the global list of macro definitions.
+Add the specified macro definition to the global list of macro definitions.
 .TP
 .BI -I dir
-Appends the specified directory to the global include path.
+Append the specified directory to the global include path.
 .TP
 .BI -P dir
-Appends the specified directory to the global dll path.
+Append the specified directory to the global dll path.
 .TP
 .BI -i dll
-Adds the Winelib library to the global list of Winelib libraries to import.
+Add the Winelib library to the global list of Winelib libraries to import.
 .TP
 .BI -L dir
-Appends the specified directory to the global library path.
+Append the specified directory to the global library path.
 .TP
 .BI -l library
-Adds the specified library to the global list of libraries to link with.
+Add the specified library to the global list of libraries to link with.
 .TP
 .B --nodlls
-This option tells winemaker not to use the standard set of winelib libraries
-for imports. That is, any DLL your code uses must be explicitly passed to
-winemaker with \fB-i\fR options.
-The standard set of libraries is: odbc32.dll, odbccp32.dll, ole32.dll,
-oleaut32.dll and winspool.drv.
+Do not use the standard set of Winelib libraries for imports.
+That is, any DLL your code uses must be explicitly passed with \fB-i\fR options.
+The standard set of libraries is: \fIodbc32.dll\fR, \fIodbccp32.dll\fR, \fIole32.dll\fR,
+\fIoleaut32.dll\fR and \fIwinspool.drv\fR.
 .TP
 .B --nomsvcrt
-Sets some options to tell winegcc not to compile against msvcrt.
-Use this option if you have cpp-files that include <string>.
+Set some options to tell \fBwinegcc\fR not to compile against msvcrt.
+Use this option if you have cpp-files that include \fI<string>\fR.
 .TP
 .B --interactive
-Puts winemaker in interactive mode. In this mode winemaker will ask you to
-confirm each directory's list of targets, and then to provide directory and
+Use interactive mode. In this mode \fBwinemaker\fR will ask you to
+confirm the list of targets for each directory, and then to provide directory and
 target specific options.
 .TP
 .BI --single-target " name"
-Specifies that there is only one target, called \fIname\fR.
+Specify that there is only one target, called \fIname\fR.
 .TP
 .B --generated-files
-Tells winemaker to generate the Makefile. This is the default.
+Generate the \fIMakefile\fR. This is the default.
 .TP
 .B --nogenerated-files
-Tells winemaker not to generate the Makefile.
+Do not generate the \fIMakefile\fR.
 .TP
 .B --wine32
-Tells winemaker to generate a 32-bit target. This is useful on wow64 systems.
+Generate a 32-bit target. This is useful on wow64 systems.
 Without that option the default architecture is used.
 
 .SH EXAMPLES
@@ -219,7 +211,7 @@ $ make
 .PP
 
 .SH TODO / BUGS
-In some cases you will have to edit the Makefile or source files by yourself.
+In some cases you will have to edit the \fIMakefile\fR or source files manually.
 .PP
 Assuming that the windows executable/library is available, we could
 use winedump to determine what kind of executable it is (graphical
