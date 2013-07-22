@@ -78,7 +78,7 @@ my @allfiles =
     [ 1256,  "VENDORS/MICSFT/WindowsBestFit/bestfit1256.txt", 0, "ANSI Arabic" ],
     [ 1257,  "VENDORS/MICSFT/WindowsBestFit/bestfit1257.txt", 0, "ANSI Baltic" ],
     [ 1258,  "VENDORS/MICSFT/WindowsBestFit/bestfit1258.txt", 0, "ANSI/OEM Viet Nam" ],
-    [ 1361,  "OBSOLETE/EASTASIA/KSC/JOHAB.TXT",   0, "Korean Johab" ],
+    [ 1361,  "VENDORS/MICSFT/WindowsBestFit/bestfit1361.txt", 0, "Korean Johab" ],
     [ 10000, "VENDORS/MICSFT/MAC/ROMAN.TXT",      0, "Mac Roman" ],
     [ 10001, "VENDORS/APPLE/JAPANESE.TXT",        0, "Mac Japanese" ],
     [ 10002, "VENDORS/APPLE/CHINTRAD.TXT",        0, "Mac Traditional Chinese" ],

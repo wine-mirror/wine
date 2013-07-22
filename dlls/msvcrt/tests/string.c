@@ -432,9 +432,7 @@ static void test_mbcp(void)
     expect_eq(_ismbblead(0x84), 1, int, "%d");
     expect_eq(_ismbblead(0xd3), 1, int, "%d");
     expect_eq(_ismbblead(0xd7), 0, int, "%d");
-    todo_wine {
-      expect_eq(_ismbblead(0xd8), 1, int, "%d");
-    }
+    expect_eq(_ismbblead(0xd8), 1, int, "%d");
     expect_eq(_ismbblead(0xd9), 1, int, "%d");
 
     expect_eq(_ismbbtrail(0x30), 0, int, "%d");
