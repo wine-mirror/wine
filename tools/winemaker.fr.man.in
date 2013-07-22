@@ -60,19 +60,19 @@ avec la casse correcte si nécessaire.
 .PP
 .RB "-\ " winemaker
 recherchera également d'autres problèmes plus exotiques comme l'emploi
-de « #pragma pack », l'utilisation de « afxres.h » dans des projets
+de \fI#pragma pack\fR, l'utilisation de \fIafxres.h\fR dans des projets
 non MFC, etc. Quand il trouve de tels points nébuleux, il émettra des
 avertissements.
 .PP
 .RB "-\ " winemaker
 peut également balayer un arbre de répertoires complet en une seule passe,
 deviner quels sont les exécutables et bibliothèques en cours de construction,
-les faire correspondre à des fichiers sources, et générer le Makefile
+les faire correspondre à des fichiers sources, et générer le \fIMakefile\fR
 correspondant.
 .PP
 -\ finalement,
 .B winemaker
-générera un Makefile global pour une utilisation classique.
+générera un \fIMakefile\fR global pour une utilisation classique.
 .PP
 .RB "-\ " winemaker
 comprend les projets de type MFC, et génère des fichiers appropriés.
@@ -95,7 +95,7 @@ Ne pas effectuer de sauvegarde des fichiers sources modifiés.
 .B --nosource-fix
 Ne pas essayer de corriger les fichiers sources (p.ex. la conversion
 DOS vers UNIX). Cela évite des messages d'erreur si des fichiers sont
-accessibles en lecture seule uniquement.
+en lecture seule.
 .TP
 .B --lower-all
 Renommer tous les fichiers et répertoires en minuscules.
@@ -103,7 +103,7 @@ Renommer tous les fichiers et répertoires en minuscules.
 .B --lower-uppercase
 Ne renommer que les fichiers et répertoires qui ont un nom composé
 uniquement de majuscules.
-Ainsi, « HELLO.C » serait renommé, mais pas « World.c ».
+Ainsi, \fIHELLO.C\fR serait renommé, mais pas \fIWorld.c\fR.
 .TP
 .B --lower-none
 Ne pas renommer de fichiers et répertoires en minuscules. Notez que cela
@@ -150,11 +150,11 @@ et lie la cible avec la bibliothèque MFC.
 Spécifier que les cibles n'utilisent pas les MFC. Cette option empêche
 l'utilisation des bibliothèques MFC même si
 .B winemaker
-rencontre des fichiers « stdafx.cpp » ou « stdafx.h » qui activeraient
+rencontre des fichiers \fIstdafx.cpp\fR ou \fIstdafx.h\fR qui activeraient
 les MFC automatiquement en temps normal si ni \fB--nomfc\fR ni \fB--mfc\fR n'était
 spécifiée.
 .TP
-.BI -D macro "\fR[=\fIdéfn\fR]"
+.BI -D macro "\fR[\fB=\fIdéfn\fR]"
 Ajouter la définition de macro spécifiée à la liste globale des
 définitions de macros.
 .TP
@@ -178,16 +178,16 @@ Ajouter la bibliothèque spécifiée à la liste globale de bibliothèques à ut
 Ne pas utiliser l'ensemble standard de bibliothèques Winelib pour les imports,
 c.-à-d. que toute DLL utilisée par votre code doit être explicitement spécifiée à l'aide d'options
 \fB-i\fR.
-L'ensemble standard de bibliothèques est\ : odbc32.dll, odbccp32.dll, ole32.dll,
-oleaut32.dll et winspool.drv.
+L'ensemble standard de bibliothèques est : \fIodbc32.dll\fR, \fIodbccp32.dll\fR, \fIole32.dll\fR,
+\fIoleaut32.dll\fR et \fIwinspool.drv\fR.
 .TP
 .B --nomsvcrt
 Définir certaines options afin que winegcc n'utilise pas
 msvcrt durant la compilation. Utilisez cette option si certains fichiers cpp
-incluent <string>.
+incluent \fI<string>\fR.
 .TP
 .B --interactive
-Entrer dans le mode interactif. Dans ce mode,
+Utiliser le mode interactif. Dans ce mode,
 .B winemaker
 demandera de confirmer la liste de cibles pour chaque répertoire, et ensuite
 de fournir des options spécifiques de répertoire et/ou de cible.
@@ -196,10 +196,10 @@ de fournir des options spécifiques de répertoire et/ou de cible.
 Spécifier qu'il n'y a qu'une seule cible, appelée \fInom\fR.
 .TP
 .B --generated-files
-Générer le Makefile. Comportement par défaut.
+Générer le \fIMakefile\fR. Comportement par défaut.
 .TP
 .B --nogenerated-files
-Ne pas générer le Makefile.
+Ne pas générer le \fIMakefile\fR.
 .TP
 .B --wine32
 Générer une cible 32 bits. Utile sur les systèmes wow64. Sans cette option,
@@ -217,17 +217,17 @@ Recherche des fichiers sources dans le répertoire courant et ses
 sous-répertoires. Quand un fichier ou répertoire a un nom composé
 uniquement de majuscules, le renomme en minuscules. Ensuite, adapte tous
 ces fichiers sources pour une compilation avec Winelib, et génère des
-Makefiles. « -DSTRICT » spécifie que la macro STRICT doit
+\fIMakefile\fRs. \fB-DSTRICT\fR spécifie que la macro \fBSTRICT\fR doit
 être définie lors de la compilation des sources.
-Finalement, un Makefile est créé.
+Finalement, un \fIMakefile\fR est créé.
 .PP
-L'étape suivante serait :
+L'étape suivante serait :
 .PP
 $ make
 .PP
 Si vous obtenez des erreurs de compilation à ce moment (ce qui est plus que
 probable pour un projet d'une taille raisonnable), vous devriez consulter
-le guide d'utilisateur Winelib pour trouver des moyens de les résoudre.
+le guide de l'utilisateur de Winelib pour trouver des moyens de les résoudre.
 .PP
 Pour un projet utilisant les MFC, vous devriez plutôt exécuter les commandes
 suivantes\ :
@@ -245,7 +245,7 @@ $ make
 
 .SH LIMITATIONS / PROBLÈMES
 .PP
-Dans certains cas, vous devrez éditer manuellement le Makefile ou les fichiers
+Dans certains cas, vous devrez éditer manuellement le \fIMakefile\fR ou les fichiers
 sources.
 .PP
 En supposant que l'exécutable ou la bibliothèque windows est disponible, on peut
@@ -260,26 +260,30 @@ De plus,
 .B winemaker
 n'est pas très apte à trouver la bibliothèque contenant l'exécutable : elle doit
 être soit dans le répertoire courant, soit dans un des répertoires de
-.IR LD_LIBRARY_PATH .
+.BR LD_LIBRARY_PATH .
 .PP
 .B winemaker
 ne prend pas encore en charge les fichiers de messages, ni le compilateur
 de messages.
 .PP
-
-.SH VOIR AUSSI
-.PP
-Le guide utilisateur de Winelib :
-.PP
-http://www.winehq.org/docs/winelib-guide/index
-.PP
-.BR wine (1)
-.PP
-
+Les bugs peuvent être signalés (en anglais) sur le
+.UR http://bugs.winehq.org
+.B système de suivi des problèmes de Wine
+.UE .
 .SH AUTEURS
 François Gouget pour CodeWeavers
-.PP
+.br
 Dimitrie O. Paun
-.PP
+.br
 André Hentschel
-.PP
+.SH DISPONIBILITÉ
+\fBwinemaker\fR fait partie de la distribution de Wine, qui est disponible sur WineHQ, le
+.UR http://www.winehq.org/
+.B quartier général du développement de Wine
+.UE .
+.SH VOIR AUSSI
+.BR wine (1),
+.br
+.UR http://www.winehq.org/help
+.B Documentation et support de Wine
+.UE .
