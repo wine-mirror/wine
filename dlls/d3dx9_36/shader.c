@@ -193,11 +193,16 @@ HRESULT WINAPI D3DXFindShaderComment(const DWORD *byte_code, DWORD fourcc, const
 HRESULT WINAPI D3DXAssembleShader(const char *data, UINT data_len, const D3DXMACRO *defines,
         ID3DXInclude *include, DWORD flags, ID3DXBuffer **shader, ID3DXBuffer **error_messages)
 {
+    HRESULT hr;
+
+    TRACE("data %p, data_len %u, defines %p, include %p, flags %#x, shader %p, error_messages %p\n",
+          data, data_len, defines, include, flags, shader, error_messages);
+
     /* Forward to d3dcompiler: the parameter types aren't really different,
        the actual data types are equivalent */
-    HRESULT hr = D3DAssemble(data, data_len, NULL, (D3D_SHADER_MACRO *)defines,
-                             (ID3DInclude *)include, flags, (ID3DBlob **)shader,
-                             (ID3DBlob **)error_messages);
+    hr = D3DAssemble(data, data_len, NULL, (D3D_SHADER_MACRO *)defines,
+                     (ID3DInclude *)include, flags, (ID3DBlob **)shader,
+                     (ID3DBlob **)error_messages);
 
     if(hr == E_FAIL) hr = D3DXERR_INVALIDDATA;
     return hr;
@@ -350,18 +355,21 @@ HRESULT WINAPI D3DXAssembleShaderFromResourceW(HMODULE module, const WCHAR *reso
                               shader, error_messages);
 }
 
-HRESULT WINAPI D3DXCompileShader(const char *pSrcData, UINT srcDataLen, const D3DXMACRO *pDefines,
-        ID3DXInclude *pInclude, const char *pFunctionName, const char *pProfile, DWORD Flags,
-        ID3DXBuffer **ppShader, ID3DXBuffer **ppErrorMsgs, ID3DXConstantTable **ppConstantTable)
+HRESULT WINAPI D3DXCompileShader(const char *data, UINT length, const D3DXMACRO *defines,
+        ID3DXInclude *include, const char *function, const char *profile, DWORD flags,
+        ID3DXBuffer **shader, ID3DXBuffer **error_msgs, ID3DXConstantTable **constant_table)
 {
-    HRESULT hr = D3DCompile(pSrcData, srcDataLen, NULL,
-                            (D3D_SHADER_MACRO *)pDefines, (ID3DInclude *)pInclude,
-                            pFunctionName, pProfile, Flags, 0,
-                            (ID3DBlob **)ppShader, (ID3DBlob **)ppErrorMsgs);
+    HRESULT hr;
 
-    if(SUCCEEDED(hr) && ppConstantTable)
-        return D3DXGetShaderConstantTable(ID3DXBuffer_GetBufferPointer(*ppShader),
-                                          ppConstantTable);
+    TRACE("data %p, length %u, defines %p, include %p, function %s, profile %s, flags %#x, shader %p, error_msgs %p, constant_table %p\n",
+          data, length, defines, include, function, profile, flags, shader, error_msgs, constant_table);
+
+    hr = D3DCompile(data, length, NULL, (D3D_SHADER_MACRO *)defines, (ID3DInclude *)include,
+                    function, profile, flags, 0, (ID3DBlob **)shader, (ID3DBlob **)error_msgs);
+
+    if (SUCCEEDED(hr) && constant_table)
+        hr = D3DXGetShaderConstantTable(ID3DXBuffer_GetBufferPointer(*shader), constant_table);
+
     return hr;
 }
 
