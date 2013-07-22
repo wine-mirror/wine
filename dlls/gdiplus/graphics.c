@@ -54,26 +54,6 @@ static GpStatus draw_driver_string(GpGraphics *graphics, GDIPCONST UINT16 *text,
 static GpStatus get_graphics_transform(GpGraphics *graphics, GpCoordinateSpace dst_space,
         GpCoordinateSpace src_space, GpMatrix *matrix);
 
-static void transform_rectf(GpGraphics *graphics, GpCoordinateSpace dst_space,
-        GpCoordinateSpace src_space, GpRectF *rect)
-{
-    GpPointF pt[3];
-
-    pt[0].X = rect->X;
-    pt[0].Y = rect->Y;
-    pt[1].X = rect->X + rect->Width;
-    pt[1].Y = rect->Y;
-    pt[2].X = rect->X;
-    pt[2].Y = rect->Y + rect->Height;
-    GdipTransformPoints(graphics, dst_space, src_space, pt, 3);
-    rect->X = pt[0].X;
-    rect->Y = pt[0].Y;
-    rect->Width = sqrt((pt[1].Y - pt[0].Y) * (pt[1].Y - pt[0].Y) +
-                     (pt[1].X - pt[0].X) * (pt[1].X - pt[0].X));
-    rect->Height = sqrt((pt[2].Y - pt[0].Y) * (pt[2].Y - pt[0].Y) +
-                      (pt[2].X - pt[0].X) * (pt[2].X - pt[0].X));
-}
-
 /* Converts from gdiplus path point type to gdi path point type. */
 static BYTE convert_path_point_type(BYTE type)
 {
@@ -5476,7 +5456,9 @@ GpStatus WINGDIPAPI GdipSetClipRect(GpGraphics *graphics, REAL x, REAL y,
                                     REAL width, REAL height,
                                     CombineMode mode)
 {
+    GpStatus status;
     GpRectF rect;
+    GpRegion *region;
 
     TRACE("(%p, %.2f, %.2f, %.2f, %.2f, %d)\n", graphics, x, y, width, height, mode);
 
@@ -5490,9 +5472,19 @@ GpStatus WINGDIPAPI GdipSetClipRect(GpGraphics *graphics, REAL x, REAL y,
     rect.Y = y;
     rect.Width  = width;
     rect.Height = height;
-    transform_rectf(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, &rect);
+    status = GdipCreateRegionRect(&rect, &region);
+    if (status == Ok)
+    {
+        GpMatrix world_to_device;
 
-    return GdipCombineRegionRect(graphics->clip, &rect, mode);
+        get_graphics_transform(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, &world_to_device);
+        status = GdipTransformRegion(region, &world_to_device);
+        if (status == Ok)
+            status = GdipCombineRegionRegion(graphics->clip, region, mode);
+
+        GdipDeleteRegion(region);
+    }
+    return status;
 }
 
 GpStatus WINGDIPAPI GdipSetClipRectI(GpGraphics *graphics, INT x, INT y,
