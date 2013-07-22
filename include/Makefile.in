@@ -236,6 +236,7 @@ SRCDIR_INCLUDES = \
 	ddk/usb100.h \
 	ddk/usb200.h \
 	ddk/usbdlib.h \
+	ddk/usbioctl.h \
 	ddk/usbiodef.h \
 	ddk/wdm.h \
 	ddk/winddiui.h \
