@@ -891,6 +891,94 @@ sub DUMP_ARRAY($$@)
     return $ret;
 }
 
+
+################################################################
+# dump a unicode->ascii mapping table
+sub dump_uni2cp_table($$)
+{
+    my ($width, $def) = @_;
+
+    # count the number of unicode->ascii subtables that contain something
+
+    my @lowerbounds;
+    my @upperbounds;
+    my $index = 0;
+    my @filled = (-1) x 256;
+    for (my $i = 0; $i < 65536; $i++)
+    {
+        next unless defined $uni2cp[$i];
+        if ($filled[$i >> 8] == -1)
+        {
+          $lowerbounds[$index] = $i & 0xff;
+          $upperbounds[$index] = 0xff - $lowerbounds[$index];
+          $filled[$i >> 8] = $index * 256;
+          $index++;
+        }
+        else
+        {
+          $upperbounds[$index-1] = 0xff - ($i & 0xff);
+        }
+    }
+
+    # add defaults mapping at the end
+    $filled[256] = $index * 256;
+    $lowerbounds[$index] = 255;
+    $upperbounds[$index] = 0;
+    $index++;
+
+    # collapse blocks upwards if possible
+    my $removed = 0;
+    $index = 0;
+    for (my $i = 0; $i < 257; $i++)
+    {
+        next if $filled[$i] == -1;
+        if ($upperbounds[$index - 1] > $lowerbounds[$index])
+        {
+           $removed += $lowerbounds[$index];
+        }
+        else
+        {
+           $removed += $upperbounds[$index - 1];
+           $lowerbounds[$index] = $upperbounds[$index - 1];
+        }
+        $filled[$i] -= $removed;
+        $index++;
+    }
+
+    # output all the subtables into a single array
+
+    printf OUTPUT "static const unsigned %s uni2cp_low[%d] =\n{\n",
+                  $width == 8 ? "char" : "short", ($index + 1) * 256 - $removed;
+
+    my $format = $width == 8 ? "0x%02x" : "0x%04x";
+    for (my $i = $index = 0; $i < 257; $i++)
+    {
+        next if $filled[$i] == -1;
+        my $start = ($i << 8) + $lowerbounds[$index];
+        my $end = ($i << 8) + 255;
+        if ($i == 256)
+        {
+            print OUTPUT "    /* defaults */\n";
+            printf OUTPUT "%s\n};\n\n", DUMP_ARRAY( $format, 0, ($def) x ($end - $start + 1) );
+        }
+        else
+        {
+            printf OUTPUT "    /* 0x%04x .. 0x%04x */\n", $start, $end;
+            printf OUTPUT "%s,\n", DUMP_ARRAY( $format, $def, @uni2cp[$start .. $end] );
+        }
+        $index++;
+    }
+
+    # output a table of the offsets of the subtables in the previous array
+
+    for (my $i = 0; $i < 256; $i++)
+    {
+        if ($filled[$i] == -1) { $filled[$i] = $filled[256]; }
+    }
+    printf OUTPUT "static const unsigned short uni2cp_high[256] =\n";
+    printf OUTPUT "{\n%s\n};\n\n", DUMP_ARRAY( "0x%04x", 0, @filled[0..255] );
+}
+
 ################################################################
 # dump an SBCS mapping table
 sub dump_sbcs_table($$$$$)
@@ -913,41 +1001,7 @@ sub dump_sbcs_table($$$$$)
         printf OUTPUT "{\n%s\n};\n\n", DUMP_ARRAY( "0x%04x", $defw, @cp2uni[0 .. 255] );
     }
 
-    # count the number of unicode->ascii subtables that contain something
-
-    my @filled = ();
-    my $subtables = 1;
-    for (my $i = 0; $i < 65536; $i++)
-    {
-        next unless defined $uni2cp[$i];
-        $filled[$i >> 8] = 1;
-        $subtables++;
-        $i |= 255;
-    }
-
-    # output all the subtables into a single array
-
-    printf OUTPUT "static const unsigned char uni2cp_low[%d] =\n{\n", $subtables*256;
-    for (my $i = 0; $i < 256; $i++)
-    {
-        next unless $filled[$i];
-        printf OUTPUT "    /* 0x%02x00 .. 0x%02xff */\n", $i, $i;
-        printf OUTPUT "%s,\n", DUMP_ARRAY( "0x%02x", $def, @uni2cp[($i<<8) .. ($i<<8)+255] );
-    }
-    printf OUTPUT "    /* defaults */\n";
-    printf OUTPUT "%s\n};\n\n", DUMP_ARRAY( "0x%02x", 0, ($def) x 256 );
-
-    # output a table of the offsets of the subtables in the previous array
-
-    my $pos = 0;
-    my @offsets = ();
-    for (my $i = 0; $i < 256; $i++)
-    {
-        if ($filled[$i]) { push @offsets, $pos; $pos += 256; }
-        else { push @offsets, ($subtables-1) * 256; }
-    }
-    printf OUTPUT "static const unsigned short uni2cp_high[256] =\n";
-    printf OUTPUT "{\n%s\n};\n\n", DUMP_ARRAY( "0x%04x", 0, @offsets );
+    dump_uni2cp_table( 8, $def );
 
     # output the code page descriptor
 
@@ -1010,8 +1064,7 @@ sub dump_dbcs_table($$$$@)
 
     # output the lead byte subtables offsets
 
-    my @offsets = ();
-    for (my $x = 0; $x < 256; $x++) { $offsets[$x] = 0; }
+    my @offsets = (0) x 256;
     for (my $x = 0; $x <= $#lblist; $x++) { $offsets[$lblist[$x]] = $x + 1; }
     if ($unused)
     {
@@ -1021,41 +1074,7 @@ sub dump_dbcs_table($$$$@)
     printf OUTPUT "static const unsigned char cp2uni_leadbytes[256] =\n";
     printf OUTPUT "{\n%s\n};\n\n", DUMP_ARRAY( "0x%02x", 0, @offsets );
 
-    # count the number of unicode->ascii subtables that contain something
-
-    my @filled = ();
-    my $subtables = 1;
-    for (my $i = 0; $i < 65536; $i++)
-    {
-        next unless defined $uni2cp[$i];
-        $filled[$i >> 8] = 1;
-        $subtables++;
-        $i |= 255;
-    }
-
-    # output all the subtables into a single array
-
-    printf OUTPUT "static const unsigned short uni2cp_low[%d] =\n{\n", $subtables*256;
-    for (my $y = 0; $y < 256; $y++)
-    {
-        next unless $filled[$y];
-        printf OUTPUT "    /* 0x%02x00 .. 0x%02xff */\n", $y, $y;
-        printf OUTPUT "%s,\n", DUMP_ARRAY( "0x%04x", $def, @uni2cp[($y<<8) .. ($y<<8)+255] );
-    }
-    printf OUTPUT "    /* defaults */\n";
-    printf OUTPUT "%s\n};\n\n", DUMP_ARRAY( "0x%04x", 0, ($def) x 256 );
-
-    # output a table of the offsets of the subtables in the previous array
-
-    my $pos = 0;
-    @offsets = ();
-    for (my $y = 0; $y < 256; $y++)
-    {
-        if ($filled[$y]) { push @offsets, $pos; $pos += 256; }
-        else { push @offsets, ($subtables-1) * 256; }
-    }
-    printf OUTPUT "static const unsigned short uni2cp_high[256] =\n";
-    printf OUTPUT "{\n%s\n};\n\n", DUMP_ARRAY( "0x%04x", 0, @offsets );
+    dump_uni2cp_table( 16, $def );
 
     # output the code page descriptor
 
