@@ -4531,7 +4531,7 @@ static void test_clipping(void)
     GpRegion *region, *region100x100;
     GpMatrix *matrix;
     GpRectF rect;
-    GpPointF ptf[2];
+    GpPointF ptf[4];
     GpUnit unit;
     HRGN hrgn;
     int ret;
@@ -4877,6 +4877,216 @@ static void test_clipping(void)
         ok(broken(fabs(ptf[1].Y - 2195.0) < 0.001), "expected 2195.0, got %f\n", ptf[1].Y);
     }
 
+    status = GdipRotateMatrix(matrix, 30.0, MatrixOrderAppend);
+    expect(Ok, status);
+    status = GdipSetWorldTransform(graphics, matrix);
+    expect(Ok, status);
+
+    status = GdipGetClipBounds(graphics, &rect);
+    expect(Ok, status);
+    expectf_(20.612978, rect.X, 1.0);
+todo_wine
+    expectf_(-6.256012, rect.Y, 1.5);
+todo_wine
+    expectf_(25.612978, rect.Width, 1.0);
+    expectf_(12.806489, rect.Height, 1.0);
+
+    status = GdipSetEmpty(region);
+    expect(Ok, status);
+    status = GdipGetClip(graphics, region);
+    expect(Ok, status);
+    status = GdipGetRegionBounds(region, graphics, &rect);
+    expect(Ok, status);
+   /* rounding under Wine is slightly different */
+    expectf_(20.612978, rect.X, 1.0);
+    expectf_(-6.256012, rect.Y, 1.5);
+    expectf_(25.612978, rect.Width, 1.0);
+    expectf_(12.806489, rect.Height, 1.0);
+
+    status = GdipGetRegionBounds(region100x100, graphics, &rect);
+    expect(Ok, status);
+    ok(rect.X == 210.0 && rect.Y == 420.0 && rect.Width == 200.0 && rect.Height == 400.0,
+       "expected 210.0,420.0-200.0,400.0, got %f,%f-%f,%f\n", rect.X, rect.Y, rect.Width, rect.Height);
+
+    status = GdipGetRegionHRgn(region, NULL, &hrgn);
+    expect(Ok, status);
+    ret = GetRgnBox(hrgn, &rc);
+    ok(ret == COMPLEXREGION, "expected COMPLEXREGION, got %d\n", ret);
+    ok((rc.left == 22 && rc.top == -6 && rc.right == 46 && rc.bottom == 7) ||
+       /* rounding under Wine is slightly different */
+       (rc.left == 21 && rc.top == -5 && rc.right == 46 && rc.bottom == 7) /* Wine */,
+       "expected (22,-6)-(46,7), got (%d,%d)-(%d,%d)\n", rc.left, rc.top, rc.right, rc.bottom);
+    DeleteObject(hrgn);
+
+    status = GdipGetRegionHRgn(region, graphics, &hrgn);
+    expect(Ok, status);
+    ret = GetRgnBox(hrgn, &rc);
+    ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
+    ok(rc.left == 100 && rc.top == 100 && rc.right == 200 && rc.bottom == 200,
+       "expected 100,100-200,200, got %d,%d-%d,%d\n", rc.left, rc.top, rc.right, rc.bottom);
+    DeleteObject(hrgn);
+
+    ptf[0].X = 100.0;
+    ptf[0].Y = 100.0;
+    ptf[1].X = 200.0;
+    ptf[1].Y = 200.0;
+    ptf[2].X = 200.0;
+    ptf[2].Y = 100.0;
+    ptf[3].X = 100.0;
+    ptf[3].Y = 200.0;
+    status = GdipTransformPoints(graphics, CoordinateSpaceWorld, CoordinateSpaceDevice, ptf, 4);
+    expect(Ok, status);
+    expectf(20.612978, ptf[0].X);
+    expectf(-1.568512, ptf[0].Y);
+    expectf(46.225956, ptf[1].X);
+    expectf(1.862977, ptf[1].Y);
+    expectf(36.850956, ptf[2].X);
+    expectf(-6.256012, ptf[2].Y);
+    expectf(29.987980, ptf[3].X);
+    expectf(6.550478, ptf[3].Y);
+
+    status = GdipGetRegionHRgn(region100x100, NULL, &hrgn);
+    expect(Ok, status);
+    ret = GetRgnBox(hrgn, &rc);
+    ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
+    ok(rc.left == 210 && rc.top == 420 && rc.right == 410 && rc.bottom == 820,
+       "expected 210,420-410,820, got %d,%d-%d,%d\n", rc.left, rc.top, rc.right, rc.bottom);
+    DeleteObject(hrgn);
+
+    status = GdipGetRegionHRgn(region100x100, graphics, &hrgn);
+    expect(Ok, status);
+    ret = GetRgnBox(hrgn, &rc);
+    ok(ret == COMPLEXREGION, "expected COMPLEXREGION, got %d\n", ret);
+    ok((rc.left == -3406 && rc.top == 4500 && rc.right == -350 && rc.bottom == 8728) ||
+       /* rounding under Wine is slightly different */
+       (rc.left == -3407 && rc.top == 4500 && rc.right == -350 && rc.bottom == 8728) /* Wine */,
+       "expected (-3406,4500)-(-350,8728), got (%d,%d)-(%d,%d)\n", rc.left, rc.top, rc.right, rc.bottom);
+    DeleteObject(hrgn);
+
+    ptf[0].X = -3406.0;
+    ptf[0].Y = 4500.0;
+    ptf[1].X = -350.0;
+    ptf[1].Y = 8728.0;
+    ptf[2].X = -350.0;
+    ptf[2].Y = 4500.0;
+    ptf[3].X = -3406.0;
+    ptf[3].Y = 8728.0;
+    status = GdipTransformPoints(graphics, CoordinateSpaceWorld, CoordinateSpaceDevice, ptf, 4);
+    expect(Ok, status);
+    expectf(-136.190491, ptf[0].X);
+    expectf(520.010742, ptf[0].Y);
+    expectf(756.417175, ptf[1].X);
+    expectf(720.031616, ptf[1].Y);
+    expectf(360.042114, ptf[2].X);
+    expectf(376.760742, ptf[2].Y);
+    expectf(260.184570, ptf[3].X);
+    expectf(863.281616, ptf[3].Y);
+
+    status = GdipRotateMatrix(matrix, -90.0, MatrixOrderAppend);
+    expect(Ok, status);
+    status = GdipSetWorldTransform(graphics, matrix);
+    expect(Ok, status);
+
+    status = GdipGetClipBounds(graphics, &rect);
+    expect(Ok, status);
+todo_wine
+    expectf(-28.100956, rect.X);
+    expectf(7.806488, rect.Y);
+todo_wine
+    expectf(25.612978, rect.Width);
+todo_wine
+    expectf(12.806489, rect.Height);
+
+    status = GdipSetEmpty(region);
+    expect(Ok, status);
+    status = GdipGetClip(graphics, region);
+    expect(Ok, status);
+    status = GdipGetRegionBounds(region, graphics, &rect);
+    expect(Ok, status);
+   /* rounding under Wine is slightly different */
+    expectf_(-28.100956, rect.X, 1.0);
+    expectf_(7.806488, rect.Y, 1.5);
+    expectf_(25.612978, rect.Width, 1.0);
+    expectf_(12.806489, rect.Height, 1.0);
+
+    status = GdipGetRegionBounds(region100x100, graphics, &rect);
+    expect(Ok, status);
+    ok(rect.X == 210.0 && rect.Y == 420.0 && rect.Width == 200.0 && rect.Height == 400.0,
+       "expected 210.0,420.0-200.0,400.0, got %f,%f-%f,%f\n", rect.X, rect.Y, rect.Width, rect.Height);
+
+    status = GdipGetRegionHRgn(region, NULL, &hrgn);
+    expect(Ok, status);
+    ret = GetRgnBox(hrgn, &rc);
+    ok(ret == COMPLEXREGION, "expected COMPLEXREGION, got %d\n", ret);
+    ok((rc.left == -27 && rc.top == 8 && rc.right == -2 && rc.bottom == 21) ||
+       /* rounding under Wine is slightly different */
+       (rc.left == -28 && rc.top == 9 && rc.right == -2 && rc.bottom == 21) /* Wine */,
+       "expected (-27,8)-(-2,21), got (%d,%d)-(%d,%d)\n", rc.left, rc.top, rc.right, rc.bottom);
+    DeleteObject(hrgn);
+
+    status = GdipGetRegionHRgn(region, graphics, &hrgn);
+    expect(Ok, status);
+    ret = GetRgnBox(hrgn, &rc);
+    ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
+    ok(rc.left == 100 && rc.top == 100 && rc.right == 200 && rc.bottom == 200,
+       "expected 100,100-200,200, got %d,%d-%d,%d\n", rc.left, rc.top, rc.right, rc.bottom);
+    DeleteObject(hrgn);
+
+    ptf[0].X = 100.0;
+    ptf[0].Y = 100.0;
+    ptf[1].X = 200.0;
+    ptf[1].Y = 200.0;
+    ptf[2].X = 200.0;
+    ptf[2].Y = 100.0;
+    ptf[3].X = 100.0;
+    ptf[3].Y = 200.0;
+    status = GdipTransformPoints(graphics, CoordinateSpaceWorld, CoordinateSpaceDevice, ptf, 4);
+    expect(Ok, status);
+    expectf(-11.862979, ptf[0].X);
+    expectf(7.806488, ptf[0].Y);
+    expectf(-18.725958, ptf[1].X);
+    expectf(20.612976, ptf[1].Y);
+    expectf(-2.487981, ptf[2].X);
+    expectf(15.925477, ptf[2].Y);
+    expectf(-28.100956, ptf[3].X);
+    expectf(12.493987, ptf[3].Y);
+
+    status = GdipGetRegionHRgn(region100x100, NULL, &hrgn);
+    expect(Ok, status);
+    ret = GetRgnBox(hrgn, &rc);
+    ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
+    ok(rc.left == 210 && rc.top == 420 && rc.right == 410 && rc.bottom == 820,
+       "expected 210,420-410,820, got %d,%d-%d,%d\n", rc.left, rc.top, rc.right, rc.bottom);
+    DeleteObject(hrgn);
+
+    status = GdipGetRegionHRgn(region100x100, graphics, &hrgn);
+    expect(Ok, status);
+    ret = GetRgnBox(hrgn, &rc);
+    ok(ret == COMPLEXREGION, "expected COMPLEXREGION, got %d\n", ret);
+todo_wine
+    ok(rc.left == 4500 && rc.top == 351 && rc.right == 8728 && rc.bottom == 3407,
+       "expected (4500,351)-(8728,3407), got (%d,%d)-(%d,%d)\n", rc.left, rc.top, rc.right, rc.bottom);
+    DeleteObject(hrgn);
+
+    ptf[0].X = -3406.0;
+    ptf[0].Y = 4500.0;
+    ptf[1].X = -350.0;
+    ptf[1].Y = 8728.0;
+    ptf[2].X = -350.0;
+    ptf[2].Y = 4500.0;
+    ptf[3].X = -3406.0;
+    ptf[3].Y = 8728.0;
+    status = GdipTransformPoints(graphics, CoordinateSpaceWorld, CoordinateSpaceDevice, ptf, 4);
+    expect(Ok, status);
+    expectf(-1055.021484, ptf[0].X);
+    expectf(-70.595329, ptf[0].Y);
+    expectf(-1455.063232, ptf[1].X);
+    expectf(375.708435, ptf[1].Y);
+    expectf(-768.521484, ptf[2].X);
+    expectf(177.520981, ptf[2].Y);
+    expectf(-1741.563110, ptf[3].X);
+    expectf(127.592125, ptf[3].Y);
+
     GdipDeleteMatrix(matrix);
     GdipDeleteRegion(region);
     GdipDeleteRegion(region100x100);
@@ -4893,7 +5103,7 @@ static void test_clipping_2(void)
     GpRegion *region;
     GpMatrix *matrix;
     GpRectF rect;
-    GpPointF ptf[2];
+    GpPointF ptf[4];
     GpUnit unit;
     HRGN hrgn;
     int ret;
@@ -5189,6 +5399,98 @@ static void test_clipping_2(void)
         ok(broken(fabs(ptf[1].X - 600.0) < 0.001), "expected 600.0, got %f\n", ptf[1].X);
         ok(broken(fabs(ptf[1].Y - 300.0) < 0.001), "expected 300.0, got %f\n", ptf[1].Y);
     }
+
+    status = GdipCreateMatrix(&matrix);
+    expect(Ok, status);
+    status = GdipRotateMatrix(matrix, 45.0, MatrixOrderAppend);
+    expect(Ok, status);
+    status = GdipSetWorldTransform(graphics, matrix);
+    expect(Ok, status);
+    GdipDeleteMatrix(matrix);
+
+    status = GdipGetClip(graphics, region);
+    expect(Ok, status);
+    status = GdipGetRegionHRgn(region, NULL, &hrgn);
+    expect(Ok, status);
+    ret = GetRgnBox(hrgn, &rc);
+    ok(ret == COMPLEXREGION, "expected COMPLEXREGION, got %d\n", ret);
+    ok((rc.left == 54 && rc.top == -26 && rc.right == 107 && rc.bottom == 27) ||
+       /* rounding under Wine is slightly different */
+       (rc.left == 53 && rc.top == -26 && rc.right == 106 && rc.bottom == 27) /* Wine */,
+       "expected 54,-26-107,27, got %d,%d-%d,%d\n", rc.left, rc.top, rc.right, rc.bottom);
+    DeleteObject(hrgn);
+    status = GdipGetRegionHRgn(region, graphics, &hrgn);
+    expect(Ok, status);
+    ret = GetRgnBox(hrgn, &rc);
+    ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
+    ok(rc.left == 100 && rc.top == 100 && rc.right == 200 && rc.bottom == 200,
+       "expected 100,100-200,200, got %d,%d-%d,%d\n", rc.left, rc.top, rc.right, rc.bottom);
+    DeleteObject(hrgn);
+
+    ptf[0].X = 100.0;
+    ptf[0].Y = 100.0;
+    ptf[1].X = 200.0;
+    ptf[1].Y = 200.0;
+    ptf[2].X = 200.0;
+    ptf[2].Y = 100.0;
+    ptf[3].X = 100.0;
+    ptf[3].Y = 200.0;
+    status = GdipTransformPoints(graphics, CoordinateSpaceWorld, CoordinateSpaceDevice, ptf, 4);
+    expect(Ok, status);
+    expectf(53.033016, ptf[0].X);
+    expectf(0.0, ptf[0].Y);
+    expectf(106.066032, ptf[1].X);
+    expectf(0.0, ptf[1].Y);
+    expectf(79.549522, ptf[2].X);
+    expectf(-26.516510, ptf[2].Y);
+    expectf(79.549522, ptf[3].X);
+    expectf(26.516508, ptf[3].Y);
+
+    status = GdipCreateMatrix(&matrix);
+    expect(Ok, status);
+    status = GdipRotateMatrix(matrix, -45.0, MatrixOrderAppend);
+    expect(Ok, status);
+    status = GdipSetWorldTransform(graphics, matrix);
+    expect(Ok, status);
+    GdipDeleteMatrix(matrix);
+
+    status = GdipGetClip(graphics, region);
+    expect(Ok, status);
+    status = GdipGetRegionHRgn(region, NULL, &hrgn);
+    expect(Ok, status);
+    ret = GetRgnBox(hrgn, &rc);
+    ok(ret == COMPLEXREGION, "expected COMPLEXREGION, got %d\n", ret);
+    ok((rc.left == -26 && rc.top == 54 && rc.right == 27 && rc.bottom == 107) ||
+       /* rounding under Wine is slightly different */
+       (rc.left == -27 && rc.top == 54 && rc.right == 27 && rc.bottom == 106) /* Wine */,
+       "expected -26,54-27,107, got %d,%d-%d,%d\n", rc.left, rc.top, rc.right, rc.bottom);
+    DeleteObject(hrgn);
+    status = GdipGetRegionHRgn(region, graphics, &hrgn);
+    expect(Ok, status);
+    ret = GetRgnBox(hrgn, &rc);
+    ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
+    ok(rc.left == 100 && rc.top == 100 && rc.right == 200 && rc.bottom == 200,
+       "expected 100,100-200,200, got %d,%d-%d,%d\n", rc.left, rc.top, rc.right, rc.bottom);
+    DeleteObject(hrgn);
+
+    ptf[0].X = 100.0;
+    ptf[0].Y = 100.0;
+    ptf[1].X = 200.0;
+    ptf[1].Y = 200.0;
+    ptf[2].X = 200.0;
+    ptf[2].Y = 100.0;
+    ptf[3].X = 100.0;
+    ptf[3].Y = 200.0;
+    status = GdipTransformPoints(graphics, CoordinateSpaceWorld, CoordinateSpaceDevice, ptf, 4);
+    expect(Ok, status);
+    expectf(0.0, ptf[0].X);
+    expectf(53.033005, ptf[0].Y);
+    expectf(0.0, ptf[1].X);
+    expectf(106.066010, ptf[1].Y);
+    expectf(26.516491, ptf[2].X);
+    expectf(79.549507, ptf[2].Y);
+    expectf(-26.516520, ptf[3].X);
+    expectf(79.549500, ptf[3].Y);
 
     GdipDeleteRegion(region);
     GdipDeleteGraphics(graphics);
