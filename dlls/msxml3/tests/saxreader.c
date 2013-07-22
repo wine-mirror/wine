@@ -3712,7 +3712,8 @@ static void test_mxwriter_startendelement(void)
     ok(!lstrcmpW(_bstr_("<abc>"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
-    ISAXContentHandler_endDocument(content);
+    hr = ISAXContentHandler_endDocument(content);
+    EXPECT_HR(hr, S_OK);
     IMXWriter_flush(writer);
 
     hr = ISAXContentHandler_endElement(content, _bstr_(""), 0, _bstr_(""), 0, _bstr_("abdcdef"), 3);
