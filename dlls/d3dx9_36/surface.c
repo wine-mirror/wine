@@ -231,7 +231,7 @@ static D3DFORMAT dds_luminance_to_d3dformat(const struct dds_pixel_format *pixel
             return D3DFMT_A8L8;
     }
 
-    WARN("Unknown luminance pixel format (bpp %#x, l %#x, a %#x)\n",
+    WARN("Unknown luminance pixel format (bpp %u, l %#x, a %#x)\n",
         pixel_format->bpp, pixel_format->rmask, pixel_format->amask);
     return D3DFMT_UNKNOWN;
 }
@@ -241,7 +241,7 @@ static D3DFORMAT dds_alpha_to_d3dformat(const struct dds_pixel_format *pixel_for
     if (pixel_format->bpp == 8 && pixel_format->amask == 0xff)
         return D3DFMT_A8;
 
-    WARN("Unknown Alpha pixel format (%#x, %#x)\n", pixel_format->bpp, pixel_format->rmask);
+    WARN("Unknown Alpha pixel format (%u, %#x)\n", pixel_format->bpp, pixel_format->rmask);
     return D3DFMT_UNKNOWN;
 }
 
@@ -252,7 +252,7 @@ static D3DFORMAT dds_bump_to_d3dformat(const struct dds_pixel_format *pixel_form
     if (pixel_format->bpp == 32 && pixel_format->rmask == 0x0000ffff && pixel_format->gmask == 0xffff0000)
         return D3DFMT_V16U16;
 
-    WARN("Unknown bump pixel format (%#x, %#x, %#x, %#x, %#x)\n", pixel_format->bpp,
+    WARN("Unknown bump pixel format (%u, %#x, %#x, %#x, %#x)\n", pixel_format->bpp,
         pixel_format->rmask, pixel_format->gmask, pixel_format->bmask, pixel_format->amask);
     return D3DFMT_UNKNOWN;
 }
@@ -270,7 +270,7 @@ static D3DFORMAT dds_pixel_format_to_d3dformat(const struct dds_pixel_format *pi
     if (pixel_format->flags & DDS_PF_BUMPDUDV)
         return dds_bump_to_d3dformat(pixel_format);
 
-    WARN("Unknown pixel format (flags %#x, fourcc %#x, bpp %#x, r %#x, g %#x, b %#x, a %#x)\n",
+    WARN("Unknown pixel format (flags %#x, fourcc %#x, bpp %u, r %#x, g %#x, b %#x, a %#x)\n",
         pixel_format->flags, pixel_format->fourcc, pixel_format->bpp,
         pixel_format->rmask, pixel_format->gmask, pixel_format->bmask, pixel_format->amask);
     return D3DFMT_UNKNOWN;
