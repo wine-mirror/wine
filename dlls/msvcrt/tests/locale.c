@@ -146,6 +146,18 @@ static void test_setlocale(void)
         ok(!strcmp(ret, "Chinese (Traditional)_Taiwan.950")
         || broken(!strcmp(ret, "Chinese_Taiwan.950")), "ret = %s\n", ret);
 
+    ret = setlocale(LC_ALL, "Chinese_China.936");
+todo_wine
+    ok(ret != NULL || broken (ret == NULL), "ret == NULL\n");
+    if(ret)
+    {
+todo_wine
+        ok(!strcmp(ret, "Chinese (Simplified)_People's Republic of China.936")
+        || !strcmp(ret, "Chinese (Simplified)_China.936")
+        || broken(!strcmp(ret, "Chinese_People's Republic of China.936")), "ret = %s\n", ret);
+        trace("ret is %s\n", ret);
+    }
+
     ret = setlocale(LC_ALL, "csy");
     ok(ret != NULL || broken (ret == NULL), "ret == NULL\n");
     if(ret)
