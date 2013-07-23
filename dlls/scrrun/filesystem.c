@@ -815,9 +815,39 @@ static HRESULT WINAPI filesys_GetFileName(IFileSystem3 *iface, BSTR Path,
 static HRESULT WINAPI filesys_GetBaseName(IFileSystem3 *iface, BSTR Path,
                                             BSTR *pbstrResult)
 {
-    FIXME("%p %s %p\n", iface, debugstr_w(Path), pbstrResult);
+    int i, end;
 
-    return E_NOTIMPL;
+    TRACE("%p %s %p\n", iface, debugstr_w(Path), pbstrResult);
+
+    if(!pbstrResult)
+        return E_POINTER;
+
+    if(!Path) {
+        *pbstrResult = NULL;
+        return S_OK;
+    }
+
+    for(end=strlenW(Path)-1; end>=0; end--)
+        if(Path[end]!='/' && Path[end]!='\\')
+            break;
+
+    for(i=end; i>=0; i--) {
+        if(Path[i]=='.' && Path[end+1]!='.')
+            end = i-1;
+        if(Path[i]=='/' || Path[i]=='\\')
+            break;
+    }
+    i++;
+
+    if((i>end && Path[end+1]!='.') || (i==0 && end==1 && Path[1]==':')) {
+        *pbstrResult = NULL;
+        return S_OK;
+    }
+
+    *pbstrResult = SysAllocStringLen(Path+i, end-i+1);
+    if(!*pbstrResult)
+        return E_OUTOFMEMORY;
+    return S_OK;
 }
 
 static HRESULT WINAPI filesys_GetExtensionName(IFileSystem3 *iface, BSTR Path,
