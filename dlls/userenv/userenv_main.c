@@ -732,6 +732,26 @@ BOOL WINAPI UnloadUserProfile( HANDLE hToken, HANDLE hProfile )
     return FALSE;
 }
 
+HANDLE WINAPI EnterCriticalPolicySection(BOOL bMachine)
+{
+    FIXME("(%x)\n", bMachine);
+    SetLastError(ERROR_ACCESS_DENIED);
+    return NULL;
+}
+
+BOOL WINAPI LeaveCriticalPolicySection(HANDLE hSection)
+{
+    FIXME("(%p)\n", hSection);
+    return TRUE;
+}
+
+DWORD WINAPI GetAppliedGPOListW(DWORD dwFlags, LPCWSTR pMachineName, PSID pSidUser, GUID *pGuidExtension,
+        PGROUP_POLICY_OBJECTW *ppGPOList)
+{
+    FIXME("(%x %s %p %s %p)\n", dwFlags, debugstr_w(pMachineName), pSidUser, debugstr_guid(pGuidExtension), ppGPOList);
+    return ERROR_ACCESS_DENIED;
+}
+
 /******************************************************************************
  *              USERENV.138
  *
