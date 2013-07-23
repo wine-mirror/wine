@@ -254,6 +254,54 @@ static void test_GetFileVersion(void)
     SysFreeString(path);
 }
 
+static void test_GetParentFolderName(void)
+{
+    static const WCHAR path1[] = {'a',0};
+    static const WCHAR path2[] = {'a','/','a','/','a',0};
+    static const WCHAR path3[] = {'a','\\','a','\\','a',0};
+    static const WCHAR path4[] = {'a','/','a','/','/','\\','\\',0};
+    static const WCHAR path5[] = {'c',':','\\','\\','a',0};
+    static const WCHAR path6[] = {'a','c',':','\\','a',0};
+    static const WCHAR result2[] = {'a','/','a',0};
+    static const WCHAR result3[] = {'a','\\','a',0};
+    static const WCHAR result4[] = {'a',0};
+    static const WCHAR result5[] = {'c',':','\\',0};
+    static const WCHAR result6[] = {'a','c',':',0};
+
+    static const struct {
+        const WCHAR *path;
+        const WCHAR *result;
+    } tests[] = {
+        {NULL, NULL},
+        {path1, NULL},
+        {path2, result2},
+        {path3, result3},
+        {path4, result4},
+        {path5, result5},
+        {path6, result6}
+    };
+
+    BSTR path, result;
+    HRESULT hr;
+    int i;
+
+    hr = IFileSystem3_GetParentFolderName(fs3, NULL, NULL);
+    ok(hr == E_POINTER, "GetParentFolderName returned %x, expected E_POINTER\n", hr);
+
+    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+        result = (BSTR)0xdeadbeef;
+        path = tests[i].path ? SysAllocString(tests[i].path) : NULL;
+        hr = IFileSystem3_GetParentFolderName(fs3, path, &result);
+        ok(hr == S_OK, "%d) GetParentFolderName returned %x, expected S_OK\n", i, hr);
+        if(!tests[i].result)
+            ok(!result, "%d) result = %s\n", i, wine_dbgstr_w(result));
+        else
+            ok(!lstrcmpW(result, tests[i].result), "%d) result = %s\n", i, wine_dbgstr_w(result));
+        SysFreeString(path);
+        SysFreeString(result);
+    }
+}
+
 START_TEST(filesystem)
 {
     HRESULT hr;
@@ -271,6 +319,7 @@ START_TEST(filesystem)
     test_createfolder();
     test_textstream();
     test_GetFileVersion();
+    test_GetParentFolderName();
 
     IFileSystem3_Release(fs3);
 

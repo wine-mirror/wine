@@ -728,12 +728,53 @@ static HRESULT WINAPI filesys_GetDriveName(IFileSystem3 *iface, BSTR Path,
     return E_NOTIMPL;
 }
 
+static inline DWORD get_parent_folder_name(const WCHAR *path, DWORD len)
+{
+    int i;
+
+    if(!path)
+        return 0;
+
+    for(i=len-1; i>=0; i--)
+        if(path[i]!='/' && path[i]!='\\')
+            break;
+
+    for(; i>=0; i--)
+        if(path[i]=='/' || path[i]=='\\')
+            break;
+
+    for(; i>=0; i--)
+        if(path[i]!='/' && path[i]!='\\')
+            break;
+
+    if(i < 0)
+        return 0;
+
+    if(path[i]==':' && i==1)
+        i++;
+    return i+1;
+}
+
 static HRESULT WINAPI filesys_GetParentFolderName(IFileSystem3 *iface, BSTR Path,
                                             BSTR *pbstrResult)
 {
-    FIXME("%p %s %p\n", iface, debugstr_w(Path), pbstrResult);
+    DWORD len;
 
-    return E_NOTIMPL;
+    TRACE("%p %s %p\n", iface, debugstr_w(Path), pbstrResult);
+
+    if(!pbstrResult)
+        return E_POINTER;
+
+    len = get_parent_folder_name(Path, SysStringLen(Path));
+    if(!len) {
+        *pbstrResult = NULL;
+        return S_OK;
+    }
+
+    *pbstrResult = SysAllocStringLen(Path, len);
+    if(!*pbstrResult)
+        return E_OUTOFMEMORY;
+    return S_OK;
 }
 
 static HRESULT WINAPI filesys_GetFileName(IFileSystem3 *iface, BSTR Path,
