@@ -3695,23 +3695,36 @@ int WINAPI WS_ioctlsocket(SOCKET s, LONG cmd, WS_u_long *argp)
  */
 int WINAPI WS_listen(SOCKET s, int backlog)
 {
-    int fd = get_sock_fd( s, FILE_READ_DATA, NULL );
+    int fd = get_sock_fd( s, FILE_READ_DATA, NULL ), ret = SOCKET_ERROR;
 
     TRACE("socket %04lx, backlog %d\n", s, backlog);
     if (fd != -1)
     {
-	if (listen(fd, backlog) == 0)
-	{
-            release_sock_fd( s, fd );
-	    _enable_event(SOCKET2HANDLE(s), FD_ACCEPT,
-			  FD_WINE_LISTENING,
-			  FD_CONNECT|FD_WINE_CONNECTED);
-	    return 0;
-	}
-	SetLastError(wsaErrno());
+        union generic_unix_sockaddr uaddr;
+        socklen_t uaddrlen = sizeof(uaddr);
+
+        if (getsockname(fd, &uaddr.addr, &uaddrlen) != 0)
+        {
+            SetLastError(wsaErrno());
+        }
+        else if (!is_sockaddr_bound(&uaddr.addr, uaddrlen))
+        {
+            SetLastError(WSAEINVAL);
+        }
+        else if (listen(fd, backlog) == 0)
+        {
+            _enable_event(SOCKET2HANDLE(s), FD_ACCEPT,
+                          FD_WINE_LISTENING,
+                          FD_CONNECT|FD_WINE_CONNECTED);
+            ret = 0;
+        }
+        else
+            SetLastError(wsaErrno());
         release_sock_fd( s, fd );
     }
-    return SOCKET_ERROR;
+    else
+        SetLastError(WSAENOTSOCK);
+    return ret;
 }
 
 /***********************************************************************
