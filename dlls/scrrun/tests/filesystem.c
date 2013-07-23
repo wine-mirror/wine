@@ -302,6 +302,49 @@ static void test_GetParentFolderName(void)
     }
 }
 
+static void test_GetFileName(void)
+{
+    static const WCHAR path1[] = {'a',0};
+    static const WCHAR path2[] = {'a','/','a','.','b',0};
+    static const WCHAR path3[] = {'a','\\',0};
+    static const WCHAR path4[] = {'c',':',0};
+    static const WCHAR path5[] = {'/','\\',0};
+    static const WCHAR result2[] = {'a','.','b',0};
+    static const WCHAR result3[] = {'a',0};
+
+    static const struct {
+        const WCHAR *path;
+        const WCHAR *result;
+    } tests[] = {
+        {NULL, NULL},
+        {path1, path1},
+        {path2, result2},
+        {path3, result3},
+        {path4, NULL},
+        {path5, NULL}
+    };
+
+    BSTR path, result;
+    HRESULT hr;
+    int i;
+
+    hr = IFileSystem3_GetFileName(fs3, NULL, NULL);
+    ok(hr == E_POINTER, "GetFileName returned %x, expected E_POINTER\n", hr);
+
+    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+        result = (BSTR)0xdeadbeef;
+        path = tests[i].path ? SysAllocString(tests[i].path) : NULL;
+        hr = IFileSystem3_GetFileName(fs3, path, &result);
+        ok(hr == S_OK, "%d) GetFileName returned %x, expected S_OK\n", i, hr);
+        if(!tests[i].result)
+            ok(!result, "%d) result = %s\n", i, wine_dbgstr_w(result));
+        else
+            ok(!lstrcmpW(result, tests[i].result), "%d) result = %s\n", i, wine_dbgstr_w(result));
+        SysFreeString(path);
+        SysFreeString(result);
+    }
+}
+
 START_TEST(filesystem)
 {
     HRESULT hr;
@@ -320,6 +363,7 @@ START_TEST(filesystem)
     test_textstream();
     test_GetFileVersion();
     test_GetParentFolderName();
+    test_GetFileName();
 
     IFileSystem3_Release(fs3);
 
