@@ -368,7 +368,14 @@ HRESULT WINAPI D3DXCompileShader(const char *data, UINT length, const D3DXMACRO 
                     function, profile, flags, 0, (ID3DBlob **)shader, (ID3DBlob **)error_msgs);
 
     if (SUCCEEDED(hr) && constant_table)
+    {
         hr = D3DXGetShaderConstantTable(ID3DXBuffer_GetBufferPointer(*shader), constant_table);
+        if (FAILED(hr))
+        {
+            ID3DXBuffer_Release(*shader);
+            *shader = NULL;
+        }
+    }
 
     return hr;
 }
