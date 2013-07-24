@@ -6376,15 +6376,15 @@ msgid "No more bindings.\n"
 msgstr "Geen bindings meer.\n"
 
 #: winerror.mc:3446
-msgid "Can't logon with inter-domain trust account.\n"
+msgid "Can't log on with inter-domain trust account.\n"
 msgstr "Kan niet inloggen met interdomein vertrouwde account.\n"
 
 #: winerror.mc:3451
-msgid "Can't logon with workstation trust account.\n"
+msgid "Can't log on with workstation trust account.\n"
 msgstr "Kan niet inloggen met werkstation vertrouwde account.\n"
 
 #: winerror.mc:3456
-msgid "Can't logon with server trust account.\n"
+msgid "Can't log on with server trust account.\n"
 msgstr "Kan niet inloggen met server vertrouwde account.\n"
 
 #: winerror.mc:3461
