@@ -685,6 +685,12 @@ static const struct {
     {data1, sizeof(data1), "text/plain", NULL, NULL, "res://mshtml.dll/blank.htm", "application/octet-stream"},
     {data1, sizeof(data1), "text/plain", NULL, NULL, "file:some%20file%2ejpg", "application/octet-stream"},
     {NULL, sizeof(data1), "text/html", NULL, NULL, "res://mshtml.dll/blank.htm"},
+    {data1, sizeof(data1), "text/css", NULL, NULL, "http://www.winehq.org/test.css"},
+    {data2, sizeof(data2), "text/css", NULL, NULL, "http://www.winehq.org/test.css"},
+    {data10, sizeof(data10), "text/html", NULL, NULL, "http://www.winehq.org/test.css"},
+    {data1, sizeof(data1), "text/css", NULL, NULL, "http://www.winehq.org/test.css", "text/plain"},
+    {data1, sizeof(data1), "text/css", NULL, NULL, "http://www.winehq.org/test.css", "application/octet-stream"},
+    {data1, sizeof(data1), "text/test", NULL, NULL, "http://www.winehq.org/test.css", "text/test"}
 };
 
 static void test_FindMimeFromData(void)
