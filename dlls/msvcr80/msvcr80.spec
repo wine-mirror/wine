@@ -1238,7 +1238,7 @@
 @ cdecl _wmakepath_s(ptr long wstr wstr wstr wstr) msvcrt._wmakepath_s
 @ cdecl _wmkdir(wstr) msvcrt._wmkdir
 @ cdecl _wmktemp(wstr) msvcrt._wmktemp
-@ stub _wmktemp_s
+@ cdecl _wmktemp_s(wstr long) msvcrt._wmktemp_s
 @ varargs _wopen(wstr long) msvcrt._wopen
 @ cdecl _wperror(wstr) msvcrt._wperror
 @ extern _wpgmptr msvcrt._wpgmptr
