@@ -1180,7 +1180,7 @@
 @ cdecl _wmakepath_s(ptr long wstr wstr wstr wstr)
 @ cdecl _wmkdir(wstr) MSVCRT__wmkdir
 @ cdecl _wmktemp(wstr) MSVCRT__wmktemp
-# stub _wmktemp_s(wstr long)
+@ cdecl _wmktemp_s(wstr long) MSVCRT__wmktemp_s
 @ varargs _wopen(wstr long) MSVCRT__wopen
 # stub _woutput_s
 @ stub _wperror(wstr)
