@@ -3281,7 +3281,7 @@ int macdrv_wglDescribePixelFormat(HDC hdc, int fmt, UINT size, PIXELFORMATDESCRI
 
     TRACE("hdc %p fmt %d size %u descr %p\n", hdc, fmt, size, descr);
 
-    if (fmt <= 0 || fmt > ret) return ret;
+    if (fmt <= 0 || fmt > ret || !descr) return ret;
     if (size < sizeof(*descr)) return 0;
 
     pf = &pixel_formats[fmt - 1];
