@@ -1829,9 +1829,20 @@ static UINT wined3d_cs_exec_query_issue(struct wined3d_cs *cs, const void *data)
 
     poll = query->query_ops->query_issue(query, op->flags);
 
-    if (wined3d_settings.cs_multithreaded && poll
-            && list_empty(&query->poll_list_entry))
-        list_add_tail(&cs->query_poll_list, &query->poll_list_entry);
+    if (wined3d_settings.cs_multithreaded)
+    {
+        if (poll && list_empty(&query->poll_list_entry))
+        {
+            list_add_tail(&cs->query_poll_list, &query->poll_list_entry);
+        }
+        else if (!poll && !list_empty(&query->poll_list_entry))
+        {
+            /* Can happen if occlusion queries are restarted. This discards the old
+             * result, polling it could result in a GL error */
+            list_remove(&query->poll_list_entry);
+            list_init(&query->poll_list_entry);
+        }
+    }
 
     return sizeof(*op);
 }
