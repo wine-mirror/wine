@@ -163,7 +163,7 @@ struct ID3DXBaseEffectImpl
     UINT technique_count;
 
     D3DXHANDLE *parameter_handles;
-    D3DXHANDLE *technique_handles;
+    struct d3dx_technique *techniques;
 };
 
 struct ID3DXEffectImpl
@@ -174,7 +174,7 @@ struct ID3DXEffectImpl
     struct ID3DXEffectStateManager *manager;
     struct IDirect3DDevice9 *device;
     struct ID3DXEffectPool *pool;
-    D3DXHANDLE active_technique;
+    struct d3dx_technique *active_technique;
     D3DXHANDLE active_pass;
 
     ID3DXBaseEffect *base_effect;
@@ -426,11 +426,6 @@ static inline struct d3dx_pass *get_pass_struct(D3DXHANDLE handle)
     return (struct d3dx_pass *) handle;
 }
 
-static inline struct d3dx_technique *get_technique_struct(D3DXHANDLE handle)
-{
-    return (struct d3dx_technique *) handle;
-}
-
 static inline D3DXHANDLE get_parameter_handle(struct d3dx_parameter *parameter)
 {
     return (D3DXHANDLE) parameter;
@@ -446,7 +441,7 @@ static inline D3DXHANDLE get_pass_handle(struct d3dx_pass *pass)
     return (D3DXHANDLE) pass;
 }
 
-static struct d3dx_technique *get_technique_by_name(struct ID3DXBaseEffectImpl *base, LPCSTR name)
+static struct d3dx_technique *get_technique_by_name(struct ID3DXBaseEffectImpl *base, const char *name)
 {
     UINT i;
 
@@ -454,9 +449,8 @@ static struct d3dx_technique *get_technique_by_name(struct ID3DXBaseEffectImpl *
 
     for (i = 0; i < base->technique_count; ++i)
     {
-        struct d3dx_technique *tech = get_technique_struct(base->technique_handles[i]);
-
-        if (!strcmp(tech->name, name)) return tech;
+        if (!strcmp(base->techniques[i].name, name))
+            return &base->techniques[i];
     }
 
     return NULL;
@@ -464,21 +458,15 @@ static struct d3dx_technique *get_technique_by_name(struct ID3DXBaseEffectImpl *
 
 static struct d3dx_technique *get_valid_technique(struct ID3DXBaseEffectImpl *base, D3DXHANDLE technique)
 {
-    struct d3dx_technique *tech = NULL;
     unsigned int i;
 
     for (i = 0; i < base->technique_count; ++i)
     {
-        if (base->technique_handles[i] == technique)
-        {
-            tech = get_technique_struct(technique);
-            break;
-        }
+        if (get_technique_handle(&base->techniques[i]) == technique)
+            return &base->techniques[i];
     }
 
-    if (!tech) tech = get_technique_by_name(base, technique);
-
-    return tech;
+    return get_technique_by_name(base, technique);
 }
 
 static struct d3dx_pass *get_valid_pass(struct ID3DXBaseEffectImpl *base, D3DXHANDLE pass)
@@ -487,7 +475,7 @@ static struct d3dx_pass *get_valid_pass(struct ID3DXBaseEffectImpl *base, D3DXHA
 
     for (i = 0; i < base->technique_count; ++i)
     {
-        struct d3dx_technique *technique = get_technique_struct(base->technique_handles[i]);
+        struct d3dx_technique *technique = &base->techniques[i];
 
         for (k = 0; k < technique->pass_count; ++k)
         {
@@ -552,7 +540,7 @@ static struct d3dx_parameter *get_valid_parameter(struct ID3DXBaseEffectImpl *ba
 
     for (i = 0; i < base->technique_count; ++i)
     {
-        struct d3dx_technique *technique = get_technique_struct(base->technique_handles[i]);
+        struct d3dx_technique *technique = &base->techniques[i];
 
         for (k = 0; k < technique->pass_count; ++k)
         {
@@ -747,17 +735,14 @@ static void free_pass(D3DXHANDLE handle)
     HeapFree(GetProcessHeap(), 0, pass);
 }
 
-static void free_technique(D3DXHANDLE handle)
+static void free_technique(struct d3dx_technique *technique)
 {
     unsigned int i;
-    struct d3dx_technique *technique = get_technique_struct(handle);
 
     TRACE("Free technique %p\n", technique);
 
     if (!technique)
-    {
         return;
-    }
 
     if (technique->annotation_handles)
     {
@@ -778,7 +763,7 @@ static void free_technique(D3DXHANDLE handle)
     }
 
     HeapFree(GetProcessHeap(), 0, technique->name);
-    HeapFree(GetProcessHeap(), 0, technique);
+    technique->name = NULL;
 }
 
 static void free_base_effect(struct ID3DXBaseEffectImpl *base)
@@ -796,13 +781,12 @@ static void free_base_effect(struct ID3DXBaseEffectImpl *base)
         HeapFree(GetProcessHeap(), 0, base->parameter_handles);
     }
 
-    if (base->technique_handles)
+    if (base->techniques)
     {
         for (i = 0; i < base->technique_count; ++i)
-        {
-            free_technique(base->technique_handles[i]);
-        }
-        HeapFree(GetProcessHeap(), 0, base->technique_handles);
+            free_technique(&base->techniques[i]);
+        HeapFree(GetProcessHeap(), 0, base->techniques);
+        base->techniques = NULL;
     }
 }
 
@@ -1141,7 +1125,7 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetParameterDesc(ID3DXBaseEffect *ifac
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetTechniqueDesc(ID3DXBaseEffect *iface, D3DXHANDLE technique, D3DXTECHNIQUE_DESC *desc)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
-    struct d3dx_technique *tech = technique ? get_valid_technique(This, technique) : get_technique_struct(This->technique_handles[0]);
+    struct d3dx_technique *tech = technique ? get_valid_technique(This, technique) : &This->techniques[0];
 
     TRACE("iface %p, technique %p, desc %p\n", This, technique, desc);
 
@@ -1342,9 +1326,9 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetTechnique(ID3DXBaseEffect *iface
         return NULL;
     }
 
-    TRACE("Returning technique %p\n", This->technique_handles[index]);
+    TRACE("Returning technique %p\n", &This->techniques[index]);
 
-    return This->technique_handles[index];
+    return get_technique_handle(&This->techniques[index]);
 }
 
 static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetTechniqueByName(ID3DXBaseEffect *iface, LPCSTR name)
@@ -3431,7 +3415,7 @@ static HRESULT WINAPI ID3DXEffectImpl_SetTechnique(ID3DXEffect *iface, D3DXHANDL
 
     if (tech)
     {
-        This->active_technique = get_technique_handle(tech);
+        This->active_technique = tech;
         TRACE("Technique %p\n", tech);
         return D3D_OK;
     }
@@ -3447,7 +3431,7 @@ static D3DXHANDLE WINAPI ID3DXEffectImpl_GetCurrentTechnique(ID3DXEffect *iface)
 
     TRACE("iface %p\n", This);
 
-    return This->active_technique;
+    return get_technique_handle(This->active_technique);
 }
 
 static HRESULT WINAPI ID3DXEffectImpl_ValidateTechnique(ID3DXEffect* iface, D3DXHANDLE technique)
@@ -3480,7 +3464,7 @@ static BOOL WINAPI ID3DXEffectImpl_IsParameterUsed(ID3DXEffect* iface, D3DXHANDL
 static HRESULT WINAPI ID3DXEffectImpl_Begin(ID3DXEffect *iface, UINT *passes, DWORD flags)
 {
     struct ID3DXEffectImpl *This = impl_from_ID3DXEffect(iface);
-    struct d3dx_technique *technique = get_technique_struct(This->active_technique);
+    struct d3dx_technique *technique = This->active_technique;
 
     FIXME("iface %p, passes %p, flags %#x partial stub\n", This, passes, flags);
 
@@ -3508,7 +3492,7 @@ static HRESULT WINAPI ID3DXEffectImpl_Begin(ID3DXEffect *iface, UINT *passes, DW
 static HRESULT WINAPI ID3DXEffectImpl_BeginPass(ID3DXEffect *iface, UINT pass)
 {
     struct ID3DXEffectImpl *This = impl_from_ID3DXEffect(iface);
-    struct d3dx_technique *technique = get_technique_struct(This->active_technique);
+    struct d3dx_technique *technique = This->active_technique;
 
     TRACE("iface %p, pass %u\n", This, pass);
 
@@ -5457,7 +5441,7 @@ static HRESULT d3dx9_parse_resource(struct ID3DXBaseEffectImpl *base, const char
             return E_FAIL;
         }
 
-        technique = get_technique_struct(base->technique_handles[technique_index]);
+        technique = &base->techniques[technique_index];
         if (index >= technique->pass_count)
         {
             FIXME("Index out of bounds: index %u >= pass_count %u\n", index, technique->pass_count);
@@ -5523,7 +5507,6 @@ static HRESULT d3dx9_parse_effect(struct ID3DXBaseEffectImpl *base, const char *
 {
     const char *ptr = data + start;
     D3DXHANDLE *parameter_handles = NULL;
-    D3DXHANDLE *technique_handles = NULL;
     D3DXHANDLE *objects = NULL;
     UINT stringcount, objectcount, resourcecount;
     HRESULT hr;
@@ -5582,8 +5565,9 @@ static HRESULT d3dx9_parse_effect(struct ID3DXBaseEffectImpl *base, const char *
 
     if (base->technique_count)
     {
-        technique_handles = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*technique_handles) * base->technique_count);
-        if (!technique_handles)
+        base->techniques = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                sizeof(*base->techniques) * base->technique_count);
+        if (!base->techniques)
         {
             ERR("Out of memory\n");
             hr = E_OUTOFMEMORY;
@@ -5592,18 +5576,7 @@ static HRESULT d3dx9_parse_effect(struct ID3DXBaseEffectImpl *base, const char *
 
         for (i = 0; i < base->technique_count; ++i)
         {
-            struct d3dx_technique *technique;
-
-            technique = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*technique));
-            if (!technique)
-            {
-                hr = E_OUTOFMEMORY;
-                goto err_out;
-            }
-
-            technique_handles[i] = get_technique_handle(technique);
-
-            hr = d3dx9_parse_effect_technique(technique, data, &ptr, objects);
+            hr = d3dx9_parse_effect_technique(&base->techniques[i], data, &ptr, objects);
             if (hr != D3D_OK)
             {
                 WARN("Failed to parse technique %u\n", i);
@@ -5613,7 +5586,6 @@ static HRESULT d3dx9_parse_effect(struct ID3DXBaseEffectImpl *base, const char *
     }
 
     /* needed for further parsing */
-    base->technique_handles = technique_handles;
     base->parameter_handles = parameter_handles;
 
     read_dword(&ptr, &stringcount);
@@ -5658,13 +5630,12 @@ static HRESULT d3dx9_parse_effect(struct ID3DXBaseEffectImpl *base, const char *
 
 err_out:
 
-    if (technique_handles)
+    if (base->techniques)
     {
         for (i = 0; i < base->technique_count; ++i)
-        {
-            free_technique(technique_handles[i]);
-        }
-        HeapFree(GetProcessHeap(), 0, technique_handles);
+            free_technique(&base->techniques[i]);
+        HeapFree(GetProcessHeap(), 0, base->techniques);
+        base->techniques = NULL;
     }
 
     if (parameter_handles)
@@ -5676,7 +5647,6 @@ err_out:
         HeapFree(GetProcessHeap(), 0, parameter_handles);
     }
 
-    base->technique_handles = NULL;
     base->parameter_handles = NULL;
 
     HeapFree(GetProcessHeap(), 0, objects);
@@ -5758,9 +5728,9 @@ static HRESULT d3dx9_effect_init(struct ID3DXEffectImpl *effect, struct IDirect3
     effect->base_effect = &object->ID3DXBaseEffect_iface;
 
     /* initialize defaults - check because of unsupported ascii effects */
-    if (object->technique_handles)
+    if (object->techniques)
     {
-        effect->active_technique = object->technique_handles[0];
+        effect->active_technique = &object->techniques[0];
         effect->active_pass = NULL;
     }
 
