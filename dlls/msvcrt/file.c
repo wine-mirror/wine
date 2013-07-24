@@ -1691,9 +1691,12 @@ char * CDECL MSVCRT__mktemp(char *pattern)
   int id;
   char letter = 'a';
 
+  if(!pattern)
+      return NULL;
+
   while(*pattern)
     numX = (*pattern++ == 'X')? numX + 1 : 0;
-  if (numX < 5)
+  if (numX < 6)
     return NULL;
   pattern--;
   id = GetCurrentProcessId();
@@ -1708,8 +1711,7 @@ char * CDECL MSVCRT__mktemp(char *pattern)
   do
   {
     *pattern = letter++;
-    if (GetFileAttributesA(retVal) == INVALID_FILE_ATTRIBUTES &&
-        GetLastError() == ERROR_FILE_NOT_FOUND)
+    if (GetFileAttributesA(retVal) == INVALID_FILE_ATTRIBUTES)
       return retVal;
   } while(letter <= 'z');
   return NULL;
@@ -1725,9 +1727,12 @@ MSVCRT_wchar_t * CDECL MSVCRT__wmktemp(MSVCRT_wchar_t *pattern)
   int id;
   MSVCRT_wchar_t letter = 'a';
 
+  if(!pattern)
+      return NULL;
+
   while(*pattern)
     numX = (*pattern++ == 'X')? numX + 1 : 0;
-  if (numX < 5)
+  if (numX < 6)
     return NULL;
   pattern--;
   id = GetCurrentProcessId();
@@ -1741,8 +1746,7 @@ MSVCRT_wchar_t * CDECL MSVCRT__wmktemp(MSVCRT_wchar_t *pattern)
   pattern++;
   do
   {
-    if (GetFileAttributesW(retVal) == INVALID_FILE_ATTRIBUTES &&
-        GetLastError() == ERROR_FILE_NOT_FOUND)
+    if (GetFileAttributesW(retVal) == INVALID_FILE_ATTRIBUTES)
       return retVal;
     *pattern = letter++;
   } while(letter != '|');

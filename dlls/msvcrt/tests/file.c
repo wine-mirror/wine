@@ -2130,6 +2130,26 @@ static void test_stdin(void)
     ok(h != NULL, "h == NULL\n");
 }
 
+static void test_mktemp(void)
+{
+    char buf[16];
+
+    strcpy(buf, "a");
+    ok(!_mktemp(buf), "_mktemp(\"a\") != NULL\n");
+
+    strcpy(buf, "testXXXXX");
+    ok(!_mktemp(buf), "_mktemp(\"testXXXXX\") != NULL\n");
+
+    strcpy(buf, "testXXXXXX");
+    ok(_mktemp(buf) != NULL, "_mktemp(\"testXXXXXX\") == NULL\n");
+
+    strcpy(buf, "testXXXXXXa");
+    ok(!_mktemp(buf), "_mktemp(\"testXXXXXXa\") != NULL\n");
+
+    strcpy(buf, "**XXXXXX");
+    ok(_mktemp(buf) != NULL, "_mktemp(\"**XXXXXX\") == NULL\n");
+}
+
 START_TEST(file)
 {
     int arg_c;
@@ -2193,6 +2213,7 @@ START_TEST(file)
     test_setmaxstdio();
     test_pipes(arg_v[0]);
     test_stdin();
+    test_mktemp();
 
     /* Wait for the (_P_NOWAIT) spawned processes to finish to make sure the report
      * file contains lines in the correct order
