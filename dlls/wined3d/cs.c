@@ -1825,10 +1825,11 @@ static UINT wined3d_cs_exec_query_issue(struct wined3d_cs *cs, const void *data)
 {
     const struct wined3d_cs_query_issue *op = data;
     struct wined3d_query *query = op->query;
+    BOOL poll;
 
-    query->query_ops->query_issue(query, op->flags);
+    poll = query->query_ops->query_issue(query, op->flags);
 
-    if (wined3d_settings.cs_multithreaded && op->flags & WINED3DISSUE_END
+    if (wined3d_settings.cs_multithreaded && poll
             && list_empty(&query->poll_list_entry))
         list_add_tail(&cs->query_poll_list, &query->poll_list_entry);
 

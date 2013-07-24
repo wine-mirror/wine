@@ -2752,7 +2752,7 @@ struct wined3d_query_ops
 {
     HRESULT (*query_get_data)(struct wined3d_query *query, void *data, DWORD data_size, DWORD flags);
     BOOL (*query_poll)(struct wined3d_query *query);
-    void (*query_issue)(struct wined3d_query *query, DWORD flags);
+    BOOL (*query_issue)(struct wined3d_query *query, DWORD flags);
 };
 
 struct wined3d_query
