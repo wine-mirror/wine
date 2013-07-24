@@ -108,6 +108,7 @@ int         __cdecl _locking(int,int,__msvcrt_long);
 __msvcrt_long __cdecl _lseek(int,__msvcrt_long,int);
 __int64     __cdecl _lseeki64(int,__int64,int);
 char*       __cdecl _mktemp(char*);
+int         __cdecl _mktemp_s(char*,size_t);
 int         __cdecl _open(const char*,int,...);
 int         __cdecl _open_osfhandle(intptr_t,int);
 int         __cdecl _pipe(int*,unsigned int,int);

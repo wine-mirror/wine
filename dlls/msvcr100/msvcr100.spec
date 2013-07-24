@@ -1204,7 +1204,7 @@
 @ cdecl _mkgmtime32(ptr) msvcrt._mkgmtime32
 @ cdecl _mkgmtime64(ptr) msvcrt._mkgmtime64
 @ cdecl _mktemp(str) msvcrt._mktemp
-@ stub _mktemp_s
+@ cdecl _mktemp_s(str long) msvcrt._mktemp_s
 @ cdecl _mktime32(ptr) msvcrt._mktime32
 @ cdecl _mktime64(ptr) msvcrt._mktime64
 @ cdecl _msize(ptr) msvcrt._msize
