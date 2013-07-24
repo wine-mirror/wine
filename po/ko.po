@@ -6337,15 +6337,15 @@ msgid "No more bindings.\n"
 msgstr "더 이상의 바인딩은 없음.\n"
 
 #: winerror.mc:3446
-msgid "Can't logon with inter-domain trust account.\n"
+msgid "Can't log on with inter-domain trust account.\n"
 msgstr "내부 도메인의 신뢰된 계정에 로그온할 수 없습니다.\n"
 
 #: winerror.mc:3451
-msgid "Can't logon with workstation trust account.\n"
+msgid "Can't log on with workstation trust account.\n"
 msgstr "워크스테이션의 신뢰된 계정에 로그온 할 수 없습니다.\n"
 
 #: winerror.mc:3456
-msgid "Can't logon with server trust account.\n"
+msgid "Can't log on with server trust account.\n"
 msgstr "서버의 신뢰된 계정에 로그온할 수 없습니다.\n"
 
 #: winerror.mc:3461

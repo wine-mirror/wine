@@ -3441,17 +3441,17 @@ No more bindings.
 MessageId=1807
 SymbolicName=ERROR_NOLOGON_INTERDOMAIN_TRUST_ACCOUNT
 Language=ENU
-Can't logon with inter-domain trust account.
+Can't log on with inter-domain trust account.
 .
 MessageId=1808
 SymbolicName=ERROR_NOLOGON_WORKSTATION_TRUST_ACCOUNT
 Language=ENU
-Can't logon with workstation trust account.
+Can't log on with workstation trust account.
 .
 MessageId=1809
 SymbolicName=ERROR_NOLOGON_SERVER_TRUST_ACCOUNT
 Language=ENU
-Can't logon with server trust account.
+Can't log on with server trust account.
 .
 MessageId=1810
 SymbolicName=ERROR_DOMAIN_TRUST_INCONSISTENT
