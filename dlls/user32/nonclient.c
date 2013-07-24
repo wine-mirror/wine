@@ -980,7 +980,7 @@ static void  NC_DrawCaption( HDC  hdc, RECT *rect, HWND hwnd, DWORD  style,
  *
  *   Paint the non-client area for windows.
  */
-static void  NC_DoNCPaint( HWND  hwnd, HRGN  clip, BOOL  suppress_menupaint )
+static void  NC_DoNCPaint( HWND  hwnd, HRGN  clip )
 {
     HDC hdc;
     RECT rfuzz, rect, rectClip;
@@ -1062,7 +1062,7 @@ static void  NC_DoNCPaint( HWND  hwnd, HRGN  clip, BOOL  suppress_menupaint )
 
 	TRACE("Calling DrawMenuBar with rect (%s)\n", wine_dbgstr_rect(&r));
 
-	rect.top += MENU_DrawMenuBar( hdc, &r, hwnd, suppress_menupaint ) + 1;
+	rect.top += MENU_DrawMenuBar( hdc, &r, hwnd ) + 1;
     }
 
     TRACE("After MenuBar, rect is (%s).\n", wine_dbgstr_rect(&rect));
@@ -1109,7 +1109,7 @@ LRESULT NC_HandleNCPaint( HWND hwnd , HRGN clip)
 	if( dwStyle & WS_MINIMIZE )
 	    WINPOS_RedrawIconTitle( hwnd );
 	else
-	    NC_DoNCPaint( hwnd, clip, FALSE );
+	    NC_DoNCPaint( hwnd, clip );
     }
     return 0;
 }
@@ -1143,7 +1143,7 @@ LRESULT NC_HandleNCActivate( HWND hwnd, WPARAM wParam, LPARAM lParam )
         if (IsIconic(hwnd))
             WINPOS_RedrawIconTitle( hwnd );
         else
-            NC_DoNCPaint( hwnd, (HRGN)1, FALSE );
+            NC_DoNCPaint( hwnd, (HRGN)1 );
     }
 
     return TRUE;
