@@ -4637,15 +4637,31 @@ static HRESULT d3dx9_parse_init_value(struct d3dx_parameter *param, const char *
 
     if (size)
     {
-        value = HeapAlloc(GetProcessHeap(), 0, size);
+        value = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
         if (!value)
         {
             ERR("Failed to allocate data memory.\n");
             return E_OUTOFMEMORY;
         }
 
-        TRACE("Data: %s.\n", debugstr_an(ptr, size));
-        memcpy(value, ptr, size);
+        switch(param->class)
+        {
+            case D3DXPC_OBJECT:
+                break;
+
+            case D3DXPC_SCALAR:
+            case D3DXPC_VECTOR:
+            case D3DXPC_MATRIX_ROWS:
+            case D3DXPC_MATRIX_COLUMNS:
+            case D3DXPC_STRUCT:
+                TRACE("Data: %s.\n", debugstr_an(ptr, size));
+                memcpy(value, ptr, size);
+                break;
+
+            default:
+                FIXME("Unhandled class %s\n", debug_d3dxparameter_class(param->class));
+                break;
+        }
     }
 
     hr = d3dx9_parse_value(param, value, data, &ptr, objects);
