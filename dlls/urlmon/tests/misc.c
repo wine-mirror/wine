@@ -87,6 +87,26 @@ static int strcmp_wa(const WCHAR *strw, const char *stra)
     return lstrcmpW(strw, buf);
 }
 
+static void heap_free(void *mem)
+{
+    HeapFree(GetProcessHeap(), 0, mem);
+}
+
+static WCHAR *a2w(const char *str)
+{
+    WCHAR *ret;
+    int len;
+
+    if(!str)
+        return NULL;
+
+    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+    ret = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+
+    return ret;
+}
+
 static void test_CreateFormatEnum(void)
 {
     IEnumFORMATETC *fenum = NULL, *fenum2 = NULL;
@@ -561,6 +581,8 @@ static const struct {
     const char *mime;
     const char *mime_pjpeg;
     const char *broken_mime;
+    const char *url;
+    const char *proposed_mime;
 } mime_tests2[] = {
     {data1, sizeof(data1), "text/plain"},
     {data2, sizeof(data2), "application/octet-stream", "image/pjpeg"},
@@ -657,13 +679,18 @@ static const struct {
     {data93, sizeof(data93), "text/xml", "text/plain"},
     {data94, sizeof(data94), "text/html", "text/plain"},
     {data95, sizeof(data95), "text/xml", "text/richtext"},
-    {data96, sizeof(data96), "text/plain"}
+    {data96, sizeof(data96), "text/plain"},
+    {data1, sizeof(data1), "text/plain", NULL, NULL, "res://mshtml.dll/blank.htm"},
+    {NULL, 0, "text/html", NULL, NULL, "res://mshtml.dll/blank.htm"},
+    {data1, sizeof(data1), "text/plain", NULL, NULL, "res://mshtml.dll/blank.htm", "application/octet-stream"},
+    {data1, sizeof(data1), "text/plain", NULL, NULL, "file:some%20file%2ejpg", "application/octet-stream"},
+    {NULL, sizeof(data1), "text/html", NULL, NULL, "res://mshtml.dll/blank.htm"},
 };
 
 static void test_FindMimeFromData(void)
 {
+    WCHAR *mime, *proposed_mime, *url;
     HRESULT hres;
-    LPWSTR mime;
     BYTE b;
     int i;
 
@@ -701,14 +728,18 @@ static void test_FindMimeFromData(void)
     }
 
     for(i=0; i < sizeof(mime_tests2)/sizeof(mime_tests2[0]); i++) {
-        hres = pFindMimeFromData(NULL, NULL, mime_tests2[i].data, mime_tests2[i].size,
-                NULL, 0, &mime, 0);
+        url = a2w(mime_tests2[i].url);
+        proposed_mime = a2w(mime_tests2[i].proposed_mime);
+        hres = pFindMimeFromData(NULL, url, mime_tests2[i].data, mime_tests2[i].size,
+                proposed_mime, 0, &mime, 0);
         ok(hres == S_OK, "[%d] FindMimeFromData failed: %08x\n", i, hres);
         b = !strcmp_wa(mime, mime_tests2[i].mime);
         ok(b || broken(mime_tests2[i].broken_mime && !strcmp_wa(mime, mime_tests2[i].broken_mime)),
             "[%d] wrong mime: %s\n", i, wine_dbgstr_w(mime));
+        heap_free(proposed_mime);
+        heap_free(url);
         CoTaskMemFree(mime);
-        if(!b)
+        if(!b || url || proposed_mime)
             continue;
 
         hres = pFindMimeFromData(NULL, NULL, mime_tests2[i].data, mime_tests2[i].size,
@@ -745,46 +776,6 @@ static void test_FindMimeFromData(void)
            "[%d] wrong mime, got %s\n", i, wine_dbgstr_w(mime));
         CoTaskMemFree(mime);
     }
-
-    hres = pFindMimeFromData(NULL, url1, data1, sizeof(data1), NULL, 0, &mime, 0);
-    ok(hres == S_OK, "FindMimeFromData failed: %08x\n", hres);
-    ok(!strcmp_wa(mime, "text/plain"), "wrong mime: %s\n", wine_dbgstr_w(mime));
-    CoTaskMemFree(mime);
-
-    hres = pFindMimeFromData(NULL, url1, data1, sizeof(data1), app_octet_streamW, 0, &mime, 0);
-    ok(hres == S_OK, "FindMimeFromData failed: %08x\n", hres);
-    ok(!strcmp_wa(mime, "text/plain"), "wrong mime: %s\n", wine_dbgstr_w(mime));
-    CoTaskMemFree(mime);
-
-    hres = pFindMimeFromData(NULL, url4, data1, sizeof(data1), app_octet_streamW, 0, &mime, 0);
-    ok(hres == S_OK, "FindMimeFromData failed: %08x\n", hres);
-    ok(!strcmp_wa(mime, "text/plain"), "wrong mime: %s\n", wine_dbgstr_w(mime));
-    CoTaskMemFree(mime);
-
-    hres = pFindMimeFromData(NULL, url1, NULL, 0, NULL, 0, &mime, 0);
-    ok(hres == S_OK, "FindMimeFromData failed: %08x, expected S_OK\n", hres);
-    ok(!strcmp_wa(mime, "text/html"), "wrong mime: %s\n", wine_dbgstr_w(mime));
-    CoTaskMemFree(mime);
-
-    hres = pFindMimeFromData(NULL, url1, NULL, sizeof(data1), NULL, 0, &mime, 0);
-    ok(hres == S_OK, "FindMimeFromData failed: %08x, expected S_OK\n", hres);
-    ok(!strcmp_wa(mime, "text/html"), "wrong mime: %s\n", wine_dbgstr_w(mime));
-    CoTaskMemFree(mime);
-
-    hres = pFindMimeFromData(NULL, url1, 0, 0, NULL, 0, &mime, 0);
-    ok(hres == S_OK, "FindMimeFromData failed: %08x, expected S_OK\n", hres);
-    ok(!strcmp_wa(mime, "text/html"), "wrong mime: %s\n", wine_dbgstr_w(mime));
-    CoTaskMemFree(mime);
-
-    hres = pFindMimeFromData(NULL, url1, 0, sizeof(data1), NULL, 0, &mime, 0);
-    ok(hres == S_OK, "FindMimeFromData failed: %08x, expected S_OK\n", hres);
-    ok(!strcmp_wa(mime, "text/html"), "wrong mime: %s\n", wine_dbgstr_w(mime));
-    CoTaskMemFree(mime);
-
-    hres = pFindMimeFromData(NULL, url1, data1, sizeof(data1), NULL, 0, &mime, 0);
-    ok(hres == S_OK, "FindMimeFromData failed: %08x, expected S_OK\n", hres);
-    ok(!strcmp_wa(mime, "text/plain"), "wrong mime: %s\n", wine_dbgstr_w(mime));
-    CoTaskMemFree(mime);
 
     hres = pFindMimeFromData(NULL, NULL, NULL, 0, NULL, 0, &mime, 0);
     ok(hres == E_INVALIDARG, "FindMimeFromData failed: %08x, expected E_INVALIDARG\n", hres);
