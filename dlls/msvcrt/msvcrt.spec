@@ -830,7 +830,7 @@
 @ cdecl _mkgmtime32(ptr) MSVCRT__mkgmtime32
 @ cdecl _mkgmtime64(ptr) MSVCRT__mkgmtime64
 @ cdecl _mktemp(str) MSVCRT__mktemp
-# stub _mktemp_s(str long)
+@ cdecl _mktemp_s(str long) MSVCRT__mktemp_s
 @ cdecl _mktime32(ptr) MSVCRT__mktime32
 @ cdecl _mktime64(ptr) MSVCRT__mktime64
 @ cdecl _msize(ptr)
