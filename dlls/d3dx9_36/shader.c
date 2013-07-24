@@ -958,8 +958,83 @@ static UINT set(struct ID3DXConstantTableImpl *table, IDirect3DDevice9 *device, 
     /* D3DXPC_STRUCT is somewhat special */
     if (desc->Class == D3DXPC_STRUCT)
     {
-        FIXME("Structs are not supported, yet.\n");
-        return 0;
+        /*
+         * Struct array sets the last complete input to the first struct element, all other
+         * elements are not set.
+         * E.g.: struct {int i;} s1[2];
+         *       SetValue(device, "s1", [1, 2], 8) => s1 = {2, x};
+         *
+         *       struct {int i; int n} s2[2];
+         *       SetValue(device, "s2", [1, 2, 3, 4, 5], 20) => s1 = {{3, 4}, {x, x}};
+         */
+        if (desc->Elements > 1)
+        {
+            UINT offset = *size / (desc->Rows * desc->Columns) - 1;
+
+            offset = min(desc->Elements - 1, offset);
+            last = offset * desc->Rows * desc->Columns;
+
+            if ((is_pointer || (!is_pointer && inclass == D3DXPC_MATRIX_ROWS)) && desc->RegisterSet != D3DXRS_BOOL)
+            {
+                set(table, device, &constant->constants[0], NULL, intype, size, incol, inclass, 0, is_pointer);
+            }
+            else
+            {
+                last += set(table, device, &constant->constants[0], indata, intype, size, incol, inclass,
+                        index + last, is_pointer);
+            }
+        }
+        else
+        {
+            /*
+             * D3DXRS_BOOL is always set. As there are only 16 bools and there are
+             * exactly 16 input values, use matrix transpose.
+             */
+            if (inclass == D3DXPC_MATRIX_ROWS && desc->RegisterSet == D3DXRS_BOOL)
+            {
+                D3DXMATRIX mat, *m, min;
+                D3DXMatrixTranspose(&mat, &min);
+
+                if (is_pointer)
+                    min = *(D3DXMATRIX *)(indata[index / 16]);
+                else
+                    min = **(D3DXMATRIX **)indata;
+
+                D3DXMatrixTranspose(&mat, &min);
+                m = &mat;
+                for (i = 0; i < desc->StructMembers; ++i)
+                {
+                    last += set(table, device, &constant->constants[i], (const void **)&m, intype, size, incol,
+                            D3DXPC_SCALAR, index + last, is_pointer);
+                }
+            }
+            /*
+             * For pointers or for matrix rows, only the first member is set.
+             * All other members are set to 0. This is not true for D3DXRS_BOOL.
+             * E.g.: struct {int i; int n} s;
+             *       SetValue(device, "s", [1, 2], 8) => s = {1, 0};
+             */
+            else if ((is_pointer || (!is_pointer && inclass == D3DXPC_MATRIX_ROWS)) && desc->RegisterSet != D3DXRS_BOOL)
+            {
+                last = set(table, device, &constant->constants[0], indata, intype, size, incol, inclass,
+                        index + last, is_pointer);
+
+                for (i = 1; i < desc->StructMembers; ++i)
+                {
+                    set(table, device, &constant->constants[i], NULL, intype, size, incol, inclass, 0, is_pointer);
+                }
+            }
+            else
+            {
+                for (i = 0; i < desc->StructMembers; ++i)
+                {
+                    last += set(table, device, &constant->constants[i], indata, intype, size, incol, D3DXPC_SCALAR,
+                            index + last, is_pointer);
+                }
+            }
+        }
+
+        return last;
     }
 
     /* elements */
