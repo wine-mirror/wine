@@ -417,72 +417,118 @@ static BOOL application_octet_stream_filter(const BYTE *b, DWORD size)
     return TRUE;
 }
 
-static HRESULT find_mime_from_buffer(const BYTE *buf, DWORD size, const WCHAR *proposed_mime, WCHAR **ret_mime)
+static HRESULT find_mime_from_url(const WCHAR *url, WCHAR **ret)
 {
-    LPCWSTR ret = NULL;
-    int len, i, any_pos_mime = -1;
+    const WCHAR *ptr;
+    DWORD res, size;
+    WCHAR mime[64];
+    HKEY hkey;
 
-    static const WCHAR text_htmlW[] = {'t','e','x','t','/','h','t','m','l',0};
-    static const WCHAR text_richtextW[] = {'t','e','x','t','/','r','i','c','h','t','e','x','t',0};
-    static const WCHAR text_xmlW[] = {'t','e','x','t','/','x','m','l',0};
-    static const WCHAR audio_basicW[] = {'a','u','d','i','o','/','b','a','s','i','c',0};
-    static const WCHAR audio_wavW[] = {'a','u','d','i','o','/','w','a','v',0};
-    static const WCHAR image_gifW[] = {'i','m','a','g','e','/','g','i','f',0};
-    static const WCHAR image_pjpegW[] = {'i','m','a','g','e','/','p','j','p','e','g',0};
-    static const WCHAR image_tiffW[] = {'i','m','a','g','e','/','t','i','f','f',0};
-    static const WCHAR image_xpngW[] = {'i','m','a','g','e','/','x','-','p','n','g',0};
-    static const WCHAR image_bmpW[] = {'i','m','a','g','e','/','b','m','p',0};
-    static const WCHAR video_aviW[] = {'v','i','d','e','o','/','a','v','i',0};
-    static const WCHAR video_mpegW[] = {'v','i','d','e','o','/','m','p','e','g',0};
-    static const WCHAR app_postscriptW[] =
+    static const WCHAR content_typeW[] = {'C','o','n','t','e','n','t',' ','T','y','p','e','\0'};
+
+    ptr = strrchrW(url, '.');
+    if(!ptr)
+        return E_FAIL;
+
+    res = RegOpenKeyW(HKEY_CLASSES_ROOT, ptr, &hkey);
+    if(res != ERROR_SUCCESS)
+        return HRESULT_FROM_WIN32(res);
+
+    size = sizeof(mime);
+    res = RegQueryValueExW(hkey, content_typeW, NULL, NULL, (LPBYTE)mime, &size);
+    RegCloseKey(hkey);
+    if(res != ERROR_SUCCESS)
+        return HRESULT_FROM_WIN32(res);
+
+    TRACE("found MIME %s\n", debugstr_w(mime));
+
+    *ret = CoTaskMemAlloc(size);
+    memcpy(*ret, mime, size);
+    return S_OK;
+}
+
+static const WCHAR text_htmlW[] = {'t','e','x','t','/','h','t','m','l',0};
+static const WCHAR text_richtextW[] = {'t','e','x','t','/','r','i','c','h','t','e','x','t',0};
+static const WCHAR text_xmlW[] = {'t','e','x','t','/','x','m','l',0};
+static const WCHAR audio_basicW[] = {'a','u','d','i','o','/','b','a','s','i','c',0};
+static const WCHAR audio_wavW[] = {'a','u','d','i','o','/','w','a','v',0};
+static const WCHAR image_gifW[] = {'i','m','a','g','e','/','g','i','f',0};
+static const WCHAR image_pjpegW[] = {'i','m','a','g','e','/','p','j','p','e','g',0};
+static const WCHAR image_tiffW[] = {'i','m','a','g','e','/','t','i','f','f',0};
+static const WCHAR image_xpngW[] = {'i','m','a','g','e','/','x','-','p','n','g',0};
+static const WCHAR image_bmpW[] = {'i','m','a','g','e','/','b','m','p',0};
+static const WCHAR video_aviW[] = {'v','i','d','e','o','/','a','v','i',0};
+static const WCHAR video_mpegW[] = {'v','i','d','e','o','/','m','p','e','g',0};
+static const WCHAR app_postscriptW[] =
         {'a','p','p','l','i','c','a','t','i','o','n','/','p','o','s','t','s','c','r','i','p','t',0};
-    static const WCHAR app_pdfW[] = {'a','p','p','l','i','c','a','t','i','o','n','/','p','d','f',0};
-    static const WCHAR app_xzipW[] = {'a','p','p','l','i','c','a','t','i','o','n','/',
+static const WCHAR app_pdfW[] = {'a','p','p','l','i','c','a','t','i','o','n','/','p','d','f',0};
+static const WCHAR app_xzipW[] = {'a','p','p','l','i','c','a','t','i','o','n','/',
         'x','-','z','i','p','-','c','o','m','p','r','e','s','s','e','d',0};
-    static const WCHAR app_xgzipW[] = {'a','p','p','l','i','c','a','t','i','o','n','/',
+static const WCHAR app_xgzipW[] = {'a','p','p','l','i','c','a','t','i','o','n','/',
         'x','-','g','z','i','p','-','c','o','m','p','r','e','s','s','e','d',0};
-    static const WCHAR app_javaW[] = {'a','p','p','l','i','c','a','t','i','o','n','/',
-        'j','a','v','a',0};
-    static const WCHAR app_xmsdownloadW[] = {'a','p','p','l','i','c','a','t','i','o','n','/',
+static const WCHAR app_javaW[] = {'a','p','p','l','i','c','a','t','i','o','n','/','j','a','v','a',0};
+static const WCHAR app_xmsdownloadW[] = {'a','p','p','l','i','c','a','t','i','o','n','/',
         'x','-','m','s','d','o','w','n','l','o','a','d',0};
-    static const WCHAR text_plainW[] = {'t','e','x','t','/','p','l','a','i','n','\0'};
-    static const WCHAR app_octetstreamW[] = {'a','p','p','l','i','c','a','t','i','o','n','/',
+static const WCHAR text_plainW[] = {'t','e','x','t','/','p','l','a','i','n','\0'};
+static const WCHAR app_octetstreamW[] = {'a','p','p','l','i','c','a','t','i','o','n','/',
         'o','c','t','e','t','-','s','t','r','e','a','m','\0'};
 
-    static const struct {
-        LPCWSTR mime;
-        BOOL (*filter)(const BYTE *,DWORD);
-    } mime_filters_any_pos[] = {
-        {text_htmlW,       text_html_filter},
-        {text_xmlW,        text_xml_filter}
-    }, mime_filters[] = {
-        {text_richtextW,   text_richtext_filter},
-     /* {audio_xaiffW,     audio_xaiff_filter}, */
-        {audio_basicW,     audio_basic_filter},
-        {audio_wavW,       audio_wav_filter},
-        {image_gifW,       image_gif_filter},
-        {image_pjpegW,     image_pjpeg_filter},
-        {image_tiffW,      image_tiff_filter},
-        {image_xpngW,      image_xpng_filter},
-     /* {image_xbitmapW,   image_xbitmap_filter}, */
-        {image_bmpW,       image_bmp_filter},
-     /* {image_xjgW,       image_xjg_filter}, */
-     /* {image_xemfW,      image_xemf_filter}, */
-     /* {image_xwmfW,      image_xwmf_filter}, */
-        {video_aviW,       video_avi_filter},
-        {video_mpegW,      video_mpeg_filter},
-        {app_postscriptW,  application_postscript_filter},
-     /* {app_base64W,      application_base64_filter}, */
-     /* {app_macbinhex40W, application_macbinhex40_filter}, */
-        {app_pdfW,         application_pdf_filter},
-     /* {app_zcompressedW, application_xcompressed_filter}, */
-        {app_xzipW,        application_xzip_filter},
-        {app_xgzipW,       application_xgzip_filter},
-        {app_javaW,        application_java_filter},
-        {app_xmsdownloadW, application_xmsdownload},
-        {text_plainW,      text_plain_filter},
-        {app_octetstreamW, application_octet_stream_filter}
-    };
+static const struct {
+    const WCHAR *mime;
+    BOOL (*filter)(const BYTE *,DWORD);
+} mime_filters_any_pos[] = {
+    {text_htmlW,       text_html_filter},
+    {text_xmlW,        text_xml_filter}
+}, mime_filters[] = {
+    {text_richtextW,   text_richtext_filter},
+ /* {audio_xaiffW,     audio_xaiff_filter}, */
+    {audio_basicW,     audio_basic_filter},
+    {audio_wavW,       audio_wav_filter},
+    {image_gifW,       image_gif_filter},
+    {image_pjpegW,     image_pjpeg_filter},
+    {image_tiffW,      image_tiff_filter},
+    {image_xpngW,      image_xpng_filter},
+ /* {image_xbitmapW,   image_xbitmap_filter}, */
+    {image_bmpW,       image_bmp_filter},
+ /* {image_xjgW,       image_xjg_filter}, */
+ /* {image_xemfW,      image_xemf_filter}, */
+ /* {image_xwmfW,      image_xwmf_filter}, */
+    {video_aviW,       video_avi_filter},
+    {video_mpegW,      video_mpeg_filter},
+    {app_postscriptW,  application_postscript_filter},
+ /* {app_base64W,      application_base64_filter}, */
+ /* {app_macbinhex40W, application_macbinhex40_filter}, */
+    {app_pdfW,         application_pdf_filter},
+ /* {app_zcompressedW, application_xcompressed_filter}, */
+    {app_xzipW,        application_xzip_filter},
+    {app_xgzipW,       application_xgzip_filter},
+    {app_javaW,        application_java_filter},
+    {app_xmsdownloadW, application_xmsdownload},
+    {text_plainW,      text_plain_filter},
+    {app_octetstreamW, application_octet_stream_filter}
+};
+
+static BOOL is_known_mime_type(const WCHAR *mime)
+{
+    unsigned i;
+
+    for(i=0; i < sizeof(mime_filters_any_pos)/sizeof(*mime_filters_any_pos); i++) {
+        if(!strcmpW(mime, mime_filters_any_pos[i].mime))
+            return TRUE;
+    }
+
+    for(i=0; i < sizeof(mime_filters)/sizeof(*mime_filters); i++) {
+        if(!strcmpW(mime, mime_filters[i].mime))
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
+static HRESULT find_mime_from_buffer(const BYTE *buf, DWORD size, const WCHAR *proposed_mime, const WCHAR *url, WCHAR **ret_mime)
+{
+    int len, i, any_pos_mime = -1;
+    const WCHAR *ret = NULL;
 
     if(!buf || !size) {
         if(!proposed_mime)
@@ -565,6 +611,21 @@ static HRESULT find_mime_from_buffer(const BYTE *buf, DWORD size, const WCHAR *p
         if(ret == app_octetstreamW)
             ret = proposed_mime;
     }
+
+    if(url && (ret == app_octetstreamW || ret == text_plainW)) {
+        WCHAR *url_mime;
+        HRESULT hres;
+
+        hres = find_mime_from_url(url, &url_mime);
+        if(SUCCEEDED(hres)) {
+            if(!is_known_mime_type(url_mime)) {
+                *ret_mime = url_mime;
+                return hres;
+            }
+            CoTaskMemFree(url_mime);
+        }
+    }
+
     TRACE("found %s for %s\n", debugstr_w(ret), debugstr_an((const char*)buf, min(32, size)));
 
     len = strlenW(ret)+1;
@@ -599,35 +660,10 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
         return E_INVALIDARG;
 
     if(pwzMimeProposed || pBuffer)
-        return find_mime_from_buffer(pBuffer, cbSize, pwzMimeProposed, ppwzMimeOut);
+        return find_mime_from_buffer(pBuffer, cbSize, pwzMimeProposed, pwzUrl, ppwzMimeOut);
 
-    if(pwzUrl) {
-        HKEY hkey;
-        DWORD res, size;
-        LPCWSTR ptr;
-        WCHAR mime[64];
-
-        static const WCHAR wszContentType[] =
-                {'C','o','n','t','e','n','t',' ','T','y','p','e','\0'};
-
-        ptr = strrchrW(pwzUrl, '.');
-        if(!ptr)
-            return E_FAIL;
-
-        res = RegOpenKeyW(HKEY_CLASSES_ROOT, ptr, &hkey);
-        if(res != ERROR_SUCCESS)
-            return HRESULT_FROM_WIN32(res);
-
-        size = sizeof(mime);
-        res = RegQueryValueExW(hkey, wszContentType, NULL, NULL, (LPBYTE)mime, &size);
-        RegCloseKey(hkey);
-        if(res != ERROR_SUCCESS)
-            return HRESULT_FROM_WIN32(res);
-
-        *ppwzMimeOut = CoTaskMemAlloc(size);
-        memcpy(*ppwzMimeOut, mime, size);
-        return S_OK;
-    }
+    if(pwzUrl)
+        return find_mime_from_url(pwzUrl, ppwzMimeOut);
 
     return E_FAIL;
 }
