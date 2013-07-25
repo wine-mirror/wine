@@ -113,8 +113,48 @@ static void test_winmodule(void)
     ok(winmod.m_pCreateWndList == create_data+1, "winmod.m_pCreateWndList != create_data\n");
 }
 
+static DWORD cb_val;
+
+static void WINAPI term_callback(DWORD dw)
+{
+    cb_val = dw;
+}
+
+static void test_term(void)
+{
+    _ATL_MODULEW test;
+    HRESULT hres;
+
+    test.cbSize = sizeof(_ATL_MODULEW);
+
+    hres = AtlModuleInit(&test, NULL, NULL);
+    ok (hres == S_OK, "AtlModuleInit failed (0x%x).\n", (int)hres);
+
+    hres = AtlModuleAddTermFunc(&test, term_callback, 0x22);
+    ok (hres == S_OK, "AtlModuleAddTermFunc failed (0x%x).\n", (int)hres);
+
+    cb_val = 0xdeadbeef;
+    hres = AtlModuleTerm(&test);
+    ok (hres == S_OK, "AtlModuleTerm failed (0x%x).\n", (int)hres);
+    ok (cb_val == 0x22, "wrong callback value (0x%x).\n", (int)cb_val);
+
+    test.cbSize = FIELD_OFFSET(_ATL_MODULEW, dwAtlBuildVer);
+
+    hres = AtlModuleInit(&test, NULL, NULL);
+    ok (hres == S_OK, "AtlModuleInit failed (0x%x).\n", (int)hres);
+
+    hres = AtlModuleAddTermFunc(&test, term_callback, 0x23);
+    ok (hres == S_OK, "AtlModuleAddTermFunc failed (0x%x).\n", (int)hres);
+
+    cb_val = 0xdeadbeef;
+    hres = AtlModuleTerm(&test);
+    ok (hres == S_OK, "AtlModuleTerm failed (0x%x).\n", (int)hres);
+    ok (cb_val == 0xdeadbeef, "wrong callback value (0x%x).\n", (int)cb_val);
+}
+
 START_TEST(module)
 {
     test_StructSize();
     test_winmodule();
+    test_term();
 }
