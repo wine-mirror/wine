@@ -461,6 +461,49 @@ static void test_GetAbsolutePathName(void)
     RemoveDirectoryW(dir2);
 }
 
+static void test_GetFile(void)
+{
+    static const WCHAR get_file[] = {'g','e','t','_','f','i','l','e','.','t','s','t',0};
+
+    BSTR path = SysAllocString(get_file);
+    IFile *file;
+    HRESULT hr;
+    HANDLE hf;
+
+    hr = IFileSystem3_GetFile(fs3, path, NULL);
+    ok(hr == E_POINTER, "GetFile returned %x, expected E_POINTER\n", hr);
+    hr = IFileSystem3_GetFile(fs3, NULL, &file);
+    ok(hr == E_INVALIDARG, "GetFile returned %x, expected E_INVALIDARG\n", hr);
+
+    hf = CreateFileW(path, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if(hf != INVALID_HANDLE_VALUE) {
+        CloseHandle(hf);
+        skip("File already exists, skipping GetFile tests\n");
+        SysFreeString(path);
+        return;
+    }
+
+    file = (IFile*)0xdeadbeef;
+    hr = IFileSystem3_GetFile(fs3, path, &file);
+    ok(!file, "file != NULL\n");
+    ok(hr == CTL_E_FILENOTFOUND, "GetFile returned %x, expected CTL_E_FILENOTFOUND\n", hr);
+
+    hf = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+    if(hf == INVALID_HANDLE_VALUE) {
+        skip("Can't create temporary file\n");
+        SysFreeString(path);
+        return;
+    }
+    CloseHandle(hf);
+
+    hr = IFileSystem3_GetFile(fs3, path, &file);
+    ok(hr == S_OK, "GetFile returned %x, expected S_OK\n", hr);
+    IFile_Release(file);
+
+    DeleteFileW(path);
+    SysFreeString(path);
+}
+
 START_TEST(filesystem)
 {
     HRESULT hr;
@@ -482,6 +525,7 @@ START_TEST(filesystem)
     test_GetFileName();
     test_GetBaseName();
     test_GetAbsolutePathName();
+    test_GetFile();
 
     IFileSystem3_Release(fs3);
 
