@@ -862,9 +862,54 @@ static HRESULT WINAPI filesys_GetExtensionName(IFileSystem3 *iface, BSTR Path,
 static HRESULT WINAPI filesys_GetAbsolutePathName(IFileSystem3 *iface, BSTR Path,
                                             BSTR *pbstrResult)
 {
-    FIXME("%p %s %p\n", iface, debugstr_w(Path), pbstrResult);
+    static const WCHAR cur_path[] = {'.',0};
 
-    return E_NOTIMPL;
+    WCHAR buf[MAX_PATH], ch;
+    const WCHAR *path;
+    DWORD i, beg, len, exp_len;
+    WIN32_FIND_DATAW fdata;
+    HANDLE fh;
+
+    TRACE("%p %s %p\n", iface, debugstr_w(Path), pbstrResult);
+
+    if(!pbstrResult)
+        return E_POINTER;
+
+    if(!Path)
+        path = cur_path;
+    else
+        path = Path;
+
+    len = GetFullPathNameW(path, MAX_PATH, buf, NULL);
+    if(!len)
+        return E_FAIL;
+
+    buf[0] = toupperW(buf[0]);
+    if(len>3 && buf[len-1] == '\\')
+        buf[--len] = 0;
+
+    for(beg=3, i=3; i<=len; i++) {
+        if(buf[i]!='\\' && buf[i])
+            continue;
+
+        ch = buf[i];
+        buf[i] = 0;
+        fh = FindFirstFileW(buf, &fdata);
+        if(fh == INVALID_HANDLE_VALUE)
+            break;
+
+        exp_len = strlenW(fdata.cFileName);
+        if(exp_len == i-beg)
+            memcpy(buf+beg, fdata.cFileName, exp_len*sizeof(WCHAR));
+        FindClose(fh);
+        buf[i] = ch;
+        beg = i+1;
+    }
+
+    *pbstrResult = SysAllocString(buf);
+    if(!*pbstrResult)
+        return E_OUTOFMEMORY;
+    return S_OK;
 }
 
 static HRESULT WINAPI filesys_GetTempName(IFileSystem3 *iface, BSTR *pbstrResult)
