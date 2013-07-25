@@ -26,6 +26,7 @@
 #include "ole2.h"
 #include "olectl.h"
 #include "dispex.h"
+#include "ntsecapi.h"
 #include "scrrun.h"
 #include "scrrun_private.h"
 
@@ -868,9 +869,23 @@ static HRESULT WINAPI filesys_GetAbsolutePathName(IFileSystem3 *iface, BSTR Path
 
 static HRESULT WINAPI filesys_GetTempName(IFileSystem3 *iface, BSTR *pbstrResult)
 {
-    FIXME("%p %p\n", iface, pbstrResult);
+    static const WCHAR fmt[] = {'r','a','d','%','0','5','X','.','t','x','t',0};
 
-    return E_NOTIMPL;
+    DWORD random;
+
+    TRACE("%p %p\n", iface, pbstrResult);
+
+    if(!pbstrResult)
+        return E_POINTER;
+
+    *pbstrResult = SysAllocStringLen(NULL, 12);
+    if(!*pbstrResult)
+        return E_OUTOFMEMORY;
+
+    if(!RtlGenRandom(&random, sizeof(random)))
+        return E_FAIL;
+    sprintfW(*pbstrResult, fmt, random & 0xfffff);
+    return S_OK;
 }
 
 static HRESULT WINAPI filesys_DriveExists(IFileSystem3 *iface, BSTR DriveSpec,
