@@ -1198,8 +1198,8 @@
 @ stub _wctime32_s
 @ cdecl _wctime64(ptr) msvcrt._wctime64
 @ stub _wctime64_s
-@ stub _wctomb_l
-@ stub _wctomb_s_l
+@ cdecl _wctomb_l(ptr long ptr) msvcrt._wctomb_l
+@ cdecl _wctomb_s_l(ptr ptr long long ptr) msvcrt._wctomb_s_l
 # extern _wctype
 @ cdecl _wdupenv_s(ptr ptr wstr) msvcrt._wdupenv_s
 @ extern _wenviron msvcrt._wenviron
@@ -1556,7 +1556,7 @@
 @ cdecl wcsxfrm(ptr wstr long) msvcrt.wcsxfrm
 @ cdecl wctob(long) msvcrt.wctob
 @ cdecl wctomb(ptr long) msvcrt.wctomb
-@ stub wctomb_s
+@ cdecl wctomb_s(ptr ptr long long) msvcrt.wctomb_s
 @ varargs wprintf(wstr) msvcrt.wprintf
 @ varargs wprintf_s(wstr) msvcrt.wprintf_s
 @ varargs wscanf(wstr) msvcrt.wscanf
