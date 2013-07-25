@@ -123,15 +123,20 @@ HRESULT WINAPI AtlModuleLoadTypeLib(_ATL_MODULEW *pM, LPCOLESTR lpszIndex,
 
 HRESULT WINAPI AtlModuleTerm(_ATL_MODULE *pM)
 {
-    _ATL_TERMFUNC_ELEM *iter = pM->m_pTermFuncs, *tmp;
+    _ATL_TERMFUNC_ELEM *iter, *tmp;
 
     TRACE("(%p)\n", pM);
 
-    while(iter) {
-        iter->pFunc(iter->dw);
-        tmp = iter;
-        iter = iter->pNext;
-        HeapFree(GetProcessHeap(), 0, tmp);
+    if (pM->cbSize > ATLVer1Size)
+    {
+        iter = pM->m_pTermFuncs;
+
+        while(iter) {
+            iter->pFunc(iter->dw);
+            tmp = iter;
+            iter = iter->pNext;
+            HeapFree(GetProcessHeap(), 0, tmp);
+        }
     }
 
     return S_OK;
@@ -143,12 +148,15 @@ HRESULT WINAPI AtlModuleAddTermFunc(_ATL_MODULEW *pM, _ATL_TERMFUNC *pFunc, DWOR
 
     TRACE("(%p %p %ld)\n", pM, pFunc, dw);
 
-    termfunc_elem = HeapAlloc(GetProcessHeap(), 0, sizeof(_ATL_TERMFUNC_ELEM));
-    termfunc_elem->pFunc = pFunc;
-    termfunc_elem->dw = dw;
-    termfunc_elem->pNext = pM->m_pTermFuncs;
+    if (pM->cbSize > ATLVer1Size)
+    {
+        termfunc_elem = HeapAlloc(GetProcessHeap(), 0, sizeof(_ATL_TERMFUNC_ELEM));
+        termfunc_elem->pFunc = pFunc;
+        termfunc_elem->dw = dw;
+        termfunc_elem->pNext = pM->m_pTermFuncs;
 
-    pM->m_pTermFuncs = termfunc_elem;
+        pM->m_pTermFuncs = termfunc_elem;
+    }
 
     return S_OK;
 }
