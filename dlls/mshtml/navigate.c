@@ -1132,7 +1132,7 @@ static void on_stop_nsrequest(nsChannelBSC *This, HRESULT result)
             WARN("OnStopRequest failed: %08x\n", nsres);
     }
 
-    if(This->nschannel->load_group) {
+    if(This->nschannel && This->nschannel->load_group) {
         nsres = nsILoadGroup_RemoveRequest(This->nschannel->load_group,
                 (nsIRequest*)&This->nschannel->nsIHttpChannel_iface, NULL, request_result);
         if(NS_FAILED(nsres))
@@ -1759,6 +1759,7 @@ HRESULT create_channelbsc(IMoniker *mon, const WCHAR *headers, BYTE *post_data, 
         ret->bsc.post_data_len = post_data_size;
     }
 
+    TRACE("created %p\n", ret);
     *retval = ret;
     return S_OK;
 }
@@ -1954,7 +1955,7 @@ static void navigate_proc(task_t *_task)
     navigate_task_t *task = (navigate_task_t*)_task;
     HRESULT hres;
 
-    hres = set_moniker(&task->window->doc_obj->basedoc, task->mon, task->uri, NULL, task->bscallback, TRUE);
+    hres = set_moniker(task->window, task->mon, task->uri, NULL, task->bscallback, TRUE);
     if(SUCCEEDED(hres)) {
         set_current_mon(task->window, task->bscallback->bsc.mon, task->flags);
         set_current_uri(task->window, task->uri);
