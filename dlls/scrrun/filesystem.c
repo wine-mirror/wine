@@ -40,6 +40,13 @@ struct folder {
     LONG ref;
 };
 
+struct file {
+    IFile IFile_iface;
+    LONG ref;
+
+    WCHAR *path;
+};
+
 struct textstream {
     ITextStream ITextStream_iface;
     LONG ref;
@@ -57,9 +64,27 @@ static inline struct folder *impl_from_IFolder(IFolder *iface)
     return CONTAINING_RECORD(iface, struct folder, IFolder_iface);
 }
 
+static inline struct file *impl_from_IFile(IFile *iface)
+{
+    return CONTAINING_RECORD(iface, struct file, IFile_iface);
+}
+
 static inline struct textstream *impl_from_ITextStream(ITextStream *iface)
 {
     return CONTAINING_RECORD(iface, struct textstream, ITextStream_iface);
+}
+
+static inline HRESULT create_error(DWORD err)
+{
+    switch(err) {
+    case ERROR_FILE_NOT_FOUND: return CTL_E_FILENOTFOUND;
+    case ERROR_PATH_NOT_FOUND: return CTL_E_PATHNOTFOUND;
+    case ERROR_ACCESS_DENIED: return CTL_E_PERMISSIONDENIED;
+    case ERROR_FILE_EXISTS: return CTL_E_FILEALREADYEXISTS;
+    default:
+        FIXME("Unsupported error code: %d\n", err);
+        return E_FAIL;
+    }
 }
 
 static int textstream_check_iomode(struct textstream *This, enum iotype type)
@@ -602,6 +627,306 @@ static HRESULT create_folder(IFolder **folder)
     return S_OK;
 }
 
+static HRESULT WINAPI file_QueryInterface(IFile *iface, REFIID riid, void **obj)
+{
+    struct file *This = impl_from_IFile(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IFile) ||
+            IsEqualIID(riid, &IID_IDispatch) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IFile_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI file_AddRef(IFile *iface)
+{
+    struct file *This = impl_from_IFile(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI file_Release(IFile *iface)
+{
+    struct file *This = impl_from_IFile(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref)
+        heap_free(This->path);
+
+    return ref;
+}
+
+static HRESULT WINAPI file_GetTypeInfoCount(IFile *iface, UINT *pctinfo)
+{
+    struct file *This = impl_from_IFile(iface);
+
+    TRACE("(%p)->(%p)\n", This, pctinfo);
+
+    *pctinfo = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI file_GetTypeInfo(IFile *iface,
+        UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
+{
+    struct file *This = impl_from_IFile(iface);
+
+    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+
+    return get_typeinfo(IFile_tid, ppTInfo);
+}
+
+static HRESULT WINAPI file_GetIDsOfNames(IFile *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    struct file *This = impl_from_IFile(iface);
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid),
+            rgszNames, cNames, lcid, rgDispId);
+
+    hr = get_typeinfo(IFile_tid, &typeinfo);
+    if(SUCCEEDED(hr)) {
+        hr = ITypeInfo_GetIDsOfNames(typeinfo, rgszNames, cNames, rgDispId);
+        ITypeInfo_Release(typeinfo);
+    }
+    return hr;
+}
+
+static HRESULT WINAPI file_Invoke(IFile *iface, DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    struct file *This = impl_from_IFile(iface);
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+
+    hr = get_typeinfo(IFile_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_Invoke(typeinfo, iface, dispIdMember, wFlags,
+                pDispParams, pVarResult, pExcepInfo, puArgErr);
+        ITypeInfo_Release(typeinfo);
+    }
+    return hr;
+}
+
+static HRESULT WINAPI file_get_Path(IFile *iface, BSTR *pbstrPath)
+{
+    struct file *This = impl_from_IFile(iface);
+    FIXME("(%p)->(%p)\n", This, pbstrPath);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_get_Name(IFile *iface, BSTR *pbstrName)
+{
+    struct file *This = impl_from_IFile(iface);
+    FIXME("(%p)->(%p)\n", This, pbstrName);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_put_Name(IFile *iface, BSTR pbstrName)
+{
+    struct file *This = impl_from_IFile(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(pbstrName));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_get_ShortPath(IFile *iface, BSTR *pbstrPath)
+{
+    struct file *This = impl_from_IFile(iface);
+    FIXME("(%p)->(%p)\n", This, pbstrPath);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_get_ShortName(IFile *iface, BSTR *pbstrName)
+{
+    struct file *This = impl_from_IFile(iface);
+    FIXME("(%p)->(%p)\n", This, pbstrName);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_get_Drive(IFile *iface, IDrive **ppdrive)
+{
+    struct file *This = impl_from_IFile(iface);
+    FIXME("(%p)->(%p)\n", This, ppdrive);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_get_ParentFolder(IFile *iface, IFolder **ppfolder)
+{
+    struct file *This = impl_from_IFile(iface);
+    FIXME("(%p)->(%p)\n", This, ppfolder);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_get_Attributes(IFile *iface, FileAttribute *pfa)
+{
+    struct file *This = impl_from_IFile(iface);
+    FIXME("(%p)->(%p)\n", This, pfa);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_put_Attributes(IFile *iface, FileAttribute pfa)
+{
+    struct file *This = impl_from_IFile(iface);
+    FIXME("(%p)->(%x)\n", This, pfa);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_get_DateCreated(IFile *iface, DATE *pdate)
+{
+    struct file *This = impl_from_IFile(iface);
+    FIXME("(%p)->(%p)\n", This, pdate);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_get_DateLastModified(IFile *iface, DATE *pdate)
+{
+    struct file *This = impl_from_IFile(iface);
+    FIXME("(%p)->(%p)\n", This, pdate);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_get_DateLastAccessed(IFile *iface, DATE *pdate)
+{
+    struct file *This = impl_from_IFile(iface);
+    FIXME("(%p)->(%p)\n", This, pdate);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_get_Size(IFile *iface, VARIANT *pvarSize)
+{
+    struct file *This = impl_from_IFile(iface);
+    FIXME("(%p)->(%p)\n", This, pvarSize);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_get_Type(IFile *iface, BSTR *pbstrType)
+{
+    struct file *This = impl_from_IFile(iface);
+    FIXME("(%p)->(%p)\n", This, pbstrType);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_Delete(IFile *iface, VARIANT_BOOL Force)
+{
+    struct file *This = impl_from_IFile(iface);
+    FIXME("(%p)->(%x)\n", This, Force);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_Copy(IFile *iface, BSTR Destination, VARIANT_BOOL OverWriteFiles)
+{
+    struct file *This = impl_from_IFile(iface);
+    FIXME("(%p)->(%s %x)\n", This, debugstr_w(Destination), OverWriteFiles);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_Move(IFile *iface, BSTR Destination)
+{
+    struct file *This = impl_from_IFile(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(Destination));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_OpenAsTextStream(IFile *iface, IOMode IOMode, Tristate Format, ITextStream **ppts)
+{
+    struct file *This = impl_from_IFile(iface);
+    FIXME("(%p)->(%x %x %p)\n", This, IOMode, Format, ppts);
+    return E_NOTIMPL;
+}
+
+static const IFileVtbl file_vtbl = {
+    file_QueryInterface,
+    file_AddRef,
+    file_Release,
+    file_GetTypeInfoCount,
+    file_GetTypeInfo,
+    file_GetIDsOfNames,
+    file_Invoke,
+    file_get_Path,
+    file_get_Name,
+    file_put_Name,
+    file_get_ShortPath,
+    file_get_ShortName,
+    file_get_Drive,
+    file_get_ParentFolder,
+    file_get_Attributes,
+    file_put_Attributes,
+    file_get_DateCreated,
+    file_get_DateLastModified,
+    file_get_DateLastAccessed,
+    file_get_Size,
+    file_get_Type,
+    file_Delete,
+    file_Copy,
+    file_Move,
+    file_OpenAsTextStream
+};
+
+static HRESULT create_file(BSTR path, IFile **file)
+{
+    struct file *f;
+    DWORD len, attrs;
+
+    *file = NULL;
+
+    f = heap_alloc(sizeof(struct file));
+    if(!f)
+        return E_OUTOFMEMORY;
+
+    f->IFile_iface.lpVtbl = &file_vtbl;
+    f->ref = 1;
+
+    len = GetFullPathNameW(path, 0, NULL, NULL);
+    if(!len) {
+        heap_free(f);
+        return E_FAIL;
+    }
+
+    f->path = heap_alloc(len*sizeof(WCHAR));
+    if(!f->path) {
+        heap_free(f);
+        return E_OUTOFMEMORY;
+    }
+
+    if(!GetFullPathNameW(path, len, f->path, NULL)) {
+        heap_free(f->path);
+        heap_free(f);
+        return E_FAIL;
+    }
+
+    if(path[len-1]=='/' || path[len-1]=='\\')
+        path[len-1] = 0;
+
+    attrs = GetFileAttributesW(f->path);
+    if(attrs==INVALID_FILE_ATTRIBUTES ||
+            (attrs&(FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_DEVICE))) {
+        heap_free(f->path);
+        heap_free(f);
+        return create_error(GetLastError());
+    }
+
+    *file = &f->IFile_iface;
+    return S_OK;
+}
+
 static HRESULT WINAPI filesys_QueryInterface(IFileSystem3 *iface, REFIID riid, void **ppvObject)
 {
     TRACE("%p %s %p\n", iface, debugstr_guid(riid), ppvObject);
@@ -977,9 +1302,14 @@ static HRESULT WINAPI filesys_GetDrive(IFileSystem3 *iface, BSTR DriveSpec,
 static HRESULT WINAPI filesys_GetFile(IFileSystem3 *iface, BSTR FilePath,
                                             IFile **ppfile)
 {
-    FIXME("%p %s %p\n", iface, debugstr_w(FilePath), ppfile);
+    TRACE("%p %s %p\n", iface, debugstr_w(FilePath), ppfile);
 
-    return E_NOTIMPL;
+    if(!ppfile)
+        return E_POINTER;
+    if(!FilePath)
+        return E_INVALIDARG;
+
+    return create_file(FilePath, ppfile);
 }
 
 static HRESULT WINAPI filesys_GetFolder(IFileSystem3 *iface, BSTR FolderPath,
