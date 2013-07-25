@@ -2356,7 +2356,7 @@ static void test_wctomb(void)
 
     ret = p_wcrtomb((char*)dst, 0xffff, NULL);
     ok(ret == -1, "wcrtomb did not return -1\n");
-    ok(dst[0] == 0x3f, "dst[0] = %x, expected 0x20\n", dst[0]);
+    ok(dst[0] == 0x3f, "dst[0] = %x, expected 0x3f\n", dst[0]);
 
     setlocale(LC_ALL, "C");
 }
