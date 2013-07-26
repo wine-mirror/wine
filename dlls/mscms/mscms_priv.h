@@ -63,4 +63,4 @@ extern void set_profile_header( const struct profile *, const PROFILEHEADER * ) 
 
 #endif /* HAVE_LCMS2 */
 
-extern const char *MSCMS_dbgstr_tag(DWORD) DECLSPEC_HIDDEN;
+extern const char *dbgstr_tag(DWORD) DECLSPEC_HIDDEN;

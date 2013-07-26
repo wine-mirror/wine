@@ -41,7 +41,7 @@ static DWORD from_profile( HPROFILE profile )
     PROFILEHEADER header;
 
     GetColorProfileHeader( profile, &header );
-    TRACE( "color space: 0x%08x %s\n", header.phDataColorSpace, MSCMS_dbgstr_tag( header.phDataColorSpace ) );
+    TRACE( "color space: 0x%08x %s\n", header.phDataColorSpace, dbgstr_tag( header.phDataColorSpace ) );
 
     switch (header.phDataColorSpace)
     {
@@ -160,7 +160,7 @@ HTRANSFORM WINAPI CreateColorTransformW( LPLOGCOLORSPACEW space, HPROFILE dest,
     intent = space->lcsIntent > 3 ? INTENT_PERCEPTUAL : space->lcsIntent;
 
     TRACE( "lcsIntent:   %x\n", space->lcsIntent );
-    TRACE( "lcsCSType:   %s\n", MSCMS_dbgstr_tag( space->lcsCSType ) );
+    TRACE( "lcsCSType:   %s\n", dbgstr_tag( space->lcsCSType ) );
     TRACE( "lcsFilename: %s\n", debugstr_w( space->lcsFilename ) );
 
     in_format  = TYPE_RGB_16;

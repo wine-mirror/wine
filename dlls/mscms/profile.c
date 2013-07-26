@@ -35,17 +35,15 @@
 
 #include "mscms_priv.h"
 
-#define IS_SEPARATOR(ch)  ((ch) == '\\' || (ch) == '/')
-
-static void MSCMS_basename( LPCWSTR path, LPWSTR name )
+static void basename( LPCWSTR path, LPWSTR name )
 {
     INT i = lstrlenW( path );
 
-    while (i > 0 && !IS_SEPARATOR(path[i - 1])) i--;
+    while (i > 0 && path[i - 1] != '\\' && path[i - 1] != '/') i--;
     lstrcpyW( name, &path[i] );
 }
 
-static inline LPWSTR MSCMS_strdupW( LPCSTR str )
+static inline LPWSTR strdupW( LPCSTR str )
 {
     LPWSTR ret = NULL;
     if (str)
@@ -57,7 +55,7 @@ static inline LPWSTR MSCMS_strdupW( LPCSTR str )
     return ret;
 }
 
-const char *MSCMS_dbgstr_tag( DWORD tag )
+const char *dbgstr_tag( DWORD tag )
 {
     return wine_dbg_sprintf( "'%c%c%c%c'",
         (char)(tag >> 24), (char)(tag >> 16), (char)(tag >> 8), (char)(tag) );
@@ -136,7 +134,7 @@ static BOOL set_profile_device_key( PCWSTR file, const BYTE *value, DWORD size )
     }
     RegCreateKeyExW( HKEY_LOCAL_MACHINE, icmW, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &icm_key, NULL );
 
-    MSCMS_basename( file, basenameW );
+    basename( file, basenameW );
     sprintfW( classW, fmtW, (header.phClass >> 24) & 0xff, (header.phClass >> 16) & 0xff,
                             (header.phClass >> 8) & 0xff,  header.phClass & 0xff );
 
@@ -670,7 +668,7 @@ BOOL WINAPI GetStandardColorSpaceProfileW( PCWSTR machine, DWORD id, PWSTR profi
     return TRUE;
 }
 
-static BOOL MSCMS_header_from_file( LPCWSTR file, PPROFILEHEADER header )
+static BOOL header_from_file( LPCWSTR file, PPROFILEHEADER header )
 {
     BOOL ret;
     PROFILE profile;
@@ -712,7 +710,7 @@ static BOOL MSCMS_header_from_file( LPCWSTR file, PPROFILEHEADER header )
     return ret;
 }
 
-static BOOL MSCMS_match_profile( PENUMTYPEW rec, PPROFILEHEADER hdr )
+static BOOL match_profile( PENUMTYPEW rec, PPROFILEHEADER hdr )
 {
     if (rec->dwFields & ET_DEVICENAME)
     {
@@ -733,36 +731,36 @@ static BOOL MSCMS_match_profile( PENUMTYPEW rec, PPROFILEHEADER hdr )
     }
     if (rec->dwFields & ET_DEVICECLASS)
     {
-        FIXME( "ET_DEVICECLASS: %s\n", MSCMS_dbgstr_tag(rec->dwMediaType) );
+        FIXME( "ET_DEVICECLASS: %s\n", dbgstr_tag(rec->dwMediaType) );
     }
     if (rec->dwFields & ET_CMMTYPE)
     {
-        TRACE( "ET_CMMTYPE: %s\n", MSCMS_dbgstr_tag(rec->dwCMMType) );
+        TRACE( "ET_CMMTYPE: %s\n", dbgstr_tag(rec->dwCMMType) );
         if (rec->dwCMMType != hdr->phCMMType) return FALSE;
     }
     if (rec->dwFields & ET_CLASS)
     {
-        TRACE( "ET_CLASS: %s\n", MSCMS_dbgstr_tag(rec->dwClass) );
+        TRACE( "ET_CLASS: %s\n", dbgstr_tag(rec->dwClass) );
         if (rec->dwClass != hdr->phClass) return FALSE;
     }
     if (rec->dwFields & ET_DATACOLORSPACE)
     {
-        TRACE( "ET_DATACOLORSPACE: %s\n", MSCMS_dbgstr_tag(rec->dwDataColorSpace) );
+        TRACE( "ET_DATACOLORSPACE: %s\n", dbgstr_tag(rec->dwDataColorSpace) );
         if (rec->dwDataColorSpace != hdr->phDataColorSpace) return FALSE;
     }
     if (rec->dwFields & ET_CONNECTIONSPACE)
     {
-        TRACE( "ET_CONNECTIONSPACE: %s\n", MSCMS_dbgstr_tag(rec->dwConnectionSpace) );
+        TRACE( "ET_CONNECTIONSPACE: %s\n", dbgstr_tag(rec->dwConnectionSpace) );
         if (rec->dwConnectionSpace != hdr->phConnectionSpace) return FALSE;
     }
     if (rec->dwFields & ET_SIGNATURE)
     {
-        TRACE( "ET_SIGNATURE: %s\n", MSCMS_dbgstr_tag(rec->dwSignature) );
+        TRACE( "ET_SIGNATURE: %s\n", dbgstr_tag(rec->dwSignature) );
         if (rec->dwSignature != hdr->phSignature) return FALSE;
     }
     if (rec->dwFields & ET_PLATFORM)
     {
-        TRACE( "ET_PLATFORM: %s\n", MSCMS_dbgstr_tag(rec->dwPlatform) );
+        TRACE( "ET_PLATFORM: %s\n", dbgstr_tag(rec->dwPlatform) );
         if (rec->dwPlatform != hdr->phPlatform) return FALSE;
     }
     if (rec->dwFields & ET_PROFILEFLAGS)
@@ -772,12 +770,12 @@ static BOOL MSCMS_match_profile( PENUMTYPEW rec, PPROFILEHEADER hdr )
     }
     if (rec->dwFields & ET_MANUFACTURER)
     {
-        TRACE( "ET_MANUFACTURER: %s\n", MSCMS_dbgstr_tag(rec->dwManufacturer) );
+        TRACE( "ET_MANUFACTURER: %s\n", dbgstr_tag(rec->dwManufacturer) );
         if (rec->dwManufacturer != hdr->phManufacturer) return FALSE;
     }
     if (rec->dwFields & ET_MODEL)
     {
-        TRACE( "ET_MODEL: %s\n", MSCMS_dbgstr_tag(rec->dwModel) );
+        TRACE( "ET_MODEL: %s\n", dbgstr_tag(rec->dwModel) );
         if (rec->dwModel != hdr->phModel) return FALSE;
     }
     if (rec->dwFields & ET_ATTRIBUTES)
@@ -794,7 +792,7 @@ static BOOL MSCMS_match_profile( PENUMTYPEW rec, PPROFILEHEADER hdr )
     }
     if (rec->dwFields & ET_CREATOR)
     {
-        TRACE( "ET_CREATOR: %s\n", MSCMS_dbgstr_tag(rec->dwCreator) );
+        TRACE( "ET_CREATOR: %s\n", dbgstr_tag(rec->dwCreator) );
         if (rec->dwCreator != hdr->phCreator) return FALSE;
     }
     return TRUE;
@@ -843,17 +841,17 @@ BOOL WINAPI EnumColorProfilesA( PCSTR machine, PENUMTYPEA record, PBYTE buffer,
     memcpy( &recordW, record, sizeof(ENUMTYPEA) );
     if (record->pDeviceName)
     {
-        deviceW = MSCMS_strdupW( record->pDeviceName );
+        deviceW = strdupW( record->pDeviceName );
         if (!(recordW.pDeviceName = deviceW)) goto exit;
     }
 
-    fileW = MSCMS_strdupW( data.cFileName );
+    fileW = strdupW( data.cFileName );
     if (!fileW) goto exit;
 
-    ret = MSCMS_header_from_file( fileW, &header );
+    ret = header_from_file( fileW, &header );
     if (ret)
     {
-        match = MSCMS_match_profile( &recordW, &header );
+        match = match_profile( &recordW, &header );
         if (match)
         {
             len = sizeof(char) * (lstrlenA( data.cFileName ) + 1);
@@ -874,17 +872,17 @@ BOOL WINAPI EnumColorProfilesA( PCSTR machine, PENUMTYPEA record, PBYTE buffer,
 
     while (FindNextFileA( find, &data ))
     {
-        fileW = MSCMS_strdupW( data.cFileName );
+        fileW = strdupW( data.cFileName );
         if (!fileW) goto exit;
 
-        ret = MSCMS_header_from_file( fileW, &header );
+        ret = header_from_file( fileW, &header );
         if (!ret)
         {
             HeapFree( GetProcessHeap(), 0, fileW );
             continue;
         }
 
-        match = MSCMS_match_profile( &recordW, &header );
+        match = match_profile( &recordW, &header );
         if (match)
         {
             char **tmp = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
@@ -987,10 +985,10 @@ BOOL WINAPI EnumColorProfilesW( PCWSTR machine, PENUMTYPEW record, PBYTE buffer,
     profiles = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WCHAR *) + 1 );
     if (!profiles) goto exit;
 
-    ret = MSCMS_header_from_file( data.cFileName, &header );
+    ret = header_from_file( data.cFileName, &header );
     if (ret)
     {
-        match = MSCMS_match_profile( record, &header );
+        match = match_profile( record, &header );
         if (match)
         {
             len = sizeof(WCHAR) * (lstrlenW( data.cFileName ) + 1);
@@ -1009,10 +1007,10 @@ BOOL WINAPI EnumColorProfilesW( PCWSTR machine, PENUMTYPEW record, PBYTE buffer,
 
     while (FindNextFileW( find, &data ))
     {
-        ret = MSCMS_header_from_file( data.cFileName, &header );
+        ret = header_from_file( data.cFileName, &header );
         if (!ret) continue;
 
-        match = MSCMS_match_profile( record, &header );
+        match = match_profile( record, &header );
         if (match)
         {
             WCHAR **tmp = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
@@ -1115,7 +1113,7 @@ BOOL WINAPI InstallColorProfileW( PCWSTR machine, PCWSTR profile )
 
     if (!GetColorDirectoryW( machine, dest, &size )) return FALSE;
 
-    MSCMS_basename( profile, base );
+    basename( profile, base );
 
     lstrcatW( dest, slash );
     lstrcatW( dest, base );
