@@ -11590,6 +11590,99 @@ static void test_xsltext(void)
     free_bstrs();
 }
 
+struct attrtest_t {
+    const char *name;
+    const char *uri;
+    const char *prefix;
+    const char *href;
+};
+
+static struct attrtest_t attrtests[] = {
+    { "xmlns", "http://www.w3.org/2000/xmlns/", "xmlns", "xmlns" },
+    { "xmlns", "nondefaulturi", "xmlns", "xmlns" },
+    { "c", "http://www.w3.org/2000/xmlns/", NULL, "http://www.w3.org/2000/xmlns/" },
+    { "c", "nsref1", NULL, "nsref1" },
+    { "ns:c", "nsref1", "ns", "nsref1" },
+    { "xmlns:c", "http://www.w3.org/2000/xmlns/", "xmlns", "" },
+    { "xmlns:c", "nondefaulturi", "xmlns", "" },
+    { 0 }
+};
+
+static void test_create_attribute(void)
+{
+    struct attrtest_t *ptr = attrtests;
+    IXMLDOMElement *el;
+    IXMLDOMDocument *doc;
+    IXMLDOMNode *node, *node2;
+    VARIANT var;
+    HRESULT hr;
+    int i = 0;
+    BSTR str;
+
+    doc = create_document(&IID_IXMLDOMDocument);
+
+    while (ptr->name)
+    {
+        V_VT(&var) = VT_I1;
+        V_I1(&var) = NODE_ATTRIBUTE;
+        hr = IXMLDOMDocument_createNode(doc, var, _bstr_(ptr->name), _bstr_(ptr->uri), &node);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        str = NULL;
+        hr = IXMLDOMNode_get_prefix(node, &str);
+        if (ptr->prefix)
+        {
+            ok(hr == S_OK, "%d: got 0x%08x\n", i, hr);
+            ok(!lstrcmpW(str, _bstr_(ptr->prefix)), "%d: got prefix %s, expected %s\n", i, wine_dbgstr_w(str), ptr->prefix);
+        }
+        else
+        {
+            ok(hr == S_FALSE, "%d: got 0x%08x\n", i, hr);
+            ok(str == NULL, "%d: got prefix %s\n", i, wine_dbgstr_w(str));
+        }
+
+        str = NULL;
+        hr = IXMLDOMNode_get_namespaceURI(node, &str);
+        ok(hr == S_OK, "%d: got 0x%08x\n", i, hr);
+        ok(!lstrcmpW(str, _bstr_(ptr->href)), "%d: got uri %s, expected %s\n", i, wine_dbgstr_w(str), ptr->href);
+        SysFreeString(str);
+
+        IXMLDOMNode_Release(node);
+        free_bstrs();
+
+        i++;
+        ptr++;
+    }
+
+    V_VT(&var) = VT_I1;
+    V_I1(&var) = NODE_ELEMENT;
+    hr = IXMLDOMDocument_createNode(doc, var, _bstr_("e"), NULL, &node2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXMLDOMNode_QueryInterface(node2, &IID_IXMLDOMElement, (void**)&el);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IXMLDOMNode_Release(node2);
+
+    V_VT(&var) = VT_I1;
+    V_I1(&var) = NODE_ATTRIBUTE;
+    hr = IXMLDOMDocument_createNode(doc, var, _bstr_("xmlns:a"), _bstr_("http://www.w3.org/2000/xmlns/"), &node);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXMLDOMElement_setAttributeNode(el, (IXMLDOMAttribute*)node, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* for some reason default namespace uri is not reported */
+    hr = IXMLDOMNode_get_namespaceURI(node, &str);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(str, _bstr_("")), "got uri %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    IXMLDOMNode_Release(node);
+    IXMLDOMElement_Release(el);
+    IXMLDOMDocument_Release(doc);
+    free_bstrs();
+}
+
 START_TEST(domdoc)
 {
     IXMLDOMDocument *doc;
@@ -11644,6 +11737,7 @@ START_TEST(domdoc)
     test_setAttributeNode();
     test_put_dataType();
     test_createNode();
+    test_create_attribute();
     test_get_prefix();
     test_default_properties();
     test_selectSingleNode();
