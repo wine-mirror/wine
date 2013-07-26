@@ -1184,6 +1184,7 @@ typedef struct tagITypeInfoImpl
     /* Implemented Interfaces  */
     TLBImplType *impltypes;
 
+    struct list *pcustdata_list;
     struct list custdata_list;
 } ITypeInfoImpl;
 
@@ -2599,7 +2600,7 @@ static ITypeInfoImpl * MSFT_DoTypeInfo(
             break;
        }
     }
-    MSFT_CustData(pcx, tiBase.oCustData, &ptiRet->custdata_list);
+    MSFT_CustData(pcx, tiBase.oCustData, ptiRet->pcustdata_list);
 
     TRACE_(typelib)("%s guid: %s kind:%s\n",
        debugstr_w(TLB_get_bstr(ptiRet->Name)),
@@ -5367,7 +5368,8 @@ static ITypeInfoImpl* ITypeInfoImpl_Constructor(void)
       pTypeInfoImpl->hreftype = -1;
       pTypeInfoImpl->memidConstructor = MEMBERID_NIL;
       pTypeInfoImpl->memidDestructor = MEMBERID_NIL;
-      list_init(&pTypeInfoImpl->custdata_list);
+      pTypeInfoImpl->pcustdata_list = &pTypeInfoImpl->custdata_list;
+      list_init(pTypeInfoImpl->pcustdata_list);
     }
     TRACE("(%p)\n", pTypeInfoImpl);
     return pTypeInfoImpl;
@@ -7389,6 +7391,7 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
 
         *pTypeInfoImpl = *This;
         pTypeInfoImpl->ref = 0;
+        list_init(&pTypeInfoImpl->custdata_list);
 
         if (This->typekind == TKIND_INTERFACE)
             pTypeInfoImpl->typekind = TKIND_DISPATCH;
@@ -7785,7 +7788,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetCustData(
     if(!guid || !pVarVal)
         return E_INVALIDARG;
 
-    pCData = TLB_get_custdata_by_guid(&This->custdata_list, guid);
+    pCData = TLB_get_custdata_by_guid(This->pcustdata_list, guid);
 
     VariantInit( pVarVal);
     if (pCData)
@@ -7991,7 +7994,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetAllCustData(
 
     TRACE("%p %p\n", This, pCustData);
 
-    return TLB_copy_all_custdata(&This->custdata_list, pCustData);
+    return TLB_copy_all_custdata(This->pcustdata_list, pCustData);
 }
 
 /* ITypeInfo2::GetAllFuncCustData
@@ -9416,7 +9419,7 @@ static DWORD WMSFT_compile_typeinfo(ITypeInfoImpl *info, INT16 index, WMSFT_TLBF
             base->docstringoffs = -1;
         base->helpstringcontext = info->dwHelpStringContext;
         base->helpcontext = info->dwHelpContext;
-        base->oCustData = WMSFT_compile_custdata(&info->custdata_list, file);
+        base->oCustData = WMSFT_compile_custdata(info->pcustdata_list, file);
         base->cImplTypes = info->cImplTypes;
         base->cbSizeVft = info->cbSizeVft;
         base->size = info->cbSizeInstance;
@@ -10756,7 +10759,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetCustData(ICreateTypeInfo2 *iface,
 
     tlbguid = TLB_append_guid(&This->pTypeLib->guid_list, guid);
 
-    return TLB_set_custdata(&This->custdata_list, tlbguid, varVal);
+    return TLB_set_custdata(This->pcustdata_list, tlbguid, varVal);
 }
 
 static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncCustData(ICreateTypeInfo2 *iface,
