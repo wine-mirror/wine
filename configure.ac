@@ -1441,23 +1441,23 @@ then
 fi
 
 dnl **** Check for LittleCMS ***
-if test "x$with_lcms" != "xno"
+if test "x$with_lcms2" != "xno"
 then
     ac_save_CPPFLAGS="$CPPFLAGS"
-    WINE_PACKAGE_FLAGS(LCMS,[lcms],[-llcms])
-    AC_CHECK_HEADERS([lcms.h lcms/lcms.h])
-    if test "$ac_cv_header_lcms_h" = "yes" -o "$ac_cv_header_lcms_lcms_h" = "yes"
+    WINE_PACKAGE_FLAGS(LCMS2,[lcms2],[-llcms2])
+    AC_CHECK_HEADERS([lcms2.h])
+    if test "$ac_cv_header_lcms2_h" = "yes"
     then
-        AC_CHECK_LIB(lcms, cmsOpenProfileFromFile,
-            [AC_DEFINE(HAVE_LCMS, 1, [Define if you have the LittleCMS development environment])],[LCMS_LIBS=""])
+        AC_CHECK_LIB(lcms2, cmsOpenProfileFromFile,
+            [AC_DEFINE(HAVE_LCMS2, 1, [Define if you have the LittleCMS development environment])],[LCMS2_LIBS=""])
     else
-        LCMS_CFLAGS=""
-        LCMS_LIBS=""
+        LCMS2_CFLAGS=""
+        LCMS2_LIBS=""
     fi
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
-WINE_NOTICE_WITH(cms,[test "$ac_cv_lib_lcms_cmsOpenProfileFromFile" != "yes"],
-                 [liblcms ${notice_platform}development files not found, Color Management won't be supported.])
+WINE_NOTICE_WITH(cms,[test "$ac_cv_lib_lcms2_cmsOpenProfileFromFile" != "yes"],
+                 [liblcms2 ${notice_platform}development files not found, Color Management won't be supported.])
 
 dnl **** Check for FreeType 2 ****
 if test "x$with_freetype" != "xno"

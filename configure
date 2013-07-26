@@ -653,8 +653,8 @@ LIBGETTEXTPO
 ZLIB
 FREETYPE_LIBS
 FREETYPE_CFLAGS
-LCMS_LIBS
-LCMS_CFLAGS
+LCMS2_LIBS
+LCMS2_CFLAGS
 RESOLVLIBS
 GPHOTO2_PORT_LIBS
 GPHOTO2_PORT_CFLAGS
@@ -880,8 +880,8 @@ GPHOTO2_CFLAGS
 GPHOTO2_LIBS
 GPHOTO2_PORT_CFLAGS
 GPHOTO2_PORT_LIBS
-LCMS_CFLAGS
-LCMS_LIBS
+LCMS2_CFLAGS
+LCMS2_LIBS
 FREETYPE_CFLAGS
 FREETYPE_LIBS
 GSTREAMER_CFLAGS
@@ -1596,8 +1596,9 @@ Some influential environment variables:
               C compiler flags for libgphoto2_port, overriding pkg-config
   GPHOTO2_PORT_LIBS
               Linker flags for libgphoto2_port, overriding pkg-config
-  LCMS_CFLAGS C compiler flags for lcms, overriding pkg-config
-  LCMS_LIBS   Linker flags for lcms, overriding pkg-config
+  LCMS2_CFLAGS
+              C compiler flags for lcms2, overriding pkg-config
+  LCMS2_LIBS  Linker flags for lcms2, overriding pkg-config
   FREETYPE_CFLAGS
               C compiler flags for freetype2, overriding pkg-config
   FREETYPE_LIBS
@@ -10758,45 +10759,44 @@ rm -f core conftest.err conftest.$ac_objext \
     LIBS="$ac_save_LIBS"
 fi
 
-if test "x$with_lcms" != "xno"
+if test "x$with_lcms2" != "xno"
 then
     ac_save_CPPFLAGS="$CPPFLAGS"
-    if test -n "$LCMS_CFLAGS"; then :
+    if test -n "$LCMS2_CFLAGS"; then :
 
 elif test -n "$PKG_CONFIG"; then :
-  LCMS_CFLAGS=`$PKG_CONFIG --cflags lcms 2>/dev/null`
+  LCMS2_CFLAGS=`$PKG_CONFIG --cflags lcms2 2>/dev/null`
 fi
 
-CPPFLAGS="$CPPFLAGS $LCMS_CFLAGS"
-if test -n "$LCMS_LIBS"; then :
+CPPFLAGS="$CPPFLAGS $LCMS2_CFLAGS"
+if test -n "$LCMS2_LIBS"; then :
 
 elif test -n "$PKG_CONFIG"; then :
-  LCMS_LIBS=`$PKG_CONFIG --libs lcms 2>/dev/null`
+  LCMS2_LIBS=`$PKG_CONFIG --libs lcms2 2>/dev/null`
 fi
 
-LCMS_LIBS=${LCMS_LIBS:-"-llcms"}
-    for ac_header in lcms.h lcms/lcms.h
+LCMS2_LIBS=${LCMS2_LIBS:-"-llcms2"}
+    for ac_header in lcms2.h
 do :
-  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
-ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
-if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
+  ac_fn_c_check_header_mongrel "$LINENO" "lcms2.h" "ac_cv_header_lcms2_h" "$ac_includes_default"
+if test "x$ac_cv_header_lcms2_h" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
+#define HAVE_LCMS2_H 1
 _ACEOF
 
 fi
 
 done
 
-    if test "$ac_cv_header_lcms_h" = "yes" -o "$ac_cv_header_lcms_lcms_h" = "yes"
+    if test "$ac_cv_header_lcms2_h" = "yes"
     then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for cmsOpenProfileFromFile in -llcms" >&5
-$as_echo_n "checking for cmsOpenProfileFromFile in -llcms... " >&6; }
-if ${ac_cv_lib_lcms_cmsOpenProfileFromFile+:} false; then :
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for cmsOpenProfileFromFile in -llcms2" >&5
+$as_echo_n "checking for cmsOpenProfileFromFile in -llcms2... " >&6; }
+if ${ac_cv_lib_lcms2_cmsOpenProfileFromFile+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-llcms  $LIBS"
+LIBS="-llcms2  $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -10816,35 +10816,35 @@ return cmsOpenProfileFromFile ();
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_lcms_cmsOpenProfileFromFile=yes
+  ac_cv_lib_lcms2_cmsOpenProfileFromFile=yes
 else
-  ac_cv_lib_lcms_cmsOpenProfileFromFile=no
+  ac_cv_lib_lcms2_cmsOpenProfileFromFile=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_lcms_cmsOpenProfileFromFile" >&5
-$as_echo "$ac_cv_lib_lcms_cmsOpenProfileFromFile" >&6; }
-if test "x$ac_cv_lib_lcms_cmsOpenProfileFromFile" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_lcms2_cmsOpenProfileFromFile" >&5
+$as_echo "$ac_cv_lib_lcms2_cmsOpenProfileFromFile" >&6; }
+if test "x$ac_cv_lib_lcms2_cmsOpenProfileFromFile" = xyes; then :
 
-$as_echo "#define HAVE_LCMS 1" >>confdefs.h
+$as_echo "#define HAVE_LCMS2 1" >>confdefs.h
 
 else
-  LCMS_LIBS=""
+  LCMS2_LIBS=""
 fi
 
     else
-        LCMS_CFLAGS=""
-        LCMS_LIBS=""
+        LCMS2_CFLAGS=""
+        LCMS2_LIBS=""
     fi
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
-if test "$ac_cv_lib_lcms_cmsOpenProfileFromFile" != "yes"; then :
+if test "$ac_cv_lib_lcms2_cmsOpenProfileFromFile" != "yes"; then :
   case "x$with_cms" in
-  x)   as_fn_append wine_notices "|liblcms ${notice_platform}development files not found, Color Management won't be supported." ;;
+  x)   as_fn_append wine_notices "|liblcms2 ${notice_platform}development files not found, Color Management won't be supported." ;;
   xno) ;;
-  *)   as_fn_error $? "liblcms ${notice_platform}development files not found, Color Management won't be supported.
+  *)   as_fn_error $? "liblcms2 ${notice_platform}development files not found, Color Management won't be supported.
 This is an error since --with-cms was requested." "$LINENO" 5 ;;
 esac
 fi

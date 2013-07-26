@@ -1,8 +1,8 @@
 MODULE    = mscms.dll
 IMPORTLIB = mscms
 IMPORTS   = shlwapi advapi32
-EXTRAINCL = @LCMS_CFLAGS@
-EXTRALIBS = @LCMS_LIBS@
+EXTRAINCL = @LCMS2_CFLAGS@
+EXTRALIBS = @LCMS2_LIBS@
 
 C_SRCS = \
 	handle.c \

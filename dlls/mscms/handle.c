@@ -31,7 +31,7 @@
 
 #include "mscms_priv.h"
 
-#ifdef HAVE_LCMS
+#ifdef HAVE_LCMS2
 
 static CRITICAL_SECTION MSCMS_handle_cs;
 static CRITICAL_SECTION_DEBUG MSCMS_handle_cs_debug =
@@ -112,7 +112,7 @@ static HPROFILE alloc_profile_handle( void )
 
     for (index = 0; index < num_profile_handles; index++)
     {
-        if (!profiletable[index].iccprofile) return (HPROFILE)(index + 1);
+        if (!profiletable[index].data) return (HPROFILE)(index + 1);
     }
     if (!profiletable)
     {
@@ -165,11 +165,11 @@ BOOL close_profile( HPROFILE handle )
     {
         if (profile->access & PROFILE_READWRITE)
         {
-            DWORD written, size = MSCMS_get_profile_size( profile->iccprofile );
+            DWORD written;
 
             if (SetFilePointer( profile->file, 0, NULL, FILE_BEGIN ) ||
-                !WriteFile( profile->file, profile->iccprofile, size, &written, NULL ) ||
-                written != size)
+                !WriteFile( profile->file, profile->data, profile->size, &written, NULL ) ||
+                written != profile->size)
             {
                 ERR( "Unable to write color profile\n" );
             }
@@ -177,7 +177,7 @@ BOOL close_profile( HPROFILE handle )
         CloseHandle( profile->file );
     }
     cmsCloseProfile( profile->cmsprofile );
-    HeapFree( GetProcessHeap(), 0, profile->iccprofile );
+    HeapFree( GetProcessHeap(), 0, profile->data );
 
     memset( profile, 0, sizeof(struct profile) );
 
@@ -249,4 +249,4 @@ BOOL close_transform( HTRANSFORM handle )
     return TRUE;
 }
 
-#endif /* HAVE_LCMS */
+#endif /* HAVE_LCMS2 */
