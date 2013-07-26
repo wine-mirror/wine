@@ -1901,7 +1901,7 @@ static void WID_PullData(WINMM_Device *device)
 
         if(packet > 0)
             WARN("losing %u frames\n", packet);
-        device->played_frames += packet_len;
+        device->played_frames += packet_len - packet;
     }
 
 exit:
