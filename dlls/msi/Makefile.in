@@ -17,7 +17,6 @@ C_SRCS = \
 	dialog.c \
 	distinct.c \
 	drop.c \
-	events.c \
 	files.c \
 	font.c \
 	format.c \
