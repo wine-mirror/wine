@@ -735,27 +735,41 @@ static void event_subscribe( msi_dialog *dialog, const WCHAR *event, const WCHAR
     list_add_tail( &dialog->package->subscriptions, &sub->entry );
 }
 
+struct dialog_control
+{
+    msi_dialog  *dialog;
+    const WCHAR *control;
+};
+
+static UINT map_event( MSIRECORD *row, void *param )
+{
+    struct dialog_control *dc = param;
+    const WCHAR *event = MSI_RecordGetString( row, 3 );
+    const WCHAR *attribute = MSI_RecordGetString( row, 4 );
+
+    event_subscribe( dc->dialog, event, dc->control, attribute );
+    return ERROR_SUCCESS;
+}
+
 static void dialog_map_events( msi_dialog *dialog, const WCHAR *control )
 {
-    static const WCHAR Query[] = {
-        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+    static const WCHAR queryW[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
          '`','E','v','e','n','t','M','a','p','p','i','n','g','`',' ',
-        'W','H','E','R','E',' ',
-         '`','D','i','a','l','o','g','_','`',' ','=',' ','\'','%','s','\'',' ',
-        'A','N','D',' ',
-         '`','C','o','n','t','r','o','l','_','`',' ','=',' ','\'','%','s','\'',0
+         'W','H','E','R','E',' ','`','D','i','a','l','o','g','_','`',' ','=',' ','\'','%','s','\'',' ',
+         'A','N','D',' ','`','C','o','n','t','r','o','l','_','`',' ','=',' ','\'','%','s','\'',0};
+    MSIQUERY *view;
+    struct dialog_control dialog_control =
+    {
+        dialog,
+        control
     };
-    MSIRECORD *row;
-    LPCWSTR event, attribute;
 
-    row = MSI_QueryGetRecord( dialog->package->db, Query, dialog->name, control );
-    if (!row)
-        return;
-
-    event = MSI_RecordGetString( row, 3 );
-    attribute = MSI_RecordGetString( row, 4 );
-    event_subscribe( dialog, event, control, attribute );
-    msiobj_release( &row->hdr );
+    if (!MSI_OpenQuery( dialog->package->db, &view, queryW, dialog->name, control ))
+    {
+        MSI_IterateRecords( view, NULL, map_event, &dialog_control );
+        msiobj_release( &view->hdr );
+    }
 }
 
 /* everything except radio buttons */
