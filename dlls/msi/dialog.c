@@ -621,19 +621,25 @@ static void dialog_handle_event( msi_dialog *dialog, const WCHAR *control,
                                  const WCHAR *attribute, MSIRECORD *rec )
 {
     msi_control* ctrl;
-    LPCWSTR font_text, text = NULL;
-    LPWSTR font;
 
     ctrl = msi_dialog_find_control( dialog, control );
     if (!ctrl)
         return;
     if( !strcmpW( attribute, szText ) )
     {
+        const WCHAR *font_text, *text = NULL;
+        WCHAR *font, *text_fmt = NULL;
+
         font_text = MSI_RecordGetString( rec , 1 );
         font = msi_dialog_get_style( font_text, &text );
-        if (!text) text = szEmpty;
+        deformat_string( dialog->package, text, &text_fmt );
+        if (text_fmt) text = text_fmt;
+        else text = szEmpty;
+
         SetWindowTextW( ctrl->hwnd, text );
+
         msi_free( font );
+        msi_free( text_fmt );
         msi_dialog_check_messages( NULL );
     }
     else if( !strcmpW( attribute, szProgress ) )
