@@ -986,14 +986,6 @@ static HRESULT DirectSoundCaptureDevice_Initialize(
 
     EnterCriticalSection(&DSOUND_capturers_lock);
 
-    LIST_FOR_EACH_ENTRY(device, &DSOUND_capturers, DirectSoundCaptureDevice, entry){
-        if(IsEqualGUID(&device->guid, &devGUID)){
-            IMMDevice_Release(mmdevice);
-            LeaveCriticalSection(&DSOUND_capturers_lock);
-            return DSERR_ALLOCATED;
-        }
-    }
-
     hr = DirectSoundCaptureDevice_Create(&device);
     if (hr != DS_OK) {
         WARN("DirectSoundCaptureDevice_Create failed\n");
