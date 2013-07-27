@@ -4739,6 +4739,28 @@ static void test_mxwriter_dtd(void)
     ok(!lstrcmpW(_bstr_("<!ENTITY name \"value\">\r\n"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
+    /* external entities */
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_put_output(writer, dest);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = ISAXDeclHandler_externalEntityDecl(decl, NULL, 0, NULL, 0, NULL, 0);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = ISAXDeclHandler_externalEntityDecl(decl, _bstr_("name"), -1, NULL, 0, NULL, 0);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = ISAXDeclHandler_externalEntityDecl(decl, _bstr_("name"), strlen("name"), _bstr_("pubid"), strlen("pubid"),
+        _bstr_("sysid"), strlen("sysid"));
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_get_output(writer, &dest);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
+    ok(!lstrcmpW(_bstr_("<!ENTITY name PUBLIC \"pubid\" \"sysid\">\r\n"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    VariantClear(&dest);
+
     ISAXContentHandler_Release(content);
     ISAXLexicalHandler_Release(lexical);
     ISAXDeclHandler_Release(decl);

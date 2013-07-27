@@ -44,6 +44,7 @@ static const WCHAR spaceW[] = {' '};
 static const WCHAR quotW[]  = {'\"'};
 static const WCHAR closetagW[] = {'>','\r','\n'};
 static const WCHAR crlfW[] = {'\r','\n'};
+static const WCHAR entityW[] = {'<','!','E','N','T','I','T','Y',' '};
 
 /* should be ordered as encoding names are sorted */
 typedef enum
@@ -1576,7 +1577,6 @@ static HRESULT WINAPI SAXDeclHandler_internalEntityDecl(ISAXDeclHandler *iface,
     const WCHAR *name, int n_name, const WCHAR *value, int n_value)
 {
     mxwriter *This = impl_from_ISAXDeclHandler( iface );
-    static const WCHAR entityW[] = {'<','!','E','N','T','I','T','Y',' '};
 
     TRACE("(%p)->(%s:%d %s:%d)\n", This, debugstr_wn(name, n_name), n_name,
         debugstr_wn(value, n_value), n_value);
@@ -1601,10 +1601,39 @@ static HRESULT WINAPI SAXDeclHandler_externalEntityDecl(ISAXDeclHandler *iface,
     const WCHAR *name, int n_name, const WCHAR *publicId, int n_publicId,
     const WCHAR *systemId, int n_systemId)
 {
+    static const WCHAR publicW[] = {'P','U','B','L','I','C',' '};
+    static const WCHAR systemW[] = {'S','Y','S','T','E','M',' '};
     mxwriter *This = impl_from_ISAXDeclHandler( iface );
-    FIXME("(%p)->(%s:%d %s:%d %s:%d): stub\n", This, debugstr_wn(name, n_name), n_name,
+
+    TRACE("(%p)->(%s:%d %s:%d %s:%d)\n", This, debugstr_wn(name, n_name), n_name,
         debugstr_wn(publicId, n_publicId), n_publicId, debugstr_wn(systemId, n_systemId), n_systemId);
-    return E_NOTIMPL;
+
+    if (!name) return E_INVALIDARG;
+    if (publicId && !systemId) return E_INVALIDARG;
+    if (!publicId && !systemId) return E_INVALIDARG;
+
+    write_output_buffer(This->buffer, entityW, sizeof(entityW)/sizeof(WCHAR));
+    if (n_name) {
+        write_output_buffer(This->buffer, name, n_name);
+        write_output_buffer(This->buffer, spaceW, sizeof(spaceW)/sizeof(WCHAR));
+    }
+
+    if (publicId)
+    {
+        write_output_buffer(This->buffer, publicW, sizeof(publicW)/sizeof(WCHAR));
+        write_output_buffer_quoted(This->buffer, publicId, n_publicId);
+        write_output_buffer(This->buffer, spaceW, sizeof(spaceW)/sizeof(WCHAR));
+        write_output_buffer_quoted(This->buffer, systemId, n_systemId);
+    }
+    else
+    {
+        write_output_buffer(This->buffer, systemW, sizeof(systemW)/sizeof(WCHAR));
+        write_output_buffer_quoted(This->buffer, systemId, n_systemId);
+    }
+
+    write_output_buffer(This->buffer, closetagW, sizeof(closetagW)/sizeof(WCHAR));
+
+    return S_OK;
 }
 
 static const ISAXDeclHandlerVtbl SAXDeclHandlerVtbl = {
