@@ -35,6 +35,8 @@
 
 #include "wine/test.h"
 
+static const WCHAR emptyW[] = {0};
+
 #define EXPECT_HR(hr,hr_exp) \
     ok(hr == hr_exp, "got 0x%08x, expected 0x%08x\n", hr, hr_exp)
 
@@ -2890,7 +2892,6 @@ static void test_mxwriter_default_properties(const struct mxwriter_props_t *tabl
 static void test_mxwriter_properties(void)
 {
     static const WCHAR utf16W[] = {'U','T','F','-','1','6',0};
-    static const WCHAR emptyW[] = {0};
     static const WCHAR testW[] = {'t','e','s','t',0};
     ISAXContentHandler *content;
     IMXWriter *writer;
@@ -3041,7 +3042,6 @@ static void test_mxwriter_properties(void)
 
 static void test_mxwriter_flush(void)
 {
-    static const WCHAR emptyW[] = {0};
     ISAXContentHandler *content;
     IMXWriter *writer;
     LARGE_INTEGER pos;
@@ -5245,6 +5245,63 @@ static void test_mxattr_localname(void)
     }
 }
 
+static void test_mxwriter_indent(void)
+{
+    ISAXContentHandler *content;
+    IMXWriter *writer;
+    VARIANT dest;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER, &IID_IMXWriter, (void**)&writer);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    hr = IMXWriter_put_indent(writer, VARIANT_TRUE);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = IMXWriter_QueryInterface(writer, &IID_ISAXContentHandler, (void**)&content);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ISAXContentHandler_startDocument(content);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ISAXContentHandler_startElement(content, emptyW, 0, emptyW, 0, _bstr_("a"), -1, NULL);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ISAXContentHandler_characters(content, _bstr_(""), 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ISAXContentHandler_startElement(content, emptyW, 0, emptyW, 0, _bstr_("b"), -1, NULL);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ISAXContentHandler_startElement(content, emptyW, 0, emptyW, 0, _bstr_("c"), -1, NULL);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ISAXContentHandler_endElement(content, emptyW, 0, emptyW, 0, _bstr_("c"), -1);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ISAXContentHandler_endElement(content, emptyW, 0, emptyW, 0, _bstr_("b"), -1);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ISAXContentHandler_endElement(content, emptyW, 0, emptyW, 0, _bstr_("a"), -1);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ISAXContentHandler_endDocument(content);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_get_output(writer, &dest);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
+    ok(!lstrcmpW(_bstr_("<?xml version=\"1.0\" encoding=\"UTF-16\" standalone=\"no\"?>\r\n<a><b>\r\n\t\t<c/>\r\n\t</b>\r\n</a>"), V_BSTR(&dest)),
+        "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    VariantClear(&dest);
+
+    ISAXContentHandler_Release(content);
+    IMXWriter_Release(writer);
+
+    free_bstrs();
+}
+
 START_TEST(saxreader)
 {
     ISAXXMLReader *reader;
@@ -5292,6 +5349,7 @@ START_TEST(saxreader)
         test_mxwriter_stream();
         test_mxwriter_encoding();
         test_mxwriter_dispex();
+        test_mxwriter_indent();
     }
     else
         win_skip("MXXMLWriter not supported\n");
