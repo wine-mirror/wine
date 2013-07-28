@@ -21,7 +21,7 @@
 @ stdcall USBD_GetUSBDIVersion(ptr)
 @ stub USBD_InitializeDevice
 @ stub USBD_MakePdoName
-@ stub USBD_ParseConfigurationDescriptor
+@ stdcall USBD_ParseConfigurationDescriptor(ptr long long)
 @ stdcall _USBD_ParseConfigurationDescriptorEx@28(ptr ptr long long long long long) USBD_ParseConfigurationDescriptorEx
 @ stdcall _USBD_ParseDescriptors@16(ptr long ptr long) USBD_ParseDescriptors
 @ stub USBD_QueryBusTime
