@@ -380,9 +380,9 @@ static int dump_msft_guidtab(seg_t *seg)
     return -1;
 }
 
-static int dump_msft_res07(seg_t *seg)
+static int dump_msft_namehashtab(seg_t *seg)
 {
-    print_begin_block("res07");
+    print_begin_block("NameHashTab");
 
     dump_binary(seg->length); /* FIXME */
 
@@ -661,7 +661,7 @@ seg_t segdir[] = {
     {"RefTab",            dump_msft_reftabs, -1, -1},
     {"LibTab",            dump_msft_libtab, -1, -1},
     {"GuidTab",           dump_msft_guidtab, -1, -1},
-    {"res07",             dump_msft_res07, -1, -1},
+    {"NameHashTab",       dump_msft_namehashtab, -1, -1},
     {"pNameTab",          dump_msft_nametab, -1, -1},
     {"pStringTab",        dump_msft_stringtab, -1, -1},
     {"TypedescTab",       dump_msft_typedesctab, -1, -1},
