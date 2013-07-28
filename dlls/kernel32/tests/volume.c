@@ -53,6 +53,7 @@ static BOOL (WINAPI *pFindVolumeClose)(HANDLE);
 static UINT (WINAPI *pGetLogicalDriveStringsA)(UINT,LPSTR);
 static UINT (WINAPI *pGetLogicalDriveStringsW)(UINT,LPWSTR);
 static BOOL (WINAPI *pGetVolumeInformationA)(LPCSTR, LPSTR, DWORD, LPDWORD, LPDWORD, LPDWORD, LPSTR, DWORD);
+static BOOL (WINAPI *pGetVolumePathNameA)(LPCSTR, LPSTR, DWORD);
 static BOOL (WINAPI *pGetVolumePathNamesForVolumeNameA)(LPCSTR, LPSTR, DWORD, LPDWORD);
 static BOOL (WINAPI *pGetVolumePathNamesForVolumeNameW)(LPCWSTR, LPWSTR, DWORD, LPDWORD);
 
@@ -588,6 +589,83 @@ static void test_disk_extents(void)
     CloseHandle( handle );
 }
 
+static void test_GetVolumePathNameA(void)
+{
+    BOOL ret;
+    char volume[MAX_PATH];
+    char expected[] = "C:\\", pathC1[] = "C:\\", pathC2[] = "C::";
+    DWORD error;
+
+    if (!pGetVolumePathNameA)
+    {
+        win_skip("required functions not found\n");
+        return;
+    }
+
+    SetLastError( 0xdeadbeef );
+    ret = pGetVolumePathNameA(NULL, NULL, 0);
+    error = GetLastError();
+    ok(!ret, "expected failure\n");
+todo_wine
+    ok(error == ERROR_INVALID_PARAMETER
+       || broken( error == 0xdeadbeef) /* <=XP */,
+       "expected ERROR_INVALID_PARAMETER got %u\n", error);
+
+    SetLastError( 0xdeadbeef );
+    ret = pGetVolumePathNameA("", NULL, 0);
+    error = GetLastError();
+    ok(!ret, "expected failure\n");
+todo_wine
+    ok(error == ERROR_INVALID_PARAMETER
+       || broken( error == 0xdeadbeef) /* <=XP */,
+       "expected ERROR_INVALID_PARAMETER got %u\n", error);
+
+    SetLastError( 0xdeadbeef );
+    ret = pGetVolumePathNameA(pathC1, NULL, 0);
+    error = GetLastError();
+    ok(!ret, "expected failure\n");
+todo_wine
+    ok(error == ERROR_INVALID_PARAMETER
+       || broken(error == ERROR_FILENAME_EXCED_RANGE) /* <=XP */,
+       "expected ERROR_INVALID_PARAMETER got %u\n", error);
+
+    SetLastError( 0xdeadbeef );
+    ret = pGetVolumePathNameA(pathC1, volume, 0);
+    error = GetLastError();
+    ok(!ret, "expected failure\n");
+todo_wine
+    ok(error == ERROR_INVALID_PARAMETER
+       || broken(error == ERROR_FILENAME_EXCED_RANGE ) /* <=XP */,
+       "expected ERROR_INVALID_PARAMETER got %u\n", error);
+
+    SetLastError( 0xdeadbeef );
+    ret = pGetVolumePathNameA(pathC1, volume, 1);
+    error = GetLastError();
+    ok(!ret, "expected failure\n");
+todo_wine
+    ok(error == ERROR_FILENAME_EXCED_RANGE, "expected ERROR_FILENAME_EXCED_RANGE got %u\n", error);
+
+    volume[0] = '\0';
+    ret = pGetVolumePathNameA(pathC1, volume, sizeof(volume));
+    ok(ret, "expected success\n");
+    ok(!strcmp(expected, volume), "expected name '%s', returned '%s'\n", pathC1, volume);
+
+    pathC1[0] = tolower(pathC1[0]);
+    volume[0] = '\0';
+    ret = pGetVolumePathNameA(pathC1, volume, sizeof(volume));
+    ok(ret, "expected success\n");
+todo_wine
+    ok(!strcmp(expected, volume) || broken(!strcasecmp(expected, volume)) /* <=XP */,
+       "expected name '%s', returned '%s'\n", expected, volume);
+
+    volume[0] = '\0';
+    ret = pGetVolumePathNameA(pathC2, volume, sizeof(volume));
+todo_wine
+    ok(ret, "expected success\n");
+todo_wine
+    ok(!strcmp(expected, volume), "expected name '%s', returned '%s'\n", expected, volume);
+}
+
 static void test_GetVolumePathNamesForVolumeNameA(void)
 {
     BOOL ret;
@@ -926,12 +1004,14 @@ START_TEST(volume)
     pGetLogicalDriveStringsA = (void *) GetProcAddress(hdll, "GetLogicalDriveStringsA");
     pGetLogicalDriveStringsW = (void *) GetProcAddress(hdll, "GetLogicalDriveStringsW");
     pGetVolumeInformationA = (void *) GetProcAddress(hdll, "GetVolumeInformationA");
+    pGetVolumePathNameA = (void *) GetProcAddress(hdll, "GetVolumePathNameA");
     pGetVolumePathNamesForVolumeNameA = (void *) GetProcAddress(hdll, "GetVolumePathNamesForVolumeNameA");
     pGetVolumePathNamesForVolumeNameW = (void *) GetProcAddress(hdll, "GetVolumePathNamesForVolumeNameW");
 
     test_query_dos_deviceA();
     test_define_dos_deviceA();
     test_FindFirstVolume();
+    test_GetVolumePathNameA();
     test_GetVolumeNameForVolumeMountPointA();
     test_GetVolumeNameForVolumeMountPointW();
     test_GetLogicalDriveStringsA();
