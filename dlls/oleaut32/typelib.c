@@ -9409,10 +9409,14 @@ static DWORD WMSFT_compile_typeinfo(ITypeInfoImpl *info, INT16 index, WMSFT_TLBF
         else
             base->posguid = -1;
         base->flags = info->wTypeFlags;
-        if(info->Name)
+        if(info->Name) {
             base->NameOffset = info->Name->offset;
-        else
+
+            ((unsigned char*)file->name_seg.data)[info->Name->offset+9] = 0x38;
+            *(HREFTYPE*)((unsigned char*)file->name_seg.data+info->Name->offset) = info->hreftype;
+        }else {
             base->NameOffset = -1;
+        }
         base->version = (info->wMinorVerNum << 16) | info->wMajorVerNum;
         if(info->DocString)
             base->docstringoffs = info->DocString->offset;
