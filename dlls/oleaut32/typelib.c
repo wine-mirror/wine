@@ -8620,7 +8620,7 @@ typedef struct tagWMSFT_TLBFile {
     WMSFT_SegContents ref_seg;
     WMSFT_SegContents lib_seg;
     WMSFT_SegContents guid_seg;
-    WMSFT_SegContents res07_seg;
+    WMSFT_SegContents namehash_seg;
     WMSFT_SegContents name_seg;
     WMSFT_SegContents string_seg;
     WMSFT_SegContents typdesc_seg;
@@ -8725,7 +8725,7 @@ static HRESULT WMSFT_compile_names(ITypeLibImpl *This,
 
     last_offs = 0;
     LIST_FOR_EACH_ENTRY(str, &This->name_list, TLBString, entry) {
-        int size;
+        int size, hash;
         MSFT_NameIntro *intro = (MSFT_NameIntro*)data;
 
         size = WideCharToMultiByte(CP_ACP, 0, str->str, strlenW(str->str),
@@ -8738,11 +8738,12 @@ static HRESULT WMSFT_compile_names(ITypeLibImpl *This,
         data[sizeof(MSFT_NameIntro) + size] = '\0';
 
         intro->hreftype = -1; /* TODO? */
-        intro->next_hash = -1;
         intro->namelen = size & 0xFF;
         /* TODO: namelen & 0xFF00 == ??? maybe HREF type indicator? */
-        intro->namelen |= LHashValOfNameSysA(This->syskind,
-                This->lcid, data + sizeof(MSFT_NameIntro)) << 16;
+        hash = LHashValOfNameSysA(This->syskind, This->lcid, data + sizeof(MSFT_NameIntro));
+        intro->namelen |= hash << 16;
+        intro->next_hash = ((DWORD*)file->namehash_seg.data)[hash & 0x7f];
+        ((DWORD*)file->namehash_seg.data)[hash & 0x7f] = last_offs;
 
         memset(data + sizeof(MSFT_NameIntro) + size, 0x57,
                 str->offset - size - sizeof(MSFT_NameIntro));
@@ -9587,17 +9588,11 @@ static void WMSFT_compile_lib(ITypeLibImpl *This, WMSFT_TLBFile *file)
 #endif
 }
 
-static void WMSFT_compile_res07(ITypeLibImpl *This, WMSFT_TLBFile *file)
+static void WMSFT_compile_namehash(ITypeLibImpl *This, WMSFT_TLBFile *file)
 {
-    /* TODO: What actually goes here?
-     * Wild speculation:
-     * It's something to do with the Name table (and string table?). When you
-     * add a new name, the offset to that name from within the Name table gets
-     * stuck somewhere in res07, apparently starting at the end of the segment
-     * then moving backwards at a rate of 3 bytes per char in the Name. */
-    file->res07_seg.len = 0x200;
-    file->res07_seg.data = heap_alloc(file->res07_seg.len);
-    memset(file->res07_seg.data, 0xFF, file->res07_seg.len);
+    file->namehash_seg.len = 0x200;
+    file->namehash_seg.data = heap_alloc(file->namehash_seg.len);
+    memset(file->namehash_seg.data, 0xFF, file->namehash_seg.len);
 }
 
 static void tmp_fill_segdir_seg(MSFT_pSeg *segdir, WMSFT_SegContents *contents, DWORD *running_offset)
@@ -9645,7 +9640,7 @@ static void WMSFT_free_file(WMSFT_TLBFile *file)
     HeapFree(GetProcessHeap(), 0, file->ref_seg.data);
     HeapFree(GetProcessHeap(), 0, file->impinfo_seg.data);
     HeapFree(GetProcessHeap(), 0, file->impfile_seg.data);
-    HeapFree(GetProcessHeap(), 0, file->res07_seg.data);
+    HeapFree(GetProcessHeap(), 0, file->namehash_seg.data);
     HeapFree(GetProcessHeap(), 0, file->name_seg.data);
     HeapFree(GetProcessHeap(), 0, file->string_seg.data);
     HeapFree(GetProcessHeap(), 0, file->typdesc_seg.data);
@@ -9686,6 +9681,7 @@ static HRESULT WINAPI ICreateTypeLib2_fnSaveAllChanges(ICreateTypeLib2 *iface)
     file.header.res48 = 0x80;
     file.header.dispatchpos = This->dispatch_href;
 
+    WMSFT_compile_namehash(This, &file);
     /* do name and string compilation to get offsets for other compilations */
     hres = WMSFT_compile_names(This, &file);
     if (FAILED(hres)){
@@ -9749,7 +9745,6 @@ static HRESULT WINAPI ICreateTypeLib2_fnSaveAllChanges(ICreateTypeLib2 *iface)
     WMSFT_compile_typeinfo_seg(This, &file, junk + junk_offs);
     WMSFT_compile_impinfo(This, &file);
     WMSFT_compile_lib(This, &file);
-    WMSFT_compile_res07(This, &file);
 
     running_offset = 0;
 
@@ -9781,7 +9776,7 @@ static HRESULT WINAPI ICreateTypeLib2_fnSaveAllChanges(ICreateTypeLib2 *iface)
     tmp_fill_segdir_seg(&file.segdir.pImpFiles, &file.impfile_seg, &running_offset);
 
     TRACE("res07 at: 0x%x\n", running_offset);
-    tmp_fill_segdir_seg(&file.segdir.res07, &file.res07_seg, &running_offset);
+    tmp_fill_segdir_seg(&file.segdir.res07, &file.namehash_seg, &running_offset);
 
     TRACE("nametab at: 0x%x\n", running_offset);
     tmp_fill_segdir_seg(&file.segdir.pNametab, &file.name_seg, &running_offset);
@@ -9848,7 +9843,7 @@ static HRESULT WINAPI ICreateTypeLib2_fnSaveAllChanges(ICreateTypeLib2 *iface)
     WMSFT_write_segment(outfile, &file.ref_seg);
     WMSFT_write_segment(outfile, &file.impinfo_seg);
     WMSFT_write_segment(outfile, &file.impfile_seg);
-    WMSFT_write_segment(outfile, &file.res07_seg);
+    WMSFT_write_segment(outfile, &file.namehash_seg);
     WMSFT_write_segment(outfile, &file.name_seg);
     WMSFT_write_segment(outfile, &file.string_seg);
     WMSFT_write_segment(outfile, &file.typdesc_seg);
