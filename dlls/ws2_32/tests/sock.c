@@ -1665,17 +1665,49 @@ static void test_WSASocket(void)
 {
     SOCKET sock = INVALID_SOCKET;
     WSAPROTOCOL_INFOA *pi;
-    int providers[] = {6, 0};
-    int ret, err;
+    int wsaproviders[] = {IPPROTO_TCP, IPPROTO_IP};
+    int autoprotocols[] = {IPPROTO_TCP, IPPROTO_UDP};
+    int items, err, size, socktype, i, j;
     UINT pi_size;
+
+    SetLastError(0xdeadbeef);
+    ok(WSASocketA(0, 0, 0, NULL, 0, 0) == INVALID_SOCKET, "WSASocketA should have failed\n");
+    err = WSAGetLastError();
+todo_wine
+    ok(err == WSAEINVAL, "Expected 10022, received %d\n", err);
+
+    sock = WSASocketA(AF_INET, 0, 0, NULL, 0, 0);
+todo_wine
+    ok(sock != INVALID_SOCKET, "WSASocketA should have succeeded\n");
+    closesocket(sock);
+
+    sock = WSASocketA(AF_INET, SOCK_STREAM, 0, NULL, 0, 0);
+    ok(sock != INVALID_SOCKET, "WSASocketA should have succeeded\n");
+    closesocket(sock);
+
+    sock = WSASocketA(AF_INET, 0, IPPROTO_TCP, NULL, 0, 0);
+todo_wine
+    ok(sock != INVALID_SOCKET, "WSASocketA should have succeeded\n");
+    closesocket(sock);
+
+    SetLastError(0xdeadbeef);
+    ok(WSASocketA(0, SOCK_STREAM, 0, NULL, 0, 0) == INVALID_SOCKET, "WSASocketA should have failed\n");
+    err = WSAGetLastError();
+todo_wine
+    ok(err == WSAEINVAL, "Expected 10022, received %d\n", err);
+
+    sock = WSASocketA(0, 0, IPPROTO_TCP, NULL, 0, 0);
+todo_wine
+    ok(sock != INVALID_SOCKET, "WSASocketA should have succeeded\n");
+    closesocket(sock);
 
     /* Set pi_size explicitly to a value below 2*sizeof(WSAPROTOCOL_INFOA)
      * to avoid a crash on win98.
      */
     pi_size = 0;
-    ret = WSAEnumProtocolsA(providers, NULL, &pi_size);
-    ok(ret == SOCKET_ERROR, "WSAEnumProtocolsA({6,0}, NULL, 0) returned %d\n",
-            ret);
+    items = WSAEnumProtocolsA(wsaproviders, NULL, &pi_size);
+    ok(items == SOCKET_ERROR, "WSAEnumProtocolsA({6,0}, NULL, 0) returned %d\n",
+            items);
     err = WSAGetLastError();
     ok(err == WSAENOBUFS, "WSAEnumProtocolsA error is %d, not WSAENOBUFS(%d)\n",
             err, WSAENOBUFS);
@@ -1687,11 +1719,11 @@ static void test_WSASocket(void)
         return;
     }
 
-    ret = WSAEnumProtocolsA(providers, pi, &pi_size);
-    ok(ret != SOCKET_ERROR, "WSAEnumProtocolsA failed, last error is %d\n",
+    items = WSAEnumProtocolsA(wsaproviders, pi, &pi_size);
+    ok(items != SOCKET_ERROR, "WSAEnumProtocolsA failed, last error is %d\n",
             WSAGetLastError());
 
-    if (ret == 0) {
+    if (items == 0) {
         skip("No protocols enumerated.\n");
         HeapFree(GetProcessHeap(), 0, pi);
         return;
@@ -1703,6 +1735,74 @@ static void test_WSASocket(void)
             WSAGetLastError());
 
     closesocket(sock);
+
+    HeapFree(GetProcessHeap(), 0, pi);
+
+    pi_size = 0;
+    items = WSAEnumProtocolsA(NULL, NULL, &pi_size);
+    ok(items == SOCKET_ERROR, "WSAEnumProtocolsA(NULL, NULL, 0) returned %d\n",
+            items);
+    err = WSAGetLastError();
+    ok(err == WSAENOBUFS, "WSAEnumProtocolsA error is %d, not WSAENOBUFS(%d)\n",
+            err, WSAENOBUFS);
+
+    pi = HeapAlloc(GetProcessHeap(), 0, pi_size);
+    ok(pi != NULL, "Failed to allocate memory\n");
+    if (pi == NULL) {
+        skip("Can't continue without memory.\n");
+        return;
+    }
+
+    items = WSAEnumProtocolsA(NULL, pi, &pi_size);
+    ok(items != SOCKET_ERROR, "WSAEnumProtocolsA failed, last error is %d\n",
+            WSAGetLastError());
+
+    /* when no protocol is specified the first socket type from WSAEnumProtocols is returned */
+    sock = WSASocketA(AF_INET, 0, 0, NULL, 0, 0);
+todo_wine
+    ok(sock != INVALID_SOCKET, "Failed to create socket: %d\n",
+            WSAGetLastError());
+
+todo_wine {
+    size = sizeof(socktype);
+    socktype = 0xdead;
+    ok(!getsockopt(sock, SOL_SOCKET, SO_TYPE, (char *) &socktype, &size), "getsockopt failed with %d\n",
+       WSAGetLastError());
+    ok(socktype == pi[0].iSocketType, "Wrong socket type, expected %d received %d\n",
+       pi[0].iSocketType, socktype);
+}
+    closesocket(sock);
+
+    /* when the protocol is specified the first socket type that matches the protocol is returned */
+    for (i = 0; i < sizeof(autoprotocols) / sizeof(autoprotocols[0]); i++)
+    {
+        sock = WSASocketA(0, 0, autoprotocols[i], NULL, 0, 0);
+todo_wine
+        ok(sock != INVALID_SOCKET, "Failed to create socket for protocol %d, received %d\n",
+                autoprotocols[i], WSAGetLastError());
+
+        size = sizeof(socktype);
+        socktype = 0xdead;
+todo_wine
+        ok(!getsockopt(sock, SOL_SOCKET, SO_TYPE, (char *) &socktype, &size), "getsockopt failed with %d\n",
+           WSAGetLastError());
+
+        for (j = 0; j < items; j++)
+        {
+            if (pi[j].iProtocol == autoprotocols[i])
+            {
+todo_wine
+                ok(socktype == pi[j].iSocketType, "Wrong socket type, expected %d received %d\n",
+                   pi[j].iSocketType, socktype);
+                break;
+            }
+        }
+todo_wine
+        ok(socktype != 0xdead, "Protocol %d not found in WSAEnumProtocols\n", autoprotocols[i]);
+
+        closesocket(sock);
+    }
+
     HeapFree(GetProcessHeap(), 0, pi);
 }
 
