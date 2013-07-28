@@ -9775,8 +9775,8 @@ static HRESULT WINAPI ICreateTypeLib2_fnSaveAllChanges(ICreateTypeLib2 *iface)
     TRACE("impfiles at: 0x%x\n", running_offset);
     tmp_fill_segdir_seg(&file.segdir.pImpFiles, &file.impfile_seg, &running_offset);
 
-    TRACE("res07 at: 0x%x\n", running_offset);
-    tmp_fill_segdir_seg(&file.segdir.res07, &file.namehash_seg, &running_offset);
+    TRACE("namehashtab at: 0x%x\n", running_offset);
+    tmp_fill_segdir_seg(&file.segdir.pNameHashTab, &file.namehash_seg, &running_offset);
 
     TRACE("nametab at: 0x%x\n", running_offset);
     tmp_fill_segdir_seg(&file.segdir.pNametab, &file.name_seg, &running_offset);

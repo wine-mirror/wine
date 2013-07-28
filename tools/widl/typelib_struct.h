@@ -101,8 +101,8 @@ typedef struct tagMSFT_SegDir {
                              /* hash table w offsets to guid????? */
 /*6*/MSFT_pSeg pGuidTab;     /* all guids are stored here together with  */
                              /* offset in some table???? */
-/*7*/MSFT_pSeg res07;        /* always created, always same size (0x200) */
-                             /* purpose largely unknown */
+/*7*/MSFT_pSeg pNameHashTab; /* always created, always same size (0x200) */
+                             /* hash table with offsets to names */
 /*8*/MSFT_pSeg pNametab;     /* name tables */
 /*9*/MSFT_pSeg pStringtab;   /* string table */
 /*A*/MSFT_pSeg pTypdescTab;  /* table with type descriptors */
