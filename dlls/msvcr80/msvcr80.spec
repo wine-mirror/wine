@@ -1183,7 +1183,7 @@
 @ cdecl _wcstod_l(wstr ptr) msvcrt._wcstod_l
 @ cdecl -ret64 _wcstoi64(wstr ptr long) msvcrt._wcstoi64
 @ cdecl -ret64 _wcstoi64_l(wstr ptr long ptr) msvcrt._wcstoi64_l
-@ stub _wcstol_l
+@ cdecl _wcstol_l(wstr ptr long ptr) msvcrt._wcstol_l
 @ cdecl _wcstombs_l(ptr ptr long ptr) msvcrt._wcstombs_l
 @ cdecl _wcstombs_s_l(ptr ptr long wstr long ptr) msvcrt._wcstombs_s_l
 @ cdecl -ret64 _wcstoui64(wstr ptr long) msvcrt._wcstoui64
