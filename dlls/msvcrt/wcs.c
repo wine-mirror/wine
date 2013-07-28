@@ -1613,6 +1613,24 @@ __int64 CDECL MSVCRT__wcstoi64(const MSVCRT_wchar_t *nptr,
 }
 
 /*********************************************************************
+ *  _wcstol_l (MSVCRT.@)
+ */
+MSVCRT_long CDECL MSVCRT__wcstol_l(const MSVCRT_wchar_t *s,
+        MSVCRT_wchar_t **end, int base, MSVCRT__locale_t locale)
+{
+    __int64 ret = MSVCRT__wcstoi64_l(s, end, base, locale);
+
+    if(ret > MSVCRT_LONG_MAX) {
+        ret = MSVCRT_LONG_MAX;
+        *MSVCRT__errno() = MSVCRT_ERANGE;
+    }else if(ret < MSVCRT_LONG_MIN) {
+        ret = MSVCRT_LONG_MIN;
+        *MSVCRT__errno() = MSVCRT_ERANGE;
+    }
+    return ret;
+}
+
+/*********************************************************************
  *  _wtoi_l (MSVCRT.@)
  */
 int __cdecl MSVCRT__wtoi_l(const MSVCRT_wchar_t *str, MSVCRT__locale_t locale)
