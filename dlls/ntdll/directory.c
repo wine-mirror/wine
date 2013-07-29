@@ -586,13 +586,13 @@ static char *get_default_drive_device( const char *root )
     if ((f = fopen( "/etc/mtab", "r" )))
     {
         device = parse_mount_entries( f, st.st_dev, st.st_ino );
-        endmntent( f );
+        fclose( f );
     }
     /* look through fstab too in case it's not mounted (for instance if it's an audio CD) */
     if (!device && (f = fopen( "/etc/fstab", "r" )))
     {
         device = parse_mount_entries( f, st.st_dev, st.st_ino );
-        endmntent( f );
+        fclose( f );
     }
     if (device)
     {
@@ -764,7 +764,7 @@ static char *get_device_mount_point( dev_t dev )
                 break;
             }
         }
-        endmntent( f );
+        fclose( f );
     }
     RtlLeaveCriticalSection( &dir_section );
 #elif defined(__APPLE__)
