@@ -5414,6 +5414,42 @@ static const struct registerset_test registerset_test_struct_struct_bool_float[]
     {SetMatrixTransposePointerArray, 0, 1, REGISTER_OUTPUT_SIZE / 16, 16, {0x3f800000}},
 };
 
+/*
+ * fxc.exe /Tvs_3_0
+ */
+#if 0
+row_major int3x2 ran[2] = {4, 5, 6, 1, 8, 1, 2, 3, 4, 7, 9, 1};
+float4 main(float4 pos : POSITION) : POSITION
+{
+    float4 tmp = 0;
+    int k;
+    for (k = 0; k < ran[1]._21; k++)
+        tmp.y += pos.y + tmp.x;
+    return tmp;
+}
+#endif
+static const DWORD registerset_blob_special_int[] =
+{
+0xfffe0300, 0x0038fffe, 0x42415443, 0x0000001c, 0x000000ab, 0xfffe0300, 0x00000001, 0x0000001c,
+0x00000100, 0x000000a4, 0x00000030, 0x00000001, 0x00000009, 0x00000034, 0x00000044, 0x006e6172,
+0x00020002, 0x00020003, 0x00000002, 0x00000000, 0x00000004, 0x00000005, 0x00000001, 0x00000000,
+0x00000006, 0x00000001, 0x00000001, 0x00000000, 0x00000008, 0x00000001, 0x00000001, 0x00000000,
+0x00000002, 0x00000003, 0x00000001, 0x00000000, 0x00000004, 0x00000007, 0x00000001, 0x00000000,
+0x00000009, 0x00000001, 0x00000001, 0x00000000, 0x335f7376, 0x4d00305f, 0x6f726369, 0x74666f73,
+0x29522820, 0x534c4820, 0x6853204c, 0x72656461, 0x6d6f4320, 0x656c6970, 0x2e392072, 0x392e3932,
+0x332e3235, 0x00313131, 0x05000051, 0xa00f0000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x0200001f, 0x80000000, 0x900f0000, 0x0200001f, 0x80000000, 0xe00f0000, 0x02000001, 0x80010000,
+0xa0000000, 0x01000026, 0xf0e40008, 0x03000002, 0x80010000, 0x80000000, 0x90550000, 0x00000027,
+0x02000001, 0xe0020000, 0x80000000, 0x02000001, 0xe00d0000, 0xa0000000, 0x0000ffff,
+};
+
+static const struct registerset_constants registerset_constants_special_int[] =
+{
+    {"ran",    {"ran", D3DXRS_INT4, 0, 9, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3,  2, 2, 0, 48, NULL}, 17},
+    {"ran[0]", {"ran", D3DXRS_INT4, 0, 3, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3,  2, 1, 0, 24, NULL}, 17},
+    {"ran[1]", {"ran", D3DXRS_INT4, 3, 3, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3,  2, 1, 0, 24, NULL}, 29},
+};
+
 static const struct
 {
     const char *name;
@@ -5677,6 +5713,10 @@ registerset_data[] =
         sizeof(registerset_test_struct_struct_int_float) / sizeof(*registerset_test_struct_struct_int_float),
         registerset_constants_struct_struct_int_float,
         sizeof(registerset_constants_struct_struct_int_float) / sizeof(*registerset_constants_struct_struct_int_float)},
+    /* special */
+    {"int ran", "ran", 0, D3DXRS_INT4, registerset_blob_special_int, NULL, 0,
+        registerset_constants_special_int,
+        sizeof(registerset_constants_special_int) / sizeof(*registerset_constants_special_int)},
 };
 
 static void registerset_clear(IDirect3DDevice9 *device)
@@ -6100,6 +6140,14 @@ registerset_defaults_data[] =
         0x00000049, 0x0000004a, 0x0000004b, 0x00000000, 0x0000004c, 0x00000000, 0x00000001, 0x00000000,
         0x666e7373, 0x00666e00, 0x00666e76, 0x00000321, 0x0000026c, 0x00000324, 0x00000280, 0x00000005},
         {0xffffffff, 0xffffffff, 0x00000000, 0xffffffff, 0xffffffff, 0x00000000}},
+    {"int ran", registerset_blob_special_int, 0, 36, 0,
+        {0x00000000},
+        {0x00000004, 0x00000005, 0x00000001, 0x00000000, 0x00000006, 0x00000001, 0x00000001, 0x00000000,
+        0x00000008, 0x00000001, 0x00000001, 0x00000000, 0x00000002, 0x00000003, 0x00000001, 0x00000000,
+        0x00000004, 0x00000007, 0x00000001, 0x00000000, 0x00000009, 0x00000001, 0x00000001, 0x00000000,
+        0x335f7376, 0x4d00305f, 0x6f726369, 0x74666f73, 0x29522820, 0x534c4820, 0x6853204c, 0x72656461,
+        0x6d6f4320, 0x656c6970, 0x2e392072, 0x392e3932},
+        {0x00000000}},
 };
 
 static void test_registerset_defaults(void)
