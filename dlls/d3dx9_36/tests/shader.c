@@ -5757,7 +5757,6 @@ static UINT registerset_compare(IDirect3DDevice9 *device, BOOL is_vs, D3DXREGIST
         if (ret[i] != value) err++;
     }
 
-    registerset_clear(device);
     return err;
 }
 
@@ -5861,8 +5860,6 @@ static void test_registerset(void)
         return;
     }
 
-    registerset_clear(device);
-
     for(k = 0; k < sizeof(registerset_data) / sizeof(*registerset_data); ++k)
     {
         LPCSTR tablename = registerset_data[k].name;
@@ -5940,6 +5937,8 @@ static void test_registerset(void)
             const struct registerset_test *test = &registerset_data[k].tests[i];
             UINT ret;
 
+            registerset_clear(device);
+
             hr = registerset_apply(ctable, device, constant, test->in_index, test->in_count_min, test->type);
             ok(hr == D3D_OK, "Set* \"%s\" index %u, count %u failed, got %x, expected %x\n", tablename, i,
                     test->in_count_min, hr, D3D_OK);
@@ -5950,6 +5949,8 @@ static void test_registerset(void)
 
             if (test->in_count_max > test->in_count_min)
             {
+                registerset_clear(device);
+
                 hr = registerset_apply(ctable, device, constant, test->in_index, test->in_count_max, test->type);
                 ok(hr == D3D_OK, "Set* \"%s\" index %u, count %u failed, got %x, expected %x\n", tablename, i,
                         test->in_count_max, hr, D3D_OK);
@@ -5959,6 +5960,229 @@ static void test_registerset(void)
                 ok(ret == 0, "Get*ShaderConstant \"%s\" index %u, count %u failed\n", tablename, i, test->in_count_max);
             }
         }
+
+        count = ID3DXConstantTable_Release(ctable);
+        ok(count == 0, "Release \"%s\" failed, got %u, expected %u\n", tablename, count, 0);
+    }
+
+    /* Release resources */
+    count = IDirect3DDevice9_Release(device);
+    ok(count == 0, "The Direct3D device reference count was %u, should be 0\n", count);
+
+    count = IDirect3D9_Release(d3d);
+    ok(count == 0, "The Direct3D object referenct count was %u, should be 0\n", count);
+
+    if (wnd) DestroyWindow(wnd);
+}
+
+/*
+ * For D3DXRS_INT4 (int_count, ints[]):
+ *      Native seems to just set the following shader blob up to the register count, which in bad cases is up
+ *      to 4 times larger than the actual correct value. This explanes where the "bogus" values for these cases
+ *      come from. Somehow they forgot that the registers are INT4 and not INT.
+ */
+static const struct
+{
+    const char *name;
+    const DWORD *blob;
+    unsigned int float_count;
+    unsigned int int_count;
+    unsigned int bool_count;
+    const DWORD floats[1024];
+    const DWORD ints[256];
+    const DWORD bools[16];
+}
+registerset_defaults_data[] =
+{
+    {"scalar", registerset_blob_scalar, 12, 4, 1,
+        {0x40a33333, 0x00000000, 0x00000000, 0x00000000, 0x41300000, 0x00000000, 0x00000000, 0x00000000,
+        0x3f800000, 0x00000000, 0x00000000, 0x00000000},
+        {0x00000008, 0x00000000, 0x00000001},
+        {0xffffffff}},
+    {"scalar array", registerset_blob_scalar_array, 24, 8, 2,
+        {0x40466666, 0x00000000, 0x00000000, 0x00000000, 0x404ccccd, 0x00000000, 0x00000000, 0x00000000,
+        0x41600000, 0x00000000, 0x00000000, 0x00000000, 0x41700000, 0x00000000, 0x00000000, 0x00000000,
+        0x3f800000, 0x00000000, 0x00000000, 0x00000000, 0x3f800000, 0x00000000, 0x00000000, 0x00000000},
+        {0x00000020, 0x00000000, 0x00000001, 0x00000000, 0x00000021, 0x00000000, 0x00000001, 0x00000000},
+        {0xffffffff, 0x00000000}},
+    {"vector", registerset_blob_vector, 12, 12, 3,
+        {0x40a33333, 0x40a66666, 0x40a9999a, 0x00000000, 0x41300000, 0x42aa0000, 0x42780000, 0x00000000,
+        0x3f800000, 0x3f800000, 0x3f800000, 0x00000000},
+        {0x00000007, 0x00000008, 0x00000009, 0x00000000, 0x00666e76, 0x41300000, 0x42aa0000, 0x42780000,
+        0x00000000, 0x335f7376, 0x4d00305f, 0x6f726369},
+        {0xffffffff, 0x00000000, 0xffffffff}},
+    {"vector array", registerset_blob_vector_array, 24, 24, 6,
+        {0x425c6666, 0x425ccccd, 0x425d3333, 0x00000000, 0x425d999a, 0x425e0000, 0x425e6666, 0x00000000,
+        0x43020000, 0x430c0000, 0x43160000, 0x00000000, 0x43200000, 0x432a0000, 0x43340000, 0x00000000,
+        0x3f800000, 0x3f800000, 0x3f800000, 0x00000000, 0x3f800000, 0x3f800000, 0x3f800000, 0x00000000},
+        {0x00000046, 0x00000050, 0x0000005a, 0x00000000, 0x00000064, 0x0000006e, 0x00000078, 0x00000000,
+        0x666e6176, 0xababab00, 0x00020001, 0x00030001, 0x00000002, 0x00000000, 0x43020000, 0x430c0000,
+        0x43160000, 0x00000000, 0x43200000, 0x432a0000, 0x43340000, 0x00000000, 0x335f7376, 0x4d00305f},
+        {0xffffffff, 0x00000000, 0xffffffff, 0xffffffff, 0x00000000, 0xffffffff}},
+    {"column", registerset_blob_column, 24, 24, 6,
+        {0x4171999a, 0x4174cccd, 0x41780000, 0x00000000, 0x41733333, 0x41766666, 0x4179999a, 0x00000000,
+        0x3f800000, 0x00000000, 0x00000000, 0x00000000, 0x3f800000, 0x3f800000, 0x3f800000, 0x00000000,
+        0x41f00000, 0x42040000, 0x42080000, 0x00000000, 0x41f80000, 0x42000000, 0x42100000, 0x00000000},
+        {0x00000004, 0x00000006, 0x00000008, 0x00000000, 0x00000005, 0x00000007, 0x00000009, 0x00000000,
+        0x00666e63, 0x41f00000, 0x42040000, 0x42080000, 0x00000000, 0x41f80000, 0x42000000, 0x42100000,
+        0x00000000, 0x335f7376, 0x4d00305f, 0x6f726369, 0x74666f73, 0x29522820, 0x534c4820, 0x6853204c},
+        {0xffffffff, 0x00000000, 0xffffffff, 0xffffffff, 0x00000000, 0xffffffff}},
+    {"column array", registerset_blob_column_array, 48, 48, 12,
+        {0x3f8ccccd, 0x40533333, 0x40b00000, 0x00000000, 0x400ccccd, 0x408ccccd, 0x40d33333, 0x00000000,
+        0x40f66666, 0x411e6666, 0x3fa66666, 0x00000000, 0x410ccccd, 0x3f99999a, 0x3fb33333, 0x00000000,
+        0x3f800000, 0x00000000, 0x00000000, 0x00000000, 0x3f800000, 0x3f800000, 0x3f800000, 0x00000000,
+        0x3f800000, 0x00000000, 0x00000000, 0x00000000, 0x3f800000, 0x3f800000, 0x3f800000, 0x00000000,
+        0x43960000, 0x43978000, 0x43980000, 0x00000000, 0x43968000, 0x43970000, 0x43990000, 0x00000000,
+        0x43af0000, 0x44238000, 0x43a30000, 0x00000000, 0x43b68000, 0x44190000, 0x4479c000, 0x00000000},
+        {0x0000000e, 0x00000010, 0x00000012, 0x00000000, 0x0000000f, 0x00000047, 0x00000013, 0x00000000,
+        0x00000037, 0x00000060, 0x00000061, 0x00000000, 0x0000003f, 0x00000060, 0x0000000d, 0x00000000,
+        0x666e6163, 0xababab00, 0x00020003, 0x00020003, 0x00000002, 0x00000000, 0x43960000, 0x43978000,
+        0x43980000, 0x00000000, 0x43968000, 0x43970000, 0x43990000, 0x00000000, 0x43af0000, 0x44238000,
+        0x43a30000, 0x00000000, 0x43b68000, 0x44190000, 0x4479c000, 0x00000000, 0x335f7376, 0x4d00305f,
+        0x6f726369, 0x74666f73, 0x29522820, 0x534c4820, 0x6853204c, 0x72656461, 0x6d6f4320, 0x656c6970},
+        {0xffffffff, 0x00000000, 0xffffffff, 0xffffffff, 0x00000000, 0xffffffff, 0xffffffff, 0x00000000,
+        0xffffffff, 0xffffffff, 0x00000000, 0xffffffff}},
+    {"row", registerset_blob_row, 36, 24, 6,
+        {0x42be3333, 0x42be6666, 0x00000000, 0x00000000, 0x42be999a, 0x42becccd, 0x00000000, 0x00000000,
+        0x42bf0000, 0x42bf3333, 0x00000000, 0x00000000, 0x3f800000, 0x3f800000, 0x00000000, 0x00000000,
+        0x3f800000, 0x3f800000, 0x00000000, 0x00000000, 0x00000000, 0x3f800000, 0x00000000, 0x00000000,
+        0x42140000, 0x41500000, 0x00000000, 0x00000000, 0x42c40000, 0x42580000, 0x00000000, 0x00000000,
+        0x429a0000, 0x42100000, 0x00000000, 0x00000000},
+        {0x00000050, 0x00000051, 0x00000001, 0x00000000, 0x00000052, 0x00000053, 0x00000001, 0x00000000,
+        0x00000054, 0x00000055, 0x00000001, 0x00000000, 0x00666e72, 0x42140000, 0x41500000, 0x00000000,
+        0x00000000, 0x42c40000, 0x42580000, 0x00000000, 0x00000000, 0x429a0000, 0x42100000, 0x00000000},
+        {0xffffffff, 0xffffffff, 0x00000000, 0x00000000, 0xffffffff, 0xffffffff}},
+    {"row array", registerset_blob_row_array, 72, 48, 12,
+        {0x3fc00000, 0x40333333, 0x00000000, 0x00000000, 0x40533333, 0x409ccccd, 0x00000000, 0x00000000,
+        0x40bccccd, 0x40d9999a, 0x00000000, 0x00000000, 0x40fccccd, 0x41080000, 0x00000000, 0x00000000,
+        0x41166666, 0x3fa66666, 0x00000000, 0x00000000, 0x3f99999a, 0x3f8ccccd, 0x00000000, 0x00000000,
+        0x3f800000, 0x3f800000, 0x00000000, 0x00000000, 0x3f800000, 0x3f800000, 0x00000000, 0x00000000,
+        0x00000000, 0x3f800000, 0x00000000, 0x00000000, 0x3f800000, 0x3f800000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x3f800000, 0x00000000, 0x00000000,
+        0x420c0000, 0x42200000, 0x00000000, 0x00000000, 0x42700000, 0x42a00000, 0x00000000, 0x00000000,
+        0x428c0000, 0x42600000, 0x00000000, 0x00000000, 0x42140000, 0x41500000, 0x00000000, 0x00000000,
+        0x42c40000, 0x42580000, 0x00000000, 0x00000000, 0x429a0000, 0x42100000, 0x00000000, 0x00000000},
+        {0x00000004, 0x00000005, 0x00000001, 0x00000000, 0x00000006, 0x00000001, 0x00000001, 0x00000000,
+        0x00000008, 0x00000001, 0x00000001, 0x00000000, 0x00000005, 0x00000003, 0x00000001, 0x00000000,
+        0x00000009, 0x00000006, 0x00000001, 0x00000000, 0x00000007, 0x00000003, 0x00000001, 0x00000000,
+        0x666e6172, 0xababab00, 0x00020002, 0x00020003, 0x00000002, 0x00000000, 0x420c0000, 0x42200000,
+        0x00000000, 0x00000000, 0x42700000, 0x42a00000, 0x00000000, 0x00000000, 0x428c0000, 0x42600000,
+        0x00000000, 0x00000000, 0x42140000, 0x41500000, 0x00000000, 0x00000000, 0x42c40000, 0x42580000},
+        {0xffffffff, 0x00000000, 0x00000000, 0xffffffff, 0x00000000, 0xffffffff, 0x00000000, 0x00000000,
+        0xffffffff, 0xffffffff, 0x00000000, 0xffffffff}},
+    {"struct", registerset_blob_struct, 24, 16, 4,
+        {0x3f8ccccd, 0x00000000, 0x00000000, 0x00000000, 0x400ccccd, 0x40533333, 0x408ccccd, 0x00000000,
+        0x41f80000, 0x00000000, 0x00000000, 0x00000000, 0x42000000, 0x42040000, 0x42080000, 0x00000000,
+        0x3f800000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x3f800000, 0x00000000},
+        {0x0000000b, 0x00000000, 0x00000001, 0x00000000, 0x0000000c, 0x0000000d, 0x0000000e, 0x00000000,
+        0x00666e73, 0x7600666e, 0xab00666e, 0x00000204, 0x0000019c, 0x00000207, 0x000001b0, 0x00000005},
+        {0xffffffff, 0xffffffff, 0x00000000, 0xffffffff}},
+    {"struct array", registerset_blob_struct_array, 48, 32, 8,
+        {0x3f8ccccd, 0x00000000, 0x00000000, 0x00000000, 0x40066666, 0x40466666, 0x40833333, 0x00000000,
+        0x40a33333, 0x00000000, 0x00000000, 0x00000000, 0x40c33333, 0x40e33333, 0x4101999a, 0x00000000,
+        0x42240000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x422c0000, 0x42300000, 0x00000000,
+        0x42240000, 0x00000000, 0x00000000, 0x00000000, 0x42280000, 0x422c0000, 0x42300000, 0x00000000,
+        0x3f800000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x3f800000, 0x00000000,
+        0x3f800000, 0x00000000, 0x00000000, 0x00000000, 0x3f800000, 0x00000000, 0x3f800000, 0x00000000},
+        {0x00000015, 0x00000000, 0x00000001, 0x00000000, 0x00000016, 0x00000017, 0x00000018, 0x00000000,
+        0x00000019, 0x00000000, 0x00000001, 0x00000000, 0x0000001a, 0x0000001b, 0x0000001c, 0x00000000,
+        0x666e6173, 0x00666e00, 0x00666e76, 0x00000275, 0x000001ec, 0x00000278, 0x00000200, 0x00000005,
+        0x00040001, 0x00020002, 0x0000027c, 0x42240000, 0x00000000, 0x00000000, 0x00000000, 0x00000000},
+        {0xffffffff, 0xffffffff, 0x00000000, 0xffffffff, 0x00000000, 0xffffffff, 0x00000000, 0xffffffff}},
+    {"struct struct", registerset_blob_struct_struct, 48, 24, 6,
+        {0x3f8ccccd, 0x00000000, 0x00000000, 0x00000000, 0x40066666, 0x00000000, 0x00000000, 0x00000000,
+        0x40466666, 0x40833333, 0x40a33333, 0x00000000, 0x40c33333, 0x00000000, 0x00000000, 0x00000000,
+        0x42240000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x422c0000, 0x42300000, 0x42240000, 0x00000000, 0x42280000, 0x00000000, 0x00000000, 0x00000000,
+        0x3f800000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x3f800000, 0x3f800000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000},
+        {0x00000047, 0x00000000, 0x00000001, 0x00000000, 0x00000048, 0x00000000, 0x00000001, 0x00000000,
+        0x00000049, 0x0000004a, 0x0000004b, 0x00000000, 0x0000004c, 0x00000000, 0x00000001, 0x00000000,
+        0x666e7373, 0x00666e00, 0x00666e76, 0x00000321, 0x0000026c, 0x00000324, 0x00000280, 0x00000005},
+        {0xffffffff, 0xffffffff, 0x00000000, 0xffffffff, 0xffffffff, 0x00000000}},
+};
+
+static void test_registerset_defaults(void)
+{
+    UINT k;
+    HWND wnd;
+    IDirect3D9 *d3d;
+    IDirect3DDevice9 *device;
+    D3DPRESENT_PARAMETERS d3dpp;
+    HRESULT hr;
+    ULONG count;
+    D3DCAPS9 caps;
+
+    /* Create the device to use for our tests */
+    wnd = CreateWindow("static", "d3dx9_test", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    if (!wnd)
+    {
+        skip("Couldn't create application window\n");
+        return;
+    }
+    if (!d3d)
+    {
+        skip("Couldn't create IDirect3D9 object\n");
+        DestroyWindow(wnd);
+        return;
+    }
+
+    ZeroMemory(&d3dpp, sizeof(d3dpp));
+    d3dpp.Windowed   = TRUE;
+    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wnd, D3DCREATE_MIXED_VERTEXPROCESSING, &d3dpp, &device);
+    if (FAILED(hr))
+    {
+        skip("Failed to create IDirect3DDevice9 object %#x\n", hr);
+        IDirect3D9_Release(d3d);
+        DestroyWindow(wnd);
+        return;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (caps.VertexShaderVersion < D3DVS_VERSION(3, 0)
+            || caps.PixelShaderVersion < D3DPS_VERSION(3, 0))
+    {
+        skip("Skipping: Test requires VS >= 3 and PS >= 3.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(wnd);
+        return;
+    }
+
+    for(k = 0; k < sizeof(registerset_defaults_data) / sizeof(*registerset_defaults_data); ++k)
+    {
+        LPCSTR tablename = registerset_defaults_data[k].name;
+        ID3DXConstantTable *ctable;
+        D3DXCONSTANTTABLE_DESC tdesc;
+        BOOL is_vs;
+        UINT ret;
+
+        hr = D3DXGetShaderConstantTable(registerset_defaults_data[k].blob, &ctable);
+        ok(hr == D3D_OK, "D3DXGetShaderConstantTable \"%s\" failed, got %08x, expected %08x\n", tablename, hr, D3D_OK);
+
+        hr = ID3DXConstantTable_GetDesc(ctable, &tdesc);
+        ok(hr == D3D_OK, "GetDesc \"%s\" failed, got %08x, expected %08x\n", tablename, hr, D3D_OK);
+
+        is_vs = (tdesc.Version & 0xFFFF0000) == 0xFFFE0000;
+
+        registerset_clear(device);
+
+        hr = ID3DXConstantTable_SetDefaults(ctable, device);
+        ok(hr == D3D_OK, "SetDefaults \"%s\" failed, got %08x, expected %08x\n", tablename, hr, D3D_OK);
+
+        ret = registerset_compare(device, is_vs, D3DXRS_FLOAT4, 0, registerset_defaults_data[k].float_count,
+                registerset_defaults_data[k].floats);
+        ok(ret == 0, "Get*ShaderConstantF \"%s\" failed\n", tablename);
+
+        ret = registerset_compare(device, is_vs, D3DXRS_INT4, 0, registerset_defaults_data[k].int_count,
+                registerset_defaults_data[k].ints);
+        ok(ret == 0, "Get*ShaderConstantI \"%s\" failed\n", tablename);
+
+        ret = registerset_compare(device, is_vs, D3DXRS_BOOL, 0, registerset_defaults_data[k].bool_count,
+                registerset_defaults_data[k].bools);
+        ok(ret == 0, "Get*ShaderConstantB \"%s\" failed\n", tablename);
 
         count = ID3DXConstantTable_Release(ctable);
         ok(count == 0, "Release \"%s\" failed, got %u, expected %u\n", tablename, count, 0);
@@ -5986,4 +6210,5 @@ START_TEST(shader)
     test_get_shader_samplers();
     test_get_shader_constant_variables();
     test_registerset();
+    test_registerset_defaults();
 }
