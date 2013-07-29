@@ -804,7 +804,7 @@ typedef struct async_commio
  */
 static NTSTATUS get_irq_info(int fd, serial_irq_info *irq_info)
 {
-#ifdef TIOCGICOUNT
+#if defined (HAVE_LINUX_SERIAL_H) && defined (TIOCGICOUNT)
     struct serial_icounter_struct einfo;
     if (!ioctl(fd, TIOCGICOUNT, &einfo))
     {
