@@ -1270,7 +1270,7 @@ msgstr "다음 업데이트 위치"
 
 #: crypt32.rc:42
 msgid "Yes or No Trust"
-msgstr "신뢰(예 나 아니오)"
+msgstr "신뢰(예(Y) 나 아니오(N))"
 
 #: crypt32.rc:43
 msgid "Email Address"
@@ -4782,7 +4782,7 @@ msgstr "잘못된 운영체제.\n"
 
 #: winerror.mc:1486
 msgid "Single-instance application.\n"
-msgstr "단일 인스턴트 어플리케이션.\n"
+msgstr "단일 인스턴트 프로그램 .\n"
 
 #: winerror.mc:1491
 msgid "Real-mode application.\n"
@@ -10064,11 +10064,11 @@ msgstr "드라이브 %1!c!는 라벨을 가지고 있지 않습니다.\n"
 
 #: cmd.rc:351
 msgid " (Yes|No)"
-msgstr "(예|아니오)"
+msgstr "(예(Y)|아니오(N))"
 
 #: cmd.rc:352
 msgid " (Yes|No|All)"
-msgstr "(예|아니오|모두)"
+msgstr "(예(Y)|아니오(N)|모두(A))"
 
 #: cmd.rc:353
 msgid ""
@@ -14198,11 +14198,11 @@ msgstr ""
 
 #: xcopy.rc:35
 msgid "%1? (Yes|No)\n"
-msgstr "%1? (예|아니오)\n"
+msgstr "%1? (예(Y)|아니오(N))\n"
 
 #: xcopy.rc:36
 msgid "Overwrite %1? (Yes|No|All)\n"
-msgstr "%1를 덮어쓰겠습니까? (예|아니오|모두)\n"
+msgstr "%1를 덮어쓰겠습니까? (예(Y)|아니오(N)|모두(A))\n"
 
 #: xcopy.rc:37
 msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
