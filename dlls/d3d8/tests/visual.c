@@ -634,7 +634,7 @@ static void fog_test(IDirect3DDevice8 *device)
         }
 
         color = getPixelColor(device, 160, 360);
-        todo_wine ok(color_match(color, 0x00e51900, 4), "Partially fogged quad has color %08x\n", color);
+        ok(color_match(color, 0x00e51900, 4), "Partially fogged quad has color %08x\n", color);
         color = getPixelColor(device, 160, 120);
         ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x00, 0xff, 0x00), 1),
                 "Fogged out quad has color %08x\n", color);
