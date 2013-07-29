@@ -750,15 +750,6 @@ static inline struct ctab_constant *get_valid_constant(struct ID3DXConstantTable
     return get_constant_by_name(table, NULL, handle);
 }
 
-static inline void set_float_shader_constant(struct ID3DXConstantTableImpl *table, IDirect3DDevice9 *device,
-                                             UINT register_index, const FLOAT *data, UINT count)
-{
-    if (is_vertex_shader(table->desc.Version))
-        IDirect3DDevice9_SetVertexShaderConstantF(device, register_index, data, count);
-    else
-        IDirect3DDevice9_SetPixelShaderConstantF(device, register_index, data, count);
-}
-
 /*** IUnknown methods ***/
 static HRESULT WINAPI ID3DXConstantTableImpl_QueryInterface(ID3DXConstantTable *iface, REFIID riid, void **out)
 {
@@ -1434,19 +1425,59 @@ static HRESULT WINAPI ID3DXConstantTableImpl_SetDefaults(struct ID3DXConstantTab
     struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
     UINT i;
 
-    TRACE("(%p)->(%p)\n", This, device);
+    TRACE("iface %p, device %p\n", iface, device);
 
     if (!device)
+    {
+        WARN("Invalid argument specified\n");
         return D3DERR_INVALIDCALL;
+    }
 
     for (i = 0; i < This->desc.Constants; i++)
     {
         D3DXCONSTANT_DESC *desc = &This->constants[i].desc;
+        HRESULT hr;
 
         if (!desc->DefaultValue)
             continue;
 
-        set_float_shader_constant(This, device, desc->RegisterIndex, desc->DefaultValue, desc->RegisterCount);
+        switch (desc->RegisterSet)
+        {
+            case D3DXRS_BOOL:
+                if (is_vertex_shader(This->desc.Version))
+                    hr = IDirect3DDevice9_SetVertexShaderConstantB(device, desc->RegisterIndex, desc->DefaultValue,
+                            desc->RegisterCount);
+                else
+                    hr = IDirect3DDevice9_SetPixelShaderConstantB(device, desc->RegisterIndex, desc->DefaultValue,
+                            desc->RegisterCount);
+                break;
+
+            case D3DXRS_INT4:
+                if (is_vertex_shader(This->desc.Version))
+                    hr = IDirect3DDevice9_SetVertexShaderConstantI(device, desc->RegisterIndex, desc->DefaultValue,
+                            desc->RegisterCount);
+                else
+                    hr = IDirect3DDevice9_SetPixelShaderConstantI(device, desc->RegisterIndex, desc->DefaultValue,
+                        desc->RegisterCount);
+                break;
+
+            case D3DXRS_FLOAT4:
+                if (is_vertex_shader(This->desc.Version))
+                    hr = IDirect3DDevice9_SetVertexShaderConstantF(device, desc->RegisterIndex, desc->DefaultValue,
+                            desc->RegisterCount);
+                else
+                    hr = IDirect3DDevice9_SetPixelShaderConstantF(device, desc->RegisterIndex, desc->DefaultValue,
+                        desc->RegisterCount);
+                break;
+
+            default:
+                FIXME("Unhandled register set %s\n", debug_d3dxparameter_registerset(desc->RegisterSet));
+                hr = E_NOTIMPL;
+                break;
+        }
+
+        if (hr != D3D_OK)
+            return hr;
     }
 
     return D3D_OK;
