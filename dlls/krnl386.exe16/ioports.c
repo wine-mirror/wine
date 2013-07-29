@@ -60,7 +60,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 
-#ifdef linux
+#if defined(linux) && !defined(__ANDROID__)
 # define DIRECT_IO_ACCESS
 #else
 # undef DIRECT_IO_ACCESS
