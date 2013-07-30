@@ -1262,51 +1262,47 @@ dnl **** Check for libxml2 ****
 
 if test "x$with_xml" != "xno"
 then
-    ac_save_CPPFLAGS="$CPPFLAGS"
     WINE_PACKAGE_FLAGS(XML2,[libxml-2.0],[-lxml2],
-                       [`xml2-config --cflags 2>/dev/null`],[`xml2-config --libs 2>/dev/null`])
-    AC_CHECK_HEADERS([libxml/parser.h libxml/xmlsave.h libxml/SAX2.h])
-    if test "$ac_cv_header_libxml_parser_h" = "yes" -a "$ac_cv_header_libxml_xmlsave_h" = "yes" -a "$ac_cv_header_libxml_SAX2_h" = "yes"
-    then
-        AC_CHECK_LIB(xml2, xmlParseMemory,
-            [AC_DEFINE(HAVE_LIBXML2, 1, [Define if you have the libxml2 library])],[XML2_LIBS=""],[$XML2_LIBS])
-        AC_CHECK_LIB(xml2, xmlReadMemory,
-            [AC_DEFINE(HAVE_XMLREADMEMORY,1,[Define if libxml2 has the xmlReadMemory function])],,[$XML2_LIBS])
-        AC_CHECK_LIB(xml2, xmlNewDocPI,
-            [AC_DEFINE(HAVE_XMLNEWDOCPI,1,[Define if libxml2 has the xmlNewDocPI function])],,[$XML2_LIBS])
-        AC_CHECK_LIB(xml2, xmlSchemaSetParserStructuredErrors,
-            [AC_DEFINE(HAVE_XMLSCHEMASSETPARSERSTRUCTUREDERRORS,1,[Define if libxml2 has the xmlSchemaSetParserStructuredErrors function])],,[$XML2_LIBS])
-        AC_CHECK_LIB(xml2, xmlSchemaSetValidStructuredErrors,
-            [AC_DEFINE(HAVE_XMLSCHEMASSETVALIDSTRUCTUREDERRORS,1,[Define if libxml2 has the xmlSchemaSetValidStructuredErrors function])],,[$XML2_LIBS])
-        AC_CHECK_LIB(xml2, xmlFirstElementChild,
-            [AC_DEFINE(HAVE_XMLFIRSTELEMENTCHILD,1,[Define if libxml2 has the xmlFirstElementChild function])],,[$XML2_LIBS])
-        AC_CHECK_TYPE([xmlDocProperties],
-            [AC_DEFINE(HAVE_XMLDOC_PROPERTIES,1,[Define if libxml2 has the xmlDocProperties enum])],,[[#include <libxml/tree.h>]])
-    else
-        XML2_CFLAGS=""
-        XML2_LIBS=""
-    fi
-    CPPFLAGS="$ac_save_CPPFLAGS"
+                       [`xml2-config --cflags 2>/dev/null`],[`xml2-config --libs 2>/dev/null`],
+        [AC_CHECK_HEADERS([libxml/parser.h libxml/xmlsave.h libxml/SAX2.h])
+        if test "$ac_cv_header_libxml_parser_h" = "yes" -a "$ac_cv_header_libxml_xmlsave_h" = "yes" -a "$ac_cv_header_libxml_SAX2_h" = "yes"
+        then
+            AC_CHECK_LIB(xml2, xmlParseMemory,
+                [AC_DEFINE(HAVE_LIBXML2, 1, [Define if you have the libxml2 library])],[XML2_LIBS=""],[$XML2_LIBS])
+            AC_CHECK_LIB(xml2, xmlReadMemory,
+                [AC_DEFINE(HAVE_XMLREADMEMORY,1,[Define if libxml2 has the xmlReadMemory function])],,[$XML2_LIBS])
+            AC_CHECK_LIB(xml2, xmlNewDocPI,
+                [AC_DEFINE(HAVE_XMLNEWDOCPI,1,[Define if libxml2 has the xmlNewDocPI function])],,[$XML2_LIBS])
+            AC_CHECK_LIB(xml2, xmlSchemaSetParserStructuredErrors,
+                [AC_DEFINE(HAVE_XMLSCHEMASSETPARSERSTRUCTUREDERRORS,1,[Define if libxml2 has the xmlSchemaSetParserStructuredErrors function])],,[$XML2_LIBS])
+            AC_CHECK_LIB(xml2, xmlSchemaSetValidStructuredErrors,
+                [AC_DEFINE(HAVE_XMLSCHEMASSETVALIDSTRUCTUREDERRORS,1,[Define if libxml2 has the xmlSchemaSetValidStructuredErrors function])],,[$XML2_LIBS])
+            AC_CHECK_LIB(xml2, xmlFirstElementChild,
+                [AC_DEFINE(HAVE_XMLFIRSTELEMENTCHILD,1,[Define if libxml2 has the xmlFirstElementChild function])],,[$XML2_LIBS])
+            AC_CHECK_TYPE([xmlDocProperties],
+                [AC_DEFINE(HAVE_XMLDOC_PROPERTIES,1,[Define if libxml2 has the xmlDocProperties enum])],,[[#include <libxml/tree.h>]])
+        else
+            XML2_CFLAGS=""
+            XML2_LIBS=""
+        fi])
 fi
 WINE_WARNING_WITH(xml,[test "$ac_cv_lib_xml2_xmlParseMemory" != "yes"],
                  [libxml2 ${notice_platform}development files not found (or too old), XML won't be supported.])
 
 if test "x$with_xslt" != "xno"
 then
-    ac_save_CPPFLAGS="$CPPFLAGS"
     WINE_PACKAGE_FLAGS(XSLT,[libxslt],[-lxml2],
-                       [`xslt-config --cflags 2>/dev/null`],[`xslt-config --libs 2>/dev/null`])
-    AC_CHECK_HEADERS([libxslt/pattern.h libxslt/transform.h],,,
-    [#ifdef HAVE_LIBXSLT_PATTERN_H
+                       [`xslt-config --cflags 2>/dev/null`],[`xslt-config --libs 2>/dev/null`],
+        [AC_CHECK_HEADERS([libxslt/pattern.h libxslt/transform.h],,,
+        [#ifdef HAVE_LIBXSLT_PATTERN_H
 # include <libxslt/pattern.h>
 #endif])
-    CPPFLAGS="$ac_save_CPPFLAGS"
-    if test "$ac_cv_header_libxslt_transform_h" = "yes"
-    then
-        WINE_CHECK_SONAME(xslt,xsltCompilePattern,,,[$XSLT_LIBS])
-    else
-        XSLT_CFLAGS=""
-    fi
+        if test "$ac_cv_header_libxslt_transform_h" = "yes"
+        then
+            WINE_CHECK_SONAME(xslt,xsltCompilePattern,,,[$XSLT_LIBS])
+        else
+            XSLT_CFLAGS=""
+        fi])
 fi
 WINE_WARNING_WITH(xslt,[test "x$ac_cv_lib_soname_xslt" = "x"],
                  [libxslt ${notice_platform}development files not found, xslt won't be supported.])
@@ -1314,12 +1310,10 @@ WINE_WARNING_WITH(xslt,[test "x$ac_cv_lib_soname_xslt" = "x"],
 dnl **** Check for libdbus ****
 if test "x$with_dbus" != "xno"
 then
-    ac_save_CPPFLAGS="$CPPFLAGS"
-    WINE_PACKAGE_FLAGS(DBUS,[dbus-1])
-    AC_CHECK_HEADER([dbus/dbus.h],
-        [WINE_CHECK_SONAME(dbus-1, dbus_connection_close,,[DBUS_CFLAGS=""],[$DBUS_LIBS])],
-        [DBUS_CFLAGS=""])
-    CPPFLAGS="$ac_save_CPPFLAGS"
+    WINE_PACKAGE_FLAGS(DBUS,[dbus-1],,,,
+        [AC_CHECK_HEADER([dbus/dbus.h],
+            [WINE_CHECK_SONAME(dbus-1, dbus_connection_close,,[DBUS_CFLAGS=""],[$DBUS_LIBS])],
+            [DBUS_CFLAGS=""])])
 fi
 WINE_NOTICE_WITH(dbus,[test "x$ac_cv_lib_soname_dbus_1" = "x" -a \
                             "x$ac_cv_header_DiskArbitration_DiskArbitration_h" != "xyes"],
@@ -1328,12 +1322,10 @@ WINE_NOTICE_WITH(dbus,[test "x$ac_cv_lib_soname_dbus_1" = "x" -a \
 dnl **** Check for libhal ****
 if test "x$with_hal" != "xno" -a "x$ac_cv_lib_soname_dbus_1" != x
 then
-    ac_save_CPPFLAGS="$CPPFLAGS"
-    WINE_PACKAGE_FLAGS(HAL,[hal],[-ldbus-1])
-    AC_CHECK_HEADER([hal/libhal.h],
-        [WINE_CHECK_SONAME(hal, libhal_ctx_new,,[HAL_CFLAGS=""],[$HAL_LIBS])],
-        [HAL_CFLAGS=""])
-    CPPFLAGS="$ac_save_CPPFLAGS"
+    WINE_PACKAGE_FLAGS(HAL,[hal],[-ldbus-1],,,
+        [AC_CHECK_HEADER([hal/libhal.h],
+            [WINE_CHECK_SONAME(hal, libhal_ctx_new,,[HAL_CFLAGS=""],[$HAL_LIBS])],
+            [HAL_CFLAGS=""])])
     WINE_NOTICE_WITH(hal,[test "x$ac_cv_lib_soname_hal" = "x" -a \
                                "x$ac_cv_header_DiskArbitration_DiskArbitration_h" != "xyes"],
                      [libhal ${notice_platform}development files not found, no legacy dynamic device support.])
@@ -1342,14 +1334,12 @@ fi
 dnl **** Check for libgnutls ****
 if test "x$with_gnutls" != "xno"
 then
-    ac_save_CPPFLAGS="$CPPFLAGS"
-    WINE_PACKAGE_FLAGS(GNUTLS,[gnutls])
-    AC_CHECK_HEADER(gnutls/gnutls.h,
-        [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <gnutls/gnutls.h>
+    WINE_PACKAGE_FLAGS(GNUTLS,[gnutls],,,,
+        [AC_CHECK_HEADER(gnutls/gnutls.h,
+            [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <gnutls/gnutls.h>
 #include <gnutls/crypto.h>]], [[static typeof(gnutls_mac_get_key_size) *func; if (func) return 0;]])],
-            [WINE_CHECK_SONAME(gnutls,gnutls_global_init,,[GNUTLS_CFLAGS=""],[$GNUTLS_LIBS])])],
-        [GNUTLS_CFLAGS=""])
-    CPPFLAGS="$ac_save_CPPFLAGS"
+                [WINE_CHECK_SONAME(gnutls,gnutls_global_init,,[GNUTLS_CFLAGS=""],[$GNUTLS_LIBS])])],
+            [GNUTLS_CFLAGS=""])])
 fi
 WINE_NOTICE_WITH(gnutls,[test "x$ac_cv_lib_soname_gnutls" = "x"],
                  [libgnutls ${notice_platform}development files not found, no schannel support.])
@@ -1373,12 +1363,10 @@ WINE_NOTICE_WITH(curses,[test "x$ac_cv_lib_soname_curses$ac_cv_lib_soname_ncurse
 dnl **** Check for SANE ****
 if test "x$with_sane" != "xno"
 then
-    ac_save_CPPFLAGS="$CPPFLAGS"
-    WINE_PACKAGE_FLAGS(SANE,[libsane],,[`sane-config --cflags 2>/dev/null`],[`sane-config --ldflags 2>/dev/null`])
-    AC_CHECK_HEADER(sane/sane.h,
-        [WINE_CHECK_SONAME(sane,sane_init,,[SANE_CFLAGS=""],[$SANE_LIBS])],
-        [SANE_CFLAGS=""])
-    CPPFLAGS="$ac_save_CPPFLAGS"
+    WINE_PACKAGE_FLAGS(SANE,[libsane],,[`sane-config --cflags 2>/dev/null`],[`sane-config --ldflags 2>/dev/null`],
+        [AC_CHECK_HEADER(sane/sane.h,
+            [WINE_CHECK_SONAME(sane,sane_init,,[SANE_CFLAGS=""],[$SANE_LIBS])],
+            [SANE_CFLAGS=""])])
 fi
 WINE_NOTICE_WITH(sane,[test "x$ac_cv_lib_soname_sane" = "x"],
                  [libsane ${notice_platform}development files not found, scanners won't be supported.])
@@ -1394,25 +1382,23 @@ WINE_NOTICE_WITH(v4l,[test "x$ac_cv_lib_soname_v4l1" = "x"],
 dnl **** Check for libgphoto2 ****
 if test "x$with_gphoto" != "xno"
 then
-    ac_save_CPPFLAGS="$CPPFLAGS"
     WINE_PACKAGE_FLAGS(GPHOTO2,[libgphoto2],[-lgphoto2],
-                       [`gphoto2-config --cflags 2>/dev/null`],[`gphoto2-config --libs 2>/dev/null`])
-    AC_CHECK_HEADER(gphoto2-camera.h,
-                    [AC_CHECK_LIB(gphoto2,gp_camera_new,
-                                  [AC_DEFINE(HAVE_GPHOTO2, 1, [Define if we have the libgphoto2 development environment])],
-                                  [GPHOTO2_LIBS=""; GPHOTO2_CFLAGS=""],
-                                  [$GPHOTO2_LIBS])],
-                    [GPHOTO2_LIBS=""; GPHOTO2_CFLAGS=""])
+                       [`gphoto2-config --cflags 2>/dev/null`],[`gphoto2-config --libs 2>/dev/null`],
+        [AC_CHECK_HEADER(gphoto2-camera.h,
+                        [AC_CHECK_LIB(gphoto2,gp_camera_new,
+                                      [AC_DEFINE(HAVE_GPHOTO2, 1, [Define if we have the libgphoto2 development environment])],
+                                      [GPHOTO2_LIBS=""; GPHOTO2_CFLAGS=""],
+                                      [$GPHOTO2_LIBS])],
+                        [GPHOTO2_LIBS=""; GPHOTO2_CFLAGS=""])])
     WINE_PACKAGE_FLAGS(GPHOTO2_PORT,[libgphoto2_port],[-lgphoto2_port],
                        [`gphoto2-port-config --cflags 2>/dev/null`],
-                       [`gphoto2-port-config --libs 2>/dev/null`])
-    AC_CHECK_HEADER(gphoto2-port.h,
-                    [AC_CHECK_LIB(gphoto2_port,gp_port_info_list_new,
-                                  [AC_DEFINE(HAVE_GPHOTO2_PORT, 1, [Define if we have the libgphoto2_port development environment])],
-                                  [GPHOTO2_PORT_LIBS=""; GPHOTO2_PORT_CFLAGS=""],
-                                  [$GPHOTO2_PORT_LIBS])],
-                    [GPHOTO2_PORT_LIBS=""; GPHOTO2_PORT_CFLAGS=""])
-    CPPFLAGS="$ac_save_CPPFLAGS"
+                       [`gphoto2-port-config --libs 2>/dev/null`],
+        [AC_CHECK_HEADER(gphoto2-port.h,
+                        [AC_CHECK_LIB(gphoto2_port,gp_port_info_list_new,
+                                      [AC_DEFINE(HAVE_GPHOTO2_PORT, 1, [Define if we have the libgphoto2_port development environment])],
+                                      [GPHOTO2_PORT_LIBS=""; GPHOTO2_PORT_CFLAGS=""],
+                                      [$GPHOTO2_PORT_LIBS])],
+                        [GPHOTO2_PORT_LIBS=""; GPHOTO2_PORT_CFLAGS=""])])
 fi
 WINE_NOTICE_WITH(gphoto,[test "$ac_cv_lib_gphoto2_gp_camera_new" != "yes"],
                  [libgphoto2 ${notice_platform}development files not found, digital cameras won't be supported.])
@@ -1443,18 +1429,16 @@ fi
 dnl **** Check for LittleCMS ***
 if test "x$with_lcms2" != "xno"
 then
-    ac_save_CPPFLAGS="$CPPFLAGS"
-    WINE_PACKAGE_FLAGS(LCMS2,[lcms2],[-llcms2])
-    AC_CHECK_HEADERS([lcms2.h])
-    if test "$ac_cv_header_lcms2_h" = "yes"
-    then
-        AC_CHECK_LIB(lcms2, cmsOpenProfileFromFile,
-            [AC_DEFINE(HAVE_LCMS2, 1, [Define if you have the LittleCMS development environment])],[LCMS2_LIBS=""])
-    else
-        LCMS2_CFLAGS=""
-        LCMS2_LIBS=""
-    fi
-    CPPFLAGS="$ac_save_CPPFLAGS"
+    WINE_PACKAGE_FLAGS(LCMS2,[lcms2],[-llcms2],,,
+        [AC_CHECK_HEADERS([lcms2.h])
+        if test "$ac_cv_header_lcms2_h" = "yes"
+        then
+            AC_CHECK_LIB(lcms2, cmsOpenProfileFromFile,
+                [AC_DEFINE(HAVE_LCMS2, 1, [Define if you have the LittleCMS development environment])],[LCMS2_LIBS=""])
+        else
+            LCMS2_CFLAGS=""
+            LCMS2_LIBS=""
+        fi])
 fi
 WINE_NOTICE_WITH(cms,[test "$ac_cv_lib_lcms2_cmsOpenProfileFromFile" != "yes"],
                  [liblcms2 ${notice_platform}development files not found, Color Management won't be supported.])
@@ -1462,43 +1446,41 @@ WINE_NOTICE_WITH(cms,[test "$ac_cv_lib_lcms2_cmsOpenProfileFromFile" != "yes"],
 dnl **** Check for FreeType 2 ****
 if test "x$with_freetype" != "xno"
 then
-    ac_save_CPPFLAGS="$CPPFLAGS"
     WINE_PACKAGE_FLAGS(FREETYPE,[freetype2],[-lfreetype],
                        [`(freetype-config --cflags || freetype2-config --cflags) 2>/dev/null`],
-                       [`(freetype-config --libs || freetype2-config --libs) 2>/dev/null`])
-    WINE_CHECK_SONAME(freetype,FT_Init_FreeType,[ft_lib=yes],[ft_lib=no],[$FREETYPE_LIBS])
-    if test "$ft_lib" = "yes"
-    then
-	AC_CHECK_HEADERS(ft2build.h \
-                         freetype/freetype.h \
-                         freetype/ftglyph.h \
-                         freetype/fttypes.h \
-                         freetype/tttables.h \
-                         freetype/ftsnames.h \
-                         freetype/ttnameid.h \
-                         freetype/ftoutln.h \
-                         freetype/ftwinfnt.h \
-                         freetype/ftmodapi.h \
-                         freetype/ftlcdfil.h,,,
-                         [#ifdef HAVE_FT2BUILD_H
-                          # include <ft2build.h>
-                          #endif])
-	AC_PREPROC_IFELSE([AC_LANG_SOURCE([[#include <ft2build.h>
-                    #include <freetype/fttrigon.h>]])],[AC_DEFINE(HAVE_FREETYPE_FTTRIGON_H, 1,
-          [Define if you have the <freetype/fttrigon.h> header file.])
-                    wine_cv_fttrigon=yes],[wine_cv_fttrigon=no])
-        AC_CHECK_TYPES(FT_TrueTypeEngineType,,,[#include <freetype/ftmodapi.h>])
-	dnl Check that we have at least freetype/freetype.h
-	if test "$ac_cv_header_freetype_freetype_h" = "yes" -a "$wine_cv_fttrigon" = "yes"
-	then
-	    AC_DEFINE(HAVE_FREETYPE, 1, [Define if FreeType 2 is installed])
+                       [`(freetype-config --libs || freetype2-config --libs) 2>/dev/null`],
+        [WINE_CHECK_SONAME(freetype,FT_Init_FreeType,[ft_lib=yes],[ft_lib=no],[$FREETYPE_LIBS])
+        if test "$ft_lib" = "yes"
+        then
+    	AC_CHECK_HEADERS(ft2build.h \
+                             freetype/freetype.h \
+                             freetype/ftglyph.h \
+                             freetype/fttypes.h \
+                             freetype/tttables.h \
+                             freetype/ftsnames.h \
+                             freetype/ttnameid.h \
+                             freetype/ftoutln.h \
+                             freetype/ftwinfnt.h \
+                             freetype/ftmodapi.h \
+                             freetype/ftlcdfil.h,,,
+                             [#ifdef HAVE_FT2BUILD_H
+# include <ft2build.h>
+#endif])
+    	AC_PREPROC_IFELSE([AC_LANG_SOURCE([[#include <ft2build.h>
+#include <freetype/fttrigon.h>]])],[AC_DEFINE(HAVE_FREETYPE_FTTRIGON_H, 1,
+              [Define if you have the <freetype/fttrigon.h> header file.])
+                        wine_cv_fttrigon=yes],[wine_cv_fttrigon=no])
+            AC_CHECK_TYPES(FT_TrueTypeEngineType,,,[#include <freetype/ftmodapi.h>])
+    	dnl Check that we have at least freetype/freetype.h
+    	if test "$ac_cv_header_freetype_freetype_h" = "yes" -a "$wine_cv_fttrigon" = "yes"
+    	then
+    	    AC_DEFINE(HAVE_FREETYPE, 1, [Define if FreeType 2 is installed])
+            else
+                FREETYPE_LIBS=""
+    	fi
         else
             FREETYPE_LIBS=""
-	fi
-    else
-        FREETYPE_LIBS=""
-    fi
-    CPPFLAGS="$ac_save_CPPFLAGS"
+        fi])
 fi
 WINE_ERROR_WITH(freetype,[test "x$ac_cv_header_freetype_freetype_h" != xyes -o "x$wine_cv_fttrigon" != xyes],
                 [FreeType ${notice_platform}development files not found. Fonts will not be built.])
@@ -1549,28 +1531,26 @@ fi
 dnl **** Check for gstreamer ****
 if test "x$with_gstreamer" != "xno"
 then
-    ac_save_CPPFLAGS="$CPPFLAGS"
-    WINE_PACKAGE_FLAGS(GSTREAMER,[gstreamer-app-0.10])
-    ac_gst_incl=""
-    for i in $GSTREAMER_CFLAGS
-    do
-        case "$i" in
-            -I*) ac_gst_incl="$ac_gst_incl $i";;
-        esac
-    done
-    GSTREAMER_CFLAGS=$ac_gst_incl
-    CPPFLAGS="$ac_save_CPPFLAGS $GSTREAMER_CFLAGS"
-    AC_CHECK_HEADER([gst/gstpad.h],
-        [AC_CHECK_HEADER([gst/app/gstappsink.h],
-             [AC_MSG_CHECKING([whether gint64 defined by gst/app/gstappsink.h is indeed 64-bit])
-              AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <gst/app/gstappsink.h>]],
-                                                 [[static int a[sizeof(gint64) > 4 ? 1 : -1]; if (a[0]) return 0;]])],
-                [AC_MSG_RESULT([yes])
-                 AC_CHECK_LIB(gstreamer-0.10,gst_pad_get_caps_reffed,
-                   [AC_CHECK_LIB(gstapp-0.10,gst_app_buffer_new,[:],,[$GSTREAMER_LIBS])])],
-                [AC_MSG_RESULT([no])])])],
-        [GSTREAMER_CFLAGS=""])
-    CPPFLAGS="$ac_save_CPPFLAGS"
+    WINE_PACKAGE_FLAGS(GSTREAMER,[gstreamer-app-0.10],,,,
+        [ac_gst_incl=""
+        for i in $GSTREAMER_CFLAGS
+        do
+            case "$i" in
+                -I*) ac_gst_incl="$ac_gst_incl $i";;
+            esac
+        done
+        GSTREAMER_CFLAGS=$ac_gst_incl
+        CPPFLAGS="$ac_save_CPPFLAGS $GSTREAMER_CFLAGS"
+        AC_CHECK_HEADER([gst/gstpad.h],
+            [AC_CHECK_HEADER([gst/app/gstappsink.h],
+                 [AC_MSG_CHECKING([whether gint64 defined by gst/app/gstappsink.h is indeed 64-bit])
+                  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <gst/app/gstappsink.h>]],
+                                                     [[static int a[sizeof(gint64) > 4 ? 1 : -1]; if (a[0]) return 0;]])],
+                    [AC_MSG_RESULT([yes])
+                     AC_CHECK_LIB(gstreamer-0.10,gst_pad_get_caps_reffed,
+                       [AC_CHECK_LIB(gstapp-0.10,gst_app_buffer_new,[:],,[$GSTREAMER_LIBS])])],
+                    [AC_MSG_RESULT([no])])])],
+            [GSTREAMER_CFLAGS=""])])
 fi
 WINE_NOTICE_WITH(gstreamer,[test "x$ac_cv_lib_gstapp_0_10_gst_app_buffer_new" != xyes -a "x$ac_cv_header_QuickTime_ImageCompression_h" != xyes],
                  [gstreamer-0.10 base plugins ${notice_platform}development files not found, gstreamer support disabled])
@@ -1676,19 +1656,17 @@ WINE_WARNING_WITH(jpeg,[test "x$ac_cv_lib_soname_jpeg" = "x"],
 dnl **** Check for libpng ****
 if test "x$with_png" != "xno"
 then
-    ac_save_CPPFLAGS="$CPPFLAGS"
-    WINE_PACKAGE_FLAGS(PNG,[libpng],,[$X_CFLAGS],[$X_LIBS])
-    AC_CHECK_HEADERS([png.h])
-    if test "$ac_cv_header_png_h" = "yes"
-    then
-        WINE_CHECK_SONAME(png,png_create_read_struct,
-            [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <png.h>]],[[typeof(png_set_expand_gray_1_2_4_to_8) *p]])],
-                [AC_DEFINE(HAVE_PNG_SET_EXPAND_GRAY_1_2_4_TO_8,1,[Define to 1 if libpng has the png_set_expand_gray_1_2_4_to_8 function.])])],
-            [PNG_CFLAGS=""],[$PNG_LIBS -lm -lz],[[libpng[[0-9]]*]])
-    else
-        PNG_CFLAGS=""
-    fi
-    CPPFLAGS="$ac_save_CPPFLAGS"
+    WINE_PACKAGE_FLAGS(PNG,[libpng],,[$X_CFLAGS],[$X_LIBS],
+        [AC_CHECK_HEADERS([png.h])
+        if test "$ac_cv_header_png_h" = "yes"
+        then
+            WINE_CHECK_SONAME(png,png_create_read_struct,
+                [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <png.h>]],[[typeof(png_set_expand_gray_1_2_4_to_8) *p]])],
+                    [AC_DEFINE(HAVE_PNG_SET_EXPAND_GRAY_1_2_4_TO_8,1,[Define to 1 if libpng has the png_set_expand_gray_1_2_4_to_8 function.])])],
+                [PNG_CFLAGS=""],[$PNG_LIBS -lm -lz],[[libpng[[0-9]]*]])
+        else
+            PNG_CFLAGS=""
+        fi])
 fi
 WINE_WARNING_WITH(png,[test "x$ac_cv_lib_soname_png" = "x"],
                  [libpng ${notice_platform}development files not found, PNG won't be supported.])

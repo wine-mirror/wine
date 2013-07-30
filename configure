@@ -9592,14 +9592,12 @@ test "x$ac_cv_lib_OpenCL_clGetPlatformInfo" != xyes && enable_opencl=${enable_op
 
 if test "x$with_xml" != "xno"
 then
-    ac_save_CPPFLAGS="$CPPFLAGS"
     if test -n "$XML2_CFLAGS"; then :
 
 elif test -n "$PKG_CONFIG"; then :
   XML2_CFLAGS=`$PKG_CONFIG --cflags libxml-2.0 2>/dev/null`
 fi
 XML2_CFLAGS=${XML2_CFLAGS:-`xml2-config --cflags 2>/dev/null`}
-CPPFLAGS="$CPPFLAGS $XML2_CFLAGS"
 if test -n "$XML2_LIBS"; then :
 
 elif test -n "$PKG_CONFIG"; then :
@@ -9607,7 +9605,9 @@ elif test -n "$PKG_CONFIG"; then :
 fi
 XML2_LIBS=${XML2_LIBS:-`xml2-config --libs 2>/dev/null`}
 XML2_LIBS=${XML2_LIBS:-"-lxml2"}
-    for ac_header in libxml/parser.h libxml/xmlsave.h libxml/SAX2.h
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $XML2_CFLAGS"
+for ac_header in libxml/parser.h libxml/xmlsave.h libxml/SAX2.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -9620,9 +9620,9 @@ fi
 
 done
 
-    if test "$ac_cv_header_libxml_parser_h" = "yes" -a "$ac_cv_header_libxml_xmlsave_h" = "yes" -a "$ac_cv_header_libxml_SAX2_h" = "yes"
-    then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlParseMemory in -lxml2" >&5
+        if test "$ac_cv_header_libxml_parser_h" = "yes" -a "$ac_cv_header_libxml_xmlsave_h" = "yes" -a "$ac_cv_header_libxml_SAX2_h" = "yes"
+        then
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlParseMemory in -lxml2" >&5
 $as_echo_n "checking for xmlParseMemory in -lxml2... " >&6; }
 if ${ac_cv_lib_xml2_xmlParseMemory+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -9666,7 +9666,7 @@ else
   XML2_LIBS=""
 fi
 
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlReadMemory in -lxml2" >&5
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlReadMemory in -lxml2" >&5
 $as_echo_n "checking for xmlReadMemory in -lxml2... " >&6; }
 if ${ac_cv_lib_xml2_xmlReadMemory+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -9708,7 +9708,7 @@ $as_echo "#define HAVE_XMLREADMEMORY 1" >>confdefs.h
 
 fi
 
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlNewDocPI in -lxml2" >&5
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlNewDocPI in -lxml2" >&5
 $as_echo_n "checking for xmlNewDocPI in -lxml2... " >&6; }
 if ${ac_cv_lib_xml2_xmlNewDocPI+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -9750,7 +9750,7 @@ $as_echo "#define HAVE_XMLNEWDOCPI 1" >>confdefs.h
 
 fi
 
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlSchemaSetParserStructuredErrors in -lxml2" >&5
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlSchemaSetParserStructuredErrors in -lxml2" >&5
 $as_echo_n "checking for xmlSchemaSetParserStructuredErrors in -lxml2... " >&6; }
 if ${ac_cv_lib_xml2_xmlSchemaSetParserStructuredErrors+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -9792,7 +9792,7 @@ $as_echo "#define HAVE_XMLSCHEMASSETPARSERSTRUCTUREDERRORS 1" >>confdefs.h
 
 fi
 
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlSchemaSetValidStructuredErrors in -lxml2" >&5
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlSchemaSetValidStructuredErrors in -lxml2" >&5
 $as_echo_n "checking for xmlSchemaSetValidStructuredErrors in -lxml2... " >&6; }
 if ${ac_cv_lib_xml2_xmlSchemaSetValidStructuredErrors+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -9834,7 +9834,7 @@ $as_echo "#define HAVE_XMLSCHEMASSETVALIDSTRUCTUREDERRORS 1" >>confdefs.h
 
 fi
 
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlFirstElementChild in -lxml2" >&5
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlFirstElementChild in -lxml2" >&5
 $as_echo_n "checking for xmlFirstElementChild in -lxml2... " >&6; }
 if ${ac_cv_lib_xml2_xmlFirstElementChild+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -9876,7 +9876,7 @@ $as_echo "#define HAVE_XMLFIRSTELEMENTCHILD 1" >>confdefs.h
 
 fi
 
-        ac_fn_c_check_type "$LINENO" "xmlDocProperties" "ac_cv_type_xmlDocProperties" "#include <libxml/tree.h>
+            ac_fn_c_check_type "$LINENO" "xmlDocProperties" "ac_cv_type_xmlDocProperties" "#include <libxml/tree.h>
 "
 if test "x$ac_cv_type_xmlDocProperties" = xyes; then :
 
@@ -9884,11 +9884,12 @@ $as_echo "#define HAVE_XMLDOC_PROPERTIES 1" >>confdefs.h
 
 fi
 
-    else
-        XML2_CFLAGS=""
-        XML2_LIBS=""
-    fi
-    CPPFLAGS="$ac_save_CPPFLAGS"
+        else
+            XML2_CFLAGS=""
+            XML2_LIBS=""
+        fi
+CPPFLAGS=$ac_save_CPPFLAGS
+
 fi
 if test "$ac_cv_lib_xml2_xmlParseMemory" != "yes"; then :
   case "x$with_xml" in
@@ -9901,14 +9902,12 @@ fi
 
 if test "x$with_xslt" != "xno"
 then
-    ac_save_CPPFLAGS="$CPPFLAGS"
     if test -n "$XSLT_CFLAGS"; then :
 
 elif test -n "$PKG_CONFIG"; then :
   XSLT_CFLAGS=`$PKG_CONFIG --cflags libxslt 2>/dev/null`
 fi
 XSLT_CFLAGS=${XSLT_CFLAGS:-`xslt-config --cflags 2>/dev/null`}
-CPPFLAGS="$CPPFLAGS $XSLT_CFLAGS"
 if test -n "$XSLT_LIBS"; then :
 
 elif test -n "$PKG_CONFIG"; then :
@@ -9916,7 +9915,9 @@ elif test -n "$PKG_CONFIG"; then :
 fi
 XSLT_LIBS=${XSLT_LIBS:-`xslt-config --libs 2>/dev/null`}
 XSLT_LIBS=${XSLT_LIBS:-"-lxml2"}
-    for ac_header in libxslt/pattern.h libxslt/transform.h
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $XSLT_CFLAGS"
+for ac_header in libxslt/pattern.h libxslt/transform.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_compile "$LINENO" "$ac_header" "$as_ac_Header" "#ifdef HAVE_LIBXSLT_PATTERN_H
@@ -9932,10 +9933,9 @@ fi
 
 done
 
-    CPPFLAGS="$ac_save_CPPFLAGS"
-    if test "$ac_cv_header_libxslt_transform_h" = "yes"
-    then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lxslt" >&5
+        if test "$ac_cv_header_libxslt_transform_h" = "yes"
+        then
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lxslt" >&5
 $as_echo_n "checking for -lxslt... " >&6; }
 if ${ac_cv_lib_soname_xslt+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -9988,9 +9988,11 @@ _ACEOF
 
 
 fi
-    else
-        XSLT_CFLAGS=""
-    fi
+        else
+            XSLT_CFLAGS=""
+        fi
+CPPFLAGS=$ac_save_CPPFLAGS
+
 fi
 if test "x$ac_cv_lib_soname_xslt" = "x"; then :
   case "x$with_xslt" in
@@ -10003,14 +10005,12 @@ fi
 
 if test "x$with_dbus" != "xno"
 then
-    ac_save_CPPFLAGS="$CPPFLAGS"
     if test -n "$DBUS_CFLAGS"; then :
 
 elif test -n "$PKG_CONFIG"; then :
   DBUS_CFLAGS=`$PKG_CONFIG --cflags dbus-1 2>/dev/null`
 fi
 
-CPPFLAGS="$CPPFLAGS $DBUS_CFLAGS"
 if test -n "$DBUS_LIBS"; then :
 
 elif test -n "$PKG_CONFIG"; then :
@@ -10018,7 +10018,9 @@ elif test -n "$PKG_CONFIG"; then :
 fi
 
 
-    ac_fn_c_check_header_mongrel "$LINENO" "dbus/dbus.h" "ac_cv_header_dbus_dbus_h" "$ac_includes_default"
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $DBUS_CFLAGS"
+ac_fn_c_check_header_mongrel "$LINENO" "dbus/dbus.h" "ac_cv_header_dbus_dbus_h" "$ac_includes_default"
 if test "x$ac_cv_header_dbus_dbus_h" = xyes; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -ldbus-1" >&5
 $as_echo_n "checking for -ldbus-1... " >&6; }
@@ -10078,7 +10080,8 @@ else
 fi
 
 
-    CPPFLAGS="$ac_save_CPPFLAGS"
+CPPFLAGS=$ac_save_CPPFLAGS
+
 fi
 if test "x$ac_cv_lib_soname_dbus_1" = "x" -a \
                             "x$ac_cv_header_DiskArbitration_DiskArbitration_h" != "xyes"; then :
@@ -10092,14 +10095,12 @@ fi
 
 if test "x$with_hal" != "xno" -a "x$ac_cv_lib_soname_dbus_1" != x
 then
-    ac_save_CPPFLAGS="$CPPFLAGS"
     if test -n "$HAL_CFLAGS"; then :
 
 elif test -n "$PKG_CONFIG"; then :
   HAL_CFLAGS=`$PKG_CONFIG --cflags hal 2>/dev/null`
 fi
 
-CPPFLAGS="$CPPFLAGS $HAL_CFLAGS"
 if test -n "$HAL_LIBS"; then :
 
 elif test -n "$PKG_CONFIG"; then :
@@ -10107,7 +10108,9 @@ elif test -n "$PKG_CONFIG"; then :
 fi
 
 HAL_LIBS=${HAL_LIBS:-"-ldbus-1"}
-    ac_fn_c_check_header_mongrel "$LINENO" "hal/libhal.h" "ac_cv_header_hal_libhal_h" "$ac_includes_default"
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $HAL_CFLAGS"
+ac_fn_c_check_header_mongrel "$LINENO" "hal/libhal.h" "ac_cv_header_hal_libhal_h" "$ac_includes_default"
 if test "x$ac_cv_header_hal_libhal_h" = xyes; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lhal" >&5
 $as_echo_n "checking for -lhal... " >&6; }
@@ -10167,7 +10170,8 @@ else
 fi
 
 
-    CPPFLAGS="$ac_save_CPPFLAGS"
+CPPFLAGS=$ac_save_CPPFLAGS
+
     if test "x$ac_cv_lib_soname_hal" = "x" -a \
                                "x$ac_cv_header_DiskArbitration_DiskArbitration_h" != "xyes"; then :
   case "x$with_hal" in
@@ -10181,14 +10185,12 @@ fi
 
 if test "x$with_gnutls" != "xno"
 then
-    ac_save_CPPFLAGS="$CPPFLAGS"
     if test -n "$GNUTLS_CFLAGS"; then :
 
 elif test -n "$PKG_CONFIG"; then :
   GNUTLS_CFLAGS=`$PKG_CONFIG --cflags gnutls 2>/dev/null`
 fi
 
-CPPFLAGS="$CPPFLAGS $GNUTLS_CFLAGS"
 if test -n "$GNUTLS_LIBS"; then :
 
 elif test -n "$PKG_CONFIG"; then :
@@ -10196,7 +10198,9 @@ elif test -n "$PKG_CONFIG"; then :
 fi
 
 
-    ac_fn_c_check_header_mongrel "$LINENO" "gnutls/gnutls.h" "ac_cv_header_gnutls_gnutls_h" "$ac_includes_default"
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $GNUTLS_CFLAGS"
+ac_fn_c_check_header_mongrel "$LINENO" "gnutls/gnutls.h" "ac_cv_header_gnutls_gnutls_h" "$ac_includes_default"
 if test "x$ac_cv_header_gnutls_gnutls_h" = xyes; then :
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -10271,7 +10275,8 @@ else
 fi
 
 
-    CPPFLAGS="$ac_save_CPPFLAGS"
+CPPFLAGS=$ac_save_CPPFLAGS
+
 fi
 if test "x$ac_cv_lib_soname_gnutls" = "x"; then :
   case "x$with_gnutls" in
@@ -10419,14 +10424,12 @@ fi
 
 if test "x$with_sane" != "xno"
 then
-    ac_save_CPPFLAGS="$CPPFLAGS"
     if test -n "$SANE_CFLAGS"; then :
 
 elif test -n "$PKG_CONFIG"; then :
   SANE_CFLAGS=`$PKG_CONFIG --cflags libsane 2>/dev/null`
 fi
 SANE_CFLAGS=${SANE_CFLAGS:-`sane-config --cflags 2>/dev/null`}
-CPPFLAGS="$CPPFLAGS $SANE_CFLAGS"
 if test -n "$SANE_LIBS"; then :
 
 elif test -n "$PKG_CONFIG"; then :
@@ -10434,7 +10437,9 @@ elif test -n "$PKG_CONFIG"; then :
 fi
 SANE_LIBS=${SANE_LIBS:-`sane-config --ldflags 2>/dev/null`}
 
-    ac_fn_c_check_header_mongrel "$LINENO" "sane/sane.h" "ac_cv_header_sane_sane_h" "$ac_includes_default"
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $SANE_CFLAGS"
+ac_fn_c_check_header_mongrel "$LINENO" "sane/sane.h" "ac_cv_header_sane_sane_h" "$ac_includes_default"
 if test "x$ac_cv_header_sane_sane_h" = xyes; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lsane" >&5
 $as_echo_n "checking for -lsane... " >&6; }
@@ -10494,7 +10499,8 @@ else
 fi
 
 
-    CPPFLAGS="$ac_save_CPPFLAGS"
+CPPFLAGS=$ac_save_CPPFLAGS
+
 fi
 if test "x$ac_cv_lib_soname_sane" = "x"; then :
   case "x$with_sane" in
@@ -10572,14 +10578,12 @@ fi
 
 if test "x$with_gphoto" != "xno"
 then
-    ac_save_CPPFLAGS="$CPPFLAGS"
     if test -n "$GPHOTO2_CFLAGS"; then :
 
 elif test -n "$PKG_CONFIG"; then :
   GPHOTO2_CFLAGS=`$PKG_CONFIG --cflags libgphoto2 2>/dev/null`
 fi
 GPHOTO2_CFLAGS=${GPHOTO2_CFLAGS:-`gphoto2-config --cflags 2>/dev/null`}
-CPPFLAGS="$CPPFLAGS $GPHOTO2_CFLAGS"
 if test -n "$GPHOTO2_LIBS"; then :
 
 elif test -n "$PKG_CONFIG"; then :
@@ -10587,7 +10591,9 @@ elif test -n "$PKG_CONFIG"; then :
 fi
 GPHOTO2_LIBS=${GPHOTO2_LIBS:-`gphoto2-config --libs 2>/dev/null`}
 GPHOTO2_LIBS=${GPHOTO2_LIBS:-"-lgphoto2"}
-    ac_fn_c_check_header_mongrel "$LINENO" "gphoto2-camera.h" "ac_cv_header_gphoto2_camera_h" "$ac_includes_default"
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $GPHOTO2_CFLAGS"
+ac_fn_c_check_header_mongrel "$LINENO" "gphoto2-camera.h" "ac_cv_header_gphoto2_camera_h" "$ac_includes_default"
 if test "x$ac_cv_header_gphoto2_camera_h" = xyes; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gp_camera_new in -lgphoto2" >&5
 $as_echo_n "checking for gp_camera_new in -lgphoto2... " >&6; }
@@ -10638,13 +10644,14 @@ else
 fi
 
 
+CPPFLAGS=$ac_save_CPPFLAGS
+
     if test -n "$GPHOTO2_PORT_CFLAGS"; then :
 
 elif test -n "$PKG_CONFIG"; then :
   GPHOTO2_PORT_CFLAGS=`$PKG_CONFIG --cflags libgphoto2_port 2>/dev/null`
 fi
 GPHOTO2_PORT_CFLAGS=${GPHOTO2_PORT_CFLAGS:-`gphoto2-port-config --cflags 2>/dev/null`}
-CPPFLAGS="$CPPFLAGS $GPHOTO2_PORT_CFLAGS"
 if test -n "$GPHOTO2_PORT_LIBS"; then :
 
 elif test -n "$PKG_CONFIG"; then :
@@ -10652,7 +10659,9 @@ elif test -n "$PKG_CONFIG"; then :
 fi
 GPHOTO2_PORT_LIBS=${GPHOTO2_PORT_LIBS:-`gphoto2-port-config --libs 2>/dev/null`}
 GPHOTO2_PORT_LIBS=${GPHOTO2_PORT_LIBS:-"-lgphoto2_port"}
-    ac_fn_c_check_header_mongrel "$LINENO" "gphoto2-port.h" "ac_cv_header_gphoto2_port_h" "$ac_includes_default"
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $GPHOTO2_PORT_CFLAGS"
+ac_fn_c_check_header_mongrel "$LINENO" "gphoto2-port.h" "ac_cv_header_gphoto2_port_h" "$ac_includes_default"
 if test "x$ac_cv_header_gphoto2_port_h" = xyes; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gp_port_info_list_new in -lgphoto2_port" >&5
 $as_echo_n "checking for gp_port_info_list_new in -lgphoto2_port... " >&6; }
@@ -10703,7 +10712,8 @@ else
 fi
 
 
-    CPPFLAGS="$ac_save_CPPFLAGS"
+CPPFLAGS=$ac_save_CPPFLAGS
+
 fi
 if test "$ac_cv_lib_gphoto2_gp_camera_new" != "yes"; then :
   case "x$with_gphoto" in
@@ -10761,14 +10771,12 @@ fi
 
 if test "x$with_lcms2" != "xno"
 then
-    ac_save_CPPFLAGS="$CPPFLAGS"
     if test -n "$LCMS2_CFLAGS"; then :
 
 elif test -n "$PKG_CONFIG"; then :
   LCMS2_CFLAGS=`$PKG_CONFIG --cflags lcms2 2>/dev/null`
 fi
 
-CPPFLAGS="$CPPFLAGS $LCMS2_CFLAGS"
 if test -n "$LCMS2_LIBS"; then :
 
 elif test -n "$PKG_CONFIG"; then :
@@ -10776,7 +10784,9 @@ elif test -n "$PKG_CONFIG"; then :
 fi
 
 LCMS2_LIBS=${LCMS2_LIBS:-"-llcms2"}
-    for ac_header in lcms2.h
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $LCMS2_CFLAGS"
+for ac_header in lcms2.h
 do :
   ac_fn_c_check_header_mongrel "$LINENO" "lcms2.h" "ac_cv_header_lcms2_h" "$ac_includes_default"
 if test "x$ac_cv_header_lcms2_h" = xyes; then :
@@ -10788,9 +10798,9 @@ fi
 
 done
 
-    if test "$ac_cv_header_lcms2_h" = "yes"
-    then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for cmsOpenProfileFromFile in -llcms2" >&5
+        if test "$ac_cv_header_lcms2_h" = "yes"
+        then
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for cmsOpenProfileFromFile in -llcms2" >&5
 $as_echo_n "checking for cmsOpenProfileFromFile in -llcms2... " >&6; }
 if ${ac_cv_lib_lcms2_cmsOpenProfileFromFile+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -10834,11 +10844,12 @@ else
   LCMS2_LIBS=""
 fi
 
-    else
-        LCMS2_CFLAGS=""
-        LCMS2_LIBS=""
-    fi
-    CPPFLAGS="$ac_save_CPPFLAGS"
+        else
+            LCMS2_CFLAGS=""
+            LCMS2_LIBS=""
+        fi
+CPPFLAGS=$ac_save_CPPFLAGS
+
 fi
 if test "$ac_cv_lib_lcms2_cmsOpenProfileFromFile" != "yes"; then :
   case "x$with_cms" in
@@ -10851,14 +10862,12 @@ fi
 
 if test "x$with_freetype" != "xno"
 then
-    ac_save_CPPFLAGS="$CPPFLAGS"
     if test -n "$FREETYPE_CFLAGS"; then :
 
 elif test -n "$PKG_CONFIG"; then :
   FREETYPE_CFLAGS=`$PKG_CONFIG --cflags freetype2 2>/dev/null`
 fi
 FREETYPE_CFLAGS=${FREETYPE_CFLAGS:-`(freetype-config --cflags || freetype2-config --cflags) 2>/dev/null`}
-CPPFLAGS="$CPPFLAGS $FREETYPE_CFLAGS"
 if test -n "$FREETYPE_LIBS"; then :
 
 elif test -n "$PKG_CONFIG"; then :
@@ -10866,7 +10875,9 @@ elif test -n "$PKG_CONFIG"; then :
 fi
 FREETYPE_LIBS=${FREETYPE_LIBS:-`(freetype-config --libs || freetype2-config --libs) 2>/dev/null`}
 FREETYPE_LIBS=${FREETYPE_LIBS:-"-lfreetype"}
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lfreetype" >&5
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $FREETYPE_CFLAGS"
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lfreetype" >&5
 $as_echo_n "checking for -lfreetype... " >&6; }
 if ${ac_cv_lib_soname_freetype+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -10919,24 +10930,24 @@ _ACEOF
 
        ft_lib=yes
 fi
-    if test "$ft_lib" = "yes"
-    then
-	for ac_header in ft2build.h \
-                         freetype/freetype.h \
-                         freetype/ftglyph.h \
-                         freetype/fttypes.h \
-                         freetype/tttables.h \
-                         freetype/ftsnames.h \
-                         freetype/ttnameid.h \
-                         freetype/ftoutln.h \
-                         freetype/ftwinfnt.h \
-                         freetype/ftmodapi.h \
-                         freetype/ftlcdfil.h
+        if test "$ft_lib" = "yes"
+        then
+    	for ac_header in ft2build.h \
+                             freetype/freetype.h \
+                             freetype/ftglyph.h \
+                             freetype/fttypes.h \
+                             freetype/tttables.h \
+                             freetype/ftsnames.h \
+                             freetype/ttnameid.h \
+                             freetype/ftoutln.h \
+                             freetype/ftwinfnt.h \
+                             freetype/ftmodapi.h \
+                             freetype/ftlcdfil.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_compile "$LINENO" "$ac_header" "$as_ac_Header" "#ifdef HAVE_FT2BUILD_H
-                          # include <ft2build.h>
-                          #endif
+# include <ft2build.h>
+#endif
 "
 if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
   cat >>confdefs.h <<_ACEOF
@@ -10947,21 +10958,21 @@ fi
 
 done
 
-	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+    	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <ft2build.h>
-                    #include <freetype/fttrigon.h>
+#include <freetype/fttrigon.h>
 _ACEOF
 if ac_fn_c_try_cpp "$LINENO"; then :
 
 $as_echo "#define HAVE_FREETYPE_FTTRIGON_H 1" >>confdefs.h
 
-                    wine_cv_fttrigon=yes
+                        wine_cv_fttrigon=yes
 else
   wine_cv_fttrigon=no
 fi
 rm -f conftest.err conftest.i conftest.$ac_ext
-        ac_fn_c_check_type "$LINENO" "FT_TrueTypeEngineType" "ac_cv_type_FT_TrueTypeEngineType" "#include <freetype/ftmodapi.h>
+            ac_fn_c_check_type "$LINENO" "FT_TrueTypeEngineType" "ac_cv_type_FT_TrueTypeEngineType" "#include <freetype/ftmodapi.h>
 "
 if test "x$ac_cv_type_FT_TrueTypeEngineType" = xyes; then :
 
@@ -10972,18 +10983,19 @@ _ACEOF
 
 fi
 
-		if test "$ac_cv_header_freetype_freetype_h" = "yes" -a "$wine_cv_fttrigon" = "yes"
-	then
+    	    	if test "$ac_cv_header_freetype_freetype_h" = "yes" -a "$wine_cv_fttrigon" = "yes"
+    	then
 
 $as_echo "#define HAVE_FREETYPE 1" >>confdefs.h
 
+            else
+                FREETYPE_LIBS=""
+    	fi
         else
             FREETYPE_LIBS=""
-	fi
-    else
-        FREETYPE_LIBS=""
-    fi
-    CPPFLAGS="$ac_save_CPPFLAGS"
+        fi
+CPPFLAGS=$ac_save_CPPFLAGS
+
 fi
 if test "x$ac_cv_header_freetype_freetype_h" != xyes -o "x$wine_cv_fttrigon" != xyes; then :
   case "x$with_freetype" in
@@ -11167,14 +11179,12 @@ fi
 
 if test "x$with_gstreamer" != "xno"
 then
-    ac_save_CPPFLAGS="$CPPFLAGS"
     if test -n "$GSTREAMER_CFLAGS"; then :
 
 elif test -n "$PKG_CONFIG"; then :
   GSTREAMER_CFLAGS=`$PKG_CONFIG --cflags gstreamer-app-0.10 2>/dev/null`
 fi
 
-CPPFLAGS="$CPPFLAGS $GSTREAMER_CFLAGS"
 if test -n "$GSTREAMER_LIBS"; then :
 
 elif test -n "$PKG_CONFIG"; then :
@@ -11182,22 +11192,24 @@ elif test -n "$PKG_CONFIG"; then :
 fi
 
 
-    ac_gst_incl=""
-    for i in $GSTREAMER_CFLAGS
-    do
-        case "$i" in
-            -I*) ac_gst_incl="$ac_gst_incl $i";;
-        esac
-    done
-    GSTREAMER_CFLAGS=$ac_gst_incl
-    CPPFLAGS="$ac_save_CPPFLAGS $GSTREAMER_CFLAGS"
-    ac_fn_c_check_header_mongrel "$LINENO" "gst/gstpad.h" "ac_cv_header_gst_gstpad_h" "$ac_includes_default"
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $GSTREAMER_CFLAGS"
+ac_gst_incl=""
+        for i in $GSTREAMER_CFLAGS
+        do
+            case "$i" in
+                -I*) ac_gst_incl="$ac_gst_incl $i";;
+            esac
+        done
+        GSTREAMER_CFLAGS=$ac_gst_incl
+        CPPFLAGS="$ac_save_CPPFLAGS $GSTREAMER_CFLAGS"
+        ac_fn_c_check_header_mongrel "$LINENO" "gst/gstpad.h" "ac_cv_header_gst_gstpad_h" "$ac_includes_default"
 if test "x$ac_cv_header_gst_gstpad_h" = xyes; then :
   ac_fn_c_check_header_mongrel "$LINENO" "gst/app/gstappsink.h" "ac_cv_header_gst_app_gstappsink_h" "$ac_includes_default"
 if test "x$ac_cv_header_gst_app_gstappsink_h" = xyes; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether gint64 defined by gst/app/gstappsink.h is indeed 64-bit" >&5
 $as_echo_n "checking whether gint64 defined by gst/app/gstappsink.h is indeed 64-bit... " >&6; }
-              cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+                  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <gst/app/gstappsink.h>
 int
@@ -11211,7 +11223,7 @@ _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-                 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gst_pad_get_caps_reffed in -lgstreamer-0.10" >&5
+                     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gst_pad_get_caps_reffed in -lgstreamer-0.10" >&5
 $as_echo_n "checking for gst_pad_get_caps_reffed in -lgstreamer-0.10... " >&6; }
 if ${ac_cv_lib_gstreamer_0_10_gst_pad_get_caps_reffed+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -11303,7 +11315,8 @@ else
 fi
 
 
-    CPPFLAGS="$ac_save_CPPFLAGS"
+CPPFLAGS=$ac_save_CPPFLAGS
+
 fi
 if test "x$ac_cv_lib_gstapp_0_10_gst_app_buffer_new" != xyes -a "x$ac_cv_header_QuickTime_ImageCompression_h" != xyes; then :
   case "x$with_gstreamer" in
@@ -11834,14 +11847,12 @@ fi
 
 if test "x$with_png" != "xno"
 then
-    ac_save_CPPFLAGS="$CPPFLAGS"
     if test -n "$PNG_CFLAGS"; then :
 
 elif test -n "$PKG_CONFIG"; then :
   PNG_CFLAGS=`$PKG_CONFIG --cflags libpng 2>/dev/null`
 fi
 PNG_CFLAGS=${PNG_CFLAGS:-$X_CFLAGS}
-CPPFLAGS="$CPPFLAGS $PNG_CFLAGS"
 if test -n "$PNG_LIBS"; then :
 
 elif test -n "$PKG_CONFIG"; then :
@@ -11849,7 +11860,9 @@ elif test -n "$PKG_CONFIG"; then :
 fi
 PNG_LIBS=${PNG_LIBS:-$X_LIBS}
 
-    for ac_header in png.h
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $PNG_CFLAGS"
+for ac_header in png.h
 do :
   ac_fn_c_check_header_mongrel "$LINENO" "png.h" "ac_cv_header_png_h" "$ac_includes_default"
 if test "x$ac_cv_header_png_h" = xyes; then :
@@ -11861,9 +11874,9 @@ fi
 
 done
 
-    if test "$ac_cv_header_png_h" = "yes"
-    then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lpng" >&5
+        if test "$ac_cv_header_png_h" = "yes"
+        then
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lpng" >&5
 $as_echo_n "checking for -lpng... " >&6; }
 if ${ac_cv_lib_soname_png+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -11932,10 +11945,11 @@ $as_echo "#define HAVE_PNG_SET_EXPAND_GRAY_1_2_4_TO_8 1" >>confdefs.h
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
-    else
-        PNG_CFLAGS=""
-    fi
-    CPPFLAGS="$ac_save_CPPFLAGS"
+        else
+            PNG_CFLAGS=""
+        fi
+CPPFLAGS=$ac_save_CPPFLAGS
+
 fi
 if test "x$ac_cv_lib_soname_png" = "x"; then :
   case "x$with_png" in

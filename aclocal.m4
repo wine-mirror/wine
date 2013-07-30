@@ -67,22 +67,29 @@ AS_VAR_POPDEF([ac_Lib])])
 
 dnl **** Get flags from pkg-config or alternate xxx-config program ****
 dnl
-dnl Usage: WINE_PACKAGE_FLAGS(var,pkg-name,[default-lib,[cflags-alternate,libs-alternate]])
+dnl Usage: WINE_PACKAGE_FLAGS(var,pkg-name,[default-lib,[cflags-alternate,libs-alternate,[checks]]])
 dnl
 AC_DEFUN([WINE_PACKAGE_FLAGS],
 [AC_REQUIRE([WINE_PATH_PKG_CONFIG])dnl
-AC_ARG_VAR([$1]_CFLAGS, [C compiler flags for $2, overriding pkg-config])dnl
-AS_IF([test -n "$[$1]_CFLAGS"],[],
+AS_VAR_PUSHDEF([ac_cflags],[[$1]_CFLAGS])dnl
+AS_VAR_PUSHDEF([ac_libs],[[$1]_LIBS])dnl
+AC_ARG_VAR(ac_cflags, [C compiler flags for $2, overriding pkg-config])dnl
+AS_IF([test -n "$ac_cflags"],[],
       [test -n "$PKG_CONFIG"],
-      [[$1]_CFLAGS=`$PKG_CONFIG --cflags [$2] 2>/dev/null`])
-m4_ifval([$4],[[$1]_CFLAGS=[$]{[$1]_CFLAGS:-[$4]}])
-CPPFLAGS="$CPPFLAGS $[$1]_CFLAGS"
-AC_ARG_VAR([$1]_LIBS, [Linker flags for $2, overriding pkg-config])dnl
-AS_IF([test -n "$[$1]_LIBS"],[],
+      [ac_cflags=`$PKG_CONFIG --cflags [$2] 2>/dev/null`])
+m4_ifval([$4],[ac_cflags=[$]{ac_cflags:-[$4]}])
+AC_ARG_VAR(ac_libs, [Linker flags for $2, overriding pkg-config])dnl
+AS_IF([test -n "$ac_libs"],[],
       [test -n "$PKG_CONFIG"],
-      [[$1]_LIBS=`$PKG_CONFIG --libs [$2] 2>/dev/null`])
-m4_ifval([$5],[[$1]_LIBS=[$]{[$1]_LIBS:-[$5]}])
-m4_ifval([$3],[[$1]_LIBS=[$]{[$1]_LIBS:-"$3"}])])
+      [ac_libs=`$PKG_CONFIG --libs [$2] 2>/dev/null`])
+m4_ifval([$5],[ac_libs=[$]{ac_libs:-[$5]}])
+m4_ifval([$3],[ac_libs=[$]{ac_libs:-"$3"}])
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $ac_cflags"
+$6
+CPPFLAGS=$ac_save_CPPFLAGS
+AS_VAR_POPDEF([ac_libs])dnl
+AS_VAR_POPDEF([ac_cflags])])dnl
 
 dnl **** Link C code with an assembly file ****
 dnl
