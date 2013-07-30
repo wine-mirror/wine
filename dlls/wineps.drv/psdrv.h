@@ -302,6 +302,8 @@ typedef struct
     INT xx, xy, yx, yy;
 } matrix;
 
+enum fontset { UNSET = 0, HORIZONTAL_SET, VERTICAL_SET };
+
 typedef struct {
     enum fontloc        fontloc;
     union {
@@ -311,7 +313,7 @@ typedef struct {
 
     matrix              size;
     PSCOLOR             color;
-    BOOL                set;		/* Have we done a setfont yet */
+    enum fontset        set;    /* Have we done a setfont yet */
 
   /* These are needed by PSDRV_ExtTextOut */
     int                 escapement;
@@ -475,7 +477,7 @@ extern void PSDRV_FreeAFMList( FONTFAMILY *head ) DECLSPEC_HIDDEN;
 extern INT PSDRV_XWStoDS( PHYSDEV dev, INT width ) DECLSPEC_HIDDEN;
 
 extern BOOL PSDRV_Brush(PHYSDEV dev, BOOL EO) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_SetFont( PHYSDEV dev ) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_SetFont( PHYSDEV dev, BOOL vertical ) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_SetPen( PHYSDEV dev ) DECLSPEC_HIDDEN;
 
 extern void PSDRV_AddClip( PHYSDEV dev, HRGN hrgn ) DECLSPEC_HIDDEN;
@@ -498,7 +500,7 @@ extern BOOL PSDRV_WriteStroke(PHYSDEV dev) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_WriteRectangle(PHYSDEV dev, INT x, INT y, INT width, INT height) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_WriteRRectangle(PHYSDEV dev, INT x, INT y, INT width, INT height) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_WriteSetFont(PHYSDEV dev, const char *name, matrix size, INT escapement,
-                               BOOL fake_italic) DECLSPEC_HIDDEN;
+                               BOOL fake_italic, BOOL vertical) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_WriteGlyphShow(PHYSDEV dev, LPCSTR g_name) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_WriteSetPen(PHYSDEV dev) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_WriteArc(PHYSDEV dev, INT x, INT y, INT w, INT h,
@@ -546,7 +548,7 @@ extern BOOL PSDRV_WriteSetBuiltinFont(PHYSDEV dev) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_WriteBuiltinGlyphShow(PHYSDEV dev, LPCWSTR str, INT count) DECLSPEC_HIDDEN;
 
 extern BOOL PSDRV_SelectDownloadFont(PHYSDEV dev) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteSetDownloadFont(PHYSDEV dev) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteSetDownloadFont(PHYSDEV dev, BOOL vertical) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_WriteDownloadGlyphShow(PHYSDEV dev, const WORD *glpyhs, UINT count) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_EmptyDownloadList(PHYSDEV dev, BOOL write_undef) DECLSPEC_HIDDEN;
 

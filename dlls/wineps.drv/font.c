@@ -114,7 +114,7 @@ HFONT PSDRV_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
     }
 
     physDev->font.escapement = lf.lfEscapement;
-    physDev->font.set = FALSE;
+    physDev->font.set = UNSET;
 
     if (!subst && ((ret = next->funcs->pSelectFont( next, hfont, aa_flags ))))
     {
@@ -130,25 +130,29 @@ HFONT PSDRV_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
 /***********************************************************************
  *           PSDRV_SetFont
  */
-BOOL PSDRV_SetFont( PHYSDEV dev )
+BOOL PSDRV_SetFont( PHYSDEV dev, BOOL vertical )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
 
     PSDRV_WriteSetColor(dev, &physDev->font.color);
-    if(physDev->font.set) return TRUE;
+    if (vertical && (physDev->font.set == VERTICAL_SET)) return TRUE;
+    if (!vertical && (physDev->font.set == HORIZONTAL_SET)) return TRUE;
 
     switch(physDev->font.fontloc) {
     case Builtin:
         PSDRV_WriteSetBuiltinFont(dev);
 	break;
     case Download:
-        PSDRV_WriteSetDownloadFont(dev);
+        PSDRV_WriteSetDownloadFont(dev, vertical);
 	break;
     default:
         ERR("fontloc = %d\n", physDev->font.fontloc);
         assert(1);
 	break;
     }
-    physDev->font.set = TRUE;
+    if (vertical)
+        physDev->font.set = VERTICAL_SET;
+    else
+        physDev->font.set = HORIZONTAL_SET;
     return TRUE;
 }

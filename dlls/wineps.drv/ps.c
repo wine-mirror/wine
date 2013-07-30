@@ -571,7 +571,7 @@ BOOL PSDRV_WriteCurveTo(PHYSDEV dev, POINT pts[3])
     return PSDRV_WriteSpool(dev, buf, strlen(buf));
 }
 
-BOOL PSDRV_WriteSetFont(PHYSDEV dev, const char *name, matrix size, INT escapement, BOOL fake_italic)
+BOOL PSDRV_WriteSetFont(PHYSDEV dev, const char *name, matrix size, INT escapement, BOOL fake_italic, BOOL vertical)
 {
     char *buf;
 
