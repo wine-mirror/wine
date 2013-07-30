@@ -2032,24 +2032,35 @@ static DWORD str_to_buffer(const WCHAR *str, void *buffer, DWORD *size, BOOL uni
     int len;
     if (unicode)
     {
-        len = strlenW(str);
+        WCHAR *buf = buffer;
+
+        if (str) len = strlenW(str);
+        else len = 0;
         if (*size < (len + 1) * sizeof(WCHAR))
         {
             *size = (len + 1) * sizeof(WCHAR);
             return ERROR_INSUFFICIENT_BUFFER;
         }
-        strcpyW(buffer, str);
+        if (str) strcpyW(buf, str);
+        else buf[0] = 0;
+
         *size = len;
         return ERROR_SUCCESS;
     }
     else
     {
-        len = WideCharToMultiByte(CP_ACP, 0, str, -1, buffer, *size, NULL, NULL);
+        char *buf = buffer;
+
+        if (str) len = WideCharToMultiByte(CP_ACP, 0, str, -1, NULL, 0, NULL, NULL);
+        else len = 1;
         if (*size < len)
         {
             *size = len;
             return ERROR_INSUFFICIENT_BUFFER;
         }
+        if (str) WideCharToMultiByte(CP_ACP, 0, str, -1, buf, *size, NULL, NULL);
+        else buf[0] = 0;
+
         *size = len - 1;
         return ERROR_SUCCESS;
     }

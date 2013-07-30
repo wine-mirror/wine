@@ -2249,6 +2249,71 @@ static void test_proxy_direct(int port)
     hr = HttpOpenRequest(hc, NULL, "/test2", NULL, NULL, NULL, 0, 0);
     ok(hr != NULL, "HttpOpenRequest failed\n");
 
+    sz = 0;
+    SetLastError(0xdeadbeef);
+    r = InternetQueryOption(hr, INTERNET_OPTION_PROXY_PASSWORD, NULL, &sz);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %u\n", GetLastError());
+    ok(!r, "unexpected success\n");
+    ok(sz == 1, "got %u\n", sz);
+
+    sz = 0;
+    SetLastError(0xdeadbeef);
+    r = InternetQueryOption(hr, INTERNET_OPTION_PROXY_USERNAME, NULL, &sz);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %u\n", GetLastError());
+    ok(!r, "unexpected success\n");
+    ok(sz == 1, "got %u\n", sz);
+
+    sz = sizeof(buffer);
+    SetLastError(0xdeadbeef);
+    r = InternetQueryOption(hr, INTERNET_OPTION_PROXY_PASSWORD, buffer, &sz);
+    ok(r, "unexpected failure %u\n", GetLastError());
+    ok(!sz, "got %u\n", sz);
+
+    sz = sizeof(buffer);
+    SetLastError(0xdeadbeef);
+    r = InternetQueryOption(hr, INTERNET_OPTION_PROXY_USERNAME, buffer, &sz);
+    ok(r, "unexpected failure %u\n", GetLastError());
+    ok(!sz, "got %u\n", sz);
+
+    sz = 0;
+    SetLastError(0xdeadbeef);
+    r = InternetQueryOption(hr, INTERNET_OPTION_PASSWORD, NULL, &sz);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %u\n", GetLastError());
+    ok(!r, "unexpected success\n");
+    ok(sz == 1, "got %u\n", sz);
+
+    sz = 0;
+    SetLastError(0xdeadbeef);
+    r = InternetQueryOption(hr, INTERNET_OPTION_USERNAME, NULL, &sz);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %u\n", GetLastError());
+    ok(!r, "unexpected success\n");
+    ok(sz == 1, "got %u\n", sz);
+
+    sz = sizeof(buffer);
+    SetLastError(0xdeadbeef);
+    r = InternetQueryOption(hr, INTERNET_OPTION_PASSWORD, buffer, &sz);
+    ok(r, "unexpected failure %u\n", GetLastError());
+    ok(!sz, "got %u\n", sz);
+
+    sz = sizeof(buffer);
+    SetLastError(0xdeadbeef);
+    r = InternetQueryOption(hr, INTERNET_OPTION_USERNAME, buffer, &sz);
+    ok(r, "unexpected failure %u\n", GetLastError());
+    ok(!sz, "got %u\n", sz);
+
+    sz = 0;
+    SetLastError(0xdeadbeef);
+    r = InternetQueryOption(hr, INTERNET_OPTION_URL, NULL, &sz);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %u\n", GetLastError());
+    ok(!r, "unexpected success\n");
+    ok(sz == 34, "got %u\n", sz);
+
+    sz = sizeof(buffer);
+    SetLastError(0xdeadbeef);
+    r = InternetQueryOption(hr, INTERNET_OPTION_URL, buffer, &sz);
+    ok(r, "unexpected failure %u\n", GetLastError());
+    ok(sz == 33, "got %u\n", sz);
+
     r = HttpSendRequest(hr, NULL, 0, NULL, 0);
     ok(r || broken(!r), "HttpSendRequest failed %u\n", GetLastError());
     if (!r)
@@ -2268,6 +2333,14 @@ static void test_proxy_direct(int port)
 
     r = InternetSetOption(hr, INTERNET_OPTION_PROXY_USERNAME, username, 4);
     ok(r, "failed to set user\n");
+
+    buffer[0] = 0;
+    sz = 3;
+    SetLastError(0xdeadbeef);
+    r = InternetQueryOption(hr, INTERNET_OPTION_PROXY_USERNAME, buffer, &sz);
+    ok(!r, "unexpected failure %u\n", GetLastError());
+    ok(!buffer[0], "got %s\n", buffer);
+    ok(sz == strlen(username) + 1, "got %u\n", sz);
 
     buffer[0] = 0;
     sz = 0;
