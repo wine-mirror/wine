@@ -1757,37 +1757,129 @@ static HRESULT reader_parse_qname(xmlreader *reader, strval *prefix, strval *loc
     return S_OK;
 }
 
+/* [66] CharRef ::= '&#' [0-9]+ ';' | '&#x' [0-9a-fA-F]+ ';'
+   [67] Reference ::= EntityRef | CharRef
+   [68] EntityRef ::= '&' Name ';' */
+static HRESULT reader_parse_reference(xmlreader *reader)
+{
+    FIXME("References not supported\n");
+    return E_NOTIMPL;
+}
+
+/* [10 NS] AttValue ::= '"' ([^<&"] | Reference)* '"' | "'" ([^<&'] | Reference)* "'" */
+static HRESULT reader_parse_attvalue(xmlreader *reader, strval *value)
+{
+    WCHAR *ptr, *start;
+    WCHAR quote;
+
+    ptr = reader_get_cur(reader);
+
+    /* skip opening quote */
+    quote = *ptr;
+    if (quote != '\"' && quote != '\'') return WC_E_QUOTE;
+    reader_skipn(reader, 1);
+
+    start = ptr = reader_get_cur(reader);
+    while (*ptr)
+    {
+        if (*ptr == '<') return WC_E_LESSTHAN;
+
+        if (*ptr == quote)
+        {
+            /* skip closing quote */
+            reader_skipn(reader, 1);
+            break;
+        }
+
+        if (*ptr == '&')
+        {
+            HRESULT hr = reader_parse_reference(reader);
+            if (FAILED(hr)) return hr;
+        }
+        else
+            reader_skipn(reader, 1);
+        ptr = reader_get_cur(reader);
+    }
+
+    reader_init_strvalue(start, ptr-start, value);
+
+    return S_OK;
+}
+
+/* [1  NS] NSAttName ::= PrefixedAttName | DefaultAttName
+   [2  NS] PrefixedAttName ::= 'xmlns:' NCName
+   [3  NS] DefaultAttName  ::= 'xmlns'
+   [15 NS] Attribute ::= NSAttName Eq AttValue | QName Eq AttValue */
+static HRESULT reader_parse_attribute(xmlreader *reader)
+{
+    static const WCHAR xmlnsW[] = {'x','m','l','n','s',0};
+    strval prefix, local, qname, xmlns, value;
+    HRESULT hr;
+
+    hr = reader_parse_qname(reader, &prefix, &local, &qname);
+    if (FAILED(hr)) return hr;
+
+    reader_init_strvalue((WCHAR*)xmlnsW, 5, &xmlns);
+
+    if (strval_eq(&prefix, &xmlns))
+    {
+        FIXME("namespace definitions not supported\n");
+        return E_NOTIMPL;
+    }
+
+    if (strval_eq(&qname, &xmlns))
+    {
+        FIXME("default namespace definitions not supported\n");
+        return E_NOTIMPL;
+    }
+
+    hr = reader_parse_eq(reader);
+    if (FAILED(hr)) return hr;
+
+    hr = reader_parse_attvalue(reader, &value);
+    if (FAILED(hr)) return hr;
+
+    TRACE("%s=\"%s\"\n", debugstr_wn(local.str, local.len), debugstr_wn(value.str, value.len));
+    return reader_add_attr(reader, &local, &value);
+}
+
 /* [12 NS] STag ::= '<' QName (S Attribute)* S? '>'
    [14 NS] EmptyElemTag ::= '<' QName (S Attribute)* S? '/>' */
 static HRESULT reader_parse_stag(xmlreader *reader, strval *prefix, strval *local, strval *qname, int *empty)
 {
-    static const WCHAR endW[] = {'/','>',0};
     HRESULT hr;
 
     hr = reader_parse_qname(reader, prefix, local, qname);
     if (FAILED(hr)) return hr;
 
-    reader_skipspaces(reader);
-
-    /* empty element */
-    if ((*empty = !reader_cmp(reader, endW)))
+    while (1)
     {
-        /* skip '/>' */
-        reader_skipn(reader, 2);
-        reader->empty_element = TRUE;
-        return S_OK;
+        static const WCHAR endW[] = {'/','>',0};
+
+        reader_skipspaces(reader);
+
+        /* empty element */
+        if ((*empty = !reader_cmp(reader, endW)))
+        {
+            /* skip '/>' */
+            reader_skipn(reader, 2);
+            reader->empty_element = TRUE;
+            return S_OK;
+        }
+
+        /* got a start tag */
+        if (!reader_cmp(reader, gtW))
+        {
+            /* skip '>' */
+            reader_skipn(reader, 1);
+            return reader_push_element(reader, qname);
+        }
+
+        hr = reader_parse_attribute(reader);
+        if (FAILED(hr)) return hr;
     }
 
-    /* got a start tag */
-    if (!reader_cmp(reader, gtW))
-    {
-        /* skip '>' */
-        reader_skipn(reader, 1);
-        return reader_push_element(reader, qname);
-    }
-
-    FIXME("only empty elements/start tags without attribute list supported\n");
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 /* [39] element ::= EmptyElemTag | STag content ETag */
@@ -1935,15 +2027,6 @@ static HRESULT reader_parse_cdata(xmlreader *reader)
     }
 
     return S_OK;
-}
-
-/* [66] CharRef ::= '&#' [0-9]+ ';' | '&#x' [0-9a-fA-F]+ ';'
-   [67]	Reference ::= EntityRef | CharRef
-   [68]	EntityRef ::= '&' Name ';' */
-static HRESULT reader_parse_reference(xmlreader *reader)
-{
-    FIXME("References not supported\n");
-    return E_NOTIMPL;
 }
 
 /* [14] CharData ::= [^<&]* - ([^<&]* ']]>' [^<&]*) */
