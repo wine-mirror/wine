@@ -2356,7 +2356,7 @@ MSFT_DoFuncs(TLBContext*     pcx,
             MSFT_ParameterInfo paraminfo;
 
             ptfd->funcdesc.lprgelemdescParam =
-                heap_alloc_zero(pFuncRec->nrargs * sizeof(ELEMDESC));
+                heap_alloc_zero(pFuncRec->nrargs * (sizeof(ELEMDESC) + sizeof(PARAMDESCEX)));
 
             ptfd->pParamDesc = TLBParDesc_Constructor(pFuncRec->nrargs);
 
@@ -2390,7 +2390,7 @@ MSFT_DoFuncs(TLBContext*     pcx,
 
                     PARAMDESC* pParamDesc = &elemdesc->u.paramdesc;
 
-                    pParamDesc->pparamdescex = heap_alloc_zero(sizeof(PARAMDESCEX));
+                    pParamDesc->pparamdescex = (PARAMDESCEX*)(ptfd->funcdesc.lprgelemdescParam+pFuncRec->nrargs)+j;
                     pParamDesc->pparamdescex->cBytes = sizeof(PARAMDESCEX);
 
 		    MSFT_ReadValue(&(pParamDesc->pparamdescex->varDefaultValue),
@@ -5441,10 +5441,7 @@ static void ITypeInfoImpl_Destroy(ITypeInfoImpl *This)
         {
             ELEMDESC *elemdesc = &pFInfo->funcdesc.lprgelemdescParam[j];
             if (elemdesc->u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT)
-            {
                 VariantClear(&elemdesc->u.paramdesc.pparamdescex->varDefaultValue);
-                heap_free(elemdesc->u.paramdesc.pparamdescex);
-            }
             TLB_FreeCustData(&pFInfo->pParamDesc[j].custdata_list);
         }
         heap_free(pFInfo->funcdesc.lprgelemdescParam);
