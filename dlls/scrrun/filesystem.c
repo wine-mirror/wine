@@ -1505,12 +1505,88 @@ static HRESULT WINAPI filesys_MoveFolder(IFileSystem3 *iface,BSTR Source,
     return E_NOTIMPL;
 }
 
+static inline HRESULT copy_file(const WCHAR *source, DWORD source_len,
+        const WCHAR *destination, DWORD destination_len, VARIANT_BOOL overwrite)
+{
+    DWORD attrs;
+    WCHAR src_path[MAX_PATH], dst_path[MAX_PATH];
+    DWORD src_len, dst_len, name_len;
+    WIN32_FIND_DATAW ffd;
+    HANDLE f;
+    HRESULT hr;
+
+    if(!source[0] || !destination[0])
+        return E_INVALIDARG;
+
+    attrs = GetFileAttributesW(destination);
+    if(attrs==INVALID_FILE_ATTRIBUTES || !(attrs & FILE_ATTRIBUTE_DIRECTORY)) {
+        attrs = GetFileAttributesW(source);
+        if(attrs == INVALID_FILE_ATTRIBUTES)
+            return create_error(GetLastError());
+        else if(attrs & FILE_ATTRIBUTE_DIRECTORY)
+            return CTL_E_FILENOTFOUND;
+
+        if(!CopyFileW(source, destination, !overwrite))
+            return create_error(GetLastError());
+        return S_OK;
+    }
+
+    f = FindFirstFileW(source, &ffd);
+    if(f == INVALID_HANDLE_VALUE)
+        return CTL_E_FILENOTFOUND;
+
+    src_len = get_parent_folder_name(source, source_len);
+    if(src_len+1 >= MAX_PATH)
+        return E_FAIL;
+    if(src_len) {
+        memcpy(src_path, source, src_len*sizeof(WCHAR));
+        src_path[src_len++] = '\\';
+    }
+
+    dst_len = destination_len;
+    if(dst_len+1 >= MAX_PATH)
+        return E_FAIL;
+    memcpy(dst_path, destination, dst_len*sizeof(WCHAR));
+    if(dst_path[dst_len-1]!= '\\' && dst_path[dst_len-1]!='/')
+        dst_path[dst_len++] = '\\';
+
+    hr = CTL_E_FILENOTFOUND;
+    do {
+        if(ffd.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_DEVICE))
+            continue;
+
+        name_len = strlenW(ffd.cFileName);
+        if(src_len+name_len+1>=MAX_PATH || dst_len+name_len+1>=MAX_PATH) {
+            FindClose(f);
+            return E_FAIL;
+        }
+        memcpy(src_path+src_len, ffd.cFileName, (name_len+1)*sizeof(WCHAR));
+        memcpy(dst_path+dst_len, ffd.cFileName, (name_len+1)*sizeof(WCHAR));
+
+        TRACE("copying %s to %s\n", debugstr_w(src_path), debugstr_w(dst_path));
+
+        if(!CopyFileW(src_path, dst_path, !overwrite)) {
+            FindClose(f);
+            return create_error(GetLastError());
+        }else {
+            hr = S_OK;
+        }
+    } while(FindNextFileW(f, &ffd));
+    FindClose(f);
+
+    return hr;
+}
+
 static HRESULT WINAPI filesys_CopyFile(IFileSystem3 *iface, BSTR Source,
                                             BSTR Destination, VARIANT_BOOL OverWriteFiles)
 {
-    FIXME("%p %s %s %d\n", iface, debugstr_w(Source), debugstr_w(Destination), OverWriteFiles);
+    TRACE("%p %s %s %d\n", iface, debugstr_w(Source), debugstr_w(Destination), OverWriteFiles);
 
-    return E_NOTIMPL;
+    if(!Source || !Destination)
+        return E_POINTER;
+
+    return copy_file(Source, SysStringLen(Source), Destination,
+            SysStringLen(Destination), OverWriteFiles);
 }
 
 static HRESULT WINAPI filesys_CopyFolder(IFileSystem3 *iface, BSTR Source,
