@@ -9889,6 +9889,8 @@ fi
             XML2_LIBS=""
         fi
 CPPFLAGS=$ac_save_CPPFLAGS
+test -z "$XML2_CFLAGS" || XML2_CFLAGS=`echo " $XML2_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
+test -z "$XML2_LIBS" || XML2_LIBS=`echo " $XML2_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "$ac_cv_lib_xml2_xmlParseMemory" != "yes"; then :
@@ -9992,6 +9994,8 @@ fi
             XSLT_CFLAGS=""
         fi
 CPPFLAGS=$ac_save_CPPFLAGS
+test -z "$XSLT_CFLAGS" || XSLT_CFLAGS=`echo " $XSLT_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
+test -z "$XSLT_LIBS" || XSLT_LIBS=`echo " $XSLT_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "x$ac_cv_lib_soname_xslt" = "x"; then :
@@ -10081,6 +10085,8 @@ fi
 
 
 CPPFLAGS=$ac_save_CPPFLAGS
+test -z "$DBUS_CFLAGS" || DBUS_CFLAGS=`echo " $DBUS_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
+test -z "$DBUS_LIBS" || DBUS_LIBS=`echo " $DBUS_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "x$ac_cv_lib_soname_dbus_1" = "x" -a \
@@ -10171,6 +10177,8 @@ fi
 
 
 CPPFLAGS=$ac_save_CPPFLAGS
+test -z "$HAL_CFLAGS" || HAL_CFLAGS=`echo " $HAL_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
+test -z "$HAL_LIBS" || HAL_LIBS=`echo " $HAL_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
     if test "x$ac_cv_lib_soname_hal" = "x" -a \
                                "x$ac_cv_header_DiskArbitration_DiskArbitration_h" != "xyes"; then :
@@ -10276,6 +10284,8 @@ fi
 
 
 CPPFLAGS=$ac_save_CPPFLAGS
+test -z "$GNUTLS_CFLAGS" || GNUTLS_CFLAGS=`echo " $GNUTLS_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
+test -z "$GNUTLS_LIBS" || GNUTLS_LIBS=`echo " $GNUTLS_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "x$ac_cv_lib_soname_gnutls" = "x"; then :
@@ -10500,6 +10510,8 @@ fi
 
 
 CPPFLAGS=$ac_save_CPPFLAGS
+test -z "$SANE_CFLAGS" || SANE_CFLAGS=`echo " $SANE_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
+test -z "$SANE_LIBS" || SANE_LIBS=`echo " $SANE_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "x$ac_cv_lib_soname_sane" = "x"; then :
@@ -10645,6 +10657,8 @@ fi
 
 
 CPPFLAGS=$ac_save_CPPFLAGS
+test -z "$GPHOTO2_CFLAGS" || GPHOTO2_CFLAGS=`echo " $GPHOTO2_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
+test -z "$GPHOTO2_LIBS" || GPHOTO2_LIBS=`echo " $GPHOTO2_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
     if test -n "$GPHOTO2_PORT_CFLAGS"; then :
 
@@ -10713,6 +10727,8 @@ fi
 
 
 CPPFLAGS=$ac_save_CPPFLAGS
+test -z "$GPHOTO2_PORT_CFLAGS" || GPHOTO2_PORT_CFLAGS=`echo " $GPHOTO2_PORT_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
+test -z "$GPHOTO2_PORT_LIBS" || GPHOTO2_PORT_LIBS=`echo " $GPHOTO2_PORT_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "$ac_cv_lib_gphoto2_gp_camera_new" != "yes"; then :
@@ -10849,6 +10865,8 @@ fi
             LCMS2_LIBS=""
         fi
 CPPFLAGS=$ac_save_CPPFLAGS
+test -z "$LCMS2_CFLAGS" || LCMS2_CFLAGS=`echo " $LCMS2_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
+test -z "$LCMS2_LIBS" || LCMS2_LIBS=`echo " $LCMS2_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "$ac_cv_lib_lcms2_cmsOpenProfileFromFile" != "yes"; then :
@@ -10995,6 +11013,8 @@ $as_echo "#define HAVE_FREETYPE 1" >>confdefs.h
             FREETYPE_LIBS=""
         fi
 CPPFLAGS=$ac_save_CPPFLAGS
+test -z "$FREETYPE_CFLAGS" || FREETYPE_CFLAGS=`echo " $FREETYPE_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
+test -z "$FREETYPE_LIBS" || FREETYPE_LIBS=`echo " $FREETYPE_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "x$ac_cv_header_freetype_freetype_h" != xyes -o "x$wine_cv_fttrigon" != xyes; then :
@@ -11316,6 +11336,8 @@ fi
 
 
 CPPFLAGS=$ac_save_CPPFLAGS
+test -z "$GSTREAMER_CFLAGS" || GSTREAMER_CFLAGS=`echo " $GSTREAMER_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
+test -z "$GSTREAMER_LIBS" || GSTREAMER_LIBS=`echo " $GSTREAMER_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "x$ac_cv_lib_gstapp_0_10_gst_app_buffer_new" != xyes -a "x$ac_cv_header_QuickTime_ImageCompression_h" != xyes; then :
@@ -11949,6 +11971,8 @@ fi
             PNG_CFLAGS=""
         fi
 CPPFLAGS=$ac_save_CPPFLAGS
+test -z "$PNG_CFLAGS" || PNG_CFLAGS=`echo " $PNG_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
+test -z "$PNG_LIBS" || PNG_LIBS=`echo " $PNG_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "x$ac_cv_lib_soname_png" = "x"; then :
