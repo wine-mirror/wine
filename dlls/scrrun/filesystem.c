@@ -20,6 +20,7 @@
 
 #include "config.h"
 #include <stdarg.h>
+#include <limits.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -824,8 +825,27 @@ static HRESULT WINAPI file_get_DateLastAccessed(IFile *iface, DATE *pdate)
 static HRESULT WINAPI file_get_Size(IFile *iface, VARIANT *pvarSize)
 {
     struct file *This = impl_from_IFile(iface);
-    FIXME("(%p)->(%p)\n", This, pvarSize);
-    return E_NOTIMPL;
+    WIN32_FIND_DATAW fd;
+    HANDLE f;
+
+    TRACE("(%p)->(%p)\n", This, pvarSize);
+
+    if(!pvarSize)
+        return E_POINTER;
+
+    f = FindFirstFileW(This->path, &fd);
+    if(f == INVALID_HANDLE_VALUE)
+        return create_error(GetLastError());
+    FindClose(f);
+
+    if(fd.nFileSizeHigh || fd.nFileSizeLow>INT_MAX) {
+        V_VT(pvarSize) = VT_R8;
+        V_R8(pvarSize) = ((ULONGLONG)fd.nFileSizeHigh<<32) + fd.nFileSizeLow;
+    }else {
+        V_VT(pvarSize) = VT_I4;
+        V_I4(pvarSize) = fd.nFileSizeLow;
+    }
+    return S_OK;
 }
 
 static HRESULT WINAPI file_get_Type(IFile *iface, BSTR *pbstrType)

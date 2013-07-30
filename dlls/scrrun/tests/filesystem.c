@@ -467,6 +467,7 @@ static void test_GetFile(void)
 
     BSTR path = SysAllocString(get_file);
     FileAttribute fa;
+    VARIANT size;
     DWORD gfa;
     IFile *file;
     HRESULT hr;
@@ -505,6 +506,11 @@ static void test_GetFile(void)
     gfa = GetFileAttributesW(get_file) & ~FILE_ATTRIBUTE_NORMAL;
     ok(hr == S_OK, "get_Attributes returned %x, expected S_OK\n", hr);
     ok(fa == gfa, "fa = %x, expected %x\n", fa, gfa);
+
+    hr = IFile_get_Size(file, &size);
+    ok(hr == S_OK, "get_Size returned %x, expected S_OK\n", hr);
+    ok(V_VT(&size) == VT_I4, "V_VT(&size) = %d, expected VT_I4\n", V_VT(&size));
+    ok(V_I4(&size) == 0, "V_I4(&size) = %d, expected 0\n", V_I4(&size));
     IFile_Release(file);
 
     DeleteFileW(path);
