@@ -1859,14 +1859,14 @@ DWORD WINAPI GetExtendedTcpTable(PVOID pTcpTable, PDWORD pdwSize, BOOL bOrder,
 
     if (!pdwSize) return ERROR_INVALID_PARAMETER;
 
-    if (ulAf != AF_INET ||
-        TableClass == TCP_TABLE_OWNER_MODULE_LISTENER ||
-        TableClass == TCP_TABLE_OWNER_MODULE_CONNECTIONS ||
-        TableClass == TCP_TABLE_OWNER_MODULE_ALL)
+    if (ulAf != AF_INET)
     {
-        FIXME("ulAf = %u, TableClass = %u not supported\n", ulAf, TableClass);
+        FIXME("ulAf = %u not supported\n", ulAf);
         return ERROR_NOT_SUPPORTED;
     }
+    if (TableClass >= TCP_TABLE_OWNER_MODULE_LISTENER)
+        FIXME("module classes not fully supported\n");
+
     if ((ret = build_tcp_table(TableClass, &table, bOrder, GetProcessHeap(), 0, &size)))
         return ret;
 
@@ -1924,11 +1924,9 @@ DWORD WINAPI GetExtendedUdpTable(PVOID pUdpTable, PDWORD pdwSize, BOOL bOrder,
 
     if (!pdwSize) return ERROR_INVALID_PARAMETER;
 
-    if (ulAf != AF_INET ||
-        (TableClass != UDP_TABLE_BASIC && TableClass != UDP_TABLE_OWNER_PID &&
-         TableClass != UDP_TABLE_OWNER_MODULE))
+    if (ulAf != AF_INET)
     {
-        FIXME("ulAf = %u, TableClass = %u not supported\n", ulAf, TableClass);
+        FIXME("ulAf = %u not supported\n", ulAf);
         return ERROR_NOT_SUPPORTED;
     }
     if (TableClass == UDP_TABLE_OWNER_MODULE)

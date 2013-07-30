@@ -1193,6 +1193,7 @@ static void test_GetExtendedTcpTable(void)
     DWORD ret, size;
     MIB_TCPTABLE *table;
     MIB_TCPTABLE_OWNER_PID *table_pid;
+    MIB_TCPTABLE_OWNER_MODULE *table_module;
 
     if (!pGetExtendedTcpTable)
     {
@@ -1237,6 +1238,24 @@ static void test_GetExtendedTcpTable(void)
     ret = pGetExtendedTcpTable( table_pid, &size, TRUE, AF_INET, TCP_TABLE_OWNER_PID_LISTENER, 0 );
     ok( ret == ERROR_SUCCESS, "got %u\n", ret );
     HeapFree( GetProcessHeap(), 0, table_pid );
+
+    size = 0;
+    ret = pGetExtendedTcpTable( NULL, &size, TRUE, AF_INET, TCP_TABLE_OWNER_MODULE_ALL, 0 );
+    ok( ret == ERROR_INSUFFICIENT_BUFFER, "got %u\n", ret );
+
+    table_module = HeapAlloc( GetProcessHeap(), 0, size );
+    ret = pGetExtendedTcpTable( table_module, &size, TRUE, AF_INET, TCP_TABLE_OWNER_MODULE_ALL, 0 );
+    ok( ret == ERROR_SUCCESS, "got %u\n", ret );
+    HeapFree( GetProcessHeap(), 0, table_module );
+
+    size = 0;
+    ret = pGetExtendedTcpTable( NULL, &size, TRUE, AF_INET, TCP_TABLE_OWNER_MODULE_LISTENER, 0 );
+    ok( ret == ERROR_INSUFFICIENT_BUFFER, "got %u\n", ret );
+
+    table_module = HeapAlloc( GetProcessHeap(), 0, size );
+    ret = pGetExtendedTcpTable( table_module, &size, TRUE, AF_INET, TCP_TABLE_OWNER_MODULE_LISTENER, 0 );
+    ok( ret == ERROR_SUCCESS, "got %u\n", ret );
+    HeapFree( GetProcessHeap(), 0, table_module );
 }
 
 static void test_GetExtendedUdpTable(void)
@@ -1244,6 +1263,7 @@ static void test_GetExtendedUdpTable(void)
     DWORD ret, size;
     MIB_UDPTABLE *table;
     MIB_UDPTABLE_OWNER_PID *table_pid;
+    MIB_UDPTABLE_OWNER_MODULE *table_module;
 
     if (!pGetExtendedUdpTable)
     {
@@ -1270,6 +1290,15 @@ static void test_GetExtendedUdpTable(void)
     ret = pGetExtendedUdpTable( table_pid, &size, TRUE, AF_INET, UDP_TABLE_OWNER_PID, 0 );
     ok( ret == ERROR_SUCCESS, "got %u\n", ret );
     HeapFree( GetProcessHeap(), 0, table_pid );
+
+    size = 0;
+    ret = pGetExtendedUdpTable( NULL, &size, TRUE, AF_INET, UDP_TABLE_OWNER_MODULE, 0 );
+    ok( ret == ERROR_INSUFFICIENT_BUFFER, "got %u\n", ret );
+
+    table_module = HeapAlloc( GetProcessHeap(), 0, size );
+    ret = pGetExtendedUdpTable( table_module, &size, TRUE, AF_INET, UDP_TABLE_OWNER_MODULE, 0 );
+    ok( ret == ERROR_SUCCESS, "got %u\n", ret );
+    HeapFree( GetProcessHeap(), 0, table_module );
 }
 
 START_TEST(iphlpapi)

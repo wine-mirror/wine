@@ -115,6 +115,24 @@ typedef struct _MIB_TCPTABLE_OWNER_PID
     MIB_TCPROW_OWNER_PID table[1];
 } MIB_TCPTABLE_OWNER_PID, *PMIB_TCPTABLE_OWNER_PID;
 
+typedef struct _MIB_TCPROW_OWNER_MODULE
+{
+    DWORD         dwState;
+    DWORD         dwLocalAddr;
+    DWORD         dwLocalPort;
+    DWORD         dwRemoteAddr;
+    DWORD         dwRemotePort;
+    DWORD         dwOwningPid;
+    LARGE_INTEGER liCreateTimestamp;
+    ULONGLONG     OwningModuleInfo[TCPIP_OWNING_MODULE_SIZE];
+} MIB_TCPROW_OWNER_MODULE, *PMIB_TCPROW_OWNER_MODULE;
+
+typedef struct _MIB_TCPTABLE_OWNER_MODULE
+{
+    DWORD                   dwNumEntries;
+    MIB_TCPROW_OWNER_MODULE table[1];
+} MIB_TCPTABLE_OWNER_MODULE, *PMIB_TCPTABLE_OWNER_MODULE;
+
 typedef struct _MIB_TCPROW2
 {
     DWORD dwState;
