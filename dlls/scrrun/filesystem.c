@@ -778,8 +778,19 @@ static HRESULT WINAPI file_get_ParentFolder(IFile *iface, IFolder **ppfolder)
 static HRESULT WINAPI file_get_Attributes(IFile *iface, FileAttribute *pfa)
 {
     struct file *This = impl_from_IFile(iface);
-    FIXME("(%p)->(%p)\n", This, pfa);
-    return E_NOTIMPL;
+    DWORD fa;
+
+    TRACE("(%p)->(%p)\n", This, pfa);
+
+    if(!pfa)
+        return E_POINTER;
+
+    fa = GetFileAttributesW(This->path);
+    if(fa == INVALID_FILE_ATTRIBUTES)
+        return create_error(GetLastError());
+
+    *pfa = fa & ~FILE_ATTRIBUTE_NORMAL;
+    return S_OK;
 }
 
 static HRESULT WINAPI file_put_Attributes(IFile *iface, FileAttribute pfa)

@@ -466,6 +466,8 @@ static void test_GetFile(void)
     static const WCHAR get_file[] = {'g','e','t','_','f','i','l','e','.','t','s','t',0};
 
     BSTR path = SysAllocString(get_file);
+    FileAttribute fa;
+    DWORD gfa;
     IFile *file;
     HRESULT hr;
     HANDLE hf;
@@ -498,6 +500,11 @@ static void test_GetFile(void)
 
     hr = IFileSystem3_GetFile(fs3, path, &file);
     ok(hr == S_OK, "GetFile returned %x, expected S_OK\n", hr);
+
+    hr = IFile_get_Attributes(file, &fa);
+    gfa = GetFileAttributesW(get_file) & ~FILE_ATTRIBUTE_NORMAL;
+    ok(hr == S_OK, "get_Attributes returned %x, expected S_OK\n", hr);
+    ok(fa == gfa, "fa = %x, expected %x\n", fa, gfa);
     IFile_Release(file);
 
     DeleteFileW(path);
