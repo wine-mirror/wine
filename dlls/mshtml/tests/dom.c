@@ -5513,11 +5513,29 @@ static void test_tr_elem(IHTMLElement *elem)
     IHTMLTableRow_Release(row);
 }
 
+#define test_table_cell_spacing(a,b) _test_table_cell_spacing(__LINE__,a,b)
+static void _test_table_cell_spacing(unsigned line, IHTMLTable *table, const char *exstr)
+{
+    VARIANT v;
+    HRESULT hres;
+
+    V_VT(&v) = VT_ERROR;
+    hres = IHTMLTable_get_cellSpacing(table, &v);
+    ok_(__FILE__,line)(hres == S_OK, "get_cellSpacing failed: %08x\n", hres);
+    ok_(__FILE__,line)(V_VT(&v) == VT_BSTR, "V_VT(v) = %d\n", V_VT(&v));
+    if(exstr)
+        ok_(__FILE__,line)(!strcmp_wa(V_BSTR(&v), exstr), "cellSpacing = %s, expected %s\n", wine_dbgstr_w(V_BSTR(&v)), exstr);
+    else
+        ok_(__FILE__,line)(!V_BSTR(&v), "cellSpacing = %s, expected NULL\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+}
+
 static void test_table_elem(IHTMLElement *elem)
 {
     IHTMLElementCollection *col;
     IHTMLTable *table;
     IHTMLDOMNode *node;
+    VARIANT v;
     HRESULT hres;
 
     static const elem_type_t row_types[] = {ET_TR,ET_TR};
@@ -5556,6 +5574,21 @@ static void test_table_elem(IHTMLElement *elem)
 
     test_elem_collection((IUnknown*)col, tbodies_types, sizeof(tbodies_types)/sizeof(*tbodies_types));
     IHTMLElementCollection_Release(col);
+
+    test_table_cell_spacing(table, NULL);
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 10;
+    hres = IHTMLTable_put_cellSpacing(table, v);
+    ok(hres == S_OK, "put_cellSpacing = %08x\n", hres);
+    test_table_cell_spacing(table, "10");
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("11");
+    hres = IHTMLTable_put_cellSpacing(table, v);
+    ok(hres == S_OK, "put_cellSpacing = %08x\n", hres);
+    test_table_cell_spacing(table, "11");
+    VariantClear(&v);
 
     IHTMLTable_Release(table);
 }
