@@ -32,7 +32,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 #define WINED3D_BUFFER_HASDESC      0x01    /* A vertex description has been found. */
 #define WINED3D_BUFFER_CREATEBO     0x02    /* Create a buffer object for this buffer. */
 #define WINED3D_BUFFER_DOUBLEBUFFER 0x04    /* Keep both a buffer object and a system memory copy for this buffer. */
-#define WINED3D_BUFFER_DISCARD      0x08    /* A DISCARD lock has occurred since the last preload. */
+#define WINED3D_BUFFER_DISCARD      0x08    /* The next PreLoad may discard the buffer contents. */
 #define WINED3D_BUFFER_SYNC         0x10    /* There has been at least one synchronized map since the last preload. */
 #define WINED3D_BUFFER_APPLESYNC    0x20    /* Using sync as in GL_APPLE_flush_buffer_range. */
 
@@ -921,7 +921,7 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
      * previous contents of the buffer. The r600g driver only does this when
      * the buffer is currently in use, while the proprietary NVIDIA driver
      * appears to do this unconditionally. */
-    if (buffer->flags & WINED3D_BUFFER_DISCARD)
+    if (buffer->ignore_discard)
         flags &= ~WINED3D_MAP_DISCARD;
     count = ++buffer->resource.map_count;
 
@@ -1004,10 +1004,15 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
                 context_release(context);
             }
         }
-
-        if (flags & WINED3D_MAP_DISCARD)
-            buffer->flags |= WINED3D_BUFFER_DISCARD;
-        else if (!(flags & WINED3D_MAP_NOOVERWRITE))
+        else if(!wined3d_settings.cs_multithreaded)
+        {
+            if (flags & WINED3D_MAP_DISCARD)
+            {
+                buffer->flags |= WINED3D_BUFFER_DISCARD;
+                buffer->ignore_discard = TRUE;
+            }
+        }
+        if (!(flags & (WINED3D_MAP_NOOVERWRITE | WINED3D_MAP_DISCARD)))
             buffer->flags |= WINED3D_BUFFER_SYNC;
     }
 
@@ -1016,6 +1021,7 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
         BOOL swvp = device->create_parms.flags & WINED3DCREATE_SOFTWARE_VERTEXPROCESSING;
         if (flags & WINED3D_MAP_DISCARD && !swvp)
         {
+            buffer->ignore_discard = TRUE;
             wined3d_resource_allocate_sysmem(&buffer->resource);
             wined3d_cs_emit_buffer_swap_mem(device->cs, buffer, buffer->resource.map_heap_memory);
         }
@@ -1337,4 +1343,11 @@ HRESULT CDECL wined3d_buffer_create_ib(struct wined3d_device *device, UINT size,
     *buffer = object;
 
     return WINED3D_OK;
+}
+
+void buffer_swap_mem(struct wined3d_buffer *buffer, BYTE *mem)
+{
+    wined3d_resource_free_sysmem(&buffer->resource);
+    buffer->resource.heap_memory = mem;
+    buffer->flags |= WINED3D_BUFFER_DISCARD;
 }

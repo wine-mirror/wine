@@ -2846,6 +2846,7 @@ struct wined3d_buffer
     GLenum buffer_object_usage;
     GLenum buffer_type_hint;
     DWORD flags;
+    BOOL ignore_discard;
     void *map_ptr;
 
     struct wined3d_map_range *maps;
@@ -2871,6 +2872,7 @@ BYTE *buffer_get_sysmem(struct wined3d_buffer *This, struct wined3d_context *con
 void buffer_internal_preload(struct wined3d_buffer *buffer, struct wined3d_context *context,
         const struct wined3d_state *state) DECLSPEC_HIDDEN;
 void buffer_invalidate_bo_range(struct wined3d_buffer *This, UINT offset, UINT size) DECLSPEC_HIDDEN;
+void buffer_swap_mem(struct wined3d_buffer *buffer, BYTE *mem) DECLSPEC_HIDDEN;
 
 struct wined3d_rendertarget_view
 {

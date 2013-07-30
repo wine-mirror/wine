@@ -732,11 +732,17 @@ void wined3d_cs_emit_draw(struct wined3d_cs *cs, UINT start_idx, UINT index_coun
     op->indexed = indexed;
 
     if (indexed)
+    {
         wined3d_resource_inc_fence(&state->index_buffer->resource);
+        state->index_buffer->ignore_discard = FALSE;
+    }
     for (i = 0; i < sizeof(state->streams) / sizeof(*state->streams); i++)
     {
         if (state->streams[i].buffer)
+        {
             wined3d_resource_inc_fence(&state->streams[i].buffer->resource);
+            state->streams[i].buffer->ignore_discard = FALSE;
+        }
     }
     for (i = 0; i < sizeof(state->textures) / sizeof(*state->textures); i++)
     {
@@ -2265,8 +2271,7 @@ static UINT wined3d_cs_exec_buffer_swap_mem(struct wined3d_cs *cs, const void *d
     const struct wined3d_cs_buffer_swap_mem *op = data;
     struct wined3d_buffer *buffer = op->buffer;
 
-    wined3d_resource_free_sysmem(&buffer->resource);
-    buffer->resource.heap_memory = op->mem;
+    buffer_swap_mem(buffer, op->mem);
 
     if (!buffer->buffer_object && buffer->resource.bind_count)
     {
