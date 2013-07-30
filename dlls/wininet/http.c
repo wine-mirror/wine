@@ -4832,7 +4832,6 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
     LPWSTR requestString = NULL;
     INT responseLen;
     BOOL loop_next;
-    static const WCHAR szPost[] = { 'P','O','S','T',0 };
     static const WCHAR szContentLength[] =
         { 'C','o','n','t','e','n','t','-','L','e','n','g','t','h',':',' ','%','l','i','\r','\n',0 };
     WCHAR contentLengthStr[sizeof szContentLength/2 /* includes \r\n */ + 20 /* int */ ];
@@ -4870,7 +4869,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
         static const WCHAR pragma_nocache[] = {'P','r','a','g','m','a',':',' ','n','o','-','c','a','c','h','e','\r','\n',0};
         HTTP_HttpAddRequestHeadersW(request, pragma_nocache, strlenW(pragma_nocache), HTTP_ADDREQ_FLAG_ADD_IF_NEW);
     }
-    if ((request->hdr.dwFlags & INTERNET_FLAG_NO_CACHE_WRITE) && !strcmpW(request->verb, szPost))
+    if ((request->hdr.dwFlags & INTERNET_FLAG_NO_CACHE_WRITE) && strcmpW(request->verb, szGET))
     {
         static const WCHAR cache_control[] = {'C','a','c','h','e','-','C','o','n','t','r','o','l',':',
                                               ' ','n','o','-','c','a','c','h','e','\r','\n',0};

@@ -2083,6 +2083,13 @@ static DWORD CALLBACK server_thread(LPVOID param)
         }
         if (strstr(buffer, "GET /send_from_buffer"))
             send(c, send_buffer, strlen(send_buffer), 0);
+        if (strstr(buffer, "/test_cache_control_verb"))
+        {
+            if (!memcmp(buffer, "GET ", sizeof("GET ")-1) &&
+                !strstr(buffer, "Cache-Control: no-cache\r\n")) send(c, okmsg, sizeof(okmsg)-1, 0);
+            else if (strstr(buffer, "Cache-Control: no-cache\r\n")) send(c, okmsg, sizeof(okmsg)-1, 0);
+            send(c, notokmsg, sizeof(notokmsg)-1, 0);
+        }
         if (strstr(buffer, "GET /test_premature_disconnect"))
             trace("closing connection\n");
 
@@ -3643,6 +3650,50 @@ static void test_http_status(int port)
     }
 }
 
+static void test_cache_control_verb(int port)
+{
+    HINTERNET session, connect, request;
+    BOOL ret;
+
+    session = InternetOpen("winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    ok(session != NULL, "InternetOpen failed\n");
+
+    connect = InternetConnect(session, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    ok(connect != NULL, "InternetConnect failed\n");
+
+    request = HttpOpenRequest(connect, "RPC_OUT_DATA", "/test_cache_control_verb", NULL, NULL, NULL,
+                              INTERNET_FLAG_NO_CACHE_WRITE, 0);
+    ok(request != NULL, "HttpOpenRequest failed\n");
+    ret = HttpSendRequest(request, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed %u\n", GetLastError());
+    test_status_code(request, 200);
+
+    request = HttpOpenRequest(connect, "POST", "/test_cache_control_verb", NULL, NULL, NULL,
+                              INTERNET_FLAG_NO_CACHE_WRITE, 0);
+    ok(request != NULL, "HttpOpenRequest failed\n");
+    ret = HttpSendRequest(request, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed %u\n", GetLastError());
+    test_status_code(request, 200);
+
+    request = HttpOpenRequest(connect, "HEAD", "/test_cache_control_verb", NULL, NULL, NULL,
+                              INTERNET_FLAG_NO_CACHE_WRITE, 0);
+    ok(request != NULL, "HttpOpenRequest failed\n");
+    ret = HttpSendRequest(request, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed %u\n", GetLastError());
+    test_status_code(request, 200);
+
+    request = HttpOpenRequest(connect, "GET", "/test_cache_control_verb", NULL, NULL, NULL,
+                              INTERNET_FLAG_NO_CACHE_WRITE, 0);
+    ok(request != NULL, "HttpOpenRequest failed\n");
+    ret = HttpSendRequest(request, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed %u\n", GetLastError());
+    test_status_code(request, 200);
+
+    InternetCloseHandle(request);
+    InternetCloseHandle(connect);
+    InternetCloseHandle(session);
+}
+
 static void test_http_connection(void)
 {
     struct server_info si;
@@ -3686,6 +3737,7 @@ static void test_http_connection(void)
     test_http_status(si.port);
     test_premature_disconnect(si.port);
     test_connection_closing(si.port);
+    test_cache_control_verb(si.port);
 
     /* send the basic request again to shutdown the server thread */
     test_basic_request(si.port, "GET", "/quit");
