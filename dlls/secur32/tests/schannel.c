@@ -513,11 +513,11 @@ static void test_remote_cert(PCCERT_CONTEXT remote_cert)
         cert_cnt++;
     }
 
-    ok(cert_cnt == 2, "cert_cnt = %u\n", cert_cnt);
+    ok(cert_cnt == 3, "cert_cnt = %u\n", cert_cnt);
     ok(incl_remote, "context does not contain cert itself\n");
 }
 
-static const char http_request[] = "HEAD /test.html HTTP/1.1\r\nHost: www.codeweavers.com\r\nConnection: close\r\n\r\n";
+static const char http_request[] = "HEAD /test.html HTTP/1.1\r\nHost: www.winehq.org\r\nConnection: close\r\n\r\n";
 
 static void init_cred(SCHANNEL_CRED *cred)
 {
@@ -639,7 +639,7 @@ static void test_communication(void)
         return;
     }
 
-    /* Create a socket and connect to www.codeweavers.com */
+    /* Create a socket and connect to www.winehq.org */
     ret = WSAStartup(0x0202, &wsa_data);
     if (ret)
     {
@@ -647,10 +647,10 @@ static void test_communication(void)
         return;
     }
 
-    host = gethostbyname("www.codeweavers.com");
+    host = gethostbyname("www.winehq.org");
     if (!host)
     {
-        skip("Can't resolve www.codeweavers.com\n");
+        skip("Can't resolve www.winehq.org\n");
         return;
     }
 
@@ -667,7 +667,7 @@ static void test_communication(void)
     ret = connect(sock, (struct sockaddr *)&addr, sizeof(addr));
     if (ret == SOCKET_ERROR)
     {
-        skip("Can't connect to www.codeweavers.com\n");
+        skip("Can't connect to www.winehq.org\n");
         return;
     }
 
