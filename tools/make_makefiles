@@ -155,6 +155,7 @@ my %private_idl_headers = (
     "opnrst.idl" => 1,
     "row.idl" => 1,
     "rowchg.idl" => 1,
+    "rowpos.idl" => 1,
     "rstbas.idl" => 1,
     "rstinf.idl" => 1,
     "rstloc.idl" => 1,

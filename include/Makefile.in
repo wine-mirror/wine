@@ -480,6 +480,7 @@ SRCDIR_INCLUDES = \
 	rmxfguid.h \
 	row.idl \
 	rowchg.idl \
+	rowpos.idl \
 	rpc.h \
 	rpcasync.h \
 	rpcdce.h \

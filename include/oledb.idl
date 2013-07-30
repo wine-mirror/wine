@@ -64,6 +64,7 @@ typedef DWORD_PTR DBHASHVALUE;
 #include "opnrst.idl"
 #include "row.idl"
 #include "rowchg.idl"
+#include "rowpos.idl"
 #include "binres.idl"
 #include "crtrow.idl"
 #include "errrec.idl"

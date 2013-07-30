@@ -1279,3 +1279,63 @@ HRESULT __RPC_STUB IErrorRecords_AddErrorRecord_Stub(IErrorRecords* This, ERRORI
 
     return hr;
 }
+
+HRESULT __RPC_STUB IRowPosition_Initialize_Stub(IRowPosition* This, IUnknown *rowset, IErrorInfo **errorinfo)
+{
+    FIXME("(%p)->(%p %p): stub\n", This, rowset, errorinfo);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IRowPosition_SetRowPosition_Stub(IRowPosition* This, HCHAPTER chapter, HROW row, DBPOSITIONFLAGS flags, IErrorInfo **errorinfo)
+{
+    FIXME("(%p)->(%lx %lx %d %p): stub\n", This, chapter, row, flags, errorinfo);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IRowPosition_GetRowset_Stub(IRowPosition* This, REFIID riid, IUnknown **rowset, IErrorInfo **errorinfo)
+{
+    FIXME("(%p)->(%s %p %p): stub\n", This, debugstr_guid(riid), rowset, errorinfo);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IRowPosition_GetRowPosition_Stub(IRowPosition* This, HCHAPTER *chapter, HROW *row, DBPOSITIONFLAGS *flags, IErrorInfo **errorinfo)
+{
+    FIXME("(%p)->(%p %p %p %p): stub\n", This, chapter, row, flags, errorinfo);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IRowPosition_ClearRowPosition_Stub(IRowPosition* This, IErrorInfo **errorinfo)
+{
+    FIXME("(%p)->(%p): stub\n", This, errorinfo);
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK IRowPosition_ClearRowPosition_Proxy(IRowPosition* This)
+{
+    FIXME("(%p): stub\n", This);
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK IRowPosition_GetRowPosition_Proxy(IRowPosition* This, HCHAPTER *chapter, HROW *row, DBPOSITIONFLAGS *flags)
+{
+    FIXME("(%p)->(%p %p %p): stub\n", This, chapter, row, flags);
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK IRowPosition_GetRowset_Proxy(IRowPosition* This, REFIID riid, IUnknown **rowset)
+{
+    FIXME("(%p)->(%s %p): stub\n", This, debugstr_guid(riid), rowset);
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK IRowPosition_Initialize_Proxy(IRowPosition* This, IUnknown *rowset)
+{
+    FIXME("(%p)->(%p): stub\n", This, rowset);
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK IRowPosition_SetRowPosition_Proxy(IRowPosition* This, HCHAPTER chapter, HROW row, DBPOSITIONFLAGS flags)
+{
+    FIXME("(%p)->(%lx %lx %d): stub\n", This, chapter, row, flags);
+    return E_NOTIMPL;
+}
