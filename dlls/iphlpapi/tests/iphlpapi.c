@@ -1212,11 +1212,29 @@ static void test_GetExtendedTcpTable(void)
     HeapFree( GetProcessHeap(), 0, table );
 
     size = 0;
+    ret = pGetExtendedTcpTable( NULL, &size, TRUE, AF_INET, TCP_TABLE_BASIC_LISTENER, 0 );
+    ok( ret == ERROR_INSUFFICIENT_BUFFER, "got %u\n", ret );
+
+    table = HeapAlloc( GetProcessHeap(), 0, size );
+    ret = pGetExtendedTcpTable( table, &size, TRUE, AF_INET, TCP_TABLE_BASIC_LISTENER, 0 );
+    ok( ret == ERROR_SUCCESS, "got %u\n", ret );
+    HeapFree( GetProcessHeap(), 0, table );
+
+    size = 0;
     ret = pGetExtendedTcpTable( NULL, &size, TRUE, AF_INET, TCP_TABLE_OWNER_PID_ALL, 0 );
     ok( ret == ERROR_INSUFFICIENT_BUFFER, "got %u\n", ret );
 
     table_pid = HeapAlloc( GetProcessHeap(), 0, size );
     ret = pGetExtendedTcpTable( table_pid, &size, TRUE, AF_INET, TCP_TABLE_OWNER_PID_ALL, 0 );
+    ok( ret == ERROR_SUCCESS, "got %u\n", ret );
+    HeapFree( GetProcessHeap(), 0, table_pid );
+
+    size = 0;
+    ret = pGetExtendedTcpTable( NULL, &size, TRUE, AF_INET, TCP_TABLE_OWNER_PID_LISTENER, 0 );
+    ok( ret == ERROR_INSUFFICIENT_BUFFER, "got %u\n", ret );
+
+    table_pid = HeapAlloc( GetProcessHeap(), 0, size );
+    ret = pGetExtendedTcpTable( table_pid, &size, TRUE, AF_INET, TCP_TABLE_OWNER_PID_LISTENER, 0 );
     ok( ret == ERROR_SUCCESS, "got %u\n", ret );
     HeapFree( GetProcessHeap(), 0, table_pid );
 }

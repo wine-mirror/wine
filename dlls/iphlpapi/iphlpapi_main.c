@@ -1860,7 +1860,9 @@ DWORD WINAPI GetExtendedTcpTable(PVOID pTcpTable, PDWORD pdwSize, BOOL bOrder,
     if (!pdwSize) return ERROR_INVALID_PARAMETER;
 
     if (ulAf != AF_INET ||
-        (TableClass != TCP_TABLE_BASIC_ALL && TableClass != TCP_TABLE_OWNER_PID_ALL))
+        TableClass == TCP_TABLE_OWNER_MODULE_LISTENER ||
+        TableClass == TCP_TABLE_OWNER_MODULE_CONNECTIONS ||
+        TableClass == TCP_TABLE_OWNER_MODULE_ALL)
     {
         FIXME("ulAf = %u, TableClass = %u not supported\n", ulAf, TableClass);
         return ERROR_NOT_SUPPORTED;
