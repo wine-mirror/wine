@@ -4591,6 +4591,64 @@ static void test_TokenIntegrityLevel(void)
     CloseHandle(token);
 }
 
+static void test_default_dacl_owner_sid(void)
+{
+    HANDLE handle;
+    BOOL ret, defaulted, present, found;
+    DWORD size, index;
+    SECURITY_DESCRIPTOR *sd;
+    SECURITY_ATTRIBUTES sa;
+    PSID owner;
+    ACL *dacl;
+    ACCESS_ALLOWED_ACE *ace;
+
+    sd = HeapAlloc( GetProcessHeap(), 0, SECURITY_DESCRIPTOR_MIN_LENGTH );
+    ret = InitializeSecurityDescriptor( sd, SECURITY_DESCRIPTOR_REVISION );
+    ok( ret, "error %u\n", GetLastError() );
+
+    sa.nLength              = sizeof(SECURITY_ATTRIBUTES);
+    sa.lpSecurityDescriptor = sd;
+    sa.bInheritHandle       = FALSE;
+    handle = CreateEvent( &sa, TRUE, TRUE, "test_event" );
+    ok( handle != NULL, "error %u\n", GetLastError() );
+
+    size = 0;
+    ret = GetKernelObjectSecurity( handle, OWNER_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION, NULL, 0, &size );
+    ok( !ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "error %u\n", GetLastError() );
+
+    sd = HeapAlloc( GetProcessHeap(), 0, size );
+    ret = GetKernelObjectSecurity( handle, OWNER_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION, sd, size, &size );
+    ok( ret, "error %u\n", GetLastError() );
+
+    owner = (void *)0xdeadbeef;
+    defaulted = TRUE;
+    ret = GetSecurityDescriptorOwner( sd, &owner, &defaulted );
+    ok( ret, "error %u\n", GetLastError() );
+    ok( owner != (void *)0xdeadbeef, "owner not set\n" );
+    todo_wine ok( !defaulted, "owner defaulted\n" );
+
+    dacl = (void *)0xdeadbeef;
+    present = FALSE;
+    defaulted = TRUE;
+    ret = GetSecurityDescriptorDacl( sd, &present, &dacl, &defaulted );
+    ok( ret, "error %u\n", GetLastError() );
+    ok( present, "dacl not present\n" );
+    ok( dacl != (void *)0xdeadbeef, "dacl not set\n" );
+    todo_wine ok( !defaulted, "dacl defaulted\n" );
+
+    index = 0;
+    found = FALSE;
+    while (pGetAce( dacl, index++, (void **)&ace ))
+    {
+        if (EqualSid( &ace->SidStart, owner )) found = TRUE;
+    }
+    ok( found, "owner sid not found in dacl\n" );
+
+    HeapFree( GetProcessHeap(), 0, sa.lpSecurityDescriptor );
+    HeapFree( GetProcessHeap(), 0, sd );
+    CloseHandle( handle );
+}
+
 START_TEST(security)
 {
     init();
@@ -4629,4 +4687,5 @@ START_TEST(security)
     test_GetUserNameW();
     test_CreateRestrictedToken();
     test_TokenIntegrityLevel();
+    test_default_dacl_owner_sid();
 }

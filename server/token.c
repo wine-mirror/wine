@@ -640,8 +640,8 @@ struct token *token_create_admin( void )
     PSID alias_admins_sid;
     PSID alias_users_sid;
     PSID logon_sid;
-    /* note: should be the owner specified in the token */
-    ACL *default_dacl = create_default_dacl( &interactive_sid );
+    const SID *user_sid = security_unix_uid_to_sid( getuid() );
+    ACL *default_dacl = create_default_dacl( user_sid );
 
     alias_admins_sid = security_sid_alloc( &nt_authority, sizeof(alias_admins_subauth)/sizeof(alias_admins_subauth[0]),
                                            alias_admins_subauth );
@@ -688,10 +688,9 @@ struct token *token_create_admin( void )
             { logon_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY|SE_GROUP_LOGON_ID },
         };
         static const TOKEN_SOURCE admin_source = {"SeMgr", {0, 0}};
-        token = create_token( TRUE, security_unix_uid_to_sid( getuid() ),
-                            admin_groups, sizeof(admin_groups)/sizeof(admin_groups[0]),
-                            admin_privs, sizeof(admin_privs)/sizeof(admin_privs[0]),
-                            default_dacl, admin_source, NULL, -1 );
+        token = create_token( TRUE, user_sid, admin_groups, sizeof(admin_groups)/sizeof(admin_groups[0]),
+                              admin_privs, sizeof(admin_privs)/sizeof(admin_privs[0]), default_dacl,
+                              admin_source, NULL, -1 );
         /* we really need a primary group */
         assert( token->primary_group );
     }
