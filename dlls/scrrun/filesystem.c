@@ -82,6 +82,7 @@ static inline HRESULT create_error(DWORD err)
     case ERROR_PATH_NOT_FOUND: return CTL_E_PATHNOTFOUND;
     case ERROR_ACCESS_DENIED: return CTL_E_PERMISSIONDENIED;
     case ERROR_FILE_EXISTS: return CTL_E_FILEALREADYEXISTS;
+    case ERROR_ALREADY_EXISTS: return CTL_E_FILEALREADYEXISTS;
     default:
         FIXME("Unsupported error code: %d\n", err);
         return E_FAIL;
@@ -1589,12 +1590,130 @@ static HRESULT WINAPI filesys_CopyFile(IFileSystem3 *iface, BSTR Source,
             SysStringLen(Destination), OverWriteFiles);
 }
 
+static HRESULT copy_folder(const WCHAR *source, DWORD source_len, const WCHAR *destination,
+        DWORD destination_len, VARIANT_BOOL overwrite)
+{
+    DWORD tmp, src_len, dst_len, name_len;
+    WCHAR src[MAX_PATH], dst[MAX_PATH];
+    WIN32_FIND_DATAW ffd;
+    HANDLE f;
+    HRESULT hr;
+    BOOL copied = FALSE;
+
+    if(!source[0] || !destination[0])
+        return E_INVALIDARG;
+
+    dst_len = destination_len;
+    if(dst_len+1 >= MAX_PATH)
+        return E_FAIL;
+    memcpy(dst, destination, (dst_len+1)*sizeof(WCHAR));
+
+    if(dst[dst_len-1]!='\\' && dst[dst_len-1]!='/' &&
+            (tmp = GetFileAttributesW(source))!=INVALID_FILE_ATTRIBUTES &&
+            tmp&FILE_ATTRIBUTE_DIRECTORY) {
+        if(!CreateDirectoryW(dst, NULL)) {
+            if(overwrite && GetLastError()==ERROR_ALREADY_EXISTS) {
+                tmp = GetFileAttributesW(dst);
+                if(tmp==INVALID_FILE_ATTRIBUTES || !(tmp&FILE_ATTRIBUTE_DIRECTORY))
+                    return CTL_E_FILEALREADYEXISTS;
+            }else {
+                return create_error(GetLastError());
+            }
+        }
+        copied = TRUE;
+
+        src_len = source_len;
+        if(src_len+2 >= MAX_PATH)
+            return E_FAIL;
+        memcpy(src, source, src_len*sizeof(WCHAR));
+        src[src_len++] = '\\';
+        src[src_len] = '*';
+        src[src_len+1] = 0;
+
+        hr = copy_file(src, src_len+1, dst, dst_len, overwrite);
+        if(FAILED(hr) && hr!=CTL_E_FILENOTFOUND)
+            return create_error(GetLastError());
+
+        f = FindFirstFileW(src, &ffd);
+    }else {
+        src_len = get_parent_folder_name(source, source_len);
+        if(src_len+2 >= MAX_PATH)
+            return E_FAIL;
+        memcpy(src, source, src_len*sizeof(WCHAR));
+        if(src_len)
+            src[src_len++] = '\\';
+
+        f = FindFirstFileW(source, &ffd);
+    }
+    if(f == INVALID_HANDLE_VALUE)
+        return CTL_E_PATHNOTFOUND;
+
+    dst[dst_len++] = '\\';
+    dst[dst_len] = 0;
+
+    do {
+        if(!(ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+            continue;
+        if(ffd.cFileName[0]=='.' && (ffd.cFileName[1]==0 ||
+                    (ffd.cFileName[1]=='.' && ffd.cFileName[2]==0)))
+            continue;
+
+        name_len = strlenW(ffd.cFileName);
+        if(dst_len+name_len>=MAX_PATH || src_len+name_len+2>=MAX_PATH) {
+            FindClose(f);
+            return E_FAIL;
+        }
+        memcpy(dst+dst_len, ffd.cFileName, name_len*sizeof(WCHAR));
+        dst[dst_len+name_len] = 0;
+        memcpy(src+src_len, ffd.cFileName, name_len*sizeof(WCHAR));
+        src[src_len+name_len] = '\\';
+        src[src_len+name_len+1] = '*';
+        src[src_len+name_len+2] = 0;
+
+        TRACE("copying %s to %s\n", debugstr_w(src), debugstr_w(dst));
+
+        if(!CreateDirectoryW(dst, NULL)) {
+            if(overwrite && GetLastError()==ERROR_ALREADY_EXISTS) {
+                tmp = GetFileAttributesW(dst);
+                if(tmp==INVALID_FILE_ATTRIBUTES || !(tmp&FILE_ATTRIBUTE_DIRECTORY)) {
+                    FindClose(f);
+                    return CTL_E_FILEALREADYEXISTS;
+                }
+            }else {
+                FindClose(f);
+                return create_error(GetLastError());
+            }
+            return create_error(GetLastError());
+        }
+        copied = TRUE;
+
+        hr = copy_file(src, src_len+name_len+2, dst, dst_len+name_len, overwrite);
+        if(FAILED(hr) && hr!=CTL_E_FILENOTFOUND) {
+            FindClose(f);
+            return hr;
+        }
+
+        hr = copy_folder(src, src_len+name_len+2, dst, dst_len+name_len, overwrite);
+        if(FAILED(hr) && hr!=CTL_E_PATHNOTFOUND) {
+            FindClose(f);
+            return hr;
+        }
+    } while(FindNextFileW(f, &ffd));
+    FindClose(f);
+
+    return copied ? S_OK : CTL_E_PATHNOTFOUND;
+}
+
 static HRESULT WINAPI filesys_CopyFolder(IFileSystem3 *iface, BSTR Source,
                                             BSTR Destination, VARIANT_BOOL OverWriteFiles)
 {
-    FIXME("%p %s %s %d\n", iface, debugstr_w(Source), debugstr_w(Destination), OverWriteFiles);
+    TRACE("%p %s %s %d\n", iface, debugstr_w(Source), debugstr_w(Destination), OverWriteFiles);
 
-    return E_NOTIMPL;
+    if(!Source || !Destination)
+        return E_POINTER;
+
+    return copy_folder(Source, SysStringLen(Source), Destination,
+            SysStringLen(Destination), OverWriteFiles);
 }
 
 static HRESULT WINAPI filesys_CreateFolder(IFileSystem3 *iface, BSTR path,
