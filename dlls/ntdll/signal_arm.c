@@ -68,6 +68,18 @@ static pthread_key_t teb_key;
  */
 #ifdef linux
 
+#ifdef __ANDROID__
+typedef struct ucontext
+{
+    unsigned long uc_flags;
+    struct ucontext *uc_link;
+    stack_t uc_stack;
+    struct sigcontext uc_mcontext;
+    sigset_t uc_sigmask;
+    unsigned long uc_regspace[128] __attribute__((__aligned__(8)));
+} ucontext_t;
+#endif
+
 typedef ucontext_t SIGCONTEXT;
 
 /* All Registers access - only for local access */
