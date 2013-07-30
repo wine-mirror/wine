@@ -491,7 +491,7 @@ static void test_GetFile(void)
     ok(!file, "file != NULL\n");
     ok(hr == CTL_E_FILENOTFOUND, "GetFile returned %x, expected CTL_E_FILENOTFOUND\n", hr);
 
-    hf = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+    hf = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_READONLY, NULL);
     if(hf == INVALID_HANDLE_VALUE) {
         skip("Can't create temporary file\n");
         SysFreeString(path);
@@ -513,7 +513,16 @@ static void test_GetFile(void)
     ok(V_I4(&size) == 0, "V_I4(&size) = %d, expected 0\n", V_I4(&size));
     IFile_Release(file);
 
-    DeleteFileW(path);
+    hr = IFileSystem3_DeleteFile(fs3, path, FALSE);
+    ok(hr==CTL_E_PERMISSIONDENIED || broken(hr==S_OK),
+            "DeleteFile returned %x, expected CTL_E_PERMISSIONDENIED\n", hr);
+    if(hr != S_OK) {
+        hr = IFileSystem3_DeleteFile(fs3, path, TRUE);
+        ok(hr == S_OK, "DeleteFile returned %x, expected S_OK\n", hr);
+    }
+    hr = IFileSystem3_DeleteFile(fs3, path, TRUE);
+    ok(hr == CTL_E_FILENOTFOUND, "DeleteFile returned %x, expected CTL_E_FILENOTFOUND\n", hr);
+
     SysFreeString(path);
 }
 
