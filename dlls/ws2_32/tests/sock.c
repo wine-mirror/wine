@@ -2460,7 +2460,7 @@ static void test_errors(void)
 static void test_listen(void)
 {
     SOCKET fdA, fdB;
-    int ret;
+    int ret, acceptc, olen = sizeof(acceptc);
     struct sockaddr_in address;
 
     memset(&address, 0, sizeof(address));
@@ -2507,8 +2507,16 @@ static void test_listen(void)
     ok (bind(fdB, (struct sockaddr*) &address, sizeof(address)), "bind should have failed\n");
     ok (ret == WSAEINVAL, "expected 10022, received %d\n", ret);
 
+    acceptc = 0xdead;
+    ok (!getsockopt(fdA, SOL_SOCKET, SO_ACCEPTCONN, (char*)&acceptc, &olen), "getsockopt failed\n");
+    ok (acceptc == 0, "SO_ACCEPTCONN should be 0, received %d\n", acceptc);
+
     ok (!listen(fdA, 0), "listen failed\n");
     ok (!listen(fdA, SOMAXCONN), "double listen failed\n");
+
+    acceptc = 0xdead;
+    ok (!getsockopt(fdA, SOL_SOCKET, SO_ACCEPTCONN, (char*)&acceptc, &olen), "getsockopt failed\n");
+    ok (acceptc == 1, "SO_ACCEPTCONN should be 1, received %d\n", acceptc);
 
     SetLastError(0xdeadbeef);
     ok ((listen(fdB, SOMAXCONN) == SOCKET_ERROR), "listen did not fail\n");
@@ -2520,7 +2528,6 @@ static void test_listen(void)
 
     fdB = socket(AF_INET, SOCK_STREAM, 0);
     ok ((fdB != INVALID_SOCKET), "socket failed unexpectedly: %d\n", WSAGetLastError() );
-
 
     SetLastError(0xdeadbeef);
     ok (bind(fdB, (struct sockaddr*) &address, sizeof(address)), "bind should have failed\n");
