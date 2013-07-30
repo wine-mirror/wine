@@ -4594,11 +4594,13 @@ static ULONG WINAPI ITypeLib2_fnRelease( ITypeLib2 *iface)
 
       LIST_FOR_EACH_ENTRY_SAFE(tlbstr, tlbstr_next, &This->string_list, TLBString, entry) {
           list_remove(&tlbstr->entry);
+          SysFreeString(tlbstr->str);
           heap_free(tlbstr);
       }
 
       LIST_FOR_EACH_ENTRY_SAFE(tlbstr, tlbstr_next, &This->name_list, TLBString, entry) {
           list_remove(&tlbstr->entry);
+          SysFreeString(tlbstr->str);
           heap_free(tlbstr);
       }
 
