@@ -4577,6 +4577,7 @@ static ULONG WINAPI ITypeLib2_fnRelease( ITypeLib2 *iface)
       TLBImpLib *pImpLib, *pImpLibNext;
       TLBRefType *ref_type;
       TLBString *tlbstr, *tlbstr_next;
+      TLBGuid *tlbguid, *tlbguid_next;
       void *cursor2;
       int i;
 
@@ -4602,6 +4603,11 @@ static ULONG WINAPI ITypeLib2_fnRelease( ITypeLib2 *iface)
           list_remove(&tlbstr->entry);
           SysFreeString(tlbstr->str);
           heap_free(tlbstr);
+      }
+
+      LIST_FOR_EACH_ENTRY_SAFE(tlbguid, tlbguid_next, &This->guid_list, TLBGuid, entry) {
+          list_remove(&tlbguid->entry);
+          heap_free(tlbguid);
       }
 
       TLB_FreeCustData(&This->custdata_list);
