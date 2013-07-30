@@ -1891,8 +1891,26 @@ static HRESULT WINAPI MXAttributes_clear(IMXAttributes *iface)
 static HRESULT WINAPI MXAttributes_removeAttribute(IMXAttributes *iface, int index)
 {
     mxattributes *This = impl_from_IMXAttributes( iface );
-    FIXME("(%p)->(%d): stub\n", This, index);
-    return E_NOTIMPL;
+    mxattribute *src, *dst;
+
+    TRACE("(%p)->(%d)\n", This, index);
+
+    if (index < 0 || index >= This->length) return E_INVALIDARG;
+
+    /* no need to remove last attribute, just make it inaccessible */
+    if (index + 1 == This->length)
+    {
+        This->length--;
+        return S_OK;
+    }
+
+    dst = &This->attr[index];
+    src = &This->attr[index+1];
+
+    memmove(dst, src, (This->length-index-1)*sizeof(*dst));
+    This->length--;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI MXAttributes_setAttribute(IMXAttributes *iface, int index,
