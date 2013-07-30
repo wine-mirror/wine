@@ -940,10 +940,10 @@ static void *find_symbol( const ElfW(Phdr) *phdr, int num, const char *var, int 
     const ElfW(Dyn) *dyn = NULL;
     const ElfW(Phdr) *ph;
     const ElfW(Sym) *symtab = NULL;
-    const Elf_Symndx *hashtab = NULL;
+    const Elf32_Word *hashtab = NULL;
     const Elf32_Word *gnu_hashtab = NULL;
     const char *strings = NULL;
-    Elf_Symndx idx;
+    Elf32_Word idx;
 
     /* check the values */
 #ifdef DUMP_SYMS
@@ -974,7 +974,7 @@ static void *find_symbol( const ElfW(Phdr) *phdr, int num, const char *var, int 
         if( dyn->d_tag == DT_SYMTAB )
             symtab = (const ElfW(Sym) *)dyn->d_un.d_ptr;
         if( dyn->d_tag == DT_HASH )
-            hashtab = (const Elf_Symndx *)dyn->d_un.d_ptr;
+            hashtab = (const Elf32_Word *)dyn->d_un.d_ptr;
         if( dyn->d_tag == DT_GNU_HASH )
             gnu_hashtab = (const Elf32_Word *)dyn->d_un.d_ptr;
 #ifdef DUMP_SYMS
@@ -1007,9 +1007,9 @@ static void *find_symbol( const ElfW(Phdr) *phdr, int num, const char *var, int 
     else if (hashtab)  /* old style hash table */
     {
         const unsigned int hash   = wld_elf_hash(var);
-        const Elf_Symndx nbuckets = hashtab[0];
-        const Elf_Symndx *buckets = hashtab + 2;
-        const Elf_Symndx *chains  = buckets + nbuckets;
+        const Elf32_Word nbuckets = hashtab[0];
+        const Elf32_Word *buckets = hashtab + 2;
+        const Elf32_Word *chains  = buckets + nbuckets;
 
         for (idx = buckets[hash % nbuckets]; idx != STN_UNDEF; idx = chains[idx])
         {
