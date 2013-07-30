@@ -1416,12 +1416,77 @@ static HRESULT WINAPI filesys_DeleteFile(IFileSystem3 *iface, BSTR FileSpec,
     return delete_file(FileSpec, SysStringLen(FileSpec), Force);
 }
 
+static HRESULT delete_folder(const WCHAR *folder, DWORD folder_len, VARIANT_BOOL force)
+{
+    WCHAR path[MAX_PATH];
+    DWORD len, name_len;
+    WIN32_FIND_DATAW ffd;
+    HANDLE f;
+    HRESULT hr;
+
+    f = FindFirstFileW(folder, &ffd);
+    if(f == INVALID_HANDLE_VALUE)
+        return create_error(GetLastError());
+
+    len = get_parent_folder_name(folder, folder_len);
+    if(len+1 >= MAX_PATH)
+        return E_FAIL;
+    if(len) {
+        memcpy(path, folder, len*sizeof(WCHAR));
+        path[len++] = '\\';
+    }
+
+    do {
+        if(!(ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+            continue;
+        if(ffd.cFileName[0]=='.' && (ffd.cFileName[1]==0 ||
+                    (ffd.cFileName[1]=='.' && ffd.cFileName[2]==0)))
+            continue;
+
+        name_len = strlenW(ffd.cFileName);
+        if(len+name_len+3 >= MAX_PATH) {
+            FindClose(f);
+            return E_FAIL;
+        }
+        memcpy(path+len, ffd.cFileName, name_len*sizeof(WCHAR));
+        path[len+name_len] = '\\';
+        path[len+name_len+1] = '*';
+        path[len+name_len+2] = 0;
+
+        hr = delete_file(path, len+name_len+2, force);
+        if(FAILED(hr)) {
+            FindClose(f);
+            return hr;
+        }
+
+        hr = delete_folder(path, len+name_len+2, force);
+        if(FAILED(hr)) {
+            FindClose(f);
+            return hr;
+        }
+
+        path[len+name_len] = 0;
+        TRACE("deleting %s\n", debugstr_w(path));
+
+        if(!RemoveDirectoryW(path)) {
+            FindClose(f);
+            return create_error(GetLastError());
+        }
+    } while(FindNextFileW(f, &ffd));
+    FindClose(f);
+
+    return S_OK;
+}
+
 static HRESULT WINAPI filesys_DeleteFolder(IFileSystem3 *iface, BSTR FolderSpec,
                                             VARIANT_BOOL Force)
 {
-    FIXME("%p %s %d\n", iface, debugstr_w(FolderSpec), Force);
+    TRACE("%p %s %d\n", iface, debugstr_w(FolderSpec), Force);
 
-    return E_NOTIMPL;
+    if(!FolderSpec)
+        return E_POINTER;
+
+    return delete_folder(FolderSpec, SysStringLen(FolderSpec), Force);
 }
 
 static HRESULT WINAPI filesys_MoveFile(IFileSystem3 *iface, BSTR Source,
