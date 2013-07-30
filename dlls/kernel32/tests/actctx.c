@@ -600,7 +600,7 @@ static void test_file_info(HANDLE handle, ULONG assid, ULONG fileid, LPCWSTR fil
     HeapFree(GetProcessHeap(), 0, info);
 }
 
-static HANDLE test_create(const char *file, const char *manifest)
+static HANDLE test_create(const char *file)
 {
     ACTCTXW actctx;
     HANDLE handle;
@@ -1114,7 +1114,7 @@ static void test_actctx(void)
 
     trace("manifest1\n");
 
-    handle = test_create("test1.manifest", manifest1);
+    handle = test_create("test1.manifest");
     DeleteFileA("test1.manifest");
     if(handle != INVALID_HANDLE_VALUE) {
         test_basic_info(handle, __LINE__);
@@ -1139,7 +1139,7 @@ static void test_actctx(void)
 
     trace("manifest2 depmanifest1\n");
 
-    handle = test_create("test2.manifest", manifest2);
+    handle = test_create("test2.manifest");
     DeleteFileA("test2.manifest");
     DeleteFileA("testdep.manifest");
     if(handle != INVALID_HANDLE_VALUE) {
@@ -1157,7 +1157,7 @@ static void test_actctx(void)
 
     trace("manifest2 depmanifest2\n");
 
-    handle = test_create("test2-2.manifest", manifest2);
+    handle = test_create("test2-2.manifest");
     DeleteFileA("test2-2.manifest");
     DeleteFileA("testdep.manifest");
     if(handle != INVALID_HANDLE_VALUE) {
@@ -1185,7 +1185,7 @@ static void test_actctx(void)
         return;
     }
 
-    handle = test_create("test2-3.manifest", manifest2);
+    handle = test_create("test2-3.manifest");
     DeleteFileA("test2-3.manifest");
     DeleteFileA("testdep.manifest");
     if(handle != INVALID_HANDLE_VALUE) {
@@ -1215,7 +1215,7 @@ static void test_actctx(void)
         return;
     }
 
-    handle = test_create("test3.manifest", manifest3);
+    handle = test_create("test3.manifest");
     DeleteFileA("test3.manifest");
     if(handle != INVALID_HANDLE_VALUE) {
         test_basic_info(handle, __LINE__);
@@ -1242,7 +1242,7 @@ static void test_actctx(void)
         return;
     }
 
-    handle = test_create("test4.manifest", manifest4);
+    handle = test_create("test4.manifest");
     DeleteFileA("test4.manifest");
     DeleteFileA("testdep.manifest");
     if(handle != INVALID_HANDLE_VALUE) {
@@ -1262,7 +1262,7 @@ static void test_actctx(void)
             skip("Could not create manifest file\n");
             return;
         }
-        handle = test_create("..\\test1.manifest", manifest1);
+        handle = test_create("..\\test1.manifest");
         DeleteFileA("..\\test1.manifest");
         if(handle != INVALID_HANDLE_VALUE) {
             test_basic_info(handle, __LINE__);
@@ -1282,7 +1282,7 @@ static void test_actctx(void)
         return;
     }
 
-    handle = test_create("test1.manifest", manifest1);
+    handle = test_create("test1.manifest");
     DeleteFileA("test1.manifest");
     if (handle != INVALID_HANDLE_VALUE) {
         test_basic_info(handle, __LINE__);
@@ -1297,7 +1297,7 @@ static void test_actctx(void)
         return;
     }
 
-    handle = test_create("test1.manifest", manifest1);
+    handle = test_create("test1.manifest");
     DeleteFileA("test1.manifest");
     if (handle != INVALID_HANDLE_VALUE) {
         test_basic_info(handle, __LINE__);
