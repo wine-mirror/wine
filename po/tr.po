@@ -4420,7 +4420,7 @@ msgstr "Takas hatası.\n"
 
 #: winerror.mc:1021
 msgid "Stack overflow.\n"
-msgstr ""
+msgstr "Yığın bellek taştı.\n"
 
 #: winerror.mc:1026
 msgid "Invalid message.\n"
@@ -4428,7 +4428,7 @@ msgstr "Geçersiz mesaj.\n"
 
 #: winerror.mc:1031
 msgid "Cannot complete.\n"
-msgstr ""
+msgstr "Tamamlanamadı.\n"
 
 #: winerror.mc:1036
 msgid "Invalid flags.\n"
@@ -4456,7 +4456,7 @@ msgstr "Kayıt defteri bozuk.\n"
 
 #: winerror.mc:1066
 msgid "Invalid key.\n"
-msgstr ""
+msgstr "Geçersiz anahtar.\n"
 
 #: winerror.mc:1071
 msgid "Can't open registry key.\n"
@@ -4476,23 +4476,23 @@ msgstr "Kayıt kurtarıldı.\n"
 
 #: winerror.mc:1091
 msgid "Registry is corrupt.\n"
-msgstr ""
+msgstr "Kayıt defteri bozuk.\n"
 
 #: winerror.mc:1096
 msgid "I/O to registry failed.\n"
-msgstr ""
+msgstr "Kayda G/Ç başarısız.\n"
 
 #: winerror.mc:1101
 msgid "Not registry file.\n"
-msgstr ""
+msgstr "Kayıt dosyası değil.\n"
 
 #: winerror.mc:1106
 msgid "Key deleted.\n"
-msgstr ""
+msgstr "Anahtar silindi.\n"
 
 #: winerror.mc:1111
 msgid "No registry log space.\n"
-msgstr ""
+msgstr "Kayıt günlük boşluğu yok.\n"
 
 #: winerror.mc:1116
 msgid "Registry key has subkeys.\n"
@@ -4552,7 +4552,7 @@ msgstr ""
 
 #: winerror.mc:1186
 msgid "Service not active.\n"
-msgstr ""
+msgstr "Hizmet etkin değil.\n"
 
 #: winerror.mc:1191
 msgid "Service controller connect failed.\n"
@@ -5844,15 +5844,15 @@ msgstr "Aygıt kaldırıldı.\n"
 
 #: winerror.mc:2811
 msgid "Installation already running.\n"
-msgstr ""
+msgstr "Kurulum zaten çalışıyor.\n"
 
 #: winerror.mc:2816
 msgid "Installation package failed to open.\n"
-msgstr ""
+msgstr "Kurulum paketi açılamadı.\n"
 
 #: winerror.mc:2821
 msgid "Installation package is invalid.\n"
-msgstr ""
+msgstr "Kurulum paketi geçersiz.\n"
 
 #: winerror.mc:2826
 msgid "Installer user interface failed.\n"
@@ -13564,22 +13564,16 @@ msgid "Not yet implemented"
 msgstr "Henüz tamamlanmadı"
 
 #: winefile.rc:106
-#, fuzzy
-#| msgid "Expiration Date"
 msgid "Creation date"
-msgstr "Son Kullanma Tarihi"
+msgstr "Oluşturma tarihi"
 
 #: winefile.rc:107
-#, fuzzy
-#| msgid "Access denied.\n"
 msgid "Access date"
-msgstr "Erişim engellendi.\n"
+msgstr "Erişim tarihi"
 
 #: winefile.rc:108
-#, fuzzy
-#| msgid "Certification Path"
 msgid "Modification date"
-msgstr "Sertifika Yolu"
+msgstr "Düzenlenme tarihi"
 
 #: winefile.rc:109
 msgid "Index/Inode"
