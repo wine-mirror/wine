@@ -50,6 +50,12 @@ ULONG CDECL wined3d_vertex_declaration_incref(struct wined3d_vertex_declaration 
     return refcount;
 }
 
+void wined3d_vertex_declaration_destroy(struct wined3d_vertex_declaration *declaration)
+{
+    HeapFree(GetProcessHeap(), 0, declaration->elements);
+    HeapFree(GetProcessHeap(), 0, declaration);
+}
+
 ULONG CDECL wined3d_vertex_declaration_decref(struct wined3d_vertex_declaration *declaration)
 {
     ULONG refcount = InterlockedDecrement(&declaration->ref);
@@ -58,14 +64,9 @@ ULONG CDECL wined3d_vertex_declaration_decref(struct wined3d_vertex_declaration 
 
     if (!refcount)
     {
-        if (wined3d_settings.cs_multithreaded)
-        {
-            FIXME("Waiting for cs.\n");
-            declaration->device->cs->ops->finish(declaration->device->cs);
-        }
-        HeapFree(GetProcessHeap(), 0, declaration->elements);
+        const struct wined3d_device *device = declaration->device;
         declaration->parent_ops->wined3d_object_destroyed(declaration->parent);
-        HeapFree(GetProcessHeap(), 0, declaration);
+        wined3d_cs_emit_vertex_declaration_destroy(device->cs, declaration);
     }
 
     return refcount;
