@@ -54,8 +54,7 @@ AC_ARG_WITH(gsm,       AS_HELP_STRING([--without-gsm],[do not use libgsm (GSM 06
             [if test "x$withval" = "xno"; then ac_cv_header_gsm_h=no; ac_cv_header_gsm_gsm_h=no; fi])
 AC_ARG_WITH(gstreamer, AS_HELP_STRING([--without-gstreamer],[do not use GStreamer (codecs support)]))
 AC_ARG_WITH(hal,       AS_HELP_STRING([--without-hal],[do not use HAL (dynamic device support)]))
-AC_ARG_WITH(jpeg,      AS_HELP_STRING([--without-jpeg],[do not use JPEG]),
-            [if test "x$withval" = "xno"; then ac_cv_header_jpeglib_h=no; fi])
+AC_ARG_WITH(jpeg,      AS_HELP_STRING([--without-jpeg],[do not use JPEG]))
 AC_ARG_WITH(ldap,      AS_HELP_STRING([--without-ldap],[do not use LDAP]),
             [if test "x$withval" = "xno"; then ac_cv_header_ldap_h=no; ac_cv_header_lber_h=no; fi])
 AC_ARG_WITH(mpg123,    AS_HELP_STRING([--without-mpg123],[do not use the mpg123 library]),
@@ -430,7 +429,6 @@ AC_CHECK_HEADERS(\
 	ieeefp.h \
 	inet/mib2.h \
 	io.h \
-	jpeglib.h \
 	kstat.h \
 	lber.h \
 	ldap.h \
@@ -1646,9 +1644,16 @@ WINE_NOTICE_WITH(gsm,[test "x$ac_cv_lib_soname_gsm" = "x"],
                  [libgsm ${notice_platform}development files not found, gsm 06.10 codec won't be supported.])
 
 dnl **** Check for libjpeg ****
-if test "$ac_cv_header_jpeglib_h" = "yes"
+if test "x$with_jpeg" != "xno"
 then
-    WINE_CHECK_SONAME(jpeg,jpeg_start_decompress)
+    WINE_PACKAGE_FLAGS(JPEG,[libjpeg],,,,
+        [AC_CHECK_HEADERS([jpeglib.h])
+        if test "$ac_cv_header_jpeglib_h" = "yes"
+        then
+            WINE_CHECK_SONAME(jpeg,jpeg_start_decompress,,[JPEG_CFLAGS=""],[$JPEG_LIBS])
+        else
+            JPEG_CFLAGS=""
+        fi])
 fi
 WINE_WARNING_WITH(jpeg,[test "x$ac_cv_lib_soname_jpeg" = "x"],
                  [libjpeg ${notice_platform}development files not found, JPEG won't be supported.])

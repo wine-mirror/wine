@@ -643,6 +643,8 @@ LIBOPENAL
 LIBMPG123
 PNG_LIBS
 PNG_CFLAGS
+JPEG_LIBS
+JPEG_CFLAGS
 FONTCONFIGINCL
 CUPSINCL
 OSS4INCL
@@ -886,6 +888,8 @@ FREETYPE_CFLAGS
 FREETYPE_LIBS
 GSTREAMER_CFLAGS
 GSTREAMER_LIBS
+JPEG_CFLAGS
+JPEG_LIBS
 PNG_CFLAGS
 PNG_LIBS'
 
@@ -1607,6 +1611,8 @@ Some influential environment variables:
               C compiler flags for gstreamer-app-0.10, overriding pkg-config
   GSTREAMER_LIBS
               Linker flags for gstreamer-app-0.10, overriding pkg-config
+  JPEG_CFLAGS C compiler flags for libjpeg, overriding pkg-config
+  JPEG_LIBS   Linker flags for libjpeg, overriding pkg-config
   PNG_CFLAGS  C compiler flags for libpng, overriding pkg-config
   PNG_LIBS    Linker flags for libpng, overriding pkg-config
 
@@ -2704,7 +2710,7 @@ fi
 
 # Check whether --with-jpeg was given.
 if test "${with_jpeg+set}" = set; then :
-  withval=$with_jpeg; if test "x$withval" = "xno"; then ac_cv_header_jpeglib_h=no; fi
+  withval=$with_jpeg;
 fi
 
 
@@ -5951,7 +5957,6 @@ for ac_header in \
 	ieeefp.h \
 	inet/mib2.h \
 	io.h \
-	jpeglib.h \
 	kstat.h \
 	lber.h \
 	ldap.h \
@@ -11802,15 +11807,44 @@ This is an error since --with-gsm was requested." "$LINENO" 5 ;;
 esac
 fi
 
-if test "$ac_cv_header_jpeglib_h" = "yes"
+if test "x$with_jpeg" != "xno"
 then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -ljpeg" >&5
+    if test -n "$JPEG_CFLAGS"; then :
+
+elif test -n "$PKG_CONFIG"; then :
+  JPEG_CFLAGS=`$PKG_CONFIG --cflags libjpeg 2>/dev/null`
+fi
+
+if test -n "$JPEG_LIBS"; then :
+
+elif test -n "$PKG_CONFIG"; then :
+  JPEG_LIBS=`$PKG_CONFIG --libs libjpeg 2>/dev/null`
+fi
+
+
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $JPEG_CFLAGS"
+for ac_header in jpeglib.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "jpeglib.h" "ac_cv_header_jpeglib_h" "$ac_includes_default"
+if test "x$ac_cv_header_jpeglib_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_JPEGLIB_H 1
+_ACEOF
+
+fi
+
+done
+
+        if test "$ac_cv_header_jpeglib_h" = "yes"
+        then
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -ljpeg" >&5
 $as_echo_n "checking for -ljpeg... " >&6; }
 if ${ac_cv_lib_soname_jpeg+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_soname_save_LIBS=$LIBS
-LIBS="-ljpeg  $LIBS"
+LIBS="-ljpeg $JPEG_LIBS $LIBS"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -11846,7 +11880,7 @@ fi
 if test "x$ac_cv_lib_soname_jpeg" = "x"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
 $as_echo "not found" >&6; }
-
+       JPEG_CFLAGS=""
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_jpeg" >&5
 $as_echo "$ac_cv_lib_soname_jpeg" >&6; }
@@ -11857,6 +11891,13 @@ _ACEOF
 
 
 fi
+        else
+            JPEG_CFLAGS=""
+        fi
+CPPFLAGS=$ac_save_CPPFLAGS
+test -z "$JPEG_CFLAGS" || JPEG_CFLAGS=`echo " $JPEG_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
+test -z "$JPEG_LIBS" || JPEG_LIBS=`echo " $JPEG_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
+
 fi
 if test "x$ac_cv_lib_soname_jpeg" = "x"; then :
   case "x$with_jpeg" in
