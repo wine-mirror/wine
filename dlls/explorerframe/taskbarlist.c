@@ -22,7 +22,7 @@
 
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(ieframe);
+WINE_DEFAULT_DEBUG_CHANNEL(explorerframe);
 
 struct taskbar_list
 {
