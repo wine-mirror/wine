@@ -9781,7 +9781,7 @@ static HRESULT WINAPI ICreateTypeLib2_fnSaveAllChanges(ICreateTypeLib2 *iface)
     tmp_fill_segdir_seg(&file.segdir.pTypeInfoTab, &file.typeinfo_seg, &running_offset);
 
     TRACE("guidhashtab at: 0x%x\n", running_offset);
-    tmp_fill_segdir_seg(&file.segdir.pLibtab, &file.guidhash_seg, &running_offset);
+    tmp_fill_segdir_seg(&file.segdir.pGuidHashTab, &file.guidhash_seg, &running_offset);
 
     TRACE("guidtab at: 0x%x\n", running_offset);
     tmp_fill_segdir_seg(&file.segdir.pGuidTab, &file.guid_seg, &running_offset);
