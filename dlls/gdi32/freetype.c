@@ -1895,15 +1895,23 @@ static inline DWORD get_ntm_flags( FT_Face ft_face )
     return flags;
 }
 
-static inline int get_bitmap_internal_leading( FT_Face ft_face )
+static inline void get_bitmap_size( FT_Face ft_face, Bitmap_Size *face_size )
 {
-    int internal_leading = 0;
+    My_FT_Bitmap_Size *size;
     FT_WinFNT_HeaderRec winfnt_header;
 
-    if (!pFT_Get_WinFNT_Header( ft_face, &winfnt_header ))
-        internal_leading = winfnt_header.internal_leading;
+    size = (My_FT_Bitmap_Size *)ft_face->available_sizes;
+    TRACE("Adding bitmap size h %d w %d size %ld x_ppem %ld y_ppem %ld\n",
+          size->height, size->width, size->size >> 6,
+          size->x_ppem >> 6, size->y_ppem >> 6);
+    face_size->height = size->height;
+    face_size->width = size->width;
+    face_size->size = size->size;
+    face_size->x_ppem = size->x_ppem;
+    face_size->y_ppem = size->y_ppem;
 
-    return internal_leading;
+    if (!pFT_Get_WinFNT_Header( ft_face, &winfnt_header ))
+        face_size->internal_leading = winfnt_header.internal_leading;
 }
 
 static inline void get_fontsig( FT_Face ft_face, FONTSIGNATURE *fs )
@@ -1974,7 +1982,6 @@ static Face *create_face( FT_Face ft_face, FT_Long face_index, const char *file,
 {
     struct stat st;
     Face *face = HeapAlloc( GetProcessHeap(), 0, sizeof(*face) );
-    My_FT_Bitmap_Size *size = (My_FT_Bitmap_Size *)ft_face->available_sizes;
 
     face->refcount = 1;
     face->StyleName = get_face_name( ft_face, TT_NAME_ID_FONT_SUBFAMILY, GetSystemDefaultLangID() );
@@ -2016,15 +2023,7 @@ static Face *create_face( FT_Face ft_face, FT_Long face_index, const char *file,
     }
     else
     {
-        TRACE("Adding bitmap size h %d w %d size %ld x_ppem %ld y_ppem %ld\n",
-              size->height, size->width, size->size >> 6,
-              size->x_ppem >> 6, size->y_ppem >> 6);
-        face->size.height = size->height;
-        face->size.width = size->width;
-        face->size.size = size->size;
-        face->size.x_ppem = size->x_ppem;
-        face->size.y_ppem = size->y_ppem;
-        face->size.internal_leading = get_bitmap_internal_leading( ft_face );
+        get_bitmap_size( ft_face, &face->size );
         face->scalable = FALSE;
     }
 
