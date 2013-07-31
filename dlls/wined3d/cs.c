@@ -70,6 +70,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_RESOURCE_UNMAP,
     WINED3D_CS_OP_QUERY_ISSUE,
     WINED3D_CS_OP_QUERY_DESTROY,
+    WINED3D_CS_OP_UPDATE_SURFACE,
     WINED3D_CS_OP_STOP,
 };
 
@@ -387,6 +388,15 @@ struct wined3d_cs_query_destroy
 {
     enum wined3d_cs_op opcode;
     struct wined3d_query *query;
+};
+
+struct wined3d_cs_update_surface
+{
+    enum wined3d_cs_op opcode;
+    struct wined3d_surface *src, *dst;
+    RECT src_rect;
+    POINT dst_point;
+    BOOL has_src_rect, has_dst_point;
 };
 
 static void wined3d_cs_mt_submit(struct wined3d_cs *cs, size_t size)
@@ -1894,6 +1904,43 @@ void wined3d_cs_emit_query_destroy(struct wined3d_cs *cs, struct wined3d_query *
     cs->ops->submit(cs, sizeof(*op));
 }
 
+static UINT wined3d_cs_exec_update_surface(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_update_surface *op = data;
+
+    surface_upload_from_surface(op->dst, op->has_dst_point ? &op->dst_point : NULL,
+            op->src, op->has_src_rect ? &op->src_rect : NULL);
+
+    return sizeof(*op);
+}
+
+void wined3d_cs_emit_update_surface(struct wined3d_cs *cs, struct wined3d_surface *src, const RECT *src_rect,
+        struct wined3d_surface *dst, const POINT *dst_point)
+{
+    struct wined3d_cs_update_surface *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_UPDATE_SURFACE;
+    op->src = src;
+    op->dst = dst;
+    op->has_src_rect = FALSE;
+    op->has_dst_point = FALSE;
+
+    if (src_rect)
+    {
+        op->has_src_rect = TRUE;
+        op->src_rect = *src_rect;
+    }
+
+    if (dst_point)
+    {
+        op->has_dst_point = TRUE;
+        op->dst_point = *dst_point;
+    }
+
+    cs->ops->submit(cs, sizeof(*op));
+}
+
 static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
 {
     /* WINED3D_CS_OP_NOP                        */ wined3d_cs_exec_nop,
@@ -1942,6 +1989,7 @@ static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_RESOURCE_UNMAP             */ wined3d_cs_exec_resource_unmap,
     /* WINED3D_CS_OP_QUERY_ISSUE                */ wined3d_cs_exec_query_issue,
     /* WINED3D_CS_OP_QUERY_DESTROY              */ wined3d_cs_exec_query_destroy,
+    /* WINED3D_CS_OP_UPDATE_SURFACE             */ wined3d_cs_exec_update_surface,
 };
 
 static inline void *_wined3d_cs_mt_require_space(struct wined3d_cs *cs, size_t size, BOOL prio)

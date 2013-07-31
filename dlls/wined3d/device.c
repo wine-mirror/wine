@@ -3840,14 +3840,9 @@ HRESULT CDECL wined3d_device_update_surface(struct wined3d_device *device,
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (wined3d_settings.cs_multithreaded)
-    {
-        FIXME("Waiting for cs.\n");
-        wined3d_cs_emit_glfinish(device->cs);
-        device->cs->ops->finish(device->cs);
-    }
+    wined3d_cs_emit_update_surface(device->cs, src_surface, src_rect, dst_surface, dst_point);
 
-    return surface_upload_from_surface(dst_surface, dst_point, src_surface, src_rect);
+    return WINED3D_OK;
 }
 
 void CDECL wined3d_device_copy_resource(struct wined3d_device *device,
