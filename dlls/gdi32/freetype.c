@@ -7628,7 +7628,6 @@ static BOOL get_glyph_index_linked(GdiFont *font, UINT c, GdiFont **linked_font,
     }
 
 done:
-    *glyph = get_default_char_index(font);
     *vert = FALSE;
     return FALSE;
 }
