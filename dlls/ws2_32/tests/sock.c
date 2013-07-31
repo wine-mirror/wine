@@ -1766,8 +1766,8 @@ todo_wine
 todo_wine {
     size = sizeof(socktype);
     socktype = 0xdead;
-    ok(!getsockopt(sock, SOL_SOCKET, SO_TYPE, (char *) &socktype, &size), "getsockopt failed with %d\n",
-       WSAGetLastError());
+    err = getsockopt(sock, SOL_SOCKET, SO_TYPE, (char *) &socktype, &size);
+    ok(!err, "getsockopt failed with %d\n", WSAGetLastError());
     ok(socktype == pi[0].iSocketType, "Wrong socket type, expected %d received %d\n",
        pi[0].iSocketType, socktype);
 }
@@ -1783,9 +1783,9 @@ todo_wine
 
         size = sizeof(socktype);
         socktype = 0xdead;
+        err = getsockopt(sock, SOL_SOCKET, SO_TYPE, (char *) &socktype, &size);
 todo_wine
-        ok(!getsockopt(sock, SOL_SOCKET, SO_TYPE, (char *) &socktype, &size), "getsockopt failed with %d\n",
-           WSAGetLastError());
+        ok(!err, "getsockopt failed with %d\n", WSAGetLastError());
 
         for (j = 0; j < items; j++)
         {
@@ -2508,14 +2508,16 @@ static void test_listen(void)
     ok (ret == WSAEINVAL, "expected 10022, received %d\n", ret);
 
     acceptc = 0xdead;
-    ok (!getsockopt(fdA, SOL_SOCKET, SO_ACCEPTCONN, (char*)&acceptc, &olen), "getsockopt failed\n");
+    ret = getsockopt(fdA, SOL_SOCKET, SO_ACCEPTCONN, (char*)&acceptc, &olen);
+    ok (!ret, "getsockopt failed\n");
     ok (acceptc == 0, "SO_ACCEPTCONN should be 0, received %d\n", acceptc);
 
     ok (!listen(fdA, 0), "listen failed\n");
     ok (!listen(fdA, SOMAXCONN), "double listen failed\n");
 
     acceptc = 0xdead;
-    ok (!getsockopt(fdA, SOL_SOCKET, SO_ACCEPTCONN, (char*)&acceptc, &olen), "getsockopt failed\n");
+    ret = getsockopt(fdA, SOL_SOCKET, SO_ACCEPTCONN, (char*)&acceptc, &olen);
+    ok (!ret, "getsockopt failed\n");
     ok (acceptc == 1, "SO_ACCEPTCONN should be 1, received %d\n", acceptc);
 
     SetLastError(0xdeadbeef);
