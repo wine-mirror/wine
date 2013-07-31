@@ -33,8 +33,7 @@ AC_ARG_ENABLE(maintainer-mode, AS_HELP_STRING([--enable-maintainer-mode],[enable
 
 AC_ARG_WITH(alsa,      AS_HELP_STRING([--without-alsa],[do not use the Alsa sound support]),
             [if test "x$withval" = "xno"; then ac_cv_header_sys_asoundlib_h=no; ac_cv_header_alsa_asoundlib_h=no; fi])
-AC_ARG_WITH(capi,      AS_HELP_STRING([--without-capi],[do not use CAPI (ISDN support)]),
-            [if test "x$withval" = "xno"; then ac_cv_header_capi20_h=no; ac_cv_header_linux_capi_h=no; fi])
+AC_ARG_WITH(capi,      AS_HELP_STRING([--without-capi],[do not use CAPI (ISDN support)]))
 AC_ARG_WITH(cms,       AS_HELP_STRING([--without-cms],[do not use CMS (color management support)]))
 AC_ARG_WITH(coreaudio, AS_HELP_STRING([--without-coreaudio],[do not use the CoreAudio sound support]),
             [if test "x$withval" = "xno"; then ac_cv_header_CoreAudio_CoreAudio_h=no; fi])
@@ -411,7 +410,6 @@ AC_CHECK_HEADERS(\
 	arpa/inet.h \
 	arpa/nameser.h \
 	asm/types.h \
-	capi20.h \
 	curses.h \
 	direct.h \
 	dirent.h \
@@ -662,9 +660,6 @@ AC_CHECK_HEADERS([linux/videodev.h linux/videodev2.h libv4l1.h],,,
 #ifdef HAVE_ASM_TYPES_H
 #include <asm/types.h>
 #endif])
-
-dnl Check for broken kernel header that doesn't define __user
-AC_CHECK_HEADERS([linux/capi.h],,,[#define __user])
 
 dnl **** Check for working dll ****
 
@@ -1587,10 +1582,15 @@ then
 fi
 
 dnl **** Check for capi4linux ****
-
-if test "$ac_cv_header_capi20_h" = "yes" -a "$ac_cv_header_linux_capi_h" = "yes"
+if test "x$with_capi" != "xno"
 then
-    WINE_CHECK_SONAME(capi20,capi20_register)
+    WINE_PACKAGE_FLAGS(CAPI20,[capi20],,,,
+     dnl Check for broken kernel header that doesn't define __user
+    [AC_CHECK_HEADERS([capi20.h linux/capi.h],,,[#define __user])
+    if test "$ac_cv_header_capi20_h" = "yes" -a "$ac_cv_header_linux_capi_h" = "yes"
+    then
+        WINE_CHECK_SONAME(capi20,capi20_register,,,[$CAPI20_LIBS])
+    fi])
 fi
 WINE_NOTICE_WITH(capi,[test "x$ac_cv_lib_soname_capi20" = "x"],
                  [libcapi20 ${notice_platform}development files not found, ISDN won't be supported.])

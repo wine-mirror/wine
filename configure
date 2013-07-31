@@ -649,6 +649,8 @@ JPEG_LIBS
 JPEG_CFLAGS
 FONTCONFIGINCL
 CUPSINCL
+CAPI20_LIBS
+CAPI20_CFLAGS
 OSS4INCL
 ALSALIBS
 GSTREAMER_LIBS
@@ -890,6 +892,8 @@ FREETYPE_CFLAGS
 FREETYPE_LIBS
 GSTREAMER_CFLAGS
 GSTREAMER_LIBS
+CAPI20_CFLAGS
+CAPI20_LIBS
 JPEG_CFLAGS
 JPEG_LIBS
 PNG_CFLAGS
@@ -1615,6 +1619,9 @@ Some influential environment variables:
               C compiler flags for gstreamer-app-0.10, overriding pkg-config
   GSTREAMER_LIBS
               Linker flags for gstreamer-app-0.10, overriding pkg-config
+  CAPI20_CFLAGS
+              C compiler flags for capi20, overriding pkg-config
+  CAPI20_LIBS Linker flags for capi20, overriding pkg-config
   JPEG_CFLAGS C compiler flags for libjpeg, overriding pkg-config
   JPEG_LIBS   Linker flags for libjpeg, overriding pkg-config
   PNG_CFLAGS  C compiler flags for libpng, overriding pkg-config
@@ -2620,7 +2627,7 @@ fi
 
 # Check whether --with-capi was given.
 if test "${with_capi+set}" = set; then :
-  withval=$with_capi; if test "x$withval" = "xno"; then ac_cv_header_capi20_h=no; ac_cv_header_linux_capi_h=no; fi
+  withval=$with_capi;
 fi
 
 
@@ -5946,7 +5953,6 @@ for ac_header in \
 	arpa/inet.h \
 	arpa/nameser.h \
 	asm/types.h \
-	capi20.h \
 	curses.h \
 	direct.h \
 	dirent.h \
@@ -6372,20 +6378,6 @@ ac_fn_c_check_header_compile "$LINENO" "$ac_header" "$as_ac_Header" "#ifdef HAVE
 if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
   cat >>confdefs.h <<_ACEOF
 #define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
-
-fi
-
-done
-
-
-for ac_header in linux/capi.h
-do :
-  ac_fn_c_check_header_compile "$LINENO" "linux/capi.h" "ac_cv_header_linux_capi_h" "#define __user
-"
-if test "x$ac_cv_header_linux_capi_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LINUX_CAPI_H 1
 _ACEOF
 
 fi
@@ -11457,16 +11449,46 @@ fi
     fi
 fi
 
-
-if test "$ac_cv_header_capi20_h" = "yes" -a "$ac_cv_header_linux_capi_h" = "yes"
+if test "x$with_capi" != "xno"
 then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lcapi20" >&5
+    if test -n "$CAPI20_CFLAGS"; then :
+
+elif test -n "$PKG_CONFIG"; then :
+  CAPI20_CFLAGS=`$PKG_CONFIG --cflags capi20 2>/dev/null`
+fi
+
+if test -n "$CAPI20_LIBS"; then :
+
+elif test -n "$PKG_CONFIG"; then :
+  CAPI20_LIBS=`$PKG_CONFIG --libs capi20 2>/dev/null`
+fi
+
+
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $CAPI20_CFLAGS"
+    for ac_header in capi20.h linux/capi.h
+do :
+  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+ac_fn_c_check_header_compile "$LINENO" "$ac_header" "$as_ac_Header" "#define __user
+"
+if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+
+done
+
+    if test "$ac_cv_header_capi20_h" = "yes" -a "$ac_cv_header_linux_capi_h" = "yes"
+    then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lcapi20" >&5
 $as_echo_n "checking for -lcapi20... " >&6; }
 if ${ac_cv_lib_soname_capi20+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_soname_save_LIBS=$LIBS
-LIBS="-lcapi20  $LIBS"
+LIBS="-lcapi20 $CAPI20_LIBS $LIBS"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -11513,6 +11535,11 @@ _ACEOF
 
 
 fi
+    fi
+CPPFLAGS=$ac_save_CPPFLAGS
+test -z "$CAPI20_CFLAGS" || CAPI20_CFLAGS=`echo " $CAPI20_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
+test -z "$CAPI20_LIBS" || CAPI20_LIBS=`echo " $CAPI20_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
+
 fi
 if test "x$ac_cv_lib_soname_capi20" = "x"; then :
   case "x$with_capi" in
