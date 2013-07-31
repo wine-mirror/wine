@@ -888,10 +888,10 @@ static struct call_entry xmlspaceattr_test_alternate[] = {
 /* attribute value normalization test */
 static const char attribute_normalize[] =
     "<?xml version=\"1.0\" ?>\n"
-    "<a attr1=\" \r \n \tattr_value &#65; \t \r \n\r\n \n\"/>\n";
+    "<a attr1=\" \r \n \tattr_value &#65; &#38; &amp;\t \r \n\r\n \n\"/>\n";
 
 static struct attribute_entry attribute_norm_attrs[] = {
-    { "", "attr1", "attr1", "      attr_value A         " },
+    { "", "attr1", "attr1", "      attr_value A & &        " },
     { NULL }
 };
 
