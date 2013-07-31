@@ -272,10 +272,15 @@ BOOL WINAPI FindActCtxSectionGuid(DWORD dwFlags, const GUID* lpExtGuid,
                                   ULONG ulId, const GUID* lpSearchGuid,
                                   PACTCTX_SECTION_KEYED_DATA pInfo)
 {
-  FIXME("%08x %s %u %s %p\n", dwFlags, debugstr_guid(lpExtGuid),
-       ulId, debugstr_guid(lpSearchGuid), pInfo);
-  SetLastError( ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
+    NTSTATUS status;
+
+    if ((status = RtlFindActivationContextSectionGuid(dwFlags, lpExtGuid, ulId, lpSearchGuid, pInfo)))
+    {
+        SetLastError(RtlNtStatusToDosError(status));
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 /***********************************************************************

@@ -2716,3 +2716,34 @@ NTSTATUS WINAPI RtlFindActivationContextSectionString( ULONG flags, const GUID *
 
     return status;
 }
+
+/***********************************************************************
+ *		RtlFindActivationContextSectionGuid (NTDLL.@)
+ *
+ * Find information about a GUID in an activation context.
+ * FIXME: function signature/prototype may be wrong
+ */
+NTSTATUS WINAPI RtlFindActivationContextSectionGuid( ULONG flags, const GUID *extguid, ULONG section_kind,
+                                                     const GUID *guid, void *ptr )
+{
+    ACTCTX_SECTION_KEYED_DATA *data = ptr;
+
+    FIXME("%08x %s %u %s %p: stub\n", flags, debugstr_guid(extguid), section_kind, debugstr_guid(guid), data);
+
+    if (extguid)
+    {
+        FIXME("expected extguid == NULL\n");
+        return STATUS_INVALID_PARAMETER;
+    }
+
+    if (flags & ~FIND_ACTCTX_SECTION_KEY_RETURN_HACTCTX)
+    {
+        FIXME("unknown flags %08x\n", flags);
+        return STATUS_INVALID_PARAMETER;
+    }
+
+    if (!data || data->cbSize < FIELD_OFFSET(ACTCTX_SECTION_KEYED_DATA, ulAssemblyRosterIndex) || !guid)
+        return STATUS_INVALID_PARAMETER;
+
+    return STATUS_NOT_IMPLEMENTED;
+}
