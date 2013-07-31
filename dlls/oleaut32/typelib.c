@@ -101,6 +101,7 @@ typedef struct
 
 static HRESULT typedescvt_to_variantvt(ITypeInfo *tinfo, const TYPEDESC *tdesc, VARTYPE *vt);
 static HRESULT TLB_AllocAndInitVarDesc(const VARDESC *src, VARDESC **dest_ptr);
+static void TLB_FreeVarDesc(VARDESC*);
 
 /****************************************************************************
  *              FromLExxx
@@ -1118,8 +1119,9 @@ typedef struct tagTLBFuncDesc
 /* internal Variable data */
 typedef struct tagTLBVarDesc
 {
-    VARDESC vardesc;        /* lots of info on the variable and its attributes. */
-    const TLBString *Name;             /* the name of this variable */
+    VARDESC vardesc;                /* lots of info on the variable and its attributes. */
+    VARDESC *vardesc_create;        /* additional data needed for storing VARDESC */
+    const TLBString *Name;          /* the name of this variable */
     int HelpContext;
     int HelpStringContext;
     const TLBString *HelpString;
@@ -5453,8 +5455,9 @@ static void ITypeInfoImpl_Destroy(ITypeInfoImpl *This)
     for(i = 0; i < This->cVars; ++i)
     {
         TLBVarDesc *pVInfo = &This->vardescs[i];
-        if (pVInfo->vardesc.varkind == VAR_CONST)
-        {
+        if (pVInfo->vardesc_create) {
+            TLB_FreeVarDesc(pVInfo->vardesc_create);
+        } else if (pVInfo->vardesc.varkind == VAR_CONST) {
             VariantClear(pVInfo->vardesc.u.lpvarValue);
             heap_free(pVInfo->vardesc.u.lpvarValue);
         }
@@ -5718,6 +5721,14 @@ static HRESULT TLB_AllocAndInitFuncDesc( const FUNCDESC *src, FUNCDESC **dest_pt
 
     *dest_ptr = dest;
     return S_OK;
+}
+
+static void TLB_FreeVarDesc(VARDESC *var_desc)
+{
+    TLB_FreeElemDesc(&var_desc->elemdescVar);
+    if (var_desc->varkind == VAR_CONST)
+        VariantClear(var_desc->u.lpvarValue);
+    SysFreeString((BSTR)var_desc);
 }
 
 HRESULT ITypeInfoImpl_GetInternalFuncDesc( ITypeInfo *iface, UINT index, const FUNCDESC **ppFuncDesc )
@@ -7690,10 +7701,7 @@ static void WINAPI ITypeInfo_fnReleaseVarDesc( ITypeInfo2 *iface,
     ITypeInfoImpl *This = impl_from_ITypeInfo2(iface);
     TRACE("(%p)->(%p)\n", This, pVarDesc);
 
-    TLB_FreeElemDesc(&pVarDesc->elemdescVar);
-    if (pVarDesc->varkind == VAR_CONST)
-        VariantClear(pVarDesc->u.lpvarValue);
-    SysFreeString((BSTR)pVarDesc);
+    TLB_FreeVarDesc(pVarDesc);
 }
 
 /* ITypeInfo2::GetTypeKind
@@ -10430,11 +10438,11 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(ICreateTypeInfo2 *iface,
             }
         }
     } else
-        var_desc = This->vardescs = heap_alloc(sizeof(TLBVarDesc));
+        var_desc = This->vardescs = heap_alloc_zero(sizeof(TLBVarDesc));
 
-    memset(var_desc, 0, sizeof(TLBVarDesc));
     TLBVarDesc_Constructor(var_desc);
-    var_desc->vardesc = *varDesc;
+    TLB_AllocAndInitVarDesc(varDesc, &var_desc->vardesc_create);
+    var_desc->vardesc = *var_desc->vardesc_create;
 
     ++This->cVars;
 
