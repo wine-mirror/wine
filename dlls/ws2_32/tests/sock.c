@@ -1733,7 +1733,21 @@ todo_wine
                       FROM_PROTOCOL_INFO, &pi[0], 0, 0);
     ok(sock != INVALID_SOCKET, "Failed to create socket: %d\n",
             WSAGetLastError());
+    closesocket(sock);
 
+    /* find what parameters are used first: plain parameters or protocol info struct */
+    pi[0].iProtocol = IPPROTO_UDP;
+    pi[0].iSocketType = SOCK_DGRAM;
+    pi[0].iAddressFamily = AF_INET;
+    sock = WSASocketA(AF_INET, SOCK_STREAM, IPPROTO_TCP, &pi[0], 0, 0);
+    ok(sock != INVALID_SOCKET, "Failed to create socket: %d\n",
+            WSAGetLastError());
+    size = sizeof(socktype);
+    socktype = 0xdead;
+    err = getsockopt(sock, SOL_SOCKET, SO_TYPE, (char *) &socktype, &size);
+    ok(!err,"getsockopt failed with %d\n", WSAGetLastError());
+    ok(socktype == SOCK_STREAM, "Wrong socket type, expected %d received %d\n",
+       SOCK_STREAM, socktype);
     closesocket(sock);
 
     HeapFree(GetProcessHeap(), 0, pi);
