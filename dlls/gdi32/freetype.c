@@ -1910,8 +1910,13 @@ static inline void get_bitmap_size( FT_Face ft_face, Bitmap_Size *face_size )
     face_size->x_ppem = size->x_ppem;
     face_size->y_ppem = size->y_ppem;
 
-    if (!pFT_Get_WinFNT_Header( ft_face, &winfnt_header ))
+    if (!pFT_Get_WinFNT_Header( ft_face, &winfnt_header )) {
         face_size->internal_leading = winfnt_header.internal_leading;
+        if (winfnt_header.external_leading > 0 &&
+            (face_size->height ==
+             winfnt_header.pixel_height + winfnt_header.external_leading))
+            face_size->height = winfnt_header.pixel_height;
+    }
 }
 
 static inline void get_fontsig( FT_Face ft_face, FONTSIGNATURE *fs )
