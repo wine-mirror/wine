@@ -96,7 +96,7 @@ static INT WINSOCK_EnterSingleProtocolW( INT protocol, WSAPROTOCOL_INFOW* info )
     switch (protocol)
     {
     case WS_IPPROTO_TCP:
-        info->dwServiceFlags1 = XP1_PARTIAL_MESSAGE | XP1_EXPEDITED_DATA |
+        info->dwServiceFlags1 = XP1_IFS_HANDLES | XP1_EXPEDITED_DATA |
                                 XP1_GRACEFUL_CLOSE | XP1_GUARANTEED_ORDER |
                                 XP1_GUARANTEED_DELIVERY;
         info->ProviderId = ProviderIdIP;
@@ -111,7 +111,7 @@ static INT WINSOCK_EnterSingleProtocolW( INT protocol, WSAPROTOCOL_INFOW* info )
         break;
 
     case WS_IPPROTO_UDP:
-        info->dwServiceFlags1 = XP1_PARTIAL_MESSAGE | XP1_SUPPORT_BROADCAST |
+        info->dwServiceFlags1 = XP1_IFS_HANDLES | XP1_SUPPORT_BROADCAST |
                                 XP1_SUPPORT_MULTIPOINT | XP1_MESSAGE_ORIENTED |
                                 XP1_CONNECTIONLESS;
         info->ProviderId = ProviderIdIP;
