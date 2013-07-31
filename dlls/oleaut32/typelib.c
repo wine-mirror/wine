@@ -8631,7 +8631,7 @@ typedef struct tagWMSFT_TLBFile {
     WMSFT_SegContents impfile_seg;
     WMSFT_SegContents impinfo_seg;
     WMSFT_SegContents ref_seg;
-    WMSFT_SegContents lib_seg;
+    WMSFT_SegContents guidhash_seg;
     WMSFT_SegContents guid_seg;
     WMSFT_SegContents namehash_seg;
     WMSFT_SegContents name_seg;
@@ -8777,30 +8777,41 @@ static HRESULT WMSFT_compile_names(ITypeLibImpl *This,
     return S_OK;
 }
 
+static inline int hash_guid(GUID *guid)
+{
+    int i, hash = 0;
+
+    for (i = 0; i < 8; i ++)
+        hash ^= ((const short *)guid)[i];
+
+    return hash & 0x1f;
+}
+
 static HRESULT WMSFT_compile_guids(ITypeLibImpl *This, WMSFT_TLBFile *file)
 {
     TLBGuid *guid;
     MSFT_GuidEntry *entry;
     DWORD offs;
+    int hash_key, *guidhashtab;
 
     file->guid_seg.len = sizeof(MSFT_GuidEntry) * list_count(&This->guid_list);
     file->guid_seg.data = heap_alloc(file->guid_seg.len);
 
     entry = file->guid_seg.data;
     offs = 0;
+    guidhashtab = file->guidhash_seg.data;
     LIST_FOR_EACH_ENTRY(guid, &This->guid_list, TLBGuid, entry){
         memcpy(&entry->guid, &guid->guid, sizeof(GUID));
         entry->hreftype = 0xFFFFFFFF; /* TODO */
-        entry->next_hash = 0xFFFFFFFF; /* TODO? */
+
+        hash_key = hash_guid(&guid->guid);
+        entry->next_hash = guidhashtab[hash_key];
+        guidhashtab[hash_key] = offs;
 
         guid->offset = offs;
-
         offs += sizeof(MSFT_GuidEntry);
         ++entry;
     }
-
-    --entry;
-    entry->next_hash = 0; /* last one has 0? */
 
     return S_OK;
 }
@@ -9590,19 +9601,11 @@ static void WMSFT_compile_impinfo(ITypeLibImpl *This, WMSFT_TLBFile *file)
     }
 }
 
-static void WMSFT_compile_lib(ITypeLibImpl *This, WMSFT_TLBFile *file)
+static void WMSFT_compile_guidhash(ITypeLibImpl *This, WMSFT_TLBFile *file)
 {
-    /* TODO: What actually goes here? */
-    file->lib_seg.len = 0x80;
-    file->lib_seg.data = heap_alloc(file->lib_seg.len);
-    memset(file->lib_seg.data, 0xFF, file->lib_seg.len);
-
-#if 0
-    /* sometimes, first element is offset to last guid, for some reason */
-    if(This->guid)
-        *(DWORD*)file->lib_seg.data =
-            (list_count(&This->guid_list) - 1) * sizeof(MSFT_GuidEntry);
-#endif
+    file->guidhash_seg.len = 0x80;
+    file->guidhash_seg.data = heap_alloc(file->guidhash_seg.len);
+    memset(file->guidhash_seg.data, 0xFF, file->guidhash_seg.len);
 }
 
 static void WMSFT_compile_namehash(ITypeLibImpl *This, WMSFT_TLBFile *file)
@@ -9652,7 +9655,7 @@ static HRESULT WMSFT_fixup_typeinfos(ITypeLibImpl *This, WMSFT_TLBFile *file,
 static void WMSFT_free_file(WMSFT_TLBFile *file)
 {
     HeapFree(GetProcessHeap(), 0, file->typeinfo_seg.data);
-    HeapFree(GetProcessHeap(), 0, file->lib_seg.data);
+    HeapFree(GetProcessHeap(), 0, file->guidhash_seg.data);
     HeapFree(GetProcessHeap(), 0, file->guid_seg.data);
     HeapFree(GetProcessHeap(), 0, file->ref_seg.data);
     HeapFree(GetProcessHeap(), 0, file->impinfo_seg.data);
@@ -9712,6 +9715,7 @@ static HRESULT WINAPI ICreateTypeLib2_fnSaveAllChanges(ICreateTypeLib2 *iface)
         return hres;
     }
 
+    WMSFT_compile_guidhash(This, &file);
     hres = WMSFT_compile_guids(This, &file);
     if (FAILED(hres)){
         WMSFT_free_file(&file);
@@ -9761,7 +9765,6 @@ static HRESULT WINAPI ICreateTypeLib2_fnSaveAllChanges(ICreateTypeLib2 *iface)
 
     WMSFT_compile_typeinfo_seg(This, &file, junk + junk_offs);
     WMSFT_compile_impinfo(This, &file);
-    WMSFT_compile_lib(This, &file);
 
     running_offset = 0;
 
@@ -9777,8 +9780,8 @@ static HRESULT WINAPI ICreateTypeLib2_fnSaveAllChanges(ICreateTypeLib2 *iface)
     TRACE("typeinfo at: 0x%x\n", running_offset);
     tmp_fill_segdir_seg(&file.segdir.pTypeInfoTab, &file.typeinfo_seg, &running_offset);
 
-    TRACE("libtab at: 0x%x\n", running_offset);
-    tmp_fill_segdir_seg(&file.segdir.pLibtab, &file.lib_seg, &running_offset);
+    TRACE("guidhashtab at: 0x%x\n", running_offset);
+    tmp_fill_segdir_seg(&file.segdir.pLibtab, &file.guidhash_seg, &running_offset);
 
     TRACE("guidtab at: 0x%x\n", running_offset);
     tmp_fill_segdir_seg(&file.segdir.pGuidTab, &file.guid_seg, &running_offset);
@@ -9855,7 +9858,7 @@ static HRESULT WINAPI ICreateTypeLib2_fnSaveAllChanges(ICreateTypeLib2 *iface)
     }
 
     WMSFT_write_segment(outfile, &file.typeinfo_seg);
-    WMSFT_write_segment(outfile, &file.lib_seg);
+    WMSFT_write_segment(outfile, &file.guidhash_seg);
     WMSFT_write_segment(outfile, &file.guid_seg);
     WMSFT_write_segment(outfile, &file.ref_seg);
     WMSFT_write_segment(outfile, &file.impinfo_seg);
