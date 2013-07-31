@@ -641,6 +641,8 @@ EXTRACFLAGS
 LIBKSTAT
 LIBOPENAL
 LIBMPG123
+TIFF_LIBS
+TIFF_CFLAGS
 PNG_LIBS
 PNG_CFLAGS
 JPEG_LIBS
@@ -891,7 +893,9 @@ GSTREAMER_LIBS
 JPEG_CFLAGS
 JPEG_LIBS
 PNG_CFLAGS
-PNG_LIBS'
+PNG_LIBS
+TIFF_CFLAGS
+TIFF_LIBS'
 
 
 # Initialize some variables set by options.
@@ -1615,6 +1619,8 @@ Some influential environment variables:
   JPEG_LIBS   Linker flags for libjpeg, overriding pkg-config
   PNG_CFLAGS  C compiler flags for libpng, overriding pkg-config
   PNG_LIBS    Linker flags for libpng, overriding pkg-config
+  TIFF_CFLAGS C compiler flags for libtiff, overriding pkg-config
+  TIFF_LIBS   Linker flags for libtiff, overriding pkg-config
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -2776,7 +2782,7 @@ fi
 
 # Check whether --with-tiff was given.
 if test "${with_tiff+set}" = set; then :
-  withval=$with_tiff; if test "x$withval" = "xno"; then ac_cv_header_tiffio_h=no; fi
+  withval=$with_tiff;
 fi
 
 
@@ -6043,7 +6049,6 @@ for ac_header in \
 	sys/wait.h \
 	syscall.h \
 	termios.h \
-	tiffio.h \
 	unistd.h \
 	utime.h \
 	valgrind/memcheck.h \
@@ -12025,15 +12030,44 @@ This is an error since --with-png was requested." "$LINENO" 5 ;;
 esac
 fi
 
-if test "$ac_cv_header_tiffio_h" = "yes"
+if test "x$with_tiff" != "xno"
 then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -ltiff" >&5
+    if test -n "$TIFF_CFLAGS"; then :
+
+elif test -n "$PKG_CONFIG"; then :
+  TIFF_CFLAGS=`$PKG_CONFIG --cflags libtiff 2>/dev/null`
+fi
+
+if test -n "$TIFF_LIBS"; then :
+
+elif test -n "$PKG_CONFIG"; then :
+  TIFF_LIBS=`$PKG_CONFIG --libs libtiff 2>/dev/null`
+fi
+
+
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $TIFF_CFLAGS"
+for ac_header in tiffio.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "tiffio.h" "ac_cv_header_tiffio_h" "$ac_includes_default"
+if test "x$ac_cv_header_tiffio_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_TIFFIO_H 1
+_ACEOF
+
+fi
+
+done
+
+        if test "$ac_cv_header_tiffio_h" = "yes"
+        then
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -ltiff" >&5
 $as_echo_n "checking for -ltiff... " >&6; }
 if ${ac_cv_lib_soname_tiff+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_soname_save_LIBS=$LIBS
-LIBS="-ltiff  $LIBS"
+LIBS="-ltiff $TIFF_LIBS $LIBS"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -12080,6 +12114,11 @@ _ACEOF
 
 
 fi
+        fi
+CPPFLAGS=$ac_save_CPPFLAGS
+test -z "$TIFF_CFLAGS" || TIFF_CFLAGS=`echo " $TIFF_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
+test -z "$TIFF_LIBS" || TIFF_LIBS=`echo " $TIFF_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
+
 fi
 if test "x$ac_cv_lib_soname_tiff" = "x"; then :
   case "x$with_tiff" in
