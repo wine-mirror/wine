@@ -1519,6 +1519,8 @@ static void test_CreateTypeLib(void) {
     static OLECHAR *propname[] = {prop1W, param1W};
     static const GUID custguid = {0xbf611abe,0x5b38,0x11df,{0x91,0x5c,0x08,0x02,0x79,0x79,0x94,0x70}};
     static const GUID bogusguid = {0xbf611abe,0x5b38,0x11df,{0x91,0x5c,0x08,0x02,0x79,0x79,0x94,0x71}};
+    static const GUID interfaceguid = {0x3b9ff02f,0x9675,0x4861,{0xb7,0x81,0xce,0xae,0xa4,0x78,0x2a,0xcc}};
+    static const GUID interface2guid = {0x3b9ff02f,0x9675,0x4861,{0xb7,0x81,0xce,0xae,0xa4,0x78,0x2a,0xcd}};
 
     char filename[MAX_PATH];
     WCHAR filenameW[MAX_PATH];
@@ -1664,6 +1666,9 @@ static void test_CreateTypeLib(void) {
 
 
     hres = ICreateTypeInfo_LayOut(createti);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ICreateTypeInfo_SetGuid(createti, &interfaceguid);
     ok(hres == S_OK, "got %08x\n", hres);
 
     hres = ICreateTypeInfo_AddRefTypeInfo(createti, NULL, &hreftype);
@@ -2193,6 +2198,9 @@ static void test_CreateTypeLib(void) {
     ok(hres == TYPE_E_NAMECONFLICT, "got %08x\n", hres);
 
     hres = ICreateTypeLib2_CreateTypeInfo(createtl, interface2W, TKIND_INTERFACE, &createti);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ICreateTypeInfo_SetGuid(createti, &interface2guid);
     ok(hres == S_OK, "got %08x\n", hres);
 
     hres = ICreateTypeInfo_QueryInterface(createti, &IID_ITypeInfo, (void**)&interface2);

@@ -959,6 +959,7 @@ HRESULT WINAPI UnRegisterTypeLibForUser(
 
 typedef struct tagTLBGuid {
     GUID guid;
+    INT hreftype;
     UINT offset;
     struct list entry;
 } TLBGuid;
@@ -1830,7 +1831,8 @@ static TLBImplType *TLBImplType_Alloc(UINT n)
     return ret;
 }
 
-static TLBGuid *TLB_append_guid(struct list *guid_list, const GUID *new_guid)
+static TLBGuid *TLB_append_guid(struct list *guid_list,
+        const GUID *new_guid, HREFTYPE hreftype)
 {
     TLBGuid *guid;
 
@@ -1844,6 +1846,7 @@ static TLBGuid *TLB_append_guid(struct list *guid_list, const GUID *new_guid)
         return NULL;
 
     memcpy(&guid->guid, new_guid, sizeof(GUID));
+    guid->hreftype = hreftype;
 
     list_add_tail(guid_list, &guid->entry);
 
@@ -1984,6 +1987,7 @@ static HRESULT MSFT_ReadAllGuids(TLBContext *pcx)
 
         guid->offset = offs;
         guid->guid = entry.guid;
+        guid->hreftype = entry.hreftype;
 
         list_add_tail(&pcx->pLibInfo->guid_list, &guid->entry);
 
@@ -3628,7 +3632,7 @@ static DWORD SLTG_ReadLibBlk(LPVOID pLibBlk, ITypeLibImpl *pTypeLibImpl)
     pTypeLibImpl->ver_minor = *(WORD*)ptr;
     ptr += 2;
 
-    pTypeLibImpl->guid = TLB_append_guid(&pTypeLibImpl->guid_list, (GUID*)ptr);
+    pTypeLibImpl->guid = TLB_append_guid(&pTypeLibImpl->guid_list, (GUID*)ptr, -2);
     ptr += sizeof(GUID);
 
     return ptr - (char*)pLibBlk;
@@ -3786,7 +3790,7 @@ static sltg_ref_lookup_t *SLTG_DoRefs(SLTG_RefInfo *pRef, ITypeLibImpl *pTL,
 		import = heap_alloc_zero(sizeof(*import));
 		import->offset = lib_offs;
 		TLB_GUIDFromString( pNameTable + lib_offs + 4, &tmpguid);
-                import->guid = TLB_append_guid(&pTL->guid_list, &tmpguid);
+                import->guid = TLB_append_guid(&pTL->guid_list, &tmpguid, 2);
 		if(sscanf(pNameTable + lib_offs + 40, "}#%hd.%hd#%x#%s",
 			  &import->wVersionMajor,
 			  &import->wVersionMinor,
@@ -4427,7 +4431,7 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
       (*ppTypeInfoImpl)->index = i;
       (*ppTypeInfoImpl)->Name = SLTG_ReadName(pNameTable, pOtherTypeInfoBlks[i].name_offs, pTypeLibImpl);
       (*ppTypeInfoImpl)->dwHelpContext = pOtherTypeInfoBlks[i].helpcontext;
-      (*ppTypeInfoImpl)->guid = TLB_append_guid(&pTypeLibImpl->guid_list, &pOtherTypeInfoBlks[i].uuid);
+      (*ppTypeInfoImpl)->guid = TLB_append_guid(&pTypeLibImpl->guid_list, &pOtherTypeInfoBlks[i].uuid, 2);
       (*ppTypeInfoImpl)->typekind = pTIHeader->typekind;
       (*ppTypeInfoImpl)->wMajorVerNum = pTIHeader->major_version;
       (*ppTypeInfoImpl)->wMinorVerNum = pTIHeader->minor_version;
@@ -8549,7 +8553,7 @@ static HRESULT WINAPI ICreateTypeLib2_fnSetGuid(ICreateTypeLib2 *iface,
 
     TRACE("%p %s\n", This, debugstr_guid(guid));
 
-    This->guid = TLB_append_guid(&This->guid_list, guid);
+    This->guid = TLB_append_guid(&This->guid_list, guid, -2);
 
     return S_OK;
 }
@@ -8802,7 +8806,7 @@ static HRESULT WMSFT_compile_guids(ITypeLibImpl *This, WMSFT_TLBFile *file)
     guidhashtab = file->guidhash_seg.data;
     LIST_FOR_EACH_ENTRY(guid, &This->guid_list, TLBGuid, entry){
         memcpy(&entry->guid, &guid->guid, sizeof(GUID));
-        entry->hreftype = 0xFFFFFFFF; /* TODO */
+        entry->hreftype = guid->hreftype;
 
         hash_key = hash_guid(&guid->guid);
         entry->next_hash = guidhashtab[hash_key];
@@ -9966,7 +9970,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetGuid(ICreateTypeInfo2 *iface,
 
     TRACE("%p %s\n", This, debugstr_guid(guid));
 
-    This->guid = TLB_append_guid(&This->pTypeLib->guid_list, guid);
+    This->guid = TLB_append_guid(&This->pTypeLib->guid_list, guid, This->hreftype);
 
     return S_OK;
 }
@@ -10114,7 +10118,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddRefTypeInfo(ICreateTypeInfo2 *iface,
             }
         }
 
-        implib->guid = TLB_append_guid(&This->pTypeLib->guid_list, &libattr->guid);
+        implib->guid = TLB_append_guid(&This->pTypeLib->guid_list, &libattr->guid, 2);
         implib->lcid = libattr->lcid;
         implib->wVersionMajor = libattr->wMajorVerNum;
         implib->wVersionMinor = libattr->wMinorVerNum;
@@ -10147,7 +10151,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddRefTypeInfo(ICreateTypeInfo2 *iface,
 
         ref_type->index = TLB_REF_USE_GUID;
 
-        ref_type->guid = TLB_append_guid(&This->pTypeLib->guid_list, &typeattr->guid);
+        ref_type->guid = TLB_append_guid(&This->pTypeLib->guid_list, &typeattr->guid, ref_type->reference+1);
 
         list_add_tail(&This->pTypeLib->ref_list, &ref_type->entry);
     }
@@ -10772,7 +10776,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetCustData(ICreateTypeInfo2 *iface,
     if (!guid || !varVal)
         return E_INVALIDARG;
 
-    tlbguid = TLB_append_guid(&This->pTypeLib->guid_list, guid);
+    tlbguid = TLB_append_guid(&This->pTypeLib->guid_list, guid, -1);
 
     return TLB_set_custdata(This->pcustdata_list, tlbguid, varVal);
 }
