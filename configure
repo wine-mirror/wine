@@ -9593,13 +9593,13 @@ then
 elif test -n "$PKG_CONFIG"; then :
   XML2_CFLAGS=`$PKG_CONFIG --cflags libxml-2.0 2>/dev/null`
 fi
-XML2_CFLAGS=${XML2_CFLAGS:-`xml2-config --cflags 2>/dev/null`}
+test "$cross_compiling" = yes || XML2_CFLAGS=${XML2_CFLAGS:-`xml2-config --cflags 2>/dev/null`}
 if test -n "$XML2_LIBS"; then :
 
 elif test -n "$PKG_CONFIG"; then :
   XML2_LIBS=`$PKG_CONFIG --libs libxml-2.0 2>/dev/null`
 fi
-XML2_LIBS=${XML2_LIBS:-`xml2-config --libs 2>/dev/null`}
+test "$cross_compiling" = yes || XML2_LIBS=${XML2_LIBS:-`xml2-config --libs 2>/dev/null`}
 XML2_LIBS=${XML2_LIBS:-"-lxml2"}
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $XML2_CFLAGS"
@@ -9905,13 +9905,13 @@ then
 elif test -n "$PKG_CONFIG"; then :
   XSLT_CFLAGS=`$PKG_CONFIG --cflags libxslt 2>/dev/null`
 fi
-XSLT_CFLAGS=${XSLT_CFLAGS:-`xslt-config --cflags 2>/dev/null`}
+test "$cross_compiling" = yes || XSLT_CFLAGS=${XSLT_CFLAGS:-`xslt-config --cflags 2>/dev/null`}
 if test -n "$XSLT_LIBS"; then :
 
 elif test -n "$PKG_CONFIG"; then :
   XSLT_LIBS=`$PKG_CONFIG --libs libxslt 2>/dev/null`
 fi
-XSLT_LIBS=${XSLT_LIBS:-`xslt-config --libs 2>/dev/null`}
+test "$cross_compiling" = yes || XSLT_LIBS=${XSLT_LIBS:-`xslt-config --libs 2>/dev/null`}
 XSLT_LIBS=${XSLT_LIBS:-"-lxml2"}
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $XSLT_CFLAGS"
@@ -10435,13 +10435,13 @@ then
 elif test -n "$PKG_CONFIG"; then :
   SANE_CFLAGS=`$PKG_CONFIG --cflags libsane 2>/dev/null`
 fi
-SANE_CFLAGS=${SANE_CFLAGS:-`sane-config --cflags 2>/dev/null`}
+test "$cross_compiling" = yes || SANE_CFLAGS=${SANE_CFLAGS:-`sane-config --cflags 2>/dev/null`}
 if test -n "$SANE_LIBS"; then :
 
 elif test -n "$PKG_CONFIG"; then :
   SANE_LIBS=`$PKG_CONFIG --libs libsane 2>/dev/null`
 fi
-SANE_LIBS=${SANE_LIBS:-`sane-config --ldflags 2>/dev/null`}
+test "$cross_compiling" = yes || SANE_LIBS=${SANE_LIBS:-`sane-config --ldflags 2>/dev/null`}
 
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $SANE_CFLAGS"
@@ -10591,13 +10591,13 @@ then
 elif test -n "$PKG_CONFIG"; then :
   GPHOTO2_CFLAGS=`$PKG_CONFIG --cflags libgphoto2 2>/dev/null`
 fi
-GPHOTO2_CFLAGS=${GPHOTO2_CFLAGS:-`gphoto2-config --cflags 2>/dev/null`}
+test "$cross_compiling" = yes || GPHOTO2_CFLAGS=${GPHOTO2_CFLAGS:-`gphoto2-config --cflags 2>/dev/null`}
 if test -n "$GPHOTO2_LIBS"; then :
 
 elif test -n "$PKG_CONFIG"; then :
   GPHOTO2_LIBS=`$PKG_CONFIG --libs libgphoto2 2>/dev/null`
 fi
-GPHOTO2_LIBS=${GPHOTO2_LIBS:-`gphoto2-config --libs 2>/dev/null`}
+test "$cross_compiling" = yes || GPHOTO2_LIBS=${GPHOTO2_LIBS:-`gphoto2-config --libs 2>/dev/null`}
 GPHOTO2_LIBS=${GPHOTO2_LIBS:-"-lgphoto2"}
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $GPHOTO2_CFLAGS"
@@ -10661,13 +10661,13 @@ test -z "$GPHOTO2_LIBS" || GPHOTO2_LIBS=`echo " $GPHOTO2_LIBS" | sed 's/ -L\([^/
 elif test -n "$PKG_CONFIG"; then :
   GPHOTO2_PORT_CFLAGS=`$PKG_CONFIG --cflags libgphoto2_port 2>/dev/null`
 fi
-GPHOTO2_PORT_CFLAGS=${GPHOTO2_PORT_CFLAGS:-`gphoto2-port-config --cflags 2>/dev/null`}
+test "$cross_compiling" = yes || GPHOTO2_PORT_CFLAGS=${GPHOTO2_PORT_CFLAGS:-`gphoto2-port-config --cflags 2>/dev/null`}
 if test -n "$GPHOTO2_PORT_LIBS"; then :
 
 elif test -n "$PKG_CONFIG"; then :
   GPHOTO2_PORT_LIBS=`$PKG_CONFIG --libs libgphoto2_port 2>/dev/null`
 fi
-GPHOTO2_PORT_LIBS=${GPHOTO2_PORT_LIBS:-`gphoto2-port-config --libs 2>/dev/null`}
+test "$cross_compiling" = yes || GPHOTO2_PORT_LIBS=${GPHOTO2_PORT_LIBS:-`gphoto2-port-config --libs 2>/dev/null`}
 GPHOTO2_PORT_LIBS=${GPHOTO2_PORT_LIBS:-"-lgphoto2_port"}
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $GPHOTO2_PORT_CFLAGS"
@@ -10881,13 +10881,13 @@ then
 elif test -n "$PKG_CONFIG"; then :
   FREETYPE_CFLAGS=`$PKG_CONFIG --cflags freetype2 2>/dev/null`
 fi
-FREETYPE_CFLAGS=${FREETYPE_CFLAGS:-`(freetype-config --cflags || freetype2-config --cflags) 2>/dev/null`}
+test "$cross_compiling" = yes || FREETYPE_CFLAGS=${FREETYPE_CFLAGS:-`(freetype-config --cflags || freetype2-config --cflags) 2>/dev/null`}
 if test -n "$FREETYPE_LIBS"; then :
 
 elif test -n "$PKG_CONFIG"; then :
   FREETYPE_LIBS=`$PKG_CONFIG --libs freetype2 2>/dev/null`
 fi
-FREETYPE_LIBS=${FREETYPE_LIBS:-`(freetype-config --libs || freetype2-config --libs) 2>/dev/null`}
+test "$cross_compiling" = yes || FREETYPE_LIBS=${FREETYPE_LIBS:-`(freetype-config --libs || freetype2-config --libs) 2>/dev/null`}
 FREETYPE_LIBS=${FREETYPE_LIBS:-"-lfreetype"}
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $FREETYPE_CFLAGS"
@@ -11941,13 +11941,13 @@ then
 elif test -n "$PKG_CONFIG"; then :
   PNG_CFLAGS=`$PKG_CONFIG --cflags libpng 2>/dev/null`
 fi
-PNG_CFLAGS=${PNG_CFLAGS:-$X_CFLAGS}
+test "$cross_compiling" = yes || PNG_CFLAGS=${PNG_CFLAGS:-$X_CFLAGS}
 if test -n "$PNG_LIBS"; then :
 
 elif test -n "$PKG_CONFIG"; then :
   PNG_LIBS=`$PKG_CONFIG --libs libpng 2>/dev/null`
 fi
-PNG_LIBS=${PNG_LIBS:-$X_LIBS}
+test "$cross_compiling" = yes || PNG_LIBS=${PNG_LIBS:-$X_LIBS}
 
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $PNG_CFLAGS"

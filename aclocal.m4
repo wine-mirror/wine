@@ -92,12 +92,12 @@ AC_ARG_VAR(ac_cflags, [C compiler flags for $2, overriding pkg-config])dnl
 AS_IF([test -n "$ac_cflags"],[],
       [test -n "$PKG_CONFIG"],
       [ac_cflags=`$PKG_CONFIG --cflags [$2] 2>/dev/null`])
-m4_ifval([$4],[ac_cflags=[$]{ac_cflags:-[$4]}])
+m4_ifval([$4],[test "$cross_compiling" = yes || ac_cflags=[$]{ac_cflags:-[$4]}])
 AC_ARG_VAR(ac_libs, [Linker flags for $2, overriding pkg-config])dnl
 AS_IF([test -n "$ac_libs"],[],
       [test -n "$PKG_CONFIG"],
       [ac_libs=`$PKG_CONFIG --libs [$2] 2>/dev/null`])
-m4_ifval([$5],[ac_libs=[$]{ac_libs:-[$5]}])
+m4_ifval([$5],[test "$cross_compiling" = yes || ac_libs=[$]{ac_libs:-[$5]}])
 m4_ifval([$3],[ac_libs=[$]{ac_libs:-"$3"}])
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $ac_cflags"
