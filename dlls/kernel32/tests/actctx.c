@@ -101,6 +101,39 @@ static const char manifest3[] =
 "</file>"
 "</assembly>";
 
+static const char manifest_wndcls1[] =
+"<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">"
+"<assemblyIdentity version=\"1.2.3.4\"  name=\"testdep1\" type=\"win32\" processorArchitecture=\"" ARCH "\"/>"
+"<file name=\"testlib1.dll\">"
+"<windowClass>wndClass1</windowClass>"
+"<windowClass>wndClass2</windowClass>"
+"</file>"
+"</assembly>";
+
+static const char manifest_wndcls2[] =
+"<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">"
+"<assemblyIdentity version=\"4.3.2.1\"  name=\"testdep2\" type=\"win32\" processorArchitecture=\"" ARCH "\" />"
+"<file name=\"testlib2.dll\">"
+"<windowClass>wndClass3</windowClass>"
+"<windowClass>wndClass4</windowClass>"
+"</file>"
+"</assembly>";
+
+static const char manifest_wndcls_main[] =
+"<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">"
+"<assemblyIdentity version=\"1.2.3.4\" name=\"Wine.Test\" type=\"win32\" />"
+"<dependency>"
+" <dependentAssembly>"
+"  <assemblyIdentity type=\"win32\" name=\"testdep1\" version=\"1.2.3.4\" processorArchitecture=\"" ARCH "\" />"
+" </dependentAssembly>"
+"</dependency>"
+"<dependency>"
+" <dependentAssembly>"
+"  <assemblyIdentity type=\"win32\" name=\"testdep2\" version=\"4.3.2.1\" processorArchitecture=\"" ARCH "\" />"
+" </dependentAssembly>"
+"</dependency>"
+"</assembly>";
+
 static const char manifest4[] =
 "<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">"
 "<assemblyIdentity version=\"1.2.3.4\" name=\"Wine.Test\" type=\"win32\">"
@@ -191,8 +224,12 @@ static const WCHAR testlib2_dll[] =
     {'t','e','s','t','l','i','b','2','.','d','l','l',0};
 static const WCHAR wndClassW[] =
     {'w','n','d','C','l','a','s','s',0};
+static const WCHAR wndClass1W[] =
+    {'w','n','d','C','l','a','s','s','1',0};
 static const WCHAR wndClass2W[] =
     {'w','n','d','C','l','a','s','s','2',0};
+static const WCHAR wndClass3W[] =
+    {'w','n','d','C','l','a','s','s','3',0};
 static const WCHAR acr_manifest[] =
     {'a','c','r','.','m','a','n','i','f','e','s','t',0};
 
@@ -1088,6 +1125,53 @@ todo_wine
        data.ulAssemblyRosterIndex, exid);
 }
 
+static void test_wndclass_section(void)
+{
+    ACTCTX_SECTION_KEYED_DATA data, data2;
+    ULONG_PTR cookie;
+    HANDLE handle;
+    BOOL ret;
+
+    /* use two dependent manifests, each defines 2 window class redirects */
+    create_manifest_file("testdep1.manifest", manifest_wndcls1, -1, NULL, NULL);
+    create_manifest_file("testdep2.manifest", manifest_wndcls2, -1, NULL, NULL);
+    create_manifest_file("main_wndcls.manifest", manifest_wndcls_main, -1, NULL, NULL);
+
+    handle = test_create("main_wndcls.manifest");
+    DeleteFileA("testdep1.manifest");
+    DeleteFileA("testdep2.manifest");
+    DeleteFileA("main_wndcls.manifest");
+
+    ret = pActivateActCtx(handle, &cookie);
+    ok(ret, "ActivateActCtx failed: %u\n", GetLastError());
+
+    memset(&data, 0, sizeof(data));
+    memset(&data2, 0, sizeof(data2));
+    data.cbSize = sizeof(data);
+    data2.cbSize = sizeof(data2);
+
+    /* get data for two classes from different assemblies */
+    ret = pFindActCtxSectionStringW(0, NULL,
+                                    ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION,
+                                    wndClass1W, &data);
+    ok(ret, "got %d\n", ret);
+    ret = pFindActCtxSectionStringW(0, NULL,
+                                    ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION,
+                                    wndClass3W, &data2);
+    ok(ret, "got %d\n", ret);
+
+    /* For both string same section is returned, meaning it's one wndclass section per context */
+todo_wine
+    ok(data.lpSectionBase == data2.lpSectionBase, "got %p, %p\n", data.lpSectionBase, data2.lpSectionBase);
+    ok(data.ulSectionTotalLength == data2.ulSectionTotalLength, "got %u, %u\n", data.ulSectionTotalLength,
+        data2.ulSectionTotalLength);
+
+    ret = pDeactivateActCtx(0, cookie);
+    ok(ret, "DeactivateActCtx failed: %u\n", GetLastError());
+
+    pReleaseActCtx(handle);
+}
+
 static void test_actctx(void)
 {
     ULONG_PTR cookie;
@@ -1306,6 +1390,7 @@ static void test_actctx(void)
         pReleaseActCtx(handle);
     }
 
+    test_wndclass_section();
 }
 
 static void test_app_manifest(void)
