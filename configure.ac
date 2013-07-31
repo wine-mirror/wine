@@ -56,8 +56,7 @@ AC_ARG_WITH(hal,       AS_HELP_STRING([--without-hal],[do not use HAL (dynamic d
 AC_ARG_WITH(jpeg,      AS_HELP_STRING([--without-jpeg],[do not use JPEG]))
 AC_ARG_WITH(ldap,      AS_HELP_STRING([--without-ldap],[do not use LDAP]),
             [if test "x$withval" = "xno"; then ac_cv_header_ldap_h=no; ac_cv_header_lber_h=no; fi])
-AC_ARG_WITH(mpg123,    AS_HELP_STRING([--without-mpg123],[do not use the mpg123 library]),
-            [if test "x$withval" = "xno"; then ac_cv_header_mpg123_h=no; fi])
+AC_ARG_WITH(mpg123,    AS_HELP_STRING([--without-mpg123],[do not use the mpg123 library]))
 AC_ARG_WITH(openal,    AS_HELP_STRING([--without-openal],[do not use OpenAL]),
             [if test "x$withval" = "xno"; then ac_cv_header_AL_al_h=no; ac_cv_header_OpenAL_al_h=no; fi])
 AC_ARG_WITH(opencl,    AS_HELP_STRING([--without-opencl],[do not use OpenCL]),
@@ -451,7 +450,6 @@ AC_CHECK_HEADERS(\
 	machine/limits.h \
 	machine/sysarch.h \
 	mntent.h \
-	mpg123.h \
 	ncurses.h \
 	netdb.h \
 	netinet/in.h \
@@ -1688,9 +1686,17 @@ WINE_NOTICE_WITH(tiff,[test "x$ac_cv_lib_soname_tiff" = "x"],
                  [libtiff ${notice_platform}development files not found, TIFF won't be supported.])
 
 dnl **** Check for mpg123 ****
-if test "$ac_cv_header_mpg123_h" = "yes"
+if test "x$with_mpg123" != "xno"
 then
-    AC_CHECK_LIB(mpg123,mpg123_feed,[AC_SUBST(LIBMPG123,"-lmpg123")])
+    WINE_PACKAGE_FLAGS(MPG123,[libmpg123],[-lmpg123],,,
+        [AC_CHECK_HEADERS([mpg123.h])
+        if test "$ac_cv_header_mpg123_h" = "yes"
+        then
+            AC_CHECK_LIB(mpg123,mpg123_feed,[:],[MPG123_LIBS=""],[$MPG123_LIBS])
+        else
+            MPG123_CFLAGS=""
+            MPG123_LIBS=""
+        fi])
 fi
 WINE_NOTICE_WITH(mpg123,[test "x$ac_cv_lib_mpg123_mpg123_feed" != xyes -a x"$ac_cv_header_CoreAudio_CoreAudio_h" != xyes],
                  [libmpg123 ${notice_platform}development files not found (or too old), mp3 codec won't be supported.])

@@ -640,7 +640,8 @@ BUILTINFLAG
 EXTRACFLAGS
 LIBKSTAT
 LIBOPENAL
-LIBMPG123
+MPG123_LIBS
+MPG123_CFLAGS
 TIFF_LIBS
 TIFF_CFLAGS
 PNG_LIBS
@@ -899,7 +900,9 @@ JPEG_LIBS
 PNG_CFLAGS
 PNG_LIBS
 TIFF_CFLAGS
-TIFF_LIBS'
+TIFF_LIBS
+MPG123_CFLAGS
+MPG123_LIBS'
 
 
 # Initialize some variables set by options.
@@ -1628,6 +1631,9 @@ Some influential environment variables:
   PNG_LIBS    Linker flags for libpng, overriding pkg-config
   TIFF_CFLAGS C compiler flags for libtiff, overriding pkg-config
   TIFF_LIBS   Linker flags for libtiff, overriding pkg-config
+  MPG123_CFLAGS
+              C compiler flags for libmpg123, overriding pkg-config
+  MPG123_LIBS Linker flags for libmpg123, overriding pkg-config
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -2735,7 +2741,7 @@ fi
 
 # Check whether --with-mpg123 was given.
 if test "${with_mpg123+set}" = set; then :
-  withval=$with_mpg123; if test "x$withval" = "xno"; then ac_cv_header_mpg123_h=no; fi
+  withval=$with_mpg123;
 fi
 
 
@@ -5994,7 +6000,6 @@ for ac_header in \
 	machine/limits.h \
 	machine/sysarch.h \
 	mntent.h \
-	mpg123.h \
 	ncurses.h \
 	netdb.h \
 	netinet/in.h \
@@ -12156,15 +12161,44 @@ This is an error since --with-tiff was requested." "$LINENO" 5 ;;
 esac
 fi
 
-if test "$ac_cv_header_mpg123_h" = "yes"
+if test "x$with_mpg123" != "xno"
 then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for mpg123_feed in -lmpg123" >&5
+    if test -n "$MPG123_CFLAGS"; then :
+
+elif test -n "$PKG_CONFIG"; then :
+  MPG123_CFLAGS=`$PKG_CONFIG --cflags libmpg123 2>/dev/null`
+fi
+
+if test -n "$MPG123_LIBS"; then :
+
+elif test -n "$PKG_CONFIG"; then :
+  MPG123_LIBS=`$PKG_CONFIG --libs libmpg123 2>/dev/null`
+fi
+
+MPG123_LIBS=${MPG123_LIBS:-"-lmpg123"}
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $MPG123_CFLAGS"
+for ac_header in mpg123.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "mpg123.h" "ac_cv_header_mpg123_h" "$ac_includes_default"
+if test "x$ac_cv_header_mpg123_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_MPG123_H 1
+_ACEOF
+
+fi
+
+done
+
+        if test "$ac_cv_header_mpg123_h" = "yes"
+        then
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for mpg123_feed in -lmpg123" >&5
 $as_echo_n "checking for mpg123_feed in -lmpg123... " >&6; }
 if ${ac_cv_lib_mpg123_mpg123_feed+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lmpg123  $LIBS"
+LIBS="-lmpg123 $MPG123_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -12195,9 +12229,18 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_mpg123_mpg123_feed" >&5
 $as_echo "$ac_cv_lib_mpg123_mpg123_feed" >&6; }
 if test "x$ac_cv_lib_mpg123_mpg123_feed" = xyes; then :
-  LIBMPG123="-lmpg123"
-
+  :
+else
+  MPG123_LIBS=""
 fi
+
+        else
+            MPG123_CFLAGS=""
+            MPG123_LIBS=""
+        fi
+CPPFLAGS=$ac_save_CPPFLAGS
+test -z "$MPG123_CFLAGS" || MPG123_CFLAGS=`echo " $MPG123_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
+test -z "$MPG123_LIBS" || MPG123_LIBS=`echo " $MPG123_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "x$ac_cv_lib_mpg123_mpg123_feed" != xyes -a x"$ac_cv_header_CoreAudio_CoreAudio_h" != xyes; then :
