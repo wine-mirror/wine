@@ -42,7 +42,7 @@ static CRITICAL_SECTION win_data_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 static CFMutableDictionaryRef win_datas;
 
-DWORD activate_on_focus_time;
+static DWORD activate_on_focus_time;
 
 
 void CDECL macdrv_SetFocus(HWND hwnd);
