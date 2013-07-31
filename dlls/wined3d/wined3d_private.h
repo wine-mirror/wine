@@ -2790,6 +2790,7 @@ void wined3d_cs_emit_buffer_preload(struct wined3d_cs *cs, struct wined3d_buffer
 void wined3d_cs_emit_view_destroy(struct wined3d_cs *cs, struct wined3d_rendertarget_view *view) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_vertex_declaration_destroy(struct wined3d_cs *cs,
         struct wined3d_vertex_declaration *declaration) DECLSPEC_HIDDEN;
+void wined3d_cs_emit_shader_cleanup(struct wined3d_cs *cs, struct wined3d_shader *shader) DECLSPEC_HIDDEN;
 
 /* Direct3D terminology with little modifications. We do not have an issued state
  * because only the driver knows about it, but we have a created state because d3d
@@ -3174,6 +3175,7 @@ unsigned int shader_find_free_input_register(const struct wined3d_shader_reg_map
 void shader_generate_main(const struct wined3d_shader *shader, struct wined3d_string_buffer *buffer,
         const struct wined3d_shader_reg_maps *reg_maps, const DWORD *byte_code, void *backend_ctx) DECLSPEC_HIDDEN;
 BOOL shader_match_semantic(const char *semantic_name, enum wined3d_decl_usage usage) DECLSPEC_HIDDEN;
+void shader_cleanup(struct wined3d_shader *shader) DECLSPEC_HIDDEN;
 
 static inline BOOL shader_is_scalar(const struct wined3d_shader_register *reg)
 {

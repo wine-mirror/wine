@@ -81,6 +81,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_EVICT_RESOURCE,
     WINED3D_CS_OP_VIEW_DESTROY,
     WINED3D_CS_OP_VDECL_DESTROY,
+    WINED3D_CS_OP_SHADER_CLEANUP,
     WINED3D_CS_OP_STOP,
 };
 
@@ -471,6 +472,12 @@ struct wined3d_cs_vertex_declaration_destroy
 {
     enum wined3d_cs_op opcode;
     struct wined3d_vertex_declaration *declaration;
+};
+
+struct wined3d_cs_shader_cleanup
+{
+    enum wined3d_cs_op opcode;
+    struct wined3d_shader *shader;
 };
 
 static void wined3d_cs_mt_submit(struct wined3d_cs *cs, size_t size)
@@ -2393,6 +2400,27 @@ void wined3d_cs_emit_vertex_declaration_destroy(struct wined3d_cs *cs,
     cs->ops->submit(cs, sizeof(*op));
 }
 
+static UINT wined3d_cs_exec_shader_cleanup(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_shader_cleanup *op = data;
+
+    shader_cleanup(op->shader);
+    HeapFree(GetProcessHeap(), 0, op->shader);
+
+    return sizeof(*op);
+}
+
+void wined3d_cs_emit_shader_cleanup(struct wined3d_cs *cs, struct wined3d_shader *shader)
+{
+    struct wined3d_cs_shader_cleanup *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_SHADER_CLEANUP;
+    op->shader = shader;
+
+    cs->ops->submit(cs, sizeof(*op));
+}
+
 static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
 {
     /* WINED3D_CS_OP_NOP                        */ wined3d_cs_exec_nop,
@@ -2452,6 +2480,7 @@ static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_EVICT_RESOURCE             */ wined3d_cs_exec_evict_resource,
     /* WINED3D_CS_OP_VIEW_DESTROY               */ wined3d_cs_exec_view_destroy,
     /* WINED3D_CS_OP_VDECL_DESTROY              */ wined3d_cs_exec_vertex_declaration_destroy,
+    /* WINED3D_CS_OP_SHADER_CLEANUP             */ wined3d_cs_exec_shader_cleanup,
 };
 
 static inline void *_wined3d_cs_mt_require_space(struct wined3d_cs *cs, size_t size, BOOL prio)
