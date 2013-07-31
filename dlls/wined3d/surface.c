@@ -1694,15 +1694,16 @@ ULONG CDECL wined3d_surface_decref(struct wined3d_surface *surface)
 
 void CDECL wined3d_surface_preload(struct wined3d_surface *surface)
 {
+    const struct wined3d_device *device = surface->resource.device;
     TRACE("surface %p.\n", surface);
 
-    if (!surface->resource.device->d3d_initialized)
+    if (!device->d3d_initialized)
     {
         ERR("D3D not initialized.\n");
         return;
     }
 
-    wined3d_texture_preload(surface->container);
+    wined3d_cs_emit_surface_preload(device->cs, surface);
 }
 
 void * CDECL wined3d_surface_get_parent(const struct wined3d_surface *surface)
