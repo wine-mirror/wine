@@ -406,18 +406,36 @@ HRESULT CALLBACK ISessionProperties_GetProperties_Proxy(ISessionProperties* This
                                                         const DBPROPIDSET rgPropertyIDSets[], ULONG *pcPropertySets,
                                                         DBPROPSET **prgPropertySets)
 {
-    FIXME("(%p, %d, %p, %p, %p): stub\n", This, cPropertyIDSets, rgPropertyIDSets,
+    IErrorInfo *error;
+    HRESULT hr;
+
+    TRACE("(%p, %d, %p, %p, %p)\n", This, cPropertyIDSets, rgPropertyIDSets,
           pcPropertySets, prgPropertySets);
-    return E_NOTIMPL;
+
+    hr = ISessionProperties_RemoteGetProperties_Proxy(This, cPropertyIDSets, rgPropertyIDSets, pcPropertySets,
+        prgPropertySets, &error);
+    if(error)
+    {
+        SetErrorInfo(0, error);
+        IErrorInfo_Release(error);
+    }
+
+    return hr;
 }
 
 HRESULT __RPC_STUB ISessionProperties_GetProperties_Stub(ISessionProperties* This, ULONG cPropertyIDSets,
                                                          const DBPROPIDSET *rgPropertyIDSets, ULONG *pcPropertySets,
                                                          DBPROPSET **prgPropertySets, IErrorInfo **ppErrorInfoRem)
 {
-    FIXME("(%p, %d, %p, %p, %p, %p): stub\n", This, cPropertyIDSets, rgPropertyIDSets,
+    HRESULT hr;
+
+    TRACE("(%p, %d, %p, %p, %p, %p)\n", This, cPropertyIDSets, rgPropertyIDSets,
           pcPropertySets, prgPropertySets, ppErrorInfoRem);
-    return E_NOTIMPL;
+
+    hr = ISessionProperties_GetProperties(This, cPropertyIDSets, rgPropertyIDSets, pcPropertySets, prgPropertySets);
+    if (FAILED(hr)) GetErrorInfo(0, ppErrorInfoRem);
+
+    return hr;
 }
 
 HRESULT CALLBACK ISessionProperties_SetProperties_Proxy(ISessionProperties* This, ULONG cPropertySets, DBPROPSET rgPropertySets[])
@@ -781,39 +799,90 @@ HRESULT __RPC_STUB IRowsetInfo_GetProperties_Stub(IRowsetInfo* This, ULONG cProp
 
 HRESULT CALLBACK IRowsetInfo_GetReferencedRowset_Proxy(IRowsetInfo* This, DBORDINAL iOrdinal, REFIID riid, IUnknown **ppReferencedRowset)
 {
-    FIXME("(%p)->(%ld, %s, %p): stub\n", This, iOrdinal, debugstr_guid(riid), ppReferencedRowset);
-    return E_NOTIMPL;
+    IErrorInfo *error;
+    HRESULT hr;
+
+    TRACE("(%p)->(%ld, %s, %p)\n", This, iOrdinal, debugstr_guid(riid), ppReferencedRowset);
+
+    hr = IRowsetInfo_RemoteGetReferencedRowset_Proxy(This, iOrdinal, riid, ppReferencedRowset, &error);
+    if(error)
+    {
+        SetErrorInfo(0, error);
+        IErrorInfo_Release(error);
+    }
+
+    return hr;
 }
 
 HRESULT __RPC_STUB IRowsetInfo_GetReferencedRowset_Stub(IRowsetInfo* This, DBORDINAL iOrdinal, REFIID riid, IUnknown **ppReferencedRowset,
                                                         IErrorInfo **ppErrorInfoRem)
 {
-    FIXME("(%p)->(%ld, %s, %p, %p): stub\n", This, iOrdinal, debugstr_guid(riid), ppReferencedRowset, ppErrorInfoRem);
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("(%p)->(%ld, %s, %p, %p)\n", This, iOrdinal, debugstr_guid(riid), ppReferencedRowset, ppErrorInfoRem);
+
+    hr = IRowsetInfo_GetReferencedRowset(This, iOrdinal, riid, ppReferencedRowset);
+    if (FAILED(hr)) GetErrorInfo(0, ppErrorInfoRem);
+
+    return hr;
 }
 
 HRESULT CALLBACK IRowsetInfo_GetSpecification_Proxy(IRowsetInfo* This, REFIID riid, IUnknown **ppSpecification)
 {
-    FIXME("(%p)->(%s, %p): stub\n", This, debugstr_guid(riid), ppSpecification);
-    return E_NOTIMPL;
+    IErrorInfo *error;
+    HRESULT hr;
+
+    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppSpecification);
+
+    hr = IRowsetInfo_RemoteGetSpecification_Proxy(This, riid, ppSpecification, &error);
+    if(error)
+    {
+        SetErrorInfo(0, error);
+        IErrorInfo_Release(error);
+    }
+
+    return hr;
 }
 
 HRESULT __RPC_STUB IRowsetInfo_GetSpecification_Stub(IRowsetInfo* This, REFIID riid, IUnknown **ppSpecification, IErrorInfo **ppErrorInfoRem)
 {
-    FIXME("(%p)->(%s, %p, %p): stub\n", This, debugstr_guid(riid), ppSpecification, ppErrorInfoRem);
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("(%p)->(%s, %p, %p)\n", This, debugstr_guid(riid), ppSpecification, ppErrorInfoRem);
+
+    hr = IRowsetInfo_GetSpecification(This, riid, ppSpecification);
+    if (FAILED(hr)) GetErrorInfo(0, ppErrorInfoRem);
+
+    return hr;
 }
 
 HRESULT CALLBACK ICommand_Cancel_Proxy(ICommand* This)
 {
-    FIXME("(%p): stub\n", This);
-    return E_NOTIMPL;
+    IErrorInfo *error;
+    HRESULT hr;
+
+    TRACE("(%p)\n", This);
+
+    hr = ICommand_RemoteCancel_Proxy(This, &error);
+    if(error)
+    {
+        SetErrorInfo(0, error);
+        IErrorInfo_Release(error);
+    }
+
+    return hr;
 }
 
 HRESULT __RPC_STUB ICommand_Cancel_Stub(ICommand* This, IErrorInfo **ppErrorInfoRem)
 {
-    FIXME("(%p)->(%p): stub\n", This, ppErrorInfoRem);
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p)\n", This, ppErrorInfoRem);
+
+    hr = ICommand_Cancel(This);
+    if (FAILED(hr)) GetErrorInfo(0, ppErrorInfoRem);
+
+    return hr;
 }
 
 HRESULT CALLBACK ICommand_Execute_Proxy(ICommand* This, IUnknown *pUnkOuter, REFIID riid,
@@ -889,27 +958,61 @@ HRESULT __RPC_STUB ICommand_Execute_Stub(ICommand* This, IUnknown *pUnkOuter, RE
 
 HRESULT CALLBACK ICommand_GetDBSession_Proxy(ICommand* This, REFIID riid, IUnknown **ppSession)
 {
-    FIXME("(%p)->(%s, %p): stub\n", This, debugstr_guid(riid), ppSession);
-    return E_NOTIMPL;
+    IErrorInfo *error;
+    HRESULT hr;
+
+    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppSession);
+
+    hr = ICommand_RemoteGetDBSession_Proxy(This, riid, ppSession, &error);
+    if(error)
+    {
+        SetErrorInfo(0, error);
+        IErrorInfo_Release(error);
+    }
+
+    return hr;
 }
 
 HRESULT __RPC_STUB ICommand_GetDBSession_Stub(ICommand* This, REFIID riid, IUnknown **ppSession, IErrorInfo **ppErrorInfoRem)
 {
-    FIXME("(%p)->(%s, %p, %p): stub\n", This, debugstr_guid(riid), ppSession, ppErrorInfoRem);
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("(%p)->(%s, %p, %p)\n", This, debugstr_guid(riid), ppSession, ppErrorInfoRem);
+
+    hr = ICommand_GetDBSession(This, riid, ppSession);
+    if (FAILED(hr)) GetErrorInfo(0, ppErrorInfoRem);
+
+    return hr;
 }
 
 HRESULT CALLBACK ICommandText_GetCommandText_Proxy(ICommandText* This, GUID *pguidDialect, LPOLESTR *ppwszCommand)
 {
-    FIXME("(%p)->(%p, %p): stub\n", This, pguidDialect, ppwszCommand);
-    return E_NOTIMPL;
+    IErrorInfo *error;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p, %p)\n", This, pguidDialect, ppwszCommand);
+
+    hr = ICommandText_RemoteGetCommandText_Proxy(This, pguidDialect, ppwszCommand, &error);
+    if(error)
+    {
+        SetErrorInfo(0, error);
+        IErrorInfo_Release(error);
+    }
+
+    return hr;
 }
 
 HRESULT __RPC_STUB ICommandText_GetCommandText_Stub(ICommandText* This, GUID *pguidDialect,
                                                     LPOLESTR *ppwszCommand, IErrorInfo **ppErrorInfoRem)
 {
-    FIXME("(%p)->(%p, %p, %p): stub\n", This, pguidDialect, ppwszCommand, ppErrorInfoRem);
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p, %p, %p)\n", This, pguidDialect, ppwszCommand, ppErrorInfoRem);
+
+    hr = ICommandText_GetCommandText(This, pguidDialect, ppwszCommand);
+    if (FAILED(hr)) GetErrorInfo(0, ppErrorInfoRem);
+
+    return hr;
 }
 
 HRESULT CALLBACK ICommandText_SetCommandText_Proxy(ICommandText* This, REFGUID rguidDialect, LPCOLESTR pwszCommand)
@@ -945,14 +1048,14 @@ HRESULT __RPC_STUB ICommandText_SetCommandText_Stub(ICommandText* This, REFGUID 
 
 HRESULT CALLBACK IDBAsynchNotify_OnLowResource_Proxy(IDBAsynchNotify* This, DB_DWRESERVE dwReserved)
 {
-    FIXME("(%p)->(%08lx): stub\n", This, dwReserved);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%08lx)\n", This, dwReserved);
+    return IDBAsynchNotify_RemoteOnLowResource_Proxy(This, dwReserved);
 }
 
 HRESULT __RPC_STUB IDBAsynchNotify_OnLowResource_Stub(IDBAsynchNotify* This, DB_DWRESERVE dwReserved)
 {
-    FIXME("(%p)->(%08lx): stub\n", This, dwReserved);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%08lx)\n", This, dwReserved);
+    return IDBAsynchNotify_OnLowResource(This, dwReserved);
 }
 
 HRESULT CALLBACK IDBAsynchNotify_OnProgress_Proxy(IDBAsynchNotify* This, HCHAPTER hChapter, DBASYNCHOP eOperation,
@@ -992,33 +1095,68 @@ HRESULT __RPC_STUB IDBAsynchNotify_OnStop_Stub(IDBAsynchNotify* This, HCHAPTER h
 
 HRESULT CALLBACK IDBAsynchStatus_Abort_Proxy(IDBAsynchStatus* This, HCHAPTER hChapter, DBASYNCHOP eOperation)
 {
-    FIXME("(%p)->(%lx, %d): stub\n", This, hChapter, eOperation);
-    return E_NOTIMPL;
+    IErrorInfo *error;
+    HRESULT hr;
+
+    TRACE("(%p)->(%lx, %d)\n", This, hChapter, eOperation);
+
+    hr = IDBAsynchStatus_RemoteAbort_Proxy(This, hChapter, eOperation, &error);
+    if(error)
+    {
+        SetErrorInfo(0, error);
+        IErrorInfo_Release(error);
+    }
+    return hr;
 }
 
 HRESULT __RPC_STUB IDBAsynchStatus_Abort_Stub(IDBAsynchStatus* This, HCHAPTER hChapter, DBASYNCHOP eOperation,
                                               IErrorInfo **ppErrorInfoRem)
 {
-    FIXME("(%p)->(%lx, %d, %p): stub\n", This, hChapter, eOperation, ppErrorInfoRem);
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("(%p)->(%lx, %d, %p)\n", This, hChapter, eOperation, ppErrorInfoRem);
+
+    *ppErrorInfoRem = NULL;
+    hr = IDBAsynchStatus_Abort(This, hChapter, eOperation);
+    if(FAILED(hr)) GetErrorInfo(0, ppErrorInfoRem);
+
+    return hr;
 }
 
 HRESULT CALLBACK IDBAsynchStatus_GetStatus_Proxy(IDBAsynchStatus* This, HCHAPTER hChapter, DBASYNCHOP eOperation,
                                                  DBCOUNTITEM *pulProgress, DBCOUNTITEM *pulProgressMax, DBASYNCHPHASE *peAsynchPhase,
                                                  LPOLESTR *ppwszStatusText)
 {
-    FIXME("(%p)->(%lx, %d, %p, %p, %p, %p): stub\n", This, hChapter, eOperation, pulProgress, pulProgressMax,
+    IErrorInfo *error;
+    HRESULT hr;
+
+    TRACE("(%p)->(%lx, %d, %p, %p, %p, %p)\n", This, hChapter, eOperation, pulProgress, pulProgressMax,
           peAsynchPhase, ppwszStatusText);
-    return E_NOTIMPL;
+
+    hr = IDBAsynchStatus_RemoteGetStatus_Proxy(This, hChapter, eOperation, pulProgress, pulProgressMax, peAsynchPhase,
+        ppwszStatusText, &error);
+    if(error)
+    {
+        SetErrorInfo(0, error);
+        IErrorInfo_Release(error);
+    }
+    return hr;
 }
 
 HRESULT __RPC_STUB IDBAsynchStatus_GetStatus_Stub(IDBAsynchStatus* This, HCHAPTER hChapter, DBASYNCHOP eOperation,
                                                   DBCOUNTITEM *pulProgress, DBCOUNTITEM *pulProgressMax, DBASYNCHPHASE *peAsynchPhase,
                                                   LPOLESTR *ppwszStatusText, IErrorInfo **ppErrorInfoRem)
 {
-    FIXME("(%p)->(%lx, %d, %p, %p, %p, %p, %p): stub\n", This, hChapter, eOperation, pulProgress, pulProgressMax,
+    HRESULT hr;
+
+    TRACE("(%p)->(%lx, %d, %p, %p, %p, %p, %p)\n", This, hChapter, eOperation, pulProgress, pulProgressMax,
           peAsynchPhase, ppwszStatusText, ppErrorInfoRem);
-    return E_NOTIMPL;
+
+    *ppErrorInfoRem = NULL;
+    hr = IDBAsynchStatus_GetStatus(This, hChapter, eOperation, pulProgress, pulProgressMax, peAsynchPhase, ppwszStatusText);
+    if(FAILED(hr)) GetErrorInfo(0, ppErrorInfoRem);
+
+    return hr;
 }
 
 HRESULT CALLBACK IRowsetNotify_OnRowChange_Proxy(IRowsetNotify* This, IRowset *rowset, DBCOUNTITEM rows, HROW *hrows, DBREASON reason,
