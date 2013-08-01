@@ -20,3 +20,4 @@
 HRESULT create_oledb_convert(IUnknown *outer, void **obj) DECLSPEC_HIDDEN;
 HRESULT create_data_init(IUnknown *outer, void **obj) DECLSPEC_HIDDEN;
 HRESULT create_error_info(IUnknown *outer, void **obj) DECLSPEC_HIDDEN;
+HRESULT create_oledb_rowpos(IUnknown *outer, void **obj) DECLSPEC_HIDDEN;

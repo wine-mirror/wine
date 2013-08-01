@@ -28,6 +28,7 @@
 #include "msdadc.h"
 #include "msdasc.h"
 #include "shlobj.h"
+#include "msdaguid.h"
 #include "initguid.h"
 
 #include "wine/test.h"
@@ -185,6 +186,17 @@ static void test_initializationstring(void)
     }
 }
 
+static void test_rowposition(void)
+{
+    IRowPosition *rowpos;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_OLEDB_ROWPOSITIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IRowPosition, (void**)&rowpos);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    IRowPosition_Release(rowpos);
+}
+
 START_TEST(database)
 {
     OleInitialize(NULL);
@@ -192,6 +204,9 @@ START_TEST(database)
     test_database();
     test_errorinfo();
     test_initializationstring();
+
+    /* row position */
+    test_rowposition();
 
     OleUninitialize();
 }

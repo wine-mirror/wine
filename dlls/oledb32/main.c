@@ -129,6 +129,7 @@ static const IClassFactoryVtbl CF_Vtbl =
 static cf oledb_convert_cf = { { &CF_Vtbl }, create_oledb_convert };
 static cf oledb_datainit_cf = { { &CF_Vtbl }, create_data_init };
 static cf oledb_errorinfo_cf = { { &CF_Vtbl }, create_error_info };
+static cf oledb_rowpos_cf = { { &CF_Vtbl }, create_oledb_rowpos };
 
 /******************************************************************
  * DllGetClassObject
@@ -150,6 +151,11 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **obj)
     else if ( IsEqualCLSID (rclsid, &CSLID_MSDAER) )
     {
         *obj = &oledb_errorinfo_cf;
+        return S_OK;
+    }
+    else if ( IsEqualCLSID (rclsid, &CLSID_OLEDB_ROWPOSITIONLIBRARY) )
+    {
+        *obj = &oledb_rowpos_cf;
         return S_OK;
     }
 

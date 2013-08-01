@@ -41,3 +41,15 @@ coclass OLEDB_CONVERSIONLIBRARY
 coclass OLEDB_MSDAER
 {
 }
+
+[
+    helpstring("OLE DB Row Position Library"),
+    threading(both),
+    progid("RowPosition.RowPosition.1"),
+    vi_progid("RowPosition.RowPosition"),
+    uuid(2048eee6-7fa2-11d0-9e6a-00a0c9138c29)
+]
+coclass OLEDB_ROWPOSITIONLIBRARY
+{
+    interface IRowPosition;
+}

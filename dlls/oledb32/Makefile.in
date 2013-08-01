@@ -6,7 +6,8 @@ C_SRCS = \
 	convert.c \
 	datainit.c \
 	errorinfo.c \
-	main.c
+	main.c \
+	rowpos.c
 
 IDL_I_SRCS = convert.idl
 
