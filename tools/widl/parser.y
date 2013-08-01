@@ -38,33 +38,6 @@
 #include "expr.h"
 #include "typetree.h"
 
-#if defined(YYBYACC)
-	/* Berkeley yacc (byacc) doesn't seem to know about these */
-	/* Some *BSD supplied versions do define these though */
-# ifndef YYEMPTY
-#  define YYEMPTY	(-1)	/* Empty lookahead value of yychar */
-# endif
-# ifndef YYLEX
-#  define YYLEX		yylex()
-# endif
-
-#elif defined(YYBISON)
-	/* Bison was used for original development */
-	/* #define YYEMPTY -2 */
-	/* #define YYLEX   yylex() */
-
-#else
-	/* No yacc we know yet */
-# if !defined(YYEMPTY) || !defined(YYLEX)
-#  error Yacc version/type unknown. This version needs to be verified for settings of YYEMPTY and YYLEX.
-# elif defined(__GNUC__)	/* gcc defines the #warning directive */
-#  warning Yacc version/type unknown. It defines YYEMPTY and YYLEX, but is not tested
-  /* #else we just take a chance that it works... */
-# endif
-#endif
-
-#define YYERROR_VERBOSE
-
 static unsigned char pointer_default = RPC_FC_UP;
 
 typedef struct list typelist_t;
@@ -322,6 +295,8 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %left '*' '/' '%'
 %right '!' '~' CAST PPTR POS NEG ADDRESSOF tSIZEOF
 %left '.' MEMBERPTR '[' ']'
+
+%error-verbose
 
 %%
 
