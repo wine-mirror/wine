@@ -1049,7 +1049,7 @@
 @ stub _swprintf_c
 @ stub _swprintf_p
 @ varargs _swprintf_p_l(ptr long wstr ptr) msvcrt._swprintf_p_l
-@ stub _swprintf_s_l
+@ varargs _swprintf_s_l(ptr long wstr ptr) msvcrt._swprintf_s_l
 @ varargs _swscanf_l(wstr wstr ptr) msvcrt._swscanf_l
 @ varargs _swscanf_s_l(wstr wstr ptr) msvcrt._swscanf_s_l
 @ extern _sys_errlist msvcrt._sys_errlist
