@@ -478,9 +478,7 @@ static void test_GetFile(void)
     hr = IFileSystem3_GetFile(fs3, NULL, &file);
     ok(hr == E_INVALIDARG, "GetFile returned %x, expected E_INVALIDARG\n", hr);
 
-    hf = CreateFileW(path, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    if(hf != INVALID_HANDLE_VALUE) {
-        CloseHandle(hf);
+    if(GetFileAttributesW(path) != INVALID_FILE_ATTRIBUTES) {
         skip("File already exists, skipping GetFile tests\n");
         SysFreeString(path);
         return;
@@ -503,7 +501,9 @@ static void test_GetFile(void)
     ok(hr == S_OK, "GetFile returned %x, expected S_OK\n", hr);
 
     hr = IFile_get_Attributes(file, &fa);
-    gfa = GetFileAttributesW(get_file) & ~FILE_ATTRIBUTE_NORMAL;
+    gfa = GetFileAttributesW(get_file) & (FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN |
+            FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_ARCHIVE |
+            FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_COMPRESSED);
     ok(hr == S_OK, "get_Attributes returned %x, expected S_OK\n", hr);
     ok(fa == gfa, "fa = %x, expected %x\n", fa, gfa);
 

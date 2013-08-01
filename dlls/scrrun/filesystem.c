@@ -791,7 +791,9 @@ static HRESULT WINAPI file_get_Attributes(IFile *iface, FileAttribute *pfa)
     if(fa == INVALID_FILE_ATTRIBUTES)
         return create_error(GetLastError());
 
-    *pfa = fa & ~FILE_ATTRIBUTE_NORMAL;
+    *pfa = fa & (FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN |
+            FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_ARCHIVE |
+            FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_COMPRESSED);
     return S_OK;
 }
 
