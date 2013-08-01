@@ -53,12 +53,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(winsock);
 
 /* names of the protocols */
-static const CHAR NameIpx[]   = "IPX";
-static const CHAR NameSpx[]   = "SPX";
-static const CHAR NameSpxII[] = "SPX II";
-static const CHAR NameTcp[]   = "TCP/IP";
-static const CHAR NameUdp[]   = "UDP/IP";
-
 static const WCHAR NameIpxW[]   = {'I', 'P', 'X', '\0'};
 static const WCHAR NameSpxW[]   = {'S', 'P', 'X', '\0'};
 static const WCHAR NameSpxIIW[] = {'S', 'P', 'X', ' ', 'I', 'I', '\0'};
@@ -194,100 +188,20 @@ static INT WINSOCK_EnterSingleProtocolW( INT protocol, WSAPROTOCOL_INFOW* info )
  */
 static INT WINSOCK_EnterSingleProtocolA( INT protocol, WSAPROTOCOL_INFOA* info )
 {
+    WSAPROTOCOL_INFOW infow;
+    INT ret;
     memset( info, 0, sizeof(WSAPROTOCOL_INFOA) );
-    info->iProtocol = protocol;
 
-    switch (protocol)
+    ret = WINSOCK_EnterSingleProtocolW( protocol, &infow );
+    if (ret != SOCKET_ERROR)
     {
-    case WS_IPPROTO_TCP:
-        info->dwServiceFlags1 = XP1_IFS_HANDLES | XP1_EXPEDITED_DATA |
-                                XP1_GRACEFUL_CLOSE | XP1_GUARANTEED_ORDER |
-                                XP1_GUARANTEED_DELIVERY;
-        info->ProviderId = ProviderIdIP;
-        info->dwCatalogEntryId = 0x3e9;
-        info->ProtocolChain.ChainLen = 1;
-        info->iVersion = 2;
-        info->iAddressFamily = WS_AF_INET;
-        info->iMaxSockAddr = 0x10;
-        info->iMinSockAddr = 0x10;
-        info->iSocketType = WS_SOCK_STREAM;
-        strcpy( info->szProtocol, NameTcp );
-        break;
-
-    case WS_IPPROTO_UDP:
-        info->dwServiceFlags1 = XP1_IFS_HANDLES | XP1_SUPPORT_BROADCAST |
-                                XP1_SUPPORT_MULTIPOINT | XP1_MESSAGE_ORIENTED |
-                                XP1_CONNECTIONLESS;
-        info->ProviderId = ProviderIdIP;
-        info->dwCatalogEntryId = 0x3ea;
-        info->ProtocolChain.ChainLen = 1;
-        info->iVersion = 2;
-        info->iAddressFamily = WS_AF_INET;
-        info->iMaxSockAddr = 0x10;
-        info->iMinSockAddr = 0x10;
-        info->iSocketType = WS_SOCK_DGRAM;
-        info->dwMessageSize = 0xffbb;
-        strcpy( info->szProtocol, NameUdp );
-        break;
-
-    case NSPROTO_IPX:
-        info->dwServiceFlags1 = XP1_IFS_HANDLES | XP1_SUPPORT_BROADCAST |
-                                XP1_SUPPORT_MULTIPOINT | XP1_MESSAGE_ORIENTED |
-                                XP1_CONNECTIONLESS;
-        info->ProviderId = ProviderIdIPX;
-        info->dwCatalogEntryId = 0x406;
-        info->ProtocolChain.ChainLen = 1;
-        info->iVersion = 2;
-        info->iAddressFamily = WS_AF_IPX;
-        info->iMaxSockAddr = 0x10;
-        info->iMinSockAddr = 0x0e;
-        info->iSocketType = WS_SOCK_DGRAM;
-        info->iProtocolMaxOffset = 0xff;
-        info->dwMessageSize = 0x240;
-        strcpy( info->szProtocol, NameIpx );
-        break;
-
-    case NSPROTO_SPX:
-        info->dwServiceFlags1 = XP1_IFS_HANDLES | XP1_PSEUDO_STREAM |
-                                XP1_MESSAGE_ORIENTED | XP1_GUARANTEED_ORDER |
-                                XP1_GUARANTEED_DELIVERY;
-        info->ProviderId = ProviderIdSPX;
-        info->dwCatalogEntryId = 0x407;
-        info->ProtocolChain.ChainLen = 1;
-        info->iVersion = 2;
-        info->iAddressFamily = WS_AF_IPX;
-        info->iMaxSockAddr = 0x10;
-        info->iMinSockAddr = 0x0e;
-        info->iSocketType = 5;
-        info->dwMessageSize = 0xffffffff;
-        strcpy( info->szProtocol, NameSpx );
-        break;
-
-    case NSPROTO_SPXII:
-        info->dwServiceFlags1 = XP1_IFS_HANDLES | XP1_GRACEFUL_CLOSE |
-                                XP1_PSEUDO_STREAM | XP1_MESSAGE_ORIENTED |
-                                XP1_GUARANTEED_ORDER | XP1_GUARANTEED_DELIVERY;
-        info->ProviderId = ProviderIdSPX;
-        info->dwCatalogEntryId = 0x409;
-        info->ProtocolChain.ChainLen = 1;
-        info->iVersion = 2;
-        info->iAddressFamily = WS_AF_IPX;
-        info->iMaxSockAddr = 0x10;
-        info->iMinSockAddr = 0x0e;
-        info->iSocketType = 5;
-        info->dwMessageSize = 0xffffffff;
-        strcpy( info->szProtocol, NameSpxII );
-        break;
-
-    default:
-        if ((protocol == ISOPROTO_TP4) || (protocol == NSPROTO_SPX))
-            FIXME("Protocol <%s> not implemented\n",
-                  (protocol == ISOPROTO_TP4) ? "ISOPROTO_TP4" : "NSPROTO_SPX");
-        else
-            FIXME("unknown Protocol <0x%08x>\n", protocol);
-        return SOCKET_ERROR;
+        /* convert the structure from W to A */
+        memcpy( info, &infow, FIELD_OFFSET( WSAPROTOCOL_INFOA, szProtocol ) );
+        WideCharToMultiByte( CP_ACP, 0, infow.szProtocol, -1,
+                             info->szProtocol, WSAPROTOCOL_LEN+1, NULL, NULL );
     }
-    return 1;
+
+    return ret;
 }
 
 /*****************************************************************************
