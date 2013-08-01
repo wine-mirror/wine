@@ -2665,7 +2665,8 @@ BOOL WINAPI ImmUnlockIMCC(HIMCC imcc)
     IMCCInternal *internal;
     internal = imcc;
 
-    internal->dwLock --;
+    if (internal->dwLock)
+        internal->dwLock --;
     return (internal->dwLock!=0);
 }
 

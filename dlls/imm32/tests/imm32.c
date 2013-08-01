@@ -728,9 +728,9 @@ static void test_ImmGetIMCCLockCount(void)
     count = ImmGetIMCCLockCount(imcc);
     ok(count == 0, "expect 0, returned %d\n", count);
     ret = ImmUnlockIMCC(imcc);
-    todo_wine ok(ret == FALSE, "expect FALSE, ret %d\n", ret);
+    ok(ret == FALSE, "expect FALSE, ret %d\n", ret);
     count = ImmGetIMCCLockCount(imcc);
-    todo_wine ok(count == 0, "expect 0, returned %d\n", count);
+    ok(count == 0, "expect 0, returned %d\n", count);
     ImmDestroyIMCC(imcc);
 }
 
