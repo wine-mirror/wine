@@ -4391,7 +4391,7 @@ static DWORD in_plane(UINT plane, D3DVECTOR normal, D3DVALUE origin_plane, D3DVE
 {
     float distance, norm;
 
-    norm = sqrt( normal.u1.x * normal.u1.x + normal.u2.y * normal.u2.y + normal.u3.z * normal.u3.z );
+    norm = sqrtf(normal.u1.x * normal.u1.x + normal.u2.y * normal.u2.y + normal.u3.z * normal.u3.z);
     distance = ( origin_plane + normal.u1.x * center.u1.x + normal.u2.y * center.u2.y + normal.u3.z * center.u3.z ) / norm;
 
     if ( fabs( distance ) < radius ) return D3DSTATUS_CLIPUNIONLEFT << plane;
