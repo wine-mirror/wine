@@ -23,6 +23,7 @@
 #include "ole2.h"
 
 #include "oledb.h"
+#include "oledberr.h"
 
 #include "oledb_private.h"
 #include "wine/debug.h"
@@ -33,6 +34,8 @@ typedef struct
 {
     IRowPosition IRowPosition_iface;
     LONG ref;
+
+    IRowset *rowset;
 } rowpos;
 
 static inline rowpos *impl_from_IRowPosition(IRowPosition *iface)
@@ -79,7 +82,10 @@ static ULONG WINAPI rowpos_Release(IRowPosition* iface)
     TRACE("(%p)->(%d)\n", This, ref);
 
     if (ref == 0)
+    {
+        if (This->rowset) IRowset_Release(This->rowset);
         HeapFree(GetProcessHeap(), 0, This);
+    }
 
     return ref;
 }
@@ -109,8 +115,12 @@ static HRESULT WINAPI rowpos_GetRowset(IRowPosition *iface, REFIID riid, IUnknow
 static HRESULT WINAPI rowpos_Initialize(IRowPosition *iface, IUnknown *rowset)
 {
     rowpos *This = impl_from_IRowPosition(iface);
-    FIXME("(%p)->(%p): stub\n", This, rowset);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, rowset);
+
+    if (This->rowset) return DB_E_ALREADYINITIALIZED;
+
+    return IUnknown_QueryInterface(rowset, &IID_IRowset, (void**)&This->rowset);
 }
 
 static HRESULT WINAPI rowpos_SetRowPosition(IRowPosition *iface, HCHAPTER chapter,
@@ -148,6 +158,7 @@ HRESULT create_oledb_rowpos(IUnknown *outer, void **obj)
 
     This->IRowPosition_iface.lpVtbl = &rowpos_vtbl;
     This->ref = 1;
+    This->rowset = NULL;
 
     *obj = &This->IRowPosition_iface;
 

@@ -42,6 +42,7 @@
 #define DB_E_BADPROPERTYVALUE               0x80040e44
 #define DB_E_INVALID                        0x80040e45
 
+#define DB_E_ALREADYINITIALIZED             0x80040e52
 #define DB_E_DATAOVERFLOW                   0x80040e57
 
 #define DB_E_MISMATCHEDPROVIDER             0x80040e75
