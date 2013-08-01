@@ -142,31 +142,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 
-#if defined(YYBYACC)
-	/* Berkeley yacc (byacc) doesn't seem to know about these */
-	/* Some *BSD supplied versions do define these though */
-# ifndef YYEMPTY
-#  define YYEMPTY	(-1)	/* Empty lookahead value of yychar */
-# endif
-# ifndef YYLEX
-#  define YYLEX		yylex()
-# endif
-
-#elif defined(YYBISON)
-	/* Bison was used for original development */
-	/* #define YYEMPTY -2 */
-	/* #define YYLEX   yylex() */
-
-#else
-	/* No yacc we know yet */
-# if !defined(YYEMPTY) || !defined(YYLEX)
-#  error Yacc version/type unknown. This version needs to be verified for settings of YYEMPTY and YYLEX.
-# elif defined(__GNUC__)	/* gcc defines the #warning directive */
-#  warning Yacc version/type unknown. It defines YYEMPTY and YYLEX, but is not tested
-  /* #else we just take a chance that it works... */
-# endif
-#endif
-
 int want_nl = 0;	/* Signal flex that we need the next newline */
 int want_id = 0;	/* Signal flex that we need the next identifier */
 static stringtable_t *tagstt;	/* Stringtable tag.
@@ -2837,7 +2812,7 @@ static int rsrcid_to_token(int lookahead)
 
 	/* Get a token if we don't have one yet */
 	if(lookahead == YYEMPTY)
-		lookahead = YYLEX;
+		lookahead = yylex();
 
 	/* Only numbers are possibly interesting */
 	switch(lookahead)
