@@ -177,6 +177,7 @@ struct ID3DXEffectImpl
     struct d3dx_technique *active_technique;
     struct d3dx_pass *active_pass;
     BOOL started;
+    DWORD flags;
 
     ID3DXBaseEffect *base_effect;
 };
@@ -3457,10 +3458,13 @@ static HRESULT WINAPI ID3DXEffectImpl_Begin(ID3DXEffect *iface, UINT *passes, DW
     struct ID3DXEffectImpl *This = impl_from_ID3DXEffect(iface);
     struct d3dx_technique *technique = This->active_technique;
 
-    FIXME("iface %p, passes %p, flags %#x partial stub\n", This, passes, flags);
+    FIXME("iface %p, passes %p, flags %#x partial stub\n", iface, passes, flags);
 
     if (passes && technique)
     {
+        if (flags & ~(D3DXFX_DONOTSAVESTATE | D3DXFX_DONOTSAVESAMPLERSTATE | D3DXFX_DONOTSAVESHADERSTATE))
+            WARN("Invalid flags (%#x) specified.\n", flags);
+
         if (This->manager || flags & D3DXFX_DONOTSAVESTATE)
         {
             TRACE("State capturing disabled.\n");
@@ -3472,6 +3476,7 @@ static HRESULT WINAPI ID3DXEffectImpl_Begin(ID3DXEffect *iface, UINT *passes, DW
 
         *passes = technique->pass_count;
         This->started = TRUE;
+        This->flags = flags;
 
         return D3D_OK;
     }
@@ -3533,6 +3538,18 @@ static HRESULT WINAPI ID3DXEffectImpl_End(ID3DXEffect *iface)
     struct ID3DXEffectImpl *This = impl_from_ID3DXEffect(iface);
 
     FIXME("iface %p partial stub\n", iface);
+
+    if (!This->started)
+        return D3D_OK;
+
+    if (This->manager || This->flags & D3DXFX_DONOTSAVESTATE)
+    {
+        TRACE("State restoring disabled.\n");
+    }
+    else
+    {
+        FIXME("State restoring not supported, yet!\n");
+    }
 
     This->started = FALSE;
 
