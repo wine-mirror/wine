@@ -24,6 +24,7 @@
 #include "winuser.h"
 #include "wingdi.h"
 #include "imm.h"
+#include "ddk/imm.h"
 
 #define NUMELEMS(array) (sizeof((array))/sizeof((array)[0]))
 
@@ -687,6 +688,30 @@ static void test_ImmDefaultHwnd(void)
     DestroyWindow(hwnd);
 }
 
+static void test_ImmGetIMCLockCount(void)
+{
+    HIMC imc;
+    DWORD count, ret;
+    INPUTCONTEXT *ic;
+
+    imc = ImmCreateContext();
+    count = ImmGetIMCLockCount(imc);
+    ok(count == 0, "expect 0, returned %d\n", count);
+    ic = ImmLockIMC(imc);
+    ok(ic != NULL, "ImmLockIMC failed\n!");
+    count = ImmGetIMCLockCount(imc);
+    ok(count == 1, "expect 1, returned %d\n", count);
+    ret = ImmUnlockIMC(imc);
+    todo_wine ok(ret == TRUE, "expect TRUE, ret %d\n", ret);
+    count = ImmGetIMCLockCount(imc);
+    ok(count == 0, "expect 0, returned %d\n", count);
+    ret = ImmUnlockIMC(imc);
+    ok(ret == TRUE, "expect TRUE, ret %d\n", ret);
+    count = ImmGetIMCLockCount(imc);
+    todo_wine ok(count == 0, "expect 0, returned %d\n", count);
+    ImmDestroyContext(imc);
+}
+
 static void test_ImmMessages(void)
 {
     CANDIDATEFORM cf;
@@ -846,6 +871,7 @@ START_TEST(imm32) {
         test_ImmGetContext();
         test_ImmGetDescription();
         test_ImmDefaultHwnd();
+        test_ImmGetIMCLockCount();
         msg_spy_cleanup();
         /* Reinitialize the hooks to capture all windows */
         msg_spy_init(NULL);
