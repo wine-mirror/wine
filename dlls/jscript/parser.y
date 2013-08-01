@@ -25,10 +25,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
-#define YYLEX_PARAM ctx
-#define YYPARSE_PARAM ctx
-
-static int parser_error(const char*);
+static int parser_error(parser_ctx_t*,const char*);
 static void set_error(parser_ctx_t*,UINT);
 static BOOL explicit_error(parser_ctx_t*,void*,WCHAR);
 static BOOL allow_auto_semicolon(parser_ctx_t*);
@@ -139,7 +136,9 @@ static source_elements_t *source_elements_add_statement(source_elements_t*,state
 
 %}
 
-%pure_parser
+%lex-param { parser_ctx_t *ctx }
+%parse-param { parser_ctx_t *ctx }
+%pure-parser
 %start Program
 
 %union {
@@ -1386,7 +1385,7 @@ static expression_t *new_call_expression(parser_ctx_t *ctx, expression_t *expres
     return &ret->expr;
 }
 
-static int parser_error(const char *str)
+static int parser_error(parser_ctx_t *ctx, const char *str)
 {
     return 0;
 }
