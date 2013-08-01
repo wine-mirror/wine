@@ -176,6 +176,7 @@ struct ID3DXEffectImpl
     struct ID3DXEffectPool *pool;
     struct d3dx_technique *active_technique;
     struct d3dx_pass *active_pass;
+    BOOL started;
 
     ID3DXBaseEffect *base_effect;
 };
@@ -3470,6 +3471,7 @@ static HRESULT WINAPI ID3DXEffectImpl_Begin(ID3DXEffect *iface, UINT *passes, DW
         }
 
         *passes = technique->pass_count;
+        This->started = TRUE;
 
         return D3D_OK;
     }
@@ -3526,13 +3528,15 @@ static HRESULT WINAPI ID3DXEffectImpl_EndPass(ID3DXEffect *iface)
     return D3DERR_INVALIDCALL;
 }
 
-static HRESULT WINAPI ID3DXEffectImpl_End(ID3DXEffect* iface)
+static HRESULT WINAPI ID3DXEffectImpl_End(ID3DXEffect *iface)
 {
     struct ID3DXEffectImpl *This = impl_from_ID3DXEffect(iface);
 
-    FIXME("(%p)->(): stub\n", This);
+    FIXME("iface %p partial stub\n", iface);
 
-    return E_NOTIMPL;
+    This->started = FALSE;
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI ID3DXEffectImpl_GetDevice(ID3DXEffect *iface, struct IDirect3DDevice9 **device)
