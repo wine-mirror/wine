@@ -712,6 +712,28 @@ static void test_ImmGetIMCLockCount(void)
     ImmDestroyContext(imc);
 }
 
+static void test_ImmGetIMCCLockCount(void)
+{
+    HIMCC imcc;
+    DWORD count, ret;
+
+    imcc = ImmCreateIMCC(sizeof(CANDIDATEINFO));
+    count = ImmGetIMCCLockCount(imcc);
+    ok(count == 0, "expect 0, returned %d\n", count);
+    ImmLockIMCC(imcc);
+    count = ImmGetIMCCLockCount(imcc);
+    ok(count == 1, "expect 1, returned %d\n", count);
+    ret = ImmUnlockIMCC(imcc);
+    ok(ret == FALSE, "expect FALSE, ret %d\n", ret);
+    count = ImmGetIMCCLockCount(imcc);
+    ok(count == 0, "expect 0, returned %d\n", count);
+    ret = ImmUnlockIMCC(imcc);
+    todo_wine ok(ret == FALSE, "expect FALSE, ret %d\n", ret);
+    count = ImmGetIMCCLockCount(imcc);
+    todo_wine ok(count == 0, "expect 0, returned %d\n", count);
+    ImmDestroyIMCC(imcc);
+}
+
 static void test_ImmMessages(void)
 {
     CANDIDATEFORM cf;
@@ -872,6 +894,7 @@ START_TEST(imm32) {
         test_ImmGetDescription();
         test_ImmDefaultHwnd();
         test_ImmGetIMCLockCount();
+        test_ImmGetIMCCLockCount();
         msg_spy_cleanup();
         /* Reinitialize the hooks to capture all windows */
         msg_spy_init(NULL);
