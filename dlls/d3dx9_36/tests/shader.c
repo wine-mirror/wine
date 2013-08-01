@@ -5912,6 +5912,25 @@ static UINT registerset_compare(IDirect3DDevice9 *device, BOOL is_vs, D3DXREGIST
     return err;
 }
 
+static UINT registerset_compare_all(IDirect3DDevice9 *device, BOOL is_vs, D3DXREGISTER_SET regset,
+        UINT start, UINT in_count, const DWORD *expected)
+{
+    D3DXREGISTER_SET regsets[] = {D3DXRS_BOOL, D3DXRS_INT4, D3DXRS_FLOAT4};
+    UINT err = 0, i;
+
+    for (i = 0; i < sizeof(regsets) / sizeof(*regsets); i++)
+    {
+        if (regset == regsets[i])
+            err += registerset_compare(device, is_vs, regset, start, in_count, expected);
+        else
+            err += registerset_compare(device, is_vs, regsets[i], 0, 0, NULL);
+
+        err += registerset_compare(device, !is_vs, regsets[i], 0, 0, NULL);
+    }
+
+    return err;
+}
+
 static HRESULT registerset_apply(ID3DXConstantTable *ctable, IDirect3DDevice9 *device, D3DXHANDLE constant,
         UINT index, DWORD count, enum Type type)
 {
@@ -6095,7 +6114,7 @@ static void test_registerset(void)
             ok(hr == D3D_OK, "Set* \"%s\" index %u, count %u failed, got %x, expected %x\n", tablename, i,
                     test->in_count_min, hr, D3D_OK);
 
-            ret = registerset_compare(device, is_vs, registerset_data[k].regset,
+            ret = registerset_compare_all(device, is_vs, registerset_data[k].regset,
                     registerset_data[k].start, test->out_count, test->out);
             ok(ret == 0, "Get*ShaderConstant \"%s\" index %u, count %u failed\n", tablename, i, test->in_count_min);
 
@@ -6107,7 +6126,7 @@ static void test_registerset(void)
                 ok(hr == D3D_OK, "Set* \"%s\" index %u, count %u failed, got %x, expected %x\n", tablename, i,
                         test->in_count_max, hr, D3D_OK);
 
-                ret = registerset_compare(device, is_vs, registerset_data[k].regset,
+                ret = registerset_compare_all(device, is_vs, registerset_data[k].regset,
                         registerset_data[k].start, test->out_count, test->out);
                 ok(ret == 0, "Get*ShaderConstant \"%s\" index %u, count %u failed\n", tablename, i, test->in_count_max);
             }
