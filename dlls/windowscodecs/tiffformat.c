@@ -44,6 +44,16 @@ WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
 #ifdef SONAME_LIBTIFF
 
+/* Workaround for broken libtiff 4.x headers on some 64-bit hosts which
+ * define TIFF_UINT64_T/toff_t as 32-bit for 32-bit builds, while they
+ * are supposed to be always 64-bit.
+ * TIFF_UINT64_T doesn't exist in libtiff 3.x, it was introduced in 4.x.
+ */
+#ifdef TIFF_UINT64_T
+# undef toff_t
+# define toff_t UINT64
+#endif
+
 static CRITICAL_SECTION init_tiff_cs;
 static CRITICAL_SECTION_DEBUG init_tiff_cs_debug =
 {
@@ -209,8 +219,8 @@ static TIFF* tiff_open_stream(IStream *stream, const char *mode)
     IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
 
     return pTIFFClientOpen("<IStream object>", mode, stream, tiff_stream_read,
-        tiff_stream_write, tiff_stream_seek, tiff_stream_close,
-        tiff_stream_size, tiff_stream_map, tiff_stream_unmap);
+        tiff_stream_write, (void *)tiff_stream_seek, tiff_stream_close,
+        (void *)tiff_stream_size, (void *)tiff_stream_map, (void *)tiff_stream_unmap);
 }
 
 typedef struct {
