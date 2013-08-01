@@ -947,6 +947,22 @@ int CDECL MSVCRT_swprintf_s(MSVCRT_wchar_t *str, MSVCRT_size_t numberOfElements,
 }
 
 /*********************************************************************
+ *              _swprintf_s_l (MSVCRT.@)
+ */
+int CDECL MSVCRT__swprintf_s_l(MSVCRT_wchar_t *str, MSVCRT_size_t numberOfElements,
+        const MSVCRT_wchar_t *format, MSVCRT__locale_t locale, ... )
+{
+    __ms_va_list ap;
+    int r;
+
+    __ms_va_start(ap, locale);
+    r = MSVCRT_vsnwprintf_s_l(str, numberOfElements, INT_MAX, format, locale, ap);
+    __ms_va_end(ap);
+
+    return r;
+}
+
+/*********************************************************************
  *		_vswprintf (MSVCRT.@)
  */
 int CDECL MSVCRT_vswprintf( MSVCRT_wchar_t* str, const MSVCRT_wchar_t* format, __ms_va_list args )
