@@ -83,7 +83,7 @@ static HRESULT (WINAPI *pIEInstallScope)(DWORD*);
 static int strcmp_wa(const WCHAR *strw, const char *stra)
 {
     WCHAR buf[512];
-    MultiByteToWideChar(CP_ACP, 0, stra, -1, buf, sizeof(buf));
+    MultiByteToWideChar(CP_ACP, 0, stra, -1, buf, sizeof(buf)/sizeof(WCHAR));
     return lstrcmpW(strw, buf);
 }
 
