@@ -281,7 +281,7 @@ static void test_res_url(const char *url_suffix)
     HRESULT hres;
 
     memcpy(url, res_url_base, res_url_base_len*sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, url_suffix, -1, url+res_url_base_len, sizeof(url)-res_url_base_len);
+    MultiByteToWideChar(CP_ACP, 0, url_suffix, -1, url+res_url_base_len, sizeof(url)/sizeof(WCHAR)-res_url_base_len);
 
     hres = CoCreateInstance(&CLSID_ResProtocol, NULL, CLSCTX_INPROC_SERVER, &IID_IInternetProtocol, (void**)&protocol);
     ok(hres == S_OK, "Could not create ResProtocol instance: %08x\n", hres);
@@ -943,7 +943,7 @@ static void test_javascript_protocol(void)
 
 START_TEST(protocol)
 {
-    res_url_base_len = 6 + GetModuleFileNameW(NULL, res_url_base + 6 /* strlen("res://") */, sizeof(res_url_base)-6);
+    res_url_base_len = 6 + GetModuleFileNameW(NULL, res_url_base + 6 /* strlen("res://") */, sizeof(res_url_base)/sizeof(WCHAR)-6);
 
     OleInitialize(NULL);
 
