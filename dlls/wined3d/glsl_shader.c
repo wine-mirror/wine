@@ -4502,8 +4502,7 @@ static void shader_glsl_generate_fog_code(struct wined3d_shader_buffer *buffer, 
             return;
 
         case WINED3D_FFP_PS_FOG_LINEAR:
-            /* Fog = (gl_Fog.end - gl_FogFragCoord) / (gl_Fog.end - gl_Fog.start) */
-            shader_addline(buffer, "float Fog = (gl_Fog.end - gl_FogFragCoord) / (gl_Fog.end - gl_Fog.start);\n");
+            shader_addline(buffer, "float Fog = (gl_Fog.end - gl_FogFragCoord) * gl_Fog.scale;\n");
             break;
 
         case WINED3D_FFP_PS_FOG_EXP:
