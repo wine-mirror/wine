@@ -481,6 +481,7 @@ SRCDIR_INCLUDES = \
 	row.idl \
 	rowchg.idl \
 	rowpos.idl \
+	rowpsc.idl \
 	rpc.h \
 	rpcasync.h \
 	rpcdce.h \

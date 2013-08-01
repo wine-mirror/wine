@@ -1477,3 +1477,17 @@ HRESULT CALLBACK IRowPosition_SetRowPosition_Proxy(IRowPosition* This, HCHAPTER 
     FIXME("(%p)->(%lx %lx %d): stub\n", This, chapter, row, flags);
     return E_NOTIMPL;
 }
+
+HRESULT __RPC_STUB IRowPositionChange_OnRowPositionChange_Stub(IRowPositionChange* This, DBREASON reason, DBEVENTPHASE phase,
+    BOOL cant_deny, IErrorInfo **errorinfo)
+{
+    FIXME("(%p)->(0x%x 0x%x %d %p): stub\n", This, reason, phase, cant_deny, errorinfo);
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK IRowPositionChange_OnRowPositionChange_Proxy(IRowPositionChange* This, DBREASON reason, DBEVENTPHASE phase,
+    BOOL cant_deny)
+{
+    FIXME("(%p)->(0x%x 0x%x %d): stub\n", This, reason, phase, cant_deny);
+    return E_NOTIMPL;
+}
