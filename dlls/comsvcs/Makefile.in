@@ -1,0 +1,8 @@
+MODULE    = comsvcs.dll
+IMPORTLIB = comsvcs
+IMPORTS   = ole32
+
+C_SRCS = \
+	main.c
+
+@MAKE_DLL_RULES@
