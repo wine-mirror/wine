@@ -39,7 +39,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(cabarc);
 #define _O_RDONLY      0
 #define _O_WRONLY      1
 #define _O_RDWR        2
-#define _O_ACCMODE     (_O_RDONLY|_O_WRONLY|_O_RDWR)
 #define _O_APPEND      0x0008
 #define _O_RANDOM      0x0010
 #define _O_SEQUENTIAL  0x0020
@@ -51,6 +50,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(cabarc);
 #define _O_SHORT_LIVED 0x1000
 #define _O_TEXT        0x4000
 #define _O_BINARY      0x8000
+#endif
+
+#ifndef _O_ACCMODE
+#define _O_ACCMODE     (_O_RDONLY|_O_WRONLY|_O_RDWR)
 #endif
 
 #ifndef _SH_COMPAT
