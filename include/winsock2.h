@@ -213,6 +213,12 @@ typedef struct _WSAPROTOCOLCHAIN
     DWORD ChainEntries[MAX_PROTOCOL_CHAIN]; /* a list of dwCatalogEntryIds */
 } WSAPROTOCOLCHAIN, * LPWSAPROTOCOLCHAIN;
 
+/* constants used in dwProviderFlags from struct WSAPROTOCOL_INFO */
+#define PFL_MULTIPLE_PROTO_ENTRIES          0x00000001
+#define PFL_RECOMMENDED_PROTO_ENTRY         0x00000002
+#define PFL_HIDDEN                          0x00000004
+#define PFL_MATCHES_PROTOCOL_ZERO           0x00000008
+
 #define XP1_CONNECTIONLESS                  0x00000001
 #define XP1_GUARANTEED_DELIVERY             0x00000002
 #define XP1_GUARANTEED_ORDER                0x00000004
