@@ -57,6 +57,8 @@ static IMMDeviceEnumerator *mme = NULL;
 static IMMDevice *dev = NULL;
 static HRESULT hexcl = S_OK; /* or AUDCLNT_E_EXCLUSIVE_MODE_NOT_ALLOWED */
 
+static const LARGE_INTEGER ullZero;
+
 static inline const char *dbgstr_guid( const GUID *id )
 {
     static char ret[256];
@@ -2159,6 +2161,71 @@ static void test_worst_case(void)
     IAudioRenderClient_Release(arc);
 }
 
+static void test_marshal(void)
+{
+    IStream *pStream;
+    IAudioClient *ac, *acDest;
+    IAudioRenderClient *rc, *rcDest;
+    WAVEFORMATEX *pwfx;
+    HRESULT hr;
+
+    /* IAudioRenderClient */
+    hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
+            NULL, (void**)&ac);
+    ok(hr == S_OK, "Activation failed with %08x\n", hr);
+    if(hr != S_OK)
+        return;
+
+    hr = IAudioClient_GetMixFormat(ac, &pwfx);
+    ok(hr == S_OK, "GetMixFormat failed: %08x\n", hr);
+
+    hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, 0, 5000000,
+            0, pwfx, NULL);
+    ok(hr == S_OK, "Initialize failed: %08x\n", hr);
+
+    CoTaskMemFree(pwfx);
+
+    hr = IAudioClient_GetService(ac, &IID_IAudioRenderClient, (void**)&rc);
+    ok(hr == S_OK, "GetService failed: %08x\n", hr);
+    if(hr != S_OK) {
+        IAudioClient_Release(ac);
+        return;
+    }
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    ok(hr == S_OK, "CreateStreamOnHGlobal failed 0x%08x\n", hr);
+
+    /* marshal IAudioClient */
+
+    hr = CoMarshalInterface(pStream, &IID_IAudioClient, (IUnknown*)ac, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok(hr == S_OK, "CoMarshalInterface IAudioClient failed 0x%08x\n", hr);
+
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(pStream, &IID_IAudioClient, (void **)&acDest);
+    ok(hr == S_OK, "CoUnmarshalInterface IAudioClient failed 0x%08x\n", hr);
+    if (hr == S_OK)
+        IAudioClient_Release(acDest);
+
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    /* marshal IAudioRenderClient */
+
+    hr = CoMarshalInterface(pStream, &IID_IAudioRenderClient, (IUnknown*)rc, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok(hr == S_OK, "CoMarshalInterface IAudioRenderClient failed 0x%08x\n", hr);
+
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(pStream, &IID_IAudioRenderClient, (void **)&rcDest);
+    ok(hr == S_OK, "CoUnmarshalInterface IAudioRenderClient failed 0x%08x\n", hr);
+    if (hr == S_OK)
+        IAudioRenderClient_Release(rcDest);
+
+
+    IStream_Release(pStream);
+
+    IAudioClient_Release(ac);
+    IAudioRenderClient_Release(rc);
+
+}
+
 START_TEST(render)
 {
     HRESULT hr;
@@ -2186,6 +2253,7 @@ START_TEST(render)
     test_formats(AUDCLNT_SHAREMODE_EXCLUSIVE);
     test_formats(AUDCLNT_SHAREMODE_SHARED);
     test_references();
+    test_marshal();
     trace("Output to a MS-DOS console is particularly slow and disturbs timing.\n");
     trace("Please redirect output to a file.\n");
     test_event();
