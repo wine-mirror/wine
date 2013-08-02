@@ -1391,22 +1391,17 @@ INT CDECL MSVCRT_wcscpy_s( MSVCRT_wchar_t* wcDest, MSVCRT_size_t numElement, con
 {
     MSVCRT_size_t size = 0;
 
-    if(!wcDest || !numElement)
-        return MSVCRT_EINVAL;
+    if(!MSVCRT_CHECK_PMT(wcDest)) return MSVCRT_EINVAL;
+    if(!MSVCRT_CHECK_PMT(numElement)) return MSVCRT_EINVAL;
 
     wcDest[0] = 0;
 
-    if(!wcSrc)
-    {
-        return MSVCRT_EINVAL;
-    }
+    if(!MSVCRT_CHECK_PMT(wcSrc)) return MSVCRT_EINVAL;
 
     size = strlenW(wcSrc) + 1;
 
-    if(size > numElement)
-    {
+    if(!MSVCRT_CHECK_PMT_ERR(size <= numElement, MSVCRT_ERANGE))
         return MSVCRT_ERANGE;
-    }
 
     memcpy( wcDest, wcSrc, size*sizeof(WCHAR) );
 

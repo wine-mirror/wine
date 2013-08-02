@@ -808,23 +808,33 @@ static void test_wcscpy_s(void)
         return;
     }
 
+    if (p_set_invalid_parameter_handler)
+        ok(p_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
+            "Invalid parameter handler was already set\n");
+
     /* Test NULL Dest */
+    errno = EBADF;
     ret = p_wcscpy_s(NULL, 18, szLongText);
     ok(ret == EINVAL, "p_wcscpy_s expect EINVAL got %d\n", ret);
+    ok(errno == EINVAL, "expected errno EINVAL got %d\n", errno);
 
     /* Test NULL Source */
+    errno = EBADF;
     szDest[0] = 'A';
     ret = p_wcscpy_s(szDest, 18, NULL);
     ok(ret == EINVAL, "expected EINVAL got %d\n", ret);
-    ok(szDest[0] == 0, "szDest[0] not 0\n");
+    ok(errno == EINVAL, "expected errno EINVAL got %d\n", errno);
+    ok(szDest[0] == 0, "szDest[0] not 0, got %c\n", szDest[0]);
 
     /* Test invalid size */
+    errno = EBADF;
     szDest[0] = 'A';
     ret = p_wcscpy_s(szDest, 0, szLongText);
     /* Later versions changed the return value for this case to EINVAL,
      * and don't modify the result if the dest size is 0.
      */
     ok(ret == ERANGE || ret == EINVAL, "expected ERANGE/EINVAL got %d\n", ret);
+    ok(errno == ERANGE || errno == EINVAL, "expected errno ERANGE/EINVAL got %d\n", errno);
     ok(szDest[0] == 0 || ret == EINVAL, "szDest[0] not 0\n");
 
     /* Copy same buffer size */
@@ -833,14 +843,20 @@ static void test_wcscpy_s(void)
     ok(lstrcmpW(szDest, szLongText) == 0, "szDest != szLongText\n");
 
     /* Copy smaller buffer size */
+    errno = EBADF;
     szDest[0] = 'A';
     ret = p_wcscpy_s(szDestShort, 8, szLongText);
     ok(ret == ERANGE || ret == EINVAL, "expected ERANGE/EINVAL got %d\n", ret);
+    ok(errno == ERANGE || errno == EINVAL, "expected errno ERANGE/EINVAL got %d\n", errno);
     ok(szDestShort[0] == 0, "szDestShort[0] not 0\n");
 
     if(!p_wcsncpy_s)
     {
         win_skip("wcsncpy_s not found\n");
+
+        if (p_set_invalid_parameter_handler)
+            ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
+                    "Cannot reset invalid parameter handler\n");
         return;
     }
 
@@ -886,6 +902,10 @@ static void test_wcscpy_s(void)
     ok(ret == STRUNCATE, "expected ERROR_SUCCESS got %d\n", ret);
     ok(szDestShort[0]=='1' && szDestShort[1]=='1' && szDestShort[2]=='1' && szDestShort[3]=='1',
             "szDestShort = %s\n", wine_dbgstr_w(szDestShort));
+
+    if (p_set_invalid_parameter_handler)
+        ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
+                "Cannot reset invalid parameter handler\n");
 }
 
 static void test__wcsupr_s(void)
