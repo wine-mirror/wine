@@ -33,6 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(oledb);
 typedef struct
 {
     IRowPosition IRowPosition_iface;
+    IConnectionPointContainer IConnectionPointContainer_iface;
     LONG ref;
 
     IRowset *rowset;
@@ -41,6 +42,11 @@ typedef struct
 static inline rowpos *impl_from_IRowPosition(IRowPosition *iface)
 {
     return CONTAINING_RECORD(iface, rowpos, IRowPosition_iface);
+}
+
+static inline rowpos *impl_from_IConnectionPointContainer(IConnectionPointContainer *iface)
+{
+    return CONTAINING_RECORD(iface, rowpos, IConnectionPointContainer_iface);
 }
 
 static HRESULT WINAPI rowpos_QueryInterface(IRowPosition* iface, REFIID riid, void **obj)
@@ -55,6 +61,10 @@ static HRESULT WINAPI rowpos_QueryInterface(IRowPosition* iface, REFIID riid, vo
         IsEqualIID(riid, &IID_IRowPosition))
     {
         *obj = iface;
+    }
+    else if (IsEqualIID(riid, &IID_IConnectionPointContainer))
+    {
+        *obj = &This->IConnectionPointContainer_iface;
     }
     else
     {
@@ -143,6 +153,47 @@ static const struct IRowPositionVtbl rowpos_vtbl =
     rowpos_SetRowPosition
 };
 
+static HRESULT WINAPI cpc_QueryInterface(IConnectionPointContainer *iface, REFIID riid, void **obj)
+{
+    rowpos *This = impl_from_IConnectionPointContainer(iface);
+    return IRowPosition_QueryInterface(&This->IRowPosition_iface, riid, obj);
+}
+
+static ULONG WINAPI cpc_AddRef(IConnectionPointContainer *iface)
+{
+    rowpos *This = impl_from_IConnectionPointContainer(iface);
+    return IRowPosition_AddRef(&This->IRowPosition_iface);
+}
+
+static ULONG WINAPI cpc_Release(IConnectionPointContainer *iface)
+{
+    rowpos *This = impl_from_IConnectionPointContainer(iface);
+    return IRowPosition_Release(&This->IRowPosition_iface);
+}
+
+static HRESULT WINAPI cpc_EnumConnectionPoints(IConnectionPointContainer *iface, IEnumConnectionPoints **enum_points)
+{
+    rowpos *This = impl_from_IConnectionPointContainer(iface);
+    FIXME("(%p)->(%p): stub\n", This, enum_points);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI cpc_FindConnectionPoint(IConnectionPointContainer *iface, REFIID riid, IConnectionPoint **point)
+{
+    rowpos *This = impl_from_IConnectionPointContainer(iface);
+    FIXME("(%p)->(%s %p): stub\n", This, debugstr_guid(riid), point);
+    return E_NOTIMPL;
+}
+
+static const struct IConnectionPointContainerVtbl rowpos_cpc_vtbl =
+{
+    cpc_QueryInterface,
+    cpc_AddRef,
+    cpc_Release,
+    cpc_EnumConnectionPoints,
+    cpc_FindConnectionPoint
+};
+
 HRESULT create_oledb_rowpos(IUnknown *outer, void **obj)
 {
     rowpos *This;
@@ -157,6 +208,7 @@ HRESULT create_oledb_rowpos(IUnknown *outer, void **obj)
     if(!This) return E_OUTOFMEMORY;
 
     This->IRowPosition_iface.lpVtbl = &rowpos_vtbl;
+    This->IConnectionPointContainer_iface.lpVtbl = &rowpos_cpc_vtbl;
     This->ref = 1;
     This->rowset = NULL;
 

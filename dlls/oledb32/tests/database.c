@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 #include <stdarg.h>
+#include <stdio.h>
 
 #define COBJMACROS
 #define NONAMELESSUNION
@@ -36,6 +37,21 @@
 DEFINE_GUID(CSLID_MSDAER, 0xc8b522cf,0x5cf3,0x11ce,0xad,0xe5,0x00,0xaa,0x00,0x44,0x77,0x3d);
 
 static WCHAR initstring_default[] = {'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y',';',0};
+
+static const char *debugstr_guid(REFIID riid)
+{
+    static char buf[50];
+
+    if(!riid)
+        return "(null)";
+
+    sprintf(buf, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
+            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
+            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
+
+    return buf;
+}
 
 static void test_GetDataSource(WCHAR *initstring)
 {
@@ -188,12 +204,36 @@ static void test_initializationstring(void)
 
 static void test_rowposition(void)
 {
+    IEnumConnectionPoints *enum_points;
+    IConnectionPointContainer *cpc;
+    IConnectionPoint *cp;
     IRowPosition *rowpos;
     HRESULT hr;
+    IID iid;
 
     hr = CoCreateInstance(&CLSID_OLEDB_ROWPOSITIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IRowPosition, (void**)&rowpos);
     ok(hr == S_OK, "got %08x\n", hr);
 
+    hr = IRowPosition_QueryInterface(rowpos, &IID_IConnectionPointContainer, (void**)&cpc);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IConnectionPointContainer_EnumConnectionPoints(cpc, &enum_points);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+if (hr == S_OK) {
+    hr = IEnumConnectionPoints_Next(enum_points, 1, &cp, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IConnectionPoint_GetConnectionInterface(cp, &iid);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(IsEqualIID(&iid, &IID_IRowPositionChange), "got %s\n", debugstr_guid(&iid));
+    IConnectionPoint_Release(cp);
+
+    hr = IEnumConnectionPoints_Next(enum_points, 1, &cp, NULL);
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+
+    IEnumConnectionPoints_Release(enum_points);
+}
+    IConnectionPointContainer_Release(cpc);
     IRowPosition_Release(rowpos);
 }
 
