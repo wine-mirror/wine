@@ -43,7 +43,12 @@ static void test_AddERExcludedApplicationA(void)
     HKEY hexclude = 0;
 
     /* clean state */
-    lres = RegOpenKeyExA(HKEY_LOCAL_MACHINE, regpath_root, 0, KEY_WRITE, &hroot);
+    lres = RegCreateKeyA(HKEY_LOCAL_MACHINE, regpath_root, &hroot);
+    if (lres == ERROR_ACCESS_DENIED)
+    {
+        skip("Not enough access rights\n");
+        return;
+    }
 
     if (!lres)
         lres = RegOpenKeyA(hroot, regpath_exclude, &hexclude);
@@ -61,8 +66,7 @@ static void test_AddERExcludedApplicationA(void)
     ok(!res, "got %d and 0x%x (expected FALSE)\n", res, GetLastError());
 
     SetLastError(0xdeadbeef);
-    /* access rights to HKLM or existence of the path doesn't matter
-       this function succeeded */
+    /* existence of the path doesn't matter this function succeeded */
     res = AddERExcludedApplicationA("winetest_faultrep.exe");
     ok(res, "got %d and 0x%x (expected TRUE)\n", res, GetLastError());
 
