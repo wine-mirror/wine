@@ -1,19 +1,17 @@
-The Wine team is proud to announce that the stable release Wine 1.6
-is now available.
+The Wine development release 1.7.0 is now available.
 
-This release represents 16 months of development effort and around
-10,000 individual changes. The main highlights are the new Mac driver,
-the full support for window transparency, and the new Mono package for
-.NET applications support.
-
-It also contains a lot of improvements across the board, as well as
-support for many new applications and games. See the release notes
-below for a summary of the major changes.
+What's new in this release (see below for details):
+  - Support for vertical text in the Postscript driver.
+  - Version 2 of liblcms used now instead of version 1.
+  - Unicode data updated to Unicode 6.2.0.
+  - Hyperlink controls supported in installers.
+  - Improved support for XML attributes.
+  - Various bug fixes.
 
 The source is available from the following locations:
 
-  http://prdownloads.sourceforge.net/wine/wine-1.6.tar.bz2
-  http://mirrors.ibiblio.org/wine/source/1.6/wine-1.6.tar.bz2
+  http://prdownloads.sourceforge.net/wine/wine-1.7.0.tar.bz2
+  http://mirrors.ibiblio.org/wine/source/1.7/wine-1.7.0.tar.bz2
 
 Binary packages for various distributions will be available from:
 
@@ -29,419 +27,364 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-What's new in Wine 1.6
-======================
-
-
-*** User interface
-
-- Window transparency is supported, including both color keying and
-  alpha blending transparency.
-
-- All window rendering is done on the client-side using the DIB engine
-  (except for OpenGL rendering). This means that rendering to windows
-  or bitmaps gives identical results.
-
-- Common dialogs correctly scale with the screen DPI resolution.
-
-- In virtual desktop mode, shortcuts placed in the Desktop folder are
-  displayed on the desktop, and can be used to launch applications.
-
-- The HTML Help control has better support for non-ASCII characters,
-  and for multiple help windows.
-
-- Custom painting and images are better supported in listview
-  controls.
-
-- Input validation is improved in the date and calendar controls.
-
-
-*** Mac driver
-
-- A native Mac OS X driver is implemented, for better integration with
-  the Mac desktop environment. The full range of driver features are
-  supported, including OpenGL, window management, clipboard, drag &
-  drop, system tray, etc.
-
-- X11 is no longer needed on Mac OS X, but the X11 driver is still
-  supported, e.g. when running remotely.
-
-Note: the Mac driver requires Mac OS X 10.6 or later, it cannot be
-      built or used on 10.5.
-
-- FontConfig is no longer needed on Mac OS X and is disabled by
-  default, system fonts are enumerated using the Core Text API
-  instead.
-
-
-*** X11 driver
-
-- X11 server-side font rendering is no longer supported. All fonts are
-  rendered client-side using FreeType.
-
-- The big lock around all X11 calls has been removed, we rely on the X
-  libraries internal locking for thread safety.
-
-- XRandR versions 1.2 and 1.3 are supported.
-
-
-*** Graphics
-
-- There are significant performance improvements in the DIB engine,
-  particularly for text rendering, bitmap stretching, alpha blending,
-  and gradients.
-
-- Bounds tracking is supported for all graphics primitives, to enable
-  copying only the modified portions of a bitmap.
-
-- OpenGL rendering is supported in device-independent bitmaps using libOSMesa.
-
-- Brush dithering is implemented in the DIB engine.
-
-- Path gradients are implemented in GdiPlus.
-
-- More image codecs features are implemented, including JPEG encoding,
-  palette formats, and meta-data support for various image types.
-
-
-*** Text and fonts
-
-- Sub-pixel font anti-aliasing is supported in the DIB engine, using
-  the system anti-aliasing configuration from FontConfig.
-
-- Dynamic loading of scalable font resources is supported.
-
-- Text layout in Uniscribe supports character-specific position
-  adjustments. Right-to-left text handling is also improved.
-
-- There is an initial implementation of the DirectWrite text layout
-  engine.
-
-- Built-in fonts are more complete, with the addition of FixedSys and
-  Wingdings fonts, more high-resolution pixel fonts, and a wider range
-  of glyphs in the existing fonts, notably Arabic glyphs in Tahoma.
-
-- Bi-directional text support is improved in the RichEdit control.
-
-
-*** Input devices
-
-- The raw input API is supported for keyboard and mouse input.
-
-- There is a joystick applet in the control panel, to allow
-  configuring joysticks and testing their behavior.
-
-- Force feedback is supported for Mac OS X joysticks.
-
-
-*** Kernel
-
-- DOSBox is tried first when running a DOS application. The Wine DOS
-  support is only used as a fallback when DOSBox cannot be found, and
-  will be removed in a future release.
-
-- A monotonic time counter is used on platforms that support it, to
-  make timers more robust against system time changes.
-
-- File times are reported with nanosecond resolution.
-
-- Wine can be configured to report the Windows version as 'Windows 8'.
-
-
-*** .NET support
-
-- The Mono runtime is packaged as an MSI file, and its installation
-  can be managed from the "Add/Remove Programs" control panel. It is
-  automatically installed on Wine prefix updates.
-
-- .NET mixed mode assemblies are supported.
-
-- The Microsoft .NET 4.0 runtime can be installed for cases where Mono
-  is not good enough yet.
-
-
-*** OLE / COM
-
-- The typelib writer is reimplemented for better compatibility.
-
-- OLE DB supports more data types and conversions.
-
-- OLE automation manages a cache of string allocations for better
-  performance and compatibility.
-
-
-*** Internet and networking
-
-- HTTPS connections use GnuTLS (or Secure Transport on Mac OS X).
-  OpenSSL is no longer used.
-
-- The TLS 1.1 and TLS 1.2 protocols are enabled by default, with
-  automatic fallback to TLS 1.0. The SSL2 protocol is disabled by
-  default.
-
-- Security certificate validation errors are handled better.
-
-- NTLM and Negotiate authentication protocols are supported.
-
-- ActiveX controls can be downloaded and installed automatically.
-
-- Internet proxy bypass is supported, and can be enabled either
-  through the registry or with the no_proxy environment variable.
-
-- Broadcast packets can be received on interface-bound sockets, which
-  is needed for some networked multi-player games.
-
-- The Server Name Indication TLS extension is supported.
-
-- Persistent cookies are supported, and URL cache files are managed
-  better. The Internet control panel allows clearing saved cookies and
-  cache files.
-
-- Punycode encoding for Internationalized Domain Names is supported.
-
-- JavaScript performance is improved. The built-in JavaScript engine
-  is preferred over the Gecko one in most cases.
-
-- Many more built-in functions of VBScript are implemented. Regular
-  expressions are also supported.
-
-- The Gecko engine is updated to the version from Firefox 21.
-
-- The Gecko and Mono installers are cached upon download, to allow
-  installation in multiple Wine prefixes without additional downloads.
-
-
-*** Direct3D
-
-- The Direct3D 9Ex implementation is more complete. In particular:
-  - IDirect3DDevice9Ex::PresentEx is implemented.
-  - IDirect3DDevice9Ex::ResetEx is implemented.
-  - Various Direct3D 9Ex display mode handling functions are implemented.
-  - Direct3D 9Ex style video memory accounting is implemented.
-
-- Like the X11 driver, WineD3D no longer uses the big X11 lock when
-  making GL calls.
-
-- The WineD3D graphics card database is updated to recognize more
-  graphics cards.
-
-- The fallback card detection code for unrecognized graphics cards is
-  improved. This results in a more reasonable card being reported when
-  the graphics card is not already in the WineD3D database.
-
-- WineD3D has GLSL based implementations of Direct3D fixed-function
-  vertex and fragment processing. In some cases this allows
-  functionality that's not present in fixed-function OpenGL to be
-  implemented, in other cases it allows functionality to be
-  implemented in a more efficient way.
-
-- On drivers that support it, GL_ARB_debug_output is used to get more
-  detailed debugging output from the OpenGL driver.
-
-- On drivers that support it, GL_ARB_framebuffer_sRGB is used for
-  rendering to frame buffers in the sRGB color space.
-
-- On drivers that support it, GL_ARB_instanced_arrays is used for more
-  efficient instanced drawing.
-
-- On drivers that support it, and return useful information,
-  GL_ARB_internalformat_query2 is used for more accurate reporting of
-  surface / texture format capabilities.
-
-- There is an initial implementation of a HLSL compiler.
-
-- Improvements to various parts of the D3DX9 implementation, including:
-  - The surface and texture handling functions. This includes code for
-    loading, saving, filling, and rendering to surfaces and textures.
-  - The effects framework.
-  - The constant table implementation.
-  - A number of spherical harmonics functions have been implemented.
-  - Support for .x files.
-
-- Improvements to the Direct3D 10 implementation, including:
-  - Support for more shader model 4 opcodes and register types.
-  - Support for shader model 4 indirect addressing.
-  - Initial geometry shader support.
-  - Improved binary effect parsing.
-  - Support for Direct3D 10 style instanced draws, using
-    GL_ARB_draw_instanced.
-
-
-*** DirectDraw
-
-- Vertex buffers are created with WINED3DUSAGE_DYNAMIC when locked with
-  DDLOCK_DISCARDCONTENTS, resulting in improved performance in some cases.
-
-- The 2D-only fallback in WineD3D for using DirectDraw without a
-  working OpenGL implementation is more robust. Note that this still
-  isn't a recommended configuration.
-
-
-*** Audio and video
-
-- DirectSound has a better resampler.
-
-- Audio device enumeration is improved, and multi-channel devices are
-  better supported.
-
-- VMR-9 video rendering is implemented.
-
-
-*** Printer support
-
-- The PPD files of already installed printers are automatically
-  refreshed when needed.
-
-- Printing resolution can be configured from the print dialog.
-
-- Simulated italic fonts can be printed.
-
-- On Mac OS X, the default paper size is retrieved from the system
-  configuration.
-
-
-*** Internationalization
-
-- Japanese vertical text is correctly supported.
-
-- Translated font names are used when there is a match for the current
-  language.
-
-- Wine is translated to French, German, Spanish, Italian, Dutch,
-  Swedish, Finnish, Portuguese, Catalan, Hungarian, Polish, Danish,
-  Russian, Slovenian, Lithuanian, Chinese, Japanese, Korean, and
-  Arabic. It has partial translations for another fifteen languages.
-
-- Various additional Mac OS code pages are supported, namely Japanese,
-  Traditional Chinese, Korean, Simplified Chinese, Romanian,
-  Ukrainian, Thai, and Croatian code pages. This improves support for
-  loading translated font names from Mac OS font files.
-
-
-*** Built-in applications
-
-- The new 'netstat' application displays information about active
-  network connections.
-
-- The 'cabarc' application supports multi-cabinet archives.
-
-- The 'attrib' application supports recursing in sub-directories.
-
-- The 'ipconfig' application can display IPv6 addresses.
-
-- The 'start' application allows setting process priority and affinity.
-
-- The 'cmd' application support arithmetic variable expansion,
-  comparison operators, and various extra features in 'for' loops.
-
-- All graphical built-in applications have a 256x256 icon for use with
-  the Mac driver.
-
-
-*** Build environment
-
-- The configure script uses pkg-config when possible to find library
-  dependencies. Compiler and linker flags can be passed explicitly for
-  each dependency to override pkg-config where necessary.
-
-- The IDL compiler supports nameless structs and unions and generates
-  portable C code for them.
-
-- The IDL compiler generates the same header guards as the Microsoft
-  one for better header compatibility.
-
-- Generated assembler files are built by invoking the C compiler when
-  possible, for better compatibility with the Clang tool chain.
-
-- The Winedump tool can display the contents of typelib files.
-
-- The Fnt2bdf tool has been removed since X11 server-side fonts are no
-  longer used.
-
-
-*** Platform-specific changes
-
-- On Linux, dynamic device management supports the UDisks2 service.
-
-- On Mac OS X, the Recycle Bin is mapped to the Mac OS Trash.
-
-- Debugging support for ARM platforms is improved, including the
-  ability to display ARM assembly in the Wine debugger, and support
-  for relay tracing.
-
-- Building Wine for the ARM64 platform is supported.
-
-- There is preliminary support for building Wine for Android using the
-  Android NDK.
-
-- The DragonFly FreeBSD variant is supported.
-
-- The Alpha and Sparc platforms are no longer supported.
-
-
-*** Miscellaneous
-
-- XML namespaces are better supported. XML parsing is also implemented
-  in the XMLLite library.
-
-- Windows Management Instrumentation (WMI) is implemented, with a wide
-  range of WBEM system classes.
-
-- A number of forwarding libraries are added to support the API Sets
-  feature added in Windows 8.
-
-- More of the latest functions of the C runtime are implemented,
-  particularly the locale functions. Exception handling and RTTI are
-  supported on 64-bit.
-
-- The standard C++ class libraries are more complete, particularly the
-  math functions and the stream classes.
-
-
-*** New external dependencies
-
-- LibOSMesa is used for OpenGL rendering to device-independent bitmaps.
-
-
-*** Useful configuration options
-
-Note: More details about these and other configuration options can be
-      found at http://wiki.winehq.org/UsefulRegistryKeys
-
-- Client-side window rendering can be disabled if necessary by setting
-  "ClientSideGraphics" to "N" under HKCU\Software\Wine\X11 Driver.
-
-- On Mac OS X, in case an application doesn't work properly with the
-  Mac driver, it is possible to go back to the X11 driver by setting
-  "Graphics" to "x11" under HKCU\Software\Wine\Drivers.
-
-- Some X11 compositors do not cope properly with transparent windows
-  that use non-rectangular shapes. In that case, window shaping can be
-  disabled by setting "ShapeLayeredWindows" to "N" under
-  HKCU\Software\Wine\X11 Driver.
-
-- The "VertexShaderMode" and "PixelShaderMode" settings under
-  HKCU\Software\Wine\Direct3D have been replaced by the "MaxShaderModelVS",
-  "MaxShaderModelGS" and "MaxShaderModelPS" (DWORD) settings. These allow
-  limiting the maximum supported shader model version. Setting these to 0
-  disables support for the corresponding shader type, like "VertexShaderMode"
-  and "PixelShaderMode" did.
-
-- The default value for the "AlwaysOffscreen" setting under
-  HKCU\Software\Wine\Direct3D is "enabled". It can still be disabled
-  by setting it to "disabled".
-
-
-*** Known issues
-
-- The addition of DirectWrite causes Steam to be unable to display
-  text. This can be fixed either by setting dwrite.dll to disabled for
-  steam.exe using Winecfg, or by running Steam with the -no-dwrite
-  option.
-
-- The removal of the big X11 lock can reveal locking bugs in old Xlib
-  versions, notably on RHEL 5. The only solution is to upgrade the X
-  libraries.
+Bugs fixed in 1.7.0 (total 44):
+
+   2770  Powerbullet Presenter 1.44: Powerbullet.dll registration fails (Armadillo v4.x software protection fails at checkpoint L5, error 0x17)
+   6807  Sunbird crashes on first run (dogfood)
+   9012  Microsoft Money 2005, 2006, 2007 crash on startup
+  12893  GTA2 runs too slow on Intel graphic
+  15242  Photoshop CS2: Typing causes excessive processor use and brief unresponsiveness
+  17882  Photoshop CS2 doesn't see the Internet
+  18461  Problem in English localization of Winelib programs
+  18744  Mp3Tag: Column headers in list view incorrectly redrawn
+  20207  NFS SHIFT: Graphical corruption in main menu
+  20979  ./wine wrapper script broken when --with-wine64 is used
+  22011  Symantec Antivirus 10.x installation fails when starting services
+  22442  Sega Rally Revo - direct2drive version: will not launch
+  22726  CodeGear RAD Studio 2007/2009 installation errors: column 3/4 out of range, missing column in table L"Property"
+  22814  IrfanView 4.00-4.25 large custom skins toolbar appearance is broken
+  23529  Add support for lcms2
+  24276  Max Payne 2 - early crash when running with mesa driver
+  24428  fifaconfig.exe: some images aren`t shown
+  24762  Homeworld 1.05 installer breaks
+  24832  Typing of the Dead Demo Installer dies before Finished dialog(but game gets installed anyway)
+  25940  Sid Meier's Civilization V crashes when completing the Space Ship
+  25960  Black Mirror 3 Demo: hangs on startup
+  25979  Duty Calls: frequently fails to install (memory corruption?)
+  26458  Photoshop CS2 workspaces windows stays on top
+  26830  dde_connect buffers not large enough (bwin poker client cannot open URLs)
+  26971  Windows get unnecessarily repainted under some circumstances
+  27912  MUSHclient: ShellExecute truncates long URLs
+  28355  Photoshop CS2 stopped working, unable to focus on any tool windows after a new file is created or opened
+  28664  qedit/mediadet test crashes on FreeBSD9
+  28784  eBay Turbo Lister 7 page fault on load
+  29614  WinRAR viewer crashes on a particular file
+  31169  SDET OGLviewer VB6 menu bar loses background
+  31938  QuickBooks SS 2008 R1 installer fails to register Intuit.Spc.Map.EntitlementClient.Common.dll
+  31988  Red fog covers the scene in Payday: The Heist (without native d3dx9_36)
+  32922  iTunes 7 needs msvcr80.dll._wmktemp_s
+  33084  installer of QQ2013 Beta2: has black spot in the dialog
+  33523  .NET Framework 3.5 WPF 3.x apps need windowscodecsext.dll.DllGetClassObject
+  33566  Manga Studio 5: Menubar titles go blank
+  33693  Spin Tires tech demo needs msvcr90.dll.wctomb_s
+  33872  Pando (installer of LOL) can't load FAQ
+  33880  Need For Speed: World launcher fails
+  33936  Jazz Jack Rabbit 2: Page fault upon finishing first level
+  34013  Altium Designer 10 and its installer crash in InternetQueryOptionW
+  34110  MS Excel 2010 escape/unescape problem in sheet names
+  34191  cabarc.c could not compile
+
+----------------------------------------------------------------
+
+Changes since 1.6:
+
+Akihiro Sagawa (3):
+      Revert "gdi32: Use the default character when the glyph is missing.".
+      gdi32: Add a helper function to get bitmap size.
+      gdi32: Adjust bitmap font height when it has an external leading.
+
+Alexandre Julliard (33):
+      widl: Fix typo in man page.
+      ntdll: Simplify detach sequence now that there is no possible race on process exit.
+      ntdll: Implement RtlExitUserProcess.
+      libwine: Fix the default character for EBCDIC codepages.
+      libwine: Fix the default Unicode character for codepage 20932.
+      libwine: Use the best fit data for codepage 1361.
+      usp10: Update the line breaking algorithm to Unicode 6.2.0.
+      usp10: Update the character data tables to Unicode 6.2.0.
+      libwine: Update the codepage tables to Unicode 6.2.0.
+      libwine: Compress code page tables by merging identical sequences.
+      d3d8/tests: Remove a todo from a test that succeeds.
+      ddraw/tests: Remove a todo from a test that succeeds.
+      ntdll: Use fclose instead of endmntent since we use fopen anyway.
+      ntdll: Don't use TIOCGICOUNT if we don't have linux/serial.h to define the necessary struct.
+      ntdll: Add context definitions missing from the Android NDK.
+      loader: ELF hash table entries are always 32-bit on Linux.
+      include: Android supports sigsetjmp now.
+      krnl386: Don't attempt direct I/O port access on Android.
+      secur32/tests: Run the tests against the winehq.org server.
+      configure: Move the checks inside the WINE_PACKAGE_FLAGS macro to enable restoring CPPFLAGS automatically.
+      configure: Allow specifying relative paths in CFLAGS and LIBS variables.
+      configure: Add pkg-config support for libjpeg.
+      configure: Add pkg-config support for libtiff.
+      configure: Add pkg-config support for libcapi20.
+      configure: Add pkg-config support for libmpg123.
+      configure: Don't use pkg-config without tool prefix when cross-compiling.
+      configure: Don't use the alternate package config scripts when cross-compiling.
+      jscript: Use bison directives instead of defines to specify extra lexer parameters.
+      msi: Use bison directives instead of defines to specify extra lexer parameters.
+      vbscript: Use bison directives instead of defines to specify extra lexer parameters.
+      wbemprox: Use bison directives instead of defines to specify extra lexer parameters.
+      widl: Remove non-bison compatibility code.
+      wrc: Remove non-bison compatibility code.
+
+Alistair Leslie-Hughes (9):
+      oledb32: Add interface ISourcesRowset.
+      oledb32: Add support for IErrorRecords.
+      oledb32: Add some missing defines.
+      msdasc.idl: Add coclass DataLinks.
+      oledb32: Implement DataConvert Variant->R8.
+      windowscodecsext: Add stub DllGetClassObject.
+      oledb32: Add IErrorInfo Support.
+      oleacc: Add missing interfaces.
+      oleacc: Add typelib.
+
+Andrew Eikum (3):
+      winmm/tests: Fix waveInGetPosition type.
+      winmm: Don't count unused frames.
+      dsound: Allow multiple buffers to capture from the same device.
+
+André Hentschel (1):
+      usbd.sys: Implement USBD_ParseConfigurationDescriptor using its Ex version.
+
+Aric Stewart (2):
+      wineqtdecoder: Calculate AvgTimePerFrame for video tracks.
+      wineps.drv: Allow for vertical text printing.
+
+Bruno Jesus (10):
+      ws2_32/tests: Add listen() tests for TCP sockets.
+      ws2_32: Fix listen() implementation.
+      ws2_32/tests: Add more tests for WSASocket().
+      kernel32/tests: Add tests for GetVolumePathNameA().
+      ws2_32/tests: Add SO_ACCEPTCONN tests.
+      ws2_32: Fix service flags returned from TCP and UDP protocols.
+      ws2_32/tests: Fix bad usage of WSAGetLastError() in tests.
+      ws2_32/tests: Test the precedence of parameters while creating a socket in WSASocket().
+      ws2_32: Simplify WINSOCK_EnterSingleProtocolA using the W version.
+      ws2_32/tests: Add and update WSASocketA() tests.
+
+Charles Davis (1):
+      winemac.drv: Also return the number of pixel formats if the caller didn't supply a PIXELFORMATDESCRIPTOR.
+
+Christian Costa (4):
+      d3dx9_36: Display bpp in decimal in traces.
+      d3dx9_36: Add trace to D3DAssembleShader and D3DCompileShader.
+      d3dx9_36: Show object number in traces.
+      d3dx9_36: Release shader if getting constant table fails in D3DXCompileShader.
+
+Damjan Jovanovic (2):
+      include/ddk: Add usbiodef.h.
+      include/ddk: Add usbioctl.h.
+
+Detlef Riekenberg (1):
+      faultrep/tests: Fix a test failure when the user has limited access rights.
+
+Dmitry Timoshkov (11):
+      gdiplus/tests: Test how device to world transform correlates with clipping region bounding rectangle.
+      gdiplus: Store graphics clipping region in device coordinates.
+      ntdll: NtAllocateVirtualMemory should fail to commit if an address range is already committed for a memory mapped file.
+      windowscodecs/tests: Add a test for global GIF palette exposed by recent Windows versions.
+      windowscodecs: Generate global GIF palette even a real one is missing.
+      kernel32: GetShortPathName for a non-existent short file name should fail.
+      gdiplus/tests: Add clipping region tests with rotating world transform.
+      gdiplus: Fix clipping region bounds calculation with rotating transform.
+      gdiplus: Reimplement GdipSetClipRect to avoid potential problems with rotating world transform.
+      windowscodecs: Workaround libtiff bug when it defines toff_t as 32-bit for 32-bit builds.
+      cabarc: Fix compilation under Windows.
+
+François Gouget (1):
+      windowscodecs: Autoconf macros don't always have a value.
+
+Frédéric Delanoy (9):
+      server: Fix manpage formatting.
+      loader: Fix wine manpage formatting.
+      loader: Fix invalid groff in Polish wine manpage.
+      loader: Update French translation of wine manpage.
+      server: Make wineserver manpage conform to common manpages conventions.
+      server: Update French translation of manpage.
+      winemaker: Make the manpage more concise.
+      winemaker: Make manpage conform to common manpages conventions.
+      winemaker: Update French translation of manpage.
+
+Hans Leidekker (12):
+      msi: Add support for the hyperlink control.
+      msi: Merge events.c into dialog.c.
+      msi: Subscribe to all control events instead of just the first.
+      msi: Format text set by means of a control event.
+      mscms: Port to liblcms2.
+      mscms: Get rid of the MSCMS_ prefix.
+      server: The token user SID must be present in the default DACL.
+      msi: Fix integer conversion in get_table_value_from_record.
+      iphlpapi: Add support for the listener and connection classes in GetExtendedTcpTable.
+      iphlpapi: Add partial support for the module classes in GetExtendedTcpTable and GetExtendedUdpTable.
+      wininet: Ignore INTERNET_FLAG_NO_CACHE_WRITE only for GET requests.
+      wininet: Handle NULL input string in str_to_buffer.
+
+Huw D. M. Davies (1):
+      gdi32: Ignore max_extent if nfit is NULL.
+
+Hwang YunSong (황윤성) (1):
+      po: Update Korean translation.
+
+Jacek Caban (12):
+      wininet: Ignore missing status text in response headers.
+      mshtml: Better res protocol URL parsing.
+      mshtml/tests: Added more res protocol tests.
+      userenv: Added a few more stubs.
+      urlmon/tests: MIME tests clean up.
+      urlmon/tests: Make array-based MIME tests more generic.
+      urlmon: Moved FindMimeFromData to mimefilter.c.
+      urlmon: Fallback to URL-based MIME search in FindMimeFromData if found MIME is not concrete.
+      urlmon/tests: Added more FindMimeFromData tests.
+      mshtml: Use proper window in set_moniker when invoked on frame or iframe.
+      mshtml: Added IHTMLTable::cellSpacing property implementation.
+      explorerframe: Fixed debug channel name.
+
+Jeff Klein (4):
+      mmdevapi/tests: Test in-proc marshal of IAudioClient.
+      winealsa.drv: Implement IMarshal for IAudioClient.
+      winecoreaudio.drv: Implement IMarshal for IAudioClient.
+      wineoss.drv: Implement IMarshal for IAudioClient.
+
+Ken Sharp (2):
+      po: Update English neutral resource.
+      kernel32: Correct log on / logon (noun / verb).
+
+Ken Thomases (2):
+      user32: Remove dead code for suppressing menu drawing.
+      winemac: Make a file-scope variable static.
+
+Marcus Meissner (6):
+      xcopy: fclose filedescriptor on eof case (Coverity).
+      winecfg: Free result in error nodes (Coverity).
+      gdiplus/tests: Check return code of GdipGetClipBounds (Coverity).
+      msxml3/tests: Check ISAXContentHandler_endDocument (Coverity).
+      mshtml: Fixed character vs byte mismatches.
+      urlmon: Fixed a chars vs bytes mismatch.
+
+Matteo Bruni (2):
+      wined3d: Implement special fog behavior for orthogonal projection matrices.
+      wined3d: Add a missing destroy_dummy_textures() call.
+
+Nikolay Sivov (37):
+      ntdll/tests: Tests for RtlHashUnicodeString().
+      ole32/tests: More tests that actually show CLSID/ProgId redirection in action.
+      msxml3/tests: Fix test failures with IObjectWithSite.
+      windowscodecs: Added IWICBitmapClipper stub.
+      windowscodecs: Implement Initialize() and GetSize() for bitmap clipper.
+      windowscodecs: Added GetPixelFormat() for bitmap clipper.
+      windowscodecs: Implement GetResolution() for bitmap clipper.
+      comctl32: Properly handle repainting for HDF_OWNERDRAW items.
+      xmllite: Store prefix for start tag and return it.
+      xmllite: Initial support for CharData (or Text) nodes.
+      xmllite: Implement IsEmptyElement().
+      xmllite: Report attribute as non-default for now.
+      windowscodecs: Implement GetPalette() for clipper.
+      windowscodecs: Implement CopyPixels() for clipper.
+      ntdll/tests: Properly skip on missing functions.
+      xmllite: Clear attributes on node change, improve tracing.
+      xmllite: Handle nesting depth limit better.
+      ntdll: Implement RtlHashUnicodeString().
+      msxml3: Store namespace info for created attribute, fix returned properties.
+      msxml3: Implement output indentation for writer.
+      msxml3: Support for external entities in writer.
+      include: Added IRowPosition interface definition.
+      msxml3: Implement IMXAttributes_removeAttribute().
+      msxml3: Implement setting attributes properties with IMXAttributes.
+      xmllite: Initial implementation of attribute parsing.
+      kernel32/tests: Remove unused helper argument.
+      kernel32/tests: Test for several assemblies in context with window class redirects.
+      ntdll: Added RtlFindActivationContextSectionGuid() stub.
+      msdaps: Implement some proxy/stub methods.
+      msxml3: Unescape '&#38;' back to '&' in attribute value.
+      oledb32: Stub for IRowPosition.
+      oledb32: Implement IRowPosition::Initialize().
+      oledb32: Added IRowPositionChange interface definition.
+      oledb32: Added IConnectionPointContainer stub.
+      oledb32: Added IConnectionPoint stub for IRowPositionChange notification.
+      oledb32: Use heap helpers for allocation.
+      ntdll: Implement compatible FindActCtxSectionString() for window class section.
+
+Piotr Caban (36):
+      scrrun: Add IFileSystem3::GetParentFolderName implementation.
+      scrrun: Add IFileSystem3::GetFileName implementation.
+      scrrun: Add IFileSystem3::GetBaseName implementation.
+      msvcrt: Fix _mktemp implementation.
+      msvcrt: Add _mktemp_s implementation.
+      msvcrt: Add _wmktemp_s implementation.
+      msvcrt: Add _wctomb_s_l implementation.
+      oleaut32: Fix custdata_list initialization in ITypeInfo_fnGetRefTypeInfo.
+      scrrun: Add IFileSystem3::GetTempName implementation.
+      scrrun: Add IFileSystem3::GetAbsolutePathName implementation.
+      scrrun/tests: Add IFileSystem3::GetAbsolutePathName tests.
+      scrrun: Add IFileSystem3::GetFile implementation.
+      scrrun/tests: Add IFileSystem3::GetFile tests.
+      msvcrt: Add _wcstol_l implementation.
+      oleaut32: Fill names hash table while creating typelib.
+      oleaut32: Name names hash table segment in MSFT_SegDir struct.
+      oleaut32: Store typeinfo hreftype while saving typelib.
+      winedump: Rename res07 typelib segment to NameHashTab.
+      scrrun: Add IFile::get_Attributes implementation.
+      scrrun: Add IFile::get_Size implementation.
+      scrrun: Add IFileSystem3::DeleteFile implementation.
+      scrrun: Add IFileSystem3::DeleteFolder implementation.
+      scrrun: Add IFileSystem3::CopyFile implementation.
+      scrrun: Add IFileSystem3::CopyFolder implementation.
+      scrrun/tests: Add IFilesystem3::CopyFolder tests.
+      oleaut32: Don't leak BSTRs allocated in string_list and name_list.
+      oleaut32: Free guid_list in ITypeLib2_Release.
+      oleaut32: Store PARAMDESCEX structure inside lprgelemdescParam.
+      oleaut32: Fix ICreateTypeInfo2_fnAddVarDesc implementation.
+      oleaut32: Fill guids hash table while creating typelib.
+      oleaut32: Name guids hash table segment in MSFT_SegDir struct.
+      winedump: Rename lib typelib segment to GuidHashTab.
+      oleaut32: Store hreftype associated with guid while saving typelib.
+      scrrun: Fix IFile::get_Attributes tests and implementation.
+      scrrun: Fix IFileSystem3::GetAbsolutePathName tests failures.
+      msvcrt: Added _swprintf_s_l implementation.
+
+Qian Hong (6):
+      msvcrt/tests: Added setlocale test for Chinese_China.936.
+      kernel32/nls: Updated LOCALE_SENGLANGUAGE for multiple Chinese variants to match Win7's behavior.
+      imm32/tests: Added test for IMC lock count.
+      imm32: Fixed ImmUnlockIMC.
+      imm32/tests: Added test for IMCC lock count.
+      imm32: Fixed ImmUnlockIMCC.
+
+Rico Schüller (27):
+      d3dx9: Improve shader constant table parsing.
+      d3dx9: Merge get/is_valid_constant().
+      d3dx9: Improve ID3DXConstantTable::Set*().
+      d3dx9/tests: Add ID3DXConstantTable scalar test.
+      d3dx9/tests: Add ID3DXConstantTable scalar array test.
+      d3dx9/tests: Add ID3DXConstantTable vector test.
+      d3dx9/tests: Add ID3DXConstantTable vector array test.
+      d3dx9/tests: Add ID3DXConstantTable matrix column test.
+      d3dx9/tests: Add ID3DXConstantTable matrix column array test.
+      wined3d: Fix typo.
+      d3dx9: Fix initialization of D3DXPC_OBJECTs.
+      d3dx9: Use d3dx_technique instead of D3DXHANDLE.
+      d3dx9: Use d3dx_pass instead of D3DXHANDLE.
+      d3dx9/tests: Add ID3DXConstantTable matrix row test.
+      d3dx9/tests: Add ID3DXConstantTable matrix row array test.
+      d3dx9: Add support for structs to ID3DXConstantTable.
+      d3dx9/tests: Add ID3DXConstantTable struct test.
+      d3dx9/tests: Add ID3DXConstantTable struct array test.
+      d3dx9/tests: Add ID3DXConstantTable struct struct test.
+      d3dx9: Improve ID3DXConstantTable::SetDefaults().
+      d3dx9/tests: Add ID3DXConstantTable::SetDefaults() test.
+      d3dx9/tests: Add ID3DXConstantTable RegisterCount test for D3DXRS_INT4.
+      d3dx9/tests: Add ID3DXConstantTable big vector test.
+      d3dx9: Track ID3DXEffect::Begin/End().
+      d3dx9: Warn when submitting invalid flags to ID3DXEffect::Begin().
+      d3dx9: Use d3dx_parameter instead of D3DXHANDLE.
+      d3dx9/tests: Test all registers set by the constant table.
+
+Stefan Dösinger (2):
+      wined3d: Avoid calculating 1 / (fog_end - fog_start) in the shader.
+      ddraw: Fix double to float conversion warnings.
+
+Thomas Faber (2):
+      ieframe: Use SHANDLE_PTR in IWebBrowserApp::get_HWND.
+      quartz: Correct IAMDirectSound::GetFocusWindow signature.
+
+Vincent Povirk (3):
+      atl: Do not access m_pTermFuncs if the structure is too small.
+      advpack/tests: Add test for LaunchINFSectionEx with quoted filename.
+      advpack: Handle quoted arguments to rundll exports.
+
+Volkan Gezer (1):
+      po: Updated Turkish translations.
 
 --
 Alexandre Julliard
