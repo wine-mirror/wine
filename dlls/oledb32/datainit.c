@@ -173,9 +173,7 @@ static ULONG WINAPI dbinit_Release(IDBInitialize *iface)
 
     ref = InterlockedDecrement(&This->ref);
     if(ref == 0)
-    {
-        HeapFree(GetProcessHeap(), 0, This);
-    }
+        heap_free(This);
 
     return ref;
 }
@@ -215,7 +213,7 @@ static HRESULT create_db_init(void **obj)
 
     *obj = NULL;
 
-    This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    This = heap_alloc(sizeof(*This));
     if(!This) return E_OUTOFMEMORY;
 
     This->IDBInitialize_iface.lpVtbl = &dbinit_vtbl;
@@ -266,9 +264,7 @@ static ULONG WINAPI datainit_Release(IDataInitialize *iface)
 
     ref = InterlockedDecrement(&This->ref);
     if(ref == 0)
-    {
-        HeapFree(GetProcessHeap(), 0, This);
-    }
+        heap_free(This);
 
     return ref;
 }
@@ -818,7 +814,7 @@ HRESULT create_data_init(IUnknown *outer, void **obj)
 
     *obj = NULL;
 
-    This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    This = heap_alloc(sizeof(*This));
     if(!This) return E_OUTOFMEMORY;
 
     This->IDataInitialize_iface.lpVtbl = &datainit_vtbl;

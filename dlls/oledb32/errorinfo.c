@@ -117,7 +117,7 @@ static ULONG WINAPI IErrorInfoImpl_Release(IErrorInfo* iface)
         SysFreeString(This->source);
         SysFreeString(This->description);
         SysFreeString(This->help_file);
-        HeapFree(GetProcessHeap(), 0, This);
+        heap_free(This);
     }
     return ref;
 }
@@ -340,7 +340,7 @@ HRESULT create_error_info(IUnknown *outer, void **obj)
 
     if(outer) return CLASS_E_NOAGGREGATION;
 
-    This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    This = heap_alloc(sizeof(*This));
     if(!This) return E_OUTOFMEMORY;
 
     This->IErrorInfo_iface.lpVtbl = &ErrorInfoVtbl;

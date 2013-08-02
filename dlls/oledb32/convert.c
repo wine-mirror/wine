@@ -103,9 +103,7 @@ static ULONG WINAPI convert_Release(IDataConvert* iface)
 
     ref = InterlockedDecrement(&This->ref);
     if(ref == 0)
-    {
-        HeapFree(GetProcessHeap(), 0, This);
-    }
+        heap_free(This);
 
     return ref;
 }
@@ -1548,7 +1546,7 @@ HRESULT create_oledb_convert(IUnknown *outer, void **obj)
 
     if(outer) return CLASS_E_NOAGGREGATION;
 
-    This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    This = heap_alloc(sizeof(*This));
     if(!This) return E_OUTOFMEMORY;
 
     This->IDataConvert_iface.lpVtbl = &convert_vtbl;
