@@ -839,20 +839,39 @@ if (dlldata->size == data.ulLength)
     pReleaseActCtx(handle);
 }
 
-struct wndclass_keyed_data
+struct wndclass_header
 {
-    DWORD size;
-    DWORD reserved;
-    DWORD classname_len;
-    DWORD classname_offset;
-    DWORD modulename_len;
-    DWORD modulename_offset; /* offset relative to section base */
-    WCHAR strdata[1];
+    DWORD magic;
+    DWORD unk1[4];
+    ULONG count;
+    ULONG index_offset;
+    DWORD unk2[4];
+};
+
+struct wndclass_index
+{
+    ULONG hash;
+    ULONG name_offset;
+    ULONG name_len;
+    ULONG data_offset;
+    ULONG data_len;
+    ULONG rosterindex;
+};
+
+struct wndclass_redirect_data
+{
+    ULONG size;
+    DWORD res;
+    ULONG name_len;
+    ULONG name_offset;  /* versioned name offset */
+    ULONG module_len;
+    ULONG module_offset;/* container name offset */
 };
 
 static void test_find_window_class(HANDLE handle, LPCWSTR clsname, ULONG exid, int line)
 {
-    struct wndclass_keyed_data *wnddata;
+    struct wndclass_redirect_data *wnddata;
+    struct wndclass_header *header;
     ACTCTX_SECTION_KEYED_DATA data;
     BOOL ret;
 
@@ -862,51 +881,50 @@ static void test_find_window_class(HANDLE handle, LPCWSTR clsname, ULONG exid, i
     ret = pFindActCtxSectionStringW(0, NULL,
                                     ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION,
                                     clsname, &data);
-    ok_(__FILE__, line)(ret, "FindActCtxSectionStringW failed: %u\n", GetLastError());
-    if(!ret)
-    {
-        skip("couldn't find\n");
-        return;
-    }
+    ok_(__FILE__, line)(ret, "FindActCtxSectionStringW failed: %u, class %s\n", GetLastError(),
+        wine_dbgstr_w(clsname));
+    if (!ret) return;
 
-    wnddata = (struct wndclass_keyed_data*)data.lpData;
+    header = (struct wndclass_header*)data.lpSectionBase;
+    wnddata = (struct wndclass_redirect_data*)data.lpData;
 
+    ok_(__FILE__, line)(header->magic == 0x64487353, "got wrong magic 0x%08x\n", header->magic);
+    ok_(__FILE__, line)(header->count > 0, "got count %d\n", header->count);
     ok_(__FILE__, line)(data.cbSize == sizeof(data), "data.cbSize=%u\n", data.cbSize);
     ok_(__FILE__, line)(data.ulDataFormatVersion == 1, "data.ulDataFormatVersion=%u\n", data.ulDataFormatVersion);
     ok_(__FILE__, line)(data.lpData != NULL, "data.lpData == NULL\n");
-todo_wine
-    ok_(__FILE__, line)(wnddata->size == FIELD_OFFSET(struct wndclass_keyed_data, strdata), "got %d for header size\n", wnddata->size);
-    if (data.lpData && wnddata->size == FIELD_OFFSET(struct wndclass_keyed_data, strdata))
+    ok_(__FILE__, line)(wnddata->size == sizeof(*wnddata), "got %d for header size\n", wnddata->size);
+    if (data.lpData && wnddata->size == sizeof(*wnddata))
     {
         static const WCHAR verW[] = {'6','.','5','.','4','.','3','!',0};
         WCHAR buff[50];
         WCHAR *ptr;
         ULONG len;
 
-        ok_(__FILE__, line)(wnddata->reserved == 0, "got reserved as %d\n", wnddata->reserved);
+        ok_(__FILE__, line)(wnddata->res == 0, "got reserved as %d\n", wnddata->res);
         /* redirect class name (versioned or not) is stored just after header data */
-        ok_(__FILE__, line)(wnddata->classname_offset == wnddata->size, "got name offset as %d\n", wnddata->classname_offset);
-        ok_(__FILE__, line)(wnddata->modulename_len > 0, "got module name length as %d\n", wnddata->modulename_len);
+        ok_(__FILE__, line)(wnddata->name_offset == wnddata->size, "got name offset as %d\n", wnddata->name_offset);
+        ok_(__FILE__, line)(wnddata->module_len > 0, "got module name length as %d\n", wnddata->module_len);
 
         /* expected versioned name */
         lstrcpyW(buff, verW);
         lstrcatW(buff, clsname);
-        ptr = (WCHAR*)((BYTE*)wnddata + wnddata->size);
+        ptr = (WCHAR*)((BYTE*)wnddata + wnddata->name_offset);
         ok_(__FILE__, line)(!lstrcmpW(ptr, buff), "got wrong class name %s, expected %s\n", wine_dbgstr_w(ptr), wine_dbgstr_w(buff));
-        ok_(__FILE__, line)(lstrlenW(ptr)*sizeof(WCHAR) == wnddata->classname_len,
-            "got wrong class name length %d, expected %d\n", wnddata->classname_len, lstrlenW(ptr));
+        ok_(__FILE__, line)(lstrlenW(ptr)*sizeof(WCHAR) == wnddata->name_len,
+            "got wrong class name length %d, expected %d\n", wnddata->name_len, lstrlenW(ptr));
 
         /* data length is simply header length + string data length including nulls */
-        len = wnddata->size + wnddata->classname_len + wnddata->modulename_len + 2*sizeof(WCHAR);
+        len = wnddata->size + wnddata->name_len + wnddata->module_len + 2*sizeof(WCHAR);
         ok_(__FILE__, line)(data.ulLength == len, "got wrong data length %d, expected %d\n", data.ulLength, len);
 
-        if (data.ulSectionTotalLength > wnddata->modulename_offset)
+        if (data.ulSectionTotalLength > wnddata->module_offset)
         {
             WCHAR *modulename, *sectionptr;
 
             /* just compare pointers */
-            modulename = (WCHAR*)((BYTE*)wnddata + wnddata->size + wnddata->classname_len + sizeof(WCHAR));
-            sectionptr = (WCHAR*)((BYTE*)data.lpSectionBase + wnddata->modulename_offset);
+            modulename = (WCHAR*)((BYTE*)wnddata + wnddata->size + wnddata->name_len + sizeof(WCHAR));
+            sectionptr = (WCHAR*)((BYTE*)data.lpSectionBase + wnddata->module_offset);
             ok_(__FILE__, line)(modulename == sectionptr, "got wrong name offset %p, expected %p\n", sectionptr, modulename);
         }
     }
@@ -915,7 +933,6 @@ todo_wine
     ok_(__FILE__, line)(data.ulSectionGlobalDataLength == 0, "data.ulSectionGlobalDataLength=%u\n",
        data.ulSectionGlobalDataLength);
     ok_(__FILE__, line)(data.lpSectionBase != NULL, "data.lpSectionBase == NULL\n");
-todo_wine
     ok_(__FILE__, line)(data.ulSectionTotalLength > 0, "data.ulSectionTotalLength=%u\n",
        data.ulSectionTotalLength);
     ok_(__FILE__, line)(data.hActCtx == NULL, "data.hActCtx=%p\n", data.hActCtx);
@@ -928,23 +945,19 @@ todo_wine
     ret = pFindActCtxSectionStringW(FIND_ACTCTX_SECTION_KEY_RETURN_HACTCTX, NULL,
                                     ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION,
                                     clsname, &data);
-    ok_(__FILE__, line)(ret, "FindActCtxSectionStringW failed: %u\n", GetLastError());
-    if(!ret)
-    {
-        skip("couldn't find\n");
-        return;
-    }
+    ok_(__FILE__, line)(ret, "FindActCtxSectionStringW failed: %u, class %s\n", GetLastError(),
+        wine_dbgstr_w(clsname));
+    if (!ret) return;
 
     ok_(__FILE__, line)(data.cbSize == sizeof(data), "data.cbSize=%u\n", data.cbSize);
     ok_(__FILE__, line)(data.ulDataFormatVersion == 1, "data.ulDataFormatVersion=%u\n", data.ulDataFormatVersion);
     ok_(__FILE__, line)(data.lpData != NULL, "data.lpData == NULL\n");
-    /* ok_(__FILE__, line)(data.ulLength == ??, "data.ulLength=%u\n", data.ulLength); FIXME */
+    ok_(__FILE__, line)(data.ulLength > 0, "data.ulLength=%u\n", data.ulLength);
     ok_(__FILE__, line)(data.lpSectionGlobalData == NULL, "data.lpSectionGlobalData != NULL\n");
     ok_(__FILE__, line)(data.ulSectionGlobalDataLength == 0, "data.ulSectionGlobalDataLength=%u\n",
        data.ulSectionGlobalDataLength);
     ok_(__FILE__, line)(data.lpSectionBase != NULL, "data.lpSectionBase == NULL\n");
-    /* ok_(__FILE__, line)(data.ulSectionTotalLength == 0, "data.ulSectionTotalLength=%u\n",
-       data.ulSectionTotalLength); FIXME */
+    ok_(__FILE__, line)(data.ulSectionTotalLength > 0, "data.ulSectionTotalLength=%u\n", data.ulSectionTotalLength);
     ok_(__FILE__, line)(data.hActCtx == handle, "data.hActCtx=%p\n", data.hActCtx);
     ok_(__FILE__, line)(data.ulAssemblyRosterIndex == exid, "data.ulAssemblyRosterIndex=%u, expected %u\n",
        data.ulAssemblyRosterIndex, exid);
@@ -1161,7 +1174,6 @@ static void test_wndclass_section(void)
     ok(ret, "got %d\n", ret);
 
     /* For both string same section is returned, meaning it's one wndclass section per context */
-todo_wine
     ok(data.lpSectionBase == data2.lpSectionBase, "got %p, %p\n", data.lpSectionBase, data2.lpSectionBase);
     ok(data.ulSectionTotalLength == data2.ulSectionTotalLength, "got %u, %u\n", data.ulSectionTotalLength,
         data2.ulSectionTotalLength);
