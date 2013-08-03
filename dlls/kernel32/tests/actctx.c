@@ -105,7 +105,7 @@ static const char manifest_wndcls1[] =
 "<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">"
 "<assemblyIdentity version=\"1.2.3.4\"  name=\"testdep1\" type=\"win32\" processorArchitecture=\"" ARCH "\"/>"
 "<file name=\"testlib1.dll\">"
-"<windowClass>wndClass1</windowClass>"
+"<windowClass versioned=\"yes\">wndClass1</windowClass>"
 "<windowClass>wndClass2</windowClass>"
 "</file>"
 "</assembly>";
@@ -114,7 +114,7 @@ static const char manifest_wndcls2[] =
 "<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">"
 "<assemblyIdentity version=\"4.3.2.1\"  name=\"testdep2\" type=\"win32\" processorArchitecture=\"" ARCH "\" />"
 "<file name=\"testlib2.dll\">"
-"<windowClass>wndClass3</windowClass>"
+"<windowClass versioned=\"no\">wndClass3</windowClass>"
 "<windowClass>wndClass4</windowClass>"
 "</file>"
 "</assembly>";
@@ -1140,9 +1140,12 @@ todo_wine
 
 static void test_wndclass_section(void)
 {
+    static const WCHAR cls1W[] = {'1','.','2','.','3','.','4','!','w','n','d','C','l','a','s','s','1',0};
     ACTCTX_SECTION_KEYED_DATA data, data2;
+    struct wndclass_redirect_data *classdata;
     ULONG_PTR cookie;
     HANDLE handle;
+    WCHAR *ptrW;
     BOOL ret;
 
     /* use two dependent manifests, each defines 2 window class redirects */
@@ -1177,6 +1180,15 @@ static void test_wndclass_section(void)
     ok(data.lpSectionBase == data2.lpSectionBase, "got %p, %p\n", data.lpSectionBase, data2.lpSectionBase);
     ok(data.ulSectionTotalLength == data2.ulSectionTotalLength, "got %u, %u\n", data.ulSectionTotalLength,
         data2.ulSectionTotalLength);
+
+    /* wndClass1 is versioned, wndClass3 is not */
+    classdata = (struct wndclass_redirect_data*)data.lpData;
+    ptrW = (WCHAR*)((BYTE*)data.lpData + classdata->name_offset);
+    ok(!lstrcmpW(ptrW, cls1W), "got %s\n", wine_dbgstr_w(ptrW));
+
+    classdata = (struct wndclass_redirect_data*)data2.lpData;
+    ptrW = (WCHAR*)((BYTE*)data2.lpData + classdata->name_offset);
+    ok(!lstrcmpW(ptrW, wndClass3W), "got %s\n", wine_dbgstr_w(ptrW));
 
     ret = pDeactivateActCtx(0, cookie);
     ok(ret, "DeactivateActCtx failed: %u\n", GetLastError());

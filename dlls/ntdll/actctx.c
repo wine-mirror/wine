@@ -167,6 +167,7 @@ struct entity
         struct
         {
             WCHAR *name;
+            BOOL   versioned;
         } class;
         struct
         {
@@ -279,6 +280,9 @@ static const WCHAR tlbidW[] = {'t','l','b','i','d',0};
 static const WCHAR typeW[] = {'t','y','p','e',0};
 static const WCHAR versionW[] = {'v','e','r','s','i','o','n',0};
 static const WCHAR xmlnsW[] = {'x','m','l','n','s',0};
+static const WCHAR versionedW[] = {'v','e','r','s','i','o','n','e','d',0};
+static const WCHAR yesW[] = {'y','e','s',0};
+static const WCHAR noW[] = {'n','o',0};
 
 static const WCHAR xmlW[] = {'?','x','m','l',0};
 static const WCHAR manifestv1W[] = {'u','r','n',':','s','c','h','e','m','a','s','-','m','i','c','r','o','s','o','f','t','-','c','o','m',':','a','s','m','.','v','1',0};
@@ -1093,15 +1097,30 @@ static int get_assembly_version(struct assembly *assembly, WCHAR *ret)
 
 static BOOL parse_window_class_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll, struct actctx_loader* acl)
 {
-    xmlstr_t    elem, content;
-    BOOL        end = FALSE, ret = TRUE;
+    xmlstr_t elem, content, attr_name, attr_value;
+    BOOL end = FALSE, ret = TRUE, error;
     struct entity*      entity;
 
     if (!(entity = add_entity(&dll->entities, ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION)))
         return FALSE;
 
-    if (!parse_expect_no_attr(xmlbuf, &end)) return FALSE;
-    if (end) return FALSE;
+    entity->u.class.versioned = TRUE;
+    while (next_xml_attr(xmlbuf, &attr_name, &attr_value, &error, &end))
+    {
+        if (xmlstr_cmp(&attr_name, versionedW))
+        {
+            if (xmlstr_cmpi(&attr_value, noW))
+                entity->u.class.versioned = FALSE;
+            else if (!xmlstr_cmpi(&attr_value, yesW))
+               return FALSE;
+        }
+        else
+        {
+            WARN("unknown attr %s=%s\n", debugstr_xmlstr(&attr_name), debugstr_xmlstr(&attr_value));
+        }
+    }
+
+    if (error || end) return end;
 
     if (!parse_text_content(xmlbuf, &content)) return FALSE;
 
@@ -1318,7 +1337,6 @@ static BOOL parse_dependency_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl)
     {
         if (xmlstr_cmp(&attr_name, optionalW))
         {
-            static const WCHAR yesW[] = {'y','e','s',0};
             optional = xmlstr_cmpi( &attr_value, yesW );
             TRACE("optional=%s\n", debugstr_xmlstr(&attr_value));
         }
@@ -2259,16 +2277,19 @@ static NTSTATUS build_wndclass_section(ACTIVATION_CONTEXT* actctx, struct wndcla
                 struct entity *entity = &dll->entities.base[k];
                 if (entity->kind == ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION)
                 {
-                    int class_len = strlenW(entity->u.class.name);
+                    int class_len = strlenW(entity->u.class.name) + 1;
                     int len;
 
                     /* each class entry needs index, data and string data */
                     total_len += sizeof(struct wndclass_index);
                     total_len += sizeof(struct wndclass_redirect_data);
                     /* original name is stored separately */
-                    total_len += aligned_string_len((class_len+1)*sizeof(WCHAR));
+                    total_len += aligned_string_len(class_len*sizeof(WCHAR));
                     /* versioned name and module name are stored one after another */
-                    len  = get_assembly_version(assembly, NULL) + class_len + 2 /* null terminator and '!' separator */;
+                    if (entity->u.class.versioned)
+                        len = get_assembly_version(assembly, NULL) + class_len + 1 /* '!' separator */;
+                    else
+                        len = class_len;
                     len += strlenW(dll->name) + 1;
                     total_len += aligned_string_len(len*sizeof(WCHAR));
 
@@ -2314,7 +2335,10 @@ static NTSTATUS build_wndclass_section(ACTIVATION_CONTEXT* actctx, struct wndcla
                     RtlHashUnicodeString(&str, TRUE, HASH_STRING_ALGORITHM_X65599, &index->hash);
 
                     /* include '!' separator too */
-                    versioned_len = (get_assembly_version(assembly, NULL) + 1)*sizeof(WCHAR) + str.Length;
+                    if (entity->u.class.versioned)
+                        versioned_len = (get_assembly_version(assembly, NULL) + 1)*sizeof(WCHAR) + str.Length;
+                    else
+                        versioned_len = str.Length;
                     module_len = strlenW(dll->name)*sizeof(WCHAR);
 
                     index->name_offset = name_offset;
@@ -2344,9 +2368,17 @@ static NTSTATUS build_wndclass_section(ACTIVATION_CONTEXT* actctx, struct wndcla
 
                     /* versioned name */
                     ptrW = (WCHAR*)((BYTE*)data + data->name_offset);
-                    get_assembly_version(assembly, ptrW);
-                    strcatW(ptrW, exclW);
-                    strcatW(ptrW, entity->u.class.name);
+                    if (entity->u.class.versioned)
+                    {
+                        get_assembly_version(assembly, ptrW);
+                        strcatW(ptrW, exclW);
+                        strcatW(ptrW, entity->u.class.name);
+                    }
+                    else
+                    {
+                        memcpy(ptrW, entity->u.class.name, index->name_len);
+                        ptrW[index->name_len/sizeof(WCHAR)] = 0;
+                    }
 
                     name_offset += sizeof(*data);
                     name_offset += aligned_string_len(str.MaximumLength) + aligned_string_len(versioned_len + module_len + 2*sizeof(WCHAR));
