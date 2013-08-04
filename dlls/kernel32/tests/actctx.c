@@ -108,6 +108,7 @@ static const char manifest_wndcls1[] =
 "<windowClass versioned=\"yes\">wndClass1</windowClass>"
 "<windowClass>wndClass2</windowClass>"
 "</file>"
+"<file name=\"testlib1_2.dll\" />"
 "</assembly>";
 
 static const char manifest_wndcls2[] =
@@ -117,6 +118,7 @@ static const char manifest_wndcls2[] =
 "<windowClass versioned=\"no\">wndClass3</windowClass>"
 "<windowClass>wndClass4</windowClass>"
 "</file>"
+"<file name=\"testlib2_2.dll\" />"
 "</assembly>";
 
 static const char manifest_wndcls_main[] =
@@ -754,101 +756,17 @@ static void test_create_fail(void)
     test_create_and_fail(manifest2, wrong_depmanifest1, 0 );
 }
 
-struct dllredirect_keyed_data
-{
-    ULONG size;
-    ULONG unk;
-    DWORD res[3];
-};
-
-static void test_find_dll_redirection(HANDLE handle, LPCWSTR libname, ULONG exid, int line)
-{
-    ACTCTX_SECTION_KEYED_DATA data;
-    BOOL ret;
-
-    memset(&data, 0xfe, sizeof(data));
-    data.cbSize = sizeof(data);
-
-    ret = pFindActCtxSectionStringW(0, NULL,
-                                    ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION,
-                                    libname, &data);
-    ok_(__FILE__, line)(ret, "FindActCtxSectionStringW failed: %u\n", GetLastError());
-    if(!ret)
-    {
-        skip("couldn't find %s\n",strw(libname));
-        return;
-    }
-
-    ok_(__FILE__, line)(data.cbSize == sizeof(data), "data.cbSize=%u\n", data.cbSize);
-    ok_(__FILE__, line)(data.ulDataFormatVersion == 1, "data.ulDataFormatVersion=%u\n", data.ulDataFormatVersion);
-    ok_(__FILE__, line)(data.lpData != NULL, "data.lpData == NULL\n");
-    ok_(__FILE__, line)(data.ulLength == 20, "data.ulLength=%u\n", data.ulLength);
-
-    if (data.lpData)
-    {
-        struct dllredirect_keyed_data *dlldata = (struct dllredirect_keyed_data*)data.lpData;
-todo_wine
-        ok_(__FILE__, line)(dlldata->size == data.ulLength, "got wrong size %d\n", dlldata->size);
-
-if (dlldata->size == data.ulLength)
-{
-        ok_(__FILE__, line)(dlldata->unk == 2, "got wrong field value %d\n", dlldata->unk);
-        ok_(__FILE__, line)(dlldata->res[0] == 0, "got wrong res[0] value %d\n", dlldata->res[0]);
-        ok_(__FILE__, line)(dlldata->res[1] == 0, "got wrong res[1] value %d\n", dlldata->res[1]);
-        ok_(__FILE__, line)(dlldata->res[2] == 0, "got wrong res[2] value %d\n", dlldata->res[2]);
-}
-    }
-
-    ok_(__FILE__, line)(data.lpSectionGlobalData == NULL, "data.lpSectionGlobalData != NULL\n");
-    ok_(__FILE__, line)(data.ulSectionGlobalDataLength == 0, "data.ulSectionGlobalDataLength=%u\n",
-       data.ulSectionGlobalDataLength);
-    ok_(__FILE__, line)(data.lpSectionBase != NULL, "data.lpSectionBase == NULL\n");
-    /* ok_(__FILE__, line)(data.ulSectionTotalLength == ??, "data.ulSectionTotalLength=%u\n",
-       data.ulSectionTotalLength); */
-    ok_(__FILE__, line)(data.hActCtx == NULL, "data.hActCtx=%p\n", data.hActCtx);
-    ok_(__FILE__, line)(data.ulAssemblyRosterIndex == exid, "data.ulAssemblyRosterIndex=%u, expected %u\n",
-       data.ulAssemblyRosterIndex, exid);
-
-    memset(&data, 0xfe, sizeof(data));
-    data.cbSize = sizeof(data);
-
-    ret = pFindActCtxSectionStringW(FIND_ACTCTX_SECTION_KEY_RETURN_HACTCTX, NULL,
-                                    ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION,
-                                    libname, &data);
-    ok_(__FILE__, line)(ret, "FindActCtxSectionStringW failed: %u\n", GetLastError());
-    if(!ret)
-    {
-        skip("couldn't find\n");
-        return;
-    }
-
-    ok_(__FILE__, line)(data.cbSize == sizeof(data), "data.cbSize=%u\n", data.cbSize);
-    ok_(__FILE__, line)(data.ulDataFormatVersion == 1, "data.ulDataFormatVersion=%u\n", data.ulDataFormatVersion);
-    ok_(__FILE__, line)(data.lpData != NULL, "data.lpData == NULL\n");
-    ok_(__FILE__, line)(data.ulLength == 20, "data.ulLength=%u\n", data.ulLength);
-    ok_(__FILE__, line)(data.lpSectionGlobalData == NULL, "data.lpSectionGlobalData != NULL\n");
-    ok_(__FILE__, line)(data.ulSectionGlobalDataLength == 0, "data.ulSectionGlobalDataLength=%u\n",
-       data.ulSectionGlobalDataLength);
-    ok_(__FILE__, line)(data.lpSectionBase != NULL, "data.lpSectionBase == NULL\n");
-    /* ok_(__FILE__, line)(data.ulSectionTotalLength == ?? , "data.ulSectionTotalLength=%u\n",
-       data.ulSectionTotalLength); */
-    ok_(__FILE__, line)(data.hActCtx == handle, "data.hActCtx=%p\n", data.hActCtx);
-    ok_(__FILE__, line)(data.ulAssemblyRosterIndex == exid, "data.ulAssemblyRosterIndex=%u, expected %u\n",
-       data.ulAssemblyRosterIndex, exid);
-
-    pReleaseActCtx(handle);
-}
-
-struct wndclass_header
+struct strsection_header
 {
     DWORD magic;
-    DWORD unk1[4];
+    ULONG size;
+    DWORD unk1[3];
     ULONG count;
     ULONG index_offset;
     DWORD unk2[4];
 };
 
-struct wndclass_index
+struct string_index
 {
     ULONG hash;
     ULONG name_offset;
@@ -868,10 +786,82 @@ struct wndclass_redirect_data
     ULONG module_offset;/* container name offset */
 };
 
+struct dllredirect_data
+{
+    ULONG size;
+    ULONG unk;
+    DWORD res[3];
+};
+
+static void test_find_dll_redirection(HANDLE handle, LPCWSTR libname, ULONG exid, int line)
+{
+    ACTCTX_SECTION_KEYED_DATA data;
+    BOOL ret;
+
+    memset(&data, 0xfe, sizeof(data));
+    data.cbSize = sizeof(data);
+
+    ret = pFindActCtxSectionStringW(0, NULL,
+                                    ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION,
+                                    libname, &data);
+    ok_(__FILE__, line)(ret, "FindActCtxSectionStringW failed: %u\n", GetLastError());
+    if (!ret) return;
+
+    ok_(__FILE__, line)(data.cbSize == sizeof(data), "data.cbSize=%u\n", data.cbSize);
+    ok_(__FILE__, line)(data.ulDataFormatVersion == 1, "data.ulDataFormatVersion=%u\n", data.ulDataFormatVersion);
+    ok_(__FILE__, line)(data.lpData != NULL, "data.lpData == NULL\n");
+    ok_(__FILE__, line)(data.ulLength == 20, "data.ulLength=%u\n", data.ulLength);
+
+    if (data.lpData)
+    {
+        struct dllredirect_data *dlldata = (struct dllredirect_data*)data.lpData;
+        ok_(__FILE__, line)(dlldata->size == data.ulLength, "got wrong size %d\n", dlldata->size);
+        ok_(__FILE__, line)(dlldata->unk == 2, "got wrong field value %d\n", dlldata->unk);
+        ok_(__FILE__, line)(dlldata->res[0] == 0, "got wrong res[0] value %d\n", dlldata->res[0]);
+        ok_(__FILE__, line)(dlldata->res[1] == 0, "got wrong res[1] value %d\n", dlldata->res[1]);
+        ok_(__FILE__, line)(dlldata->res[2] == 0, "got wrong res[2] value %d\n", dlldata->res[2]);
+    }
+
+    ok_(__FILE__, line)(data.lpSectionGlobalData == NULL, "data.lpSectionGlobalData != NULL\n");
+    ok_(__FILE__, line)(data.ulSectionGlobalDataLength == 0, "data.ulSectionGlobalDataLength=%u\n",
+       data.ulSectionGlobalDataLength);
+    ok_(__FILE__, line)(data.lpSectionBase != NULL, "data.lpSectionBase == NULL\n");
+    ok_(__FILE__, line)(data.ulSectionTotalLength > 0, "data.ulSectionTotalLength=%u\n",
+       data.ulSectionTotalLength);
+    ok_(__FILE__, line)(data.hActCtx == NULL, "data.hActCtx=%p\n", data.hActCtx);
+    ok_(__FILE__, line)(data.ulAssemblyRosterIndex == exid, "data.ulAssemblyRosterIndex=%u, expected %u\n",
+       data.ulAssemblyRosterIndex, exid);
+
+    memset(&data, 0xfe, sizeof(data));
+    data.cbSize = sizeof(data);
+
+    ret = pFindActCtxSectionStringW(FIND_ACTCTX_SECTION_KEY_RETURN_HACTCTX, NULL,
+                                    ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION,
+                                    libname, &data);
+    ok_(__FILE__, line)(ret, "FindActCtxSectionStringW failed: %u\n", GetLastError());
+    if (!ret) return;
+
+    ok_(__FILE__, line)(data.cbSize == sizeof(data), "data.cbSize=%u\n", data.cbSize);
+    ok_(__FILE__, line)(data.ulDataFormatVersion == 1, "data.ulDataFormatVersion=%u\n", data.ulDataFormatVersion);
+    ok_(__FILE__, line)(data.lpData != NULL, "data.lpData == NULL\n");
+    ok_(__FILE__, line)(data.ulLength == 20, "data.ulLength=%u\n", data.ulLength);
+    ok_(__FILE__, line)(data.lpSectionGlobalData == NULL, "data.lpSectionGlobalData != NULL\n");
+    ok_(__FILE__, line)(data.ulSectionGlobalDataLength == 0, "data.ulSectionGlobalDataLength=%u\n",
+       data.ulSectionGlobalDataLength);
+    ok_(__FILE__, line)(data.lpSectionBase != NULL, "data.lpSectionBase == NULL\n");
+    ok_(__FILE__, line)(data.ulSectionTotalLength > 0, "data.ulSectionTotalLength=%u\n",
+       data.ulSectionTotalLength);
+    ok_(__FILE__, line)(data.hActCtx == handle, "data.hActCtx=%p\n", data.hActCtx);
+    ok_(__FILE__, line)(data.ulAssemblyRosterIndex == exid, "data.ulAssemblyRosterIndex=%u, expected %u\n",
+       data.ulAssemblyRosterIndex, exid);
+
+    pReleaseActCtx(handle);
+}
+
 static void test_find_window_class(HANDLE handle, LPCWSTR clsname, ULONG exid, int line)
 {
     struct wndclass_redirect_data *wnddata;
-    struct wndclass_header *header;
+    struct strsection_header *header;
     ACTCTX_SECTION_KEYED_DATA data;
     BOOL ret;
 
@@ -885,7 +875,7 @@ static void test_find_window_class(HANDLE handle, LPCWSTR clsname, ULONG exid, i
         wine_dbgstr_w(clsname));
     if (!ret) return;
 
-    header = (struct wndclass_header*)data.lpSectionBase;
+    header = (struct strsection_header*)data.lpSectionBase;
     wnddata = (struct wndclass_redirect_data*)data.lpData;
 
     ok_(__FILE__, line)(header->magic == 0x64487353, "got wrong magic 0x%08x\n", header->magic);
@@ -1143,6 +1133,7 @@ static void test_wndclass_section(void)
     static const WCHAR cls1W[] = {'1','.','2','.','3','.','4','!','w','n','d','C','l','a','s','s','1',0};
     ACTCTX_SECTION_KEYED_DATA data, data2;
     struct wndclass_redirect_data *classdata;
+    struct strsection_header *section;
     ULONG_PTR cookie;
     HANDLE handle;
     WCHAR *ptrW;
@@ -1176,6 +1167,10 @@ static void test_wndclass_section(void)
                                     wndClass3W, &data2);
     ok(ret, "got %d\n", ret);
 
+    section = (struct strsection_header*)data.lpSectionBase;
+    ok(section->count == 4, "got %d\n", section->count);
+    ok(section->size == sizeof(*section), "got %d\n", section->size);
+
     /* For both string same section is returned, meaning it's one wndclass section per context */
     ok(data.lpSectionBase == data2.lpSectionBase, "got %p, %p\n", data.lpSectionBase, data2.lpSectionBase);
     ok(data.ulSectionTotalLength == data2.ulSectionTotalLength, "got %u, %u\n", data.ulSectionTotalLength,
@@ -1189,6 +1184,59 @@ static void test_wndclass_section(void)
     classdata = (struct wndclass_redirect_data*)data2.lpData;
     ptrW = (WCHAR*)((BYTE*)data2.lpData + classdata->name_offset);
     ok(!lstrcmpW(ptrW, wndClass3W), "got %s\n", wine_dbgstr_w(ptrW));
+
+    ret = pDeactivateActCtx(0, cookie);
+    ok(ret, "DeactivateActCtx failed: %u\n", GetLastError());
+
+    pReleaseActCtx(handle);
+}
+
+static void test_dllredirect_section(void)
+{
+    static const WCHAR testlib1W[] = {'t','e','s','t','l','i','b','1','.','d','l','l',0};
+    static const WCHAR testlib2W[] = {'t','e','s','t','l','i','b','2','.','d','l','l',0};
+    ACTCTX_SECTION_KEYED_DATA data, data2;
+    struct strsection_header *section;
+    ULONG_PTR cookie;
+    HANDLE handle;
+    BOOL ret;
+
+    /* use two dependent manifests, 4 'files' total */
+    create_manifest_file("testdep1.manifest", manifest_wndcls1, -1, NULL, NULL);
+    create_manifest_file("testdep2.manifest", manifest_wndcls2, -1, NULL, NULL);
+    create_manifest_file("main_wndcls.manifest", manifest_wndcls_main, -1, NULL, NULL);
+
+    handle = test_create("main_wndcls.manifest");
+    DeleteFileA("testdep1.manifest");
+    DeleteFileA("testdep2.manifest");
+    DeleteFileA("main_wndcls.manifest");
+
+    ret = pActivateActCtx(handle, &cookie);
+    ok(ret, "ActivateActCtx failed: %u\n", GetLastError());
+
+    memset(&data, 0, sizeof(data));
+    memset(&data2, 0, sizeof(data2));
+    data.cbSize = sizeof(data);
+    data2.cbSize = sizeof(data2);
+
+    /* get data for two files from different assemblies */
+    ret = pFindActCtxSectionStringW(0, NULL,
+                                    ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION,
+                                    testlib1W, &data);
+    ok(ret, "got %d\n", ret);
+    ret = pFindActCtxSectionStringW(0, NULL,
+                                    ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION,
+                                    testlib2W, &data2);
+    ok(ret, "got %d\n", ret);
+
+    section = (struct strsection_header*)data.lpSectionBase;
+    ok(section->count == 4, "got %d\n", section->count);
+    ok(section->size == sizeof(*section), "got %d\n", section->size);
+
+    /* For both string same section is returned, meaning it's one dll redirect section per context */
+    ok(data.lpSectionBase == data2.lpSectionBase, "got %p, %p\n", data.lpSectionBase, data2.lpSectionBase);
+    ok(data.ulSectionTotalLength == data2.ulSectionTotalLength, "got %u, %u\n", data.ulSectionTotalLength,
+        data2.ulSectionTotalLength);
 
     ret = pDeactivateActCtx(0, cookie);
     ok(ret, "DeactivateActCtx failed: %u\n", GetLastError());
@@ -1415,6 +1463,7 @@ static void test_actctx(void)
     }
 
     test_wndclass_section();
+    test_dllredirect_section();
 }
 
 static void test_app_manifest(void)
