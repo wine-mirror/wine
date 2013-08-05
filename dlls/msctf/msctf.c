@@ -35,6 +35,7 @@
 #include "comcat.h"
 #include "rpcproxy.h"
 #include "msctf.h"
+#include "inputscope.h"
 
 #include "msctf_internal.h"
 
@@ -602,7 +603,7 @@ HRESULT WINAPI TF_GetThreadMgr(ITfThreadMgr **pptim)
 /***********************************************************************
  *              SetInputScope(MSCTF.@)
  */
-HRESULT WINAPI SetInputScope(HWND hwnd, INT inputscope)
+HRESULT WINAPI SetInputScope(HWND hwnd, InputScope inputscope)
 {
     FIXME("STUB: %p %i\n",hwnd,inputscope);
     return S_OK;
@@ -611,7 +612,7 @@ HRESULT WINAPI SetInputScope(HWND hwnd, INT inputscope)
 /***********************************************************************
  *              SetInputScopes(MSCTF.@)
  */
-HRESULT WINAPI SetInputScopes(HWND hwnd, const INT *pInputScopes,
+HRESULT WINAPI SetInputScopes(HWND hwnd, const InputScope *pInputScopes,
                               UINT cInputScopes, WCHAR **ppszPhraseList,
                               UINT cPhrases, WCHAR *pszRegExp, WCHAR *pszSRGS)
 {

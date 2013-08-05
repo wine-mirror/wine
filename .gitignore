@@ -194,6 +194,7 @@ include/iextag.h
 include/imnact.h
 include/imnxport.h
 include/indexsrv.h
+include/inputscope.h
 include/mediaobj.h
 include/metahost.h
 include/mimeinfo.h

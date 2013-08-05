@@ -29,8 +29,6 @@ cpp_quote("#define TF_E_DISCONNECTED    MAKE_HRESULT(SEVERITY_ERROR, FACILITY_IT
 cpp_quote("#define TF_E_ALREADY_EXISTS  MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 0x0506)")
 cpp_quote("#define TF_E_NOLOCK          MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 0x0201)")
 
-cpp_quote("HRESULT WINAPI SetInputScope(HWND hwnd, INT inputscope);")
-cpp_quote("HRESULT WINAPI SetInputScopes(HWND hwnd, const INT *pInputScopes, UINT cInputScopes, WCHAR **ppszPhraseList, UINT cPhrases, WCHAR *pszRegExp, WCHAR *pszSRGS);")
 cpp_quote("HRESULT WINAPI TF_CreateThreadMgr(ITfThreadMgr **pptim);")
 cpp_quote("HRESULT WINAPI TF_GetThreadMgr(ITfThreadMgr **pptim);")
 cpp_quote("HRESULT WINAPI TF_CreateInputProcessorProfiles(ITfInputProcessorProfiles **ppipr);")
