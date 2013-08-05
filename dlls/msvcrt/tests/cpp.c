@@ -238,6 +238,55 @@ static BOOL InitFunctionPtrs(void)
     }
     else
     {
+#ifdef __arm__
+        SETNOFAIL(poperator_new, "??_U@YAPAXI@Z");
+        SETNOFAIL(poperator_delete, "??_V@YAXPAX@Z");
+
+        SET(pexception_ctor, "??0exception@std@@QAA@ABQBD@Z");
+        SET(pexception_copy_ctor, "??0exception@std@@QAA@ABV01@@Z");
+        SET(pexception_default_ctor, "??0exception@std@@QAA@XZ");
+        SET(pexception_dtor, "??1exception@std@@UAA@XZ");
+        SET(pexception_opequals, "??4exception@std@@QAAAAV01@ABV01@@Z");
+        SET(pexception_what, "?what@exception@std@@UBAPBDXZ");
+        SET(pexception_vector_dtor, "??_Eexception@@UAEPAXI@Z");/**/
+        SET(pexception_scalar_dtor, "??_Gexception@@UAEPAXI@Z");/**/
+
+        SET(pbad_typeid_ctor, "??0bad_typeid@std@@QAA@PBD@Z");
+        SETNOFAIL(pbad_typeid_ctor_closure, "??_Fbad_typeid@std@@QAAXXZ");
+        SET(pbad_typeid_copy_ctor, "??0bad_typeid@std@@QAA@ABV01@@Z");
+        SET(pbad_typeid_dtor, "??1bad_typeid@std@@UAA@XZ");
+        SET(pbad_typeid_opequals, "??4bad_typeid@std@@QAAAAV01@ABV01@@Z");
+        SET(pbad_typeid_what, "?what@exception@std@@UBAPBDXZ");
+        SET(pbad_typeid_vector_dtor, "??_Ebad_cast@@UAEPAXI@Z");
+        SET(pbad_typeid_scalar_dtor, "??_Gbad_cast@@UAEPAXI@Z");
+
+        SETNOFAIL(pbad_cast_ctor, "??0bad_cast@@QAE@ABQBD@Z");
+        if (!pbad_cast_ctor)
+            SET(pbad_cast_ctor, "??0bad_cast@std@@AAA@PBQBD@Z");
+        SETNOFAIL(pbad_cast_ctor2, "??0bad_cast@std@@QAA@PBD@Z");
+        SETNOFAIL(pbad_cast_ctor_closure, "??_Fbad_cast@std@@QAAXXZ");
+        /* FIXME: No ARM equivalent for "??0bad_cast@@QAE@ABV0@@Z" */
+        SET(pbad_cast_dtor, "??1bad_cast@std@@UAA@XZ");
+        SET(pbad_cast_opequals, "??4bad_cast@std@@QAAAAV01@ABV01@@Z");
+        SET(pbad_cast_what, "?what@exception@std@@UBAPBDXZ");
+        SET(pbad_cast_vector_dtor, "??_Ebad_cast@@UAEPAXI@Z");
+        SET(pbad_cast_scalar_dtor, "??_Gbad_cast@@UAEPAXI@Z");
+
+        SET(p__non_rtti_object_ctor, "??0__non_rtti_object@std@@QAA@PBD@Z");
+        SET(p__non_rtti_object_copy_ctor, "??0__non_rtti_object@std@@QAA@ABV01@@Z");
+        SET(p__non_rtti_object_dtor, "??1__non_rtti_object@std@@UAA@XZ");
+        SET(p__non_rtti_object_opequals, "??4__non_rtti_object@std@@QAAAAV01@ABV01@@Z");
+        SET(p__non_rtti_object_what, "?what@exception@std@@UBAPBDXZ");
+        SET(p__non_rtti_object_vector_dtor, "??_E__non_rtti_object@@UAEPAXI@Z");
+        SET(p__non_rtti_object_scalar_dtor, "??_G__non_rtti_object@@UAEPAXI@Z");
+
+        SET(ptype_info_dtor, "??1type_info@@UAA@XZ");
+        SET(ptype_info_raw_name, "?raw_name@type_info@@QBAPBDXZ");
+        SET(ptype_info_name, "?name@type_info@@QBEPBDXZ");
+        SET(ptype_info_before, "?before@type_info@@QBEHABV1@@Z");
+        SET(ptype_info_opequals_equals, "??8type_info@@QBA_NABV0@@Z");
+        SET(ptype_info_opnot_equals, "??9type_info@@QBA_NABV0@@Z");
+#else
         SETNOFAIL(poperator_new, "??_U@YAPAXI@Z");
         SETNOFAIL(poperator_delete, "??_V@YAXPAX@Z");
 
@@ -285,6 +334,7 @@ static BOOL InitFunctionPtrs(void)
         SET(ptype_info_before, "?before@type_info@@QBEHABV1@@Z");
         SET(ptype_info_opequals_equals, "??8type_info@@QBEHABV0@@Z");
         SET(ptype_info_opnot_equals, "??9type_info@@QBEHABV0@@Z");
+#endif /* __arm__ */
     }
 
     if (!poperator_new)
