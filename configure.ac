@@ -745,6 +745,7 @@ clean::
     AC_SUBST(FORCEFEEDBACKLIB,"-framework ForceFeedback -framework CoreFoundation")
     AC_SUBST(APPLICATIONSERVICESLIB,"-framework ApplicationServices")
     AC_SUBST(CORESERVICESLIB,"-framework CoreServices")
+    AC_SUBST(APPKITLIB,"-framework AppKit")
     case $host_os in
       darwin11*)
         AC_SUBST(LDEXECFLAGS,["-image_base 0x7bf00000 -Wl,-macosx_version_min,10.6,-segaddr,WINE_DOS,0x00001000,-segaddr,WINE_SHAREDHEAP,0x7f000000,-sectcreate,__TEXT,__info_plist,wine_info.plist"]) ;;
