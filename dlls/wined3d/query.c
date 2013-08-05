@@ -321,9 +321,6 @@ static HRESULT wined3d_occlusion_query_ops_get_data(struct wined3d_query *query,
     struct wined3d_occlusion_query *oq = query->extendedData;
     GLuint samples;
 
-    if (!oq->context)
-        query->state = QUERY_CREATED;
-
     if (query->state == QUERY_CREATED)
     {
         /* D3D allows GetData on a new query, OpenGL doesn't. So just invent the data ourselves */
