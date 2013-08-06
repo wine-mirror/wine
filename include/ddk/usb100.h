@@ -102,6 +102,17 @@ typedef struct _USB_COMMON_DESCRIPTOR {
 } USB_COMMON_DESCRIPTOR;
 typedef struct _USB_COMMON_DESCRIPTOR *PUSB_COMMON_DESCRIPTOR;
 
+typedef struct _USB_HUB_DESCRIPTOR {
+    UCHAR bDescriptorLength;
+    UCHAR bDescriptorType;
+    UCHAR bNumberOfPorts;
+    USHORT wHubCharacteristics;
+    UCHAR bPowerOnToPowerGood;
+    UCHAR bHubControlCurrent;
+    UCHAR bRemoveAndPowerMask[64];
+} USB_HUB_DESCRIPTOR;
+typedef struct _USB_HUB_DESCRIPTOR *PUSB_HUB_DESCRIPTOR;
+
 #include <poppack.h>
 
 #endif
