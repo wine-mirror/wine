@@ -74,6 +74,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_TEXTURE_PRELOAD,
     WINED3D_CS_OP_SURFACE_PRELOAD,
     WINED3D_CS_OP_UPDATE_TEXTURE,
+    WINED3D_CS_OP_EVICT_RESOURCE,
     WINED3D_CS_OP_STOP,
 };
 
@@ -418,6 +419,12 @@ struct wined3d_cs_update_texture
 {
     enum wined3d_cs_op opcode;
     struct wined3d_texture *src, *dst;
+};
+
+struct wined3d_cs_evict_resource
+{
+    enum wined3d_cs_op opcode;
+    struct wined3d_resource *resource;
 };
 
 static void wined3d_cs_mt_submit(struct wined3d_cs *cs, size_t size)
@@ -2034,6 +2041,35 @@ void wined3d_cs_emit_update_texture(struct wined3d_cs *cs, struct wined3d_textur
     cs->ops->submit(cs, sizeof(*op));
 }
 
+static UINT wined3d_cs_exec_evict_resource(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_evict_resource *op = data;
+    struct wined3d_resource *resource = op->resource;
+
+    resource->resource_ops->resource_unload(resource);
+
+    /* FIXME: Is this necessary? Bound buffers are preloaded anyway, and in theory
+     * PreLoad should take care of invalidating the state if the VBO changes */
+    if (resource->bind_count && resource->type == WINED3D_RTYPE_BUFFER)
+    {
+        device_invalidate_state(cs->device, STATE_STREAMSRC);
+        device_invalidate_state(cs->device, STATE_INDEXBUFFER);
+    }
+
+    return sizeof(*op);
+}
+
+void wined3d_cs_emit_evict_resource(struct wined3d_cs *cs, struct wined3d_resource *resource)
+{
+    struct wined3d_cs_evict_resource *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_EVICT_RESOURCE;
+    op->resource = resource;
+
+    cs->ops->submit(cs, sizeof(*op));
+}
+
 static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
 {
     /* WINED3D_CS_OP_NOP                        */ wined3d_cs_exec_nop,
@@ -2086,6 +2122,7 @@ static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_TEXTURE_PRELOAD            */ wined3d_cs_exec_texture_preload,
     /* WINED3D_CS_OP_SURFACE_PRELOAD            */ wined3d_cs_exec_surface_preload,
     /* WINED3D_CS_OP_UPDATE_TEXTURE             */ wined3d_cs_exec_update_texture,
+    /* WINED3D_CS_OP_EVICT_RESOURCE             */ wined3d_cs_exec_evict_resource,
 };
 
 static inline void *_wined3d_cs_mt_require_space(struct wined3d_cs *cs, size_t size, BOOL prio)
