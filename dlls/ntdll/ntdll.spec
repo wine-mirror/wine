@@ -939,7 +939,7 @@
 @ stdcall RtlpNtEnumerateSubKey(ptr ptr long)
 @ stdcall RtlpNtMakeTemporaryKey(ptr)
 @ stdcall RtlpNtOpenKey(ptr long ptr)
-@ stdcall RtlpNtQueryValueKey(long ptr ptr ptr)
+@ stdcall RtlpNtQueryValueKey(long ptr ptr ptr ptr)
 @ stdcall RtlpNtSetValueKey(ptr long ptr long)
 @ stdcall RtlpUnWaitCriticalSection(ptr)
 @ stdcall RtlpWaitForCriticalSection(ptr)
