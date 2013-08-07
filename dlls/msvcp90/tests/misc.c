@@ -264,6 +264,61 @@ static BOOL init(void)
         SET(p_complex_float_sqrt,
                 "??$sqrt@M@std@@YA?AV?$complex@M@0@AEBV10@@Z");
     } else {
+#ifdef __arm__
+        SET(p_char_assign, "?assign@?$char_traits@D@std@@SAXAADABD@Z");
+        SET(p_wchar_assign, "?assign@?$char_traits@_W@std@@SAXAA_WAB_W@Z");
+        SET(p_short_assign, "?assign@?$char_traits@G@std@@SAXAAGABG@Z");
+
+        SET(p_char_eq, "?eq@?$char_traits@D@std@@SA_NABD0@Z");
+        SET(p_wchar_eq, "?eq@?$char_traits@_W@std@@SA_NAB_W0@Z");
+        SET(p_short_eq, "?eq@?$char_traits@G@std@@SA_NABG0@Z");
+
+        SET(p_Copy_s, "?_Copy_s@?$char_traits@D@std@@SAPADPADIPBDI@Z");
+
+        SET(p_char_address, "?address@?$allocator@D@std@@QBEPADAAD@Z");
+        SET(p_char_ctor, "??0?$allocator@D@std@@QAE@XZ");
+        SET(p_char_deallocate, "?deallocate@?$allocator@D@std@@QAEXPADI@Z");
+        SET(p_char_allocate, "?allocate@?$allocator@D@std@@QAEPADI@Z");
+        SET(p_char_construct, "?construct@?$allocator@D@std@@QAEXPADABD@Z");
+        SET(p_char_max_size, "?max_size@?$allocator@D@std@@QBEIXZ");
+
+        SET(p_collate_char_ctor_refs, "??0?$collate@D@std@@QAE@I@Z");
+        SET(p_collate_char_compare, "?compare@?$collate@D@std@@QBEHPBD000@Z");
+        SET(p_collate_char_dtor, "??1?$collate@D@std@@MAE@XZ");
+        SET(p_numpunct_char_ctor, "??_F?$numpunct@D@std@@QAEXXZ");
+        SET(p_numpunct_char_falsename, "?falsename@?$numpunct@D@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ");
+        SET(p_numpunct_char_dtor, "??1?$numpunct@D@std@@MAE@XZ");
+        SET(p_basic_string_char_dtor,
+                "??1?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@XZ");
+        SET(p_basic_string_char_cstr,
+                "?c_str@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEPBDXZ");
+
+        SET(p_basic_ostringstream_char_ctor_mode,
+                "??0?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@H@Z");
+        SET(p_basic_ostringstream_char_dtor,
+                "??1?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@UAE@XZ");
+        SET(p_basic_ostringstream_char_vbase_dtor,
+                "??_D?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEXXZ");
+        SET(p_basic_ios_char_dtor,
+                "??1?$basic_ios@DU?$char_traits@D@std@@@std@@UAA@XZ");
+
+        SET(p_complex_float_ctor,
+                "??0?$complex@M@std@@QAE@ABM0@Z");
+        SET(p_complex_float_add,
+                "??$?HM@std@@YA?AV?$complex@M@0@ABV10@0@Z");
+        SET(p_complex_float_div,
+                "??$?KM@std@@YA?AV?$complex@M@0@ABV10@0@Z");
+        SET(p_complex_float__Fabs,
+                "??$_Fabs@M@std@@YAMABV?$complex@M@0@PAH@Z");
+        SET(p_complex_float_tan,
+                "??$tan@M@std@@YA?AV?$complex@M@0@ABV10@@Z");
+        SET(p_complex_float_tanh,
+                "??$tanh@M@std@@YA?AV?$complex@M@0@ABV10@@Z");
+        SET(p_complex_float_log10,
+                "??$log10@M@std@@YA?AV?$complex@M@0@ABV10@@Z");
+        SET(p_complex_float_sqrt,
+                "??$sqrt@M@std@@YA?AV?$complex@M@0@ABV10@@Z");
+#else
         SET(p_char_assign, "?assign@?$char_traits@D@std@@SAXAADABD@Z");
         SET(p_wchar_assign, "?assign@?$char_traits@_W@std@@SAXAA_WAB_W@Z");
         SET(p_short_assign, "?assign@?$char_traits@G@std@@SAXAAGABG@Z");
@@ -317,6 +372,7 @@ static BOOL init(void)
                 "??$log10@M@std@@YA?AV?$complex@M@0@ABV10@@Z");
         SET(p_complex_float_sqrt,
                 "??$sqrt@M@std@@YA?AV?$complex@M@0@ABV10@@Z");
+#endif
     }
 
     init_thiscall_thunk();
