@@ -873,8 +873,12 @@ sub source_scan_project_file($$$)
         push @{@$project_settings[$T_DEFINES]},$prj_target_defines;
         push @{@$project_settings[$T_LDFLAGS]},$prj_target_ldflags;
     } elsif ($filename =~ /.vcproj$/i) {
-        # Import XML::LibXML, you need the libxml package (deb: libxml-libxml-perl, rpm: perl-libxml-perl)
-        require XML::LibXML;
+        eval {
+            require XML::LibXML;
+        };
+        if ($@) {
+            die "Error: You need the libxml package (deb: libxml-libxml-perl, rpm: perl-libxml-perl)";
+        }
 
         my $xmlparser = XML::LibXML->new();
         my $project_xml = $xmlparser->parse_file($filename);
