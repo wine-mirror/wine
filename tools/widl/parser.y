@@ -1111,6 +1111,7 @@ uniondef: tUNION t_ident '{' ne_union_fields '}'
 version:
 	  aNUM					{ $$ = MAKEVERSION($1, 0); }
 	| aNUM '.' aNUM				{ $$ = MAKEVERSION($1, $3); }
+	| aHEXNUM				{ $$ = $1; }
 	;
 
 %%
