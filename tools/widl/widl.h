@@ -49,6 +49,7 @@ extern int do_win32;
 extern int do_win64;
 extern int win32_packing;
 extern int win64_packing;
+extern int do_rt_extension;
 
 extern char *input_name;
 extern char *header_name;
