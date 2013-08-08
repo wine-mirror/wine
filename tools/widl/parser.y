@@ -1840,11 +1840,12 @@ static type_t *reg_typedefs(decl_spec_t *decl_spec, declarator_list_t *decls, at
        type_get_type_detect_alias(type) == TYPE_ENCAPSULATED_UNION) &&
       !type->name && !parse_only)
   {
-    if (! is_attr(attrs, ATTR_PUBLIC))
+    if (! is_attr(attrs, ATTR_PUBLIC) && ! is_attr (attrs, ATTR_HIDDEN))
       attrs = append_attr( attrs, make_attr(ATTR_PUBLIC) );
     type->name = gen_name();
   }
-  else if (is_attr(attrs, ATTR_UUID) && !is_attr(attrs, ATTR_PUBLIC))
+  else if (is_attr(attrs, ATTR_UUID) && !is_attr(attrs, ATTR_PUBLIC)
+	   && !is_attr(attrs, ATTR_HIDDEN))
     attrs = append_attr( attrs, make_attr(ATTR_PUBLIC) );
 
   LIST_FOR_EACH_ENTRY( decl, decls, const declarator_t, entry )
