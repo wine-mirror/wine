@@ -121,6 +121,7 @@ static statement_t *make_statement_typedef(var_list_t *names);
 static statement_t *make_statement_import(const char *str);
 static statement_t *make_statement_typedef(var_list_t *names);
 static statement_list_t *append_statement(statement_list_t *list, statement_t *stmt);
+static statement_list_t *append_statements(statement_list_t *, statement_list_t *);
 
 %}
 %union {
@@ -202,6 +203,7 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %token tMAYBE tMESSAGE
 %token tMETHODS
 %token tMODULE
+%token tNAMESPACE
 %token tNOCODE tNONBROWSABLE
 %token tNONCREATABLE
 %token tNONEXTENSIBLE
@@ -258,6 +260,7 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %type <type> inherit interface interfacedef interfacedec
 %type <type> dispinterface dispinterfacehdr dispinterfacedef
 %type <type> module modulehdr moduledef
+%type <type> namespacedef
 %type <type> base_type int_std
 %type <type> enumdef structdef uniondef typedecl
 %type <type> type
@@ -315,6 +318,8 @@ input:   gbl_statements				{ fix_incomplete();
 	;
 
 gbl_statements:					{ $$ = NULL; }
+	| gbl_statements namespacedef '{' gbl_statements '}'
+						{ $$ = append_statements($1, $4); }
 	| gbl_statements interfacedec		{ $$ = append_statement($1, make_statement_reference($2)); }
 	| gbl_statements interfacedef		{ $$ = append_statement($1, make_statement_type_decl($2)); }
 	| gbl_statements coclass ';'		{ $$ = $1;
@@ -330,6 +335,8 @@ gbl_statements:					{ $$ = NULL; }
 
 imp_statements:					{ $$ = NULL; }
 	| imp_statements interfacedec		{ $$ = append_statement($1, make_statement_reference($2)); }
+	| imp_statements namespacedef '{' imp_statements '}'
+						{ $$ = append_statements($1, $4); }
 	| imp_statements interfacedef		{ $$ = append_statement($1, make_statement_type_decl($2)); }
 	| imp_statements coclass ';'		{ $$ = $1; reg_type($2, $2->name, 0); }
 	| imp_statements coclassdef		{ $$ = append_statement($1, make_statement_type_decl($2));
@@ -799,6 +806,9 @@ coclasshdr: attributes coclass			{ $$ = $2;
 
 coclassdef: coclasshdr '{' coclass_ints '}' semicolon_opt
 						{ $$ = type_coclass_define($1, $3); }
+	;
+
+namespacedef: tNAMESPACE aIDENTIFIER		{ $$ = NULL; }
 	;
 
 coclass_ints:					{ $$ = NULL; }
@@ -2782,6 +2792,14 @@ static statement_t *make_statement_typedef(declarator_list_t *decls)
     }
 
     return stmt;
+}
+
+static statement_list_t *append_statements(statement_list_t *l1, statement_list_t *l2)
+{
+    if (!l2) return l1;
+    if (!l1 || l1 == l2) return l2;
+    list_move_tail (l1, l2);
+    return l1;
 }
 
 static statement_list_t *append_statement(statement_list_t *list, statement_t *stmt)
