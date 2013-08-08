@@ -122,6 +122,7 @@ static statement_t *make_statement_import(const char *str);
 static statement_t *make_statement_typedef(var_list_t *names);
 static statement_list_t *append_statement(statement_list_t *list, statement_t *stmt);
 static statement_list_t *append_statements(statement_list_t *, statement_list_t *);
+static attr_list_t *append_attribs(attr_list_t *, attr_list_t *);
 
 %}
 %union {
@@ -1093,9 +1094,10 @@ type:	  tVOID					{ $$ = type_new_void(); }
 	| tSAFEARRAY '(' type ')'		{ $$ = make_safearray($3); }
 	;
 
-typedef: tTYPEDEF m_attributes decl_spec declarator_list
-						{ reg_typedefs($3, $4, check_typedef_attrs($2));
-						  $$ = make_statement_typedef($4);
+typedef: m_attributes tTYPEDEF m_attributes decl_spec declarator_list
+						{ $1 = append_attribs($1, $3);
+						  reg_typedefs($4, $5, check_typedef_attrs($1));
+						  $$ = make_statement_typedef($5);
 						}
 	;
 
@@ -2795,6 +2797,14 @@ static statement_t *make_statement_typedef(declarator_list_t *decls)
 }
 
 static statement_list_t *append_statements(statement_list_t *l1, statement_list_t *l2)
+{
+    if (!l2) return l1;
+    if (!l1 || l1 == l2) return l2;
+    list_move_tail (l1, l2);
+    return l1;
+}
+
+static attr_list_t *append_attribs(attr_list_t *l1, attr_list_t *l2)
 {
     if (!l2) return l1;
     if (!l1 || l1 == l2) return l2;
