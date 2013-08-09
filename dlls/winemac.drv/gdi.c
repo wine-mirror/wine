@@ -49,7 +49,6 @@ static int vert_res;            /* height in pixels of screen */
 static int desktop_horz_res;    /* width in pixels of virtual desktop */
 static int desktop_vert_res;    /* height in pixels of virtual desktop */
 static int bits_per_pixel;      /* pixel depth of screen */
-static int palette_size;        /* number of color entries in palette */
 static int device_data_valid;   /* do the above variables have up-to-date values? */
 
 static CRITICAL_SECTION device_data_section;
@@ -141,7 +140,6 @@ static void device_init(void)
     CGDirectDisplayID mainDisplay = CGMainDisplayID();
     CGSize size_mm = CGDisplayScreenSize(mainDisplay);
     CGDisplayModeRef mode = CGDisplayCopyDisplayMode(mainDisplay);
-    CGDirectPaletteRef palette;
 
     /* Initialize device caps */
     log_pixels_x = log_pixels_y = get_dpi();
@@ -186,15 +184,6 @@ static void device_init(void)
     macdrv_get_desktop_rect();
     desktop_horz_res = desktop_rect.size.width;
     desktop_vert_res = desktop_rect.size.height;
-
-    palette = CGPaletteCreateWithDisplay(mainDisplay);
-    if (palette)
-    {
-        palette_size = CGPaletteGetNumberOfSamples(palette);
-        CGPaletteRelease(palette);
-    }
-    else
-        palette_size = 0;
 
     device_data_valid = TRUE;
 }
@@ -368,7 +357,7 @@ static INT macdrv_GetDeviceCaps(PHYSDEV dev, INT cap)
     case RASTERCAPS:
         ret = (RC_BITBLT | RC_BANDING | RC_SCALING | RC_BITMAP64 | RC_DI_BITMAP |
                RC_DIBTODEV | RC_BIGFONT | RC_STRETCHBLT | RC_STRETCHDIB | RC_DEVBITS |
-               (palette_size ? RC_PALETTE : 0));
+               (bits_per_pixel <= 8 ? RC_PALETTE : 0));
         break;
     case SHADEBLENDCAPS:
         ret = (SB_GRAD_RECT | SB_GRAD_TRI | SB_CONST_ALPHA | SB_PIXEL_ALPHA);
@@ -393,7 +382,7 @@ static INT macdrv_GetDeviceCaps(PHYSDEV dev, INT cap)
         ret = 0;
         break;
     case SIZEPALETTE:
-        ret = palette_size;
+        ret = bits_per_pixel <= 8 ? 1 << bits_per_pixel : 0;
         break;
     case NUMRESERVED:
     case PHYSICALWIDTH:
