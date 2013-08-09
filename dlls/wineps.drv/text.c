@@ -91,15 +91,16 @@ static BOOL check_unicode_tategaki(WCHAR uchar)
 
 static Run* build_vertical_runs(PHYSDEV dev, UINT flags, LPCWSTR str, UINT count, INT *run_count)
 {
-    BOOL last_vert = check_unicode_tategaki(str[0]);
+    BOOL last_vert;
     INT start, end;
     INT array_size = 5;
     Run *run = HeapAlloc(GetProcessHeap(),0,sizeof(Run)*array_size);
     int index = 0;
     LOGFONTW lf;
 
-    if ((!(flags & ETO_GLYPH_INDEX)) && GetObjectW( GetCurrentObject(dev->hdc, OBJ_FONT), sizeof(lf), &lf ) && (lf.lfFaceName[0] == '@'))
+    if (count && str && (!(flags & ETO_GLYPH_INDEX)) && GetObjectW( GetCurrentObject(dev->hdc, OBJ_FONT), sizeof(lf), &lf ) && (lf.lfFaceName[0] == '@'))
     {
+        last_vert = check_unicode_tategaki(str[0]);
         start = end = 0;
         while (start < count)
         {
