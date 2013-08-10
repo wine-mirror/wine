@@ -257,29 +257,17 @@ static void DoDelete(ContextMenu *This)
  *
  * copies the currently selected items into the clipboard
  */
-static BOOL DoCopyOrCut(ContextMenu *This, HWND hwnd, BOOL cut)
+static void DoCopyOrCut(ContextMenu *This, HWND hwnd, BOOL cut)
 {
     IDataObject *dataobject;
-    IShellBrowser *browser;
-    IShellView *view;
 
     TRACE("(%p)->(wnd=%p, cut=%d)\n", This, hwnd, cut);
 
-    /* get the active IShellView */
-    if ((browser = (IShellBrowser*)SendMessageA(hwnd, CWM_GETISHELLBROWSER, 0, 0)))
+    if (SUCCEEDED(IShellFolder_GetUIObjectOf(This->parent, hwnd, This->cidl, (LPCITEMIDLIST*)This->apidl, &IID_IDataObject, 0, (void**)&dataobject)))
     {
-        if (SUCCEEDED(IShellBrowser_QueryActiveShellView(browser, &view)))
-        {
-            if (SUCCEEDED(IShellView_GetItemObject(view, SVGIO_SELECTION, &IID_IDataObject, (void**)&dataobject)))
-	    {
-                OleSetClipboard(dataobject);
-                IDataObject_Release(dataobject);
-	    }
-            IShellView_Release(view);
-        }
+        OleSetClipboard(dataobject);
+        IDataObject_Release(dataobject);
     }
-
-    return TRUE;
 }
 
 /**************************************************************************
