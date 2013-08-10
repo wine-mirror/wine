@@ -49,7 +49,6 @@ typedef struct
     LONG ref;
 
     IShellFolder* parent;
-    UINT verb_offset;
 
     /* item menu data */
     LPITEMIDLIST  pidl;  /* root pidl */
@@ -137,8 +136,6 @@ static HRESULT WINAPI ItemMenu_QueryContextMenu(
     INT uIDMax;
 
     TRACE("(%p)->(%p %d 0x%x 0x%x 0x%x )\n", This, hmenu, indexMenu, idCmdFirst, idCmdLast, uFlags);
-
-    This->verb_offset = idCmdFirst;
 
     if(!(CMF_DEFAULTONLY & uFlags) && This->cidl > 0)
     {
@@ -419,7 +416,7 @@ static HRESULT WINAPI ItemMenu_InvokeCommand(
 
     if (HIWORD(lpcmi->lpVerb) == 0)
     {
-        switch(LOWORD(lpcmi->lpVerb - This->verb_offset))
+        switch(LOWORD(lpcmi->lpVerb))
         {
         case FCIDM_SHVIEW_EXPLORE:
             TRACE("Verb FCIDM_SHVIEW_EXPLORE\n");
@@ -466,7 +463,7 @@ static HRESULT WINAPI ItemMenu_InvokeCommand(
             DoOpenProperties(This, lpcmi->hwnd);
             break;
         default:
-            FIXME("Unhandled Verb %xl\n",LOWORD(lpcmi->lpVerb)-This->verb_offset);
+            FIXME("Unhandled Verb %xl\n",LOWORD(lpcmi->lpVerb));
             return E_INVALIDARG;
         }
     }
@@ -506,7 +503,7 @@ static HRESULT WINAPI ItemMenu_GetCommandString(
 	    break;
 
 	  case GCS_VERBA:
-	    switch(idCommand-This->verb_offset)
+	    switch(idCommand)
 	    {
 	    case FCIDM_SHVIEW_RENAME:
 	        strcpy(lpszName, "rename");
@@ -518,7 +515,7 @@ static HRESULT WINAPI ItemMenu_GetCommandString(
 	     /* NT 4.0 with IE 3.0x or no IE will always call This with GCS_VERBW. In This
 	     case, you need to do the lstrcpyW to the pointer passed.*/
 	  case GCS_VERBW:
-	    switch(idCommand-This->verb_offset)
+	    switch(idCommand)
 	    {
 	    case FCIDM_SHVIEW_RENAME:
                 MultiByteToWideChar( CP_ACP, 0, "rename", -1, (LPWSTR)lpszName, uMaxNameLen );
@@ -581,7 +578,6 @@ HRESULT ItemMenu_Constructor(IShellFolder *parent, LPCITEMIDLIST pidl, const LPC
 
     This->IContextMenu3_iface.lpVtbl = &ItemContextMenuVtbl;
     This->ref = 1;
-    This->verb_offset = 0;
     This->parent = parent;
     if (parent) IShellFolder_AddRef(parent);
 
@@ -617,8 +613,6 @@ static HRESULT WINAPI BackgroundMenu_QueryContextMenu(
 
     TRACE("(%p)->(hmenu=%p indexmenu=%x cmdfirst=%x cmdlast=%x flags=%x )\n",
           This, hMenu, indexMenu, idCmdFirst, idCmdLast, uFlags);
-
-    This->verb_offset = idCmdFirst;
 
     hMyMenu = LoadMenuA(shell32_hInstance, "MENU_002");
     if (uFlags & CMF_DEFAULTONLY)
@@ -804,7 +798,7 @@ static HRESULT WINAPI BackgroundMenu_InvokeCommand(
     }
     else
     {
-        switch (LOWORD(lpcmi->lpVerb) - This->verb_offset)
+        switch (LOWORD(lpcmi->lpVerb))
         {
 	    case FCIDM_SHVIEW_REFRESH:
 	        if (view) IShellView_Refresh(view);
@@ -893,7 +887,6 @@ HRESULT BackgroundMenu_Constructor(IShellFolder *parent, BOOL desktop, REFIID ri
     This->IContextMenu3_iface.lpVtbl = &BackgroundContextMenuVtbl;
     This->ref = 1;
     This->parent = parent;
-    This->verb_offset = 0;
 
     This->pidl = NULL;
     This->apidl = NULL;
