@@ -3917,11 +3917,12 @@ static void test_GetUIObject(void)
             ok(hr == S_OK, "Got 0x%08x\n", hr);
             if(SUCCEEDED(hr))
             {
+                const int baseItem = 0x40;
                 HMENU hmenu = CreatePopupMenu();
                 INT max_id, max_id_check;
                 UINT count, i;
                 const int id_upper_limit = 32767;
-                hr = IContextMenu_QueryContextMenu(pcm, hmenu, 0, 0, id_upper_limit, CMF_NORMAL);
+                hr = IContextMenu_QueryContextMenu(pcm, hmenu, 0, baseItem, id_upper_limit, CMF_NORMAL);
                 ok(SUCCEEDED(hr), "Got 0x%08x\n", hr);
                 max_id = HRESULT_CODE(hr) - 1; /* returns max_id + 1 */
                 ok(max_id <= id_upper_limit, "Got %d\n", max_id);
@@ -3933,9 +3934,12 @@ static void test_GetUIObject(void)
                 {
                     MENUITEMINFOA mii;
                     INT res;
+                    char buf[255], buf2[255];
                     ZeroMemory(&mii, sizeof(MENUITEMINFOA));
                     mii.cbSize = sizeof(MENUITEMINFOA);
-                    mii.fMask = MIIM_ID | MIIM_FTYPE;
+                    mii.fMask = MIIM_ID | MIIM_FTYPE | MIIM_STRING;
+                    mii.dwTypeData = buf2;
+                    mii.cch = sizeof(buf2);
 
                     SetLastError(0);
                     res = GetMenuItemInfoA(hmenu, i, TRUE, &mii);
@@ -3944,8 +3948,17 @@ static void test_GetUIObject(void)
                     ok( (mii.wID <= id_upper_limit) || (mii.fType & MFT_SEPARATOR),
                         "Got non-separator ID out of range: %d (type: %x)\n", mii.wID, mii.fType);
                     if(!(mii.fType & MFT_SEPARATOR))
+                    {
                         max_id_check = (mii.wID>max_id_check)?mii.wID:max_id_check;
+                        hr = IContextMenu_GetCommandString(pcm, mii.wID - baseItem, GCS_VERBA, 0, buf, sizeof(buf));
+                        ok(SUCCEEDED(hr) || hr == E_NOTIMPL, "for id 0x%x got 0x%08x (menustr: %s)\n", mii.wID - baseItem, hr, mii.dwTypeData);
+                        if (SUCCEEDED(hr))
+                            trace("for id 0x%x got string %s (menu string: %s)\n", mii.wID - baseItem, buf, mii.dwTypeData);
+                        else if (hr == E_NOTIMPL)
+                            trace("for id 0x%x got E_NOTIMPL (menu string: %s)\n", mii.wID - baseItem, mii.dwTypeData);
+                    }
                 }
+                max_id_check -= baseItem;
                 ok((max_id_check == max_id) ||
                    (max_id_check == max_id-1 /* Win 7 */),
                    "Not equal (or near equal), got %d and %d\n", max_id_check, max_id);
