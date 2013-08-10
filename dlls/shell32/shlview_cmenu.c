@@ -160,10 +160,10 @@ static HRESULT WINAPI ItemMenu_QueryContextMenu(
             mi.dwTypeData = str;
             mi.cch = 255;
             GetMenuItemInfoW(hmenu, FCIDM_SHVIEW_EXPLORE, MF_BYCOMMAND, &mi);
-            RemoveMenu(hmenu, FCIDM_SHVIEW_EXPLORE, MF_BYCOMMAND);
+            RemoveMenu(hmenu, FCIDM_SHVIEW_EXPLORE + idCmdFirst, MF_BYCOMMAND);
 
             mi.cbSize = sizeof(mi);
-            mi.fMask = MIIM_ID | MIIM_TYPE | MIIM_STATE;
+            mi.fMask = MIIM_ID | MIIM_TYPE | MIIM_STATE | MIIM_STRING;
             mi.dwTypeData = str;
             mi.fState = MFS_ENABLED;
             mi.wID = FCIDM_SHVIEW_EXPLORE;
