@@ -505,6 +505,34 @@ static HRESULT WINAPI ItemMenu_GetCommandString(
 	  case GCS_VERBA:
 	    switch(idCommand)
 	    {
+            case FCIDM_SHVIEW_OPEN:
+                strcpy(lpszName, "open");
+                hr = S_OK;
+                break;
+            case FCIDM_SHVIEW_EXPLORE:
+                strcpy(lpszName, "explore");
+                hr = S_OK;
+                break;
+            case FCIDM_SHVIEW_CUT:
+                strcpy(lpszName, "cut");
+                hr = S_OK;
+                break;
+            case FCIDM_SHVIEW_COPY:
+                strcpy(lpszName, "copy");
+                hr = S_OK;
+                break;
+            case FCIDM_SHVIEW_CREATELINK:
+                strcpy(lpszName, "link");
+                hr = S_OK;
+                break;
+            case FCIDM_SHVIEW_DELETE:
+                strcpy(lpszName, "delete");
+                hr = S_OK;
+                break;
+            case FCIDM_SHVIEW_PROPERTIES:
+                strcpy(lpszName, "properties");
+                hr = S_OK;
+                break;
 	    case FCIDM_SHVIEW_RENAME:
 	        strcpy(lpszName, "rename");
 	        hr = S_OK;
@@ -517,6 +545,34 @@ static HRESULT WINAPI ItemMenu_GetCommandString(
 	  case GCS_VERBW:
 	    switch(idCommand)
 	    {
+            case FCIDM_SHVIEW_OPEN:
+                MultiByteToWideChar(CP_ACP, 0, "open", -1, (LPWSTR)lpszName, uMaxNameLen);
+                hr = S_OK;
+                break;
+            case FCIDM_SHVIEW_EXPLORE:
+                MultiByteToWideChar(CP_ACP, 0, "explore", -1, (LPWSTR)lpszName, uMaxNameLen);
+                hr = S_OK;
+                break;
+            case FCIDM_SHVIEW_CUT:
+                MultiByteToWideChar(CP_ACP, 0, "cut", -1, (LPWSTR)lpszName, uMaxNameLen);
+                hr = S_OK;
+                break;
+            case FCIDM_SHVIEW_COPY:
+                MultiByteToWideChar(CP_ACP, 0, "copy", -1, (LPWSTR)lpszName, uMaxNameLen);
+                hr = S_OK;
+                break;
+            case FCIDM_SHVIEW_CREATELINK:
+                MultiByteToWideChar(CP_ACP, 0, "link", -1, (LPWSTR)lpszName, uMaxNameLen);
+                hr = S_OK;
+                break;
+            case FCIDM_SHVIEW_DELETE:
+                MultiByteToWideChar(CP_ACP, 0, "delete", -1, (LPWSTR)lpszName, uMaxNameLen);
+                hr = S_OK;
+                break;
+            case FCIDM_SHVIEW_PROPERTIES:
+                MultiByteToWideChar(CP_ACP, 0, "properties", -1, (LPWSTR)lpszName, uMaxNameLen);
+                hr = S_OK;
+                break;
 	    case FCIDM_SHVIEW_RENAME:
                 MultiByteToWideChar( CP_ACP, 0, "rename", -1, (LPWSTR)lpszName, uMaxNameLen );
 	        hr = S_OK;
