@@ -3296,6 +3296,8 @@ TREEVIEW_Collapse(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item,
 	TREEVIEW_RemoveAllChildren(infoPtr, item);
         item->cChildren = old_cChildren;
     }
+    if (!wasExpanded)
+        return FALSE;
 
     if (item->firstChild)
     {
