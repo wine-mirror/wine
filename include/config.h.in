@@ -1,7 +1,8 @@
 /* include/config.h.in.  Generated from configure.ac by autoheader.  */
 
-#ifndef WINE_CROSSTEST
+#ifndef __WINE_CONFIG_H
 #define __WINE_CONFIG_H
+#ifndef WINE_CROSSTEST
 
 /* Define to a function attribute for Microsoft hotpatch assembly prefix. */
 #undef DECLSPEC_HOTPATCH
@@ -1366,3 +1367,4 @@
 #endif
 
 #endif /* WINE_CROSSTEST */
+#endif /* __WINE_CONFIG_H */
