@@ -774,6 +774,34 @@ static void test_ImmGetIMCCLockCount(void)
     ImmDestroyIMCC(imcc);
 }
 
+static void test_ImmDestroyContext(void)
+{
+    HIMC imc;
+    DWORD ret, count;
+    INPUTCONTEXT *ic;
+
+    imc = ImmCreateContext();
+    count = ImmGetIMCLockCount(imc);
+    ok(count == 0, "expect 0, returned %d\n", count);
+    ic = ImmLockIMC(imc);
+    ok(ic != NULL, "ImmLockIMC failed!\n");
+    count = ImmGetIMCLockCount(imc);
+    ok(count == 1, "expect 1, returned %d\n", count);
+    ret = ImmDestroyContext(imc);
+    ok(ret == TRUE, "Destroy a locked IMC should success!\n");
+    ic = ImmLockIMC(imc);
+    todo_wine ok(ic == NULL, "Lock a destroyed IMC should fail!\n");
+    ret = ImmUnlockIMC(imc);
+    todo_wine ok(ret == FALSE, "Unlock a destroyed IMC should fail!\n");
+    count = ImmGetIMCLockCount(imc);
+    todo_wine ok(count == 0, "Get lock count of a destroyed IMC should return 0!\n");
+    SetLastError(0xdeadbeef);
+    ret = ImmDestroyContext(imc);
+    todo_wine ok(ret == FALSE, "Destroy a destroyed IMC should fail!\n");
+    ret = GetLastError();
+    todo_wine ok(ret == ERROR_INVALID_HANDLE, "wrong last error %08x!\n", ret);
+}
+
 static void test_ImmDestroyIMCC(void)
 {
     HIMCC imcc;
@@ -967,6 +995,7 @@ START_TEST(imm32) {
         test_ImmDefaultHwnd();
         test_ImmGetIMCLockCount();
         test_ImmGetIMCCLockCount();
+        test_ImmDestroyContext();
         test_ImmDestroyIMCC();
         msg_spy_cleanup();
         /* Reinitialize the hooks to capture all windows */
