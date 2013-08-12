@@ -1008,9 +1008,8 @@ static void init_dde(void)
     if(!ddestr_openurl)
         WARN("Failed to create string handle: %u\n", DdeGetLastError(dde_inst));
 
-    res = HandleToULong(DdeNameService(dde_inst, ddestr_iexplore, 0, DNS_REGISTER));
-    if(res != DMLERR_NO_ERROR)
-        WARN("DdeNameService failed: %u\n", res);
+    if(!DdeNameService(dde_inst, ddestr_iexplore, 0, DNS_REGISTER))
+        WARN("DdeNameService failed\n");
 }
 
 static void release_dde(void)
