@@ -715,7 +715,8 @@ static void test_ImmGetIMCLockCount(void)
 static void test_ImmGetIMCCLockCount(void)
 {
     HIMCC imcc;
-    DWORD count, ret;
+    DWORD count, g_count, ret, i;
+    VOID *p;
 
     imcc = ImmCreateIMCC(sizeof(CANDIDATEINFO));
     count = ImmGetIMCCLockCount(imcc);
@@ -731,6 +732,28 @@ static void test_ImmGetIMCCLockCount(void)
     ok(ret == FALSE, "expect FALSE, ret %d\n", ret);
     count = ImmGetIMCCLockCount(imcc);
     ok(count == 0, "expect 0, returned %d\n", count);
+
+    p = ImmLockIMCC(imcc);
+    todo_wine ok(GlobalHandle(p) == imcc, "expect %p, returned %p\n", imcc, GlobalHandle(p));
+
+    for (i = 0; i < GMEM_LOCKCOUNT * 2; i++)
+    {
+        ImmLockIMCC(imcc);
+        count = ImmGetIMCCLockCount(imcc);
+        g_count = GlobalFlags(imcc) & GMEM_LOCKCOUNT;
+        todo_wine ok(count == g_count, "count %d, g_count %d\n", count, g_count);
+    }
+    count = ImmGetIMCCLockCount(imcc);
+    todo_wine ok(count == GMEM_LOCKCOUNT, "expect GMEM_LOCKCOUNT, returned %d\n", count);
+
+    for (i = 0; i < GMEM_LOCKCOUNT - 1; i++)
+        GlobalUnlock(imcc);
+    count = ImmGetIMCCLockCount(imcc);
+    todo_wine ok(count == 1, "expect 1, returned %d\n", count);
+    GlobalUnlock(imcc);
+    count = ImmGetIMCCLockCount(imcc);
+    todo_wine ok(count == 0, "expect 0, returned %d\n", count);
+
     ImmDestroyIMCC(imcc);
 }
 
