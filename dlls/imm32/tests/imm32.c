@@ -734,25 +734,25 @@ static void test_ImmGetIMCCLockCount(void)
     ok(count == 0, "expect 0, returned %d\n", count);
 
     p = ImmLockIMCC(imcc);
-    todo_wine ok(GlobalHandle(p) == imcc, "expect %p, returned %p\n", imcc, GlobalHandle(p));
+    ok(GlobalHandle(p) == imcc, "expect %p, returned %p\n", imcc, GlobalHandle(p));
 
     for (i = 0; i < GMEM_LOCKCOUNT * 2; i++)
     {
         ImmLockIMCC(imcc);
         count = ImmGetIMCCLockCount(imcc);
         g_count = GlobalFlags(imcc) & GMEM_LOCKCOUNT;
-        todo_wine ok(count == g_count, "count %d, g_count %d\n", count, g_count);
+        ok(count == g_count, "count %d, g_count %d\n", count, g_count);
     }
     count = ImmGetIMCCLockCount(imcc);
-    todo_wine ok(count == GMEM_LOCKCOUNT, "expect GMEM_LOCKCOUNT, returned %d\n", count);
+    ok(count == GMEM_LOCKCOUNT, "expect GMEM_LOCKCOUNT, returned %d\n", count);
 
     for (i = 0; i < GMEM_LOCKCOUNT - 1; i++)
         GlobalUnlock(imcc);
     count = ImmGetIMCCLockCount(imcc);
-    todo_wine ok(count == 1, "expect 1, returned %d\n", count);
+    ok(count == 1, "expect 1, returned %d\n", count);
     GlobalUnlock(imcc);
     count = ImmGetIMCCLockCount(imcc);
-    todo_wine ok(count == 0, "expect 0, returned %d\n", count);
+    ok(count == 0, "expect 0, returned %d\n", count);
 
     ImmDestroyIMCC(imcc);
 }
@@ -775,18 +775,18 @@ static void test_ImmDestroyIMCC(void)
     p = ImmDestroyIMCC(imcc);
     ok(p == NULL, "Destroy a locked IMCC should success!\n");
     p = ImmLockIMCC(imcc);
-    todo_wine ok(p == NULL, "Lock a destroyed IMCC should fail!\n");
+    ok(p == NULL, "Lock a destroyed IMCC should fail!\n");
     ret = ImmUnlockIMCC(imcc);
-    todo_wine ok(ret == FALSE, "Unlock a destroyed IMCC should return FALSE!\n");
+    ok(ret == FALSE, "Unlock a destroyed IMCC should return FALSE!\n");
     count = ImmGetIMCCLockCount(imcc);
-    todo_wine ok(count == 0, "Get lock count of a destroyed IMCC should return 0!\n");
+    ok(count == 0, "Get lock count of a destroyed IMCC should return 0!\n");
     size = ImmGetIMCCSize(imcc);
-    todo_wine ok(size == 0, "Get size of a destroyed IMCC should return 0!\n");
+    ok(size == 0, "Get size of a destroyed IMCC should return 0!\n");
     SetLastError(0xdeadbeef);
     p = ImmDestroyIMCC(imcc);
-    todo_wine ok(p != NULL, "returned NULL\n");
+    ok(p != NULL, "returned NULL\n");
     ret = GetLastError();
-    todo_wine ok(ret == ERROR_INVALID_HANDLE, "wrong last error %08x!\n", ret);
+    ok(ret == ERROR_INVALID_HANDLE, "wrong last error %08x!\n", ret);
 }
 
 static void test_ImmMessages(void)
