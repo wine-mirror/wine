@@ -1299,6 +1299,158 @@ static void test_file_both_information(void)
     CloseHandle( h );
 }
 
+static void test_file_disposition_information(void)
+{
+    char buffer[MAX_PATH + 16];
+    DWORD dirpos;
+    HANDLE handle, handle2;
+    NTSTATUS res;
+    IO_STATUS_BLOCK io;
+    FILE_DISPOSITION_INFORMATION fdi;
+    BOOL fileDeleted;
+
+    /* cannot set disposition on file not opened with delete access */
+    GetTempFileNameA( ".", "dis", 0, buffer );
+    handle = CreateFileA(buffer, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok( handle != INVALID_HANDLE_VALUE, "failed to create temp file\n" );
+    res = pNtQueryInformationFile( handle, &io, &fdi, sizeof fdi, FileDispositionInformation );
+    ok( res == STATUS_INVALID_INFO_CLASS || res == STATUS_NOT_IMPLEMENTED, "Unexpected NtQueryInformationFile result (expected STATUS_INVALID_INFO_CLASS, got %x)\n", res );
+    fdi.DoDeleteFile = TRUE;
+    res = pNtSetInformationFile( handle, &io, &fdi, sizeof fdi, FileDispositionInformation );
+    todo_wine
+    ok( res == STATUS_ACCESS_DENIED, "unexpected FileDispositionInformation result (expected STATUS_ACCESS_DENIED, got %x)\n", res );
+    CloseHandle( handle );
+    fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
+    ok( !fileDeleted, "File shouldn't have been deleted\n" );
+    DeleteFileA( buffer );
+
+    /* can set disposition on file opened with proper access */
+    GetTempFileNameA( ".", "dis", 0, buffer );
+    handle = CreateFileA(buffer, GENERIC_WRITE | DELETE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok( handle != INVALID_HANDLE_VALUE, "failed to create temp file\n" );
+    fdi.DoDeleteFile = TRUE;
+    res = pNtSetInformationFile( handle, &io, &fdi, sizeof fdi, FileDispositionInformation );
+    todo_wine
+    ok( res == STATUS_SUCCESS, "unexpected FileDispositionInformation result (expected STATUS_SUCCESS, got %x)\n", res );
+    CloseHandle( handle );
+    fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
+    todo_wine
+    ok( fileDeleted, "File should have been deleted\n" );
+    DeleteFileA( buffer );
+
+    /* cannot set disposition on readonly file */
+    GetTempFileNameA( ".", "dis", 0, buffer );
+    handle = CreateFileA(buffer, GENERIC_WRITE | DELETE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_READONLY, 0);
+    ok( handle != INVALID_HANDLE_VALUE, "failed to create temp file\n" );
+    fdi.DoDeleteFile = TRUE;
+    res = pNtSetInformationFile( handle, &io, &fdi, sizeof fdi, FileDispositionInformation );
+    todo_wine
+    ok( res == STATUS_CANNOT_DELETE, "unexpected FileDispositionInformation result (expected STATUS_CANNOT_DELETE, got %x)\n", res );
+    CloseHandle( handle );
+    fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
+    ok( !fileDeleted, "File shouldn't have been deleted\n" );
+    SetFileAttributesA( buffer, FILE_ATTRIBUTE_NORMAL );
+    DeleteFileA( buffer );
+
+    /* can set disposition on file and then reset it */
+    GetTempFileNameA( ".", "dis", 0, buffer );
+    handle = CreateFileA(buffer, GENERIC_WRITE | DELETE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok( handle != INVALID_HANDLE_VALUE, "failed to create temp file\n" );
+    fdi.DoDeleteFile = TRUE;
+    res = pNtSetInformationFile( handle, &io, &fdi, sizeof fdi, FileDispositionInformation );
+    todo_wine
+    ok( res == STATUS_SUCCESS, "unexpected FileDispositionInformation result (expected STATUS_SUCCESS, got %x)\n", res );
+    fdi.DoDeleteFile = FALSE;
+    res = pNtSetInformationFile( handle, &io, &fdi, sizeof fdi, FileDispositionInformation );
+    todo_wine
+    ok( res == STATUS_SUCCESS, "unexpected FileDispositionInformation result (expected STATUS_SUCCESS, got %x)\n", res );
+    CloseHandle( handle );
+    fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
+    ok( !fileDeleted, "File shouldn't have been deleted\n" );
+    DeleteFileA( buffer );
+
+    /* Delete-on-close flag doesn't change file disposition until a handle is closed */
+    GetTempFileNameA( ".", "dis", 0, buffer );
+    handle = CreateFileA(buffer, GENERIC_WRITE | DELETE, 0, NULL, CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, 0);
+    ok( handle != INVALID_HANDLE_VALUE, "failed to create temp file\n" );
+    fdi.DoDeleteFile = FALSE;
+    res = pNtSetInformationFile( handle, &io, &fdi, sizeof fdi, FileDispositionInformation );
+    todo_wine
+    ok( res == STATUS_SUCCESS, "unexpected FileDispositionInformation result (expected STATUS_SUCCESS, got %x)\n", res );
+    CloseHandle( handle );
+    fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
+    ok( fileDeleted, "File should have been deleted\n" );
+    DeleteFileA( buffer );
+
+    /* Delete-on-close flag sets disposition when a handle is closed and then it could be changed back */
+    GetTempFileNameA( ".", "dis", 0, buffer );
+    handle = CreateFileA(buffer, GENERIC_WRITE | DELETE, 0, NULL, CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, 0);
+    ok( handle != INVALID_HANDLE_VALUE, "failed to create temp file\n" );
+    ok( DuplicateHandle( GetCurrentProcess(), handle, GetCurrentProcess(), &handle2, 0, FALSE, DUPLICATE_SAME_ACCESS ), "DuplicateHandle failed" );
+    CloseHandle( handle );
+    fdi.DoDeleteFile = FALSE;
+    res = pNtSetInformationFile( handle2, &io, &fdi, sizeof fdi, FileDispositionInformation );
+    todo_wine
+    ok( res == STATUS_SUCCESS, "unexpected FileDispositionInformation result (expected STATUS_SUCCESS, got %x)\n", res );
+    CloseHandle( handle2 );
+    fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
+    ok( fileDeleted, "File should have been deleted\n" );
+    DeleteFileA( buffer );
+
+    /* can set disposition on a directory opened with proper access */
+    GetTempFileNameA( ".", "dis", 0, buffer );
+    DeleteFileA( buffer );
+    ok( CreateDirectoryA( buffer, NULL ), "CreateDirectory failed\n" );
+    handle = CreateFileA(buffer, DELETE, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
+    ok( handle != INVALID_HANDLE_VALUE, "failed to open a directory\n" );
+    fdi.DoDeleteFile = TRUE;
+    res = pNtSetInformationFile( handle, &io, &fdi, sizeof fdi, FileDispositionInformation );
+    todo_wine
+    ok( res == STATUS_SUCCESS, "unexpected FileDispositionInformation result (expected STATUS_SUCCESS, got %x)\n", res );
+    CloseHandle( handle );
+    fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
+    todo_wine
+    ok( fileDeleted, "Directory should have been deleted\n" );
+    RemoveDirectoryA( buffer );
+
+    /* RemoveDirectory sets directory disposition and it can be undone */
+    GetTempFileNameA( ".", "dis", 0, buffer );
+    DeleteFileA( buffer );
+    ok( CreateDirectoryA( buffer, NULL ), "CreateDirectory failed\n" );
+    handle = CreateFileA(buffer, DELETE, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
+    ok( handle != INVALID_HANDLE_VALUE, "failed to open a directory\n" );
+    RemoveDirectoryA( buffer );
+    fdi.DoDeleteFile = FALSE;
+    res = pNtSetInformationFile( handle, &io, &fdi, sizeof fdi, FileDispositionInformation );
+    todo_wine
+    ok( res == STATUS_SUCCESS, "unexpected FileDispositionInformation result (expected STATUS_SUCCESS, got %x)\n", res );
+    CloseHandle( handle );
+    fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
+    ok( !fileDeleted, "Directory shouldn't have been deleted\n" );
+    RemoveDirectoryA( buffer );
+
+    /* cannot set disposition on a non-empty directory */
+    GetTempFileNameA( ".", "dis", 0, buffer );
+    DeleteFileA( buffer );
+    ok( CreateDirectoryA( buffer, NULL ), "CreateDirectory failed\n" );
+    handle = CreateFileA(buffer, DELETE, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
+    ok( handle != INVALID_HANDLE_VALUE, "failed to open a directory\n" );
+    dirpos = lstrlenA( buffer );
+    lstrcpyA( buffer + dirpos, "\\tst" );
+    handle2 = CreateFileA(buffer, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    CloseHandle( handle2 );
+    fdi.DoDeleteFile = TRUE;
+    res = pNtSetInformationFile( handle, &io, &fdi, sizeof fdi, FileDispositionInformation );
+    todo_wine
+    ok( res == STATUS_DIRECTORY_NOT_EMPTY, "unexpected FileDispositionInformation result (expected STATUS_DIRECTORY_NOT_EMPTY, got %x)\n", res );
+    DeleteFileA( buffer );
+    buffer[dirpos] = '\0';
+    CloseHandle( handle );
+    fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
+    ok( !fileDeleted, "Directory shouldn't have been deleted\n" );
+    RemoveDirectoryA( buffer );
+}
+
 static void test_iocompletion(void)
 {
     HANDLE h = INVALID_HANDLE_VALUE;
@@ -1815,6 +1967,7 @@ START_TEST(file)
     test_file_both_information();
     test_file_name_information();
     test_file_all_name_information();
+    test_file_disposition_information();
     test_query_volume_information_file();
     test_query_attribute_information_file();
 }
