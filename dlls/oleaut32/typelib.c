@@ -2537,10 +2537,18 @@ static ITypeInfoImpl * MSFT_DoTypeInfo(
     ptiRet->lcid=pLibInfo->set_lcid;   /* FIXME: correct? */
     ptiRet->lpstrSchema=NULL;              /* reserved */
     ptiRet->cbSizeInstance=tiBase.size;
+#ifdef _WIN64
+    if(pLibInfo->syskind == SYS_WIN32)
+        ptiRet->cbSizeInstance=sizeof(void*);
+#endif
     ptiRet->typekind=tiBase.typekind & 0xF;
     ptiRet->cFuncs=LOWORD(tiBase.cElement);
     ptiRet->cVars=HIWORD(tiBase.cElement);
     ptiRet->cbAlignment=(tiBase.typekind >> 11 )& 0x1F; /* there are more flags there */
+#ifdef _WIN64
+    if(pLibInfo->syskind == SYS_WIN32)
+        ptiRet->cbAlignment = 8;
+#endif
     ptiRet->wTypeFlags=tiBase.flags;
     ptiRet->wMajorVerNum=LOWORD(tiBase.version);
     ptiRet->wMinorVerNum=HIWORD(tiBase.version);
@@ -8484,7 +8492,7 @@ static HRESULT WINAPI ICreateTypeLib2_fnCreateTypeInfo(ICreateTypeLib2 *iface,
     case TKIND_INTERFACE:
     case TKIND_DISPATCH:
     case TKIND_COCLASS:
-        info->cbSizeInstance = 4;
+        info->cbSizeInstance = This->ptr_size;
         break;
     case TKIND_RECORD:
     case TKIND_UNION:
@@ -10198,6 +10206,12 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(ICreateTypeInfo2 *iface,
     if (funcDesc->invkind & (INVOKE_PROPERTYPUT | INVOKE_PROPERTYPUTREF) &&
             !funcDesc->cParams)
         return TYPE_E_INCONSISTENTPROPFUNCS;
+
+#ifdef _WIN64
+    if(This->pTypeLib->syskind == SYS_WIN64 &&
+            funcDesc->oVft % 8 != 0)
+        return E_INVALIDARG;
+#endif
 
     memset(&tmp_func_desc, 0, sizeof(tmp_func_desc));
     TLBFuncDesc_Constructor(&tmp_func_desc);
