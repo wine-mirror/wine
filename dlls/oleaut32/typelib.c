@@ -9698,7 +9698,7 @@ static HRESULT WINAPI ICreateTypeLib2_fnSaveAllChanges(ICreateTypeLib2 *iface)
     file.header.magic2 = 0x00010002;
     file.header.lcid = This->set_lcid ? This->set_lcid : MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US);
     file.header.lcid2 = This->set_lcid;
-    file.header.varflags = 0x41; /* TODO?? */
+    file.header.varflags = 0x40 | This->syskind;
     if (This->HelpFile)
         file.header.varflags |= 0x10;
     if (This->HelpStringDll)
