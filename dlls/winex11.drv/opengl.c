@@ -396,9 +396,11 @@ static void (*pglXCopySubBufferMESA)(Display *dpy, GLXDrawable drawable, int x, 
 /* Standard OpenGL */
 static void (*pglFinish)(void);
 static void (*pglFlush)(void);
+static const GLubyte *(*pglGetString)(GLenum name);
 
 static void wglFinish(void);
 static void wglFlush(void);
+static const GLubyte *wglGetString(GLenum name);
 
 /* check if the extension is present in the list */
 static BOOL has_extension( const char *list, const char *ext )
@@ -422,6 +424,8 @@ static int GLXErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
 
 static BOOL X11DRV_WineGL_InitOpenglInfo(void)
 {
+    static const char legacy_extensions[] = " WGL_EXT_extensions_string WGL_EXT_swap_control";
+
     int screen = DefaultScreen(gdi_display);
     Window win = 0, root = 0;
     const char *gl_renderer;
@@ -473,8 +477,9 @@ static BOOL X11DRV_WineGL_InitOpenglInfo(void)
     gl_renderer = (const char *)opengl_funcs.gl.p_glGetString(GL_RENDERER);
     WineGLInfo.glVersion = (const char *) opengl_funcs.gl.p_glGetString(GL_VERSION);
     str = (const char *) opengl_funcs.gl.p_glGetString(GL_EXTENSIONS);
-    WineGLInfo.glExtensions = HeapAlloc(GetProcessHeap(), 0, strlen(str)+1);
+    WineGLInfo.glExtensions = HeapAlloc(GetProcessHeap(), 0, strlen(str)+sizeof(legacy_extensions));
     strcpy(WineGLInfo.glExtensions, str);
+    strcat(WineGLInfo.glExtensions, legacy_extensions);
 
     /* Get the common GLX version supported by GLX client and server ( major/minor) */
     pglXQueryVersion(gdi_display, &WineGLInfo.glxVersion[0], &WineGLInfo.glxVersion[1]);
@@ -581,6 +586,7 @@ static BOOL has_opengl(void)
     do { p##func = opengl_funcs.gl.p_##func; opengl_funcs.gl.p_##func = w##func; } while(0)
     REDIRECT( glFinish );
     REDIRECT( glFlush );
+    REDIRECT( glGetString );
 #undef REDIRECT
 
     pglXGetProcAddressARB = wine_dlsym(opengl_handle, "glXGetProcAddressARB", NULL, 0);
@@ -1925,6 +1931,13 @@ static void wglFlush(void)
 
     pglFlush();
     if (escape.gl_drawable) ExtEscape( ctx->hdc, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
+}
+
+static const GLubyte *wglGetString(GLenum name)
+{
+    if (name == GL_EXTENSIONS && WineGLInfo.glExtensions)
+        return (const GLubyte *)WineGLInfo.glExtensions;
+    return pglGetString(name);
 }
 
 /***********************************************************************
