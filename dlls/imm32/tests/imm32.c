@@ -757,6 +757,38 @@ static void test_ImmGetIMCCLockCount(void)
     ImmDestroyIMCC(imcc);
 }
 
+static void test_ImmDestroyIMCC(void)
+{
+    HIMCC imcc;
+    DWORD ret, count, size;
+    VOID *p;
+
+    imcc = ImmCreateIMCC(sizeof(CANDIDATEINFO));
+    count = ImmGetIMCCLockCount(imcc);
+    ok(count == 0, "expect 0, returned %d\n", count);
+    p = ImmLockIMCC(imcc);
+    ok(p != NULL, "ImmLockIMCC failed!\n");
+    count = ImmGetIMCCLockCount(imcc);
+    ok(count == 1, "expect 1, returned %d\n", count);
+    size = ImmGetIMCCSize(imcc);
+    ok(size == sizeof(CANDIDATEINFO), "returned %d\n", size);
+    p = ImmDestroyIMCC(imcc);
+    ok(p == NULL, "Destroy a locked IMCC should success!\n");
+    p = ImmLockIMCC(imcc);
+    todo_wine ok(p == NULL, "Lock a destroyed IMCC should fail!\n");
+    ret = ImmUnlockIMCC(imcc);
+    todo_wine ok(ret == FALSE, "Unlock a destroyed IMCC should return FALSE!\n");
+    count = ImmGetIMCCLockCount(imcc);
+    todo_wine ok(count == 0, "Get lock count of a destroyed IMCC should return 0!\n");
+    size = ImmGetIMCCSize(imcc);
+    todo_wine ok(size == 0, "Get size of a destroyed IMCC should return 0!\n");
+    SetLastError(0xdeadbeef);
+    p = ImmDestroyIMCC(imcc);
+    todo_wine ok(p != NULL, "returned NULL\n");
+    ret = GetLastError();
+    todo_wine ok(ret == ERROR_INVALID_HANDLE, "wrong last error %08x!\n", ret);
+}
+
 static void test_ImmMessages(void)
 {
     CANDIDATEFORM cf;
@@ -918,6 +950,7 @@ START_TEST(imm32) {
         test_ImmDefaultHwnd();
         test_ImmGetIMCLockCount();
         test_ImmGetIMCCLockCount();
+        test_ImmDestroyIMCC();
         msg_spy_cleanup();
         /* Reinitialize the hooks to capture all windows */
         msg_spy_init(NULL);
