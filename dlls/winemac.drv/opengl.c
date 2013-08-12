@@ -104,6 +104,7 @@ static void (*pglCopyColorTable)(GLenum target, GLenum internalformat, GLint x, 
 static void (*pglCopyPixels)(GLint x, GLint y, GLsizei width, GLsizei height, GLenum type);
 static void (*pglFlush)(void);
 static void (*pglFlushRenderAPPLE)(void);
+static const GLubyte *(*pglGetString)(GLenum name);
 static void (*pglReadPixels)(GLint x, GLint y, GLsizei width, GLsizei height,
                              GLenum format, GLenum type, void *pixels);
 static void (*pglViewport)(GLint x, GLint y, GLsizei width, GLsizei height);
@@ -1186,6 +1187,9 @@ static const pixel_format *get_pixel_format(int format, BOOL allow_nondisplayabl
 
 static BOOL init_gl_info(void)
 {
+    static char legacy_extensions[] = " WGL_EXT_extensions_string";
+    static const char legacy_ext_swap_control[] = " WGL_EXT_swap_control";
+
     CGDirectDisplayID display = CGMainDisplayID();
     CGOpenGLDisplayMask displayMask = CGDisplayIDToOpenGLDisplayMask(display);
     CGLPixelFormatAttribute attribs[] = {
@@ -1198,6 +1202,7 @@ static BOOL init_gl_info(void)
     CGLContextObj context;
     CGLContextObj old_context = CGLGetCurrentContext();
     const char *str;
+    size_t length;
 
     err = CGLChoosePixelFormat(attribs, &pix, &virtualScreens);
     if (err != kCGLNoError || !pix)
@@ -1226,8 +1231,14 @@ static BOOL init_gl_info(void)
     gl_info.glVersion = HeapAlloc(GetProcessHeap(), 0, strlen(str) + 1);
     strcpy(gl_info.glVersion, str);
     str = (const char*)opengl_funcs.gl.p_glGetString(GL_EXTENSIONS);
-    gl_info.glExtensions = HeapAlloc(GetProcessHeap(), 0, strlen(str) + 1);
+    length = strlen(str) + sizeof(legacy_extensions);
+    if (allow_vsync)
+        length += strlen(legacy_ext_swap_control);
+    gl_info.glExtensions = HeapAlloc(GetProcessHeap(), 0, length);
     strcpy(gl_info.glExtensions, str);
+    strcat(gl_info.glExtensions, legacy_extensions);
+    if (allow_vsync)
+        strcat(gl_info.glExtensions, legacy_ext_swap_control);
 
     opengl_funcs.gl.p_glGetIntegerv(GL_MAX_VIEWPORT_DIMS, gl_info.max_viewport_dims);
 
@@ -1512,6 +1523,26 @@ static void macdrv_glFlush(void)
         pglFlush();
         context->last_flush_time = now;
     }
+}
+
+
+/**********************************************************************
+ *              macdrv_glGetString
+ *
+ * Hook into glGetString in order to return some legacy WGL extensions
+ * that couldn't be advertised via the standard
+ * WGL_ARB_extensions_string mechanism. Some programs, especially
+ * older ones, expect to find certain older extensions, such as
+ * WGL_EXT_extensions_string itself, in the standard GL extensions
+ * string, and won't query any other WGL extensions unless they find
+ * that particular extension there.
+ */
+static const GLubyte *macdrv_glGetString(GLenum name)
+{
+    if (name == GL_EXTENSIONS && gl_info.glExtensions)
+        return (const GLubyte *)gl_info.glExtensions;
+    else
+        return pglGetString(name);
 }
 
 
@@ -3054,6 +3085,7 @@ static BOOL init_opengl(void)
 #define REDIRECT(func) \
     do { p##func = opengl_funcs.gl.p_##func; opengl_funcs.gl.p_##func = macdrv_##func; } while(0)
     REDIRECT(glCopyPixels);
+    REDIRECT(glGetString);
     REDIRECT(glReadPixels);
     REDIRECT(glViewport);
     if (skip_single_buffer_flushes)
