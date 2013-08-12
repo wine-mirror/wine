@@ -1537,9 +1537,10 @@ static void test_CreateTypeLib(void) {
     TYPEATTR *typeattr;
     TLIBATTR *libattr;
     HREFTYPE hreftype;
-    BSTR name, docstring, helpfile;
+    BSTR name, docstring, helpfile, names[3];
     DWORD helpcontext;
     int impltypeflags;
+    unsigned int cnames;
     VARIANT cust_data;
     HRESULT hres;
     TYPEKIND kind;
@@ -2532,6 +2533,808 @@ static void test_CreateTypeLib(void) {
 
     hres = LoadTypeLibEx(filenameW, REGKIND_NONE, &tl);
     ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ITypeLib_GetLibAttr(tl, &libattr);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(libattr->syskind == SYS_WIN32, "syskind = %d\n", libattr->syskind);
+    ok(libattr->wMajorVerNum == 0, "wMajorVer = %d\n", libattr->wMajorVerNum);
+    ok(libattr->wMinorVerNum == 0, "wMinorVerNum = %d\n", libattr->wMinorVerNum);
+    todo_wine
+        ok(libattr->wLibFlags == LIBFLAG_FHASDISKIMAGE, "wLibFlags = %d\n", libattr->wLibFlags);
+    ITypeLib_ReleaseTLibAttr(tl, libattr);
+
+    hres = ITypeLib_GetDocumentation(tl, -1, &name, &docstring, &helpcontext, &helpfile);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(memcmp(typelibW, name, sizeof(typelibW)) == 0, "got wrong typelib name: %s\n",
+            wine_dbgstr_w(name));
+    ok(docstring == NULL, "got wrong docstring: %s\n", wine_dbgstr_w(docstring));
+    ok(helpcontext == 0, "got wrong helpcontext: 0x%x\n", helpcontext);
+    ok(memcmp(helpfileW, helpfile, sizeof(helpfileW)) == 0,
+            "got wrong helpfile: %s\n", wine_dbgstr_w(helpfile));
+    SysFreeString(name);
+    SysFreeString(helpfile);
+
+    hres = ITypeLib_GetDocumentation(tl, 0, &name, &docstring, &helpcontext, &helpfile);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(memcmp(interface1W, name, sizeof(interface1W)) == 0, "got wrong typeinfo name: %s\n",
+            wine_dbgstr_w(name));
+    ok(docstring == NULL, "got wrong docstring: %s\n", wine_dbgstr_w(docstring));
+    ok(helpcontext == 0, "got wrong helpcontext: 0x%x\n", helpcontext);
+    ok(memcmp(helpfileW, helpfile, sizeof(helpfileW)) == 0,
+            "got wrong helpfile: %s\n", wine_dbgstr_w(helpfile));
+    SysFreeString(name);
+    SysFreeString(helpfile);
+
+    hres = ITypeLib_GetTypeInfo(tl, 0, &ti);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ITypeInfo_GetTypeAttr(ti, &typeattr);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(typeattr->cbSizeInstance == sizeof(void*), "cbSizeInstance = %d\n", typeattr->cbSizeInstance);
+    ok(typeattr->typekind == TKIND_INTERFACE, "typekind = %d\n", typeattr->typekind);
+    ok(typeattr->cFuncs == 13, "cFuncs = %d\n", typeattr->cFuncs);
+    ok(typeattr->cVars == 0, "cVars = %d\n", typeattr->cVars);
+    ok(typeattr->cImplTypes == 1, "cImplTypes = %d\n", typeattr->cImplTypes);
+#ifdef _WIN64
+    todo_wine ok(typeattr->cbSizeVft == 16 * sizeof(void*), "cbSizeVft = %d\n", typeattr->cbSizeVft);
+#else
+    ok(typeattr->cbSizeVft == 16 * sizeof(void*), "cbSizeVft = %d\n", typeattr->cbSizeVft);
+#endif
+    ok(typeattr->cbAlignment == sizeof(void*), "cbAlignment = %d\n", typeattr->cbAlignment);
+    ok(typeattr->wTypeFlags == 0, "wTypeFlags = %d\n", typeattr->wTypeFlags);
+    ok(typeattr->wMajorVerNum == 0, "wMajorVerNum = %d\n", typeattr->wMajorVerNum);
+    ok(typeattr->wMinorVerNum == 0, "wMinorVerNum = %d\n", typeattr->wMinorVerNum);
+    ITypeInfo_ReleaseTypeAttr(ti, typeattr);
+
+    hres = ITypeInfo_GetRefTypeOfImplType(ti, 0, &hreftype);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(hreftype == 3, "hreftype = %d\n", hreftype);
+
+    hres = ITypeInfo_GetRefTypeInfo(ti, hreftype, &unknown);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ITypeInfo_GetTypeAttr(unknown, &typeattr);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(IsEqualGUID(&typeattr->guid, &IID_IUnknown), "got wrong reftypeinfo\n");
+    ITypeInfo_ReleaseTypeAttr(unknown, typeattr);
+
+    ITypeInfo_Release(unknown);
+
+    hres = ITypeInfo_GetFuncDesc(ti, 0, &pfuncdesc);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(pfuncdesc->memid == 0, "got %x\n", pfuncdesc->memid);
+    ok(pfuncdesc->lprgscode == NULL, "got %p\n", pfuncdesc->lprgscode);
+    ok(pfuncdesc->lprgelemdescParam != NULL, "got %p\n", pfuncdesc->lprgelemdescParam);
+    ok(pfuncdesc->funckind == FUNC_PUREVIRTUAL, "got 0x%x\n", pfuncdesc->funckind);
+    ok(pfuncdesc->invkind == INVOKE_PROPERTYPUTREF, "got 0x%x\n", pfuncdesc->invkind);
+    ok(pfuncdesc->callconv == CC_STDCALL, "got 0x%x\n", pfuncdesc->callconv);
+    ok(pfuncdesc->cParams == 1, "got %d\n", pfuncdesc->cParams);
+    ok(pfuncdesc->cParamsOpt == 0, "got %d\n", pfuncdesc->cParamsOpt);
+    ok(pfuncdesc->cScodes == 0, "got %d\n", pfuncdesc->cScodes);
+    ok(pfuncdesc->elemdescFunc.tdesc.vt == VT_VOID, "got %d\n", pfuncdesc->elemdescFunc.tdesc.vt);
+    ok(pfuncdesc->wFuncFlags == 0, "got 0x%x\n", pfuncdesc->wFuncFlags);
+    edesc = pfuncdesc->lprgelemdescParam;
+    ok(edesc->tdesc.vt == VT_BSTR, "got: %d\n", edesc->tdesc.vt);
+    ok(U(*edesc).idldesc.wIDLFlags == IDLFLAG_FIN, "got: %x\n", U(*edesc).idldesc.wIDLFlags);
+
+    hres = ITypeInfo_GetDocumentation(ti, pfuncdesc->memid, &name, &docstring, &helpcontext, &helpfile);
+    ok(hres == S_OK, "got: %08x\n", hres);
+    ok(!memcmp(name, func1W, sizeof(func1W)), "got name: %s\n", wine_dbgstr_w(name));
+    ok(docstring == NULL, "got docstring: %s\n", wine_dbgstr_w(docstring));
+    ok(helpcontext == 0x201, "got helpcontext: 0x%x\n", helpcontext);
+    ok(!memcmp(helpfile, helpfileW, sizeof(helpfileW)), "got helpfile: %s\n", wine_dbgstr_w(helpfile));
+    SysFreeString(name);
+    SysFreeString(helpfile);
+
+    hres = ITypeInfo_GetNames(ti, pfuncdesc->memid, NULL, 0, &cnames);
+    ok(hres == E_INVALIDARG, "got: %08x\n", hres);
+
+    cnames = 8;
+    hres = ITypeInfo_GetNames(ti, pfuncdesc->memid, names, 0, &cnames);
+    ok(hres == S_OK, "got: %08x\n", hres);
+    ok(cnames == 0, "got: %u\n", cnames);
+
+    hres = ITypeInfo_GetNames(ti, pfuncdesc->memid, names, sizeof(names) / sizeof(*names), &cnames);
+    ok(hres == S_OK, "got: %08x\n", hres);
+    ok(cnames == 1, "got: %u\n", cnames);
+    ok(!memcmp(names[0], func1W, sizeof(func1W)), "got names[0]: %s\n", wine_dbgstr_w(names[0]));
+    SysFreeString(names[0]);
+
+    ITypeInfo_ReleaseFuncDesc(ti, pfuncdesc);
+
+    hres = ITypeInfo_GetFuncDesc(ti, 1, &pfuncdesc);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(pfuncdesc->memid == 0x60010001, "got %x\n", pfuncdesc->memid);
+    ok(pfuncdesc->lprgscode == NULL, "got %p\n", pfuncdesc->lprgscode);
+    ok(pfuncdesc->lprgelemdescParam == NULL, "got %p\n", pfuncdesc->lprgelemdescParam);
+    ok(pfuncdesc->funckind == FUNC_PUREVIRTUAL, "got 0x%x\n", pfuncdesc->funckind);
+    ok(pfuncdesc->invkind == INVOKE_FUNC, "got 0x%x\n", pfuncdesc->invkind);
+    ok(pfuncdesc->callconv == CC_STDCALL, "got 0x%x\n", pfuncdesc->callconv);
+    ok(pfuncdesc->cParams == 0, "got %d\n", pfuncdesc->cParams);
+    ok(pfuncdesc->cParamsOpt == 0, "got %d\n", pfuncdesc->cParamsOpt);
+#ifdef _WIN64
+    todo_wine ok(pfuncdesc->oVft == 4 * sizeof(void*), "got %d\n", pfuncdesc->oVft);
+#else
+    ok(pfuncdesc->oVft == 4 * sizeof(void*), "got %d\n", pfuncdesc->oVft);
+#endif
+    ok(pfuncdesc->cScodes == 0, "got %d\n", pfuncdesc->cScodes);
+    ok(pfuncdesc->elemdescFunc.tdesc.vt == VT_VOID, "got %d\n", pfuncdesc->elemdescFunc.tdesc.vt);
+    ok(pfuncdesc->wFuncFlags == 0, "got 0x%x\n", pfuncdesc->wFuncFlags);
+
+    hres = ITypeInfo_GetDocumentation(ti, pfuncdesc->memid, &name, &docstring, &helpcontext, &helpfile);
+    ok(hres == S_OK, "got: %08x\n", hres);
+    ok(name == NULL, "got name: %s\n", wine_dbgstr_w(name));
+    ok(docstring == NULL, "got docstring: %s\n", wine_dbgstr_w(docstring));
+    ok(helpcontext == 0, "got helpcontext: 0x%x\n", helpcontext);
+    ok(!memcmp(helpfile, helpfileW, sizeof(helpfileW)), "got helpfile: %s\n", wine_dbgstr_w(helpfile));
+    SysFreeString(helpfile);
+    ITypeInfo_ReleaseFuncDesc(ti, pfuncdesc);
+
+    hres = ITypeInfo_GetFuncDesc(ti, 2, &pfuncdesc);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(pfuncdesc->memid == 0x1, "got %x\n", pfuncdesc->memid);
+    ok(pfuncdesc->lprgscode == NULL, "got %p\n", pfuncdesc->lprgscode);
+    ok(pfuncdesc->lprgelemdescParam == NULL, "got %p\n", pfuncdesc->lprgelemdescParam);
+    ok(pfuncdesc->funckind == FUNC_PUREVIRTUAL, "got 0x%x\n", pfuncdesc->funckind);
+    ok(pfuncdesc->invkind == INVOKE_FUNC, "got 0x%x\n", pfuncdesc->invkind);
+    ok(pfuncdesc->callconv == CC_STDCALL, "got 0x%x\n", pfuncdesc->callconv);
+    ok(pfuncdesc->cParams == 0, "got %d\n", pfuncdesc->cParams);
+    ok(pfuncdesc->cParamsOpt == 0, "got %d\n", pfuncdesc->cParamsOpt);
+#ifdef _WIN64
+    todo_wine ok(pfuncdesc->oVft == 5 * sizeof(void*), "got %d\n", pfuncdesc->oVft);
+#else
+    ok(pfuncdesc->oVft == 5 * sizeof(void*), "got %d\n", pfuncdesc->oVft);
+#endif
+    ok(pfuncdesc->cScodes == 0, "got %d\n", pfuncdesc->cScodes);
+    ok(pfuncdesc->elemdescFunc.tdesc.vt == VT_VOID, "got %d\n", pfuncdesc->elemdescFunc.tdesc.vt);
+    ok(pfuncdesc->wFuncFlags == 0, "got 0x%x\n", pfuncdesc->wFuncFlags);
+
+    hres = ITypeInfo_GetDocumentation(ti, pfuncdesc->memid, &name, &docstring, &helpcontext, &helpfile);
+    ok(hres == S_OK, "got: %08x\n", hres);
+    ok(name == NULL, "got name: %s\n", wine_dbgstr_w(name));
+    ok(docstring == NULL, "got docstring: %s\n", wine_dbgstr_w(docstring));
+    ok(helpcontext == 0, "got helpcontext: 0x%x\n", helpcontext);
+    ok(!memcmp(helpfile, helpfileW, sizeof(helpfileW)), "got helpfile: %s\n", wine_dbgstr_w(helpfile));
+    SysFreeString(helpfile);
+    ITypeInfo_ReleaseFuncDesc(ti, pfuncdesc);
+
+    hres = ITypeInfo_GetFuncDesc(ti, 3, &pfuncdesc);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(pfuncdesc->memid == 0x6001000b, "got %x\n", pfuncdesc->memid);
+    ok(pfuncdesc->lprgscode == NULL, "got %p\n", pfuncdesc->lprgscode);
+    ok(pfuncdesc->lprgelemdescParam != NULL, "got %p\n", pfuncdesc->lprgelemdescParam);
+    ok(pfuncdesc->funckind == FUNC_PUREVIRTUAL, "got 0x%x\n", pfuncdesc->funckind);
+    ok(pfuncdesc->invkind == INVOKE_FUNC, "got 0x%x\n", pfuncdesc->invkind);
+    ok(pfuncdesc->callconv == CC_STDCALL, "got 0x%x\n", pfuncdesc->callconv);
+    ok(pfuncdesc->cParams == 2, "got %d\n", pfuncdesc->cParams);
+    ok(pfuncdesc->cParamsOpt == 0, "got %d\n", pfuncdesc->cParamsOpt);
+#ifdef _WIN64
+    todo_wine ok(pfuncdesc->oVft == 6 * sizeof(void*), "got %d\n", pfuncdesc->oVft);
+#else
+    ok(pfuncdesc->oVft == 6 * sizeof(void*), "got %d\n", pfuncdesc->oVft);
+#endif
+    ok(pfuncdesc->cScodes == 0, "got %d\n", pfuncdesc->cScodes);
+    ok(pfuncdesc->elemdescFunc.tdesc.vt == VT_VOID, "got %d\n", pfuncdesc->elemdescFunc.tdesc.vt);
+    ok(pfuncdesc->wFuncFlags == 0, "got 0x%x\n", pfuncdesc->wFuncFlags);
+
+    edesc = pfuncdesc->lprgelemdescParam;
+    ok(edesc->tdesc.vt == VT_BSTR, "got: %d\n", edesc->tdesc.vt);
+    ok(U(*edesc).paramdesc.wParamFlags == PARAMFLAG_FHASDEFAULT, "got: 0x%x\n", U(*edesc).paramdesc.wParamFlags);
+    ok(U(*edesc).paramdesc.pparamdescex != NULL, "got: %p\n", U(*edesc).paramdesc.pparamdescex);
+    ok(U(*edesc).paramdesc.pparamdescex->cBytes == sizeof(PARAMDESCEX), "got: %d\n",
+            U(*edesc).paramdesc.pparamdescex->cBytes);
+    ok(V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue) == VT_BSTR, "got: %d\n",
+            V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue));
+    ok(!lstrcmpW(V_BSTR(&U(*edesc).paramdesc.pparamdescex->varDefaultValue), defaultQW),
+            "got: %s\n",
+            wine_dbgstr_w(V_BSTR(&U(*edesc).paramdesc.pparamdescex->varDefaultValue)));
+
+    edesc = pfuncdesc->lprgelemdescParam + 1;
+    ok(edesc->tdesc.vt == VT_BSTR, "got: %d\n", edesc->tdesc.vt);
+    ok(U(*edesc).paramdesc.wParamFlags == PARAMFLAG_FHASDEFAULT, "got: 0x%x\n", U(*edesc).paramdesc.wParamFlags);
+    ok(U(*edesc).paramdesc.pparamdescex != NULL, "got: %p\n", U(*edesc).paramdesc.pparamdescex);
+    ok(U(*edesc).paramdesc.pparamdescex->cBytes == sizeof(PARAMDESCEX), "got: %d\n",
+            U(*edesc).paramdesc.pparamdescex->cBytes);
+    ok(V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue) == VT_BSTR, "got: %d\n",
+            V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue));
+    ok(!lstrcmpW(V_BSTR(&U(*edesc).paramdesc.pparamdescex->varDefaultValue), defaultQW),
+            "got: %s\n",
+            wine_dbgstr_w(V_BSTR(&U(*edesc).paramdesc.pparamdescex->varDefaultValue)));
+
+    hres = ITypeInfo_GetDocumentation(ti, pfuncdesc->memid, &name, &docstring, &helpcontext, &helpfile);
+    ok(hres == S_OK, "got: %08x\n", hres);
+    ok(!memcmp(name, func2W, sizeof(func2W)), "got name: %s\n", wine_dbgstr_w(name));
+    ok(docstring == NULL, "got docstring: %s\n", wine_dbgstr_w(docstring));
+    ok(helpcontext == 0, "got helpcontext: 0x%x\n", helpcontext);
+    ok(!memcmp(helpfile, helpfileW, sizeof(helpfileW)), "got helpfile: %s\n", wine_dbgstr_w(helpfile));
+    SysFreeString(name);
+    SysFreeString(helpfile);
+
+    hres = ITypeInfo_GetNames(ti, pfuncdesc->memid, names, sizeof(names) / sizeof(*names), &cnames);
+    ok(hres == S_OK, "got: %08x\n", hres);
+    ok(cnames == 3, "got: %u\n", cnames);
+    ok(!memcmp(names[0], func2W, sizeof(func2W)), "got names[0]: %s\n", wine_dbgstr_w(names[0]));
+    ok(!memcmp(names[1], param1W, sizeof(func2W)), "got names[1]: %s\n", wine_dbgstr_w(names[1]));
+    ok(!memcmp(names[2], param2W, sizeof(func2W)), "got names[2]: %s\n", wine_dbgstr_w(names[2]));
+    SysFreeString(names[0]);
+    SysFreeString(names[1]);
+    SysFreeString(names[2]);
+    ITypeInfo_ReleaseFuncDesc(ti, pfuncdesc);
+
+    hres = ITypeInfo_GetFuncDesc(ti, 4, &pfuncdesc);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(pfuncdesc->memid == 0x6001000c, "got %x\n", pfuncdesc->memid);
+    ok(pfuncdesc->lprgscode == NULL, "got %p\n", pfuncdesc->lprgscode);
+    ok(pfuncdesc->lprgelemdescParam != NULL, "got %p\n", pfuncdesc->lprgelemdescParam);
+    ok(pfuncdesc->funckind == FUNC_PUREVIRTUAL, "got 0x%x\n", pfuncdesc->funckind);
+    ok(pfuncdesc->invkind == INVOKE_FUNC, "got 0x%x\n", pfuncdesc->invkind);
+    ok(pfuncdesc->callconv == CC_STDCALL, "got 0x%x\n", pfuncdesc->callconv);
+    ok(pfuncdesc->cParams == 2, "got %d\n", pfuncdesc->cParams);
+    ok(pfuncdesc->cParamsOpt == 0, "got %d\n", pfuncdesc->cParamsOpt);
+#ifdef _WIN64
+    todo_wine ok(pfuncdesc->oVft == 7 * sizeof(void*), "got %d\n", pfuncdesc->oVft);
+#else
+    ok(pfuncdesc->oVft == 7 * sizeof(void*), "got %d\n", pfuncdesc->oVft);
+#endif
+    ok(pfuncdesc->cScodes == 0, "got %d\n", pfuncdesc->cScodes);
+    ok(pfuncdesc->elemdescFunc.tdesc.vt == VT_VOID, "got %d\n", pfuncdesc->elemdescFunc.tdesc.vt);
+    ok(pfuncdesc->wFuncFlags == 0, "got 0x%x\n", pfuncdesc->wFuncFlags);
+
+    edesc = pfuncdesc->lprgelemdescParam;
+    ok(edesc->tdesc.vt == VT_INT, "got: %d\n", edesc->tdesc.vt);
+    ok(U(*edesc).paramdesc.wParamFlags == PARAMFLAG_FHASDEFAULT, "got: 0x%x\n", U(*edesc).paramdesc.wParamFlags);
+    ok(U(*edesc).paramdesc.pparamdescex != NULL, "got: %p\n", U(*edesc).paramdesc.pparamdescex);
+    ok(U(*edesc).paramdesc.pparamdescex->cBytes == sizeof(PARAMDESCEX), "got: %d\n",
+            U(*edesc).paramdesc.pparamdescex->cBytes);
+    ok(V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue) == VT_I4, "got: %d\n",
+            V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue));
+    ok(V_I4(&U(*edesc).paramdesc.pparamdescex->varDefaultValue) == 0xFFFFFFFF,
+            "got: 0x%x\n", V_I4(&U(*edesc).paramdesc.pparamdescex->varDefaultValue));
+
+    edesc = pfuncdesc->lprgelemdescParam + 1;
+    ok(edesc->tdesc.vt == VT_INT, "got: %d\n", edesc->tdesc.vt);
+    ok(U(*edesc).paramdesc.wParamFlags == PARAMFLAG_FHASDEFAULT, "got: 0x%x\n", U(*edesc).paramdesc.wParamFlags);
+    ok(U(*edesc).paramdesc.pparamdescex != NULL, "got: %p\n", U(*edesc).paramdesc.pparamdescex);
+    ok(U(*edesc).paramdesc.pparamdescex->cBytes == sizeof(PARAMDESCEX), "got: %d\n",
+            U(*edesc).paramdesc.pparamdescex->cBytes);
+    ok(V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue) == VT_I4, "got: %d\n",
+            V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue));
+    ok(V_I4(&U(*edesc).paramdesc.pparamdescex->varDefaultValue) == 0xFFFFFFFF,
+            "got: 0x%x\n", V_I4(&U(*edesc).paramdesc.pparamdescex->varDefaultValue));
+
+    hres = ITypeInfo_GetDocumentation(ti, pfuncdesc->memid, &name, &docstring, &helpcontext, &helpfile);
+    ok(hres == S_OK, "got: %08x\n", hres);
+    ok(name == NULL, "got name: %s\n", wine_dbgstr_w(name));
+    ok(docstring == NULL, "got docstring: %s\n", wine_dbgstr_w(docstring));
+    ok(helpcontext == 0, "got helpcontext: 0x%x\n", helpcontext);
+    ok(!memcmp(helpfile, helpfileW, sizeof(helpfileW)), "got helpfile: %s\n", wine_dbgstr_w(helpfile));
+    SysFreeString(helpfile);
+    ITypeInfo_ReleaseFuncDesc(ti, pfuncdesc);
+
+    hres = ITypeInfo_GetFuncDesc(ti, 5, &pfuncdesc);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(pfuncdesc->memid == 0x60010005, "got %x\n", pfuncdesc->memid);
+    ok(pfuncdesc->lprgscode == NULL, "got %p\n", pfuncdesc->lprgscode);
+    ok(pfuncdesc->lprgelemdescParam != NULL, "got %p\n", pfuncdesc->lprgelemdescParam);
+    ok(pfuncdesc->funckind == FUNC_PUREVIRTUAL, "got 0x%x\n", pfuncdesc->funckind);
+    ok(pfuncdesc->invkind == INVOKE_FUNC, "got 0x%x\n", pfuncdesc->invkind);
+    ok(pfuncdesc->callconv == CC_STDCALL, "got 0x%x\n", pfuncdesc->callconv);
+    ok(pfuncdesc->cParams == 1, "got %d\n", pfuncdesc->cParams);
+    ok(pfuncdesc->cParamsOpt == 0, "got %d\n", pfuncdesc->cParamsOpt);
+#ifdef _WIN64
+    todo_wine ok(pfuncdesc->oVft == 8 * sizeof(void*), "got %d\n", pfuncdesc->oVft);
+#else
+    ok(pfuncdesc->oVft == 8 * sizeof(void*), "got %d\n", pfuncdesc->oVft);
+#endif
+    ok(pfuncdesc->cScodes == 0, "got %d\n", pfuncdesc->cScodes);
+    ok(pfuncdesc->elemdescFunc.tdesc.vt == VT_VOID, "got %d\n", pfuncdesc->elemdescFunc.tdesc.vt);
+    ok(pfuncdesc->wFuncFlags == 0, "got 0x%x\n", pfuncdesc->wFuncFlags);
+
+    edesc = pfuncdesc->lprgelemdescParam;
+    ok(U(*edesc).paramdesc.pparamdescex != NULL, "got: %p\n", U(*edesc).paramdesc.pparamdescex);
+    ok(U(*edesc).paramdesc.pparamdescex->cBytes == sizeof(PARAMDESCEX), "got: %d\n",
+            U(*edesc).paramdesc.pparamdescex->cBytes);
+    ok(V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue) == VT_INT, "got: %d\n",
+            V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue));
+    ok(V_UI2(&U(*edesc).paramdesc.pparamdescex->varDefaultValue) == 0x789, "got: 0x%x\n",
+            V_UI2(&U(*edesc).paramdesc.pparamdescex->varDefaultValue));
+    ok(U(*edesc).paramdesc.wParamFlags == PARAMFLAG_FHASDEFAULT,
+            "got: 0x%x\n", U(*edesc).paramdesc.wParamFlags);
+    ok(edesc->tdesc.vt == VT_USERDEFINED, "got: %d\n", edesc->tdesc.vt);
+    ok(U(edesc->tdesc).hreftype == hreftype, "got: 0x%x\n", U(edesc->tdesc).hreftype);
+
+    hres = ITypeInfo_GetDocumentation(ti, pfuncdesc->memid, &name, &docstring, &helpcontext, &helpfile);
+    ok(hres == S_OK, "got: %08x\n", hres);
+    ok(name == NULL, "got name: %s\n", wine_dbgstr_w(name));
+    ok(docstring == NULL, "got docstring: %s\n", wine_dbgstr_w(docstring));
+    ok(helpcontext == 0, "got helpcontext: 0x%x\n", helpcontext);
+    ok(!memcmp(helpfile, helpfileW, sizeof(helpfileW)), "got helpfile: %s\n", wine_dbgstr_w(helpfile));
+    SysFreeString(helpfile);
+    ITypeInfo_ReleaseFuncDesc(ti, pfuncdesc);
+
+    hres = ITypeInfo_GetFuncDesc(ti, 6, &pfuncdesc);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(pfuncdesc->memid == 0x60010006, "got %x\n", pfuncdesc->memid);
+    ok(pfuncdesc->lprgscode == NULL, "got %p\n", pfuncdesc->lprgscode);
+    ok(pfuncdesc->lprgelemdescParam != NULL, "got %p\n", pfuncdesc->lprgelemdescParam);
+    ok(pfuncdesc->funckind == FUNC_PUREVIRTUAL, "got 0x%x\n", pfuncdesc->funckind);
+    ok(pfuncdesc->invkind == INVOKE_FUNC, "got 0x%x\n", pfuncdesc->invkind);
+    ok(pfuncdesc->callconv == CC_STDCALL, "got 0x%x\n", pfuncdesc->callconv);
+    ok(pfuncdesc->cParams == 1, "got %d\n", pfuncdesc->cParams);
+    ok(pfuncdesc->cParamsOpt == 0, "got %d\n", pfuncdesc->cParamsOpt);
+#ifdef _WIN64
+    todo_wine ok(pfuncdesc->oVft == 9 * sizeof(void*), "got %d\n", pfuncdesc->oVft);
+#else
+    ok(pfuncdesc->oVft == 9 * sizeof(void*), "got %d\n", pfuncdesc->oVft);
+#endif
+    ok(pfuncdesc->cScodes == 0, "got %d\n", pfuncdesc->cScodes);
+    ok(pfuncdesc->elemdescFunc.tdesc.vt == VT_VARIANT, "got %d\n", pfuncdesc->elemdescFunc.tdesc.vt);
+    ok(pfuncdesc->wFuncFlags == 0, "got 0x%x\n", pfuncdesc->wFuncFlags);
+
+    edesc = pfuncdesc->lprgelemdescParam;
+    ok(U(*edesc).paramdesc.pparamdescex != NULL, "got: %p\n", U(*edesc).paramdesc.pparamdescex);
+    ok(U(*edesc).paramdesc.pparamdescex->cBytes == sizeof(PARAMDESCEX), "got: %d\n",
+            U(*edesc).paramdesc.pparamdescex->cBytes);
+    ok(V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue) == VT_INT, "got: %d\n",
+            V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue));
+    ok(V_UI2(&U(*edesc).paramdesc.pparamdescex->varDefaultValue) == 0x3, "got: 0x%x\n",
+            V_UI2(&U(*edesc).paramdesc.pparamdescex->varDefaultValue));
+    ok(U(*edesc).paramdesc.wParamFlags == PARAMFLAG_FHASDEFAULT,
+            "got: 0x%x\n", U(*edesc).paramdesc.wParamFlags);
+    ok(edesc->tdesc.vt == VT_VARIANT, "got: %d\n", edesc->tdesc.vt);
+    ok(U(edesc->tdesc).hreftype == 0, "got: 0x%x\n", U(edesc->tdesc).hreftype);
+
+    hres = ITypeInfo_GetDocumentation(ti, pfuncdesc->memid, &name, &docstring, &helpcontext, &helpfile);
+    ok(hres == S_OK, "got: %08x\n", hres);
+    ok(name == NULL, "got name: %s\n", wine_dbgstr_w(name));
+    ok(docstring == NULL, "got docstring: %s\n", wine_dbgstr_w(docstring));
+    ok(helpcontext == 0, "got helpcontext: 0x%x\n", helpcontext);
+    ok(!memcmp(helpfile, helpfileW, sizeof(helpfileW)), "got helpfile: %s\n", wine_dbgstr_w(helpfile));
+    SysFreeString(helpfile);
+    ITypeInfo_ReleaseFuncDesc(ti, pfuncdesc);
+
+    hres = ITypeInfo_GetFuncDesc(ti, 7, &pfuncdesc);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(pfuncdesc->memid == 0x60010009, "got %x\n", pfuncdesc->memid);
+    ok(pfuncdesc->lprgscode == NULL, "got %p\n", pfuncdesc->lprgscode);
+    ok(pfuncdesc->lprgelemdescParam != NULL, "got %p\n", pfuncdesc->lprgelemdescParam);
+    ok(pfuncdesc->funckind == FUNC_PUREVIRTUAL, "got 0x%x\n", pfuncdesc->funckind);
+    ok(pfuncdesc->invkind == INVOKE_FUNC, "got 0x%x\n", pfuncdesc->invkind);
+    ok(pfuncdesc->callconv == CC_STDCALL, "got 0x%x\n", pfuncdesc->callconv);
+    ok(pfuncdesc->cParams == 2, "got %d\n", pfuncdesc->cParams);
+    ok(pfuncdesc->cParamsOpt == 0, "got %d\n", pfuncdesc->cParamsOpt);
+#ifdef _WIN64
+    todo_wine ok(pfuncdesc->oVft == 10 * sizeof(void*), "got %d\n", pfuncdesc->oVft);
+#else
+    ok(pfuncdesc->oVft == 10 * sizeof(void*), "got %d\n", pfuncdesc->oVft);
+#endif
+    ok(pfuncdesc->cScodes == 0, "got %d\n", pfuncdesc->cScodes);
+    ok(pfuncdesc->elemdescFunc.tdesc.vt == VT_VOID, "got %d\n", pfuncdesc->elemdescFunc.tdesc.vt);
+    ok(pfuncdesc->wFuncFlags == 0, "got 0x%x\n", pfuncdesc->wFuncFlags);
+
+    edesc = pfuncdesc->lprgelemdescParam;
+    ok(edesc->tdesc.vt == VT_INT, "got: %d\n", edesc->tdesc.vt);
+    ok(U(*edesc).paramdesc.wParamFlags == PARAMFLAG_FIN, "got: 0x%x\n", U(*edesc).paramdesc.wParamFlags);
+    ok(U(*edesc).paramdesc.pparamdescex == NULL, "got: %p\n", U(*edesc).paramdesc.pparamdescex);
+
+    edesc = pfuncdesc->lprgelemdescParam + 1;
+    ok(edesc->tdesc.vt == VT_UI2, "got: %d\n", edesc->tdesc.vt);
+    ok(U(*edesc).paramdesc.wParamFlags == PARAMFLAG_FHASDEFAULT, "got: 0x%x\n", U(*edesc).paramdesc.wParamFlags);
+    ok(U(*edesc).paramdesc.pparamdescex != NULL, "got: %p\n", U(*edesc).paramdesc.pparamdescex);
+    ok(U(*edesc).paramdesc.pparamdescex->cBytes == sizeof(PARAMDESCEX), "got: %d\n",
+            U(*edesc).paramdesc.pparamdescex->cBytes);
+    ok(V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue) == VT_UI2, "got: %d\n",
+            V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue));
+    ok(V_UI2(&U(*edesc).paramdesc.pparamdescex->varDefaultValue) == 0xFFFF, "got: 0x%x\n",
+            V_UI2(&U(*edesc).paramdesc.pparamdescex->varDefaultValue));
+
+    hres = ITypeInfo_GetDocumentation(ti, pfuncdesc->memid, &name, &docstring, &helpcontext, &helpfile);
+    ok(hres == S_OK, "got: %08x\n", hres);
+    ok(name == NULL, "got name: %s\n", wine_dbgstr_w(name));
+    ok(docstring == NULL, "got docstring: %s\n", wine_dbgstr_w(docstring));
+    ok(helpcontext == 0, "got helpcontext: 0x%x\n", helpcontext);
+    ok(!memcmp(helpfile, helpfileW, sizeof(helpfileW)), "got helpfile: %s\n", wine_dbgstr_w(helpfile));
+    SysFreeString(helpfile);
+    ITypeInfo_ReleaseFuncDesc(ti, pfuncdesc);
+
+    hres = ITypeInfo_GetFuncDesc(ti, 8, &pfuncdesc);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(pfuncdesc->memid == 0x60010003, "got %x\n", pfuncdesc->memid);
+    ok(pfuncdesc->lprgscode == NULL, "got %p\n", pfuncdesc->lprgscode);
+    ok(pfuncdesc->lprgelemdescParam != NULL, "got %p\n", pfuncdesc->lprgelemdescParam);
+    ok(pfuncdesc->funckind == FUNC_PUREVIRTUAL, "got 0x%x\n", pfuncdesc->funckind);
+    ok(pfuncdesc->invkind == INVOKE_FUNC, "got 0x%x\n", pfuncdesc->invkind);
+    ok(pfuncdesc->callconv == CC_STDCALL, "got 0x%x\n", pfuncdesc->callconv);
+    ok(pfuncdesc->cParams == 1, "got %d\n", pfuncdesc->cParams);
+    ok(pfuncdesc->cParamsOpt == 0, "got %d\n", pfuncdesc->cParamsOpt);
+#ifdef _WIN64
+    todo_wine ok(pfuncdesc->oVft == 11 * sizeof(void*), "got %d\n", pfuncdesc->oVft);
+#else
+    ok(pfuncdesc->oVft == 11 * sizeof(void*), "got %d\n", pfuncdesc->oVft);
+#endif
+    ok(pfuncdesc->cScodes == 0, "got %d\n", pfuncdesc->cScodes);
+    ok(pfuncdesc->elemdescFunc.tdesc.vt == VT_VOID, "got %d\n", pfuncdesc->elemdescFunc.tdesc.vt);
+    ok(pfuncdesc->wFuncFlags == 0, "got 0x%x\n", pfuncdesc->wFuncFlags);
+
+    edesc = pfuncdesc->lprgelemdescParam;
+    ok(edesc->tdesc.vt == VT_INT, "got: %d\n", edesc->tdesc.vt);
+    ok(U(*edesc).paramdesc.wParamFlags == PARAMFLAG_FHASDEFAULT, "got: 0x%x\n", U(*edesc).paramdesc.wParamFlags);
+    ok(U(*edesc).paramdesc.pparamdescex != NULL, "got: %p\n", U(*edesc).paramdesc.pparamdescex);
+    ok(U(*edesc).paramdesc.pparamdescex->cBytes == sizeof(PARAMDESCEX), "got: %d\n",
+            U(*edesc).paramdesc.pparamdescex->cBytes);
+    ok(V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue) == VT_I4, "got: %d\n",
+            V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue));
+    ok(V_I4(&U(*edesc).paramdesc.pparamdescex->varDefaultValue) == 0x123, "got: 0x%x\n",
+            V_I4(&U(*edesc).paramdesc.pparamdescex->varDefaultValue));
+
+    hres = ITypeInfo_GetDocumentation(ti, pfuncdesc->memid, &name, &docstring, &helpcontext, &helpfile);
+    ok(hres == S_OK, "got: %08x\n", hres);
+    ok(name == NULL, "got name: %s\n", wine_dbgstr_w(name));
+    ok(docstring == NULL, "got docstring: %s\n", wine_dbgstr_w(docstring));
+    ok(helpcontext == 0, "got helpcontext: 0x%x\n", helpcontext);
+    ok(!memcmp(helpfile, helpfileW, sizeof(helpfileW)), "got helpfile: %s\n", wine_dbgstr_w(helpfile));
+    SysFreeString(helpfile);
+    ITypeInfo_ReleaseFuncDesc(ti, pfuncdesc);
+
+    hres = ITypeInfo_GetFuncDesc(ti, 9, &pfuncdesc);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(pfuncdesc->memid == 0, "got %x\n", pfuncdesc->memid);
+    ok(pfuncdesc->lprgscode == NULL, "got %p\n", pfuncdesc->lprgscode);
+    ok(pfuncdesc->lprgelemdescParam == NULL, "got %p\n", pfuncdesc->lprgelemdescParam);
+    ok(pfuncdesc->funckind == FUNC_PUREVIRTUAL, "got 0x%x\n", pfuncdesc->funckind);
+    ok(pfuncdesc->invkind == INVOKE_PROPERTYGET, "got 0x%x\n", pfuncdesc->invkind);
+    ok(pfuncdesc->callconv == CC_STDCALL, "got 0x%x\n", pfuncdesc->callconv);
+    ok(pfuncdesc->cParams == 0, "got %d\n", pfuncdesc->cParams);
+    ok(pfuncdesc->cParamsOpt == 0, "got %d\n", pfuncdesc->cParamsOpt);
+#ifdef _WIN64
+    todo_wine ok(pfuncdesc->oVft == 12 * sizeof(void*), "got %d\n", pfuncdesc->oVft);
+#else
+    ok(pfuncdesc->oVft == 12 * sizeof(void*), "got %d\n", pfuncdesc->oVft);
+#endif
+    ok(pfuncdesc->cScodes == 0, "got %d\n", pfuncdesc->cScodes);
+    ok(pfuncdesc->elemdescFunc.tdesc.vt == VT_BSTR, "got %d\n", pfuncdesc->elemdescFunc.tdesc.vt);
+    ok(pfuncdesc->wFuncFlags == 0, "got 0x%x\n", pfuncdesc->wFuncFlags);
+
+    hres = ITypeInfo_GetDocumentation(ti, pfuncdesc->memid, &name, &docstring, &helpcontext, &helpfile);
+    ok(hres == S_OK, "got: %08x\n", hres);
+    ok(!memcmp(name, func1W, sizeof(func1W)), "got name: %s\n", wine_dbgstr_w(name));
+    ok(docstring == NULL, "got docstring: %s\n", wine_dbgstr_w(docstring));
+    ok(helpcontext == 0x201, "got helpcontext: 0x%x\n", helpcontext);
+    ok(!memcmp(helpfile, helpfileW, sizeof(helpfileW)), "got helpfile: %s\n", wine_dbgstr_w(helpfile));
+    SysFreeString(helpfile);
+
+    hres = ITypeInfo_GetNames(ti, pfuncdesc->memid, names, sizeof(names) / sizeof(*names), &cnames);
+    ok(hres == S_OK, "got: %08x\n", hres);
+    ok(cnames == 1, "got: %u\n", cnames);
+    ok(!memcmp(names[0], func1W, sizeof(func1W)), "got names[0]: %s\n", wine_dbgstr_w(names[0]));
+    ITypeInfo_ReleaseFuncDesc(ti, pfuncdesc);
+
+    hres = ITypeInfo_GetFuncDesc(ti, 10, &pfuncdesc);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(pfuncdesc->memid == 0x60010007, "got %x\n", pfuncdesc->memid);
+    ok(pfuncdesc->lprgscode == NULL, "got %p\n", pfuncdesc->lprgscode);
+    ok(pfuncdesc->lprgelemdescParam != NULL, "got %p\n", pfuncdesc->lprgelemdescParam);
+    ok(pfuncdesc->funckind == FUNC_PUREVIRTUAL, "got 0x%x\n", pfuncdesc->funckind);
+    ok(pfuncdesc->invkind == INVOKE_FUNC, "got 0x%x\n", pfuncdesc->invkind);
+    ok(pfuncdesc->callconv == CC_STDCALL, "got 0x%x\n", pfuncdesc->callconv);
+    ok(pfuncdesc->cParams == 1, "got %d\n", pfuncdesc->cParams);
+    ok(pfuncdesc->cParamsOpt == 0, "got %d\n", pfuncdesc->cParamsOpt);
+#ifdef _WIN64
+    todo_wine ok(pfuncdesc->oVft == 13 * sizeof(void*), "got %d\n", pfuncdesc->oVft);
+#else
+    ok(pfuncdesc->oVft == 13 * sizeof(void*), "got %d\n", pfuncdesc->oVft);
+#endif
+    ok(pfuncdesc->cScodes == 0, "got %d\n", pfuncdesc->cScodes);
+    ok(pfuncdesc->elemdescFunc.tdesc.vt == VT_VOID, "got %d\n", pfuncdesc->elemdescFunc.tdesc.vt);
+    ok(pfuncdesc->wFuncFlags == 0, "got 0x%x\n", pfuncdesc->wFuncFlags);
+
+    edesc = pfuncdesc->lprgelemdescParam;
+    ok(edesc->tdesc.vt == VT_PTR, "got: %d\n", edesc->tdesc.vt);
+    ok(U(*edesc).paramdesc.wParamFlags == PARAMFLAG_FIN, "got: 0x%x\n", U(*edesc).paramdesc.wParamFlags);
+    ok(U(*edesc).paramdesc.pparamdescex == NULL, "got: %p\n", U(*edesc).paramdesc.pparamdescex);
+    ok(U(edesc->tdesc).lptdesc != NULL, "got: %p\n", U(edesc->tdesc).lptdesc);
+    ok(U(edesc->tdesc).lptdesc->vt == VT_PTR, "got: %d\n", U(edesc->tdesc).lptdesc->vt);
+    ok(U(*U(edesc->tdesc).lptdesc).lptdesc != NULL, "got: %p\n", U(*U(edesc->tdesc).lptdesc).lptdesc);
+    ok(U(*U(edesc->tdesc).lptdesc).lptdesc->vt == VT_BSTR, "got: %d\n", U(*U(edesc->tdesc).lptdesc).lptdesc->vt);
+
+    hres = ITypeInfo_GetDocumentation(ti, pfuncdesc->memid, &name, &docstring, &helpcontext, &helpfile);
+    ok(hres == S_OK, "got: %08x\n", hres);
+    ok(name == NULL, "got name: %s\n", wine_dbgstr_w(name));
+    ok(docstring == NULL, "got docstring: %s\n", wine_dbgstr_w(docstring));
+    ok(helpcontext == 0, "got helpcontext: 0x%x\n", helpcontext);
+    ok(!memcmp(helpfile, helpfileW, sizeof(helpfileW)), "got helpfile: %s\n", wine_dbgstr_w(helpfile));
+    SysFreeString(helpfile);
+    ITypeInfo_ReleaseFuncDesc(ti, pfuncdesc);
+
+    hres = ITypeInfo_GetFuncDesc(ti, 11, &pfuncdesc);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(pfuncdesc->memid == 0x60010004, "got %x\n", pfuncdesc->memid);
+    ok(pfuncdesc->lprgscode == NULL, "got %p\n", pfuncdesc->lprgscode);
+    ok(pfuncdesc->lprgelemdescParam != NULL, "got %p\n", pfuncdesc->lprgelemdescParam);
+    ok(pfuncdesc->funckind == FUNC_PUREVIRTUAL, "got 0x%x\n", pfuncdesc->funckind);
+    ok(pfuncdesc->invkind == INVOKE_FUNC, "got 0x%x\n", pfuncdesc->invkind);
+    ok(pfuncdesc->callconv == CC_STDCALL, "got 0x%x\n", pfuncdesc->callconv);
+    ok(pfuncdesc->cParams == 1, "got %d\n", pfuncdesc->cParams);
+    ok(pfuncdesc->cParamsOpt == 0, "got %d\n", pfuncdesc->cParamsOpt);
+#ifdef _WIN64
+    todo_wine ok(pfuncdesc->oVft == 14 * sizeof(void*), "got %d\n", pfuncdesc->oVft);
+#else
+    ok(pfuncdesc->oVft == 14 * sizeof(void*), "got %d\n", pfuncdesc->oVft);
+#endif
+    ok(pfuncdesc->cScodes == 0, "got %d\n", pfuncdesc->cScodes);
+    ok(pfuncdesc->elemdescFunc.tdesc.vt == VT_VOID, "got %d\n", pfuncdesc->elemdescFunc.tdesc.vt);
+    ok(pfuncdesc->wFuncFlags == 0, "got 0x%x\n", pfuncdesc->wFuncFlags);
+
+    edesc = pfuncdesc->lprgelemdescParam;
+    ok(edesc->tdesc.vt == VT_PTR, "got: %d\n", edesc->tdesc.vt);
+    ok(U(*edesc).paramdesc.wParamFlags == PARAMFLAG_FIN, "got: 0x%x\n", U(*edesc).paramdesc.wParamFlags);
+    ok(U(*edesc).paramdesc.pparamdescex == NULL, "got: %p\n", U(*edesc).paramdesc.pparamdescex);
+    ok(U(edesc->tdesc).lptdesc != NULL, "got: %p\n", U(edesc->tdesc).lptdesc);
+    ok(U(edesc->tdesc).lptdesc->vt == VT_BSTR, "got: %d\n", U(edesc->tdesc).lptdesc->vt);
+
+    hres = ITypeInfo_GetDocumentation(ti, pfuncdesc->memid, &name, &docstring, &helpcontext, &helpfile);
+    ok(hres == S_OK, "got: %08x\n", hres);
+    ok(name == NULL, "got name: %s\n", wine_dbgstr_w(name));
+    ok(docstring == NULL, "got docstring: %s\n", wine_dbgstr_w(docstring));
+    ok(helpcontext == 0, "got helpcontext: 0x%x\n", helpcontext);
+    ok(!memcmp(helpfile, helpfileW, sizeof(helpfileW)), "got helpfile: %s\n", wine_dbgstr_w(helpfile));
+    SysFreeString(helpfile);
+    ITypeInfo_ReleaseFuncDesc(ti, pfuncdesc);
+
+    hres = ITypeInfo_GetFuncDesc(ti, 12, &pfuncdesc);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(pfuncdesc->memid == 0, "got %x\n", pfuncdesc->memid);
+    ok(pfuncdesc->lprgscode == NULL, "got %p\n", pfuncdesc->lprgscode);
+    ok(pfuncdesc->lprgelemdescParam != NULL, "got %p\n", pfuncdesc->lprgelemdescParam);
+    ok(pfuncdesc->funckind == FUNC_PUREVIRTUAL, "got 0x%x\n", pfuncdesc->funckind);
+    ok(pfuncdesc->invkind == INVOKE_PROPERTYPUT, "got 0x%x\n", pfuncdesc->invkind);
+    ok(pfuncdesc->callconv == CC_STDCALL, "got 0x%x\n", pfuncdesc->callconv);
+    ok(pfuncdesc->cParams == 1, "got %d\n", pfuncdesc->cParams);
+    ok(pfuncdesc->cParamsOpt == 0, "got %d\n", pfuncdesc->cParamsOpt);
+#ifdef _WIN64
+    todo_wine ok(pfuncdesc->oVft == 15 * sizeof(void*), "got %d\n", pfuncdesc->oVft);
+#else
+    ok(pfuncdesc->oVft == 15 * sizeof(void*), "got %d\n", pfuncdesc->oVft);
+#endif
+    ok(pfuncdesc->cScodes == 0, "got %d\n", pfuncdesc->cScodes);
+    ok(pfuncdesc->elemdescFunc.tdesc.vt == VT_VOID, "got %d\n", pfuncdesc->elemdescFunc.tdesc.vt);
+    ok(pfuncdesc->wFuncFlags == 0, "got 0x%x\n", pfuncdesc->wFuncFlags);
+
+    edesc = pfuncdesc->lprgelemdescParam;
+    ok(edesc->tdesc.vt == VT_BSTR, "got: %d\n", edesc->tdesc.vt);
+    ok(U(*edesc).idldesc.wIDLFlags == IDLFLAG_FIN, "got: %x\n", U(*edesc).idldesc.wIDLFlags);
+
+    hres = ITypeInfo_GetDocumentation(ti, pfuncdesc->memid, &name, &docstring, &helpcontext, &helpfile);
+    ok(hres == S_OK, "got: %08x\n", hres);
+    ok(!memcmp(name, func1W, sizeof(func1W)), "got name: %s\n", wine_dbgstr_w(name));
+    ok(docstring == NULL, "got docstring: %s\n", wine_dbgstr_w(docstring));
+    ok(helpcontext == 0x201, "got helpcontext: 0x%x\n", helpcontext);
+    ok(!memcmp(helpfile, helpfileW, sizeof(helpfileW)), "got helpfile: %s\n", wine_dbgstr_w(helpfile));
+    SysFreeString(name);
+    SysFreeString(helpfile);
+
+    hres = ITypeInfo_GetNames(ti, pfuncdesc->memid, names, sizeof(names) / sizeof(*names), &cnames);
+    ok(hres == S_OK, "got: %08x\n", hres);
+    ok(cnames == 1, "got: %u\n", cnames);
+    ok(!memcmp(names[0], func1W, sizeof(func1W)), "got names[0]: %s\n", wine_dbgstr_w(names[0]));
+    ITypeInfo_ReleaseFuncDesc(ti, pfuncdesc);
+
+    hres = ITypeInfo_GetFuncDesc(ti, 13, &pfuncdesc);
+    ok(hres == TYPE_E_ELEMENTNOTFOUND, "got %08x\n", hres);
+
+    ok(ITypeInfo_Release(ti) == 0, "Object should be freed\n");
+
+    hres = ITypeLib_GetTypeInfo(tl, 1, &ti);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ITypeInfo_GetTypeAttr(ti, &typeattr);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(typeattr->cbSizeInstance == sizeof(void*), "cbSizeInstance = %d\n", typeattr->cbSizeInstance);
+    ok(typeattr->typekind == TKIND_INTERFACE, "typekind = %d\n", typeattr->typekind);
+    ok(typeattr->cFuncs == 2, "cFuncs = %d\n", typeattr->cFuncs);
+    ok(typeattr->cVars == 0, "cVars = %d\n", typeattr->cVars);
+    ok(typeattr->cImplTypes == 1, "cImplTypes = %d\n", typeattr->cImplTypes);
+    ok(typeattr->cbSizeVft == 0xaab0 ||
+            typeattr->cbSizeVft == 0x5560, "cbSizeVft = 0x%x\n", typeattr->cbSizeVft);
+    ok(typeattr->cbAlignment == sizeof(void*), "cbAlignment = %d\n", typeattr->cbAlignment);
+    ok(typeattr->wTypeFlags == 0, "wTypeFlags = %d\n", typeattr->wTypeFlags);
+    ok(typeattr->wMajorVerNum == 0, "wMajorVerNum = %d\n", typeattr->wMajorVerNum);
+    ok(typeattr->wMinorVerNum == 0, "wMinorVerNum = %d\n", typeattr->wMinorVerNum);
+    ITypeInfo_ReleaseTypeAttr(ti, typeattr);
+
+    hres = ITypeInfo_GetRefTypeOfImplType(ti, 0, &hreftype);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ITypeInfo_GetFuncDesc(ti, 0, &pfuncdesc);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(pfuncdesc->memid == 0x60020000, "got %x\n", pfuncdesc->memid);
+    ok(pfuncdesc->lprgscode == NULL, "got %p\n", pfuncdesc->lprgscode);
+    ok(pfuncdesc->lprgelemdescParam != NULL, "got %p\n", pfuncdesc->lprgelemdescParam);
+    ok(pfuncdesc->funckind == FUNC_PUREVIRTUAL, "got 0x%x\n", pfuncdesc->funckind);
+    ok(pfuncdesc->invkind == INVOKE_FUNC, "got 0x%x\n", pfuncdesc->invkind);
+    ok(pfuncdesc->callconv == CC_STDCALL, "got 0x%x\n", pfuncdesc->callconv);
+    ok(pfuncdesc->cParams == 1, "got %d\n", pfuncdesc->cParams);
+    ok(pfuncdesc->cParamsOpt == 0, "got %d\n", pfuncdesc->cParamsOpt);
+    ok(pfuncdesc->oVft == 0xffffaaa8 ||
+            pfuncdesc->oVft == 0x5550, "got %x\n", pfuncdesc->oVft);
+    ok(pfuncdesc->cScodes == 0, "got %d\n", pfuncdesc->cScodes);
+    ok(pfuncdesc->elemdescFunc.tdesc.vt == VT_VOID, "got %d\n", pfuncdesc->elemdescFunc.tdesc.vt);
+    ok(pfuncdesc->wFuncFlags == 0, "got 0x%x\n", pfuncdesc->wFuncFlags);
+
+    edesc = pfuncdesc->lprgelemdescParam;
+    ok(edesc->tdesc.vt == VT_VARIANT, "got: %d\n", edesc->tdesc.vt);
+    ok(U(*edesc).paramdesc.wParamFlags == PARAMFLAG_FHASDEFAULT,
+            "got: 0x%x\n", U(*edesc).paramdesc.wParamFlags);
+    ok(U(*edesc).paramdesc.pparamdescex != NULL, "got: %p\n", U(*edesc).paramdesc.pparamdescex);
+    ok(U(*edesc).paramdesc.pparamdescex->cBytes == sizeof(PARAMDESCEX), "got: %d\n",
+            U(*edesc).paramdesc.pparamdescex->cBytes);
+    ok(V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue) == VT_INT, "got: %d\n",
+            V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue));
+    ok(V_UI2(&U(*edesc).paramdesc.pparamdescex->varDefaultValue) == 0x3, "got: 0x%x\n",
+            V_UI2(&U(*edesc).paramdesc.pparamdescex->varDefaultValue));
+    ok(U(*edesc).paramdesc.wParamFlags == PARAMFLAG_FHASDEFAULT,
+            "got: 0x%x\n", U(*edesc).paramdesc.wParamFlags);
+    ok(U(edesc->tdesc).lptdesc == NULL, "got: %p\n", U(edesc->tdesc).lptdesc);
+    ok(U(edesc->tdesc).hreftype == 0, "got: %d\n", U(edesc->tdesc).hreftype);
+    ITypeInfo_ReleaseFuncDesc(ti, pfuncdesc);
+
+    hres = ITypeInfo_GetFuncDesc(ti, 1, &pfuncdesc);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(pfuncdesc->memid == 0x60020001, "got %x\n", pfuncdesc->memid);
+    ok(pfuncdesc->lprgscode == NULL, "got %p\n", pfuncdesc->lprgscode);
+    ok(pfuncdesc->lprgelemdescParam != NULL, "got %p\n", pfuncdesc->lprgelemdescParam);
+    ok(pfuncdesc->funckind == FUNC_PUREVIRTUAL, "got 0x%x\n", pfuncdesc->funckind);
+    ok(pfuncdesc->invkind == INVOKE_FUNC, "got 0x%x\n", pfuncdesc->invkind);
+    ok(pfuncdesc->callconv == CC_STDCALL, "got 0x%x\n", pfuncdesc->callconv);
+    ok(pfuncdesc->cParams == 1, "got %d\n", pfuncdesc->cParams);
+    ok(pfuncdesc->cParamsOpt == 0, "got %d\n", pfuncdesc->cParamsOpt);
+    ok(pfuncdesc->oVft == 0xffffaaac ||
+            pfuncdesc->oVft == 0x5558, "got %x\n", pfuncdesc->oVft);
+    ok(pfuncdesc->cScodes == 0, "got %d\n", pfuncdesc->cScodes);
+    ok(pfuncdesc->elemdescFunc.tdesc.vt == VT_VOID, "got %d\n", pfuncdesc->elemdescFunc.tdesc.vt);
+    ok(pfuncdesc->wFuncFlags == 0, "got 0x%x\n", pfuncdesc->wFuncFlags);
+
+    edesc = pfuncdesc->lprgelemdescParam;
+    ok(edesc->tdesc.vt == VT_VARIANT, "got: %d\n", edesc->tdesc.vt);
+    ok(U(*edesc).paramdesc.wParamFlags == PARAMFLAG_FHASDEFAULT,
+            "got: 0x%x\n", U(*edesc).paramdesc.wParamFlags);
+    ok(U(*edesc).paramdesc.pparamdescex != NULL, "got: %p\n", U(*edesc).paramdesc.pparamdescex);
+    ok(U(*edesc).paramdesc.pparamdescex->cBytes == sizeof(PARAMDESCEX), "got: %d\n",
+            U(*edesc).paramdesc.pparamdescex->cBytes);
+    ok(V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue) == VT_INT, "got: %d\n",
+            V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue));
+    ok(V_UI2(&U(*edesc).paramdesc.pparamdescex->varDefaultValue) == 0x3, "got: 0x%x\n",
+            V_UI2(&U(*edesc).paramdesc.pparamdescex->varDefaultValue));
+    ok(U(*edesc).paramdesc.wParamFlags == PARAMFLAG_FHASDEFAULT,
+            "got: 0x%x\n", U(*edesc).paramdesc.wParamFlags);
+    ok(U(edesc->tdesc).lptdesc == NULL, "got: %p\n", U(edesc->tdesc).lptdesc);
+    ok(U(edesc->tdesc).hreftype == 0, "got: %d\n", U(edesc->tdesc).hreftype);
+    ITypeInfo_ReleaseFuncDesc(ti, pfuncdesc);
+
+    ok(ITypeInfo_Release(ti) == 0, "Object should be freed\n");
+
+    hres = ITypeLib_GetTypeInfo(tl, 2, &ti);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ITypeInfo_QueryInterface(ti, &IID_ITypeInfo2, (void**)&ti2);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ITypeInfo_GetTypeAttr(ti, &typeattr);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(typeattr->cbSizeInstance == sizeof(void*), "cbSizeInstance = %d\n", typeattr->cbSizeInstance);
+    ok(typeattr->typekind == TKIND_INTERFACE, "typekind = %d\n", typeattr->typekind);
+    ok(typeattr->cFuncs == 0, "cFuncs = %d\n", typeattr->cFuncs);
+    ok(typeattr->cVars == 0, "cVars = %d\n", typeattr->cVars);
+    ok(typeattr->cImplTypes == 0, "cImplTypes = %d\n", typeattr->cImplTypes);
+    ok(typeattr->cbSizeVft == 0, "cbSizeVft = %d\n", typeattr->cbSizeVft);
+    ok(typeattr->cbAlignment == sizeof(void*), "cbAlignment = %d\n", typeattr->cbAlignment);
+    ok(typeattr->wTypeFlags == 0, "wTypeFlags = %d\n", typeattr->wTypeFlags);
+    ok(typeattr->wMajorVerNum == 0, "wMajorVerNum = %d\n", typeattr->wMajorVerNum);
+    ok(typeattr->wMinorVerNum == 0, "wMinorVerNum = %d\n", typeattr->wMinorVerNum);
+    ITypeInfo_ReleaseTypeAttr(ti, typeattr);
+
+    VariantClear(&cust_data);
+    hres = ITypeInfo2_GetCustData(ti2, &custguid, &cust_data);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(V_VT(&cust_data) == VT_BSTR, "got wrong custdata type: %u\n", V_VT(&cust_data));
+    ok(!lstrcmpW(V_BSTR(&cust_data), asdfW), "got wrong custdata value: %s\n", wine_dbgstr_w(V_BSTR(&cust_data)));
+    SysFreeString(V_BSTR(&cust_data));
+
+    ITypeInfo2_Release(ti2);
+    ok(ITypeInfo_Release(ti) == 0, "Object should be freed\n");
+
+    hres = ITypeLib_GetTypeInfo(tl, 3, &ti);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ITypeInfo_GetTypeAttr(ti, &typeattr);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(typeattr->cbSizeInstance == sizeof(void*), "cbSizeInstance = %d\n", typeattr->cbSizeInstance);
+    ok(typeattr->typekind == TKIND_COCLASS, "typekind = %d\n", typeattr->typekind);
+    ok(typeattr->cFuncs == 0, "cFuncs = %d\n", typeattr->cFuncs);
+    ok(typeattr->cVars == 0, "cVars = %d\n", typeattr->cVars);
+    ok(typeattr->cImplTypes == 3, "cImplTypes = %d\n", typeattr->cImplTypes);
+    ok(typeattr->cbSizeVft == 0, "cbSizeVft = %d\n", typeattr->cbSizeVft);
+    ok(typeattr->cbAlignment == sizeof(void*), "cbAlignment = %d\n", typeattr->cbAlignment);
+    ok(typeattr->wTypeFlags == 0, "wTypeFlags = %d\n", typeattr->wTypeFlags);
+    ok(typeattr->wMajorVerNum == 0, "wMajorVerNum = %d\n", typeattr->wMajorVerNum);
+    ok(typeattr->wMinorVerNum == 0, "wMinorVerNum = %d\n", typeattr->wMinorVerNum);
+    ITypeInfo_ReleaseTypeAttr(ti, typeattr);
+
+    hres = ITypeInfo_GetRefTypeOfImplType(ti, 0, &hreftype);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(hreftype == 0, "got wrong hreftype: %x\n", hreftype);
+
+    hres = ITypeInfo_GetImplTypeFlags(ti, 0, &impltypeflags);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(impltypeflags == IMPLTYPEFLAG_FDEFAULT, "got wrong flag: %x\n", impltypeflags);
+
+    hres = ITypeInfo_GetRefTypeOfImplType(ti, 1, &hreftype);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(hreftype == 1, "got wrong hreftype: %x\n", hreftype);
+
+    hres = ITypeInfo_GetImplTypeFlags(ti, 1, &impltypeflags);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(impltypeflags == IMPLTYPEFLAG_FRESTRICTED, "got wrong flag: %x\n", impltypeflags);
+
+    hres = ITypeInfo_GetRefTypeOfImplType(ti, 2, &hreftype);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(hreftype == 1, "got wrong hreftype: %x\n", hreftype);
+
+    hres = ITypeInfo_GetImplTypeFlags(ti, 2, &impltypeflags);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(impltypeflags == 0, "got wrong flag: %x\n", impltypeflags);
+
+    hres = ITypeInfo_GetRefTypeOfImplType(ti, 3, &hreftype);
+    ok(hres == TYPE_E_ELEMENTNOTFOUND, "got %08x\n", hres);
+
+    ok(ITypeInfo_Release(ti) == 0, "Object should be freed\n");
+
+    hres = ITypeLib_GetTypeInfo(tl, 4, &ti);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ITypeInfo_GetTypeAttr(ti, &typeattr);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(typeattr->cbSizeInstance == sizeof(void*), "cbSizeInstance = %d\n", typeattr->cbSizeInstance);
+    ok(typeattr->typekind == TKIND_DISPATCH, "typekind = %d\n", typeattr->typekind);
+    ok(typeattr->cFuncs == 8, "cFuncs = %d\n", typeattr->cFuncs);
+    ok(typeattr->cVars == 0, "cVars = %d\n", typeattr->cVars);
+    ok(typeattr->cImplTypes == 1, "cImplTypes = %d\n", typeattr->cImplTypes);
+    ok(typeattr->cbSizeVft == 7 * sizeof(void*), "cbSizeVft = %d\n", typeattr->cbSizeVft);
+    ok(typeattr->cbAlignment == sizeof(void*), "cbAlignment = %d\n", typeattr->cbAlignment);
+    ok(typeattr->wTypeFlags == (TYPEFLAG_FDISPATCHABLE | TYPEFLAG_FDUAL), "wTypeFlags = 0x%x\n", typeattr->wTypeFlags);
+    ok(typeattr->wMajorVerNum == 0, "wMajorVerNum = %d\n", typeattr->wMajorVerNum);
+    ok(typeattr->wMinorVerNum == 0, "wMinorVerNum = %d\n", typeattr->wMinorVerNum);
+    ITypeInfo_ReleaseTypeAttr(ti, typeattr);
+
+    hres = ITypeInfo_GetRefTypeOfImplType(ti, -1, &hreftype);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(hreftype == -2, "got wrong hreftype: %x\n", hreftype);
+
+    hres = ITypeInfo_GetRefTypeInfo(ti, hreftype, &interface1);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ITypeInfo_GetTypeAttr(interface1, &typeattr);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(typeattr->cbSizeInstance == sizeof(void*), "cbSizeInstance = %d\n", typeattr->cbSizeInstance);
+    ok(typeattr->typekind == TKIND_INTERFACE, "typekind = %d\n", typeattr->typekind);
+    ok(typeattr->cFuncs == 1, "cFuncs = %d\n", typeattr->cFuncs);
+    ok(typeattr->cVars == 0, "cVars = %d\n", typeattr->cVars);
+    ok(typeattr->cImplTypes == 1, "cImplTypes = %d\n", typeattr->cImplTypes);
+#ifdef _WIN64
+    todo_wine ok(typeattr->cbSizeVft == 8 * sizeof(void*), "cbSizeVft = %d\n", typeattr->cbSizeVft);
+#else
+    ok(typeattr->cbSizeVft == 8 * sizeof(void*), "cbSizeVft = %d\n", typeattr->cbSizeVft);
+#endif
+    ok(typeattr->cbAlignment == sizeof(void*), "cbAlignment = %d\n", typeattr->cbAlignment);
+    ok(typeattr->wTypeFlags == (TYPEFLAG_FDISPATCHABLE | TYPEFLAG_FDUAL), "wTypeFlags = 0x%x\n", typeattr->wTypeFlags);
+    ok(typeattr->wMajorVerNum == 0, "wMajorVerNum = %d\n", typeattr->wMajorVerNum);
+    ok(typeattr->wMinorVerNum == 0, "wMinorVerNum = %d\n", typeattr->wMinorVerNum);
+    ITypeInfo_ReleaseTypeAttr(interface1, typeattr);
+
+    ITypeInfo_Release(interface1);
+
+    ok(ITypeInfo_Release(ti) == 0, "Object should be freed\n");
+
     ok(ITypeLib_Release(tl)==0, "Object should be freed\n");
 
     DeleteFileA(filename);
@@ -3168,8 +3971,11 @@ static void test_SetVarHelpContext(void)
     WCHAR filenameW[MAX_PATH];
     ICreateTypeLib2 *ctl;
     ICreateTypeInfo *cti;
-    VARDESC desc;
+    ITypeLib *tl;
+    ITypeInfo *ti;
+    VARDESC desc, *pdesc;
     HRESULT hr;
+    DWORD ctx;
     VARIANT v;
 
     GetTempFileNameA(".", "tlb", 0, filenameA);
@@ -3206,7 +4012,33 @@ static void test_SetVarHelpContext(void)
     ok(hr == TYPE_E_ELEMENTNOTFOUND, "got %08x\n", hr);
 
     ICreateTypeInfo_Release(cti);
+
+    hr = ICreateTypeLib2_SaveAllChanges(ctl);
+    ok(hr == S_OK, "got: %08x\n", hr);
+
     ICreateTypeLib2_Release(ctl);
+
+    hr = LoadTypeLib(filenameW, &tl);
+    ok(hr == S_OK, "got: %08x\n", hr);
+
+    hr = ITypeLib_GetTypeInfo(tl, 0, &ti);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ITypeInfo_GetVarDesc(ti, 0, &pdesc);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(pdesc->elemdescVar.tdesc.vt == VT_INT, "got wrong vardesc type: %u\n", pdesc->elemdescVar.tdesc.vt);
+    ok(pdesc->varkind == VAR_CONST, "got wrong varkind: %u\n", pdesc->varkind);
+    ok(V_VT(U(pdesc)->lpvarValue) == VT_INT, "got wrong value type: %u\n", V_VT(U(pdesc)->lpvarValue));
+    ok(V_INT(U(pdesc)->lpvarValue) == 1, "got wrong value: 0x%x\n", V_INT(U(pdesc)->lpvarValue));
+
+    hr = ITypeInfo_GetDocumentation(ti, pdesc->memid, NULL, NULL, &ctx, NULL);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(ctx == 1, "got wrong help context: 0x%x\n", ctx);
+
+    ITypeInfo_ReleaseVarDesc(ti, pdesc);
+    ITypeInfo_Release(ti);
+    ITypeLib_Release(tl);
+
     DeleteFileA(filenameA);
 }
 
@@ -3295,7 +4127,10 @@ static void test_SetVarDocString(void)
     WCHAR filenameW[MAX_PATH];
     ICreateTypeLib2 *ctl;
     ICreateTypeInfo *cti;
-    VARDESC desc;
+    ITypeLib *tl;
+    ITypeInfo *ti;
+    BSTR docstr;
+    VARDESC desc, *pdesc;
     HRESULT hr;
     VARIANT v;
 
@@ -3339,7 +4174,35 @@ static void test_SetVarDocString(void)
     ok(hr == TYPE_E_ELEMENTNOTFOUND, "got %08x\n", hr);
 
     ICreateTypeInfo_Release(cti);
+
+    hr = ICreateTypeLib2_SaveAllChanges(ctl);
+    ok(hr == S_OK, "got: %08x\n", hr);
+
     ICreateTypeLib2_Release(ctl);
+
+    hr = LoadTypeLib(filenameW, &tl);
+    ok(hr == S_OK, "got: %08x\n", hr);
+
+    hr = ITypeLib_GetTypeInfo(tl, 0, &ti);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ITypeInfo_GetVarDesc(ti, 0, &pdesc);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(pdesc->elemdescVar.tdesc.vt == VT_INT, "got wrong vardesc type: %u\n", pdesc->elemdescVar.tdesc.vt);
+    ok(pdesc->varkind == VAR_CONST, "got wrong varkind: %u\n", pdesc->varkind);
+    ok(V_VT(U(pdesc)->lpvarValue) == VT_INT, "got wrong value type: %u\n", V_VT(U(pdesc)->lpvarValue));
+    ok(V_INT(U(pdesc)->lpvarValue) == 1, "got wrong value: 0x%x\n", V_INT(U(pdesc)->lpvarValue));
+
+    hr = ITypeInfo_GetDocumentation(ti, pdesc->memid, NULL, &docstr, NULL, NULL);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(memcmp(docstr, doc2W, sizeof(doc2W)) == 0, "got wrong docstring: %s\n", wine_dbgstr_w(docstr));
+
+    SysFreeString(docstr);
+
+    ITypeInfo_ReleaseVarDesc(ti, pdesc);
+    ITypeInfo_Release(ti);
+    ITypeLib_Release(tl);
+
     DeleteFileA(filenameA);
 }
 
