@@ -691,7 +691,7 @@ static void test_ImmDefaultHwnd(void)
 static void test_ImmGetIMCLockCount(void)
 {
     HIMC imc;
-    DWORD count, ret;
+    DWORD count, ret, i;
     INPUTCONTEXT *ic;
 
     imc = ImmCreateContext();
@@ -709,6 +709,23 @@ static void test_ImmGetIMCLockCount(void)
     ok(ret == TRUE, "expect TRUE, ret %d\n", ret);
     count = ImmGetIMCLockCount(imc);
     ok(count == 0, "expect 0, returned %d\n", count);
+
+    for (i = 0; i < GMEM_LOCKCOUNT * 2; i++)
+    {
+        ic = ImmLockIMC(imc);
+        ok(ic != NULL, "ImmLockIMC failed!\n");
+    }
+    count = ImmGetIMCLockCount(imc);
+    todo_wine ok(count == GMEM_LOCKCOUNT, "expect GMEM_LOCKCOUNT, returned %d\n", count);
+
+    for (i = 0; i < GMEM_LOCKCOUNT - 1; i++)
+        ImmUnlockIMC(imc);
+    count = ImmGetIMCLockCount(imc);
+    todo_wine ok(count == 1, "expect 1, returned %d\n", count);
+    ImmUnlockIMC(imc);
+    count = ImmGetIMCLockCount(imc);
+    todo_wine ok(count == 0, "expect 0, returned %d\n", count);
+
     ImmDestroyContext(imc);
 }
 
