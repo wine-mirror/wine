@@ -703,14 +703,13 @@ static D3DCOLOR WINAPI IDirect3DRMFrame2Impl_GetColor(IDirect3DRMFrame2* iface)
     return 0;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_GetLights(IDirect3DRMFrame2* iface,
-                                                      LPDIRECT3DRMLIGHTARRAY *lights)
+static HRESULT WINAPI IDirect3DRMFrame2Impl_GetLights(IDirect3DRMFrame2 *iface, IDirect3DRMLightArray **lights)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
+    IDirect3DRMFrameImpl *frame = impl_from_IDirect3DRMFrame2(iface);
 
-    TRACE("(%p/%p)->(%p)\n", iface, This, lights);
+    TRACE("iface %p, lights %p.\n", iface, lights);
 
-    return IDirect3DRMFrame3_GetLights(&This->IDirect3DRMFrame3_iface, lights);
+    return IDirect3DRMFrame3_GetLights(&frame->IDirect3DRMFrame3_iface, lights);
 }
 
 static D3DRMMATERIALMODE WINAPI IDirect3DRMFrame2Impl_GetMaterialMode(IDirect3DRMFrame2* iface)
@@ -1721,8 +1720,7 @@ static D3DCOLOR WINAPI IDirect3DRMFrame3Impl_GetColor(IDirect3DRMFrame3* iface)
     return 0;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_GetLights(IDirect3DRMFrame3* iface,
-                                                      LPDIRECT3DRMLIGHTARRAY *lights)
+static HRESULT WINAPI IDirect3DRMFrame3Impl_GetLights(IDirect3DRMFrame3 *iface, IDirect3DRMLightArray **lights)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
     IDirect3DRMLightArrayImpl* obj;

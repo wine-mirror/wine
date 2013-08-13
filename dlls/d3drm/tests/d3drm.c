@@ -918,7 +918,7 @@ static void test_Frame(void)
     IDirect3DRMVisualArray *visual_array;
     IDirect3DRMLight *light1;
     IDirect3DRMLight *light_tmp;
-    LPDIRECT3DRMLIGHTARRAY pLightArray;
+    IDirect3DRMLightArray *light_array;
     D3DCOLOR color;
     DWORD count;
     CHAR cname[64] = {0};
@@ -1193,18 +1193,18 @@ static void test_Frame(void)
     CHECK_REFCOUNT(pFrameP1, 3);
     CHECK_REFCOUNT(light1, 2);
 
-    pLightArray = NULL;
-    hr = IDirect3DRMFrame_GetLights(pFrameP1, &pLightArray);
+    light_array = NULL;
+    hr = IDirect3DRMFrame_GetLights(pFrameP1, &light_array);
     ok(hr == D3DRM_OK, "Cannot get lights (hr = %x)\n", hr);
-    if (pLightArray)
+    if (light_array)
     {
-        count = IDirect3DRMLightArray_GetSize(pLightArray);
+        count = IDirect3DRMLightArray_GetSize(light_array);
         ok(count == 1, "count = %u\n", count);
-        hr = IDirect3DRMLightArray_GetElement(pLightArray, 0, &light_tmp);
+        hr = IDirect3DRMLightArray_GetElement(light_array, 0, &light_tmp);
         ok(hr == D3DRM_OK, "Cannot get element (hr = %x)\n", hr);
         ok(light_tmp == light1, "light_tmp = %p\n", light_tmp);
         IDirect3DRMLight_Release(light_tmp);
-        IDirect3DRMLightArray_Release(pLightArray);
+        IDirect3DRMLightArray_Release(light_array);
     }
 
     /* Delete Light */

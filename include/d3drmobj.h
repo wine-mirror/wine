@@ -1106,7 +1106,7 @@ DECLARE_INTERFACE_(IDirect3DRMFrame,IDirect3DRMVisual)
     STDMETHOD(AddVisual)(THIS_ IDirect3DRMVisual *visual) PURE;
     STDMETHOD(GetChildren)(THIS_ struct IDirect3DRMFrameArray **children) PURE;
     STDMETHOD_(D3DCOLOR, GetColor)(THIS) PURE;
-    STDMETHOD(GetLights)(THIS_ LPDIRECT3DRMLIGHTARRAY *lights) PURE;
+    STDMETHOD(GetLights)(THIS_ struct IDirect3DRMLightArray **lights) PURE;
     STDMETHOD_(D3DRMMATERIALMODE, GetMaterialMode)(THIS) PURE;
     STDMETHOD(GetParent)(THIS_ IDirect3DRMFrame **parent) PURE;
     STDMETHOD(GetPosition)(THIS_ IDirect3DRMFrame *reference, D3DVECTOR *return_position) PURE;
@@ -1339,7 +1339,7 @@ DECLARE_INTERFACE_(IDirect3DRMFrame2,IDirect3DRMFrame)
     STDMETHOD(AddVisual)(THIS_ IDirect3DRMVisual *visual) PURE;
     STDMETHOD(GetChildren)(THIS_ struct IDirect3DRMFrameArray **children) PURE;
     STDMETHOD_(D3DCOLOR, GetColor)(THIS) PURE;
-    STDMETHOD(GetLights)(THIS_ LPDIRECT3DRMLIGHTARRAY *lights) PURE;
+    STDMETHOD(GetLights)(THIS_ struct IDirect3DRMLightArray **lights) PURE;
     STDMETHOD_(D3DRMMATERIALMODE, GetMaterialMode)(THIS) PURE;
     STDMETHOD(GetParent)(THIS_ IDirect3DRMFrame **parent) PURE;
     STDMETHOD(GetPosition)(THIS_ IDirect3DRMFrame *reference, D3DVECTOR *return_position) PURE;
@@ -1621,7 +1621,7 @@ DECLARE_INTERFACE_(IDirect3DRMFrame3,IDirect3DRMVisual)
     STDMETHOD(AddVisual)(THIS_ LPUNKNOWN) PURE;
     STDMETHOD(GetChildren)(THIS_ struct IDirect3DRMFrameArray **children) PURE;
     STDMETHOD_(D3DCOLOR, GetColor)(THIS) PURE;
-    STDMETHOD(GetLights)(THIS_ LPDIRECT3DRMLIGHTARRAY *lights) PURE;
+    STDMETHOD(GetLights)(THIS_ struct IDirect3DRMLightArray **lights) PURE;
     STDMETHOD_(D3DRMMATERIALMODE, GetMaterialMode)(THIS) PURE;
     STDMETHOD(GetParent)(THIS_ IDirect3DRMFrame3 **parent) PURE;
     STDMETHOD(GetPosition)(THIS_ IDirect3DRMFrame3 *reference, D3DVECTOR *return_position) PURE;
