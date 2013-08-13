@@ -2574,6 +2574,36 @@ static void test_atoi(void)
     ok(r == 0, "atoi(4294967296) = %d\n", r);
 }
 
+static void test_strncpy(void)
+{
+#define TEST_STRNCPY_LEN 10
+    char *ret;
+    char dst[TEST_STRNCPY_LEN + 1];
+    char not_null_terminated[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0'};
+
+    /* strlen(src) > TEST_STRNCPY_LEN */
+    ret = strncpy(dst, "01234567890123456789", TEST_STRNCPY_LEN);
+    ok(ret == dst, "ret != dst\n");
+    ok(!strncmp(dst, "0123456789", TEST_STRNCPY_LEN), "dst != 0123456789\n");
+
+    /* without null-terminated */
+    ret = strncpy(dst, not_null_terminated, TEST_STRNCPY_LEN);
+    ok(ret == dst, "ret != dst\n");
+    ok(!strncmp(dst, "0123456789", TEST_STRNCPY_LEN), "dst != 0123456789\n");
+
+    /* strlen(src) < TEST_STRNCPY_LEN */
+    strcpy(dst, "0123456789");
+    ret = strncpy(dst, "012345", TEST_STRNCPY_LEN);
+    ok(ret == dst, "ret != dst\n");
+    ok(!strcmp(dst, "012345"), "dst != 012345\n");
+    ok(dst[TEST_STRNCPY_LEN - 1] == '\0', "dst[TEST_STRNCPY_LEN - 1] != 0\n");
+
+    /* strlen(src) == TEST_STRNCPY_LEN */
+    ret = strncpy(dst, "0123456789", TEST_STRNCPY_LEN);
+    ok(ret == dst, "ret != dst\n");
+    ok(!strncmp(dst, "0123456789", TEST_STRNCPY_LEN), "dst != 0123456789\n");
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -2675,4 +2705,5 @@ START_TEST(string)
     test__stricmp();
     test__wcstoi64();
     test_atoi();
+    test_strncpy();
 }
