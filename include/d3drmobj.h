@@ -826,7 +826,7 @@ DECLARE_INTERFACE_(IDirect3DRMViewport,IDirect3DRMObject)
     STDMETHOD(GetCamera)(THIS_ struct IDirect3DRMFrame **camera) PURE;
     STDMETHOD(GetDevice)(THIS_ IDirect3DRMDevice **device) PURE;
     STDMETHOD(GetPlane)(THIS_ D3DVALUE *left, D3DVALUE *right, D3DVALUE *bottom, D3DVALUE *top) PURE;
-    STDMETHOD(Pick)(THIS_ LONG x, LONG y, LPDIRECT3DRMPICKEDARRAY *return_visuals) PURE;
+    STDMETHOD(Pick)(THIS_ LONG x, LONG y, struct IDirect3DRMPickedArray **visuals) PURE;
     STDMETHOD_(BOOL, GetUniformScaling)(THIS) PURE;
     STDMETHOD_(LONG, GetX)(THIS) PURE;
     STDMETHOD_(LONG, GetY)(THIS) PURE;
@@ -966,7 +966,7 @@ DECLARE_INTERFACE_(IDirect3DRMViewport2,IDirect3DRMObject)
     STDMETHOD(GetCamera)(THIS_ struct IDirect3DRMFrame3 **camera) PURE;
     STDMETHOD(GetDevice)(THIS_ IDirect3DRMDevice3 **device) PURE;
     STDMETHOD(GetPlane)(THIS_ D3DVALUE *left, D3DVALUE *right, D3DVALUE *bottom, D3DVALUE *top) PURE;
-    STDMETHOD(Pick)(THIS_ LONG x, LONG y, LPDIRECT3DRMPICKEDARRAY *return_visuals) PURE;
+    STDMETHOD(Pick)(THIS_ LONG x, LONG y, struct IDirect3DRMPickedArray **visuals) PURE;
     STDMETHOD_(BOOL, GetUniformScaling)(THIS) PURE;
     STDMETHOD_(LONG, GetX)(THIS) PURE;
     STDMETHOD_(LONG, GetY)(THIS) PURE;
