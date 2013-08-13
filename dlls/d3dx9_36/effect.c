@@ -1381,36 +1381,44 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetFunctionByName(ID3DXBaseEffect *
     return NULL;
 }
 
-static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetAnnotation(ID3DXBaseEffect *iface, D3DXHANDLE object, UINT index)
+static UINT get_annotation_from_object(struct ID3DXBaseEffectImpl *base, D3DXHANDLE object,
+        struct d3dx_parameter **annotations)
 {
-    struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
-    struct d3dx_parameter *param = get_valid_parameter(This, object);
-    struct d3dx_pass *pass = get_valid_pass(This, object);
-    struct d3dx_technique *technique = get_valid_technique(This, object);
-    UINT annotation_count = 0;
-    struct d3dx_parameter *annotations = NULL;
-
-    TRACE("iface %p, object %p, index %u\n", This, object, index);
+    struct d3dx_parameter *param = get_valid_parameter(base, object);
+    struct d3dx_pass *pass = get_valid_pass(base, object);
+    struct d3dx_technique *technique = get_valid_technique(base, object);
 
     if (pass)
     {
-        annotation_count = pass->annotation_count;
-        annotations = pass->annotations;
+        *annotations = pass->annotations;
+        return pass->annotation_count;
     }
     else if (technique)
     {
-        annotation_count = technique->annotation_count;
-        annotations = technique->annotations;
+        *annotations = technique->annotations;
+        return technique->annotation_count;
     }
     else if (param)
     {
-        annotation_count = param->annotation_count;
-        annotations = param->annotations;
+        *annotations = param->annotations;
+        return param->annotation_count;
     }
     else
     {
         FIXME("Functions are not handled, yet!\n");
+        return 0;
     }
+}
+
+static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetAnnotation(ID3DXBaseEffect *iface, D3DXHANDLE object, UINT index)
+{
+    struct ID3DXBaseEffectImpl *base = impl_from_ID3DXBaseEffect(iface);
+    struct d3dx_parameter *annotations = NULL;
+    UINT annotation_count = 0;
+
+    TRACE("iface %p, object %p, index %u\n", iface, object, index);
+
+    annotation_count = get_annotation_from_object(base, object, &annotations);
 
     if (index < annotation_count)
     {
@@ -1425,15 +1433,12 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetAnnotation(ID3DXBaseEffect *ifac
 
 static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetAnnotationByName(ID3DXBaseEffect *iface, D3DXHANDLE object, LPCSTR name)
 {
-    struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
-    struct d3dx_parameter *param = get_valid_parameter(This, object);
-    struct d3dx_pass *pass = get_valid_pass(This, object);
-    struct d3dx_technique *technique = get_valid_technique(This, object);
-    struct d3dx_parameter *anno = NULL;
-    UINT annotation_count = 0;
+    struct ID3DXBaseEffectImpl *base = impl_from_ID3DXBaseEffect(iface);
+    struct d3dx_parameter *annotation = NULL;
     struct d3dx_parameter *annotations = NULL;
+    UINT annotation_count = 0;
 
-    TRACE("iface %p, object %p, name %s\n", This, object, debugstr_a(name));
+    TRACE("iface %p, object %p, name %s\n", iface, object, debugstr_a(name));
 
     if (!name)
     {
@@ -1441,31 +1446,13 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetAnnotationByName(ID3DXBaseEffect
         return NULL;
     }
 
-    if (pass)
-    {
-        annotation_count = pass->annotation_count;
-        annotations = pass->annotations;
-    }
-    else if (technique)
-    {
-        annotation_count = technique->annotation_count;
-        annotations = technique->annotations;
-    }
-    else if (param)
-    {
-        annotation_count = param->annotation_count;
-        annotations = param->annotations;
-    }
-    else
-    {
-        FIXME("Functions are not handled, yet!\n");
-    }
+    annotation_count = get_annotation_from_object(base, object, &annotations);
 
-    anno = get_annotation_by_name(annotation_count, annotations, name);
-    if (anno)
+    annotation = get_annotation_by_name(annotation_count, annotations, name);
+    if (annotation)
     {
-        TRACE("Returning parameter %p\n", anno);
-        return get_parameter_handle(anno);
+        TRACE("Returning parameter %p\n", annotation);
+        return get_parameter_handle(annotation);
     }
 
     WARN("Invalid argument specified\n");
