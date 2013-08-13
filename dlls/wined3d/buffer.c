@@ -34,11 +34,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 #define VB_MAXFULLCONVERSIONS 5       /* Number of full conversions before we stop converting */
 #define VB_RESETFULLCONVS     20      /* Reset full conversion counts after that number of draws */
 
-static void buffer_add_dirty_area(struct wined3d_buffer *buffer, UINT offset, UINT size)
+static void buffer_invalidate_bo_range(struct wined3d_buffer *buffer, UINT offset, UINT size)
 {
-    if (!buffer->buffer_object)
-        return;
-
     if (!offset && !size)
         goto invalidate_all;
 
@@ -188,7 +185,7 @@ static void buffer_create_buffer_object(struct wined3d_buffer *This, const struc
 
     if (This->flags & WINED3D_BUFFER_DOUBLEBUFFER)
     {
-        buffer_add_dirty_area(This, 0, 0);
+        buffer_invalidate_bo_range(This, 0, 0);
     }
     else
     {
@@ -808,7 +805,7 @@ void CDECL wined3d_buffer_preload(struct wined3d_buffer *buffer)
 
         /* The declaration changed, reload the whole buffer. */
         WARN("Reloading buffer because of a vertex declaration change.\n");
-        buffer_add_dirty_area(buffer, 0, 0);
+        buffer_invalidate_bo_range(buffer, 0, 0);
 
         /* Avoid unfenced updates, we might overwrite more areas of the buffer than the application
          * cleared for unsynchronized updates
@@ -990,19 +987,19 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
     TRACE("buffer %p, offset %u, size %u, data %p, flags %#x\n", buffer, offset, size, data, flags);
 
     flags = buffer_sanitize_flags(buffer, flags);
-    /* DISCARD invalidates the entire buffer, regardless of the specified
-     * offset and size. Some applications also depend on the entire buffer
-     * being uploaded in that case. Two such applications are Port Royale
-     * and Darkstar One. */
-    if (flags & WINED3D_MAP_DISCARD)
-        buffer_add_dirty_area(buffer, 0, 0);
-    else if (!(flags & WINED3D_MAP_READONLY))
-        buffer_add_dirty_area(buffer, offset, size);
-
     count = ++buffer->resource.map_count;
 
     if (buffer->buffer_object)
     {
+        /* DISCARD invalidates the entire buffer, regardless of the specified
+         * offset and size. Some applications also depend on the entire buffer
+         * being uploaded in that case. Two such applications are Port Royale
+         * and Darkstar One. */
+        if (flags & WINED3D_MAP_DISCARD)
+            buffer_invalidate_bo_range(buffer, 0, 0);
+        else if (!(flags & WINED3D_MAP_READONLY))
+            buffer_invalidate_bo_range(buffer, offset, size);
+
         if (!(buffer->flags & WINED3D_BUFFER_DOUBLEBUFFER))
         {
             if (count == 1)
