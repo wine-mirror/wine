@@ -581,6 +581,8 @@ char* __cdecl MSVCRT_strncpy(char *dst, const char *src, MSVCRT_size_t len)
     for(i=0; i<len; i++)
         if((dst[i] = src[i]) == '\0') break;
 
+    while (i < len) dst[i++] = 0;
+
     return dst;
 }
 
