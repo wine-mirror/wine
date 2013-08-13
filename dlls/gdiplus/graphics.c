@@ -4988,7 +4988,8 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     if (scaled_rect.Height >= 1 << 23) scaled_rect.Height = 1 << 23;
 
     if (!(format_flags & StringFormatFlagsNoClip) &&
-        scaled_rect.Width != 1 << 23 && scaled_rect.Height != 1 << 23)
+        scaled_rect.Width != 1 << 23 && scaled_rect.Height != 1 << 23 &&
+        rect->Width > 0.0 && rect->Height > 0.0)
     {
         /* FIXME: If only the width or only the height is 0, we should probably still clip */
         rgn = CreatePolygonRgn(corners, 4, ALTERNATE);
