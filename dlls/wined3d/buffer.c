@@ -34,41 +34,43 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 #define VB_MAXFULLCONVERSIONS 5       /* Number of full conversions before we stop converting */
 #define VB_RESETFULLCONVS     20      /* Reset full conversion counts after that number of draws */
 
-static inline BOOL buffer_add_dirty_area(struct wined3d_buffer *This, UINT offset, UINT size)
+static void buffer_add_dirty_area(struct wined3d_buffer *buffer, UINT offset, UINT size)
 {
-    if (!This->buffer_object) return TRUE;
+    if (!buffer->buffer_object)
+        return;
 
-    if (This->maps_size <= This->modified_areas)
+    if (!offset && !size)
+        goto invalidate_all;
+
+    if (offset > buffer->resource.size || offset + size > buffer->resource.size)
     {
-        void *new = HeapReAlloc(GetProcessHeap(), 0, This->maps,
-                                This->maps_size * 2 * sizeof(*This->maps));
-        if (!new)
+        WARN("Invalid range specified, invalidating entire buffer.\n");
+        goto invalidate_all;
+    }
+
+    if (buffer->modified_areas >= buffer->maps_size)
+    {
+        struct wined3d_map_range *new;
+
+        if (!(new = HeapReAlloc(GetProcessHeap(), 0, buffer->maps, 2 * buffer->maps_size * sizeof(*buffer->maps))))
         {
-            ERR("Out of memory\n");
-            return FALSE;
+            ERR("Failed to allocate maps array, invalidating entire buffer.\n");
+            goto invalidate_all;
         }
-        else
-        {
-            This->maps = new;
-            This->maps_size *= 2;
-        }
+
+        buffer->maps = new;
+        buffer->maps_size *= 2;
     }
 
-    if(offset > This->resource.size || offset + size > This->resource.size)
-    {
-        WARN("Invalid range dirtified, marking entire buffer dirty\n");
-        offset = 0;
-        size = This->resource.size;
-    }
-    else if(!offset && !size)
-    {
-        size = This->resource.size;
-    }
+    buffer->maps[buffer->modified_areas].offset = offset;
+    buffer->maps[buffer->modified_areas].size = size;
+    ++buffer->modified_areas;
+    return;
 
-    This->maps[This->modified_areas].offset = offset;
-    This->maps[This->modified_areas].size = size;
-    This->modified_areas++;
-    return TRUE;
+invalidate_all:
+    buffer->modified_areas = 1;
+    buffer->maps[0].offset = 0;
+    buffer->maps[0].size = buffer->resource.size;
 }
 
 static inline void buffer_clear_dirty_areas(struct wined3d_buffer *This)
@@ -184,13 +186,9 @@ static void buffer_create_buffer_object(struct wined3d_buffer *This, const struc
     This->buffer_object_size = This->resource.size;
     This->buffer_object_usage = gl_usage;
 
-    if(This->flags & WINED3D_BUFFER_DOUBLEBUFFER)
+    if (This->flags & WINED3D_BUFFER_DOUBLEBUFFER)
     {
-        if(!buffer_add_dirty_area(This, 0, 0))
-        {
-            ERR("buffer_add_dirty_area failed, this is not expected\n");
-            goto fail;
-        }
+        buffer_add_dirty_area(This, 0, 0);
     }
     else
     {
@@ -808,14 +806,10 @@ void CDECL wined3d_buffer_preload(struct wined3d_buffer *buffer)
             return;
         }
 
-        /* The declaration changed, reload the whole buffer */
-        WARN("Reloading buffer because of decl change\n");
-        buffer_clear_dirty_areas(buffer);
-        if (!buffer_add_dirty_area(buffer, 0, 0))
-        {
-            ERR("buffer_add_dirty_area failed, this is not expected\n");
-            return;
-        }
+        /* The declaration changed, reload the whole buffer. */
+        WARN("Reloading buffer because of a vertex declaration change.\n");
+        buffer_add_dirty_area(buffer, 0, 0);
+
         /* Avoid unfenced updates, we might overwrite more areas of the buffer than the application
          * cleared for unsynchronized updates
          */
@@ -996,20 +990,14 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
     TRACE("buffer %p, offset %u, size %u, data %p, flags %#x\n", buffer, offset, size, data, flags);
 
     flags = buffer_sanitize_flags(buffer, flags);
+    /* DISCARD invalidates the entire buffer, regardless of the specified
+     * offset and size. Some applications also depend on the entire buffer
+     * being uploaded in that case. Two such applications are Port Royale
+     * and Darkstar One. */
     if (flags & WINED3D_MAP_DISCARD)
-    {
-        /* DISCARD invalidates the entire buffer, regardless of the specified
-         * offset and size. Some applications also depend on the entire buffer
-         * being uploaded in that case. Two such applications are Port Royale
-         * and Darkstar One. */
-        if (!buffer_add_dirty_area(buffer, 0, 0))
-            return E_OUTOFMEMORY;
-    }
+        buffer_add_dirty_area(buffer, 0, 0);
     else if (!(flags & WINED3D_MAP_READONLY))
-    {
-        if (!buffer_add_dirty_area(buffer, offset, size))
-            return E_OUTOFMEMORY;
-    }
+        buffer_add_dirty_area(buffer, offset, size);
 
     count = ++buffer->resource.map_count;
 
