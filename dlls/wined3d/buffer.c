@@ -551,12 +551,21 @@ static void buffer_unload(struct wined3d_resource *resource)
 ULONG CDECL wined3d_buffer_decref(struct wined3d_buffer *buffer)
 {
     ULONG refcount = InterlockedDecrement(&buffer->resource.ref);
+    struct wined3d_context *context;
 
     TRACE("%p decreasing refcount to %u.\n", buffer, refcount);
 
     if (!refcount)
     {
-        buffer_unload(&buffer->resource);
+        if (buffer->buffer_object)
+        {
+            context = context_acquire(buffer->resource.device, NULL);
+            delete_gl_buffer(buffer, context->gl_info);
+            context_release(context);
+
+            HeapFree(GetProcessHeap(), 0, buffer->conversion_map);
+        }
+
         resource_cleanup(&buffer->resource);
         buffer->resource.parent_ops->wined3d_object_destroyed(buffer->resource.parent);
         HeapFree(GetProcessHeap(), 0, buffer->maps);
