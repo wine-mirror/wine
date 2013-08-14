@@ -50,9 +50,10 @@ static const WCHAR net_40_subdir[] = {'4','.','0',0};
 
 static const struct ICLRRuntimeInfoVtbl CLRRuntimeInfoVtbl;
 
-#define NUM_RUNTIMES 3
+#define NUM_RUNTIMES 4
 
 static struct CLRRuntimeInfo runtimes[NUM_RUNTIMES] = {
+    {{&CLRRuntimeInfoVtbl}, net_20_subdir, 1, 0, 3705, 0},
     {{&CLRRuntimeInfoVtbl}, net_20_subdir, 1, 1, 4322, 0},
     {{&CLRRuntimeInfoVtbl}, net_20_subdir, 2, 0, 50727, 0},
     {{&CLRRuntimeInfoVtbl}, net_40_subdir, 4, 0, 30319, 0}
@@ -1390,7 +1391,7 @@ HRESULT get_runtime_info(LPCWSTR exefile, LPCWSTR version, LPCWSTR config_file,
         find_runtimes();
 
         if (legacy)
-            i = 2;
+            i = 3;
         else
             i = NUM_RUNTIMES;
 
