@@ -4002,6 +4002,7 @@ static GpStatus encode_image_WIC(GpImage *image, IStream* stream,
     HRESULT hr;
     UINT width, height;
     PixelFormat gdipformat=0;
+    const WICPixelFormatGUID *desired_wicformat;
     WICPixelFormatGUID wicformat;
     GpRect rc;
     BitmapData lockeddata;
@@ -4054,18 +4055,38 @@ static GpStatus encode_image_WIC(GpImage *image, IStream* stream,
             {
                 if (pixel_formats[i].gdip_format == bitmap->format)
                 {
-                    memcpy(&wicformat, pixel_formats[i].wic_format, sizeof(GUID));
+                    desired_wicformat = pixel_formats[i].wic_format;
                     gdipformat = bitmap->format;
                     break;
                 }
             }
             if (!gdipformat)
             {
-                memcpy(&wicformat, &GUID_WICPixelFormat32bppBGRA, sizeof(GUID));
+                desired_wicformat = &GUID_WICPixelFormat32bppBGRA;
                 gdipformat = PixelFormat32bppARGB;
             }
 
+            memcpy(&wicformat, desired_wicformat, sizeof(GUID));
             hr = IWICBitmapFrameEncode_SetPixelFormat(frameencode, &wicformat);
+        }
+
+        if (SUCCEEDED(hr) && !IsEqualGUID(desired_wicformat, &wicformat))
+        {
+            /* Encoder doesn't support this bitmap's format. */
+            gdipformat = 0;
+            for (i=0; pixel_formats[i].wic_format; i++)
+            {
+                if (IsEqualGUID(&wicformat, pixel_formats[i].wic_format))
+                {
+                    gdipformat = bitmap->format;
+                    break;
+                }
+            }
+            if (!gdipformat)
+            {
+                ERR("Cannot support encoder format %s\n", debugstr_guid(&wicformat));
+                hr = E_FAIL;
+            }
         }
 
         if (SUCCEEDED(hr))
