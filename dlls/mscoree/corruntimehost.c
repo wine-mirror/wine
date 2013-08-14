@@ -1280,6 +1280,7 @@ HRESULT create_monodata(REFIID riid, LPVOID *ppObj )
     static const WCHAR wszFileSlash[] = {'f','i','l','e',':','/','/','/',0};
     static const WCHAR wszCLSIDSlash[] = {'C','L','S','I','D','\\',0};
     static const WCHAR wszInprocServer32[] = {'\\','I','n','p','r','o','c','S','e','r','v','e','r','3','2',0};
+    static const WCHAR wszDLL[] = {'.','d','l','l',0};
     WCHAR path[CHARS_IN_GUID + ARRAYSIZE(wszCLSIDSlash) + ARRAYSIZE(wszInprocServer32) - 1];
     MonoDomain *domain;
     MonoAssembly *assembly;
@@ -1328,6 +1329,8 @@ HRESULT create_monodata(REFIID riid, LPVOID *ppObj )
     }
     else
     {
+        WCHAR assemblyname[MAX_PATH + 8];
+
         hr = CLASS_E_CLASSNOTAVAILABLE;
         WARN("CodeBase value cannot be found, trying Assembly.\n");
         /* get the last subkey of InprocServer32 */
@@ -1343,16 +1346,36 @@ HRESULT create_monodata(REFIID riid, LPVOID *ppObj )
         if (res != ERROR_SUCCESS)
             goto cleanup;
         dwBufLen = MAX_PATH + 8;
-        res = RegGetValueW(subkey, NULL, wszAssembly, RRF_RT_REG_SZ, NULL, codebase, &dwBufLen);
+        res = RegGetValueW(subkey, NULL, wszAssembly, RRF_RT_REG_SZ, NULL, assemblyname, &dwBufLen);
         RegCloseKey(subkey);
         if (res != ERROR_SUCCESS)
             goto cleanup;
-        hr = get_file_from_strongname(codebase, filename, MAX_PATH);
+
+        hr = get_file_from_strongname(assemblyname, filename, MAX_PATH);
         if (!SUCCEEDED(hr))
-            goto cleanup;
+        {
+            /*
+             * The registry doesn't have a CodeBase entry and it's not in the GAC.
+             *
+             * Use the Assembly Key to retrieve the filename.
+             *    Assembly : REG_SZ : AssemblyName, Version=X.X.X.X, Culture=neutral, PublicKeyToken=null
+             */
+            WCHAR *ns;
+
+            WARN("Attempt to load from the application directory.\n");
+            GetModuleFileNameW(NULL, filename, MAX_PATH);
+            ns = strrchrW(filename, '\\');
+            *(ns+1) = '\0';
+
+            ns = strchrW(assemblyname, ',');
+            *(ns) = '\0';
+            strcatW(filename, assemblyname);
+            *(ns) = '.';
+            strcatW(filename, wszDLL);
+        }
     }
 
-    TRACE("codebase (%s)\n", debugstr_w(filename));
+    TRACE("filename (%s)\n", debugstr_w(filename));
 
     *ppObj = NULL;
 
