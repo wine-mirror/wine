@@ -780,59 +780,99 @@ static void test_waittxempty(void)
     DCB dcb;
     COMMTIMEOUTS timeouts;
     char tbuf[]="test_waittxempty";
-    DWORD before, after, written, timediff, evtmask = 0;
-    BOOL res_write, res;
+    DWORD before, after, bytes, timediff, evtmask;
+    BOOL res;
     DWORD baud = SLOWBAUD;
+    OVERLAPPED ovl_write, ovl_wait;
 
-    hcom = test_OpenComm(FALSE);
+    hcom = test_OpenComm(TRUE);
     if (hcom == INVALID_HANDLE_VALUE) return;
 
     /* set a low baud rate to have ample time*/
-    ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
+    res = GetCommState(hcom, &dcb);
+    ok(res, "GetCommState error %d\n", GetLastError());
     dcb.BaudRate = baud;
     dcb.ByteSize = 8;
     dcb.Parity = NOPARITY;
     dcb.fRtsControl=RTS_CONTROL_ENABLE;
     dcb.fDtrControl=DTR_CONTROL_ENABLE;
     dcb.StopBits = ONESTOPBIT;
-    ok(SetCommState(hcom, &dcb), "SetCommState failed\n");
+    res = SetCommState(hcom, &dcb);
+    ok(res, "SetCommState error %d\n", GetLastError());
 
     ZeroMemory( &timeouts, sizeof(timeouts));
     timeouts.ReadTotalTimeoutConstant = TIMEOUT;
-    ok(SetCommTimeouts(hcom, &timeouts),"SetCommTimeouts failed\n");
+    res = SetCommTimeouts(hcom, &timeouts);
+    ok(res,"SetCommTimeouts error %d\n", GetLastError());
 
-    ok(SetupComm(hcom,1024,1024),"SetUpComm failed\n");
-    ok(SetCommMask(hcom, EV_TXEMPTY), "SetCommMask failed\n");
+    res = SetupComm(hcom, 1024, 1024);
+    ok(res, "SetUpComm error %d\n", GetLastError());
 
+    /* calling SetCommMask after WriteFile leads to WaitCommEvent failures
+     * due to timeout (no events) under testbot VMs and VirtualBox
+     */
+    res = SetCommMask(hcom, EV_TXEMPTY);
+    ok(res, "SetCommMask error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    res = WriteFile(hcom, tbuf, sizeof(tbuf), &bytes, NULL);
+todo_wine
+    ok(!res, "WriteFile on an overlapped handle without ovl structure should fail\n");
+todo_wine
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    S(U(ovl_write)).Offset = 0;
+    S(U(ovl_write)).OffsetHigh = 0;
+    ovl_write.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
     before = GetTickCount();
-    res_write=WriteFile(hcom, tbuf, sizeof(tbuf), &written, NULL);
+    SetLastError(0xdeadbeef);
+    res = WriteFile(hcom, tbuf, sizeof(tbuf), &bytes, &ovl_write);
     after = GetTickCount();
-    ok(res_write == TRUE, "WriteFile failed\n");
-    ok(written == sizeof(tbuf),
-       "WriteFile: Unexpected write_size %d\n", written);
+todo_wine
+    ok(!res && GetLastError() == ERROR_IO_PENDING, "WriteFile returned %d, error %d\n", res, GetLastError());
+todo_wine
+    ok(!bytes, "expected 0, got %u\n", bytes);
+    ok(after - before == 0, "WriteFile took %d ms to write %d Bytes at %d Baud\n",
+       after - before, bytes, baud);
+    /* don't wait for WriteFile completion */
 
-    trace("WriteFile succeeded, took %d ms to write %d Bytes at %d Baud\n",
-	  after - before, written, baud);
-
+    S(U(ovl_wait)).Offset = 0;
+    S(U(ovl_wait)).OffsetHigh = 0;
+    ovl_wait.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+    evtmask = 0;
     before = GetTickCount();
-    res = WaitCommEvent(hcom, &evtmask, NULL);
+    SetLastError(0xdeadbeef);
+    res = WaitCommEvent(hcom, &evtmask, &ovl_wait);
+    ok(!res && GetLastError() == ERROR_IO_PENDING, "WaitCommEvent error %d\n", GetLastError());
+    res = WaitForSingleObject(ovl_wait.hEvent, TIMEOUT);
+todo_wine
+    ok(res == WAIT_OBJECT_0, "WaitCommEvent failed with a timeout\n");
+    if (res == WAIT_OBJECT_0)
+    {
+        res = GetOverlappedResult(hcom, &ovl_wait, &bytes, FALSE);
+        ok(res, "GetOverlappedResult reported error %d\n", GetLastError());
+        ok(bytes == sizeof(evtmask), "expected %u, written %u\n", (UINT)sizeof(evtmask), bytes);
+        res = TRUE;
+    }
+    else res = FALSE;
     after = GetTickCount();
-
-    ok(res == TRUE, "WaitCommEvent failed\n");
-    ok((evtmask & EV_TXEMPTY),
-                 "WaitCommEvent: Unexpected EvtMask 0x%08x, expected 0x%08x\n",
-		 evtmask, EV_TXEMPTY);
+todo_wine
+    ok(res, "WaitCommEvent error %d\n", GetLastError());
+todo_wine
+    ok(evtmask & EV_TXEMPTY, "WaitCommEvent: expected EV_TXEMPTY, got %#x\n", evtmask);
+    CloseHandle(ovl_wait.hEvent);
 
     timediff = after - before;
+    trace("WaitCommEvent for EV_TXEMPTY took %d ms (timeout %d)\n", timediff, TIMEOUT);
+todo_wine
+    ok(timediff < 900, "WaitCommEvent used %d ms for waiting\n", timediff);
 
-    trace("WaitCommEvent for EV_TXEMPTY took %d ms\n", timediff);
-    /* 050604: This shows a difference between XP (tested with mingw compiled crosstest):
-       XP returns Writefile only after everything went out of the Serial port,
-       while wine returns immediately.
-       Thus on XP, WaintCommEvent after setting the CommMask for EV_TXEMPTY
-       nearly return immediate,
-       while on wine the most time is spent here
-    */
+    res = WaitForSingleObject(ovl_write.hEvent, 0);
+    ok(res == WAIT_OBJECT_0, "WriteFile failed with a timeout\n");
+    res = GetOverlappedResult(hcom, &ovl_write, &bytes, FALSE);
+    ok(res, "GetOverlappedResult reported error %d\n", GetLastError());
+    ok(bytes == sizeof(tbuf), "expected %u, written %u\n", (UINT)sizeof(tbuf), bytes);
+    CloseHandle(ovl_write.hEvent);
 
     CloseHandle(hcom);
 }
