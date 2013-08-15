@@ -51,7 +51,7 @@ typedef struct
 	COMMTIMEOUTS timeouts1, timeouts2;
 } TEST;
 
-static TEST test[] =
+static const TEST test[] =
 {
 	{
 		"baud=9600 parity=e data=5 stop=1 xon=on odsr=off octs=off dtr=on rts=on idsr=on",
@@ -428,7 +428,7 @@ static TEST test[] =
 		pdcb->wReserved1 & 0xffff );
 } */
 
-static void check_result(const char *function, TEST *ptest, int initial_value, BOOL result)
+static void check_result(const char *function, const TEST *ptest, int initial_value, BOOL result)
 {
 	DWORD LastError = GetLastError();
 	DWORD CorrectError = (ptest->result ? 0xdeadbeef : ERROR_INVALID_PARAMETER);
@@ -440,7 +440,7 @@ static void check_result(const char *function, TEST *ptest, int initial_value, B
 #define check_dcb_member(a,b) ok(pdcb1->a == pdcb2->a, "%s(\"%s\"), 0x%02x: "#a" is "b", should be "b"\n", function, ptest->string, initial_value, pdcb1->a, pdcb2->a)
 #define check_dcb_member2(a,c,b) if(pdcb2->a == c) { check_dcb_member(a,b); } else { ok(pdcb1->a == pdcb2->a || pdcb1->a == c, "%s(\"%s\"), 0x%02x: "#a" is "b", should be "b" or "b"\n", function, ptest->string, initial_value, pdcb1->a, pdcb2->a, c); }
 
-static void check_dcb(const char *function, TEST *ptest, int initial_value, DCB *pdcb1, DCB *pdcb2)
+static void check_dcb(const char *function, const TEST *ptest, int initial_value, const DCB *pdcb1, const DCB *pdcb2)
 {
 	/* DCBlength is a special case since Win 9x sets it but NT does not.
 	   We will accept either as correct. */
@@ -512,7 +512,7 @@ static void check_dcb(const char *function, TEST *ptest, int initial_value, DCB 
 
 #define check_timeouts_member(a) ok(ptimeouts1->a == ptimeouts2->a, "%s(\"%s\"), 0x%02x: "#a" is %u, should be %u\n", function, ptest->string, initial_value, ptimeouts1->a, ptimeouts2->a);
 
-static void check_timeouts(const char *function, TEST *ptest, int initial_value, COMMTIMEOUTS *ptimeouts1, COMMTIMEOUTS *ptimeouts2)
+static void check_timeouts(const char *function, const TEST *ptest, int initial_value, const COMMTIMEOUTS *ptimeouts1, const COMMTIMEOUTS *ptimeouts2)
 {
 	check_timeouts_member(ReadIntervalTimeout);
 	check_timeouts_member(ReadTotalTimeoutMultiplier);
@@ -521,7 +521,7 @@ static void check_timeouts(const char *function, TEST *ptest, int initial_value,
 	check_timeouts_member(WriteTotalTimeoutConstant);
 }
 
-static void test_BuildCommDCBA(TEST *ptest, int initial_value, DCB *pexpected_dcb)
+static void test_BuildCommDCBA(const char *string, const TEST *ptest, int initial_value, const DCB *pexpected_dcb)
 {
 	BOOL result;
 	DCB dcb;
@@ -530,14 +530,14 @@ static void test_BuildCommDCBA(TEST *ptest, int initial_value, DCB *pexpected_dc
 	memset(&dcb, initial_value, sizeof(DCB));
 	SetLastError(0xdeadbeef);
 
-	result = BuildCommDCBA(ptest->string, &dcb);
+	result = BuildCommDCBA(string, &dcb);
 
 	/* check results */
 	check_result("BuildCommDCBA", ptest, initial_value, result);
 	check_dcb("BuildCommDCBA", ptest, initial_value, &dcb, pexpected_dcb);
 }
 
-static void test_BuildCommDCBAndTimeoutsA(TEST *ptest, int initial_value, DCB *pexpected_dcb, COMMTIMEOUTS *pexpected_timeouts)
+static void test_BuildCommDCBAndTimeoutsA(const char *string, const TEST *ptest, int initial_value, const DCB *pexpected_dcb, const COMMTIMEOUTS *pexpected_timeouts)
 {
 	BOOL result;
 	DCB dcb;
@@ -548,7 +548,7 @@ static void test_BuildCommDCBAndTimeoutsA(TEST *ptest, int initial_value, DCB *p
 	memset(&timeouts, initial_value, sizeof(COMMTIMEOUTS));
 	SetLastError(0xdeadbeef);
 
-	result = BuildCommDCBAndTimeoutsA(ptest->string, &dcb, &timeouts);
+	result = BuildCommDCBAndTimeoutsA(string, &dcb, &timeouts);
 
 	/* check results */
 	check_result("BuildCommDCBAndTimeoutsA", ptest, initial_value, result);
@@ -556,14 +556,14 @@ static void test_BuildCommDCBAndTimeoutsA(TEST *ptest, int initial_value, DCB *p
 	check_timeouts("BuildCommDCBAndTimeoutsA", ptest, initial_value, &timeouts, pexpected_timeouts);
 }
 
-static void test_BuildCommDCBW(TEST *ptest, int initial_value, DCB *pexpected_dcb)
+static void test_BuildCommDCBW(const char *string, const TEST *ptest, int initial_value, const DCB *pexpected_dcb)
 {
 	BOOL result;
 	DCB dcb;
 	WCHAR wide_string[sizeof(ptest->string)];
 	static int reportedDCBW = 0;
 
-	MultiByteToWideChar(CP_ACP, 0, ptest->string, -1, wide_string, sizeof(wide_string) / sizeof(WCHAR));
+	MultiByteToWideChar(CP_ACP, 0, string, -1, wide_string, sizeof(wide_string) / sizeof(WCHAR));
 
 	/* set initial conditions */
 	memset(&dcb, initial_value, sizeof(DCB));
@@ -583,7 +583,7 @@ static void test_BuildCommDCBW(TEST *ptest, int initial_value, DCB *pexpected_dc
 	check_dcb("BuildCommDCBW", ptest, initial_value, &dcb, pexpected_dcb);
 }
 
-static void test_BuildCommDCBAndTimeoutsW(TEST *ptest, int initial_value, DCB *pexpected_dcb, COMMTIMEOUTS *pexpected_timeouts)
+static void test_BuildCommDCBAndTimeoutsW(const char *string, const TEST *ptest, int initial_value, const DCB *pexpected_dcb, const COMMTIMEOUTS *pexpected_timeouts)
 {
 	BOOL result;
 	DCB dcb;
@@ -591,7 +591,7 @@ static void test_BuildCommDCBAndTimeoutsW(TEST *ptest, int initial_value, DCB *p
 	WCHAR wide_string[sizeof(ptest->string)];
 	static int reportedDCBAndTW = 0;
 
-	MultiByteToWideChar(CP_ACP, 0, ptest->string, -1, wide_string, sizeof(wide_string) / sizeof(WCHAR));
+	MultiByteToWideChar(CP_ACP, 0, string, -1, wide_string, sizeof(wide_string) / sizeof(WCHAR));
 
 	/* set initial conditions */
 	memset(&dcb, initial_value, sizeof(DCB));
@@ -639,8 +639,12 @@ static void test_BuildCommDCB(void)
 
 	for(i = 0; i < TEST_COUNT; i++)
 	{
+                char string[sizeof(test[i].string)];
+
+                strcpy(string, test[i].string);
+
 		/* Check if this test case needs a valid COM port. */
-		ptr = strstr(test[i].string, "COMx");
+		ptr = strstr(string, "COMx");
 
 		/* If required, substitute valid port number into device control string. */
 		if(ptr)
@@ -651,15 +655,15 @@ static void test_BuildCommDCB(void)
 				continue;
 		}
 
-		test_BuildCommDCBA(&test[i], 0x00, &test[i].dcb1);
-		test_BuildCommDCBA(&test[i], 0xff, &test[i].dcb2);
-		test_BuildCommDCBAndTimeoutsA(&test[i], 0x00, &test[i].dcb1, &test[i].timeouts1);
-		test_BuildCommDCBAndTimeoutsA(&test[i], 0xff, &test[i].dcb2, &test[i].timeouts2);
+		test_BuildCommDCBA(string, &test[i], 0x00, &test[i].dcb1);
+		test_BuildCommDCBA(string, &test[i], 0xff, &test[i].dcb2);
+		test_BuildCommDCBAndTimeoutsA(string, &test[i], 0x00, &test[i].dcb1, &test[i].timeouts1);
+		test_BuildCommDCBAndTimeoutsA(string, &test[i], 0xff, &test[i].dcb2, &test[i].timeouts2);
 
-		test_BuildCommDCBW(&test[i], 0x00, &test[i].dcb1);
-		test_BuildCommDCBW(&test[i], 0xff, &test[i].dcb2);
-		test_BuildCommDCBAndTimeoutsW(&test[i], 0x00, &test[i].dcb1, &test[i].timeouts1);
-		test_BuildCommDCBAndTimeoutsW(&test[i], 0xff, &test[i].dcb2, &test[i].timeouts2);
+		test_BuildCommDCBW(string, &test[i], 0x00, &test[i].dcb1);
+		test_BuildCommDCBW(string, &test[i], 0xff, &test[i].dcb2);
+		test_BuildCommDCBAndTimeoutsW(string, &test[i], 0x00, &test[i].dcb1, &test[i].timeouts1);
+		test_BuildCommDCBAndTimeoutsW(string, &test[i], 0xff, &test[i].dcb2, &test[i].timeouts2);
 	}
 }
 
