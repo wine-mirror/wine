@@ -41,6 +41,12 @@
  * available. For the 8250 this is equivalent to TXD->RXD, OUT2->DCD,
  * OUT1->RI, RTS->CTS and DTR->DSR
  */
+/* use variables and not #define to compile the code */
+static BOOL loopback_txd_rxd  = LOOPBACK_TXD_RXD;
+static BOOL loopback_rts_cts  = LOOPBACK_CTS_RTS;
+static BOOL loopback_dtr_dsr  = LOOPBACK_DTR_DSR;
+static BOOL loopback_dtr_ring = LOOPBACK_DTR_RING;
+static BOOL loopback_dtr_dcd  = LOOPBACK_DTR_DCD;
 
 typedef struct
 {
@@ -727,13 +733,19 @@ static void test_GetModemStatus(HANDLE hcom)
 }
 
 /* When we don't write anything, Read should time out even on a loopbacked port */
-static void test_ReadTimeOut(HANDLE hcom)
+static void test_ReadTimeOut(void)
 {
+    HANDLE hcom;
     DCB dcb;
     COMMTIMEOUTS timeouts;
     char rbuf[32];
     DWORD before, after, read, timediff, LastError;
     BOOL res;
+
+    hcom = test_OpenComm(FALSE);
+    if (hcom == INVALID_HANDLE_VALUE) return;
+
+    test_GetModemStatus(hcom);
 
     ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
     dcb.BaudRate = FASTBAUD;
@@ -758,10 +770,13 @@ static void test_ReadTimeOut(HANDLE hcom)
     timediff = after - before;
     ok( timediff > TIMEOUT>>2 && timediff < TIMEOUT *2,
 	"Unexpected TimeOut %d, expected %d\n", timediff, TIMEOUT);
+
+    CloseHandle(hcom);
 }
 
-static void test_waittxempty(HANDLE hcom)
+static void test_waittxempty(void)
 {
+    HANDLE hcom;
     DCB dcb;
     COMMTIMEOUTS timeouts;
     char tbuf[]="test_waittxempty";
@@ -769,7 +784,9 @@ static void test_waittxempty(HANDLE hcom)
     BOOL res_write, res;
     DWORD baud = SLOWBAUD;
 
-    trace("test_waittxempty\n");
+    hcom = test_OpenComm(FALSE);
+    if (hcom == INVALID_HANDLE_VALUE) return;
+
     /* set a low baud rate to have ample time*/
     ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
     dcb.BaudRate = baud;
@@ -816,42 +833,61 @@ static void test_waittxempty(HANDLE hcom)
        nearly return immediate,
        while on wine the most time is spent here
     */
+
+    CloseHandle(hcom);
 }
 
 /* A new open handle should not return error or have bytes in the Queues */
-static void test_ClearCommErrors(HANDLE hcom)
+static void test_ClearCommError(void)
 {
-    DWORD   errors;
+    HANDLE hcom;
+    DWORD  errors;
     COMSTAT lpStat;
+
+    hcom = test_OpenComm(FALSE);
+    if (hcom == INVALID_HANDLE_VALUE) return;
 
     ok(ClearCommError(hcom, &errors, &lpStat), "ClearCommError failed\n");
     ok(lpStat.cbInQue == 0, "Unexpected %d chars in InQueue\n", lpStat.cbInQue);
     ok(lpStat.cbOutQue == 0, "Unexpected %d chars in OutQueue\n", lpStat.cbOutQue);
     ok(errors == 0, "ClearCommErrors: Unexpected error 0x%08x\n", errors);
     trace("test_ClearCommErrors done\n");
+
+    CloseHandle(hcom);
 }
 
-static void test_non_pending_errors(HANDLE hcom)
+static void test_non_pending_errors(void)
 {
+    HANDLE hcom;
     DCB dcb;
     DWORD err;
+
+    hcom = test_OpenComm(FALSE);
+    if (hcom == INVALID_HANDLE_VALUE) return;
 
     ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
     dcb.ByteSize = 255; /* likely bogus */
     ok(!SetCommState(hcom, &dcb), "SetCommState should have failed\n");
     ok(ClearCommError(hcom, &err, NULL), "ClearCommError should succeed\n");
     ok(!(err & CE_MODE), "ClearCommError shouldn't set CE_MODE byte in this case (%x)\n", err);
+
+    CloseHandle(hcom);
 }
 
-/**/
-static void test_LoopbackRead(HANDLE hcom)
+static void test_LoopbackRead(void)
 {
+    HANDLE hcom;
     DCB dcb;
     COMMTIMEOUTS timeouts;
     char rbuf[32];
     DWORD before, after, diff, read, read1, written, evtmask=0, i;
     BOOL res;
     char tbuf[]="test_LoopbackRead";
+
+    if (!loopback_txd_rxd) return;
+
+    hcom = test_OpenComm(FALSE);
+    if (hcom == INVALID_HANDLE_VALUE) return;
 
     trace("Starting test_LoopbackRead\n");
     ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
@@ -940,18 +976,27 @@ static void test_LoopbackRead(HANDLE hcom)
     after =  GetTickCount();
     ok( read == sizeof(tbuf),"ReadFile read %d bytes\n", read);
     trace("Plain Read for %d char at %d baud took %d ms\n", read, SLOWBAUD, after-before);
+
+    CloseHandle(hcom);
 }
 
-static void test_LoopbackCtsRts(HANDLE hcom)
+static void test_LoopbackCtsRts(void)
 {
+    HANDLE hcom;
     DWORD ModemStat = 0, defaultStat = 0;
     DCB dcb;
+
+    if (!loopback_rts_cts) return;
+
+    hcom = test_OpenComm(FALSE);
+    if (hcom == INVALID_HANDLE_VALUE) return;
 
     memset (&dcb, 0, sizeof (dcb));
     ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
     if (dcb.fRtsControl == RTS_CONTROL_HANDSHAKE)
     {
 	trace("RTS_CONTROL_HANDSHAKE is set, so don't manipulate RTS\n");
+        CloseHandle(hcom);
 	return;
     }
     ok(GetCommModemStatus(hcom, &defaultStat), "GetCommModemStatus failed\n");
@@ -980,17 +1025,26 @@ static void test_LoopbackCtsRts(HANDLE hcom)
 	ok (ModemStat ==  defaultStat, "Failed to restore CTS: 0x%04x, expected 0x%04x\n",
 	    ModemStat, defaultStat);
     }
+
+    CloseHandle(hcom);
 }
 
-static void test_LoopbackDtrDcd(HANDLE hcom)
+static void test_LoopbackDtrDcd(void)
 {
+    HANDLE hcom;
     DWORD ModemStat = 0, defaultStat = 0;
     DCB dcb;
+
+    if (!loopback_dtr_dcd) return;
+
+    hcom = test_OpenComm(FALSE);
+    if (hcom == INVALID_HANDLE_VALUE) return;
 
     ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
     if (dcb.fDtrControl == DTR_CONTROL_HANDSHAKE)
     {
 	trace("DTR_CONTROL_HANDSHAKE is set, so don't manipulate DTR\n");
+        CloseHandle(hcom);
 	return;
     }
     ok(GetCommModemStatus(hcom, &defaultStat), "GetCommModemStatus failed\n");
@@ -1019,17 +1073,26 @@ static void test_LoopbackDtrDcd(HANDLE hcom)
 	ok (ModemStat ==  defaultStat, "Failed to restore RLSD: 0x%04x, expected 0x%04x\n",
 	    ModemStat, defaultStat);
     }
+
+    CloseHandle(hcom);
 }
 
-static void test_LoopbackDtrDsr(HANDLE hcom)
+static void test_LoopbackDtrDsr(void)
 {
+    HANDLE hcom;
     DWORD ModemStat = 0, defaultStat = 0;
     DCB dcb;
+
+    if (!loopback_dtr_dsr) return;
+
+    hcom = test_OpenComm(FALSE);
+    if (hcom == INVALID_HANDLE_VALUE) return;
 
     ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
     if (dcb.fDtrControl == DTR_CONTROL_DISABLE)
     {
 	trace("DTR_CONTROL_HANDSHAKE is set, so don't manipulate DTR\n");
+        CloseHandle(hcom);
 	return;
     }
     ok(GetCommModemStatus(hcom, &defaultStat), "GetCommModemStatus failed\n");
@@ -1058,12 +1121,20 @@ static void test_LoopbackDtrDsr(HANDLE hcom)
 	ok (ModemStat ==  defaultStat, "Failed to restore DSR: 0x%04x, expected 0x%04x\n",
 	    ModemStat, defaultStat);
     }
+
+    CloseHandle(hcom);
 }
 
-static void test_LoopbackDtrRing(HANDLE hcom)
+static void test_LoopbackDtrRing(void)
 {
+    HANDLE hcom;
     DWORD ModemStat = 0, defaultStat = 0;
     DCB dcb;
+
+    if (!loopback_dtr_ring) return;
+
+    hcom = test_OpenComm(FALSE);
+    if (hcom == INVALID_HANDLE_VALUE) return;
 
     ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
     if (dcb.fDtrControl == DTR_CONTROL_HANDSHAKE)
@@ -1097,6 +1168,8 @@ static void test_LoopbackDtrRing(HANDLE hcom)
 	ok (ModemStat ==  defaultStat, "Failed to restore RING: 0x%04x, expected 0x%04x\n",
 	    ModemStat, defaultStat);
     }
+
+    CloseHandle(hcom);
 }
 
 /*
@@ -1106,12 +1179,17 @@ static void test_LoopbackDtrRing(HANDLE hcom)
  * Need Loopback TX->RX
 */
 
-static void  test_WaitRx(HANDLE hcom)
+static void test_WaitRx(void)
 {
     OVERLAPPED overlapped, overlapped_w;
-    HANDLE hComPortEvent, hComWriteEvent;
+    HANDLE hcom, hComPortEvent, hComWriteEvent;
     DWORD before, after, after1, diff, success_wait = FALSE, success_write;
     DWORD err_wait, err_write, written, evtmask=0;
+
+    if (!loopback_txd_rxd) return;
+
+    hcom = test_OpenComm(TRUE);
+    if (hcom == INVALID_HANDLE_VALUE) return;
 
     ok(SetCommMask(hcom, EV_RXCHAR), "SetCommMask failed\n");
     hComPortEvent =  CreateEvent( NULL, TRUE, FALSE, NULL );
@@ -1125,7 +1203,7 @@ static void  test_WaitRx(HANDLE hcom)
     overlapped_w.hEvent = hComWriteEvent;
 
     before = GetTickCount();
-    {success_wait = WaitCommEvent(hcom, &evtmask, &overlapped);}
+    success_wait = WaitCommEvent(hcom, &evtmask, &overlapped);
     err_wait = GetLastError();
     after = GetTickCount();
     trace("Success 0x%08x err %d evtmask 0x%08x\n", success_wait, err_wait, evtmask);
@@ -1170,6 +1248,7 @@ static void  test_WaitRx(HANDLE hcom)
     ok ((diff > (TIMEOUT>>1) -TIMEDELTA) && (diff < (TIMEOUT>>1) + TIMEDELTA),
 	"Unexpected time %d, expected around %d\n", diff, TIMEOUT>>1);
 
+    CloseHandle(hcom);
 }
 
 /* Change the controlling line after the given timeout to the given state
@@ -1199,14 +1278,18 @@ static DWORD CALLBACK toggle_ctlLine(LPVOID arg)
  * Wait for a change in CTS
  * Needs Loopback from DTR to CTS
  */
-static void  test_WaitCts(HANDLE hcom)
+static void test_WaitCts(void)
 {
     DCB dcb;
     OVERLAPPED overlapped;
-    HANDLE hComPortEvent;
-    HANDLE alarmThread;
+    HANDLE hcom, hComPortEvent, alarmThread;
     DWORD_PTR args[4];
     DWORD alarmThreadId, before, after, after1, diff, success, err, written, evtmask=0, defaultStat = 0;
+
+    if (!loopback_rts_cts) return;
+
+    hcom = test_OpenComm(TRUE);
+    if (hcom == INVALID_HANDLE_VALUE) return;
 
     ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
     dcb.fRtsControl=RTS_CONTROL_ENABLE;
@@ -1215,6 +1298,7 @@ static void  test_WaitCts(HANDLE hcom)
     if (dcb.fDtrControl == RTS_CONTROL_DISABLE)
     {
 	trace("RTS_CONTROL_HANDSHAKE is set, so don't manipulate DTR\n");
+        CloseHandle(hcom);
 	return;
     }
     args[0]= TIMEOUT >>1;
@@ -1273,6 +1357,8 @@ static void  test_WaitCts(HANDLE hcom)
 	args[1] = SETRTS;
     else
 	args[1] = CLRRTS;
+
+    CloseHandle(hcom);
 }
 
 /* Change the  Comm Mask while a Wait is going on
@@ -1296,19 +1382,22 @@ static DWORD CALLBACK reset_CommMask(LPVOID arg)
    reset the CommMask and expect the wait to return with a mask of 0
    No special port connections needed
 */
-static void  test_AbortWaitCts(HANDLE hcom)
+static void test_AbortWaitCts(void)
 {
     DCB dcb;
     OVERLAPPED overlapped;
-    HANDLE hComPortEvent;
-    HANDLE alarmThread;
+    HANDLE hcom, hComPortEvent, alarmThread;
     DWORD_PTR args[2];
     DWORD alarmThreadId, before, after, after1, diff, success, err, written, evtmask=0;
+
+    hcom = test_OpenComm(TRUE);
+    if (hcom == INVALID_HANDLE_VALUE) return;
 
     ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
     if (dcb.fDtrControl == RTS_CONTROL_DISABLE)
     {
 	trace("RTS_CONTROL_HANDSHAKE is set, so don't manipulate DTR\n");
+        CloseHandle(hcom);
 	return;
     }
     args[0]= TIMEOUT >>1;
@@ -1351,25 +1440,31 @@ static void  test_AbortWaitCts(HANDLE hcom)
     ok ((diff > (TIMEOUT>>1) -TIMEDELTA) && (diff < (TIMEOUT>>1) + TIMEDELTA),
                   "Unexpected time %d, expected around %d\n", diff, TIMEOUT>>1);
 
+    CloseHandle(hcom);
 }
 
 /*
  * Wait for a change in DSR
  * Needs Loopback from DTR to DSR
  */
-static void  test_WaitDsr(HANDLE hcom)
+static void test_WaitDsr(void)
 {
     DCB dcb;
     OVERLAPPED overlapped;
-    HANDLE hComPortEvent;
-    HANDLE alarmThread;
+    HANDLE hcom, hComPortEvent, alarmThread;
     DWORD_PTR args[3];
     DWORD alarmThreadId, before, after, after1, diff, success, err, written, evtmask=0, defaultStat = 0;
+
+    if (!loopback_dtr_dsr) return;
+
+    hcom = test_OpenComm(TRUE);
+    if (hcom == INVALID_HANDLE_VALUE) return;
 
     ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
     if (dcb.fDtrControl == DTR_CONTROL_DISABLE)
     {
 	trace("DTR_CONTROL_HANDSHAKE is set, so don't manipulate DTR\n");
+        CloseHandle(hcom);
 	return;
     }
     args[0]= TIMEOUT >>1;
@@ -1424,26 +1519,33 @@ static void  test_WaitDsr(HANDLE hcom)
 	args[1] = SETDTR;
     else
 	args[1] = CLRDTR;
+
+    CloseHandle(hcom);
 }
 
 /*
  * Wait for a Ring
  * Needs Loopback from DTR to RING
  */
-static void  test_WaitRing(HANDLE hcom)
+static void test_WaitRing(void)
 {
     DCB dcb;
     OVERLAPPED overlapped;
-    HANDLE hComPortEvent;
-    HANDLE alarmThread;
+    HANDLE hcom, hComPortEvent, alarmThread;
     DWORD_PTR args[3];
     DWORD alarmThreadId, before, after, after1, diff, success, err, written, evtmask=0, defaultStat;
     BOOL ret;
+
+    if (!loopback_dtr_ring) return;
+
+    hcom = test_OpenComm(TRUE);
+    if (hcom == INVALID_HANDLE_VALUE) return;
 
     ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
     if (dcb.fDtrControl == DTR_CONTROL_DISABLE)
     {
 	trace("DTR_CONTROL_HANDSHAKE is set, so don't manipulate DTR\n");
+        CloseHandle(hcom);
 	return;
     }
     args[0]= TIMEOUT >>1;
@@ -1486,7 +1588,7 @@ static void  test_WaitRing(HANDLE hcom)
 	  success, err, evtmask, after-before, after1-before);
 
     ok(evtmask & EV_RING, "Failed to detect  EV_RING: 0x%08x, expected 0x%08x\n",
-       evtmask, EV_RING);
+       evtmask, EV_CTS);
     ok(GetCommModemStatus(hcom, &evtmask), "GetCommModemStatus failed\n");
     if(defaultStat & MS_RING_ON)
 	ok((evtmask & MS_RING_ON) == 0,"DTR didn't change state!\n");
@@ -1502,24 +1604,31 @@ static void  test_WaitRing(HANDLE hcom)
 	args[1] = SETDTR;
     else
 	args[1] = CLRDTR;
+
+    CloseHandle(hcom);
 }
 /*
  * Wait for a change in DCD
  * Needs Loopback from DTR to DCD
  */
-static void  test_WaitDcd(HANDLE hcom)
+static void test_WaitDcd(void)
 {
     DCB dcb;
     OVERLAPPED overlapped;
-    HANDLE hComPortEvent;
-    HANDLE alarmThread;
+    HANDLE hcom, hComPortEvent, alarmThread;
     DWORD_PTR args[3];
     DWORD alarmThreadId, before, after, after1, diff, success, err, written, evtmask=0, defaultStat = 0;
+
+    if (!loopback_dtr_dcd) return;
+
+    hcom = test_OpenComm(TRUE);
+    if (hcom == INVALID_HANDLE_VALUE) return;
 
     ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
     if (dcb.fDtrControl == DTR_CONTROL_DISABLE)
     {
 	trace("DTR_CONTROL_HANDSHAKE is set, so don't manipulate DTR\n");
+        CloseHandle(hcom);
 	return;
     }
     args[0]= TIMEOUT >>1;
@@ -1574,6 +1683,8 @@ static void  test_WaitDcd(HANDLE hcom)
 	args[1] = SETDTR;
     else
 	args[1] = CLRDTR;
+
+    CloseHandle(hcom);
 }
 
 /* 
@@ -1597,13 +1708,17 @@ static DWORD CALLBACK set_CommBreak(LPVOID arg)
    Wait for the Break condition (TX resp. RX active)
    Needs Loopback TX-RX
 */
-static void  test_WaitBreak(HANDLE hcom)
+static void test_WaitBreak(void)
 {
     OVERLAPPED overlapped;
-    HANDLE hComPortEvent;
-    HANDLE alarmThread;
+    HANDLE hcom, hComPortEvent, alarmThread;
     DWORD_PTR args[2];
     DWORD alarmThreadId, before, after, after1, diff, success, err, written, evtmask=0;
+
+    if (!loopback_txd_rxd) return;
+
+    hcom = test_OpenComm(TRUE);
+    if (hcom == INVALID_HANDLE_VALUE) return;
 
     ok(SetCommMask(hcom, EV_BREAK), "SetCommMask failed\n");
     hComPortEvent =  CreateEvent( NULL, TRUE, FALSE, NULL );
@@ -1649,6 +1764,8 @@ static void  test_WaitBreak(HANDLE hcom)
 	"Unexpected time %d, expected around %d\n", diff, TIMEOUT>>1);
 
     ok(ClearCommBreak(hcom), "ClearCommBreak failed\n");
+
+    CloseHandle(hcom);
 }
 
 static void test_stdio(void)
@@ -1663,89 +1780,22 @@ static void test_stdio(void)
 
 START_TEST(comm)
 {
-    HANDLE hcom;
-    /* use variables and not #define to compile the code */
-    BOOL loopback_txd_rxd  = LOOPBACK_TXD_RXD;
-    BOOL loopback_rts_cts  = LOOPBACK_CTS_RTS;
-    BOOL loopback_dtr_dsr  = LOOPBACK_DTR_DSR;
-    BOOL loopback_dtr_ring = LOOPBACK_DTR_RING;
-    BOOL loopback_dtr_dcd  = LOOPBACK_DTR_DCD;
-
+    test_ClearCommError(); /* keep it the very first test */
     test_BuildCommDCB();
-    hcom = test_OpenComm(FALSE);
-    if (hcom != INVALID_HANDLE_VALUE)
-    {
-	test_ClearCommErrors(hcom); /* keep it the very first test */
-	test_GetModemStatus(hcom);
-	test_ReadTimeOut(hcom);
-	test_waittxempty(hcom);
-	CloseHandle(hcom);
-    }
-    hcom = test_OpenComm(FALSE);
-    if (hcom != INVALID_HANDLE_VALUE)
-    {
-        test_non_pending_errors(hcom);
-	CloseHandle(hcom);
-    }
-    if((loopback_txd_rxd) && ((hcom = test_OpenComm(FALSE))!=INVALID_HANDLE_VALUE))
-    {
-	test_LoopbackRead(hcom);
-	CloseHandle(hcom);
-    }
-    if((loopback_rts_cts) && ((hcom = test_OpenComm(FALSE))!=INVALID_HANDLE_VALUE))
-    {
-	test_LoopbackCtsRts(hcom);
-	CloseHandle(hcom);
-    }
-    if((loopback_dtr_dsr) && ((hcom = test_OpenComm(FALSE))!=INVALID_HANDLE_VALUE))
-    {
-	test_LoopbackDtrDsr(hcom);
-	CloseHandle(hcom);
-    }
-    if((loopback_dtr_ring) && ((hcom = test_OpenComm(FALSE))!=INVALID_HANDLE_VALUE))
-    {
-	test_LoopbackDtrRing(hcom);
-	CloseHandle(hcom);
-    }
-    if((loopback_dtr_dcd) && ((hcom = test_OpenComm(FALSE))!=INVALID_HANDLE_VALUE))
-    {
-	test_LoopbackDtrDcd(hcom);
-	CloseHandle(hcom);
-    }
-    if((loopback_txd_rxd) && ((hcom = test_OpenComm(TRUE))!=INVALID_HANDLE_VALUE))
-    {
-        test_WaitRx(hcom);
-        CloseHandle(hcom);
-    }
-    if((loopback_rts_cts) && ((hcom = test_OpenComm(TRUE))!=INVALID_HANDLE_VALUE))
-    {
-	test_WaitCts(hcom);
-	CloseHandle(hcom);
-    }
-    if((hcom = test_OpenComm(TRUE))!=INVALID_HANDLE_VALUE)
-    {
-	test_AbortWaitCts(hcom);
-	CloseHandle(hcom);
-    }
-    if((loopback_dtr_dsr) && ((hcom = test_OpenComm(TRUE))!=INVALID_HANDLE_VALUE))
-    {
-	test_WaitDsr(hcom);
-	CloseHandle(hcom);
-    }
-    if((loopback_dtr_ring) && ((hcom = test_OpenComm(TRUE))!=INVALID_HANDLE_VALUE))
-    {
-	test_WaitRing(hcom);
-	CloseHandle(hcom);
-    }
-    if((loopback_dtr_dcd) && ((hcom = test_OpenComm(TRUE))!=INVALID_HANDLE_VALUE))
-    {
-	test_WaitDcd(hcom);
-	CloseHandle(hcom);
-    }
-    if(loopback_txd_rxd && (hcom = test_OpenComm(TRUE))!=INVALID_HANDLE_VALUE)
-    {
-	test_WaitBreak(hcom);
-	CloseHandle(hcom);
-    }
+    test_ReadTimeOut();
+    test_waittxempty();
+    test_non_pending_errors();
+    test_LoopbackRead();
+    test_LoopbackCtsRts();
+    test_LoopbackDtrDsr();
+    test_LoopbackDtrRing();
+    test_LoopbackDtrDcd();
+    test_WaitRx();
+    test_WaitCts();
+    test_AbortWaitCts();
+    test_WaitDsr();
+    test_WaitRing();
+    test_WaitDcd();
+    test_WaitBreak();
     test_stdio();
 }
