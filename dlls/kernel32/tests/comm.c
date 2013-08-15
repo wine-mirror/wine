@@ -1671,16 +1671,10 @@ START_TEST(comm)
     hcom = test_OpenComm(FALSE);
     if (hcom != INVALID_HANDLE_VALUE)
     {
+	test_ClearCommErrors(hcom); /* keep it the very first test */
 	test_GetModemStatus(hcom);
 	test_ReadTimeOut(hcom);
 	test_waittxempty(hcom);
-	CloseHandle(hcom);
-    }
-    hcom = test_OpenComm(FALSE);
-    if (hcom != INVALID_HANDLE_VALUE)
-    {
-	Sleep(200); /* Give the laster character of test_waittxempty to drop into the receiver */
-	test_ClearCommErrors(hcom);
 	CloseHandle(hcom);
     }
     hcom = test_OpenComm(FALSE);
