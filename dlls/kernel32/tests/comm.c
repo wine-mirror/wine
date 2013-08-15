@@ -1818,6 +1818,60 @@ static void test_stdio(void)
         "got error %u\n", GetLastError() );
 }
 
+static void test_WaitCommEvent(void)
+{
+    HANDLE hcom;
+    DWORD evtmask, ret, bytes, before, after, last_event_time;
+    OVERLAPPED ovl_wait;
+
+    hcom = test_OpenComm(TRUE);
+    if (hcom == INVALID_HANDLE_VALUE) return;
+
+    test_GetModemStatus(hcom);
+
+    ret = SetCommMask(hcom, 0x1fff);
+    ok(ret, "SetCommMask error %d\n", GetLastError());
+
+    S(U(ovl_wait)).Offset = 0;
+    S(U(ovl_wait)).OffsetHigh = 0;
+    ovl_wait.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+    trace("waiting 10 secs for com port events (turn on/off the device)...\n");
+    last_event_time = 0;
+    before = GetTickCount();
+    do
+    {
+        evtmask = 0;
+        SetLastError(0xdeadbeef);
+        ret = WaitCommEvent(hcom, &evtmask, &ovl_wait);
+        ok(!ret && GetLastError() == ERROR_IO_PENDING, "WaitCommEvent returned %d, error %d\n", ret, GetLastError());
+        if (GetLastError() != ERROR_IO_PENDING) goto done; /* no point in further testing */
+        for (;;)
+        {
+            ret = WaitForSingleObject(ovl_wait.hEvent, 500);
+            after = GetTickCount();
+            if (ret == WAIT_OBJECT_0)
+            {
+                last_event_time = after;
+                ret = GetOverlappedResult(hcom, &ovl_wait, &bytes, FALSE);
+                ok(ret, "GetOverlappedResult reported error %d\n", GetLastError());
+                ok(bytes == sizeof(evtmask), "expected %u, written %u\n", (UINT)sizeof(evtmask), bytes);
+                trace("WaitCommEvent: got events %#x\n", evtmask);
+                test_GetModemStatus(hcom);
+                break;
+            }
+            else
+            {
+                if (last_event_time || after - before >= 10000) goto done;
+            }
+        }
+    } while (after - before < 10000);
+
+done:
+    CloseHandle(ovl_wait.hEvent);
+    CloseHandle(hcom);
+}
+
 START_TEST(comm)
 {
     test_ClearCommError(); /* keep it the very first test */
@@ -1838,4 +1892,12 @@ START_TEST(comm)
     test_WaitDcd();
     test_WaitBreak();
     test_stdio();
+
+    if (!winetest_interactive)
+    {
+        skip("interactive tests (set WINETEST_INTERACTIVE=1)\n");
+        return;
+    }
+
+    test_WaitCommEvent();
 }
