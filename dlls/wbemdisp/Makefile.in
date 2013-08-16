@@ -3,4 +3,6 @@ MODULE    = wbemdisp.dll
 C_SRCS = \
 	main.c
 
+IDL_R_SRCS = wbemdisp_classes.idl
+
 @MAKE_DLL_RULES@

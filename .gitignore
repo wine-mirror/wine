@@ -257,6 +257,7 @@ include/urlhist.h
 include/urlmon.h
 include/vmr9.h
 include/wbemcli.h
+include/wbemdisp.h
 include/wbemprov.h
 include/wia_lh.h
 include/wia_xp.h

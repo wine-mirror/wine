@@ -1,0 +1,484 @@
+/*
+ * Copyright 2013 Hans Leidekker for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+import "dispex.idl";
+
+interface ISWbemEventSource;
+interface ISWbemLocator;
+interface ISWbemMethodSet;
+interface ISWbemObject;
+interface ISWbemObjectPath;
+interface ISWbemObjectSet;
+interface ISWbemPrivilegeSet;
+interface ISWbemPropertySet;
+interface ISWbemQualifierSet;
+interface ISWbemSecurity;
+interface ISWbemServices;
+
+[
+    object,
+    local,
+    uuid(76a6415b-cb41-11d1-8b02-00600806d9b6),
+    dual,
+    hidden,
+    oleautomation,
+    pointer_default(unique)
+]
+interface ISWbemLocator : IDispatch
+{
+    [ id(1) ]
+    HRESULT ConnectServer(
+        [in] BSTR strServer,
+        [in] BSTR strNamespace,
+        [in] BSTR strUser,
+        [in] BSTR strPassword,
+        [in] BSTR strLocale,
+        [in] BSTR strAuthority,
+        [in] long iSecurityFlags,
+        [in] IDispatch *objWbemNamedValueSet,
+        [out, retval] ISWbemServices **objWbemServices);
+
+    [ id(2), propget ]
+    HRESULT Security_(
+        ISWbemSecurity **objWbemSecurity);
+};
+
+[
+    object,
+    local,
+    uuid(76A6415A-CB41-11d1-8B02-00600806D9B6),
+    dual,
+    hidden,
+    oleautomation
+]
+interface ISWbemObject : IDispatch
+{
+    [ id(1) ]
+    HRESULT Put_(
+        [in] long iFlags,
+        [in] IDispatch *objWbemNamedValueSet,
+        [out, retval] ISWbemObjectPath **objWbemObjectPath);
+
+    [ id(2) ]
+    HRESULT PutAsync_(
+        [in] IDispatch *objWbemSink,
+        [in] long iFlags,
+        [in] IDispatch *objWbemNamedValueSet,
+        [in] IDispatch *objWbemAsyncContext);
+
+    [ id (3) ]
+    HRESULT Delete_(
+        [in] long iFlags,
+        [in] IDispatch *objWbemNamedValueSet);
+
+    [ id (4) ]
+    HRESULT DeleteAsync_(
+        [in] IDispatch *objWbemSink,
+        [in] long iFlags,
+        [in] IDispatch *objWbemNamedValueSet,
+        [in] IDispatch *objWbemAsyncContext);
+
+    [ id(5) ]
+    HRESULT Instances_(
+        [in] long iFlags,
+        [in] IDispatch *objWbemNamedValueSet,
+        [out, retval] ISWbemObjectSet **objWbemObjectSet);
+
+    [ id(6) ]
+    HRESULT InstancesAsync_(
+        [in] IDispatch *objWbemSink,
+        [in] long iFlags,
+        [in] IDispatch *objWbemNamedValueSet,
+        [in] IDispatch *objWbemAsyncContext);
+
+    [ id(7) ]
+    HRESULT Subclasses_(
+        [in] long iFlags,
+        [in] IDispatch *objWbemNamedValueSet,
+        [out, retval] ISWbemObjectSet **objWbemObjectSet);
+
+    [ id(8) ]
+    HRESULT SubclassesAsync_(
+        [in] IDispatch *objWbemSink,
+        [in] long iFlags,
+        [in] IDispatch *objWbemNamedValueSet,
+        [in] IDispatch *objWbemAsyncContext);
+
+    [ id(9) ]
+    HRESULT Associators_(
+        [in] BSTR strAssocClass,
+        [in] BSTR strResultClass,
+        [in] BSTR strResultRole,
+        [in] BSTR strRole,
+        [in] VARIANT_BOOL bClassesOnly,
+        [in] VARIANT_BOOL bSchemaOnly,
+        [in] BSTR strRequiredAssocQualifier,
+        [in] BSTR strRequiredQualifier,
+        [in] long iFlags,
+        [in] IDispatch *objWbemNamedValueSet,
+        [out, retval] ISWbemObjectSet **objWbemObjectSet);
+
+    [ id(10) ]
+    HRESULT AssociatorsAsync_(
+        [in] IDispatch *objWbemSink,
+        [in] BSTR strAssocClass,
+        [in] BSTR strResultClass,
+        [in] BSTR strResultRole,
+        [in] BSTR strRole,
+        [in] VARIANT_BOOL bClassesOnly,
+        [in] VARIANT_BOOL bSchemaOnly,
+        [in] BSTR strRequiredAssocQualifier,
+        [in] BSTR strRequiredQualifier,
+        [in] long iFlags,
+        [in] IDispatch *objWbemNamedValueSet,
+        [in] IDispatch *objWbemAsyncContext);
+
+    [ id(11) ]
+    HRESULT References_(
+        [in] BSTR strResultClass,
+        [in] BSTR strRole,
+        [in] VARIANT_BOOL bClassesOnly,
+        [in] VARIANT_BOOL bSchemaOnly,
+        [in] BSTR strRequiredQualifier,
+        [in] long iFlags,
+        [in] IDispatch *objWbemNamedValueSet,
+        [out, retval] ISWbemObjectSet **objWbemObjectSet);
+
+    [ id(12) ]
+    HRESULT ReferencesAsync_(
+        [in] IDispatch *objWbemSink,
+        [in] BSTR strResultClass,
+        [in] BSTR strRole,
+        [in] VARIANT_BOOL bClassesOnly,
+        [in] VARIANT_BOOL bSchemaOnly,
+        [in] BSTR strRequiredQualifier,
+        [in] long iFlags,
+        [in] IDispatch *objWbemNamedValueSet,
+        [in] IDispatch *objWbemAsyncContext);
+
+    [ id(13) ]
+    HRESULT ExecMethod_(
+        [in] BSTR strMethodName,
+        [in] IDispatch *objWbemInParameters,
+        [in] long iFlags,
+        [in] IDispatch *objWbemNamedValueSet,
+        [out, retval] ISWbemObject **objWbemOutParameters);
+
+    [ id(14) ]
+    HRESULT ExecMethodAsync_(
+        [in] IDispatch *objWbemSink,
+        [in] BSTR strMethodName,
+        [in] IDispatch *objWbemInParameters,
+        [in] long iFlags,
+        [in] IDispatch *objWbemNamedValueSet,
+        [in] IDispatch *objWbemAsyncContext);
+
+    [ id(15) ]
+    HRESULT Clone_(
+        [out, retval] ISWbemObject **objWbemObject);
+
+    [ id(16) ]
+    HRESULT GetObjectText_(
+        [in] long iFlags,
+        [out, retval] BSTR *strObjectText);
+
+    [ id(17) ]
+    HRESULT SpawnDerivedClass_(
+        [in] long iFlags,
+        [out, retval] ISWbemObject **objWbemObject);
+
+    [ id(18) ]
+    HRESULT SpawnInstance_(
+        [in] long iFlags,
+        [out, retval] ISWbemObject **objWbemObject);
+
+    [ id(19) ]
+    HRESULT CompareTo_(
+        [in] IDispatch *objWbemObject,
+        [in] long iFlags,
+        [out, retval] VARIANT_BOOL *bResult);
+
+    [ id(20), propget ]
+    HRESULT Qualifiers_(
+        [out, retval] ISWbemQualifierSet **objWbemQualifierSet);
+
+    [ id(21), propget ]
+    HRESULT Properties_(
+        [out, retval] ISWbemPropertySet **objWbemPropertySet);
+
+    [ id(22), propget ]
+    HRESULT Methods_(
+        [out, retval] ISWbemMethodSet **objWbemMethodSet);
+
+    [ id(23), propget ]
+    HRESULT Derivation_(
+        [out, retval] VARIANT *strClassNameArray);
+
+    [ id(24), propget ]
+    HRESULT Path_(
+        [out, retval] ISWbemObjectPath **objWbemObjectPath);
+
+    [ id(25), propget ]
+    HRESULT Security_(
+        [out, retval] ISWbemSecurity **objWbemSecurity);
+};
+
+typedef
+[
+    v1_enum,
+    uuid(b54d66e8-2287-11d2-8b33-00600806d9b6)
+]
+enum WbemImpersonationLevelEnum
+{
+    wbemImpersonationLevelAnonymous   = 1,
+    wbemImpersonationLevelIdentify    = 2,
+    wbemImpersonationLevelImpersonate = 3,
+    wbemImpersonationLevelDelegate    = 4
+} WbemImpersonationLevelEnum;
+
+typedef
+[
+    v1_enum,
+    uuid(b54d66e7-2287-11d2-8b33-00600806d9b6)
+]
+enum WbemAuthenticationLevelEnum
+{
+    wbemAuthenticationLevelDefault      = 0,
+    wbemAuthenticationLevelNone         = 1,
+    wbemAuthenticationLevelConnect      = 2,
+    wbemAuthenticationLevelCall         = 3,
+    wbemAuthenticationLevelPkt          = 4,
+    wbemAuthenticationLevelPktIntegrity = 5,
+    wbemAuthenticationLevelPktPrivacy   = 6
+} WbemAuthenticationLevelEnum;
+
+[
+    object,
+    local,
+    uuid(b54d66e6-2287-11d2-8b33-00600806d9b6),
+    dual,
+    hidden,
+    oleautomation,
+    nonextensible
+]
+interface ISWbemSecurity : IDispatch
+{
+    [ id(1), propget ]
+    HRESULT ImpersonationLevel(
+        [out, retval] WbemImpersonationLevelEnum *iImpersonationLevel);
+
+    [ id(1), propput ]
+    HRESULT ImpersonationLevel(
+        [in] WbemImpersonationLevelEnum iImpersonationLevel);
+
+    [ id(2), propget ]
+    HRESULT AuthenticationLevel(
+        [out, retval] WbemAuthenticationLevelEnum *iAuthenticationLevel);
+
+    [ id(2), propput ]
+    HRESULT AuthenticationLevel(
+        [in] WbemAuthenticationLevelEnum iAuthenticationLevel);
+
+    [ id(3), propget ]
+    HRESULT Privileges(
+        [out, retval] ISWbemPrivilegeSet **objWbemPrivilegeSet);
+};
+
+[
+    object,
+    local,
+    uuid(76a6415c-cb41-11d1-8b02-00600806d9b6),
+    dual,
+    hidden,
+    oleautomation,
+    pointer_default(unique)
+]
+interface ISWbemServices : IDispatch
+{
+    [ id(1) ]
+    HRESULT Get(
+        [in] BSTR strObjectPath,
+        [in] long iFlags,
+        [in] IDispatch *objWbemNamedValueSet,
+        [out, retval] ISWbemObject **objWbemObject);
+
+    [ id(2) ]
+    HRESULT GetAsync(
+        [in] IDispatch *objWbemSink,
+        [in] BSTR strObjectPath,
+        [in] long iFlags,
+        [in] IDispatch *objWbemNamedValueSet,
+        [in] IDispatch *objWbemAsyncContext);
+
+    [ id(3) ]
+    HRESULT Delete(
+        [in] BSTR strObjectPath,
+        [in] long iFlags,
+        [in] IDispatch *objWbemNamedValueSet);
+
+    [ id(4) ]
+    HRESULT DeleteAsync(
+        [in] IDispatch *objWbemSink,
+        [in] BSTR strObjectPath,
+        [in] long iFlags,
+        [in] IDispatch *objWbemNamedValueSet,
+        [in] IDispatch *objWbemAsyncContext);
+
+    [ id(5) ]
+    HRESULT InstancesOf(
+        [in] BSTR strClass,
+        [in] long iFlags,
+        [in] IDispatch *objWbemNamedValueSet,
+        [out, retval] ISWbemObjectSet **objWbemObjectSet);
+
+    [ id(6) ]
+    HRESULT InstancesOfAsync(
+        [in] IDispatch *objWbemSink,
+        [in] BSTR strClass,
+        [in] long iFlags,
+        [in] IDispatch *objWbemNamedValueSet,
+        [in] IDispatch *objWbemAsyncContext);
+
+    [ id(7) ]
+    HRESULT SubclassesOf(
+        [in]  BSTR strSuperclass,
+        [in]  long iFlags,
+        [in]  IDispatch *objWbemNamedValueSet,
+        [out, retval] ISWbemObjectSet **objWbemObjectSet);
+
+    [ id(8) ]
+    HRESULT SubclassesOfAsync(
+        [in] IDispatch *objWbemSink,
+        [in] BSTR strSuperclass,
+        [in] long iFlags,
+        [in] IDispatch *objWbemNamedValueSet,
+        [in] IDispatch *objWbemAsyncContext);
+
+    [ id(9) ]
+    HRESULT ExecQuery(
+        [in] BSTR strQuery,
+        [in] BSTR strQueryLanguage,
+        [in] long iFlags,
+        [in] IDispatch *objWbemNamedValueSet,
+        [out, retval] ISWbemObjectSet **objWbemObjectSet);
+
+    [ id(10) ]
+    HRESULT ExecQueryAsync(
+        [in] IDispatch *objWbemSink,
+        [in] BSTR strQuery,
+        [in] BSTR strQueryLanguage,
+        [in] long lFlags,
+        [in] IDispatch *objWbemNamedValueSet,
+        [in] IDispatch *objWbemAsyncContext);
+
+    [ id(11) ]
+    HRESULT AssociatorsOf(
+        [in] BSTR strObjectPath,
+        [in] BSTR strAssocClass,
+        [in] BSTR strResultClass,
+        [in] BSTR strResultRole,
+        [in] BSTR strRole,
+        [in] VARIANT_BOOL bClassesOnly,
+        [in] VARIANT_BOOL bSchemaOnly,
+        [in] BSTR strRequiredAssocQualifier,
+        [in] BSTR strRequiredQualifier,
+        [in] long iFlags,
+        [in] IDispatch *objWbemNamedValueSet,
+        [out, retval] ISWbemObjectSet **objWbemObjectSet);
+
+    [ id(12) ]
+    HRESULT AssociatorsOfAsync(
+        [in] IDispatch *objWbemSink,
+        [in] BSTR strObjectPath,
+        [in] BSTR strAssocClass,
+        [in] BSTR strResultClass,
+        [in] BSTR strResultRole,
+        [in] BSTR strRole,
+        [in] VARIANT_BOOL bClassesOnly,
+        [in] VARIANT_BOOL bSchemaOnly,
+        [in] BSTR strRequiredAssocQualifier,
+        [in] BSTR strRequiredQualifier,
+        [in] long iFlags,
+        [in] IDispatch *objWbemNamedValueSet,
+        [in] IDispatch *objWbemAsyncContext);
+
+    [ id(13) ]
+    HRESULT ReferencesTo(
+        [in] BSTR strObjectPath,
+        [in] BSTR strResultClass,
+        [in] BSTR strRole,
+        [in] VARIANT_BOOL bClassesOnly,
+        [in] VARIANT_BOOL bSchemaOnly,
+        [in] BSTR strRequiredQualifier,
+        [in] long iFlags,
+        [in] IDispatch *objWbemNamedValueSet,
+        [out, retval] ISWbemObjectSet **objWbemObjectSet);
+
+    [ id(14) ]
+    HRESULT ReferencesToAsync(
+        [in] IDispatch *objWbemSink,
+        [in] BSTR strObjectPath,
+        [in] BSTR strResultClass,
+        [in] BSTR strRole,
+        [in] VARIANT_BOOL bClassesOnly,
+        [in] VARIANT_BOOL bSchemaOnly,
+        [in] BSTR strRequiredQualifier,
+        [in] long iFlags,
+        [in] IDispatch *objWbemNamedValueSet,
+        [in] IDispatch *objWbemAsyncContext);
+
+    [ id(15) ]
+    HRESULT ExecNotificationQuery(
+        [in] BSTR strQuery,
+        [in] BSTR strQueryLanguage,
+        [in] long iFlags,
+        [in] IDispatch *objWbemNamedValueSet,
+        [out, retval] ISWbemEventSource **objWbemEventSource);
+
+    [ id(16) ]
+    HRESULT ExecNotificationQueryAsync(
+        [in] IDispatch *objWbemSink,
+        [in] BSTR strQuery,
+        [in] BSTR strQueryLanguage,
+        [in] long iFlags,
+        [in] IDispatch *objWbemNamedValueSet,
+        [in] IDispatch *objWbemAsyncContext);
+
+    [ id(17) ]
+    HRESULT ExecMethod(
+        [in] BSTR strObjectPath,
+        [in] BSTR strMethodName,
+        [in] IDispatch *objWbemInParameters,
+        [in] long iFlags,
+        [in] IDispatch *objWbemNamedValueSet,
+        [out, retval] ISWbemObject **objWbemOutParameters);
+
+    [ id(18) ]
+    HRESULT ExecMethodAsync(
+        [in] IDispatch *objWbemSink,
+        [in] BSTR strObjectPath,
+        [in] BSTR strMethodName,
+        [in] IDispatch *objWbemInParameters,
+        [in] long iFlags,
+        [in] IDispatch *objWbemNamedValueSet,
+        [in] IDispatch *objWbemAsyncContext);
+
+    [ id(19), propget ]
+    HRESULT Security_(
+        [out, retval] ISWbemSecurity **objWbemSecurity);
+};

@@ -20,6 +20,10 @@
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
+#include "objbase.h"
+#include "rpcproxy.h"
+
+static HINSTANCE instance;
 
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
@@ -29,8 +33,25 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
         case DLL_WINE_PREATTACH:
             return FALSE;    /* prefer native version */
         case DLL_PROCESS_ATTACH:
+            instance = hinst;
             DisableThreadLibraryCalls( hinst );
             break;
     }
     return TRUE;
+}
+
+/***********************************************************************
+ *      DllRegisterServer (WBEMDISP.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return __wine_register_resources( instance );
+}
+
+/***********************************************************************
+ *      DllUnregisterServer (WBEMDISP.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources( instance );
 }
