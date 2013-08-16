@@ -648,7 +648,7 @@ static void shader_arb_vs_local_constants(const struct arb_vs_compiled_shader *g
     checkGLcall("Load vs int consts");
 }
 
-static void shader_arb_select(void *shader_priv, const struct wined3d_context *context,
+static void shader_arb_select(void *shader_priv, struct wined3d_context *context,
         const struct wined3d_state *state);
 
 /**
@@ -659,7 +659,7 @@ static void shader_arb_select(void *shader_priv, const struct wined3d_context *c
  */
 /* Context activation is done by the caller (state handler). */
 static void shader_arb_load_constants_internal(struct shader_arb_priv *priv,
-        const struct wined3d_context *context, const struct wined3d_state *state,
+        struct wined3d_context *context, const struct wined3d_state *state,
         BOOL usePixelShader, BOOL useVertexShader, BOOL from_shader_select)
 {
     const struct wined3d_d3d_info *d3d_info = context->d3d_info;
@@ -723,7 +723,7 @@ static void shader_arb_load_constants_internal(struct shader_arb_priv *priv,
     }
 }
 
-static void shader_arb_load_constants(void *shader_priv, const struct wined3d_context *context,
+static void shader_arb_load_constants(void *shader_priv, struct wined3d_context *context,
         const struct wined3d_state *state)
 {
     BOOL vs = use_vs(state);
@@ -736,6 +736,12 @@ static void shader_arb_update_float_vertex_constants(struct wined3d_device *devi
 {
     struct wined3d_context *context = context_get_current();
     struct shader_arb_priv *priv = device->shader_priv;
+    unsigned int i;
+
+    for (i = 0; i < device->context_count; ++i)
+    {
+        device->contexts[i]->constant_update_mask |= WINED3D_SHADER_CONST_VS_F;
+    }
 
     /* We don't want shader constant dirtification to be an O(contexts), so just dirtify the active
      * context. On a context switch the old context will be fully dirtified */
@@ -749,6 +755,12 @@ static void shader_arb_update_float_pixel_constants(struct wined3d_device *devic
 {
     struct wined3d_context *context = context_get_current();
     struct shader_arb_priv *priv = device->shader_priv;
+    unsigned int i;
+
+    for (i = 0; i < device->context_count; ++i)
+    {
+        device->contexts[i]->constant_update_mask |= WINED3D_SHADER_CONST_PS_F;
+    }
 
     /* We don't want shader constant dirtification to be an O(contexts), so just dirtify the active
      * context. On a context switch the old context will be fully dirtified */
@@ -4629,7 +4641,7 @@ static void find_arb_vs_compile_args(const struct wined3d_state *state,
 }
 
 /* Context activation is done by the caller. */
-static void shader_arb_select(void *shader_priv, const struct wined3d_context *context,
+static void shader_arb_select(void *shader_priv, struct wined3d_context *context,
         const struct wined3d_state *state)
 {
     struct shader_arb_priv *priv = shader_priv;
@@ -4685,6 +4697,9 @@ static void shader_arb_select(void *shader_priv, const struct wined3d_context *c
         /* Force constant reloading for the NP2 fixup (see comment in shader_glsl_select for more info) */
         if (compiled->np2fixup_info.super.active)
             shader_arb_load_np2fixup_constants(priv, gl_info, state);
+
+        if (ps->load_local_constsF)
+            context->constant_update_mask |= WINED3D_SHADER_CONST_PS_F;
     }
     else
     {
@@ -4746,6 +4761,9 @@ static void shader_arb_select(void *shader_priv, const struct wined3d_context *c
                 FIXME("vertex color clamp needs to be changed, but extension not supported.\n");
             }
         }
+
+        if (vs->load_local_constsF)
+            context->constant_update_mask |= WINED3D_SHADER_CONST_VS_F;
     }
     else
     {
@@ -5882,21 +5900,16 @@ static void set_bumpmat_arbfp(struct wined3d_context *context, const struct wine
     const struct wined3d_gl_info *gl_info = context->gl_info;
     float mat[2][2];
 
-    if (use_ps(state))
-    {
-        /* The pixel shader has to know the bump env matrix. Do a constants
-         * update. */
-        if (stage && (state->pixel_shader->reg_maps.bumpmat & (1 << stage)))
-            context->load_constants = 1;
+    context->constant_update_mask |= WINED3D_SHADER_CONST_PS_BUMP_ENV;
 
-        if(device->shader_backend == &arb_program_shader_backend) {
-            /* Exit now, don't set the bumpmat below, otherwise we may overwrite pixel shader constants */
-            return;
-        }
-    }
-    else if (device->shader_backend == &arb_program_shader_backend)
+    if (device->shader_backend == &arb_program_shader_backend)
     {
         struct shader_arb_priv *priv = device->shader_priv;
+
+        /* Exit now, don't set the bumpmat below, otherwise we may overwrite pixel shader constants. */
+        if (use_ps(state))
+            return;
+
         priv->pshader_const_dirty[ARB_FFP_CONST_BUMPMAT(stage)] = 1;
         priv->highest_dirty_ps_const = max(priv->highest_dirty_ps_const, ARB_FFP_CONST_BUMPMAT(stage) + 1);
     }
@@ -5918,21 +5931,16 @@ static void tex_bumpenvlum_arbfp(struct wined3d_context *context,
     const struct wined3d_gl_info *gl_info = context->gl_info;
     float param[4];
 
-    if (use_ps(state))
-    {
-        /* The pixel shader has to know the luminance offset. Do a constants
-         * update. */
-        if (stage && (state->pixel_shader->reg_maps.luminanceparams & (1 << stage)))
-            context->load_constants = 1;
+    context->constant_update_mask |= WINED3D_SHADER_CONST_PS_BUMP_ENV;
 
-        if(device->shader_backend == &arb_program_shader_backend) {
-            /* Exit now, don't set the bumpmat below, otherwise we may overwrite pixel shader constants */
-            return;
-        }
-    }
-    else if (device->shader_backend == &arb_program_shader_backend)
+    if (device->shader_backend == &arb_program_shader_backend)
     {
         struct shader_arb_priv *priv = device->shader_priv;
+
+        /* Exit now, don't set the bumpmat below, otherwise we may overwrite pixel shader constants. */
+        if (use_ps(state))
+            return;
+
         priv->pshader_const_dirty[ARB_FFP_CONST_LUMINANCE(stage)] = 1;
         priv->highest_dirty_ps_const = max(priv->highest_dirty_ps_const, ARB_FFP_CONST_LUMINANCE(stage) + 1);
     }
@@ -6536,7 +6544,6 @@ static void fragment_prog_arbfp(struct wined3d_context *context, const struct wi
     }
 
     context->select_shader = 1;
-    context->load_constants = 1;
 }
 
 /* We can't link the fog states to the fragment state directly since the

@@ -2518,6 +2518,16 @@ struct wined3d_sampler * CDECL wined3d_device_get_vs_sampler(const struct wined3
     return device->stateBlock->state.vs_sampler[idx];
 }
 
+void device_invalidate_shader_constants(const struct wined3d_device *device, DWORD mask)
+{
+    UINT i;
+
+    for (i = 0; i < device->context_count; ++i)
+    {
+        device->contexts[i]->constant_update_mask |= mask;
+    }
+}
+
 HRESULT CDECL wined3d_device_set_vs_consts_b(struct wined3d_device *device,
         UINT start_register, const BOOL *constants, UINT bool_count)
 {
@@ -2538,7 +2548,7 @@ HRESULT CDECL wined3d_device_set_vs_consts_b(struct wined3d_device *device,
         device->updateStateBlock->changed.vertexShaderConstantsB |= (1 << i);
 
     if (!device->isRecordingState)
-        device_invalidate_state(device, STATE_VERTEXSHADERCONSTANT);
+        device_invalidate_shader_constants(device, WINED3D_SHADER_CONST_VS_B);
 
     return WINED3D_OK;
 }
@@ -2581,7 +2591,7 @@ HRESULT CDECL wined3d_device_set_vs_consts_i(struct wined3d_device *device,
         device->updateStateBlock->changed.vertexShaderConstantsI |= (1 << i);
 
     if (!device->isRecordingState)
-        device_invalidate_state(device, STATE_VERTEXSHADERCONSTANT);
+        device_invalidate_shader_constants(device, WINED3D_SHADER_CONST_VS_I);
 
     return WINED3D_OK;
 }
@@ -2628,10 +2638,7 @@ HRESULT CDECL wined3d_device_set_vs_consts_f(struct wined3d_device *device,
     }
 
     if (!device->isRecordingState)
-    {
         device->shader_backend->shader_update_float_vertex_constants(device, start_register, vector4f_count);
-        device_invalidate_state(device, STATE_VERTEXSHADERCONSTANT);
-    }
 
     memset(device->updateStateBlock->changed.vertexShaderConstantsF + start_register, 1,
             sizeof(*device->updateStateBlock->changed.vertexShaderConstantsF) * vector4f_count);
@@ -3009,7 +3016,7 @@ HRESULT CDECL wined3d_device_set_ps_consts_b(struct wined3d_device *device,
         device->updateStateBlock->changed.pixelShaderConstantsB |= (1 << i);
 
     if (!device->isRecordingState)
-        device_invalidate_state(device, STATE_PIXELSHADERCONSTANT);
+        device_invalidate_shader_constants(device, WINED3D_SHADER_CONST_PS_B);
 
     return WINED3D_OK;
 }
@@ -3052,7 +3059,7 @@ HRESULT CDECL wined3d_device_set_ps_consts_i(struct wined3d_device *device,
         device->updateStateBlock->changed.pixelShaderConstantsI |= (1 << i);
 
     if (!device->isRecordingState)
-        device_invalidate_state(device, STATE_PIXELSHADERCONSTANT);
+        device_invalidate_shader_constants(device, WINED3D_SHADER_CONST_PS_I);
 
     return WINED3D_OK;
 }
@@ -3100,10 +3107,7 @@ HRESULT CDECL wined3d_device_set_ps_consts_f(struct wined3d_device *device,
     }
 
     if (!device->isRecordingState)
-    {
         device->shader_backend->shader_update_float_pixel_constants(device, start_register, vector4f_count);
-        device_invalidate_state(device, STATE_PIXELSHADERCONSTANT);
-    }
 
     memset(device->updateStateBlock->changed.pixelShaderConstantsF + start_register, 1,
             sizeof(*device->updateStateBlock->changed.pixelShaderConstantsF) * vector4f_count);

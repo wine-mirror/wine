@@ -283,6 +283,17 @@ enum wined3d_sampler_texture_type
     WINED3DSTT_VOLUME = 4,
 };
 
+#define WINED3D_SHADER_CONST_VS_F           0x00000001
+#define WINED3D_SHADER_CONST_VS_I           0x00000002
+#define WINED3D_SHADER_CONST_VS_B           0x00000004
+#define WINED3D_SHADER_CONST_VS_POS_FIXUP   0x00000008
+#define WINED3D_SHADER_CONST_PS_F           0x00000010
+#define WINED3D_SHADER_CONST_PS_I           0x00000020
+#define WINED3D_SHADER_CONST_PS_B           0x00000040
+#define WINED3D_SHADER_CONST_PS_BUMP_ENV    0x00000080
+#define WINED3D_SHADER_CONST_PS_Y_CORR      0x00000100
+#define WINED3D_SHADER_CONST_FFP_PS         0x00000200
+
 enum wined3d_shader_register_type
 {
     WINED3DSPR_TEMP = 0,
@@ -796,7 +807,7 @@ struct wined3d_vertex_pipe_ops;
 struct wined3d_shader_backend_ops
 {
     void (*shader_handle_instruction)(const struct wined3d_shader_instruction *);
-    void (*shader_select)(void *shader_priv, const struct wined3d_context *context,
+    void (*shader_select)(void *shader_priv, struct wined3d_context *context,
             const struct wined3d_state *state);
     void (*shader_disable)(void *shader_priv, const struct wined3d_context *context);
     void (*shader_select_depth_blt)(void *shader_priv, const struct wined3d_gl_info *gl_info,
@@ -804,7 +815,7 @@ struct wined3d_shader_backend_ops
     void (*shader_deselect_depth_blt)(void *shader_priv, const struct wined3d_gl_info *gl_info);
     void (*shader_update_float_vertex_constants)(struct wined3d_device *device, UINT start, UINT count);
     void (*shader_update_float_pixel_constants)(struct wined3d_device *device, UINT start, UINT count);
-    void (*shader_load_constants)(void *shader_priv, const struct wined3d_context *context,
+    void (*shader_load_constants)(void *shader_priv, struct wined3d_context *context,
             const struct wined3d_state *state);
     void (*shader_load_np2fixup_constants)(void *shader_priv, const struct wined3d_gl_info *gl_info,
             const struct wined3d_state *state);
@@ -982,12 +993,7 @@ extern glMultiTexCoordFunc multi_texcoord_funcs[WINED3D_FFP_EMIT_COUNT] DECLSPEC
 #define STATE_VIEWPORT (STATE_GEOMETRY_SHADER + 1)
 #define STATE_IS_VIEWPORT(a) ((a) == STATE_VIEWPORT)
 
-#define STATE_VERTEXSHADERCONSTANT (STATE_VIEWPORT + 1)
-#define STATE_PIXELSHADERCONSTANT (STATE_VERTEXSHADERCONSTANT + 1)
-#define STATE_IS_VERTEXSHADERCONSTANT(a) ((a) == STATE_VERTEXSHADERCONSTANT)
-#define STATE_IS_PIXELSHADERCONSTANT(a) ((a) == STATE_PIXELSHADERCONSTANT)
-
-#define STATE_LIGHT_TYPE (STATE_PIXELSHADERCONSTANT + 1)
+#define STATE_LIGHT_TYPE (STATE_VIEWPORT + 1)
 #define STATE_IS_LIGHT_TYPE(a) ((a) == STATE_LIGHT_TYPE)
 #define STATE_ACTIVELIGHT(a) (STATE_LIGHT_TYPE + 1 + (a))
 #define STATE_IS_ACTIVELIGHT(a) ((a) >= STATE_ACTIVELIGHT(0) && (a) < STATE_ACTIVELIGHT(MAX_ACTIVE_LIGHTS))
@@ -1096,10 +1102,9 @@ struct wined3d_context
     DWORD destroyed : 1;
     DWORD valid : 1;
     DWORD select_shader : 1;
-    DWORD load_constants : 1;
-    DWORD padding : 15;
-    BYTE texShaderBumpMap;              /* MAX_TEXTURES, 8 */
-    BYTE lastWasPow2Texture;            /* MAX_TEXTURES, 8 */
+    DWORD texShaderBumpMap : 8;         /* MAX_TEXTURES, 8 */
+    DWORD lastWasPow2Texture : 8;       /* MAX_TEXTURES, 8 */
+    DWORD constant_update_mask;
     DWORD                   numbered_array_mask;
     GLenum                  tracking_parm;     /* Which source is tracking current colour         */
     GLenum                  untracked_materials[2];

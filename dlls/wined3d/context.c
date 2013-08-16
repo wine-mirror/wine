@@ -1909,7 +1909,6 @@ static void SetupForBlit(const struct wined3d_device *device, struct wined3d_con
     /* Disable shaders */
     device->shader_backend->shader_disable(device->shader_priv, context);
     context->select_shader = 1;
-    context->load_constants = 1;
 
     context->blit_w = rt_size.cx;
     context->blit_h = rt_size.cy;
@@ -2393,11 +2392,10 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
         context->select_shader = 0;
     }
 
-    if (context->load_constants)
+    if (context->constant_update_mask)
     {
-        device->shader_backend->shader_load_constants(device->shader_priv,
-                context, state);
-        context->load_constants = 0;
+        device->shader_backend->shader_load_constants(device->shader_priv, context, state);
+        context->constant_update_mask = 0;
     }
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)

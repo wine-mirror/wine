@@ -1509,7 +1509,7 @@ static void shader_none_select_depth_blt(void *shader_priv, const struct wined3d
 static void shader_none_deselect_depth_blt(void *shader_priv, const struct wined3d_gl_info *gl_info) {}
 static void shader_none_update_float_vertex_constants(struct wined3d_device *device, UINT start, UINT count) {}
 static void shader_none_update_float_pixel_constants(struct wined3d_device *device, UINT start, UINT count) {}
-static void shader_none_load_constants(void *shader_priv, const struct wined3d_context *context,
+static void shader_none_load_constants(void *shader_priv, struct wined3d_context *context,
         const struct wined3d_state *state) {}
 static void shader_none_load_np2fixup_constants(void *shader_priv,
         const struct wined3d_gl_info *gl_info, const struct wined3d_state *state) {}
@@ -1517,7 +1517,7 @@ static void shader_none_destroy(struct wined3d_shader *shader) {}
 static void shader_none_context_destroyed(void *shader_priv, const struct wined3d_context *context) {}
 
 /* Context activation is done by the caller. */
-static void shader_none_select(void *shader_priv, const struct wined3d_context *context,
+static void shader_none_select(void *shader_priv, struct wined3d_context *context,
         const struct wined3d_state *state)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
