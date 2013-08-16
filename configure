@@ -16449,6 +16449,7 @@ wine_fn_config_dll vtdapi.vxd enable_win16
 wine_fn_config_dll vwin32.vxd enable_win16
 wine_fn_config_dll w32skrnl enable_win16
 wine_fn_config_dll w32sys.dll16 enable_win16
+wine_fn_config_dll wbemdisp enable_wbemdisp
 wine_fn_config_dll wbemprox enable_wbemprox
 wine_fn_config_test dlls/wbemprox/tests wbemprox_test
 wine_fn_config_dll webservices enable_webservices implib
