@@ -9689,8 +9689,13 @@ static HRESULT WINAPI ICreateTypeLib2_fnSaveAllChanges(ICreateTypeLib2 *iface)
     HANDLE outfile;
     HRESULT hres;
     DWORD *junk;
+    UINT i;
 
     TRACE("%p\n", This);
+
+    for(i = 0; i < This->TypeInfoCount; ++i)
+        if(This->typeinfos[i]->needs_layout)
+            ICreateTypeInfo2_LayOut(&This->typeinfos[i]->ICreateTypeInfo2_iface);
 
     memset(&file, 0, sizeof(file));
 
