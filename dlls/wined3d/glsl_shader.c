@@ -908,16 +908,26 @@ static void shader_glsl_load_constants(void *shader_priv, const struct wined3d_c
 
         for (i = 0; i < MAX_TEXTURES; ++i)
         {
+            if (prog->ps.bumpenv_mat_location[i] == -1)
+                continue;
+
             GL_EXTCALL(glUniformMatrix2fvARB(prog->ps.bumpenv_mat_location[i], 1, 0,
-                        (const float *)&state->texture_states[i][WINED3D_TSS_BUMPENV_MAT00]));
-            GL_EXTCALL(glUniform1fARB(prog->ps.bumpenv_lum_scale_location[i],
-                        *(const float *)&state->texture_states[i][WINED3D_TSS_BUMPENV_LSCALE]));
-            GL_EXTCALL(glUniform1fARB(prog->ps.bumpenv_lum_offset_location[i],
-                        *(const float *)&state->texture_states[i][WINED3D_TSS_BUMPENV_LOFFSET]));
+                    (const float *)&state->texture_states[i][WINED3D_TSS_BUMPENV_MAT00]));
+
+            if (prog->ps.bumpenv_lum_scale_location[i] != -1)
+            {
+                GL_EXTCALL(glUniform1fvARB(prog->ps.bumpenv_lum_scale_location[i], 1,
+                        (const float *)&state->texture_states[i][WINED3D_TSS_BUMPENV_LSCALE]));
+                GL_EXTCALL(glUniform1fvARB(prog->ps.bumpenv_lum_offset_location[i], 1,
+                        (const float *)&state->texture_states[i][WINED3D_TSS_BUMPENV_LOFFSET]));
+            }
         }
 
-        D3DCOLORTOGLFLOAT4(state->render_states[WINED3D_RS_TEXTUREFACTOR], col);
-        GL_EXTCALL(glUniform4fARB(prog->ps.tex_factor_location, col[0], col[1], col[2], col[3]));
+        if (prog->ps.tex_factor_location != -1)
+        {
+            D3DCOLORTOGLFLOAT4(state->render_states[WINED3D_RS_TEXTUREFACTOR], col);
+            GL_EXTCALL(glUniform4fvARB(prog->ps.tex_factor_location, 1, col));
+        }
 
         if (state->render_states[WINED3D_RS_SPECULARENABLE])
             GL_EXTCALL(glUniform4fARB(prog->ps.specular_enable_location, 1.0f, 1.0f, 1.0f, 0.0f));
