@@ -280,14 +280,6 @@ static HRESULT ShellLink_QueryInterface( IShellLinkImpl *This, REFIID riid,  LPV
     return E_NOINTERFACE;
 }
 
-static HRESULT ShellLink_GetClassID( IShellLinkImpl *This, CLSID *pclsid )
-{
-    TRACE("%p %p\n", This, pclsid);
-
-    *pclsid = CLSID_ShellLink;
-    return S_OK;
-}
-
 /**************************************************************************
  *  IPersistFile_QueryInterface
  */
@@ -321,7 +313,12 @@ static ULONG WINAPI IPersistFile_fnRelease(IPersistFile* iface)
 static HRESULT WINAPI IPersistFile_fnGetClassID(IPersistFile* iface, CLSID *pClassID)
 {
     IShellLinkImpl *This = impl_from_IPersistFile(iface);
-    return ShellLink_GetClassID( This, pClassID );
+
+    TRACE("(%p)->(%p)\n", This, pClassID);
+
+    *pClassID = CLSID_ShellLink;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IPersistFile_fnIsDirty(IPersistFile* iface)
@@ -545,7 +542,7 @@ static HRESULT WINAPI IPersistStream_fnGetClassID(
 	CLSID* pClassID)
 {
     IShellLinkImpl *This = impl_from_IPersistStream(iface);
-    return ShellLink_GetClassID( This, pClassID );
+    return IPersistFile_GetClassID(&This->IPersistFile_iface, pClassID);
 }
 
 /************************************************************************
