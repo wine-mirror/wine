@@ -1476,7 +1476,7 @@ static void test_Device(void)
     HRESULT hr;
     IDirect3DRM *d3drm;
     IDirect3DRMDevice *device;
-    LPDIRECT3DRMWINDEVICE pWinDevice;
+    IDirect3DRMWinDevice *win_device;
     GUID driver;
     HWND window;
     RECT rc;
@@ -1513,27 +1513,26 @@ static void test_Device(void)
     ok(!strcmp(cname, "Device"), "Expected cname to be \"Device\", but got \"%s\"\n", cname);
 
     /* WinDevice */
-    hr = IDirect3DRMDevice_QueryInterface(device, &IID_IDirect3DRMWinDevice, (LPVOID*)&pWinDevice);
-    if (FAILED(hr))
+    if (FAILED(hr = IDirect3DRMDevice_QueryInterface(device, &IID_IDirect3DRMWinDevice, (void **)&win_device)))
     {
         win_skip("Cannot get IDirect3DRMWinDevice interface (hr = %x), skipping tests\n", hr);
         goto cleanup;
     }
 
-    hr = IDirect3DRMWinDevice_GetClassName(pWinDevice, NULL, cname);
+    hr = IDirect3DRMWinDevice_GetClassName(win_device, NULL, cname);
     ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    hr = IDirect3DRMWinDevice_GetClassName(pWinDevice, NULL, NULL);
+    hr = IDirect3DRMWinDevice_GetClassName(win_device, NULL, NULL);
     ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
     size = 1;
-    hr = IDirect3DRMWinDevice_GetClassName(pWinDevice, &size, cname);
+    hr = IDirect3DRMWinDevice_GetClassName(win_device, &size, cname);
     ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
     size = sizeof(cname);
-    hr = IDirect3DRMWinDevice_GetClassName(pWinDevice, &size, cname);
+    hr = IDirect3DRMWinDevice_GetClassName(win_device, &size, cname);
     ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
     ok(size == sizeof("Device"), "wrong size: %u\n", size);
     ok(!strcmp(cname, "Device"), "Expected cname to be \"Device\", but got \"%s\"\n", cname);
 
-    IDirect3DRMWinDevice_Release(pWinDevice);
+    IDirect3DRMWinDevice_Release(win_device);
 
 cleanup:
     IDirect3DRMDevice_Release(device);
