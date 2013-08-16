@@ -1295,8 +1295,8 @@ static HRESULT ShellLink_UpdatePath(LPCWSTR sPathRel, LPCWSTR path, LPCWSTR sWor
 /**************************************************************************
  *	  IShellLink_ConstructFromFile
  */
-HRESULT WINAPI IShellLink_ConstructFromFile( IUnknown* pUnkOuter, REFIID riid,
-               LPCITEMIDLIST pidl, LPVOID* ppv)
+HRESULT IShellLink_ConstructFromFile( IUnknown* pUnkOuter, REFIID riid,
+               LPCITEMIDLIST pidl, IUnknown **ppv)
 {
     IShellLinkW* psl;
 
@@ -1318,7 +1318,7 @@ HRESULT WINAPI IShellLink_ConstructFromFile( IUnknown* pUnkOuter, REFIID riid,
                 hr = E_FAIL;
 
 	    if (SUCCEEDED(hr))
-                *ppv = psl;
+                *ppv = (IUnknown*)psl;
 
 	    IPersistFile_Release(ppf);
 	}

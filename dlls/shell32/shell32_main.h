@@ -86,7 +86,6 @@ HRESULT WINAPI IFSFolder_Constructor(IUnknown * pUnkOuter, REFIID riid, LPVOID *
 HRESULT WINAPI IShellDispatch_Constructor(IUnknown * pUnkOuter, REFIID riid, LPVOID * ppv) DECLSPEC_HIDDEN;
 HRESULT WINAPI IShellItem_Constructor(IUnknown * pUnkOuter, REFIID riid, LPVOID * ppv) DECLSPEC_HIDDEN;
 HRESULT WINAPI IShellLink_Constructor(IUnknown * pUnkOuter, REFIID riid, LPVOID * ppv) DECLSPEC_HIDDEN;
-HRESULT WINAPI IShellLink_ConstructFromFile(IUnknown * pUnkOuter, REFIID riid, LPCITEMIDLIST pidl, LPVOID * ppv) DECLSPEC_HIDDEN;
 HRESULT WINAPI ISF_Desktop_Constructor(IUnknown * pUnkOuter, REFIID riid, LPVOID * ppv) DECLSPEC_HIDDEN;
 HRESULT WINAPI ISF_MyComputer_Constructor(IUnknown * pUnkOuter, REFIID riid, LPVOID * ppv) DECLSPEC_HIDDEN;
 HRESULT WINAPI ISF_NetworkPlaces_Constructor(IUnknown * pUnkOuter, REFIID riid, LPVOID * ppv) DECLSPEC_HIDDEN;
@@ -109,6 +108,7 @@ HRESULT WINAPI CPanel_ExtractIconW(LPITEMIDLIST pidl, LPCWSTR pszFile, UINT nIco
 HRESULT WINAPI IAutoComplete_Constructor(IUnknown * pUnkOuter, REFIID riid, LPVOID * ppv) DECLSPEC_HIDDEN;
 HRESULT WINAPI ApplicationAssociationRegistration_Constructor(IUnknown *outer, REFIID riid, LPVOID *ppv) DECLSPEC_HIDDEN;
 
+HRESULT IShellLink_ConstructFromFile(IUnknown * pUnkOuter, REFIID riid, LPCITEMIDLIST pidl, IUnknown **ppv) DECLSPEC_HIDDEN;
 
 LPEXTRACTICONA	IExtractIconA_Constructor(LPCITEMIDLIST) DECLSPEC_HIDDEN;
 LPEXTRACTICONW	IExtractIconW_Constructor(LPCITEMIDLIST) DECLSPEC_HIDDEN;

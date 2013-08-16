@@ -562,7 +562,7 @@ static HRESULT WINAPI ISF_Desktop_fnGetUIObjectOf (IShellFolder2 * iface,
               IsEqualIID(riid,&IID_IShellLinkA)) && (cidl == 1))
     {
         pidl = ILCombine (This->pidlRoot, apidl[0]);
-        hr = IShellLink_ConstructFromFile(NULL, riid, pidl, (LPVOID*)&pObj);
+        hr = IShellLink_ConstructFromFile(NULL, riid, pidl, &pObj);
         SHFree (pidl);
     }
     else
