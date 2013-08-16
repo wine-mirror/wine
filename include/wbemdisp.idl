@@ -18,17 +18,55 @@
 
 import "dispex.idl";
 
+[
+    uuid(565783c6-cb41-11d1-8b02-00600806d9b6),
+    helpstring("Microsoft WMI Scripting V1.2 Library"),
+    lcid(0x0000),
+    version(1.2)
+]
+library WbemScripting
+{
+
+importlib("stdole2.tlb");
+
 interface ISWbemEventSource;
 interface ISWbemLocator;
+interface ISWbemMethod;
 interface ISWbemMethodSet;
+interface ISWbemNamedValue;
+interface ISWbemNamedValueSet;
 interface ISWbemObject;
 interface ISWbemObjectPath;
 interface ISWbemObjectSet;
+interface ISWbemPrivilege;
 interface ISWbemPrivilegeSet;
+interface ISWbemProperty;
 interface ISWbemPropertySet;
+interface ISWbemQualifier;
 interface ISWbemQualifierSet;
 interface ISWbemSecurity;
 interface ISWbemServices;
+
+[
+    object,
+    local,
+    uuid(27d54d92-0ebe-11d2-8b22-00600806d9b6),
+    dual,
+    hidden,
+    oleautomation,
+    nonextensible
+]
+interface ISWbemEventSource : IDispatch
+{
+    [ id(1) ]
+    HRESULT NextEvent(
+        [in] long iTimeoutMs,
+        [out, retval] ISWbemObject **objWbemObject);
+
+    [ id(2), propget ]
+    HRESULT Security_(
+        [out, retval] ISWbemSecurity **objWbemSecurity);
+};
 
 [
     object,
@@ -56,6 +94,132 @@ interface ISWbemLocator : IDispatch
     [ id(2), propget ]
     HRESULT Security_(
         ISWbemSecurity **objWbemSecurity);
+};
+
+[
+    object,
+    local,
+    uuid(422e8e90-d955-11d1-8b09-00600806d9b6),
+    dual,
+    hidden,
+    oleautomation,
+    pointer_default(unique),
+    nonextensible
+]
+interface ISWbemMethod : IDispatch
+{
+    [ id(1), propget ]
+    HRESULT Name(
+        [out, retval] BSTR *strName);
+
+    [ id(2), propget ]
+    HRESULT Origin(
+        [out, retval] BSTR *strOrigin);
+
+    [ id(3), propget ]
+    HRESULT InParameters(
+        [out, retval] ISWbemObject **objWbemInParameters);
+
+    [ id(4), propget ]
+    HRESULT OutParameters(
+        [out, retval] ISWbemObject **objWbemOutParameters);
+
+    [ id(5), propget ]
+    HRESULT Qualifiers_(
+        [out, retval] ISWbemQualifierSet **objWbemQualifierSet);
+};
+
+[
+    object,
+    local,
+    uuid(c93ba292-d955-11d1-8b09-00600806d9b6),
+    dual,
+    hidden,
+    oleautomation,
+    nonextensible
+]
+interface ISWbemMethodSet : IDispatch
+{
+    [ id(DISPID_NEWENUM), propget, restricted ]
+    HRESULT _NewEnum(
+        [out, retval] IUnknown **pUnk);
+
+    [ id(DISPID_VALUE) ]
+    HRESULT Item(
+        [in] BSTR strName,
+        [in] long iFlags,
+        [out, retval] ISWbemMethod **objWbemMethod);
+
+    [ id(1), propget ]
+    HRESULT Count(
+        [out, retval] long *iCount);
+};
+
+[
+    object,
+    local,
+    uuid(76a64164-cb41-11d1-8b02-00600806d9b6),
+    dual,
+    hidden,
+    oleautomation
+]
+interface ISWbemNamedValue : IDispatch
+{
+    [ id(DISPID_VALUE), propget ]
+    HRESULT Value(
+        [out, retval] VARIANT *varValue);
+
+    [ id(DISPID_VALUE), propput ]
+    HRESULT Value(
+        [in] VARIANT *varValue);
+
+    [ id(2), propget ]
+    HRESULT Name(
+        [out, retval] BSTR *strName);
+};
+
+[
+    object,
+    local,
+    uuid(cf2376ea-ce8c-11d1-8b05-00600806d9b6),
+    dual,
+    hidden,
+    oleautomation
+]
+interface ISWbemNamedValueSet : IDispatch
+{
+    [ id(DISPID_NEWENUM), propget, restricted ]
+    HRESULT _NewEnum(
+        [out, retval] IUnknown **pUnk);
+
+    [ id(DISPID_VALUE) ]
+    HRESULT Item(
+        [in] BSTR strName,
+        [in] long iFlags,
+        [out, retval] ISWbemNamedValue **objWbemNamedValue);
+
+    [ id(1), propget ]
+    HRESULT Count(
+        [out, retval] long *iCount);
+
+    [ id(2) ]
+    HRESULT Add(
+        [in] BSTR strName,
+        [in] VARIANT *varValue,
+        [in] long iFlags,
+        [out, retval] ISWbemNamedValue **objWbemNamedValue);
+
+    [ id(3) ]
+    HRESULT Remove(
+        [in] BSTR strName,
+        [in] long iFlags);
+
+    [ id(4) ]
+    HRESULT Clone(
+        [out, retval] ISWbemNamedValueSet **objWbemNamedValueSet);
+
+    [ id(5) ]
+    HRESULT DeleteAll();
 };
 
 [
@@ -236,6 +400,460 @@ interface ISWbemObject : IDispatch
     [ id(25), propget ]
     HRESULT Security_(
         [out, retval] ISWbemSecurity **objWbemSecurity);
+};
+
+[
+    object,
+    local,
+    uuid(5791bc27-ce9c-11d1-97bf-0000f81e849c),
+    dual,
+    hidden,
+    oleautomation,
+    pointer_default(unique)
+]
+interface ISWbemObjectPath : IDispatch
+{
+    [ id(DISPID_VALUE), propget ]
+    HRESULT Path(
+        [out, retval] BSTR *strPath);
+
+    [ id(DISPID_VALUE), propput ]
+    HRESULT Path(
+        [in] BSTR strPath);
+
+    [ id(1), propget ]
+    HRESULT RelPath(
+        [out, retval] BSTR *strRelPath);
+
+    [ id(1), propput ]
+    HRESULT RelPath(
+        [in] BSTR strRelPath);
+
+    [ id(2), propget ]
+    HRESULT Server(
+        [out, retval] BSTR *strServer);
+
+    [ id(2), propput ]
+    HRESULT Server(
+        [in] BSTR strServer);
+
+    [ id(3), propget ]
+    HRESULT Namespace(
+        [out, retval] BSTR *strNamespace);
+
+    [ id(3), propput ]
+    HRESULT Namespace(
+        [in] BSTR strNamespace);
+
+    [ id(4), propget ]
+    HRESULT ParentNamespace(
+        [out, retval] BSTR *strParentNamespace);
+
+    [ id(5), propget ]
+    HRESULT DisplayName(
+        [out, retval] BSTR *strDisplayName);
+
+    [ id(5), propput ]
+    HRESULT DisplayName(
+        [in] BSTR strDisplayName);
+
+    [ id(6), propget ]
+    HRESULT Class(
+        [out, retval] BSTR *strClass);
+
+    [ id(6), propput ]
+    HRESULT Class(
+        [in] BSTR strClass);
+
+    [ id(7), propget ]
+    HRESULT IsClass(
+        [out, retval] VARIANT_BOOL *bIsClass);
+
+    [ id(8) ]
+    HRESULT SetAsClass();
+
+    [ id(9), propget ]
+    HRESULT IsSingleton(
+        [out, retval] VARIANT_BOOL *bIsSingleton);
+
+    [ id(10) ]
+    HRESULT SetAsSingleton();
+
+    [ id(11), propget ]
+    HRESULT Keys(
+        [out, retval] ISWbemNamedValueSet **objWbemNamedValueSet);
+
+    [ id(12), propget ]
+    HRESULT Security_(
+        [out, retval] ISWbemSecurity **objWbemSecurity);
+
+    [ id(13), propget ]
+    HRESULT Locale(
+        [out, retval] BSTR *strLocale);
+
+    [ id(13), propput ]
+    HRESULT Locale(
+        [in] BSTR strLocale);
+
+    [ id(14), propget ]
+    HRESULT Authority(
+        [out, retval] BSTR *strAuthority);
+
+    [ id(14), propput ]
+    HRESULT Authority(
+        [in] BSTR strAuthority);
+};
+
+[
+    object,
+    local,
+    uuid(76a6415f-cb41-11d1-8b02-00600806d9b6),
+    dual,
+    hidden,
+    oleautomation,
+    nonextensible
+]
+interface ISWbemObjectSet : IDispatch
+{
+    [ id(DISPID_NEWENUM), propget, restricted ]
+    HRESULT _NewEnum(
+        [out, retval] IUnknown **pUnk);
+
+    [ id(DISPID_VALUE) ]
+    HRESULT Item(
+        [in] BSTR strObjectPath,
+        [in] long iFlags,
+        [out, retval] ISWbemObject **objWbemObject);
+
+    [ id(1), propget ]
+    HRESULT Count(
+        [out, retval] long *iCount);
+
+    [ id(4), propget ]
+    HRESULT Security_(
+        [out, retval] ISWbemSecurity **objWbemSecurity);
+
+    [ id(5) ]
+    HRESULT ItemIndex(
+        [in] long lIndex,
+        [out, retval] ISWbemObject **objWbemObject);
+};
+
+typedef
+[
+    v1_enum,
+    uuid(176d2f70-5af3-11d2-8b4a-00600806d9b6)
+]
+enum WbemPrivilegeEnum
+{
+    wbemPrivilegeCreateToken          = 1,
+    wbemPrivilegePrimaryToken         = 2,
+    wbemPrivilegeLockMemory           = 3,
+    wbemPrivilegeIncreaseQuota        = 4,
+    wbemPrivilegeMachineAccount       = 5,
+    wbemPrivilegeTcb                  = 6,
+    wbemPrivilegeSecurity             = 7,
+    wbemPrivilegeTakeOwnership        = 8,
+    wbemPrivilegeLoadDriver           = 9,
+    wbemPrivilegeSystemProfile        = 10,
+    wbemPrivilegeSystemtime           = 11,
+    wbemPrivilegeProfileSingleProcess = 12,
+    wbemPrivilegeIncreaseBasePriority = 13,
+    wbemPrivilegeCreatePagefile       = 14,
+    wbemPrivilegeCreatePermanent      = 15,
+    wbemPrivilegeBackup               = 16,
+    wbemPrivilegeRestore              = 17,
+    wbemPrivilegeShutdown             = 18,
+    wbemPrivilegeDebug                = 19,
+    wbemPrivilegeAudit                = 20,
+    wbemPrivilegeSystemEnvironment    = 21,
+    wbemPrivilegeChangeNotify         = 22,
+    wbemPrivilegeRemoteShutdown       = 23,
+    wbemPrivilegeUndock               = 24,
+    wbemPrivilegeSyncAgent            = 25,
+    wbemPrivilegeEnableDelegation     = 26,
+    wbemPrivilegeManageVolume         = 27
+} WbemPrivilegeEnum;
+
+[
+    object,
+    local,
+    uuid(26ee67bd-5804-11d2-8b4a-00600806d9b6),
+    dual,
+    hidden,
+    oleautomation,
+    nonextensible
+]
+interface ISWbemPrivilege : IDispatch
+{
+    [ id(DISPID_VALUE), propget ]
+    HRESULT IsEnabled(
+        [out, retval] VARIANT_BOOL *bIsEnabled);
+
+    [ id(DISPID_VALUE), propput ]
+    HRESULT IsEnabled(
+        [in] VARIANT_BOOL bIsEnabled);
+
+    [ id(1), propget ]
+    HRESULT Name(
+        [out, retval] BSTR *strDisplayName);
+
+    [ id(2), propget ]
+    HRESULT DisplayName(
+        [out, retval] BSTR *strDisplayName);
+
+    [ id(3), propget ]
+    HRESULT Identifier(
+        [out, retval] WbemPrivilegeEnum *iPrivilege);
+};
+
+[
+    object,
+    local,
+    uuid(26ee67bf-5804-11d2-8b4a-00600806d9b6),
+    dual,
+    hidden,
+    oleautomation,
+    nonextensible
+]
+interface ISWbemPrivilegeSet : IDispatch
+{
+    [ id(DISPID_NEWENUM), propget, restricted ]
+    HRESULT _NewEnum(
+        [out, retval] IUnknown **pUnk);
+
+    [ id(DISPID_VALUE) ]
+    HRESULT Item(
+        [in] WbemPrivilegeEnum iPrivilege,
+        [out, retval] ISWbemPrivilege **objWbemPrivilege);
+
+    [ id(1), propget ]
+    HRESULT Count(
+        [out, retval] long *iCount);
+
+    [ id(2) ]
+    HRESULT Add(
+        [in] WbemPrivilegeEnum iPrivilege,
+        [in] VARIANT_BOOL bIsEnabled,
+        [out, retval] ISWbemPrivilege **objWbemPrivilege);
+
+    [ id(3) ]
+    HRESULT Remove(
+        [in] WbemPrivilegeEnum iPrivilege);
+
+    [ id(4) ]
+    HRESULT DeleteAll();
+
+    [ id(5) ]
+    HRESULT AddAsString(
+        [in] BSTR strPrivilege,
+        [in] VARIANT_BOOL bIsEnabled,
+        [out, retval] ISWbemPrivilege **objWbemPrivilege);
+};
+
+typedef
+[
+    v1_enum,
+    uuid(4a249b7b-fc9a-11d1-8b1e-00600806d9b6),
+]
+enum WbemCimtypeEnum
+{
+    wbemCimtypeSint16    = 2,
+    wbemCimtypeSint32    = 3,
+    wbemCimtypeReal32    = 4,
+    wbemCimtypeReal64    = 5,
+    wbemCimtypeString    = 8,
+    wbemCimtypeBoolean   = 11,
+    wbemCimtypeObject    = 13,
+    wbemCimtypeSint8     = 16,
+    wbemCimtypeUint8     = 17,
+    wbemCimtypeUint16    = 18,
+    wbemCimtypeUint32    = 19,
+    wbemCimtypeSint64    = 20,
+    wbemCimtypeUint64    = 21,
+    wbemCimtypeDatetime  = 101,
+    wbemCimtypeReference = 102,
+    wbemCimtypeChar16    = 103
+} WbemCimtypeEnum;
+
+[
+    object,
+    local,
+    uuid(1a388f98-d4ba-11d1-8b09-00600806d9b6),
+    dual,
+    hidden,
+    oleautomation,
+    pointer_default(unique)
+]
+interface ISWbemProperty : IDispatch
+{
+    [ id(DISPID_VALUE), propget ]
+    HRESULT Value(
+        [out, retval] VARIANT *varValue);
+
+    [ id(DISPID_VALUE), propput ]
+    HRESULT Value(
+        [in] VARIANT *varValue);
+
+    [ id(1), propget ]
+    HRESULT Name(
+        [out, retval] BSTR *strName);
+
+    [ id(2), propget ]
+    HRESULT IsLocal(
+        [out, retval] VARIANT_BOOL *bIsLocal);
+
+    [ id(3), propget ]
+    HRESULT Origin(
+        [out, retval] BSTR *strOrigin);
+
+    [ id(4), propget ]
+    HRESULT CIMType(
+        [out, retval] WbemCimtypeEnum *iCimType);
+
+    [ id(5), propget ]
+    HRESULT Qualifiers_(
+        [out, retval] ISWbemQualifierSet **objWbemQualifierSet);
+
+    [ id(6), propget ]
+    HRESULT IsArray(
+        [out, retval] VARIANT_BOOL *bIsArray);
+};
+
+[
+    object,
+    local,
+    uuid(dea0a7b2-d4ba-11d1-8b09-00600806d9b6),
+    dual,
+    hidden,
+    oleautomation
+]
+interface ISWbemPropertySet : IDispatch
+{
+    [ id(DISPID_NEWENUM), propget, restricted ]
+    HRESULT _NewEnum(
+        [out, retval] IUnknown **pUnk);
+
+    [ id(DISPID_VALUE) ]
+    HRESULT Item(
+        [in] BSTR strName,
+        [in] long iFlags,
+        [out, retval] ISWbemProperty **objWbemProperty);
+
+    [ id(1), propget ]
+    HRESULT Count(
+        [out, retval] long *iCount);
+
+    [ id(2) ]
+    HRESULT Add(
+        [in] BSTR strName,
+        [in] WbemCimtypeEnum iCIMType,
+        [in] VARIANT_BOOL bIsArray,
+        [in] long iFlags,
+        [out, retval] ISWbemProperty **objWbemProperty);
+
+    [ id(3) ]
+    HRESULT Remove(
+        [in] BSTR strName,
+        [in] long iFlags);
+};
+
+[
+    object,
+    local,
+    uuid(79b05932-d3b7-11d1-8b06-00600806d9b6),
+    dual,
+    hidden,
+    oleautomation,
+    nonextensible,
+    pointer_default(unique)
+]
+interface ISWbemQualifier : IDispatch
+{
+    [ id(DISPID_VALUE), propget ]
+    HRESULT Value(
+        [out, retval] VARIANT *varValue);
+
+    [ id(DISPID_VALUE), propput ]
+    HRESULT Value(
+        [in] VARIANT *varValue);
+
+    [ id(1), propget ]
+    HRESULT Name(
+        [out, retval] BSTR *strName);
+
+    [ id(2), propget ]
+    HRESULT IsLocal(
+        [out, retval] VARIANT_BOOL *bIsLocal);
+
+    [ id(3), propget ]
+    HRESULT PropagatesToSubclass(
+        [out, retval] VARIANT_BOOL *bPropagatesToSubclass);
+
+    [ id(3), propput ]
+    HRESULT PropagatesToSubclass(
+        [in] VARIANT_BOOL bPropagatesToSubclass);
+
+    [ id(4), propget ]
+    HRESULT PropagatesToInstance(
+        [out, retval] VARIANT_BOOL *bPropagatesToInstance);
+
+    [ id(4), propput ]
+    HRESULT PropagatesToInstance(
+        [in] VARIANT_BOOL bPropagatesToInstance);
+
+    [ id(5), propget ]
+    HRESULT IsOverridable(
+        [out, retval] VARIANT_BOOL *bIsOverridable);
+
+    [ id(5), propput ]
+    HRESULT IsOverridable(
+        [in] VARIANT_BOOL bIsOverridable);
+
+    [ id(6), propget ]
+    HRESULT IsAmended(
+        [out, retval] VARIANT_BOOL *bIsAmended);
+};
+
+[
+    object,
+    local,
+    uuid(9b16ed16-d3df-11d1-8b08-00600806d9b6),
+    dual,
+    hidden,
+    oleautomation,
+    nonextensible
+]
+interface ISWbemQualifierSet : IDispatch
+{
+    [ id(DISPID_NEWENUM), propget, restricted ]
+    HRESULT _NewEnum(
+        [out, retval] IUnknown **pUnk);
+
+    [ id(DISPID_VALUE) ]
+    HRESULT Item(
+        [in] BSTR name,
+        [in] long iFlags,
+        [out, retval] ISWbemQualifier **objWbemQualifier);
+
+    [ id(1), propget ]
+    HRESULT Count(
+        [out, retval] long *iCount);
+
+    [ id(2) ]
+    HRESULT Add(
+        [in] BSTR strName,
+        [in] VARIANT *varVal,
+        [in] VARIANT_BOOL bPropagatesToSubclass,
+        [in] VARIANT_BOOL bPropagatesToInstance,
+        [in] VARIANT_BOOL bIsOverridable,
+        [in] long iFlags,
+        [out, retval] ISWbemQualifier **objWbemQualifier);
+
+    [ id(3) ]
+    HRESULT Remove(
+        [in] BSTR strName,
+        [in] long iFlags);
 };
 
 typedef
@@ -482,3 +1100,13 @@ interface ISWbemServices : IDispatch
     HRESULT Security_(
         [out, retval] ISWbemSecurity **objWbemSecurity);
 };
+
+[
+    uuid(76a64158-cb41-11d1-8b02-00600806d9b6)
+]
+coclass SWbemLocator
+{
+    interface ISWbemLocator;
+};
+
+}; /* WbemScripting */

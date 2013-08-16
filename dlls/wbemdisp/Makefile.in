@@ -7,4 +7,6 @@ C_SRCS = \
 
 IDL_R_SRCS = wbemdisp_classes.idl
 
+IDL_TLB_SRCS = wbemdisp_tlb.idl
+
 @MAKE_DLL_RULES@
