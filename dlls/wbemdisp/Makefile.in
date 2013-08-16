@@ -1,6 +1,8 @@
 MODULE    = wbemdisp.dll
+IMPORTS   = oleaut32
 
 C_SRCS = \
+	locator.c \
 	main.c
 
 IDL_R_SRCS = wbemdisp_classes.idl
