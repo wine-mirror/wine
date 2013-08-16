@@ -241,7 +241,7 @@ DECLARE_INTERFACE_(IDirect3DRM2,IUnknown)
             D3DRMLOADCALLBACK load_cb, void *load_ctx, D3DRMLOADTEXTURECALLBACK load_tex_cb, void *load_tex_ctx,
             IDirect3DRMFrame *parent_frame) PURE;
     STDMETHOD(Tick)(THIS_ D3DVALUE) PURE;
-    STDMETHOD(CreateProgressiveMesh)(THIS_ LPDIRECT3DRMPROGRESSIVEMESH *) PURE;
+    STDMETHOD(CreateProgressiveMesh)(THIS_ IDirect3DRMProgressiveMesh **mesh) PURE;
 };
 #undef INTERFACE
 
@@ -384,7 +384,7 @@ DECLARE_INTERFACE_(IDirect3DRM3,IUnknown)
             D3DRMLOADCALLBACK load_cb, void *load_ctx, D3DRMLOADTEXTURECALLBACK load_tex_cb, void *load_tex_ctx,
             IDirect3DRMFrame3 *parent_frame) PURE;
     STDMETHOD(Tick)(THIS_ D3DVALUE) PURE;
-    STDMETHOD(CreateProgressiveMesh)(THIS_ LPDIRECT3DRMPROGRESSIVEMESH) PURE;
+    STDMETHOD(CreateProgressiveMesh)(THIS_ IDirect3DRMProgressiveMesh **mesh) PURE;
     STDMETHOD(RegisterClient)(THIS_ REFGUID rguid, LPDWORD lpdwID) PURE;
     STDMETHOD(UnregisterClient)(THIS_ REFGUID rguid) PURE;
     STDMETHOD(CreateClippedVisual)(THIS_ IDirect3DRMVisual *visual, IDirect3DRMClippedVisual **clipped_visual) PURE;

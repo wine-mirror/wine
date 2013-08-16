@@ -2039,7 +2039,7 @@ DECLARE_INTERFACE_(IDirect3DRMProgressiveMesh,IDirect3DRMVisual)
     STDMETHOD(SetDetail) (THIS_ D3DVALUE d3dVal) PURE;
     STDMETHOD(RegisterEvents) (THIS_ HANDLE event, DWORD flags, DWORD reserved) PURE;
     STDMETHOD(CreateMesh) (THIS_ IDirect3DRMMesh **mesh) PURE;
-    STDMETHOD(Duplicate) (THIS_ LPDIRECT3DRMPROGRESSIVEMESH *ppD3DRMPMesh) PURE;
+    STDMETHOD(Duplicate) (THIS_ IDirect3DRMProgressiveMesh **mesh) PURE;
     STDMETHOD(GetBox) (THIS_ D3DRMBOX *box) PURE;
     STDMETHOD(SetQuality) (THIS_ D3DRMRENDERQUALITY quality) PURE;
     STDMETHOD(GetQuality) (THIS_ D3DRMRENDERQUALITY *quality) PURE;
