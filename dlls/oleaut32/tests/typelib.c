@@ -3813,7 +3813,7 @@ static void test_create_typelib_lcid(LCID lcid)
     HRESULT hr;
     ICreateTypeLib2 *tl;
     HANDLE file;
-    DWORD msft_header[5]; /* five is enough for now */
+    DWORD msft_header[7];
     DWORD read;
 
     GetTempFileNameA( ".", "tlb", 0, filename );
@@ -3823,6 +3823,9 @@ static void test_create_typelib_lcid(LCID lcid)
     ok(hr == S_OK, "got %08x\n", hr);
 
     hr = ICreateTypeLib2_SetLcid(tl, lcid);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeLib2_SetVersion(tl, 3, 4);
     ok(hr == S_OK, "got %08x\n", hr);
 
     hr = ICreateTypeLib2_SaveAllChanges(tl);
@@ -3842,6 +3845,7 @@ static void test_create_typelib_lcid(LCID lcid)
     ok(msft_header[2] == 0xffffffff, "got %08x\n", msft_header[2]);
     ok(msft_header[3] == (lcid ? lcid : 0x409), "got %08x (lcid %08x)\n", msft_header[3], lcid);
     ok(msft_header[4] == lcid, "got %08x (lcid %08x)\n", msft_header[4], lcid);
+    ok(msft_header[6] == 0x00040003, "got %08x\n", msft_header[6]);
 
     DeleteFileA(filename);
 }

@@ -9703,7 +9703,7 @@ static HRESULT WINAPI ICreateTypeLib2_fnSaveAllChanges(ICreateTypeLib2 *iface)
         file.header.varflags |= 0x10;
     if (This->HelpStringDll)
         file.header.varflags |= HELPDLLFLAG;
-    file.header.version = (This->ver_major << 16) | This->ver_minor;
+    file.header.version = (This->ver_minor << 16) | This->ver_major;
     file.header.flags = This->libflags;
     file.header.helpstringcontext = 0; /* TODO - SetHelpStringContext not implemented yet */
     file.header.helpcontext = This->dwHelpContext;
