@@ -239,7 +239,7 @@ static HRESULT ShellLink_QueryInterface( IShellLinkImpl *This, REFIID riid,  LPV
 
     if(IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IShellLinkA))
     {
-        *ppvObj = This;
+        *ppvObj = &This->IShellLinkA_iface;
     }
     else if(IsEqualIID(riid, &IID_IShellLinkW))
     {
@@ -280,53 +280,6 @@ static HRESULT ShellLink_QueryInterface( IShellLinkImpl *This, REFIID riid,  LPV
     return E_NOINTERFACE;
 }
 
-/**************************************************************************
- *  ShellLink::AddRef implementation
- */
-static ULONG ShellLink_AddRef( IShellLinkImpl *This )
-{
-    ULONG refCount = InterlockedIncrement(&This->ref);
-
-    TRACE("(%p)->(count=%u)\n", This, refCount - 1);
-
-    return refCount;
-}
-
-/**************************************************************************
- *  ShellLink::Release implementation
- */
-static ULONG ShellLink_Release( IShellLinkImpl *This )
-{
-    ULONG refCount = InterlockedDecrement(&This->ref);
-
-    TRACE("(%p)->(count=%u)\n", This, refCount + 1);
-
-    if (refCount)
-        return refCount;
-
-    TRACE("-- destroying IShellLink(%p)\n",This);
-
-    HeapFree(GetProcessHeap(), 0, This->sIcoPath);
-    HeapFree(GetProcessHeap(), 0, This->sArgs);
-    HeapFree(GetProcessHeap(), 0, This->sWorkDir);
-    HeapFree(GetProcessHeap(), 0, This->sDescription);
-    HeapFree(GetProcessHeap(), 0, This->sPath);
-    HeapFree(GetProcessHeap(), 0, This->sPathRel);
-    HeapFree(GetProcessHeap(), 0, This->sProduct);
-    HeapFree(GetProcessHeap(), 0, This->sComponent);
-    HeapFree(GetProcessHeap(), 0, This->filepath);
-
-    if (This->site)
-        IUnknown_Release( This->site );
-
-    if (This->pPidl)
-        ILFree(This->pPidl);
-
-    LocalFree(This);
-
-    return 0;
-}
-
 static HRESULT ShellLink_GetClassID( IShellLinkImpl *This, CLSID *pclsid )
 {
     TRACE("%p %p\n", This, pclsid);
@@ -353,7 +306,7 @@ static HRESULT WINAPI IPersistFile_fnQueryInterface(
 static ULONG WINAPI IPersistFile_fnAddRef(IPersistFile* iface)
 {
     IShellLinkImpl *This = impl_from_IPersistFile(iface);
-    return ShellLink_AddRef( This );
+    return IShellLinkW_AddRef(&This->IShellLinkW_iface);
 }
 
 /******************************************************************************
@@ -580,7 +533,7 @@ static ULONG WINAPI IPersistStream_fnAddRef(
 	IPersistStream* iface)
 {
     IShellLinkImpl *This = impl_from_IPersistStream(iface);
-    return ShellLink_AddRef( This );
+    return IShellLinkW_AddRef(&This->IShellLinkW_iface);
 }
 
 /************************************************************************
@@ -1278,8 +1231,8 @@ HRESULT WINAPI IShellLink_Constructor( IUnknown *pUnkOuter,
 
 	TRACE("(%p)->()\n",sl);
 
-        r = ShellLink_QueryInterface( sl, riid, ppv );
-        ShellLink_Release( sl );
+        r = IShellLinkW_QueryInterface( &sl->IShellLinkW_iface, riid, ppv );
+        IShellLinkW_Release( &sl->IShellLinkW_iface );
         return r;
 }
 
@@ -1395,7 +1348,7 @@ static HRESULT WINAPI IShellLinkA_fnQueryInterface(IShellLinkA *iface, REFIID ri
 static ULONG WINAPI IShellLinkA_fnAddRef(IShellLinkA *iface)
 {
     IShellLinkImpl *This = impl_from_IShellLinkA(iface);
-    return ShellLink_AddRef( This );
+    return IShellLinkW_AddRef(&This->IShellLinkW_iface);
 }
 
 /******************************************************************************
@@ -1404,7 +1357,7 @@ static ULONG WINAPI IShellLinkA_fnAddRef(IShellLinkA *iface)
 static ULONG WINAPI IShellLinkA_fnRelease(IShellLinkA *iface)
 {
     IShellLinkImpl *This = impl_from_IShellLinkA(iface);
-    return ShellLink_Release( This );
+    return IShellLinkW_Release(&This->IShellLinkW_iface);
 }
 
 static HRESULT WINAPI IShellLinkA_fnGetPath(IShellLinkA *iface, LPSTR pszFile, INT cchMaxPath,
@@ -1432,24 +1385,13 @@ static HRESULT WINAPI IShellLinkA_fnGetPath(IShellLinkA *iface, LPSTR pszFile, I
 static HRESULT WINAPI IShellLinkA_fnGetIDList(IShellLinkA *iface, LPITEMIDLIST *ppidl)
 {
     IShellLinkImpl *This = impl_from_IShellLinkA(iface);
-
-    TRACE("(%p)->(ppidl=%p)\n",This, ppidl);
-
     return IShellLinkW_GetIDList(&This->IShellLinkW_iface, ppidl);
 }
 
 static HRESULT WINAPI IShellLinkA_fnSetIDList(IShellLinkA *iface, LPCITEMIDLIST pidl)
 {
     IShellLinkImpl *This = impl_from_IShellLinkA(iface);
-
-    TRACE("(%p)->(pidl=%p)\n",This, pidl);
-
-    if (This->pPidl)
-	ILFree(This->pPidl);
-    This->pPidl = ILClone (pidl);
-    This->bDirty = TRUE;
-
-    return S_OK;
+    return IShellLinkW_SetIDList(&This->IShellLinkW_iface, pidl);
 }
 
 static HRESULT WINAPI IShellLinkA_fnGetDescription(IShellLinkA *iface, LPSTR pszName,
@@ -1471,22 +1413,23 @@ static HRESULT WINAPI IShellLinkA_fnGetDescription(IShellLinkA *iface, LPSTR psz
 static HRESULT WINAPI IShellLinkA_fnSetDescription(IShellLinkA *iface, LPCSTR pszName)
 {
     IShellLinkImpl *This = impl_from_IShellLinkA(iface);
+    WCHAR *descrW;
+    HRESULT hr;
 
     TRACE("(%p)->(pName=%s)\n", This, debugstr_a(pszName));
 
-    HeapFree(GetProcessHeap(), 0, This->sDescription);
     if (pszName)
     {
-        This->sDescription = HEAP_strdupAtoW( GetProcessHeap(), 0, pszName);
-        if ( !This->sDescription )
-            return E_OUTOFMEMORY;
+        descrW = HEAP_strdupAtoW(GetProcessHeap(), 0, pszName);
+        if (!descrW) return E_OUTOFMEMORY;
     }
     else
-        This->sDescription = NULL;
+        descrW = NULL;
 
-    This->bDirty = TRUE;
+    hr = IShellLinkW_SetDescription(&This->IShellLinkW_iface, descrW);
+    HeapFree(GetProcessHeap(), 0, descrW);
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI IShellLinkA_fnGetWorkingDirectory(IShellLinkA *iface, LPSTR pszDir,
@@ -1508,17 +1451,18 @@ static HRESULT WINAPI IShellLinkA_fnGetWorkingDirectory(IShellLinkA *iface, LPST
 static HRESULT WINAPI IShellLinkA_fnSetWorkingDirectory(IShellLinkA *iface, LPCSTR pszDir)
 {
     IShellLinkImpl *This = impl_from_IShellLinkA(iface);
+    WCHAR *dirW;
+    HRESULT hr;
 
     TRACE("(%p)->(dir=%s)\n",This, pszDir);
 
-    HeapFree(GetProcessHeap(), 0, This->sWorkDir);
-    This->sWorkDir = HEAP_strdupAtoW( GetProcessHeap(), 0, pszDir);
-    if ( !This->sWorkDir )
-        return E_OUTOFMEMORY;
+    dirW = HEAP_strdupAtoW(GetProcessHeap(), 0, pszDir);
+    if (!dirW) return E_OUTOFMEMORY;
 
-    This->bDirty = TRUE;
+    hr = IShellLinkW_SetWorkingDirectory(&This->IShellLinkW_iface, dirW);
+    HeapFree(GetProcessHeap(), 0, dirW);
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI IShellLinkA_fnGetArguments(IShellLinkA *iface, LPSTR pszArgs, INT cchMaxPath)
@@ -1539,65 +1483,47 @@ static HRESULT WINAPI IShellLinkA_fnGetArguments(IShellLinkA *iface, LPSTR pszAr
 static HRESULT WINAPI IShellLinkA_fnSetArguments(IShellLinkA *iface, LPCSTR pszArgs)
 {
     IShellLinkImpl *This = impl_from_IShellLinkA(iface);
+    WCHAR *argsW;
+    HRESULT hr;
 
     TRACE("(%p)->(args=%s)\n",This, debugstr_a(pszArgs));
 
-    HeapFree(GetProcessHeap(), 0, This->sArgs);
     if (pszArgs)
     {
-        This->sArgs = HEAP_strdupAtoW( GetProcessHeap(), 0, pszArgs);
-        if( !This->sArgs )
-            return E_OUTOFMEMORY;
+        argsW = HEAP_strdupAtoW(GetProcessHeap(), 0, pszArgs);
+        if (!argsW) return E_OUTOFMEMORY;
     }
-    else This->sArgs = NULL;
+    else
+        argsW = NULL;
 
-    This->bDirty = TRUE;
+    hr = IShellLinkW_SetArguments(&This->IShellLinkW_iface, argsW);
+    HeapFree(GetProcessHeap(), 0, argsW);
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI IShellLinkA_fnGetHotkey(IShellLinkA *iface, WORD *pwHotkey)
 {
     IShellLinkImpl *This = impl_from_IShellLinkA(iface);
-
-    TRACE("(%p)->(%p)(0x%08x)\n",This, pwHotkey, This->wHotKey);
-
-    *pwHotkey = This->wHotKey;
-
-    return S_OK;
+    return IShellLinkW_GetHotkey(&This->IShellLinkW_iface, pwHotkey);
 }
 
 static HRESULT WINAPI IShellLinkA_fnSetHotkey(IShellLinkA *iface, WORD wHotkey)
 {
     IShellLinkImpl *This = impl_from_IShellLinkA(iface);
-
-    TRACE("(%p)->(hotkey=%x)\n",This, wHotkey);
-
-    This->wHotKey = wHotkey;
-    This->bDirty = TRUE;
-
-    return S_OK;
+    return IShellLinkW_SetHotkey(&This->IShellLinkW_iface, wHotkey);
 }
 
 static HRESULT WINAPI IShellLinkA_fnGetShowCmd(IShellLinkA *iface, INT *piShowCmd)
 {
     IShellLinkImpl *This = impl_from_IShellLinkA(iface);
-
-    TRACE("(%p)->(%p)\n",This, piShowCmd);
-    *piShowCmd = This->iShowCmd;
-    return S_OK;
+    return IShellLinkW_GetShowCmd(&This->IShellLinkW_iface, piShowCmd);
 }
 
 static HRESULT WINAPI IShellLinkA_fnSetShowCmd(IShellLinkA *iface, INT iShowCmd)
 {
     IShellLinkImpl *This = impl_from_IShellLinkA(iface);
-
-    TRACE("(%p) %d\n",This, iShowCmd);
-
-    This->iShowCmd = iShowCmd;
-    This->bDirty = TRUE;
-
-    return S_OK;
+    return IShellLinkW_SetShowCmd(&This->IShellLinkW_iface, iShowCmd);
 }
 
 static HRESULT WINAPI IShellLinkA_fnGetIconLocation(IShellLinkA *iface, LPSTR pszIconPath,
@@ -1621,32 +1547,36 @@ static HRESULT WINAPI IShellLinkA_fnSetIconLocation(IShellLinkA *iface, LPCSTR p
         INT iIcon)
 {
     IShellLinkImpl *This = impl_from_IShellLinkA(iface);
+    WCHAR *pathW;
+    HRESULT hr;
 
     TRACE("(%p)->(path=%s iicon=%u)\n",This, pszIconPath, iIcon);
 
-    HeapFree(GetProcessHeap(), 0, This->sIcoPath);
-    This->sIcoPath = HEAP_strdupAtoW(GetProcessHeap(), 0, pszIconPath);
-    if ( !This->sIcoPath )
-        return E_OUTOFMEMORY;
+    pathW = HEAP_strdupAtoW(GetProcessHeap(), 0, pszIconPath);
+    if (!pathW) return E_OUTOFMEMORY;
 
-    This->iIcoNdx = iIcon;
-    This->bDirty = TRUE;
+    hr = IShellLinkW_SetIconLocation(&This->IShellLinkW_iface, pathW, iIcon);
+    HeapFree(GetProcessHeap(), 0, pathW);
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI IShellLinkA_fnSetRelativePath(IShellLinkA *iface, LPCSTR pszPathRel,
         DWORD dwReserved)
 {
     IShellLinkImpl *This = impl_from_IShellLinkA(iface);
+    WCHAR *pathW;
+    HRESULT hr;
 
     TRACE("(%p)->(path=%s %x)\n",This, pszPathRel, dwReserved);
 
-    HeapFree(GetProcessHeap(), 0, This->sPathRel);
-    This->sPathRel = HEAP_strdupAtoW(GetProcessHeap(), 0, pszPathRel);
-    This->bDirty = TRUE;
+    pathW = HEAP_strdupAtoW(GetProcessHeap(), 0, pszPathRel);
+    if (!pathW) return E_OUTOFMEMORY;
 
-    return ShellLink_UpdatePath(This->sPathRel, This->sPath, This->sWorkDir, &This->sPath);
+    hr = IShellLinkW_SetRelativePath(&This->IShellLinkW_iface, pathW, dwReserved);
+    HeapFree(GetProcessHeap(), 0, pathW);
+
+    return hr;
 }
 
 static HRESULT WINAPI IShellLinkA_fnResolve(IShellLinkA *iface, HWND hwnd, DWORD fFlags)
@@ -1724,7 +1654,11 @@ static HRESULT WINAPI IShellLinkW_fnQueryInterface(
 static ULONG WINAPI IShellLinkW_fnAddRef(IShellLinkW * iface)
 {
     IShellLinkImpl *This = impl_from_IShellLinkW(iface);
-    return ShellLink_AddRef( This );
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p)->(count=%u)\n", This, ref - 1);
+
+    return ref;
 }
 
 /******************************************************************************
@@ -1733,7 +1667,34 @@ static ULONG WINAPI IShellLinkW_fnAddRef(IShellLinkW * iface)
 static ULONG WINAPI IShellLinkW_fnRelease(IShellLinkW * iface)
 {
     IShellLinkImpl *This = impl_from_IShellLinkW(iface);
-    return ShellLink_Release( This );
+    ULONG refCount = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(count=%u)\n", This, refCount + 1);
+
+    if (refCount)
+        return refCount;
+
+    TRACE("-- destroying IShellLink(%p)\n",This);
+
+    HeapFree(GetProcessHeap(), 0, This->sIcoPath);
+    HeapFree(GetProcessHeap(), 0, This->sArgs);
+    HeapFree(GetProcessHeap(), 0, This->sWorkDir);
+    HeapFree(GetProcessHeap(), 0, This->sDescription);
+    HeapFree(GetProcessHeap(), 0, This->sPath);
+    HeapFree(GetProcessHeap(), 0, This->sPathRel);
+    HeapFree(GetProcessHeap(), 0, This->sProduct);
+    HeapFree(GetProcessHeap(), 0, This->sComponent);
+    HeapFree(GetProcessHeap(), 0, This->filepath);
+
+    if (This->site)
+        IUnknown_Release( This->site );
+
+    if (This->pPidl)
+        ILFree(This->pPidl);
+
+    LocalFree(This);
+
+    return 0;
 }
 
 static HRESULT WINAPI IShellLinkW_fnGetPath(IShellLinkW * iface, LPWSTR pszFile,INT cchMaxPath, WIN32_FIND_DATAW *pfd, DWORD fFlags)
@@ -1928,6 +1889,8 @@ static HRESULT WINAPI IShellLinkW_fnGetShowCmd(IShellLinkW * iface, INT *piShowC
 static HRESULT WINAPI IShellLinkW_fnSetShowCmd(IShellLinkW * iface, INT iShowCmd)
 {
     IShellLinkImpl *This = impl_from_IShellLinkW(iface);
+
+    TRACE("(%p)->(%d)\n", This, iShowCmd);
 
     This->iShowCmd = iShowCmd;
     This->bDirty = TRUE;
@@ -2240,7 +2203,7 @@ static ULONG WINAPI
 ShellLink_DataList_Release( IShellLinkDataList* iface )
 {
     IShellLinkImpl *This = impl_from_IShellLinkDataList(iface);
-    return ShellLink_Release( This );
+    return IShellLinkW_Release(&This->IShellLinkW_iface);
 }
 
 static HRESULT WINAPI
@@ -2350,7 +2313,7 @@ static ULONG WINAPI
 ShellLink_ExtInit_Release( IShellExtInit* iface )
 {
     IShellLinkImpl *This = impl_from_IShellExtInit(iface);
-    return ShellLink_Release( This );
+    return IShellLinkW_Release(&This->IShellLinkW_iface);
 }
 
 /**************************************************************************
@@ -2430,7 +2393,7 @@ static ULONG WINAPI
 ShellLink_ContextMenu_Release( IContextMenu* iface )
 {
     IShellLinkImpl *This = impl_from_IContextMenu(iface);
-    return ShellLink_Release( This );
+    return IShellLinkW_Release(&This->IShellLinkW_iface);
 }
 
 static HRESULT WINAPI
@@ -2599,14 +2562,14 @@ static ULONG WINAPI
 ShellLink_ObjectWithSite_AddRef( IObjectWithSite* iface )
 {
     IShellLinkImpl *This = impl_from_IObjectWithSite(iface);
-    return ShellLink_AddRef( This );
+    return IShellLinkW_AddRef(&This->IShellLinkW_iface);
 }
 
 static ULONG WINAPI
 ShellLink_ObjectWithSite_Release( IObjectWithSite* iface )
 {
     IShellLinkImpl *This = impl_from_IObjectWithSite(iface);
-    return ShellLink_Release( This );
+    return IShellLinkW_Release(&This->IShellLinkW_iface);
 }
 
 static HRESULT WINAPI
