@@ -1375,8 +1375,10 @@ static inline HRESULT delete_file(const WCHAR *file, DWORD file_len, VARIANT_BOO
         return create_error(GetLastError());
 
     len = get_parent_folder_name(file, file_len);
-    if(len+1 >= MAX_PATH)
+    if(len+1 >= MAX_PATH) {
+        FindClose(f);
         return E_FAIL;
+    }
     if(len) {
         memcpy(path, file, len*sizeof(WCHAR));
         path[len++] = '\\';
@@ -1432,8 +1434,10 @@ static HRESULT delete_folder(const WCHAR *folder, DWORD folder_len, VARIANT_BOOL
         return create_error(GetLastError());
 
     len = get_parent_folder_name(folder, folder_len);
-    if(len+1 >= MAX_PATH)
+    if(len+1 >= MAX_PATH) {
+        FindClose(f);
         return E_FAIL;
+    }
     if(len) {
         memcpy(path, folder, len*sizeof(WCHAR));
         path[len++] = '\\';
@@ -1547,8 +1551,10 @@ static inline HRESULT copy_file(const WCHAR *source, DWORD source_len,
     }
 
     dst_len = destination_len;
-    if(dst_len+1 >= MAX_PATH)
+    if(dst_len+1 >= MAX_PATH) {
+        FindClose(f);
         return E_FAIL;
+    }
     memcpy(dst_path, destination, dst_len*sizeof(WCHAR));
     if(dst_path[dst_len-1]!= '\\' && dst_path[dst_len-1]!='/')
         dst_path[dst_len++] = '\\';
