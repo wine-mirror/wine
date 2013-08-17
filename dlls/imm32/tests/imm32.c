@@ -698,7 +698,7 @@ static void test_ImmGetIMCLockCount(void)
     count = ImmGetIMCLockCount(imc);
     ok(count == 0, "expect 0, returned %d\n", count);
     ic = ImmLockIMC(imc);
-    ok(ic != NULL, "ImmLockIMC failed\n!");
+    ok(ic != NULL, "ImmLockIMC failed!\n");
     count = ImmGetIMCLockCount(imc);
     ok(count == 1, "expect 1, returned %d\n", count);
     ret = ImmUnlockIMC(imc);
