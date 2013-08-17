@@ -97,6 +97,7 @@ void BREAK_line(const WCHAR *chars, int count, const SCRIPT_ANALYSIS *sa, SCRIPT
                 break;
             case b_CM:
                 la[i].fCharStop = FALSE;
+                break;
         }
     }
 
@@ -111,8 +112,10 @@ void BREAK_line(const WCHAR *chars, int count, const SCRIPT_ANALYSIS *sa, SCRIPT
             case b_SG:
             case b_XX:
                 break_class[i] = b_AL;
+                break;
             case b_CJ:
                 break_class[i] = b_NS;
+                break;
         }
     }
 
