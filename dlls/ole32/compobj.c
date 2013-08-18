@@ -2910,7 +2910,7 @@ HRESULT WINAPI CoCreateInstance(
     {
         IGlobalInterfaceTable *git = get_std_git();
         hres = IGlobalInterfaceTable_QueryInterface(git, iid, ppv);
-        if (hres) return hres;
+        if (hres != S_OK) return hres;
 
         TRACE("Retrieved GIT (%p)\n", *ppv);
         return S_OK;
@@ -2992,7 +2992,7 @@ HRESULT WINAPI CoCreateInstanceEx(
 			&IID_IUnknown,
 			(VOID**)&pUnk);
 
-  if (hr)
+  if (hr != S_OK)
     return hr;
 
   /*

@@ -296,7 +296,7 @@ StdGlobalInterfaceTable_GetInterfaceFromGlobal(
   hres = CoUnmarshalInterface(stream, riid, ppv);
   IStream_Release(stream);
 
-  if (hres) {
+  if (hres != S_OK) {
     WARN("Failed to unmarshal stream\n");
     return hres;
   }

@@ -1519,7 +1519,7 @@ static void __RPC_STUB dispatch_rpc(RPC_MESSAGE *msg)
 
     /* if IRpcStubBuffer_Invoke fails, we should raise an exception to tell
      * the RPC runtime that the call failed */
-    if (hr) RpcRaiseException(hr);
+    if (hr != S_OK) RpcRaiseException(hr);
 }
 
 /* stub registration */
@@ -1656,6 +1656,7 @@ static HRESULT create_server(REFCLSID rclsid, HANDLE *process)
     DWORD               size = (MAX_PATH+1) * sizeof(WCHAR);
     STARTUPINFOW        sinfo;
     PROCESS_INFORMATION pinfo;
+    LONG ret;
 
     hres = COM_OpenKeyForCLSID(rclsid, wszLocalServer32, KEY_READ, &key);
     if (FAILED(hres)) {
@@ -1663,9 +1664,9 @@ static HRESULT create_server(REFCLSID rclsid, HANDLE *process)
         return hres;
     }
 
-    hres = RegQueryValueExW(key, NULL, NULL, NULL, (LPBYTE)command, &size);
+    ret = RegQueryValueExW(key, NULL, NULL, NULL, (LPBYTE)command, &size);
     RegCloseKey(key);
-    if (hres) {
+    if (ret) {
         WARN("No default value for LocalServer32 key\n");
         return REGDB_E_CLASSNOTREG; /* FIXME: check retval */
     }
@@ -1861,9 +1862,9 @@ HRESULT RPC_GetLocalClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
         return E_NOINTERFACE;
     
     hres = CreateStreamOnHGlobal(0,TRUE,&pStm);
-    if (hres) return hres;
+    if (hres != S_OK) return hres;
     hres = IStream_Write(pStm,marshalbuffer,bufferlen,&res);
-    if (hres) goto out;
+    if (hres != S_OK) goto out;
     seekto.u.LowPart = 0;seekto.u.HighPart = 0;
     hres = IStream_Seek(pStm,seekto,STREAM_SEEK_SET,&newpos);
     
@@ -1935,13 +1936,13 @@ static DWORD WINAPI local_server_thread(LPVOID param)
         TRACE("marshalling LocalServer to client\n");
         
         hres = IStream_Stat(pStm,&ststg,STATFLAG_NONAME);
-        if (hres)
+        if (hres != S_OK)
             break;
 
         seekto.u.LowPart = 0;
         seekto.u.HighPart = 0;
         hres = IStream_Seek(pStm,seekto,STREAM_SEEK_SET,&newpos);
-        if (hres) {
+        if (hres != S_OK) {
             FIXME("IStream_Seek failed, %x\n",hres);
             break;
         }
@@ -1950,7 +1951,7 @@ static DWORD WINAPI local_server_thread(LPVOID param)
         buffer = HeapAlloc(GetProcessHeap(),0,buflen);
         
         hres = IStream_Read(pStm,buffer,buflen,&res);
-        if (hres) {
+        if (hres != S_OK) {
             FIXME("Stream Read failed, %x\n",hres);
             HeapFree(GetProcessHeap(),0,buffer);
             break;
