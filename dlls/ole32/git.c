@@ -72,7 +72,7 @@ typedef struct StdGlobalInterfaceTableImpl
   
 } StdGlobalInterfaceTableImpl;
 
-void* StdGlobalInterfaceTableInstance;
+static IGlobalInterfaceTable *std_git;
 
 static CRITICAL_SECTION git_section;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -96,7 +96,7 @@ static void StdGlobalInterfaceTable_Destroy(void* This)
   FIXME("Revoke held interfaces here\n");
   
   HeapFree(GetProcessHeap(), 0, This);
-  StdGlobalInterfaceTableInstance = NULL;
+  std_git = NULL;
 }
 
 /***
@@ -335,9 +335,8 @@ GITCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pUnk,
                      REFIID riid, LPVOID *ppv)
 {
   if (IsEqualIID(riid,&IID_IGlobalInterfaceTable)) {
-    if (StdGlobalInterfaceTableInstance == NULL) 
-      StdGlobalInterfaceTableInstance = StdGlobalInterfaceTable_Construct();
-    return IGlobalInterfaceTable_QueryInterface( (IGlobalInterfaceTable*) StdGlobalInterfaceTableInstance, riid, ppv);
+    IGlobalInterfaceTable *git = get_std_git();
+    return IGlobalInterfaceTable_QueryInterface(git, riid, ppv);
   }
 
   FIXME("(%s), not supported.\n",debugstr_guid(riid));
@@ -378,19 +377,27 @@ static const IGlobalInterfaceTableVtbl StdGlobalInterfaceTableImpl_Vtbl =
   StdGlobalInterfaceTable_GetInterfaceFromGlobal
 };
 
-/** This function constructs the GIT. It should only be called once **/
-void* StdGlobalInterfaceTable_Construct(void)
+IGlobalInterfaceTable* get_std_git(void)
 {
-  StdGlobalInterfaceTableImpl* newGIT;
+  if (!std_git)
+  {
+    StdGlobalInterfaceTableImpl* newGIT;
 
-  newGIT = HeapAlloc(GetProcessHeap(), 0, sizeof(StdGlobalInterfaceTableImpl));
-  if (newGIT == 0) return newGIT;
+    newGIT = HeapAlloc(GetProcessHeap(), 0, sizeof(StdGlobalInterfaceTableImpl));
+    if (!newGIT) return NULL;
 
-  newGIT->IGlobalInterfaceTable_iface.lpVtbl = &StdGlobalInterfaceTableImpl_Vtbl;
-  newGIT->ref = 1;      /* Initialise the reference count */
-  list_init(&newGIT->list);
-  newGIT->nextCookie = 0xf100; /* that's where windows starts, so that's where we start */
-  TRACE("Created the GIT at %p\n", newGIT);
+    newGIT->IGlobalInterfaceTable_iface.lpVtbl = &StdGlobalInterfaceTableImpl_Vtbl;
+    newGIT->ref = 1;
+    list_init(&newGIT->list);
+    newGIT->nextCookie = 0xf100; /* that's where windows starts, so that's where we start */
 
-  return (void*)newGIT;
+    if (InterlockedCompareExchangePointer((void**)&std_git, &newGIT->IGlobalInterfaceTable_iface, NULL))
+    {
+      StdGlobalInterfaceTable_Destroy(newGIT);
+    }
+    else
+      TRACE("Created the GIT at %p\n", newGIT);
+  }
+
+  return std_git;
 }

@@ -2905,15 +2905,11 @@ HRESULT WINAPI CoCreateInstance(
 
     /*
      * The Standard Global Interface Table (GIT) object is a process-wide singleton.
-     * Rather than create a class factory, we can just check for it here
      */
     if (IsEqualIID(rclsid, &CLSID_StdGlobalInterfaceTable))
     {
-        if (StdGlobalInterfaceTableInstance == NULL)
-            StdGlobalInterfaceTableInstance = StdGlobalInterfaceTable_Construct();
-        hres = IGlobalInterfaceTable_QueryInterface((IGlobalInterfaceTable*)StdGlobalInterfaceTableInstance,
-                                                    iid,
-                                                    ppv);
+        IGlobalInterfaceTable *git = get_std_git();
+        hres = IGlobalInterfaceTable_QueryInterface(git, iid, ppv);
         if (hres) return hres;
 
         TRACE("Retrieved GIT (%p)\n", *ppv);
