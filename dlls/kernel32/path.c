@@ -1516,10 +1516,9 @@ UINT WINAPI GetCurrentDirectoryA( UINT buflen, LPSTR buf )
         return 0;
     }
 
-    ret = GetCurrentDirectoryW(MAX_PATH, bufferW);
-
+    ret = RtlGetCurrentDirectory_U( sizeof(bufferW), bufferW );
     if (!ret) return 0;
-    if (ret > MAX_PATH)
+    if (ret > sizeof(bufferW))
     {
         SetLastError(ERROR_FILENAME_EXCED_RANGE);
         return 0;
@@ -1538,12 +1537,8 @@ BOOL WINAPI SetCurrentDirectoryW( LPCWSTR dir )
 
     RtlInitUnicodeString( &dirW, dir );
     status = RtlSetCurrentDirectory_U( &dirW );
-    if (status != STATUS_SUCCESS)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        return FALSE;
-    }
-    return TRUE;
+    if (status != STATUS_SUCCESS) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
 }
 
 
@@ -1553,9 +1548,14 @@ BOOL WINAPI SetCurrentDirectoryW( LPCWSTR dir )
 BOOL WINAPI SetCurrentDirectoryA( LPCSTR dir )
 {
     WCHAR *dirW;
+    UNICODE_STRING strW;
+    NTSTATUS status;
 
     if (!(dirW = FILE_name_AtoW( dir, FALSE ))) return FALSE;
-    return SetCurrentDirectoryW( dirW );
+    RtlInitUnicodeString( &strW, dirW );
+    status = RtlSetCurrentDirectory_U( &strW );
+    if (status != STATUS_SUCCESS) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
 }
 
 
