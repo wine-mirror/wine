@@ -2666,6 +2666,7 @@ static void test_converttovar(void)
     CY cy, cy2;
     DATE date;
     INT i4;
+    signed short i2;
     LARGE_INTEGER i8;
     VARIANT_BOOL boolean = VARIANT_TRUE;
     FLOAT fvalue = 543.21f;
@@ -2742,6 +2743,17 @@ static void test_converttovar(void)
     ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
     ok(V_VT(&dst) == VT_I4, "got %d\n", V_VT(&dst));
     ok(V_I4(&dst) == 123, "got %d\n", V_I4(&dst));
+
+    V_VT(&dst) = VT_EMPTY;
+    dst_len = 0;
+    dst_status = DBSTATUS_S_DEFAULT;
+    i2 = 123;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_I2, DBTYPE_VARIANT, sizeof(i2), &dst_len, &i2, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
+    ok(V_VT(&dst) == VT_I2, "got %d\n", V_VT(&dst));
+    ok(V_I2(&dst) == 123, "got %d\n", V_I2(&dst));
 
     V_VT(&dst) = VT_EMPTY;
     dst_len = 0;

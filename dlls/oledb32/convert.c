@@ -878,6 +878,11 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
             V_BOOL(v) = *(VARIANT_BOOL*)src;
             hr = S_OK;
             break;
+        case DBTYPE_I2:
+            V_VT(v) = VT_I2;
+            V_I2(v) = *(signed short*)src;
+            hr = S_OK;
+            break;
         case DBTYPE_I4:
             V_VT(v) = VT_I4;
             V_I4(v) = *(signed int*)src;
