@@ -238,7 +238,7 @@ static const char html_page[] =
 static const char css_data[] = "body {color: red; margin: 0}";
 
 static const WCHAR http_urlW[] =
-    {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g',0};
+    {'h','t','t','p',':','/','/','t','e','s','t','.','w','i','n','e','h','q','.','o','r','g','/','t','e','s','t','s','/','w','i','n','e','h','q','_','s','n','a','p','s','h','o','t','/',0};
 
 static const WCHAR doc_url[] = {'w','i','n','e','t','e','s','t',':','d','o','c',0};
 
@@ -2893,7 +2893,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             CHECK_EXPECT(Exec_ShellDocView_67);
             ok(pvaIn != NULL, "pvaIn == NULL\n");
             ok(V_VT(pvaIn) == VT_BSTR, "V_VT(pvaIn) = %d\n", V_VT(pvaIn));
-            ok(!strcmp_wa(V_BSTR(pvaIn), nav_serv_url), "V_BSTR(pvaIn) = %s, expected %s\n",
+            ok(!strcmp_wa(V_BSTR(pvaIn), nav_serv_url), "V_BSTR(pvaIn) = %s, expected \"%s\"\n",
                wine_dbgstr_w(V_BSTR(pvaIn)), nav_serv_url);
             ok(pvaOut != NULL, "pvaOut == NULL\n");
             ok(V_VT(pvaOut) == VT_BOOL, "V_VT(pvaOut) = %d\n", V_VT(pvaOut));
@@ -5755,8 +5755,8 @@ static void test_load_history(IHTMLDocument2 *doc)
     ok(hres == S_OK, "Could not get IPersistHistory iface: %08x\n", hres);
 
     prev_url = nav_url;
-    nav_url = "http://www.winehq.org/#test";
-    nav_serv_url = "http://www.winehq.org/";
+    nav_url = "http://test.winehq.org/tests/winehq_snapshot/#test";
+    nav_serv_url = "http://test.winehq.org/tests/winehq_snapshot/";
 
     SET_EXPECT(Exec_ShellDocView_138);
     SET_EXPECT(Exec_ShellDocView_67);
@@ -7327,9 +7327,9 @@ static void test_HTMLDocument_http(BOOL with_wbapp)
     test_travellog(doc);
     test_binding_ui((IUnknown*)doc);
 
-    nav_url = nav_serv_url = "http://www.winehq.org/"; /* for valid prev nav_url */
+    nav_url = nav_serv_url = "http://test.winehq.org/tests/winehq_snapshot/"; /* for valid prev nav_url */
     if(support_wbapp) {
-        test_put_href(doc, FALSE, "#test", "http://www.winehq.org/#test", FALSE, TRUE, 0);
+        test_put_href(doc, FALSE, "#test", "http://test.winehq.org/tests/winehq_snapshot/#test", FALSE, TRUE, 0);
         test_travellog(doc);
         test_refresh(doc);
     }
