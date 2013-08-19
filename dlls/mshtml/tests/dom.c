@@ -5839,6 +5839,8 @@ static void test_stylesheet(IDispatch *disp)
     IHTMLStyleSheet *stylesheet;
     HRESULT hres;
 
+    test_disp2((IUnknown*)disp, &DIID_DispHTMLStyleSheet, &IID_IHTMLStyleSheet, "[object]");
+
     hres = IDispatch_QueryInterface(disp, &IID_IHTMLStyleSheet, (void**)&stylesheet);
     ok(hres == S_OK, "Could not get IHTMLStyleSheet: %08x\n", hres);
 
