@@ -123,6 +123,19 @@
 #ifdef HAVE_SYS_TIHDR_H
 #include <sys/tihdr.h>
 #endif
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_QUEUE_H
+#include <sys/queue.h>
+#endif
+#ifdef HAVE_SYS_USER_H
+/* Make sure the definitions of struct kinfo_proc are the same. */
+#include <sys/user.h>
+#endif
+#ifdef HAVE_LIBPROCSTAT_H
+#include <libprocstat.h>
+#endif
 #ifdef HAVE_LIBPROC_H
 #include <libproc.h>
 #endif
@@ -1986,6 +1999,52 @@ static unsigned int find_owning_pid( struct pid_map *map, unsigned int num_entri
             closedir( dirfd );
         }
     }
+    return 0;
+#elif defined(HAVE_LIBPROCSTAT)
+    struct procstat *pstat;
+    struct kinfo_proc *proc;
+    struct filestat_list *fds;
+    struct filestat *fd;
+    struct sockstat sock;
+    unsigned int i, proc_count;
+
+    pstat = procstat_open_sysctl();
+    if (!pstat) return 0;
+
+    for (i = 0; i < num_entries; i++)
+    {
+        proc = procstat_getprocs( pstat, KERN_PROC_PID, map[i].unix_pid, &proc_count );
+        if (!proc || proc_count < 1) continue;
+
+        fds = procstat_getfiles( pstat, proc, 0 );
+        if (!fds)
+        {
+            procstat_freeprocs( pstat, proc );
+            continue;
+        }
+
+        STAILQ_FOREACH( fd, fds, next )
+        {
+            char errbuf[_POSIX2_LINE_MAX];
+
+            if (fd->fs_type != PS_FST_TYPE_SOCKET) continue;
+
+            procstat_get_socket_info( pstat, fd, &sock, errbuf );
+
+            if (sock.so_pcb == inode)
+            {
+                procstat_freefiles( pstat, fds );
+                procstat_freeprocs( pstat, proc );
+                procstat_close( pstat );
+                return map[i].pid;
+            }
+        }
+
+        procstat_freefiles( pstat, fds );
+        procstat_freeprocs( pstat, proc );
+    }
+
+    procstat_close( pstat );
     return 0;
 #elif defined(HAVE_LIBPROC_H)
     struct proc_fdinfo *fds;

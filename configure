@@ -638,6 +638,7 @@ LDPATH
 UNWINDFLAGS
 BUILTINFLAG
 EXTRACFLAGS
+LIBPROCSTAT
 LIBKSTAT
 LIBOPENAL
 MPG123_LIBS
@@ -6031,6 +6032,7 @@ for ac_header in \
 	sys/prctl.h \
 	sys/protosw.h \
 	sys/ptrace.h \
+	sys/queue.h \
 	sys/resource.h \
 	sys/scsiio.h \
 	sys/shm.h \
@@ -6046,6 +6048,7 @@ for ac_header in \
 	sys/timeout.h \
 	sys/times.h \
 	sys/uio.h \
+	sys/user.h \
 	sys/utsname.h \
 	sys/vm86.h \
 	sys/wait.h \
@@ -6374,6 +6377,28 @@ ac_fn_c_check_header_compile "$LINENO" "$ac_header" "$as_ac_Header" "#ifdef HAVE
 if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
   cat >>confdefs.h <<_ACEOF
 #define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+
+done
+
+
+for ac_header in libprocstat.h
+do :
+  ac_fn_c_check_header_compile "$LINENO" "libprocstat.h" "ac_cv_header_libprocstat_h" "#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_QUEUE_H
+#include <sys/queue.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+"
+if test "x$ac_cv_header_libprocstat_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBPROCSTAT_H 1
 _ACEOF
 
 fi
@@ -12362,6 +12387,54 @@ if test "x$ac_cv_lib_kstat_kstat_open" = xyes; then :
 $as_echo "#define HAVE_LIBKSTAT 1" >>confdefs.h
 
                   LIBKSTAT="-lkstat"
+
+fi
+
+fi
+
+if test "$ac_cv_header_libprocstat_h" = "yes"
+then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for procstat_open_sysctl in -lprocstat" >&5
+$as_echo_n "checking for procstat_open_sysctl in -lprocstat... " >&6; }
+if ${ac_cv_lib_procstat_procstat_open_sysctl+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lprocstat  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char procstat_open_sysctl ();
+int
+main ()
+{
+return procstat_open_sysctl ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_procstat_procstat_open_sysctl=yes
+else
+  ac_cv_lib_procstat_procstat_open_sysctl=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_procstat_procstat_open_sysctl" >&5
+$as_echo "$ac_cv_lib_procstat_procstat_open_sysctl" >&6; }
+if test "x$ac_cv_lib_procstat_procstat_open_sysctl" = xyes; then :
+
+$as_echo "#define HAVE_LIBPROCSTAT 1" >>confdefs.h
+
+                  LIBPROCSTAT="-lprocstat"
 
 fi
 

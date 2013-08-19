@@ -351,6 +351,12 @@
 /* Define to 1 if you have the `ossaudio' library (-lossaudio). */
 #undef HAVE_LIBOSSAUDIO
 
+/* Define to 1 if you have the `procstat' library (-lprocstat). */
+#undef HAVE_LIBPROCSTAT
+
+/* Define to 1 if you have the <libprocstat.h> header file. */
+#undef HAVE_LIBPROCSTAT_H
+
 /* Define to 1 if you have the <libproc.h> header file. */
 #undef HAVE_LIBPROC_H
 
@@ -977,6 +983,9 @@
 
 /* Define to 1 if you have the <sys/ptrace.h> header file. */
 #undef HAVE_SYS_PTRACE_H
+
+/* Define to 1 if you have the <sys/queue.h> header file. */
+#undef HAVE_SYS_QUEUE_H
 
 /* Define to 1 if you have the <sys/resource.h> header file. */
 #undef HAVE_SYS_RESOURCE_H

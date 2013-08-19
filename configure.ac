@@ -491,6 +491,7 @@ AC_CHECK_HEADERS(\
 	sys/prctl.h \
 	sys/protosw.h \
 	sys/ptrace.h \
+	sys/queue.h \
 	sys/resource.h \
 	sys/scsiio.h \
 	sys/shm.h \
@@ -506,6 +507,7 @@ AC_CHECK_HEADERS(\
 	sys/timeout.h \
 	sys/times.h \
 	sys/uio.h \
+	sys/user.h \
 	sys/utsname.h \
 	sys/vm86.h \
 	sys/wait.h \
@@ -658,6 +660,17 @@ AC_CHECK_HEADERS([linux/videodev.h linux/videodev2.h libv4l1.h],,,
 #include <sys/types.h>
 #ifdef HAVE_ASM_TYPES_H
 #include <asm/types.h>
+#endif])
+
+AC_CHECK_HEADERS([libprocstat.h],,,
+[#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_QUEUE_H
+#include <sys/queue.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
 #endif])
 
 dnl **** Check for working dll ****
@@ -1721,6 +1734,14 @@ then
     AC_CHECK_LIB(kstat,kstat_open,
                  [AC_DEFINE(HAVE_LIBKSTAT, 1, [Define to 1 if you have the `kstat' library (-lkstat).])
                   AC_SUBST(LIBKSTAT,"-lkstat")])
+fi
+
+dnl **** Check for libprocstat ****
+if test "$ac_cv_header_libprocstat_h" = "yes"
+then
+    AC_CHECK_LIB(procstat,procstat_open_sysctl,
+                 [AC_DEFINE(HAVE_LIBPROCSTAT, 1, [Define to 1 if you have the `procstat' library (-lprocstat).])
+                  AC_SUBST(LIBPROCSTAT,"-lprocstat")])
 fi
 
 dnl **** Check for libodbc ****
