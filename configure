@@ -16663,6 +16663,7 @@ wine_fn_config_program spoolsv enable_spoolsv install
 wine_fn_config_program start enable_start install,po
 wine_fn_config_program svchost enable_svchost install
 wine_fn_config_program taskkill enable_taskkill install,po
+wine_fn_config_program tasklist enable_tasklist install
 wine_fn_config_program taskmgr enable_taskmgr install,po
 wine_fn_config_program termsv enable_termsv install
 wine_fn_config_program uninstaller enable_uninstaller install,po
