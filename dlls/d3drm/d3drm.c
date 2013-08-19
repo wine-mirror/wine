@@ -1354,7 +1354,7 @@ static HRESULT WINAPI IDirect3DRM3Impl_Load(IDirect3DRM3 *iface, void *source, v
 {
     DXFILELOADOPTIONS load_options;
     IDirectXFile *file = NULL;
-    LPDIRECTXFILEENUMOBJECT pEnumObject = NULL;
+    IDirectXFileEnumObject *enum_object = NULL;
     LPDIRECTXFILEDATA pData = NULL;
     HRESULT hr;
     const GUID* pGuid;
@@ -1395,11 +1395,11 @@ static HRESULT WINAPI IDirect3DRM3Impl_Load(IDirect3DRM3 *iface, void *source, v
     if (hr != DXFILE_OK)
         goto end;
 
-    hr = IDirectXFile_CreateEnumObject(file, source, load_options, &pEnumObject);
+    hr = IDirectXFile_CreateEnumObject(file, source, load_options, &enum_object);
     if (hr != DXFILE_OK)
         goto end;
 
-    hr = IDirectXFileEnumObject_GetNextDataObject(pEnumObject, &pData);
+    hr = IDirectXFileEnumObject_GetNextDataObject(enum_object, &pData);
     if (hr != DXFILE_OK)
         goto end;
 
@@ -1433,7 +1433,7 @@ static HRESULT WINAPI IDirect3DRM3Impl_Load(IDirect3DRM3 *iface, void *source, v
 
     while (1)
     {
-        hr = IDirectXFileEnumObject_GetNextDataObject(pEnumObject, &pData);
+        hr = IDirectXFileEnumObject_GetNextDataObject(enum_object, &pData);
         if (hr == DXFILEERR_NOMOREOBJECTS)
         {
             TRACE("No more object\n");
@@ -1458,8 +1458,8 @@ static HRESULT WINAPI IDirect3DRM3Impl_Load(IDirect3DRM3 *iface, void *source, v
 end:
     if (pData)
         IDirectXFileData_Release(pData);
-    if (pEnumObject)
-        IDirectXFileEnumObject_Release(pEnumObject);
+    if (enum_object)
+        IDirectXFileEnumObject_Release(enum_object);
     if (file)
         IDirectXFile_Release(file);
 
