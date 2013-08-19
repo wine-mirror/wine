@@ -240,12 +240,12 @@ static void test_logpen(void)
             break;
 
         case PS_USERSTYLE:
-            ok(size == FIELD_OFFSET( EXTLOGPEN, elpStyleEntry[2] ),
+            ok(size == offsetof( EXTLOGPEN, elpStyleEntry[2] ),
                "GetObject returned %d, error %d\n", size, GetLastError());
             break;
 
         default:
-            ok(size == FIELD_OFFSET( EXTLOGPEN, elpStyleEntry ),
+            ok(size == offsetof( EXTLOGPEN, elpStyleEntry ),
                "GetObject returned %d, error %d\n", size, GetLastError());
             break;
         }
@@ -283,7 +283,7 @@ static void test_logpen(void)
             break;
 
         case PS_USERSTYLE:
-            ok(size == FIELD_OFFSET( EXTLOGPEN, elpStyleEntry[2] ),
+            ok(size == offsetof( EXTLOGPEN, elpStyleEntry[2] ),
                "GetObject returned %d, error %d\n", size, GetLastError());
             ok(ext_pen->elpHatch == HS_CROSS, "expected HS_CROSS, got %p\n", (void *)ext_pen->elpHatch);
             ok(ext_pen->elpNumEntries == 2, "expected 0, got %x\n", ext_pen->elpNumEntries);
@@ -292,7 +292,7 @@ static void test_logpen(void)
             break;
 
         default:
-            ok(size == FIELD_OFFSET( EXTLOGPEN, elpStyleEntry ),
+            ok(size == offsetof( EXTLOGPEN, elpStyleEntry ),
                "GetObject returned %d, error %d\n", size, GetLastError());
             ok(ext_pen->elpHatch == HS_CROSS, "expected HS_CROSS, got %p\n", (void *)ext_pen->elpHatch);
             ok(ext_pen->elpNumEntries == 0, "expected 0, got %x\n", ext_pen->elpNumEntries);
@@ -350,12 +350,12 @@ test_geometric_pens:
             break;
 
         case PS_USERSTYLE:
-            ok(size == FIELD_OFFSET( EXTLOGPEN, elpStyleEntry[2] ),
+            ok(size == offsetof( EXTLOGPEN, elpStyleEntry[2] ),
                "GetObject returned %d, error %d\n", size, GetLastError());
             break;
 
         default:
-            ok(size == FIELD_OFFSET( EXTLOGPEN, elpStyleEntry ),
+            ok(size == offsetof( EXTLOGPEN, elpStyleEntry ),
                "GetObject returned %d, error %d\n", size, GetLastError());
             break;
         }
@@ -410,7 +410,7 @@ test_geometric_pens:
             ok(!size /*&& GetLastError() == ERROR_INVALID_PARAMETER*/,
                "GetObject should fail: size %d, error %d\n", size, GetLastError());
             size = GetObject(hpen, sizeof(elp_buffer), elp_buffer);
-            ok(size == FIELD_OFFSET( EXTLOGPEN, elpStyleEntry[2] ),
+            ok(size == offsetof( EXTLOGPEN, elpStyleEntry[2] ),
                "GetObject returned %d, error %d\n", size, GetLastError());
             ok(ext_pen->elpHatch == HS_CROSS, "expected HS_CROSS, got %p\n", (void *)ext_pen->elpHatch);
             ok(ext_pen->elpNumEntries == 2, "expected 0, got %x\n", ext_pen->elpNumEntries);
@@ -419,7 +419,7 @@ test_geometric_pens:
             break;
 
         default:
-            ok(size == FIELD_OFFSET( EXTLOGPEN, elpStyleEntry ),
+            ok(size == offsetof( EXTLOGPEN, elpStyleEntry ),
                "GetObject returned %d, error %d\n", size, GetLastError());
             ok(ext_pen->elpHatch == HS_CROSS, "expected HS_CROSS, got %p\n", (void *)ext_pen->elpHatch);
             ok(ext_pen->elpNumEntries == 0, "expected 0, got %x\n", ext_pen->elpNumEntries);
@@ -559,7 +559,7 @@ static void test_ps_userstyle(void)
     ok(pen != 0, "ExtCreatePen should not fail\n");
 
     size = GetObject(pen, sizeof(buffer), ext_pen);
-    expect(FIELD_OFFSET(EXTLOGPEN,elpStyleEntry[16]), size);
+    ok(size == offsetof(EXTLOGPEN, elpStyleEntry[16]), "wrong size %d\n", size);
 
     for(i = 0; i < 16; i++)
         expect(style[i], ext_pen->elpStyleEntry[i]);
@@ -602,7 +602,7 @@ static void test_brush_pens(void)
             pen = ExtCreatePen( PS_DOT | PS_GEOMETRIC, 3, &lb, 0, NULL );
             ok( pen != 0, "ExtCreatePen failed err %u\n", GetLastError() );
             size = GetObject( pen, sizeof(buffer), elp );
-            ok( size == FIELD_OFFSET( EXTLOGPEN, elpStyleEntry ), "wrong size %u\n", size );
+            ok( size == offsetof( EXTLOGPEN, elpStyleEntry ), "wrong size %u\n", size );
             ok( elp->elpPenStyle == (PS_DOT | PS_GEOMETRIC), "wrong pen style %x\n", elp->elpPenStyle );
             ok( elp->elpBrushStyle == lb.lbStyle, "wrong brush style %x\n", elp->elpBrushStyle );
             ok( elp->elpColor == RGB(12,34,56), "wrong color %x\n", elp->elpColor );
@@ -627,7 +627,7 @@ static void test_brush_pens(void)
             pen = ExtCreatePen( PS_DOT | PS_GEOMETRIC, 3, &lb, 0, NULL );
             ok( pen != 0, "ExtCreatePen failed err %u\n", GetLastError() );
             size = GetObject( pen, sizeof(buffer), elp );
-            ok( size == FIELD_OFFSET( EXTLOGPEN, elpStyleEntry ), "wrong size %u\n", size );
+            ok( size == offsetof( EXTLOGPEN, elpStyleEntry ), "wrong size %u\n", size );
             ok( elp->elpPenStyle == (PS_DOT | PS_GEOMETRIC), "wrong pen style %x\n", elp->elpPenStyle );
             ok( elp->elpBrushStyle == BS_PATTERN, "wrong brush style %x\n", elp->elpBrushStyle );
             ok( elp->elpColor == 0, "wrong color %x\n", elp->elpColor );
@@ -642,7 +642,7 @@ static void test_brush_pens(void)
             pen = ExtCreatePen( PS_DOT | PS_GEOMETRIC, 3, &lb, 0, NULL );
             ok( pen != 0, "ExtCreatePen failed err %u\n", GetLastError() );
             size = GetObject( pen, sizeof(buffer), elp );
-            ok( size == FIELD_OFFSET( EXTLOGPEN, elpStyleEntry ), "wrong size %u\n", size );
+            ok( size == offsetof( EXTLOGPEN, elpStyleEntry ), "wrong size %u\n", size );
             ok( elp->elpPenStyle == (PS_DOT | PS_GEOMETRIC), "wrong pen style %x\n", elp->elpPenStyle );
             ok( elp->elpBrushStyle == BS_DIBPATTERNPT, "wrong brush style %x\n", elp->elpBrushStyle );
             ok( elp->elpColor == 0, "wrong color %x\n", elp->elpColor );
@@ -668,7 +668,7 @@ static void test_brush_pens(void)
         {
             ok( pen != 0, "ExtCreatePen failed err %u\n", GetLastError() );
             size = GetObject( pen, sizeof(buffer), elp );
-            ok( size == FIELD_OFFSET( EXTLOGPEN, elpStyleEntry ), "wrong size %u\n", size );
+            ok( size == offsetof( EXTLOGPEN, elpStyleEntry ), "wrong size %u\n", size );
             ok( elp->elpPenStyle == PS_DOT, "wrong pen style %x\n", elp->elpPenStyle );
             ok( elp->elpBrushStyle == BS_SOLID, "wrong brush style %x\n", elp->elpBrushStyle );
             ok( elp->elpColor == RGB(12,34,56), "wrong color %x\n", elp->elpColor );
