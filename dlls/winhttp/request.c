@@ -1270,12 +1270,14 @@ static BOOL query_auth_schemes( request_t *request, DWORD level, LPDWORD support
             return FALSE;
         }
         scheme = auth_scheme_from_header( buffer );
+        heap_free( buffer );
+        if (!scheme) break;
+
         if (first && index == 1)
             *first = *supported = scheme;
         else
             *supported |= scheme;
 
-        heap_free( buffer );
         ret = TRUE;
     }
     return ret;
@@ -1301,6 +1303,13 @@ BOOL WINAPI WinHttpQueryAuthSchemes( HINTERNET hrequest, LPDWORD supported, LPDW
         release_object( &request->hdr );
         set_last_error( ERROR_WINHTTP_INCORRECT_HANDLE_TYPE );
         return FALSE;
+    }
+    if (!supported || !first || !target)
+    {
+        release_object( &request->hdr );
+        set_last_error( ERROR_INVALID_PARAMETER );
+        return FALSE;
+
     }
 
     if (query_auth_schemes( request, WINHTTP_QUERY_WWW_AUTHENTICATE, supported, first ))

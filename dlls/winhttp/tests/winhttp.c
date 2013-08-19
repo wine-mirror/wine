@@ -1881,7 +1881,7 @@ static void test_basic_request(int port, const WCHAR *verb, const WCHAR *path)
 {
     HINTERNET ses, con, req;
     char buffer[0x100];
-    DWORD count, status, size, supported, first, target;
+    DWORD count, status, size, error, supported, first, target;
     BOOL ret;
 
     ses = WinHttpOpen(test_useragent, 0, NULL, NULL, 0);
@@ -1904,12 +1904,15 @@ static void test_basic_request(int port, const WCHAR *verb, const WCHAR *path)
     ok(ret, "failed to query status code %u\n", GetLastError());
     ok(status == 200, "request failed unexpectedly %u\n", status);
 
-    supported = first = target = 0xffff;
+    supported = first = target = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
     ret = WinHttpQueryAuthSchemes(req, &supported, &first, &target);
+    error = GetLastError();
     ok(!ret, "unexpected success\n");
-    ok(supported == 0xffff, "got %x\n", supported);
-    ok(first == 0xffff, "got %x\n", first);
-    ok(target == 0xffff, "got %x\n", target);
+    todo_wine ok(error == ERROR_INVALID_OPERATION, "expected ERROR_INVALID_OPERATION, got %u\n", error);
+    ok(supported == 0xdeadbeef, "got %x\n", supported);
+    ok(first == 0xdeadbeef, "got %x\n", first);
+    ok(target == 0xdeadbeef, "got %x\n", target);
 
     count = 0;
     memset(buffer, 0, sizeof(buffer));
@@ -1941,12 +1944,54 @@ static void test_basic_authentication(int port)
     req = WinHttpOpenRequest(con, NULL, authW, NULL, NULL, NULL, 0);
     ok(req != NULL, "failed to open a request %u\n", GetLastError());
 
-    supported = first = target = 0xffff;
+    SetLastError(0xdeadbeef);
+    ret = WinHttpQueryAuthSchemes(NULL, NULL, NULL, NULL);
+    error = GetLastError();
+    ok(!ret, "expected failure\n");
+    ok(error == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %u\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpQueryAuthSchemes(req, NULL, NULL, NULL);
+    error = GetLastError();
+    ok(!ret, "expected failure\n");
+    ok(error == ERROR_INVALID_PARAMETER || error == ERROR_INVALID_OPERATION, "got %u\n", error);
+
+    supported = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = WinHttpQueryAuthSchemes(req, &supported, NULL, NULL);
+    error = GetLastError();
+    ok(!ret, "expected failure\n");
+    ok(error == ERROR_INVALID_PARAMETER || error == ERROR_INVALID_OPERATION, "got %u\n", error);
+    ok(supported == 0xdeadbeef, "got %x\n", supported);
+
+    supported = first = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = WinHttpQueryAuthSchemes(req, &supported, &first, NULL);
+    error = GetLastError();
+    ok(!ret, "expected failure\n");
+    ok(error == ERROR_INVALID_PARAMETER || error == ERROR_INVALID_OPERATION, "got %u\n", error);
+    ok(supported == 0xdeadbeef, "got %x\n", supported);
+    ok(first == 0xdeadbeef, "got %x\n", first);
+
+    supported = first = target = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
     ret = WinHttpQueryAuthSchemes(req, &supported, &first, &target);
-    ok(!ret, "unexpected success\n");
-    ok(supported == 0xffff, "got %x\n", supported);
-    ok(first == 0xffff, "got %x\n", first);
-    ok(target == 0xffff, "got %x\n", target);
+    error = GetLastError();
+    ok(!ret, "expected failure\n");
+    todo_wine ok(error == ERROR_INVALID_OPERATION, "expected ERROR_INVALID_OPERATION, got %u\n", error);
+    ok(supported == 0xdeadbeef, "got %x\n", supported);
+    ok(first == 0xdeadbeef, "got %x\n", first);
+    ok(target == 0xdeadbeef, "got %x\n", target);
+
+    supported = first = target = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = WinHttpQueryAuthSchemes(NULL, &supported, &first, &target);
+    error = GetLastError();
+    ok(!ret, "expected failure\n");
+    ok(error == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %u\n", error);
+    ok(supported == 0xdeadbeef, "got %x\n", supported);
+    ok(first == 0xdeadbeef, "got %x\n", first);
+    ok(target == 0xdeadbeef, "got %x\n", target);
 
     ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
     ok(ret, "failed to send request %u\n", GetLastError());
@@ -1958,6 +2003,13 @@ static void test_basic_authentication(int port)
     ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL);
     ok(ret, "failed to query status code %u\n", GetLastError());
     ok(status == 401, "request failed unexpectedly %u\n", status);
+
+    supported = first = target = 0xdeadbeef;
+    ret = WinHttpQueryAuthSchemes(req, &supported, &first, &target);
+    ok(ret, "failed to query authentication schemes %u\n", GetLastError());
+    ok(supported == WINHTTP_AUTH_SCHEME_BASIC, "got %x\n", supported);
+    ok(first == WINHTTP_AUTH_SCHEME_BASIC, "got %x\n", first);
+    ok(target == WINHTTP_AUTH_TARGET_SERVER, "got %x\n", target);
 
     ret = WinHttpSetCredentials(req, WINHTTP_AUTH_TARGET_SERVER, WINHTTP_AUTH_SCHEME_NTLM, NULL, NULL, NULL);
     ok(ret, "failed to set credentials %u\n", GetLastError());
