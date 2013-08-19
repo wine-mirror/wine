@@ -1067,8 +1067,8 @@ typedef struct _settextex {
 #define ST_DEFAULT	      0x00000000	
 #define ST_KEEPUNDO           0x00000001
 #define ST_SELECTION          0x00000002
-
 #define ST_NEWCHARS           0x00000004
+#define ST_UNICODE            0x00000008
 
 #ifdef __cplusplus
 }
