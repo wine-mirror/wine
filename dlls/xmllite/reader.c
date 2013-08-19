@@ -1766,12 +1766,99 @@ static HRESULT reader_parse_qname(xmlreader *reader, strval *prefix, strval *loc
     return S_OK;
 }
 
+/* Applies normalization rules to a single char, used for attribute values.
+
+   Rules include 2 steps:
+
+   1) replacing \r\n with a single \n;
+   2) replacing all whitespace chars with ' '.
+
+ */
+static void reader_normalize_space(xmlreader *reader, WCHAR *ptr)
+{
+    encoded_buffer *buffer = &reader->input->buffer->utf16;
+
+    if (!is_wchar_space(*ptr)) return;
+
+    if (*ptr == '\r' && *(ptr+1) == '\n')
+    {
+        int len = buffer->written - ((char*)ptr - buffer->data) - 2*sizeof(WCHAR);
+        memmove(ptr+1, ptr+2, len);
+    }
+    *ptr = ' ';
+}
+
 /* [66] CharRef ::= '&#' [0-9]+ ';' | '&#x' [0-9a-fA-F]+ ';'
    [67] Reference ::= EntityRef | CharRef
    [68] EntityRef ::= '&' Name ';' */
 static HRESULT reader_parse_reference(xmlreader *reader)
 {
-    FIXME("References not supported\n");
+    WCHAR *start = reader_get_cur(reader), *ptr;
+    WCHAR ch = 0;
+    int len;
+
+    /* skip '&' */
+    reader_skipn(reader, 1);
+    ptr = reader_get_cur(reader);
+
+    if (*ptr == '#')
+    {
+        encoded_buffer *buffer = &reader->input->buffer->utf16;
+
+        reader_skipn(reader, 1);
+        ptr = reader_get_cur(reader);
+
+        /* hex char or decimal */
+        if (*ptr == 'x')
+        {
+            reader_skipn(reader, 1);
+            ptr = reader_get_cur(reader);
+
+            while (*ptr != ';')
+            {
+                if ((*ptr >= '0' && *ptr <= '9'))
+                    ch = ch*16 + *ptr - '0';
+                else if ((*ptr >= 'a' && *ptr <= 'f'))
+                    ch = ch*16 + *ptr - 'a' + 10;
+                else if ((*ptr >= 'A' && *ptr <= 'F'))
+                    ch = ch*16 + *ptr - 'A' + 10;
+                else
+                    return ch ? WC_E_SEMICOLON : WC_E_HEXDIGIT;
+                reader_skipn(reader, 1);
+                ptr = reader_get_cur(reader);
+            }
+        }
+        else
+        {
+            while (*ptr != ';')
+            {
+                if ((*ptr >= '0' && *ptr <= '9'))
+                {
+                    ch = ch*10 + *ptr - '0';
+                    reader_skipn(reader, 1);
+                    ptr = reader_get_cur(reader);
+                }
+                else
+                    return ch ? WC_E_SEMICOLON : WC_E_DIGIT;
+            }
+        }
+
+        if (!is_char(ch)) return WC_E_XMLCHARACTER;
+
+        /* normalize */
+        if (is_wchar_space(ch)) ch = ' ';
+
+        len = buffer->written - ((char*)ptr - buffer->data) - sizeof(WCHAR);
+        memmove(start+1, ptr+1, len);
+        buffer->cur = (char*)start;
+
+        *start = ch;
+
+        return S_OK;
+    }
+    else
+        FIXME("Entity references not supported\n");
+
     return E_NOTIMPL;
 }
 
@@ -1806,7 +1893,10 @@ static HRESULT reader_parse_attvalue(xmlreader *reader, strval *value)
             if (FAILED(hr)) return hr;
         }
         else
+        {
+            reader_normalize_space(reader, ptr);
             reader_skipn(reader, 1);
+        }
         ptr = reader_get_cur(reader);
     }
 
@@ -1848,7 +1938,7 @@ static HRESULT reader_parse_attribute(xmlreader *reader)
     hr = reader_parse_attvalue(reader, &value);
     if (FAILED(hr)) return hr;
 
-    TRACE("%s=\"%s\"\n", debugstr_wn(local.str, local.len), debugstr_wn(value.str, value.len));
+    TRACE("%s=%s\n", debugstr_wn(local.str, local.len), debugstr_wn(value.str, value.len));
     return reader_add_attr(reader, &local, &value);
 }
 
