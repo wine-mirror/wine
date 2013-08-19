@@ -31,6 +31,7 @@
 #include "shlobj.h"
 #include "msdaguid.h"
 #include "initguid.h"
+#include "oledberr.h"
 
 #include "wine/test.h"
 
@@ -159,6 +160,45 @@ static void test_errorinfo(void)
         ok(hr == S_OK, "got %08x\n", hr);
         if(hr == S_OK)
         {
+            ERRORINFO info, info2, info3;
+            ULONG cnt = 0;
+
+            memset(&info, 0, sizeof(ERRORINFO));
+            info.dwMinor = 1;
+            memset(&info2, 0, sizeof(ERRORINFO));
+            info2.dwMinor = 2;
+            memset(&info3, 0, sizeof(ERRORINFO));
+
+            hr = IErrorRecords_AddErrorRecord(errrecs, NULL, 268435456, NULL, NULL, 0);
+            ok(hr == E_INVALIDARG, "got %08x\n", hr);
+
+            hr = IErrorRecords_AddErrorRecord(errrecs, &info, 1, NULL, NULL, 0);
+            ok(hr == S_OK, "got %08x\n", hr);
+
+            hr = IErrorRecords_GetRecordCount(errrecs, &cnt);
+            ok(hr == S_OK, "got %08x\n", hr);
+            ok(cnt == 1, "expected 1 got %d\n", cnt);
+
+            hr = IErrorRecords_AddErrorRecord(errrecs, &info2, 2, NULL, NULL, 0);
+            ok(hr == S_OK, "got %08x\n", hr);
+
+            hr = IErrorRecords_GetRecordCount(errrecs, &cnt);
+            ok(hr == S_OK, "got %08x\n", hr);
+            ok(cnt == 2, "expected 2 got %d\n", cnt);
+
+            hr = IErrorRecords_GetBasicErrorInfo(errrecs, 0, NULL);
+            ok(hr == E_INVALIDARG, "got %08x\n", hr);
+
+            hr = IErrorRecords_GetBasicErrorInfo(errrecs, 100, &info3);
+            ok(hr == DB_E_BADRECORDNUM, "got %08x\n", hr);
+
+            hr = IErrorRecords_GetBasicErrorInfo(errrecs, 0, &info3);
+            todo_wine ok(hr == S_OK, "got %08x\n", hr);
+            if(hr == S_OK)
+            {
+                ok(info3.dwMinor == 2, "expected 2 got %d\n", info3.dwMinor);
+            }
+
             IErrorRecords_Release(errrecs);
         }
 

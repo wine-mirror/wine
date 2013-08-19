@@ -41,7 +41,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(oledb);
 struct ErrorEntry
 {
     struct list entry;
-    ERRORINFO*      info;
+    ERRORINFO       info;
     DISPPARAMS      dispparams;
     IUnknown        *unknown;
     DWORD           lookupID;
@@ -109,6 +109,7 @@ static ULONG WINAPI IErrorInfoImpl_Release(IErrorInfo* iface)
 {
     ErrorInfoImpl *This = impl_from_IErrorInfo(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
+    struct ErrorEntry *cursor, *cursor2;
 
     TRACE("(%p)->%u\n",This,ref+1);
 
@@ -117,6 +118,15 @@ static ULONG WINAPI IErrorInfoImpl_Release(IErrorInfo* iface)
         SysFreeString(This->source);
         SysFreeString(This->description);
         SysFreeString(This->help_file);
+
+        LIST_FOR_EACH_ENTRY_SAFE(cursor, cursor2, &This->errors, struct ErrorEntry, entry)
+        {
+            list_remove(&cursor->entry);
+            if(cursor->unknown)
+                IUnknown_Release(cursor->unknown);
+
+            heap_free(cursor);
+        }
         heap_free(This);
     }
     return ref;
@@ -226,11 +236,26 @@ static HRESULT WINAPI errorrec_AddErrorRecord(IErrorRecords *iface, ERRORINFO *p
         DWORD dwLookupID, DISPPARAMS *pdispparams, IUnknown *punkCustomError, DWORD dwDynamicErrorID)
 {
     ErrorInfoImpl *This = impl_from_IErrorRecords(iface);
+    struct ErrorEntry *entry;
 
-    FIXME("(%p)->(%p %d %p %p %d)\n", This, pErrorInfo, dwLookupID, pdispparams, punkCustomError, dwDynamicErrorID);
+    TRACE("(%p)->(%p %d %p %p %d)\n", This, pErrorInfo, dwLookupID, pdispparams, punkCustomError, dwDynamicErrorID);
 
-    if(pErrorInfo)
+    if(!pErrorInfo)
         return E_INVALIDARG;
+
+    entry = heap_alloc(sizeof(*entry));
+    if(!entry)
+        return E_OUTOFMEMORY;
+
+    entry->info = *pErrorInfo;
+    if(pdispparams)
+        entry->dispparams = *pdispparams;
+    entry->unknown = punkCustomError;
+    if(entry->unknown)
+        IUnknown_AddRef(entry->unknown);
+    entry->lookupID = dwDynamicErrorID;
+
+    list_add_head(&This->errors, &entry->entry);
 
     return S_OK;
 }
