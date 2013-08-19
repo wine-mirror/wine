@@ -1668,7 +1668,8 @@ static BOOL do_authorization( request_t *request, DWORD target, DWORD scheme_fla
 static BOOL set_credentials( request_t *request, DWORD target, DWORD scheme, const WCHAR *username,
                              const WCHAR *password )
 {
-    if (!username || !password)
+    if ((scheme == WINHTTP_AUTH_SCHEME_BASIC || scheme == WINHTTP_AUTH_SCHEME_DIGEST) &&
+        (!username || !password))
     {
         set_last_error( ERROR_INVALID_PARAMETER );
         return FALSE;
@@ -1678,17 +1679,23 @@ static BOOL set_credentials( request_t *request, DWORD target, DWORD scheme, con
     case WINHTTP_AUTH_TARGET_SERVER:
     {
         heap_free( request->connect->username );
-        if (!(request->connect->username = strdupW( username ))) return FALSE;
+        if (!username) request->connect->username = NULL;
+        else if (!(request->connect->username = strdupW( username ))) return FALSE;
+
         heap_free( request->connect->password );
-        if (!(request->connect->password = strdupW( password ))) return FALSE;
+        if (!password) request->connect->password = NULL;
+        else if (!(request->connect->password = strdupW( password ))) return FALSE;
         break;
     }
     case WINHTTP_AUTH_TARGET_PROXY:
     {
         heap_free( request->connect->session->proxy_username );
-        if (!(request->connect->session->proxy_username = strdupW( username ))) return FALSE;
+        if (!username) request->connect->session->proxy_username = NULL;
+        else if (!(request->connect->session->proxy_username = strdupW( username ))) return FALSE;
+
         heap_free( request->connect->session->proxy_password );
-        if (!(request->connect->session->proxy_password = strdupW( password ))) return FALSE;
+        if (!password) request->connect->session->proxy_password = NULL;
+        else if (!(request->connect->session->proxy_password = strdupW( password ))) return FALSE;
         break;
     }
     default:
