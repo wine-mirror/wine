@@ -1353,7 +1353,7 @@ static HRESULT WINAPI IDirect3DRM3Impl_Load(IDirect3DRM3 *iface, void *source, v
         D3DRMLOADTEXTURECALLBACK load_tex_cb, void *load_tex_ctx, IDirect3DRMFrame3 *parent_frame)
 {
     DXFILELOADOPTIONS load_options;
-    LPDIRECTXFILE pDXFile = NULL;
+    IDirectXFile *file = NULL;
     LPDIRECTXFILEENUMOBJECT pEnumObject = NULL;
     LPDIRECTXFILEDATA pData = NULL;
     HRESULT hr;
@@ -1387,15 +1387,15 @@ static HRESULT WINAPI IDirect3DRM3Impl_Load(IDirect3DRM3 *iface, void *source, v
         return E_NOTIMPL;
     }
 
-    hr = DirectXFileCreate(&pDXFile);
+    hr = DirectXFileCreate(&file);
     if (hr != DXFILE_OK)
         goto end;
 
-    hr = IDirectXFile_RegisterTemplates(pDXFile, templates, strlen(templates));
+    hr = IDirectXFile_RegisterTemplates(file, templates, strlen(templates));
     if (hr != DXFILE_OK)
         goto end;
 
-    hr = IDirectXFile_CreateEnumObject(pDXFile, source, load_options, &pEnumObject);
+    hr = IDirectXFile_CreateEnumObject(file, source, load_options, &pEnumObject);
     if (hr != DXFILE_OK)
         goto end;
 
@@ -1460,8 +1460,8 @@ end:
         IDirectXFileData_Release(pData);
     if (pEnumObject)
         IDirectXFileEnumObject_Release(pEnumObject);
-    if (pDXFile)
-        IDirectXFile_Release(pDXFile);
+    if (file)
+        IDirectXFile_Release(file);
 
     return ret;
 }
