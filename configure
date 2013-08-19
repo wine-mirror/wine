@@ -5968,6 +5968,7 @@ for ac_header in \
 	kstat.h \
 	lber.h \
 	ldap.h \
+	libproc.h \
 	link.h \
 	linux/cdrom.h \
 	linux/compiler.h \

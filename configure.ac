@@ -428,6 +428,7 @@ AC_CHECK_HEADERS(\
 	kstat.h \
 	lber.h \
 	ldap.h \
+	libproc.h \
 	link.h \
 	linux/cdrom.h \
 	linux/compiler.h \

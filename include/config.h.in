@@ -351,6 +351,9 @@
 /* Define to 1 if you have the `ossaudio' library (-lossaudio). */
 #undef HAVE_LIBOSSAUDIO
 
+/* Define to 1 if you have the <libproc.h> header file. */
+#undef HAVE_LIBPROC_H
+
 /* Define to 1 if you have the <libv4l1.h> header file. */
 #undef HAVE_LIBV4L1_H
 
