@@ -32,7 +32,21 @@
 #define DB_E_BADSTORAGEFLAG                 0x80040e26
 #define DB_E_BADCOMPAREOP                   0x80040e27
 #define DB_E_BADSTATUSVALUE                 0x80040e28
-
+#define DB_E_CANTSCROLLBACKWARDS            0x80040e29
+#define DB_E_BADREGIONHANDLE                0x80040e2a
+#define DB_E_NONCONTIGUOUSRANGE             0x80040e2b
+#define DB_E_INVALIDTRANSITION              0x80040e2c
+#define DB_E_NOTASUBREGION                  0x80040e2d
+#define DB_E_MULTIPLESTATEMENTS             0x80040e2e
+#define DB_E_INTEGRITYVIOLATION             0x80040e2f
+#define DB_E_BADTYPENAME                    0x80040e30
+#define DB_E_ABORTLIMITREACHED              0x80040e31
+#define DB_E_ROWSETINCOMMAND                0x80040e32
+#define DB_E_CANTTRANSLATE                  0x80040e33
+#define DB_E_DUPLICATEINDEXID               0x80040e34
+#define DB_E_NOINDEX                        0x80040e35
+#define DB_E_INDEXINUSE                     0x80040e36
+#define DB_E_NOTABLE                        0x80040e37
 #define DB_E_CONCURRENCYVIOLATION           0x80040e38
 
 #define DB_E_TABLEINUSE                     0x80040e40
@@ -41,6 +55,14 @@
 #define DB_E_BOOKMARKSKIPPED                0x80040e43
 #define DB_E_BADPROPERTYVALUE               0x80040e44
 #define DB_E_INVALID                        0x80040e45
+#define DB_E_BADACCESSORFLAGS               0x80040e46
+#define DB_E_BADSTORAGEFLAGS                0x80040e47
+#define DB_E_BYREFACCESSORNOTSUPPORTED      0x80040e48
+#define DB_E_NULLACCESSORNOTSUPPORTED       0x80040e49
+#define DB_E_NOTPREPARED                    0x80040e4a
+#define DB_E_BADACCESSORTYPE                0x80040e4b
+#define DB_E_WRITEONLYACCESSOR              0x80040e4c
+#define DB_SEC_E_AUTH_FAILED                0x80040e4d
 
 #define DB_E_ALREADYINITIALIZED             0x80040e52
 #define DB_E_DATAOVERFLOW                   0x80040e57
