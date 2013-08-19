@@ -226,6 +226,7 @@ struct element
 {
     struct list entry;
     strval qname;
+    strval localname;
 };
 
 typedef struct
@@ -437,7 +438,7 @@ static void reader_dec_depth(xmlreader *reader)
     if (reader->depth > 1) reader->depth--;
 }
 
-static HRESULT reader_push_element(xmlreader *reader, strval *qname)
+static HRESULT reader_push_element(xmlreader *reader, strval *qname, strval *localname)
 {
     struct element *elem;
     HRESULT hr;
@@ -447,6 +448,14 @@ static HRESULT reader_push_element(xmlreader *reader, strval *qname)
 
     hr = reader_strvaldup(reader, qname, &elem->qname);
     if (FAILED(hr)) {
+        reader_free(reader, elem);
+        return hr;
+    }
+
+    hr = reader_strvaldup(reader, localname, &elem->localname);
+    if (FAILED(hr))
+    {
+        reader_free_strvalued(reader, &elem->qname);
         reader_free(reader, elem);
         return hr;
     }
@@ -473,6 +482,7 @@ static void reader_pop_element(xmlreader *reader)
     {
         list_remove(&elem->entry);
         reader_free_strvalued(reader, &elem->qname);
+        reader_free_strvalued(reader, &elem->localname);
         reader_free(reader, elem);
         reader_dec_depth(reader);
     }
@@ -1524,8 +1534,7 @@ static HRESULT reader_parse_sys_literal(xmlreader *reader, strval *literal)
     }
     if (*cur == quote) reader_skipn(reader, 1);
 
-    literal->str = start;
-    literal->len = cur-start;
+    reader_init_strvalue(start, cur-start, literal);
     TRACE("%s\n", debugstr_wn(start, cur-start));
     return S_OK;
 }
@@ -1872,7 +1881,7 @@ static HRESULT reader_parse_stag(xmlreader *reader, strval *prefix, strval *loca
         {
             /* skip '>' */
             reader_skipn(reader, 1);
-            return reader_push_element(reader, qname);
+            return reader_push_element(reader, qname, local);
         }
 
         hr = reader_parse_attribute(reader);
@@ -2413,6 +2422,9 @@ static HRESULT WINAPI xmlreader_MoveToFirstAttribute(IXmlReader* iface)
 
     if (!This->attr_count) return S_FALSE;
     This->attr = LIST_ENTRY(list_head(&This->attrs), struct attribute, entry);
+    reader_set_strvalue(This, StringValue_LocalName, &This->attr->localname);
+    reader_set_strvalue(This, StringValue_Value, &This->attr->value);
+
     return S_OK;
 }
 
@@ -2430,7 +2442,11 @@ static HRESULT WINAPI xmlreader_MoveToNextAttribute(IXmlReader* iface)
 
     next = list_next(&This->attrs, &This->attr->entry);
     if (next)
+    {
         This->attr = LIST_ENTRY(next, struct attribute, entry);
+        reader_set_strvalue(This, StringValue_LocalName, &This->attr->localname);
+        reader_set_strvalue(This, StringValue_Value, &This->attr->value);
+    }
 
     return next ? S_OK : S_FALSE;
 }
@@ -2446,11 +2462,21 @@ static HRESULT WINAPI xmlreader_MoveToAttributeByName(IXmlReader* iface,
 static HRESULT WINAPI xmlreader_MoveToElement(IXmlReader* iface)
 {
     xmlreader *This = impl_from_IXmlReader(iface);
+    struct element *elem;
 
     TRACE("(%p)\n", This);
 
     if (!This->attr_count) return S_FALSE;
     This->attr = NULL;
+
+    /* FIXME: support other node types with 'attributes' like DTD */
+    elem = LIST_ENTRY(list_head(&This->elements), struct element, entry);
+    if (elem)
+    {
+        reader_set_strvalue(This, StringValue_QualifiedName, &elem->qname);
+        reader_set_strvalue(This, StringValue_LocalName, &elem->localname);
+    }
+
     return S_OK;
 }
 
