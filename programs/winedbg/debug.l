@@ -61,7 +61,7 @@ void lexeme_flush(void)
     next_lexeme = 0;
 }
 
-static int read_input(const char* pfx, char* buf, int size)
+static size_t read_input(const char* pfx, char* buf, int size)
 {
     int len;
     static char*  last_line = NULL;
@@ -107,8 +107,7 @@ static int read_input(const char* pfx, char* buf, int size)
 }
 
 #define YY_INPUT(buf,result,max_size) \
-	if ((result = read_input("Wine-dbg>", buf, max_size)) < 0) \
-	    YY_FATAL_ERROR("read_input in flex scanner failed");
+        (result = read_input("Wine-dbg>", buf, max_size))
 
 static int syntax_error;
 %}
