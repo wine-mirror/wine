@@ -925,7 +925,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
         mode.refresh_rate = desc->refresh_rate;
         mode.scanline_ordering = WINED3D_SCANLINE_ORDERING_UNKNOWN;
 
-        if (FAILED(hr = wined3d_set_adapter_display_mode(device->wined3d, device->adapter->ordinal, &mode)))
+        if (FAILED(hr = wined3d_set_adapter_display_mode(device->wined3d, adapter->ordinal, &mode)))
         {
             WARN("Failed to set display mode, hr %#x.\n", hr);
             goto err;
@@ -944,7 +944,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
             WINED3DFMT_S1_UINT_D15_UNORM
         };
 
-        const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+        const struct wined3d_gl_info *gl_info = &adapter->gl_info;
 
         swapchain->context = HeapAlloc(GetProcessHeap(), 0, sizeof(*swapchain->context));
         if (!swapchain->context)
