@@ -1959,6 +1959,27 @@ static void test_basic_authentication(int port)
     ok(ret, "failed to query status code %u\n", GetLastError());
     ok(status == 401, "request failed unexpectedly %u\n", status);
 
+    ret = WinHttpSetCredentials(req, WINHTTP_AUTH_TARGET_SERVER, WINHTTP_AUTH_SCHEME_NTLM, NULL, NULL, NULL);
+    ok(ret, "failed to set credentials %u\n", GetLastError());
+
+    ret = WinHttpSetCredentials(req, WINHTTP_AUTH_TARGET_SERVER, WINHTTP_AUTH_SCHEME_PASSPORT, NULL, NULL, NULL);
+    ok(ret, "failed to set credentials %u\n", GetLastError());
+
+    ret = WinHttpSetCredentials(req, WINHTTP_AUTH_TARGET_SERVER, WINHTTP_AUTH_SCHEME_NEGOTIATE, NULL, NULL, NULL);
+    ok(ret, "failed to set credentials %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpSetCredentials(req, WINHTTP_AUTH_TARGET_SERVER, WINHTTP_AUTH_SCHEME_DIGEST, NULL, NULL, NULL);
+    error = GetLastError();
+    ok(!ret, "expected failure\n");
+    ok(error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %u\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpSetCredentials(req, WINHTTP_AUTH_TARGET_SERVER, WINHTTP_AUTH_SCHEME_BASIC, NULL, NULL, NULL);
+    error = GetLastError();
+    ok(!ret, "expected failure\n");
+    ok(error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %u\n", error);
+
     SetLastError(0xdeadbeef);
     ret = WinHttpSetCredentials(req, WINHTTP_AUTH_TARGET_SERVER, WINHTTP_AUTH_SCHEME_BASIC, userW, NULL, NULL);
     error = GetLastError();
