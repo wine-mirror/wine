@@ -511,12 +511,8 @@ static void test_ps_userstyle(void)
     LOGBRUSH lb;
     HPEN pen;
     INT size, i;
-
-    struct
-    {
-        EXTLOGPEN elp;
-        DWORD style_data[15];
-    } ext_pen;
+    char buffer[offsetof(EXTLOGPEN, elpStyleEntry[16])];
+    EXTLOGPEN *ext_pen = (EXTLOGPEN *)buffer;
 
     lb.lbColor = 0x00ff0000;
     lb.lbStyle = BS_SOLID;
@@ -561,11 +557,11 @@ static void test_ps_userstyle(void)
     pen = ExtCreatePen(PS_GEOMETRIC | PS_USERSTYLE, 50, &lb, 16, style);
     ok(pen != 0, "ExtCreatePen should not fail\n");
 
-    size = GetObject(pen, sizeof(ext_pen), &ext_pen);
+    size = GetObject(pen, sizeof(buffer), ext_pen);
     expect(FIELD_OFFSET(EXTLOGPEN,elpStyleEntry[16]), size);
 
     for(i = 0; i < 16; i++)
-        expect(style[i], ext_pen.elp.elpStyleEntry[i]);
+        expect(style[i], ext_pen->elpStyleEntry[i]);
 
     DeleteObject(pen);
 }
