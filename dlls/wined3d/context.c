@@ -1564,13 +1564,6 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_ALIGNMENT, device->surface_alignment);
     checkGLcall("glPixelStorei(GL_UNPACK_ALIGNMENT, device->surface_alignment);");
 
-    if (gl_info->supported[APPLE_CLIENT_STORAGE])
-    {
-        /* Most textures will use client storage if supported. Exceptions are
-         * non-native power of 2 textures and textures in DIB sections. */
-        gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
-        checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE)");
-    }
     if (gl_info->supported[ARB_VERTEX_BLEND])
     {
         /* Direct3D always uses n-1 weights for n world matrices and uses

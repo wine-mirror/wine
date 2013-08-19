@@ -871,13 +871,6 @@ static void create_dummy_textures(struct wined3d_device *device, struct wined3d_
      * We emulate this by creating dummy textures and binding them
      * to each texture stage when the currently set D3D texture is NULL. */
 
-    if (gl_info->supported[APPLE_CLIENT_STORAGE])
-    {
-        /* The dummy texture does not have client storage backing */
-        gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
-        checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE)");
-    }
-
     count = min(MAX_COMBINED_SAMPLERS, gl_info->limits.combined_samplers);
     for (i = 0; i < count; ++i)
     {
@@ -940,13 +933,6 @@ static void create_dummy_textures(struct wined3d_device *device, struct wined3d_
                 checkGLcall("glTexImage2D");
             }
         }
-    }
-
-    if (gl_info->supported[APPLE_CLIENT_STORAGE])
-    {
-        /* Re-enable because if supported it is enabled by default */
-        gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
-        checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE)");
     }
 }
 
@@ -4648,12 +4634,6 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
 
             context = context_acquire(device, NULL);
 
-            if (gl_info->supported[APPLE_CLIENT_STORAGE])
-            {
-                gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
-                checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE)");
-            }
-
             invalidate_active_texture(device, context);
             /* Create a new cursor texture */
             gl_info->gl_ops.gl.p_glGenTextures(1, &device->cursorTexture);
@@ -4663,12 +4643,6 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
             gl_info->gl_ops.gl.p_glTexImage2D(GL_TEXTURE_2D, 0, intfmt, width, height, 0, gl_format, type, mem);
             checkGLcall("glTexImage2D");
             HeapFree(GetProcessHeap(), 0, mem);
-
-            if (gl_info->supported[APPLE_CLIENT_STORAGE])
-            {
-                gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
-                checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE)");
-            }
 
             context_release(context);
         }

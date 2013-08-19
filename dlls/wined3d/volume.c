@@ -92,12 +92,6 @@ void volume_load(const struct wined3d_volume *volume, struct wined3d_context *co
             volume->resource.width, volume->resource.height, volume->resource.depth,
             0, format->glFormat, format->glType, volume->resource.allocatedMemory));
     checkGLcall("glTexImage3D");
-
-    /* When adding code releasing volume->resource.allocatedMemory to save
-     * data keep in mind that GL_UNPACK_CLIENT_STORAGE_APPLE is enabled by
-     * default if supported(GL_APPLE_client_storage). Thus do not release
-     * volume->resource.allocatedMemory if GL_APPLE_client_storage is
-     * supported. */
 }
 
 /* Do not call while under the GL lock. */

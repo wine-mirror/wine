@@ -694,7 +694,6 @@ static void surface_release_client_storage(struct wined3d_surface *surface)
     struct wined3d_context *context = context_acquire(surface->resource.device, NULL);
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
-    gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
     if (surface->texture_name)
     {
         surface_bind_and_dirtify(surface, context, FALSE);
@@ -707,7 +706,6 @@ static void surface_release_client_storage(struct wined3d_surface *surface)
         gl_info->gl_ops.gl.p_glTexImage2D(surface->texture_target, surface->texture_level,
                 GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     }
-    gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
 
     context_release(context);
 
@@ -2642,7 +2640,7 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
 static void surface_allocate_surface(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info,
         const struct wined3d_format *format, BOOL srgb)
 {
-    BOOL enable_client_storage = FALSE;
+    BOOL disable_client_storage = FALSE;
     GLsizei width = surface->pow2Width;
     GLsizei height = surface->pow2Height;
     const BYTE *mem = NULL;
@@ -2685,10 +2683,7 @@ static void surface_allocate_surface(struct wined3d_surface *surface, const stru
              * SFLAG_CONVERTED: The conversion destination memory is freed after loading the surface
              * allocatedMemory == NULL: Not defined in the extension. Seems to disable client storage effectively
              */
-            gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
-            checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE)");
             surface->flags &= ~SFLAG_CLIENT;
-            enable_client_storage = TRUE;
         }
         else
         {
@@ -2699,6 +2694,10 @@ static void surface_allocate_surface(struct wined3d_surface *surface, const stru
              * PBO. Instead use heapMemory, but get the alignment right. */
             mem = (BYTE *)(((ULONG_PTR)surface->resource.heapMemory
                     + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1));
+
+            gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+            checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE)");
+            disable_client_storage = TRUE;
         }
     }
 
@@ -2715,10 +2714,10 @@ static void surface_allocate_surface(struct wined3d_surface *surface, const stru
         checkGLcall("glTexImage2D");
     }
 
-    if (enable_client_storage)
+    if (disable_client_storage)
     {
-        gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
-        checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE)");
+        gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
+        checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE)");
     }
 }
 
