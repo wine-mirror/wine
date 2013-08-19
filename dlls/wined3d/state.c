@@ -4677,10 +4677,6 @@ static void viewport_miscpart(struct wined3d_context *context, const struct wine
         gl_info->gl_ops.gl.p_glViewport(vp.x, (height - (vp.y + vp.height)),
                 vp.width, vp.height);
     }
-
-    if (!isStateDirty(context, STATE_RENDER(WINED3D_RS_POINTSCALEENABLE)))
-        state_pscale(context, state, STATE_RENDER(WINED3D_RS_POINTSCALEENABLE));
-
     checkGLcall("glViewport");
 }
 
@@ -4688,7 +4684,8 @@ void viewport_vertexpart(struct wined3d_context *context, const struct wined3d_s
 {
     if (!isStateDirty(context, STATE_TRANSFORM(WINED3D_TS_PROJECTION)))
         transform_projection(context, state, STATE_TRANSFORM(WINED3D_TS_PROJECTION));
-    if (!isStateDirty(context, STATE_RENDER(WINED3D_RS_POINTSCALEENABLE)))
+    if (!isStateDirty(context, STATE_RENDER(WINED3D_RS_POINTSCALEENABLE))
+            && state->render_states[WINED3D_RS_POINTSCALEENABLE])
         state_pscale(context, state, STATE_RENDER(WINED3D_RS_POINTSCALEENABLE));
     /* Update the position fixup. */
     context->constant_update_mask |= WINED3D_SHADER_CONST_VS_POS_FIXUP;
