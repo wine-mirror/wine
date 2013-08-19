@@ -83,6 +83,7 @@ my @allfiles =
     [ 10001, "VENDORS/APPLE/JAPANESE.TXT",        0, "Mac Japanese" ],
     [ 10002, "VENDORS/APPLE/CHINTRAD.TXT",        0, "Mac Traditional Chinese" ],
     [ 10003, "VENDORS/APPLE/KOREAN.TXT",          0, "Mac Korean", 0xf8e5 ],
+    [ 10004, "VENDORS/APPLE/ARABIC.TXT",          0, "Mac Arabic", 0xf826 ],
     [ 10006, "VENDORS/MICSFT/MAC/GREEK.TXT",      0, "Mac Greek" ],
     [ 10007, "VENDORS/MICSFT/MAC/CYRILLIC.TXT",   0, "Mac Cyrillic" ],
     [ 10008, "VENDORS/APPLE/CHINSIMP.TXT",        0, "Mac Simplified Chinese" ],
@@ -561,9 +562,16 @@ sub read_codepage_file($)
             next;
         }
         # 0x12 <LR>+0x3456
-        if (/^0x([0-9a-fA-F]+)\s+<[LR]+>\+0x([0-9a-fA-F]+)\s+(\#.*)?/)
+        if (/^0x([0-9a-fA-F]+)\s+<LR>\+0x([0-9a-fA-F]+)\s+(\#.*)?/)
         {
             add_mapping( hex $1, hex $2 );
+            next;
+        }
+        # 0x12 <RL>+0x3456
+        if (/^0x([0-9a-fA-F]+)\s+<RL>\+0x([0-9a-fA-F]+)\s+(\#.*)?/)
+        {
+            my $uni = hex $2;
+            add_mapping( hex $1, $uni ) if $uni >= 0x80;
             next;
         }
         die "$name: Unrecognized line $_\n";

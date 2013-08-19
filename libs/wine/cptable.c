@@ -66,6 +66,7 @@ extern union cptable cptable_10000;
 extern union cptable cptable_10001;
 extern union cptable cptable_10002;
 extern union cptable cptable_10003;
+extern union cptable cptable_10004;
 extern union cptable cptable_10006;
 extern union cptable cptable_10007;
 extern union cptable cptable_10008;
@@ -95,7 +96,7 @@ extern union cptable cptable_28604;
 extern union cptable cptable_28605;
 extern union cptable cptable_28606;
 
-static const union cptable * const cptables[70] =
+static const union cptable * const cptables[71] =
 {
     &cptable_037,
     &cptable_424,
@@ -139,6 +140,7 @@ static const union cptable * const cptables[70] =
     &cptable_10001,
     &cptable_10002,
     &cptable_10003,
+    &cptable_10004,
     &cptable_10006,
     &cptable_10007,
     &cptable_10008,
