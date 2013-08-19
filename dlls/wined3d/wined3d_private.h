@@ -944,15 +944,6 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
         UINT start_instance, UINT instance_count, BOOL indexed) DECLSPEC_HIDDEN;
 DWORD get_flexible_vertex_size(DWORD d3dvtVertexType) DECLSPEC_HIDDEN;
 
-typedef void (WINE_GLAPI *glAttribFunc)(const void *data);
-typedef void (WINE_GLAPI *glMultiTexCoordFunc)(GLenum unit, const void *data);
-extern glAttribFunc position_funcs[WINED3D_FFP_EMIT_COUNT] DECLSPEC_HIDDEN;
-extern glAttribFunc diffuse_funcs[WINED3D_FFP_EMIT_COUNT] DECLSPEC_HIDDEN;
-extern glAttribFunc specular_func_3ubv DECLSPEC_HIDDEN;
-extern glAttribFunc specular_funcs[WINED3D_FFP_EMIT_COUNT] DECLSPEC_HIDDEN;
-extern glAttribFunc normal_funcs[WINED3D_FFP_EMIT_COUNT] DECLSPEC_HIDDEN;
-extern glMultiTexCoordFunc multi_texcoord_funcs[WINED3D_FFP_EMIT_COUNT] DECLSPEC_HIDDEN;
-
 #define eps 1e-8
 
 #define GET_TEXCOORD_SIZE_FROM_FVF(d3dvtVertexType, tex_num) \
@@ -1612,9 +1603,23 @@ struct wined3d_d3d_limits
     UINT ffp_blend_stages;
 };
 
+typedef void (WINE_GLAPI *wined3d_ffp_attrib_func)(const void *data);
+typedef void (WINE_GLAPI *wined3d_ffp_texcoord_func)(GLenum unit, const void *data);
+extern wined3d_ffp_attrib_func specular_func_3ubv DECLSPEC_HIDDEN;
+
+struct wined3d_ffp_attrib_ops
+{
+    wined3d_ffp_attrib_func position[WINED3D_FFP_EMIT_COUNT];
+    wined3d_ffp_attrib_func diffuse[WINED3D_FFP_EMIT_COUNT];
+    wined3d_ffp_attrib_func specular[WINED3D_FFP_EMIT_COUNT];
+    wined3d_ffp_attrib_func normal[WINED3D_FFP_EMIT_COUNT];
+    wined3d_ffp_texcoord_func texcoord[WINED3D_FFP_EMIT_COUNT];
+};
+
 struct wined3d_d3d_info
 {
     struct wined3d_d3d_limits limits;
+    struct wined3d_ffp_attrib_ops ffp_attrib_ops;
     BOOL xyzrhw;
     BOOL vs_clipping;
     DWORD valid_rt_mask;
