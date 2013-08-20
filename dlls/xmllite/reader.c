@@ -207,9 +207,9 @@ static const struct IUnknownVtbl xmlreaderinputvtbl;
  */
 typedef struct
 {
-    WCHAR *start; /* input position where value starts */
-    UINT len;     /* length in WCHARs, altered after ReadValueChunk */
     WCHAR *str;   /* allocated null-terminated string */
+    UINT   len;   /* length in WCHARs, altered after ReadValueChunk */
+    WCHAR *start; /* input position where value starts */
 } strval;
 
 static WCHAR emptyW[] = {0};
@@ -1788,11 +1788,50 @@ static void reader_normalize_space(xmlreader *reader, WCHAR *ptr)
     *ptr = ' ';
 }
 
+static WCHAR get_predefined_entity(const strval *name)
+{
+    static const WCHAR entltW[]   = {'l','t'};
+    static const WCHAR entgtW[]   = {'g','t'};
+    static const WCHAR entampW[]  = {'a','m','p'};
+    static const WCHAR entaposW[] = {'a','p','o','s'};
+    static const WCHAR entquotW[] = {'q','u','o','t'};
+
+    static const strval lt   = { (WCHAR*)entltW,   2 };
+    static const strval gt   = { (WCHAR*)entgtW,   2 };
+    static const strval amp  = { (WCHAR*)entampW,  3 };
+    static const strval apos = { (WCHAR*)entaposW, 4 };
+    static const strval quot = { (WCHAR*)entquotW, 4 };
+
+    switch (name->str[0])
+    {
+    case 'l':
+        if (strval_eq(name, &lt)) return '<';
+        break;
+    case 'g':
+        if (strval_eq(name, &gt)) return '>';
+        break;
+    case 'a':
+        if (strval_eq(name, &amp))
+            return '&';
+        else if (strval_eq(name, &apos))
+            return '\'';
+        break;
+    case 'q':
+        if (strval_eq(name, &quot)) return '\"';
+        break;
+    default:
+        ;
+    }
+
+    return 0;
+}
+
 /* [66] CharRef ::= '&#' [0-9]+ ';' | '&#x' [0-9a-fA-F]+ ';'
    [67] Reference ::= EntityRef | CharRef
    [68] EntityRef ::= '&' Name ';' */
 static HRESULT reader_parse_reference(xmlreader *reader)
 {
+    encoded_buffer *buffer = &reader->input->buffer->utf16;
     WCHAR *start = reader_get_cur(reader), *ptr;
     WCHAR ch = 0;
     int len;
@@ -1803,8 +1842,6 @@ static HRESULT reader_parse_reference(xmlreader *reader)
 
     if (*ptr == '#')
     {
-        encoded_buffer *buffer = &reader->input->buffer->utf16;
-
         reader_skipn(reader, 1);
         ptr = reader_get_cur(reader);
 
@@ -1850,16 +1887,40 @@ static HRESULT reader_parse_reference(xmlreader *reader)
 
         len = buffer->written - ((char*)ptr - buffer->data) - sizeof(WCHAR);
         memmove(start+1, ptr+1, len);
-        buffer->cur = (char*)start;
+        buffer->cur = (char*)(start+1);
 
         *start = ch;
-
-        return S_OK;
     }
     else
-        FIXME("Entity references not supported\n");
+    {
+        strval name;
+        HRESULT hr;
 
-    return E_NOTIMPL;
+        hr = reader_parse_name(reader, &name);
+        if (FAILED(hr)) return hr;
+
+        ptr = reader_get_cur(reader);
+        if (*ptr != ';') return WC_E_SEMICOLON;
+
+        /* predefined entities resolve to a single character */
+        ch = get_predefined_entity(&name);
+        if (ch)
+        {
+            len = buffer->written - ((char*)ptr - buffer->data) - sizeof(WCHAR);
+            memmove(start+1, ptr+1, len);
+            buffer->cur = (char*)(start+1);
+
+            *start = ch;
+        }
+        else
+        {
+            FIXME("undeclared entity %s\n", debugstr_wn(name.str, name.len));
+            return WC_E_UNDECLAREDENTITY;
+        }
+
+    }
+
+    return S_OK;
 }
 
 /* [10 NS] AttValue ::= '"' ([^<&"] | Reference)* '"' | "'" ([^<&'] | Reference)* "'" */

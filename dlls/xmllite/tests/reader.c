@@ -1576,6 +1576,8 @@ static struct test_entry attributes_tests[] = {
     { "<a attr1=\"\r\n\tval\n\"/>", "attr1", "  val ", S_OK },
     { "<a attr1=\"val&#32;\"/>", "attr1", "val ", S_OK },
     { "<a attr1=\"val&#x20;\"/>", "attr1", "val ", S_OK },
+    { "<a attr1=\"&lt;&gt;&amp;&apos;&quot;\"/>", "attr1", "<>&\'\"", S_OK },
+    { "<a attr1=\"&entname;\"/>", NULL, NULL, WC_E_UNDECLAREDENTITY },
     { "<a attr1=\"val&#xfffe;\"/>", NULL, NULL, WC_E_XMLCHARACTER },
     { "<a attr1=\"val &#a;\"/>", NULL, NULL, WC_E_DIGIT, WC_E_SEMICOLON },
     { "<a attr1=\"val &#12a;\"/>", NULL, NULL, WC_E_SEMICOLON },
@@ -1583,6 +1585,7 @@ static struct test_entry attributes_tests[] = {
     { "<a attr1=\"val &#xg;\"/>", NULL, NULL, WC_E_HEXDIGIT, WC_E_SEMICOLON },
     { "<a attr1=attrvalue/>", NULL, NULL, WC_E_QUOTE },
     { "<a attr1=\"attr<value\"/>", NULL, NULL, WC_E_LESSTHAN },
+    { "<a attr1=\"&entname\"/>", NULL, NULL, WC_E_SEMICOLON },
     { NULL }
 };
 
