@@ -144,6 +144,7 @@ static DWORD delete_key( HKEY hkey )
     char name[MAX_PATH];
     DWORD ret;
 
+    if ((ret = RegOpenKeyExA( hkey, "", 0, KEY_ENUMERATE_SUB_KEYS, &hkey ))) return ret;
     while (!(ret = RegEnumKeyA(hkey, 0, name, sizeof(name))))
     {
         HKEY tmp;
@@ -156,6 +157,7 @@ static DWORD delete_key( HKEY hkey )
     }
     if (ret != ERROR_NO_MORE_ITEMS) return ret;
     RegDeleteKeyA( hkey, "" );
+    RegCloseKey(hkey);
     return 0;
 }
 
@@ -2214,10 +2216,10 @@ static void test_classesroot(void)
     res = RegSetValueExA(hkcr, "val2", 0, REG_SZ, (const BYTE *)"hkcr", sizeof("hkcr"));
     ok(res == ERROR_SUCCESS, "RegSetValueExA failed: %d, GLE=%x\n", res, GetLastError());
 
-    /* check that the value is not modified in hklm classes */
+    /* check that the value is modified in hklm classes */
     res = RegQueryValueExA(hklm, "val2", NULL, &type, (LPBYTE)buffer, &size);
     ok(res == ERROR_SUCCESS, "RegQueryValueExA failed: %d, GLE=%x\n", res, GetLastError());
-    ok(!strcmp( buffer, "hklm" ), "value set to '%s'\n", buffer );
+    ok(!strcmp( buffer, "hkcr" ), "value set to '%s'\n", buffer );
 
     if (RegCreateKeyExA( HKEY_CURRENT_USER, "Software\\Classes\\WineTestCls", 0, NULL, 0,
                          KEY_QUERY_VALUE|KEY_SET_VALUE, NULL, &hkey, NULL )) return;
