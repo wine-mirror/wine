@@ -505,7 +505,8 @@ static void read_file_test(void)
     ok( U(iosb).Status == 0xdeadbabe, "wrong status %x\n", U(iosb).Status );
     ok( iosb.Information == 0xdeadbeef, "wrong info %lu\n", iosb.Information );
     ok( !apc_count, "apc was called\n" );
-    WriteFile( write, buffer, 1, &written, NULL );
+    ret = WriteFile( write, buffer, 1, &written, NULL );
+    ok(ret && written == 1, "WriteFile error %d\n", GetLastError());
     /* iosb updated here by async i/o */
     Sleep(1);  /* FIXME: needed for wine to run the i/o apc  */
     ok( U(iosb).Status == 0, "wrong status %x\n", U(iosb).Status );
@@ -530,7 +531,8 @@ static void read_file_test(void)
     ok( U(iosb).Status == 0xdeadbabe, "wrong status %x\n", U(iosb).Status );
     ok( iosb.Information == 0xdeadbeef, "wrong info %lu\n", iosb.Information );
     ok( !apc_count, "apc was called\n" );
-    WriteFile( write, buffer, 1, &written, NULL );
+    ret = WriteFile( write, buffer, 1, &written, NULL );
+    ok(ret && written == 1, "WriteFile error %d\n", GetLastError());
     /* iosb updated here by async i/o */
     Sleep(1);  /* FIXME: needed for wine to run the i/o apc  */
     ok( U(iosb).Status == 0, "wrong status %x\n", U(iosb).Status );
@@ -548,7 +550,8 @@ static void read_file_test(void)
     U(iosb).Status = 0xdeadbabe;
     iosb.Information = 0xdeadbeef;
     ResetEvent( event );
-    WriteFile( write, buffer, 1, &written, NULL );
+    ret = WriteFile( write, buffer, 1, &written, NULL );
+    ok(ret && written == 1, "WriteFile error %d\n", GetLastError());
     status = pNtReadFile( read, event, apc, &apc_count, &iosb, buffer, 1, NULL, NULL );
     ok( status == STATUS_SUCCESS, "wrong status %x\n", status );
     ok( U(iosb).Status == 0, "wrong status %x\n", U(iosb).Status );
@@ -571,7 +574,8 @@ static void read_file_test(void)
     ok( U(iosb).Status == 0xdeadbabe, "wrong status %x\n", U(iosb).Status );
     ok( iosb.Information == 0xdeadbeef, "wrong info %lu\n", iosb.Information );
     ok( !apc_count, "apc was called\n" );
-    WriteFile( write, buffer, 1, &written, NULL );
+    ret = WriteFile( write, buffer, 1, &written, NULL );
+    ok(ret && written == 1, "WriteFile error %d\n", GetLastError());
     /* partial read is good enough */
     Sleep(1);  /* FIXME: needed for wine to run the i/o apc  */
     ok( is_signaled( event ), "event is signaled\n" );
