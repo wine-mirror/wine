@@ -1663,12 +1663,13 @@ RpcBindingSetAuthInfoExA( RPC_BINDING_HANDLE Binding, RPC_CSTR ServerPrincName,
           const RPC_SECURITY_QOS_V2_A *SecurityQos2 = (const RPC_SECURITY_QOS_V2_A *)SecurityQos;
           TRACE(", AdditionalSecurityInfoType=%d", SecurityQos2->AdditionalSecurityInfoType);
           if (SecurityQos2->AdditionalSecurityInfoType == RPC_C_AUTHN_INFO_TYPE_HTTP)
-              TRACE(", { %p, 0x%x, %d, %d, %p, %s }",
+              TRACE(", { %p, 0x%x, %d, %d, %p(%u), %s }",
                     SecurityQos2->u.HttpCredentials->TransportCredentials,
                     SecurityQos2->u.HttpCredentials->Flags,
                     SecurityQos2->u.HttpCredentials->AuthenticationTarget,
                     SecurityQos2->u.HttpCredentials->NumberOfAuthnSchemes,
                     SecurityQos2->u.HttpCredentials->AuthnSchemes,
+                    SecurityQos2->u.HttpCredentials->AuthnSchemes ? *SecurityQos2->u.HttpCredentials->AuthnSchemes : 0,
                     SecurityQos2->u.HttpCredentials->ServerCertificateSubject);
       }
       TRACE("}\n");
@@ -1793,12 +1794,13 @@ RpcBindingSetAuthInfoExW( RPC_BINDING_HANDLE Binding, RPC_WSTR ServerPrincName, 
           const RPC_SECURITY_QOS_V2_W *SecurityQos2 = (const RPC_SECURITY_QOS_V2_W *)SecurityQos;
           TRACE(", AdditionalSecurityInfoType=%d", SecurityQos2->AdditionalSecurityInfoType);
           if (SecurityQos2->AdditionalSecurityInfoType == RPC_C_AUTHN_INFO_TYPE_HTTP)
-              TRACE(", { %p, 0x%x, %d, %d, %p, %s }",
+              TRACE(", { %p, 0x%x, %d, %d, %p(%u), %s }",
                     SecurityQos2->u.HttpCredentials->TransportCredentials,
                     SecurityQos2->u.HttpCredentials->Flags,
                     SecurityQos2->u.HttpCredentials->AuthenticationTarget,
                     SecurityQos2->u.HttpCredentials->NumberOfAuthnSchemes,
                     SecurityQos2->u.HttpCredentials->AuthnSchemes,
+                    SecurityQos2->u.HttpCredentials->AuthnSchemes ? *SecurityQos2->u.HttpCredentials->AuthnSchemes : 0,
                     debugstr_w(SecurityQos2->u.HttpCredentials->ServerCertificateSubject));
       }
       TRACE("}\n");
