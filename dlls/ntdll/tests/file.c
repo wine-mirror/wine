@@ -1931,6 +1931,380 @@ static void test_NtCreateFile(void)
     DeleteFileW( path );
 }
 
+static void test_read_write(void)
+{
+    static const char contents[] = "1234567890abcd";
+    char buf[256];
+    HANDLE hfile;
+    OVERLAPPED ovl;
+    IO_STATUS_BLOCK iob;
+    DWORD ret, bytes, status;
+    LARGE_INTEGER offset;
+
+    hfile = create_temp_file(0);
+    if (!hfile) return;
+
+    iob.Status = -1;
+    iob.Information = -1;
+    status = pNtWriteFile(hfile, 0, NULL, NULL, &iob, contents, sizeof(contents), NULL, NULL);
+    ok(status == STATUS_SUCCESS, "NtWriteFile error %#x\n", status);
+    ok(iob.Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", iob.Status);
+    ok(iob.Information == sizeof(contents), "expected sizeof(contents), got %lu\n", iob.Information);
+
+    bytes = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = ReadFile(hfile, buf, sizeof(buf), &bytes, NULL);
+    ok(ret, "ReadFile error %d\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
+    ok(bytes == 0, "bytes %u\n", bytes);
+
+    SetFilePointer(hfile, 0, NULL, FILE_BEGIN);
+
+    bytes = 0;
+    SetLastError(0xdeadbeef);
+    ret = ReadFile(hfile, buf, sizeof(buf), &bytes, NULL);
+    ok(ret, "ReadFile error %d\n", GetLastError());
+    ok(bytes == sizeof(contents), "bytes %u\n", bytes);
+    ok(!memcmp(contents, buf, sizeof(contents)), "file contents mismatch\n");
+
+    SetFilePointer(hfile, sizeof(contents) - 4, NULL, FILE_BEGIN);
+
+    iob.Status = -1;
+    iob.Information = -1;
+    status = pNtWriteFile(hfile, 0, NULL, NULL, &iob, "DCBA", 4, NULL, NULL);
+    ok(status == STATUS_SUCCESS, "NtWriteFile error %#x\n", status);
+    ok(iob.Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", iob.Status);
+    ok(iob.Information == 4, "expected 4, got %lu\n", iob.Information);
+
+    SetFilePointer(hfile, 0, NULL, FILE_BEGIN);
+
+    bytes = 0;
+    SetLastError(0xdeadbeef);
+    ret = ReadFile(hfile, buf, sizeof(buf), &bytes, NULL);
+    ok(ret, "ReadFile error %d\n", GetLastError());
+    ok(bytes == sizeof(contents), "bytes %u\n", bytes);
+    ok(!memcmp(contents, buf, sizeof(contents) - 4), "file contents mismatch\n");
+    ok(!memcmp(buf + sizeof(contents) - 4, "DCBA", 4), "file contents mismatch\n");
+
+    SetFilePointer(hfile, 0, NULL, FILE_BEGIN);
+
+    bytes = 0;
+    SetLastError(0xdeadbeef);
+    ret = WriteFile(hfile, contents, sizeof(contents), &bytes, NULL);
+    ok(ret, "WriteFile error %d\n", GetLastError());
+    ok(bytes == sizeof(contents), "bytes %u\n", bytes);
+
+    iob.Status = -1;
+    iob.Information = -1;
+    status = pNtReadFile(hfile, 0, NULL, NULL, &iob, buf, sizeof(buf), NULL, NULL);
+    ok(status == STATUS_END_OF_FILE, "expected STATUS_END_OF_FILE, got %#x\n", status);
+todo_wine
+    ok(iob.Status == STATUS_END_OF_FILE, "expected STATUS_END_OF_FILE, got %#x\n", iob.Status);
+todo_wine
+    ok(iob.Information == 0, "expected 0, got %lu\n", iob.Information);
+
+    iob.Status = -1;
+    iob.Information = -1;
+    offset.QuadPart = sizeof(contents);
+    status = pNtReadFile(hfile, 0, NULL, NULL, &iob, buf, sizeof(buf), &offset, NULL);
+    ok(status == STATUS_END_OF_FILE, "expected STATUS_END_OF_FILE, got %#x\n", status);
+todo_wine
+    ok(iob.Status == STATUS_END_OF_FILE, "expected STATUS_END_OF_FILE, got %#x\n", iob.Status);
+todo_wine
+    ok(iob.Information == 0, "expected 0, got %lu\n", iob.Information);
+
+    SetFilePointer(hfile, 0, NULL, FILE_BEGIN);
+
+    bytes = 0;
+    SetLastError(0xdeadbeef);
+    ret = ReadFile(hfile, buf, sizeof(buf), &bytes, NULL);
+    ok(ret, "ReadFile error %d\n", GetLastError());
+    ok(bytes == sizeof(contents), "bytes %u\n", bytes);
+    ok(!memcmp(contents, buf, sizeof(contents)), "file contents mismatch\n");
+
+    iob.Status = -1;
+    iob.Information = -1;
+    status = pNtReadFile(hfile, 0, NULL, NULL, &iob, buf, sizeof(buf), NULL, NULL);
+    ok(status == STATUS_END_OF_FILE, "expected STATUS_END_OF_FILE, got %#x\n", status);
+todo_wine
+    ok(iob.Status == STATUS_END_OF_FILE, "expected STATUS_END_OF_FILE, got %#x\n", iob.Status);
+todo_wine
+    ok(iob.Information == 0, "expected 0, got %lu\n", iob.Information);
+
+    iob.Status = -1;
+    iob.Information = -1;
+    offset.QuadPart = 0;
+    status = pNtReadFile(hfile, 0, NULL, NULL, &iob, buf, sizeof(buf), &offset, NULL);
+    ok(status == STATUS_SUCCESS, "NtReadFile error %#x\n", status);
+    ok(iob.Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", iob.Status);
+    ok(iob.Information == sizeof(contents), "expected sizeof(contents), got %lu\n", iob.Information);
+    ok(!memcmp(contents, buf, sizeof(contents)), "file contents mismatch\n");
+
+    iob.Status = -1;
+    iob.Information = -1;
+    offset.QuadPart = sizeof(contents) - 4;
+    status = pNtWriteFile(hfile, 0, NULL, NULL, &iob, "DCBA", 4, &offset, NULL);
+    ok(status == STATUS_SUCCESS, "NtWriteFile error %#x\n", status);
+    ok(iob.Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", iob.Status);
+    ok(iob.Information == 4, "expected 4, got %lu\n", iob.Information);
+
+    iob.Status = -1;
+    iob.Information = -1;
+    offset.QuadPart = 0;
+    status = pNtReadFile(hfile, 0, NULL, NULL, &iob, buf, sizeof(buf), &offset, NULL);
+    ok(status == STATUS_SUCCESS, "NtReadFile error %#x\n", status);
+    ok(iob.Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", iob.Status);
+    ok(iob.Information == sizeof(contents), "expected sizeof(contents), got %lu\n", iob.Information);
+    ok(!memcmp(contents, buf, sizeof(contents) - 4), "file contents mismatch\n");
+    ok(!memcmp(buf + sizeof(contents) - 4, "DCBA", 4), "file contents mismatch\n");
+
+    S(U(ovl)).Offset = sizeof(contents) - 4;
+    S(U(ovl)).OffsetHigh = 0;
+    ovl.hEvent = 0;
+    bytes = 0;
+    SetLastError(0xdeadbeef);
+    ret = WriteFile(hfile, "ABCD", 4, &bytes, &ovl);
+    ok(ret, "WriteFile error %d\n", GetLastError());
+    ok(bytes == 4, "bytes %u\n", bytes);
+
+    S(U(ovl)).Offset = 0;
+    S(U(ovl)).OffsetHigh = 0;
+    ovl.Internal = -1;
+    ovl.InternalHigh = -1;
+    ovl.hEvent = 0;
+    bytes = 0;
+    SetLastError(0xdeadbeef);
+    ret = ReadFile(hfile, buf, sizeof(buf), &bytes, &ovl);
+    ok(ret, "ReadFile error %d\n", GetLastError());
+    ok(bytes == sizeof(contents), "bytes %u\n", bytes);
+    ok((NTSTATUS)ovl.Internal == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx\n", ovl.Internal);
+    ok(ovl.InternalHigh == sizeof(contents), "expected sizeof(contents), got %lu\n", ovl.InternalHigh);
+    ok(!memcmp(contents, buf, sizeof(contents) - 4), "file contents mismatch\n");
+    ok(!memcmp(buf + sizeof(contents) - 4, "ABCD", 4), "file contents mismatch\n");
+
+    CloseHandle(hfile);
+
+    hfile = create_temp_file(FILE_FLAG_OVERLAPPED);
+    if (!hfile) return;
+
+    bytes = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = WriteFile(hfile, contents, sizeof(contents), &bytes, NULL);
+todo_wine
+    ok(!ret, "WriteFile should fail\n");
+todo_wine
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+todo_wine
+    ok(bytes == 0, "bytes %u\n", bytes);
+
+    iob.Status = -1;
+    iob.Information = -1;
+    status = pNtWriteFile(hfile, 0, NULL, NULL, &iob, contents, sizeof(contents), NULL, NULL);
+todo_wine
+    ok(status == STATUS_INVALID_PARAMETER, "expected STATUS_INVALID_PARAMETER, got %#x\n", status);
+todo_wine
+    ok(iob.Status == -1, "expected -1, got %#x\n", iob.Status);
+todo_wine
+    ok(iob.Information == -1, "expected -1, got %ld\n", iob.Information);
+
+    S(U(ovl)).Offset = 0;
+    S(U(ovl)).OffsetHigh = 0;
+    ovl.Internal = -1;
+    ovl.InternalHigh = -1;
+    ovl.hEvent = 0;
+    bytes = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = WriteFile(hfile, contents, sizeof(contents), &bytes, &ovl);
+todo_wine
+    ok(!ret || broken(ret) /* see below */, "WriteFile should fail\n");
+todo_wine
+    ok(GetLastError() == ERROR_IO_PENDING || broken(GetLastError() == 0xdeadbeef), "expected ERROR_IO_PENDING, got %d\n", GetLastError());
+    /* even fully updated XP passes this test, but it looks like some VMs
+     * in a testbot get never updated, so overlapped IO is broken. Instead
+     * of fighting with broken tests and adding a bunch of broken() statements
+     * it's better to skip further tests completely.
+     */
+    if (GetLastError() != ERROR_IO_PENDING)
+    {
+todo_wine
+        win_skip("broken overlapped IO implementation, update your OS\n");
+        CloseHandle(hfile);
+        return;
+    }
+    ok(bytes == 0, "bytes %u\n", bytes);
+    ok(ovl.Internal == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx\n", ovl.Internal);
+    ok(ovl.InternalHigh == sizeof(contents), "expected sizeof(contents), got %lu\n", ovl.InternalHigh);
+
+    bytes = 0xdeadbeef;
+    ret = GetOverlappedResult(hfile, &ovl, &bytes, TRUE);
+    ok(ret, "GetOverlappedResult error %d\n", GetLastError());
+    ok(bytes == sizeof(contents), "bytes %u\n", bytes);
+
+    bytes = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = ReadFile(hfile, buf, sizeof(buf), &bytes, NULL);
+    ok(!ret, "ReadFile should fail\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    ok(bytes == 0, "bytes %u\n", bytes);
+
+    iob.Status = -1;
+    iob.Information = -1;
+    status = pNtReadFile(hfile, 0, NULL, NULL, &iob, buf, sizeof(buf), NULL, NULL);
+    ok(status == STATUS_INVALID_PARAMETER, "expected STATUS_INVALID_PARAMETER, got %#x\n", status);
+    ok(iob.Status == -1, "expected -1, got %#x\n", iob.Status);
+    ok(iob.Information == -1, "expected -1, got %ld\n", iob.Information);
+
+    offset.QuadPart = (LONGLONG)-2 /* FILE_USE_FILE_POINTER_POSITION */;
+    offset.QuadPart = sizeof(contents); /* magic -2 doen't seem to work under win7 */
+    S(U(ovl)).Offset = offset.u.LowPart;
+    S(U(ovl)).OffsetHigh = offset.u.HighPart;
+    ovl.Internal = -1;
+    ovl.InternalHigh = -1;
+    ovl.hEvent = 0;
+    bytes = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = ReadFile(hfile, buf, sizeof(buf), &bytes, &ovl);
+    ok(!ret, "ReadFile should fail\n");
+    ok(GetLastError() == ERROR_IO_PENDING || broken(GetLastError() == ERROR_HANDLE_EOF), "expected ERROR_IO_PENDING, got %d\n", GetLastError());
+    /* even fully updated XP passes this test, but it looks like some VMs
+     * in a testbot get never updated, so overlapped IO is broken. Instead
+     * of fighting with broken tests and adding a bunch of broken() statements
+     * it's better to skip further tests completely.
+     */
+    if (GetLastError() != ERROR_IO_PENDING)
+    {
+        win_skip("broken overlapped IO implementation, update your OS\n");
+        CloseHandle(hfile);
+        return;
+    }
+    ok(bytes == 0, "bytes %u\n", bytes);
+    ok((NTSTATUS)ovl.Internal == STATUS_END_OF_FILE, "expected STATUS_END_OF_FILE, got %#lx\n", ovl.Internal);
+    ok(ovl.InternalHigh == 0, "expected 0, got %lu\n", ovl.InternalHigh);
+
+    bytes = 0xdeadbeef;
+    ret = GetOverlappedResult(hfile, &ovl, &bytes, TRUE);
+    ok(!ret, "GetOverlappedResult should report FALSE\n");
+    ok(GetLastError() == ERROR_HANDLE_EOF, "expected ERROR_HANDLE_EOF, got %d\n", GetLastError());
+    ok(bytes == 0, "expected 0, read %u\n", bytes);
+    ok((NTSTATUS)ovl.Internal == STATUS_END_OF_FILE, "expected STATUS_END_OF_FILE, got %#lx\n", ovl.Internal);
+    ok(ovl.InternalHigh == 0, "expected 0, got %lu\n", ovl.InternalHigh);
+
+    iob.Status = -1;
+    iob.Information = -1;
+    offset.QuadPart = sizeof(contents);
+    status = pNtReadFile(hfile, 0, NULL, NULL, &iob, buf, sizeof(buf), &offset, NULL);
+    ok(status == STATUS_PENDING, "expected STATUS_PENDING, got %#x\n", status);
+    ok(iob.Status == STATUS_END_OF_FILE, "expected STATUS_END_OF_FILE, got %#x\n", iob.Status);
+    ok(iob.Information == 0, "expected 0, got %lu\n", iob.Information);
+
+    S(U(ovl)).Offset = offset.u.LowPart;
+    S(U(ovl)).OffsetHigh = offset.u.HighPart;
+    ovl.Internal = iob.Status;
+    ovl.InternalHigh = iob.Information;
+    ovl.hEvent = 0;
+    bytes = 0xdeadbeef;
+    ret = GetOverlappedResult(hfile, &ovl, &bytes, TRUE);
+    ok(!ret, "GetOverlappedResult should report FALSE\n");
+    ok(GetLastError() == ERROR_HANDLE_EOF, "expected ERROR_HANDLE_EOF, got %d\n", GetLastError());
+    ok(bytes == 0, "expected 0, read %u\n", bytes);
+    ok((NTSTATUS)ovl.Internal == STATUS_END_OF_FILE, "expected STATUS_END_OF_FILE, got %#lx\n", ovl.Internal);
+    ok(ovl.InternalHigh == 0, "expected 0, got %lu\n", ovl.InternalHigh);
+
+    SetFilePointer(hfile, 0, NULL, FILE_BEGIN);
+
+    S(U(ovl)).Offset = 0;
+    S(U(ovl)).OffsetHigh = 0;
+    ovl.Internal = -1;
+    ovl.InternalHigh = -1;
+    ovl.hEvent = 0;
+    bytes = 0;
+    SetLastError(0xdeadbeef);
+    ret = ReadFile(hfile, buf, sizeof(buf), &bytes, &ovl);
+    ok(!ret, "ReadFile should fail\n");
+    ok(GetLastError() == ERROR_IO_PENDING, "expected ERROR_IO_PENDING, got %d\n", GetLastError());
+    ok(bytes == 0, "bytes %u\n", bytes);
+    ok((NTSTATUS)ovl.Internal == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx\n", ovl.Internal);
+    ok(ovl.InternalHigh == sizeof(contents), "expected sizeof(contents), got %lu\n", ovl.InternalHigh);
+
+    bytes = 0xdeadbeef;
+    ret = GetOverlappedResult(hfile, &ovl, &bytes, TRUE);
+    ok(ret, "GetOverlappedResult error %d\n", GetLastError());
+    ok(bytes == sizeof(contents), "bytes %u\n", bytes);
+    ok((NTSTATUS)ovl.Internal == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx\n", ovl.Internal);
+    ok(ovl.InternalHigh == sizeof(contents), "expected sizeof(contents), got %lu\n", ovl.InternalHigh);
+    ok(!memcmp(contents, buf, sizeof(contents)), "file contents mismatch\n");
+
+    iob.Status = -1;
+    iob.Information = -1;
+    offset.QuadPart = sizeof(contents) - 4;
+    status = pNtWriteFile(hfile, 0, NULL, NULL, &iob, "DCBA", 4, &offset, NULL);
+    ok(status == STATUS_PENDING || broken(status == STATUS_SUCCESS) /* before Vista */, "expected STATUS_PENDING, got %#x\n", status);
+    ok(iob.Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", iob.Status);
+    ok(iob.Information == 4, "expected 4, got %lu\n", iob.Information);
+
+    ret = WaitForSingleObject(hfile, 3000);
+    ok(ret == WAIT_OBJECT_0, "GetOverlappedResult error %d\n", ret);
+
+    iob.Status = -1;
+    iob.Information = -1;
+    offset.QuadPart = 0;
+    status = pNtReadFile(hfile, 0, NULL, NULL, &iob, buf, sizeof(buf), &offset, NULL);
+    ok(status == STATUS_PENDING, "expected STATUS_PENDING, got %#x\n", status);
+    ok(iob.Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", iob.Status);
+    ok(iob.Information == sizeof(contents), "expected sizeof(contents), got %lu\n", iob.Information);
+
+    ret = WaitForSingleObject(hfile, 3000);
+    ok(ret == WAIT_OBJECT_0, "GetOverlappedResult error %d\n", ret);
+    ok(!memcmp(contents, buf, sizeof(contents) - 4), "file contents mismatch\n");
+    ok(!memcmp(buf + sizeof(contents) - 4, "DCBA", 4), "file contents mismatch\n");
+
+    S(U(ovl)).Offset = sizeof(contents) - 4;
+    S(U(ovl)).OffsetHigh = 0;
+    ovl.Internal = -1;
+    ovl.InternalHigh = -1;
+    ovl.hEvent = 0;
+    bytes = 0;
+    SetLastError(0xdeadbeef);
+    ret = WriteFile(hfile, "ABCD", 4, &bytes, &ovl);
+    ok(!ret || broken(ret) /* before Vista */, "WriteFile should fail\n");
+    ok(GetLastError() == ERROR_IO_PENDING || broken(GetLastError() == 0xdeadbeef) /* before Vista */, "expected ERROR_IO_PENDING, got %d\n", GetLastError());
+    ok(bytes == 0 || broken(bytes == 4) /* before Vista */, "bytes %u\n", bytes);
+    ok((NTSTATUS)ovl.Internal == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx\n", ovl.Internal);
+    ok(ovl.InternalHigh == 4, "expected 4, got %lu\n", ovl.InternalHigh);
+
+    bytes = 0xdeadbeef;
+    ret = GetOverlappedResult(hfile, &ovl, &bytes, TRUE);
+    ok(ret, "GetOverlappedResult error %d\n", GetLastError());
+    ok(bytes == 4, "bytes %u\n", bytes);
+    ok((NTSTATUS)ovl.Internal == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx\n", ovl.Internal);
+    ok(ovl.InternalHigh == 4, "expected 4, got %lu\n", ovl.InternalHigh);
+
+    S(U(ovl)).Offset = 0;
+    S(U(ovl)).OffsetHigh = 0;
+    ovl.Internal = -1;
+    ovl.InternalHigh = -1;
+    ovl.hEvent = 0;
+    bytes = 0;
+    SetLastError(0xdeadbeef);
+    ret = ReadFile(hfile, buf, sizeof(buf), &bytes, &ovl);
+    ok(!ret, "ReadFile should fail\n");
+    ok(GetLastError() == ERROR_IO_PENDING, "expected ERROR_IO_PENDING, got %d\n", GetLastError());
+    ok(bytes == 0, "bytes %u\n", bytes);
+    ok((NTSTATUS)ovl.Internal == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx\n", ovl.Internal);
+    ok(ovl.InternalHigh == sizeof(contents), "expected sizeof(contents), got %lu\n", ovl.InternalHigh);
+
+    bytes = 0xdeadbeef;
+    ret = GetOverlappedResult(hfile, &ovl, &bytes, TRUE);
+    ok(ret, "GetOverlappedResult error %d\n", GetLastError());
+    ok(bytes == sizeof(contents), "bytes %u\n", bytes);
+    ok((NTSTATUS)ovl.Internal == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx\n", ovl.Internal);
+    ok(ovl.InternalHigh == sizeof(contents), "expected sizeof(contents), got %lu\n", ovl.InternalHigh);
+    ok(!memcmp(contents, buf, sizeof(contents) - 4), "file contents mismatch\n");
+    ok(!memcmp(buf + sizeof(contents) - 4, "ABCD", 4), "file contents mismatch\n");
+
+    CloseHandle(hfile);
+}
+
 START_TEST(file)
 {
     HMODULE hkernel32 = GetModuleHandleA("kernel32.dll");
@@ -1967,6 +2341,7 @@ START_TEST(file)
     pNtQueryDirectoryFile   = (void *)GetProcAddress(hntdll, "NtQueryDirectoryFile");
     pNtQueryVolumeInformationFile = (void *)GetProcAddress(hntdll, "NtQueryVolumeInformationFile");
 
+    test_read_write();
     test_NtCreateFile();
     create_file_test();
     open_file_test();
