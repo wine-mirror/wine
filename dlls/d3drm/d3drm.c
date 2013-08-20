@@ -1355,7 +1355,7 @@ static HRESULT WINAPI IDirect3DRM3Impl_Load(IDirect3DRM3 *iface, void *source, v
     DXFILELOADOPTIONS load_options;
     IDirectXFile *file = NULL;
     IDirectXFileEnumObject *enum_object = NULL;
-    LPDIRECTXFILEDATA pData = NULL;
+    IDirectXFileData *data = NULL;
     HRESULT hr;
     const GUID* pGuid;
     DWORD size;
@@ -1399,11 +1399,11 @@ static HRESULT WINAPI IDirect3DRM3Impl_Load(IDirect3DRM3 *iface, void *source, v
     if (hr != DXFILE_OK)
         goto end;
 
-    hr = IDirectXFileEnumObject_GetNextDataObject(enum_object, &pData);
+    hr = IDirectXFileEnumObject_GetNextDataObject(enum_object, &data);
     if (hr != DXFILE_OK)
         goto end;
 
-    hr = IDirectXFileData_GetType(pData, &pGuid);
+    hr = IDirectXFileData_GetType(data, &pGuid);
     if (hr != DXFILE_OK)
         goto end;
 
@@ -1415,7 +1415,7 @@ static HRESULT WINAPI IDirect3DRM3Impl_Load(IDirect3DRM3 *iface, void *source, v
         goto end;
     }
 
-    hr = IDirectXFileData_GetData(pData, NULL, &size, (void**)&pHeader);
+    hr = IDirectXFileData_GetData(data, NULL, &size, (void **)&pHeader);
     if ((hr != DXFILE_OK) || (size != sizeof(Header)))
         goto end;
 
@@ -1428,12 +1428,12 @@ static HRESULT WINAPI IDirect3DRM3Impl_Load(IDirect3DRM3 *iface, void *source, v
         goto end;
     }
 
-    IDirectXFileData_Release(pData);
-    pData = NULL;
+    IDirectXFileData_Release(data);
+    data = NULL;
 
     while (1)
     {
-        hr = IDirectXFileEnumObject_GetNextDataObject(enum_object, &pData);
+        hr = IDirectXFileEnumObject_GetNextDataObject(enum_object, &data);
         if (hr == DXFILEERR_NOMOREOBJECTS)
         {
             TRACE("No more object\n");
@@ -1445,19 +1445,19 @@ static HRESULT WINAPI IDirect3DRM3Impl_Load(IDirect3DRM3 *iface, void *source, v
             goto end;
         }
 
-        ret = load_data(iface, pData, iids, iid_count, load_cb, load_ctx, load_tex_cb, load_tex_ctx, parent_frame);
+        ret = load_data(iface, data, iids, iid_count, load_cb, load_ctx, load_tex_cb, load_tex_ctx, parent_frame);
         if (ret != D3DRM_OK)
             goto end;
 
-        IDirectXFileData_Release(pData);
-        pData = NULL;
+        IDirectXFileData_Release(data);
+        data = NULL;
     }
 
     ret = D3DRM_OK;
 
 end:
-    if (pData)
-        IDirectXFileData_Release(pData);
+    if (data)
+        IDirectXFileData_Release(data);
     if (enum_object)
         IDirectXFileEnumObject_Release(enum_object);
     if (file)
