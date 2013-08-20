@@ -1297,11 +1297,11 @@ NTSTATUS WINAPI NtCreateIoCompletion( PHANDLE CompletionPort, ACCESS_MASK Desire
  */
 NTSTATUS WINAPI NtSetIoCompletion( HANDLE CompletionPort, ULONG_PTR CompletionKey,
                                    ULONG_PTR CompletionValue, NTSTATUS Status,
-                                   ULONG NumberOfBytesTransferred )
+                                   SIZE_T NumberOfBytesTransferred )
 {
     NTSTATUS status;
 
-    TRACE("(%p, %lx, %lx, %x, %d)\n", CompletionPort, CompletionKey,
+    TRACE("(%p, %lx, %lx, %x, %lx)\n", CompletionPort, CompletionKey,
           CompletionValue, Status, NumberOfBytesTransferred);
 
     SERVER_START_REQ( add_completion )

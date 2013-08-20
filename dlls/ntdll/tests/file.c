@@ -72,7 +72,7 @@ static NTSTATUS (WINAPI *pNtCreateIoCompletion)(PHANDLE, ACCESS_MASK, POBJECT_AT
 static NTSTATUS (WINAPI *pNtOpenIoCompletion)(PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES);
 static NTSTATUS (WINAPI *pNtQueryIoCompletion)(HANDLE, IO_COMPLETION_INFORMATION_CLASS, PVOID, ULONG, PULONG);
 static NTSTATUS (WINAPI *pNtRemoveIoCompletion)(HANDLE, PULONG_PTR, PULONG_PTR, PIO_STATUS_BLOCK, PLARGE_INTEGER);
-static NTSTATUS (WINAPI *pNtSetIoCompletion)(HANDLE, ULONG_PTR, ULONG_PTR, NTSTATUS, ULONG);
+static NTSTATUS (WINAPI *pNtSetIoCompletion)(HANDLE, ULONG_PTR, ULONG_PTR, NTSTATUS, SIZE_T);
 static NTSTATUS (WINAPI *pNtSetInformationFile)(HANDLE, PIO_STATUS_BLOCK, PVOID, ULONG, FILE_INFORMATION_CLASS);
 static NTSTATUS (WINAPI *pNtQueryInformationFile)(HANDLE, PIO_STATUS_BLOCK, PVOID, ULONG, FILE_INFORMATION_CLASS);
 static NTSTATUS (WINAPI *pNtQueryDirectoryFile)(HANDLE,HANDLE,PIO_APC_ROUTINE,PVOID,PIO_STATUS_BLOCK,
@@ -990,8 +990,11 @@ static void test_iocp_setcompletion(HANDLE h)
 {
     NTSTATUS res;
     ULONG count;
+    SIZE_T size = 3;
 
-    res = pNtSetIoCompletion( h, CKEY_FIRST, CVALUE_FIRST, STATUS_INVALID_DEVICE_REQUEST, 3 );
+    if (sizeof(size) > 4) size |= (ULONGLONG)0x12345678 << 32;
+
+    res = pNtSetIoCompletion( h, CKEY_FIRST, CVALUE_FIRST, STATUS_INVALID_DEVICE_REQUEST, size );
     ok( res == STATUS_SUCCESS, "NtSetIoCompletion failed: %x\n", res );
 
     count = get_pending_msgs(h);
@@ -1000,7 +1003,12 @@ static void test_iocp_setcompletion(HANDLE h)
     if (get_msg(h))
     {
         ok( completionKey == CKEY_FIRST, "Invalid completion key: %lx\n", completionKey );
-        ok( ioSb.Information == 3, "Invalid ioSb.Information: %ld\n", ioSb.Information );
+        /* FIXME: Remove once Wine is fixed */
+        if (sizeof(size) > 4)
+todo_wine
+        ok( ioSb.Information == size, "Invalid ioSb.Information: %lu\n", ioSb.Information );
+        else
+        ok( ioSb.Information == size, "Invalid ioSb.Information: %lu\n", ioSb.Information );
         ok( U(ioSb).Status == STATUS_INVALID_DEVICE_REQUEST, "Invalid ioSb.Status: %x\n", U(ioSb).Status);
         ok( completionValue == CVALUE_FIRST, "Invalid completion value: %lx\n", completionValue );
     }
