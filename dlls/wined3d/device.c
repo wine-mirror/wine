@@ -5012,11 +5012,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     }
     else if (swapchain_desc->windowed)
     {
-        m.width = swapchain->orig_width;
-        m.height = swapchain->orig_height;
-        m.refresh_rate = 0;
-        m.format_id = swapchain->desc.backbuffer_format;
-        m.scanline_ordering = WINED3D_SCANLINE_ORDERING_UNKNOWN;
+        m = swapchain->original_mode;
     }
     else
     {
