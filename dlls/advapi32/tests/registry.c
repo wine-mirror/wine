@@ -2385,6 +2385,183 @@ static void test_classesroot(void)
     RegCloseKey( hkcrsub2 );
 }
 
+static void test_classesroot_enum(void)
+{
+    HKEY hkcu=0, hklm=0, hkcr=0, hkcusub[2]={0}, hklmsub[2]={0};
+    DWORD size;
+    static CHAR buffer[2];
+    LONG res;
+
+    /* prepare initial testing env in HKCU */
+    if (!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Classes\\WineTestCls", &hkcu ))
+    {
+        delete_key( hkcu );
+        RegCloseKey( hkcu );
+    }
+    res = RegCreateKeyExA( HKEY_CURRENT_USER, "Software\\Classes\\WineTestCls", 0, NULL, 0,
+                            KEY_SET_VALUE|KEY_ENUMERATE_SUB_KEYS, NULL, &hkcu, NULL );
+
+    if (res != ERROR_SUCCESS)
+    {
+        skip("failed to add a user class\n");
+        return;
+    }
+
+    res = RegOpenKeyA( HKEY_CLASSES_ROOT, "WineTestCls", &hkcr );
+    todo_wine ok(res == ERROR_SUCCESS ||
+                 broken(res == ERROR_FILE_NOT_FOUND /* WinNT */),
+                 "test key not found in hkcr: %d\n", res);
+    if (res)
+    {
+        skip("HKCR key merging not supported\n");
+        delete_key( hkcu );
+        RegCloseKey( hkcu );
+        return;
+    }
+
+    res = RegSetValueExA( hkcu, "X", 0, REG_SZ, (const BYTE *) "AA", 3 );
+    ok(res == ERROR_SUCCESS, "RegSetValueExA failed: %d\n", res);
+    res = RegSetValueExA( hkcu, "Y", 0, REG_SZ, (const BYTE *) "B", 2 );
+    ok(res == ERROR_SUCCESS, "RegSetValueExA failed: %d\n", res);
+    res = RegCreateKeyA( hkcu, "A", &hkcusub[0] );
+    ok(res == ERROR_SUCCESS, "RegCreateKeyA failed: %d\n", res);
+    res = RegCreateKeyA( hkcu, "B", &hkcusub[1] );
+    ok(res == ERROR_SUCCESS, "RegCreateKeyA failed: %d\n", res);
+
+    /* test on values in HKCU */
+    size = sizeof(buffer);
+    res = RegEnumValueA( hkcr, 0, buffer, &size, NULL, NULL, NULL, NULL );
+    ok(res == ERROR_SUCCESS, "RegEnumValueA failed: %d\n", res );
+    ok(!strcmp( buffer, "X" ), "expected 'X', got '%s'\n", buffer);
+    size = sizeof(buffer);
+    res = RegEnumValueA( hkcr, 1, buffer, &size, NULL, NULL, NULL, NULL );
+    ok(res == ERROR_SUCCESS, "RegEnumValueA failed: %d\n", res );
+    ok(!strcmp( buffer, "Y" ), "expected 'Y', got '%s'\n", buffer);
+    size = sizeof(buffer);
+    res = RegEnumValueA( hkcr, 2, buffer, &size, NULL, NULL, NULL, NULL );
+    ok(res == ERROR_NO_MORE_ITEMS, "expected ERROR_NO_MORE_ITEMS, got %d\n", res );
+
+    res = RegEnumKeyA( hkcr, 0, buffer, size );
+    ok(res == ERROR_SUCCESS, "RegEnumKey failed: %d\n", res );
+    ok(!strcmp( buffer, "A" ), "expected 'A', got '%s'\n", buffer);
+    res = RegEnumKeyA( hkcr, 1, buffer, size );
+    ok(res == ERROR_SUCCESS, "RegEnumKey failed: %d\n", res );
+    ok(!strcmp( buffer, "B" ), "expected 'B', got '%s'\n", buffer);
+    res = RegEnumKeyA( hkcr, 2, buffer, size );
+    ok(res == ERROR_NO_MORE_ITEMS, "expected ERROR_NO_MORE_ITEMS, got %d\n", res );
+
+    /* prepare test env in HKLM */
+    if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Classes\\WineTestCls", &hklm ))
+    {
+        delete_key( hklm );
+        RegCloseKey( hklm );
+    }
+
+    res = RegCreateKeyExA( HKEY_LOCAL_MACHINE, "Software\\Classes\\WineTestCls", 0, NULL, 0,
+                            KEY_SET_VALUE|KEY_ENUMERATE_SUB_KEYS, NULL, &hklm, NULL );
+
+    if (res == ERROR_ACCESS_DENIED)
+    {
+        RegCloseKey( hkcusub[0] );
+        RegCloseKey( hkcusub[1] );
+        delete_key( hkcu );
+        RegCloseKey( hkcu );
+        RegCloseKey( hkcr );
+        skip("not enough privileges to add a system class\n");
+        return;
+    }
+
+    res = RegSetValueExA( hklm, "X", 0, REG_SZ, (const BYTE *) "AB", 3 );
+    ok(res == ERROR_SUCCESS, "RegSetValueExA failed: %d\n", res);
+    res = RegSetValueExA( hklm, "Z", 0, REG_SZ, (const BYTE *) "C", 2 );
+    ok(res == ERROR_SUCCESS, "RegSetValueExA failed: %d\n", res);
+    res = RegCreateKeyA( hklm, "A", &hklmsub[0] );
+    ok(res == ERROR_SUCCESS, "RegCreateKeyA failed: %d\n", res);
+    res = RegCreateKeyA( hklm, "C", &hklmsub[1] );
+    ok(res == ERROR_SUCCESS, "RegCreateKeyA failed: %d\n", res);
+
+    /* test on values/keys in both HKCU and HKLM */
+    size = sizeof(buffer);
+    res = RegEnumValueA( hkcr, 0, buffer, &size, NULL, NULL, NULL, NULL );
+    ok(res == ERROR_SUCCESS, "RegEnumValueA failed: %d\n", res );
+    ok(!strcmp( buffer, "X" ), "expected 'X', got '%s'\n", buffer);
+    size = sizeof(buffer);
+    res = RegEnumValueA( hkcr, 1, buffer, &size, NULL, NULL, NULL, NULL );
+    ok(res == ERROR_SUCCESS, "RegEnumValueA failed: %d\n", res );
+    ok(!strcmp( buffer, "Y" ), "expected 'Y', got '%s'\n", buffer);
+    size = sizeof(buffer);
+    res = RegEnumValueA( hkcr, 2, buffer, &size, NULL, NULL, NULL, NULL );
+    ok(res == ERROR_SUCCESS, "RegEnumValueA failed: %d\n", res );
+    ok(!strcmp( buffer, "Z" ), "expected 'Z', got '%s'\n", buffer);
+    size = sizeof(buffer);
+    res = RegEnumValueA( hkcr, 3, buffer, &size, NULL, NULL, NULL, NULL );
+    ok(res == ERROR_NO_MORE_ITEMS, "expected ERROR_NO_MORE_ITEMS, got %d\n", res );
+
+    res = RegEnumKeyA( hkcr, 0, buffer, size );
+    ok(res == ERROR_SUCCESS, "RegEnumKey failed: %d\n", res );
+    ok(!strcmp( buffer, "A" ), "expected 'A', got '%s'\n", buffer);
+    res = RegEnumKeyA( hkcr, 1, buffer, size );
+    ok(res == ERROR_SUCCESS, "RegEnumKey failed: %d\n", res );
+    ok(!strcmp( buffer, "B" ), "expected 'B', got '%s'\n", buffer);
+    res = RegEnumKeyA( hkcr, 2, buffer, size );
+    ok(res == ERROR_SUCCESS, "RegEnumKey failed: %d\n", res );
+    ok(!strcmp( buffer, "C" ), "expected 'C', got '%s'\n", buffer);
+    res = RegEnumKeyA( hkcr, 3, buffer, size );
+    ok(res == ERROR_NO_MORE_ITEMS, "expected ERROR_NO_MORE_ITEMS, got %d\n", res );
+
+    /* delete values/keys from HKCU to test only on HKLM */
+    RegCloseKey( hkcusub[0] );
+    RegCloseKey( hkcusub[1] );
+    delete_key( hkcu );
+    RegCloseKey( hkcu );
+
+    size = sizeof(buffer);
+    res = RegEnumValueA( hkcr, 0, buffer, &size, NULL, NULL, NULL, NULL );
+    ok(res == ERROR_KEY_DELETED ||
+       res == ERROR_NO_SYSTEM_RESOURCES, /* Windows XP */
+       "expected ERROR_KEY_DELETED, got %d\n", res);
+    size = sizeof(buffer);
+    res = RegEnumKeyA( hkcr, 0, buffer, size );
+    ok(res == ERROR_KEY_DELETED ||
+       res == ERROR_NO_SYSTEM_RESOURCES, /* Windows XP */
+       "expected ERROR_KEY_DELETED, got %d\n", res);
+
+    /* reopen HKCR handle */
+    RegCloseKey( hkcr );
+    res = RegOpenKeyA( HKEY_CLASSES_ROOT, "WineTestCls", &hkcr );
+    ok(res == ERROR_SUCCESS, "test key not found in hkcr: %d\n", res);
+    if (res) goto cleanup;
+
+    /* test on values/keys in HKLM */
+    size = sizeof(buffer);
+    res = RegEnumValueA( hkcr, 0, buffer, &size, NULL, NULL, NULL, NULL );
+    ok(res == ERROR_SUCCESS, "RegEnumValueA failed: %d\n", res );
+    ok(!strcmp( buffer, "X" ), "expected 'X', got '%s'\n", buffer);
+    size = sizeof(buffer);
+    res = RegEnumValueA( hkcr, 1, buffer, &size, NULL, NULL, NULL, NULL );
+    ok(res == ERROR_SUCCESS, "RegEnumValueA failed: %d\n", res );
+    ok(!strcmp( buffer, "Z" ), "expected 'Z', got '%s'\n", buffer);
+    size = sizeof(buffer);
+    res = RegEnumValueA( hkcr, 2, buffer, &size, NULL, NULL, NULL, NULL );
+    ok(res == ERROR_NO_MORE_ITEMS, "expected ERROR_NO_MORE_ITEMS, got %d\n", res );
+
+    res = RegEnumKeyA( hkcr, 0, buffer, size );
+    ok(res == ERROR_SUCCESS, "RegEnumKey failed: %d\n", res );
+    ok(!strcmp( buffer, "A" ), "expected 'A', got '%s'\n", buffer);
+    res = RegEnumKeyA( hkcr, 1, buffer, size );
+    ok(res == ERROR_SUCCESS, "RegEnumKey failed: %d\n", res );
+    ok(!strcmp( buffer, "C" ), "expected 'C', got '%s'\n", buffer);
+    res = RegEnumKeyA( hkcr, 2, buffer, size );
+    ok(res == ERROR_NO_MORE_ITEMS, "expected ERROR_NO_MORE_ITEMS, got %d\n", res );
+
+cleanup:
+    RegCloseKey( hklmsub[0] );
+    RegCloseKey( hklmsub[1] );
+    delete_key( hklm );
+    RegCloseKey( hklm );
+    RegCloseKey( hkcr );
+}
+
 static void test_deleted_key(void)
 {
     HKEY hkey, hkey2;
@@ -2478,6 +2655,7 @@ START_TEST(registry)
     test_symlinks();
     test_redirection();
     test_classesroot();
+    test_classesroot_enum();
 
     /* SaveKey/LoadKey require the SE_BACKUP_NAME privilege to be set */
     if (set_privileges(SE_BACKUP_NAME, TRUE) &&
