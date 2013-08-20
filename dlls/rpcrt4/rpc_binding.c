@@ -1729,7 +1729,7 @@ RpcBindingSetAuthInfoExA( RPC_BINDING_HANDLE Binding, RPC_CSTR ServerPrincName,
     if (r == RPC_S_OK)
     {
       new_auth_info->server_principal_name = RPCRT4_strdupAtoW((char *)ServerPrincName);
-      if (new_auth_info->server_principal_name)
+      if (!ServerPrincName || new_auth_info->server_principal_name)
       {
         if (bind->AuthInfo) RpcAuthInfo_Release(bind->AuthInfo);
         bind->AuthInfo = new_auth_info;
