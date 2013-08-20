@@ -1026,6 +1026,9 @@ UINT CDECL macdrv_ShowWindow(HWND hwnd, INT cmd, RECT *rect, UINT swp)
     struct macdrv_win_data *data = get_win_data(hwnd);
     CGRect frame;
 
+    TRACE("win %p/%p cmd %d at %s flags %08x\n",
+          hwnd, data ? data->cocoa_window : NULL, cmd, wine_dbgstr_rect(rect), swp);
+
     if (!data || !data->cocoa_window) goto done;
     if (IsRectEmpty(rect)) goto done;
     if (GetWindowLongW(hwnd, GWL_STYLE) & WS_MINIMIZE)
@@ -1048,9 +1051,6 @@ UINT CDECL macdrv_ShowWindow(HWND hwnd, INT cmd, RECT *rect, UINT swp)
         thread_data->current_event->type != WINDOW_DID_MINIMIZE &&
         thread_data->current_event->type != WINDOW_DID_UNMINIMIZE)
         goto done;
-
-    TRACE("win %p/%p cmd %d at %s flags %08x\n",
-          hwnd, data->cocoa_window, cmd, wine_dbgstr_rect(rect), swp);
 
     macdrv_get_cocoa_window_frame(data->cocoa_window, &frame);
     *rect = rect_from_cgrect(frame);
