@@ -1228,6 +1228,8 @@ static LRESULT WOD_Open(WINMM_OpenInfo *info)
         WINMM_MMDevice *mmdevice;
 
         if(WINMM_IsMapper(info->req_device)){
+            if (g_outmmdevices_count == 0)
+                return MMSYSERR_BADDEVICEID;
             devices = g_out_mapper_devices;
             mmdevice = read_map(g_out_map, 0);
             lock = &g_devthread_lock;
@@ -1317,6 +1319,8 @@ static LRESULT WID_Open(WINMM_OpenInfo *info)
     HRESULT hr;
 
     if(WINMM_IsMapper(info->req_device)){
+        if (g_inmmdevices_count == 0)
+            return MMSYSERR_BADDEVICEID;
         devices = g_in_mapper_devices;
         mmdevice = read_map(g_in_map, 0);
         lock = &g_devthread_lock;
