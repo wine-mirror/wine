@@ -2355,6 +2355,98 @@ static RPC_STATUS rpcrt4_http_prepare_out_pipe(HINTERNET out_request,
     return RPC_S_OK;
 }
 
+static UINT encode_base64(const char *bin, unsigned int len, WCHAR *base64)
+{
+    static char enc[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    UINT i = 0, x;
+
+    while (len > 0)
+    {
+        /* first 6 bits, all from bin[0] */
+        base64[i++] = enc[(bin[0] & 0xfc) >> 2];
+        x = (bin[0] & 3) << 4;
+
+        /* next 6 bits, 2 from bin[0] and 4 from bin[1] */
+        if (len == 1)
+        {
+            base64[i++] = enc[x];
+            base64[i++] = '=';
+            base64[i++] = '=';
+            break;
+        }
+        base64[i++] = enc[x | ((bin[1] & 0xf0) >> 4)];
+        x = (bin[1] & 0x0f) << 2;
+
+        /* next 6 bits 4 from bin[1] and 2 from bin[2] */
+        if (len == 2)
+        {
+            base64[i++] = enc[x];
+            base64[i++] = '=';
+            break;
+        }
+        base64[i++] = enc[x | ((bin[2] & 0xc0) >> 6)];
+
+        /* last 6 bits, all from bin [2] */
+        base64[i++] = enc[bin[2] & 0x3f];
+        bin += 3;
+        len -= 3;
+    }
+    base64[i] = 0;
+    return i;
+}
+
+static RPC_STATUS insert_authorization_header(HINTERNET request, RpcQualityOfService *qos)
+{
+    static const WCHAR basicW[] =
+        {'A','u','t','h','o','r','i','z','a','t','i','o','n',':',' ','B','a','s','i','c',' '};
+    RPC_HTTP_TRANSPORT_CREDENTIALS_W *creds;
+    SEC_WINNT_AUTH_IDENTITY_W *id;
+    int len, datalen, userlen, passlen;
+    WCHAR *header, *ptr;
+    char *data;
+    RPC_STATUS status = RPC_S_SERVER_UNAVAILABLE;
+
+    if (!qos || qos->qos->AdditionalSecurityInfoType != RPC_C_AUTHN_INFO_TYPE_HTTP)
+        return RPC_S_OK;
+
+    creds = qos->qos->u.HttpCredentials;
+    if (creds->AuthenticationTarget != RPC_C_HTTP_AUTHN_TARGET_SERVER || !creds->NumberOfAuthnSchemes)
+        return RPC_S_OK;
+
+    if (creds->AuthnSchemes[0] != RPC_C_HTTP_AUTHN_SCHEME_BASIC)
+    {
+        FIXME("scheme %u not supported\n", creds->AuthnSchemes[0]);
+        return RPC_S_OK;
+    }
+    id = creds->TransportCredentials;
+    if (!id->User || !id->Password) return RPC_S_OK;
+
+    userlen = WideCharToMultiByte(CP_UTF8, 0, id->User, id->UserLength, NULL, 0, NULL, NULL);
+    passlen = WideCharToMultiByte(CP_UTF8, 0, id->Password, id->PasswordLength, NULL, 0, NULL, NULL);
+
+    datalen = userlen + passlen + 1;
+    if (!(data = HeapAlloc(GetProcessHeap(), 0, datalen))) return RPC_S_OUT_OF_MEMORY;
+
+    WideCharToMultiByte(CP_UTF8, 0, id->User, id->UserLength, data, userlen, NULL, NULL);
+    data[userlen] = ':';
+    WideCharToMultiByte(CP_UTF8, 0, id->Password, id->PasswordLength, data + userlen + 1, passlen, NULL, NULL);
+
+    len = ((datalen + 2) * 4) / 3;
+    if ((header = HeapAlloc(GetProcessHeap(), 0, sizeof(basicW) + (len + 2) * sizeof(WCHAR))))
+    {
+        memcpy(header, basicW, sizeof(basicW));
+        ptr = header + sizeof(basicW) / sizeof(basicW[0]);
+        len = encode_base64(data, datalen, ptr);
+        ptr[len++] = '\r';
+        ptr[len++] = '\n';
+        ptr[len] = 0;
+        if ((HttpAddRequestHeadersW(request, header, -1, HTTP_ADDREQ_FLAG_ADD_IF_NEW))) status = RPC_S_OK;
+        HeapFree(GetProcessHeap(), 0, header);
+    }
+    HeapFree(GetProcessHeap(), 0, data);
+    return status;
+}
+
 static RPC_STATUS rpcrt4_ncacn_http_open(RpcConnection* Connection)
 {
     RpcConnection_http *httpc = (RpcConnection_http *)Connection;
@@ -2415,6 +2507,10 @@ static RPC_STATUS rpcrt4_ncacn_http_open(RpcConnection* Connection)
         HeapFree(GetProcessHeap(), 0, url);
         return RPC_S_SERVER_UNAVAILABLE;
     }
+    status = insert_authorization_header(httpc->in_request, httpc->common.QOS);
+    if (status != RPC_S_OK)
+        return status;
+
     httpc->out_request = HttpOpenRequestW(httpc->session, wszVerbOut, url, NULL, NULL, wszAcceptTypes,
                                           flags, (DWORD_PTR)httpc->async_data);
     HeapFree(GetProcessHeap(), 0, url);
@@ -2423,6 +2519,9 @@ static RPC_STATUS rpcrt4_ncacn_http_open(RpcConnection* Connection)
         ERR("HttpOpenRequestW failed with error %d\n", GetLastError());
         return RPC_S_SERVER_UNAVAILABLE;
     }
+    status = insert_authorization_header(httpc->out_request, httpc->common.QOS);
+    if (status != RPC_S_OK)
+        return status;
 
     status = rpcrt4_http_prepare_in_pipe(httpc->in_request,
                                          httpc->async_data,
