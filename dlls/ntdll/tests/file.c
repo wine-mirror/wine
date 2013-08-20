@@ -863,9 +863,10 @@ static void append_file_test(void)
     NTSTATUS status;
     IO_STATUS_BLOCK iosb;
     DWORD written;
-    char buffer[128];
+    char path[MAX_PATH], buffer[MAX_PATH];
 
-    GetTempFileNameA( ".", "foo", 0, buffer );
+    GetTempPathA( MAX_PATH, path );
+    GetTempFileNameA( path, "foo", 0, buffer );
     /* It is possible to open a file with only FILE_APPEND_DATA access flags.
        It matches the O_WRONLY|O_APPEND open() posix behavior */
     handle = CreateFileA(buffer, FILE_APPEND_DATA, 0, NULL, CREATE_ALWAYS,
@@ -1872,7 +1873,6 @@ static void test_NtCreateFile(void)
     /*18*/{ FILE_SUPERSEDE, 0, 0, FILE_CREATED, FILE_ATTRIBUTE_ARCHIVE, TRUE }
     };
     static const WCHAR fooW[] = {'f','o','o',0};
-    static const WCHAR dotW[] = {'.',0};
     NTSTATUS status;
     HANDLE handle;
     WCHAR path[MAX_PATH];
@@ -1881,7 +1881,8 @@ static void test_NtCreateFile(void)
     UNICODE_STRING nameW;
     DWORD ret, i;
 
-    GetTempFileNameW(dotW, fooW, 0, path);
+    GetTempPathW(MAX_PATH, path);
+    GetTempFileNameW(path, fooW, 0, path);
     DeleteFileW(path);
     pRtlDosPathNameToNtPathName_U(path, &nameW, NULL, NULL);
 
