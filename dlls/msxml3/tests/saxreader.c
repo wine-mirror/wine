@@ -1553,8 +1553,8 @@ static HRESULT WINAPI isaxattributes_getValue(ISAXAttributes* iface, int index,
 {
     static const WCHAR attrvaluesW[][10] = {{'a','1','j','u','n','k',0},
                                             {'a','2','j','u','n','k',0},
-                                            {'<','&','"','>',0}};
-    static const int attrvalueslen[] = {2, 2, 4};
+                                            {'<','&','"','>','\'',0}};
+    static const int attrvalueslen[] = {2, 2, 5};
 
     ok(index >= 0 && index <= 2, "invalid index received %d\n", index);
 
@@ -3331,9 +3331,9 @@ struct writer_startendelement_t {
     ISAXAttributes *attr;
 };
 
-static const char startelement_xml[] = "<uri:local a:attr1=\"a1\" attr2=\"a2\" attr3=\"&lt;&amp;&quot;&gt;\">";
-static const char startendelement_xml[] = "<uri:local a:attr1=\"a1\" attr2=\"a2\" attr3=\"&lt;&amp;&quot;&gt;\"/>";
-static const char startendelement_noescape_xml[] = "<uri:local a:attr1=\"a1\" attr2=\"a2\" attr3=\"<&\">\"/>";
+static const char startelement_xml[] = "<uri:local a:attr1=\"a1\" attr2=\"a2\" attr3=\"&lt;&amp;&quot;&gt;\'\">";
+static const char startendelement_xml[] = "<uri:local a:attr1=\"a1\" attr2=\"a2\" attr3=\"&lt;&amp;&quot;&gt;\'\"/>";
+static const char startendelement_noescape_xml[] = "<uri:local a:attr1=\"a1\" attr2=\"a2\" attr3=\"<&\">\'\"/>";
 
 static const struct writer_startendelement_t writer_startendelement[] = {
     /* 0 */
@@ -3751,10 +3751,10 @@ struct writer_characters_t {
 };
 
 static const struct writer_characters_t writer_characters[] = {
-    { &CLSID_MXXMLWriter,   "< > & \"", "&lt; &gt; &amp; \"" },
-    { &CLSID_MXXMLWriter30, "< > & \"", "&lt; &gt; &amp; \"" },
-    { &CLSID_MXXMLWriter40, "< > & \"", "&lt; &gt; &amp; \"" },
-    { &CLSID_MXXMLWriter60, "< > & \"", "&lt; &gt; &amp; \"" },
+    { &CLSID_MXXMLWriter,   "< > & \" \'", "&lt; &gt; &amp; \" \'" },
+    { &CLSID_MXXMLWriter30, "< > & \" \'", "&lt; &gt; &amp; \" \'" },
+    { &CLSID_MXXMLWriter40, "< > & \" \'", "&lt; &gt; &amp; \" \'" },
+    { &CLSID_MXXMLWriter60, "< > & \" \'", "&lt; &gt; &amp; \" \'" },
     { NULL }
 };
 
