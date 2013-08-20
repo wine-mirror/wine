@@ -728,8 +728,8 @@ static void sync_window_position(struct macdrv_win_data *data, UINT swp_flags, c
     if (old_window_rect && IsRectEmpty(old_window_rect) != IsRectEmpty(&data->window_rect))
         sync_window_region(data, (HRGN)1);
 
-    TRACE("win %p/%p pos %s\n", data->hwnd, data->cocoa_window,
-          wine_dbgstr_rect(&data->whole_rect));
+    TRACE("win %p/%p whole_rect %s frame %s\n", data->hwnd, data->cocoa_window,
+          wine_dbgstr_rect(&data->whole_rect), wine_dbgstr_cgrect(frame));
 
     if (data->on_screen && (!(swp_flags & SWP_NOZORDER) || (swp_flags & SWP_SHOWWINDOW)))
         show_window(data);
