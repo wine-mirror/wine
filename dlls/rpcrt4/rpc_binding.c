@@ -1414,7 +1414,18 @@ BOOL RpcQualityOfService_IsEqual(const RpcQualityOfService *qos1, const RpcQuali
         if (http_credentials1->AuthenticationTarget != http_credentials2->AuthenticationTarget)
             return FALSE;
 
-        /* authentication schemes and server certificate subject not currently used */
+        if (http_credentials1->NumberOfAuthnSchemes != http_credentials2->NumberOfAuthnSchemes)
+            return FALSE;
+
+        if ((!http_credentials1->AuthnSchemes && http_credentials2->AuthnSchemes) ||
+            (http_credentials1->AuthnSchemes && !http_credentials2->AuthnSchemes))
+            return FALSE;
+
+        if (memcmp(http_credentials1->AuthnSchemes, http_credentials2->AuthnSchemes,
+                   http_credentials1->NumberOfAuthnSchemes * sizeof(http_credentials1->AuthnSchemes[0])))
+            return FALSE;
+
+        /* server certificate subject not currently used */
 
         if (http_credentials1->TransportCredentials != http_credentials2->TransportCredentials)
         {
