@@ -495,7 +495,6 @@ static void create_cocoa_window(struct macdrv_win_data *data)
     data->whole_rect = data->window_rect;
     macdrv_window_to_mac_rect(data, style, &data->whole_rect);
 
-    memset(&wf, 0, sizeof(wf));
     get_cocoa_window_features(data, style, ex_style, &wf);
 
     frame = cgrect_from_rect(data->whole_rect);
