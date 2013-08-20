@@ -553,6 +553,7 @@ struct queue_timer
 
 struct timer_queue
 {
+    DWORD magic;
     RTL_CRITICAL_SECTION cs;
     struct list timers;          /* sorted by expiration time */
     BOOL quit;         /* queue should be deleted; once set, never unset */
@@ -561,6 +562,7 @@ struct timer_queue
 };
 
 #define EXPIRE_NEVER (~(ULONGLONG) 0)
+#define TIMER_QUEUE_MAGIC 0x516d6954  /* TimQ */
 
 static void queue_remove_timer(struct queue_timer *t)
 {
@@ -748,6 +750,7 @@ static void WINAPI timer_queue_thread_proc(LPVOID p)
 
     NtClose(q->event);
     RtlDeleteCriticalSection(&q->cs);
+    q->magic = 0;
     RtlFreeHeap(GetProcessHeap(), 0, q);
 }
 
@@ -788,6 +791,7 @@ NTSTATUS WINAPI RtlCreateTimerQueue(PHANDLE NewTimerQueue)
     RtlInitializeCriticalSection(&q->cs);
     list_init(&q->timers);
     q->quit = FALSE;
+    q->magic = TIMER_QUEUE_MAGIC;
     status = NtCreateEvent(&q->event, EVENT_ALL_ACCESS, NULL, SynchronizationEvent, FALSE);
     if (status != STATUS_SUCCESS)
     {
@@ -830,7 +834,7 @@ NTSTATUS WINAPI RtlDeleteTimerQueueEx(HANDLE TimerQueue, HANDLE CompletionEvent)
     HANDLE thread;
     NTSTATUS status;
 
-    if (!q)
+    if (!q || q->magic != TIMER_QUEUE_MAGIC)
         return STATUS_INVALID_HANDLE;
 
     thread = q->thread;
@@ -925,8 +929,9 @@ NTSTATUS WINAPI RtlCreateTimer(PHANDLE NewTimer, HANDLE TimerQueue,
     NTSTATUS status;
     struct queue_timer *t;
     struct timer_queue *q = get_timer_queue(TimerQueue);
-    if (!q)
-        return STATUS_NO_MEMORY;
+
+    if (!q) return STATUS_NO_MEMORY;
+    if (q->magic != TIMER_QUEUE_MAGIC) return STATUS_INVALID_HANDLE;
 
     t = RtlAllocateHeap(GetProcessHeap(), 0, sizeof *t);
     if (!t)
