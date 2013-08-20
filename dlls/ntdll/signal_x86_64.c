@@ -1826,7 +1826,7 @@ static EXCEPTION_RECORD *setup_exception( ucontext_t *sigcontext, raise_func fun
     if (is_inside_signal_stack( stack ))
     {
         ERR( "nested exception on signal stack in thread %04x eip %016lx esp %016lx stack %p-%p\n",
-             GetCurrentThreadId(), RIP_sig(sigcontext), RSP_sig(sigcontext),
+             GetCurrentThreadId(), (ULONG_PTR)RIP_sig(sigcontext), (ULONG_PTR)RSP_sig(sigcontext),
              NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
         abort_thread(1);
     }
@@ -1836,7 +1836,7 @@ static EXCEPTION_RECORD *setup_exception( ucontext_t *sigcontext, raise_func fun
         (char *)stack > (char *)NtCurrentTeb()->Tib.StackBase)
     {
         WARN( "exception outside of stack limits in thread %04x eip %016lx esp %016lx stack %p-%p\n",
-              GetCurrentThreadId(), RIP_sig(sigcontext), RSP_sig(sigcontext),
+              GetCurrentThreadId(), (ULONG_PTR)RIP_sig(sigcontext), (ULONG_PTR)RSP_sig(sigcontext),
               NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
     }
     else if ((char *)(stack - 1) < (char *)NtCurrentTeb()->DeallocationStack + 4096)
@@ -1844,8 +1844,8 @@ static EXCEPTION_RECORD *setup_exception( ucontext_t *sigcontext, raise_func fun
         /* stack overflow on last page, unrecoverable */
         UINT diff = (char *)NtCurrentTeb()->DeallocationStack + 4096 - (char *)(stack - 1);
         ERR( "stack overflow %u bytes in thread %04x eip %016lx esp %016lx stack %p-%p-%p\n",
-             diff, GetCurrentThreadId(), RIP_sig(sigcontext),
-             RSP_sig(sigcontext), NtCurrentTeb()->DeallocationStack,
+             diff, GetCurrentThreadId(), (ULONG_PTR)RIP_sig(sigcontext),
+             (ULONG_PTR)RSP_sig(sigcontext), NtCurrentTeb()->DeallocationStack,
              NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
         abort_thread(1);
     }
@@ -1857,8 +1857,8 @@ static EXCEPTION_RECORD *setup_exception( ucontext_t *sigcontext, raise_func fun
         {
             UINT diff = (char *)NtCurrentTeb()->Tib.StackLimit - (char *)(stack - 1);
             ERR( "stack overflow %u bytes in thread %04x eip %016lx esp %016lx stack %p-%p-%p\n",
-                 diff, GetCurrentThreadId(), RIP_sig(sigcontext),
-                 RSP_sig(sigcontext), NtCurrentTeb()->DeallocationStack,
+                 diff, GetCurrentThreadId(), (ULONG_PTR)RIP_sig(sigcontext),
+                 (ULONG_PTR)RSP_sig(sigcontext), NtCurrentTeb()->DeallocationStack,
                  NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
             abort_thread(1);
         }
@@ -2255,7 +2255,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         rec->ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
         break;
     default:
-        ERR( "Got unexpected trap %ld\n", TRAP_sig(ucontext) );
+        ERR( "Got unexpected trap %ld\n", (ULONG_PTR)TRAP_sig(ucontext) );
         /* fall through */
     case TRAP_x86_NMI:       /* NMI interrupt */
     case TRAP_x86_DNA:       /* Device not available exception */
