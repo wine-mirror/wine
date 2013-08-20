@@ -64,6 +64,8 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_MATERIAL,
     WINED3D_CS_OP_RESET_STATE,
     WINED3D_CS_OP_STATEBLOCK,
+    WINED3D_CS_OP_SET_VS_CONSTS_F,
+    WINED3D_CS_OP_SET_PS_CONSTS_F,
     WINED3D_CS_OP_STOP,
 };
 
@@ -283,7 +285,13 @@ struct wined3d_cs_stateblock
 {
     enum wined3d_cs_op opcode;
     struct wined3d_state state;
-    float vs_consts_f[256 * 4], ps_consts_f[256 * 4];
+};
+
+struct wined3d_cs_set_consts_f
+{
+    enum wined3d_cs_op opcode;
+    UINT start_register, vector4f_count;
+    float constants[4];
 };
 
 /* FIXME: The list synchronization probably isn't particularly fast. */
@@ -936,13 +944,7 @@ void wined3d_cs_emit_set_texture(struct wined3d_cs *cs, UINT stage, struct wined
 
 static UINT wined3d_cs_exec_transfer_stateblock(struct wined3d_cs *cs, const void *data)
 {
-    const struct wined3d_adapter *adapter = cs->device->adapter;
     const struct wined3d_cs_stateblock *op = data;
-    UINT num_vs_consts_f = sizeof(op->vs_consts_f) / sizeof(*op->vs_consts_f) / 4;
-    UINT num_ps_consts_f = sizeof(op->ps_consts_f) / sizeof(*op->ps_consts_f) / 4;
-
-    num_vs_consts_f = min(num_vs_consts_f, adapter->d3d_info.limits.vs_uniform_count);
-    num_ps_consts_f = min(num_ps_consts_f, adapter->d3d_info.limits.ps_uniform_count);
 
     /* Don't memcpy the entire struct, we'll remove single items as we add dedicated
      * ops for setting states */
@@ -953,11 +955,9 @@ static UINT wined3d_cs_exec_transfer_stateblock(struct wined3d_cs *cs, const voi
 
     memcpy(cs->state.vs_consts_b, op->state.vs_consts_b, sizeof(cs->state.vs_consts_b));
     memcpy(cs->state.vs_consts_i, op->state.vs_consts_i, sizeof(cs->state.vs_consts_i));
-    memcpy(cs->state.vs_consts_f, op->state.vs_consts_f, sizeof(*cs->state.vs_consts_f) * num_vs_consts_f);
 
     memcpy(cs->state.ps_consts_b, op->state.ps_consts_b, sizeof(cs->state.ps_consts_b));
     memcpy(cs->state.ps_consts_i, op->state.ps_consts_i, sizeof(cs->state.ps_consts_i));
-    memcpy(cs->state.ps_consts_f, op->state.ps_consts_f, sizeof(*cs->state.ps_consts_f) * num_ps_consts_f);
 
     memcpy(cs->state.lights, op->state.lights, sizeof(cs->state.lights));
 
@@ -966,14 +966,7 @@ static UINT wined3d_cs_exec_transfer_stateblock(struct wined3d_cs *cs, const voi
 
 void wined3d_cs_emit_transfer_stateblock(struct wined3d_cs *cs, const struct wined3d_state *state)
 {
-    const struct wined3d_device *device = cs->device;
-    const struct wined3d_adapter *adapter = device->adapter;
     struct wined3d_cs_stateblock *op;
-    UINT num_vs_consts_f = sizeof(op->vs_consts_f) / sizeof(*op->vs_consts_f) / 4;
-    UINT num_ps_consts_f = sizeof(op->ps_consts_f) / sizeof(*op->ps_consts_f) / 4;
-
-    num_vs_consts_f = min(num_vs_consts_f, adapter->d3d_info.limits.vs_uniform_count);
-    num_ps_consts_f = min(num_ps_consts_f, adapter->d3d_info.limits.ps_uniform_count);
 
     op = cs->ops->require_space(cs, sizeof(*op));
     op->opcode = WINED3D_CS_OP_STATEBLOCK;
@@ -986,13 +979,9 @@ void wined3d_cs_emit_transfer_stateblock(struct wined3d_cs *cs, const struct win
 
     memcpy(op->state.vs_consts_b, state->vs_consts_b, sizeof(op->state.vs_consts_b));
     memcpy(op->state.vs_consts_i, state->vs_consts_i, sizeof(op->state.vs_consts_i));
-    op->state.vs_consts_f = op->vs_consts_f;
-    memcpy(op->state.vs_consts_f, state->vs_consts_f, sizeof(*op->state.vs_consts_f) * num_vs_consts_f);
 
     memcpy(op->state.ps_consts_b, state->ps_consts_b, sizeof(op->state.ps_consts_b));
     memcpy(op->state.ps_consts_i, state->ps_consts_i, sizeof(op->state.ps_consts_i));
-    op->state.ps_consts_f = op->ps_consts_f;
-    memcpy(op->state.ps_consts_f, state->ps_consts_f, sizeof(*op->state.ps_consts_f) * num_ps_consts_f);
 
     /* FIXME: This is not ideal. CS is still running synchronously, so this is ok.
      * It will go away soon anyway. */
@@ -1068,6 +1057,63 @@ void wined3d_cs_emit_set_shader(struct wined3d_cs *cs, enum wined3d_shader_type 
     op->opcode = WINED3D_CS_OP_SET_SHADER;
     op->type = type;
     op->shader = shader;
+}
+
+static UINT wined3d_cs_exec_set_vs_consts_f(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_set_consts_f *op = data;
+    struct wined3d_device *device = cs->device;
+
+    memcpy(cs->state.vs_consts_f + op->start_register * 4, op->constants,
+            sizeof(*cs->state.vs_consts_f) * 4 * op->vector4f_count);
+
+    device->shader_backend->shader_update_float_vertex_constants(device,
+            op->start_register, op->vector4f_count);
+
+    return sizeof(*op) + sizeof(op->constants) * (op->vector4f_count - 1);
+}
+
+static UINT wined3d_cs_exec_set_ps_consts_f(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_set_consts_f *op = data;
+    struct wined3d_device *device = cs->device;
+
+    memcpy(cs->state.ps_consts_f + op->start_register * 4, op->constants,
+            sizeof(*cs->state.ps_consts_f) * 4 * op->vector4f_count);
+
+    device->shader_backend->shader_update_float_pixel_constants(device,
+            op->start_register, op->vector4f_count);
+
+    return sizeof(*op) + sizeof(op->constants) * (op->vector4f_count - 1);
+}
+
+void wined3d_cs_emit_set_consts_f(struct wined3d_cs *cs, UINT start_register,
+        const float *constants, UINT vector4f_count, enum wined3d_shader_type type)
+{
+    struct wined3d_cs_set_consts_f *op;
+    UINT extra_space = vector4f_count - 1;
+
+    op = cs->ops->require_space(cs, sizeof(*op) + sizeof(op->constants) * extra_space);
+    switch (type)
+    {
+        case WINED3D_SHADER_TYPE_PIXEL:
+            op->opcode = WINED3D_CS_OP_SET_PS_CONSTS_F;
+            break;
+
+        case WINED3D_SHADER_TYPE_VERTEX:
+            op->opcode = WINED3D_CS_OP_SET_VS_CONSTS_F;
+            break;
+
+        case WINED3D_SHADER_TYPE_GEOMETRY:
+            FIXME("Invalid for geometry shaders\n");
+            return;
+
+        case WINED3D_SHADER_TYPE_COUNT:
+            break;
+    }
+    op->start_register = start_register;
+    op->vector4f_count = vector4f_count;
+    memcpy(op->constants, constants, sizeof(*constants) * 4 * vector4f_count);
 
     cs->ops->submit(cs);
 }
@@ -1348,6 +1394,8 @@ static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_MATERIAL               */ wined3d_cs_exec_set_material,
     /* WINED3D_CS_OP_RESET_STATE                */ wined3d_cs_exec_reset_state,
     /* WINED3D_CS_OP_STATEBLOCK                 */ wined3d_cs_exec_transfer_stateblock,
+    /* WINED3D_CS_OP_SET_VS_CONSTS_F            */ wined3d_cs_exec_set_vs_consts_f,
+    /* WINED3D_CS_OP_SET_PS_CONSTS_F            */ wined3d_cs_exec_set_ps_consts_f,
 };
 
 static void *wined3d_cs_st_require_space(struct wined3d_cs *cs, size_t size)
