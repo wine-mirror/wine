@@ -128,11 +128,11 @@ static ULONG WINAPI IDirect3DRMImpl_Release(IDirect3DRM* iface)
 }
 
 /*** IDirect3DRM methods ***/
-static HRESULT WINAPI IDirect3DRMImpl_CreateObject(IDirect3DRM* iface, REFCLSID rclsid, LPUNKNOWN pUnkOuter, REFIID riid, LPVOID *ppvObj)
+static HRESULT WINAPI IDirect3DRMImpl_CreateObject(IDirect3DRM *iface,
+        REFCLSID clsid, IUnknown *outer, REFIID iid, void **out)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM(iface);
-
-    FIXME("(%p/%p)->(%s,%p,%s,%p): stub\n", iface, This, debugstr_guid(rclsid), pUnkOuter, debugstr_guid(riid), ppvObj);
+    FIXME("iface %p, clsid %s, outer %p, iid %s, out %p stub!\n",
+            iface, debugstr_guid(clsid), outer, debugstr_guid(iid), out);
 
     return E_NOTIMPL;
 }
@@ -492,14 +492,11 @@ static ULONG WINAPI IDirect3DRM2Impl_Release(IDirect3DRM2* iface)
 }
 
 /*** IDirect3DRM2 methods ***/
-static HRESULT WINAPI IDirect3DRM2Impl_CreateObject(IDirect3DRM2* iface, REFCLSID rclsid,
-                                                    LPUNKNOWN pUnkOuter, REFIID riid,
-                                                    LPVOID *ppvObj)
+static HRESULT WINAPI IDirect3DRM2Impl_CreateObject(IDirect3DRM2 *iface,
+        REFCLSID clsid, IUnknown *outer, REFIID iid, void **out)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM2(iface);
-
-    FIXME("(%p/%p)->(%s,%p,%s,%p): stub\n", iface, This, debugstr_guid(rclsid), pUnkOuter,
-                                            debugstr_guid(riid), ppvObj);
+    FIXME("iface %p, clsid %s, outer %p, iid %s, out %p stub!\n",
+            iface, debugstr_guid(clsid), outer, debugstr_guid(iid), out);
 
     return E_NOTIMPL;
 }
@@ -872,13 +869,11 @@ static ULONG WINAPI IDirect3DRM3Impl_Release(IDirect3DRM3* iface)
 }
 
 /*** IDirect3DRM3 methods ***/
-static HRESULT WINAPI IDirect3DRM3Impl_CreateObject(IDirect3DRM3* iface, REFCLSID rclsid,
-                                                    LPUNKNOWN unkwn, REFIID riid, LPVOID* object)
+static HRESULT WINAPI IDirect3DRM3Impl_CreateObject(IDirect3DRM3 *iface,
+        REFCLSID clsid, IUnknown *outer, REFIID iid, void **out)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM3(iface);
-
-    FIXME("(%p/%p)->(%s,%p,%s,%p): stub\n", iface, This, debugstr_guid(rclsid), unkwn,
-          debugstr_guid(riid), object);
+    FIXME("iface %p, clsid %s, outer %p, iid %s, out %p stub!\n",
+            iface, debugstr_guid(clsid), outer, debugstr_guid(iid), out);
 
     return E_NOTIMPL;
 }

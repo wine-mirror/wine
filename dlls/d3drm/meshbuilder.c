@@ -415,13 +415,10 @@ static ULONG WINAPI IDirect3DRMMeshBuilder2Impl_Release(IDirect3DRMMeshBuilder2*
 }
 
 /*** IDirect3DRMObject methods ***/
-static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_Clone(IDirect3DRMMeshBuilder2* iface,
-                                                        LPUNKNOWN pUnkOuter, REFIID riid,
-                                                        LPVOID *ppvObj)
+static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_Clone(IDirect3DRMMeshBuilder2 *iface,
+        IUnknown *outer, REFIID iid, void **out)
 {
-    IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder2(iface);
-
-    FIXME("(%p)->(%p,%s,%p): stub\n", This, pUnkOuter, debugstr_guid(riid), ppvObj);
+    FIXME("iface %p, outer %p, iid %s, out %p stub!\n", iface, outer, debugstr_guid(iid), out);
 
     return E_NOTIMPL;
 }
@@ -1003,13 +1000,10 @@ static ULONG WINAPI IDirect3DRMMeshBuilder3Impl_Release(IDirect3DRMMeshBuilder3*
 }
 
 /*** IDirect3DRMObject methods ***/
-static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_Clone(IDirect3DRMMeshBuilder3* iface,
-                                                        LPUNKNOWN pUnkOuter, REFIID riid,
-                                                        LPVOID *ppvObj)
+static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_Clone(IDirect3DRMMeshBuilder3 *iface,
+        IUnknown *outer, REFIID iid, void **out)
 {
-    IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
-
-    FIXME("(%p)->(%p,%s,%p): stub\n", This, pUnkOuter, debugstr_guid(riid), ppvObj);
+    FIXME("iface %p, outer %p, iid %s, out %p stub!\n", iface, outer, debugstr_guid(iid), out);
 
     return E_NOTIMPL;
 }
@@ -2262,42 +2256,32 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_AddFacesIndexed(IDirect3DRMMes
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_CreateSubMesh(IDirect3DRMMeshBuilder3* iface,
-                                                                LPUNKNOWN *unkwn)
+static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_CreateSubMesh(IDirect3DRMMeshBuilder3 *iface, IUnknown **mesh)
 {
-    IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
-
-    FIXME("(%p)->(%p): stub\n", This, unkwn);
+    FIXME("iface %p, mesh %p stub!\n", iface, mesh);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_GetParentMesh(IDirect3DRMMeshBuilder3* iface,
-                                                                DWORD flags, LPUNKNOWN *unkwn)
+static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_GetParentMesh(IDirect3DRMMeshBuilder3 *iface,
+        DWORD flags, IUnknown **parent)
 {
-    IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
-
-    FIXME("(%p)->(%u,%p): stub\n", This, flags, unkwn);
+    FIXME("iface %p, flags %#x, parent %p stub!\n", iface, flags, parent);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_GetSubMeshes(IDirect3DRMMeshBuilder3* iface,
-                                                               LPDWORD count, LPUNKNOWN *unkwn)
+static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_GetSubMeshes(IDirect3DRMMeshBuilder3 *iface,
+        DWORD *count, IUnknown **meshes)
 {
-    IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
-
-    FIXME("(%p)->(%p,%p): stub\n", This, count, unkwn);
+    FIXME("iface %p, count %p, meshes %p stub!\n", iface, count, meshes);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_DeleteSubMesh(IDirect3DRMMeshBuilder3* iface,
-                                                                LPUNKNOWN unkwn)
+static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_DeleteSubMesh(IDirect3DRMMeshBuilder3 *iface, IUnknown *mesh)
 {
-    IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
-
-    FIXME("(%p)->(%p): stub\n", This, unkwn);
+    FIXME("iface %p, mesh %p stub!\n", iface, mesh);
 
     return E_NOTIMPL;
 }
@@ -2556,13 +2540,10 @@ static ULONG WINAPI IDirect3DRMMeshImpl_Release(IDirect3DRMMesh* iface)
 }
 
 /*** IDirect3DRMObject methods ***/
-static HRESULT WINAPI IDirect3DRMMeshImpl_Clone(IDirect3DRMMesh* iface,
-                                                LPUNKNOWN pUnkOuter, REFIID riid,
-                                                LPVOID *ppvObj)
+static HRESULT WINAPI IDirect3DRMMeshImpl_Clone(IDirect3DRMMesh *iface,
+        IUnknown *outer, REFIID iid, void **out)
 {
-    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
-
-    FIXME("(%p)->(%p,%s,%p): stub\n", This, pUnkOuter, debugstr_guid(riid), ppvObj);
+    FIXME("iface %p, outer %p, iid %s, out %p stub!\n", iface, outer, debugstr_guid(iid), out);
 
     return E_NOTIMPL;
 }

@@ -100,11 +100,10 @@ static ULONG WINAPI IDirect3DRMMaterial2Impl_Release(IDirect3DRMMaterial2* iface
 }
 
 /*** IDirect3DRMObject methods ***/
-static HRESULT WINAPI IDirect3DRMMaterial2Impl_Clone(IDirect3DRMMaterial2* iface,
-                                                     LPUNKNOWN unknown, REFIID riid,
-                                                     LPVOID* object)
+static HRESULT WINAPI IDirect3DRMMaterial2Impl_Clone(IDirect3DRMMaterial2 *iface,
+        IUnknown *outer, REFIID iid, void **out)
 {
-    FIXME("(%p)->(%p, %s, %p): stub\n", iface, unknown, debugstr_guid(riid), object);
+    FIXME("iface %p, outer %p, iid %s, out %p stub!\n", iface, outer, debugstr_guid(iid), out);
 
     return E_NOTIMPL;
 }

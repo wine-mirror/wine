@@ -96,13 +96,10 @@ static ULONG WINAPI IDirect3DRMLightImpl_Release(IDirect3DRMLight* iface)
 }
 
 /*** IDirect3DRMObject methods ***/
-static HRESULT WINAPI IDirect3DRMLightImpl_Clone(IDirect3DRMLight* iface,
-                                                  LPUNKNOWN unkwn, REFIID riid,
-                                                  LPVOID* object)
+static HRESULT WINAPI IDirect3DRMLightImpl_Clone(IDirect3DRMLight *iface,
+        IUnknown *outer, REFIID iid, void **out)
 {
-    IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
-
-    FIXME("(%p/%p)->(%p, %s, %p): stub\n", iface, This, unkwn, debugstr_guid(riid), object);
+    FIXME("iface %p, outer %p, iid %s, out %p stub!\n", iface, outer, debugstr_guid(iid), out);
 
     return E_NOTIMPL;
 }

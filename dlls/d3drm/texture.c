@@ -101,11 +101,10 @@ static ULONG WINAPI IDirect3DRMTexture2Impl_Release(IDirect3DRMTexture2* iface)
 }
 
 /*** IDirect3DRMObject methods ***/
-static HRESULT WINAPI IDirect3DRMTexture2Impl_Clone(IDirect3DRMTexture2* iface,
-                                                    LPUNKNOWN unknown, REFIID riid,
-                                                    LPVOID* object)
+static HRESULT WINAPI IDirect3DRMTexture2Impl_Clone(IDirect3DRMTexture2 *iface,
+        IUnknown *outer, REFIID iid, void **out)
 {
-    FIXME("(%p)->(%p, %s, %p): stub\n", iface, unknown, debugstr_guid(riid), object);
+    FIXME("iface %p, outer %p, iid %s, out %p stub!\n", iface, outer, debugstr_guid(iid), out);
 
     return E_NOTIMPL;
 }
@@ -470,11 +469,10 @@ static ULONG WINAPI IDirect3DRMTexture3Impl_Release(IDirect3DRMTexture3* iface)
 }
 
 /*** IDirect3DRMObject methods ***/
-static HRESULT WINAPI IDirect3DRMTexture3Impl_Clone(IDirect3DRMTexture3* iface,
-                                                     LPUNKNOWN unknown, REFIID riid,
-                                                     LPVOID* object)
+static HRESULT WINAPI IDirect3DRMTexture3Impl_Clone(IDirect3DRMTexture3 *iface,
+        IUnknown *outer, REFIID iid, void **out)
 {
-    FIXME("(%p)->(%p, %s, %p): stub\n", iface, unknown, debugstr_guid(riid), object);
+    FIXME("iface %p, outer %p, iid %s, out %p stub!\n", iface, outer, debugstr_guid(iid), out);
 
     return E_NOTIMPL;
 }

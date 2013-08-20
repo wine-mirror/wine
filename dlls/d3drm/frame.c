@@ -512,13 +512,10 @@ static ULONG WINAPI IDirect3DRMFrame2Impl_Release(IDirect3DRMFrame2* iface)
 }
 
 /*** IDirect3DRMObject methods ***/
-static HRESULT WINAPI IDirect3DRMFrame2Impl_Clone(IDirect3DRMFrame2* iface,
-                                                  LPUNKNOWN unkwn, REFIID riid,
-                                                  LPVOID* object)
+static HRESULT WINAPI IDirect3DRMFrame2Impl_Clone(IDirect3DRMFrame2 *iface,
+        IUnknown *outer, REFIID iid, void **out)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%p, %s, %p): stub\n", iface, This, unkwn, debugstr_guid(riid), object);
+    FIXME("iface %p, outer %p, iid %s, out %p stub!\n", iface, outer, debugstr_guid(iid), out);
 
     return E_NOTIMPL;
 }
@@ -1373,13 +1370,10 @@ static ULONG WINAPI IDirect3DRMFrame3Impl_Release(IDirect3DRMFrame3* iface)
 }
 
 /*** IDirect3DRMObject methods ***/
-static HRESULT WINAPI IDirect3DRMFrame3Impl_Clone(IDirect3DRMFrame3* iface,
-                                                  LPUNKNOWN unkwn, REFIID riid,
-                                                  LPVOID* object)
+static HRESULT WINAPI IDirect3DRMFrame3Impl_Clone(IDirect3DRMFrame3 *iface,
+        IUnknown *outer, REFIID iid, void **out)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%p, %s, %p): stub\n", iface, This, unkwn, debugstr_guid(riid), object);
+    FIXME("iface %p, outer %p, iid %s, out %p stub!\n", iface, outer, debugstr_guid(iid), out);
 
     return E_NOTIMPL;
 }
@@ -1636,20 +1630,20 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_AddRotation(IDirect3DRMFrame3* iface
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_AddVisual(IDirect3DRMFrame3* iface, LPUNKNOWN vis)
+static HRESULT WINAPI IDirect3DRMFrame3Impl_AddVisual(IDirect3DRMFrame3 *iface, IUnknown *visual)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
     ULONG i;
     IDirect3DRMVisual** visuals;
 
-    TRACE("(%p/%p)->(%p)\n", iface, This, vis);
+    TRACE("iface %p, visual %p.\n", iface, visual);
 
-    if (!vis)
+    if (!visual)
         return D3DRMERR_BADOBJECT;
 
     /* Check if already existing and return gracefully without increasing ref count */
     for (i = 0; i < This->nb_visuals; i++)
-        if (This->visuals[i] == (IDirect3DRMVisual*)vis)
+        if (This->visuals[i] == (IDirect3DRMVisual *)visual)
             return D3DRM_OK;
 
     if ((This->nb_visuals + 1) > This->visuals_capacity)
@@ -1674,8 +1668,8 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_AddVisual(IDirect3DRMFrame3* iface, 
         This->visuals = visuals;
     }
 
-    This->visuals[This->nb_visuals++] = (IDirect3DRMVisual*)vis;
-    IDirect3DRMVisual_AddRef(vis);
+    This->visuals[This->nb_visuals++] = (IDirect3DRMVisual *)visual;
+    IDirect3DRMVisual_AddRef(visual);
 
     return D3DRM_OK;
 }
@@ -1860,12 +1854,10 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_GetOrientation(IDirect3DRMFrame3 *if
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_GetVisuals(IDirect3DRMFrame3* iface, LPDWORD num,
-                                                       LPUNKNOWN *visuals)
+static HRESULT WINAPI IDirect3DRMFrame3Impl_GetVisuals(IDirect3DRMFrame3 *iface,
+        DWORD *count, IUnknown **visuals)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%p,%p): stub\n", iface, This, num, visuals);
+    FIXME("iface %p, count %p, visuals %p stub!\n", iface, count, visuals);
 
     return E_NOTIMPL;
 }
@@ -1971,26 +1963,26 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_DeleteMoveCallback(IDirect3DRMFrame3
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_DeleteVisual(IDirect3DRMFrame3* iface, LPUNKNOWN vis)
+static HRESULT WINAPI IDirect3DRMFrame3Impl_DeleteVisual(IDirect3DRMFrame3 *iface, IUnknown *visual)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
     ULONG i;
 
-    TRACE("(%p/%p)->(%p)\n", iface, This, vis);
+    TRACE("iface %p, visual %p.\n", iface, visual);
 
-    if (!vis)
+    if (!visual)
         return D3DRMERR_BADOBJECT;
 
     /* Check if visual exists */
     for (i = 0; i < This->nb_visuals; i++)
-        if (This->visuals[i] == (IDirect3DRMVisual*)vis)
+        if (This->visuals[i] == (IDirect3DRMVisual *)visual)
             break;
 
     if (i == This->nb_visuals)
         return D3DRMERR_BADVALUE;
 
     memmove(This->visuals + i, This->visuals + i + 1, sizeof(IDirect3DRMVisual*) * (This->nb_visuals - 1 - i));
-    IDirect3DRMVisual_Release(vis);
+    IDirect3DRMVisual_Release(visual);
     This->nb_visuals--;
 
     return D3DRM_OK;
