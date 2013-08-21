@@ -2243,7 +2243,7 @@ todo_wine
     ok(iob.Information == 4, "expected 4, got %lu\n", iob.Information);
 
     ret = WaitForSingleObject(hfile, 3000);
-    ok(ret == WAIT_OBJECT_0, "GetOverlappedResult error %d\n", ret);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject error %d\n", ret);
 
     iob.Status = -1;
     iob.Information = -1;
@@ -2254,7 +2254,7 @@ todo_wine
     ok(iob.Information == sizeof(contents), "expected sizeof(contents), got %lu\n", iob.Information);
 
     ret = WaitForSingleObject(hfile, 3000);
-    ok(ret == WAIT_OBJECT_0, "GetOverlappedResult error %d\n", ret);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject error %d\n", ret);
     ok(!memcmp(contents, buf, sizeof(contents) - 4), "file contents mismatch\n");
     ok(!memcmp(buf + sizeof(contents) - 4, "DCBA", 4), "file contents mismatch\n");
 
