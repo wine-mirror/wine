@@ -4,6 +4,7 @@
  * Copyright 2004 Christian Costa
  * Copyright 2005 Oliver Stieber
  * Copyright 2009-2010 Henri Verbeet for CodeWeavers
+ * Copyright 2006-2008, 2013 Stefan Dösinger for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -111,8 +112,8 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
 
     if (size)
     {
-        resource->heapMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size + RESOURCE_ALIGNMENT);
-        if (!resource->heapMemory)
+        resource->heap_memory = wined3d_resource_allocate_sysmem(size);
+        if (!resource->heap_memory)
         {
             ERR("Out of memory!\n");
             return WINED3DERR_OUTOFVIDEOMEMORY;
@@ -120,10 +121,9 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
     }
     else
     {
-        resource->heapMemory = NULL;
+        resource->heap_memory = NULL;
     }
-    resource->allocatedMemory = (BYTE *)(((ULONG_PTR)resource->heapMemory
-            + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1));
+    resource->allocatedMemory = resource->heap_memory;
 
     /* Check that we have enough video ram left */
     if (pool == WINED3D_POOL_DEFAULT && d3d->flags & WINED3D_VIDMEM_ACCOUNTING)
@@ -131,7 +131,7 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
         if (size > wined3d_device_get_available_texture_mem(device))
         {
             ERR("Out of adapter memory\n");
-            HeapFree(GetProcessHeap(), 0, resource->heapMemory);
+            wined3d_resource_free_sysmem(resource->heap_memory);
             return WINED3DERR_OUTOFVIDEOMEMORY;
         }
         adapter_adjust_memory(device->adapter, size);
@@ -165,9 +165,9 @@ void resource_cleanup(struct wined3d_resource *resource)
             ERR("Failed to free private data when destroying resource %p, hr = %#x.\n", resource, hr);
     }
 
-    HeapFree(GetProcessHeap(), 0, resource->heapMemory);
-    resource->allocatedMemory = 0;
-    resource->heapMemory = 0;
+    wined3d_resource_free_sysmem(resource->heap_memory);
+    resource->allocatedMemory = NULL;
+    resource->heap_memory = NULL;
 
     device_resource_released(resource->device, resource);
 }
@@ -334,4 +334,29 @@ void CDECL wined3d_resource_get_desc(const struct wined3d_resource *resource, st
     desc->height = resource->height;
     desc->depth = resource->depth;
     desc->size = resource->size;
+}
+
+void *wined3d_resource_allocate_sysmem(SIZE_T size)
+{
+    void **p;
+    SIZE_T align = RESOURCE_ALIGNMENT - 1 + sizeof(*p);
+    void *mem;
+
+    if (!(mem = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size + align)))
+        return NULL;
+
+    p = (void **)(((ULONG_PTR)mem + align) & ~(RESOURCE_ALIGNMENT - 1)) - 1;
+    *p = mem;
+
+    return ++p;
+}
+
+void wined3d_resource_free_sysmem(void *mem)
+{
+    void **p = mem;
+
+    if (!mem)
+        return;
+
+    HeapFree(GetProcessHeap(), 0, *(--p));
 }

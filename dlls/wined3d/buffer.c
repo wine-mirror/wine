@@ -3,7 +3,7 @@
  * Copyright 2002-2005 Raphael Junqueira
  * Copyright 2004 Christian Costa
  * Copyright 2005 Oliver Stieber
- * Copyright 2007-2010 Stefan Dösinger for CodeWeavers
+ * Copyright 2007-2011, 2013 Stefan Dösinger for CodeWeavers
  * Copyright 2009-2010 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
@@ -189,9 +189,9 @@ static void buffer_create_buffer_object(struct wined3d_buffer *This, const struc
     }
     else
     {
-        HeapFree(GetProcessHeap(), 0, This->resource.heapMemory);
+        wined3d_resource_free_sysmem(This->resource.heap_memory);
         This->resource.allocatedMemory = NULL;
-        This->resource.heapMemory = NULL;
+        This->resource.heap_memory = NULL;
     }
 
     return;
@@ -492,8 +492,8 @@ BYTE *buffer_get_sysmem(struct wined3d_buffer *This, const struct wined3d_gl_inf
     /* AllocatedMemory exists if the buffer is double buffered or has no buffer object at all */
     if(This->resource.allocatedMemory) return This->resource.allocatedMemory;
 
-    This->resource.heapMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->resource.size + RESOURCE_ALIGNMENT);
-    This->resource.allocatedMemory = (BYTE *)(((ULONG_PTR)This->resource.heapMemory + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1));
+    This->resource.heap_memory = wined3d_resource_allocate_sysmem(This->resource.size);
+    This->resource.allocatedMemory = This->resource.heap_memory;
 
     if (This->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
         device_invalidate_state(This->resource.device, STATE_INDEXBUFFER);

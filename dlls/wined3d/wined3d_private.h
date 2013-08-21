@@ -1926,6 +1926,9 @@ struct wined3d_resource_ops
     void (*resource_unload)(struct wined3d_resource *resource);
 };
 
+void *wined3d_resource_allocate_sysmem(SIZE_T size) DECLSPEC_HIDDEN;
+void wined3d_resource_free_sysmem(void *mem) DECLSPEC_HIDDEN;
+
 struct wined3d_resource
 {
     LONG ref;
@@ -1935,19 +1938,19 @@ struct wined3d_resource
     enum wined3d_resource_type type;
     const struct wined3d_format *format;
     enum wined3d_multisample_type multisample_type;
-    UINT                    multisample_quality;
-    DWORD                   usage;
+    UINT multisample_quality;
+    DWORD usage;
     enum wined3d_pool pool;
     DWORD access_flags;
     UINT width;
     UINT height;
     UINT depth;
-    UINT                    size;
-    DWORD                   priority;
-    BYTE                   *allocatedMemory; /* Pointer to the real data location */
-    BYTE                   *heapMemory; /* Pointer to the HeapAlloced block of memory */
-    struct list             privateData;
-    struct list             resource_list_entry;
+    UINT size;
+    DWORD priority;
+    BYTE *allocatedMemory; /* Pointer to the real data location */
+    void *heap_memory;
+    struct list privateData;
+    struct list resource_list_entry;
 
     void *parent;
     const struct wined3d_parent_ops *parent_ops;
