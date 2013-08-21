@@ -715,10 +715,12 @@ int CDECL MSVCRT__access(const char *filename, int mode)
  */
 int CDECL _access_s(const char *filename, int mode)
 {
-  if (!MSVCRT_CHECK_PMT(filename != NULL)) return -1;
-  if (!MSVCRT_CHECK_PMT((mode & ~(MSVCRT_R_OK | MSVCRT_W_OK)) == 0)) return -1;
+  if (!MSVCRT_CHECK_PMT(filename != NULL)) return *MSVCRT__errno();
+  if (!MSVCRT_CHECK_PMT((mode & ~(MSVCRT_R_OK | MSVCRT_W_OK)) == 0)) return *MSVCRT__errno();
 
-  return MSVCRT__access(filename, mode);
+  if (MSVCRT__access(filename, mode) == -1)
+    return *MSVCRT__errno();
+  return 0;
 }
 
 /*********************************************************************
@@ -748,10 +750,12 @@ int CDECL MSVCRT__waccess(const MSVCRT_wchar_t *filename, int mode)
  */
 int CDECL _waccess_s(const MSVCRT_wchar_t *filename, int mode)
 {
-  if (!MSVCRT_CHECK_PMT(filename != NULL)) return -1;
-  if (!MSVCRT_CHECK_PMT((mode & ~(MSVCRT_R_OK | MSVCRT_W_OK)) == 0)) return -1;
+  if (!MSVCRT_CHECK_PMT(filename != NULL)) return *MSVCRT__errno();
+  if (!MSVCRT_CHECK_PMT((mode & ~(MSVCRT_R_OK | MSVCRT_W_OK)) == 0)) return *MSVCRT__errno();
 
-  return MSVCRT__waccess(filename, mode);
+  if (MSVCRT__waccess(filename, mode) == -1)
+    return *MSVCRT__errno();
+  return 0;
 }
 
 /*********************************************************************
