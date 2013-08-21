@@ -896,6 +896,50 @@ HRESULT node_get_xml(xmlnode *This, BOOL ensure_eol, BSTR *ret)
     return *ret ? S_OK : E_OUTOFMEMORY;
 }
 
+/* duplicates xmlBufferWriteQuotedString() logic */
+static void xml_write_quotedstring(xmlOutputBufferPtr buf, const xmlChar *string)
+{
+    const xmlChar *cur, *base;
+
+    if (xmlStrchr(string, '\"'))
+    {
+        if (xmlStrchr(string, '\''))
+        {
+	    xmlOutputBufferWrite(buf, 1, "\"");
+            base = cur = string;
+
+            while (*cur)
+            {
+                if (*cur == '"')
+                {
+                    if (base != cur)
+                        xmlOutputBufferWrite(buf, cur-base, (const char*)base);
+                    xmlOutputBufferWrite(buf, 6, "&quot;");
+                    cur++;
+                    base = cur;
+                }
+                else
+                    cur++;
+            }
+            if (base != cur)
+                xmlOutputBufferWrite(buf, cur-base, (const char*)base);
+	    xmlOutputBufferWrite(buf, 1, "\"");
+	}
+        else
+        {
+	    xmlOutputBufferWrite(buf, 1, "\'");
+            xmlOutputBufferWriteString(buf, (const char*)string);
+	    xmlOutputBufferWrite(buf, 1, "\'");
+        }
+    }
+    else
+    {
+        xmlOutputBufferWrite(buf, 1, "\"");
+        xmlOutputBufferWriteString(buf, (const char*)string);
+        xmlOutputBufferWrite(buf, 1, "\"");
+    }
+}
+
 static void htmldtd_dumpcontent(xmlOutputBufferPtr buf, xmlDocPtr doc)
 {
     xmlDtdPtr cur = doc->intSubset;
@@ -905,17 +949,17 @@ static void htmldtd_dumpcontent(xmlOutputBufferPtr buf, xmlDocPtr doc)
     if (cur->ExternalID)
     {
         xmlOutputBufferWriteString(buf, " PUBLIC ");
-        xmlBufferWriteQuotedString(buf->buffer, cur->ExternalID);
+        xml_write_quotedstring(buf, cur->ExternalID);
         if (cur->SystemID)
         {
             xmlOutputBufferWriteString(buf, " ");
-            xmlBufferWriteQuotedString(buf->buffer, cur->SystemID);
+            xml_write_quotedstring(buf, cur->SystemID);
 	}
     }
     else if (cur->SystemID)
     {
         xmlOutputBufferWriteString(buf, " SYSTEM ");
-        xmlBufferWriteQuotedString(buf->buffer, cur->SystemID);
+        xml_write_quotedstring(buf, cur->SystemID);
     }
     xmlOutputBufferWriteString(buf, ">\n");
 }
