@@ -1628,7 +1628,7 @@ static void test_WaitRing(void)
 	  success, err, evtmask, after-before, after1-before);
 
     ok(evtmask & EV_RING, "Failed to detect  EV_RING: 0x%08x, expected 0x%08x\n",
-       evtmask, EV_CTS);
+       evtmask, EV_RING);
     ok(GetCommModemStatus(hcom, &evtmask), "GetCommModemStatus failed\n");
     if(defaultStat & MS_RING_ON)
 	ok((evtmask & MS_RING_ON) == 0,"DTR didn't change state!\n");
