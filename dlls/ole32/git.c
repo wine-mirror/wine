@@ -311,8 +311,8 @@ static HRESULT WINAPI
 GITCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid, LPVOID *ppv)
 {
   *ppv = NULL;
-  if (IsEqualIID(riid,&IID_IUnknown) ||
-      IsEqualIID(riid,&IID_IGlobalInterfaceTable))
+  if (IsEqualIID(riid, &IID_IUnknown) ||
+      IsEqualIID(riid, &IID_IClassFactory))
   {
     *ppv = iface;
     return S_OK;
@@ -357,11 +357,11 @@ static const IClassFactoryVtbl GITClassFactoryVtbl = {
     GITCF_LockServer
 };
 
-static const IClassFactoryVtbl *PGITClassFactoryVtbl = &GITClassFactoryVtbl;
+static IClassFactory git_classfactory = { &GITClassFactoryVtbl };
 
 HRESULT StdGlobalInterfaceTable_GetFactory(LPVOID *ppv)
 {
-  *ppv = &PGITClassFactoryVtbl;
+  *ppv = &git_classfactory;
   TRACE("Returning GIT classfactory\n");
   return S_OK;
 }
