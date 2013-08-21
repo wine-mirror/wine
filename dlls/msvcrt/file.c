@@ -65,6 +65,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 #define WX_PIPE           0x08
 #define WX_DONTINHERIT    0x10
 #define WX_APPEND         0x20
+#define WX_NOSEEK         0x40
 #define WX_TEXT           0x80
 
 /* values for exflag - it's used differently in msvcr90.dll*/
@@ -347,7 +348,7 @@ static int msvcrt_set_fd(HANDLE hand, int flag, int fd)
   }
 
   fdinfo->handle = hand;
-  fdinfo->wxflag = WX_OPEN | (flag & (WX_DONTINHERIT | WX_APPEND | WX_TEXT | WX_PIPE));
+  fdinfo->wxflag = WX_OPEN | (flag & (WX_DONTINHERIT | WX_APPEND | WX_TEXT | WX_PIPE | WX_NOSEEK));
   fdinfo->lookahead[0] = '\n';
   fdinfo->lookahead[1] = '\n';
   fdinfo->lookahead[2] = '\n';
@@ -515,16 +516,31 @@ void msvcrt_init_io(void)
   }
 
   fdinfo = msvcrt_get_ioinfo(MSVCRT_STDIN_FILENO);
-  if (!(fdinfo->wxflag & WX_OPEN) || fdinfo->handle == INVALID_HANDLE_VALUE)
-    msvcrt_set_fd(GetStdHandle(STD_INPUT_HANDLE), WX_OPEN|WX_TEXT, MSVCRT_STDIN_FILENO);
+  if (!(fdinfo->wxflag & WX_OPEN) || fdinfo->handle == INVALID_HANDLE_VALUE) {
+    HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
+    DWORD type = GetFileType(h);
+
+    msvcrt_set_fd(h, WX_OPEN|WX_TEXT|((type&0xf)==FILE_TYPE_CHAR ? WX_NOSEEK : 0)
+            |((type&0xf)==FILE_TYPE_PIPE ? WX_PIPE : 0), MSVCRT_STDIN_FILENO);
+  }
 
   fdinfo = msvcrt_get_ioinfo(MSVCRT_STDOUT_FILENO);
-  if (!(fdinfo->wxflag & WX_OPEN) || fdinfo->handle == INVALID_HANDLE_VALUE)
-    msvcrt_set_fd(GetStdHandle(STD_OUTPUT_HANDLE), WX_OPEN|WX_TEXT, MSVCRT_STDOUT_FILENO);
+  if (!(fdinfo->wxflag & WX_OPEN) || fdinfo->handle == INVALID_HANDLE_VALUE) {
+    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD type = GetFileType(h);
+
+    msvcrt_set_fd(h, WX_OPEN|WX_TEXT|((type&0xf)==FILE_TYPE_CHAR ? WX_NOSEEK : 0)
+            |((type&0xf)==FILE_TYPE_PIPE ? WX_PIPE : 0), MSVCRT_STDOUT_FILENO);
+  }
 
   fdinfo = msvcrt_get_ioinfo(MSVCRT_STDERR_FILENO);
-  if (!(fdinfo->wxflag & WX_OPEN) || fdinfo->handle == INVALID_HANDLE_VALUE)
-    msvcrt_set_fd(GetStdHandle(STD_ERROR_HANDLE), WX_OPEN|WX_TEXT, MSVCRT_STDERR_FILENO);
+  if (!(fdinfo->wxflag & WX_OPEN) || fdinfo->handle == INVALID_HANDLE_VALUE) {
+    HANDLE h = GetStdHandle(STD_ERROR_HANDLE);
+    DWORD type = GetFileType(h);
+
+    msvcrt_set_fd(h, WX_OPEN|WX_TEXT|((type&0xf)==FILE_TYPE_CHAR ? WX_NOSEEK : 0)
+            |((type&0xf)==FILE_TYPE_PIPE ? WX_PIPE : 0), MSVCRT_STDERR_FILENO);
+  }
 
   TRACE(":handles (%p)(%p)(%p)\n", msvcrt_get_ioinfo(MSVCRT_STDIN_FILENO)->handle,
         msvcrt_get_ioinfo(MSVCRT_STDOUT_FILENO)->handle,
@@ -2347,7 +2363,7 @@ static int read_utf8(int fd, MSVCRT_wchar_t *buf, unsigned int count)
                 buf[0] = '\n';
             else {
                 buf[0] = '\r';
-                if(fdinfo->wxflag & WX_PIPE)
+                if(fdinfo->wxflag & (WX_PIPE | WX_NOSEEK))
                     fdinfo->lookahead[0] = lookahead;
                 else
                     SetFilePointer(fdinfo->handle, -1, NULL, FILE_CURRENT);
@@ -2395,7 +2411,7 @@ static int read_utf8(int fd, MSVCRT_wchar_t *buf, unsigned int count)
     if(char_len+i <= pos)
         i += char_len;
 
-    if(fdinfo->wxflag & WX_PIPE) {
+    if(fdinfo->wxflag & (WX_PIPE | WX_NOSEEK)) {
         if(i < pos)
             fdinfo->lookahead[0] = readbuf[i];
         if(i+1 < pos)
@@ -2423,7 +2439,7 @@ static int read_utf8(int fd, MSVCRT_wchar_t *buf, unsigned int count)
                 if(lookahead != '\n')
                     readbuf[j++] = '\r';
 
-                if(fdinfo->wxflag & WX_PIPE)
+                if(fdinfo->wxflag & (WX_PIPE | WX_NOSEEK))
                     fdinfo->lookahead[0] = lookahead;
                 else
                     SetFilePointer(fdinfo->handle, -1, NULL, FILE_CURRENT);
@@ -2557,7 +2573,7 @@ static int read_i(int fd, void *buf, unsigned int count)
                                 if(utf16) bufstart[j++] = 0;
                             }
 
-                            if (fdinfo->wxflag & WX_PIPE)
+                            if (fdinfo->wxflag & (WX_PIPE | WX_NOSEEK))
                             {
                                 fdinfo->lookahead[0] = lookahead[0];
                                 fdinfo->lookahead[1] = lookahead[1];
