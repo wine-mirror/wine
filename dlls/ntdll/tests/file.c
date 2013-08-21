@@ -1941,8 +1941,38 @@ static void test_read_write(void)
     DWORD ret, bytes, status;
     LARGE_INTEGER offset;
 
+    iob.Status = -1;
+    iob.Information = -1;
+    offset.QuadPart = 0;
+    status = pNtReadFile(INVALID_HANDLE_VALUE, 0, NULL, NULL, &iob, buf, sizeof(buf), &offset, NULL);
+    ok(status == STATUS_OBJECT_TYPE_MISMATCH || status == STATUS_INVALID_HANDLE, "expected STATUS_OBJECT_TYPE_MISMATCH, got %#x\n", status);
+    ok(iob.Status == -1, "expected -1, got %#x\n", iob.Status);
+    ok(iob.Information == -1, "expected -1, got %lu\n", iob.Information);
+
+    iob.Status = -1;
+    iob.Information = -1;
+    offset.QuadPart = 0;
+    status = pNtWriteFile(INVALID_HANDLE_VALUE, 0, NULL, NULL, &iob, buf, sizeof(buf), &offset, NULL);
+    ok(status == STATUS_OBJECT_TYPE_MISMATCH || status == STATUS_INVALID_HANDLE, "expected STATUS_OBJECT_TYPE_MISMATCH, got %#x\n", status);
+    ok(iob.Status == -1, "expected -1, got %#x\n", iob.Status);
+    ok(iob.Information == -1, "expected -1, got %lu\n", iob.Information);
+
     hfile = create_temp_file(0);
     if (!hfile) return;
+
+    iob.Status = -1;
+    iob.Information = -1;
+    status = pNtWriteFile(hfile, 0, NULL, NULL, &iob, NULL, sizeof(contents), NULL, NULL);
+    ok(status == STATUS_INVALID_USER_BUFFER, "expected STATUS_INVALID_USER_BUFFER, got %#x\n", status);
+    ok(iob.Status == -1, "expected -1, got %#x\n", iob.Status);
+    ok(iob.Information == -1, "expected -1, got %lu\n", iob.Information);
+
+    iob.Status = -1;
+    iob.Information = -1;
+    status = pNtReadFile(hfile, 0, NULL, NULL, &iob, NULL, sizeof(contents), NULL, NULL);
+    ok(status == STATUS_ACCESS_VIOLATION, "expected STATUS_ACCESS_VIOLATION, got %#x\n", status);
+    ok(iob.Status == -1, "expected -1, got %#x\n", iob.Status);
+    ok(iob.Information == -1, "expected -1, got %lu\n", iob.Information);
 
     iob.Status = -1;
     iob.Information = -1;
