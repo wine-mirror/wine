@@ -234,7 +234,7 @@ static void D3DXFresnelTest(void)
 static void D3DXMatrixTest(void)
 {
     D3DXMATRIX expectedmat, gotmat, mat, mat2, mat3;
-    LPD3DXMATRIX funcpointer;
+    D3DXMATRIX *funcpointer;
     D3DXPLANE plane;
     D3DXQUATERNION q, r;
     D3DXVECTOR3 at, axis, eye, last;

@@ -285,7 +285,7 @@ static HRESULT WINAPI ID3DXSkinInfoImpl_SetBoneOffsetMatrix(ID3DXSkinInfo *iface
     return D3D_OK;
 }
 
-static LPD3DXMATRIX WINAPI ID3DXSkinInfoImpl_GetBoneOffsetMatrix(ID3DXSkinInfo *iface, DWORD bone_num)
+static D3DXMATRIX * WINAPI ID3DXSkinInfoImpl_GetBoneOffsetMatrix(ID3DXSkinInfo *iface, DWORD bone_num)
 {
     ID3DXSkinInfoImpl *This = impl_from_ID3DXSkinInfo(iface);
 
