@@ -184,7 +184,16 @@ HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
             volume, map_desc, box, flags);
 
     if (!volume->resource.allocatedMemory)
-        volume->resource.allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, volume->resource.size);
+    {
+        volume->resource.heap_memory = wined3d_resource_allocate_sysmem(volume->resource.size);
+        if (!volume->resource.heap_memory)
+        {
+            WARN("Out of memory.\n");
+            map_desc->data = NULL;
+            return E_OUTOFMEMORY;
+        }
+        volume->resource.allocatedMemory = volume->resource.heap_memory;
+    }
 
     TRACE("allocatedMemory %p.\n", volume->resource.allocatedMemory);
 
