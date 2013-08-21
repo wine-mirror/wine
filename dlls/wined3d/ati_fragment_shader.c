@@ -942,7 +942,7 @@ static void atifs_apply_pixelshader(struct wined3d_context *context, const struc
      * startup, and blitting disables all shaders and dirtifies all shader
      * states. If atifs can deal with this it keeps the rest of the code
      * simpler. */
-    context->select_shader = 1;
+    context->shader_update_mask |= 1 << WINED3D_SHADER_TYPE_PIXEL;
 }
 
 static void atifs_srgbwriteenable(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)

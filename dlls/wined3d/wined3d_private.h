@@ -1092,9 +1092,10 @@ struct wined3d_context
     DWORD current : 1;
     DWORD destroyed : 1;
     DWORD valid : 1;
-    DWORD select_shader : 1;
+    DWORD padding : 1;
     DWORD texShaderBumpMap : 8;         /* MAX_TEXTURES, 8 */
     DWORD lastWasPow2Texture : 8;       /* MAX_TEXTURES, 8 */
+    DWORD shader_update_mask;
     DWORD constant_update_mask;
     DWORD                   numbered_array_mask;
     GLenum                  tracking_parm;     /* Which source is tracking current colour         */

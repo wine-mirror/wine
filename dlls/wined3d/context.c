@@ -1624,7 +1624,9 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     {
         GL_EXTCALL(glProvokingVertexEXT(GL_FIRST_VERTEX_CONVENTION_EXT));
     }
-    ret->select_shader = 1;
+    ret->shader_update_mask = (1 << WINED3D_SHADER_TYPE_PIXEL)
+            | (1 << WINED3D_SHADER_TYPE_VERTEX)
+            | (1 << WINED3D_SHADER_TYPE_GEOMETRY);
 
     /* If this happens to be the first context for the device, dummy textures
      * are not created yet. In that case, they will be created (and bound) by
@@ -1901,7 +1903,9 @@ static void SetupForBlit(const struct wined3d_device *device, struct wined3d_con
 
     /* Disable shaders */
     device->shader_backend->shader_disable(device->shader_priv, context);
-    context->select_shader = 1;
+    context->shader_update_mask = (1 << WINED3D_SHADER_TYPE_PIXEL)
+            | (1 << WINED3D_SHADER_TYPE_VERTEX)
+            | (1 << WINED3D_SHADER_TYPE_GEOMETRY);
 
     context->blit_w = rt_size.cx;
     context->blit_h = rt_size.cy;
@@ -2379,10 +2383,10 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
         state_table[rep].apply(context, state, rep);
     }
 
-    if (context->select_shader)
+    if (context->shader_update_mask)
     {
         device->shader_backend->shader_select(device->shader_priv, context, state);
-        context->select_shader = 0;
+        context->shader_update_mask = 0;
     }
 
     if (context->constant_update_mask)

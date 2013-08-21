@@ -6493,7 +6493,7 @@ static void fragment_prog_arbfp(struct wined3d_context *context, const struct wi
         }
         else if (use_pshader)
         {
-            context->select_shader = 1;
+            context->shader_update_mask |= 1 << WINED3D_SHADER_TYPE_PIXEL;
         }
         return;
     }
@@ -6543,7 +6543,7 @@ static void fragment_prog_arbfp(struct wined3d_context *context, const struct wi
         context->last_was_pshader = TRUE;
     }
 
-    context->select_shader = 1;
+    context->shader_update_mask |= 1 << WINED3D_SHADER_TYPE_PIXEL;
 }
 
 /* We can't link the fog states to the fragment state directly since the
