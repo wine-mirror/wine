@@ -2575,8 +2575,16 @@ static int read_i(int fd, void *buf, unsigned int count)
 
                             if (fdinfo->wxflag & (WX_PIPE | WX_NOSEEK))
                             {
-                                fdinfo->lookahead[0] = lookahead[0];
-                                fdinfo->lookahead[1] = lookahead[1];
+                                if (lookahead[0]=='\n' && (!utf16 || !lookahead[1]))
+                                {
+                                    bufstart[j++] = '\n';
+                                    if (utf16) bufstart[j++] = 0;
+                                }
+                                else
+                                {
+                                    fdinfo->lookahead[0] = lookahead[0];
+                                    fdinfo->lookahead[1] = lookahead[1];
+                                }
                             }
                             else
                                 SetFilePointer(fdinfo->handle, -1-utf16, NULL, FILE_CURRENT);
