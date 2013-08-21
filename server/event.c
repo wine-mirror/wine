@@ -71,6 +71,41 @@ static const struct object_ops event_ops =
 };
 
 
+struct keyed_event
+{
+    struct object  obj;             /* object header */
+};
+
+static void keyed_event_dump( struct object *obj, int verbose );
+static struct object_type *keyed_event_get_type( struct object *obj );
+static int keyed_event_signaled( struct object *obj, struct thread *thread );
+static unsigned int keyed_event_map_access( struct object *obj, unsigned int access );
+
+static const struct object_ops keyed_event_ops =
+{
+    sizeof(struct keyed_event),  /* size */
+    keyed_event_dump,            /* dump */
+    keyed_event_get_type,        /* get_type */
+    add_queue,                   /* add_queue */
+    remove_queue,                /* remove_queue */
+    keyed_event_signaled,        /* signaled */
+    no_satisfied,                /* satisfied */
+    no_signal,                   /* signal */
+    no_get_fd,                   /* get_fd */
+    keyed_event_map_access,      /* map_access */
+    default_get_sd,              /* get_sd */
+    default_set_sd,              /* set_sd */
+    no_lookup_name,              /* lookup_name */
+    no_open_file,                /* open_file */
+    no_close_handle,             /* close_handle */
+    no_destroy                   /* destroy */
+};
+
+#define KEYEDEVENT_WAIT       0x0001
+#define KEYEDEVENT_WAKE       0x0002
+#define KEYEDEVENT_ALL_ACCESS (STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE | 0x0003)
+
+
 struct event *create_event( struct directory *root, const struct unicode_str *name,
                             unsigned int attr, int manual_reset, int initial_state,
                             const struct security_descriptor *sd )
@@ -174,6 +209,56 @@ static int event_signal( struct object *obj, unsigned int access )
     return 1;
 }
 
+struct keyed_event *create_keyed_event( struct directory *root, const struct unicode_str *name,
+                                        unsigned int attr, const struct security_descriptor *sd )
+{
+    struct keyed_event *event;
+
+    if ((event = create_named_object_dir( root, name, attr, &keyed_event_ops )))
+    {
+        if (get_error() != STATUS_OBJECT_NAME_EXISTS)
+        {
+            /* initialize it if it didn't already exist */
+            if (sd) default_set_sd( &event->obj, sd, OWNER_SECURITY_INFORMATION|
+                                                     GROUP_SECURITY_INFORMATION|
+                                                     DACL_SECURITY_INFORMATION|
+                                                     SACL_SECURITY_INFORMATION );
+        }
+    }
+    return event;
+}
+
+static void keyed_event_dump( struct object *obj, int verbose )
+{
+    struct keyed_event *event = (struct keyed_event *)obj;
+    assert( obj->ops == &keyed_event_ops );
+    fprintf( stderr, "Keyed event " );
+    dump_object_name( &event->obj );
+    fputc( '\n', stderr );
+}
+
+static struct object_type *keyed_event_get_type( struct object *obj )
+{
+    static const WCHAR name[] = {'K','e','y','e','d','E','v','e','n','t'};
+    static const struct unicode_str str = { name, sizeof(name) };
+    return get_object_type( &str );
+}
+
+static int keyed_event_signaled( struct object *obj, struct thread *thread )
+{
+    assert( obj->ops == &keyed_event_ops );
+    return 1;
+}
+
+static unsigned int keyed_event_map_access( struct object *obj, unsigned int access )
+{
+    if (access & GENERIC_READ)    access |= STANDARD_RIGHTS_READ | SYNCHRONIZE | KEYEDEVENT_WAIT;
+    if (access & GENERIC_WRITE)   access |= STANDARD_RIGHTS_WRITE | KEYEDEVENT_WAKE;
+    if (access & GENERIC_EXECUTE) access |= STANDARD_RIGHTS_EXECUTE;
+    if (access & GENERIC_ALL)     access |= STANDARD_RIGHTS_ALL | KEYEDEVENT_ALL_ACCESS;
+    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
+}
+
 /* create an event */
 DECL_HANDLER(create_event)
 {
@@ -248,4 +333,49 @@ DECL_HANDLER(event_op)
         break;
     }
     release_object( event );
+}
+
+/* create a keyed event */
+DECL_HANDLER(create_keyed_event)
+{
+    struct keyed_event *event;
+    struct unicode_str name;
+    struct directory *root = NULL;
+    const struct object_attributes *objattr = get_req_data();
+    const struct security_descriptor *sd;
+
+    if (!objattr_is_valid( objattr, get_req_data_size() )) return;
+
+    sd = objattr->sd_len ? (const struct security_descriptor *)(objattr + 1) : NULL;
+    objattr_get_name( objattr, &name );
+
+    if (objattr->rootdir && !(root = get_directory_obj( current->process, objattr->rootdir, 0 ))) return;
+
+    if ((event = create_keyed_event( root, &name, req->attributes, sd )))
+    {
+        if (get_error() == STATUS_OBJECT_NAME_EXISTS)
+            reply->handle = alloc_handle( current->process, event, req->access, req->attributes );
+        else
+            reply->handle = alloc_handle_no_access_check( current->process, event, req->access, req->attributes );
+        release_object( event );
+    }
+    if (root) release_object( root );
+}
+
+/* open a handle to a keyed event */
+DECL_HANDLER(open_keyed_event)
+{
+    struct unicode_str name;
+    struct directory *root = NULL;
+    struct keyed_event *event;
+
+    get_req_unicode_str( &name );
+    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 ))) return;
+
+    if ((event = open_object_dir( root, &name, req->attributes, &keyed_event_ops )))
+    {
+        reply->handle = alloc_handle( current->process, &event->obj, req->access, req->attributes );
+        release_object( event );
+    }
+    if (root) release_object( root );
 }

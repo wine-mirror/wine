@@ -1404,6 +1404,31 @@ static void dump_open_event_reply( const struct open_event_reply *req )
     fprintf( stderr, " handle=%04x", req->handle );
 }
 
+static void dump_create_keyed_event_request( const struct create_keyed_event_request *req )
+{
+    fprintf( stderr, " access=%08x", req->access );
+    fprintf( stderr, ", attributes=%08x", req->attributes );
+    dump_varargs_object_attributes( ", objattr=", cur_size );
+}
+
+static void dump_create_keyed_event_reply( const struct create_keyed_event_reply *req )
+{
+    fprintf( stderr, " handle=%04x", req->handle );
+}
+
+static void dump_open_keyed_event_request( const struct open_keyed_event_request *req )
+{
+    fprintf( stderr, " access=%08x", req->access );
+    fprintf( stderr, ", attributes=%08x", req->attributes );
+    fprintf( stderr, ", rootdir=%04x", req->rootdir );
+    dump_varargs_unicode_str( ", name=", cur_size );
+}
+
+static void dump_open_keyed_event_reply( const struct open_keyed_event_reply *req )
+{
+    fprintf( stderr, " handle=%04x", req->handle );
+}
+
 static void dump_create_mutex_request( const struct create_mutex_request *req )
 {
     fprintf( stderr, " access=%08x", req->access );
@@ -4008,6 +4033,8 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_event_request,
     (dump_func)dump_event_op_request,
     (dump_func)dump_open_event_request,
+    (dump_func)dump_create_keyed_event_request,
+    (dump_func)dump_open_keyed_event_request,
     (dump_func)dump_create_mutex_request,
     (dump_func)dump_release_mutex_request,
     (dump_func)dump_open_mutex_request,
@@ -4260,6 +4287,8 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_event_reply,
     NULL,
     (dump_func)dump_open_event_reply,
+    (dump_func)dump_create_keyed_event_reply,
+    (dump_func)dump_open_keyed_event_reply,
     (dump_func)dump_create_mutex_reply,
     (dump_func)dump_release_mutex_reply,
     (dump_func)dump_open_mutex_reply,
@@ -4512,6 +4541,8 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "create_event",
     "event_op",
     "open_event",
+    "create_keyed_event",
+    "open_keyed_event",
     "create_mutex",
     "release_mutex",
     "open_mutex",
