@@ -1611,7 +1611,7 @@ HRESULT CDECL wined3d_device_get_stream_source_freq(const struct wined3d_device 
 
     TRACE("device %p, stream_idx %u, divider %p.\n", device, stream_idx, divider);
 
-    stream = &device->updateStateBlock->state.streams[stream_idx];
+    stream = &device->stateBlock->state.streams[stream_idx];
     *divider = stream->flags | stream->frequency;
 
     TRACE("Returning %#x.\n", *divider);
