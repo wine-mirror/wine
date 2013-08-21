@@ -987,6 +987,15 @@ static void htmldoc_dumpcontent(xmlOutputBufferPtr buf, xmlDocPtr doc)
     doc->type = type;
 }
 
+static const xmlChar *get_output_buffer_content(xmlOutputBufferPtr output)
+{
+#ifdef LIBXML2_NEW_BUFFER
+    return xmlOutputBufferGetContent(output);
+#else
+    return xmlBufferContent(output->buffer);
+#endif
+}
+
 HRESULT node_transform_node(const xmlnode *This, IXMLDOMNode *stylesheet, BSTR *p)
 {
 #ifdef SONAME_LIBXSLT
@@ -1015,7 +1024,7 @@ HRESULT node_transform_node(const xmlnode *This, IXMLDOMNode *stylesheet, BSTR *
                 if (output)
                 {
                     htmldoc_dumpcontent(output, result->doc);
-                    content = xmlBufferContent(output->buffer);
+                    content = get_output_buffer_content(output);
                     *p = bstr_from_xmlChar(content);
                     xmlOutputBufferClose(output);
                 }
