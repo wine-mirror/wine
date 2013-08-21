@@ -2050,15 +2050,17 @@ void wined3d_texture_apply_state_changes(struct wined3d_texture *texture,
         const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
 void wined3d_texture_set_dirty(struct wined3d_texture *texture, BOOL dirty) DECLSPEC_HIDDEN;
 
+#define WINED3D_VFLAG_LOCKED            0x00000001
+
 struct wined3d_volume
 {
     struct wined3d_resource resource;
     struct wined3d_texture *container;
-    BOOL                    lockable;
-    BOOL                    locked;
+
     struct wined3d_box lockedBox;
     struct wined3d_box dirtyBox;
-    BOOL                    dirty;
+
+    DWORD flags;
 };
 
 static inline struct wined3d_volume *volume_from_resource(struct wined3d_resource *resource)

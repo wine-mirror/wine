@@ -49,7 +49,6 @@ static void volume_bind_and_dirtify(const struct wined3d_volume *volume, struct 
 
 void volume_add_dirty_box(struct wined3d_volume *volume, const struct wined3d_box *dirty_box)
 {
-    volume->dirty = TRUE;
     if (dirty_box)
     {
         volume->lockedBox.left = min(volume->lockedBox.left, dirty_box->left);
@@ -233,7 +232,7 @@ HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
         wined3d_texture_set_dirty(volume->container, TRUE);
     }
 
-    volume->locked = TRUE;
+    volume->flags |= WINED3D_VFLAG_LOCKED;
 
     TRACE("Returning memory %p, row pitch %d, slice pitch %d.\n",
             map_desc->data, map_desc->row_pitch, map_desc->slice_pitch);
@@ -250,13 +249,13 @@ HRESULT CDECL wined3d_volume_unmap(struct wined3d_volume *volume)
 {
     TRACE("volume %p.\n", volume);
 
-    if (!volume->locked)
+    if (!(volume->flags & WINED3D_VFLAG_LOCKED))
     {
         WARN("Trying to unlock unlocked volume %p.\n", volume);
         return WINED3DERR_INVALIDCALL;
     }
 
-    volume->locked = FALSE;
+    volume->flags &= ~WINED3D_VFLAG_LOCKED;
     memset(&volume->lockedBox, 0, sizeof(volume->lockedBox));
 
     return WINED3D_OK;
@@ -293,10 +292,7 @@ static HRESULT volume_init(struct wined3d_volume *volume, struct wined3d_device 
         return hr;
     }
 
-    volume->lockable = TRUE;
-    volume->locked = FALSE;
     memset(&volume->lockedBox, 0, sizeof(volume->lockedBox));
-    volume->dirty = TRUE;
 
     volume_add_dirty_box(volume, NULL);
 
