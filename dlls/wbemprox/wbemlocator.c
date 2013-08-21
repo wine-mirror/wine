@@ -101,6 +101,7 @@ static HRESULT parse_resource( const WCHAR *resource, WCHAR **server, WCHAR **na
 {
     static const WCHAR rootW[] = {'R','O','O','T'};
     static const WCHAR cimv2W[] = {'C','I','M','V','2'};
+    static const WCHAR defaultW[] = {'D','E','F','A','U','L','T'};
     HRESULT hr = WBEM_E_INVALID_NAMESPACE;
     const WCHAR *p, *q;
     unsigned int len;
@@ -138,7 +139,9 @@ static HRESULT parse_resource( const WCHAR *resource, WCHAR **server, WCHAR **na
         goto done;
     }
     q++;
-    if ((len = strlenW( q )) != sizeof(cimv2W) / sizeof(cimv2W[0]) || memicmpW( q, cimv2W, len ))
+    len = strlenW( q );
+    if ((len != sizeof(cimv2W) / sizeof(cimv2W[0]) || memicmpW( q, cimv2W, len )) &&
+        (len != sizeof(defaultW) / sizeof(defaultW[0]) || memicmpW( q, defaultW, len )))
         goto done;
     if (!(*namespace = heap_alloc( (len + 1) * sizeof(WCHAR) ))) hr = E_OUTOFMEMORY;
     else
