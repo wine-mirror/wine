@@ -3676,7 +3676,7 @@ static void sampler(struct wined3d_context *context, const struct wined3d_state 
 
         /* Trigger shader constant reloading (for NP2 texcoord fixup) */
         if (!(texture->flags & WINED3D_TEXTURE_POW2_MAT_IDENT))
-            device->shader_backend->shader_load_np2fixup_constants(device->shader_priv, gl_info, state);
+            context->constant_update_mask |= WINED3D_SHADER_CONST_PS_NP2_FIXUP;
     }
     else
     {

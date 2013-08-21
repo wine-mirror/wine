@@ -1511,8 +1511,6 @@ static void shader_none_update_float_vertex_constants(struct wined3d_device *dev
 static void shader_none_update_float_pixel_constants(struct wined3d_device *device, UINT start, UINT count) {}
 static void shader_none_load_constants(void *shader_priv, struct wined3d_context *context,
         const struct wined3d_state *state) {}
-static void shader_none_load_np2fixup_constants(void *shader_priv,
-        const struct wined3d_gl_info *gl_info, const struct wined3d_state *state) {}
 static void shader_none_destroy(struct wined3d_shader *shader) {}
 static void shader_none_context_destroyed(void *shader_priv, const struct wined3d_context *context) {}
 
@@ -1619,7 +1617,6 @@ const struct wined3d_shader_backend_ops none_shader_backend =
     shader_none_update_float_vertex_constants,
     shader_none_update_float_pixel_constants,
     shader_none_load_constants,
-    shader_none_load_np2fixup_constants,
     shader_none_destroy,
     shader_none_alloc,
     shader_none_free,

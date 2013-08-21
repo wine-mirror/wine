@@ -505,52 +505,49 @@ static unsigned int shader_arb_load_constantsF(const struct wined3d_shader *shad
     }
 }
 
-/**
- * Loads the texture dimensions for NP2 fixup into the currently set ARB_[vertex/fragment]_programs.
- */
-static void shader_arb_load_np2fixup_constants(void *shader_priv,
+/* Loads the texture dimensions for NP2 fixup into the currently set
+ * ARB_[vertex/fragment]_programs. */
+static void shader_arb_load_np2fixup_constants(const struct arb_ps_np2fixup_info *fixup,
         const struct wined3d_gl_info *gl_info, const struct wined3d_state *state)
 {
-    const struct shader_arb_priv * priv = shader_priv;
+    GLfloat np2fixup_constants[4 * MAX_FRAGMENT_SAMPLERS];
+    WORD active = fixup->super.active;
+    UINT i;
 
-    /* NP2 texcoord fixup is (currently) only done for pixelshaders. */
-    if (!use_ps(state)) return;
+    if (!active)
+        return;
 
-    if (priv->compiled_fprog && priv->compiled_fprog->np2fixup_info.super.active) {
-        const struct arb_ps_np2fixup_info* const fixup = &priv->compiled_fprog->np2fixup_info;
-        UINT i;
-        WORD active = fixup->super.active;
-        GLfloat np2fixup_constants[4 * MAX_FRAGMENT_SAMPLERS];
+    for (i = 0; active; active >>= 1, ++i)
+    {
+        const struct wined3d_texture *tex = state->textures[i];
+        unsigned char idx = fixup->super.idx[i];
+        GLfloat *tex_dim = &np2fixup_constants[(idx >> 1) * 4];
 
-        for (i = 0; active; active >>= 1, ++i)
+        if (!(active & 1))
+            continue;
+
+        if (!tex)
         {
-            const struct wined3d_texture *tex = state->textures[i];
-            const unsigned char idx = fixup->super.idx[i];
-            GLfloat *tex_dim = &np2fixup_constants[(idx >> 1) * 4];
-
-            if (!(active & 1)) continue;
-
-            if (!tex) {
-                FIXME("Nonexistent texture is flagged for NP2 texcoord fixup\n");
-                continue;
-            }
-
-            if (idx % 2)
-            {
-                tex_dim[2] = tex->pow2_matrix[0];
-                tex_dim[3] = tex->pow2_matrix[5];
-            }
-            else
-            {
-                tex_dim[0] = tex->pow2_matrix[0];
-                tex_dim[1] = tex->pow2_matrix[5];
-            }
+            ERR("Nonexistent texture is flagged for NP2 texcoord fixup.\n");
+            continue;
         }
 
-        for (i = 0; i < fixup->super.num_consts; ++i) {
-            GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB,
-                                                   fixup->offset + i, &np2fixup_constants[i * 4]));
+        if (idx % 2)
+        {
+            tex_dim[2] = tex->pow2_matrix[0];
+            tex_dim[3] = tex->pow2_matrix[5];
         }
+        else
+        {
+            tex_dim[0] = tex->pow2_matrix[0];
+            tex_dim[1] = tex->pow2_matrix[5];
+        }
+    }
+
+    for (i = 0; i < fixup->super.num_consts; ++i)
+    {
+        GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB,
+                fixup->offset + i, &np2fixup_constants[i * 4]));
     }
 }
 
@@ -720,6 +717,9 @@ static void shader_arb_load_constants_internal(struct shader_arb_priv *priv,
         priv->highest_dirty_ps_const = shader_arb_load_constantsF(pshader, gl_info, GL_FRAGMENT_PROGRAM_ARB,
                 priv->highest_dirty_ps_const, state->ps_consts_f, priv->pshader_const_dirty);
         shader_arb_ps_local_constants(gl_shader, context, state, rt_height);
+
+        if (context->constant_update_mask & WINED3D_SHADER_CONST_PS_NP2_FIXUP)
+            shader_arb_load_np2fixup_constants(&gl_shader->np2fixup_info, gl_info, state);
     }
 }
 
@@ -4696,7 +4696,7 @@ static void shader_arb_select(void *shader_priv, struct wined3d_context *context
 
         /* Force constant reloading for the NP2 fixup (see comment in shader_glsl_select for more info) */
         if (compiled->np2fixup_info.super.active)
-            shader_arb_load_np2fixup_constants(priv, gl_info, state);
+            context->constant_update_mask |= WINED3D_SHADER_CONST_PS_NP2_FIXUP;
 
         if (ps->load_local_constsF)
             context->constant_update_mask |= WINED3D_SHADER_CONST_PS_F;
@@ -5709,7 +5709,6 @@ const struct wined3d_shader_backend_ops arb_program_shader_backend =
     shader_arb_update_float_vertex_constants,
     shader_arb_update_float_pixel_constants,
     shader_arb_load_constants,
-    shader_arb_load_np2fixup_constants,
     shader_arb_destroy,
     shader_arb_alloc,
     shader_arb_free,

@@ -767,51 +767,38 @@ static void reset_program_constant_version(struct wine_rb_entry *entry, void *co
 }
 
 /* Context activation is done by the caller (state handler). */
-static void shader_glsl_load_np2fixup_constants(void *shader_priv,
+static void shader_glsl_load_np2fixup_constants(const struct glsl_ps_program *ps,
         const struct wined3d_gl_info *gl_info, const struct wined3d_state *state)
 {
-    struct shader_glsl_priv *glsl_priv = shader_priv;
-    const struct glsl_shader_prog_link *prog = glsl_priv->glsl_program;
+    GLfloat np2fixup_constants[4 * MAX_FRAGMENT_SAMPLERS];
+    UINT fixup = ps->np2_fixup_info->active;
+    UINT i;
 
-    /* No GLSL program set - nothing to do. */
-    if (!prog) return;
-
-    /* NP2 texcoord fixup is (currently) only done for pixelshaders. */
-    if (!use_ps(state)) return;
-
-    if (prog->ps.np2_fixup_info && prog->ps.np2_fixup_location != -1)
+    for (i = 0; fixup; fixup >>= 1, ++i)
     {
-        UINT i;
-        UINT fixup = prog->ps.np2_fixup_info->active;
-        GLfloat np2fixup_constants[4 * MAX_FRAGMENT_SAMPLERS];
+        const struct wined3d_texture *tex = state->textures[i];
+        unsigned char idx = ps->np2_fixup_info->idx[i];
+        GLfloat *tex_dim = &np2fixup_constants[(idx >> 1) * 4];
 
-        for (i = 0; fixup; fixup >>= 1, ++i)
+        if (!tex)
         {
-            const struct wined3d_texture *tex = state->textures[i];
-            const unsigned char idx = prog->ps.np2_fixup_info->idx[i];
-            GLfloat *tex_dim = &np2fixup_constants[(idx >> 1) * 4];
-
-            if (!tex)
-            {
-                ERR("Nonexistent texture is flagged for NP2 texcoord fixup.\n");
-                continue;
-            }
-
-            if (idx % 2)
-            {
-                tex_dim[2] = tex->pow2_matrix[0];
-                tex_dim[3] = tex->pow2_matrix[5];
-            }
-            else
-            {
-                tex_dim[0] = tex->pow2_matrix[0];
-                tex_dim[1] = tex->pow2_matrix[5];
-            }
+            ERR("Nonexistent texture is flagged for NP2 texcoord fixup.\n");
+            continue;
         }
 
-        GL_EXTCALL(glUniform4fvARB(prog->ps.np2_fixup_location,
-                prog->ps.np2_fixup_info->num_consts, np2fixup_constants));
+        if (idx % 2)
+        {
+            tex_dim[2] = tex->pow2_matrix[0];
+            tex_dim[3] = tex->pow2_matrix[5];
+        }
+        else
+        {
+            tex_dim[0] = tex->pow2_matrix[0];
+            tex_dim[1] = tex->pow2_matrix[5];
+        }
     }
+
+    GL_EXTCALL(glUniform4fvARB(ps->np2_fixup_location, ps->np2_fixup_info->num_consts, np2fixup_constants));
 }
 
 /* Context activation is done by the caller (state handler). */
@@ -906,6 +893,9 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
         }
         GL_EXTCALL(glUniform4fvARB(prog->ps.ycorrection_location, 1, correction_params));
     }
+
+    if (update_mask & WINED3D_SHADER_CONST_PS_NP2_FIXUP)
+        shader_glsl_load_np2fixup_constants(&prog->ps, gl_info, state);
 
     if (update_mask & WINED3D_SHADER_CONST_FFP_PS)
     {
@@ -6086,6 +6076,9 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
                 break;
             }
         }
+
+        if (entry->ps.np2_fixup_location != -1)
+            entry->constant_update_mask |= WINED3D_SHADER_CONST_PS_NP2_FIXUP;
     }
 }
 
@@ -6257,14 +6250,6 @@ static void shader_glsl_select(void *shader_priv, struct wined3d_context *contex
 
         if (program_id)
             context->constant_update_mask |= priv->glsl_program->constant_update_mask;
-    }
-
-    /* In case that NP2 texcoord fixup data is found for the selected program, trigger a reload of the
-     * constants. This has to be done because it can't be guaranteed that sampler() (from state.c) is
-     * called between selecting the shader and using it, which results in wrong fixup for some frames. */
-    if (priv->glsl_program && priv->glsl_program->ps.np2_fixup_info)
-    {
-        shader_glsl_load_np2fixup_constants(priv, gl_info, state);
     }
 }
 
@@ -6822,7 +6807,6 @@ const struct wined3d_shader_backend_ops glsl_shader_backend =
     shader_glsl_update_float_vertex_constants,
     shader_glsl_update_float_pixel_constants,
     shader_glsl_load_constants,
-    shader_glsl_load_np2fixup_constants,
     shader_glsl_destroy,
     shader_glsl_alloc,
     shader_glsl_free,

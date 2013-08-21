@@ -292,7 +292,8 @@ enum wined3d_sampler_texture_type
 #define WINED3D_SHADER_CONST_PS_B           0x00000040
 #define WINED3D_SHADER_CONST_PS_BUMP_ENV    0x00000080
 #define WINED3D_SHADER_CONST_PS_Y_CORR      0x00000100
-#define WINED3D_SHADER_CONST_FFP_PS         0x00000200
+#define WINED3D_SHADER_CONST_PS_NP2_FIXUP   0x00000200
+#define WINED3D_SHADER_CONST_FFP_PS         0x00000400
 
 enum wined3d_shader_register_type
 {
@@ -816,8 +817,6 @@ struct wined3d_shader_backend_ops
     void (*shader_update_float_vertex_constants)(struct wined3d_device *device, UINT start, UINT count);
     void (*shader_update_float_pixel_constants)(struct wined3d_device *device, UINT start, UINT count);
     void (*shader_load_constants)(void *shader_priv, struct wined3d_context *context,
-            const struct wined3d_state *state);
-    void (*shader_load_np2fixup_constants)(void *shader_priv, const struct wined3d_gl_info *gl_info,
             const struct wined3d_state *state);
     void (*shader_destroy)(struct wined3d_shader *shader);
     HRESULT (*shader_alloc_private)(struct wined3d_device *device, const struct wined3d_vertex_pipe_ops *vertex_pipe,
