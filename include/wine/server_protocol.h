@@ -1122,6 +1122,39 @@ struct open_event_reply
 
 
 
+struct create_keyed_event_request
+{
+    struct request_header __header;
+    unsigned int access;
+    unsigned int attributes;
+    /* VARARG(objattr,object_attributes); */
+    char __pad_20[4];
+};
+struct create_keyed_event_reply
+{
+    struct reply_header __header;
+    obj_handle_t handle;
+    char __pad_12[4];
+};
+
+
+struct open_keyed_event_request
+{
+    struct request_header __header;
+    unsigned int access;
+    unsigned int attributes;
+    obj_handle_t rootdir;
+    /* VARARG(name,unicode_str); */
+};
+struct open_keyed_event_reply
+{
+    struct reply_header __header;
+    obj_handle_t handle;
+    char __pad_12[4];
+};
+
+
+
 struct create_mutex_request
 {
     struct request_header __header;
@@ -4982,6 +5015,8 @@ enum request
     REQ_create_event,
     REQ_event_op,
     REQ_open_event,
+    REQ_create_keyed_event,
+    REQ_open_keyed_event,
     REQ_create_mutex,
     REQ_release_mutex,
     REQ_open_mutex,
@@ -5238,6 +5273,8 @@ union generic_request
     struct create_event_request create_event_request;
     struct event_op_request event_op_request;
     struct open_event_request open_event_request;
+    struct create_keyed_event_request create_keyed_event_request;
+    struct open_keyed_event_request open_keyed_event_request;
     struct create_mutex_request create_mutex_request;
     struct release_mutex_request release_mutex_request;
     struct open_mutex_request open_mutex_request;
@@ -5492,6 +5529,8 @@ union generic_reply
     struct create_event_reply create_event_reply;
     struct event_op_reply event_op_reply;
     struct open_event_reply open_event_reply;
+    struct create_keyed_event_reply create_keyed_event_reply;
+    struct open_keyed_event_reply open_keyed_event_reply;
     struct create_mutex_reply create_mutex_reply;
     struct release_mutex_reply release_mutex_reply;
     struct open_mutex_reply open_mutex_reply;
@@ -5715,6 +5754,6 @@ union generic_reply
     struct set_suspend_context_reply set_suspend_context_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 440
+#define SERVER_PROTOCOL_VERSION 441
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

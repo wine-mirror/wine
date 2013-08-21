@@ -965,6 +965,26 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 @END
 
 
+/* Create a keyed event */
+@REQ(create_keyed_event)
+    unsigned int access;        /* wanted access rights */
+    unsigned int attributes;    /* object attributes */
+    VARARG(objattr,object_attributes); /* object attributes */
+@REPLY
+    obj_handle_t handle;        /* handle to the event */
+@END
+
+/* Open a keyed event */
+@REQ(open_keyed_event)
+    unsigned int access;        /* wanted access rights */
+    unsigned int attributes;    /* object attributes */
+    obj_handle_t rootdir;       /* root directory */
+    VARARG(name,unicode_str);   /* object name */
+@REPLY
+    obj_handle_t handle;        /* handle to the event */
+@END
+
+
 /* Create a mutex */
 @REQ(create_mutex)
     unsigned int access;        /* wanted access rights */

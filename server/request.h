@@ -134,6 +134,8 @@ DECL_HANDLER(select);
 DECL_HANDLER(create_event);
 DECL_HANDLER(event_op);
 DECL_HANDLER(open_event);
+DECL_HANDLER(create_keyed_event);
+DECL_HANDLER(open_keyed_event);
 DECL_HANDLER(create_mutex);
 DECL_HANDLER(release_mutex);
 DECL_HANDLER(open_mutex);
@@ -389,6 +391,8 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_create_event,
     (req_handler)req_event_op,
     (req_handler)req_open_event,
+    (req_handler)req_create_keyed_event,
+    (req_handler)req_open_keyed_event,
     (req_handler)req_create_mutex,
     (req_handler)req_release_mutex,
     (req_handler)req_open_mutex,
@@ -834,6 +838,17 @@ C_ASSERT( FIELD_OFFSET(struct open_event_request, rootdir) == 20 );
 C_ASSERT( sizeof(struct open_event_request) == 24 );
 C_ASSERT( FIELD_OFFSET(struct open_event_reply, handle) == 8 );
 C_ASSERT( sizeof(struct open_event_reply) == 16 );
+C_ASSERT( FIELD_OFFSET(struct create_keyed_event_request, access) == 12 );
+C_ASSERT( FIELD_OFFSET(struct create_keyed_event_request, attributes) == 16 );
+C_ASSERT( sizeof(struct create_keyed_event_request) == 24 );
+C_ASSERT( FIELD_OFFSET(struct create_keyed_event_reply, handle) == 8 );
+C_ASSERT( sizeof(struct create_keyed_event_reply) == 16 );
+C_ASSERT( FIELD_OFFSET(struct open_keyed_event_request, access) == 12 );
+C_ASSERT( FIELD_OFFSET(struct open_keyed_event_request, attributes) == 16 );
+C_ASSERT( FIELD_OFFSET(struct open_keyed_event_request, rootdir) == 20 );
+C_ASSERT( sizeof(struct open_keyed_event_request) == 24 );
+C_ASSERT( FIELD_OFFSET(struct open_keyed_event_reply, handle) == 8 );
+C_ASSERT( sizeof(struct open_keyed_event_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct create_mutex_request, access) == 12 );
 C_ASSERT( FIELD_OFFSET(struct create_mutex_request, attributes) == 16 );
 C_ASSERT( FIELD_OFFSET(struct create_mutex_request, owned) == 20 );

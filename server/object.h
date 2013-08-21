@@ -152,10 +152,13 @@ extern void close_objects(void);
 /* event functions */
 
 struct event;
+struct keyed_event;
 
 extern struct event *create_event( struct directory *root, const struct unicode_str *name,
                                    unsigned int attr, int manual_reset, int initial_state,
                                    const struct security_descriptor *sd );
+extern struct keyed_event *create_keyed_event( struct directory *root, const struct unicode_str *name,
+                                               unsigned int attr, const struct security_descriptor *sd );
 extern struct event *get_event_obj( struct process *process, obj_handle_t handle, unsigned int access );
 extern void pulse_event( struct event *event );
 extern void set_event( struct event *event );
