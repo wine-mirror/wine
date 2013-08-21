@@ -2293,7 +2293,7 @@ static void surface_upload_data(struct wined3d_surface *surface, const struct wi
 
     if (format->flags & WINED3DFMT_FLAG_COMPRESSED)
     {
-        UINT row_length = wined3d_format_calculate_size(format, 1, update_w, 1);
+        UINT row_length = wined3d_format_calculate_size(format, 1, update_w, 1, 1);
         UINT row_count = (update_h + format->block_height - 1) / format->block_height;
         const BYTE *addr = data->addr;
         GLenum internal;
@@ -3437,7 +3437,7 @@ HRESULT CDECL wined3d_surface_update_desc(struct wined3d_surface *surface,
     struct wined3d_device *device = surface->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct wined3d_format *format = wined3d_get_format(gl_info, format_id);
-    UINT resource_size = wined3d_format_calculate_size(format, device->surface_alignment, width, height);
+    UINT resource_size = wined3d_format_calculate_size(format, device->surface_alignment, width, height, 1);
 
     TRACE("surface %p, width %u, height %u, format %s, multisample_type %#x, multisample_quality %u.\n",
             surface, width, height, debug_d3dformat(format_id), multisample_type, multisample_type);
@@ -7161,7 +7161,7 @@ static HRESULT surface_init(struct wined3d_surface *surface, UINT alignment, UIN
 
     /* FIXME: Check that the format is supported by the device. */
 
-    resource_size = wined3d_format_calculate_size(format, alignment, width, height);
+    resource_size = wined3d_format_calculate_size(format, alignment, width, height, 1);
     if (!resource_size)
         return WINED3DERR_INVALIDCALL;
 

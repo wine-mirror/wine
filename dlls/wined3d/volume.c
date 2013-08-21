@@ -265,6 +265,7 @@ static HRESULT volume_init(struct wined3d_volume *volume, struct wined3d_device 
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct wined3d_format *format = wined3d_get_format(gl_info, format_id);
     HRESULT hr;
+    UINT size;
 
     if (!gl_info->supported[EXT_TEXTURE3D])
     {
@@ -272,10 +273,11 @@ static HRESULT volume_init(struct wined3d_volume *volume, struct wined3d_device 
         return WINED3DERR_INVALIDCALL;
     }
 
+    size = wined3d_format_calculate_size(format, device->surface_alignment, width, height, depth);
+
     hr = resource_init(&volume->resource, device, WINED3D_RTYPE_VOLUME, format,
             WINED3D_MULTISAMPLE_NONE, 0, usage, pool, width, height, depth,
-            width * height * depth * format->byte_count, parent, parent_ops,
-            &volume_resource_ops);
+            size, parent, parent_ops, &volume_resource_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize resource, returning %#x.\n", hr);

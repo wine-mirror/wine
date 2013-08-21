@@ -1942,7 +1942,8 @@ const struct wined3d_format *wined3d_get_format(const struct wined3d_gl_info *gl
     return &gl_info->formats[idx];
 }
 
-UINT wined3d_format_calculate_size(const struct wined3d_format *format, UINT alignment, UINT width, UINT height)
+UINT wined3d_format_calculate_size(const struct wined3d_format *format, UINT alignment,
+        UINT width, UINT height, UINT depth)
 {
     UINT size;
 
@@ -1967,6 +1968,8 @@ UINT wined3d_format_calculate_size(const struct wined3d_format *format, UINT ali
         size *= format->height_scale.numerator;
         size /= format->height_scale.denominator;
     }
+
+    size *= depth;
 
     return size;
 }
