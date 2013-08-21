@@ -2742,7 +2742,7 @@ static void test_download(DWORD flags)
     test_ready_state((flags & (DWL_FROM_PUT_HREF|DWL_FROM_GOBACK|DWL_FROM_GOFORWARD|DWL_REFRESH))
                      ? READYSTATE_COMPLETE : READYSTATE_LOADING);
 
-    if((is_http && !(flags & (DWL_FROM_GOBACK|DWL_FROM_GOFORWARD|DWL_REFRESH))) || (flags & DWL_EXPECT_BEFORE_NAVIGATE))
+    if(flags & (DWL_EXPECT_BEFORE_NAVIGATE|(is_http ? DWL_FROM_PUT_HREF : 0)))
         SET_EXPECT(Invoke_PROPERTYCHANGE);
 
     if(flags & DWL_EXPECT_BEFORE_NAVIGATE) {
@@ -2784,7 +2784,7 @@ static void test_download(DWORD flags)
         DispatchMessage(&msg);
     }
 
-    if((is_http && !(flags & (DWL_FROM_GOBACK|DWL_FROM_GOFORWARD|DWL_REFRESH))) || (flags & DWL_EXPECT_BEFORE_NAVIGATE))
+    if(flags & (DWL_EXPECT_BEFORE_NAVIGATE|(is_http ? DWL_FROM_PUT_HREF : 0)))
         todo_wine CHECK_CALLED(Invoke_PROPERTYCHANGE);
 
     if(flags & DWL_EXPECT_BEFORE_NAVIGATE) {
@@ -2914,6 +2914,8 @@ static void test_put_href(IWebBrowser2 *unk, const char *url)
     BSTR str;
     HRESULT hres;
 
+    trace("put_href(%s)...\n", url);
+
     doc = get_document(unk);
 
     location = NULL;
@@ -2922,6 +2924,8 @@ static void test_put_href(IWebBrowser2 *unk, const char *url)
     ok(hres == S_OK, "get_location failed: %08x\n", hres);
     ok(location != NULL, "location == NULL\n");
 
+    is_http = !memcmp(url, "http:", 5);
+
     SET_EXPECT(TranslateUrl);
     SET_EXPECT(Invoke_BEFORENAVIGATE2);
     if(!is_http)
@@ -2929,7 +2933,6 @@ static void test_put_href(IWebBrowser2 *unk, const char *url)
 
     dwl_flags = DWL_FROM_PUT_HREF;
 
-    is_http = !memcmp(url, "http:", 5);
     str = a2bstr(current_url = url);
     is_first_load = FALSE;
     hres = IHTMLLocation_put_href(location, str);
@@ -3423,7 +3426,7 @@ static void test_WebBrowser(BOOL do_download, BOOL do_close)
             test_Refresh(webbrowser);
 
             trace("put_href http URL...\n");
-            test_put_href(webbrowser, "http://www.winehq.org/");
+            test_put_href(webbrowser, "http://test.winehq.org/tests/winehq_snapshot/");
             test_download(DWL_FROM_PUT_HREF|DWL_HTTP);
 
             trace("GoBack...\n");
@@ -3431,7 +3434,7 @@ static void test_WebBrowser(BOOL do_download, BOOL do_close)
             test_download(DWL_FROM_GOBACK|DWL_HTTP);
 
             trace("GoForward...\n");
-            test_go_forward(webbrowser, "http://www.winehq.org/");
+            test_go_forward(webbrowser, "http://test.winehq.org/tests/winehq_snapshot/");
             test_download(DWL_FROM_GOFORWARD|DWL_HTTP);
         }
 
