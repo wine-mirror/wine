@@ -2032,8 +2032,8 @@ static void test_pipes(const char* selfname)
         ok(0, "pipe failed with errno %d\n", errno);
         return;
     }
-    r = write(pipes[1], "\r\n\rab", 5);
-    ok(r == 5, "write returned %d, errno = %d\n", r, errno);
+    r = write(pipes[1], "\r\n\rab\r\n", 7);
+    ok(r == 7, "write returned %d, errno = %d\n", r, errno);
     setmode(pipes[0], O_TEXT);
     r = read(pipes[0], buf, 1);
     ok(r == 1, "read returned %d, expected 1\n", r);
@@ -2044,9 +2044,10 @@ static void test_pipes(const char* selfname)
     r = read(pipes[0], buf, 1);
     ok(r == 1, "read returned %d, expected 1\n", r);
     ok(buf[0] == 'a', "buf[0] = %x, expected 'a'\n", buf[0]);
-    r = read(pipes[0], buf, 1);
-    ok(r == 1, "read returned %d, expected 1\n", r);
+    r = read(pipes[0], buf, 2);
+    ok(r == 2, "read returned %d, expected 1\n", r);
     ok(buf[0] == 'b', "buf[0] = %x, expected 'b'\n", buf[0]);
+    ok(buf[1] == '\n', "buf[1] = %x, expected '\\n'\n", buf[1]);
 
     if (p_fopen_s)
     {
