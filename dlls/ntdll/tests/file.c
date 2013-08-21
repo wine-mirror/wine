@@ -2107,38 +2107,29 @@ todo_wine
 todo_wine
     ok(iob.Information == -1, "expected -1, got %ld\n", iob.Information);
 
-    S(U(ovl)).Offset = 0;
-    S(U(ovl)).OffsetHigh = 0;
-    ovl.Internal = -1;
-    ovl.InternalHigh = -1;
-    ovl.hEvent = 0;
-    bytes = 0xdeadbeef;
-    SetLastError(0xdeadbeef);
-    ret = WriteFile(hfile, contents, sizeof(contents), &bytes, &ovl);
+    iob.Status = -1;
+    iob.Information = -1;
+    offset.QuadPart = 0;
+    status = pNtWriteFile(hfile, 0, NULL, NULL, &iob, contents, sizeof(contents), &offset, NULL);
 todo_wine
-    ok(!ret || broken(ret) /* see below */, "WriteFile should fail\n");
-todo_wine
-    ok(GetLastError() == ERROR_IO_PENDING || broken(GetLastError() == 0xdeadbeef), "expected ERROR_IO_PENDING, got %d\n", GetLastError());
+    ok(status == STATUS_PENDING || broken(status == STATUS_SUCCESS) /* see below */, "expected STATUS_PENDING, got %#x\n", status);
+    ok(iob.Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", iob.Status);
+    ok(iob.Information == sizeof(contents), "expected sizeof(contents), got %lu\n", iob.Information);
     /* even fully updated XP passes this test, but it looks like some VMs
      * in a testbot get never updated, so overlapped IO is broken. Instead
      * of fighting with broken tests and adding a bunch of broken() statements
      * it's better to skip further tests completely.
      */
-    if (GetLastError() != ERROR_IO_PENDING)
+    if (status != STATUS_PENDING)
     {
 todo_wine
         win_skip("broken overlapped IO implementation, update your OS\n");
         CloseHandle(hfile);
         return;
     }
-    ok(bytes == 0, "bytes %u\n", bytes);
-    ok(ovl.Internal == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx\n", ovl.Internal);
-    ok(ovl.InternalHigh == sizeof(contents), "expected sizeof(contents), got %lu\n", ovl.InternalHigh);
 
-    bytes = 0xdeadbeef;
-    ret = GetOverlappedResult(hfile, &ovl, &bytes, TRUE);
-    ok(ret, "GetOverlappedResult error %d\n", GetLastError());
-    ok(bytes == sizeof(contents), "bytes %u\n", bytes);
+    ret = WaitForSingleObject(hfile, 3000);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject error %d\n", ret);
 
     bytes = 0xdeadbeef;
     SetLastError(0xdeadbeef);
