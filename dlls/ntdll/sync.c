@@ -1242,6 +1242,46 @@ NTSTATUS WINAPI NtDelayExecution( BOOLEAN alertable, const LARGE_INTEGER *timeou
     return STATUS_SUCCESS;
 }
 
+
+/******************************************************************************
+ *              NtCreateKeyedEvent (NTDLL.@)
+ */
+NTSTATUS WINAPI NtCreateKeyedEvent( HANDLE *handle, ACCESS_MASK access,
+                                    const OBJECT_ATTRIBUTES *attr, ULONG flags )
+{
+    FIXME( "stub\n" );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *              NtOpenKeyedEvent (NTDLL.@)
+ */
+NTSTATUS WINAPI NtOpenKeyedEvent( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
+{
+    FIXME( "stub\n" );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *              NtWaitForKeyedEvent (NTDLL.@)
+ */
+NTSTATUS WINAPI NtWaitForKeyedEvent( HANDLE handle, const void *key,
+                                     BOOLEAN alertable, const LARGE_INTEGER *timeout )
+{
+    FIXME( "stub\n" );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *              NtReleaseKeyedEvent (NTDLL.@)
+ */
+NTSTATUS WINAPI NtReleaseKeyedEvent( HANDLE handle, const void *key,
+                                     BOOLEAN alertable, const LARGE_INTEGER *timeout )
+{
+    FIXME( "stub\n" );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 /******************************************************************
  *              NtCreateIoCompletion (NTDLL.@)
  *              ZwCreateIoCompletion (NTDLL.@)
