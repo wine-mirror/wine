@@ -413,6 +413,7 @@ void init_directories(void)
     static const WCHAR event_high_memW[] = {'H','i','g','h','M','e','m','o','r','y','C','o','n','d','i','t','i','o','n'};
     static const WCHAR event_high_pagedW[] = {'H','i','g','h','P','a','g','e','d','P','o','o','l','C','o','n','d','i','t','i','o','n'};
     static const WCHAR event_high_nonpgW[] = {'H','i','g','h','N','o','n','P','a','g','e','d','P','o','o','l','C','o','n','d','i','t','i','o','n'};
+    static const WCHAR keyed_event_crit_sectW[] = {'C','r','i','t','S','e','c','O','u','t','O','f','M','e','m','o','r','y','E','v','e','n','t'};
     static const struct unicode_str kernel_events[] =
     {
         { event_low_memW, sizeof(event_low_memW) },
@@ -422,9 +423,11 @@ void init_directories(void)
         { event_high_pagedW, sizeof(event_high_pagedW) },
         { event_high_nonpgW, sizeof(event_high_nonpgW) }
     };
+    static const struct unicode_str keyed_event_crit_sect_str = {keyed_event_crit_sectW, sizeof(keyed_event_crit_sectW)};
 
     struct directory *dir_driver, *dir_device, *dir_global, *dir_basenamed, *dir_sessions, *dir_kernel;
     struct symlink *link_dosdev, *link_global1, *link_global2, *link_local, *link_pipe, *link_mailslot, *link_0, *link_session;
+    struct keyed_event *keyed_event;
     unsigned int i;
 
     root_directory = create_directory( NULL, NULL, 0, HASH_SIZE );
@@ -469,6 +472,8 @@ void init_directories(void)
         struct event *event = create_event( dir_kernel, &kernel_events[i], 0, 1, 0, NULL );
         make_object_static( (struct object *)event );
     }
+    keyed_event = create_keyed_event( dir_kernel, &keyed_event_crit_sect_str, 0, NULL );
+    make_object_static( (struct object *)keyed_event );
 
     /* the objects hold references so we can release these directories */
     release_object( dir_global );
