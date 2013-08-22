@@ -2067,6 +2067,7 @@ struct wined3d_volume
 
     DWORD flags, locations;
     GLint texture_level;
+    DWORD download_count;
 };
 
 static inline struct wined3d_volume *volume_from_resource(struct wined3d_resource *resource)

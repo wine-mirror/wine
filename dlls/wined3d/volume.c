@@ -113,6 +113,26 @@ static void wined3d_volume_invalidate_location(struct wined3d_volume *volume, DW
 }
 
 /* Context activation is done by the caller. */
+static void wined3d_volume_download_data(struct wined3d_volume *volume,
+        const struct wined3d_context *context)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct wined3d_format *format = volume->resource.format;
+
+    gl_info->gl_ops.gl.p_glGetTexImage(GL_TEXTURE_3D, volume->texture_level,
+            format->glFormat, format->glType, volume->resource.allocatedMemory);
+    checkGLcall("glGetTexImage");
+}
+
+static void wined3d_volume_evict_sysmem(struct wined3d_volume *volume)
+{
+    wined3d_resource_free_sysmem(volume->resource.heap_memory);
+    volume->resource.heap_memory = NULL;
+    volume->resource.allocatedMemory = NULL;
+    wined3d_volume_invalidate_location(volume, WINED3D_LOCATION_SYSMEM);
+}
+
+/* Context activation is done by the caller. */
 static void wined3d_volume_load_location(struct wined3d_volume *volume,
         struct wined3d_context *context, DWORD location)
 {
@@ -160,6 +180,10 @@ static void wined3d_volume_load_location(struct wined3d_volume *volume,
                 return;
             }
             wined3d_volume_validate_location(volume, WINED3D_LOCATION_TEXTURE_RGB);
+
+            if (volume->resource.pool == WINED3D_POOL_MANAGED && volume->download_count < 10)
+                wined3d_volume_evict_sysmem(volume);
+
             break;
 
         case WINED3D_LOCATION_SYSMEM:
@@ -173,6 +197,12 @@ static void wined3d_volume_load_location(struct wined3d_volume *volume,
             {
                 TRACE("Volume previously discarded, nothing to do.\n");
                 wined3d_volume_invalidate_location(volume, WINED3D_LOCATION_DISCARDED);
+            }
+            else if (volume->locations & WINED3D_LOCATION_TEXTURE_RGB)
+            {
+                volume_bind_and_dirtify(volume, context);
+                volume->download_count++;
+                wined3d_volume_download_data(volume, context);
             }
             else
             {
