@@ -1109,18 +1109,19 @@ NTSTATUS NTDLL_queue_process_apc( HANDLE process, const apc_call_t *call, apc_re
 NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handles, UINT flags,
                                           const LARGE_INTEGER *timeout, HANDLE signal_object )
 {
+    select_op_t select_op;
     NTSTATUS ret;
     UINT i;
     int cookie;
     BOOL user_apc = FALSE;
-    obj_handle_t obj_handles[MAXIMUM_WAIT_OBJECTS];
     obj_handle_t apc_handle = 0;
     apc_call_t call;
     apc_result_t result;
     timeout_t abs_timeout = timeout ? timeout->QuadPart : TIMEOUT_INFINITE;
 
     memset( &result, 0, sizeof(result) );
-    for (i = 0; i < count; i++) obj_handles[i] = wine_server_obj_handle( handles[i] );
+    select_op.wait.op = SELECT_WAIT;
+    for (i = 0; i < count; i++) select_op.wait.handles[i] = wine_server_obj_handle( handles[i] );
 
     for (;;)
     {
@@ -1132,7 +1133,7 @@ NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handles, UIN
             req->prev_apc = apc_handle;
             req->timeout  = abs_timeout;
             wine_server_add_data( req, &result, sizeof(result) );
-            wine_server_add_data( req, obj_handles, count * sizeof(*obj_handles) );
+            wine_server_add_data( req, &select_op, offsetof( select_op_t, wait.handles[count] ));
             ret = wine_server_call( req );
             abs_timeout = reply->timeout;
             apc_handle  = reply->apc_handle;

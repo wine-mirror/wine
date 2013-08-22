@@ -710,23 +710,39 @@ static int signal_object( obj_handle_t handle )
 }
 
 /* select on a list of handles */
-static timeout_t select_on( unsigned int count, client_ptr_t cookie, const obj_handle_t *handles,
+static timeout_t select_on( const select_op_t *select_op, data_size_t op_size, client_ptr_t cookie,
                             int flags, timeout_t timeout, obj_handle_t signal_obj )
 {
     int ret;
-    unsigned int i;
+    unsigned int i, count;
     struct object *objects[MAXIMUM_WAIT_OBJECTS];
 
     if (timeout <= 0) timeout = current_time - timeout;
 
-    if (count > MAXIMUM_WAIT_OBJECTS)
+    switch (select_op->op)
     {
+    case SELECT_NONE:
+        count = 0;
+        break;
+
+    case SELECT_WAIT:
+        count = (op_size - offsetof( select_op_t, wait.handles )) / sizeof(select_op->wait.handles[0]);
+        if (op_size < offsetof( select_op_t, wait.handles ) || count > MAXIMUM_WAIT_OBJECTS)
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return 0;
+        }
+        break;
+
+    default:
         set_error( STATUS_INVALID_PARAMETER );
         return 0;
     }
+
     for (i = 0; i < count; i++)
     {
-        if (!(objects[i] = get_handle_obj( current->process, handles[i], SYNCHRONIZE, NULL )))
+        if (!(objects[i] = get_handle_obj( current->process, select_op->wait.handles[i],
+                                           SYNCHRONIZE, NULL )))
             break;
     }
 
@@ -1310,17 +1326,19 @@ DECL_HANDLER(resume_thread)
 /* select on a handle list */
 DECL_HANDLER(select)
 {
+    select_op_t select_op;
+    data_size_t op_size;
     struct thread_apc *apc;
-    unsigned int count;
     const apc_result_t *result = get_req_data();
-    const obj_handle_t *handles = (const obj_handle_t *)(result + 1);
 
     if (get_req_data_size() < sizeof(*result))
     {
         set_error( STATUS_INVALID_PARAMETER );
         return;
     }
-    count = (get_req_data_size() - sizeof(*result)) / sizeof(obj_handle_t);
+    op_size = min( get_req_data_size() - sizeof(*result), sizeof(select_op) );
+    memset( &select_op, 0, sizeof(select_op) );
+    memcpy( &select_op, result + 1, op_size );
 
     /* first store results of previous apc */
     if (req->prev_apc)
@@ -1348,7 +1366,7 @@ DECL_HANDLER(select)
         release_object( apc );
     }
 
-    reply->timeout = select_on( count, req->cookie, handles, req->flags, req->timeout, req->signal );
+    reply->timeout = select_on( &select_op, op_size, req->cookie, req->flags, req->timeout, req->signal );
 
     if (get_error() == STATUS_USER_APC)
     {

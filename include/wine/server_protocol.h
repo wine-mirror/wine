@@ -404,6 +404,22 @@ struct token_groups
 
 };
 
+enum select_op
+{
+    SELECT_NONE,
+    SELECT_WAIT
+};
+
+typedef union
+{
+    enum select_op op;
+    struct
+    {
+        enum select_op  op;
+        obj_handle_t    handles[MAXIMUM_WAIT_OBJECTS];
+    } wait;
+} select_op_t;
+
 enum apc_type
 {
     APC_NONE,
@@ -1056,7 +1072,7 @@ struct select_request
     obj_handle_t prev_apc;
     timeout_t    timeout;
     /* VARARG(result,apc_result); */
-    /* VARARG(handles,handles); */
+    /* VARARG(data,select_op); */
 };
 struct select_reply
 {
@@ -5771,6 +5787,6 @@ union generic_reply
     struct set_suspend_context_reply set_suspend_context_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 443
+#define SERVER_PROTOCOL_VERSION 444
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

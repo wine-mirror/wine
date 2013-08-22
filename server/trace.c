@@ -66,6 +66,19 @@ static void dump_uints( const int *ptr, int len )
     fputc( '}', stderr );
 }
 
+static void dump_handles( const char *prefix, const obj_handle_t *data, data_size_t size )
+{
+    data_size_t len = size / sizeof(*data);
+
+    fprintf( stderr,"%s{", prefix );
+    while (len > 0)
+    {
+        fprintf( stderr, "%04x", *data++ );
+        if (--len) fputc( ',', stderr );
+    }
+    fputc( '}', stderr );
+}
+
 static void dump_timeout( const char *prefix, const timeout_t *time )
 {
     fprintf( stderr, "%s%s", prefix, get_timeout_str(*time) );
@@ -367,16 +380,33 @@ static void dump_varargs_apc_result( const char *prefix, data_size_t size )
     remove_data( size );
 }
 
-static void dump_varargs_handles( const char *prefix, data_size_t size )
+static void dump_varargs_select_op( const char *prefix, data_size_t size )
 {
-    const obj_handle_t *data = cur_data;
-    data_size_t len = size / sizeof(*data);
+    select_op_t data;
 
-    fprintf( stderr,"%s{", prefix );
-    while (len > 0)
+    if (!size)
     {
-        fprintf( stderr, "%04x", *data++ );
-        if (--len) fputc( ',', stderr );
+        fprintf( stderr, "%s{}", prefix );
+        return;
+    }
+    memset( &data, 0, sizeof(data) );
+    memcpy( &data, cur_data, min( size, sizeof(data) ));
+
+    fprintf( stderr, "%s{", prefix );
+    switch (data.op)
+    {
+    case SELECT_NONE:
+        fprintf( stderr, "NONE" );
+        break;
+    case SELECT_WAIT:
+        fprintf( stderr, "WAIT" );
+        if (size > offsetof( select_op_t, wait.handles ))
+            dump_handles( ",handles=", data.wait.handles,
+                          min( size, sizeof(data.wait) ) - offsetof( select_op_t, wait.handles ));
+        break;
+    default:
+        fprintf( stderr, "op=%u", data.op );
+        break;
     }
     fputc( '}', stderr );
     remove_data( size );
@@ -1361,7 +1391,7 @@ static void dump_select_request( const struct select_request *req )
     fprintf( stderr, ", prev_apc=%04x", req->prev_apc );
     dump_timeout( ", timeout=", &req->timeout );
     dump_varargs_apc_result( ", result=", cur_size );
-    dump_varargs_handles( ", handles=", cur_size );
+    dump_varargs_select_op( ", data=", cur_size );
 }
 
 static void dump_select_reply( const struct select_reply *req )
