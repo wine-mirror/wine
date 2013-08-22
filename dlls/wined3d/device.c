@@ -2098,7 +2098,7 @@ void CDECL wined3d_device_get_material(const struct wined3d_device *device, stru
 {
     TRACE("device %p, material %p.\n", device, material);
 
-    *material = device->updateStateBlock->state.material;
+    *material = device->stateBlock->state.material;
 
     TRACE("diffuse {%.8e, %.8e, %.8e, %.8e}\n",
             material->diffuse.r, material->diffuse.g,
