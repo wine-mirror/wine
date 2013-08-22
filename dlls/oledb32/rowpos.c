@@ -21,6 +21,7 @@
 
 #include "windef.h"
 #include "ole2.h"
+#include "olectl.h"
 
 #include "oledb.h"
 #include "oledberr.h"
@@ -194,8 +195,20 @@ static HRESULT WINAPI cpc_EnumConnectionPoints(IConnectionPointContainer *iface,
 static HRESULT WINAPI cpc_FindConnectionPoint(IConnectionPointContainer *iface, REFIID riid, IConnectionPoint **point)
 {
     rowpos *This = impl_from_IConnectionPointContainer(iface);
-    FIXME("(%p)->(%s %p): stub\n", This, debugstr_guid(riid), point);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), point);
+
+    if (IsEqualIID(riid, &IID_IRowPositionChange))
+    {
+        *point = &This->cp.IConnectionPoint_iface;
+        IConnectionPoint_AddRef(*point);
+        return S_OK;
+    }
+    else
+    {
+        FIXME("unsupported riid %s\n", debugstr_guid(riid));
+        return CONNECT_E_NOCONNECTION;
+    }
 }
 
 static const struct IConnectionPointContainerVtbl rowpos_cpc_vtbl =
