@@ -36,6 +36,8 @@ typedef struct
 {
     IConnectionPoint IConnectionPoint_iface;
     rowpos *container;
+    IRowPositionChange **sinks;
+    DWORD sinks_size;
 } rowpos_cp;
 
 struct rowpos
@@ -47,6 +49,8 @@ struct rowpos
     IRowset *rowset;
     rowpos_cp cp;
 };
+
+static void rowposchange_cp_destroy(rowpos_cp*);
 
 static inline rowpos *impl_from_IRowPosition(IRowPosition *iface)
 {
@@ -108,6 +112,7 @@ static ULONG WINAPI rowpos_Release(IRowPosition* iface)
     if (ref == 0)
     {
         if (This->rowset) IRowset_Release(This->rowset);
+        rowposchange_cp_destroy(&This->cp);
         heap_free(This);
     }
 
@@ -263,18 +268,62 @@ static HRESULT WINAPI rowpos_cp_GetConnectionPointContainer(IConnectionPoint *if
     return S_OK;
 }
 
-static HRESULT WINAPI rowpos_cp_Advise(IConnectionPoint *iface, IUnknown *sink, DWORD *cookie)
+static HRESULT WINAPI rowpos_cp_Advise(IConnectionPoint *iface, IUnknown *unksink, DWORD *cookie)
 {
     rowpos_cp *This = impl_from_IConnectionPoint(iface);
-    FIXME("(%p)->(%p %p): stub\n", This, sink, cookie);
-    return E_NOTIMPL;
+    IRowPositionChange *sink;
+    HRESULT hr;
+    DWORD i;
+
+    TRACE("(%p)->(%p %p)\n", This, unksink, cookie);
+
+    hr = IUnknown_QueryInterface(unksink, &IID_IRowPositionChange, (void**)&sink);
+    if (FAILED(hr))
+    {
+        FIXME("sink doesn't support IRowPositionChange\n");
+        return CONNECT_E_CANNOTCONNECT;
+    }
+
+    if (This->sinks)
+    {
+        for (i = 0; i < This->sinks_size; i++)
+        {
+            if (!This->sinks[i])
+                break;
+        }
+
+        if (i == This->sinks_size)
+        {
+            This->sinks_size *= 2;
+            This->sinks = heap_realloc_zero(This->sinks, This->sinks_size*sizeof(*This->sinks));
+        }
+    }
+    else
+    {
+        This->sinks_size = 10;
+        This->sinks = heap_alloc_zero(This->sinks_size*sizeof(*This->sinks));
+        i = 0;
+    }
+
+    This->sinks[i] = sink;
+    if (cookie) *cookie = i + 1;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI rowpos_cp_Unadvise(IConnectionPoint *iface, DWORD cookie)
 {
     rowpos_cp *This = impl_from_IConnectionPoint(iface);
-    FIXME("(%p)->(%d): stub\n", This, cookie);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d)\n", This, cookie);
+
+    if (!cookie || cookie > This->sinks_size || !This->sinks[cookie-1])
+        return CONNECT_E_NOCONNECTION;
+
+    IRowPositionChange_Release(This->sinks[cookie-1]);
+    This->sinks[cookie-1] = NULL;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI rowpos_cp_EnumConnections(IConnectionPoint *iface, IEnumConnections **enum_c)
@@ -300,6 +349,19 @@ static void rowposchange_cp_init(rowpos_cp *cp, rowpos *container)
 {
     cp->IConnectionPoint_iface.lpVtbl = &rowpos_cp_vtbl;
     cp->container = container;
+    cp->sinks = NULL;
+    cp->sinks_size = 0;
+}
+
+void rowposchange_cp_destroy(rowpos_cp *cp)
+{
+    DWORD i;
+    for (i = 0; i < cp->sinks_size; i++)
+    {
+        if (cp->sinks[i])
+            IRowPositionChange_Release(cp->sinks[i]);
+    }
+    heap_free(cp->sinks);
 }
 
 HRESULT create_oledb_rowpos(IUnknown *outer, void **obj)
