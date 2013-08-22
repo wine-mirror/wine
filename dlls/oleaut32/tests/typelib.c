@@ -56,8 +56,21 @@
 
 #define ok_ole_success(hr, func) ok(hr == S_OK, #func " failed with error 0x%08x\n", hr)
 
+#ifdef __i386__
+#define ARCH "x86"
+#elif defined __x86_64__
+#define ARCH "amd64"
+#else
+#define ARCH "none"
+#endif
+
 static HRESULT WINAPI (*pRegisterTypeLibForUser)(ITypeLib*,OLECHAR*,OLECHAR*);
 static HRESULT WINAPI (*pUnRegisterTypeLibForUser)(REFGUID,WORD,WORD,LCID,SYSKIND);
+
+static BOOL   (WINAPI *pActivateActCtx)(HANDLE,ULONG_PTR*);
+static HANDLE (WINAPI *pCreateActCtxW)(PCACTCTXW);
+static BOOL   (WINAPI *pDeactivateActCtx)(DWORD,ULONG_PTR);
+static VOID   (WINAPI *pReleaseActCtx)(HANDLE);
 
 static const WCHAR wszStdOle2[] = {'s','t','d','o','l','e','2','.','t','l','b',0};
 static WCHAR wszGUID[] = {'G','U','I','D',0};
@@ -136,9 +149,14 @@ static IInvokeTest invoketest = { &invoketestvtbl };
 static void init_function_pointers(void)
 {
     HMODULE hmod = GetModuleHandleA("oleaut32.dll");
+    HMODULE hk32 = GetModuleHandleA("kernel32.dll");
 
     pRegisterTypeLibForUser = (void *)GetProcAddress(hmod, "RegisterTypeLibForUser");
     pUnRegisterTypeLibForUser = (void *)GetProcAddress(hmod, "UnRegisterTypeLibForUser");
+    pActivateActCtx = (void *)GetProcAddress(hk32, "ActivateActCtx");
+    pCreateActCtxW = (void *)GetProcAddress(hk32, "CreateActCtxW");
+    pDeactivateActCtx = (void *)GetProcAddress(hk32, "DeactivateActCtx");
+    pReleaseActCtx = (void *)GetProcAddress(hk32, "ReleaseActCtx");
 }
 
 static void ref_count_test(LPCWSTR type_lib)
@@ -603,24 +621,30 @@ static void test_CreateDispTypeInfo(void)
     SysFreeString(methdata[3].szName);
 }
 
-static const char *create_test_typelib(int res_no)
+static void write_typelib(int res_no, const char *filename)
 {
-    static char filename[MAX_PATH];
+    DWORD written;
     HANDLE file;
     HRSRC res;
     void *ptr;
-    DWORD written;
 
-    GetTempFileNameA( ".", "tlb", 0, filename );
     file = CreateFile( filename, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
     ok( file != INVALID_HANDLE_VALUE, "file creation failed\n" );
-    if (file == INVALID_HANDLE_VALUE) return NULL;
+    if (file == INVALID_HANDLE_VALUE) return;
     res = FindResource( GetModuleHandle(0), MAKEINTRESOURCE(res_no), "TYPELIB" );
     ok( res != 0, "couldn't find resource\n" );
     ptr = LockResource( LoadResource( GetModuleHandle(0), res ));
     WriteFile( file, ptr, SizeofResource( GetModuleHandle(0), res ), &written, NULL );
     ok( written == SizeofResource( GetModuleHandle(0), res ), "couldn't write resource\n" );
     CloseHandle( file );
+}
+
+static const char *create_test_typelib(int res_no)
+{
+    static char filename[MAX_PATH];
+
+    GetTempFileNameA( ".", "tlb", 0, filename );
+    write_typelib(res_no, filename);
     return filename;
 }
 
@@ -4372,6 +4396,170 @@ static void test_TypeInfo2_GetContainingTypeLib(void)
     ICreateTypeLib2_Release(ctl2);
 }
 
+static void create_manifest_file(const char *filename, const char *manifest)
+{
+    HANDLE file;
+    DWORD size;
+
+    file = CreateFileA(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+                       FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError());
+    WriteFile(file, manifest, strlen(manifest), &size, NULL);
+    CloseHandle(file);
+}
+
+static HANDLE create_actctx(const char *file)
+{
+    WCHAR path[MAX_PATH];
+    ACTCTXW actctx;
+    HANDLE handle;
+
+    MultiByteToWideChar(CP_ACP, 0, file, -1, path, MAX_PATH);
+    memset(&actctx, 0, sizeof(ACTCTXW));
+    actctx.cbSize = sizeof(ACTCTXW);
+    actctx.lpSource = path;
+
+    handle = pCreateActCtxW(&actctx);
+    ok(handle != INVALID_HANDLE_VALUE, "handle == INVALID_HANDLE_VALUE, error %u\n", GetLastError());
+
+    ok(actctx.cbSize == sizeof(actctx), "actctx.cbSize=%d\n", actctx.cbSize);
+    ok(actctx.dwFlags == 0, "actctx.dwFlags=%d\n", actctx.dwFlags);
+    ok(actctx.lpSource == path, "actctx.lpSource=%p\n", actctx.lpSource);
+    ok(actctx.wProcessorArchitecture == 0, "actctx.wProcessorArchitecture=%d\n", actctx.wProcessorArchitecture);
+    ok(actctx.wLangId == 0, "actctx.wLangId=%d\n", actctx.wLangId);
+    ok(actctx.lpAssemblyDirectory == NULL, "actctx.lpAssemblyDirectory=%p\n", actctx.lpAssemblyDirectory);
+    ok(actctx.lpResourceName == NULL, "actctx.lpResourceName=%p\n", actctx.lpResourceName);
+    ok(actctx.lpApplicationName == NULL, "actctx.lpApplicationName=%p\n",
+       actctx.lpApplicationName);
+    ok(actctx.hModule == NULL, "actctx.hModule=%p\n", actctx.hModule);
+
+    return handle;
+}
+
+static const char manifest_dep[] =
+"<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">"
+"<assemblyIdentity version=\"1.2.3.4\" name=\"testdep\" type=\"win32\" processorArchitecture=\"" ARCH "\"/>"
+"<file name=\"test_actctx_tlb.tlb\">"
+" <typelib tlbid=\"{d96d8a3e-78b6-4c8d-8f27-059db959be8a}\" version=\"2.7\" helpdir=\"\" resourceid=\"409\""
+"          flags=\"RESTRICTED,CONTROL\""
+" />"
+"</file>"
+"<file name=\"test_actctx_tlb2.tlb\">"
+" <typelib tlbid=\"{a2cfdbd3-2bbf-4b1c-a414-5a5904e634c9}\" version=\"2.0\" helpdir=\"\" resourceid=\"409\""
+"          flags=\"RESTRICTED,CONTROL\""
+" />"
+"</file>"
+"</assembly>";
+
+static const char manifest_main[] =
+"<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">"
+"<assemblyIdentity version=\"1.2.3.4\" name=\"Wine.Test\" type=\"win32\" />"
+"<dependency>"
+" <dependentAssembly>"
+"  <assemblyIdentity type=\"win32\" name=\"testdep\" version=\"1.2.3.4\" processorArchitecture=\"" ARCH "\" />"
+" </dependentAssembly>"
+"</dependency>"
+"</assembly>";
+
+static void test_LoadRegTypeLib(void)
+{
+    LCID lcid_en = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
+    LCID lcid_ru = MAKELCID(MAKELANGID(LANG_RUSSIAN, SUBLANG_NEUTRAL), SORT_DEFAULT);
+    ULONG_PTR cookie;
+    TLIBATTR *attr;
+    HANDLE handle;
+    ITypeLib *tl;
+    HRESULT hr;
+    BOOL ret;
+
+    if (!pActivateActCtx)
+    {
+        win_skip("Activation contexts not supported, skipping LoadRegTypeLib tests\n");
+        return;
+    }
+
+    create_manifest_file("testdep.manifest", manifest_dep);
+    create_manifest_file("main.manifest", manifest_main);
+
+    handle = create_actctx("main.manifest");
+    DeleteFileA("testdep.manifest");
+    DeleteFileA("main.manifest");
+
+    /* create typelib file */
+    write_typelib(1, "test_actctx_tlb.tlb");
+    write_typelib(3, "test_actctx_tlb2.tlb");
+
+    hr = LoadRegTypeLib(&LIBID_TestTypelib, 1, 0, LOCALE_NEUTRAL, &tl);
+    ok(hr == TYPE_E_LIBNOTREGISTERED, "got 0x%08x\n", hr);
+
+    hr = LoadRegTypeLib(&LIBID_register_test, 1, 0, LOCALE_NEUTRAL, &tl);
+    ok(hr == TYPE_E_LIBNOTREGISTERED, "got 0x%08x\n", hr);
+
+    ret = pActivateActCtx(handle, &cookie);
+    ok(ret, "ActivateActCtx failed: %u\n", GetLastError());
+
+    /* manifest version is 2.0, actual is 1.0 */
+    hr = LoadRegTypeLib(&LIBID_register_test, 1, 0, LOCALE_NEUTRAL, &tl);
+    ok(hr == TYPE_E_LIBNOTREGISTERED || broken(hr == S_OK) /* winxp */, "got 0x%08x\n", hr);
+    if (hr == S_OK) ITypeLib_Release(tl);
+
+    hr = LoadRegTypeLib(&LIBID_register_test, 2, 0, LOCALE_NEUTRAL, &tl);
+    ok(hr == TYPE_E_LIBNOTREGISTERED, "got 0x%08x\n", hr);
+
+    /* manifest version is 2.7, actual is 2.5 */
+    hr = LoadRegTypeLib(&LIBID_TestTypelib, 2, 0, LOCALE_NEUTRAL, &tl);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    if (hr == S_OK) ITypeLib_Release(tl);
+
+    hr = LoadRegTypeLib(&LIBID_TestTypelib, 2, 1, LOCALE_NEUTRAL, &tl);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    if (hr == S_OK) ITypeLib_Release(tl);
+
+    hr = LoadRegTypeLib(&LIBID_TestTypelib, 2, 0, lcid_en, &tl);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    if (hr == S_OK) ITypeLib_Release(tl);
+
+    hr = LoadRegTypeLib(&LIBID_TestTypelib, 2, 0, lcid_ru, &tl);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    if (hr == S_OK) ITypeLib_Release(tl);
+
+    hr = LoadRegTypeLib(&LIBID_TestTypelib, 2, 7, LOCALE_NEUTRAL, &tl);
+    ok(hr == TYPE_E_LIBNOTREGISTERED, "got 0x%08x\n", hr);
+
+    hr = LoadRegTypeLib(&LIBID_TestTypelib, 2, 5, LOCALE_NEUTRAL, &tl);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+if (hr == S_OK)
+{
+    hr = ITypeLib_GetLibAttr(tl, &attr);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    ok(attr->lcid == 0, "got %x\n", attr->lcid);
+    ok(attr->wMajorVerNum == 2, "got %d\n", attr->wMajorVerNum);
+    ok(attr->wMinorVerNum == 5, "got %d\n", attr->wMinorVerNum);
+    ok(attr->wLibFlags == LIBFLAG_FHASDISKIMAGE, "got %x\n", attr->wLibFlags);
+
+    ITypeLib_ReleaseTLibAttr(tl, attr);
+    ITypeLib_Release(tl);
+}
+
+    hr = LoadRegTypeLib(&LIBID_TestTypelib, 1, 7, LOCALE_NEUTRAL, &tl);
+    ok(hr == TYPE_E_LIBNOTREGISTERED, "got 0x%08x\n", hr);
+
+    DeleteFileA("test_actctx_tlb.tlb");
+    DeleteFileA("test_actctx_tlb2.tlb");
+
+    ret = pDeactivateActCtx(0, cookie);
+    ok(ret, "DeactivateActCtx failed: %u\n", GetLastError());
+
+    pReleaseActCtx(handle);
+}
+
 START_TEST(typelib)
 {
     const char *filename;
@@ -4406,4 +4594,5 @@ START_TEST(typelib)
     test_create_typelibs();
     test_LoadTypeLib();
     test_TypeInfo2_GetContainingTypeLib();
+    test_LoadRegTypeLib();
 }

@@ -22,7 +22,7 @@ import "ocidl.idl";
 
 [
   uuid(d96d8a3e-78b6-4c8d-8f27-059db959be8a),
-  version(1.0),
+  version(2.5),
   helpstring("Test Typelib")
 ]
 library TestTypelib

@@ -995,7 +995,7 @@ static ITypeInfo *get_type_info(REFIID riid)
     ITypeLib *pTypeLib;
     HRESULT hr;
 
-    hr = LoadRegTypeLib(&LIBID_TestTypelib, 1, 0, LOCALE_NEUTRAL, &pTypeLib);
+    hr = LoadRegTypeLib(&LIBID_TestTypelib, 2, 5, LOCALE_NEUTRAL, &pTypeLib);
     ok_ole_success(hr, LoadRegTypeLib);
     if (FAILED(hr))
         return NULL;
@@ -1178,7 +1178,7 @@ static INonOleAutomation NonOleAutomation = { &NonOleAutomation_VTable };
 static ITypeInfo *NonOleAutomation_GetTypeInfo(void)
 {
     ITypeLib *pTypeLib;
-    HRESULT hr = LoadRegTypeLib(&LIBID_TestTypelib, 1, 0, LOCALE_NEUTRAL, &pTypeLib);
+    HRESULT hr = LoadRegTypeLib(&LIBID_TestTypelib, 2, 5, LOCALE_NEUTRAL, &pTypeLib);
     ok_ole_success(hr, LoadRegTypeLib);
     if (SUCCEEDED(hr))
     {
@@ -1807,7 +1807,7 @@ static void test_libattr(void)
     HRESULT hr;
     TLIBATTR *pattr;
 
-    hr = LoadRegTypeLib(&LIBID_TestTypelib, 1, 0, LOCALE_NEUTRAL, &pTypeLib);
+    hr = LoadRegTypeLib(&LIBID_TestTypelib, 2, 5, LOCALE_NEUTRAL, &pTypeLib);
     ok_ole_success(hr, LoadRegTypeLib);
     if (FAILED(hr))
         return;
@@ -1952,7 +1952,7 @@ START_TEST(tmarshal)
     test_libattr();
     test_external_connection();
 
-    hr = UnRegisterTypeLib(&LIBID_TestTypelib, 1, 0, LOCALE_NEUTRAL,
+    hr = UnRegisterTypeLib(&LIBID_TestTypelib, 2, 5, LOCALE_NEUTRAL,
                            sizeof(void*) == 8 ? SYS_WIN64 : SYS_WIN32);
     ok_ole_success(hr, UnRegisterTypeLib);
 
