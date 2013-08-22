@@ -247,6 +247,7 @@ SRCDIR_INCLUDES = \
 	ddraw.h \
 	ddrawgdi.h \
 	ddrawi.h \
+	delayloadhandler.h \
 	devenum.idl \
 	devguid.h \
 	devpkey.h \
