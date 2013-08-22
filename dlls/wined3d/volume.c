@@ -78,7 +78,20 @@ void volume_set_container(struct wined3d_volume *volume, struct wined3d_texture 
 }
 
 /* Context activation is done by the caller. */
-void wined3d_volume_load(const struct wined3d_volume *volume, struct wined3d_context *context, BOOL srgb_mode)
+static void wined3d_volume_allocate_texture(const struct wined3d_volume *volume,
+        const struct wined3d_context *context)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct wined3d_format *format = volume->resource.format;
+
+    GL_EXTCALL(glTexImage3DEXT(GL_TEXTURE_3D, volume->texture_level, format->glInternal,
+            volume->resource.width, volume->resource.height, volume->resource.depth,
+            0, format->glFormat, format->glType, NULL));
+    checkGLcall("glTexImage3D");
+}
+
+/* Context activation is done by the caller. */
+void wined3d_volume_load(struct wined3d_volume *volume, struct wined3d_context *context, BOOL srgb_mode)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_format *format = volume->resource.format;
@@ -89,19 +102,28 @@ void wined3d_volume_load(const struct wined3d_volume *volume, struct wined3d_con
 
     volume_bind_and_dirtify(volume, context);
 
-    GL_EXTCALL(glTexImage3DEXT(GL_TEXTURE_3D, volume->texture_level, format->glInternal,
+    if (!(volume->flags & WINED3D_VFLAG_ALLOCATED))
+    {
+        wined3d_volume_allocate_texture(volume, context);
+        volume->flags |= WINED3D_VFLAG_ALLOCATED;
+    }
+
+    GL_EXTCALL(glTexSubImage3DEXT(GL_TEXTURE_3D, volume->texture_level, 0, 0, 0,
             volume->resource.width, volume->resource.height, volume->resource.depth,
-            0, format->glFormat, format->glType, volume->resource.allocatedMemory));
-    checkGLcall("glTexImage3D");
+            format->glFormat, format->glType, volume->resource.allocatedMemory));
+    checkGLcall("glTexSubImage3D");
 }
 
 /* Do not call while under the GL lock. */
 static void volume_unload(struct wined3d_resource *resource)
 {
+    struct wined3d_volume *volume = volume_from_resource(resource);
+
     TRACE("texture %p.\n", resource);
 
     /* The whole content is shadowed on This->resource.allocatedMemory, and
      * the texture name is managed by the VolumeTexture container. */
+    volume->flags &= ~WINED3D_VFLAG_ALLOCATED;
 
     resource_unload(resource);
 }

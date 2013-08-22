@@ -2051,6 +2051,7 @@ void wined3d_texture_apply_state_changes(struct wined3d_texture *texture,
 void wined3d_texture_set_dirty(struct wined3d_texture *texture, BOOL dirty) DECLSPEC_HIDDEN;
 
 #define WINED3D_VFLAG_LOCKED            0x00000001
+#define WINED3D_VFLAG_ALLOCATED         0x00000002
 
 struct wined3d_volume
 {
@@ -2070,7 +2071,7 @@ static inline struct wined3d_volume *volume_from_resource(struct wined3d_resourc
 }
 
 void volume_add_dirty_box(struct wined3d_volume *volume, const struct wined3d_box *dirty_box) DECLSPEC_HIDDEN;
-void wined3d_volume_load(const struct wined3d_volume *volume, struct wined3d_context *context, BOOL srgb_mode) DECLSPEC_HIDDEN;
+void wined3d_volume_load(struct wined3d_volume *volume, struct wined3d_context *context, BOOL srgb_mode) DECLSPEC_HIDDEN;
 void volume_set_container(struct wined3d_volume *volume, struct wined3d_texture *container) DECLSPEC_HIDDEN;
 
 struct wined3d_surface_dib
