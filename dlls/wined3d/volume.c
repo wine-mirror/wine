@@ -203,6 +203,19 @@ void wined3d_volume_load(struct wined3d_volume *volume, struct wined3d_context *
     wined3d_volume_load_location(volume, context, WINED3D_LOCATION_TEXTURE_RGB);
 }
 
+static BOOL volume_prepare_system_memory(struct wined3d_volume *volume)
+{
+    if (volume->resource.allocatedMemory)
+        return TRUE;
+
+    volume->resource.heap_memory = wined3d_resource_allocate_sysmem(volume->resource.size);
+    if (!volume->resource.heap_memory)
+        return FALSE;
+    volume->resource.allocatedMemory = volume->resource.heap_memory;
+    return TRUE;
+}
+
+
 static void volume_unload(struct wined3d_resource *resource)
 {
     struct wined3d_volume *volume = volume_from_resource(resource);
@@ -214,13 +227,19 @@ static void volume_unload(struct wined3d_resource *resource)
 
     TRACE("texture %p.\n", resource);
 
-    context = context_acquire(device, NULL);
-
-    wined3d_volume_load_location(volume, context, WINED3D_LOCATION_SYSMEM);
-
-    context_release(context);
-
-    wined3d_volume_invalidate_location(volume, ~WINED3D_LOCATION_SYSMEM);
+    if (volume_prepare_system_memory(volume))
+    {
+        context = context_acquire(device, NULL);
+        wined3d_volume_load_location(volume, context, WINED3D_LOCATION_SYSMEM);
+        context_release(context);
+        wined3d_volume_invalidate_location(volume, ~WINED3D_LOCATION_SYSMEM);
+    }
+    else
+    {
+        ERR("Out of memory when unloading volume %p.\n", volume);
+        wined3d_volume_validate_location(volume, WINED3D_LOCATION_DISCARDED);
+        wined3d_volume_invalidate_location(volume, ~WINED3D_LOCATION_DISCARDED);
+    }
 
     /* The texture name is managed by the container. */
     volume->flags &= ~WINED3D_VFLAG_ALLOCATED;
@@ -306,16 +325,11 @@ HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
     TRACE("volume %p, map_desc %p, box %p, flags %#x.\n",
             volume, map_desc, box, flags);
 
-    if (!volume->resource.allocatedMemory)
+    if (!volume_prepare_system_memory(volume))
     {
-        volume->resource.heap_memory = wined3d_resource_allocate_sysmem(volume->resource.size);
-        if (!volume->resource.heap_memory)
-        {
-            WARN("Out of memory.\n");
-            map_desc->data = NULL;
-            return E_OUTOFMEMORY;
-        }
-        volume->resource.allocatedMemory = volume->resource.heap_memory;
+        WARN("Out of memory.\n");
+        map_desc->data = NULL;
+        return E_OUTOFMEMORY;
     }
 
     if (!(volume->locations & WINED3D_LOCATION_SYSMEM))
