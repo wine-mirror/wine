@@ -35,8 +35,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
-static const ID3DXMatrixStackVtbl ID3DXMatrixStack_Vtbl;
-
 struct ID3DXMatrixStackImpl
 {
   ID3DXMatrixStack ID3DXMatrixStack_iface;
@@ -47,6 +45,7 @@ struct ID3DXMatrixStackImpl
   D3DXMATRIX *stack;
 };
 
+static const unsigned int INITIAL_STACK_SIZE = 32;
 
 /*_________________D3DXColor____________________*/
 
@@ -930,40 +929,6 @@ D3DXMATRIX* WINAPI D3DXMatrixTranspose(D3DXMATRIX *pout, const D3DXMATRIX *pm)
 
 /*_________________D3DXMatrixStack____________________*/
 
-static const unsigned int INITIAL_STACK_SIZE = 32;
-
-HRESULT WINAPI D3DXCreateMatrixStack(DWORD flags, ID3DXMatrixStack **ppstack)
-{
-    struct ID3DXMatrixStackImpl *object;
-
-    TRACE("flags %#x, ppstack %p\n", flags, ppstack);
-
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (object == NULL)
-    {
-        *ppstack = NULL;
-        return E_OUTOFMEMORY;
-    }
-    object->ID3DXMatrixStack_iface.lpVtbl = &ID3DXMatrixStack_Vtbl;
-    object->ref = 1;
-
-    object->stack = HeapAlloc(GetProcessHeap(), 0, INITIAL_STACK_SIZE * sizeof(*object->stack));
-    if (!object->stack)
-    {
-        HeapFree(GetProcessHeap(), 0, object);
-        *ppstack = NULL;
-        return E_OUTOFMEMORY;
-    }
-
-    object->current = 0;
-    object->stack_size = INITIAL_STACK_SIZE;
-    D3DXMatrixIdentity(&object->stack[0]);
-
-    TRACE("Created matrix stack %p\n", object);
-
-    *ppstack = &object->ID3DXMatrixStack_iface;
-    return D3D_OK;
-}
 
 static inline struct ID3DXMatrixStackImpl *impl_from_ID3DXMatrixStack(ID3DXMatrixStack *iface)
 {
@@ -1242,6 +1207,37 @@ static const ID3DXMatrixStackVtbl ID3DXMatrixStack_Vtbl =
     ID3DXMatrixStackImpl_TranslateLocal,
     ID3DXMatrixStackImpl_GetTop
 };
+
+HRESULT WINAPI D3DXCreateMatrixStack(DWORD flags, ID3DXMatrixStack **stack)
+{
+    struct ID3DXMatrixStackImpl *object;
+
+    TRACE("flags %#x, stack %p.\n", flags, stack);
+
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+    {
+        *stack = NULL;
+        return E_OUTOFMEMORY;
+    }
+    object->ID3DXMatrixStack_iface.lpVtbl = &ID3DXMatrixStack_Vtbl;
+    object->ref = 1;
+
+    if (!(object->stack = HeapAlloc(GetProcessHeap(), 0, INITIAL_STACK_SIZE * sizeof(*object->stack))))
+    {
+        HeapFree(GetProcessHeap(), 0, object);
+        *stack = NULL;
+        return E_OUTOFMEMORY;
+    }
+
+    object->current = 0;
+    object->stack_size = INITIAL_STACK_SIZE;
+    D3DXMatrixIdentity(&object->stack[0]);
+
+    TRACE("Created matrix stack %p.\n", object);
+
+    *stack = &object->ID3DXMatrixStack_iface;
+    return D3D_OK;
+}
 
 /*_________________D3DXPLANE________________*/
 
