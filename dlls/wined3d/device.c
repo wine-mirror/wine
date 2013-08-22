@@ -4092,29 +4092,28 @@ static HRESULT device_update_volume(struct wined3d_device *device,
         struct wined3d_volume *src_volume, struct wined3d_volume *dst_volume)
 {
     struct wined3d_map_desc src;
-    struct wined3d_map_desc dst;
     HRESULT hr;
+    struct wined3d_bo_address data;
+    struct wined3d_context *context;
 
     TRACE("device %p, src_volume %p, dst_volume %p.\n",
             device, src_volume, dst_volume);
 
-    /* TODO: Implement direct loading into the gl volume instead of using
-     * memcpy and dirtification to improve loading performance. */
     if (FAILED(hr = wined3d_volume_map(src_volume, &src, NULL, WINED3D_MAP_READONLY)))
         return hr;
-    if (FAILED(hr = wined3d_volume_map(dst_volume, &dst, NULL, WINED3D_MAP_DISCARD)))
-    {
-        wined3d_volume_unmap(src_volume);
-        return hr;
-    }
 
-    memcpy(dst.data, src.data, dst_volume->resource.size);
+    context = context_acquire(device, NULL);
 
-    hr = wined3d_volume_unmap(dst_volume);
-    if (FAILED(hr))
-        wined3d_volume_unmap(src_volume);
-    else
-        hr = wined3d_volume_unmap(src_volume);
+    wined3d_volume_load(dst_volume, context, FALSE);
+
+    data.buffer_object = 0;
+    data.addr = src.data;
+    wined3d_volume_upload_data(dst_volume, context, &data);
+    wined3d_volume_invalidate_location(dst_volume, ~WINED3D_LOCATION_TEXTURE_RGB);
+
+    context_release(context);
+
+    hr = wined3d_volume_unmap(src_volume);
 
     return hr;
 }

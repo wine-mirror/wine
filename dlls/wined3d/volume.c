@@ -69,7 +69,7 @@ static void wined3d_volume_allocate_texture(const struct wined3d_volume *volume,
 }
 
 /* Context activation is done by the caller. */
-static void wined3d_volume_upload_data(struct wined3d_volume *volume, const struct wined3d_context *context,
+void wined3d_volume_upload_data(struct wined3d_volume *volume, const struct wined3d_context *context,
         const struct wined3d_bo_address *data)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
@@ -105,7 +105,7 @@ static void wined3d_volume_validate_location(struct wined3d_volume *volume, DWOR
     TRACE("new location flags are %s.\n", wined3d_debug_location(volume->locations));
 }
 
-static void wined3d_volume_invalidate_location(struct wined3d_volume *volume, DWORD location)
+void wined3d_volume_invalidate_location(struct wined3d_volume *volume, DWORD location)
 {
     TRACE("Volume %p, clearing %s.\n", volume, wined3d_debug_location(location));
     volume->locations &= ~location;
@@ -132,10 +132,31 @@ static void wined3d_volume_evict_sysmem(struct wined3d_volume *volume)
     wined3d_volume_invalidate_location(volume, WINED3D_LOCATION_SYSMEM);
 }
 
+static DWORD volume_access_from_location(DWORD location)
+{
+    switch (location)
+    {
+        case WINED3D_LOCATION_DISCARDED:
+            return 0;
+
+        case WINED3D_LOCATION_SYSMEM:
+            return WINED3D_RESOURCE_ACCESS_CPU;
+
+        case WINED3D_LOCATION_TEXTURE_RGB:
+            return WINED3D_RESOURCE_ACCESS_GPU;
+
+        default:
+            FIXME("Unhandled location %#x.\n", location);
+            return 0;
+    }
+}
+
 /* Context activation is done by the caller. */
 static void wined3d_volume_load_location(struct wined3d_volume *volume,
         struct wined3d_context *context, DWORD location)
 {
+    DWORD required_access = volume_access_from_location(location);
+
     TRACE("Volume %p, loading %s, have %s.\n", volume, wined3d_debug_location(location),
         wined3d_debug_location(volume->locations));
 
@@ -145,14 +166,11 @@ static void wined3d_volume_load_location(struct wined3d_volume *volume,
         return;
     }
 
-    if (!(volume->resource.access_flags & WINED3D_RESOURCE_ACCESS_GPU))
+    if ((volume->resource.access_flags & required_access) != required_access)
     {
-        if (location & ~WINED3D_LOCATION_SYSMEM)
-        {
-            ERR("Trying to load a cpu-only access volume into %s.\n",
-                    wined3d_debug_location(location));
-            return;
-        }
+        ERR("Operation requires %#x access, but volume only has %#x.\n",
+                required_access, volume->resource.access_flags);
+        return;
     }
 
     switch (location)
