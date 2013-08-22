@@ -160,7 +160,7 @@ static void fatal_perror( const char *err, ... )
 /***********************************************************************
  *           server_protocol_error
  */
-void server_protocol_error( const char *err, ... )
+static DECLSPEC_NORETURN void server_protocol_error( const char *err, ... )
 {
     va_list args;
 
@@ -175,7 +175,7 @@ void server_protocol_error( const char *err, ... )
 /***********************************************************************
  *           server_protocol_perror
  */
-void server_protocol_perror( const char *err )
+static DECLSPEC_NORETURN void server_protocol_perror( const char *err )
 {
     fprintf( stderr, "wine client error:%x: ", GetCurrentThreadId() );
     perror( err );
@@ -315,6 +315,355 @@ void server_leave_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sig
 {
     RtlLeaveCriticalSection( cs );
     pthread_sigmask( SIG_SETMASK, sigset, NULL );
+}
+
+
+/***********************************************************************
+ *              wait_select_reply
+ *
+ * Wait for a reply on the waiting pipe of the current thread.
+ */
+static int wait_select_reply( void *cookie )
+{
+    int signaled;
+    struct wake_up_reply reply;
+    for (;;)
+    {
+        int ret;
+        ret = read( ntdll_get_thread_data()->wait_fd[0], &reply, sizeof(reply) );
+        if (ret == sizeof(reply))
+        {
+            if (!reply.cookie) abort_thread( reply.signaled );  /* thread got killed */
+            if (wine_server_get_ptr(reply.cookie) == cookie) return reply.signaled;
+            /* we stole another reply, wait for the real one */
+            signaled = wait_select_reply( cookie );
+            /* and now put the wrong one back in the pipe */
+            for (;;)
+            {
+                ret = write( ntdll_get_thread_data()->wait_fd[1], &reply, sizeof(reply) );
+                if (ret == sizeof(reply)) break;
+                if (ret >= 0) server_protocol_error( "partial wakeup write %d\n", ret );
+                if (errno == EINTR) continue;
+                server_protocol_perror("wakeup write");
+            }
+            return signaled;
+        }
+        if (ret >= 0) server_protocol_error( "partial wakeup read %d\n", ret );
+        if (errno == EINTR) continue;
+        server_protocol_perror("wakeup read");
+    }
+}
+
+
+/***********************************************************************
+ *              invoke_apc
+ *
+ * Invoke a single APC. Return TRUE if a user APC has been run.
+ */
+static BOOL invoke_apc( const apc_call_t *call, apc_result_t *result )
+{
+    BOOL user_apc = FALSE;
+    SIZE_T size;
+    void *addr;
+
+    memset( result, 0, sizeof(*result) );
+
+    switch (call->type)
+    {
+    case APC_NONE:
+        break;
+    case APC_USER:
+    {
+        void (WINAPI *func)(ULONG_PTR,ULONG_PTR,ULONG_PTR) = wine_server_get_ptr( call->user.func );
+        func( call->user.args[0], call->user.args[1], call->user.args[2] );
+        user_apc = TRUE;
+        break;
+    }
+    case APC_TIMER:
+    {
+        void (WINAPI *func)(void*, unsigned int, unsigned int) = wine_server_get_ptr( call->timer.func );
+        func( wine_server_get_ptr( call->timer.arg ),
+              (DWORD)call->timer.time, (DWORD)(call->timer.time >> 32) );
+        user_apc = TRUE;
+        break;
+    }
+    case APC_ASYNC_IO:
+    {
+        void *apc = NULL;
+        IO_STATUS_BLOCK *iosb = wine_server_get_ptr( call->async_io.sb );
+        NTSTATUS (*func)(void *, IO_STATUS_BLOCK *, NTSTATUS, void **) = wine_server_get_ptr( call->async_io.func );
+        result->type = call->type;
+        result->async_io.status = func( wine_server_get_ptr( call->async_io.user ),
+                                        iosb, call->async_io.status, &apc );
+        if (result->async_io.status != STATUS_PENDING)
+        {
+            result->async_io.total = iosb->Information;
+            result->async_io.apc   = wine_server_client_ptr( apc );
+        }
+        break;
+    }
+    case APC_VIRTUAL_ALLOC:
+        result->type = call->type;
+        addr = wine_server_get_ptr( call->virtual_alloc.addr );
+        size = call->virtual_alloc.size;
+        if ((ULONG_PTR)addr == call->virtual_alloc.addr && size == call->virtual_alloc.size)
+        {
+            result->virtual_alloc.status = NtAllocateVirtualMemory( NtCurrentProcess(), &addr,
+                                                                    call->virtual_alloc.zero_bits, &size,
+                                                                    call->virtual_alloc.op_type,
+                                                                    call->virtual_alloc.prot );
+            result->virtual_alloc.addr = wine_server_client_ptr( addr );
+            result->virtual_alloc.size = size;
+        }
+        else result->virtual_alloc.status = STATUS_WORKING_SET_LIMIT_RANGE;
+        break;
+    case APC_VIRTUAL_FREE:
+        result->type = call->type;
+        addr = wine_server_get_ptr( call->virtual_free.addr );
+        size = call->virtual_free.size;
+        if ((ULONG_PTR)addr == call->virtual_free.addr && size == call->virtual_free.size)
+        {
+            result->virtual_free.status = NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size,
+                                                               call->virtual_free.op_type );
+            result->virtual_free.addr = wine_server_client_ptr( addr );
+            result->virtual_free.size = size;
+        }
+        else result->virtual_free.status = STATUS_INVALID_PARAMETER;
+        break;
+    case APC_VIRTUAL_QUERY:
+    {
+        MEMORY_BASIC_INFORMATION info;
+        result->type = call->type;
+        addr = wine_server_get_ptr( call->virtual_query.addr );
+        if ((ULONG_PTR)addr == call->virtual_query.addr)
+            result->virtual_query.status = NtQueryVirtualMemory( NtCurrentProcess(),
+                                                                 addr, MemoryBasicInformation, &info,
+                                                                 sizeof(info), NULL );
+        else
+            result->virtual_query.status = STATUS_WORKING_SET_LIMIT_RANGE;
+
+        if (result->virtual_query.status == STATUS_SUCCESS)
+        {
+            result->virtual_query.base       = wine_server_client_ptr( info.BaseAddress );
+            result->virtual_query.alloc_base = wine_server_client_ptr( info.AllocationBase );
+            result->virtual_query.size       = info.RegionSize;
+            result->virtual_query.prot       = info.Protect;
+            result->virtual_query.alloc_prot = info.AllocationProtect;
+            result->virtual_query.state      = info.State >> 12;
+            result->virtual_query.alloc_type = info.Type >> 16;
+        }
+        break;
+    }
+    case APC_VIRTUAL_PROTECT:
+        result->type = call->type;
+        addr = wine_server_get_ptr( call->virtual_protect.addr );
+        size = call->virtual_protect.size;
+        if ((ULONG_PTR)addr == call->virtual_protect.addr && size == call->virtual_protect.size)
+        {
+            result->virtual_protect.status = NtProtectVirtualMemory( NtCurrentProcess(), &addr, &size,
+                                                                     call->virtual_protect.prot,
+                                                                     &result->virtual_protect.prot );
+            result->virtual_protect.addr = wine_server_client_ptr( addr );
+            result->virtual_protect.size = size;
+        }
+        else result->virtual_protect.status = STATUS_INVALID_PARAMETER;
+        break;
+    case APC_VIRTUAL_FLUSH:
+        result->type = call->type;
+        addr = wine_server_get_ptr( call->virtual_flush.addr );
+        size = call->virtual_flush.size;
+        if ((ULONG_PTR)addr == call->virtual_flush.addr && size == call->virtual_flush.size)
+        {
+            result->virtual_flush.status = NtFlushVirtualMemory( NtCurrentProcess(),
+                                                                 (const void **)&addr, &size, 0 );
+            result->virtual_flush.addr = wine_server_client_ptr( addr );
+            result->virtual_flush.size = size;
+        }
+        else result->virtual_flush.status = STATUS_INVALID_PARAMETER;
+        break;
+    case APC_VIRTUAL_LOCK:
+        result->type = call->type;
+        addr = wine_server_get_ptr( call->virtual_lock.addr );
+        size = call->virtual_lock.size;
+        if ((ULONG_PTR)addr == call->virtual_lock.addr && size == call->virtual_lock.size)
+        {
+            result->virtual_lock.status = NtLockVirtualMemory( NtCurrentProcess(), &addr, &size, 0 );
+            result->virtual_lock.addr = wine_server_client_ptr( addr );
+            result->virtual_lock.size = size;
+        }
+        else result->virtual_lock.status = STATUS_INVALID_PARAMETER;
+        break;
+    case APC_VIRTUAL_UNLOCK:
+        result->type = call->type;
+        addr = wine_server_get_ptr( call->virtual_unlock.addr );
+        size = call->virtual_unlock.size;
+        if ((ULONG_PTR)addr == call->virtual_unlock.addr && size == call->virtual_unlock.size)
+        {
+            result->virtual_unlock.status = NtUnlockVirtualMemory( NtCurrentProcess(), &addr, &size, 0 );
+            result->virtual_unlock.addr = wine_server_client_ptr( addr );
+            result->virtual_unlock.size = size;
+        }
+        else result->virtual_unlock.status = STATUS_INVALID_PARAMETER;
+        break;
+    case APC_MAP_VIEW:
+        result->type = call->type;
+        addr = wine_server_get_ptr( call->map_view.addr );
+        size = call->map_view.size;
+        if ((ULONG_PTR)addr == call->map_view.addr && size == call->map_view.size)
+        {
+            LARGE_INTEGER offset;
+            offset.QuadPart = call->map_view.offset;
+            result->map_view.status = NtMapViewOfSection( wine_server_ptr_handle(call->map_view.handle),
+                                                          NtCurrentProcess(), &addr,
+                                                          call->map_view.zero_bits, 0,
+                                                          &offset, &size, ViewShare,
+                                                          call->map_view.alloc_type, call->map_view.prot );
+            result->map_view.addr = wine_server_client_ptr( addr );
+            result->map_view.size = size;
+        }
+        else result->map_view.status = STATUS_INVALID_PARAMETER;
+        NtClose( wine_server_ptr_handle(call->map_view.handle) );
+        break;
+    case APC_UNMAP_VIEW:
+        result->type = call->type;
+        addr = wine_server_get_ptr( call->unmap_view.addr );
+        if ((ULONG_PTR)addr == call->unmap_view.addr)
+            result->unmap_view.status = NtUnmapViewOfSection( NtCurrentProcess(), addr );
+        else
+            result->unmap_view.status = STATUS_INVALID_PARAMETER;
+        break;
+    case APC_CREATE_THREAD:
+    {
+        CLIENT_ID id;
+        HANDLE handle;
+        SIZE_T reserve = call->create_thread.reserve;
+        SIZE_T commit = call->create_thread.commit;
+        void *func = wine_server_get_ptr( call->create_thread.func );
+        void *arg  = wine_server_get_ptr( call->create_thread.arg );
+
+        result->type = call->type;
+        if (reserve == call->create_thread.reserve && commit == call->create_thread.commit &&
+            (ULONG_PTR)func == call->create_thread.func && (ULONG_PTR)arg == call->create_thread.arg)
+        {
+            result->create_thread.status = RtlCreateUserThread( NtCurrentProcess(), NULL,
+                                                                call->create_thread.suspend, NULL,
+                                                                reserve, commit, func, arg, &handle, &id );
+            result->create_thread.handle = wine_server_obj_handle( handle );
+            result->create_thread.tid = HandleToULong(id.UniqueThread);
+        }
+        else result->create_thread.status = STATUS_INVALID_PARAMETER;
+        break;
+    }
+    default:
+        server_protocol_error( "get_apc_request: bad type %d\n", call->type );
+        break;
+    }
+    return user_apc;
+}
+
+
+/***********************************************************************
+ *              server_select
+ */
+unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT flags,
+                            const LARGE_INTEGER *timeout )
+{
+    unsigned int ret;
+    int cookie;
+    BOOL user_apc = FALSE;
+    obj_handle_t apc_handle = 0;
+    apc_call_t call;
+    apc_result_t result;
+    timeout_t abs_timeout = timeout ? timeout->QuadPart : TIMEOUT_INFINITE;
+
+    memset( &result, 0, sizeof(result) );
+
+    for (;;)
+    {
+        SERVER_START_REQ( select )
+        {
+            req->flags    = flags;
+            req->cookie   = wine_server_client_ptr( &cookie );
+            req->prev_apc = apc_handle;
+            req->timeout  = abs_timeout;
+            wine_server_add_data( req, &result, sizeof(result) );
+            wine_server_add_data( req, select_op, size );
+            ret = wine_server_call( req );
+            abs_timeout = reply->timeout;
+            apc_handle  = reply->apc_handle;
+            call        = reply->call;
+        }
+        SERVER_END_REQ;
+        if (ret == STATUS_PENDING) ret = wait_select_reply( &cookie );
+        if (ret != STATUS_USER_APC) break;
+        if (invoke_apc( &call, &result ))
+        {
+            /* if we ran a user apc we have to check once more if an object got signaled,
+             * but we don't want to wait */
+            abs_timeout = 0;
+            user_apc = TRUE;
+        }
+
+        /* don't signal multiple times */
+        if (size >= sizeof(select_op->signal_and_wait) && select_op->op == SELECT_SIGNAL_AND_WAIT)
+            size = offsetof( select_op_t, signal_and_wait.signal );
+    }
+
+    if (ret == STATUS_TIMEOUT && user_apc) ret = STATUS_USER_APC;
+
+    /* A test on Windows 2000 shows that Windows always yields during
+       a wait, but a wait that is hit by an event gets a priority
+       boost as well.  This seems to model that behavior the closest.  */
+    if (ret == STATUS_TIMEOUT) NtYieldExecution();
+
+    return ret;
+}
+
+
+/***********************************************************************
+ *           server_queue_process_apc
+ */
+unsigned int server_queue_process_apc( HANDLE process, const apc_call_t *call, apc_result_t *result )
+{
+    for (;;)
+    {
+        unsigned int ret;
+        HANDLE handle = 0;
+        BOOL self = FALSE;
+
+        SERVER_START_REQ( queue_apc )
+        {
+            req->handle = wine_server_obj_handle( process );
+            req->call = *call;
+            if (!(ret = wine_server_call( req )))
+            {
+                handle = wine_server_ptr_handle( reply->handle );
+                self = reply->self;
+            }
+        }
+        SERVER_END_REQ;
+        if (ret != STATUS_SUCCESS) return ret;
+
+        if (self)
+        {
+            invoke_apc( call, result );
+        }
+        else
+        {
+            NtWaitForSingleObject( handle, FALSE, NULL );
+
+            SERVER_START_REQ( get_apc_result )
+            {
+                req->handle = wine_server_obj_handle( handle );
+                if (!(ret = wine_server_call( req ))) *result = reply->result;
+            }
+            SERVER_END_REQ;
+
+            if (!ret && result->type == APC_NONE) continue;  /* APC didn't run, try again */
+            if (ret) NtClose( handle );
+        }
+        return ret;
+    }
 }
 
 
