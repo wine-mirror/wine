@@ -405,6 +405,10 @@ static void dump_varargs_select_op( const char *prefix, data_size_t size )
             dump_handles( ",handles=", data.wait.handles,
                           min( size, sizeof(data.wait) ) - offsetof( select_op_t, wait.handles ));
         break;
+    case SELECT_SIGNAL_AND_WAIT:
+        fprintf( stderr, "SIGNAL_AND_WAIT,signal=%04x,wait=%04x",
+                 data.signal_and_wait.signal, data.signal_and_wait.wait );
+        break;
     default:
         fprintf( stderr, "op=%u", data.op );
         break;
@@ -1388,9 +1392,8 @@ static void dump_select_request( const struct select_request *req )
 {
     fprintf( stderr, " flags=%d", req->flags );
     dump_uint64( ", cookie=", &req->cookie );
-    fprintf( stderr, ", signal=%04x", req->signal );
-    fprintf( stderr, ", prev_apc=%04x", req->prev_apc );
     dump_timeout( ", timeout=", &req->timeout );
+    fprintf( stderr, ", prev_apc=%04x", req->prev_apc );
     dump_varargs_apc_result( ", result=", cur_size );
     dump_varargs_select_op( ", data=", cur_size );
 }

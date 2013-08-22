@@ -590,6 +590,25 @@ static int wait_on( const select_op_t *select_op, unsigned int count, struct obj
     return 1;
 }
 
+static int wait_on_handles( const select_op_t *select_op, unsigned int count, const obj_handle_t *handles,
+                            int flags, timeout_t timeout )
+{
+    struct object *objects[MAXIMUM_WAIT_OBJECTS];
+    unsigned int i;
+    int ret = 0;
+
+    assert( count <= MAXIMUM_WAIT_OBJECTS );
+
+    for (i = 0; i < count; i++)
+        if (!(objects[i] = get_handle_obj( current->process, handles[i], SYNCHRONIZE, NULL )))
+            break;
+
+    if (i == count) ret = wait_on( select_op, count, objects, flags, timeout );
+
+    while (i > 0) release_object( objects[--i] );
+    return ret;
+}
+
 /* check if the thread waiting condition is satisfied */
 static int check_wait( struct thread *thread )
 {
@@ -714,18 +733,17 @@ static int signal_object( obj_handle_t handle )
 
 /* select on a list of handles */
 static timeout_t select_on( const select_op_t *select_op, data_size_t op_size, client_ptr_t cookie,
-                            int flags, timeout_t timeout, obj_handle_t signal_obj )
+                            int flags, timeout_t timeout )
 {
     int ret;
-    unsigned int i, count;
-    struct object *objects[MAXIMUM_WAIT_OBJECTS];
+    unsigned int count;
 
     if (timeout <= 0) timeout = current_time - timeout;
 
     switch (select_op->op)
     {
     case SELECT_NONE:
-        count = 0;
+        if (!wait_on( select_op, 0, NULL, flags, timeout )) return timeout;
         break;
 
     case SELECT_WAIT:
@@ -736,6 +754,23 @@ static timeout_t select_on( const select_op_t *select_op, data_size_t op_size, c
             set_error( STATUS_INVALID_PARAMETER );
             return 0;
         }
+        if (!wait_on_handles( select_op, count, select_op->wait.handles, flags, timeout ))
+            return timeout;
+        break;
+
+    case SELECT_SIGNAL_AND_WAIT:
+        if (!wait_on_handles( select_op, 1, &select_op->signal_and_wait.wait, flags, timeout ))
+            return timeout;
+        if (select_op->signal_and_wait.signal)
+        {
+            if (!signal_object( select_op->signal_and_wait.signal ))
+            {
+                end_wait( current );
+                return timeout;
+            }
+            /* check if we woke ourselves up */
+            if (!current->wait) return timeout;
+        }
         break;
 
     default:
@@ -743,34 +778,12 @@ static timeout_t select_on( const select_op_t *select_op, data_size_t op_size, c
         return 0;
     }
 
-    for (i = 0; i < count; i++)
-    {
-        if (!(objects[i] = get_handle_obj( current->process, select_op->wait.handles[i],
-                                           SYNCHRONIZE, NULL )))
-            break;
-    }
-
-    if (i < count) goto done;
-    if (!wait_on( select_op, count, objects, flags, timeout )) goto done;
-
-    /* signal the object */
-    if (signal_obj)
-    {
-        if (!signal_object( signal_obj ))
-        {
-            end_wait( current );
-            goto done;
-        }
-        /* check if we woke ourselves up */
-        if (!current->wait) goto done;
-    }
-
     if ((ret = check_wait( current )) != -1)
     {
         /* condition is already satisfied */
         end_wait( current );
         set_error( ret );
-        goto done;
+        return timeout;
     }
 
     /* now we need to wait */
@@ -780,14 +793,11 @@ static timeout_t select_on( const select_op_t *select_op, data_size_t op_size, c
                                                       thread_timeout, current->wait )))
         {
             end_wait( current );
-            goto done;
+            return timeout;
         }
     }
     current->wait->cookie = cookie;
     set_error( STATUS_PENDING );
-
-done:
-    while (i > 0) release_object( objects[--i] );
     return timeout;
 }
 
@@ -1370,7 +1380,7 @@ DECL_HANDLER(select)
         release_object( apc );
     }
 
-    reply->timeout = select_on( &select_op, op_size, req->cookie, req->flags, req->timeout, req->signal );
+    reply->timeout = select_on( &select_op, op_size, req->cookie, req->flags, req->timeout );
 
     if (get_error() == STATUS_USER_APC)
     {
