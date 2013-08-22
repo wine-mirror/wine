@@ -62,10 +62,6 @@ extern void call_thread_entry_point( LPTHREAD_START_ROUTINE entry, void *arg ) D
 extern LPCSTR debugstr_us( const UNICODE_STRING *str ) DECLSPEC_HIDDEN;
 extern LPCSTR debugstr_ObjectAttributes(const OBJECT_ATTRIBUTES *oa) DECLSPEC_HIDDEN;
 
-extern NTSTATUS NTDLL_queue_process_apc( HANDLE process, const apc_call_t *call, apc_result_t *result ) DECLSPEC_HIDDEN;
-extern NTSTATUS server_select( const select_op_t *select_op, data_size_t size,
-                               UINT flags, const LARGE_INTEGER *timeout ) DECLSPEC_HIDDEN;
-
 /* init routines */
 extern NTSTATUS signal_alloc_thread( TEB **teb ) DECLSPEC_HIDDEN;
 extern void signal_free_thread( TEB *teb ) DECLSPEC_HIDDEN;
@@ -87,14 +83,15 @@ extern int is_wow64 DECLSPEC_HIDDEN;
 extern void server_init_process(void) DECLSPEC_HIDDEN;
 extern NTSTATUS server_init_process_done(void) DECLSPEC_HIDDEN;
 extern size_t server_init_thread( void *entry_point ) DECLSPEC_HIDDEN;
-extern void DECLSPEC_NORETURN server_protocol_error( const char *err, ... ) DECLSPEC_HIDDEN;
-extern void DECLSPEC_NORETURN server_protocol_perror( const char *err ) DECLSPEC_HIDDEN;
 extern void DECLSPEC_NORETURN abort_thread( int status ) DECLSPEC_HIDDEN;
 extern void DECLSPEC_NORETURN terminate_thread( int status ) DECLSPEC_HIDDEN;
 extern void DECLSPEC_NORETURN exit_thread( int status ) DECLSPEC_HIDDEN;
 extern sigset_t server_block_set DECLSPEC_HIDDEN;
 extern void server_enter_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sigset ) DECLSPEC_HIDDEN;
 extern void server_leave_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sigset ) DECLSPEC_HIDDEN;
+extern unsigned int server_select( const select_op_t *select_op, data_size_t size,
+                                   UINT flags, const LARGE_INTEGER *timeout ) DECLSPEC_HIDDEN;
+extern unsigned int server_queue_process_apc( HANDLE process, const apc_call_t *call, apc_result_t *result ) DECLSPEC_HIDDEN;
 extern int server_remove_fd_from_cache( HANDLE handle ) DECLSPEC_HIDDEN;
 extern int server_get_unix_fd( HANDLE handle, unsigned int access, int *unix_fd,
                                int *needs_close, enum server_fd_type *type, unsigned int *options ) DECLSPEC_HIDDEN;

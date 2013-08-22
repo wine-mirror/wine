@@ -1893,7 +1893,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
         call.virtual_alloc.zero_bits = zero_bits;
         call.virtual_alloc.op_type   = type;
         call.virtual_alloc.prot      = protect;
-        status = NTDLL_queue_process_apc( process, &call, &result );
+        status = server_queue_process_apc( process, &call, &result );
         if (status != STATUS_SUCCESS) return status;
 
         if (result.virtual_alloc.status == STATUS_SUCCESS)
@@ -2026,7 +2026,7 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *si
         call.virtual_free.addr      = wine_server_client_ptr( addr );
         call.virtual_free.size      = size;
         call.virtual_free.op_type   = type;
-        status = NTDLL_queue_process_apc( process, &call, &result );
+        status = server_queue_process_apc( process, &call, &result );
         if (status != STATUS_SUCCESS) return status;
 
         if (result.virtual_free.status == STATUS_SUCCESS)
@@ -2140,7 +2140,7 @@ NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T 
         call.virtual_protect.addr = wine_server_client_ptr( addr );
         call.virtual_protect.size = size;
         call.virtual_protect.prot = new_prot;
-        status = NTDLL_queue_process_apc( process, &call, &result );
+        status = server_queue_process_apc( process, &call, &result );
         if (status != STATUS_SUCCESS) return status;
 
         if (result.virtual_protect.status == STATUS_SUCCESS)
@@ -2276,7 +2276,7 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
 
         call.virtual_query.type = APC_VIRTUAL_QUERY;
         call.virtual_query.addr = wine_server_client_ptr( addr );
-        status = NTDLL_queue_process_apc( process, &call, &result );
+        status = server_queue_process_apc( process, &call, &result );
         if (status != STATUS_SUCCESS) return status;
 
         if (result.virtual_query.status == STATUS_SUCCESS)
@@ -2399,7 +2399,7 @@ NTSTATUS WINAPI NtLockVirtualMemory( HANDLE process, PVOID *addr, SIZE_T *size, 
         call.virtual_lock.type = APC_VIRTUAL_LOCK;
         call.virtual_lock.addr = wine_server_client_ptr( *addr );
         call.virtual_lock.size = *size;
-        status = NTDLL_queue_process_apc( process, &call, &result );
+        status = server_queue_process_apc( process, &call, &result );
         if (status != STATUS_SUCCESS) return status;
 
         if (result.virtual_lock.status == STATUS_SUCCESS)
@@ -2436,7 +2436,7 @@ NTSTATUS WINAPI NtUnlockVirtualMemory( HANDLE process, PVOID *addr, SIZE_T *size
         call.virtual_unlock.type = APC_VIRTUAL_UNLOCK;
         call.virtual_unlock.addr = wine_server_client_ptr( *addr );
         call.virtual_unlock.size = *size;
-        status = NTDLL_queue_process_apc( process, &call, &result );
+        status = server_queue_process_apc( process, &call, &result );
         if (status != STATUS_SUCCESS) return status;
 
         if (result.virtual_unlock.status == STATUS_SUCCESS)
@@ -2601,7 +2601,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
         call.map_view.zero_bits   = zero_bits;
         call.map_view.alloc_type  = alloc_type;
         call.map_view.prot        = protect;
-        res = NTDLL_queue_process_apc( process, &call, &result );
+        res = server_queue_process_apc( process, &call, &result );
         if (res != STATUS_SUCCESS) return res;
 
         if ((NTSTATUS)result.map_view.status >= 0)
@@ -2742,7 +2742,7 @@ NTSTATUS WINAPI NtUnmapViewOfSection( HANDLE process, PVOID addr )
 
         call.unmap_view.type = APC_UNMAP_VIEW;
         call.unmap_view.addr = wine_server_client_ptr( addr );
-        status = NTDLL_queue_process_apc( process, &call, &result );
+        status = server_queue_process_apc( process, &call, &result );
         if (status == STATUS_SUCCESS) status = result.unmap_view.status;
         return status;
     }
@@ -2780,7 +2780,7 @@ NTSTATUS WINAPI NtFlushVirtualMemory( HANDLE process, LPCVOID *addr_ptr,
         call.virtual_flush.type = APC_VIRTUAL_FLUSH;
         call.virtual_flush.addr = wine_server_client_ptr( addr );
         call.virtual_flush.size = *size_ptr;
-        status = NTDLL_queue_process_apc( process, &call, &result );
+        status = server_queue_process_apc( process, &call, &result );
         if (status != STATUS_SUCCESS) return status;
 
         if (result.virtual_flush.status == STATUS_SUCCESS)
