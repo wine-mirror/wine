@@ -140,6 +140,7 @@ my %private_idl_headers = (
     "axcore.idl" => 1,
     "axextend.idl" => 1,
     "binres.idl" => 1,
+    "chprst.idl" => 1,
     "cmdbas.idl" => 1,
     "cmdtxt.idl" => 1,
     "crtrow.idl" => 1,

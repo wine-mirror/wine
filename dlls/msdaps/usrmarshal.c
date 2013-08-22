@@ -1491,3 +1491,27 @@ HRESULT CALLBACK IRowPositionChange_OnRowPositionChange_Proxy(IRowPositionChange
     FIXME("(%p)->(0x%x 0x%x %d): stub\n", This, reason, phase, cant_deny);
     return E_NOTIMPL;
 }
+
+HRESULT __RPC_STUB IChapteredRowset_ReleaseChapter_Stub(IChapteredRowset* This, HCHAPTER chapter, DBREFCOUNT *refcount, IErrorInfo **errorinfo)
+{
+    FIXME("(%p)->(%lx %p %p): stub\n", This, chapter, refcount, errorinfo);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IChapteredRowset_AddRefChapter_Stub(IChapteredRowset* This, HCHAPTER chapter, DBREFCOUNT *refcount, IErrorInfo **errorinfo)
+{
+    FIXME("(%p)->(%lx %p %p): stub\n", This, chapter, refcount, errorinfo);
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK IChapteredRowset_AddRefChapter_Proxy(IChapteredRowset* This, HCHAPTER chapter, DBREFCOUNT *refcount)
+{
+    FIXME("(%p)->(%lx %p): stub\n", This, chapter, refcount);
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK IChapteredRowset_ReleaseChapter_Proxy(IChapteredRowset* This, HCHAPTER chapter, DBREFCOUNT *refcount)
+{
+    FIXME("(%p)->(%lx %p): stub\n", This, chapter, refcount);
+    return E_NOTIMPL;
+}

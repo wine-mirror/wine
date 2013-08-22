@@ -49,6 +49,7 @@ typedef DWORD_PTR DBHASHVALUE;
 #include "rstbas.idl"
 #include "rstinf.idl"
 #include "rstloc.idl"
+#include "chprst.idl"
 #include "cmdbas.idl"
 #include "cmdtxt.idl"
 #include "dbccmd.idl"
