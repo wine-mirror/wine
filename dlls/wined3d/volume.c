@@ -91,15 +91,39 @@ static void wined3d_volume_allocate_texture(const struct wined3d_volume *volume,
 }
 
 /* Context activation is done by the caller. */
-void wined3d_volume_load(struct wined3d_volume *volume, struct wined3d_context *context, BOOL srgb_mode)
+static void wined3d_volume_upload_data(struct wined3d_volume *volume, const struct wined3d_context *context,
+        const struct wined3d_bo_address *data)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_format *format = volume->resource.format;
 
-    TRACE("volume %p, context %p, level %u, srgb %#x, format %s (%#x).\n",
-            volume, context, volume->texture_level, srgb_mode, debug_d3dformat(format->id),
+    TRACE("volume %p, context %p, level %u, format %s (%#x).\n",
+            volume, context, volume->texture_level, debug_d3dformat(format->id),
             format->id);
 
+
+    if (data->buffer_object)
+    {
+        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, data->buffer_object));
+        checkGLcall("glBindBufferARB");
+    }
+
+    GL_EXTCALL(glTexSubImage3DEXT(GL_TEXTURE_3D, volume->texture_level, 0, 0, 0,
+            volume->resource.width, volume->resource.height, volume->resource.depth,
+            format->glFormat, format->glType, data->addr));
+    checkGLcall("glTexSubImage3D");
+
+    if (data->buffer_object)
+    {
+        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
+        checkGLcall("glBindBufferARB");
+    }
+}
+
+/* Context activation is done by the caller. */
+void wined3d_volume_load(struct wined3d_volume *volume, struct wined3d_context *context, BOOL srgb_mode)
+{
+    struct wined3d_bo_address data = {0, volume->resource.allocatedMemory};
     volume_bind_and_dirtify(volume, context);
 
     if (!(volume->flags & WINED3D_VFLAG_ALLOCATED))
@@ -108,10 +132,7 @@ void wined3d_volume_load(struct wined3d_volume *volume, struct wined3d_context *
         volume->flags |= WINED3D_VFLAG_ALLOCATED;
     }
 
-    GL_EXTCALL(glTexSubImage3DEXT(GL_TEXTURE_3D, volume->texture_level, 0, 0, 0,
-            volume->resource.width, volume->resource.height, volume->resource.depth,
-            format->glFormat, format->glType, volume->resource.allocatedMemory));
-    checkGLcall("glTexSubImage3D");
+    wined3d_volume_upload_data(volume, context, &data);
 }
 
 /* Do not call while under the GL lock. */
