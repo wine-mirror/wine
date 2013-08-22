@@ -75,6 +75,7 @@ struct thread_wait
     struct thread          *thread;     /* owner thread */
     int                     count;      /* count of objects */
     int                     flags;
+    enum select_op          select;
     client_ptr_t            cookie;     /* magic cookie to return to client */
     timeout_t               timeout;
     struct timeout_user    *user;
@@ -558,7 +559,8 @@ static void end_wait( struct thread *thread )
 }
 
 /* build the thread wait structure */
-static int wait_on( unsigned int count, struct object *objects[], int flags, timeout_t timeout )
+static int wait_on( const select_op_t *select_op, unsigned int count, struct object *objects[],
+                    int flags, timeout_t timeout )
 {
     struct thread_wait *wait;
     struct wait_queue_entry *entry;
@@ -569,6 +571,7 @@ static int wait_on( unsigned int count, struct object *objects[], int flags, tim
     wait->thread  = current;
     wait->count   = count;
     wait->flags   = flags;
+    wait->select  = select_op->op;
     wait->user    = NULL;
     wait->timeout = timeout;
     current->wait = wait;
@@ -602,7 +605,7 @@ static int check_wait( struct thread *thread )
     /* Suspended threads may not acquire locks, but they can run system APCs */
     if (thread->process->suspend + thread->suspend > 0) return -1;
 
-    if (wait->flags & SELECT_ALL)
+    if (wait->select == SELECT_WAIT_ALL)
     {
         int not_ok = 0;
         /* Note: we must check them all anyway, as some objects may
@@ -726,6 +729,7 @@ static timeout_t select_on( const select_op_t *select_op, data_size_t op_size, c
         break;
 
     case SELECT_WAIT:
+    case SELECT_WAIT_ALL:
         count = (op_size - offsetof( select_op_t, wait.handles )) / sizeof(select_op->wait.handles[0]);
         if (op_size < offsetof( select_op_t, wait.handles ) || count > MAXIMUM_WAIT_OBJECTS)
         {
@@ -747,7 +751,7 @@ static timeout_t select_on( const select_op_t *select_op, data_size_t op_size, c
     }
 
     if (i < count) goto done;
-    if (!wait_on( count, objects, flags, timeout )) goto done;
+    if (!wait_on( select_op, count, objects, flags, timeout )) goto done;
 
     /* signal the object */
     if (signal_obj)

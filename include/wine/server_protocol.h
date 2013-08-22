@@ -407,7 +407,8 @@ struct token_groups
 enum select_op
 {
     SELECT_NONE,
-    SELECT_WAIT
+    SELECT_WAIT,
+    SELECT_WAIT_ALL
 };
 
 typedef union
@@ -1082,9 +1083,8 @@ struct select_reply
     obj_handle_t apc_handle;
     char __pad_60[4];
 };
-#define SELECT_ALL           1
-#define SELECT_ALERTABLE     2
-#define SELECT_INTERRUPTIBLE 4
+#define SELECT_ALERTABLE     1
+#define SELECT_INTERRUPTIBLE 2
 
 
 
@@ -5787,6 +5787,6 @@ union generic_reply
     struct set_suspend_context_reply set_suspend_context_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 444
+#define SERVER_PROTOCOL_VERSION 445
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
