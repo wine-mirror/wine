@@ -866,7 +866,8 @@ static HRESULT WINAPI PngDecoder_Frame_GetColorContexts(IWICBitmapFrameDecode *i
     UINT cCount, IWICColorContext **ppIColorContexts, UINT *pcActualCount)
 {
     PngDecoder *This = impl_from_IWICBitmapFrameDecode(iface);
-    png_charp name, profile;
+    png_charp name;
+    BYTE *profile;
     png_uint_32 len;
     int compression_type;
     HRESULT hr;
@@ -877,11 +878,11 @@ static HRESULT WINAPI PngDecoder_Frame_GetColorContexts(IWICBitmapFrameDecode *i
 
     EnterCriticalSection(&This->lock);
 
-    if (ppng_get_iCCP(This->png_ptr, This->info_ptr, &name, &compression_type, &profile, &len))
+    if (ppng_get_iCCP(This->png_ptr, This->info_ptr, &name, &compression_type, (void *)&profile, &len))
     {
         if (cCount && ppIColorContexts)
         {
-            hr = IWICColorContext_InitializeFromMemory(*ppIColorContexts, (const BYTE *)profile, len);
+            hr = IWICColorContext_InitializeFromMemory(*ppIColorContexts, profile, len);
             if (FAILED(hr))
             {
                 LeaveCriticalSection(&This->lock);
