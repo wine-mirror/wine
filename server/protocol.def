@@ -423,7 +423,8 @@ struct token_groups
 enum select_op
 {
     SELECT_NONE,
-    SELECT_WAIT
+    SELECT_WAIT,
+    SELECT_WAIT_ALL
 };
 
 typedef union
@@ -431,7 +432,7 @@ typedef union
     enum select_op op;
     struct
     {
-        enum select_op  op;      /* SELECT_WAIT */
+        enum select_op  op;      /* SELECT_WAIT or SELECT_WAIT_ALL */
         obj_handle_t    handles[MAXIMUM_WAIT_OBJECTS];
     } wait;
 } select_op_t;
@@ -946,9 +947,8 @@ struct rawinput_device
     apc_call_t   call;         /* APC call arguments */
     obj_handle_t apc_handle;   /* handle to next APC */
 @END
-#define SELECT_ALL           1
-#define SELECT_ALERTABLE     2
-#define SELECT_INTERRUPTIBLE 4
+#define SELECT_ALERTABLE     1
+#define SELECT_INTERRUPTIBLE 2
 
 
 /* Create an event */

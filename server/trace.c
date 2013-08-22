@@ -399,7 +399,8 @@ static void dump_varargs_select_op( const char *prefix, data_size_t size )
         fprintf( stderr, "NONE" );
         break;
     case SELECT_WAIT:
-        fprintf( stderr, "WAIT" );
+    case SELECT_WAIT_ALL:
+        fprintf( stderr, "%s", data.op == SELECT_WAIT ? "WAIT" : "WAIT_ALL" );
         if (size > offsetof( select_op_t, wait.handles ))
             dump_handles( ",handles=", data.wait.handles,
                           min( size, sizeof(data.wait) ) - offsetof( select_op_t, wait.handles ));

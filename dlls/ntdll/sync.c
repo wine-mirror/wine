@@ -1173,9 +1173,8 @@ NTSTATUS WINAPI NtWaitForMultipleObjects( DWORD count, const HANDLE *handles,
 
     if (!count || count > MAXIMUM_WAIT_OBJECTS) return STATUS_INVALID_PARAMETER_1;
 
-    if (wait_all) flags |= SELECT_ALL;
     if (alertable) flags |= SELECT_ALERTABLE;
-    select_op.wait.op = SELECT_WAIT;
+    select_op.wait.op = wait_all ? SELECT_WAIT_ALL : SELECT_WAIT;
     for (i = 0; i < count; i++) select_op.wait.handles[i] = wine_server_obj_handle( handles[i] );
     return NTDLL_wait_for_multiple_objects( &select_op, offsetof( select_op_t, wait.handles[count] ), flags, timeout, 0 );
 }
