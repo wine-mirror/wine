@@ -408,7 +408,8 @@ enum select_op
 {
     SELECT_NONE,
     SELECT_WAIT,
-    SELECT_WAIT_ALL
+    SELECT_WAIT_ALL,
+    SELECT_SIGNAL_AND_WAIT
 };
 
 typedef union
@@ -419,6 +420,12 @@ typedef union
         enum select_op  op;
         obj_handle_t    handles[MAXIMUM_WAIT_OBJECTS];
     } wait;
+    struct
+    {
+        enum select_op  op;
+        obj_handle_t    wait;
+        obj_handle_t    signal;
+    } signal_and_wait;
 } select_op_t;
 
 enum apc_type
@@ -1069,11 +1076,11 @@ struct select_request
     struct request_header __header;
     int          flags;
     client_ptr_t cookie;
-    obj_handle_t signal;
-    obj_handle_t prev_apc;
     timeout_t    timeout;
+    obj_handle_t prev_apc;
     /* VARARG(result,apc_result); */
     /* VARARG(data,select_op); */
+    char __pad_36[4];
 };
 struct select_reply
 {
@@ -5787,6 +5794,6 @@ union generic_reply
     struct set_suspend_context_reply set_suspend_context_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 445
+#define SERVER_PROTOCOL_VERSION 446
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
