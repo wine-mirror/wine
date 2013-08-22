@@ -106,9 +106,9 @@ struct object
 
 struct wait_queue_entry
 {
-    struct list     entry;
-    struct object  *obj;
-    struct thread  *thread;
+    struct list         entry;
+    struct object      *obj;
+    struct thread_wait *wait;
 };
 
 extern void *mem_alloc( size_t size );  /* malloc wrapper */

@@ -543,6 +543,11 @@ void remove_queue( struct object *obj, struct wait_queue_entry *entry )
     release_object( obj );
 }
 
+struct thread *get_wait_queue_thread( struct wait_queue_entry *entry )
+{
+    return entry->wait->thread;
+}
+
 /* finish waiting */
 static void end_wait( struct thread *thread )
 {
@@ -579,7 +584,7 @@ static int wait_on( const select_op_t *select_op, unsigned int count, struct obj
     for (i = 0, entry = wait->queues; i < count; i++, entry++)
     {
         struct object *obj = objects[i];
-        entry->thread = current;
+        entry->wait = wait;
         if (!obj->ops->add_queue( obj, entry ))
         {
             wait->count = i;
@@ -809,7 +814,7 @@ void wake_up( struct object *obj, int max )
     LIST_FOR_EACH( ptr, &obj->wait_queue )
     {
         struct wait_queue_entry *entry = LIST_ENTRY( ptr, struct wait_queue_entry, entry );
-        if (!wake_thread( entry->thread )) continue;
+        if (!wake_thread( get_wait_queue_thread( entry ))) continue;
         if (max && !--max) break;
         /* restart at the head of the list since a wake up can change the object wait queue */
         ptr = &obj->wait_queue;

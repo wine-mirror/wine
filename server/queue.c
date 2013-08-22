@@ -866,7 +866,7 @@ static int is_queue_hung( struct msg_queue *queue )
 
     LIST_FOR_EACH_ENTRY( entry, &queue->obj.wait_queue, struct wait_queue_entry, entry )
     {
-        if (entry->thread->queue == queue)
+        if (get_wait_queue_thread(entry)->queue == queue)
             return 0;  /* thread is waiting on queue -> not hung */
     }
     return 1;
@@ -875,10 +875,10 @@ static int is_queue_hung( struct msg_queue *queue )
 static int msg_queue_add_queue( struct object *obj, struct wait_queue_entry *entry )
 {
     struct msg_queue *queue = (struct msg_queue *)obj;
-    struct process *process = entry->thread->process;
+    struct process *process = get_wait_queue_thread(entry)->process;
 
     /* a thread can only wait on its own queue */
-    if (entry->thread->queue != queue)
+    if (get_wait_queue_thread(entry)->queue != queue)
     {
         set_error( STATUS_ACCESS_DENIED );
         return 0;
