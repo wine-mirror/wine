@@ -1102,12 +1102,10 @@ NTSTATUS NTDLL_queue_process_apc( HANDLE process, const apc_call_t *call, apc_re
 
 
 /***********************************************************************
- *              NTDLL_wait_for_multiple_objects
- *
- * Implementation of NtWaitForMultipleObjects
+ *              server_select
  */
-NTSTATUS NTDLL_wait_for_multiple_objects( const select_op_t *select_op, data_size_t size, UINT flags,
-                                          const LARGE_INTEGER *timeout )
+NTSTATUS server_select( const select_op_t *select_op, data_size_t size, UINT flags,
+                        const LARGE_INTEGER *timeout )
 {
     NTSTATUS ret;
     int cookie;
@@ -1178,7 +1176,7 @@ NTSTATUS WINAPI NtWaitForMultipleObjects( DWORD count, const HANDLE *handles,
     if (alertable) flags |= SELECT_ALERTABLE;
     select_op.wait.op = wait_all ? SELECT_WAIT_ALL : SELECT_WAIT;
     for (i = 0; i < count; i++) select_op.wait.handles[i] = wine_server_obj_handle( handles[i] );
-    return NTDLL_wait_for_multiple_objects( &select_op, offsetof( select_op_t, wait.handles[count] ), flags, timeout );
+    return server_select( &select_op, offsetof( select_op_t, wait.handles[count] ), flags, timeout );
 }
 
 
@@ -1206,7 +1204,7 @@ NTSTATUS WINAPI NtSignalAndWaitForSingleObject( HANDLE hSignalObject, HANDLE hWa
     select_op.signal_and_wait.op = SELECT_SIGNAL_AND_WAIT;
     select_op.signal_and_wait.wait = wine_server_obj_handle( hWaitObject );
     select_op.signal_and_wait.signal = wine_server_obj_handle( hSignalObject );
-    return NTDLL_wait_for_multiple_objects( &select_op, sizeof(select_op.signal_and_wait), flags, timeout );
+    return server_select( &select_op, sizeof(select_op.signal_and_wait), flags, timeout );
 }
 
 
@@ -1231,8 +1229,7 @@ NTSTATUS WINAPI NtDelayExecution( BOOLEAN alertable, const LARGE_INTEGER *timeou
 {
     /* if alertable, we need to query the server */
     if (alertable)
-        return NTDLL_wait_for_multiple_objects( NULL, 0, SELECT_INTERRUPTIBLE | SELECT_ALERTABLE,
-                                                timeout );
+        return server_select( NULL, 0, SELECT_INTERRUPTIBLE | SELECT_ALERTABLE, timeout );
 
     if (!timeout || timeout->QuadPart == TIMEOUT_INFINITE)  /* sleep forever */
     {

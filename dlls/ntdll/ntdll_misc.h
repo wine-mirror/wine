@@ -63,8 +63,8 @@ extern LPCSTR debugstr_us( const UNICODE_STRING *str ) DECLSPEC_HIDDEN;
 extern LPCSTR debugstr_ObjectAttributes(const OBJECT_ATTRIBUTES *oa) DECLSPEC_HIDDEN;
 
 extern NTSTATUS NTDLL_queue_process_apc( HANDLE process, const apc_call_t *call, apc_result_t *result ) DECLSPEC_HIDDEN;
-extern NTSTATUS NTDLL_wait_for_multiple_objects( const select_op_t *select_op, data_size_t size,
-                                                 UINT flags, const LARGE_INTEGER *timeout ) DECLSPEC_HIDDEN;
+extern NTSTATUS server_select( const select_op_t *select_op, data_size_t size,
+                               UINT flags, const LARGE_INTEGER *timeout ) DECLSPEC_HIDDEN;
 
 /* init routines */
 extern NTSTATUS signal_alloc_thread( TEB **teb ) DECLSPEC_HIDDEN;
