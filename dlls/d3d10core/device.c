@@ -1887,8 +1887,9 @@ static HRESULT CDECL device_parent_create_swapchain_surface(struct wined3d_devic
 }
 
 static HRESULT CDECL device_parent_create_volume(struct wined3d_device_parent *device_parent,
-        void *container_parent, UINT width, UINT height, UINT depth, enum wined3d_format_id format,
-        enum wined3d_pool pool, DWORD usage, struct wined3d_volume **volume)
+        void *container_parent, UINT width, UINT height, UINT depth, UINT level,
+        enum wined3d_format_id format, enum wined3d_pool pool, DWORD usage,
+        struct wined3d_volume **volume)
 {
     HRESULT hr;
 
@@ -1898,7 +1899,8 @@ static HRESULT CDECL device_parent_create_volume(struct wined3d_device_parent *d
             format, pool, usage, volume);
 
     hr = wined3d_volume_create(device_from_wined3d_device_parent(device_parent)->wined3d_device,
-            width, height, depth, usage, format, pool, NULL, &d3d10_subresource_parent_ops, volume);
+            width, height, depth, level, usage, format, pool, NULL, &d3d10_subresource_parent_ops,
+            volume);
     if (FAILED(hr))
     {
         WARN("Failed to create wined3d volume, hr %#x.\n", hr);

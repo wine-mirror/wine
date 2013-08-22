@@ -3,6 +3,7 @@
  * Copyright 2002-2005 Raphael Junqueira
  * Copyright 2005 Oliver Stieber
  * Copyright 2009-2011 Henri Verbeet for CodeWeavers
+ * Copyright 2013 Stefan Dösinger for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -77,17 +78,18 @@ void volume_set_container(struct wined3d_volume *volume, struct wined3d_texture 
 }
 
 /* Context activation is done by the caller. */
-void volume_load(const struct wined3d_volume *volume, struct wined3d_context *context, UINT level, BOOL srgb_mode)
+void wined3d_volume_load(const struct wined3d_volume *volume, struct wined3d_context *context, BOOL srgb_mode)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_format *format = volume->resource.format;
 
     TRACE("volume %p, context %p, level %u, srgb %#x, format %s (%#x).\n",
-            volume, context, level, srgb_mode, debug_d3dformat(format->id), format->id);
+            volume, context, volume->texture_level, srgb_mode, debug_d3dformat(format->id),
+            format->id);
 
     volume_bind_and_dirtify(volume, context);
 
-    GL_EXTCALL(glTexImage3DEXT(GL_TEXTURE_3D, level, format->glInternal,
+    GL_EXTCALL(glTexImage3DEXT(GL_TEXTURE_3D, volume->texture_level, format->glInternal,
             volume->resource.width, volume->resource.height, volume->resource.depth,
             0, format->glFormat, format->glType, volume->resource.allocatedMemory));
     checkGLcall("glTexImage3D");
@@ -267,8 +269,8 @@ static const struct wined3d_resource_ops volume_resource_ops =
 };
 
 static HRESULT volume_init(struct wined3d_volume *volume, struct wined3d_device *device, UINT width,
-        UINT height, UINT depth, DWORD usage, enum wined3d_format_id format_id, enum wined3d_pool pool,
-        void *parent, const struct wined3d_parent_ops *parent_ops)
+        UINT height, UINT depth, UINT level, DWORD usage, enum wined3d_format_id format_id,
+        enum wined3d_pool pool, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct wined3d_format *format = wined3d_get_format(gl_info, format_id);
@@ -295,13 +297,15 @@ static HRESULT volume_init(struct wined3d_volume *volume, struct wined3d_device 
     memset(&volume->lockedBox, 0, sizeof(volume->lockedBox));
 
     volume_add_dirty_box(volume, NULL);
+    volume->texture_level = level;
+
 
     return WINED3D_OK;
 }
 
 HRESULT CDECL wined3d_volume_create(struct wined3d_device *device, UINT width, UINT height,
-        UINT depth, DWORD usage, enum wined3d_format_id format_id, enum wined3d_pool pool, void *parent,
-        const struct wined3d_parent_ops *parent_ops, struct wined3d_volume **volume)
+        UINT depth, UINT level, DWORD usage, enum wined3d_format_id format_id, enum wined3d_pool pool,
+        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_volume **volume)
 {
     struct wined3d_volume *object;
     HRESULT hr;
@@ -317,7 +321,8 @@ HRESULT CDECL wined3d_volume_create(struct wined3d_device *device, UINT width, U
         return WINED3DERR_OUTOFVIDEOMEMORY;
     }
 
-    hr = volume_init(object, device, width, height, depth, usage, format_id, pool, parent, parent_ops);
+    hr = volume_init(object, device, width, height, depth, level,
+            usage, format_id, pool, parent, parent_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize volume, returning %#x.\n", hr);

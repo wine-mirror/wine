@@ -1987,8 +1987,8 @@ struct wined3d_device_parent_ops
             const struct wined3d_resource_desc *desc, UINT sub_resource_idx, DWORD flags,
             struct wined3d_surface **surface);
     HRESULT (__cdecl *create_volume)(struct wined3d_device_parent *device_parent, void *container_parent,
-            UINT width, UINT height, UINT depth, enum wined3d_format_id format_id, enum wined3d_pool pool, DWORD usage,
-            struct wined3d_volume **volume);
+            UINT width, UINT height, UINT depth, UINT level, enum wined3d_format_id format_id,
+            enum wined3d_pool pool, DWORD usage, struct wined3d_volume **volume);
     HRESULT (__cdecl *create_swapchain)(struct wined3d_device_parent *device_parent,
             struct wined3d_swapchain_desc *desc, struct wined3d_swapchain **swapchain);
 };
@@ -2408,7 +2408,7 @@ void * __cdecl wined3d_vertex_declaration_get_parent(const struct wined3d_vertex
 ULONG __cdecl wined3d_vertex_declaration_incref(struct wined3d_vertex_declaration *declaration);
 
 HRESULT __cdecl wined3d_volume_create(struct wined3d_device *device, UINT width, UINT height, UINT depth,
-        DWORD usage, enum wined3d_format_id format_id, enum wined3d_pool pool, void *parent,
+        UINT level, DWORD usage, enum wined3d_format_id format_id, enum wined3d_pool pool, void *parent,
         const struct wined3d_parent_ops *parent_ops, struct wined3d_volume **volume);
 ULONG __cdecl wined3d_volume_decref(struct wined3d_volume *volume);
 struct wined3d_volume * __cdecl wined3d_volume_from_resource(struct wined3d_resource *resource);

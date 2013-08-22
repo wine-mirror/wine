@@ -3375,8 +3375,8 @@ static HRESULT CDECL device_parent_create_swapchain_surface(struct wined3d_devic
 }
 
 static HRESULT CDECL device_parent_create_volume(struct wined3d_device_parent *device_parent,
-        void *container_parent, UINT width, UINT height, UINT depth, enum wined3d_format_id format,
-        enum wined3d_pool pool, DWORD usage, struct wined3d_volume **volume)
+        void *container_parent, UINT width, UINT height, UINT depth, UINT level,
+        enum wined3d_format_id format, enum wined3d_pool pool, DWORD usage, struct wined3d_volume **volume)
 {
     struct d3d9_device *device = device_from_device_parent(device_parent);
     struct d3d9_volume *object;
@@ -3396,7 +3396,7 @@ static HRESULT CDECL device_parent_create_volume(struct wined3d_device_parent *d
         return D3DERR_OUTOFVIDEOMEMORY;
     }
 
-    hr = volume_init(object, device, width, height, depth, usage, format, pool);
+    hr = volume_init(object, device, width, height, depth, level, usage, format, pool);
     if (FAILED(hr))
     {
         WARN("Failed to initialize volume, hr %#x.\n", hr);

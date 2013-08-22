@@ -184,7 +184,8 @@ struct d3d8_volume
 };
 
 HRESULT volume_init(struct d3d8_volume *volume, struct d3d8_device *device, UINT width, UINT height,
-        UINT depth, DWORD usage, enum wined3d_format_id format, enum wined3d_pool pool) DECLSPEC_HIDDEN;
+        UINT depth, UINT level, DWORD usage, enum wined3d_format_id format,
+        enum wined3d_pool pool) DECLSPEC_HIDDEN;
 
 struct d3d8_swapchain
 {

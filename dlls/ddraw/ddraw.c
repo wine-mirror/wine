@@ -5190,8 +5190,9 @@ static HRESULT CDECL device_parent_create_swapchain_surface(struct wined3d_devic
 }
 
 static HRESULT CDECL device_parent_create_volume(struct wined3d_device_parent *device_parent,
-        void *container_parent, UINT width, UINT height, UINT depth, enum wined3d_format_id format,
-        enum wined3d_pool pool, DWORD usage, struct wined3d_volume **volume)
+        void *container_parent, UINT width, UINT height, UINT depth, UINT level,
+        enum wined3d_format_id format, enum wined3d_pool pool, DWORD usage,
+        struct wined3d_volume **volume)
 {
     TRACE("device_parent %p, container_parent %p, width %u, height %u, depth %u, "
             "format %#x, pool %#x, usage %#x, volume %p.\n",

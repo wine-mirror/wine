@@ -2061,6 +2061,7 @@ struct wined3d_volume
     struct wined3d_box dirtyBox;
 
     DWORD flags;
+    GLint texture_level;
 };
 
 static inline struct wined3d_volume *volume_from_resource(struct wined3d_resource *resource)
@@ -2069,7 +2070,7 @@ static inline struct wined3d_volume *volume_from_resource(struct wined3d_resourc
 }
 
 void volume_add_dirty_box(struct wined3d_volume *volume, const struct wined3d_box *dirty_box) DECLSPEC_HIDDEN;
-void volume_load(const struct wined3d_volume *volume, struct wined3d_context *context, UINT level, BOOL srgb_mode) DECLSPEC_HIDDEN;
+void wined3d_volume_load(const struct wined3d_volume *volume, struct wined3d_context *context, BOOL srgb_mode) DECLSPEC_HIDDEN;
 void volume_set_container(struct wined3d_volume *volume, struct wined3d_texture *container) DECLSPEC_HIDDEN;
 
 struct wined3d_surface_dib

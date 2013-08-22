@@ -1086,7 +1086,7 @@ static void texture3d_preload(struct wined3d_texture *texture, enum WINED3DSRGB 
     {
         for (i = 0; i < texture->level_count; ++i)
         {
-            volume_load(volume_from_resource(texture->sub_resources[i]), context, i,
+            wined3d_volume_load(volume_from_resource(texture->sub_resources[i]), context,
                     texture->flags & WINED3D_TEXTURE_IS_SRGB);
         }
     }
@@ -1096,7 +1096,7 @@ static void texture3d_preload(struct wined3d_texture *texture, enum WINED3DSRGB 
         {
             struct wined3d_volume *volume = volume_from_resource(texture->sub_resources[i]);
             volume_add_dirty_box(volume, NULL);
-            volume_load(volume, context, i, texture->flags & WINED3D_TEXTURE_IS_SRGB);
+            wined3d_volume_load(volume, context, texture->flags & WINED3D_TEXTURE_IS_SRGB);
         }
     }
     else
@@ -1252,7 +1252,7 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
 
         /* Create the volume. */
         hr = device->device_parent->ops->create_volume(device->device_parent, parent,
-                tmp_w, tmp_h, tmp_d, desc->format, desc->pool, desc->usage, &volume);
+                tmp_w, tmp_h, tmp_d, i, desc->format, desc->pool, desc->usage, &volume);
         if (FAILED(hr))
         {
             ERR("Creating a volume for the volume texture failed, hr %#x.\n", hr);
