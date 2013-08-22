@@ -985,8 +985,15 @@ NTSTATUS WINAPI NtOpenKeyedEvent( HANDLE *handle, ACCESS_MASK access, const OBJE
 NTSTATUS WINAPI NtWaitForKeyedEvent( HANDLE handle, const void *key,
                                      BOOLEAN alertable, const LARGE_INTEGER *timeout )
 {
-    FIXME( "stub\n" );
-    return STATUS_NOT_IMPLEMENTED;
+    select_op_t select_op;
+    UINT flags = SELECT_INTERRUPTIBLE;
+
+    if ((ULONG_PTR)key & 1) return STATUS_INVALID_PARAMETER_1;
+    if (alertable) flags |= SELECT_ALERTABLE;
+    select_op.keyed_event.op     = SELECT_KEYED_EVENT_WAIT;
+    select_op.keyed_event.handle = wine_server_obj_handle( handle );
+    select_op.keyed_event.key    = wine_server_client_ptr( key );
+    return server_select( &select_op, sizeof(select_op.keyed_event), flags, timeout );
 }
 
 /******************************************************************************
@@ -995,8 +1002,15 @@ NTSTATUS WINAPI NtWaitForKeyedEvent( HANDLE handle, const void *key,
 NTSTATUS WINAPI NtReleaseKeyedEvent( HANDLE handle, const void *key,
                                      BOOLEAN alertable, const LARGE_INTEGER *timeout )
 {
-    FIXME( "stub\n" );
-    return STATUS_NOT_IMPLEMENTED;
+    select_op_t select_op;
+    UINT flags = SELECT_INTERRUPTIBLE;
+
+    if ((ULONG_PTR)key & 1) return STATUS_INVALID_PARAMETER_1;
+    if (alertable) flags |= SELECT_ALERTABLE;
+    select_op.keyed_event.op     = SELECT_KEYED_EVENT_RELEASE;
+    select_op.keyed_event.handle = wine_server_obj_handle( handle );
+    select_op.keyed_event.key    = wine_server_client_ptr( key );
+    return server_select( &select_op, sizeof(select_op.keyed_event), flags, timeout );
 }
 
 /******************************************************************

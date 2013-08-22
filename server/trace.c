@@ -409,6 +409,13 @@ static void dump_varargs_select_op( const char *prefix, data_size_t size )
         fprintf( stderr, "SIGNAL_AND_WAIT,signal=%04x,wait=%04x",
                  data.signal_and_wait.signal, data.signal_and_wait.wait );
         break;
+    case SELECT_KEYED_EVENT_WAIT:
+    case SELECT_KEYED_EVENT_RELEASE:
+        fprintf( stderr, "KEYED_EVENT_%s,handle=%04x",
+                 data.op == SELECT_KEYED_EVENT_WAIT ? "WAIT" : "RELEASE",
+                 data.keyed_event.handle );
+        dump_uint64( ",key=", &data.keyed_event.key );
+        break;
     default:
         fprintf( stderr, "op=%u", data.op );
         break;

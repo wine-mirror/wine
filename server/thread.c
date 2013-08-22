@@ -77,6 +77,7 @@ struct thread_wait
     int                     flags;
     int                     abandoned;
     enum select_op          select;
+    client_ptr_t            key;        /* wait key for keyed events */
     client_ptr_t            cookie;     /* magic cookie to return to client */
     timeout_t               timeout;
     struct timeout_user    *user;
@@ -549,6 +550,16 @@ struct thread *get_wait_queue_thread( struct wait_queue_entry *entry )
     return entry->wait->thread;
 }
 
+enum select_op get_wait_queue_select_op( struct wait_queue_entry *entry )
+{
+    return entry->wait->select;
+}
+
+client_ptr_t get_wait_queue_key( struct wait_queue_entry *entry )
+{
+    return entry->wait->key;
+}
+
 void make_wait_abandoned( struct wait_queue_entry *entry )
 {
     entry->wait->abandoned = 1;
@@ -707,6 +718,33 @@ int wake_thread( struct thread *thread )
     return count;
 }
 
+/* attempt to wake up a thread from a wait queue entry, assuming that it is signaled */
+int wake_thread_queue_entry( struct wait_queue_entry *entry )
+{
+    struct thread_wait *wait = entry->wait;
+    struct thread *thread = wait->thread;
+    int signaled;
+    client_ptr_t cookie;
+
+    if (thread->wait != wait) return 0;  /* not the current wait */
+    if (thread->process->suspend + thread->suspend > 0) return 0;  /* cannot acquire locks */
+
+    assert( wait->select != SELECT_WAIT_ALL );
+
+    signaled = entry - wait->queues;
+    entry->obj->ops->satisfied( entry->obj, entry );
+    if (wait->abandoned) signaled += STATUS_ABANDONED_WAIT_0;
+
+    cookie = wait->cookie;
+    if (debug_level) fprintf( stderr, "%04x: *wakeup* signaled=%d\n", thread->id, signaled );
+    end_wait( thread );
+
+    if (send_thread_wakeup( thread, cookie, signaled ) != -1)
+        wake_thread( thread );  /* check other waits too */
+
+    return 1;
+}
+
 /* thread wait timeout */
 static void thread_timeout( void *ptr )
 {
@@ -746,6 +784,7 @@ static timeout_t select_on( const select_op_t *select_op, data_size_t op_size, c
 {
     int ret;
     unsigned int count;
+    struct object *object;
 
     if (timeout <= 0) timeout = current_time - timeout;
 
@@ -780,6 +819,17 @@ static timeout_t select_on( const select_op_t *select_op, data_size_t op_size, c
             /* check if we woke ourselves up */
             if (!current->wait) return timeout;
         }
+        break;
+
+    case SELECT_KEYED_EVENT_WAIT:
+    case SELECT_KEYED_EVENT_RELEASE:
+        object = (struct object *)get_keyed_event_obj( current->process, select_op->keyed_event.handle,
+                         select_op->op == SELECT_KEYED_EVENT_WAIT ? KEYEDEVENT_WAIT : KEYEDEVENT_WAKE );
+        if (!object) return timeout;
+        ret = wait_on( select_op, 1, &object, flags, timeout );
+        release_object( object );
+        if (!ret) return timeout;
+        current->wait->key = select_op->keyed_event.key;
         break;
 
     default:

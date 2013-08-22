@@ -106,10 +106,13 @@ extern struct thread *get_thread_from_handle( obj_handle_t handle, unsigned int 
 extern struct thread *get_thread_from_tid( int tid );
 extern struct thread *get_thread_from_pid( int pid );
 extern struct thread *get_wait_queue_thread( struct wait_queue_entry *entry );
+extern enum select_op get_wait_queue_select_op( struct wait_queue_entry *entry );
+extern client_ptr_t get_wait_queue_key( struct wait_queue_entry *entry );
 extern void make_wait_abandoned( struct wait_queue_entry *entry );
 extern void stop_thread( struct thread *thread );
 extern void stop_thread_if_suspended( struct thread *thread );
 extern int wake_thread( struct thread *thread );
+extern int wake_thread_queue_entry( struct wait_queue_entry *entry );
 extern int add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern void remove_queue( struct object *obj, struct wait_queue_entry *entry );
 extern void kill_thread( struct thread *thread, int violent_death );
