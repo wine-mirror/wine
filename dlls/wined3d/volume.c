@@ -48,28 +48,6 @@ static void volume_bind_and_dirtify(const struct wined3d_volume *volume, struct 
     container->texture_ops->texture_bind(container, context, FALSE);
 }
 
-void volume_add_dirty_box(struct wined3d_volume *volume, const struct wined3d_box *dirty_box)
-{
-    if (dirty_box)
-    {
-        volume->lockedBox.left = min(volume->lockedBox.left, dirty_box->left);
-        volume->lockedBox.top = min(volume->lockedBox.top, dirty_box->top);
-        volume->lockedBox.front = min(volume->lockedBox.front, dirty_box->front);
-        volume->lockedBox.right = max(volume->lockedBox.right, dirty_box->right);
-        volume->lockedBox.bottom = max(volume->lockedBox.bottom, dirty_box->bottom);
-        volume->lockedBox.back = max(volume->lockedBox.back, dirty_box->back);
-    }
-    else
-    {
-        volume->lockedBox.left = 0;
-        volume->lockedBox.top = 0;
-        volume->lockedBox.front = 0;
-        volume->lockedBox.right = volume->resource.width;
-        volume->lockedBox.bottom = volume->resource.height;
-        volume->lockedBox.back = volume->resource.depth;
-    }
-}
-
 void volume_set_container(struct wined3d_volume *volume, struct wined3d_texture *container)
 {
     TRACE("volume %p, container %p.\n", volume, container);
@@ -248,12 +226,6 @@ HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
     {
         TRACE("No box supplied - all is ok\n");
         map_desc->data = volume->resource.allocatedMemory;
-        volume->lockedBox.left   = 0;
-        volume->lockedBox.top    = 0;
-        volume->lockedBox.front  = 0;
-        volume->lockedBox.right  = volume->resource.width;
-        volume->lockedBox.bottom = volume->resource.height;
-        volume->lockedBox.back   = volume->resource.depth;
     }
     else
     {
@@ -263,17 +235,10 @@ HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
                 + (map_desc->slice_pitch * box->front)     /* FIXME: is front < back or vica versa? */
                 + (map_desc->row_pitch * box->top)
                 + (box->left * volume->resource.format->byte_count);
-        volume->lockedBox.left   = box->left;
-        volume->lockedBox.top    = box->top;
-        volume->lockedBox.front  = box->front;
-        volume->lockedBox.right  = box->right;
-        volume->lockedBox.bottom = box->bottom;
-        volume->lockedBox.back   = box->back;
     }
 
     if (!(flags & (WINED3D_MAP_NO_DIRTY_UPDATE | WINED3D_MAP_READONLY)))
     {
-        volume_add_dirty_box(volume, &volume->lockedBox);
         wined3d_texture_set_dirty(volume->container, TRUE);
     }
 
@@ -301,7 +266,6 @@ HRESULT CDECL wined3d_volume_unmap(struct wined3d_volume *volume)
     }
 
     volume->flags &= ~WINED3D_VFLAG_LOCKED;
-    memset(&volume->lockedBox, 0, sizeof(volume->lockedBox));
 
     return WINED3D_OK;
 }
@@ -337,11 +301,7 @@ static HRESULT volume_init(struct wined3d_volume *volume, struct wined3d_device 
         return hr;
     }
 
-    memset(&volume->lockedBox, 0, sizeof(volume->lockedBox));
-
-    volume_add_dirty_box(volume, NULL);
     volume->texture_level = level;
-
 
     return WINED3D_OK;
 }

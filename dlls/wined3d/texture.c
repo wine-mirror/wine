@@ -1095,7 +1095,6 @@ static void texture3d_preload(struct wined3d_texture *texture, enum WINED3DSRGB 
         for (i = 0; i < texture->level_count; ++i)
         {
             struct wined3d_volume *volume = volume_from_resource(texture->sub_resources[i]);
-            volume_add_dirty_box(volume, NULL);
             wined3d_volume_load(volume, context, texture->flags & WINED3D_TEXTURE_IS_SRGB);
         }
     }
@@ -1113,7 +1112,6 @@ static void texture3d_preload(struct wined3d_texture *texture, enum WINED3DSRGB 
 static void texture3d_sub_resource_add_dirty_region(struct wined3d_resource *sub_resource,
         const struct wined3d_box *dirty_region)
 {
-    volume_add_dirty_box(volume_from_resource(sub_resource), dirty_region);
 }
 
 static void texture3d_sub_resource_cleanup(struct wined3d_resource *sub_resource)
