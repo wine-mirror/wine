@@ -1106,12 +1106,10 @@ NTSTATUS NTDLL_queue_process_apc( HANDLE process, const apc_call_t *call, apc_re
  *
  * Implementation of NtWaitForMultipleObjects
  */
-NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handles, UINT flags,
+NTSTATUS NTDLL_wait_for_multiple_objects( const select_op_t *select_op, data_size_t size, UINT flags,
                                           const LARGE_INTEGER *timeout, HANDLE signal_object )
 {
-    select_op_t select_op;
     NTSTATUS ret;
-    UINT i;
     int cookie;
     BOOL user_apc = FALSE;
     obj_handle_t apc_handle = 0;
@@ -1120,8 +1118,6 @@ NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handles, UIN
     timeout_t abs_timeout = timeout ? timeout->QuadPart : TIMEOUT_INFINITE;
 
     memset( &result, 0, sizeof(result) );
-    select_op.wait.op = SELECT_WAIT;
-    for (i = 0; i < count; i++) select_op.wait.handles[i] = wine_server_obj_handle( handles[i] );
 
     for (;;)
     {
@@ -1133,7 +1129,7 @@ NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handles, UIN
             req->prev_apc = apc_handle;
             req->timeout  = abs_timeout;
             wine_server_add_data( req, &result, sizeof(result) );
-            wine_server_add_data( req, &select_op, offsetof( select_op_t, wait.handles[count] ));
+            wine_server_add_data( req, select_op, size );
             ret = wine_server_call( req );
             abs_timeout = reply->timeout;
             apc_handle  = reply->apc_handle;
@@ -1172,13 +1168,16 @@ NTSTATUS WINAPI NtWaitForMultipleObjects( DWORD count, const HANDLE *handles,
                                           BOOLEAN wait_all, BOOLEAN alertable,
                                           const LARGE_INTEGER *timeout )
 {
-    UINT flags = SELECT_INTERRUPTIBLE;
+    select_op_t select_op;
+    UINT i, flags = SELECT_INTERRUPTIBLE;
 
     if (!count || count > MAXIMUM_WAIT_OBJECTS) return STATUS_INVALID_PARAMETER_1;
 
     if (wait_all) flags |= SELECT_ALL;
     if (alertable) flags |= SELECT_ALERTABLE;
-    return NTDLL_wait_for_multiple_objects( count, handles, flags, timeout, 0 );
+    select_op.wait.op = SELECT_WAIT;
+    for (i = 0; i < count; i++) select_op.wait.handles[i] = wine_server_obj_handle( handles[i] );
+    return NTDLL_wait_for_multiple_objects( &select_op, offsetof( select_op_t, wait.handles[count] ), flags, timeout, 0 );
 }
 
 
@@ -1197,11 +1196,14 @@ NTSTATUS WINAPI NtWaitForSingleObject(HANDLE handle, BOOLEAN alertable, const LA
 NTSTATUS WINAPI NtSignalAndWaitForSingleObject( HANDLE hSignalObject, HANDLE hWaitObject,
                                                 BOOLEAN alertable, const LARGE_INTEGER *timeout )
 {
+    select_op_t select_op;
     UINT flags = SELECT_INTERRUPTIBLE;
 
     if (!hSignalObject) return STATUS_INVALID_HANDLE;
     if (alertable) flags |= SELECT_ALERTABLE;
-    return NTDLL_wait_for_multiple_objects( 1, &hWaitObject, flags, timeout, hSignalObject );
+    select_op.wait.op = SELECT_WAIT;
+    select_op.wait.handles[0] = wine_server_obj_handle( hWaitObject );
+    return NTDLL_wait_for_multiple_objects( &select_op, offsetof( select_op_t, wait.handles[1] ), flags, timeout, hSignalObject );
 }
 
 
@@ -1226,7 +1228,7 @@ NTSTATUS WINAPI NtDelayExecution( BOOLEAN alertable, const LARGE_INTEGER *timeou
 {
     /* if alertable, we need to query the server */
     if (alertable)
-        return NTDLL_wait_for_multiple_objects( 0, NULL, SELECT_INTERRUPTIBLE | SELECT_ALERTABLE,
+        return NTDLL_wait_for_multiple_objects( NULL, 0, SELECT_INTERRUPTIBLE | SELECT_ALERTABLE,
                                                 timeout, 0 );
 
     if (!timeout || timeout->QuadPart == TIMEOUT_INFINITE)  /* sleep forever */
