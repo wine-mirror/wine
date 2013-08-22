@@ -3665,7 +3665,7 @@ DWORD CDECL wined3d_device_get_texture_stage_state(const struct wined3d_device *
         return 0;
     }
 
-    return device->updateStateBlock->state.texture_states[stage][state];
+    return device->stateBlock->state.texture_states[stage][state];
 }
 
 HRESULT CDECL wined3d_device_set_texture(struct wined3d_device *device,
