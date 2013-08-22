@@ -1291,7 +1291,7 @@ NTSTATUS WINAPI NtOpenKeyedEvent( HANDLE *handle, ACCESS_MASK access, const OBJE
 
     if (len >= MAX_PATH * sizeof(WCHAR)) return STATUS_NAME_TOO_LONG;
 
-    SERVER_START_REQ( open_event )
+    SERVER_START_REQ( open_keyed_event )
     {
         req->access  = access;
         req->attributes = attr ? attr->Attributes : 0;
