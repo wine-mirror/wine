@@ -20,6 +20,7 @@
 #include <stdio.h>
 
 #define COBJMACROS
+#define CONST_VTABLE
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 
@@ -277,6 +278,142 @@ if (hr == S_OK) {
     IRowPosition_Release(rowpos);
 }
 
+typedef struct
+{
+    IRowset IRowset_iface;
+    IChapteredRowset IChapteredRowset_iface;
+} test_rset_t;
+
+static test_rset_t test_rset;
+
+static HRESULT WINAPI rset_QI(IRowset *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IRowset))
+    {
+        *obj = &test_rset.IRowset_iface;
+        return S_OK;
+    }
+    else if (IsEqualIID(riid, &IID_IChapteredRowset))
+    {
+        *obj = &test_rset.IChapteredRowset_iface;
+        return S_OK;
+    }
+
+    ok(0, "unexpected riid %s\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI rset_AddRef(IRowset *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI rset_Release(IRowset *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI rset_AddRefRows(IRowset *iface, DBCOUNTITEM cRows,
+    const HROW rghRows[], DBREFCOUNT rgRefCounts[], DBROWSTATUS rgRowStatus[])
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rset_GetData(IRowset *iface, HROW hRow, HACCESSOR hAccessor, void *pData)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rset_GetNextRows(IRowset *iface, HCHAPTER hReserved, DBROWOFFSET lRowsOffset,
+    DBROWCOUNT cRows, DBCOUNTITEM *pcRowObtained, HROW **prghRows)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rset_ReleaseRows(IRowset *iface, DBCOUNTITEM cRows, const HROW rghRows[], DBROWOPTIONS rgRowOptions[],
+    DBREFCOUNT rgRefCounts[], DBROWSTATUS rgRowStatus[])
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rset_RestartPosition(IRowset *iface, HCHAPTER hReserved)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IRowsetVtbl rset_vtbl = {
+    rset_QI,
+    rset_AddRef,
+    rset_Release,
+    rset_AddRefRows,
+    rset_GetData,
+    rset_GetNextRows,
+    rset_ReleaseRows,
+    rset_RestartPosition
+};
+
+static HRESULT WINAPI chrset_QI(IChapteredRowset *iface, REFIID riid, void **obj)
+{
+    return IRowset_QueryInterface(&test_rset.IRowset_iface, riid, obj);
+}
+
+static ULONG WINAPI chrset_AddRef(IChapteredRowset *iface)
+{
+    return IRowset_AddRef(&test_rset.IRowset_iface);
+}
+
+static ULONG WINAPI chrset_Release(IChapteredRowset *iface)
+{
+    return IRowset_Release(&test_rset.IRowset_iface);
+}
+
+static HRESULT WINAPI chrset_AddRefChapter(IChapteredRowset *iface, HCHAPTER chapter, DBREFCOUNT *refcount)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI chrset_ReleaseChapter(IChapteredRowset *iface, HCHAPTER chapter, DBREFCOUNT *refcount)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IChapteredRowsetVtbl chrset_vtbl = {
+    chrset_QI,
+    chrset_AddRef,
+    chrset_Release,
+    chrset_AddRefChapter,
+    chrset_ReleaseChapter
+};
+
+static void init_test_rset(void)
+{
+    test_rset.IRowset_iface.lpVtbl = &rset_vtbl;
+    test_rset.IChapteredRowset_iface.lpVtbl = &chrset_vtbl;
+}
+
+static void test_rowpos_initialize(void)
+{
+    IRowPosition *rowpos;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_OLEDB_ROWPOSITIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IRowPosition, (void**)&rowpos);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    init_test_rset();
+    hr = IRowPosition_Initialize(rowpos, (IUnknown*)&test_rset.IRowset_iface);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    IRowPosition_Release(rowpos);
+}
+
 START_TEST(database)
 {
     OleInitialize(NULL);
@@ -287,6 +424,7 @@ START_TEST(database)
 
     /* row position */
     test_rowposition();
+    test_rowpos_initialize();
 
     OleUninitialize();
 }
