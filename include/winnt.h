@@ -3052,6 +3052,28 @@ typedef struct _IMAGE_RELOCATION
 
 #define IMAGE_SIZEOF_RELOCATION 10
 
+typedef struct _IMAGE_DELAYLOAD_DESCRIPTOR
+{
+    union
+    {
+        DWORD AllAttributes;
+        struct
+        {
+            DWORD RvaBased:1;
+            DWORD ReservedAttributes:31;
+        } DUMMYSTRUCTNAME;
+    } Attributes;
+
+    DWORD DllNameRVA;
+    DWORD ModuleHandleRVA;
+    DWORD ImportAddressTableRVA;
+    DWORD ImportNameTableRVA;
+    DWORD BoundImportAddressTableRVA;
+    DWORD UnloadInformationTableRVA;
+    DWORD TimeDateStamp;
+} IMAGE_DELAYLOAD_DESCRIPTOR, *PIMAGE_DELAYLOAD_DESCRIPTOR;
+typedef const IMAGE_DELAYLOAD_DESCRIPTOR *PCIMAGE_DELAYLOAD_DESCRIPTOR;
+
 /* generic relocation types */
 #define IMAGE_REL_BASED_ABSOLUTE 		0
 #define IMAGE_REL_BASED_HIGH			1

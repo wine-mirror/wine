@@ -864,17 +864,7 @@ static	void	dump_dir_imported_functions(void)
 static void dump_dir_delay_imported_functions(void)
 {
     unsigned  directorySize;
-    const struct ImgDelayDescr
-    {
-        DWORD grAttrs;
-        DWORD szName;
-        DWORD phmod;
-        DWORD pIAT;
-        DWORD pINT;
-        DWORD pBoundIAT;
-        DWORD pUnloadIAT;
-        DWORD dwTimeStamp;
-    } *importDesc = get_dir_and_size(IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT, &directorySize);
+    const IMAGE_DELAYLOAD_DESCRIPTOR *importDesc = get_dir_and_size(IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT, &directorySize);
 
     if (!importDesc) return;
 
@@ -883,19 +873,19 @@ static void dump_dir_delay_imported_functions(void)
     for (;;)
     {
         const IMAGE_THUNK_DATA32*       il;
-        int                             offset = (importDesc->grAttrs & 1) ? 0 : PE_nt_headers->OptionalHeader.ImageBase;
+        int                             offset = (importDesc->Attributes.AllAttributes & 1) ? 0 : PE_nt_headers->OptionalHeader.ImageBase;
 
-        if (!importDesc->szName || !importDesc->pIAT || !importDesc->pINT) break;
+        if (!importDesc->DllNameRVA || !importDesc->ImportAddressTableRVA || !importDesc->ImportNameTableRVA) break;
 
-        printf("  grAttrs %08x offset %08lx %s\n", importDesc->grAttrs, Offset(importDesc),
-               (const char *)RVA(importDesc->szName - offset, sizeof(DWORD)));
-        printf("  Hint/Name Table: %08x\n", importDesc->pINT);
+        printf("  grAttrs %08x offset %08lx %s\n", importDesc->Attributes.AllAttributes, Offset(importDesc),
+               (const char *)RVA(importDesc->DllNameRVA - offset, sizeof(DWORD)));
+        printf("  Hint/Name Table: %08x\n", importDesc->ImportNameTableRVA);
         printf("  TimeDateStamp:   %08X (%s)\n",
-               importDesc->dwTimeStamp, get_time_str(importDesc->dwTimeStamp));
+               importDesc->TimeDateStamp, get_time_str(importDesc->TimeDateStamp));
 
         printf("  Ordn  Name\n");
 
-        il = RVA(importDesc->pINT - offset, sizeof(DWORD));
+        il = RVA(importDesc->ImportNameTableRVA - offset, sizeof(DWORD));
 
         if (!il)
             printf("Can't grab thunk data, going to next imported DLL\n");
