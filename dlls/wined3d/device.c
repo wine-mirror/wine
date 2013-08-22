@@ -2340,7 +2340,7 @@ void CDECL wined3d_device_get_scissor_rect(const struct wined3d_device *device, 
 {
     TRACE("device %p, rect %p.\n", device, rect);
 
-    *rect = device->updateStateBlock->state.scissor_rect;
+    *rect = device->stateBlock->state.scissor_rect;
     TRACE("Returning rect %s.\n", wine_dbgstr_rect(rect));
 }
 
