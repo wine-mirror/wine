@@ -53,11 +53,9 @@ static DWORD resource_access_from_pool(enum wined3d_pool pool)
         case WINED3D_POOL_MANAGED:
             return WINED3D_RESOURCE_ACCESS_GPU | WINED3D_RESOURCE_ACCESS_CPU;
 
+        case WINED3D_POOL_SCRATCH:
         case WINED3D_POOL_SYSTEM_MEM:
             return WINED3D_RESOURCE_ACCESS_CPU;
-
-        case WINED3D_POOL_SCRATCH:
-            return WINED3D_RESOURCE_ACCESS_SCRATCH;
 
         default:
             FIXME("Unhandled pool %#x.\n", pool);

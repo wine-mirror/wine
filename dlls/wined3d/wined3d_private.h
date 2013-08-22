@@ -1917,9 +1917,6 @@ static inline void invalidate_active_texture(const struct wined3d_device *device
 
 #define WINED3D_RESOURCE_ACCESS_GPU     0x1
 #define WINED3D_RESOURCE_ACCESS_CPU     0x2
-/* SCRATCH is mostly the same as CPU, but can't be used by the GPU at all,
- * not even for resource uploads. */
-#define WINED3D_RESOURCE_ACCESS_SCRATCH 0x4
 
 struct wined3d_resource_ops
 {
