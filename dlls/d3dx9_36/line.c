@@ -22,8 +22,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
-static const struct ID3DXLineVtbl ID3DXLine_Vtbl;
-
 typedef struct ID3DXLineImpl {
     ID3DXLine ID3DXLine_iface;
     LONG ref;

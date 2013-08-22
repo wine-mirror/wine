@@ -567,8 +567,6 @@ struct ctab_constant {
     struct ctab_constant *constants;
 };
 
-static const struct ID3DXConstantTableVtbl ID3DXConstantTable_Vtbl;
-
 struct ID3DXConstantTableImpl {
     ID3DXConstantTable ID3DXConstantTable_iface;
     LONG ref;

@@ -5423,8 +5423,6 @@ HRESULT WINAPI D3DXCreateEffectCompiler(const char *srcdata, UINT srcdatalen, co
     return D3D_OK;
 }
 
-static const struct ID3DXEffectPoolVtbl ID3DXEffectPool_Vtbl;
-
 struct ID3DXEffectPoolImpl
 {
     ID3DXEffectPool ID3DXEffectPool_iface;
