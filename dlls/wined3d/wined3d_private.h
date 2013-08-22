@@ -2050,12 +2050,18 @@ void wined3d_texture_set_dirty(struct wined3d_texture *texture, BOOL dirty) DECL
 #define WINED3D_VFLAG_LOCKED            0x00000001
 #define WINED3D_VFLAG_ALLOCATED         0x00000002
 
+#define WINED3D_LOCATION_DISCARDED      0x00000001
+#define WINED3D_LOCATION_SYSMEM         0x00000002
+#define WINED3D_LOCATION_TEXTURE_RGB    0x00000004
+
+const char *wined3d_debug_location(DWORD location) DECLSPEC_HIDDEN;
+
 struct wined3d_volume
 {
     struct wined3d_resource resource;
     struct wined3d_texture *container;
 
-    DWORD flags;
+    DWORD flags, locations;
     GLint texture_level;
 };
 

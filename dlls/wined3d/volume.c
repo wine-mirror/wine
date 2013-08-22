@@ -98,10 +98,100 @@ static void wined3d_volume_upload_data(struct wined3d_volume *volume, const stru
     }
 }
 
+static void wined3d_volume_validate_location(struct wined3d_volume *volume, DWORD location)
+{
+    TRACE("Volume %p, setting %s.\n", volume, wined3d_debug_location(location));
+    volume->locations |= location;
+    TRACE("new location flags are %s.\n", wined3d_debug_location(volume->locations));
+}
+
+static void wined3d_volume_invalidate_location(struct wined3d_volume *volume, DWORD location)
+{
+    TRACE("Volume %p, clearing %s.\n", volume, wined3d_debug_location(location));
+    volume->locations &= ~location;
+    TRACE("new location flags are %s.\n", wined3d_debug_location(volume->locations));
+}
+
+/* Context activation is done by the caller. */
+static void wined3d_volume_load_location(struct wined3d_volume *volume,
+        struct wined3d_context *context, DWORD location)
+{
+    TRACE("Volume %p, loading %s, have %s.\n", volume, wined3d_debug_location(location),
+        wined3d_debug_location(volume->locations));
+
+    if ((volume->locations & location) == location)
+    {
+        TRACE("Location(s) already up to date.\n");
+        return;
+    }
+
+    if (!(volume->resource.access_flags & WINED3D_RESOURCE_ACCESS_GPU))
+    {
+        if (location & ~WINED3D_LOCATION_SYSMEM)
+        {
+            ERR("Trying to load a cpu-only access volume into %s.\n",
+                    wined3d_debug_location(location));
+            return;
+        }
+    }
+
+    switch (location)
+    {
+        case WINED3D_LOCATION_TEXTURE_RGB:
+            if (!(volume->flags & WINED3D_VFLAG_ALLOCATED))
+            {
+                ERR("Trying to load RGB texture without prior allocation.\n");
+                return;
+            }
+
+            if (volume->locations & WINED3D_LOCATION_DISCARDED)
+            {
+                TRACE("Volume previously discarded, nothing to do.\n");
+                wined3d_volume_invalidate_location(volume, WINED3D_LOCATION_DISCARDED);
+            }
+            else if (volume->locations & WINED3D_LOCATION_SYSMEM)
+            {
+                struct wined3d_bo_address data = {0, volume->resource.allocatedMemory};
+                wined3d_volume_upload_data(volume, context, &data);
+            }
+            else
+            {
+                FIXME("Implement texture loading from %s.\n", wined3d_debug_location(volume->locations));
+                return;
+            }
+            wined3d_volume_validate_location(volume, WINED3D_LOCATION_TEXTURE_RGB);
+            break;
+
+        case WINED3D_LOCATION_SYSMEM:
+            if (!volume->resource.allocatedMemory || !volume->resource.heap_memory)
+            {
+                ERR("Trying to load WINED3D_LOCATION_SYSMEM without setting it up first.\n");
+                return;
+            }
+
+            if (volume->locations & WINED3D_LOCATION_DISCARDED)
+            {
+                TRACE("Volume previously discarded, nothing to do.\n");
+                wined3d_volume_invalidate_location(volume, WINED3D_LOCATION_DISCARDED);
+            }
+            else
+            {
+                FIXME("Implement WINED3D_LOCATION_SYSMEM loading from %s.\n",
+                        wined3d_debug_location(volume->locations));
+                return;
+            }
+            wined3d_volume_validate_location(volume, WINED3D_LOCATION_SYSMEM);
+            break;
+
+        default:
+            FIXME("Implement %s loading from %s.\n", wined3d_debug_location(location),
+                    wined3d_debug_location(volume->locations));
+    }
+}
+
 /* Context activation is done by the caller. */
 void wined3d_volume_load(struct wined3d_volume *volume, struct wined3d_context *context, BOOL srgb_mode)
 {
-    struct wined3d_bo_address data = {0, volume->resource.allocatedMemory};
     volume_bind_and_dirtify(volume, context);
 
     if (!(volume->flags & WINED3D_VFLAG_ALLOCATED))
@@ -110,18 +200,29 @@ void wined3d_volume_load(struct wined3d_volume *volume, struct wined3d_context *
         volume->flags |= WINED3D_VFLAG_ALLOCATED;
     }
 
-    wined3d_volume_upload_data(volume, context, &data);
+    wined3d_volume_load_location(volume, context, WINED3D_LOCATION_TEXTURE_RGB);
 }
 
-/* Do not call while under the GL lock. */
 static void volume_unload(struct wined3d_resource *resource)
 {
     struct wined3d_volume *volume = volume_from_resource(resource);
+    struct wined3d_device *device = volume->resource.device;
+    struct wined3d_context *context;
+
+    if (volume->resource.pool == WINED3D_POOL_DEFAULT)
+        ERR("Unloading DEFAULT pool volume.\n");
 
     TRACE("texture %p.\n", resource);
 
-    /* The whole content is shadowed on This->resource.allocatedMemory, and
-     * the texture name is managed by the VolumeTexture container. */
+    context = context_acquire(device, NULL);
+
+    wined3d_volume_load_location(volume, context, WINED3D_LOCATION_SYSMEM);
+
+    context_release(context);
+
+    wined3d_volume_invalidate_location(volume, ~WINED3D_LOCATION_SYSMEM);
+
+    /* The texture name is managed by the container. */
     volume->flags &= ~WINED3D_VFLAG_ALLOCATED;
 
     resource_unload(resource);
@@ -217,6 +318,14 @@ HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
         volume->resource.allocatedMemory = volume->resource.heap_memory;
     }
 
+    if (!(volume->locations & WINED3D_LOCATION_SYSMEM))
+    {
+        struct wined3d_device *device = volume->resource.device;
+        struct wined3d_context *context = context_acquire(device, NULL);
+        wined3d_volume_load_location(volume, context, WINED3D_LOCATION_SYSMEM);
+        context_release(context);
+    }
+
     TRACE("allocatedMemory %p.\n", volume->resource.allocatedMemory);
 
     map_desc->row_pitch = volume->resource.format->byte_count * volume->resource.width; /* Bytes / row */
@@ -240,6 +349,7 @@ HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
     if (!(flags & (WINED3D_MAP_NO_DIRTY_UPDATE | WINED3D_MAP_READONLY)))
     {
         wined3d_texture_set_dirty(volume->container, TRUE);
+        wined3d_volume_invalidate_location(volume, ~WINED3D_LOCATION_SYSMEM);
     }
 
     volume->flags |= WINED3D_VFLAG_LOCKED;
@@ -302,6 +412,7 @@ static HRESULT volume_init(struct wined3d_volume *volume, struct wined3d_device 
     }
 
     volume->texture_level = level;
+    volume->locations = WINED3D_LOCATION_DISCARDED;
 
     return WINED3D_OK;
 }
