@@ -409,7 +409,9 @@ enum select_op
     SELECT_NONE,
     SELECT_WAIT,
     SELECT_WAIT_ALL,
-    SELECT_SIGNAL_AND_WAIT
+    SELECT_SIGNAL_AND_WAIT,
+    SELECT_KEYED_EVENT_WAIT,
+    SELECT_KEYED_EVENT_RELEASE
 };
 
 typedef union
@@ -426,6 +428,12 @@ typedef union
         obj_handle_t    wait;
         obj_handle_t    signal;
     } signal_and_wait;
+    struct
+    {
+        enum select_op  op;
+        obj_handle_t    handle;
+        client_ptr_t    key;
+    } keyed_event;
 } select_op_t;
 
 enum apc_type
@@ -5794,6 +5802,6 @@ union generic_reply
     struct set_suspend_context_reply set_suspend_context_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 446
+#define SERVER_PROTOCOL_VERSION 447
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

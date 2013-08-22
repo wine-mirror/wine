@@ -101,10 +101,6 @@ static const struct object_ops keyed_event_ops =
     no_destroy                   /* destroy */
 };
 
-#define KEYEDEVENT_WAIT       0x0001
-#define KEYEDEVENT_WAKE       0x0002
-#define KEYEDEVENT_ALL_ACCESS (STANDARD_RIGHTS_REQUIRED | 0x0003)
-
 
 struct event *create_event( struct directory *root, const struct unicode_str *name,
                             unsigned int attr, int manual_reset, int initial_state,
@@ -227,6 +223,11 @@ struct keyed_event *create_keyed_event( struct directory *root, const struct uni
     return event;
 }
 
+struct keyed_event *get_keyed_event_obj( struct process *process, obj_handle_t handle, unsigned int access )
+{
+    return (struct keyed_event *)get_handle_obj( process, handle, access, &keyed_event_ops );
+}
+
 static void keyed_event_dump( struct object *obj, int verbose )
 {
     struct keyed_event *event = (struct keyed_event *)obj;
@@ -243,10 +244,32 @@ static struct object_type *keyed_event_get_type( struct object *obj )
     return get_object_type( &str );
 }
 
+static enum select_op matching_op( enum select_op op )
+{
+    return op ^ (SELECT_KEYED_EVENT_WAIT ^ SELECT_KEYED_EVENT_RELEASE);
+}
+
 static int keyed_event_signaled( struct object *obj, struct wait_queue_entry *entry )
 {
+    struct wait_queue_entry *ptr;
+    struct process *process;
+    enum select_op select_op;
+
     assert( obj->ops == &keyed_event_ops );
-    return 1;
+
+    process = get_wait_queue_thread( entry )->process;
+    select_op = get_wait_queue_select_op( entry );
+    if (select_op != SELECT_KEYED_EVENT_WAIT && select_op != SELECT_KEYED_EVENT_RELEASE) return 1;
+
+    LIST_FOR_EACH_ENTRY( ptr, &obj->wait_queue, struct wait_queue_entry, entry )
+    {
+        if (ptr == entry) continue;
+        if (get_wait_queue_thread( ptr )->process != process) continue;
+        if (get_wait_queue_select_op( ptr ) != matching_op( select_op )) continue;
+        if (get_wait_queue_key( ptr ) != get_wait_queue_key( entry )) continue;
+        if (wake_thread_queue_entry( ptr )) return 1;
+    }
+    return 0;
 }
 
 static unsigned int keyed_event_map_access( struct object *obj, unsigned int access )
