@@ -3326,7 +3326,7 @@ enum coords_relative
     obj_handle_t  handle;         /* port handle */
     apc_param_t   ckey;           /* completion key */
     apc_param_t   cvalue;         /* completion value */
-    unsigned int  information;    /* IO_STATUS_BLOCK Information */
+    apc_param_t   information;    /* IO_STATUS_BLOCK Information */
     unsigned int  status;         /* completion result */
 @END
 
@@ -3337,7 +3337,7 @@ enum coords_relative
 @REPLY
     apc_param_t   ckey;           /* completion key */
     apc_param_t   cvalue;         /* completion value */
-    unsigned int  information;    /* IO_STATUS_BLOCK Information */
+    apc_param_t   information;    /* IO_STATUS_BLOCK Information */
     unsigned int  status;         /* completion result */
 @END
 
@@ -3362,8 +3362,8 @@ enum coords_relative
 @REQ(add_fd_completion)
     obj_handle_t   handle;        /* async' object */
     apc_param_t    cvalue;        /* completion value */
+    apc_param_t    information;   /* IO_STATUS_BLOCK Information */
     unsigned int   status;        /* completion status */
-    unsigned int   information;   /* IO_STATUS_BLOCK Information */
 @END
 
 

@@ -1001,11 +1001,6 @@ static void test_iocp_setcompletion(HANDLE h)
     if (get_msg(h))
     {
         ok( completionKey == CKEY_FIRST, "Invalid completion key: %lx\n", completionKey );
-        /* FIXME: Remove once Wine is fixed */
-        if (sizeof(size) > 4)
-todo_wine
-        ok( ioSb.Information == size, "Invalid ioSb.Information: %lu\n", ioSb.Information );
-        else
         ok( ioSb.Information == size, "Invalid ioSb.Information: %lu\n", ioSb.Information );
         ok( U(ioSb).Status == STATUS_INVALID_DEVICE_REQUEST, "Invalid ioSb.Status: %x\n", U(ioSb).Status);
         ok( completionValue == CVALUE_FIRST, "Invalid completion value: %lx\n", completionValue );
