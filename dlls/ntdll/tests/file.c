@@ -101,10 +101,11 @@ static BOOL create_pipe( HANDLE *read, HANDLE *write, ULONG flags, ULONG size )
 
 static HANDLE create_temp_file( ULONG flags )
 {
-    char buffer[MAX_PATH];
+    char path[MAX_PATH], buffer[MAX_PATH];
     HANDLE handle;
 
-    GetTempFileNameA( ".", "foo", 0, buffer );
+    GetTempPathA( MAX_PATH, path );
+    GetTempFileNameA( path, "foo", 0, buffer );
     handle = CreateFileA(buffer, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
                          flags | FILE_FLAG_DELETE_ON_CLOSE, 0);
     ok( handle != INVALID_HANDLE_VALUE, "failed to create temp file\n" );
