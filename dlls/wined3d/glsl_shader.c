@@ -84,6 +84,7 @@ struct constant_entry
 struct constant_heap
 {
     struct constant_entry *entries;
+    BOOL *contained;
     unsigned int *positions;
     unsigned int size;
 };
@@ -932,12 +933,21 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
     }
 }
 
-static void update_heap_entry(const struct constant_heap *heap, unsigned int idx,
-        unsigned int heap_idx, DWORD new_version)
+static void update_heap_entry(struct constant_heap *heap, unsigned int idx, DWORD new_version)
 {
     struct constant_entry *entries = heap->entries;
     unsigned int *positions = heap->positions;
-    unsigned int parent_idx;
+    unsigned int heap_idx, parent_idx;
+
+    if (!heap->contained[idx])
+    {
+        heap_idx = heap->size++;
+        heap->contained[idx] = TRUE;
+    }
+    else
+    {
+        heap_idx = positions[idx];
+    }
 
     while (heap_idx > 1)
     {
@@ -963,10 +973,7 @@ static void shader_glsl_update_float_vertex_constants(struct wined3d_device *dev
 
     for (i = start; i < count + start; ++i)
     {
-        if (!device->stateBlock->changed.vertexShaderConstantsF[i])
-            update_heap_entry(heap, i, heap->size++, priv->next_constant_version);
-        else
-            update_heap_entry(heap, i, heap->positions[i], priv->next_constant_version);
+        update_heap_entry(heap, i, priv->next_constant_version);
     }
 
     for (i = 0; i < device->context_count; ++i)
@@ -983,10 +990,7 @@ static void shader_glsl_update_float_pixel_constants(struct wined3d_device *devi
 
     for (i = start; i < count + start; ++i)
     {
-        if (!device->stateBlock->changed.pixelShaderConstantsF[i])
-            update_heap_entry(heap, i, heap->size++, priv->next_constant_version);
-        else
-            update_heap_entry(heap, i, heap->positions[i], priv->next_constant_version);
+        update_heap_entry(heap, i, priv->next_constant_version);
     }
 
     for (i = 0; i < device->context_count; ++i)
@@ -6475,7 +6479,9 @@ static int glsl_program_key_compare(const void *key, const struct wine_rb_entry 
 
 static BOOL constant_heap_init(struct constant_heap *heap, unsigned int constant_count)
 {
-    SIZE_T size = (constant_count + 1) * sizeof(*heap->entries) + constant_count * sizeof(*heap->positions);
+    SIZE_T size = (constant_count + 1) * sizeof(*heap->entries)
+            + constant_count * sizeof(*heap->contained)
+            + constant_count * sizeof(*heap->positions);
     void *mem = HeapAlloc(GetProcessHeap(), 0, size);
 
     if (!mem)
@@ -6486,7 +6492,9 @@ static BOOL constant_heap_init(struct constant_heap *heap, unsigned int constant
 
     heap->entries = mem;
     heap->entries[1].version = 0;
-    heap->positions = (unsigned int *)(heap->entries + constant_count + 1);
+    heap->contained = (BOOL *)(heap->entries + constant_count + 1);
+    memset(heap->contained, 0, constant_count * sizeof(*heap->contained));
+    heap->positions = (unsigned int *)(heap->contained + constant_count);
     heap->size = 1;
 
     return TRUE;
