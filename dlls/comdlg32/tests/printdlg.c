@@ -128,7 +128,9 @@ static UINT_PTR CALLBACK print_hook_proc(HWND hdlg, UINT msg, WPARAM wp, LPARAM 
 {
     if (msg == WM_INITDIALOG)
     {
-        SetDlgItemInt(hdlg, edt3, 1234, FALSE);
+        /* some driver popup a dialog and hung the test or silently limit the number of copies,
+           when trying to set more than 999 copies */
+        SetDlgItemInt(hdlg, edt3, 123, FALSE);
         PostMessage(hdlg, WM_COMMAND, IDOK, FALSE);
     }
     return 0;
@@ -252,7 +254,7 @@ static void test_PrintDlgA(void)
         /* Version of Microsoft XPS Document Writer driver shipped before Win7
          * reports that it can print multiple copies, but returns 1.
          */
-        ok(pDlg->nCopies == 1234 || broken(pDlg->nCopies == 1), "expected nCopies 1234, got %d\n", pDlg->nCopies);
+        ok(pDlg->nCopies == 123 || broken(pDlg->nCopies == 1), "expected nCopies 123, got %d\n", pDlg->nCopies);
         ok(pDlg->hDevMode != 0, "hDevMode should not be 0\n");
         dm = GlobalLock(pDlg->hDevMode);
         ok(S1(U1(*dm)).dmCopies == 1, "expected dm->dmCopies 1, got %d\n", S1(U1(*dm)).dmCopies);
@@ -269,7 +271,7 @@ static void test_PrintDlgA(void)
         ok(pDlg->nCopies == 1, "expected nCopies 1, got %d\n", pDlg->nCopies);
         ok(pDlg->hDevMode != 0, "hDevMode should not be 0\n");
         dm = GlobalLock(pDlg->hDevMode);
-        ok(S1(U1(*dm)).dmCopies == 1234, "expected dm->dmCopies 1234, got %d\n", S1(U1(*dm)).dmCopies);
+        ok(S1(U1(*dm)).dmCopies == 123, "expected dm->dmCopies 123, got %d\n", S1(U1(*dm)).dmCopies);
         GlobalUnlock(pDlg->hDevMode);
         GlobalFree(pDlg->hDevMode);
         GlobalFree(pDlg->hDevNames);
