@@ -471,9 +471,12 @@ static void init_onchange_sink(IRowPosition *rowpos)
 
 static void test_rowpos_clearrowposition(void)
 {
+    DBPOSITIONFLAGS flags;
     IRowPosition *rowpos;
+    HCHAPTER chapter;
     IUnknown *unk;
     HRESULT hr;
+    HROW row;
 
     hr = CoCreateInstance(&CLSID_OLEDB_ROWPOSITIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IRowPosition, (void**)&rowpos);
     ok(hr == S_OK, "got %08x\n", hr);
@@ -484,9 +487,27 @@ static void test_rowpos_clearrowposition(void)
     hr = IRowPosition_GetRowset(rowpos, &IID_IStream, &unk);
     ok(hr == E_UNEXPECTED, "got %08x\n", hr);
 
+    chapter = 1;
+    row = 1;
+    flags = DBPOSITION_OK;
+    hr = IRowPosition_GetRowPosition(rowpos, &chapter, &row, &flags);
+    ok(hr == E_UNEXPECTED, "got %08x\n", hr);
+    ok(chapter == DB_NULL_HCHAPTER, "got %ld\n", chapter);
+    ok(row == DB_NULL_HROW, "got %ld\n", row);
+    ok(flags == DBPOSITION_NOROW, "got %d\n", flags);
+
     init_test_rset();
     hr = IRowPosition_Initialize(rowpos, (IUnknown*)&test_rset.IRowset_iface);
     ok(hr == S_OK, "got %08x\n", hr);
+
+    chapter = 1;
+    row = 1;
+    flags = DBPOSITION_OK;
+    hr = IRowPosition_GetRowPosition(rowpos, &chapter, &row, &flags);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(chapter == DB_NULL_HCHAPTER, "got %ld\n", chapter);
+    ok(row == DB_NULL_HROW, "got %ld\n", row);
+    ok(flags == DBPOSITION_NOROW, "got %d\n", flags);
 
     hr = IRowPosition_GetRowset(rowpos, &IID_IRowset, &unk);
     ok(hr == S_OK, "got %08x\n", hr);
@@ -494,6 +515,15 @@ static void test_rowpos_clearrowposition(void)
     init_onchange_sink(rowpos);
     hr = IRowPosition_ClearRowPosition(rowpos);
     ok(hr == S_OK, "got %08x\n", hr);
+
+    chapter = 1;
+    row = 1;
+    flags = DBPOSITION_OK;
+    hr = IRowPosition_GetRowPosition(rowpos, &chapter, &row, &flags);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(chapter == DB_NULL_HCHAPTER, "got %ld\n", chapter);
+    ok(row == DB_NULL_HROW, "got %ld\n", row);
+    ok(flags == DBPOSITION_NOROW, "got %d\n", flags);
 
     IRowPosition_Release(rowpos);
 }
