@@ -1512,7 +1512,7 @@ static void shader_none_update_float_pixel_constants(struct wined3d_device *devi
 static void shader_none_load_constants(void *shader_priv, struct wined3d_context *context,
         const struct wined3d_state *state) {}
 static void shader_none_destroy(struct wined3d_shader *shader) {}
-static void shader_none_context_destroyed(void *shader_priv, const struct wined3d_context *context) {}
+static void shader_none_free_context_data(struct wined3d_context *context) {}
 
 /* Context activation is done by the caller. */
 static void shader_none_select(void *shader_priv, struct wined3d_context *context,
@@ -1526,13 +1526,17 @@ static void shader_none_select(void *shader_priv, struct wined3d_context *contex
 }
 
 /* Context activation is done by the caller. */
-static void shader_none_disable(void *shader_priv, const struct wined3d_context *context)
+static void shader_none_disable(void *shader_priv, struct wined3d_context *context)
 {
     struct shader_none_priv *priv = shader_priv;
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
     priv->vertex_pipe->vp_enable(gl_info, FALSE);
     priv->fragment_pipe->enable_extension(gl_info, FALSE);
+
+    context->shader_update_mask = (1 << WINED3D_SHADER_TYPE_PIXEL)
+            | (1 << WINED3D_SHADER_TYPE_VERTEX)
+            | (1 << WINED3D_SHADER_TYPE_GEOMETRY);
 }
 
 static HRESULT shader_none_alloc(struct wined3d_device *device, const struct wined3d_vertex_pipe_ops *vertex_pipe,
@@ -1581,6 +1585,11 @@ static void shader_none_free(struct wined3d_device *device)
     HeapFree(GetProcessHeap(), 0, priv);
 }
 
+static BOOL shader_none_allocate_context_data(struct wined3d_context *context)
+{
+    return TRUE;
+}
+
 static void shader_none_get_caps(const struct wined3d_gl_info *gl_info, struct shader_caps *caps)
 {
     /* Set the shader caps to 0 for the none shader backend */
@@ -1620,7 +1629,8 @@ const struct wined3d_shader_backend_ops none_shader_backend =
     shader_none_destroy,
     shader_none_alloc,
     shader_none_free,
-    shader_none_context_destroyed,
+    shader_none_allocate_context_data,
+    shader_none_free_context_data,
     shader_none_get_caps,
     shader_none_color_fixup_supported,
     shader_none_has_ffp_proj_control,

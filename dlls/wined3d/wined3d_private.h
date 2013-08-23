@@ -810,7 +810,7 @@ struct wined3d_shader_backend_ops
     void (*shader_handle_instruction)(const struct wined3d_shader_instruction *);
     void (*shader_select)(void *shader_priv, struct wined3d_context *context,
             const struct wined3d_state *state);
-    void (*shader_disable)(void *shader_priv, const struct wined3d_context *context);
+    void (*shader_disable)(void *shader_priv, struct wined3d_context *context);
     void (*shader_select_depth_blt)(void *shader_priv, const struct wined3d_gl_info *gl_info,
             enum tex_types tex_type, const SIZE *ds_mask_size);
     void (*shader_deselect_depth_blt)(void *shader_priv, const struct wined3d_gl_info *gl_info);
@@ -822,7 +822,8 @@ struct wined3d_shader_backend_ops
     HRESULT (*shader_alloc_private)(struct wined3d_device *device, const struct wined3d_vertex_pipe_ops *vertex_pipe,
             const struct fragment_pipeline *fragment_pipe);
     void (*shader_free_private)(struct wined3d_device *device);
-    void (*shader_context_destroyed)(void *shader_priv, const struct wined3d_context *context);
+    BOOL (*shader_allocate_context_data)(struct wined3d_context *context);
+    void (*shader_free_context_data)(struct wined3d_context *context);
     void (*shader_get_caps)(const struct wined3d_gl_info *gl_info, struct shader_caps *caps);
     BOOL (*shader_color_fixup_supported)(struct color_fixup_desc fixup);
     BOOL (*shader_has_ffp_proj_control)(void *shader_priv);
@@ -1114,6 +1115,8 @@ struct wined3d_context
     HDC                     hdc;
     int pixel_format;
     GLint                   aux_buffers;
+
+    void *shader_backend_data;
 
     /* FBOs */
     UINT                    fbo_entry_count;

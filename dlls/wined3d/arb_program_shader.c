@@ -4779,7 +4779,7 @@ static void shader_arb_select(void *shader_priv, struct wined3d_context *context
 
 
 /* Context activation is done by the caller. */
-static void shader_arb_disable(void *shader_priv, const struct wined3d_context *context)
+static void shader_arb_disable(void *shader_priv, struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct shader_arb_priv *priv = shader_priv;
@@ -4806,6 +4806,10 @@ static void shader_arb_disable(void *shader_priv, const struct wined3d_context *
         checkGLcall("glClampColorARB");
         priv->last_vs_color_unclamp = FALSE;
     }
+
+    context->shader_update_mask = (1 << WINED3D_SHADER_TYPE_PIXEL)
+            | (1 << WINED3D_SHADER_TYPE_VERTEX)
+            | (1 << WINED3D_SHADER_TYPE_GEOMETRY);
 }
 
 /* Context activation is done by the caller. */
@@ -5032,9 +5036,14 @@ static void shader_arb_free(struct wined3d_device *device)
     HeapFree(GetProcessHeap(), 0, device->shader_priv);
 }
 
-static void shader_arb_context_destroyed(void *shader_priv, const struct wined3d_context *context)
+static BOOL shader_arb_allocate_context_data(struct wined3d_context *context)
 {
-    struct shader_arb_priv *priv = shader_priv;
+    return TRUE;
+}
+
+static void shader_arb_free_context_data(struct wined3d_context *context)
+{
+    struct shader_arb_priv *priv = context->swapchain->device->shader_priv;
 
     if (priv->last_context == context)
         priv->last_context = NULL;
@@ -5712,7 +5721,8 @@ const struct wined3d_shader_backend_ops arb_program_shader_backend =
     shader_arb_destroy,
     shader_arb_alloc,
     shader_arb_free,
-    shader_arb_context_destroyed,
+    shader_arb_allocate_context_data,
+    shader_arb_free_context_data,
     shader_arb_get_caps,
     shader_arb_color_fixup_supported,
     shader_arb_has_ffp_proj_control,

@@ -1345,6 +1345,12 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     list_init(&ret->fbo_list);
     list_init(&ret->fbo_destroy_list);
 
+    if (!device->shader_backend->shader_allocate_context_data(ret))
+    {
+        ERR("Failed to allocate shader backend context data.\n");
+        goto out;
+    }
+
     if (!(hdc = GetDC(swapchain->win_handle)))
     {
         WARN("Failed to retireve device context, trying swapchain backup.\n");
@@ -1639,6 +1645,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     return ret;
 
 out:
+    device->shader_backend->shader_free_context_data(ret);
     HeapFree(GetProcessHeap(), 0, ret->free_event_queries);
     HeapFree(GetProcessHeap(), 0, ret->free_occlusion_queries);
     HeapFree(GetProcessHeap(), 0, ret->draw_buffers);
@@ -1671,6 +1678,7 @@ void context_destroy(struct wined3d_device *device, struct wined3d_context *cont
         destroy = FALSE;
     }
 
+    device->shader_backend->shader_free_context_data(context);
     HeapFree(GetProcessHeap(), 0, context->draw_buffers);
     HeapFree(GetProcessHeap(), 0, context->blit_targets);
     device_context_remove(device, context);
@@ -1903,9 +1911,6 @@ static void SetupForBlit(const struct wined3d_device *device, struct wined3d_con
 
     /* Disable shaders */
     device->shader_backend->shader_disable(device->shader_priv, context);
-    context->shader_update_mask = (1 << WINED3D_SHADER_TYPE_PIXEL)
-            | (1 << WINED3D_SHADER_TYPE_VERTEX)
-            | (1 << WINED3D_SHADER_TYPE_GEOMETRY);
 
     context->blit_w = rt_size.cx;
     context->blit_h = rt_size.cy;
