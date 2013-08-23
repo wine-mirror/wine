@@ -241,7 +241,7 @@ void async_set_timeout( struct async *async, timeout_t timeout, unsigned int sta
 }
 
 static void add_async_completion( struct async_queue *queue, apc_param_t cvalue, unsigned int status,
-                                  unsigned int information )
+                                  apc_param_t information )
 {
     if (status == STATUS_MORE_PROCESSING_REQUIRED)
         return; /* The async callback has successfully finished but no completion should be reported */
@@ -262,7 +262,7 @@ static void add_async_completion( struct async_queue *queue, apc_param_t cvalue,
 }
 
 /* store the result of the client-side async callback */
-void async_set_result( struct object *obj, unsigned int status, unsigned int total, client_ptr_t apc )
+void async_set_result( struct object *obj, unsigned int status, apc_param_t total, client_ptr_t apc )
 {
     struct async *async = (struct async *)obj;
 
