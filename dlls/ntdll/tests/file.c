@@ -2001,7 +2001,8 @@ static void test_read_write(void)
 
     iob.Status = -1;
     iob.Information = -1;
-    status = pNtWriteFile(hfile, 0, NULL, NULL, &iob, "DCBA", 4, NULL, NULL);
+    offset.QuadPart = (LONGLONG)-2 /* FILE_USE_FILE_POINTER_POSITION */;
+    status = pNtWriteFile(hfile, 0, NULL, NULL, &iob, "DCBA", 4, &offset, NULL);
     ok(status == STATUS_SUCCESS, "NtWriteFile error %#x\n", status);
     ok(iob.Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", iob.Status);
     ok(iob.Information == 4, "expected 4, got %lu\n", iob.Information);
@@ -2035,7 +2036,7 @@ todo_wine
 
     iob.Status = -1;
     iob.Information = -1;
-    offset.QuadPart = sizeof(contents);
+    offset.QuadPart = (LONGLONG)-2 /* FILE_USE_FILE_POINTER_POSITION */;
     status = pNtReadFile(hfile, 0, NULL, NULL, &iob, buf, sizeof(buf), &offset, NULL);
     ok(status == STATUS_END_OF_FILE, "expected STATUS_END_OF_FILE, got %#x\n", status);
 todo_wine
@@ -2139,6 +2140,17 @@ todo_wine
 
     iob.Status = -1;
     iob.Information = -1;
+    offset.QuadPart = (LONGLONG)-2 /* FILE_USE_FILE_POINTER_POSITION */;
+    status = pNtWriteFile(hfile, 0, NULL, NULL, &iob, contents, sizeof(contents), &offset, NULL);
+todo_wine
+    ok(status == STATUS_INVALID_PARAMETER, "expected STATUS_INVALID_PARAMETER, got %#x\n", status);
+todo_wine
+    ok(iob.Status == -1, "expected -1, got %#x\n", iob.Status);
+todo_wine
+    ok(iob.Information == -1, "expected -1, got %ld\n", iob.Information);
+
+    iob.Status = -1;
+    iob.Information = -1;
     offset.QuadPart = 0;
     status = pNtWriteFile(hfile, 0, NULL, NULL, &iob, contents, sizeof(contents), &offset, NULL);
 todo_wine
@@ -2175,8 +2187,15 @@ todo_wine
     ok(iob.Status == -1, "expected -1, got %#x\n", iob.Status);
     ok(iob.Information == -1, "expected -1, got %ld\n", iob.Information);
 
+    iob.Status = -1;
+    iob.Information = -1;
     offset.QuadPart = (LONGLONG)-2 /* FILE_USE_FILE_POINTER_POSITION */;
-    offset.QuadPart = sizeof(contents); /* magic -2 doen't seem to work under win7 */
+    status = pNtReadFile(hfile, 0, NULL, NULL, &iob, buf, sizeof(buf), &offset, NULL);
+    ok(status == STATUS_INVALID_PARAMETER, "expected STATUS_INVALID_PARAMETER, got %#x\n", status);
+    ok(iob.Status == -1, "expected -1, got %#x\n", iob.Status);
+    ok(iob.Information == -1, "expected -1, got %ld\n", iob.Information);
+
+    offset.QuadPart = sizeof(contents);
     S(U(ovl)).Offset = offset.u.LowPart;
     S(U(ovl)).OffsetHigh = offset.u.HighPart;
     ovl.Internal = -1;
