@@ -1234,7 +1234,7 @@ static void test_QueryPathOfRegTypeLib(DWORD arch)
 
     for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
     {
-        ret = QueryPathOfRegTypeLib(&uid, td[i].maj, td[i].min, 0, &path);
+        ret = QueryPathOfRegTypeLib(&uid, td[i].maj, td[i].min, LOCALE_NEUTRAL, &path);
         ok(ret == td[i].ret, "QueryPathOfRegTypeLib(%u.%u) returned %08x\n", td[i].maj, td[i].min, ret);
         if (ret == S_OK)
         {
@@ -4470,6 +4470,7 @@ static void test_LoadRegTypeLib(void)
     HANDLE handle;
     ITypeLib *tl;
     HRESULT hr;
+    BSTR path;
     BOOL ret;
 
     if (!pActivateActCtx)
@@ -4495,8 +4496,34 @@ static void test_LoadRegTypeLib(void)
     hr = LoadRegTypeLib(&LIBID_register_test, 1, 0, LOCALE_NEUTRAL, &tl);
     ok(hr == TYPE_E_LIBNOTREGISTERED, "got 0x%08x\n", hr);
 
+    hr = QueryPathOfRegTypeLib(&LIBID_TestTypelib, 2, 0, LOCALE_NEUTRAL, &path);
+    ok(hr == TYPE_E_LIBNOTREGISTERED, "got 0x%08x\n", hr);
+
     ret = pActivateActCtx(handle, &cookie);
     ok(ret, "ActivateActCtx failed: %u\n", GetLastError());
+
+    path = NULL;
+    hr = QueryPathOfRegTypeLib(&LIBID_TestTypelib, 2, 0, LOCALE_NEUTRAL, &path);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    SysFreeString(path);
+
+    path = NULL;
+    hr = QueryPathOfRegTypeLib(&LIBID_TestTypelib, 2, 0, lcid_en, &path);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    SysFreeString(path);
+
+    path = NULL;
+    hr = QueryPathOfRegTypeLib(&LIBID_TestTypelib, 2, 0, lcid_ru, &path);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    SysFreeString(path);
+
+    path = NULL;
+    hr = QueryPathOfRegTypeLib(&LIBID_TestTypelib, 1, 0, LOCALE_NEUTRAL, &path);
+    ok(hr == TYPE_E_LIBNOTREGISTERED || broken(hr == S_OK) /* winxp */, "got 0x%08x\n", hr);
+    SysFreeString(path);
 
     /* manifest version is 2.0, actual is 1.0 */
     hr = LoadRegTypeLib(&LIBID_register_test, 1, 0, LOCALE_NEUTRAL, &tl);
