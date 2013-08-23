@@ -103,7 +103,7 @@ static const struct object_ops keyed_event_ops =
 
 #define KEYEDEVENT_WAIT       0x0001
 #define KEYEDEVENT_WAKE       0x0002
-#define KEYEDEVENT_ALL_ACCESS (STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE | 0x0003)
+#define KEYEDEVENT_ALL_ACCESS (STANDARD_RIGHTS_REQUIRED | 0x0003)
 
 
 struct event *create_event( struct directory *root, const struct unicode_str *name,
@@ -252,10 +252,10 @@ static int keyed_event_signaled( struct object *obj, struct thread *thread )
 
 static unsigned int keyed_event_map_access( struct object *obj, unsigned int access )
 {
-    if (access & GENERIC_READ)    access |= STANDARD_RIGHTS_READ | SYNCHRONIZE | KEYEDEVENT_WAIT;
+    if (access & GENERIC_READ)    access |= STANDARD_RIGHTS_READ | KEYEDEVENT_WAIT;
     if (access & GENERIC_WRITE)   access |= STANDARD_RIGHTS_WRITE | KEYEDEVENT_WAKE;
     if (access & GENERIC_EXECUTE) access |= STANDARD_RIGHTS_EXECUTE;
-    if (access & GENERIC_ALL)     access |= STANDARD_RIGHTS_ALL | KEYEDEVENT_ALL_ACCESS;
+    if (access & GENERIC_ALL)     access |= KEYEDEVENT_ALL_ACCESS;
     return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
