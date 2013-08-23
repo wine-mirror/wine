@@ -81,7 +81,7 @@ static NTSTATUS (WINAPI *pNtQueryVolumeInformationFile)(HANDLE,PIO_STATUS_BLOCK,
 
 static inline BOOL is_signaled( HANDLE obj )
 {
-    return WaitForSingleObject( obj, 0 ) == 0;
+    return WaitForSingleObject( obj, 0 ) == WAIT_OBJECT_0;
 }
 
 #define PIPENAME "\\\\.\\pipe\\ntdll_tests_file.c"
