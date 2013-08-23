@@ -781,6 +781,8 @@ static void read_file_test(void)
     iosb.Information = 0xdeadbeef;
     offset.QuadPart = strlen(text) + 2;
     status = pNtReadFile( handle, event, apc, &apc_count, &iosb, buffer, 2, &offset, NULL );
+todo_wine
+    ok(status == STATUS_PENDING || broken(status == STATUS_END_OF_FILE) /* before Vista */, "expected STATUS_PENDING, got %#x\n", status);
     if (status == STATUS_PENDING)  /* vista */
     {
         WaitForSingleObject( event, 1000 );
@@ -790,16 +792,6 @@ static void read_file_test(void)
         ok( !apc_count, "apc was called\n" );
         SleepEx( 1, TRUE ); /* alertable sleep */
         ok( apc_count == 1, "apc was not called\n" );
-    }
-    else
-    {
-        ok( status == STATUS_END_OF_FILE, "wrong status %x\n", status );
-        ok( U(iosb).Status == 0xdeadbabe, "wrong status %x\n", U(iosb).Status );
-        ok( iosb.Information == 0xdeadbeef, "wrong info %lu\n", iosb.Information );
-        ok( !is_signaled( event ), "event is signaled\n" );
-        ok( !apc_count, "apc was called\n" );
-        SleepEx( 1, TRUE ); /* alertable sleep */
-        ok( !apc_count, "apc was called\n" );
     }
     CloseHandle( handle );
 
