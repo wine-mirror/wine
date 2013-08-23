@@ -1319,9 +1319,7 @@ static void test_typelib_section(void)
     ret = pFindActCtxSectionGuid(0, NULL,
                                  ACTIVATION_CONTEXT_SECTION_COM_TYPE_LIBRARY_REDIRECTION,
                                  &IID_TlibTest, &data);
-todo_wine
     ok(ret, "got %d\n", ret);
-    if (!ret) return;
 
     ret = pFindActCtxSectionGuid(0, NULL,
                                  ACTIVATION_CONTEXT_SECTION_COM_TYPE_LIBRARY_REDIRECTION,
