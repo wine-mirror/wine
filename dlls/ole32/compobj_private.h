@@ -174,6 +174,7 @@ struct oletls
 
 /* Global Interface Table Functions */
 extern IGlobalInterfaceTable *get_std_git(void) DECLSPEC_HIDDEN;
+extern void release_std_git(void) DECLSPEC_HIDDEN;
 extern HRESULT StdGlobalInterfaceTable_GetFactory(LPVOID *ppv) DECLSPEC_HIDDEN;
 
 HRESULT COM_OpenKeyForCLSID(REFCLSID clsid, LPCWSTR keyname, REGSAM access, HKEY *key) DECLSPEC_HIDDEN;

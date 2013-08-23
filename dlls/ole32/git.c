@@ -66,7 +66,6 @@ typedef struct StdGlobalInterfaceTableImpl
 {
   IGlobalInterfaceTable IGlobalInterfaceTable_iface;
 
-  ULONG ref;
   struct list list;
   ULONG nextCookie;
   
@@ -87,16 +86,6 @@ static CRITICAL_SECTION git_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 static inline StdGlobalInterfaceTableImpl *impl_from_IGlobalInterfaceTable(IGlobalInterfaceTable *iface)
 {
   return CONTAINING_RECORD(iface, StdGlobalInterfaceTableImpl, IGlobalInterfaceTable_iface);
-}
-
-/** This destroys it again. It should revoke all the held interfaces first **/
-static void StdGlobalInterfaceTable_Destroy(void* This)
-{
-  TRACE("(%p)\n", This);
-  FIXME("Revoke held interfaces here\n");
-  
-  HeapFree(GetProcessHeap(), 0, This);
-  std_git = NULL;
 }
 
 /***
@@ -147,25 +136,13 @@ StdGlobalInterfaceTable_QueryInterface(IGlobalInterfaceTable* iface,
 static ULONG WINAPI
 StdGlobalInterfaceTable_AddRef(IGlobalInterfaceTable* iface)
 {
-  StdGlobalInterfaceTableImpl* const This = impl_from_IGlobalInterfaceTable(iface);
-
-  /* InterlockedIncrement(&This->ref); */
-  return This->ref;
+  return 1;
 }
 
 static ULONG WINAPI
 StdGlobalInterfaceTable_Release(IGlobalInterfaceTable* iface)
 {
-  StdGlobalInterfaceTableImpl* const This = impl_from_IGlobalInterfaceTable(iface);
-
-  /* InterlockedDecrement(&This->ref); */
-  if (This->ref == 0) {
-    /* Hey ho, it's time to go, so long again 'till next weeks show! */
-    StdGlobalInterfaceTable_Destroy(This);
-    return 0;
-  }
-
-  return This->ref;
+  return 1;
 }
 
 /***
@@ -387,17 +364,36 @@ IGlobalInterfaceTable* get_std_git(void)
     if (!newGIT) return NULL;
 
     newGIT->IGlobalInterfaceTable_iface.lpVtbl = &StdGlobalInterfaceTableImpl_Vtbl;
-    newGIT->ref = 1;
     list_init(&newGIT->list);
     newGIT->nextCookie = 0xf100; /* that's where windows starts, so that's where we start */
 
     if (InterlockedCompareExchangePointer((void**)&std_git, &newGIT->IGlobalInterfaceTable_iface, NULL))
     {
-      StdGlobalInterfaceTable_Destroy(newGIT);
+      HeapFree(GetProcessHeap(), 0, newGIT);
     }
     else
       TRACE("Created the GIT at %p\n", newGIT);
   }
 
   return std_git;
+}
+
+void release_std_git(void)
+{
+  StdGlobalInterfaceTableImpl *git;
+  StdGITEntry *entry, *entry2;
+
+  if (!std_git) return;
+
+  git = impl_from_IGlobalInterfaceTable(std_git);
+  LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &git->list, StdGITEntry, entry)
+  {
+      list_remove(&entry->entry);
+
+      CoReleaseMarshalData(entry->stream);
+      IStream_Release(entry->stream);
+      HeapFree(GetProcessHeap(), 0, entry);
+  }
+
+  HeapFree(GetProcessHeap(), 0, git);
 }

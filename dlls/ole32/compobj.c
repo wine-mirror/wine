@@ -4590,6 +4590,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID reserved)
 
     case DLL_PROCESS_DETACH:
         if (reserved) break;
+        release_std_git();
         COMPOBJ_UninitProcess();
         RPC_UnregisterAllChannelHooks();
         COMPOBJ_DllList_Free();

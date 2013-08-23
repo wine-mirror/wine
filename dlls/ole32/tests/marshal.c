@@ -2806,6 +2806,7 @@ static void test_globalinterfacetable(void)
 	DWORD ret;
         IUnknown *object;
         IClassFactory *cf;
+        ULONG ref;
 
         trace("test_globalinterfacetable\n");
 	cLocks = 0;
@@ -2820,6 +2821,16 @@ static void test_globalinterfacetable(void)
 
 	hr = CoCreateInstance(&CLSID_StdGlobalInterfaceTable, NULL, CLSCTX_INPROC_SERVER, &IID_IGlobalInterfaceTable, (void **)&git);
 	ok_ole_success(hr, CoCreateInstance);
+
+	ref = IGlobalInterfaceTable_AddRef(git);
+	ok(ref == 1, "ref=%d\n", ref);
+	ref = IGlobalInterfaceTable_AddRef(git);
+	ok(ref == 1, "ref=%d\n", ref);
+
+	ref = IGlobalInterfaceTable_Release(git);
+	ok(ref == 1, "ref=%d\n", ref);
+	ref = IGlobalInterfaceTable_Release(git);
+	ok(ref == 1, "ref=%d\n", ref);
 
 	hr = IGlobalInterfaceTable_RegisterInterfaceInGlobal(git, (IUnknown *)&Test_ClassFactory, &IID_IClassFactory, &cookie);
 	ok_ole_success(hr, IGlobalInterfaceTable_RegisterInterfaceInGlobal);
