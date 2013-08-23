@@ -1075,7 +1075,8 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock)
     {
         GLenum gl_primitive_type, prev;
 
-        device->updateStateBlock->changed.primitive_type = TRUE;
+        if (device->isRecordingState)
+            device->updateStateBlock->changed.primitive_type = TRUE;
         gl_primitive_type = stateblock->state.gl_primitive_type;
         prev = device->updateStateBlock->state.gl_primitive_type;
         device->updateStateBlock->state.gl_primitive_type = gl_primitive_type;
@@ -1154,7 +1155,6 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
 {
     struct wined3d_device *device = stateblock->device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
     struct wined3d_state *state = &stateblock->state;
     union
     {
@@ -1177,9 +1177,6 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
     }}};
 
     TRACE("stateblock %p.\n", stateblock);
-
-    memset(stateblock->changed.pixelShaderConstantsF, 0, d3d_info->limits.ps_uniform_count * sizeof(BOOL));
-    memset(stateblock->changed.vertexShaderConstantsF, 0, d3d_info->limits.vs_uniform_count * sizeof(BOOL));
 
     /* Set some of the defaults for lights, transforms etc */
     state->transforms[WINED3D_TS_PROJECTION] = identity;
