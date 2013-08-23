@@ -67,6 +67,22 @@ static inline rowpos_cp *impl_from_IConnectionPoint(IConnectionPoint *iface)
     return CONTAINING_RECORD(iface, rowpos_cp, IConnectionPoint_iface);
 }
 
+static HRESULT rowpos_fireevent(rowpos *rp, DBREASON reason, DBEVENTPHASE phase)
+{
+    HRESULT hr = S_OK;
+    DWORD i;
+
+    for (i = 0; i < rp->cp.sinks_size; i++)
+        if (rp->cp.sinks[i])
+        {
+            hr = IRowPositionChange_OnRowPositionChange(rp->cp.sinks[i], reason, phase, phase == DBEVENTPHASE_FAILEDTODO);
+            if (phase == DBEVENTPHASE_FAILEDTODO) return DB_E_CANCELED;
+            if (hr != S_OK) return hr;
+        }
+
+    return hr;
+}
+
 static HRESULT WINAPI rowpos_QueryInterface(IRowPosition* iface, REFIID riid, void **obj)
 {
     rowpos *This = impl_from_IRowPosition(iface);
@@ -122,8 +138,23 @@ static ULONG WINAPI rowpos_Release(IRowPosition* iface)
 static HRESULT WINAPI rowpos_ClearRowPosition(IRowPosition* iface)
 {
     rowpos *This = impl_from_IRowPosition(iface);
-    FIXME("(%p): stub\n", This);
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("(%p)\n", This);
+
+    if (!This->rowset) return E_UNEXPECTED;
+
+    hr = rowpos_fireevent(This, DBREASON_ROWPOSITION_CLEARED, DBEVENTPHASE_OKTODO);
+    if (hr != S_OK)
+        return rowpos_fireevent(This, DBREASON_ROWPOSITION_CLEARED, DBEVENTPHASE_FAILEDTODO);
+
+    hr = rowpos_fireevent(This, DBREASON_ROWPOSITION_CLEARED, DBEVENTPHASE_ABOUTTODO);
+    if (hr != S_OK)
+        return rowpos_fireevent(This, DBREASON_ROWPOSITION_CLEARED, DBEVENTPHASE_FAILEDTODO);
+
+    /* FIXME: actually clear stored data */
+
+    return S_OK;
 }
 
 static HRESULT WINAPI rowpos_GetRowPosition(IRowPosition *iface, HCHAPTER *chapter,
@@ -276,6 +307,8 @@ static HRESULT WINAPI rowpos_cp_Advise(IConnectionPoint *iface, IUnknown *unksin
     DWORD i;
 
     TRACE("(%p)->(%p %p)\n", This, unksink, cookie);
+
+    if (!cookie) return E_POINTER;
 
     hr = IUnknown_QueryInterface(unksink, &IID_IRowPositionChange, (void**)&sink);
     if (FAILED(hr))

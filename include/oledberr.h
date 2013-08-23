@@ -63,6 +63,7 @@
 #define DB_E_BADACCESSORTYPE                0x80040e4b
 #define DB_E_WRITEONLYACCESSOR              0x80040e4c
 #define DB_SEC_E_AUTH_FAILED                0x80040e4d
+#define DB_E_CANCELED                       0x80040e4e
 
 #define DB_E_ALREADYINITIALIZED             0x80040e52
 #define DB_E_DATAOVERFLOW                   0x80040e57

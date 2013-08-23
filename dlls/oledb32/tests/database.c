@@ -414,6 +414,83 @@ static void test_rowpos_initialize(void)
     IRowPosition_Release(rowpos);
 }
 
+static HRESULT WINAPI onchange_QI(IRowPositionChange *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IRowPositionChange))
+    {
+        *obj = iface;
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI onchange_AddRef(IRowPositionChange *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI onchange_Release(IRowPositionChange *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI onchange_OnRowPositionChange(IRowPositionChange *iface, DBREASON reason,
+    DBEVENTPHASE phase, BOOL cant_deny)
+{
+    trace("%d %d %d\n", reason, phase, cant_deny);
+    return S_OK;
+}
+
+static const IRowPositionChangeVtbl onchange_vtbl = {
+    onchange_QI,
+    onchange_AddRef,
+    onchange_Release,
+    onchange_OnRowPositionChange
+};
+
+static IRowPositionChange onchangesink = { &onchange_vtbl };
+
+static void init_onchange_sink(IRowPosition *rowpos)
+{
+    IConnectionPointContainer *cpc;
+    IConnectionPoint *cp;
+    DWORD cookie;
+    HRESULT hr;
+
+    hr = IRowPosition_QueryInterface(rowpos, &IID_IConnectionPointContainer, (void**)&cpc);
+    ok(hr == S_OK, "got %08x\n", hr);
+    hr = IConnectionPointContainer_FindConnectionPoint(cpc, &IID_IRowPositionChange, &cp);
+    ok(hr == S_OK, "got %08x\n", hr);
+    hr = IConnectionPoint_Advise(cp, (IUnknown*)&onchangesink, &cookie);
+    ok(hr == S_OK, "got %08x\n", hr);
+    IConnectionPoint_Release(cp);
+    IConnectionPointContainer_Release(cpc);
+}
+
+static void test_rowpos_clearrowposition(void)
+{
+    IRowPosition *rowpos;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_OLEDB_ROWPOSITIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IRowPosition, (void**)&rowpos);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = IRowPosition_ClearRowPosition(rowpos);
+    ok(hr == E_UNEXPECTED, "got %08x\n", hr);
+
+    init_test_rset();
+    hr = IRowPosition_Initialize(rowpos, (IUnknown*)&test_rset.IRowset_iface);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    init_onchange_sink(rowpos);
+    hr = IRowPosition_ClearRowPosition(rowpos);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    IRowPosition_Release(rowpos);
+}
+
 START_TEST(database)
 {
     OleInitialize(NULL);
@@ -425,6 +502,7 @@ START_TEST(database)
     /* row position */
     test_rowposition();
     test_rowpos_initialize();
+    test_rowpos_clearrowposition();
 
     OleUninitialize();
 }
