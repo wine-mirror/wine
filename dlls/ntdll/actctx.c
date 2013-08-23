@@ -57,6 +57,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(actctx);
 #define RT_MANIFEST                        ((ULONG_PTR)24)
 #define CREATEPROCESS_MANIFEST_RESOURCE_ID ((ULONG_PTR)1)
 
+/* from oaidl.h */
+typedef enum tagLIBFLAGS {
+    LIBFLAG_FRESTRICTED   = 0x1,
+    LIBFLAG_FCONTROL      = 0x2,
+    LIBFLAG_FHIDDEN       = 0x4,
+    LIBFLAG_FHASDISKIMAGE = 0x8
+} LIBFLAGS;
+
 typedef struct
 {
     const WCHAR        *ptr;
@@ -179,8 +187,10 @@ struct entity
         struct
         {
             WCHAR *tlbid;
-            WCHAR *version;
             WCHAR *helpdir;
+            WORD   flags;
+            WORD   major;
+            WORD   minor;
 	} typelib;
         struct
         {
@@ -311,6 +321,11 @@ static const WCHAR xmlnsW[] = {'x','m','l','n','s',0};
 static const WCHAR versionedW[] = {'v','e','r','s','i','o','n','e','d',0};
 static const WCHAR yesW[] = {'y','e','s',0};
 static const WCHAR noW[] = {'n','o',0};
+static const WCHAR restrictedW[] = {'R','E','S','T','R','I','C','T','E','D',0};
+static const WCHAR controlW[] = {'C','O','N','T','R','O','L',0};
+static const WCHAR hiddenW[] = {'H','I','D','D','E','N',0};
+static const WCHAR hasdiskimageW[] = {'H','A','S','D','I','S','K','I','M','A','G','E',0};
+static const WCHAR flagsW[] = {'f','l','a','g','s',0};
 
 static const WCHAR xmlW[] = {'?','x','m','l',0};
 static const WCHAR manifestv1W[] = {'u','r','n',':','s','c','h','e','m','a','s','-','m','i','c','r','o','s','o','f','t','-','c','o','m',':','a','s','m','.','v','1',0};
@@ -503,7 +518,6 @@ static void free_entity_array(struct entity_array *array)
             break;
         case ACTIVATION_CONTEXT_SECTION_COM_TYPE_LIBRARY_REDIRECTION:
             RtlFreeHeap(GetProcessHeap(), 0, entity->u.typelib.tlbid);
-            RtlFreeHeap(GetProcessHeap(), 0, entity->u.typelib.version);
             RtlFreeHeap(GetProcessHeap(), 0, entity->u.typelib.helpdir);
             break;
         case ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION:
@@ -1076,6 +1090,72 @@ static BOOL parse_cominterface_proxy_stub_elem(xmlbuf_t* xmlbuf, struct dll_redi
     return parse_expect_end_elem(xmlbuf, comInterfaceProxyStubW, asmv1W);
 }
 
+static BOOL parse_typelib_flags(const xmlstr_t *value, struct entity *entity)
+{
+    WORD *flags = &entity->u.typelib.flags;
+    const WCHAR *str = value->ptr, *start;
+    int i = 0;
+
+    *flags = 0;
+
+    /* it's comma separated list of flags */
+    while (i < value->len)
+    {
+        start = str;
+        while (*str != ',' && (i++ < value->len)) str++;
+
+        if (!strncmpW(start, restrictedW, str-start))
+            *flags |= LIBFLAG_FRESTRICTED;
+        else if (!strncmpW(start, controlW, str-start))
+            *flags |= LIBFLAG_FCONTROL;
+        else if (!strncmpW(start, hiddenW, str-start))
+            *flags |= LIBFLAG_FHIDDEN;
+        else if (!strncmpW(start, hasdiskimageW, str-start))
+            *flags |= LIBFLAG_FHASDISKIMAGE;
+        else
+        {
+            WARN("unknown flags value %s\n", debugstr_xmlstr(value));
+            return FALSE;
+        }
+
+        /* skip separator */
+        str++;
+        i++;
+    }
+
+    return TRUE;
+}
+
+static BOOL parse_typelib_version(const xmlstr_t *str, struct entity *entity)
+{
+    unsigned int ver[2];
+    unsigned int pos;
+    const WCHAR *curr;
+
+    /* major.minor */
+    ver[0] = ver[1] = pos = 0;
+    for (curr = str->ptr; curr < str->ptr + str->len; curr++)
+    {
+        if (*curr >= '0' && *curr <= '9')
+        {
+            ver[pos] = ver[pos] * 10 + *curr - '0';
+            if (ver[pos] >= 0x10000) goto error;
+        }
+        else if (*curr == '.')
+        {
+            if (++pos >= 2) goto error;
+        }
+        else goto error;
+    }
+    entity->u.typelib.major = ver[0];
+    entity->u.typelib.minor = ver[1];
+    return TRUE;
+
+error:
+    FIXME("wrong typelib version value (%s)\n", debugstr_xmlstr(str));
+    return FALSE;
+}
+
 static BOOL parse_typelib_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll)
 {
     xmlstr_t    attr_name, attr_value;
@@ -1091,13 +1171,17 @@ static BOOL parse_typelib_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll)
         {
             if (!(entity->u.typelib.tlbid = xmlstrdupW(&attr_value))) return FALSE;
         }
-        if (xmlstr_cmp(&attr_name, versionW))
+        else if (xmlstr_cmp(&attr_name, versionW))
         {
-            if (!(entity->u.typelib.version = xmlstrdupW(&attr_value))) return FALSE;
+            if (!parse_typelib_version(&attr_value, entity)) return FALSE;
         }
-        if (xmlstr_cmp(&attr_name, helpdirW))
+        else if (xmlstr_cmp(&attr_name, helpdirW))
         {
             if (!(entity->u.typelib.helpdir = xmlstrdupW(&attr_value))) return FALSE;
+        }
+        else if (xmlstr_cmp(&attr_name, flagsW))
+        {
+            if (!parse_typelib_flags(&attr_value, entity)) return FALSE;
         }
         else
         {
