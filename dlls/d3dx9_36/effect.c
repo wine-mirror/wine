@@ -5601,29 +5601,25 @@ HRESULT WINAPI D3DXCreateEffectFromResourceExA(struct IDirect3DDevice9 *device, 
         DWORD flags, struct ID3DXEffectPool *pool, struct ID3DXEffect **effect, struct ID3DXBuffer **compilationerrors)
 {
     HRSRC resinfo;
+    void *buffer;
+    DWORD size;
 
-    TRACE("(%p, %s): relay\n", srcmodule, debugstr_a(srcresource));
+    TRACE("device %p, srcmodule %p, srcresource %s, defines %p, include %p, skipconstants %s, "
+            "flags %#x, pool %p, effect %p, compilationerrors %p.\n",
+            device, srcmodule, debugstr_a(srcresource), defines, include, debugstr_a(skipconstants),
+            flags, pool, effect, compilationerrors);
 
     if (!device)
         return D3DERR_INVALIDCALL;
 
-    resinfo = FindResourceA(srcmodule, srcresource, (LPCSTR) RT_RCDATA);
+    if (!(resinfo = FindResourceA(srcmodule, srcresource, (const char *)RT_RCDATA)))
+        return D3DXERR_INVALIDDATA;
 
-    if (resinfo)
-    {
-        LPVOID buffer;
-        HRESULT ret;
-        DWORD size;
+    if (FAILED(load_resource_into_memory(srcmodule, resinfo, &buffer, &size)))
+        return D3DXERR_INVALIDDATA;
 
-        ret = load_resource_into_memory(srcmodule, resinfo, &buffer, &size);
-
-        if (FAILED(ret))
-            return D3DXERR_INVALIDDATA;
-
-        return D3DXCreateEffectEx(device, buffer, size, defines, include, skipconstants, flags, pool, effect, compilationerrors);
-    }
-
-    return D3DXERR_INVALIDDATA;
+    return D3DXCreateEffectEx(device, buffer, size, defines, include,
+            skipconstants, flags, pool, effect, compilationerrors);
 }
 
 HRESULT WINAPI D3DXCreateEffectFromResourceW(struct IDirect3DDevice9 *device, HMODULE srcmodule,
