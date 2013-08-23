@@ -24,6 +24,7 @@
 #include <winnls.h>
 #include <stdio.h>
 
+#include "oaidl.h"
 #include "initguid.h"
 
 static BOOL   (WINAPI *pActivateActCtx)(HANDLE,ULONG_PTR*);
@@ -85,6 +86,9 @@ static const char manifest2[] =
 
 DEFINE_GUID(IID_CoTest, 0x12345678, 0x1234, 0x5678, 0x12, 0x34, 0x11, 0x11, 0x22, 0x22, 0x33, 0x33);
 DEFINE_GUID(IID_TlibTest, 0x99999999, 0x8888, 0x7777, 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55);
+DEFINE_GUID(IID_TlibTest2, 0x99999999, 0x8888, 0x7777, 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x55, 0x56);
+DEFINE_GUID(IID_TlibTest3, 0x99999999, 0x8888, 0x7777, 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x55, 0x57);
+DEFINE_GUID(IID_TlibTest4, 0x99999999, 0x8888, 0x7777, 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x55, 0x58);
 
 static const char manifest3[] =
 "<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">"
@@ -107,6 +111,7 @@ static const char manifest_wndcls1[] =
 "<file name=\"testlib1.dll\">"
 "<windowClass versioned=\"yes\">wndClass1</windowClass>"
 "<windowClass>wndClass2</windowClass>"
+" <typelib tlbid=\"{99999999-8888-7777-6666-555555555558}\" version=\"1.0\" helpdir=\"\" />"
 "</file>"
 "<file name=\"testlib1_2.dll\" />"
 "</assembly>";
@@ -115,8 +120,12 @@ static const char manifest_wndcls2[] =
 "<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">"
 "<assemblyIdentity version=\"4.3.2.1\"  name=\"testdep2\" type=\"win32\" processorArchitecture=\"" ARCH "\" />"
 "<file name=\"testlib2.dll\">"
-"<windowClass versioned=\"no\">wndClass3</windowClass>"
-"<windowClass>wndClass4</windowClass>"
+" <windowClass versioned=\"no\">wndClass3</windowClass>"
+" <windowClass>wndClass4</windowClass>"
+" <typelib tlbid=\"{99999999-8888-7777-6666-555555555555}\" version=\"1.0\" helpdir=\"help\" resourceid=\"409\""
+"          flags=\"HIDDEN,CONTROL,RESTRICTED\" />"
+" <typelib tlbid=\"{99999999-8888-7777-6666-555555555556}\" version=\"1.0\" helpdir=\"help1\" resourceid=\"409\" />"
+" <typelib tlbid=\"{99999999-8888-7777-6666-555555555557}\" version=\"1.0\" helpdir=\"\" />"
 "</file>"
 "<file name=\"testlib2_2.dll\" />"
 "</assembly>";
@@ -776,6 +785,26 @@ struct string_index
     ULONG rosterindex;
 };
 
+struct guidsection_header
+{
+    DWORD magic;
+    ULONG size;
+    DWORD unk[3];
+    ULONG count;
+    ULONG index_offset;
+    DWORD unk2;
+    ULONG names_offset;
+    ULONG names_len;
+};
+
+struct guid_index
+{
+    GUID  guid;
+    ULONG data_offset;
+    ULONG data_len;
+    ULONG rosterindex;
+};
+
 struct wndclass_redirect_data
 {
     ULONG size;
@@ -791,6 +820,20 @@ struct dllredirect_data
     ULONG size;
     ULONG unk;
     DWORD res[3];
+};
+
+struct tlibredirect_data
+{
+    ULONG  size;
+    DWORD  res;
+    ULONG  name_len;
+    ULONG  name_offset;
+    LANGID langid;
+    WORD   flags;
+    ULONG  help_len;
+    ULONG  help_offset;
+    WORD   major_version;
+    WORD   minor_version;
 };
 
 static void test_find_dll_redirection(HANDLE handle, LPCWSTR libname, ULONG exid, int line)
@@ -1244,6 +1287,71 @@ static void test_dllredirect_section(void)
     pReleaseActCtx(handle);
 }
 
+static void test_typelib_section(void)
+{
+    static const WCHAR helpW[] = {'h','e','l','p'};
+    ACTCTX_SECTION_KEYED_DATA data, data2;
+    struct guidsection_header *section;
+    struct tlibredirect_data *tlib;
+    ULONG_PTR cookie;
+    HANDLE handle;
+    BOOL ret;
+
+    /* use two dependent manifests, 4 'files' total */
+    create_manifest_file("testdep1.manifest", manifest_wndcls1, -1, NULL, NULL);
+    create_manifest_file("testdep2.manifest", manifest_wndcls2, -1, NULL, NULL);
+    create_manifest_file("main_wndcls.manifest", manifest_wndcls_main, -1, NULL, NULL);
+
+    handle = test_create("main_wndcls.manifest");
+    DeleteFileA("testdep1.manifest");
+    DeleteFileA("testdep2.manifest");
+    DeleteFileA("main_wndcls.manifest");
+
+    ret = pActivateActCtx(handle, &cookie);
+    ok(ret, "ActivateActCtx failed: %u\n", GetLastError());
+
+    memset(&data, 0, sizeof(data));
+    memset(&data2, 0, sizeof(data2));
+    data.cbSize = sizeof(data);
+    data2.cbSize = sizeof(data2);
+
+    /* get data for two typelibs from different assemblies */
+    ret = pFindActCtxSectionGuid(0, NULL,
+                                 ACTIVATION_CONTEXT_SECTION_COM_TYPE_LIBRARY_REDIRECTION,
+                                 &IID_TlibTest, &data);
+todo_wine
+    ok(ret, "got %d\n", ret);
+    if (!ret) return;
+
+    ret = pFindActCtxSectionGuid(0, NULL,
+                                 ACTIVATION_CONTEXT_SECTION_COM_TYPE_LIBRARY_REDIRECTION,
+                                 &IID_TlibTest4, &data2);
+    ok(ret, "got %d\n", ret);
+
+    section = (struct guidsection_header*)data.lpSectionBase;
+    ok(section->count == 4, "got %d\n", section->count);
+    ok(section->size == sizeof(*section), "got %d\n", section->size);
+
+    /* For both GUIDs same section is returned */
+    ok(data.lpSectionBase == data2.lpSectionBase, "got %p, %p\n", data.lpSectionBase, data2.lpSectionBase);
+    ok(data.ulSectionTotalLength == data2.ulSectionTotalLength, "got %u, %u\n", data.ulSectionTotalLength,
+        data2.ulSectionTotalLength);
+
+    /* test some actual data */
+    tlib = (struct tlibredirect_data*)data.lpData;
+    ok(tlib->size == sizeof(*tlib), "got %d\n", tlib->size);
+    ok(tlib->major_version == 1, "got %d\n", tlib->major_version);
+    ok(tlib->minor_version == 0, "got %d\n", tlib->minor_version);
+    ok(tlib->help_offset > 0, "got %d\n", tlib->help_offset);
+    ok(tlib->help_len == sizeof(helpW), "got %d\n", tlib->help_len);
+    ok(tlib->flags == (LIBFLAG_FHIDDEN|LIBFLAG_FCONTROL|LIBFLAG_FRESTRICTED), "got %x\n", tlib->flags);
+
+    ret = pDeactivateActCtx(0, cookie);
+    ok(ret, "DeactivateActCtx failed: %u\n", GetLastError());
+
+    pReleaseActCtx(handle);
+}
+
 static void test_actctx(void)
 {
     ULONG_PTR cookie;
@@ -1464,6 +1572,7 @@ static void test_actctx(void)
 
     test_wndclass_section();
     test_dllredirect_section();
+    test_typelib_section();
 }
 
 static void test_app_manifest(void)
