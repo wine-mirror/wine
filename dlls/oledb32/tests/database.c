@@ -472,6 +472,7 @@ static void init_onchange_sink(IRowPosition *rowpos)
 static void test_rowpos_clearrowposition(void)
 {
     IRowPosition *rowpos;
+    IUnknown *unk;
     HRESULT hr;
 
     hr = CoCreateInstance(&CLSID_OLEDB_ROWPOSITIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IRowPosition, (void**)&rowpos);
@@ -480,8 +481,14 @@ static void test_rowpos_clearrowposition(void)
     hr = IRowPosition_ClearRowPosition(rowpos);
     ok(hr == E_UNEXPECTED, "got %08x\n", hr);
 
+    hr = IRowPosition_GetRowset(rowpos, &IID_IStream, &unk);
+    ok(hr == E_UNEXPECTED, "got %08x\n", hr);
+
     init_test_rset();
     hr = IRowPosition_Initialize(rowpos, (IUnknown*)&test_rset.IRowset_iface);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = IRowPosition_GetRowset(rowpos, &IID_IRowset, &unk);
     ok(hr == S_OK, "got %08x\n", hr);
 
     init_onchange_sink(rowpos);

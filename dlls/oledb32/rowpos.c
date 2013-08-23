@@ -168,8 +168,11 @@ static HRESULT WINAPI rowpos_GetRowPosition(IRowPosition *iface, HCHAPTER *chapt
 static HRESULT WINAPI rowpos_GetRowset(IRowPosition *iface, REFIID riid, IUnknown **rowset)
 {
     rowpos *This = impl_from_IRowPosition(iface);
-    FIXME("(%p)->(%s %p): stub\n", This, debugstr_guid(riid), rowset);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), rowset);
+
+    if (!This->rowset) return E_UNEXPECTED;
+    return IRowset_QueryInterface(This->rowset, riid, (void**)rowset);
 }
 
 static HRESULT WINAPI rowpos_Initialize(IRowPosition *iface, IUnknown *rowset)
