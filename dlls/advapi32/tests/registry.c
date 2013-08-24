@@ -31,6 +31,8 @@
 #include "winerror.h"
 #include "aclapi.h"
 
+#define IS_HKCR(hk) ((UINT_PTR)hk > 0 && ((UINT_PTR)hk & 3) == 2)
+
 static HKEY hkey_main;
 static DWORD GLE;
 
@@ -2562,6 +2564,37 @@ cleanup:
     RegCloseKey( hkcr );
 }
 
+static void test_classesroot_mask(void)
+{
+    HKEY hkey;
+    LSTATUS res;
+
+    res = RegOpenKeyA( HKEY_CLASSES_ROOT, "CLSID", &hkey );
+    ok(res == ERROR_SUCCESS, "RegOpenKeyA failed: %d\n", res);
+    todo_wine ok(IS_HKCR(hkey), "hkcr mask not set in %p\n", hkey);
+    RegCloseKey( hkey );
+
+    res = RegOpenKeyA( HKEY_CURRENT_USER, "Software", &hkey );
+    ok(res == ERROR_SUCCESS, "RegOpenKeyA failed: %d\n", res);
+    ok(!IS_HKCR(hkey), "hkcr mask set in %p\n", hkey);
+    RegCloseKey( hkey );
+
+    res = RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software", &hkey );
+    ok(res == ERROR_SUCCESS, "RegOpenKeyA failed: %d\n", res);
+    ok(!IS_HKCR(hkey), "hkcr mask set in %p\n", hkey);
+    RegCloseKey( hkey );
+
+    res = RegOpenKeyA( HKEY_USERS, ".Default", &hkey );
+    ok(res == ERROR_SUCCESS, "RegOpenKeyA failed: %d\n", res);
+    ok(!IS_HKCR(hkey), "hkcr mask set in %p\n", hkey);
+    RegCloseKey( hkey );
+
+    res = RegOpenKeyA( HKEY_CURRENT_CONFIG, "Software", &hkey );
+    ok(res == ERROR_SUCCESS, "RegOpenKeyA failed: %d\n", res);
+    ok(!IS_HKCR(hkey), "hkcr mask set in %p\n", hkey);
+    RegCloseKey( hkey );
+}
+
 static void test_deleted_key(void)
 {
     HKEY hkey, hkey2;
@@ -2656,6 +2689,7 @@ START_TEST(registry)
     test_redirection();
     test_classesroot();
     test_classesroot_enum();
+    test_classesroot_mask();
 
     /* SaveKey/LoadKey require the SE_BACKUP_NAME privilege to be set */
     if (set_privileges(SE_BACKUP_NAME, TRUE) &&
