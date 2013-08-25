@@ -220,15 +220,20 @@ static const char actctx_manifest[] =
 "    <comClass description=\"Test com class\""
 "              clsid=\"{12345678-1234-1234-1234-56789abcdef0}\""
 "              progid=\"ProgId.ProgId\""
+"              miscStatusIcon=\"recomposeonresize\""
 "    />"
 "    <comClass clsid=\"{0be35203-8f91-11ce-9de3-00aa004bb851}\""
 "              progid=\"CustomFont\""
+"              miscStatusIcon=\"recomposeonresize\""
+"              miscStatusContent=\"insideout\""
 "    />"
 "    <comClass clsid=\"{0be35203-8f91-11ce-9de3-00aa004bb852}\""
 "              progid=\"StdFont\""
 "    />"
 "</file>"
 "</assembly>";
+
+DEFINE_GUID(CLSID_Testclass, 0x12345678, 0x1234, 0x1234, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0);
 
 static void test_ProgIDFromCLSID(void)
 {
@@ -1720,6 +1725,30 @@ static void test_CoInitializeEx(void)
     OleUninitialize();
 }
 
+static void test_OleRegGetMiscStatus(void)
+{
+    ULONG_PTR cookie;
+    HANDLE handle;
+    DWORD status;
+    HRESULT hr;
+
+    hr = OleRegGetMiscStatus(&CLSID_Testclass, DVASPECT_ICON, &status);
+    ok(hr == REGDB_E_CLASSNOTREG, "got 0x%08x\n", hr);
+
+    if ((handle = activate_context(actctx_manifest, &cookie)))
+    {
+
+        status = 0;
+        hr = OleRegGetMiscStatus(&CLSID_Testclass, DVASPECT_ICON, &status);
+todo_wine {
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(status == OLEMISC_RECOMPOSEONRESIZE, "got 0x%08x\n", status);
+}
+        pDeactivateActCtx(0, cookie);
+        pReleaseActCtx(handle);
+    }
+}
+
 static void init_funcs(void)
 {
     HMODULE hOle32 = GetModuleHandleA("ole32");
@@ -1771,4 +1800,5 @@ START_TEST(compobj)
     test_CoGetContextToken();
     test_CoGetTreatAsClass();
     test_CoInitializeEx();
+    test_OleRegGetMiscStatus();
 }
