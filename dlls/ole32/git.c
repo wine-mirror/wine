@@ -180,7 +180,12 @@ StdGlobalInterfaceTable_RegisterInterfaceInGlobal(
   IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
 
   entry = HeapAlloc(GetProcessHeap(), 0, sizeof(StdGITEntry));
-  if (entry == NULL) return E_OUTOFMEMORY;
+  if (!entry)
+  {
+      CoReleaseMarshalData(stream);
+      IStream_Release(stream);
+      return E_OUTOFMEMORY;
+  }
 
   EnterCriticalSection(&git_section);
   
