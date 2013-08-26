@@ -1816,7 +1816,6 @@ struct wined3d_device
     UINT instance_count;
 
     WORD vertexBlendUsed : 1;           /* To avoid needless setting of the blend matrices */
-    WORD isRecordingState : 1;
     WORD isInDraw : 1;
     WORD bCursorVisible : 1;
     WORD d3d_initialized : 1;
@@ -1824,7 +1823,7 @@ struct wined3d_device
     WORD softwareVertexProcessing : 1;  /* process vertex shaders using software or hardware */
     WORD useDrawStridedSlow : 1;
     WORD filter_messages : 1;
-    WORD padding : 7;
+    WORD padding : 8;
 
     BYTE fixed_function_usage_map;      /* MAX_TEXTURES, 8 */
 
@@ -1834,7 +1833,8 @@ struct wined3d_device
 
     /* State block related */
     struct wined3d_stateblock *stateBlock;
-    struct wined3d_stateblock *updateStateBlock;
+    struct wined3d_state *update_state;
+    struct wined3d_stateblock *recording;
 
     /* Internal use fields  */
     struct wined3d_device_creation_parameters create_parms;

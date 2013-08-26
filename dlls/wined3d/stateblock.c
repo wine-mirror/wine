@@ -1075,11 +1075,11 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock)
     {
         GLenum gl_primitive_type, prev;
 
-        if (device->isRecordingState)
-            device->updateStateBlock->changed.primitive_type = TRUE;
+        if (device->recording)
+            device->recording->changed.primitive_type = TRUE;
         gl_primitive_type = stateblock->state.gl_primitive_type;
-        prev = device->updateStateBlock->state.gl_primitive_type;
-        device->updateStateBlock->state.gl_primitive_type = gl_primitive_type;
+        prev = device->update_state->gl_primitive_type;
+        device->update_state->gl_primitive_type = gl_primitive_type;
         if (gl_primitive_type != prev && (gl_primitive_type == GL_POINTS || prev == GL_POINTS))
             device_invalidate_state(device, STATE_POINT_SIZE_ENABLE);
     }
