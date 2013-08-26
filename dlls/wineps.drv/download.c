@@ -353,7 +353,7 @@ BOOL PSDRV_WriteSetDownloadFont(PHYSDEV dev, BOOL vertical)
         escapement += 900;
 
     PSDRV_WriteSetFont(dev, ps_name, physDev->font.size, escapement,
-                        is_fake_italic( dev->hdc ), (lf.lfFaceName[0] == '@'));
+                        is_fake_italic( dev->hdc ));
 
     HeapFree(GetProcessHeap(), 0, ps_name);
     HeapFree(GetProcessHeap(), 0, potm);
