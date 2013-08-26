@@ -664,6 +664,9 @@ BOOL WINAPI ClearCommError(HANDLE handle, LPDWORD errors, LPCOMSTAT lpStat)
                          &ss, sizeof(ss), &dwBytesReturned, NULL))
         return FALSE;
 
+    TRACE("=> status %#x,%#x, in %u, out %u, eof %d, wait %d\n", ss.Errors, ss.HoldReasons,
+          ss.AmountInInQueue, ss.AmountInOutQueue, ss.EofReceived, ss.WaitForImmediate);
+
     if (errors)
     {
         *errors = 0;
