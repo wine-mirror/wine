@@ -4096,6 +4096,19 @@ static HRESULT device_update_volume(struct wined3d_device *device,
     TRACE("device %p, src_volume %p, dst_volume %p.\n",
             device, src_volume, dst_volume);
 
+    if (src_volume->resource.format != dst_volume->resource.format)
+    {
+        FIXME("Source and destination formats do not match.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+    if (src_volume->resource.width != dst_volume->resource.width
+            || src_volume->resource.height != dst_volume->resource.height
+            || src_volume->resource.depth != dst_volume->resource.depth)
+    {
+        FIXME("Source and destination sizes do not match.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
     if (FAILED(hr = wined3d_volume_map(src_volume, &src, NULL, WINED3D_MAP_READONLY)))
         return hr;
 
