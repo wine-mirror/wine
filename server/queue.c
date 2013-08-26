@@ -151,7 +151,7 @@ static void msg_queue_dump( struct object *obj, int verbose );
 static int msg_queue_add_queue( struct object *obj, struct wait_queue_entry *entry );
 static void msg_queue_remove_queue( struct object *obj, struct wait_queue_entry *entry );
 static int msg_queue_signaled( struct object *obj, struct wait_queue_entry *entry );
-static int msg_queue_satisfied( struct object *obj, struct wait_queue_entry *entry );
+static void msg_queue_satisfied( struct object *obj, struct wait_queue_entry *entry );
 static void msg_queue_destroy( struct object *obj );
 static void msg_queue_poll_event( struct fd *fd, int event );
 static void thread_input_dump( struct object *obj, int verbose );
@@ -924,12 +924,11 @@ static int msg_queue_signaled( struct object *obj, struct wait_queue_entry *entr
     return ret || is_signaled( queue );
 }
 
-static int msg_queue_satisfied( struct object *obj, struct wait_queue_entry *entry )
+static void msg_queue_satisfied( struct object *obj, struct wait_queue_entry *entry )
 {
     struct msg_queue *queue = (struct msg_queue *)obj;
     queue->wake_mask = 0;
     queue->changed_mask = 0;
-    return 0;  /* Not abandoned */
 }
 
 static void msg_queue_destroy( struct object *obj )

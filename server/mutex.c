@@ -48,7 +48,7 @@ struct mutex
 static void mutex_dump( struct object *obj, int verbose );
 static struct object_type *mutex_get_type( struct object *obj );
 static int mutex_signaled( struct object *obj, struct wait_queue_entry *entry );
-static int mutex_satisfied( struct object *obj, struct wait_queue_entry *entry );
+static void mutex_satisfied( struct object *obj, struct wait_queue_entry *entry );
 static unsigned int mutex_map_access( struct object *obj, unsigned int access );
 static void mutex_destroy( struct object *obj );
 static int mutex_signal( struct object *obj, unsigned int access );
@@ -157,16 +157,14 @@ static int mutex_signaled( struct object *obj, struct wait_queue_entry *entry )
     return (!mutex->count || (mutex->owner == get_wait_queue_thread( entry )));
 }
 
-static int mutex_satisfied( struct object *obj, struct wait_queue_entry *entry )
+static void mutex_satisfied( struct object *obj, struct wait_queue_entry *entry )
 {
     struct mutex *mutex = (struct mutex *)obj;
     assert( obj->ops == &mutex_ops );
 
     do_grab( mutex, get_wait_queue_thread( entry ));
-
-    if (!mutex->abandoned) return 0;
+    if (mutex->abandoned) make_wait_abandoned( entry );
     mutex->abandoned = 0;
-    return 1;
 }
 
 static unsigned int mutex_map_access( struct object *obj, unsigned int access )
