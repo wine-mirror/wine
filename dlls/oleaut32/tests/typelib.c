@@ -1538,6 +1538,7 @@ static void test_CreateTypeLib(SYSKIND sys) {
     static OLECHAR param1W[] = {'p','a','r','a','m','1',0};
     static OLECHAR param2W[] = {'p','a','r','a','m','2',0};
     static OLECHAR asdfW[] = {'A','s','d','f',0};
+    static OLECHAR aliasW[] = {'a','l','i','a','s',0};
     static OLECHAR *names1[] = {func1W, param1W, param2W};
     static OLECHAR *names2[] = {func2W, param1W, param2W};
     static OLECHAR *propname[] = {prop1W, param1W};
@@ -2530,6 +2531,9 @@ static void test_CreateTypeLib(SYSKIND sys) {
 
     ITypeInfo_Release(ti);
 
+    hres = ICreateTypeInfo_SetTypeDescAlias(createti, &typedesc1);
+    ok(hres == TYPE_E_BADMODULEKIND, "got %08x\n", hres);
+
     ICreateTypeInfo_Release(createti);
 
     hres = ITypeInfo_GetTypeAttr(interface1, &typeattr);
@@ -2565,12 +2569,82 @@ static void test_CreateTypeLib(SYSKIND sys) {
 
     ITypeInfo_ReleaseTypeAttr(interface2, typeattr);
 
-    hres = ICreateTypeLib2_SaveAllChanges(createtl);
-    ok(hres == S_OK, "got %08x\n", hres);
-
     ok(ITypeInfo_Release(interface2)==0, "Object should be freed\n");
     ok(ITypeInfo_Release(interface1)==0, "Object should be freed\n");
     ok(ITypeInfo_Release(dual)==0, "Object should be freed\n");
+
+    hres = ICreateTypeLib2_CreateTypeInfo(createtl, aliasW, TKIND_ALIAS, &createti);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ICreateTypeInfo_QueryInterface(createti, &IID_ITypeInfo, (void**)&interface1);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    if(0){
+        /* windows gives invalid values here, and even breaks the typeinfo permanently
+         * on winxp. only call GetTypeAttr() on a TKIND_ALIAS after SetTypeDescAlias. */
+        hres = ITypeInfo_GetTypeAttr(interface1, &typeattr);
+        ok(hres == S_OK, "got %08x\n", hres);
+        ok(typeattr->cbSizeInstance == 0xffffffb4, "cbSizeInstance = %d\n", typeattr->cbSizeInstance);
+        ok(typeattr->typekind == TKIND_ALIAS, "typekind = %d\n", typeattr->typekind);
+        ok(typeattr->cFuncs == 0, "cFuncs = %d\n", typeattr->cFuncs);
+        ok(typeattr->cVars == 0, "cVars = %d\n", typeattr->cVars);
+        ok(typeattr->cImplTypes == 0, "cImplTypes = %d\n", typeattr->cImplTypes);
+        ok(typeattr->cbSizeVft == 0, "cbSizeVft = %d\n", typeattr->cbSizeVft);
+        ok(typeattr->cbAlignment == 0, "cbAlignment = %d\n", typeattr->cbAlignment);
+        ok(typeattr->wTypeFlags == 0, "wTypeFlags = %d\n", typeattr->wTypeFlags);
+        ok(typeattr->wMajorVerNum == 0, "wMajorVerNum = %d\n", typeattr->wMajorVerNum);
+        ok(typeattr->wMinorVerNum == 0, "wMinorVerNum = %d\n", typeattr->wMinorVerNum);
+        ok(typeattr->tdescAlias.vt == VT_EMPTY, "Got wrong tdescAlias.vt: %u\n", typeattr->tdescAlias.vt);
+        ITypeInfo_ReleaseTypeAttr(interface1, typeattr);
+    }
+
+    hres = ICreateTypeInfo_SetTypeDescAlias(createti, NULL);
+    ok(hres == E_INVALIDARG, "got %08x\n", hres);
+
+    typedesc1.vt = VT_I1;
+    hres = ICreateTypeInfo_SetTypeDescAlias(createti, &typedesc1);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ITypeInfo_GetTypeAttr(interface1, &typeattr);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(typeattr->cbSizeInstance == 1, "cbSizeInstance = %d\n", typeattr->cbSizeInstance);
+    ok(typeattr->typekind == TKIND_ALIAS, "typekind = %d\n", typeattr->typekind);
+    ok(typeattr->cFuncs == 0, "cFuncs = %d\n", typeattr->cFuncs);
+    ok(typeattr->cVars == 0, "cVars = %d\n", typeattr->cVars);
+    ok(typeattr->cImplTypes == 0, "cImplTypes = %d\n", typeattr->cImplTypes);
+    ok(typeattr->cbSizeVft == 0, "cbSizeVft = %d\n", typeattr->cbSizeVft);
+    ok(typeattr->cbAlignment == 1, "cbAlignment = %d\n", typeattr->cbAlignment);
+    ok(typeattr->wTypeFlags == 0, "wTypeFlags = %d\n", typeattr->wTypeFlags);
+    ok(typeattr->wMajorVerNum == 0, "wMajorVerNum = %d\n", typeattr->wMajorVerNum);
+    ok(typeattr->wMinorVerNum == 0, "wMinorVerNum = %d\n", typeattr->wMinorVerNum);
+    ok(typeattr->tdescAlias.vt == VT_I1, "Got wrong tdescAlias.vt: %u\n", typeattr->tdescAlias.vt);
+    ITypeInfo_ReleaseTypeAttr(interface1, typeattr);
+
+    typedesc1.vt = VT_R8;
+    hres = ICreateTypeInfo_SetTypeDescAlias(createti, &typedesc1);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ITypeInfo_GetTypeAttr(interface1, &typeattr);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(typeattr->cbSizeInstance == 8, "cbSizeInstance = %d\n", typeattr->cbSizeInstance);
+    ok(typeattr->typekind == TKIND_ALIAS, "typekind = %d\n", typeattr->typekind);
+    ok(typeattr->cFuncs == 0, "cFuncs = %d\n", typeattr->cFuncs);
+    ok(typeattr->cVars == 0, "cVars = %d\n", typeattr->cVars);
+    ok(typeattr->cImplTypes == 0, "cImplTypes = %d\n", typeattr->cImplTypes);
+    ok(typeattr->cbSizeVft == 0, "cbSizeVft = %d\n", typeattr->cbSizeVft);
+    ok(typeattr->cbAlignment == 4, "cbAlignment = %d\n", typeattr->cbAlignment);
+    ok(typeattr->wTypeFlags == 0, "wTypeFlags = %d\n", typeattr->wTypeFlags);
+    ok(typeattr->wMajorVerNum == 0, "wMajorVerNum = %d\n", typeattr->wMajorVerNum);
+    ok(typeattr->wMinorVerNum == 0, "wMinorVerNum = %d\n", typeattr->wMinorVerNum);
+    ok(typeattr->tdescAlias.vt == VT_R8, "Got wrong tdescAlias.vt: %u\n", typeattr->tdescAlias.vt);
+    ITypeInfo_ReleaseTypeAttr(interface1, typeattr);
+
+    ITypeInfo_Release(interface1);
+    ICreateTypeInfo_Release(createti);
+
+    hres = ICreateTypeLib2_SaveAllChanges(createtl);
+    ok(hres == S_OK, "got %08x\n", hres);
+
     ok(ICreateTypeLib2_Release(createtl)==0, "Object should be freed\n");
 
     ok(ITypeInfo_Release(dispatch)==0, "Object should be freed\n");
@@ -3393,6 +3467,26 @@ static void test_CreateTypeLib(SYSKIND sys) {
     ITypeInfo_ReleaseTypeAttr(interface1, typeattr);
 
     ITypeInfo_Release(interface1);
+
+    ok(ITypeInfo_Release(ti) == 0, "Object should be freed\n");
+
+    hres = ITypeLib_GetTypeInfo(tl, 5, &ti);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ITypeInfo_GetTypeAttr(ti, &typeattr);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(typeattr->cbSizeInstance == 8, "cbSizeInstance = %d\n", typeattr->cbSizeInstance);
+    ok(typeattr->typekind == TKIND_ALIAS, "typekind = %d\n", typeattr->typekind);
+    ok(typeattr->cFuncs == 0, "cFuncs = %d\n", typeattr->cFuncs);
+    ok(typeattr->cVars == 0, "cVars = %d\n", typeattr->cVars);
+    ok(typeattr->cImplTypes == 0, "cImplTypes = %d\n", typeattr->cImplTypes);
+    ok(typeattr->cbSizeVft == 0, "cbSizeVft = %d\n", typeattr->cbSizeVft);
+    ok(typeattr->cbAlignment == alignment, "cbAlignment = %d\n", typeattr->cbAlignment);
+    ok(typeattr->wTypeFlags == 0, "wTypeFlags = 0x%x\n", typeattr->wTypeFlags);
+    ok(typeattr->wMajorVerNum == 0, "wMajorVerNum = %d\n", typeattr->wMajorVerNum);
+    ok(typeattr->wMinorVerNum == 0, "wMinorVerNum = %d\n", typeattr->wMinorVerNum);
+    ok(typeattr->tdescAlias.vt == VT_R8, "Got wrong tdescAlias.vt: %u\n", typeattr->tdescAlias.vt);
+    ITypeInfo_ReleaseTypeAttr(ti, typeattr);
 
     ok(ITypeInfo_Release(ti) == 0, "Object should be freed\n");
 
@@ -4587,6 +4681,245 @@ if (hr == S_OK)
     pReleaseActCtx(handle);
 }
 
+#define AUX_HREF 1
+#define AUX_TDESC 2
+#define AUX_ADESC 3
+static struct _TDATest {
+    VARTYPE vt;
+    ULONG size; /* -1 == typelib ptr size */
+    WORD align;
+    WORD align3264; /* for 32-bit typelibs loaded in 64-bit mode */
+    DWORD aux;
+    TYPEDESC tdesc;
+    ARRAYDESC adesc;
+} TDATests[] = {
+    { VT_I2, 2, 2, 2 },
+    { VT_I4, 4, 4, 4 },
+    { VT_R4, 4, 4, 4 },
+    { VT_R8, 8, 4, 8 },
+    { VT_CY, 8, 4, 8 },
+    { VT_DATE, 8, 4, 8 },
+    { VT_BSTR, -1, 4, 8 },
+    { VT_DISPATCH, -1, 4, 8 },
+    { VT_ERROR, 4, 4, 4 },
+    { VT_BOOL, 2, 2, 2 },
+    { VT_VARIANT, 0 /* see code below */, 4, 8 },
+    { VT_UNKNOWN, -1, 4, 8 },
+    { VT_DECIMAL, 16, 4, 8 },
+    { VT_I1, 1, 1, 1 },
+    { VT_UI1, 1, 1, 1 },
+    { VT_UI2, 2, 2, 2 },
+    { VT_UI4, 4, 4, 4 },
+    { VT_I8, 8, 4, 8 },
+    { VT_UI8, 8, 4, 8 },
+    { VT_INT, 4, 4, 4 },
+    { VT_UINT, 4, 4, 4 },
+    { VT_VOID, 0, 0, 0 },
+    { VT_HRESULT, 4, 4, 4 },
+    { VT_PTR, -1, 4, 8, AUX_TDESC, { { 0 }, VT_INT } },
+    { VT_SAFEARRAY, -1, 4, 8, AUX_TDESC, { { 0 }, VT_INT } },
+    { VT_CARRAY, 16 /* == 4 * sizeof(int) */, 4, 4, AUX_ADESC, { { 0 } }, { { { 0 }, VT_INT }, 1, { { 4, 0 } } } },
+    { VT_USERDEFINED, 0, 0, 0, AUX_HREF },
+    { VT_LPSTR, -1, 4, 8 },
+    { VT_LPWSTR, -1, 4, 8 },
+    { 0 }
+};
+
+static void testTDA(ITypeLib *tl, struct _TDATest *TDATest,
+        ULONG ptr_size, HREFTYPE hreftype, ULONG href_cbSizeInstance,
+        WORD href_cbAlignment, BOOL create)
+{
+    TYPEDESC tdesc;
+    WCHAR nameW[32];
+    ITypeInfo *ti;
+    ICreateTypeInfo *cti;
+    ICreateTypeLib2 *ctl;
+    ULONG size;
+    WORD alignment;
+    TYPEATTR *typeattr;
+    HRESULT hr;
+
+    static const WCHAR name_fmtW[] = {'a','l','i','a','s','%','0','2','u',0};
+
+    wsprintfW(nameW, name_fmtW, TDATest->vt);
+
+    if(create){
+        hr = ITypeLib_QueryInterface(tl, &IID_ICreateTypeLib2, (void**)&ctl);
+        ok(hr == S_OK, "got %08x\n", hr);
+
+        hr = ICreateTypeLib2_CreateTypeInfo(ctl, nameW, TKIND_ALIAS, &cti);
+        ok(hr == S_OK, "got %08x\n", hr);
+
+        tdesc.vt = TDATest->vt;
+        if(TDATest->aux == AUX_TDESC)
+            U(tdesc).lptdesc = &TDATest->tdesc;
+        else if(TDATest->aux == AUX_ADESC)
+            U(tdesc).lpadesc = &TDATest->adesc;
+        else if(TDATest->aux == AUX_HREF)
+            U(tdesc).hreftype = hreftype;
+
+        hr = ICreateTypeInfo_SetTypeDescAlias(cti, &tdesc);
+        ok(hr == S_OK, "for VT %u, got %08x\n", TDATest->vt, hr);
+
+        hr = ICreateTypeInfo_QueryInterface(cti, &IID_ITypeInfo, (void**)&ti);
+        ok(hr == S_OK, "got %08x\n", hr);
+
+        ICreateTypeInfo_Release(cti);
+        ICreateTypeLib2_Release(ctl);
+    }else{
+        USHORT found = 1;
+        MEMBERID memid;
+
+        hr = ITypeLib_FindName(tl, nameW, 0, &ti, &memid, &found);
+        ok(hr == S_OK, "for VT %u, got %08x\n", TDATest->vt, hr);
+    }
+
+    hr = ITypeInfo_GetTypeAttr(ti, &typeattr);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    if(TDATest->aux == AUX_HREF){
+        size = href_cbSizeInstance;
+        alignment = href_cbAlignment;
+    }else{
+        size = TDATest->size;
+        if(size == -1){
+            if(create)
+                size = ptr_size;
+            else
+                size = sizeof(void*);
+        }else if(TDATest->vt == VT_VARIANT){
+            if(create){
+                size = sizeof(VARIANT);
+#ifdef _WIN64
+                if(ptr_size != sizeof(void*))
+                    size -= 8; /* 32-bit variant is 4 bytes smaller than 64-bit variant */
+#endif
+            }else
+                size = sizeof(VARIANT);
+        }
+        alignment = TDATest->align;
+#ifdef _WIN64
+        if(!create && ptr_size != sizeof(void*))
+            alignment = TDATest->align3264;
+#endif
+    }
+
+    ok(typeattr->cbSizeInstance == size ||
+            broken(TDATest->vt == VT_VARIANT && ptr_size != sizeof(void*) && typeattr->cbSizeInstance == sizeof(VARIANT)) /* winxp64 */,
+            "got wrong size for VT %u: 0x%x\n", TDATest->vt, typeattr->cbSizeInstance);
+    ok(typeattr->cbAlignment == alignment, "got wrong alignment for VT %u: 0x%x\n", TDATest->vt, typeattr->cbAlignment);
+    ok(typeattr->tdescAlias.vt == TDATest->vt, "got wrong VT for VT %u: 0x%x\n", TDATest->vt, typeattr->tdescAlias.vt);
+
+    switch(TDATest->aux){
+    case AUX_HREF:
+        ok(U(typeattr->tdescAlias).hreftype == hreftype, "got wrong hreftype for VT %u: 0x%x\n", TDATest->vt, U(typeattr->tdescAlias).hreftype);
+        break;
+    case AUX_TDESC:
+        ok(U(typeattr->tdescAlias).lptdesc->vt == TDATest->tdesc.vt, "got wrong typedesc VT for VT %u: 0x%x\n", TDATest->vt, U(typeattr->tdescAlias).lptdesc->vt);
+        break;
+    case AUX_ADESC:
+        ok(U(typeattr->tdescAlias).lpadesc->tdescElem.vt == TDATest->adesc.tdescElem.vt, "got wrong arraydesc element VT for VT %u: 0x%x\n", TDATest->vt, U(typeattr->tdescAlias).lpadesc->tdescElem.vt);
+        ok(U(typeattr->tdescAlias).lpadesc->cDims == TDATest->adesc.cDims, "got wrong arraydesc dimension count for VT %u: 0x%x\n", TDATest->vt, U(typeattr->tdescAlias).lpadesc->cDims);
+        ok(U(typeattr->tdescAlias).lpadesc->rgbounds[0].cElements == TDATest->adesc.rgbounds[0].cElements, "got wrong arraydesc element count for VT %u: 0x%x\n", TDATest->vt, U(typeattr->tdescAlias).lpadesc->rgbounds[0].cElements);
+        ok(U(typeattr->tdescAlias).lpadesc->rgbounds[0].lLbound == TDATest->adesc.rgbounds[0].lLbound, "got wrong arraydesc lower bound for VT %u: 0x%x\n", TDATest->vt, U(typeattr->tdescAlias).lpadesc->rgbounds[0].lLbound);
+        break;
+    }
+
+    ITypeInfo_Release(ti);
+}
+
+static void test_SetTypeDescAlias(SYSKIND kind)
+{
+    CHAR filenameA[MAX_PATH];
+    WCHAR filenameW[MAX_PATH];
+    ITypeLib *tl;
+    ICreateTypeLib2 *ctl;
+    ITypeInfo *ti;
+    ICreateTypeInfo *cti;
+    HREFTYPE hreftype;
+    TYPEATTR *typeattr;
+    ULONG href_cbSizeInstance, i;
+    WORD href_cbAlignment, ptr_size;
+    HRESULT hr;
+
+    static OLECHAR interfaceW[] = {'i','n','t','e','r','f','a','c','e',0};
+
+    switch(kind){
+    case SYS_WIN32:
+        trace("testing SYS_WIN32\n");
+        ptr_size = 4;
+        break;
+    case SYS_WIN64:
+        trace("testing SYS_WIN64\n");
+        ptr_size = 8;
+        break;
+    default:
+        return;
+    }
+
+    GetTempFileNameA(".", "tlb", 0, filenameA);
+    MultiByteToWideChar(CP_ACP, 0, filenameA, -1, filenameW, MAX_PATH);
+
+    hr = CreateTypeLib2(kind, filenameW, &ctl);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeLib2_CreateTypeInfo(ctl, interfaceW, TKIND_INTERFACE, &cti);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_QueryInterface(cti, &IID_ITypeInfo, (void**)&ti);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_AddRefTypeInfo(cti, ti, &hreftype);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ITypeInfo_GetTypeAttr(ti, &typeattr);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    href_cbSizeInstance = typeattr->cbSizeInstance;
+    href_cbAlignment = typeattr->cbAlignment;
+
+    ITypeInfo_ReleaseTypeAttr(ti, typeattr);
+
+    ITypeInfo_Release(ti);
+    ICreateTypeInfo_Release(cti);
+
+    hr = ICreateTypeLib2_QueryInterface(ctl, &IID_ITypeLib, (void**)&tl);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    for(i = 0; TDATests[i].vt; ++i)
+        testTDA(tl, &TDATests[i], ptr_size, hreftype, href_cbSizeInstance, href_cbAlignment, TRUE);
+
+    hr = ICreateTypeLib2_SaveAllChanges(ctl);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    ITypeLib_Release(tl);
+    ok(0 == ICreateTypeLib2_Release(ctl), "typelib should have been released");
+
+    trace("after save...\n");
+
+    hr = LoadTypeLibEx(filenameW, REGKIND_NONE, &tl);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ITypeLib_GetTypeInfo(tl, 0, &ti);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ITypeInfo_GetTypeAttr(ti, &typeattr);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    href_cbSizeInstance = typeattr->cbSizeInstance;
+    href_cbAlignment = typeattr->cbAlignment;
+
+    ITypeInfo_ReleaseTypeAttr(ti, typeattr);
+    ITypeInfo_Release(ti);
+
+    for(i = 0; TDATests[i].vt; ++i)
+        testTDA(tl, &TDATests[i], ptr_size, hreftype, href_cbSizeInstance, href_cbAlignment, FALSE);
+
+    ok(0 == ITypeLib_Release(tl), "typelib should have been released");
+
+    DeleteFileA(filenameA);
+}
+
 START_TEST(typelib)
 {
     const char *filename;
@@ -4602,8 +4935,10 @@ START_TEST(typelib)
     if(sizeof(void*) == 8){
         test_QueryPathOfRegTypeLib(64);
         test_CreateTypeLib(SYS_WIN64);
+        test_SetTypeDescAlias(SYS_WIN64);
     }
     test_CreateTypeLib(SYS_WIN32);
+    test_SetTypeDescAlias(SYS_WIN32);
     test_inheritance();
     test_SetVarHelpContext();
     test_SetFuncAndParamNames();
