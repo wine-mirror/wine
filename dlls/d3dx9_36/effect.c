@@ -5684,26 +5684,19 @@ HRESULT WINAPI D3DXCreateEffectCompilerFromResourceA(HMODULE srcmodule, const ch
         ID3DXEffectCompiler **effectcompiler, ID3DXBuffer **parseerrors)
 {
     HRSRC resinfo;
+    void *buffer;
+    DWORD size;
 
-    TRACE("(%p, %s): relay\n", srcmodule, debugstr_a(srcresource));
+    TRACE("srcmodule %p, srcresource %s, defines %p, include %p, flags %#x, effectcompiler %p, parseerrors %p.\n",
+            srcmodule, debugstr_a(srcresource), defines, include, flags, effectcompiler, parseerrors);
 
-    resinfo = FindResourceA(srcmodule, srcresource, (LPCSTR) RT_RCDATA);
+    if (!(resinfo = FindResourceA(srcmodule, srcresource, (const char *)RT_RCDATA)))
+        return D3DXERR_INVALIDDATA;
 
-    if (resinfo)
-    {
-        LPVOID buffer;
-        HRESULT ret;
-        DWORD size;
+    if (FAILED(load_resource_into_memory(srcmodule, resinfo, &buffer, &size)))
+        return D3DXERR_INVALIDDATA;
 
-        ret = load_resource_into_memory(srcmodule, resinfo, &buffer, &size);
-
-        if (FAILED(ret))
-            return D3DXERR_INVALIDDATA;
-
-        return D3DXCreateEffectCompiler(buffer, size, defines, include, flags, effectcompiler, parseerrors);
-    }
-
-    return D3DXERR_INVALIDDATA;
+    return D3DXCreateEffectCompiler(buffer, size, defines, include, flags, effectcompiler, parseerrors);
 }
 
 HRESULT WINAPI D3DXCreateEffectCompilerFromResourceW(HMODULE srcmodule, const WCHAR *srcresource,
