@@ -588,6 +588,27 @@ void state_unbind_resources(struct wined3d_state *state)
     }
 }
 
+static void state_cleanup(struct wined3d_state *state)
+{
+    unsigned int counter;
+
+    state_unbind_resources(state);
+
+    for (counter = 0; counter < LIGHTMAP_SIZE; ++counter)
+    {
+        struct list *e1, *e2;
+        LIST_FOR_EACH_SAFE(e1, e2, &state->light_map[counter])
+        {
+            struct wined3d_light_info *light = LIST_ENTRY(e1, struct wined3d_light_info, entry);
+            list_remove(&light->entry);
+            HeapFree(GetProcessHeap(), 0, light);
+        }
+    }
+
+    HeapFree(GetProcessHeap(), 0, state->vs_consts_f);
+    HeapFree(GetProcessHeap(), 0, state->ps_consts_f);
+}
+
 ULONG CDECL wined3d_stateblock_decref(struct wined3d_stateblock *stateblock)
 {
     ULONG refcount = InterlockedDecrement(&stateblock->ref);
@@ -596,24 +617,9 @@ ULONG CDECL wined3d_stateblock_decref(struct wined3d_stateblock *stateblock)
 
     if (!refcount)
     {
-        int counter;
+        state_cleanup(&stateblock->state);
 
-        state_unbind_resources(&stateblock->state);
-
-        for (counter = 0; counter < LIGHTMAP_SIZE; ++counter)
-        {
-            struct list *e1, *e2;
-            LIST_FOR_EACH_SAFE(e1, e2, &stateblock->state.light_map[counter])
-            {
-                struct wined3d_light_info *light = LIST_ENTRY(e1, struct wined3d_light_info, entry);
-                list_remove(&light->entry);
-                HeapFree(GetProcessHeap(), 0, light);
-            }
-        }
-
-        HeapFree(GetProcessHeap(), 0, stateblock->state.vs_consts_f);
         HeapFree(GetProcessHeap(), 0, stateblock->changed.vertexShaderConstantsF);
-        HeapFree(GetProcessHeap(), 0, stateblock->state.ps_consts_f);
         HeapFree(GetProcessHeap(), 0, stateblock->changed.pixelShaderConstantsF);
         HeapFree(GetProcessHeap(), 0, stateblock->contained_vs_consts_f);
         HeapFree(GetProcessHeap(), 0, stateblock->contained_ps_consts_f);
