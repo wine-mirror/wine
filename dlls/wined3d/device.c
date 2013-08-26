@@ -4131,9 +4131,14 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (src_texture == dst_texture)
+    if (src_texture->resource.pool != WINED3D_POOL_SYSTEM_MEM)
     {
-        WARN("Source and destination are the same object, returning WINED3DERR_INVALIDCALL.\n");
+        WARN("Source texture not in WINED3D_POOL_SYSTEM_MEM, returning WINED3DERR_INVALIDCALL.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+    if (dst_texture->resource.pool != WINED3D_POOL_DEFAULT)
+    {
+        WARN("Destination texture not in WINED3D_POOL_DEFAULT, returning WINED3DERR_INVALIDCALL.\n");
         return WINED3DERR_INVALIDCALL;
     }
 
