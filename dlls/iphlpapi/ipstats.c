@@ -2197,7 +2197,7 @@ DWORD build_tcp_table( TCP_TABLE_CLASS class, void **tablep, BOOL order, HANDLE 
         size_t Len = 0;
         char *Buf = NULL;
         struct xinpgen *pXIG, *pOrigXIG;
-        struct pid_map *pMap;
+        struct pid_map *pMap = NULL;
         unsigned NumEntries;
 
         if (sysctlbyname ("net.inet.tcp.pcblist", NULL, &Len, NULL, 0) < 0)
@@ -2280,6 +2280,7 @@ DWORD build_tcp_table( TCP_TABLE_CLASS class, void **tablep, BOOL order, HANDLE 
         }
 
     done:
+        HeapFree( GetProcessHeap(), 0, pMap );
         HeapFree (GetProcessHeap (), 0, Buf);
     }
 #else
@@ -2471,7 +2472,7 @@ DWORD build_udp_table( UDP_TABLE_CLASS class, void **tablep, BOOL order, HANDLE 
         size_t Len = 0;
         char *Buf = NULL;
         struct xinpgen *pXIG, *pOrigXIG;
-        struct pid_map *pMap;
+        struct pid_map *pMap = NULL;
         unsigned NumEntries;
 
         if (sysctlbyname ("net.inet.udp.pcblist", NULL, &Len, NULL, 0) < 0)
@@ -2547,6 +2548,7 @@ DWORD build_udp_table( UDP_TABLE_CLASS class, void **tablep, BOOL order, HANDLE 
         }
 
     done:
+        HeapFree( GetProcessHeap(), 0, pMap );
         HeapFree (GetProcessHeap (), 0, Buf);
     }
 #else
