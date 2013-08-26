@@ -1909,6 +1909,120 @@ static TLBString *TLB_append_str(struct list *string_list, BSTR new_str)
     return str;
 }
 
+static HRESULT TLB_get_size_from_hreftype(ITypeInfoImpl *info, HREFTYPE href,
+        ULONG *size, WORD *align)
+{
+    ITypeInfo *other;
+    TYPEATTR *attr;
+    HRESULT hr;
+
+    hr = ITypeInfo2_GetRefTypeInfo(&info->ITypeInfo2_iface, href, &other);
+    if(FAILED(hr))
+        return hr;
+
+    hr = ITypeInfo_GetTypeAttr(other, &attr);
+    if(FAILED(hr)){
+        ITypeInfo_Release(other);
+        return hr;
+    }
+
+    if(size)
+        *size = attr->cbSizeInstance;
+    if(align)
+        *align = attr->cbAlignment;
+
+    ITypeInfo_ReleaseTypeAttr(other, attr);
+    ITypeInfo_Release(other);
+
+    return S_OK;
+}
+
+static HRESULT TLB_size_instance(ITypeInfoImpl *info, SYSKIND sys,
+        TYPEDESC *tdesc, ULONG *size, WORD *align)
+{
+    ULONG i, sub, ptr_size;
+    HRESULT hr;
+
+    ptr_size = get_ptr_size(sys);
+
+    switch(tdesc->vt){
+    case VT_VOID:
+        *size = 0;
+        break;
+    case VT_I1:
+    case VT_UI1:
+        *size = 1;
+        break;
+    case VT_I2:
+    case VT_BOOL:
+    case VT_UI2:
+        *size = 2;
+        break;
+    case VT_I4:
+    case VT_R4:
+    case VT_ERROR:
+    case VT_UI4:
+    case VT_INT:
+    case VT_UINT:
+    case VT_HRESULT:
+        *size = 4;
+        break;
+    case VT_R8:
+    case VT_I8:
+    case VT_UI8:
+        *size = 8;
+        break;
+    case VT_BSTR:
+    case VT_DISPATCH:
+    case VT_UNKNOWN:
+    case VT_PTR:
+    case VT_SAFEARRAY:
+    case VT_LPSTR:
+    case VT_LPWSTR:
+        *size = ptr_size;
+        break;
+    case VT_DATE:
+        *size = sizeof(DATE);
+        break;
+    case VT_VARIANT:
+        *size = sizeof(VARIANT);
+#ifdef _WIN64
+        if(sys == SYS_WIN32)
+            *size -= 8; /* 32-bit VARIANT is 8 bytes smaller than 64-bit VARIANT */
+#endif
+        break;
+    case VT_DECIMAL:
+        *size = sizeof(DECIMAL);
+        break;
+    case VT_CY:
+        *size = sizeof(CY);
+        break;
+    case VT_CARRAY:
+        *size = 0;
+        for(i = 0; i < tdesc->u.lpadesc->cDims; ++i)
+            *size += tdesc->u.lpadesc->rgbounds[i].cElements;
+        hr = TLB_size_instance(info, sys, &tdesc->u.lpadesc->tdescElem, &sub, align);
+        if(FAILED(hr))
+            return hr;
+        *size *= sub;
+        return S_OK;
+    case VT_USERDEFINED:
+        return TLB_get_size_from_hreftype(info, tdesc->u.hreftype, size, align);
+    default:
+        FIXME("Unsized VT: 0x%x\n", tdesc->vt);
+        return E_FAIL;
+    }
+
+    if(align){
+        if(*size < 4)
+            *align = *size;
+        else
+            *align = 4;
+    }
+
+    return S_OK;
+}
+
 /**********************************************************************
  *
  *  Functions for reading MSFT typelibs (those created by CreateTypeLib2)
@@ -2512,6 +2626,47 @@ static void MSFT_DoImplTypes(TLBContext *pcx, ITypeInfoImpl *pTI, int count,
         ++pImpl;
     }
 }
+
+#ifdef _WIN64
+/* when a 32-bit typelib is loaded in 64-bit mode, we need to resize pointers
+ * and some structures, and fix the alignment */
+static void TLB_fix_32on64_typeinfo(ITypeInfoImpl *info)
+{
+    if(info->typekind == TKIND_ALIAS){
+        switch(info->tdescAlias.vt){
+        case VT_BSTR:
+        case VT_DISPATCH:
+        case VT_UNKNOWN:
+        case VT_PTR:
+        case VT_SAFEARRAY:
+        case VT_LPSTR:
+        case VT_LPWSTR:
+            info->cbSizeInstance = sizeof(void*);
+            info->cbAlignment = sizeof(void*);
+            break;
+        case VT_CARRAY:
+        case VT_USERDEFINED:
+            TLB_size_instance(info, SYS_WIN64, &info->tdescAlias, &info->cbSizeInstance, &info->cbAlignment);
+            break;
+        case VT_VARIANT:
+            info->cbSizeInstance = sizeof(VARIANT);
+            info->cbAlignment = 8;
+        default:
+            if(info->cbSizeInstance < sizeof(void*))
+                info->cbAlignment = info->cbSizeInstance;
+            else
+                info->cbAlignment = sizeof(void*);
+            break;
+        }
+    }else if(info->typekind == TKIND_INTERFACE ||
+            info->typekind == TKIND_DISPATCH ||
+            info->typekind == TKIND_COCLASS){
+        info->cbSizeInstance = sizeof(void*);
+        info->cbAlignment = sizeof(void*);
+    }
+}
+#endif
+
 /*
  * process a typeinfo record
  */
@@ -2537,18 +2692,10 @@ static ITypeInfoImpl * MSFT_DoTypeInfo(
     ptiRet->lcid=pLibInfo->set_lcid;   /* FIXME: correct? */
     ptiRet->lpstrSchema=NULL;              /* reserved */
     ptiRet->cbSizeInstance=tiBase.size;
-#ifdef _WIN64
-    if(pLibInfo->syskind == SYS_WIN32)
-        ptiRet->cbSizeInstance=sizeof(void*);
-#endif
     ptiRet->typekind=tiBase.typekind & 0xF;
     ptiRet->cFuncs=LOWORD(tiBase.cElement);
     ptiRet->cVars=HIWORD(tiBase.cElement);
     ptiRet->cbAlignment=(tiBase.typekind >> 11 )& 0x1F; /* there are more flags there */
-#ifdef _WIN64
-    if(pLibInfo->syskind == SYS_WIN32)
-        ptiRet->cbAlignment = 8;
-#endif
     ptiRet->wTypeFlags=tiBase.flags;
     ptiRet->wMajorVerNum=LOWORD(tiBase.version);
     ptiRet->wMinorVerNum=HIWORD(tiBase.version);
@@ -3318,6 +3465,7 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
     MSFT_Header tlbHeader;
     MSFT_SegDir tlbSegDir;
     ITypeLibImpl * pTypeLibImpl;
+    int i;
 
     TRACE("%p, TLB length = %d\n", pLib, dwTLBLength);
 
@@ -3503,7 +3651,6 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
     if(tlbHeader.nrtypeinfos >= 0 )
     {
         ITypeInfoImpl **ppTI;
-        int i;
 
         ppTI = pTypeLibImpl->typeinfos = heap_alloc_zero(sizeof(ITypeInfoImpl*) * tlbHeader.nrtypeinfos);
 
@@ -3515,6 +3662,13 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
             (pTypeLibImpl->TypeInfoCount)++;
         }
     }
+
+#ifdef _WIN64
+    if(pTypeLibImpl->syskind == SYS_WIN32){
+        for(i = 0; i < pTypeLibImpl->TypeInfoCount; ++i)
+            TLB_fix_32on64_typeinfo(pTypeLibImpl->typeinfos[i]);
+    }
+#endif
 
     TRACE("(%p)\n", pTypeLibImpl);
     return &pTypeLibImpl->ITypeLib2_iface;
