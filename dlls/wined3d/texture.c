@@ -1056,57 +1056,39 @@ static HRESULT texture3d_bind(struct wined3d_texture *texture,
 /* Do not call while under the GL lock. */
 static void texture3d_preload(struct wined3d_texture *texture, enum WINED3DSRGB srgb)
 {
+    UINT sub_count = texture->level_count * texture->layer_count;
     struct wined3d_device *device = texture->resource.device;
-    struct wined3d_context *context;
-    BOOL srgb_was_toggled = FALSE;
-    unsigned int i;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    struct wined3d_context *context = NULL;
+    struct gl_texture *gl_tex;
+    BOOL srgb_mode;
+    UINT i;
 
     TRACE("texture %p, srgb %#x.\n", texture, srgb);
 
-    /* TODO: Use already acquired context when possible. */
-    context = context_acquire(device, NULL);
-    if (texture->resource.bind_count > 0)
-    {
-        BOOL texture_srgb = texture->flags & WINED3D_TEXTURE_IS_SRGB;
-        BOOL sampler_srgb = texture_srgb_mode(texture, srgb);
-        srgb_was_toggled = !texture_srgb != !sampler_srgb;
+    srgb_mode = texture_srgb_mode(texture, srgb);
+    gl_tex = wined3d_texture_get_gl_texture(texture, gl_info, srgb_mode);
 
-        if (srgb_was_toggled)
-        {
-            if (sampler_srgb)
-                texture->flags |= WINED3D_TEXTURE_IS_SRGB;
-            else
-                texture->flags &= ~WINED3D_TEXTURE_IS_SRGB;
-        }
-    }
-
-    /* If the texture is marked dirty or the sRGB sampler setting has changed
-     * since the last load then reload the volumes. */
-    if (texture->texture_rgb.dirty)
+    if (gl_tex->dirty)
     {
-        for (i = 0; i < texture->level_count; ++i)
+        context = context_acquire(device, NULL);
+
+        /* Reload the surfaces if the texture is marked dirty. */
+        for (i = 0; i < sub_count; ++i)
         {
             wined3d_volume_load(volume_from_resource(texture->sub_resources[i]), context,
-                    texture->flags & WINED3D_TEXTURE_IS_SRGB);
+                    srgb_mode);
         }
-    }
-    else if (srgb_was_toggled)
-    {
-        for (i = 0; i < texture->level_count; ++i)
-        {
-            struct wined3d_volume *volume = volume_from_resource(texture->sub_resources[i]);
-            wined3d_volume_load(volume, context, texture->flags & WINED3D_TEXTURE_IS_SRGB);
-        }
+
+        context_release(context);
     }
     else
     {
         TRACE("Texture %p not dirty, nothing to do.\n", texture);
     }
 
-    context_release(context);
-
-    /* No longer dirty */
-    texture->texture_rgb.dirty = FALSE;
+    /* No longer dirty. */
+    gl_tex->dirty = FALSE;
 }
 
 static void texture3d_sub_resource_add_dirty_region(struct wined3d_resource *sub_resource,
