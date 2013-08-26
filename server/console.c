@@ -91,7 +91,7 @@ static const struct object_ops console_input_ops =
 
 static void console_input_events_dump( struct object *obj, int verbose );
 static void console_input_events_destroy( struct object *obj );
-static int  console_input_events_signaled( struct object *obj, struct thread *thread );
+static int console_input_events_signaled( struct object *obj, struct wait_queue_entry *entry );
 
 struct console_input_events
 {
@@ -222,7 +222,7 @@ static void console_input_events_destroy( struct object *obj )
 }
 
 /* the renderer events list is signaled when it's not empty */
-static int console_input_events_signaled( struct object *obj, struct thread *thread )
+static int console_input_events_signaled( struct object *obj, struct wait_queue_entry *entry )
 {
     struct console_input_events *evts = (struct console_input_events *)obj;
     assert( obj->ops == &console_input_events_ops );

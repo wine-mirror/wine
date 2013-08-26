@@ -109,7 +109,7 @@ struct sock
 };
 
 static void sock_dump( struct object *obj, int verbose );
-static int sock_signaled( struct object *obj, struct thread *thread );
+static int sock_signaled( struct object *obj, struct wait_queue_entry *entry );
 static struct fd *sock_get_fd( struct object *obj );
 static void sock_destroy( struct object *obj );
 
@@ -470,7 +470,7 @@ static void sock_dump( struct object *obj, int verbose )
             sock->mask, sock->pmask, sock->hmask );
 }
 
-static int sock_signaled( struct object *obj, struct thread *thread )
+static int sock_signaled( struct object *obj, struct wait_queue_entry *entry )
 {
     struct sock *sock = (struct sock *)obj;
     assert( obj->ops == &sock_ops );

@@ -96,7 +96,7 @@ struct thread_apc
 };
 
 static void dump_thread_apc( struct object *obj, int verbose );
-static int thread_apc_signaled( struct object *obj, struct thread *thread );
+static int thread_apc_signaled( struct object *obj, struct wait_queue_entry *entry );
 static void thread_apc_destroy( struct object *obj );
 static void clear_apc_queue( struct list *queue );
 
@@ -124,7 +124,7 @@ static const struct object_ops thread_apc_ops =
 /* thread operations */
 
 static void dump_thread( struct object *obj, int verbose );
-static int thread_signaled( struct object *obj, struct thread *thread );
+static int thread_signaled( struct object *obj, struct wait_queue_entry *entry );
 static unsigned int thread_map_access( struct object *obj, unsigned int access );
 static void thread_poll_event( struct fd *fd, int event );
 static void destroy_thread( struct object *obj );
@@ -321,7 +321,7 @@ static void dump_thread( struct object *obj, int verbose )
              thread->id, thread->unix_pid, thread->unix_tid, thread->state );
 }
 
-static int thread_signaled( struct object *obj, struct thread *thread )
+static int thread_signaled( struct object *obj, struct wait_queue_entry *entry )
 {
     struct thread *mythread = (struct thread *)obj;
     return (mythread->state == TERMINATED);
@@ -344,7 +344,7 @@ static void dump_thread_apc( struct object *obj, int verbose )
     fprintf( stderr, "APC owner=%p type=%u\n", apc->owner, apc->call.type );
 }
 
-static int thread_apc_signaled( struct object *obj, struct thread *thread )
+static int thread_apc_signaled( struct object *obj, struct wait_queue_entry *entry )
 {
     struct thread_apc *apc = (struct thread_apc *)obj;
     return apc->executed;
@@ -635,12 +635,12 @@ static int check_wait( struct thread *thread )
         /* Note: we must check them all anyway, as some objects may
          * want to do something when signaled, even if others are not */
         for (i = 0, entry = wait->queues; i < wait->count; i++, entry++)
-            not_ok |= !entry->obj->ops->signaled( entry->obj, thread );
+            not_ok |= !entry->obj->ops->signaled( entry->obj, entry );
         if (not_ok) goto other_checks;
         /* Wait satisfied: tell it to all objects */
         signaled = 0;
         for (i = 0, entry = wait->queues; i < wait->count; i++, entry++)
-            if (entry->obj->ops->satisfied( entry->obj, thread ))
+            if (entry->obj->ops->satisfied( entry->obj, entry ))
                 signaled = STATUS_ABANDONED_WAIT_0;
         return signaled;
     }
@@ -648,10 +648,10 @@ static int check_wait( struct thread *thread )
     {
         for (i = 0, entry = wait->queues; i < wait->count; i++, entry++)
         {
-            if (!entry->obj->ops->signaled( entry->obj, thread )) continue;
+            if (!entry->obj->ops->signaled( entry->obj, entry )) continue;
             /* Wait satisfied: tell it to the object */
             signaled = i;
-            if (entry->obj->ops->satisfied( entry->obj, thread ))
+            if (entry->obj->ops->satisfied( entry->obj, entry ))
                 signaled = i + STATUS_ABANDONED_WAIT_0;
             return signaled;
         }

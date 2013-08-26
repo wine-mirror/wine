@@ -52,7 +52,7 @@ struct ioctl_call
 };
 
 static void ioctl_call_dump( struct object *obj, int verbose );
-static int ioctl_call_signaled( struct object *obj, struct thread *thread );
+static int ioctl_call_signaled( struct object *obj, struct wait_queue_entry *entry );
 static void ioctl_call_destroy( struct object *obj );
 
 static const struct object_ops ioctl_call_ops =
@@ -84,7 +84,7 @@ struct device_manager
 };
 
 static void device_manager_dump( struct object *obj, int verbose );
-static int device_manager_signaled( struct object *obj, struct thread *thread );
+static int device_manager_signaled( struct object *obj, struct wait_queue_entry *entry );
 static void device_manager_destroy( struct object *obj );
 
 static const struct object_ops device_manager_ops =
@@ -167,7 +167,7 @@ static void ioctl_call_dump( struct object *obj, int verbose )
     fprintf( stderr, "Ioctl call code=%08x device=%p\n", ioctl->code, ioctl->device );
 }
 
-static int ioctl_call_signaled( struct object *obj, struct thread *thread )
+static int ioctl_call_signaled( struct object *obj, struct wait_queue_entry *entry )
 {
     struct ioctl_call *ioctl = (struct ioctl_call *)obj;
 
@@ -394,7 +394,7 @@ static void device_manager_dump( struct object *obj, int verbose )
     fprintf( stderr, "Device manager\n" );
 }
 
-static int device_manager_signaled( struct object *obj, struct thread *thread )
+static int device_manager_signaled( struct object *obj, struct wait_queue_entry *entry )
 {
     struct device_manager *manager = (struct device_manager *)obj;
 
