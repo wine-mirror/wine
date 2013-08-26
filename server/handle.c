@@ -235,12 +235,12 @@ static obj_handle_t alloc_entry( struct handle_table *table, void *obj, unsigned
 }
 
 /* allocate a handle for an object, incrementing its refcount */
-/* return the handle, or 0 on error */
-obj_handle_t alloc_handle_no_access_check( struct process *process, void *ptr, unsigned int access, unsigned int attr )
+static obj_handle_t alloc_handle_entry( struct process *process, void *ptr,
+                                        unsigned int access, unsigned int attr )
 {
     struct object *obj = ptr;
 
-    access &= ~RESERVED_ALL;
+    assert( !(access & RESERVED_ALL) );
     if (attr & OBJ_INHERIT) access |= RESERVED_INHERIT;
     if (!process->handles)
     {
@@ -250,15 +250,24 @@ obj_handle_t alloc_handle_no_access_check( struct process *process, void *ptr, u
     return alloc_entry( process->handles, obj, access );
 }
 
+/* allocate a handle for an object, incrementing its refcount */
+/* return the handle, or 0 on error */
+obj_handle_t alloc_handle_no_access_check( struct process *process, void *ptr, unsigned int access, unsigned int attr )
+{
+    struct object *obj = ptr;
+    access = obj->ops->map_access( obj, access ) & ~RESERVED_ALL;
+    return alloc_handle_entry( process, ptr, access, attr );
+}
+
 /* allocate a handle for an object, checking the dacl allows the process to */
 /* access it and incrementing its refcount */
 /* return the handle, or 0 on error */
 obj_handle_t alloc_handle( struct process *process, void *ptr, unsigned int access, unsigned int attr )
 {
     struct object *obj = ptr;
-    access = obj->ops->map_access( obj, access );
+    access = obj->ops->map_access( obj, access ) & ~RESERVED_ALL;
     if (access && !check_object_access( obj, &access )) return 0;
-    return alloc_handle_no_access_check( process, ptr, access, attr );
+    return alloc_handle_entry( process, ptr, access, attr );
 }
 
 /* allocate a global handle for an object, incrementing its refcount */
@@ -539,7 +548,7 @@ obj_handle_t duplicate_handle( struct process *src, obj_handle_t src_handle, str
             res = src_handle;
         }
         else
-            res = alloc_handle_no_access_check( dst, obj, access, attr );
+            res = alloc_handle_entry( dst, obj, access, attr );
     }
 
     release_object( obj );
