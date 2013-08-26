@@ -317,8 +317,8 @@ static ULONG WINAPI rset_Release(IRowset *iface)
 static HRESULT WINAPI rset_AddRefRows(IRowset *iface, DBCOUNTITEM cRows,
     const HROW rghRows[], DBREFCOUNT rgRefCounts[], DBROWSTATUS rgRowStatus[])
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    trace("AddRefRows: %ld\n", rghRows[0]);
+    return S_OK;
 }
 
 static HRESULT WINAPI rset_GetData(IRowset *iface, HROW hRow, HACCESSOR hAccessor, void *pData)
@@ -337,8 +337,7 @@ static HRESULT WINAPI rset_GetNextRows(IRowset *iface, HCHAPTER hReserved, DBROW
 static HRESULT WINAPI rset_ReleaseRows(IRowset *iface, DBCOUNTITEM cRows, const HROW rghRows[], DBROWOPTIONS rgRowOptions[],
     DBREFCOUNT rgRefCounts[], DBROWSTATUS rgRowStatus[])
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI rset_RestartPosition(IRowset *iface, HCHAPTER hReserved)
@@ -375,14 +374,12 @@ static ULONG WINAPI chrset_Release(IChapteredRowset *iface)
 
 static HRESULT WINAPI chrset_AddRefChapter(IChapteredRowset *iface, HCHAPTER chapter, DBREFCOUNT *refcount)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI chrset_ReleaseChapter(IChapteredRowset *iface, HCHAPTER chapter, DBREFCOUNT *refcount)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static const IChapteredRowsetVtbl chrset_vtbl = {
@@ -528,6 +525,28 @@ static void test_rowpos_clearrowposition(void)
     IRowPosition_Release(rowpos);
 }
 
+static void test_rowpos_setrowposition(void)
+{
+    IRowPosition *rowpos;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_OLEDB_ROWPOSITIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IRowPosition, (void**)&rowpos);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    init_test_rset();
+    hr = IRowPosition_Initialize(rowpos, (IUnknown*)&test_rset.IRowset_iface);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = IRowPosition_ClearRowPosition(rowpos);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    init_onchange_sink(rowpos);
+    hr = IRowPosition_SetRowPosition(rowpos, 0x123, 0x456, DBPOSITION_OK);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    IRowPosition_Release(rowpos);
+}
+
 START_TEST(database)
 {
     OleInitialize(NULL);
@@ -540,6 +559,7 @@ START_TEST(database)
     test_rowposition();
     test_rowpos_initialize();
     test_rowpos_clearrowposition();
+    test_rowpos_setrowposition();
 
     OleUninitialize();
 }

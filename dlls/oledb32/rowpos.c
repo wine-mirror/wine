@@ -47,9 +47,11 @@ struct rowpos
     LONG ref;
 
     IRowset *rowset;
+    IChapteredRowset *chrst;
     HROW row;
     HCHAPTER chapter;
     DBPOSITIONFLAGS flags;
+    BOOL cleared;
     rowpos_cp cp;
 };
 
@@ -72,13 +74,14 @@ static inline rowpos_cp *impl_from_IConnectionPoint(IConnectionPoint *iface)
 
 static HRESULT rowpos_fireevent(rowpos *rp, DBREASON reason, DBEVENTPHASE phase)
 {
+    BOOL cant_deny = phase == DBEVENTPHASE_FAILEDTODO || phase == DBEVENTPHASE_SYNCHAFTER;
     HRESULT hr = S_OK;
     DWORD i;
 
     for (i = 0; i < rp->cp.sinks_size; i++)
         if (rp->cp.sinks[i])
         {
-            hr = IRowPositionChange_OnRowPositionChange(rp->cp.sinks[i], reason, phase, phase == DBEVENTPHASE_FAILEDTODO);
+            hr = IRowPositionChange_OnRowPositionChange(rp->cp.sinks[i], reason, phase, cant_deny);
             if (phase == DBEVENTPHASE_FAILEDTODO) return DB_E_CANCELED;
             if (hr != S_OK) return hr;
         }
@@ -88,6 +91,14 @@ static HRESULT rowpos_fireevent(rowpos *rp, DBREASON reason, DBEVENTPHASE phase)
 
 static void rowpos_clearposition(rowpos *rp)
 {
+    if (!rp->cleared)
+    {
+        if (rp->rowset)
+            IRowset_ReleaseRows(rp->rowset, 1, &rp->row, NULL, NULL, NULL);
+        if (rp->chrst)
+            IChapteredRowset_ReleaseChapter(rp->chrst, rp->chapter, NULL);
+    }
+
     rp->row = DB_NULL_HROW;
     rp->chapter = DB_NULL_HCHAPTER;
     rp->flags = DBPOSITION_NOROW;
@@ -138,6 +149,7 @@ static ULONG WINAPI rowpos_Release(IRowPosition* iface)
     if (ref == 0)
     {
         if (This->rowset) IRowset_Release(This->rowset);
+        if (This->chrst) IChapteredRowset_Release(This->chrst);
         rowposchange_cp_destroy(&This->cp);
         heap_free(This);
     }
@@ -163,6 +175,7 @@ static HRESULT WINAPI rowpos_ClearRowPosition(IRowPosition* iface)
         return rowpos_fireevent(This, DBREASON_ROWPOSITION_CLEARED, DBEVENTPHASE_FAILEDTODO);
 
     rowpos_clearposition(This);
+    This->cleared = TRUE;
     return S_OK;
 }
 
@@ -195,20 +208,63 @@ static HRESULT WINAPI rowpos_GetRowset(IRowPosition *iface, REFIID riid, IUnknow
 static HRESULT WINAPI rowpos_Initialize(IRowPosition *iface, IUnknown *rowset)
 {
     rowpos *This = impl_from_IRowPosition(iface);
+    HRESULT hr;
 
     TRACE("(%p)->(%p)\n", This, rowset);
 
     if (This->rowset) return DB_E_ALREADYINITIALIZED;
 
-    return IUnknown_QueryInterface(rowset, &IID_IRowset, (void**)&This->rowset);
+    hr = IUnknown_QueryInterface(rowset, &IID_IRowset, (void**)&This->rowset);
+    if (FAILED(hr)) return hr;
+
+    /* this one is optional */
+    IUnknown_QueryInterface(rowset, &IID_IChapteredRowset, (void**)&This->chrst);
+    return S_OK;
 }
 
 static HRESULT WINAPI rowpos_SetRowPosition(IRowPosition *iface, HCHAPTER chapter,
     HROW row, DBPOSITIONFLAGS flags)
 {
     rowpos *This = impl_from_IRowPosition(iface);
-    FIXME("(%p)->(%lx %lx %d): stub\n", This, chapter, row, flags);
-    return E_NOTIMPL;
+    DBREASON reason;
+    HRESULT hr;
+
+    TRACE("(%p)->(%lx %lx %d)\n", This, chapter, row, flags);
+
+    if (!This->cleared) return E_UNEXPECTED;
+
+    hr = IRowset_AddRefRows(This->rowset, 1, &row, NULL, NULL);
+    if (FAILED(hr)) return hr;
+
+    if (This->chrst)
+    {
+        hr = IChapteredRowset_AddRefChapter(This->chrst, chapter, NULL);
+        if (FAILED(hr))
+        {
+            IRowset_ReleaseRows(This->rowset, 1, &row, NULL, NULL, NULL);
+            return hr;
+        }
+    }
+
+    reason = This->chrst ? DBREASON_ROWPOSITION_CHAPTERCHANGED : DBREASON_ROWPOSITION_CHANGED;
+    hr = rowpos_fireevent(This, reason, DBEVENTPHASE_SYNCHAFTER);
+    if (hr != S_OK)
+    {
+        IRowset_ReleaseRows(This->rowset, 1, &row, NULL, NULL, NULL);
+        if (This->chrst)
+            IChapteredRowset_ReleaseChapter(This->chrst, chapter, NULL);
+        return rowpos_fireevent(This, reason, DBEVENTPHASE_FAILEDTODO);
+    }
+    else
+        rowpos_fireevent(This, reason, DBEVENTPHASE_DIDEVENT);
+
+    /* previously set chapter and row are released with ClearRowPosition() */
+    This->chapter = chapter;
+    This->row = row;
+    This->flags = flags;
+    This->cleared = FALSE;
+
+    return S_OK;
 }
 
 static const struct IRowPositionVtbl rowpos_vtbl =
@@ -434,6 +490,8 @@ HRESULT create_oledb_rowpos(IUnknown *outer, void **obj)
     This->IConnectionPointContainer_iface.lpVtbl = &rowpos_cpc_vtbl;
     This->ref = 1;
     This->rowset = NULL;
+    This->chrst = NULL;
+    This->cleared = FALSE;
     rowpos_clearposition(This);
     rowposchange_cp_init(&This->cp, This);
 
