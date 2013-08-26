@@ -184,7 +184,7 @@ static void test_D3DXLoadVolumeFromMemory(IDirect3DDevice9 *device)
     set_box(&src_box, 0, 0, 4, 1, 0, 4);
     set_box(&dst_box, 0, 0, 4, 1, 0, 4);
     hr = D3DXLoadVolumeFromMemory(volume, NULL, &dst_box, pixels, D3DFMT_A8R8G8B8, 16, 16, NULL, &src_box, D3DX_DEFAULT, 0);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "D3DXLoadVolumeFromMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadVolumeFromMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
 
     IDirect3DVolume9_Release(volume);
     IDirect3DVolumeTexture9_Release(volume_texture);

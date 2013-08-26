@@ -373,6 +373,13 @@ HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
     TRACE("volume %p, map_desc %p, box %p, flags %#x.\n",
             volume, map_desc, box, flags);
 
+    if (!(volume->resource.access_flags & WINED3D_RESOURCE_ACCESS_CPU))
+    {
+        WARN("Volume %p is not CPU accessible.\n", volume);
+        map_desc->data = NULL;
+        return WINED3DERR_INVALIDCALL;
+    }
+
     if (!volume_prepare_system_memory(volume))
     {
         WARN("Out of memory.\n");
