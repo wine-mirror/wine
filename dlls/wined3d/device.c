@@ -1285,7 +1285,7 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
     if (device->logo_surface)
         wined3d_surface_decref(device->logo_surface);
 
-    stateblock_unbind_resources(device->stateBlock);
+    state_unbind_resources(&device->stateBlock->state);
 
     /* Unload resources */
     LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &device->resources, struct wined3d_resource, resource_list_entry)
@@ -4917,7 +4917,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     }
 
     if (reset_state)
-        stateblock_unbind_resources(device->stateBlock);
+        state_unbind_resources(&device->stateBlock->state);
 
     if (device->fb.render_targets)
     {

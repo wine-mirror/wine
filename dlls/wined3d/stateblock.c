@@ -467,9 +467,8 @@ ULONG CDECL wined3d_stateblock_incref(struct wined3d_stateblock *stateblock)
     return refcount;
 }
 
-void stateblock_unbind_resources(struct wined3d_stateblock *stateblock)
+void state_unbind_resources(struct wined3d_state *state)
 {
-    struct wined3d_state *state = &stateblock->state;
     struct wined3d_vertex_declaration *decl;
     struct wined3d_sampler *sampler;
     struct wined3d_texture *texture;
@@ -599,7 +598,7 @@ ULONG CDECL wined3d_stateblock_decref(struct wined3d_stateblock *stateblock)
     {
         int counter;
 
-        stateblock_unbind_resources(stateblock);
+        state_unbind_resources(&stateblock->state);
 
         for (counter = 0; counter < LIGHTMAP_SIZE; ++counter)
         {
