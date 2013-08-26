@@ -47,8 +47,8 @@ struct mutex
 
 static void mutex_dump( struct object *obj, int verbose );
 static struct object_type *mutex_get_type( struct object *obj );
-static int mutex_signaled( struct object *obj, struct thread *thread );
-static int mutex_satisfied( struct object *obj, struct thread *thread );
+static int mutex_signaled( struct object *obj, struct wait_queue_entry *entry );
+static int mutex_satisfied( struct object *obj, struct wait_queue_entry *entry );
 static unsigned int mutex_map_access( struct object *obj, unsigned int access );
 static void mutex_destroy( struct object *obj );
 static int mutex_signal( struct object *obj, unsigned int access );
@@ -74,6 +74,29 @@ static const struct object_ops mutex_ops =
 };
 
 
+/* grab a mutex for a given thread */
+static void do_grab( struct mutex *mutex, struct thread *thread )
+{
+    assert( !mutex->count || (mutex->owner == thread) );
+
+    if (!mutex->count++)  /* FIXME: avoid wrap-around */
+    {
+        assert( !mutex->owner );
+        mutex->owner = thread;
+        list_add_head( &thread->mutex_list, &mutex->entry );
+    }
+}
+
+/* release a mutex once the recursion count is 0 */
+static void do_release( struct mutex *mutex )
+{
+    assert( !mutex->count );
+    /* remove the mutex from the thread list of owned mutexes */
+    list_remove( &mutex->entry );
+    mutex->owner = NULL;
+    wake_up( &mutex->obj, 0 );
+}
+
 static struct mutex *create_mutex( struct directory *root, const struct unicode_str *name,
                                    unsigned int attr, int owned, const struct security_descriptor *sd )
 {
@@ -87,7 +110,7 @@ static struct mutex *create_mutex( struct directory *root, const struct unicode_
             mutex->count = 0;
             mutex->owner = NULL;
             mutex->abandoned = 0;
-            if (owned) mutex_satisfied( &mutex->obj, current );
+            if (owned) do_grab( mutex, current );
             if (sd) default_set_sd( &mutex->obj, sd, OWNER_SECURITY_INFORMATION|
                                                      GROUP_SECURITY_INFORMATION|
                                                      DACL_SECURITY_INFORMATION|
@@ -95,16 +118,6 @@ static struct mutex *create_mutex( struct directory *root, const struct unicode_
         }
     }
     return mutex;
-}
-
-/* release a mutex once the recursion count is 0 */
-static void do_release( struct mutex *mutex )
-{
-    assert( !mutex->count );
-    /* remove the mutex from the thread list of owned mutexes */
-    list_remove( &mutex->entry );
-    mutex->owner = NULL;
-    wake_up( &mutex->obj, 0 );
 }
 
 void abandon_mutexes( struct thread *thread )
@@ -137,25 +150,20 @@ static struct object_type *mutex_get_type( struct object *obj )
     return get_object_type( &str );
 }
 
-static int mutex_signaled( struct object *obj, struct thread *thread )
+static int mutex_signaled( struct object *obj, struct wait_queue_entry *entry )
 {
     struct mutex *mutex = (struct mutex *)obj;
     assert( obj->ops == &mutex_ops );
-    return (!mutex->count || (mutex->owner == thread));
+    return (!mutex->count || (mutex->owner == get_wait_queue_thread( entry )));
 }
 
-static int mutex_satisfied( struct object *obj, struct thread *thread )
+static int mutex_satisfied( struct object *obj, struct wait_queue_entry *entry )
 {
     struct mutex *mutex = (struct mutex *)obj;
     assert( obj->ops == &mutex_ops );
-    assert( !mutex->count || (mutex->owner == thread) );
 
-    if (!mutex->count++)  /* FIXME: avoid wrap-around */
-    {
-        assert( !mutex->owner );
-        mutex->owner = thread;
-        list_add_head( &thread->mutex_list, &mutex->entry );
-    }
+    do_grab( mutex, get_wait_queue_thread( entry ));
+
     if (!mutex->abandoned) return 0;
     mutex->abandoned = 0;
     return 1;

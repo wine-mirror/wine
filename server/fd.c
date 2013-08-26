@@ -302,7 +302,7 @@ struct file_lock
 };
 
 static void file_lock_dump( struct object *obj, int verbose );
-static int file_lock_signaled( struct object *obj, struct thread *thread );
+static int file_lock_signaled( struct object *obj, struct wait_queue_entry *entry );
 
 static const struct object_ops file_lock_ops =
 {
@@ -1128,7 +1128,7 @@ static void file_lock_dump( struct object *obj, int verbose )
     fprintf( stderr, "\n" );
 }
 
-static int file_lock_signaled( struct object *obj, struct thread *thread )
+static int file_lock_signaled( struct object *obj, struct wait_queue_entry *entry )
 {
     struct file_lock *lock = (struct file_lock *)obj;
     /* lock is signaled if it has lost its owner */
@@ -1968,7 +1968,7 @@ int check_fd_events( struct fd *fd, int events )
 }
 
 /* default signaled() routine for objects that poll() on an fd */
-int default_fd_signaled( struct object *obj, struct thread *thread )
+int default_fd_signaled( struct object *obj, struct wait_queue_entry *entry )
 {
     struct fd *fd = get_obj_fd( obj );
     int ret = fd->signaled;

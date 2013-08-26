@@ -393,7 +393,7 @@ int no_add_queue( struct object *obj, struct wait_queue_entry *entry )
     return 0;
 }
 
-int no_satisfied( struct object *obj, struct thread *thread )
+int no_satisfied( struct object *obj, struct wait_queue_entry *entry )
 {
     return 0;  /* not abandoned */
 }

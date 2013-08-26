@@ -45,8 +45,8 @@ struct semaphore
 
 static void semaphore_dump( struct object *obj, int verbose );
 static struct object_type *semaphore_get_type( struct object *obj );
-static int semaphore_signaled( struct object *obj, struct thread *thread );
-static int semaphore_satisfied( struct object *obj, struct thread *thread );
+static int semaphore_signaled( struct object *obj, struct wait_queue_entry *entry );
+static int semaphore_satisfied( struct object *obj, struct wait_queue_entry *entry );
 static unsigned int semaphore_map_access( struct object *obj, unsigned int access );
 static int semaphore_signal( struct object *obj, unsigned int access );
 
@@ -136,14 +136,14 @@ static struct object_type *semaphore_get_type( struct object *obj )
     return get_object_type( &str );
 }
 
-static int semaphore_signaled( struct object *obj, struct thread *thread )
+static int semaphore_signaled( struct object *obj, struct wait_queue_entry *entry )
 {
     struct semaphore *sem = (struct semaphore *)obj;
     assert( obj->ops == &semaphore_ops );
     return (sem->count > 0);
 }
 
-static int semaphore_satisfied( struct object *obj, struct thread *thread )
+static int semaphore_satisfied( struct object *obj, struct wait_queue_entry *entry )
 {
     struct semaphore *sem = (struct semaphore *)obj;
     assert( obj->ops == &semaphore_ops );

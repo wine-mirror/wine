@@ -52,8 +52,8 @@ struct timer
 
 static void timer_dump( struct object *obj, int verbose );
 static struct object_type *timer_get_type( struct object *obj );
-static int timer_signaled( struct object *obj, struct thread *thread );
-static int timer_satisfied( struct object *obj, struct thread *thread );
+static int timer_signaled( struct object *obj, struct wait_queue_entry *entry );
+static int timer_satisfied( struct object *obj, struct wait_queue_entry *entry );
 static unsigned int timer_map_access( struct object *obj, unsigned int access );
 static void timer_destroy( struct object *obj );
 
@@ -194,14 +194,14 @@ static struct object_type *timer_get_type( struct object *obj )
     return get_object_type( &str );
 }
 
-static int timer_signaled( struct object *obj, struct thread *thread )
+static int timer_signaled( struct object *obj, struct wait_queue_entry *entry )
 {
     struct timer *timer = (struct timer *)obj;
     assert( obj->ops == &timer_ops );
     return timer->signaled;
 }
 
-static int timer_satisfied( struct object *obj, struct thread *thread )
+static int timer_satisfied( struct object *obj, struct wait_queue_entry *entry )
 {
     struct timer *timer = (struct timer *)obj;
     assert( obj->ops == &timer_ops );

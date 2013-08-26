@@ -45,8 +45,8 @@ struct event
 
 static void event_dump( struct object *obj, int verbose );
 static struct object_type *event_get_type( struct object *obj );
-static int event_signaled( struct object *obj, struct thread *thread );
-static int event_satisfied( struct object *obj, struct thread *thread );
+static int event_signaled( struct object *obj, struct wait_queue_entry *entry );
+static int event_satisfied( struct object *obj, struct wait_queue_entry *entry );
 static unsigned int event_map_access( struct object *obj, unsigned int access );
 static int event_signal( struct object *obj, unsigned int access);
 
@@ -78,7 +78,7 @@ struct keyed_event
 
 static void keyed_event_dump( struct object *obj, int verbose );
 static struct object_type *keyed_event_get_type( struct object *obj );
-static int keyed_event_signaled( struct object *obj, struct thread *thread );
+static int keyed_event_signaled( struct object *obj, struct wait_queue_entry *entry );
 static unsigned int keyed_event_map_access( struct object *obj, unsigned int access );
 
 static const struct object_ops keyed_event_ops =
@@ -170,14 +170,14 @@ static struct object_type *event_get_type( struct object *obj )
     return get_object_type( &str );
 }
 
-static int event_signaled( struct object *obj, struct thread *thread )
+static int event_signaled( struct object *obj, struct wait_queue_entry *entry )
 {
     struct event *event = (struct event *)obj;
     assert( obj->ops == &event_ops );
     return event->signaled;
 }
 
-static int event_satisfied( struct object *obj, struct thread *thread )
+static int event_satisfied( struct object *obj, struct wait_queue_entry *entry )
 {
     struct event *event = (struct event *)obj;
     assert( obj->ops == &event_ops );
@@ -244,7 +244,7 @@ static struct object_type *keyed_event_get_type( struct object *obj )
     return get_object_type( &str );
 }
 
-static int keyed_event_signaled( struct object *obj, struct thread *thread )
+static int keyed_event_signaled( struct object *obj, struct wait_queue_entry *entry )
 {
     assert( obj->ops == &keyed_event_ops );
     return 1;

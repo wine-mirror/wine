@@ -177,7 +177,7 @@ static const struct fd_ops pipe_server_fd_ops =
 
 /* client end functions */
 static void pipe_client_dump( struct object *obj, int verbose );
-static int pipe_client_signaled( struct object *obj, struct thread *thread );
+static int pipe_client_signaled( struct object *obj, struct wait_queue_entry *entry );
 static struct fd *pipe_client_get_fd( struct object *obj );
 static void pipe_client_destroy( struct object *obj );
 static void pipe_client_flush( struct fd *fd, struct event **event );
@@ -291,7 +291,7 @@ static void pipe_client_dump( struct object *obj, int verbose )
     fprintf( stderr, "Named pipe client server=%p\n", client->server );
 }
 
-static int pipe_client_signaled( struct object *obj, struct thread *thread )
+static int pipe_client_signaled( struct object *obj, struct wait_queue_entry *entry )
 {
     struct pipe_client *client = (struct pipe_client *) obj;
 
