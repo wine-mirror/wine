@@ -922,56 +922,6 @@ void CDECL wined3d_buffer_preload(struct wined3d_buffer *buffer)
     context_release(context);
 }
 
-static DWORD buffer_sanitize_flags(const struct wined3d_buffer *buffer, DWORD flags)
-{
-    /* Not all flags make sense together, but Windows never returns an error.
-     * Catch the cases that could cause issues. */
-    if (flags & WINED3D_MAP_READONLY)
-    {
-        if (flags & WINED3D_MAP_DISCARD)
-        {
-            WARN("WINED3D_MAP_READONLY combined with WINED3D_MAP_DISCARD, ignoring flags.\n");
-            return 0;
-        }
-        if (flags & WINED3D_MAP_NOOVERWRITE)
-        {
-            WARN("WINED3D_MAP_READONLY combined with WINED3D_MAP_NOOVERWRITE, ignoring flags.\n");
-            return 0;
-        }
-    }
-    else if ((flags & (WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE))
-            == (WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE))
-    {
-        WARN("WINED3D_MAP_DISCARD and WINED3D_MAP_NOOVERWRITE used together, ignoring.\n");
-        return 0;
-    }
-    else if (flags & (WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE)
-            && !(buffer->resource.usage & WINED3DUSAGE_DYNAMIC))
-    {
-        WARN("DISCARD or NOOVERWRITE map on non-dynamic buffer, ignoring.\n");
-        return 0;
-    }
-
-    return flags;
-}
-
-static GLbitfield buffer_gl_map_flags(DWORD d3d_flags)
-{
-    GLbitfield ret = 0;
-
-    if (!(d3d_flags & WINED3D_MAP_READONLY))
-        ret |= GL_MAP_WRITE_BIT | GL_MAP_FLUSH_EXPLICIT_BIT;
-    if (!(d3d_flags & (WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE)))
-        ret |= GL_MAP_READ_BIT;
-
-    if (d3d_flags & WINED3D_MAP_DISCARD)
-        ret |= GL_MAP_INVALIDATE_BUFFER_BIT;
-    if (d3d_flags & WINED3D_MAP_NOOVERWRITE)
-        ret |= GL_MAP_UNSYNCHRONIZED_BIT;
-
-    return ret;
-}
-
 struct wined3d_resource * CDECL wined3d_buffer_get_resource(struct wined3d_buffer *buffer)
 {
     TRACE("buffer %p.\n", buffer);
@@ -986,7 +936,7 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
 
     TRACE("buffer %p, offset %u, size %u, data %p, flags %#x\n", buffer, offset, size, data, flags);
 
-    flags = buffer_sanitize_flags(buffer, flags);
+    flags = wined3d_resource_sanitize_map_flags(&buffer->resource, flags);
     count = ++buffer->resource.map_count;
 
     if (buffer->buffer_object)
@@ -1017,7 +967,7 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
 
                 if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
                 {
-                    GLbitfield mapflags = buffer_gl_map_flags(flags);
+                    GLbitfield mapflags = wined3d_resource_gl_map_flags(flags);
                     buffer->resource.allocatedMemory = GL_EXTCALL(glMapBufferRange(buffer->buffer_type_hint,
                             0, buffer->resource.size, mapflags));
                     checkGLcall("glMapBufferRange");

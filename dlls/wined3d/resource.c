@@ -358,3 +358,53 @@ void wined3d_resource_free_sysmem(void *mem)
 
     HeapFree(GetProcessHeap(), 0, *(--p));
 }
+
+DWORD wined3d_resource_sanitize_map_flags(const struct wined3d_resource *resource, DWORD flags)
+{
+    /* Not all flags make sense together, but Windows never returns an error.
+     * Catch the cases that could cause issues. */
+    if (flags & WINED3D_MAP_READONLY)
+    {
+        if (flags & WINED3D_MAP_DISCARD)
+        {
+            WARN("WINED3D_MAP_READONLY combined with WINED3D_MAP_DISCARD, ignoring flags.\n");
+            return 0;
+        }
+        if (flags & WINED3D_MAP_NOOVERWRITE)
+        {
+            WARN("WINED3D_MAP_READONLY combined with WINED3D_MAP_NOOVERWRITE, ignoring flags.\n");
+            return 0;
+        }
+    }
+    else if ((flags & (WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE))
+            == (WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE))
+    {
+        WARN("WINED3D_MAP_DISCARD and WINED3D_MAP_NOOVERWRITE used together, ignoring.\n");
+        return 0;
+    }
+    else if (flags & (WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE)
+            && !(resource->usage & WINED3DUSAGE_DYNAMIC))
+    {
+        WARN("DISCARD or NOOVERWRITE map on non-dynamic buffer, ignoring.\n");
+        return 0;
+    }
+
+    return flags;
+}
+
+GLbitfield wined3d_resource_gl_map_flags(DWORD d3d_flags)
+{
+    GLbitfield ret = 0;
+
+    if (!(d3d_flags & WINED3D_MAP_READONLY))
+        ret |= GL_MAP_WRITE_BIT | GL_MAP_FLUSH_EXPLICIT_BIT;
+    if (!(d3d_flags & (WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE)))
+        ret |= GL_MAP_READ_BIT;
+
+    if (d3d_flags & WINED3D_MAP_DISCARD)
+        ret |= GL_MAP_INVALIDATE_BUFFER_BIT;
+    if (d3d_flags & WINED3D_MAP_NOOVERWRITE)
+        ret |= GL_MAP_UNSYNCHRONIZED_BIT;
+
+    return ret;
+}

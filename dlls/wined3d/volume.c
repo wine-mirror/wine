@@ -469,6 +469,7 @@ HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
         map_desc->data = NULL;
         return WINED3DERR_INVALIDCALL;
     }
+    flags = wined3d_resource_sanitize_map_flags(&volume->resource, flags);
 
     if (volume->flags & WINED3D_VFLAG_PBO)
     {
@@ -476,10 +477,25 @@ HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
         gl_info = context->gl_info;
 
         wined3d_volume_prepare_pbo(volume, context);
-        wined3d_volume_load_location(volume, context, WINED3D_LOCATION_BUFFER);
+        if (flags & WINED3D_MAP_DISCARD)
+            wined3d_volume_validate_location(volume, WINED3D_LOCATION_BUFFER);
+        else
+            wined3d_volume_load_location(volume, context, WINED3D_LOCATION_BUFFER);
 
         GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, volume->pbo));
-        base_memory = GL_EXTCALL(glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
+
+        if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
+        {
+            GLbitfield mapflags = wined3d_resource_gl_map_flags(flags);
+            mapflags &= ~GL_MAP_FLUSH_EXPLICIT_BIT;
+            base_memory = GL_EXTCALL(glMapBufferRange(GL_PIXEL_UNPACK_BUFFER_ARB,
+                    0, volume->resource.size, mapflags));
+        }
+        else
+        {
+            base_memory = GL_EXTCALL(glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
+        }
+
         GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
         checkGLcall("Map PBO");
 
@@ -487,14 +503,19 @@ HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
     }
     else
     {
-        if (!(volume->locations & WINED3D_LOCATION_SYSMEM))
+        if (!volume_prepare_system_memory(volume))
         {
-            if (!volume_prepare_system_memory(volume))
-            {
-                WARN("Out of memory.\n");
-                map_desc->data = NULL;
-                return E_OUTOFMEMORY;
-            }
+            WARN("Out of memory.\n");
+            map_desc->data = NULL;
+            return E_OUTOFMEMORY;
+        }
+
+        if (flags & WINED3D_MAP_DISCARD)
+        {
+            wined3d_volume_validate_location(volume, WINED3D_LOCATION_SYSMEM);
+        }
+        else if (!(volume->locations & WINED3D_LOCATION_SYSMEM))
+        {
             context = context_acquire(device, NULL);
             wined3d_volume_load_location(volume, context, WINED3D_LOCATION_SYSMEM);
             context_release(context);
