@@ -1907,6 +1907,16 @@ static void test_stat(void)
     }
     else
         skip("mkdir failed with errno %d\n", errno);
+
+    errno = 0xdeadbeef;
+    ret = stat("c:", &buf);
+    ok(ret == -1, "stat returned %d\n", ret);
+    ok(errno == ENOENT, "errno = %d\n", errno);
+
+    ret = stat("c:/", &buf);
+    ok(!ret, "stat returned %d\n", ret);
+    ok(buf.st_dev == 2, "st_dev = %d\n", buf.st_dev);
+    ok(buf.st_rdev == 2, "st_rdev = %d\n", buf.st_rdev);
 }
 
 static const char* pipe_string="Hello world";
