@@ -390,15 +390,34 @@ NTSTATUS WINAPI NtPulseEvent( HANDLE handle, PULONG PulseCount )
 /******************************************************************************
  *  NtQueryEvent (NTDLL.@)
  */
-NTSTATUS WINAPI NtQueryEvent (
-	IN  HANDLE EventHandle,
-	IN  EVENT_INFORMATION_CLASS EventInformationClass,
-	OUT PVOID EventInformation,
-	IN  ULONG EventInformationLength,
-	OUT PULONG  ReturnLength)
+NTSTATUS WINAPI NtQueryEvent( HANDLE handle, EVENT_INFORMATION_CLASS class,
+                              void *info, ULONG len, ULONG *ret_len )
 {
-	FIXME("(%p)\n", EventHandle);
-	return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS ret;
+    EVENT_BASIC_INFORMATION *out = info;
+
+    if (class != EventBasicInformation)
+    {
+        FIXME("(%p, %d, %d) Unknown class\n",
+              handle, class, len);
+        return STATUS_INVALID_INFO_CLASS;
+    }
+
+    if (len != sizeof(EVENT_BASIC_INFORMATION)) return STATUS_INFO_LENGTH_MISMATCH;
+
+    SERVER_START_REQ( query_event )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        if (!(ret = wine_server_call( req )))
+        {
+            out->EventType  = reply->manual_reset ? NotificationEvent : SynchronizationEvent;
+            out->EventState = reply->state;
+            if (ret_len) *ret_len = sizeof(EVENT_BASIC_INFORMATION);
+        }
+    }
+    SERVER_END_REQ;
+
+    return ret;
 }
 
 /*

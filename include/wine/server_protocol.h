@@ -1103,6 +1103,17 @@ struct event_op_reply
 };
 enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 
+struct query_event_request
+{
+    struct request_header __header;
+    obj_handle_t  handle;
+};
+struct query_event_reply
+{
+    struct reply_header __header;
+    int          manual_reset;
+    int          state;
+};
 
 
 struct open_event_request
@@ -5017,6 +5028,7 @@ enum request
     REQ_select,
     REQ_create_event,
     REQ_event_op,
+    REQ_query_event,
     REQ_open_event,
     REQ_create_keyed_event,
     REQ_open_keyed_event,
@@ -5275,6 +5287,7 @@ union generic_request
     struct select_request select_request;
     struct create_event_request create_event_request;
     struct event_op_request event_op_request;
+    struct query_event_request query_event_request;
     struct open_event_request open_event_request;
     struct create_keyed_event_request create_keyed_event_request;
     struct open_keyed_event_request open_keyed_event_request;
@@ -5531,6 +5544,7 @@ union generic_reply
     struct select_reply select_reply;
     struct create_event_reply create_event_reply;
     struct event_op_reply event_op_reply;
+    struct query_event_reply query_event_reply;
     struct open_event_reply open_event_reply;
     struct create_keyed_event_reply create_keyed_event_reply;
     struct open_keyed_event_reply open_keyed_event_reply;
@@ -5757,6 +5771,6 @@ union generic_reply
     struct set_suspend_context_reply set_suspend_context_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 442
+#define SERVER_PROTOCOL_VERSION 443
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

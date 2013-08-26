@@ -335,6 +335,19 @@ DECL_HANDLER(event_op)
     release_object( event );
 }
 
+/* return details about the event */
+DECL_HANDLER(query_event)
+{
+    struct event *event;
+
+    if (!(event = get_event_obj( current->process, req->handle, EVENT_QUERY_STATE ))) return;
+
+    reply->manual_reset = event->manual_reset;
+    reply->state = event->signaled;
+
+    release_object( event );
+}
+
 /* create a keyed event */
 DECL_HANDLER(create_keyed_event)
 {

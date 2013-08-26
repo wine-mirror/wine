@@ -133,6 +133,7 @@ DECL_HANDLER(open_thread);
 DECL_HANDLER(select);
 DECL_HANDLER(create_event);
 DECL_HANDLER(event_op);
+DECL_HANDLER(query_event);
 DECL_HANDLER(open_event);
 DECL_HANDLER(create_keyed_event);
 DECL_HANDLER(open_keyed_event);
@@ -390,6 +391,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_select,
     (req_handler)req_create_event,
     (req_handler)req_event_op,
+    (req_handler)req_query_event,
     (req_handler)req_open_event,
     (req_handler)req_create_keyed_event,
     (req_handler)req_open_keyed_event,
@@ -832,6 +834,11 @@ C_ASSERT( sizeof(struct create_event_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct event_op_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct event_op_request, op) == 16 );
 C_ASSERT( sizeof(struct event_op_request) == 24 );
+C_ASSERT( FIELD_OFFSET(struct query_event_request, handle) == 12 );
+C_ASSERT( sizeof(struct query_event_request) == 16 );
+C_ASSERT( FIELD_OFFSET(struct query_event_reply, manual_reset) == 8 );
+C_ASSERT( FIELD_OFFSET(struct query_event_reply, state) == 12 );
+C_ASSERT( sizeof(struct query_event_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct open_event_request, access) == 12 );
 C_ASSERT( FIELD_OFFSET(struct open_event_request, attributes) == 16 );
 C_ASSERT( FIELD_OFFSET(struct open_event_request, rootdir) == 20 );

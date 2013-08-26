@@ -1391,6 +1391,17 @@ static void dump_event_op_request( const struct event_op_request *req )
     fprintf( stderr, ", op=%d", req->op );
 }
 
+static void dump_query_event_request( const struct query_event_request *req )
+{
+    fprintf( stderr, " handle=%04x", req->handle );
+}
+
+static void dump_query_event_reply( const struct query_event_reply *req )
+{
+    fprintf( stderr, " manual_reset=%d", req->manual_reset );
+    fprintf( stderr, ", state=%d", req->state );
+}
+
 static void dump_open_event_request( const struct open_event_request *req )
 {
     fprintf( stderr, " access=%08x", req->access );
@@ -4032,6 +4043,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_select_request,
     (dump_func)dump_create_event_request,
     (dump_func)dump_event_op_request,
+    (dump_func)dump_query_event_request,
     (dump_func)dump_open_event_request,
     (dump_func)dump_create_keyed_event_request,
     (dump_func)dump_open_keyed_event_request,
@@ -4286,6 +4298,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_select_reply,
     (dump_func)dump_create_event_reply,
     NULL,
+    (dump_func)dump_query_event_reply,
     (dump_func)dump_open_event_reply,
     (dump_func)dump_create_keyed_event_reply,
     (dump_func)dump_open_keyed_event_reply,
@@ -4540,6 +4553,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "select",
     "create_event",
     "event_op",
+    "query_event",
     "open_event",
     "create_keyed_event",
     "open_keyed_event",

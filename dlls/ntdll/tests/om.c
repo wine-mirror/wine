@@ -30,6 +30,9 @@ static NTSTATUS (WINAPI *pRtlCreateUnicodeStringFromAsciiz)(PUNICODE_STRING, LPC
 static VOID     (WINAPI *pRtlInitUnicodeString)( PUNICODE_STRING, LPCWSTR );
 static VOID     (WINAPI *pRtlFreeUnicodeString)(PUNICODE_STRING);
 static NTSTATUS (WINAPI *pNtCreateEvent) ( PHANDLE, ACCESS_MASK, const POBJECT_ATTRIBUTES, BOOLEAN, BOOLEAN);
+static NTSTATUS (WINAPI *pNtOpenEvent)   ( PHANDLE, ACCESS_MASK, const POBJECT_ATTRIBUTES);
+static NTSTATUS (WINAPI *pNtPulseEvent)  ( HANDLE, PULONG );
+static NTSTATUS (WINAPI *pNtQueryEvent)  ( HANDLE, EVENT_INFORMATION_CLASS, PVOID, ULONG, PULONG );
 static NTSTATUS (WINAPI *pNtCreateMutant)( PHANDLE, ACCESS_MASK, const POBJECT_ATTRIBUTES, BOOLEAN );
 static NTSTATUS (WINAPI *pNtOpenMutant)  ( PHANDLE, ACCESS_MASK, const POBJECT_ATTRIBUTES );
 static NTSTATUS (WINAPI *pNtCreateSemaphore)( PHANDLE, ACCESS_MASK,const POBJECT_ATTRIBUTES,LONG,LONG );
@@ -798,6 +801,44 @@ static void test_type_mismatch(void)
     pNtClose( h );
 }
 
+static void test_event(void)
+{
+    HANDLE Event;
+    HANDLE Event2;
+    NTSTATUS status;
+    UNICODE_STRING str;
+    OBJECT_ATTRIBUTES attr;
+    EVENT_BASIC_INFORMATION info;
+    static const WCHAR eventName[] = {'\\','B','a','s','e','N','a','m','e','d','O','b','j','e','c','t','s','\\','t','e','s','t','E','v','e','n','t',0};
+
+    pRtlInitUnicodeString(&str, eventName);
+    InitializeObjectAttributes(&attr, &str, 0, 0, NULL);
+
+    status = pNtCreateEvent(&Event, GENERIC_ALL, &attr, 1, 0);
+    ok( status == STATUS_SUCCESS, "NtCreateEvent failed %08x\n", status );
+
+    status = pNtPulseEvent(Event, NULL);
+    ok( status == STATUS_SUCCESS, "NtPulseEvent failed %08x\n", status );
+
+    status = pNtQueryEvent(Event, EventBasicInformation, &info, sizeof(info), NULL);
+    ok( status == STATUS_SUCCESS, "NtQueryEvent failed %08x\n", status );
+    ok( info.EventType == 1 && info.EventState == 0,
+        "NtQueryEvent failed, expected 1 0, got %d %d\n", info.EventType, info.EventState );
+
+    status = pNtOpenEvent(&Event2, GENERIC_ALL, &attr);
+    ok( status == STATUS_SUCCESS, "NtOpenEvent failed %08x\n", status );
+
+    status = pNtClose(Event);
+
+    status = pNtQueryEvent(Event2, EventBasicInformation, &info, sizeof(info), NULL);
+    ok( status == STATUS_SUCCESS, "NtQueryEvent failed %08x\n", status );
+    ok( info.EventType == 1 && info.EventState == 0,
+        "NtQueryEvent failed, expected 1 0, got %d %d\n", info.EventType, info.EventState );
+
+    status = pNtClose(Event2);
+}
+
+
 START_TEST(om)
 {
     HMODULE hntdll = GetModuleHandleA("ntdll.dll");
@@ -815,6 +856,9 @@ START_TEST(om)
     pRtlFreeUnicodeString   = (void *)GetProcAddress(hntdll, "RtlFreeUnicodeString");
     pNtCreateEvent          = (void *)GetProcAddress(hntdll, "NtCreateEvent");
     pNtCreateMutant         = (void *)GetProcAddress(hntdll, "NtCreateMutant");
+    pNtOpenEvent            = (void *)GetProcAddress(hntdll, "NtOpenEvent");
+    pNtQueryEvent           = (void *)GetProcAddress(hntdll, "NtQueryEvent");
+    pNtPulseEvent           = (void *)GetProcAddress(hntdll, "NtPulseEvent");
     pNtOpenMutant           = (void *)GetProcAddress(hntdll, "NtOpenMutant");
     pNtOpenFile             = (void *)GetProcAddress(hntdll, "NtOpenFile");
     pNtClose                = (void *)GetProcAddress(hntdll, "NtClose");
@@ -838,4 +882,5 @@ START_TEST(om)
     test_symboliclink();
     test_query_object();
     test_type_mismatch();
+    test_event();
 }
