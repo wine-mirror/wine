@@ -676,6 +676,14 @@ static HRESULT volume_init(struct wined3d_volume *volume, struct wined3d_device 
         WARN("Volume cannot be created - no volume texture support.\n");
         return WINED3DERR_INVALIDCALL;
     }
+    /* TODO: Write tests for other resources and move this check
+     * to resource_init, if applicable. */
+    if (usage & WINED3DUSAGE_DYNAMIC
+            && (pool == WINED3D_POOL_MANAGED || pool == WINED3D_POOL_SCRATCH))
+    {
+        WARN("Attempted to create a DYNAMIC texture in pool %u.\n", pool);
+        return WINED3DERR_INVALIDCALL;
+    }
 
     size = wined3d_format_calculate_size(format, device->surface_alignment, width, height, depth);
 
