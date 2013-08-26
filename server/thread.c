@@ -75,6 +75,7 @@ struct thread_wait
     struct thread          *thread;     /* owner thread */
     int                     count;      /* count of objects */
     int                     flags;
+    int                     abandoned;
     enum select_op          select;
     client_ptr_t            cookie;     /* magic cookie to return to client */
     timeout_t               timeout;
@@ -548,6 +549,11 @@ struct thread *get_wait_queue_thread( struct wait_queue_entry *entry )
     return entry->wait->thread;
 }
 
+void make_wait_abandoned( struct wait_queue_entry *entry )
+{
+    entry->wait->abandoned = 1;
+}
+
 /* finish waiting */
 static void end_wait( struct thread *thread )
 {
@@ -579,6 +585,7 @@ static int wait_on( const select_op_t *select_op, unsigned int count, struct obj
     wait->select  = select_op->op;
     wait->user    = NULL;
     wait->timeout = timeout;
+    wait->abandoned = 0;
     current->wait = wait;
 
     for (i = 0, entry = wait->queues; i < count; i++, entry++)
@@ -617,7 +624,7 @@ static int wait_on_handles( const select_op_t *select_op, unsigned int count, co
 /* check if the thread waiting condition is satisfied */
 static int check_wait( struct thread *thread )
 {
-    int i, signaled;
+    int i;
     struct thread_wait *wait = thread->wait;
     struct wait_queue_entry *entry;
 
@@ -638,11 +645,9 @@ static int check_wait( struct thread *thread )
             not_ok |= !entry->obj->ops->signaled( entry->obj, entry );
         if (not_ok) goto other_checks;
         /* Wait satisfied: tell it to all objects */
-        signaled = 0;
         for (i = 0, entry = wait->queues; i < wait->count; i++, entry++)
-            if (entry->obj->ops->satisfied( entry->obj, entry ))
-                signaled = STATUS_ABANDONED_WAIT_0;
-        return signaled;
+            entry->obj->ops->satisfied( entry->obj, entry );
+        return wait->abandoned ? STATUS_ABANDONED_WAIT_0 : STATUS_WAIT_0;
     }
     else
     {
@@ -650,10 +655,9 @@ static int check_wait( struct thread *thread )
         {
             if (!entry->obj->ops->signaled( entry->obj, entry )) continue;
             /* Wait satisfied: tell it to the object */
-            signaled = i;
-            if (entry->obj->ops->satisfied( entry->obj, entry ))
-                signaled = i + STATUS_ABANDONED_WAIT_0;
-            return signaled;
+            entry->obj->ops->satisfied( entry->obj, entry );
+            if (wait->abandoned) i += STATUS_ABANDONED_WAIT_0;
+            return i;
         }
     }
 

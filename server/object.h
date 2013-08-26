@@ -69,8 +69,8 @@ struct object_ops
     void (*remove_queue)(struct object *,struct wait_queue_entry *);
     /* is object signaled? */
     int  (*signaled)(struct object *,struct wait_queue_entry *);
-    /* wait satisfied; return 1 if abandoned */
-    int  (*satisfied)(struct object *,struct wait_queue_entry *);
+    /* wait satisfied */
+    void (*satisfied)(struct object *,struct wait_queue_entry *);
     /* signal an object */
     int  (*signal)(struct object *, unsigned int);
     /* return an fd object that can be used to read/write from the object */
@@ -133,7 +133,7 @@ extern struct object *find_object( const struct namespace *namespace, const stru
 extern struct object *find_object_index( const struct namespace *namespace, unsigned int index );
 extern struct object_type *no_get_type( struct object *obj );
 extern int no_add_queue( struct object *obj, struct wait_queue_entry *entry );
-extern int no_satisfied( struct object *obj, struct wait_queue_entry *entry );
+extern void no_satisfied( struct object *obj, struct wait_queue_entry *entry );
 extern int no_signal( struct object *obj, unsigned int access );
 extern struct fd *no_get_fd( struct object *obj );
 extern unsigned int no_map_access( struct object *obj, unsigned int access );
