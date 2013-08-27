@@ -2,7 +2,6 @@ DEFS = \
 	-DINCLUDEDIR="\"$(includedir)\"" \
 	-DDLLDIR="\"$(dlldir)\"" \
 	-DLIBDIR="\"$(libdir)\"" \
-	-DDLLFLAGS="\"@DLLFLAGS@\"" \
 	-DCC="\"$(CC)\"" \
 	-DCPP="\"@CPPBIN@\"" \
 	-DCXX="\"@CXX@\"" \

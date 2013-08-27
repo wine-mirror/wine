@@ -511,7 +511,8 @@ static void compile(struct options* opts, const char* lang)
             strarray_add(comp_args, "-fshort-wchar");
             strarray_add(comp_args, "-DWINE_UNICODE_NATIVE");
 	}
-        strarray_addall(comp_args, strarray_fromstring(DLLFLAGS, " "));
+        strarray_add(comp_args, "-D_REENTRANT");
+        strarray_add(comp_args, "-fPIC");
     }
 
     if (opts->target_cpu == CPU_x86_64 || opts->target_cpu == CPU_ARM64)
@@ -1010,7 +1011,8 @@ static void build(struct options* opts)
     spec_o_name = get_temp_file(output_name, ".spec.o");
     if (opts->force_pointer_size)
         strarray_add(spec_args, strmake("-m%u", 8 * opts->force_pointer_size ));
-    strarray_addall(spec_args, strarray_fromstring(DLLFLAGS, " "));
+    strarray_add(spec_args, "-D_REENTRANT");
+    strarray_add(spec_args, "-fPIC");
     strarray_add(spec_args, opts->shared ? "--dll" : "--exe");
     if (fake_module)
     {
