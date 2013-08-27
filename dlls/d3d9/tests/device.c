@@ -6454,6 +6454,90 @@ static void test_vidmem_accounting(void)
     DestroyWindow(window);
 }
 
+static void test_volume_locking(void)
+{
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d9;
+    HWND window;
+    HRESULT hr;
+    IDirect3DVolumeTexture9 *texture;
+    unsigned int i;
+    D3DLOCKED_BOX locked_box;
+    ULONG refcount;
+    D3DCAPS9 caps;
+    static const struct
+    {
+        D3DPOOL pool;
+        DWORD usage;
+        HRESULT create_hr, lock_hr;
+    }
+    tests[] =
+    {
+        { D3DPOOL_DEFAULT,      0,                  D3D_OK,             D3DERR_INVALIDCALL  },
+        { D3DPOOL_DEFAULT,      D3DUSAGE_DYNAMIC,   D3D_OK,             D3D_OK              },
+        { D3DPOOL_SYSTEMMEM,    0,                  D3D_OK,             D3D_OK              },
+        { D3DPOOL_SYSTEMMEM,    D3DUSAGE_DYNAMIC,   D3D_OK,             D3D_OK              },
+        { D3DPOOL_MANAGED,      0,                  D3D_OK,             D3D_OK              },
+        { D3DPOOL_MANAGED,      D3DUSAGE_DYNAMIC,   D3DERR_INVALIDCALL, D3D_OK              },
+        { D3DPOOL_SCRATCH,      0,                  D3D_OK,             D3D_OK              },
+        { D3DPOOL_SCRATCH,      D3DUSAGE_DYNAMIC,   D3DERR_INVALIDCALL, D3D_OK              },
+    };
+
+    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create IDirect3D9 object, skipping tests.\n");
+        return;
+    }
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(d3d9, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d9);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get caps, hr %#x.\n", hr);
+    if (!(caps.TextureCaps & D3DPTEXTURECAPS_VOLUMEMAP))
+    {
+        skip("Volume textures not supported, skipping test.\n");
+        goto out;
+    }
+
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); i++)
+    {
+        hr = IDirect3DDevice9_CreateVolumeTexture(device, 4, 4, 4, 1, tests[i].usage,
+                D3DFMT_A8R8G8B8, tests[i].pool, &texture, NULL);
+        ok(hr == tests[i].create_hr, "Creating volume texture pool=%u, usage=%#x returned %#x, expected %#x.\n",
+                tests[i].pool, tests[i].usage, hr, tests[i].create_hr);
+        if (FAILED(hr))
+            continue;
+
+        locked_box.pBits = (void *)0xdeadbeef;
+        hr = IDirect3DVolumeTexture9_LockBox(texture, 0, &locked_box, NULL, 0);
+        ok(hr == tests[i].lock_hr, "Lock returned %#x, expected %#x.\n", hr, tests[i].lock_hr);
+        if (SUCCEEDED(hr))
+        {
+            hr = IDirect3DVolumeTexture9_UnlockBox(texture, 0);
+            ok(SUCCEEDED(hr), "Failed to unlock volume texture, hr %#x.\n", hr);
+        }
+        else
+        {
+            ok (locked_box.pBits == NULL, "Failed lock set pBits = %p, expected NULL.\n", locked_box.pBits);
+        }
+        IDirect3DVolumeTexture9_Release(texture);
+    }
+
+out:
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d9);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     HMODULE d3d9_handle = LoadLibraryA( "d3d9.dll" );
@@ -6544,6 +6628,7 @@ START_TEST(device)
         test_rtpatch();
         test_npot_textures();
         test_vidmem_accounting();
+        test_volume_locking();
     }
 
 out:
