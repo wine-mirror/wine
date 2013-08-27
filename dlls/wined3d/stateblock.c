@@ -577,7 +577,7 @@ void state_unbind_resources(struct wined3d_state *state)
     }
 }
 
-static void state_cleanup(struct wined3d_state *state)
+void state_cleanup(struct wined3d_state *state)
 {
     unsigned int counter;
 
@@ -598,7 +598,7 @@ static void state_cleanup(struct wined3d_state *state)
     HeapFree(GetProcessHeap(), 0, state->ps_consts_f);
 }
 
-static HRESULT state_init(struct wined3d_state *state, const struct wined3d_d3d_info *d3d_info)
+HRESULT state_init(struct wined3d_state *state, const struct wined3d_d3d_info *d3d_info)
 {
     unsigned int i;
 
@@ -700,7 +700,7 @@ static void wined3d_state_record_lights(struct wined3d_state *dst_state, const s
 
 void CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock)
 {
-    const struct wined3d_state *src_state = &stateblock->device->stateBlock->state;
+    const struct wined3d_state *src_state = &stateblock->device->state;
     unsigned int i;
     DWORD map;
 
@@ -1155,12 +1155,12 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock)
         wined3d_device_set_clip_plane(device, i, &stateblock->state.clip_planes[i]);
     }
 
-    stateblock->device->stateBlock->state.lowest_disabled_stage = MAX_TEXTURES - 1;
+    stateblock->device->state.lowest_disabled_stage = MAX_TEXTURES - 1;
     for (i = 0; i < MAX_TEXTURES - 1; ++i)
     {
-        if (stateblock->device->stateBlock->state.texture_states[i][WINED3D_TSS_COLOR_OP] == WINED3D_TOP_DISABLE)
+        if (stateblock->device->state.texture_states[i][WINED3D_TSS_COLOR_OP] == WINED3D_TOP_DISABLE)
         {
-            stateblock->device->stateBlock->state.lowest_disabled_stage = i;
+            stateblock->device->state.lowest_disabled_stage = i;
             break;
         }
     }
@@ -1432,17 +1432,15 @@ static HRESULT stateblock_init(struct wined3d_stateblock *stateblock,
         return hr;
     }
 
-    /* The WINED3D_SBT_INIT stateblock type is used during initialization to
-     * produce a placeholder stateblock so other functions called can update a
-     * state block. */
-    if (type == WINED3D_SBT_INIT || type == WINED3D_SBT_RECORDED) return WINED3D_OK;
+    if (type == WINED3D_SBT_RECORDED)
+        return WINED3D_OK;
 
     TRACE("Updating changed flags appropriate for type %#x.\n", type);
 
     switch (type)
     {
         case WINED3D_SBT_ALL:
-            stateblock_init_lights(stateblock, device->stateBlock->state.light_map);
+            stateblock_init_lights(stateblock, device->state.light_map);
             stateblock_savedstates_set_all(&stateblock->changed,
                     d3d_info->limits.vs_uniform_count, d3d_info->limits.ps_uniform_count);
             break;
@@ -1453,7 +1451,7 @@ static HRESULT stateblock_init(struct wined3d_stateblock *stateblock,
             break;
 
         case WINED3D_SBT_VERTEX_STATE:
-            stateblock_init_lights(stateblock, device->stateBlock->state.light_map);
+            stateblock_init_lights(stateblock, device->state.light_map);
             stateblock_savedstates_set_vertex(&stateblock->changed,
                     d3d_info->limits.vs_uniform_count);
             break;

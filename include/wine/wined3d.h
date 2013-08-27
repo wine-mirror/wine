@@ -713,7 +713,6 @@ enum wined3d_query_type
 
 enum wined3d_stateblock_type
 {
-    WINED3D_SBT_INIT                        = 0,
     WINED3D_SBT_ALL                         = 1,
     WINED3D_SBT_PIXEL_STATE                 = 2,
     WINED3D_SBT_VERTEX_STATE                = 3,

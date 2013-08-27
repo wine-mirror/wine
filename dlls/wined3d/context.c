@@ -2276,7 +2276,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, const struct win
 
 static DWORD find_draw_buffers_mask(const struct wined3d_context *context, const struct wined3d_device *device)
 {
-    const struct wined3d_state *state = &device->stateBlock->state;
+    const struct wined3d_state *state = &device->state;
     struct wined3d_surface **rts = state->fb->render_targets;
     struct wined3d_shader *ps = state->pixel_shader;
     DWORD rt_mask, rt_mask_bits;
@@ -2350,7 +2350,7 @@ void context_state_drawbuf(struct wined3d_context *context, const struct wined3d
 /* Context activation is done by the caller. */
 BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_device *device)
 {
-    const struct wined3d_state *state = &device->stateBlock->state;
+    const struct wined3d_state *state = &device->state;
     const struct StateEntry *state_table = context->state_table;
     const struct wined3d_fb_state *fb = state->fb;
     unsigned int i;

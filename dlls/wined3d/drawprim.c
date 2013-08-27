@@ -91,7 +91,7 @@ static void drawStridedSlow(const struct wined3d_device *device, const struct wi
     const WORD                *pIdxBufS     = NULL;
     const DWORD               *pIdxBufL     = NULL;
     UINT vx_index;
-    const struct wined3d_state *state = &device->stateBlock->state;
+    const struct wined3d_state *state = &device->state;
     LONG SkipnStrides = startIdx;
     BOOL pixelShader = use_ps(state);
     BOOL specular_fog = FALSE;
@@ -584,7 +584,7 @@ static void remove_vbos(const struct wined3d_gl_info *gl_info,
 void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_count,
         UINT start_instance, UINT instance_count, BOOL indexed)
 {
-    const struct wined3d_state *state = &device->stateBlock->state;
+    const struct wined3d_state *state = &device->state;
     const struct wined3d_stream_info *stream_info;
     struct wined3d_event_query *ib_query = NULL;
     struct wined3d_stream_info si_emulated;

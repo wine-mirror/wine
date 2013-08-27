@@ -1779,6 +1779,72 @@ HRESULT wined3d_init(struct wined3d *wined3d, UINT version, DWORD flags) DECLSPE
 BOOL wined3d_register_window(HWND window, struct wined3d_device *device) DECLSPEC_HIDDEN;
 void wined3d_unregister_window(HWND window) DECLSPEC_HIDDEN;
 
+struct wined3d_stream_output
+{
+    struct wined3d_buffer *buffer;
+    UINT offset;
+};
+
+struct wined3d_stream_state
+{
+    struct wined3d_buffer *buffer;
+    UINT offset;
+    UINT stride;
+    UINT frequency;
+    UINT flags;
+};
+
+struct wined3d_state
+{
+    const struct wined3d_fb_state *fb;
+
+    struct wined3d_vertex_declaration *vertex_declaration;
+    struct wined3d_stream_output stream_output[MAX_STREAM_OUT];
+    struct wined3d_stream_state streams[MAX_STREAMS + 1 /* tesselated pseudo-stream */];
+    struct wined3d_buffer *index_buffer;
+    enum wined3d_format_id index_format;
+    INT base_vertex_index;
+    INT load_base_vertex_index; /* Non-indexed drawing needs 0 here, indexed needs base_vertex_index. */
+    GLenum gl_primitive_type;
+
+    struct wined3d_shader *vertex_shader;
+    struct wined3d_buffer *vs_cb[MAX_CONSTANT_BUFFERS];
+    struct wined3d_sampler *vs_sampler[MAX_SAMPLER_OBJECTS];
+    BOOL vs_consts_b[MAX_CONST_B];
+    INT vs_consts_i[MAX_CONST_I * 4];
+    float *vs_consts_f;
+
+    struct wined3d_shader *geometry_shader;
+    struct wined3d_buffer *gs_cb[MAX_CONSTANT_BUFFERS];
+    struct wined3d_sampler *gs_sampler[MAX_SAMPLER_OBJECTS];
+
+    struct wined3d_shader *pixel_shader;
+    struct wined3d_buffer *ps_cb[MAX_CONSTANT_BUFFERS];
+    struct wined3d_sampler *ps_sampler[MAX_SAMPLER_OBJECTS];
+    BOOL ps_consts_b[MAX_CONST_B];
+    INT ps_consts_i[MAX_CONST_I * 4];
+    float *ps_consts_f;
+
+    struct wined3d_texture *textures[MAX_COMBINED_SAMPLERS];
+    DWORD sampler_states[MAX_COMBINED_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
+    DWORD texture_states[MAX_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
+    DWORD lowest_disabled_stage;
+
+    struct wined3d_matrix transforms[HIGHEST_TRANSFORMSTATE + 1];
+    struct wined3d_vec4 clip_planes[MAX_CLIPPLANES];
+    struct wined3d_material material;
+    struct wined3d_viewport viewport;
+    RECT scissor_rect;
+
+    /* Light hashmap. Collisions are handled using linked lists. */
+#define LIGHTMAP_SIZE 43
+#define LIGHTMAP_HASHFUNC(x) ((x) % LIGHTMAP_SIZE)
+    struct list light_map[LIGHTMAP_SIZE];
+    const struct wined3d_light_info *lights[MAX_ACTIVE_LIGHTS];
+
+    DWORD render_states[WINEHIGHEST_RENDER_STATE + 1];
+};
+
 /*****************************************************************************
  * IWineD3DDevice implementation structure
  */
@@ -1831,8 +1897,7 @@ struct wined3d_device
 #define D3D8_PITCH_ALIGNMENT 4
     unsigned char           surface_alignment; /* Line Alignment of surfaces                      */
 
-    /* State block related */
-    struct wined3d_stateblock *stateBlock;
+    struct wined3d_state state;
     struct wined3d_state *update_state;
     struct wined3d_stateblock *recording;
 
@@ -2354,72 +2419,6 @@ struct StageState {
     DWORD state;
 };
 
-struct wined3d_stream_output
-{
-    struct wined3d_buffer *buffer;
-    UINT offset;
-};
-
-struct wined3d_stream_state
-{
-    struct wined3d_buffer *buffer;
-    UINT offset;
-    UINT stride;
-    UINT frequency;
-    UINT flags;
-};
-
-struct wined3d_state
-{
-    const struct wined3d_fb_state *fb;
-
-    struct wined3d_vertex_declaration *vertex_declaration;
-    struct wined3d_stream_output stream_output[MAX_STREAM_OUT];
-    struct wined3d_stream_state streams[MAX_STREAMS + 1 /* tesselated pseudo-stream */];
-    struct wined3d_buffer *index_buffer;
-    enum wined3d_format_id index_format;
-    INT base_vertex_index;
-    INT load_base_vertex_index; /* Non-indexed drawing needs 0 here, indexed needs base_vertex_index. */
-    GLenum gl_primitive_type;
-
-    struct wined3d_shader *vertex_shader;
-    struct wined3d_buffer *vs_cb[MAX_CONSTANT_BUFFERS];
-    struct wined3d_sampler *vs_sampler[MAX_SAMPLER_OBJECTS];
-    BOOL vs_consts_b[MAX_CONST_B];
-    INT vs_consts_i[MAX_CONST_I * 4];
-    float *vs_consts_f;
-
-    struct wined3d_shader *geometry_shader;
-    struct wined3d_buffer *gs_cb[MAX_CONSTANT_BUFFERS];
-    struct wined3d_sampler *gs_sampler[MAX_SAMPLER_OBJECTS];
-
-    struct wined3d_shader *pixel_shader;
-    struct wined3d_buffer *ps_cb[MAX_CONSTANT_BUFFERS];
-    struct wined3d_sampler *ps_sampler[MAX_SAMPLER_OBJECTS];
-    BOOL ps_consts_b[MAX_CONST_B];
-    INT ps_consts_i[MAX_CONST_I * 4];
-    float *ps_consts_f;
-
-    struct wined3d_texture *textures[MAX_COMBINED_SAMPLERS];
-    DWORD sampler_states[MAX_COMBINED_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
-    DWORD texture_states[MAX_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
-    DWORD lowest_disabled_stage;
-
-    struct wined3d_matrix transforms[HIGHEST_TRANSFORMSTATE + 1];
-    struct wined3d_vec4 clip_planes[MAX_CLIPPLANES];
-    struct wined3d_material material;
-    struct wined3d_viewport viewport;
-    RECT scissor_rect;
-
-    /* Light hashmap . Collisions are handled using standard wine double linked lists */
-#define LIGHTMAP_SIZE 43 /* Use of a prime number recommended. Set to 1 for a linked list! */
-#define LIGHTMAP_HASHFUNC(x) ((x) % LIGHTMAP_SIZE) /* Primitive and simple function */
-    struct list light_map[LIGHTMAP_SIZE]; /* Hash map containing the lights */
-    const struct wined3d_light_info *lights[MAX_ACTIVE_LIGHTS]; /* Map of opengl lights to d3d lights */
-
-    DWORD render_states[WINEHIGHEST_RENDER_STATE + 1];
-};
-
 struct wined3d_stateblock
 {
     LONG                      ref;     /* Note: Ref counting not required */
@@ -2454,6 +2453,8 @@ struct wined3d_stateblock
 
 void stateblock_init_contained_states(struct wined3d_stateblock *stateblock) DECLSPEC_HIDDEN;
 
+void state_cleanup(struct wined3d_state *state) DECLSPEC_HIDDEN;
+HRESULT state_init(struct wined3d_state *state, const struct wined3d_d3d_info *d3d_info) DECLSPEC_HIDDEN;
 void state_init_default(struct wined3d_state *state, struct wined3d_device *device) DECLSPEC_HIDDEN;
 void state_unbind_resources(struct wined3d_state *state) DECLSPEC_HIDDEN;
 

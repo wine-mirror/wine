@@ -306,7 +306,7 @@ static BOOL buffer_find_decl(struct wined3d_buffer *This)
     struct wined3d_device *device = This->resource.device;
     const struct wined3d_adapter *adapter = device->adapter;
     const struct wined3d_stream_info *si = &device->stream_info;
-    const struct wined3d_state *state = &device->stateBlock->state;
+    const struct wined3d_state *state = &device->state;
     BOOL support_d3dcolor = adapter->gl_info.supported[ARB_VERTEX_ARRAY_BGRA];
     BOOL support_xyzrhw = adapter->d3d_info.xyzrhw;
     UINT stride_this_run = 0;
