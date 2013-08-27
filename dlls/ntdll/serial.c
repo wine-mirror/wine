@@ -804,6 +804,8 @@ typedef struct async_commio
  */
 static NTSTATUS get_irq_info(int fd, serial_irq_info *irq_info)
 {
+    int out;
+
 #if defined (HAVE_LINUX_SERIAL_H) && defined (TIOCGICOUNT)
     struct serial_icounter_struct einfo;
     if (!ioctl(fd, TIOCGICOUNT, &einfo))
@@ -828,8 +830,11 @@ static NTSTATUS get_irq_info(int fd, serial_irq_info *irq_info)
     irq_info->temt = 0;
     /* Generate a single TX_TXEMPTY event when the TX Buffer turns empty*/
 #ifdef TIOCSERGETLSR  /* prefer to log the state TIOCSERGETLSR */
-    if (!ioctl(fd, TIOCSERGETLSR, &irq_info->temt))
+    if (!ioctl(fd, TIOCSERGETLSR, &out))
+    {
+        irq_info->temt = (out & TIOCSER_TEMT) != 0;
         return STATUS_SUCCESS;
+    }
 
     TRACE("TIOCSERGETLSR err %s\n", strerror(errno));
 #endif
