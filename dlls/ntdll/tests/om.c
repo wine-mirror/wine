@@ -855,7 +855,7 @@ static DWORD WINAPI keyed_event_thread( void *arg )
     LARGE_INTEGER timeout;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING str;
-    int i;
+    ULONG_PTR i;
 
     attr.Length                   = sizeof(attr);
     attr.RootDirectory            = 0;
@@ -874,12 +874,12 @@ static DWORD WINAPI keyed_event_thread( void *arg )
             status = pNtWaitForKeyedEvent( handle, (void *)(i * 2), 0, NULL );
         else
             status = pNtReleaseKeyedEvent( handle, (void *)(i * 2), 0, NULL );
-        ok( status == STATUS_SUCCESS, "%i: failed %x\n", i, status );
+        ok( status == STATUS_SUCCESS, "%li: failed %x\n", i, status );
         Sleep( 20 - i );
     }
 
     status = pNtReleaseKeyedEvent( handle, (void *)0x1234, 0, NULL );
-    ok( status == STATUS_SUCCESS, "%i: failed %x\n", i, status );
+    ok( status == STATUS_SUCCESS, "NtReleaseKeyedEvent %x\n", status );
 
     timeout.QuadPart = -10000;
     status = pNtWaitForKeyedEvent( handle, (void *)0x5678, 0, &timeout );
@@ -898,7 +898,7 @@ static void test_keyed_events(void)
     HANDLE handle, event, thread;
     NTSTATUS status;
     LARGE_INTEGER timeout;
-    int i;
+    ULONG_PTR i;
 
     if (!pNtCreateKeyedEvent)
     {
@@ -953,7 +953,7 @@ static void test_keyed_events(void)
             status = pNtReleaseKeyedEvent( handle, (void *)(i * 2), 0, NULL );
         else
             status = pNtWaitForKeyedEvent( handle, (void *)(i * 2), 0, NULL );
-        ok( status == STATUS_SUCCESS, "%i: failed %x\n", i, status );
+        ok( status == STATUS_SUCCESS, "%li: failed %x\n", i, status );
         Sleep( i );
     }
     status = pNtWaitForKeyedEvent( handle, (void *)0x1234, 0, &timeout );

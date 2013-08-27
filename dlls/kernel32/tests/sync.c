@@ -1164,7 +1164,7 @@ static void test_initonce(void)
 
     if (!pInitOnceInitialize || !pInitOnceExecuteOnce)
     {
-        skip("one-time initialization API not supported\n");
+        todo_wine win_skip("one-time initialization API not supported\n");
         return;
     }
 
@@ -1177,7 +1177,7 @@ static void test_initonce(void)
     g_initcallback_ret = TRUE;
     g_initctxt = NULL;
     ret = pInitOnceExecuteOnce(&initonce, initonce_callback, (void*)0xdeadbeef, &g_initctxt);
-    ok(ret, "got wrong ret value %d\n", ret);
+    ok(ret, "wrong ret %d err %u\n", ret, GetLastError());
     ok(initonce.Ptr == (void*)0x2, "got %p\n", initonce.Ptr);
     ok(g_initctxt == NULL, "got %p\n", g_initctxt);
     ok(g_initcallback_called, "got %d\n", g_initcallback_called);
@@ -1186,7 +1186,7 @@ static void test_initonce(void)
     g_initctxt = NULL;
     g_initcallback_called = FALSE;
     ret = pInitOnceExecuteOnce(&initonce, initonce_callback, (void*)0xdeadbeef, &g_initctxt);
-    ok(ret, "got wrong ret value %d\n", ret);
+    ok(ret, "wrong ret %d err %u\n", ret, GetLastError());
     ok(initonce.Ptr == (void*)0x2, "got %p\n", initonce.Ptr);
     ok(g_initctxt == NULL, "got %p\n", g_initctxt);
     ok(!g_initcallback_called, "got %d\n", g_initcallback_called);
@@ -1196,7 +1196,7 @@ static void test_initonce(void)
     /* 2 lower order bits should never be used, you'll get a crash in result */
     g_initctxt = (void*)0xFFFFFFF0;
     ret = pInitOnceExecuteOnce(&initonce, initonce_callback, (void*)0xdeadbeef, &g_initctxt);
-    ok(ret, "got wrong ret value %d\n", ret);
+    ok(ret, "wrong ret %d err %u\n", ret, GetLastError());
     ok(initonce.Ptr == (void*)0xFFFFFFF2, "got %p\n", initonce.Ptr);
     ok(g_initctxt == (void*)0xFFFFFFF0, "got %p\n", g_initctxt);
     ok(g_initcallback_called, "got %d\n", g_initcallback_called);
@@ -1206,18 +1206,19 @@ static void test_initonce(void)
     g_initcallback_called = FALSE;
     g_initctxt = NULL;
     pInitOnceInitialize(&initonce);
+    SetLastError( 0xdeadbeef );
     ret = pInitOnceExecuteOnce(&initonce, initonce_callback, (void*)0xdeadbeef, &g_initctxt);
-    ok(!ret, "got wrong ret value %d\n", ret);
+    ok(!ret && GetLastError() == 0xdeadbeef, "got wrong ret value %d err %u\n", ret, GetLastError());
     ok(initonce.Ptr == NULL, "got %p\n", initonce.Ptr);
     ok(g_initctxt == NULL, "got %p\n", g_initctxt);
     ok(g_initcallback_called, "got %d\n", g_initcallback_called);
 
-    /* blocking initialzation without a callback */
+    /* blocking initialization without a callback */
     pInitOnceInitialize(&initonce);
     g_initctxt = NULL;
     pending = FALSE;
     ret = pInitOnceBeginInitialize(&initonce, 0, &pending, &g_initctxt);
-    ok(ret, "got wrong ret value %d\n", ret);
+    ok(ret, "wrong ret %d err %u\n", ret, GetLastError());
     ok(pending, "got %d\n", pending);
     ok(initonce.Ptr == (void*)1, "got %p\n", initonce.Ptr);
     ok(g_initctxt == NULL, "got %p\n", g_initctxt);
@@ -1225,22 +1226,166 @@ static void test_initonce(void)
 
     g_initctxt = NULL;
     pending = 0xf;
+    SetLastError( 0xdeadbeef );
     ret = pInitOnceBeginInitialize(&initonce, INIT_ONCE_CHECK_ONLY, &pending, &g_initctxt);
-    ok(!ret, "got wrong ret value %d\n", ret);
+    ok(!ret && GetLastError() == ERROR_GEN_FAILURE, "wrong ret %d err %u\n", ret, GetLastError());
     ok(pending == 0xf, "got %d\n", pending);
     ok(initonce.Ptr == (void*)1, "got %p\n", initonce.Ptr);
     ok(g_initctxt == NULL, "got %p\n", g_initctxt);
 
     g_initctxt = (void*)0xdeadbee0;
+    SetLastError( 0xdeadbeef );
     ret = pInitOnceComplete(&initonce, INIT_ONCE_INIT_FAILED, g_initctxt);
-    ok(!ret, "got wrong ret value %d\n", ret);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %u\n", ret, GetLastError());
     ok(initonce.Ptr == (void*)1, "got %p\n", initonce.Ptr);
 
     /* once failed already */
     g_initctxt = (void*)0xdeadbee0;
     ret = pInitOnceComplete(&initonce, 0, g_initctxt);
-    ok(ret, "got wrong ret value %d\n", ret);
+    ok(ret, "wrong ret %d err %u\n", ret, GetLastError());
     ok(initonce.Ptr == (void*)0xdeadbee2, "got %p\n", initonce.Ptr);
+
+    pInitOnceInitialize(&initonce);
+    SetLastError( 0xdeadbeef );
+    ret = pInitOnceComplete(&initonce, INIT_ONCE_INIT_FAILED, NULL);
+    ok(!ret && GetLastError() == ERROR_GEN_FAILURE, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(initonce.Ptr == NULL, "got %p\n", initonce.Ptr);
+
+    SetLastError( 0xdeadbeef );
+    ret = pInitOnceComplete(&initonce, INIT_ONCE_INIT_FAILED | INIT_ONCE_ASYNC, NULL);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(initonce.Ptr == NULL, "got %p\n", initonce.Ptr);
+
+    ret = pInitOnceBeginInitialize(&initonce, 0, &pending, &g_initctxt);
+    ok(ret, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(pending, "got %d\n", pending);
+    ok(initonce.Ptr == (void*)1, "got %p\n", initonce.Ptr);
+
+    SetLastError( 0xdeadbeef );
+    ret = pInitOnceBeginInitialize(&initonce, INIT_ONCE_ASYNC, &pending, &g_initctxt);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %u\n", ret, GetLastError());
+
+    SetLastError( 0xdeadbeef );
+    ret = pInitOnceComplete(&initonce, INIT_ONCE_INIT_FAILED | INIT_ONCE_ASYNC, NULL);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(initonce.Ptr == (void*)1, "got %p\n", initonce.Ptr);
+
+    SetLastError( 0xdeadbeef );
+    ret = pInitOnceComplete(&initonce, 0, (void *)0xdeadbeef);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(initonce.Ptr == (void*)1, "got %p\n", initonce.Ptr);
+
+    ret = pInitOnceComplete(&initonce, INIT_ONCE_INIT_FAILED, NULL);
+    ok(ret, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(initonce.Ptr == NULL, "got %p\n", initonce.Ptr);
+
+    pInitOnceInitialize(&initonce);
+    ret = pInitOnceBeginInitialize(&initonce, INIT_ONCE_ASYNC, &pending, &g_initctxt);
+    ok(ret, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(pending, "got %d\n", pending);
+    ok(initonce.Ptr == (void*)3, "got %p\n", initonce.Ptr);
+
+    SetLastError( 0xdeadbeef );
+    ret = pInitOnceBeginInitialize(&initonce, 0, &pending, &g_initctxt);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %u\n", ret, GetLastError());
+
+    ret = pInitOnceBeginInitialize(&initonce, INIT_ONCE_ASYNC, &pending, &g_initctxt);
+    ok(ret, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(pending, "got %d\n", pending);
+    ok(initonce.Ptr == (void*)3, "got %p\n", initonce.Ptr);
+
+    SetLastError( 0xdeadbeef );
+    ret = pInitOnceComplete(&initonce, INIT_ONCE_INIT_FAILED, NULL);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(initonce.Ptr == (void*)3, "got %p\n", initonce.Ptr);
+
+    SetLastError( 0xdeadbeef );
+    ret = pInitOnceComplete(&initonce, INIT_ONCE_INIT_FAILED | INIT_ONCE_ASYNC, NULL);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(initonce.Ptr == (void*)3, "got %p\n", initonce.Ptr);
+
+    SetLastError( 0xdeadbeef );
+    ret = pInitOnceComplete(&initonce, INIT_ONCE_ASYNC, (void *)0xdeadbeef);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(initonce.Ptr == (void*)3, "got %p\n", initonce.Ptr);
+
+    ret = pInitOnceComplete(&initonce, INIT_ONCE_ASYNC, (void *)0xdeadbee0);
+    ok(ret, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(initonce.Ptr == (void*)0xdeadbee2, "got %p\n", initonce.Ptr);
+
+    SetLastError( 0xdeadbeef );
+    ret = pInitOnceComplete(&initonce, INIT_ONCE_INIT_FAILED | INIT_ONCE_ASYNC, NULL);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(initonce.Ptr == (void*)0xdeadbee2, "got %p\n", initonce.Ptr);
+
+    pInitOnceInitialize(&initonce);
+    ret = pInitOnceBeginInitialize(&initonce, 0, &pending, &g_initctxt);
+    ok(ret, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(pending, "got %d\n", pending);
+    ok(initonce.Ptr == (void*)1, "got %p\n", initonce.Ptr);
+
+    /* test INIT_ONCE_CHECK_ONLY */
+
+    pInitOnceInitialize(&initonce);
+    SetLastError( 0xdeadbeef );
+    ret = pInitOnceBeginInitialize(&initonce, INIT_ONCE_CHECK_ONLY, &pending, &g_initctxt);
+    ok(!ret && GetLastError() == ERROR_GEN_FAILURE, "wrong ret %d err %u\n", ret, GetLastError());
+    SetLastError( 0xdeadbeef );
+    ret = pInitOnceBeginInitialize(&initonce, INIT_ONCE_CHECK_ONLY|INIT_ONCE_ASYNC, &pending, &g_initctxt);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %u\n", ret, GetLastError());
+
+    ret = pInitOnceBeginInitialize(&initonce, 0, &pending, &g_initctxt);
+    ok(ret, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(pending, "got %d\n", pending);
+    ok(initonce.Ptr == (void*)1, "got %p\n", initonce.Ptr);
+
+    SetLastError( 0xdeadbeef );
+    ret = pInitOnceBeginInitialize(&initonce, INIT_ONCE_CHECK_ONLY, &pending, &g_initctxt);
+    ok(!ret && GetLastError() == ERROR_GEN_FAILURE, "wrong ret %d err %u\n", ret, GetLastError());
+    SetLastError( 0xdeadbeef );
+    ret = pInitOnceBeginInitialize(&initonce, INIT_ONCE_CHECK_ONLY|INIT_ONCE_ASYNC, &pending, &g_initctxt);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %u\n", ret, GetLastError());
+
+    ret = pInitOnceComplete(&initonce, 0, (void *)0xdeadbee0);
+    ok(ret, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(initonce.Ptr == (void*)0xdeadbee2, "got %p\n", initonce.Ptr);
+
+    ret = pInitOnceBeginInitialize(&initonce, INIT_ONCE_CHECK_ONLY, &pending, &g_initctxt);
+    ok(ret, "got wrong ret value %d err %u\n", ret, GetLastError());
+    ok(!pending, "got %d\n", pending);
+    ok(initonce.Ptr == (void*)0xdeadbee2, "got %p\n", initonce.Ptr);
+    ok(g_initctxt == (void*)0xdeadbee0, "got %p\n", initonce.Ptr);
+
+    SetLastError( 0xdeadbeef );
+    ret = pInitOnceBeginInitialize(&initonce, INIT_ONCE_CHECK_ONLY|INIT_ONCE_ASYNC, &pending, &g_initctxt);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %u\n", ret, GetLastError());
+
+    pInitOnceInitialize(&initonce);
+    ret = pInitOnceBeginInitialize(&initonce, INIT_ONCE_ASYNC, &pending, &g_initctxt);
+    ok(ret, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(pending, "got %d\n", pending);
+    ok(initonce.Ptr == (void*)3, "got %p\n", initonce.Ptr);
+
+    SetLastError( 0xdeadbeef );
+    ret = pInitOnceBeginInitialize(&initonce, INIT_ONCE_CHECK_ONLY, &pending, &g_initctxt);
+    ok(!ret && GetLastError() == ERROR_GEN_FAILURE, "wrong ret %d err %u\n", ret, GetLastError());
+    SetLastError( 0xdeadbeef );
+    ret = pInitOnceBeginInitialize(&initonce, INIT_ONCE_CHECK_ONLY|INIT_ONCE_ASYNC, &pending, &g_initctxt);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %u\n", ret, GetLastError());
+
+    ret = pInitOnceComplete(&initonce, INIT_ONCE_ASYNC, (void *)0xdeadbee0);
+    ok(ret, "wrong ret %d err %u\n", ret, GetLastError());
+    ok(initonce.Ptr == (void*)0xdeadbee2, "got %p\n", initonce.Ptr);
+
+    ret = pInitOnceBeginInitialize(&initonce, INIT_ONCE_CHECK_ONLY, &pending, &g_initctxt);
+    ok(ret, "got wrong ret value %d err %u\n", ret, GetLastError());
+    ok(!pending, "got %d\n", pending);
+    ok(initonce.Ptr == (void*)0xdeadbee2, "got %p\n", initonce.Ptr);
+    ok(g_initctxt == (void*)0xdeadbee0, "got %p\n", initonce.Ptr);
+
+    SetLastError( 0xdeadbeef );
+    ret = pInitOnceBeginInitialize(&initonce, INIT_ONCE_CHECK_ONLY|INIT_ONCE_ASYNC, &pending, &g_initctxt);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "wrong ret %d err %u\n", ret, GetLastError());
 }
 
 static CONDITION_VARIABLE buffernotempty = CONDITION_VARIABLE_INIT;
