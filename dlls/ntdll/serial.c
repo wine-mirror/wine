@@ -828,12 +828,12 @@ static NTSTATUS get_irq_info(int fd, serial_irq_info *irq_info)
     irq_info->temt = 0;
     /* Generate a single TX_TXEMPTY event when the TX Buffer turns empty*/
 #ifdef TIOCSERGETLSR  /* prefer to log the state TIOCSERGETLSR */
-    if (ioctl(fd, TIOCSERGETLSR, &irq_info->temt))
-    {
-        TRACE("TIOCSERGETLSR err %s\n", strerror(errno));
-        return FILE_GetNtStatus();
-    }
-#elif defined(TIOCOUTQ)  /* otherwise we log when the out queue gets empty */
+    if (!ioctl(fd, TIOCSERGETLSR, &irq_info->temt))
+        return STATUS_SUCCESS;
+
+    TRACE("TIOCSERGETLSR err %s\n", strerror(errno));
+#endif
+#ifdef TIOCOUTQ  /* otherwise we log when the out queue gets empty */
     if (ioctl(fd, TIOCOUTQ, &irq_info->temt))
     {
         TRACE("TIOCOUTQ err %s\n", strerror(errno));
