@@ -1034,7 +1034,7 @@ static void console_input_append_hist( struct console_input* console, const WCHA
     ptr[len] = 0;
 
     if (console->history_mode && console->history_index &&
-	strncmpW( console->history[console->history_index - 1], ptr, len * sizeof(WCHAR) ) == 0)
+	strncmpW( console->history[console->history_index - 1], ptr, len ) == 0)
     {
 	/* ok, mode ask us to not use twice the same string...
 	 * so just free mem and returns
