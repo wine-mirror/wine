@@ -194,6 +194,7 @@
 @ stub -arch=win64 ??1scoped_lock@reader_writer_lock@Concurrency@@QEAA@XZ
 @ stub -arch=win32 ??1scoped_lock_read@reader_writer_lock@Concurrency@@QAE@XZ
 @ stub -arch=win64 ??1scoped_lock_read@reader_writer_lock@Concurrency@@QEAA@XZ
+@ cdecl -arch=arm ??1type_info@@UAA@XZ(ptr) msvcrt.??1type_info@@UAA@XZ
 @ thiscall -arch=i386 ??1type_info@@UAE@XZ(ptr) msvcrt.??1type_info@@UAE@XZ
 @ cdecl -arch=win64 ??1type_info@@UEAA@XZ(ptr) msvcrt.??1type_info@@UEAA@XZ
 @ cdecl -arch=win32 ??2@YAPAXI@Z(long) msvcrt.??2@YAPAXI@Z
@@ -216,8 +217,10 @@
 @ cdecl -arch=win64 ??4bad_typeid@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) msvcrt.??4bad_typeid@@QEAAAEAV0@AEBV0@@Z
 @ thiscall -arch=i386 ??4exception@std@@QAEAAV01@ABV01@@Z(ptr ptr) msvcrt.??4exception@@QAEAAV0@ABV0@@Z
 @ cdecl -arch=win64 ??4exception@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) msvcrt.??4exception@@QEAAAEAV0@AEBV0@@Z
+@ cdecl -arch=arm ??8type_info@@QBA_NABV0@@Z(ptr ptr) msvcrt.??8type_info@@QBA_NABV0@@Z
 @ thiscall -arch=i386 ??8type_info@@QBE_NABV0@@Z(ptr ptr) msvcrt.??8type_info@@QBEHABV0@@Z
 @ cdecl -arch=win64 ??8type_info@@QEBA_NAEBV0@@Z(ptr ptr) msvcrt.??8type_info@@QEBAHAEBV0@@Z
+@ cdecl -arch=arm ??9type_info@@QBA_NABV0@@Z(ptr ptr) msvcrt.??9type_info@@QBA_NABV0@@Z
 @ thiscall -arch=i386 ??9type_info@@QBE_NABV0@@Z(ptr ptr) msvcrt.??9type_info@@QBEHABV0@@Z
 @ cdecl -arch=win64 ??9type_info@@QEBA_NAEBV0@@Z(ptr ptr) msvcrt.??9type_info@@QEBAHAEBV0@@Z
 @ extern ??_7__non_rtti_object@std@@6B@ msvcrt.??_7__non_rtti_object@@6B@
@@ -466,6 +469,7 @@
 @ stub -arch=win64 ?name@type_info@@QEBAPEBDPEAU__type_info_node@@@Z  # public: char const * __ptr64 __cdecl type_info::name(struct __type_info_node * __ptr64)const __ptr64
 @ stub -arch=win32 ?native_handle@critical_section@Concurrency@@QAEAAV12@XZ
 @ stub -arch=win64 ?native_handle@critical_section@Concurrency@@QEAAAEAV12@XZ
+@ cdecl -arch=arm ?raw_name@type_info@@QBAPBDXZ(ptr) msvcrt.?raw_name@type_info@@QBAPBDXZ
 @ thiscall -arch=i386 ?raw_name@type_info@@QBEPBDXZ(ptr) msvcrt.?raw_name@type_info@@QBEPBDXZ
 @ cdecl -arch=win64 ?raw_name@type_info@@QEBAPEBDXZ(ptr) msvcrt.?raw_name@type_info@@QEBAPEBDXZ
 @ stub -arch=win32 ?reset@event@Concurrency@@QAEXXZ
