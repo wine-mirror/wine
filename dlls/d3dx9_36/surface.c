@@ -966,28 +966,23 @@ HRESULT WINAPI D3DXGetImageInfoFromResourceA(HMODULE module, const char *resourc
     return D3DXGetImageInfoFromFileInMemory(buffer, size, info);
 }
 
-HRESULT WINAPI D3DXGetImageInfoFromResourceW(HMODULE module, LPCWSTR resource, D3DXIMAGE_INFO *info)
+HRESULT WINAPI D3DXGetImageInfoFromResourceW(HMODULE module, const WCHAR *resource, D3DXIMAGE_INFO *info)
 {
     HRSRC resinfo;
+    void *buffer;
+    DWORD size;
 
-    TRACE("(%p, %s, %p)\n", module, debugstr_w(resource), info);
+    TRACE("module %p, resource %s, info %p.\n", module, debugstr_w(resource), info);
 
-    resinfo = FindResourceW(module, resource, (const WCHAR *)RT_RCDATA);
-    if (!resinfo) /* Try loading the resource as bitmap data (which is in DIB format D3DXIFF_DIB) */
-        resinfo = FindResourceW(module, resource, (const WCHAR *)RT_BITMAP);
+    if (!(resinfo = FindResourceW(module, resource, (const WCHAR *)RT_RCDATA))
+            /* Try loading the resource as bitmap data (which is in DIB format D3DXIFF_DIB) */
+            && !(resinfo = FindResourceW(module, resource, (const WCHAR *)RT_BITMAP)))
+        return D3DXERR_INVALIDDATA;
 
-    if (resinfo)
-    {
-        LPVOID buffer;
-        HRESULT hr;
-        DWORD size;
+    if (FAILED(load_resource_into_memory(module, resinfo, &buffer, &size)))
+        return D3DXERR_INVALIDDATA;
 
-        hr = load_resource_into_memory(module, resinfo, &buffer, &size);
-        if(FAILED(hr)) return D3DXERR_INVALIDDATA;
-        return D3DXGetImageInfoFromFileInMemory(buffer, size, info);
-    }
-
-    return D3DXERR_INVALIDDATA;
+    return D3DXGetImageInfoFromFileInMemory(buffer, size, info);
 }
 
 /************************************************************
