@@ -14430,6 +14430,125 @@ static void fog_special_test(IDirect3DDevice9 *device)
         IDirect3DPixelShader9_Release(ps);
 }
 
+static void volume_srgb_test(IDirect3DDevice9 *device)
+{
+    HRESULT hr;
+    IDirect3D9 *d3d9;
+    unsigned int i, j;
+    IDirect3DVolumeTexture9 *tex1, *tex2;
+    D3DPOOL pool;
+    D3DLOCKED_BOX locked_box;
+    D3DCOLOR color;
+    static const struct
+    {
+        BOOL srgb;
+        DWORD color;
+    }
+    tests[] =
+    {
+        /* Try toggling on and off */
+        { FALSE,    0x007f7f7f },
+        { TRUE,     0x00363636 },
+        { FALSE,    0x007f7f7f },
+    };
+    static const struct
+    {
+        struct vec3 pos;
+        struct vec3 texcrd;
+    }
+    quad[] =
+    {
+        { {-1.0, -1.0, 0.0}, {0.0, 0.0, 0.0} },
+        { { 1.0, -1.0, 0.0}, {0.0, 0.0, 0.0} },
+        { {-1.0,  1.0, 0.0}, {0.0, 0.0, 0.0} },
+        { { 1.0,  1.0, 0.0}, {0.0, 0.0, 0.0} },
+    };
+
+    hr = IDirect3DDevice9_GetDirect3D(device, &d3d9);
+    ok(SUCCEEDED(hr), "Failed to get d3d9 interface, hr %#x.\n", hr);
+
+    hr = IDirect3D9_CheckDeviceFormat(d3d9, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
+            D3DUSAGE_QUERY_SRGBREAD, D3DRTYPE_VOLUMETEXTURE, D3DFMT_A8R8G8B8);
+    if (hr != D3D_OK)
+    {
+        skip("D3DFMT_A8R8G8B8 volume textures with SRGBREAD not supported.\n");
+        IDirect3D9_Release(d3d9);
+        return;
+    }
+
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+    ok(SUCCEEDED(hr), "Failed to set color op 0, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+    ok(SUCCEEDED(hr), "Failed to set color arg, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 1, D3DTSS_COLOROP, D3DTOP_DISABLE);
+    ok(SUCCEEDED(hr), "Failed to set color op 0, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1 | D3DFVF_TEXCOORDSIZE3(0));
+    ok(SUCCEEDED(hr), "Failed to set fvf, hr %#x.\n", hr);
+
+    for (i = 0; i < 2; i++)
+    {
+        if (!i)
+            pool = D3DPOOL_SYSTEMMEM;
+        else
+            pool = D3DPOOL_MANAGED;
+
+        hr = IDirect3DDevice9_CreateVolumeTexture(device, 1, 1, 1, 1, 0, D3DFMT_A8R8G8B8, pool, &tex1, NULL);
+        ok(SUCCEEDED(hr), "Failed to create volume texture, hr %#x.\n", hr);
+        hr = IDirect3DVolumeTexture9_LockBox(tex1, 0, &locked_box, NULL, 0);
+        ok(SUCCEEDED(hr), "Failed to lock volume texture, hr %#x.\n", hr);
+        *((DWORD *)locked_box.pBits) = 0x7f7f7f7f;
+        hr = IDirect3DVolumeTexture9_UnlockBox(tex1, 0);
+        ok(SUCCEEDED(hr), "Failed to lock volume texture, hr %#x.\n", hr);
+
+        if (!i)
+        {
+            hr = IDirect3DDevice9_CreateVolumeTexture(device, 1, 1, 1, 1, 0,
+                    D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &tex2, NULL);
+            ok(SUCCEEDED(hr), "Failed to create volume texture, hr %#x.\n", hr);
+            hr = IDirect3DDevice9_UpdateTexture(device, (IDirect3DBaseTexture9 *)tex1, (IDirect3DBaseTexture9 *)tex2);
+            ok(SUCCEEDED(hr), "Failed to update texture, hr %#x.\n", hr);
+            IDirect3DVolumeTexture9_Release(tex1);
+
+            hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *)tex2);
+            ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
+            IDirect3DVolumeTexture9_Release(tex2);
+        }
+        else
+        {
+            hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *)tex1);
+            ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
+            IDirect3DVolumeTexture9_Release(tex1);
+        }
+
+        for (j = 0; j < sizeof(tests) / sizeof(*tests); j++)
+        {
+            hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, tests[j].srgb);
+            ok(SUCCEEDED(hr), "Failed to set srgb state, hr %#x.\n", hr);
+
+            hr = IDirect3DDevice9_BeginScene(device);
+            ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+            hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+            ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+            hr = IDirect3DDevice9_EndScene(device);
+            ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+            color = getPixelColor(device, 320, 240);
+            ok(color_match(color, tests[j].color, 2),
+                    "Expected color 0x%08x, got 0x%08x, i = %u, j = %u.\n", tests[j].color, color, i, j);
+
+            hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+            ok(SUCCEEDED(hr), "Failed to present backbuffer, hr %#x.\n", hr);
+        }
+    }
+
+    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
+    ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_DISABLE);
+    ok(SUCCEEDED(hr), "Failed to set color op 0, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, FALSE);
+    ok(SUCCEEDED(hr), "Failed to set srgb state, hr %#x.\n", hr);
+}
+
 START_TEST(visual)
 {
     IDirect3D9 *d3d9;
@@ -14608,6 +14727,7 @@ START_TEST(visual)
     multisample_get_rtdata_test(device_ptr);
     zenable_test(device_ptr);
     fog_special_test(device_ptr);
+    volume_srgb_test(device_ptr);
 
     hr = IDirect3DDevice9_GetDirect3D(device_ptr, &d3d9);
     ok(SUCCEEDED(hr), "Failed to get d3d9 interface, hr %#x.\n", hr);
