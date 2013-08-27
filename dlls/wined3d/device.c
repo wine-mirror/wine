@@ -1169,7 +1169,7 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
     /* Set up some starting GL setup */
 
     /* Setup all the devices defaults */
-    stateblock_init_default_state(device->stateBlock);
+    state_init_default(&device->stateBlock->state, device);
 
     context = context_acquire(device, swapchain->front_buffer);
 
@@ -5216,7 +5216,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
             TRACE("Created stateblock %p.\n", device->stateBlock);
         device->update_state = &device->stateBlock->state;
 
-        stateblock_init_default_state(device->stateBlock);
+        state_init_default(&device->stateBlock->state, device);
     }
     else
     {

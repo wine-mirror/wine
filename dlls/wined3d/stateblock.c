@@ -1168,11 +1168,9 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock)
     TRACE("Applied stateblock %p.\n", stateblock);
 }
 
-void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
+void state_init_default(struct wined3d_state *state, struct wined3d_device *device)
 {
-    struct wined3d_device *device = stateblock->device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    struct wined3d_state *state = &stateblock->state;
     union
     {
         struct wined3d_line_pattern lp;
@@ -1193,7 +1191,7 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
         0.0f, 0.0f, 0.0f, 1.0f,
     }}};
 
-    TRACE("stateblock %p.\n", stateblock);
+    TRACE("state %p, device %p.\n", state, device);
 
     /* Set some of the defaults for lights, transforms etc */
     state->transforms[WINED3D_TS_PROJECTION] = identity;

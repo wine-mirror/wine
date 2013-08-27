@@ -2453,8 +2453,8 @@ struct wined3d_stateblock
 };
 
 void stateblock_init_contained_states(struct wined3d_stateblock *stateblock) DECLSPEC_HIDDEN;
-void stateblock_init_default_state(struct wined3d_stateblock *stateblock) DECLSPEC_HIDDEN;
 
+void state_init_default(struct wined3d_state *state, struct wined3d_device *device) DECLSPEC_HIDDEN;
 void state_unbind_resources(struct wined3d_state *state) DECLSPEC_HIDDEN;
 
 /* Direct3D terminology with little modifications. We do not have an issued state
