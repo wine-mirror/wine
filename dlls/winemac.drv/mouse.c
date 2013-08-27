@@ -911,12 +911,14 @@ void macdrv_mouse_scroll(HWND hwnd, const macdrv_event *event)
           event->mouse_scroll.x, event->mouse_scroll.y,
           event->mouse_scroll.time_ms, (GetTickCount() - event->mouse_scroll.time_ms));
 
-    send_mouse_input(hwnd, event->window, MOUSEEVENTF_WHEEL | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE,
-                     event->mouse_scroll.x, event->mouse_scroll.y,
-                     event->mouse_scroll.y_scroll, FALSE, event->mouse_scroll.time_ms);
-    send_mouse_input(hwnd, event->window, MOUSEEVENTF_HWHEEL | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE,
-                     event->mouse_scroll.x, event->mouse_scroll.y,
-                     event->mouse_scroll.x_scroll, FALSE, event->mouse_scroll.time_ms);
+    if (event->mouse_scroll.y_scroll)
+        send_mouse_input(hwnd, event->window, MOUSEEVENTF_WHEEL | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE,
+                         event->mouse_scroll.x, event->mouse_scroll.y,
+                         event->mouse_scroll.y_scroll, FALSE, event->mouse_scroll.time_ms);
+    if (event->mouse_scroll.x_scroll)
+        send_mouse_input(hwnd, event->window, MOUSEEVENTF_HWHEEL | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE,
+                         event->mouse_scroll.x, event->mouse_scroll.y,
+                         event->mouse_scroll.x_scroll, FALSE, event->mouse_scroll.time_ms);
 }
 
 
