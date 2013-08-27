@@ -1732,18 +1732,41 @@ static void test_OleRegGetMiscStatus(void)
     DWORD status;
     HRESULT hr;
 
+    hr = OleRegGetMiscStatus(&CLSID_Testclass, DVASPECT_ICON, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    status = 0xdeadbeef;
     hr = OleRegGetMiscStatus(&CLSID_Testclass, DVASPECT_ICON, &status);
     ok(hr == REGDB_E_CLASSNOTREG, "got 0x%08x\n", hr);
+    ok(status == 0, "got 0x%08x\n", status);
+
+    status = -1;
+    hr = OleRegGetMiscStatus(&CLSID_StdFont, DVASPECT_ICON, &status);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(status == 0, "got 0x%08x\n", status);
 
     if ((handle = activate_context(actctx_manifest, &cookie)))
     {
-
         status = 0;
         hr = OleRegGetMiscStatus(&CLSID_Testclass, DVASPECT_ICON, &status);
 todo_wine {
         ok(hr == S_OK, "got 0x%08x\n", hr);
         ok(status == OLEMISC_RECOMPOSEONRESIZE, "got 0x%08x\n", status);
 }
+        /* context data takes precedence over registration info */
+        status = 0;
+        hr = OleRegGetMiscStatus(&CLSID_StdFont, DVASPECT_ICON, &status);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine
+        ok(status == OLEMISC_RECOMPOSEONRESIZE, "got 0x%08x\n", status);
+
+        /* there's no such attribute in context */
+        status = -1;
+        hr = OleRegGetMiscStatus(&CLSID_Testclass, DVASPECT_DOCPRINT, &status);
+todo_wine
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(status == 0, "got 0x%08x\n", status);
+
         pDeactivateActCtx(0, cookie);
         pReleaseActCtx(handle);
     }
