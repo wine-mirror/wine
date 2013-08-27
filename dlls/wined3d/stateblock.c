@@ -196,18 +196,9 @@ static HRESULT stateblock_allocate_shader_constants(struct wined3d_stateblock *o
 {
     const struct wined3d_d3d_info *d3d_info = &object->device->adapter->d3d_info;
 
-    /* Allocate space for floating point constants */
-    object->state.ps_consts_f = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            sizeof(float) * d3d_info->limits.ps_uniform_count * 4);
-    if (!object->state.ps_consts_f) goto fail;
-
     object->changed.pixelShaderConstantsF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
             sizeof(BOOL) * d3d_info->limits.ps_uniform_count);
     if (!object->changed.pixelShaderConstantsF) goto fail;
-
-    object->state.vs_consts_f = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            sizeof(float) * d3d_info->limits.vs_uniform_count * 4);
-    if (!object->state.vs_consts_f) goto fail;
 
     object->changed.vertexShaderConstantsF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
             sizeof(BOOL) * d3d_info->limits.vs_uniform_count);
@@ -225,9 +216,7 @@ static HRESULT stateblock_allocate_shader_constants(struct wined3d_stateblock *o
 
 fail:
     ERR("Failed to allocate memory\n");
-    HeapFree(GetProcessHeap(), 0, object->state.ps_consts_f);
     HeapFree(GetProcessHeap(), 0, object->changed.pixelShaderConstantsF);
-    HeapFree(GetProcessHeap(), 0, object->state.vs_consts_f);
     HeapFree(GetProcessHeap(), 0, object->changed.vertexShaderConstantsF);
     HeapFree(GetProcessHeap(), 0, object->contained_vs_consts_f);
     HeapFree(GetProcessHeap(), 0, object->contained_ps_consts_f);
@@ -607,6 +596,29 @@ static void state_cleanup(struct wined3d_state *state)
 
     HeapFree(GetProcessHeap(), 0, state->vs_consts_f);
     HeapFree(GetProcessHeap(), 0, state->ps_consts_f);
+}
+
+static HRESULT state_init(struct wined3d_state *state, const struct wined3d_d3d_info *d3d_info)
+{
+    unsigned int i;
+
+    for (i = 0; i < LIGHTMAP_SIZE; i++)
+    {
+        list_init(&state->light_map[i]);
+    }
+
+    if (!(state->vs_consts_f = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+            4 * sizeof(float) * d3d_info->limits.vs_uniform_count)))
+        return E_OUTOFMEMORY;
+
+    if (!(state->ps_consts_f = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+            4 * sizeof(float) * d3d_info->limits.ps_uniform_count)))
+    {
+        HeapFree(GetProcessHeap(), 0, state->vs_consts_f);
+        return E_OUTOFMEMORY;
+    }
+
+    return WINED3D_OK;
 }
 
 ULONG CDECL wined3d_stateblock_decref(struct wined3d_stateblock *stateblock)
@@ -1407,20 +1419,20 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
 static HRESULT stateblock_init(struct wined3d_stateblock *stateblock,
         struct wined3d_device *device, enum wined3d_stateblock_type type)
 {
-    unsigned int i;
     HRESULT hr;
     const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
 
     stateblock->ref = 1;
     stateblock->device = device;
 
-    for (i = 0; i < LIGHTMAP_SIZE; i++)
-    {
-        list_init(&stateblock->state.light_map[i]);
-    }
+    if (FAILED(hr = state_init(&stateblock->state, d3d_info)))
+        return hr;
 
-    hr = stateblock_allocate_shader_constants(stateblock);
-    if (FAILED(hr)) return hr;
+    if (FAILED(hr = stateblock_allocate_shader_constants(stateblock)))
+    {
+        state_cleanup(&stateblock->state);
+        return hr;
+    }
 
     /* The WINED3D_SBT_INIT stateblock type is used during initialization to
      * produce a placeholder stateblock so other functions called can update a
