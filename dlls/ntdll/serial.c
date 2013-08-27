@@ -820,12 +820,11 @@ static NTSTATUS get_irq_info(int fd, serial_irq_info *irq_info)
     {
         TRACE("TIOCGICOUNT err %s\n", strerror(errno));
         memset(irq_info,0, sizeof(serial_irq_info));
-        return FILE_GetNtStatus();
     }
 #else
     memset(irq_info,0, sizeof(serial_irq_info));
-    return STATUS_NOT_IMPLEMENTED;
 #endif
+
     irq_info->temt = 0;
     /* Generate a single TX_TXEMPTY event when the TX Buffer turns empty*/
 #ifdef TIOCSERGETLSR  /* prefer to log the state TIOCSERGETLSR */
