@@ -315,8 +315,13 @@ static BOOL init(void)
     }
     else
     {
+#ifdef __arm__
+        SET(p_type_info_name_internal_method, "?_name_internal_method@type_info@@QBAPBDPAU__type_info_node@@@Z");
+        SET(ptype_info_dtor, "??1type_info@@UAA@XZ");
+#else
         SET(p_type_info_name_internal_method, "?_name_internal_method@type_info@@QBEPBDPAU__type_info_node@@@Z");
         SET(ptype_info_dtor, "??1type_info@@UAE@XZ");
+#endif
     }
 
     hkernel32 = GetModuleHandleA("kernel32.dll");
