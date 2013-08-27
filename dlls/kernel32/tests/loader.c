@@ -1101,9 +1101,9 @@ static DWORD WINAPI mutex_thread_proc(void *param)
     wait_list[2] = peb_lock_event;
     wait_list[3] = heap_lock_event;
 
+    trace("%04u: mutex_thread_proc: starting\n", GetCurrentThreadId());
     while (1)
     {
-        trace("%04u: mutex_thread_proc: still alive\n", GetCurrentThreadId());
         ret = WaitForMultipleObjects(sizeof(wait_list)/sizeof(wait_list[0]), wait_list, FALSE, 50);
         if (ret == WAIT_OBJECT_0) break;
         else if (ret == WAIT_OBJECT_0 + 1)
@@ -1702,9 +1702,9 @@ static void child_process(const char *dll_name, DWORD target_offset)
     }
     else
     {
-        ret = WaitForSingleObject(attached_thread[0], 100);
+        ret = WaitForSingleObject(attached_thread[0], 1000);
         ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %#x\n", ret);
-        ret = WaitForSingleObject(attached_thread[1], 100);
+        ret = WaitForSingleObject(attached_thread[1], 1000);
         ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %#x\n", ret);
     }
 
