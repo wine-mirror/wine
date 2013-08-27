@@ -1026,67 +1026,11 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
     - (void) makeFocused:(BOOL)activate
     {
-        WineApplicationController* controller = [WineApplicationController sharedController];
-        NSArray* screens;
-        WineWindow* front;
-        BOOL wasVisible = [self isVisible];
-
-        [controller transformProcessToForeground];
-
-        /* If a borderless window is offscreen, orderFront: won't move
-           it onscreen like it would for a titled window.  Do that ourselves. */
-        screens = [NSScreen screens];
-        if (!([self styleMask] & NSTitledWindowMask) && ![self isOrderedIn] &&
-            !frame_intersects_screens([self frame], screens))
-        {
-            NSScreen* primaryScreen = [screens objectAtIndex:0];
-            NSRect frame = [primaryScreen frame];
-            [self setFrameTopLeftPoint:NSMakePoint(NSMinX(frame), NSMaxY(frame))];
-            frame = [self constrainFrameRect:[self frame] toScreen:primaryScreen];
-            [self setFrame:frame display:YES];
-            [self updateColorSpace];
-        }
-
-        if (activate)
-            [NSApp activateIgnoringOtherApps:YES];
-
-        NSDisableScreenUpdates();
-
-        if (latentParentWindow)
-        {
-            if ([latentParentWindow level] > [self level])
-                [self setLevel:[latentParentWindow level]];
-            [latentParentWindow addChildWindow:self ordered:NSWindowAbove];
-            self.latentParentWindow = nil;
-        }
-        front = [controller frontWineWindow];
-        if (front && [self level] < [front level])
-            [self setLevel:[front level]];
-        [self orderFront:nil];
-        if (!wasVisible && fullscreen && [self isOnActiveSpace])
-            [controller updateFullscreenWindows];
-        [controller adjustWindowLevels];
-
-        if (pendingMinimize)
-        {
-            ignore_windowMiniaturize = TRUE;
-            [self miniaturize:nil];
-            pendingMinimize = FALSE;
-        }
-
-        NSEnableScreenUpdates();
+        [self orderBelow:nil orAbove:nil activate:activate];
 
         causing_becomeKeyWindow = TRUE;
         [self makeKeyWindow];
         causing_becomeKeyWindow = FALSE;
-
-        if (![self isExcludedFromWindowsMenu])
-            [NSApp addWindowsItem:self title:[self title] filename:NO];
-
-        /* Cocoa may adjust the frame when the window is ordered onto the screen.
-           Generate a frame-changed event just in case.  The back end will ignore
-           it if nothing actually changed. */
-        [self windowDidResize:nil];
     }
 
     - (void) postKey:(uint16_t)keyCode
