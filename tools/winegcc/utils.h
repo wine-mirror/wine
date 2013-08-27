@@ -78,6 +78,6 @@ void create_file(const char* name, int mode, const char* fmt, ...);
 file_type get_file_type(const char* filename);
 file_type get_lib_type(enum target_platform platform, strarray* path, const char *library,
                        const char *suffix, char** file);
-void spawn(const strarray* prefix, const strarray* arr, int ignore_errors);
+int spawn(const strarray* prefix, const strarray* arr, int ignore_errors);
 
 extern int verbose;

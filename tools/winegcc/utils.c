@@ -297,7 +297,7 @@ file_type get_lib_type(enum target_platform platform, strarray* path, const char
     return file_na;
 }
 
-void spawn(const strarray* prefix, const strarray* args, int ignore_errors)
+int spawn(const strarray* prefix, const strarray* args, int ignore_errors)
 {
     unsigned int i;
     int status;
@@ -343,4 +343,5 @@ void spawn(const strarray* prefix, const strarray* args, int ignore_errors)
 
     free(prog);
     strarray_free(arr);
+    return status;
 }

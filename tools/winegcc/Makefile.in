@@ -3,7 +3,6 @@ DEFS = \
 	-DDLLDIR="\"$(dlldir)\"" \
 	-DLIBDIR="\"$(libdir)\"" \
 	-DDLLFLAGS="\"@DLLFLAGS@\"" \
-	-DLDDLLFLAGS="\"@LDDLLFLAGS@\"" \
 	-DCC="\"$(CC)\"" \
 	-DCPP="\"@CPPBIN@\"" \
 	-DCXX="\"@CXX@\"" \

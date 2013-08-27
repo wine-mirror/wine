@@ -677,7 +677,6 @@ dnl **** Check for working dll ****
 
 AC_SUBST(DLLEXT,"")
 AC_SUBST(DLLFLAGS,"-D_REENTRANT")
-AC_SUBST(LDDLLFLAGS,"")
 AC_SUBST(IMPLIBEXT,"def")
 AC_SUBST(LDRPATH_INSTALL,"")
 AC_SUBST(LDRPATH_LOCAL,"")
@@ -738,7 +737,6 @@ clean::
     DLLEXT=".so"
     LIBEXT="dylib"
     DLLFLAGS="$DLLFLAGS -fPIC"
-    LDDLLFLAGS="-bundle -multiply_defined suppress"
     LIBWINE_LDFLAGS="-multiply_defined suppress"
     LDRPATH_INSTALL="-Wl,-rpath,@loader_path/\`\$(RELPATH) \$(bindir) \$(libdir)\`"
     LDRPATH_LOCAL="-Wl,-rpath,@loader_path/\$(top_builddir)/libs/wine"
@@ -803,11 +801,6 @@ clean::
         AC_CHECK_FUNCS(IOHIDManagerCreate)
         LIBS="$ac_save_LIBS"
     fi
-    case $host_cpu in
-      *powerpc*)
-        LDDLLFLAGS="$LDDLLFLAGS -read_only_relocs warning"  dnl FIXME
-        ;;
-    esac
     if test "$ac_cv_header_QuickTime_ImageCompression_h" = "yes"
     then
         AC_SUBST(QUICKTIMELIB,"-framework QuickTime -framework ApplicationServices -framework CoreVideo")
@@ -877,11 +870,6 @@ clean::
   linux-android*)
     DLLFLAGS="$DLLFLAGS -fPIC"
     DLLEXT=".so"
-    LDDLLFLAGS="-shared -Wl,-Bsymbolic"
-    WINE_TRY_CFLAGS([-fPIC -shared -Wl,-Bsymbolic,-z,defs],
-                    [LDDLLFLAGS="$LDDLLFLAGS,-z,defs"])
-    WINE_TRY_CFLAGS([-fPIC -shared -Wl,-Bsymbolic,-init,__wine_spec_init,-fini,__wine_spec_fini],
-                    [LDDLLFLAGS="$LDDLLFLAGS,-init,__wine_spec_init,-fini,__wine_spec_fini"])
     WINE_TRY_CFLAGS([-fPIC -Wl,--export-dynamic],
                     [AC_SUBST(LDEXECFLAGS,["-Wl,--export-dynamic"])])
     WINE_TRY_CFLAGS([-fPIC -Wl,--rpath,\$ORIGIN/../lib],
@@ -927,16 +915,10 @@ clean::
     if test "$ac_cv_c_dll_gnuelf" = "yes"
     then
       LDSHARED="\$(CC) -shared"
-      LDDLLFLAGS="-shared -Wl,-Bsymbolic"
       WINE_TRY_CFLAGS([-fPIC -shared -Wl,-soname,confest.so.1],
                       [LDSHARED="\$(CC) -shared -Wl,-soname,libwine.so.\$(SOVERSION)"],
                       [WINE_TRY_CFLAGS([-fPIC -shared -Wl,-h,confest.so.1],
                                        [LDSHARED="\$(CC) -shared -Wl,-h,libwine.so.\$(SOVERSION)"])])
-
-      WINE_TRY_CFLAGS([-fPIC -shared -Wl,-Bsymbolic,-z,defs], [LDDLLFLAGS="$LDDLLFLAGS,-z,defs"])
-
-      WINE_TRY_CFLAGS([-fPIC -shared -Wl,-Bsymbolic,-init,__wine_spec_init,-fini,__wine_spec_fini],
-                      [LDDLLFLAGS="$LDDLLFLAGS,-init,__wine_spec_init,-fini,__wine_spec_fini"])
 
       echo '{ global: *; };' >conftest.map
       WINE_TRY_CFLAGS([-fPIC -shared -Wl,--version-script=conftest.map],
@@ -979,7 +961,6 @@ clean::
       if test "$ac_cv_c_dll_unixware" = "yes"
       then
         LDSHARED="\$(CC) -Wl,-G,-h,libwine.so.\$(SOVERSION)"
-        LDDLLFLAGS="-Wl,-G,-B,symbolic"
       fi
     fi
     AC_SUBST(LIBWINE_RULES,["
