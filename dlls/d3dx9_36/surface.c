@@ -1240,7 +1240,9 @@ HRESULT WINAPI D3DXLoadSurfaceFromResourceA(IDirect3DSurface9 *dst_surface,
         const PALETTEENTRY *dst_palette, const RECT *dst_rect, HMODULE src_module, const char *resource,
         const RECT *src_rect, DWORD filter, D3DCOLOR color_key, D3DXIMAGE_INFO *src_info)
 {
-    HRSRC hResInfo;
+    UINT data_size;
+    HRSRC resinfo;
+    void *data;
 
     TRACE("dst_surface %p, dst_palette %p, dst_rect %s, src_module %p, resource %s, "
             "src_rect %s, filter %#x, color_key 0x%08x, src_info %p.\n",
@@ -1250,23 +1252,16 @@ HRESULT WINAPI D3DXLoadSurfaceFromResourceA(IDirect3DSurface9 *dst_surface,
     if (!dst_surface)
         return D3DERR_INVALIDCALL;
 
-    hResInfo = FindResourceA(src_module, resource, (const char *)RT_RCDATA);
-    if (!hResInfo) /* Try loading the resource as bitmap data (which is in DIB format D3DXIFF_DIB) */
-        hResInfo = FindResourceA(src_module, resource, (const char *)RT_BITMAP);
+    if (!(resinfo = FindResourceA(src_module, resource, (const char *)RT_RCDATA))
+            /* Try loading the resource as bitmap data (which is in DIB format D3DXIFF_DIB) */
+            && !(resinfo = FindResourceA(src_module, resource, (const char *)RT_BITMAP)))
+        return D3DXERR_INVALIDDATA;
 
-    if (hResInfo)
-    {
-        UINT data_size;
-        void *data;
+    if (FAILED(load_resource_into_memory(src_module, resinfo, &data, &data_size)))
+        return D3DXERR_INVALIDDATA;
 
-        if (FAILED(load_resource_into_memory(src_module, hResInfo, &data, &data_size)))
-            return D3DXERR_INVALIDDATA;
-
-        return D3DXLoadSurfaceFromFileInMemory(dst_surface, dst_palette, dst_rect,
-                data, data_size, src_rect, filter, color_key, src_info);
-    }
-
-    return D3DXERR_INVALIDDATA;
+    return D3DXLoadSurfaceFromFileInMemory(dst_surface, dst_palette, dst_rect,
+            data, data_size, src_rect, filter, color_key, src_info);
 }
 
 HRESULT WINAPI D3DXLoadSurfaceFromResourceW(IDirect3DSurface9 *dst_surface,
