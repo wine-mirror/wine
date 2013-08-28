@@ -18,6 +18,12 @@
 
 import "dispex.idl";
 
+#ifndef __WIDL__
+#define threading(model)
+#define progid(str)
+#define vi_progid(str)
+#endif
+
 [
     uuid(565783c6-cb41-11d1-8b02-00600806d9b6),
     helpstring("Microsoft WMI Scripting V1.2 Library"),
@@ -1102,7 +1108,10 @@ interface ISWbemServices : IDispatch
 };
 
 [
-    uuid(76a64158-cb41-11d1-8b02-00600806d9b6)
+    threading(apartment),
+    uuid(76a64158-cb41-11d1-8b02-00600806d9b6),
+    progid("WbemScripting.SWbemLocator.1"),
+    vi_progid("WbemScripting.SWbemLocator")
 ]
 coclass SWbemLocator
 {
