@@ -4508,6 +4508,8 @@ static LONG load_VDMX(GdiFont *font, LONG height)
 
 	TRACE("Ratios[%d] %d  %d : %d -> %d\n", i, ratio.bCharSet, ratio.xRatio, ratio.yStartRatio, ratio.yEndRatio);
 
+        if (!ratio.bCharSet) continue;
+
 	if((ratio.xRatio == 0 &&
 	    ratio.yStartRatio == 0 &&
 	    ratio.yEndRatio == 0) ||
@@ -4522,10 +4524,7 @@ static LONG load_VDMX(GdiFont *font, LONG height)
 	    }
     }
 
-    if(offset == -1) {
-	FIXME("No suitable ratio found\n");
-	return ppem;
-    }
+    if(offset == -1) return 0;
 
     if(get_font_data(font, MS_VDMX_TAG, offset, &group, 4) != GDI_ERROR) {
 	USHORT recs;
