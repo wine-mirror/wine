@@ -25,3 +25,11 @@
     vi_progid("WbemScripting.SWbemLocator")
 ]
 coclass SWbemLocator { interface ISWbemLocator; }
+
+[
+    threading(apartment),
+    uuid(172bddf8-ceea-11d1-8b05-00600806d9b6),
+    progid("WINMGMTS.1"),
+    vi_progid("WINMGMTS")
+]
+coclass WinMGMTS { interface IParseDisplayName; }
