@@ -308,6 +308,8 @@ HANDLE thread_init(void)
 
     fill_cpu_info();
 
+    NtCreateKeyedEvent( &keyed_event, GENERIC_READ | GENERIC_WRITE, NULL, 0 );
+
     return exe_file;
 }
 

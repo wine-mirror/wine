@@ -816,6 +816,9 @@
 @ stub RtlRevertMemoryStream
 @ stub RtlRunDecodeUnicodeString
 @ stub RtlRunEncodeUnicodeString
+@ stdcall RtlRunOnceBeginInitialize(ptr long ptr)
+@ stdcall RtlRunOnceComplete(ptr long ptr)
+@ stdcall RtlRunOnceExecuteOnce(ptr ptr ptr ptr)
 @ stdcall RtlRunOnceInitialize(ptr)
 @ stdcall RtlSecondsSince1970ToTime(long ptr)
 @ stdcall RtlSecondsSince1980ToTime(long ptr)
