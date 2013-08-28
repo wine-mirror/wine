@@ -155,7 +155,6 @@ void *wined3d_rb_realloc(void *ptr, size_t size) DECLSPEC_HIDDEN;
 void wined3d_rb_free(void *ptr) DECLSPEC_HIDDEN;
 
 /* Device caps */
-#define MAX_PALETTES            65536
 #define MAX_STREAM_OUT          4
 #define MAX_STREAMS             16
 #define MAX_TEXTURES            8
