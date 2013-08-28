@@ -4439,76 +4439,6 @@ void surface_prepare_rb(struct wined3d_surface *surface, const struct wined3d_gl
     }
 }
 
-static void flush_to_framebuffer_drawpixels(struct wined3d_surface *surface,
-        const RECT *rect, GLenum fmt, GLenum type, UINT bpp, const BYTE *mem)
-{
-    struct wined3d_device *device = surface->resource.device;
-    UINT pitch = wined3d_surface_get_pitch(surface);
-    const struct wined3d_gl_info *gl_info;
-    struct wined3d_context *context;
-    RECT local_rect;
-    UINT w, h;
-
-    surface_get_rect(surface, rect, &local_rect);
-
-    mem += local_rect.top * pitch + local_rect.left * bpp;
-    w = local_rect.right - local_rect.left;
-    h = local_rect.bottom - local_rect.top;
-
-    /* Activate the correct context for the render target */
-    context = context_acquire(device, surface);
-    context_apply_blit_state(context, device);
-    gl_info = context->gl_info;
-
-    if (!surface_is_offscreen(surface))
-    {
-        GLenum buffer = surface_get_gl_buffer(surface);
-        TRACE("Unlocking %#x buffer.\n", buffer);
-        context_set_draw_buffer(context, buffer);
-
-        surface_translate_drawable_coords(surface, context->win_handle, &local_rect);
-        gl_info->gl_ops.gl.p_glPixelZoom(1.0f, -1.0f);
-    }
-    else
-    {
-        /* Primary offscreen render target */
-        TRACE("Offscreen render target.\n");
-        context_set_draw_buffer(context, device->offscreenBuffer);
-
-        gl_info->gl_ops.gl.p_glPixelZoom(1.0f, 1.0f);
-    }
-
-    gl_info->gl_ops.gl.p_glRasterPos3i(local_rect.left, local_rect.top, 1);
-    checkGLcall("glRasterPos3i");
-
-    /* If not fullscreen, we need to skip a number of bytes to find the next row of data */
-    gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_ROW_LENGTH, surface->resource.width);
-
-    if (surface->flags & SFLAG_PBO)
-    {
-        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, surface->pbo));
-        checkGLcall("glBindBufferARB");
-    }
-
-    gl_info->gl_ops.gl.p_glDrawPixels(w, h, fmt, type, mem);
-    checkGLcall("glDrawPixels");
-
-    if (surface->flags & SFLAG_PBO)
-    {
-        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
-        checkGLcall("glBindBufferARB");
-    }
-
-    gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-    checkGLcall("glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)");
-
-    if (wined3d_settings.strict_draw_ordering
-            || (surface->swapchain && surface->swapchain->front_buffer == surface))
-        gl_info->gl_ops.gl.p_glFlush();
-
-    context_release(context);
-}
-
 static BOOL color_in_range(const struct wined3d_color_key *color_key, DWORD color)
 {
     /* FIXME: Is this really how color keys are supposed to work? I think it
@@ -5860,11 +5790,7 @@ static void surface_load_sysmem(struct wined3d_surface *surface,
 static HRESULT surface_load_drawable(struct wined3d_surface *surface,
         const struct wined3d_gl_info *gl_info, const RECT *rect)
 {
-    struct wined3d_device *device = surface->resource.device;
-    enum wined3d_conversion_type convert;
-    struct wined3d_format format;
-    UINT byte_count;
-    BYTE *mem;
+    RECT r;
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO && surface_is_offscreen(surface))
     {
@@ -5872,82 +5798,10 @@ static HRESULT surface_load_drawable(struct wined3d_surface *surface,
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (wined3d_settings.rendertargetlock_mode == RTL_READTEX)
-        surface_load_location(surface, SFLAG_INTEXTURE, NULL);
-
-    if (surface->flags & SFLAG_INTEXTURE)
-    {
-        RECT r;
-
-        surface_get_rect(surface, rect, &r);
-        surface_blt_to_drawable(device, WINED3D_TEXF_POINT, FALSE, surface, &r, surface, &r);
-
-        return WINED3D_OK;
-    }
-
-    if ((surface->flags & SFLAG_LOCATIONS) == SFLAG_INSRGBTEX)
-    {
-        /* This needs colorspace conversion from sRGB to RGB. We take the slow
-         * path through sysmem. */
-        surface_load_location(surface, SFLAG_INSYSMEM, rect);
-    }
-
-    d3dfmt_get_conv(surface, FALSE, FALSE, &format, &convert);
-
-    /* Don't use PBOs for converted surfaces. During PBO conversion we look at
-     * SFLAG_CONVERTED but it isn't set (yet) in all cases where it is getting
-     * called. */
-    if ((convert != WINED3D_CT_NONE) && (surface->flags & SFLAG_PBO))
-    {
-        struct wined3d_context *context;
-
-        TRACE("Removing the pbo attached to surface %p.\n", surface);
-
-        /* TODO: Use already acquired context when possible. */
-        context = context_acquire(device, NULL);
-
-        surface_remove_pbo(surface, gl_info);
-
-        context_release(context);
-    }
-
-    if ((convert != WINED3D_CT_NONE) && surface->resource.allocatedMemory)
-    {
-        UINT height = surface->resource.height;
-        UINT width = surface->resource.width;
-        UINT src_pitch, dst_pitch;
-
-        byte_count = format.conv_byte_count;
-        src_pitch = wined3d_surface_get_pitch(surface);
-
-        /* Stick to the alignment for the converted surface too, makes it
-         * easier to load the surface. */
-        dst_pitch = width * byte_count;
-        dst_pitch = (dst_pitch + device->surface_alignment - 1) & ~(device->surface_alignment - 1);
-
-        if (!(mem = HeapAlloc(GetProcessHeap(), 0, dst_pitch * height)))
-        {
-            ERR("Out of memory (%u).\n", dst_pitch * height);
-            return E_OUTOFMEMORY;
-        }
-
-        d3dfmt_convert_surface(surface->resource.allocatedMemory, mem,
-                src_pitch, width, height, dst_pitch, convert, surface);
-
-        surface->flags |= SFLAG_CONVERTED;
-    }
-    else
-    {
-        surface->flags &= ~SFLAG_CONVERTED;
-        mem = surface->resource.allocatedMemory;
-        byte_count = format.byte_count;
-    }
-
-    flush_to_framebuffer_drawpixels(surface, rect, format.glFormat, format.glType, byte_count, mem);
-
-    /* Don't delete PBO memory. */
-    if ((mem != surface->resource.allocatedMemory) && !(surface->flags & SFLAG_PBO))
-        HeapFree(GetProcessHeap(), 0, mem);
+    surface_get_rect(surface, rect, &r);
+    surface_load_location(surface, SFLAG_INTEXTURE, NULL);
+    surface_blt_to_drawable(surface->resource.device,
+            WINED3D_TEXF_POINT, FALSE, surface, &r, surface, &r);
 
     return WINED3D_OK;
 }
