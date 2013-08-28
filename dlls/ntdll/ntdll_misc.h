@@ -241,6 +241,7 @@ static inline struct ntdll_thread_data *ntdll_get_thread_data(void)
 }
 
 extern mode_t FILE_umask DECLSPEC_HIDDEN;
+extern HANDLE keyed_event DECLSPEC_HIDDEN;
 
 /* Register functions */
 
