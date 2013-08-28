@@ -306,7 +306,7 @@ static NTSTATUS get_modem_status(int fd, DWORD* lpModemStat)
               (*lpModemStat & MS_CTS_ON)  ? "MS_CTS_ON  " : "");
         return STATUS_SUCCESS;
     }
-    WARN("ioctl failed\n");
+    WARN("TIOCMGET err %s\n", strerror(errno));
     status = FILE_GetNtStatus();
 #endif
     return status;
@@ -928,7 +928,11 @@ static DWORD CALLBACK wait_for_event(LPVOID arg)
             NtDelayExecution(FALSE, &time);
             get_irq_info(fd, &new_irq_info);
             if (get_modem_status(fd, &new_mstat))
+            {
                 TRACE("get_modem_status failed\n");
+                *commio->events = 0;
+                break;
+            }
             *commio->events = check_events(fd, commio->evtmask,
                                            &new_irq_info, &commio->irq_info,
                                            new_mstat, commio->mstat);
