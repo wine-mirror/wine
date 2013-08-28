@@ -891,7 +891,6 @@ static void test_ClearCommError(void)
     ok(lpStat.cbInQue == 0, "Unexpected %d chars in InQueue\n", lpStat.cbInQue);
     ok(lpStat.cbOutQue == 0, "Unexpected %d chars in OutQueue\n", lpStat.cbOutQue);
     ok(errors == 0, "ClearCommErrors: Unexpected error 0x%08x\n", errors);
-    trace("test_ClearCommErrors done\n");
 
     CloseHandle(hcom);
 }
