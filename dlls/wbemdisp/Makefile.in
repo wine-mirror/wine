@@ -6,6 +6,7 @@ C_SRCS = \
 	main.c
 
 IDL_R_SRCS = wbemdisp_classes.idl
+IDL_H_SRCS = wbemdisp_classes.idl
 
 IDL_TLB_SRCS = wbemdisp_tlb.idl
 

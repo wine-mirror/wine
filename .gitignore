@@ -140,6 +140,7 @@ dlls/vbscript/tests/vbsregexp55.h
 dlls/vbscript/vbscript_classes.h
 dlls/vbscript/vbsglobal.h
 dlls/vbscript/vbsregexp55.h
+dlls/wbemdisp/wbemdisp_classes.h
 dlls/wbemprox/wql.tab.c
 dlls/wbemprox/wql.tab.h
 dlls/windowscodecs/windowscodecs_wincodec.h

@@ -23,16 +23,68 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "initguid.h"
 #include "objbase.h"
 #include "wbemdisp.h"
 #include "rpcproxy.h"
 
 #include "wine/debug.h"
 #include "wbemdisp_private.h"
+#include "wbemdisp_classes.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wbemdisp);
 
 static HINSTANCE instance;
+
+static HRESULT WINAPI WinMGMTS_QueryInterface(IParseDisplayName *iface, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(riid, &IID_IUnknown)) {
+        TRACE("(IID_IUnknown %p)\n", ppv);
+        *ppv = iface;
+    }else if(IsEqualGUID(riid, &IID_IParseDisplayName)) {
+        TRACE("(IID_IParseDisplayName %p)\n", ppv);
+        *ppv = iface;
+    }else {
+        WARN("Unsupported riid %s\n", debugstr_guid(riid));
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI WinMGMTS_AddRef(IParseDisplayName *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI WinMGMTS_Release(IParseDisplayName *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI WinMGMTS_ParseDisplayName(IParseDisplayName *iface, IBindCtx *pbc, LPOLESTR pszDisplayName,
+        ULONG *pchEaten, IMoniker **ppmkOut)
+{
+    FIXME("(%p %s %p %p)\n", pbc, debugstr_w(pszDisplayName), pchEaten, ppmkOut);
+    return E_NOTIMPL;
+}
+
+static const IParseDisplayNameVtbl WinMGMTSVtbl = {
+    WinMGMTS_QueryInterface,
+    WinMGMTS_AddRef,
+    WinMGMTS_Release,
+    WinMGMTS_ParseDisplayName
+};
+
+static IParseDisplayName winmgmts = { &WinMGMTSVtbl };
+
+static HRESULT WinMGMTS_create(IUnknown *outer, void **ppv)
+{
+    *ppv = &winmgmts;
+    return S_OK;
+}
 
 struct factory
 {
@@ -107,6 +159,7 @@ static const struct IClassFactoryVtbl factory_vtbl =
 };
 
 static struct factory swbem_locator_cf = { { &factory_vtbl }, SWbemLocator_create };
+static struct factory winmgmts_cf = { { &factory_vtbl }, WinMGMTS_create };
 
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
@@ -130,10 +183,12 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID iid, LPVOID *obj )
     TRACE( "%s, %s, %p\n", debugstr_guid(rclsid), debugstr_guid(iid), obj );
 
     if (IsEqualGUID( rclsid, &CLSID_SWbemLocator ))
-    {
-       cf = &swbem_locator_cf.IClassFactory_iface;
-    }
-    if (!cf) return CLASS_E_CLASSNOTAVAILABLE;
+        cf = &swbem_locator_cf.IClassFactory_iface;
+    else if (IsEqualGUID( rclsid, &CLSID_WinMGMTS ))
+        cf = &winmgmts_cf.IClassFactory_iface;
+    else
+        return CLASS_E_CLASSNOTAVAILABLE;
+
     return IClassFactory_QueryInterface( cf, iid, obj );
 }
 
