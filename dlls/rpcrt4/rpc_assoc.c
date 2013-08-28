@@ -389,7 +389,7 @@ static RpcConnection *RpcAssoc_GetIdleConnection(RpcAssoc *assoc,
 RPC_STATUS RpcAssoc_GetClientConnection(RpcAssoc *assoc,
                                         const RPC_SYNTAX_IDENTIFIER *InterfaceId,
                                         const RPC_SYNTAX_IDENTIFIER *TransferSyntax, RpcAuthInfo *AuthInfo,
-                                        RpcQualityOfService *QOS, RpcConnection **Connection)
+                                        RpcQualityOfService *QOS, LPCWSTR CookieAuth, RpcConnection **Connection)
 {
     RpcConnection *NewConnection;
     RPC_STATUS status;
@@ -402,7 +402,7 @@ RPC_STATUS RpcAssoc_GetClientConnection(RpcAssoc *assoc,
     status = RPCRT4_CreateConnection(&NewConnection, FALSE /* is this a server connection? */,
         assoc->Protseq, assoc->NetworkAddr,
         assoc->Endpoint, assoc->NetworkOptions,
-        AuthInfo, QOS);
+        AuthInfo, QOS, CookieAuth);
     if (status != RPC_S_OK)
         return status;
 

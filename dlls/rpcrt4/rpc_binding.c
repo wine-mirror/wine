@@ -263,6 +263,7 @@ RPC_STATUS RPCRT4_ReleaseBinding(RpcBinding* Binding)
   RPCRT4_strfree(Binding->NetworkAddr);
   RPCRT4_strfree(Binding->Protseq);
   HeapFree(GetProcessHeap(), 0, Binding->NetworkOptions);
+  HeapFree(GetProcessHeap(), 0, Binding->CookieAuth);
   if (Binding->AuthInfo) RpcAuthInfo_Release(Binding->AuthInfo);
   if (Binding->QOS) RpcQualityOfService_Release(Binding->QOS);
   HeapFree(GetProcessHeap(), 0, Binding);
@@ -277,7 +278,7 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection,
 
   if (!Binding->server) {
      return RpcAssoc_GetClientConnection(Binding->Assoc, InterfaceId,
-         TransferSyntax, Binding->AuthInfo, Binding->QOS, Connection);
+         TransferSyntax, Binding->AuthInfo, Binding->QOS, Binding->CookieAuth, Connection);
   } else {
     /* we already have a connection with acceptable binding, so use it */
     if (Binding->FromConn) {
@@ -1002,6 +1003,7 @@ RPC_STATUS RPC_ENTRY RpcBindingCopy(
   DestBinding->NetworkAddr = RPCRT4_strndupA(SrcBinding->NetworkAddr, -1);
   DestBinding->Endpoint = RPCRT4_strndupA(SrcBinding->Endpoint, -1);
   DestBinding->NetworkOptions = RPCRT4_strdupW(SrcBinding->NetworkOptions);
+  DestBinding->CookieAuth = RPCRT4_strdupW(SrcBinding->CookieAuth);
   if (SrcBinding->Assoc) SrcBinding->Assoc->refs++;
   DestBinding->Assoc = SrcBinding->Assoc;
 
@@ -1923,6 +1925,27 @@ RpcBindingSetAuthInfoW( RPC_BINDING_HANDLE Binding, RPC_WSTR ServerPrincName, UL
  */
 RPC_STATUS WINAPI RpcBindingSetOption(RPC_BINDING_HANDLE BindingHandle, ULONG Option, ULONG_PTR OptionValue)
 {
-    FIXME("(%p, %d, %ld): stub\n", BindingHandle, Option, OptionValue);
+    TRACE("(%p, %d, %ld)\n", BindingHandle, Option, OptionValue);
+
+    switch (Option)
+    {
+    case RPC_C_OPT_COOKIE_AUTH:
+    {
+        RPC_C_OPT_COOKIE_AUTH_DESCRIPTOR *cookie = (RPC_C_OPT_COOKIE_AUTH_DESCRIPTOR *)OptionValue;
+        RpcBinding *binding = BindingHandle;
+        int len = MultiByteToWideChar(CP_ACP, 0, cookie->Buffer, cookie->BufferSize, NULL, 0);
+        WCHAR *str;
+
+        if (!(str = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR)))) return ERROR_OUTOFMEMORY;
+        MultiByteToWideChar(CP_ACP, 0, cookie->Buffer, cookie->BufferSize, str, len);
+        str[len] = 0;
+        HeapFree(GetProcessHeap(), 0, binding->CookieAuth);
+        binding->CookieAuth = str;
+        break;
+    }
+    default:
+        FIXME("option %u not supported\n", Option);
+        break;
+    }
     return RPC_S_OK;
 }
