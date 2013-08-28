@@ -88,6 +88,7 @@ _Yarn_char* __thiscall _Yarn_char_ctor_cstr(_Yarn_char*, const char*);
 _Yarn_char* __thiscall _Yarn_char_copy_ctor(_Yarn_char*, const _Yarn_char*);
 const char* __thiscall _Yarn_char_c_str(const _Yarn_char*);
 void __thiscall _Yarn_char_dtor(_Yarn_char*);
+_Yarn_char* __thiscall _Yarn_char_op_assign(_Yarn_char*, const _Yarn_char*);
 
 /* class locale::facet */
 typedef struct {
