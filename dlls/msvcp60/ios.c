@@ -2310,7 +2310,8 @@ void __thiscall basic_filebuf_char__Init(basic_filebuf_char *this, FILE *file, b
     this->cvt = NULL;
     this->state0 = basic_filebuf_char__Init__Stinit;
     this->state = basic_filebuf_char__Init__Stinit;
-    this->str = NULL;
+    if(which == INITFL_new)
+        this->str = NULL;
     this->close = (which == INITFL_open);
     this->file = file;
 
@@ -2802,7 +2803,8 @@ static void basic_filebuf_wchar__Init(basic_filebuf_wchar *this, FILE *file, bas
     this->cvt = NULL;
     this->state0 = basic_filebuf_short__Init__Stinit;
     this->state = basic_filebuf_short__Init__Stinit;
-    this->str = NULL;
+    if(which == INITFL_new)
+        this->str = NULL;
     this->close = (which == INITFL_open);
     this->file = file;
 
@@ -2819,7 +2821,8 @@ void __thiscall basic_filebuf_short__Init(basic_filebuf_wchar *this, FILE *file,
     this->cvt = NULL;
     this->state0 = basic_filebuf_short__Init__Stinit;
     this->state = basic_filebuf_short__Init__Stinit;
-    this->str = NULL;
+    if(which == INITFL_new)
+        this->str = NULL;
     this->close = (which == INITFL_open);
     this->file = file;
 
