@@ -49,8 +49,15 @@ static NTSTATUS (WINAPI *pNtOpenSymbolicLinkObject)(PHANDLE, ACCESS_MASK, POBJEC
 static NTSTATUS (WINAPI *pNtCreateSymbolicLinkObject)(PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES, PUNICODE_STRING);
 static NTSTATUS (WINAPI *pNtQuerySymbolicLinkObject)(HANDLE,PUNICODE_STRING,PULONG);
 static NTSTATUS (WINAPI *pNtQueryObject)(HANDLE,OBJECT_INFORMATION_CLASS,PVOID,ULONG,PULONG);
-static NTSTATUS (WINAPI *pNtReleaseSemaphore)(HANDLE handle, ULONG count, PULONG previous);
+static NTSTATUS (WINAPI *pNtReleaseSemaphore)(HANDLE, ULONG, PULONG);
+static NTSTATUS (WINAPI *pNtCreateKeyedEvent)( HANDLE *, ACCESS_MASK, const OBJECT_ATTRIBUTES *, ULONG );
+static NTSTATUS (WINAPI *pNtOpenKeyedEvent)( HANDLE *, ACCESS_MASK, const OBJECT_ATTRIBUTES * );
+static NTSTATUS (WINAPI *pNtWaitForKeyedEvent)( HANDLE, const void *, BOOLEAN, const LARGE_INTEGER * );
+static NTSTATUS (WINAPI *pNtReleaseKeyedEvent)( HANDLE, const void *, BOOLEAN, const LARGE_INTEGER * );
 
+#define KEYEDEVENT_WAIT       0x0001
+#define KEYEDEVENT_WAKE       0x0002
+#define KEYEDEVENT_ALL_ACCESS (STANDARD_RIGHTS_REQUIRED | 0x0003)
 
 static void test_case_sensitive (void)
 {
@@ -838,6 +845,192 @@ static void test_event(void)
     status = pNtClose(Event2);
 }
 
+static const WCHAR keyed_nameW[] = {'\\','B','a','s','e','N','a','m','e','d','O','b','j','e','c','t','s',
+                                    '\\','W','i','n','e','T','e','s','t','E','v','e','n','t',0};
+
+static DWORD WINAPI keyed_event_thread( void *arg )
+{
+    HANDLE handle;
+    NTSTATUS status;
+    LARGE_INTEGER timeout;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING str;
+    int i;
+
+    attr.Length                   = sizeof(attr);
+    attr.RootDirectory            = 0;
+    attr.ObjectName               = &str;
+    attr.Attributes               = 0;
+    attr.SecurityDescriptor       = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &str, keyed_nameW );
+
+    status = pNtOpenKeyedEvent( &handle, KEYEDEVENT_ALL_ACCESS, &attr );
+    ok( !status, "NtOpenKeyedEvent failed %x\n", status );
+
+    for (i = 0; i < 20; i++)
+    {
+        if (i & 1)
+            status = pNtWaitForKeyedEvent( handle, (void *)(i * 2), 0, NULL );
+        else
+            status = pNtReleaseKeyedEvent( handle, (void *)(i * 2), 0, NULL );
+        ok( status == STATUS_SUCCESS, "%i: failed %x\n", i, status );
+        Sleep( 20 - i );
+    }
+
+    status = pNtReleaseKeyedEvent( handle, (void *)0x1234, 0, NULL );
+    ok( status == STATUS_SUCCESS, "%i: failed %x\n", i, status );
+
+    timeout.QuadPart = -10000;
+    status = pNtWaitForKeyedEvent( handle, (void *)0x5678, 0, &timeout );
+    ok( status == STATUS_TIMEOUT, "NtWaitForKeyedEvent %x\n", status );
+    status = pNtReleaseKeyedEvent( handle, (void *)0x9abc, 0, &timeout );
+    ok( status == STATUS_TIMEOUT, "NtReleaseKeyedEvent %x\n", status );
+
+    NtClose( handle );
+    return 0;
+}
+
+static void test_keyed_events(void)
+{
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING str;
+    HANDLE handle, event, thread;
+    NTSTATUS status;
+    LARGE_INTEGER timeout;
+    int i;
+
+    if (!pNtCreateKeyedEvent)
+    {
+        win_skip( "Keyed events not supported\n" );
+        return;
+    }
+
+    attr.Length                   = sizeof(attr);
+    attr.RootDirectory            = 0;
+    attr.ObjectName               = &str;
+    attr.Attributes               = 0;
+    attr.SecurityDescriptor       = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &str, keyed_nameW );
+
+    status = pNtCreateKeyedEvent( &handle, KEYEDEVENT_ALL_ACCESS | SYNCHRONIZE, &attr, 0 );
+    ok( !status, "NtCreateKeyedEvent failed %x\n", status );
+
+    status = WaitForSingleObject( handle, 1000 );
+    ok( status == 0, "WaitForSingleObject %x\n", status );
+
+    timeout.QuadPart = -100000;
+    status = pNtWaitForKeyedEvent( handle, (void *)255, 0, &timeout );
+    ok( status == STATUS_INVALID_PARAMETER_1, "NtWaitForKeyedEvent %x\n", status );
+    status = pNtReleaseKeyedEvent( handle, (void *)255, 0, &timeout );
+    ok( status == STATUS_INVALID_PARAMETER_1, "NtReleaseKeyedEvent %x\n", status );
+
+    status = pNtWaitForKeyedEvent( handle, (void *)254, 0, &timeout );
+    ok( status == STATUS_TIMEOUT, "NtWaitForKeyedEvent %x\n", status );
+    status = pNtReleaseKeyedEvent( handle, (void *)254, 0, &timeout );
+    ok( status == STATUS_TIMEOUT, "NtReleaseKeyedEvent %x\n", status );
+
+    status = pNtWaitForKeyedEvent( handle, NULL, 0, &timeout );
+    ok( status == STATUS_TIMEOUT, "NtWaitForKeyedEvent %x\n", status );
+    status = pNtReleaseKeyedEvent( handle, NULL, 0, &timeout );
+    ok( status == STATUS_TIMEOUT, "NtReleaseKeyedEvent %x\n", status );
+
+    status = pNtWaitForKeyedEvent( (HANDLE)0xdeadbeef, (void *)9, 0, &timeout );
+    ok( status == STATUS_INVALID_PARAMETER_1, "NtWaitForKeyedEvent %x\n", status );
+    status = pNtReleaseKeyedEvent( (HANDLE)0xdeadbeef, (void *)9, 0, &timeout );
+    ok( status == STATUS_INVALID_PARAMETER_1, "NtReleaseKeyedEvent %x\n", status );
+
+    status = pNtWaitForKeyedEvent( (HANDLE)0xdeadbeef, (void *)8, 0, &timeout );
+    ok( status == STATUS_INVALID_HANDLE, "NtWaitForKeyedEvent %x\n", status );
+    status = pNtReleaseKeyedEvent( (HANDLE)0xdeadbeef, (void *)8, 0, &timeout );
+    ok( status == STATUS_INVALID_HANDLE, "NtReleaseKeyedEvent %x\n", status );
+
+    thread = CreateThread( NULL, 0, keyed_event_thread, 0, 0, NULL );
+    for (i = 0; i < 20; i++)
+    {
+        if (i & 1)
+            status = pNtReleaseKeyedEvent( handle, (void *)(i * 2), 0, NULL );
+        else
+            status = pNtWaitForKeyedEvent( handle, (void *)(i * 2), 0, NULL );
+        ok( status == STATUS_SUCCESS, "%i: failed %x\n", i, status );
+        Sleep( i );
+    }
+    status = pNtWaitForKeyedEvent( handle, (void *)0x1234, 0, &timeout );
+    ok( status == STATUS_SUCCESS, "NtWaitForKeyedEvent %x\n", status );
+    status = pNtWaitForKeyedEvent( handle, (void *)0x5678, 0, &timeout );
+    ok( status == STATUS_TIMEOUT, "NtWaitForKeyedEvent %x\n", status );
+    status = pNtReleaseKeyedEvent( handle, (void *)0x9abc, 0, &timeout );
+    ok( status == STATUS_TIMEOUT, "NtReleaseKeyedEvent %x\n", status );
+
+    ok( WaitForSingleObject( thread, 30000 ) == 0, "wait failed\n" );
+
+    NtClose( handle );
+
+    /* test access rights */
+
+    status = pNtCreateKeyedEvent( &handle, KEYEDEVENT_WAIT, &attr, 0 );
+    ok( !status, "NtCreateKeyedEvent failed %x\n", status );
+    status = pNtWaitForKeyedEvent( handle, (void *)8, 0, &timeout );
+    ok( status == STATUS_TIMEOUT, "NtWaitForKeyedEvent %x\n", status );
+    status = pNtReleaseKeyedEvent( handle, (void *)8, 0, &timeout );
+    ok( status == STATUS_ACCESS_DENIED, "NtReleaseKeyedEvent %x\n", status );
+    NtClose( handle );
+
+    status = pNtCreateKeyedEvent( &handle, KEYEDEVENT_WAKE, &attr, 0 );
+    ok( !status, "NtCreateKeyedEvent failed %x\n", status );
+    status = pNtWaitForKeyedEvent( handle, (void *)8, 0, &timeout );
+    ok( status == STATUS_ACCESS_DENIED, "NtWaitForKeyedEvent %x\n", status );
+    status = pNtReleaseKeyedEvent( handle, (void *)8, 0, &timeout );
+    ok( status == STATUS_TIMEOUT, "NtReleaseKeyedEvent %x\n", status );
+    NtClose( handle );
+
+    status = pNtCreateKeyedEvent( &handle, KEYEDEVENT_ALL_ACCESS, &attr, 0 );
+    ok( !status, "NtCreateKeyedEvent failed %x\n", status );
+    status = WaitForSingleObject( handle, 1000 );
+    ok( status == WAIT_FAILED && GetLastError() == ERROR_ACCESS_DENIED,
+        "WaitForSingleObject %x err %u\n", status, GetLastError() );
+    status = pNtWaitForKeyedEvent( handle, (void *)8, 0, &timeout );
+    ok( status == STATUS_TIMEOUT, "NtWaitForKeyedEvent %x\n", status );
+    status = pNtReleaseKeyedEvent( handle, (void *)8, 0, &timeout );
+    ok( status == STATUS_TIMEOUT, "NtReleaseKeyedEvent %x\n", status );
+    NtClose( handle );
+
+    /* GENERIC_READ gives wait access */
+    status = pNtCreateKeyedEvent( &handle, GENERIC_READ, &attr, 0 );
+    ok( !status, "NtCreateKeyedEvent failed %x\n", status );
+    status = pNtWaitForKeyedEvent( handle, (void *)8, 0, &timeout );
+    ok( status == STATUS_TIMEOUT, "NtWaitForKeyedEvent %x\n", status );
+    status = pNtReleaseKeyedEvent( handle, (void *)8, 0, &timeout );
+    ok( status == STATUS_ACCESS_DENIED, "NtReleaseKeyedEvent %x\n", status );
+    NtClose( handle );
+
+    /* GENERIC_WRITE gives wake access */
+    status = pNtCreateKeyedEvent( &handle, GENERIC_WRITE, &attr, 0 );
+    ok( !status, "NtCreateKeyedEvent failed %x\n", status );
+    status = pNtWaitForKeyedEvent( handle, (void *)8, 0, &timeout );
+    ok( status == STATUS_ACCESS_DENIED, "NtWaitForKeyedEvent %x\n", status );
+    status = pNtReleaseKeyedEvent( handle, (void *)8, 0, &timeout );
+    ok( status == STATUS_TIMEOUT, "NtReleaseKeyedEvent %x\n", status );
+
+    /* it's not an event */
+    status = pNtPulseEvent( handle, NULL );
+    ok( status == STATUS_OBJECT_TYPE_MISMATCH, "NtPulseEvent %x\n", status );
+
+    status = pNtCreateEvent( &event, GENERIC_ALL, &attr, FALSE, FALSE );
+    ok( status == STATUS_OBJECT_NAME_COLLISION || status == STATUS_OBJECT_TYPE_MISMATCH,
+        "CreateEvent %x\n", status );
+
+    NtClose( handle );
+
+    status = pNtCreateEvent( &event, GENERIC_ALL, &attr, FALSE, FALSE );
+    ok( status == 0, "CreateEvent %x\n", status );
+    status = pNtWaitForKeyedEvent( event, (void *)8, 0, &timeout );
+    ok( status == STATUS_OBJECT_TYPE_MISMATCH, "NtWaitForKeyedEvent %x\n", status );
+    status = pNtReleaseKeyedEvent( event, (void *)8, 0, &timeout );
+    ok( status == STATUS_OBJECT_TYPE_MISMATCH, "NtReleaseKeyedEvent %x\n", status );
+    NtClose( event );
+}
 
 START_TEST(om)
 {
@@ -874,6 +1067,10 @@ START_TEST(om)
     pNtCreateSection        =  (void *)GetProcAddress(hntdll, "NtCreateSection");
     pNtQueryObject          =  (void *)GetProcAddress(hntdll, "NtQueryObject");
     pNtReleaseSemaphore     =  (void *)GetProcAddress(hntdll, "NtReleaseSemaphore");
+    pNtCreateKeyedEvent     =  (void *)GetProcAddress(hntdll, "NtCreateKeyedEvent");
+    pNtOpenKeyedEvent       =  (void *)GetProcAddress(hntdll, "NtOpenKeyedEvent");
+    pNtWaitForKeyedEvent    =  (void *)GetProcAddress(hntdll, "NtWaitForKeyedEvent");
+    pNtReleaseKeyedEvent    =  (void *)GetProcAddress(hntdll, "NtReleaseKeyedEvent");
 
     test_case_sensitive();
     test_namespace_pipe();
@@ -883,4 +1080,5 @@ START_TEST(om)
     test_query_object();
     test_type_mismatch();
     test_event();
+    test_keyed_events();
 }
