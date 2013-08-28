@@ -2039,7 +2039,7 @@ static RPC_STATUS rpcrt4_http_check_response(HINTERNET hor)
     ret = HttpQueryInfoW(hor, HTTP_QUERY_STATUS_CODE|HTTP_QUERY_FLAG_NUMBER, &status_code, &size, &index);
     if (!ret)
         return GetLastError();
-    if (status_code < 400)
+    if (status_code == HTTP_STATUS_OK)
         return RPC_S_OK;
     index = 0;
     size = sizeof(buf);
