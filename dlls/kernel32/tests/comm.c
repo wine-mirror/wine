@@ -832,7 +832,7 @@ todo_wine
     ok(!res && GetLastError() == ERROR_IO_PENDING, "WriteFile returned %d, error %d\n", res, GetLastError());
 todo_wine
     ok(!bytes, "expected 0, got %u\n", bytes);
-    ok(after - before == 0, "WriteFile took %d ms to write %d Bytes at %d Baud\n",
+    ok(after - before < 30, "WriteFile took %d ms to write %d Bytes at %d Baud\n",
        after - before, bytes, baud);
     /* don't wait for WriteFile completion */
 
