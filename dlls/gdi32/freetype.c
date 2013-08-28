@@ -4576,14 +4576,20 @@ static LONG load_VDMX(GdiFont *font, LONG height)
 	} else {
 	    ppem = -height;
 	    if(ppem < startsz || ppem > endsz)
-		goto end;
+            {
+                ppem = 0;
+                goto end;
+            }
 
 	    for(i = 0; i < recs; i++) {
 		USHORT yPelHeight;
 		yPelHeight = GET_BE_WORD(vTable[i * 3]);
 
 		if(yPelHeight > ppem)
-		    break; /* failed */
+                {
+                    ppem = 0;
+                    break; /* failed */
+                }
 
 		if(yPelHeight == ppem) {
 		    font->yMax = GET_BE_WORD(vTable[(i * 3) + 1]);
