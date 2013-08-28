@@ -1663,36 +1663,21 @@ todo_wine {
     ReleaseDC(0, hdc);
 }
 
-static void test_height_selection(void)
+struct font_data
 {
-    static const struct font_data
-    {
-        const char face_name[LF_FACESIZE];
-        int requested_height;
-        int weight, height, ascent, descent, int_leading, ext_leading, dpi;
-    } fd[] =
-    {
-        {"Tahoma", -12, FW_NORMAL, 14, 12, 2, 2, 0, 96 },
-        {"Tahoma", -24, FW_NORMAL, 29, 24, 5, 5, 0, 96 },
-        {"Tahoma", -48, FW_NORMAL, 58, 48, 10, 10, 0, 96 },
-        {"Tahoma", -96, FW_NORMAL, 116, 96, 20, 20, 0, 96 },
-        {"Tahoma", -192, FW_NORMAL, 232, 192, 40, 40, 0, 96 },
-        {"Tahoma", 12, FW_NORMAL, 12, 10, 2, 2, 0, 96 },
-        {"Tahoma", 24, FW_NORMAL, 24, 20, 4, 4, 0, 96 },
-        {"Tahoma", 48, FW_NORMAL, 48, 40, 8, 8, 0, 96 },
-        {"Tahoma", 96, FW_NORMAL, 96, 80, 16, 17, 0, 96 },
-        {"Tahoma", 192, FW_NORMAL, 192, 159, 33, 33, 0, 96 }
-    };
-    HDC hdc;
+    const char face_name[LF_FACESIZE];
+    int requested_height;
+    int weight, height, ascent, descent, int_leading, ext_leading, dpi;
+};
+
+static void test_height( HDC hdc, const struct font_data *fd )
+{
     LOGFONT lf;
     HFONT hfont, old_hfont;
     TEXTMETRIC tm;
     INT ret, i;
 
-    hdc = CreateCompatibleDC(0);
-    assert(hdc);
-
-    for (i = 0; i < sizeof(fd)/sizeof(fd[0]); i++)
+    for (i = 0; fd[i].face_name[0]; i++)
     {
         if (!is_truetype_font_installed(fd[i].face_name))
         {
@@ -1727,6 +1712,28 @@ static void test_height_selection(void)
         SelectObject(hdc, old_hfont);
         DeleteObject(hfont);
     }
+}
+
+static void test_height_selection(void)
+{
+    static const struct font_data tahoma[] =
+    {
+        {"Tahoma", -12, FW_NORMAL, 14, 12, 2, 2, 0, 96 },
+        {"Tahoma", -24, FW_NORMAL, 29, 24, 5, 5, 0, 96 },
+        {"Tahoma", -48, FW_NORMAL, 58, 48, 10, 10, 0, 96 },
+        {"Tahoma", -96, FW_NORMAL, 116, 96, 20, 20, 0, 96 },
+        {"Tahoma", -192, FW_NORMAL, 232, 192, 40, 40, 0, 96 },
+        {"Tahoma", 12, FW_NORMAL, 12, 10, 2, 2, 0, 96 },
+        {"Tahoma", 24, FW_NORMAL, 24, 20, 4, 4, 0, 96 },
+        {"Tahoma", 48, FW_NORMAL, 48, 40, 8, 8, 0, 96 },
+        {"Tahoma", 96, FW_NORMAL, 96, 80, 16, 17, 0, 96 },
+        {"Tahoma", 192, FW_NORMAL, 192, 159, 33, 33, 0, 96 },
+        {"", 0, 0, 0, 0, 0, 0, 0, 0 }
+    };
+    HDC hdc = CreateCompatibleDC(0);
+    assert(hdc);
+
+    test_height( hdc, tahoma );
 
     DeleteDC(hdc);
 }
