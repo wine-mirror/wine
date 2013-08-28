@@ -31,7 +31,7 @@
 #include "wine/test.h"
 
 /* Do not allow more than 1 deviation here */
-#define match_off_by_1(a, b) (abs((a) - (b)) <= 1)
+#define match_off_by_1(a, b, exact) (abs((a) - (b)) <= ((exact) ? 0 : 1))
 
 #define near_match(a, b) (abs((a) - (b)) <= 6)
 #define expect(expected, got) ok(got == expected, "Expected %.8x, got %.8x\n", expected, got)
@@ -1575,9 +1575,9 @@ static void test_GetKerningPairs(void)
         uiRet = GetOutlineTextMetricsW(hdc, sizeof(otm), &otm);
         ok(uiRet == sizeof(otm), "GetOutlineTextMetricsW error %d\n", GetLastError());
 
-        ok(match_off_by_1(kd[i].tmHeight, otm.otmTextMetrics.tmHeight), "expected %d, got %d\n",
+        ok(match_off_by_1(kd[i].tmHeight, otm.otmTextMetrics.tmHeight, FALSE), "expected %d, got %d\n",
            kd[i].tmHeight, otm.otmTextMetrics.tmHeight);
-        ok(match_off_by_1(kd[i].tmAscent, otm.otmTextMetrics.tmAscent), "expected %d, got %d\n",
+        ok(match_off_by_1(kd[i].tmAscent, otm.otmTextMetrics.tmAscent, FALSE), "expected %d, got %d\n",
            kd[i].tmAscent, otm.otmTextMetrics.tmAscent);
         ok(kd[i].tmDescent == otm.otmTextMetrics.tmDescent, "expected %d, got %d\n",
            kd[i].tmDescent, otm.otmTextMetrics.tmDescent);
@@ -1668,6 +1668,7 @@ struct font_data
     const char face_name[LF_FACESIZE];
     int requested_height;
     int weight, height, ascent, descent, int_leading, ext_leading, dpi;
+    BOOL exact;
 };
 
 static void test_height( HDC hdc, const struct font_data *fd )
@@ -1700,9 +1701,9 @@ static void test_height( HDC hdc, const struct font_data *fd )
         {
             trace("found font %s, height %d charset %x dpi %d\n", lf.lfFaceName, lf.lfHeight, lf.lfCharSet, fd[i].dpi);
             ok(tm.tmWeight == fd[i].weight, "%s(%d): tm.tmWeight %d != %d\n", fd[i].face_name, fd[i].requested_height, tm.tmWeight, fd[i].weight);
-            ok(match_off_by_1(tm.tmHeight, fd[i].height), "%s(%d): tm.tmHeight %d != %d\n", fd[i].face_name, fd[i].requested_height, tm.tmHeight, fd[i].height);
-            ok(match_off_by_1(tm.tmAscent, fd[i].ascent), "%s(%d): tm.tmAscent %d != %d\n", fd[i].face_name, fd[i].requested_height, tm.tmAscent, fd[i].ascent);
-            ok(match_off_by_1(tm.tmDescent, fd[i].descent), "%s(%d): tm.tmDescent %d != %d\n", fd[i].face_name, fd[i].requested_height, tm.tmDescent, fd[i].descent);
+            ok(match_off_by_1(tm.tmHeight, fd[i].height, fd[i].exact), "%s(%d): tm.tmHeight %d != %d\n", fd[i].face_name, fd[i].requested_height, tm.tmHeight, fd[i].height);
+            ok(match_off_by_1(tm.tmAscent, fd[i].ascent, fd[i].exact), "%s(%d): tm.tmAscent %d != %d\n", fd[i].face_name, fd[i].requested_height, tm.tmAscent, fd[i].ascent);
+            ok(match_off_by_1(tm.tmDescent, fd[i].descent, fd[i].exact), "%s(%d): tm.tmDescent %d != %d\n", fd[i].face_name, fd[i].requested_height, tm.tmDescent, fd[i].descent);
 #if 0 /* FIXME: calculation of tmInternalLeading in Wine doesn't match what Windows does */
             ok(tm.tmInternalLeading == fd[i].int_leading, "%s(%d): tm.tmInternalLeading %d != %d\n", fd[i].face_name, fd[i].requested_height, tm.tmInternalLeading, fd[i].int_leading);
 #endif
@@ -1718,17 +1719,17 @@ static void test_height_selection(void)
 {
     static const struct font_data tahoma[] =
     {
-        {"Tahoma", -12, FW_NORMAL, 14, 12, 2, 2, 0, 96 },
-        {"Tahoma", -24, FW_NORMAL, 29, 24, 5, 5, 0, 96 },
-        {"Tahoma", -48, FW_NORMAL, 58, 48, 10, 10, 0, 96 },
-        {"Tahoma", -96, FW_NORMAL, 116, 96, 20, 20, 0, 96 },
-        {"Tahoma", -192, FW_NORMAL, 232, 192, 40, 40, 0, 96 },
-        {"Tahoma", 12, FW_NORMAL, 12, 10, 2, 2, 0, 96 },
-        {"Tahoma", 24, FW_NORMAL, 24, 20, 4, 4, 0, 96 },
-        {"Tahoma", 48, FW_NORMAL, 48, 40, 8, 8, 0, 96 },
-        {"Tahoma", 96, FW_NORMAL, 96, 80, 16, 17, 0, 96 },
-        {"Tahoma", 192, FW_NORMAL, 192, 159, 33, 33, 0, 96 },
-        {"", 0, 0, 0, 0, 0, 0, 0, 0 }
+        {"Tahoma", -12, FW_NORMAL, 14, 12, 2, 2, 0, 96, TRUE },
+        {"Tahoma", -24, FW_NORMAL, 29, 24, 5, 5, 0, 96, TRUE },
+        {"Tahoma", -48, FW_NORMAL, 58, 48, 10, 10, 0, 96, TRUE },
+        {"Tahoma", -96, FW_NORMAL, 116, 96, 20, 20, 0, 96, TRUE },
+        {"Tahoma", -192, FW_NORMAL, 232, 192, 40, 40, 0, 96, TRUE },
+        {"Tahoma", 12, FW_NORMAL, 12, 10, 2, 2, 0, 96, TRUE },
+        {"Tahoma", 24, FW_NORMAL, 24, 20, 4, 4, 0, 96, FALSE },
+        {"Tahoma", 48, FW_NORMAL, 48, 40, 8, 8, 0, 96, TRUE },
+        {"Tahoma", 96, FW_NORMAL, 96, 80, 16, 17, 0, 96, FALSE },
+        {"Tahoma", 192, FW_NORMAL, 192, 159, 33, 33, 0, 96, FALSE },
+        {"", 0, 0, 0, 0, 0, 0, 0, 0, 0 }
     };
     HDC hdc = CreateCompatibleDC(0);
     assert(hdc);
@@ -3966,7 +3967,7 @@ static void test_GetTextMetrics2(const char *fontname, int font_height)
         SelectObject(hdc, of);
         DeleteObject(hf);
 
-        if (match_off_by_1(tm.tmAveCharWidth, ave_width) || width / height > 200)
+        if (match_off_by_1(tm.tmAveCharWidth, ave_width, FALSE) || width / height > 200)
             break;
     }
 
