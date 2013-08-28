@@ -8905,7 +8905,8 @@ static HRESULT WMSFT_compile_names(ITypeLibImpl *This,
         str->offset = size;
     }
 
-    file->name_seg.data = data = heap_alloc(file->name_seg.len);
+    /* Allocate bigger buffer so we can temporarily NULL terminate the name */
+    file->name_seg.data = data = heap_alloc(file->name_seg.len+1);
 
     last_offs = 0;
     LIST_FOR_EACH_ENTRY(str, &This->name_list, TLBString, entry) {
