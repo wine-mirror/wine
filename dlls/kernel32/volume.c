@@ -1031,7 +1031,7 @@ BOOL WINAPI GetVolumeNameForVolumeMountPointA( LPCSTR path, LPSTR volume, DWORD 
 BOOL WINAPI GetVolumeNameForVolumeMountPointW( LPCWSTR path, LPWSTR volume, DWORD size )
 {
     static const WCHAR prefixW[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\',0};
-    static const WCHAR volumeW[] = {'\\','?','?','\\','V','o','l','u','m','e','{',0};
+    static const WCHAR volumeW[] = {'\\','?','?','\\','V','o','l','u','m','e','{'};
     static const WCHAR trailingW[] = {'\\',0};
 
     MOUNTMGR_MOUNT_POINT *input = NULL, *o1;
@@ -1133,7 +1133,7 @@ BOOL WINAPI GetVolumeNameForVolumeMountPointW( LPCWSTR path, LPWSTR volume, DWOR
             debugstr_wn((WCHAR*)((char *)output + o1->DeviceNameOffset),
                             o1->DeviceNameLength/sizeof(WCHAR)));
 
-        if (!strncmpW( p, volumeW, (sizeof(volumeW)-1)/sizeof(WCHAR) ))
+        if (!strncmpW( p, volumeW, sizeof(volumeW)/sizeof(WCHAR) ))
         {
             /* is there space in the return variable ?? */
             if ((o1->SymbolicLinkNameLength/sizeof(WCHAR))+2 > size)
