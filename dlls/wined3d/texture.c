@@ -962,10 +962,7 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
         return hr;
     }
 
-    /* Precalculated scaling for 'faked' non power of two texture coords.
-     * Second also don't use ARB_TEXTURE_RECTANGLE in case the surface format is P8 and EXT_PALETTED_TEXTURE
-     * is used in combination with texture uploads (RTL_READTEX). The reason is that EXT_PALETTED_TEXTURE
-     * doesn't work in combination with ARB_TEXTURE_RECTANGLE. */
+    /* Precalculated scaling for 'faked' non power of two texture coords. */
     if (gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT]
             && (desc->width != pow2_width || desc->height != pow2_height))
     {
@@ -977,9 +974,8 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
         texture->flags |= WINED3D_TEXTURE_COND_NP2;
         texture->min_mip_lookup = minMipLookup_noFilter;
     }
-    else if (gl_info->supported[ARB_TEXTURE_RECTANGLE] && (desc->width != pow2_width || desc->height != pow2_height)
-            && !(desc->format == WINED3DFMT_P8_UINT && gl_info->supported[EXT_PALETTED_TEXTURE]
-            && wined3d_settings.rendertargetlock_mode == RTL_READTEX))
+    else if (gl_info->supported[ARB_TEXTURE_RECTANGLE]
+            && (desc->width != pow2_width || desc->height != pow2_height))
     {
         texture->pow2_matrix[0] = (float)desc->width;
         texture->pow2_matrix[5] = (float)desc->height;

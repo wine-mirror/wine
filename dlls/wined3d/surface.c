@@ -782,24 +782,6 @@ static HRESULT surface_private_setup(struct wined3d_surface *surface)
         TRACE("Creating an oversized surface: %ux%u.\n",
                 surface->pow2Width, surface->pow2Height);
     }
-    else
-    {
-        /* Don't use ARB_TEXTURE_RECTANGLE in case the surface format is P8
-         * and EXT_PALETTED_TEXTURE is used in combination with texture
-         * uploads (RTL_READTEX/RTL_TEXTEX). The reason is that
-         * EXT_PALETTED_TEXTURE doesn't work in combination with
-         * ARB_TEXTURE_RECTANGLE. */
-        if (surface->flags & SFLAG_NONPOW2 && gl_info->supported[ARB_TEXTURE_RECTANGLE]
-                && !(surface->resource.format->id == WINED3DFMT_P8_UINT
-                && gl_info->supported[EXT_PALETTED_TEXTURE]
-                && wined3d_settings.rendertargetlock_mode == RTL_READTEX))
-        {
-            surface->texture_target = GL_TEXTURE_RECTANGLE_ARB;
-            surface->pow2Width = surface->resource.width;
-            surface->pow2Height = surface->resource.height;
-            surface->flags &= ~(SFLAG_NONPOW2 | SFLAG_NORMCOORD);
-        }
-    }
 
     switch (wined3d_settings.offscreen_rendering_mode)
     {
@@ -2399,7 +2381,7 @@ static HRESULT d3dfmt_get_conv(const struct wined3d_surface *surface, BOOL need_
                     &rect, surface->resource.usage, surface->resource.pool, surface->resource.format,
                     &rect, surface->resource.usage, surface->resource.pool, surface->resource.format);
 #endif
-            blit_supported = gl_info->supported[EXT_PALETTED_TEXTURE] || gl_info->supported[ARB_FRAGMENT_PROGRAM];
+            blit_supported = gl_info->supported[ARB_FRAGMENT_PROGRAM];
 
             /* Use conversion when the blit_shader backend supports it. It only supports this in case of
              * texturing. Further also use conversion in case of color keying.
@@ -6270,29 +6252,9 @@ static HRESULT ffp_blit_alloc(struct wined3d_device *device) { return WINED3D_OK
 /* Context activation is done by the caller. */
 static void ffp_blit_free(struct wined3d_device *device) { }
 
-/* This function is used in case of 8bit paletted textures using GL_EXT_paletted_texture */
-/* Context activation is done by the caller. */
-static void ffp_blit_p8_upload_palette(const struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info)
-{
-    BYTE table[256][4];
-    BOOL colorkey_active = (surface->CKeyFlags & WINEDDSD_CKSRCBLT) != 0;
-    GLenum target;
-
-    if (surface->container)
-        target = surface->container->target;
-    else
-        target = surface->texture_target;
-
-    d3dfmt_p8_init_palette(surface, table, colorkey_active);
-
-    TRACE("Using GL_EXT_PALETTED_TEXTURE for 8-bit paletted texture support\n");
-    GL_EXTCALL(glColorTableEXT(target, GL_RGBA, 256, GL_RGBA, GL_UNSIGNED_BYTE, table));
-}
-
 /* Context activation is done by the caller. */
 static HRESULT ffp_blit_set(void *blit_priv, struct wined3d_context *context, const struct wined3d_surface *surface)
 {
-    enum complex_fixup fixup = get_complex_fixup(surface->resource.format->color_fixup);
     const struct wined3d_gl_info *gl_info = context->gl_info;
     GLenum target;
 
@@ -6300,13 +6262,6 @@ static HRESULT ffp_blit_set(void *blit_priv, struct wined3d_context *context, co
         target = surface->container->target;
     else
         target = surface->texture_target;
-
-    /* When EXT_PALETTED_TEXTURE is around, palette conversion is done by the GPU
-     * else the surface is converted in software at upload time in LoadLocation.
-     */
-    if (!(surface->flags & SFLAG_CONVERTED) && fixup == COMPLEX_FIXUP_P8
-            && gl_info->supported[EXT_PALETTED_TEXTURE])
-        ffp_blit_p8_upload_palette(surface, gl_info);
 
     gl_info->gl_ops.gl.p_glEnable(target);
     checkGLcall("glEnable(target)");
@@ -6335,42 +6290,27 @@ static BOOL ffp_blit_supported(const struct wined3d_gl_info *gl_info, enum wined
         const RECT *src_rect, DWORD src_usage, enum wined3d_pool src_pool, const struct wined3d_format *src_format,
         const RECT *dst_rect, DWORD dst_usage, enum wined3d_pool dst_pool, const struct wined3d_format *dst_format)
 {
-    enum complex_fixup src_fixup;
-
     switch (blit_op)
     {
         case WINED3D_BLIT_OP_COLOR_BLIT:
             if (src_pool == WINED3D_POOL_SYSTEM_MEM || dst_pool == WINED3D_POOL_SYSTEM_MEM)
                 return FALSE;
 
-            src_fixup = get_complex_fixup(src_format->color_fixup);
             if (TRACE_ON(d3d_surface) && TRACE_ON(d3d))
             {
                 TRACE("Checking support for fixup:\n");
                 dump_color_fixup_desc(src_format->color_fixup);
             }
 
-            if (!is_identity_fixup(dst_format->color_fixup))
+            /* We only support identity conversions. */
+            if (!is_identity_fixup(src_format->color_fixup)
+                    || !is_identity_fixup(dst_format->color_fixup))
             {
-                TRACE("Destination fixups are not supported\n");
+                TRACE("Fixups are not supported.\n");
                 return FALSE;
             }
 
-            if (src_fixup == COMPLEX_FIXUP_P8 && gl_info->supported[EXT_PALETTED_TEXTURE])
-            {
-                TRACE("P8 fixup supported\n");
-                return TRUE;
-            }
-
-            /* We only support identity conversions. */
-            if (is_identity_fixup(src_format->color_fixup))
-            {
-                TRACE("[OK]\n");
-                return TRUE;
-            }
-
-            TRACE("[FAILED]\n");
-            return FALSE;
+            return TRUE;
 
         case WINED3D_BLIT_OP_COLOR_FILL:
             if (dst_pool == WINED3D_POOL_SYSTEM_MEM)

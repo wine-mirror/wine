@@ -113,7 +113,6 @@ enum wined3d_gl_extension
     EXT_GPU_PROGRAM_PARAMETERS,
     EXT_GPU_SHADER4,
     EXT_PACKED_DEPTH_STENCIL,
-    EXT_PALETTED_TEXTURE,
     EXT_POINT_PARAMETERS,
     EXT_PROVOKING_VERTEX,
     EXT_SECONDARY_COLOR,
@@ -487,8 +486,6 @@ enum wined3d_gl_extension
     USE_GL_FUNC(glVertexAttribI4uivEXT) \
     USE_GL_FUNC(glVertexAttribI4usvEXT) \
     USE_GL_FUNC(glVertexAttribIPointerEXT) \
-    /* GL_EXT_paletted_texture */ \
-    USE_GL_FUNC(glColorTableEXT) \
     /* GL_EXT_point_parameters */ \
     USE_GL_FUNC(glPointParameterfEXT) \
     USE_GL_FUNC(glPointParameterfvEXT) \
