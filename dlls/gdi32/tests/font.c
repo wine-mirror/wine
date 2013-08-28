@@ -1704,9 +1704,7 @@ static void test_height( HDC hdc, const struct font_data *fd )
             ok(match_off_by_1(tm.tmHeight, fd[i].height, fd[i].exact), "%s(%d): tm.tmHeight %d != %d\n", fd[i].face_name, fd[i].requested_height, tm.tmHeight, fd[i].height);
             ok(match_off_by_1(tm.tmAscent, fd[i].ascent, fd[i].exact), "%s(%d): tm.tmAscent %d != %d\n", fd[i].face_name, fd[i].requested_height, tm.tmAscent, fd[i].ascent);
             ok(match_off_by_1(tm.tmDescent, fd[i].descent, fd[i].exact), "%s(%d): tm.tmDescent %d != %d\n", fd[i].face_name, fd[i].requested_height, tm.tmDescent, fd[i].descent);
-#if 0 /* FIXME: calculation of tmInternalLeading in Wine doesn't match what Windows does */
-            ok(tm.tmInternalLeading == fd[i].int_leading, "%s(%d): tm.tmInternalLeading %d != %d\n", fd[i].face_name, fd[i].requested_height, tm.tmInternalLeading, fd[i].int_leading);
-#endif
+            ok(match_off_by_1(tm.tmInternalLeading, fd[i].int_leading, fd[i].exact), "%s(%d): tm.tmInternalLeading %d != %d\n", fd[i].face_name, fd[i].requested_height, tm.tmInternalLeading, fd[i].int_leading);
             ok(tm.tmExternalLeading == fd[i].ext_leading, "%s(%d): tm.tmExternalLeading %d != %d\n", fd[i].face_name, fd[i].requested_height, tm.tmExternalLeading, fd[i].ext_leading);
         }
 
@@ -1725,10 +1723,10 @@ static void test_height_selection(void)
         {"Tahoma", -96, FW_NORMAL, 116, 96, 20, 20, 0, 96, TRUE },
         {"Tahoma", -192, FW_NORMAL, 232, 192, 40, 40, 0, 96, TRUE },
         {"Tahoma", 12, FW_NORMAL, 12, 10, 2, 2, 0, 96, TRUE },
-        {"Tahoma", 24, FW_NORMAL, 24, 20, 4, 4, 0, 96, FALSE },
+        {"Tahoma", 24, FW_NORMAL, 24, 20, 4, 4, 0, 96, TRUE },
         {"Tahoma", 48, FW_NORMAL, 48, 40, 8, 8, 0, 96, TRUE },
         {"Tahoma", 96, FW_NORMAL, 96, 80, 16, 17, 0, 96, FALSE },
-        {"Tahoma", 192, FW_NORMAL, 192, 159, 33, 33, 0, 96, FALSE },
+        {"Tahoma", 192, FW_NORMAL, 192, 159, 33, 33, 0, 96, TRUE },
         {"", 0, 0, 0, 0, 0, 0, 0, 0, 0 }
     };
     HDC hdc = CreateCompatibleDC(0);
