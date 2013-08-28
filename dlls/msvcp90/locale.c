@@ -8949,7 +8949,7 @@ locale__Locimp* __cdecl locale__Locimp__Makeloc(const _Locinfo *locinfo, categor
     locale__Locimp__Makeushloc(locinfo, cat, locimp, loc);
 
     locimp->catmask |= cat;
-    MSVCP_basic_string_char_copy_ctor(&locimp->name, &locinfo->newlocname);
+    MSVCP_basic_string_char_assign(&locimp->name, &locinfo->newlocname);
     return locimp;
 }
 
