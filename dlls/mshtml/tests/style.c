@@ -2028,6 +2028,22 @@ static void test_body_style(IHTMLStyle *style)
     ok(hres == S_OK, "get_pageBreakBefore failed: %08x\n", hres);
     ok(!str, "pageBreakBefore = %s\n", wine_dbgstr_w(str));
 
+    str = (void*)0xdeadbeef;
+    hres = IHTMLStyle_get_whiteSpace(style, &str);
+    ok(hres == S_OK, "get_whiteSpace failed: %08x\n", hres);
+    ok(!str, "whiteSpace = %s\n", wine_dbgstr_w(str));
+
+    str = a2bstr("nowrap");
+    hres = IHTMLStyle_put_whiteSpace(style, str);
+    SysFreeString(str);
+    ok(hres == S_OK, "put_whiteSpace failed: %08x\n", hres);
+
+    str = NULL;
+    hres = IHTMLStyle_get_whiteSpace(style, &str);
+    ok(hres == S_OK, "get_whiteSpace failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "nowrap"), "whiteSpace = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
     hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLStyle2, (void**)&style2);
     ok(hres == S_OK, "Could not get IHTMLStyle2 iface: %08x\n", hres);
     if(SUCCEEDED(hres)) {
