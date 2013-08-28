@@ -406,8 +406,33 @@ static HRESULT WINAPI HTMLDocument_get_title(IHTMLDocument2 *iface, BSTR *p)
 static HRESULT WINAPI HTMLDocument_get_scripts(IHTMLDocument2 *iface, IHTMLElementCollection **p)
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsIDOMHTMLCollection *nscoll = NULL;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!p)
+        return E_INVALIDARG;
+
+    *p = NULL;
+
+    if(!This->doc_node->nsdoc) {
+        WARN("NULL nsdoc\n");
+        return E_UNEXPECTED;
+    }
+
+    nsres = nsIDOMHTMLDocument_GetScripts(This->doc_node->nsdoc, &nscoll);
+    if(NS_FAILED(nsres)) {
+        ERR("GetImages failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    if(nscoll) {
+        *p = create_collection_from_htmlcol(This->doc_node, nscoll);
+        nsIDOMHTMLCollection_Release(nscoll);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDocument_put_designMode(IHTMLDocument2 *iface, BSTR v)

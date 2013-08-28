@@ -6075,6 +6075,14 @@ static void test_elems(IHTMLDocument2 *doc)
         IHTMLElementCollection_Release(collection);
     }
 
+    hres = IHTMLDocument2_get_scripts(doc, &collection);
+    ok(hres == S_OK, "get_scripts failed: %08x\n", hres);
+    if(hres == S_OK) {
+        static const elem_type_t script_types[] = {ET_SCRIPT};
+        test_elem_collection((IUnknown*)collection, script_types, 1);
+        IHTMLElementCollection_Release(collection);
+    }
+
     test_plugins_col(doc);
 
     elem = get_doc_elem(doc);
