@@ -4897,7 +4897,7 @@ static void test_SetTypeDescAlias(SYSKIND kind)
     ok(hr == S_OK, "got %08x\n", hr);
 
     ITypeLib_Release(tl);
-    ok(0 == ICreateTypeLib2_Release(ctl), "typelib should have been released");
+    ok(0 == ICreateTypeLib2_Release(ctl), "typelib should have been released\n");
 
     trace("after save...\n");
 
@@ -4919,7 +4919,7 @@ static void test_SetTypeDescAlias(SYSKIND kind)
     for(i = 0; TDATests[i].vt; ++i)
         testTDA(tl, &TDATests[i], ptr_size, hreftype, href_cbSizeInstance, href_cbAlignment, FALSE);
 
-    ok(0 == ITypeLib_Release(tl), "typelib should have been released");
+    ok(0 == ITypeLib_Release(tl), "typelib should have been released\n");
 
     DeleteFileA(filenameA);
 }
