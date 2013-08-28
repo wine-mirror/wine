@@ -1468,6 +1468,22 @@ static void _test_anchor_hostname(unsigned line, IUnknown *unk, const char *host
     SysFreeString(str);
 }
 
+#define test_anchor_hash(a,h) _test_anchor_hash(__LINE__,a,h)
+static void _test_anchor_hash(unsigned line, IHTMLElement *elem, const char *exhash)
+{
+    IHTMLAnchorElement *anchor = _get_anchor_iface(line, (IUnknown*)elem);
+    BSTR str;
+    HRESULT hres;
+
+    hres = IHTMLAnchorElement_get_hash(anchor, &str);
+    ok_(__FILE__,line)(hres == S_OK, "get_hash failed: %08x\n", hres);
+    if(exhash)
+        ok_(__FILE__,line)(!strcmp_wa(str, exhash), "hash = %s, expected %s\n", wine_dbgstr_w(str), exhash);
+    else
+        ok_(__FILE__,line)(!str, "hash = %s, expected NULL\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+}
+
 #define test_option_text(o,t) _test_option_text(__LINE__,o,t)
 static void _test_option_text(unsigned line, IHTMLOptionElement *option, const char *text)
 {
@@ -6380,6 +6396,7 @@ static void test_elems(IHTMLDocument2 *doc)
         test_anchor_put_href((IUnknown*)elem, "http://test/");
         test_anchor_href((IUnknown*)elem, "http://test/");
         test_anchor_hostname((IUnknown*)elem, "test");
+        test_anchor_hash(elem, NULL);
 
         /* target */
         test_anchor_get_target((IUnknown*)elem, NULL);
@@ -6400,6 +6417,9 @@ static void test_elems(IHTMLDocument2 *doc)
         test_anchor_put_name((IUnknown*)elem, "anchor name");
         test_anchor_put_name((IUnknown*)elem, NULL);
         test_anchor_put_name((IUnknown*)elem, "x");
+
+        test_anchor_put_href((IUnknown*)elem, "http://test/#hash");
+        test_anchor_hash(elem, "#hash");
 
         IHTMLElement_Release(elem);
     }
