@@ -340,7 +340,7 @@ RpcPktHdr *RPCRT4_BuildHttpHeader(ULONG DataRepresentation,
         (payload) += sizeof(UUID); \
     } while (0)
 
-RpcPktHdr *RPCRT4_BuildHttpConnectHeader(unsigned short flags, int out_pipe,
+RpcPktHdr *RPCRT4_BuildHttpConnectHeader(int out_pipe,
                                          const UUID *connection_uuid,
                                          const UUID *pipe_uuid,
                                          const UUID *association_uuid)
@@ -353,7 +353,7 @@ RpcPktHdr *RPCRT4_BuildHttpConnectHeader(unsigned short flags, int out_pipe,
   if (!out_pipe)
     size += 8 + 4 + sizeof(UUID);
 
-  header = RPCRT4_BuildHttpHeader(NDR_LOCAL_DATA_REPRESENTATION, flags,
+  header = RPCRT4_BuildHttpHeader(NDR_LOCAL_DATA_REPRESENTATION, 0,
                                   out_pipe ? 4 : 6, size);
   if (!header) return NULL;
   payload = (char *)(&header->http+1);

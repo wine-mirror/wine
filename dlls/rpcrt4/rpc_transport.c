@@ -2232,7 +2232,7 @@ static RPC_STATUS rpcrt4_http_prepare_in_pipe(HINTERNET in_request, RpcHttpAsync
     if (status != RPC_S_OK) return status;
 
     TRACE("sending HTTP connect header to server\n");
-    hdr = RPCRT4_BuildHttpConnectHeader(0, FALSE, connection_uuid, in_pipe_uuid, association_uuid);
+    hdr = RPCRT4_BuildHttpConnectHeader(FALSE, connection_uuid, in_pipe_uuid, association_uuid);
     if (!hdr) return RPC_S_OUT_OF_RESOURCES;
     ret = InternetWriteFile(in_request, hdr, hdr->common.frag_len, &bytes_written);
     RPCRT4_FreeHeader(hdr);
@@ -2308,7 +2308,7 @@ static RPC_STATUS rpcrt4_http_prepare_out_pipe(HINTERNET out_request,
     status = send_echo_request(out_request, async_data, cancel_event);
     if (status != RPC_S_OK) return status;
 
-    hdr = RPCRT4_BuildHttpConnectHeader(0, TRUE, connection_uuid, out_pipe_uuid, NULL);
+    hdr = RPCRT4_BuildHttpConnectHeader(TRUE, connection_uuid, out_pipe_uuid, NULL);
     if (!hdr) return RPC_S_OUT_OF_RESOURCES;
 
     prepare_async_request(async_data);
