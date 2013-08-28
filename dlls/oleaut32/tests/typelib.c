@@ -3131,12 +3131,14 @@ static void test_CreateTypeLib(SYSKIND sys) {
     ok(docstring == NULL, "got docstring: %s\n", wine_dbgstr_w(docstring));
     ok(helpcontext == 0x201, "got helpcontext: 0x%x\n", helpcontext);
     ok(!memcmp(helpfile, helpfileW, sizeof(helpfileW)), "got helpfile: %s\n", wine_dbgstr_w(helpfile));
+    SysFreeString(name);
     SysFreeString(helpfile);
 
     hres = ITypeInfo_GetNames(ti, pfuncdesc->memid, names, sizeof(names) / sizeof(*names), &cnames);
     ok(hres == S_OK, "got: %08x\n", hres);
     ok(cnames == 1, "got: %u\n", cnames);
     ok(!memcmp(names[0], func1W, sizeof(func1W)), "got names[0]: %s\n", wine_dbgstr_w(names[0]));
+    SysFreeString(names[0]);
     ITypeInfo_ReleaseFuncDesc(ti, pfuncdesc);
 
     hres = ITypeInfo_GetFuncDesc(ti, 10, &pfuncdesc);
@@ -3250,6 +3252,7 @@ static void test_CreateTypeLib(SYSKIND sys) {
     ok(hres == S_OK, "got: %08x\n", hres);
     ok(cnames == 1, "got: %u\n", cnames);
     ok(!memcmp(names[0], func1W, sizeof(func1W)), "got names[0]: %s\n", wine_dbgstr_w(names[0]));
+    SysFreeString(names[0]);
     ITypeInfo_ReleaseFuncDesc(ti, pfuncdesc);
 
     hres = ITypeInfo_GetFuncDesc(ti, 13, &pfuncdesc);
@@ -4825,6 +4828,7 @@ static void testTDA(ITypeLib *tl, struct _TDATest *TDATest,
         break;
     }
 
+    ITypeInfo_ReleaseTypeAttr(ti, typeattr);
     ITypeInfo_Release(ti);
 }
 
