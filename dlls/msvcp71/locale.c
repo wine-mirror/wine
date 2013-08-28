@@ -8810,7 +8810,7 @@ void __thiscall locale_dtor(locale *this)
     TRACE("(%p)\n", this);
     if(this->ptr && locale_facet__Decref(&this->ptr->facet)) {
         locale__Locimp_dtor(this->ptr);
-        MSVCRT_operator_delete(this);
+        MSVCRT_operator_delete(this->ptr);
     }
 }
 
