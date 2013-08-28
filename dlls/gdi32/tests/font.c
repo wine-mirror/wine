@@ -118,6 +118,52 @@ static BOOL is_font_installed(const char *name)
     return ret;
 }
 
+static void *get_res_data(const char *fontname, DWORD *rsrc_size)
+{
+    HRSRC rsrc;
+    void *rsrc_data;
+
+    rsrc = FindResource(GetModuleHandle(0), fontname, RT_RCDATA);
+    if (!rsrc) return NULL;
+
+    rsrc_data = LockResource(LoadResource(GetModuleHandle(0), rsrc));
+    if (!rsrc_data) return NULL;
+
+    *rsrc_size = SizeofResource(GetModuleHandle(0), rsrc);
+    if (!*rsrc_size) return NULL;
+
+    return rsrc_data;
+}
+
+static BOOL write_tmp_file( const void *data, DWORD *size, char *tmp_name )
+{
+    char tmp_path[MAX_PATH];
+    HANDLE hfile;
+    BOOL ret;
+
+    GetTempPath(MAX_PATH, tmp_path);
+    GetTempFileName(tmp_path, "ttf", 0, tmp_name);
+
+    hfile = CreateFile(tmp_name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+    if (hfile == INVALID_HANDLE_VALUE) return FALSE;
+
+    ret = WriteFile(hfile, data, *size, size, NULL);
+
+    CloseHandle(hfile);
+    return ret;
+}
+
+static BOOL write_ttf_file(const char *fontname, char *tmp_name)
+{
+    void *rsrc_data;
+    DWORD rsrc_size;
+
+    rsrc_data = get_res_data( fontname, &rsrc_size );
+    if (!rsrc_data) return FALSE;
+
+    return write_tmp_file( rsrc_data, &rsrc_size, tmp_name );
+}
+
 static void check_font(const char* test, const LOGFONTA* lf, HFONT hfont)
 {
     LOGFONTA getobj_lf;
@@ -4497,48 +4543,6 @@ static void test_fullname2(void)
     test_fullname2_helper("@UnBatang");
     test_fullname2_helper("@UnDotum");
 
-}
-
-static BOOL write_ttf_file(const char *fontname, char *tmp_name)
-{
-    char tmp_path[MAX_PATH];
-    HRSRC rsrc;
-    void *rsrc_data;
-    DWORD rsrc_size;
-    HANDLE hfile;
-    BOOL ret;
-
-    SetLastError(0xdeadbeef);
-    rsrc = FindResource(GetModuleHandle(0), fontname, RT_RCDATA);
-    ok(rsrc != 0, "FindResource error %d\n", GetLastError());
-    if (!rsrc) return FALSE;
-    SetLastError(0xdeadbeef);
-    rsrc_data = LockResource(LoadResource(GetModuleHandle(0), rsrc));
-    ok(rsrc_data != 0, "LockResource error %d\n", GetLastError());
-    if (!rsrc_data) return FALSE;
-    SetLastError(0xdeadbeef);
-    rsrc_size = SizeofResource(GetModuleHandle(0), rsrc);
-    ok(rsrc_size != 0, "SizeofResource error %d\n", GetLastError());
-    if (!rsrc_size) return FALSE;
-
-    SetLastError(0xdeadbeef);
-    ret = GetTempPath(MAX_PATH, tmp_path);
-    ok(ret, "GetTempPath() error %d\n", GetLastError());
-    SetLastError(0xdeadbeef);
-    ret = GetTempFileName(tmp_path, "ttf", 0, tmp_name);
-    ok(ret, "GetTempFileName() error %d\n", GetLastError());
-
-    SetLastError(0xdeadbeef);
-    hfile = CreateFile(tmp_name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
-    ok(hfile != INVALID_HANDLE_VALUE, "CreateFile() error %d\n", GetLastError());
-    if (hfile == INVALID_HANDLE_VALUE) return FALSE;
-
-    SetLastError(0xdeadbeef);
-    ret = WriteFile(hfile, rsrc_data, rsrc_size, &rsrc_size, NULL);
-    ok(ret, "WriteFile() error %d\n", GetLastError());
-
-    CloseHandle(hfile);
-    return ret;
 }
 
 static void test_GetGlyphOutline_empty_contour(void)
