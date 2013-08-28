@@ -745,12 +745,15 @@
 @ stdcall IdnToNameprepUnicode(long wstr long ptr long)
 @ stdcall IdnToUnicode(long wstr long ptr long)
 @ stdcall InitAtomTable(long)
-@ stdcall InitializeSRWLock(ptr)
+@ stdcall InitOnceBeginInitialize(ptr long ptr ptr)
+@ stdcall InitOnceComplete(ptr long ptr)
+@ stdcall InitOnceExecuteOnce(ptr ptr ptr ptr)
+@ stdcall InitOnceInitialize(ptr) ntdll.RtlRunOnceInitialize
 @ stdcall InitializeCriticalSection(ptr)
 @ stdcall InitializeCriticalSectionAndSpinCount(ptr long)
 @ stdcall InitializeCriticalSectionEx(ptr long long)
 @ stdcall InitializeSListHead(ptr) ntdll.RtlInitializeSListHead
-@ stdcall InitOnceInitialize(ptr) ntdll.RtlRunOnceInitialize
+@ stdcall InitializeSRWLock(ptr)
 @ stdcall -arch=i386 InterlockedCompareExchange (ptr long long)
 @ stdcall -arch=i386 -ret64 InterlockedCompareExchange64(ptr int64 int64) ntdll.RtlInterlockedCompareExchange64
 @ stdcall -arch=i386 InterlockedDecrement(ptr)

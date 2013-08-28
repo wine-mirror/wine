@@ -1164,7 +1164,7 @@ static void test_initonce(void)
 
     if (!pInitOnceInitialize || !pInitOnceExecuteOnce)
     {
-        todo_wine win_skip("one-time initialization API not supported\n");
+        win_skip("one-time initialization API not supported\n");
         return;
     }
 

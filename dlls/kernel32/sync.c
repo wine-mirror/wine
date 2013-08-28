@@ -2237,6 +2237,35 @@ BOOL WINAPI QueryMemoryResourceNotification(HANDLE handle, PBOOL state)
     return FALSE;
 }
 
+/***********************************************************************
+ *           InitOnceBeginInitialize    (KERNEL32.@)
+ */
+BOOL WINAPI InitOnceBeginInitialize( INIT_ONCE *once, DWORD flags, BOOL *pending, void **context )
+{
+    NTSTATUS status = RtlRunOnceBeginInitialize( once, flags, context );
+    if (status >= 0) *pending = (status == STATUS_PENDING);
+    else SetLastError( RtlNtStatusToDosError(status) );
+    return status >= 0;
+}
+
+/***********************************************************************
+ *           InitOnceComplete    (KERNEL32.@)
+ */
+BOOL WINAPI InitOnceComplete( INIT_ONCE *once, DWORD flags, void *context )
+{
+    NTSTATUS status = RtlRunOnceComplete( once, flags, context );
+    if (status != STATUS_SUCCESS) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
+}
+
+/***********************************************************************
+ *           InitOnceExecuteOnce    (KERNEL32.@)
+ */
+BOOL WINAPI InitOnceExecuteOnce( INIT_ONCE *once, PINIT_ONCE_FN func, void *param, void **context )
+{
+    return !RtlRunOnceExecuteOnce( once, (PRTL_RUN_ONCE_INIT_FN)func, param, context );
+}
+
 #ifdef __i386__
 
 /***********************************************************************
