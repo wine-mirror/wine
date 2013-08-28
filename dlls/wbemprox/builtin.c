@@ -1085,9 +1085,12 @@ static BOOL seen_dir( struct dirstack *dirstack, const WCHAR *path )
 /* optimize queries of the form WHERE Name='...' [OR Name='...']* */
 static UINT seed_dirs( struct dirstack *dirstack, const struct expr *cond, WCHAR root, UINT *count )
 {
-    const struct expr *left = cond->u.expr.left, *right = cond->u.expr.right;
+    const struct expr *left, *right;
 
-    if (cond->type != EXPR_COMPLEX) return *count = 0;
+    if (!cond || cond->type != EXPR_COMPLEX) return *count = 0;
+
+    left = cond->u.expr.left;
+    right = cond->u.expr.right;
     if (cond->u.expr.op == OP_EQ)
     {
         UINT len;
