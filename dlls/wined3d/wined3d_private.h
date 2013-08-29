@@ -412,8 +412,6 @@ enum wined3d_shader_rel_op
  * Shader model 3 according to msdn (and for software shaders) */
 #define MAX_LABELS 16
 
-#define SHADER_PGMSIZE 16384
-
 struct wined3d_shader_buffer
 {
     char *buffer;

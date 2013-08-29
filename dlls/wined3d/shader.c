@@ -245,13 +245,12 @@ void shader_buffer_clear(struct wined3d_shader_buffer *buffer)
 
 BOOL shader_buffer_init(struct wined3d_shader_buffer *buffer)
 {
-    buffer->buffer = HeapAlloc(GetProcessHeap(), 0, SHADER_PGMSIZE);
-    if (!buffer->buffer)
+    buffer->buffer_size = 16384;
+    if (!(buffer->buffer = HeapAlloc(GetProcessHeap(), 0, buffer->buffer_size)))
     {
         ERR("Failed to allocate shader buffer memory.\n");
         return FALSE;
     }
-    buffer->buffer_size = SHADER_PGMSIZE;
 
     shader_buffer_clear(buffer);
     return TRUE;
