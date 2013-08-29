@@ -18,6 +18,16 @@
 
 #ifndef GUID_DEFINED
 #define GUID_DEFINED
+
+#ifdef __WIDL__
+typedef struct
+{
+    unsigned long  Data1;
+    unsigned short Data2;
+    unsigned short Data3;
+    byte           Data4[ 8 ];
+} GUID;
+#else
 typedef struct _GUID
 {
 #ifdef _MSC_VER
@@ -29,6 +39,7 @@ typedef struct _GUID
     unsigned short Data3;
     unsigned char  Data4[ 8 ];
 } GUID;
+#endif
 
 /* Macros for __uuidof emulation */
 #if defined(__cplusplus) && !defined(_MSC_VER)
