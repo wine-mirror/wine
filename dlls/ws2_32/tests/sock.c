@@ -1105,6 +1105,18 @@ static void test_set_getsockopt(void)
     int timeout;
     LINGER lingval;
     int size;
+    WSAPROTOCOL_INFOA infoA;
+    WSAPROTOCOL_INFOW infoW;
+    char providername[WSAPROTOCOL_LEN + 1];
+    struct _prottest
+    {
+        int family, type, proto;
+    } prottest[] = {
+        {AF_INET, SOCK_STREAM, IPPROTO_TCP},
+        {AF_INET, SOCK_DGRAM, IPPROTO_UDP},
+        {AF_INET6, SOCK_STREAM, IPPROTO_TCP},
+        {AF_INET6, SOCK_DGRAM, IPPROTO_UDP}
+    };
 
     s = socket(AF_INET, SOCK_STREAM, 0);
     ok(s!=INVALID_SOCKET, "socket() failed error: %d\n", WSAGetLastError());
@@ -1221,6 +1233,81 @@ todo_wine
         err, WSAGetLastError());
 
     closesocket(s);
+
+    /* test SO_PROTOCOL_INFOA invalid parameters */
+    s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ok(getsockopt(s, SOL_SOCKET, SO_PROTOCOL_INFOA, NULL, NULL),
+       "getsockopt should have failed\n");
+    err = WSAGetLastError();
+todo_wine
+    ok(err == WSAEFAULT, "expected 10014, got %d instead\n", err);
+    ok(getsockopt(s, SOL_SOCKET, SO_PROTOCOL_INFOA, (char *) &infoA, NULL),
+       "getsockopt should have failed\n");
+    err = WSAGetLastError();
+todo_wine
+    ok(err == WSAEFAULT, "expected 10014, got %d instead\n", err);
+    ok(getsockopt(s, SOL_SOCKET, SO_PROTOCOL_INFOA, NULL, &size),
+       "getsockopt should have failed\n");
+    err = WSAGetLastError();
+todo_wine
+    ok(err == WSAEFAULT, "expected 10014, got %d instead\n", err);
+
+    size = sizeof(WSAPROTOCOL_INFOA) / 2;
+    ok(getsockopt(s, SOL_SOCKET, SO_PROTOCOL_INFOA, (char *) &infoA, &size),
+       "getsockopt should have failed\n");
+    err = WSAGetLastError();
+todo_wine
+    ok(err == WSAEFAULT, "expected 10014, got %d instead\n", err);
+    closesocket(s);
+
+    /* test SO_PROTOCOL_INFO structure returned for different protocols */
+    for (i = 0; i < sizeof(prottest) / sizeof(prottest[0]); i++)
+    {
+        s = socket(prottest[i].family, prottest[i].type, prottest[i].proto);
+        if (s == INVALID_SOCKET && prottest[i].family == AF_INET6) continue;
+
+        ok(s != INVALID_SOCKET, "Failed to create socket: %d\n",
+          WSAGetLastError());
+
+        /* compare both A and W version */
+        infoA.szProtocol[0] = 0;
+        size = sizeof(WSAPROTOCOL_INFOA);
+        err = getsockopt(s, SOL_SOCKET, SO_PROTOCOL_INFOA, (char *) &infoA, &size);
+todo_wine
+        ok(!err,"getsockopt failed with %d\n", WSAGetLastError());
+
+        infoW.szProtocol[0] = 0;
+        size = sizeof(WSAPROTOCOL_INFOW);
+        err = getsockopt(s, SOL_SOCKET, SO_PROTOCOL_INFOW, (char *) &infoW, &size);
+todo_wine
+        ok(!err,"getsockopt failed with %d\n", WSAGetLastError());
+
+        trace("provider name '%s', family %d, type %d, proto %d\n",
+              infoA.szProtocol, prottest[i].family, prottest[i].type, prottest[i].proto);
+
+        todo_wine {
+        ok(infoA.szProtocol[0], "WSAPROTOCOL_INFOA was not filled\n");
+        ok(infoW.szProtocol[0], "WSAPROTOCOL_INFOW was not filled\n");
+        }
+
+        WideCharToMultiByte(CP_ACP, 0, infoW.szProtocol, -1,
+                            providername, sizeof(providername), NULL, NULL);
+        ok(!strcmp(infoA.szProtocol,providername),
+           "different provider names '%s' != '%s'\n", infoA.szProtocol, providername);
+
+        todo_wine {
+        ok(!memcmp(&infoA, &infoW, FIELD_OFFSET(WSAPROTOCOL_INFOA, szProtocol)),
+           "SO_PROTOCOL_INFO[A/W] comparison failed\n");
+        ok(infoA.iAddressFamily == prottest[i].family, "socket family invalid, expected %d received %d\n",
+           prottest[i].family, infoA.iAddressFamily);
+        ok(infoA.iSocketType == prottest[i].type, "socket type invalid, expected %d received %d\n",
+           prottest[i].type, infoA.iSocketType);
+        ok(infoA.iProtocol == prottest[i].proto, "socket protocol invalid, expected %d received %d\n",
+           prottest[i].proto, infoA.iProtocol);
+        }
+
+        closesocket(s);
+    }
 }
 
 static void test_so_reuseaddr(void)
