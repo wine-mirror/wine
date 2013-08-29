@@ -1232,7 +1232,7 @@ static void write_value(msft_typelib_t* typelib, int *out, int vt, const void *v
 }
 
 static HRESULT set_custdata(msft_typelib_t *typelib, REFGUID guid,
-                            int vt, int value, int *offset)
+                            int vt, const void *value, int *offset)
 {
     MSFT_GuidEntry guidentry;
     int guidoffset;
@@ -1246,7 +1246,7 @@ static HRESULT set_custdata(msft_typelib_t *typelib, REFGUID guid,
     guidentry.next_hash = -1;
 
     guidoffset = ctl2_alloc_guid(typelib, &guidentry);
-    write_value(typelib, &data_out, vt, &value);
+    write_value(typelib, &data_out, vt, value);
 
     custoffset = ctl2_alloc_segment(typelib, MSFT_SEG_CUSTDATAGUID, 12, 0);
 
@@ -2567,8 +2567,10 @@ int create_msft_typelib(typelib_t *typelib)
     time_t cur_time;
     char *time_override;
     unsigned int version = 5 << 24 | 1 << 16 | 164; /* 5.01.0164 */
-    GUID midl_time_guid    = {0xde77ba63,0x517c,0x11d1,{0xa2,0xda,0x00,0x00,0xf8,0x77,0x3c,0xe9}}; 
-    GUID midl_version_guid = {0xde77ba64,0x517c,0x11d1,{0xa2,0xda,0x00,0x00,0xf8,0x77,0x3c,0xe9}}; 
+    GUID midl_time_guid    = {0xde77ba63,0x517c,0x11d1,{0xa2,0xda,0x00,0x00,0xf8,0x77,0x3c,0xe9}};
+    GUID midl_version_guid = {0xde77ba64,0x517c,0x11d1,{0xa2,0xda,0x00,0x00,0xf8,0x77,0x3c,0xe9}};
+    GUID midl_info_guid = {0xde77ba65,0x517c,0x11d1,{0xa2,0xda,0x00,0x00,0xf8,0x77,0x3c,0xe9}};
+    char info_string[128];
 
     pointer_size = (typelib_kind == SYS_WIN64) ? 8 : 4;
 
@@ -2615,8 +2617,10 @@ int create_msft_typelib(typelib_t *typelib)
        and midl's version number */
     time_override = getenv( "WIDL_TIME_OVERRIDE");
     cur_time = time_override ? atol( time_override) : time(NULL);
-    set_custdata(msft, &midl_time_guid, VT_UI4, cur_time, &msft->typelib_header.CustomDataOffset);
-    set_custdata(msft, &midl_version_guid, VT_UI4, version, &msft->typelib_header.CustomDataOffset);
+    sprintf(info_string, "Created by WIDL version %s at %s\n", PACKAGE_VERSION, ctime(&cur_time));
+    set_custdata(msft, &midl_info_guid, VT_BSTR, info_string, &msft->typelib_header.CustomDataOffset);
+    set_custdata(msft, &midl_time_guid, VT_UI4, &cur_time, &msft->typelib_header.CustomDataOffset);
+    set_custdata(msft, &midl_version_guid, VT_UI4, &version, &msft->typelib_header.CustomDataOffset);
 
     if (typelib->stmts)
         LIST_FOR_EACH_ENTRY( stmt, typelib->stmts, const statement_t, entry )
