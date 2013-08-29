@@ -1325,6 +1325,9 @@ static void test_scroll(void)
 
     hwnd = create_monthcal_control(0);
 
+    res = SendMessage(hwnd, MCM_GETMONTHDELTA, 0, 0);
+    expect(2, res);
+
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     /* Setter and Getters for scroll rate */
