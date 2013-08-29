@@ -81,7 +81,7 @@ static const WCHAR **debug_from_relay_includelist;
 static const WCHAR **debug_from_snoop_excludelist;
 static const WCHAR **debug_from_snoop_includelist;
 
-static BOOL init_done;
+static RTL_RUN_ONCE init_once = RTL_RUN_ONCE_INIT;
 
 /* compare an ASCII and a Unicode string without depending on the current codepage */
 static inline int strcmpAW( const char *strA, const WCHAR *strW )
@@ -172,7 +172,7 @@ static const WCHAR **load_list( HKEY hkey, const WCHAR *value )
  *
  * Build the relay include/exclude function lists.
  */
-static void init_debug_lists(void)
+static DWORD WINAPI init_debug_lists( RTL_RUN_ONCE *once, void *param, void **context )
 {
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING name;
@@ -189,9 +189,6 @@ static void init_debug_lists(void)
     static const WCHAR SnoopFromIncludeW[] = {'S','n','o','o','p','F','r','o','m','I','n','c','l','u','d','e',0};
     static const WCHAR SnoopFromExcludeW[] = {'S','n','o','o','p','F','r','o','m','E','x','c','l','u','d','e',0};
 
-    if (init_done) return;
-    init_done = TRUE;
-
     RtlOpenCurrentUser( KEY_ALL_ACCESS, &root );
     attr.Length = sizeof(attr);
     attr.RootDirectory = root;
@@ -204,7 +201,7 @@ static void init_debug_lists(void)
     /* @@ Wine registry key: HKCU\Software\Wine\Debug */
     if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr )) hkey = 0;
     NtClose( root );
-    if (!hkey) return;
+    if (!hkey) return TRUE;
 
     debug_relay_includelist = load_list( hkey, RelayIncludeW );
     debug_relay_excludelist = load_list( hkey, RelayExcludeW );
@@ -216,6 +213,7 @@ static void init_debug_lists(void)
     debug_from_snoop_excludelist = load_list( hkey, SnoopFromExcludeW );
 
     NtClose( hkey );
+    return TRUE;
 }
 
 
@@ -698,7 +696,7 @@ void RELAY_SetupDLL( HMODULE module )
     struct relay_private_data *data;
     const WORD *ordptr;
 
-    if (!init_done) init_debug_lists();
+    RtlRunOnceExecuteOnce( &init_once, init_debug_lists, NULL, NULL );
 
     exports = RtlImageDirectoryEntryToData( module, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &size );
     if (!exports) return;
@@ -855,7 +853,7 @@ void SNOOP_SetupDLL(HMODULE hmod)
     ULONG size32;
     IMAGE_EXPORT_DIRECTORY *exports;
 
-    if (!init_done) init_debug_lists();
+    RtlRunOnceExecuteOnce( &init_once, init_debug_lists, NULL, NULL );
 
     exports = RtlImageDirectoryEntryToData( hmod, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &size32 );
     if (!exports || !exports->NumberOfFunctions) return;
