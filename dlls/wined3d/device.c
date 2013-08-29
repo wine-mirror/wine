@@ -3420,12 +3420,10 @@ void CDECL wined3d_device_draw_indexed_primitive_instanced(struct wined3d_device
 }
 
 /* This is a helper function for UpdateTexture, there is no UpdateVolume method in D3D. */
-static HRESULT device_update_volume(struct wined3d_context *context,
+static void device_update_volume(struct wined3d_context *context,
         struct wined3d_volume *src_volume, struct wined3d_volume *dst_volume)
 {
-    struct wined3d_const_bo_address data;
-    struct wined3d_map_desc src;
-    HRESULT hr;
+    struct wined3d_bo_address data;
 
     TRACE("src_volume %p, dst_volume %p.\n",
             src_volume, dst_volume);
@@ -3433,31 +3431,23 @@ static HRESULT device_update_volume(struct wined3d_context *context,
     if (src_volume->resource.format != dst_volume->resource.format)
     {
         FIXME("Source and destination formats do not match.\n");
-        return WINED3DERR_INVALIDCALL;
+        return;
     }
     if (src_volume->resource.width != dst_volume->resource.width
             || src_volume->resource.height != dst_volume->resource.height
             || src_volume->resource.depth != dst_volume->resource.depth)
     {
         FIXME("Source and destination sizes do not match.\n");
-        return WINED3DERR_INVALIDCALL;
+        return;
     }
-
-    if (FAILED(hr = wined3d_volume_map(src_volume, &src, NULL, WINED3D_MAP_READONLY)))
-        return hr;
 
     /* Only a prepare, since we're uploading the entire volume. */
     wined3d_texture_prepare_texture(dst_volume->container, context, FALSE);
     wined3d_texture_bind_and_dirtify(dst_volume->container, context, FALSE);
 
-    data.buffer_object = 0;
-    data.addr = src.data;
-    wined3d_volume_upload_data(dst_volume, context, &data);
+    wined3d_resource_get_memory(&src_volume->resource, src_volume->resource.map_binding, &data);
+    wined3d_volume_upload_data(dst_volume, context, wined3d_const_bo_address(&data));
     wined3d_resource_invalidate_location(&dst_volume->resource, ~WINED3D_LOCATION_TEXTURE_RGB);
-
-    hr = wined3d_volume_unmap(src_volume);
-
-    return hr;
 }
 
 /* Context activation is done by the caller */
@@ -3529,16 +3519,10 @@ void device_exec_update_texture(struct wined3d_context *context, struct wined3d_
         {
             for (i = 0; i < level_count; ++i)
             {
-                HRESULT hr;
-                hr = device_update_volume(context,
+                device_update_volume(context,
                         volume_from_resource(wined3d_texture_get_sub_resource(src_texture,
                                 i + src_skip_levels)),
                         volume_from_resource(wined3d_texture_get_sub_resource(dst_texture, i)));
-                if (FAILED(hr))
-                {
-                    WARN("Failed to update volume, hr %#x.\n", hr);
-                    return;
-                }
             }
             break;
         }
