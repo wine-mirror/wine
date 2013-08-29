@@ -785,34 +785,27 @@ HRESULT WINAPI D3DXCreateTextureFromResourceExA(struct IDirect3DDevice9 *device,
         PALETTEENTRY *palette, struct IDirect3DTexture9 **texture)
 {
     HRSRC resinfo;
+    void *buffer;
+    DWORD size;
 
-    TRACE("(%p, %s): relay\n", srcmodule, debugstr_a(resource));
+    TRACE("device %p, srcmodule %p, resource %s, width %u, height %u, miplevels %u, usage %#x, format %#x, "
+            "pool %#x, filter %#x, mipfilter %#x, colorkey 0x%08x, srcinfo %p, palette %p, texture %p.\n",
+            device, srcmodule, debugstr_a(resource), width, height, miplevels, usage, format,
+            pool, filter, mipfilter, colorkey, srcinfo, palette, texture);
 
     if (!device || !texture)
         return D3DERR_INVALIDCALL;
 
-    resinfo = FindResourceA(srcmodule, resource, (const char *)RT_RCDATA);
-    if (!resinfo) /* Try loading the resource as bitmap data (which is in DIB format D3DXIFF_DIB) */
-        resinfo = FindResourceA(srcmodule, resource, (const char *)RT_BITMAP);
+    if (!(resinfo = FindResourceA(srcmodule, resource, (const char *)RT_RCDATA))
+            /* Try loading the resource as bitmap data (which is in DIB format D3DXIFF_DIB) */
+            && !(resinfo = FindResourceA(srcmodule, resource, (const char *)RT_BITMAP)))
+        return D3DXERR_INVALIDDATA;
 
-    if (resinfo)
-    {
-        LPVOID buffer;
-        HRESULT hr;
-        DWORD size;
+    if (FAILED(load_resource_into_memory(srcmodule, resinfo, &buffer, &size)))
+        return D3DXERR_INVALIDDATA;
 
-        hr = load_resource_into_memory(srcmodule, resinfo, &buffer, &size);
-
-        if (FAILED(hr))
-            return D3DXERR_INVALIDDATA;
-
-        return D3DXCreateTextureFromFileInMemoryEx(device, buffer, size, width,
-                                                   height, miplevels, usage, format,
-                                                   pool, filter, mipfilter, colorkey,
-                                                   srcinfo, palette, texture);
-    }
-
-    return D3DXERR_INVALIDDATA;
+    return D3DXCreateTextureFromFileInMemoryEx(device, buffer, size, width, height, miplevels,
+            usage, format, pool, filter, mipfilter, colorkey, srcinfo, palette, texture);
 }
 
 HRESULT WINAPI D3DXCreateTextureFromResourceExW(struct IDirect3DDevice9 *device, HMODULE srcmodule,
