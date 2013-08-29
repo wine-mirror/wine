@@ -39,9 +39,10 @@ static int log_pixels_y;  /* pixels per logical inch in y direction */
 static int horz_size;     /* horz. size of screen in millimeters */
 static int vert_size;     /* vert. size of screen in millimeters */
 static int palette_size;
-static int device_init_done;
 
 static Pixmap stock_bitmap_pixmap;  /* phys bitmap for the default stock bitmap */
+
+static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
 
 static const WCHAR dpi_key_name[] = {'S','o','f','t','w','a','r','e','\\','F','o','n','t','s','\0'};
 static const WCHAR dpi_value_name[] = {'L','o','g','P','i','x','e','l','s','\0'};
@@ -79,10 +80,8 @@ static DWORD get_dpi( void )
  *
  * Perform initializations needed upon creation of the first device.
  */
-static void device_init(void)
+static BOOL WINAPI device_init( INIT_ONCE *once, void *param, void **context )
 {
-    device_init_done = TRUE;
-
     /* Initialize XRender */
     xrender_funcs = X11DRV_XRender_Init();
 
@@ -97,6 +96,7 @@ static void device_init(void)
     log_pixels_x = log_pixels_y = get_dpi();
     horz_size = MulDiv( screen_width, 254, log_pixels_x * 10 );
     vert_size = MulDiv( screen_height, 254, log_pixels_y * 10 );
+    return TRUE;
 }
 
 
@@ -104,7 +104,7 @@ static X11DRV_PDEVICE *create_x11_physdev( Drawable drawable )
 {
     X11DRV_PDEVICE *physDev;
 
-    if (!device_init_done) device_init();
+    InitOnceExecuteOnce( &init_once, device_init, NULL, NULL );
 
     if (!(physDev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*physDev) ))) return NULL;
 
