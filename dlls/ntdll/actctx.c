@@ -66,6 +66,33 @@ typedef enum tagLIBFLAGS {
     LIBFLAG_FHASDISKIMAGE = 0x8
 } LIBFLAGS;
 
+/* from oleidl.idl */
+typedef enum tagOLEMISC
+{
+    OLEMISC_RECOMPOSEONRESIZE            = 0x1,
+    OLEMISC_ONLYICONIC                   = 0x2,
+    OLEMISC_INSERTNOTREPLACE             = 0x4,
+    OLEMISC_STATIC                       = 0x8,
+    OLEMISC_CANTLINKINSIDE               = 0x10,
+    OLEMISC_CANLINKBYOLE1                = 0x20,
+    OLEMISC_ISLINKOBJECT                 = 0x40,
+    OLEMISC_INSIDEOUT                    = 0x80,
+    OLEMISC_ACTIVATEWHENVISIBLE          = 0x100,
+    OLEMISC_RENDERINGISDEVICEINDEPENDENT = 0x200,
+    OLEMISC_INVISIBLEATRUNTIME           = 0x400,
+    OLEMISC_ALWAYSRUN                    = 0x800,
+    OLEMISC_ACTSLIKEBUTTON               = 0x1000,
+    OLEMISC_ACTSLIKELABEL                = 0x2000,
+    OLEMISC_NOUIACTIVATE                 = 0x4000,
+    OLEMISC_ALIGNABLE                    = 0x8000,
+    OLEMISC_SIMPLEFRAME                  = 0x10000,
+    OLEMISC_SETCLIENTSITEFIRST           = 0x20000,
+    OLEMISC_IMEMODE                      = 0x40000,
+    OLEMISC_IGNOREACTIVATEWHENVISIBLE    = 0x80000,
+    OLEMISC_WANTSTOMENUMERGE             = 0x100000,
+    OLEMISC_SUPPORTSMULTILEVELUNDO       = 0x200000
+} OLEMISC;
+
 typedef struct
 {
     const WCHAR        *ptr;
@@ -174,6 +201,24 @@ struct tlibredirect_data
     WORD   minor_version;
 };
 
+enum comclass_threadingmodel
+{
+    ThreadingModel_Apartment = 1,
+    ThreadingModel_Free      = 2,
+    ThreadingModel_No        = 3,
+    ThreadingModel_Both      = 4,
+    ThreadingModel_Neutral   = 5
+};
+
+enum comclass_miscfields
+{
+    MiscStatus          = 1,
+    MiscStatusIcon      = 2,
+    MiscStatusContent   = 4,
+    MiscStatusThumbnail = 8,
+    MiscStatusDocPrint  = 16
+};
+
 /*
 
    Sections structure.
@@ -245,6 +290,14 @@ struct entity
         struct
         {
             WCHAR *clsid;
+            WCHAR *tlbid;
+            WCHAR *progid;
+            DWORD  model;
+            DWORD  miscstatus;
+            DWORD  miscstatuscontent;
+            DWORD  miscstatusthumbnail;
+            DWORD  miscstatusicon;
+            DWORD  miscstatusdocprint;
 	} comclass;
 	struct {
             WCHAR *iid;
@@ -365,7 +418,9 @@ static const WCHAR newVersionW[] = {'n','e','w','V','e','r','s','i','o','n',0};
 static const WCHAR oldVersionW[] = {'o','l','d','V','e','r','s','i','o','n',0};
 static const WCHAR optionalW[] = {'o','p','t','i','o','n','a','l',0};
 static const WCHAR processorArchitectureW[] = {'p','r','o','c','e','s','s','o','r','A','r','c','h','i','t','e','c','t','u','r','e',0};
+static const WCHAR progidW[] = {'p','r','o','g','i','d',0};
 static const WCHAR publicKeyTokenW[] = {'p','u','b','l','i','c','K','e','y','T','o','k','e','n',0};
+static const WCHAR threadingmodelW[] = {'t','h','r','e','a','d','i','n','g','M','o','d','e','l',0};
 static const WCHAR tlbidW[] = {'t','l','b','i','d',0};
 static const WCHAR typeW[] = {'t','y','p','e',0};
 static const WCHAR versionW[] = {'v','e','r','s','i','o','n',0};
@@ -378,6 +433,66 @@ static const WCHAR controlW[] = {'C','O','N','T','R','O','L',0};
 static const WCHAR hiddenW[] = {'H','I','D','D','E','N',0};
 static const WCHAR hasdiskimageW[] = {'H','A','S','D','I','S','K','I','M','A','G','E',0};
 static const WCHAR flagsW[] = {'f','l','a','g','s',0};
+static const WCHAR miscstatusW[] = {'m','i','s','c','S','t','a','t','u','s',0};
+static const WCHAR miscstatusiconW[] = {'m','i','s','c','S','t','a','t','u','s','I','c','o','n',0};
+static const WCHAR miscstatuscontentW[] = {'m','i','s','c','S','t','a','t','u','s','C','o','n','t','e','n','t',0};
+static const WCHAR miscstatusthumbnailW[] = {'m','i','s','c','S','t','a','t','u','s','T','h','u','m','b','n','a','i','l',0};
+static const WCHAR miscstatusdocprintW[] = {'m','i','s','c','S','t','a','t','u','s','D','o','c','P','r','i','n','t',0};
+
+static const WCHAR activatewhenvisibleW[] = {'a','c','t','i','v','a','t','e','w','h','e','n','v','i','s','i','b','l','e',0};
+static const WCHAR actslikebuttonW[] = {'a','c','t','s','l','i','k','e','b','u','t','t','o','n',0};
+static const WCHAR actslikelabelW[] = {'a','c','t','s','l','i','k','e','l','a','b','e','l',0};
+static const WCHAR alignableW[] = {'a','l','i','g','n','a','b','l','e',0};
+static const WCHAR alwaysrunW[] = {'a','l','w','a','y','s','r','u','n',0};
+static const WCHAR canlinkbyole1W[] = {'c','a','n','l','i','n','k','b','y','o','l','e','1',0};
+static const WCHAR cantlinkinsideW[] = {'c','a','n','t','l','i','n','k','i','n','s','i','d','e',0};
+static const WCHAR ignoreactivatewhenvisibleW[] = {'i','g','n','o','r','e','a','c','t','i','v','a','t','e','w','h','e','n','v','i','s','i','b','l','e',0};
+static const WCHAR imemodeW[] = {'i','m','e','m','o','d','e',0};
+static const WCHAR insertnotreplaceW[] = {'i','n','s','e','r','t','n','o','t','r','e','p','l','a','c','e',0};
+static const WCHAR insideoutW[] = {'i','n','s','i','d','e','o','u','t',0};
+static const WCHAR invisibleatruntimeW[] = {'i','n','v','i','s','i','b','l','e','a','t','r','u','n','t','i','m','e',0};
+static const WCHAR islinkobjectW[] = {'i','s','l','i','n','k','o','b','j','e','c','t',0};
+static const WCHAR nouiactivateW[] = {'n','o','u','i','a','c','t','i','v','a','t','e',0};
+static const WCHAR onlyiconicW[] = {'o','n','l','y','i','c','o','n','i','c',0};
+static const WCHAR recomposeonresizeW[] = {'r','e','c','o','m','p','o','s','e','o','n','r','e','s','i','z','e',0};
+static const WCHAR renderingisdeviceindependentW[] = {'r','e','n','d','e','r','i','n','g','i','s','d','e','v','i','c','e','i','n','d','e','p','e','n','d','e','n','t',0};
+static const WCHAR setclientsitefirstW[] = {'s','e','t','c','l','i','e','n','t','s','i','t','e','f','i','r','s','t',0};
+static const WCHAR simpleframeW[] = {'s','i','m','p','l','e','f','r','a','m','e',0};
+static const WCHAR staticW[] = {'s','t','a','t','i','c',0};
+static const WCHAR supportsmultilevelundoW[] = {'s','u','p','p','o','r','t','s','m','u','l','t','i','l','e','v','e','l','u','n','d','o',0};
+static const WCHAR wantstomenumergeW[] = {'w','a','n','t','s','t','o','m','e','n','u','m','e','r','g','e',0};
+
+struct olemisc_entry
+{
+    const WCHAR *name;
+    OLEMISC value;
+};
+
+static const struct olemisc_entry olemisc_values[] =
+{
+    { activatewhenvisibleW,          OLEMISC_ACTIVATEWHENVISIBLE },
+    { actslikebuttonW,               OLEMISC_ACTSLIKEBUTTON },
+    { actslikelabelW,                OLEMISC_ACTSLIKELABEL },
+    { alignableW,                    OLEMISC_ALIGNABLE },
+    { alwaysrunW,                    OLEMISC_ALWAYSRUN },
+    { canlinkbyole1W,                OLEMISC_CANLINKBYOLE1 },
+    { cantlinkinsideW,               OLEMISC_CANTLINKINSIDE },
+    { ignoreactivatewhenvisibleW,    OLEMISC_IGNOREACTIVATEWHENVISIBLE },
+    { imemodeW,                      OLEMISC_IMEMODE },
+    { insertnotreplaceW,             OLEMISC_INSERTNOTREPLACE },
+    { insideoutW,                    OLEMISC_INSIDEOUT },
+    { invisibleatruntimeW,           OLEMISC_INVISIBLEATRUNTIME },
+    { islinkobjectW,                 OLEMISC_ISLINKOBJECT },
+    { nouiactivateW,                 OLEMISC_NOUIACTIVATE },
+    { onlyiconicW,                   OLEMISC_ONLYICONIC },
+    { recomposeonresizeW,            OLEMISC_RECOMPOSEONRESIZE },
+    { renderingisdeviceindependentW, OLEMISC_RENDERINGISDEVICEINDEPENDENT },
+    { setclientsitefirstW,           OLEMISC_SETCLIENTSITEFIRST },
+    { simpleframeW,                  OLEMISC_SIMPLEFRAME },
+    { staticW,                       OLEMISC_STATIC },
+    { supportsmultilevelundoW,       OLEMISC_SUPPORTSMULTILEVELUNDO },
+    { wantstomenumergeW,             OLEMISC_WANTSTOMENUMERGE }
+};
 
 static const WCHAR xmlW[] = {'?','x','m','l',0};
 static const WCHAR manifestv1W[] = {'u','r','n',':','s','c','h','e','m','a','s','-','m','i','c','r','o','s','o','f','t','-','c','o','m',':','a','s','m','.','v','1',0};
@@ -563,6 +678,8 @@ static void free_entity_array(struct entity_array *array)
         {
         case ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION:
             RtlFreeHeap(GetProcessHeap(), 0, entity->u.comclass.clsid);
+            RtlFreeHeap(GetProcessHeap(), 0, entity->u.comclass.tlbid);
+            RtlFreeHeap(GetProcessHeap(), 0, entity->u.comclass.progid);
             break;
         case ACTIVATION_CONTEXT_SECTION_COM_INTERFACE_REDIRECTION:
             RtlFreeHeap(GetProcessHeap(), 0, entity->u.proxy.iid);
@@ -1074,6 +1191,75 @@ static BOOL parse_assembly_identity_elem(xmlbuf_t* xmlbuf, ACTIVATION_CONTEXT* a
     return parse_expect_end_elem(xmlbuf, assemblyIdentityW, asmv1W);
 }
 
+static enum comclass_threadingmodel parse_com_class_threadingmodel(xmlstr_t *value)
+{
+    static const WCHAR apartW[] = {'A','p','a','r','t','m','e','n','t',0};
+    static const WCHAR neutralW[] = {'N','e','u','t','r','a','l',0};
+    static const WCHAR freeW[] = {'F','r','e','e',0};
+    static const WCHAR bothW[] = {'B','o','t','h',0};
+
+    if (value->len == 0) return ThreadingModel_No;
+    if (xmlstr_cmp(value, apartW))
+        return ThreadingModel_Apartment;
+    else if (xmlstr_cmp(value, freeW))
+        return ThreadingModel_Free;
+    else if (xmlstr_cmp(value, bothW))
+        return ThreadingModel_Both;
+    else if (xmlstr_cmp(value, neutralW))
+        return ThreadingModel_Neutral;
+    else
+        return ThreadingModel_No;
+};
+
+static OLEMISC get_olemisc_value(const WCHAR *str, int len)
+{
+    int min, max;
+
+    min = 0;
+    max = sizeof(olemisc_values)/sizeof(struct olemisc_entry) - 1;
+
+    while (min <= max)
+    {
+        int n, c;
+
+        n = (min+max)/2;
+
+        c = strncmpW(olemisc_values[n].name, str, len);
+        if (!c && !olemisc_values[n].name[len])
+            return olemisc_values[n].value;
+
+        if (c >= 0)
+            max = n-1;
+        else
+            min = n+1;
+    }
+
+    WARN("unknown flag %s\n", debugstr_wn(str, len));
+    return 0;
+}
+
+static DWORD parse_com_class_misc(const xmlstr_t *value)
+{
+    const WCHAR *str = value->ptr, *start;
+    DWORD flags = 0;
+    int i = 0;
+
+    /* it's comma separated list of flags */
+    while (i < value->len)
+    {
+        start = str;
+        while (*str != ',' && (i++ < value->len)) str++;
+
+        flags |= get_olemisc_value(start, str-start);
+
+        /* skip separator */
+        str++;
+        i++;
+    }
+
+    return flags;
+}
+
 static BOOL parse_com_class_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll)
 {
     xmlstr_t elem, attr_name, attr_value;
@@ -1088,6 +1274,38 @@ static BOOL parse_com_class_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll)
         if (xmlstr_cmp(&attr_name, clsidW))
         {
             if (!(entity->u.comclass.clsid = xmlstrdupW(&attr_value))) return FALSE;
+        }
+        else if (xmlstr_cmp(&attr_name, progidW))
+        {
+            if (!(entity->u.comclass.progid = xmlstrdupW(&attr_value))) return FALSE;
+        }
+        else if (xmlstr_cmp(&attr_name, tlbidW))
+        {
+            if (!(entity->u.comclass.tlbid = xmlstrdupW(&attr_value))) return FALSE;
+        }
+        else if (xmlstr_cmp(&attr_name, threadingmodelW))
+        {
+            entity->u.comclass.model = parse_com_class_threadingmodel(&attr_value);
+        }
+        else if (xmlstr_cmp(&attr_name, miscstatusW))
+        {
+            entity->u.comclass.miscstatus = parse_com_class_misc(&attr_value);
+        }
+        else if (xmlstr_cmp(&attr_name, miscstatuscontentW))
+        {
+            entity->u.comclass.miscstatuscontent = parse_com_class_misc(&attr_value);
+        }
+        else if (xmlstr_cmp(&attr_name, miscstatusthumbnailW))
+        {
+            entity->u.comclass.miscstatusthumbnail = parse_com_class_misc(&attr_value);
+        }
+        else if (xmlstr_cmp(&attr_name, miscstatusiconW))
+        {
+            entity->u.comclass.miscstatusicon = parse_com_class_misc(&attr_value);
+        }
+        else if (xmlstr_cmp(&attr_name, miscstatusdocprintW))
+        {
+            entity->u.comclass.miscstatusdocprint = parse_com_class_misc(&attr_value);
         }
         else
         {

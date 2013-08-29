@@ -101,6 +101,11 @@ static const char manifest3[] =
 "              tlbid=\"{99999999-8888-7777-6666-555555555555}\""
 "              threadingModel=\"Neutral\""
 "              progid=\"ProgId.ProgId\""
+"              miscStatus=\"cantlinkinside\""
+"              miscStatusIcon=\"recomposeonresize\""
+"              miscStatusContent=\"insideout\""
+"              miscStatusThumbnail=\"alignable\""
+"              miscStatusDocPrint=\"simpleframe,setclientsitefirst\""
 "    />"
 "</file>"
 "</assembly>";
@@ -1075,38 +1080,44 @@ static void test_basic_info(HANDLE handle, int line)
 enum comclass_threadingmodel {
     ThreadingModel_Apartment = 1,
     ThreadingModel_Free      = 2,
+    ThreadingModel_No        = 3,
     ThreadingModel_Both      = 4,
     ThreadingModel_Neutral   = 5
 };
 
 enum comclass_miscfields {
-    MiscStatus          = 0x1,
-    MiscStatusIcon      = 0x2,
-    MiscStatusContent   = 0x4,
-    MiscStatusThumbnail = 0x8
+    MiscStatus          = 1,
+    MiscStatusIcon      = 2,
+    MiscStatusContent   = 4,
+    MiscStatusThumbnail = 8,
+    MiscStatusDocPrint  = 16
 };
 
-struct comclass_keyed_data {
-    DWORD size;
-    BYTE reserved;
-    BYTE miscmask;
-    BYTE unk[2];
+struct comclassredirect_data {
+    ULONG size;
+    BYTE  res;
+    BYTE  miscmask;
+    BYTE  res1[2];
     DWORD model;
-    GUID clsid;
-    GUID unkguid;
-    GUID clsid2;
-    GUID tlid;
-    DWORD modulename_len;
-    DWORD modulename_offset;
-    DWORD progid_len;
-    DWORD progid_offset;
-    DWORD res2[7];
-    WCHAR strdata[1];
+    GUID  clsid;
+    GUID  alias;
+    GUID  clsid2;
+    GUID  tlid;
+    ULONG name_len;
+    ULONG name_offset;
+    ULONG progid_len;
+    ULONG progid_offset;
+    DWORD res2[2];
+    DWORD miscstatus;
+    DWORD miscstatuscontent;
+    DWORD miscstatusthumbnail;
+    DWORD miscstatusicon;
+    DWORD miscstatusdocprint;
 };
 
 static void test_find_com_redirection(HANDLE handle, const GUID *clsid, const GUID *tlid, ULONG exid, int line)
 {
-    struct comclass_keyed_data *comclass;
+    struct comclassredirect_data *comclass;
     ACTCTX_SECTION_KEYED_DATA data;
     BOOL ret;
 
@@ -1124,27 +1135,26 @@ todo_wine
         return;
     }
 
-    comclass = (struct comclass_keyed_data*)data.lpData;
+    comclass = (struct comclassredirect_data*)data.lpData;
 
     ok_(__FILE__, line)(data.cbSize == sizeof(data), "data.cbSize=%u\n", data.cbSize);
     ok_(__FILE__, line)(data.ulDataFormatVersion == 1, "data.ulDataFormatVersion=%u\n", data.ulDataFormatVersion);
     ok_(__FILE__, line)(data.lpData != NULL, "data.lpData == NULL\n");
-    ok_(__FILE__, line)(comclass->size == FIELD_OFFSET(struct comclass_keyed_data, strdata), "got %d for header size\n", comclass->size);
-    if (data.lpData && comclass->size == FIELD_OFFSET(struct comclass_keyed_data, strdata))
+    ok_(__FILE__, line)(comclass->size == sizeof(*comclass), "got %d for header size\n", comclass->size);
+    if (data.lpData && comclass->size == sizeof(*comclass))
     {
         static const WCHAR progid[] = {'P','r','o','g','I','d','.','P','r','o','g','I','d',0};
         WCHAR *ptr;
         ULONG len;
 
-        ok_(__FILE__, line)(comclass->reserved == 0, "got reserved as %d\n", comclass->reserved);
-        ok_(__FILE__, line)(comclass->miscmask == 0, "got miscmask as %02x\n", comclass->miscmask);
-        ok_(__FILE__, line)(comclass->unk[0] == 0, "got unk[0] as %02x\n", comclass->unk[0]);
-        ok_(__FILE__, line)(comclass->unk[1] == 0, "got unk[1] as %02x\n", comclass->unk[1]);
+        ok_(__FILE__, line)(comclass->res == 0, "got res as %d\n", comclass->res);
+        ok_(__FILE__, line)(comclass->res1[0] == 0, "got res1[0] as %02x\n", comclass->res1[0]);
+        ok_(__FILE__, line)(comclass->res1[1] == 0, "got res1[1] as %02x\n", comclass->res1[1]);
         ok_(__FILE__, line)(comclass->model == ThreadingModel_Neutral, "got model %d\n", comclass->model);
         ok_(__FILE__, line)(IsEqualGUID(&comclass->clsid, clsid), "got wrong clsid %s\n", debugstr_guid(&comclass->clsid));
         ok_(__FILE__, line)(IsEqualGUID(&comclass->clsid2, clsid), "got wrong clsid2 %s\n", debugstr_guid(&comclass->clsid2));
         ok_(__FILE__, line)(IsEqualGUID(&comclass->tlid, tlid), "got wrong tlid %s\n", debugstr_guid(&comclass->tlid));
-        ok_(__FILE__, line)(comclass->modulename_len > 0, "got modulename len %d\n", comclass->modulename_len);
+        ok_(__FILE__, line)(comclass->name_len > 0, "got modulename len %d\n", comclass->name_len);
         ok_(__FILE__, line)(comclass->progid_offset == comclass->size, "got progid offset %d\n", comclass->progid_offset);
 
         ptr = (WCHAR*)((BYTE*)comclass + comclass->size);
@@ -1157,7 +1167,22 @@ todo_wine
         ok_(__FILE__, line)(data.ulLength == len, "got wrong data length %d, expected %d\n", data.ulLength, len);
 
         /* keyed data structure doesn't include module name, it's available from section data */
-        ok_(__FILE__, line)(data.ulSectionTotalLength > comclass->modulename_offset, "got wrong offset %d\n", comclass->modulename_offset);
+        ok_(__FILE__, line)(data.ulSectionTotalLength > comclass->name_offset, "got wrong offset %d\n", comclass->name_offset);
+
+        /* check misc fields are set */
+        if (comclass->miscmask)
+        {
+            if (comclass->miscmask & MiscStatus)
+                ok_(__FILE__, line)(comclass->miscstatus != 0, "got miscstatus 0x%08x\n", comclass->miscstatus);
+            if (comclass->miscmask & MiscStatusIcon)
+                ok_(__FILE__, line)(comclass->miscstatusicon != 0, "got miscstatusicon 0x%08x\n", comclass->miscstatusicon);
+            if (comclass->miscmask & MiscStatusContent)
+                ok_(__FILE__, line)(comclass->miscstatuscontent != 0, "got miscstatuscontent 0x%08x\n", comclass->miscstatuscontent);
+            if (comclass->miscmask & MiscStatusThumbnail)
+                ok_(__FILE__, line)(comclass->miscstatusthumbnail != 0, "got miscstatusthumbnail 0x%08x\n", comclass->miscstatusthumbnail);
+            if (comclass->miscmask & MiscStatusDocPrint)
+                ok_(__FILE__, line)(comclass->miscstatusdocprint != 0, "got miscstatusdocprint 0x%08x\n", comclass->miscstatusdocprint);
+        }
     }
 
     ok_(__FILE__, line)(data.lpSectionGlobalData != NULL, "data.lpSectionGlobalData == NULL\n");
