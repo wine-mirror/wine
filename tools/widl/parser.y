@@ -1840,7 +1840,7 @@ static type_t *reg_typedefs(decl_spec_t *decl_spec, declarator_list_t *decls, at
        type_get_type_detect_alias(type) == TYPE_STRUCT ||
        type_get_type_detect_alias(type) == TYPE_UNION ||
        type_get_type_detect_alias(type) == TYPE_ENCAPSULATED_UNION) &&
-      !type->name && !parse_only)
+      !type->name)
   {
     if (! is_attr(attrs, ATTR_PUBLIC) && ! is_attr (attrs, ATTR_HIDDEN))
       attrs = append_attr( attrs, make_attr(ATTR_PUBLIC) );
@@ -1980,7 +1980,7 @@ static char *gen_name(void)
 
   if (! file_id)
   {
-    char *dst = dup_basename(input_name, ".idl");
+    char *dst = dup_basename(input_idl_name, ".idl");
     file_id = dst;
 
     for (; *dst; ++dst)
