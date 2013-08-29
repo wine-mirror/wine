@@ -2130,7 +2130,6 @@ static void test_classesroot(void)
     todo_wine ok(res == ERROR_SUCCESS ||
                  broken(res == ERROR_FILE_NOT_FOUND /* WinNT */),
                  "test key not found in hkcr: %d\n", res);
-    todo_wine ok(IS_HKCR(hkcr), "hkcr mask not set in %p\n", hkcr);
     if (res)
     {
         skip("HKCR key merging not supported\n");
@@ -2138,6 +2137,8 @@ static void test_classesroot(void)
         RegCloseKey( hkey );
         return;
     }
+
+    todo_wine ok(IS_HKCR(hkcr), "hkcr mask not set in %p\n", hkcr);
 
     /* set a value in user's classes */
     res = RegSetValueExA(hkey, "val1", 0, REG_SZ, (const BYTE *)"user", sizeof("user"));
@@ -2583,7 +2584,8 @@ static void test_classesroot_mask(void)
 
     res = RegOpenKeyA( HKEY_CLASSES_ROOT, "CLSID", &hkey );
     ok(res == ERROR_SUCCESS, "RegOpenKeyA failed: %d\n", res);
-    todo_wine ok(IS_HKCR(hkey), "hkcr mask not set in %p\n", hkey);
+    todo_wine ok(IS_HKCR(hkey) || broken(!IS_HKCR(hkey)) /* WinNT */,
+                 "hkcr mask not set in %p\n", hkey);
     RegCloseKey( hkey );
 
     res = RegOpenKeyA( HKEY_CURRENT_USER, "Software", &hkey );
