@@ -6062,7 +6062,7 @@ static DWORD HTTP_ProcessHeader(http_request_t *request, LPCWSTR field, LPCWSTR 
     {
         HTTP_DeleteCustomHeader( request, index );
 
-        if (value)
+        if (value && value[0])
         {
             HTTPHEADERW hdr;
 

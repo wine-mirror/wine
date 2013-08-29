@@ -1759,6 +1759,27 @@ static void HttpHeaders_test(void)
     ok(index == 1, "Index was not incremented\n");
     ok(strcmp(buffer,"value3")==0, "incorrect string was returned(%s)\n",buffer);
 
+    ok(HttpAddRequestHeaders(hRequest, "Authorization: Basic\r\n", -1, HTTP_ADDREQ_FLAG_ADD),
+       "unable to add header %u\n", GetLastError());
+
+    index = 0;
+    buffer[0] = 0;
+    len = sizeof(buffer);
+    ok(HttpQueryInfo(hRequest, HTTP_QUERY_AUTHORIZATION|HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer, &len, &index),
+       "unable to query header %u\n", GetLastError());
+    ok(index == 1, "index was not incremented\n");
+    ok(!strcmp(buffer, "Basic"), "incorrect string was returned (%s)\n", buffer);
+
+    ok(HttpAddRequestHeaders(hRequest, "Authorization:\r\n", -1, HTTP_ADDREQ_FLAG_REPLACE),
+       "unable to remove header %u\n", GetLastError());
+
+    index = 0;
+    len = sizeof(buffer);
+    SetLastError(0xdeadbeef);
+    ok(!HttpQueryInfo(hRequest, HTTP_QUERY_AUTHORIZATION|HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer, &len, &index),
+       "header still present\n");
+    ok(GetLastError() == ERROR_HTTP_HEADER_NOT_FOUND, "got %u\n", GetLastError());
+
     ok(InternetCloseHandle(hRequest), "Close request handle failed\n");
 done:
     ok(InternetCloseHandle(hConnect), "Close connect handle failed\n");
