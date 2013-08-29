@@ -851,6 +851,7 @@ todo_wine
     {
         res = GetOverlappedResult(hcom, &ovl_wait, &bytes, FALSE);
         ok(res, "GetOverlappedResult reported error %d\n", GetLastError());
+todo_wine
         ok(bytes == sizeof(evtmask), "expected %u, written %u\n", (UINT)sizeof(evtmask), bytes);
         res = TRUE;
     }

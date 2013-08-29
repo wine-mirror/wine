@@ -838,16 +838,13 @@ static NTSTATUS get_irq_info(int fd, serial_irq_info *irq_info)
     TRACE("TIOCSERGETLSR err %s\n", strerror(errno));
 #endif
 #ifdef TIOCOUTQ  /* otherwise we log when the out queue gets empty */
-    if (ioctl(fd, TIOCOUTQ, &irq_info->temt))
+    if (!ioctl(fd, TIOCOUTQ, &out))
     {
-        TRACE("TIOCOUTQ err %s\n", strerror(errno));
-        return FILE_GetNtStatus();
+        irq_info->temt = out == 0;
+        return STATUS_SUCCESS;
     }
-    else
-    {
-        if (irq_info->temt == 0)
-            irq_info->temt = 1;
-    }
+    TRACE("TIOCOUTQ err %s\n", strerror(errno));
+    return FILE_GetNtStatus();
 #endif
     return STATUS_SUCCESS;
 }
