@@ -4657,7 +4657,6 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
                                         WINEDDSCAPS_SYSTEMMEMORY            |
                                         WINEDDSCAPS_VIDEOMEMORY             |
                                         WINEDDSCAPS_VISIBLE;
-    caps->ddraw_caps.stride_align = DDRAW_PITCH_ALIGNMENT;
 
     if (!(wined3d->flags & WINED3D_NO3D))
     {

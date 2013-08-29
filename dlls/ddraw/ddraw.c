@@ -1228,11 +1228,8 @@ static HRESULT WINAPI ddraw7_GetCaps(IDirectDraw7 *iface, DDCAPS *DriverCaps, DD
     caps.dwSSBCKeyCaps = winecaps.ddraw_caps.ssb_color_key_caps;
     caps.dwSSBFXCaps = winecaps.ddraw_caps.ssb_fx_caps;
 
-    if (winecaps.ddraw_caps.stride_align)
-    {
-        caps.dwCaps |= DDCAPS_ALIGNSTRIDE;
-        caps.dwAlignStrideAlign = winecaps.ddraw_caps.stride_align;
-    }
+    caps.dwCaps |= DDCAPS_ALIGNSTRIDE;
+    caps.dwAlignStrideAlign = DDRAW_STRIDE_ALIGNMENT;
 
     if(DriverCaps)
     {
@@ -5276,9 +5273,8 @@ HRESULT ddraw_init(struct ddraw *ddraw, enum wined3d_device_type device_type)
         ddraw->flags |= DDRAW_NO3D;
     }
 
-    hr = wined3d_device_create(ddraw->wined3d, WINED3DADAPTER_DEFAULT, device_type,
-            NULL, 0, 8, &ddraw->device_parent, &ddraw->wined3d_device);
-    if (FAILED(hr))
+    if (FAILED(hr = wined3d_device_create(ddraw->wined3d, WINED3DADAPTER_DEFAULT, device_type,
+            NULL, 0, DDRAW_STRIDE_ALIGNMENT, &ddraw->device_parent, &ddraw->wined3d_device)))
     {
         WARN("Failed to create a wined3d device, hr %#x.\n", hr);
         wined3d_decref(ddraw->wined3d);

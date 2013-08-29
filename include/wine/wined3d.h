@@ -1748,7 +1748,6 @@ struct wined3d_ddraw_caps
     DWORD ssb_color_key_caps;
     DWORD ssb_fx_caps;
     DWORD dds_caps;
-    DWORD stride_align;
 };
 
 typedef struct _WINED3DCAPS

@@ -55,6 +55,8 @@ struct FvfToDecl
 #define DDRAW_NO3D              0x00000008
 #define DDRAW_SCL_DDRAW1        0x00000010
 
+#define DDRAW_STRIDE_ALIGNMENT  8
+
 struct ddraw
 {
     /* Interfaces */

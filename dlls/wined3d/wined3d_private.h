@@ -1886,8 +1886,6 @@ struct wined3d_device
 
     BYTE fixed_function_usage_map;      /* MAX_TEXTURES, 8 */
 
-#define DDRAW_PITCH_ALIGNMENT 8
-#define D3D8_PITCH_ALIGNMENT 4
     unsigned char           surface_alignment; /* Line Alignment of surfaces                      */
 
     struct wined3d_state state;
