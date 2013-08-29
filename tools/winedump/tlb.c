@@ -390,6 +390,15 @@ static int dump_msft_namehashtab(seg_t *seg)
     return -1;
 }
 
+static void dump_string(int len, int align_off)
+{
+    printf("\"");
+    fwrite(tlb_read(len), len, 1, stdout);
+    printf("\" ");
+    while((len++ + align_off) & 3)
+        printf("\\%2.2x", tlb_read_byte());
+}
+
 static void dump_msft_name(int base, int n)
 {
     int len;
@@ -401,11 +410,8 @@ static void dump_msft_name(int base, int n)
     len = print_hex("namelen")&0xff;
 
     print_offset();
-    printf("name = \"");
-    fwrite(tlb_read(len), len, 1, stdout);
-    printf("\" ");
-    while(len++ & 3)
-        printf("\\%2.2x", tlb_read_byte());
+    printf("name = ");
+    dump_string(len, 0);
     printf("\n");
 
     print_end_block();
@@ -470,9 +476,29 @@ static int dump_msft_arraydescs(seg_t *seg)
 
 static int dump_msft_custdata(seg_t *seg)
 {
+    unsigned short vt;
+    unsigned i, n;
+
     print_begin_block("CustData");
 
-    dump_binary(seg->length); /* FIXME */
+    for(i=0; offset < seg->offset+seg->length; i++) {
+        print_offset();
+
+        vt = tlb_read_short();
+        printf("vt %d", vt);
+        n = tlb_read_int();
+
+        switch(vt) {
+        case 8 /* VT_BSTR */:
+            printf(" len %d: ", n);
+            dump_string(n, 2);
+            printf("\n");
+            break;
+        default:
+            printf(": %x ", n);
+            printf("\\%2.2x \\%2.2x\n", tlb_read_byte(), tlb_read_byte());
+        }
+    }
 
     print_end_block();
     return -1;
