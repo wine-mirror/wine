@@ -185,6 +185,8 @@ static void buffer_create_buffer_object(struct wined3d_buffer *This, struct wine
         ERR("glBufferData failed with error %s (%#x)\n", debug_glerror(error), error);
         goto fail;
     }
+    if (wined3d_settings.strict_draw_ordering || wined3d_settings.cs_multithreaded)
+        gl_info->gl_ops.gl.p_glFlush(); /* Flush to ensure ordering across contexts. */
 
     This->buffer_object_usage = gl_usage;
 
@@ -911,8 +913,31 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
     LONG count;
     BYTE *base;
     struct wined3d_device *device = buffer->resource.device;
+    struct wined3d_context *context;
 
     TRACE("buffer %p, offset %u, size %u, data %p, flags %#x\n", buffer, offset, size, data, flags);
+
+    /* FIXME: There is a race condition with the same code in
+     * buffer_internal_preload and buffer_get_memory.
+     *
+     * This deals with a race condition concering buffer creation and buffer maps.
+     * If a VBO is created by the worker thread while the buffer is mapped, outdated
+     * data may be uploaded, and the BO range is not properly invaliated. Keep in
+     * mind that a broken application might draw from a buffer before mapping it.
+     *
+     * Don't try to solve this by going back to always invalidating changed areas.
+     * This won't work if we ever want to support glMapBufferRange mapping with
+     * GL_ARB_buffer_storage in the CS.
+     *
+     * Also keep in mind that UnLoad can destroy the VBO, so simply creating it
+     * on buffer creation won't work either. */
+    if (buffer->flags & WINED3D_BUFFER_CREATEBO)
+    {
+        context = context_acquire(device, NULL);
+        buffer_create_buffer_object(buffer, context);
+        context_release(context);
+        buffer->flags &= ~WINED3D_BUFFER_CREATEBO;
+    }
 
     flags = wined3d_resource_sanitize_map_flags(&buffer->resource, flags);
     /* Filter redundant WINED3D_MAP_DISCARD maps. The 3DMark2001 multitexture
@@ -941,7 +966,6 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
             if (count == 1)
             {
                 struct wined3d_device *device = buffer->resource.device;
-                struct wined3d_context *context;
                 const struct wined3d_gl_info *gl_info;
 
                 if (wined3d_settings.cs_multithreaded)
