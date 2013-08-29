@@ -2491,14 +2491,13 @@ struct wined3d_map_range
     UINT size;
 };
 
-#define WINED3D_BUFFER_OPTIMIZED    0x01    /* Optimize has been called for the buffer */
-#define WINED3D_BUFFER_HASDESC      0x02    /* A vertex description has been found */
-#define WINED3D_BUFFER_CREATEBO     0x04    /* Attempt to create a buffer object next PreLoad */
-#define WINED3D_BUFFER_DOUBLEBUFFER 0x08    /* Use a vbo and local allocated memory */
-#define WINED3D_BUFFER_FLUSH        0x10    /* Manual unmap flushing */
-#define WINED3D_BUFFER_DISCARD      0x20    /* A DISCARD lock has occurred since the last PreLoad */
-#define WINED3D_BUFFER_NOSYNC       0x40    /* All locks since the last PreLoad had NOOVERWRITE set */
-#define WINED3D_BUFFER_APPLESYNC    0x80    /* Using sync as in GL_APPLE_flush_buffer_range */
+#define WINED3D_BUFFER_HASDESC      0x01    /* A vertex description has been found. */
+#define WINED3D_BUFFER_CREATEBO     0x02    /* Create a buffer object for this buffer. */
+#define WINED3D_BUFFER_DOUBLEBUFFER 0x04    /* Keep both a buffer object and a system memory copy for this buffer. */
+#define WINED3D_BUFFER_FLUSH        0x08    /* Manual unmap flushing. */
+#define WINED3D_BUFFER_DISCARD      0x10    /* A DISCARD lock has occurred since the last preload. */
+#define WINED3D_BUFFER_NOSYNC       0x20    /* All locks since the last preload had NOOVERWRITE set. */
+#define WINED3D_BUFFER_APPLESYNC    0x40    /* Using sync as in GL_APPLE_flush_buffer_range. */
 
 struct wined3d_buffer
 {
