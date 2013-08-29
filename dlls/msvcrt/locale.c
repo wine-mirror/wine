@@ -407,20 +407,6 @@ static inline char* construct_lc_all(MSVCRT_pthreadlocinfo locinfo) {
 
 
 /*********************************************************************
- *		wsetlocale (MSVCRT.@)
- */
-MSVCRT_wchar_t* CDECL MSVCRT__wsetlocale(int category, const MSVCRT_wchar_t* locale)
-{
-  static MSVCRT_wchar_t fake[] = {
-    'E','n','g','l','i','s','h','_','U','n','i','t','e','d',' ',
-    'S','t','a','t','e','s','.','1','2','5','2',0 };
-
-  FIXME("%d %s\n", category, debugstr_w(locale));
-
-  return fake;
-}
-
-/*********************************************************************
  *		_Getdays (MSVCRT.@)
  */
 char* CDECL _Getdays(void)
@@ -1433,6 +1419,40 @@ char* CDECL MSVCRT_setlocale(int category, const char* locale)
         return construct_lc_all(locinfo);
 
     return locinfo->lc_category[category].locale;
+}
+
+/*********************************************************************
+ *		_wsetlocale (MSVCRT.@)
+ */
+MSVCRT_wchar_t* CDECL MSVCRT__wsetlocale(int category, const MSVCRT_wchar_t* wlocale)
+{
+    static MSVCRT_wchar_t current_lc_all[MAX_LOCALE_LENGTH];
+
+    char *locale = NULL;
+    const char *ret;
+    MSVCRT_size_t len;
+
+    if(wlocale) {
+        len = MSVCRT_wcstombs(NULL, wlocale, 0);
+        if(len == -1)
+            return NULL;
+
+        locale = MSVCRT_malloc(++len);
+        if(!locale)
+            return NULL;
+
+        MSVCRT_wcstombs(locale, wlocale, len);
+    }
+
+    LOCK_LOCALE;
+    ret = MSVCRT_setlocale(category, locale);
+    MSVCRT_free(locale);
+
+    if(ret && MSVCRT_mbstowcs(current_lc_all, ret, MAX_LOCALE_LENGTH)==-1)
+        ret = NULL;
+
+    UNLOCK_LOCALE;
+    return ret ? current_lc_all : NULL;
 }
 
 /* _configthreadlocale - not exported in native msvcrt */
