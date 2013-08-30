@@ -611,6 +611,11 @@ static UINT wined3d_cs_exec_draw(struct wined3d_cs *cs, const void *data)
         if (cs->state.streams[i].buffer)
             wined3d_resource_dec_fence(&cs->state.streams[i].buffer->resource);
     }
+    for (i = 0; i < sizeof(cs->state.textures) / sizeof(*cs->state.textures); i++)
+    {
+        if (cs->state.textures[i])
+            wined3d_resource_dec_fence(&cs->state.textures[i]->resource);
+    }
 
     return sizeof(*op);
 }
@@ -636,6 +641,11 @@ void wined3d_cs_emit_draw(struct wined3d_cs *cs, UINT start_idx, UINT index_coun
     {
         if (state->streams[i].buffer)
             wined3d_resource_inc_fence(&state->streams[i].buffer->resource);
+    }
+    for (i = 0; i < sizeof(state->textures) / sizeof(*state->textures); i++)
+    {
+        if (state->textures[i])
+            wined3d_resource_inc_fence(&state->textures[i]->resource);
     }
 
     cs->ops->submit(cs, sizeof(*op));
