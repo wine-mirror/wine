@@ -1872,9 +1872,35 @@ done:
     CloseHandle(hcom);
 }
 
+static void test_FlushFileBuffers(void)
+{
+    HANDLE hcom;
+    DWORD  ret, bytes, errors;
+    COMSTAT stat;
+
+    hcom = test_OpenComm(FALSE);
+    if (hcom == INVALID_HANDLE_VALUE) return;
+
+    ret = WriteFile(hcom, "\0\0\0\0\0\0\0", 7, &bytes, NULL);
+    ok(ret, "WriteFile error %d\n", GetLastError());
+    ok(bytes == 7, "expected 7, got %u\n", bytes);
+
+    ret = FlushFileBuffers(hcom);
+    ok(ret, "FlushFileBuffers error %d\n", GetLastError());
+
+    ret = ClearCommError(hcom, &errors, &stat);
+    ok(ret, "ClearCommError error %d\n", GetLastError());
+    ok(stat.cbInQue == 0, "expected 0, got %d bytes in InQueue\n", stat.cbInQue);
+    ok(stat.cbOutQue == 0, "expected 0, got %d bytes in OutQueue\n", stat.cbOutQue);
+    ok(errors == 0, "expected errors 0, got %#x\n", errors);
+
+    CloseHandle(hcom);
+}
+
 START_TEST(comm)
 {
     test_ClearCommError(); /* keep it the very first test */
+    test_FlushFileBuffers();
     test_BuildCommDCB();
     test_ReadTimeOut();
     test_waittxempty();
