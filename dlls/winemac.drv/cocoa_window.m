@@ -1392,6 +1392,11 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         return NO;
     }
 
+    - (void) windowWillClose:(NSNotification*)notification
+    {
+        self.latentParentWindow = nil;
+    }
+
     - (void)windowWillMiniaturize:(NSNotification *)notification
     {
         if (!ignore_windowMiniaturize)
