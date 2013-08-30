@@ -1119,26 +1119,12 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
     /* We don't call this.  It's the action method of the items in the Window menu. */
     - (void) makeKeyAndOrderFront:(id)sender
     {
-        WineApplicationController* controller = [WineApplicationController sharedController];
-        WineWindow* front = [controller frontWineWindow];
-        BOOL wasVisible = [self isVisible];
-
         if (![self isKeyWindow] && !self.disabled && !self.noActivate)
-            [controller windowGotFocus:self];
+            [[WineApplicationController sharedController] windowGotFocus:self];
 
-        if (front && [self level] < [front level])
-            [self setLevel:[front level]];
-        [self orderFront:nil];
-        if (!wasVisible && fullscreen && [self isOnActiveSpace])
-            [controller updateFullscreenWindows];
-        [controller adjustWindowLevels];
-
-        if (pendingMinimize)
-        {
-            ignore_windowMiniaturize = TRUE;
-            [self miniaturize:nil];
-            pendingMinimize = FALSE;
-        }
+        if ([self isMiniaturized])
+            [self deminiaturize:nil];
+        [self orderBelow:nil orAbove:nil activate:NO];
     }
 
     - (void) sendEvent:(NSEvent*)event
