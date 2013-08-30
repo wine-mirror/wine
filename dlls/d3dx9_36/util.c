@@ -108,7 +108,7 @@ static const struct pixel_format_desc formats[] =
  *   The caller must UnmapViewOfFile when it doesn't need the data anymore
  *
  */
-HRESULT map_view_of_file(LPCWSTR filename, LPVOID *buffer, DWORD *length)
+HRESULT map_view_of_file(const WCHAR *filename, void **buffer, DWORD *length)
 {
     HANDLE hfile, hmapping = NULL;
 

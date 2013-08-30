@@ -144,7 +144,7 @@ DECLARE_INTERFACE_(ID3DXFont, IUnknown)
     STDMETHOD(PreloadCharacters)(THIS_ UINT first, UINT last) PURE;
     STDMETHOD(PreloadGlyphs)(THIS_ UINT first, UINT last) PURE;
     STDMETHOD(PreloadTextA)(THIS_ LPCSTR string, INT count) PURE;
-    STDMETHOD(PreloadTextW)(THIS_ LPCWSTR string, INT count) PURE;
+    STDMETHOD(PreloadTextW)(THIS_ const WCHAR *string, INT count) PURE;
 
     STDMETHOD_(INT, DrawTextA)(THIS_ struct ID3DXSprite *sprite, const char *string,
             INT count, RECT *rect, DWORD format, D3DCOLOR color) PURE;

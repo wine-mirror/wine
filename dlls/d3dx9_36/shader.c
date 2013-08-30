@@ -347,7 +347,10 @@ HRESULT WINAPI D3DXAssembleShaderFromResourceW(HMODULE module, const WCHAR *reso
     HRSRC res;
     DWORD len;
 
-    if (!(res = FindResourceW(module, resource, (LPCWSTR)RT_RCDATA)))
+    TRACE("module %p, resource %s, defines %p, include %p, flags %#x, shader %p, error_messages %p.\n",
+            module, debugstr_w(resource), defines, include, flags, shader, error_messages);
+
+    if (!(res = FindResourceW(module, resource, (const WCHAR *)RT_RCDATA)))
         return D3DXERR_INVALIDDATA;
     if (FAILED(load_resource_into_memory(module, res, &buffer, &len)))
         return D3DXERR_INVALIDDATA;
@@ -468,7 +471,12 @@ HRESULT WINAPI D3DXCompileShaderFromResourceW(HMODULE module, const WCHAR *resou
     HRSRC res;
     DWORD len;
 
-    if (!(res = FindResourceW(module, resource, (LPCWSTR)RT_RCDATA)))
+    TRACE("module %p, resource %s, defines %p, include %p, entrypoint %s, profile %s, "
+            "flags %#x, shader %p, error_messages %p, constant_table %p.\n",
+            module, debugstr_w(resource), defines, include, debugstr_a(entrypoint), debugstr_a(profile),
+            flags, shader, error_messages, constant_table);
+
+    if (!(res = FindResourceW(module, resource, (const WCHAR *)RT_RCDATA)))
         return D3DXERR_INVALIDDATA;
     if (FAILED(load_resource_into_memory(module, res, &buffer, &len)))
         return D3DXERR_INVALIDDATA;

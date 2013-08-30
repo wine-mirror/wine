@@ -919,18 +919,19 @@ HRESULT WINAPI D3DXGetImageInfoFromFileA(LPCSTR file, D3DXIMAGE_INFO *info)
     return hr;
 }
 
-HRESULT WINAPI D3DXGetImageInfoFromFileW(LPCWSTR file, D3DXIMAGE_INFO *info)
+HRESULT WINAPI D3DXGetImageInfoFromFileW(const WCHAR *file, D3DXIMAGE_INFO *info)
 {
+    void *buffer;
     HRESULT hr;
     DWORD size;
-    LPVOID buffer;
 
-    TRACE("(%s, %p): relay\n", debugstr_w(file), info);
+    TRACE("file %s, info %p.\n", debugstr_w(file), info);
 
-    if( !file ) return D3DERR_INVALIDCALL;
+    if (!file)
+        return D3DERR_INVALIDCALL;
 
-    hr = map_view_of_file(file, &buffer, &size);
-    if(FAILED(hr)) return D3DXERR_INVALIDDATA;
+    if (FAILED(map_view_of_file(file, &buffer, &size)))
+        return D3DXERR_INVALIDDATA;
 
     hr = D3DXGetImageInfoFromFileInMemory(buffer, size, info);
     UnmapViewOfFile(buffer);

@@ -67,7 +67,7 @@ struct pixel_format_desc {
     void (*to_rgba)(const struct vec4 *src, struct vec4 *dst, const PALETTEENTRY *palette);
 };
 
-HRESULT map_view_of_file(LPCWSTR filename, LPVOID *buffer, DWORD *length) DECLSPEC_HIDDEN;
+HRESULT map_view_of_file(const WCHAR *filename, void **buffer, DWORD *length) DECLSPEC_HIDDEN;
 HRESULT load_resource_into_memory(HMODULE module, HRSRC resinfo, LPVOID *buffer, DWORD *length) DECLSPEC_HIDDEN;
 
 HRESULT write_buffer_to_file(const WCHAR *filename, ID3DXBuffer *buffer) DECLSPEC_HIDDEN;
