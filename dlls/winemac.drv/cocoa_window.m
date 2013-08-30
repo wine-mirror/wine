@@ -712,10 +712,22 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
     - (void) becameIneligibleParentOrChild
     {
         WineWindow* parent = (WineWindow*)[self parentWindow];
+        NSArray* childWindows = [self childWindows];
+
         if (parent)
         {
             self.latentParentWindow = parent;
             [parent removeChildWindow:self];
+        }
+
+        if ([childWindows count])
+        {
+            WineWindow* child;
+            for (child in [[childWindows copy] autorelease])
+            {
+                child.latentParentWindow = self;
+                [self removeChildWindow:child];
+            }
         }
     }
 
