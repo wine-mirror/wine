@@ -600,14 +600,14 @@ static void show_window(struct macdrv_win_data *data)
 
     /* find window that this one must be after */
     prev = GetWindow(data->hwnd, GW_HWNDPREV);
-    while (prev && !((GetWindowLongW(prev, GWL_STYLE) & WS_VISIBLE) &&
+    while (prev && !((GetWindowLongW(prev, GWL_STYLE) & (WS_VISIBLE | WS_MINIMIZE)) == WS_VISIBLE &&
                      (prev_window = macdrv_get_cocoa_window(prev, TRUE))))
         prev = GetWindow(prev, GW_HWNDPREV);
     if (!prev_window)
     {
         /* find window that this one must be before */
         next = GetWindow(data->hwnd, GW_HWNDNEXT);
-        while (next && !((GetWindowLongW(next, GWL_STYLE) & WS_VISIBLE) &&
+        while (next && !((GetWindowLongW(next, GWL_STYLE) & (WS_VISIBLE | WS_MINIMIZE)) == WS_VISIBLE &&
                          (next_window = macdrv_get_cocoa_window(next, TRUE))))
             next = GetWindow(next, GW_HWNDNEXT);
     }
