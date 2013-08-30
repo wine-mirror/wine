@@ -328,13 +328,13 @@ HRESULT WINAPI D3DXAssembleShaderFromFileW(const WCHAR *filename, const D3DXMACR
 HRESULT WINAPI D3DXAssembleShaderFromResourceA(HMODULE module, const char *resource, const D3DXMACRO *defines,
         ID3DXInclude *include, DWORD flags, ID3DXBuffer **shader, ID3DXBuffer **error_messages)
 {
+    void *buffer;
     HRSRC res;
-    LPCSTR buffer;
     DWORD len;
 
     if (!(res = FindResourceA(module, resource, (LPCSTR)RT_RCDATA)))
         return D3DXERR_INVALIDDATA;
-    if (FAILED(load_resource_into_memory(module, res, (LPVOID *)&buffer, &len)))
+    if (FAILED(load_resource_into_memory(module, res, &buffer, &len)))
         return D3DXERR_INVALIDDATA;
     return D3DXAssembleShader(buffer, len, defines, include, flags,
                               shader, error_messages);
@@ -343,13 +343,13 @@ HRESULT WINAPI D3DXAssembleShaderFromResourceA(HMODULE module, const char *resou
 HRESULT WINAPI D3DXAssembleShaderFromResourceW(HMODULE module, const WCHAR *resource, const D3DXMACRO *defines,
         ID3DXInclude *include, DWORD flags, ID3DXBuffer **shader, ID3DXBuffer **error_messages)
 {
+    void *buffer;
     HRSRC res;
-    LPCSTR buffer;
     DWORD len;
 
     if (!(res = FindResourceW(module, resource, (LPCWSTR)RT_RCDATA)))
         return D3DXERR_INVALIDDATA;
-    if (FAILED(load_resource_into_memory(module, res, (LPVOID *)&buffer, &len)))
+    if (FAILED(load_resource_into_memory(module, res, &buffer, &len)))
         return D3DXERR_INVALIDDATA;
     return D3DXAssembleShader(buffer, len, defines, include, flags,
                               shader, error_messages);
@@ -448,13 +448,13 @@ HRESULT WINAPI D3DXCompileShaderFromResourceA(HMODULE module, const char *resour
         ID3DXInclude *include, const char *entrypoint, const char *profile, DWORD flags,
         ID3DXBuffer **shader, ID3DXBuffer **error_messages, ID3DXConstantTable **constant_table)
 {
+    void *buffer;
     HRSRC res;
-    LPCSTR buffer;
     DWORD len;
 
     if (!(res = FindResourceA(module, resource, (LPCSTR)RT_RCDATA)))
         return D3DXERR_INVALIDDATA;
-    if (FAILED(load_resource_into_memory(module, res, (LPVOID *)&buffer, &len)))
+    if (FAILED(load_resource_into_memory(module, res, &buffer, &len)))
         return D3DXERR_INVALIDDATA;
     return D3DXCompileShader(buffer, len, defines, include, entrypoint, profile,
                              flags, shader, error_messages, constant_table);
@@ -464,13 +464,13 @@ HRESULT WINAPI D3DXCompileShaderFromResourceW(HMODULE module, const WCHAR *resou
         ID3DXInclude *include, const char *entrypoint, const char *profile, DWORD flags,
         ID3DXBuffer **shader, ID3DXBuffer **error_messages, ID3DXConstantTable **constant_table)
 {
+    void *buffer;
     HRSRC res;
-    LPCSTR buffer;
     DWORD len;
 
     if (!(res = FindResourceW(module, resource, (LPCWSTR)RT_RCDATA)))
         return D3DXERR_INVALIDDATA;
-    if (FAILED(load_resource_into_memory(module, res, (LPVOID *)&buffer, &len)))
+    if (FAILED(load_resource_into_memory(module, res, &buffer, &len)))
         return D3DXERR_INVALIDDATA;
     return D3DXCompileShader(buffer, len, defines, include, entrypoint, profile,
                              flags, shader, error_messages, constant_table);
@@ -534,13 +534,13 @@ HRESULT WINAPI D3DXPreprocessShaderFromFileW(const WCHAR *filename, const D3DXMA
 HRESULT WINAPI D3DXPreprocessShaderFromResourceA(HMODULE module, const char *resource, const D3DXMACRO *defines,
         ID3DXInclude *include, ID3DXBuffer **shader, ID3DXBuffer **error_messages)
 {
+    void *buffer;
     HRSRC res;
-    const char *buffer;
     DWORD len;
 
     if (!(res = FindResourceA(module, resource, (LPCSTR)RT_RCDATA)))
         return D3DXERR_INVALIDDATA;
-    if (FAILED(load_resource_into_memory(module, res, (LPVOID *)&buffer, &len)))
+    if (FAILED(load_resource_into_memory(module, res, &buffer, &len)))
         return D3DXERR_INVALIDDATA;
     return D3DXPreprocessShader(buffer, len, defines, include,
                                 shader, error_messages);
@@ -549,13 +549,13 @@ HRESULT WINAPI D3DXPreprocessShaderFromResourceA(HMODULE module, const char *res
 HRESULT WINAPI D3DXPreprocessShaderFromResourceW(HMODULE module, const WCHAR *resource, const D3DXMACRO *defines,
         ID3DXInclude *include, ID3DXBuffer **shader, ID3DXBuffer **error_messages)
 {
+    void *buffer;
     HRSRC res;
-    const char *buffer;
     DWORD len;
 
     if (!(res = FindResourceW(module, resource, (const WCHAR *)RT_RCDATA)))
         return D3DXERR_INVALIDDATA;
-    if (FAILED(load_resource_into_memory(module, res, (void **)&buffer, &len)))
+    if (FAILED(load_resource_into_memory(module, res, &buffer, &len)))
         return D3DXERR_INVALIDDATA;
     return D3DXPreprocessShader(buffer, len, defines, include,
                                 shader, error_messages);
