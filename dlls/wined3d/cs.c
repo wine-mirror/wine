@@ -1842,6 +1842,18 @@ static UINT wined3d_cs_exec_query_issue(struct wined3d_cs *cs, const void *data)
             list_remove(&query->poll_list_entry);
             list_init(&query->poll_list_entry);
         }
+        else if (op->flags & WINED3DISSUE_END)
+        {
+            /* Can happen when an occlusion query is ended without being started,
+             * in which case we don't want to poll, but still have to counter-balance
+             * the increment of the main counter (!poll && list_empty).
+             *
+             * This can also happen if an event query is re-issued before the first
+             * fence was reached (poll && !list_empty). In this case the query is
+             * already in the list and the poll function will check the new fence.
+             * We have to counter-balance the discarded increment. */
+            InterlockedIncrement(&query->counter_retrieved);
+        }
     }
 
     return sizeof(*op);

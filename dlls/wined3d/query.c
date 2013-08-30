@@ -567,10 +567,10 @@ static BOOL wined3d_occlusion_query_ops_issue(struct wined3d_query *query, DWORD
                     checkGLcall("glEndQuery()");
 
                     context_release(context);
+                    poll = TRUE;
                 }
             }
             oq->started = FALSE;
-            poll = TRUE;
         }
     }
     else
