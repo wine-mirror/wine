@@ -537,6 +537,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         [liveResizeDisplayTimer invalidate];
         [liveResizeDisplayTimer release];
         [queue release];
+        [latentChildWindows release];
         [latentParentWindow release];
         [shape release];
         [super dealloc];
@@ -679,11 +680,18 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
             if ([self level] > [child level])
                 [child setLevel:[self level]];
             [self addChildWindow:child ordered:NSWindowAbove];
+            [latentChildWindows removeObjectIdenticalTo:child];
             child.latentParentWindow = nil;
             reordered = TRUE;
         }
         else
+        {
+            if (!latentChildWindows)
+                latentChildWindows = [[NSMutableArray alloc] init];
+            if (![latentChildWindows containsObject:child])
+                [latentChildWindows addObject:child];
             child.latentParentWindow = self;
+        }
 
         return reordered;
     }
@@ -698,15 +706,52 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         [self removeChildWindow:child];
         if (child.latentParentWindow == self)
             child.latentParentWindow = nil;
+        [latentChildWindows removeObjectIdenticalTo:child];
     }
 
     - (BOOL) becameEligibleParentOrChild
     {
+        BOOL reordered = FALSE;
+        NSUInteger count;
+
         // If we aren't visible currently, we assume that we should be and soon
         // will be.  So, if the latent parent is visible that's enough to assume
         // we can establish the parent-child relationship in Cocoa.  That will
         // actually make us visible, which is fine.
-        return [latentParentWindow addChildWineWindow:self assumeVisible:TRUE];
+        if ([latentParentWindow addChildWineWindow:self assumeVisible:TRUE])
+            reordered = TRUE;
+
+        // Here, though, we may not actually be visible yet and adding a child
+        // won't make us visible.  The caller will have to call this method
+        // again after actually making us visible.
+        if ([self isVisible] && (count = [latentChildWindows count]))
+        {
+            NSMutableIndexSet* indexesToRemove = [NSMutableIndexSet indexSet];
+            NSUInteger i;
+
+            for (i = 0; i < count; i++)
+            {
+                WineWindow* child = [latentChildWindows objectAtIndex:i];
+                if ([child isVisible])
+                {
+                    if (child.latentParentWindow == self)
+                    {
+                        if ([self level] > [child level])
+                            [child setLevel:[self level]];
+                        [self addChildWindow:child ordered:NSWindowAbove];
+                        child.latentParentWindow = nil;
+                        reordered = TRUE;
+                    }
+                    else
+                        ERR(@"shouldn't happen: %@ thinks %@ is a latent child, but it doesn't agree\n", self, child);
+                    [indexesToRemove addIndex:i];
+                }
+            }
+
+            [latentChildWindows removeObjectsAtIndexes:indexesToRemove];
+        }
+
+        return reordered;
     }
 
     - (void) becameIneligibleParentOrChild
@@ -716,6 +761,9 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
         if (parent)
         {
+            if (!parent->latentChildWindows)
+                parent->latentChildWindows = [[NSMutableArray alloc] init];
+            [parent->latentChildWindows insertObject:self atIndex:0];
             self.latentParentWindow = parent;
             [parent removeChildWindow:self];
         }
@@ -723,11 +771,18 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         if ([childWindows count])
         {
             WineWindow* child;
-            for (child in [[childWindows copy] autorelease])
+
+            childWindows = [[childWindows copy] autorelease];
+            for (child in childWindows)
             {
                 child.latentParentWindow = self;
                 [self removeChildWindow:child];
             }
+
+            if (latentChildWindows)
+                [latentChildWindows replaceObjectsInRange:NSMakeRange(0, 0) withObjectsFromArray:childWindows];
+            else
+                latentChildWindows = [childWindows mutableCopy];
         }
     }
 
@@ -887,6 +942,10 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
                 [self orderFront:nil];
                 needAdjustWindowLevels = TRUE;
             }
+
+            if ([self becameEligibleParentOrChild])
+                needAdjustWindowLevels = TRUE;
+
             if (needAdjustWindowLevels)
             {
                 if (!wasVisible && fullscreen && [self isOnActiveSpace])
@@ -1406,7 +1465,20 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
     - (void) windowWillClose:(NSNotification*)notification
     {
-        self.latentParentWindow = nil;
+        WineWindow* child;
+
+        if (latentParentWindow)
+        {
+            [latentParentWindow->latentChildWindows removeObjectIdenticalTo:self];
+            self.latentParentWindow = nil;
+        }
+
+        for (child in latentChildWindows)
+        {
+            if (child.latentParentWindow == self)
+                child.latentParentWindow = nil;
+        }
+        [latentChildWindows removeAllObjects];
     }
 
     - (void)windowWillMiniaturize:(NSNotification *)notification
