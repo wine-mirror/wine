@@ -1127,13 +1127,7 @@ static void test_find_com_redirection(HANDLE handle, const GUID *clsid, const GU
     ret = pFindActCtxSectionGuid(0, NULL,
                                     ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION,
                                     clsid, &data);
-todo_wine
     ok_(__FILE__, line)(ret, "FindActCtxSectionGuid failed: %u\n", GetLastError());
-    if(!ret)
-    {
-        skip("couldn't find guid %s\n", debugstr_guid(clsid));
-        return;
-    }
 
     comclass = (struct comclassredirect_data*)data.lpData;
 
@@ -1184,10 +1178,11 @@ todo_wine
                 ok_(__FILE__, line)(comclass->miscstatusdocprint != 0, "got miscstatusdocprint 0x%08x\n", comclass->miscstatusdocprint);
         }
     }
-
+todo_wine {
     ok_(__FILE__, line)(data.lpSectionGlobalData != NULL, "data.lpSectionGlobalData == NULL\n");
     ok_(__FILE__, line)(data.ulSectionGlobalDataLength > 0, "data.ulSectionGlobalDataLength=%u\n",
        data.ulSectionGlobalDataLength);
+}
     ok_(__FILE__, line)(data.lpSectionBase != NULL, "data.lpSectionBase == NULL\n");
     ok_(__FILE__, line)(data.ulSectionTotalLength > 0, "data.ulSectionTotalLength=%u\n",
        data.ulSectionTotalLength);
