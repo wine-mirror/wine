@@ -91,6 +91,8 @@ DEFINE_GUID(IID_TlibTest3, 0x99999999, 0x8888, 0x7777, 0x66, 0x66, 0x55, 0x55, 0
 DEFINE_GUID(IID_TlibTest4, 0x99999999, 0x8888, 0x7777, 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x55, 0x58);
 DEFINE_GUID(IID_Iifaceps,  0x66666666, 0x8888, 0x7777, 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55);
 DEFINE_GUID(IID_Ibifaceps, 0x66666666, 0x8888, 0x7777, 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x55, 0x57);
+DEFINE_GUID(IID_Iifaceps2, 0x76666666, 0x8888, 0x7777, 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55);
+DEFINE_GUID(IID_PS32,      0x66666666, 0x8888, 0x7777, 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x55, 0x56);
 
 static const char manifest3[] =
 "<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">"
@@ -119,6 +121,14 @@ static const char manifest3[] =
 "        baseInterface=\"{66666666-8888-7777-6666-555555555557}\""
 "    />"
 "</file>"
+"    <comInterfaceExternalProxyStub "
+"        name=\"Iifaceps2\""
+"        tlbid=\"{99999999-8888-7777-6666-555555555558}\""
+"        iid=\"{76666666-8888-7777-6666-555555555555}\""
+"        proxyStubClsid32=\"{66666666-8888-7777-6666-555555555556}\""
+"        numMethods=\"10\""
+"        baseInterface=\"{66666666-8888-7777-6666-555555555557}\""
+"    />"
 "</assembly>";
 
 static const char manifest_wndcls1[] =
@@ -1232,7 +1242,8 @@ struct ifacepsredirect_data
     ULONG name_offset;
 };
 
-static void test_find_ifaceps_redirection(HANDLE handle, const GUID *iid, const GUID *tlbid, const GUID *base, ULONG exid, int line)
+static void test_find_ifaceps_redirection(HANDLE handle, const GUID *iid, const GUID *tlbid, const GUID *base,
+    const GUID *ps32, ULONG exid, int line)
 {
     struct ifacepsredirect_data *ifaceps;
     ACTCTX_SECTION_KEYED_DATA data;
@@ -1262,7 +1273,14 @@ todo_wine
     {
         ULONG len;
 
-        ok_(__FILE__, line)(IsEqualGUID(&ifaceps->iid, iid), "got wrong iid %s\n", debugstr_guid(&ifaceps->iid));
+        /* for external proxy stubs it contains a value from 'proxyStubClsid32' */
+        if (ps32)
+        {
+            ok_(__FILE__, line)(IsEqualGUID(&ifaceps->iid, ps32), "got wrong iid %s\n", debugstr_guid(&ifaceps->iid));
+        }
+        else
+            ok_(__FILE__, line)(IsEqualGUID(&ifaceps->iid, iid), "got wrong iid %s\n", debugstr_guid(&ifaceps->iid));
+
         ok_(__FILE__, line)(IsEqualGUID(&ifaceps->tlbid, tlbid), "got wrong tlid %s\n", debugstr_guid(&ifaceps->tlbid));
         ok_(__FILE__, line)(ifaceps->name_len > 0, "got modulename len %d\n", ifaceps->name_len);
         ok_(__FILE__, line)(ifaceps->name_offset == ifaceps->size, "got progid offset %d\n", ifaceps->name_offset);
@@ -1609,7 +1627,8 @@ static void test_actctx(void)
         test_find_dll_redirection(handle, testlib_dll, 1, __LINE__);
         test_find_dll_redirection(handle, testlib_dll, 1, __LINE__);
         test_find_com_redirection(handle, &IID_CoTest, &IID_TlibTest, 1, __LINE__);
-        test_find_ifaceps_redirection(handle, &IID_Iifaceps, &IID_TlibTest4, &IID_Ibifaceps, 1, __LINE__);
+        test_find_ifaceps_redirection(handle, &IID_Iifaceps, &IID_TlibTest4, &IID_Ibifaceps, NULL, 1, __LINE__);
+        test_find_ifaceps_redirection(handle, &IID_Iifaceps2, &IID_TlibTest4, &IID_Ibifaceps, &IID_PS32, 1, __LINE__);
         test_find_string_fail();
         b = pDeactivateActCtx(0, cookie);
         ok(b, "DeactivateActCtx failed: %u\n", GetLastError());
