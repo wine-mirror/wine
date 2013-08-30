@@ -1383,6 +1383,8 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
         ignore_windowDeminiaturize = FALSE;
 
+        [self becameEligibleParentOrChild];
+
         if (fullscreen && [self isOnActiveSpace])
             [controller updateFullscreenWindows];
         [controller adjustWindowLevels];
@@ -1483,6 +1485,8 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
     - (void)windowWillMiniaturize:(NSNotification *)notification
     {
+        [self becameIneligibleParentOrChild];
+
         if (!ignore_windowMiniaturize)
         {
             macdrv_event* event;
