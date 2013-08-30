@@ -1482,6 +1482,7 @@ int macdrv_err_on;
                 NSWindow* parent = [window parentWindow];
                 NSInteger level = [window level];
                 __block BOOL needReorder = FALSE;
+                NSMutableArray* higherLevelSiblings = [NSMutableArray array];
 
                 // If the window is already the last child or if it's only below
                 // children with higher window level, then no need to reorder it.
@@ -1495,12 +1496,35 @@ int macdrv_err_on;
                         needReorder = TRUE;
                         *stop = TRUE;
                     }
+                    else
+                        [higherLevelSiblings insertObject:child atIndex:0];
                 }];
 
                 if (needReorder)
                 {
+                    WineWindow* sibling;
+
+                    NSDisableScreenUpdates();
+
                     [parent removeChildWindow:window];
+                    for (sibling in higherLevelSiblings)
+                        [parent removeChildWindow:sibling];
+
                     [parent addChildWindow:window ordered:NSWindowAbove];
+                    for (sibling in higherLevelSiblings)
+                    {
+                        // Setting a window as a child can reset its level to be
+                        // the same as the parent, so save it and restore it.
+                        // The call to -setLevel: puts the window at the front
+                        // of its level but testing shows that that's what Cocoa
+                        // does when you click on any window in an ownership
+                        // hierarchy, anyway.
+                        level = [sibling level];
+                        [parent addChildWindow:sibling ordered:NSWindowAbove];
+                        [sibling setLevel:level];
+                    }
+
+                    NSEnableScreenUpdates();
                 }
             }
         }
