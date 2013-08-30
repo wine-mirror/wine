@@ -1285,6 +1285,15 @@ BOOL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 
     TRACE("(%p, %d, %d, %d, %d)\n", dev, left, top, right, bottom);
 
+    if (GetGraphicsMode( dev->hdc ) == GM_ADVANCED)
+    {
+        pts[0].x = pts[3].x = left;
+        pts[0].y = pts[1].y = top;
+        pts[1].x = pts[2].x = right;
+        pts[2].y = pts[3].y = bottom;
+        return dibdrv_Polygon( dev, pts, 4 );
+    }
+
     if (!get_pen_device_rect( pdev, &rect, left, top, right, bottom )) return TRUE;
 
     if (pdev->pen_uses_region && !(outline = CreateRectRgn( 0, 0, 0, 0 ))) return FALSE;
