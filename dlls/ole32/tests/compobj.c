@@ -55,6 +55,12 @@ static void   (WINAPI *pReleaseActCtx)(HANDLE);
 
 static const CLSID CLSID_non_existent =   { 0x12345678, 0x1234, 0x1234, { 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0 } };
 static const CLSID CLSID_StdFont = { 0x0be35203, 0x8f91, 0x11ce, { 0x9d, 0xe3, 0x00, 0xaa, 0x00, 0x4b, 0xb8, 0x51 } };
+static const GUID IID_Testiface = { 0x22222222, 0x1234, 0x1234, { 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0 } };
+static const GUID IID_Testiface2 = { 0x32222222, 0x1234, 0x1234, { 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0 } };
+static const GUID IID_Testiface3 = { 0x42222222, 0x1234, 0x1234, { 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0 } };
+static const GUID IID_Testiface4 = { 0x52222222, 0x1234, 0x1234, { 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0 } };
+static const GUID IID_TestPS = { 0x66666666, 0x8888, 0x7777, { 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55 } };
+
 static WCHAR stdfont[] = {'S','t','d','F','o','n','t',0};
 static const WCHAR wszNonExistent[] = {'N','o','n','E','x','i','s','t','e','n','t',0};
 static WCHAR wszCLSID_StdFont[] =
@@ -230,7 +236,26 @@ static const char actctx_manifest[] =
 "    <comClass clsid=\"{0be35203-8f91-11ce-9de3-00aa004bb852}\""
 "              progid=\"StdFont\""
 "    />"
+"    <comInterfaceProxyStub "
+"        name=\"Iifaceps\""
+"        iid=\"{22222222-1234-1234-1234-56789abcdef0}\""
+"        proxyStubClsid32=\"{66666666-8888-7777-6666-555555555555}\""
+"    />"
 "</file>"
+"    <comInterfaceExternalProxyStub "
+"        name=\"Iifaceps2\""
+"        iid=\"{32222222-1234-1234-1234-56789abcdef0}\""
+"    />"
+"    <comInterfaceExternalProxyStub "
+"        name=\"Iifaceps3\""
+"        iid=\"{42222222-1234-1234-1234-56789abcdef0}\""
+"        proxyStubClsid32=\"{66666666-8888-7777-6666-555555555555}\""
+"    />"
+"    <comInterfaceExternalProxyStub "
+"        name=\"Iifaceps4\""
+"        iid=\"{52222222-1234-1234-1234-56789abcdef0}\""
+"        proxyStubClsid32=\"{00000000-0000-0000-0000-000000000000}\""
+"    />"
 "</assembly>";
 
 DEFINE_GUID(CLSID_Testclass, 0x12345678, 0x1234, 0x1234, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0);
@@ -904,6 +929,8 @@ static void test_CoRegisterPSClsid(void)
 
 static void test_CoGetPSClsid(void)
 {
+    ULONG_PTR cookie;
+    HANDLE handle;
     HRESULT hr;
     CLSID clsid;
     HKEY hkey;
@@ -952,6 +979,38 @@ static void test_CoGetPSClsid(void)
     ok(!res, "RegOverridePredefKey returned %d\n", res);
 
     RegCloseKey(hkey);
+
+    /* not registered CLSID */
+    hr = CoGetPSClsid(&IID_Testiface, &clsid);
+    ok(hr == REGDB_E_IIDNOTREG, "got 0x%08x\n", hr);
+
+    if ((handle = activate_context(actctx_manifest, &cookie)))
+    {
+todo_wine {
+        memset(&clsid, 0, sizeof(clsid));
+        hr = CoGetPSClsid(&IID_Testiface, &clsid);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(IsEqualGUID(&clsid, &IID_Testiface), "got clsid %s\n", debugstr_guid(&clsid));
+
+        memset(&clsid, 0, sizeof(clsid));
+        hr = CoGetPSClsid(&IID_Testiface2, &clsid);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(IsEqualGUID(&clsid, &IID_Testiface2), "got clsid %s\n", debugstr_guid(&clsid));
+
+        memset(&clsid, 0, sizeof(clsid));
+        hr = CoGetPSClsid(&IID_Testiface3, &clsid);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(IsEqualGUID(&clsid, &IID_TestPS), "got clsid %s\n", debugstr_guid(&clsid));
+
+        memset(&clsid, 0xaa, sizeof(clsid));
+        hr = CoGetPSClsid(&IID_Testiface4, &clsid);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(IsEqualGUID(&clsid, &GUID_NULL), "got clsid %s\n", debugstr_guid(&clsid));
+}
+        pDeactivateActCtx(0, cookie);
+        pReleaseActCtx(handle);
+    }
+
     CoUninitialize();
 }
 
