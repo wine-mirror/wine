@@ -2572,8 +2572,6 @@ HDC swapchain_get_backup_dc(struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN
 void swapchain_update_draw_bindings(struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
 void swapchain_update_render_to_fbo(struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
 
-#define DEFAULT_REFRESH_RATE 0
-
 /*****************************************************************************
  * Utility function prototypes
  */

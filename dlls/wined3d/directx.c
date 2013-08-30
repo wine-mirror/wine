@@ -33,6 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 
 #define WINE_DEFAULT_VIDMEM (64 * 1024 * 1024)
+#define DEFAULT_REFRESH_RATE 0
 
 /* The driver names reflect the lowest GPU supported
  * by a certain driver, so DRIVER_AMD_R300 supports
