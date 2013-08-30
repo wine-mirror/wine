@@ -949,7 +949,8 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
     - (void) setMacDrvParentWindow:(WineWindow*)parent
     {
-        if ([self parentWindow] != parent)
+        WineWindow* oldParent = (WineWindow*)[self parentWindow];
+        if ((oldParent && oldParent != parent) || (!oldParent && latentParentWindow != parent))
         {
             [[self parentWindow] removeChildWindow:self];
             self.latentParentWindow = nil;
