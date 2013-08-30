@@ -2212,7 +2212,7 @@ struct wined3d_resource
     DWORD priority;
     void *heap_memory, *user_memory, *bitmap_data;
     UINT custom_row_pitch, custom_slice_pitch;
-    struct wined3d_gl_bo *buffer;
+    struct wined3d_gl_bo *buffer, *map_buffer;
     struct list resource_list_entry;
     DWORD locations;
     LONG access_fence;
