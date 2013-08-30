@@ -1480,8 +1480,28 @@ int macdrv_err_on;
                 // respect to its siblings, but we want it to.  We have to do it
                 // manually.
                 NSWindow* parent = [window parentWindow];
-                [parent removeChildWindow:window];
-                [parent addChildWindow:window ordered:NSWindowAbove];
+                NSInteger level = [window level];
+                __block BOOL needReorder = FALSE;
+
+                // If the window is already the last child or if it's only below
+                // children with higher window level, then no need to reorder it.
+                [[parent childWindows] enumerateObjectsWithOptions:NSEnumerationReverse
+                                                        usingBlock:^(id obj, NSUInteger idx, BOOL *stop){
+                    WineWindow* child = obj;
+                    if (child == window)
+                        *stop = TRUE;
+                    else if ([child level] <= level)
+                    {
+                        needReorder = TRUE;
+                        *stop = TRUE;
+                    }
+                }];
+
+                if (needReorder)
+                {
+                    [parent removeChildWindow:window];
+                    [parent addChildWindow:window ordered:NSWindowAbove];
+                }
             }
         }
 
