@@ -453,7 +453,7 @@ static HRESULT WINAPI HTMLDocument_put_designMode(IHTMLDocument2 *iface, BSTR v)
     if(FAILED(hres))
         return hres;
 
-    call_property_onchanged(&This->cp_container, 1014);
+    call_property_onchanged(&This->cp_container, DISPID_IHTMLDOCUMENT2_DESIGNMODE);
     return S_OK;
 }
 
