@@ -795,6 +795,32 @@ void *wined3d_resource_map_internal(struct wined3d_resource *resource, DWORD fla
     return mem;
 }
 
+static void wined3d_resource_sync(struct wined3d_resource *resource)
+{
+    struct wined3d_resource *real_res = resource;
+    struct wined3d_surface *surface;
+    struct wined3d_volume *volume;
+
+    switch (resource->type)
+    {
+        case WINED3D_RTYPE_SURFACE:
+            surface = surface_from_resource(resource);
+            if (surface->container)
+                real_res = &surface->container->resource;
+            break;
+
+        case WINED3D_RTYPE_VOLUME:
+            volume = volume_from_resource(resource);
+            real_res = &volume->container->resource;
+            break;
+
+        default:
+            break;
+    }
+    if (!real_res->access_fence)
+        FIXME("Waiting for CS even though resource %p is idle.\n", resource);
+}
+
 HRESULT wined3d_resource_map(struct wined3d_resource *resource,
         struct wined3d_map_desc *map_desc, const struct wined3d_box *box, DWORD flags)
 {
@@ -813,6 +839,8 @@ HRESULT wined3d_resource_map(struct wined3d_resource *resource,
     }
 
     flags = wined3d_resource_sanitize_map_flags(resource, flags);
+
+    wined3d_resource_sync(resource);
 
     base_memory = wined3d_cs_emit_resource_map(device->cs, resource, flags);
     if (!base_memory)

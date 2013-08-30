@@ -1958,6 +1958,16 @@ static UINT wined3d_cs_exec_update_surface(struct wined3d_cs *cs, const void *da
     surface_upload_from_surface(op->dst, op->has_dst_point ? &op->dst_point : NULL,
             op->src, op->has_src_rect ? &op->src_rect : NULL);
 
+    if (op->src->container)
+        wined3d_resource_dec_fence(&op->src->container->resource);
+    else
+        wined3d_resource_inc_fence(&op->src->resource);
+
+    if (op->dst->container)
+        wined3d_resource_dec_fence(&op->dst->container->resource);
+    else
+        wined3d_resource_inc_fence(&op->dst->resource);
+
     return sizeof(*op);
 }
 
@@ -1984,6 +1994,16 @@ void wined3d_cs_emit_update_surface(struct wined3d_cs *cs, struct wined3d_surfac
         op->has_dst_point = TRUE;
         op->dst_point = *dst_point;
     }
+
+    if (src->container)
+        wined3d_resource_inc_fence(&src->container->resource);
+    else
+        wined3d_resource_inc_fence(&src->resource);
+
+    if (dst->container)
+        wined3d_resource_inc_fence(&dst->container->resource);
+    else
+        wined3d_resource_inc_fence(&dst->resource);
 
     cs->ops->submit(cs, sizeof(*op));
 }
@@ -2044,6 +2064,9 @@ static UINT wined3d_cs_exec_update_texture(struct wined3d_cs *cs, const void *da
     device_exec_update_texture(context, op->src, op->dst);
     context_release(context);
 
+    wined3d_resource_dec_fence(&op->src->resource);
+    wined3d_resource_dec_fence(&op->dst->resource);
+
     return sizeof(*op);
 }
 
@@ -2056,6 +2079,9 @@ void wined3d_cs_emit_update_texture(struct wined3d_cs *cs, struct wined3d_textur
     op->opcode = WINED3D_CS_OP_UPDATE_TEXTURE;
     op->src = src;
     op->dst = dst;
+
+    wined3d_resource_inc_fence(&op->src->resource);
+    wined3d_resource_inc_fence(&op->dst->resource);
 
     cs->ops->submit(cs, sizeof(*op));
 }
