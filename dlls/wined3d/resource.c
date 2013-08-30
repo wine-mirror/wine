@@ -226,12 +226,10 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
 void wined3d_resource_free_bo(struct wined3d_resource *resource)
 {
     struct wined3d_context *context = context_acquire(resource->device, NULL);
-    const struct wined3d_gl_info *gl_info = context->gl_info;
 
-    TRACE("Deleting GL buffer %u belonging to resource %p.\n", resource->buffer_object, resource);
-    GL_EXTCALL(glDeleteBuffers(1, &resource->buffer_object));
-    checkGLcall("glDeleteBuffers");
-    resource->buffer_object = 0;
+    wined3d_device_release_bo(resource->device, resource->buffer, context);
+    resource->buffer = NULL;
+
     context_release(context);
 }
 
@@ -247,7 +245,7 @@ void resource_cleanup(struct wined3d_resource *resource)
         adapter_adjust_memory(resource->device->adapter, (INT64)0 - resource->size);
     }
 
-    if (resource->buffer_object)
+    if (resource->buffer)
         wined3d_resource_free_bo(resource);
 
     wined3d_resource_free_sysmem(resource);
@@ -260,7 +258,7 @@ void resource_unload(struct wined3d_resource *resource)
     if (resource->map_count)
         ERR("Resource %p is being unloaded while mapped.\n", resource);
 
-    if (resource->buffer_object)
+    if (resource->buffer)
         wined3d_resource_free_bo(resource);
 
     context_resource_unloaded(resource->device,
@@ -511,7 +509,7 @@ void wined3d_resource_get_memory(const struct wined3d_resource *resource,
 {
     if (location & WINED3D_LOCATION_BUFFER)
     {
-        data->buffer_object = resource->buffer_object;
+        data->buffer_object = resource->buffer->name;
         data->addr = NULL;
         return;
     }
@@ -620,7 +618,7 @@ BYTE *wined3d_resource_get_map_ptr(const struct wined3d_resource *resource,
     {
         case WINED3D_LOCATION_BUFFER:
             gl_info = context->gl_info;
-            GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, resource->buffer_object));
+            GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, resource->buffer->name));
 
             if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
             {
@@ -663,7 +661,7 @@ void wined3d_resource_release_map_ptr(const struct wined3d_resource *resource,
     {
         case WINED3D_LOCATION_BUFFER:
             gl_info = context->gl_info;
-            GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, resource->buffer_object));
+            GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, resource->buffer->name));
             GL_EXTCALL(glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER));
             GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
             checkGLcall("Unmap GL buffer");
@@ -681,20 +679,14 @@ void wined3d_resource_release_map_ptr(const struct wined3d_resource *resource,
 }
 
 /* Context activation is done by the caller. */
-static void wined3d_resource_prepare_bo(struct wined3d_resource *resource, const struct wined3d_context *context)
+static void wined3d_resource_prepare_bo(struct wined3d_resource *resource, struct wined3d_context *context)
 {
-    const struct wined3d_gl_info *gl_info = context->gl_info;
-
-    if (resource->buffer_object)
+    if (resource->buffer)
         return;
 
-    GL_EXTCALL(glGenBuffers(1, &resource->buffer_object));
-    GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, resource->buffer_object));
-    GL_EXTCALL(glBufferData(GL_PIXEL_UNPACK_BUFFER, resource->size, NULL, GL_STREAM_DRAW));
-    GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
-    checkGLcall("Create GL buffer");
-
-    TRACE("Created GL buffer %u for resource %p.\n", resource->buffer_object, resource);
+    resource->buffer = wined3d_device_get_bo(resource->device, resource->size,
+            GL_STREAM_DRAW, GL_PIXEL_UNPACK_BUFFER, context);
+    TRACE("Created GL buffer %u for resource %p.\n", resource->buffer->name, resource);
 }
 
 BOOL wined3d_resource_prepare_system_memory(struct wined3d_resource *resource)
