@@ -1014,8 +1014,6 @@ enum fogsource {
     FOGSOURCE_COORD,
 };
 
-#define WINED3D_MAX_FBO_ENTRIES 64
-
 struct wined3d_occlusion_query
 {
     struct list entry;

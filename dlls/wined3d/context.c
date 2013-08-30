@@ -33,6 +33,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_synchronous);
 
+#define WINED3D_MAX_FBO_ENTRIES 64
+
 static DWORD wined3d_context_tls_idx;
 
 /* FBO helper functions */
