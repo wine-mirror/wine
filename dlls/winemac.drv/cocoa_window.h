@@ -32,6 +32,7 @@
     BOOL fullscreen;
     BOOL pendingMinimize;
     WineWindow* latentParentWindow;
+    NSMutableArray* latentChildWindows;
 
     void* hwnd;
     WineEventQueue* queue;
