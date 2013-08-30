@@ -84,11 +84,13 @@ static const char manifest2[] =
 "</dependency>"
 "</assembly>";
 
-DEFINE_GUID(IID_CoTest, 0x12345678, 0x1234, 0x5678, 0x12, 0x34, 0x11, 0x11, 0x22, 0x22, 0x33, 0x33);
-DEFINE_GUID(IID_TlibTest, 0x99999999, 0x8888, 0x7777, 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55);
+DEFINE_GUID(IID_CoTest,    0x12345678, 0x1234, 0x5678, 0x12, 0x34, 0x11, 0x11, 0x22, 0x22, 0x33, 0x33);
+DEFINE_GUID(IID_TlibTest,  0x99999999, 0x8888, 0x7777, 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55);
 DEFINE_GUID(IID_TlibTest2, 0x99999999, 0x8888, 0x7777, 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x55, 0x56);
 DEFINE_GUID(IID_TlibTest3, 0x99999999, 0x8888, 0x7777, 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x55, 0x57);
 DEFINE_GUID(IID_TlibTest4, 0x99999999, 0x8888, 0x7777, 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x55, 0x58);
+DEFINE_GUID(IID_Iifaceps,  0x66666666, 0x8888, 0x7777, 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55);
+DEFINE_GUID(IID_Ibifaceps, 0x66666666, 0x8888, 0x7777, 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x55, 0x57);
 
 static const char manifest3[] =
 "<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">"
@@ -106,6 +108,15 @@ static const char manifest3[] =
 "              miscStatusContent=\"insideout\""
 "              miscStatusThumbnail=\"alignable\""
 "              miscStatusDocPrint=\"simpleframe,setclientsitefirst\""
+"    />"
+"    <comInterfaceProxyStub "
+"        name=\"Iifaceps\""
+"        tlbid=\"{99999999-8888-7777-6666-555555555558}\""
+"        iid=\"{66666666-8888-7777-6666-555555555555}\""
+"        proxyStubClsid32=\"{66666666-8888-7777-6666-555555555556}\""
+"        threadingModel=\"Free\""
+"        numMethods=\"10\""
+"        baseInterface=\"{66666666-8888-7777-6666-555555555557}\""
 "    />"
 "</file>"
 "</assembly>";
@@ -1203,6 +1214,82 @@ todo_wine {
     ok_(__FILE__, line)(!memcmp(comclass, comclass2, comclass->size), "got wrong data\n");
 }
 
+enum ifaceps_mask
+{
+    NumMethods = 1,
+    BaseIface  = 2
+};
+
+struct ifacepsredirect_data
+{
+    ULONG size;
+    DWORD mask;
+    GUID  iid;
+    ULONG nummethods;
+    GUID  tlbid;
+    GUID  base;
+    ULONG name_len;
+    ULONG name_offset;
+};
+
+static void test_find_ifaceps_redirection(HANDLE handle, const GUID *iid, const GUID *tlbid, const GUID *base, ULONG exid, int line)
+{
+    struct ifacepsredirect_data *ifaceps;
+    ACTCTX_SECTION_KEYED_DATA data;
+    BOOL ret;
+
+    memset(&data, 0xfe, sizeof(data));
+    data.cbSize = sizeof(data);
+
+    ret = pFindActCtxSectionGuid(0, NULL,
+                                    ACTIVATION_CONTEXT_SECTION_COM_INTERFACE_REDIRECTION,
+                                    iid, &data);
+todo_wine
+    ok_(__FILE__, line)(ret, "FindActCtxSectionGuid failed: %u\n", GetLastError());
+    if (!ret)
+    {
+        skip("iterface redirection search is not supported\n");
+        return;
+    }
+
+    ifaceps = (struct ifacepsredirect_data*)data.lpData;
+
+    ok_(__FILE__, line)(data.cbSize == sizeof(data), "data.cbSize=%u\n", data.cbSize);
+    ok_(__FILE__, line)(data.ulDataFormatVersion == 1, "data.ulDataFormatVersion=%u\n", data.ulDataFormatVersion);
+    ok_(__FILE__, line)(data.lpData != NULL, "data.lpData == NULL\n");
+    ok_(__FILE__, line)(ifaceps->size == sizeof(*ifaceps), "got %d for header size\n", ifaceps->size);
+    if (data.lpData && ifaceps->size == sizeof(*ifaceps))
+    {
+        ULONG len;
+
+        ok_(__FILE__, line)(IsEqualGUID(&ifaceps->iid, iid), "got wrong iid %s\n", debugstr_guid(&ifaceps->iid));
+        ok_(__FILE__, line)(IsEqualGUID(&ifaceps->tlbid, tlbid), "got wrong tlid %s\n", debugstr_guid(&ifaceps->tlbid));
+        ok_(__FILE__, line)(ifaceps->name_len > 0, "got modulename len %d\n", ifaceps->name_len);
+        ok_(__FILE__, line)(ifaceps->name_offset == ifaceps->size, "got progid offset %d\n", ifaceps->name_offset);
+
+        /* data length is simply header length + string data length including nulls */
+        len = ifaceps->size + ifaceps->name_len + sizeof(WCHAR);
+        ok_(__FILE__, line)(data.ulLength == len, "got wrong data length %d, expected %d\n", data.ulLength, len);
+
+        /* mask purpose is to indicate if attribute was specified, for testing purposes assume that manifest
+           always has non-zero value for it */
+        if (ifaceps->mask & NumMethods)
+            ok_(__FILE__, line)(ifaceps->nummethods != 0, "got nummethods %d\n", ifaceps->nummethods);
+        if (ifaceps->mask & BaseIface)
+            ok_(__FILE__, line)(IsEqualGUID(&ifaceps->base, base), "got base %s\n", debugstr_guid(&ifaceps->base));
+    }
+
+    ok_(__FILE__, line)(data.lpSectionGlobalData == NULL, "data.lpSectionGlobalData != NULL\n");
+    ok_(__FILE__, line)(data.ulSectionGlobalDataLength == 0, "data.ulSectionGlobalDataLength=%u\n",
+       data.ulSectionGlobalDataLength);
+    ok_(__FILE__, line)(data.lpSectionBase != NULL, "data.lpSectionBase == NULL\n");
+    ok_(__FILE__, line)(data.ulSectionTotalLength > 0, "data.ulSectionTotalLength=%u\n",
+       data.ulSectionTotalLength);
+    ok_(__FILE__, line)(data.hActCtx == NULL, "data.hActCtx=%p\n", data.hActCtx);
+    ok_(__FILE__, line)(data.ulAssemblyRosterIndex == exid, "data.ulAssemblyRosterIndex=%u, expected %u\n",
+       data.ulAssemblyRosterIndex, exid);
+}
+
 static void test_wndclass_section(void)
 {
     static const WCHAR cls1W[] = {'1','.','2','.','3','.','4','!','w','n','d','C','l','a','s','s','1',0};
@@ -1522,6 +1609,7 @@ static void test_actctx(void)
         test_find_dll_redirection(handle, testlib_dll, 1, __LINE__);
         test_find_dll_redirection(handle, testlib_dll, 1, __LINE__);
         test_find_com_redirection(handle, &IID_CoTest, &IID_TlibTest, 1, __LINE__);
+        test_find_ifaceps_redirection(handle, &IID_Iifaceps, &IID_TlibTest4, &IID_Ibifaceps, 1, __LINE__);
         test_find_string_fail();
         b = pDeactivateActCtx(0, cookie);
         ok(b, "DeactivateActCtx failed: %u\n", GetLastError());
