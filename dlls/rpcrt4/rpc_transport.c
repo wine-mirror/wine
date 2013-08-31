@@ -2533,12 +2533,16 @@ static RPC_STATUS rpcrt4_ncacn_http_open(RpcConnection* Connection)
         return RPC_S_SERVER_UNAVAILABLE;
     }
     status = insert_authorization_header(httpc->in_request, httpc->common.QOS);
-    if (status != RPC_S_OK)
+    if (status != RPC_S_OK) {
+        HeapFree(GetProcessHeap(), 0, url);
         return status;
+    }
 
     status = insert_cookie_header(httpc->in_request, Connection->CookieAuth);
-    if (status != RPC_S_OK)
+    if (status != RPC_S_OK) {
+        HeapFree(GetProcessHeap(), 0, url);
         return status;
+    }
 
     httpc->out_request = HttpOpenRequestW(httpc->session, wszVerbOut, url, NULL, NULL, wszAcceptTypes,
                                           flags, (DWORD_PTR)httpc->async_data);
