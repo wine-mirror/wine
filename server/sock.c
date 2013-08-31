@@ -96,6 +96,7 @@ struct sock
     unsigned int        pmask;       /* pending events */
     unsigned int        flags;       /* socket flags */
     int                 polling;     /* is socket being polled? */
+    unsigned short      proto;       /* socket protocol */
     unsigned short      type;        /* socket type */
     unsigned short      family;      /* socket family */
     struct event       *event;       /* event object */
@@ -643,6 +644,7 @@ static struct object *create_socket( int family, int type, int protocol, unsigne
     init_sock( sock );
     sock->state  = (type != SOCK_STREAM) ? (FD_READ|FD_WRITE) : 0;
     sock->flags  = flags;
+    sock->proto  = protocol;
     sock->type   = type;
     sock->family = family;
 
@@ -715,6 +717,7 @@ static struct sock *accept_socket( obj_handle_t handle )
         if (sock->state & FD_WINE_NONBLOCKING)
             acceptsock->state |= FD_WINE_NONBLOCKING;
         acceptsock->mask    = sock->mask;
+        acceptsock->proto   = sock->proto;
         acceptsock->type    = sock->type;
         acceptsock->family  = sock->family;
         acceptsock->window  = sock->window;
