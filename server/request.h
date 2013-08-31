@@ -156,6 +156,7 @@ DECL_HANDLER(accept_socket);
 DECL_HANDLER(accept_into_socket);
 DECL_HANDLER(set_socket_event);
 DECL_HANDLER(get_socket_event);
+DECL_HANDLER(get_socket_info);
 DECL_HANDLER(enable_socket_event);
 DECL_HANDLER(set_socket_deferred);
 DECL_HANDLER(alloc_console);
@@ -414,6 +415,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_accept_into_socket,
     (req_handler)req_set_socket_event,
     (req_handler)req_get_socket_event,
+    (req_handler)req_get_socket_info,
     (req_handler)req_enable_socket_event,
     (req_handler)req_set_socket_deferred,
     (req_handler)req_alloc_console,
@@ -972,6 +974,12 @@ C_ASSERT( FIELD_OFFSET(struct get_socket_event_reply, mask) == 8 );
 C_ASSERT( FIELD_OFFSET(struct get_socket_event_reply, pmask) == 12 );
 C_ASSERT( FIELD_OFFSET(struct get_socket_event_reply, state) == 16 );
 C_ASSERT( sizeof(struct get_socket_event_reply) == 24 );
+C_ASSERT( FIELD_OFFSET(struct get_socket_info_request, handle) == 12 );
+C_ASSERT( sizeof(struct get_socket_info_request) == 16 );
+C_ASSERT( FIELD_OFFSET(struct get_socket_info_reply, family) == 8 );
+C_ASSERT( FIELD_OFFSET(struct get_socket_info_reply, type) == 12 );
+C_ASSERT( FIELD_OFFSET(struct get_socket_info_reply, protocol) == 16 );
+C_ASSERT( sizeof(struct get_socket_info_reply) == 24 );
 C_ASSERT( FIELD_OFFSET(struct enable_socket_event_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct enable_socket_event_request, mask) == 16 );
 C_ASSERT( FIELD_OFFSET(struct enable_socket_event_request, sstate) == 20 );

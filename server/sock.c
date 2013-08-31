@@ -1073,3 +1073,17 @@ DECL_HANDLER(set_socket_deferred)
     sock->deferred = acceptsock;
     release_object( sock );
 }
+
+DECL_HANDLER(get_socket_info)
+{
+    struct sock *sock;
+
+    sock = (struct sock *)get_handle_obj( current->process, req->handle, FILE_READ_ATTRIBUTES, &sock_ops );
+    if (!sock) return;
+
+    reply->family   = sock->family;
+    reply->type     = sock->type;
+    reply->protocol = sock->proto;
+
+    release_object( &sock->obj );
+}

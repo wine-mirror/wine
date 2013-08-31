@@ -1529,6 +1529,22 @@ struct get_socket_event_reply
 
 
 
+struct get_socket_info_request
+{
+    struct request_header __header;
+    obj_handle_t handle;
+};
+struct get_socket_info_reply
+{
+    struct reply_header __header;
+    int family;
+    int type;
+    int protocol;
+    char __pad_20[4];
+};
+
+
+
 struct enable_socket_event_request
 {
     struct request_header __header;
@@ -5082,6 +5098,7 @@ enum request
     REQ_accept_into_socket,
     REQ_set_socket_event,
     REQ_get_socket_event,
+    REQ_get_socket_info,
     REQ_enable_socket_event,
     REQ_set_socket_deferred,
     REQ_alloc_console,
@@ -5341,6 +5358,7 @@ union generic_request
     struct accept_into_socket_request accept_into_socket_request;
     struct set_socket_event_request set_socket_event_request;
     struct get_socket_event_request get_socket_event_request;
+    struct get_socket_info_request get_socket_info_request;
     struct enable_socket_event_request enable_socket_event_request;
     struct set_socket_deferred_request set_socket_deferred_request;
     struct alloc_console_request alloc_console_request;
@@ -5598,6 +5616,7 @@ union generic_reply
     struct accept_into_socket_reply accept_into_socket_reply;
     struct set_socket_event_reply set_socket_event_reply;
     struct get_socket_event_reply get_socket_event_reply;
+    struct get_socket_info_reply get_socket_info_reply;
     struct enable_socket_event_reply enable_socket_event_reply;
     struct set_socket_deferred_reply set_socket_deferred_reply;
     struct alloc_console_reply alloc_console_reply;
@@ -5802,6 +5821,6 @@ union generic_reply
     struct set_suspend_context_reply set_suspend_context_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 447
+#define SERVER_PROTOCOL_VERSION 448
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

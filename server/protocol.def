@@ -1236,6 +1236,16 @@ enum server_fd_type
 @END
 
 
+/* Get socket info */
+@REQ(get_socket_info)
+    obj_handle_t handle;        /* handle to the socket */
+@REPLY
+    int family;                 /* family, see socket manpage */
+    int type;                   /* type, see socket manpage */
+    int protocol;               /* protocol, see socket manpage */
+@END
+
+
 /* Re-enable pending socket events */
 @REQ(enable_socket_event)
     obj_handle_t handle;        /* handle to the socket */
