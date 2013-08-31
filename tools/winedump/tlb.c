@@ -428,14 +428,35 @@ static int dump_msft_nametab(seg_t *seg)
     return -1;
 }
 
-static int dump_msft_stringtab(seg_t *seg)
+static void dump_msft_string(int n)
 {
-    print_begin_block("StringTab");
+    int len;
 
-    dump_binary(seg->length); /* FIXME */
+    print_begin_block_id("String", n);
+
+    len = print_short_hex("stringlen");
+
+    print_offset();
+    printf("string = ");
+    dump_string(len, 2);
+
+    if(len < 3) {
+        for(len = 0; len < 4; len++)
+            printf("\\%2.2x", tlb_read_byte());
+    }
+    printf("\n");
 
     print_end_block();
+}
 
+static int dump_msft_stringtab(seg_t *seg)
+{
+    int i;
+
+    for(i = 0; offset < seg->offset+seg->length; i++)
+        dump_msft_string(i);
+
+    assert(offset == seg->offset+seg->length);
     return -1;
 }
 
