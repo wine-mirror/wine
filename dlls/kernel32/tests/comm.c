@@ -1036,7 +1036,7 @@ static void test_LoopbackCtsRts(void)
     if (dcb.fRtsControl == RTS_CONTROL_HANDSHAKE)
     {
 	trace("RTS_CONTROL_HANDSHAKE is set, so don't manipulate RTS\n");
-        CloseHandle(hcom);
+	CloseHandle(hcom);
 	return;
     }
     ok(GetCommModemStatus(hcom, &defaultStat), "GetCommModemStatus failed\n");
@@ -1180,6 +1180,7 @@ static void test_LoopbackDtrRing(void)
     if (dcb.fDtrControl == DTR_CONTROL_HANDSHAKE)
     {
 	trace("DTR_CONTROL_HANDSHAKE is set, so don't manipulate DTR\n");
+	CloseHandle(hcom);
 	return;
     }
     ok(GetCommModemStatus(hcom, &defaultStat), "GetCommModemStatus failed\n");
@@ -1592,6 +1593,7 @@ static void test_WaitRing(void)
     ok((ret = GetCommModemStatus(hcom, &defaultStat)), "GetCommModemStatus failed\n");
     if (!ret) {
 	skip("modem status failed -> skip.\n");
+	CloseHandle(hcom);
 	return;
     }
     if(defaultStat & MS_RING_ON)
@@ -1668,7 +1670,7 @@ static void test_WaitDcd(void)
     if (dcb.fDtrControl == DTR_CONTROL_DISABLE)
     {
 	trace("DTR_CONTROL_HANDSHAKE is set, so don't manipulate DTR\n");
-        CloseHandle(hcom);
+	CloseHandle(hcom);
 	return;
     }
     args[0]= TIMEOUT >>1;
