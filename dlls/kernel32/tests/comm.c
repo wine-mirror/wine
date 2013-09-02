@@ -780,10 +780,11 @@ static void test_waittxempty(void)
     DCB dcb;
     COMMTIMEOUTS timeouts;
     char tbuf[]="test_waittxempty";
-    DWORD before, after, bytes, timediff, evtmask;
+    DWORD before, after, bytes, timediff, evtmask, errors, i;
     BOOL res;
     DWORD baud = SLOWBAUD;
     OVERLAPPED ovl_write, ovl_wait;
+    COMSTAT stat;
 
     hcom = test_OpenComm(TRUE);
     if (hcom == INVALID_HANDLE_VALUE) return;
@@ -855,7 +856,19 @@ todo_wine
         ok(bytes == sizeof(evtmask), "expected %u, written %u\n", (UINT)sizeof(evtmask), bytes);
         res = TRUE;
     }
-    else res = FALSE;
+    else
+    {
+        /* unblock pending wait */
+        trace("recovering after WAIT_TIMEOUT...\n");
+        /* FIXME: Wine fails to unblock with new mask being equal to the old one */
+        res = SetCommMask(hcom, 0);
+        ok(res, "SetCommMask error %d\n", GetLastError());
+
+        res = WaitForSingleObject(ovl_wait.hEvent, TIMEOUT);
+        ok(res == WAIT_OBJECT_0, "WaitCommEvent failed with a timeout\n");
+
+        res = FALSE;
+    }
     after = GetTickCount();
 todo_wine
     ok(res, "WaitCommEvent error %d\n", GetLastError());
@@ -876,6 +889,86 @@ todo_wine
     CloseHandle(ovl_write.hEvent);
 
     CloseHandle(hcom);
+
+    for (i = 0; i < 2; i++)
+    {
+        hcom = test_OpenComm(TRUE);
+        if (hcom == INVALID_HANDLE_VALUE) return;
+
+        res = SetCommMask(hcom, EV_TXEMPTY);
+        ok(res, "SetCommMask error %d\n", GetLastError());
+
+        if (i == 0)
+        {
+            S(U(ovl_write)).Offset = 0;
+            S(U(ovl_write)).OffsetHigh = 0;
+            ovl_write.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+            before = GetTickCount();
+            SetLastError(0xdeadbeef);
+            res = WriteFile(hcom, tbuf, sizeof(tbuf), &bytes, &ovl_write);
+todo_wine
+            ok(!res && GetLastError() == ERROR_IO_PENDING, "WriteFile returned %d, error %d\n", res, GetLastError());
+todo_wine
+            ok(!bytes, "expected 0, got %u\n", bytes);
+
+            ClearCommError(hcom, &errors, &stat);
+            ok(stat.cbInQue == 0, "InQueue should be empty, got %d bytes\n", stat.cbInQue);
+            ok(stat.cbOutQue != 0 || broken(stat.cbOutQue == 0) /* VM */, "OutQueue should not be empty\n");
+            ok(errors == 0, "ClearCommErrors: Unexpected error 0x%08x\n", errors);
+
+            res = GetOverlappedResult(hcom, &ovl_write, &bytes, TRUE);
+            ok(res, "GetOverlappedResult reported error %d\n", GetLastError());
+            ok(bytes == sizeof(tbuf), "expected %u, written %u\n", (UINT)sizeof(tbuf), bytes);
+            CloseHandle(ovl_write.hEvent);
+
+            res = FlushFileBuffers(hcom);
+            ok(res, "FlushFileBuffers error %d\n", GetLastError());
+        }
+
+        ClearCommError(hcom, &errors, &stat);
+        ok(stat.cbInQue == 0, "InQueue should be empty, got %d bytes\n", stat.cbInQue);
+        ok(stat.cbOutQue == 0, "OutQueue should be empty, got %d bytes\n", stat.cbOutQue);
+        ok(errors == 0, "ClearCommErrors: Unexpected error 0x%08x\n", errors);
+
+        S(U(ovl_wait)).Offset = 0;
+        S(U(ovl_wait)).OffsetHigh = 0;
+        ovl_wait.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+        evtmask = 0;
+        SetLastError(0xdeadbeef);
+        res = WaitCommEvent(hcom, &evtmask, &ovl_wait);
+        ok(!res && GetLastError() == ERROR_IO_PENDING, "%d: WaitCommEvent error %d\n", i, GetLastError());
+
+        res = WaitForSingleObject(ovl_wait.hEvent, TIMEOUT);
+        if (i == 0)
+todo_wine
+            ok(res == WAIT_OBJECT_0, "WaitCommEvent failed with a timeout\n");
+        else
+            ok(res == WAIT_TIMEOUT, "WaitCommEvent should fail with a timeout\n");
+        if (res == WAIT_OBJECT_0)
+        {
+            res = GetOverlappedResult(hcom, &ovl_wait, &bytes, FALSE);
+            ok(res, "GetOverlappedResult reported error %d\n", GetLastError());
+            ok(bytes == sizeof(evtmask), "expected %u, written %u\n", (UINT)sizeof(evtmask), bytes);
+            ok(res, "WaitCommEvent error %d\n", GetLastError());
+            ok(evtmask & EV_TXEMPTY, "WaitCommEvent: expected EV_TXEMPTY, got %#x\n", evtmask);
+        }
+        else
+        {
+            ok(!evtmask, "WaitCommEvent: expected 0, got %#x\n", evtmask);
+
+            /* unblock pending wait */
+            trace("recovering after WAIT_TIMEOUT...\n");
+            /* FIXME: Wine fails to unblock with new mask being equal to the old one */
+            res = SetCommMask(hcom, 0);
+            ok(res, "SetCommMask error %d\n", GetLastError());
+
+            res = WaitForSingleObject(ovl_wait.hEvent, TIMEOUT);
+            ok(res == WAIT_OBJECT_0, "WaitCommEvent failed with a timeout\n");
+            CloseHandle(ovl_wait.hEvent);
+        }
+
+        CloseHandle(hcom);
+    }
 }
 
 /* A new open handle should not return error or have bytes in the Queues */
