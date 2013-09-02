@@ -87,7 +87,6 @@ struct wined3d_settings wined3d_settings =
     FALSE,          /* 3D support enabled by default. */
 };
 
-/* Do not call while under the GL lock. */
 struct wined3d * CDECL wined3d_create(UINT version, DWORD flags)
 {
     struct wined3d *object;

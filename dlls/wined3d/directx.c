@@ -313,7 +313,6 @@ static void wined3d_create_fake_gl_context_attribs(struct wined3d_fake_gl_ctx *f
     fake_gl_ctx->gl_ctx = new_ctx;
 }
 
-/* Do not call while under the GL lock. */
 static BOOL WineD3D_CreateFakeGLContext(struct wined3d_fake_gl_ctx *ctx)
 {
     PIXELFORMATDESCRIPTOR pfd;
@@ -5031,7 +5030,6 @@ static void wined3d_adapter_init_fb_cfgs(struct wined3d_adapter *adapter, HDC dc
     }
 }
 
-/* Do not call while under the GL lock. */
 static BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, UINT ordinal)
 {
     struct wined3d_gl_info *gl_info = &adapter->gl_info;
@@ -5170,7 +5168,6 @@ const struct wined3d_parent_ops wined3d_null_parent_ops =
     wined3d_null_wined3d_object_destroyed,
 };
 
-/* Do not call while under the GL lock. */
 HRESULT wined3d_init(struct wined3d *wined3d, UINT version, DWORD flags)
 {
     wined3d->dxVersion = version;

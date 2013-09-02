@@ -172,7 +172,6 @@ void set_tex_op_nvrc(const struct wined3d_gl_info *gl_info, const struct wined3d
         output = GL_SPARE0_NV;
     }
 
-    /* This is called by a state handler which has the gl lock held and a context for the thread */
     switch (op)
     {
         case WINED3D_TOP_DISABLE:

@@ -27,7 +27,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(fps);
 
-/* Do not call while under the GL lock. */
 static void swapchain_cleanup(struct wined3d_swapchain *swapchain)
 {
     HRESULT hr;
@@ -98,7 +97,6 @@ ULONG CDECL wined3d_swapchain_incref(struct wined3d_swapchain *swapchain)
     return refcount;
 }
 
-/* Do not call while under the GL lock. */
 ULONG CDECL wined3d_swapchain_decref(struct wined3d_swapchain *swapchain)
 {
     ULONG refcount = InterlockedDecrement(&swapchain->ref);
@@ -806,7 +804,6 @@ void swapchain_update_render_to_fbo(struct wined3d_swapchain *swapchain)
     swapchain->render_to_fbo = TRUE;
 }
 
-/* Do not call while under the GL lock. */
 static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3d_device *device,
         struct wined3d_swapchain_desc *desc, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
@@ -1072,7 +1069,6 @@ err:
     return hr;
 }
 
-/* Do not call while under the GL lock. */
 HRESULT CDECL wined3d_swapchain_create(struct wined3d_device *device, struct wined3d_swapchain_desc *desc,
         void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_swapchain **swapchain)
 {
@@ -1100,7 +1096,6 @@ HRESULT CDECL wined3d_swapchain_create(struct wined3d_device *device, struct win
     return WINED3D_OK;
 }
 
-/* Do not call while under the GL lock. */
 static struct wined3d_context *swapchain_create_context(struct wined3d_swapchain *swapchain)
 {
     struct wined3d_context **newArray;

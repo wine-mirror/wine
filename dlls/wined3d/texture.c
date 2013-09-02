@@ -437,7 +437,6 @@ ULONG CDECL wined3d_texture_incref(struct wined3d_texture *texture)
     return refcount;
 }
 
-/* Do not call while under the GL lock. */
 ULONG CDECL wined3d_texture_decref(struct wined3d_texture *texture)
 {
     ULONG refcount = InterlockedDecrement(&texture->resource.ref);
@@ -471,7 +470,6 @@ DWORD CDECL wined3d_texture_get_priority(const struct wined3d_texture *texture)
     return resource_get_priority(&texture->resource);
 }
 
-/* Do not call while under the GL lock. */
 void CDECL wined3d_texture_preload(struct wined3d_texture *texture)
 {
     texture->texture_ops->texture_preload(texture, SRGB_ANY);
@@ -665,7 +663,6 @@ static BOOL texture_srgb_mode(const struct wined3d_texture *texture, enum WINED3
     }
 }
 
-/* Do not call while under the GL lock. */
 static void texture2d_preload(struct wined3d_texture *texture, enum WINED3DSRGB srgb)
 {
     UINT sub_count = texture->level_count * texture->layer_count;
@@ -726,7 +723,6 @@ static void texture2d_sub_resource_cleanup(struct wined3d_resource *sub_resource
     wined3d_surface_decref(surface);
 }
 
-/* Do not call while under the GL lock. */
 static void texture2d_unload(struct wined3d_resource *resource)
 {
     struct wined3d_texture *texture = wined3d_texture_from_resource(resource);
@@ -1049,7 +1045,6 @@ static HRESULT texture3d_bind(struct wined3d_texture *texture,
     return wined3d_texture_bind(texture, context, srgb, &dummy);
 }
 
-/* Do not call while under the GL lock. */
 static void texture3d_preload(struct wined3d_texture *texture, enum WINED3DSRGB srgb)
 {
     UINT sub_count = texture->level_count * texture->layer_count;
@@ -1101,7 +1096,6 @@ static void texture3d_sub_resource_cleanup(struct wined3d_resource *sub_resource
     wined3d_volume_decref(volume);
 }
 
-/* Do not call while under the GL lock. */
 static void texture3d_unload(struct wined3d_resource *resource)
 {
     struct wined3d_texture *texture = wined3d_texture_from_resource(resource);

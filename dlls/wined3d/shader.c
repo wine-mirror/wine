@@ -1727,7 +1727,6 @@ ULONG CDECL wined3d_shader_incref(struct wined3d_shader *shader)
     return refcount;
 }
 
-/* Do not call while under the GL lock. */
 ULONG CDECL wined3d_shader_decref(struct wined3d_shader *shader)
 {
     ULONG refcount = InterlockedDecrement(&shader->ref);

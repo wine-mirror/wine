@@ -456,7 +456,6 @@ ULONG CDECL wined3d_volume_incref(struct wined3d_volume *volume)
     return refcount;
 }
 
-/* Do not call while under the GL lock. */
 ULONG CDECL wined3d_volume_decref(struct wined3d_volume *volume)
 {
     ULONG refcount;
@@ -501,7 +500,6 @@ DWORD CDECL wined3d_volume_get_priority(const struct wined3d_volume *volume)
     return resource_get_priority(&volume->resource);
 }
 
-/* Do not call while under the GL lock. */
 void CDECL wined3d_volume_preload(struct wined3d_volume *volume)
 {
     FIXME("volume %p stub!\n", volume);

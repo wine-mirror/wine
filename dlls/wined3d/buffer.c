@@ -513,7 +513,6 @@ BYTE *buffer_get_sysmem(struct wined3d_buffer *This, const struct wined3d_gl_inf
     return This->resource.allocatedMemory;
 }
 
-/* Do not call while under the GL lock. */
 static void buffer_unload(struct wined3d_resource *resource)
 {
     struct wined3d_buffer *buffer = buffer_from_resource(resource);
@@ -550,7 +549,6 @@ static void buffer_unload(struct wined3d_resource *resource)
     resource_unload(resource);
 }
 
-/* Do not call while under the GL lock. */
 ULONG CDECL wined3d_buffer_decref(struct wined3d_buffer *buffer)
 {
     ULONG refcount = InterlockedDecrement(&buffer->resource.ref);
@@ -729,7 +727,6 @@ static void buffer_direct_upload(struct wined3d_buffer *This, const struct wined
     checkGLcall("glUnmapBufferARB");
 }
 
-/* Do not call while under the GL lock. */
 void CDECL wined3d_buffer_preload(struct wined3d_buffer *buffer)
 {
     DWORD flags = buffer->flags & (WINED3D_BUFFER_NOSYNC | WINED3D_BUFFER_DISCARD);

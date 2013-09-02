@@ -449,7 +449,6 @@ void device_context_remove(struct wined3d_device *device, struct wined3d_context
     device->contexts = new_array;
 }
 
-/* Do not call while under the GL lock. */
 void device_switch_onscreen_ds(struct wined3d_device *device,
         struct wined3d_context *context, struct wined3d_surface *depth_stencil)
 {
@@ -536,7 +535,6 @@ static void prepare_ds_clear(struct wined3d_surface *ds, struct wined3d_context 
     SetRect(out_rect, 0, 0, ds->ds_current_size.cx, ds->ds_current_size.cy);
 }
 
-/* Do not call while under the GL lock. */
 void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, const struct wined3d_fb_state *fb,
         UINT rect_count, const RECT *rects, const RECT *draw_rect, DWORD flags, const struct wined3d_color *color,
         float depth, DWORD stencil)
@@ -3245,7 +3243,6 @@ struct wined3d_sampler * CDECL wined3d_device_get_gs_sampler(const struct wined3
 }
 
 /* Context activation is done by the caller. */
-/* Do not call while under the GL lock. */
 #define copy_and_next(dest, src, size) memcpy(dest, src, size); dest += (size)
 static HRESULT process_vertices_strided(const struct wined3d_device *device, DWORD dwDestIndex, DWORD dwCount,
         const struct wined3d_stream_info *stream_info, struct wined3d_buffer *dest, DWORD flags,
@@ -3512,7 +3509,6 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
 }
 #undef copy_and_next
 
-/* Do not call while under the GL lock. */
 HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
         UINT src_start_idx, UINT dst_idx, UINT vertex_count, struct wined3d_buffer *dst_buffer,
         const struct wined3d_vertex_declaration *declaration, DWORD flags, DWORD dst_fvf)
@@ -3946,7 +3942,6 @@ HRESULT CDECL wined3d_device_present(const struct wined3d_device *device, const 
     return WINED3D_OK;
 }
 
-/* Do not call while under the GL lock. */
 HRESULT CDECL wined3d_device_clear(struct wined3d_device *device, DWORD rect_count,
         const RECT *rects, DWORD flags, const struct wined3d_color *color, float depth, DWORD stencil)
 {
@@ -4404,7 +4399,6 @@ HRESULT CDECL wined3d_device_update_surface(struct wined3d_device *device,
     return surface_upload_from_surface(dst_surface, dst_point, src_surface, src_rect);
 }
 
-/* Do not call while under the GL lock. */
 HRESULT CDECL wined3d_device_color_fill(struct wined3d_device *device,
         struct wined3d_surface *surface, const RECT *rect, const struct wined3d_color *color)
 {
@@ -4429,7 +4423,6 @@ HRESULT CDECL wined3d_device_color_fill(struct wined3d_device *device,
     return surface_color_fill(surface, rect, color);
 }
 
-/* Do not call while under the GL lock. */
 void CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *device,
         struct wined3d_rendertarget_view *rendertarget_view, const struct wined3d_color *color)
 {
@@ -4807,7 +4800,6 @@ void CDECL wined3d_device_evict_managed_resources(struct wined3d_device *device)
     device_invalidate_state(device, STATE_STREAMSRC);
 }
 
-/* Do not call while under the GL lock. */
 static void delete_opengl_contexts(struct wined3d_device *device, struct wined3d_swapchain *swapchain)
 {
     struct wined3d_resource *resource, *cursor;
@@ -4856,7 +4848,6 @@ static void delete_opengl_contexts(struct wined3d_device *device, struct wined3d
     swapchain->context = NULL;
 }
 
-/* Do not call while under the GL lock. */
 static HRESULT create_primary_opengl_context(struct wined3d_device *device, struct wined3d_swapchain *swapchain)
 {
     struct wined3d_context *context;
@@ -4905,7 +4896,6 @@ static HRESULT create_primary_opengl_context(struct wined3d_device *device, stru
     return WINED3D_OK;
 }
 
-/* Do not call while under the GL lock. */
 HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         const struct wined3d_swapchain_desc *swapchain_desc, const struct wined3d_display_mode *mode,
         wined3d_device_reset_cb callback, BOOL reset_state)

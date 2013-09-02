@@ -1393,7 +1393,6 @@ static BOOL surface_convert_depth_to_float(const struct wined3d_surface *surface
     return TRUE;
 }
 
-/* Do not call while under the GL lock. */
 static HRESULT wined3d_surface_depth_fill(struct wined3d_surface *surface, const RECT *rect, float depth)
 {
     const struct wined3d_resource *resource = &surface->resource;
@@ -1429,7 +1428,6 @@ static HRESULT wined3d_surface_depth_blt(struct wined3d_surface *src_surface, DW
     return WINED3D_OK;
 }
 
-/* Do not call while under the GL lock. */
 HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst_rect_in,
         struct wined3d_surface *src_surface, const RECT *src_rect_in, DWORD flags,
         const WINEDDBLTFX *fx, enum wined3d_texture_filter_type filter)
@@ -1813,7 +1811,6 @@ static BOOL surface_init_sysmem(struct wined3d_surface *surface)
     return TRUE;
 }
 
-/* Do not call while under the GL lock. */
 static void surface_unload(struct wined3d_resource *resource)
 {
     struct wined3d_surface *surface = surface_from_resource(resource);
@@ -2966,7 +2963,6 @@ ULONG CDECL wined3d_surface_incref(struct wined3d_surface *surface)
     return refcount;
 }
 
-/* Do not call while under the GL lock. */
 ULONG CDECL wined3d_surface_decref(struct wined3d_surface *surface)
 {
     ULONG refcount;
@@ -4060,7 +4056,6 @@ HRESULT CDECL wined3d_surface_flip(struct wined3d_surface *surface, struct wined
     return WINED3D_OK;
 }
 
-/* Do not call while under the GL lock. */
 void surface_internal_preload(struct wined3d_surface *surface, enum WINED3DSRGB srgb)
 {
     struct wined3d_device *device = surface->resource.device;
@@ -5222,7 +5217,6 @@ static void surface_blt_to_drawable(const struct wined3d_device *device,
     context_release(context);
 }
 
-/* Do not call while under the GL lock. */
 HRESULT surface_color_fill(struct wined3d_surface *s, const RECT *rect, const struct wined3d_color *color)
 {
     struct wined3d_device *device = s->resource.device;
@@ -5239,7 +5233,6 @@ HRESULT surface_color_fill(struct wined3d_surface *s, const RECT *rect, const st
     return blitter->color_fill(device, s, rect, color);
 }
 
-/* Do not call while under the GL lock. */
 static HRESULT IWineD3DSurfaceImpl_BltOverride(struct wined3d_surface *dst_surface, const RECT *dst_rect,
         struct wined3d_surface *src_surface, const RECT *src_rect, DWORD flags, const WINEDDBLTFX *DDBltFx,
         enum wined3d_texture_filter_type filter)
@@ -6197,7 +6190,6 @@ static BOOL ffp_blit_supported(const struct wined3d_gl_info *gl_info, enum wined
     }
 }
 
-/* Do not call while under the GL lock. */
 static HRESULT ffp_blit_color_fill(struct wined3d_device *device, struct wined3d_surface *dst_surface,
         const RECT *dst_rect, const struct wined3d_color *color)
 {
@@ -6209,7 +6201,6 @@ static HRESULT ffp_blit_color_fill(struct wined3d_device *device, struct wined3d
     return WINED3D_OK;
 }
 
-/* Do not call while under the GL lock. */
 static HRESULT ffp_blit_depth_fill(struct wined3d_device *device,
         struct wined3d_surface *surface, const RECT *rect, float depth)
 {
@@ -6864,7 +6855,6 @@ release:
     return hr;
 }
 
-/* Do not call while under the GL lock. */
 static HRESULT cpu_blit_color_fill(struct wined3d_device *device, struct wined3d_surface *dst_surface,
         const RECT *dst_rect, const struct wined3d_color *color)
 {
@@ -6878,7 +6868,6 @@ static HRESULT cpu_blit_color_fill(struct wined3d_device *device, struct wined3d
             WINEDDBLT_COLORFILL, &BltFx, WINED3D_TEXF_POINT);
 }
 
-/* Do not call while under the GL lock. */
 static HRESULT cpu_blit_depth_fill(struct wined3d_device *device,
         struct wined3d_surface *surface, const RECT *rect, float depth)
 {

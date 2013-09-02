@@ -887,7 +887,6 @@ err:
     context->valid = 0;
 }
 
-/* Do not call while under the GL lock. */
 static void context_destroy_gl_resources(struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
@@ -1012,7 +1011,6 @@ struct wined3d_context *context_get_current(void)
     return TlsGetValue(wined3d_context_tls_idx);
 }
 
-/* Do not call while under the GL lock. */
 BOOL context_set_current(struct wined3d_context *ctx)
 {
     struct wined3d_context *old = context_get_current();
@@ -1297,7 +1295,6 @@ static void WINE_GLAPI wined3d_debug_callback(GLenum source, GLenum type, GLuint
     }
 }
 
-/* Do not call while under the GL lock. */
 struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
         struct wined3d_surface *target, const struct wined3d_format *ds_format)
 {
@@ -1656,7 +1653,6 @@ out:
     return NULL;
 }
 
-/* Do not call while under the GL lock. */
 void context_destroy(struct wined3d_device *device, struct wined3d_context *context)
 {
     BOOL destroy;
@@ -2465,7 +2461,6 @@ static void context_setup_target(struct wined3d_context *context, struct wined3d
     context_set_render_offscreen(context, render_offscreen);
 }
 
-/* Do not call while under the GL lock. */
 struct wined3d_context *context_acquire(const struct wined3d_device *device, struct wined3d_surface *target)
 {
     struct wined3d_context *current_context = context_get_current();
