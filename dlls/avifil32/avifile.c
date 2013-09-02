@@ -55,38 +55,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(avifile);
 #define IDX_PER_BLOCK 2730
 #endif
 
-static HRESULT WINAPI IAVIStream_fnQueryInterface(IAVIStream*iface,REFIID refiid,LPVOID *obj);
-static ULONG   WINAPI IAVIStream_fnAddRef(IAVIStream*iface);
-static ULONG   WINAPI IAVIStream_fnRelease(IAVIStream* iface);
-static HRESULT WINAPI IAVIStream_fnCreate(IAVIStream*iface,LPARAM lParam1,LPARAM lParam2);
-static HRESULT WINAPI IAVIStream_fnInfo(IAVIStream*iface,AVISTREAMINFOW *psi,LONG size);
-static LONG    WINAPI IAVIStream_fnFindSample(IAVIStream*iface,LONG pos,LONG flags);
-static HRESULT WINAPI IAVIStream_fnReadFormat(IAVIStream*iface,LONG pos,LPVOID format,LONG *formatsize);
-static HRESULT WINAPI IAVIStream_fnSetFormat(IAVIStream*iface,LONG pos,LPVOID format,LONG formatsize);
-static HRESULT WINAPI IAVIStream_fnRead(IAVIStream*iface,LONG start,LONG samples,LPVOID buffer,LONG buffersize,LONG *bytesread,LONG *samplesread);
-static HRESULT WINAPI IAVIStream_fnWrite(IAVIStream*iface,LONG start,LONG samples,LPVOID buffer,LONG buffersize,DWORD flags,LONG *sampwritten,LONG *byteswritten);
-static HRESULT WINAPI IAVIStream_fnDelete(IAVIStream*iface,LONG start,LONG samples);
-static HRESULT WINAPI IAVIStream_fnReadData(IAVIStream*iface,DWORD fcc,LPVOID lp,LONG *lpread);
-static HRESULT WINAPI IAVIStream_fnWriteData(IAVIStream*iface,DWORD fcc,LPVOID lp,LONG size);
-static HRESULT WINAPI IAVIStream_fnSetInfo(IAVIStream*iface,AVISTREAMINFOW*info,LONG infolen);
-
-static const struct IAVIStreamVtbl avist_vt = {
-  IAVIStream_fnQueryInterface,
-  IAVIStream_fnAddRef,
-  IAVIStream_fnRelease,
-  IAVIStream_fnCreate,
-  IAVIStream_fnInfo,
-  IAVIStream_fnFindSample,
-  IAVIStream_fnReadFormat,
-  IAVIStream_fnSetFormat,
-  IAVIStream_fnRead,
-  IAVIStream_fnWrite,
-  IAVIStream_fnDelete,
-  IAVIStream_fnReadData,
-  IAVIStream_fnWriteData,
-  IAVIStream_fnSetInfo
-};
-
 typedef struct _IAVIFileImpl IAVIFileImpl;
 
 typedef struct _IAVIStreamImpl {
@@ -1346,7 +1314,23 @@ static HRESULT WINAPI IAVIStream_fnSetInfo(IAVIStream *iface, AVISTREAMINFOW *in
   return E_FAIL;
 }
 
-/***********************************************************************/
+static const struct IAVIStreamVtbl avist_vt = {
+  IAVIStream_fnQueryInterface,
+  IAVIStream_fnAddRef,
+  IAVIStream_fnRelease,
+  IAVIStream_fnCreate,
+  IAVIStream_fnInfo,
+  IAVIStream_fnFindSample,
+  IAVIStream_fnReadFormat,
+  IAVIStream_fnSetFormat,
+  IAVIStream_fnRead,
+  IAVIStream_fnWrite,
+  IAVIStream_fnDelete,
+  IAVIStream_fnReadData,
+  IAVIStream_fnWriteData,
+  IAVIStream_fnSetInfo
+};
+
 
 static HRESULT AVIFILE_AddFrame(IAVIStreamImpl *This, DWORD ckid, DWORD size, DWORD offset, DWORD flags)
 {
