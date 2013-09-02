@@ -248,6 +248,18 @@ enum ifaceps_mask
     BaseIface  = 2
 };
 
+struct ifacepsredirect_data
+{
+    ULONG size;
+    DWORD mask;
+    GUID  iid;
+    ULONG nummethods;
+    GUID  tlbid;
+    GUID  base;
+    ULONG name_len;
+    ULONG name_offset;
+};
+
 /*
 
    Sections structure.
@@ -316,6 +328,21 @@ enum ifaceps_mask
 
    Module name offsets are relative to section, progid offset is relative to data
    structure itself.
+
+   - COM interface section format:
+
+   <section header>
+   <index[]>
+   <data[]> --- <data>
+                <name>
+
+   Interface section contains data for proxy/stubs and external proxy/stubs. External
+   ones are defined at assembly level, so this section has no module information.
+   All records are indexed with 'iid' value from manifest. There an exception for
+   external variants - if 'proxyStubClsid32' is specified, it's stored as iid in
+   redirect data, but index is still 'iid' from manifest.
+
+   Interface name offset is relative to data structure itself.
 */
 
 struct entity
@@ -409,7 +436,8 @@ enum context_sections
     WINDOWCLASS_SECTION    = 1,
     DLLREDIRECT_SECTION    = 2,
     TLIBREDIRECT_SECTION   = 4,
-    SERVERREDIRECT_SECTION = 8
+    SERVERREDIRECT_SECTION = 8,
+    IFACEREDIRECT_SECTION  = 16
 };
 
 typedef struct _ACTIVATION_CONTEXT
@@ -427,6 +455,7 @@ typedef struct _ACTIVATION_CONTEXT
     struct strsection_header  *dllredirect_section;
     struct guidsection_header *tlib_section;
     struct guidsection_header *comserver_section;
+    struct guidsection_header *ifaceps_section;
 } ACTIVATION_CONTEXT;
 
 struct actctx_loader
@@ -975,6 +1004,7 @@ static void actctx_release( ACTIVATION_CONTEXT *actctx )
         RtlFreeHeap( GetProcessHeap(), 0, actctx->wndclass_section );
         RtlFreeHeap( GetProcessHeap(), 0, actctx->tlib_section );
         RtlFreeHeap( GetProcessHeap(), 0, actctx->comserver_section );
+        RtlFreeHeap( GetProcessHeap(), 0, actctx->ifaceps_section );
         actctx->magic = 0;
         RtlFreeHeap( GetProcessHeap(), 0, actctx );
     }
@@ -1413,7 +1443,7 @@ static BOOL parse_nummethods(const xmlstr_t *str, struct entity *entity)
     return TRUE;
 }
 
-static BOOL parse_cominterface_proxy_stub_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll)
+static BOOL parse_cominterface_proxy_stub_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll, struct actctx_loader* acl)
 {
     xmlstr_t    attr_name, attr_value;
     BOOL        end = FALSE, error;
@@ -1456,7 +1486,10 @@ static BOOL parse_cominterface_proxy_stub_elem(xmlbuf_t* xmlbuf, struct dll_redi
         }
     }
 
-    if (error || end) return end;
+    if (error) return FALSE;
+    acl->actctx->sections |= IFACEREDIRECT_SECTION;
+    if (end) return TRUE;
+
     return parse_expect_end_elem(xmlbuf, comInterfaceProxyStubW, asmv1W);
 }
 
@@ -1687,7 +1720,8 @@ static BOOL parse_description_elem(xmlbuf_t* xmlbuf)
 }
 
 static BOOL parse_com_interface_external_proxy_stub_elem(xmlbuf_t* xmlbuf,
-                                                         struct assembly* assembly)
+                                                         struct assembly* assembly,
+                                                         struct actctx_loader* acl)
 {
     xmlstr_t            attr_name, attr_value;
     BOOL                end = FALSE, error;
@@ -1730,7 +1764,10 @@ static BOOL parse_com_interface_external_proxy_stub_elem(xmlbuf_t* xmlbuf,
         }
     }
 
-    if (error || end) return end;
+    if (error) return FALSE;
+    acl->actctx->sections |= IFACEREDIRECT_SECTION;
+    if (end) return TRUE;
+
     return parse_expect_end_elem(xmlbuf, comInterfaceExternalProxyStubW, asmv1W);
 }
 
@@ -1939,7 +1976,7 @@ static BOOL parse_file_elem(xmlbuf_t* xmlbuf, struct assembly* assembly, struct 
         }
         else if (xmlstr_cmp(&elem, comInterfaceProxyStubW))
         {
-            ret = parse_cominterface_proxy_stub_elem(xmlbuf, dll);
+            ret = parse_cominterface_proxy_stub_elem(xmlbuf, dll, acl);
         }
         else if (xml_elem_cmp(&elem, hashW, asmv2W))
         {
@@ -2032,7 +2069,7 @@ static BOOL parse_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl,
         }
         else if (xml_elem_cmp(&elem, comInterfaceExternalProxyStubW, asmv1W))
         {
-            ret = parse_com_interface_external_proxy_stub_elem(xmlbuf, assembly);
+            ret = parse_com_interface_external_proxy_stub_elem(xmlbuf, assembly, acl);
         }
         else if (xml_elem_cmp(&elem, dependencyW, asmv1W))
         {
@@ -3492,6 +3529,194 @@ static NTSTATUS find_comserver_redirection(ACTIVATION_CONTEXT* actctx, const GUI
     return STATUS_SUCCESS;
 }
 
+static void get_ifaceps_datalen(const struct entity_array *entities, unsigned int *count, unsigned int *len)
+{
+    unsigned int i;
+
+    for (i = 0; i < entities->num; i++)
+    {
+        struct entity *entity = &entities->base[i];
+        if (entity->kind == ACTIVATION_CONTEXT_SECTION_COM_INTERFACE_REDIRECTION)
+        {
+            *len += sizeof(struct guid_index) + sizeof(struct ifacepsredirect_data);
+            if (entity->u.ifaceps.name)
+                *len += aligned_string_len((strlenW(entity->u.ifaceps.name)+1)*sizeof(WCHAR));
+            *count += 1;
+        }
+    }
+}
+
+static void add_ifaceps_record(struct guidsection_header *section, struct entity_array *entities,
+    struct guid_index **index, ULONG *data_offset, ULONG rosterindex)
+{
+    unsigned int i;
+
+    for (i = 0; i < entities->num; i++)
+    {
+        struct entity *entity = &entities->base[i];
+        if (entity->kind == ACTIVATION_CONTEXT_SECTION_COM_INTERFACE_REDIRECTION)
+        {
+            struct ifacepsredirect_data *data = (struct ifacepsredirect_data*)((BYTE*)section + *data_offset);
+            UNICODE_STRING str;
+            ULONG name_len;
+
+            if (entity->u.ifaceps.name)
+                name_len = strlenW(entity->u.ifaceps.name)*sizeof(WCHAR);
+            else
+                name_len = 0;
+
+            /* setup index */
+            RtlInitUnicodeString(&str, entity->u.ifaceps.iid);
+            RtlGUIDFromString(&str, &(*index)->guid);
+            (*index)->data_offset = *data_offset;
+            (*index)->data_len = sizeof(*data) + name_len ? aligned_string_len(name_len + sizeof(WCHAR)) : 0;
+            (*index)->rosterindex = rosterindex;
+
+            /* setup data record */
+            data->size = sizeof(*data);
+            data->mask = entity->u.ifaceps.mask;
+
+            /* proxyStubClsid32 value is only stored for external PS,
+               if set it's used as iid, otherwise 'iid' attribute value is used */
+            if (entity->u.ifaceps.ps32)
+            {
+                RtlInitUnicodeString(&str, entity->u.ifaceps.ps32);
+                RtlGUIDFromString(&str, &data->iid);
+            }
+            else
+                data->iid = (*index)->guid;
+
+            data->nummethods = entity->u.ifaceps.nummethods;
+
+            if (entity->u.ifaceps.tlib)
+            {
+                RtlInitUnicodeString(&str, entity->u.ifaceps.tlib);
+                RtlGUIDFromString(&str, &data->tlbid);
+            }
+            else
+                memset(&data->tlbid, 0, sizeof(data->tlbid));
+
+            if (entity->u.ifaceps.base)
+            {
+                RtlInitUnicodeString(&str, entity->u.ifaceps.base);
+                RtlGUIDFromString(&str, &data->base);
+            }
+            else
+                memset(&data->base, 0, sizeof(data->base));
+
+            data->name_len = name_len;
+            data->name_offset = data->name_len ? sizeof(*data) : 0;
+
+            /* name string */
+            if (data->name_len)
+            {
+                WCHAR *ptrW = (WCHAR*)((BYTE*)data + data->name_offset);
+                memcpy(ptrW, entity->u.ifaceps.name, data->name_len);
+                ptrW[data->name_len/sizeof(WCHAR)] = 0;
+            }
+
+            /* move to next record */
+            (*index) += 1;
+            *data_offset += sizeof(*data);
+            if (data->name_len)
+                *data_offset += aligned_string_len(data->name_len + sizeof(WCHAR));
+        }
+    }
+}
+
+static NTSTATUS build_ifaceps_section(ACTIVATION_CONTEXT* actctx, struct guidsection_header **section)
+{
+    unsigned int i, j, total_len = 0, count = 0;
+    struct guidsection_header *header;
+    struct guid_index *index;
+    ULONG data_offset;
+
+    /* compute section length */
+    for (i = 0; i < actctx->num_assemblies; i++)
+    {
+        struct assembly *assembly = &actctx->assemblies[i];
+
+        get_ifaceps_datalen(&assembly->entities, &count, &total_len);
+        for (j = 0; j < assembly->num_dlls; j++)
+        {
+            struct dll_redirect *dll = &assembly->dlls[j];
+            get_ifaceps_datalen(&dll->entities, &count, &total_len);
+        }
+    }
+
+    total_len += sizeof(*header);
+
+    header = RtlAllocateHeap(GetProcessHeap(), 0, total_len);
+    if (!header) return STATUS_NO_MEMORY;
+
+    memset(header, 0, sizeof(*header));
+    header->magic = GUIDSECTION_MAGIC;
+    header->size  = sizeof(*header);
+    header->count = count;
+    header->index_offset = sizeof(*header);
+    index = (struct guid_index*)((BYTE*)header + header->index_offset);
+    data_offset = header->index_offset + count*sizeof(*index);
+
+    for (i = 0; i < actctx->num_assemblies; i++)
+    {
+        struct assembly *assembly = &actctx->assemblies[i];
+
+        add_ifaceps_record(header, &assembly->entities, &index, &data_offset, i + 1);
+        for (j = 0; j < assembly->num_dlls; j++)
+        {
+            struct dll_redirect *dll = &assembly->dlls[j];
+            add_ifaceps_record(header, &dll->entities, &index, &data_offset, i + 1);
+        }
+    }
+
+    *section = header;
+
+    return STATUS_SUCCESS;
+}
+
+static inline struct ifacepsredirect_data *get_ifaceps_data(ACTIVATION_CONTEXT *actctx, struct guid_index *index)
+{
+    return (struct ifacepsredirect_data*)((BYTE*)actctx->ifaceps_section + index->data_offset);
+}
+
+static NTSTATUS find_cominterface_redirection(ACTIVATION_CONTEXT* actctx, const GUID *guid, ACTCTX_SECTION_KEYED_DATA* data)
+{
+    struct ifacepsredirect_data *iface;
+    struct guid_index *index = NULL;
+
+    if (!(actctx->sections & IFACEREDIRECT_SECTION)) return STATUS_SXS_KEY_NOT_FOUND;
+
+    if (!actctx->ifaceps_section)
+    {
+        struct guidsection_header *section;
+
+        NTSTATUS status = build_ifaceps_section(actctx, &section);
+        if (status) return status;
+
+        if (interlocked_cmpxchg_ptr((void**)&actctx->ifaceps_section, section, NULL))
+            RtlFreeHeap(GetProcessHeap(), 0, section);
+    }
+
+    index = find_guid_index(actctx->ifaceps_section, guid);
+    if (!index) return STATUS_SXS_KEY_NOT_FOUND;
+
+    iface = get_ifaceps_data(actctx, index);
+
+    data->ulDataFormatVersion = 1;
+    data->lpData = iface;
+    data->ulLength = iface->size + (iface->name_len ? iface->name_len + sizeof(WCHAR) : 0);
+    data->lpSectionGlobalData = NULL;
+    data->ulSectionGlobalDataLength = 0;
+    data->lpSectionBase = actctx->ifaceps_section;
+    data->ulSectionTotalLength = RtlSizeHeap( GetProcessHeap(), 0, actctx->ifaceps_section );
+    data->hActCtx = NULL;
+
+    if (data->cbSize >= FIELD_OFFSET(ACTCTX_SECTION_KEYED_DATA, ulAssemblyRosterIndex) + sizeof(ULONG))
+        data->ulAssemblyRosterIndex = index->rosterindex;
+
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS find_string(ACTIVATION_CONTEXT* actctx, ULONG section_kind,
                             const UNICODE_STRING *section_name,
                             DWORD flags, PACTCTX_SECTION_KEYED_DATA data)
@@ -3508,7 +3733,6 @@ static NTSTATUS find_string(ACTIVATION_CONTEXT* actctx, ULONG section_kind,
         break;
     case ACTIVATION_CONTEXT_SECTION_COM_PROGID_REDIRECTION:
     case ACTIVATION_CONTEXT_SECTION_GLOBAL_OBJECT_RENAME_TABLE:
-    case ACTIVATION_CONTEXT_SECTION_CLR_SURROGATES:
         FIXME("Unsupported yet section_kind %x\n", section_kind);
         return STATUS_SXS_SECTION_NOT_FOUND;
     default:
@@ -3540,6 +3764,9 @@ static NTSTATUS find_guid(ACTIVATION_CONTEXT* actctx, ULONG section_kind,
         status = find_comserver_redirection(actctx, guid, data);
         break;
     case ACTIVATION_CONTEXT_SECTION_COM_INTERFACE_REDIRECTION:
+        status = find_cominterface_redirection(actctx, guid, data);
+        break;
+    case ACTIVATION_CONTEXT_SECTION_CLR_SURROGATES:
         FIXME("Unsupported yet section_kind %x\n", section_kind);
         return STATUS_SXS_SECTION_NOT_FOUND;
     default:

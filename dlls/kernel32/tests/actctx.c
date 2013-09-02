@@ -1263,13 +1263,7 @@ static void test_find_ifaceps_redirection(HANDLE handle, const GUID *iid, const 
     ret = pFindActCtxSectionGuid(0, NULL,
                                     ACTIVATION_CONTEXT_SECTION_COM_INTERFACE_REDIRECTION,
                                     iid, &data);
-todo_wine
     ok_(__FILE__, line)(ret, "FindActCtxSectionGuid failed: %u\n", GetLastError());
-    if (!ret)
-    {
-        skip("iterface redirection search is not supported\n");
-        return;
-    }
 
     ifaceps = (struct ifacepsredirect_data*)data.lpData;
 
