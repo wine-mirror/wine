@@ -281,6 +281,8 @@ static int use_render_texture_emulation = 1;
 
 /* Selects the preferred GLX swap control method for use by wglSwapIntervalEXT */
 static enum glx_swap_control_method swap_control_method = GLX_SWAP_CONTROL_NONE;
+/* Set when GLX_EXT_swap_control_tear is supported, requires GLX_SWAP_CONTROL_EXT */
+static BOOL has_swap_control_tear = FALSE;
 
 static CRITICAL_SECTION context_section;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -2937,7 +2939,10 @@ static BOOL X11DRV_wglSwapIntervalEXT(int interval)
 
     TRACE("(%d)\n", interval);
 
-    if (interval < 0)
+    /* Without WGL/GLX_EXT_swap_control_tear a negative interval
+     * is invalid.
+     */
+    if (interval < 0 && !has_swap_control_tear)
     {
         SetLastError(ERROR_INVALID_DATA);
         return FALSE;
@@ -3135,6 +3140,11 @@ static void X11DRV_WineGL_LoadExtensions(void)
     if (has_extension( WineGLInfo.glxExtensions, "GLX_EXT_swap_control"))
     {
         swap_control_method = GLX_SWAP_CONTROL_EXT;
+        if (has_extension( WineGLInfo.glxExtensions, "GLX_EXT_swap_control_tear"))
+        {
+            register_extension("WGL_EXT_swap_control_tear");
+            has_swap_control_tear = TRUE;
+        }
     }
     else if (has_extension( WineGLInfo.glxExtensions, "GLX_SGI_swap_control"))
     {
