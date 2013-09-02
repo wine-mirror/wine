@@ -386,6 +386,8 @@ struct entity
             WCHAR *clsid;
             WCHAR *tlbid;
             WCHAR *progid;
+            WCHAR *name; /* not NULL for clrClass */
+            WCHAR *version;
             DWORD  model;
             DWORD  miscstatus;
             DWORD  miscstatuscontent;
@@ -407,11 +409,6 @@ struct entity
             WCHAR *name;
             BOOL   versioned;
         } class;
-        struct
-        {
-            WCHAR *name;
-            WCHAR *clsid;
-        } clrclass;
         struct
         {
             WCHAR *name;
@@ -790,6 +787,8 @@ static void free_entity_array(struct entity_array *array)
             RtlFreeHeap(GetProcessHeap(), 0, entity->u.comclass.clsid);
             RtlFreeHeap(GetProcessHeap(), 0, entity->u.comclass.tlbid);
             RtlFreeHeap(GetProcessHeap(), 0, entity->u.comclass.progid);
+            RtlFreeHeap(GetProcessHeap(), 0, entity->u.comclass.name);
+            RtlFreeHeap(GetProcessHeap(), 0, entity->u.comclass.version);
             break;
         case ACTIVATION_CONTEXT_SECTION_COM_INTERFACE_REDIRECTION:
             RtlFreeHeap(GetProcessHeap(), 0, entity->u.ifaceps.iid);
@@ -803,10 +802,6 @@ static void free_entity_array(struct entity_array *array)
             break;
         case ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION:
             RtlFreeHeap(GetProcessHeap(), 0, entity->u.class.name);
-            break;
-        case ACTIVATION_CONTEXT_SECTION_COM_PROGID_REDIRECTION:
-            RtlFreeHeap(GetProcessHeap(), 0, entity->u.clrclass.name);
-            RtlFreeHeap(GetProcessHeap(), 0, entity->u.clrclass.clsid);
             break;
         case ACTIVATION_CONTEXT_SECTION_CLR_SURROGATES:
             RtlFreeHeap(GetProcessHeap(), 0, entity->u.clrsurrogate.name);
@@ -1806,18 +1801,34 @@ static BOOL parse_clr_class_elem(xmlbuf_t* xmlbuf, struct assembly* assembly)
     BOOL        end = FALSE, error;
     struct entity*      entity;
 
-    entity = add_entity(&assembly->entities, ACTIVATION_CONTEXT_SECTION_COM_PROGID_REDIRECTION);
+    entity = add_entity(&assembly->entities, ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION);
     if (!entity) return FALSE;
 
     while (next_xml_attr(xmlbuf, &attr_name, &attr_value, &error, &end))
     {
         if (xmlstr_cmp(&attr_name, nameW))
         {
-            if (!(entity->u.clrclass.name = xmlstrdupW(&attr_value))) return FALSE;
+            if (!(entity->u.comclass.name = xmlstrdupW(&attr_value))) return FALSE;
         }
         else if (xmlstr_cmp(&attr_name, clsidW))
         {
-            if (!(entity->u.clrclass.clsid = xmlstrdupW(&attr_value))) return FALSE;
+            if (!(entity->u.comclass.clsid = xmlstrdupW(&attr_value))) return FALSE;
+        }
+        else if (xmlstr_cmp(&attr_name, progidW))
+        {
+            if (!(entity->u.comclass.progid = xmlstrdupW(&attr_value))) return FALSE;
+        }
+        else if (xmlstr_cmp(&attr_name, tlbidW))
+        {
+            if (!(entity->u.comclass.tlbid = xmlstrdupW(&attr_value))) return FALSE;
+        }
+        else if (xmlstr_cmp(&attr_name, threadingmodelW))
+        {
+            entity->u.comclass.model = parse_com_class_threadingmodel(&attr_value);
+        }
+        else if (xmlstr_cmp(&attr_name, runtimeVersionW))
+        {
+            if (!(entity->u.comclass.version = xmlstrdupW(&attr_value))) return FALSE;
         }
         else
         {
