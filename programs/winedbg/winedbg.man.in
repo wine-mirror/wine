@@ -3,15 +3,15 @@
 winedbg \- Wine debugger
 .SH SYNOPSIS
 .B winedbg
-.RI "[ " options " ] [ " program_name " [ " program_arguments " ] | " pid " ]"
+.RI "[ " options " ] [ " program_name " [ " program_arguments " ] | " wpid " ]"
 .PP
 .B winedbg --gdb
-.RI "[ " options " ] [ " program_name " [ " program_arguments " ] | " pid " ]"
+.RI "[ " options " ] [ " program_name " [ " program_arguments " ] | " wpid " ]"
 .PP
-.BI "winedbg --auto " pid
+.BI "winedbg --auto " wpid
 .PP
 .B winedbg --minidump
-.RI "[ " file.mdmp " ] " pid
+.RI "[ " file.mdmp " ] " wpid
 .PP
 .BI "winedbg " file.mdmp
 .SH DESCRIPTION
@@ -84,10 +84,10 @@ This is the name of an executable to start for a debugging
 session.  \fBwinedbg\fR will actually create a process with this
 executable. If \fIprograms_arguments\fR are also given, they will be
 used as arguments for creating the process to be debugged.
-.IP \fIpid\fR
-\fBwinedbg\fR will attach to the process which pid is \fIpid\fR (pids
-refer to Win32 pids, not Unix pids). Use the \fBinfo proc\fR command
-within \fBwinedbg\fR to list running processes and their Win32 pids.
+.IP \fIwpid\fR
+\fBwinedbg\fR will attach to the process which Windows pid is \fIwpid\fR.
+Use the \fBinfo proc\fR command within \fBwinedbg\fR to list running processes
+and their Windows pids.
 .IP \fBdefault\fR
 If nothing is specified, you will enter the debugger without any run
 nor attached process. You'll have to do the job yourself.
@@ -106,7 +106,7 @@ Aborts the debugger.
 .IP \fBquit\fR
 Exits the debugger.
 .IP \fBattach\ \fIN\fR
-Attach to a Wine process (\fIN\fR is its ID, numeric or hexadecimal).
+Attach to a Wine process (\fIN\fR is its Windows ID, numeric or hexadecimal).
 IDs can be obtained using the \fBinfo\ process\fR command.  Note the
 \fBinfo\ process\fR command returns hexadecimal values
 .IP 
@@ -346,7 +346,7 @@ Prints the values on top of the stack
 .IP \fBinfo\ map\fR
 Lists all virtual mappings used by the debugged program
 .IP \fBinfo\ map\ \fIN\fR
-Lists all virtual mappings used by the program of pid \fIN\fR
+Lists all virtual mappings used by the program of Windows pid \fIN\fR
 .IP \fBinfo\ wnd\fR
 Displays the window hierarchy starting from the desktop window
 .IP \fBinfo\ wnd\ \fIN\fR
