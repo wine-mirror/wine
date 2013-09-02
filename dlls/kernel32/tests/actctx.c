@@ -92,6 +92,7 @@ DEFINE_GUID(IID_TlibTest4, 0x99999999, 0x8888, 0x7777, 0x66, 0x66, 0x55, 0x55, 0
 DEFINE_GUID(IID_Iifaceps,  0x66666666, 0x8888, 0x7777, 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55);
 DEFINE_GUID(IID_Ibifaceps, 0x66666666, 0x8888, 0x7777, 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x55, 0x57);
 DEFINE_GUID(IID_Iifaceps2, 0x76666666, 0x8888, 0x7777, 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55);
+DEFINE_GUID(IID_Iifaceps3, 0x86666666, 0x8888, 0x7777, 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55);
 DEFINE_GUID(IID_PS32,      0x66666666, 0x8888, 0x7777, 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x55, 0x56);
 
 static const char manifest3[] =
@@ -126,6 +127,13 @@ static const char manifest3[] =
 "        tlbid=\"{99999999-8888-7777-6666-555555555558}\""
 "        iid=\"{76666666-8888-7777-6666-555555555555}\""
 "        proxyStubClsid32=\"{66666666-8888-7777-6666-555555555556}\""
+"        numMethods=\"10\""
+"        baseInterface=\"{66666666-8888-7777-6666-555555555557}\""
+"    />"
+"    <comInterfaceExternalProxyStub "
+"        name=\"Iifaceps3\""
+"        tlbid=\"{99999999-8888-7777-6666-555555555558}\""
+"        iid=\"{86666666-8888-7777-6666-555555555555}\""
 "        numMethods=\"10\""
 "        baseInterface=\"{66666666-8888-7777-6666-555555555557}\""
 "    />"
@@ -1629,6 +1637,7 @@ static void test_actctx(void)
         test_find_com_redirection(handle, &IID_CoTest, &IID_TlibTest, 1, __LINE__);
         test_find_ifaceps_redirection(handle, &IID_Iifaceps, &IID_TlibTest4, &IID_Ibifaceps, NULL, 1, __LINE__);
         test_find_ifaceps_redirection(handle, &IID_Iifaceps2, &IID_TlibTest4, &IID_Ibifaceps, &IID_PS32, 1, __LINE__);
+        test_find_ifaceps_redirection(handle, &IID_Iifaceps3, &IID_TlibTest4, &IID_Ibifaceps, NULL, 1, __LINE__);
         test_find_string_fail();
         b = pDeactivateActCtx(0, cookie);
         ok(b, "DeactivateActCtx failed: %u\n", GetLastError());

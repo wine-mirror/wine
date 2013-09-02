@@ -242,6 +242,12 @@ struct comclassredirect_data
     DWORD miscstatusdocprint;
 };
 
+enum ifaceps_mask
+{
+    NumMethods = 1,
+    BaseIface  = 2
+};
+
 /*
 
    Sections structure.
@@ -339,8 +345,13 @@ struct entity
 	} comclass;
 	struct {
             WCHAR *iid;
+            WCHAR *base;
+            WCHAR *tlib;
             WCHAR *name;
-	} proxy;
+            WCHAR *ps32; /* only stored for 'comInterfaceExternalProxyStub' */
+            DWORD  mask;
+            ULONG  nummethods;
+	} ifaceps;
         struct
         {
             WCHAR *name;
@@ -478,6 +489,9 @@ static const WCHAR miscstatusiconW[] = {'m','i','s','c','S','t','a','t','u','s',
 static const WCHAR miscstatuscontentW[] = {'m','i','s','c','S','t','a','t','u','s','C','o','n','t','e','n','t',0};
 static const WCHAR miscstatusthumbnailW[] = {'m','i','s','c','S','t','a','t','u','s','T','h','u','m','b','n','a','i','l',0};
 static const WCHAR miscstatusdocprintW[] = {'m','i','s','c','S','t','a','t','u','s','D','o','c','P','r','i','n','t',0};
+static const WCHAR baseInterfaceW[] = {'b','a','s','e','I','n','t','e','r','f','a','c','e',0};
+static const WCHAR nummethodsW[] = {'n','u','m','M','e','t','h','o','d','s',0};
+static const WCHAR proxyStubClsid32W[] = {'p','r','o','x','y','S','t','u','b','C','l','s','i','d','3','2',0};
 
 static const WCHAR activatewhenvisibleW[] = {'a','c','t','i','v','a','t','e','w','h','e','n','v','i','s','i','b','l','e',0};
 static const WCHAR actslikebuttonW[] = {'a','c','t','s','l','i','k','e','b','u','t','t','o','n',0};
@@ -722,8 +736,10 @@ static void free_entity_array(struct entity_array *array)
             RtlFreeHeap(GetProcessHeap(), 0, entity->u.comclass.progid);
             break;
         case ACTIVATION_CONTEXT_SECTION_COM_INTERFACE_REDIRECTION:
-            RtlFreeHeap(GetProcessHeap(), 0, entity->u.proxy.iid);
-            RtlFreeHeap(GetProcessHeap(), 0, entity->u.proxy.name);
+            RtlFreeHeap(GetProcessHeap(), 0, entity->u.ifaceps.iid);
+            RtlFreeHeap(GetProcessHeap(), 0, entity->u.ifaceps.base);
+            RtlFreeHeap(GetProcessHeap(), 0, entity->u.ifaceps.ps32);
+            RtlFreeHeap(GetProcessHeap(), 0, entity->u.ifaceps.name);
             break;
         case ACTIVATION_CONTEXT_SECTION_COM_TYPE_LIBRARY_REDIRECTION:
             RtlFreeHeap(GetProcessHeap(), 0, entity->u.typelib.tlbid);
@@ -1377,6 +1393,26 @@ static BOOL parse_com_class_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll, str
     return ret;
 }
 
+static BOOL parse_nummethods(const xmlstr_t *str, struct entity *entity)
+{
+    const WCHAR *curr;
+    ULONG num = 0;
+
+    for (curr = str->ptr; curr < str->ptr + str->len; curr++)
+    {
+        if (*curr >= '0' && *curr <= '9')
+            num = num * 10 + *curr - '0';
+        else
+        {
+            ERR("wrong numeric value %s\n", debugstr_xmlstr(str));
+            return FALSE;
+        }
+    }
+    entity->u.ifaceps.nummethods = num;
+
+    return TRUE;
+}
+
 static BOOL parse_cominterface_proxy_stub_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll)
 {
     xmlstr_t    attr_name, attr_value;
@@ -1390,11 +1426,29 @@ static BOOL parse_cominterface_proxy_stub_elem(xmlbuf_t* xmlbuf, struct dll_redi
     {
         if (xmlstr_cmp(&attr_name, iidW))
         {
-            if (!(entity->u.proxy.iid = xmlstrdupW(&attr_value))) return FALSE;
+            if (!(entity->u.ifaceps.iid = xmlstrdupW(&attr_value))) return FALSE;
         }
-        if (xmlstr_cmp(&attr_name, nameW))
+        else if (xmlstr_cmp(&attr_name, nameW))
         {
-            if (!(entity->u.proxy.name = xmlstrdupW(&attr_value))) return FALSE;
+            if (!(entity->u.ifaceps.name = xmlstrdupW(&attr_value))) return FALSE;
+        }
+        else if (xmlstr_cmp(&attr_name, baseInterfaceW))
+        {
+            if (!(entity->u.ifaceps.base = xmlstrdupW(&attr_value))) return FALSE;
+            entity->u.ifaceps.mask |= BaseIface;
+        }
+        else if (xmlstr_cmp(&attr_name, nummethodsW))
+        {
+            if (!(parse_nummethods(&attr_value, entity))) return FALSE;
+            entity->u.ifaceps.mask |= NumMethods;
+        }
+        else if (xmlstr_cmp(&attr_name, tlbidW))
+        {
+            if (!(entity->u.ifaceps.tlib = xmlstrdupW(&attr_value))) return FALSE;
+        }
+        /* not used */
+        else if (xmlstr_cmp(&attr_name, proxyStubClsid32W) || xmlstr_cmp(&attr_name, threadingmodelW))
+        {
         }
         else
         {
@@ -1646,11 +1700,29 @@ static BOOL parse_com_interface_external_proxy_stub_elem(xmlbuf_t* xmlbuf,
     {
         if (xmlstr_cmp(&attr_name, iidW))
         {
-            if (!(entity->u.proxy.iid = xmlstrdupW(&attr_value))) return FALSE;
+            if (!(entity->u.ifaceps.iid = xmlstrdupW(&attr_value))) return FALSE;
         }
-        if (xmlstr_cmp(&attr_name, nameW))
+        else if (xmlstr_cmp(&attr_name, nameW))
         {
-            if (!(entity->u.proxy.name = xmlstrdupW(&attr_value))) return FALSE;
+            if (!(entity->u.ifaceps.name = xmlstrdupW(&attr_value))) return FALSE;
+        }
+        else if (xmlstr_cmp(&attr_name, baseInterfaceW))
+        {
+            if (!(entity->u.ifaceps.base = xmlstrdupW(&attr_value))) return FALSE;
+            entity->u.ifaceps.mask |= BaseIface;
+        }
+        else if (xmlstr_cmp(&attr_name, nummethodsW))
+        {
+            if (!(parse_nummethods(&attr_value, entity))) return FALSE;
+            entity->u.ifaceps.mask |= NumMethods;
+        }
+        else if (xmlstr_cmp(&attr_name, proxyStubClsid32W))
+        {
+            if (!(entity->u.ifaceps.ps32 = xmlstrdupW(&attr_value))) return FALSE;
+        }
+        else if (xmlstr_cmp(&attr_name, tlbidW))
+        {
+            if (!(entity->u.ifaceps.tlib = xmlstrdupW(&attr_value))) return FALSE;
         }
         else
         {
