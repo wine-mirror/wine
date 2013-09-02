@@ -934,7 +934,7 @@
 @ stdcall RtlWriteRegistryValue(long ptr ptr long ptr long)
 @ stub RtlZeroHeap
 @ stdcall RtlZeroMemory(ptr long)
-# @ stub RtlZombifyActivationContext
+@ stdcall RtlZombifyActivationContext(ptr)
 # @ stub RtlpApplyLengthFunction
 # @ stub RtlpEnsureBufferSize
 # @ stub RtlpNotOwnerCriticalSection

@@ -4138,6 +4138,16 @@ void WINAPI RtlReleaseActivationContext( HANDLE handle )
     if ((actctx = check_actctx( handle ))) actctx_release( actctx );
 }
 
+/******************************************************************
+ *              RtlZombifyActivationContext (NTDLL.@)
+ *
+ * FIXME: function prototype might be wrong
+ */
+NTSTATUS WINAPI RtlZombifyActivationContext( HANDLE handle )
+{
+    FIXME("%p: stub\n", handle);
+    return STATUS_NOT_IMPLEMENTED;
+}
 
 /******************************************************************
  *		RtlActivateActivationContext (NTDLL.@)
