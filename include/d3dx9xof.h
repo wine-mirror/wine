@@ -40,10 +40,11 @@ typedef DWORD D3DXF_FILELOADOPTIONS;
 #define D3DXF_FILELOAD_FROMRESOURCE 0x02
 #define D3DXF_FILELOAD_FROMMEMORY   0x03
 
-typedef struct _D3DXF_FILELOADRESOURCE {
+typedef struct _D3DXF_FILELOADRESOURCE
+{
     HMODULE hModule;
-    LPCSTR lpName;
-    LPCSTR lpType;
+    const char *lpName;
+    const char *lpType;
 } D3DXF_FILELOADRESOURCE;
 
 typedef struct _D3DXF_FILELOADMEMORY {
@@ -114,7 +115,7 @@ DECLARE_INTERFACE_IID_(ID3DXFileSaveData,IUnknown,"cef08cfb-7b4f-4429-9624-2a690
     STDMETHOD(GetType)(THIS_ GUID*) PURE;
     STDMETHOD(AddDataObject)(THIS_ REFGUID template_guid, const char *name, const GUID *guid,
             SIZE_T data_size, const void *data, ID3DXFileSaveData **obj) PURE;
-    STDMETHOD(AddDataReference)(THIS_ LPCSTR, CONST GUID*) PURE;
+    STDMETHOD(AddDataReference)(THIS_ const char *name, const GUID *id) PURE;
 };
 #undef INTERFACE
 

@@ -526,8 +526,8 @@ DECLARE_INTERFACE_(ID3DXSkinInfo, IUnknown)
             DWORD num_faces, DWORD *max_face_influences) PURE;
     STDMETHOD(SetMinBoneInfluence)(THIS_ FLOAT min_influence) PURE;
     STDMETHOD_(FLOAT, GetMinBoneInfluence)(THIS) PURE;
-    STDMETHOD(SetBoneName)(THIS_ DWORD bone, LPCSTR name) PURE;
-    STDMETHOD_(LPCSTR, GetBoneName)(THIS_ DWORD bone) PURE;
+    STDMETHOD(SetBoneName)(THIS_ DWORD bone_idx, const char *name) PURE;
+    STDMETHOD_(const char *, GetBoneName)(THIS_ DWORD bone_idx) PURE;
     STDMETHOD(SetBoneOffsetMatrix)(THIS_ DWORD bone, CONST D3DXMATRIX* bone_transform) PURE;
     STDMETHOD_(D3DXMATRIX *, GetBoneOffsetMatrix)(THIS_ DWORD bone) PURE;
     STDMETHOD(Clone)(THIS_ ID3DXSkinInfo **skin_info) PURE;

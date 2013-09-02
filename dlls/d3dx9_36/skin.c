@@ -238,15 +238,15 @@ static FLOAT WINAPI ID3DXSkinInfoImpl_GetMinBoneInfluence(ID3DXSkinInfo *iface)
     return 0.0f;
 }
 
-static HRESULT WINAPI ID3DXSkinInfoImpl_SetBoneName(ID3DXSkinInfo *iface, DWORD bone_num, LPCSTR name)
+static HRESULT WINAPI ID3DXSkinInfoImpl_SetBoneName(ID3DXSkinInfo *iface, DWORD bone_idx, const char *name)
 {
     ID3DXSkinInfoImpl *This = impl_from_ID3DXSkinInfo(iface);
     char *new_name;
     size_t size;
 
-    TRACE("(%p, %u, %s)\n", This, bone_num, debugstr_a(name));
+    TRACE("iface %p, bone_idx %u, name %s.\n", iface, bone_idx, debugstr_a(name));
 
-    if (bone_num >= This->num_bones || !name)
+    if (bone_idx >= This->num_bones || !name)
         return D3DERR_INVALIDCALL;
 
     size = strlen(name) + 1;
@@ -254,22 +254,22 @@ static HRESULT WINAPI ID3DXSkinInfoImpl_SetBoneName(ID3DXSkinInfo *iface, DWORD 
     if (!new_name)
         return E_OUTOFMEMORY;
     memcpy(new_name, name, size);
-    HeapFree(GetProcessHeap(), 0, This->bones[bone_num].name);
-    This->bones[bone_num].name = new_name;
+    HeapFree(GetProcessHeap(), 0, This->bones[bone_idx].name);
+    This->bones[bone_idx].name = new_name;
 
     return D3D_OK;
 }
 
-static LPCSTR WINAPI ID3DXSkinInfoImpl_GetBoneName(ID3DXSkinInfo *iface, DWORD bone_num)
+static const char * WINAPI ID3DXSkinInfoImpl_GetBoneName(ID3DXSkinInfo *iface, DWORD bone_idx)
 {
     ID3DXSkinInfoImpl *This = impl_from_ID3DXSkinInfo(iface);
 
-    TRACE("(%p, %u)\n", This, bone_num);
+    TRACE("iface %p, bone_idx %u.\n", iface, bone_idx);
 
-    if (bone_num >= This->num_bones)
+    if (bone_idx >= This->num_bones)
         return NULL;
 
-    return This->bones[bone_num].name;
+    return This->bones[bone_idx].name;
 }
 
 static HRESULT WINAPI ID3DXSkinInfoImpl_SetBoneOffsetMatrix(ID3DXSkinInfo *iface, DWORD bone_num, CONST D3DXMATRIX *bone_transform)

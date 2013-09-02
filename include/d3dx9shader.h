@@ -42,7 +42,7 @@
 
 #define D3DXSHADER_USE_LEGACY_D3DX9_31_DLL        0x10000
 
-typedef LPCSTR D3DXHANDLE;
+typedef const char *D3DXHANDLE;
 
 typedef enum _D3DXREGISTER_SET
 {
@@ -91,14 +91,14 @@ typedef enum D3DXPARAMETER_TYPE
 
 typedef struct _D3DXCONSTANTTABLE_DESC
 {
-    LPCSTR Creator;
+    const char *Creator;
     DWORD Version;
     UINT Constants;
 } D3DXCONSTANTTABLE_DESC, *LPD3DXCONSTANTTABLE_DESC;
 
 typedef struct _D3DXCONSTANT_DESC
 {
-    LPCSTR Name;
+    const char *Name;
     D3DXREGISTER_SET RegisterSet;
     UINT RegisterIndex;
     UINT RegisterCount;
@@ -131,7 +131,7 @@ DECLARE_INTERFACE_(ID3DXConstantTable, ID3DXBuffer)
     STDMETHOD(GetConstantDesc)(THIS_ D3DXHANDLE hConstant, D3DXCONSTANT_DESC *pConstantDesc, UINT *pCount) PURE;
     STDMETHOD_(UINT, GetSamplerIndex)(THIS_ D3DXHANDLE hConstant) PURE;
     STDMETHOD_(D3DXHANDLE, GetConstant)(THIS_ D3DXHANDLE hConstant, UINT Index) PURE;
-    STDMETHOD_(D3DXHANDLE, GetConstantByName)(THIS_ D3DXHANDLE hConstant, LPCSTR pName) PURE;
+    STDMETHOD_(D3DXHANDLE, GetConstantByName)(THIS_ D3DXHANDLE constant, const char *name) PURE;
     STDMETHOD_(D3DXHANDLE, GetConstantElement)(THIS_ D3DXHANDLE hConstant, UINT Index) PURE;
     STDMETHOD(SetDefaults)(THIS_ struct IDirect3DDevice9 *device) PURE;
     STDMETHOD(SetValue)(THIS_ struct IDirect3DDevice9 *device, D3DXHANDLE constant,
@@ -228,9 +228,10 @@ DECLARE_INTERFACE_(ID3DXConstantTable, ID3DXBuffer)
 
 typedef struct ID3DXConstantTable *LPD3DXCONSTANTTABLE;
 
-typedef struct _D3DXMACRO {
-    LPCSTR Name;
-    LPCSTR Definition;
+typedef struct _D3DXMACRO
+{
+    const char *Name;
+    const char *Definition;
 } D3DXMACRO, *LPD3DXMACRO;
 
 typedef struct _D3DXSEMANTIC {
@@ -249,8 +250,9 @@ typedef enum _D3DXINCLUDE_TYPE
 
 DECLARE_INTERFACE(ID3DXInclude)
 {
-    STDMETHOD(Open)(THIS_ D3DXINCLUDE_TYPE include_type, LPCSTR filename, LPCVOID parent_data, LPCVOID *data, UINT *bytes) PURE;
-    STDMETHOD(Close)(THIS_ LPCVOID data) PURE;
+    STDMETHOD(Open)(THIS_ D3DXINCLUDE_TYPE include_type, const char *filename,
+            const void *parent_data, const void **data, UINT *bytes) PURE;
+    STDMETHOD(Close)(THIS_ const void *data) PURE;
 };
 #undef INTERFACE
 
@@ -267,8 +269,8 @@ const char * WINAPI D3DXGetPixelShaderProfile(struct IDirect3DDevice9 *device);
 UINT WINAPI D3DXGetShaderSize(const DWORD *byte_code);
 DWORD WINAPI D3DXGetShaderVersion(const DWORD *byte_code);
 const char * WINAPI D3DXGetVertexShaderProfile(struct IDirect3DDevice9 *device);
-HRESULT WINAPI D3DXFindShaderComment(CONST DWORD* byte_code, DWORD fourcc, LPCVOID* data, UINT* size);
-HRESULT WINAPI D3DXGetShaderSamplers(CONST DWORD *byte_code, LPCSTR *samplers, UINT *count);
+HRESULT WINAPI D3DXFindShaderComment(const DWORD *byte_code, DWORD fourcc, const void **data, UINT *size);
+HRESULT WINAPI D3DXGetShaderSamplers(const DWORD *byte_code, const char **samplers, UINT *count);
 
 HRESULT WINAPI D3DXAssembleShaderFromFileA(const char *filename, const D3DXMACRO *defines,
         ID3DXInclude *include, DWORD flags, ID3DXBuffer **shader, ID3DXBuffer **error_messages);

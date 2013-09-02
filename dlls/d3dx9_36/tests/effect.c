@@ -309,7 +309,7 @@ static void test_create_effect_compiler(void)
  */
 struct test_effect_parameter_value_result
 {
-    LPCSTR full_name;
+    const char *full_name;
     D3DXPARAMETER_DESC desc;
     UINT value_offset; /* start position for the value in the blob */
 };
@@ -895,7 +895,7 @@ static void test_effect_parameter_value_GetValue(const struct test_effect_parame
         ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
 {
     const D3DXPARAMETER_DESC *res_desc = &res->desc;
-    LPCSTR res_full_name = res->full_name;
+    const char *res_full_name = res->full_name;
     DWORD value[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
     HRESULT hr;
     UINT l;
@@ -962,7 +962,7 @@ static void test_effect_parameter_value_GetBool(const struct test_effect_paramet
         ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
 {
     const D3DXPARAMETER_DESC *res_desc = &res->desc;
-    LPCSTR res_full_name = res->full_name;
+    const char *res_full_name = res->full_name;
     BOOL bvalue = 0xabababab;
     HRESULT hr;
 
@@ -986,7 +986,7 @@ static void test_effect_parameter_value_GetBoolArray(const struct test_effect_pa
         ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
 {
     const D3DXPARAMETER_DESC *res_desc = &res->desc;
-    LPCSTR res_full_name = res->full_name;
+    const char *res_full_name = res->full_name;
     BOOL bavalue[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
     HRESULT hr;
     UINT l, err = 0;
@@ -1023,7 +1023,7 @@ static void test_effect_parameter_value_GetInt(const struct test_effect_paramete
         ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
 {
     const D3DXPARAMETER_DESC *res_desc = &res->desc;
-    LPCSTR res_full_name = res->full_name;
+    const char *res_full_name = res->full_name;
     INT ivalue = 0xabababab;
     HRESULT hr;
 
@@ -1066,7 +1066,7 @@ static void test_effect_parameter_value_GetIntArray(const struct test_effect_par
         ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
 {
     const D3DXPARAMETER_DESC *res_desc = &res->desc;
-    LPCSTR res_full_name = res->full_name;
+    const char *res_full_name = res->full_name;
     INT iavalue[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
     HRESULT hr;
     UINT l, err = 0;
@@ -1103,7 +1103,7 @@ static void test_effect_parameter_value_GetFloat(const struct test_effect_parame
         ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
 {
     const D3DXPARAMETER_DESC *res_desc = &res->desc;
-    LPCSTR res_full_name = res->full_name;
+    const char *res_full_name = res->full_name;
     HRESULT hr;
     DWORD cmp = 0xabababab;
     FLOAT fvalue = *(FLOAT *)&cmp;
@@ -1128,7 +1128,7 @@ static void test_effect_parameter_value_GetFloatArray(const struct test_effect_p
         ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
 {
     const D3DXPARAMETER_DESC *res_desc = &res->desc;
-    LPCSTR res_full_name = res->full_name;
+    const char *res_full_name = res->full_name;
     FLOAT favalue[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
     HRESULT hr;
     UINT l, err = 0;
@@ -1166,7 +1166,7 @@ static void test_effect_parameter_value_GetVector(const struct test_effect_param
         ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
 {
     const D3DXPARAMETER_DESC *res_desc = &res->desc;
-    LPCSTR res_full_name = res->full_name;
+    const char *res_full_name = res->full_name;
     HRESULT hr;
     DWORD cmp = 0xabababab;
     FLOAT fvalue[4];
@@ -1214,7 +1214,7 @@ static void test_effect_parameter_value_GetVectorArray(const struct test_effect_
         ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
 {
     const D3DXPARAMETER_DESC *res_desc = &res->desc;
-    LPCSTR res_full_name = res->full_name;
+    const char *res_full_name = res->full_name;
     HRESULT hr;
     DWORD cmp = 0xabababab;
     FLOAT fvalue[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
@@ -1263,7 +1263,7 @@ static void test_effect_parameter_value_GetMatrix(const struct test_effect_param
         ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
 {
     const D3DXPARAMETER_DESC *res_desc = &res->desc;
-    LPCSTR res_full_name = res->full_name;
+    const char *res_full_name = res->full_name;
     HRESULT hr;
     DWORD cmp = 0xabababab;
     FLOAT fvalue[16];
@@ -1303,7 +1303,7 @@ static void test_effect_parameter_value_GetMatrixArray(const struct test_effect_
         ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
 {
     const D3DXPARAMETER_DESC *res_desc = &res->desc;
-    LPCSTR res_full_name = res->full_name;
+    const char *res_full_name = res->full_name;
     HRESULT hr;
     DWORD cmp = 0xabababab;
     FLOAT fvalue[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
@@ -1357,7 +1357,7 @@ static void test_effect_parameter_value_GetMatrixPointerArray(const struct test_
         ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
 {
     const D3DXPARAMETER_DESC *res_desc = &res->desc;
-    LPCSTR res_full_name = res->full_name;
+    const char *res_full_name = res->full_name;
     HRESULT hr;
     DWORD cmp = 0xabababab;
     FLOAT fvalue[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
@@ -1418,7 +1418,7 @@ static void test_effect_parameter_value_GetMatrixTranspose(const struct test_eff
         ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
 {
     const D3DXPARAMETER_DESC *res_desc = &res->desc;
-    LPCSTR res_full_name = res->full_name;
+    const char *res_full_name = res->full_name;
     HRESULT hr;
     DWORD cmp = 0xabababab;
     FLOAT fvalue[16];
@@ -1476,7 +1476,7 @@ static void test_effect_parameter_value_GetMatrixTransposeArray(const struct tes
         ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
 {
     const D3DXPARAMETER_DESC *res_desc = &res->desc;
-    LPCSTR res_full_name = res->full_name;
+    const char *res_full_name = res->full_name;
     HRESULT hr;
     DWORD cmp = 0xabababab;
     FLOAT fvalue[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
@@ -1532,7 +1532,7 @@ static void test_effect_parameter_value_GetMatrixTransposePointerArray(const str
         ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
 {
     const D3DXPARAMETER_DESC *res_desc = &res->desc;
-    LPCSTR res_full_name = res->full_name;
+    const char *res_full_name = res->full_name;
     HRESULT hr;
     DWORD cmp = 0xabababab;
     FLOAT fvalue[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
@@ -1613,7 +1613,7 @@ static void test_effect_parameter_value_ResetValue(const struct test_effect_para
         ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
 {
     const D3DXPARAMETER_DESC *res_desc = &res->desc;
-    LPCSTR res_full_name = res->full_name;
+    const char *res_full_name = res->full_name;
     HRESULT hr;
 
     if (res_desc->Class == D3DXPC_SCALAR
@@ -1669,7 +1669,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
         for (k = 0; k < res_count; ++k)
         {
             const D3DXPARAMETER_DESC *res_desc = &res[k].desc;
-            LPCSTR res_full_name = res[k].full_name;
+            const char *res_full_name = res[k].full_name;
             UINT res_value_offset = res[k].value_offset;
             D3DXHANDLE parameter;
             D3DXPARAMETER_DESC pdesc;

@@ -42,10 +42,9 @@ static HRESULT create_file(const char *filename, const char *data, const unsigne
     return D3DERR_INVALIDCALL;
 }
 
-static HRESULT WINAPI testD3DXInclude_open(ID3DXInclude *iface,
-                                           D3DXINCLUDE_TYPE include_type,
-                                           LPCSTR filename, LPCVOID parent_data,
-                                           LPCVOID *data, UINT *bytes) {
+static HRESULT WINAPI testD3DXInclude_open(ID3DXInclude *iface, D3DXINCLUDE_TYPE include_type,
+        const char *filename, const void *parent_data, const void **data, UINT *bytes)
+{
     char *buffer;
     const char include[] = "#define REGISTER r0\nvs.1.1\n";
     const char include2[] = "#include \"incl3.vsh\"\n";

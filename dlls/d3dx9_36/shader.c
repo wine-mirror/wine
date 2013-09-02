@@ -34,11 +34,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
-/* This function is not declared in the SDK headers yet */
-HRESULT WINAPI D3DAssemble(LPCVOID data, SIZE_T datasize, LPCSTR filename,
-                           const D3D_SHADER_MACRO *defines, ID3DInclude *include,
-                           UINT flags,
-                           ID3DBlob **shader, ID3DBlob **error_messages);
+/* This function is not declared in the SDK headers yet. */
+HRESULT WINAPI D3DAssemble(const void *data, SIZE_T datasize, const char *filename,
+        const D3D_SHADER_MACRO *defines, ID3DInclude *include, UINT flags,
+        ID3DBlob **shader, ID3DBlob **error_messages);
 
 static inline BOOL is_valid_bytecode(DWORD token)
 {
@@ -209,14 +208,13 @@ HRESULT WINAPI D3DXAssembleShader(const char *data, UINT data_len, const D3DXMAC
 }
 
 /* D3DXInclude private implementation, used to implement
-   D3DXAssembleShaderFromFile from D3DXAssembleShader */
-/* To be able to correctly resolve include search paths we have to store
-   the pathname of each include file. We store the pathname pointer right
-   before the file data. */
-static HRESULT WINAPI d3dincludefromfile_open(ID3DXInclude *iface,
-                                              D3DXINCLUDE_TYPE include_type,
-                                              LPCSTR filename, LPCVOID parent_data,
-                                              LPCVOID *data, UINT *bytes) {
+ * D3DXAssembleShaderFromFile() from D3DXAssembleShader(). */
+/* To be able to correctly resolve include search paths we have to store the
+ * pathname of each include file. We store the pathname pointer right before
+ * the file data. */
+static HRESULT WINAPI d3dincludefromfile_open(ID3DXInclude *iface, D3DXINCLUDE_TYPE include_type,
+        const char *filename, const void *parent_data, const void **data, UINT *bytes)
+{
     const char *p, *parent_name = "";
     char *pathname = NULL;
     char **buffer = NULL;
@@ -335,7 +333,7 @@ HRESULT WINAPI D3DXAssembleShaderFromResourceA(HMODULE module, const char *resou
     HRSRC res;
     DWORD len;
 
-    if (!(res = FindResourceA(module, resource, (LPCSTR)RT_RCDATA)))
+    if (!(res = FindResourceA(module, resource, (const char *)RT_RCDATA)))
         return D3DXERR_INVALIDDATA;
     if (FAILED(load_resource_into_memory(module, res, &buffer, &len)))
         return D3DXERR_INVALIDDATA;
@@ -463,7 +461,7 @@ HRESULT WINAPI D3DXCompileShaderFromResourceA(HMODULE module, const char *resour
     HRSRC res;
     DWORD len;
 
-    if (!(res = FindResourceA(module, resource, (LPCSTR)RT_RCDATA)))
+    if (!(res = FindResourceA(module, resource, (const char *)RT_RCDATA)))
         return D3DXERR_INVALIDDATA;
     if (FAILED(load_resource_into_memory(module, res, &buffer, &len)))
         return D3DXERR_INVALIDDATA;
@@ -554,7 +552,7 @@ HRESULT WINAPI D3DXPreprocessShaderFromResourceA(HMODULE module, const char *res
     HRSRC res;
     DWORD len;
 
-    if (!(res = FindResourceA(module, resource, (LPCSTR)RT_RCDATA)))
+    if (!(res = FindResourceA(module, resource, (const char *)RT_RCDATA)))
         return D3DXERR_INVALIDDATA;
     if (FAILED(load_resource_into_memory(module, res, &buffer, &len)))
         return D3DXERR_INVALIDDATA;
@@ -636,12 +634,13 @@ static inline D3DXHANDLE handle_from_constant(struct ctab_constant *constant)
     return (D3DXHANDLE)constant;
 }
 
-static struct ctab_constant *get_constant_by_name(struct ID3DXConstantTableImpl *, struct ctab_constant *, LPCSTR);
+static struct ctab_constant *get_constant_by_name(struct ID3DXConstantTableImpl *table,
+        struct ctab_constant *constant, const char *name);
 
-static struct ctab_constant *get_constant_element_by_name(struct ctab_constant *constant, LPCSTR name)
+static struct ctab_constant *get_constant_element_by_name(struct ctab_constant *constant, const char *name)
 {
+    const char *part;
     UINT element;
-    LPCSTR part;
 
     TRACE("constant %p, name %s\n", constant, debugstr_a(name));
 
@@ -677,11 +676,11 @@ static struct ctab_constant *get_constant_element_by_name(struct ctab_constant *
 }
 
 static struct ctab_constant *get_constant_by_name(struct ID3DXConstantTableImpl *table,
-        struct ctab_constant *constant, LPCSTR name)
+        struct ctab_constant *constant, const char *name)
 {
     UINT i, count, length;
     struct ctab_constant *handles;
-    LPCSTR part;
+    const char *part;
 
     TRACE("table %p, constant %p, name %s\n", table, constant, debugstr_a(name));
 
@@ -910,12 +909,13 @@ static D3DXHANDLE WINAPI ID3DXConstantTableImpl_GetConstant(ID3DXConstantTable *
     return NULL;
 }
 
-static D3DXHANDLE WINAPI ID3DXConstantTableImpl_GetConstantByName(ID3DXConstantTable *iface, D3DXHANDLE constant, LPCSTR name)
+static D3DXHANDLE WINAPI ID3DXConstantTableImpl_GetConstantByName(ID3DXConstantTable *iface,
+        D3DXHANDLE constant, const char *name)
 {
     struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
     struct ctab_constant *c = get_valid_constant(This, constant);
 
-    TRACE("(%p)->(%p, %s)\n", This, constant, name);
+    TRACE("iface %p, constant %p, name %s.\n", iface, constant, debugstr_a(name));
 
     c = get_constant_by_name(This, c, name);
     TRACE("Returning constant %p\n", c);

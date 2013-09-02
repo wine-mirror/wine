@@ -1779,7 +1779,7 @@ static void check_generated_effects_(int line, const D3DXMATERIAL *materials, DW
     }
 }
 
-static LPSTR strdupA(LPCSTR p)
+static char *strdupA(const char *p)
 {
     LPSTR ret;
     if (!p) return NULL;
@@ -1798,9 +1798,10 @@ static CALLBACK HRESULT ID3DXAllocateHierarchyImpl_DestroyFrame(ID3DXAllocateHie
     return D3D_OK;
 }
 
-static CALLBACK HRESULT ID3DXAllocateHierarchyImpl_CreateFrame(ID3DXAllocateHierarchy *iface, LPCSTR name, LPD3DXFRAME *new_frame)
+static CALLBACK HRESULT ID3DXAllocateHierarchyImpl_CreateFrame(ID3DXAllocateHierarchy *iface,
+        const char *name, D3DXFRAME **new_frame)
 {
-    LPD3DXFRAME frame;
+    D3DXFRAME *frame;
 
     TRACECALLBACK("ID3DXAllocateHierarchyImpl_CreateFrame(%p, '%s', %p)\n", iface, name, new_frame);
     frame = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*frame));
@@ -3398,7 +3399,8 @@ static HRESULT create_outline(struct glyphinfo *glyph, void *raw_outline, int da
     return S_OK;
 }
 
-static BOOL compute_text_mesh(struct mesh *mesh, HDC hdc, LPCSTR text, FLOAT deviation, FLOAT extrusion, FLOAT otmEMSquare)
+static BOOL compute_text_mesh(struct mesh *mesh, HDC hdc, const char *text,
+        float deviation, float extrusion, float otmEMSquare)
 {
     HRESULT hr = E_FAIL;
     DWORD nb_vertices, nb_faces;
@@ -3901,7 +3903,7 @@ error:
     if (vertex_buffer) IDirect3DVertexBuffer9_Release(vertex_buffer);
 }
 
-static void test_createtext(IDirect3DDevice9 *device, HDC hdc, LPCSTR text, FLOAT deviation, FLOAT extrusion)
+static void test_createtext(IDirect3DDevice9 *device, HDC hdc, const char *text, float deviation, float extrusion)
 {
     HRESULT hr;
     ID3DXMesh *d3dxmesh;
@@ -4700,10 +4702,11 @@ static void test_create_skin_info(void)
 
     hr = D3DXCreateSkinInfoFVF(1, 0, 1, &skininfo);
     ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
-    if (skininfo) {
+    if (skininfo)
+    {
         DWORD dword_result;
-        FLOAT flt_result;
-        LPCSTR string_result;
+        float flt_result;
+        const char *string_result;
         D3DXMATRIX *transform;
         D3DXMATRIX identity_matrix;
 

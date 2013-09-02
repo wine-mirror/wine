@@ -410,7 +410,8 @@ static void test_get_shader_constant_table_ex(void)
 
         hr = ID3DXConstantTable_GetDesc(constant_table, &desc);
         ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
-        ok(desc.Creator == (LPCSTR)data + 0x10, "Got result %p, expected %p\n", desc.Creator, (LPCSTR)data + 0x10);
+        ok(desc.Creator == (const char *)data + 0x10, "Got result %p, expected %p\n",
+                desc.Creator, (const char *)data + 0x10);
         ok(desc.Version == D3DVS_VERSION(3, 0), "Got result %x, expected %x\n", desc.Version, D3DVS_VERSION(3, 0));
         ok(desc.Constants == 0, "Got result %x, expected 0\n", desc.Constants);
 
@@ -1532,8 +1533,8 @@ static const DWORD get_shader_samplers_blob[] =
 
 static void test_get_shader_samplers(void)
 {
-    LPCSTR samplers[16] = {NULL}; /* maximum number of sampler registers v/ps 3.0 = 16 */
-    LPCSTR sampler_orig;
+    const char *samplers[16] = {NULL}; /* maximum number of sampler registers v/ps 3.0 = 16 */
+    const char *sampler_orig;
     UINT count = 2;
     HRESULT hr;
 
@@ -1552,19 +1553,19 @@ static void test_get_shader_samplers(void)
     ok(hr == D3D_OK, "D3DXGetShaderSamplers failed, got %x, expected %x\n", hr, D3D_OK);
 
     /* check that sampler points to shader blob */
-    sampler_orig = (LPCSTR)&get_shader_samplers_blob[0x2E];
+    sampler_orig = (const char *)&get_shader_samplers_blob[0x2e];
     ok(sampler_orig == samplers[0], "D3DXGetShaderSamplers failed, got %p, expected %p\n", samplers[0], sampler_orig);
 
-    sampler_orig = (LPCSTR)&get_shader_samplers_blob[0x33];
+    sampler_orig = (const char *)&get_shader_samplers_blob[0x33];
     ok(sampler_orig == samplers[1], "D3DXGetShaderSamplers failed, got %p, expected %p\n", samplers[1], sampler_orig);
 
-    sampler_orig = (LPCSTR)&get_shader_samplers_blob[0x38];
+    sampler_orig = (const char *)&get_shader_samplers_blob[0x38];
     ok(sampler_orig == samplers[2], "D3DXGetShaderSamplers failed, got %p, expected %p\n", samplers[2], sampler_orig);
 
-    sampler_orig = (LPCSTR)&get_shader_samplers_blob[0x3D];
+    sampler_orig = (const char *)&get_shader_samplers_blob[0x3d];
     ok(sampler_orig == samplers[3], "D3DXGetShaderSamplers failed, got %p, expected %p\n", samplers[3], sampler_orig);
 
-    sampler_orig = (LPCSTR)&get_shader_samplers_blob[0x42];
+    sampler_orig = (const char *)&get_shader_samplers_blob[0x42];
     ok(sampler_orig == samplers[4], "D3DXGetShaderSamplers failed, got %p, expected %p\n", samplers[4], sampler_orig);
 
     ok(!strcmp(samplers[5], "dummy"), "D3DXGetShaderSamplers failed, got \"%s\", expected \"%s\"\n", samplers[5], "dummy");
@@ -1582,19 +1583,19 @@ static void test_get_shader_samplers(void)
     ok(count == 5, "D3DXGetShaderSamplers failed, got %u, expected %u\n", count, 5);
 
     /* check that sampler points to shader blob */
-    sampler_orig = (LPCSTR)&get_shader_samplers_blob[0x2E];
+    sampler_orig = (const char *)&get_shader_samplers_blob[0x2e];
     ok(sampler_orig == samplers[0], "D3DXGetShaderSamplers failed, got %p, expected %p\n", samplers[0], sampler_orig);
 
-    sampler_orig = (LPCSTR)&get_shader_samplers_blob[0x33];
+    sampler_orig = (const char *)&get_shader_samplers_blob[0x33];
     ok(sampler_orig == samplers[1], "D3DXGetShaderSamplers failed, got %p, expected %p\n", samplers[1], sampler_orig);
 
-    sampler_orig = (LPCSTR)&get_shader_samplers_blob[0x38];
+    sampler_orig = (const char *)&get_shader_samplers_blob[0x38];
     ok(sampler_orig == samplers[2], "D3DXGetShaderSamplers failed, got %p, expected %p\n", samplers[2], sampler_orig);
 
-    sampler_orig = (LPCSTR)&get_shader_samplers_blob[0x3D];
+    sampler_orig = (const char *)&get_shader_samplers_blob[0x3d];
     ok(sampler_orig == samplers[3], "D3DXGetShaderSamplers failed, got %p, expected %p\n", samplers[3], sampler_orig);
 
-    sampler_orig = (LPCSTR)&get_shader_samplers_blob[0x42];
+    sampler_orig = (const char *)&get_shader_samplers_blob[0x42];
     ok(sampler_orig == samplers[4], "D3DXGetShaderSamplers failed, got %p, expected %p\n", samplers[4], sampler_orig);
 
     ok(!strcmp(samplers[5], "dummy"), "D3DXGetShaderSamplers failed, got \"%s\", expected \"%s\"\n", samplers[5], "dummy");
@@ -1701,8 +1702,9 @@ static const DWORD test_get_shader_constant_variables_blob[] =
 0x80000000, 0x0000ffff,
 };
 
-const struct {
-    LPCSTR fullname;
+const struct
+{
+    const char *fullname;
     D3DXCONSTANT_DESC desc;
     UINT ctaboffset;
 }
@@ -1785,7 +1787,7 @@ static void test_get_shader_constant_variables(void)
 
     for (i = 0; i < sizeof(test_get_shader_constant_variables_data) / sizeof(*test_get_shader_constant_variables_data); ++i)
     {
-        LPCSTR fullname = test_get_shader_constant_variables_data[i].fullname;
+        const char *fullname = test_get_shader_constant_variables_data[i].fullname;
         const D3DXCONSTANT_DESC *expected_desc = &test_get_shader_constant_variables_data[i].desc;
         UINT ctaboffset = test_get_shader_constant_variables_data[i].ctaboffset;
 
@@ -1918,7 +1920,7 @@ struct registerset_test
 
 struct registerset_constants
 {
-    LPCSTR fullname;
+    const char *fullname;
     D3DXCONSTANT_DESC desc;
     UINT ctaboffset;
 };
@@ -6031,10 +6033,10 @@ static void test_registerset(void)
         return;
     }
 
-    for(k = 0; k < sizeof(registerset_data) / sizeof(*registerset_data); ++k)
+    for (k = 0; k < sizeof(registerset_data) / sizeof(*registerset_data); ++k)
     {
-        LPCSTR tablename = registerset_data[k].name;
-        LPCSTR name = registerset_data[k].var;
+        const char *tablename = registerset_data[k].name;
+        const char *name = registerset_data[k].var;
         ID3DXConstantTable *ctable;
         D3DXCONSTANTTABLE_DESC tdesc;
         D3DXHANDLE constant;
@@ -6055,7 +6057,7 @@ static void test_registerset(void)
 
         for (i = 0; i < registerset_data[k].constant_count; ++i)
         {
-            LPCSTR fullname = registerset_data[k].constants[i].fullname;
+            const char *fullname = registerset_data[k].constants[i].fullname;
             const D3DXCONSTANT_DESC *expected_desc = &registerset_data[k].constants[i].desc;
             D3DXCONSTANT_DESC desc;
             UINT nr = 0;
@@ -6332,9 +6334,9 @@ static void test_registerset_defaults(void)
         return;
     }
 
-    for(k = 0; k < sizeof(registerset_defaults_data) / sizeof(*registerset_defaults_data); ++k)
+    for (k = 0; k < sizeof(registerset_defaults_data) / sizeof(*registerset_defaults_data); ++k)
     {
-        LPCSTR tablename = registerset_defaults_data[k].name;
+        const char *tablename = registerset_defaults_data[k].name;
         ID3DXConstantTable *ctable;
         D3DXCONSTANTTABLE_DESC tdesc;
         BOOL is_vs;

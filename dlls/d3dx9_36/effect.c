@@ -2398,8 +2398,8 @@ static HRESULT d3dx9_base_effect_get_string(struct d3dx9_base_effect *base,
 
     if (string && param && !param->element_count && param->type == D3DXPT_STRING)
     {
-        *string = *(LPCSTR *)param->data;
-        TRACE("Returning %s\n", debugstr_a(*string));
+        *string = *(const char **)param->data;
+        TRACE("Returning %s.\n", debugstr_a(*string));
         return D3D_OK;
     }
 
