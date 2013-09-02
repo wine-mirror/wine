@@ -604,24 +604,33 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
         goto done;
     }
 
-    if (type == FD_TYPE_FILE && offset && offset->QuadPart != (LONGLONG)-2 /* FILE_USE_FILE_POINTER_POSITION */ )
+    if (type == FD_TYPE_FILE)
     {
-        /* async I/O doesn't make sense on regular files */
-        while ((result = pread( unix_handle, buffer, length, offset->QuadPart )) == -1)
+        if (!(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)) && !offset)
         {
-            if (errno != EINTR)
-            {
-                status = FILE_GetNtStatus();
-                goto done;
-            }
+            status = STATUS_INVALID_PARAMETER;
+            goto done;
         }
-        if (options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT))
-            /* update file pointer position */
-            lseek( unix_handle, offset->QuadPart + result, SEEK_SET );
 
-        total = result;
-        status = total ? STATUS_SUCCESS : STATUS_END_OF_FILE;
-        goto done;
+        if (offset && offset->QuadPart != (LONGLONG)-2 /* FILE_USE_FILE_POINTER_POSITION */)
+        {
+            /* async I/O doesn't make sense on regular files */
+            while ((result = pread( unix_handle, buffer, length, offset->QuadPart )) == -1)
+            {
+                if (errno != EINTR)
+                {
+                    status = FILE_GetNtStatus();
+                    goto done;
+                }
+            }
+            if (options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT))
+                /* update file pointer position */
+                lseek( unix_handle, offset->QuadPart + result, SEEK_SET );
+
+            total = result;
+            status = total ? STATUS_SUCCESS : STATUS_END_OF_FILE;
+            goto done;
+        }
     }
 
     for (;;)
