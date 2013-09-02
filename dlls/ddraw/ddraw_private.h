@@ -54,6 +54,7 @@ struct FvfToDecl
 #define DDRAW_RESTORE_MODE      0x00000004
 #define DDRAW_NO3D              0x00000008
 #define DDRAW_SCL_DDRAW1        0x00000010
+#define DDRAW_SCL_RECURSIVE     0x00000020
 
 #define DDRAW_STRIDE_ALIGNMENT  8
 
