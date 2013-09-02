@@ -477,7 +477,7 @@ static void CRYPT_CheckTrustedStatus(HCERTSTORE hRoot,
         CertFreeCertificateContext(trustedRoot);
 }
 
-static void CRYPT_CheckRootCert(HCERTCHAINENGINE hRoot,
+static void CRYPT_CheckRootCert(HCERTSTORE hRoot,
  PCERT_CHAIN_ELEMENT rootElement)
 {
     PCCERT_CONTEXT root = rootElement->pCertContext;
@@ -2171,11 +2171,10 @@ static BOOL CRYPT_GetSimpleChainForCert(CertificateChainEngine *engine,
     return ret;
 }
 
-static BOOL CRYPT_BuildCandidateChainFromCert(HCERTCHAINENGINE hChainEngine,
+static BOOL CRYPT_BuildCandidateChainFromCert(CertificateChainEngine *engine,
  PCCERT_CONTEXT cert, LPFILETIME pTime, HCERTSTORE hAdditionalStore,
  PCertificateChain *ppChain)
 {
-    CertificateChainEngine *engine = (CertificateChainEngine*)hChainEngine;
     PCERT_SIMPLE_CHAIN simpleChain = NULL;
     HCERTSTORE world;
     BOOL ret;
@@ -2362,13 +2361,12 @@ static PCertificateChain CRYPT_CopyChainToElement(PCertificateChain chain,
 }
 
 static PCertificateChain CRYPT_BuildAlternateContextFromChain(
- HCERTCHAINENGINE hChainEngine, LPFILETIME pTime, HCERTSTORE hAdditionalStore,
+ CertificateChainEngine *engine, LPFILETIME pTime, HCERTSTORE hAdditionalStore,
  PCertificateChain chain)
 {
-    CertificateChainEngine *engine = (CertificateChainEngine*)hChainEngine;
     PCertificateChain alternate;
 
-    TRACE("(%p, %s, %p, %p)\n", hChainEngine, debugstr_filetime(pTime),
+    TRACE("(%p, %s, %p, %p)\n", engine, debugstr_filetime(pTime),
      hAdditionalStore, chain);
 
     /* Always start with the last "lower quality" chain to ensure a consistent
@@ -2799,10 +2797,11 @@ BOOL WINAPI CertGetCertificateChain(HCERTCHAINENGINE hChainEngine,
  PCERT_CHAIN_PARA pChainPara, DWORD dwFlags, LPVOID pvReserved,
  PCCERT_CHAIN_CONTEXT* ppChainContext)
 {
+    CertificateChainEngine *engine = (CertificateChainEngine*)hChainEngine;
     BOOL ret;
     PCertificateChain chain = NULL;
 
-    TRACE("(%p, %p, %s, %p, %p, %08x, %p, %p)\n", hChainEngine, pCertContext,
+    TRACE("(%p, %p, %s, %p, %p, %08x, %p, %p)\n", engine, pCertContext,
      debugstr_filetime(pTime), hAdditionalStore, pChainPara, dwFlags,
      pvReserved, ppChainContext);
 
@@ -2819,12 +2818,12 @@ BOOL WINAPI CertGetCertificateChain(HCERTCHAINENGINE hChainEngine,
         return FALSE;
     }
 
-    if (!hChainEngine)
-        hChainEngine = CRYPT_GetDefaultChainEngine();
+    if (!engine)
+        engine = CRYPT_GetDefaultChainEngine();
     if (TRACE_ON(chain))
         dump_chain_para(pChainPara);
     /* FIXME: what about HCCE_LOCAL_MACHINE? */
-    ret = CRYPT_BuildCandidateChainFromCert(hChainEngine, pCertContext, pTime,
+    ret = CRYPT_BuildCandidateChainFromCert(engine, pCertContext, pTime,
      hAdditionalStore, &chain);
     if (ret)
     {
@@ -2832,7 +2831,7 @@ BOOL WINAPI CertGetCertificateChain(HCERTCHAINENGINE hChainEngine,
         PCERT_CHAIN_CONTEXT pChain;
 
         do {
-            alternate = CRYPT_BuildAlternateContextFromChain(hChainEngine,
+            alternate = CRYPT_BuildAlternateContextFromChain(engine,
              pTime, hAdditionalStore, chain);
 
             /* Alternate contexts are added as "lower quality" contexts of
