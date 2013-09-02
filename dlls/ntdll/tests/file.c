@@ -2109,21 +2109,15 @@ todo_wine
     bytes = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = WriteFile(hfile, contents, sizeof(contents), &bytes, NULL);
-todo_wine
     ok(!ret, "WriteFile should fail\n");
-todo_wine
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-todo_wine
     ok(bytes == 0, "bytes %u\n", bytes);
 
     iob.Status = -1;
     iob.Information = -1;
     status = pNtWriteFile(hfile, 0, NULL, NULL, &iob, contents, sizeof(contents), NULL, NULL);
-todo_wine
     ok(status == STATUS_INVALID_PARAMETER, "expected STATUS_INVALID_PARAMETER, got %#x\n", status);
-todo_wine
     ok(iob.Status == -1, "expected -1, got %#x\n", iob.Status);
-todo_wine
     ok(iob.Information == -1, "expected -1, got %ld\n", iob.Information);
 
     iob.Status = -1;
