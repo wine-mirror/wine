@@ -49,7 +49,7 @@ typedef struct _CertificateChainEngine
     DWORD      dwUrlRetrievalTimeout;
     DWORD      MaximumCachedCertificates;
     DWORD      CycleDetectionModulus;
-} CertificateChainEngine, *PCertificateChainEngine;
+} CertificateChainEngine;
 
 static inline void CRYPT_AddStoresToCollection(HCERTSTORE collection,
  DWORD cStores, HCERTSTORE *stores)
@@ -120,7 +120,7 @@ HCERTCHAINENGINE CRYPT_CreateChainEngine(HCERTSTORE root,
     static const WCHAR caW[] = { 'C','A',0 };
     static const WCHAR myW[] = { 'M','y',0 };
     static const WCHAR trustW[] = { 'T','r','u','s','t',0 };
-    PCertificateChainEngine engine =
+    CertificateChainEngine *engine =
      CryptMemAlloc(sizeof(CertificateChainEngine));
 
     if (engine)
@@ -208,7 +208,7 @@ BOOL WINAPI CertCreateCertificateChainEngine(PCERT_CHAIN_ENGINE_CONFIG pConfig,
 
 VOID WINAPI CertFreeCertificateChainEngine(HCERTCHAINENGINE hChainEngine)
 {
-    PCertificateChainEngine engine = (PCertificateChainEngine)hChainEngine;
+    CertificateChainEngine *engine = (CertificateChainEngine*)hChainEngine;
 
     TRACE("(%p)\n", hChainEngine);
 
@@ -566,7 +566,7 @@ static BOOL CRYPT_DecodeBasicConstraints(PCCERT_CONTEXT cert,
  * Returns TRUE if the element can be a CA, and the length of the remaining
  * chain is valid.
  */
-static BOOL CRYPT_CheckBasicConstraintsForCA(PCertificateChainEngine engine,
+static BOOL CRYPT_CheckBasicConstraintsForCA(CertificateChainEngine *engine,
  PCCERT_CONTEXT cert, CERT_BASIC_CONSTRAINTS2_INFO *chainConstraints,
  DWORD remainingCAs, BOOL isRoot, BOOL *pathLengthConstraintViolated)
 {
@@ -1712,7 +1712,7 @@ static void dump_element(PCCERT_CONTEXT cert)
         dump_extension(&cert->pCertInfo->rgExtension[i]);
 }
 
-static BOOL CRYPT_KeyUsageValid(PCertificateChainEngine engine,
+static BOOL CRYPT_KeyUsageValid(CertificateChainEngine *engine,
  PCCERT_CONTEXT cert, BOOL isRoot, BOOL isCA, DWORD index)
 {
     PCERT_EXTENSION ext;
@@ -1868,7 +1868,7 @@ static BOOL CRYPT_IsCertVersionValid(PCCERT_CONTEXT cert)
     return ret;
 }
 
-static void CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
+static void CRYPT_CheckSimpleChain(CertificateChainEngine *engine,
  PCERT_SIMPLE_CHAIN chain, LPFILETIME time)
 {
     PCERT_CHAIN_ELEMENT rootElement = chain->rgpElement[chain->cElement - 1];
@@ -2140,7 +2140,7 @@ static LPCSTR debugstr_filetime(LPFILETIME pTime)
     return wine_dbg_sprintf("%p (%s)", pTime, filetime_to_str(pTime));
 }
 
-static BOOL CRYPT_GetSimpleChainForCert(PCertificateChainEngine engine,
+static BOOL CRYPT_GetSimpleChainForCert(CertificateChainEngine *engine,
  HCERTSTORE world, PCCERT_CONTEXT cert, LPFILETIME pTime,
  PCERT_SIMPLE_CHAIN *ppChain)
 {
@@ -2175,7 +2175,7 @@ static BOOL CRYPT_BuildCandidateChainFromCert(HCERTCHAINENGINE hChainEngine,
  PCCERT_CONTEXT cert, LPFILETIME pTime, HCERTSTORE hAdditionalStore,
  PCertificateChain *ppChain)
 {
-    PCertificateChainEngine engine = (PCertificateChainEngine)hChainEngine;
+    CertificateChainEngine *engine = (CertificateChainEngine*)hChainEngine;
     PCERT_SIMPLE_CHAIN simpleChain = NULL;
     HCERTSTORE world;
     BOOL ret;
@@ -2365,7 +2365,7 @@ static PCertificateChain CRYPT_BuildAlternateContextFromChain(
  HCERTCHAINENGINE hChainEngine, LPFILETIME pTime, HCERTSTORE hAdditionalStore,
  PCertificateChain chain)
 {
-    PCertificateChainEngine engine = (PCertificateChainEngine)hChainEngine;
+    CertificateChainEngine *engine = (CertificateChainEngine*)hChainEngine;
     PCertificateChain alternate;
 
     TRACE("(%p, %s, %p, %p)\n", hChainEngine, debugstr_filetime(pTime),
