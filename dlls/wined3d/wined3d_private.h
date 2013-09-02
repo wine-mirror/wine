@@ -2207,7 +2207,6 @@ struct wined3d_surface
     RECT                      lockedRect;
     RECT                      dirtyRect;
     int                       lockCount;
-#define MAXLOCKCOUNT          50 /* After this amount of locks do not free the sysmem copy */
 
     /* For GetDC */
     struct wined3d_surface_dib dib;
