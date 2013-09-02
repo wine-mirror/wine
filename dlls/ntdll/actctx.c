@@ -260,6 +260,17 @@ struct ifacepsredirect_data
     ULONG name_offset;
 };
 
+struct clrsurrogate_data
+{
+    ULONG size;
+    DWORD res;
+    GUID  clsid;
+    ULONG version_offset;
+    ULONG version_len;
+    ULONG name_offset;
+    ULONG name_len;
+};
+
 /*
 
    Sections structure.
@@ -343,6 +354,17 @@ struct ifacepsredirect_data
    redirect data, but index is still 'iid' from manifest.
 
    Interface name offset is relative to data structure itself.
+
+   - CLR surrogates section format:
+
+   <section header>
+   <index[]>
+   <data[]> --- <data>
+                <name>
+                <version>
+
+    There's nothing special about this section, same way to store strings is used,
+    no modules part as it belongs to assembly level, not a file.
 */
 
 struct entity
@@ -438,7 +460,8 @@ enum context_sections
     DLLREDIRECT_SECTION    = 2,
     TLIBREDIRECT_SECTION   = 4,
     SERVERREDIRECT_SECTION = 8,
-    IFACEREDIRECT_SECTION  = 16
+    IFACEREDIRECT_SECTION  = 16,
+    CLRSURROGATES_SECTION  = 32
 };
 
 typedef struct _ACTIVATION_CONTEXT
@@ -457,6 +480,7 @@ typedef struct _ACTIVATION_CONTEXT
     struct guidsection_header *tlib_section;
     struct guidsection_header *comserver_section;
     struct guidsection_header *ifaceps_section;
+    struct guidsection_header *clrsurrogate_section;
 } ACTIVATION_CONTEXT;
 
 struct actctx_loader
@@ -1008,6 +1032,7 @@ static void actctx_release( ACTIVATION_CONTEXT *actctx )
         RtlFreeHeap( GetProcessHeap(), 0, actctx->tlib_section );
         RtlFreeHeap( GetProcessHeap(), 0, actctx->comserver_section );
         RtlFreeHeap( GetProcessHeap(), 0, actctx->ifaceps_section );
+        RtlFreeHeap( GetProcessHeap(), 0, actctx->clrsurrogate_section );
         actctx->magic = 0;
         RtlFreeHeap( GetProcessHeap(), 0, actctx );
     }
@@ -1803,7 +1828,7 @@ static BOOL parse_clr_class_elem(xmlbuf_t* xmlbuf, struct assembly* assembly)
     return parse_expect_end_elem(xmlbuf, clrClassW, asmv1W);
 }
 
-static BOOL parse_clr_surrogate_elem(xmlbuf_t* xmlbuf, struct assembly* assembly)
+static BOOL parse_clr_surrogate_elem(xmlbuf_t* xmlbuf, struct assembly* assembly, struct actctx_loader *acl)
 {
     xmlstr_t    attr_name, attr_value;
     BOOL        end = FALSE, error;
@@ -1832,7 +1857,10 @@ static BOOL parse_clr_surrogate_elem(xmlbuf_t* xmlbuf, struct assembly* assembly
         }
     }
 
-    if (error || end) return end;
+    if (error) return FALSE;
+    acl->actctx->sections |= CLRSURROGATES_SECTION;
+    if (end) return TRUE;
+
     return parse_expect_end_elem(xmlbuf, clrSurrogateW, asmv1W);
 }
 
@@ -2092,7 +2120,7 @@ static BOOL parse_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl,
         }
         else if (xml_elem_cmp(&elem, clrSurrogateW, asmv1W))
         {
-            ret = parse_clr_surrogate_elem(xmlbuf, assembly);
+            ret = parse_clr_surrogate_elem(xmlbuf, assembly, acl);
         }
         else if (xml_elem_cmp(&elem, assemblyIdentityW, asmv1W))
         {
@@ -3724,6 +3752,158 @@ static NTSTATUS find_cominterface_redirection(ACTIVATION_CONTEXT* actctx, const 
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS build_clr_surrogate_section(ACTIVATION_CONTEXT* actctx, struct guidsection_header **section)
+{
+    unsigned int i, j, total_len = 0, count = 0;
+    struct guidsection_header *header;
+    struct clrsurrogate_data *data;
+    struct guid_index *index;
+    ULONG data_offset;
+
+    /* compute section length */
+    for (i = 0; i < actctx->num_assemblies; i++)
+    {
+        struct assembly *assembly = &actctx->assemblies[i];
+        for (j = 0; j < assembly->entities.num; j++)
+        {
+            struct entity *entity = &assembly->entities.base[j];
+            if (entity->kind == ACTIVATION_CONTEXT_SECTION_CLR_SURROGATES)
+            {
+                ULONG len;
+
+                total_len += sizeof(*index) + sizeof(*data);
+                len = strlenW(entity->u.clrsurrogate.name) + 1;
+                if (entity->u.clrsurrogate.version)
+                   len += strlenW(entity->u.clrsurrogate.version) + 1;
+                total_len += aligned_string_len(len*sizeof(WCHAR));
+
+                count++;
+            }
+        }
+    }
+
+    total_len += sizeof(*header);
+
+    header = RtlAllocateHeap(GetProcessHeap(), 0, total_len);
+    if (!header) return STATUS_NO_MEMORY;
+
+    memset(header, 0, sizeof(*header));
+    header->magic = GUIDSECTION_MAGIC;
+    header->size  = sizeof(*header);
+    header->count = count;
+    header->index_offset = sizeof(*header);
+    index = (struct guid_index*)((BYTE*)header + header->index_offset);
+    data_offset = header->index_offset + count*sizeof(*index);
+
+    for (i = 0; i < actctx->num_assemblies; i++)
+    {
+        struct assembly *assembly = &actctx->assemblies[i];
+        for (j = 0; j < assembly->entities.num; j++)
+        {
+            struct entity *entity = &assembly->entities.base[j];
+            if (entity->kind == ACTIVATION_CONTEXT_SECTION_CLR_SURROGATES)
+            {
+                ULONG version_len, name_len;
+                UNICODE_STRING str;
+                WCHAR *ptrW;
+
+                if (entity->u.clrsurrogate.version)
+                    version_len = strlenW(entity->u.clrsurrogate.version)*sizeof(WCHAR);
+                else
+                    version_len = 0;
+                name_len = strlenW(entity->u.clrsurrogate.name)*sizeof(WCHAR);
+
+                /* setup new index entry */
+                RtlInitUnicodeString(&str, entity->u.clrsurrogate.clsid);
+                RtlGUIDFromString(&str, &index->guid);
+
+                index->data_offset = data_offset;
+                index->data_len = sizeof(*data) + aligned_string_len(name_len + sizeof(WCHAR) + (version_len ? version_len + sizeof(WCHAR) : 0));
+                index->rosterindex = i + 1;
+
+                /* setup data */
+                data = (struct clrsurrogate_data*)((BYTE*)header + index->data_offset);
+                data->size = sizeof(*data);
+                data->res = 0;
+                data->clsid = index->guid;
+                data->version_offset = version_len ? data->size : 0;
+                data->version_len = version_len;
+                data->name_offset = data->size + version_len;
+                if (version_len)
+                    data->name_offset += sizeof(WCHAR);
+                data->name_len = name_len;
+
+                /* surrogate name */
+                ptrW = (WCHAR*)((BYTE*)data + data->name_offset);
+                memcpy(ptrW, entity->u.clrsurrogate.name, data->name_len);
+                ptrW[data->name_len/sizeof(WCHAR)] = 0;
+
+                /* runtime version */
+                if (data->version_len)
+                {
+                    ptrW = (WCHAR*)((BYTE*)data + data->version_offset);
+                    memcpy(ptrW, entity->u.clrsurrogate.version, data->version_len);
+                    ptrW[data->version_len/sizeof(WCHAR)] = 0;
+                }
+
+                data_offset += index->data_offset;
+                index++;
+            }
+        }
+    }
+
+    *section = header;
+
+    return STATUS_SUCCESS;
+}
+
+static inline struct clrsurrogate_data *get_surrogate_data(ACTIVATION_CONTEXT *actctx, const struct guid_index *index)
+{
+    return (struct clrsurrogate_data*)((BYTE*)actctx->clrsurrogate_section + index->data_offset);
+}
+
+static NTSTATUS find_clr_surrogate(ACTIVATION_CONTEXT* actctx, const GUID *guid, ACTCTX_SECTION_KEYED_DATA* data)
+{
+    struct clrsurrogate_data *surrogate;
+    struct guid_index *index = NULL;
+
+    if (!(actctx->sections & CLRSURROGATES_SECTION)) return STATUS_SXS_KEY_NOT_FOUND;
+
+    if (!actctx->clrsurrogate_section)
+    {
+        struct guidsection_header *section;
+
+        NTSTATUS status = build_clr_surrogate_section(actctx, &section);
+        if (status) return status;
+
+        if (interlocked_cmpxchg_ptr((void**)&actctx->clrsurrogate_section, section, NULL))
+            RtlFreeHeap(GetProcessHeap(), 0, section);
+    }
+
+    index = find_guid_index(actctx->clrsurrogate_section, guid);
+    if (!index) return STATUS_SXS_KEY_NOT_FOUND;
+
+    surrogate = get_surrogate_data(actctx, index);
+
+    data->ulDataFormatVersion = 1;
+    data->lpData = surrogate;
+    /* full length includes string length with nulls */
+    data->ulLength = surrogate->size + surrogate->name_len + sizeof(WCHAR);
+    if (surrogate->version_len)
+        data->ulLength += surrogate->version_len + sizeof(WCHAR);
+
+    data->lpSectionGlobalData = NULL;
+    data->ulSectionGlobalDataLength = 0;
+    data->lpSectionBase = actctx->clrsurrogate_section;
+    data->ulSectionTotalLength = RtlSizeHeap( GetProcessHeap(), 0, actctx->clrsurrogate_section );
+    data->hActCtx = NULL;
+
+    if (data->cbSize >= FIELD_OFFSET(ACTCTX_SECTION_KEYED_DATA, ulAssemblyRosterIndex) + sizeof(ULONG))
+        data->ulAssemblyRosterIndex = index->rosterindex;
+
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS find_string(ACTIVATION_CONTEXT* actctx, ULONG section_kind,
                             const UNICODE_STRING *section_name,
                             DWORD flags, PACTCTX_SECTION_KEYED_DATA data)
@@ -3774,8 +3954,8 @@ static NTSTATUS find_guid(ACTIVATION_CONTEXT* actctx, ULONG section_kind,
         status = find_cominterface_redirection(actctx, guid, data);
         break;
     case ACTIVATION_CONTEXT_SECTION_CLR_SURROGATES:
-        FIXME("Unsupported yet section_kind %x\n", section_kind);
-        return STATUS_SXS_SECTION_NOT_FOUND;
+        status = find_clr_surrogate(actctx, guid, data);
+        break;
     default:
         WARN("Unknown section_kind %x\n", section_kind);
         return STATUS_SXS_SECTION_NOT_FOUND;

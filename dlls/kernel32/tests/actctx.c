@@ -1366,7 +1366,7 @@ static void test_find_surrogate(HANDLE handle, const GUID *clsid, const WCHAR *n
         ok_(__FILE__, line)(surrogate->version_offset == surrogate->size, "got version offset %d\n", surrogate->version_offset);
 
         ok_(__FILE__, line)(surrogate->name_len == lstrlenW(name)*sizeof(WCHAR), "got name len %d\n", surrogate->name_len);
-        ok_(__FILE__, line)(surrogate->name_offset > 0, "got name offset %d\n", surrogate->name_offset);
+        ok_(__FILE__, line)(surrogate->name_offset > surrogate->version_offset, "got name offset %d\n", surrogate->name_offset);
 
         len = surrogate->size + surrogate->name_len + surrogate->version_len + 2*sizeof(WCHAR);
         ok_(__FILE__, line)(data.ulLength == len, "got wrong data length %d, expected %d\n", data.ulLength, len);
