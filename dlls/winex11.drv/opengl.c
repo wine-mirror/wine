@@ -254,6 +254,13 @@ struct gl_drawable
     int                            swap_interval;
 };
 
+enum glx_swap_control_method
+{
+    GLX_SWAP_CONTROL_NONE,
+    GLX_SWAP_CONTROL_EXT,
+    GLX_SWAP_CONTROL_SGI
+};
+
 /* X context to associate a struct gl_drawable to an hwnd */
 static XContext gl_hwnd_context;
 /* X context to associate a struct gl_drawable to a pbuffer hdc */
@@ -271,7 +278,9 @@ static struct WineGLInfo WineGLInfo = { 0 };
 static struct wgl_pixel_format *pixel_formats;
 static int nb_pixel_formats, nb_onscreen_formats;
 static int use_render_texture_emulation = 1;
-static BOOL has_swap_control;
+
+/* Selects the preferred GLX swap control method for use by wglSwapIntervalEXT */
+static enum glx_swap_control_method swap_control_method = GLX_SWAP_CONTROL_NONE;
 
 static CRITICAL_SECTION context_section;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -384,6 +393,7 @@ static Bool (*pglXMakeContextCurrent)( Display *dpy, GLXDrawable draw, GLXDrawab
 /* GLX Extensions */
 static GLXContext (*pglXCreateContextAttribsARB)(Display *dpy, GLXFBConfig config, GLXContext share_context, Bool direct, const int *attrib_list);
 static void* (*pglXGetProcAddressARB)(const GLubyte *);
+static void (*pglXSwapIntervalEXT)(Display *dpy, GLXDrawable drawable, int interval);
 static int   (*pglXSwapIntervalSGI)(int);
 
 /* NV GLX Extension */
@@ -636,6 +646,8 @@ static BOOL has_opengl(void)
 #define LOAD_FUNCPTR(f) p##f = pglXGetProcAddressARB((const GLubyte *)#f)
     /* ARB GLX Extension */
     LOAD_FUNCPTR(glXCreateContextAttribsARB);
+    /* EXT GLX Extension */
+    LOAD_FUNCPTR(glXSwapIntervalEXT);
     /* SGI GLX Extension */
     LOAD_FUNCPTR(glXSwapIntervalSGI);
     /* NV GLX Extension */
@@ -2937,26 +2949,36 @@ static BOOL X11DRV_wglSwapIntervalEXT(int interval)
         return FALSE;
     }
 
-    if (!has_swap_control && interval == 0)
+    switch (swap_control_method)
     {
+    case GLX_SWAP_CONTROL_EXT:
+        X11DRV_expect_error(gdi_display, GLXErrorHandler, NULL);
+        pglXSwapIntervalEXT(gdi_display, gl->drawable, interval);
+        XSync(gdi_display, False);
+        ret = !X11DRV_check_error();
+        break;
+
+    case GLX_SWAP_CONTROL_SGI:
         /* wglSwapIntervalEXT considers an interval value of zero to mean that
          * vsync should be disabled, but glXSwapIntervalSGI considers such a
-         * value to be an error. Just silently ignore the request for now. */
-        WARN("Request to disable vertical sync is not handled\n");
-        gl->swap_interval = 0;
-    }
-    else
-    {
-        if (pglXSwapIntervalSGI)
+         * value to be an error. Just silently ignore the request for now.
+         */
+        if (!interval)
+            WARN("Request to disable vertical sync is not handled\n");
+        else
             ret = !pglXSwapIntervalSGI(interval);
-        else
-            WARN("GLX_SGI_swap_control extension is not available\n");
+        break;
 
-        if (ret)
-            gl->swap_interval = interval;
-        else
-            SetLastError(ERROR_DC_NOT_FOUND);
+    case GLX_SWAP_CONTROL_NONE:
+        /* Unlikely to happen on modern GLX implementations */
+        WARN("Request to adjust swap interval is not handled\n");
+        break;
     }
+
+    if (ret)
+        gl->swap_interval = interval;
+    else
+        SetLastError(ERROR_DC_NOT_FOUND);
 
     release_gl_drawable(gl);
 
@@ -3111,7 +3133,13 @@ static void X11DRV_WineGL_LoadExtensions(void)
         register_extension("WGL_EXT_pixel_format_packed_float");
 
     if (has_extension( WineGLInfo.glxExtensions, "GLX_EXT_swap_control"))
-        has_swap_control = TRUE;
+    {
+        swap_control_method = GLX_SWAP_CONTROL_EXT;
+    }
+    else if (has_extension( WineGLInfo.glxExtensions, "GLX_SGI_swap_control"))
+    {
+        swap_control_method = GLX_SWAP_CONTROL_SGI;
+    }
 
     /* The OpenGL extension GL_NV_vertex_array_range adds wgl/glX functions which aren't exported as 'real' wgl/glX extensions. */
     if (has_extension(WineGLInfo.glExtensions, "GL_NV_vertex_array_range"))
