@@ -783,7 +783,7 @@ static void test_waittxempty(void)
     DWORD before, after, bytes, timediff, evtmask, errors, i;
     BOOL res;
     DWORD baud = SLOWBAUD;
-    OVERLAPPED ovl_write, ovl_wait;
+    OVERLAPPED ovl_write, ovl_wait, ovl_wait2;
     COMSTAT stat;
 
     hcom = test_OpenComm(TRUE);
@@ -955,6 +955,16 @@ todo_wine
         else
         {
             ok(!evtmask, "WaitCommEvent: expected 0, got %#x\n", evtmask);
+
+            S(U(ovl_wait2)).Offset = 0;
+            S(U(ovl_wait2)).OffsetHigh = 0;
+            ovl_wait2.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+            SetLastError(0xdeadbeef);
+            res = WaitCommEvent(hcom, &evtmask, &ovl_wait2);
+            ok(!res, "WaitCommEvent should fail if there is a pending wait\n");
+todo_wine
+            ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+            CloseHandle(ovl_wait2.hEvent);
 
             /* unblock pending wait */
             trace("recovering after WAIT_TIMEOUT...\n");
