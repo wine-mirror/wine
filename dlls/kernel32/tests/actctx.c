@@ -85,6 +85,7 @@ static const char manifest2[] =
 "</assembly>";
 
 DEFINE_GUID(IID_CoTest,    0x12345678, 0x1234, 0x5678, 0x12, 0x34, 0x11, 0x11, 0x22, 0x22, 0x33, 0x33);
+DEFINE_GUID(CLSID_clrclass,0x22345678, 0x1234, 0x5678, 0x12, 0x34, 0x11, 0x11, 0x22, 0x22, 0x33, 0x33);
 DEFINE_GUID(IID_TlibTest,  0x99999999, 0x8888, 0x7777, 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55);
 DEFINE_GUID(IID_TlibTest2, 0x99999999, 0x8888, 0x7777, 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x55, 0x56);
 DEFINE_GUID(IID_TlibTest3, 0x99999999, 0x8888, 0x7777, 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x55, 0x57);
@@ -142,6 +143,15 @@ static const char manifest3[] =
 "        clsid=\"{96666666-8888-7777-6666-555555555555}\""
 "        name=\"testsurrogate\""
 "        runtimeVersion=\"v2.0.50727\""
+"    />"
+"    <clrClass "
+"        clsid=\"{22345678-1234-5678-1234-111122223333}\""
+"        name=\"clrclass\""
+"        progid=\"clrprogid\""
+"        description=\"test description\""
+"        tlbid=\"{99999999-8888-7777-6666-555555555555}\""
+"        runtimeVersion=\"1.2.3.4\""
+"        threadingModel=\"Neutral\""
 "    />"
 "</assembly>";
 
@@ -1142,7 +1152,8 @@ struct comclassredirect_data {
     ULONG name_offset;
     ULONG progid_len;
     ULONG progid_offset;
-    DWORD res2[2];
+    ULONG clrdata_len;
+    ULONG clrdata_offset;
     DWORD miscstatus;
     DWORD miscstatuscontent;
     DWORD miscstatusthumbnail;
@@ -1150,7 +1161,19 @@ struct comclassredirect_data {
     DWORD miscstatusdocprint;
 };
 
-static void test_find_com_redirection(HANDLE handle, const GUID *clsid, const GUID *tlid, ULONG exid, int line)
+struct clrclass_data {
+    ULONG size;
+    DWORD res[2];
+    ULONG module_len;
+    ULONG module_offset;
+    ULONG name_len;
+    ULONG name_offset;
+    ULONG version_len;
+    ULONG version_offset;
+    DWORD res2[2];
+};
+
+static void test_find_com_redirection(HANDLE handle, const GUID *clsid, const GUID *tlid, const WCHAR *progid, ULONG exid, int line)
 {
     struct comclassredirect_data *comclass, *comclass2;
     ACTCTX_SECTION_KEYED_DATA data, data2;
@@ -1163,6 +1186,11 @@ static void test_find_com_redirection(HANDLE handle, const GUID *clsid, const GU
     ret = pFindActCtxSectionGuid(0, NULL,
                                     ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION,
                                     clsid, &data);
+    if (!ret)
+    {
+        skip("failed for guid %s\n", debugstr_guid(clsid));
+        return;
+    }
     ok_(__FILE__, line)(ret, "FindActCtxSectionGuid failed: %u\n", GetLastError());
 
     comclass = (struct comclassredirect_data*)data.lpData;
@@ -1173,7 +1201,6 @@ static void test_find_com_redirection(HANDLE handle, const GUID *clsid, const GU
     ok_(__FILE__, line)(comclass->size == sizeof(*comclass), "got %d for header size\n", comclass->size);
     if (data.lpData && comclass->size == sizeof(*comclass))
     {
-        static const WCHAR progid[] = {'P','r','o','g','I','d','.','P','r','o','g','I','d',0};
         WCHAR *ptr;
         ULONG len;
 
@@ -1185,15 +1212,15 @@ static void test_find_com_redirection(HANDLE handle, const GUID *clsid, const GU
         ok_(__FILE__, line)(IsEqualGUID(&comclass->clsid2, clsid), "got wrong clsid2 %s\n", debugstr_guid(&comclass->clsid2));
         ok_(__FILE__, line)(IsEqualGUID(&comclass->tlid, tlid), "got wrong tlid %s\n", debugstr_guid(&comclass->tlid));
         ok_(__FILE__, line)(comclass->name_len > 0, "got modulename len %d\n", comclass->name_len);
-        ok_(__FILE__, line)(comclass->progid_offset == comclass->size, "got progid offset %d\n", comclass->progid_offset);
+        ok_(__FILE__, line)(comclass->progid_offset == comclass->size + comclass->clrdata_len, "got progid offset %d\n", comclass->progid_offset);
 
-        ptr = (WCHAR*)((BYTE*)comclass + comclass->size);
+        ptr = (WCHAR*)((BYTE*)comclass + comclass->progid_offset);
         ok_(__FILE__, line)(!lstrcmpW(ptr, progid), "got wrong progid %s, expected %s\n", wine_dbgstr_w(ptr), wine_dbgstr_w(progid));
         ok_(__FILE__, line)(lstrlenW(ptr)*sizeof(WCHAR) == comclass->progid_len,
             "got progid name length %d, expected %d\n", comclass->progid_len, lstrlenW(ptr));
 
         /* data length is simply header length + string data length including nulls */
-        len = comclass->size + comclass->progid_len + sizeof(WCHAR);
+        len = comclass->size + comclass->progid_len + sizeof(WCHAR) + comclass->clrdata_len;
         ok_(__FILE__, line)(data.ulLength == len, "got wrong data length %d, expected %d\n", data.ulLength, len);
 
         /* keyed data structure doesn't include module name, it's available from section data */
@@ -1212,6 +1239,41 @@ static void test_find_com_redirection(HANDLE handle, const GUID *clsid, const GU
                 ok_(__FILE__, line)(comclass->miscstatusthumbnail != 0, "got miscstatusthumbnail 0x%08x\n", comclass->miscstatusthumbnail);
             if (comclass->miscmask & MiscStatusDocPrint)
                 ok_(__FILE__, line)(comclass->miscstatusdocprint != 0, "got miscstatusdocprint 0x%08x\n", comclass->miscstatusdocprint);
+        }
+
+        /* part used for clrClass only */
+        if (comclass->clrdata_len)
+        {
+            static const WCHAR mscoreeW[] = {'M','S','C','O','R','E','E','.','D','L','L',0};
+            static const WCHAR mscoree2W[] = {'m','s','c','o','r','e','e','.','d','l','l',0};
+            struct clrclass_data *clrclass;
+            WCHAR *ptrW;
+
+            clrclass = (struct clrclass_data*)((BYTE*)data.lpData + comclass->clrdata_offset);
+            ok_(__FILE__, line)(clrclass->size == sizeof(*clrclass), "clrclass: got size %d\n", clrclass->size);
+            ok_(__FILE__, line)(clrclass->res[0] == 0, "clrclass: got res[0]=0x%08x\n", clrclass->res[0]);
+            ok_(__FILE__, line)(clrclass->res[1] == 2, "clrclass: got res[1]=0x%08x\n", clrclass->res[1]);
+            ok_(__FILE__, line)(clrclass->module_len == lstrlenW(mscoreeW)*sizeof(WCHAR), "clrclass: got module len %d\n", clrclass->module_len);
+            ok_(__FILE__, line)(clrclass->module_offset > 0, "clrclass: got module offset %d\n", clrclass->module_offset);
+
+            ok_(__FILE__, line)(clrclass->name_len > 0, "clrclass: got name len %d\n", clrclass->name_len);
+            ok_(__FILE__, line)(clrclass->name_offset == clrclass->size, "clrclass: got name offset %d\n", clrclass->name_offset);
+            ok_(__FILE__, line)(clrclass->version_len > 0, "clrclass: got version len %d\n", clrclass->version_len);
+            ok_(__FILE__, line)(clrclass->version_offset > 0, "clrclass: got version offset %d\n", clrclass->version_offset);
+
+            ok_(__FILE__, line)(clrclass->res2[0] == 0, "clrclass: got res2[0]=0x%08x\n", clrclass->res2[0]);
+            ok_(__FILE__, line)(clrclass->res2[1] == 0, "clrclass: got res2[1]=0x%08x\n", clrclass->res2[1]);
+
+            /* clrClass uses mscoree.dll as module name, but in two variants - comclass data points to module name
+               in lower case, clsclass subsection - in upper case */
+            ok_(__FILE__, line)(comclass->name_len == lstrlenW(mscoree2W)*sizeof(WCHAR), "clrclass: got com name len %d\n", comclass->name_len);
+            ok_(__FILE__, line)(comclass->name_offset > 0, "clrclass: got name offset %d\n", clrclass->name_offset);
+
+            ptrW = (WCHAR*)((BYTE*)data.lpSectionBase + comclass->name_offset);
+            ok_(__FILE__, line)(!lstrcmpW(ptrW, mscoreeW), "clrclass: module name %s\n", wine_dbgstr_w(ptrW));
+
+            ptrW = (WCHAR*)((BYTE*)data.lpSectionBase + clrclass->module_offset);
+            ok_(__FILE__, line)(!lstrcmpW(ptrW, mscoree2W), "clrclass: module name2 %s\n", wine_dbgstr_w(ptrW));
         }
     }
 
@@ -1704,6 +1766,8 @@ static void test_actctx(void)
     if(handle != INVALID_HANDLE_VALUE) {
         static const WCHAR nameW[] = {'t','e','s','t','s','u','r','r','o','g','a','t','e',0};
         static const WCHAR versionW[] = {'v','2','.','0','.','5','0','7','2','7',0};
+        static const WCHAR progidW[] = {'P','r','o','g','I','d','.','P','r','o','g','I','d',0};
+        static const WCHAR clrprogidW[] = {'c','l','r','p','r','o','g','i','d',0};
 
         test_basic_info(handle, __LINE__);
         test_detailed_info(handle, &detailed_info1, __LINE__);
@@ -1714,15 +1778,16 @@ static void test_actctx(void)
         ok(b, "ActivateActCtx failed: %u\n", GetLastError());
         test_find_dll_redirection(handle, testlib_dll, 1, __LINE__);
         test_find_dll_redirection(handle, testlib_dll, 1, __LINE__);
-        test_find_com_redirection(handle, &IID_CoTest, &IID_TlibTest, 1, __LINE__);
+        test_find_com_redirection(handle, &IID_CoTest, &IID_TlibTest, progidW, 1, __LINE__);
+        test_find_com_redirection(handle, &CLSID_clrclass, &IID_TlibTest, clrprogidW, 1, __LINE__);
         test_find_surrogate(handle, &IID_Iiface, nameW, versionW, 1, __LINE__);
         test_find_ifaceps_redirection(handle, &IID_Iifaceps, &IID_TlibTest4, &IID_Ibifaceps, NULL, 1, __LINE__);
         test_find_ifaceps_redirection(handle, &IID_Iifaceps2, &IID_TlibTest4, &IID_Ibifaceps, &IID_PS32, 1, __LINE__);
         test_find_ifaceps_redirection(handle, &IID_Iifaceps3, &IID_TlibTest4, &IID_Ibifaceps, NULL, 1, __LINE__);
         test_find_string_fail();
+
         b = pDeactivateActCtx(0, cookie);
         ok(b, "DeactivateActCtx failed: %u\n", GetLastError());
-
         pReleaseActCtx(handle);
     }
 

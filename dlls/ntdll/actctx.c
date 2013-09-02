@@ -234,7 +234,8 @@ struct comclassredirect_data
     ULONG name_offset;
     ULONG progid_len;
     ULONG progid_offset;
-    DWORD res2[2]; /* this was likely reserved for 'description' but not used */
+    ULONG clrdata_len;
+    ULONG clrdata_offset;
     DWORD miscstatus;
     DWORD miscstatuscontent;
     DWORD miscstatusthumbnail;
@@ -3469,8 +3470,8 @@ static NTSTATUS build_comserver_section(ACTIVATION_CONTEXT* actctx, struct guids
                     data->name_offset = module_offset;
                     data->progid_len = progid_len;
                     data->progid_offset = sizeof(*data);
-                    data->res2[0] = 0;
-                    data->res2[1] = 0;
+                    data->clrdata_len = 0;
+                    data->clrdata_offset = 0;
                     data->miscstatus = entity->u.comclass.miscstatus;
                     data->miscstatuscontent = entity->u.comclass.miscstatuscontent;
                     data->miscstatusthumbnail = entity->u.comclass.miscstatusthumbnail;
