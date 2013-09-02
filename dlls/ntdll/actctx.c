@@ -3294,8 +3294,8 @@ static NTSTATUS find_tlib_redirection(ACTIVATION_CONTEXT* actctx, const GUID *gu
     data->lpData = tlib;
     /* full length includes string length with nulls */
     data->ulLength = tlib->size + tlib->help_len + sizeof(WCHAR);
-    data->lpSectionGlobalData = NULL;
-    data->ulSectionGlobalDataLength = 0;
+    data->lpSectionGlobalData = (BYTE*)actctx->tlib_section + actctx->tlib_section->names_offset;
+    data->ulSectionGlobalDataLength = actctx->tlib_section->names_len;
     data->lpSectionBase = actctx->tlib_section;
     data->ulSectionTotalLength = RtlSizeHeap( GetProcessHeap(), 0, actctx->tlib_section );
     data->hActCtx = NULL;
@@ -3517,8 +3517,8 @@ static NTSTATUS find_comserver_redirection(ACTIVATION_CONTEXT* actctx, const GUI
     data->lpData = comclass;
     /* full length includes string length with nulls */
     data->ulLength = comclass->size + comclass->progid_len + sizeof(WCHAR);
-    data->lpSectionGlobalData = NULL;
-    data->ulSectionGlobalDataLength = 0;
+    data->lpSectionGlobalData = (BYTE*)actctx->comserver_section + actctx->comserver_section->names_offset;
+    data->ulSectionGlobalDataLength = actctx->comserver_section->names_len;
     data->lpSectionBase = actctx->comserver_section;
     data->ulSectionTotalLength = RtlSizeHeap( GetProcessHeap(), 0, actctx->comserver_section );
     data->hActCtx = NULL;

@@ -1148,6 +1148,7 @@ static void test_find_com_redirection(HANDLE handle, const GUID *clsid, const GU
 {
     struct comclassredirect_data *comclass, *comclass2;
     ACTCTX_SECTION_KEYED_DATA data, data2;
+    struct guidsection_header *header;
     BOOL ret;
 
     memset(&data, 0xfe, sizeof(data));
@@ -1207,11 +1208,11 @@ static void test_find_com_redirection(HANDLE handle, const GUID *clsid, const GU
                 ok_(__FILE__, line)(comclass->miscstatusdocprint != 0, "got miscstatusdocprint 0x%08x\n", comclass->miscstatusdocprint);
         }
     }
-todo_wine {
-    ok_(__FILE__, line)(data.lpSectionGlobalData != NULL, "data.lpSectionGlobalData == NULL\n");
-    ok_(__FILE__, line)(data.ulSectionGlobalDataLength > 0, "data.ulSectionGlobalDataLength=%u\n",
+
+    header = (struct guidsection_header*)data.lpSectionBase;
+    ok_(__FILE__, line)(data.lpSectionGlobalData == ((BYTE*)header + header->names_offset), "data.lpSectionGlobalData == NULL\n");
+    ok_(__FILE__, line)(data.ulSectionGlobalDataLength == header->names_len, "data.ulSectionGlobalDataLength=%u\n",
        data.ulSectionGlobalDataLength);
-}
     ok_(__FILE__, line)(data.lpSectionBase != NULL, "data.lpSectionBase == NULL\n");
     ok_(__FILE__, line)(data.ulSectionTotalLength > 0, "data.ulSectionTotalLength=%u\n",
        data.ulSectionTotalLength);
@@ -1473,6 +1474,10 @@ static void test_typelib_section(void)
     ok(data.lpSectionBase == data2.lpSectionBase, "got %p, %p\n", data.lpSectionBase, data2.lpSectionBase);
     ok(data.ulSectionTotalLength == data2.ulSectionTotalLength, "got %u, %u\n", data.ulSectionTotalLength,
         data2.ulSectionTotalLength);
+
+    ok(data.lpSectionGlobalData == ((BYTE*)section + section->names_offset), "data.lpSectionGlobalData == NULL\n");
+    ok(data.ulSectionGlobalDataLength == section->names_len, "data.ulSectionGlobalDataLength=%u\n",
+       data.ulSectionGlobalDataLength);
 
     /* test some actual data */
     tlib = (struct tlibredirect_data*)data.lpData;
