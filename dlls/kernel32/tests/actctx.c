@@ -93,6 +93,7 @@ DEFINE_GUID(IID_Iifaceps,  0x66666666, 0x8888, 0x7777, 0x66, 0x66, 0x55, 0x55, 0
 DEFINE_GUID(IID_Ibifaceps, 0x66666666, 0x8888, 0x7777, 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x55, 0x57);
 DEFINE_GUID(IID_Iifaceps2, 0x76666666, 0x8888, 0x7777, 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55);
 DEFINE_GUID(IID_Iifaceps3, 0x86666666, 0x8888, 0x7777, 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55);
+DEFINE_GUID(IID_Iiface,    0x96666666, 0x8888, 0x7777, 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55);
 DEFINE_GUID(IID_PS32,      0x66666666, 0x8888, 0x7777, 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x55, 0x56);
 
 static const char manifest3[] =
@@ -136,6 +137,11 @@ static const char manifest3[] =
 "        iid=\"{86666666-8888-7777-6666-555555555555}\""
 "        numMethods=\"10\""
 "        baseInterface=\"{66666666-8888-7777-6666-555555555557}\""
+"    />"
+"    <clrSurrogate "
+"        clsid=\"{96666666-8888-7777-6666-555555555555}\""
+"        name=\"testsurrogate\""
+"        runtimeVersion=\"v2.0.50727\""
 "    />"
 "</assembly>";
 
@@ -1311,6 +1317,78 @@ static void test_find_ifaceps_redirection(HANDLE handle, const GUID *iid, const 
        data.ulAssemblyRosterIndex, exid);
 }
 
+struct clrsurrogate_data
+{
+    ULONG size;
+    DWORD res;
+    GUID  clsid;
+    ULONG version_offset;
+    ULONG version_len;
+    ULONG name_offset;
+    ULONG name_len;
+};
+
+static void test_find_surrogate(HANDLE handle, const GUID *clsid, const WCHAR *name, const WCHAR *version,
+    ULONG exid, int line)
+{
+    struct clrsurrogate_data *surrogate;
+    ACTCTX_SECTION_KEYED_DATA data;
+    BOOL ret;
+
+    memset(&data, 0xfe, sizeof(data));
+    data.cbSize = sizeof(data);
+
+    ret = pFindActCtxSectionGuid(0, NULL,
+                                    ACTIVATION_CONTEXT_SECTION_CLR_SURROGATES,
+                                    clsid, &data);
+    if (!ret)
+    {
+        skip("surrogate sections are not supported\n");
+        return;
+    }
+    ok_(__FILE__, line)(ret, "FindActCtxSectionGuid failed: %u\n", GetLastError());
+
+    surrogate = (struct clrsurrogate_data*)data.lpData;
+
+    ok_(__FILE__, line)(data.cbSize == sizeof(data), "data.cbSize=%u\n", data.cbSize);
+    ok_(__FILE__, line)(data.ulDataFormatVersion == 1, "data.ulDataFormatVersion=%u\n", data.ulDataFormatVersion);
+    ok_(__FILE__, line)(data.lpData != NULL, "data.lpData == NULL\n");
+    ok_(__FILE__, line)(surrogate->size == sizeof(*surrogate), "got %d for header size\n", surrogate->size);
+    if (data.lpData && surrogate->size == sizeof(*surrogate))
+    {
+        WCHAR *ptrW;
+        ULONG len;
+
+        ok_(__FILE__, line)(surrogate->res == 0, "invalid res value %d\n", surrogate->res);
+        ok_(__FILE__, line)(IsEqualGUID(&surrogate->clsid, clsid), "got wrong clsid %s\n", debugstr_guid(&surrogate->clsid));
+
+        ok_(__FILE__, line)(surrogate->version_len == lstrlenW(version)*sizeof(WCHAR), "got version len %d\n", surrogate->version_len);
+        ok_(__FILE__, line)(surrogate->version_offset == surrogate->size, "got version offset %d\n", surrogate->version_offset);
+
+        ok_(__FILE__, line)(surrogate->name_len == lstrlenW(name)*sizeof(WCHAR), "got name len %d\n", surrogate->name_len);
+        ok_(__FILE__, line)(surrogate->name_offset > 0, "got name offset %d\n", surrogate->name_offset);
+
+        len = surrogate->size + surrogate->name_len + surrogate->version_len + 2*sizeof(WCHAR);
+        ok_(__FILE__, line)(data.ulLength == len, "got wrong data length %d, expected %d\n", data.ulLength, len);
+
+        ptrW = (WCHAR*)((BYTE*)surrogate + surrogate->name_offset);
+        ok(!lstrcmpW(ptrW, name), "got wrong name %s\n", wine_dbgstr_w(ptrW));
+
+        ptrW = (WCHAR*)((BYTE*)surrogate + surrogate->version_offset);
+        ok(!lstrcmpW(ptrW, version), "got wrong name %s\n", wine_dbgstr_w(ptrW));
+    }
+
+    ok_(__FILE__, line)(data.lpSectionGlobalData == NULL, "data.lpSectionGlobalData != NULL\n");
+    ok_(__FILE__, line)(data.ulSectionGlobalDataLength == 0, "data.ulSectionGlobalDataLength=%u\n",
+       data.ulSectionGlobalDataLength);
+    ok_(__FILE__, line)(data.lpSectionBase != NULL, "data.lpSectionBase == NULL\n");
+    ok_(__FILE__, line)(data.ulSectionTotalLength > 0, "data.ulSectionTotalLength=%u\n",
+       data.ulSectionTotalLength);
+    ok_(__FILE__, line)(data.hActCtx == NULL, "data.hActCtx=%p\n", data.hActCtx);
+    ok_(__FILE__, line)(data.ulAssemblyRosterIndex == exid, "data.ulAssemblyRosterIndex=%u, expected %u\n",
+       data.ulAssemblyRosterIndex, exid);
+}
+
 static void test_wndclass_section(void)
 {
     static const WCHAR cls1W[] = {'1','.','2','.','3','.','4','!','w','n','d','C','l','a','s','s','1',0};
@@ -1624,6 +1702,9 @@ static void test_actctx(void)
     handle = test_create("test3.manifest");
     DeleteFileA("test3.manifest");
     if(handle != INVALID_HANDLE_VALUE) {
+        static const WCHAR nameW[] = {'t','e','s','t','s','u','r','r','o','g','a','t','e',0};
+        static const WCHAR versionW[] = {'v','2','.','0','.','5','0','7','2','7',0};
+
         test_basic_info(handle, __LINE__);
         test_detailed_info(handle, &detailed_info1, __LINE__);
         test_info_in_assembly(handle, 1, &manifest3_info, __LINE__);
@@ -1634,6 +1715,7 @@ static void test_actctx(void)
         test_find_dll_redirection(handle, testlib_dll, 1, __LINE__);
         test_find_dll_redirection(handle, testlib_dll, 1, __LINE__);
         test_find_com_redirection(handle, &IID_CoTest, &IID_TlibTest, 1, __LINE__);
+        test_find_surrogate(handle, &IID_Iiface, nameW, versionW, 1, __LINE__);
         test_find_ifaceps_redirection(handle, &IID_Iifaceps, &IID_TlibTest4, &IID_Ibifaceps, NULL, 1, __LINE__);
         test_find_ifaceps_redirection(handle, &IID_Iifaceps2, &IID_TlibTest4, &IID_Ibifaceps, &IID_PS32, 1, __LINE__);
         test_find_ifaceps_redirection(handle, &IID_Iifaceps3, &IID_TlibTest4, &IID_Ibifaceps, NULL, 1, __LINE__);

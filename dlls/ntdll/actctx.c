@@ -393,6 +393,7 @@ struct entity
         {
             WCHAR *name;
             WCHAR *clsid;
+            WCHAR *version;
         } clrsurrogate;
     } u;
 };
@@ -521,6 +522,7 @@ static const WCHAR miscstatusdocprintW[] = {'m','i','s','c','S','t','a','t','u',
 static const WCHAR baseInterfaceW[] = {'b','a','s','e','I','n','t','e','r','f','a','c','e',0};
 static const WCHAR nummethodsW[] = {'n','u','m','M','e','t','h','o','d','s',0};
 static const WCHAR proxyStubClsid32W[] = {'p','r','o','x','y','S','t','u','b','C','l','s','i','d','3','2',0};
+static const WCHAR runtimeVersionW[] = {'r','u','n','t','i','m','e','V','e','r','s','i','o','n',0};
 
 static const WCHAR activatewhenvisibleW[] = {'a','c','t','i','v','a','t','e','w','h','e','n','v','i','s','i','b','l','e',0};
 static const WCHAR actslikebuttonW[] = {'a','c','t','s','l','i','k','e','b','u','t','t','o','n',0};
@@ -784,6 +786,7 @@ static void free_entity_array(struct entity_array *array)
         case ACTIVATION_CONTEXT_SECTION_CLR_SURROGATES:
             RtlFreeHeap(GetProcessHeap(), 0, entity->u.clrsurrogate.name);
             RtlFreeHeap(GetProcessHeap(), 0, entity->u.clrsurrogate.clsid);
+            RtlFreeHeap(GetProcessHeap(), 0, entity->u.clrsurrogate.version);
             break;
         default:
             FIXME("Unknown entity kind %d\n", entity->kind);
@@ -1818,6 +1821,10 @@ static BOOL parse_clr_surrogate_elem(xmlbuf_t* xmlbuf, struct assembly* assembly
         else if (xmlstr_cmp(&attr_name, clsidW))
         {
             if (!(entity->u.clrsurrogate.clsid = xmlstrdupW(&attr_value))) return FALSE;
+        }
+        else if (xmlstr_cmp(&attr_name, runtimeVersionW))
+        {
+            if (!(entity->u.clrsurrogate.version = xmlstrdupW(&attr_value))) return FALSE;
         }
         else
         {
