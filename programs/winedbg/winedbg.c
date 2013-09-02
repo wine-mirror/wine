@@ -566,20 +566,20 @@ static int dbg_winedbg_usage(BOOL advanced)
     if (advanced)
     {
     dbg_printf("Usage:\n"
-               "   winedbg cmdline         launch process 'cmdline' (as if you were starting\n"
+               "   winedbg <cmdline>       launch process <cmdline> (as if you were starting\n"
                "                           it with wine) and run WineDbg on it\n"
                "   winedbg <num>           attach to running process of wpid <num> and run\n"
                "                           WineDbg on it\n"
-               "   winedbg --gdb cmdline   launch process 'cmdline' (as if you were starting\n"
+               "   winedbg --gdb <cmdline> launch process <cmdline> (as if you were starting\n"
                "                           wine) and run gdb (proxied) on it\n"
                "   winedbg --gdb <num>     attach to running process of wpid <num> and run\n"
                "                           gdb (proxied) on it\n"
-               "   winedbg file.mdmp       reload the minidump file.mdmp into memory and run\n"
+               "   winedbg <file.mdmp>     reload the minidump <file.mdmp> into memory and run\n"
                "                           WineDbg on it\n"
                "   winedbg --help          prints advanced options\n");
     }
     else
-        dbg_printf("Usage:\n\twinedbg [ [ --gdb ] [ prog-name [ prog-args ] | <num> | file.mdmp | --help ]\n");
+        dbg_printf("Usage:\n\twinedbg [ [ --gdb ] [ <prog-name> [ <prog-args> ] | <num> | <file.mdmp> | --help ]\n");
     return 0;
 }
 
