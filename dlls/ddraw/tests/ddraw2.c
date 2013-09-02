@@ -3375,6 +3375,144 @@ static void test_lighting_interface_versions(void)
     ok(ref == 0, "Ddraw object not properly released, refcount %u.\n", ref);
 }
 
+static struct
+{
+    BOOL received;
+    IDirectDraw2 *ddraw;
+    HWND window;
+    DWORD coop_level;
+} activateapp_testdata;
+
+static LRESULT CALLBACK activateapp_test_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
+{
+    if (message == WM_ACTIVATEAPP)
+    {
+        if (activateapp_testdata.ddraw)
+        {
+            HRESULT hr;
+            activateapp_testdata.received = FALSE;
+            hr = IDirectDraw2_SetCooperativeLevel(activateapp_testdata.ddraw,
+                    activateapp_testdata.window, activateapp_testdata.coop_level);
+            ok(SUCCEEDED(hr), "Recursive SetCooperativeLevel call failed, hr %#x.\n", hr);
+            ok(!activateapp_testdata.received, "Received WM_ACTIVATEAPP during recursive SetCooperativeLevel call.\n");
+        }
+        activateapp_testdata.received = TRUE;
+    }
+
+    return DefWindowProcA(hwnd, message, wparam, lparam);
+}
+
+static void test_coop_level_activateapp(void)
+{
+    IDirectDraw2 *ddraw;
+    HRESULT hr;
+    HWND window;
+    WNDCLASSA wc = {0};
+    DDSURFACEDESC ddsd;
+    IDirectDrawSurface *surface;
+
+    if (!(ddraw = create_ddraw()))
+    {
+        skip("Failed to create IDirectDraw2 object, skipping tests.\n");
+        return;
+    }
+
+    wc.lpfnWndProc = activateapp_test_proc;
+    wc.lpszClassName = "ddraw_test_wndproc_wc";
+    ok(RegisterClassA(&wc), "Failed to register window class.\n");
+
+    window = CreateWindowA("ddraw_test_wndproc_wc", "ddraw_test",
+            WS_MAXIMIZE | WS_CAPTION , 0, 0, 640, 480, 0, 0, 0, 0);
+
+    /* Exclusive with window already active. */
+    SetActiveWindow(window);
+    activateapp_testdata.received = FALSE;
+    hr = IDirectDraw2_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+    ok(!activateapp_testdata.received, "Received WM_ACTIVATEAPP although window was already active.\n");
+    hr = IDirectDraw2_SetCooperativeLevel(ddraw, NULL, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    /* Exclusive with window not active. */
+    SetActiveWindow(NULL);
+    activateapp_testdata.received = FALSE;
+    hr = IDirectDraw2_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+    ok(activateapp_testdata.received, "Expected WM_ACTIVATEAPP, but did not receive it.\n");
+    hr = IDirectDraw2_SetCooperativeLevel(ddraw, NULL, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    /* Normal with window not active, then exclusive with the same window. */
+    SetActiveWindow(NULL);
+    activateapp_testdata.received = FALSE;
+    hr = IDirectDraw2_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+    ok(!activateapp_testdata.received, "Received WM_ACTIVATEAPP when setting DDSCL_NORMAL.\n");
+    hr = IDirectDraw2_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+    /* Except in the first SetCooperativeLevel call, Windows XP randomly does not send
+     * WM_ACTIVATEAPP. Windows 7 sends the message reliably. Mark the XP behavior broken. */
+    ok(activateapp_testdata.received || broken(!activateapp_testdata.received),
+            "Expected WM_ACTIVATEAPP, but did not receive it.\n");
+    hr = IDirectDraw2_SetCooperativeLevel(ddraw, NULL, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    /* Recursive set of DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN. */
+    SetActiveWindow(NULL);
+    activateapp_testdata.received = FALSE;
+    activateapp_testdata.ddraw = ddraw;
+    activateapp_testdata.window = window;
+    activateapp_testdata.coop_level = DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN;
+    hr = IDirectDraw2_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+    ok(activateapp_testdata.received || broken(!activateapp_testdata.received),
+            "Expected WM_ACTIVATEAPP, but did not receive it.\n");
+    hr = IDirectDraw2_SetCooperativeLevel(ddraw, NULL, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    /* The recursive call seems to have some bad effect on native ddraw, despite (apparently)
+     * succeeding. Another switch to exclusive and back to normal is needed to release the
+     * window properly. Without doing this, SetCooperativeLevel(EXCLUSIVE) will not send
+     * WM_ACTIVATEAPP messages. */
+    activateapp_testdata.ddraw = NULL;
+    hr = IDirectDraw2_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+    hr = IDirectDraw2_SetCooperativeLevel(ddraw, NULL, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    /* Setting DDSCL_NORMAL with recursive invocation. */
+    SetActiveWindow(NULL);
+    activateapp_testdata.received = FALSE;
+    activateapp_testdata.ddraw = ddraw;
+    activateapp_testdata.window = window;
+    activateapp_testdata.coop_level = DDSCL_NORMAL;
+    hr = IDirectDraw2_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+    ok(activateapp_testdata.received || broken(!activateapp_testdata.received),
+            "Expected WM_ACTIVATEAPP, but did not receive it.\n");
+
+    /* DDraw is in exlusive mode now. */
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
+    ddsd.dwBackBufferCount = 1;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP;
+    hr = IDirectDraw2_CreateSurface(ddraw, &ddsd, &surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+    IDirectDrawSurface_Release(surface);
+
+    /* Recover again, just to be sure. */
+    activateapp_testdata.ddraw = NULL;
+    hr = IDirectDraw2_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+    hr = IDirectDraw2_SetCooperativeLevel(ddraw, NULL, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    DestroyWindow(window);
+    UnregisterClassA("ddraw_test_wndproc_wc", GetModuleHandleA(NULL));
+    IDirectDraw2_Release(ddraw);
+}
+
 START_TEST(ddraw2)
 {
     test_coop_level_create_device_window();
@@ -3401,4 +3539,5 @@ START_TEST(ddraw2)
     test_clear_rect_count();
     test_coop_level_versions();
     test_lighting_interface_versions();
+    test_coop_level_activateapp();
 }
