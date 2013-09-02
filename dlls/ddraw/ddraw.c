@@ -778,21 +778,29 @@ static HRESULT ddraw_set_cooperative_level(struct ddraw *ddraw, HWND window,
 
     wined3d_mutex_lock();
 
+    if (ddraw->flags & DDRAW_SCL_RECURSIVE)
+    {
+        WARN("Recursive call, returning DD_OK.\n");
+        hr = DD_OK;
+        goto done;
+    }
+    ddraw->flags |= DDRAW_SCL_RECURSIVE;
+
     /* Tests suggest that we need one of them: */
     if(!(cooplevel & (DDSCL_SETFOCUSWINDOW |
                       DDSCL_NORMAL         |
                       DDSCL_EXCLUSIVE      )))
     {
         TRACE("Incorrect cooplevel flags, returning DDERR_INVALIDPARAMS\n");
-        wined3d_mutex_unlock();
-        return DDERR_INVALIDPARAMS;
+        hr = DDERR_INVALIDPARAMS;
+        goto done;
     }
 
     if ((cooplevel & DDSCL_CREATEDEVICEWINDOW) && !(cooplevel & DDSCL_EXCLUSIVE))
     {
         WARN("DDSCL_CREATEDEVICEWINDOW requires DDSCL_EXCLUSIVE.\n");
-        wined3d_mutex_unlock();
-        return DDERR_INVALIDPARAMS;
+        hr = DDERR_INVALIDPARAMS;
+        goto done;
     }
 
     /* Handle those levels first which set various hwnds */
@@ -810,13 +818,12 @@ static HRESULT ddraw_set_cooperative_level(struct ddraw *ddraw, HWND window,
                 | DDSCL_FULLSCREEN))
         {
             WARN("Called with incompatible flags, returning DDERR_INVALIDPARAMS.\n");
-            wined3d_mutex_unlock();
-            return DDERR_INVALIDPARAMS;
+            hr = DDERR_INVALIDPARAMS;
+            goto done;
         }
 
         hr = ddraw_set_focus_window(ddraw, window);
-        wined3d_mutex_unlock();
-        return hr;
+        goto done;
     }
 
     if (cooplevel & DDSCL_EXCLUSIVE)
@@ -824,8 +831,8 @@ static HRESULT ddraw_set_cooperative_level(struct ddraw *ddraw, HWND window,
         if (!(cooplevel & DDSCL_FULLSCREEN) || !(window || (cooplevel & DDSCL_CREATEDEVICEWINDOW)))
         {
             WARN("DDSCL_EXCLUSIVE requires DDSCL_FULLSCREEN and a window.\n");
-            wined3d_mutex_unlock();
-            return DDERR_INVALIDPARAMS;
+            hr = DDERR_INVALIDPARAMS;
+            goto done;
         }
 
         if (cooplevel & DDSCL_CREATEDEVICEWINDOW)
@@ -835,8 +842,8 @@ static HRESULT ddraw_set_cooperative_level(struct ddraw *ddraw, HWND window,
             if (!ddraw->focuswindow && !(cooplevel & DDSCL_SETFOCUSWINDOW))
             {
                 WARN("No focus window set.\n");
-                wined3d_mutex_unlock();
-                return DDERR_NOFOCUSWINDOW;
+                hr = DDERR_NOFOCUSWINDOW;
+                goto done;
             }
 
             device_window = CreateWindowExA(0, DDRAW_WINDOW_CLASS_NAME, "DirectDrawDeviceWnd",
@@ -845,8 +852,8 @@ static HRESULT ddraw_set_cooperative_level(struct ddraw *ddraw, HWND window,
             if (!device_window)
             {
                 ERR("Failed to create window, last error %#x.\n", GetLastError());
-                wined3d_mutex_unlock();
-                return E_FAIL;
+                hr = E_FAIL;
+                goto done;
             }
 
             ShowWindow(device_window, SW_SHOW);
@@ -861,15 +868,12 @@ static HRESULT ddraw_set_cooperative_level(struct ddraw *ddraw, HWND window,
             {
                 if (!window)
                 {
-                    wined3d_mutex_unlock();
-                    return DDERR_NOHWND;
+                    hr = DDERR_NOHWND;
+                    goto done;
                 }
 
                 if (FAILED(hr = ddraw_set_focus_window(ddraw, window)))
-                {
-                    wined3d_mutex_unlock();
-                    return hr;
-                }
+                    goto done;
             }
 
             window = device_window;
@@ -910,8 +914,7 @@ static HRESULT ddraw_set_cooperative_level(struct ddraw *ddraw, HWND window,
             if (FAILED(hr = wined3d_stateblock_create(ddraw->wined3d_device, WINED3D_SBT_ALL, &stateblock)))
             {
                 ERR("Failed to create stateblock, hr %#x.\n", hr);
-                wined3d_mutex_unlock();
-                return hr;
+                goto done;
             }
 
             wined3d_stateblock_capture(stateblock);
@@ -968,8 +971,7 @@ static HRESULT ddraw_set_cooperative_level(struct ddraw *ddraw, HWND window,
         if (FAILED(hr))
         {
             ERR("Failed to acquire focus window, hr %#x.\n", hr);
-            wined3d_mutex_unlock();
-            return hr;
+            goto done;
         }
     }
 
@@ -991,9 +993,12 @@ static HRESULT ddraw_set_cooperative_level(struct ddraw *ddraw, HWND window,
     ddraw->dest_window = window;
 
     TRACE("SetCooperativeLevel retuning DD_OK\n");
+    hr = DD_OK;
+done:
+    ddraw->flags &= ~DDRAW_SCL_RECURSIVE;
     wined3d_mutex_unlock();
 
-    return DD_OK;
+    return hr;
 }
 
 static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND window, DWORD flags)
