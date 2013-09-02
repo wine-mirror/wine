@@ -719,13 +719,14 @@ HRESULT WINAPI D3DXCreateTextureFromFileExA(struct IDirect3DDevice9 *device, con
         D3DPOOL pool, DWORD filter, DWORD mipfilter, D3DCOLOR colorkey, D3DXIMAGE_INFO *srcinfo,
         PALETTEENTRY *palette, struct IDirect3DTexture9 **texture)
 {
-    LPWSTR widename;
+    WCHAR *widename;
     HRESULT hr;
     DWORD len;
 
-    TRACE("(%p, %s, %u, %u, %u, %x, %x, %x, %u, %u, %x, %p, %p, %p): relay\n",
-            device, debugstr_a(srcfile), width, height, miplevels, usage, format, pool, filter,
-            mipfilter, colorkey, srcinfo, palette, texture);
+    TRACE("device %p, srcfile %s, width %u, height %u, miplevels %u, usage %#x, format %#x, "
+            "pool %#x, filter %#x, mipfilter %#x, colorkey 0x%08x, srcinfo %p, palette %p, texture %p.\n",
+            device, debugstr_a(srcfile), width, height, miplevels, usage, format,
+            pool, filter, mipfilter, colorkey, srcinfo, palette, texture);
 
     if (!device || !srcfile || !texture)
         return D3DERR_INVALIDCALL;

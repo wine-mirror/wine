@@ -284,9 +284,12 @@ struct D3DXIncludeImpl {
 HRESULT WINAPI D3DXAssembleShaderFromFileA(const char *filename, const D3DXMACRO *defines,
         ID3DXInclude *include, DWORD flags, ID3DXBuffer **shader, ID3DXBuffer **error_messages)
 {
-    LPWSTR filename_w = NULL;
+    WCHAR *filename_w;
     DWORD len;
     HRESULT ret;
+
+    TRACE("filename %s, defines %p, include %p, flags %#x, shader %p, error_messages %p.\n",
+            debugstr_a(filename), defines, include, flags, shader, error_messages);
 
     if (!filename) return D3DXERR_INVALIDDATA;
 
@@ -387,9 +390,14 @@ HRESULT WINAPI D3DXCompileShaderFromFileA(const char *filename, const D3DXMACRO 
         ID3DXInclude *include, const char *entrypoint, const char *profile, DWORD flags,
         ID3DXBuffer **shader, ID3DXBuffer **error_messages, ID3DXConstantTable **constant_table)
 {
-    LPWSTR filename_w = NULL;
+    WCHAR *filename_w;
     DWORD len;
     HRESULT ret;
+
+    TRACE("filename %s, defines %p, include %p, entrypoint %s, profile %s, "
+            "flags %#x, shader %p, error_messages %p, constant_table %p.\n",
+            debugstr_a(filename), defines, include, debugstr_a(entrypoint),
+            debugstr_a(profile), flags, shader, error_messages, constant_table);
 
     if (!filename) return D3DXERR_INVALIDDATA;
 

@@ -3673,12 +3673,14 @@ HRESULT WINAPI D3DXLoadMeshHierarchyFromXA(const char *filename, DWORD options, 
         struct ID3DXAllocateHierarchy *alloc_hier, struct ID3DXLoadUserData *load_user_data,
         D3DXFRAME **frame_hierarchy, struct ID3DXAnimationController **anim_controller)
 {
+    WCHAR *filenameW;
     HRESULT hr;
     int len;
-    LPWSTR filenameW;
 
-    TRACE("(%s, %x, %p, %p, %p, %p, %p)\n", debugstr_a(filename), options,
-          device, alloc_hier, load_user_data, frame_hierarchy, anim_controller);
+    TRACE("filename %s, options %#x, device %p, alloc_hier %p, "
+            "load_user_data %p, frame_hierarchy %p, anim_controller %p.\n",
+            debugstr_a(filename), options, device, alloc_hier,
+            load_user_data, frame_hierarchy, anim_controller);
 
     if (!filename)
         return D3DERR_INVALIDCALL;
@@ -4025,12 +4027,14 @@ HRESULT WINAPI D3DXLoadMeshFromXA(const char *filename, DWORD options, struct ID
         struct ID3DXBuffer **adjacency, struct ID3DXBuffer **materials, struct ID3DXBuffer **effect_instances,
         DWORD *num_materials, struct ID3DXMesh **mesh)
 {
+    WCHAR *filenameW;
     HRESULT hr;
     int len;
-    LPWSTR filenameW;
 
-    TRACE("(%s, %x, %p, %p, %p, %p, %p, %p)\n", debugstr_a(filename), options,
-          device, adjacency, materials, effect_instances, num_materials, mesh);
+    TRACE("filename %s, options %#x, device %p, adjacency %p, materials %p, "
+            "effect_instances %p, num_materials %p, mesh %p.\n",
+            debugstr_a(filename), options, device, adjacency, materials,
+            effect_instances, num_materials, mesh);
 
     if (!filename)
         return D3DERR_INVALIDCALL;
@@ -4943,12 +4947,12 @@ HRESULT WINAPI D3DXCreateTeapot(struct IDirect3DDevice9 *device,
 HRESULT WINAPI D3DXCreateTextA(struct IDirect3DDevice9 *device, HDC hdc, const char *text, float deviation,
         float extrusion, struct ID3DXMesh **mesh, struct ID3DXBuffer **adjacency, GLYPHMETRICSFLOAT *glyphmetrics)
 {
+    WCHAR *textW;
     HRESULT hr;
     int len;
-    LPWSTR textW;
 
-    TRACE("(%p, %p, %s, %f, %f, %p, %p, %p)\n", device, hdc,
-          debugstr_a(text), deviation, extrusion, mesh, adjacency, glyphmetrics);
+    TRACE("device %p, hdc %p, text %s, deviation %.8e, extrusion %.8e, mesh %p, adjacency %p, glyphmetrics %p.\n",
+            device, hdc, debugstr_a(text), deviation, extrusion, mesh, adjacency, glyphmetrics);
 
     if (!text)
         return D3DERR_INVALIDCALL;

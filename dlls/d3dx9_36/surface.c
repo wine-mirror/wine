@@ -901,11 +901,11 @@ HRESULT WINAPI D3DXGetImageInfoFromFileInMemory(const void *data, UINT datasize,
  */
 HRESULT WINAPI D3DXGetImageInfoFromFileA(LPCSTR file, D3DXIMAGE_INFO *info)
 {
-    LPWSTR widename;
+    WCHAR *widename;
     HRESULT hr;
     int strlength;
 
-    TRACE("(%s, %p): relay\n", debugstr_a(file), info);
+    TRACE("file %s, info %p.\n", debugstr_a(file), info);
 
     if( !file ) return D3DERR_INVALIDCALL;
 
@@ -1188,7 +1188,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileA(IDirect3DSurface9 *dst_surface,
         const PALETTEENTRY *dst_palette, const RECT *dst_rect, const char *src_file,
         const RECT *src_rect, DWORD filter, D3DCOLOR color_key, D3DXIMAGE_INFO *src_info)
 {
-    LPWSTR pWidename;
+    WCHAR *src_file_w;
     HRESULT hr;
     int strlength;
 
@@ -1201,12 +1201,12 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileA(IDirect3DSurface9 *dst_surface,
         return D3DERR_INVALIDCALL;
 
     strlength = MultiByteToWideChar(CP_ACP, 0, src_file, -1, NULL, 0);
-    pWidename = HeapAlloc(GetProcessHeap(), 0, strlength * sizeof(*pWidename));
-    MultiByteToWideChar(CP_ACP, 0, src_file, -1, pWidename, strlength);
+    src_file_w = HeapAlloc(GetProcessHeap(), 0, strlength * sizeof(*src_file_w));
+    MultiByteToWideChar(CP_ACP, 0, src_file, -1, src_file_w, strlength);
 
     hr = D3DXLoadSurfaceFromFileW(dst_surface, dst_palette, dst_rect,
-            pWidename, src_rect, filter, color_key, src_info);
-    HeapFree(GetProcessHeap(), 0, pWidename);
+            src_file_w, src_rect, filter, color_key, src_info);
+    HeapFree(GetProcessHeap(), 0, src_file_w);
 
     return hr;
 }

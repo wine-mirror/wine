@@ -5531,11 +5531,14 @@ HRESULT WINAPI D3DXCreateEffectFromFileExA(struct IDirect3DDevice9 *device, cons
         const D3DXMACRO *defines, struct ID3DXInclude *include, const char *skipconstants, DWORD flags,
         struct ID3DXEffectPool *pool, struct ID3DXEffect **effect, struct ID3DXBuffer **compilationerrors)
 {
-    LPWSTR srcfileW;
+    WCHAR *srcfileW;
     HRESULT ret;
     DWORD len;
 
-    TRACE("(void): relay\n");
+    TRACE("device %p, srcfile %s, defines %p, include %p, skipconstants %s, "
+            "flags %#x, pool %p, effect %p, compilationerrors %p.\n",
+            device, debugstr_a(srcfile), defines, include, debugstr_a(skipconstants),
+            flags, pool, effect, compilationerrors);
 
     if (!srcfile)
         return D3DERR_INVALIDCALL;
@@ -5660,11 +5663,12 @@ HRESULT WINAPI D3DXCreateEffectCompilerFromFileW(const WCHAR *srcfile, const D3D
 HRESULT WINAPI D3DXCreateEffectCompilerFromFileA(const char *srcfile, const D3DXMACRO *defines,
         ID3DXInclude *include, DWORD flags, ID3DXEffectCompiler **effectcompiler, ID3DXBuffer **parseerrors)
 {
-    LPWSTR srcfileW;
+    WCHAR *srcfileW;
     HRESULT ret;
     DWORD len;
 
-    TRACE("(void): relay\n");
+    TRACE("srcfile %s, defines %p, include %p, flags %#x, effectcompiler %p, parseerrors %p.\n",
+            debugstr_a(srcfile), defines, include, flags, effectcompiler, parseerrors);
 
     if (!srcfile)
         return D3DERR_INVALIDCALL;
