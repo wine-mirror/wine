@@ -2,32 +2,18 @@
 .SH NAME
 winedbg \- Wine debugger
 .SH SYNOPSIS
-.BR "winedbg "
-.RI "[" " options " "] ["
-.BI "program name"
-.RI "[ program arguments ] |"
-.BI "pid"
-.RI "]"
+.B winedbg
+.RI "[ " options " ] [ " program_name " [ " program_arguments " ] | " pid " ]"
 .PP
-.BR "winedbg "
-.BI "--gdb"
-.RI "[" " options " "] ["
-.BI "program name"
-.RI "[ program arguments ] |"
-.BI "pid"
-.RI "]"
+.B winedbg --gdb
+.RI "[ " options " ] [ " program_name " [ " program_arguments " ] | " pid " ]"
 .PP
-.BR "winedbg "
-.BI "--auto "
-.BI "pid"
+.BI "winedbg --auto " pid
 .PP
-.BR "winedbg "
-.BI "--minidump "
-.RI "[ file.mdmp ]"
-.BI "pid"
+.B winedbg --minidump
+.RI "[ " file.mdmp " ] " pid
 .PP
-.BR "winedbg"
-.BI "file.mdmp"
+.BI "winedbg " file.mdmp
 .SH DESCRIPTION
 .B winedbg
 is a debugger for Wine. It allows:
@@ -93,15 +79,15 @@ Unix console for textual display.
 .PP
 In all modes, the rest of the command line, when passed, is used to 
 identify which programs, if any, has to debugged:
-.IP \fBprogram\ name\fR
+.IP \fIprogram_name\fR
 This is the name of an executable to start for a debugging
 session.  \fBwinedbg\fR will actually create a process with this
-executable. If \fBprograms arguments\fR are also given, they will be
+executable. If \fIprograms_arguments\fR are also given, they will be
 used as arguments for creating the process to be debugged.
-.IP \fBpid\fR
-\fBwinedbg\fR will attach to the process which pid is \fBpid\fR (pids
-refer to Win32 pids, not Unix pids). Use the \fIinfo proc\fR
-\fBwinedbg\fR command to list running processes and their Win32 pids.
+.IP \fIpid\fR
+\fBwinedbg\fR will attach to the process which pid is \fIpid\fR (pids
+refer to Win32 pids, not Unix pids). Use the \fBinfo proc\fR command
+within \fBwinedbg\fR to list running processes and their Win32 pids.
 .IP \fBdefault\fR
 If nothing is specified, you will enter the debugger without any run
 nor attached process. You'll have to do the job yourself.
@@ -333,9 +319,9 @@ use. Pick up the one you want from its number.
 .PP
 \fIMisc.\fR
 .PP
-.IP \fBminidump\ file.mdmp\fR
+.BI "minidump " file.mdmp
 saves the debugging context of the debuggee into a minidump file called 
-file.mdmp
+\fIfile.mdmp\fR.
 .PP
 \fIInformation on Wine internals\fR
 .IP \fBinfo\ class\fR
@@ -406,7 +392,7 @@ Since no user input is possible, no commands are available.
 .SH ENVIRONMENT
 .IP \fBWINE_GDB\fR
 When used in \fBgdb\fR proxy mode, \fBWINE_GDB\fR specifies the name
-(and the path) of the executable to be used for \fBgdb\fR. \fB"gdb"\fR
+(and the path) of the executable to be used for \fBgdb\fR. "gdb"
 is used by default.
 .SH AUTHORS
 The first version was written by Eric Youngdale.
