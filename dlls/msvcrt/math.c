@@ -289,6 +289,14 @@ float CDECL MSVCRT_ceilf( float x )
 }
 
 /*********************************************************************
+ *      fabsf (MSVCRT.@)
+ */
+float CDECL MSVCRT_fabsf( float x )
+{
+  return fabsf(x);
+}
+
+/*********************************************************************
  *      floorf (MSVCRT.@)
  */
 float CDECL MSVCRT_floorf( float x )

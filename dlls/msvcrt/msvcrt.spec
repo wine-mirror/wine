@@ -1276,6 +1276,7 @@
 @ cdecl exp(double) MSVCRT_exp
 @ cdecl -arch=arm,x86_64 expf(float) MSVCRT_expf
 @ cdecl fabs(double) MSVCRT_fabs
+@ cdecl -arch=arm,x86_64 fabsf(float) MSVCRT_fabsf
 @ cdecl fclose(ptr) MSVCRT_fclose
 @ cdecl feof(ptr) MSVCRT_feof
 @ cdecl ferror(ptr) MSVCRT_ferror
