@@ -27,8 +27,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dplay);
 
 /* Prototypes */
-static BOOL DPLSP_CreateIUnknown( LPVOID lpSP );
-static BOOL DPLSP_DestroyIUnknown( LPVOID lpSP );
 static BOOL DPLSP_CreateDPLobbySP( void *lpSP, IDirectPlayImpl *dp );
 static BOOL DPLSP_DestroyDPLobbySP( LPVOID lpSP );
 
@@ -36,18 +34,12 @@ static BOOL DPLSP_DestroyDPLobbySP( LPVOID lpSP );
 /* Predefine the interface */
 typedef struct IDPLobbySPImpl IDPLobbySPImpl;
 
-typedef struct tagDPLobbySPIUnknownData
-{
-  CRITICAL_SECTION  DPLSP_lock;
-} DPLobbySPIUnknownData;
-
 typedef struct tagDPLobbySPData
 {
   IDirectPlayImpl *dplay;
 } DPLobbySPData;
 
 #define DPLSP_IMPL_FIELDS \
-   DPLobbySPIUnknownData* unk; \
    DPLobbySPData* sp;
 
 struct IDPLobbySPImpl
@@ -92,9 +84,7 @@ HRESULT DPLSP_CreateInterface( REFIID riid, void **ppvObj, IDirectPlayImpl *dp )
   }
 
   /* Initialize it */
-  if( DPLSP_CreateIUnknown( *ppvObj ) &&
-      DPLSP_CreateDPLobbySP( *ppvObj, dp )
-    )
+  if( DPLSP_CreateDPLobbySP( *ppvObj, dp ) )
   {
     IDPLobbySP_AddRef( (LPDPLOBBYSP)*ppvObj );
     return S_OK;
@@ -102,40 +92,11 @@ HRESULT DPLSP_CreateInterface( REFIID riid, void **ppvObj, IDirectPlayImpl *dp )
 
   /* Initialize failed, destroy it */
   DPLSP_DestroyDPLobbySP( *ppvObj );
-  DPLSP_DestroyIUnknown( *ppvObj );
 
   HeapFree( GetProcessHeap(), 0, *ppvObj );
   *ppvObj = NULL;
 
   return DPERR_NOMEMORY;
-}
-
-static BOOL DPLSP_CreateIUnknown( LPVOID lpSP )
-{
-  IDPLobbySPImpl *This = lpSP;
-
-  This->unk = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *(This->unk) ) );
-
-  if ( This->unk == NULL )
-  {
-    return FALSE;
-  }
-
-  InitializeCriticalSection( &This->unk->DPLSP_lock );
-  This->unk->DPLSP_lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IDPLobbySPImpl*->DPLobbySPIUnknownData*->DPLSP_lock");
-
-  return TRUE;
-}
-
-static BOOL DPLSP_DestroyIUnknown( LPVOID lpSP )
-{
-  IDPLobbySPImpl *This = lpSP;
-
-  This->unk->DPLSP_lock.DebugInfo->Spare[0] = 0;
-  DeleteCriticalSection( &This->unk->DPLSP_lock );
-  HeapFree( GetProcessHeap(), 0, This->unk );
-
-  return TRUE;
 }
 
 static BOOL DPLSP_CreateDPLobbySP( void *lpSP, IDirectPlayImpl *dp )
@@ -200,7 +161,6 @@ static ULONG WINAPI IDPLobbySPImpl_Release( IDPLobbySP *iface )
   if( !ref )
   {
     DPLSP_DestroyDPLobbySP( This );
-    DPLSP_DestroyIUnknown( This );
     HeapFree( GetProcessHeap(), 0, This );
   }
 
