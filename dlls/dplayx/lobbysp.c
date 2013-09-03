@@ -38,7 +38,6 @@ typedef struct IDPLobbySPImpl IDPLobbySPImpl;
 
 typedef struct tagDPLobbySPIUnknownData
 {
-  LONG              ulObjRef;
   CRITICAL_SECTION  DPLSP_lock;
 } DPLobbySPIUnknownData;
 
@@ -48,13 +47,13 @@ typedef struct tagDPLobbySPData
 } DPLobbySPData;
 
 #define DPLSP_IMPL_FIELDS \
-   LONG ulInterfaceRef; \
    DPLobbySPIUnknownData* unk; \
    DPLobbySPData* sp;
 
 struct IDPLobbySPImpl
 {
   const IDPLobbySPVtbl *lpVtbl;
+  LONG ref;
   DPLSP_IMPL_FIELDS
 };
 
@@ -165,79 +164,47 @@ static BOOL DPLSP_DestroyDPLobbySP( LPVOID lpSP )
 }
 
 static HRESULT WINAPI IDPLobbySPImpl_QueryInterface( IDPLobbySP *iface, REFIID riid,
-        void **ppvObj )
+        void **ppv )
 {
-  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
-  TRACE("(%p)->(%s,%p)\n", This, debugstr_guid( riid ), ppvObj );
+  TRACE("(%p)->(%s,%p)\n", iface, debugstr_guid( riid ), ppv );
 
-  *ppvObj = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                       sizeof( *This ) );
-
-  if( *ppvObj == NULL )
+  if ( IsEqualGUID( &IID_IUnknown, riid ) || IsEqualGUID( &IID_IDPLobbySP, riid ) )
   {
-    return DPERR_OUTOFMEMORY;
+    *ppv = iface;
+    IDPLobbySP_AddRef(iface);
+    return S_OK;
   }
 
-  CopyMemory( *ppvObj, This, sizeof( *This )  );
-  (*(IDPLobbySPImpl**)ppvObj)->ulInterfaceRef = 0;
-
-  if( IsEqualGUID( &IID_IDPLobbySP, riid ) )
-  {
-    IDPLobbySPImpl *This = *ppvObj;
-    This->lpVtbl = &dpLobbySPVT;
-  }
-  else
-  {
-    /* Unsupported interface */
-    HeapFree( GetProcessHeap(), 0, *ppvObj );
-    *ppvObj = NULL;
-
-    return E_NOINTERFACE;
-  }
-
-  IDPLobbySP_AddRef( (LPDPLOBBYSP)*ppvObj );
-
-  return S_OK;
+  FIXME("Unsupported interface %s\n", debugstr_guid(riid));
+  *ppv = NULL;
+  return E_NOINTERFACE;
 }
 
 static ULONG WINAPI IDPLobbySPImpl_AddRef( IDPLobbySP *iface )
 {
   IDPLobbySPImpl *This = impl_from_IDPLobbySP( iface );
-  ULONG ulInterfaceRefCount, ulObjRefCount;
+  ULONG ref = InterlockedIncrement( &This->ref );
 
-  ulObjRefCount       = InterlockedIncrement( &This->unk->ulObjRef );
-  ulInterfaceRefCount = InterlockedIncrement( &This->ulInterfaceRef );
+  TRACE( "(%p) ref=%d\n", This, ref );
 
-  TRACE( "ref count incremented to %u:%u for %p\n",
-         ulInterfaceRefCount, ulObjRefCount, This );
-
-  return ulObjRefCount;
+  return ref;
 }
 
 static ULONG WINAPI IDPLobbySPImpl_Release( IDPLobbySP *iface )
 {
   IDPLobbySPImpl *This = impl_from_IDPLobbySP( iface );
-  ULONG ulInterfaceRefCount, ulObjRefCount;
+  ULONG ref = InterlockedDecrement( &This->ref );
 
-  ulObjRefCount       = InterlockedDecrement( &This->unk->ulObjRef );
-  ulInterfaceRefCount = InterlockedDecrement( &This->ulInterfaceRef );
+  TRACE( "(%p) ref=%d\n", This, ref );
 
-  TRACE( "ref count decremented to %u:%u for %p\n",
-         ulInterfaceRefCount, ulObjRefCount, This );
-
-  /* Deallocate if this is the last reference to the object */
-  if( ulObjRefCount == 0 )
+  if( !ref )
   {
-     DPLSP_DestroyDPLobbySP( This );
-     DPLSP_DestroyIUnknown( This );
-  }
-
-  if( ulInterfaceRefCount == 0 )
-  {
+    DPLSP_DestroyDPLobbySP( This );
+    DPLSP_DestroyIUnknown( This );
     HeapFree( GetProcessHeap(), 0, This );
   }
 
-  return ulInterfaceRefCount;
+  return ref;
 }
 
 static HRESULT WINAPI IDPLobbySPImpl_AddGroupToGroup( IDPLobbySP *iface,
