@@ -411,7 +411,7 @@ static void test_GetAbsolutePathName(void)
     hr = IFileSystem3_GetAbsolutePathName(fs3, NULL, &result);
     ok(hr == S_OK, "GetAbsolutePathName returned %x, expected S_OK\n", hr);
     GetFullPathNameW(cur_dir, MAX_PATH, buf, NULL);
-    ok(!lstrcmpW(buf, result), "result = %s, expected %s\n", wine_dbgstr_w(result), wine_dbgstr_w(buf));
+    ok(!lstrcmpiW(buf, result), "result = %s, expected %s\n", wine_dbgstr_w(result), wine_dbgstr_w(buf));
     SysFreeString(result);
 
     find = FindFirstFileW(dir_match2, &fdata);
@@ -425,26 +425,26 @@ static void test_GetAbsolutePathName(void)
     hr = IFileSystem3_GetAbsolutePathName(fs3, path, &result);
     ok(hr == S_OK, "GetAbsolutePathName returned %x, expected S_OK\n", hr);
     GetFullPathNameW(dir_match1, MAX_PATH, buf2, NULL);
-    ok(!lstrcmpW(buf2, result), "result = %s, expected %s\n", wine_dbgstr_w(result), wine_dbgstr_w(buf2));
+    ok(!lstrcmpiW(buf2, result), "result = %s, expected %s\n", wine_dbgstr_w(result), wine_dbgstr_w(buf2));
     SysFreeString(result);
 
     ok(CreateDirectoryW(dir1, NULL), "CreateDirectory(%s) failed\n", wine_dbgstr_w(dir1));
     hr = IFileSystem3_GetAbsolutePathName(fs3, path, &result);
     ok(hr == S_OK, "GetAbsolutePathName returned %x, expected S_OK\n", hr);
     GetFullPathNameW(dir1, MAX_PATH, buf, NULL);
-    ok(!lstrcmpW(buf, result) || broken(!lstrcmpW(buf2, result)), "result = %s, expected %s\n",
+    ok(!lstrcmpiW(buf, result) || broken(!lstrcmpiW(buf2, result)), "result = %s, expected %s\n",
                 wine_dbgstr_w(result), wine_dbgstr_w(buf));
     SysFreeString(result);
 
     ok(CreateDirectoryW(dir2, NULL), "CreateDirectory(%s) failed\n", wine_dbgstr_w(dir2));
     hr = IFileSystem3_GetAbsolutePathName(fs3, path, &result);
     ok(hr == S_OK, "GetAbsolutePathName returned %x, expected S_OK\n", hr);
-    if(!lstrcmpW(buf, result) || !lstrcmpW(buf2, result)) {
-        ok(!lstrcmpW(buf, result) || broken(!lstrcmpW(buf2, result)), "result = %s, expected %s\n",
+    if(!lstrcmpiW(buf, result) || !lstrcmpiW(buf2, result)) {
+        ok(!lstrcmpiW(buf, result) || broken(!lstrcmpiW(buf2, result)), "result = %s, expected %s\n",
                 wine_dbgstr_w(result), wine_dbgstr_w(buf));
     }else {
         GetFullPathNameW(dir2, MAX_PATH, buf, NULL);
-        ok(!lstrcmpW(buf, result), "result = %s, expected %s\n",
+        ok(!lstrcmpiW(buf, result), "result = %s, expected %s\n",
                 wine_dbgstr_w(result), wine_dbgstr_w(buf));
     }
     SysFreeString(result);
@@ -454,7 +454,7 @@ static void test_GetAbsolutePathName(void)
     hr = IFileSystem3_GetAbsolutePathName(fs3, path, &result);
     ok(hr == S_OK, "GetAbsolutePathName returned %x, expected S_OK\n", hr);
     GetFullPathNameW(dir_match2, MAX_PATH, buf, NULL);
-    ok(!lstrcmpW(buf, result), "result = %s, expected %s\n", wine_dbgstr_w(result), wine_dbgstr_w(buf));
+    ok(!lstrcmpiW(buf, result), "result = %s, expected %s\n", wine_dbgstr_w(result), wine_dbgstr_w(buf));
     SysFreeString(result);
     SysFreeString(path);
 
