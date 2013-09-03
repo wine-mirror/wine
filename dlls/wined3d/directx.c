@@ -255,7 +255,7 @@ const GLenum magLookup_noFilter[] =
     GL_NEAREST, GL_NEAREST, GL_NEAREST,
 };
 
-struct wined3d_fake_gl_ctx
+struct wined3d_caps_gl_ctx
 {
     HDC dc;
     HWND wnd;
@@ -264,12 +264,12 @@ struct wined3d_fake_gl_ctx
     HGLRC restore_gl_ctx;
 };
 
-static void WineD3D_ReleaseFakeGLContext(const struct wined3d_fake_gl_ctx *ctx)
+static void wined3d_caps_gl_ctx_destroy(const struct wined3d_caps_gl_ctx *ctx)
 {
-    TRACE("Destroying fake GL context.\n");
+    TRACE("Destroying caps GL context.\n");
 
     if (!wglMakeCurrent(NULL, NULL))
-        ERR("Failed to disable fake GL context.\n");
+        ERR("Failed to disable caps GL context.\n");
 
     if (!wglDeleteContext(ctx->gl_ctx))
     {
@@ -284,7 +284,7 @@ static void WineD3D_ReleaseFakeGLContext(const struct wined3d_fake_gl_ctx *ctx)
         ERR("Failed to restore previous GL context.\n");
 }
 
-static void wined3d_create_fake_gl_context_attribs(struct wined3d_fake_gl_ctx *fake_gl_ctx,
+static void wined3d_caps_gl_ctx_create_attribs(struct wined3d_caps_gl_ctx *caps_gl_ctx,
         struct wined3d_gl_info *gl_info, const GLint *ctx_attribs)
 {
     HGLRC new_ctx;
@@ -292,14 +292,14 @@ static void wined3d_create_fake_gl_context_attribs(struct wined3d_fake_gl_ctx *f
     if (!(gl_info->p_wglCreateContextAttribsARB = (void *)wglGetProcAddress("wglCreateContextAttribsARB")))
         return;
 
-    if (!(new_ctx = gl_info->p_wglCreateContextAttribsARB(fake_gl_ctx->dc, NULL, ctx_attribs)))
+    if (!(new_ctx = gl_info->p_wglCreateContextAttribsARB(caps_gl_ctx->dc, NULL, ctx_attribs)))
     {
         ERR("Failed to create a context using wglCreateContextAttribsARB(), last error %#x.\n", GetLastError());
         gl_info->p_wglCreateContextAttribsARB = NULL;
         return;
     }
 
-    if (!wglMakeCurrent(fake_gl_ctx->dc, new_ctx))
+    if (!wglMakeCurrent(caps_gl_ctx->dc, new_ctx))
     {
         ERR("Failed to make new context current, last error %#x.\n", GetLastError());
         if (!wglDeleteContext(new_ctx))
@@ -308,12 +308,12 @@ static void wined3d_create_fake_gl_context_attribs(struct wined3d_fake_gl_ctx *f
         return;
     }
 
-    if (!wglDeleteContext(fake_gl_ctx->gl_ctx))
+    if (!wglDeleteContext(caps_gl_ctx->gl_ctx))
         ERR("Failed to delete old context, last error %#x.\n", GetLastError());
-    fake_gl_ctx->gl_ctx = new_ctx;
+    caps_gl_ctx->gl_ctx = new_ctx;
 }
 
-static BOOL WineD3D_CreateFakeGLContext(struct wined3d_fake_gl_ctx *ctx)
+static BOOL wined3d_caps_gl_ctx_create(struct wined3d_caps_gl_ctx *ctx)
 {
     PIXELFORMATDESCRIPTOR pfd;
     int iPixelFormat;
@@ -367,7 +367,7 @@ static BOOL WineD3D_CreateFakeGLContext(struct wined3d_fake_gl_ctx *ctx)
     /* Make it the current GL context. */
     if (!wglMakeCurrent(ctx->dc, ctx->gl_ctx))
     {
-        ERR("Failed to make fake GL context current.\n");
+        ERR("Failed to make caps GL context current.\n");
         goto fail;
     }
 
@@ -5033,7 +5033,7 @@ static void wined3d_adapter_init_fb_cfgs(struct wined3d_adapter *adapter, HDC dc
 static BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, UINT ordinal)
 {
     struct wined3d_gl_info *gl_info = &adapter->gl_info;
-    struct wined3d_fake_gl_ctx fake_gl_ctx = {0};
+    struct wined3d_caps_gl_ctx caps_gl_ctx = {0};
     unsigned int ctx_attrib_idx = 0;
     DISPLAY_DEVICEW display_device;
     GLint ctx_attribs[3];
@@ -5076,7 +5076,7 @@ static BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, UINT ordinal)
     TRACE("Allocated LUID %08x:%08x for adapter %p.\n",
             adapter->luid.HighPart, adapter->luid.LowPart, adapter);
 
-    if (!WineD3D_CreateFakeGLContext(&fake_gl_ctx))
+    if (!wined3d_caps_gl_ctx_create(&caps_gl_ctx))
     {
         ERR("Failed to get a GL context for adapter %p.\n", adapter);
         return FALSE;
@@ -5088,22 +5088,22 @@ static BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, UINT ordinal)
         ctx_attribs[ctx_attrib_idx++] = WGL_CONTEXT_DEBUG_BIT_ARB;
     }
     ctx_attribs[ctx_attrib_idx] = 0;
-    wined3d_create_fake_gl_context_attribs(&fake_gl_ctx, gl_info, ctx_attribs);
+    wined3d_caps_gl_ctx_create_attribs(&caps_gl_ctx, gl_info, ctx_attribs);
 
     if (!wined3d_adapter_init_gl_caps(adapter))
     {
         ERR("Failed to initialize GL caps for adapter %p.\n", adapter);
-        WineD3D_ReleaseFakeGLContext(&fake_gl_ctx);
+        wined3d_caps_gl_ctx_destroy(&caps_gl_ctx);
         return FALSE;
     }
 
-    wined3d_adapter_init_fb_cfgs(adapter, fake_gl_ctx.dc);
+    wined3d_adapter_init_fb_cfgs(adapter, caps_gl_ctx.dc);
     /* We haven't found any suitable formats. This should only happen in
      * case of GDI software rendering, which is pretty useless anyway. */
     if (!adapter->cfg_count)
     {
         WARN("No suitable pixel formats found.\n");
-        WineD3D_ReleaseFakeGLContext(&fake_gl_ctx);
+        wined3d_caps_gl_ctx_destroy(&caps_gl_ctx);
         HeapFree(GetProcessHeap(), 0, adapter->cfgs);
         return FALSE;
     }
@@ -5111,7 +5111,7 @@ static BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, UINT ordinal)
     if (!wined3d_adapter_init_format_info(adapter))
     {
         ERR("Failed to initialize GL format info.\n");
-        WineD3D_ReleaseFakeGLContext(&fake_gl_ctx);
+        wined3d_caps_gl_ctx_destroy(&caps_gl_ctx);
         HeapFree(GetProcessHeap(), 0, adapter->cfgs);
         return FALSE;
     }
@@ -5125,7 +5125,7 @@ static BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, UINT ordinal)
     TRACE("DeviceName: %s\n", debugstr_w(display_device.DeviceName));
     strcpyW(adapter->DeviceName, display_device.DeviceName);
 
-    WineD3D_ReleaseFakeGLContext(&fake_gl_ctx);
+    wined3d_caps_gl_ctx_destroy(&caps_gl_ctx);
 
     wined3d_adapter_init_ffp_attrib_ops(adapter);
 
