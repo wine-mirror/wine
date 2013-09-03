@@ -46,31 +46,50 @@ static HRESULT WINAPI testD3DXInclude_open(ID3DXInclude *iface, D3DXINCLUDE_TYPE
         const char *filename, const void *parent_data, const void **data, UINT *bytes)
 {
     char *buffer;
-    const char include[] = "#define REGISTER r0\nvs.1.1\n";
-    const char include2[] = "#include \"incl3.vsh\"\n";
-    const char include3[] = "vs.1.1\n";
+    static const char shader[] =
+            "#include \"incl.vsh\"\n"
+            "mov REGISTER, v0\n";
+    static const char include[] = "#define REGISTER r0\nvs.1.1\n";
+    static const char include2[] = "#include \"incl3.vsh\"\n";
+    static const char include3[] = "vs.1.1\n";
 
-    trace("filename = %s\n", filename);
-    trace("parent_data (%p) -> %s\n", parent_data, parent_data ? (char *)parent_data : "(null)");
+    trace("filename %s.\n", filename);
+    trace("parent_data %p: %s.\n", parent_data, parent_data ? (char *)parent_data : "(null)");
 
-    if(!strcmp(filename,"incl.vsh")) {
-        buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(include));
-        CopyMemory(buffer, include, sizeof(include));
-        *bytes = sizeof(include);
-        /* Also check for the correct parent_data content */
-        ok(parent_data == NULL, "wrong parent_data value\n");
+    if (!strcmp(filename, "shader.vsh"))
+    {
+        buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(shader));
+        memcpy(buffer, shader, sizeof(shader));
+        *bytes = sizeof(shader);
     }
-    else if(!strcmp(filename,"incl3.vsh")) {
+    else if (!strcmp(filename, "incl.vsh"))
+    {
+        buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(include));
+        memcpy(buffer, include, sizeof(include));
+        *bytes = sizeof(include);
+        /* This is included from the first D3DXAssembleShader with non-null ID3DXInclude test
+         * (parent_data == NULL) and from shader.vsh / shader[] (with matching parent_data).
+         * Allow both cases. */
+        ok(parent_data == NULL || !strncmp(shader, parent_data, strlen(shader)), "wrong parent_data value\n");
+    }
+    else if (!strcmp(filename, "incl2.vsh"))
+    {
+        buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(include2));
+        memcpy(buffer, include2, sizeof(include2));
+        *bytes = sizeof(include2);
+    }
+    else if (!strcmp(filename, "incl3.vsh"))
+    {
         buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(include3));
-        CopyMemory(buffer, include3, sizeof(include3));
+        memcpy(buffer, include3, sizeof(include3));
         *bytes = sizeof(include3);
         /* Also check for the correct parent_data content */
         ok(parent_data != NULL && !strncmp(include2, parent_data, strlen(include2)), "wrong parent_data value\n");
     }
-    else {
-        buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(include2));
-        CopyMemory(buffer, include2, sizeof(include2));
-        *bytes = sizeof(include2);
+    else
+    {
+        ok(0, "Unexpected #include for file %s.\n", filename);
+        return D3DERR_INVALIDCALL;
     }
     *data = buffer;
     return S_OK;
@@ -91,40 +110,33 @@ struct D3DXIncludeImpl {
     ID3DXInclude ID3DXInclude_iface;
 };
 
-static void assembleshader_test(void) {
-    const char test1[] = {
+static void assembleshader_test(void)
+{
+    static const char test1[] =
         "vs.1.1\n"
-        "mov DEF2, v0\n"
-    };
-    const char testincl[] = {
+        "mov DEF2, v0\n";
+    static const char testincl[] =
         "#define REGISTER r0\n"
-        "vs.1.1\n"
-    };
-    const char testshader[] = {
+        "vs.1.1\n";
+    static const char testshader[] =
         "#include \"incl.vsh\"\n"
-        "mov REGISTER, v0\n"
-    };
-    const char testshader2[] = {
+        "mov REGISTER, v0\n";
+    static const char testshader2[] =
         "#include \"incl2.vsh\"\n"
-        "mov REGISTER, v0\n"
-    };
-    const char testshader3[] = {
+        "mov REGISTER, v0\n";
+    static const char testshader3[] =
         "#include \"include/incl3.vsh\"\n"
-        "mov REGISTER, v0\n"
-    };
-    const char testincl3[] = {
-        "#include \"incl4.vsh\"\n"
-    };
-    const char testincl4_ok[] = {
+        "mov REGISTER, v0\n";
+    static const char testincl3[] =
+        "#include \"incl4.vsh\"\n";
+    static const char testincl4_ok[] =
         "#define REGISTER r0\n"
-        "vs.1.1\n"
-    };
-    const char testincl4_wrong[] = {
-        "#error \"wrong include\"\n"
-    };
+        "vs.1.1\n";
+    static const char testincl4_wrong[] =
+        "#error \"wrong include\"\n";
     HRESULT hr;
     ID3DXBuffer *shader, *messages;
-    D3DXMACRO defines[] = {
+    static const D3DXMACRO defines[] = {
         {
             "DEF1", "10 + 15"
         },
@@ -137,6 +149,7 @@ static void assembleshader_test(void) {
     };
     struct D3DXIncludeImpl include;
     HRESULT shader_vsh_res;
+    static const WCHAR shader_filename_w[] = {'s','h','a','d','e','r','.','v','s','h',0};
 
     /* pDefines test */
     shader = NULL;
@@ -256,6 +269,43 @@ static void assembleshader_test(void) {
             }
             if(shader) ID3DXBuffer_Release(shader);
         } else skip("Couldn't create \"include\" directory\n");
+
+        DeleteFileA("shader.vsh");
+        DeleteFileA("incl.vsh");
+        DeleteFileA("shader3.vsh");
+        DeleteFileA("incl4.vsh");
+        DeleteFileA("include/incl3.vsh");
+        DeleteFileA("include/incl4.vsh");
+        RemoveDirectoryA("include");
+
+        /* The main shader is also to be loaded through the ID3DXInclude object. */
+        shader = NULL;
+        messages = NULL;
+        hr = D3DXAssembleShaderFromFileA("shader.vsh", NULL, &include.ID3DXInclude_iface,
+                D3DXSHADER_SKIPVALIDATION, &shader, &messages);
+        ok(hr == D3D_OK, "D3DXAssembleShaderFromFile + pInclude main shader test failed with error 0x%x - %d\n",
+                hr, hr & 0x0000ffff);
+        if (messages)
+        {
+            trace("D3DXAssembleShader messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
+            ID3DXBuffer_Release(messages);
+        }
+        if (shader)
+            ID3DXBuffer_Release(shader);
+
+        shader = NULL;
+        messages = NULL;
+        hr = D3DXAssembleShaderFromFileW(shader_filename_w, NULL, &include.ID3DXInclude_iface,
+                D3DXSHADER_SKIPVALIDATION, &shader, &messages);
+        ok(hr == D3D_OK, "D3DXAssembleShaderFromFile + pInclude main shader test failed with error 0x%x - %d\n",
+                hr, hr & 0x0000ffff);
+        if (messages)
+        {
+            trace("D3DXAssembleShader messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
+            ID3DXBuffer_Release(messages);
+        }
+        if (shader)
+            ID3DXBuffer_Release(shader);
     } else skip("Couldn't create \"shader.vsh\"\n");
 
     /* NULL shader tests */
@@ -310,46 +360,31 @@ static void assembleshader_test(void) {
         ID3DXBuffer_Release(messages);
     }
     if(shader) ID3DXBuffer_Release(shader);
-
-    /* cleanup */
-    if(SUCCEEDED(shader_vsh_res)) {
-        DeleteFileA("shader.vsh");
-        DeleteFileA("incl.vsh");
-        DeleteFileA("shader3.vsh");
-        DeleteFileA("incl4.vsh");
-        DeleteFileA("include/incl3.vsh");
-        DeleteFileA("include/incl4.vsh");
-        RemoveDirectoryA("include");
-    }
 }
 
-static void d3dxpreprocess_test(void) {
-    const char testincl[] = {
-        "#define REGISTER r0\n"
-        "vs.1.1\n"
-    };
-    const char testshader[] = {
-        "#include \"incl.vsh\"\n"
-        "mov REGISTER, v0\n"
-    };
-    const char testshader3[] = {
-        "#include \"include/incl3.vsh\"\n"
-        "mov REGISTER, v0\n"
-    };
-    const char testincl3[] = {
-        "#include \"incl4.vsh\"\n"
-    };
-    const char testincl4_ok[] = {
-        "#define REGISTER r0\n"
-        "vs.1.1\n"
-    };
-    const char testincl4_wrong[] = {
-        "#error \"wrong include\"\n"
-    };
+static void d3dxpreprocess_test(void)
+{
+    static const char testincl[] =
+            "#define REGISTER r0\n"
+            "vs.1.1\n";
+    static const char testshader[] =
+            "#include \"incl.vsh\"\n"
+            "mov REGISTER, v0\n";
+    static const char testshader3[] =
+            "#include \"include/incl3.vsh\"\n"
+            "mov REGISTER, v0\n";
+    static const char testincl3[] =
+            "#include \"incl4.vsh\"\n";
+    static const char testincl4_ok[] =
+            "#define REGISTER r0\n"
+            "vs.1.1\n";
+    static const char testincl4_wrong[] =
+            "#error \"wrong include\"\n";
     HRESULT hr;
     ID3DXBuffer *shader, *messages;
     HRESULT shader_vsh_res;
-    struct D3DXIncludeImpl include = {{&D3DXInclude_Vtbl}};
+    static struct D3DXIncludeImpl include = {{&D3DXInclude_Vtbl}};
+    static const WCHAR shader_filename_w[] = {'s','h','a','d','e','r','.','v','s','h',0};
 
     shader_vsh_res = create_file("shader.vsh", testshader, sizeof(testshader) - 1);
     if(SUCCEEDED(shader_vsh_res)) {
@@ -397,6 +432,43 @@ static void d3dxpreprocess_test(void) {
             ID3DXBuffer_Release(messages);
         }
         if(shader) ID3DXBuffer_Release(shader);
+
+        DeleteFileA("shader.vsh");
+        DeleteFileA("incl.vsh");
+        DeleteFileA("shader3.vsh");
+        DeleteFileA("incl4.vsh");
+        DeleteFileA("include/incl3.vsh");
+        DeleteFileA("include/incl4.vsh");
+        RemoveDirectoryA("include");
+
+        /* The main shader is also to be loaded through the ID3DXInclude object. */
+        shader = NULL;
+        messages = NULL;
+        hr = D3DXPreprocessShaderFromFileA("shader.vsh", NULL, &include.ID3DXInclude_iface,
+                &shader, &messages);
+        ok(hr == D3D_OK, "D3DXPreprocessShaderFromFile + pInclude main shader test failed with error 0x%x - %d\n",
+                hr, hr & 0x0000ffff);
+        if (messages)
+        {
+            trace("D3DXPreprocessShaderFromFile messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
+            ID3DXBuffer_Release(messages);
+        }
+        if (shader)
+            ID3DXBuffer_Release(shader);
+
+        shader = NULL;
+        messages = NULL;
+        hr = D3DXPreprocessShaderFromFileW(shader_filename_w, NULL, &include.ID3DXInclude_iface,
+                &shader, &messages);
+        ok(hr == D3D_OK, "D3DXPreprocessShaderFromFile + pInclude main shader test failed with error 0x%x - %d\n",
+                hr, hr & 0x0000ffff);
+        if (messages)
+        {
+            trace("D3DXPreprocessShaderFromFile messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
+            ID3DXBuffer_Release(messages);
+        }
+        if (shader)
+            ID3DXBuffer_Release(shader);
     } else skip("Couldn't create \"shader.vsh\"\n");
 
     /* NULL shader tests */
@@ -439,17 +511,6 @@ static void d3dxpreprocess_test(void) {
         ID3DXBuffer_Release(messages);
     }
     if(shader) ID3DXBuffer_Release(shader);
-
-    /* cleanup */
-    if(SUCCEEDED(shader_vsh_res)) {
-        DeleteFileA("shader.vsh");
-        DeleteFileA("incl.vsh");
-        DeleteFileA("shader3.vsh");
-        DeleteFileA("incl4.vsh");
-        DeleteFileA("include/incl3.vsh");
-        DeleteFileA("include/incl4.vsh");
-        RemoveDirectoryA("include");
-    }
 }
 
 START_TEST(asm)
