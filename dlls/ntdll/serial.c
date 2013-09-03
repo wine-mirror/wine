@@ -1322,7 +1322,7 @@ NTSTATUS COMM_DeviceIoControl(HANDLE hDevice,
             attr.SecurityQualityOfService = NULL;
             status = NtCreateEvent(&hev, EVENT_ALL_ACCESS, &attr, SynchronizationEvent, FALSE);
 
-            if (status) goto done;
+            if (status) return status;
         }
         status = io_control(hDevice, hev, UserApcRoutine, UserApcContext,
                             piosb, dwIoControlCode, lpInBuffer, nInBufferSize,
@@ -1340,6 +1340,5 @@ NTSTATUS COMM_DeviceIoControl(HANDLE hDevice,
     else status = io_control(hDevice, hEvent, UserApcRoutine, UserApcContext,
                              piosb, dwIoControlCode, lpInBuffer, nInBufferSize,
                              lpOutBuffer, nOutBufferSize);
-done:
     return status;
 }
