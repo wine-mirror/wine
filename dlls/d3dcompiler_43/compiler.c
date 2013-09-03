@@ -149,8 +149,10 @@ static char *wpp_lookup_mem(const char *filename, int type, const char *parent_n
     char *path;
     int i;
 
+    TRACE("Looking for include %s.\n", debugstr_a(filename));
+
     parent_include = NULL;
-    if(parent_name[0] != '\0')
+    if (strcmp(parent_name, initial_filename))
     {
         for(i = 0; i < includes_size; i++)
         {
@@ -162,7 +164,7 @@ static char *wpp_lookup_mem(const char *filename, int type, const char *parent_n
         }
         if(parent_include == NULL)
         {
-            ERR("Parent include file missing\n");
+            ERR("Parent include %s missing.\n", debugstr_a(parent_name));
             return NULL;
         }
     }
@@ -177,6 +179,8 @@ static void *wpp_open_mem(const char *filename, int type)
 {
     struct mem_file_desc *desc;
     HRESULT hr;
+
+    TRACE("Opening include %s.\n", debugstr_a(filename));
 
     if(!strcmp(filename, initial_filename))
     {
