@@ -16487,6 +16487,7 @@ wine_fn_config_dll xinput1_1 enable_xinput1_1
 wine_fn_config_dll xinput1_2 enable_xinput1_2
 wine_fn_config_dll xinput1_3 enable_xinput1_3 implib xinput
 wine_fn_config_test dlls/xinput1_3/tests xinput1_3_test
+wine_fn_config_dll xinput1_4 enable_xinput1_4
 wine_fn_config_dll xinput9_1_0 enable_xinput9_1_0
 wine_fn_config_dll xmllite enable_xmllite
 wine_fn_config_test dlls/xmllite/tests xmllite_test
