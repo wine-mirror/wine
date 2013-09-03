@@ -2817,13 +2817,13 @@ static ULONG WINAPI saxxmlreader_Release(
 
         for (i = 0; i < SAXHandler_Last; i++)
         {
-            struct saxanyhandler_iface *iface = &This->saxhandlers[i].u.anyhandler;
+            struct saxanyhandler_iface *saxiface = &This->saxhandlers[i].u.anyhandler;
 
-            if (iface->handler)
-                IUnknown_Release(iface->handler);
+            if (saxiface->handler)
+                IUnknown_Release(saxiface->handler);
 
-            if (iface->vbhandler)
-                IUnknown_Release(iface->vbhandler);
+            if (saxiface->vbhandler)
+                IUnknown_Release(saxiface->vbhandler);
         }
 
         SysFreeString(This->xmldecl_version);
