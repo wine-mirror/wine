@@ -5507,7 +5507,7 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct wined3d_shader_buf
     {
         const char *texture_function, *coord_mask;
         char tex_reg_name[8];
-        BOOL proj, clamp;
+        BOOL proj;
 
         if (!(tex_map & (1 << stage)))
             continue;
@@ -5526,12 +5526,6 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct wined3d_shader_buf
             FIXME("Unexpected projection mode %d\n", settings->op[stage].projected);
             proj = TRUE;
         }
-
-        if (settings->op[stage].cop == WINED3D_TOP_BUMPENVMAP
-                || settings->op[stage].cop == WINED3D_TOP_BUMPENVMAP_LUMINANCE)
-            clamp = FALSE;
-        else
-            clamp = TRUE;
 
         switch (settings->op[stage].tex_type)
         {
@@ -5624,12 +5618,8 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct wined3d_shader_buf
                 shader_addline(buffer, "ret = gl_TexCoord[%u] + ret.xyxy;\n", stage);
             }
 
-            if (clamp)
-                shader_addline(buffer, "tex%u = clamp(%s(ps_sampler%u, ret.%s), 0.0, 1.0);\n",
-                        stage, texture_function, stage, coord_mask);
-            else
-                shader_addline(buffer, "tex%u = %s(ps_sampler%u, ret.%s);\n",
-                        stage, texture_function, stage, coord_mask);
+            shader_addline(buffer, "tex%u = %s(ps_sampler%u, ret.%s);\n",
+                    stage, texture_function, stage, coord_mask);
 
             if (settings->op[stage - 1].cop == WINED3D_TOP_BUMPENVMAP_LUMINANCE)
                 shader_addline(buffer, "tex%u *= clamp(tex%u.z * bumpenv_lum_scale%u + bumpenv_lum_offset%u, 0.0, 1.0);\n",
@@ -5637,21 +5627,13 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct wined3d_shader_buf
         }
         else if (settings->op[stage].projected == proj_count3)
         {
-            if (clamp)
-                shader_addline(buffer, "tex%u = clamp(%s(ps_sampler%u, gl_TexCoord[%u].xyz), 0.0, 1.0);\n",
-                        stage, texture_function, stage, stage);
-            else
-                shader_addline(buffer, "tex%u = %s(ps_sampler%u, gl_TexCoord[%u].xyz);\n",
-                        stage, texture_function, stage, stage);
+            shader_addline(buffer, "tex%u = %s(ps_sampler%u, gl_TexCoord[%u].xyz);\n",
+                    stage, texture_function, stage, stage);
         }
         else
         {
-            if (clamp)
-                shader_addline(buffer, "tex%u = clamp(%s(ps_sampler%u, gl_TexCoord[%u].%s), 0.0, 1.0);\n",
-                        stage, texture_function, stage, stage, coord_mask);
-            else
-                shader_addline(buffer, "tex%u = %s(ps_sampler%u, gl_TexCoord[%u].%s);\n",
-                        stage, texture_function, stage, stage, coord_mask);
+            shader_addline(buffer, "tex%u = %s(ps_sampler%u, gl_TexCoord[%u].%s);\n",
+                    stage, texture_function, stage, stage, coord_mask);
         }
 
         sprintf(tex_reg_name, "tex%u", stage);
