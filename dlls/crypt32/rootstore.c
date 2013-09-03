@@ -256,9 +256,10 @@ static void check_and_store_certs(HCERTSTORE from, HCERTSTORE to)
             {
                 CERT_CHAIN_PARA chainPara = { sizeof(chainPara), { 0 } };
                 PCCERT_CHAIN_CONTEXT chain;
-                BOOL ret = CertGetCertificateChain(engine, cert, NULL, from,
-                 &chainPara, 0, NULL, &chain);
+                BOOL ret;
 
+                ret = CertGetCertificateChain(engine, cert, NULL, from,
+                 &chainPara, CERT_CHAIN_CACHE_ONLY_URL_RETRIEVAL, NULL, &chain);
                 if (!ret)
                     TRACE("rejecting %s: %s\n", get_cert_common_name(cert),
                      "chain creation failed");
