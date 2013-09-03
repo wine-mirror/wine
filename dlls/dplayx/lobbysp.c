@@ -28,14 +28,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(dplay);
 
 typedef struct IDPLobbySPImpl
 {
-  const IDPLobbySPVtbl *lpVtbl;
+  IDPLobbySP IDPLobbySP_iface;
   LONG ref;
   IDirectPlayImpl *dplay;
 } IDPLobbySPImpl;
 
 static inline IDPLobbySPImpl *impl_from_IDPLobbySP(IDPLobbySP *iface)
 {
-    return CONTAINING_RECORD( iface, IDPLobbySPImpl, lpVtbl );
+    return CONTAINING_RECORD(iface, IDPLobbySPImpl, IDPLobbySP_iface);
 }
 
 /* Forward declaration of virtual tables */
@@ -56,7 +56,7 @@ HRESULT DPLSP_CreateInterface( REFIID riid, void **ppvObj, IDirectPlayImpl *dp )
   if( IsEqualGUID( &IID_IDPLobbySP, riid ) )
   {
     IDPLobbySPImpl *This = *ppvObj;
-    This->lpVtbl = &dpLobbySPVT;
+    This->IDPLobbySP_iface.lpVtbl = &dpLobbySPVT;
     This->dplay = dp;
   }
   else
