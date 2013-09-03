@@ -2011,7 +2011,7 @@
 @ cdecl exp(double) msvcrt.exp
 @ cdecl -arch=arm,x86_64 expf(float) msvcrt.expf
 @ cdecl fabs(double) msvcrt.fabs
-@ stub -arch=arm fabsf
+@ cdecl -arch=arm,x86_64 fabsf(float) msvcrt.fabsf
 @ cdecl fclose(ptr) msvcrt.fclose
 @ cdecl feof(ptr) msvcrt.feof
 @ cdecl ferror(ptr) msvcrt.ferror
