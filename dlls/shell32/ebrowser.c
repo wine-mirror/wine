@@ -782,7 +782,7 @@ static HRESULT WINAPI IExplorerBrowser_fnQueryInterface(IExplorerBrowser *iface,
     if(IsEqualIID(riid, &IID_IExplorerBrowser) ||
        IsEqualIID(riid, &IID_IUnknown))
     {
-        *ppvObject = This;
+        *ppvObject = &This->IExplorerBrowser_iface;
     }
     else if(IsEqualIID(riid, &IID_IShellBrowser))
     {

@@ -47,7 +47,7 @@ typedef struct {
 } ShellDispatch;
 
 typedef struct {
-    Folder3 Folder_iface;
+    Folder3 Folder3_iface;
     LONG ref;
     ITypeInfo *iTypeInfo;
     VARIANT dir;
@@ -67,7 +67,7 @@ static inline ShellDispatch *impl_from_IShellDispatch2(IShellDispatch2 *iface)
 
 static inline FolderImpl *impl_from_Folder(Folder3 *iface)
 {
-    return CONTAINING_RECORD(iface, FolderImpl, Folder_iface);
+    return CONTAINING_RECORD(iface, FolderImpl, Folder3_iface);
 }
 
 static inline FolderItemImpl *impl_from_FolderItem(FolderItem *iface)
@@ -107,7 +107,7 @@ static HRESULT WINAPI FolderItemImpl_QueryInterface(FolderItem *iface,
     if (IsEqualIID(&IID_IUnknown, riid) ||
         IsEqualIID(&IID_IDispatch, riid) ||
         IsEqualIID(&IID_FolderItem, riid))
-        *ppv = This;
+        *ppv = &This->FolderItem_iface;
     else
     {
         FIXME("not implemented for %s\n", shdebugstr_guid(riid));
@@ -430,7 +430,7 @@ static HRESULT WINAPI FolderImpl_QueryInterface(Folder3 *iface, REFIID riid,
         IsEqualIID(&IID_Folder, riid) ||
         IsEqualIID(&IID_Folder2, riid) ||
         IsEqualIID(&IID_Folder3, riid))
-        *ppv = This;
+        *ppv = &This->Folder3_iface;
     else
     {
         FIXME("not implemented for %s\n", shdebugstr_guid(riid));
@@ -712,7 +712,7 @@ static HRESULT Folder_Constructor(VARIANT *dir, Folder **ppsdf)
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(FolderImpl));
     if (!This) return E_OUTOFMEMORY;
-    This->Folder_iface.lpVtbl = &FolderImpl_Vtbl;
+    This->Folder3_iface.lpVtbl = &FolderImpl_Vtbl;
     This->ref = 1;
 
     ret = load_type_info(&IID_Folder3, &This->iTypeInfo);
@@ -748,7 +748,7 @@ static HRESULT WINAPI ShellDispatch_QueryInterface(IShellDispatch2 *iface,
         IsEqualIID(&IID_IDispatch, riid) ||
         IsEqualIID(&IID_IShellDispatch, riid) ||
         IsEqualIID(&IID_IShellDispatch2, riid))
-        *ppv = This;
+        *ppv = &This->IShellDispatch2_iface;
     else
     {
         FIXME("not implemented for %s\n", shdebugstr_guid(riid));

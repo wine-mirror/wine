@@ -63,13 +63,10 @@ static HRESULT WINAPI IEnumFORMATETC_fnQueryInterface(
 
 	*ppvObj = NULL;
 
-	if(IsEqualIID(riid, &IID_IUnknown))
+	if(IsEqualIID(riid, &IID_IUnknown) ||
+           IsEqualIID(riid, &IID_IEnumFORMATETC))
 	{
-	  *ppvObj = This;
-	}
-	else if(IsEqualIID(riid, &IID_IEnumFORMATETC))
-	{
-          *ppvObj = This;
+	  *ppvObj = &This->IEnumFORMATETC_iface;
 	}
 
 	if(*ppvObj)
@@ -229,20 +226,17 @@ static inline IDataObjectImpl *impl_from_IDataObject(IDataObject *iface)
 /***************************************************************************
 *  IDataObject_QueryInterface
 */
-static HRESULT WINAPI IDataObject_fnQueryInterface(LPDATAOBJECT iface, REFIID riid, LPVOID * ppvObj)
+static HRESULT WINAPI IDataObject_fnQueryInterface(IDataObject *iface, REFIID riid, LPVOID * ppvObj)
 {
 	IDataObjectImpl *This = impl_from_IDataObject(iface);
 	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,debugstr_guid(riid),ppvObj);
 
 	*ppvObj = NULL;
 
-	if(IsEqualIID(riid, &IID_IUnknown))          /*IUnknown*/
+	if(IsEqualIID(riid, &IID_IUnknown) ||
+           IsEqualIID(riid, &IID_IDataObject))
 	{
-	  *ppvObj = This;
-	}
-	else if(IsEqualIID(riid, &IID_IDataObject))  /*IDataObject*/
-	{
-          *ppvObj = This;
+	  *ppvObj = &This->IDataObject_iface;
 	}
 
 	if(*ppvObj)
@@ -258,7 +252,7 @@ static HRESULT WINAPI IDataObject_fnQueryInterface(LPDATAOBJECT iface, REFIID ri
 /**************************************************************************
 *  IDataObject_AddRef
 */
-static ULONG WINAPI IDataObject_fnAddRef(LPDATAOBJECT iface)
+static ULONG WINAPI IDataObject_fnAddRef(IDataObject *iface)
 {
 	IDataObjectImpl *This = impl_from_IDataObject(iface);
 	ULONG refCount = InterlockedIncrement(&This->ref);
@@ -271,7 +265,7 @@ static ULONG WINAPI IDataObject_fnAddRef(LPDATAOBJECT iface)
 /**************************************************************************
 *  IDataObject_Release
 */
-static ULONG WINAPI IDataObject_fnRelease(LPDATAOBJECT iface)
+static ULONG WINAPI IDataObject_fnRelease(IDataObject *iface)
 {
 	IDataObjectImpl *This = impl_from_IDataObject(iface);
 	ULONG refCount = InterlockedDecrement(&This->ref);
@@ -291,7 +285,7 @@ static ULONG WINAPI IDataObject_fnRelease(LPDATAOBJECT iface)
 /**************************************************************************
 * IDataObject_fnGetData
 */
-static HRESULT WINAPI IDataObject_fnGetData(LPDATAOBJECT iface, LPFORMATETC pformatetcIn, STGMEDIUM *pmedium)
+static HRESULT WINAPI IDataObject_fnGetData(IDataObject *iface, LPFORMATETC pformatetcIn, STGMEDIUM *pmedium)
 {
 	IDataObjectImpl *This = impl_from_IDataObject(iface);
 
@@ -335,14 +329,14 @@ static HRESULT WINAPI IDataObject_fnGetData(LPDATAOBJECT iface, LPFORMATETC pfor
 	return E_OUTOFMEMORY;
 }
 
-static HRESULT WINAPI IDataObject_fnGetDataHere(LPDATAOBJECT iface, LPFORMATETC pformatetc, STGMEDIUM *pmedium)
+static HRESULT WINAPI IDataObject_fnGetDataHere(IDataObject *iface, LPFORMATETC pformatetc, STGMEDIUM *pmedium)
 {
 	IDataObjectImpl *This = impl_from_IDataObject(iface);
 	FIXME("(%p)->()\n", This);
 	return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDataObject_fnQueryGetData(LPDATAOBJECT iface, LPFORMATETC pformatetc)
+static HRESULT WINAPI IDataObject_fnQueryGetData(IDataObject *iface, LPFORMATETC pformatetc)
 {
 	IDataObjectImpl *This = impl_from_IDataObject(iface);
 	UINT i;
@@ -365,21 +359,21 @@ static HRESULT WINAPI IDataObject_fnQueryGetData(LPDATAOBJECT iface, LPFORMATETC
 	return DV_E_TYMED;
 }
 
-static HRESULT WINAPI IDataObject_fnGetCanonicalFormatEtc(LPDATAOBJECT iface, LPFORMATETC pformatectIn, LPFORMATETC pformatetcOut)
+static HRESULT WINAPI IDataObject_fnGetCanonicalFormatEtc(IDataObject *iface, LPFORMATETC pformatectIn, LPFORMATETC pformatetcOut)
 {
 	IDataObjectImpl *This = impl_from_IDataObject(iface);
 	FIXME("(%p)->()\n", This);
 	return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDataObject_fnSetData(LPDATAOBJECT iface, LPFORMATETC pformatetc, STGMEDIUM *pmedium, BOOL fRelease)
+static HRESULT WINAPI IDataObject_fnSetData(IDataObject *iface, LPFORMATETC pformatetc, STGMEDIUM *pmedium, BOOL fRelease)
 {
 	IDataObjectImpl *This = impl_from_IDataObject(iface);
 	FIXME("(%p)->()\n", This);
 	return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDataObject_fnEnumFormatEtc(LPDATAOBJECT iface, DWORD dwDirection, IEnumFORMATETC **ppenumFormatEtc)
+static HRESULT WINAPI IDataObject_fnEnumFormatEtc(IDataObject *iface, DWORD dwDirection, IEnumFORMATETC **ppenumFormatEtc)
 {
 	IDataObjectImpl *This = impl_from_IDataObject(iface);
 
@@ -396,19 +390,19 @@ static HRESULT WINAPI IDataObject_fnEnumFormatEtc(LPDATAOBJECT iface, DWORD dwDi
 	return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDataObject_fnDAdvise(LPDATAOBJECT iface, FORMATETC *pformatetc, DWORD advf, IAdviseSink *pAdvSink, DWORD *pdwConnection)
+static HRESULT WINAPI IDataObject_fnDAdvise(IDataObject *iface, FORMATETC *pformatetc, DWORD advf, IAdviseSink *pAdvSink, DWORD *pdwConnection)
 {
 	IDataObjectImpl *This = impl_from_IDataObject(iface);
 	FIXME("(%p)->()\n", This);
 	return E_NOTIMPL;
 }
-static HRESULT WINAPI IDataObject_fnDUnadvise(LPDATAOBJECT iface, DWORD dwConnection)
+static HRESULT WINAPI IDataObject_fnDUnadvise(IDataObject *iface, DWORD dwConnection)
 {
 	IDataObjectImpl *This = impl_from_IDataObject(iface);
 	FIXME("(%p)->()\n", This);
 	return E_NOTIMPL;
 }
-static HRESULT WINAPI IDataObject_fnEnumDAdvise(LPDATAOBJECT iface, IEnumSTATDATA **ppenumAdvise)
+static HRESULT WINAPI IDataObject_fnEnumDAdvise(IDataObject *iface, IEnumSTATDATA **ppenumAdvise)
 {
 	IDataObjectImpl *This = impl_from_IDataObject(iface);
 	FIXME("(%p)->()\n", This);
@@ -434,7 +428,7 @@ static const IDataObjectVtbl dtovt =
 /**************************************************************************
 *  IDataObject_Constructor
 */
-LPDATAOBJECT IDataObject_Constructor(HWND hwndOwner,
+IDataObject* IDataObject_Constructor(HWND hwndOwner,
                LPCITEMIDLIST pMyPidl, LPCITEMIDLIST * apidl, UINT cidl)
 {
     IDataObjectImpl* dto;
@@ -459,5 +453,5 @@ LPDATAOBJECT IDataObject_Constructor(HWND hwndOwner,
     }
 
     TRACE("(%p)->(apidl=%p cidl=%u)\n",dto, apidl, cidl);
-    return (LPDATAOBJECT)dto;
+    return &dto->IDataObject_iface;
 }

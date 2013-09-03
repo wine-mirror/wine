@@ -358,7 +358,7 @@ static HRESULT WINAPI RecycleBin_QueryInterface(IShellFolder2 *iface, REFIID rii
     *ppvObject = NULL;
     if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IShellFolder)
             || IsEqualGUID(riid, &IID_IShellFolder2))
-        *ppvObject = This;
+        *ppvObject = &This->IShellFolder2_iface;
 
     if (IsEqualGUID(riid, &IID_IPersist) || IsEqualGUID(riid, &IID_IPersistFolder)
             || IsEqualGUID(riid, &IID_IPersistFolder2))
@@ -703,21 +703,21 @@ static HRESULT WINAPI RecycleBin_IPersistFolder2_QueryInterface(IPersistFolder2 
 {
     RecycleBin *This = impl_from_IPersistFolder2(iface);
 
-    return RecycleBin_QueryInterface(&This->IShellFolder2_iface, riid, ppvObject);
+    return IShellFolder2_QueryInterface(&This->IShellFolder2_iface, riid, ppvObject);
 }
 
 static ULONG WINAPI RecycleBin_IPersistFolder2_AddRef(IPersistFolder2 *iface)
 {
     RecycleBin *This = impl_from_IPersistFolder2(iface);
 
-    return RecycleBin_AddRef(&This->IShellFolder2_iface);
+    return IShellFolder2_AddRef(&This->IShellFolder2_iface);
 }
 
 static ULONG WINAPI RecycleBin_IPersistFolder2_Release(IPersistFolder2 *iface)
 {
     RecycleBin *This = impl_from_IPersistFolder2(iface);
 
-    return RecycleBin_Release(&This->IShellFolder2_iface);
+    return IShellFolder2_Release(&This->IShellFolder2_iface);
 }
 
 static const IPersistFolder2Vtbl recycleBinPersistVtbl =
@@ -740,21 +740,21 @@ static HRESULT WINAPI RecycleBin_ISFHelper_QueryInterface(ISFHelper *iface, REFI
 {
     RecycleBin *This = impl_from_ISFHelper(iface);
 
-    return RecycleBin_QueryInterface(&This->IShellFolder2_iface, riid, ppvObject);
+    return IShellFolder2_QueryInterface(&This->IShellFolder2_iface, riid, ppvObject);
 }
 
 static ULONG WINAPI RecycleBin_ISFHelper_AddRef(ISFHelper *iface)
 {
     RecycleBin *This = impl_from_ISFHelper(iface);
 
-    return RecycleBin_AddRef(&This->IShellFolder2_iface);
+    return IShellFolder2_AddRef(&This->IShellFolder2_iface);
 }
 
 static ULONG WINAPI RecycleBin_ISFHelper_Release(ISFHelper *iface)
 {
     RecycleBin *This = impl_from_ISFHelper(iface);
 
-    return RecycleBin_Release(&This->IShellFolder2_iface);
+    return IShellFolder2_Release(&This->IShellFolder2_iface);
 }
 
 static HRESULT WINAPI RecycleBin_GetUniqueName(ISFHelper *iface,LPWSTR lpName,

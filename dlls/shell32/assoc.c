@@ -100,7 +100,7 @@ static HRESULT WINAPI IQueryAssociations_fnQueryInterface(
   if (IsEqualIID(riid, &IID_IUnknown) ||
       IsEqualIID(riid, &IID_IQueryAssociations))
   {
-    *ppvObj = This;
+    *ppvObj = &This->IQueryAssociations_iface;
 
     IQueryAssociations_AddRef((IQueryAssociations*)*ppvObj);
     TRACE("Returning IQueryAssociations (%p)\n", *ppvObj);
@@ -901,7 +901,7 @@ HRESULT WINAPI QueryAssociations_Constructor(IUnknown *pUnkOuter, REFIID riid, L
     this->ref = 0;
     this->hkeySource = 0;
     this->hkeyProgID = 0;
-    if (FAILED(ret = IUnknown_QueryInterface((IUnknown *)this, riid, ppOutput))) SHFree( this );
+    if (FAILED(ret = IQueryAssociations_QueryInterface(&this->IQueryAssociations_iface, riid, ppOutput))) SHFree( this );
     TRACE("returning %p\n", *ppOutput);
     return ret;
 }

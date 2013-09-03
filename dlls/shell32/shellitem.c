@@ -69,7 +69,7 @@ static HRESULT WINAPI ShellItem_QueryInterface(IShellItem2 *iface, REFIID riid,
     if (IsEqualIID(&IID_IUnknown, riid) || IsEqualIID(&IID_IShellItem, riid) ||
         IsEqualIID(&IID_IShellItem2, riid))
     {
-        *ppv = This;
+        *ppv = &This->IShellItem2_iface;
     }
     else if (IsEqualIID(&IID_IPersist, riid) || IsEqualIID(&IID_IPersistIDList, riid))
     {
@@ -447,41 +447,30 @@ static const IShellItem2Vtbl ShellItem2_Vtbl = {
     ShellItem2_GetBool
 };
 
-
-static HRESULT ShellItem_GetClassID(ShellItem* This, CLSID *pClassID)
-{
-    TRACE("(%p,%p)\n", This, pClassID);
-
-    *pClassID = CLSID_ShellItem;
-    return S_OK;
-}
-
-
 static HRESULT WINAPI ShellItem_IPersistIDList_QueryInterface(IPersistIDList *iface,
     REFIID riid, void **ppv)
 {
     ShellItem *This = impl_from_IPersistIDList(iface);
-    return ShellItem_QueryInterface(&This->IShellItem2_iface, riid, ppv);
+    return IShellItem2_QueryInterface(&This->IShellItem2_iface, riid, ppv);
 }
 
 static ULONG WINAPI ShellItem_IPersistIDList_AddRef(IPersistIDList *iface)
 {
     ShellItem *This = impl_from_IPersistIDList(iface);
-    return ShellItem_AddRef(&This->IShellItem2_iface);
+    return IShellItem2_AddRef(&This->IShellItem2_iface);
 }
 
 static ULONG WINAPI ShellItem_IPersistIDList_Release(IPersistIDList *iface)
 {
     ShellItem *This = impl_from_IPersistIDList(iface);
-    return ShellItem_Release(&This->IShellItem2_iface);
+    return IShellItem2_Release(&This->IShellItem2_iface);
 }
 
 static HRESULT WINAPI ShellItem_IPersistIDList_GetClassID(IPersistIDList* iface,
     CLSID *pClassID)
 {
-    ShellItem *This = impl_from_IPersistIDList(iface);
-
-    return ShellItem_GetClassID(This, pClassID);
+    *pClassID = CLSID_ShellItem;
+    return S_OK;
 }
 
 static HRESULT WINAPI ShellItem_IPersistIDList_SetIDList(IPersistIDList* iface,
@@ -545,8 +534,8 @@ HRESULT WINAPI IShellItem_Constructor(IUnknown *pUnkOuter, REFIID riid, void **p
     This->pidl = NULL;
     This->IPersistIDList_iface.lpVtbl = &ShellItem_IPersistIDList_Vtbl;
 
-    ret = ShellItem_QueryInterface(&This->IShellItem2_iface, riid, ppv);
-    ShellItem_Release(&This->IShellItem2_iface);
+    ret = IShellItem2_QueryInterface(&This->IShellItem2_iface, riid, ppv);
+    IShellItem2_Release(&This->IShellItem2_iface);
 
     return ret;
 }
@@ -800,7 +789,7 @@ static HRESULT WINAPI IShellItemArray_fnQueryInterface(IShellItemArray *iface,
     if(IsEqualIID(riid, &IID_IShellItemArray) ||
        IsEqualIID(riid, &IID_IUnknown))
     {
-        *ppvObject = This;
+        *ppvObject = &This->IShellItemArray_iface;
     }
 
     if(*ppvObject)

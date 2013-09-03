@@ -80,7 +80,7 @@ HRESULT WINAPI IDropTargetHelper_Constructor (IUnknown * pUnkOuter, REFIID riid,
     dth->IDropTargetHelper_iface.lpVtbl = &vt_IDropTargetHelper;
 
     if (FAILED (IDropTargetHelper_QueryInterface (&dth->IDropTargetHelper_iface, riid, ppv))) {
-        IDropTargetHelper_Release (&dth->IDropTargetHelper_iface);
+        LocalFree(dth);
 	return E_NOINTERFACE;
     }
 
@@ -100,7 +100,7 @@ static HRESULT WINAPI IDropTargetHelper_fnQueryInterface (IDropTargetHelper * if
     *ppvObj = NULL;
 
     if (IsEqualIID (riid, &IID_IUnknown) || IsEqualIID (riid, &IID_IDropTargetHelper)) {
-	*ppvObj = This;
+	*ppvObj = &This->IDropTargetHelper_iface;
     }
 
     if (*ppvObj) {

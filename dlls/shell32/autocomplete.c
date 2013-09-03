@@ -350,7 +350,7 @@ static HRESULT WINAPI IAutoComplete2_fnQueryInterface(
         IsEqualIID(riid, &IID_IAutoComplete) ||
         IsEqualIID(riid, &IID_IAutoComplete2))
     {
-        *ppvObj = This;
+        *ppvObj = &This->IAutoComplete2_iface;
     }
     else if (IsEqualIID(riid, &IID_IAutoCompleteDropDown))
     {
@@ -561,19 +561,19 @@ static HRESULT WINAPI IAutoCompleteDropDown_fnQueryInterface(IAutoCompleteDropDo
             REFIID riid, LPVOID *ppvObj)
 {
     IAutoCompleteImpl *This = impl_from_IAutoCompleteDropDown(iface);
-    return IAutoComplete2_fnQueryInterface(&This->IAutoComplete2_iface, riid, ppvObj);
+    return IAutoComplete2_QueryInterface(&This->IAutoComplete2_iface, riid, ppvObj);
 }
 
 static ULONG WINAPI IAutoCompleteDropDown_fnAddRef(IAutoCompleteDropDown *iface)
 {
     IAutoCompleteImpl *This = impl_from_IAutoCompleteDropDown(iface);
-    return IAutoComplete2_fnAddRef(&This->IAutoComplete2_iface);
+    return IAutoComplete2_AddRef(&This->IAutoComplete2_iface);
 }
 
 static ULONG WINAPI IAutoCompleteDropDown_fnRelease(IAutoCompleteDropDown *iface)
 {
     IAutoCompleteImpl *This = impl_from_IAutoCompleteDropDown(iface);
-    return IAutoComplete2_fnRelease(&This->IAutoComplete2_iface);
+    return IAutoComplete2_Release(&This->IAutoComplete2_iface);
 }
 
 /**************************************************************************
