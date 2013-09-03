@@ -193,12 +193,12 @@ typedef D3DXATTRIBUTERANGE* LPD3DXATTRIBUTERANGE;
 typedef struct _D3DXMATERIAL
 {
     D3DMATERIAL9 MatD3D;
-    LPSTR pTextureFilename;
+    char *pTextureFilename;
 } D3DXMATERIAL, *LPD3DXMATERIAL;
 
 typedef struct _D3DXEFFECTDEFAULT
 {
-    LPSTR pParamName;
+    char *pParamName;
     D3DXEFFECTDEFAULTTYPE Type;
     DWORD NumBytes;
     LPVOID pValue;
@@ -206,7 +206,7 @@ typedef struct _D3DXEFFECTDEFAULT
 
 typedef struct _D3DXEFFECTINSTANCE
 {
-    LPSTR pEffectFilename;
+    char *pEffectFilename;
     DWORD NumDefaults;
     LPD3DXEFFECTDEFAULT pDefaults;
 } D3DXEFFECTINSTANCE, *LPD3DXEFFECTINSTANCE;

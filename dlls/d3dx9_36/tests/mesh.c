@@ -1781,7 +1781,7 @@ static void check_generated_effects_(int line, const D3DXMATERIAL *materials, DW
 
 static char *strdupA(const char *p)
 {
-    LPSTR ret;
+    char *ret;
     if (!p) return NULL;
     ret = HeapAlloc(GetProcessHeap(), 0, strlen(p) + 1);
     if (ret) strcpy(ret, p);

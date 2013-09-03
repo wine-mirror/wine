@@ -2638,7 +2638,7 @@ struct mesh_data {
     DWORD nb_bones;
 };
 
-static HRESULT parse_texture_filename(ID3DXFileData *filedata, LPSTR *filename_out)
+static HRESULT parse_texture_filename(ID3DXFileData *filedata, char **filename_out)
 {
     HRESULT hr;
     SIZE_T data_size;
@@ -2658,12 +2658,13 @@ static HRESULT parse_texture_filename(ID3DXFileData *filedata, LPSTR *filename_o
     if (FAILED(hr)) return hr;
 
     /* FIXME: String must be retrieved directly instead of through a pointer once ID3DXFILE is fixed */
-    if (data_size < sizeof(LPSTR)) {
+    if (data_size < sizeof(filename_in))
+    {
         WARN("truncated data (%lu bytes)\n", data_size);
         filedata->lpVtbl->Unlock(filedata);
         return E_FAIL;
     }
-    filename_in = *(LPSTR*)data;
+    filename_in = *(char **)data;
 
     filename = HeapAlloc(GetProcessHeap(), 0, strlen(filename_in) + 1);
     if (!filename) {
@@ -3398,7 +3399,7 @@ static HRESULT generate_effects(ID3DXBuffer *materials, DWORD num_materials,
 
         for (j = 0; j < ARRAY_SIZE(material_effects); j++)
         {
-            defaults->pParamName = (LPSTR)out_ptr;
+            defaults->pParamName = (char *)out_ptr;
             strcpy(defaults->pParamName, material_effects[j].param_name);
             defaults->pValue = defaults->pParamName + material_effects[j].name_size;
             defaults->Type = D3DXEDT_FLOATS;
@@ -3408,8 +3409,9 @@ static HRESULT generate_effects(ID3DXBuffer *materials, DWORD num_materials,
             defaults++;
         }
 
-        if (material_ptr->pTextureFilename) {
-            defaults->pParamName = (LPSTR)out_ptr;
+        if (material_ptr->pTextureFilename)
+        {
+            defaults->pParamName = (char *)out_ptr;
             strcpy(defaults->pParamName, texture_paramname);
             defaults->pValue = defaults->pParamName + sizeof(texture_paramname);
             defaults->Type = D3DXEDT_STRING;

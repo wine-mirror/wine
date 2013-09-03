@@ -92,7 +92,7 @@ typedef struct _D3DXMESHDATA
 
 typedef struct _D3DXMESHCONTAINER
 {
-    LPSTR Name;
+    char *Name;
     D3DXMESHDATA MeshData;
     LPD3DXMATERIAL pMaterials;
     LPD3DXEFFECTINSTANCE pEffects;
@@ -104,7 +104,7 @@ typedef struct _D3DXMESHCONTAINER
 
 typedef struct _D3DXFRAME
 {
-    LPSTR Name;
+    char *Name;
     D3DXMATRIX TransformationMatrix;
     LPD3DXMESHCONTAINER pMeshContainer;
     struct _D3DXFRAME *pFrameSibling;

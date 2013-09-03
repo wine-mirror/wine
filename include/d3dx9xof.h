@@ -110,7 +110,7 @@ DECLARE_INTERFACE_IID_(ID3DXFileSaveData,IUnknown,"cef08cfb-7b4f-4429-9624-2a690
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** ID3DXFileSaveObject methods ***/
     STDMETHOD(GetSave)(THIS_ ID3DXFileSaveObject **save_obj) PURE;
-    STDMETHOD(GetName)(THIS_ LPSTR, SIZE_T*) PURE;
+    STDMETHOD(GetName)(THIS_ char *name, SIZE_T *size) PURE;
     STDMETHOD(GetId)(THIS_ LPGUID) PURE;
     STDMETHOD(GetType)(THIS_ GUID*) PURE;
     STDMETHOD(AddDataObject)(THIS_ REFGUID template_guid, const char *name, const GUID *guid,
@@ -145,7 +145,7 @@ DECLARE_INTERFACE_IID_(ID3DXFileData,IUnknown,"cef08cfd-7b4f-4429-9624-2a690a933
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** ID3DXFileData methods ***/
     STDMETHOD(GetEnum)(THIS_ ID3DXFileEnumObject **enum_obj) PURE;
-    STDMETHOD(GetName)(THIS_ LPSTR, SIZE_T*) PURE;
+    STDMETHOD(GetName)(THIS_ char *name, SIZE_T *size) PURE;
     STDMETHOD(GetId)(THIS_ LPGUID) PURE;
     STDMETHOD(Lock)(THIS_ SIZE_T*, LPCVOID*) PURE;
     STDMETHOD(Unlock)(THIS) PURE;
