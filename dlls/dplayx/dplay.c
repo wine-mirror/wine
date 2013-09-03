@@ -187,8 +187,7 @@ static BOOL DP_CreateDirectPlay2( LPVOID lpDP )
                                          sizeof( *This->dp2->dplspData.lpCB ) );
   This->dp2->dplspData.lpCB->dwSize = sizeof(  *This->dp2->dplspData.lpCB );
 
-  if( FAILED( DPLSP_CreateInterface( &IID_IDPLobbySP,
-                                     (LPVOID*)&This->dp2->dplspData.lpISP, This ) )
+  if( FAILED( dplobbysp_create( &IID_IDPLobbySP, (void**)&This->dp2->dplspData.lpISP, This ) )
     )
   {
     /* FIXME: Memory leak */

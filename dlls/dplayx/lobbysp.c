@@ -38,40 +38,6 @@ static inline IDPLobbySPImpl *impl_from_IDPLobbySP(IDPLobbySP *iface)
     return CONTAINING_RECORD(iface, IDPLobbySPImpl, IDPLobbySP_iface);
 }
 
-/* Forward declaration of virtual tables */
-static const IDPLobbySPVtbl dpLobbySPVT;
-
-HRESULT DPLSP_CreateInterface( REFIID riid, void **ppvObj, IDirectPlayImpl *dp )
-{
-  TRACE( " for %s\n", debugstr_guid( riid ) );
-
-  *ppvObj = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                       sizeof( IDPLobbySPImpl ) );
-
-  if( *ppvObj == NULL )
-  {
-    return DPERR_OUTOFMEMORY;
-  }
-
-  if( IsEqualGUID( &IID_IDPLobbySP, riid ) )
-  {
-    IDPLobbySPImpl *This = *ppvObj;
-    This->IDPLobbySP_iface.lpVtbl = &dpLobbySPVT;
-    This->dplay = dp;
-  }
-  else
-  {
-    /* Unsupported interface */
-    HeapFree( GetProcessHeap(), 0, *ppvObj );
-    *ppvObj = NULL;
-
-    return E_NOINTERFACE;
-  }
-
-  IDPLobbySP_AddRef( (LPDPLOBBYSP)*ppvObj );
-  return S_OK;
-}
-
 static HRESULT WINAPI IDPLobbySPImpl_QueryInterface( IDPLobbySP *iface, REFIID riid,
         void **ppv )
 {
@@ -260,3 +226,25 @@ static const IDPLobbySPVtbl dpLobbySPVT =
   IDPLobbySPImpl_SetSPDataPointer,
   IDPLobbySPImpl_StartSession
 };
+
+HRESULT dplobbysp_create( REFIID riid, void **ppv, IDirectPlayImpl *dp )
+{
+  IDPLobbySPImpl *obj;
+  HRESULT hr;
+
+  TRACE( "(%s, %p)\n", debugstr_guid( riid ), ppv );
+
+  *ppv = NULL;
+  obj = HeapAlloc( GetProcessHeap(), 0, sizeof( *obj ) );
+  if ( !obj )
+    return DPERR_OUTOFMEMORY;
+
+  obj->IDPLobbySP_iface.lpVtbl = &dpLobbySPVT;
+  obj->ref = 0;
+  obj->dplay = dp;
+
+  hr = IDPLobbySP_QueryInterface( &obj->IDPLobbySP_iface, riid, ppv );
+  IDPLobbySP_Release( &obj->IDPLobbySP_iface );
+
+  return hr;
+}
