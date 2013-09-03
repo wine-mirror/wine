@@ -2762,7 +2762,8 @@ static DWORD start_next_chunk(chunked_stream_t *stream, http_request_t *req)
             {
                 TRACE( "reading %u byte chunk\n", chunk_size );
                 stream->chunk_size = chunk_size;
-                req->contentLength += chunk_size;
+                if (req->contentLength == ~0u) req->contentLength = chunk_size;
+                else req->contentLength += chunk_size;
                 return discard_chunked_eol(stream, req);
             }
             remove_chunked_data(stream, 1);
