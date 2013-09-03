@@ -159,12 +159,8 @@ static BOOL DPLSP_DestroyDPLobbySP( LPVOID lpSP )
   return TRUE;
 }
 
-static
-HRESULT WINAPI DPLSP_QueryInterface
-( LPDPLOBBYSP iface,
-  REFIID riid,
-  LPVOID* ppvObj
-)
+static HRESULT WINAPI IDPLobbySPImpl_QueryInterface( IDPLobbySP *iface, REFIID riid,
+        void **ppvObj )
 {
   IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
   TRACE("(%p)->(%s,%p)\n", This, debugstr_guid( riid ), ppvObj );
@@ -199,9 +195,7 @@ HRESULT WINAPI DPLSP_QueryInterface
   return S_OK;
 }
 
-static
-ULONG WINAPI DPLSP_AddRef
-( LPDPLOBBYSP iface )
+static ULONG WINAPI IDPLobbySPImpl_AddRef( IDPLobbySP *iface )
 {
   ULONG ulInterfaceRefCount, ulObjRefCount;
   IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
@@ -215,9 +209,7 @@ ULONG WINAPI DPLSP_AddRef
   return ulObjRefCount;
 }
 
-static
-ULONG WINAPI DPLSP_Release
-( LPDPLOBBYSP iface )
+static ULONG WINAPI IDPLobbySPImpl_Release( IDPLobbySP *iface )
 {
   ULONG ulInterfaceRefCount, ulObjRefCount;
   IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
@@ -422,11 +414,9 @@ HRESULT WINAPI IDPLobbySPImpl_StartSession
 
 static const IDPLobbySPVtbl dpLobbySPVT =
 {
-
-  DPLSP_QueryInterface,
-  DPLSP_AddRef,
-  DPLSP_Release,
-
+  IDPLobbySPImpl_QueryInterface,
+  IDPLobbySPImpl_AddRef,
+  IDPLobbySPImpl_Release,
   IDPLobbySPImpl_AddGroupToGroup,
   IDPLobbySPImpl_AddPlayerToGroup,
   IDPLobbySPImpl_CreateGroup,
@@ -443,5 +433,4 @@ static const IDPLobbySPVtbl dpLobbySPVT =
   IDPLobbySPImpl_SetSessionDesc,
   IDPLobbySPImpl_SetSPDataPointer,
   IDPLobbySPImpl_StartSession
-
 };
