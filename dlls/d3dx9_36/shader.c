@@ -174,7 +174,7 @@ HRESULT WINAPI D3DXFindShaderComment(const DWORD *byte_code, DWORD fourcc, const
             if (*(ptr + 1) == fourcc)
             {
                 UINT ctab_size = (comment_size - 1) * sizeof(DWORD);
-                LPCVOID ctab_data = ptr + 2;
+                const void *ctab_data = ptr + 2;
                 if (size)
                     *size = ctab_size;
                 if (data)
@@ -264,7 +264,8 @@ error:
     return HRESULT_FROM_WIN32(GetLastError());
 }
 
-static HRESULT WINAPI d3dincludefromfile_close(ID3DXInclude *iface, LPCVOID data) {
+static HRESULT WINAPI d3dincludefromfile_close(ID3DXInclude *iface, const void *data)
+{
     HeapFree(GetProcessHeap(), 0, *((char **)data - 1));
     HeapFree(GetProcessHeap(), 0, (char **)data - 1);
     return S_OK;
@@ -1846,8 +1847,8 @@ error:
 HRESULT WINAPI D3DXGetShaderConstantTableEx(const DWORD *byte_code, DWORD flags, ID3DXConstantTable **constant_table)
 {
     struct ID3DXConstantTableImpl *object = NULL;
+    const void *data;
     HRESULT hr;
-    LPCVOID data;
     UINT size;
     const D3DXSHADER_CONSTANTTABLE *ctab_header;
     const D3DXSHADER_CONSTANTINFO *constant_info;

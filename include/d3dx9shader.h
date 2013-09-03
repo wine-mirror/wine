@@ -109,7 +109,7 @@ typedef struct _D3DXCONSTANT_DESC
     UINT Elements;
     UINT StructMembers;
     UINT Bytes;
-    LPCVOID DefaultValue;
+    const void *DefaultValue;
 } D3DXCONSTANT_DESC, *LPD3DXCONSTANT_DESC;
 
 DEFINE_GUID(IID_ID3DXConstantTable, 0x9dca3190, 0x38b9, 0x4fc3, 0x92, 0xe3, 0x39, 0xc6, 0xdd, 0xfb, 0x35, 0x8b);

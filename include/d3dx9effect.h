@@ -121,7 +121,7 @@ DECLARE_INTERFACE_(ID3DXBaseEffect, IUnknown)
     STDMETHOD_(D3DXHANDLE, GetFunctionByName)(THIS_ const char *name);
     STDMETHOD_(D3DXHANDLE, GetAnnotation)(THIS_ D3DXHANDLE object, UINT index) PURE;
     STDMETHOD_(D3DXHANDLE, GetAnnotationByName)(THIS_ D3DXHANDLE object, const char *name) PURE;
-    STDMETHOD(SetValue)(THIS_ D3DXHANDLE parameter, LPCVOID data, UINT bytes) PURE;
+    STDMETHOD(SetValue)(THIS_ D3DXHANDLE parameter, const void *data, UINT bytes) PURE;
     STDMETHOD(GetValue)(THIS_ D3DXHANDLE parameter, LPVOID data, UINT bytes) PURE;
     STDMETHOD(SetBool)(THIS_ D3DXHANDLE parameter, BOOL b) PURE;
     STDMETHOD(GetBool)(THIS_ D3DXHANDLE parameter, BOOL* b) PURE;
@@ -225,7 +225,7 @@ DECLARE_INTERFACE_(ID3DXEffect, ID3DXBaseEffect)
     STDMETHOD_(D3DXHANDLE, GetFunctionByName)(THIS_ const char *name);
     STDMETHOD_(D3DXHANDLE, GetAnnotation)(THIS_ D3DXHANDLE object, UINT index) PURE;
     STDMETHOD_(D3DXHANDLE, GetAnnotationByName)(THIS_ D3DXHANDLE object, const char *name) PURE;
-    STDMETHOD(SetValue)(THIS_ D3DXHANDLE parameter, LPCVOID data, UINT bytes) PURE;
+    STDMETHOD(SetValue)(THIS_ D3DXHANDLE parameter, const void *data, UINT bytes) PURE;
     STDMETHOD(GetValue)(THIS_ D3DXHANDLE parameter, LPVOID data, UINT bytes) PURE;
     STDMETHOD(SetBool)(THIS_ D3DXHANDLE parameter, BOOL b) PURE;
     STDMETHOD(GetBool)(THIS_ D3DXHANDLE parameter, BOOL* b) PURE;
@@ -284,7 +284,7 @@ DECLARE_INTERFACE_(ID3DXEffect, ID3DXBaseEffect)
     STDMETHOD(ApplyParameterBlock)(THIS_ D3DXHANDLE parameter_block) PURE;
     STDMETHOD(DeleteParameterBlock)(THIS_ D3DXHANDLE parameter_block) PURE;
     STDMETHOD(CloneEffect)(THIS_ struct IDirect3DDevice9 *device, struct ID3DXEffect **effect) PURE;
-    STDMETHOD(SetRawValue)(THIS_ D3DXHANDLE parameter, LPCVOID data, UINT byte_offset, UINT bytes) PURE;
+    STDMETHOD(SetRawValue)(THIS_ D3DXHANDLE parameter, const void *data, UINT byte_offset, UINT bytes) PURE;
 };
 #undef INTERFACE
 
@@ -318,7 +318,7 @@ DECLARE_INTERFACE_(ID3DXEffectCompiler, ID3DXBaseEffect)
     STDMETHOD_(D3DXHANDLE, GetFunctionByName)(THIS_ const char *name);
     STDMETHOD_(D3DXHANDLE, GetAnnotation)(THIS_ D3DXHANDLE object, UINT index) PURE;
     STDMETHOD_(D3DXHANDLE, GetAnnotationByName)(THIS_ D3DXHANDLE object, const char *name) PURE;
-    STDMETHOD(SetValue)(THIS_ D3DXHANDLE parameter, LPCVOID data, UINT bytes) PURE;
+    STDMETHOD(SetValue)(THIS_ D3DXHANDLE parameter, const void *data, UINT bytes) PURE;
     STDMETHOD(GetValue)(THIS_ D3DXHANDLE parameter, LPVOID data, UINT bytes) PURE;
     STDMETHOD(SetBool)(THIS_ D3DXHANDLE parameter, BOOL b) PURE;
     STDMETHOD(GetBool)(THIS_ D3DXHANDLE parameter, BOOL* b) PURE;

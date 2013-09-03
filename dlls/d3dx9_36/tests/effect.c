@@ -39,7 +39,7 @@ static BOOL compare_float(FLOAT f, FLOAT g, UINT ulps)
     return TRUE;
 }
 
-static inline INT get_int(D3DXPARAMETER_TYPE type, LPCVOID data)
+static inline INT get_int(D3DXPARAMETER_TYPE type, const void *data)
 {
     INT i;
 
@@ -66,9 +66,9 @@ static inline INT get_int(D3DXPARAMETER_TYPE type, LPCVOID data)
     return i;
 }
 
-static inline FLOAT get_float(D3DXPARAMETER_TYPE type, LPCVOID data)
+static inline float get_float(D3DXPARAMETER_TYPE type, const void *data)
 {
-    FLOAT f;
+    float f;
 
     switch (type)
     {
@@ -93,12 +93,12 @@ static inline FLOAT get_float(D3DXPARAMETER_TYPE type, LPCVOID data)
     return f;
 }
 
-static inline BOOL get_bool(LPCVOID data)
+static inline BOOL get_bool(const void *data)
 {
-    return (*(BOOL *)data) ? TRUE : FALSE;
+    return !!*(BOOL *)data;
 }
 
-static void set_number(LPVOID outdata, D3DXPARAMETER_TYPE outtype, LPCVOID indata, D3DXPARAMETER_TYPE intype)
+static void set_number(void *outdata, D3DXPARAMETER_TYPE outtype, const void *indata, D3DXPARAMETER_TYPE intype)
 {
     switch (outtype)
     {

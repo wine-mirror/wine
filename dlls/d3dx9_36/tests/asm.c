@@ -76,8 +76,9 @@ static HRESULT WINAPI testD3DXInclude_open(ID3DXInclude *iface, D3DXINCLUDE_TYPE
     return S_OK;
 }
 
-static HRESULT WINAPI testD3DXInclude_close(ID3DXInclude *iface, LPCVOID data) {
-    HeapFree(GetProcessHeap(), 0, (LPVOID)data);
+static HRESULT WINAPI testD3DXInclude_close(ID3DXInclude *iface, const void *data)
+{
+    HeapFree(GetProcessHeap(), 0, (void *)data);
     return S_OK;
 }
 

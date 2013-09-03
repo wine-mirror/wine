@@ -3368,11 +3368,11 @@ static HRESULT WINAPI ID3DXEffectImpl_CloneEffect(ID3DXEffect *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ID3DXEffectImpl_SetRawValue(ID3DXEffect* iface, D3DXHANDLE parameter, LPCVOID data, UINT byte_offset, UINT bytes)
+static HRESULT WINAPI ID3DXEffectImpl_SetRawValue(ID3DXEffect *iface,
+        D3DXHANDLE parameter, const void *data, UINT byte_offset, UINT bytes)
 {
-    struct ID3DXEffectImpl *This = impl_from_ID3DXEffect(iface);
-
-    FIXME("(%p)->(%p, %p, %u, %u): stub\n", This, parameter, data, byte_offset, bytes);
+    FIXME("iface %p, parameter %p, data %p, byte_offset %u, bytes %u stub!\n",
+            iface, parameter, data, byte_offset, bytes);
 
     return E_NOTIMPL;
 }

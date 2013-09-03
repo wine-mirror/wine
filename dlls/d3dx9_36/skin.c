@@ -378,12 +378,11 @@ static HRESULT WINAPI ID3DXSkinInfoImpl_GetDeclaration(ID3DXSkinInfo *iface, D3D
     return D3D_OK;
 }
 
-static HRESULT WINAPI ID3DXSkinInfoImpl_UpdateSkinnedMesh(ID3DXSkinInfo *iface, CONST D3DXMATRIX *bone_transforms,
-        CONST D3DXMATRIX *bone_inv_transpose_transforms, LPCVOID vertices_src, PVOID vertices_dest)
+static HRESULT WINAPI ID3DXSkinInfoImpl_UpdateSkinnedMesh(ID3DXSkinInfo *iface, const D3DXMATRIX *bone_transforms,
+        const D3DXMATRIX *bone_inv_transpose_transforms, const void *src_vertices, void *dst_vertices)
 {
-    ID3DXSkinInfoImpl *This = impl_from_ID3DXSkinInfo(iface);
-
-    FIXME("(%p, %p, %p, %p, %p): stub\n", This, bone_transforms, bone_inv_transpose_transforms, vertices_src, vertices_dest);
+    FIXME("iface %p, bone_transforms %p, bone_inv_transpose_transforms %p, src_vertices %p, dst_vertices %p stub!\n",
+            iface, bone_transforms, bone_inv_transpose_transforms, src_vertices, dst_vertices);
 
     return E_NOTIMPL;
 }

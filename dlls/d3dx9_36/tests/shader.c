@@ -305,8 +305,8 @@ static void test_get_shader_version(void)
 
 static void test_find_shader_comment(void)
 {
+    const void *data = (void *)0xdeadbeef;
     HRESULT hr;
-    LPCVOID data = (LPVOID)0xdeadbeef;
     UINT size = 100;
 
     hr = D3DXFindShaderComment(NULL, MAKEFOURCC('C','T','A','B'), &data, &size);
@@ -320,7 +320,7 @@ static void test_find_shader_comment(void)
 
     hr = D3DXFindShaderComment(shader_with_ctab, MAKEFOURCC('C','T','A','B'), &data, NULL);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
-    ok(data == (LPCVOID)(shader_with_ctab + 6), "Got result %p, expected %p\n", data, shader_with_ctab + 6);
+    ok(data == shader_with_ctab + 6, "Got result %p, expected %p.\n", data, shader_with_ctab + 6);
 
     hr = D3DXFindShaderComment(shader_with_ctab, 0, &data, &size);
     ok(hr == S_FALSE, "Got result %x, expected 1 (S_FALSE)\n", hr);
@@ -334,7 +334,7 @@ static void test_find_shader_comment(void)
 
     hr = D3DXFindShaderComment(shader_with_ctab, MAKEFOURCC('C','T','A','B'), &data, &size);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
-    ok(data == (LPCVOID)(shader_with_ctab + 6), "Got result %p, expected %p\n", data, shader_with_ctab + 6);
+    ok(data == shader_with_ctab + 6, "Got result %p, expected %p.\n", data, shader_with_ctab + 6);
     ok(size == 28, "Got result %d, expected 28\n", size);
 
     hr = D3DXFindShaderComment(shader_zero, MAKEFOURCC('C','T','A','B'), &data, &size);

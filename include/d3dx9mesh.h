@@ -536,8 +536,8 @@ DECLARE_INTERFACE_(ID3DXSkinInfo, IUnknown)
     STDMETHOD(SetDeclaration)(THIS_ CONST D3DVERTEXELEMENT9* declaration) PURE;
     STDMETHOD_(DWORD, GetFVF)(THIS) PURE;
     STDMETHOD(GetDeclaration)(THIS_ D3DVERTEXELEMENT9 declaration[MAX_FVF_DECL_SIZE]) PURE;
-    STDMETHOD(UpdateSkinnedMesh)(THIS_ CONST D3DXMATRIX* bone_transforms,
-        CONST D3DXMATRIX* bone_inv_transpose_transforms, LPCVOID vertices_src, PVOID vertices_dest) PURE;
+    STDMETHOD(UpdateSkinnedMesh)(THIS_ const D3DXMATRIX *bone_transforms,
+            const D3DXMATRIX *bone_inv_transpose_transforms, const void *src_vertices, void *dst_vertices) PURE;
     STDMETHOD(ConvertToBlendedMesh)(THIS_ ID3DXMesh *mesh_in, DWORD options, const DWORD *adjacency_in,
             DWORD *adjacency_out, DWORD *face_remap, ID3DXBuffer **vertex_remap, DWORD *max_face_infl,
             DWORD *num_bone_combinations, ID3DXBuffer **bone_combination_table, ID3DXMesh **mesh_out) PURE;
@@ -807,8 +807,10 @@ HRESULT WINAPI D3DXIntersectSubset(ID3DXBaseMesh *mesh, DWORD attribute_id, cons
         const D3DXVECTOR3 *ray_direction, BOOL *hit, DWORD *face_idx, float *u, float *v, float *distance,
         ID3DXBuffer **hits, DWORD *hit_count);
 BOOL    WINAPI D3DXIntersectTri(CONST D3DXVECTOR3 *, CONST D3DXVECTOR3 *, CONST D3DXVECTOR3 *, CONST D3DXVECTOR3 *, CONST D3DXVECTOR3*, FLOAT *, FLOAT *, FLOAT *);
-HRESULT WINAPI D3DXOptimizeFaces(LPCVOID, UINT, UINT, BOOL, DWORD *);
-HRESULT WINAPI D3DXOptimizeVertices(LPCVOID, UINT, UINT, BOOL, DWORD *);
+HRESULT WINAPI D3DXOptimizeFaces(const void *indices, UINT face_count,
+        UINT vertex_count, BOOL idx_32bit, DWORD *face_remap);
+HRESULT WINAPI D3DXOptimizeVertices(const void *indices, UINT face_count,
+        UINT vertex_count, BOOL idx_32bit, DWORD *vertex_remap);
 HRESULT WINAPI D3DXRectPatchSize(CONST FLOAT *, DWORD *, DWORD *);
 HRESULT WINAPI D3DXSHPRTCompSuperCluster(UINT *cluster_ids, ID3DXMesh *scene, UINT max_cluster_count,
         UINT cluster_count, UINT *scluster_ids, UINT *scluster_count);

@@ -6872,20 +6872,17 @@ cleanup:
  *   The face re-ordering does not use the vertex cache optimally.
  *
  */
-HRESULT WINAPI D3DXOptimizeFaces(LPCVOID indices,
-                                 UINT num_faces,
-                                 UINT num_vertices,
-                                 BOOL indices_are_32bit,
-                                 DWORD *face_remap)
+HRESULT WINAPI D3DXOptimizeFaces(const void *indices, UINT num_faces,
+        UINT num_vertices, BOOL indices_are_32bit, DWORD *face_remap)
 {
     UINT i;
     UINT j = num_faces - 1;
     UINT limit_16_bit = 2 << 15; /* According to MSDN */
     HRESULT hr = D3D_OK;
 
-    FIXME("(%p, %u, %u, %s, %p): semi-stub. Face order will not be optimal.\n",
-          indices, num_faces, num_vertices,
-          indices_are_32bit ? "TRUE" : "FALSE", face_remap);
+    FIXME("indices %p, num_faces %u, num_vertices %u, indices_are_32bit %#x, face_remap %p semi-stub. "
+            "Face order will not be optimal.\n",
+            indices, num_faces, num_vertices, indices_are_32bit, face_remap);
 
     if (!indices_are_32bit && num_faces >= limit_16_bit)
     {

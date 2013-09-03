@@ -81,7 +81,7 @@ DECLARE_INTERFACE_IID_(ID3DXFile,IUnknown,"cef08cf9-7b4f-4429-9624-2a690a933201"
             struct ID3DXFileEnumObject **enum_obj) PURE;
     STDMETHOD(CreateSaveObject)(THIS_ const void *data, D3DXF_FILESAVEOPTIONS flags,
             D3DXF_FILEFORMAT format, struct ID3DXFileSaveObject **save_obj) PURE;
-    STDMETHOD(RegisterTemplates)(THIS_ LPCVOID, SIZE_T) PURE;
+    STDMETHOD(RegisterTemplates)(THIS_ const void *data, SIZE_T data_size) PURE;
     STDMETHOD(RegisterEnumTemplates)(THIS_ struct ID3DXFileEnumObject *enum_obj) PURE;
 };
 #undef INTERFACE
@@ -147,7 +147,7 @@ DECLARE_INTERFACE_IID_(ID3DXFileData,IUnknown,"cef08cfd-7b4f-4429-9624-2a690a933
     STDMETHOD(GetEnum)(THIS_ ID3DXFileEnumObject **enum_obj) PURE;
     STDMETHOD(GetName)(THIS_ char *name, SIZE_T *size) PURE;
     STDMETHOD(GetId)(THIS_ LPGUID) PURE;
-    STDMETHOD(Lock)(THIS_ SIZE_T*, LPCVOID*) PURE;
+    STDMETHOD(Lock)(THIS_ SIZE_T *data_size, const void **data) PURE;
     STDMETHOD(Unlock)(THIS) PURE;
     STDMETHOD(GetType)(THIS_ GUID*) PURE;
     STDMETHOD_(BOOL,IsReference)(THIS) PURE;

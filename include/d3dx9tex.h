@@ -100,7 +100,7 @@ HRESULT WINAPI D3DXGetImageInfoFromResourceA(HMODULE module, const char *resourc
 HRESULT WINAPI D3DXGetImageInfoFromResourceW(HMODULE module, const WCHAR *resource, D3DXIMAGE_INFO *info);
 #define        D3DXGetImageInfoFromResource WINELIB_NAME_AW(D3DXGetImageInfoFromResource)
 
-HRESULT WINAPI D3DXGetImageInfoFromFileInMemory(LPCVOID data, UINT datasize, D3DXIMAGE_INFO *info);
+HRESULT WINAPI D3DXGetImageInfoFromFileInMemory(const void *data, UINT data_size, D3DXIMAGE_INFO *info);
 
 
 /* Surface Loading/Saving */
