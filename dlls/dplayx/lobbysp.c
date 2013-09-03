@@ -26,28 +26,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dplay);
 
-/* Prototypes */
-static BOOL DPLSP_CreateDPLobbySP( void *lpSP, IDirectPlayImpl *dp );
-static BOOL DPLSP_DestroyDPLobbySP( LPVOID lpSP );
-
-
-/* Predefine the interface */
-typedef struct IDPLobbySPImpl IDPLobbySPImpl;
-
-typedef struct tagDPLobbySPData
-{
-  IDirectPlayImpl *dplay;
-} DPLobbySPData;
-
-#define DPLSP_IMPL_FIELDS \
-   DPLobbySPData* sp;
-
-struct IDPLobbySPImpl
+typedef struct IDPLobbySPImpl
 {
   const IDPLobbySPVtbl *lpVtbl;
   LONG ref;
-  DPLSP_IMPL_FIELDS
-};
+  IDirectPlayImpl *dplay;
+} IDPLobbySPImpl;
 
 static inline IDPLobbySPImpl *impl_from_IDPLobbySP(IDPLobbySP *iface)
 {
@@ -73,6 +57,7 @@ HRESULT DPLSP_CreateInterface( REFIID riid, void **ppvObj, IDirectPlayImpl *dp )
   {
     IDPLobbySPImpl *This = *ppvObj;
     This->lpVtbl = &dpLobbySPVT;
+    This->dplay = dp;
   }
   else
   {
@@ -83,45 +68,8 @@ HRESULT DPLSP_CreateInterface( REFIID riid, void **ppvObj, IDirectPlayImpl *dp )
     return E_NOINTERFACE;
   }
 
-  /* Initialize it */
-  if( DPLSP_CreateDPLobbySP( *ppvObj, dp ) )
-  {
-    IDPLobbySP_AddRef( (LPDPLOBBYSP)*ppvObj );
-    return S_OK;
-  }
-
-  /* Initialize failed, destroy it */
-  DPLSP_DestroyDPLobbySP( *ppvObj );
-
-  HeapFree( GetProcessHeap(), 0, *ppvObj );
-  *ppvObj = NULL;
-
-  return DPERR_NOMEMORY;
-}
-
-static BOOL DPLSP_CreateDPLobbySP( void *lpSP, IDirectPlayImpl *dp )
-{
-  IDPLobbySPImpl *This = lpSP;
-
-  This->sp = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *(This->sp) ) );
-
-  if ( This->sp == NULL )
-  {
-    return FALSE;
-  }
-
-  This->sp->dplay = dp;
-
-  return TRUE;
-}
-
-static BOOL DPLSP_DestroyDPLobbySP( LPVOID lpSP )
-{
-  IDPLobbySPImpl *This = lpSP;
-
-  HeapFree( GetProcessHeap(), 0, This->sp );
-
-  return TRUE;
+  IDPLobbySP_AddRef( (LPDPLOBBYSP)*ppvObj );
+  return S_OK;
 }
 
 static HRESULT WINAPI IDPLobbySPImpl_QueryInterface( IDPLobbySP *iface, REFIID riid,
@@ -159,10 +107,7 @@ static ULONG WINAPI IDPLobbySPImpl_Release( IDPLobbySP *iface )
   TRACE( "(%p) ref=%d\n", This, ref );
 
   if( !ref )
-  {
-    DPLSP_DestroyDPLobbySP( This );
     HeapFree( GetProcessHeap(), 0, This );
-  }
 
   return ref;
 }
