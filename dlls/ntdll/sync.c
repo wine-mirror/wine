@@ -1353,3 +1353,43 @@ DWORD WINAPI RtlRunOnceExecuteOnce( RTL_RUN_ONCE *once, PRTL_RUN_ONCE_INIT_FN fu
 
     return RtlRunOnceComplete( once, 0, context ? *context : NULL );
 }
+
+/***********************************************************************
+ *              RtlInitializeSRWLock (NTDLL.@)
+ */
+void WINAPI RtlInitializeSRWLock( RTL_SRWLOCK *lock )
+{
+    lock->Ptr = NULL;
+}
+
+/***********************************************************************
+ *              RtlAcquireSRWLockExclusive (NTDLL.@)
+ */
+void WINAPI RtlAcquireSRWLockExclusive( RTL_SRWLOCK *lock )
+{
+    FIXME( "%p stub\n", lock );
+}
+
+/***********************************************************************
+ *              RtlAcquireSRWLockShared (NTDLL.@)
+ */
+void WINAPI RtlAcquireSRWLockShared( RTL_SRWLOCK *lock )
+{
+    FIXME( "%p stub\n", lock );
+}
+
+/***********************************************************************
+ *              RtlReleaseSRWLockExclusive (NTDLL.@)
+ */
+void WINAPI RtlReleaseSRWLockExclusive( RTL_SRWLOCK *lock )
+{
+    FIXME( "%p stub\n", lock );
+}
+
+/***********************************************************************
+ *              RtlReleaseSRWLockShared (NTDLL.@)
+ */
+void WINAPI RtlReleaseSRWLockShared( RTL_SRWLOCK *lock )
+{
+    FIXME( "%p stub\n", lock );
+}
