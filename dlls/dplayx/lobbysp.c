@@ -58,6 +58,11 @@ struct IDPLobbySPImpl
   DPLSP_IMPL_FIELDS
 };
 
+static inline IDPLobbySPImpl *impl_from_IDPLobbySP(IDPLobbySP *iface)
+{
+    return CONTAINING_RECORD( iface, IDPLobbySPImpl, lpVtbl );
+}
+
 /* Forward declaration of virtual tables */
 static const IDPLobbySPVtbl dpLobbySPVT;
 
@@ -197,8 +202,8 @@ static HRESULT WINAPI IDPLobbySPImpl_QueryInterface( IDPLobbySP *iface, REFIID r
 
 static ULONG WINAPI IDPLobbySPImpl_AddRef( IDPLobbySP *iface )
 {
+  IDPLobbySPImpl *This = impl_from_IDPLobbySP( iface );
   ULONG ulInterfaceRefCount, ulObjRefCount;
-  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
 
   ulObjRefCount       = InterlockedIncrement( &This->unk->ulObjRef );
   ulInterfaceRefCount = InterlockedIncrement( &This->ulInterfaceRef );
@@ -211,8 +216,8 @@ static ULONG WINAPI IDPLobbySPImpl_AddRef( IDPLobbySP *iface )
 
 static ULONG WINAPI IDPLobbySPImpl_Release( IDPLobbySP *iface )
 {
+  IDPLobbySPImpl *This = impl_from_IDPLobbySP( iface );
   ULONG ulInterfaceRefCount, ulObjRefCount;
-  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
 
   ulObjRefCount       = InterlockedDecrement( &This->unk->ulObjRef );
   ulInterfaceRefCount = InterlockedDecrement( &This->ulInterfaceRef );
@@ -235,178 +240,127 @@ static ULONG WINAPI IDPLobbySPImpl_Release( IDPLobbySP *iface )
   return ulInterfaceRefCount;
 }
 
-static
-HRESULT WINAPI IDPLobbySPImpl_AddGroupToGroup
-( LPDPLOBBYSP iface,
-  LPSPDATA_ADDREMOTEGROUPTOGROUP argtg
-)
+static HRESULT WINAPI IDPLobbySPImpl_AddGroupToGroup( IDPLobbySP *iface,
+        SPDATA_ADDREMOTEGROUPTOGROUP *argtg )
 {
-  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
+  IDPLobbySPImpl *This = impl_from_IDPLobbySP( iface );
   FIXME( "(%p)->(%p):stub\n", This, argtg );
   return DP_OK;
 }
 
-static
-HRESULT WINAPI IDPLobbySPImpl_AddPlayerToGroup
-( LPDPLOBBYSP iface,
-  LPSPDATA_ADDREMOTEPLAYERTOGROUP arptg
-)
+static HRESULT WINAPI IDPLobbySPImpl_AddPlayerToGroup( IDPLobbySP *iface,
+        SPDATA_ADDREMOTEPLAYERTOGROUP *arptg )
 {
-  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
+  IDPLobbySPImpl *This = impl_from_IDPLobbySP( iface );
   FIXME( "(%p)->(%p):stub\n", This, arptg );
   return DP_OK;
 }
 
-static
-HRESULT WINAPI IDPLobbySPImpl_CreateGroup
-( LPDPLOBBYSP iface,
-  LPSPDATA_CREATEREMOTEGROUP crg
-)
+static HRESULT WINAPI IDPLobbySPImpl_CreateGroup( IDPLobbySP *iface,
+        SPDATA_CREATEREMOTEGROUP *crg )
 {
-  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
+  IDPLobbySPImpl *This = impl_from_IDPLobbySP( iface );
   FIXME( "(%p)->(%p):stub\n", This, crg );
   return DP_OK;
 }
 
-static
-HRESULT WINAPI IDPLobbySPImpl_CreateGroupInGroup
-( LPDPLOBBYSP iface,
-  LPSPDATA_CREATEREMOTEGROUPINGROUP crgig
-)
+static HRESULT WINAPI IDPLobbySPImpl_CreateGroupInGroup( IDPLobbySP *iface,
+        SPDATA_CREATEREMOTEGROUPINGROUP *crgig )
 {
-  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
+  IDPLobbySPImpl *This = impl_from_IDPLobbySP( iface );
   FIXME( "(%p)->(%p):stub\n", This, crgig );
   return DP_OK;
 }
 
-static
-HRESULT WINAPI IDPLobbySPImpl_DeleteGroupFromGroup
-( LPDPLOBBYSP iface,
-  LPSPDATA_DELETEREMOTEGROUPFROMGROUP drgfg
-)
+static HRESULT WINAPI IDPLobbySPImpl_DeleteGroupFromGroup( IDPLobbySP *iface,
+        SPDATA_DELETEREMOTEGROUPFROMGROUP *drgfg )
 {
-  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
+  IDPLobbySPImpl *This = impl_from_IDPLobbySP( iface );
   FIXME( "(%p)->(%p):stub\n", This, drgfg );
   return DP_OK;
 }
 
-static
-HRESULT WINAPI IDPLobbySPImpl_DeletePlayerFromGroup
-( LPDPLOBBYSP iface,
-  LPSPDATA_DELETEREMOTEPLAYERFROMGROUP drpfg
-)
+static HRESULT WINAPI IDPLobbySPImpl_DeletePlayerFromGroup( IDPLobbySP *iface,
+        SPDATA_DELETEREMOTEPLAYERFROMGROUP *drpfg )
 {
-  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
+  IDPLobbySPImpl *This = impl_from_IDPLobbySP( iface );
   FIXME( "(%p)->(%p):stub\n", This, drpfg );
   return DP_OK;
 }
 
-static
-HRESULT WINAPI IDPLobbySPImpl_DestroyGroup
-( LPDPLOBBYSP iface,
-  LPSPDATA_DESTROYREMOTEGROUP drg
-)
+static HRESULT WINAPI IDPLobbySPImpl_DestroyGroup( IDPLobbySP *iface,
+        SPDATA_DESTROYREMOTEGROUP *drg )
 {
-  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
+  IDPLobbySPImpl *This = impl_from_IDPLobbySP( iface );
   FIXME( "(%p)->(%p):stub\n", This, drg );
   return DP_OK;
 }
 
-static
-HRESULT WINAPI IDPLobbySPImpl_EnumSessionsResponse
-( LPDPLOBBYSP iface,
-  LPSPDATA_ENUMSESSIONSRESPONSE er
-)
+static HRESULT WINAPI IDPLobbySPImpl_EnumSessionsResponse( IDPLobbySP *iface,
+        SPDATA_ENUMSESSIONSRESPONSE *er )
 {
-  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
+  IDPLobbySPImpl *This = impl_from_IDPLobbySP( iface );
   FIXME( "(%p)->(%p):stub\n", This, er );
   return DP_OK;
 }
 
-static
-HRESULT WINAPI IDPLobbySPImpl_GetSPDataPointer
-( LPDPLOBBYSP iface,
-  LPVOID* lplpData
-)
+static HRESULT WINAPI IDPLobbySPImpl_GetSPDataPointer( IDPLobbySP *iface, LPVOID* lplpData )
 {
-  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
+  IDPLobbySPImpl *This = impl_from_IDPLobbySP( iface );
   FIXME( "(%p)->(%p):stub\n", This, lplpData );
   return DP_OK;
 }
 
-static
-HRESULT WINAPI IDPLobbySPImpl_HandleMessage
-( LPDPLOBBYSP iface,
-  LPSPDATA_HANDLEMESSAGE hm
-)
+static HRESULT WINAPI IDPLobbySPImpl_HandleMessage( IDPLobbySP *iface, SPDATA_HANDLEMESSAGE *hm )
 {
-  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
+  IDPLobbySPImpl *This = impl_from_IDPLobbySP( iface );
   FIXME( "(%p)->(%p):stub\n", This, hm );
   return DP_OK;
 }
 
-static
-HRESULT WINAPI IDPLobbySPImpl_SendChatMessage
-( LPDPLOBBYSP iface,
-  LPSPDATA_CHATMESSAGE cm
-)
+static HRESULT WINAPI IDPLobbySPImpl_SendChatMessage( IDPLobbySP *iface,
+        SPDATA_CHATMESSAGE *cm )
 {
-  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
+  IDPLobbySPImpl *This = impl_from_IDPLobbySP( iface );
   FIXME( "(%p)->(%p):stub\n", This, cm );
   return DP_OK;
 }
 
-static
-HRESULT WINAPI IDPLobbySPImpl_SetGroupName
-( LPDPLOBBYSP iface,
-  LPSPDATA_SETREMOTEGROUPNAME srgn
-)
+static HRESULT WINAPI IDPLobbySPImpl_SetGroupName( IDPLobbySP *iface,
+        SPDATA_SETREMOTEGROUPNAME *srgn )
 {
-  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
+  IDPLobbySPImpl *This = impl_from_IDPLobbySP( iface );
   FIXME( "(%p)->(%p):stub\n", This, srgn );
   return DP_OK;
 }
 
-static
-HRESULT WINAPI IDPLobbySPImpl_SetPlayerName
-( LPDPLOBBYSP iface,
-  LPSPDATA_SETREMOTEPLAYERNAME srpn
-)
+static HRESULT WINAPI IDPLobbySPImpl_SetPlayerName( IDPLobbySP *iface,
+        SPDATA_SETREMOTEPLAYERNAME *srpn )
 {
-  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
+  IDPLobbySPImpl *This = impl_from_IDPLobbySP( iface );
   FIXME( "(%p)->(%p):stub\n", This, srpn );
   return DP_OK;
 }
 
-static
-HRESULT WINAPI IDPLobbySPImpl_SetSessionDesc
-( LPDPLOBBYSP iface,
-  LPSPDATA_SETSESSIONDESC ssd
-)
+static HRESULT WINAPI IDPLobbySPImpl_SetSessionDesc( IDPLobbySP *iface,
+        SPDATA_SETSESSIONDESC *ssd )
 {
-  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
+  IDPLobbySPImpl *This = impl_from_IDPLobbySP( iface );
   FIXME( "(%p)->(%p):stub\n", This, ssd );
   return DP_OK;
 }
 
-static
-HRESULT WINAPI IDPLobbySPImpl_SetSPDataPointer
-( LPDPLOBBYSP iface,
-  LPVOID lpData
-)
+static HRESULT WINAPI IDPLobbySPImpl_SetSPDataPointer( IDPLobbySP *iface, void *lpData )
 {
-  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
+  IDPLobbySPImpl *This = impl_from_IDPLobbySP( iface );
   FIXME( "(%p)->(%p):stub\n", This, lpData );
   return DP_OK;
 }
 
-static
-HRESULT WINAPI IDPLobbySPImpl_StartSession
-( LPDPLOBBYSP iface,
-  LPSPDATA_STARTSESSIONCOMMAND ssc
-)
+static HRESULT WINAPI IDPLobbySPImpl_StartSession( IDPLobbySP *iface,
+        SPDATA_STARTSESSIONCOMMAND *ssc )
 {
-  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
+  IDPLobbySPImpl *This = impl_from_IDPLobbySP( iface );
   FIXME( "(%p)->(%p):stub\n", This, ssc );
   return DP_OK;
 }
