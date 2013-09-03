@@ -2041,6 +2041,7 @@ AC_CHECK_FUNCS(\
 	port_create \
 	prctl \
 	pread \
+	proc_pidinfo \
 	pwrite \
 	readdir \
 	readlink \

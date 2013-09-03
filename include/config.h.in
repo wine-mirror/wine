@@ -633,6 +633,9 @@
 /* Define to 1 if you have the <process.h> header file. */
 #undef HAVE_PROCESS_H
 
+/* Define to 1 if you have the `proc_pidinfo' function. */
+#undef HAVE_PROC_PIDINFO
+
 /* Define to 1 if you have the `pthread_attr_get_np' function. */
 #undef HAVE_PTHREAD_ATTR_GET_NP
 

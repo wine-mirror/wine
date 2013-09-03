@@ -2046,7 +2046,7 @@ static unsigned int find_owning_pid( struct pid_map *map, unsigned int num_entri
 
     procstat_close( pstat );
     return 0;
-#elif defined(HAVE_LIBPROC_H)
+#elif defined(HAVE_PROC_PIDINFO)
     struct proc_fdinfo *fds;
     struct socket_fdinfo sock;
     unsigned int i, j, n, fd_len;

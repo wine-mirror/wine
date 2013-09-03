@@ -13414,6 +13414,7 @@ for ac_func in \
 	port_create \
 	prctl \
 	pread \
+	proc_pidinfo \
 	pwrite \
 	readdir \
 	readlink \
