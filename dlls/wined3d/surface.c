@@ -4163,7 +4163,7 @@ void d3dfmt_p8_init_palette(const struct wined3d_surface *surface, BYTE table[25
 
             /* When index_in_alpha is set the palette index is stored in the
              * alpha component. In case of a readback we can then read
-             * GL_ALPHA. Color keying is handled in BltOverride using a
+             * GL_ALPHA. Color keying is handled in surface_blt_special() using a
              * GL_ALPHA_TEST using GL_NOT_EQUAL. In case of index_in_alpha the
              * color key itself is passed to glAlphaFunc in other cases the
              * alpha component of pixels that should be masked away is set to 0. */
@@ -4916,7 +4916,7 @@ HRESULT surface_color_fill(struct wined3d_surface *s, const RECT *rect, const st
     return blitter->color_fill(device, s, rect, color);
 }
 
-static HRESULT IWineD3DSurfaceImpl_BltOverride(struct wined3d_surface *dst_surface, const RECT *dst_rect,
+static HRESULT surface_blt_special(struct wined3d_surface *dst_surface, const RECT *dst_rect,
         struct wined3d_surface *src_surface, const RECT *src_rect, DWORD flags, const WINEDDBLTFX *DDBltFx,
         enum wined3d_texture_filter_type filter)
 {
@@ -6864,7 +6864,7 @@ fallback:
     if ((dst_surface->resource.usage & WINED3DUSAGE_RENDERTARGET)
             || (src_surface && (src_surface->resource.usage & WINED3DUSAGE_RENDERTARGET)))
     {
-        if (SUCCEEDED(IWineD3DSurfaceImpl_BltOverride(dst_surface, &dst_rect,
+        if (SUCCEEDED(surface_blt_special(dst_surface, &dst_rect,
                 src_surface, &src_rect, flags, fx, filter)))
             return WINED3D_OK;
     }
@@ -6872,8 +6872,8 @@ fallback:
 cpu:
 
     /* For the rest call the X11 surface implementation. For render targets
-     * this should be implemented OpenGL accelerated in BltOverride, other
-     * blits are rather rare. */
+     * this should be implemented OpenGL accelerated in surface_blt_special(),
+     * other blits are rather rare. */
     return surface_cpu_blt(dst_surface, &dst_rect, src_surface, &src_rect, flags, fx, filter);
 }
 

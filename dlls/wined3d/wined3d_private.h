@@ -1836,12 +1836,10 @@ struct wined3d_state
     DWORD render_states[WINEHIGHEST_RENDER_STATE + 1];
 };
 
-/*****************************************************************************
- * IWineD3DDevice implementation structure
- */
 #define WINED3D_UNMAPPED_STAGE ~0U
 
-/* Multithreaded flag. Removed from the public header to signal that IWineD3D::CreateDevice ignores it */
+/* Multithreaded flag. Removed from the public header to signal that
+ * wined3d_device_create() ignores it. */
 #define WINED3DCREATE_MULTITHREADED 0x00000004
 
 struct wined3d_device
@@ -2969,10 +2967,8 @@ DWORD wined3d_format_convert_from_float(const struct wined3d_surface *surface,
 
 static inline BOOL use_vs(const struct wined3d_state *state)
 {
-    /* Check stateblock->vertexDecl to allow this to be used from
-     * IWineD3DDeviceImpl_FindTexUnitMap(). This is safe because
-     * stateblock->vertexShader implies a vertex declaration instead of ddraw
-     * style strided data. */
+    /* Check state->vertex_declaration to allow this to be used before the
+     * stream info is validated, for example in device_update_tex_unit_map(). */
     return state->vertex_shader && !state->vertex_declaration->position_transformed;
 }
 
