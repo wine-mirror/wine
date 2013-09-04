@@ -597,6 +597,8 @@ static void dump_msft_func(int n)
         print_hex("HelpStringContext");
     if(extra_attr >= 7)
         print_hex("oCustData");
+    for(i = 0; i < extra_attr-7; i++)
+        print_hex_id("oArgCustData", i);
 
     if(fkccic & 0x1000) {
         for(i=0; i < args_cnt; i++)
