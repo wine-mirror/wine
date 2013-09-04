@@ -13297,7 +13297,7 @@ for ac_func in \
 	strtoll \
 	strtoull \
 	symlink \
-	tcgetattr \
+	tcdrain \
 	thr_kill2 \
 	timegm \
 	usleep \

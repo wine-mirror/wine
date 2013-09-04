@@ -142,6 +142,7 @@ extern NTSTATUS TAPE_DeviceIoControl(HANDLE hDevice,
                                      ULONG IoControlCode,
                                      LPVOID lpInBuffer, DWORD nInBufferSize,
                                      LPVOID lpOutBuffer, DWORD nOutBufferSize) DECLSPEC_HIDDEN;
+extern NTSTATUS COMM_FlushBuffersFile( int fd ) DECLSPEC_HIDDEN;
 
 /* file I/O */
 struct stat;
