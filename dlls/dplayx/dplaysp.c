@@ -655,9 +655,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_SetSPPlayerData( IDirectPlaySP *iface, D
   LPDP_SPPLAYERDATA lpPlayerEntry;
   LPVOID            lpPlayerData;
 
-/*  TRACE( "Called on process 0x%08lx\n", GetCurrentProcessId() ); */
-  TRACE( "(%p)->(0x%08x,%p,0x%08x,0x%08x)\n",
-         This, idPlayer, lpData, dwDataSize, dwFlags );
+  TRACE( "(%p)->(0x%08x,%p,0x%08x,0x%08x)\n", This, idPlayer, lpData, dwDataSize, dwFlags );
 
   hr = DP_GetSPPlayerData( This->sp->dplay, idPlayer, (LPVOID*)&lpPlayerEntry );
   if( FAILED(hr) )
@@ -703,9 +701,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_GetSPData( IDirectPlaySP *iface, void **
   IDirectPlaySPImpl *This = impl_from_IDirectPlaySP( iface );
   HRESULT hr = DP_OK;
 
-/*  TRACE( "Called on process 0x%08lx\n", GetCurrentProcessId() ); */
-  TRACE( "(%p)->(%p,%p,0x%08x)\n",
-         This, lplpData, lpdwDataSize, dwFlags );
+  TRACE( "(%p)->(%p,%p,0x%08x)\n", This, lplpData, lpdwDataSize, dwFlags );
 
 #if 0
   /* This is what the documentation says... */
@@ -757,9 +753,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_SetSPData( IDirectPlaySP *iface, void *l
   IDirectPlaySPImpl *This = impl_from_IDirectPlaySP( iface );
   LPVOID lpSpData;
 
-/*  TRACE( "Called on process 0x%08lx\n", GetCurrentProcessId() ); */
-  TRACE( "(%p)->(%p,0x%08x,0x%08x)\n",
-         This, lpData, dwDataSize, dwFlags );
+  TRACE( "(%p)->(%p,0x%08x,0x%08x)\n", This, lpData, dwDataSize, dwFlags );
 
 #if 0
   /* This is what the documentation says... */
