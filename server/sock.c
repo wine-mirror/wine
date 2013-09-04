@@ -466,7 +466,7 @@ static void sock_dump( struct object *obj, int verbose )
 {
     struct sock *sock = (struct sock *)obj;
     assert( obj->ops == &sock_ops );
-    printf( "Socket fd=%p, state=%x, mask=%x, pending=%x, held=%x\n",
+    fprintf( stderr, "Socket fd=%p, state=%x, mask=%x, pending=%x, held=%x\n",
             sock->fd, sock->state,
             sock->mask, sock->pmask, sock->hmask );
 }
