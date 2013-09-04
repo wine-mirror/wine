@@ -4287,13 +4287,14 @@ static void test_SetVarDocString(void)
     static OLECHAR nameW[] = {'n','a','m','e',0};
     static OLECHAR doc1W[] = {'d','o','c','1',0};
     static OLECHAR doc2W[] = {'d','o','c','2',0};
+    static OLECHAR var_nameW[] = {'v','a','r','n','a','m','e',0};
     CHAR filenameA[MAX_PATH];
     WCHAR filenameW[MAX_PATH];
     ICreateTypeLib2 *ctl;
     ICreateTypeInfo *cti;
     ITypeLib *tl;
     ITypeInfo *ti;
-    BSTR docstr;
+    BSTR namestr, docstr;
     VARDESC desc, *pdesc;
     HRESULT hr;
     VARIANT v;
@@ -4322,6 +4323,15 @@ static void test_SetVarDocString(void)
     V_INT(&v) = 1;
     U(desc).lpvarValue = &v;
     hr = ICreateTypeInfo_AddVarDesc(cti, 0, &desc);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_SetVarName(cti, 0, NULL);
+    ok(hr == E_INVALIDARG, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_SetVarName(cti, 1, var_nameW);
+    ok(hr == TYPE_E_ELEMENTNOTFOUND, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_SetVarName(cti, 0, var_nameW);
     ok(hr == S_OK, "got %08x\n", hr);
 
     hr = ICreateTypeInfo_SetVarDocString(cti, 0, NULL);
@@ -4359,10 +4369,12 @@ static void test_SetVarDocString(void)
     ok(V_VT(U(pdesc)->lpvarValue) == VT_INT, "got wrong value type: %u\n", V_VT(U(pdesc)->lpvarValue));
     ok(V_INT(U(pdesc)->lpvarValue) == 1, "got wrong value: 0x%x\n", V_INT(U(pdesc)->lpvarValue));
 
-    hr = ITypeInfo_GetDocumentation(ti, pdesc->memid, NULL, &docstr, NULL, NULL);
+    hr = ITypeInfo_GetDocumentation(ti, pdesc->memid, &namestr, &docstr, NULL, NULL);
     ok(hr == S_OK, "got %08x\n", hr);
+    ok(memcmp(namestr, var_nameW, sizeof(var_nameW)) == 0, "got wrong name: %s\n", wine_dbgstr_w(namestr));
     ok(memcmp(docstr, doc2W, sizeof(doc2W)) == 0, "got wrong docstring: %s\n", wine_dbgstr_w(docstr));
 
+    SysFreeString(namestr);
     SysFreeString(docstr);
 
     ITypeInfo_ReleaseVarDesc(ti, pdesc);

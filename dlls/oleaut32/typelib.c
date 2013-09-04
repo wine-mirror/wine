@@ -10688,8 +10688,17 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetVarName(ICreateTypeInfo2 *iface,
         UINT index, LPOLESTR name)
 {
     ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
-    FIXME("%p %u %s - stub\n", This, index, wine_dbgstr_w(name));
-    return E_NOTIMPL;
+
+    TRACE("%p %u %s\n", This, index, wine_dbgstr_w(name));
+
+    if(!name)
+        return E_INVALIDARG;
+
+    if(index >= This->cVars)
+        return TYPE_E_ELEMENTNOTFOUND;
+
+    This->vardescs[index].Name = TLB_append_str(&This->pTypeLib->name_list, name);
+    return S_OK;
 }
 
 static HRESULT WINAPI ICreateTypeInfo2_fnSetTypeDescAlias(ICreateTypeInfo2 *iface,
