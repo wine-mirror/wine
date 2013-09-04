@@ -2777,14 +2777,7 @@ NTSTATUS WINAPI NtFlushBuffersFile( HANDLE hFile, IO_STATUS_BLOCK* IoStatusBlock
 
     if (!ret && type == FD_TYPE_SERIAL)
     {
-        while (tcdrain( fd ) == -1)
-        {
-            if (errno != EINTR)
-            {
-                ret = FILE_GetNtStatus();
-                break;
-            }
-        }
+        ret = COMM_FlushBuffersFile( fd );
     }
     else
     {

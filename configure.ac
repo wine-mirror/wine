@@ -2063,7 +2063,7 @@ AC_CHECK_FUNCS(\
 	strtoll \
 	strtoull \
 	symlink \
-	tcgetattr \
+	tcdrain \
 	thr_kill2 \
 	timegm \
 	usleep \
