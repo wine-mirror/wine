@@ -39,11 +39,11 @@ typedef struct _WINE_PROVIDERSTORE
     PFN_CERT_STORE_PROV_WRITE_CTL   provWriteCtl;
     PFN_CERT_STORE_PROV_DELETE_CTL  provDeleteCtl;
     PFN_CERT_STORE_PROV_CONTROL     provControl;
-} WINE_PROVIDERSTORE, *PWINE_PROVIDERSTORE;
+} WINE_PROVIDERSTORE;
 
 static void WINAPI CRYPT_ProvCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
 {
-    PWINE_PROVIDERSTORE store = hCertStore;
+    WINE_PROVIDERSTORE *store = hCertStore;
 
     TRACE("(%p, %08x)\n", store, dwFlags);
 
@@ -57,7 +57,7 @@ static void WINAPI CRYPT_ProvCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
 static BOOL CRYPT_ProvAddCert(WINECRYPT_CERTSTORE *store, void *cert,
  void *toReplace, const void **ppStoreContext)
 {
-    PWINE_PROVIDERSTORE ps = (PWINE_PROVIDERSTORE)store;
+    WINE_PROVIDERSTORE *ps = (WINE_PROVIDERSTORE*)store;
     BOOL ret;
 
     TRACE("(%p, %p, %p, %p)\n", store, cert, toReplace, ppStoreContext);
@@ -85,7 +85,7 @@ static BOOL CRYPT_ProvAddCert(WINECRYPT_CERTSTORE *store, void *cert,
 
 static void *CRYPT_ProvEnumCert(WINECRYPT_CERTSTORE *store, void *pPrev)
 {
-    PWINE_PROVIDERSTORE ps = (PWINE_PROVIDERSTORE)store;
+    WINE_PROVIDERSTORE *ps = (WINE_PROVIDERSTORE*)store;
     void *ret;
 
     ret = ps->memStore->certs.enumContext(ps->memStore, pPrev);
@@ -101,7 +101,7 @@ static void *CRYPT_ProvEnumCert(WINECRYPT_CERTSTORE *store, void *pPrev)
 
 static BOOL CRYPT_ProvDeleteCert(WINECRYPT_CERTSTORE *store, void *cert)
 {
-    PWINE_PROVIDERSTORE ps = (PWINE_PROVIDERSTORE)store;
+    WINE_PROVIDERSTORE *ps = (WINE_PROVIDERSTORE*)store;
     BOOL ret = TRUE;
 
     TRACE("(%p, %p)\n", store, cert);
@@ -116,7 +116,7 @@ static BOOL CRYPT_ProvDeleteCert(WINECRYPT_CERTSTORE *store, void *cert)
 static BOOL CRYPT_ProvAddCRL(WINECRYPT_CERTSTORE *store, void *crl,
  void *toReplace, const void **ppStoreContext)
 {
-    PWINE_PROVIDERSTORE ps = (PWINE_PROVIDERSTORE)store;
+    WINE_PROVIDERSTORE *ps = (WINE_PROVIDERSTORE*)store;
     BOOL ret;
 
     TRACE("(%p, %p, %p, %p)\n", store, crl, toReplace, ppStoreContext);
@@ -152,7 +152,7 @@ static BOOL CRYPT_ProvAddCRL(WINECRYPT_CERTSTORE *store, void *crl,
 
 static void *CRYPT_ProvEnumCRL(WINECRYPT_CERTSTORE *store, void *pPrev)
 {
-    PWINE_PROVIDERSTORE ps = (PWINE_PROVIDERSTORE)store;
+    WINE_PROVIDERSTORE *ps = (WINE_PROVIDERSTORE*)store;
     void *ret;
 
     ret = ps->memStore->crls.enumContext(ps->memStore, pPrev);
@@ -168,7 +168,7 @@ static void *CRYPT_ProvEnumCRL(WINECRYPT_CERTSTORE *store, void *pPrev)
 
 static BOOL CRYPT_ProvDeleteCRL(WINECRYPT_CERTSTORE *store, void *crl)
 {
-    PWINE_PROVIDERSTORE ps = (PWINE_PROVIDERSTORE)store;
+    WINE_PROVIDERSTORE *ps = (WINE_PROVIDERSTORE*)store;
     BOOL ret = TRUE;
 
     TRACE("(%p, %p)\n", store, crl);
@@ -183,7 +183,7 @@ static BOOL CRYPT_ProvDeleteCRL(WINECRYPT_CERTSTORE *store, void *crl)
 static BOOL CRYPT_ProvAddCTL(WINECRYPT_CERTSTORE *store, void *ctl,
  void *toReplace, const void **ppStoreContext)
 {
-    PWINE_PROVIDERSTORE ps = (PWINE_PROVIDERSTORE)store;
+    WINE_PROVIDERSTORE *ps = (WINE_PROVIDERSTORE*)store;
     BOOL ret;
 
     TRACE("(%p, %p, %p, %p)\n", store, ctl, toReplace, ppStoreContext);
@@ -219,7 +219,7 @@ static BOOL CRYPT_ProvAddCTL(WINECRYPT_CERTSTORE *store, void *ctl,
 
 static void *CRYPT_ProvEnumCTL(WINECRYPT_CERTSTORE *store, void *pPrev)
 {
-    PWINE_PROVIDERSTORE ps = (PWINE_PROVIDERSTORE)store;
+    WINE_PROVIDERSTORE *ps = (WINE_PROVIDERSTORE*)store;
     void *ret;
 
     ret = ps->memStore->ctls.enumContext(ps->memStore, pPrev);
@@ -235,7 +235,7 @@ static void *CRYPT_ProvEnumCTL(WINECRYPT_CERTSTORE *store, void *pPrev)
 
 static BOOL CRYPT_ProvDeleteCTL(WINECRYPT_CERTSTORE *store, void *ctl)
 {
-    PWINE_PROVIDERSTORE ps = (PWINE_PROVIDERSTORE)store;
+    WINE_PROVIDERSTORE *ps = (WINE_PROVIDERSTORE*)store;
     BOOL ret = TRUE;
 
     TRACE("(%p, %p)\n", store, ctl);
@@ -250,7 +250,7 @@ static BOOL CRYPT_ProvDeleteCTL(WINECRYPT_CERTSTORE *store, void *ctl)
 static BOOL WINAPI CRYPT_ProvControl(HCERTSTORE hCertStore, DWORD dwFlags,
  DWORD dwCtrlType, void const *pvCtrlPara)
 {
-    PWINE_PROVIDERSTORE store = hCertStore;
+    WINE_PROVIDERSTORE *store = hCertStore;
     BOOL ret = TRUE;
 
     TRACE("(%p, %08x, %d, %p)\n", hCertStore, dwFlags, dwCtrlType,
@@ -265,7 +265,7 @@ static BOOL WINAPI CRYPT_ProvControl(HCERTSTORE hCertStore, DWORD dwFlags,
 WINECRYPT_CERTSTORE *CRYPT_ProvCreateStore(DWORD dwFlags,
  WINECRYPT_CERTSTORE *memStore, const CERT_STORE_PROV_INFO *pProvInfo)
 {
-    PWINE_PROVIDERSTORE ret = CryptMemAlloc(sizeof(WINE_PROVIDERSTORE));
+    WINE_PROVIDERSTORE *ret = CryptMemAlloc(sizeof(WINE_PROVIDERSTORE));
 
     if (ret)
     {
