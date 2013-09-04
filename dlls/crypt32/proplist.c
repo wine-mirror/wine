@@ -38,7 +38,7 @@ typedef struct _CONTEXT_PROPERTY
     DWORD       cbData;
     LPBYTE      pbData;
     struct list entry;
-} CONTEXT_PROPERTY, *PCONTEXT_PROPERTY;
+} CONTEXT_PROPERTY;
 
 CONTEXT_PROPERTY_LIST *ContextPropertyList_Create(void)
 {
@@ -55,7 +55,7 @@ CONTEXT_PROPERTY_LIST *ContextPropertyList_Create(void)
 
 void ContextPropertyList_Free(CONTEXT_PROPERTY_LIST *list)
 {
-    PCONTEXT_PROPERTY prop, next;
+    CONTEXT_PROPERTY *prop, *next;
 
     LIST_FOR_EACH_ENTRY_SAFE(prop, next, &list->properties, CONTEXT_PROPERTY,
      entry)
@@ -72,7 +72,7 @@ void ContextPropertyList_Free(CONTEXT_PROPERTY_LIST *list)
 BOOL ContextPropertyList_FindProperty(CONTEXT_PROPERTY_LIST *list, DWORD id,
  PCRYPT_DATA_BLOB blob)
 {
-    PCONTEXT_PROPERTY prop;
+    CONTEXT_PROPERTY *prop;
     BOOL ret = FALSE;
 
     TRACE("(%p, %d, %p)\n", list, id, blob);
@@ -108,7 +108,7 @@ BOOL ContextPropertyList_SetProperty(CONTEXT_PROPERTY_LIST *list, DWORD id,
         data = NULL;
     if (!cbData || data)
     {
-        PCONTEXT_PROPERTY prop;
+        CONTEXT_PROPERTY *prop;
         BOOL found = FALSE;
 
         EnterCriticalSection(&list->cs);
@@ -148,7 +148,7 @@ BOOL ContextPropertyList_SetProperty(CONTEXT_PROPERTY_LIST *list, DWORD id,
 
 void ContextPropertyList_RemoveProperty(CONTEXT_PROPERTY_LIST *list, DWORD id)
 {
-    PCONTEXT_PROPERTY prop, next;
+    CONTEXT_PROPERTY *prop, *next;
 
     EnterCriticalSection(&list->cs);
     LIST_FOR_EACH_ENTRY_SAFE(prop, next, &list->properties, CONTEXT_PROPERTY,
@@ -175,7 +175,7 @@ DWORD ContextPropertyList_EnumPropIDs(CONTEXT_PROPERTY_LIST *list, DWORD id)
     EnterCriticalSection(&list->cs);
     if (id)
     {
-        PCONTEXT_PROPERTY cursor = NULL;
+        CONTEXT_PROPERTY *cursor = NULL;
 
         LIST_FOR_EACH_ENTRY(cursor, &list->properties, CONTEXT_PROPERTY, entry)
         {
@@ -204,7 +204,7 @@ DWORD ContextPropertyList_EnumPropIDs(CONTEXT_PROPERTY_LIST *list, DWORD id)
 
 void ContextPropertyList_Copy(CONTEXT_PROPERTY_LIST *to, CONTEXT_PROPERTY_LIST *from)
 {
-    PCONTEXT_PROPERTY prop;
+    CONTEXT_PROPERTY *prop;
 
     EnterCriticalSection(&from->cs);
     LIST_FOR_EACH_ENTRY(prop, &from->properties, CONTEXT_PROPERTY, entry)
