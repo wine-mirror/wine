@@ -41,7 +41,7 @@ typedef struct _WINE_CERT_PROP_HEADER
 
 static BOOL CRYPT_SerializeStoreElement(const void *context,
  const BYTE *encodedContext, DWORD cbEncodedContext, DWORD contextPropID,
- PCWINE_CONTEXT_INTERFACE contextInterface, DWORD dwFlags, BOOL omitHashes,
+ const WINE_CONTEXT_INTERFACE *contextInterface, DWORD dwFlags, BOOL omitHashes,
  BYTE *pbElement, DWORD *pcbElement)
 {
     BOOL ret;

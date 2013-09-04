@@ -194,12 +194,11 @@ typedef struct _WINE_CONTEXT_INTERFACE
     SerializeElementFunc         serialize;
     FreeContextFunc              free;
     DeleteContextFunc            deleteFromStore;
-} WINE_CONTEXT_INTERFACE, *PWINE_CONTEXT_INTERFACE;
-typedef const WINE_CONTEXT_INTERFACE *PCWINE_CONTEXT_INTERFACE;
+} WINE_CONTEXT_INTERFACE;
 
-extern PCWINE_CONTEXT_INTERFACE pCertInterface DECLSPEC_HIDDEN;
-extern PCWINE_CONTEXT_INTERFACE pCRLInterface DECLSPEC_HIDDEN;
-extern PCWINE_CONTEXT_INTERFACE pCTLInterface DECLSPEC_HIDDEN;
+extern const WINE_CONTEXT_INTERFACE *pCertInterface DECLSPEC_HIDDEN;
+extern const WINE_CONTEXT_INTERFACE *pCRLInterface DECLSPEC_HIDDEN;
+extern const WINE_CONTEXT_INTERFACE *pCTLInterface DECLSPEC_HIDDEN;
 
 /* (Internal) certificate store types and functions */
 struct WINE_CRYPTCERTSTORE;
@@ -404,7 +403,7 @@ void ContextPropertyList_Free(PCONTEXT_PROPERTY_LIST list) DECLSPEC_HIDDEN;
 struct ContextList;
 
 struct ContextList *ContextList_Create(
- PCWINE_CONTEXT_INTERFACE contextInterface, size_t contextSize) DECLSPEC_HIDDEN;
+ const WINE_CONTEXT_INTERFACE *contextInterface, size_t contextSize) DECLSPEC_HIDDEN;
 
 void *ContextList_Add(struct ContextList *list, void *toLink, void *toReplace) DECLSPEC_HIDDEN;
 

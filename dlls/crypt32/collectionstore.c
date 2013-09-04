@@ -135,7 +135,7 @@ static BOOL CRYPT_CollectionAddContext(PWINE_COLLECTIONSTORE store,
  */
 static void *CRYPT_CollectionAdvanceEnum(PWINE_COLLECTIONSTORE store,
  PWINE_STORE_LIST_ENTRY storeEntry, const CONTEXT_FUNCS *contextFuncs,
- PCWINE_CONTEXT_INTERFACE contextInterface, void *pPrev, size_t contextSize)
+ const WINE_CONTEXT_INTERFACE *contextInterface, void *pPrev, size_t contextSize)
 {
     void *ret, *child;
     struct list *storeNext = list_next(&store->stores, &storeEntry->entry);

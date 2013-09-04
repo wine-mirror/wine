@@ -349,7 +349,7 @@ static BOOL CRYPT_RegWriteContext(PWINE_REGSTOREINFO store,
 
 static BOOL CRYPT_RegDeleteContext(PWINE_REGSTOREINFO store,
  struct list *deleteList, const void *context,
- PCWINE_CONTEXT_INTERFACE contextInterface)
+ const WINE_CONTEXT_INTERFACE *contextInterface)
 {
     BOOL ret;
 

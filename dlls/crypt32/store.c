@@ -54,7 +54,7 @@ static const WINE_CONTEXT_INTERFACE gCertInterface = {
     (FreeContextFunc)CertFreeCertificateContext,
     (DeleteContextFunc)CertDeleteCertificateFromStore,
 };
-PCWINE_CONTEXT_INTERFACE pCertInterface = &gCertInterface;
+const WINE_CONTEXT_INTERFACE *pCertInterface = &gCertInterface;
 
 static const WINE_CONTEXT_INTERFACE gCRLInterface = {
     (CreateContextFunc)CertCreateCRLContext,
@@ -69,7 +69,7 @@ static const WINE_CONTEXT_INTERFACE gCRLInterface = {
     (FreeContextFunc)CertFreeCRLContext,
     (DeleteContextFunc)CertDeleteCRLFromStore,
 };
-PCWINE_CONTEXT_INTERFACE pCRLInterface = &gCRLInterface;
+const WINE_CONTEXT_INTERFACE *pCRLInterface = &gCRLInterface;
 
 static const WINE_CONTEXT_INTERFACE gCTLInterface = {
     (CreateContextFunc)CertCreateCTLContext,
@@ -84,7 +84,7 @@ static const WINE_CONTEXT_INTERFACE gCTLInterface = {
     (FreeContextFunc)CertFreeCTLContext,
     (DeleteContextFunc)CertDeleteCTLFromStore,
 };
-PCWINE_CONTEXT_INTERFACE pCTLInterface = &gCTLInterface;
+const WINE_CONTEXT_INTERFACE *pCTLInterface = &gCTLInterface;
 
 typedef struct _WINE_MEMSTORE
 {

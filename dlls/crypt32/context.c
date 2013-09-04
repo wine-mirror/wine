@@ -214,14 +214,14 @@ void Context_CopyProperties(const void *to, const void *from,
 
 struct ContextList
 {
-    PCWINE_CONTEXT_INTERFACE contextInterface;
+    const WINE_CONTEXT_INTERFACE *contextInterface;
     size_t contextSize;
     CRITICAL_SECTION cs;
     struct list contexts;
 };
 
 struct ContextList *ContextList_Create(
- PCWINE_CONTEXT_INTERFACE contextInterface, size_t contextSize)
+ const WINE_CONTEXT_INTERFACE *contextInterface, size_t contextSize)
 {
     struct ContextList *list = CryptMemAlloc(sizeof(struct ContextList));
 
