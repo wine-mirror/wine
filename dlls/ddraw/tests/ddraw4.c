@@ -3819,6 +3819,101 @@ static void test_coop_level_activateapp(void)
     IDirectDraw4_Release(ddraw);
 }
 
+static void test_texturemanage(void)
+{
+    IDirectDraw4 *ddraw;
+    HRESULT hr;
+    DDSURFACEDESC2 ddsd;
+    IDirectDrawSurface4 *surface;
+    unsigned int i;
+    DDCAPS hal_caps, hel_caps;
+    DWORD needed_caps = DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY;
+    static const struct
+    {
+        DWORD caps_in, caps2_in;
+        HRESULT hr;
+        DWORD caps_out, caps2_out;
+    }
+    tests[] =
+    {
+        {DDSCAPS_SYSTEMMEMORY | DDSCAPS_TEXTURE, DDSCAPS2_TEXTUREMANAGE, DDERR_INVALIDCAPS,
+                ~0U, ~0U},
+        {DDSCAPS_VIDEOMEMORY | DDSCAPS_TEXTURE, DDSCAPS2_TEXTUREMANAGE, DDERR_INVALIDCAPS,
+                ~0U, ~0U},
+        {DDSCAPS_TEXTURE, DDSCAPS2_TEXTUREMANAGE, DD_OK,
+                DDSCAPS_SYSTEMMEMORY | DDSCAPS_TEXTURE, DDSCAPS2_TEXTUREMANAGE},
+        {DDSCAPS_VIDEOMEMORY | DDSCAPS_TEXTURE, 0, DD_OK,
+                DDSCAPS_VIDEOMEMORY | DDSCAPS_TEXTURE | DDSCAPS_LOCALVIDMEM, 0},
+        {DDSCAPS_SYSTEMMEMORY | DDSCAPS_TEXTURE, 0, DD_OK,
+                DDSCAPS_SYSTEMMEMORY | DDSCAPS_TEXTURE, 0},
+
+        {0, DDSCAPS2_TEXTUREMANAGE, DDERR_INVALIDCAPS,
+                ~0U, ~0U},
+        {DDSCAPS_SYSTEMMEMORY, DDSCAPS2_TEXTUREMANAGE, DDERR_INVALIDCAPS,
+                ~0U, ~0U},
+        {DDSCAPS_VIDEOMEMORY, DDSCAPS2_TEXTUREMANAGE, DDERR_INVALIDCAPS,
+                ~0U, ~0U},
+        {DDSCAPS_VIDEOMEMORY, 0, DD_OK,
+                DDSCAPS_LOCALVIDMEM | DDSCAPS_VIDEOMEMORY, 0},
+        {DDSCAPS_SYSTEMMEMORY, 0, DD_OK,
+                DDSCAPS_SYSTEMMEMORY, 0},
+    };
+
+    if (!(ddraw = create_ddraw()))
+    {
+        skip("Failed to create IDirectDraw4 object, skipping tests.\n");
+        return;
+    }
+
+    hr = IDirectDraw4_SetCooperativeLevel(ddraw, NULL, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    memset(&hal_caps, 0, sizeof(hal_caps));
+    hal_caps.dwSize = sizeof(hal_caps);
+    memset(&hel_caps, 0, sizeof(hel_caps));
+    hel_caps.dwSize = sizeof(hel_caps);
+    hr = IDirectDraw4_GetCaps(ddraw, &hal_caps, &hel_caps);
+    ok(SUCCEEDED(hr), "Failed to get caps, hr %#x.\n", hr);
+    if ((hal_caps.ddsCaps.dwCaps & needed_caps) != needed_caps)
+    {
+        skip("Managed textures not supported, skipping managed texture test.\n");
+        IDirectDraw4_Release(ddraw);
+        return;
+    }
+
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); i++)
+    {
+        memset(&ddsd, 0, sizeof(ddsd));
+        ddsd.dwSize = sizeof(ddsd);
+        ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS;
+        ddsd.ddsCaps.dwCaps = tests[i].caps_in;
+        ddsd.ddsCaps.dwCaps2 = tests[i].caps2_in;
+        ddsd.dwWidth = 4;
+        ddsd.dwHeight = 4;
+
+        hr = IDirectDraw4_CreateSurface(ddraw, &ddsd, &surface, NULL);
+        ok(hr == tests[i].hr, "Got unexpected, hr %#x, case %u.\n", hr, i);
+        if (FAILED(hr))
+            continue;
+
+        memset(&ddsd, 0, sizeof(ddsd));
+        ddsd.dwSize = sizeof(ddsd);
+        hr = IDirectDrawSurface4_GetSurfaceDesc(surface, &ddsd);
+        ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
+
+        ok(ddsd.ddsCaps.dwCaps == tests[i].caps_out,
+                "Input caps %#x, %#x, expected output caps %#x, got %#x, case %u.\n",
+                tests[i].caps_in, tests[i].caps2_in, tests[i].caps_out, ddsd.ddsCaps.dwCaps, i);
+        ok(ddsd.ddsCaps.dwCaps2 == tests[i].caps2_out,
+                "Input caps %#x, %#x, expected output caps %#x, got %#x, case %u.\n",
+                tests[i].caps_in, tests[i].caps2_in, tests[i].caps2_out, ddsd.ddsCaps.dwCaps2, i);
+
+        IDirectDrawSurface4_Release(surface);
+    }
+
+    IDirectDraw4_Release(ddraw);
+}
+
 START_TEST(ddraw4)
 {
     test_process_vertices();
@@ -3849,4 +3944,5 @@ START_TEST(ddraw4)
     test_coop_level_versions();
     test_lighting_interface_versions();
     test_coop_level_activateapp();
+    test_texturemanage();
 }
