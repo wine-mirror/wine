@@ -240,7 +240,7 @@ HRESULT dplobbysp_create( REFIID riid, void **ppv, IDirectPlayImpl *dp )
     return DPERR_OUTOFMEMORY;
 
   obj->IDPLobbySP_iface.lpVtbl = &dpLobbySPVT;
-  obj->ref = 0;
+  obj->ref = 1;
   obj->dplay = dp;
 
   hr = IDPLobbySP_QueryInterface( &obj->IDPLobbySP_iface, riid, ppv );
