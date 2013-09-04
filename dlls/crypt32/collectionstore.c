@@ -38,11 +38,11 @@ typedef struct _WINE_COLLECTIONSTORE
     WINECRYPT_CERTSTORE hdr;
     CRITICAL_SECTION    cs;
     struct list         stores;
-} WINE_COLLECTIONSTORE, *PWINE_COLLECTIONSTORE;
+} WINE_COLLECTIONSTORE;
 
 static void WINAPI CRYPT_CollectionCloseStore(HCERTSTORE store, DWORD dwFlags)
 {
-    PWINE_COLLECTIONSTORE cs = store;
+    WINE_COLLECTIONSTORE *cs = store;
     WINE_STORE_LIST_ENTRY *entry, *next;
 
     TRACE("(%p, %08x)\n", store, dwFlags);
@@ -59,7 +59,7 @@ static void WINAPI CRYPT_CollectionCloseStore(HCERTSTORE store, DWORD dwFlags)
     CRYPT_FreeStore(store);
 }
 
-static void *CRYPT_CollectionCreateContextFromChild(PWINE_COLLECTIONSTORE store,
+static void *CRYPT_CollectionCreateContextFromChild(WINE_COLLECTIONSTORE *store,
  WINE_STORE_LIST_ENTRY *storeEntry, void *child, size_t contextSize,
  BOOL addRef)
 {
@@ -73,7 +73,7 @@ static void *CRYPT_CollectionCreateContextFromChild(PWINE_COLLECTIONSTORE store,
     return ret;
 }
 
-static BOOL CRYPT_CollectionAddContext(PWINE_COLLECTIONSTORE store,
+static BOOL CRYPT_CollectionAddContext(WINE_COLLECTIONSTORE *store,
  unsigned int contextFuncsOffset, void *context, void *toReplace, unsigned int contextSize,
  void **pChildContext)
 {
@@ -133,7 +133,7 @@ static BOOL CRYPT_CollectionAddContext(PWINE_COLLECTIONSTORE store,
  * Returns NULL if the collection contains no more items or on error.
  * Assumes the collection store's lock is held.
  */
-static void *CRYPT_CollectionAdvanceEnum(PWINE_COLLECTIONSTORE store,
+static void *CRYPT_CollectionAdvanceEnum(WINE_COLLECTIONSTORE *store,
  WINE_STORE_LIST_ENTRY *storeEntry, const CONTEXT_FUNCS *contextFuncs,
  const WINE_CONTEXT_INTERFACE *contextInterface, void *pPrev, size_t contextSize)
 {
@@ -189,7 +189,7 @@ static BOOL CRYPT_CollectionAddCert(WINECRYPT_CERTSTORE *store, void *cert,
 {
     BOOL ret;
     void *childContext = NULL;
-    PWINE_COLLECTIONSTORE cs = (PWINE_COLLECTIONSTORE)store;
+    WINE_COLLECTIONSTORE *cs = (WINE_COLLECTIONSTORE*)store;
 
     ret = CRYPT_CollectionAddContext(cs, offsetof(WINECRYPT_CERTSTORE, certs),
      cert, toReplace, sizeof(CERT_CONTEXT), &childContext);
@@ -211,7 +211,7 @@ static BOOL CRYPT_CollectionAddCert(WINECRYPT_CERTSTORE *store, void *cert,
 
 static void *CRYPT_CollectionEnumCert(WINECRYPT_CERTSTORE *store, void *pPrev)
 {
-    PWINE_COLLECTIONSTORE cs = (PWINE_COLLECTIONSTORE)store;
+    WINE_COLLECTIONSTORE *cs = (WINE_COLLECTIONSTORE*)store;
     void *ret;
 
     TRACE("(%p, %p)\n", store, pPrev);
@@ -276,7 +276,7 @@ static BOOL CRYPT_CollectionAddCRL(WINECRYPT_CERTSTORE *store, void *crl,
 {
     BOOL ret;
     void *childContext = NULL;
-    PWINE_COLLECTIONSTORE cs = (PWINE_COLLECTIONSTORE)store;
+    WINE_COLLECTIONSTORE *cs = (WINE_COLLECTIONSTORE*)store;
 
     ret = CRYPT_CollectionAddContext(cs, offsetof(WINECRYPT_CERTSTORE, crls),
      crl, toReplace, sizeof(CRL_CONTEXT), &childContext);
@@ -298,7 +298,7 @@ static BOOL CRYPT_CollectionAddCRL(WINECRYPT_CERTSTORE *store, void *crl,
 
 static void *CRYPT_CollectionEnumCRL(WINECRYPT_CERTSTORE *store, void *pPrev)
 {
-    PWINE_COLLECTIONSTORE cs = (PWINE_COLLECTIONSTORE)store;
+    WINE_COLLECTIONSTORE *cs = (WINE_COLLECTIONSTORE*)store;
     void *ret;
 
     TRACE("(%p, %p)\n", store, pPrev);
@@ -360,7 +360,7 @@ static BOOL CRYPT_CollectionAddCTL(WINECRYPT_CERTSTORE *store, void *ctl,
 {
     BOOL ret;
     void *childContext = NULL;
-    PWINE_COLLECTIONSTORE cs = (PWINE_COLLECTIONSTORE)store;
+    WINE_COLLECTIONSTORE *cs = (WINE_COLLECTIONSTORE*)store;
 
     ret = CRYPT_CollectionAddContext(cs, offsetof(WINECRYPT_CERTSTORE, ctls),
      ctl, toReplace, sizeof(CTL_CONTEXT), &childContext);
@@ -382,7 +382,7 @@ static BOOL CRYPT_CollectionAddCTL(WINECRYPT_CERTSTORE *store, void *ctl,
 
 static void *CRYPT_CollectionEnumCTL(WINECRYPT_CERTSTORE *store, void *pPrev)
 {
-    PWINE_COLLECTIONSTORE cs = (PWINE_COLLECTIONSTORE)store;
+    WINE_COLLECTIONSTORE *cs = (WINE_COLLECTIONSTORE*)store;
     void *ret;
 
     TRACE("(%p, %p)\n", store, pPrev);
@@ -443,7 +443,7 @@ static BOOL WINAPI CRYPT_CollectionControl(HCERTSTORE hCertStore, DWORD dwFlags,
  DWORD dwCtrlType, void const *pvCtrlPara)
 {
     BOOL ret;
-    PWINE_COLLECTIONSTORE store = hCertStore;
+    WINE_COLLECTIONSTORE *store = hCertStore;
     WINE_STORE_LIST_ENTRY *entry;
 
     TRACE("(%p, %08x, %d, %p)\n", hCertStore, dwFlags, dwCtrlType,
@@ -481,7 +481,7 @@ static BOOL WINAPI CRYPT_CollectionControl(HCERTSTORE hCertStore, DWORD dwFlags,
 WINECRYPT_CERTSTORE *CRYPT_CollectionOpenStore(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara)
 {
-    PWINE_COLLECTIONSTORE store;
+    WINE_COLLECTIONSTORE *store;
 
     if (dwFlags & CERT_STORE_DELETE_FLAG)
     {
@@ -517,7 +517,7 @@ WINECRYPT_CERTSTORE *CRYPT_CollectionOpenStore(HCRYPTPROV hCryptProv,
 BOOL WINAPI CertAddStoreToCollection(HCERTSTORE hCollectionStore,
  HCERTSTORE hSiblingStore, DWORD dwUpdateFlags, DWORD dwPriority)
 {
-    PWINE_COLLECTIONSTORE collection = hCollectionStore;
+    WINE_COLLECTIONSTORE *collection = hCollectionStore;
     WINECRYPT_CERTSTORE *sibling = hSiblingStore;
     WINE_STORE_LIST_ENTRY *entry;
     BOOL ret;
@@ -585,7 +585,7 @@ BOOL WINAPI CertAddStoreToCollection(HCERTSTORE hCollectionStore,
 void WINAPI CertRemoveStoreFromCollection(HCERTSTORE hCollectionStore,
  HCERTSTORE hSiblingStore)
 {
-    PWINE_COLLECTIONSTORE collection = hCollectionStore;
+    WINE_COLLECTIONSTORE *collection = hCollectionStore;
     WINECRYPT_CERTSTORE *sibling = hSiblingStore;
     WINE_STORE_LIST_ENTRY *store, *next;
 
