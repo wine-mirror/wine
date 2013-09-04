@@ -882,7 +882,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
     surface_desc.format = swapchain->desc.backbuffer_format;
     surface_desc.multisample_type = swapchain->desc.multisample_type;
     surface_desc.multisample_quality = swapchain->desc.multisample_quality;
-    surface_desc.usage = WINED3DUSAGE_RENDERTARGET;
+    surface_desc.usage = 0;
     surface_desc.pool = WINED3D_POOL_DEFAULT;
     surface_desc.width = swapchain->desc.backbuffer_width;
     surface_desc.height = swapchain->desc.backbuffer_height;
@@ -992,6 +992,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
             goto err;
         }
 
+        surface_desc.usage |= WINED3DUSAGE_RENDERTARGET;
         for (i = 0; i < swapchain->desc.backbuffer_count; ++i)
         {
             TRACE("Creating back buffer %u.\n", i);
