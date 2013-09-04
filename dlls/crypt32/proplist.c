@@ -26,11 +26,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
-typedef struct _CONTEXT_PROPERTY_LIST
+struct _CONTEXT_PROPERTY_LIST
 {
     CRITICAL_SECTION cs;
     struct list      properties;
-} CONTEXT_PROPERTY_LIST;
+};
 
 typedef struct _CONTEXT_PROPERTY
 {
@@ -40,9 +40,9 @@ typedef struct _CONTEXT_PROPERTY
     struct list entry;
 } CONTEXT_PROPERTY, *PCONTEXT_PROPERTY;
 
-PCONTEXT_PROPERTY_LIST ContextPropertyList_Create(void)
+CONTEXT_PROPERTY_LIST *ContextPropertyList_Create(void)
 {
-    PCONTEXT_PROPERTY_LIST list = CryptMemAlloc(sizeof(CONTEXT_PROPERTY_LIST));
+    CONTEXT_PROPERTY_LIST *list = CryptMemAlloc(sizeof(CONTEXT_PROPERTY_LIST));
 
     if (list)
     {
@@ -53,7 +53,7 @@ PCONTEXT_PROPERTY_LIST ContextPropertyList_Create(void)
     return list;
 }
 
-void ContextPropertyList_Free(PCONTEXT_PROPERTY_LIST list)
+void ContextPropertyList_Free(CONTEXT_PROPERTY_LIST *list)
 {
     PCONTEXT_PROPERTY prop, next;
 
@@ -69,7 +69,7 @@ void ContextPropertyList_Free(PCONTEXT_PROPERTY_LIST list)
     CryptMemFree(list);
 }
 
-BOOL ContextPropertyList_FindProperty(PCONTEXT_PROPERTY_LIST list, DWORD id,
+BOOL ContextPropertyList_FindProperty(CONTEXT_PROPERTY_LIST *list, DWORD id,
  PCRYPT_DATA_BLOB blob)
 {
     PCONTEXT_PROPERTY prop;
@@ -92,7 +92,7 @@ BOOL ContextPropertyList_FindProperty(PCONTEXT_PROPERTY_LIST list, DWORD id,
     return ret;
 }
 
-BOOL ContextPropertyList_SetProperty(PCONTEXT_PROPERTY_LIST list, DWORD id,
+BOOL ContextPropertyList_SetProperty(CONTEXT_PROPERTY_LIST *list, DWORD id,
  const BYTE *pbData, size_t cbData)
 {
     LPBYTE data;
@@ -146,7 +146,7 @@ BOOL ContextPropertyList_SetProperty(PCONTEXT_PROPERTY_LIST list, DWORD id,
     return ret;
 }
 
-void ContextPropertyList_RemoveProperty(PCONTEXT_PROPERTY_LIST list, DWORD id)
+void ContextPropertyList_RemoveProperty(CONTEXT_PROPERTY_LIST *list, DWORD id)
 {
     PCONTEXT_PROPERTY prop, next;
 
@@ -168,7 +168,7 @@ void ContextPropertyList_RemoveProperty(PCONTEXT_PROPERTY_LIST list, DWORD id)
 /* Since the properties are stored in a list, this is a tad inefficient
  * (O(n^2)) since I have to find the previous position every time.
  */
-DWORD ContextPropertyList_EnumPropIDs(PCONTEXT_PROPERTY_LIST list, DWORD id)
+DWORD ContextPropertyList_EnumPropIDs(CONTEXT_PROPERTY_LIST *list, DWORD id)
 {
     DWORD ret;
 
@@ -202,8 +202,7 @@ DWORD ContextPropertyList_EnumPropIDs(PCONTEXT_PROPERTY_LIST list, DWORD id)
     return ret;
 }
 
-void ContextPropertyList_Copy(PCONTEXT_PROPERTY_LIST to,
- PCONTEXT_PROPERTY_LIST from)
+void ContextPropertyList_Copy(CONTEXT_PROPERTY_LIST *to, CONTEXT_PROPERTY_LIST *from)
 {
     PCONTEXT_PROPERTY prop;
 

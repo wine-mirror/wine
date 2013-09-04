@@ -489,7 +489,7 @@ BOOL WINAPI CertFreeCTLContext(PCCTL_CONTEXT pCTLContext)
 DWORD WINAPI CertEnumCTLContextProperties(PCCTL_CONTEXT pCTLContext,
  DWORD dwPropId)
 {
-    PCONTEXT_PROPERTY_LIST properties = Context_GetProperties(
+    CONTEXT_PROPERTY_LIST *properties = Context_GetProperties(
      pCTLContext, sizeof(CTL_CONTEXT));
     DWORD ret;
 
@@ -523,7 +523,7 @@ static BOOL CTLContext_GetHashProp(PCCTL_CONTEXT context, DWORD dwPropId,
 static BOOL CTLContext_GetProperty(PCCTL_CONTEXT context, DWORD dwPropId,
                                    void *pvData, DWORD *pcbData)
 {
-    PCONTEXT_PROPERTY_LIST properties =
+    CONTEXT_PROPERTY_LIST *properties =
      Context_GetProperties(context, sizeof(CTL_CONTEXT));
     BOOL ret;
     CRYPT_DATA_BLOB blob;
@@ -621,8 +621,7 @@ BOOL WINAPI CertGetCTLContextProperty(PCCTL_CONTEXT pCTLContext,
 static BOOL CTLContext_SetProperty(PCCTL_CONTEXT context, DWORD dwPropId,
  DWORD dwFlags, const void *pvData)
 {
-    PCONTEXT_PROPERTY_LIST properties =
-     Context_GetProperties(context, sizeof(CTL_CONTEXT));
+    CONTEXT_PROPERTY_LIST *properties = Context_GetProperties(context, sizeof(CTL_CONTEXT));
     BOOL ret;
 
     TRACE("(%p, %d, %08x, %p)\n", context, dwPropId, dwFlags, pvData);

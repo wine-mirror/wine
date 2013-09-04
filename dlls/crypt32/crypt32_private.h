@@ -233,8 +233,7 @@ typedef enum _CertStoreType {
     StoreTypeProvider,
 } CertStoreType;
 
-struct _CONTEXT_PROPERTY_LIST;
-typedef struct _CONTEXT_PROPERTY_LIST *PCONTEXT_PROPERTY_LIST;
+typedef struct _CONTEXT_PROPERTY_LIST CONTEXT_PROPERTY_LIST;
 
 #define WINE_CRYPTCERTSTORE_MAGIC 0x74726563
 
@@ -256,7 +255,7 @@ typedef struct WINE_CRYPTCERTSTORE
     CONTEXT_FUNCS               crls;
     CONTEXT_FUNCS               ctls;
     PFN_CERT_STORE_PROV_CONTROL control; /* optional */
-    PCONTEXT_PROPERTY_LIST      properties;
+    CONTEXT_PROPERTY_LIST      *properties;
 } WINECRYPT_CERTSTORE, *PWINECRYPT_CERTSTORE;
 
 void CRYPT_InitStore(WINECRYPT_CERTSTORE *store, DWORD dwFlags,
@@ -358,7 +357,7 @@ void Context_CopyProperties(const void *to, const void *from,
 /* Returns context's properties, or the linked context's properties if context
  * is a link context.
  */
-PCONTEXT_PROPERTY_LIST Context_GetProperties(const void *context, size_t contextSize) DECLSPEC_HIDDEN;
+CONTEXT_PROPERTY_LIST *Context_GetProperties(const void *context, size_t contextSize) DECLSPEC_HIDDEN;
 
 void Context_AddRef(void *context, size_t contextSize) DECLSPEC_HIDDEN;
 
@@ -376,26 +375,26 @@ BOOL Context_Release(void *context, size_t contextSize,
  *  Context property list functions
  */
 
-PCONTEXT_PROPERTY_LIST ContextPropertyList_Create(void) DECLSPEC_HIDDEN;
+CONTEXT_PROPERTY_LIST *ContextPropertyList_Create(void) DECLSPEC_HIDDEN;
 
 /* Searches for the property with ID id in the context.  Returns TRUE if found,
  * and copies the property's length and a pointer to its data to blob.
  * Otherwise returns FALSE.
  */
-BOOL ContextPropertyList_FindProperty(PCONTEXT_PROPERTY_LIST list, DWORD id,
+BOOL ContextPropertyList_FindProperty(CONTEXT_PROPERTY_LIST *list, DWORD id,
  PCRYPT_DATA_BLOB blob) DECLSPEC_HIDDEN;
 
-BOOL ContextPropertyList_SetProperty(PCONTEXT_PROPERTY_LIST list, DWORD id,
+BOOL ContextPropertyList_SetProperty(CONTEXT_PROPERTY_LIST *list, DWORD id,
  const BYTE *pbData, size_t cbData) DECLSPEC_HIDDEN;
 
-void ContextPropertyList_RemoveProperty(PCONTEXT_PROPERTY_LIST list, DWORD id) DECLSPEC_HIDDEN;
+void ContextPropertyList_RemoveProperty(CONTEXT_PROPERTY_LIST *list, DWORD id) DECLSPEC_HIDDEN;
 
-DWORD ContextPropertyList_EnumPropIDs(PCONTEXT_PROPERTY_LIST list, DWORD id) DECLSPEC_HIDDEN;
+DWORD ContextPropertyList_EnumPropIDs(CONTEXT_PROPERTY_LIST *list, DWORD id) DECLSPEC_HIDDEN;
 
-void ContextPropertyList_Copy(PCONTEXT_PROPERTY_LIST to,
- PCONTEXT_PROPERTY_LIST from) DECLSPEC_HIDDEN;
+void ContextPropertyList_Copy(CONTEXT_PROPERTY_LIST *to,
+ CONTEXT_PROPERTY_LIST *from) DECLSPEC_HIDDEN;
 
-void ContextPropertyList_Free(PCONTEXT_PROPERTY_LIST list) DECLSPEC_HIDDEN;
+void ContextPropertyList_Free(CONTEXT_PROPERTY_LIST *list) DECLSPEC_HIDDEN;
 
 /**
  *  Context list functions.  A context list is a simple list of link contexts.

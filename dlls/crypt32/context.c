@@ -41,7 +41,7 @@ typedef struct _DATA_CONTEXT
 {
     LONG                   ref;
     ContextType            type; /* always ContextTypeData */
-    PCONTEXT_PROPERTY_LIST properties;
+    CONTEXT_PROPERTY_LIST *properties;
 } DATA_CONTEXT, *PDATA_CONTEXT;
 
 typedef struct _LINK_CONTEXT
@@ -156,7 +156,7 @@ void *Context_GetLinkedContext(void *context, size_t contextSize)
      contextSize);
 }
 
-PCONTEXT_PROPERTY_LIST Context_GetProperties(const void *context, size_t contextSize)
+CONTEXT_PROPERTY_LIST *Context_GetProperties(const void *context, size_t contextSize)
 {
     PBASE_CONTEXT ptr = BASE_CONTEXT_FROM_CONTEXT(context, contextSize);
 
@@ -204,7 +204,7 @@ BOOL Context_Release(void *context, size_t contextSize,
 void Context_CopyProperties(const void *to, const void *from,
  size_t contextSize)
 {
-    PCONTEXT_PROPERTY_LIST toProperties, fromProperties;
+    CONTEXT_PROPERTY_LIST *toProperties, *fromProperties;
 
     toProperties = Context_GetProperties(to, contextSize);
     fromProperties = Context_GetProperties(from, contextSize);

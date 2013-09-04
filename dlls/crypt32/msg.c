@@ -2071,7 +2071,7 @@ typedef struct _CDecodeMsg
     } u;
     CRYPT_DATA_BLOB        msg_data;
     CRYPT_DATA_BLOB        detached_data;
-    PCONTEXT_PROPERTY_LIST properties;
+    CONTEXT_PROPERTY_LIST *properties;
 } CDecodeMsg;
 
 static void CDecodeMsg_Close(HCRYPTMSG hCryptMsg)
