@@ -32,7 +32,7 @@ typedef struct _WINE_HASH_TO_DELETE
 {
     BYTE        hash[20];
     struct list entry;
-} WINE_HASH_TO_DELETE, *PWINE_HASH_TO_DELETE;
+} WINE_HASH_TO_DELETE;
 
 typedef struct _WINE_REGSTOREINFO
 {
@@ -44,7 +44,7 @@ typedef struct _WINE_REGSTOREINFO
     struct list      certsToDelete;
     struct list      crlsToDelete;
     struct list      ctlsToDelete;
-} WINE_REGSTOREINFO, *PWINE_REGSTOREINFO;
+} WINE_REGSTOREINFO;
 
 static void CRYPT_HashToStr(const BYTE *hash, LPWSTR asciiHash)
 {
@@ -246,7 +246,7 @@ static BOOL CRYPT_SerializeContextsToReg(HKEY key,
     return ret;
 }
 
-static BOOL CRYPT_RegWriteToReg(PWINE_REGSTOREINFO store)
+static BOOL CRYPT_RegWriteToReg(WINE_REGSTOREINFO *store)
 {
     static const WCHAR * const subKeys[] = { CertsW, CRLsW, CTLsW };
     const WINE_CONTEXT_INTERFACE * const interfaces[] = { pCertInterface,
@@ -266,7 +266,7 @@ static BOOL CRYPT_RegWriteToReg(PWINE_REGSTOREINFO store)
         {
             if (listToDelete[i])
             {
-                PWINE_HASH_TO_DELETE toDelete, next;
+                WINE_HASH_TO_DELETE *toDelete, *next;
                 WCHAR asciiHash[20 * 2 + 1];
 
                 EnterCriticalSection(&store->cs);
@@ -304,7 +304,7 @@ static BOOL CRYPT_RegWriteToReg(PWINE_REGSTOREINFO store)
 /* If force is true or the registry store is dirty, writes the contents of the
  * store to the registry.
  */
-static BOOL CRYPT_RegFlushStore(PWINE_REGSTOREINFO store, BOOL force)
+static BOOL CRYPT_RegFlushStore(WINE_REGSTOREINFO *store, BOOL force)
 {
     BOOL ret;
 
@@ -319,7 +319,7 @@ static BOOL CRYPT_RegFlushStore(PWINE_REGSTOREINFO store, BOOL force)
 
 static void WINAPI CRYPT_RegCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
 {
-    PWINE_REGSTOREINFO store = hCertStore;
+    WINE_REGSTOREINFO *store = hCertStore;
 
     TRACE("(%p, %08x)\n", store, dwFlags);
     if (dwFlags)
@@ -332,7 +332,7 @@ static void WINAPI CRYPT_RegCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
     CryptMemFree(store);
 }
 
-static BOOL CRYPT_RegWriteContext(PWINE_REGSTOREINFO store,
+static BOOL CRYPT_RegWriteContext(WINE_REGSTOREINFO *store,
  const void *context, DWORD dwFlags)
 {
     BOOL ret;
@@ -347,7 +347,7 @@ static BOOL CRYPT_RegWriteContext(PWINE_REGSTOREINFO store,
     return ret;
 }
 
-static BOOL CRYPT_RegDeleteContext(PWINE_REGSTOREINFO store,
+static BOOL CRYPT_RegDeleteContext(WINE_REGSTOREINFO *store,
  struct list *deleteList, const void *context,
  const WINE_CONTEXT_INTERFACE *contextInterface)
 {
@@ -360,8 +360,7 @@ static BOOL CRYPT_RegDeleteContext(PWINE_REGSTOREINFO store,
     }
     else
     {
-        PWINE_HASH_TO_DELETE toDelete =
-         CryptMemAlloc(sizeof(WINE_HASH_TO_DELETE));
+        WINE_HASH_TO_DELETE *toDelete = CryptMemAlloc(sizeof(WINE_HASH_TO_DELETE));
 
         if (toDelete)
         {
@@ -392,7 +391,7 @@ static BOOL CRYPT_RegDeleteContext(PWINE_REGSTOREINFO store,
 static BOOL WINAPI CRYPT_RegWriteCert(HCERTSTORE hCertStore,
  PCCERT_CONTEXT cert, DWORD dwFlags)
 {
-    PWINE_REGSTOREINFO store = hCertStore;
+    WINE_REGSTOREINFO *store = hCertStore;
 
     TRACE("(%p, %p, %d)\n", hCertStore, cert, dwFlags);
 
@@ -402,7 +401,7 @@ static BOOL WINAPI CRYPT_RegWriteCert(HCERTSTORE hCertStore,
 static BOOL WINAPI CRYPT_RegDeleteCert(HCERTSTORE hCertStore,
  PCCERT_CONTEXT pCertContext, DWORD dwFlags)
 {
-    PWINE_REGSTOREINFO store = hCertStore;
+    WINE_REGSTOREINFO *store = hCertStore;
 
     TRACE("(%p, %p, %08x)\n", store, pCertContext, dwFlags);
 
@@ -413,7 +412,7 @@ static BOOL WINAPI CRYPT_RegDeleteCert(HCERTSTORE hCertStore,
 static BOOL WINAPI CRYPT_RegWriteCRL(HCERTSTORE hCertStore,
  PCCRL_CONTEXT crl, DWORD dwFlags)
 {
-    PWINE_REGSTOREINFO store = hCertStore;
+    WINE_REGSTOREINFO *store = hCertStore;
 
     TRACE("(%p, %p, %d)\n", hCertStore, crl, dwFlags);
 
@@ -423,7 +422,7 @@ static BOOL WINAPI CRYPT_RegWriteCRL(HCERTSTORE hCertStore,
 static BOOL WINAPI CRYPT_RegDeleteCRL(HCERTSTORE hCertStore,
  PCCRL_CONTEXT pCrlContext, DWORD dwFlags)
 {
-    PWINE_REGSTOREINFO store = hCertStore;
+    WINE_REGSTOREINFO *store = hCertStore;
 
     TRACE("(%p, %p, %08x)\n", store, pCrlContext, dwFlags);
 
@@ -434,7 +433,7 @@ static BOOL WINAPI CRYPT_RegDeleteCRL(HCERTSTORE hCertStore,
 static BOOL WINAPI CRYPT_RegWriteCTL(HCERTSTORE hCertStore,
  PCCTL_CONTEXT ctl, DWORD dwFlags)
 {
-    PWINE_REGSTOREINFO store = hCertStore;
+    WINE_REGSTOREINFO *store = hCertStore;
 
     TRACE("(%p, %p, %d)\n", hCertStore, ctl, dwFlags);
 
@@ -444,7 +443,7 @@ static BOOL WINAPI CRYPT_RegWriteCTL(HCERTSTORE hCertStore,
 static BOOL WINAPI CRYPT_RegDeleteCTL(HCERTSTORE hCertStore,
  PCCTL_CONTEXT pCtlContext, DWORD dwFlags)
 {
-    PWINE_REGSTOREINFO store = hCertStore;
+    WINE_REGSTOREINFO *store = hCertStore;
 
     TRACE("(%p, %p, %08x)\n", store, pCtlContext, dwFlags);
 
@@ -455,7 +454,7 @@ static BOOL WINAPI CRYPT_RegDeleteCTL(HCERTSTORE hCertStore,
 static BOOL WINAPI CRYPT_RegControl(HCERTSTORE hCertStore, DWORD dwFlags,
  DWORD dwCtrlType, void const *pvCtrlPara)
 {
-    PWINE_REGSTOREINFO store = hCertStore;
+    WINE_REGSTOREINFO *store = hCertStore;
     BOOL ret;
 
     TRACE("(%p, %08x, %d, %p)\n", hCertStore, dwFlags, dwCtrlType,
@@ -541,7 +540,7 @@ WINECRYPT_CERTSTORE *CRYPT_RegOpenStore(HCRYPTPROV hCryptProv, DWORD dwFlags,
              CERT_STORE_CREATE_NEW_FLAG, NULL);
             if (memStore)
             {
-                PWINE_REGSTOREINFO regInfo = CryptMemAlloc(
+                WINE_REGSTOREINFO *regInfo = CryptMemAlloc(
                  sizeof(WINE_REGSTOREINFO));
 
                 if (regInfo)
