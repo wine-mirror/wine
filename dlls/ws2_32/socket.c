@@ -2,6 +2,8 @@
  * based on Windows Sockets 1.1 specs
  *
  * Copyright (C) 1993,1994,1996,1997 John Brezak, Erik Bos, Alex Korobka.
+ * Copyright (C) 2001 Stefan Leichter
+ * Copyright (C) 2004 Hans Leidekker
  * Copyright (C) 2005 Marcus Meissner
  * Copyright (C) 2006-2008 Kai Blin
  *
@@ -143,6 +145,7 @@
 #include "ws2tcpip.h"
 #include "ws2spi.h"
 #include "wsipx.h"
+#include "wshisotp.h"
 #include "mstcpip.h"
 #include "af_irda.h"
 #include "winnt.h"
@@ -172,6 +175,21 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winsock);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
+
+/* names of the protocols */
+static const WCHAR NameIpxW[]   = {'I', 'P', 'X', '\0'};
+static const WCHAR NameSpxW[]   = {'S', 'P', 'X', '\0'};
+static const WCHAR NameSpxIIW[] = {'S', 'P', 'X', ' ', 'I', 'I', '\0'};
+static const WCHAR NameTcpW[]   = {'T', 'C', 'P', '/', 'I', 'P', '\0'};
+static const WCHAR NameUdpW[]   = {'U', 'D', 'P', '/', 'I', 'P', '\0'};
+
+/* Taken from Win2k */
+static const GUID ProviderIdIP = { 0xe70f1aa0, 0xab8b, 0x11cf,
+                                   { 0x8c, 0xa3, 0x00, 0x80, 0x5f, 0x48, 0xa1, 0x92 } };
+static const GUID ProviderIdIPX = { 0x11058240, 0xbe47, 0x11cf,
+                                    { 0x95, 0xc8, 0x00, 0x80, 0x5f, 0x48, 0xa1, 0x92 } };
+static const GUID ProviderIdSPX = { 0x11058241, 0xbe47, 0x11cf,
+                                    { 0x95, 0xc8, 0x00, 0x80, 0x5f, 0x48, 0xa1, 0x92 } };
 
 #if defined(IP_UNICAST_IF) && defined(SO_ATTACH_FILTER)
 # define LINUX_BOUND_IF
@@ -1508,6 +1526,184 @@ static int ws_sockaddr_u2ws(const struct sockaddr* uaddr, struct WS_sockaddr* ws
         return -1;
     }
     return res;
+}
+
+/*****************************************************************************
+ *          WS_EnterSingleProtocolW [internal]
+ *
+ *    enters the protocol information of one given protocol into the given
+ *    buffer.
+ *
+ * RETURNS
+ *    1 if a protocol was entered into the buffer.
+ *    SOCKET_ERROR otherwise.
+ *
+ * BUGS
+ *    - only implemented for IPX, SPX, SPXII, TCP, UDP
+ *    - there is no check that the operating system supports the returned
+ *      protocols
+ */
+static INT WS_EnterSingleProtocolW( INT protocol, WSAPROTOCOL_INFOW* info )
+{
+    memset( info, 0, sizeof(WSAPROTOCOL_INFOW) );
+    info->iProtocol = protocol;
+
+    switch (protocol)
+    {
+    case WS_IPPROTO_TCP:
+        info->dwServiceFlags1 = XP1_IFS_HANDLES | XP1_EXPEDITED_DATA |
+                                XP1_GRACEFUL_CLOSE | XP1_GUARANTEED_ORDER |
+                                XP1_GUARANTEED_DELIVERY;
+        info->ProviderId = ProviderIdIP;
+        info->dwCatalogEntryId = 0x3e9;
+        info->ProtocolChain.ChainLen = 1;
+        info->iVersion = 2;
+        info->iAddressFamily = WS_AF_INET;
+        info->iMaxSockAddr = 0x10;
+        info->iMinSockAddr = 0x10;
+        info->iSocketType = WS_SOCK_STREAM;
+        strcpyW( info->szProtocol, NameTcpW );
+        break;
+
+    case WS_IPPROTO_UDP:
+        info->dwServiceFlags1 = XP1_IFS_HANDLES | XP1_SUPPORT_BROADCAST |
+                                XP1_SUPPORT_MULTIPOINT | XP1_MESSAGE_ORIENTED |
+                                XP1_CONNECTIONLESS;
+        info->ProviderId = ProviderIdIP;
+        info->dwCatalogEntryId = 0x3ea;
+        info->ProtocolChain.ChainLen = 1;
+        info->iVersion = 2;
+        info->iAddressFamily = WS_AF_INET;
+        info->iMaxSockAddr = 0x10;
+        info->iMinSockAddr = 0x10;
+        info->iSocketType = WS_SOCK_DGRAM;
+        info->dwMessageSize = 0xffbb;
+        strcpyW( info->szProtocol, NameUdpW );
+        break;
+
+    case NSPROTO_IPX:
+        info->dwServiceFlags1 = XP1_PARTIAL_MESSAGE | XP1_SUPPORT_BROADCAST |
+                                XP1_SUPPORT_MULTIPOINT | XP1_MESSAGE_ORIENTED |
+                                XP1_CONNECTIONLESS;
+        info->ProviderId = ProviderIdIPX;
+        info->dwCatalogEntryId = 0x406;
+        info->ProtocolChain.ChainLen = 1;
+        info->iVersion = 2;
+        info->iAddressFamily = WS_AF_IPX;
+        info->iMaxSockAddr = 0x10;
+        info->iMinSockAddr = 0x0e;
+        info->iSocketType = WS_SOCK_DGRAM;
+        info->iProtocolMaxOffset = 0xff;
+        info->dwMessageSize = 0x240;
+        strcpyW( info->szProtocol, NameIpxW );
+        break;
+
+    case NSPROTO_SPX:
+        info->dwServiceFlags1 = XP1_IFS_HANDLES | XP1_PSEUDO_STREAM |
+                                XP1_MESSAGE_ORIENTED | XP1_GUARANTEED_ORDER |
+                                XP1_GUARANTEED_DELIVERY;
+        info->ProviderId = ProviderIdSPX;
+        info->dwCatalogEntryId = 0x407;
+        info->ProtocolChain.ChainLen = 1;
+        info->iVersion = 2;
+        info->iAddressFamily = WS_AF_IPX;
+        info->iMaxSockAddr = 0x10;
+        info->iMinSockAddr = 0x0e;
+        info->iSocketType = 5;
+        info->dwMessageSize = 0xffffffff;
+        strcpyW( info->szProtocol, NameSpxW );
+        break;
+
+    case NSPROTO_SPXII:
+        info->dwServiceFlags1 = XP1_IFS_HANDLES | XP1_GRACEFUL_CLOSE |
+                                XP1_PSEUDO_STREAM | XP1_MESSAGE_ORIENTED |
+                                XP1_GUARANTEED_ORDER | XP1_GUARANTEED_DELIVERY;
+        info->ProviderId = ProviderIdSPX;
+        info->dwCatalogEntryId = 0x409;
+        info->ProtocolChain.ChainLen = 1;
+        info->iVersion = 2;
+        info->iAddressFamily = WS_AF_IPX;
+        info->iMaxSockAddr = 0x10;
+        info->iMinSockAddr = 0x0e;
+        info->iSocketType = 5;
+        info->dwMessageSize = 0xffffffff;
+        strcpyW( info->szProtocol, NameSpxIIW );
+        break;
+
+    default:
+        if ((protocol == ISOPROTO_TP4) || (protocol == NSPROTO_SPX))
+            FIXME("Protocol <%s> not implemented\n",
+                  (protocol == ISOPROTO_TP4) ? "ISOPROTO_TP4" : "NSPROTO_SPX");
+        else
+            FIXME("unknown Protocol <0x%08x>\n", protocol);
+        return SOCKET_ERROR;
+    }
+    return 1;
+}
+
+/*****************************************************************************
+ *          WS_EnterSingleProtocolA [internal]
+ *
+ *    see function WS_EnterSingleProtocolW
+ *
+ */
+static INT WS_EnterSingleProtocolA( INT protocol, WSAPROTOCOL_INFOA* info )
+{
+    WSAPROTOCOL_INFOW infow;
+    INT ret;
+    memset( info, 0, sizeof(WSAPROTOCOL_INFOA) );
+
+    ret = WS_EnterSingleProtocolW( protocol, &infow );
+    if (ret != SOCKET_ERROR)
+    {
+        /* convert the structure from W to A */
+        memcpy( info, &infow, FIELD_OFFSET( WSAPROTOCOL_INFOA, szProtocol ) );
+        WideCharToMultiByte( CP_ACP, 0, infow.szProtocol, -1,
+                             info->szProtocol, WSAPROTOCOL_LEN+1, NULL, NULL );
+    }
+
+    return ret;
+}
+
+static INT WS_EnumProtocols( BOOL unicode, LPINT protocols, LPWSAPROTOCOL_INFOW buffer, LPDWORD len )
+{
+    INT i = 0;
+    DWORD size = 0;
+    INT local[] = { WS_IPPROTO_TCP, WS_IPPROTO_UDP, NSPROTO_IPX, NSPROTO_SPX, NSPROTO_SPXII, 0 };
+    union _info
+    {
+      LPWSAPROTOCOL_INFOA a;
+      LPWSAPROTOCOL_INFOW w;
+    } info;
+    info.w = buffer;
+
+    if (!protocols) protocols = local;
+
+    while (protocols[i]) i++;
+
+    size = i * (unicode ? sizeof(WSAPROTOCOL_INFOW) : sizeof(WSAPROTOCOL_INFOA));
+
+    if (*len < size || !buffer)
+    {
+        *len = size;
+        WSASetLastError(WSAENOBUFS);
+        return SOCKET_ERROR;
+    }
+
+    for (i = 0; protocols[i]; i++)
+    {
+        if (unicode)
+        {
+            if (WS_EnterSingleProtocolW( protocols[i], &info.w[i] ) == SOCKET_ERROR)
+                break;
+        }
+        else
+        {
+            if (WS_EnterSingleProtocolA( protocols[i], &info.a[i] ) == SOCKET_ERROR)
+                break;
+        }
+    }
+    return i;
 }
 
 /**************************************************************************
@@ -6858,4 +7054,82 @@ INT WINAPI WSANSPIoctl( HANDLE hLookup, DWORD dwControlCode, LPVOID lpvInBuffer,
     lpvInBuffer, cbInBuffer, lpvOutBuffer, cbOutBuffer, lpcbBytesReturned, lpCompletion);
     WSASetLastError(WSA_NOT_ENOUGH_MEMORY);
     return SOCKET_ERROR;
+}
+
+/*****************************************************************************
+ *          WSAEnumProtocolsA       [WS2_32.@]
+ *
+ *    see function WSAEnumProtocolsW
+ */
+INT WINAPI WSAEnumProtocolsA( LPINT protocols, LPWSAPROTOCOL_INFOA buffer, LPDWORD len )
+{
+    return WS_EnumProtocols( FALSE, protocols, (LPWSAPROTOCOL_INFOW) buffer, len);
+}
+
+/*****************************************************************************
+ *          WSAEnumProtocolsW       [WS2_32.@]
+ *
+ * Retrieves information about specified set of active network protocols.
+ *
+ * PARAMS
+ *  protocols [I]   Pointer to null-terminated array of protocol id's. NULL
+ *                  retrieves information on all available protocols.
+ *  buffer    [I]   Pointer to a buffer to be filled with WSAPROTOCOL_INFO
+ *                  structures.
+ *  len       [I/O] Pointer to a variable specifying buffer size. On output
+ *                  the variable holds the number of bytes needed when the
+ *                  specified size is too small.
+ *
+ * RETURNS
+ *  Success: number of WSAPROTOCOL_INFO structures in buffer.
+ *  Failure: SOCKET_ERROR
+ *
+ * NOTES
+ *  NT4SP5 does not return SPX if protocols == NULL
+ *
+ * BUGS
+ *  - NT4SP5 returns in addition these list of NETBIOS protocols
+ *    (address family 17), each entry two times one for socket type 2 and 5
+ *
+ *    iProtocol   szProtocol
+ *    0x80000000  \Device\NwlnkNb
+ *    0xfffffffa  \Device\NetBT_CBENT7
+ *    0xfffffffb  \Device\Nbf_CBENT7
+ *    0xfffffffc  \Device\NetBT_NdisWan5
+ *    0xfffffffd  \Device\NetBT_El9202
+ *    0xfffffffe  \Device\Nbf_El9202
+ *    0xffffffff  \Device\Nbf_NdisWan4
+ *
+ *  - there is no check that the operating system supports the returned
+ *    protocols
+ */
+INT WINAPI WSAEnumProtocolsW( LPINT protocols, LPWSAPROTOCOL_INFOW buffer, LPDWORD len )
+{
+    return WS_EnumProtocols( TRUE, protocols, buffer, len);
+}
+
+/*****************************************************************************
+ *          WSCEnumProtocols        [WS2_32.@]
+ *
+ * PARAMS
+ *  protocols [I]   Null-terminated array of iProtocol values.
+ *  buffer    [O]   Buffer of WSAPROTOCOL_INFOW structures.
+ *  len       [I/O] Size of buffer on input/output.
+ *  errno     [O]   Error code.
+ *
+ * RETURNS
+ *  Success: number of protocols to be reported on.
+ *  Failure: SOCKET_ERROR. error is in errno.
+ *
+ * BUGS
+ *  Doesn't supply info on layered protocols.
+ *
+ */
+INT WINAPI WSCEnumProtocols( LPINT protocols, LPWSAPROTOCOL_INFOW buffer, LPDWORD len, LPINT err )
+{
+    INT ret = WSAEnumProtocolsW( protocols, buffer, len );
+
+    if (ret == SOCKET_ERROR) *err = WSAENOBUFS;
+
+    return ret;
 }
