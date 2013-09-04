@@ -1,0 +1,7 @@
+MODULE = d3dx11_42.dll
+
+C_SRCS = d3dx11_42.c
+
+RC_SRCS = version.rc
+
+@MAKE_DLL_RULES@

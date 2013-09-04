@@ -86,6 +86,10 @@ my @dll_groups =
   "d3dx10_33",
  ],
  [
+  "d3dx11_43",
+  "d3dx11_42",
+ ],
+ [
   "d3dcompiler_43",
   "d3dcompiler_42",
   "d3dcompiler_41",
