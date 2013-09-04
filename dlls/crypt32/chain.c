@@ -247,7 +247,7 @@ typedef struct _CertificateChain
     CERT_CHAIN_CONTEXT context;
     HCERTSTORE world;
     LONG ref;
-} CertificateChain, *PCertificateChain;
+} CertificateChain;
 
 static BOOL CRYPT_IsCertificateSelfSigned(PCCERT_CONTEXT cert)
 {
@@ -2173,7 +2173,7 @@ static BOOL CRYPT_GetSimpleChainForCert(CertificateChainEngine *engine,
 
 static BOOL CRYPT_BuildCandidateChainFromCert(CertificateChainEngine *engine,
  PCCERT_CONTEXT cert, LPFILETIME pTime, HCERTSTORE hAdditionalStore,
- PCertificateChain *ppChain)
+ CertificateChain **ppChain)
 {
     PCERT_SIMPLE_CHAIN simpleChain = NULL;
     HCERTSTORE world;
@@ -2190,7 +2190,7 @@ static BOOL CRYPT_BuildCandidateChainFromCert(CertificateChainEngine *engine,
     if ((ret = CRYPT_GetSimpleChainForCert(engine, world, cert, pTime,
      &simpleChain)))
     {
-        PCertificateChain chain = CryptMemAlloc(sizeof(CertificateChain));
+        CertificateChain *chain = CryptMemAlloc(sizeof(CertificateChain));
 
         if (chain)
         {
@@ -2269,7 +2269,7 @@ static PCERT_SIMPLE_CHAIN CRYPT_CopySimpleChainToElement(
     return copy;
 }
 
-static void CRYPT_FreeLowerQualityChains(PCertificateChain chain)
+static void CRYPT_FreeLowerQualityChains(CertificateChain *chain)
 {
     DWORD i;
 
@@ -2280,7 +2280,7 @@ static void CRYPT_FreeLowerQualityChains(PCertificateChain chain)
     chain->context.rgpLowerQualityChainContext = NULL;
 }
 
-static void CRYPT_FreeChainContext(PCertificateChain chain)
+static void CRYPT_FreeChainContext(CertificateChain *chain)
 {
     DWORD i;
 
@@ -2295,10 +2295,10 @@ static void CRYPT_FreeChainContext(PCertificateChain chain)
 /* Makes and returns a copy of chain, up to and including element iElement of
  * simple chain iChain.
  */
-static PCertificateChain CRYPT_CopyChainToElement(PCertificateChain chain,
+static CertificateChain *CRYPT_CopyChainToElement(CertificateChain *chain,
  DWORD iChain, DWORD iElement)
 {
-    PCertificateChain copy = CryptMemAlloc(sizeof(CertificateChain));
+    CertificateChain *copy = CryptMemAlloc(sizeof(CertificateChain));
 
     if (copy)
     {
@@ -2360,11 +2360,11 @@ static PCertificateChain CRYPT_CopyChainToElement(PCertificateChain chain,
     return copy;
 }
 
-static PCertificateChain CRYPT_BuildAlternateContextFromChain(
+static CertificateChain *CRYPT_BuildAlternateContextFromChain(
  CertificateChainEngine *engine, LPFILETIME pTime, HCERTSTORE hAdditionalStore,
- PCertificateChain chain)
+ CertificateChain *chain)
 {
-    PCertificateChain alternate;
+    CertificateChain *alternate;
 
     TRACE("(%p, %s, %p, %p)\n", engine, debugstr_filetime(pTime),
      hAdditionalStore, chain);
@@ -2373,7 +2373,7 @@ static PCertificateChain CRYPT_BuildAlternateContextFromChain(
      * order of alternate creation:
      */
     if (chain->context.cLowerQualityChainContext)
-        chain = (PCertificateChain)chain->context.rgpLowerQualityChainContext[
+        chain = (CertificateChain*)chain->context.rgpLowerQualityChainContext[
          chain->context.cLowerQualityChainContext - 1];
     /* A chain with only one element can't have any alternates */
     if (chain->context.cChain <= 1 && chain->context.rgpChain[0]->cElement <= 1)
@@ -2472,8 +2472,8 @@ static DWORD CRYPT_ChainQuality(const CertificateChain *chain)
  * alternate chains.  Returns the highest quality chain, with all other
  * chains as lower quality chains of it.
  */
-static PCertificateChain CRYPT_ChooseHighestQualityChain(
- PCertificateChain chain)
+static CertificateChain *CRYPT_ChooseHighestQualityChain(
+ CertificateChain *chain)
 {
     DWORD i;
 
@@ -2485,8 +2485,8 @@ static PCertificateChain CRYPT_ChooseHighestQualityChain(
      */
     for (i = 0; i < chain->context.cLowerQualityChainContext; i++)
     {
-        PCertificateChain alternate =
-         (PCertificateChain)chain->context.rgpLowerQualityChainContext[i];
+        CertificateChain *alternate =
+         (CertificateChain*)chain->context.rgpLowerQualityChainContext[i];
 
         if (CRYPT_ChainQuality(alternate) > CRYPT_ChainQuality(chain))
         {
@@ -2504,7 +2504,7 @@ static PCertificateChain CRYPT_ChooseHighestQualityChain(
     return chain;
 }
 
-static BOOL CRYPT_AddAlternateChainToChain(PCertificateChain chain,
+static BOOL CRYPT_AddAlternateChainToChain(CertificateChain *chain,
  const CertificateChain *alternate)
 {
     BOOL ret;
@@ -2799,7 +2799,7 @@ BOOL WINAPI CertGetCertificateChain(HCERTCHAINENGINE hChainEngine,
 {
     CertificateChainEngine *engine = (CertificateChainEngine*)hChainEngine;
     BOOL ret;
-    PCertificateChain chain = NULL;
+    CertificateChain *chain = NULL;
 
     TRACE("(%p, %p, %s, %p, %p, %08x, %p, %p)\n", engine, pCertContext,
      debugstr_filetime(pTime), hAdditionalStore, pChainPara, dwFlags,
@@ -2827,7 +2827,7 @@ BOOL WINAPI CertGetCertificateChain(HCERTCHAINENGINE hChainEngine,
      hAdditionalStore, &chain);
     if (ret)
     {
-        PCertificateChain alternate = NULL;
+        CertificateChain *alternate = NULL;
         PCERT_CHAIN_CONTEXT pChain;
 
         do {
@@ -2862,7 +2862,7 @@ BOOL WINAPI CertGetCertificateChain(HCERTCHAINENGINE hChainEngine,
 PCCERT_CHAIN_CONTEXT WINAPI CertDuplicateCertificateChain(
  PCCERT_CHAIN_CONTEXT pChainContext)
 {
-    PCertificateChain chain = (PCertificateChain)pChainContext;
+    CertificateChain *chain = (CertificateChain*)pChainContext;
 
     TRACE("(%p)\n", pChainContext);
 
@@ -2873,7 +2873,7 @@ PCCERT_CHAIN_CONTEXT WINAPI CertDuplicateCertificateChain(
 
 VOID WINAPI CertFreeCertificateChain(PCCERT_CHAIN_CONTEXT pChainContext)
 {
-    PCertificateChain chain = (PCertificateChain)pChainContext;
+    CertificateChain *chain = (CertificateChain*)pChainContext;
 
     TRACE("(%p)\n", pChainContext);
 
