@@ -34,18 +34,11 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dplay);
 
 /* Prototypes */
-static BOOL DPSP_CreateIUnknown( LPVOID lpSP );
-static BOOL DPSP_DestroyIUnknown( LPVOID lpSP );
 static BOOL DPSP_CreateDirectPlaySP( void *lpSP, IDirectPlayImpl *dp );
 static BOOL DPSP_DestroyDirectPlaySP( LPVOID lpSP );
 
 /* Predefine the interface */
 typedef struct IDirectPlaySPImpl IDirectPlaySPImpl;
-
-typedef struct tagDirectPlaySPIUnknownData
-{
-  CRITICAL_SECTION  DPSP_lock;
-} DirectPlaySPIUnknownData;
 
 typedef struct tagDirectPlaySPData
 {
@@ -60,7 +53,6 @@ typedef struct tagDirectPlaySPData
 } DirectPlaySPData;
 
 #define DPSP_IMPL_FIELDS \
-   DirectPlaySPIUnknownData* unk; \
    DirectPlaySPData* sp;
 
 struct IDirectPlaySPImpl
@@ -111,9 +103,7 @@ HRESULT DPSP_CreateInterface( REFIID riid, void **ppvObj, IDirectPlayImpl *dp )
   }
 
   /* Initialize it */
-  if( DPSP_CreateIUnknown( *ppvObj ) &&
-      DPSP_CreateDirectPlaySP( *ppvObj, dp )
-    )
+  if( DPSP_CreateDirectPlaySP( *ppvObj, dp ) )
   {
     IDirectPlaySP_AddRef( (LPDIRECTPLAYSP)*ppvObj );
     return S_OK;
@@ -121,42 +111,12 @@ HRESULT DPSP_CreateInterface( REFIID riid, void **ppvObj, IDirectPlayImpl *dp )
 
   /* Initialize failed, destroy it */
   DPSP_DestroyDirectPlaySP( *ppvObj );
-  DPSP_DestroyIUnknown( *ppvObj );
 
   HeapFree( GetProcessHeap(), 0, *ppvObj );
   *ppvObj = NULL;
 
   return DPERR_NOMEMORY;
 }
-
-static BOOL DPSP_CreateIUnknown( LPVOID lpSP )
-{
-  IDirectPlaySPImpl *This = lpSP;
-
-  This->unk = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *(This->unk) ) );
-
-  if ( This->unk == NULL )
-  {
-    return FALSE;
-  }
-
-  InitializeCriticalSection( &This->unk->DPSP_lock );
-  This->unk->DPSP_lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IDirectPlaySPImpl*->DirectPlaySPIUnknownData*->DPSP_lock");
-
-  return TRUE;
-}
-
-static BOOL DPSP_DestroyIUnknown( LPVOID lpSP )
-{
-  IDirectPlaySPImpl *This = lpSP;
-
-  This->unk->DPSP_lock.DebugInfo->Spare[0] = 0;
-  DeleteCriticalSection( &This->unk->DPSP_lock );
-  HeapFree( GetProcessHeap(), 0, This->unk );
-
-  return TRUE;
-}
-
 
 static BOOL DPSP_CreateDirectPlaySP( void *lpSP, IDirectPlayImpl *dp )
 {
@@ -229,7 +189,6 @@ static ULONG WINAPI IDirectPlaySPImpl_Release( IDirectPlaySP *iface )
   if( !ref )
   {
     DPSP_DestroyDirectPlaySP( This );
-    DPSP_DestroyIUnknown( This );
     HeapFree( GetProcessHeap(), 0, This );
   }
 
