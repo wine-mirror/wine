@@ -33,34 +33,16 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dplay);
 
-/* Prototypes */
-static BOOL DPSP_CreateDirectPlaySP( void *lpSP, IDirectPlayImpl *dp );
-static BOOL DPSP_DestroyDirectPlaySP( LPVOID lpSP );
-
-/* Predefine the interface */
-typedef struct IDirectPlaySPImpl IDirectPlaySPImpl;
-
-typedef struct tagDirectPlaySPData
-{
-  LPVOID lpSpRemoteData;
-  DWORD  dwSpRemoteDataSize; /* Size of data pointed to by lpSpRemoteData */
-
-  LPVOID lpSpLocalData;
-  DWORD  dwSpLocalDataSize; /* Size of data pointed to by lpSpLocalData */
-
-  IDirectPlayImpl *dplay; /* FIXME: This should perhaps be iface not impl */
-
-} DirectPlaySPData;
-
-#define DPSP_IMPL_FIELDS \
-   DirectPlaySPData* sp;
-
-struct IDirectPlaySPImpl
+typedef struct IDirectPlaySPImpl
 {
   const IDirectPlaySPVtbl *lpVtbl;
   LONG ref;
-  DPSP_IMPL_FIELDS
-};
+  void *remote_data;
+  DWORD remote_data_size;
+  void *local_data;
+  DWORD local_data_size;
+  IDirectPlayImpl *dplay; /* FIXME: This should perhaps be iface not impl */
+} IDirectPlaySPImpl;
 
 /* Forward declaration of virtual tables */
 static const IDirectPlaySPVtbl directPlaySPVT;
@@ -92,6 +74,7 @@ HRESULT DPSP_CreateInterface( REFIID riid, void **ppvObj, IDirectPlayImpl *dp )
   {
     IDirectPlaySPImpl *This = *ppvObj;
     This->lpVtbl = &directPlaySPVT;
+    This->dplay = dp;
   }
   else
   {
@@ -102,49 +85,8 @@ HRESULT DPSP_CreateInterface( REFIID riid, void **ppvObj, IDirectPlayImpl *dp )
     return E_NOINTERFACE;
   }
 
-  /* Initialize it */
-  if( DPSP_CreateDirectPlaySP( *ppvObj, dp ) )
-  {
-    IDirectPlaySP_AddRef( (LPDIRECTPLAYSP)*ppvObj );
-    return S_OK;
-  }
-
-  /* Initialize failed, destroy it */
-  DPSP_DestroyDirectPlaySP( *ppvObj );
-
-  HeapFree( GetProcessHeap(), 0, *ppvObj );
-  *ppvObj = NULL;
-
-  return DPERR_NOMEMORY;
-}
-
-static BOOL DPSP_CreateDirectPlaySP( void *lpSP, IDirectPlayImpl *dp )
-{
-  IDirectPlaySPImpl *This = lpSP;
-
-  This->sp = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *(This->sp) ) );
-
-  if ( This->sp == NULL )
-  {
-    return FALSE;
-  }
-
-  This->sp->dplay = dp;
-
-  return TRUE;
-}
-
-static BOOL DPSP_DestroyDirectPlaySP( LPVOID lpSP )
-{
-  IDirectPlaySPImpl *This = lpSP;
-
-  HeapFree( GetProcessHeap(), 0, This->sp->lpSpRemoteData );
-  HeapFree( GetProcessHeap(), 0, This->sp->lpSpLocalData );
-
-  /* FIXME: Need to delete player queue */
-
-  HeapFree( GetProcessHeap(), 0, This->sp );
-  return TRUE;
+  IDirectPlaySP_AddRef( (LPDIRECTPLAYSP)*ppvObj );
+  return S_OK;
 }
 
 static inline IDirectPlaySPImpl *impl_from_IDirectPlaySP( IDirectPlaySP *iface )
@@ -188,7 +130,8 @@ static ULONG WINAPI IDirectPlaySPImpl_Release( IDirectPlaySP *iface )
 
   if( !ref )
   {
-    DPSP_DestroyDirectPlaySP( This );
+    HeapFree( GetProcessHeap(), 0, This->remote_data );
+    HeapFree( GetProcessHeap(), 0, This->local_data );
     HeapFree( GetProcessHeap(), 0, This );
   }
 
@@ -269,7 +212,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_GetSPPlayerData( IDirectPlaySP *iface, D
   TRACE( "(%p)->(0x%08x,%p,%p,0x%08x)\n",
          This, idPlayer, lplpData, lpdwDataSize, dwFlags );
 
-  hr = DP_GetSPPlayerData( This->sp->dplay, idPlayer, (LPVOID*)&lpPlayerData );
+  hr = DP_GetSPPlayerData( This->dplay, idPlayer, (void**)&lpPlayerData );
 
   if( FAILED(hr) )
   {
@@ -336,9 +279,8 @@ static HRESULT WINAPI IDirectPlaySPImpl_HandleMessage( IDirectPlaySP *iface, voi
   data.dwMessageSize = 0;
 
   /* Pass this message to the dplay interface to handle */
-  hr = DP_HandleMessage( This->sp->dplay, lpMessageBody, dwMessageBodySize,
-                         lpMessageHeader, wCommandId, wVersion,
-                         &data.lpMessage, &data.dwMessageSize );
+  hr = DP_HandleMessage( This->dplay, lpMessageBody, dwMessageBodySize, lpMessageHeader,
+                         wCommandId, wVersion, &data.lpMessage, &data.dwMessageSize );
 
   if( FAILED(hr) )
   {
@@ -352,7 +294,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_HandleMessage( IDirectPlaySP *iface, voi
     data.idNameServer      = 0;
     data.lpISP             = iface;
 
-    hr = (This->sp->dplay->dp2->spData.lpCB->Reply)( &data );
+    hr = This->dplay->dp2->spData.lpCB->Reply( &data );
 
     if( FAILED(hr) )
     {
@@ -616,7 +558,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_SetSPPlayerData( IDirectPlaySP *iface, D
 
   TRACE( "(%p)->(0x%08x,%p,0x%08x,0x%08x)\n", This, idPlayer, lpData, dwDataSize, dwFlags );
 
-  hr = DP_GetSPPlayerData( This->sp->dplay, idPlayer, (LPVOID*)&lpPlayerEntry );
+  hr = DP_GetSPPlayerData( This->dplay, idPlayer, (void**)&lpPlayerEntry );
   if( FAILED(hr) )
   {
     /* Player must not exist */
@@ -637,7 +579,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_SetSPPlayerData( IDirectPlaySP *iface, D
     lpPlayerEntry->dwPlayerRemoteDataSize = dwDataSize;
   }
 
-  hr = DP_SetSPPlayerData( This->sp->dplay, idPlayer, lpPlayerEntry );
+  hr = DP_SetSPPlayerData( This->dplay, idPlayer, lpPlayerEntry );
 
   return hr;
 }
@@ -684,23 +626,19 @@ static HRESULT WINAPI IDirectPlaySPImpl_GetSPData( IDirectPlaySP *iface, void **
   /* Yes, we're supposed to return a pointer to the memory we have stored! */
   if( dwFlags == DPSET_REMOTE )
   {
-    *lpdwDataSize = This->sp->dwSpRemoteDataSize;
-    *lplpData     = This->sp->lpSpRemoteData;
+    *lpdwDataSize = This->remote_data_size;
+    *lplpData = This->remote_data;
 
-    if( This->sp->lpSpRemoteData == NULL )
-    {
+    if( !This->remote_data )
       hr = DPERR_GENERIC;
-    }
   }
   else if( dwFlags == DPSET_LOCAL )
   {
-    *lpdwDataSize = This->sp->dwSpLocalDataSize;
-    *lplpData     = This->sp->lpSpLocalData;
+    *lpdwDataSize = This->local_data_size;
+    *lplpData = This->local_data;
 
-    if( This->sp->lpSpLocalData == NULL )
-    {
+    if( !This->local_data )
       hr = DPERR_GENERIC;
-    }
   }
 
   return hr;
@@ -737,15 +675,15 @@ static HRESULT WINAPI IDirectPlaySPImpl_SetSPData( IDirectPlaySP *iface, void *l
   /* If we have data already allocated, free it and replace it */
   if( dwFlags == DPSET_REMOTE )
   {
-    HeapFree( GetProcessHeap(), 0, This->sp->lpSpRemoteData );
-    This->sp->dwSpRemoteDataSize = dwDataSize;
-    This->sp->lpSpRemoteData = lpSpData;
+    HeapFree( GetProcessHeap(), 0, This->remote_data );
+    This->remote_data_size = dwDataSize;
+    This->remote_data = lpSpData;
   }
   else if ( dwFlags == DPSET_LOCAL )
   {
-    HeapFree( GetProcessHeap(), 0, This->sp->lpSpLocalData );
-    This->sp->lpSpLocalData     = lpSpData;
-    This->sp->dwSpLocalDataSize = dwDataSize;
+    HeapFree( GetProcessHeap(), 0, This->local_data );
+    This->local_data = lpSpData;
+    This->local_data_size = dwDataSize;
   }
 
   return DP_OK;
