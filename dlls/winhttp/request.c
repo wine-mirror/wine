@@ -1384,7 +1384,7 @@ static unsigned int decode_base64( const WCHAR *base64, unsigned int len, char *
     char c0, c1, c2, c3;
     const WCHAR *p = base64;
 
-    while (len >= 4)
+    while (len > 4)
     {
         if ((c0 = decode_char( p[0] )) > 63) return 0;
         if ((c1 = decode_char( p[1] )) > 63) return 0;
@@ -1421,6 +1421,21 @@ static unsigned int decode_base64( const WCHAR *base64, unsigned int len, char *
             buf[i + 1] = (c1 << 4) | (c2 >> 2);
         }
         i += 2;
+    }
+    else
+    {
+        if ((c0 = decode_char( p[0] )) > 63) return 0;
+        if ((c1 = decode_char( p[1] )) > 63) return 0;
+        if ((c2 = decode_char( p[2] )) > 63) return 0;
+        if ((c3 = decode_char( p[3] )) > 63) return 0;
+
+        if (buf)
+        {
+            buf[i + 0] = (c0 << 2) | (c1 >> 4);
+            buf[i + 1] = (c1 << 4) | (c2 >> 2);
+            buf[i + 2] = (c2 << 6) |  c3;
+        }
+        i += 3;
     }
     return i;
 }
