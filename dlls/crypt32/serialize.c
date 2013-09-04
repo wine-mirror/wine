@@ -37,7 +37,7 @@ typedef struct _WINE_CERT_PROP_HEADER
     DWORD propID;
     DWORD unknown; /* always 1 */
     DWORD cb;
-} WINE_CERT_PROP_HEADER, *PWINE_CERT_PROP_HEADER;
+} WINE_CERT_PROP_HEADER;
 
 static BOOL CRYPT_SerializeStoreElement(const void *context,
  const BYTE *encodedContext, DWORD cbEncodedContext, DWORD contextPropID,
@@ -80,7 +80,7 @@ static BOOL CRYPT_SerializeStoreElement(const void *context,
         }
         else
         {
-            PWINE_CERT_PROP_HEADER hdr;
+            WINE_CERT_PROP_HEADER *hdr;
             DWORD bufSize = 0;
             LPBYTE buf = NULL;
 
@@ -109,7 +109,7 @@ static BOOL CRYPT_SerializeStoreElement(const void *context,
                              &propSize);
                             if (ret)
                             {
-                                hdr = (PWINE_CERT_PROP_HEADER)pbElement;
+                                hdr = (WINE_CERT_PROP_HEADER*)pbElement;
                                 hdr->propID = prop;
                                 hdr->unknown = 1;
                                 hdr->cb = propSize;
@@ -128,7 +128,7 @@ static BOOL CRYPT_SerializeStoreElement(const void *context,
             } while (ret && prop != 0);
             CryptMemFree(buf);
 
-            hdr = (PWINE_CERT_PROP_HEADER)pbElement;
+            hdr = (WINE_CERT_PROP_HEADER*)pbElement;
             hdr->propID = contextPropID;
             hdr->unknown = 1;
             hdr->cb = cbEncodedContext;

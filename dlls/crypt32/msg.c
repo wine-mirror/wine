@@ -603,20 +603,20 @@ typedef struct _CMSG_SIGNER_ENCODE_INFO_WITH_CMS
     CERT_ID                    SignerId;
     CRYPT_ALGORITHM_IDENTIFIER HashEncryptionAlgorithm;
     void                      *pvHashEncryptionAuxInfo;
-} CMSG_SIGNER_ENCODE_INFO_WITH_CMS, *PCMSG_SIGNER_ENCODE_INFO_WITH_CMS;
+} CMSG_SIGNER_ENCODE_INFO_WITH_CMS;
 
 typedef struct _CMSG_SIGNED_ENCODE_INFO_WITH_CMS
 {
     DWORD                             cbSize;
     DWORD                             cSigners;
-    PCMSG_SIGNER_ENCODE_INFO_WITH_CMS rgSigners;
+    CMSG_SIGNER_ENCODE_INFO_WITH_CMS *rgSigners;
     DWORD                             cCertEncoded;
     PCERT_BLOB                        rgCertEncoded;
     DWORD                             cCrlEncoded;
     PCRL_BLOB                         rgCrlEncoded;
     DWORD                             cAttrCertEncoded;
     PCERT_BLOB                        rgAttrCertEncoded;
-} CMSG_SIGNED_ENCODE_INFO_WITH_CMS, *PCMSG_SIGNED_ENCODE_INFO_WITH_CMS;
+} CMSG_SIGNED_ENCODE_INFO_WITH_CMS;
 
 static BOOL CRYPT_IsValidSigner(const CMSG_SIGNER_ENCODE_INFO_WITH_CMS *signer)
 {
@@ -1474,7 +1474,7 @@ typedef struct _CMSG_ENVELOPED_ENCODE_INFO_WITH_CMS
     PCERT_BLOB                  rgAttrCertEncoded;
     DWORD                       cUnprotectedAttr;
     PCRYPT_ATTRIBUTE            rgUnprotectedAttr;
-} CMSG_ENVELOPED_ENCODE_INFO_WITH_CMS, *PCMSG_ENVELOPED_ENCODE_INFO_WITH_CMS;
+} CMSG_ENVELOPED_ENCODE_INFO_WITH_CMS;
 
 typedef struct _CEnvelopedEncodeMsg
 {

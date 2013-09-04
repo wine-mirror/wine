@@ -92,7 +92,7 @@ typedef struct _WINE_MEMSTORE
     struct ContextList *certs;
     struct ContextList *crls;
     struct ContextList *ctls;
-} WINE_MEMSTORE, *PWINE_MEMSTORE;
+} WINE_MEMSTORE;
 
 void CRYPT_InitStore(WINECRYPT_CERTSTORE *store, DWORD dwFlags,
  CertStoreType type)
@@ -307,7 +307,7 @@ static void WINAPI CRYPT_MemCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
 static WINECRYPT_CERTSTORE *CRYPT_MemOpenStore(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara)
 {
-    PWINE_MEMSTORE store;
+    WINE_MEMSTORE *store;
 
     TRACE("(%ld, %08x, %p)\n", hCryptProv, dwFlags, pvPara);
 
