@@ -2,7 +2,7 @@ MODULE    = winex11.drv
 IMPORTS   = uuid user32 gdi32 advapi32
 DELAYIMPORTS = comctl32 ole32 shell32 imm32
 EXTRAINCL = @X_CFLAGS@
-EXTRALIBS = @X_LIBS@ @X_PRE_LIBS@ @XLIB@ @X_EXTRA_LIBS@
+EXTRALIBS = @X_LIBS@ @XLIB@ @X_EXTRA_LIBS@
 
 C_SRCS = \
 	bitblt.c \
