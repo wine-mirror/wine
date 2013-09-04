@@ -78,7 +78,7 @@ static HRESULT WINAPI ContextMenu_QueryInterface(IContextMenu3 *iface, REFIID ri
         IsEqualIID(riid, &IID_IContextMenu2) ||
         IsEqualIID(riid, &IID_IContextMenu3))
     {
-        *ppvObj = This;
+        *ppvObj = &This->IContextMenu3_iface;
     }
     else if (IsEqualIID(riid, &IID_IShellExtInit))  /*IShellExtInit*/
     {

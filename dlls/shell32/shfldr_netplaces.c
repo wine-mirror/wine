@@ -133,7 +133,7 @@ static HRESULT WINAPI ISF_NetworkPlaces_fnQueryInterface (IShellFolder2 *iface, 
         IsEqualIID (riid, &IID_IShellFolder) ||
         IsEqualIID (riid, &IID_IShellFolder2))
     {
-        *ppvObj = This;
+        *ppvObj = &This->IShellFolder2_iface;
     }
     else if (IsEqualIID (riid, &IID_IPersist) ||
              IsEqualIID (riid, &IID_IPersistFolder) ||

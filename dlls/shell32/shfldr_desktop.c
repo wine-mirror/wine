@@ -112,7 +112,7 @@ static HRESULT WINAPI ISF_Desktop_fnQueryInterface(
         IsEqualIID (riid, &IID_IShellFolder) ||
         IsEqualIID (riid, &IID_IShellFolder2))
     {
-        *ppvObj = This;
+        *ppvObj = &This->IShellFolder2_iface;
     }
     else if (IsEqualIID (riid, &IID_IPersist) ||
              IsEqualIID (riid, &IID_IPersistFolder) ||
