@@ -44,9 +44,6 @@ typedef struct IDirectPlaySPImpl
   IDirectPlayImpl *dplay; /* FIXME: This should perhaps be iface not impl */
 } IDirectPlaySPImpl;
 
-/* Forward declaration of virtual tables */
-static const IDirectPlaySPVtbl directPlaySPVT;
-
 /* This structure is passed to the DP object for safe keeping */
 typedef struct tagDP_SPPLAYERDATA
 {
@@ -57,37 +54,6 @@ typedef struct tagDP_SPPLAYERDATA
   DWORD  dwPlayerRemoteDataSize;
 } DP_SPPLAYERDATA, *LPDP_SPPLAYERDATA;
 
-/* Create the SP interface */
-HRESULT DPSP_CreateInterface( REFIID riid, void **ppvObj, IDirectPlayImpl *dp )
-{
-  TRACE( " for %s\n", debugstr_guid( riid ) );
-
-  *ppvObj = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                       sizeof( IDirectPlaySPImpl ) );
-
-  if( *ppvObj == NULL )
-  {
-    return DPERR_OUTOFMEMORY;
-  }
-
-  if( IsEqualGUID( &IID_IDirectPlaySP, riid ) )
-  {
-    IDirectPlaySPImpl *This = *ppvObj;
-    This->IDirectPlaySP_iface.lpVtbl = &directPlaySPVT;
-    This->dplay = dp;
-  }
-  else
-  {
-    /* Unsupported interface */
-    HeapFree( GetProcessHeap(), 0, *ppvObj );
-    *ppvObj = NULL;
-
-    return E_NOINTERFACE;
-  }
-
-  IDirectPlaySP_AddRef( (LPDIRECTPLAYSP)*ppvObj );
-  return S_OK;
-}
 
 static inline IDirectPlaySPImpl *impl_from_IDirectPlaySP( IDirectPlaySP *iface )
 {
@@ -717,6 +683,27 @@ static const IDirectPlaySPVtbl directPlaySPVT =
   IDirectPlaySPImpl_SendComplete
 };
 
+HRESULT dplaysp_create( REFIID riid, void **ppv, IDirectPlayImpl *dp )
+{
+  IDirectPlaySPImpl *obj;
+  HRESULT hr;
+
+  TRACE( "(%s, %p)\n", debugstr_guid( riid ), ppv );
+
+  *ppv = NULL;
+  obj = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *obj ) );
+  if ( !obj )
+    return DPERR_OUTOFMEMORY;
+
+  obj->IDirectPlaySP_iface.lpVtbl = &directPlaySPVT;
+  obj->ref = 1;
+  obj->dplay = dp;
+
+  hr = IDirectPlaySP_QueryInterface( &obj->IDirectPlaySP_iface, riid, ppv );
+  IDirectPlaySP_Release( &obj->IDirectPlaySP_iface );
+
+  return hr;
+}
 
 /* DP external interfaces to call into DPSP interface */
 

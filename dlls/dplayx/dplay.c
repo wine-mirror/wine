@@ -173,9 +173,7 @@ static BOOL DP_CreateDirectPlay2( LPVOID lpDP )
   This->dp2->spData.lpCB->dwVersion = DPSP_MAJORVERSION;
 
   /* This is the pointer to the service provider */
-  if( FAILED( DPSP_CreateInterface( &IID_IDirectPlaySP,
-                                    (LPVOID*)&This->dp2->spData.lpISP, This ) )
-    )
+  if ( FAILED( dplaysp_create( &IID_IDirectPlaySP, (void**)&This->dp2->spData.lpISP, This ) ) )
   {
     /* FIXME: Memory leak */
     return FALSE;
