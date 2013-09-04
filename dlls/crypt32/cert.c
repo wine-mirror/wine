@@ -114,7 +114,7 @@ BOOL WINAPI CertAddCertificateLinkToStore(HCERTSTORE hCertStore,
  PCCERT_CONTEXT *ppCertContext)
 {
     static int calls;
-    PWINECRYPT_CERTSTORE store = (PWINECRYPT_CERTSTORE)hCertStore;
+    WINECRYPT_CERTSTORE *store = (WINECRYPT_CERTSTORE*)hCertStore;
 
     if (!(calls++))
         FIXME("(%p, %p, %08x, %p): semi-stub\n", hCertStore, pCertContext,

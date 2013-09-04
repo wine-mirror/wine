@@ -507,10 +507,10 @@ static void *regProvFuncs[] = {
     CRYPT_RegControl,
 };
 
-PWINECRYPT_CERTSTORE CRYPT_RegOpenStore(HCRYPTPROV hCryptProv, DWORD dwFlags,
+WINECRYPT_CERTSTORE *CRYPT_RegOpenStore(HCRYPTPROV hCryptProv, DWORD dwFlags,
  const void *pvPara)
 {
-    PWINECRYPT_CERTSTORE store = NULL;
+    WINECRYPT_CERTSTORE *store = NULL;
 
     TRACE("(%ld, %08x, %p)\n", hCryptProv, dwFlags, pvPara);
 
@@ -535,7 +535,7 @@ PWINECRYPT_CERTSTORE CRYPT_RegOpenStore(HCRYPTPROV hCryptProv, DWORD dwFlags,
          dwFlags & CERT_STORE_READONLY_FLAG ? KEY_READ : KEY_ALL_ACCESS,
          TRUE, 0))
         {
-            PWINECRYPT_CERTSTORE memStore;
+            WINECRYPT_CERTSTORE *memStore;
 
             memStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, hCryptProv,
              CERT_STORE_CREATE_NEW_FLAG, NULL);

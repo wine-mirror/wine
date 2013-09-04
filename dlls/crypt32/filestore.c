@@ -212,10 +212,10 @@ static void *fileProvFuncs[] = {
     CRYPT_FileControl,
 };
 
-static PWINECRYPT_CERTSTORE CRYPT_CreateFileStore(DWORD dwFlags,
+static WINECRYPT_CERTSTORE *CRYPT_CreateFileStore(DWORD dwFlags,
  HCERTSTORE memStore, HANDLE file, DWORD type)
 {
-    PWINECRYPT_CERTSTORE store = NULL;
+    WINECRYPT_CERTSTORE *store = NULL;
     PWINE_FILESTOREINFO info = CryptMemAlloc(sizeof(WINE_FILESTOREINFO));
 
     if (info)
@@ -237,10 +237,10 @@ static PWINECRYPT_CERTSTORE CRYPT_CreateFileStore(DWORD dwFlags,
     return store;
 }
 
-PWINECRYPT_CERTSTORE CRYPT_FileOpenStore(HCRYPTPROV hCryptProv, DWORD dwFlags,
+WINECRYPT_CERTSTORE *CRYPT_FileOpenStore(HCRYPTPROV hCryptProv, DWORD dwFlags,
  const void *pvPara)
 {
-    PWINECRYPT_CERTSTORE store = NULL;
+    WINECRYPT_CERTSTORE *store = NULL;
     HANDLE file = (HANDLE)pvPara;
 
     TRACE("(%ld, %08x, %p)\n", hCryptProv, dwFlags, pvPara);
@@ -287,7 +287,7 @@ PWINECRYPT_CERTSTORE CRYPT_FileOpenStore(HCRYPTPROV hCryptProv, DWORD dwFlags,
     return store;
 }
 
-PWINECRYPT_CERTSTORE CRYPT_FileNameOpenStoreW(HCRYPTPROV hCryptProv,
+WINECRYPT_CERTSTORE *CRYPT_FileNameOpenStoreW(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara)
 {
     HCERTSTORE store = 0;
@@ -378,11 +378,11 @@ PWINECRYPT_CERTSTORE CRYPT_FileNameOpenStoreW(HCRYPTPROV hCryptProv,
     return store;
 }
 
-PWINECRYPT_CERTSTORE CRYPT_FileNameOpenStoreA(HCRYPTPROV hCryptProv,
+WINECRYPT_CERTSTORE *CRYPT_FileNameOpenStoreA(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara)
 {
     int len;
-    PWINECRYPT_CERTSTORE ret = NULL;
+    WINECRYPT_CERTSTORE *ret = NULL;
 
     TRACE("(%ld, %08x, %s)\n", hCryptProv, dwFlags,
      debugstr_a(pvPara));

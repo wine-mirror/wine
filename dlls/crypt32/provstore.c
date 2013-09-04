@@ -29,7 +29,7 @@ typedef struct _WINE_PROVIDERSTORE
 {
     WINECRYPT_CERTSTORE             hdr;
     DWORD                           dwStoreProvFlags;
-    PWINECRYPT_CERTSTORE            memStore;
+    WINECRYPT_CERTSTORE            *memStore;
     HCERTSTOREPROV                  hStoreProv;
     PFN_CERT_STORE_PROV_CLOSE       provCloseStore;
     PFN_CERT_STORE_PROV_WRITE_CERT  provWriteCert;
@@ -51,10 +51,10 @@ static void WINAPI CRYPT_ProvCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
         store->provCloseStore(store->hStoreProv, dwFlags);
     if (!(store->dwStoreProvFlags & CERT_STORE_PROV_EXTERNAL_FLAG))
         CertCloseStore(store->memStore, dwFlags);
-    CRYPT_FreeStore((PWINECRYPT_CERTSTORE)store);
+    CRYPT_FreeStore((WINECRYPT_CERTSTORE*)store);
 }
 
-static BOOL CRYPT_ProvAddCert(PWINECRYPT_CERTSTORE store, void *cert,
+static BOOL CRYPT_ProvAddCert(WINECRYPT_CERTSTORE *store, void *cert,
  void *toReplace, const void **ppStoreContext)
 {
     PWINE_PROVIDERSTORE ps = (PWINE_PROVIDERSTORE)store;
@@ -83,7 +83,7 @@ static BOOL CRYPT_ProvAddCert(PWINECRYPT_CERTSTORE store, void *cert,
     return ret;
 }
 
-static void *CRYPT_ProvEnumCert(PWINECRYPT_CERTSTORE store, void *pPrev)
+static void *CRYPT_ProvEnumCert(WINECRYPT_CERTSTORE *store, void *pPrev)
 {
     PWINE_PROVIDERSTORE ps = (PWINE_PROVIDERSTORE)store;
     void *ret;
@@ -99,7 +99,7 @@ static void *CRYPT_ProvEnumCert(PWINECRYPT_CERTSTORE store, void *pPrev)
     return ret;
 }
 
-static BOOL CRYPT_ProvDeleteCert(PWINECRYPT_CERTSTORE store, void *cert)
+static BOOL CRYPT_ProvDeleteCert(WINECRYPT_CERTSTORE *store, void *cert)
 {
     PWINE_PROVIDERSTORE ps = (PWINE_PROVIDERSTORE)store;
     BOOL ret = TRUE;
@@ -113,7 +113,7 @@ static BOOL CRYPT_ProvDeleteCert(PWINECRYPT_CERTSTORE store, void *cert)
     return ret;
 }
 
-static BOOL CRYPT_ProvAddCRL(PWINECRYPT_CERTSTORE store, void *crl,
+static BOOL CRYPT_ProvAddCRL(WINECRYPT_CERTSTORE *store, void *crl,
  void *toReplace, const void **ppStoreContext)
 {
     PWINE_PROVIDERSTORE ps = (PWINE_PROVIDERSTORE)store;
@@ -150,7 +150,7 @@ static BOOL CRYPT_ProvAddCRL(PWINECRYPT_CERTSTORE store, void *crl,
     return ret;
 }
 
-static void *CRYPT_ProvEnumCRL(PWINECRYPT_CERTSTORE store, void *pPrev)
+static void *CRYPT_ProvEnumCRL(WINECRYPT_CERTSTORE *store, void *pPrev)
 {
     PWINE_PROVIDERSTORE ps = (PWINE_PROVIDERSTORE)store;
     void *ret;
@@ -166,7 +166,7 @@ static void *CRYPT_ProvEnumCRL(PWINECRYPT_CERTSTORE store, void *pPrev)
     return ret;
 }
 
-static BOOL CRYPT_ProvDeleteCRL(PWINECRYPT_CERTSTORE store, void *crl)
+static BOOL CRYPT_ProvDeleteCRL(WINECRYPT_CERTSTORE *store, void *crl)
 {
     PWINE_PROVIDERSTORE ps = (PWINE_PROVIDERSTORE)store;
     BOOL ret = TRUE;
@@ -180,7 +180,7 @@ static BOOL CRYPT_ProvDeleteCRL(PWINECRYPT_CERTSTORE store, void *crl)
     return ret;
 }
 
-static BOOL CRYPT_ProvAddCTL(PWINECRYPT_CERTSTORE store, void *ctl,
+static BOOL CRYPT_ProvAddCTL(WINECRYPT_CERTSTORE *store, void *ctl,
  void *toReplace, const void **ppStoreContext)
 {
     PWINE_PROVIDERSTORE ps = (PWINE_PROVIDERSTORE)store;
@@ -217,7 +217,7 @@ static BOOL CRYPT_ProvAddCTL(PWINECRYPT_CERTSTORE store, void *ctl,
     return ret;
 }
 
-static void *CRYPT_ProvEnumCTL(PWINECRYPT_CERTSTORE store, void *pPrev)
+static void *CRYPT_ProvEnumCTL(WINECRYPT_CERTSTORE *store, void *pPrev)
 {
     PWINE_PROVIDERSTORE ps = (PWINE_PROVIDERSTORE)store;
     void *ret;
@@ -233,7 +233,7 @@ static void *CRYPT_ProvEnumCTL(PWINECRYPT_CERTSTORE store, void *pPrev)
     return ret;
 }
 
-static BOOL CRYPT_ProvDeleteCTL(PWINECRYPT_CERTSTORE store, void *ctl)
+static BOOL CRYPT_ProvDeleteCTL(WINECRYPT_CERTSTORE *store, void *ctl)
 {
     PWINE_PROVIDERSTORE ps = (PWINE_PROVIDERSTORE)store;
     BOOL ret = TRUE;
@@ -262,8 +262,8 @@ static BOOL WINAPI CRYPT_ProvControl(HCERTSTORE hCertStore, DWORD dwFlags,
     return ret;
 }
 
-PWINECRYPT_CERTSTORE CRYPT_ProvCreateStore(DWORD dwFlags,
- PWINECRYPT_CERTSTORE memStore, const CERT_STORE_PROV_INFO *pProvInfo)
+WINECRYPT_CERTSTORE *CRYPT_ProvCreateStore(DWORD dwFlags,
+ WINECRYPT_CERTSTORE *memStore, const CERT_STORE_PROV_INFO *pProvInfo)
 {
     PWINE_PROVIDERSTORE ret = CryptMemAlloc(sizeof(WINE_PROVIDERSTORE));
 
@@ -338,16 +338,16 @@ PWINECRYPT_CERTSTORE CRYPT_ProvCreateStore(DWORD dwFlags,
         else
             ret->provControl = NULL;
     }
-    return (PWINECRYPT_CERTSTORE)ret;
+    return (WINECRYPT_CERTSTORE*)ret;
 }
 
-PWINECRYPT_CERTSTORE CRYPT_ProvOpenStore(LPCSTR lpszStoreProvider,
+WINECRYPT_CERTSTORE *CRYPT_ProvOpenStore(LPCSTR lpszStoreProvider,
  DWORD dwEncodingType, HCRYPTPROV hCryptProv, DWORD dwFlags, const void *pvPara)
 {
     static HCRYPTOIDFUNCSET set = NULL;
     PFN_CERT_DLL_OPEN_STORE_PROV_FUNC provOpenFunc;
     HCRYPTOIDFUNCADDR hFunc;
-    PWINECRYPT_CERTSTORE ret = NULL;
+    WINECRYPT_CERTSTORE *ret = NULL;
 
     if (!set)
         set = CryptInitOIDFunctionSet(CRYPT_OID_OPEN_STORE_PROV_FUNC, 0);

@@ -27,7 +27,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
 typedef struct _WINE_STORE_LIST_ENTRY
 {
-    PWINECRYPT_CERTSTORE store;
+    WINECRYPT_CERTSTORE *store;
     DWORD                dwUpdateFlags;
     DWORD                dwPriority;
     struct list          entry;
@@ -184,7 +184,7 @@ static void *CRYPT_CollectionAdvanceEnum(PWINE_COLLECTIONSTORE store,
     return ret;
 }
 
-static BOOL CRYPT_CollectionAddCert(PWINECRYPT_CERTSTORE store, void *cert,
+static BOOL CRYPT_CollectionAddCert(WINECRYPT_CERTSTORE *store, void *cert,
  void *toReplace, const void **ppStoreContext)
 {
     BOOL ret;
@@ -209,7 +209,7 @@ static BOOL CRYPT_CollectionAddCert(PWINECRYPT_CERTSTORE store, void *cert,
     return ret;
 }
 
-static void *CRYPT_CollectionEnumCert(PWINECRYPT_CERTSTORE store, void *pPrev)
+static void *CRYPT_CollectionEnumCert(WINECRYPT_CERTSTORE *store, void *pPrev)
 {
     PWINE_COLLECTIONSTORE cs = (PWINE_COLLECTIONSTORE)store;
     void *ret;
@@ -251,7 +251,7 @@ static void *CRYPT_CollectionEnumCert(PWINECRYPT_CERTSTORE store, void *pPrev)
     return ret;
 }
 
-static BOOL CRYPT_CollectionDeleteCert(PWINECRYPT_CERTSTORE store,
+static BOOL CRYPT_CollectionDeleteCert(WINECRYPT_CERTSTORE *store,
  void *pCertContext)
 {
     BOOL ret;
@@ -271,7 +271,7 @@ static BOOL CRYPT_CollectionDeleteCert(PWINECRYPT_CERTSTORE store,
     return ret;
 }
 
-static BOOL CRYPT_CollectionAddCRL(PWINECRYPT_CERTSTORE store, void *crl,
+static BOOL CRYPT_CollectionAddCRL(WINECRYPT_CERTSTORE *store, void *crl,
  void *toReplace, const void **ppStoreContext)
 {
     BOOL ret;
@@ -296,7 +296,7 @@ static BOOL CRYPT_CollectionAddCRL(PWINECRYPT_CERTSTORE store, void *crl,
     return ret;
 }
 
-static void *CRYPT_CollectionEnumCRL(PWINECRYPT_CERTSTORE store, void *pPrev)
+static void *CRYPT_CollectionEnumCRL(WINECRYPT_CERTSTORE *store, void *pPrev)
 {
     PWINE_COLLECTIONSTORE cs = (PWINE_COLLECTIONSTORE)store;
     void *ret;
@@ -337,8 +337,7 @@ static void *CRYPT_CollectionEnumCRL(PWINECRYPT_CERTSTORE store, void *pPrev)
     return ret;
 }
 
-static BOOL CRYPT_CollectionDeleteCRL(PWINECRYPT_CERTSTORE store,
- void *pCrlContext)
+static BOOL CRYPT_CollectionDeleteCRL(WINECRYPT_CERTSTORE *store, void *pCrlContext)
 {
     BOOL ret;
     PCCRL_CONTEXT linked;
@@ -356,7 +355,7 @@ static BOOL CRYPT_CollectionDeleteCRL(PWINECRYPT_CERTSTORE store,
     return ret;
 }
 
-static BOOL CRYPT_CollectionAddCTL(PWINECRYPT_CERTSTORE store, void *ctl,
+static BOOL CRYPT_CollectionAddCTL(WINECRYPT_CERTSTORE *store, void *ctl,
  void *toReplace, const void **ppStoreContext)
 {
     BOOL ret;
@@ -381,7 +380,7 @@ static BOOL CRYPT_CollectionAddCTL(PWINECRYPT_CERTSTORE store, void *ctl,
     return ret;
 }
 
-static void *CRYPT_CollectionEnumCTL(PWINECRYPT_CERTSTORE store, void *pPrev)
+static void *CRYPT_CollectionEnumCTL(WINECRYPT_CERTSTORE *store, void *pPrev)
 {
     PWINE_COLLECTIONSTORE cs = (PWINE_COLLECTIONSTORE)store;
     void *ret;
@@ -422,7 +421,7 @@ static void *CRYPT_CollectionEnumCTL(PWINECRYPT_CERTSTORE store, void *pPrev)
     return ret;
 }
 
-static BOOL CRYPT_CollectionDeleteCTL(PWINECRYPT_CERTSTORE store,
+static BOOL CRYPT_CollectionDeleteCTL(WINECRYPT_CERTSTORE *store,
  void *pCtlContext)
 {
     BOOL ret;
@@ -480,7 +479,7 @@ static BOOL WINAPI CRYPT_CollectionControl(HCERTSTORE hCertStore, DWORD dwFlags,
     return ret;
 }
 
-PWINECRYPT_CERTSTORE CRYPT_CollectionOpenStore(HCRYPTPROV hCryptProv,
+WINECRYPT_CERTSTORE *CRYPT_CollectionOpenStore(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara)
 {
     PWINE_COLLECTIONSTORE store;
@@ -513,7 +512,7 @@ PWINECRYPT_CERTSTORE CRYPT_CollectionOpenStore(HCRYPTPROV hCryptProv,
             list_init(&store->stores);
         }
     }
-    return (PWINECRYPT_CERTSTORE)store;
+    return (WINECRYPT_CERTSTORE*)store;
 }
 
 BOOL WINAPI CertAddStoreToCollection(HCERTSTORE hCollectionStore,

@@ -36,7 +36,7 @@ BOOL WINAPI CertAddCTLContextToStore(HCERTSTORE hCertStore,
  PCCTL_CONTEXT pCtlContext, DWORD dwAddDisposition,
  PCCTL_CONTEXT* ppStoreContext)
 {
-    PWINECRYPT_CERTSTORE store = hCertStore;
+    WINECRYPT_CERTSTORE *store = hCertStore;
     BOOL ret = TRUE;
     PCCTL_CONTEXT toAdd = NULL, existing = NULL;
 
@@ -318,7 +318,7 @@ BOOL WINAPI CertDeleteCTLFromStore(PCCTL_CONTEXT pCtlContext)
         ret = CertFreeCTLContext(pCtlContext);
     else
     {
-        PWINECRYPT_CERTSTORE hcs = pCtlContext->hCertStore;
+        WINECRYPT_CERTSTORE *hcs = pCtlContext->hCertStore;
 
         if (hcs->dwMagic != WINE_CRYPTCERTSTORE_MAGIC)
             ret = FALSE;

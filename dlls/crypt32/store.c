@@ -104,7 +104,7 @@ void CRYPT_InitStore(WINECRYPT_CERTSTORE *store, DWORD dwFlags,
     store->properties = NULL;
 }
 
-void CRYPT_FreeStore(PWINECRYPT_CERTSTORE store)
+void CRYPT_FreeStore(WINECRYPT_CERTSTORE *store)
 {
     if (store->properties)
         ContextPropertyList_Free(store->properties);
@@ -148,7 +148,7 @@ BOOL WINAPI I_CertUpdateStore(HCERTSTORE store1, HCERTSTORE store2, DWORD unk0,
     return TRUE;
 }
 
-static BOOL CRYPT_MemAddCert(PWINECRYPT_CERTSTORE store, void *cert,
+static BOOL CRYPT_MemAddCert(WINECRYPT_CERTSTORE *store, void *cert,
  void *toReplace, const void **ppStoreContext)
 {
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
@@ -166,7 +166,7 @@ static BOOL CRYPT_MemAddCert(PWINECRYPT_CERTSTORE store, void *cert,
     return context != 0;
 }
 
-static void *CRYPT_MemEnumCert(PWINECRYPT_CERTSTORE store, void *pPrev)
+static void *CRYPT_MemEnumCert(WINECRYPT_CERTSTORE *store, void *pPrev)
 {
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
     void *ret;
@@ -181,7 +181,7 @@ static void *CRYPT_MemEnumCert(PWINECRYPT_CERTSTORE store, void *pPrev)
     return ret;
 }
 
-static BOOL CRYPT_MemDeleteCert(PWINECRYPT_CERTSTORE store, void *pCertContext)
+static BOOL CRYPT_MemDeleteCert(WINECRYPT_CERTSTORE *store, void *pCertContext)
 {
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
     BOOL ret;
@@ -193,7 +193,7 @@ static BOOL CRYPT_MemDeleteCert(PWINECRYPT_CERTSTORE store, void *pCertContext)
     return ret;
 }
 
-static BOOL CRYPT_MemAddCrl(PWINECRYPT_CERTSTORE store, void *crl,
+static BOOL CRYPT_MemAddCrl(WINECRYPT_CERTSTORE *store, void *crl,
  void *toReplace, const void **ppStoreContext)
 {
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
@@ -211,7 +211,7 @@ static BOOL CRYPT_MemAddCrl(PWINECRYPT_CERTSTORE store, void *crl,
     return context != 0;
 }
 
-static void *CRYPT_MemEnumCrl(PWINECRYPT_CERTSTORE store, void *pPrev)
+static void *CRYPT_MemEnumCrl(WINECRYPT_CERTSTORE *store, void *pPrev)
 {
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
     void *ret;
@@ -226,7 +226,7 @@ static void *CRYPT_MemEnumCrl(PWINECRYPT_CERTSTORE store, void *pPrev)
     return ret;
 }
 
-static BOOL CRYPT_MemDeleteCrl(PWINECRYPT_CERTSTORE store, void *pCrlContext)
+static BOOL CRYPT_MemDeleteCrl(WINECRYPT_CERTSTORE *store, void *pCrlContext)
 {
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
     BOOL ret;
@@ -238,7 +238,7 @@ static BOOL CRYPT_MemDeleteCrl(PWINECRYPT_CERTSTORE store, void *pCrlContext)
     return ret;
 }
 
-static BOOL CRYPT_MemAddCtl(PWINECRYPT_CERTSTORE store, void *ctl,
+static BOOL CRYPT_MemAddCtl(WINECRYPT_CERTSTORE *store, void *ctl,
  void *toReplace, const void **ppStoreContext)
 {
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
@@ -256,7 +256,7 @@ static BOOL CRYPT_MemAddCtl(PWINECRYPT_CERTSTORE store, void *ctl,
     return context != 0;
 }
 
-static void *CRYPT_MemEnumCtl(PWINECRYPT_CERTSTORE store, void *pPrev)
+static void *CRYPT_MemEnumCtl(WINECRYPT_CERTSTORE *store, void *pPrev)
 {
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
     void *ret;
@@ -271,7 +271,7 @@ static void *CRYPT_MemEnumCtl(PWINECRYPT_CERTSTORE store, void *pPrev)
     return ret;
 }
 
-static BOOL CRYPT_MemDeleteCtl(PWINECRYPT_CERTSTORE store, void *pCtlContext)
+static BOOL CRYPT_MemDeleteCtl(WINECRYPT_CERTSTORE *store, void *pCtlContext)
 {
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
     BOOL ret;
@@ -301,7 +301,7 @@ static void WINAPI CRYPT_MemCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
     ContextList_Free(store->certs);
     ContextList_Free(store->crls);
     ContextList_Free(store->ctls);
-    CRYPT_FreeStore((PWINECRYPT_CERTSTORE)store);
+    CRYPT_FreeStore((WINECRYPT_CERTSTORE*)store);
 }
 
 static WINECRYPT_CERTSTORE *CRYPT_MemOpenStore(HCRYPTPROV hCryptProv,
@@ -345,18 +345,18 @@ static WINECRYPT_CERTSTORE *CRYPT_MemOpenStore(HCRYPTPROV hCryptProv,
                 CryptReleaseContext(hCryptProv, 0);
         }
     }
-    return (PWINECRYPT_CERTSTORE)store;
+    return (WINECRYPT_CERTSTORE*)store;
 }
 
 static const WCHAR rootW[] = { 'R','o','o','t',0 };
 
-static PWINECRYPT_CERTSTORE CRYPT_SysRegOpenStoreW(HCRYPTPROV hCryptProv,
+static WINECRYPT_CERTSTORE *CRYPT_SysRegOpenStoreW(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara)
 {
     static const WCHAR fmt[] = { '%','s','\\','%','s',0 };
     LPCWSTR storeName = pvPara;
     LPWSTR storePath;
-    PWINECRYPT_CERTSTORE store = NULL;
+    WINECRYPT_CERTSTORE *store = NULL;
     HKEY root;
     LPCWSTR base;
 
@@ -462,11 +462,11 @@ static PWINECRYPT_CERTSTORE CRYPT_SysRegOpenStoreW(HCRYPTPROV hCryptProv,
     return store;
 }
 
-static PWINECRYPT_CERTSTORE CRYPT_SysRegOpenStoreA(HCRYPTPROV hCryptProv,
+static WINECRYPT_CERTSTORE *CRYPT_SysRegOpenStoreA(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara)
 {
     int len;
-    PWINECRYPT_CERTSTORE ret = NULL;
+    WINECRYPT_CERTSTORE *ret = NULL;
 
     TRACE("(%ld, %08x, %s)\n", hCryptProv, dwFlags,
      debugstr_a(pvPara));
@@ -491,7 +491,7 @@ static PWINECRYPT_CERTSTORE CRYPT_SysRegOpenStoreA(HCRYPTPROV hCryptProv,
     return ret;
 }
 
-static PWINECRYPT_CERTSTORE CRYPT_SysOpenStoreW(HCRYPTPROV hCryptProv,
+static WINECRYPT_CERTSTORE *CRYPT_SysOpenStoreW(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara)
 {
     HCERTSTORE store = 0;
@@ -563,11 +563,11 @@ static PWINECRYPT_CERTSTORE CRYPT_SysOpenStoreW(HCRYPTPROV hCryptProv,
     return store;
 }
 
-static PWINECRYPT_CERTSTORE CRYPT_SysOpenStoreA(HCRYPTPROV hCryptProv,
+static WINECRYPT_CERTSTORE *CRYPT_SysOpenStoreA(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara)
 {
     int len;
-    PWINECRYPT_CERTSTORE ret = NULL;
+    WINECRYPT_CERTSTORE *ret = NULL;
 
     TRACE("(%ld, %08x, %s)\n", hCryptProv, dwFlags,
      debugstr_a(pvPara));
@@ -604,12 +604,12 @@ static void *msgProvFuncs[] = {
     CRYPT_MsgCloseStore,
 };
 
-static PWINECRYPT_CERTSTORE CRYPT_MsgOpenStore(HCRYPTPROV hCryptProv,
+static WINECRYPT_CERTSTORE *CRYPT_MsgOpenStore(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara)
 {
-    PWINECRYPT_CERTSTORE store = NULL;
+    WINECRYPT_CERTSTORE *store = NULL;
     HCRYPTMSG msg = (HCRYPTMSG)pvPara;
-    PWINECRYPT_CERTSTORE memStore;
+    WINECRYPT_CERTSTORE *memStore;
 
     TRACE("(%ld, %08x, %p)\n", hCryptProv, dwFlags, pvPara);
 
@@ -683,11 +683,11 @@ static PWINECRYPT_CERTSTORE CRYPT_MsgOpenStore(HCRYPTPROV hCryptProv,
     return store;
 }
 
-static PWINECRYPT_CERTSTORE CRYPT_PKCSOpenStore(HCRYPTPROV hCryptProv,
+static WINECRYPT_CERTSTORE *CRYPT_PKCSOpenStore(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara)
 {
     HCRYPTMSG msg;
-    PWINECRYPT_CERTSTORE store = NULL;
+    WINECRYPT_CERTSTORE *store = NULL;
     const CRYPT_DATA_BLOB *data = pvPara;
     BOOL ret;
     DWORD msgOpenFlags = dwFlags & CERT_STORE_NO_CRYPT_RELEASE_FLAG ? 0 :
@@ -724,7 +724,7 @@ static PWINECRYPT_CERTSTORE CRYPT_PKCSOpenStore(HCRYPTPROV hCryptProv,
     return store;
 }
 
-static PWINECRYPT_CERTSTORE CRYPT_SerializedOpenStore(HCRYPTPROV hCryptProv,
+static WINECRYPT_CERTSTORE *CRYPT_SerializedOpenStore(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara)
 {
     HCERTSTORE store;
@@ -749,10 +749,10 @@ static PWINECRYPT_CERTSTORE CRYPT_SerializedOpenStore(HCRYPTPROV hCryptProv,
         }
     }
     TRACE("returning %p\n", store);
-    return (PWINECRYPT_CERTSTORE)store;
+    return (WINECRYPT_CERTSTORE*)store;
 }
 
-static PWINECRYPT_CERTSTORE CRYPT_PhysOpenStoreW(HCRYPTPROV hCryptProv,
+static WINECRYPT_CERTSTORE *CRYPT_PhysOpenStoreW(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara)
 {
     if (dwFlags & CERT_SYSTEM_STORE_RELOCATE_FLAG)
@@ -883,7 +883,7 @@ BOOL WINAPI CertAddCertificateContextToStore(HCERTSTORE hCertStore,
  PCCERT_CONTEXT pCertContext, DWORD dwAddDisposition,
  PCCERT_CONTEXT *ppStoreContext)
 {
-    PWINECRYPT_CERTSTORE store = hCertStore;
+    WINECRYPT_CERTSTORE *store = hCertStore;
     BOOL ret = TRUE;
     PCCERT_CONTEXT toAdd = NULL, existing = NULL;
 
@@ -1035,7 +1035,7 @@ BOOL WINAPI CertDeleteCertificateFromStore(PCCERT_CONTEXT pCertContext)
         ret = CertFreeCertificateContext(pCertContext);
     else
     {
-        PWINECRYPT_CERTSTORE hcs = pCertContext->hCertStore;
+        WINECRYPT_CERTSTORE *hcs = pCertContext->hCertStore;
 
         if (hcs->dwMagic != WINE_CRYPTCERTSTORE_MAGIC)
             ret = FALSE;
@@ -1054,7 +1054,7 @@ BOOL WINAPI CertAddCRLContextToStore(HCERTSTORE hCertStore,
  PCCRL_CONTEXT pCrlContext, DWORD dwAddDisposition,
  PCCRL_CONTEXT* ppStoreContext)
 {
-    PWINECRYPT_CERTSTORE store = hCertStore;
+    WINECRYPT_CERTSTORE *store = hCertStore;
     BOOL ret = TRUE;
     PCCRL_CONTEXT toAdd = NULL, existing = NULL;
 
@@ -1177,7 +1177,7 @@ BOOL WINAPI CertDeleteCRLFromStore(PCCRL_CONTEXT pCrlContext)
         ret = CertFreeCRLContext(pCrlContext);
     else
     {
-        PWINECRYPT_CERTSTORE hcs = pCrlContext->hCertStore;
+        WINECRYPT_CERTSTORE *hcs = pCrlContext->hCertStore;
 
         if (hcs->dwMagic != WINE_CRYPTCERTSTORE_MAGIC)
             ret = FALSE;
@@ -1267,7 +1267,7 @@ BOOL WINAPI CertControlStore(HCERTSTORE hCertStore, DWORD dwFlags,
 BOOL WINAPI CertGetStoreProperty(HCERTSTORE hCertStore, DWORD dwPropId,
  void *pvData, DWORD *pcbData)
 {
-    PWINECRYPT_CERTSTORE store = hCertStore;
+    WINECRYPT_CERTSTORE *store = hCertStore;
     BOOL ret = FALSE;
 
     TRACE("(%p, %d, %p, %p)\n", hCertStore, dwPropId, pvData, pcbData);
@@ -1331,7 +1331,7 @@ BOOL WINAPI CertGetStoreProperty(HCERTSTORE hCertStore, DWORD dwPropId,
 BOOL WINAPI CertSetStoreProperty(HCERTSTORE hCertStore, DWORD dwPropId,
  DWORD dwFlags, const void *pvData)
 {
-    PWINECRYPT_CERTSTORE store = hCertStore;
+    WINECRYPT_CERTSTORE *store = hCertStore;
     BOOL ret = FALSE;
 
     TRACE("(%p, %d, %08x, %p)\n", hCertStore, dwPropId, dwFlags, pvData);

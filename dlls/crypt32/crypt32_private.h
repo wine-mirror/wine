@@ -256,30 +256,30 @@ typedef struct WINE_CRYPTCERTSTORE
     CONTEXT_FUNCS               ctls;
     PFN_CERT_STORE_PROV_CONTROL control; /* optional */
     CONTEXT_PROPERTY_LIST      *properties;
-} WINECRYPT_CERTSTORE, *PWINECRYPT_CERTSTORE;
+} WINECRYPT_CERTSTORE;
 
 void CRYPT_InitStore(WINECRYPT_CERTSTORE *store, DWORD dwFlags,
  CertStoreType type) DECLSPEC_HIDDEN;
-void CRYPT_FreeStore(PWINECRYPT_CERTSTORE store) DECLSPEC_HIDDEN;
+void CRYPT_FreeStore(WINECRYPT_CERTSTORE *store) DECLSPEC_HIDDEN;
 BOOL WINAPI I_CertUpdateStore(HCERTSTORE store1, HCERTSTORE store2, DWORD unk0,
  DWORD unk1) DECLSPEC_HIDDEN;
 
-PWINECRYPT_CERTSTORE CRYPT_CollectionOpenStore(HCRYPTPROV hCryptProv,
+WINECRYPT_CERTSTORE *CRYPT_CollectionOpenStore(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara) DECLSPEC_HIDDEN;
-PWINECRYPT_CERTSTORE CRYPT_ProvCreateStore(DWORD dwFlags,
- PWINECRYPT_CERTSTORE memStore, const CERT_STORE_PROV_INFO *pProvInfo) DECLSPEC_HIDDEN;
-PWINECRYPT_CERTSTORE CRYPT_ProvOpenStore(LPCSTR lpszStoreProvider,
+WINECRYPT_CERTSTORE *CRYPT_ProvCreateStore(DWORD dwFlags,
+ WINECRYPT_CERTSTORE *memStore, const CERT_STORE_PROV_INFO *pProvInfo) DECLSPEC_HIDDEN;
+WINECRYPT_CERTSTORE *CRYPT_ProvOpenStore(LPCSTR lpszStoreProvider,
  DWORD dwEncodingType, HCRYPTPROV hCryptProv, DWORD dwFlags,
  const void *pvPara) DECLSPEC_HIDDEN;
-PWINECRYPT_CERTSTORE CRYPT_RegOpenStore(HCRYPTPROV hCryptProv, DWORD dwFlags,
+WINECRYPT_CERTSTORE *CRYPT_RegOpenStore(HCRYPTPROV hCryptProv, DWORD dwFlags,
  const void *pvPara) DECLSPEC_HIDDEN;
-PWINECRYPT_CERTSTORE CRYPT_FileOpenStore(HCRYPTPROV hCryptProv, DWORD dwFlags,
+WINECRYPT_CERTSTORE *CRYPT_FileOpenStore(HCRYPTPROV hCryptProv, DWORD dwFlags,
  const void *pvPara) DECLSPEC_HIDDEN;
-PWINECRYPT_CERTSTORE CRYPT_FileNameOpenStoreA(HCRYPTPROV hCryptProv,
+WINECRYPT_CERTSTORE *CRYPT_FileNameOpenStoreA(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara) DECLSPEC_HIDDEN;
-PWINECRYPT_CERTSTORE CRYPT_FileNameOpenStoreW(HCRYPTPROV hCryptProv,
+WINECRYPT_CERTSTORE *CRYPT_FileNameOpenStoreW(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara) DECLSPEC_HIDDEN;
-PWINECRYPT_CERTSTORE CRYPT_RootOpenStore(HCRYPTPROV hCryptProv, DWORD dwFlags) DECLSPEC_HIDDEN;
+WINECRYPT_CERTSTORE *CRYPT_RootOpenStore(HCRYPTPROV hCryptProv, DWORD dwFlags) DECLSPEC_HIDDEN;
 
 /* Allocates and initializes a certificate chain engine, but without creating
  * the root store.  Instead, it uses root, and assumes the caller has done any

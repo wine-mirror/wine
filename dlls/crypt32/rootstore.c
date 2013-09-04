@@ -811,9 +811,9 @@ static HCERTSTORE create_root_store(void)
     return root;
 }
 
-static PWINECRYPT_CERTSTORE CRYPT_rootStore;
+static WINECRYPT_CERTSTORE *CRYPT_rootStore;
 
-PWINECRYPT_CERTSTORE CRYPT_RootOpenStore(HCRYPTPROV hCryptProv, DWORD dwFlags)
+WINECRYPT_CERTSTORE *CRYPT_RootOpenStore(HCRYPTPROV hCryptProv, DWORD dwFlags)
 {
     TRACE("(%ld, %08x)\n", hCryptProv, dwFlags);
 
