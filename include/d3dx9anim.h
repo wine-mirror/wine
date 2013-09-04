@@ -125,8 +125,8 @@ typedef struct _D3DXKEY_QUATERNION
 
 typedef struct _D3DXKEY_CALLBACK
 {
-    FLOAT Time;
-    LPVOID pCallbackData;
+    float Time;
+    void *pCallbackData;
 } D3DXKEY_CALLBACK, *LPD3DXKEY_CALLBACK;
 
 typedef struct _D3DXTRACK_DESC
@@ -207,7 +207,7 @@ DECLARE_INTERFACE(ID3DXSaveUserData)
 DECLARE_INTERFACE_(ID3DXAnimationSet, IUnknown)
 {
     /*** IUnknown methods ***/
-    STDMETHOD(QueryInterface)(THIS_ REFIID riid, LPVOID* object) PURE;
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
     STDMETHOD_(ULONG, AddRef)(THIS) PURE;
     STDMETHOD_(ULONG, Release)(THIS) PURE;
     /*** ID3DXAnimationSet methods ***/
@@ -219,8 +219,8 @@ DECLARE_INTERFACE_(ID3DXAnimationSet, IUnknown)
     STDMETHOD(GetAnimationIndexByName)(THIS_ const char *name, UINT *index) PURE;
     STDMETHOD(GetSRT)(THIS_ DOUBLE periodic_position, UINT animation, D3DXVECTOR3 *scale,
             D3DXQUATERNION *rotation, D3DXVECTOR3 *translation) PURE;
-    STDMETHOD(GetCallback)(THIS_ DOUBLE position, DWORD flags, DOUBLE *callback_position,
-            LPVOID *callback_data) PURE;
+    STDMETHOD(GetCallback)(THIS_ double position, DWORD flags, double *callback_position,
+            void **callback_data) PURE;
 };
 #undef INTERFACE
 
@@ -228,7 +228,7 @@ DECLARE_INTERFACE_(ID3DXAnimationSet, IUnknown)
 DECLARE_INTERFACE_(ID3DXKeyframedAnimationSet, ID3DXAnimationSet)
 {
     /*** IUnknown methods ***/
-    STDMETHOD(QueryInterface)(THIS_ REFIID riid, LPVOID* object) PURE;
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
     STDMETHOD_(ULONG, AddRef)(THIS) PURE;
     STDMETHOD_(ULONG, Release)(THIS) PURE;
     /*** ID3DXAnimationSet methods ***/
@@ -240,8 +240,8 @@ DECLARE_INTERFACE_(ID3DXKeyframedAnimationSet, ID3DXAnimationSet)
     STDMETHOD(GetAnimationIndexByName)(THIS_ const char *name, UINT *index) PURE;
     STDMETHOD(GetSRT)(THIS_ DOUBLE periodic_position, UINT animation, D3DXVECTOR3 *scale,
             D3DXQUATERNION *rotation, D3DXVECTOR3 *translation) PURE;
-    STDMETHOD(GetCallback)(THIS_ DOUBLE position, DWORD flags, DOUBLE *callback_position,
-            LPVOID *callback_data) PURE;
+    STDMETHOD(GetCallback)(THIS_ double position, DWORD flags, double *callback_position,
+            void **callback_data) PURE;
     /*** ID3DXKeyframedAnimationSet methods ***/
     STDMETHOD_(D3DXPLAYBACK_TYPE, GetPlaybackType)(THIS) PURE;
     STDMETHOD_(DOUBLE, GetSourceTicksPerSecond)(THIS) PURE;
@@ -278,7 +278,7 @@ DECLARE_INTERFACE_(ID3DXKeyframedAnimationSet, ID3DXAnimationSet)
 DECLARE_INTERFACE_(ID3DXCompressedAnimationSet, ID3DXAnimationSet)
 {
     /*** IUnknown methods ***/
-    STDMETHOD(QueryInterface)(THIS_ REFIID riid, LPVOID* object) PURE;
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
     STDMETHOD_(ULONG, AddRef)(THIS) PURE;
     STDMETHOD_(ULONG, Release)(THIS) PURE;
     /*** ID3DXAnimationSet methods ***/
@@ -290,8 +290,8 @@ DECLARE_INTERFACE_(ID3DXCompressedAnimationSet, ID3DXAnimationSet)
     STDMETHOD(GetAnimationIndexByName)(THIS_ const char *name, UINT *index) PURE;
     STDMETHOD(GetSRT)(THIS_ DOUBLE periodic_position, UINT animation, D3DXVECTOR3 *scale,
             D3DXQUATERNION *rotation, D3DXVECTOR3 *translation) PURE;
-    STDMETHOD(GetCallback)(THIS_ DOUBLE position, DWORD flags, DOUBLE *callback_position,
-            LPVOID *callback_data) PURE;
+    STDMETHOD(GetCallback)(THIS_ double position, DWORD flags, double *callback_position,
+            void **callback_data) PURE;
     /*** ID3DXCompressedAnimationSet methods ***/
     STDMETHOD_(D3DXPLAYBACK_TYPE, GetPlaybackType)(THIS) PURE;
     STDMETHOD_(DOUBLE, GetSourceTicksPerSecond)(THIS) PURE;
@@ -304,7 +304,7 @@ DECLARE_INTERFACE_(ID3DXCompressedAnimationSet, ID3DXAnimationSet)
 #define INTERFACE ID3DXAnimationCallbackHandler
 DECLARE_INTERFACE(ID3DXAnimationCallbackHandler)
 {
-    STDMETHOD(HandleCallback)(THIS_ UINT track, LPVOID callback_data) PURE;
+    STDMETHOD(HandleCallback)(THIS_ UINT track, void *callback_data) PURE;
 };
 #undef INTERFACE
 
@@ -312,7 +312,7 @@ DECLARE_INTERFACE(ID3DXAnimationCallbackHandler)
 DECLARE_INTERFACE_(ID3DXAnimationController, IUnknown)
 {
     /*** IUnknown methods ***/
-    STDMETHOD(QueryInterface)(THIS_ REFIID riid, LPVOID* object) PURE;
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
     STDMETHOD_(ULONG, AddRef)(THIS) PURE;
     STDMETHOD_(ULONG, Release)(THIS) PURE;
     /*** ID3DXAnimationController methods ***/

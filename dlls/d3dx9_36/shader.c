@@ -865,13 +865,13 @@ static ULONG WINAPI ID3DXConstantTableImpl_Release(ID3DXConstantTable *iface)
 }
 
 /*** ID3DXBuffer methods ***/
-static LPVOID WINAPI ID3DXConstantTableImpl_GetBufferPointer(ID3DXConstantTable *iface)
+static void * WINAPI ID3DXConstantTableImpl_GetBufferPointer(ID3DXConstantTable *iface)
 {
-    struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
+    struct ID3DXConstantTableImpl *table = impl_from_ID3DXConstantTable(iface);
 
-    TRACE("(%p)->()\n", This);
+    TRACE("iface %p.\n", iface);
 
-    return This->ctab;
+    return table->ctab;
 }
 
 static DWORD WINAPI ID3DXConstantTableImpl_GetBufferSize(ID3DXConstantTable *iface)

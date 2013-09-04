@@ -85,7 +85,7 @@ DEFINE_GUID(IID_ID3DXEffectPool, 0x9537ab04, 0x3250, 0x412e, 0x82, 0x13, 0xfc, 0
 DECLARE_INTERFACE_(ID3DXEffectPool, IUnknown)
 {
     /*** IUnknown methods ***/
-    STDMETHOD(QueryInterface)(THIS_ REFIID riid, LPVOID* object) PURE;
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
     STDMETHOD_(ULONG, AddRef)(THIS) PURE;
     STDMETHOD_(ULONG, Release)(THIS) PURE;
 };
@@ -100,7 +100,7 @@ DEFINE_GUID(IID_ID3DXBaseEffect, 0x17c18ac, 0x103f, 0x4417, 0x8c, 0x51, 0x6b, 0x
 DECLARE_INTERFACE_(ID3DXBaseEffect, IUnknown)
 {
     /*** IUnknown methods ***/
-    STDMETHOD(QueryInterface)(THIS_ REFIID riid, LPVOID* object) PURE;
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
     STDMETHOD_(ULONG, AddRef)(THIS) PURE;
     STDMETHOD_(ULONG, Release)(THIS) PURE;
     /*** ID3DXBaseEffect methods ***/
@@ -122,7 +122,7 @@ DECLARE_INTERFACE_(ID3DXBaseEffect, IUnknown)
     STDMETHOD_(D3DXHANDLE, GetAnnotation)(THIS_ D3DXHANDLE object, UINT index) PURE;
     STDMETHOD_(D3DXHANDLE, GetAnnotationByName)(THIS_ D3DXHANDLE object, const char *name) PURE;
     STDMETHOD(SetValue)(THIS_ D3DXHANDLE parameter, const void *data, UINT bytes) PURE;
-    STDMETHOD(GetValue)(THIS_ D3DXHANDLE parameter, LPVOID data, UINT bytes) PURE;
+    STDMETHOD(GetValue)(THIS_ D3DXHANDLE parameter, void *data, UINT bytes) PURE;
     STDMETHOD(SetBool)(THIS_ D3DXHANDLE parameter, BOOL b) PURE;
     STDMETHOD(GetBool)(THIS_ D3DXHANDLE parameter, BOOL* b) PURE;
     STDMETHOD(SetBoolArray)(THIS_ D3DXHANDLE parameter, CONST BOOL* b, UINT count) PURE;
@@ -170,7 +170,7 @@ DEFINE_GUID(IID_ID3DXEffectStateManager, 0x79aab587, 0x6dbc, 0x4fa7, 0x82, 0xde,
 DECLARE_INTERFACE_(ID3DXEffectStateManager, IUnknown)
 {
     /*** IUnknown methods ***/
-    STDMETHOD(QueryInterface)(THIS_ REFIID riid, LPVOID* object) PURE;
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
     STDMETHOD_(ULONG, AddRef)(THIS) PURE;
     STDMETHOD_(ULONG, Release)(THIS) PURE;
     /*** ID3DXEffectStateManager methods ***/
@@ -204,7 +204,7 @@ DEFINE_GUID(IID_ID3DXEffect, 0xf6ceb4b3, 0x4e4c, 0x40dd, 0xb8, 0x83, 0x8d, 0x8d,
 DECLARE_INTERFACE_(ID3DXEffect, ID3DXBaseEffect)
 {
     /*** IUnknown methods ***/
-    STDMETHOD(QueryInterface)(THIS_ REFIID riid, LPVOID* object) PURE;
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
     STDMETHOD_(ULONG, AddRef)(THIS) PURE;
     STDMETHOD_(ULONG, Release)(THIS) PURE;
     /*** ID3DXBaseEffect methods ***/
@@ -226,7 +226,7 @@ DECLARE_INTERFACE_(ID3DXEffect, ID3DXBaseEffect)
     STDMETHOD_(D3DXHANDLE, GetAnnotation)(THIS_ D3DXHANDLE object, UINT index) PURE;
     STDMETHOD_(D3DXHANDLE, GetAnnotationByName)(THIS_ D3DXHANDLE object, const char *name) PURE;
     STDMETHOD(SetValue)(THIS_ D3DXHANDLE parameter, const void *data, UINT bytes) PURE;
-    STDMETHOD(GetValue)(THIS_ D3DXHANDLE parameter, LPVOID data, UINT bytes) PURE;
+    STDMETHOD(GetValue)(THIS_ D3DXHANDLE parameter, void *data, UINT bytes) PURE;
     STDMETHOD(SetBool)(THIS_ D3DXHANDLE parameter, BOOL b) PURE;
     STDMETHOD(GetBool)(THIS_ D3DXHANDLE parameter, BOOL* b) PURE;
     STDMETHOD(SetBoolArray)(THIS_ D3DXHANDLE parameter, CONST BOOL* b, UINT count) PURE;
@@ -297,7 +297,7 @@ DEFINE_GUID(IID_ID3DXEffectCompiler, 0x51b8a949, 0x1a31, 0x47e6, 0xbe, 0xa0, 0x4
 DECLARE_INTERFACE_(ID3DXEffectCompiler, ID3DXBaseEffect)
 {
     /*** IUnknown methods ***/
-    STDMETHOD(QueryInterface)(THIS_ REFIID riid, LPVOID* object) PURE;
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
     STDMETHOD_(ULONG, AddRef)(THIS) PURE;
     STDMETHOD_(ULONG, Release)(THIS) PURE;
     /*** ID3DXBaseEffect methods ***/
@@ -319,7 +319,7 @@ DECLARE_INTERFACE_(ID3DXEffectCompiler, ID3DXBaseEffect)
     STDMETHOD_(D3DXHANDLE, GetAnnotation)(THIS_ D3DXHANDLE object, UINT index) PURE;
     STDMETHOD_(D3DXHANDLE, GetAnnotationByName)(THIS_ D3DXHANDLE object, const char *name) PURE;
     STDMETHOD(SetValue)(THIS_ D3DXHANDLE parameter, const void *data, UINT bytes) PURE;
-    STDMETHOD(GetValue)(THIS_ D3DXHANDLE parameter, LPVOID data, UINT bytes) PURE;
+    STDMETHOD(GetValue)(THIS_ D3DXHANDLE parameter, void *data, UINT bytes) PURE;
     STDMETHOD(SetBool)(THIS_ D3DXHANDLE parameter, BOOL b) PURE;
     STDMETHOD(GetBool)(THIS_ D3DXHANDLE parameter, BOOL* b) PURE;
     STDMETHOD(SetBoolArray)(THIS_ D3DXHANDLE parameter, CONST BOOL* b, UINT count) PURE;

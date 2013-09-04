@@ -201,7 +201,7 @@ typedef struct _D3DXEFFECTDEFAULT
     char *pParamName;
     D3DXEFFECTDEFAULTTYPE Type;
     DWORD NumBytes;
-    LPVOID pValue;
+    void *pValue;
 } D3DXEFFECTDEFAULT, *LPD3DXEFFECTDEFAULT;
 
 typedef struct _D3DXEFFECTINSTANCE
@@ -297,9 +297,9 @@ typedef struct _XFILECOMPRESSEDANIMATIONSET
     DWORD BufferLength;
 } XFILECOMPRESSEDANIMATIONSET;
 
-typedef HRESULT (WINAPI *LPD3DXUVATLASCB)(FLOAT, LPVOID);
+typedef HRESULT (WINAPI *LPD3DXUVATLASCB)(float complete, void *ctx);
 typedef HRESULT (WINAPI *LPD3DXIMTSIGNALCALLBACK)(CONST D3DXVECTOR2 *, UINT, UINT, VOID *, FLOAT *);
-typedef HRESULT (WINAPI *LPD3DXSHPRTSIMCB)(float, LPVOID);
+typedef HRESULT (WINAPI *LPD3DXSHPRTSIMCB)(float complete, void *ctx);
 
 #undef INTERFACE
 #define INTERFACE ID3DXBaseMesh
@@ -307,7 +307,7 @@ typedef HRESULT (WINAPI *LPD3DXSHPRTSIMCB)(float, LPVOID);
 DECLARE_INTERFACE_(ID3DXBaseMesh, IUnknown)
 {
     /*** IUnknown methods ***/
-    STDMETHOD(QueryInterface)(THIS_ REFIID riid, LPVOID* object) PURE;
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
     STDMETHOD_(ULONG, AddRef)(THIS) PURE;
     STDMETHOD_(ULONG, Release)(THIS) PURE;
     /*** ID3DXBaseMesh ***/
@@ -325,9 +325,9 @@ DECLARE_INTERFACE_(ID3DXBaseMesh, IUnknown)
             struct IDirect3DDevice9 *device, struct ID3DXMesh **clone_mesh) PURE;
     STDMETHOD(GetVertexBuffer)(THIS_ struct IDirect3DVertexBuffer9 **vertex_buffer) PURE;
     STDMETHOD(GetIndexBuffer)(THIS_ struct IDirect3DIndexBuffer9 **index_buffer) PURE;
-    STDMETHOD(LockVertexBuffer)(THIS_ DWORD flags, LPVOID* data) PURE;
+    STDMETHOD(LockVertexBuffer)(THIS_ DWORD flags, void **data) PURE;
     STDMETHOD(UnlockVertexBuffer)(THIS) PURE;
-    STDMETHOD(LockIndexBuffer)(THIS_ DWORD flags, LPVOID* data) PURE;
+    STDMETHOD(LockIndexBuffer)(THIS_ DWORD flags, void **data) PURE;
     STDMETHOD(UnlockIndexBuffer)(THIS) PURE;
     STDMETHOD(GetAttributeTable)(THIS_ D3DXATTRIBUTERANGE* attrib_table, DWORD* attrib_table_size) PURE;
     STDMETHOD(ConvertPointRepsToAdjacency)(THIS_ CONST DWORD* point_reps, DWORD* adjacency) PURE;
@@ -341,7 +341,7 @@ DECLARE_INTERFACE_(ID3DXBaseMesh, IUnknown)
 DECLARE_INTERFACE_(ID3DXMesh, ID3DXBaseMesh)
 {
     /*** IUnknown methods ***/
-    STDMETHOD(QueryInterface)(THIS_ REFIID riid, LPVOID* object) PURE;
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
     STDMETHOD_(ULONG, AddRef)(THIS) PURE;
     STDMETHOD_(ULONG, Release)(THIS) PURE;
     /*** ID3DXBaseMesh ***/
@@ -359,9 +359,9 @@ DECLARE_INTERFACE_(ID3DXMesh, ID3DXBaseMesh)
             struct IDirect3DDevice9 *device, struct ID3DXMesh **clone_mesh) PURE;
     STDMETHOD(GetVertexBuffer)(THIS_ struct IDirect3DVertexBuffer9 **vertex_buffer) PURE;
     STDMETHOD(GetIndexBuffer)(THIS_ struct IDirect3DIndexBuffer9 **index_buffer) PURE;
-    STDMETHOD(LockVertexBuffer)(THIS_ DWORD flags, LPVOID* data) PURE;
+    STDMETHOD(LockVertexBuffer)(THIS_ DWORD flags, void **data) PURE;
     STDMETHOD(UnlockVertexBuffer)(THIS) PURE;
-    STDMETHOD(LockIndexBuffer)(THIS_ DWORD flags, LPVOID* data) PURE;
+    STDMETHOD(LockIndexBuffer)(THIS_ DWORD flags, void **data) PURE;
     STDMETHOD(UnlockIndexBuffer)(THIS) PURE;
     STDMETHOD(GetAttributeTable)(THIS_ D3DXATTRIBUTERANGE* attrib_table, DWORD* attrib_table_size) PURE;
     STDMETHOD(ConvertPointRepsToAdjacency)(THIS_ CONST DWORD* point_reps, DWORD* adjacency) PURE;
@@ -383,7 +383,7 @@ DECLARE_INTERFACE_(ID3DXMesh, ID3DXBaseMesh)
 DECLARE_INTERFACE_(ID3DXPMesh, ID3DXBaseMesh)
 {
     /*** IUnknown methods ***/
-    STDMETHOD(QueryInterface)(THIS_ REFIID riid, LPVOID* object) PURE;
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
     STDMETHOD_(ULONG, AddRef)(THIS) PURE;
     STDMETHOD_(ULONG, Release)(THIS) PURE;
     /*** ID3DXBaseMesh ***/
@@ -401,9 +401,9 @@ DECLARE_INTERFACE_(ID3DXPMesh, ID3DXBaseMesh)
             struct IDirect3DDevice9 *device, struct ID3DXMesh **clone_mesh) PURE;
     STDMETHOD(GetVertexBuffer)(THIS_ struct IDirect3DVertexBuffer9 **vertex_buffer) PURE;
     STDMETHOD(GetIndexBuffer)(THIS_ struct IDirect3DIndexBuffer9 **index_buffer) PURE;
-    STDMETHOD(LockVertexBuffer)(THIS_ DWORD flags, LPVOID* data) PURE;
+    STDMETHOD(LockVertexBuffer)(THIS_ DWORD flags, void **data) PURE;
     STDMETHOD(UnlockVertexBuffer)(THIS) PURE;
-    STDMETHOD(LockIndexBuffer)(THIS_ DWORD flags, LPVOID* data) PURE;
+    STDMETHOD(LockIndexBuffer)(THIS_ DWORD flags, void **data) PURE;
     STDMETHOD(UnlockIndexBuffer)(THIS) PURE;
     STDMETHOD(GetAttributeTable)(THIS_ D3DXATTRIBUTERANGE* attrib_table, DWORD* attrib_table_size) PURE;
     STDMETHOD(ConvertPointRepsToAdjacency)(THIS_ CONST DWORD* point_reps, DWORD* adjacency) PURE;
@@ -436,7 +436,7 @@ DECLARE_INTERFACE_(ID3DXPMesh, ID3DXBaseMesh)
 DECLARE_INTERFACE_(ID3DXSPMesh, IUnknown)
 {
     /*** IUnknown methods ***/
-    STDMETHOD(QueryInterface)(THIS_ REFIID riid, LPVOID* object) PURE;
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
     STDMETHOD_(ULONG, AddRef)(THIS) PURE;
     STDMETHOD_(ULONG, Release)(THIS) PURE;
     /*** ID3DXSPMesh ***/
@@ -471,7 +471,7 @@ DECLARE_INTERFACE_(ID3DXSPMesh, IUnknown)
 DECLARE_INTERFACE_(ID3DXPatchMesh, IUnknown)
 {
     /*** IUnknown methods ***/
-    STDMETHOD(QueryInterface)(THIS_ REFIID riid, LPVOID* object) PURE;
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
     STDMETHOD_(ULONG, AddRef)(THIS) PURE;
     STDMETHOD_(ULONG, Release)(THIS) PURE;
     /*** ID3DXPatchMesh ***/
@@ -484,9 +484,9 @@ DECLARE_INTERFACE_(ID3DXPatchMesh, IUnknown)
     STDMETHOD(GetPatchInfo)(THIS_ LPD3DXPATCHINFO patch_info) PURE;
     STDMETHOD(GetVertexBuffer)(THIS_ struct IDirect3DVertexBuffer9 **vertex_buffer) PURE;
     STDMETHOD(GetIndexBuffer)(THIS_ struct IDirect3DIndexBuffer9 **index_buffer) PURE;
-    STDMETHOD(LockVertexBuffer)(THIS_ DWORD flags, LPVOID* data) PURE;
+    STDMETHOD(LockVertexBuffer)(THIS_ DWORD flags, void **data) PURE;
     STDMETHOD(UnlockVertexBuffer)(THIS) PURE;
-    STDMETHOD(LockIndexBuffer)(THIS_ DWORD flags, LPVOID* data) PURE;
+    STDMETHOD(LockIndexBuffer)(THIS_ DWORD flags, void **data) PURE;
     STDMETHOD(UnlockIndexBuffer)(THIS) PURE;
     STDMETHOD(LockAttributeBuffer)(THIS_ DWORD flags, DWORD** data) PURE;
     STDMETHOD(UnlockAttributeBuffer)(THIS) PURE;
@@ -510,7 +510,7 @@ DECLARE_INTERFACE_(ID3DXPatchMesh, IUnknown)
 DECLARE_INTERFACE_(ID3DXSkinInfo, IUnknown)
 {
     /*** IUnknown methods ***/
-    STDMETHOD(QueryInterface)(THIS_ REFIID riid, LPVOID* object) PURE;
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
     STDMETHOD_(ULONG, AddRef)(THIS) PURE;
     STDMETHOD_(ULONG, Release)(THIS) PURE;
     /*** ID3DXSkinInfo ***/
@@ -551,7 +551,7 @@ DECLARE_INTERFACE_(ID3DXSkinInfo, IUnknown)
 DECLARE_INTERFACE_(ID3DXPRTBuffer, IUnknown)
 {
     /*** IUnknown methods ***/
-    STDMETHOD(QueryInterface)(THIS_ REFIID riid, LPVOID* object) PURE;
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
     STDMETHOD_(ULONG, AddRef)(THIS) PURE;
     STDMETHOD_(ULONG, Release)(THIS) PURE;
     /*** ID3DXPRTBuffer methods ***/
@@ -580,7 +580,7 @@ DECLARE_INTERFACE_(ID3DXPRTBuffer, IUnknown)
 DECLARE_INTERFACE_(ID3DXPRTCompBuffer, IUnknown)
 {
     /*** IUnknown methods ***/
-    STDMETHOD(QueryInterface)(THIS_ REFIID riid, LPVOID* object) PURE;
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
     STDMETHOD_(ULONG, AddRef)(THIS) PURE;
     STDMETHOD_(ULONG, Release)(THIS) PURE;
     /*** ID3DXPRTCompBuffer methods ***/
@@ -605,7 +605,7 @@ DECLARE_INTERFACE_(ID3DXPRTCompBuffer, IUnknown)
 DECLARE_INTERFACE_(ID3DXTextureGutterHelper, IUnknown)
 {
     /*** IUnknown methods ***/
-    STDMETHOD(QueryInterface)(THIS_ REFIID riid, LPVOID* object) PURE;
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
     STDMETHOD_(ULONG, AddRef)(THIS) PURE;
     STDMETHOD_(ULONG, Release)(THIS) PURE;
     /*** ID3DXTextureGutterHelper methods ***/
@@ -632,7 +632,7 @@ DECLARE_INTERFACE_(ID3DXTextureGutterHelper, IUnknown)
 DECLARE_INTERFACE_(ID3DXPRTEngine, IUnknown)
 {
     /*** IUnknown methods ***/
-    STDMETHOD(QueryInterface)(THIS_ REFIID riid, LPVOID* object) PURE;
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
     STDMETHOD_(ULONG, AddRef)(THIS) PURE;
     STDMETHOD_(ULONG, Release)(THIS) PURE;
     /*** ID3DXPRTEngine methods ***/
@@ -681,7 +681,7 @@ DECLARE_INTERFACE_(ID3DXPRTEngine, IUnknown)
             ID3DXPRTBuffer *data_out) PURE;
     STDMETHOD(ScaleMeshChunk)(THIS_ UINT mesh_chunk, float scale, ID3DXPRTBuffer *data_out) PURE;
     STDMETHOD(MultiplyAlbedo)(THIS_ ID3DXPRTBuffer *data_out) PURE;
-    STDMETHOD(SetCallback)(THIS_ LPD3DXSHPRTSIMCB cb, FLOAT frequency, LPVOID user_context) PURE;
+    STDMETHOD(SetCallback)(THIS_ LPD3DXSHPRTSIMCB cb, float frequency, void *user_context) PURE;
     STDMETHOD_(BOOL, ShadowRayIntersects)(THIS_ CONST D3DXVECTOR3 *ray_pos, CONST D3DXVECTOR3 *ray_dir) PURE;
     STDMETHOD_(BOOL, ClosestRayIntersects)(THIS_ CONST D3DXVECTOR3 *ray_pos, CONST D3DXVECTOR3 *ray_dir,
         DWORD *face_index, FLOAT *u, FLOAT *v, FLOAT *dist) PURE;

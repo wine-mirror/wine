@@ -95,16 +95,16 @@ static inline ID3DXMeshImpl *impl_from_ID3DXMesh(ID3DXMesh *iface)
     return CONTAINING_RECORD(iface, ID3DXMeshImpl, ID3DXMesh_iface);
 }
 
-static HRESULT WINAPI ID3DXMeshImpl_QueryInterface(ID3DXMesh *iface, REFIID riid, LPVOID *object)
+static HRESULT WINAPI ID3DXMeshImpl_QueryInterface(ID3DXMesh *iface, REFIID riid, void **out)
 {
-    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), object);
+    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
 
     if (IsEqualGUID(riid, &IID_IUnknown) ||
         IsEqualGUID(riid, &IID_ID3DXBaseMesh) ||
         IsEqualGUID(riid, &IID_ID3DXMesh))
     {
         iface->lpVtbl->AddRef(iface);
-        *object = iface;
+        *out = iface;
         return S_OK;
     }
 
@@ -801,13 +801,13 @@ static HRESULT WINAPI ID3DXMeshImpl_GetIndexBuffer(struct ID3DXMesh *iface,
     return D3D_OK;
 }
 
-static HRESULT WINAPI ID3DXMeshImpl_LockVertexBuffer(ID3DXMesh *iface, DWORD flags, LPVOID *data)
+static HRESULT WINAPI ID3DXMeshImpl_LockVertexBuffer(ID3DXMesh *iface, DWORD flags, void **data)
 {
-    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
+    ID3DXMeshImpl *mesh = impl_from_ID3DXMesh(iface);
 
-    TRACE("(%p)->(%u,%p)\n", This, flags, data);
+    TRACE("iface %p, flags %#x, data %p.\n", iface, flags, data);
 
-    return IDirect3DVertexBuffer9_Lock(This->vertex_buffer, 0, 0, data, flags);
+    return IDirect3DVertexBuffer9_Lock(mesh->vertex_buffer, 0, 0, data, flags);
 }
 
 static HRESULT WINAPI ID3DXMeshImpl_UnlockVertexBuffer(ID3DXMesh *iface)
@@ -819,13 +819,13 @@ static HRESULT WINAPI ID3DXMeshImpl_UnlockVertexBuffer(ID3DXMesh *iface)
     return IDirect3DVertexBuffer9_Unlock(This->vertex_buffer);
 }
 
-static HRESULT WINAPI ID3DXMeshImpl_LockIndexBuffer(ID3DXMesh *iface, DWORD flags, LPVOID *data)
+static HRESULT WINAPI ID3DXMeshImpl_LockIndexBuffer(ID3DXMesh *iface, DWORD flags, void **data)
 {
-    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
+    ID3DXMeshImpl *mesh = impl_from_ID3DXMesh(iface);
 
-    TRACE("(%p)->(%u,%p)\n", This, flags, data);
+    TRACE("iface %p, flags %#x, data %p.\n", iface, flags, data);
 
-    return IDirect3DIndexBuffer9_Lock(This->index_buffer, 0, 0, data, flags);
+    return IDirect3DIndexBuffer9_Lock(mesh->index_buffer, 0, 0, data, flags);
 }
 
 static HRESULT WINAPI ID3DXMeshImpl_UnlockIndexBuffer(ID3DXMesh *iface)
@@ -3703,12 +3703,14 @@ HRESULT WINAPI D3DXLoadMeshHierarchyFromXW(const WCHAR *filename, DWORD options,
         struct ID3DXAllocateHierarchy *alloc_hier, struct ID3DXLoadUserData *load_user_data,
         D3DXFRAME **frame_hierarchy, struct ID3DXAnimationController **anim_controller)
 {
+    void *buffer;
     HRESULT hr;
     DWORD size;
-    LPVOID buffer;
 
-    TRACE("(%s, %x, %p, %p, %p, %p, %p)\n", debugstr_w(filename), options,
-          device, alloc_hier, load_user_data, frame_hierarchy, anim_controller);
+    TRACE("filename %s, options %#x, device %p, alloc_hier %p, "
+            "load_user_data %p, frame_hierarchy %p, anim_controller %p.\n",
+            debugstr_w(filename), options, device, alloc_hier,
+            load_user_data, frame_hierarchy, anim_controller);
 
     if (!filename)
         return D3DERR_INVALIDCALL;
@@ -4057,12 +4059,14 @@ HRESULT WINAPI D3DXLoadMeshFromXW(const WCHAR *filename, DWORD options, struct I
         struct ID3DXBuffer **adjacency, struct ID3DXBuffer **materials, struct ID3DXBuffer **effect_instances,
         DWORD *num_materials, struct ID3DXMesh **mesh)
 {
+    void *buffer;
     HRESULT hr;
     DWORD size;
-    LPVOID buffer;
 
-    TRACE("(%s, %x, %p, %p, %p, %p, %p, %p)\n", debugstr_w(filename), options,
-          device, adjacency, materials, effect_instances, num_materials, mesh);
+    TRACE("filename %s, options %#x, device %p, adjacency %p, materials %p, "
+            "effect_instances %p, num_materials %p, mesh %p.\n",
+            debugstr_w(filename), options, device, adjacency, materials,
+            effect_instances, num_materials, mesh);
 
     if (!filename)
         return D3DERR_INVALIDCALL;
@@ -4085,12 +4089,13 @@ HRESULT WINAPI D3DXLoadMeshFromXResource(HMODULE module, const char *name, const
 {
     HRESULT hr;
     HRSRC resinfo;
+    void *buffer;
     DWORD size;
-    LPVOID buffer;
 
-    TRACE("(%p, %s, %s, %x, %p, %p, %p, %p, %p, %p)\n",
-          module, debugstr_a(name), debugstr_a(type), options, device,
-          adjacency, materials, effect_instances, num_materials, mesh);
+    TRACE("module %p, name %s, type %s, options %#x, device %p, adjacency %p, "
+            "materials %p, effect_instances %p, num_materials %p, mesh %p.\n",
+            module, debugstr_a(name), debugstr_a(type), options, device, adjacency,
+            materials, effect_instances, num_materials, mesh);
 
     resinfo = FindResourceA(module, name, type);
     if (!resinfo) return D3DXERR_INVALIDDATA;
@@ -4619,15 +4624,13 @@ HRESULT WINAPI D3DXCreateSphere(struct IDirect3DDevice9 *device, float radius, U
         return hr;
     }
 
-    hr = sphere->lpVtbl->LockVertexBuffer(sphere, 0, (LPVOID *)&vertices);
-    if (FAILED(hr))
+    if (FAILED(hr = sphere->lpVtbl->LockVertexBuffer(sphere, 0, (void **)&vertices)))
     {
         sphere->lpVtbl->Release(sphere);
         return hr;
     }
 
-    hr = sphere->lpVtbl->LockIndexBuffer(sphere, 0, (LPVOID *)&faces);
-    if (FAILED(hr))
+    if (FAILED(hr = sphere->lpVtbl->LockIndexBuffer(sphere, 0, (void **)&faces)))
     {
         sphere->lpVtbl->UnlockVertexBuffer(sphere);
         sphere->lpVtbl->Release(sphere);
@@ -4790,15 +4793,13 @@ HRESULT WINAPI D3DXCreateCylinder(struct IDirect3DDevice9 *device, float radius1
         return hr;
     }
 
-    hr = cylinder->lpVtbl->LockVertexBuffer(cylinder, 0, (LPVOID *)&vertices);
-    if (FAILED(hr))
+    if (FAILED(hr = cylinder->lpVtbl->LockVertexBuffer(cylinder, 0, (void **)&vertices)))
     {
         cylinder->lpVtbl->Release(cylinder);
         return hr;
     }
 
-    hr = cylinder->lpVtbl->LockIndexBuffer(cylinder, 0, (LPVOID *)&faces);
-    if (FAILED(hr))
+    if (FAILED(hr = cylinder->lpVtbl->LockIndexBuffer(cylinder, 0, (void **)&faces)))
     {
         cylinder->lpVtbl->UnlockVertexBuffer(cylinder);
         cylinder->lpVtbl->Release(cylinder);
@@ -5897,12 +5898,10 @@ HRESULT WINAPI D3DXCreateTextW(struct IDirect3DDevice9 *device, HDC hdc, const W
     if (FAILED(hr))
         goto error;
 
-    hr = mesh->lpVtbl->LockVertexBuffer(mesh, 0, (LPVOID *)&vertices);
-    if (FAILED(hr))
+    if (FAILED(hr = mesh->lpVtbl->LockVertexBuffer(mesh, 0, (void **)&vertices)))
         goto error;
 
-    hr = mesh->lpVtbl->LockIndexBuffer(mesh, 0, (LPVOID *)&faces);
-    if (FAILED(hr))
+    if (FAILED(hr = mesh->lpVtbl->LockIndexBuffer(mesh, 0, (void **)&faces)))
         goto error;
 
     /* convert 2D vertices and faces into 3D mesh */

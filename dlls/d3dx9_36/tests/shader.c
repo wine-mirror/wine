@@ -357,7 +357,7 @@ static void test_get_shader_constant_table_ex(void)
 {
     ID3DXConstantTable *constant_table;
     HRESULT hr;
-    LPVOID data;
+    void *data;
     DWORD size;
     D3DXCONSTANTTABLE_DESC desc;
 

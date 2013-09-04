@@ -278,7 +278,7 @@ static void compare_mesh(const char *name, ID3DXMesh *d3dxmesh, struct mesh *mes
 
         /* specify offset and size to avoid potential overruns */
         hr = IDirect3DVertexBuffer9_Lock(vertex_buffer, 0, number_of_vertices * sizeof(D3DXVECTOR3) * 2,
-                                         (LPVOID *)&vertices, D3DLOCK_DISCARD);
+                (void **)&vertices, D3DLOCK_DISCARD);
         ok(hr == D3D_OK, "Test %s, result %x, expected 0 (D3D_OK)\n", name, hr);
 
         if (hr != D3D_OK)
@@ -339,7 +339,7 @@ static void compare_mesh(const char *name, ID3DXMesh *d3dxmesh, struct mesh *mes
 
         /* specify offset and size to avoid potential overruns */
         hr = IDirect3DIndexBuffer9_Lock(index_buffer, 0, number_of_faces * sizeof(WORD) * 3,
-                                        (LPVOID *)&faces, D3DLOCK_DISCARD);
+                (void **)&faces, D3DLOCK_DISCARD);
         ok(hr == D3D_OK, "Test %s, result %x, expected 0 (D3D_OK)\n", name, hr);
 
         if (hr != D3D_OK)
@@ -3687,7 +3687,7 @@ static void compare_text_outline_mesh(const char *name, ID3DXMesh *d3dxmesh, str
 
     /* specify offset and size to avoid potential overruns */
     hr = IDirect3DVertexBuffer9_Lock(vertex_buffer, 0, number_of_vertices * sizeof(D3DXVECTOR3) * 2,
-                                     (LPVOID *)&vertices, D3DLOCK_DISCARD);
+            (void **)&vertices, D3DLOCK_DISCARD);
     ok(hr == D3D_OK, "Test %s, result %x, expected 0 (D3D_OK)\n", name, hr);
     if (hr != D3D_OK)
     {
@@ -3695,7 +3695,7 @@ static void compare_text_outline_mesh(const char *name, ID3DXMesh *d3dxmesh, str
         goto error;
     }
     hr = IDirect3DIndexBuffer9_Lock(index_buffer, 0, number_of_faces * sizeof(WORD) * 3,
-                                    (LPVOID *)&faces, D3DLOCK_DISCARD);
+            (void **)&faces, D3DLOCK_DISCARD);
     ok(hr == D3D_OK, "Test %s, result %x, expected 0 (D3D_OK)\n", name, hr);
     if (hr != D3D_OK)
     {

@@ -156,7 +156,7 @@ error:
  *   The memory doesn't need to be freed by the caller manually
  *
  */
-HRESULT load_resource_into_memory(HMODULE module, HRSRC resinfo, LPVOID *buffer, DWORD *length)
+HRESULT load_resource_into_memory(HMODULE module, HRSRC resinfo, void **buffer, DWORD *length)
 {
     HGLOBAL resource;
 

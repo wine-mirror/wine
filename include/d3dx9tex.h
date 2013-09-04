@@ -83,8 +83,10 @@ typedef struct _D3DXIMAGE_INFO
  ****************** Functions *****************
  **********************************************/
 /* Typedefs for callback functions */
-typedef VOID (WINAPI *LPD3DXFILL2D)(D3DXVECTOR4 *out, CONST D3DXVECTOR2 *texcoord, CONST D3DXVECTOR2 *texelsize, LPVOID data);
-typedef VOID (WINAPI *LPD3DXFILL3D)(D3DXVECTOR4 *out, CONST D3DXVECTOR3 *texcoord, CONST D3DXVECTOR3 *texelsize, LPVOID data);
+typedef void (WINAPI *LPD3DXFILL2D)(D3DXVECTOR4 *out, const D3DXVECTOR2 *texcoord,
+        const D3DXVECTOR2 *texelsize, void *data);
+typedef void (WINAPI *LPD3DXFILL3D)(D3DXVECTOR4 *out, const D3DXVECTOR3 *texcoord,
+        const D3DXVECTOR3 *texelsize, void *data);
 
 #ifdef __cplusplus
 extern "C" {
