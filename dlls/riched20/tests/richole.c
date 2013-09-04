@@ -41,7 +41,6 @@ static HWND new_window(LPCTSTR lpClassName, DWORD dwStyle, HWND parent)
     = CreateWindow(lpClassName, NULL,
                    dwStyle | WS_POPUP | WS_HSCROLL | WS_VSCROLL | WS_VISIBLE,
                    0, 0, 200, 60, parent, NULL, hmoduleRichEdit, NULL);
-  ok(hwnd != NULL, "class: %s, error: %d\n", lpClassName, (int) GetLastError());
   return hwnd;
 }
 
@@ -50,8 +49,51 @@ static HWND new_richedit(HWND parent)
   return new_window(RICHEDIT_CLASS, ES_MULTILINE, parent);
 }
 
+static BOOL touch_file(LPCWSTR filename)
+{
+  HANDLE file;
 
-START_TEST(richole)
+  file = CreateFileW(filename, GENERIC_READ|GENERIC_WRITE, 0, NULL,
+		     CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+
+  if(file == INVALID_HANDLE_VALUE)
+    return FALSE;
+  CloseHandle(file);
+  return TRUE;
+}
+
+static BOOL is_existing_file(LPCWSTR filename)
+{
+  HANDLE file;
+
+  file = CreateFileW(filename, GENERIC_READ, 0, NULL,
+		     OPEN_EXISTING, 0, NULL);
+  if(file == INVALID_HANDLE_VALUE)
+    return FALSE;
+  CloseHandle(file);
+  return TRUE;
+}
+
+static void create_interfaces(HWND *w, IRichEditOle **reOle, ITextDocument **txtDoc,
+                              ITextSelection **txtSel)
+{
+  *w = new_richedit(NULL);
+  SendMessage(*w, EM_GETOLEINTERFACE, 0, (LPARAM) reOle);
+  IRichEditOle_QueryInterface(*reOle, &IID_ITextDocument,
+                                 (void **) txtDoc);
+  ITextDocument_GetSelection(*txtDoc, txtSel);
+}
+
+static void release_interfaces(HWND *w, IRichEditOle **reOle, ITextDocument **txtDoc,
+                               ITextSelection **txtSel)
+{
+  ITextDocument_Release(*txtDoc);
+  IRichEditOle_Release(*reOle);
+  DestroyWindow(*w);
+  ITextSelection_Release(*txtSel);
+}
+
+static void test_Interfaces(void)
 {
   IRichEditOle *reOle = NULL;
   ITextDocument *txtDoc = NULL;
@@ -60,11 +102,6 @@ START_TEST(richole)
   HRESULT hres;
   LRESULT res;
   HWND w;
-
-  /* Must explicitly LoadLibrary(). The test has no references to functions in
-   * RICHED20.DLL, so the linker doesn't actually link to it. */
-  hmoduleRichEdit = LoadLibrary("RICHED20.DLL");
-  ok(hmoduleRichEdit != NULL, "error: %d\n", (int) GetLastError());
 
   w = new_richedit(NULL);
   if (!w) {
@@ -81,9 +118,7 @@ START_TEST(richole)
   ok(hres == S_OK, "IRichEditOle_QueryInterface\n");
   ok(txtDoc != NULL, "IRichEditOle_QueryInterface\n");
 
-  hres = ITextDocument_GetSelection(txtDoc, &txtSel);
-  ok(hres == S_OK, "ITextDocument_GetSelection\n");
-  ok(txtSel != NULL, "ITextDocument_GetSelection\n");
+  ITextDocument_GetSelection(txtDoc, &txtSel);
 
   punk = NULL;
   hres = ITextSelection_QueryInterface(txtSel, &IID_ITextSelection, (void **) &punk);
@@ -113,4 +148,196 @@ START_TEST(richole)
   ok(hres == CO_E_RELEASED, "ITextSelection after ITextDocument destroyed\n");
 
   ITextSelection_Release(txtSel);
+}
+
+static void test_ITextDocument_Open(void)
+{
+  IRichEditOle *reOle = NULL;
+  ITextDocument *txtDoc = NULL;
+  ITextSelection *txtSel = NULL;
+  HRESULT hres;
+  HWND w;
+  HANDLE hFile;
+  VARIANT testfile;
+  WCHAR filename[] = {'t', 'e', 's', 't','.','t','x','t', 0};
+
+  static const int tomConstantsSingle[] =
+    {
+      tomReadOnly, tomShareDenyRead, tomShareDenyWrite,
+      tomCreateAlways, tomOpenExisting, tomOpenAlways,
+      tomTruncateExisting, tomRTF, tomText
+    };
+
+  static const int tomConstantsMulti[] =
+    {
+      tomReadOnly|tomShareDenyRead|tomPasteFile, tomReadOnly|tomPasteFile,
+      tomReadOnly|tomShareDenyWrite|tomPasteFile,
+      tomReadOnly|tomShareDenyRead|tomShareDenyWrite|tomPasteFile, tomShareDenyWrite|tomPasteFile,
+      tomShareDenyRead|tomShareDenyWrite|tomPasteFile, tomShareDenyRead|tomPasteFile,
+      tomShareDenyRead|tomShareDenyWrite, tomReadOnly|tomShareDenyRead|tomShareDenyWrite,
+      tomReadOnly|tomShareDenyWrite, tomReadOnly|tomShareDenyRead
+    };
+
+  int tomNumSingle =  sizeof(tomConstantsSingle)/sizeof(tomConstantsSingle[0]);
+  int tomNumMulti = sizeof(tomConstantsMulti)/sizeof(tomConstantsMulti[0]);
+  int i;
+  VariantInit(&testfile);
+  V_VT(&testfile) = VT_BSTR;
+  V_BSTR(&testfile) = SysAllocString(filename);
+
+  for(i=0; i < tomNumSingle; i++)
+    {
+      touch_file(filename);
+      create_interfaces(&w, &reOle, &txtDoc, &txtSel);
+      hres = ITextDocument_Open(txtDoc, &testfile, tomConstantsSingle[i], CP_ACP);
+      todo_wine ok(hres == S_OK, "ITextDocument_Open: Filename:test.txt Flags:0x%x Codepage:CP_ACP hres:0x%x\n",
+         tomConstantsSingle[i], hres);
+      release_interfaces(&w, &reOle, &txtDoc, &txtSel);
+      DeleteFileW(filename);
+
+      touch_file(filename);
+      create_interfaces(&w, &reOle, &txtDoc, &txtSel);
+      hres = ITextDocument_Open(txtDoc, &testfile, tomConstantsSingle[i], CP_UTF8);
+      todo_wine ok(hres == S_OK, "ITextDocument_Open: Filename:test.txt Flags:0x%x Codepage:CP_UTF8 hres:0x%x\n",
+         tomConstantsSingle[i], hres);
+      release_interfaces(&w, &reOle, &txtDoc, &txtSel);
+      DeleteFileW(filename);
+    }
+
+  for(i=0; i < tomNumMulti; i++)
+    {
+      touch_file(filename);
+      create_interfaces(&w, &reOle, &txtDoc, &txtSel);
+      hres = ITextDocument_Open(txtDoc, &testfile, tomConstantsMulti[i], CP_ACP);
+      todo_wine ok(hres == S_OK, "ITextDocument_Open: Filename:test.txt Flags:0x%x Codepage:CP_ACP hres:0x%x\n",
+         tomConstantsMulti[i], hres);
+      release_interfaces(&w, &reOle, &txtDoc, &txtSel);
+      DeleteFileW(filename);
+
+      touch_file(filename);
+      create_interfaces(&w, &reOle, &txtDoc, &txtSel);
+      hres = ITextDocument_Open(txtDoc, &testfile, tomConstantsMulti[i], CP_UTF8);
+      todo_wine ok(hres == S_OK, "ITextDocument_Open: Filename:test.txt Flags:0x%x Codepage:CP_UTF8 hres:0x%x\n",
+         tomConstantsMulti[i], hres);
+      release_interfaces(&w, &reOle, &txtDoc, &txtSel);
+      DeleteFileW(filename);
+    }
+
+  create_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  hres = ITextDocument_Open(txtDoc, &testfile, tomCreateAlways, CP_ACP);
+  todo_wine ok(hres == S_OK, "ITextDocument_Open should success Codepage:CP_ACP\n");
+  todo_wine ok(is_existing_file(filename), "ITextDocument_Open should create a file\n");
+  release_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  DeleteFileW(filename);
+
+  create_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  hres = ITextDocument_Open(txtDoc, &testfile, tomCreateAlways, CP_UTF8);
+  todo_wine ok(hres == S_OK, "ITextDocument_Open should success Codepage:CP_UTF8\n");
+  todo_wine ok(is_existing_file(filename), "ITextDocument_Open should create a file\n");
+  release_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  DeleteFileW(filename);
+
+  create_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  hres = ITextDocument_Open(txtDoc, &testfile, tomOpenAlways, CP_ACP);
+  todo_wine ok(hres == S_OK, "ITextDocument_Open should success Codepage:CP_ACP\n");
+  todo_wine ok(is_existing_file(filename), "ITextDocument_Open should create a file\n");
+  release_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  DeleteFileW(filename);
+
+  create_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  hres = ITextDocument_Open(txtDoc, &testfile, tomOpenAlways, CP_UTF8);
+  todo_wine ok(hres == S_OK, "ITextDocument_Open should success Codepage:CP_UTF8\n");
+  todo_wine ok(is_existing_file(filename), "ITextDocument_Open should create a file\n");
+  release_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  DeleteFileW(filename);
+
+  create_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  hres = ITextDocument_Open(txtDoc, &testfile, tomCreateNew, CP_ACP);
+  todo_wine ok(hres == S_OK, "ITextDocument_Open should success Codepage:CP_ACP\n");
+  todo_wine ok(is_existing_file(filename), "ITextDocument_Open should create a file\n");
+  release_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  DeleteFileW(filename);
+
+  create_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  hres = ITextDocument_Open(txtDoc, &testfile, tomCreateNew, CP_UTF8);
+  todo_wine ok(hres == S_OK, "ITextDocument_Open should success Codepage:CP_UTF8\n");
+  todo_wine ok(is_existing_file(filename), "ITextDocument_Open should create a file\n");
+  release_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  DeleteFileW(filename);
+
+  create_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  touch_file(filename);
+  hres = ITextDocument_Open(txtDoc, &testfile, tomCreateNew, CP_ACP);
+  todo_wine ok(hres == HRESULT_FROM_WIN32(ERROR_FILE_EXISTS), "ITextDocument_Open should fail Codepage:CP_ACP\n");
+  release_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  DeleteFileW(filename);
+
+  create_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  touch_file(filename);
+  hres = ITextDocument_Open(txtDoc, &testfile, tomCreateNew, CP_UTF8);
+  todo_wine ok(hres == HRESULT_FROM_WIN32(ERROR_FILE_EXISTS), "ITextDocument_Open should fail Codepage:CP_UTF8\n");
+  release_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  DeleteFileW(filename);
+
+  create_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  hres = ITextDocument_Open(txtDoc, &testfile, tomOpenExisting, CP_ACP);
+  todo_wine ok(hres == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "ITextDocument_Open should fail Codepage:CP_ACP\n");
+  release_interfaces(&w, &reOle, &txtDoc, &txtSel);
+
+  create_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  hres = ITextDocument_Open(txtDoc, &testfile, tomOpenExisting, CP_UTF8);
+  todo_wine ok(hres == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "ITextDocument_Open should fail Codepage:CP_UTF8\n");
+  release_interfaces(&w, &reOle, &txtDoc, &txtSel);
+
+  create_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  DeleteFileW(filename);
+  ITextDocument_Open(txtDoc, &testfile, tomText, CP_ACP);
+  todo_wine ok(is_existing_file(filename) == TRUE, "a file should be created default\n");
+  release_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  DeleteFileW(filename);
+
+  /* test of share mode */
+  touch_file(filename);
+  create_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  ITextDocument_Open(txtDoc, &testfile, tomShareDenyRead, CP_ACP);
+  SetLastError(0xdeadbeef);
+  hFile = CreateFileW(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
+                          FILE_ATTRIBUTE_NORMAL, NULL);
+  todo_wine ok(GetLastError() == ERROR_SHARING_VIOLATION, "ITextDocument_Open should fail\n");
+  CloseHandle(hFile);
+  release_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  DeleteFileW(filename);
+
+  touch_file(filename);
+  create_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  ITextDocument_Open(txtDoc, &testfile, tomShareDenyWrite, CP_ACP);
+  SetLastError(0xdeadbeef);
+  hFile = CreateFileW(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
+                          FILE_ATTRIBUTE_NORMAL, NULL);
+  todo_wine ok(GetLastError() == ERROR_SHARING_VIOLATION, "ITextDocument_Open should fail\n");
+  CloseHandle(hFile);
+  release_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  DeleteFileW(filename);
+
+  touch_file(filename);
+  create_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  SetLastError(0xdeadbeef);
+  ITextDocument_Open(txtDoc, &testfile, tomShareDenyWrite|tomShareDenyRead, CP_ACP);
+  hFile = CreateFileW(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
+                          FILE_ATTRIBUTE_NORMAL, NULL);
+  todo_wine ok(GetLastError() == ERROR_SHARING_VIOLATION, "ITextDocument_Open should fail\n");
+  CloseHandle(hFile);
+  release_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  DeleteFileW(filename);
+}
+
+START_TEST(richole)
+{
+  /* Must explicitly LoadLibrary(). The test has no references to functions in
+   * RICHED20.DLL, so the linker doesn't actually link to it. */
+  hmoduleRichEdit = LoadLibrary("RICHED20.DLL");
+  ok(hmoduleRichEdit != NULL, "error: %d\n", (int) GetLastError());
+
+  test_Interfaces();
+  test_ITextDocument_Open();
 }
