@@ -12633,8 +12633,8 @@ msgid ""
 "or per-application settings in those tabs as well."
 msgstr ""
 "Wine может имитировать различные версии Windows для каждого приложения "
-"отдельно. Эта вкладка связана с вкладками Библиотеки и Графика, что "
-"позволяет изменение настроек в этих вкладках как для определённого "
+"отдельно. Эта вкладка связана со вкладками Библиотеки и Графика, что "
+"позволяет изменять настройки в этих вкладках как для определённого "
 "приложения, так и глобально."
 
 #: winecfg.rc:150
@@ -12671,7 +12671,7 @@ msgstr "&Эмулировать виртуальный рабочий стол"
 
 #: winecfg.rc:166
 msgid "Desktop &size:"
-msgstr "Размер рабочего стола:"
+msgstr "&Рабочий стол:"
 
 #: winecfg.rc:171
 msgid "Screen resolution"
@@ -12679,7 +12679,7 @@ msgstr "Разрешение экрана"
 
 #: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
-msgstr "Пример текста (This is a sample text), шрифт Tahoma 10 пунктов"
+msgstr "Пример текста, шрифт Tahoma 10 пунктов"
 
 #: winecfg.rc:182
 msgid "DLL overrides"
@@ -12764,7 +12764,7 @@ msgstr "&Путь:"
 
 #: winecfg.rc:239 winecfg.rc:35
 msgid "Show &Advanced"
-msgstr "Показать &дополнительные"
+msgstr "&Дополнительно"
 
 #: winecfg.rc:240
 msgid "De&vice:"
@@ -12892,7 +12892,7 @@ msgstr "Выберите файл с темой"
 
 #: winecfg.rc:45
 msgid "Folder"
-msgstr "Стандартные папки"
+msgstr "Папка"
 
 #: winecfg.rc:46
 msgid "Links to"
