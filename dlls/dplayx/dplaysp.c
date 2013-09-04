@@ -35,7 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dplay);
 
 typedef struct IDirectPlaySPImpl
 {
-  const IDirectPlaySPVtbl *lpVtbl;
+  IDirectPlaySP IDirectPlaySP_iface;
   LONG ref;
   void *remote_data;
   DWORD remote_data_size;
@@ -73,7 +73,7 @@ HRESULT DPSP_CreateInterface( REFIID riid, void **ppvObj, IDirectPlayImpl *dp )
   if( IsEqualGUID( &IID_IDirectPlaySP, riid ) )
   {
     IDirectPlaySPImpl *This = *ppvObj;
-    This->lpVtbl = &directPlaySPVT;
+    This->IDirectPlaySP_iface.lpVtbl = &directPlaySPVT;
     This->dplay = dp;
   }
   else
@@ -91,7 +91,7 @@ HRESULT DPSP_CreateInterface( REFIID riid, void **ppvObj, IDirectPlayImpl *dp )
 
 static inline IDirectPlaySPImpl *impl_from_IDirectPlaySP( IDirectPlaySP *iface )
 {
-  return CONTAINING_RECORD( iface, IDirectPlaySPImpl, lpVtbl );
+  return CONTAINING_RECORD( iface, IDirectPlaySPImpl, IDirectPlaySP_iface );
 }
 
 static HRESULT WINAPI IDirectPlaySPImpl_QueryInterface( IDirectPlaySP *iface, REFIID riid,
