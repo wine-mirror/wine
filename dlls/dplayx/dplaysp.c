@@ -44,7 +44,6 @@ typedef struct IDirectPlaySPImpl IDirectPlaySPImpl;
 
 typedef struct tagDirectPlaySPIUnknownData
 {
-  LONG              ulObjRef;
   CRITICAL_SECTION  DPSP_lock;
 } DirectPlaySPIUnknownData;
 
@@ -61,13 +60,13 @@ typedef struct tagDirectPlaySPData
 } DirectPlaySPData;
 
 #define DPSP_IMPL_FIELDS \
-   LONG ulInterfaceRef; \
    DirectPlaySPIUnknownData* unk; \
    DirectPlaySPData* sp;
 
 struct IDirectPlaySPImpl
 {
   const IDirectPlaySPVtbl *lpVtbl;
+  LONG ref;
   DPSP_IMPL_FIELDS
 };
 
@@ -194,79 +193,47 @@ static inline IDirectPlaySPImpl *impl_from_IDirectPlaySP( IDirectPlaySP *iface )
 }
 
 static HRESULT WINAPI IDirectPlaySPImpl_QueryInterface( IDirectPlaySP *iface, REFIID riid,
-        void **ppvObj )
+        void **ppv )
 {
-  IDirectPlaySPImpl *This = (IDirectPlaySPImpl *)iface;
-  TRACE("(%p)->(%s,%p)\n", This, debugstr_guid( riid ), ppvObj );
+  TRACE("(%p)->(%s,%p)\n", iface, debugstr_guid( riid ), ppv );
 
-  *ppvObj = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                       sizeof( *This ) );
-
-  if( *ppvObj == NULL )
+  if ( IsEqualGUID( &IID_IUnknown, riid ) || IsEqualGUID( &IID_IDirectPlaySP, riid ) )
   {
-    return DPERR_OUTOFMEMORY;
+    *ppv = iface;
+    IDirectPlaySP_AddRef( iface );
+    return S_OK;
   }
 
-  CopyMemory( *ppvObj, This, sizeof( *This )  );
-  (*(IDirectPlaySPImpl**)ppvObj)->ulInterfaceRef = 0;
-
-  if( IsEqualGUID( &IID_IDirectPlaySP, riid ) )
-  {
-    IDirectPlaySPImpl *This = *ppvObj;
-    This->lpVtbl = &directPlaySPVT;
-  }
-  else
-  {
-    /* Unsupported interface */
-    HeapFree( GetProcessHeap(), 0, *ppvObj );
-    *ppvObj = NULL;
-
-    return E_NOINTERFACE;
-  }
-
-  IDirectPlaySP_AddRef( (LPDIRECTPLAYSP)*ppvObj );
-
-  return S_OK;
+  FIXME( "Unsupported interface %s\n", debugstr_guid( riid ) );
+  *ppv = NULL;
+  return E_NOINTERFACE;
 }
 
 static ULONG WINAPI IDirectPlaySPImpl_AddRef( IDirectPlaySP *iface )
 {
   IDirectPlaySPImpl *This = impl_from_IDirectPlaySP( iface );
-  ULONG ulInterfaceRefCount, ulObjRefCount;
+  ULONG ref = InterlockedIncrement( &This->ref );
 
-  ulObjRefCount       = InterlockedIncrement( &This->unk->ulObjRef );
-  ulInterfaceRefCount = InterlockedIncrement( &This->ulInterfaceRef );
+  TRACE( "(%p) ref=%d\n", This, ref );
 
-  TRACE( "ref count incremented to %u:%u for %p\n",
-         ulInterfaceRefCount, ulObjRefCount, This );
-
-  return ulObjRefCount;
+  return ref;
 }
 
 static ULONG WINAPI IDirectPlaySPImpl_Release( IDirectPlaySP *iface )
 {
   IDirectPlaySPImpl *This = impl_from_IDirectPlaySP( iface );
-  ULONG ulInterfaceRefCount, ulObjRefCount;
+  ULONG ref = InterlockedDecrement( &This->ref );
 
-  ulObjRefCount       = InterlockedDecrement( &This->unk->ulObjRef );
-  ulInterfaceRefCount = InterlockedDecrement( &This->ulInterfaceRef );
+  TRACE( "(%p) ref=%d\n", This, ref );
 
-  TRACE( "ref count decremented to %u:%u for %p\n",
-         ulInterfaceRefCount, ulObjRefCount, This );
-
-  /* Deallocate if this is the last reference to the object */
-  if( ulObjRefCount == 0 )
+  if( !ref )
   {
-     DPSP_DestroyDirectPlaySP( This );
-     DPSP_DestroyIUnknown( This );
-  }
-
-  if( ulInterfaceRefCount == 0 )
-  {
+    DPSP_DestroyDirectPlaySP( This );
+    DPSP_DestroyIUnknown( This );
     HeapFree( GetProcessHeap(), 0, This );
   }
 
-  return ulInterfaceRefCount;
+  return ref;
 }
 
 static HRESULT WINAPI IDirectPlaySPImpl_AddMRUEntry( IDirectPlaySP *iface, LPCWSTR lpSection,
