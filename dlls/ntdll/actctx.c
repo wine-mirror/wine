@@ -5,6 +5,7 @@
  * Copyright 2007 Eric Pouech
  * Copyright 2007 Jacek Caban for CodeWeavers
  * Copyright 2007 Alexandre Julliard
+ * Copyright 2013 Nikolay Sivov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -368,6 +369,13 @@ struct clrsurrogate_data
     no modules part as it belongs to assembly level, not a file.
 */
 
+struct progids
+{
+    WCHAR        **progids;
+    unsigned int   num;
+    unsigned int   allocated;
+};
+
 struct entity
 {
     DWORD kind;
@@ -394,6 +402,7 @@ struct entity
             DWORD  miscstatusthumbnail;
             DWORD  miscstatusicon;
             DWORD  miscstatusdocprint;
+            struct progids progids;
 	} comclass;
 	struct {
             WCHAR *iid;
@@ -777,7 +786,7 @@ static struct entity* add_entity(struct entity_array *array, DWORD kind)
 
 static void free_entity_array(struct entity_array *array)
 {
-    unsigned int i;
+    unsigned int i, j;
     for (i = 0; i < array->num; i++)
     {
         struct entity *entity = &array->base[i];
@@ -789,6 +798,9 @@ static void free_entity_array(struct entity_array *array)
             RtlFreeHeap(GetProcessHeap(), 0, entity->u.comclass.progid);
             RtlFreeHeap(GetProcessHeap(), 0, entity->u.comclass.name);
             RtlFreeHeap(GetProcessHeap(), 0, entity->u.comclass.version);
+            for (j = 0; j < entity->u.comclass.progids.num; j++)
+                RtlFreeHeap(GetProcessHeap(), 0, entity->u.comclass.progids.progids[j]);
+            RtlFreeHeap(GetProcessHeap(), 0, entity->u.comclass.progids.progids);
             break;
         case ACTIVATION_CONTEXT_SECTION_COM_INTERFACE_REDIRECTION:
             RtlFreeHeap(GetProcessHeap(), 0, entity->u.ifaceps.iid);
@@ -1372,10 +1384,44 @@ static DWORD parse_com_class_misc(const xmlstr_t *value)
     return flags;
 }
 
+static BOOL com_class_add_progid(const xmlstr_t *progid, struct entity *entity)
+{
+    struct progids *progids = &entity->u.comclass.progids;
+
+    if (progids->allocated == 0)
+    {
+        progids->allocated = 4;
+        if (!(progids->progids = RtlAllocateHeap(GetProcessHeap(), 0, progids->allocated * sizeof(WCHAR*)))) return FALSE;
+    }
+
+    if (progids->allocated == progids->num)
+    {
+        progids->allocated *= 2;
+        progids->progids = RtlReAllocateHeap(GetProcessHeap(), 0, progids->progids, progids->allocated * sizeof(WCHAR*));
+    }
+
+    if (!(progids->progids[progids->num] = xmlstrdupW(progid))) return FALSE;
+    progids->num++;
+
+    return TRUE;
+}
+
+static BOOL parse_com_class_progid(xmlbuf_t* xmlbuf, struct entity *entity)
+{
+    xmlstr_t content;
+    BOOL end = FALSE;
+
+    if (!parse_expect_no_attr(xmlbuf, &end) || end || !parse_text_content(xmlbuf, &content))
+        return FALSE;
+
+    if (!com_class_add_progid(&content, entity)) return FALSE;
+    return parse_expect_end_elem(xmlbuf, progidW, asmv1W);
+}
+
 static BOOL parse_com_class_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll, struct actctx_loader *acl)
 {
     xmlstr_t elem, attr_name, attr_value;
-    BOOL ret, end = FALSE, error;
+    BOOL ret = TRUE, end = FALSE, error;
     struct entity*      entity;
 
     if (!(entity = add_entity(&dll->entities, ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION)))
@@ -1431,12 +1477,16 @@ static BOOL parse_com_class_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll, str
 
     if (end) return TRUE;
 
-    while ((ret = next_xml_elem(xmlbuf, &elem)))
+    while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
     {
         if (xmlstr_cmp_end(&elem, comClassW))
         {
             ret = parse_end_element(xmlbuf);
             break;
+        }
+        else if (xmlstr_cmp(&elem, progidW))
+        {
+            ret = parse_com_class_progid(xmlbuf, entity);
         }
         else
         {
@@ -1797,8 +1847,8 @@ static BOOL parse_com_interface_external_proxy_stub_elem(xmlbuf_t* xmlbuf,
 
 static BOOL parse_clr_class_elem(xmlbuf_t* xmlbuf, struct assembly* assembly)
 {
-    xmlstr_t    attr_name, attr_value;
-    BOOL        end = FALSE, error;
+    xmlstr_t    attr_name, attr_value, elem;
+    BOOL        end = FALSE, error, ret = TRUE;
     struct entity*      entity;
 
     entity = add_entity(&assembly->entities, ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION);
@@ -1837,7 +1887,25 @@ static BOOL parse_clr_class_elem(xmlbuf_t* xmlbuf, struct assembly* assembly)
     }
 
     if (error || end) return end;
-    return parse_expect_end_elem(xmlbuf, clrClassW, asmv1W);
+
+    while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
+    {
+        if (xmlstr_cmp_end(&elem, clrClassW))
+        {
+            ret = parse_end_element(xmlbuf);
+            break;
+        }
+        else if (xmlstr_cmp(&elem, progidW))
+        {
+            ret = parse_com_class_progid(xmlbuf, entity);
+        }
+        else
+        {
+            WARN("unknown elem %s\n", debugstr_xmlstr(&elem));
+            ret = parse_unknown_elem(xmlbuf, &elem);
+        }
+    }
+    return ret;
 }
 
 static BOOL parse_clr_surrogate_elem(xmlbuf_t* xmlbuf, struct assembly* assembly, struct actctx_loader *acl)
