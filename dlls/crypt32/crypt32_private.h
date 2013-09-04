@@ -225,7 +225,7 @@ typedef struct _CONTEXT_FUNCS
     AddFunc    addContext;
     EnumFunc   enumContext;
     DeleteFunc deleteContext;
-} CONTEXT_FUNCS, *PCONTEXT_FUNCS;
+} CONTEXT_FUNCS;
 
 typedef enum _CertStoreType {
     StoreTypeMem,

@@ -88,11 +88,11 @@ static BOOL CRYPT_CollectionAddContext(PWINE_COLLECTIONSTORE store,
     if (toReplace)
     {
         void *existingLinked = Context_GetLinkedContext(toReplace, contextSize);
-        PCONTEXT_FUNCS contextFuncs;
+        CONTEXT_FUNCS *contextFuncs;
 
         storeEntry = *(PWINE_STORE_LIST_ENTRY *)Context_GetExtra(toReplace,
          contextSize);
-        contextFuncs = (PCONTEXT_FUNCS)((LPBYTE)storeEntry->store +
+        contextFuncs = (CONTEXT_FUNCS*)((LPBYTE)storeEntry->store +
          contextFuncsOffset);
         ret = contextFuncs->addContext(storeEntry->store, context,
          existingLinked, (const void **)&childContext);
@@ -107,7 +107,7 @@ static BOOL CRYPT_CollectionAddContext(PWINE_COLLECTIONSTORE store,
         {
             if (entry->dwUpdateFlags & CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG)
             {
-                PCONTEXT_FUNCS contextFuncs = (PCONTEXT_FUNCS)(
+                CONTEXT_FUNCS *contextFuncs = (CONTEXT_FUNCS*)(
                  (LPBYTE)entry->store + contextFuncsOffset);
 
                 storeEntry = entry;
@@ -168,8 +168,8 @@ static void *CRYPT_CollectionAdvanceEnum(PWINE_COLLECTIONSTORE store,
             size_t offset = (const BYTE *)contextFuncs - (LPBYTE)storeEntry->store;
             PWINE_STORE_LIST_ENTRY storeNextEntry =
              LIST_ENTRY(storeNext, WINE_STORE_LIST_ENTRY, entry);
-            PCONTEXT_FUNCS storeNextContexts =
-             (PCONTEXT_FUNCS)((LPBYTE)storeNextEntry->store + offset);
+            CONTEXT_FUNCS *storeNextContexts =
+             (CONTEXT_FUNCS*)((LPBYTE)storeNextEntry->store + offset);
 
             ret = CRYPT_CollectionAdvanceEnum(store, storeNextEntry,
              storeNextContexts, contextInterface, NULL, contextSize);
