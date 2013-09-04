@@ -781,8 +781,8 @@ static char *get_device_mount_point( dev_t dev )
         if (stat( entry[i].f_mntfromname, &st ) == -1) continue;
         if (S_ISBLK(st.st_mode) && st.st_rdev == dev)
         {
-            ret = RtlAllocateHeap( GetProcessHeap(), 0, strlen(entry[i].f_mntfromname) + 1 );
-            if (ret) strcpy( ret, entry[i].f_mntfromname );
+            ret = RtlAllocateHeap( GetProcessHeap(), 0, strlen(entry[i].f_mntonname) + 1 );
+            if (ret) strcpy( ret, entry[i].f_mntonname );
             break;
         }
     }
