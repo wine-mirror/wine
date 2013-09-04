@@ -188,12 +188,8 @@ static BOOL DPSP_DestroyDirectPlaySP( LPVOID lpSP )
   return TRUE;
 }
 
-/* Interface implementation */
-
-static HRESULT WINAPI DPSP_QueryInterface
-( LPDIRECTPLAYSP iface,
-  REFIID riid,
-  LPVOID* ppvObj )
+static HRESULT WINAPI IDirectPlaySPImpl_QueryInterface( IDirectPlaySP *iface, REFIID riid,
+        void **ppvObj )
 {
   IDirectPlaySPImpl *This = (IDirectPlaySPImpl *)iface;
   TRACE("(%p)->(%s,%p)\n", This, debugstr_guid( riid ), ppvObj );
@@ -228,8 +224,7 @@ static HRESULT WINAPI DPSP_QueryInterface
   return S_OK;
 }
 
-static ULONG WINAPI DPSP_AddRef
-( LPDIRECTPLAYSP iface )
+static ULONG WINAPI IDirectPlaySPImpl_AddRef( IDirectPlaySP *iface )
 {
   ULONG ulInterfaceRefCount, ulObjRefCount;
   IDirectPlaySPImpl *This = (IDirectPlaySPImpl *)iface;
@@ -243,8 +238,7 @@ static ULONG WINAPI DPSP_AddRef
   return ulObjRefCount;
 }
 
-static ULONG WINAPI DPSP_Release
-( LPDIRECTPLAYSP iface )
+static ULONG WINAPI IDirectPlaySPImpl_Release( IDirectPlaySP *iface )
 {
   ULONG ulInterfaceRefCount, ulObjRefCount;
   IDirectPlaySPImpl *This = (IDirectPlaySPImpl *)iface;
@@ -899,11 +893,9 @@ static VOID WINAPI IDirectPlaySPImpl_SendComplete
 
 static const IDirectPlaySPVtbl directPlaySPVT =
 {
-
-  DPSP_QueryInterface,
-  DPSP_AddRef,
-  DPSP_Release,
-
+  IDirectPlaySPImpl_QueryInterface,
+  IDirectPlaySPImpl_AddRef,
+  IDirectPlaySPImpl_Release,
   IDirectPlaySPImpl_AddMRUEntry,
   IDirectPlaySPImpl_CreateAddress,
   IDirectPlaySPImpl_EnumAddress,
