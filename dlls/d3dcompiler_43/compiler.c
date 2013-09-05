@@ -193,11 +193,8 @@ static void *wpp_open_mem(const char *filename, int type)
     if(!desc)
         return NULL;
 
-    hr = ID3DInclude_Open(current_include,
-                          type ? D3D_INCLUDE_LOCAL : D3D_INCLUDE_SYSTEM,
-                          filename, parent_include, (LPCVOID *)&desc->buffer,
-                          &desc->size);
-    if(FAILED(hr))
+    if (FAILED(hr = ID3DInclude_Open(current_include, type ? D3D_INCLUDE_LOCAL : D3D_INCLUDE_SYSTEM,
+            filename, parent_include, (const void **)&desc->buffer, &desc->size)))
     {
         HeapFree(GetProcessHeap(), 0, desc);
         return NULL;
