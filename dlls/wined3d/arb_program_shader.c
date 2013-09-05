@@ -39,13 +39,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_constants);
 WINE_DECLARE_DEBUG_CHANNEL(d3d);
 
-/* sRGB correction constants */
-static const float srgb_cmp = 0.0031308f;
-static const float srgb_mul_low = 12.92f;
-static const float srgb_pow = 0.41666f;
-static const float srgb_mul_high = 1.055f;
-static const float srgb_sub_high = 0.055f;
-
 static BOOL shader_is_pshader_version(enum wined3d_shader_type type)
 {
     return type == WINED3D_SHADER_TYPE_PIXEL;
@@ -758,6 +751,17 @@ static void shader_arb_update_float_pixel_constants(struct wined3d_device *devic
     priv->highest_dirty_ps_const = max(priv->highest_dirty_ps_const, start + count);
 }
 
+static void shader_arb_append_imm_vec4(struct wined3d_shader_buffer *buffer, const float *values)
+{
+    char str[4][16];
+
+    wined3d_ftoa(values[0], str[0]);
+    wined3d_ftoa(values[1], str[1]);
+    wined3d_ftoa(values[2], str[2]);
+    wined3d_ftoa(values[3], str[3]);
+    shader_addline(buffer, "{%s, %s, %s, %s}", str[0], str[1], str[2], str[3]);
+}
+
 /* Generate the variable & register declarations for the ARB_vertex_program output target */
 static void shader_generate_arb_declarations(const struct wined3d_shader *shader,
         const struct wined3d_shader_reg_maps *reg_maps, struct wined3d_shader_buffer *buffer,
@@ -862,8 +866,9 @@ static void shader_generate_arb_declarations(const struct wined3d_shader *shader
         {
             const float *value;
             value = (const float *)lconst->value;
-            shader_addline(buffer, "PARAM C%u = {%.8e, %.8e, %.8e, %.8e};\n", lconst->idx,
-                           value[0], value[1], value[2], value[3]);
+            shader_addline(buffer, "PARAM C%u = ", lconst->idx);
+            shader_arb_append_imm_vec4(buffer, value);
+            shader_addline(buffer, ";\n");
         }
     }
 
@@ -3436,29 +3441,29 @@ static void arbfp_add_sRGB_correction(struct wined3d_shader_buffer *buffer, cons
     if(condcode)
     {
         /* Sigh. MOVC CC doesn't work, so use one of the temps as dummy dest */
-        shader_addline(buffer, "SUBC %s, %s.x, srgb_consts1.y;\n", tmp1, fragcolor);
+        shader_addline(buffer, "SUBC %s, %s.x, srgb_consts1.x;\n", tmp1, fragcolor);
         /* Calculate the > 0.0031308 case */
-        shader_addline(buffer, "POW %s.x (GE), %s.x, srgb_consts1.z;\n", fragcolor, fragcolor);
-        shader_addline(buffer, "POW %s.y (GE), %s.y, srgb_consts1.z;\n", fragcolor, fragcolor);
-        shader_addline(buffer, "POW %s.z (GE), %s.z, srgb_consts1.z;\n", fragcolor, fragcolor);
-        shader_addline(buffer, "MUL %s.xyz (GE), %s, srgb_consts1.w;\n", fragcolor, fragcolor);
-        shader_addline(buffer, "SUB %s.xyz (GE), %s, srgb_consts2.x;\n", fragcolor, fragcolor);
+        shader_addline(buffer, "POW %s.x (GE), %s.x, srgb_consts0.x;\n", fragcolor, fragcolor);
+        shader_addline(buffer, "POW %s.y (GE), %s.y, srgb_consts0.x;\n", fragcolor, fragcolor);
+        shader_addline(buffer, "POW %s.z (GE), %s.z, srgb_consts0.x;\n", fragcolor, fragcolor);
+        shader_addline(buffer, "MUL %s.xyz (GE), %s, srgb_consts0.y;\n", fragcolor, fragcolor);
+        shader_addline(buffer, "SUB %s.xyz (GE), %s, srgb_consts0.z;\n", fragcolor, fragcolor);
         /* Calculate the < case */
-        shader_addline(buffer, "MUL %s.xyz (LT), srgb_consts1.x, %s;\n", fragcolor, fragcolor);
+        shader_addline(buffer, "MUL %s.xyz (LT), srgb_consts0.w, %s;\n", fragcolor, fragcolor);
     }
     else
     {
         /* Calculate the > 0.0031308 case */
-        shader_addline(buffer, "POW %s.x, %s.x, srgb_consts1.z;\n", tmp1, fragcolor);
-        shader_addline(buffer, "POW %s.y, %s.y, srgb_consts1.z;\n", tmp1, fragcolor);
-        shader_addline(buffer, "POW %s.z, %s.z, srgb_consts1.z;\n", tmp1, fragcolor);
-        shader_addline(buffer, "MUL %s, %s, srgb_consts1.w;\n", tmp1, tmp1);
-        shader_addline(buffer, "SUB %s, %s, srgb_consts2.x;\n", tmp1, tmp1);
+        shader_addline(buffer, "POW %s.x, %s.x, srgb_consts0.x;\n", tmp1, fragcolor);
+        shader_addline(buffer, "POW %s.y, %s.y, srgb_consts0.x;\n", tmp1, fragcolor);
+        shader_addline(buffer, "POW %s.z, %s.z, srgb_consts0.x;\n", tmp1, fragcolor);
+        shader_addline(buffer, "MUL %s, %s, srgb_consts0.y;\n", tmp1, tmp1);
+        shader_addline(buffer, "SUB %s, %s, srgb_consts0.z;\n", tmp1, tmp1);
         /* Calculate the < case */
-        shader_addline(buffer, "MUL %s, srgb_consts1.x, %s;\n", tmp2, fragcolor);
+        shader_addline(buffer, "MUL %s, srgb_consts0.w, %s;\n", tmp2, fragcolor);
         /* Get 1.0 / 0.0 masks for > 0.0031308 and < 0.0031308 */
-        shader_addline(buffer, "SLT %s, srgb_consts1.y, %s;\n", tmp3, fragcolor);
-        shader_addline(buffer, "SGE %s, srgb_consts1.y, %s;\n", tmp4, fragcolor);
+        shader_addline(buffer, "SLT %s, srgb_consts1.x, %s;\n", tmp3, fragcolor);
+        shader_addline(buffer, "SGE %s, srgb_consts1.x, %s;\n", tmp4, fragcolor);
         /* Store the components > 0.0031308 in the destination */
         shader_addline(buffer, "MUL %s.xyz, %s, %s;\n", fragcolor, tmp1, tmp3);
         /* Add the components that are < 0.0031308 */
@@ -3587,6 +3592,7 @@ static GLuint shader_arb_generate_pshader(const struct wined3d_shader *shader,
     BOOL custom_linear_fog = FALSE;
 
     char srgbtmp[4][4];
+    char ftoa_tmp[16];
     unsigned int i, found = 0;
 
     for (i = 0, map = reg_maps->temporary; map; map >>= 1, ++i)
@@ -3712,7 +3718,8 @@ static GLuint shader_arb_generate_pshader(const struct wined3d_shader *shader,
     if(dcl_td) shader_addline(buffer, "TEMP TD;\n"); /* Used for sRGB writing */
     shader_addline(buffer, "PARAM coefdiv = { 0.5, 0.25, 0.125, 0.0625 };\n");
     shader_addline(buffer, "PARAM coefmul = { 2, 4, 8, 16 };\n");
-    shader_addline(buffer, "PARAM ps_helper_const = { 0.0, 1.0, %1.10f, 0.0 };\n", eps);
+    wined3d_ftoa(eps, ftoa_tmp);
+    shader_addline(buffer, "PARAM ps_helper_const = { 0.0, 1.0, %s, 0.0 };\n", ftoa_tmp);
 
     if (reg_maps->shader_version.major < 2)
     {
@@ -3736,11 +3743,14 @@ static GLuint shader_arb_generate_pshader(const struct wined3d_shader *shader,
         }
     }
 
-    if(args->super.srgb_correction) {
-        shader_addline(buffer, "PARAM srgb_consts1 = {%f, %f, %f, %f};\n",
-                       srgb_mul_low, srgb_cmp, srgb_pow, srgb_mul_high);
-        shader_addline(buffer, "PARAM srgb_consts2 = {%f, %f, %f, %f};\n",
-                       srgb_sub_high, 0.0, 0.0, 0.0);
+    if (args->super.srgb_correction)
+    {
+        shader_addline(buffer, "PARAM srgb_consts0 = ");
+        shader_arb_append_imm_vec4(buffer, wined3d_srgb_const0);
+        shader_addline(buffer, ";\n");
+        shader_addline(buffer, "PARAM srgb_consts1 = ");
+        shader_arb_append_imm_vec4(buffer, wined3d_srgb_const1);
+        shader_addline(buffer, ";\n");
     }
 
     /* Base Declarations */
@@ -4197,7 +4207,9 @@ static GLuint shader_arb_generate_vshader(const struct wined3d_shader *shader,
         shader_addline(buffer, "TEMP TMP_FOGCOORD;\n");
     if (need_helper_const(shader_data, reg_maps, gl_info))
     {
-        shader_addline(buffer, "PARAM helper_const = { 0.0, 1.0, 2.0, %1.10f};\n", eps);
+        char ftoa_tmp[16];
+        wined3d_ftoa(eps, ftoa_tmp);
+        shader_addline(buffer, "PARAM helper_const = { 0.0, 1.0, 2.0, %s};\n", ftoa_tmp);
     }
     if (need_rel_addr_const(shader_data, reg_maps, gl_info))
     {
@@ -6274,11 +6286,14 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, con
     }
     shader_addline(&buffer, "PARAM specular_enable = program.env[%u];\n", ARB_FFP_CONST_SPECULAR_ENABLE);
 
-    if(settings->sRGB_write) {
-        shader_addline(&buffer, "PARAM srgb_consts1 = {%f, %f, %f, %f};\n",
-                       srgb_mul_low, srgb_cmp, srgb_pow, srgb_mul_high);
-        shader_addline(&buffer, "PARAM srgb_consts2 = {%f, %f, %f, %f};\n",
-                       srgb_sub_high, 0.0, 0.0, 0.0);
+    if (settings->sRGB_write)
+    {
+        shader_addline(&buffer, "PARAM srgb_consts0 = ");
+        shader_arb_append_imm_vec4(&buffer, wined3d_srgb_const0);
+        shader_addline(&buffer, ";\n");
+        shader_addline(&buffer, "PARAM srgb_consts1 = ");
+        shader_arb_append_imm_vec4(&buffer, wined3d_srgb_const1);
+        shader_addline(&buffer, ";\n");
     }
 
     if (lowest_disabled_stage < 7 && settings->emul_clipplanes)
@@ -6872,6 +6887,8 @@ static BOOL gen_planar_yuv_read(struct wined3d_shader_buffer *buffer, enum compl
 static BOOL gen_yv12_read(struct wined3d_shader_buffer *buffer, GLenum textype, char *luminance)
 {
     const char *tex;
+    static const float yv12_coef[]
+            = {2.0f / 3.0f, 1.0f / 6.0f, (2.0f / 3.0f) + (1.0f / 6.0f), 1.0f / 3.0f};
 
     switch(textype) {
         case GL_TEXTURE_2D:             tex = "2D";     break;
@@ -6919,8 +6936,9 @@ static BOOL gen_yv12_read(struct wined3d_shader_buffer *buffer, GLenum textype, 
      * When reading from rectangle textures, keep in mind that the input y coordinates
      * go from 0 to d3d_height, whereas the opengl texture height is 1.5 * d3d_height
      */
-    shader_addline(buffer, "PARAM yv12_coef = {%f, %f, %f, %f};\n",
-            2.0f / 3.0f, 1.0f / 6.0f, (2.0f / 3.0f) + (1.0f / 6.0f), 1.0f / 3.0f);
+    shader_addline(buffer, "PARAM yv12_coef = ");
+    shader_arb_append_imm_vec4(buffer, yv12_coef);
+    shader_addline(buffer, ";\n");
 
     shader_addline(buffer, "MOV texcrd, fragment.texcoord[0];\n");
     /* the chroma planes have only half the width */
