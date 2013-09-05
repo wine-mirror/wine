@@ -53,6 +53,10 @@ a shell, e.g.
 .PP
 wine C:\(rs\(rsProgram\(rs Files\(rs\(rsMyPrg\(rs\(rstest.exe
 .PP
+It can also be one of the Windows executables shipped with Wine, in
+which case specifying the full path is not mandatory, e.g. \fIwine
+explorer\fR or \fIwine notepad\fR.
+.PP
 .SH ENVIRONMENT
 .B wine
 makes the environment variables of the shell from which it
