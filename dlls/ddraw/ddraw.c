@@ -3162,12 +3162,24 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
         }
     }
 
+    if (desc2.ddsCaps.dwCaps & DDSCAPS_TEXTURE)
+    {
+        hr = ddraw_surface_create_texture(object, flags);
+        if (FAILED(hr))
+        {
+            if (version == 7)
+                IDirectDrawSurface7_Release(&object->IDirectDrawSurface7_iface);
+            else if (version == 4)
+                IDirectDrawSurface4_Release(&object->IDirectDrawSurface4_iface);
+            else
+                IDirectDrawSurface_Release(&object->IDirectDrawSurface_iface);
+
+            return hr;
+        }
+    }
+
     if (desc2.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
         ddraw->primary = object;
-
-    /* Create a WineD3DTexture if a texture was requested */
-    if (desc2.ddsCaps.dwCaps & DDSCAPS_TEXTURE)
-        ddraw_surface_create_texture(object, flags);
 
     return hr;
 }

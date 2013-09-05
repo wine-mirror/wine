@@ -5651,6 +5651,16 @@ HRESULT ddraw_surface_create_texture(struct ddraw_surface *surface, DWORD surfac
     if (FAILED(hr))
     {
         WARN("Failed to create wined3d texture, hr %#x.\n", hr);
+        switch (hr)
+        {
+            case WINED3DERR_INVALIDCALL:
+                hr = DDERR_INVALIDPARAMS;
+                break;
+
+            default:
+                FIXME("Unexpected wined3d error %#x.\n", hr);
+                break;
+        }
         return hr;
     }
 

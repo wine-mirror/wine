@@ -3728,6 +3728,224 @@ static void test_texturemanage(void)
     IDirectDraw7_Release(ddraw);
 }
 
+#define SUPPORT_DXT1    0x01
+#define SUPPORT_DXT2    0x02
+#define SUPPORT_DXT3    0x04
+#define SUPPORT_DXT4    0x08
+#define SUPPORT_DXT5    0x10
+#define SUPPORT_YUY2    0x20
+#define SUPPORT_UYVY    0x40
+
+static HRESULT WINAPI test_block_formats_creation_cb(DDPIXELFORMAT *fmt, void *ctx)
+{
+    DWORD *supported_fmts = ctx;
+
+    if (!(fmt->dwFlags & DDPF_FOURCC))
+        return DDENUMRET_OK;
+
+    switch (fmt->dwFourCC)
+    {
+        case MAKEFOURCC('D','X','T','1'):
+            *supported_fmts |= SUPPORT_DXT1;
+            break;
+        case MAKEFOURCC('D','X','T','2'):
+            *supported_fmts |= SUPPORT_DXT2;
+            break;
+        case MAKEFOURCC('D','X','T','3'):
+            *supported_fmts |= SUPPORT_DXT3;
+            break;
+        case MAKEFOURCC('D','X','T','4'):
+            *supported_fmts |= SUPPORT_DXT4;
+            break;
+        case MAKEFOURCC('D','X','T','5'):
+            *supported_fmts |= SUPPORT_DXT5;
+            break;
+        case MAKEFOURCC('Y','U','Y','2'):
+            *supported_fmts |= SUPPORT_YUY2;
+            break;
+        case MAKEFOURCC('U','Y','V','Y'):
+            *supported_fmts |= SUPPORT_UYVY;
+            break;
+        default:
+            break;
+    }
+
+    return DDENUMRET_OK;
+}
+
+static void test_block_formats_creation(void)
+{
+    HRESULT hr, expect_hr;
+    unsigned int i, j, w, h;
+    HWND window;
+    IDirectDraw7 *ddraw;
+    IDirect3D7 *d3d;
+    IDirect3DDevice7 *device;
+    IDirectDrawSurface7 *surface;
+    DWORD supported_fmts = 0, supported_overlay_fmts = 0;
+    DWORD num_fourcc_codes = 0, *fourcc_codes;
+    DDSURFACEDESC2 ddsd;
+    static const struct
+    {
+        DWORD fourcc;
+        const char *name;
+        DWORD support_flag;
+        unsigned int block_width;
+        unsigned int block_height;
+        BOOL create_size_checked, overlay;
+    }
+    formats[] =
+    {
+        {MAKEFOURCC('D','X','T','1'), "D3DFMT_DXT1", SUPPORT_DXT1, 4, 4, TRUE,  FALSE},
+        {MAKEFOURCC('D','X','T','2'), "D3DFMT_DXT2", SUPPORT_DXT2, 4, 4, TRUE,  FALSE},
+        {MAKEFOURCC('D','X','T','3'), "D3DFMT_DXT3", SUPPORT_DXT3, 4, 4, TRUE,  FALSE},
+        {MAKEFOURCC('D','X','T','4'), "D3DFMT_DXT4", SUPPORT_DXT4, 4, 4, TRUE,  FALSE},
+        {MAKEFOURCC('D','X','T','5'), "D3DFMT_DXT5", SUPPORT_DXT5, 4, 4, TRUE,  FALSE},
+        {MAKEFOURCC('Y','U','Y','2'), "D3DFMT_YUY2", SUPPORT_YUY2, 2, 1, FALSE, TRUE },
+        {MAKEFOURCC('U','Y','V','Y'), "D3DFMT_UYVY", SUPPORT_UYVY, 2, 1, FALSE, TRUE },
+    };
+    const struct
+    {
+        DWORD caps, caps2;
+        const char *name;
+        BOOL overlay;
+    }
+    types[] =
+    {
+        /* DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY fails to create any fourcc
+         * surface with DDERR_INVALIDPIXELFORMAT. Don't care about it for now.
+         *
+         * Nvidia returns E_FAIL on DXTN DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY.
+         * Other hw / drivers successfully create those surfaces. Ignore them, this
+         * suggests that no game uses this, otherwise Nvidia would support it. */
+        {
+            DDSCAPS_VIDEOMEMORY | DDSCAPS_TEXTURE, 0,
+            "videomemory texture", FALSE
+        },
+        {
+            DDSCAPS_VIDEOMEMORY | DDSCAPS_OVERLAY, 0,
+            "videomemory overlay", TRUE
+        },
+        {
+            DDSCAPS_SYSTEMMEMORY | DDSCAPS_TEXTURE, 0,
+            "systemmemory texture", FALSE
+        },
+        {
+            DDSCAPS_TEXTURE, DDSCAPS2_TEXTUREMANAGE,
+            "managed texture", FALSE
+        }
+    };
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create D3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice7_GetDirect3D(device, &d3d);
+    ok(SUCCEEDED(hr), "Failed to get d3d interface, hr %#x.\n", hr);
+    hr = IDirect3D7_QueryInterface(d3d, &IID_IDirectDraw7, (void **) &ddraw);
+    ok(SUCCEEDED(hr), "Failed to get ddraw interface, hr %#x.\n", hr);
+    IDirect3D7_Release(d3d);
+
+    hr = IDirect3DDevice7_EnumTextureFormats(device, test_block_formats_creation_cb,
+            &supported_fmts);
+    ok(SUCCEEDED(hr), "Failed to enumerate texture formats %#x.\n", hr);
+
+    hr = IDirectDraw7_GetFourCCCodes(ddraw, &num_fourcc_codes, NULL);
+    ok(SUCCEEDED(hr), "Failed to get fourcc codes %#x.\n", hr);
+    fourcc_codes = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+            num_fourcc_codes * sizeof(*fourcc_codes));
+    if (!fourcc_codes)
+        goto cleanup;
+    hr = IDirectDraw7_GetFourCCCodes(ddraw, &num_fourcc_codes, fourcc_codes);
+    ok(SUCCEEDED(hr), "Failed to get fourcc codes %#x.\n", hr);
+    for (i = 0; i < num_fourcc_codes; i++)
+    {
+        for (j = 0; j < sizeof(formats) / sizeof(*formats); j++)
+        {
+            if (fourcc_codes[i] == formats[j].fourcc)
+                supported_overlay_fmts |= formats[j].support_flag;
+        }
+    }
+    HeapFree(GetProcessHeap(), 0, fourcc_codes);
+
+    for (i = 0; i < sizeof(formats) / sizeof(*formats); i++)
+    {
+        for (j = 0; j < sizeof(types) / sizeof(*types); j++)
+        {
+            BOOL support;
+            if (formats[i].overlay != types[j].overlay)
+                continue;
+
+            if (formats[i].overlay)
+                support = supported_overlay_fmts & formats[i].support_flag;
+            else
+                support = supported_fmts & formats[i].support_flag;
+
+            for (w = 1; w <= 8; w++)
+            {
+                for (h = 1; h <= 8; h++)
+                {
+                    BOOL block_aligned = TRUE;
+                    BOOL todo = FALSE;
+
+                    if (w & (formats[i].block_width - 1) || h & (formats[i].block_height - 1))
+                        block_aligned = FALSE;
+
+                    memset(&ddsd, 0, sizeof(ddsd));
+                    ddsd.dwSize = sizeof(ddsd);
+                    ddsd.dwFlags = DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS;
+                    ddsd.ddsCaps.dwCaps = types[j].caps;
+                    ddsd.ddsCaps.dwCaps2 = types[j].caps2;
+                    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+                    ddsd.ddpfPixelFormat.dwFlags = DDPF_FOURCC;
+                    ddsd.ddpfPixelFormat.dwFourCC = formats[i].fourcc;
+                    ddsd.dwWidth = w;
+                    ddsd.dwHeight = h;
+
+                    /* TODO: Handle power of two limitations. I cannot test the pow2
+                     * behavior on windows because I have no hardware that doesn't at
+                     * least support np2_conditional. There's probably no HW that
+                     * supports DXTN textures but no conditional np2 textures. */
+                    if (!support && !(types[j].caps & DDSCAPS_SYSTEMMEMORY))
+                        expect_hr = DDERR_INVALIDPARAMS;
+                    else if (formats[i].create_size_checked && !block_aligned)
+                    {
+                        expect_hr = DDERR_INVALIDPARAMS;
+                        if (!(types[j].caps & DDSCAPS_TEXTURE))
+                            todo = TRUE;
+                    }
+                    else
+                        expect_hr = D3D_OK;
+
+                    hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &surface, NULL);
+                    if (todo)
+                        todo_wine ok(hr == expect_hr,
+                                "Got unexpected hr %#x for format %s, resource type %s, size %ux%u, expected %#x.\n",
+                                hr, formats[i].name, types[j].name, w, h, expect_hr);
+                    else
+                        ok(hr == expect_hr,
+                                "Got unexpected hr %#x for format %s, resource type %s, size %ux%u, expected %#x.\n",
+                                hr, formats[i].name, types[j].name, w, h, expect_hr);
+
+                    if (SUCCEEDED(hr))
+                        IDirectDrawSurface7_Release(surface);
+                }
+            }
+        }
+    }
+
+cleanup:
+    IDirectDraw7_Release(ddraw);
+    IDirect3DDevice7_Release(device);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw7)
 {
     HMODULE module = GetModuleHandleA("ddraw.dll");
@@ -3767,4 +3985,5 @@ START_TEST(ddraw7)
     test_lighting_interface_versions();
     test_coop_level_activateapp();
     test_texturemanage();
+    test_block_formats_creation();
 }
