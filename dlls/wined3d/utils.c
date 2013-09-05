@@ -191,18 +191,19 @@ struct wined3d_format_block_info
     UINT block_width;
     UINT block_height;
     UINT block_byte_count;
+    BOOL verify;
 };
 
 static const struct wined3d_format_block_info format_block_info[] =
 {
-    {WINED3DFMT_DXT1,   4,  4,  8},
-    {WINED3DFMT_DXT2,   4,  4,  16},
-    {WINED3DFMT_DXT3,   4,  4,  16},
-    {WINED3DFMT_DXT4,   4,  4,  16},
-    {WINED3DFMT_DXT5,   4,  4,  16},
-    {WINED3DFMT_ATI2N,  4,  4,  16},
-    {WINED3DFMT_YUY2,   2,  1,  4},
-    {WINED3DFMT_UYVY,   2,  1,  4},
+    {WINED3DFMT_DXT1,   4,  4,  8,  TRUE},
+    {WINED3DFMT_DXT2,   4,  4,  16, TRUE},
+    {WINED3DFMT_DXT3,   4,  4,  16, TRUE},
+    {WINED3DFMT_DXT4,   4,  4,  16, TRUE},
+    {WINED3DFMT_DXT5,   4,  4,  16, TRUE},
+    {WINED3DFMT_ATI2N,  4,  4,  16, FALSE},
+    {WINED3DFMT_YUY2,   2,  1,  4,  FALSE},
+    {WINED3DFMT_UYVY,   2,  1,  4,  FALSE},
 };
 
 struct wined3d_format_vertex_info
@@ -1023,6 +1024,8 @@ static BOOL init_format_block_info(struct wined3d_gl_info *gl_info)
         format->block_height = format_block_info[i].block_height;
         format->block_byte_count = format_block_info[i].block_byte_count;
         format->flags |= WINED3DFMT_FLAG_BLOCKS;
+        if (!format_block_info[i].verify)
+            format->flags |= WINED3DFMT_FLAG_BLOCKS_NO_VERIFY;
     }
 
     return TRUE;
