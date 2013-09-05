@@ -1073,7 +1073,9 @@ static HRESULT d3d_device7_EnumTextureFormats(IDirect3DDevice7 *iface,
         WINED3DFMT_P8_UINT,
         /* FOURCC codes */
         WINED3DFMT_DXT1,
+        WINED3DFMT_DXT2,
         WINED3DFMT_DXT3,
+        WINED3DFMT_DXT4,
         WINED3DFMT_DXT5,
     };
 
