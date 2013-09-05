@@ -287,7 +287,6 @@ static DWORD WINAPI thread_actctx_func(void *p)
     cur = (void*)0xdeadbeef;
     ret = pGetCurrentActCtx(&cur);
     ok(ret, "thread GetCurrentActCtx failed, %u\n", GetLastError());
-todo_wine
     ok(cur == param->handle, "got %p, expected %p\n", cur, param->handle);
     param->thread_context = cur;
 
@@ -1550,6 +1549,17 @@ static void test_thread_actctx(void)
     ok(b, "GetCurentActCtx failed: %u\n", GetLastError());
     ok(handle == 0, "active context %p\n", handle);
 
+    /* without active context */
+    param.thread_context = (void*)0xdeadbeef;
+    param.handle = NULL;
+    thread = CreateThread(NULL, 0, thread_actctx_func, &param, 0, &tid);
+    ok(thread != NULL, "failed, got %u\n", GetLastError());
+
+    ret = WaitForSingleObject(thread, 1000);
+    ok(ret == WAIT_OBJECT_0, "wait timeout\n");
+    ok(param.thread_context == NULL, "got wrong thread context %p\n", param.thread_context);
+    CloseHandle(thread);
+
     b = pActivateActCtx(context, &cookie);
     ok(b, "activation failed: %u\n", GetLastError());
 
@@ -1568,7 +1578,6 @@ static void test_thread_actctx(void)
 
     ret = WaitForSingleObject(thread, 1000);
     ok(ret == WAIT_OBJECT_0, "wait timeout\n");
-todo_wine
     ok(param.thread_context == context, "got wrong thread context %p, %p\n", param.thread_context, context);
     CloseHandle(thread);
 
@@ -1579,7 +1588,6 @@ todo_wine
 
     ret = WaitForSingleObject(thread, 1000);
     ok(ret == WAIT_OBJECT_0, "wait timeout\n");
-todo_wine
     ok(param.thread_context == context, "got wrong thread context %p, %p\n", param.thread_context, context);
     CloseHandle(thread);
 

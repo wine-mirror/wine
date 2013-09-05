@@ -432,7 +432,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     pthread_attr_t attr;
     struct ntdll_thread_data *thread_data;
     struct startup_info *info = NULL;
-    HANDLE handle = 0;
+    HANDLE handle = 0, actctx = 0;
     TEB *teb = NULL;
     DWORD tid = 0;
     int request_pipe[2];
@@ -496,6 +496,21 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     teb->ClientId.UniqueThread  = ULongToHandle(tid);
     teb->StaticUnicodeString.Buffer        = teb->StaticUnicodeBuffer;
     teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
+
+    /* create default activation context frame for new thread */
+    RtlGetActiveActivationContext(&actctx);
+    if (actctx)
+    {
+        RTL_ACTIVATION_CONTEXT_STACK_FRAME *frame;
+
+        frame = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(*frame));
+        frame->Previous = NULL;
+        frame->ActivationContext = actctx;
+        frame->Flags = 0;
+        teb->ActivationContextStack.ActiveFrame = frame;
+
+        RtlAddRefActivationContext(actctx);
+    }
 
     info = (struct startup_info *)(teb + 1);
     info->teb         = teb;
