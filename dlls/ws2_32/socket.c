@@ -191,6 +191,16 @@ static const GUID ProviderIdIPX = { 0x11058240, 0xbe47, 0x11cf,
 static const GUID ProviderIdSPX = { 0x11058241, 0xbe47, 0x11cf,
                                     { 0x95, 0xc8, 0x00, 0x80, 0x5f, 0x48, 0xa1, 0x92 } };
 
+static const INT valid_protocols[] =
+{
+    WS_IPPROTO_TCP,
+    WS_IPPROTO_UDP,
+    NSPROTO_IPX,
+    NSPROTO_SPX,
+    NSPROTO_SPXII,
+    0
+};
+
 #if defined(IP_UNICAST_IF) && defined(SO_ATTACH_FILTER)
 # define LINUX_BOUND_IF
 struct interface_filter {
@@ -1259,6 +1269,14 @@ static inline BOOL supported_pf(int pf)
     }
 }
 
+static inline BOOL supported_protocol(int protocol)
+{
+    int i;
+    for (i = 0; i < sizeof(valid_protocols) / sizeof(valid_protocols[0]); i++)
+        if (protocol == valid_protocols[i])
+            return TRUE;
+    return FALSE;
+}
 
 /**********************************************************************/
 
@@ -1665,11 +1683,10 @@ static INT WS_EnterSingleProtocolA( INT protocol, WSAPROTOCOL_INFOA* info )
     return ret;
 }
 
-static INT WS_EnumProtocols( BOOL unicode, LPINT protocols, LPWSAPROTOCOL_INFOW buffer, LPDWORD len )
+static INT WS_EnumProtocols( BOOL unicode, const INT *protocols, LPWSAPROTOCOL_INFOW buffer, LPDWORD len )
 {
-    INT i = 0;
+    INT i = 0, items = 0;
     DWORD size = 0;
-    INT local[] = { WS_IPPROTO_TCP, WS_IPPROTO_UDP, NSPROTO_IPX, NSPROTO_SPX, NSPROTO_SPXII, 0 };
     union _info
     {
       LPWSAPROTOCOL_INFOA a;
@@ -1677,11 +1694,15 @@ static INT WS_EnumProtocols( BOOL unicode, LPINT protocols, LPWSAPROTOCOL_INFOW 
     } info;
     info.w = buffer;
 
-    if (!protocols) protocols = local;
+    if (!protocols) protocols = valid_protocols;
 
-    while (protocols[i]) i++;
+    while (protocols[i])
+    {
+        if(supported_protocol(protocols[i++]))
+            items++;
+    }
 
-    size = i * (unicode ? sizeof(WSAPROTOCOL_INFOW) : sizeof(WSAPROTOCOL_INFOA));
+    size = items * (unicode ? sizeof(WSAPROTOCOL_INFOW) : sizeof(WSAPROTOCOL_INFOA));
 
     if (*len < size || !buffer)
     {
@@ -1690,20 +1711,20 @@ static INT WS_EnumProtocols( BOOL unicode, LPINT protocols, LPWSAPROTOCOL_INFOW 
         return SOCKET_ERROR;
     }
 
-    for (i = 0; protocols[i]; i++)
+    for (i = items = 0; protocols[i]; i++)
     {
         if (unicode)
         {
-            if (WS_EnterSingleProtocolW( protocols[i], &info.w[i] ) == SOCKET_ERROR)
-                break;
+            if (WS_EnterSingleProtocolW( protocols[i], &info.w[items] ) != SOCKET_ERROR)
+                items++;
         }
         else
         {
-            if (WS_EnterSingleProtocolA( protocols[i], &info.a[i] ) == SOCKET_ERROR)
-                break;
+            if (WS_EnterSingleProtocolA( protocols[i], &info.a[items] ) != SOCKET_ERROR)
+                items++;
         }
     }
-    return i;
+    return items;
 }
 
 /**************************************************************************
