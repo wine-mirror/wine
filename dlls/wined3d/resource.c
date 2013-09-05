@@ -90,6 +90,8 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
     {
         if ((usage & WINED3DUSAGE_RENDERTARGET) && !(format->flags & WINED3DFMT_FLAG_RENDERTARGET))
             return WINED3DERR_INVALIDCALL;
+        if ((usage & WINED3DUSAGE_DEPTHSTENCIL) && !(format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)))
+            return WINED3DERR_INVALIDCALL;
     }
 
     resource->ref = 1;
