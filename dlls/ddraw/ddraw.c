@@ -3000,6 +3000,27 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
         ddrawformat_from_wined3dformat(&desc2.u4.ddpfPixelFormat, mode.format_id);
     }
 
+    if (!(desc2.ddsCaps.dwCaps & (DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY))
+            && !(desc2.ddsCaps.dwCaps2 & DDSCAPS2_TEXTUREMANAGE))
+    {
+        enum wined3d_format_id format = wined3dformat_from_ddrawformat(&desc2.u4.ddpfPixelFormat);
+        enum wined3d_resource_type rtype;
+
+        if (desc2.ddsCaps.dwCaps & DDSCAPS_TEXTURE)
+            rtype = WINED3D_RTYPE_TEXTURE;
+        else if (desc2.ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
+            rtype = WINED3D_RTYPE_CUBE_TEXTURE;
+        else
+            rtype = WINED3D_RTYPE_SURFACE;
+
+        hr = wined3d_check_device_format(ddraw->wined3d, WINED3DADAPTER_DEFAULT, WINED3D_DEVICE_TYPE_HAL,
+                mode.format_id, 0, rtype, format);
+        if (SUCCEEDED(hr))
+            desc2.ddsCaps.dwCaps |= DDSCAPS_VIDEOMEMORY;
+        else
+            desc2.ddsCaps.dwCaps |= DDSCAPS_SYSTEMMEMORY;
+    }
+
     /* No Width or no Height? Use the original screen size
      */
     if(!(desc2.dwFlags & DDSD_WIDTH) ||
