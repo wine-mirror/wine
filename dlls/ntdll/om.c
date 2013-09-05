@@ -165,8 +165,8 @@ NTSTATUS WINAPI NtQueryObject(IN HANDLE handle,
                 status = wine_server_call( req );
                 if (status == STATUS_SUCCESS)
                 {
-                    p->InheritHandle = (reply->old_flags & HANDLE_FLAG_INHERIT) ? TRUE : FALSE;
-                    p->ProtectFromClose = (reply->old_flags & HANDLE_FLAG_PROTECT_FROM_CLOSE) ? TRUE : FALSE;
+                    p->InheritHandle = (reply->old_flags & HANDLE_FLAG_INHERIT) != 0;
+                    p->ProtectFromClose = (reply->old_flags & HANDLE_FLAG_PROTECT_FROM_CLOSE) != 0;
                     if (used_len) *used_len = sizeof(*p);
                 }
             }
