@@ -824,6 +824,7 @@ enum wined3d_display_rotation
 #define WINED3DUSAGE_AUTOGENMIPMAP                              0x00000400
 #define WINED3DUSAGE_DMAP                                       0x00004000
 #define WINED3DUSAGE_MASK                                       0x00004fff
+#define WINED3DUSAGE_TEXTURE                                    0x10000000
 #define WINED3DUSAGE_OWNDC                                      0x20000000
 #define WINED3DUSAGE_STATICDECL                                 0x40000000
 #define WINED3DUSAGE_OVERLAY                                    0x80000000

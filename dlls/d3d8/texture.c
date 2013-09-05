@@ -1197,6 +1197,7 @@ HRESULT texture_init(struct d3d8_texture *texture, struct d3d8_device *device,
     desc.multisample_type = WINED3D_MULTISAMPLE_NONE;
     desc.multisample_quality = 0;
     desc.usage = usage & WINED3DUSAGE_MASK;
+    desc.usage |= WINED3DUSAGE_TEXTURE;
     desc.pool = pool;
     desc.width = width;
     desc.height = height;
@@ -1237,6 +1238,7 @@ HRESULT cubetexture_init(struct d3d8_texture *texture, struct d3d8_device *devic
     desc.multisample_type = WINED3D_MULTISAMPLE_NONE;
     desc.multisample_quality = 0;
     desc.usage = usage & WINED3DUSAGE_MASK;
+    desc.usage |= WINED3DUSAGE_TEXTURE;
     desc.pool = pool;
     desc.width = edge_length;
     desc.height = edge_length;
@@ -1276,6 +1278,7 @@ HRESULT volumetexture_init(struct d3d8_texture *texture, struct d3d8_device *dev
     desc.multisample_type = WINED3D_MULTISAMPLE_NONE;
     desc.multisample_quality = 0;
     desc.usage = usage & WINED3DUSAGE_MASK;
+    desc.usage |= WINED3DUSAGE_TEXTURE;
     desc.pool = pool;
     desc.width = width;
     desc.height = height;

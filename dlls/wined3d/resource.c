@@ -70,7 +70,8 @@ static void resource_check_usage(DWORD usage)
             | WINED3DUSAGE_DYNAMIC
             | WINED3DUSAGE_AUTOGENMIPMAP
             | WINED3DUSAGE_STATICDECL
-            | WINED3DUSAGE_OVERLAY;
+            | WINED3DUSAGE_OVERLAY
+            | WINED3DUSAGE_TEXTURE;
 
     if (usage & ~handled)
         FIXME("Unhandled usage flags %#x.\n", usage & ~handled);
@@ -91,6 +92,8 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
         if ((usage & WINED3DUSAGE_RENDERTARGET) && !(format->flags & WINED3DFMT_FLAG_RENDERTARGET))
             return WINED3DERR_INVALIDCALL;
         if ((usage & WINED3DUSAGE_DEPTHSTENCIL) && !(format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)))
+            return WINED3DERR_INVALIDCALL;
+        if ((usage & WINED3DUSAGE_TEXTURE) && !(format->flags & WINED3DFMT_FLAG_TEXTURE))
             return WINED3DERR_INVALIDCALL;
     }
 
