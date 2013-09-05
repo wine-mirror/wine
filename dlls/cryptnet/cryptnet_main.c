@@ -1812,14 +1812,14 @@ typedef struct _CERT_REVOCATION_PARA_NO_EXTRA_FIELDS {
     HCERTSTORE               *rgCertStore;
     HCERTSTORE                hCrlStore;
     LPFILETIME                pftTimeToUse;
-} CERT_REVOCATION_PARA_NO_EXTRA_FIELDS, *PCERT_REVOCATION_PARA_NO_EXTRA_FIELDS;
+} CERT_REVOCATION_PARA_NO_EXTRA_FIELDS;
 
 typedef struct _OLD_CERT_REVOCATION_STATUS {
     DWORD cbSize;
     DWORD dwIndex;
     DWORD dwError;
     DWORD dwReason;
-} OLD_CERT_REVOCATION_STATUS, *POLD_CERT_REVOCATION_STATUS;
+} OLD_CERT_REVOCATION_STATUS;
 
 /***********************************************************************
  *    CertDllVerifyRevocation (CRYPTNET.@)
