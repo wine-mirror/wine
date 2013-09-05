@@ -3946,6 +3946,132 @@ cleanup:
     DestroyWindow(window);
 }
 
+struct format_support_check
+{
+    const DDPIXELFORMAT *format;
+    BOOL supported;
+};
+
+static HRESULT WINAPI test_unsupported_formats_cb(DDPIXELFORMAT *fmt, void *ctx)
+{
+    struct format_support_check *format = ctx;
+
+    if (!memcmp(format->format, fmt, sizeof(*fmt)))
+    {
+        format->supported = TRUE;
+        return DDENUMRET_CANCEL;
+    }
+
+    return DDENUMRET_OK;
+}
+
+static void test_unsupported_formats(void)
+{
+    HRESULT hr;
+    BOOL expect_success;
+    HWND window;
+    IDirectDraw7 *ddraw;
+    IDirect3D7 *d3d;
+    IDirect3DDevice7 *device;
+    IDirectDrawSurface7 *surface;
+    DDSURFACEDESC2 ddsd;
+    unsigned int i, j;
+    DWORD expected_caps;
+    static const struct
+    {
+        const char *name;
+        DDPIXELFORMAT fmt;
+    }
+    formats[] =
+    {
+        {
+            "D3DFMT_A8R8G8B8",
+            {
+                sizeof(DDPIXELFORMAT), DDPF_RGB | DDPF_ALPHAPIXELS, 0,
+                {32}, {0x00ff0000}, {0x0000ff00}, {0x000000ff}, {0xff000000}
+            }
+        },
+        {
+            "D3DFMT_P8",
+            {
+                sizeof(DDPIXELFORMAT), DDPF_PALETTEINDEXED8 | DDPF_RGB, 0,
+                {8 }, {0x00000000}, {0x00000000}, {0x00000000}, {0x00000000}
+            }
+        },
+    };
+    static const DWORD caps[] = {0, DDSCAPS_SYSTEMMEMORY, DDSCAPS_VIDEOMEMORY};
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create D3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice7_GetDirect3D(device, &d3d);
+    ok(SUCCEEDED(hr), "Failed to get d3d interface, hr %#x.\n", hr);
+    hr = IDirect3D7_QueryInterface(d3d, &IID_IDirectDraw7, (void **) &ddraw);
+    ok(SUCCEEDED(hr), "Failed to get ddraw interface, hr %#x.\n", hr);
+    IDirect3D7_Release(d3d);
+
+    for (i = 0; i < sizeof(formats) / sizeof(*formats); i++)
+    {
+        struct format_support_check check = {&formats[i].fmt, FALSE};
+        hr = IDirect3DDevice7_EnumTextureFormats(device, test_unsupported_formats_cb, &check);
+        ok(SUCCEEDED(hr), "Failed to enumerate texture formats %#x.\n", hr);
+
+        for (j = 0; j < sizeof(caps) / sizeof(*caps); j++)
+        {
+            memset(&ddsd, 0, sizeof(ddsd));
+            ddsd.dwSize = sizeof(ddsd);
+            ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+            ddsd.ddpfPixelFormat = formats[i].fmt;
+            ddsd.dwWidth = 4;
+            ddsd.dwHeight = 4;
+            ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | caps[j];
+
+            if (caps[j] & DDSCAPS_VIDEOMEMORY && !check.supported)
+                expect_success = FALSE;
+            else
+                expect_success = TRUE;
+
+            hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &surface, NULL);
+            ok(SUCCEEDED(hr) == expect_success,
+                    "Got unexpected hr %#x for format %s, caps %#x, expected %s.\n",
+                    hr, formats[i].name, caps[j], expect_success ? "success" : "failure");
+            if (FAILED(hr))
+                continue;
+
+            memset(&ddsd, 0, sizeof(ddsd));
+            ddsd.dwSize = sizeof(ddsd);
+            hr = IDirectDrawSurface7_GetSurfaceDesc(surface, &ddsd);
+            ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
+
+            if (caps[j] & DDSCAPS_VIDEOMEMORY)
+                expected_caps = DDSCAPS_VIDEOMEMORY;
+            else if (caps[j] & DDSCAPS_SYSTEMMEMORY)
+                expected_caps = DDSCAPS_SYSTEMMEMORY;
+            else if (check.supported)
+                expected_caps = DDSCAPS_VIDEOMEMORY;
+            else
+                expected_caps = DDSCAPS_SYSTEMMEMORY;
+
+            ok(ddsd.ddsCaps.dwCaps & expected_caps,
+                    "Expected capability %#x, format %s, input cap %#x.\n",
+                    expected_caps, formats[i].name, caps[j]);
+
+            IDirectDrawSurface7_Release(surface);
+        }
+    }
+
+    IDirectDraw7_Release(ddraw);
+    IDirect3DDevice7_Release(device);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw7)
 {
     HMODULE module = GetModuleHandleA("ddraw.dll");
@@ -3986,4 +4112,5 @@ START_TEST(ddraw7)
     test_coop_level_activateapp();
     test_texturemanage();
     test_block_formats_creation();
+    test_unsupported_formats();
 }

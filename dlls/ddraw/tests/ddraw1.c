@@ -2929,6 +2929,131 @@ static void test_coop_level_activateapp(void)
     IDirectDraw_Release(ddraw);
 }
 
+struct format_support_check
+{
+    const DDPIXELFORMAT *format;
+    BOOL supported;
+};
+
+static HRESULT WINAPI test_unsupported_formats_cb(DDSURFACEDESC *desc, void *ctx)
+{
+    struct format_support_check *format = ctx;
+
+    if (!memcmp(format->format, &desc->ddpfPixelFormat, sizeof(*format->format)))
+    {
+        format->supported = TRUE;
+        return DDENUMRET_CANCEL;
+    }
+
+    return DDENUMRET_OK;
+}
+
+static void test_unsupported_formats(void)
+{
+    HRESULT hr;
+    BOOL expect_success;
+    HWND window;
+    IDirectDraw *ddraw;
+    IDirect3DDevice *device;
+    IDirectDrawSurface *surface;
+    DDSURFACEDESC ddsd;
+    unsigned int i, j;
+    DWORD expected_caps;
+    static const struct
+    {
+        const char *name;
+        DDPIXELFORMAT fmt;
+    }
+    formats[] =
+    {
+        {
+            "D3DFMT_A8R8G8B8",
+            {
+                sizeof(DDPIXELFORMAT), DDPF_RGB | DDPF_ALPHAPIXELS, 0,
+                {32}, {0x00ff0000}, {0x0000ff00}, {0x000000ff}, {0xff000000}
+            }
+        },
+        {
+            "D3DFMT_P8",
+            {
+                sizeof(DDPIXELFORMAT), DDPF_PALETTEINDEXED8 | DDPF_RGB, 0,
+                {8 }, {0x00000000}, {0x00000000}, {0x00000000}, {0x00000000}
+            }
+        },
+    };
+    static const DWORD caps[] = {0, DDSCAPS_SYSTEMMEMORY, DDSCAPS_VIDEOMEMORY};
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(ddraw = create_ddraw()))
+    {
+        skip("Failed to create ddraw object, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+    if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create D3D device, skipping test.\n");
+        IDirectDraw_Release(ddraw);
+        DestroyWindow(window);
+        return;
+    }
+
+    for (i = 0; i < sizeof(formats) / sizeof(*formats); i++)
+    {
+        struct format_support_check check = {&formats[i].fmt, FALSE};
+        hr = IDirect3DDevice_EnumTextureFormats(device, test_unsupported_formats_cb, &check);
+        ok(SUCCEEDED(hr), "Failed to enumerate texture formats %#x.\n", hr);
+
+        for (j = 0; j < sizeof(caps) / sizeof(*caps); j++)
+        {
+            memset(&ddsd, 0, sizeof(ddsd));
+            ddsd.dwSize = sizeof(ddsd);
+            ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+            ddsd.ddpfPixelFormat = formats[i].fmt;
+            ddsd.dwWidth = 4;
+            ddsd.dwHeight = 4;
+            ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | caps[j];
+
+            if (caps[j] & DDSCAPS_VIDEOMEMORY && !check.supported)
+                expect_success = FALSE;
+            else
+                expect_success = TRUE;
+
+            hr = IDirectDraw_CreateSurface(ddraw, &ddsd, &surface, NULL);
+            ok(SUCCEEDED(hr) == expect_success,
+                    "Got unexpected hr %#x for format %s, caps %#x, expected %s.\n",
+                    hr, formats[i].name, caps[j], expect_success ? "success" : "failure");
+            if (FAILED(hr))
+                continue;
+
+            memset(&ddsd, 0, sizeof(ddsd));
+            ddsd.dwSize = sizeof(ddsd);
+            hr = IDirectDrawSurface_GetSurfaceDesc(surface, &ddsd);
+            ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
+
+            if (caps[j] & DDSCAPS_VIDEOMEMORY)
+                expected_caps = DDSCAPS_VIDEOMEMORY;
+            else if (caps[j] & DDSCAPS_SYSTEMMEMORY)
+                expected_caps = DDSCAPS_SYSTEMMEMORY;
+            else if (check.supported)
+                expected_caps = DDSCAPS_VIDEOMEMORY;
+            else
+                expected_caps = DDSCAPS_SYSTEMMEMORY;
+
+            ok(ddsd.ddsCaps.dwCaps & expected_caps,
+                    "Expected capability %#x, format %s, input cap %#x.\n",
+                    expected_caps, formats[i].name, caps[j]);
+
+            IDirectDrawSurface_Release(surface);
+        }
+    }
+
+    IDirect3DDevice_Release(device);
+    IDirectDraw_Release(ddraw);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw1)
 {
     test_coop_level_create_device_window();
@@ -2952,4 +3077,5 @@ START_TEST(ddraw1)
     test_coop_level_multi_window();
     test_clear_rect_count();
     test_coop_level_activateapp();
+    test_unsupported_formats();
 }
