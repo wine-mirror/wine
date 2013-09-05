@@ -6159,7 +6159,7 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, con
     BOOL luminance_used[MAX_TEXTURES] = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE};
     UINT lowest_disabled_stage;
     const char *textype;
-    const char *instr, *sat;
+    const char *instr;
     char colorcor_dst[8];
     GLuint ret;
     DWORD arg0, arg1, arg2;
@@ -6299,12 +6299,6 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, con
             default: textype = "unexpected_textype";   break;
         }
 
-        if (settings->op[stage].cop == WINED3D_TOP_BUMPENVMAP
-                || settings->op[stage].cop == WINED3D_TOP_BUMPENVMAP_LUMINANCE)
-            sat = "";
-        else
-            sat = "_SAT";
-
         if(settings->op[stage].projected == proj_none) {
             instr = "TEX";
         } else if(settings->op[stage].projected == proj_count4 ||
@@ -6339,8 +6333,8 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, con
                 shader_addline(&buffer, "ADD ret, ret, fragment.texcoord[%u];\n", stage);
             }
 
-            shader_addline(&buffer, "%s%s tex%u, ret, texture[%u], %s;\n",
-                    instr, sat, stage, stage, textype);
+            shader_addline(&buffer, "%s tex%u, ret, texture[%u], %s;\n",
+                    instr, stage, stage, textype);
             if (settings->op[stage - 1].cop == WINED3D_TOP_BUMPENVMAP_LUMINANCE)
             {
                 shader_addline(&buffer, "MAD_SAT ret.x, tex%u.z, luminance%u.x, luminance%u.y;\n",
@@ -6350,11 +6344,11 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, con
         } else if(settings->op[stage].projected == proj_count3) {
             shader_addline(&buffer, "MOV ret, fragment.texcoord[%u];\n", stage);
             shader_addline(&buffer, "MOV ret.w, ret.z;\n");
-            shader_addline(&buffer, "%s%s tex%u, ret, texture[%u], %s;\n",
-                            instr, sat, stage, stage, textype);
+            shader_addline(&buffer, "%s tex%u, ret, texture[%u], %s;\n",
+                            instr, stage, stage, textype);
         } else {
-            shader_addline(&buffer, "%s%s tex%u, fragment.texcoord[%u], texture[%u], %s;\n",
-                            instr, sat, stage, stage, stage, textype);
+            shader_addline(&buffer, "%s tex%u, fragment.texcoord[%u], texture[%u], %s;\n",
+                            instr, stage, stage, stage, textype);
         }
 
         sprintf(colorcor_dst, "tex%u", stage);
