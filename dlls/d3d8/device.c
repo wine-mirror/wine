@@ -743,6 +743,7 @@ static HRESULT WINAPI d3d8_device_CreateTexture(IDirect3DDevice8 *iface,
     TRACE("iface %p, width %u, height %u, levels %u, usage %#x, format %#x, pool %#x, texture %p.\n",
             iface, width, height, levels, usage, format, pool, texture);
 
+    *texture = NULL;
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
         return D3DERR_OUTOFVIDEOMEMORY;
@@ -772,6 +773,7 @@ static HRESULT WINAPI d3d8_device_CreateVolumeTexture(IDirect3DDevice8 *iface,
     TRACE("iface %p, width %u, height %u, depth %u, levels %u, usage %#x, format %#x, pool %#x, texture %p.\n",
             iface, width, height, depth, levels, usage, format, pool, texture);
 
+    *texture = NULL;
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
         return D3DERR_OUTOFVIDEOMEMORY;
@@ -800,6 +802,7 @@ static HRESULT WINAPI d3d8_device_CreateCubeTexture(IDirect3DDevice8 *iface, UIN
     TRACE("iface %p, edge_length %u, levels %u, usage %#x, format %#x, pool %#x, texture %p.\n",
             iface, edge_length, levels, usage, format, pool, texture);
 
+    *texture = NULL;
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
         return D3DERR_OUTOFVIDEOMEMORY;
@@ -933,6 +936,7 @@ static HRESULT WINAPI d3d8_device_CreateRenderTarget(IDirect3DDevice8 *iface, UI
     TRACE("iface %p, width %u, height %u, format %#x, multisample_type %#x, lockable %#x, surface %p.\n",
             iface, width, height, format, multisample_type, lockable, surface);
 
+    *surface = NULL;
     if (lockable)
         flags |= WINED3D_SURFACE_MAPPABLE;
 
@@ -949,6 +953,8 @@ static HRESULT WINAPI d3d8_device_CreateDepthStencilSurface(IDirect3DDevice8 *if
     TRACE("iface %p, width %u, height %u, format %#x, multisample_type %#x, surface %p.\n",
             iface, width, height, format, multisample_type, surface);
 
+    *surface = NULL;
+
     /* TODO: Verify that Discard is false */
     return d3d8_device_create_surface(device, width, height, format, WINED3D_SURFACE_MAPPABLE,
             surface, D3DUSAGE_DEPTHSTENCIL, D3DPOOL_DEFAULT, multisample_type, 0);
@@ -962,6 +968,8 @@ static HRESULT WINAPI d3d8_device_CreateImageSurface(IDirect3DDevice8 *iface, UI
 
     TRACE("iface %p, width %u, height %u, format %#x, surface %p.\n",
             iface, width, height, format, surface);
+
+    *surface = NULL;
 
     return d3d8_device_create_surface(device, width, height, format, WINED3D_SURFACE_MAPPABLE,
             surface, 0, D3DPOOL_SYSTEMMEM, D3DMULTISAMPLE_NONE, 0);

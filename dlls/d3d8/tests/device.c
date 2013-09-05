@@ -4340,7 +4340,7 @@ static void test_surface_double_unlock(void)
     DestroyWindow(window);
 }
 
-static void test_surface_lockrect_blocks(void)
+static void test_surface_blocks(void)
 {
     static const struct
     {
@@ -4349,20 +4349,21 @@ static void test_surface_lockrect_blocks(void)
         unsigned int block_width;
         unsigned int block_height;
         BOOL broken;
+        BOOL create_size_checked, core_fmt;
     }
     formats[] =
     {
-        {D3DFMT_DXT1,                 "D3DFMT_DXT1", 4, 4, FALSE},
-        {D3DFMT_DXT2,                 "D3DFMT_DXT2", 4, 4, FALSE},
-        {D3DFMT_DXT3,                 "D3DFMT_DXT3", 4, 4, FALSE},
-        {D3DFMT_DXT4,                 "D3DFMT_DXT4", 4, 4, FALSE},
-        {D3DFMT_DXT5,                 "D3DFMT_DXT5", 4, 4, FALSE},
+        {D3DFMT_DXT1,                 "D3DFMT_DXT1", 4, 4, FALSE, TRUE,  TRUE },
+        {D3DFMT_DXT2,                 "D3DFMT_DXT2", 4, 4, FALSE, TRUE,  TRUE },
+        {D3DFMT_DXT3,                 "D3DFMT_DXT3", 4, 4, FALSE, TRUE,  TRUE },
+        {D3DFMT_DXT4,                 "D3DFMT_DXT4", 4, 4, FALSE, TRUE,  TRUE },
+        {D3DFMT_DXT5,                 "D3DFMT_DXT5", 4, 4, FALSE, TRUE,  TRUE },
         /* ATI2N has 2x2 blocks on all AMD cards and Geforce 7 cards,
          * which doesn't match the format spec. On newer Nvidia cards
          * it has the correct 4x4 block size */
-        {MAKEFOURCC('A','T','I','2'), "ATI2N",       4, 4, TRUE},
-        /* YUY2 and UYVY are not supported in d3d8, there is no way
-         * to use them with this API considering their restrictions */
+        {MAKEFOURCC('A','T','I','2'), "ATI2N",       4, 4, TRUE,  FALSE, FALSE},
+        {D3DFMT_YUY2,                 "D3DFMT_YUY2", 2, 1, FALSE, FALSE, TRUE },
+        {D3DFMT_UYVY,                 "D3DFMT_UYVY", 2, 1, FALSE, FALSE, TRUE },
     };
     static const struct
     {
@@ -4379,16 +4380,44 @@ static void test_surface_lockrect_blocks(void)
         {D3DPOOL_SYSTEMMEM,     "D3DPOOL_SYSTEMMEM",TRUE},
         {D3DPOOL_MANAGED,       "D3DPOOL_MANAGED",  TRUE},
     };
+    static struct
+    {
+        D3DRESOURCETYPE rtype;
+        const char *type_name;
+        D3DPOOL pool;
+        const char *pool_name;
+        BOOL need_driver_support, need_runtime_support;
+    }
+    create_tests[] =
+    {
+        /* D3d8 only supports sysmem surfaces, which are created via CreateImageSurface. Other tests confirm
+         * that they are D3DPOOL_SYSTEMMEM surfaces, but their creation restriction behaves like the scratch
+         * pool in d3d9. */
+        {D3DRTYPE_SURFACE,     "D3DRTYPE_SURFACE",     D3DPOOL_SYSTEMMEM, "D3DPOOL_SYSTEMMEM", FALSE, TRUE },
+
+        {D3DRTYPE_TEXTURE,     "D3DRTYPE_TEXTURE",     D3DPOOL_DEFAULT,   "D3DPOOL_DEFAULT",   TRUE,  FALSE },
+        {D3DRTYPE_TEXTURE,     "D3DRTYPE_TEXTURE",     D3DPOOL_SYSTEMMEM, "D3DPOOL_SYSTEMMEM", TRUE,  FALSE },
+        {D3DRTYPE_TEXTURE,     "D3DRTYPE_TEXTURE",     D3DPOOL_MANAGED,   "D3DPOOL_MANAGED",   TRUE,  FALSE },
+        {D3DRTYPE_TEXTURE,     "D3DRTYPE_TEXTURE",     D3DPOOL_SCRATCH,   "D3DPOOL_SCRATCH",   FALSE, TRUE  },
+
+        {D3DRTYPE_CUBETEXTURE, "D3DRTYPE_CUBETEXTURE", D3DPOOL_DEFAULT,   "D3DPOOL_DEFAULT",   TRUE,  FALSE },
+        {D3DRTYPE_CUBETEXTURE, "D3DRTYPE_CUBETEXTURE", D3DPOOL_SYSTEMMEM, "D3DPOOL_SYSTEMMEM", TRUE,  FALSE },
+        {D3DRTYPE_CUBETEXTURE, "D3DRTYPE_CUBETEXTURE", D3DPOOL_MANAGED,   "D3DPOOL_MANAGED",   TRUE,  FALSE },
+        {D3DRTYPE_CUBETEXTURE, "D3DRTYPE_CUBETEXTURE", D3DPOOL_SCRATCH,   "D3DPOOL_SCRATCH",   FALSE, TRUE  },
+    };
     IDirect3DTexture8 *texture;
+    IDirect3DCubeTexture8 *cube_texture;
     IDirect3DSurface8 *surface;
     D3DLOCKED_RECT locked_rect;
     IDirect3DDevice8 *device;
-    unsigned int i, j;
+    unsigned int i, j, w, h;
     IDirect3D8 *d3d;
     ULONG refcount;
     HWND window;
     HRESULT hr;
     RECT rect;
+    BOOL tex_pow2, cube_pow2;
+    D3DCAPS8 caps;
 
     if (!(d3d = pDirect3DCreate8(D3D_SDK_VERSION)))
     {
@@ -4406,8 +4435,136 @@ static void test_surface_lockrect_blocks(void)
         return;
     }
 
+    hr = IDirect3DDevice8_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get caps, hr %#x.\n", hr);
+    tex_pow2 = caps.TextureCaps & D3DPTEXTURECAPS_POW2;
+    if (tex_pow2)
+        tex_pow2 = !(caps.TextureCaps & D3DPTEXTURECAPS_NONPOW2CONDITIONAL);
+    cube_pow2 = !!(caps.TextureCaps & D3DPTEXTURECAPS_CUBEMAP_POW2);
+
     for (i = 0; i < (sizeof(formats) / sizeof(*formats)); ++i)
     {
+        BOOL tex_support, cube_support, surface_support, format_known;
+
+        hr = IDirect3D8_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
+                0, D3DRTYPE_TEXTURE, formats[i].fmt);
+        tex_support = SUCCEEDED(hr);
+        hr = IDirect3D8_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
+                0, D3DRTYPE_CUBETEXTURE, formats[i].fmt);
+        cube_support = SUCCEEDED(hr);
+        hr = IDirect3D8_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
+                0, D3DRTYPE_SURFACE, formats[i].fmt);
+        surface_support = SUCCEEDED(hr);
+
+        /* Scratch pool in general allows texture creation even if the driver does
+         * not support the format. If the format is an extension format that is not
+         * known to the runtime, like ATI2N, some driver support is required for
+         * this to work.
+         *
+         * It is also possible that Windows Vista and Windows 7 d3d8 runtimes know
+         * about ATI2N. I cannot check this because all my Vista+ machines support
+         * ATI2N in hardware, but none of my WinXP machines do. */
+        format_known = tex_support || cube_support || surface_support;
+
+        for (w = 1; w <= 8; w++)
+        {
+            for (h = 1; h <= 8; h++)
+            {
+                BOOL block_aligned = TRUE;
+                BOOL size_is_pow2;
+
+                if (w & (formats[i].block_width - 1) || h & (formats[i].block_height - 1))
+                    block_aligned = FALSE;
+
+                size_is_pow2 = !(w & (w - 1) || h & (h - 1));
+
+                for (j = 0; j < sizeof(create_tests) / sizeof(*create_tests); j++)
+                {
+                    BOOL support, pow2;
+                    HRESULT expect_hr;
+                    BOOL may_succeed = FALSE;
+                    IUnknown **check_null;
+
+                    if (!formats[i].core_fmt)
+                    {
+                        /* AMD warns against creating ATI2N textures smaller than
+                         * the block size because the runtime cannot calculate the
+                         * correct texture size. Generalize this for all extension
+                         * formats. */
+                        if (w < formats[i].block_width || h < formats[i].block_height)
+                            continue;
+                    }
+
+                    texture = (IDirect3DTexture8 *)0xdeadbeef;
+                    cube_texture = (IDirect3DCubeTexture8 *)0xdeadbeef;
+                    surface = (IDirect3DSurface8 *)0xdeadbeef;
+
+                    switch (create_tests[j].rtype)
+                    {
+                        case D3DRTYPE_TEXTURE:
+                            check_null = (IUnknown **)&texture;
+                            hr = IDirect3DDevice8_CreateTexture(device, w, h, 1, 0,
+                                    formats[i].fmt, create_tests[j].pool, &texture);
+                            support = tex_support;
+                            pow2 = tex_pow2;
+                            break;
+
+                        case D3DRTYPE_CUBETEXTURE:
+                            if (w != h)
+                                continue;
+                            check_null = (IUnknown **)&cube_texture;
+                            hr = IDirect3DDevice8_CreateCubeTexture(device, w, 1, 0,
+                                    formats[i].fmt, create_tests[j].pool, &cube_texture);
+                            support = cube_support;
+                            pow2 = cube_pow2;
+                            break;
+
+                        case D3DRTYPE_SURFACE:
+                            check_null = (IUnknown **)&surface;
+                            hr = IDirect3DDevice8_CreateImageSurface(device, w, h,
+                                    formats[i].fmt, &surface);
+                            support = surface_support;
+                            pow2 = FALSE;
+                            break;
+
+                        default:
+                            pow2 = FALSE;
+                            support = FALSE;
+                            check_null = NULL;
+                            break;
+                    }
+
+                    if (create_tests[j].need_driver_support && !support)
+                        expect_hr = D3DERR_INVALIDCALL;
+                    else if (create_tests[j].need_runtime_support && !formats[i].core_fmt && !format_known)
+                        expect_hr = D3DERR_INVALIDCALL;
+                    else if (formats[i].create_size_checked && !block_aligned)
+                        expect_hr = D3DERR_INVALIDCALL;
+                    else if (pow2 && !size_is_pow2 && create_tests[j].need_driver_support)
+                        expect_hr = D3DERR_INVALIDCALL;
+                    else
+                        expect_hr = D3D_OK;
+
+                    if (!formats[i].core_fmt && !format_known && FAILED(expect_hr))
+                        may_succeed = TRUE;
+
+                    /* Wine knows about ATI2N and happily creates a scratch resource even if GL
+                     * does not support it. Accept scratch creation of extension formats on
+                     * Windows as well if it occurs. We don't really care if e.g. a Windows 7
+                     * on an r200 GPU creates scratch ATI2N texture even though the card doesn't
+                     * support it. */
+                    ok(hr == expect_hr || ((SUCCEEDED(hr) && may_succeed)),
+                            "Got unexpected hr %#x for format %s, pool %s, type %s, size %ux%u.\n",
+                            hr, formats[i].name, create_tests[j].pool_name, create_tests[j].type_name, w, h);
+
+                    if (FAILED(hr))
+                        ok(*check_null == NULL, "Got object ptr %p, expected NULL.\n", *check_null);
+                    else
+                        IUnknown_Release(*check_null);
+                }
+            }
+        }
+
         hr = IDirect3D8_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
                 D3DUSAGE_DYNAMIC, D3DRTYPE_TEXTURE, formats[i].fmt);
         if (FAILED(hr))
@@ -4488,6 +4645,38 @@ static void test_surface_lockrect_blocks(void)
 
             IDirect3DSurface8_Release(surface);
         }
+
+        if (formats[i].block_width == 1 && formats[i].block_height == 1)
+            continue;
+        if (!formats[i].core_fmt)
+            continue;
+
+        hr = IDirect3DDevice8_CreateTexture(device, formats[i].block_width, formats[i].block_height, 2,
+                D3DUSAGE_DYNAMIC, formats[i].fmt, D3DPOOL_DEFAULT, &texture);
+        ok(SUCCEEDED(hr), "Failed to create texture, hr %#x, format %s.\n", hr, formats[i].name);
+
+        hr = IDirect3DTexture8_LockRect(texture, 1, &locked_rect, NULL, 0);
+        ok(SUCCEEDED(hr), "Failed lock texture, hr %#x.\n", hr);
+        hr = IDirect3DTexture8_UnlockRect(texture, 1);
+        ok(SUCCEEDED(hr), "Failed lock texture, hr %#x.\n", hr);
+
+        rect.left = 0;
+        rect.top = 0;
+        rect.right = formats[i].block_width == 1 ? 1 : formats[i].block_width >> 1;
+        rect.bottom = formats[i].block_height == 1 ? 1 : formats[i].block_height >> 1;
+        hr = IDirect3DTexture8_LockRect(texture, 1, &locked_rect, &rect, 0);
+        ok(SUCCEEDED(hr), "Failed lock texture, hr %#x.\n", hr);
+        hr = IDirect3DTexture8_UnlockRect(texture, 1);
+        ok(SUCCEEDED(hr), "Failed lock texture, hr %#x.\n", hr);
+
+        rect.right = formats[i].block_width;
+        rect.bottom = formats[i].block_height;
+        hr = IDirect3DTexture8_LockRect(texture, 1, &locked_rect, &rect, 0);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+        if (SUCCEEDED(hr))
+            IDirect3DTexture8_UnlockRect(texture, 1);
+
+        IDirect3DTexture8_Release(texture);
     }
 
     refcount = IDirect3DDevice8_Release(device);
@@ -5203,7 +5392,7 @@ START_TEST(device)
         test_surface_dimensions();
         test_surface_format_null();
         test_surface_double_unlock();
-        test_surface_lockrect_blocks();
+        test_surface_blocks();
         test_set_palette();
         test_swvp_buffer();
         test_rtpatch();
