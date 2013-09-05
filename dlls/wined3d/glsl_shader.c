@@ -47,9 +47,6 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 #define WINED3D_GLSL_SAMPLE_LOD         0x4
 #define WINED3D_GLSL_SAMPLE_GRAD        0x8
 
-static const float srgb_const0[] = {0.41666f, 1.055f, 0.055f, 12.92f};  /* pow, mul_high, sub_high, mul_low */
-static const float srgb_const1[] = {0.0031308f, 0.0f, 0.0f, 0.0f};      /* cmp */
-
 struct glsl_dst_param
 {
     char reg_name[150];
@@ -251,61 +248,14 @@ static const char *shader_glsl_get_prefix(enum wined3d_shader_type type)
     }
 }
 
-/* This should be equivalent to using the %.8e format specifier, but always
- * using '.' as decimal separator. This doesn't handle +/-INF or NAN, since
- * the GLSL parser wouldn't be able to handle those anyway. */
-static void shader_glsl_ftoa(float value, char *s)
-{
-    int x, frac, exponent;
-    const char *sign = "";
-    double d;
-
-    d = value;
-    if (copysignf(1.0f, value) < 0.0f)
-    {
-        d = -d;
-        sign = "-";
-    }
-
-    if (d == 0.0f)
-    {
-        x = 0;
-        frac = 0;
-        exponent = 0;
-    }
-    else
-    {
-        double t, diff;
-
-        exponent = floorf(log10f(d));
-        d /= pow(10.0, exponent);
-
-        x = d;
-        t = (d - x) * 100000000;
-        frac = t;
-        diff = t - frac;
-
-        if ((diff > 0.5) || (diff == 0.5 && (frac & 1)))
-        {
-            if (++frac >= 100000000)
-            {
-                frac = 0;
-                ++x;
-            }
-        }
-    }
-
-    sprintf(s, "%s%d.%08de%+03d", sign, x, frac, exponent);
-}
-
 static void shader_glsl_append_imm_vec4(struct wined3d_shader_buffer *buffer, const float *values)
 {
     char str[4][16];
 
-    shader_glsl_ftoa(values[0], str[0]);
-    shader_glsl_ftoa(values[1], str[1]);
-    shader_glsl_ftoa(values[2], str[2]);
-    shader_glsl_ftoa(values[3], str[3]);
+    wined3d_ftoa(values[0], str[0]);
+    wined3d_ftoa(values[1], str[1]);
+    wined3d_ftoa(values[2], str[2]);
+    wined3d_ftoa(values[3], str[3]);
     shader_addline(buffer, "vec4(%s, %s, %s, %s)", str[0], str[1], str[2], str[3]);
 }
 
@@ -1275,10 +1225,10 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
         if (ps_args->srgb_correction)
         {
             shader_addline(buffer, "const vec4 srgb_const0 = ");
-            shader_glsl_append_imm_vec4(buffer, srgb_const0);
+            shader_glsl_append_imm_vec4(buffer, wined3d_srgb_const0);
             shader_addline(buffer, ";\n");
             shader_addline(buffer, "const vec4 srgb_const1 = ");
-            shader_glsl_append_imm_vec4(buffer, srgb_const1);
+            shader_glsl_append_imm_vec4(buffer, wined3d_srgb_const1);
             shader_addline(buffer, ";\n");
         }
         if (reg_maps->vpos || reg_maps->usesdsy)
@@ -1661,7 +1611,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
                     switch (reg->data_type)
                     {
                         case WINED3D_DATA_FLOAT:
-                            shader_glsl_ftoa(*(const float *)reg->immconst_data, register_name);
+                            wined3d_ftoa(*(const float *)reg->immconst_data, register_name);
                             break;
                         case WINED3D_DATA_INT:
                             sprintf(register_name, "%#x", reg->immconst_data[0]);
@@ -1681,10 +1631,10 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
                     switch (reg->data_type)
                     {
                         case WINED3D_DATA_FLOAT:
-                            shader_glsl_ftoa(*(const float *)&reg->immconst_data[0], imm_str[0]);
-                            shader_glsl_ftoa(*(const float *)&reg->immconst_data[1], imm_str[1]);
-                            shader_glsl_ftoa(*(const float *)&reg->immconst_data[2], imm_str[2]);
-                            shader_glsl_ftoa(*(const float *)&reg->immconst_data[3], imm_str[3]);
+                            wined3d_ftoa(*(const float *)&reg->immconst_data[0], imm_str[0]);
+                            wined3d_ftoa(*(const float *)&reg->immconst_data[1], imm_str[1]);
+                            wined3d_ftoa(*(const float *)&reg->immconst_data[2], imm_str[2]);
+                            wined3d_ftoa(*(const float *)&reg->immconst_data[3], imm_str[3]);
                             sprintf(register_name, "vec4(%s, %s, %s, %s)",
                                     imm_str[0], imm_str[1], imm_str[2], imm_str[3]);
                             break;
@@ -5491,10 +5441,10 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct wined3d_shader_buf
     if (settings->sRGB_write)
     {
         shader_addline(buffer, "const vec4 srgb_const0 = ");
-        shader_glsl_append_imm_vec4(buffer, srgb_const0);
+        shader_glsl_append_imm_vec4(buffer, wined3d_srgb_const0);
         shader_addline(buffer, ";\n");
         shader_addline(buffer, "const vec4 srgb_const1 = ");
-        shader_glsl_append_imm_vec4(buffer, srgb_const1);
+        shader_glsl_append_imm_vec4(buffer, wined3d_srgb_const1);
         shader_addline(buffer, ";\n");
     }
 
