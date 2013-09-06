@@ -207,7 +207,7 @@ DECLARE_INTERFACE_(IDirect3DRMObject,IUnknown)
     STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
-    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetName)(THIS_ const char *name) PURE;
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
 };
@@ -264,7 +264,7 @@ DECLARE_INTERFACE_(IDirect3DRMObject2,IUnknown)
     STDMETHOD(GetDirect3DRM)(THIS_ struct IDirect3DRM **d3drm) PURE;
     STDMETHOD(GetName)(THIS_ LPDWORD pSize, LPSTR pName) PURE;
     STDMETHOD(SetClientData)(THIS_ DWORD id, LPVOID pData, DWORD flags) PURE;
-    STDMETHOD(SetName)(THIS_ LPCSTR pName) PURE;
+    STDMETHOD(SetName)(THIS_ const char *name) PURE;
     STDMETHOD(GetAge)(THIS_ DWORD flags, LPDWORD pAge) PURE;
 };
 #undef INTERFACE
@@ -317,7 +317,7 @@ DECLARE_INTERFACE_(IDirect3DRMVisual,IDirect3DRMObject)
     STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
-    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetName)(THIS_ const char *name) PURE;
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
 };
@@ -372,7 +372,7 @@ DECLARE_INTERFACE_(IDirect3DRMDevice,IUnknown)
     STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK pFunc, LPVOID pArg) PURE;
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
-    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetName)(THIS_ const char *name) PURE;
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMDevice methods ***/
@@ -499,7 +499,7 @@ DECLARE_INTERFACE_(IDirect3DRMDevice2,IDirect3DRMDevice)
     STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK pFunc, LPVOID pArg) PURE;
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
-    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetName)(THIS_ const char *name) PURE;
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMDevice methods ***/
@@ -644,7 +644,7 @@ DECLARE_INTERFACE_(IDirect3DRMDevice3,IDirect3DRMObject)
     STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK pFunc, LPVOID pArg) PURE;
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
-    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetName)(THIS_ const char *name) PURE;
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMDevice methods ***/
@@ -804,7 +804,7 @@ DECLARE_INTERFACE_(IDirect3DRMViewport,IDirect3DRMObject)
     STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
-    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetName)(THIS_ const char *name) PURE;
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMViewport methods ***/
@@ -944,7 +944,7 @@ DECLARE_INTERFACE_(IDirect3DRMViewport2,IDirect3DRMObject)
     STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
-    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetName)(THIS_ const char *name) PURE;
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMViewport2 methods ***/
@@ -1092,7 +1092,7 @@ DECLARE_INTERFACE_(IDirect3DRMFrame,IDirect3DRMVisual)
     STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
-    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetName)(THIS_ const char *name) PURE;
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMFrame methods ***/
@@ -1325,7 +1325,7 @@ DECLARE_INTERFACE_(IDirect3DRMFrame2,IDirect3DRMFrame)
     STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
-    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetName)(THIS_ const char *name) PURE;
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMFrame methods ***/
@@ -1407,7 +1407,7 @@ DECLARE_INTERFACE_(IDirect3DRMFrame2,IDirect3DRMFrame)
     STDMETHOD(SetQuaternion)(THIS_ IDirect3DRMFrame *reference, D3DRMQUATERNION *q) PURE;
     STDMETHOD(RayPick)(THIS_ IDirect3DRMFrame *reference, D3DRMRAY *ray, DWORD flags,
             struct IDirect3DRMPicked2Array **return_visuals) PURE;
-    STDMETHOD(Save)(THIS_ LPCSTR filename, D3DRMXOFFORMAT d3dFormat, D3DRMSAVEOPTIONS d3dSaveFlags);
+    STDMETHOD(Save)(THIS_ const char *filename, D3DRMXOFFORMAT format, D3DRMSAVEOPTIONS flags);
 };
 #undef INTERFACE
 
@@ -1607,7 +1607,7 @@ DECLARE_INTERFACE_(IDirect3DRMFrame3,IDirect3DRMVisual)
     STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
-    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetName)(THIS_ const char *name) PURE;
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMFrame3 methods ***/
@@ -1687,7 +1687,7 @@ DECLARE_INTERFACE_(IDirect3DRMFrame3,IDirect3DRMVisual)
     STDMETHOD(SetQuaternion)(THIS_ IDirect3DRMFrame3 *reference, D3DRMQUATERNION *q) PURE;
     STDMETHOD(RayPick)(THIS_ IDirect3DRMFrame3 *reference, D3DRMRAY *ray, DWORD flags,
             struct IDirect3DRMPicked2Array **return_visuals) PURE;
-    STDMETHOD(Save)(THIS_ LPCSTR filename, D3DRMXOFFORMAT d3dFormat, D3DRMSAVEOPTIONS d3dSaveFlags);
+    STDMETHOD(Save)(THIS_ const char *filename, D3DRMXOFFORMAT format, D3DRMSAVEOPTIONS flags);
     STDMETHOD(TransformVectors)(THIS_ IDirect3DRMFrame3 *reference, DWORD vector_count,
             D3DVECTOR *dst_vectors, D3DVECTOR *src_vectors) PURE;
     STDMETHOD(InverseTransformVectors)(THIS_ IDirect3DRMFrame3 *reference, DWORD vector_count,
@@ -1905,7 +1905,7 @@ DECLARE_INTERFACE_(IDirect3DRMMesh,IDirect3DRMVisual)
     STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
-    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetName)(THIS_ const char *name) PURE;
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMMesh methods ***/
@@ -2020,7 +2020,7 @@ DECLARE_INTERFACE_(IDirect3DRMProgressiveMesh,IDirect3DRMVisual)
     STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
-    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetName)(THIS_ const char *name) PURE;
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMProgressiveMesh methods ***/
@@ -2130,7 +2130,7 @@ DECLARE_INTERFACE_(IDirect3DRMShadow,IDirect3DRMVisual)
     STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
-    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetName)(THIS_ const char *name) PURE;
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMShadow methods ***/
@@ -2189,7 +2189,7 @@ DECLARE_INTERFACE_(IDirect3DRMShadow2,IDirect3DRMVisual)
     STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
-    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetName)(THIS_ const char *name) PURE;
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMShadow methods ***/
@@ -2277,7 +2277,7 @@ DECLARE_INTERFACE_(IDirect3DRMFace,IDirect3DRMObject)
     STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
-    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetName)(THIS_ const char *name) PURE;
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMFace methods ***/
@@ -2387,7 +2387,7 @@ DECLARE_INTERFACE_(IDirect3DRMFace2,IDirect3DRMObject)
     STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
-    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetName)(THIS_ const char *name) PURE;
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMFace methods ***/
@@ -2497,7 +2497,7 @@ DECLARE_INTERFACE_(IDirect3DRMMeshBuilder,IDirect3DRMVisual)
     STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
-    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetName)(THIS_ const char *name) PURE;
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMMeshBuilder methods ***/
@@ -2668,7 +2668,7 @@ DECLARE_INTERFACE_(IDirect3DRMMeshBuilder2,IDirect3DRMMeshBuilder)
     STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
-    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetName)(THIS_ const char *name) PURE;
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMMeshBuilder methods ***/
@@ -2848,7 +2848,7 @@ DECLARE_INTERFACE_(IDirect3DRMMeshBuilder3,IDirect3DRMVisual)
     STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
-    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetName)(THIS_ const char *name) PURE;
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMMeshBuilder3 methods ***/
@@ -3084,7 +3084,7 @@ DECLARE_INTERFACE_(IDirect3DRMLight,IDirect3DRMObject)
     STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
-    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetName)(THIS_ const char *name) PURE;
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMLight methods ***/
@@ -3196,7 +3196,7 @@ DECLARE_INTERFACE_(IDirect3DRMTexture, IDirect3DRMVisual)
     STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
-    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetName)(THIS_ const char *name) PURE;
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMTexture methods ***/
@@ -3308,7 +3308,7 @@ DECLARE_INTERFACE_(IDirect3DRMTexture2, IDirect3DRMTexture)
     STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
-    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetName)(THIS_ const char *name) PURE;
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMTexture methods ***/
@@ -3333,7 +3333,7 @@ DECLARE_INTERFACE_(IDirect3DRMTexture2, IDirect3DRMTexture)
     STDMETHOD_(D3DCOLOR, GetDecalTransparentColor)(THIS) PURE;
     /*** IDirect3DRMTexture2 methods ***/
     STDMETHOD(InitFromImage)(THIS_ D3DRMIMAGE *image) PURE;
-    STDMETHOD(InitFromResource2)(THIS_ HMODULE hModule, LPCSTR /* LPCTSTR */ strName, LPCSTR /* LPCTSTR */ strType) PURE;
+    STDMETHOD(InitFromResource2)(THIS_ HMODULE module, const char *name, const char *type) PURE;
     STDMETHOD(GenerateMIPMap)(THIS_ DWORD) PURE;
 };
 #undef INTERFACE
@@ -3432,7 +3432,7 @@ DECLARE_INTERFACE_(IDirect3DRMTexture3, IDirect3DRMVisual)
     STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
-    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetName)(THIS_ const char *name) PURE;
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMTexture3 methods ***/
@@ -3456,7 +3456,7 @@ DECLARE_INTERFACE_(IDirect3DRMTexture3, IDirect3DRMVisual)
     STDMETHOD_(BOOL, GetDecalTransparency)(THIS) PURE;
     STDMETHOD_(D3DCOLOR, GetDecalTransparentColor)(THIS) PURE;
     STDMETHOD(InitFromImage)(THIS_ D3DRMIMAGE *image) PURE;
-    STDMETHOD(InitFromResource2)(THIS_ HMODULE hModule, LPCSTR /* LPCTSTR */ strName, LPCSTR /* LPCTSTR */ strType) PURE;
+    STDMETHOD(InitFromResource2)(THIS_ HMODULE module, const char *name, const char *type) PURE;
     STDMETHOD(GenerateMIPMap)(THIS_ DWORD) PURE;
     STDMETHOD(GetSurface)(THIS_ DWORD flags, IDirectDrawSurface **surface) PURE;
     STDMETHOD(SetCacheOptions)(THIS_ LONG lImportance, DWORD dwFlags) PURE;
@@ -3568,7 +3568,7 @@ DECLARE_INTERFACE_(IDirect3DRMWrap, IDirect3DRMObject)
     STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
-    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetName)(THIS_ const char *name) PURE;
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMWrap methods ***/
@@ -3634,7 +3634,7 @@ DECLARE_INTERFACE_(IDirect3DRMMaterial, IDirect3DRMObject)
     STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
-    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetName)(THIS_ const char *name) PURE;
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMMaterial methods ***/
@@ -3707,7 +3707,7 @@ DECLARE_INTERFACE_(IDirect3DRMMaterial2, IDirect3DRMObject)
     STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
-    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetName)(THIS_ const char *name) PURE;
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMMaterial2 methods ***/
@@ -3786,7 +3786,7 @@ DECLARE_INTERFACE_(IDirect3DRMAnimation, IDirect3DRMObject)
     STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
-    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetName)(THIS_ const char *name) PURE;
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMAnimation methods ***/
@@ -3865,7 +3865,7 @@ DECLARE_INTERFACE_(IDirect3DRMAnimation2, IDirect3DRMObject)
     STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
-    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetName)(THIS_ const char *name) PURE;
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMAnimation2 methods ***/
@@ -3959,7 +3959,7 @@ DECLARE_INTERFACE_(IDirect3DRMAnimationSet, IDirect3DRMObject)
     STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
-    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetName)(THIS_ const char *name) PURE;
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMAnimationSet methods ***/
@@ -4027,7 +4027,7 @@ DECLARE_INTERFACE_(IDirect3DRMAnimationSet2, IDirect3DRMObject)
     STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
-    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetName)(THIS_ const char *name) PURE;
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMAnimationSet2 methods ***/
@@ -4098,7 +4098,7 @@ DECLARE_INTERFACE_(IDirect3DRMUserVisual, IDirect3DRMVisual)
     STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
-    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetName)(THIS_ const char *name) PURE;
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMUserVisual methods ***/
@@ -4559,7 +4559,7 @@ DECLARE_INTERFACE_(IDirect3DRMInterpolator, IDirect3DRMObject)
     STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
-    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetName)(THIS_ const char *name) PURE;
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMInterpolator methods ***/
@@ -4632,7 +4632,7 @@ DECLARE_INTERFACE_(IDirect3DRMClippedVisual, IDirect3DRMVisual)
     STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
-    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetName)(THIS_ const char *name) PURE;
     STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
     /*** IDirect3DRMClippedVisual methods ***/

@@ -145,11 +145,9 @@ static DWORD WINAPI IDirect3DRMLightImpl_GetAppData(IDirect3DRMLight* iface)
     return 0;
 }
 
-static HRESULT WINAPI IDirect3DRMLightImpl_SetName(IDirect3DRMLight* iface, LPCSTR name)
+static HRESULT WINAPI IDirect3DRMLightImpl_SetName(IDirect3DRMLight *iface, const char *name)
 {
-    IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
-
-    FIXME("(%p/%p)->(%s): stub\n", iface, This, name);
+    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
 
     return E_NOTIMPL;
 }

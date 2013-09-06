@@ -150,11 +150,9 @@ static DWORD WINAPI IDirect3DRMFaceImpl_GetAppData(IDirect3DRMFace* iface)
     return 0;
 }
 
-static HRESULT WINAPI IDirect3DRMFaceImpl_SetName(IDirect3DRMFace* iface, LPCSTR name)
+static HRESULT WINAPI IDirect3DRMFaceImpl_SetName(IDirect3DRMFace *iface, const char *name)
 {
-    IDirect3DRMFaceImpl *This = impl_from_IDirect3DRMFace(iface);
-
-    FIXME("(%p/%p)->(%s): stub\n", iface, This, name);
+    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
 
     return E_NOTIMPL;
 }
@@ -472,11 +470,9 @@ static DWORD WINAPI IDirect3DRMFace2Impl_GetAppData(IDirect3DRMFace2* iface)
     return 0;
 }
 
-static HRESULT WINAPI IDirect3DRMFace2Impl_SetName(IDirect3DRMFace2* iface, LPCSTR name)
+static HRESULT WINAPI IDirect3DRMFace2Impl_SetName(IDirect3DRMFace2 *iface, const char *name)
 {
-    IDirect3DRMFaceImpl *This = impl_from_IDirect3DRMFace2(iface);
-
-    FIXME("(%p/%p)->(%s): stub\n", iface, This, name);
+    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
 
     return E_NOTIMPL;
 }

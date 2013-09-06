@@ -141,9 +141,9 @@ static DWORD WINAPI IDirect3DRMMaterial2Impl_GetAppData(IDirect3DRMMaterial2* if
     return 0;
 }
 
-static HRESULT WINAPI IDirect3DRMMaterial2Impl_SetName(IDirect3DRMMaterial2* iface, LPCSTR name)
+static HRESULT WINAPI IDirect3DRMMaterial2Impl_SetName(IDirect3DRMMaterial2 *iface, const char *name)
 {
-    FIXME("(%p)->(%s): stub\n", iface, name);
+    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
 
     return E_NOTIMPL;
 }

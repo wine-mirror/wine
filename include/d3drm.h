@@ -89,8 +89,8 @@ DECLARE_INTERFACE_(IDirect3DRM,IUnknown)
     STDMETHOD(CreateUserVisual)(THIS_ D3DRMUSERVISUALCALLBACK cb, void *ctx, IDirect3DRMUserVisual **visual) PURE;
     STDMETHOD(LoadTexture)(THIS_ const char *filename, IDirect3DRMTexture **texture) PURE;
     STDMETHOD(LoadTextureFromResource)(THIS_ HRSRC resource, IDirect3DRMTexture **texture) PURE;
-    STDMETHOD(SetSearchPath)(THIS_ LPCSTR) PURE;
-    STDMETHOD(AddSearchPath)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetSearchPath)(THIS_ const char *path) PURE;
+    STDMETHOD(AddSearchPath)(THIS_ const char *path) PURE;
     STDMETHOD(GetSearchPath)(THIS_ DWORD *size_return, LPSTR path_return) PURE;
     STDMETHOD(SetDefaultTextureColors)(THIS_ DWORD) PURE;
     STDMETHOD(SetDefaultTextureShades)(THIS_ DWORD) PURE;
@@ -229,8 +229,8 @@ DECLARE_INTERFACE_(IDirect3DRM2,IUnknown)
     STDMETHOD(LoadTexture)(THIS_ const char *filename, IDirect3DRMTexture2 **texture) PURE;
     STDMETHOD(LoadTextureFromResource)(THIS_ HMODULE module, const char *resource_name,
             const char *resource_type, IDirect3DRMTexture2 **texture) PURE;
-    STDMETHOD(SetSearchPath)(THIS_ LPCSTR) PURE;
-    STDMETHOD(AddSearchPath)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetSearchPath)(THIS_ const char *path) PURE;
+    STDMETHOD(AddSearchPath)(THIS_ const char *path) PURE;
     STDMETHOD(GetSearchPath)(THIS_ DWORD *size_return, LPSTR path_return) PURE;
     STDMETHOD(SetDefaultTextureColors)(THIS_ DWORD) PURE;
     STDMETHOD(SetDefaultTextureShades)(THIS_ DWORD) PURE;
@@ -372,8 +372,8 @@ DECLARE_INTERFACE_(IDirect3DRM3,IUnknown)
     STDMETHOD(LoadTexture)(THIS_ const char *filename, IDirect3DRMTexture3 **texture) PURE;
     STDMETHOD(LoadTextureFromResource)(THIS_ HMODULE module, const char *resource_name,
             const char *resource_type, IDirect3DRMTexture3 **texture) PURE;
-    STDMETHOD(SetSearchPath)(THIS_ LPCSTR) PURE;
-    STDMETHOD(AddSearchPath)(THIS_ LPCSTR) PURE;
+    STDMETHOD(SetSearchPath)(THIS_ const char *path) PURE;
+    STDMETHOD(AddSearchPath)(THIS_ const char *path) PURE;
     STDMETHOD(GetSearchPath)(THIS_ DWORD *size_return, LPSTR path_return) PURE;
     STDMETHOD(SetDefaultTextureColors)(THIS_ DWORD) PURE;
     STDMETHOD(SetDefaultTextureShades)(THIS_ DWORD) PURE;

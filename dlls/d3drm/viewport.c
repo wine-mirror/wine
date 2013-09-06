@@ -154,11 +154,9 @@ static DWORD WINAPI IDirect3DRMViewportImpl_GetAppData(IDirect3DRMViewport* ifac
     return 0;
 }
 
-static HRESULT WINAPI IDirect3DRMViewportImpl_SetName(IDirect3DRMViewport* iface, LPCSTR name)
+static HRESULT WINAPI IDirect3DRMViewportImpl_SetName(IDirect3DRMViewport *iface, const char *name)
 {
-    IDirect3DRMViewportImpl *This = impl_from_IDirect3DRMViewport(iface);
-
-    FIXME("(%p/%p)->(%s): stub\n", iface, This, name);
+    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
 
     return E_NOTIMPL;
 }
@@ -554,11 +552,9 @@ static DWORD WINAPI IDirect3DRMViewport2Impl_GetAppData(IDirect3DRMViewport2* if
     return 0;
 }
 
-static HRESULT WINAPI IDirect3DRMViewport2Impl_SetName(IDirect3DRMViewport2* iface, LPCSTR name)
+static HRESULT WINAPI IDirect3DRMViewport2Impl_SetName(IDirect3DRMViewport2 *iface, const char *name)
 {
-    IDirect3DRMViewportImpl *This = impl_from_IDirect3DRMViewport2(iface);
-
-    FIXME("(%p/%p)->(%s): stub\n", iface, This, name);
+    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
 
     return E_NOTIMPL;
 }

@@ -168,11 +168,9 @@ static DWORD WINAPI IDirect3DRMDevice2Impl_GetAppData(IDirect3DRMDevice2* iface)
     return 0;
 }
 
-static HRESULT WINAPI IDirect3DRMDevice2Impl_SetName(IDirect3DRMDevice2* iface, LPCSTR name)
+static HRESULT WINAPI IDirect3DRMDevice2Impl_SetName(IDirect3DRMDevice2 *iface, const char *name)
 {
-    IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice2(iface);
-
-    FIXME("(%p/%p)->(%s): stub\n", iface, This, name);
+    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
 
     return E_NOTIMPL;
 }
@@ -580,11 +578,9 @@ static DWORD WINAPI IDirect3DRMDevice3Impl_GetAppData(IDirect3DRMDevice3* iface)
     return 0;
 }
 
-static HRESULT WINAPI IDirect3DRMDevice3Impl_SetName(IDirect3DRMDevice3* iface, LPCSTR name)
+static HRESULT WINAPI IDirect3DRMDevice3Impl_SetName(IDirect3DRMDevice3 *iface, const char *name)
 {
-    IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice3(iface);
-
-    FIXME("(%p/%p)->(%s): stub\n", iface, This, name);
+    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
 
     return E_NOTIMPL;
 }
@@ -1070,11 +1066,9 @@ static DWORD WINAPI IDirect3DRMWinDeviceImpl_GetAppData(IDirect3DRMWinDevice* if
     return 0;
 }
 
-static HRESULT WINAPI IDirect3DRMWinDeviceImpl_SetName(IDirect3DRMWinDevice* iface, LPCSTR name)
+static HRESULT WINAPI IDirect3DRMWinDeviceImpl_SetName(IDirect3DRMWinDevice *iface, const char *name)
 {
-    IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMWinDevice(iface);
-
-    FIXME("(%p/%p)->(%s): stub\n", iface, This, name);
+    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
 
     return E_NOTIMPL;
 }

@@ -464,14 +464,13 @@ static DWORD WINAPI IDirect3DRMMeshBuilder2Impl_GetAppData(IDirect3DRMMeshBuilde
     return 0;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_SetName(IDirect3DRMMeshBuilder2* iface,
-                                                          LPCSTR name)
+static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_SetName(IDirect3DRMMeshBuilder2 *iface, const char *name)
 {
-    IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder2(iface);
+    IDirect3DRMMeshBuilderImpl *mesh_builder = impl_from_IDirect3DRMMeshBuilder2(iface);
 
-    TRACE("(%p)->(%s)\n", This, debugstr_a(name));
+    TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
 
-    return IDirect3DRMMeshBuilder3_SetName(&This->IDirect3DRMMeshBuilder3_iface, name);
+    return IDirect3DRMMeshBuilder3_SetName(&mesh_builder->IDirect3DRMMeshBuilder3_iface, name);
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_GetName(IDirect3DRMMeshBuilder2* iface,
@@ -1049,13 +1048,12 @@ static DWORD WINAPI IDirect3DRMMeshBuilder3Impl_GetAppData(IDirect3DRMMeshBuilde
     return 0;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_SetName(IDirect3DRMMeshBuilder3* iface,
-                                                          LPCSTR name)
+static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_SetName(IDirect3DRMMeshBuilder3 *iface, const char *name)
 {
-    IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
+    IDirect3DRMMeshBuilderImpl *mesh_builder = impl_from_IDirect3DRMMeshBuilder3(iface);
     char *string = NULL;
 
-    TRACE("(%p)->(%s)\n", This, debugstr_a(name));
+    TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
 
     if (name)
     {
@@ -1063,8 +1061,8 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_SetName(IDirect3DRMMeshBuilder
         if (!string) return E_OUTOFMEMORY;
         strcpy(string, name);
     }
-    HeapFree(GetProcessHeap(), 0, This->name);
-    This->name = string;
+    HeapFree(GetProcessHeap(), 0, mesh_builder->name);
+    mesh_builder->name = string;
 
     return D3DRM_OK;
 }
@@ -2589,12 +2587,9 @@ static DWORD WINAPI IDirect3DRMMeshImpl_GetAppData(IDirect3DRMMesh* iface)
     return 0;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshImpl_SetName(IDirect3DRMMesh* iface,
-                                                  LPCSTR pName)
+static HRESULT WINAPI IDirect3DRMMeshImpl_SetName(IDirect3DRMMesh *iface, const char *name)
 {
-    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
-
-    FIXME("(%p)->(%s): stub\n", This, pName);
+    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
 
     return E_NOTIMPL;
 }

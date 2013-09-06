@@ -329,20 +329,16 @@ static HRESULT WINAPI IDirect3DRMImpl_LoadTextureFromResource(IDirect3DRM *iface
     return Direct3DRMTexture_create(&IID_IDirect3DRMTexture, (IUnknown **)texture);
 }
 
-static HRESULT WINAPI IDirect3DRMImpl_SetSearchPath(IDirect3DRM* iface, LPCSTR path)
+static HRESULT WINAPI IDirect3DRMImpl_SetSearchPath(IDirect3DRM *iface, const char *path)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM(iface);
-
-    FIXME("(%p/%p)->(%s): stub\n", iface, This, path);
+    FIXME("iface %p, path %s stub!\n", iface, debugstr_a(path));
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMImpl_AddSearchPath(IDirect3DRM* iface, LPCSTR path)
+static HRESULT WINAPI IDirect3DRMImpl_AddSearchPath(IDirect3DRM *iface, const char *path)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM(iface);
-
-    FIXME("(%p/%p)->(%s): stub\n", iface, This, path);
+    FIXME("iface %p, path %s stub!\n", iface, debugstr_a(path));
 
     return E_NOTIMPL;
 }
@@ -696,20 +692,16 @@ static HRESULT WINAPI IDirect3DRM2Impl_LoadTextureFromResource(IDirect3DRM2 *ifa
     return Direct3DRMTexture_create(&IID_IDirect3DRMTexture2, (IUnknown **)texture);
 }
 
-static HRESULT WINAPI IDirect3DRM2Impl_SetSearchPath(IDirect3DRM2* iface, LPCSTR path)
+static HRESULT WINAPI IDirect3DRM2Impl_SetSearchPath(IDirect3DRM2 *iface, const char *path)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM2(iface);
-
-    FIXME("(%p/%p)->(%s): stub\n", iface, This, path);
+    FIXME("iface %p, path %s stub!\n", iface, debugstr_a(path));
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRM2Impl_AddSearchPath(IDirect3DRM2* iface, LPCSTR path)
+static HRESULT WINAPI IDirect3DRM2Impl_AddSearchPath(IDirect3DRM2 *iface, const char *path)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM2(iface);
-
-    FIXME("(%p/%p)->(%s): stub\n", iface, This, path);
+    FIXME("iface %p, path %s stub!\n", iface, debugstr_a(path));
 
     return E_NOTIMPL;
 }
@@ -1082,20 +1074,16 @@ static HRESULT WINAPI IDirect3DRM3Impl_LoadTextureFromResource(IDirect3DRM3 *ifa
     return Direct3DRMTexture_create(&IID_IDirect3DRMTexture3, (IUnknown **)texture);
 }
 
-static HRESULT WINAPI IDirect3DRM3Impl_SetSearchPath(IDirect3DRM3* iface, LPCSTR path)
+static HRESULT WINAPI IDirect3DRM3Impl_SetSearchPath(IDirect3DRM3 *iface, const char *path)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM3(iface);
-
-    FIXME("(%p/%p)->(%s): stub\n", iface, This, path);
+    FIXME("iface %p, path %s stub!\n", iface, debugstr_a(path));
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRM3Impl_AddSearchPath(IDirect3DRM3* iface, LPCSTR path)
+static HRESULT WINAPI IDirect3DRM3Impl_AddSearchPath(IDirect3DRM3* iface, const char *path)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM3(iface);
-
-    FIXME("(%p/%p)->(%s): stub\n", iface, This, path);
+    FIXME("iface %p, path %s stub!\n", iface, debugstr_a(path));
 
     return E_NOTIMPL;
 }

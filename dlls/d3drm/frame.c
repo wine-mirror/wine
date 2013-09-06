@@ -561,11 +561,9 @@ static DWORD WINAPI IDirect3DRMFrame2Impl_GetAppData(IDirect3DRMFrame2* iface)
     return 0;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_SetName(IDirect3DRMFrame2* iface, LPCSTR name)
+static HRESULT WINAPI IDirect3DRMFrame2Impl_SetName(IDirect3DRMFrame2 *iface, const char *name)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%s): stub\n", iface, This, name);
+    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
 
     return E_NOTIMPL;
 }
@@ -1419,11 +1417,9 @@ static DWORD WINAPI IDirect3DRMFrame3Impl_GetAppData(IDirect3DRMFrame3* iface)
     return 0;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_SetName(IDirect3DRMFrame3* iface, LPCSTR name)
+static HRESULT WINAPI IDirect3DRMFrame3Impl_SetName(IDirect3DRMFrame3 *iface, const char *name)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%s): stub\n", iface, This, name);
+    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
 
     return E_NOTIMPL;
 }
@@ -2356,13 +2352,11 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_RayPick(IDirect3DRMFrame3 *iface, ID
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_Save(IDirect3DRMFrame3* iface, LPCSTR filename,
-                                                 D3DRMXOFFORMAT d3dFormat,
-                                                 D3DRMSAVEOPTIONS d3dSaveFlags)
+static HRESULT WINAPI IDirect3DRMFrame3Impl_Save(IDirect3DRMFrame3 *iface,
+        const char *filename, D3DRMXOFFORMAT format, D3DRMSAVEOPTIONS flags)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%p,%u,%u): stub\n", iface, This, filename, d3dFormat, d3dSaveFlags);
+    FIXME("iface %p, filename %s, format %#x, flags %#x stub!\n",
+            iface, debugstr_a(filename), format, flags);
 
     return E_NOTIMPL;
 }

@@ -146,9 +146,9 @@ static DWORD WINAPI IDirect3DRMTexture2Impl_GetAppData(IDirect3DRMTexture2* ifac
     return IDirect3DRMTexture3_GetAppData(&This->IDirect3DRMTexture3_iface);
 }
 
-static HRESULT WINAPI IDirect3DRMTexture2Impl_SetName(IDirect3DRMTexture2* iface, LPCSTR name)
+static HRESULT WINAPI IDirect3DRMTexture2Impl_SetName(IDirect3DRMTexture2 *iface, const char *name)
 {
-    FIXME("(%p)->(%s): stub\n", iface, name);
+    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
 
     return E_NOTIMPL;
 }
@@ -354,12 +354,11 @@ static HRESULT WINAPI IDirect3DRMTexture2Impl_InitFromImage(IDirect3DRMTexture2 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMTexture2Impl_InitFromResource2(IDirect3DRMTexture2* iface, HMODULE module,
-                                                               LPCSTR /* LPCTSTR */ name, LPCSTR /* LPCTSTR */ type)
+static HRESULT WINAPI IDirect3DRMTexture2Impl_InitFromResource2(IDirect3DRMTexture2 *iface,
+        HMODULE module, const char *name, const char *type)
 {
-    IDirect3DRMTextureImpl *This = impl_from_IDirect3DRMTexture2(iface);
-
-    FIXME("(%p/%p)->(%p, %s, %s): stub\n", iface, This, module, debugstr_a(name), debugstr_a(type));
+    FIXME("iface %p, module %p, name %s, type %s stub!\n",
+            iface, module, debugstr_a(name), debugstr_a(type));
 
     return E_NOTIMPL;
 }
@@ -516,9 +515,9 @@ static DWORD WINAPI IDirect3DRMTexture3Impl_GetAppData(IDirect3DRMTexture3* ifac
     return This->app_data;
 }
 
-static HRESULT WINAPI IDirect3DRMTexture3Impl_SetName(IDirect3DRMTexture3* iface, LPCSTR name)
+static HRESULT WINAPI IDirect3DRMTexture3Impl_SetName(IDirect3DRMTexture3 *iface, const char *name)
 {
-    FIXME("(%p)->(%s): stub\n", iface, name);
+    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
 
     return E_NOTIMPL;
 }
@@ -729,12 +728,11 @@ static HRESULT WINAPI IDirect3DRMTexture3Impl_InitFromImage(IDirect3DRMTexture3 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMTexture3Impl_InitFromResource2(IDirect3DRMTexture3* iface, HMODULE module,
-                                                               LPCSTR /* LPCTSTR */ name, LPCSTR /* LPCTSTR */ type)
+static HRESULT WINAPI IDirect3DRMTexture3Impl_InitFromResource2(IDirect3DRMTexture3 *iface,
+        HMODULE module, const char *name, const char *type)
 {
-    IDirect3DRMTextureImpl *This = impl_from_IDirect3DRMTexture3(iface);
-
-    FIXME("(%p/%p)->(%p, %s, %s): stub\n", iface, This, module, debugstr_a(name), debugstr_a(type));
+    FIXME("iface %p, module %p, name %s, type %s stub!\n",
+            iface, module, debugstr_a(name), debugstr_a(type));
 
     return E_NOTIMPL;
 }
