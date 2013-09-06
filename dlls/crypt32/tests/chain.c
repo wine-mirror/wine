@@ -3998,7 +3998,7 @@ static void testGetCertChain(void)
     ok(ret, "CertGetCertificateChain failed: %u\n", GetLastError());
 
     if(chain->TrustStatus.dwErrorStatus == CERT_TRUST_IS_PARTIAL_CHAIN) { /* win2k */
-        todo_wine win_skip("winehq cert reported as partial chain, skipping its tests\n");
+        win_skip("winehq cert reported as partial chain, skipping its tests\n");
         pCertFreeCertificateChain(chain);
         CertCloseStore(store, 0);
         return;
