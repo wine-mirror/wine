@@ -1709,36 +1709,15 @@ static const struct wined3d_surface_ops gdi_surface_ops =
     gdi_surface_unmap,
 };
 
-void surface_set_texture_name(struct wined3d_surface *surface, GLuint new_name, BOOL srgb)
+void surface_set_texture_name(struct wined3d_surface *surface, GLuint name, BOOL srgb)
 {
-    GLuint *name;
-    DWORD flag;
+    TRACE("surface %p, name %u, srgb %#x.\n", surface, name, srgb);
 
-    TRACE("surface %p, new_name %u, srgb %#x.\n", surface, new_name, srgb);
-
-    if(srgb)
-    {
-        name = &surface->texture_name_srgb;
-        flag = SFLAG_INSRGBTEX;
-    }
+    if (srgb)
+        surface->texture_name_srgb = name;
     else
-    {
-        name = &surface->texture_name;
-        flag = SFLAG_INTEXTURE;
-    }
+        surface->texture_name = name;
 
-    if (!*name && new_name)
-    {
-        /* FIXME: We shouldn't need to remove SFLAG_INTEXTURE if the
-         * surface has no texture name yet. See if we can get rid of this. */
-        if (surface->flags & flag)
-        {
-            ERR("Surface has %s set, but no texture name.\n", debug_surflocation(flag));
-            surface_modify_location(surface, flag, FALSE);
-        }
-    }
-
-    *name = new_name;
     surface_force_reload(surface);
 }
 
