@@ -35,7 +35,7 @@
 @ stub WinStationFreeGAPMemory
 @ stub WinStationFreeMemory
 @ stub WinStationGenerateLicense
-@ stub WinStationGetAllProcesses
+@ stdcall WinStationGetAllProcesses(ptr long ptr ptr)
 @ stub WinStationGetLanAdapterNameA
 @ stub WinStationGetLanAdapterNameW
 @ stub WinStationGetMachinePolicy
