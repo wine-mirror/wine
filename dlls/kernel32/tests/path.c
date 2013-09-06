@@ -42,6 +42,14 @@
 
 #define NOT_A_VALID_DRIVE '@'
 
+#ifdef __i386__
+#define ARCH "x86"
+#elif defined __x86_64__
+#define ARCH "amd64"
+#else
+#define ARCH "none"
+#endif
+
 /* the following characters don't work well with GetFullPathNameA
    in Win98.  I don't know if this is a FAT thing, or if it is an OS thing
    but I don't test these characters now.
@@ -60,6 +68,12 @@ static BOOL  (WINAPI *pNeedCurrentDirectoryForExePathW)(LPCWSTR);
 
 static DWORD (WINAPI *pSearchPathA)(LPCSTR,LPCSTR,LPCSTR,DWORD,LPSTR,LPSTR*);
 static DWORD (WINAPI *pSearchPathW)(LPCWSTR,LPCWSTR,LPCWSTR,DWORD,LPWSTR,LPWSTR*);
+
+static BOOL   (WINAPI *pActivateActCtx)(HANDLE,ULONG_PTR*);
+static HANDLE (WINAPI *pCreateActCtxW)(PCACTCTXW);
+static BOOL   (WINAPI *pDeactivateActCtx)(DWORD,ULONG_PTR);
+static BOOL   (WINAPI *pGetCurrentActCtx)(HANDLE *);
+static void   (WINAPI *pReleaseActCtx)(HANDLE);
 
 /* a structure to deal with wine todos somewhat cleanly */
 typedef struct {
@@ -1549,10 +1563,89 @@ static void test_drive_letter_case(void)
 #undef is_upper_case_letter
 }
 
+static const char manifest_dep[] =
+"<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">"
+"<assemblyIdentity version=\"1.2.3.4\"  name=\"testdep1\" type=\"win32\" processorArchitecture=\"" ARCH "\"/>"
+"    <file name=\"testdep.dll\" />"
+"    <file name=\"kernel32.dll\" />"
+"</assembly>";
+
+static const char manifest_main[] =
+"<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">"
+"<assemblyIdentity version=\"1.2.3.4\" name=\"Wine.Test\" type=\"win32\" />"
+"<dependency>"
+" <dependentAssembly>"
+"  <assemblyIdentity type=\"win32\" name=\"testdep1\" version=\"1.2.3.4\" processorArchitecture=\"" ARCH "\" />"
+" </dependentAssembly>"
+"</dependency>"
+"</assembly>";
+
+static void create_manifest_file(const char *filename, const char *manifest)
+{
+    WCHAR path[MAX_PATH], manifest_path[MAX_PATH];
+    HANDLE file;
+    DWORD size;
+
+    MultiByteToWideChar( CP_ACP, 0, filename, -1, path, MAX_PATH );
+
+    GetTempPathW(sizeof(manifest_path)/sizeof(WCHAR), manifest_path);
+    lstrcatW(manifest_path, path);
+
+    file = CreateFileW(manifest_path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError());
+    WriteFile(file, manifest, strlen(manifest), &size, NULL);
+    CloseHandle(file);
+}
+
+static void delete_manifest_file(const char *filename)
+{
+    CHAR path[MAX_PATH];
+
+    GetTempPathA(sizeof(path), path);
+    strcat(path, filename);
+    DeleteFileA(path);
+}
+
+static HANDLE test_create(const char *file)
+{
+    WCHAR path[MAX_PATH], manifest_path[MAX_PATH];
+    ACTCTXW actctx;
+    HANDLE handle;
+
+    MultiByteToWideChar(CP_ACP, 0, file, -1, path, MAX_PATH);
+    GetTempPathW(sizeof(manifest_path)/sizeof(WCHAR), manifest_path);
+    lstrcatW(manifest_path, path);
+
+    memset(&actctx, 0, sizeof(ACTCTXW));
+    actctx.cbSize = sizeof(ACTCTXW);
+    actctx.lpSource = manifest_path;
+
+    handle = pCreateActCtxW(&actctx);
+todo_wine
+    ok(handle != INVALID_HANDLE_VALUE, "failed to create context, error %u\n", GetLastError());
+
+    ok(actctx.cbSize == sizeof(actctx), "cbSize=%d\n", actctx.cbSize);
+    ok(actctx.dwFlags == 0, "dwFlags=%d\n", actctx.dwFlags);
+    ok(actctx.lpSource == manifest_path, "lpSource=%p\n", actctx.lpSource);
+    ok(actctx.wProcessorArchitecture == 0, "wProcessorArchitecture=%d\n", actctx.wProcessorArchitecture);
+    ok(actctx.wLangId == 0, "wLangId=%d\n", actctx.wLangId);
+    ok(actctx.lpAssemblyDirectory == NULL, "lpAssemblyDirectory=%p\n", actctx.lpAssemblyDirectory);
+    ok(actctx.lpResourceName == NULL, "lpResourceName=%p\n", actctx.lpResourceName);
+    ok(actctx.lpApplicationName == NULL, "lpApplicationName=%p\n", actctx.lpApplicationName);
+    ok(actctx.hModule == NULL, "hModule=%p\n", actctx.hModule);
+
+    return handle;
+}
+
 static void test_SearchPathA(void)
 {
-    CHAR pathA[MAX_PATH], fileA[] = "", buffA[MAX_PATH];
+    static const CHAR testdepA[] = "testdep.dll";
+    static const CHAR kernel32A[] = "kernel32.dll";
+    static const CHAR fileA[] = "";
+    CHAR pathA[MAX_PATH], buffA[MAX_PATH], path2A[MAX_PATH];
     CHAR *ptrA = NULL;
+    ULONG_PTR cookie;
+    HANDLE handle;
     DWORD ret;
 
     if (!pSearchPathA)
@@ -1576,12 +1669,52 @@ static void test_SearchPathA(void)
     ok(ret == 0, "Expected failure, got %d\n", ret);
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
       "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
+
+    if (!pActivateActCtx)
+        return;
+
+    create_manifest_file("testdep1.manifest", manifest_dep);
+    create_manifest_file("main.manifest", manifest_main);
+
+    handle = test_create("main.manifest");
+    delete_manifest_file("testdep1.manifest");
+    delete_manifest_file("main.manifest");
+
+    /* search fails without active context */
+    ret = pSearchPathA(NULL, testdepA, NULL, sizeof(buffA)/sizeof(CHAR), buffA, NULL);
+    ok(ret == 0, "got %d\n", ret);
+
+    ret = pSearchPathA(NULL, kernel32A, NULL, sizeof(path2A)/sizeof(CHAR), path2A, NULL);
+    ok(ret && ret == strlen(path2A), "got %d\n", ret);
+
+    ret = pActivateActCtx(handle, &cookie);
+    ok(ret, "failed to activate context, %u\n", GetLastError());
+
+    /* works when activated */
+    ret = pSearchPathA(NULL, testdepA, NULL, sizeof(buffA)/sizeof(CHAR), buffA, NULL);
+todo_wine
+    ok(ret && ret == strlen(buffA), "got %d\n", ret);
+
+    /* path is redirect for wellknown names too */
+    ret = pSearchPathA(NULL, kernel32A, NULL, sizeof(buffA)/sizeof(CHAR), buffA, NULL);
+    ok(ret && ret == strlen(buffA), "got %d\n", ret);
+todo_wine
+    ok(strcmp(buffA, path2A), "got wrong path %s, %s\n", buffA, path2A);
+
+    ret = pDeactivateActCtx(0, cookie);
+    ok(ret, "failed to deactivate context, %u\n", GetLastError());
+    pReleaseActCtx(handle);
 }
 
 static void test_SearchPathW(void)
 {
-    WCHAR pathW[MAX_PATH], fileW[] = { 0 }, buffW[MAX_PATH];
+    static const WCHAR testdepW[] = {'t','e','s','t','d','e','p','.','d','l','l',0};
+    static const WCHAR kernel32W[] = {'k','e','r','n','e','l','3','2','.','d','l','l',0};
+    static const WCHAR fileW[] = { 0 };
+    WCHAR pathW[MAX_PATH], buffW[MAX_PATH], path2W[MAX_PATH];
     WCHAR *ptrW = NULL;
+    ULONG_PTR cookie;
+    HANDLE handle;
     DWORD ret;
 
     if (!pSearchPathW)
@@ -1602,6 +1735,41 @@ if (0)
     ok(ret == 0, "Expected failure, got %d\n", ret);
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
       "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
+
+    if (!pActivateActCtx)
+        return;
+
+    create_manifest_file("testdep1.manifest", manifest_dep);
+    create_manifest_file("main.manifest", manifest_main);
+
+    handle = test_create("main.manifest");
+    delete_manifest_file("testdep1.manifest");
+    delete_manifest_file("main.manifest");
+
+    /* search fails without active context */
+    ret = pSearchPathW(NULL, testdepW, NULL, sizeof(buffW)/sizeof(WCHAR), buffW, NULL);
+    ok(ret == 0, "got %d\n", ret);
+
+    ret = pSearchPathW(NULL, kernel32W, NULL, sizeof(path2W)/sizeof(WCHAR), path2W, NULL);
+    ok(ret && ret == lstrlenW(path2W), "got %d\n", ret);
+
+    ret = pActivateActCtx(handle, &cookie);
+    ok(ret, "failed to activate context, %u\n", GetLastError());
+
+    /* works when activated */
+    ret = pSearchPathW(NULL, testdepW, NULL, sizeof(buffW)/sizeof(WCHAR), buffW, NULL);
+todo_wine
+    ok(ret && ret == lstrlenW(buffW), "got %d\n", ret);
+
+    /* path is redirect for wellknown names too */
+    ret = pSearchPathW(NULL, kernel32W, NULL, sizeof(buffW)/sizeof(WCHAR), buffW, NULL);
+    ok(ret && ret == lstrlenW(buffW), "got %d\n", ret);
+todo_wine
+    ok(lstrcmpW(buffW, path2W), "got wrong path %s, %s\n", wine_dbgstr_w(buffW), wine_dbgstr_w(path2W));
+
+    ret = pDeactivateActCtx(0, cookie);
+    ok(ret, "failed to deactivate context, %u\n", GetLastError());
+    pReleaseActCtx(handle);
 }
 
 static void test_GetFullPathNameA(void)
@@ -1717,6 +1885,11 @@ static void init_pointers(void)
     MAKEFUNC(NeedCurrentDirectoryForExePathW);
     MAKEFUNC(SearchPathA);
     MAKEFUNC(SearchPathW);
+    MAKEFUNC(ActivateActCtx);
+    MAKEFUNC(CreateActCtxW);
+    MAKEFUNC(DeactivateActCtx);
+    MAKEFUNC(GetCurrentActCtx);
+    MAKEFUNC(ReleaseActCtx);
 #undef MAKEFUNC
 }
 
@@ -1731,6 +1904,8 @@ START_TEST(path)
         win_skip("GetLongPathNameA is not available\n");
     if (!pGetLongPathNameW)
         win_skip("GetLongPathNameW is not available\n");
+    if (!pActivateActCtx)
+        win_skip("Activation contexts not supported, some tests will be skipped\n");
 
     test_InitPathA(curdir, &curDrive, &otherDrive);
     test_CurrentDirectoryA(origdir,curdir);
