@@ -172,17 +172,24 @@ ME_CallWordBreakProc(ME_TextEditor *editor, WCHAR *str, INT len, INT start, INT 
   }
 }
 
-LPWSTR ME_ToUnicode(BOOL unicode, LPVOID psz)
+LPWSTR ME_ToUnicode(BOOL unicode, LPVOID psz, INT *len)
 {
-  assert(psz != NULL);
+  *len = 0;
+  if (!psz) return NULL;
 
   if (unicode)
+  {
+    *len = lstrlenW(psz);
     return psz;
+  }
   else {
     WCHAR *tmp;
     int nChars = MultiByteToWideChar(CP_ACP, 0, psz, -1, NULL, 0);
+
+    if(!nChars) return NULL;
+
     if((tmp = ALLOC_N_OBJ(WCHAR, nChars)) != NULL)
-      MultiByteToWideChar(CP_ACP, 0, psz, -1, tmp, nChars);
+      *len = MultiByteToWideChar(CP_ACP, 0, psz, -1, tmp, nChars) - 1;
     return tmp;
   }
 }

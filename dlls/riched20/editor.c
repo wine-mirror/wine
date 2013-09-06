@@ -3276,8 +3276,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   {
     LPWSTR wszText;
     SETTEXTEX *pStruct = (SETTEXTEX *)wParam;
-    size_t len = 0;
-    int from, to;
+    int from, to, len;
     ME_Style *style;
     BOOL bRtf, bUnicode, bSelection;
     int oldModify = editor->nModifyStep;
@@ -3315,8 +3314,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       }
     } else {
       /* FIXME: make use of pStruct->codepage in the to unicode translation */
-      wszText = lParam ? ME_ToUnicode(bUnicode, (void *)lParam) : NULL;
-      len = wszText ? lstrlenW(wszText) : 0;
+      wszText = ME_ToUnicode(bUnicode, (void *)lParam, &len);
       ME_InsertTextFromCursor(editor, 0, wszText, len, style);
       ME_EndToUnicode(bUnicode, wszText);
     }
@@ -3505,8 +3503,8 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   {
     int from, to, nStartCursor;
     ME_Style *style;
-    LPWSTR wszText = lParam ? ME_ToUnicode(unicode, (void *)lParam) : NULL;
-    size_t len = wszText ? lstrlenW(wszText) : 0;
+    int len = 0;
+    LPWSTR wszText = ME_ToUnicode(unicode, (void *)lParam, &len);
     TRACE("EM_REPLACESEL - %s\n", debugstr_w(wszText));
 
     nStartCursor = ME_GetSelectionOfs(editor, &from, &to);
@@ -3576,9 +3574,10 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       }
       else
       {
-        LPWSTR wszText = ME_ToUnicode(unicode, (void *)lParam);
+        int textLen;
+        LPWSTR wszText = ME_ToUnicode(unicode, (void *)lParam, &textLen);
         TRACE("WM_SETTEXT - %s\n", debugstr_w(wszText)); /* debugstr_w() */
-        if (lstrlenW(wszText) > 0)
+        if (textLen > 0)
         {
           int len = -1;
 

@@ -109,7 +109,7 @@ void ME_StrDeleteV(ME_String *s, int nVChar, int nChars) DECLSPEC_HIDDEN;
 BOOL ME_InsertString(ME_String *s, int ofs, const WCHAR *insert, int len) DECLSPEC_HIDDEN;
 
 /* smart helpers for A<->W conversions, they reserve/free memory and call MultiByte<->WideChar functions */
-LPWSTR ME_ToUnicode(BOOL unicode, LPVOID psz) DECLSPEC_HIDDEN;
+LPWSTR ME_ToUnicode(BOOL unicode, LPVOID psz, INT *len) DECLSPEC_HIDDEN;
 void ME_EndToUnicode(BOOL unicode, LPVOID psz) DECLSPEC_HIDDEN;
 
 static inline int ME_IsWSpace(WCHAR ch)
