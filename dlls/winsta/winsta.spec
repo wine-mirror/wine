@@ -53,7 +53,7 @@
 @ stub WinStationQueryLicense
 @ stub WinStationQueryLogonCredentialsW
 @ stub WinStationQueryUpdateRequired
-@ stub WinStationRegisterConsoleNotification
+@ stdcall WinStationRegisterConsoleNotification(ptr ptr long)
 @ stub WinStationRemoveLicense
 @ stub WinStationRenameA
 @ stub WinStationRenameW
