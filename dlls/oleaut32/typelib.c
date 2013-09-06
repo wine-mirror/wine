@@ -5080,8 +5080,8 @@ static HRESULT WINAPI ITypeLib2_fnIsName(
     *pfName=FALSE;
 
 ITypeLib2_fnIsName_exit:
-    TRACE("(%p)slow! search for %s: %s found!\n", This,
-          debugstr_w(szNameBuf), *pfName?"NOT":"");
+    TRACE("(%p)slow! search for %s: %sfound!\n", This,
+          debugstr_w(szNameBuf), *pfName ? "" : "NOT ");
 
     return S_OK;
 }
