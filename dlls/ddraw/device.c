@@ -393,37 +393,20 @@ static HRESULT WINAPI d3d_device1_Initialize(IDirect3DDevice *iface,
     return D3D_OK;
 }
 
-/*****************************************************************************
- * IDirect3DDevice7::GetCaps
- *
- * Retrieves the device's capabilities
- *
- * This implementation is used for Version 7 only, the older versions have
- * their own implementation.
- *
- * Parameters:
- *  Desc: Pointer to a D3DDEVICEDESC7 structure to fill
- *
- * Returns:
- *  D3D_OK on success
- *  D3DERR_* if a problem occurs. See WineD3D
- *
- *****************************************************************************/
-static HRESULT d3d_device7_GetCaps(IDirect3DDevice7 *iface, D3DDEVICEDESC7 *Desc)
+static HRESULT d3d_device7_GetCaps(IDirect3DDevice7 *iface, D3DDEVICEDESC7 *device_desc)
 {
     struct d3d_device *device = impl_from_IDirect3DDevice7(iface);
-    D3DDEVICEDESC OldDesc;
 
-    TRACE("iface %p, device_desc %p.\n", iface, Desc);
+    TRACE("iface %p, device_desc %p.\n", iface, device_desc);
 
-    if (!Desc)
+    if (!device_desc)
     {
-        WARN("Desc is NULL, returning DDERR_INVALIDPARAMS.\n");
+        WARN("device_desc is NULL, returning DDERR_INVALIDPARAMS.\n");
         return DDERR_INVALIDPARAMS;
     }
 
     /* Call the same function used by IDirect3D, this saves code */
-    return IDirect3DImpl_GetCaps(device->ddraw->wined3d, &OldDesc, Desc);
+    return ddraw_get_d3dcaps(device->ddraw, device_desc);
 }
 
 static HRESULT WINAPI d3d_device7_GetCaps_FPUSetup(IDirect3DDevice7 *iface, D3DDEVICEDESC7 *desc)
@@ -485,8 +468,8 @@ static HRESULT WINAPI d3d_device3_GetCaps(IDirect3DDevice3 *iface,
         D3DDEVICEDESC *HWDesc, D3DDEVICEDESC *HelDesc)
 {
     struct d3d_device *device = impl_from_IDirect3DDevice3(iface);
-    D3DDEVICEDESC oldDesc;
-    D3DDEVICEDESC7 newDesc;
+    D3DDEVICEDESC7 desc7;
+    D3DDEVICEDESC desc1;
     HRESULT hr;
 
     TRACE("iface %p, hw_desc %p, hel_desc %p.\n", iface, HWDesc, HelDesc);
@@ -512,12 +495,12 @@ static HRESULT WINAPI d3d_device3_GetCaps(IDirect3DDevice3 *iface,
         return DDERR_INVALIDPARAMS;
     }
 
-    hr = IDirect3DImpl_GetCaps(device->ddraw->wined3d, &oldDesc, &newDesc);
-    if (hr != D3D_OK)
+    if (FAILED(hr = ddraw_get_d3dcaps(device->ddraw, &desc7)))
         return hr;
 
-    DD_STRUCT_COPY_BYSIZE(HWDesc, &oldDesc);
-    DD_STRUCT_COPY_BYSIZE(HelDesc, &oldDesc);
+    ddraw_d3dcaps1_from_7(&desc1, &desc7);
+    DD_STRUCT_COPY_BYSIZE(HWDesc, &desc1);
+    DD_STRUCT_COPY_BYSIZE(HelDesc, &desc1);
     return D3D_OK;
 }
 
