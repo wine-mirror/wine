@@ -1015,7 +1015,7 @@ BOOL WINAPI AssignProcessToJobObject( HANDLE job, HANDLE process )
  */
 BOOL WINAPI IsProcessInJob( HANDLE process, HANDLE job, PBOOL result )
 {
-    NTSTATUS status = NtIsProcessInJob( job, process );
+    NTSTATUS status = NtIsProcessInJob( process, job );
     switch(status)
     {
     case STATUS_PROCESS_IN_JOB:
