@@ -1704,6 +1704,9 @@ static INT WS_EnumProtocols( BOOL unicode, const INT *protocols, LPWSAPROTOCOL_I
 
     size = items * (unicode ? sizeof(WSAPROTOCOL_INFOW) : sizeof(WSAPROTOCOL_INFOA));
 
+    TRACE("unicode %d, protocols %p, buffer %p, length %p %d, items %d, required %d\n",
+          unicode, protocols, buffer, len, len ? *len : 0, items, size);
+
     if (*len < size || !buffer)
     {
         *len = size;
