@@ -60,6 +60,20 @@
 #define WM_LBTRACKPOINT  0x0131
 #endif
 
+#ifdef __i386__
+#define ARCH "x86"
+#elif defined __x86_64__
+#define ARCH "amd64"
+#else
+#define ARCH "none"
+#endif
+
+static BOOL   (WINAPI *pActivateActCtx)(HANDLE,ULONG_PTR*);
+static HANDLE (WINAPI *pCreateActCtxW)(PCACTCTXW);
+static BOOL   (WINAPI *pDeactivateActCtx)(DWORD,ULONG_PTR);
+static BOOL   (WINAPI *pGetCurrentActCtx)(HANDLE *);
+static void   (WINAPI *pReleaseActCtx)(HANDLE);
+
 /* encoded DRAWITEMSTRUCT into an LPARAM */
 typedef struct
 {
@@ -6728,9 +6742,66 @@ static DWORD CALLBACK create_child_thread( void *param )
     return 0;
 }
 
+static const char manifest_dep[] =
+"<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">"
+"<assemblyIdentity version=\"1.2.3.4\"  name=\"testdep1\" type=\"win32\" processorArchitecture=\"" ARCH "\"/>"
+"    <file name=\"testdep.dll\" />"
+"</assembly>";
+
+static const char manifest_main[] =
+"<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">"
+"<assemblyIdentity version=\"1.2.3.4\" name=\"Wine.Test\" type=\"win32\" />"
+"<dependency>"
+" <dependentAssembly>"
+"  <assemblyIdentity type=\"win32\" name=\"testdep1\" version=\"1.2.3.4\" processorArchitecture=\"" ARCH "\" />"
+" </dependentAssembly>"
+"</dependency>"
+"</assembly>";
+
+static void create_manifest_file(const char *filename, const char *manifest)
+{
+    WCHAR path[MAX_PATH];
+    HANDLE file;
+    DWORD size;
+
+    MultiByteToWideChar( CP_ACP, 0, filename, -1, path, MAX_PATH );
+    file = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError());
+    WriteFile(file, manifest, strlen(manifest), &size, NULL);
+    CloseHandle(file);
+}
+
+static HANDLE test_create(const char *file)
+{
+    WCHAR path[MAX_PATH];
+    ACTCTXW actctx;
+    HANDLE handle;
+
+    MultiByteToWideChar(CP_ACP, 0, file, -1, path, MAX_PATH);
+    memset(&actctx, 0, sizeof(ACTCTXW));
+    actctx.cbSize = sizeof(ACTCTXW);
+    actctx.lpSource = path;
+
+    handle = pCreateActCtxW(&actctx);
+    ok(handle != INVALID_HANDLE_VALUE, "failed to create context, error %u\n", GetLastError());
+
+    ok(actctx.cbSize == sizeof(actctx), "cbSize=%d\n", actctx.cbSize);
+    ok(actctx.dwFlags == 0, "dwFlags=%d\n", actctx.dwFlags);
+    ok(actctx.lpSource == path, "lpSource=%p\n", actctx.lpSource);
+    ok(actctx.wProcessorArchitecture == 0, "wProcessorArchitecture=%d\n", actctx.wProcessorArchitecture);
+    ok(actctx.wLangId == 0, "wLangId=%d\n", actctx.wLangId);
+    ok(actctx.lpAssemblyDirectory == NULL, "lpAssemblyDirectory=%p\n", actctx.lpAssemblyDirectory);
+    ok(actctx.lpResourceName == NULL, "lpResourceName=%p\n", actctx.lpResourceName);
+    ok(actctx.lpApplicationName == NULL, "lpApplicationName=%p\n", actctx.lpApplicationName);
+    ok(actctx.hModule == NULL, "hModule=%p\n", actctx.hModule);
+
+    return handle;
+}
+
 static void test_interthread_messages(void)
 {
-    HANDLE hThread;
+    HANDLE hThread, context, handle, event;
+    ULONG_PTR cookie;
     DWORD tid;
     WNDPROC proc;
     MSG msg;
@@ -6828,6 +6899,60 @@ static void test_interthread_messages(void)
     ok_sequence(WmExitThreadSeq, "destroy child on thread exit", FALSE);
     log_all_parent_messages--;
     DestroyWindow( wnd_event.hwnd );
+
+    /* activation context tests */
+    if (!pActivateActCtx)
+    {
+        win_skip("Activation contexts are not supported, skipping\n");
+        return;
+    }
+
+    create_manifest_file("testdep1.manifest", manifest_dep);
+    create_manifest_file("main.manifest", manifest_main);
+
+    context = test_create("main.manifest");
+    DeleteFileA("testdep1.manifest");
+    DeleteFileA("main.manifest");
+
+    handle = (void*)0xdeadbeef;
+    ret = pGetCurrentActCtx(&handle);
+    ok(ret, "GetCurentActCtx failed: %u\n", GetLastError());
+    ok(handle == 0, "active context %p\n", handle);
+
+    wnd_event.start_event = CreateEventW(NULL, 0, 0, NULL);
+    hThread = CreateThread(NULL, 0, thread_proc, &wnd_event, 0, &tid);
+    ok(hThread != NULL, "CreateThread failed, error %d\n", GetLastError());
+    ok(WaitForSingleObject(wnd_event.start_event, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
+    CloseHandle(wnd_event.start_event);
+
+    /* context is activated after thread creation, so it doesn't inherit it by default */
+    ret = pActivateActCtx(context, &cookie);
+    ok(ret, "activation failed: %u\n", GetLastError());
+
+    handle = 0;
+    ret = pGetCurrentActCtx(&handle);
+    ok(ret, "GetCurentActCtx failed: %u\n", GetLastError());
+    ok(handle != 0, "active context %p\n", handle);
+
+    /* destination window will test for active context */
+    ret = SendMessageA(wnd_event.hwnd, WM_USER+10, 0, 0);
+    ok(ret, "thread window returned %d\n", ret);
+
+    event = CreateEventW(NULL, 0, 0, NULL);
+    ret = PostMessageA(wnd_event.hwnd, WM_USER+10, 0, (LPARAM)event);
+    ok(ret, "thread window returned %d\n", ret);
+    ok(WaitForSingleObject(event, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
+    CloseHandle(event);
+
+    ret = PostMessageA(wnd_event.hwnd, WM_QUIT, 0, 0);
+    ok(ret, "PostMessageA(WM_QUIT) error %d\n", GetLastError());
+
+    ok(WaitForSingleObject(hThread, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
+    CloseHandle(hThread);
+
+    ret = pDeactivateActCtx(0, cookie);
+    ok(ret, "DeactivateActCtx failed: %u\n", GetLastError());
+    pReleaseActCtx(context);
 }
 
 
@@ -7462,6 +7587,19 @@ static LRESULT MsgCheckProc (BOOL unicode, HWND hwnd, UINT message,
 	/* test_accelerators() depends on this */
 	case WM_NCHITTEST:
 	    return HTCLIENT;
+
+	case WM_USER+10:
+	{
+	    HANDLE handle, event = (HANDLE)lParam;
+	    BOOL ret;
+
+	    handle = (void*)0xdeadbeef;
+	    ret = pGetCurrentActCtx(&handle);
+	    ok(ret, "failed to get current context, %u\n", GetLastError());
+	    ok(handle == 0, "got active context %p\n", handle);
+	    if (event) SetEvent(event);
+	    return 1;
+	}
 
 	/* ignore */
 	case WM_MOUSEMOVE:
@@ -14105,6 +14243,19 @@ static void test_layered_window(void)
     DeleteObject( bmp );
 }
 
+static void init_funcs(void)
+{
+    HMODULE hKernel32 = GetModuleHandle("kernel32");
+
+#define X(f) p##f = (void*)GetProcAddress(hKernel32, #f)
+    X(ActivateActCtx);
+    X(CreateActCtxW);
+    X(DeactivateActCtx);
+    X(GetCurrentActCtx);
+    X(ReleaseActCtx);
+#undef X
+}
+
 START_TEST(msg)
 {
     char **test_argv;
@@ -14112,8 +14263,11 @@ START_TEST(msg)
     BOOL (WINAPI *pIsWinEventHookInstalled)(DWORD)= 0;/*GetProcAddress(user32, "IsWinEventHookInstalled");*/
     HMODULE hModuleImm32;
     BOOL (WINAPI *pImmDisableIME)(DWORD);
+    int argc;
 
-    int argc = winetest_get_mainargs( &test_argv );
+    init_funcs();
+
+    argc = winetest_get_mainargs( &test_argv );
     if (argc >= 3)
     {
         unsigned int arg;
