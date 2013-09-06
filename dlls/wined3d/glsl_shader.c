@@ -6808,7 +6808,7 @@ static void glsl_vertex_pipe_vp_get_caps(const struct wined3d_gl_info *gl_info, 
 {
     caps->xyzrhw = TRUE;
     caps->max_active_lights = gl_info->limits.lights;
-    caps->max_vertex_blend_matrices = 0;
+    caps->max_vertex_blend_matrices = 1;
     caps->max_vertex_blend_matrix_index = 0;
     caps->vertex_processing_caps = WINED3DVTXPCAPS_TEXGEN
             | WINED3DVTXPCAPS_MATERIALSOURCE7
