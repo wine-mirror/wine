@@ -176,7 +176,8 @@ enum {
     MOUSE_SCROLL,
     QUERY_EVENT,
     RELEASE_CAPTURE,
-    STATUS_ITEM_CLICKED,
+    STATUS_ITEM_MOUSE_BUTTON,
+    STATUS_ITEM_MOUSE_MOVE,
     WINDOW_CLOSE_REQUESTED,
     WINDOW_DID_MINIMIZE,
     WINDOW_DID_UNMINIMIZE,
@@ -248,8 +249,13 @@ typedef struct macdrv_event {
         }                                           query_event;
         struct {
             macdrv_status_item  item;
+            int                 button;
+            int                 down;
             int                 count;
-        }                                           status_item_clicked;
+        }                                           status_item_mouse_button;
+        struct {
+            macdrv_status_item  item;
+        }                                           status_item_mouse_move;
         struct {
             CGRect frame;
         }                                           window_frame_changed;

@@ -308,22 +308,38 @@ int CDECL wine_notify_icon(DWORD msg, NOTIFYICONDATAW *data)
 
 
 /***********************************************************************
- *              macdrv_status_item_clicked
+ *              macdrv_status_item_mouse_button
  *
- * Handle STATUS_ITEM_CLICKED events.
+ * Handle STATUS_ITEM_MOUSE_BUTTON events.
  */
-void macdrv_status_item_clicked(const macdrv_event *event)
+void macdrv_status_item_mouse_button(const macdrv_event *event)
 {
     struct tray_icon *icon;
 
-    TRACE("item %p count %d\n", event->status_item_clicked.item,
-          event->status_item_clicked.count);
+    TRACE("item %p button %d down %d count %d\n", event->status_item_mouse_button.item,
+          event->status_item_mouse_button.button, event->status_item_mouse_button.down,
+          event->status_item_mouse_button.count);
 
     LIST_FOR_EACH_ENTRY(icon, &icon_list, struct tray_icon, entry)
     {
-        if (icon->status_item == event->status_item_clicked.item)
+        if (icon->status_item == event->status_item_mouse_button.item)
         {
-            UINT down;
+            UINT msg;
+
+            switch (event->status_item_mouse_button.button)
+            {
+                case 0: msg = WM_LBUTTONDOWN; break;
+                case 1: msg = WM_RBUTTONDOWN; break;
+                case 2: msg = WM_MBUTTONDOWN; break;
+                default:
+                    TRACE("ignoring button beyond the third\n");
+                    return;
+            }
+
+            if (!event->status_item_mouse_button.down)
+                msg += WM_LBUTTONUP - WM_LBUTTONDOWN;
+            else if (event->status_item_mouse_button.count % 2 == 0)
+                msg += WM_LBUTTONDBLCLK - WM_LBUTTONDOWN;
 
             if (!SendMessageW(icon->owner, WM_MACDRV_ACTIVATE_ON_FOLLOWING_FOCUS, 0, 0) &&
                 GetLastError() == ERROR_INVALID_WINDOW_HANDLE)
@@ -333,18 +349,8 @@ void macdrv_status_item_clicked(const macdrv_event *event)
                 return;
             }
 
-            if (event->status_item_clicked.count == 1)
-            {
-                down = WM_LBUTTONDOWN;
-                TRACE("posting WM_LBUTTONDOWN to hwnd %p id 0x%x\n", icon->owner, icon->id);
-            }
-            else
-            {
-                down = WM_LBUTTONDBLCLK;
-                TRACE("posting WM_LBUTTONDBLCLK to hwnd %p id 0x%x\n", icon->owner, icon->id);
-            }
-
-            if (!PostMessageW(icon->owner, icon->callback_message, icon->id, down) &&
+            TRACE("posting msg 0x%04x to hwnd %p id 0x%x\n", msg, icon->owner, icon->id);
+            if (!PostMessageW(icon->owner, icon->callback_message, icon->id, msg) &&
                 GetLastError() == ERROR_INVALID_WINDOW_HANDLE)
             {
                 WARN("window %p was destroyed, removing icon 0x%x\n", icon->owner, icon->id);
@@ -352,12 +358,33 @@ void macdrv_status_item_clicked(const macdrv_event *event)
                 return;
             }
 
-            TRACE("posting WM_LBUTTONUP to hwnd %p id 0x%x\n", icon->owner, icon->id);
-            if (!PostMessageW(icon->owner, icon->callback_message, icon->id, WM_LBUTTONUP) &&
+            break;
+        }
+    }
+}
+
+
+/***********************************************************************
+ *              macdrv_status_item_mouse_move
+ *
+ * Handle STATUS_ITEM_MOUSE_MOVE events.
+ */
+void macdrv_status_item_mouse_move(const macdrv_event *event)
+{
+    struct tray_icon *icon;
+
+    TRACE("item %p\n", event->status_item_mouse_move.item);
+
+    LIST_FOR_EACH_ENTRY(icon, &icon_list, struct tray_icon, entry)
+    {
+        if (icon->status_item == event->status_item_mouse_move.item)
+        {
+            if (!PostMessageW(icon->owner, icon->callback_message, icon->id, WM_MOUSEMOVE) &&
                 GetLastError() == ERROR_INVALID_WINDOW_HANDLE)
             {
                 WARN("window %p was destroyed, removing icon 0x%x\n", icon->owner, icon->id);
                 delete_icon(icon);
+                return;
             }
 
             break;

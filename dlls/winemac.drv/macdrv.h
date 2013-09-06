@@ -195,7 +195,8 @@ extern CGImageRef create_cgimage_from_icon_bitmaps(HDC hdc, HANDLE icon, HBITMAP
 extern CGImageRef create_cgimage_from_icon(HANDLE icon, int width, int height) DECLSPEC_HIDDEN;
 extern CFArrayRef create_app_icon_images(void) DECLSPEC_HIDDEN;
 
-extern void macdrv_status_item_clicked(const macdrv_event *event) DECLSPEC_HIDDEN;
+extern void macdrv_status_item_mouse_button(const macdrv_event *event) DECLSPEC_HIDDEN;
+extern void macdrv_status_item_mouse_move(const macdrv_event *event) DECLSPEC_HIDDEN;
 
 
 /**************************************************************************

@@ -24,34 +24,44 @@
 #import "cocoa_event.h"
 
 
-@interface WineStatusItem : NSObject
+@interface WineStatusItem : NSView
 {
     NSStatusItem* item;
     WineEventQueue* queue;
+    NSTrackingArea* trackingArea;
+    NSImage* image;
 }
 
 @property (retain, nonatomic) NSStatusItem* item;
 @property (assign, nonatomic) WineEventQueue* queue;
+@property (retain, nonatomic) NSImage* image;
 
 @end
 
 
 @implementation WineStatusItem
 
-@synthesize item, queue;
+@synthesize item, queue, image;
 
     - (id) initWithEventQueue:(WineEventQueue*)inQueue
     {
-        self = [super init];
+        NSStatusBar* statusBar = [NSStatusBar systemStatusBar];
+        CGFloat thickness = [statusBar thickness];
+
+        self = [super initWithFrame:NSMakeRect(0, 0, thickness, thickness)];
         if (self)
         {
-            NSStatusBar* statusBar = [NSStatusBar systemStatusBar];
             item = [[statusBar statusItemWithLength:NSSquareStatusItemLength] retain];
-            [item setTarget:self];
-            [item setAction:@selector(clicked:)];
-            [item setDoubleAction:@selector(doubleClicked:)];
+            // This is a retain cycle which is broken in -removeFromStatusBar.
+            [item setView:self];
 
             queue = inQueue;
+
+            trackingArea = [[NSTrackingArea alloc] initWithRect:[self bounds]
+                                                        options:NSTrackingMouseMoved | NSTrackingActiveAlways | NSTrackingInVisibleRect
+                                                          owner:self
+                                                       userInfo:nil];
+            [self addTrackingArea:trackingArea];
         }
         return self;
     }
@@ -64,7 +74,19 @@
             [statusBar removeStatusItem:item];
             [item release];
         }
+        [image release];
+        [trackingArea release];
         [super dealloc];
+    }
+
+    - (void) setImage:(NSImage*)inImage
+    {
+        if (image != inImage)
+        {
+            [image release];
+            image = [inImage retain];
+            [self setNeedsDisplay:YES];
+        }
     }
 
     - (void) removeFromStatusBar
@@ -73,28 +95,108 @@
         {
             NSStatusBar* statusBar = [NSStatusBar systemStatusBar];
             [statusBar removeStatusItem:item];
+            [item setView:nil];
             self.item = nil;
         }
     }
 
-    - (void) postClickedEventWithCount:(int)count
+    - (void) postMouseButtonEvent:(NSEvent*)nsevent;
     {
         macdrv_event* event;
-        event = macdrv_create_event(STATUS_ITEM_CLICKED, nil);
-        event->status_item_clicked.item = (macdrv_status_item)self;
-        event->status_item_clicked.count = count;
+        NSUInteger typeMask = NSEventMaskFromType([nsevent type]);
+
+        event = macdrv_create_event(STATUS_ITEM_MOUSE_BUTTON, nil);
+        event->status_item_mouse_button.item = (macdrv_status_item)self;
+        event->status_item_mouse_button.button = [nsevent buttonNumber];
+        event->status_item_mouse_button.down = (typeMask & (NSLeftMouseDownMask | NSRightMouseDownMask | NSOtherMouseDownMask)) != 0;
+        event->status_item_mouse_button.count = [nsevent clickCount];
         [queue postEvent:event];
         macdrv_release_event(event);
     }
 
-    - (void) clicked:(id)sender
+
+    /*
+     * ---------- NSView methods ----------
+     */
+    - (void) drawRect:(NSRect)rect
     {
-        [self postClickedEventWithCount:1];
+        [item drawStatusBarBackgroundInRect:[self bounds] withHighlight:NO];
+
+        if (image)
+        {
+            NSSize imageSize = [image size];
+            NSRect bounds = [self bounds];
+            NSPoint imageOrigin = NSMakePoint(NSMidX(bounds) - imageSize.width / 2,
+                                              NSMidY(bounds) - imageSize.height / 2);
+
+            imageOrigin = [self convertPointToBase:imageOrigin];
+            imageOrigin.x = floor(imageOrigin.x);
+            imageOrigin.y = floor(imageOrigin.y);
+            imageOrigin = [self convertPointFromBase:imageOrigin];
+
+            [image drawAtPoint:imageOrigin
+                      fromRect:NSZeroRect
+                     operation:NSCompositeSourceOver
+                      fraction:1];
+        }
     }
 
-    - (void) doubleClicked:(id)sender
+
+    /*
+     * ---------- NSResponder methods ----------
+     */
+    - (void) mouseDown:(NSEvent*)event
     {
-        [self postClickedEventWithCount:2];
+        [self postMouseButtonEvent:event];
+    }
+
+    - (void) mouseDragged:(NSEvent*)event
+    {
+        [self mouseMoved:event];
+    }
+
+    - (void) mouseMoved:(NSEvent*)nsevent
+    {
+        macdrv_event* event;
+        event = macdrv_create_event(STATUS_ITEM_MOUSE_MOVE, nil);
+        event->status_item_mouse_move.item = (macdrv_status_item)self;
+        [queue postEvent:event];
+        macdrv_release_event(event);
+    }
+
+    - (void) mouseUp:(NSEvent*)event
+    {
+        [self postMouseButtonEvent:event];
+    }
+
+    - (void) otherMouseDown:(NSEvent*)event
+    {
+        [self postMouseButtonEvent:event];
+    }
+
+    - (void) otherMouseDragged:(NSEvent*)event
+    {
+        [self mouseMoved:event];
+    }
+
+    - (void) otherMouseUp:(NSEvent*)event
+    {
+        [self postMouseButtonEvent:event];
+    }
+
+    - (void) rightMouseDown:(NSEvent*)event
+    {
+        [self postMouseButtonEvent:event];
+    }
+
+    - (void) rightMouseDragged:(NSEvent*)event
+    {
+        [self mouseMoved:event];
+    }
+
+    - (void) rightMouseUp:(NSEvent*)event
+    {
+        [self postMouseButtonEvent:event];
     }
 
 @end
@@ -165,7 +267,7 @@ void macdrv_set_status_item_image(macdrv_status_item s, CGImageRef cgimage)
             if (changed)
                 [image setSize:size];
         }
-        [statusItem.item setImage:image];
+        statusItem.image = image;
         [image release];
     });
 }
@@ -183,6 +285,6 @@ void macdrv_set_status_item_tooltip(macdrv_status_item s, CFStringRef cftip)
 
     if (![tip length]) tip = nil;
     OnMainThreadAsync(^{
-        [statusItem.item setToolTip:tip];
+        [statusItem setToolTip:tip];
     });
 }

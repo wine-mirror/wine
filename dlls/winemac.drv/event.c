@@ -45,7 +45,8 @@ static const char *dbgstr_event(int type)
         "MOUSE_SCROLL",
         "QUERY_EVENT",
         "RELEASE_CAPTURE",
-        "STATUS_ITEM_CLICKED",
+        "STATUS_ITEM_MOUSE_BUTTON",
+        "STATUS_ITEM_MOUSE_MOVE",
         "WINDOW_CLOSE_REQUESTED",
         "WINDOW_DID_MINIMIZE",
         "WINDOW_DID_UNMINIMIZE",
@@ -93,7 +94,8 @@ static macdrv_event_mask get_event_mask(DWORD mask)
         event_mask |= event_mask_for_type(APP_QUIT_REQUESTED);
         event_mask |= event_mask_for_type(DISPLAYS_CHANGED);
         event_mask |= event_mask_for_type(IM_SET_TEXT);
-        event_mask |= event_mask_for_type(STATUS_ITEM_CLICKED);
+        event_mask |= event_mask_for_type(STATUS_ITEM_MOUSE_BUTTON);
+        event_mask |= event_mask_for_type(STATUS_ITEM_MOUSE_MOVE);
         event_mask |= event_mask_for_type(WINDOW_CLOSE_REQUESTED);
         event_mask |= event_mask_for_type(WINDOW_DID_MINIMIZE);
         event_mask |= event_mask_for_type(WINDOW_DID_UNMINIMIZE);
@@ -207,8 +209,11 @@ void macdrv_handle_event(const macdrv_event *event)
     case RELEASE_CAPTURE:
         macdrv_release_capture(hwnd, event);
         break;
-    case STATUS_ITEM_CLICKED:
-        macdrv_status_item_clicked(event);
+    case STATUS_ITEM_MOUSE_BUTTON:
+        macdrv_status_item_mouse_button(event);
+        break;
+    case STATUS_ITEM_MOUSE_MOVE:
+        macdrv_status_item_mouse_move(event);
         break;
     case WINDOW_CLOSE_REQUESTED:
         macdrv_window_close_requested(hwnd);
