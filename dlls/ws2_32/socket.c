@@ -1649,11 +1649,7 @@ static INT WS_EnterSingleProtocolW( INT protocol, WSAPROTOCOL_INFOW* info )
         break;
 
     default:
-        if ((protocol == ISOPROTO_TP4) || (protocol == NSPROTO_SPX))
-            FIXME("Protocol <%s> not implemented\n",
-                  (protocol == ISOPROTO_TP4) ? "ISOPROTO_TP4" : "NSPROTO_SPX");
-        else
-            FIXME("unknown Protocol <0x%08x>\n", protocol);
+        FIXME("unknown Protocol <0x%08x>\n", protocol);
         return SOCKET_ERROR;
     }
     return 1;
