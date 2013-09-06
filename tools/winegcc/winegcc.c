@@ -382,9 +382,6 @@ static const strarray* get_lddllflags( const struct options *opts, const strarra
         break;
 
     case PLATFORM_SOLARIS:
-        strarray_add( flags, "-Wl,-G,-B,symbolic" );
-        break;
-
     case PLATFORM_UNSPECIFIED:
         strarray_add( flags, "-shared" );
         strarray_add( flags, "-Wl,-Bsymbolic" );
