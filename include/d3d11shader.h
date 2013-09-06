@@ -80,7 +80,7 @@ typedef struct _D3D11_SHADER_VARIABLE_DESC
     UINT StartOffset;
     UINT Size;
     UINT uFlags;
-    LPVOID DefaultValue;
+    void *DefaultValue;
     UINT StartTexture;
     UINT TextureSize;
     UINT StartSampler;
@@ -180,7 +180,7 @@ DEFINE_GUID(IID_ID3D11ShaderReflection, 0x0a233719, 0x3960, 0x4578, 0x9d, 0x7c, 
 DECLARE_INTERFACE_(ID3D11ShaderReflection, IUnknown)
 {
     /* IUnknown methods */
-    STDMETHOD(QueryInterface)(THIS_ REFIID riid, LPVOID *object) PURE;
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
     STDMETHOD_(ULONG, AddRef)(THIS) PURE;
     STDMETHOD_(ULONG, Release)(THIS) PURE;
     /* ID3D11ShaderReflection methods */

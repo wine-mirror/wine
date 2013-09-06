@@ -72,7 +72,7 @@ struct d3dcompiler_shader_reflection_variable
     UINT start_offset;
     UINT size;
     UINT flags;
-    LPVOID default_value;
+    void *default_value;
 };
 
 struct d3dcompiler_shader_reflection_constant_buffer
