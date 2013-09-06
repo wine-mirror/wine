@@ -606,7 +606,6 @@ static void test_GetVolumePathNameA(void)
     ret = pGetVolumePathNameA(NULL, NULL, 0);
     error = GetLastError();
     ok(!ret, "expected failure\n");
-todo_wine
     ok(error == ERROR_INVALID_PARAMETER
        || broken( error == 0xdeadbeef) /* <=XP */,
        "expected ERROR_INVALID_PARAMETER got %u\n", error);
@@ -615,7 +614,6 @@ todo_wine
     ret = pGetVolumePathNameA("", NULL, 0);
     error = GetLastError();
     ok(!ret, "expected failure\n");
-todo_wine
     ok(error == ERROR_INVALID_PARAMETER
        || broken( error == 0xdeadbeef) /* <=XP */,
        "expected ERROR_INVALID_PARAMETER got %u\n", error);
@@ -624,7 +622,6 @@ todo_wine
     ret = pGetVolumePathNameA(pathC1, NULL, 0);
     error = GetLastError();
     ok(!ret, "expected failure\n");
-todo_wine
     ok(error == ERROR_INVALID_PARAMETER
        || broken(error == ERROR_FILENAME_EXCED_RANGE) /* <=XP */,
        "expected ERROR_INVALID_PARAMETER got %u\n", error);
@@ -633,7 +630,6 @@ todo_wine
     ret = pGetVolumePathNameA(pathC1, volume, 0);
     error = GetLastError();
     ok(!ret, "expected failure\n");
-todo_wine
     ok(error == ERROR_INVALID_PARAMETER
        || broken(error == ERROR_FILENAME_EXCED_RANGE ) /* <=XP */,
        "expected ERROR_INVALID_PARAMETER got %u\n", error);
@@ -642,7 +638,6 @@ todo_wine
     ret = pGetVolumePathNameA(pathC1, volume, 1);
     error = GetLastError();
     ok(!ret, "expected failure\n");
-todo_wine
     ok(error == ERROR_FILENAME_EXCED_RANGE, "expected ERROR_FILENAME_EXCED_RANGE got %u\n", error);
 
     volume[0] = '\0';
@@ -664,6 +659,14 @@ todo_wine
     ok(ret, "expected success\n");
 todo_wine
     ok(!strcmp(expected, volume), "expected name '%s', returned '%s'\n", expected, volume);
+
+    /* test an invalid path */
+    SetLastError( 0xdeadbeef );
+    ret = pGetVolumePathNameA("\\\\$$$", volume, 1);
+    error = GetLastError();
+    ok(!ret, "expected failure\n");
+    ok(error == ERROR_INVALID_NAME || broken(ERROR_FILENAME_EXCED_RANGE) /* <=2000 */,
+       "expected ERROR_INVALID_NAME got %u\n", error);
 }
 
 static void test_GetVolumePathNamesForVolumeNameA(void)

@@ -1782,12 +1782,14 @@ BOOL WINAPI GetDiskFreeSpaceA( LPCSTR root, LPDWORD cluster_sectors,
 BOOL WINAPI GetVolumePathNameA(LPCSTR filename, LPSTR volumepathname, DWORD buflen)
 {
     BOOL ret;
-    WCHAR *filenameW = NULL, *volumeW;
+    WCHAR *filenameW = NULL, *volumeW = NULL;
 
     FIXME("(%s, %p, %d), stub!\n", debugstr_a(filename), volumepathname, buflen);
 
-    if (filename && !(filenameW = FILE_name_AtoW( filename, FALSE ))) return FALSE;
-    if (!(volumeW = HeapAlloc( GetProcessHeap(), 0, buflen * sizeof(WCHAR) ))) return FALSE;
+    if (filename && !(filenameW = FILE_name_AtoW( filename, FALSE )))
+        return FALSE;
+    if (volumepathname && !(volumeW = HeapAlloc( GetProcessHeap(), 0, buflen * sizeof(WCHAR) )))
+        return FALSE;
 
     if ((ret = GetVolumePathNameW( filenameW, volumeW, buflen )))
         FILE_name_WtoA( volumeW, -1, volumepathname, buflen );
@@ -1805,14 +1807,27 @@ BOOL WINAPI GetVolumePathNameW(LPCWSTR filename, LPWSTR volumepathname, DWORD bu
 
     FIXME("(%s, %p, %d), stub!\n", debugstr_w(filename), volumepathname, buflen);
 
-    if (p && tolowerW(p[0]) >= 'a' && tolowerW(p[0]) <= 'z' && p[1] ==':' && p[2] == '\\' && buflen >= 4)
+    if (!filename || !volumepathname || !buflen)
     {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (p && tolowerW(p[0]) >= 'a' && tolowerW(p[0]) <= 'z' && p[1] ==':' && p[2] == '\\')
+    {
+        if (buflen < 4)
+        {
+            SetLastError(ERROR_FILENAME_EXCED_RANGE);
+            return FALSE;
+        }
         volumepathname[0] = p[0];
         volumepathname[1] = ':';
         volumepathname[2] = '\\';
         volumepathname[3] = 0;
         return TRUE;
     }
+
+    SetLastError(ERROR_INVALID_NAME);
     return FALSE;
 }
 
