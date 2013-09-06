@@ -66,3 +66,6 @@ uninstall::
 	$(RM) $(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)/wine.$(prog_manext)
 	$(RM) $(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext)/wine.$(prog_manext)
 	$(RM) $(DESTDIR)$(mandir)/pl.UTF-8/man$(prog_manext)/wine.$(prog_manext)
+
+clean::
+	$(RM) wine_info.plist
