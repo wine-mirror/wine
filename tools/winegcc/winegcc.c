@@ -337,7 +337,7 @@ static int try_link( const strarray *prefix, const strarray *link_tool, const ch
     strarray *link = strarray_dup( link_tool );
     int ret;
 
-    create_file( in, 0644, "int main(void){return 1;}" );
+    create_file( in, 0644, "int main(void){return 1;}\n" );
 
     strarray_add( link, "-o" );
     strarray_add( link, out );
