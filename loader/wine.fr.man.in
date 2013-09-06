@@ -51,6 +51,10 @@ un shell, par exemple :
 .PP
 wine C:\(rs\(rsProgram\(rs Files\(rs\(rsMonProg\(rs\(rstest.exe
 .PP
+Il peut également s'agir d'un des exécutables Windows livrés avec Wine,
+auquel cas la spécification d'un chemin complet n'est pas obligatoire,
+p.ex. \fIwine explorer\fR ou \fIwine notepad\fR.
+.PP
 .SH ENVIRONNEMENT
 .B wine
 passe les variables d'environnement du shell depuis lequel il
