@@ -334,7 +334,9 @@ static int try_link( const strarray *prefix, const strarray *link_tool, const ch
 {
     const char *in = get_temp_file( "try_link", ".c" );
     const char *out = get_temp_file( "try_link", ".out" );
+    const char *err = get_temp_file( "try_link", ".err" );
     strarray *link = strarray_dup( link_tool );
+    int sout = -1, serr = -1;
     int ret;
 
     create_file( in, 0644, "int main(void){return 1;}\n" );
@@ -344,7 +346,21 @@ static int try_link( const strarray *prefix, const strarray *link_tool, const ch
     strarray_addall( link, strarray_fromstring( cflags, " " ) );
     strarray_add( link, in );
 
+    sout = dup( fileno(stdout) );
+    freopen( err, "w", stdout );
+    serr = dup( fileno(stderr) );
+    freopen( err, "w", stderr );
     ret = spawn( prefix, link, 1 );
+    if (sout >= 0)
+    {
+        dup2( sout, fileno(stdout) );
+        close( sout );
+    }
+    if (serr >= 0)
+    {
+        dup2( serr, fileno(stderr) );
+        close( serr );
+    }
     strarray_free( link );
     return ret;
 }
