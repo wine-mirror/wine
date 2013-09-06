@@ -2,6 +2,7 @@ EXTRADEFS = -D_CRYPT32_
 MODULE    = crypt32.dll
 IMPORTLIB = crypt32
 IMPORTS   = user32 advapi32
+DELAYIMPORTS = cryptnet
 EXTRALIBS = @SECURITYLIB@
 
 C_SRCS = \

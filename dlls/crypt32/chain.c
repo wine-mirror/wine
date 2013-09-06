@@ -1974,7 +1974,10 @@ static void CRYPT_CheckSimpleChain(CertificateChainEngine *engine,
 static PCCERT_CONTEXT CRYPT_FindIssuer(const CertificateChainEngine *engine, const CERT_CONTEXT *cert,
         HCERTSTORE store, DWORD type, void *para, PCCERT_CONTEXT prev_issuer)
 {
+    CRYPT_URL_ARRAY *urls;
     PCCERT_CONTEXT issuer;
+    DWORD size;
+    BOOL res;
 
     issuer = CertFindCertificateInStore(store, cert->dwCertEncodingType, 0, type, para, prev_issuer);
     if(issuer) {
@@ -1996,7 +1999,50 @@ static PCCERT_CONTEXT CRYPT_FindIssuer(const CertificateChainEngine *engine, con
         }
     }
 
-    return NULL;
+    res = CryptGetObjectUrl(URL_OID_CERTIFICATE_ISSUER, (void*)cert, 0, NULL, &size, NULL, NULL, NULL);
+    if(!res)
+        return NULL;
+
+    urls = HeapAlloc(GetProcessHeap(), 0, size);
+    if(!urls)
+        return NULL;
+
+    res = CryptGetObjectUrl(URL_OID_CERTIFICATE_ISSUER, (void*)cert, 0, urls, &size, NULL, NULL, NULL);
+    if(res)
+    {
+        CERT_CONTEXT *new_cert;
+        HCERTSTORE new_store;
+        unsigned i;
+
+        for(i=0; i < urls->cUrl; i++)
+        {
+            TRACE("Trying URL %s\n", debugstr_w(urls->rgwszUrl[i]));
+
+            res = CryptRetrieveObjectByUrlW(urls->rgwszUrl[i], CONTEXT_OID_CERTIFICATE,
+             CRYPT_CACHE_ONLY_RETRIEVAL /* FIXME */,
+             0, (void**)&new_cert, NULL, NULL, NULL, NULL);
+            if(!res)
+            {
+                TRACE("CryptRetrieveObjectByUrlW failed: %u\n", GetLastError());
+                continue;
+            }
+
+            /* FIXME: Use new_cert->hCertStore once cert ref count bug is fixed. */
+            new_store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0, CERT_STORE_CREATE_NEW_FLAG, NULL);
+            CertAddCertificateContextToStore(new_store, new_cert, CERT_STORE_ADD_NEW, NULL);
+            issuer = CertFindCertificateInStore(new_store, cert->dwCertEncodingType, 0, type, para, NULL);
+            CertFreeCertificateContext(new_cert);
+            CertCloseStore(new_store, 0);
+            if(issuer)
+            {
+                TRACE("Found downloaded issuer %p\n", issuer);
+                break;
+            }
+        }
+    }
+
+    HeapFree(GetProcessHeap(), 0, urls);
+    return issuer;
 }
 
 static PCCERT_CONTEXT CRYPT_GetIssuer(const CertificateChainEngine *engine,

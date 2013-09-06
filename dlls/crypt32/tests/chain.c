@@ -4005,6 +4005,7 @@ static void testGetCertChain(void)
     }
 
     ok(!chain->TrustStatus.dwErrorStatus, "chain->TrustStatus.dwErrorStatus = %x\n", chain->TrustStatus.dwErrorStatus);
+    todo_wine
     ok(chain->TrustStatus.dwInfoStatus == CERT_TRUST_HAS_PREFERRED_ISSUER, "chain->TrustStatus.dwInfoStatus = %x\n",
        chain->TrustStatus.dwInfoStatus);
 
@@ -4016,6 +4017,7 @@ static void testGetCertChain(void)
     ok(simple_chain->cbSize == sizeof(*simple_chain), "simple_chain->cbSize = %u\n", simple_chain->cbSize);
     ok(!simple_chain->TrustStatus.dwErrorStatus, "simple_chain->TrustStatus.dwErrorStatus = %x\n",
        simple_chain->TrustStatus.dwErrorStatus);
+    todo_wine
     ok(simple_chain->TrustStatus.dwInfoStatus == CERT_TRUST_HAS_PREFERRED_ISSUER,
        "simple_chain->TrustStatus.dwInfoStatus = %x\n", simple_chain->TrustStatus.dwInfoStatus);
     ok(simple_chain->cElement == 3, "simple_chain->cElement = %u\n", simple_chain->cElement);
