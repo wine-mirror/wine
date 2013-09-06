@@ -65,7 +65,8 @@ static const struct { WCHAR lower; WCHAR upper;} unrotate_ranges[] =
         {0xA000, 0xABFF},
         /* Hangul Syllables */
         /* Hangul Jamo Extended-B */
-        {0xD800, 0xF8FF},
+        {0xD800, 0xDFFF},
+        /* Private Use Area */
         /* CJK Compatibility Ideographs */
         {0xFB00, 0xFE0F},
         /* Vertical Forms */
