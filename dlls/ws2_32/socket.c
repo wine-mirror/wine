@@ -1546,6 +1546,27 @@ static int ws_sockaddr_u2ws(const struct sockaddr* uaddr, struct WS_sockaddr* ws
     return res;
 }
 
+static INT WS_DuplicateSocket(BOOL unicode, SOCKET s, DWORD dwProcessId, LPWSAPROTOCOL_INFOW lpProtocolInfo)
+{
+    HANDLE hProcess;
+
+    TRACE("(unicode %d, socket %04lx, processid %x, buffer %p)\n",
+          unicode, s, dwProcessId, lpProtocolInfo);
+    memset(lpProtocolInfo, 0, unicode ? sizeof(WSAPROTOCOL_INFOW) : sizeof(WSAPROTOCOL_INFOA));
+    /* FIXME: WS_getsockopt(s, WS_SOL_SOCKET, SO_PROTOCOL_INFO, lpProtocolInfo, sizeof(*lpProtocolInfo)); */
+    /* I don't know what the real Windoze does next, this is a hack */
+    /* ...we could duplicate and then use ConvertToGlobalHandle on the duplicate, then let
+     * the target use the global duplicate, or we could copy a reference to us to the structure
+     * and let the target duplicate it from us, but let's do it as simple as possible */
+    hProcess = OpenProcess(PROCESS_DUP_HANDLE, FALSE, dwProcessId);
+    DuplicateHandle(GetCurrentProcess(), SOCKET2HANDLE(s),
+                    hProcess, (LPHANDLE)&lpProtocolInfo->dwCatalogEntryId,
+                    0, FALSE, DUPLICATE_SAME_ACCESS);
+    CloseHandle(hProcess);
+    lpProtocolInfo->dwServiceFlags4 = 0xff00ff00; /* magic */
+    return 0;
+}
+
 /*****************************************************************************
  *          WS_EnterSingleProtocolW [internal]
  *
@@ -6405,22 +6426,7 @@ SOCKET WINAPI WSAAccept( SOCKET s, struct WS_sockaddr *addr, LPINT addrlen,
  */
 int WINAPI WSADuplicateSocketA( SOCKET s, DWORD dwProcessId, LPWSAPROTOCOL_INFOA lpProtocolInfo )
 {
-   HANDLE hProcess;
-
-   TRACE("(%ld,%x,%p)\n", s, dwProcessId, lpProtocolInfo);
-   memset(lpProtocolInfo, 0, sizeof(*lpProtocolInfo));
-   /* FIXME: WS_getsockopt(s, WS_SOL_SOCKET, SO_PROTOCOL_INFO, lpProtocolInfo, sizeof(*lpProtocolInfo)); */
-   /* I don't know what the real Windoze does next, this is a hack */
-   /* ...we could duplicate and then use ConvertToGlobalHandle on the duplicate, then let
-    * the target use the global duplicate, or we could copy a reference to us to the structure
-    * and let the target duplicate it from us, but let's do it as simple as possible */
-   hProcess = OpenProcess(PROCESS_DUP_HANDLE, FALSE, dwProcessId);
-   DuplicateHandle(GetCurrentProcess(), SOCKET2HANDLE(s),
-                   hProcess, (LPHANDLE)&lpProtocolInfo->dwCatalogEntryId,
-                   0, FALSE, DUPLICATE_SAME_ACCESS);
-   CloseHandle(hProcess);
-   lpProtocolInfo->dwServiceFlags4 = 0xff00ff00; /* magic */
-   return 0;
+    return WS_DuplicateSocket(FALSE, s, dwProcessId, (LPWSAPROTOCOL_INFOW) lpProtocolInfo);
 }
 
 /***********************************************************************
@@ -6428,18 +6434,7 @@ int WINAPI WSADuplicateSocketA( SOCKET s, DWORD dwProcessId, LPWSAPROTOCOL_INFOA
  */
 int WINAPI WSADuplicateSocketW( SOCKET s, DWORD dwProcessId, LPWSAPROTOCOL_INFOW lpProtocolInfo )
 {
-   HANDLE hProcess;
-
-   TRACE("(%ld,%x,%p)\n", s, dwProcessId, lpProtocolInfo);
-
-   memset(lpProtocolInfo, 0, sizeof(*lpProtocolInfo));
-   hProcess = OpenProcess(PROCESS_DUP_HANDLE, FALSE, dwProcessId);
-   DuplicateHandle(GetCurrentProcess(), SOCKET2HANDLE(s),
-                   hProcess, (LPHANDLE)&lpProtocolInfo->dwCatalogEntryId,
-                   0, FALSE, DUPLICATE_SAME_ACCESS);
-   CloseHandle(hProcess);
-   lpProtocolInfo->dwServiceFlags4 = 0xff00ff00; /* magic */
-   return 0;
+    return WS_DuplicateSocket(TRUE, s, dwProcessId, lpProtocolInfo);
 }
 
 /***********************************************************************
