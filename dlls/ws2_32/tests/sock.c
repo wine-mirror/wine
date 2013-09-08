@@ -1286,8 +1286,10 @@ todo_wine
               infoA.szProtocol, prottest[i].family, prottest[i].type, prottest[i].proto);
 
         todo_wine {
-        ok(infoA.szProtocol[0], "WSAPROTOCOL_INFOA was not filled\n");
-        ok(infoW.szProtocol[0], "WSAPROTOCOL_INFOW was not filled\n");
+        ok(infoA.szProtocol[0] || broken(!infoA.szProtocol[0]) /* NT4 */,
+           "WSAPROTOCOL_INFOA was not filled\n");
+        ok(infoW.szProtocol[0] || broken(!infoA.szProtocol[0]) /* NT4 */,
+           "WSAPROTOCOL_INFOW was not filled\n");
         }
 
         WideCharToMultiByte(CP_ACP, 0, infoW.szProtocol, -1,
