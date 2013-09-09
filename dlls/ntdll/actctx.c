@@ -273,6 +273,19 @@ struct clrsurrogate_data
     ULONG name_len;
 };
 
+struct clrclass_data
+{
+    ULONG size;
+    DWORD res[2];
+    ULONG module_len;
+    ULONG module_offset;
+    ULONG name_len;
+    ULONG name_offset;
+    ULONG version_len;
+    ULONG version_offset;
+    DWORD res2[2];
+};
+
 /*
 
    Sections structure.
@@ -332,12 +345,18 @@ struct clrsurrogate_data
    <section header>
    <module names[]>
    <index[]>
-   <data[]> --- <data>
-                <progid>
+   <data[]> --- <data>   --- <data>
+                <progid>     <clrdata>
+                             <name>
+                             <version>
+                             <progid>
 
    This section uses two index records per comclass, one entry contains original guid
    as specified by context, another one has a generated guid. Index and strings handling
    is similar to typelib sections.
+
+   For CLR classes additional data is stored after main COM class data, it contains
+   class name and runtime version string, see 'struct clrclass_data'.
 
    Module name offsets are relative to section, progid offset is relative to data
    structure itself.
@@ -394,8 +413,8 @@ struct entity
             WCHAR *clsid;
             WCHAR *tlbid;
             WCHAR *progid;
-            WCHAR *name; /* not NULL for clrClass */
-            WCHAR *version;
+            WCHAR *name;    /* clrClass: class name */
+            WCHAR *version; /* clrClass: CLR runtime version */
             DWORD  model;
             DWORD  miscstatus;
             DWORD  miscstatuscontent;
@@ -554,6 +573,8 @@ static const WCHAR baseInterfaceW[] = {'b','a','s','e','I','n','t','e','r','f','
 static const WCHAR nummethodsW[] = {'n','u','m','M','e','t','h','o','d','s',0};
 static const WCHAR proxyStubClsid32W[] = {'p','r','o','x','y','S','t','u','b','C','l','s','i','d','3','2',0};
 static const WCHAR runtimeVersionW[] = {'r','u','n','t','i','m','e','V','e','r','s','i','o','n',0};
+static const WCHAR mscoreeW[] = {'M','S','C','O','R','E','E','.','D','L','L',0};
+static const WCHAR mscoree2W[] = {'m','s','c','o','r','e','e','.','d','l','l',0};
 
 static const WCHAR activatewhenvisibleW[] = {'a','c','t','i','v','a','t','e','w','h','e','n','v','i','s','i','b','l','e',0};
 static const WCHAR actslikebuttonW[] = {'a','c','t','s','l','i','k','e','b','u','t','t','o','n',0};
@@ -1845,7 +1866,7 @@ static BOOL parse_com_interface_external_proxy_stub_elem(xmlbuf_t* xmlbuf,
     return parse_expect_end_elem(xmlbuf, comInterfaceExternalProxyStubW, asmv1W);
 }
 
-static BOOL parse_clr_class_elem(xmlbuf_t* xmlbuf, struct assembly* assembly)
+static BOOL parse_clr_class_elem(xmlbuf_t* xmlbuf, struct assembly* assembly, struct actctx_loader *acl)
 {
     xmlstr_t    attr_name, attr_value, elem;
     BOOL        end = FALSE, error, ret = TRUE;
@@ -1886,7 +1907,9 @@ static BOOL parse_clr_class_elem(xmlbuf_t* xmlbuf, struct assembly* assembly)
         }
     }
 
-    if (error || end) return end;
+    if (error) return FALSE;
+    acl->actctx->sections |= SERVERREDIRECT_SECTION;
+    if (end) return TRUE;
 
     while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
     {
@@ -2196,7 +2219,7 @@ static BOOL parse_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl,
         }
         else if (xml_elem_cmp(&elem, clrClassW, asmv1W))
         {
-            ret = parse_clr_class_elem(xmlbuf, assembly);
+            ret = parse_clr_class_elem(xmlbuf, assembly, acl);
         }
         else if (xml_elem_cmp(&elem, clrSurrogateW, asmv1W))
         {
@@ -3436,42 +3459,247 @@ static void generate_uuid(ULONG *seed, GUID *guid)
     guid->Data4[0] |= 0x80;
 }
 
+static void get_comserver_datalen(const struct entity_array *entities, const struct dll_redirect *dll,
+    unsigned int *count, unsigned int *len, unsigned int *module_len)
+{
+    unsigned int i;
+
+    for (i = 0; i < entities->num; i++)
+    {
+        struct entity *entity = &entities->base[i];
+        if (entity->kind == ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION)
+        {
+            /* each entry needs two index entries, extra one goes for alias GUID */
+            *len += 2*sizeof(struct guid_index);
+            /* To save some memory we don't allocated two data structures,
+               instead alias index and normal index point to the same data structure. */
+            *len += sizeof(struct comclassredirect_data);
+
+            /* for clrClass store some more */
+            if (entity->u.comclass.name)
+            {
+                unsigned int str_len;
+
+                /* all string data is stored together in aligned block */
+                str_len = strlenW(entity->u.comclass.name)+1;
+                if (*entity->u.comclass.progid)
+                    str_len += strlenW(entity->u.comclass.progid)+1;
+                if (entity->u.comclass.version)
+                    str_len += strlenW(entity->u.comclass.version)+1;
+
+                *len += sizeof(struct clrclass_data);
+                *len += aligned_string_len(str_len*sizeof(WCHAR));
+
+                /* module name is forced to mscoree.dll, and stored two times with different case */
+                *module_len += sizeof(mscoreeW) + sizeof(mscoree2W);
+            }
+            else
+            {
+                /* progid string is stored separately */
+                if (*entity->u.comclass.progid)
+                    *len += aligned_string_len((strlenW(entity->u.comclass.progid)+1)*sizeof(WCHAR));
+
+                *module_len += (strlenW(dll->name)+1)*sizeof(WCHAR);
+            }
+
+            *count += 1;
+        }
+    }
+}
+
+static void add_comserver_record(const struct guidsection_header *section, const struct entity_array *entities,
+    const struct dll_redirect *dll, struct guid_index **index, ULONG *data_offset, ULONG *module_offset,
+    ULONG *seed, ULONG rosterindex)
+{
+    unsigned int i;
+
+    for (i = 0; i < entities->num; i++)
+    {
+        struct entity *entity = &entities->base[i];
+        if (entity->kind == ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION)
+        {
+            ULONG module_len, progid_len, str_len = 0;
+            struct comclassredirect_data *data;
+            struct guid_index *alias_index;
+            struct clrclass_data *clrdata;
+            UNICODE_STRING str;
+            WCHAR *ptrW;
+
+            if (*entity->u.comclass.progid)
+                progid_len = strlenW(entity->u.comclass.progid)*sizeof(WCHAR);
+            else
+                progid_len = 0;
+
+            module_len = dll ? strlenW(dll->name)*sizeof(WCHAR) : strlenW(mscoreeW)*sizeof(WCHAR);
+
+            /* setup new index entry */
+            RtlInitUnicodeString(&str, entity->u.comclass.clsid);
+            RtlGUIDFromString(&str, &(*index)->guid);
+
+            (*index)->data_offset = *data_offset;
+            (*index)->data_len = sizeof(*data); /* additional length added later */
+            (*index)->rosterindex = rosterindex;
+
+            /* Setup new index entry for alias guid. Alias index records are placed after
+               normal records, so normal guids are hit first on search. Note that class count
+               is doubled. */
+            alias_index = (*index) + section->count/2;
+            generate_uuid(seed, &alias_index->guid);
+            alias_index->data_offset = (*index)->data_offset;
+            alias_index->data_len = 0;
+            alias_index->rosterindex = (*index)->rosterindex;
+
+            /* setup data */
+            data = (struct comclassredirect_data*)((BYTE*)section + (*index)->data_offset);
+            data->size = sizeof(*data);
+            data->res = 0;
+            data->res1[0] = 0;
+            data->res1[1] = 0;
+            data->model = entity->u.comclass.model;
+            data->clsid = (*index)->guid;
+            data->alias = alias_index->guid;
+            data->clsid2 = data->clsid;
+            if (entity->u.comclass.tlbid)
+            {
+                RtlInitUnicodeString(&str, entity->u.comclass.tlbid);
+                RtlGUIDFromString(&str, &data->tlbid);
+            }
+            else
+                memset(&data->tlbid, 0, sizeof(data->tlbid));
+            data->name_len = module_len;
+            data->name_offset = *module_offset;
+            data->progid_len = progid_len;
+            data->progid_offset = data->progid_len ? data->size : 0; /* in case of clrClass additional offset is added later */
+            data->clrdata_len = 0; /* will be set later */
+            data->clrdata_offset = entity->u.comclass.name ? sizeof(*data) : 0;
+            data->miscstatus = entity->u.comclass.miscstatus;
+            data->miscstatuscontent = entity->u.comclass.miscstatuscontent;
+            data->miscstatusthumbnail = entity->u.comclass.miscstatusthumbnail;
+            data->miscstatusicon = entity->u.comclass.miscstatusicon;
+            data->miscstatusdocprint = entity->u.comclass.miscstatusdocprint;
+
+            /* mask describes which misc* data is available */
+            data->miscmask = 0;
+            if (data->miscstatus)
+                data->miscmask |= MiscStatus;
+            if (data->miscstatuscontent)
+                data->miscmask |= MiscStatusContent;
+            if (data->miscstatusthumbnail)
+                data->miscmask |= MiscStatusThumbnail;
+            if (data->miscstatusicon)
+                data->miscmask |= MiscStatusIcon;
+            if (data->miscstatusdocprint)
+                data->miscmask |= MiscStatusDocPrint;
+
+            if (data->clrdata_offset)
+            {
+                clrdata = (struct clrclass_data*)((BYTE*)data + data->clrdata_offset);
+
+                clrdata->size = sizeof(*clrdata);
+                clrdata->res[0] = 0;
+                clrdata->res[1] = 2; /* FIXME: unknown field */
+                clrdata->module_len = strlenW(mscoreeW)*sizeof(WCHAR);
+                clrdata->module_offset = *module_offset + data->name_len + sizeof(WCHAR);
+                clrdata->name_len = strlenW(entity->u.comclass.name)*sizeof(WCHAR);
+                clrdata->name_offset = clrdata->size;
+                clrdata->version_len = entity->u.comclass.version ? strlenW(entity->u.comclass.version)*sizeof(WCHAR) : 0;
+                clrdata->version_offset = clrdata->version_len ? clrdata->name_offset + clrdata->name_len + sizeof(WCHAR) : 0;
+                clrdata->res2[0] = 0;
+                clrdata->res2[1] = 0;
+
+                data->clrdata_len = clrdata->size + clrdata->name_len + sizeof(WCHAR);
+
+                /* module name */
+                ptrW = (WCHAR*)((BYTE*)section + clrdata->module_offset);
+                memcpy(ptrW, mscoree2W, clrdata->module_len);
+                ptrW[clrdata->module_len/sizeof(WCHAR)] = 0;
+
+                ptrW = (WCHAR*)((BYTE*)section + data->name_offset);
+                memcpy(ptrW, mscoreeW, data->name_len);
+                ptrW[data->name_len/sizeof(WCHAR)] = 0;
+
+                /* class name */
+                ptrW = (WCHAR*)((BYTE*)clrdata + clrdata->name_offset);
+                memcpy(ptrW, entity->u.comclass.name, clrdata->name_len);
+                ptrW[clrdata->name_len/sizeof(WCHAR)] = 0;
+
+                /* runtime version, optional */
+                if (clrdata->version_len)
+                {
+                    data->clrdata_len += clrdata->version_len + sizeof(WCHAR);
+
+                    ptrW = (WCHAR*)((BYTE*)clrdata + clrdata->version_offset);
+                    memcpy(ptrW, entity->u.comclass.version, clrdata->version_len);
+                    ptrW[clrdata->version_len/sizeof(WCHAR)] = 0;
+                }
+
+                if (data->progid_len)
+                    data->progid_offset += data->clrdata_len;
+                (*index)->data_len += sizeof(*clrdata);
+            }
+            else
+            {
+                clrdata = NULL;
+
+                /* module name */
+                ptrW = (WCHAR*)((BYTE*)section + data->name_offset);
+                memcpy(ptrW, dll->name, data->name_len);
+                ptrW[data->name_len/sizeof(WCHAR)] = 0;
+            }
+
+            /* progid string */
+            if (data->progid_len)
+            {
+                ptrW = (WCHAR*)((BYTE*)data + data->progid_offset);
+                memcpy(ptrW, entity->u.comclass.progid, data->progid_len);
+                ptrW[data->progid_len/sizeof(WCHAR)] = 0;
+            }
+
+            /* string block length */
+            str_len = 0;
+            if (clrdata)
+            {
+                str_len += clrdata->name_len + sizeof(WCHAR);
+                if (clrdata->version_len)
+                    str_len += clrdata->version_len + sizeof(WCHAR);
+            }
+            if (progid_len)
+                str_len += progid_len + sizeof(WCHAR);
+
+            (*index)->data_len += aligned_string_len(str_len);
+            alias_index->data_len = (*index)->data_len;
+
+            /* move to next data record */
+            (*data_offset) += sizeof(*data) + aligned_string_len(str_len);
+            (*module_offset) += module_len + sizeof(WCHAR);
+
+            if (clrdata)
+            {
+                (*data_offset) += sizeof(*clrdata);
+                (*module_offset) += clrdata->module_len + sizeof(WCHAR);
+            }
+            (*index) += 1;
+        }
+    }
+}
+
 static NTSTATUS build_comserver_section(ACTIVATION_CONTEXT* actctx, struct guidsection_header **section)
 {
-    unsigned int i, j, k, total_len = 0, class_count = 0, names_len = 0;
-    struct guid_index *index, *alias_index;
-    struct comclassredirect_data *data;
+    unsigned int i, j, total_len = 0, class_count = 0, names_len = 0;
     struct guidsection_header *header;
     ULONG module_offset, data_offset;
+    struct guid_index *index;
     ULONG seed;
 
     /* compute section length */
     for (i = 0; i < actctx->num_assemblies; i++)
     {
         struct assembly *assembly = &actctx->assemblies[i];
+        get_comserver_datalen(&assembly->entities, NULL, &class_count, &total_len, &names_len);
         for (j = 0; j < assembly->num_dlls; j++)
         {
             struct dll_redirect *dll = &assembly->dlls[j];
-            for (k = 0; k < dll->entities.num; k++)
-            {
-                struct entity *entity = &dll->entities.base[k];
-                if (entity->kind == ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION)
-                {
-                    /* each entry needs two index entries, extra one goes for alias GUID */
-                    total_len += 2*sizeof(*index);
-                    /* to save some memory we don't allocated two data structures,
-                       instead alias index and normal index point to the same data structure */
-                    total_len += sizeof(*data);
-                    /* help string is stored separately */
-                    if (*entity->u.comclass.progid)
-                        total_len += aligned_string_len((strlenW(entity->u.comclass.progid)+1)*sizeof(WCHAR));
-
-                    /* module names are packed one after another */
-                    names_len += (strlenW(dll->name)+1)*sizeof(WCHAR);
-
-                    class_count++;
-                }
-            }
+            get_comserver_datalen(&dll->entities, dll, &class_count, &total_len, &names_len);
         }
     }
 
@@ -3494,104 +3722,11 @@ static NTSTATUS build_comserver_section(ACTIVATION_CONTEXT* actctx, struct guids
     for (i = 0; i < actctx->num_assemblies; i++)
     {
         struct assembly *assembly = &actctx->assemblies[i];
+        add_comserver_record(header, &assembly->entities, NULL, &index, &data_offset, &module_offset, &seed, i+1);
         for (j = 0; j < assembly->num_dlls; j++)
         {
             struct dll_redirect *dll = &assembly->dlls[j];
-            for (k = 0; k < dll->entities.num; k++)
-            {
-                struct entity *entity = &dll->entities.base[k];
-                if (entity->kind == ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION)
-                {
-                    ULONG module_len, progid_len;
-                    UNICODE_STRING str;
-                    WCHAR *ptrW;
-
-                    if (*entity->u.comclass.progid)
-                        progid_len = strlenW(entity->u.comclass.progid)*sizeof(WCHAR);
-                    else
-                        progid_len = 0;
-
-                    module_len = strlenW(dll->name)*sizeof(WCHAR);
-
-                    /* setup new index entry */
-                    RtlInitUnicodeString(&str, entity->u.comclass.clsid);
-                    RtlGUIDFromString(&str, &index->guid);
-                    index->data_offset = data_offset;
-                    index->data_len = sizeof(*data) + aligned_string_len(progid_len);
-                    index->rosterindex = i + 1;
-
-                    /* Setup new index entry for alias guid. Alias index records are placed after
-                       normal records, so normal guids are hit first on search */
-                    alias_index = index + class_count;
-                    generate_uuid(&seed, &alias_index->guid);
-                    alias_index->data_offset = index->data_offset;
-                    alias_index->data_len = index->data_len;
-                    alias_index->rosterindex = index->rosterindex;
-
-                    /* setup data */
-                    data = (struct comclassredirect_data*)((BYTE*)header + index->data_offset);
-                    data->size = sizeof(*data);
-                    data->res = 0;
-                    data->res1[0] = 0;
-                    data->res1[1] = 0;
-                    data->model = entity->u.comclass.model;
-                    data->clsid = index->guid;
-                    data->alias = alias_index->guid;
-                    data->clsid2 = data->clsid;
-                    if (entity->u.comclass.tlbid)
-                    {
-                        RtlInitUnicodeString(&str, entity->u.comclass.tlbid);
-                        RtlGUIDFromString(&str, &data->tlbid);
-                    }
-                    else
-                        memset(&data->tlbid, 0, sizeof(data->tlbid));
-                    data->name_len = module_len;
-                    data->name_offset = module_offset;
-                    data->progid_len = progid_len;
-                    data->progid_offset = sizeof(*data);
-                    data->clrdata_len = 0;
-                    data->clrdata_offset = 0;
-                    data->miscstatus = entity->u.comclass.miscstatus;
-                    data->miscstatuscontent = entity->u.comclass.miscstatuscontent;
-                    data->miscstatusthumbnail = entity->u.comclass.miscstatusthumbnail;
-                    data->miscstatusicon = entity->u.comclass.miscstatusicon;
-                    data->miscstatusdocprint = entity->u.comclass.miscstatusdocprint;
-
-                    /* mask describes which misc* data is available */
-                    data->miscmask = 0;
-                    if (data->miscstatus)
-                        data->miscmask |= MiscStatus;
-                    if (data->miscstatuscontent)
-                        data->miscmask |= MiscStatusContent;
-                    if (data->miscstatusthumbnail)
-                        data->miscmask |= MiscStatusThumbnail;
-                    if (data->miscstatusicon)
-                        data->miscmask |= MiscStatusIcon;
-                    if (data->miscstatusdocprint)
-                        data->miscmask |= MiscStatusDocPrint;
-
-                    /* module name */
-                    ptrW = (WCHAR*)((BYTE*)header + data->name_offset);
-                    memcpy(ptrW, dll->name, data->name_len);
-                    ptrW[data->name_len/sizeof(WCHAR)] = 0;
-
-                    /* progid string */
-                    if (data->progid_len)
-                    {
-                        ptrW = (WCHAR*)((BYTE*)data + data->progid_offset);
-                        memcpy(ptrW, entity->u.comclass.progid, data->progid_len);
-                        ptrW[data->progid_len/sizeof(WCHAR)] = 0;
-                    }
-
-                    data_offset += sizeof(*data);
-                    if (progid_len)
-                        data_offset += aligned_string_len(progid_len + sizeof(WCHAR));
-
-                    module_offset += module_len + sizeof(WCHAR);
-
-                    index++;
-                }
-            }
+            add_comserver_record(header, &dll->entities, dll, &index, &data_offset, &module_offset, &seed, i+1);
         }
     }
 
@@ -3631,7 +3766,7 @@ static NTSTATUS find_comserver_redirection(ACTIVATION_CONTEXT* actctx, const GUI
     data->ulDataFormatVersion = 1;
     data->lpData = comclass;
     /* full length includes string length with nulls */
-    data->ulLength = comclass->size + comclass->progid_len + sizeof(WCHAR);
+    data->ulLength = comclass->size + comclass->progid_len + sizeof(WCHAR) + comclass->clrdata_len;
     data->lpSectionGlobalData = (BYTE*)actctx->comserver_section + actctx->comserver_section->names_offset;
     data->ulSectionGlobalDataLength = actctx->comserver_section->names_len;
     data->lpSectionBase = actctx->comserver_section;

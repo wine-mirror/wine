@@ -1226,12 +1226,14 @@ static void test_find_com_redirection(HANDLE handle, const GUID *clsid, const GU
         ok_(__FILE__, line)(IsEqualGUID(&comclass->clsid2, clsid), "got wrong clsid2 %s\n", debugstr_guid(&comclass->clsid2));
         ok_(__FILE__, line)(IsEqualGUID(&comclass->tlid, tlid), "got wrong tlid %s\n", debugstr_guid(&comclass->tlid));
         ok_(__FILE__, line)(comclass->name_len > 0, "got modulename len %d\n", comclass->name_len);
-        ok_(__FILE__, line)(comclass->progid_offset == comclass->size + comclass->clrdata_len, "got progid offset %d\n", comclass->progid_offset);
+
+        len = comclass->size + comclass->clrdata_len;
+        ok_(__FILE__, line)(comclass->progid_offset == len, "got progid offset %d, expected %d\n", comclass->progid_offset, len);
 
         ptr = (WCHAR*)((BYTE*)comclass + comclass->progid_offset);
         ok_(__FILE__, line)(!lstrcmpW(ptr, progid), "got wrong progid %s, expected %s\n", wine_dbgstr_w(ptr), wine_dbgstr_w(progid));
-        ok_(__FILE__, line)(lstrlenW(ptr)*sizeof(WCHAR) == comclass->progid_len,
-            "got progid name length %d, expected %d\n", comclass->progid_len, lstrlenW(ptr));
+        ok_(__FILE__, line)(lstrlenW(progid)*sizeof(WCHAR) == comclass->progid_len,
+            "got progid name length %d\n", comclass->progid_len);
 
         /* data length is simply header length + string data length including nulls */
         len = comclass->size + comclass->progid_len + sizeof(WCHAR) + comclass->clrdata_len;
