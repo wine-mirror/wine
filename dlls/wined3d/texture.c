@@ -114,7 +114,7 @@ static void wined3d_texture_unload(struct wined3d_texture *texture)
 
     if (context) context_release(context);
 
-    wined3d_texture_set_dirty(texture, TRUE);
+    wined3d_texture_set_dirty(texture);
 
     resource_unload(&texture->resource);
 }
@@ -139,10 +139,10 @@ static void wined3d_texture_cleanup(struct wined3d_texture *texture)
     resource_cleanup(&texture->resource);
 }
 
-void wined3d_texture_set_dirty(struct wined3d_texture *texture, BOOL dirty)
+void wined3d_texture_set_dirty(struct wined3d_texture *texture)
 {
-    texture->texture_rgb.dirty = dirty;
-    texture->texture_srgb.dirty = dirty;
+    texture->texture_rgb.dirty = TRUE;
+    texture->texture_srgb.dirty = TRUE;
 }
 
 /* Context activation is done by the caller. */
@@ -195,7 +195,7 @@ static HRESULT wined3d_texture_bind(struct wined3d_texture *texture,
         else
             gl_tex->states[WINED3DTEXSTA_SRGBTEXTURE] = srgb;
         gl_tex->states[WINED3DTEXSTA_SHADOW] = FALSE;
-        wined3d_texture_set_dirty(texture, TRUE);
+        wined3d_texture_set_dirty(texture);
         new_texture = TRUE;
 
         if (texture->resource.usage & WINED3DUSAGE_AUTOGENMIPMAP)
@@ -592,7 +592,7 @@ HRESULT CDECL wined3d_texture_add_dirty_region(struct wined3d_texture *texture,
         return WINED3DERR_INVALIDCALL;
     }
 
-    wined3d_texture_set_dirty(texture, TRUE);
+    wined3d_texture_set_dirty(texture);
     texture->texture_ops->texture_sub_resource_add_dirty_region(sub_resource, dirty_region);
 
     return WINED3D_OK;

@@ -2488,7 +2488,7 @@ void surface_add_dirty_rect(struct wined3d_surface *surface, const struct wined3
     if (surface->container)
     {
         TRACE("Passing to container.\n");
-        wined3d_texture_set_dirty(surface->container, TRUE);
+        wined3d_texture_set_dirty(surface->container);
     }
 }
 
@@ -5162,7 +5162,7 @@ void surface_modify_ds_location(struct wined3d_surface *surface,
         if (surface->container)
         {
             TRACE("Passing to container.\n");
-            wined3d_texture_set_dirty(surface->container, TRUE);
+            wined3d_texture_set_dirty(surface->container);
         }
     }
 
@@ -5354,7 +5354,7 @@ void surface_modify_location(struct wined3d_surface *surface, DWORD location, BO
             if (surface->container)
             {
                 TRACE("Passing to container.\n");
-                wined3d_texture_set_dirty(surface->container, TRUE);
+                wined3d_texture_set_dirty(surface->container);
             }
         }
         surface->flags &= ~SFLAG_LOCATIONS;
@@ -5376,7 +5376,7 @@ void surface_modify_location(struct wined3d_surface *surface, DWORD location, BO
             if (surface->container)
             {
                 TRACE("Passing to container\n");
-                wined3d_texture_set_dirty(surface->container, TRUE);
+                wined3d_texture_set_dirty(surface->container);
             }
         }
         surface->flags &= ~location;

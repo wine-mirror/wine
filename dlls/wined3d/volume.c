@@ -605,7 +605,7 @@ HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
 
     if (!(flags & (WINED3D_MAP_NO_DIRTY_UPDATE | WINED3D_MAP_READONLY)))
     {
-        wined3d_texture_set_dirty(volume->container, TRUE);
+        wined3d_texture_set_dirty(volume->container);
 
         if (volume->flags & WINED3D_VFLAG_PBO)
             wined3d_volume_invalidate_location(volume, ~WINED3D_LOCATION_BUFFER);
