@@ -180,7 +180,7 @@ HRESULT volume_init(struct d3d9_volume *volume, struct d3d9_device *device, UINT
 
 struct d3d9_swapchain
 {
-    IDirect3DSwapChain9 IDirect3DSwapChain9_iface;
+    IDirect3DSwapChain9Ex IDirect3DSwapChain9Ex_iface;
     LONG refcount;
     struct wined3d_swapchain *wined3d_swapchain;
     IDirect3DDevice9Ex *parent_device;
@@ -310,5 +310,10 @@ struct d3d9_query
 };
 
 HRESULT query_init(struct d3d9_query *query, struct d3d9_device *device, D3DQUERYTYPE type) DECLSPEC_HIDDEN;
+
+static inline struct d3d9_device *impl_from_IDirect3DDevice9Ex(IDirect3DDevice9Ex *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d9_device, IDirect3DDevice9Ex_iface);
+}
 
 #endif /* __WINE_D3D9_PRIVATE_H */
