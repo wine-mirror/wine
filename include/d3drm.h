@@ -91,7 +91,7 @@ DECLARE_INTERFACE_(IDirect3DRM,IUnknown)
     STDMETHOD(LoadTextureFromResource)(THIS_ HRSRC resource, IDirect3DRMTexture **texture) PURE;
     STDMETHOD(SetSearchPath)(THIS_ const char *path) PURE;
     STDMETHOD(AddSearchPath)(THIS_ const char *path) PURE;
-    STDMETHOD(GetSearchPath)(THIS_ DWORD *size_return, LPSTR path_return) PURE;
+    STDMETHOD(GetSearchPath)(THIS_ DWORD *size, char *path) PURE;
     STDMETHOD(SetDefaultTextureColors)(THIS_ DWORD) PURE;
     STDMETHOD(SetDefaultTextureShades)(THIS_ DWORD) PURE;
     STDMETHOD(GetDevices)(THIS_ IDirect3DRMDeviceArray **array) PURE;
@@ -231,7 +231,7 @@ DECLARE_INTERFACE_(IDirect3DRM2,IUnknown)
             const char *resource_type, IDirect3DRMTexture2 **texture) PURE;
     STDMETHOD(SetSearchPath)(THIS_ const char *path) PURE;
     STDMETHOD(AddSearchPath)(THIS_ const char *path) PURE;
-    STDMETHOD(GetSearchPath)(THIS_ DWORD *size_return, LPSTR path_return) PURE;
+    STDMETHOD(GetSearchPath)(THIS_ DWORD *size, char *path) PURE;
     STDMETHOD(SetDefaultTextureColors)(THIS_ DWORD) PURE;
     STDMETHOD(SetDefaultTextureShades)(THIS_ DWORD) PURE;
     STDMETHOD(GetDevices)(THIS_ IDirect3DRMDeviceArray **array) PURE;
@@ -374,7 +374,7 @@ DECLARE_INTERFACE_(IDirect3DRM3,IUnknown)
             const char *resource_type, IDirect3DRMTexture3 **texture) PURE;
     STDMETHOD(SetSearchPath)(THIS_ const char *path) PURE;
     STDMETHOD(AddSearchPath)(THIS_ const char *path) PURE;
-    STDMETHOD(GetSearchPath)(THIS_ DWORD *size_return, LPSTR path_return) PURE;
+    STDMETHOD(GetSearchPath)(THIS_ DWORD *size, char *path) PURE;
     STDMETHOD(SetDefaultTextureColors)(THIS_ DWORD) PURE;
     STDMETHOD(SetDefaultTextureShades)(THIS_ DWORD) PURE;
     STDMETHOD(GetDevices)(THIS_ IDirect3DRMDeviceArray **array) PURE;

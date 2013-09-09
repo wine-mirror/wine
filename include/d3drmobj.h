@@ -208,8 +208,8 @@ DECLARE_INTERFACE_(IDirect3DRMObject,IUnknown)
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
-    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
-    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
+    STDMETHOD(GetClassName)(THIS_ DWORD *size, char *name) PURE;
 };
 #undef INTERFACE
 
@@ -262,7 +262,7 @@ DECLARE_INTERFACE_(IDirect3DRMObject2,IUnknown)
     STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK pFunc, LPVOID pArg) PURE;
     STDMETHOD(GetClientData)(THIS_ DWORD id, LPVOID* ppData) PURE;
     STDMETHOD(GetDirect3DRM)(THIS_ struct IDirect3DRM **d3drm) PURE;
-    STDMETHOD(GetName)(THIS_ LPDWORD pSize, LPSTR pName) PURE;
+    STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
     STDMETHOD(SetClientData)(THIS_ DWORD id, LPVOID pData, DWORD flags) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
     STDMETHOD(GetAge)(THIS_ DWORD flags, LPDWORD pAge) PURE;
@@ -318,8 +318,8 @@ DECLARE_INTERFACE_(IDirect3DRMVisual,IDirect3DRMObject)
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
-    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
-    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
+    STDMETHOD(GetClassName)(THIS_ DWORD *size, char *name) PURE;
 };
 #undef INTERFACE
 
@@ -373,8 +373,8 @@ DECLARE_INTERFACE_(IDirect3DRMDevice,IUnknown)
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
-    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
-    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
+    STDMETHOD(GetClassName)(THIS_ DWORD *size, char *name) PURE;
     /*** IDirect3DRMDevice methods ***/
     STDMETHOD(Init)(THIS_ ULONG width, ULONG height) PURE;
     STDMETHOD(InitFromD3D)(THIS_ IDirect3D *d3d, IDirect3DDevice *d3d_device) PURE;
@@ -500,8 +500,8 @@ DECLARE_INTERFACE_(IDirect3DRMDevice2,IDirect3DRMDevice)
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
-    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
-    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
+    STDMETHOD(GetClassName)(THIS_ DWORD *size, char *name) PURE;
     /*** IDirect3DRMDevice methods ***/
     STDMETHOD(Init)(THIS_ ULONG width, ULONG height) PURE;
     STDMETHOD(InitFromD3D)(THIS_ IDirect3D *d3d, IDirect3DDevice *d3d_device) PURE;
@@ -645,8 +645,8 @@ DECLARE_INTERFACE_(IDirect3DRMDevice3,IDirect3DRMObject)
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
-    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
-    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
+    STDMETHOD(GetClassName)(THIS_ DWORD *size, char *name) PURE;
     /*** IDirect3DRMDevice methods ***/
     STDMETHOD(Init)(THIS_ ULONG width, ULONG height) PURE;
     STDMETHOD(InitFromD3D)(THIS_ IDirect3D *d3d, IDirect3DDevice *d3d_device) PURE;
@@ -805,8 +805,8 @@ DECLARE_INTERFACE_(IDirect3DRMViewport,IDirect3DRMObject)
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
-    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
-    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
+    STDMETHOD(GetClassName)(THIS_ DWORD *size, char *name) PURE;
     /*** IDirect3DRMViewport methods ***/
     STDMETHOD(Init) (THIS_ IDirect3DRMDevice *device, struct IDirect3DRMFrame *camera,
             DWORD x, DWORD y, DWORD width, DWORD height) PURE;
@@ -945,8 +945,8 @@ DECLARE_INTERFACE_(IDirect3DRMViewport2,IDirect3DRMObject)
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
-    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
-    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
+    STDMETHOD(GetClassName)(THIS_ DWORD *size, char *name) PURE;
     /*** IDirect3DRMViewport2 methods ***/
     STDMETHOD(Init) (THIS_ IDirect3DRMDevice3 *device, struct IDirect3DRMFrame3 *camera,
             DWORD x, DWORD y, DWORD width, DWORD height) PURE;
@@ -1093,8 +1093,8 @@ DECLARE_INTERFACE_(IDirect3DRMFrame,IDirect3DRMVisual)
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
-    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
-    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
+    STDMETHOD(GetClassName)(THIS_ DWORD *size, char *name) PURE;
     /*** IDirect3DRMFrame methods ***/
     STDMETHOD(AddChild)(THIS_ IDirect3DRMFrame *child) PURE;
     STDMETHOD(AddLight)(THIS_ struct IDirect3DRMLight *light) PURE;
@@ -1326,8 +1326,8 @@ DECLARE_INTERFACE_(IDirect3DRMFrame2,IDirect3DRMFrame)
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
-    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
-    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
+    STDMETHOD(GetClassName)(THIS_ DWORD *size, char *name) PURE;
     /*** IDirect3DRMFrame methods ***/
     STDMETHOD(AddChild)(THIS_ IDirect3DRMFrame *child) PURE;
     STDMETHOD(AddLight)(THIS_ struct IDirect3DRMLight *light) PURE;
@@ -1608,8 +1608,8 @@ DECLARE_INTERFACE_(IDirect3DRMFrame3,IDirect3DRMVisual)
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
-    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
-    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
+    STDMETHOD(GetClassName)(THIS_ DWORD *size, char *name) PURE;
     /*** IDirect3DRMFrame3 methods ***/
     STDMETHOD(AddChild)(THIS_ IDirect3DRMFrame3 *child) PURE;
     STDMETHOD(AddLight)(THIS_ struct IDirect3DRMLight *light) PURE;
@@ -1906,8 +1906,8 @@ DECLARE_INTERFACE_(IDirect3DRMMesh,IDirect3DRMVisual)
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
-    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
-    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
+    STDMETHOD(GetClassName)(THIS_ DWORD *size, char *name) PURE;
     /*** IDirect3DRMMesh methods ***/
     STDMETHOD(Scale)(THIS_ D3DVALUE sx, D3DVALUE sy, D3DVALUE sz) PURE;
     STDMETHOD(Translate)(THIS_ D3DVALUE tx, D3DVALUE ty, D3DVALUE tz) PURE;
@@ -2021,8 +2021,8 @@ DECLARE_INTERFACE_(IDirect3DRMProgressiveMesh,IDirect3DRMVisual)
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
-    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
-    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
+    STDMETHOD(GetClassName)(THIS_ DWORD *size, char *name) PURE;
     /*** IDirect3DRMProgressiveMesh methods ***/
     STDMETHOD(Load) (THIS_ LPVOID pObjLocation, LPVOID pObjId, D3DRMLOADOPTIONS dloLoadflags,
         D3DRMLOADTEXTURECALLBACK pCallback, LPVOID lpArg) PURE;
@@ -2131,8 +2131,8 @@ DECLARE_INTERFACE_(IDirect3DRMShadow,IDirect3DRMVisual)
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
-    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
-    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
+    STDMETHOD(GetClassName)(THIS_ DWORD *size, char *name) PURE;
     /*** IDirect3DRMShadow methods ***/
     STDMETHOD(Init)(THIS_ IDirect3DRMVisual *visual, struct IDirect3DRMLight *light,
             D3DVALUE px, D3DVALUE py, D3DVALUE pz, D3DVALUE nx, D3DVALUE ny, D3DVALUE nz) PURE;
@@ -2190,8 +2190,8 @@ DECLARE_INTERFACE_(IDirect3DRMShadow2,IDirect3DRMVisual)
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
-    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
-    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
+    STDMETHOD(GetClassName)(THIS_ DWORD *size, char *name) PURE;
     /*** IDirect3DRMShadow methods ***/
     STDMETHOD(Init)(THIS_ IUnknown *object, struct IDirect3DRMLight *light,
             D3DVALUE px, D3DVALUE py, D3DVALUE pz, D3DVALUE nx, D3DVALUE ny, D3DVALUE nz) PURE;
@@ -2278,8 +2278,8 @@ DECLARE_INTERFACE_(IDirect3DRMFace,IDirect3DRMObject)
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
-    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
-    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
+    STDMETHOD(GetClassName)(THIS_ DWORD *size, char *name) PURE;
     /*** IDirect3DRMFace methods ***/
     STDMETHOD(AddVertex)(THIS_ D3DVALUE x, D3DVALUE y, D3DVALUE z) PURE;
     STDMETHOD(AddVertexAndNormalIndexed)(THIS_ DWORD vertex, DWORD normal) PURE;
@@ -2388,8 +2388,8 @@ DECLARE_INTERFACE_(IDirect3DRMFace2,IDirect3DRMObject)
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
-    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
-    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
+    STDMETHOD(GetClassName)(THIS_ DWORD *size, char *name) PURE;
     /*** IDirect3DRMFace methods ***/
     STDMETHOD(AddVertex)(THIS_ D3DVALUE x, D3DVALUE y, D3DVALUE z) PURE;
     STDMETHOD(AddVertexAndNormalIndexed)(THIS_ DWORD vertex, DWORD normal) PURE;
@@ -2498,8 +2498,8 @@ DECLARE_INTERFACE_(IDirect3DRMMeshBuilder,IDirect3DRMVisual)
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
-    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
-    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
+    STDMETHOD(GetClassName)(THIS_ DWORD *size, char *name) PURE;
     /*** IDirect3DRMMeshBuilder methods ***/
     STDMETHOD(Load)(THIS_ LPVOID filename, LPVOID name, D3DRMLOADOPTIONS loadflags, D3DRMLOADTEXTURECALLBACK, LPVOID pArg) PURE;
     STDMETHOD(Save)(THIS_ const char *filename, D3DRMXOFFORMAT, D3DRMSAVEOPTIONS save) PURE;
@@ -2669,8 +2669,8 @@ DECLARE_INTERFACE_(IDirect3DRMMeshBuilder2,IDirect3DRMMeshBuilder)
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
-    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
-    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
+    STDMETHOD(GetClassName)(THIS_ DWORD *size, char *name) PURE;
     /*** IDirect3DRMMeshBuilder methods ***/
     STDMETHOD(Load)(THIS_ LPVOID filename, LPVOID name, D3DRMLOADOPTIONS loadflags, D3DRMLOADTEXTURECALLBACK, LPVOID pArg) PURE;
     STDMETHOD(Save)(THIS_ const char *filename, D3DRMXOFFORMAT, D3DRMSAVEOPTIONS save) PURE;
@@ -2849,8 +2849,8 @@ DECLARE_INTERFACE_(IDirect3DRMMeshBuilder3,IDirect3DRMVisual)
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
-    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
-    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
+    STDMETHOD(GetClassName)(THIS_ DWORD *size, char *name) PURE;
     /*** IDirect3DRMMeshBuilder3 methods ***/
     STDMETHOD(Load)(THIS_ LPVOID filename, LPVOID name, D3DRMLOADOPTIONS loadflags, D3DRMLOADTEXTURE3CALLBACK, LPVOID pArg) PURE;
     STDMETHOD(Save)(THIS_ const char *filename, D3DRMXOFFORMAT, D3DRMSAVEOPTIONS save) PURE;
@@ -3085,8 +3085,8 @@ DECLARE_INTERFACE_(IDirect3DRMLight,IDirect3DRMObject)
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
-    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
-    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
+    STDMETHOD(GetClassName)(THIS_ DWORD *size, char *name) PURE;
     /*** IDirect3DRMLight methods ***/
     STDMETHOD(SetType)(THIS_ D3DRMLIGHTTYPE) PURE;
     STDMETHOD(SetColor)(THIS_ D3DCOLOR) PURE;
@@ -3197,8 +3197,8 @@ DECLARE_INTERFACE_(IDirect3DRMTexture, IDirect3DRMVisual)
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
-    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
-    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
+    STDMETHOD(GetClassName)(THIS_ DWORD *size, char *name) PURE;
     /*** IDirect3DRMTexture methods ***/
     STDMETHOD(InitFromFile)(THIS_ const char *filename) PURE;
     STDMETHOD(InitFromSurface)(THIS_ IDirectDrawSurface *surface) PURE;
@@ -3309,8 +3309,8 @@ DECLARE_INTERFACE_(IDirect3DRMTexture2, IDirect3DRMTexture)
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
-    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
-    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
+    STDMETHOD(GetClassName)(THIS_ DWORD *size, char *name) PURE;
     /*** IDirect3DRMTexture methods ***/
     STDMETHOD(InitFromFile)(THIS_ const char *filename) PURE;
     STDMETHOD(InitFromSurface)(THIS_ IDirectDrawSurface *surface) PURE;
@@ -3433,8 +3433,8 @@ DECLARE_INTERFACE_(IDirect3DRMTexture3, IDirect3DRMVisual)
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
-    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
-    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
+    STDMETHOD(GetClassName)(THIS_ DWORD *size, char *name) PURE;
     /*** IDirect3DRMTexture3 methods ***/
     STDMETHOD(InitFromFile)(THIS_ const char *filename) PURE;
     STDMETHOD(InitFromSurface)(THIS_ IDirectDrawSurface *surface) PURE;
@@ -3569,8 +3569,8 @@ DECLARE_INTERFACE_(IDirect3DRMWrap, IDirect3DRMObject)
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
-    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
-    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
+    STDMETHOD(GetClassName)(THIS_ DWORD *size, char *name) PURE;
     /*** IDirect3DRMWrap methods ***/
     STDMETHOD(Init)(THIS_ D3DRMWRAPTYPE type, IDirect3DRMFrame *reference, D3DVALUE ox, D3DVALUE oy, D3DVALUE oz,
             D3DVALUE dx, D3DVALUE dy, D3DVALUE dz, D3DVALUE ux, D3DVALUE uy, D3DVALUE uz,
@@ -3635,8 +3635,8 @@ DECLARE_INTERFACE_(IDirect3DRMMaterial, IDirect3DRMObject)
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
-    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
-    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
+    STDMETHOD(GetClassName)(THIS_ DWORD *size, char *name) PURE;
     /*** IDirect3DRMMaterial methods ***/
     STDMETHOD(SetPower)(THIS_ D3DVALUE power) PURE;
     STDMETHOD(SetSpecular)(THIS_ D3DVALUE r, D3DVALUE g, D3DVALUE b) PURE;
@@ -3708,8 +3708,8 @@ DECLARE_INTERFACE_(IDirect3DRMMaterial2, IDirect3DRMObject)
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
-    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
-    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
+    STDMETHOD(GetClassName)(THIS_ DWORD *size, char *name) PURE;
     /*** IDirect3DRMMaterial2 methods ***/
     STDMETHOD(SetPower)(THIS_ D3DVALUE power) PURE;
     STDMETHOD(SetSpecular)(THIS_ D3DVALUE r, D3DVALUE g, D3DVALUE b) PURE;
@@ -3787,8 +3787,8 @@ DECLARE_INTERFACE_(IDirect3DRMAnimation, IDirect3DRMObject)
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
-    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
-    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
+    STDMETHOD(GetClassName)(THIS_ DWORD *size, char *name) PURE;
     /*** IDirect3DRMAnimation methods ***/
     STDMETHOD(SetOptions)(THIS_ D3DRMANIMATIONOPTIONS flags) PURE;
     STDMETHOD(AddRotateKey)(THIS_ D3DVALUE time, D3DRMQUATERNION *q) PURE;
@@ -3866,8 +3866,8 @@ DECLARE_INTERFACE_(IDirect3DRMAnimation2, IDirect3DRMObject)
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
-    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
-    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
+    STDMETHOD(GetClassName)(THIS_ DWORD *size, char *name) PURE;
     /*** IDirect3DRMAnimation2 methods ***/
     STDMETHOD(SetOptions)(THIS_ D3DRMANIMATIONOPTIONS flags) PURE;
     STDMETHOD(AddRotateKey)(THIS_ D3DVALUE time, D3DRMQUATERNION *q) PURE;
@@ -3960,8 +3960,8 @@ DECLARE_INTERFACE_(IDirect3DRMAnimationSet, IDirect3DRMObject)
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
-    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
-    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
+    STDMETHOD(GetClassName)(THIS_ DWORD *size, char *name) PURE;
     /*** IDirect3DRMAnimationSet methods ***/
     STDMETHOD(AddAnimation)(THIS_ IDirect3DRMAnimation *animation) PURE;
     STDMETHOD(Load)(THIS_ void *filename, void *name, D3DRMLOADOPTIONS flags,
@@ -4028,8 +4028,8 @@ DECLARE_INTERFACE_(IDirect3DRMAnimationSet2, IDirect3DRMObject)
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
-    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
-    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
+    STDMETHOD(GetClassName)(THIS_ DWORD *size, char *name) PURE;
     /*** IDirect3DRMAnimationSet2 methods ***/
     STDMETHOD(AddAnimation)(THIS_ IDirect3DRMAnimation2 *animation) PURE;
     STDMETHOD(Load)(THIS_ void *source, void *object_id, D3DRMLOADOPTIONS flags,
@@ -4099,8 +4099,8 @@ DECLARE_INTERFACE_(IDirect3DRMUserVisual, IDirect3DRMVisual)
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
-    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
-    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
+    STDMETHOD(GetClassName)(THIS_ DWORD *size, char *name) PURE;
     /*** IDirect3DRMUserVisual methods ***/
     STDMETHOD(Init)(THIS_ D3DRMUSERVISUALCALLBACK fn, void *arg) PURE;
 };
@@ -4560,8 +4560,8 @@ DECLARE_INTERFACE_(IDirect3DRMInterpolator, IDirect3DRMObject)
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
-    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
-    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
+    STDMETHOD(GetClassName)(THIS_ DWORD *size, char *name) PURE;
     /*** IDirect3DRMInterpolator methods ***/
     STDMETHOD(AttachObject)(THIS_ IDirect3DRMObject *object) PURE;
     STDMETHOD(GetAttachedObjects)(THIS_ IDirect3DRMObjectArray **array) PURE;
@@ -4633,8 +4633,8 @@ DECLARE_INTERFACE_(IDirect3DRMClippedVisual, IDirect3DRMVisual)
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
-    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
-    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
+    STDMETHOD(GetClassName)(THIS_ DWORD *size, char *name) PURE;
     /*** IDirect3DRMClippedVisual methods ***/
     STDMETHOD(Init) (THIS_ IDirect3DRMVisual *visual) PURE;
     STDMETHOD(AddPlane) (THIS_ IDirect3DRMFrame3 *reference, D3DVECTOR *point,

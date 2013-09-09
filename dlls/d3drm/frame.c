@@ -568,24 +568,20 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_SetName(IDirect3DRMFrame2 *iface, co
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_GetName(IDirect3DRMFrame2* iface,
-                                                    LPDWORD size, LPSTR name)
+static HRESULT WINAPI IDirect3DRMFrame2Impl_GetName(IDirect3DRMFrame2 *iface, DWORD *size, char *name)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%p, %p): stub\n", iface, This, size, name);
+    FIXME("iface %p, size %p, name %p stub!\n", iface, size, name);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_GetClassName(IDirect3DRMFrame2* iface,
-                                                         LPDWORD size, LPSTR name)
+static HRESULT WINAPI IDirect3DRMFrame2Impl_GetClassName(IDirect3DRMFrame2 *iface, DWORD *size, char *name)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
+    IDirect3DRMFrameImpl *frame = impl_from_IDirect3DRMFrame2(iface);
 
-    TRACE("(%p/%p)->(%p, %p)\n", iface, This, size, name);
+    TRACE("iface %p, size %p, name %p.\n", iface, size, name);
 
-    return IDirect3DRMFrame3_GetClassName(&This->IDirect3DRMFrame3_iface, size, name);
+    return IDirect3DRMFrame3_GetClassName(&frame->IDirect3DRMFrame3_iface, size, name);
 }
 
 /*** IDirect3DRMFrame methods ***/
@@ -1424,22 +1420,16 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_SetName(IDirect3DRMFrame3 *iface, co
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_GetName(IDirect3DRMFrame3* iface,
-                                                    LPDWORD size, LPSTR name)
+static HRESULT WINAPI IDirect3DRMFrame3Impl_GetName(IDirect3DRMFrame3 *iface, DWORD *size, char *name)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%p, %p): stub\n", iface, This, size, name);
+    FIXME("iface %p, size %p, name %p stub!\n", iface, size, name);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_GetClassName(IDirect3DRMFrame3* iface,
-                                                         LPDWORD size, LPSTR name)
+static HRESULT WINAPI IDirect3DRMFrame3Impl_GetClassName(IDirect3DRMFrame3 *iface, DWORD *size, char *name)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    TRACE("(%p/%p)->(%p, %p)\n", iface, This, size, name);
+    TRACE("iface %p, size %p, name %p.\n", iface, size, name);
 
     if (!size || *size < strlen("Frame") || !name)
         return E_INVALIDARG;

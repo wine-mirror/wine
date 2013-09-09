@@ -152,22 +152,16 @@ static HRESULT WINAPI IDirect3DRMLightImpl_SetName(IDirect3DRMLight *iface, cons
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMLightImpl_GetName(IDirect3DRMLight* iface,
-                                                    LPDWORD size, LPSTR name)
+static HRESULT WINAPI IDirect3DRMLightImpl_GetName(IDirect3DRMLight *iface, DWORD *size, char *name)
 {
-    IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
-
-    FIXME("(%p/%p)->(%p, %p): stub\n", iface, This, size, name);
+    FIXME("iface %p, size %p, name %p stub!\n", iface, size, name);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMLightImpl_GetClassName(IDirect3DRMLight* iface,
-                                                         LPDWORD size, LPSTR name)
+static HRESULT WINAPI IDirect3DRMLightImpl_GetClassName(IDirect3DRMLight *iface, DWORD *size, char *name)
 {
-    IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
-
-    TRACE("(%p/%p)->(%p, %p)\n", iface, This, size, name);
+    TRACE("iface %p, size %p, name %p.\n", iface, size, name);
 
     if (!size || *size < strlen("Light") || !name)
         return E_INVALIDARG;

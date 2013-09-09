@@ -175,24 +175,20 @@ static HRESULT WINAPI IDirect3DRMDevice2Impl_SetName(IDirect3DRMDevice2 *iface, 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMDevice2Impl_GetName(IDirect3DRMDevice2* iface,
-                                                          LPDWORD size, LPSTR name)
+static HRESULT WINAPI IDirect3DRMDevice2Impl_GetName(IDirect3DRMDevice2 *iface, DWORD *size, char *name)
 {
-    IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice2(iface);
-
-    FIXME("(%p/%p)->(%p, %p): stub\n", iface, This, size, name);
+    FIXME("iface %p, size %p, name %p stub!\n", iface, size, name);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMDevice2Impl_GetClassName(IDirect3DRMDevice2* iface,
-                                                          LPDWORD size, LPSTR name)
+static HRESULT WINAPI IDirect3DRMDevice2Impl_GetClassName(IDirect3DRMDevice2 *iface, DWORD *size, char *name)
 {
-    IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice2(iface);
+    IDirect3DRMDeviceImpl *device = impl_from_IDirect3DRMDevice2(iface);
 
-    TRACE("(%p/%p)->(%p, %p)\n", iface, This, size, name);
+    TRACE("iface %p, size %p, name %p.\n", iface, size, name);
 
-    return IDirect3DRMDevice3_GetClassName(&This->IDirect3DRMDevice3_iface, size, name);
+    return IDirect3DRMDevice3_GetClassName(&device->IDirect3DRMDevice3_iface, size, name);
 }
 
 /*** IDirect3DRMDevice methods ***/
@@ -585,22 +581,16 @@ static HRESULT WINAPI IDirect3DRMDevice3Impl_SetName(IDirect3DRMDevice3 *iface, 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMDevice3Impl_GetName(IDirect3DRMDevice3* iface,
-                                                          LPDWORD size, LPSTR name)
+static HRESULT WINAPI IDirect3DRMDevice3Impl_GetName(IDirect3DRMDevice3 *iface, DWORD *size, char *name)
 {
-    IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice3(iface);
-
-    FIXME("(%p/%p)->(%p, %p): stub\n", iface, This, size, name);
+    FIXME("iface %p, size %p, name %p stub!\n", iface, size, name);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMDevice3Impl_GetClassName(IDirect3DRMDevice3* iface,
-                                                          LPDWORD size, LPSTR name)
+static HRESULT WINAPI IDirect3DRMDevice3Impl_GetClassName(IDirect3DRMDevice3 *iface, DWORD *size, char *name)
 {
-    IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice3(iface);
-
-    TRACE("(%p/%p)->(%p, %p)\n", iface, This, size, name);
+    TRACE("iface %p, size %p, name %p.\n", iface, size, name);
 
     if (!size || *size < strlen("Device") || !name)
         return E_INVALIDARG;
@@ -1073,24 +1063,20 @@ static HRESULT WINAPI IDirect3DRMWinDeviceImpl_SetName(IDirect3DRMWinDevice *ifa
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMWinDeviceImpl_GetName(IDirect3DRMWinDevice* iface,
-                                                          LPDWORD size, LPSTR name)
+static HRESULT WINAPI IDirect3DRMWinDeviceImpl_GetName(IDirect3DRMWinDevice *iface, DWORD *size, char *name)
 {
-    IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMWinDevice(iface);
-
-    FIXME("(%p/%p)->(%p, %p): stub\n", iface, This, size, name);
+    FIXME("iface %p, size %p, name %p stub!\n", iface, size, name);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMWinDeviceImpl_GetClassName(IDirect3DRMWinDevice* iface,
-                                                            LPDWORD size, LPSTR name)
+static HRESULT WINAPI IDirect3DRMWinDeviceImpl_GetClassName(IDirect3DRMWinDevice *iface, DWORD *size, char *name)
 {
-    IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMWinDevice(iface);
+    IDirect3DRMDeviceImpl *device = impl_from_IDirect3DRMWinDevice(iface);
 
-    TRACE("(%p/%p)->(%p, %p)\n", iface, This, size, name);
+    TRACE("iface %p, size %p, name %p.\n", iface, size, name);
 
-    return IDirect3DRMDevice3_GetClassName(&This->IDirect3DRMDevice3_iface, size, name);
+    return IDirect3DRMDevice3_GetClassName(&device->IDirect3DRMDevice3_iface, size, name);
 }
 
 /*** IDirect3DRMWinDevice methods ***/

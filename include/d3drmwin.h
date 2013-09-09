@@ -52,8 +52,8 @@ DECLARE_INTERFACE_(IDirect3DRMWinDevice,IDirect3DRMObject)
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
-    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
-    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
+    STDMETHOD(GetClassName)(THIS_ DWORD *size, char *name) PURE;
     /*** IDirect3DRMWinDevice methods ***/
     STDMETHOD(HandlePaint)(THIS_ HDC) PURE;
     STDMETHOD(HandleActivate)(THIS_ WORD) PURE;

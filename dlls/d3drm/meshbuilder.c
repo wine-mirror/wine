@@ -473,24 +473,23 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_SetName(IDirect3DRMMeshBuilder
     return IDirect3DRMMeshBuilder3_SetName(&mesh_builder->IDirect3DRMMeshBuilder3_iface, name);
 }
 
-static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_GetName(IDirect3DRMMeshBuilder2* iface,
-                                                          LPDWORD size, LPSTR name)
+static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_GetName(IDirect3DRMMeshBuilder2 *iface, DWORD *size, char *name)
 {
-    IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder2(iface);
+    IDirect3DRMMeshBuilderImpl *mesh_builder = impl_from_IDirect3DRMMeshBuilder2(iface);
 
-    TRACE("(%p)->(%p,%p)\n", This, size, name);
+    TRACE("iface %p, size %p, name %p.\n", iface, size, name);
 
-    return IDirect3DRMMeshBuilder3_GetName(&This->IDirect3DRMMeshBuilder3_iface, size, name);
+    return IDirect3DRMMeshBuilder3_GetName(&mesh_builder->IDirect3DRMMeshBuilder3_iface, size, name);
 }
 
-static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_GetClassName(IDirect3DRMMeshBuilder2* iface,
-                                                               LPDWORD size, LPSTR name)
+static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_GetClassName(IDirect3DRMMeshBuilder2 *iface,
+        DWORD *size, char *name)
 {
-    IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder2(iface);
+    IDirect3DRMMeshBuilderImpl *mesh_builder = impl_from_IDirect3DRMMeshBuilder2(iface);
 
-    TRACE("(%p)->(%p, %p)\n", This, size, name);
+    TRACE("iface %p, size %p, name %p.\n", iface, size, name);
 
-    return IDirect3DRMMeshBuilder3_GetClassName(&This->IDirect3DRMMeshBuilder3_iface, size, name);
+    return IDirect3DRMMeshBuilder3_GetClassName(&mesh_builder->IDirect3DRMMeshBuilder3_iface, size, name);
 }
 
 /*** IDirect3DRMMeshBuilder2 methods ***/
@@ -1067,37 +1066,35 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_SetName(IDirect3DRMMeshBuilder
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_GetName(IDirect3DRMMeshBuilder3* iface,
-                                                          LPDWORD size, LPSTR name)
+static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_GetName(IDirect3DRMMeshBuilder3 *iface,
+        DWORD *size, char *name)
 {
-    IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
+    IDirect3DRMMeshBuilderImpl *mesh_builder = impl_from_IDirect3DRMMeshBuilder3(iface);
 
-    TRACE("(%p)->(%p,%p)\n", This, size, name);
+    TRACE("iface %p, size %p, name %p.\n", iface, size, name);
 
     if (!size)
         return E_POINTER;
 
-    if (!This->name)
+    if (!mesh_builder->name)
     {
         *size = 0;
         return D3DRM_OK;
     }
 
-    if (*size < (strlen(This->name) + 1))
+    if (*size < (strlen(mesh_builder->name) + 1))
         return E_INVALIDARG;
 
-    strcpy(name, This->name);
-    *size = strlen(This->name) + 1;
+    strcpy(name, mesh_builder->name);
+    *size = strlen(mesh_builder->name) + 1;
 
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_GetClassName(IDirect3DRMMeshBuilder3* iface,
-                                                               LPDWORD size, LPSTR name)
+static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_GetClassName(IDirect3DRMMeshBuilder3 *iface,
+        DWORD *size, char *name)
 {
-    IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
-
-    TRACE("(%p)->(%p, %p)\n", This, size, name);
+    TRACE("iface %p, size %p, name %p.\n", iface, size, name);
 
     if (!size || *size < strlen("Builder") || !name)
         return E_INVALIDARG;
@@ -2594,22 +2591,16 @@ static HRESULT WINAPI IDirect3DRMMeshImpl_SetName(IDirect3DRMMesh *iface, const 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshImpl_GetName(IDirect3DRMMesh* iface,
-                                                  LPDWORD lpdwSize, LPSTR lpName)
+static HRESULT WINAPI IDirect3DRMMeshImpl_GetName(IDirect3DRMMesh *iface, DWORD *size, char *name)
 {
-    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
-
-    FIXME("(%p)->(%p,%p): stub\n", This, lpdwSize, lpName);
+    FIXME("iface %p, size %p, name %p stub!\n", iface, size, name);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshImpl_GetClassName(IDirect3DRMMesh* iface,
-                                                       LPDWORD size, LPSTR name)
+static HRESULT WINAPI IDirect3DRMMeshImpl_GetClassName(IDirect3DRMMesh *iface, DWORD *size, char *name)
 {
-    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
-
-    TRACE("(%p)->(%p, %p)\n", This, size, name);
+    TRACE("iface %p, size %p, name %p.\n", iface, size, name);
 
     if (!size || *size < strlen("Mesh") || !name)
         return E_INVALIDARG;

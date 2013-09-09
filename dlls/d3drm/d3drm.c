@@ -343,11 +343,9 @@ static HRESULT WINAPI IDirect3DRMImpl_AddSearchPath(IDirect3DRM *iface, const ch
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMImpl_GetSearchPath(IDirect3DRM* iface, DWORD *size_return, LPSTR path_return)
+static HRESULT WINAPI IDirect3DRMImpl_GetSearchPath(IDirect3DRM *iface, DWORD *size, char *path)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM(iface);
-
-    FIXME("(%p/%p)->(%p,%s): stub\n", iface, This, size_return, path_return);
+    FIXME("iface %p, size %p, path %p stub!\n", iface, size, path);
 
     return E_NOTIMPL;
 }
@@ -706,12 +704,9 @@ static HRESULT WINAPI IDirect3DRM2Impl_AddSearchPath(IDirect3DRM2 *iface, const 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRM2Impl_GetSearchPath(IDirect3DRM2* iface, DWORD *size_return,
-                                                     LPSTR path_return)
+static HRESULT WINAPI IDirect3DRM2Impl_GetSearchPath(IDirect3DRM2 *iface, DWORD *size, char *path)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM2(iface);
-
-    FIXME("(%p/%p)->(%p,%s): stub\n", iface, This, size_return, path_return);
+    FIXME("iface %p, size %p, path %p stub!\n", iface, size, path);
 
     return E_NOTIMPL;
 }
@@ -1088,12 +1083,9 @@ static HRESULT WINAPI IDirect3DRM3Impl_AddSearchPath(IDirect3DRM3* iface, const 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRM3Impl_GetSearchPath(IDirect3DRM3* iface, DWORD* size_return,
-                                                     LPSTR path_return)
+static HRESULT WINAPI IDirect3DRM3Impl_GetSearchPath(IDirect3DRM3 *iface, DWORD *size, char *path)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM3(iface);
-
-    FIXME("(%p/%p)->(%p,%s): stub\n", iface, This, size_return, path_return);
+    FIXME("iface %p, size %p, path %p stub!\n", iface, size, path);
 
     return E_NOTIMPL;
 }
