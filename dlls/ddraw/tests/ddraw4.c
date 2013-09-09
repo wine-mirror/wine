@@ -3516,21 +3516,6 @@ static void test_lighting_interface_versions(void)
         {{ 640.0f}, {   0.0f}, {0.0f}, {1.0f}, {0xff0000ff}, {0xff808080}},
     };
 
-#define FVF_TLVERTEX2 (D3DFVF_XYZRHW | D3DFVF_NORMAL | D3DFVF_DIFFUSE | D3DFVF_SPECULAR)
-    static struct
-    {
-        struct vec4 position;
-        struct vec3 normal;
-        DWORD diffuse, specular;
-    }
-    tlquad2[] =
-    {
-        {{   0.0f,  480.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 0.0f}, 0xff0000ff, 0xff808080},
-        {{   0.0f,    0.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 0.0f}, 0xff0000ff, 0xff808080},
-        {{ 640.0f,  480.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 0.0f}, 0xff0000ff, 0xff808080},
-        {{ 640.0f,    0.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 0.0f}, 0xff0000ff, 0xff808080},
-    };
-
     static const struct
     {
         DWORD vertextype;
@@ -3600,16 +3585,6 @@ static void test_lighting_interface_versions(void)
         { D3DFVF_TLVERTEX,  tlquad,     TRUE,   TRUE,   0,                  0x008080ff},
         { D3DFVF_TLVERTEX,  tlquad,     FALSE,  TRUE,   D3DDP_DONOTLIGHT,   0x008080ff},
         { D3DFVF_TLVERTEX,  tlquad,     TRUE,   TRUE,   D3DDP_DONOTLIGHT,   0x008080ff},
-
-        /* 40 */
-        { FVF_TLVERTEX2,    tlquad2,    FALSE,  FALSE,  0,                  0x000000ff},
-        { FVF_TLVERTEX2,    tlquad2,    TRUE,   FALSE,  0,                  0x000000ff},
-        { FVF_TLVERTEX2,    tlquad2,    FALSE,  FALSE,  D3DDP_DONOTLIGHT,   0x000000ff},
-        { FVF_TLVERTEX2,    tlquad2,    TRUE,   FALSE,  D3DDP_DONOTLIGHT,   0x000000ff},
-        { FVF_TLVERTEX2,    tlquad2,    FALSE,  TRUE,   0,                  0x008080ff},
-        { FVF_TLVERTEX2,    tlquad2,    TRUE,   TRUE,   0,                  0x008080ff},
-        { FVF_TLVERTEX2,    tlquad2,    FALSE,  TRUE,   D3DDP_DONOTLIGHT,   0x008080ff},
-        { FVF_TLVERTEX2,    tlquad2,    TRUE,   TRUE,   D3DDP_DONOTLIGHT,   0x008080ff},
     };
 
     window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
