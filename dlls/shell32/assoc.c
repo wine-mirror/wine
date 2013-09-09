@@ -18,7 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 #include <stdarg.h>
-#include <assert.h>
 
 #define COBJMACROS
 #include "windef.h"
@@ -224,7 +223,6 @@ static HRESULT ASSOC_GetValue(HKEY hkey, const WCHAR *name, void **data, DWORD *
   DWORD size;
   LONG ret;
 
-  assert(data);
   ret = RegQueryValueExW(hkey, name, 0, NULL, NULL, &size);
   if (ret != ERROR_SUCCESS)
     return HRESULT_FROM_WIN32(ret);
@@ -337,8 +335,6 @@ static HRESULT ASSOC_GetExecutable(IQueryAssociationsImpl *This,
   WCHAR *pszEnd;
   HRESULT hr;
 
-  assert(len);
-
   hr = ASSOC_GetCommand(This, pszExtra, &pszCommand);
   if (FAILED(hr))
     return hr;
@@ -376,8 +372,6 @@ static HRESULT ASSOC_GetExecutable(IQueryAssociationsImpl *This,
 static HRESULT ASSOC_ReturnData(void *out, DWORD *outlen, const void *data,
                                 DWORD datalen)
 {
-  assert(outlen);
-
   if (out)
   {
     if (*outlen < datalen)
