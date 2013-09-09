@@ -118,10 +118,11 @@ static void delete_gl_buffer(struct wined3d_buffer *This, const struct wined3d_g
 }
 
 /* Context activation is done by the caller. */
-static void buffer_create_buffer_object(struct wined3d_buffer *This, const struct wined3d_gl_info *gl_info)
+static void buffer_create_buffer_object(struct wined3d_buffer *This, struct wined3d_context *context)
 {
     GLenum gl_usage = GL_STATIC_DRAW_ARB;
     GLenum error;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
 
     TRACE("Creating an OpenGL vertex buffer object for wined3d_buffer %p with usage %s.\n",
             This, debug_d3dusage(This->resource.usage));
@@ -148,7 +149,7 @@ static void buffer_create_buffer_object(struct wined3d_buffer *This, const struc
     }
 
     if (This->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
-        device_invalidate_state(This->resource.device, STATE_INDEXBUFFER);
+        context_invalidate_state(context, STATE_INDEXBUFFER);
     GL_EXTCALL(glBindBufferARB(This->buffer_type_hint, This->buffer_object));
     error = gl_info->gl_ops.gl.p_glGetError();
     if (error != GL_NO_ERROR)
@@ -460,7 +461,7 @@ static inline void fixup_transformed_pos(float *p)
 }
 
 /* Context activation is done by the caller. */
-void buffer_get_memory(struct wined3d_buffer *buffer, const struct wined3d_gl_info *gl_info,
+void buffer_get_memory(struct wined3d_buffer *buffer, struct wined3d_context *context,
         struct wined3d_bo_address *data)
 {
     data->buffer_object = buffer->buffer_object;
@@ -468,7 +469,7 @@ void buffer_get_memory(struct wined3d_buffer *buffer, const struct wined3d_gl_in
     {
         if ((buffer->flags & WINED3D_BUFFER_CREATEBO) && !buffer->resource.map_count)
         {
-            buffer_create_buffer_object(buffer, gl_info);
+            buffer_create_buffer_object(buffer, context);
             buffer->flags &= ~WINED3D_BUFFER_CREATEBO;
             if (buffer->buffer_object)
             {
@@ -754,7 +755,7 @@ void CDECL wined3d_buffer_preload(struct wined3d_buffer *buffer)
         if (buffer->flags & WINED3D_BUFFER_CREATEBO)
         {
             context = context_acquire(device, NULL);
-            buffer_create_buffer_object(buffer, context->gl_info);
+            buffer_create_buffer_object(buffer, context);
             context_release(context);
             buffer->flags &= ~WINED3D_BUFFER_CREATEBO;
         }

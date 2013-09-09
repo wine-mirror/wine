@@ -164,7 +164,8 @@ static BOOL fixed_get_input(BYTE usage, BYTE usage_idx, unsigned int *regnum)
 }
 
 /* Context activation is done by the caller. */
-static void device_stream_info_from_declaration(struct wined3d_device *device, struct wined3d_stream_info *stream_info)
+static void device_stream_info_from_declaration(struct wined3d_device *device, struct wined3d_stream_info *stream_info,
+        struct wined3d_context *context)
 {
     const struct wined3d_state *state = &device->state;
     /* We need to deal with frequency data! */
@@ -200,7 +201,7 @@ static void device_stream_info_from_declaration(struct wined3d_device *device, s
         stride = stream->stride;
 
         TRACE("Stream %u, buffer %p.\n", element->input_slot, buffer);
-        buffer_get_memory(buffer, &device->adapter->gl_info, &data);
+        buffer_get_memory(buffer, context, &data);
 
         /* We can't use VBOs if the base vertex index is negative. OpenGL
          * doesn't accept negative offsets (or rather offsets bigger than the
@@ -213,7 +214,7 @@ static void device_stream_info_from_declaration(struct wined3d_device *device, s
         {
             WARN_(d3d_perf)("load_base_vertex_index is < 0 (%d), not using VBOs.\n", state->load_base_vertex_index);
             data.buffer_object = 0;
-            data.addr = buffer_get_sysmem(buffer, &device->adapter->gl_info);
+            data.addr = buffer_get_sysmem(buffer, context->gl_info);
             if ((UINT_PTR)data.addr < -state->load_base_vertex_index * stride)
                 FIXME("System memory vertex data load offset is negative!\n");
         }
@@ -266,7 +267,7 @@ static void device_stream_info_from_declaration(struct wined3d_device *device, s
             stream_info->elements[idx].stride = stride;
             stream_info->elements[idx].stream_idx = element->input_slot;
 
-            if (!device->adapter->gl_info.supported[ARB_VERTEX_ARRAY_BGRA]
+            if (!context->gl_info->supported[ARB_VERTEX_ARRAY_BGRA]
                     && element->format->id == WINED3DFMT_B8G8R8A8_UNORM)
             {
                 stream_info->swizzle_map |= 1 << idx;
@@ -305,14 +306,15 @@ static void device_stream_info_from_declaration(struct wined3d_device *device, s
 }
 
 /* Context activation is done by the caller. */
-void device_update_stream_info(struct wined3d_device *device, const struct wined3d_gl_info *gl_info)
+void device_update_stream_info(struct wined3d_device *device, struct wined3d_context *context)
 {
+    const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wined3d_stream_info *stream_info = &device->stream_info;
     const struct wined3d_state *state = &device->state;
     DWORD prev_all_vbo = stream_info->all_vbo;
 
     TRACE("============================= Vertex Declaration =============================\n");
-    device_stream_info_from_declaration(device, stream_info);
+    device_stream_info_from_declaration(device, stream_info, context);
 
     if (state->vertex_shader && !stream_info->position_transformed)
     {
@@ -3535,7 +3537,7 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
 
     vs = state->vertex_shader;
     state->vertex_shader = NULL;
-    device_stream_info_from_declaration(device, &stream_info);
+    device_stream_info_from_declaration(device, &stream_info, context);
     state->vertex_shader = vs;
 
     /* We can't convert FROM a VBO, and vertex buffers used to source into

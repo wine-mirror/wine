@@ -1957,7 +1957,7 @@ void device_resource_add(struct wined3d_device *device, struct wined3d_resource 
 void device_resource_released(struct wined3d_device *device, struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 void device_switch_onscreen_ds(struct wined3d_device *device, struct wined3d_context *context,
         struct wined3d_surface *depth_stencil) DECLSPEC_HIDDEN;
-void device_update_stream_info(struct wined3d_device *device, const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
+void device_update_stream_info(struct wined3d_device *device, struct wined3d_context *context) DECLSPEC_HIDDEN;
 void device_update_tex_unit_map(struct wined3d_device *device) DECLSPEC_HIDDEN;
 void device_invalidate_state(const struct wined3d_device *device, DWORD state) DECLSPEC_HIDDEN;
 
@@ -2520,7 +2520,7 @@ static inline struct wined3d_buffer *buffer_from_resource(struct wined3d_resourc
     return CONTAINING_RECORD(resource, struct wined3d_buffer, resource);
 }
 
-void buffer_get_memory(struct wined3d_buffer *buffer, const struct wined3d_gl_info *gl_info,
+void buffer_get_memory(struct wined3d_buffer *buffer, struct wined3d_context *context,
         struct wined3d_bo_address *data) DECLSPEC_HIDDEN;
 BYTE *buffer_get_sysmem(struct wined3d_buffer *This, const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
 
