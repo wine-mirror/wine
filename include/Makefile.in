@@ -302,6 +302,7 @@ SRCDIR_INCLUDES = \
 	exdispid.h \
 	fci.h \
 	fdi.h \
+	fileapi.h \
 	fltdefs.h \
 	gdiplus.h \
 	gdipluscolor.h \

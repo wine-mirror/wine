@@ -42,6 +42,7 @@
 #include "wincon.h"
 #include "ddk/ntddk.h"
 #include "kernel_private.h"
+#include "fileapi.h"
 
 #include "wine/exception.h"
 #include "wine/unicode.h"
@@ -1527,6 +1528,20 @@ HANDLE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
     return CreateFileW( nameW, access, sharing, sa, creation, attributes, template );
 }
 
+/*************************************************************************
+ *              CreateFile2              (KERNEL32.@)
+ */
+HANDLE WINAPI CreateFile2( LPCWSTR filename, DWORD access, DWORD sharing, DWORD creation,
+                           CREATEFILE2_EXTENDED_PARAMETERS *exparams )
+{
+    LPSECURITY_ATTRIBUTES sa = exparams ? exparams->lpSecurityAttributes : NULL;
+    DWORD attributes = exparams ? exparams->dwFileAttributes : 0;
+    HANDLE template = exparams ? exparams->hTemplateFile : NULL;
+
+    FIXME("(%s %x %x %x %p), partial stub\n", debugstr_w(filename), access, sharing, creation, exparams);
+
+    return CreateFileW( filename, access, sharing, sa, creation, attributes, template );
+}
 
 /***********************************************************************
  *           DeleteFileW   (KERNEL32.@)
