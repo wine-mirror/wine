@@ -229,11 +229,6 @@ static void wined3d_swapchain_desc_from_present_parameters(struct wined3d_swapch
     swapchain_desc->auto_restore_display_mode = TRUE;
 }
 
-static inline struct d3d9_device *impl_from_IDirect3DDevice9Ex(IDirect3DDevice9Ex *iface)
-{
-    return CONTAINING_RECORD(iface, struct d3d9_device, IDirect3DDevice9Ex_iface);
-}
-
 static HRESULT WINAPI d3d9_device_QueryInterface(IDirect3DDevice9Ex *iface, REFIID riid, void **out)
 {
     TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
@@ -507,7 +502,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_device_CreateAdditionalSwapChain(ID
 
     wined3d_swapchain_desc_from_present_parameters(&desc, present_parameters);
     if (SUCCEEDED(hr = d3d9_swapchain_create(device, &desc, &object)))
-        *swapchain = &object->IDirect3DSwapChain9_iface;
+        *swapchain = (IDirect3DSwapChain9 *)&object->IDirect3DSwapChain9Ex_iface;
     present_parameters_from_wined3d_swapchain_desc(present_parameters, &desc);
 
     return hr;
@@ -527,8 +522,8 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_device_GetSwapChain(IDirect3DDevice
     if ((wined3d_swapchain = wined3d_device_get_swapchain(device->wined3d_device, swapchain_idx)))
     {
        swapchain_impl = wined3d_swapchain_get_parent(wined3d_swapchain);
-       *swapchain = &swapchain_impl->IDirect3DSwapChain9_iface;
-       IDirect3DSwapChain9_AddRef(*swapchain);
+       *swapchain = (IDirect3DSwapChain9 *)&swapchain_impl->IDirect3DSwapChain9Ex_iface;
+       IDirect3DSwapChain9Ex_AddRef(*swapchain);
        hr = D3D_OK;
     }
     else
@@ -3449,7 +3444,7 @@ static HRESULT CDECL device_parent_create_swapchain(struct wined3d_device_parent
 
     *swapchain = d3d_swapchain->wined3d_swapchain;
     wined3d_swapchain_incref(*swapchain);
-    IDirect3DSwapChain9_Release(&d3d_swapchain->IDirect3DSwapChain9_iface);
+    IDirect3DSwapChain9Ex_Release(&d3d_swapchain->IDirect3DSwapChain9Ex_iface);
 
     return hr;
 }
