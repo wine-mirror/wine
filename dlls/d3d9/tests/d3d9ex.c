@@ -122,6 +122,8 @@ static void test_qi_base_to_ex(void)
     IDirect3D9Ex *d3d9ex = (void *) 0xdeadbeef;
     IDirect3DDevice9 *device;
     IDirect3DDevice9Ex *deviceEx = (void *) 0xdeadbeef;
+    IDirect3DSwapChain9 *swapchain = NULL;
+    IDirect3DSwapChain9Ex *swapchainEx = (void *)0xdeadbeef;
     HRESULT hr;
     HWND window = create_window();
     D3DPRESENT_PARAMETERS present_parameters;
@@ -160,6 +162,22 @@ static void test_qi_base_to_ex(void)
     ok(deviceEx == NULL, "QueryInterface returned interface %p, expected NULL\n", deviceEx);
     if(deviceEx) IDirect3DDevice9Ex_Release(deviceEx);
 
+    /* Get the implicit swapchain */
+    hr = IDirect3DDevice9_GetSwapChain(device, 0, &swapchain);
+    ok(SUCCEEDED(hr), "Failed to get the implicit swapchain (%08x).\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        hr = IDirect3DSwapChain9_QueryInterface(swapchain, &IID_IDirect3DSwapChain9Ex, (void **)&swapchainEx);
+        ok(hr == E_NOINTERFACE,
+                "IDirect3DSwapChain9::QueryInterface for IID_IDirect3DSwapChain9Ex returned %08x, expected E_NOINTERFACE.\n",
+                hr);
+        ok(swapchainEx == NULL, "QueryInterface returned interface %p, expected NULL.\n", swapchainEx);
+        if (swapchainEx)
+            IDirect3DSwapChain9Ex_Release(swapchainEx);
+    }
+    if (swapchain)
+        IDirect3DSwapChain9_Release(swapchain);
+
     IDirect3DDevice9_Release(device);
 
 out:
@@ -173,6 +191,8 @@ static void test_qi_ex_to_base(void)
     IDirect3D9Ex *d3d9ex;
     IDirect3DDevice9 *device;
     IDirect3DDevice9Ex *deviceEx = (void *) 0xdeadbeef;
+    IDirect3DSwapChain9 *swapchain = NULL;
+    IDirect3DSwapChain9Ex *swapchainEx = (void *)0xdeadbeef;
     HRESULT hr;
     HWND window = create_window();
     D3DPRESENT_PARAMETERS present_parameters;
@@ -242,6 +262,24 @@ static void test_qi_ex_to_base(void)
     ok(ref == 2, "IDirect3DDevice9 refcount is %d, expected 2\n", ref);
     ref = getref((IUnknown *) deviceEx);
     ok(ref == 2, "IDirect3DDevice9Ex refcount is %d, expected 2\n", ref);
+
+    /* Get the implicit swapchain */
+    hr = IDirect3DDevice9_GetSwapChain(device, 0, &swapchain);
+    ok(SUCCEEDED(hr), "Failed to get the implicit swapchain (%08x).\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        hr = IDirect3DSwapChain9_QueryInterface(swapchain, &IID_IDirect3DSwapChain9Ex, (void **)&swapchainEx);
+        ok(hr == D3D_OK,
+                "IDirect3DSwapChain9::QueryInterface for IID_IDirect3DSwapChain9Ex returned %08x, expected D3D_OK.\n",
+                hr);
+        ok(swapchainEx != NULL && swapchainEx != (void *)0xdeadbeef,
+                "QueryInterface returned interface %p, expected != NULL && != 0xdeadbeef.\n", swapchainEx);
+        if (swapchainEx)
+            IDirect3DSwapChain9Ex_Release(swapchainEx);
+    }
+    if (swapchain)
+        IDirect3DSwapChain9_Release(swapchain);
+
     if(deviceEx) IDirect3DDevice9Ex_Release(deviceEx);
     IDirect3DDevice9_Release(device);
 
