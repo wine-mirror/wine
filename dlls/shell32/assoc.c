@@ -392,17 +392,41 @@ static HRESULT ASSOC_ReturnData(void *out, DWORD *outlen, const void *data,
   }
 }
 
-static HRESULT ASSOC_ReturnString(LPWSTR out, DWORD *outlen, LPCWSTR data,
-        DWORD datalen)
+static HRESULT ASSOC_ReturnString(ASSOCF flags, LPWSTR out, DWORD *outlen, LPCWSTR data, DWORD datalen)
 {
-    HRESULT hres;
+    HRESULT hr = S_OK;
+    DWORD len;
 
-    assert(outlen);
+    TRACE("flags=0x%08x, data=%s\n", flags, debugstr_w(data));
 
-    *outlen *= sizeof(WCHAR);
-    hres = ASSOC_ReturnData(out, outlen, data, datalen*sizeof(WCHAR));
-    *outlen /= sizeof(WCHAR);
-    return hres;
+    if (!out)
+    {
+        *outlen = datalen;
+        return S_FALSE;
+    }
+
+    if (*outlen < datalen)
+    {
+        if (flags & ASSOCF_NOTRUNCATE)
+        {
+            len = 0;
+            if (*outlen > 0) out[0] = 0;
+            hr = E_POINTER;
+        }
+        else
+        {
+            len = min(*outlen, datalen);
+            hr = E_NOT_SUFFICIENT_BUFFER;
+        }
+        *outlen = datalen;
+    }
+    else
+        len = datalen;
+
+    if (len)
+        memcpy(out, data, len*sizeof(WCHAR));
+
+    return hr;
 }
 
 /**************************************************************************
@@ -424,23 +448,22 @@ static HRESULT ASSOC_ReturnString(LPWSTR out, DWORD *outlen, LPCWSTR data,
  */
 static HRESULT WINAPI IQueryAssociations_fnGetString(
   IQueryAssociations *iface,
-  ASSOCF cfFlags,
+  ASSOCF flags,
   ASSOCSTR str,
   LPCWSTR pszExtra,
   LPWSTR pszOut,
   DWORD *pcchOut)
 {
   IQueryAssociationsImpl *This = impl_from_IQueryAssociations(iface);
-  const ASSOCF cfUnimplemented = ~(0);
+  const ASSOCF unimplemented_flags = ~ASSOCF_NOTRUNCATE;
   DWORD len = 0;
   HRESULT hr;
   WCHAR path[MAX_PATH];
 
-  TRACE("(%p,0x%08x,%u,%s,%p,%p)\n", This, cfFlags, str,
-        debugstr_w(pszExtra), pszOut, pcchOut);
+  TRACE("(%p)->(0x%08x, %u, %s, %p, %p)\n", This, flags, str, debugstr_w(pszExtra), pszOut, pcchOut);
 
-  if (cfFlags & cfUnimplemented)
-    FIXME("%08x: unimplemented flags!\n", cfFlags & cfUnimplemented);
+  if (flags & unimplemented_flags)
+    FIXME("%08x: unimplemented flags\n", flags & unimplemented_flags);
 
   if (!pcchOut)
     return E_UNEXPECTED;
@@ -453,7 +476,7 @@ static HRESULT WINAPI IQueryAssociations_fnGetString(
       hr = ASSOC_GetCommand(This, pszExtra, &command);
       if (SUCCEEDED(hr))
       {
-        hr = ASSOC_ReturnString(pszOut, pcchOut, command, strlenW(command) + 1);
+        hr = ASSOC_ReturnString(flags, pszOut, pcchOut, command, strlenW(command) + 1);
         HeapFree(GetProcessHeap(), 0, command);
       }
       return hr;
@@ -465,7 +488,7 @@ static HRESULT WINAPI IQueryAssociations_fnGetString(
       if (FAILED(hr))
         return hr;
       len++;
-      return ASSOC_ReturnString(pszOut, pcchOut, path, len);
+      return ASSOC_ReturnString(flags, pszOut, pcchOut, path, len);
     }
 
     case ASSOCSTR_FRIENDLYDOCNAME:
@@ -486,7 +509,7 @@ static HRESULT WINAPI IQueryAssociations_fnGetString(
         {
           ret = RegGetValueW(HKEY_CLASSES_ROOT, pszFileType, NULL, RRF_RT_REG_SZ, NULL, docName, &size);
           if (ret == ERROR_SUCCESS)
-            hr = ASSOC_ReturnString(pszOut, pcchOut, docName, strlenW(docName) + 1);
+            hr = ASSOC_ReturnString(flags, pszOut, pcchOut, docName, strlenW(docName) + 1);
           else
             hr = HRESULT_FROM_WIN32(ret);
           HeapFree(GetProcessHeap(), 0, docName);
@@ -542,7 +565,7 @@ static HRESULT WINAPI IQueryAssociations_fnGetString(
             /* Does strlenW(bufW) == 0 mean we use the filename? */
             len = strlenW(bufW) + 1;
             TRACE("found FileDescription: %s\n", debugstr_w(bufW));
-            hr = ASSOC_ReturnString(pszOut, pcchOut, bufW, len);
+            hr = ASSOC_ReturnString(flags, pszOut, pcchOut, bufW, len);
             HeapFree(GetProcessHeap(), 0, verinfoW);
             return hr;
           }
@@ -552,7 +575,7 @@ get_friendly_name_fail:
       PathRemoveExtensionW(path);
       PathStripPathW(path);
       TRACE("using filename: %s\n", debugstr_w(path));
-      hr = ASSOC_ReturnString(pszOut, pcchOut, path, strlenW(path) + 1);
+      hr = ASSOC_ReturnString(flags, pszOut, pcchOut, path, strlenW(path) + 1);
       HeapFree(GetProcessHeap(), 0, verinfoW);
       return hr;
     }
@@ -573,7 +596,7 @@ get_friendly_name_fail:
       {
         ret = RegGetValueW(This->hkeySource, NULL, Content_TypeW, RRF_RT_REG_SZ, NULL, contentType, &size);
         if (ret == ERROR_SUCCESS)
-          hr = ASSOC_ReturnString(pszOut, pcchOut, contentType, strlenW(contentType) + 1);
+          hr = ASSOC_ReturnString(flags, pszOut, pcchOut, contentType, strlenW(contentType) + 1);
         else
           hr = HRESULT_FROM_WIN32(ret);
         HeapFree(GetProcessHeap(), 0, contentType);
@@ -606,7 +629,7 @@ get_friendly_name_fail:
           {
             ret = RegGetValueW(hkeyFile, DefaultIconW, NULL, RRF_RT_REG_SZ, NULL, icon, &size);
             if (ret == ERROR_SUCCESS)
-              hr = ASSOC_ReturnString(pszOut, pcchOut, icon, strlenW(icon) + 1);
+              hr = ASSOC_ReturnString(flags, pszOut, pcchOut, icon, strlenW(icon) + 1);
             else
               hr = HRESULT_FROM_WIN32(ret);
             HeapFree(GetProcessHeap(), 0, icon);
@@ -645,7 +668,7 @@ get_friendly_name_fail:
         RegCloseKey(hkey);
         if (ret) return HRESULT_FROM_WIN32(ret);
 
-        return ASSOC_ReturnString(pszOut, pcchOut, guid, size / sizeof(WCHAR));
+        return ASSOC_ReturnString(flags, pszOut, pcchOut, guid, size / sizeof(WCHAR));
     }
 
     default:
