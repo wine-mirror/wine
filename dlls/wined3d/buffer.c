@@ -496,8 +496,10 @@ ULONG CDECL wined3d_buffer_incref(struct wined3d_buffer *buffer)
 }
 
 /* Context activation is done by the caller. */
-BYTE *buffer_get_sysmem(struct wined3d_buffer *This, const struct wined3d_gl_info *gl_info)
+BYTE *buffer_get_sysmem(struct wined3d_buffer *This, struct wined3d_context *context)
 {
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+
     /* AllocatedMemory exists if the buffer is double buffered or has no buffer object at all */
     if(This->resource.allocatedMemory) return This->resource.allocatedMemory;
 
@@ -505,7 +507,7 @@ BYTE *buffer_get_sysmem(struct wined3d_buffer *This, const struct wined3d_gl_inf
     This->resource.allocatedMemory = This->resource.heap_memory;
 
     if (This->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
-        device_invalidate_state(This->resource.device, STATE_INDEXBUFFER);
+        context_invalidate_state(context, STATE_INDEXBUFFER);
 
     GL_EXTCALL(glBindBufferARB(This->buffer_type_hint, This->buffer_object));
     GL_EXTCALL(glGetBufferSubDataARB(This->buffer_type_hint, 0, This->resource.size, This->resource.allocatedMemory));
@@ -530,7 +532,7 @@ static void buffer_unload(struct wined3d_resource *resource)
         /* Download the buffer, but don't permanently enable double buffering */
         if (!(buffer->flags & WINED3D_BUFFER_DOUBLEBUFFER))
         {
-            buffer_get_sysmem(buffer, context->gl_info);
+            buffer_get_sysmem(buffer, context);
             buffer->flags &= ~WINED3D_BUFFER_DOUBLEBUFFER;
         }
 
@@ -877,7 +879,7 @@ void CDECL wined3d_buffer_preload(struct wined3d_buffer *buffer)
 
     if(!(buffer->flags & WINED3D_BUFFER_DOUBLEBUFFER))
     {
-        buffer_get_sysmem(buffer, gl_info);
+        buffer_get_sysmem(buffer, context);
     }
 
     /* Now for each vertex in the buffer that needs conversion */
@@ -1010,7 +1012,7 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
                     else
                     {
                         TRACE("Falling back to doublebuffered operation\n");
-                        buffer_get_sysmem(buffer, gl_info);
+                        buffer_get_sysmem(buffer, context);
                     }
                     TRACE("New pointer is %p.\n", buffer->resource.allocatedMemory);
                 }

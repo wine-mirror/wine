@@ -83,7 +83,7 @@ static void drawStridedFast(const struct wined3d_gl_info *gl_info, GLenum primit
  */
 
 /* Context activation is done by the caller. */
-static void drawStridedSlow(const struct wined3d_device *device, const struct wined3d_context *context,
+static void drawStridedSlow(const struct wined3d_device *device, struct wined3d_context *context,
         const struct wined3d_stream_info *si, UINT NumVertexes, GLenum glPrimType,
         const void *idxData, UINT idxSize, UINT startIdx)
 {
@@ -115,7 +115,7 @@ static void drawStridedSlow(const struct wined3d_device *device, const struct wi
          * supported or other reason), or with user pointer drawing idxData
          * will be non-NULL. */
         if (!idxData)
-            idxData = buffer_get_sysmem(state->index_buffer, gl_info);
+            idxData = buffer_get_sysmem(state->index_buffer, context);
 
         if (idxSize == 2) pIdxBufS = idxData;
         else pIdxBufL = idxData;
@@ -441,10 +441,11 @@ static inline void send_attribute(const struct wined3d_gl_info *gl_info,
 }
 
 /* Context activation is done by the caller. */
-static void drawStridedSlowVs(const struct wined3d_gl_info *gl_info, const struct wined3d_state *state,
+static void drawStridedSlowVs(struct wined3d_context *context, const struct wined3d_state *state,
         const struct wined3d_stream_info *si, UINT numberOfVertices, GLenum glPrimitiveType,
         const void *idxData, UINT idxSize, UINT startIdx)
 {
+    const struct wined3d_gl_info *gl_info = context->gl_info;
     LONG SkipnStrides = startIdx + state->load_base_vertex_index;
     const DWORD *pIdxBufL = NULL;
     const WORD *pIdxBufS = NULL;
@@ -459,7 +460,7 @@ static void drawStridedSlowVs(const struct wined3d_gl_info *gl_info, const struc
          * supported or other reason), or with user pointer drawing idxData
          * will be non-NULL. */
         if (!idxData)
-            idxData = buffer_get_sysmem(state->index_buffer, gl_info);
+            idxData = buffer_get_sysmem(state->index_buffer, context);
 
         if (idxSize == 2) pIdxBufS = idxData;
         else pIdxBufL = idxData;
@@ -497,10 +498,11 @@ static void drawStridedSlowVs(const struct wined3d_gl_info *gl_info, const struc
 }
 
 /* Context activation is done by the caller. */
-static void drawStridedInstanced(const struct wined3d_gl_info *gl_info, const struct wined3d_state *state,
+static void drawStridedInstanced(struct wined3d_context *context, const struct wined3d_state *state,
         const struct wined3d_stream_info *si, UINT numberOfVertices, GLenum glPrimitiveType,
         const void *idxData, UINT idxSize, UINT startIdx, UINT base_vertex_index, UINT instance_count)
 {
+    const struct wined3d_gl_info *gl_info = context->gl_info;
     int numInstancedAttribs = 0, j;
     UINT instancedData[sizeof(si->elements) / sizeof(*si->elements) /* 16 */];
     GLenum idxtype = idxSize == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT;
@@ -538,7 +540,7 @@ static void drawStridedInstanced(const struct wined3d_gl_info *gl_info, const st
             if (si->elements[instancedData[j]].data.buffer_object)
             {
                 struct wined3d_buffer *vb = state->streams[si->elements[instancedData[j]].stream_idx].buffer;
-                ptr += (ULONG_PTR)buffer_get_sysmem(vb, gl_info);
+                ptr += (ULONG_PTR)buffer_get_sysmem(vb, context);
             }
 
             send_attribute(gl_info, si->elements[instancedData[j]].format->id, instancedData[j], ptr);
@@ -559,7 +561,7 @@ static void drawStridedInstanced(const struct wined3d_gl_info *gl_info, const st
     }
 }
 
-static void remove_vbos(const struct wined3d_gl_info *gl_info,
+static void remove_vbos(struct wined3d_context *context,
         const struct wined3d_state *state, struct wined3d_stream_info *s)
 {
     unsigned int i;
@@ -575,7 +577,7 @@ static void remove_vbos(const struct wined3d_gl_info *gl_info,
         {
             struct wined3d_buffer *vb = state->streams[e->stream_idx].buffer;
             e->data.buffer_object = 0;
-            e->data.addr = (BYTE *)((ULONG_PTR)e->data.addr + (ULONG_PTR)buffer_get_sysmem(vb, gl_info));
+            e->data.addr = (BYTE *)((ULONG_PTR)e->data.addr + (ULONG_PTR)buffer_get_sysmem(vb, context));
         }
     }
 }
@@ -727,7 +729,7 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
         if (emulation)
         {
             si_emulated = device->stream_info;
-            remove_vbos(gl_info, state, &si_emulated);
+            remove_vbos(context, state, &si_emulated);
             stream_info = &si_emulated;
         }
     }
@@ -744,7 +746,7 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
             else
                 WARN_(d3d_perf)("Using immediate mode with vertex shaders for half float emulation.\n");
 
-            drawStridedSlowVs(gl_info, state, stream_info, index_count,
+            drawStridedSlowVs(context, state, stream_info, index_count,
                     state->gl_primitive_type, idx_data, idx_size, start_idx);
         }
         else
@@ -756,7 +758,7 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
     else if (!gl_info->supported[ARB_INSTANCED_ARRAYS] && instance_count)
     {
         /* Instancing emulation by mixing immediate mode and arrays. */
-        drawStridedInstanced(gl_info, state, stream_info, index_count, state->gl_primitive_type,
+        drawStridedInstanced(context, state, stream_info, index_count, state->gl_primitive_type,
                 idx_data, idx_size, start_idx, state->base_vertex_index, instance_count);
     }
     else

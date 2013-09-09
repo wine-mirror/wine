@@ -214,7 +214,7 @@ static void device_stream_info_from_declaration(struct wined3d_device *device, s
         {
             WARN_(d3d_perf)("load_base_vertex_index is < 0 (%d), not using VBOs.\n", state->load_base_vertex_index);
             data.buffer_object = 0;
-            data.addr = buffer_get_sysmem(buffer, context->gl_info);
+            data.addr = buffer_get_sysmem(buffer, context);
             if ((UINT_PTR)data.addr < -state->load_base_vertex_index * stride)
                 FIXME("System memory vertex data load offset is negative!\n");
         }
@@ -294,7 +294,7 @@ static void device_stream_info_from_declaration(struct wined3d_device *device, s
         if (buffer->buffer_object != element->data.buffer_object)
         {
             element->data.buffer_object = 0;
-            element->data.addr = buffer_get_sysmem(buffer, &device->adapter->gl_info) + (ptrdiff_t)element->data.addr;
+            element->data.addr = buffer_get_sysmem(buffer, context) + (ptrdiff_t)element->data.addr;
         }
 
         if (!buffer->buffer_object)
@@ -3557,7 +3557,7 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
         {
             struct wined3d_buffer *vb = state->streams[e->stream_idx].buffer;
             e->data.buffer_object = 0;
-            e->data.addr = (BYTE *)((ULONG_PTR)e->data.addr + (ULONG_PTR)buffer_get_sysmem(vb, gl_info));
+            e->data.addr = (BYTE *)((ULONG_PTR)e->data.addr + (ULONG_PTR)buffer_get_sysmem(vb, context));
             GL_EXTCALL(glDeleteBuffersARB(1, &vb->buffer_object));
             vb->buffer_object = 0;
         }

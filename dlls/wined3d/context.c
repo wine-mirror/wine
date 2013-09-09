@@ -2374,7 +2374,7 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
         if (device->stream_info.all_vbo)
             wined3d_buffer_preload(state->index_buffer);
         else
-            buffer_get_sysmem(state->index_buffer, context->gl_info);
+            buffer_get_sysmem(state->index_buffer, context);
     }
 
     for (i = 0; i < context->numDirtyEntries; ++i)

@@ -4147,7 +4147,7 @@ static void load_numbered_arrays(struct wined3d_context *context,
             const BYTE *ptr = stream_info->elements[i].data.addr;
             if (stream_info->elements[i].data.buffer_object)
             {
-                ptr += (ULONG_PTR)buffer_get_sysmem(stream->buffer, gl_info);
+                ptr += (ULONG_PTR)buffer_get_sysmem(stream->buffer, context);
             }
 
             if (context->numbered_array_mask & (1 << i)) unload_numbered_array(context, i);
