@@ -361,8 +361,9 @@ typedef struct _D3DRMLOADRESOURCE
     const char *lpType;
 } D3DRMLOADRESOURCE, *LPD3DRMLOADRESOURCE;
 
-typedef struct _D3DRMLOADMEMORY {
-    LPVOID lpMemory;
+typedef struct _D3DRMLOADMEMORY
+{
+    void *lpMemory;
     DWORD dSize;
 } D3DRMLOADMEMORY, *LPD3DRMLOADMEMORY;
 

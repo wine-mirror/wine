@@ -47,8 +47,8 @@ DECLARE_INTERFACE_(IDirect3DRMWinDevice,IDirect3DRMObject)
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IDirect3DRMObject methods ***/
     STDMETHOD(Clone)(THIS_ IUnknown *outer, REFIID iid, void **out) PURE;
-    STDMETHOD(AddDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
-    STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
+    STDMETHOD(AddDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK cb, void *ctx) PURE;
+    STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK cb, void *ctx) PURE;
     STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
     STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;

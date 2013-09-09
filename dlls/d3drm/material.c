@@ -108,20 +108,18 @@ static HRESULT WINAPI IDirect3DRMMaterial2Impl_Clone(IDirect3DRMMaterial2 *iface
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMaterial2Impl_AddDestroyCallback(IDirect3DRMMaterial2* iface,
-                                                                  D3DRMOBJECTCALLBACK cb,
-                                                                  LPVOID argument)
+static HRESULT WINAPI IDirect3DRMMaterial2Impl_AddDestroyCallback(IDirect3DRMMaterial2 *iface,
+        D3DRMOBJECTCALLBACK cb, void *ctx)
 {
-    FIXME("(%p)->(%p, %p): stub\n", iface, cb, argument);
+    FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMaterial2Impl_DeleteDestroyCallback(IDirect3DRMMaterial2* iface,
-                                                                     D3DRMOBJECTCALLBACK cb,
-                                                                     LPVOID argument)
+static HRESULT WINAPI IDirect3DRMMaterial2Impl_DeleteDestroyCallback(IDirect3DRMMaterial2 *iface,
+        D3DRMOBJECTCALLBACK cb, void *ctx)
 {
-    FIXME("(%p)->(%p, %p): stub\n", iface, cb, argument);
+    FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
 
     return E_NOTIMPL;
 }

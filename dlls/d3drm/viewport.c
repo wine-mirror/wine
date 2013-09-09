@@ -113,24 +113,18 @@ static HRESULT WINAPI IDirect3DRMViewportImpl_Clone(IDirect3DRMViewport *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMViewportImpl_AddDestroyCallback(IDirect3DRMViewport* iface,
-                                                                     D3DRMOBJECTCALLBACK cb,
-                                                                     LPVOID argument)
+static HRESULT WINAPI IDirect3DRMViewportImpl_AddDestroyCallback(IDirect3DRMViewport *iface,
+        D3DRMOBJECTCALLBACK cb, void *ctx)
 {
-    IDirect3DRMViewportImpl *This = impl_from_IDirect3DRMViewport(iface);
-
-    FIXME("(%p/%p)->(%p, %p): stub\n", iface, This, cb, argument);
+    FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMViewportImpl_DeleteDestroyCallback(IDirect3DRMViewport* iface,
-                                                                        D3DRMOBJECTCALLBACK cb,
-                                                                        LPVOID argument)
+static HRESULT WINAPI IDirect3DRMViewportImpl_DeleteDestroyCallback(IDirect3DRMViewport *iface,
+        D3DRMOBJECTCALLBACK cb, void *ctx)
 {
-    IDirect3DRMViewportImpl *This = impl_from_IDirect3DRMViewport(iface);
-
-    FIXME("(%p/%p)->(%p, %p): stub\n", iface, This, cb, argument);
+    FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
 
     return E_NOTIMPL;
 }
@@ -507,24 +501,18 @@ static HRESULT WINAPI IDirect3DRMViewport2Impl_Clone(IDirect3DRMViewport2 *iface
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMViewport2Impl_AddDestroyCallback(IDirect3DRMViewport2* iface,
-                                                                     D3DRMOBJECTCALLBACK cb,
-                                                                     LPVOID argument)
+static HRESULT WINAPI IDirect3DRMViewport2Impl_AddDestroyCallback(IDirect3DRMViewport2 *iface,
+        D3DRMOBJECTCALLBACK cb, void *ctx)
 {
-    IDirect3DRMViewportImpl *This = impl_from_IDirect3DRMViewport2(iface);
-
-    FIXME("(%p/%p)->(%p, %p): stub\n", iface, This, cb, argument);
+    FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMViewport2Impl_DeleteDestroyCallback(IDirect3DRMViewport2* iface,
-                                                                        D3DRMOBJECTCALLBACK cb,
-                                                                        LPVOID argument)
+static HRESULT WINAPI IDirect3DRMViewport2Impl_DeleteDestroyCallback(IDirect3DRMViewport2 *iface,
+        D3DRMOBJECTCALLBACK cb, void *ctx)
 {
-    IDirect3DRMViewportImpl *This = impl_from_IDirect3DRMViewport2(iface);
-
-    FIXME("(%p/%p)->(%p, %p): stub\n", iface, This, cb, argument);
+    FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
 
     return E_NOTIMPL;
 }

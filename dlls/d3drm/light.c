@@ -104,24 +104,18 @@ static HRESULT WINAPI IDirect3DRMLightImpl_Clone(IDirect3DRMLight *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMLightImpl_AddDestroyCallback(IDirect3DRMLight* iface,
-                                                               D3DRMOBJECTCALLBACK cb,
-                                                               LPVOID argument)
+static HRESULT WINAPI IDirect3DRMLightImpl_AddDestroyCallback(IDirect3DRMLight *iface,
+        D3DRMOBJECTCALLBACK cb, void *ctx)
 {
-    IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
-
-    FIXME("(%p/%p)->(%p, %p): stub\n", iface, This, cb, argument);
+    FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMLightImpl_DeleteDestroyCallback(IDirect3DRMLight* iface,
-                                                                  D3DRMOBJECTCALLBACK cb,
-                                                                  LPVOID argument)
+static HRESULT WINAPI IDirect3DRMLightImpl_DeleteDestroyCallback(IDirect3DRMLight *iface,
+        D3DRMOBJECTCALLBACK cb, void *ctx)
 {
-    IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
-
-    FIXME("(%p/%p)->(%p, %p): stub\n", iface, This, cb, argument);
+    FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
 
     return E_NOTIMPL;
 }

@@ -383,11 +383,9 @@ static HRESULT WINAPI IDirect3DRMImpl_GetNamedObject(IDirect3DRM *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMImpl_EnumerateObjects(IDirect3DRM* iface, D3DRMOBJECTCALLBACK cb, LPVOID pArg)
+static HRESULT WINAPI IDirect3DRMImpl_EnumerateObjects(IDirect3DRM *iface, D3DRMOBJECTCALLBACK cb, void *ctx)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM(iface);
-
-    FIXME("(%p/%p)->(%p,%p): stub\n", iface, This, cb, pArg);
+    FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
 
     return E_NOTIMPL;
 }
@@ -744,12 +742,9 @@ static HRESULT WINAPI IDirect3DRM2Impl_GetNamedObject(IDirect3DRM2 *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRM2Impl_EnumerateObjects(IDirect3DRM2* iface, D3DRMOBJECTCALLBACK cb,
-                                                        LPVOID pArg)
+static HRESULT WINAPI IDirect3DRM2Impl_EnumerateObjects(IDirect3DRM2 *iface, D3DRMOBJECTCALLBACK cb, void *ctx)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM2(iface);
-
-    FIXME("(%p/%p)->(%p,%p): stub\n", iface, This, cb, pArg);
+    FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
 
     return E_NOTIMPL;
 }
@@ -1123,12 +1118,9 @@ static HRESULT WINAPI IDirect3DRM3Impl_GetNamedObject(IDirect3DRM3 *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRM3Impl_EnumerateObjects(IDirect3DRM3* iface, D3DRMOBJECTCALLBACK cb,
-                                                        LPVOID arg)
+static HRESULT WINAPI IDirect3DRM3Impl_EnumerateObjects(IDirect3DRM3 *iface, D3DRMOBJECTCALLBACK cb, void *ctx)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM3(iface);
-
-    FIXME("(%p/%p)->(%p,%p): stub\n", iface, This, cb, arg);
+    FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
 
     return E_NOTIMPL;
 }
