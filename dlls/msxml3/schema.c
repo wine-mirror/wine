@@ -116,6 +116,12 @@ typedef struct
     LONG ref;
 } cache_entry;
 
+static const tid_t schema_cache_se_tids[] = {
+    IXMLDOMSchemaCollection_tid,
+    IXMLDOMSchemaCollection2_tid,
+    NULL_tid
+};
+
 /* datatypes lookup stuff
  * generated with help from gperf */
 #define DT_MIN_STR_LEN 2
@@ -1104,6 +1110,10 @@ static HRESULT WINAPI schema_cache_QueryInterface(IXMLDOMSchemaCollection2* ifac
     else if (dispex_query_interface(&This->dispex, riid, ppvObject))
     {
         return *ppvObject ? S_OK : E_NOINTERFACE;
+    }
+    else if(IsEqualGUID( riid, &IID_ISupportErrorInfo ))
+    {
+        return node_create_supporterrorinfo(schema_cache_se_tids, ppvObject);
     }
     else
     {

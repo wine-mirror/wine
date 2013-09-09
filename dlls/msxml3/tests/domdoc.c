@@ -10712,6 +10712,7 @@ static void test_supporterrorinfo(void)
                               &IID_IXMLDOMDocument2, &IID_IXMLDOMDocument3 };
     const supporterror_t *ptr = supporterror_test;
     ISupportErrorInfo *errorinfo, *info2;
+    IXMLDOMSchemaCollection *schemacache;
     IXMLDOMNamedNodeMap *map, *map2;
     IXMLDOMDocument *doc;
     IXMLDOMElement *elem;
@@ -10838,6 +10839,20 @@ static void test_supporterrorinfo(void)
     IXMLDOMElement_Release(elem);
 
     IXMLDOMDocument_Release(doc);
+
+    /* IXMLDOMSchemaCollection */
+    hr = CoCreateInstance(&CLSID_XMLSchemaCache, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMSchemaCollection, (void**)&schemacache);
+    ok(hr == S_OK, "failed to create schema collection, 0x%08x\n", hr);
+
+    hr = IXMLDOMSchemaCollection_QueryInterface(schemacache, &IID_ISupportErrorInfo, (void**)&errorinfo);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = ISupportErrorInfo_InterfaceSupportsErrorInfo(errorinfo, &IID_IXMLDOMSchemaCollection);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    ISupportErrorInfo_Release(errorinfo);
+    IXMLDOMSchemaCollection_Release(schemacache);
+
     free_bstrs();
 }
 
