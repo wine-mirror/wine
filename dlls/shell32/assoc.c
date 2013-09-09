@@ -240,79 +240,86 @@ static HRESULT ASSOC_GetValue(HKEY hkey, const WCHAR *name, void **data, DWORD *
   return S_OK;
 }
 
-static HRESULT ASSOC_GetCommand(IQueryAssociationsImpl *This,
-                                LPCWSTR pszExtra, WCHAR **ppszCommand)
+static HRESULT ASSOC_GetCommand(IQueryAssociationsImpl *This, const WCHAR *extra, WCHAR **command)
 {
   HKEY hkeyCommand;
-  HKEY hkeyFile;
   HKEY hkeyShell;
   HKEY hkeyVerb;
   HRESULT hr;
   LONG ret;
-  WCHAR * pszExtraFromReg = NULL;
-  WCHAR * pszFileType;
+  WCHAR *extra_from_reg = NULL;
+  WCHAR *filetype;
   static const WCHAR commandW[] = { 'c','o','m','m','a','n','d',0 };
   static const WCHAR shellW[] = { 's','h','e','l','l',0 };
 
-  hr = ASSOC_GetValue(This->hkeySource, NULL, (void**)&pszFileType, NULL);
-  if (FAILED(hr))
-    return hr;
-  ret = RegOpenKeyExW(HKEY_CLASSES_ROOT, pszFileType, 0, KEY_READ, &hkeyFile);
-  HeapFree(GetProcessHeap(), 0, pszFileType);
-  if (ret != ERROR_SUCCESS)
-    return HRESULT_FROM_WIN32(ret);
-
-  ret = RegOpenKeyExW(hkeyFile, shellW, 0, KEY_READ, &hkeyShell);
-  RegCloseKey(hkeyFile);
-  if (ret != ERROR_SUCCESS)
-    return HRESULT_FROM_WIN32(ret);
-
-  if (!pszExtra)
+  /* When looking for file extension it's possible to have a default value
+     that points to another key that contains 'shell/<verb>/command' subtree. */
+  hr = ASSOC_GetValue(This->hkeySource, NULL, (void**)&filetype, NULL);
+  if (hr == S_OK)
   {
-    hr = ASSOC_GetValue(hkeyShell, NULL, (void**)&pszExtraFromReg, NULL);
-    /* if no default action */
-    if (hr == E_FAIL || hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
-    {
-      DWORD rlen;
-      ret = RegQueryInfoKeyW(hkeyShell, 0, 0, 0, 0, &rlen, 0, 0, 0, 0, 0, 0);
-      if (ret != ERROR_SUCCESS)
-      {
-        RegCloseKey(hkeyShell);
-        return HRESULT_FROM_WIN32(ret);
-      }
-      rlen++;
-      pszExtraFromReg = HeapAlloc(GetProcessHeap(), 0, rlen * sizeof(WCHAR));
-      if (!pszExtraFromReg)
-      {
-        RegCloseKey(hkeyShell);
-        return E_OUTOFMEMORY;
-      }
-      ret = RegEnumKeyExW(hkeyShell, 0, pszExtraFromReg, &rlen, 0, NULL, NULL, NULL);
-      if (ret != ERROR_SUCCESS)
-      {
-        RegCloseKey(hkeyShell);
-        return HRESULT_FROM_WIN32(ret);
-      }
-    }
-    else if (FAILED(hr))
-    {
-      RegCloseKey(hkeyShell);
-      return hr;
-    }
+      HKEY hkeyFile;
+
+      ret = RegOpenKeyExW(HKEY_CLASSES_ROOT, filetype, 0, KEY_READ, &hkeyFile);
+      HeapFree(GetProcessHeap(), 0, filetype);
+      if (ret) return HRESULT_FROM_WIN32(ret);
+
+      ret = RegOpenKeyExW(hkeyFile, shellW, 0, KEY_READ, &hkeyShell);
+      RegCloseKey(hkeyFile);
+      if (ret) return HRESULT_FROM_WIN32(ret);
+  }
+  else
+  {
+      ret = RegOpenKeyExW(This->hkeySource, shellW, 0, KEY_READ, &hkeyShell);
+      if (ret) return HRESULT_FROM_WIN32(ret);
   }
 
-  ret = RegOpenKeyExW(hkeyShell, pszExtra ? pszExtra : pszExtraFromReg, 0,
-                      KEY_READ, &hkeyVerb);
-  HeapFree(GetProcessHeap(), 0, pszExtraFromReg);
-  RegCloseKey(hkeyShell);
-  if (ret != ERROR_SUCCESS)
-    return HRESULT_FROM_WIN32(ret);
+  if (!extra)
+  {
+      /* check for default verb */
+      hr = ASSOC_GetValue(hkeyShell, NULL, (void**)&extra_from_reg, NULL);
+      if (FAILED(hr))
+      {
+          /* no default verb, try first subkey */
+          DWORD max_subkey_len;
 
+          ret = RegQueryInfoKeyW(hkeyShell, NULL, NULL, NULL, NULL, &max_subkey_len, NULL, NULL, NULL, NULL, NULL, NULL);
+          if (ret)
+          {
+              RegCloseKey(hkeyShell);
+              return HRESULT_FROM_WIN32(ret);
+          }
+
+          max_subkey_len++;
+          extra_from_reg = HeapAlloc(GetProcessHeap(), 0, max_subkey_len * sizeof(WCHAR));
+          if (!extra_from_reg)
+          {
+              RegCloseKey(hkeyShell);
+              return E_OUTOFMEMORY;
+          }
+
+          ret = RegEnumKeyExW(hkeyShell, 0, extra_from_reg, &max_subkey_len, NULL, NULL, NULL, NULL);
+          if (ret)
+          {
+              HeapFree(GetProcessHeap(), 0, extra_from_reg);
+              RegCloseKey(hkeyShell);
+              return HRESULT_FROM_WIN32(ret);
+          }
+      }
+      extra = extra_from_reg;
+  }
+
+  /* open verb subkey */
+  ret = RegOpenKeyExW(hkeyShell, extra, 0, KEY_READ, &hkeyVerb);
+  HeapFree(GetProcessHeap(), 0, extra_from_reg);
+  RegCloseKey(hkeyShell);
+  if (ret) return HRESULT_FROM_WIN32(ret);
+
+  /* open command subkey */
   ret = RegOpenKeyExW(hkeyVerb, commandW, 0, KEY_READ, &hkeyCommand);
   RegCloseKey(hkeyVerb);
-  if (ret != ERROR_SUCCESS)
-    return HRESULT_FROM_WIN32(ret);
-  hr = ASSOC_GetValue(hkeyCommand, NULL, (void**)ppszCommand, NULL);
+  if (ret) return HRESULT_FROM_WIN32(ret);
+
+  hr = ASSOC_GetValue(hkeyCommand, NULL, (void**)command, NULL);
   RegCloseKey(hkeyCommand);
   return hr;
 }
