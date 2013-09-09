@@ -5329,10 +5329,39 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
     surface->ds_current_size.cy = surface->resource.height;
 }
 
+static void surface_validate_location(struct wined3d_surface *surface, DWORD location)
+{
+    struct wined3d_surface *overlay;
+
+    TRACE("surface %p, location %s.\n", surface, debug_surflocation(location & SFLAG_LOCATIONS));
+
+    surface->flags |= (location & SFLAG_LOCATIONS);
+
+    /* Redraw emulated overlays, if any. */
+    if (location & SFLAG_INDRAWABLE && !list_empty(&surface->overlays))
+    {
+        LIST_FOR_EACH_ENTRY(overlay, &surface->overlays, struct wined3d_surface, overlay_entry)
+        {
+            surface_draw_overlay(overlay);
+        }
+    }
+}
+
+static void surface_invalidate_location(struct wined3d_surface *surface, DWORD location)
+{
+    TRACE("surface %p, location %s.\n", surface, debug_surflocation(location & SFLAG_LOCATIONS));
+
+    if ((location & (SFLAG_INTEXTURE | SFLAG_INSRGBTEX)) && surface->container)
+        wined3d_texture_set_dirty(surface->container);
+    surface->flags &= ~(location & SFLAG_LOCATIONS);
+
+    if (!(surface->flags & SFLAG_LOCATIONS))
+        ERR("Surface %p does not have any up to date location.\n", surface);
+}
+
 void surface_modify_location(struct wined3d_surface *surface, DWORD location, BOOL persistent)
 {
     const struct wined3d_gl_info *gl_info = &surface->resource.device->adapter->gl_info;
-    struct wined3d_surface *overlay;
 
     TRACE("surface %p, location %s, persistent %#x.\n",
             surface, debug_surflocation(location), persistent);
@@ -5348,43 +5377,12 @@ void surface_modify_location(struct wined3d_surface *surface, DWORD location, BO
 
     if (persistent)
     {
-        if (((surface->flags & SFLAG_INTEXTURE) && !(location & SFLAG_INTEXTURE))
-                || ((surface->flags & SFLAG_INSRGBTEX) && !(location & SFLAG_INSRGBTEX)))
-        {
-            if (surface->container)
-            {
-                TRACE("Passing to container.\n");
-                wined3d_texture_set_dirty(surface->container);
-            }
-        }
-        surface->flags &= ~SFLAG_LOCATIONS;
-        surface->flags |= location;
-
-        /* Redraw emulated overlays, if any */
-        if (location & SFLAG_INDRAWABLE && !list_empty(&surface->overlays))
-        {
-            LIST_FOR_EACH_ENTRY(overlay, &surface->overlays, struct wined3d_surface, overlay_entry)
-            {
-                surface_draw_overlay(overlay);
-            }
-        }
+        surface_validate_location(surface, location);
+        surface_invalidate_location(surface, ~location);
     }
     else
     {
-        if ((surface->flags & (SFLAG_INTEXTURE | SFLAG_INSRGBTEX)) && (location & (SFLAG_INTEXTURE | SFLAG_INSRGBTEX)))
-        {
-            if (surface->container)
-            {
-                TRACE("Passing to container\n");
-                wined3d_texture_set_dirty(surface->container);
-            }
-        }
-        surface->flags &= ~location;
-    }
-
-    if (!(surface->flags & SFLAG_LOCATIONS))
-    {
-        ERR("Surface %p does not have any up to date location.\n", surface);
+        surface_invalidate_location(surface, location);
     }
 }
 
