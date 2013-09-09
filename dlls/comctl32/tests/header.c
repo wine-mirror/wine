@@ -1814,7 +1814,6 @@ START_TEST(header)
     HWND parent_hwnd;
     ULONG_PTR ctx_cookie;
     HANDLE hCtx;
-    HWND hwnd;
 
     if (!init())
         return;
@@ -1846,22 +1845,6 @@ START_TEST(header)
         DestroyWindow(parent_hwnd);
         return;
     }
-
-    /* this is a XP SP3 failure workaround */
-    hwnd = CreateWindowExA(0, WC_HEADER, NULL,
-                           WS_CHILD|WS_BORDER|WS_VISIBLE|HDS_BUTTONS|HDS_HORZ,
-                           0, 0, 100, 100,
-                           parent_hwnd, NULL, GetModuleHandleA(NULL), NULL);
-
-    if (!IsWindow(hwnd))
-    {
-        win_skip("FIXME: failed to create Header window.\n");
-        unload_v6_module(ctx_cookie, hCtx);
-        DestroyWindow(parent_hwnd);
-        return;
-    }
-    else
-        DestroyWindow(hwnd);
 
     /* comctl32 version 6 tests start here */
     test_hdf_fixedwidth(parent_hwnd);

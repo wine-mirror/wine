@@ -1972,7 +1972,6 @@ START_TEST(treeview)
 
     ULONG_PTR ctx_cookie;
     HANDLE hCtx;
-    HWND hwnd;
   
     hComctl32 = GetModuleHandleA("comctl32.dll");
     pInitCommonControlsEx = (void*)GetProcAddress(hComctl32, "InitCommonControlsEx");
@@ -2043,21 +2042,6 @@ START_TEST(treeview)
         DestroyWindow(hMainWnd);
         return;
     }
-
-    /* this is a XP SP3 failure workaround */
-    hwnd = CreateWindowExA(0, WC_TREEVIEW, "foo",
-                           WS_CHILD | WS_BORDER | WS_VISIBLE,
-                           0, 0, 100, 100,
-                           hMainWnd, NULL, GetModuleHandleA(NULL), NULL);
-    if (!IsWindow(hwnd))
-    {
-        win_skip("FIXME: failed to create TreeView window.\n");
-        unload_v6_module(ctx_cookie, hCtx);
-        DestroyWindow(hMainWnd);
-        return;
-    }
-    else
-        DestroyWindow(hwnd);
 
     /* comctl32 version 6 tests start here */
     test_expandedimage();

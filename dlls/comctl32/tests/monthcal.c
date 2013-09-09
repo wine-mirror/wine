@@ -2002,7 +2002,6 @@ START_TEST(monthcal)
     BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
     INITCOMMONCONTROLSEX iccex;
     HMODULE hComctl32;
-    HWND hwnd;
 
     ULONG_PTR ctx_cookie;
     HANDLE hCtx;
@@ -2047,21 +2046,6 @@ START_TEST(monthcal)
         DestroyWindow(parent_wnd);
         return;
     }
-
-    /* this is a XP SP3 failure workaround */
-    hwnd = CreateWindowExA(0, MONTHCAL_CLASSA, "foo",
-                           WS_CHILD | WS_BORDER | WS_VISIBLE,
-                           0, 0, 100, 100,
-                           parent_wnd, NULL, GetModuleHandleA(NULL), NULL);
-    if (!IsWindow(hwnd))
-    {
-        win_skip("FIXME: failed to create Monthcal window.\n");
-        unload_v6_module(ctx_cookie, hCtx);
-        DestroyWindow(parent_wnd);
-        return;
-    }
-    else
-        DestroyWindow(hwnd);
 
     test_hittest_v6();
     test_get_set_border();
