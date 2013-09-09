@@ -288,7 +288,7 @@ static void device_stream_info_from_declaration(struct wined3d_device *device, s
 
         element = &stream_info->elements[i];
         buffer = state->streams[element->stream_idx].buffer;
-        wined3d_buffer_preload(buffer);
+        buffer_internal_preload(buffer, context);
 
         /* If the preload dropped the buffer object, update the stream info. */
         if (buffer->buffer_object != element->data.buffer_object)

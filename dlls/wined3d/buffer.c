@@ -730,13 +730,13 @@ static void buffer_direct_upload(struct wined3d_buffer *This, const struct wined
     checkGLcall("glUnmapBufferARB");
 }
 
-void CDECL wined3d_buffer_preload(struct wined3d_buffer *buffer)
+/* Context activation is done by the caller. */
+void buffer_internal_preload(struct wined3d_buffer *buffer, struct wined3d_context *context)
 {
     DWORD flags = buffer->flags & (WINED3D_BUFFER_NOSYNC | WINED3D_BUFFER_DISCARD);
     struct wined3d_device *device = buffer->resource.device;
     UINT start = 0, end = 0, len = 0, vertices;
     const struct wined3d_gl_info *gl_info;
-    struct wined3d_context *context;
     BOOL decl_changed = FALSE;
     unsigned int i, j;
     BYTE *data;
@@ -756,9 +756,7 @@ void CDECL wined3d_buffer_preload(struct wined3d_buffer *buffer)
         /* TODO: Make converting independent from VBOs */
         if (buffer->flags & WINED3D_BUFFER_CREATEBO)
         {
-            context = context_acquire(device, NULL);
             buffer_create_buffer_object(buffer, context);
-            context_release(context);
             buffer->flags &= ~WINED3D_BUFFER_CREATEBO;
         }
         else
@@ -867,14 +865,11 @@ void CDECL wined3d_buffer_preload(struct wined3d_buffer *buffer)
             return;
         }
 
-        context = context_acquire(device, NULL);
         buffer_direct_upload(buffer, context->gl_info, flags);
 
-        context_release(context);
         return;
     }
 
-    context = context_acquire(device, NULL);
     gl_info = context->gl_info;
 
     if(!(buffer->flags & WINED3D_BUFFER_DOUBLEBUFFER))
@@ -927,6 +922,13 @@ void CDECL wined3d_buffer_preload(struct wined3d_buffer *buffer)
     }
 
     HeapFree(GetProcessHeap(), 0, data);
+}
+
+void CDECL wined3d_buffer_preload(struct wined3d_buffer *buffer)
+{
+    struct wined3d_context *context;
+    context = context_acquire(buffer->resource.device, NULL);
+    buffer_internal_preload(buffer, context);
     context_release(context);
 }
 
