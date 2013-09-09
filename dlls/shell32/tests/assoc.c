@@ -103,6 +103,8 @@ struct assoc_getstring_test
 };
 
 static const WCHAR httpW[] = {'h','t','t','p',0};
+static const WCHAR httpsW[] = {'h','t','t','p','s',0};
+static const WCHAR badW[] = {'b','a','d','b','a','d',0};
 
 static struct assoc_getstring_test getstring_tests[] =
 {
@@ -163,6 +165,31 @@ static void test_IQueryAssociations_GetString(void)
     IQueryAssociations_Release(assoc);
 }
 
+static void test_IQueryAssociations_Init(void)
+{
+    IQueryAssociations *assoc;
+    HRESULT hr;
+    DWORD len;
+
+    hr = CoCreateInstance(&CLSID_QueryAssociations, NULL, CLSCTX_INPROC_SERVER, &IID_IQueryAssociations, (void*)&assoc);
+    ok(hr == S_OK, "failed to create object, 0x%x\n", hr);
+
+    hr = IQueryAssociations_Init(assoc, 0, NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Init failed, 0x%08x\n", hr);
+
+    hr = IQueryAssociations_Init(assoc, 0, httpW, NULL, NULL);
+    ok(hr == S_OK, "Init failed, 0x%08x\n", hr);
+
+    hr = IQueryAssociations_Init(assoc, 0, badW, NULL, NULL);
+    ok(hr == S_OK || broken(hr == S_FALSE) /* pre-vista */, "Init failed, 0x%08x\n", hr);
+
+    len = 0;
+    hr = IQueryAssociations_GetString(assoc, 0, ASSOCSTR_EXECUTABLE, NULL, NULL, &len);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION) || broken(hr == E_FAIL) /* pre-vista */, "got 0x%08x\n", hr);
+
+    IQueryAssociations_Release(assoc);
+}
+
 START_TEST(assoc)
 {
     IQueryAssociations *qa;
@@ -176,6 +203,7 @@ START_TEST(assoc)
     {
         test_IQueryAssociations_QueryInterface();
         test_IQueryAssociations_GetString();
+        test_IQueryAssociations_Init();
 
         IQueryAssociations_Release(qa);
     }

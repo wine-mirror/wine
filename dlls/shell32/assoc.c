@@ -184,6 +184,10 @@ static HRESULT WINAPI IQueryAssociations_fnInit(
         FIXME("hwnd != NULL not supported\n");
     if (cfFlags != 0)
 	FIXME("unsupported flags: %x\n", cfFlags);
+
+    RegCloseKey(This->hkeySource);
+    RegCloseKey(This->hkeyProgID);
+    This->hkeySource = This->hkeyProgID = NULL;
     if (pszAssoc != NULL)
     {
         ret = RegOpenKeyExW(HKEY_CLASSES_ROOT,
@@ -191,8 +195,8 @@ static HRESULT WINAPI IQueryAssociations_fnInit(
                             0,
                             KEY_READ,
                             &This->hkeySource);
-        if (ret != ERROR_SUCCESS)
-            return E_FAIL;
+        if (ret)
+            return S_OK;
         /* if this is not a prog id */
         if ((*pszAssoc == '.') || (*pszAssoc == '{'))
         {
@@ -467,6 +471,9 @@ static HRESULT WINAPI IQueryAssociations_fnGetString(
 
   if (!pcchOut)
     return E_UNEXPECTED;
+
+  if (!This->hkeySource && !This->hkeyProgID)
+    return HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION);
 
   switch (str)
   {
