@@ -5357,7 +5357,7 @@ static HRESULT WINAPI ITypeLibComp_fnBind(
     ITypeLibImpl *This = impl_from_ITypeComp(iface);
     int typemismatch=0, i;
 
-    TRACE("(%s, 0x%x, 0x%x, %p, %p, %p)\n", debugstr_w(szName), lHash, wFlags, ppTInfo, pDescKind, pBindPtr);
+    TRACE("(%p)->(%s, 0x%x, 0x%x, %p, %p, %p)\n", This, debugstr_w(szName), lHash, wFlags, ppTInfo, pDescKind, pBindPtr);
 
     *pDescKind = DESCKIND_NONE;
     pBindPtr->lptcomp = NULL;
