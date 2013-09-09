@@ -2057,7 +2057,6 @@ enum WINED3DSRGB
 struct gl_texture
 {
     DWORD                   states[MAX_WINETEXTURESTATES];
-    BOOL                    dirty;
     GLuint                  name;
 };
 
@@ -2071,9 +2070,11 @@ struct wined3d_texture_ops
     void (*texture_sub_resource_cleanup)(struct wined3d_resource *sub_resource);
 };
 
-#define WINED3D_TEXTURE_COND_NP2            0x1
-#define WINED3D_TEXTURE_POW2_MAT_IDENT      0x2
-#define WINED3D_TEXTURE_IS_SRGB             0x4
+#define WINED3D_TEXTURE_COND_NP2            0x00000001
+#define WINED3D_TEXTURE_POW2_MAT_IDENT      0x00000002
+#define WINED3D_TEXTURE_IS_SRGB             0x00000004
+#define WINED3D_TEXTURE_RGB_VALID           0x00000008
+#define WINED3D_TEXTURE_SRGB_VALID          0x00000010
 
 struct wined3d_texture
 {

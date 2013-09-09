@@ -71,8 +71,6 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
     texture->level_count = level_count;
     texture->filter_type = (desc->usage & WINED3DUSAGE_AUTOGENMIPMAP) ? WINED3D_TEXF_LINEAR : WINED3D_TEXF_NONE;
     texture->lod = 0;
-    texture->texture_rgb.dirty = TRUE;
-    texture->texture_srgb.dirty = TRUE;
     texture->flags = WINED3D_TEXTURE_POW2_MAT_IDENT;
 
     if (texture->resource.format->flags & WINED3DFMT_FLAG_FILTERING)
@@ -141,8 +139,7 @@ static void wined3d_texture_cleanup(struct wined3d_texture *texture)
 
 void wined3d_texture_set_dirty(struct wined3d_texture *texture)
 {
-    texture->texture_rgb.dirty = TRUE;
-    texture->texture_srgb.dirty = TRUE;
+    texture->flags &= ~(WINED3D_TEXTURE_RGB_VALID | WINED3D_TEXTURE_SRGB_VALID);
 }
 
 /* Context activation is done by the caller. */
@@ -677,14 +674,23 @@ static void texture2d_preload(struct wined3d_texture *texture, enum WINED3DSRGB 
     struct wined3d_device *device = texture->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct wined3d_context *context = NULL;
-    struct gl_texture *gl_tex;
     BOOL srgb_mode;
+    DWORD flag;
     UINT i;
 
     TRACE("texture %p, srgb %#x.\n", texture, srgb);
 
     srgb_mode = texture_srgb_mode(texture, srgb);
-    gl_tex = wined3d_texture_get_gl_texture(texture, gl_info, srgb_mode);
+    if (srgb_mode && !gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
+        flag = WINED3D_TEXTURE_SRGB_VALID;
+    else
+        flag = WINED3D_TEXTURE_RGB_VALID;
+
+    if (texture->flags & flag)
+    {
+        TRACE("Texture %p not dirty, nothing to do.\n", texture);
+        return;
+    }
 
     if (!device->isInDraw)
     {
@@ -693,21 +699,12 @@ static void texture2d_preload(struct wined3d_texture *texture, enum WINED3DSRGB 
         context = context_acquire(device, NULL);
     }
 
-    if (gl_tex->dirty)
+    /* Reload the surfaces if the texture is marked dirty. */
+    for (i = 0; i < sub_count; ++i)
     {
-        /* Reload the surfaces if the texture is marked dirty. */
-        for (i = 0; i < sub_count; ++i)
-        {
-            surface_load(surface_from_resource(texture->sub_resources[i]), srgb_mode);
-        }
+        surface_load(surface_from_resource(texture->sub_resources[i]), srgb_mode);
     }
-    else
-    {
-        TRACE("Texture %p not dirty, nothing to do.\n", texture);
-    }
-
-    /* No longer dirty. */
-    gl_tex->dirty = FALSE;
+    texture->flags |= flag;
 
     if (context) context_release(context);
 }
@@ -1059,35 +1056,34 @@ static void texture3d_preload(struct wined3d_texture *texture, enum WINED3DSRGB 
     struct wined3d_device *device = texture->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct wined3d_context *context = NULL;
-    struct gl_texture *gl_tex;
     BOOL srgb_mode;
+    DWORD flag;
     UINT i;
 
     TRACE("texture %p, srgb %#x.\n", texture, srgb);
 
     srgb_mode = texture_srgb_mode(texture, srgb);
-    gl_tex = wined3d_texture_get_gl_texture(texture, gl_info, srgb_mode);
-
-    if (gl_tex->dirty)
-    {
-        context = context_acquire(device, NULL);
-
-        /* Reload the surfaces if the texture is marked dirty. */
-        for (i = 0; i < sub_count; ++i)
-        {
-            wined3d_volume_load(volume_from_resource(texture->sub_resources[i]), context,
-                    srgb_mode);
-        }
-
-        context_release(context);
-    }
+    if (srgb_mode && !gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
+        flag = WINED3D_TEXTURE_SRGB_VALID;
     else
+        flag = WINED3D_TEXTURE_RGB_VALID;
+
+    if (texture->flags & flag)
     {
         TRACE("Texture %p not dirty, nothing to do.\n", texture);
+        return;
     }
 
-    /* No longer dirty. */
-    gl_tex->dirty = FALSE;
+    context = context_acquire(device, NULL);
+
+    /* Reload the surfaces if the texture is marked dirty. */
+    for (i = 0; i < sub_count; ++i)
+    {
+        wined3d_volume_load(volume_from_resource(texture->sub_resources[i]), context, srgb_mode);
+    }
+    texture->flags |= flag;
+
+    context_release(context);
 }
 
 static void texture3d_sub_resource_add_dirty_region(struct wined3d_resource *sub_resource,
