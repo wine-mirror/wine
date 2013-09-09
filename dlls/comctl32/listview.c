@@ -7500,6 +7500,7 @@ static INT LISTVIEW_HitTest(const LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, 
     WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
     RECT rcBox, rcBounds, rcState, rcIcon, rcLabel, rcSearch;
     POINT Origin, Position, opt;
+    BOOL is_fullrow;
     LVITEMW lvItem;
     ITERATOR i;
     INT iItem;
@@ -7623,15 +7624,17 @@ static INT LISTVIEW_HitTest(const LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, 
     TRACE("rcBounds=%s\n", wine_dbgstr_rect(&rcBounds));
     if (!PtInRect(&rcBounds, opt)) return -1;
 
+    /* That's a special case - row rectangle is used as item rectangle and
+       returned flags contain all item parts. */
+    is_fullrow = (infoPtr->uView == LV_VIEW_DETAILS) && ((infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT) || (infoPtr->dwStyle & LVS_OWNERDRAWFIXED));
+
     if (PtInRect(&rcIcon, opt))
 	lpht->flags |= LVHT_ONITEMICON;
     else if (PtInRect(&rcLabel, opt))
 	lpht->flags |= LVHT_ONITEMLABEL;
     else if (infoPtr->himlState && PtInRect(&rcState, opt))
 	lpht->flags |= LVHT_ONITEMSTATEICON;
-    /* special case for LVS_EX_FULLROWSELECT */
-    if (infoPtr->uView == LV_VIEW_DETAILS && infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT &&
-      !(lpht->flags & LVHT_ONITEM))
+    if (is_fullrow && !(lpht->flags & LVHT_ONITEM))
     {
 	lpht->flags = LVHT_ONITEM | LVHT_ABOVE;
     }
@@ -7639,9 +7642,7 @@ static INT LISTVIEW_HitTest(const LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, 
 	lpht->flags &= ~LVHT_NOWHERE;
     TRACE("lpht->flags=0x%x\n", lpht->flags); 
 
-    if (select && !(infoPtr->uView == LV_VIEW_DETAILS &&
-                    ((infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT) ||
-                     (infoPtr->dwStyle & LVS_OWNERDRAWFIXED))))
+    if (select && !is_fullrow)
     {
         if (infoPtr->uView == LV_VIEW_DETAILS)
         {
