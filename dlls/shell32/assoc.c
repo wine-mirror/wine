@@ -263,17 +263,19 @@ static HRESULT ASSOC_GetCommand(IQueryAssociationsImpl *This, const WCHAR *extra
 
       ret = RegOpenKeyExW(HKEY_CLASSES_ROOT, filetype, 0, KEY_READ, &hkeyFile);
       HeapFree(GetProcessHeap(), 0, filetype);
-      if (ret) return HRESULT_FROM_WIN32(ret);
 
-      ret = RegOpenKeyExW(hkeyFile, shellW, 0, KEY_READ, &hkeyShell);
-      RegCloseKey(hkeyFile);
-      if (ret) return HRESULT_FROM_WIN32(ret);
+      if (ret == ERROR_SUCCESS)
+      {
+          ret = RegOpenKeyExW(hkeyFile, shellW, 0, KEY_READ, &hkeyShell);
+          RegCloseKey(hkeyFile);
+      }
+      else
+          ret = RegOpenKeyExW(This->hkeySource, shellW, 0, KEY_READ, &hkeyShell);
   }
   else
-  {
       ret = RegOpenKeyExW(This->hkeySource, shellW, 0, KEY_READ, &hkeyShell);
-      if (ret) return HRESULT_FROM_WIN32(ret);
-  }
+
+  if (ret) return HRESULT_FROM_WIN32(ret);
 
   if (!extra)
   {
