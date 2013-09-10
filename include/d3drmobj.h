@@ -3442,7 +3442,7 @@ DECLARE_INTERFACE_(IDirect3DRMTexture3, IDirect3DRMVisual)
     STDMETHOD(InitFromFile)(THIS_ const char *filename) PURE;
     STDMETHOD(InitFromSurface)(THIS_ IDirectDrawSurface *surface) PURE;
     STDMETHOD(InitFromResource)(THIS_ HRSRC) PURE;
-    STDMETHOD(Changed)(THIS_ DWORD dwFlags, DWORD dwcRects, LPRECT pRects) PURE;
+    STDMETHOD(Changed)(THIS_ DWORD flags, DWORD rect_count, RECT *rects) PURE;
     STDMETHOD(SetColors)(THIS_ DWORD) PURE;
     STDMETHOD(SetShades)(THIS_ DWORD) PURE;
     STDMETHOD(SetDecalSize)(THIS_ D3DVALUE width, D3DVALUE height) PURE;

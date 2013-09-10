@@ -565,11 +565,10 @@ static HRESULT WINAPI IDirect3DRMTexture3Impl_InitFromResource(IDirect3DRMTextur
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMTexture3Impl_Changed(IDirect3DRMTexture3* iface, DWORD flags, DWORD nb_rects, LPRECT rects)
+static HRESULT WINAPI IDirect3DRMTexture3Impl_Changed(IDirect3DRMTexture3 *iface,
+        DWORD flags, DWORD rect_count, RECT *rects)
 {
-    IDirect3DRMTextureImpl *This = impl_from_IDirect3DRMTexture3(iface);
-
-    FIXME("(%p/%p)->(%x, %u, %p): stub\n", iface, This, flags, nb_rects, rects);
+    FIXME("iface %p, flags %#x, rect_count %u, rects %p stub!\n", iface, flags, rect_count, rects);
 
     return E_NOTIMPL;
 }
