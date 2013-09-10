@@ -5361,8 +5361,6 @@ static void surface_invalidate_location(struct wined3d_surface *surface, DWORD l
 
 void surface_modify_location(struct wined3d_surface *surface, DWORD location, BOOL persistent)
 {
-    const struct wined3d_gl_info *gl_info = &surface->resource.device->adapter->gl_info;
-
     TRACE("surface %p, location %s, persistent %#x.\n",
             surface, debug_surflocation(location), persistent);
 
@@ -5370,10 +5368,6 @@ void surface_modify_location(struct wined3d_surface *surface, DWORD location, BO
             && !(surface->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
             && (location & SFLAG_INDRAWABLE))
         ERR("Trying to invalidate the SFLAG_INDRAWABLE location of an offscreen surface.\n");
-
-    if (location & (SFLAG_INTEXTURE | SFLAG_INSRGBTEX)
-            && gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
-        location |= (SFLAG_INTEXTURE | SFLAG_INSRGBTEX);
 
     if (persistent)
     {
