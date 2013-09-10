@@ -124,6 +124,7 @@ library MSDASC
 
     [
       uuid(2206CDB2-19C1-11D1-89E0-00C04FD7A829),
+      threading(both),
       progid("DataLinks")
     ]
     coclass DataLinks
