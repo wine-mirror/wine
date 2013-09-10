@@ -4362,8 +4362,11 @@ static void test_surface_blocks(void)
          * which doesn't match the format spec. On newer Nvidia cards
          * it has the correct 4x4 block size */
         {MAKEFOURCC('A','T','I','2'), "ATI2N",       4, 4, TRUE,  FALSE, FALSE},
-        {D3DFMT_YUY2,                 "D3DFMT_YUY2", 2, 1, FALSE, FALSE, TRUE },
-        {D3DFMT_UYVY,                 "D3DFMT_UYVY", 2, 1, FALSE, FALSE, TRUE },
+        /* Windows drivers generally enforce block-aligned locks for
+         * YUY2 and UYVY. The notable exception is the AMD r500 driver
+         * in d3d8. The same driver checks the sizes in d3d9. */
+        {D3DFMT_YUY2,                 "D3DFMT_YUY2", 2, 1, TRUE,  FALSE, TRUE },
+        {D3DFMT_UYVY,                 "D3DFMT_UYVY", 2, 1, TRUE,  FALSE, TRUE },
     };
     static const struct
     {
