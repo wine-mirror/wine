@@ -12728,11 +12728,12 @@ static void fp_special_test(IDirect3DDevice9 *device)
         ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
 
         color = getPixelColor(device, 320, 240);
-        ok(color_match(color, vs_body[i].r600, 1)
+        ok(color_match(color, vs_body[i].r500, 1)
+                || color_match(color, vs_body[i].r600, 1)
                 || color_match(color, vs_body[i].nv40, 1)
                 || color_match(color, vs_body[i].nv50, 1),
-                "Expected color 0x%08x, 0x%08x or 0x%08x for instruction \"%s\", got 0x%08x.\n",
-                vs_body[i].r600, vs_body[i].nv40, vs_body[i].nv50, vs_body[i].name, color);
+                "Expected color 0x%08x, 0x%08x, 0x%08x or 0x%08x for instruction \"%s\", got 0x%08x.\n",
+                vs_body[i].r500, vs_body[i].r600, vs_body[i].nv40, vs_body[i].nv50, vs_body[i].name, color);
 
         hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
         ok(SUCCEEDED(hr), "Present failed, hr %#x.\n", hr);
