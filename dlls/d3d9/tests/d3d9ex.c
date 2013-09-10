@@ -861,12 +861,9 @@ static void test_reset_resources(void)
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
     ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice9_CreateTexture(device, 128, 128, 1, D3DUSAGE_DEPTHSTENCIL,
-            D3DFMT_D24S8, D3DPOOL_DEFAULT, &texture, NULL);
-    ok(SUCCEEDED(hr), "Failed to create depth/stencil texture, hr %#x.\n", hr);
-    hr = IDirect3DTexture9_GetSurfaceLevel(texture, 0, &surface);
-    ok(SUCCEEDED(hr), "Failed to get surface, hr %#x.\n", hr);
-    IDirect3DTexture9_Release(texture);
+    hr = IDirect3DDevice9_CreateDepthStencilSurface(device, 128, 128, D3DFMT_D24S8,
+            D3DMULTISAMPLE_NONE, 0, TRUE, &surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create depth/stencil surface, hr %#x.\n", hr);
     hr = IDirect3DDevice9_SetDepthStencilSurface(device, surface);
     ok(SUCCEEDED(hr), "Failed to set depth/stencil surface, hr %#x.\n", hr);
     IDirect3DSurface9_Release(surface);
