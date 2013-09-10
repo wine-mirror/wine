@@ -1083,7 +1083,7 @@ ULONG WINAPI DECLSPEC_HOTPATCH GetAdaptersAddresses(ULONG family, ULONG flags, P
                 size = bytes_left -= size;
             }
         }
-        if (!(flags & GAA_FLAG_SKIP_DNS_SERVER))
+        if (!(flags & GAA_FLAG_SKIP_DNS_SERVER) && dns_server_size)
         {
             firstDns = (PIP_ADAPTER_DNS_SERVER_ADDRESS)((BYTE *)first_aa + total_size - dns_server_size - dns_suffix_size);
             get_dns_server_addresses(firstDns, &dns_server_size);
