@@ -1747,6 +1747,40 @@ static INT WS_EnumProtocols( BOOL unicode, const INT *protocols, LPWSAPROTOCOL_I
     return items;
 }
 
+static BOOL ws_protocol_info(SOCKET s, int unicode, WSAPROTOCOL_INFOW *buffer, int *size)
+{
+    NTSTATUS status;
+
+    *size = unicode ? sizeof(WSAPROTOCOL_INFOW) : sizeof(WSAPROTOCOL_INFOA);
+    memset(buffer, 0, *size);
+
+    SERVER_START_REQ( get_socket_info )
+    {
+        req->handle  = wine_server_obj_handle( SOCKET2HANDLE(s) );
+        status = wine_server_call( req );
+        if (!status)
+        {
+            buffer->iAddressFamily = convert_af_u2w(reply->family);
+            buffer->iSocketType = convert_socktype_u2w(reply->type);
+            buffer->iProtocol = convert_proto_u2w(reply->protocol);
+        }
+    }
+    SERVER_END_REQ;
+
+    if (status)
+    {
+        set_error(status);
+        return FALSE;
+    }
+
+    if (unicode)
+        WS_EnterSingleProtocolW( buffer->iProtocol, buffer);
+    else
+        WS_EnterSingleProtocolA( buffer->iProtocol, (WSAPROTOCOL_INFOA *)buffer);
+
+    return TRUE;
+}
+
 /**************************************************************************
  * Functions for handling overlapped I/O
  **************************************************************************/
@@ -3024,7 +3058,26 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             *optlen = sizeof(int);
             TRACE("getting global SO_OPENTYPE = 0x%x\n", *((int*)optval) );
             return 0;
+        case WS_SO_PROTOCOL_INFOA:
+        case WS_SO_PROTOCOL_INFOW:
+        {
+            int size;
+            WSAPROTOCOL_INFOW infow;
 
+            ret = ws_protocol_info(s, optname == WS_SO_PROTOCOL_INFOW, &infow, &size);
+            if (ret)
+            {
+                if (!optlen || !optval || *optlen < size)
+                {
+                    if(optlen) *optlen = size;
+                    ret = 0;
+                    SetLastError(WSAEFAULT);
+                }
+                else
+                    memcpy(optval, &infow, size);
+            }
+            return ret ? 0 : SOCKET_ERROR;
+        }
 #ifdef SO_RCVTIMEO
         case WS_SO_RCVTIMEO:
 #endif

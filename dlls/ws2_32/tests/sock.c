@@ -1235,29 +1235,40 @@ todo_wine
     closesocket(s);
 
     /* test SO_PROTOCOL_INFOA invalid parameters */
+    ok(getsockopt(INVALID_SOCKET, SOL_SOCKET, SO_PROTOCOL_INFOA, NULL, NULL),
+       "getsockopt should have failed\n");
+    err = WSAGetLastError();
+    ok(err == WSAENOTSOCK, "expected 10038, got %d instead\n", err);
+    size = sizeof(WSAPROTOCOL_INFOA);
+    ok(getsockopt(INVALID_SOCKET, SOL_SOCKET, SO_PROTOCOL_INFOA, (char *) &infoA, &size),
+       "getsockopt should have failed\n");
+    ok(size == sizeof(WSAPROTOCOL_INFOA), "got size %d\n", size);
+    err = WSAGetLastError();
+    ok(err == WSAENOTSOCK, "expected 10038, got %d instead\n", err);
     s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     ok(getsockopt(s, SOL_SOCKET, SO_PROTOCOL_INFOA, NULL, NULL),
        "getsockopt should have failed\n");
     err = WSAGetLastError();
-todo_wine
     ok(err == WSAEFAULT, "expected 10014, got %d instead\n", err);
     ok(getsockopt(s, SOL_SOCKET, SO_PROTOCOL_INFOA, (char *) &infoA, NULL),
        "getsockopt should have failed\n");
     err = WSAGetLastError();
-todo_wine
     ok(err == WSAEFAULT, "expected 10014, got %d instead\n", err);
     ok(getsockopt(s, SOL_SOCKET, SO_PROTOCOL_INFOA, NULL, &size),
        "getsockopt should have failed\n");
     err = WSAGetLastError();
-todo_wine
     ok(err == WSAEFAULT, "expected 10014, got %d instead\n", err);
-
     size = sizeof(WSAPROTOCOL_INFOA) / 2;
     ok(getsockopt(s, SOL_SOCKET, SO_PROTOCOL_INFOA, (char *) &infoA, &size),
        "getsockopt should have failed\n");
     err = WSAGetLastError();
-todo_wine
     ok(err == WSAEFAULT, "expected 10014, got %d instead\n", err);
+    ok(size == sizeof(WSAPROTOCOL_INFOA), "got size %d\n", size);
+    size = sizeof(WSAPROTOCOL_INFOA) * 2;
+    err = getsockopt(s, SOL_SOCKET, SO_PROTOCOL_INFOA, (char *) &infoA, &size);
+    ok(!err,"getsockopt failed with %d\n", WSAGetLastError());
+    ok(size == sizeof(WSAPROTOCOL_INFOA) * 2, "got size %d\n", size);
+
     closesocket(s);
 
     /* test SO_PROTOCOL_INFO structure returned for different protocols */
@@ -1273,40 +1284,46 @@ todo_wine
         infoA.szProtocol[0] = 0;
         size = sizeof(WSAPROTOCOL_INFOA);
         err = getsockopt(s, SOL_SOCKET, SO_PROTOCOL_INFOA, (char *) &infoA, &size);
-todo_wine
         ok(!err,"getsockopt failed with %d\n", WSAGetLastError());
+        ok(size == sizeof(WSAPROTOCOL_INFOA), "got size %d\n", size);
 
         infoW.szProtocol[0] = 0;
         size = sizeof(WSAPROTOCOL_INFOW);
         err = getsockopt(s, SOL_SOCKET, SO_PROTOCOL_INFOW, (char *) &infoW, &size);
-todo_wine
         ok(!err,"getsockopt failed with %d\n", WSAGetLastError());
+        ok(size == sizeof(WSAPROTOCOL_INFOW), "got size %d\n", size);
 
         trace("provider name '%s', family %d, type %d, proto %d\n",
               infoA.szProtocol, prottest[i].family, prottest[i].type, prottest[i].proto);
 
-        todo_wine {
         ok(infoA.szProtocol[0] || broken(!infoA.szProtocol[0]) /* NT4 */,
            "WSAPROTOCOL_INFOA was not filled\n");
         ok(infoW.szProtocol[0] || broken(!infoA.szProtocol[0]) /* NT4 */,
            "WSAPROTOCOL_INFOW was not filled\n");
-        }
 
         WideCharToMultiByte(CP_ACP, 0, infoW.szProtocol, -1,
                             providername, sizeof(providername), NULL, NULL);
         ok(!strcmp(infoA.szProtocol,providername),
            "different provider names '%s' != '%s'\n", infoA.szProtocol, providername);
 
-        todo_wine {
         ok(!memcmp(&infoA, &infoW, FIELD_OFFSET(WSAPROTOCOL_INFOA, szProtocol)),
            "SO_PROTOCOL_INFO[A/W] comparison failed\n");
-        ok(infoA.iAddressFamily == prottest[i].family, "socket family invalid, expected %d received %d\n",
-           prottest[i].family, infoA.iAddressFamily);
-        ok(infoA.iSocketType == prottest[i].type, "socket type invalid, expected %d received %d\n",
+
+        /* Remove IF when WSAEnumProtocols support IPV6 data */
+        if (prottest[i].family == AF_INET6)
+        {
+            todo_wine
+            ok(infoA.iAddressFamily == prottest[i].family, "socket family invalid, expected %d received %d\n",
+               prottest[i].family, infoA.iAddressFamily);
+        }
+        else
+        {
+            ok(infoA.iAddressFamily == prottest[i].family, "socket family invalid, expected %d received %d\n",
+               prottest[i].family, infoA.iAddressFamily);
+        }        ok(infoA.iSocketType == prottest[i].type, "socket type invalid, expected %d received %d\n",
            prottest[i].type, infoA.iSocketType);
         ok(infoA.iProtocol == prottest[i].proto, "socket protocol invalid, expected %d received %d\n",
            prottest[i].proto, infoA.iProtocol);
-        }
 
         closesocket(s);
     }
