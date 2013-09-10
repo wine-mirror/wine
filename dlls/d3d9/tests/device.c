@@ -6890,6 +6890,55 @@ out:
     DestroyWindow(window);
 }
 
+static void test_create_rt_ds_fail(void)
+{
+    IDirect3DDevice9 *device;
+    HWND window;
+    HRESULT hr;
+    ULONG refcount;
+    IDirect3D9 *d3d9;
+    IDirect3DSurface9 *surface;
+
+    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create IDirect3D9 object, skipping tests.\n");
+        return;
+    }
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(d3d9, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d9);
+        DestroyWindow(window);
+        return;
+    }
+
+    /* Output pointer == NULL segfaults on Windows. */
+
+    surface = (IDirect3DSurface9 *)0xdeadbeef;
+    hr = IDirect3DDevice9_CreateRenderTarget(device, 4, 4, D3DFMT_D16,
+            D3DMULTISAMPLE_NONE, 0, FALSE, &surface, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Creating a D16 render target returned hr %#x.\n", hr);
+    ok(surface == NULL, "Got pointer %p, expected NULL.\n", surface);
+    if (SUCCEEDED(hr))
+        IDirect3DSurface9_Release(surface);
+
+    surface = (IDirect3DSurface9 *)0xdeadbeef;
+    hr = IDirect3DDevice9_CreateDepthStencilSurface(device, 4, 4, D3DFMT_A8R8G8B8,
+            D3DMULTISAMPLE_NONE, 0, TRUE, &surface, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Creating a A8R8G8B8 depth stencil returned hr %#x.\n", hr);
+    ok(surface == NULL, "Got pointer %p, expected NULL.\n", surface);
+    if (SUCCEEDED(hr))
+        IDirect3DSurface9_Release(surface);
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d9);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     HMODULE d3d9_handle = LoadLibraryA( "d3d9.dll" );
@@ -6982,6 +7031,7 @@ START_TEST(device)
         test_vidmem_accounting();
         test_volume_locking();
         test_update_volumetexture();
+        test_create_rt_ds_fail();
     }
 
 out:
