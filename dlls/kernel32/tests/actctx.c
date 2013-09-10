@@ -28,6 +28,7 @@
 #include "initguid.h"
 
 static BOOL   (WINAPI *pActivateActCtx)(HANDLE,ULONG_PTR*);
+static HANDLE (WINAPI *pCreateActCtxA)(PCACTCTXA);
 static HANDLE (WINAPI *pCreateActCtxW)(PCACTCTXW);
 static BOOL   (WINAPI *pDeactivateActCtx)(DWORD,ULONG_PTR);
 static BOOL   (WINAPI *pFindActCtxSectionStringW)(DWORD,const GUID *,ULONG,LPCWSTR,PACTCTX_SECTION_KEYED_DATA);
@@ -1964,12 +1965,78 @@ static void init_paths(void)
     lstrcpyW(app_manifest_path+lstrlenW(app_manifest_path), dot_manifest);
 }
 
+static void write_manifest(const char *filename, const char *manifest)
+{
+    HANDLE file;
+    DWORD size;
+    CHAR path[MAX_PATH];
+
+    GetTempPathA(sizeof(path)/sizeof(CHAR), path);
+    strcat(path, filename);
+
+    file = CreateFileA(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError());
+    WriteFile(file, manifest, strlen(manifest), &size, NULL);
+    CloseHandle(file);
+}
+
+static void delete_manifest_file(const char *filename)
+{
+    CHAR path[MAX_PATH];
+
+    GetTempPathA(sizeof(path)/sizeof(CHAR), path);
+    strcat(path, filename);
+    DeleteFileA(path);
+}
+
+static void test_CreateActCtx(void)
+{
+    CHAR path[MAX_PATH], dir[MAX_PATH];
+    ACTCTXA actctx;
+    HANDLE handle;
+
+    GetTempPathA(sizeof(path)/sizeof(CHAR), path);
+    strcat(path, "main_wndcls.manifest");
+
+    write_manifest("testdep1.manifest", manifest_wndcls1);
+    write_manifest("testdep2.manifest", manifest_wndcls2);
+    write_manifest("main_wndcls.manifest", manifest_wndcls_main);
+
+    memset(&actctx, 0, sizeof(ACTCTXA));
+    actctx.cbSize = sizeof(ACTCTXA);
+    actctx.lpSource = path;
+
+    /* create using lpSource without specified directory */
+    handle = pCreateActCtxA(&actctx);
+    ok(handle != INVALID_HANDLE_VALUE, "failed to generate context, error %u\n", GetLastError());
+    pReleaseActCtx(handle);
+
+    /* with specified directory, that doesn't contain dependent assembly */
+    GetWindowsDirectoryA(dir, sizeof(dir)/sizeof(CHAR));
+
+    memset(&actctx, 0, sizeof(ACTCTXA));
+    actctx.cbSize = sizeof(ACTCTXA);
+    actctx.dwFlags = ACTCTX_FLAG_ASSEMBLY_DIRECTORY_VALID;
+    actctx.lpAssemblyDirectory = dir;
+    actctx.lpSource = path;
+
+    handle = pCreateActCtxA(&actctx);
+todo_wine
+    ok(handle == INVALID_HANDLE_VALUE && GetLastError() == ERROR_SXS_CANT_GEN_ACTCTX,
+        "got handle %p, supposed to fail\n", handle);
+    if (handle != INVALID_HANDLE_VALUE) pReleaseActCtx(handle);
+
+    delete_manifest_file("main.manifest");
+    delete_manifest_file("testdep1.manifest");
+}
+
 static BOOL init_funcs(void)
 {
     HMODULE hKernel32 = GetModuleHandle("kernel32");
 
 #define X(f) if (!(p##f = (void*)GetProcAddress(hKernel32, #f))) return FALSE;
     X(ActivateActCtx);
+    X(CreateActCtxA);
     X(CreateActCtxW);
     X(DeactivateActCtx);
     X(FindActCtxSectionStringW);
@@ -2003,5 +2070,6 @@ START_TEST(actctx)
     }
 
     test_actctx();
+    test_CreateActCtx();
     run_child_process();
 }

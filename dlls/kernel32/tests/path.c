@@ -1621,7 +1621,6 @@ static HANDLE test_create(const char *file)
     actctx.lpSource = manifest_path;
 
     handle = pCreateActCtxW(&actctx);
-todo_wine
     ok(handle != INVALID_HANDLE_VALUE, "failed to create context, error %u\n", GetLastError());
 
     ok(actctx.cbSize == sizeof(actctx), "cbSize=%d\n", actctx.cbSize);

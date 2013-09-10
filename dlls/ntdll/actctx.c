@@ -2767,6 +2767,7 @@ static NTSTATUS lookup_assembly(struct actctx_loader* acl,
     NTSTATUS status;
     UNICODE_STRING nameW;
     HANDLE file;
+    DWORD len;
 
     TRACE( "looking for name=%s version=%s arch=%s\n",
            debugstr_w(ai->name), debugstr_version(&ai->version), debugstr_w(ai->arch) );
@@ -2775,9 +2776,12 @@ static NTSTATUS lookup_assembly(struct actctx_loader* acl,
 
     /* FIXME: add support for language specific lookup */
 
+    len = max(RtlGetFullPathName_U(acl->actctx->assemblies->manifest.info, 0, NULL, NULL) / sizeof(WCHAR),
+        strlenW(acl->actctx->appdir.info));
+
     nameW.Buffer = NULL;
     if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0,
-                                    (strlenW(acl->actctx->appdir.info) + 2 * strlenW(ai->name) + 2) * sizeof(WCHAR) + sizeof(dotManifestW) )))
+                                    (len + 2 * strlenW(ai->name) + 2) * sizeof(WCHAR) + sizeof(dotManifestW) )))
         return STATUS_NO_MEMORY;
 
     if (!(directory = build_assembly_dir( ai )))
@@ -2786,16 +2790,25 @@ static NTSTATUS lookup_assembly(struct actctx_loader* acl,
         return STATUS_NO_MEMORY;
     }
 
-    /* lookup in appdir\name.dll
-     *           appdir\name.manifest
-     *           appdir\name\name.dll
-     *           appdir\name\name.manifest
+    /* Lookup in <dir>\name.dll
+     *           <dir>\name.manifest
+     *           <dir>\name\name.dll
+     *           <dir>\name\name.manifest
+     *
+     * First 'appdir' is used as <dir>, if that failed
+     * it tries application manifest file path.
      */
     strcpyW( buffer, acl->actctx->appdir.info );
     p = buffer + strlenW(buffer);
-    for (i = 0; i < 2; i++)
+    for (i = 0; i < 4; i++)
     {
-        *p++ = '\\';
+        if (i == 2)
+        {
+            struct assembly *assembly = acl->actctx->assemblies;
+            if (!RtlGetFullPathName_U(assembly->manifest.info, len * sizeof(WCHAR), buffer, &p)) break;
+        }
+        else *p++ = '\\';
+
         strcpyW( p, ai->name );
         p += strlenW(p);
 
