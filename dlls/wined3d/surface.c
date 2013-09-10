@@ -826,7 +826,7 @@ static void surface_realize_palette(struct wined3d_surface *surface)
                 TRACE("Palette changed with surface that does not have an up to date system memory copy.\n");
                 surface_load_location(surface, SFLAG_INSYSMEM, NULL);
             }
-            surface_modify_location(surface, SFLAG_INSYSMEM, TRUE);
+            surface_invalidate_location(surface, ~SFLAG_INSYSMEM);
         }
     }
 
@@ -885,7 +885,8 @@ static void surface_map(struct wined3d_surface *surface, const RECT *rect, DWORD
     {
         TRACE("WINED3D_MAP_DISCARD flag passed, marking SYSMEM as up to date.\n");
         surface_prepare_system_memory(surface);
-        surface_modify_location(surface, SFLAG_INSYSMEM, TRUE);
+        surface_validate_location(surface, SFLAG_INSYSMEM);
+        surface_invalidate_location(surface, ~SFLAG_INSYSMEM);
     }
     else
     {
@@ -1009,7 +1010,8 @@ static void surface_unmap(struct wined3d_surface *surface)
          * date because only a subrectangle was read in Map(). */
         if (!fullsurface)
         {
-            surface_modify_location(surface, surface->draw_binding, TRUE);
+            surface_validate_location(surface, surface->draw_binding);
+            surface_invalidate_location(surface, ~surface->draw_binding);
             surface_evict_sysmem(surface);
         }
 
@@ -1488,7 +1490,8 @@ static BOOL surface_init_sysmem(struct wined3d_surface *surface)
         memset(surface->resource.allocatedMemory, 0, surface->resource.size);
     }
 
-    surface_modify_location(surface, SFLAG_INSYSMEM, TRUE);
+    surface_validate_location(surface, SFLAG_INSYSMEM);
+    surface_invalidate_location(surface, ~SFLAG_INSYSMEM);
 
     return TRUE;
 }
@@ -2268,7 +2271,9 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
 
     context_release(context);
 
-    surface_modify_location(dst_surface, SFLAG_INTEXTURE, TRUE);
+    surface_validate_location(dst_surface, SFLAG_INTEXTURE);
+    surface_invalidate_location(dst_surface, ~SFLAG_INTEXTURE);
+
     return WINED3D_OK;
 }
 
@@ -2466,7 +2471,9 @@ void surface_add_dirty_rect(struct wined3d_surface *surface, const struct wined3
         /* No partial locking for textures yet. */
         surface_load_location(surface, SFLAG_INSYSMEM, NULL);
 
-    surface_modify_location(surface, SFLAG_INSYSMEM, TRUE);
+    surface_validate_location(surface, SFLAG_INSYSMEM);
+    surface_invalidate_location(surface, ~SFLAG_INSYSMEM);
+
     if (dirty_rect)
     {
         surface->dirtyRect.left = min(surface->dirtyRect.left, dirty_rect->left);
@@ -2516,10 +2523,7 @@ HRESULT surface_load(struct wined3d_surface *surface, BOOL srgb)
          * the surface. Make sure we have it. */
 
         surface_load_location(surface, SFLAG_INSYSMEM, NULL);
-        /* Make sure the texture is reloaded because of the color key change,
-         * this kills performance though :( */
-        /* TODO: This is not necessarily needed with hw palettized texture support. */
-        surface_modify_location(surface, SFLAG_INSYSMEM, TRUE);
+        surface_invalidate_location(surface, ~SFLAG_INSYSMEM);
         /* Switching color keying on / off may change the internal format. */
         if (ck_changed)
             surface_force_reload(surface);
@@ -2898,7 +2902,8 @@ HRESULT CDECL wined3d_surface_set_mem(struct wined3d_surface *surface, void *mem
         surface->flags |= SFLAG_USERPTR;
 
         /* Now the surface memory is most up do date. Invalidate drawable and texture. */
-        surface_modify_location(surface, SFLAG_INSYSMEM, TRUE);
+        surface_validate_location(surface, SFLAG_INSYSMEM);
+        surface_invalidate_location(surface, ~SFLAG_INSYSMEM);
 
         /* For client textures OpenGL has to be notified. */
         if (surface->flags & SFLAG_CLIENT)
@@ -2924,7 +2929,8 @@ HRESULT CDECL wined3d_surface_set_mem(struct wined3d_surface *surface, void *mem
             surface_prepare_system_memory(surface);
         }
 
-        surface_modify_location(surface, SFLAG_INSYSMEM, TRUE);
+        surface_validate_location(surface, SFLAG_INSYSMEM);
+        surface_invalidate_location(surface, ~SFLAG_INSYSMEM);
     }
 
     surface->pitch = pitch;
@@ -4503,10 +4509,10 @@ static void fb_copy_to_texture_direct(struct wined3d_surface *dst_surface, struc
 
     context_release(context);
 
-    /* The texture is now most up to date - If the surface is a render target and has a drawable, this
-     * path is never entered
-     */
-    surface_modify_location(dst_surface, SFLAG_INTEXTURE, TRUE);
+    /* The texture is now most up to date - If the surface is a render target
+     * and has a drawable, this path is never entered. */
+    surface_validate_location(dst_surface, SFLAG_INTEXTURE);
+    surface_invalidate_location(dst_surface, ~SFLAG_INTEXTURE);
 }
 
 /* Uses the hardware to stretch and flip the image */
@@ -4776,10 +4782,10 @@ static void fb_copy_to_texture_hwstretch(struct wined3d_surface *dst_surface, st
 
     context_release(context);
 
-    /* The texture is now most up to date - If the surface is a render target and has a drawable, this
-     * path is never entered
-     */
-    surface_modify_location(dst_surface, SFLAG_INTEXTURE, TRUE);
+    /* The texture is now most up to date - If the surface is a render target
+     * and has a drawable, this path is never entered. */
+    surface_validate_location(dst_surface, SFLAG_INTEXTURE);
+    surface_invalidate_location(dst_surface, ~SFLAG_INTEXTURE);
 }
 
 /* Front buffer coordinates are always full screen coordinates, but our GL
@@ -5076,7 +5082,8 @@ static HRESULT surface_blt_special(struct wined3d_surface *dst_surface, const RE
         src_surface->CKeyFlags = oldCKeyFlags;
         src_surface->src_blt_color_key = old_blt_key;
 
-        surface_modify_location(dst_surface, dst_surface->draw_binding, TRUE);
+        surface_validate_location(dst_surface, dst_surface->draw_binding);
+        surface_invalidate_location(dst_surface, ~dst_surface->draw_binding);
 
         return WINED3D_OK;
     }
@@ -5327,7 +5334,7 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
     surface->ds_current_size.cy = surface->resource.height;
 }
 
-static void surface_validate_location(struct wined3d_surface *surface, DWORD location)
+void surface_validate_location(struct wined3d_surface *surface, DWORD location)
 {
     struct wined3d_surface *overlay;
 
@@ -5355,27 +5362,6 @@ void surface_invalidate_location(struct wined3d_surface *surface, DWORD location
 
     if (!(surface->flags & SFLAG_LOCATIONS))
         ERR("Surface %p does not have any up to date location.\n", surface);
-}
-
-void surface_modify_location(struct wined3d_surface *surface, DWORD location, BOOL persistent)
-{
-    TRACE("surface %p, location %s, persistent %#x.\n",
-            surface, debug_surflocation(location), persistent);
-
-    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO && surface_is_offscreen(surface)
-            && !(surface->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
-            && (location & SFLAG_INDRAWABLE))
-        ERR("Trying to invalidate the SFLAG_INDRAWABLE location of an offscreen surface.\n");
-
-    if (persistent)
-    {
-        surface_validate_location(surface, location);
-        surface_invalidate_location(surface, ~location);
-    }
-    else
-    {
-        surface_invalidate_location(surface, location);
-    }
 }
 
 static DWORD resource_access_from_location(DWORD location)
@@ -6811,7 +6797,9 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
                 surface_blt_fbo(device, filter,
                         src_surface, src_surface->draw_binding, &src_rect,
                         dst_surface, dst_surface->draw_binding, &dst_rect);
-                surface_modify_location(dst_surface, dst_surface->draw_binding, TRUE);
+                surface_validate_location(dst_surface, dst_surface->draw_binding);
+                surface_invalidate_location(dst_surface, ~dst_surface->draw_binding);
+
                 return WINED3D_OK;
             }
 

@@ -642,7 +642,10 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
             struct wined3d_surface *rt = fb->render_targets[i];
 
             if (rt)
-                surface_modify_location(rt, rt->draw_binding, TRUE);
+            {
+                surface_validate_location(rt, rt->draw_binding);
+                surface_invalidate_location(rt, ~rt->draw_binding);
+            }
         }
 
         gl_info->gl_ops.gl.p_glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);

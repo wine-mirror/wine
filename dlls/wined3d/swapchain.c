@@ -602,32 +602,35 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain, const RECT
 
         if (front->resource.size == back_buffer->resource.size)
         {
-            DWORD fbflags;
             flip_surface(front, back_buffer);
 
             /* Tell the front buffer surface that is has been modified. However,
              * the other locations were preserved during that, so keep the flags.
              * This serves to update the emulated overlay, if any. */
-            fbflags = front->flags;
-            surface_modify_location(front, SFLAG_INDRAWABLE, TRUE);
-            front->flags = fbflags;
+            surface_validate_location(front, SFLAG_INDRAWABLE);
         }
         else
         {
-            surface_modify_location(front, SFLAG_INDRAWABLE, TRUE);
-            surface_modify_location(back_buffer, SFLAG_INDRAWABLE, TRUE);
+            surface_validate_location(front, SFLAG_INDRAWABLE);
+            surface_invalidate_location(front, ~SFLAG_INDRAWABLE);
+            surface_validate_location(back_buffer, SFLAG_INDRAWABLE);
+            surface_invalidate_location(back_buffer, ~SFLAG_INDRAWABLE);
         }
     }
     else
     {
-        surface_modify_location(swapchain->front_buffer, SFLAG_INDRAWABLE, TRUE);
+        surface_validate_location(swapchain->front_buffer, SFLAG_INDRAWABLE);
+        surface_invalidate_location(swapchain->front_buffer, ~SFLAG_INDRAWABLE);
         /* If the swapeffect is DISCARD, the back buffer is undefined. That means the SYSMEM
          * and INTEXTURE copies can keep their old content if they have any defined content.
          * If the swapeffect is COPY, the content remains the same. If it is FLIP however,
          * the texture / sysmem copy needs to be reloaded from the drawable
          */
         if (swapchain->desc.swap_effect == WINED3D_SWAP_EFFECT_FLIP)
-            surface_modify_location(back_buffer, back_buffer->draw_binding, TRUE);
+        {
+            surface_validate_location(back_buffer, back_buffer->draw_binding);
+            surface_invalidate_location(back_buffer, ~back_buffer->draw_binding);
+        }
     }
 
     if (fb->depth_stencil)
@@ -898,7 +901,10 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
 
     surface_set_swapchain(swapchain->front_buffer, swapchain);
     if (!(device->wined3d->flags & WINED3D_NO3D))
-        surface_modify_location(swapchain->front_buffer, SFLAG_INDRAWABLE, TRUE);
+    {
+        surface_validate_location(swapchain->front_buffer, SFLAG_INDRAWABLE);
+        surface_invalidate_location(swapchain->front_buffer, ~SFLAG_INDRAWABLE);
+    }
 
     /* MSDN says we're only allowed a single fullscreen swapchain per device,
      * so we should really check to see if there is a fullscreen swapchain
