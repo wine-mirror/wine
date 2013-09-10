@@ -605,7 +605,7 @@ static void surface_evict_sysmem(struct wined3d_surface *surface)
     wined3d_resource_free_sysmem(surface->resource.heap_memory);
     surface->resource.allocatedMemory = NULL;
     surface->resource.heap_memory = NULL;
-    surface_modify_location(surface, SFLAG_INSYSMEM, FALSE);
+    surface_invalidate_location(surface, SFLAG_INSYSMEM);
 }
 
 /* Context activation is done by the caller. */
@@ -703,8 +703,7 @@ static void surface_release_client_storage(struct wined3d_surface *surface)
 
     context_release(context);
 
-    surface_modify_location(surface, SFLAG_INSRGBTEX, FALSE);
-    surface_modify_location(surface, SFLAG_INTEXTURE, FALSE);
+    surface_invalidate_location(surface, SFLAG_INTEXTURE | SFLAG_INSRGBTEX);
     surface_force_reload(surface);
 }
 
@@ -818,7 +817,7 @@ static void surface_realize_palette(struct wined3d_surface *surface)
 
             /* We want to force a palette refresh, so mark the drawable as not being up to date */
             if (!surface_is_offscreen(surface))
-                surface_modify_location(surface, SFLAG_INDRAWABLE, FALSE);
+                surface_invalidate_location(surface, SFLAG_INDRAWABLE);
         }
         else
         {
@@ -1528,10 +1527,9 @@ static void surface_unload(struct wined3d_resource *resource)
     {
         /* Load the surface into system memory */
         surface_load_location(surface, SFLAG_INSYSMEM, NULL);
-        surface_modify_location(surface, surface->draw_binding, FALSE);
+        surface_invalidate_location(surface, surface->draw_binding);
     }
-    surface_modify_location(surface, SFLAG_INTEXTURE, FALSE);
-    surface_modify_location(surface, SFLAG_INSRGBTEX, FALSE);
+    surface_invalidate_location(surface, SFLAG_INTEXTURE | SFLAG_INSRGBTEX);
     surface->flags &= ~(SFLAG_ALLOCATED | SFLAG_SRGBALLOCATED);
 
     context = context_acquire(device, NULL);
@@ -5347,7 +5345,7 @@ static void surface_validate_location(struct wined3d_surface *surface, DWORD loc
     }
 }
 
-static void surface_invalidate_location(struct wined3d_surface *surface, DWORD location)
+void surface_invalidate_location(struct wined3d_surface *surface, DWORD location)
 {
     TRACE("surface %p, location %s.\n", surface, debug_surflocation(location & SFLAG_LOCATIONS));
 

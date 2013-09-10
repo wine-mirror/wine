@@ -2453,7 +2453,7 @@ static void context_setup_target(struct wined3d_context *context, struct wined3d
             if (context->current_rt->texture_name_srgb)
                 surface_internal_preload(context->current_rt, SRGB_SRGB);
             surface_internal_preload(context->current_rt, SRGB_RGB);
-            surface_modify_location(context->current_rt, SFLAG_INDRAWABLE, FALSE);
+            surface_invalidate_location(context->current_rt, SFLAG_INDRAWABLE);
         }
     }
 

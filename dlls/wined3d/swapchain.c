@@ -521,7 +521,7 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain, const RECT
     if (!swapchain->render_to_fbo && render_to_fbo && wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
         surface_load_location(back_buffer, SFLAG_INTEXTURE, NULL);
-        surface_modify_location(back_buffer, SFLAG_INDRAWABLE, FALSE);
+        surface_invalidate_location(back_buffer, SFLAG_INDRAWABLE);
         swapchain->render_to_fbo = TRUE;
         swapchain_update_draw_bindings(swapchain);
     }
