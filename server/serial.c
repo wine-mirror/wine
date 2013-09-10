@@ -76,6 +76,7 @@ struct serial
     unsigned int        writemult;
 
     unsigned int        eventmask;
+    unsigned int        generation; /* event mask change counter */
 
     struct termios      original;
 
@@ -135,6 +136,7 @@ struct object *create_serial( struct fd *fd )
     serial->writemult    = 0;
     serial->writeconst   = 0;
     serial->eventmask    = 0;
+    serial->generation   = 0;
     serial->fd = (struct fd *)grab_object( fd );
     set_fd_user( fd, &serial_fd_ops, &serial->obj );
     return &serial->obj;
@@ -210,6 +212,7 @@ DECL_HANDLER(get_serial_info)
 
         /* event mask */
         reply->eventmask    = serial->eventmask;
+        reply->cookie       = serial->generation;
 
         release_object( serial );
     }
@@ -235,10 +238,8 @@ DECL_HANDLER(set_serial_info)
         if (req->flags & SERIALINFO_SET_MASK)
         {
             serial->eventmask = req->eventmask;
-            if (!serial->eventmask)
-            {
-                fd_async_wake_up( serial->fd, ASYNC_TYPE_WAIT, STATUS_SUCCESS );
-            }
+            serial->generation++;
+            fd_async_wake_up( serial->fd, ASYNC_TYPE_WAIT, STATUS_SUCCESS );
         }
 
         release_object( serial );

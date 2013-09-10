@@ -2687,6 +2687,7 @@ static void dump_get_serial_info_reply( const struct get_serial_info_reply *req 
     fprintf( stderr, ", writeconst=%08x", req->writeconst );
     fprintf( stderr, ", writemult=%08x", req->writemult );
     fprintf( stderr, ", eventmask=%08x", req->eventmask );
+    fprintf( stderr, ", cookie=%08x", req->cookie );
 }
 
 static void dump_set_serial_info_request( const struct set_serial_info_request *req )

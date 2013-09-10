@@ -3055,6 +3055,8 @@ struct get_serial_info_reply
     unsigned int writeconst;
     unsigned int writemult;
     unsigned int eventmask;
+    unsigned int cookie;
+    char __pad_36[4];
 };
 
 
@@ -5821,6 +5823,6 @@ union generic_reply
     struct set_suspend_context_reply set_suspend_context_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 448
+#define SERVER_PROTOCOL_VERSION 449
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

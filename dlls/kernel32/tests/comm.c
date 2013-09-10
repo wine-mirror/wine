@@ -860,8 +860,7 @@ todo_wine
     {
         /* unblock pending wait */
         trace("recovering after WAIT_TIMEOUT...\n");
-        /* FIXME: Wine fails to unblock with new mask being equal to the old one */
-        res = SetCommMask(hcom, 0);
+        res = SetCommMask(hcom, EV_TXEMPTY);
         ok(res, "SetCommMask error %d\n", GetLastError());
 
         res = WaitForSingleObject(ovl_wait.hEvent, TIMEOUT);
@@ -968,8 +967,7 @@ todo_wine
 
             /* unblock pending wait */
             trace("recovering after WAIT_TIMEOUT...\n");
-            /* FIXME: Wine fails to unblock with new mask being equal to the old one */
-            res = SetCommMask(hcom, 0);
+            res = SetCommMask(hcom, EV_TXEMPTY);
             ok(res, "SetCommMask error %d\n", GetLastError());
 
             res = WaitForSingleObject(ovl_wait.hEvent, TIMEOUT);

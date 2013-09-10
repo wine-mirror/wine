@@ -380,7 +380,7 @@ static NTSTATUS get_timeouts(HANDLE handle, SERIAL_TIMEOUTS* st)
     return status;
 }
 
-static NTSTATUS get_wait_mask(HANDLE hDevice, DWORD* mask)
+static NTSTATUS get_wait_mask(HANDLE hDevice, DWORD *mask, DWORD *cookie)
 {
     NTSTATUS    status;
 
@@ -388,7 +388,10 @@ static NTSTATUS get_wait_mask(HANDLE hDevice, DWORD* mask)
     {
         req->handle = wine_server_obj_handle( hDevice );
         if (!(status = wine_server_call( req )))
+        {
             *mask = reply->eventmask;
+            if (cookie) *cookie = reply->cookie;
+        }
     }
     SERVER_END_REQ;
     return status;
@@ -794,6 +797,7 @@ typedef struct async_commio
     IO_STATUS_BLOCK*    iosb;
     HANDLE              hEvent;
     DWORD               evtmask;
+    DWORD               cookie;
     DWORD               mstat;
     serial_irq_info     irq_info;
 } async_commio;
@@ -906,9 +910,9 @@ static DWORD CALLBACK wait_for_event(LPVOID arg)
     if (!server_get_unix_fd( commio->hDevice, FILE_READ_DATA | FILE_WRITE_DATA, &fd, &needs_close, NULL, NULL ))
     {
         serial_irq_info new_irq_info;
-        DWORD new_mstat, new_evtmask;
+        DWORD new_mstat, dummy, cookie;
         LARGE_INTEGER time;
-        
+
         TRACE("device=%p fd=0x%08x mask=0x%08x buffer=%p event=%p irq_info=%p\n", 
               commio->hDevice, fd, commio->evtmask, commio->events, commio->hEvent, &commio->irq_info);
 
@@ -934,8 +938,8 @@ static DWORD CALLBACK wait_for_event(LPVOID arg)
                                            &new_irq_info, &commio->irq_info,
                                            new_mstat, commio->mstat);
             if (*commio->events) break;
-            get_wait_mask(commio->hDevice, &new_evtmask);
-            if (commio->evtmask != new_evtmask)
+            get_wait_mask(commio->hDevice, &dummy, &cookie);
+            if (commio->cookie != cookie)
             {
                 *commio->events = 0;
                 break;
@@ -964,7 +968,7 @@ static NTSTATUS wait_on(HANDLE hDevice, int fd, HANDLE hEvent, PIO_STATUS_BLOCK 
     commio->events  = events;
     commio->iosb    = piosb;
     commio->hEvent  = hEvent;
-    get_wait_mask(commio->hDevice, &commio->evtmask);
+    get_wait_mask(commio->hDevice, &commio->evtmask, &commio->cookie);
 
 /* We may never return, if some capabilities miss
  * Return error in that case
@@ -1159,7 +1163,7 @@ static inline NTSTATUS io_control(HANDLE hDevice,
     case IOCTL_SERIAL_GET_WAIT_MASK:
         if (lpOutBuffer && nOutBufferSize == sizeof(DWORD))
         {
-            if (!(status = get_wait_mask(hDevice, lpOutBuffer)))
+            if (!(status = get_wait_mask(hDevice, lpOutBuffer, NULL)))
                 sz = sizeof(DWORD);
         }
         else
