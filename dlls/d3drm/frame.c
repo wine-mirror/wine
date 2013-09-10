@@ -2365,12 +2365,9 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_SetTraversalOptions(IDirect3DRMFrame
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_GetTraversalOptions(IDirect3DRMFrame3* iface,
-                                                                LPDWORD flags)
+static HRESULT WINAPI IDirect3DRMFrame3Impl_GetTraversalOptions(IDirect3DRMFrame3 *iface, DWORD *flags)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, flags);
+    FIXME("iface %p, flags %p stub!\n", iface, flags);
 
     return E_NOTIMPL;
 }
@@ -2385,12 +2382,9 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_SetSceneFogMethod(IDirect3DRMFrame3*
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_GetSceneFogMethod(IDirect3DRMFrame3* iface,
-                                                              LPDWORD flags)
+static HRESULT WINAPI IDirect3DRMFrame3Impl_GetSceneFogMethod(IDirect3DRMFrame3 *iface, DWORD *fog_mode)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, flags);
+    FIXME("iface %p, fogmode %p stub!\n", iface, fog_mode);
 
     return E_NOTIMPL;
 }

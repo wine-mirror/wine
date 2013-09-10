@@ -1449,12 +1449,9 @@ static HRESULT WINAPI IDirect3DRM3Impl_CreateProgressiveMesh(IDirect3DRM3 *iface
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRM3Impl_RegisterClient(IDirect3DRM3* iface, REFGUID rguid,
-                                                      LPDWORD id)
+static HRESULT WINAPI IDirect3DRM3Impl_RegisterClient(IDirect3DRM3 *iface, REFGUID guid, DWORD *id)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM3(iface);
-
-    FIXME("(%p/%p)->(%s, %p): stub\n", iface, This, debugstr_guid(rguid), id);
+    FIXME("iface %p, guid %s, id %p stub!\n", iface, debugstr_guid(guid), id);
 
     return E_NOTIMPL;
 }
@@ -1485,11 +1482,9 @@ static HRESULT WINAPI IDirect3DRM3Impl_SetOptions(IDirect3DRM3* iface, DWORD opt
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRM3Impl_GetOptions(IDirect3DRM3* iface, LPDWORD opt)
+static HRESULT WINAPI IDirect3DRM3Impl_GetOptions(IDirect3DRM3 *iface, DWORD *flags)
 {
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM3(iface);
-
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, opt);
+    FIXME("iface %p, flags %p stub!\n", iface, flags);
 
     return E_NOTIMPL;
 }

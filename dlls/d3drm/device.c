@@ -888,13 +888,11 @@ static HRESULT WINAPI IDirect3DRMDevice3Impl_LightStateChange(IDirect3DRMDevice3
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMDevice3Impl_GetStateChangeOptions(IDirect3DRMDevice3* iface,
-                                                                   DWORD stateclass, DWORD statenum,
-                                                                   LPDWORD flags)
+static HRESULT WINAPI IDirect3DRMDevice3Impl_GetStateChangeOptions(IDirect3DRMDevice3 *iface,
+        DWORD state_class, DWORD state_idx, DWORD *flags)
 {
-    IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice3(iface);
-
-    FIXME("(%p/%p)->(%u, %u, %p): stub\n", iface, This, stateclass, statenum, flags);
+    FIXME("iface %p, state_class %#x, state_idx %#x, flags %p stub!\n",
+            iface, state_class, state_idx, flags);
 
     return E_NOTIMPL;
 }

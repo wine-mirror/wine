@@ -755,11 +755,10 @@ static HRESULT WINAPI IDirect3DRMTexture3Impl_SetCacheOptions(IDirect3DRMTexture
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMTexture3Impl_GetCacheOptions(IDirect3DRMTexture3* iface, LPLONG importance, LPDWORD flags)
+static HRESULT WINAPI IDirect3DRMTexture3Impl_GetCacheOptions(IDirect3DRMTexture3 *iface,
+        LONG *importance, DWORD *flags)
 {
-    IDirect3DRMTextureImpl *This = impl_from_IDirect3DRMTexture3(iface);
-
-    FIXME("(%p/%p)->(%p, %p): stub\n", iface, This, importance, flags);
+    FIXME("iface %p, importance %p, flags %p stub!\n", iface, importance, flags);
 
     return E_NOTIMPL;
 }

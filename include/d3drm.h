@@ -385,11 +385,11 @@ DECLARE_INTERFACE_(IDirect3DRM3,IUnknown)
             IDirect3DRMFrame3 *parent_frame) PURE;
     STDMETHOD(Tick)(THIS_ D3DVALUE) PURE;
     STDMETHOD(CreateProgressiveMesh)(THIS_ IDirect3DRMProgressiveMesh **mesh) PURE;
-    STDMETHOD(RegisterClient)(THIS_ REFGUID rguid, LPDWORD lpdwID) PURE;
+    STDMETHOD(RegisterClient)(THIS_ REFGUID guid, DWORD *id) PURE;
     STDMETHOD(UnregisterClient)(THIS_ REFGUID rguid) PURE;
     STDMETHOD(CreateClippedVisual)(THIS_ IDirect3DRMVisual *visual, IDirect3DRMClippedVisual **clipped_visual) PURE;
     STDMETHOD(SetOptions)(THIS_ DWORD) PURE;
-    STDMETHOD(GetOptions)(THIS_ LPDWORD) PURE;
+    STDMETHOD(GetOptions)(THIS_ DWORD *flags) PURE;
 };
 #undef INTERFACE
 

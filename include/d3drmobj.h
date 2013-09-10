@@ -265,7 +265,7 @@ DECLARE_INTERFACE_(IDirect3DRMObject2,IUnknown)
     STDMETHOD(GetName)(THIS_ DWORD *size, char *name) PURE;
     STDMETHOD(SetClientData)(THIS_ DWORD id, void *data, DWORD flags) PURE;
     STDMETHOD(SetName)(THIS_ const char *name) PURE;
-    STDMETHOD(GetAge)(THIS_ DWORD flags, LPDWORD pAge) PURE;
+    STDMETHOD(GetAge)(THIS_ DWORD flags, DWORD *age) PURE;
 };
 #undef INTERFACE
 
@@ -681,7 +681,7 @@ DECLARE_INTERFACE_(IDirect3DRMDevice3,IDirect3DRMObject)
     STDMETHOD(FindPreferredTextureFormat)(THIS_ DWORD BitDepths, DWORD flags, DDPIXELFORMAT *format) PURE;
     STDMETHOD(RenderStateChange)(THIS_ D3DRENDERSTATETYPE drsType, DWORD val, DWORD flags) PURE;
     STDMETHOD(LightStateChange)(THIS_ D3DLIGHTSTATETYPE drsType, DWORD val, DWORD flags) PURE;
-    STDMETHOD(GetStateChangeOptions)(THIS_ DWORD StateClass, DWORD StateNum, LPDWORD pFlags) PURE;
+    STDMETHOD(GetStateChangeOptions)(THIS_ DWORD state_class, DWORD state_idx, DWORD *flags) PURE;
     STDMETHOD(SetStateChangeOptions)(THIS_ DWORD StateClass, DWORD StateNum, DWORD flags) PURE;
 };
 #undef INTERFACE
@@ -1693,9 +1693,9 @@ DECLARE_INTERFACE_(IDirect3DRMFrame3,IDirect3DRMVisual)
     STDMETHOD(InverseTransformVectors)(THIS_ IDirect3DRMFrame3 *reference, DWORD vector_count,
             D3DVECTOR *dst_vectors, D3DVECTOR *src_vectors) PURE;
     STDMETHOD(SetTraversalOptions)(THIS_ DWORD flags) PURE;
-    STDMETHOD(GetTraversalOptions)(THIS_ LPDWORD pFlags) PURE;
+    STDMETHOD(GetTraversalOptions)(THIS_ DWORD *flags) PURE;
     STDMETHOD(SetSceneFogMethod)(THIS_ DWORD flags) PURE;
-    STDMETHOD(GetSceneFogMethod)(THIS_ LPDWORD pFlags) PURE;
+    STDMETHOD(GetSceneFogMethod)(THIS_ DWORD *fog_mode) PURE;
     STDMETHOD(SetMaterialOverride)(THIS_ D3DRMMATERIALOVERRIDE *override) PURE;
     STDMETHOD(GetMaterialOverride)(THIS_ D3DRMMATERIALOVERRIDE *override) PURE;
 };
@@ -2029,12 +2029,12 @@ DECLARE_INTERFACE_(IDirect3DRMProgressiveMesh,IDirect3DRMVisual)
     STDMETHOD(GetLoadStatus) (THIS_ D3DRMPMESHLOADSTATUS *status) PURE;
     STDMETHOD(SetMinRenderDetail) (THIS_ D3DVALUE d3dVal) PURE;
     STDMETHOD(Abort) (THIS_ DWORD flags) PURE;
-    STDMETHOD(GetFaceDetail) (THIS_ LPDWORD pCount) PURE;
-    STDMETHOD(GetVertexDetail) (THIS_ LPDWORD pCount) PURE;
+    STDMETHOD(GetFaceDetail) (THIS_ DWORD *count) PURE;
+    STDMETHOD(GetVertexDetail) (THIS_ DWORD *count) PURE;
     STDMETHOD(SetFaceDetail) (THIS_ DWORD count) PURE;
     STDMETHOD(SetVertexDetail) (THIS_ DWORD count) PURE;
-    STDMETHOD(GetFaceDetailRange) (THIS_ LPDWORD pMin, LPDWORD pMax) PURE;
-    STDMETHOD(GetVertexDetailRange) (THIS_ LPDWORD pMin, LPDWORD pMax) PURE;
+    STDMETHOD(GetFaceDetailRange) (THIS_ DWORD *min_detail, DWORD *max_detail) PURE;
+    STDMETHOD(GetVertexDetailRange) (THIS_ DWORD *min_detail, DWORD *max_detail) PURE;
     STDMETHOD(GetDetail) (THIS_ D3DVALUE *pdvVal) PURE;
     STDMETHOD(SetDetail) (THIS_ D3DVALUE d3dVal) PURE;
     STDMETHOD(RegisterEvents) (THIS_ HANDLE event, DWORD flags, DWORD reserved) PURE;
@@ -2204,7 +2204,7 @@ DECLARE_INTERFACE_(IDirect3DRMShadow2,IDirect3DRMVisual)
             D3DVALUE *nx, D3DVALUE *ny, D3DVALUE *nz) PURE;
     STDMETHOD(SetPlane)(THIS_ D3DVALUE px, D3DVALUE py, D3DVALUE pz,
         D3DVALUE nx, D3DVALUE ny, D3DVALUE nz, DWORD) PURE;
-    STDMETHOD(GetOptions)(THIS_ LPDWORD) PURE;
+    STDMETHOD(GetOptions)(THIS_ DWORD *flags) PURE;
     STDMETHOD(SetOptions)(THIS_ DWORD) PURE;
 };
 #undef INTERFACE
@@ -3463,7 +3463,7 @@ DECLARE_INTERFACE_(IDirect3DRMTexture3, IDirect3DRMVisual)
     STDMETHOD(GenerateMIPMap)(THIS_ DWORD) PURE;
     STDMETHOD(GetSurface)(THIS_ DWORD flags, IDirectDrawSurface **surface) PURE;
     STDMETHOD(SetCacheOptions)(THIS_ LONG lImportance, DWORD dwFlags) PURE;
-    STDMETHOD(GetCacheOptions)(THIS_ LPLONG lplImportance, LPDWORD lpdwFlags) PURE;
+    STDMETHOD(GetCacheOptions)(THIS_ LONG *importance, DWORD *flags) PURE;
     STDMETHOD(SetDownsampleCallback)(THIS_ D3DRMDOWNSAMPLECALLBACK cb, void *ctx) PURE;
     STDMETHOD(SetValidationCallback)(THIS_ D3DRMVALIDATIONCALLBACK cb, void *ctx) PURE;
 };
@@ -4643,7 +4643,7 @@ DECLARE_INTERFACE_(IDirect3DRMClippedVisual, IDirect3DRMVisual)
     STDMETHOD(AddPlane) (THIS_ IDirect3DRMFrame3 *reference, D3DVECTOR *point,
             D3DVECTOR *normal, DWORD flags, DWORD *id) PURE;
     STDMETHOD(DeletePlane)(THIS_ DWORD, DWORD) PURE;
-    STDMETHOD(GetPlaneIDs)(THIS_ LPDWORD, LPDWORD, DWORD) PURE;
+    STDMETHOD(GetPlaneIDs)(THIS_ DWORD *count, DWORD *id, DWORD flags) PURE;
     STDMETHOD(GetPlane) (THIS_ DWORD id, IDirect3DRMFrame3 *reference, D3DVECTOR *point,
             D3DVECTOR *normal, DWORD flags) PURE;
     STDMETHOD(SetPlane) (THIS_ DWORD id, IDirect3DRMFrame3 *reference, D3DVECTOR *point,
