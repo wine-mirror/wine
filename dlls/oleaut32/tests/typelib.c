@@ -4243,6 +4243,8 @@ static void test_SetFuncAndParamNames(void)
     static OLECHAR nameW[] = {'n','a','m','e',0};
     static OLECHAR prop[] = {'p','r','o','p',0};
     static OLECHAR *propW[] = {prop};
+    static OLECHAR func[] = {'f','u','n','c',0};
+    static OLECHAR *funcW[] = {func, NULL};
     CHAR filenameA[MAX_PATH];
     WCHAR filenameW[MAX_PATH];
     ICreateTypeLib2 *ctl;
@@ -4308,6 +4310,15 @@ static void test_SetFuncAndParamNames(void)
     /* getter name again */
     hr = ICreateTypeInfo_SetFuncAndParamNames(cti, 3, propW, 1);
     ok(hr == TYPE_E_AMBIGUOUSNAME, "got 0x%08x\n", hr);
+
+    /* regular function */
+    funcdesc.invkind = INVOKE_FUNC;
+    funcdesc.cParams = 1;
+    hr = ICreateTypeInfo_AddFuncDesc(cti, 4, &funcdesc);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = ICreateTypeInfo_SetFuncAndParamNames(cti, 4, funcW, 2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
 
     ICreateTypeInfo_Release(cti);
     ICreateTypeLib2_Release(ctl);

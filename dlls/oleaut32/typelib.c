@@ -1889,6 +1889,9 @@ static TLBString *TLB_append_str(struct list *string_list, BSTR new_str)
 {
     TLBString *str;
 
+    if(!new_str)
+        return NULL;
+
     LIST_FOR_EACH_ENTRY(str, string_list, TLBString, entry) {
         if (strcmpW(str->str, new_str) == 0)
             return str;
