@@ -969,8 +969,22 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
 
         if (offset && offset->QuadPart != (LONGLONG)-2 /* FILE_USE_FILE_POINTER_POSITION */)
         {
+            off_t off = offset->QuadPart;
+
+            if (offset->QuadPart == (LONGLONG)-1 /* FILE_WRITE_TO_END_OF_FILE */)
+            {
+                struct stat st;
+
+                if (fstat( unix_handle, &st ) == -1)
+                {
+                    status = FILE_GetNtStatus();
+                    goto done;
+                }
+                off = st.st_size;
+            }
+
             /* async I/O doesn't make sense on regular files */
-            while ((result = pwrite( unix_handle, buffer, length, offset->QuadPart )) == -1)
+            while ((result = pwrite( unix_handle, buffer, length, off )) == -1)
             {
                 if (errno != EINTR)
                 {
@@ -982,7 +996,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
 
             if (options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT))
                 /* update file pointer position */
-                lseek( unix_handle, offset->QuadPart + result, SEEK_SET );
+                lseek( unix_handle, off + result, SEEK_SET );
 
             total = result;
             status = STATUS_SUCCESS;

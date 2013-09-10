@@ -1976,24 +1976,9 @@ static void test_read_write(void)
     iob.Information = -1;
     offset.QuadPart = (LONGLONG)-1 /* FILE_WRITE_TO_END_OF_FILE */;
     status = pNtWriteFile(hfile, 0, NULL, NULL, &iob, contents + 7, sizeof(contents) - 7, &offset, NULL);
-todo_wine
     ok(status == STATUS_SUCCESS, "NtWriteFile error %#x\n", status);
-todo_wine
     ok(iob.Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", iob.Status);
-todo_wine
     ok(iob.Information == sizeof(contents) - 7, "expected sizeof(contents)-7, got %lu\n", iob.Information);
-
-    /* FIXME: Remove once Wine is fixed */
-    if (status != STATUS_SUCCESS)
-    {
-        iob.Status = -1;
-        iob.Information = -1;
-        offset.QuadPart = 7;
-        status = pNtWriteFile(hfile, 0, NULL, NULL, &iob, contents + 7, sizeof(contents) - 7, &offset, NULL);
-        ok(status == STATUS_SUCCESS, "NtWriteFile error %#x\n", status);
-        ok(iob.Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", iob.Status);
-        ok(iob.Information == sizeof(contents) - 7, "expected sizeof(contents)-7, got %lu\n", iob.Information);
-    }
 
     off = SetFilePointer(hfile, 0, NULL, FILE_CURRENT);
     ok(off == sizeof(contents), "expected sizeof(contents), got %u\n", off);
