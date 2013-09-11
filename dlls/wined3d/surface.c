@@ -1292,14 +1292,7 @@ static BOOL fbo_blit_supported(const struct wined3d_gl_info *gl_info, enum wined
 /* This function checks if the primary render target uses the 8bit paletted format. */
 static BOOL primary_render_target_is_p8(const struct wined3d_device *device)
 {
-    if (device->fb.render_targets && device->fb.render_targets[0])
-    {
-        const struct wined3d_surface *render_target = device->fb.render_targets[0];
-        if ((render_target->resource.usage & WINED3DUSAGE_RENDERTARGET)
-                && (render_target->resource.format->id == WINED3DFMT_P8_UINT))
-            return TRUE;
-    }
-    return FALSE;
+    return device->swapchains[0]->desc.backbuffer_format == WINED3DFMT_P8_UINT;
 }
 
 static BOOL surface_convert_color_to_float(const struct wined3d_surface *surface,
