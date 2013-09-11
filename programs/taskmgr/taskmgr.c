@@ -1101,6 +1101,5 @@ int APIENTRY WinMain(HINSTANCE hInstance,
  
     /* Save our settings to the registry */
     SaveSettings();
-    PerfDataUninitialize();
     return 0;
 }

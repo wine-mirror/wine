@@ -1363,7 +1363,7 @@ typedef struct _SYSTEM_PROCESS_INFORMATION {
     HANDLE UniqueProcessId;            /* 44/50 */
     HANDLE ParentProcessId;            /* 48/58 */
     ULONG HandleCount;                 /* 4c/60 */
-    DWORD dwUnknown3;                  /* 50/64 */
+    ULONG SessionId;                   /* 50/64 */
     DWORD dwUnknown4;                  /* 54/68 */
     VM_COUNTERS vmCounters;            /* 58/70 */
     IO_COUNTERS ioCounters;            /* 88/d0 */
