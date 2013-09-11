@@ -2,7 +2,7 @@
 @ stub D3D11CoreCreateLayeredDevice
 @ stub D3D11CoreGetLayeredDeviceSize
 @ stub D3D11CoreRegisterLayers
-@ stdcall D3D11CreateDevice(ptr long ptr long long long long ptr ptr ptr)
+@ stdcall D3D11CreateDevice(ptr long ptr long ptr long long ptr ptr ptr)
 @ stub D3D11CreateDeviceAndSwapChain
 @ stub D3DKMTCloseAdapter
 @ stub D3DKMTCreateAllocation
