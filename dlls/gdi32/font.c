@@ -1748,9 +1748,13 @@ BOOL WINAPI GetCharWidth32W( HDC hdc, UINT firstChar, UINT lastChar,
 
     if (ret)
     {
+#define WDPTOLP(x) ((x<0)?					\
+		(-abs(INTERNAL_XDSTOWS(dc, (x)))):		\
+		(abs(INTERNAL_XDSTOWS(dc, (x)))))
         /* convert device units to logical */
         for( i = firstChar; i <= lastChar; i++, buffer++ )
-            *buffer = INTERNAL_XDSTOWS(dc, *buffer);
+            *buffer = WDPTOLP(*buffer);
+#undef WDPTOLP
     }
     release_dc_ptr( dc );
     return ret;
