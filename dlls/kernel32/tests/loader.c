@@ -28,6 +28,7 @@
 #include "winbase.h"
 #include "winternl.h"
 #include "wine/test.h"
+#include "delayloadhandler.h"
 
 #define ALIGN_SIZE(size, alignment) (((size) + (alignment - 1)) & ~((alignment - 1)))
 
@@ -43,6 +44,7 @@ struct PROCESS_BASIC_INFORMATION_PRIVATE
 
 static BOOL is_child;
 static LONG *child_failures;
+static WORD cb_count;
 
 static NTSTATUS (WINAPI *pNtMapViewOfSection)(HANDLE, HANDLE, PVOID *, ULONG, SIZE_T, const LARGE_INTEGER *, SIZE_T *, ULONG, ULONG, ULONG);
 static NTSTATUS (WINAPI *pNtUnmapViewOfSection)(HANDLE, PVOID);
@@ -57,6 +59,9 @@ static NTSTATUS (WINAPI *pLdrLockLoaderLock)(ULONG, ULONG *, ULONG *);
 static NTSTATUS (WINAPI *pLdrUnlockLoaderLock)(ULONG, ULONG);
 static void (WINAPI *pRtlAcquirePebLock)(void);
 static void (WINAPI *pRtlReleasePebLock)(void);
+static PVOID    (WINAPI *pResolveDelayLoadedAPI)(PVOID, PCIMAGE_DELAYLOAD_DESCRIPTOR,
+                                                 PDELAYLOAD_FAILURE_DLL_CALLBACK, PVOID,
+                                                 PIMAGE_THUNK_DATA ThunkAddress,ULONG);
 
 static PVOID RVAToAddr(DWORD_PTR rva, HMODULE module)
 {
@@ -2184,6 +2189,105 @@ if (0)
     ok(ret, "DeleteFile error %d\n", GetLastError());
 }
 
+static PVOID WINAPI failuredllhook(ULONG ul, DELAYLOAD_INFO* pd)
+{
+    cb_count++;
+    return NULL;
+}
+
+static void test_ResolveDelayLoadedAPI(void)
+{
+    HMODULE hlib;
+    int i;
+    static const char* td[] =
+    {
+        "advapi32.dll",
+        "comdlg32.dll",
+    };
+
+    if (!pResolveDelayLoadedAPI)
+    {
+        todo_wine win_skip("ResolveDelayLoadedAPI is not available\n");
+        return;
+    }
+
+    if (0) /* crashes on native */
+    {
+        SetLastError(0xdeadbeef);
+        ok(!pResolveDelayLoadedAPI(NULL, NULL, NULL, NULL, NULL, 0),
+           "ResolveDelayLoadedAPI succeeded\n");
+        ok(GetLastError() == 0xdeadbeef, "GetLastError changed to %x\n", GetLastError());
+
+        cb_count = 0;
+        SetLastError(0xdeadbeef);
+        ok(!pResolveDelayLoadedAPI(NULL, NULL, failuredllhook, NULL, NULL, 0),
+           "ResolveDelayLoadedAPI succeeded\n");
+        ok(GetLastError() == 0xdeadbeef, "GetLastError changed to %x\n", GetLastError());
+        ok(cb_count == 1, "Wrong callback count: %d\n", cb_count);
+    }
+
+    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+    {
+        IMAGE_DELAYLOAD_DESCRIPTOR *delaydir;
+        ULONG size;
+
+        SetLastError(0xdeadbeef);
+        hlib = LoadLibrary(td[i]);
+        ok(hlib != NULL, "LoadLibrary error %u\n", GetLastError());
+        if (!hlib)
+        {
+            skip("couldn't load %s.\n", td[i]);
+            continue;
+        }
+
+        delaydir = RtlImageDirectoryEntryToData(hlib, TRUE, IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT, &size);
+        if (!delaydir)
+        {
+            skip("haven't found section for delay import directory in %s.\n", td[i]);
+            FreeLibrary(hlib);
+            continue;
+        }
+
+        for (;;)
+        {
+            const IMAGE_THUNK_DATA *itdn;
+            IMAGE_THUNK_DATA *itda;
+            HMODULE htarget;
+            int j;
+
+            if (!delaydir->DllNameRVA ||
+                !delaydir->ImportAddressTableRVA ||
+                !delaydir->ImportNameTableRVA) break;
+
+            itdn = RVAToAddr(delaydir->ImportNameTableRVA, hlib);
+            itda = RVAToAddr(delaydir->ImportAddressTableRVA, hlib);
+            htarget = LoadLibrary(RVAToAddr(delaydir->DllNameRVA, hlib));
+            for (j = 0; itdn[j].u1.Ordinal; j++)
+            {
+                void *ret, *load;
+
+                if (IMAGE_SNAP_BY_ORDINAL(itdn[j].u1.Ordinal))
+                    load = (void *)GetProcAddress(htarget, (LPSTR)IMAGE_ORDINAL(itdn[j].u1.Ordinal));
+                else
+                {
+                    const IMAGE_IMPORT_BY_NAME* iibn = RVAToAddr(itdn[j].u1.AddressOfData, hlib);
+                    load = (void *)GetProcAddress(htarget, (char*)iibn->Name);
+                }
+
+                cb_count = 0;
+                ret = pResolveDelayLoadedAPI(hlib, delaydir, failuredllhook, NULL, &itda[j], 0);
+                ok(ret != NULL, "ResolveDelayLoadedAPI failed\n");
+                ok(ret == load, "expected %p, got %p\n", ret, load);
+                ok(ret == (void*)itda[j].u1.AddressOfData, "expected %p, got %p\n",
+                   ret, (void*)itda[j].u1.AddressOfData);
+                ok(!cb_count, "Wrong callback count: %d\n", cb_count);
+            }
+            delaydir++;
+        }
+        FreeLibrary(hlib);
+    }
+}
+
 START_TEST(loader)
 {
     int argc;
@@ -2203,6 +2307,7 @@ START_TEST(loader)
     pLdrUnlockLoaderLock = (void *)GetProcAddress(GetModuleHandle("ntdll.dll"), "LdrUnlockLoaderLock");
     pRtlAcquirePebLock = (void *)GetProcAddress(GetModuleHandle("ntdll.dll"), "RtlAcquirePebLock");
     pRtlReleasePebLock = (void *)GetProcAddress(GetModuleHandle("ntdll.dll"), "RtlReleasePebLock");
+    pResolveDelayLoadedAPI = (void *)GetProcAddress(GetModuleHandle("kernel32.dll"), "ResolveDelayLoadedAPI");
 
     mapping = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 4096, "winetest_loader");
     ok(mapping != 0, "CreateFileMapping failed\n");
@@ -2227,4 +2332,5 @@ START_TEST(loader)
     test_ImportDescriptors();
     test_section_access();
     test_ExitProcess();
+    test_ResolveDelayLoadedAPI();
 }
