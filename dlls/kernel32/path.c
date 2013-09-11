@@ -724,6 +724,97 @@ static inline BOOL contains_pathW (LPCWSTR name)
     return (name[1] == '.' && (name[2] == '/' || name[2] == '\\'));
 }
 
+/***********************************************************************
+ *	find_actctx_dllpath
+ *
+ * Find the path (if any) of the dll from the activation context.
+ * Returned path doesn't include a name.
+ */
+static NTSTATUS find_actctx_dllpath(const WCHAR *libname, WCHAR **path)
+{
+    static const WCHAR winsxsW[] = {'\\','w','i','n','s','x','s','\\'};
+    static const WCHAR dotManifestW[] = {'.','m','a','n','i','f','e','s','t',0};
+
+    ACTIVATION_CONTEXT_ASSEMBLY_DETAILED_INFORMATION *info;
+    ACTCTX_SECTION_KEYED_DATA data;
+    UNICODE_STRING nameW;
+    NTSTATUS status;
+    SIZE_T needed, size = 1024;
+    WCHAR *p;
+
+    RtlInitUnicodeString( &nameW, libname );
+    data.cbSize = sizeof(data);
+    status = RtlFindActivationContextSectionString( FIND_ACTCTX_SECTION_KEY_RETURN_HACTCTX, NULL,
+                                                    ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION,
+                                                    &nameW, &data );
+    if (status != STATUS_SUCCESS) return status;
+
+    for (;;)
+    {
+        if (!(info = HeapAlloc( GetProcessHeap(), 0, size )))
+        {
+            status = STATUS_NO_MEMORY;
+            goto done;
+        }
+        status = RtlQueryInformationActivationContext( 0, data.hActCtx, &data.ulAssemblyRosterIndex,
+                                                       AssemblyDetailedInformationInActivationContext,
+                                                       info, size, &needed );
+        if (status == STATUS_SUCCESS) break;
+        if (status != STATUS_BUFFER_TOO_SMALL) goto done;
+        HeapFree( GetProcessHeap(), 0, info );
+        size = needed;
+        /* restart with larger buffer */
+    }
+
+    if (!info->lpAssemblyManifestPath || !info->lpAssemblyDirectoryName)
+    {
+        status = STATUS_SXS_KEY_NOT_FOUND;
+        goto done;
+    }
+
+    if ((p = strrchrW( info->lpAssemblyManifestPath, '\\' )))
+    {
+        DWORD dirlen = info->ulAssemblyDirectoryNameLength / sizeof(WCHAR);
+
+        p++;
+        if (strncmpiW( p, info->lpAssemblyDirectoryName, dirlen ) || strcmpiW( p + dirlen, dotManifestW ))
+        {
+            /* manifest name does not match directory name, so it's not a global
+             * windows/winsxs manifest; use the manifest directory name instead */
+            dirlen = p - info->lpAssemblyManifestPath;
+            needed = (dirlen + 1) * sizeof(WCHAR);
+            if (!(*path = p = HeapAlloc( GetProcessHeap(), 0, needed )))
+            {
+                status = STATUS_NO_MEMORY;
+                goto done;
+            }
+            memcpy( p, info->lpAssemblyManifestPath, dirlen * sizeof(WCHAR) );
+            *(p + dirlen) = 0;
+            goto done;
+        }
+    }
+
+    needed = (strlenW( DIR_Windows ) * sizeof(WCHAR) +
+              sizeof(winsxsW) + info->ulAssemblyDirectoryNameLength + 2*sizeof(WCHAR));
+
+    if (!(*path = p = HeapAlloc( GetProcessHeap(), 0, needed )))
+    {
+        status = STATUS_NO_MEMORY;
+        goto done;
+    }
+    strcpyW( p, DIR_Windows );
+    p += strlenW(p);
+    memcpy( p, winsxsW, sizeof(winsxsW) );
+    p += sizeof(winsxsW) / sizeof(WCHAR);
+    memcpy( p, info->lpAssemblyDirectoryName, info->ulAssemblyDirectoryNameLength );
+    p += info->ulAssemblyDirectoryNameLength / sizeof(WCHAR);
+    *p++ = '\\';
+    *p = 0;
+done:
+    HeapFree( GetProcessHeap(), 0, info );
+    RtlReleaseActivationContext( data.hActCtx );
+    return status;
+}
 
 /***********************************************************************
  * SearchPathW [KERNEL32.@]
@@ -802,20 +893,75 @@ DWORD WINAPI SearchPathW( LPCWSTR path, LPCWSTR name, LPCWSTR ext, DWORD buflen,
         ret = RtlDosSearchPath_U( path, name, ext, buflen * sizeof(WCHAR),
                                   buffer, lastpart ) / sizeof(WCHAR);
     }
-    else  /* search in the default path */
+    else  /* search in active context and default path */
     {
-        WCHAR *dll_path = MODULE_get_dll_load_path( NULL );
+        WCHAR *dll_path = NULL, *search = NULL;
+        DWORD req_len, name_len;
 
-        if (dll_path)
+        req_len = name_len = strlenW(name);
+
+        if (strchrW( name, '.' )) ext = NULL;
+        if (ext)
         {
-            ret = RtlDosSearchPath_U( dll_path, name, ext, buflen * sizeof(WCHAR),
-                                      buffer, lastpart ) / sizeof(WCHAR);
+            DWORD ext_len = strlenW(ext);
+
+            req_len += ext_len;
+            name_len += ext_len;
+
+            search = HeapAlloc( GetProcessHeap(), 0, (name_len + ext_len + 1) * sizeof(WCHAR) );
+            if (!search)
+            {
+                SetLastError( ERROR_OUTOFMEMORY );
+                HeapFree( GetProcessHeap(), 0, dll_path );
+                return 0;
+            }
+            strcpyW( search, name );
+            strcatW( search, ext );
+            name = search;
+
+            /* now that we have combined name we don't need extension any more */
+        }
+
+        /* When file is found with activation context no attempt is made
+          to check if it's really exist, path is returned only basing on context info. */
+        if (find_actctx_dllpath( name, &dll_path ) == STATUS_SUCCESS)
+        {
+            DWORD path_len;
+
+            path_len = strlenW(dll_path);
+            req_len += path_len;
+
+            if (lastpart) *lastpart = NULL;
+
+            /* count null termination char too */
+            if (req_len + 1 <= buflen)
+            {
+                memcpy( buffer, dll_path, path_len * sizeof(WCHAR) );
+                memcpy( &buffer[path_len], name, name_len * sizeof(WCHAR) );
+                buffer[req_len] = 0;
+                if (lastpart) *lastpart = buffer + path_len;
+                ret = req_len;
+            }
+            else
+                ret = req_len + 1;
+
             HeapFree( GetProcessHeap(), 0, dll_path );
+            HeapFree( GetProcessHeap(), 0, search );
         }
         else
         {
-            SetLastError( ERROR_OUTOFMEMORY );
-            return 0;
+            if ((dll_path = MODULE_get_dll_load_path( NULL )))
+            {
+                ret = RtlDosSearchPath_U( dll_path, name, NULL, buflen * sizeof(WCHAR),
+                                          buffer, lastpart ) / sizeof(WCHAR);
+                HeapFree( GetProcessHeap(), 0, dll_path );
+                HeapFree( GetProcessHeap(), 0, search );
+            }
+            else
+            {
+                SetLastError( ERROR_OUTOFMEMORY );
+                return 0;
+            }
         }
     }
 

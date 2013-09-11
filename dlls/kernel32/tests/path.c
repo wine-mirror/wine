@@ -1639,6 +1639,7 @@ static HANDLE test_create(const char *file)
 static void test_SearchPathA(void)
 {
     static const CHAR testdepA[] = "testdep.dll";
+    static const CHAR testdeprelA[] = "./testdep.dll";
     static const CHAR kernel32A[] = "kernel32.dll";
     static const CHAR fileA[] = "";
     CHAR pathA[MAX_PATH], buffA[MAX_PATH], path2A[MAX_PATH];
@@ -1691,13 +1692,28 @@ static void test_SearchPathA(void)
 
     /* works when activated */
     ret = pSearchPathA(NULL, testdepA, NULL, sizeof(buffA)/sizeof(CHAR), buffA, NULL);
-todo_wine
     ok(ret && ret == strlen(buffA), "got %d\n", ret);
 
-    /* path is redirect for wellknown names too */
+    ret = pSearchPathA(NULL, "testdep.dll", ".ext", sizeof(buffA)/sizeof(CHAR), buffA, NULL);
+    ok(ret && ret == strlen(buffA), "got %d\n", ret);
+
+    ret = pSearchPathA(NULL, "testdep", ".dll", sizeof(buffA)/sizeof(CHAR), buffA, NULL);
+    ok(ret && ret == strlen(buffA), "got %d\n", ret);
+
+    ret = pSearchPathA(NULL, "testdep", ".ext", sizeof(buffA)/sizeof(CHAR), buffA, NULL);
+    ok(!ret, "got %d\n", ret);
+
+    /* name contains path */
+    ret = pSearchPathA(NULL, testdeprelA, NULL, sizeof(buffA)/sizeof(CHAR), buffA, NULL);
+    ok(!ret, "got %d\n", ret);
+
+    /* fails with specified path that doesn't contain this file */
+    ret = pSearchPathA(pathA, testdepA, NULL, sizeof(buffA)/sizeof(CHAR), buffA, NULL);
+    ok(!ret, "got %d\n", ret);
+
+    /* path is redirected for wellknown names too */
     ret = pSearchPathA(NULL, kernel32A, NULL, sizeof(buffA)/sizeof(CHAR), buffA, NULL);
     ok(ret && ret == strlen(buffA), "got %d\n", ret);
-todo_wine
     ok(strcmp(buffA, path2A), "got wrong path %s, %s\n", buffA, path2A);
 
     ret = pDeactivateActCtx(0, cookie);
@@ -1707,8 +1723,12 @@ todo_wine
 
 static void test_SearchPathW(void)
 {
+    static const WCHAR testdeprelW[] = {'.','/','t','e','s','t','d','e','p','.','d','l','l',0};
     static const WCHAR testdepW[] = {'t','e','s','t','d','e','p','.','d','l','l',0};
+    static const WCHAR testdep1W[] = {'t','e','s','t','d','e','p',0};
     static const WCHAR kernel32W[] = {'k','e','r','n','e','l','3','2','.','d','l','l',0};
+    static const WCHAR extW[] = {'.','e','x','t',0};
+    static const WCHAR dllW[] = {'.','d','l','l',0};
     static const WCHAR fileW[] = { 0 };
     WCHAR pathW[MAX_PATH], buffW[MAX_PATH], path2W[MAX_PATH];
     WCHAR *ptrW = NULL;
@@ -1727,6 +1747,8 @@ if (0)
     /* NULL filename, crashes on nt4 */
     pSearchPathW(pathW, NULL, NULL, sizeof(buffW)/sizeof(WCHAR), buffW, &ptrW);
 }
+
+    GetWindowsDirectoryW(pathW, sizeof(pathW)/sizeof(WCHAR));
 
     /* empty filename */
     SetLastError(0xdeadbeef);
@@ -1757,13 +1779,28 @@ if (0)
 
     /* works when activated */
     ret = pSearchPathW(NULL, testdepW, NULL, sizeof(buffW)/sizeof(WCHAR), buffW, NULL);
-todo_wine
     ok(ret && ret == lstrlenW(buffW), "got %d\n", ret);
+
+    ret = pSearchPathW(NULL, testdepW, extW, sizeof(buffW)/sizeof(WCHAR), buffW, NULL);
+    ok(ret && ret == lstrlenW(buffW), "got %d\n", ret);
+
+    ret = pSearchPathW(NULL, testdep1W, dllW, sizeof(buffW)/sizeof(WCHAR), buffW, NULL);
+    ok(ret && ret == lstrlenW(buffW), "got %d\n", ret);
+
+    ret = pSearchPathW(NULL, testdep1W, extW, sizeof(buffW)/sizeof(WCHAR), buffW, NULL);
+    ok(!ret, "got %d\n", ret);
+
+    /* name contains path */
+    ret = pSearchPathW(NULL, testdeprelW, NULL, sizeof(buffW)/sizeof(WCHAR), buffW, NULL);
+    ok(!ret, "got %d\n", ret);
+
+    /* fails with specified path that doesn't contain this file */
+    ret = pSearchPathW(pathW, testdepW, NULL, sizeof(buffW)/sizeof(WCHAR), buffW, NULL);
+    ok(!ret, "got %d\n", ret);
 
     /* path is redirect for wellknown names too */
     ret = pSearchPathW(NULL, kernel32W, NULL, sizeof(buffW)/sizeof(WCHAR), buffW, NULL);
     ok(ret && ret == lstrlenW(buffW), "got %d\n", ret);
-todo_wine
     ok(lstrcmpW(buffW, path2W), "got wrong path %s, %s\n", wine_dbgstr_w(buffW), wine_dbgstr_w(path2W));
 
     ret = pDeactivateActCtx(0, cookie);
