@@ -740,7 +740,7 @@ static void QueryInterface(void)
 {
     IDirectDrawSurface *dsurface;
     DDSURFACEDESC surface;
-    LPVOID object;
+    void *object;
     HRESULT ret;
 
     /* Create a surface */

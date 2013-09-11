@@ -390,7 +390,7 @@ typedef struct _D3DExecuteBufferDesc {
   DWORD  dwFlags;
   DWORD  dwCaps;
   DWORD  dwBufferSize;
-  LPVOID lpData;
+  void *lpData;
 } D3DEXECUTEBUFFERDESC, *LPD3DEXECUTEBUFFERDESC;
 
 #define D3DDEB_BUFSIZE          0x00000001

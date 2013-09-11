@@ -43,10 +43,10 @@ static int modes16bpp_cnt;
 static int refresh_rate;
 static int refresh_rate_cnt;
 
-static HRESULT (WINAPI *pDirectDrawEnumerateA)(LPDDENUMCALLBACKA,LPVOID);
-static HRESULT (WINAPI *pDirectDrawEnumerateW)(LPDDENUMCALLBACKW,LPVOID);
-static HRESULT (WINAPI *pDirectDrawEnumerateExA)(LPDDENUMCALLBACKEXA,LPVOID,DWORD);
-static HRESULT (WINAPI *pDirectDrawEnumerateExW)(LPDDENUMCALLBACKEXW,LPVOID,DWORD);
+static HRESULT (WINAPI *pDirectDrawEnumerateA)(LPDDENUMCALLBACKA cb, void *ctx);
+static HRESULT (WINAPI *pDirectDrawEnumerateW)(LPDDENUMCALLBACKW cb, void *ctx);
+static HRESULT (WINAPI *pDirectDrawEnumerateExA)(LPDDENUMCALLBACKEXA cb, void *ctx, DWORD flags);
+static HRESULT (WINAPI *pDirectDrawEnumerateExW)(LPDDENUMCALLBACKEXW cb, void *ctx, DWORD flags);
 
 static void init_function_pointers(void)
 {
@@ -104,8 +104,8 @@ static void releasedirectdraw(void)
     }
 }
 
-static BOOL WINAPI test_nullcontext_callbackA(GUID *lpGUID, LPSTR lpDriverDescription,
-                                              LPSTR lpDriverName, LPVOID lpContext)
+static BOOL WINAPI test_nullcontext_callbackA(GUID *lpGUID,
+        char *lpDriverDescription, char *lpDriverName, void *lpContext)
 {
     trace("test_nullcontext_callbackA: %p %s %s %p\n",
           lpGUID, lpDriverDescription, lpDriverName, lpContext);
@@ -115,13 +115,13 @@ static BOOL WINAPI test_nullcontext_callbackA(GUID *lpGUID, LPSTR lpDriverDescri
     return TRUE;
 }
 
-static BOOL WINAPI test_context_callbackA(GUID *lpGUID, LPSTR lpDriverDescription,
-                                          LPSTR lpDriverName, LPVOID lpContext)
+static BOOL WINAPI test_context_callbackA(GUID *lpGUID,
+        char *lpDriverDescription, char *lpDriverName, void *lpContext)
 {
     trace("test_context_callbackA: %p %s %s %p\n",
           lpGUID, lpDriverDescription, lpDriverName, lpContext);
 
-    ok(lpContext == (LPVOID)0xdeadbeef, "Expected non-NULL lpContext\n");
+    ok(lpContext == (void *)0xdeadbeef, "Expected non-NULL lpContext\n");
 
     return TRUE;
 }
@@ -147,12 +147,12 @@ static void test_DirectDrawEnumerateA(void)
 
     /* Test with valid callback parameter and valid context parameter. */
     trace("Calling DirectDrawEnumerateA with test_context_callbackA callback and non-NULL context.\n");
-    ret = pDirectDrawEnumerateA(test_context_callbackA, (LPVOID)0xdeadbeef);
+    ret = pDirectDrawEnumerateA(test_context_callbackA, (void *)0xdeadbeef);
     ok(ret == DD_OK, "Expected DD_OK, got %d\n", ret);
 }
 
-static BOOL WINAPI test_callbackW(GUID *lpGUID, LPWSTR lpDriverDescription,
-                                  LPWSTR lpDriverName, LPVOID lpContext)
+static BOOL WINAPI test_callbackW(GUID *lpGUID, WCHAR *lpDriverDescription,
+        WCHAR *lpDriverName, void *lpContext)
 {
     ok(0, "The callback should not be invoked by DirectDrawEnumerateW\n");
     return TRUE;
@@ -187,9 +187,8 @@ static void test_DirectDrawEnumerateW(void)
     ok(ret == DDERR_UNSUPPORTED, "Expected DDERR_UNSUPPORTED, got %d\n", ret);
 }
 
-static BOOL WINAPI test_nullcontext_callbackExA(GUID *lpGUID, LPSTR lpDriverDescription,
-                                                LPSTR lpDriverName, LPVOID lpContext,
-                                                HMONITOR hm)
+static BOOL WINAPI test_nullcontext_callbackExA(GUID *lpGUID, char *lpDriverDescription,
+        char *lpDriverName, void *lpContext, HMONITOR hm)
 {
     trace("test_nullcontext_callbackExA: %p %s %s %p %p\n", lpGUID,
           lpDriverDescription, lpDriverName, lpContext, hm);
@@ -199,14 +198,13 @@ static BOOL WINAPI test_nullcontext_callbackExA(GUID *lpGUID, LPSTR lpDriverDesc
     return TRUE;
 }
 
-static BOOL WINAPI test_context_callbackExA(GUID *lpGUID, LPSTR lpDriverDescription,
-                                            LPSTR lpDriverName, LPVOID lpContext,
-                                            HMONITOR hm)
+static BOOL WINAPI test_context_callbackExA(GUID *lpGUID, char *lpDriverDescription,
+        char *lpDriverName, void *lpContext, HMONITOR hm)
 {
     trace("test_context_callbackExA: %p %s %s %p %p\n", lpGUID,
           lpDriverDescription, lpDriverName, lpContext, hm);
 
-    ok(lpContext == (LPVOID)0xdeadbeef, "Expected non-NULL lpContext\n");
+    ok(lpContext == (void *)0xdeadbeef, "Expected non-NULL lpContext\n");
 
     return TRUE;
 }
@@ -236,7 +234,7 @@ static void test_DirectDrawEnumerateExA(void)
 
     /* Test with valid callback parameter and non-NULL context parameter. */
     trace("Calling DirectDrawEnumerateExA with empty flags and non-NULL context.\n");
-    ret = pDirectDrawEnumerateExA(test_context_callbackExA, (LPVOID)0xdeadbeef, 0);
+    ret = pDirectDrawEnumerateExA(test_context_callbackExA, (void *)0xdeadbeef, 0);
     ok(ret == DD_OK, "Expected DD_OK, got %d\n", ret);
 
     /* Test with valid callback parameter, NULL context parameter, and all flags set. */
@@ -248,9 +246,8 @@ static void test_DirectDrawEnumerateExA(void)
     ok(ret == DD_OK, "Expected DD_OK, got %d\n", ret);
 }
 
-static BOOL WINAPI test_callbackExW(GUID *lpGUID, LPWSTR lpDriverDescription,
-                                    LPWSTR lpDriverName, LPVOID lpContext,
-                                    HMONITOR hm)
+static BOOL WINAPI test_callbackExW(GUID *lpGUID, WCHAR *lpDriverDescription,
+        WCHAR *lpDriverName, void *lpContext, HMONITOR hm)
 {
     ok(0, "The callback should not be invoked by DirectDrawEnumerateExW.\n");
     return TRUE;

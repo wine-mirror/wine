@@ -982,7 +982,7 @@ typedef struct _DDSURFACEDESC
 	} DUMMYUNIONNAME2;
 	DWORD	dwAlphaBitDepth;/* 1C:depth of alpha buffer requested*/
 	DWORD	dwReserved;	/* 20:reserved*/
-	LPVOID	lpSurface;	/* 24:pointer to the associated surface memory*/
+	void *lpSurface;	/* 24:pointer to the associated surface memory*/
 	DDCOLORKEY	ddckCKDestOverlay;/* 28: CK for dest overlay use*/
 	DDCOLORKEY	ddckCKDestBlt;	/* 30: CK for destination blt use*/
 	DDCOLORKEY	ddckCKSrcOverlay;/* 38: CK for source overlay use*/
@@ -1009,7 +1009,7 @@ typedef struct _DDSURFACEDESC2
 	} DUMMYUNIONNAME2;
 	DWORD	dwAlphaBitDepth;/* 1C:depth of alpha buffer requested*/
 	DWORD	dwReserved;	/* 20:reserved*/
-	LPVOID	lpSurface;	/* 24:pointer to the associated surface memory*/
+	void *lpSurface;	/* 24:pointer to the associated surface memory*/
 	union {
 		DDCOLORKEY	ddckCKDestOverlay; /* 28: CK for dest overlay use*/
 		DWORD 		dwEmptyFaceColor;  /* 28: color for empty cubemap faces */
@@ -1054,8 +1054,8 @@ typedef struct {
 	WORD	blue[256];
 } DDGAMMARAMP,*LPDDGAMMARAMP;
 
-typedef BOOL (CALLBACK *LPDDENUMCALLBACKA)(GUID *, LPSTR, LPSTR, LPVOID);
-typedef BOOL (CALLBACK *LPDDENUMCALLBACKW)(GUID *, LPWSTR, LPWSTR, LPVOID);
+typedef BOOL (CALLBACK *LPDDENUMCALLBACKA)(GUID *guid, char *driver_description, char *driver_name, void *ctx);
+typedef BOOL (CALLBACK *LPDDENUMCALLBACKW)(GUID *guid, WCHAR *driver_description, WCHAR *driver_name, void *ctx);
 DECL_WINELIB_TYPE_AW(LPDDENUMCALLBACK)
 
 typedef HRESULT (CALLBACK *LPDDENUMMODESCALLBACK)(DDSURFACEDESC *desc, void *ctx);
@@ -1067,20 +1067,22 @@ typedef HRESULT (CALLBACK *LPDDENUMSURFACESCALLBACK2)(struct IDirectDrawSurface4
 typedef HRESULT (CALLBACK *LPDDENUMSURFACESCALLBACK7)(struct IDirectDrawSurface7 *surface,
         DDSURFACEDESC2 *surface_desc, void *ctx);
 
-typedef BOOL (CALLBACK *LPDDENUMCALLBACKEXA)(GUID *, LPSTR, LPSTR, LPVOID, HMONITOR);
-typedef BOOL (CALLBACK *LPDDENUMCALLBACKEXW)(GUID *, LPWSTR, LPWSTR, LPVOID, HMONITOR);
+typedef BOOL (CALLBACK *LPDDENUMCALLBACKEXA)(GUID *guid, char *driver_description,
+        char *driver_name, void *ctx, HMONITOR monitor);
+typedef BOOL (CALLBACK *LPDDENUMCALLBACKEXW)(GUID *guid, WCHAR *driver_description,
+        WCHAR *driver_name, void *ctx, HMONITOR monitor);
 DECL_WINELIB_TYPE_AW(LPDDENUMCALLBACKEX)
 
-HRESULT WINAPI DirectDrawEnumerateA(LPDDENUMCALLBACKA,LPVOID);
-HRESULT WINAPI DirectDrawEnumerateW(LPDDENUMCALLBACKW,LPVOID);
+HRESULT WINAPI DirectDrawEnumerateA(LPDDENUMCALLBACKA cb, void *ctx);
+HRESULT WINAPI DirectDrawEnumerateW(LPDDENUMCALLBACKW cb, void *ctx);
 #define DirectDrawEnumerate WINELIB_NAME_AW(DirectDrawEnumerate)
 
-HRESULT WINAPI DirectDrawEnumerateExA( LPDDENUMCALLBACKEXA lpCallback, LPVOID lpContext, DWORD dwFlags);
-HRESULT WINAPI DirectDrawEnumerateExW( LPDDENUMCALLBACKEXW lpCallback, LPVOID lpContext, DWORD dwFlags);
+HRESULT WINAPI DirectDrawEnumerateExA(LPDDENUMCALLBACKEXA cb, void *ctx, DWORD flags);
+HRESULT WINAPI DirectDrawEnumerateExW(LPDDENUMCALLBACKEXW cb, void *ctx, DWORD flags);
 #define DirectDrawEnumerateEx WINELIB_NAME_AW(DirectDrawEnumerateEx)
 
-typedef HRESULT (WINAPI * LPDIRECTDRAWENUMERATEEXA)( LPDDENUMCALLBACKEXA lpCallback, LPVOID lpContext, DWORD dwFlags);
-typedef HRESULT (WINAPI * LPDIRECTDRAWENUMERATEEXW)( LPDDENUMCALLBACKEXW lpCallback, LPVOID lpContext, DWORD dwFlags);
+typedef HRESULT (WINAPI * LPDIRECTDRAWENUMERATEEXA)(LPDDENUMCALLBACKEXA cb, void *ctx, DWORD flags);
+typedef HRESULT (WINAPI * LPDIRECTDRAWENUMERATEEXW)(LPDDENUMCALLBACKEXW cb, void *ctx, DWORD flags);
 DECL_WINELIB_TYPE_AW(LPDIRECTDRAWENUMERATEEX)
 
 /* flags for DirectDrawEnumerateEx */
@@ -1889,8 +1891,8 @@ DECLARE_INTERFACE_(IDirectDrawSurface,IUnknown)
 /*1c*/    STDMETHOD(BltFast)(THIS_ DWORD x, DWORD y, IDirectDrawSurface *src_surface,
                 RECT *src_rect, DWORD flags) PURE;
 /*20*/    STDMETHOD(DeleteAttachedSurface)(THIS_ DWORD flags, IDirectDrawSurface *attachment) PURE;
-/*24*/    STDMETHOD(EnumAttachedSurfaces)(THIS_ LPVOID lpContext, LPDDENUMSURFACESCALLBACK lpEnumSurfacesCallback) PURE;
-/*28*/    STDMETHOD(EnumOverlayZOrders)(THIS_ DWORD dwFlags, LPVOID lpContext, LPDDENUMSURFACESCALLBACK lpfnCallback) PURE;
+/*24*/    STDMETHOD(EnumAttachedSurfaces)(THIS_ void *ctx, LPDDENUMSURFACESCALLBACK cb) PURE;
+/*28*/    STDMETHOD(EnumOverlayZOrders)(THIS_ DWORD flags, void *ctx, LPDDENUMSURFACESCALLBACK cb) PURE;
 /*2c*/    STDMETHOD(Flip)(THIS_ IDirectDrawSurface *dst_surface, DWORD flags) PURE;
 /*30*/    STDMETHOD(GetAttachedSurface)(THIS_ DDSCAPS *caps, IDirectDrawSurface **attachment) PURE;
 /*34*/    STDMETHOD(GetBltStatus)(THIS_ DWORD dwFlags) PURE;
@@ -1912,7 +1914,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface,IUnknown)
 /*74*/    STDMETHOD(SetColorKey)(THIS_ DWORD flags, DDCOLORKEY *color_key) PURE;
 /*78*/    STDMETHOD(SetOverlayPosition)(THIS_ LONG lX, LONG lY) PURE;
 /*7c*/    STDMETHOD(SetPalette)(THIS_ IDirectDrawPalette *palette) PURE;
-/*80*/    STDMETHOD(Unlock)(THIS_ LPVOID lpSurfaceData) PURE;
+/*80*/    STDMETHOD(Unlock)(THIS_ void *data) PURE;
 /*84*/    STDMETHOD(UpdateOverlay)(THIS_ RECT *src_rect, IDirectDrawSurface *dst_surface,
                 RECT *dst_rect, DWORD flags, DDOVERLAYFX *fx) PURE;
 /*88*/    STDMETHOD(UpdateOverlayDisplay)(THIS_ DWORD dwFlags) PURE;
@@ -2023,8 +2025,8 @@ DECLARE_INTERFACE_(IDirectDrawSurface2,IUnknown)
     STDMETHOD(BltFast)(THIS_ DWORD x, DWORD y, IDirectDrawSurface2 *src_surface,
             RECT *src_rect, DWORD flags) PURE;
     STDMETHOD(DeleteAttachedSurface)(THIS_ DWORD flags, IDirectDrawSurface2 *attachment) PURE;
-    STDMETHOD(EnumAttachedSurfaces)(THIS_ LPVOID lpContext, LPDDENUMSURFACESCALLBACK lpEnumSurfacesCallback) PURE;
-    STDMETHOD(EnumOverlayZOrders)(THIS_ DWORD dwFlags, LPVOID lpContext, LPDDENUMSURFACESCALLBACK lpfnCallback) PURE;
+    STDMETHOD(EnumAttachedSurfaces)(THIS_ void *ctx, LPDDENUMSURFACESCALLBACK cb) PURE;
+    STDMETHOD(EnumOverlayZOrders)(THIS_ DWORD flags, void *ctx, LPDDENUMSURFACESCALLBACK cb) PURE;
     STDMETHOD(Flip)(THIS_ IDirectDrawSurface2 *dst_surface, DWORD flags) PURE;
     STDMETHOD(GetAttachedSurface)(THIS_ DDSCAPS *caps, IDirectDrawSurface2 **attachment) PURE;
     STDMETHOD(GetBltStatus)(THIS_ DWORD dwFlags) PURE;
@@ -2046,13 +2048,13 @@ DECLARE_INTERFACE_(IDirectDrawSurface2,IUnknown)
     STDMETHOD(SetColorKey)(THIS_ DWORD flags, DDCOLORKEY *color_key) PURE;
     STDMETHOD(SetOverlayPosition)(THIS_ LONG lX, LONG lY) PURE;
     STDMETHOD(SetPalette)(THIS_ IDirectDrawPalette *palette) PURE;
-    STDMETHOD(Unlock)(THIS_ LPVOID lpSurfaceData) PURE;
+    STDMETHOD(Unlock)(THIS_ void *data) PURE;
     STDMETHOD(UpdateOverlay)(THIS_ RECT *src_rect, IDirectDrawSurface2 *dst_surface, RECT *dst_rect,
             DWORD flags, DDOVERLAYFX *fx) PURE;
     STDMETHOD(UpdateOverlayDisplay)(THIS_ DWORD dwFlags) PURE;
     STDMETHOD(UpdateOverlayZOrder)(THIS_ DWORD flags, IDirectDrawSurface2 *reference_surface) PURE;
     /* added in v2 */
-    STDMETHOD(GetDDInterface)(THIS_ LPVOID *lplpDD) PURE;
+    STDMETHOD(GetDDInterface)(THIS_ void **ddraw) PURE;
     STDMETHOD(PageLock)(THIS_ DWORD dwFlags) PURE;
     STDMETHOD(PageUnlock)(THIS_ DWORD dwFlags) PURE;
 };
@@ -2169,8 +2171,8 @@ DECLARE_INTERFACE_(IDirectDrawSurface3,IUnknown)
     STDMETHOD(BltFast)(THIS_ DWORD x, DWORD y, IDirectDrawSurface3 *src_surface,
             RECT *src_rect, DWORD flags) PURE;
     STDMETHOD(DeleteAttachedSurface)(THIS_ DWORD flags, IDirectDrawSurface3 *attachment) PURE;
-    STDMETHOD(EnumAttachedSurfaces)(THIS_ LPVOID lpContext, LPDDENUMSURFACESCALLBACK lpEnumSurfacesCallback) PURE;
-    STDMETHOD(EnumOverlayZOrders)(THIS_ DWORD dwFlags, LPVOID lpContext, LPDDENUMSURFACESCALLBACK lpfnCallback) PURE;
+    STDMETHOD(EnumAttachedSurfaces)(THIS_ void *ctx, LPDDENUMSURFACESCALLBACK cb) PURE;
+    STDMETHOD(EnumOverlayZOrders)(THIS_ DWORD flags, void *ctx, LPDDENUMSURFACESCALLBACK cb) PURE;
     STDMETHOD(Flip)(THIS_ IDirectDrawSurface3 *dst_surface, DWORD flags) PURE;
     STDMETHOD(GetAttachedSurface)(THIS_ DDSCAPS *caps, IDirectDrawSurface3 **attachment) PURE;
     STDMETHOD(GetBltStatus)(THIS_ DWORD dwFlags) PURE;
@@ -2192,13 +2194,13 @@ DECLARE_INTERFACE_(IDirectDrawSurface3,IUnknown)
     STDMETHOD(SetColorKey)(THIS_ DWORD flags, DDCOLORKEY *color_key) PURE;
     STDMETHOD(SetOverlayPosition)(THIS_ LONG lX, LONG lY) PURE;
     STDMETHOD(SetPalette)(THIS_ IDirectDrawPalette *palette) PURE;
-    STDMETHOD(Unlock)(THIS_ LPVOID lpSurfaceData) PURE;
+    STDMETHOD(Unlock)(THIS_ void *data) PURE;
     STDMETHOD(UpdateOverlay)(THIS_ RECT *src_rect, IDirectDrawSurface3 *dst_surface, RECT *dst_rect,
             DWORD flags, DDOVERLAYFX *fx) PURE;
     STDMETHOD(UpdateOverlayDisplay)(THIS_ DWORD dwFlags) PURE;
     STDMETHOD(UpdateOverlayZOrder)(THIS_ DWORD flags, IDirectDrawSurface3 *reference_surface) PURE;
     /* added in v2 */
-    STDMETHOD(GetDDInterface)(THIS_ LPVOID *lplpDD) PURE;
+    STDMETHOD(GetDDInterface)(THIS_ void **ddraw) PURE;
     STDMETHOD(PageLock)(THIS_ DWORD dwFlags) PURE;
     STDMETHOD(PageUnlock)(THIS_ DWORD dwFlags) PURE;
     /* added in v3 */
@@ -2320,8 +2322,8 @@ DECLARE_INTERFACE_(IDirectDrawSurface4,IUnknown)
     STDMETHOD(BltFast)(THIS_ DWORD x, DWORD y, IDirectDrawSurface4 *src_surface,
             RECT *src_rect, DWORD flags) PURE;
     STDMETHOD(DeleteAttachedSurface)(THIS_ DWORD flags, IDirectDrawSurface4 *attachment) PURE;
-    STDMETHOD(EnumAttachedSurfaces)(THIS_ LPVOID lpContext, LPDDENUMSURFACESCALLBACK2 lpEnumSurfacesCallback) PURE;
-    STDMETHOD(EnumOverlayZOrders)(THIS_ DWORD dwFlags, LPVOID lpContext, LPDDENUMSURFACESCALLBACK2 lpfnCallback) PURE;
+    STDMETHOD(EnumAttachedSurfaces)(THIS_ void *ctx, LPDDENUMSURFACESCALLBACK2 cb) PURE;
+    STDMETHOD(EnumOverlayZOrders)(THIS_ DWORD flags, void *ctx, LPDDENUMSURFACESCALLBACK2 cb) PURE;
     STDMETHOD(Flip)(THIS_ IDirectDrawSurface4 *dst_surface, DWORD flags) PURE;
     STDMETHOD(GetAttachedSurface)(THIS_ DDSCAPS2 *caps, IDirectDrawSurface4 **attachment) PURE;
     STDMETHOD(GetBltStatus)(THIS_ DWORD dwFlags) PURE;
@@ -2349,14 +2351,14 @@ DECLARE_INTERFACE_(IDirectDrawSurface4,IUnknown)
     STDMETHOD(UpdateOverlayDisplay)(THIS_ DWORD dwFlags) PURE;
     STDMETHOD(UpdateOverlayZOrder)(THIS_ DWORD flags, IDirectDrawSurface4 *reference_surface) PURE;
     /* added in v2 */
-    STDMETHOD(GetDDInterface)(THIS_ LPVOID *lplpDD) PURE;
+    STDMETHOD(GetDDInterface)(THIS_ void **ddraw) PURE;
     STDMETHOD(PageLock)(THIS_ DWORD dwFlags) PURE;
     STDMETHOD(PageUnlock)(THIS_ DWORD dwFlags) PURE;
     /* added in v3 */
     STDMETHOD(SetSurfaceDesc)(THIS_ DDSURFACEDESC2 *surface_desc, DWORD flags) PURE;
     /* added in v4 */
-    STDMETHOD(SetPrivateData)(THIS_ REFGUID tag, LPVOID pData, DWORD cbSize, DWORD dwFlags) PURE;
-    STDMETHOD(GetPrivateData)(THIS_ REFGUID tag, LPVOID pBuffer, LPDWORD pcbBufferSize) PURE;
+    STDMETHOD(SetPrivateData)(THIS_ REFGUID tag, void *data, DWORD size, DWORD flags) PURE;
+    STDMETHOD(GetPrivateData)(THIS_ REFGUID tag, void *data, DWORD *size) PURE;
     STDMETHOD(FreePrivateData)(THIS_ REFGUID tag) PURE;
     STDMETHOD(GetUniquenessValue)(THIS_ LPDWORD pValue) PURE;
     STDMETHOD(ChangeUniquenessValue)(THIS) PURE;
@@ -2487,8 +2489,8 @@ DECLARE_INTERFACE_(IDirectDrawSurface7,IUnknown)
     STDMETHOD(BltFast)(THIS_ DWORD x, DWORD y, IDirectDrawSurface7 *src_surface,
             RECT *src_rect, DWORD flags) PURE;
     STDMETHOD(DeleteAttachedSurface)(THIS_ DWORD flags, IDirectDrawSurface7 *attachment) PURE;
-    STDMETHOD(EnumAttachedSurfaces)(THIS_ LPVOID lpContext, LPDDENUMSURFACESCALLBACK7 lpEnumSurfacesCallback) PURE;
-    STDMETHOD(EnumOverlayZOrders)(THIS_ DWORD dwFlags, LPVOID lpContext, LPDDENUMSURFACESCALLBACK7 lpfnCallback) PURE;
+    STDMETHOD(EnumAttachedSurfaces)(THIS_ void *ctx, LPDDENUMSURFACESCALLBACK7 cb) PURE;
+    STDMETHOD(EnumOverlayZOrders)(THIS_ DWORD flags, void *ctx, LPDDENUMSURFACESCALLBACK7 cb) PURE;
     STDMETHOD(Flip)(THIS_ IDirectDrawSurface7 *dst_surface, DWORD flags) PURE;
     STDMETHOD(GetAttachedSurface)(THIS_ DDSCAPS2 *caps, IDirectDrawSurface7 **attachment) PURE;
     STDMETHOD(GetBltStatus)(THIS_ DWORD dwFlags) PURE;
@@ -2516,14 +2518,14 @@ DECLARE_INTERFACE_(IDirectDrawSurface7,IUnknown)
     STDMETHOD(UpdateOverlayDisplay)(THIS_ DWORD dwFlags) PURE;
     STDMETHOD(UpdateOverlayZOrder)(THIS_ DWORD flags, IDirectDrawSurface7 *reference_surface) PURE;
     /* added in v2 */
-    STDMETHOD(GetDDInterface)(THIS_ LPVOID *lplpDD) PURE;
+    STDMETHOD(GetDDInterface)(THIS_ void **ddraw) PURE;
     STDMETHOD(PageLock)(THIS_ DWORD dwFlags) PURE;
     STDMETHOD(PageUnlock)(THIS_ DWORD dwFlags) PURE;
     /* added in v3 */
     STDMETHOD(SetSurfaceDesc)(THIS_ DDSURFACEDESC2 *surface_desc, DWORD flags) PURE;
     /* added in v4 */
-    STDMETHOD(SetPrivateData)(THIS_ REFGUID tag, LPVOID pData, DWORD cbSize, DWORD dwFlags) PURE;
-    STDMETHOD(GetPrivateData)(THIS_ REFGUID tag, LPVOID pBuffer, LPDWORD pcbBufferSize) PURE;
+    STDMETHOD(SetPrivateData)(THIS_ REFGUID tag, void *data, DWORD size, DWORD flags) PURE;
+    STDMETHOD(GetPrivateData)(THIS_ REFGUID tag, void *data, DWORD *size) PURE;
     STDMETHOD(FreePrivateData)(THIS_ REFGUID tag) PURE;
     STDMETHOD(GetUniquenessValue)(THIS_ LPDWORD pValue) PURE;
     STDMETHOD(ChangeUniquenessValue)(THIS) PURE;
@@ -2719,7 +2721,7 @@ DECLARE_INTERFACE_(IDirectDrawGammaControl,IUnknown)
 
 
 HRESULT WINAPI DirectDrawCreate(GUID *driver_guid, IDirectDraw **ddraw, IUnknown *outer);
-HRESULT WINAPI DirectDrawCreateEx(GUID*,LPVOID*,REFIID,IUnknown*);
+HRESULT WINAPI DirectDrawCreateEx(GUID *driver_guid, void **ddraw, REFIID interface_iid, IUnknown *outer);
 HRESULT WINAPI DirectDrawCreateClipper(DWORD flags, IDirectDrawClipper **clipper, IUnknown *outer);
 
 #ifdef __cplusplus

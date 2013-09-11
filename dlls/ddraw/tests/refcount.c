@@ -24,7 +24,8 @@
 #include "d3d.h"
 #include "unknwn.h"
 
-static HRESULT (WINAPI *pDirectDrawCreateEx)(LPGUID,LPVOID*,REFIID,LPUNKNOWN);
+static HRESULT (WINAPI *pDirectDrawCreateEx)(GUID *driver_guid,
+        void **ddraw, REFIID interface_iid, IUnknown *outer);
 
 static void init_function_pointers(void)
 {

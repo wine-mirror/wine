@@ -67,7 +67,8 @@ typedef struct
     char callback_name_strings[MAX_ENUMERATION_COUNT][100];
 } D3D7ELifetimeTest;
 
-static HRESULT (WINAPI *pDirectDrawCreateEx)(LPGUID,LPVOID*,REFIID,LPUNKNOWN);
+static HRESULT (WINAPI *pDirectDrawCreateEx)(GUID *driver_guid,
+        void **ddraw, REFIID interface_iid, IUnknown *outer);
 
 static void init_function_pointers(void)
 {

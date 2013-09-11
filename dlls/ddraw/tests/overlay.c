@@ -23,7 +23,8 @@
 #include "ddraw.h"
 #include "unknwn.h"
 
-static HRESULT (WINAPI *pDirectDrawCreateEx)(LPGUID,LPVOID*,REFIID,LPUNKNOWN);
+static HRESULT (WINAPI *pDirectDrawCreateEx)(GUID *driver_guid,
+        void **ddraw, REFIID interface_iid, IUnknown *outer);
 
 static IDirectDraw7 *ddraw = NULL;
 static IDirectDrawSurface7 *primary = NULL;

@@ -39,7 +39,8 @@ static IDirect3DViewport *Viewport;
 
 static BOOL refdevice = FALSE;
 
-static HRESULT (WINAPI *pDirectDrawCreateEx)(LPGUID,LPVOID*,REFIID,LPUNKNOWN);
+static HRESULT (WINAPI *pDirectDrawCreateEx)(GUID *driver_guid,
+        void **ddraw, REFIID interface_iid, IUnknown *outer);
 
 static BOOL color_match(D3DCOLOR c1, D3DCOLOR c2, BYTE max_diff)
 {

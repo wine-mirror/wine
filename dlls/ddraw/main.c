@@ -296,28 +296,25 @@ HRESULT WINAPI DECLSPEC_HOTPATCH DirectDrawCreate(GUID *driver_guid, IDirectDraw
  * Arguments, return values: See DDRAW_Create
  *
  ***********************************************************************/
-HRESULT WINAPI DECLSPEC_HOTPATCH
-DirectDrawCreateEx(GUID *guid,
-                   LPVOID *dd,
-                   REFIID iid,
-                   IUnknown *UnkOuter)
+HRESULT WINAPI DECLSPEC_HOTPATCH DirectDrawCreateEx(GUID *driver_guid,
+        void **ddraw, REFIID interface_iid, IUnknown *outer)
 {
     HRESULT hr;
 
-    TRACE("driver_guid %s, ddraw %p, interface_iid %s, outer_unknown %p.\n",
-            debugstr_guid(guid), dd, debugstr_guid(iid), UnkOuter);
+    TRACE("driver_guid %s, ddraw %p, interface_iid %s, outer %p.\n",
+            debugstr_guid(driver_guid), ddraw, debugstr_guid(interface_iid), outer);
 
-    if (!IsEqualGUID(iid, &IID_IDirectDraw7))
+    if (!IsEqualGUID(interface_iid, &IID_IDirectDraw7))
         return DDERR_INVALIDPARAMS;
 
     wined3d_mutex_lock();
-    hr = DDRAW_Create(guid, dd, UnkOuter, iid);
+    hr = DDRAW_Create(driver_guid, ddraw, outer, interface_iid);
     wined3d_mutex_unlock();
 
     if (SUCCEEDED(hr))
     {
-        IDirectDraw7 *ddraw7 = *(IDirectDraw7 **)dd;
-        hr = IDirectDraw7_Initialize(ddraw7, guid);
+        IDirectDraw7 *ddraw7 = *(IDirectDraw7 **)ddraw;
+        hr = IDirectDraw7_Initialize(ddraw7, driver_guid);
         if (FAILED(hr))
             IDirectDraw7_Release(ddraw7);
     }
@@ -551,7 +548,7 @@ struct ddraw_class_factory
     IClassFactory IClassFactory_iface;
 
     LONG ref;
-    HRESULT (*pfnCreateInstance)(IUnknown *pUnkOuter, REFIID iid, LPVOID *ppObj);
+    HRESULT (*pfnCreateInstance)(IUnknown *outer, REFIID iid, void **out);
 };
 
 static inline struct ddraw_class_factory *impl_from_IClassFactory(IClassFactory *iface)
@@ -687,30 +684,13 @@ static const IClassFactoryVtbl IClassFactory_Vtbl =
     ddraw_class_factory_LockServer
 };
 
-/*******************************************************************************
- * DllGetClassObject [DDRAW.@]
- * Retrieves class object from a DLL object
- *
- * NOTES
- *    Docs say returns STDAPI
- *
- * PARAMS
- *    rclsid [I] CLSID for the class object
- *    riid   [I] Reference to identifier of interface for class object
- *    ppv    [O] Address of variable to receive interface pointer for riid
- *
- * RETURNS
- *    Success: S_OK
- *    Failure: CLASS_E_CLASSNOTAVAILABLE, E_OUTOFMEMORY, E_INVALIDARG,
- *             E_UNEXPECTED
- */
-HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **out)
 {
     struct ddraw_class_factory *factory;
     unsigned int i;
 
-    TRACE("rclsid %s, riid %s, object %p.\n",
-            debugstr_guid(rclsid), debugstr_guid(riid), ppv);
+    TRACE("rclsid %s, riid %s, out %p.\n",
+            debugstr_guid(rclsid), debugstr_guid(riid), out);
 
     if (!IsEqualGUID(&IID_IClassFactory, riid)
             && !IsEqualGUID(&IID_IUnknown, riid))
@@ -736,7 +716,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 
     factory->pfnCreateInstance = object_creation[i].pfnCreateInstance;
 
-    *ppv = factory;
+    *out = factory;
     return S_OK;
 }
 
@@ -826,9 +806,8 @@ DestroyCallback(IDirectDrawSurface7 *surf,
  * app didn't release them properly(Gothic 2, Diablo 2, Moto racer, ...)
  *
  ***********************************************************************/
-BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD reason, LPVOID reserved)
+BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)
 {
-    TRACE("(%p,%x,%p)\n", hInstDLL, reason, reserved);
     switch (reason)
     {
     case DLL_PROCESS_ATTACH:
@@ -844,7 +823,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD reason, LPVOID reserved)
         wc.lpfnWndProc = DefWindowProcA;
         wc.cbClsExtra = 0;
         wc.cbWndExtra = 0;
-        wc.hInstance = hInstDLL;
+        wc.hInstance = inst;
         wc.hIcon = 0;
         wc.hCursor = 0;
         wc.hbrBackground = GetStockObject(BLACK_BRUSH);
@@ -899,8 +878,8 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD reason, LPVOID reserved)
         if (!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (const WCHAR *)&ddraw_self, &ddraw_self))
             ERR("Failed to get own module handle.\n");
 
-        instance = hInstDLL;
-        DisableThreadLibraryCalls(hInstDLL);
+        instance = inst;
+        DisableThreadLibraryCalls(inst);
         break;
     }
 
@@ -969,7 +948,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD reason, LPVOID reserved)
         }
 
         if (reserved) break;
-        UnregisterClassA(DDRAW_WINDOW_CLASS_NAME, hInstDLL);
+        UnregisterClassA(DDRAW_WINDOW_CLASS_NAME, inst);
     }
 
     return TRUE;
