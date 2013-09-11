@@ -69,6 +69,18 @@ static inline INT INTERNAL_YDSTOWS(DC *dc, INT height)
     return GDI_ROUND(floatHeight);
 }
 
+/* scale width and height but don't mirror them */
+
+static inline INT width_to_LP( DC *dc, INT width )
+{
+    return GDI_ROUND( (double)width * fabs( dc->xformVport2World.eM11 ));
+}
+
+static inline INT height_to_LP( DC *dc, INT height )
+{
+    return GDI_ROUND( (double)height * fabs( dc->xformVport2World.eM22 ));
+}
+
 static inline INT INTERNAL_XWSTODS(DC *dc, INT width)
 {
     POINT pt[2];
@@ -1372,26 +1384,17 @@ BOOL WINAPI GetTextMetricsW( HDC hdc, TEXTMETRICW *metrics )
 
         metrics->tmDigitizedAspectX = GetDeviceCaps(hdc, LOGPIXELSX);
         metrics->tmDigitizedAspectY = GetDeviceCaps(hdc, LOGPIXELSY);
-
-#define WDPTOLP(x) ((x<0)?					\
-		(-abs(INTERNAL_XDSTOWS(dc, (x)))):		\
-		(abs(INTERNAL_XDSTOWS(dc, (x)))))
-#define HDPTOLP(y) ((y<0)?					\
-		(-abs(INTERNAL_YDSTOWS(dc, (y)))):		\
-		(abs(INTERNAL_YDSTOWS(dc, (y)))))
-
-        metrics->tmHeight           = HDPTOLP(metrics->tmHeight);
-        metrics->tmAscent           = HDPTOLP(metrics->tmAscent);
-        metrics->tmDescent          = HDPTOLP(metrics->tmDescent);
-        metrics->tmInternalLeading  = HDPTOLP(metrics->tmInternalLeading);
-        metrics->tmExternalLeading  = HDPTOLP(metrics->tmExternalLeading);
-        metrics->tmAveCharWidth     = WDPTOLP(metrics->tmAveCharWidth);
-        metrics->tmMaxCharWidth     = WDPTOLP(metrics->tmMaxCharWidth);
-        metrics->tmOverhang         = WDPTOLP(metrics->tmOverhang);
+        metrics->tmHeight           = height_to_LP( dc, metrics->tmHeight );
+        metrics->tmAscent           = height_to_LP( dc, metrics->tmAscent );
+        metrics->tmDescent          = height_to_LP( dc, metrics->tmDescent );
+        metrics->tmInternalLeading  = height_to_LP( dc, metrics->tmInternalLeading );
+        metrics->tmExternalLeading  = height_to_LP( dc, metrics->tmExternalLeading );
+        metrics->tmAveCharWidth     = width_to_LP( dc, metrics->tmAveCharWidth );
+        metrics->tmMaxCharWidth     = width_to_LP( dc, metrics->tmMaxCharWidth );
+        metrics->tmOverhang         = width_to_LP( dc, metrics->tmOverhang );
         ret = TRUE;
-#undef WDPTOLP
-#undef HDPTOLP
-    TRACE("text metrics:\n"
+
+        TRACE("text metrics:\n"
           "    Weight = %03i\t FirstChar = %i\t AveCharWidth = %i\n"
           "    Italic = % 3i\t LastChar = %i\t\t MaxCharWidth = %i\n"
           "    UnderLined = %01i\t DefaultChar = %i\t Overhang = %i\n"
@@ -1622,46 +1625,38 @@ UINT WINAPI GetOutlineTextMetricsW(
     {
         output->otmTextMetrics.tmDigitizedAspectX = GetDeviceCaps(hdc, LOGPIXELSX);
         output->otmTextMetrics.tmDigitizedAspectY = GetDeviceCaps(hdc, LOGPIXELSY);
-
-#define WDPTOLP(x) ((x<0)?					\
-		(-abs(INTERNAL_XDSTOWS(dc, (x)))):		\
-		(abs(INTERNAL_XDSTOWS(dc, (x)))))
-#define HDPTOLP(y) ((y<0)?					\
-		(-abs(INTERNAL_YDSTOWS(dc, (y)))):		\
-		(abs(INTERNAL_YDSTOWS(dc, (y)))))
-
-        output->otmTextMetrics.tmHeight           = HDPTOLP(output->otmTextMetrics.tmHeight);
-        output->otmTextMetrics.tmAscent           = HDPTOLP(output->otmTextMetrics.tmAscent);
-        output->otmTextMetrics.tmDescent          = HDPTOLP(output->otmTextMetrics.tmDescent);
-        output->otmTextMetrics.tmInternalLeading  = HDPTOLP(output->otmTextMetrics.tmInternalLeading);
-        output->otmTextMetrics.tmExternalLeading  = HDPTOLP(output->otmTextMetrics.tmExternalLeading);
-        output->otmTextMetrics.tmAveCharWidth     = WDPTOLP(output->otmTextMetrics.tmAveCharWidth);
-        output->otmTextMetrics.tmMaxCharWidth     = WDPTOLP(output->otmTextMetrics.tmMaxCharWidth);
-        output->otmTextMetrics.tmOverhang         = WDPTOLP(output->otmTextMetrics.tmOverhang);
-        output->otmAscent = HDPTOLP(output->otmAscent);
-        output->otmDescent = HDPTOLP(output->otmDescent);
-        output->otmLineGap = abs(INTERNAL_YDSTOWS(dc,output->otmLineGap));
-        output->otmsCapEmHeight = abs(INTERNAL_YDSTOWS(dc,output->otmsCapEmHeight));
-        output->otmsXHeight = abs(INTERNAL_YDSTOWS(dc,output->otmsXHeight));
-        output->otmrcFontBox.top = HDPTOLP(output->otmrcFontBox.top);
-        output->otmrcFontBox.bottom = HDPTOLP(output->otmrcFontBox.bottom);
-        output->otmrcFontBox.left = WDPTOLP(output->otmrcFontBox.left);
-        output->otmrcFontBox.right = WDPTOLP(output->otmrcFontBox.right);
-        output->otmMacAscent = HDPTOLP(output->otmMacAscent);
-        output->otmMacDescent = HDPTOLP(output->otmMacDescent);
-        output->otmMacLineGap = abs(INTERNAL_YDSTOWS(dc,output->otmMacLineGap));
-        output->otmptSubscriptSize.x = WDPTOLP(output->otmptSubscriptSize.x);
-        output->otmptSubscriptSize.y = HDPTOLP(output->otmptSubscriptSize.y);
-        output->otmptSubscriptOffset.x = WDPTOLP(output->otmptSubscriptOffset.x);
-        output->otmptSubscriptOffset.y = HDPTOLP(output->otmptSubscriptOffset.y);
-        output->otmptSuperscriptSize.x = WDPTOLP(output->otmptSuperscriptSize.x);
-        output->otmptSuperscriptSize.y = HDPTOLP(output->otmptSuperscriptSize.y);
-        output->otmptSuperscriptOffset.x = WDPTOLP(output->otmptSuperscriptOffset.x);
-        output->otmptSuperscriptOffset.y = HDPTOLP(output->otmptSuperscriptOffset.y);
-        output->otmsStrikeoutSize = abs(INTERNAL_YDSTOWS(dc,output->otmsStrikeoutSize));
-        output->otmsStrikeoutPosition = HDPTOLP(output->otmsStrikeoutPosition);
-        output->otmsUnderscoreSize = HDPTOLP(output->otmsUnderscoreSize);
-        output->otmsUnderscorePosition = HDPTOLP(output->otmsUnderscorePosition);
+        output->otmTextMetrics.tmHeight           = height_to_LP( dc, output->otmTextMetrics.tmHeight );
+        output->otmTextMetrics.tmAscent           = height_to_LP( dc, output->otmTextMetrics.tmAscent );
+        output->otmTextMetrics.tmDescent          = height_to_LP( dc, output->otmTextMetrics.tmDescent );
+        output->otmTextMetrics.tmInternalLeading  = height_to_LP( dc, output->otmTextMetrics.tmInternalLeading );
+        output->otmTextMetrics.tmExternalLeading  = height_to_LP( dc, output->otmTextMetrics.tmExternalLeading );
+        output->otmTextMetrics.tmAveCharWidth     = width_to_LP( dc, output->otmTextMetrics.tmAveCharWidth );
+        output->otmTextMetrics.tmMaxCharWidth     = width_to_LP( dc, output->otmTextMetrics.tmMaxCharWidth );
+        output->otmTextMetrics.tmOverhang         = width_to_LP( dc, output->otmTextMetrics.tmOverhang );
+        output->otmAscent                = height_to_LP( dc, output->otmAscent);
+        output->otmDescent               = height_to_LP( dc, output->otmDescent);
+        output->otmLineGap               = abs(INTERNAL_YDSTOWS(dc,output->otmLineGap));
+        output->otmsCapEmHeight          = abs(INTERNAL_YDSTOWS(dc,output->otmsCapEmHeight));
+        output->otmsXHeight              = abs(INTERNAL_YDSTOWS(dc,output->otmsXHeight));
+        output->otmrcFontBox.top         = height_to_LP( dc, output->otmrcFontBox.top);
+        output->otmrcFontBox.bottom      = height_to_LP( dc, output->otmrcFontBox.bottom);
+        output->otmrcFontBox.left        = width_to_LP( dc, output->otmrcFontBox.left);
+        output->otmrcFontBox.right       = width_to_LP( dc, output->otmrcFontBox.right);
+        output->otmMacAscent             = height_to_LP( dc, output->otmMacAscent);
+        output->otmMacDescent            = height_to_LP( dc, output->otmMacDescent);
+        output->otmMacLineGap            = abs(INTERNAL_YDSTOWS(dc,output->otmMacLineGap));
+        output->otmptSubscriptSize.x     = width_to_LP( dc, output->otmptSubscriptSize.x);
+        output->otmptSubscriptSize.y     = height_to_LP( dc, output->otmptSubscriptSize.y);
+        output->otmptSubscriptOffset.x   = width_to_LP( dc, output->otmptSubscriptOffset.x);
+        output->otmptSubscriptOffset.y   = height_to_LP( dc, output->otmptSubscriptOffset.y);
+        output->otmptSuperscriptSize.x   = width_to_LP( dc, output->otmptSuperscriptSize.x);
+        output->otmptSuperscriptSize.y   = height_to_LP( dc, output->otmptSuperscriptSize.y);
+        output->otmptSuperscriptOffset.x = width_to_LP( dc, output->otmptSuperscriptOffset.x);
+        output->otmptSuperscriptOffset.y = height_to_LP( dc, output->otmptSuperscriptOffset.y);
+        output->otmsStrikeoutSize        = abs(INTERNAL_YDSTOWS(dc,output->otmsStrikeoutSize));
+        output->otmsStrikeoutPosition    = height_to_LP( dc, output->otmsStrikeoutPosition);
+        output->otmsUnderscoreSize       = height_to_LP( dc, output->otmsUnderscoreSize);
+        output->otmsUnderscorePosition   = height_to_LP( dc, output->otmsUnderscorePosition);
 #undef WDPTOLP
 #undef HDPTOLP
         if(output != lpOTM)
@@ -1748,13 +1743,9 @@ BOOL WINAPI GetCharWidth32W( HDC hdc, UINT firstChar, UINT lastChar,
 
     if (ret)
     {
-#define WDPTOLP(x) ((x<0)?					\
-		(-abs(INTERNAL_XDSTOWS(dc, (x)))):		\
-		(abs(INTERNAL_XDSTOWS(dc, (x)))))
         /* convert device units to logical */
         for( i = firstChar; i <= lastChar; i++, buffer++ )
-            *buffer = WDPTOLP(*buffer);
-#undef WDPTOLP
+            *buffer = width_to_LP( dc, *buffer );
     }
     release_dc_ptr( dc );
     return ret;
