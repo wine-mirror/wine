@@ -466,7 +466,7 @@
 @ stub -arch=win32 ?base@streambuf@@IBEPADXZ
 @ stub -arch=win64 ?base@streambuf@@IEBAPEADXZ
 # @ extern ?basefield@ios@@2JB
-@ thiscall -arch=win32 ?before@type_info@@QBEHABV1@@Z(ptr ptr) msvcrt.?before@type_info@@QBEHABV1@@Z
+@ thiscall -arch=i386 ?before@type_info@@QBEHABV1@@Z(ptr ptr) msvcrt.?before@type_info@@QBEHABV1@@Z
 @ cdecl -arch=win64 ?before@type_info@@QEBAHAEBV1@@Z(ptr ptr) msvcrt.?before@type_info@@QEBAHAEBV1@@Z
 # @ extern ?binary@filebuf@@2HB
 @ stub ?bitalloc@ios@@SAJXZ
