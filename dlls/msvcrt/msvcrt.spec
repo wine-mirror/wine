@@ -107,7 +107,8 @@
 @ cdecl ?_set_new_mode@@YAHH@Z(long) MSVCRT__set_new_mode
 @ cdecl -arch=win32 ?_set_se_translator@@YAP6AXIPAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z(ptr) MSVCRT__set_se_translator
 @ cdecl -arch=win64 ?_set_se_translator@@YAP6AXIPEAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z(ptr) MSVCRT__set_se_translator
-@ thiscall -arch=win32 ?before@type_info@@QBEHABV1@@Z(ptr ptr) MSVCRT_type_info_before
+@ cdecl -arch=arm ?before@type_info@@QBA_NABV1@@Z(ptr ptr) MSVCRT_type_info_before
+@ thiscall -arch=i386 ?before@type_info@@QBEHABV1@@Z(ptr ptr) MSVCRT_type_info_before
 @ cdecl -arch=win64 ?before@type_info@@QEBAHAEBV1@@Z(ptr ptr) MSVCRT_type_info_before
 @ thiscall -arch=win32 ?name@type_info@@QBEPBDXZ(ptr) MSVCRT_type_info_name
 @ cdecl -arch=win64 ?name@type_info@@QEBAPEBDXZ(ptr) MSVCRT_type_info_name
