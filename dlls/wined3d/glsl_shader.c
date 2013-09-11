@@ -5807,7 +5807,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
         struct vs_compile_args vs_compile_args;
         vshader = state->vertex_shader;
 
-        find_vs_compile_args(state, vshader, &vs_compile_args);
+        find_vs_compile_args(state, vshader, device->stream_info.swizzle_map, &vs_compile_args);
         vs_id = find_glsl_vshader(context, &priv->shader_buffer, vshader, &vs_compile_args);
         vs_list = &vshader->linked_programs;
 

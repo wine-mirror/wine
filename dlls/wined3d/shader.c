@@ -1817,14 +1817,14 @@ HRESULT CDECL wined3d_shader_set_local_constants_float(struct wined3d_shader *sh
     return WINED3D_OK;
 }
 
-void find_vs_compile_args(const struct wined3d_state *state,
-        const struct wined3d_shader *shader, struct vs_compile_args *args)
+void find_vs_compile_args(const struct wined3d_state *state, const struct wined3d_shader *shader,
+        WORD swizzle_map, struct vs_compile_args *args)
 {
     args->fog_src = state->render_states[WINED3D_RS_FOGTABLEMODE]
             == WINED3D_FOG_NONE ? VS_FOG_COORD : VS_FOG_Z;
     args->clip_enabled = state->render_states[WINED3D_RS_CLIPPING]
             && state->render_states[WINED3D_RS_CLIPPLANEENABLE];
-    args->swizzle_map = shader->device->stream_info.swizzle_map;
+    args->swizzle_map = swizzle_map;
 }
 
 static BOOL match_usage(BYTE usage1, BYTE usage_idx1, BYTE usage2, BYTE usage_idx2)
