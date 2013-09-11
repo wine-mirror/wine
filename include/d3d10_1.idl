@@ -22,6 +22,8 @@ import "ocidl.idl";
 import "d3d10.idl";
 cpp_quote("#include <d3d10_1shader.h>")
 
+const UINT D3D10_1_SHADER_MAJOR_VERSION = 4;
+const UINT D3D10_1_SHADER_MINOR_VERSION = 1;
 
 typedef enum D3D10_FEATURE_LEVEL1
 {
