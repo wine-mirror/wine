@@ -2653,7 +2653,7 @@ static RPC_STATUS do_authorization(HINTERNET request, SEC_WCHAR *servername,
         in_desc.pBuffers  = &in;
 
         p = auth_value + scheme_len;
-        if (*p == ' ')
+        if (!first && *p == ' ')
         {
             int len = strlenW(++p);
             in.cbBuffer = decode_base64(p, len, NULL);
