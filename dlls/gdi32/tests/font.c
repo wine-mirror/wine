@@ -42,6 +42,8 @@ static BOOL  (WINAPI *pGetCharABCWidthsI)(HDC hdc, UINT first, UINT count, LPWOR
 static BOOL  (WINAPI *pGetCharABCWidthsA)(HDC hdc, UINT first, UINT last, LPABC abc);
 static BOOL  (WINAPI *pGetCharABCWidthsW)(HDC hdc, UINT first, UINT last, LPABC abc);
 static BOOL  (WINAPI *pGetCharABCWidthsFloatW)(HDC hdc, UINT first, UINT last, LPABCFLOAT abc);
+static BOOL  (WINAPI *pGetCharWidth32A)(HDC hdc, UINT first, UINT last, LPINT buffer);
+static BOOL  (WINAPI *pGetCharWidth32W)(HDC hdc, UINT first, UINT last, LPINT buffer);
 static DWORD (WINAPI *pGetFontUnicodeRanges)(HDC hdc, LPGLYPHSET lpgs);
 static DWORD (WINAPI *pGetGlyphIndicesA)(HDC hdc, LPCSTR lpstr, INT count, LPWORD pgi, DWORD flags);
 static DWORD (WINAPI *pGetGlyphIndicesW)(HDC hdc, LPCWSTR lpstr, INT count, LPWORD pgi, DWORD flags);
@@ -83,6 +85,8 @@ static void init(void)
     pGetCharABCWidthsA = (void *)GetProcAddress(hgdi32, "GetCharABCWidthsA");
     pGetCharABCWidthsW = (void *)GetProcAddress(hgdi32, "GetCharABCWidthsW");
     pGetCharABCWidthsFloatW = (void *)GetProcAddress(hgdi32, "GetCharABCWidthsFloatW");
+    pGetCharWidth32A = (void *)GetProcAddress(hgdi32, "GetCharWidth32A");
+    pGetCharWidth32W = (void *)GetProcAddress(hgdi32, "GetCharWidth32W");
     pGetFontUnicodeRanges = (void *)GetProcAddress(hgdi32, "GetFontUnicodeRanges");
     pGetGlyphIndicesA = (void *)GetProcAddress(hgdi32, "GetGlyphIndicesA");
     pGetGlyphIndicesW = (void *)GetProcAddress(hgdi32, "GetGlyphIndicesW");
@@ -5348,6 +5352,109 @@ static void test_vertical_order(void)
     DeleteDC( hdc );
 }
 
+static void test_GetCharWidth32(void)
+{
+    BOOL ret;
+    HDC hdc;
+    LOGFONTA lf;
+    HFONT hfont;
+    INT bufferA;
+    INT bufferW;
+    HWND hwnd;
+
+    if (!pGetCharWidth32A || !pGetCharWidth32W)
+    {
+        win_skip("GetCharWidth32A/W not available on this platform\n");
+        return;
+    }
+
+    memset(&lf, 0, sizeof(lf));
+    strcpy(lf.lfFaceName, "System");
+    lf.lfHeight = 20;
+
+    hfont = CreateFontIndirectA(&lf);
+    hdc = GetDC(0);
+    hfont = SelectObject(hdc, hfont);
+
+    ret = pGetCharWidth32W(hdc, 'a', 'a', &bufferW);
+    ok(ret, "GetCharWidth32W should have succeeded\n");
+    ret = pGetCharWidth32A(hdc, 'a', 'a', &bufferA);
+    ok(ret, "GetCharWidth32A should have succeeded\n");
+    ok (bufferA == bufferW, "Widths should be the same\n");
+    ok (bufferA > 0," Width should be greater than zero\n");
+
+    hfont = SelectObject(hdc, hfont);
+    DeleteObject(hfont);
+    ReleaseDC(NULL, hdc);
+
+    memset(&lf, 0, sizeof(lf));
+    strcpy(lf.lfFaceName, "Tahoma");
+    lf.lfHeight = 20;
+
+    hfont = CreateFontIndirectA(&lf);
+    hwnd = CreateWindowEx(0, "static", "", WS_POPUP, 0,0,100,100,
+                           0, 0, 0, NULL);
+    hdc = GetDC(hwnd);
+    SetMapMode( hdc, MM_ANISOTROPIC );
+    SelectObject(hdc, hfont);
+
+    ret = pGetCharWidth32W(hdc, 'a', 'a', &bufferW);
+    ok(ret, "GetCharWidth32W should have succeeded\n");
+    ok (bufferW > 0," Width should be greater than zero\n");
+    SetWindowExtEx(hdc, -1,-1,NULL);
+    SetGraphicsMode(hdc, GM_COMPATIBLE);
+    ret = pGetCharWidth32W(hdc, 'a', 'a', &bufferW);
+    ok(ret, "GetCharWidth32W should have succeeded\n");
+    ok (bufferW > 0," Width should be greater than zero\n");
+    SetGraphicsMode(hdc, GM_ADVANCED);
+    ret = pGetCharWidth32W(hdc, 'a', 'a', &bufferW);
+    ok(ret, "GetCharWidth32W should have succeeded\n");
+    todo_wine ok (bufferW > 0," Width should be greater than zero\n");
+    SetWindowExtEx(hdc, 1,1,NULL);
+    SetGraphicsMode(hdc, GM_COMPATIBLE);
+    ret = pGetCharWidth32W(hdc, 'a', 'a', &bufferW);
+    ok(ret, "GetCharWidth32W should have succeeded\n");
+    ok (bufferW > 0," Width should be greater than zero\n");
+    SetGraphicsMode(hdc, GM_ADVANCED);
+    ret = pGetCharWidth32W(hdc, 'a', 'a', &bufferW);
+    ok(ret, "GetCharWidth32W should have succeeded\n");
+    ok (bufferW > 0," Width should be greater than zero\n");
+
+    ReleaseDC(hwnd, hdc);
+    DestroyWindow(hwnd);
+
+    hwnd = CreateWindowEx(WS_EX_LAYOUTRTL, "static", "", WS_POPUP, 0,0,100,100,
+                           0, 0, 0, NULL);
+    hdc = GetDC(hwnd);
+    SetMapMode( hdc, MM_ANISOTROPIC );
+    SelectObject(hdc, hfont);
+
+    ret = pGetCharWidth32W(hdc, 'a', 'a', &bufferW);
+    ok(ret, "GetCharWidth32W should have succeeded\n");
+    ok (bufferW > 0," Width should be greater than zero\n");
+    SetWindowExtEx(hdc, -1,-1,NULL);
+    SetGraphicsMode(hdc, GM_COMPATIBLE);
+    ret = pGetCharWidth32W(hdc, 'a', 'a', &bufferW);
+    ok(ret, "GetCharWidth32W should have succeeded\n");
+    ok (bufferW > 0," Width should be greater than zero\n");
+    SetGraphicsMode(hdc, GM_ADVANCED);
+    ret = pGetCharWidth32W(hdc, 'a', 'a', &bufferW);
+    ok(ret, "GetCharWidth32W should have succeeded\n");
+    ok (bufferW > 0," Width should be greater than zero\n");
+    SetWindowExtEx(hdc, 1,1,NULL);
+    SetGraphicsMode(hdc, GM_COMPATIBLE);
+    ret = pGetCharWidth32W(hdc, 'a', 'a', &bufferW);
+    ok(ret, "GetCharWidth32W should have succeeded\n");
+    ok (bufferW > 0," Width should be greater than zero\n");
+    SetGraphicsMode(hdc, GM_ADVANCED);
+    ret = pGetCharWidth32W(hdc, 'a', 'a', &bufferW);
+    ok(ret, "GetCharWidth32W should have succeeded\n");
+    todo_wine ok (bufferW > 0," Width should be greater than zero\n");
+
+    ReleaseDC(hwnd, hdc);
+    DestroyWindow(hwnd);
+    DeleteObject(hfont);
+}
 
 START_TEST(font)
 {
@@ -5407,6 +5514,7 @@ START_TEST(font)
     test_east_asian_font_selection();
     test_max_height();
     test_vertical_order();
+    test_GetCharWidth32();
 
     /* These tests should be last test until RemoveFontResource
      * is properly implemented.
