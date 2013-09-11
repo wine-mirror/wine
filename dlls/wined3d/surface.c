@@ -4065,13 +4065,6 @@ HRESULT CDECL wined3d_surface_flip(struct wined3d_surface *surface, struct wined
         return WINEDDERR_NOTFLIPPABLE;
     }
 
-    /* Flipping is only supported on render targets and overlays. */
-    if (!(surface->resource.usage & (WINED3DUSAGE_RENDERTARGET | WINED3DUSAGE_OVERLAY)))
-    {
-        WARN("Tried to flip a non-render target, non-overlay surface.\n");
-        return WINEDDERR_NOTFLIPPABLE;
-    }
-
     flip_surface(surface, override);
 
     /* Update overlays if they're visible. */
