@@ -2803,7 +2803,9 @@ static RPC_STATUS authorize_request(RpcConnection_http *httpc, HINTERNET request
         drain_content(request);
     }
 
-    HttpAddRequestHeadersW(request, authW, -1, HTTP_ADDREQ_FLAG_REPLACE);
+    if (info->scheme != RPC_C_HTTP_AUTHN_SCHEME_BASIC)
+        HttpAddRequestHeadersW(request, authW, -1, HTTP_ADDREQ_FLAG_REPLACE);
+
     destroy_authinfo(info);
     return status;
 }
