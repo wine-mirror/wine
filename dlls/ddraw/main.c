@@ -819,19 +819,6 @@ DestroyCallback(IDirectDrawSurface7 *surf,
 }
 
 /***********************************************************************
- * get_config_key
- *
- * Reads a config key from the registry. Taken from WineD3D
- *
- ***********************************************************************/
-static inline DWORD get_config_key(HKEY defkey, HKEY appkey, const char* name, char* buffer, DWORD size)
-{
-    if (0 != appkey && !RegQueryValueExA( appkey, name, 0, NULL, (LPBYTE) buffer, &size )) return 0;
-    if (0 != defkey && !RegQueryValueExA( defkey, name, 0, NULL, (LPBYTE) buffer, &size )) return 0;
-    return ERROR_FILE_NOT_FOUND;
-}
-
-/***********************************************************************
  * DllMain (DDRAW.0)
  *
  * Could be used to register DirectDraw drivers, if we have more than
