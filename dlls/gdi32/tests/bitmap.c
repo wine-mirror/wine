@@ -1207,6 +1207,49 @@ static void test_dib_formats(void)
     ret = GetDIBits(hdc, hbmp, 0, 0, NULL, bi, DIB_PAL_COLORS+2);
     ok( !ret, "GetDIBits succeeded with DIB_PAL_COLORS+2\n" );
 
+    bi->bmiHeader.biWidth = 0x4000;
+    bi->bmiHeader.biHeight = 0x4000;
+    bi->bmiHeader.biBitCount = 1;
+    bi->bmiHeader.biCompression = BI_RGB;
+    hdib = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, &bits, NULL, 0);
+    ok( hdib != NULL, "CreateDIBSection failed with large size\n" );
+    DeleteObject( hdib );
+
+    bi->bmiHeader.biWidth = 0x8001;
+    bi->bmiHeader.biHeight = 0x8001;
+    bi->bmiHeader.biBitCount = 32;
+    bi->bmiHeader.biCompression = BI_RGB;
+    hdib = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, &bits, NULL, 0);
+    ok( hdib == NULL, "CreateDIBSection succeeded with size overflow\n" );
+
+    bi->bmiHeader.biWidth = 1;
+    bi->bmiHeader.biHeight = 0x40000001;
+    bi->bmiHeader.biBitCount = 32;
+    bi->bmiHeader.biCompression = BI_RGB;
+    hdib = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, &bits, NULL, 0);
+    ok( hdib == NULL, "CreateDIBSection succeeded with size overflow\n" );
+
+    bi->bmiHeader.biWidth = 2;
+    bi->bmiHeader.biHeight = 0x40000001;
+    bi->bmiHeader.biBitCount = 16;
+    bi->bmiHeader.biCompression = BI_RGB;
+    hdib = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, &bits, NULL, 0);
+    ok( hdib == NULL, "CreateDIBSection succeeded with size overflow\n" );
+
+    bi->bmiHeader.biWidth = 0x40000001;
+    bi->bmiHeader.biHeight = 1;
+    bi->bmiHeader.biBitCount = 32;
+    bi->bmiHeader.biCompression = BI_RGB;
+    hdib = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, &bits, NULL, 0);
+    ok( hdib == NULL, "CreateDIBSection succeeded with size overflow\n" );
+
+    bi->bmiHeader.biWidth = 0x40000001;
+    bi->bmiHeader.biHeight = 4;
+    bi->bmiHeader.biBitCount = 8;
+    bi->bmiHeader.biCompression = BI_RGB;
+    hdib = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, &bits, NULL, 0);
+    ok( hdib == NULL, "CreateDIBSection succeeded with size overflow\n" );
+
     DeleteDC( memdc );
     DeleteObject( hbmp );
     ReleaseDC( 0, hdc );
