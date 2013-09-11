@@ -2025,11 +2025,9 @@ static HRESULT geometryshader_init(struct wined3d_shader *shader, struct wined3d
     return WINED3D_OK;
 }
 
-void find_ps_compile_args(const struct wined3d_state *state,
-        const struct wined3d_shader *shader, struct ps_compile_args *args)
+void find_ps_compile_args(const struct wined3d_state *state, const struct wined3d_shader *shader,
+        BOOL position_transformed, struct ps_compile_args *args, const struct wined3d_gl_info *gl_info)
 {
-    struct wined3d_device *device = shader->device;
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct wined3d_texture *texture;
     UINT i;
 
@@ -2158,7 +2156,7 @@ void find_ps_compile_args(const struct wined3d_state *state,
     }
     if (shader->reg_maps.shader_version.major >= 3)
     {
-        if (device->stream_info.position_transformed)
+        if (position_transformed)
             args->vp_mode = pretransformed;
         else if (use_vs(state))
             args->vp_mode = vertexshader;
@@ -2174,7 +2172,7 @@ void find_ps_compile_args(const struct wined3d_state *state,
             switch (state->render_states[WINED3D_RS_FOGTABLEMODE])
             {
                 case WINED3D_FOG_NONE:
-                    if (device->stream_info.position_transformed || use_vs(state))
+                    if (position_transformed || use_vs(state))
                     {
                         args->fog = WINED3D_FFP_PS_FOG_LINEAR;
                         break;
