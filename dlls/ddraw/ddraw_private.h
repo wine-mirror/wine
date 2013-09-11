@@ -306,7 +306,7 @@ struct d3d_device
     DWORD vertex_type;
     DWORD render_flags;
     DWORD nb_vertices;
-    LPBYTE sysmem_vertex_buffer;
+    BYTE *sysmem_vertex_buffer;
     DWORD vertex_size;
     DWORD buffer_size;
 

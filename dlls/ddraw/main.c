@@ -860,7 +860,7 @@ BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)
             DWORD type, data, size;
 
             size = sizeof(data);
-            if (!RegQueryValueExA( hkey, "ForceRefreshRate", NULL, &type, (LPBYTE)&data, &size ) && type == REG_DWORD)
+            if (!RegQueryValueExA(hkey, "ForceRefreshRate", NULL, &type, (BYTE *)&data, &size) && type == REG_DWORD)
             {
                 TRACE("ForceRefreshRate set; overriding refresh rate to %d Hz\n", data);
                 force_refresh_rate = data;
