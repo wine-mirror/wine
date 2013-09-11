@@ -128,6 +128,11 @@ static BOOL is_valid_dib_format( const BITMAPINFOHEADER *info, BOOL allow_compre
 
     if (!info->biPlanes) return FALSE;
 
+    /* check for size overflow */
+    if (!info->biBitCount) return FALSE;
+    if (UINT_MAX / info->biBitCount < info->biWidth) return FALSE;
+    if (UINT_MAX / get_dib_stride( info->biWidth, info->biBitCount ) < abs( info->biHeight )) return FALSE;
+
     switch (info->biBitCount)
     {
     case 1:
