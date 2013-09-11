@@ -395,6 +395,7 @@ static struct WS_hostent *WS_create_he(char *name, int aliases, int aliases_size
 static struct WS_hostent *WS_dup_he(const struct hostent* p_he);
 static struct WS_protoent *WS_dup_pe(const struct protoent* p_pe);
 static struct WS_servent *WS_dup_se(const struct servent* p_se);
+static int ws_protocol_info(SOCKET s, int unicode, WSAPROTOCOL_INFOW *buffer, int *size);
 
 int WSAIOCTL_GetInterfaceCount(void);
 int WSAIOCTL_GetInterfaceName(int intNumber, char *intName);
@@ -1549,18 +1550,35 @@ static int ws_sockaddr_u2ws(const struct sockaddr* uaddr, struct WS_sockaddr* ws
 static INT WS_DuplicateSocket(BOOL unicode, SOCKET s, DWORD dwProcessId, LPWSAPROTOCOL_INFOW lpProtocolInfo)
 {
     HANDLE hProcess;
+    int size;
+    WSAPROTOCOL_INFOW infow;
 
     TRACE("(unicode %d, socket %04lx, processid %x, buffer %p)\n",
           unicode, s, dwProcessId, lpProtocolInfo);
-    memset(lpProtocolInfo, 0, unicode ? sizeof(WSAPROTOCOL_INFOW) : sizeof(WSAPROTOCOL_INFOA));
-    /* FIXME: WS_getsockopt(s, WS_SOL_SOCKET, SO_PROTOCOL_INFO, lpProtocolInfo, sizeof(*lpProtocolInfo)); */
+
+    if (!ws_protocol_info(s, unicode, &infow, &size))
+        return SOCKET_ERROR;
+
+    if (!(hProcess = OpenProcess(PROCESS_DUP_HANDLE, FALSE, dwProcessId)))
+    {
+        SetLastError(WSAEINVAL);
+        return SOCKET_ERROR;
+    }
+
+    if (!lpProtocolInfo)
+    {
+        CloseHandle(hProcess);
+        SetLastError(WSAEFAULT);
+        return SOCKET_ERROR;
+    }
+
     /* I don't know what the real Windoze does next, this is a hack */
     /* ...we could duplicate and then use ConvertToGlobalHandle on the duplicate, then let
      * the target use the global duplicate, or we could copy a reference to us to the structure
      * and let the target duplicate it from us, but let's do it as simple as possible */
-    hProcess = OpenProcess(PROCESS_DUP_HANDLE, FALSE, dwProcessId);
+    memcpy(lpProtocolInfo, &infow, size);
     DuplicateHandle(GetCurrentProcess(), SOCKET2HANDLE(s),
-                    hProcess, (LPHANDLE)&lpProtocolInfo->dwCatalogEntryId,
+                    hProcess, (LPHANDLE)&lpProtocolInfo->dwServiceFlags3,
                     0, FALSE, DUPLICATE_SAME_ACCESS);
     CloseHandle(hProcess);
     lpProtocolInfo->dwServiceFlags4 = 0xff00ff00; /* magic */
@@ -1769,7 +1787,8 @@ static BOOL ws_protocol_info(SOCKET s, int unicode, WSAPROTOCOL_INFOW *buffer, i
 
     if (status)
     {
-        set_error(status);
+        unsigned int err = NtStatusToWSAError( status );
+        SetLastError( err == WSAEBADF ? WSAENOTSOCK : err );
         return FALSE;
     }
 
@@ -5855,7 +5874,7 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
 
     /* hack for WSADuplicateSocket */
     if (lpProtocolInfo && lpProtocolInfo->dwServiceFlags4 == 0xff00ff00) {
-      ret = lpProtocolInfo->dwCatalogEntryId;
+      ret = lpProtocolInfo->dwServiceFlags3;
       TRACE("\tgot duplicate %04lx\n", ret);
       return ret;
     }
