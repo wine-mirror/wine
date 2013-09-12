@@ -138,7 +138,9 @@ struct strsection_header
     DWORD unk1[3];
     ULONG count;
     ULONG index_offset;
-    DWORD unk2[4];
+    DWORD unk2[2];
+    ULONG global_offset;
+    ULONG global_len;
 };
 
 struct string_index
@@ -3495,7 +3497,7 @@ static void get_comserver_datalen(const struct entity_array *entities, const str
 
                 /* all string data is stored together in aligned block */
                 str_len = strlenW(entity->u.comclass.name)+1;
-                if (*entity->u.comclass.progid)
+                if (entity->u.comclass.progid)
                     str_len += strlenW(entity->u.comclass.progid)+1;
                 if (entity->u.comclass.version)
                     str_len += strlenW(entity->u.comclass.version)+1;
@@ -3509,7 +3511,7 @@ static void get_comserver_datalen(const struct entity_array *entities, const str
             else
             {
                 /* progid string is stored separately */
-                if (*entity->u.comclass.progid)
+                if (entity->u.comclass.progid)
                     *len += aligned_string_len((strlenW(entity->u.comclass.progid)+1)*sizeof(WCHAR));
 
                 *module_len += (strlenW(dll->name)+1)*sizeof(WCHAR);
@@ -3538,7 +3540,7 @@ static void add_comserver_record(const struct guidsection_header *section, const
             UNICODE_STRING str;
             WCHAR *ptrW;
 
-            if (*entity->u.comclass.progid)
+            if (entity->u.comclass.progid)
                 progid_len = strlenW(entity->u.comclass.progid)*sizeof(WCHAR);
             else
                 progid_len = 0;
@@ -3779,7 +3781,8 @@ static NTSTATUS find_comserver_redirection(ACTIVATION_CONTEXT* actctx, const GUI
     data->ulDataFormatVersion = 1;
     data->lpData = comclass;
     /* full length includes string length with nulls */
-    data->ulLength = comclass->size + comclass->progid_len + sizeof(WCHAR) + comclass->clrdata_len;
+    data->ulLength = comclass->size + comclass->clrdata_len;
+    if (comclass->progid_len) data->ulLength += comclass->progid_len + sizeof(WCHAR);
     data->lpSectionGlobalData = (BYTE*)actctx->comserver_section + actctx->comserver_section->names_offset;
     data->ulSectionGlobalDataLength = actctx->comserver_section->names_len;
     data->lpSectionBase = actctx->comserver_section;

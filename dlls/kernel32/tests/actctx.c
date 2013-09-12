@@ -31,6 +31,7 @@ static BOOL   (WINAPI *pActivateActCtx)(HANDLE,ULONG_PTR*);
 static HANDLE (WINAPI *pCreateActCtxA)(PCACTCTXA);
 static HANDLE (WINAPI *pCreateActCtxW)(PCACTCTXW);
 static BOOL   (WINAPI *pDeactivateActCtx)(DWORD,ULONG_PTR);
+static BOOL   (WINAPI *pFindActCtxSectionStringA)(DWORD,const GUID *,ULONG,LPCSTR,PACTCTX_SECTION_KEYED_DATA);
 static BOOL   (WINAPI *pFindActCtxSectionStringW)(DWORD,const GUID *,ULONG,LPCWSTR,PACTCTX_SECTION_KEYED_DATA);
 static BOOL   (WINAPI *pGetCurrentActCtx)(HANDLE *);
 static BOOL   (WINAPI *pIsDebuggerPresent)(void);
@@ -86,6 +87,7 @@ static const char manifest2[] =
 "</assembly>";
 
 DEFINE_GUID(IID_CoTest,    0x12345678, 0x1234, 0x5678, 0x12, 0x34, 0x11, 0x11, 0x22, 0x22, 0x33, 0x33);
+DEFINE_GUID(IID_CoTest2,   0x12345678, 0x1234, 0x5678, 0x12, 0x34, 0x11, 0x11, 0x22, 0x22, 0x33, 0x34);
 DEFINE_GUID(CLSID_clrclass,0x22345678, 0x1234, 0x5678, 0x12, 0x34, 0x11, 0x11, 0x22, 0x22, 0x33, 0x33);
 DEFINE_GUID(IID_TlibTest,  0x99999999, 0x8888, 0x7777, 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55);
 DEFINE_GUID(IID_TlibTest2, 0x99999999, 0x8888, 0x7777, 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x55, 0x56);
@@ -121,6 +123,9 @@ static const char manifest3[] =
 "        <progid>ProgId.ProgId.4</progid>"
 "        <progid>ProgId.ProgId.5</progid>"
 "        <progid>ProgId.ProgId.6</progid>"
+"    </comClass>"
+"    <comClass clsid=\"{12345678-1234-5678-1234-111122223334}\" threadingModel=\"Neutral\" >"
+"        <progid>ProgId.ProgId.7</progid>"
 "    </comClass>"
 "    <comInterfaceProxyStub "
 "        name=\"Iifaceps\""
@@ -837,7 +842,9 @@ struct strsection_header
     DWORD unk1[3];
     ULONG count;
     ULONG index_offset;
-    DWORD unk2[4];
+    DWORD unk2[2];
+    ULONG global_offset;
+    ULONG global_len;
 };
 
 struct string_index
@@ -899,6 +906,13 @@ struct tlibredirect_data
     ULONG  help_offset;
     WORD   major_version;
     WORD   minor_version;
+};
+
+struct progidredirect_data
+{
+    ULONG size;
+    DWORD reserved;
+    ULONG clsid_offset;
 };
 
 static void test_find_dll_redirection(HANDLE handle, LPCWSTR libname, ULONG exid, int line)
@@ -1225,19 +1239,29 @@ static void test_find_com_redirection(HANDLE handle, const GUID *clsid, const GU
         ok_(__FILE__, line)(comclass->model == ThreadingModel_Neutral, "got model %d\n", comclass->model);
         ok_(__FILE__, line)(IsEqualGUID(&comclass->clsid, clsid), "got wrong clsid %s\n", debugstr_guid(&comclass->clsid));
         ok_(__FILE__, line)(IsEqualGUID(&comclass->clsid2, clsid), "got wrong clsid2 %s\n", debugstr_guid(&comclass->clsid2));
-        ok_(__FILE__, line)(IsEqualGUID(&comclass->tlid, tlid), "got wrong tlid %s\n", debugstr_guid(&comclass->tlid));
+        if (tlid)
+            ok_(__FILE__, line)(IsEqualGUID(&comclass->tlid, tlid), "got wrong tlid %s\n", debugstr_guid(&comclass->tlid));
         ok_(__FILE__, line)(comclass->name_len > 0, "got modulename len %d\n", comclass->name_len);
 
-        len = comclass->size + comclass->clrdata_len;
-        ok_(__FILE__, line)(comclass->progid_offset == len, "got progid offset %d, expected %d\n", comclass->progid_offset, len);
+        if (progid)
+        {
+            len = comclass->size + comclass->clrdata_len;
+            ok_(__FILE__, line)(comclass->progid_offset == len, "got progid offset %d, expected %d\n", comclass->progid_offset, len);
+        }
+        else
+            ok_(__FILE__, line)(comclass->progid_offset == 0, "got progid offset %d, expected 0\n", comclass->progid_offset);
 
-        ptr = (WCHAR*)((BYTE*)comclass + comclass->progid_offset);
-        ok_(__FILE__, line)(!lstrcmpW(ptr, progid), "got wrong progid %s, expected %s\n", wine_dbgstr_w(ptr), wine_dbgstr_w(progid));
-        ok_(__FILE__, line)(lstrlenW(progid)*sizeof(WCHAR) == comclass->progid_len,
-            "got progid name length %d\n", comclass->progid_len);
+        if (comclass->progid_offset)
+        {
+            ptr = (WCHAR*)((BYTE*)comclass + comclass->progid_offset);
+            ok_(__FILE__, line)(!lstrcmpW(ptr, progid), "got wrong progid %s, expected %s\n", wine_dbgstr_w(ptr), wine_dbgstr_w(progid));
+            ok_(__FILE__, line)(lstrlenW(progid)*sizeof(WCHAR) == comclass->progid_len,
+                "got progid name length %d\n", comclass->progid_len);
+        }
 
         /* data length is simply header length + string data length including nulls */
-        len = comclass->size + comclass->progid_len + sizeof(WCHAR) + comclass->clrdata_len;
+        len = comclass->size + comclass->clrdata_len;
+        if (comclass->progid_len) len += comclass->progid_len + sizeof(WCHAR);
         ok_(__FILE__, line)(data.ulLength == len, "got wrong data length %d, expected %d\n", data.ulLength, len);
 
         /* keyed data structure doesn't include module name, it's available from section data */
@@ -1466,6 +1490,65 @@ static void test_find_surrogate(HANDLE handle, const GUID *clsid, const WCHAR *n
     ok_(__FILE__, line)(data.hActCtx == NULL, "data.hActCtx=%p\n", data.hActCtx);
     ok_(__FILE__, line)(data.ulAssemblyRosterIndex == exid, "data.ulAssemblyRosterIndex=%u, expected %u\n",
        data.ulAssemblyRosterIndex, exid);
+}
+
+static void test_find_progid_redirection(HANDLE handle, const GUID *clsid, const char *progid, ULONG exid, int line)
+{
+    struct progidredirect_data *progiddata;
+    struct comclassredirect_data *comclass;
+    ACTCTX_SECTION_KEYED_DATA data, data2;
+    struct strsection_header *header;
+    BOOL ret;
+
+    memset(&data, 0xfe, sizeof(data));
+    data.cbSize = sizeof(data);
+
+    ret = pFindActCtxSectionStringA(0, NULL,
+                                       ACTIVATION_CONTEXT_SECTION_COM_PROGID_REDIRECTION,
+                                       progid, &data);
+    if (!ret)
+    {
+        skip("failed for progid=%s\n", progid);
+        return;
+    }
+    ok_(__FILE__, line)(ret, "FindActCtxSectionStringA failed: %u\n", GetLastError());
+
+    progiddata = (struct progidredirect_data*)data.lpData;
+
+    ok_(__FILE__, line)(data.cbSize == sizeof(data), "data.cbSize=%u\n", data.cbSize);
+    ok_(__FILE__, line)(data.ulDataFormatVersion == 1, "data.ulDataFormatVersion=%u\n", data.ulDataFormatVersion);
+    ok_(__FILE__, line)(data.lpData != NULL, "data.lpData == NULL\n");
+    ok_(__FILE__, line)(progiddata->size == sizeof(*progiddata), "got %d for header size\n", progiddata->size);
+    if (data.lpData && progiddata->size == sizeof(*progiddata))
+    {
+        GUID *guid;
+
+        ok_(__FILE__, line)(progiddata->reserved == 0, "got reserved as %d\n", progiddata->reserved);
+        ok_(__FILE__, line)(progiddata->clsid_offset > 0, "got clsid_offset as %d\n", progiddata->clsid_offset);
+
+        /* progid data points to generated alias guid */
+        guid = (GUID*)((BYTE*)data.lpSectionBase + progiddata->clsid_offset);
+
+        memset(&data2, 0, sizeof(data2));
+        data2.cbSize = sizeof(data2);
+        ret = pFindActCtxSectionGuid(0, NULL,
+                                        ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION,
+                                        guid, &data2);
+        ok_(__FILE__, line)(ret, "FindActCtxSectionGuid failed: %u\n", GetLastError());
+
+        comclass = (struct comclassredirect_data*)data2.lpData;
+        ok_(__FILE__, line)(IsEqualGUID(guid, &comclass->alias), "got wrong alias referenced from progid %s, %s\n", progid, debugstr_guid(guid));
+        ok_(__FILE__, line)(IsEqualGUID(clsid, &comclass->clsid), "got wrong class referenced from progid %s, %s\n", progid, debugstr_guid(clsid));
+    }
+
+    header = (struct strsection_header*)data.lpSectionBase;
+    ok_(__FILE__, line)(data.lpSectionGlobalData == (BYTE*)header + header->global_offset, "data.lpSectionGlobalData == NULL\n");
+    ok_(__FILE__, line)(data.ulSectionGlobalDataLength == header->global_len, "data.ulSectionGlobalDataLength=%u\n", data.ulSectionGlobalDataLength);
+    ok_(__FILE__, line)(data.lpSectionBase != NULL, "data.lpSectionBase == NULL\n");
+    ok_(__FILE__, line)(data.ulSectionTotalLength > 0, "data.ulSectionTotalLength=%u\n", data.ulSectionTotalLength);
+    ok_(__FILE__, line)(data.hActCtx == NULL, "data.hActCtx=%p\n", data.hActCtx);
+    ok_(__FILE__, line)(data.ulAssemblyRosterIndex == exid, "data.ulAssemblyRosterIndex=%u, expected %u\n",
+        data.ulAssemblyRosterIndex, exid);
 }
 
 static void test_wndclass_section(void)
@@ -1796,7 +1879,22 @@ static void test_actctx(void)
         test_find_dll_redirection(handle, testlib_dll, 1, __LINE__);
         test_find_dll_redirection(handle, testlib_dll, 1, __LINE__);
         test_find_com_redirection(handle, &IID_CoTest, &IID_TlibTest, progidW, 1, __LINE__);
+        test_find_com_redirection(handle, &IID_CoTest2, NULL, NULL, 1, __LINE__);
         test_find_com_redirection(handle, &CLSID_clrclass, &IID_TlibTest, clrprogidW, 1, __LINE__);
+        test_find_progid_redirection(handle, &IID_CoTest, "ProgId.ProgId", 1, __LINE__);
+        test_find_progid_redirection(handle, &IID_CoTest, "ProgId.ProgId.1", 1, __LINE__);
+        test_find_progid_redirection(handle, &IID_CoTest, "ProgId.ProgId.2", 1, __LINE__);
+        test_find_progid_redirection(handle, &IID_CoTest, "ProgId.ProgId.3", 1, __LINE__);
+        test_find_progid_redirection(handle, &IID_CoTest, "ProgId.ProgId.4", 1, __LINE__);
+        test_find_progid_redirection(handle, &IID_CoTest, "ProgId.ProgId.5", 1, __LINE__);
+        test_find_progid_redirection(handle, &IID_CoTest, "ProgId.ProgId.6", 1, __LINE__);
+        test_find_progid_redirection(handle, &CLSID_clrclass, "clrprogid", 1, __LINE__);
+        test_find_progid_redirection(handle, &CLSID_clrclass, "clrprogid.1", 1, __LINE__);
+        test_find_progid_redirection(handle, &CLSID_clrclass, "clrprogid.2", 1, __LINE__);
+        test_find_progid_redirection(handle, &CLSID_clrclass, "clrprogid.3", 1, __LINE__);
+        test_find_progid_redirection(handle, &CLSID_clrclass, "clrprogid.4", 1, __LINE__);
+        test_find_progid_redirection(handle, &CLSID_clrclass, "clrprogid.5", 1, __LINE__);
+        test_find_progid_redirection(handle, &CLSID_clrclass, "clrprogid.6", 1, __LINE__);
         test_find_surrogate(handle, &IID_Iiface, nameW, versionW, 1, __LINE__);
         test_find_ifaceps_redirection(handle, &IID_Iifaceps, &IID_TlibTest4, &IID_Ibifaceps, NULL, 1, __LINE__);
         test_find_ifaceps_redirection(handle, &IID_Iifaceps2, &IID_TlibTest4, &IID_Ibifaceps, &IID_PS32, 1, __LINE__);
@@ -2039,6 +2137,7 @@ static BOOL init_funcs(void)
     X(CreateActCtxA);
     X(CreateActCtxW);
     X(DeactivateActCtx);
+    X(FindActCtxSectionStringA);
     X(FindActCtxSectionStringW);
     X(GetCurrentActCtx);
     X(IsDebuggerPresent);
