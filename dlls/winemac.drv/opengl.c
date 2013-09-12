@@ -3363,6 +3363,8 @@ int macdrv_wglDescribePixelFormat(HDC hdc, int fmt, UINT size, PIXELFORMATDESCRI
     descr->cStencilBits     = pf->stencil_bits;
     descr->cAuxBuffers      = pf->aux_buffers;
     descr->iLayerType       = PFD_MAIN_PLANE;
+
+    TRACE("%s\n", debugstr_pf(pf));
     return nb_displayable_formats;
 }
 
