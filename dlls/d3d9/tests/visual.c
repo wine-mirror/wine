@@ -2454,39 +2454,37 @@ static void texbem_test(IDirect3DDevice9 *device)
 
 static void z_range_test(IDirect3DDevice9 *device)
 {
-    const struct vertex quad[] =
+    static const struct vertex quad[] =
     {
-        {-1.0f,  0.0f,   1.1f,                          0xffff0000},
-        {-1.0f,  1.0f,   1.1f,                          0xffff0000},
-        { 1.0f,  0.0f,  -1.1f,                          0xffff0000},
-        { 1.0f,  1.0f,  -1.1f,                          0xffff0000},
+        {-1.0f, 0.0f,  1.1f, 0xffff0000},
+        {-1.0f, 1.0f,  1.1f, 0xffff0000},
+        { 1.0f, 0.0f, -1.1f, 0xffff0000},
+        { 1.0f, 1.0f, -1.1f, 0xffff0000},
     };
-    const struct vertex quad2[] =
+    static const struct vertex quad2[] =
     {
-        {-1.0f,  0.0f,   1.1f,                          0xff0000ff},
-        {-1.0f,  1.0f,   1.1f,                          0xff0000ff},
-        { 1.0f,  0.0f,  -1.1f,                          0xff0000ff},
-        { 1.0f,  1.0f,  -1.1f,                          0xff0000ff},
+        {-1.0f, 0.0f,  1.1f, 0xff0000ff},
+        {-1.0f, 1.0f,  1.1f, 0xff0000ff},
+        { 1.0f, 0.0f, -1.1f, 0xff0000ff},
+        { 1.0f, 1.0f, -1.1f, 0xff0000ff},
     };
-
-    const struct tvertex quad3[] =
+    static const struct tvertex quad3[] =
     {
-        {    0,   240,   1.1f,  1.0,                    0xffffff00},
-        {    0,   480,   1.1f,  1.0,                    0xffffff00},
-        {  640,   240,  -1.1f,  1.0,                    0xffffff00},
-        {  640,   480,  -1.1f,  1.0,                    0xffffff00},
+        {  0.0f, 240.0f,  1.1f, 1.0f, 0xffffff00},
+        {  0.0f, 480.0f,  1.1f, 1.0f, 0xffffff00},
+        {640.0f, 240.0f, -1.1f, 1.0f, 0xffffff00},
+        {640.0f, 480.0f, -1.1f, 1.0f, 0xffffff00},
     };
-    const struct tvertex quad4[] =
+    static const struct tvertex quad4[] =
     {
-        {    0,   240,   1.1f,  1.0,                    0xff00ff00},
-        {    0,   480,   1.1f,  1.0,                    0xff00ff00},
-        {  640,   240,  -1.1f,  1.0,                    0xff00ff00},
-        {  640,   480,  -1.1f,  1.0,                    0xff00ff00},
+        {  0.0f, 240.0f,  1.1f, 1.0f, 0xff00ff00},
+        {  0.0f, 480.0f,  1.1f, 1.0f, 0xff00ff00},
+        {640.0f, 240.0f, -1.1f, 1.0f, 0xff00ff00},
+        {640.0f, 480.0f, -1.1f, 1.0f, 0xff00ff00},
     };
     HRESULT hr;
     DWORD color;
     IDirect3DVertexShader9 *shader;
-    IDirect3DVertexDeclaration9 *decl;
     D3DCAPS9 caps;
     static const DWORD shader_code[] =
     {
@@ -2496,188 +2494,172 @@ static void z_range_test(IDirect3DDevice9 *device)
         0x00000001, 0xd00f0000, 0xa0e40000,             /* mov oD0, c0      */
         0x0000ffff                                      /* end              */
     };
-    static const D3DVERTEXELEMENT9 decl_elements[] = {
-        {0, 0,  D3DDECLTYPE_FLOAT3,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
-        D3DDECL_END()
-    };
+    static const float color_const_1[] = {1.0f, 0.0f, 0.0f, 1.0f};
+    static const float color_const_2[] = {0.0f, 0.0f, 1.0f, 1.0f};
 
-    IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
 
     /* Does the Present clear the depth stencil? Clear the depth buffer with some value != 0,
      * then call Present. Then clear the color buffer to make sure it has some defined content
      * after the Present with D3DSWAPEFFECT_DISCARD. After that draw a plane that is somewhere cut
-     * by the depth value.
-     */
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffffffff, 0.75, 0);
-    ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %08x\n", hr);
+     * by the depth value. */
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffffffff, 0.75f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
-    ok(SUCCEEDED(hr), "IDirect3DDevice9_Present returned %#x.\n", hr);
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.4, 0);
-    ok(SUCCEEDED(hr), "IDirect3DDevice9_Clear returned %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_CLIPPING, TRUE);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
+    ok(SUCCEEDED(hr), "Failed to enable clipping, hr %#x.\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, D3DZB_TRUE);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
+    ok(SUCCEEDED(hr), "Failed to enable z test, hr %#x.\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZWRITEENABLE, FALSE);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
+    ok(SUCCEEDED(hr), "Failed to disable z writes, hr %#x.\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZFUNC, D3DCMP_GREATER);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
+    ok(SUCCEEDED(hr), "Failed to set z function, hr %#x.\n", hr);
     hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF returned %08x\n", hr);
+    ok(SUCCEEDED(hr), "Failed set FVF, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_BeginScene(device);
-    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with %08x\n", hr);
-    if(hr == D3D_OK)
-    {
-        /* Test the untransformed vertex path */
-        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2 /*PrimCount */, quad, sizeof(quad[0]));
-        ok(hr == D3D_OK, "IDirect3DDevice9_DrawIndexedPrimitiveUP failed with %08x\n", hr);
-        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZFUNC, D3DCMP_LESS);
-        ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
-        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2 /*PrimCount */, quad2, sizeof(quad2[0]));
-        ok(hr == D3D_OK, "IDirect3DDevice9_DrawIndexedPrimitiveUP failed with %08x\n", hr);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
 
-        /* Test the transformed vertex path */
-        hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZRHW | D3DFVF_DIFFUSE);
-        ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF returned %08x\n", hr);
+    /* Test the untransformed vertex path */
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(quad[0]));
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZFUNC, D3DCMP_LESS);
+    ok(SUCCEEDED(hr), "Failed to set z function, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad2, sizeof(quad2[0]));
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
 
-        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2 /*PrimCount */, quad4, sizeof(quad4[0]));
-        ok(hr == D3D_OK, "IDirect3DDevice9_DrawIndexedPrimitiveUP failed with %08x\n", hr);
-        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZFUNC, D3DCMP_GREATER);
-        ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
-        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2 /*PrimCount */, quad3, sizeof(quad3[0]));
-        ok(hr == D3D_OK, "IDirect3DDevice9_DrawIndexedPrimitiveUP failed with %08x\n", hr);
+    /* Test the transformed vertex path */
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZRHW | D3DFVF_DIFFUSE);
+    ok(SUCCEEDED(hr), "Failed set FVF, hr %#x.\n", hr);
 
-        hr = IDirect3DDevice9_EndScene(device);
-        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed with %08x\n", hr);
-    }
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad4, sizeof(quad4[0]));
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZFUNC, D3DCMP_GREATER);
+    ok(SUCCEEDED(hr), "Failed to set z function, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad3, sizeof(quad3[0]));
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
 
     /* Do not test the exact corner pixels, but go pretty close to them */
 
     /* Clipped because z > 1.0 */
     color = getPixelColor(device, 28, 238);
-    ok(color == 0x00ffffff, "Z range failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
+    ok(color_match(color, 0x00ffffff, 0), "Z range failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
     color = getPixelColor(device, 28, 241);
     if (caps.PrimitiveMiscCaps & D3DPMISCCAPS_CLIPTLVERTS)
-    {
-        ok(color == 0x00ffffff, "Z range failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
-    }
+        ok(color_match(color, 0x00ffffff, 0), "Z range failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
     else
-    {
-        ok(color == 0x00ffff00, "Z range failed: Got color 0x%08x, expected 0x00ffff00.\n", color);
-    }
+        ok(color_match(color, 0x00ffff00, 0), "Z range failed: Got color 0x%08x, expected 0x00ffff00.\n", color);
 
     /* Not clipped, > z buffer clear value(0.75) */
     color = getPixelColor(device, 31, 238);
-    ok(color == 0x00ff0000, "Z range failed: Got color 0x%08x, expected 0x00ff0000.\n", color);
+    ok(color_match(color, 0x00ff0000, 0), "Z range failed: Got color 0x%08x, expected 0x00ff0000.\n", color);
     color = getPixelColor(device, 31, 241);
-    ok(color == 0x00ffff00, "Z range failed: Got color 0x%08x, expected 0x00ffff00.\n", color);
+    ok(color_match(color, 0x00ffff00, 0), "Z range failed: Got color 0x%08x, expected 0x00ffff00.\n", color);
     color = getPixelColor(device, 100, 238);
-    ok(color == 0x00ff0000, "Z range failed: Got color 0x%08x, expected 0x00ff0000.\n", color);
+    ok(color_match(color, 0x00ff0000, 0), "Z range failed: Got color 0x%08x, expected 0x00ff0000.\n", color);
     color = getPixelColor(device, 100, 241);
-    ok(color == 0x00ffff00, "Z range failed: Got color 0x%08x, expected 0x00ffff00.\n", color);
+    ok(color_match(color, 0x00ffff00, 0), "Z range failed: Got color 0x%08x, expected 0x00ffff00.\n", color);
 
     /* Not clipped, < z buffer clear value */
     color = getPixelColor(device, 104, 238);
-    ok(color == 0x000000ff, "Z range failed: Got color 0x%08x, expected 0x000000ff.\n", color);
+    ok(color_match(color, 0x000000ff, 0), "Z range failed: Got color 0x%08x, expected 0x000000ff.\n", color);
     color = getPixelColor(device, 104, 241);
-    ok(color == 0x0000ff00, "Z range failed: Got color 0x%08x, expected 0x0000ff00.\n", color);
+    ok(color_match(color, 0x0000ff00, 0), "Z range failed: Got color 0x%08x, expected 0x0000ff00.\n", color);
     color = getPixelColor(device, 318, 238);
-    ok(color == 0x000000ff, "Z range failed: Got color 0x%08x, expected 0x000000ff.\n", color);
+    ok(color_match(color, 0x000000ff, 0), "Z range failed: Got color 0x%08x, expected 0x000000ff.\n", color);
     color = getPixelColor(device, 318, 241);
-    ok(color == 0x0000ff00, "Z range failed: Got color 0x%08x, expected 0x0000ff00.\n", color);
+    ok(color_match(color, 0x0000ff00, 0), "Z range failed: Got color 0x%08x, expected 0x0000ff00.\n", color);
 
     /* Clipped because z < 0.0 */
     color = getPixelColor(device, 321, 238);
-    ok(color == 0x00ffffff, "Z range failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
+    ok(color_match(color, 0x00ffffff, 0), "Z range failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
     color = getPixelColor(device, 321, 241);
     if (caps.PrimitiveMiscCaps & D3DPMISCCAPS_CLIPTLVERTS)
-    {
-        ok(color == 0x00ffffff, "Z range failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
-    }
+        ok(color_match(color, 0x00ffffff, 0), "Z range failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
     else
-    {
-        ok(color == 0x0000ff00, "Z range failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
-    }
+        ok(color_match(color, 0x0000ff00, 0), "Z range failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
 
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
-    ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
 
     /* Test the shader path */
-    if (caps.VertexShaderVersion < D3DVS_VERSION(1, 1)) {
+    if (caps.VertexShaderVersion < D3DVS_VERSION(1, 1))
+    {
         skip("Vertex shaders not supported\n");
         goto out;
     }
     hr = IDirect3DDevice9_CreateVertexShader(device, shader_code, &shader);
-    ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexShader returned %08x\n", hr);
-    hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements, &decl);
-    ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexDeclaration returned %08x\n", hr);
+    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.4, 0);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice9_SetVertexDeclaration(device, decl);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration returned %08x\n", hr);
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ);
+    ok(SUCCEEDED(hr), "Failed to set FVF, hr %#x.\n", hr);
     hr = IDirect3DDevice9_SetVertexShader(device, shader);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexShader returned %08x\n", hr);
+    ok(SUCCEEDED(hr), "Failed to set vertex shader, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_BeginScene(device);
-    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with %08x\n", hr);
-    if(hr == D3D_OK)
-    {
-        float colorf[] = {1.0, 0.0, 0.0, 1.0};
-        float colorf2[] = {0.0, 0.0, 1.0, 1.0};
-        IDirect3DDevice9_SetVertexShaderConstantF(device, 0, colorf, 1);
-        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2 /*PrimCount */, quad, sizeof(quad[0]));
-        ok(hr == D3D_OK, "IDirect3DDevice9_DrawIndexedPrimitiveUP failed with %08x\n", hr);
-        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZFUNC, D3DCMP_LESS);
-        ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
-        IDirect3DDevice9_SetVertexShaderConstantF(device, 0, colorf2, 1);
-        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2 /*PrimCount */, quad2, sizeof(quad2[0]));
-        ok(hr == D3D_OK, "IDirect3DDevice9_DrawIndexedPrimitiveUP failed with %08x\n", hr);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
 
-        hr = IDirect3DDevice9_EndScene(device);
-        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed with %08x\n", hr);
-    }
+    hr = IDirect3DDevice9_SetVertexShaderConstantF(device, 0, color_const_1, 1);
+    ok(SUCCEEDED(hr), "Failed to set vs constant 0, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(quad[0]));
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration returned %08x\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZFUNC, D3DCMP_LESS);
+    ok(SUCCEEDED(hr), "Failed to set z function, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexShaderConstantF(device, 0, color_const_2, 1);
+    ok(SUCCEEDED(hr), "Failed to set vs constant 0, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad2, sizeof(quad2[0]));
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
     hr = IDirect3DDevice9_SetVertexShader(device, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexShader returned %08x\n", hr);
+    ok(SUCCEEDED(hr), "Failed to set vertex shader, hr %#x.\n", hr);
 
-    IDirect3DVertexDeclaration9_Release(decl);
     IDirect3DVertexShader9_Release(shader);
 
     /* Z < 1.0 */
     color = getPixelColor(device, 28, 238);
-    ok(color == 0x00ffffff, "Z range failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
+    ok(color_match(color, 0x00ffffff, 0), "Z range failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
 
     /* 1.0 < z < 0.75 */
     color = getPixelColor(device, 31, 238);
-    ok(color == 0x00ff0000, "Z range failed: Got color 0x%08x, expected 0x00ff0000.\n", color);
+    ok(color_match(color, 0x00ff0000, 0), "Z range failed: Got color 0x%08x, expected 0x00ff0000.\n", color);
     color = getPixelColor(device, 100, 238);
-    ok(color == 0x00ff0000, "Z range failed: Got color 0x%08x, expected 0x00ff0000.\n", color);
+    ok(color_match(color, 0x00ff0000, 0), "Z range failed: Got color 0x%08x, expected 0x00ff0000.\n", color);
 
     /* 0.75 < z < 0.0 */
     color = getPixelColor(device, 104, 238);
-    ok(color == 0x000000ff, "Z range failed: Got color 0x%08x, expected 0x000000ff.\n", color);
+    ok(color_match(color, 0x000000ff, 0), "Z range failed: Got color 0x%08x, expected 0x000000ff.\n", color);
     color = getPixelColor(device, 318, 238);
-    ok(color == 0x000000ff, "Z range failed: Got color 0x%08x, expected 0x000000ff.\n", color);
+    ok(color_match(color, 0x000000ff, 0), "Z range failed: Got color 0x%08x, expected 0x000000ff.\n", color);
 
     /* 0.0 < z */
     color = getPixelColor(device, 321, 238);
-    ok(color == 0x00ffffff, "Z range failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
+    ok(color_match(color, 0x00ffffff, 0), "Z range failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
 
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
-    ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
 
-    out:
+out:
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, D3DZB_FALSE);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
+    ok(SUCCEEDED(hr), "Failed to disable z test, hr %#x.\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_CLIPPING, FALSE);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
+    ok(SUCCEEDED(hr), "Failed to disable clipping, hr %#x.\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZWRITEENABLE, TRUE);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
+    ok(SUCCEEDED(hr), "Failed to enable z writes, hr %#x.\n", hr);
 }
 
 static void fill_surface(IDirect3DSurface9 *surface, DWORD color)
