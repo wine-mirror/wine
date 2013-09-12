@@ -1309,7 +1309,9 @@ static void test_demangle(void)
 /* 122 */ {"?_R2@?BN@???$_Fabs@N@std@@YANAEBV?$complex@N@1@PEAH@Z@4NB",
            "double const `double __cdecl std::_Fabs<double>(class std::complex<double> const & __ptr64,int * __ptr64)'::`29'::_R2",
            "?_R2@?BN@???$_Fabs@N@std@@YANAEBV?$complex@N@1@PEAH@Z@4NB"},
-
+/* 123 */ {"?vtordisp_thunk@std@@$4PPPPPPPM@3EAA_NXZ",
+           "[thunk]:public: virtual bool __cdecl std::vtordisp_thunk`vtordisp{4294967292,4}' (void) __ptr64",
+           "[thunk]:public: virtual bool __cdecl std::vtordisp_thunk`vtordisp{-4,4}' (void) __ptr64"},
     };
     int i, num_test = (sizeof(test)/sizeof(test[0]));
     char* name;
