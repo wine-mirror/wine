@@ -245,10 +245,7 @@ static ULONG WINAPI d3d_device_inner_Release(IUnknown *iface)
         if (This->vertex_buffer)
             wined3d_buffer_decref(This->vertex_buffer);
 
-        /* Set the device up to render to the front buffer since the back
-         * buffer will vanish soon. */
-        wined3d_device_set_render_target(This->wined3d_device, 0,
-                This->ddraw->wined3d_frontbuffer, TRUE);
+        wined3d_device_set_render_target(This->wined3d_device, 0, NULL, FALSE);
 
         /* Release the wined3d device. This won't destroy it. */
         if (!wined3d_device_decref(This->wined3d_device))
