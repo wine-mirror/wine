@@ -4224,8 +4224,8 @@ static void test_SetVarHelpContext(void)
     ok(pdesc->memid == 0x40000000, "got wrong memid: %x\n", pdesc->memid);
     ok(pdesc->elemdescVar.tdesc.vt == VT_INT, "got wrong vardesc type: %u\n", pdesc->elemdescVar.tdesc.vt);
     ok(pdesc->varkind == VAR_CONST, "got wrong varkind: %u\n", pdesc->varkind);
-    ok(V_VT(U(pdesc)->lpvarValue) == VT_INT, "got wrong value type: %u\n", V_VT(U(pdesc)->lpvarValue));
-    ok(V_INT(U(pdesc)->lpvarValue) == 1, "got wrong value: 0x%x\n", V_INT(U(pdesc)->lpvarValue));
+    ok(V_VT(U(*pdesc).lpvarValue) == VT_INT, "got wrong value type: %u\n", V_VT(U(*pdesc).lpvarValue));
+    ok(V_INT(U(*pdesc).lpvarValue) == 1, "got wrong value: 0x%x\n", V_INT(U(*pdesc).lpvarValue));
 
     hr = ITypeInfo_GetDocumentation(ti, pdesc->memid, NULL, NULL, &ctx, NULL);
     ok(hr == S_OK, "got %08x\n", hr);
@@ -4409,8 +4409,8 @@ static void test_SetVarDocString(void)
     ok(pdesc->memid == 0x40000000, "got wrong memid: %x\n", pdesc->memid);
     ok(pdesc->elemdescVar.tdesc.vt == VT_INT, "got wrong vardesc type: %u\n", pdesc->elemdescVar.tdesc.vt);
     ok(pdesc->varkind == VAR_CONST, "got wrong varkind: %u\n", pdesc->varkind);
-    ok(V_VT(U(pdesc)->lpvarValue) == VT_INT, "got wrong value type: %u\n", V_VT(U(pdesc)->lpvarValue));
-    ok(V_INT(U(pdesc)->lpvarValue) == 1, "got wrong value: 0x%x\n", V_INT(U(pdesc)->lpvarValue));
+    ok(V_VT(U(*pdesc).lpvarValue) == VT_INT, "got wrong value type: %u\n", V_VT(U(*pdesc).lpvarValue));
+    ok(V_INT(U(*pdesc).lpvarValue) == 1, "got wrong value: 0x%x\n", V_INT(U(*pdesc).lpvarValue));
 
     hr = ITypeInfo_GetDocumentation(ti, pdesc->memid, &namestr, &docstr, NULL, NULL);
     ok(hr == S_OK, "got %08x\n", hr);
