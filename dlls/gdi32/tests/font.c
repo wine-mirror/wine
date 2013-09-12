@@ -1113,17 +1113,50 @@ static int CALLBACK create_font_proc(const LOGFONT *lpelfe,
     return 1;
 }
 
+static void ABCWidths_helper(const char* description, HDC hdc, WORD *glyphs, ABC *base_abci, ABC *base_abcw, ABCFLOAT *base_abcf, INT todo)
+{
+    ABC abc[1];
+    ABCFLOAT abcf[1];
+    BOOL ret = FALSE;
+
+    ret = pGetCharABCWidthsI(hdc, 0, 1, glyphs, abc);
+    ok(ret, "%s: GetCharABCWidthsI should have succeeded\n", description);
+    ok ((INT)abc->abcB > 0, "%s: abcB should be positive\n", description);
+    if (todo) todo_wine ok(abc->abcA * base_abci->abcA >= 0, "%s: abcA's sign should be unchanged\n", description);
+    else ok(abc->abcA * base_abci->abcA >= 0, "%s: abcA's sign should be unchanged\n", description);
+    if (todo) todo_wine ok(abc->abcC * base_abci->abcC >= 0, "%s: abcC's sign should be unchanged\n", description);
+    else ok(abc->abcC * base_abci->abcC >= 0, "%s: abcC's sign should be unchanged\n", description);
+
+    ret = pGetCharABCWidthsW(hdc, 'i', 'i', abc);
+    ok(ret, "%s: GetCharABCWidthsW should have succeeded\n", description);
+    ok ((INT)abc->abcB > 0, "%s: abcB should be positive\n", description);
+    if (todo) todo_wine ok(abc->abcA * base_abcw->abcA >= 0, "%s: abcA's sign should be unchanged\n", description);
+    else ok(abc->abcA * base_abcw->abcA >= 0, "%s: abcA's sign should be unchanged\n", description);
+    if (todo) todo_wine ok(abc->abcC * base_abcw->abcC >= 0, "%s: abcC's sign should be unchanged\n", description);
+    else ok(abc->abcC * base_abcw->abcC >= 0, "%s: abcC's should be unchanged\n", description);
+
+    ret = pGetCharABCWidthsFloatW(hdc, 'i', 'i', abcf);
+    ok(ret, "%s: GetCharABCWidthsFloatW should have succeeded\n", description);
+    ok (abcf->abcfB > 0.0, "%s: abcfB should be positive\n", description);
+    if (todo) todo_wine ok(abcf->abcfA * base_abcf->abcfA >= 0.0, "%s: abcfA's sign should be unchanged\n", description);
+    else ok(abcf->abcfA * base_abcf->abcfA >= 0.0, "%s: abcfA's should be unchanged\n", description);
+    if (todo) todo_wine ok(abcf->abcfC * base_abcf->abcfC >= 0.0, "%s: abcfC's sign should be unchanged\n", description);
+    else ok(abcf->abcfC * base_abcf->abcfC >= 0.0, "%s: abcfC's sign should be unchanged\n", description);
+}
+
 static void test_GetCharABCWidths(void)
 {
-    static const WCHAR str[] = {'a',0};
+    static const WCHAR str[] = {'i',0};
     BOOL ret;
     HDC hdc;
     LOGFONTA lf;
     HFONT hfont;
     ABC abc[1];
+    ABC abcw[1];
     ABCFLOAT abcf[1];
     WORD glyphs[1];
     DWORD nb;
+    HWND hwnd;
     static const struct
     {
         UINT first;
@@ -1266,6 +1299,66 @@ static void test_GetCharABCWidths(void)
     }
 
     ReleaseDC(NULL, hdc);
+
+    memset(&lf, 0, sizeof(lf));
+    strcpy(lf.lfFaceName, "Tahoma");
+    lf.lfHeight = 20;
+
+    trace("ABC sign test for a varity of transforms:\n");
+    hfont = CreateFontIndirectA(&lf);
+    hwnd = CreateWindowEx(0, "static", "", WS_POPUP, 0,0,100,100,
+                           0, 0, 0, NULL);
+    hdc = GetDC(hwnd);
+    SetMapMode(hdc, MM_ANISOTROPIC);
+    SelectObject(hdc, hfont);
+
+    nb = pGetGlyphIndicesW(hdc, str, 1, glyphs, 0);
+    ok(nb == 1, "GetGlyphIndicesW should have returned 1\n");
+
+    ret = pGetCharABCWidthsI(hdc, 0, 1, glyphs, abc);
+    ok(ret, "GetCharABCWidthsI should have succeeded\n");
+    ret = pGetCharABCWidthsW(hdc, 'i', 'i', abcw);
+    ok(ret, "GetCharABCWidthsI should have succeeded\n");
+    ret = pGetCharABCWidthsFloatW(hdc, 'i', 'i', abcf);
+    ok(ret, "GetCharABCWidthsFloatW should have succeeded\n");
+
+    ABCWidths_helper("LTR", hdc, glyphs, abc, abcw, abcf, 0);
+    SetWindowExtEx(hdc, -1, -1, NULL);
+    SetGraphicsMode(hdc, GM_COMPATIBLE);
+    ABCWidths_helper("LTR -1 compatible", hdc, glyphs, abc, abcw, abcf, 0);
+    SetGraphicsMode(hdc, GM_ADVANCED);
+    ABCWidths_helper("LTR -1 advanced", hdc, glyphs, abc, abcw, abcf, 1);
+    SetWindowExtEx(hdc, 1, 1, NULL);
+    SetGraphicsMode(hdc, GM_COMPATIBLE);
+    ABCWidths_helper("LTR 1 compatible", hdc, glyphs, abc, abcw, abcf, 0);
+    SetGraphicsMode(hdc, GM_ADVANCED);
+    ABCWidths_helper("LTR 1 advanced", hdc, glyphs, abc, abcw, abcf, 0);
+
+    ReleaseDC(hwnd, hdc);
+    DestroyWindow(hwnd);
+
+    trace("RTL layout\n");
+    hwnd = CreateWindowEx(WS_EX_LAYOUTRTL, "static", "", WS_POPUP, 0,0,100,100,
+                           0, 0, 0, NULL);
+    hdc = GetDC(hwnd);
+    SetMapMode(hdc, MM_ANISOTROPIC);
+    SelectObject(hdc, hfont);
+
+    ABCWidths_helper("RTL", hdc, glyphs, abc, abcw, abcf, 0);
+    SetWindowExtEx(hdc, -1, -1, NULL);
+    SetGraphicsMode(hdc, GM_COMPATIBLE);
+    ABCWidths_helper("RTL -1 compatible", hdc, glyphs, abc, abcw, abcf, 0);
+    SetGraphicsMode(hdc, GM_ADVANCED);
+    ABCWidths_helper("RTL -1 advanced", hdc, glyphs, abc, abcw, abcf, 0);
+    SetWindowExtEx(hdc, 1, 1, NULL);
+    SetGraphicsMode(hdc, GM_COMPATIBLE);
+    ABCWidths_helper("RTL 1 compatible", hdc, glyphs, abc, abcw, abcf, 0);
+    SetGraphicsMode(hdc, GM_ADVANCED);
+    ABCWidths_helper("RTL 1 advanced", hdc, glyphs, abc, abcw, abcf, 1);
+
+    ReleaseDC(hwnd, hdc);
+    DestroyWindow(hwnd);
+    DeleteObject(hfont);
 }
 
 static void test_text_extents(void)

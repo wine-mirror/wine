@@ -2700,9 +2700,9 @@ BOOL WINAPI GetCharABCWidthsW( HDC hdc, UINT firstChar, UINT lastChar,
     {
         /* convert device units to logical */
         for( i = firstChar; i <= lastChar; i++, abc++ ) {
-            abc->abcA = INTERNAL_XDSTOWS(dc, abc->abcA);
-            abc->abcB = INTERNAL_XDSTOWS(dc, abc->abcB);
-            abc->abcC = INTERNAL_XDSTOWS(dc, abc->abcC);
+            abc->abcA = width_to_LP(dc, abc->abcA);
+            abc->abcB = width_to_LP(dc, abc->abcB);
+            abc->abcC = width_to_LP(dc, abc->abcC);
 	}
     }
 
@@ -2752,9 +2752,9 @@ BOOL WINAPI GetCharABCWidthsI( HDC hdc, UINT firstChar, UINT count,
     {
         /* convert device units to logical */
         for( i = 0; i < count; i++, abc++ ) {
-            abc->abcA = INTERNAL_XDSTOWS(dc, abc->abcA);
-            abc->abcB = INTERNAL_XDSTOWS(dc, abc->abcB);
-            abc->abcC = INTERNAL_XDSTOWS(dc, abc->abcC);
+            abc->abcA = width_to_LP(dc, abc->abcA);
+            abc->abcB = width_to_LP(dc, abc->abcB);
+            abc->abcC = width_to_LP(dc, abc->abcC);
 	}
     }
 
@@ -3352,11 +3352,12 @@ BOOL WINAPI GetCharABCWidthsFloatW( HDC hdc, UINT first, UINT last, LPABCFLOAT a
     if (ret)
     {
         /* convert device units to logical */
+        FLOAT scale = fabs( dc->xformVport2World.eM11 );
         for (i = first; i <= last; i++, abcf++)
         {
-            abcf->abcfA = abc[i - first].abcA * dc->xformVport2World.eM11;
-            abcf->abcfB = abc[i - first].abcB * dc->xformVport2World.eM11;
-            abcf->abcfC = abc[i - first].abcC * dc->xformVport2World.eM11;
+            abcf->abcfA = abc[i - first].abcA * scale;
+            abcf->abcfB = abc[i - first].abcB * scale;
+            abcf->abcfC = abc[i - first].abcC * scale;
         }
     }
     HeapFree( GetProcessHeap(), 0, abc );
