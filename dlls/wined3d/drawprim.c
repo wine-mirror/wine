@@ -678,7 +678,7 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
         FIXME("Point sprite coordinate origin switching not supported.\n");
     }
 
-    stream_info = &device->stream_info;
+    stream_info = &context->stream_info;
     if (device->instance_count)
         instance_count = device->instance_count;
 
@@ -728,13 +728,13 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
 
         if (emulation)
         {
-            si_emulated = device->stream_info;
+            si_emulated = context->stream_info;
             remove_vbos(context, state, &si_emulated);
             stream_info = &si_emulated;
         }
     }
 
-    if (device->useDrawStridedSlow || emulation)
+    if (context->use_immediate_mode_draw || emulation)
     {
         /* Immediate mode drawing. */
         if (use_vs(state))
@@ -769,9 +769,9 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
 
     if (ib_query)
         wined3d_event_query_issue(ib_query, device);
-    for (i = 0; i < device->num_buffer_queries; ++i)
+    for (i = 0; i < context->num_buffer_queries; ++i)
     {
-        wined3d_event_query_issue(device->buffer_queries[i], device);
+        wined3d_event_query_issue(context->buffer_queries[i], device);
     }
 
     if (wined3d_settings.strict_draw_ordering)

@@ -4735,7 +4735,7 @@ static GLhandleARB find_glsl_vshader(const struct wined3d_context *context,
 {
     UINT i;
     DWORD new_size;
-    DWORD use_map = shader->device->stream_info.use_map;
+    DWORD use_map = context->stream_info.use_map;
     struct glsl_vs_compiled_shader *gl_shaders, *new_array;
     struct glsl_shader_private *shader_data;
     GLhandleARB ret;
@@ -5807,7 +5807,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
         struct vs_compile_args vs_compile_args;
         vshader = state->vertex_shader;
 
-        find_vs_compile_args(state, vshader, device->stream_info.swizzle_map, &vs_compile_args);
+        find_vs_compile_args(state, vshader, context->stream_info.swizzle_map, &vs_compile_args);
         vs_id = find_glsl_vshader(context, &priv->shader_buffer, vshader, &vs_compile_args);
         vs_list = &vshader->linked_programs;
 
@@ -5819,7 +5819,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
         struct glsl_ffp_vertex_shader *ffp_shader;
         struct wined3d_ffp_vs_settings settings;
 
-        wined3d_ffp_get_vs_settings(state, &device->stream_info, &settings);
+        wined3d_ffp_get_vs_settings(state, &context->stream_info, &settings);
         ffp_shader = shader_glsl_find_ffp_vertex_shader(priv, gl_info, &settings);
         vs_id = ffp_shader->id;
         vs_list = &ffp_shader->linked_programs;
@@ -5837,7 +5837,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
     {
         struct ps_compile_args ps_compile_args;
         pshader = state->pixel_shader;
-        find_ps_compile_args(state, pshader, device->stream_info.position_transformed, &ps_compile_args, gl_info);
+        find_ps_compile_args(state, pshader, context->stream_info.position_transformed, &ps_compile_args, gl_info);
         ps_id = find_glsl_pshader(context, &priv->shader_buffer,
                 pshader, &ps_compile_args, &np2fixup_info);
         ps_list = &pshader->linked_programs;

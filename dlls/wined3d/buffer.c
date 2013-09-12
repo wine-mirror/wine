@@ -776,7 +776,7 @@ void buffer_internal_preload(struct wined3d_buffer *buffer, struct wined3d_conte
                 fixup_flags |= WINED3D_BUFFER_FIXUP_XYZRHW;
         }
 
-        decl_changed = buffer_find_decl(buffer, &device->stream_info, fixup_flags);
+        decl_changed = buffer_find_decl(buffer, &context->stream_info, fixup_flags);
         buffer->flags |= WINED3D_BUFFER_HASDESC;
     }
 
