@@ -970,14 +970,18 @@ out:
 /* Tests for WSAStartup */
 static void test_WithoutWSAStartup(void)
 {
-    LPVOID ptr;
+    DWORD err;
 
     WSASetLastError(0xdeadbeef);
-    ptr = gethostbyname("localhost");
+    ok(WSASocketA(0, 0, 0, NULL, 0, 0) == INVALID_SOCKET, "WSASocketA should have failed\n");
+    err = WSAGetLastError();
+todo_wine
+    ok(err == WSANOTINITIALISED, "Expected 10093, received %d\n", err);
 
-    ok(ptr == NULL, "gethostbyname() succeeded unexpectedly: %d\n", WSAGetLastError());
-    ok(WSAGetLastError() == WSANOTINITIALISED, "gethostbyname() failed with unexpected error: %d\n",
-                WSAGetLastError());
+    WSASetLastError(0xdeadbeef);
+    ok(gethostbyname("localhost") == NULL, "gethostbyname() succeeded unexpectedly\n");
+    err = WSAGetLastError();
+    ok(err == WSANOTINITIALISED, "Expected 10093, received %d\n", err);
 }
 
 static void test_WithWSAStartup(void)
@@ -1777,7 +1781,8 @@ static void test_WSASocket(void)
     UINT pi_size;
 
     SetLastError(0xdeadbeef);
-    ok(WSASocketA(0, 0, 0, NULL, 0, 0) == INVALID_SOCKET, "WSASocketA should have failed\n");
+    ok(WSASocketA(0, 0, 0, NULL, 0, 0) == INVALID_SOCKET,
+       "WSASocketA should have failed\n");
     err = WSAGetLastError();
 todo_wine
     ok(err == WSAEINVAL, "Expected 10022, received %d\n", err);
@@ -1791,13 +1796,70 @@ todo_wine
     ok(sock != INVALID_SOCKET, "WSASocketA should have succeeded\n");
     closesocket(sock);
 
+    SetLastError(0xdeadbeef);
+    ok(WSASocketA(0, SOCK_STREAM, -1, NULL, 0, 0) == INVALID_SOCKET,
+       "WSASocketA should have failed\n");
+    err = WSAGetLastError();
+todo_wine
+    ok(err == WSAEPROTONOSUPPORT, "Expected 10043, received %d\n", err);
+
+    SetLastError(0xdeadbeef);
+    ok(WSASocketA(0, -1, IPPROTO_UDP, NULL, 0, 0) == INVALID_SOCKET,
+       "WSASocketA should have failed\n");
+    err = WSAGetLastError();
+todo_wine
+    ok(err == WSAESOCKTNOSUPPORT, "Expected 10044, received %d\n", err);
+
+    SetLastError(0xdeadbeef);
+    ok(WSASocketA(0, -1, 0, NULL, 0, 0) == INVALID_SOCKET,
+       "WSASocketA should have failed\n");
+    err = WSAGetLastError();
+todo_wine
+    ok(err == WSAEINVAL, "Expected 10022, received %d\n", err);
+
+    SetLastError(0xdeadbeef);
+    ok(WSASocketA(0, -1, -1, NULL, 0, 0) == INVALID_SOCKET,
+       "WSASocketA should have failed\n");
+    err = WSAGetLastError();
+todo_wine
+    ok(err == WSAESOCKTNOSUPPORT, "Expected 10044, received %d\n", err);
+
+    SetLastError(0xdeadbeef);
+    ok(WSASocketA(-1, SOCK_STREAM, IPPROTO_UDP, NULL, 0, 0) == INVALID_SOCKET,
+       "WSASocketA should have failed\n");
+    err = WSAGetLastError();
+todo_wine
+    ok(err == WSAEAFNOSUPPORT, "Expected 10047, received %d\n", err);
+
     sock = WSASocketA(AF_INET, 0, IPPROTO_TCP, NULL, 0, 0);
 todo_wine
     ok(sock != INVALID_SOCKET, "WSASocketA should have succeeded\n");
     closesocket(sock);
 
     SetLastError(0xdeadbeef);
-    ok(WSASocketA(0, SOCK_STREAM, 0, NULL, 0, 0) == INVALID_SOCKET, "WSASocketA should have failed\n");
+    ok(WSASocketA(0, SOCK_STREAM, 0, NULL, 0, 0) == INVALID_SOCKET,
+       "WSASocketA should have failed\n");
+    err = WSAGetLastError();
+todo_wine
+    ok(err == WSAEINVAL, "Expected 10022, received %d\n", err);
+
+    SetLastError(0xdeadbeef);
+    ok(WSASocketA(0, 0, 0xdead, NULL, 0, 0) == INVALID_SOCKET,
+       "WSASocketA should have failed\n");
+    err = WSAGetLastError();
+todo_wine
+    ok(err == WSAEPROTONOSUPPORT, "Expected 10043, received %d\n", err);
+
+    SetLastError(0xdeadbeef);
+    ok(WSASocketA(AF_INET, 0xdead, 0, NULL, 0, 0) == INVALID_SOCKET,
+       "WSASocketA should have failed\n");
+    err = WSAGetLastError();
+todo_wine
+    ok(err == WSAESOCKTNOSUPPORT, "Expected 10044, received %d\n", err);
+
+    SetLastError(0xdeadbeef);
+    ok(WSASocketA(0, 0xdead, 0, NULL, 0, 0) == INVALID_SOCKET,
+       "WSASocketA should have failed\n");
     err = WSAGetLastError();
 todo_wine
     ok(err == WSAEINVAL, "Expected 10022, received %d\n", err);
@@ -1858,6 +1920,31 @@ todo_wine
     closesocket(sock);
 
     /* find what parameters are used first: plain parameters or protocol info struct */
+    pi[0].iProtocol = -1;
+    pi[0].iSocketType = -1;
+    pi[0].iAddressFamily = -1;
+    ok(WSASocketA(0, 0, IPPROTO_UDP, &pi[0], 0, 0) == INVALID_SOCKET,
+       "WSASocketA should have failed\n");
+    err = WSAGetLastError();
+todo_wine
+    ok(err == WSAEAFNOSUPPORT, "Expected 10047, received %d\n", err);
+
+    pi[0].iProtocol = 0;
+    pi[0].iSocketType = 0;
+    pi[0].iAddressFamily = 0;
+    sock = WSASocketA(0, 0, IPPROTO_UDP, &pi[0], 0, 0);
+    if(sock != INVALID_SOCKET)
+    {
+      win_skip("must work only in OS <= 2003\n");
+      closesocket(sock);
+    }
+    else
+    {
+      err = WSAGetLastError();
+todo_wine
+      ok(err == WSAEAFNOSUPPORT, "Expected 10047, received %d\n", err);
+    }
+
     pi[0].iProtocol = IPPROTO_UDP;
     pi[0].iSocketType = SOCK_DGRAM;
     pi[0].iAddressFamily = AF_INET;
