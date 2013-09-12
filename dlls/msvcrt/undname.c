@@ -331,7 +331,7 @@ static const char* get_number(struct parsed_symbol* sym)
         if (*sym->current != '@') return NULL;
 
         ptr = und_alloc(sym, 17);
-        sprintf(ptr, "%s%d", sgn ? "-" : "", ret);
+        sprintf(ptr, "%s%u", sgn ? "-" : "", ret);
         sym->current++;
     }
     else return NULL;
@@ -1103,13 +1103,24 @@ static BOOL handle_method(struct parsed_symbol* sym, BOOL cast_op)
      * 'X' public: thunk
      * 'Y'
      * 'Z'
+     * "$0" private: thunk vtordisp
+     * "$1" private: thunk vtordisp
+     * "$2" protected: thunk vtordisp
+     * "$3" protected: thunk vtordisp
+     * "$4" public: thunk vtordisp
+     * "$5" public: thunk vtordisp
      */
     accmem = *sym->current++;
-    if (accmem < 'A' || accmem > 'Z') goto done;
+    if (accmem == '$')
+    {
+        accmem = *sym->current++;
+        if (accmem < '0' || accmem > '5') goto done;
+    }
+    else if (accmem < 'A' || accmem > 'Z') goto done;
 
     if (!(sym->flags & UNDNAME_NO_ACCESS_SPECIFIERS))
     {
-        switch ((accmem - 'A') / 8)
+        switch (accmem >= '0' && accmem <= '5' ? (accmem - '0') / 2 : (accmem - 'A') / 8)
         {
         case 0: access = "private: "; break;
         case 1: access = "protected: "; break;
@@ -1118,7 +1129,12 @@ static BOOL handle_method(struct parsed_symbol* sym, BOOL cast_op)
     }
     if (!(sym->flags & UNDNAME_NO_MEMBER_TYPE))
     {
-        if (accmem <= 'X')
+        if (accmem >= '0' && accmem <= '5')
+        {
+            access = str_printf(sym, "[thunk]:%s", access);
+            member_type = "virtual ";
+        }
+        else if (accmem <= 'X')
         {
             switch ((accmem - 'A') % 8)
             {
@@ -1134,7 +1150,15 @@ static BOOL handle_method(struct parsed_symbol* sym, BOOL cast_op)
 
     name = get_class_string(sym, 0);
 
-    if ((accmem - 'A') % 8 == 6 || (accmem - '8') % 8 == 7) /* a thunk */
+    if (accmem >= '0' && accmem <='5') /* vtordisp thunk */
+    {
+        const char *n1 = get_number(sym);
+        const char *n2 = get_number(sym);
+
+        if (!n1 || !n2) goto done;
+        name = str_printf(sym, "%s`vtordisp{%s,%s}' ", name, n1, n2);
+    }
+    else if ((accmem - 'A') % 8 == 6 || (accmem - 'A') % 8 == 7) /* a thunk */
         name = str_printf(sym, "%s`adjustor{%s}' ", name, get_number(sym));
 
     if (accmem <= 'X')
@@ -1194,7 +1218,7 @@ done:
 }
 
 /******************************************************************
- *		handle_template
+ *             handle_template
  * Does the final parsing and handling for a name with templates
  */
 static BOOL handle_template(struct parsed_symbol* sym)
@@ -1443,10 +1467,10 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
     /* Function/Data type and access level */
     if (*sym->current >= '0' && *sym->current <= '9')
         ret = handle_data(sym);
-    else if (*sym->current >= 'A' && *sym->current <= 'Z')
-        ret = handle_method(sym, do_after == 3);
-    else if (*sym->current == '$')
+    else if (sym->current[0] == '$' && (sym->current[1] < '0' || sym->current[1] > '9'))
         ret = handle_template(sym);
+    else if ((*sym->current >= 'A' && *sym->current <= 'Z') || *sym->current == '$')
+        ret = handle_method(sym, do_after == 3);
     else ret = FALSE;
 done:
     if (ret) assert(sym->result);
