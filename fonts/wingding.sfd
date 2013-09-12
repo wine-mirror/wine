@@ -13,7 +13,6 @@ Descent: 410
 LayerCount: 2
 Layer: 0 1 "Back" 1
 Layer: 1 1 "Fore" 0
-NeedsXUIDChange: 1
 FSType: 0
 OS2Version: 0
 OS2_WeightWidthSlopeOnly: 0
@@ -75,9 +74,9 @@ SplineSet
 EndSplineSet
 EndChar
 
-StartChar: ogonek
+StartChar: boxcheckbld
 Encoding: 254 731 1
-Width: 1896
+Width: 1826
 Flags: W
 LayerCount: 2
 Fore
@@ -104,9 +103,9 @@ SplineSet
 EndSplineSet
 EndChar
 
-StartChar: registered
+StartChar: box2
 Encoding: 168 174 2
-Width: 1884
+Width: 1825
 Flags: W
 LayerCount: 2
 Fore
@@ -124,10 +123,10 @@ SplineSet
 EndSplineSet
 EndChar
 
-StartChar: G
+StartChar: handptup
 Encoding: 71 71 3
-Width: 1581
-Flags: HW
+Width: 1124
+Flags: W
 LayerCount: 2
 Fore
 SplineSet
