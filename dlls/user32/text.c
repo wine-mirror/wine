@@ -38,6 +38,7 @@
 #include "wine/unicode.h"
 #include "winnls.h"
 #include "controls.h"
+#include "usp10.h"
 #include "user_private.h"
 #include "wine/debug.h"
 
@@ -357,24 +358,40 @@ static void TEXT_WordBreak (HDC hdc, WCHAR *str, unsigned int max_str,
 {
     WCHAR *p;
     int word_fits;
+    SCRIPT_LOGATTR *sla;
+    SCRIPT_ANALYSIS sa;
+    int i;
+
     assert (format & DT_WORDBREAK);
     assert (chars_fit < *len_str);
+
+    sla = HeapAlloc(GetProcessHeap(), 0, sizeof(SCRIPT_LOGATTR) * *len_str);
+
+    memset(&sa, 0, sizeof(SCRIPT_ANALYSIS));
+    sa.eScript = SCRIPT_UNDEFINED;
+
+    ScriptBreak(str, *len_str, &sa, sla);
 
     /* Work back from the last character that did fit to either a space or the
      * last character of a word, whichever is met first.
      */
     p = str + chars_fit; /* The character that doesn't fit */
+    i = chars_fit;
     word_fits = TRUE;
     if (!chars_fit)
         ; /* we pretend that it fits anyway */
-    else if (*p == SPACE) /* chars_fit < *len_str so this is valid */
-        p--; /* the word just fitted */
+    else if (sla[i].fSoftBreak) /* chars_fit < *len_str so this is valid */
+    {
+         /* the word just fitted */
+        p--;
+    }
     else
     {
-        while (p > str && *(--p) != SPACE)
-            ;
-        word_fits = (p != str || *p == SPACE);
+        while (i > 0 && !sla[(--i)+1].fSoftBreak) p--;
+        p--;
+        word_fits = (i != 0 || sla[i+1].fSoftBreak );
     }
+
     /* If there was one or the first character didn't fit then */
     if (word_fits)
     {
@@ -427,6 +444,7 @@ static void TEXT_WordBreak (HDC hdc, WCHAR *str, unsigned int max_str,
     }
     /* Remeasure the string */
     GetTextExtentExPointW (hdc, str, *len_str, 0, NULL, NULL, size);
+    HeapFree(GetProcessHeap(),0, sla);
 }
 
 /*********************************************************************
