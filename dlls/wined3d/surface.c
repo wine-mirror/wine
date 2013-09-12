@@ -1289,12 +1289,6 @@ static BOOL fbo_blit_supported(const struct wined3d_gl_info *gl_info, enum wined
     return TRUE;
 }
 
-/* This function checks if the primary render target uses the 8bit paletted format. */
-static BOOL primary_render_target_is_p8(const struct wined3d_device *device)
-{
-    return device->swapchains[0]->desc.backbuffer_format == WINED3DFMT_P8_UINT;
-}
-
 static BOOL surface_convert_color_to_float(const struct wined3d_surface *surface,
         DWORD color, struct wined3d_color *float_color)
 {
@@ -1316,7 +1310,7 @@ static BOOL surface_convert_color_to_float(const struct wined3d_surface *surface
                 float_color->g = 0.0f;
                 float_color->b = 0.0f;
             }
-            float_color->a = primary_render_target_is_p8(device) ? color / 255.0f : 1.0f;
+            float_color->a = swapchain_is_p8(device->swapchains[0]) ? color / 255.0f : 1.0f;
             break;
 
         case WINED3DFMT_B5G6R5_UNORM:
@@ -1780,7 +1774,7 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
         int dst_pitch = 0;
 
         /* In case of P8 the index is stored in the alpha component if the primary render target uses P8. */
-        if (format->id == WINED3DFMT_P8_UINT && primary_render_target_is_p8(surface->resource.device))
+        if (format->id == WINED3DFMT_P8_UINT && swapchain_is_p8(surface->resource.device->swapchains[0]))
         {
             gl_format = GL_ALPHA;
             gl_type = GL_UNSIGNED_BYTE;
@@ -3806,7 +3800,7 @@ static void read_from_framebuffer(struct wined3d_surface *surface, const RECT *r
     {
         case WINED3DFMT_P8_UINT:
         {
-            if (primary_render_target_is_p8(device))
+            if (swapchain_is_p8(context->swapchain))
             {
                 /* In case of P8 render targets the index is stored in the alpha component */
                 fmt = GL_ALPHA;
@@ -3942,14 +3936,12 @@ static void read_from_framebuffer(struct wined3d_surface *surface, const RECT *r
         }
     }
 
-    context_release(context);
-
     /* For P8 textures we need to perform an inverse palette lookup. This is
      * done by searching for a palette index which matches the RGB value.
      * Note this isn't guaranteed to work when there are multiple entries for
      * the same color but we have no choice. In case of P8 render targets,
      * the index is stored in the alpha component so no conversion is needed. */
-    if (surface->resource.format->id == WINED3DFMT_P8_UINT && !primary_render_target_is_p8(device))
+    if (surface->resource.format->id == WINED3DFMT_P8_UINT && !swapchain_is_p8(context->swapchain))
     {
         const PALETTEENTRY *pal = NULL;
         DWORD width = pitch / 3;
@@ -3986,6 +3978,8 @@ static void read_from_framebuffer(struct wined3d_surface *surface, const RECT *r
         }
         HeapFree(GetProcessHeap(), 0, mem);
     }
+
+    context_release(context);
 }
 
 /* Read the framebuffer contents into a texture. Note that this function
@@ -4108,7 +4102,7 @@ void d3dfmt_p8_init_palette(const struct wined3d_surface *surface, BYTE table[25
      * is slow. Further RGB->P8 conversion is not possible because palettes can have
      * duplicate entries. Store the color key in the unused alpha component to speed the
      * download up and to make conversion unneeded. */
-    index_in_alpha = primary_render_target_is_p8(device);
+    index_in_alpha = swapchain_is_p8(device->swapchains[0]);
 
     if (!pal)
     {
@@ -4838,7 +4832,7 @@ static void surface_blt_to_drawable(const struct wined3d_device *device,
          * contains the palette index. Which means that the colorkey is one of
          * the palette entries. In other cases pixels that should be masked
          * away have alpha set to 0. */
-        if (primary_render_target_is_p8(device))
+        if (swapchain_is_p8(context->swapchain))
             gl_info->gl_ops.gl.p_glAlphaFunc(GL_NOTEQUAL,
                     (float)src_surface->src_blt_color_key.color_space_low_value / 256.0f);
         else
