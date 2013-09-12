@@ -728,7 +728,8 @@ static void buffer_direct_upload(struct wined3d_buffer *This, const struct wined
 }
 
 /* Context activation is done by the caller. */
-void buffer_internal_preload(struct wined3d_buffer *buffer, struct wined3d_context *context)
+void buffer_internal_preload(struct wined3d_buffer *buffer, struct wined3d_context *context,
+        const struct wined3d_state *state)
 {
     DWORD flags = buffer->flags & (WINED3D_BUFFER_NOSYNC | WINED3D_BUFFER_DISCARD);
     struct wined3d_device *device = buffer->resource.device;
@@ -763,12 +764,13 @@ void buffer_internal_preload(struct wined3d_buffer *buffer, struct wined3d_conte
         }
     }
 
-    /* Reading the declaration makes only sense if the stateblock is finalized and the buffer bound to a stream */
-    if (device->isInDraw && buffer->resource.bind_count > 0)
+    /* Reading the declaration makes only sense if we have valid state information
+     * (i.e., if this function is called during draws). */
+    if (state)
     {
         DWORD fixup_flags = 0;
 
-        if (!use_vs(&device->state))
+        if (!use_vs(state))
         {
             if (!context->gl_info->supported[ARB_VERTEX_ARRAY_BGRA])
                 fixup_flags |= WINED3D_BUFFER_FIXUP_D3DCOLOR;
@@ -935,7 +937,7 @@ void CDECL wined3d_buffer_preload(struct wined3d_buffer *buffer)
 {
     struct wined3d_context *context;
     context = context_acquire(buffer->resource.device, NULL);
-    buffer_internal_preload(buffer, context);
+    buffer_internal_preload(buffer, context, NULL);
     context_release(context);
 }
 

@@ -2498,7 +2498,7 @@ void context_stream_info_from_declaration(struct wined3d_context *context,
 
         element = &stream_info->elements[i];
         buffer = state->streams[element->stream_idx].buffer;
-        buffer_internal_preload(buffer, context);
+        buffer_internal_preload(buffer, context, state);
 
         /* If the preload dropped the buffer object, update the stream info. */
         if (buffer->buffer_object != element->data.buffer_object)
@@ -2583,7 +2583,7 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
     if (state->index_buffer)
     {
         if (context->stream_info.all_vbo)
-            buffer_internal_preload(state->index_buffer, context);
+            buffer_internal_preload(state->index_buffer, context, state);
         else
             buffer_get_sysmem(state->index_buffer, context);
     }
