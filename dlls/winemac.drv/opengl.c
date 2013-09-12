@@ -3275,16 +3275,16 @@ static BOOL create_context(struct wgl_context *context, CGLContextObj share)
  */
 int macdrv_wglDescribePixelFormat(HDC hdc, int fmt, UINT size, PIXELFORMATDESCRIPTOR *descr)
 {
-    int ret = nb_displayable_formats;
     const pixel_format *pf;
     const struct color_mode *mode;
 
     TRACE("hdc %p fmt %d size %u descr %p\n", hdc, fmt, size, descr);
 
-    if (fmt <= 0 || fmt > ret || !descr) return ret;
+    if (!descr) return nb_displayable_formats;
     if (size < sizeof(*descr)) return 0;
 
-    pf = &pixel_formats[fmt - 1];
+    if (!(pf = get_pixel_format(fmt, FALSE)))
+        return 0;
 
     memset(descr, 0, sizeof(*descr));
     descr->nSize            = sizeof(*descr);
@@ -3331,7 +3331,7 @@ int macdrv_wglDescribePixelFormat(HDC hdc, int fmt, UINT size, PIXELFORMATDESCRI
     descr->cStencilBits     = pf->stencil_bits;
     descr->cAuxBuffers      = pf->aux_buffers;
     descr->iLayerType       = PFD_MAIN_PLANE;
-    return ret;
+    return nb_displayable_formats;
 }
 
 /***********************************************************************
