@@ -2558,15 +2558,21 @@ static void z_range_test(IDirect3DDevice9 *device)
     else
         ok(color_match(color, 0x00ffff00, 0), "Z range failed: Got color 0x%08x, expected 0x00ffff00.\n", color);
 
-    /* Not clipped, > z buffer clear value(0.75) */
+    /* Not clipped, > z buffer clear value(0.75).
+     *
+     * On the r500 driver on Windows D3DCMP_GREATER and D3DCMP_GREATEREQUAL are broken for depth
+     * values > 0.5. The range appears to be distorted, apparently an incoming value of ~0.875 is
+     * equal to a stored depth buffer value of 0.5. */
     color = getPixelColor(device, 31, 238);
     ok(color_match(color, 0x00ff0000, 0), "Z range failed: Got color 0x%08x, expected 0x00ff0000.\n", color);
     color = getPixelColor(device, 31, 241);
     ok(color_match(color, 0x00ffff00, 0), "Z range failed: Got color 0x%08x, expected 0x00ffff00.\n", color);
     color = getPixelColor(device, 100, 238);
-    ok(color_match(color, 0x00ff0000, 0), "Z range failed: Got color 0x%08x, expected 0x00ff0000.\n", color);
+    ok(color_match(color, 0x00ff0000, 0) || broken(color_match(color, 0x00ffffff, 0)),
+            "Z range failed: Got color 0x%08x, expected 0x00ff0000.\n", color);
     color = getPixelColor(device, 100, 241);
-    ok(color_match(color, 0x00ffff00, 0), "Z range failed: Got color 0x%08x, expected 0x00ffff00.\n", color);
+    ok(color_match(color, 0x00ffff00, 0) || broken(color_match(color, 0x00ffffff, 0)),
+            "Z range failed: Got color 0x%08x, expected 0x00ffff00.\n", color);
 
     /* Not clipped, < z buffer clear value */
     color = getPixelColor(device, 104, 238);
@@ -2638,7 +2644,8 @@ static void z_range_test(IDirect3DDevice9 *device)
     color = getPixelColor(device, 31, 238);
     ok(color_match(color, 0x00ff0000, 0), "Z range failed: Got color 0x%08x, expected 0x00ff0000.\n", color);
     color = getPixelColor(device, 100, 238);
-    ok(color_match(color, 0x00ff0000, 0), "Z range failed: Got color 0x%08x, expected 0x00ff0000.\n", color);
+    ok(color_match(color, 0x00ff0000, 0) || broken(color_match(color, 0x00ffffff, 0)),
+            "Z range failed: Got color 0x%08x, expected 0x00ff0000.\n", color);
 
     /* 0.75 < z < 0.0 */
     color = getPixelColor(device, 104, 238);
