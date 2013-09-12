@@ -913,6 +913,119 @@ typedef DWORD (CALLBACK *LPPROGRESS_ROUTINE)(LARGE_INTEGER, LARGE_INTEGER, LARGE
 
 typedef DWORD (WINAPI *APPLICATION_RECOVERY_CALLBACK)(PVOID);
 
+typedef enum _COPYFILE2_MESSAGE_TYPE
+{
+    COPYFILE2_CALLBACK_NONE = 0,
+    COPYFILE2_CALLBACK_CHUNK_STARTED,
+    COPYFILE2_CALLBACK_CHUNK_FINISHED,
+    COPYFILE2_CALLBACK_STREAM_STARTED,
+    COPYFILE2_CALLBACK_STREAM_FINISHED,
+    COPYFILE2_CALLBACK_POLL_CONTINUE,
+    COPYFILE2_CALLBACK_ERROR,
+    COPYFILE2_CALLBACK_MAX,
+} COPYFILE2_MESSAGE_TYPE;
+
+typedef enum _COPYFILE2_MESSAGE_ACTION
+{
+    COPYFILE2_PROGRESS_CONTINUE = 0,
+    COPYFILE2_PROGRESS_CANCEL,
+    COPYFILE2_PROGRESS_STOP,
+    COPYFILE2_PROGRESS_QUIET,
+    COPYFILE2_PROGRESS_PAUSE,
+} COPYFILE2_MESSAGE_ACTION;
+
+typedef enum _COPYFILE2_COPY_PHASE
+{
+    COPYFILE2_PHASE_NONE = 0,
+    COPYFILE2_PHASE_PREPARE_SOURCE,
+    COPYFILE2_PHASE_PREPARE_DEST,
+    COPYFILE2_PHASE_READ_SOURCE,
+    COPYFILE2_PHASE_WRITE_DESTINATION,
+    COPYFILE2_PHASE_SERVER_COPY,
+    COPYFILE2_PHASE_NAMEGRAFT_COPY,
+    COPYFILE2_PHASE_MAX,
+} COPYFILE2_COPY_PHASE;
+
+typedef struct COPYFILE2_MESSAGE
+{
+    COPYFILE2_MESSAGE_TYPE Type;
+    DWORD                  dwPadding;
+    union
+    {
+        struct
+        {
+            DWORD          dwStreamNumber;
+            DWORD          dwReserved;
+            HANDLE         hSourceFile;
+            HANDLE         hDestinationFile;
+            ULARGE_INTEGER uliChunkNumber;
+            ULARGE_INTEGER uliChunkSize;
+            ULARGE_INTEGER uliStreamSize;
+            ULARGE_INTEGER uliTotalFileSize;
+        } ChunkStarted;
+        struct
+        {
+            DWORD          dwStreamNumber;
+            DWORD          dwFlags;
+            HANDLE         hSourceFile;
+            HANDLE         hDestinationFile;
+            ULARGE_INTEGER uliChunkNumber;
+            ULARGE_INTEGER uliChunkSize;
+            ULARGE_INTEGER uliStreamSize;
+            ULARGE_INTEGER uliStreamBytesTransferred;
+            ULARGE_INTEGER uliTotalFileSize;
+            ULARGE_INTEGER uliTotalBytesTransferred;
+        } ChunkFinished;
+        struct
+        {
+            DWORD          dwStreamNumber;
+            DWORD          dwReserved;
+            HANDLE         hSourceFile;
+            HANDLE         hDestinationFile;
+            ULARGE_INTEGER uliStreamSize;
+            ULARGE_INTEGER uliTotalFileSize;
+        } StreamStarted;
+        struct
+        {
+            DWORD          dwStreamNumber;
+            DWORD          dwReserved;
+            HANDLE         hSourceFile;
+            HANDLE         hDestinationFile;
+            ULARGE_INTEGER uliStreamSize;
+            ULARGE_INTEGER uliStreamBytesTransferred;
+            ULARGE_INTEGER uliTotalFileSize;
+            ULARGE_INTEGER uliTotalBytesTransferred;
+        } StreamFinished;
+        struct
+        {
+            DWORD dwReserved;
+        } PollContinue;
+        struct
+        {
+            COPYFILE2_COPY_PHASE CopyPhase;
+            DWORD                dwStreamNumber;
+            HRESULT              hrFailure;
+            DWORD                dwReserved;
+            ULARGE_INTEGER       uliChunkNumber;
+            ULARGE_INTEGER       uliStreamSize;
+            ULARGE_INTEGER       uliStreamBytesTransferred;
+            ULARGE_INTEGER       uliTotalFileSize;
+            ULARGE_INTEGER       uliTotalBytesTransferred;
+        } Error;
+    } Info;
+} COPYFILE2_MESSAGE;
+
+typedef COPYFILE2_MESSAGE_ACTION (CALLBACK *PCOPYFILE2_PROGRESS_ROUTINE)(const COPYFILE2_MESSAGE*,PVOID);
+
+typedef struct COPYFILE2_EXTENDED_PARAMETERS
+{
+    DWORD                        dwSize;
+    DWORD                        dwCopyFlags;
+    BOOL                        *pfCancel;
+    PCOPYFILE2_PROGRESS_ROUTINE  pProgressRoutine;
+    PVOID                        pvCallbackContext;
+} COPYFILE2_EXTENDED_PARAMETERS;
+
 #define CREATE_EVENT_MANUAL_RESET 1
 #define CREATE_EVENT_INITIAL_SET  2
 
@@ -1462,6 +1575,7 @@ WINBASEAPI HANDLE      WINAPI ConvertToGlobalHandle(HANDLE hSrc);
 WINBASEAPI BOOL        WINAPI CopyFileA(LPCSTR,LPCSTR,BOOL);
 WINBASEAPI BOOL        WINAPI CopyFileW(LPCWSTR,LPCWSTR,BOOL);
 #define                       CopyFile WINELIB_NAME_AW(CopyFile)
+WINBASEAPI HRESULT     WINAPI CopyFile2(PCWSTR,PCWSTR,COPYFILE2_EXTENDED_PARAMETERS*);
 WINBASEAPI BOOL        WINAPI CopyFileExA(LPCSTR, LPCSTR, LPPROGRESS_ROUTINE, LPVOID, LPBOOL, DWORD);
 WINBASEAPI BOOL        WINAPI CopyFileExW(LPCWSTR, LPCWSTR, LPPROGRESS_ROUTINE, LPVOID, LPBOOL, DWORD);
 #define                       CopyFileEx WINELIB_NAME_AW(CopyFileEx)
