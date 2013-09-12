@@ -3307,7 +3307,7 @@ static BOOL create_context(struct wgl_context *context, CGLContextObj share)
  */
 int macdrv_wglDescribePixelFormat(HDC hdc, int fmt, UINT size, PIXELFORMATDESCRIPTOR *descr)
 {
-    int ret = nb_formats;
+    int ret = nb_displayable_formats;
     const pixel_format *pf;
     const struct color_mode *mode;
 
