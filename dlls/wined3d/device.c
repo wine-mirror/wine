@@ -1350,7 +1350,8 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
     TRACE("Setting rendertarget 0 to NULL\n");
     device->fb.render_targets[0] = NULL;
     TRACE("Releasing the render target at %p\n", surface);
-    wined3d_surface_decref(surface);
+    if (surface)
+        wined3d_surface_decref(surface);
 
     context_release(context);
 
@@ -4479,13 +4480,6 @@ HRESULT CDECL wined3d_device_set_render_target(struct wined3d_device *device,
     if (render_target_idx >= device->adapter->gl_info.limits.buffers)
     {
         WARN("Only %u render targets are supported.\n", device->adapter->gl_info.limits.buffers);
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    /* Render target 0 can't be set to NULL. */
-    if (!render_target && !render_target_idx)
-    {
-        WARN("Trying to set render target 0 to NULL.\n");
         return WINED3DERR_INVALIDCALL;
     }
 

@@ -1827,10 +1827,15 @@ static HRESULT d3d_device_set_render_target(struct d3d_device *device, struct dd
         wined3d_mutex_unlock();
         return D3D_OK;
     }
+    if (!target)
+    {
+        WARN("Trying to set render target to NULL.\n");
+        wined3d_mutex_unlock();
+        return DDERR_INVALIDPARAMS;
+    }
     device->target = target;
-    hr = wined3d_device_set_render_target(device->wined3d_device, 0,
-            target ? target->wined3d_surface : NULL, FALSE);
-    if(hr != D3D_OK)
+    if (FAILED(hr = wined3d_device_set_render_target(device->wined3d_device,
+            0, target->wined3d_surface, FALSE)))
     {
         wined3d_mutex_unlock();
         return hr;

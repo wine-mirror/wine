@@ -1226,6 +1226,12 @@ static HRESULT WINAPI d3d9_device_SetRenderTarget(IDirect3DDevice9Ex *iface, DWO
         return D3DERR_INVALIDCALL;
     }
 
+    if (!idx && !surface_impl)
+    {
+         WARN("Trying to set render target 0 to NULL.\n");
+         return D3DERR_INVALIDCALL;
+    }
+
     wined3d_mutex_lock();
     hr = wined3d_device_set_render_target(device->wined3d_device, idx,
             surface_impl ? surface_impl->wined3d_surface : NULL, TRUE);
