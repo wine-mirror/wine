@@ -30,7 +30,7 @@ DECLARE_INTERFACE_(IDirectDrawFactory, IUnknown)
     STDMETHOD_(ULONG, Release)(THIS) PURE;
     STDMETHOD(CreateDirectDraw)(THIS_ GUID * pGUID, HWND hWnd, DWORD dwCoopLevelFlags,
               DWORD dwReserved, IUnknown *pUnkOuter, IDirectDraw **ppDirectDraw) PURE;
-    STDMETHOD(_DirectDrawEnumerate)(THIS_ LPDDENUMCALLBACKW lpCallback, LPVOID lpContext) PURE;
+    STDMETHOD(_DirectDrawEnumerate)(THIS_ LPDDENUMCALLBACKW cb, void *ctx) PURE;
 };
 #undef INTERFACE
 

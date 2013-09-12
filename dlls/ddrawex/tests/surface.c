@@ -27,7 +27,7 @@
 #include "unknwn.h"
 
 static IDirectDrawFactory *factory;
-static HRESULT (WINAPI *pDllGetClassObject)(REFCLSID rclsid, REFIID riid, LPVOID *ppv);
+static HRESULT (WINAPI *pDllGetClassObject)(REFCLSID rclsid, REFIID riid, void **out);
 
 static IDirectDraw *createDD(void)
 {

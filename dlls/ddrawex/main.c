@@ -43,7 +43,7 @@ typedef struct
 {
     IClassFactory IClassFactory_iface;
     LONG ref;
-    HRESULT (*pfnCreateInstance)(IUnknown *pUnkOuter, REFIID iid, LPVOID *ppObj);
+    HRESULT (*pfnCreateInstance)(IUnknown *outer, REFIID iid, void **out);
 } IClassFactoryImpl;
 
 static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
@@ -215,13 +215,8 @@ static ULONG WINAPI IDirectDrawFactoryImpl_Release(IDirectDrawFactory *iface)
     return ref;
 }
 
-/*******************************************************************************
- * IDirectDrawFactoryImpl_DirectDrawEnumerate
- *******************************************************************************/
-static HRESULT WINAPI
-IDirectDrawFactoryImpl_DirectDrawEnumerate(IDirectDrawFactory* iface,
-                                           LPDDENUMCALLBACKW lpCallback,
-                                           LPVOID lpContext)
+static HRESULT WINAPI IDirectDrawFactoryImpl_DirectDrawEnumerate(IDirectDrawFactory *iface,
+        LPDDENUMCALLBACKW cb, void *ctx)
 {
     FIXME("Stub!\n");
     return E_FAIL;
@@ -286,11 +281,11 @@ HRESULT WINAPI DllCanUnloadNow(void)
 /*******************************************************************************
  * DllGetClassObject [DDRAWEX.@]
  */
-HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **out)
 {
     IClassFactoryImpl *factory;
 
-    TRACE("ddrawex (%s,%s,%p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
+    TRACE("rclsid %s, riid %s, out %p.\n", debugstr_guid(rclsid), debugstr_guid(riid), out);
 
     if (!IsEqualGUID( &IID_IClassFactory, riid)
         && !IsEqualGUID( &IID_IUnknown, riid))
@@ -310,7 +305,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 
     factory->pfnCreateInstance = CreateDirectDrawFactory;
 
-    *ppv = factory;
+    *out = factory;
 
     return S_OK;
 }
@@ -319,13 +314,13 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 /***********************************************************************
  * DllMain
  */
-BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD reason, LPVOID lpv)
+BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)
 {
     switch (reason)
     {
     case DLL_PROCESS_ATTACH:
-        instance = hInstDLL;
-        DisableThreadLibraryCalls( hInstDLL );
+        instance = inst;
+        DisableThreadLibraryCalls( inst );
         break;
     }
     return TRUE;
