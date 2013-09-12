@@ -3876,9 +3876,9 @@ static void test_block_formats_creation(void)
                     ddsd.dwFlags = DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS;
                     ddsd.ddsCaps.dwCaps = types[j].caps;
                     ddsd.ddsCaps.dwCaps2 = types[j].caps2;
-                    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
-                    ddsd.ddpfPixelFormat.dwFlags = DDPF_FOURCC;
-                    ddsd.ddpfPixelFormat.dwFourCC = formats[i].fourcc;
+                    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
+                    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_FOURCC;
+                    U4(ddsd).ddpfPixelFormat.dwFourCC = formats[i].fourcc;
                     ddsd.dwWidth = w;
                     ddsd.dwHeight = h;
 
@@ -4002,7 +4002,7 @@ static void test_unsupported_formats(void)
             memset(&ddsd, 0, sizeof(ddsd));
             ddsd.dwSize = sizeof(ddsd);
             ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
-            ddsd.ddpfPixelFormat = formats[i].fmt;
+            U4(ddsd).ddpfPixelFormat = formats[i].fmt;
             ddsd.dwWidth = 4;
             ddsd.dwHeight = 4;
             ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | caps[j];
