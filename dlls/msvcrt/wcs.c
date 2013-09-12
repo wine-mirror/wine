@@ -86,6 +86,14 @@ INT CDECL MSVCRT__wcsicmp( const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* str
 }
 
 /*********************************************************************
+ *              _wcsnicmp (MSVCRT.@)
+ */
+INT CDECL MSVCRT__wcsnicmp(const MSVCRT_wchar_t *str1, const MSVCRT_wchar_t *str2, INT n)
+{
+    return strncmpiW(str1, str2, n);
+}
+
+/*********************************************************************
  *              _wcsicoll_l (MSVCRT.@)
  */
 int CDECL MSVCRT__wcsicoll_l(const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* str2, MSVCRT__locale_t locale)
