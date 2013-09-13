@@ -3806,6 +3806,87 @@ static void test_SetFileValidData(void)
     DeleteFile(filename);
 }
 
+static void test_file_access(void)
+{
+    static const struct
+    {
+        int access, create_error, write_error, read_error;
+    } td[] =
+    {
+        { GENERIC_READ | GENERIC_WRITE, 0, 0, 0 },
+        { GENERIC_WRITE, 0, 0, ERROR_ACCESS_DENIED },
+        { GENERIC_READ, 0, ERROR_ACCESS_DENIED, 0 },
+        { FILE_READ_DATA | FILE_WRITE_DATA, 0, 0, 0 },
+        { FILE_WRITE_DATA, 0, 0, ERROR_ACCESS_DENIED },
+        { FILE_READ_DATA, 0, ERROR_ACCESS_DENIED, 0 },
+        { 0, 0, ERROR_ACCESS_DENIED, ERROR_ACCESS_DENIED },
+    };
+    char path[MAX_PATH], fname[MAX_PATH];
+    unsigned char buf[16];
+    HANDLE hfile;
+    DWORD i, ret, bytes;
+
+    GetTempPath(MAX_PATH, path);
+    GetTempFileName(path, "foo", 0, fname);
+
+    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+    {
+        SetLastError(0xdeadbeef);
+        hfile = CreateFile(fname, td[i].access, 0, NULL, CREATE_ALWAYS,
+                           FILE_FLAG_DELETE_ON_CLOSE, 0);
+        if (td[i].create_error)
+        {
+            ok(hfile == INVALID_HANDLE_VALUE, "%d: CreateFile should fail\n", i);
+            ok(td[i].create_error == GetLastError(), "%d: expected %d, got %d\n", i, td[i].create_error, GetLastError());
+            continue;
+        }
+        else
+            ok(hfile != INVALID_HANDLE_VALUE, "%d: CreateFile error %d\n", i, GetLastError());
+
+        SetLastError(0xdeadbeef);
+        bytes = 0xdeadbeef;
+        ret = WriteFile(hfile, "\x5e\xa7", 2, &bytes, NULL);
+        if (td[i].write_error)
+        {
+            ok(!ret, "%d: WriteFile should fail\n", i);
+            ok(td[i].write_error == GetLastError(), "%d: expected %d, got %d\n", i, td[i].write_error, GetLastError());
+            ok(bytes == 0, "%d: expected 0, got %u\n", i, bytes);
+        }
+        else
+        {
+            ok(ret, "%d: WriteFile error %d\n", i, GetLastError());
+            ok(bytes == 2, "%d: expected 2, got %u\n", i, bytes);
+        }
+
+        SetLastError(0xdeadbeef);
+        ret = SetFilePointer(hfile, 0, NULL, FILE_BEGIN);
+        ok(ret != INVALID_SET_FILE_POINTER, "SetFilePointer error %d\n", GetLastError());
+
+        SetLastError(0xdeadbeef);
+        bytes = 0xdeadbeef;
+        ret = ReadFile(hfile, buf, sizeof(buf), &bytes, NULL);
+        if (td[i].read_error)
+        {
+            ok(!ret, "%d: ReadFile should fail\n", i);
+            ok(td[i].read_error == GetLastError(), "%d: expected %d, got %d\n", i, td[i].read_error, GetLastError());
+            ok(bytes == 0, "%d: expected 0, got %u\n", i, bytes);
+        }
+        else
+        {
+            ok(ret, "%d: ReadFile error %d\n", i, GetLastError());
+            if (td[i].write_error)
+                ok(bytes == 0, "%d: expected 0, got %u\n", i, bytes);
+            else
+            {
+                ok(bytes == 2, "%d: expected 2, got %u\n", i, bytes);
+                ok(buf[0] == 0x5e && buf[1] == 0xa7, "%d: expected 5ea7, got %02x%02x\n", i, buf[0], buf[1]);
+            }
+        }
+
+        CloseHandle(hfile);
+    }
+}
+
 START_TEST(file)
 {
     InitFunctionPointers();
@@ -3849,4 +3930,5 @@ START_TEST(file)
     test_GetFileInformationByHandleEx();
     test_OpenFileById();
     test_SetFileValidData();
+    test_file_access();
 }
