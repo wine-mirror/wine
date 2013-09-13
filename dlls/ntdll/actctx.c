@@ -288,6 +288,13 @@ struct clrclass_data
     DWORD res2[2];
 };
 
+struct progidredirect_data
+{
+    ULONG size;
+    DWORD reserved;
+    ULONG clsid_offset;
+};
+
 /*
 
    Sections structure.
@@ -388,6 +395,18 @@ struct clrclass_data
 
     There's nothing special about this section, same way to store strings is used,
     no modules part as it belongs to assembly level, not a file.
+
+   - ProgID section format:
+
+   <section header>
+   <guids[]>
+   <index[]>
+   <data[]> --- <progid>
+                <data>
+
+   This sections uses generated alias guids from COM server section. This way
+   ProgID -> CLSID mapping returns generated guid, not the real one. ProgID string
+   is stored too, aligned.
 */
 
 struct progids
@@ -489,7 +508,8 @@ enum context_sections
     TLIBREDIRECT_SECTION   = 4,
     SERVERREDIRECT_SECTION = 8,
     IFACEREDIRECT_SECTION  = 16,
-    CLRSURROGATES_SECTION  = 32
+    CLRSURROGATES_SECTION  = 32,
+    PROGIDREDIRECT_SECTION = 64
 };
 
 typedef struct _ACTIVATION_CONTEXT
@@ -505,6 +525,7 @@ typedef struct _ACTIVATION_CONTEXT
     DWORD               sections;
     struct strsection_header  *wndclass_section;
     struct strsection_header  *dllredirect_section;
+    struct strsection_header  *progid_section;
     struct guidsection_header *tlib_section;
     struct guidsection_header *comserver_section;
     struct guidsection_header *ifaceps_section;
@@ -1064,6 +1085,7 @@ static void actctx_release( ACTIVATION_CONTEXT *actctx )
         RtlFreeHeap( GetProcessHeap(), 0, actctx->comserver_section );
         RtlFreeHeap( GetProcessHeap(), 0, actctx->ifaceps_section );
         RtlFreeHeap( GetProcessHeap(), 0, actctx->clrsurrogate_section );
+        RtlFreeHeap( GetProcessHeap(), 0, actctx->progid_section );
         actctx->magic = 0;
         RtlFreeHeap( GetProcessHeap(), 0, actctx );
     }
@@ -1497,6 +1519,8 @@ static BOOL parse_com_class_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll, str
     if (error) return FALSE;
 
     acl->actctx->sections |= SERVERREDIRECT_SECTION;
+    if (entity->u.comclass.progid)
+        acl->actctx->sections |= PROGIDREDIRECT_SECTION;
 
     if (end) return TRUE;
 
@@ -1517,6 +1541,10 @@ static BOOL parse_com_class_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll, str
             ret = parse_unknown_elem(xmlbuf, &elem);
         }
     }
+
+    if (entity->u.comclass.progids.num)
+        acl->actctx->sections |= PROGIDREDIRECT_SECTION;
+
     return ret;
 }
 
@@ -1911,6 +1939,8 @@ static BOOL parse_clr_class_elem(xmlbuf_t* xmlbuf, struct assembly* assembly, st
 
     if (error) return FALSE;
     acl->actctx->sections |= SERVERREDIRECT_SECTION;
+    if (entity->u.comclass.progid)
+        acl->actctx->sections |= PROGIDREDIRECT_SECTION;
     if (end) return TRUE;
 
     while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
@@ -1930,6 +1960,10 @@ static BOOL parse_clr_class_elem(xmlbuf_t* xmlbuf, struct assembly* assembly, st
             ret = parse_unknown_elem(xmlbuf, &elem);
         }
     }
+
+    if (entity->u.comclass.progids.num)
+        acl->actctx->sections |= PROGIDREDIRECT_SECTION;
+
     return ret;
 }
 
@@ -4135,6 +4169,216 @@ static NTSTATUS find_clr_surrogate(ACTIVATION_CONTEXT* actctx, const GUID *guid,
     return STATUS_SUCCESS;
 }
 
+static void get_progid_datalen(struct entity_array *entities, unsigned int *count, unsigned int *total_len)
+{
+    unsigned int i, j, single_len;
+
+    single_len = sizeof(struct progidredirect_data) + sizeof(struct string_index) + sizeof(GUID);
+    for (i = 0; i < entities->num; i++)
+    {
+        struct entity *entity = &entities->base[i];
+        if (entity->kind == ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION)
+        {
+            if (entity->u.comclass.progid)
+            {
+                *total_len += single_len + aligned_string_len((strlenW(entity->u.comclass.progid)+1)*sizeof(WCHAR));
+                *count += 1;
+            }
+
+            for (j = 0; j < entity->u.comclass.progids.num; j++)
+                *total_len += aligned_string_len((strlenW(entity->u.comclass.progids.progids[j])+1)*sizeof(WCHAR));
+
+            *total_len += single_len*entity->u.comclass.progids.num;
+            *count += entity->u.comclass.progids.num;
+        }
+    }
+}
+
+static void write_progid_record(struct strsection_header *section, const WCHAR *progid, const GUID *alias,
+    struct string_index **index, ULONG *data_offset, ULONG *global_offset, ULONG rosterindex)
+{
+    struct progidredirect_data *data;
+    UNICODE_STRING str;
+    GUID *guid_ptr;
+    WCHAR *ptrW;
+
+    /* setup new index entry */
+
+    /* hash progid name */
+    RtlInitUnicodeString(&str, progid);
+    RtlHashUnicodeString(&str, TRUE, HASH_STRING_ALGORITHM_X65599, &(*index)->hash);
+
+    (*index)->name_offset = *data_offset;
+    (*index)->name_len = str.Length;
+    (*index)->data_offset = (*index)->name_offset + aligned_string_len(str.MaximumLength);
+    (*index)->data_len = sizeof(*data);
+    (*index)->rosterindex = rosterindex;
+
+    *data_offset += aligned_string_len(str.MaximumLength);
+
+    /* setup data structure */
+    data = (struct progidredirect_data*)((BYTE*)section + *data_offset);
+    data->size = sizeof(*data);
+    data->reserved = 0;
+    data->clsid_offset = *global_offset;
+
+    /* write progid string */
+    ptrW = (WCHAR*)((BYTE*)section + (*index)->name_offset);
+    memcpy(ptrW, progid, (*index)->name_len);
+    ptrW[(*index)->name_len/sizeof(WCHAR)] = 0;
+
+    /* write guid to global area */
+    guid_ptr = (GUID*)((BYTE*)section + data->clsid_offset);
+    *guid_ptr = *alias;
+
+    /* to next entry */
+    *global_offset += sizeof(GUID);
+    *data_offset += data->size;
+    (*index) += 1;
+}
+
+static void add_progid_record(ACTIVATION_CONTEXT* actctx, struct strsection_header *section, const struct entity_array *entities,
+    struct string_index **index, ULONG *data_offset, ULONG *global_offset, ULONG rosterindex)
+{
+    unsigned int i, j;
+
+    for (i = 0; i < entities->num; i++)
+    {
+        struct entity *entity = &entities->base[i];
+        if (entity->kind == ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION)
+        {
+            const struct progids *progids = &entity->u.comclass.progids;
+            struct comclassredirect_data *comclass;
+            struct guid_index *guid_index;
+            UNICODE_STRING str;
+            GUID clsid;
+
+            RtlInitUnicodeString(&str, entity->u.comclass.clsid);
+            RtlGUIDFromString(&str, &clsid);
+
+            guid_index = find_guid_index(actctx->comserver_section, &clsid);
+            comclass = get_comclass_data(actctx, guid_index);
+
+            if (entity->u.comclass.progid)
+                write_progid_record(section, entity->u.comclass.progid, &comclass->alias,
+                     index, data_offset, global_offset, rosterindex);
+
+            for (j = 0; j < progids->num; j++)
+                write_progid_record(section, progids->progids[j], &comclass->alias,
+                     index, data_offset, global_offset, rosterindex);
+        }
+    }
+}
+
+static NTSTATUS build_progid_section(ACTIVATION_CONTEXT* actctx, struct strsection_header **section)
+{
+    unsigned int i, j, total_len = 0, count = 0;
+    struct strsection_header *header;
+    ULONG data_offset, global_offset;
+    struct string_index *index;
+
+    /* compute section length */
+    for (i = 0; i < actctx->num_assemblies; i++)
+    {
+        struct assembly *assembly = &actctx->assemblies[i];
+
+        get_progid_datalen(&assembly->entities, &count, &total_len);
+        for (j = 0; j < assembly->num_dlls; j++)
+        {
+            struct dll_redirect *dll = &assembly->dlls[j];
+            get_progid_datalen(&dll->entities, &count, &total_len);
+        }
+    }
+
+    total_len += sizeof(*header);
+
+    header = RtlAllocateHeap(GetProcessHeap(), 0, total_len);
+    if (!header) return STATUS_NO_MEMORY;
+
+    memset(header, 0, sizeof(*header));
+    header->magic = STRSECTION_MAGIC;
+    header->size  = sizeof(*header);
+    header->count = count;
+    header->global_offset = header->size;
+    header->global_len = count*sizeof(GUID);
+    header->index_offset = header->size + header->global_len;
+
+    index = (struct string_index*)((BYTE*)header + header->index_offset);
+    data_offset = header->index_offset + count*sizeof(*index);
+    global_offset = header->global_offset;
+
+    for (i = 0; i < actctx->num_assemblies; i++)
+    {
+        struct assembly *assembly = &actctx->assemblies[i];
+
+        add_progid_record(actctx, header, &assembly->entities, &index, &data_offset, &global_offset, i + 1);
+        for (j = 0; j < assembly->num_dlls; j++)
+        {
+            struct dll_redirect *dll = &assembly->dlls[j];
+            add_progid_record(actctx, header, &dll->entities, &index, &data_offset, &global_offset, i + 1);
+        }
+    }
+
+    *section = header;
+
+    return STATUS_SUCCESS;
+}
+
+static inline struct progidredirect_data *get_progid_data(ACTIVATION_CONTEXT *actctx, const struct string_index *index)
+{
+    return (struct progidredirect_data*)((BYTE*)actctx->progid_section + index->data_offset);
+}
+
+static NTSTATUS find_progid_redirection(ACTIVATION_CONTEXT* actctx, const UNICODE_STRING *name,
+                                     PACTCTX_SECTION_KEYED_DATA data)
+{
+    struct progidredirect_data *progid;
+    struct string_index *index;
+
+    if (!(actctx->sections & PROGIDREDIRECT_SECTION)) return STATUS_SXS_KEY_NOT_FOUND;
+
+    if (!actctx->comserver_section)
+    {
+        struct guidsection_header *section;
+
+        NTSTATUS status = build_comserver_section(actctx, &section);
+        if (status) return status;
+
+        if (interlocked_cmpxchg_ptr((void**)&actctx->comserver_section, section, NULL))
+            RtlFreeHeap(GetProcessHeap(), 0, section);
+    }
+
+    if (!actctx->progid_section)
+    {
+        struct strsection_header *section;
+
+        NTSTATUS status = build_progid_section(actctx, &section);
+        if (status) return status;
+
+        if (interlocked_cmpxchg_ptr((void**)&actctx->progid_section, section, NULL))
+            RtlFreeHeap(GetProcessHeap(), 0, section);
+    }
+
+    index = find_string_index(actctx->progid_section, name);
+    if (!index) return STATUS_SXS_KEY_NOT_FOUND;
+
+    progid = get_progid_data(actctx, index);
+
+    data->ulDataFormatVersion = 1;
+    data->lpData = progid;
+    data->ulLength = progid->size;
+    data->lpSectionGlobalData = (BYTE*)actctx->progid_section + actctx->progid_section->global_offset;
+    data->ulSectionGlobalDataLength = actctx->progid_section->global_len;
+    data->lpSectionBase = actctx->progid_section;
+    data->ulSectionTotalLength = RtlSizeHeap( GetProcessHeap(), 0, actctx->progid_section );
+    data->hActCtx = NULL;
+
+    if (data->cbSize >= FIELD_OFFSET(ACTCTX_SECTION_KEYED_DATA, ulAssemblyRosterIndex) + sizeof(ULONG))
+        data->ulAssemblyRosterIndex = index->rosterindex;
+
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS find_string(ACTIVATION_CONTEXT* actctx, ULONG section_kind,
                             const UNICODE_STRING *section_name,
                             DWORD flags, PACTCTX_SECTION_KEYED_DATA data)
@@ -4150,6 +4394,8 @@ static NTSTATUS find_string(ACTIVATION_CONTEXT* actctx, ULONG section_kind,
         status = find_window_class(actctx, section_name, data);
         break;
     case ACTIVATION_CONTEXT_SECTION_COM_PROGID_REDIRECTION:
+        status = find_progid_redirection(actctx, section_name, data);
+        break;
     case ACTIVATION_CONTEXT_SECTION_GLOBAL_OBJECT_RENAME_TABLE:
         FIXME("Unsupported yet section_kind %x\n", section_kind);
         return STATUS_SXS_SECTION_NOT_FOUND;

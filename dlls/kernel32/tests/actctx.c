@@ -1506,11 +1506,6 @@ static void test_find_progid_redirection(HANDLE handle, const GUID *clsid, const
     ret = pFindActCtxSectionStringA(0, NULL,
                                        ACTIVATION_CONTEXT_SECTION_COM_PROGID_REDIRECTION,
                                        progid, &data);
-    if (!ret)
-    {
-        skip("failed for progid=%s\n", progid);
-        return;
-    }
     ok_(__FILE__, line)(ret, "FindActCtxSectionStringA failed: %u\n", GetLastError());
 
     progiddata = (struct progidredirect_data*)data.lpData;

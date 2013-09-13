@@ -59,6 +59,8 @@ static const GUID IID_Testiface = { 0x22222222, 0x1234, 0x1234, { 0x12, 0x34, 0x
 static const GUID IID_Testiface2 = { 0x32222222, 0x1234, 0x1234, { 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0 } };
 static const GUID IID_Testiface3 = { 0x42222222, 0x1234, 0x1234, { 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0 } };
 static const GUID IID_Testiface4 = { 0x52222222, 0x1234, 0x1234, { 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0 } };
+static const GUID IID_Testiface5 = { 0x62222222, 0x1234, 0x1234, { 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0 } };
+static const GUID IID_Testiface6 = { 0x72222222, 0x1234, 0x1234, { 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0 } };
 static const GUID IID_TestPS = { 0x66666666, 0x8888, 0x7777, { 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55 } };
 
 static WCHAR stdfont[] = {'S','t','d','F','o','n','t',0};
@@ -236,6 +238,9 @@ static const char actctx_manifest[] =
 "    <comClass clsid=\"{0be35203-8f91-11ce-9de3-00aa004bb852}\""
 "              progid=\"StdFont\""
 "    />"
+"    <comClass clsid=\"{62222222-1234-1234-1234-56789abcdef0}\" >"
+"        <progid>ProgId.ProgId.1</progid>"
+"    </comClass>"
 "    <comInterfaceProxyStub "
 "        name=\"Iifaceps\""
 "        iid=\"{22222222-1234-1234-1234-56789abcdef0}\""
@@ -256,6 +261,12 @@ static const char actctx_manifest[] =
 "        iid=\"{52222222-1234-1234-1234-56789abcdef0}\""
 "        proxyStubClsid32=\"{00000000-0000-0000-0000-000000000000}\""
 "    />"
+"    <clrClass "
+"        clsid=\"{72222222-1234-1234-1234-56789abcdef0}\""
+"        name=\"clrclass\""
+"    >"
+"        <progid>clrprogid.1</progid>"
+"    </clrClass>"
 "</assembly>";
 
 DEFINE_GUID(CLSID_Testclass, 0x12345678, 0x1234, 0x1234, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0);
@@ -303,6 +314,13 @@ todo_wine
 todo_wine
         ok(!lstrcmpiW(progid, customfontW), "got wrong progid %s\n", wine_dbgstr_w(progid));
         CoTaskMemFree(progid);
+
+        /* classes without default progid, progid list is not used */
+        hr = ProgIDFromCLSID(&IID_Testiface5, &progid);
+        ok(hr == REGDB_E_CLASSNOTREG, "got 0x%08x\n", hr);
+
+        hr = ProgIDFromCLSID(&IID_Testiface6, &progid);
+        ok(hr == REGDB_E_CLASSNOTREG, "got 0x%08x\n", hr);
 
         pDeactivateActCtx(0, cookie);
         pReleaseActCtx(handle);
