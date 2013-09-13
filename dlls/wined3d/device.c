@@ -878,6 +878,7 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct wined3d_swapchain *swapchain = NULL;
     struct wined3d_context *context;
+    DWORD clear_flags = 0;
     HRESULT hr;
     DWORD state;
 
@@ -941,13 +942,9 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
     {
         TRACE("Setting rendertarget to %p.\n", swapchain->back_buffers);
         device->fb.render_targets[0] = swapchain->back_buffers[0];
+        wined3d_surface_incref(device->fb.render_targets[0]);
+        clear_flags |= WINED3DCLEAR_TARGET;
     }
-    else
-    {
-        TRACE("Setting rendertarget to %p.\n", swapchain->front_buffer);
-        device->fb.render_targets[0] = swapchain->front_buffer;
-    }
-    wined3d_surface_incref(device->fb.render_targets[0]);
 
     /* Depth Stencil support */
     device->fb.depth_stencil = device->auto_depth_stencil;
@@ -991,9 +988,10 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
     context_release(context);
 
     /* Clear the screen */
-    wined3d_device_clear(device, 0, NULL, WINED3DCLEAR_TARGET
-            | (swapchain_desc->enable_auto_depth_stencil ? WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL : 0),
-            &black, 1.0f, 0);
+    if (swapchain_desc->enable_auto_depth_stencil)
+        clear_flags |= WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL;
+    if (clear_flags)
+        wined3d_device_clear(device, 0, NULL, clear_flags, &black, 1.0f, 0);
 
     device->d3d_initialized = TRUE;
 
