@@ -2989,7 +2989,7 @@ static void msi_dialog_update_directory_list( msi_dialog *dialog, msi_control *c
     FindClose( file );
 }
 
-UINT msi_dialog_directorylist_up( msi_dialog *dialog )
+static UINT msi_dialog_directorylist_up( msi_dialog *dialog )
 {
     msi_control *control;
     LPWSTR prop, path, ptr;
@@ -3492,7 +3492,7 @@ static UINT msi_dialog_fill_controls( msi_dialog *dialog )
     return r;
 }
 
-UINT msi_dialog_reset( msi_dialog *dialog )
+static UINT msi_dialog_reset( msi_dialog *dialog )
 {
     /* FIXME: should restore the original values of any properties we changed */
     return msi_dialog_evaluate_control_conditions( dialog );
@@ -3926,7 +3926,7 @@ static msi_dialog *dialog_create( MSIPACKAGE *package, const WCHAR *name, msi_di
     return dialog;
 }
 
-void msi_dialog_end_dialog( msi_dialog *dialog )
+static void msi_dialog_end_dialog( msi_dialog *dialog )
 {
     TRACE("%p\n", dialog);
     dialog->finished = 1;
