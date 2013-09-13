@@ -7268,7 +7268,7 @@ static void shademode_test(IDirect3DDevice9 *device)
     DWORD color0_gouraud = 0, color1_gouraud = 0;
     DWORD shademode = D3DSHADE_FLAT;
     DWORD primtype = D3DPT_TRIANGLESTRIP;
-    LPVOID data = NULL;
+    void *data = NULL;
     UINT i, j;
     struct vertex quad_strip[] =
     {

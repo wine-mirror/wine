@@ -93,12 +93,10 @@ void* WINAPI Direct3DShaderValidatorCreate9(void)
 /*******************************************************************
  *       DllMain
  */
-BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
+BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)
 {
-    /* At process attach */
-    TRACE("fdwReason=%d\n", fdwReason);
-    if (fdwReason == DLL_PROCESS_ATTACH)
-        DisableThreadLibraryCalls(hInstDLL);
+    if (reason == DLL_PROCESS_ATTACH)
+        DisableThreadLibraryCalls(inst);
 
     return TRUE;
 }

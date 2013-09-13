@@ -30,8 +30,10 @@
 
 static HMODULE d3d9_handle = 0;
 
-static BOOL (WINAPI *pEnumDisplaySettingsExA)(LPCSTR, DWORD, DEVMODEA *, DWORD);
-static LONG (WINAPI *pChangeDisplaySettingsExA)(LPCSTR, LPDEVMODE, HWND, DWORD, LPVOID);
+static BOOL (WINAPI *pEnumDisplaySettingsExA)(const char *device_name,
+        DWORD mode_idx, DEVMODEA *mode, DWORD flags);
+static LONG (WINAPI *pChangeDisplaySettingsExA)(const char *device_name,
+        DEVMODEA *mode, HWND window, DWORD flags, void *param);
 
 static IDirect3D9 * (WINAPI *pDirect3DCreate9)(UINT SDKVersion);
 static HRESULT (WINAPI *pDirect3DCreate9Ex)(UINT SDKVersion, IDirect3D9Ex **d3d9ex);
