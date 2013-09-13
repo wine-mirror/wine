@@ -1130,17 +1130,10 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
             FIXME("Something's still holding the auto depth stencil buffer (%p).\n", surface);
     }
 
-    for (i = 1; i < gl_info->limits.buffers; ++i)
+    for (i = 0; i < gl_info->limits.buffers; ++i)
     {
         wined3d_device_set_render_target(device, i, NULL, FALSE);
     }
-
-    surface = device->fb.render_targets[0];
-    TRACE("Setting rendertarget 0 to NULL\n");
-    device->fb.render_targets[0] = NULL;
-    TRACE("Releasing the render target at %p\n", surface);
-    if (surface)
-        wined3d_surface_decref(surface);
 
     context_release(context);
 
