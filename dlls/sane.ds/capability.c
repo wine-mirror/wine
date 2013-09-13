@@ -1221,6 +1221,7 @@ TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
     return twCC;
 }
 
+#ifdef SONAME_LIBSANE
 TW_UINT16 SANE_SaneSetDefaults (void)
 {
     TW_CAPABILITY cap;
@@ -1248,3 +1249,4 @@ TW_UINT16 SANE_SaneSetDefaults (void)
 
    return TWCC_SUCCESS;
 }
+#endif
