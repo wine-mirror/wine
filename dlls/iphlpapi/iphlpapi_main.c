@@ -933,25 +933,46 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
     return ERROR_SUCCESS;
 }
 
-static int get_dns_servers( SOCKADDR_STORAGE *servers, int num )
+static int get_dns_servers( SOCKADDR_STORAGE *servers, int num, BOOL ip4_only )
 {
-    int i;
+    int i, ip6_count = 0;
     SOCKADDR_STORAGE *addr;
 
     initialise_resolver();
 
-    /* AF_INET6 not yet enumerated */
+#ifdef HAVE_STRUCT___RES_STATE__U__EXT_NSCOUNT6
+    ip6_count = _res._u._ext.nscount6;
+#endif
+
     if (!servers || !num)
     {
         num = _res.nscount;
+        if (ip4_only) num -= ip6_count;
         return num;
     }
 
     for (i = 0, addr = servers; addr < (servers + num) && i < _res.nscount; i++)
     {
-        *(struct sockaddr_in *)addr = _res.nsaddr_list[i];
-        memset( (char *)addr + sizeof(struct sockaddr_in), 0,
-                sizeof(SOCKADDR_STORAGE) - sizeof(struct sockaddr_in) );
+#ifdef HAVE_STRUCT___RES_STATE__U__EXT_NSCOUNT6
+        if (_res._u._ext.nsaddrs[i])
+        {
+            SOCKADDR_IN6 *s = (SOCKADDR_IN6 *)addr;
+            if (ip4_only) continue;
+            s->sin6_family = WS_AF_INET6;
+            s->sin6_port = _res._u._ext.nsaddrs[i]->sin6_port;
+            s->sin6_flowinfo = _res._u._ext.nsaddrs[i]->sin6_flowinfo;
+            memcpy( &s->sin6_addr, &_res._u._ext.nsaddrs[i]->sin6_addr, sizeof(IN6_ADDR) );
+            s->sin6_scope_id = _res._u._ext.nsaddrs[i]->sin6_scope_id;
+            memset( (char *)s + sizeof(SOCKADDR_IN6), 0,
+                    sizeof(SOCKADDR_STORAGE) - sizeof(SOCKADDR_IN6) );
+        }
+        else
+#endif
+        {
+            *(struct sockaddr_in *)addr = _res.nsaddr_list[i];
+            memset( (char *)addr + sizeof(struct sockaddr_in), 0,
+                    sizeof(SOCKADDR_STORAGE) - sizeof(struct sockaddr_in) );
+        }
         addr++;
     }
     return addr - servers;
@@ -959,7 +980,7 @@ static int get_dns_servers( SOCKADDR_STORAGE *servers, int num )
 
 static ULONG get_dns_server_addresses(PIP_ADAPTER_DNS_SERVER_ADDRESS address, ULONG *len)
 {
-    int num = get_dns_servers( NULL, 0 );
+    int num = get_dns_servers( NULL, 0, FALSE );
     DWORD size;
 
     size = num * (sizeof(IP_ADAPTER_DNS_SERVER_ADDRESS) + sizeof(SOCKADDR_STORAGE));
@@ -975,12 +996,15 @@ static ULONG get_dns_server_addresses(PIP_ADAPTER_DNS_SERVER_ADDRESS address, UL
         SOCKADDR_STORAGE *sock_addrs = (SOCKADDR_STORAGE *)(address + num);
         int i;
 
-        get_dns_servers( sock_addrs, num );
+        get_dns_servers( sock_addrs, num, FALSE );
 
         for (i = 0; i < num; i++, addr = addr->Next)
         {
             addr->u.s.Length = sizeof(*addr);
-            addr->Address.iSockaddrLength = sizeof(SOCKADDR_IN);
+            if (sock_addrs[i].ss_family == WS_AF_INET6)
+                addr->Address.iSockaddrLength = sizeof(SOCKADDR_IN6);
+            else
+                addr->Address.iSockaddrLength = sizeof(SOCKADDR_IN);
             addr->Address.lpSockaddr = (SOCKADDR *)(sock_addrs + i);
             if (i == num - 1)
                 addr->Next = NULL;
@@ -1637,7 +1661,7 @@ static DWORD get_dns_server_list(PIP_ADDR_STRING list,
  PIP_ADDR_STRING firstDynamic, DWORD *len)
 {
   DWORD size;
-  int num = get_dns_servers( NULL, 0 );
+  int num = get_dns_servers( NULL, 0, TRUE );
 
   size = num * sizeof(IP_ADDR_STRING);
   if (!list || *len < size) {
@@ -1650,7 +1674,7 @@ static DWORD get_dns_server_list(PIP_ADDR_STRING list,
     int i;
     SOCKADDR_STORAGE *addr = HeapAlloc( GetProcessHeap(), 0, num * sizeof(SOCKADDR_STORAGE) );
 
-    get_dns_servers( addr, num );
+    get_dns_servers( addr, num, TRUE );
 
     for (i = 0, ptr = list; i < num; i++, ptr = ptr->Next) {
         toIPAddressString(((struct sockaddr_in *)(addr + i))->sin_addr.s_addr,

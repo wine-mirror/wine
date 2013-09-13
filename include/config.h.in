@@ -912,6 +912,9 @@
 /* Define to 1 if the system has the type `struct xinpgen'. */
 #undef HAVE_STRUCT_XINPGEN
 
+/* Define to 1 if `_u._ext.nscount6' is a member of `struct __res_state'. */
+#undef HAVE_STRUCT___RES_STATE__U__EXT_NSCOUNT6
+
 /* Define to 1 if you have the `symlink' function. */
 #undef HAVE_SYMLINK
 
