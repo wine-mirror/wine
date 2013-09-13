@@ -933,45 +933,59 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
     return ERROR_SUCCESS;
 }
 
-static ULONG get_dns_server_addresses(PIP_ADAPTER_DNS_SERVER_ADDRESS address, ULONG *len)
+static int get_dns_servers( SOCKADDR_STORAGE *servers, int num )
 {
-    DWORD size;
+    int i;
+    SOCKADDR_STORAGE *addr;
 
     initialise_resolver();
-    /* FIXME: no support for IPv6 DNS server addresses.  Doing so requires
-     * sizeof SOCKADDR_STORAGE instead, and using _res._u._ext.nsaddrs when
-     * available.
-     */
-    size = _res.nscount * (sizeof(IP_ADAPTER_DNS_SERVER_ADDRESS) + sizeof(SOCKADDR));
+
+    /* AF_INET6 not yet enumerated */
+    if (!servers || !num)
+    {
+        num = _res.nscount;
+        return num;
+    }
+
+    for (i = 0, addr = servers; addr < (servers + num) && i < _res.nscount; i++)
+    {
+        *(struct sockaddr_in *)addr = _res.nsaddr_list[i];
+        memset( (char *)addr + sizeof(struct sockaddr_in), 0,
+                sizeof(SOCKADDR_STORAGE) - sizeof(struct sockaddr_in) );
+        addr++;
+    }
+    return addr - servers;
+}
+
+static ULONG get_dns_server_addresses(PIP_ADAPTER_DNS_SERVER_ADDRESS address, ULONG *len)
+{
+    int num = get_dns_servers( NULL, 0 );
+    DWORD size;
+
+    size = num * (sizeof(IP_ADAPTER_DNS_SERVER_ADDRESS) + sizeof(SOCKADDR_STORAGE));
     if (!address || *len < size)
     {
         *len = size;
         return ERROR_BUFFER_OVERFLOW;
     }
     *len = size;
-    if (_res.nscount > 0)
+    if (num > 0)
     {
-        PIP_ADAPTER_DNS_SERVER_ADDRESS addr;
+        PIP_ADAPTER_DNS_SERVER_ADDRESS addr = address;
+        SOCKADDR_STORAGE *sock_addrs = (SOCKADDR_STORAGE *)(address + num);
         int i;
 
-        for (i = 0, addr = address; i < _res.nscount && addr;
-             i++, addr = addr->Next)
-        {
-            SOCKADDR_IN *sin;
+        get_dns_servers( sock_addrs, num );
 
-            addr->Address.iSockaddrLength = sizeof(SOCKADDR);
-            addr->Address.lpSockaddr =
-             (LPSOCKADDR)((PBYTE)addr + sizeof(IP_ADAPTER_DNS_SERVER_ADDRESS));
-            sin = (SOCKADDR_IN *)addr->Address.lpSockaddr;
-            sin->sin_family = WS_AF_INET;
-            sin->sin_port = _res.nsaddr_list[i].sin_port;
-            memcpy(&sin->sin_addr, &_res.nsaddr_list[i].sin_addr, sizeof(sin->sin_addr));
-            if (i == _res.nscount - 1)
+        for (i = 0; i < num; i++, addr = addr->Next)
+        {
+            addr->u.s.Length = sizeof(*addr);
+            addr->Address.iSockaddrLength = sizeof(SOCKADDR_IN);
+            addr->Address.lpSockaddr = (SOCKADDR *)(sock_addrs + i);
+            if (i == num - 1)
                 addr->Next = NULL;
             else
-                addr->Next =
-                 (PIP_ADAPTER_DNS_SERVER_ADDRESS)((PBYTE)addr +
-                 sizeof(IP_ADAPTER_DNS_SERVER_ADDRESS) + sizeof(SOCKADDR));
+                addr->Next = addr + 1;
         }
     }
     return ERROR_SUCCESS;
@@ -1623,28 +1637,32 @@ static DWORD get_dns_server_list(PIP_ADDR_STRING list,
  PIP_ADDR_STRING firstDynamic, DWORD *len)
 {
   DWORD size;
+  int num = get_dns_servers( NULL, 0 );
 
-  initialise_resolver();
-  size = _res.nscount * sizeof(IP_ADDR_STRING);
+  size = num * sizeof(IP_ADDR_STRING);
   if (!list || *len < size) {
     *len = size;
     return ERROR_BUFFER_OVERFLOW;
   }
   *len = size;
-  if (_res.nscount > 0) {
+  if (num > 0) {
     PIP_ADDR_STRING ptr;
     int i;
+    SOCKADDR_STORAGE *addr = HeapAlloc( GetProcessHeap(), 0, num * sizeof(SOCKADDR_STORAGE) );
 
-    for (i = 0, ptr = list; i < _res.nscount && ptr; i++, ptr = ptr->Next) {
-      toIPAddressString(_res.nsaddr_list[i].sin_addr.s_addr,
+    get_dns_servers( addr, num );
+
+    for (i = 0, ptr = list; i < num; i++, ptr = ptr->Next) {
+        toIPAddressString(((struct sockaddr_in *)(addr + i))->sin_addr.s_addr,
        ptr->IpAddress.String);
-      if (i == _res.nscount - 1)
+      if (i == num - 1)
         ptr->Next = NULL;
       else if (i == 0)
         ptr->Next = firstDynamic;
       else
         ptr->Next = (PIP_ADDR_STRING)((PBYTE)ptr + sizeof(IP_ADDR_STRING));
     }
+    HeapFree( GetProcessHeap(), 0, addr );
   }
   return ERROR_SUCCESS;
 }
