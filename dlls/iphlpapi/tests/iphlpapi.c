@@ -303,7 +303,7 @@ static void testGetIpForwardTable(void)
           trace( "IP forward table: %u entries\n", buf->dwNumEntries );
           for (i = 0; i < buf->dwNumEntries; i++)
           {
-              char buffer[40];
+              char buffer[100];
               sprintf( buffer, "dest %s", ntoa( buf->table[i].dwForwardDest ));
               sprintf( buffer + strlen(buffer), " mask %s", ntoa( buf->table[i].dwForwardMask ));
               trace( "%u: %s gw %s if %u type %u\n", i, buffer,
