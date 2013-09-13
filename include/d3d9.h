@@ -2087,13 +2087,13 @@ DECLARE_INTERFACE_(IDirect3DDevice9Ex,IDirect3DDevice9)
 extern "C" {
 #endif  /* defined(__cplusplus) */
 
-int         WINAPI D3DPERF_BeginEvent(D3DCOLOR,LPCWSTR);
-int         WINAPI D3DPERF_EndEvent(void);
-DWORD       WINAPI D3DPERF_GetStatus(void);
-BOOL        WINAPI D3DPERF_QueryRepeatFrame(void);
-void        WINAPI D3DPERF_SetMarker(D3DCOLOR,LPCWSTR);
-void        WINAPI D3DPERF_SetOptions(DWORD);
-void        WINAPI D3DPERF_SetRegion(D3DCOLOR,LPCWSTR);
+int WINAPI D3DPERF_BeginEvent(D3DCOLOR color, const WCHAR *name);
+int WINAPI D3DPERF_EndEvent(void);
+DWORD WINAPI D3DPERF_GetStatus(void);
+BOOL WINAPI D3DPERF_QueryRepeatFrame(void);
+void WINAPI D3DPERF_SetMarker(D3DCOLOR color, const WCHAR *name);
+void WINAPI D3DPERF_SetOptions(DWORD options);
+void WINAPI D3DPERF_SetRegion(D3DCOLOR color, const WCHAR *name);
 
 /* Define the main entrypoint as well */
 IDirect3D9* WINAPI Direct3DCreate9(UINT SDKVersion);
