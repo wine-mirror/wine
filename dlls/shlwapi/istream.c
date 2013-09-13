@@ -437,6 +437,7 @@ HRESULT WINAPI SHCreateStreamOnFileEx(LPCWSTR lpszPath, DWORD dwMode,
   switch (STGM_SHARE_MODE(dwMode))
   {
   case 0:
+  case STGM_SHARE_DENY_NONE:
     dwShare = FILE_SHARE_READ|FILE_SHARE_WRITE;
     break;
   case STGM_SHARE_DENY_READ:
@@ -447,9 +448,6 @@ HRESULT WINAPI SHCreateStreamOnFileEx(LPCWSTR lpszPath, DWORD dwMode,
     break;
   case STGM_SHARE_EXCLUSIVE:
     dwShare = 0;
-    break;
-  case STGM_SHARE_DENY_NONE:
-    dwShare = FILE_SHARE_READ|FILE_SHARE_WRITE;
     break;
   default:
     return E_INVALIDARG;
