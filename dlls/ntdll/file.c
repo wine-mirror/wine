@@ -982,6 +982,11 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
                 }
                 off = st.st_size;
             }
+            else if (offset->QuadPart < 0)
+            {
+                status = STATUS_INVALID_PARAMETER;
+                goto done;
+            }
 
             /* async I/O doesn't make sense on regular files */
             while ((result = pwrite( unix_handle, buffer, length, off )) == -1)
