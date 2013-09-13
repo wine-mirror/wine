@@ -961,7 +961,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
 
     if (type == FD_TYPE_FILE)
     {
-        if (!(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)) && !offset)
+        if (!(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)) && (!offset || offset->QuadPart < 0))
         {
             status = STATUS_INVALID_PARAMETER;
             goto done;

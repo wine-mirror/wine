@@ -2198,9 +2198,6 @@ todo_wine
 
     for (i = -20; i < -1; i++)
     {
-        /* FIXME: Remove once Wine is fixed */
-        if (i == -2) continue;
-
         iob.Status = -1;
         iob.Information = -1;
         offset.QuadPart = (LONGLONG)i;
@@ -2209,17 +2206,6 @@ todo_wine
         ok(iob.Status == -1, "expected -1, got %#x\n", iob.Status);
         ok(iob.Information == -1, "expected -1, got %ld\n", iob.Information);
     }
-
-    iob.Status = -1;
-    iob.Information = -1;
-    offset.QuadPart = (LONGLONG)-2 /* FILE_USE_FILE_POINTER_POSITION */;
-    status = pNtWriteFile(hfile, 0, NULL, NULL, &iob, contents, sizeof(contents), &offset, NULL);
-todo_wine
-    ok(status == STATUS_INVALID_PARAMETER, "expected STATUS_INVALID_PARAMETER, got %#x\n", status);
-todo_wine
-    ok(iob.Status == -1, "expected -1, got %#x\n", iob.Status);
-todo_wine
-    ok(iob.Information == -1, "expected -1, got %ld\n", iob.Information);
 
     iob.Status = -1;
     iob.Information = -1;
