@@ -2794,12 +2794,16 @@ DECL_HANDLER(set_window_layered_info)
 
     if (win->ex_style & WS_EX_LAYERED)
     {
+        int was_layered = win->is_layered;
+
         if (req->flags & LWA_ALPHA) win->alpha = req->alpha;
         else if (!win->is_layered) win->alpha = 0;  /* alpha init value is 0 */
 
         win->color_key     = req->color_key;
         win->layered_flags = req->flags;
         win->is_layered    = 1;
+        /* repaint since we know now it's not going to use UpdateLayeredWindow */
+        if (!was_layered) redraw_window( win, 0, 1, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME );
     }
     else set_win32_error( ERROR_INVALID_WINDOW_HANDLE );
 }
