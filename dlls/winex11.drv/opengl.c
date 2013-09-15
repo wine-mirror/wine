@@ -258,7 +258,8 @@ enum glx_swap_control_method
 {
     GLX_SWAP_CONTROL_NONE,
     GLX_SWAP_CONTROL_EXT,
-    GLX_SWAP_CONTROL_SGI
+    GLX_SWAP_CONTROL_SGI,
+    GLX_SWAP_CONTROL_MESA
 };
 
 /* X context to associate a struct gl_drawable to an hwnd */
@@ -404,6 +405,7 @@ static void  (*pglXFreeMemoryNV)(GLvoid *pointer);
 
 /* MESA GLX Extensions */
 static void (*pglXCopySubBufferMESA)(Display *dpy, GLXDrawable drawable, int x, int y, int width, int height);
+static int (*pglXSwapIntervalMESA)(unsigned int interval);
 
 /* Standard OpenGL */
 static void (*pglFinish)(void);
@@ -650,6 +652,8 @@ static BOOL has_opengl(void)
     LOAD_FUNCPTR(glXCreateContextAttribsARB);
     /* EXT GLX Extension */
     LOAD_FUNCPTR(glXSwapIntervalEXT);
+    /* MESA GLX Extension */
+    LOAD_FUNCPTR(glXSwapIntervalMESA);
     /* SGI GLX Extension */
     LOAD_FUNCPTR(glXSwapIntervalSGI);
     /* NV GLX Extension */
@@ -2963,6 +2967,10 @@ static BOOL X11DRV_wglSwapIntervalEXT(int interval)
         ret = !X11DRV_check_error();
         break;
 
+    case GLX_SWAP_CONTROL_MESA:
+        ret = !pglXSwapIntervalMESA(interval);
+        break;
+
     case GLX_SWAP_CONTROL_SGI:
         /* wglSwapIntervalEXT considers an interval value of zero to mean that
          * vsync should be disabled, but glXSwapIntervalSGI considers such a
@@ -3145,6 +3153,10 @@ static void X11DRV_WineGL_LoadExtensions(void)
             register_extension("WGL_EXT_swap_control_tear");
             has_swap_control_tear = TRUE;
         }
+    }
+    else if (has_extension( WineGLInfo.glxExtensions, "GLX_MESA_swap_control"))
+    {
+        swap_control_method = GLX_SWAP_CONTROL_MESA;
     }
     else if (has_extension( WineGLInfo.glxExtensions, "GLX_SGI_swap_control"))
     {
