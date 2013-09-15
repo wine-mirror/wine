@@ -135,7 +135,7 @@ static HRESULT WINAPI dslocator_Invoke(IDataSourceLocator *iface, DISPID dispIdM
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI dslocator_get_hWnd(IDataSourceLocator *iface, LONG *phwndParent)
+static HRESULT WINAPI dslocator_get_hWnd(IDataSourceLocator *iface, COMPATIBLE_LONG *phwndParent)
 {
     DSLocatorImpl *This = impl_from_IDataSourceLocator(iface);
 
@@ -144,11 +144,11 @@ static HRESULT WINAPI dslocator_get_hWnd(IDataSourceLocator *iface, LONG *phwndP
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI dslocator_put_hWnd(IDataSourceLocator *iface, LONG phwndParent)
+static HRESULT WINAPI dslocator_put_hWnd(IDataSourceLocator *iface, COMPATIBLE_LONG hwndParent)
 {
     DSLocatorImpl *This = impl_from_IDataSourceLocator(iface);
 
-    FIXME("(%p)->(%d)\n",This, phwndParent);
+    FIXME("(%p)->(%p)\n",This, (HWND)hwndParent);
 
     return E_NOTIMPL;
 }

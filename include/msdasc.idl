@@ -26,6 +26,8 @@ import "oledb.idl";
 #define vi_progid(str)
 #endif
 
+typedef LONG_PTR COMPATIBLE_LONG;
+
 [
     uuid(2206CEB0-19C1-11D1-89E0-00C04FD7A829),
     version(1.0)
@@ -56,10 +58,10 @@ library MSDASC
     interface IDataSourceLocator : IDispatch
     {
         [id(0x60020000), propget]
-        HRESULT hWnd([out, retval] long* phwndParent);
+        HRESULT hWnd([out, retval] COMPATIBLE_LONG* phwndParent);
 
         [id(0x60020000), propput]
-        HRESULT hWnd([in] long phwndParent);
+        HRESULT hWnd([in] COMPATIBLE_LONG hwndParent);
 
         [id(0x60020002), helpstring("PromptNew")]
         HRESULT PromptNew([out, retval] IDispatch** ppADOConnection);
