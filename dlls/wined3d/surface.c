@@ -587,9 +587,8 @@ static void surface_prepare_system_memory(struct wined3d_surface *surface)
     {
         /* Whatever surface we have, make sure that there is memory allocated
          * for the downloaded copy, or a PBO to map. */
-        if (!surface->resource.heap_memory)
-            surface->resource.heap_memory = wined3d_resource_allocate_sysmem(surface->resource.size);
-
+        if (!surface->resource.heap_memory && !wined3d_resource_allocate_sysmem(&surface->resource))
+            ERR("Failed to allocate system memory.\n");
         surface->resource.allocatedMemory = surface->resource.heap_memory;
 
         if (surface->flags & SFLAG_INSYSMEM)
@@ -1432,7 +1431,7 @@ static void surface_remove_pbo(struct wined3d_surface *surface, const struct win
     else
     {
         if (!surface->resource.heap_memory)
-            surface->resource.heap_memory = wined3d_resource_allocate_sysmem(surface->resource.size);
+            wined3d_resource_allocate_sysmem(&surface->resource);
         else if (!(surface->flags & SFLAG_CLIENT))
             ERR("Surface %p has heap_memory %p and flags %#x.\n",
                     surface, surface->resource.heap_memory, surface->flags);
@@ -1458,9 +1457,9 @@ static BOOL surface_init_sysmem(struct wined3d_surface *surface)
     {
         if (!surface->resource.heap_memory)
         {
-            if (!(surface->resource.heap_memory = wined3d_resource_allocate_sysmem(surface->resource.size)))
+            if (!wined3d_resource_allocate_sysmem(&surface->resource))
             {
-                ERR("Failed to allocate memory.\n");
+                ERR("Failed to allocate system memory.\n");
                 return FALSE;
             }
         }

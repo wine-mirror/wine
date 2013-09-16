@@ -391,9 +391,11 @@ static BOOL volume_prepare_system_memory(struct wined3d_volume *volume)
     if (volume->resource.allocatedMemory)
         return TRUE;
 
-    volume->resource.heap_memory = wined3d_resource_allocate_sysmem(volume->resource.size);
-    if (!volume->resource.heap_memory)
+    if (!wined3d_resource_allocate_sysmem(&volume->resource))
+    {
+        ERR("Failed to allocate system memory.\n");
         return FALSE;
+    }
     volume->resource.allocatedMemory = volume->resource.heap_memory;
     return TRUE;
 }
