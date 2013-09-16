@@ -2050,6 +2050,53 @@ todo_wine
     }
 
     HeapFree(GetProcessHeap(), 0, pi);
+
+    SetLastError(0xdeadbeef);
+    /* starting on vista the socket function returns error during the socket
+       creation and no longer in the socket operations (sendto, readfrom) */
+    sock = WSASocketA(AF_INET, SOCK_RAW, IPPROTO_ICMP, NULL, 0, 0);
+    if (sock == INVALID_SOCKET)
+    {
+        err = WSAGetLastError();
+        ok(err == WSAEACCES, "Expected 10013, received %d\n", err);
+        skip("SOCK_RAW is not supported\n");
+    }
+    else
+    {
+        trace("SOCK_RAW is supported\n");
+
+        size = sizeof(socktype);
+        socktype = 0xdead;
+        err = getsockopt(sock, SOL_SOCKET, SO_TYPE, (char *) &socktype, &size);
+        ok(!err, "getsockopt failed with %d\n", WSAGetLastError());
+        ok(socktype == SOCK_RAW, "Wrong socket type, expected %d received %d\n",
+           SOCK_RAW, socktype);
+        closesocket(sock);
+
+        todo_wine {
+        sock = WSASocketA(0, 0, IPPROTO_RAW, NULL, 0, 0);
+        ok(sock != INVALID_SOCKET, "Failed to create socket: %d\n",
+           WSAGetLastError());
+        size = sizeof(socktype);
+        socktype = 0xdead;
+        err = getsockopt(sock, SOL_SOCKET, SO_TYPE, (char *) &socktype, &size);
+        ok(!err, "getsockopt failed with %d\n", WSAGetLastError());
+        ok(socktype == SOCK_RAW, "Wrong socket type, expected %d received %d\n",
+           SOCK_RAW, socktype);
+        closesocket(sock);
+        }
+
+        sock = WSASocketA(AF_INET, SOCK_RAW, IPPROTO_TCP, NULL, 0, 0);
+        ok(sock != INVALID_SOCKET, "Failed to create socket: %d\n",
+           WSAGetLastError());
+        size = sizeof(socktype);
+        socktype = 0xdead;
+        err = getsockopt(sock, SOL_SOCKET, SO_TYPE, (char *) &socktype, &size);
+        ok(!err, "getsockopt failed with %d\n", WSAGetLastError());
+        ok(socktype == SOCK_RAW, "Wrong socket type, expected %d received %d\n",
+           SOCK_RAW, socktype);
+        closesocket(sock);
+    }
 }
 
 static void test_WSADuplicateSocket(void)

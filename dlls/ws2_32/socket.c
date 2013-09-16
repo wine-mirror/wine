@@ -5937,7 +5937,6 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
             ERR_(winediag)("Failed to create a socket of type SOCK_RAW, this requires special permissions.\n");
         else
             ERR_(winediag)("Failed to create socket, this requires special permissions.\n");
-        err = WSAESOCKTNOSUPPORT;
     }
     else
     {
