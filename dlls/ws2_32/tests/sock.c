@@ -1854,7 +1854,6 @@ todo_wine
     ok(WSASocketA(AF_INET, 0xdead, 0, NULL, 0, 0) == INVALID_SOCKET,
        "WSASocketA should have failed\n");
     err = WSAGetLastError();
-todo_wine
     ok(err == WSAESOCKTNOSUPPORT, "Expected 10044, received %d\n", err);
 
     SetLastError(0xdeadbeef);
@@ -1874,7 +1873,6 @@ todo_wine
     ok(WSASocketA(AF_INET, SOCK_STREAM, IPPROTO_UDP, NULL, 0, 0) == INVALID_SOCKET,
        "WSASocketA should have failed\n");
     err = WSAGetLastError();
-todo_wine
     ok(err == WSAEPROTONOSUPPORT, "Expected 10043, received %d\n", err);
 
     /* SOCK_DGRAM does not support IPPROTO_TCP */
@@ -1882,7 +1880,6 @@ todo_wine
     ok(WSASocketA(AF_INET, SOCK_DGRAM, IPPROTO_TCP, NULL, 0, 0) == INVALID_SOCKET,
        "WSASocketA should have failed\n");
     err = WSAGetLastError();
-todo_wine
     ok(err == WSAEPROTONOSUPPORT, "Expected 10043, received %d\n", err);
 
     /* Set pi_size explicitly to a value below 2*sizeof(WSAPROTOCOL_INFOA)

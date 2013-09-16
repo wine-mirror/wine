@@ -5867,6 +5867,7 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
                          GROUP g, DWORD dwFlags)
 {
     SOCKET ret;
+    DWORD err;
 
    /*
       FIXME: The "advanced" parameters of WSASocketW (lpProtocolInfo,
@@ -5929,16 +5930,26 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
         return ret;
     }
 
-    if (GetLastError() == WSAEACCES) /* raw socket denied */
+    err = GetLastError();
+    if (err == WSAEACCES) /* raw socket denied */
     {
         if (type == SOCK_RAW)
             ERR_(winediag)("Failed to create a socket of type SOCK_RAW, this requires special permissions.\n");
         else
             ERR_(winediag)("Failed to create socket, this requires special permissions.\n");
-        SetLastError(WSAESOCKTNOSUPPORT);
+        err = WSAESOCKTNOSUPPORT;
+    }
+    else
+    {
+        /* invalid combination of valid parameters, like SOCK_STREAM + IPPROTO_UDP */
+        if (err == WSAEINVAL)
+            err = WSAESOCKTNOSUPPORT;
+        else if (err == WSAEOPNOTSUPP)
+            err = WSAEPROTONOSUPPORT;
     }
 
-    WARN("\t\tfailed!\n");
+    WARN("\t\tfailed, error %d!\n", err);
+    SetLastError(err);
     return INVALID_SOCKET;
 }
 
