@@ -191,6 +191,71 @@ static void test_IStream_invalid_operations(IStream * stream, DWORD mode)
 }
 
 
+static void test_stream_read_write(IStream *stream, DWORD mode)
+{
+    static const LARGE_INTEGER start;
+    HRESULT ret;
+    unsigned char buf[16];
+    DWORD written, count;
+
+    /* IStream_Read/Write from the COBJMACROS is undefined by shlwapi.h */
+
+    written = 0xdeadbeaf;
+    ret = stream->lpVtbl->Write(stream, "\x5e\xa7", 2, &written);
+    if (mode == STGM_WRITE || mode == STGM_READWRITE)
+    {
+        ok(ret == S_OK, "IStream_Write error %#x (access %#x)\n", ret, mode);
+        ok(written == 2, "expected 2, got %u\n", written);
+    }
+    else
+    {
+        ok(ret == STG_E_ACCESSDENIED || broken(ret == S_OK) /* win2000 */, "expected STG_E_ACCESSDENIED, got %#x (access %#x)\n", ret, mode);
+        ok(written == 0xdeadbeaf || broken(written == 2) /* win2000 */, "expected 0xdeadbeaf, got %#x\n", written);
+        written = 0;
+        if (ret == S_OK) return; /* no point in further testing */
+    }
+
+    ret = stream->lpVtbl->Seek(stream, start, STREAM_SEEK_SET, NULL);
+    ok(ret == S_OK, "Seek error %#x\n", ret);
+
+    count = 0xdeadbeaf;
+    ret = stream->lpVtbl->Read(stream, buf, 2, &count);
+    if (written != 0)
+    {
+        /* FIXME: Remove once Wine is fixed */
+        if (mode == STGM_WRITE)
+todo_wine
+        ok(ret == S_OK, "IStream_Read error %#x (access %#x, written %u)\n", ret, mode, written);
+        else
+        ok(ret == S_OK, "IStream_Read error %#x (access %#x, written %u)\n", ret, mode, written);
+        if (mode == STGM_WRITE || mode == STGM_READWRITE)
+        {
+            /* FIXME: Remove once Wine is fixed */
+            if (mode == STGM_WRITE)
+            {
+todo_wine
+            ok(count == 2, "expected 2, got %u\n", count);
+todo_wine
+            ok(buf[0] == 0x5e && buf[1] == 0xa7, "expected 5ea7, got %02x%02x\n", buf[0], buf[1]);
+            }
+            else
+            {
+            ok(count == 2, "expected 2, got %u\n", count);
+            ok(buf[0] == 0x5e && buf[1] == 0xa7, "expected 5ea7, got %02x%02x\n", buf[0], buf[1]);
+            }
+        }
+        else
+            ok(count == 0, "expected 0, got %u\n", count);
+    }
+    else
+    {
+todo_wine
+        ok(ret == S_FALSE, "expected S_FALSE, got %#x (access %#x, written %u)\n", ret, mode, written);
+        ok(count == 0, "expected 0, got %u\n", count);
+    }
+
+}
+
 static void test_SHCreateStreamOnFileA(DWORD mode, DWORD stgm)
 {
     IStream * stream;
@@ -282,6 +347,8 @@ static void test_SHCreateStreamOnFileA(DWORD mode, DWORD stgm)
 
     if (stream) {
         BOOL delret;
+
+        test_stream_read_write(stream, mode);
         test_IStream_invalid_operations(stream, mode);
 
         refcount = IStream_Release(stream);
@@ -392,6 +459,8 @@ static void test_SHCreateStreamOnFileW(DWORD mode, DWORD stgm)
 
     if (stream) {
         BOOL delret;
+
+        test_stream_read_write(stream, mode);
         test_IStream_invalid_operations(stream, mode);
 
         refcount = IStream_Release(stream);
@@ -616,7 +685,7 @@ START_TEST(istream)
 
     int i, j, k;
 
-    hShlwapi = GetModuleHandleA("shlwapi.dll");
+    hShlwapi = LoadLibrary("shlwapi.dll");
 
     pSHCreateStreamOnFileA = (void*)GetProcAddress(hShlwapi, "SHCreateStreamOnFileA");
     pSHCreateStreamOnFileW = (void*)GetProcAddress(hShlwapi, "SHCreateStreamOnFileW");
