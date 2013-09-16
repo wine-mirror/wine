@@ -36,7 +36,7 @@
 #include "wine/library.h"
 
 static const char server_config_dir[] = "/.wine";        /* config dir relative to $HOME */
-static const char server_root_prefix[] = "/tmp/.wine-";  /* prefix for server root dir */
+static const char server_root_prefix[] = "/tmp/.wine";   /* prefix for server root dir */
 static const char server_dir_prefix[] = "/server-";      /* prefix for server dir */
 
 static char *bindir;
@@ -220,16 +220,18 @@ static char *get_runtime_argvdir( const char *argv0 )
 /* initialize the server directory value */
 static void init_server_dir( dev_t dev, ino_t ino )
 {
-    char *p;
+    char *p, *root;
+
 #ifdef HAVE_GETUID
-    const unsigned int uid = getuid();
+    root = xmalloc( sizeof(server_root_prefix) + 12 );
+    sprintf( root, "%s-%u", server_root_prefix, getuid() );
 #else
-    const unsigned int uid = 0;
+    root = xstrdup( server_root_prefix );
 #endif
 
-    server_dir = xmalloc( sizeof(server_root_prefix) + 32 + sizeof(server_dir_prefix) +
-                          2*sizeof(dev) + 2*sizeof(ino) );
-    sprintf( server_dir, "%s%u%s", server_root_prefix, uid, server_dir_prefix );
+    server_dir = xmalloc( strlen(root) + sizeof(server_dir_prefix) + 2*sizeof(dev) + 2*sizeof(ino) + 2 );
+    strcpy( server_dir, root );
+    strcat( server_dir, server_dir_prefix );
     p = server_dir + strlen(server_dir);
 
     if (dev != (unsigned long)dev)
@@ -241,6 +243,7 @@ static void init_server_dir( dev_t dev, ino_t ino )
         sprintf( p, "%lx%08lx", (unsigned long)((unsigned long long)ino >> 32), (unsigned long)ino );
     else
         sprintf( p, "%lx", (unsigned long)ino );
+    free( root );
 }
 
 /* retrieve the default dll dir */
