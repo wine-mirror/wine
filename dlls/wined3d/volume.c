@@ -42,10 +42,10 @@ static void volume_bind_and_dirtify(const struct wined3d_volume *volume,
      * from sampler() in state.c. This means we can't touch anything other than
      * whatever happens to be the currently active texture, or we would risk
      * marking already applied sampler states dirty again. */
-    active_sampler = volume->resource.device->rev_tex_unit_map[context->active_texture];
+    active_sampler = context->rev_tex_unit_map[context->active_texture];
 
     if (active_sampler != WINED3D_UNMAPPED_STAGE)
-        device_invalidate_state(volume->resource.device, STATE_SAMPLER(active_sampler));
+        context_invalidate_state(context, STATE_SAMPLER(active_sampler));
 
     container->texture_ops->texture_bind(container, context, srgb);
 }

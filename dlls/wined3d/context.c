@@ -1350,6 +1350,21 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
         goto out;
     }
 
+    /* Initialize the texture unit mapping to a 1:1 mapping */
+    for (s = 0; s < MAX_COMBINED_SAMPLERS; ++s)
+    {
+        if (s < gl_info->limits.fragment_samplers)
+        {
+            ret->tex_unit_map[s] = s;
+            ret->rev_tex_unit_map[s] = s;
+        }
+        else
+        {
+            ret->tex_unit_map[s] = WINED3D_UNMAPPED_STAGE;
+            ret->rev_tex_unit_map[s] = WINED3D_UNMAPPED_STAGE;
+        }
+    }
+
     if (!(hdc = GetDC(swapchain->win_handle)))
     {
         WARN("Failed to retireve device context, trying swapchain backup.\n");
@@ -1772,7 +1787,7 @@ static void SetupForBlit(const struct wined3d_device *device, struct wined3d_con
      */
     for (i = gl_info->limits.textures - 1; i > 0 ; --i)
     {
-        sampler = device->rev_tex_unit_map[i];
+        sampler = context->rev_tex_unit_map[i];
         context_active_texture(context, gl_info, i);
 
         if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
@@ -1802,7 +1817,7 @@ static void SetupForBlit(const struct wined3d_device *device, struct wined3d_con
     }
     context_active_texture(context, gl_info, 0);
 
-    sampler = device->rev_tex_unit_map[0];
+    sampler = context->rev_tex_unit_map[0];
 
     if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
     {
@@ -2328,6 +2343,221 @@ void context_state_fb(struct wined3d_context *context, const struct wined3d_stat
     }
 }
 
+static void context_map_stage(struct wined3d_context *context, DWORD stage, DWORD unit)
+{
+    DWORD i = context->rev_tex_unit_map[unit];
+    DWORD j = context->tex_unit_map[stage];
+
+    context->tex_unit_map[stage] = unit;
+    if (i != WINED3D_UNMAPPED_STAGE && i != stage)
+        context->tex_unit_map[i] = WINED3D_UNMAPPED_STAGE;
+
+    context->rev_tex_unit_map[unit] = stage;
+    if (j != WINED3D_UNMAPPED_STAGE && j != unit)
+        context->rev_tex_unit_map[j] = WINED3D_UNMAPPED_STAGE;
+}
+
+static void context_invalidate_texture_stage(struct wined3d_context *context, DWORD stage)
+{
+    DWORD i;
+
+    for (i = 0; i <= WINED3D_HIGHEST_TEXTURE_STATE; ++i)
+        context_invalidate_state(context, STATE_TEXTURESTAGE(stage, i));
+}
+
+static void context_update_fixed_function_usage_map(struct wined3d_context *context,
+        const struct wined3d_state *state)
+{
+    UINT i;
+
+    context->fixed_function_usage_map = 0;
+    for (i = 0; i < MAX_TEXTURES; ++i)
+    {
+        enum wined3d_texture_op color_op = state->texture_states[i][WINED3D_TSS_COLOR_OP];
+        enum wined3d_texture_op alpha_op = state->texture_states[i][WINED3D_TSS_ALPHA_OP];
+        DWORD color_arg1 = state->texture_states[i][WINED3D_TSS_COLOR_ARG1] & WINED3DTA_SELECTMASK;
+        DWORD color_arg2 = state->texture_states[i][WINED3D_TSS_COLOR_ARG2] & WINED3DTA_SELECTMASK;
+        DWORD color_arg3 = state->texture_states[i][WINED3D_TSS_COLOR_ARG0] & WINED3DTA_SELECTMASK;
+        DWORD alpha_arg1 = state->texture_states[i][WINED3D_TSS_ALPHA_ARG1] & WINED3DTA_SELECTMASK;
+        DWORD alpha_arg2 = state->texture_states[i][WINED3D_TSS_ALPHA_ARG2] & WINED3DTA_SELECTMASK;
+        DWORD alpha_arg3 = state->texture_states[i][WINED3D_TSS_ALPHA_ARG0] & WINED3DTA_SELECTMASK;
+
+        /* Not used, and disable higher stages. */
+        if (color_op == WINED3D_TOP_DISABLE)
+            break;
+
+        if (((color_arg1 == WINED3DTA_TEXTURE) && color_op != WINED3D_TOP_SELECT_ARG2)
+                || ((color_arg2 == WINED3DTA_TEXTURE) && color_op != WINED3D_TOP_SELECT_ARG1)
+                || ((color_arg3 == WINED3DTA_TEXTURE)
+                    && (color_op == WINED3D_TOP_MULTIPLY_ADD || color_op == WINED3D_TOP_LERP))
+                || ((alpha_arg1 == WINED3DTA_TEXTURE) && alpha_op != WINED3D_TOP_SELECT_ARG2)
+                || ((alpha_arg2 == WINED3DTA_TEXTURE) && alpha_op != WINED3D_TOP_SELECT_ARG1)
+                || ((alpha_arg3 == WINED3DTA_TEXTURE)
+                    && (alpha_op == WINED3D_TOP_MULTIPLY_ADD || alpha_op == WINED3D_TOP_LERP)))
+            context->fixed_function_usage_map |= (1 << i);
+
+        if ((color_op == WINED3D_TOP_BUMPENVMAP || color_op == WINED3D_TOP_BUMPENVMAP_LUMINANCE)
+                && i < MAX_TEXTURES - 1)
+            context->fixed_function_usage_map |= (1 << (i + 1));
+    }
+}
+
+static void context_map_fixed_function_samplers(struct wined3d_context *context,
+        const struct wined3d_state *state)
+{
+    unsigned int i, tex;
+    WORD ffu_map;
+    const struct wined3d_d3d_info *d3d_info = context->d3d_info;
+
+    context_update_fixed_function_usage_map(context, state);
+    ffu_map = context->fixed_function_usage_map;
+
+    if (d3d_info->limits.ffp_textures == d3d_info->limits.ffp_blend_stages
+            || state->lowest_disabled_stage <= d3d_info->limits.ffp_textures)
+    {
+        for (i = 0; ffu_map; ffu_map >>= 1, ++i)
+        {
+            if (!(ffu_map & 1))
+                continue;
+
+            if (context->tex_unit_map[i] != i)
+            {
+                context_map_stage(context, i, i);
+                context_invalidate_state(context, STATE_SAMPLER(i));
+                context_invalidate_texture_stage(context, i);
+            }
+        }
+        return;
+    }
+
+    /* Now work out the mapping */
+    tex = 0;
+    for (i = 0; ffu_map; ffu_map >>= 1, ++i)
+    {
+        if (!(ffu_map & 1))
+            continue;
+
+        if (context->tex_unit_map[i] != tex)
+        {
+            context_map_stage(context, i, tex);
+            context_invalidate_state(context, STATE_SAMPLER(i));
+            context_invalidate_texture_stage(context, i);
+        }
+
+        ++tex;
+    }
+}
+
+static void context_map_psamplers(struct wined3d_context *context, const struct wined3d_state *state)
+{
+    const enum wined3d_sampler_texture_type *sampler_type =
+            state->pixel_shader->reg_maps.sampler_type;
+    unsigned int i;
+    const struct wined3d_d3d_info *d3d_info = context->d3d_info;
+
+    for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i)
+    {
+        if (sampler_type[i] && context->tex_unit_map[i] != i)
+        {
+            context_map_stage(context, i, i);
+            context_invalidate_state(context, STATE_SAMPLER(i));
+            if (i < d3d_info->limits.ffp_blend_stages)
+                context_invalidate_texture_stage(context, i);
+        }
+    }
+}
+
+static BOOL context_unit_free_for_vs(const struct wined3d_context *context,
+        const enum wined3d_sampler_texture_type *pshader_sampler_tokens,
+        const enum wined3d_sampler_texture_type *vshader_sampler_tokens, DWORD unit)
+{
+    DWORD current_mapping = context->rev_tex_unit_map[unit];
+
+    /* Not currently used */
+    if (current_mapping == WINED3D_UNMAPPED_STAGE)
+        return TRUE;
+
+    if (current_mapping < MAX_FRAGMENT_SAMPLERS)
+    {
+        /* Used by a fragment sampler */
+
+        if (!pshader_sampler_tokens)
+        {
+            /* No pixel shader, check fixed function */
+            return current_mapping >= MAX_TEXTURES || !(context->fixed_function_usage_map & (1 << current_mapping));
+        }
+
+        /* Pixel shader, check the shader's sampler map */
+        return !pshader_sampler_tokens[current_mapping];
+    }
+
+    /* Used by a vertex sampler */
+    return !vshader_sampler_tokens[current_mapping - MAX_FRAGMENT_SAMPLERS];
+}
+
+static void context_map_vsamplers(struct wined3d_context *context, BOOL ps, const struct wined3d_state *state)
+{
+    const enum wined3d_sampler_texture_type *vshader_sampler_type =
+            state->vertex_shader->reg_maps.sampler_type;
+    const enum wined3d_sampler_texture_type *pshader_sampler_type = NULL;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    int start = min(MAX_COMBINED_SAMPLERS, gl_info->limits.combined_samplers) - 1;
+    int i;
+
+    if (ps)
+    {
+        /* Note that we only care if a sampler is sampled or not, not the sampler's specific type.
+         * Otherwise we'd need to call shader_update_samplers() here for 1.x pixelshaders. */
+        pshader_sampler_type = state->pixel_shader->reg_maps.sampler_type;
+    }
+
+    for (i = 0; i < MAX_VERTEX_SAMPLERS; ++i) {
+        DWORD vsampler_idx = i + MAX_FRAGMENT_SAMPLERS;
+        if (vshader_sampler_type[i])
+        {
+            if (context->tex_unit_map[vsampler_idx] != WINED3D_UNMAPPED_STAGE)
+            {
+                /* Already mapped somewhere */
+                continue;
+            }
+
+            while (start >= 0)
+            {
+                if (context_unit_free_for_vs(context, pshader_sampler_type, vshader_sampler_type, start))
+                {
+                    context_map_stage(context, vsampler_idx, start);
+                    context_invalidate_state(context, STATE_SAMPLER(vsampler_idx));
+
+                    --start;
+                    break;
+                }
+
+                --start;
+            }
+        }
+    }
+}
+
+static void context_update_tex_unit_map(struct wined3d_context *context, const struct wined3d_state *state)
+{
+    BOOL vs = use_vs(state);
+    BOOL ps = use_ps(state);
+    /*
+     * Rules are:
+     * -> Pixel shaders need a 1:1 map. In theory the shader input could be mapped too, but
+     * that would be really messy and require shader recompilation
+     * -> When the mapping of a stage is changed, sampler and ALL texture stage states have
+     * to be reset. Because of that try to work with a 1:1 mapping as much as possible
+     */
+    if (ps)
+        context_map_psamplers(context, state);
+    else
+        context_map_fixed_function_samplers(context, state);
+
+    if (vs)
+        context_map_vsamplers(context, ps, state);
+}
+
 /* Context activation is done by the caller. */
 void context_state_drawbuf(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
@@ -2576,7 +2806,7 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
     /* Preload resources before FBO setup. Texture preload in particular may
      * result in changes to the current FBO, due to using e.g. FBO blits for
      * updating a resource location. */
-    device_update_tex_unit_map(device);
+    context_update_tex_unit_map(context, state);
     device_preload_textures(device, context);
     if (isStateDirty(context, STATE_VDECL) || isStateDirty(context, STATE_STREAMSRC))
         context_update_stream_info(context, state);

@@ -3130,9 +3130,8 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
 static void tex_colorop(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     DWORD stage = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
-    const struct wined3d_device *device = context->swapchain->device;
-    BOOL tex_used = device->fixed_function_usage_map & (1 << stage);
-    DWORD mapped_stage = device->texUnitMap[stage];
+    BOOL tex_used = context->fixed_function_usage_map & (1 << stage);
+    DWORD mapped_stage = context->tex_unit_map[stage];
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
     TRACE("Setting color op for stage %d\n", stage);
@@ -3192,9 +3191,8 @@ static void tex_colorop(struct wined3d_context *context, const struct wined3d_st
 void tex_alphaop(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     DWORD stage = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
-    const struct wined3d_device *device = context->swapchain->device;
-    BOOL tex_used = device->fixed_function_usage_map & (1 << stage);
-    DWORD mapped_stage = device->texUnitMap[stage];
+    BOOL tex_used = context->fixed_function_usage_map & (1 << stage);
+    DWORD mapped_stage = context->tex_unit_map[stage];
     const struct wined3d_gl_info *gl_info = context->gl_info;
     DWORD op, arg1, arg2, arg0;
 
@@ -3295,7 +3293,7 @@ void transform_texture(struct wined3d_context *context, const struct wined3d_sta
     DWORD texUnit = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
     const struct wined3d_device *device = context->swapchain->device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    DWORD mapped_stage = device->texUnitMap[texUnit];
+    DWORD mapped_stage = context->tex_unit_map[texUnit];
     BOOL generated;
     int coordIdx;
 
@@ -3351,7 +3349,6 @@ static void unload_tex_coords(const struct wined3d_gl_info *gl_info)
 static void load_tex_coords(const struct wined3d_context *context, const struct wined3d_stream_info *si,
         GLuint *curVBO, const struct wined3d_state *state)
 {
-    const struct wined3d_device *device = context->swapchain->device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     unsigned int mapped_stage = 0;
     unsigned int textureNo = 0;
@@ -3360,7 +3357,7 @@ static void load_tex_coords(const struct wined3d_context *context, const struct 
     {
         int coordIdx = state->texture_states[textureNo][WINED3D_TSS_TEXCOORD_INDEX];
 
-        mapped_stage = device->texUnitMap[textureNo];
+        mapped_stage = context->tex_unit_map[textureNo];
         if (mapped_stage == WINED3D_UNMAPPED_STAGE) continue;
 
         if (mapped_stage >= gl_info->limits.texture_coords)
@@ -3411,13 +3408,12 @@ static void load_tex_coords(const struct wined3d_context *context, const struct 
 static void tex_coordindex(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     DWORD stage = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
-    const struct wined3d_device *device = context->swapchain->device;
     static const GLfloat s_plane[] = { 1.0f, 0.0f, 0.0f, 0.0f };
     static const GLfloat t_plane[] = { 0.0f, 1.0f, 0.0f, 0.0f };
     static const GLfloat r_plane[] = { 0.0f, 0.0f, 1.0f, 0.0f };
     static const GLfloat q_plane[] = { 0.0f, 0.0f, 0.0f, 1.0f };
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    DWORD mapped_stage = device->texUnitMap[stage];
+    DWORD mapped_stage = context->tex_unit_map[stage];
 
     if (mapped_stage == WINED3D_UNMAPPED_STAGE)
     {
@@ -3605,24 +3601,21 @@ void sampler_texmatrix(struct wined3d_context *context, const struct wined3d_sta
 
         if (texIsPow2 || (context->lastWasPow2Texture & (1 << sampler)))
         {
-            const struct wined3d_device *device = context->swapchain->device;
-
             if (texIsPow2)
                 context->lastWasPow2Texture |= 1 << sampler;
             else
                 context->lastWasPow2Texture &= ~(1 << sampler);
 
             transform_texture(context, state,
-                    STATE_TEXTURESTAGE(device->texUnitMap[sampler], WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS));
+                    STATE_TEXTURESTAGE(context->tex_unit_map[sampler], WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS));
         }
     }
 }
 
 static void sampler(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    const struct wined3d_device *device = context->swapchain->device;
     DWORD sampler = state_id - STATE_SAMPLER(0);
-    DWORD mapped_stage = device->texUnitMap[sampler];
+    DWORD mapped_stage = context->tex_unit_map[sampler];
     const struct wined3d_gl_info *gl_info = context->gl_info;
     union {
         float f;

@@ -171,7 +171,7 @@ void device_preload_textures(const struct wined3d_device *device, struct wined3d
     }
     else
     {
-        WORD ffu_map = device->fixed_function_usage_map;
+        WORD ffu_map = context->fixed_function_usage_map;
 
         for (i = 0; ffu_map; ffu_map >>= 1, ++i)
         {
@@ -883,7 +883,6 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
     struct wined3d_context *context;
     DWORD clear_flags = 0;
     HRESULT hr;
-    DWORD state;
 
     TRACE("device %p, swapchain_desc %p.\n", device, swapchain_desc);
 
@@ -894,21 +893,6 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
 
     device->fb.render_targets = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
             sizeof(*device->fb.render_targets) * gl_info->limits.buffers);
-
-    /* Initialize the texture unit mapping to a 1:1 mapping */
-    for (state = 0; state < MAX_COMBINED_SAMPLERS; ++state)
-    {
-        if (state < gl_info->limits.fragment_samplers)
-        {
-            device->texUnitMap[state] = state;
-            device->rev_tex_unit_map[state] = state;
-        }
-        else
-        {
-            device->texUnitMap[state] = WINED3D_UNMAPPED_STAGE;
-            device->rev_tex_unit_map[state] = WINED3D_UNMAPPED_STAGE;
-        }
-    }
 
     if (FAILED(hr = device->shader_backend->shader_alloc_private(device,
             device->adapter->vertex_pipe, device->adapter->fragment_pipe)))
@@ -2440,217 +2424,6 @@ HRESULT CDECL wined3d_device_get_vs_consts_f(const struct wined3d_device *device
     memcpy(constants, &device->state.vs_consts_f[start_register * 4], count * sizeof(float) * 4);
 
     return WINED3D_OK;
-}
-
-static void device_invalidate_texture_stage(const struct wined3d_device *device, DWORD stage)
-{
-    DWORD i;
-
-    for (i = 0; i <= WINED3D_HIGHEST_TEXTURE_STATE; ++i)
-    {
-        device_invalidate_state(device, STATE_TEXTURESTAGE(stage, i));
-    }
-}
-
-static void device_map_stage(struct wined3d_device *device, DWORD stage, DWORD unit)
-{
-    DWORD i = device->rev_tex_unit_map[unit];
-    DWORD j = device->texUnitMap[stage];
-
-    device->texUnitMap[stage] = unit;
-    if (i != WINED3D_UNMAPPED_STAGE && i != stage)
-        device->texUnitMap[i] = WINED3D_UNMAPPED_STAGE;
-
-    device->rev_tex_unit_map[unit] = stage;
-    if (j != WINED3D_UNMAPPED_STAGE && j != unit)
-        device->rev_tex_unit_map[j] = WINED3D_UNMAPPED_STAGE;
-}
-
-static void device_update_fixed_function_usage_map(struct wined3d_device *device)
-{
-    UINT i;
-
-    device->fixed_function_usage_map = 0;
-    for (i = 0; i < MAX_TEXTURES; ++i)
-    {
-        const struct wined3d_state *state = &device->state;
-        enum wined3d_texture_op color_op = state->texture_states[i][WINED3D_TSS_COLOR_OP];
-        enum wined3d_texture_op alpha_op = state->texture_states[i][WINED3D_TSS_ALPHA_OP];
-        DWORD color_arg1 = state->texture_states[i][WINED3D_TSS_COLOR_ARG1] & WINED3DTA_SELECTMASK;
-        DWORD color_arg2 = state->texture_states[i][WINED3D_TSS_COLOR_ARG2] & WINED3DTA_SELECTMASK;
-        DWORD color_arg3 = state->texture_states[i][WINED3D_TSS_COLOR_ARG0] & WINED3DTA_SELECTMASK;
-        DWORD alpha_arg1 = state->texture_states[i][WINED3D_TSS_ALPHA_ARG1] & WINED3DTA_SELECTMASK;
-        DWORD alpha_arg2 = state->texture_states[i][WINED3D_TSS_ALPHA_ARG2] & WINED3DTA_SELECTMASK;
-        DWORD alpha_arg3 = state->texture_states[i][WINED3D_TSS_ALPHA_ARG0] & WINED3DTA_SELECTMASK;
-
-        /* Not used, and disable higher stages. */
-        if (color_op == WINED3D_TOP_DISABLE)
-            break;
-
-        if (((color_arg1 == WINED3DTA_TEXTURE) && color_op != WINED3D_TOP_SELECT_ARG2)
-                || ((color_arg2 == WINED3DTA_TEXTURE) && color_op != WINED3D_TOP_SELECT_ARG1)
-                || ((color_arg3 == WINED3DTA_TEXTURE)
-                    && (color_op == WINED3D_TOP_MULTIPLY_ADD || color_op == WINED3D_TOP_LERP))
-                || ((alpha_arg1 == WINED3DTA_TEXTURE) && alpha_op != WINED3D_TOP_SELECT_ARG2)
-                || ((alpha_arg2 == WINED3DTA_TEXTURE) && alpha_op != WINED3D_TOP_SELECT_ARG1)
-                || ((alpha_arg3 == WINED3DTA_TEXTURE)
-                    && (alpha_op == WINED3D_TOP_MULTIPLY_ADD || alpha_op == WINED3D_TOP_LERP)))
-            device->fixed_function_usage_map |= (1 << i);
-
-        if ((color_op == WINED3D_TOP_BUMPENVMAP || color_op == WINED3D_TOP_BUMPENVMAP_LUMINANCE)
-                && i < MAX_TEXTURES - 1)
-            device->fixed_function_usage_map |= (1 << (i + 1));
-    }
-}
-
-static void device_map_fixed_function_samplers(struct wined3d_device *device, const struct wined3d_d3d_info *d3d_info)
-{
-    unsigned int i, tex;
-    WORD ffu_map;
-
-    device_update_fixed_function_usage_map(device);
-    ffu_map = device->fixed_function_usage_map;
-
-    if (d3d_info->limits.ffp_textures == d3d_info->limits.ffp_blend_stages
-            || device->state.lowest_disabled_stage <= d3d_info->limits.ffp_textures)
-    {
-        for (i = 0; ffu_map; ffu_map >>= 1, ++i)
-        {
-            if (!(ffu_map & 1)) continue;
-
-            if (device->texUnitMap[i] != i)
-            {
-                device_map_stage(device, i, i);
-                device_invalidate_state(device, STATE_SAMPLER(i));
-                device_invalidate_texture_stage(device, i);
-            }
-        }
-        return;
-    }
-
-    /* Now work out the mapping */
-    tex = 0;
-    for (i = 0; ffu_map; ffu_map >>= 1, ++i)
-    {
-        if (!(ffu_map & 1)) continue;
-
-        if (device->texUnitMap[i] != tex)
-        {
-            device_map_stage(device, i, tex);
-            device_invalidate_state(device, STATE_SAMPLER(i));
-            device_invalidate_texture_stage(device, i);
-        }
-
-        ++tex;
-    }
-}
-
-static void device_map_psamplers(struct wined3d_device *device, const struct wined3d_d3d_info *d3d_info)
-{
-    const enum wined3d_sampler_texture_type *sampler_type =
-            device->state.pixel_shader->reg_maps.sampler_type;
-    unsigned int i;
-
-    for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i)
-    {
-        if (sampler_type[i] && device->texUnitMap[i] != i)
-        {
-            device_map_stage(device, i, i);
-            device_invalidate_state(device, STATE_SAMPLER(i));
-            if (i < d3d_info->limits.ffp_blend_stages)
-                device_invalidate_texture_stage(device, i);
-        }
-    }
-}
-
-static BOOL device_unit_free_for_vs(const struct wined3d_device *device,
-        const enum wined3d_sampler_texture_type *pshader_sampler_tokens,
-        const enum wined3d_sampler_texture_type *vshader_sampler_tokens, DWORD unit)
-{
-    DWORD current_mapping = device->rev_tex_unit_map[unit];
-
-    /* Not currently used */
-    if (current_mapping == WINED3D_UNMAPPED_STAGE) return TRUE;
-
-    if (current_mapping < MAX_FRAGMENT_SAMPLERS) {
-        /* Used by a fragment sampler */
-
-        if (!pshader_sampler_tokens) {
-            /* No pixel shader, check fixed function */
-            return current_mapping >= MAX_TEXTURES || !(device->fixed_function_usage_map & (1 << current_mapping));
-        }
-
-        /* Pixel shader, check the shader's sampler map */
-        return !pshader_sampler_tokens[current_mapping];
-    }
-
-    /* Used by a vertex sampler */
-    return !vshader_sampler_tokens[current_mapping - MAX_FRAGMENT_SAMPLERS];
-}
-
-static void device_map_vsamplers(struct wined3d_device *device, BOOL ps, const struct wined3d_gl_info *gl_info)
-{
-    const enum wined3d_sampler_texture_type *vshader_sampler_type =
-            device->state.vertex_shader->reg_maps.sampler_type;
-    const enum wined3d_sampler_texture_type *pshader_sampler_type = NULL;
-    int start = min(MAX_COMBINED_SAMPLERS, gl_info->limits.combined_samplers) - 1;
-    int i;
-
-    if (ps)
-    {
-        /* Note that we only care if a sampler is sampled or not, not the sampler's specific type.
-         * Otherwise we'd need to call shader_update_samplers() here for 1.x pixelshaders. */
-        pshader_sampler_type = device->state.pixel_shader->reg_maps.sampler_type;
-    }
-
-    for (i = 0; i < MAX_VERTEX_SAMPLERS; ++i) {
-        DWORD vsampler_idx = i + MAX_FRAGMENT_SAMPLERS;
-        if (vshader_sampler_type[i])
-        {
-            if (device->texUnitMap[vsampler_idx] != WINED3D_UNMAPPED_STAGE)
-            {
-                /* Already mapped somewhere */
-                continue;
-            }
-
-            while (start >= 0)
-            {
-                if (device_unit_free_for_vs(device, pshader_sampler_type, vshader_sampler_type, start))
-                {
-                    device_map_stage(device, vsampler_idx, start);
-                    device_invalidate_state(device, STATE_SAMPLER(vsampler_idx));
-
-                    --start;
-                    break;
-                }
-
-                --start;
-            }
-        }
-    }
-}
-
-void device_update_tex_unit_map(struct wined3d_device *device)
-{
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
-    const struct wined3d_state *state = &device->state;
-    BOOL vs = use_vs(state);
-    BOOL ps = use_ps(state);
-    /*
-     * Rules are:
-     * -> Pixel shaders need a 1:1 map. In theory the shader input could be mapped too, but
-     * that would be really messy and require shader recompilation
-     * -> When the mapping of a stage is changed, sampler and ALL texture stage states have
-     * to be reset. Because of that try to work with a 1:1 mapping as much as possible
-     */
-    if (ps)
-        device_map_psamplers(device, d3d_info);
-    else
-        device_map_fixed_function_samplers(device, d3d_info);
-
-    if (vs)
-        device_map_vsamplers(device, ps, gl_info);
 }
 
 void CDECL wined3d_device_set_pixel_shader(struct wined3d_device *device, struct wined3d_shader *shader)
@@ -4442,7 +4215,7 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
 
             context = context_acquire(device, NULL);
 
-            invalidate_active_texture(device, context);
+            context_invalidate_active_texture(context);
             /* Create a new cursor texture */
             gl_info->gl_ops.gl.p_glGenTextures(1, &device->cursorTexture);
             checkGLcall("glGenTextures");

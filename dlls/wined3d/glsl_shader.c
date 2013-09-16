@@ -5783,7 +5783,6 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
     GLhandleARB gs_id = 0;
     GLhandleARB ps_id = 0;
     struct list *ps_list, *vs_list;
-    struct wined3d_device *device = context->swapchain->device;
 
     if (!(context->shader_update_mask & (1 << WINED3D_SHADER_TYPE_VERTEX)))
     {
@@ -5985,8 +5984,8 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
      * fixed function fragment processing setups. So once the program is linked these samplers
      * won't change.
      */
-    shader_glsl_load_vsamplers(gl_info, device->texUnitMap, programId);
-    shader_glsl_load_psamplers(gl_info, device->texUnitMap, programId);
+    shader_glsl_load_vsamplers(gl_info, context->tex_unit_map, programId);
+    shader_glsl_load_psamplers(gl_info, context->tex_unit_map, programId);
 
     entry->constant_update_mask = 0;
     if (vshader)

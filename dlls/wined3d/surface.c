@@ -654,7 +654,6 @@ static void surface_bind(struct wined3d_surface *surface, struct wined3d_context
 static void surface_bind_and_dirtify(struct wined3d_surface *surface,
         struct wined3d_context *context, BOOL srgb)
 {
-    struct wined3d_device *device = surface->resource.device;
     DWORD active_sampler;
 
     /* We don't need a specific texture unit, but after binding the texture
@@ -666,10 +665,10 @@ static void surface_bind_and_dirtify(struct wined3d_surface *surface,
      * called from sampler() in state.c. This means we can't touch anything
      * other than whatever happens to be the currently active texture, or we
      * would risk marking already applied sampler states dirty again. */
-    active_sampler = device->rev_tex_unit_map[context->active_texture];
+    active_sampler = context->rev_tex_unit_map[context->active_texture];
 
     if (active_sampler != WINED3D_UNMAPPED_STAGE)
-        device_invalidate_state(device, STATE_SAMPLER(active_sampler));
+        context_invalidate_state(context, STATE_SAMPLER(active_sampler));
     surface_bind(surface, context, srgb);
 }
 
@@ -2247,7 +2246,7 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
 
     surface_upload_data(dst_surface, gl_info, src_format, src_rect, src_pitch, dst_point, FALSE, &data);
 
-    invalidate_active_texture(dst_surface->resource.device, context);
+    context_invalidate_active_texture(context);
 
     context_release(context);
 

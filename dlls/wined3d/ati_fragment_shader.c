@@ -874,7 +874,7 @@ static void set_tex_op_atifs(struct wined3d_context *context, const struct wined
      */
     for (i = 0; i < desc->num_textures_used; ++i)
     {
-        mapped_stage = device->texUnitMap[i];
+        mapped_stage = context->tex_unit_map[i];
         if (mapped_stage != WINED3D_UNMAPPED_STAGE)
         {
             context_active_texture(context, gl_info, mapped_stage);

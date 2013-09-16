@@ -4574,7 +4574,7 @@ static void find_arb_vs_compile_args(const struct wined3d_state *state,
         const struct wined3d_context *context, const struct wined3d_shader *shader,
         struct arb_vs_compile_args *args)
 {
-    struct wined3d_device *device = shader->device;
+    const struct wined3d_device *device = shader->device;
     const struct wined3d_adapter *adapter = device->adapter;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_d3d_info *d3d_info = context->d3d_info;
@@ -4618,9 +4618,9 @@ static void find_arb_vs_compile_args(const struct wined3d_state *state,
             args->clip.boolclip.bools |= ( 1 << i);
     }
 
-    args->vertex.samplers[0] = device->texUnitMap[MAX_FRAGMENT_SAMPLERS + 0];
-    args->vertex.samplers[1] = device->texUnitMap[MAX_FRAGMENT_SAMPLERS + 1];
-    args->vertex.samplers[2] = device->texUnitMap[MAX_FRAGMENT_SAMPLERS + 2];
+    args->vertex.samplers[0] = context->tex_unit_map[MAX_FRAGMENT_SAMPLERS + 0];
+    args->vertex.samplers[1] = context->tex_unit_map[MAX_FRAGMENT_SAMPLERS + 1];
+    args->vertex.samplers[2] = context->tex_unit_map[MAX_FRAGMENT_SAMPLERS + 2];
     args->vertex.samplers[3] = 0;
 
     /* Skip if unused or local */

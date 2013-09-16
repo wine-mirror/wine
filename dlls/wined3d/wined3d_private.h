@@ -1086,6 +1086,8 @@ struct wined3d_context
     DWORD use_immediate_mode_draw : 1;
     DWORD texShaderBumpMap : 8;         /* MAX_TEXTURES, 8 */
     DWORD lastWasPow2Texture : 8;       /* MAX_TEXTURES, 8 */
+    DWORD fixed_function_usage_map : 8; /* MAX_TEXTURES, 8 */
+    DWORD padding : 24;
     DWORD shader_update_mask;
     DWORD constant_update_mask;
     DWORD                   numbered_array_mask;
@@ -1137,6 +1139,9 @@ struct wined3d_context
     /* Fences for GL_APPLE_flush_buffer_range */
     struct wined3d_event_query *buffer_queries[MAX_ATTRIBS];
     unsigned int num_buffer_queries;
+
+    DWORD                     tex_unit_map[MAX_COMBINED_SAMPLERS];
+    DWORD                     rev_tex_unit_map[MAX_COMBINED_SAMPLERS];
 
     /* Extension emulation */
     GLint                   gl_fog_source;
@@ -1882,17 +1887,17 @@ struct wined3d_device
 
     UINT instance_count;
 
-    WORD vertexBlendUsed : 1;           /* To avoid needless setting of the blend matrices */
-    WORD bCursorVisible : 1;
-    WORD d3d_initialized : 1;
-    WORD inScene : 1;                   /* A flag to check for proper BeginScene / EndScene call pairs */
-    WORD softwareVertexProcessing : 1;  /* process vertex shaders using software or hardware */
-    WORD filter_messages : 1;
-    WORD padding : 10;
-
-    BYTE fixed_function_usage_map;      /* MAX_TEXTURES, 8 */
+    BYTE vertexBlendUsed : 1;           /* To avoid needless setting of the blend matrices */
+    BYTE bCursorVisible : 1;
+    BYTE d3d_initialized : 1;
+    BYTE inScene : 1;                   /* A flag to check for proper BeginScene / EndScene call pairs */
+    BYTE softwareVertexProcessing : 1;  /* process vertex shaders using software or hardware */
+    BYTE filter_messages : 1;
+    BYTE padding : 2;
 
     unsigned char           surface_alignment; /* Line Alignment of surfaces                      */
+
+    WORD padding2 : 16;
 
     struct wined3d_state state;
     struct wined3d_state *update_state;
@@ -1934,10 +1939,6 @@ struct wined3d_device
     UINT dummy_texture_3d[MAX_COMBINED_SAMPLERS];
     UINT dummy_texture_cube[MAX_COMBINED_SAMPLERS];
 
-    /* With register combiners we can skip junk texture stages */
-    DWORD                     texUnitMap[MAX_COMBINED_SAMPLERS];
-    DWORD                     rev_tex_unit_map[MAX_COMBINED_SAMPLERS];
-
     /* Context management */
     struct wined3d_context **contexts;
     UINT context_count;
@@ -1958,7 +1959,6 @@ void device_resource_add(struct wined3d_device *device, struct wined3d_resource 
 void device_resource_released(struct wined3d_device *device, struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 void device_switch_onscreen_ds(struct wined3d_device *device, struct wined3d_context *context,
         struct wined3d_surface *depth_stencil) DECLSPEC_HIDDEN;
-void device_update_tex_unit_map(struct wined3d_device *device) DECLSPEC_HIDDEN;
 void device_invalidate_state(const struct wined3d_device *device, DWORD state) DECLSPEC_HIDDEN;
 
 static inline BOOL isStateDirty(const struct wined3d_context *context, DWORD state)
@@ -1968,9 +1968,9 @@ static inline BOOL isStateDirty(const struct wined3d_context *context, DWORD sta
     return context->isStateDirty[idx] & (1 << shift);
 }
 
-static inline void invalidate_active_texture(const struct wined3d_device *device, struct wined3d_context *context)
+static inline void context_invalidate_active_texture(struct wined3d_context *context)
 {
-    DWORD sampler = device->rev_tex_unit_map[context->active_texture];
+    DWORD sampler = context->rev_tex_unit_map[context->active_texture];
     if (sampler != WINED3D_UNMAPPED_STAGE)
         context_invalidate_state(context, STATE_SAMPLER(sampler));
 }
