@@ -33,6 +33,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "winnls.h"
+#include "fileapi.h"
 
 static HANDLE (WINAPI *pFindFirstFileExA)(LPCSTR,FINDEX_INFO_LEVELS,LPVOID,FINDEX_SEARCH_OPS,LPVOID,DWORD);
 static BOOL (WINAPI *pReplaceFileA)(LPCSTR, LPCSTR, LPCSTR, DWORD, LPVOID, LPVOID);
@@ -44,6 +45,7 @@ static BOOL (WINAPI *pGetFileInformationByHandleEx)(HANDLE, FILE_INFO_BY_HANDLE_
 static HANDLE (WINAPI *pOpenFileById)(HANDLE, LPFILE_ID_DESCRIPTOR, DWORD, DWORD, LPSECURITY_ATTRIBUTES, DWORD);
 static BOOL (WINAPI *pSetFileValidData)(HANDLE, LONGLONG);
 static HRESULT (WINAPI *pCopyFile2)(PCWSTR,PCWSTR,COPYFILE2_EXTENDED_PARAMETERS*);
+static HANDLE (WINAPI *pCreateFile2)(LPCWSTR, DWORD, DWORD, DWORD, CREATEFILE2_EXTENDED_PARAMETERS*);
 
 /* keep filename and filenameW the same */
 static const char filename[] = "testfile.xxx";
@@ -82,6 +84,7 @@ static void InitFunctionPointers(void)
     pOpenFileById = (void *) GetProcAddress(hkernel32, "OpenFileById");
     pSetFileValidData = (void *) GetProcAddress(hkernel32, "SetFileValidData");
     pCopyFile2 = (void *) GetProcAddress(hkernel32, "CopyFile2");
+    pCreateFile2 = (void *) GetProcAddress(hkernel32, "CreateFile2");
 }
 
 static void test__hread( void )
@@ -1483,6 +1486,87 @@ static void test_CreateFileW(void)
 			OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_BACKUP_SEMANTICS, NULL);
     ok(hFile != INVALID_HANDLE_VALUE,
        "expected CreateFile to succeed on existing directory, error: %d\n", GetLastError());
+    CloseHandle(hFile);
+    ret = RemoveDirectoryW(filename);
+    ok(ret, "DeleteFileW: error %d\n", GetLastError());
+}
+
+static void test_CreateFile2(void)
+{
+    HANDLE hFile;
+    WCHAR temp_path[MAX_PATH];
+    WCHAR filename[MAX_PATH];
+    CREATEFILE2_EXTENDED_PARAMETERS exparams;
+    static const WCHAR emptyW[]={'\0'};
+    static const WCHAR prefix[] = {'p','f','x',0};
+    static const WCHAR bogus[] = { '\\', '\\', '.', '\\', 'B', 'O', 'G', 'U', 'S', 0 };
+    DWORD ret;
+
+    if (!pCreateFile2)
+    {
+        win_skip("CreateFile2 is missing\n");
+        return;
+    }
+
+    ret = GetTempPathW(MAX_PATH, temp_path);
+    ok(ret != 0, "GetTempPathW error %d\n", GetLastError());
+    ok(ret < MAX_PATH, "temp path should fit into MAX_PATH\n");
+
+    ret = GetTempFileNameW(temp_path, prefix, 0, filename);
+    ok(ret != 0, "GetTempFileNameW error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    exparams.dwSize = sizeof(exparams);
+    exparams.dwFileAttributes = FILE_FLAG_RANDOM_ACCESS;
+    exparams.dwFileFlags = 0;
+    exparams.dwSecurityQosFlags = 0;
+    exparams.lpSecurityAttributes = NULL;
+    exparams.hTemplateFile = 0;
+    hFile = pCreateFile2(filename, GENERIC_READ, 0, CREATE_NEW, &exparams);
+    ok(hFile == INVALID_HANDLE_VALUE && GetLastError() == ERROR_FILE_EXISTS,
+       "CREATE_NEW should fail if file exists and last error value should be ERROR_FILE_EXISTS\n");
+
+    SetLastError(0xdeadbeef);
+    hFile = pCreateFile2(filename, GENERIC_READ, FILE_SHARE_READ, CREATE_ALWAYS, &exparams);
+    ok(hFile != INVALID_HANDLE_VALUE && GetLastError() == ERROR_ALREADY_EXISTS,
+       "hFile %p, last error %u\n", hFile, GetLastError());
+    CloseHandle(hFile);
+
+    SetLastError(0xdeadbeef);
+    hFile = pCreateFile2(filename, GENERIC_READ, FILE_SHARE_READ, OPEN_ALWAYS, &exparams);
+    ok(hFile != INVALID_HANDLE_VALUE && GetLastError() == ERROR_ALREADY_EXISTS,
+       "hFile %p, last error %u\n", hFile, GetLastError());
+    CloseHandle(hFile);
+
+    ret = DeleteFileW(filename);
+    ok(ret, "DeleteFileW: error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    hFile = pCreateFile2(filename, GENERIC_READ, FILE_SHARE_READ, OPEN_ALWAYS, &exparams);
+    ok(hFile != INVALID_HANDLE_VALUE && GetLastError() == 0,
+       "hFile %p, last error %u\n", hFile, GetLastError());
+    CloseHandle(hFile);
+
+    ret = DeleteFileW(filename);
+    ok(ret, "DeleteFileW: error %d\n", GetLastError());
+
+    hFile = pCreateFile2(emptyW, GENERIC_READ, 0, CREATE_NEW, &exparams);
+    ok(hFile == INVALID_HANDLE_VALUE && GetLastError() == ERROR_PATH_NOT_FOUND,
+       "CreateFile2(\"\") returned ret=%p error=%d\n",hFile,GetLastError());
+
+    /* test the result of opening a nonexistent driver name */
+    exparams.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
+    hFile = pCreateFile2(bogus, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, OPEN_EXISTING, &exparams);
+    ok(hFile == INVALID_HANDLE_VALUE && GetLastError() == ERROR_FILE_NOT_FOUND,
+       "CreateFile2 on invalid VxD name returned ret=%p error=%d\n",hFile,GetLastError());
+
+    ret = CreateDirectoryW(filename, NULL);
+    ok(ret == TRUE, "couldn't create temporary directory\n");
+    exparams.dwFileAttributes = FILE_ATTRIBUTE_NORMAL | FILE_FLAG_BACKUP_SEMANTICS;
+    hFile = pCreateFile2(filename, GENERIC_READ | GENERIC_WRITE, 0, OPEN_ALWAYS, &exparams);
+    todo_wine
+    ok(hFile == INVALID_HANDLE_VALUE,
+       "expected CreateFile2 to fail on existing directory, error: %d\n", GetLastError());
     CloseHandle(hFile);
     ret = RemoveDirectoryW(filename);
     ok(ret, "DeleteFileW: error %d\n", GetLastError());
@@ -3906,6 +3990,7 @@ START_TEST(file)
     test_CreateFile();
     test_CreateFileA();
     test_CreateFileW();
+    test_CreateFile2();
     test_DeleteFileA();
     test_DeleteFileW();
     test_MoveFileA();
