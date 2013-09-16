@@ -2123,7 +2123,7 @@ void context_apply_blit_state(struct wined3d_context *context, const struct wine
 
         if (context->render_offscreen)
         {
-            surface_internal_preload(rt, SRGB_RGB);
+            surface_internal_preload(rt, context, SRGB_RGB);
 
             context_apply_fbo_state_blit(context, GL_FRAMEBUFFER, rt, NULL, rt->draw_binding);
             if (rt->resource.format->id != WINED3DFMT_NULL)
@@ -2662,8 +2662,8 @@ static void context_setup_target(struct wined3d_context *context, struct wined3d
         {
             /* Read the back buffer of the old drawable into the destination texture. */
             if (context->current_rt->texture_name_srgb)
-                surface_internal_preload(context->current_rt, SRGB_SRGB);
-            surface_internal_preload(context->current_rt, SRGB_RGB);
+                surface_internal_preload(context->current_rt, context, SRGB_SRGB);
+            surface_internal_preload(context->current_rt, context, SRGB_RGB);
             surface_invalidate_location(context->current_rt, SFLAG_INDRAWABLE);
         }
     }

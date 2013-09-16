@@ -7455,6 +7455,9 @@ HRESULT arbfp_blit_surface(struct wined3d_device *device, DWORD filter,
     RECT src_rect = *src_rect_in;
     RECT dst_rect = *dst_rect_in;
 
+    /* Activate the destination context, set it up for blitting */
+    context = context_acquire(device, dst_surface);
+
     /* Now load the surface */
     if (wined3d_settings.offscreen_rendering_mode != ORM_FBO
             && (src_surface->flags & (SFLAG_INTEXTURE | SFLAG_INDRAWABLE)) == SFLAG_INDRAWABLE)
@@ -7470,10 +7473,8 @@ HRESULT arbfp_blit_surface(struct wined3d_device *device, DWORD filter,
         src_rect.bottom = src_surface->resource.height - src_rect.bottom;
     }
     else
-        surface_internal_preload(src_surface, SRGB_RGB);
+        surface_internal_preload(src_surface, context, SRGB_RGB);
 
-    /* Activate the destination context, set it up for blitting */
-    context = context_acquire(device, dst_surface);
     context_apply_blit_state(context, device);
 
     if (!surface_is_offscreen(dst_surface))
