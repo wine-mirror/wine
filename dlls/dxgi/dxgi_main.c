@@ -49,19 +49,17 @@ static void dxgi_main_cleanup(void)
     DeleteCriticalSection(&dxgi_cs);
 }
 
-BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
+BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)
 {
-    TRACE("fdwReason %u\n", fdwReason);
-
-    switch(fdwReason)
+    switch (reason)
     {
         case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(hInstDLL);
+            DisableThreadLibraryCalls(inst);
             break;
 
         case DLL_PROCESS_DETACH:
-            if (lpv) break;
-            dxgi_main_cleanup();
+            if (!reserved)
+                dxgi_main_cleanup();
             break;
     }
 
