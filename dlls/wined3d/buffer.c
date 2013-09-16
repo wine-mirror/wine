@@ -198,9 +198,8 @@ static void buffer_create_buffer_object(struct wined3d_buffer *This, struct wine
     }
     else
     {
-        wined3d_resource_free_sysmem(This->resource.heap_memory);
+        wined3d_resource_free_sysmem(&This->resource);
         This->resource.allocatedMemory = NULL;
-        This->resource.heap_memory = NULL;
     }
 
     return;

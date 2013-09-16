@@ -142,8 +142,7 @@ static void wined3d_volume_download_data(struct wined3d_volume *volume,
 
 static void wined3d_volume_evict_sysmem(struct wined3d_volume *volume)
 {
-    wined3d_resource_free_sysmem(volume->resource.heap_memory);
-    volume->resource.heap_memory = NULL;
+    wined3d_resource_free_sysmem(&volume->resource);
     volume->resource.allocatedMemory = NULL;
     wined3d_volume_invalidate_location(volume, WINED3D_LOCATION_SYSMEM);
 }
@@ -702,8 +701,7 @@ static HRESULT volume_init(struct wined3d_volume *volume, struct wined3d_device 
     if (pool == WINED3D_POOL_DEFAULT && usage & WINED3DUSAGE_DYNAMIC
             && gl_info->supported[ARB_PIXEL_BUFFER_OBJECT])
     {
-        wined3d_resource_free_sysmem(volume->resource.heap_memory);
-        volume->resource.heap_memory = NULL;
+        wined3d_resource_free_sysmem(&volume->resource);
         volume->resource.allocatedMemory = NULL;
         volume->flags |= WINED3D_VFLAG_PBO;
     }

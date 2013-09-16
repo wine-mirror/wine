@@ -566,10 +566,7 @@ static void surface_load_pbo(struct wined3d_surface *surface, const struct wined
 
     /* We don't need the system memory anymore and we can't even use it for PBOs. */
     if (!(surface->flags & SFLAG_CLIENT))
-    {
-        wined3d_resource_free_sysmem(surface->resource.heap_memory);
-        surface->resource.heap_memory = NULL;
-    }
+        wined3d_resource_free_sysmem(&surface->resource);
     surface->resource.allocatedMemory = NULL;
     surface->flags |= SFLAG_PBO;
     context_release(context);
@@ -601,9 +598,8 @@ static void surface_evict_sysmem(struct wined3d_surface *surface)
     if (surface->resource.map_count || (surface->flags & SFLAG_DONOTFREE))
         return;
 
-    wined3d_resource_free_sysmem(surface->resource.heap_memory);
+    wined3d_resource_free_sysmem(&surface->resource);
     surface->resource.allocatedMemory = NULL;
-    surface->resource.heap_memory = NULL;
     surface_invalidate_location(surface, SFLAG_INSYSMEM);
 }
 
@@ -1611,8 +1607,7 @@ static HRESULT gdi_surface_private_setup(struct wined3d_surface *surface)
     hr = surface_create_dib_section(surface);
     if (SUCCEEDED(hr))
     {
-        wined3d_resource_free_sysmem(surface->resource.heap_memory);
-        surface->resource.heap_memory = NULL;
+        wined3d_resource_free_sysmem(&surface->resource);
         surface->resource.allocatedMemory = surface->dib.bitmap_data;
     }
 
@@ -1671,8 +1666,7 @@ static void gdi_surface_map(struct wined3d_surface *surface, const RECT *rect, D
             ERR("Failed to create dib section, hr %#x.\n", hr);
             return;
         }
-        wined3d_resource_free_sysmem(surface->resource.heap_memory);
-        surface->resource.heap_memory = NULL;
+        wined3d_resource_free_sysmem(&surface->resource);
         surface->resource.allocatedMemory = surface->dib.bitmap_data;
     }
 }
@@ -2867,8 +2861,6 @@ HRESULT CDECL wined3d_surface_set_mem(struct wined3d_surface *surface, void *mem
 
     if (mem && mem != surface->resource.allocatedMemory)
     {
-        void *release = NULL;
-
         /* Do I have to copy the old surface content? */
         if (surface->flags & SFLAG_DIBSECTION)
         {
@@ -2881,8 +2873,7 @@ HRESULT CDECL wined3d_surface_set_mem(struct wined3d_surface *surface, void *mem
         }
         else if (!(surface->flags & SFLAG_USERPTR))
         {
-            release = surface->resource.heap_memory;
-            surface->resource.heap_memory = NULL;
+            wined3d_resource_free_sysmem(&surface->resource);
         }
         surface->resource.allocatedMemory = mem;
         surface->flags |= SFLAG_USERPTR;
@@ -2894,9 +2885,6 @@ HRESULT CDECL wined3d_surface_set_mem(struct wined3d_surface *surface, void *mem
         /* For client textures OpenGL has to be notified. */
         if (surface->flags & SFLAG_CLIENT)
             surface_release_client_storage(surface);
-
-        /* Now free the old memory if any. */
-        wined3d_resource_free_sysmem(release);
     }
     else if (surface->flags & SFLAG_USERPTR)
     {
@@ -3086,8 +3074,7 @@ HRESULT CDECL wined3d_surface_update_desc(struct wined3d_surface *surface,
 
     surface->flags &= ~(SFLAG_LOCATIONS | SFLAG_USERPTR);
     surface->resource.allocatedMemory = NULL;
-    wined3d_resource_free_sysmem(surface->resource.heap_memory);
-    surface->resource.heap_memory = NULL;
+    wined3d_resource_free_sysmem(&surface->resource);
 
     surface->resource.width = width;
     surface->resource.height = height;
@@ -3583,8 +3570,7 @@ HRESULT CDECL wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
         /* Use the DIB section from now on if we are not using a PBO. */
         if (!(surface->flags & (SFLAG_PBO | SFLAG_PIN_SYSMEM)))
         {
-            wined3d_resource_free_sysmem(surface->resource.heap_memory);
-            surface->resource.heap_memory = NULL;
+            wined3d_resource_free_sysmem(&surface->resource);
             surface->resource.allocatedMemory = surface->dib.bitmap_data;
         }
     }
@@ -5004,9 +4990,8 @@ static HRESULT surface_blt_special(struct wined3d_surface *dst_surface, const RE
 
         if (!dst_surface->resource.map_count && !(dst_surface->flags & SFLAG_DONOTFREE))
         {
-            wined3d_resource_free_sysmem(dst_surface->resource.heap_memory);
+            wined3d_resource_free_sysmem(&dst_surface->resource);
             dst_surface->resource.allocatedMemory = NULL;
-            dst_surface->resource.heap_memory = NULL;
         }
         else
         {
@@ -6933,8 +6918,7 @@ static HRESULT surface_init(struct wined3d_surface *surface, UINT alignment, UIN
     if ((usage & WINED3DUSAGE_OWNDC) && !surface->hDC
             && SUCCEEDED(surface_create_dib_section(surface)))
     {
-        wined3d_resource_free_sysmem(surface->resource.heap_memory);
-        surface->resource.heap_memory = NULL;
+        wined3d_resource_free_sysmem(&surface->resource);
         surface->resource.allocatedMemory = surface->dib.bitmap_data;
     }
 

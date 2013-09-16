@@ -1984,8 +1984,6 @@ struct wined3d_resource_ops
     void (*resource_unload)(struct wined3d_resource *resource);
 };
 
-void wined3d_resource_free_sysmem(void *mem) DECLSPEC_HIDDEN;
-
 struct wined3d_resource
 {
     LONG ref;
@@ -2025,6 +2023,7 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
 DWORD resource_set_priority(struct wined3d_resource *resource, DWORD priority) DECLSPEC_HIDDEN;
 void resource_unload(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 BOOL wined3d_resource_allocate_sysmem(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
+void wined3d_resource_free_sysmem(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 DWORD wined3d_resource_sanitize_map_flags(const struct wined3d_resource *resource,
         DWORD flags) DECLSPEC_HIDDEN;
 GLbitfield wined3d_resource_gl_map_flags(DWORD d3d_flags) DECLSPEC_HIDDEN;
