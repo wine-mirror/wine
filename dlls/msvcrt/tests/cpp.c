@@ -283,7 +283,7 @@ static BOOL InitFunctionPtrs(void)
         SET(ptype_info_dtor, "??1type_info@@UAA@XZ");
         SET(ptype_info_raw_name, "?raw_name@type_info@@QBAPBDXZ");
         SET(ptype_info_name, "?name@type_info@@QBEPBDXZ");
-        SET(ptype_info_before, "?before@type_info@@QBEHABV1@@Z");
+        SET(ptype_info_before, "?before@type_info@@QBA_NABV1@@Z");
         SET(ptype_info_opequals_equals, "??8type_info@@QBA_NABV0@@Z");
         SET(ptype_info_opnot_equals, "??9type_info@@QBA_NABV0@@Z");
 #else
