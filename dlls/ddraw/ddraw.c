@@ -3005,6 +3005,7 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
     {
         enum wined3d_format_id format = wined3dformat_from_ddrawformat(&desc2.u4.ddpfPixelFormat);
         enum wined3d_resource_type rtype;
+        DWORD usage = 0;
 
         if (desc2.ddsCaps.dwCaps & DDSCAPS_TEXTURE)
             rtype = WINED3D_RTYPE_TEXTURE;
@@ -3013,8 +3014,13 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
         else
             rtype = WINED3D_RTYPE_SURFACE;
 
+        if (desc2.ddsCaps.dwCaps & DDSCAPS_ZBUFFER)
+            usage = WINED3DUSAGE_DEPTHSTENCIL;
+        else if (desc2.ddsCaps.dwCaps & DDSCAPS_3DDEVICE)
+            usage = WINED3DUSAGE_RENDERTARGET;
+
         hr = wined3d_check_device_format(ddraw->wined3d, WINED3DADAPTER_DEFAULT, WINED3D_DEVICE_TYPE_HAL,
-                mode.format_id, 0, rtype, format);
+                mode.format_id, usage, rtype, format);
         if (SUCCEEDED(hr))
             desc2.ddsCaps.dwCaps |= DDSCAPS_VIDEOMEMORY;
         else
