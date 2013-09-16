@@ -1883,13 +1883,12 @@ struct wined3d_device
     UINT instance_count;
 
     WORD vertexBlendUsed : 1;           /* To avoid needless setting of the blend matrices */
-    WORD isInDraw : 1;
     WORD bCursorVisible : 1;
     WORD d3d_initialized : 1;
     WORD inScene : 1;                   /* A flag to check for proper BeginScene / EndScene call pairs */
     WORD softwareVertexProcessing : 1;  /* process vertex shaders using software or hardware */
     WORD filter_messages : 1;
-    WORD padding : 9;
+    WORD padding : 10;
 
     BYTE fixed_function_usage_map;      /* MAX_TEXTURES, 8 */
 
@@ -1952,7 +1951,7 @@ void device_context_remove(struct wined3d_device *device, struct wined3d_context
 HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
         UINT adapter_idx, enum wined3d_device_type device_type, HWND focus_window, DWORD flags,
         BYTE surface_alignment, struct wined3d_device_parent *device_parent) DECLSPEC_HIDDEN;
-void device_preload_textures(const struct wined3d_device *device) DECLSPEC_HIDDEN;
+void device_preload_textures(const struct wined3d_device *device, struct wined3d_context *context) DECLSPEC_HIDDEN;
 LRESULT device_process_message(struct wined3d_device *device, HWND window, BOOL unicode,
         UINT message, WPARAM wparam, LPARAM lparam, WNDPROC proc) DECLSPEC_HIDDEN;
 void device_resource_add(struct wined3d_device *device, struct wined3d_resource *resource) DECLSPEC_HIDDEN;
@@ -2064,7 +2063,8 @@ struct wined3d_texture_ops
 {
     HRESULT (*texture_bind)(struct wined3d_texture *texture,
             struct wined3d_context *context, BOOL srgb);
-    void (*texture_preload)(struct wined3d_texture *texture, enum WINED3DSRGB srgb);
+    void (*texture_preload)(struct wined3d_texture *texture, struct wined3d_context *context,
+            enum WINED3DSRGB srgb);
     void (*texture_sub_resource_add_dirty_region)(struct wined3d_resource *sub_resource,
             const struct wined3d_box *dirty_region);
     void (*texture_sub_resource_cleanup)(struct wined3d_resource *sub_resource);

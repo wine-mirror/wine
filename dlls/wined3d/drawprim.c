@@ -613,9 +613,6 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
         }
     }
 
-    /* Signals other modules that a drawing is in progress and the stateblock finalized */
-    device->isInDraw = TRUE;
-
     context = context_acquire(device, device->fb.render_targets[0]);
     if (!context->valid)
     {
@@ -780,7 +777,4 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
     context_release(context);
 
     TRACE("Done all gl drawing\n");
-
-    /* Control goes back to the device, stateblock values may change again */
-    device->isInDraw = FALSE;
 }

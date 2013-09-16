@@ -3690,24 +3690,23 @@ HRESULT CDECL wined3d_surface_flip(struct wined3d_surface *surface, struct wined
 void surface_internal_preload(struct wined3d_surface *surface, enum WINED3DSRGB srgb)
 {
     struct wined3d_device *device = surface->resource.device;
+    struct wined3d_context *context;
 
     TRACE("iface %p, srgb %#x.\n", surface, srgb);
+
+    /* TODO: Use already acquired context when possible. */
+    context = context_acquire(device, NULL);
 
     if (surface->container)
     {
         struct wined3d_texture *texture = surface->container;
 
         TRACE("Passing to container (%p).\n", texture);
-        texture->texture_ops->texture_preload(texture, srgb);
+        texture->texture_ops->texture_preload(texture, context, srgb);
     }
     else
     {
-        struct wined3d_context *context;
-
         TRACE("(%p) : About to load surface\n", surface);
-
-        /* TODO: Use already acquired context when possible. */
-        context = context_acquire(device, NULL);
 
         surface_load(surface, srgb == SRGB_SRGB);
 
@@ -3718,9 +3717,8 @@ void surface_internal_preload(struct wined3d_surface *surface, enum WINED3DSRGB 
             tmp = 0.9f;
             context->gl_info->gl_ops.gl.p_glPrioritizeTextures(1, &surface->texture_name, &tmp);
         }
-
-        context_release(context);
     }
+    context_release(context);
 }
 
 /* Read the framebuffer back into the surface */

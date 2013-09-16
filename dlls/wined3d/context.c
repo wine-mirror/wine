@@ -2577,7 +2577,7 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
      * result in changes to the current FBO, due to using e.g. FBO blits for
      * updating a resource location. */
     device_update_tex_unit_map(device);
-    device_preload_textures(device);
+    device_preload_textures(device, context);
     if (isStateDirty(context, STATE_VDECL) || isStateDirty(context, STATE_STREAMSRC))
         context_update_stream_info(context, state);
     if (state->index_buffer)

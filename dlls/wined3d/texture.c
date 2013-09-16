@@ -477,7 +477,10 @@ DWORD CDECL wined3d_texture_get_priority(const struct wined3d_texture *texture)
 
 void CDECL wined3d_texture_preload(struct wined3d_texture *texture)
 {
-    texture->texture_ops->texture_preload(texture, SRGB_ANY);
+    struct wined3d_context *context;
+    context = context_acquire(texture->resource.device, NULL);
+    texture->texture_ops->texture_preload(texture, context, SRGB_ANY);
+    context_release(context);
 }
 
 void * CDECL wined3d_texture_get_parent(const struct wined3d_texture *texture)
@@ -668,12 +671,12 @@ static BOOL texture_srgb_mode(const struct wined3d_texture *texture, enum WINED3
     }
 }
 
-static void texture2d_preload(struct wined3d_texture *texture, enum WINED3DSRGB srgb)
+/* Context activation is done by the caller */
+static void texture2d_preload(struct wined3d_texture *texture,
+        struct wined3d_context *context, enum WINED3DSRGB srgb)
 {
     UINT sub_count = texture->level_count * texture->layer_count;
-    struct wined3d_device *device = texture->resource.device;
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    struct wined3d_context *context = NULL;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
     BOOL srgb_mode;
     DWORD flag;
     UINT i;
@@ -692,21 +695,12 @@ static void texture2d_preload(struct wined3d_texture *texture, enum WINED3DSRGB 
         return;
     }
 
-    if (!device->isInDraw)
-    {
-        /* No danger of recursive calls, context_acquire() sets isInDraw to TRUE
-         * when loading offscreen render targets into the texture. */
-        context = context_acquire(device, NULL);
-    }
-
     /* Reload the surfaces if the texture is marked dirty. */
     for (i = 0; i < sub_count; ++i)
     {
         surface_load(surface_from_resource(texture->sub_resources[i]), srgb_mode);
     }
     texture->flags |= flag;
-
-    if (context) context_release(context);
 }
 
 static void texture2d_sub_resource_add_dirty_region(struct wined3d_resource *sub_resource,
@@ -1050,12 +1044,12 @@ static HRESULT texture3d_bind(struct wined3d_texture *texture,
     return wined3d_texture_bind(texture, context, srgb, &dummy);
 }
 
-static void texture3d_preload(struct wined3d_texture *texture, enum WINED3DSRGB srgb)
+/* Context activation is done by the caller. */
+static void texture3d_preload(struct wined3d_texture *texture,
+        struct wined3d_context *context, enum WINED3DSRGB srgb)
 {
     UINT sub_count = texture->level_count * texture->layer_count;
-    struct wined3d_device *device = texture->resource.device;
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    struct wined3d_context *context = NULL;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
     BOOL srgb_mode;
     DWORD flag;
     UINT i;
@@ -1074,16 +1068,12 @@ static void texture3d_preload(struct wined3d_texture *texture, enum WINED3DSRGB 
         return;
     }
 
-    context = context_acquire(device, NULL);
-
     /* Reload the surfaces if the texture is marked dirty. */
     for (i = 0; i < sub_count; ++i)
     {
         wined3d_volume_load(volume_from_resource(texture->sub_resources[i]), context, srgb_mode);
     }
     texture->flags |= flag;
-
-    context_release(context);
 }
 
 static void texture3d_sub_resource_add_dirty_region(struct wined3d_resource *sub_resource,
