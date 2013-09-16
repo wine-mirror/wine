@@ -1592,15 +1592,14 @@ static INT WS_DuplicateSocket(BOOL unicode, SOCKET s, DWORD dwProcessId, LPWSAPR
  *    buffer.
  *
  * RETURNS
- *    1 if a protocol was entered into the buffer.
- *    SOCKET_ERROR otherwise.
+ *    TRUE if a protocol was entered into the buffer.
  *
  * BUGS
  *    - only implemented for IPX, SPX, SPXII, TCP, UDP
  *    - there is no check that the operating system supports the returned
  *      protocols
  */
-static INT WS_EnterSingleProtocolW( INT protocol, WSAPROTOCOL_INFOW* info )
+static BOOL WS_EnterSingleProtocolW( INT protocol, WSAPROTOCOL_INFOW* info )
 {
     memset( info, 0, sizeof(WSAPROTOCOL_INFOW) );
     info->iProtocol = protocol;
@@ -1694,9 +1693,9 @@ static INT WS_EnterSingleProtocolW( INT protocol, WSAPROTOCOL_INFOW* info )
 
     default:
         FIXME("unknown Protocol <0x%08x>\n", protocol);
-        return SOCKET_ERROR;
+        return FALSE;
     }
-    return 1;
+    return TRUE;
 }
 
 /*****************************************************************************
@@ -1705,14 +1704,14 @@ static INT WS_EnterSingleProtocolW( INT protocol, WSAPROTOCOL_INFOW* info )
  *    see function WS_EnterSingleProtocolW
  *
  */
-static INT WS_EnterSingleProtocolA( INT protocol, WSAPROTOCOL_INFOA* info )
+static BOOL WS_EnterSingleProtocolA( INT protocol, WSAPROTOCOL_INFOA* info )
 {
     WSAPROTOCOL_INFOW infow;
     INT ret;
     memset( info, 0, sizeof(WSAPROTOCOL_INFOA) );
 
     ret = WS_EnterSingleProtocolW( protocol, &infow );
-    if (ret != SOCKET_ERROR)
+    if (ret)
     {
         /* convert the structure from W to A */
         memcpy( info, &infow, FIELD_OFFSET( WSAPROTOCOL_INFOA, szProtocol ) );
@@ -1758,12 +1757,12 @@ static INT WS_EnumProtocols( BOOL unicode, const INT *protocols, LPWSAPROTOCOL_I
     {
         if (unicode)
         {
-            if (WS_EnterSingleProtocolW( protocols[i], &info.w[items] ) != SOCKET_ERROR)
+            if (WS_EnterSingleProtocolW( protocols[i], &info.w[items] ))
                 items++;
         }
         else
         {
-            if (WS_EnterSingleProtocolA( protocols[i], &info.a[items] ) != SOCKET_ERROR)
+            if (WS_EnterSingleProtocolA( protocols[i], &info.a[items] ))
                 items++;
         }
     }
