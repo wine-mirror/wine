@@ -872,8 +872,7 @@ static void texture2d_prepare_texture(struct wined3d_texture *texture, struct wi
         if (gl_info->supported[APPLE_CLIENT_STORAGE])
         {
             if (surface->flags & (SFLAG_NONPOW2 | SFLAG_DIBSECTION)
-                    || texture->flags & WINED3D_TEXTURE_CONVERTED
-                    || !surface->resource.heap_memory)
+                    || texture->flags & WINED3D_TEXTURE_CONVERTED)
             {
                 /* In some cases we want to disable client storage.
                  * SFLAG_NONPOW2 has a bigger opengl texture than the client memory, and different pitches
@@ -885,6 +884,9 @@ static void texture2d_prepare_texture(struct wined3d_texture *texture, struct wi
             }
             else
             {
+                if (!surface->resource.heap_memory)
+                    wined3d_resource_allocate_sysmem(&surface->resource);
+
                 surface->flags |= SFLAG_CLIENT;
                 mem = surface->resource.heap_memory;
 
