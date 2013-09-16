@@ -131,8 +131,7 @@ static HRESULT register_d3d10core_layers(HMODULE d3d10core)
         HMODULE mod;
         BOOL ret;
 
-        ret = GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCSTR)d3d10core, &mod);
-        if (!ret)
+        if (!(ret = GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (const char *)d3d10core, &mod)))
         {
             LeaveCriticalSection(&dxgi_cs);
             return E_FAIL;
