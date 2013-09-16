@@ -134,53 +134,6 @@ static enum wined3d_primitive_type d3d_primitive_type_from_gl(GLenum primitive_t
     }
 }
 
-/* Context activation is done by the caller. */
-static void device_preload_texture(const struct wined3d_state *state,
-        struct wined3d_context *context, unsigned int idx)
-{
-    struct wined3d_texture *texture;
-    enum WINED3DSRGB srgb;
-
-    if (!(texture = state->textures[idx])) return;
-    srgb = state->sampler_states[idx][WINED3D_SAMP_SRGB_TEXTURE] ? SRGB_SRGB : SRGB_RGB;
-    texture->texture_ops->texture_preload(texture, context, srgb);
-}
-
-/* Context activation is done by the caller. */
-void device_preload_textures(const struct wined3d_device *device, struct wined3d_context *context)
-{
-    const struct wined3d_state *state = &device->state;
-    unsigned int i;
-
-    if (use_vs(state))
-    {
-        for (i = 0; i < MAX_VERTEX_SAMPLERS; ++i)
-        {
-            if (state->vertex_shader->reg_maps.sampler_type[i])
-                device_preload_texture(state, context, MAX_FRAGMENT_SAMPLERS + i);
-        }
-    }
-
-    if (use_ps(state))
-    {
-        for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i)
-        {
-            if (state->pixel_shader->reg_maps.sampler_type[i])
-                device_preload_texture(state, context, i);
-        }
-    }
-    else
-    {
-        WORD ffu_map = context->fixed_function_usage_map;
-
-        for (i = 0; ffu_map; ffu_map >>= 1, ++i)
-        {
-            if (ffu_map & 1)
-                device_preload_texture(state, context, i);
-        }
-    }
-}
-
 BOOL device_context_add(struct wined3d_device *device, struct wined3d_context *context)
 {
     struct wined3d_context **new_array;

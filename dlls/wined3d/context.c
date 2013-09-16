@@ -2787,6 +2787,54 @@ static void context_update_stream_info(struct wined3d_context *context, const st
 }
 
 /* Context activation is done by the caller. */
+static void context_preload_texture(struct wined3d_context *context,
+        const struct wined3d_state *state, unsigned int idx)
+{
+    struct wined3d_texture *texture;
+    enum WINED3DSRGB srgb;
+
+    if (!(texture = state->textures[idx]))
+        return;
+
+    srgb = state->sampler_states[idx][WINED3D_SAMP_SRGB_TEXTURE] ? SRGB_SRGB : SRGB_RGB;
+    texture->texture_ops->texture_preload(texture, context, srgb);
+}
+
+/* Context activation is done by the caller. */
+static void context_preload_textures(struct wined3d_context *context, const struct wined3d_state *state)
+{
+    unsigned int i;
+
+    if (use_vs(state))
+    {
+        for (i = 0; i < MAX_VERTEX_SAMPLERS; ++i)
+        {
+            if (state->vertex_shader->reg_maps.sampler_type[i])
+                context_preload_texture(context, state, MAX_FRAGMENT_SAMPLERS + i);
+        }
+    }
+
+    if (use_ps(state))
+    {
+        for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i)
+        {
+            if (state->pixel_shader->reg_maps.sampler_type[i])
+                context_preload_texture(context, state, i);
+        }
+    }
+    else
+    {
+        WORD ffu_map = context->fixed_function_usage_map;
+
+        for (i = 0; ffu_map; ffu_map >>= 1, ++i)
+        {
+            if (ffu_map & 1)
+                context_preload_texture(context, state, i);
+        }
+    }
+}
+
+/* Context activation is done by the caller. */
 BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_device *device)
 {
     const struct wined3d_state *state = &device->state;
@@ -2807,7 +2855,7 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
      * result in changes to the current FBO, due to using e.g. FBO blits for
      * updating a resource location. */
     context_update_tex_unit_map(context, state);
-    device_preload_textures(device, context);
+    context_preload_textures(context, state);
     if (isStateDirty(context, STATE_VDECL) || isStateDirty(context, STATE_STREAMSRC))
         context_update_stream_info(context, state);
     if (state->index_buffer)
