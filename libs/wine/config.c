@@ -152,16 +152,16 @@ static char *get_runtime_libdir(void)
 }
 
 /* return the directory that contains the main exe at run-time */
-static char *get_runtime_bindir( const char *argv0 )
+static char *get_runtime_exedir(void)
 {
-    char *p, *bindir, *cwd;
-    int len, size;
-
 #ifdef EXE_LINK
+    char *p, *bindir;
+    int size;
+
     for (size = 256; ; size *= 2)
     {
         int ret;
-        if (!(bindir = malloc( size ))) break;
+        if (!(bindir = malloc( size ))) return NULL;
         if ((ret = readlink( EXE_LINK, bindir, size )) == -1) break;
         if (ret != size)
         {
@@ -175,6 +175,14 @@ static char *get_runtime_bindir( const char *argv0 )
     }
     free( bindir );
 #endif
+    return NULL;
+}
+
+/* return the base directory from argv0 */
+static char *get_runtime_argvdir( const char *argv0 )
+{
+    char *p, *bindir, *cwd;
+    int len, size;
 
     if (!(p = strrchr( argv0, '/' ))) return NULL;
 
@@ -370,19 +378,30 @@ void wine_init_argv0_path( const char *argv0 )
     if (!(basename = strrchr( argv0, '/' ))) basename = argv0;
     else basename++;
 
-    bindir = get_runtime_bindir( argv0 );
-    libdir = get_runtime_libdir();
-
+    bindir = get_runtime_exedir();
     if (bindir && !is_valid_bindir( bindir ))
     {
         build_dir = running_from_build_dir( bindir );
         free( bindir );
         bindir = NULL;
     }
+
+    libdir = get_runtime_libdir();
     if (libdir && !bindir && !build_dir)
     {
         build_dir = running_from_build_dir( libdir );
         if (!build_dir) bindir = build_path( libdir, LIB_TO_BINDIR );
+    }
+
+    if (!libdir && !bindir && !build_dir)
+    {
+        bindir = get_runtime_argvdir( argv0 );
+        if (bindir && !is_valid_bindir( bindir ))
+        {
+            build_dir = running_from_build_dir( bindir );
+            free( bindir );
+            bindir = NULL;
+        }
     }
 
     if (build_dir)
