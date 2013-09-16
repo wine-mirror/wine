@@ -27,6 +27,7 @@
  
 #include <stdio.h>
 #include <errno.h>
+#include <math.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -81,7 +82,7 @@ static void test_sprintf( void )
 {
     char buffer[100];
     const char *format;
-    double pnumber=789456123;
+    double pnumber=789456123, inf, nan;
     int x, r;
     WCHAR wide[] = { 'w','i','d','e',0};
 
@@ -639,6 +640,41 @@ static void test_sprintf( void )
     ok(!strcmp(buffer,"123"), "failed: \"%s\"\n", buffer);
     r = sprintf(buffer, format, 0x12345);
     ok(!strcmp(buffer,"2345"), "failed \"%s\"\n", buffer);
+
+    nan = 0.0;
+    inf = 1.0/nan;
+    nan = sqrt(-1);
+    format = "%lf";
+    r = sprintf(buffer, format, nan);
+    ok(r==9, "r = %d\n", r);
+    ok(!strcmp(buffer, "-1.#IND00"), "failed: \"%s\"\n", buffer);
+    r = sprintf(buffer, format, inf);
+    ok(r==8, "r = %d\n", r);
+    ok(!strcmp(buffer, "1.#INF00"), "failed: \"%s\"\n", buffer);
+
+    format = "%le";
+    r = sprintf(buffer, format, nan);
+    ok(r==14, "r = %d\n", r);
+    ok(!strcmp(buffer, "-1.#IND00e+000"), "failed: \"%s\"\n", buffer);
+    r = sprintf(buffer, format, inf);
+    ok(r==13, "r = %d\n", r);
+    ok(!strcmp(buffer, "1.#INF00e+000"), "failed: \"%s\"\n", buffer);
+
+    format = "%lg";
+    r = sprintf(buffer, format, nan);
+    ok(r==7, "r = %d\n", r);
+    ok(!strcmp(buffer, "-1.#IND"), "failed: \"%s\"\n", buffer);
+    r = sprintf(buffer, format, inf);
+    ok(r==6, "r = %d\n", r);
+    ok(!strcmp(buffer, "1.#INF"), "failed: \"%s\"\n", buffer);
+
+    format = "%010.2lf";
+    r = sprintf(buffer, format, nan);
+    ok(r==10, "r = %d\n", r);
+    ok(!strcmp(buffer, "-000001.#J"), "failed: \"%s\"\n", buffer);
+    r = sprintf(buffer, format, inf);
+    ok(r==10, "r = %d\n", r);
+    ok(!strcmp(buffer, "0000001.#J"), "failed: \"%s\"\n", buffer);
 }
 
 static void test_swprintf( void )

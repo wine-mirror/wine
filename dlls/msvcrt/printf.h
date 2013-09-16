@@ -537,6 +537,27 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
             int len = flags.Precision + 10;
             double val = pf_args(args_ctx, pos, VT_R8, valist).get_double;
             int r;
+            BOOL inf = FALSE, nan = FALSE;
+
+            if(isinf(val))
+                inf = TRUE;
+            else if(isnan(val))
+                nan = TRUE; /* FIXME: NaN value may be displayed as #IND or #QNAN */
+
+            if(inf || nan) {
+                if(nan || val<0)
+                    flags.Sign = '-';
+
+                if(flags.Format=='g' || flags.Format=='G')
+                    val = 1.1234; /* fraction will be overwritten with #INF or #IND string */
+                else
+                    val = 1;
+
+                if(flags.Format=='a') {
+                    if(flags.Precision==-1)
+                        flags.Precision = 6; /* strlen("#INF00") */
+                }
+            }
 
             if(flags.Format=='f') {
                 if(val>-10.0 && val<10.0)
@@ -566,8 +587,24 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
                 FUNC_NAME(pf_fixup_exponent)(tmp);
 
             decimal_point = strchr(tmp, '.');
-            if(decimal_point)
+            if(decimal_point) {
                 *decimal_point = *locinfo->lconv->decimal_point;
+
+                if(inf || nan) {
+                    static const char inf_str[] = "#INF";
+                    static const char ind_str[] = "#IND";
+
+                    for(i=1; i<=sizeof(inf ? inf_str : ind_str); i++) {
+                        if(decimal_point[i]<'0' || decimal_point[i]>'9')
+                            break;
+
+                        decimal_point[i] = inf ? inf_str[i-1] : ind_str[i-1];
+                    }
+
+                    if(i!=sizeof(inf_str) && i!=1)
+                        decimal_point[i-1]++;
+                }
+            }
 
             len = strlen(tmp);
             i = FUNC_NAME(pf_fill)(pf_puts, puts_ctx, len, &flags, TRUE);
