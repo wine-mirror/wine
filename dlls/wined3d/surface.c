@@ -479,39 +479,6 @@ static HRESULT surface_create_dib_section(struct wined3d_surface *surface)
     return WINED3D_OK;
 }
 
-static void surface_get_memory(const struct wined3d_surface *surface, struct wined3d_bo_address *data,
-        DWORD location)
-{
-    if (location & WINED3D_LOCATION_BUFFER)
-    {
-        data->addr = NULL;
-        data->buffer_object = surface->resource.buffer_object;
-        return;
-    }
-    if (location & WINED3D_LOCATION_USER_MEMORY)
-    {
-        data->addr = surface->resource.user_memory;
-        data->buffer_object = 0;
-        return;
-    }
-    if (location & WINED3D_LOCATION_DIB)
-    {
-        data->addr = surface->resource.bitmap_data;
-        data->buffer_object = 0;
-        return;
-    }
-    if (location & WINED3D_LOCATION_SYSMEM)
-    {
-        data->addr = surface->resource.heap_memory;
-        data->buffer_object = 0;
-        return;
-    }
-
-    ERR("Unexpected locations %s.\n", wined3d_debug_location(location));
-    data->addr = NULL;
-    data->buffer_object = 0;
-}
-
 static void surface_prepare_buffer(struct wined3d_surface *surface)
 {
     struct wined3d_context *context;
@@ -1274,7 +1241,7 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
         return;
     }
 
-    surface_get_memory(surface, &data, dst_location);
+    wined3d_resource_get_memory(&surface->resource, dst_location, &data);
 
     if (surface->container->resource.format_flags & WINED3DFMT_FLAG_COMPRESSED)
     {
@@ -1643,7 +1610,7 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
         wined3d_resource_load_location(&dst_surface->resource, context, WINED3D_LOCATION_TEXTURE_RGB);
     wined3d_texture_bind_and_dirtify(dst_surface->container, context, FALSE);
 
-    surface_get_memory(src_surface, &data, src_surface->resource.locations);
+    wined3d_resource_get_memory(&src_surface->resource, src_surface->resource.locations, &data);
     wined3d_resource_get_pitch(&src_surface->resource, &src_row_pitch, &src_slice_pitch);
 
     wined3d_surface_upload_data(dst_surface, gl_info, src_format, src_rect,
@@ -2704,7 +2671,7 @@ static void read_from_framebuffer(struct wined3d_surface *surface,
     struct wined3d_bo_address data;
     DWORD slice_pitch, pitch;
 
-    surface_get_memory(surface, &data, dst_location);
+    wined3d_resource_get_memory(&surface->resource, dst_location, &data);
 
     /* Context_release does not restore the original context in case of
      * nested context_acquire calls. Only read_from_framebuffer and
@@ -3855,8 +3822,8 @@ static void surface_copy_simple_location(struct wined3d_surface *surface, DWORD 
     struct wined3d_bo_address dst, src;
     UINT size = surface->resource.size;
 
-    surface_get_memory(surface, &dst, location);
-    surface_get_memory(surface, &src, surface->resource.locations);
+    wined3d_resource_get_memory(&surface->resource, location, &dst);
+    wined3d_resource_get_memory(&surface->resource, surface->resource.locations, &src);
 
     if (dst.buffer_object)
     {
@@ -4068,7 +4035,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         surface_remove_pbo(surface, gl_info);
     }
 
-    surface_get_memory(surface, &data, surface->resource.locations);
+    wined3d_resource_get_memory(&surface->resource, surface->resource.locations, &data);
     if (format.convert)
     {
         /* This code is entered for texture formats which need a fixup. */

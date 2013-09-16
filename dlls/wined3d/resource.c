@@ -506,6 +506,36 @@ DWORD wined3d_resource_access_from_location(DWORD location)
     }
 }
 
+void wined3d_resource_get_memory(const struct wined3d_resource *resource,
+        DWORD location, struct wined3d_bo_address *data)
+{
+    if (location & WINED3D_LOCATION_BUFFER)
+    {
+        data->buffer_object = resource->buffer_object;
+        data->addr = NULL;
+        return;
+    }
+    if (location & WINED3D_LOCATION_USER_MEMORY)
+    {
+        data->buffer_object = 0;
+        data->addr = resource->user_memory;
+        return;
+    }
+    if (location & WINED3D_LOCATION_DIB)
+    {
+        data->buffer_object = 0;
+        data->addr = resource->bitmap_data;
+        return;
+    }
+    if (location & WINED3D_LOCATION_SYSMEM)
+    {
+        data->buffer_object = 0;
+        data->addr = resource->heap_memory;
+        return;
+    }
+    ERR("Unexpected location %s.\n", wined3d_debug_location(location));
+}
+
 /* Context activation is optionally by the caller. Context may be NULL. */
 void wined3d_resource_load_location(struct wined3d_resource *resource,
         struct wined3d_context *context, DWORD location)

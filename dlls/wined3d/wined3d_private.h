@@ -2200,6 +2200,8 @@ BOOL wined3d_resource_allocate_sysmem(struct wined3d_resource *resource) DECLSPE
 void wined3d_resource_free_sysmem(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 BYTE *wined3d_resource_get_map_ptr(const struct wined3d_resource *resource,
         const struct wined3d_context *context, DWORD flags) DECLSPEC_HIDDEN;
+void wined3d_resource_get_memory(const struct wined3d_resource *resource,
+        DWORD location, struct wined3d_bo_address *data) DECLSPEC_HIDDEN;
 GLbitfield wined3d_resource_gl_map_flags(DWORD d3d_flags) DECLSPEC_HIDDEN;
 void wined3d_resource_invalidate_location(struct wined3d_resource *resource, DWORD location) DECLSPEC_HIDDEN;
 BOOL wined3d_resource_is_offscreen(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
