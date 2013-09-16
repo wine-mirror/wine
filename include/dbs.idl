@@ -50,6 +50,13 @@ typedef struct tagDBID {
     } uName;
 } DBID;
 
+typedef struct tagDB_NUMERIC {
+    BYTE precision;
+    BYTE scale;
+    BYTE sign;
+    BYTE val[16];
+} DB_NUMERIC;
+
 typedef DWORD DBPROPID;
 
 typedef struct tagDBPROPIDSET {
