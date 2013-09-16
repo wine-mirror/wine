@@ -1613,6 +1613,7 @@ static INT WS_EnterSingleProtocolW( INT protocol, WSAPROTOCOL_INFOW* info )
                                 XP1_GUARANTEED_DELIVERY;
         info->ProviderId = ProviderIdIP;
         info->dwCatalogEntryId = 0x3e9;
+        info->dwProviderFlags = PFL_MATCHES_PROTOCOL_ZERO;
         info->ProtocolChain.ChainLen = 1;
         info->iVersion = 2;
         info->iAddressFamily = WS_AF_INET;
@@ -1628,6 +1629,7 @@ static INT WS_EnterSingleProtocolW( INT protocol, WSAPROTOCOL_INFOW* info )
                                 XP1_CONNECTIONLESS;
         info->ProviderId = ProviderIdIP;
         info->dwCatalogEntryId = 0x3ea;
+        info->dwProviderFlags = PFL_MATCHES_PROTOCOL_ZERO;
         info->ProtocolChain.ChainLen = 1;
         info->iVersion = 2;
         info->iAddressFamily = WS_AF_INET;
@@ -1644,6 +1646,7 @@ static INT WS_EnterSingleProtocolW( INT protocol, WSAPROTOCOL_INFOW* info )
                                 XP1_CONNECTIONLESS;
         info->ProviderId = ProviderIdIPX;
         info->dwCatalogEntryId = 0x406;
+        info->dwProviderFlags = PFL_MATCHES_PROTOCOL_ZERO;
         info->ProtocolChain.ChainLen = 1;
         info->iVersion = 2;
         info->iAddressFamily = WS_AF_IPX;
@@ -1661,6 +1664,7 @@ static INT WS_EnterSingleProtocolW( INT protocol, WSAPROTOCOL_INFOW* info )
                                 XP1_GUARANTEED_DELIVERY;
         info->ProviderId = ProviderIdSPX;
         info->dwCatalogEntryId = 0x407;
+        info->dwProviderFlags = PFL_MATCHES_PROTOCOL_ZERO;
         info->ProtocolChain.ChainLen = 1;
         info->iVersion = 2;
         info->iAddressFamily = WS_AF_IPX;
@@ -1677,6 +1681,7 @@ static INT WS_EnterSingleProtocolW( INT protocol, WSAPROTOCOL_INFOW* info )
                                 XP1_GUARANTEED_ORDER | XP1_GUARANTEED_DELIVERY;
         info->ProviderId = ProviderIdSPX;
         info->dwCatalogEntryId = 0x409;
+        info->dwProviderFlags = PFL_MATCHES_PROTOCOL_ZERO;
         info->ProtocolChain.ChainLen = 1;
         info->iVersion = 2;
         info->iAddressFamily = WS_AF_IPX;

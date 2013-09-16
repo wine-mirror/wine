@@ -2000,22 +2000,22 @@ todo_wine
     ok(sock != INVALID_SOCKET, "Failed to create socket: %d\n",
             WSAGetLastError());
 
-todo_wine {
     size = sizeof(socktype);
     socktype = 0xdead;
     err = getsockopt(sock, SOL_SOCKET, SO_TYPE, (char *) &socktype, &size);
+todo_wine
     ok(!err, "getsockopt failed with %d\n", WSAGetLastError());
     for(i = 0; i < items; i++)
     {
         if(pi[i].dwProviderFlags & PFL_MATCHES_PROTOCOL_ZERO)
         {
+todo_wine
             ok(socktype == pi[i].iSocketType, "Wrong socket type, expected %d received %d\n",
                pi[i].iSocketType, socktype);
              break;
         }
     }
     ok(i != items, "Creating a socket without protocol and socket type didn't work\n");
-}
     closesocket(sock);
 
     /* when no socket type is specified the first entry from WSAEnumProtocols
