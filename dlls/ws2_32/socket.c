@@ -1670,7 +1670,7 @@ static INT WS_EnterSingleProtocolW( INT protocol, WSAPROTOCOL_INFOW* info )
         info->iAddressFamily = WS_AF_IPX;
         info->iMaxSockAddr = 0x10;
         info->iMinSockAddr = 0x0e;
-        info->iSocketType = 5;
+        info->iSocketType = WS_SOCK_SEQPACKET;
         info->dwMessageSize = 0xffffffff;
         strcpyW( info->szProtocol, NameSpxW );
         break;
@@ -1687,7 +1687,7 @@ static INT WS_EnterSingleProtocolW( INT protocol, WSAPROTOCOL_INFOW* info )
         info->iAddressFamily = WS_AF_IPX;
         info->iMaxSockAddr = 0x10;
         info->iMinSockAddr = 0x0e;
-        info->iSocketType = 5;
+        info->iSocketType = WS_SOCK_SEQPACKET;
         info->dwMessageSize = 0xffffffff;
         strcpyW( info->szProtocol, NameSpxIIW );
         break;
