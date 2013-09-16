@@ -727,17 +727,13 @@ static void test_CreateBitmapFromHBITMAP(void)
     ok(hbmp != 0, "failed to create bitmap\n");
 
     hr = IWICImagingFactory_CreateBitmapFromHBITMAP(factory, 0, 0, WICBitmapIgnoreAlpha, &bitmap);
-todo_wine
     ok(hr == WINCODEC_ERR_WIN32ERROR || hr == 0x88980003 /*XP*/, "expected WINCODEC_ERR_WIN32ERROR, got %#x\n", hr);
 
     hr = IWICImagingFactory_CreateBitmapFromHBITMAP(factory, hbmp, 0, WICBitmapIgnoreAlpha, NULL);
-todo_wine
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
 
     hr = IWICImagingFactory_CreateBitmapFromHBITMAP(factory, hbmp, 0, WICBitmapIgnoreAlpha, &bitmap);
-todo_wine
     ok(hr == S_OK, "CreateBitmapFromHBITMAP error %#x\n", hr);
-    if (hr != S_OK) return;
 
     IWICBitmap_GetPixelFormat(bitmap, &format);
     ok(IsEqualGUID(&format, &GUID_WICPixelFormat8bppIndexed),
@@ -770,6 +766,7 @@ todo_wine
     ok(hr == S_OK, "CreateBitmapFromHBITMAP error %#x\n", hr);
 
     IWICBitmap_GetPixelFormat(bitmap, &format);
+todo_wine
     ok(IsEqualGUID(&format, &GUID_WICPixelFormat4bppIndexed),
        "unexpected pixel format %s\n", debugstr_guid(&format));
 
@@ -789,6 +786,7 @@ todo_wine
 
     hr = IWICPalette_GetColorCount(palette, &count);
     ok(hr == S_OK, "GetColorCount error %#x\n", hr);
+todo_wine
     ok(count == 16, "expected 16, got %u\n", count);
 
     IWICPalette_Release(palette);
@@ -837,7 +835,13 @@ todo_wine
     hr = IWICBitmap_CopyPixels(bitmap, NULL, 4, sizeof(data), data);
     ok(hr == S_OK, "IWICBitmap_CopyPixels error %#x\n", hr);
     for (i = 0; i < sizeof(data); i++)
-        ok(data[i] == data_8bpp_pal_wic[i], "%u: expected %#x, got %#x\n", i, data_8bpp_pal_wic[i], data[i]);
+    {
+        if (data[i] != data_8bpp_pal_wic[i])
+todo_wine
+            ok(data[i] == data_8bpp_pal_wic[i], "%u: expected %#x, got %#x\n", i, data_8bpp_pal_wic[i], data[i]);
+        else
+            ok(data[i] == data_8bpp_pal_wic[i], "%u: expected %#x, got %#x\n", i, data_8bpp_pal_wic[i], data[i]);
+    }
 
     IWICBitmap_Release(bitmap);
     DeleteObject(hbmp);
