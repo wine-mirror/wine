@@ -222,7 +222,9 @@ static void init_server_dir( dev_t dev, ino_t ino )
 {
     char *p, *root;
 
-#ifdef HAVE_GETUID
+#ifdef __ANDROID__  /* there's no /tmp dir on Android */
+    root = build_path( config_dir, ".wineserver" );
+#elif defined(HAVE_GETUID)
     root = xmalloc( sizeof(server_root_prefix) + 12 );
     sprintf( root, "%s-%u", server_root_prefix, getuid() );
 #else
