@@ -222,27 +222,11 @@ static void test_stream_read_write(IStream *stream, DWORD mode)
     ret = stream->lpVtbl->Read(stream, buf, 2, &count);
     if (written != 0)
     {
-        /* FIXME: Remove once Wine is fixed */
-        if (mode == STGM_WRITE)
-todo_wine
-        ok(ret == S_OK, "IStream_Read error %#x (access %#x, written %u)\n", ret, mode, written);
-        else
         ok(ret == S_OK, "IStream_Read error %#x (access %#x, written %u)\n", ret, mode, written);
         if (mode == STGM_WRITE || mode == STGM_READWRITE)
         {
-            /* FIXME: Remove once Wine is fixed */
-            if (mode == STGM_WRITE)
-            {
-todo_wine
-            ok(count == 2, "expected 2, got %u\n", count);
-todo_wine
-            ok(buf[0] == 0x5e && buf[1] == 0xa7, "expected 5ea7, got %02x%02x\n", buf[0], buf[1]);
-            }
-            else
-            {
             ok(count == 2, "expected 2, got %u\n", count);
             ok(buf[0] == 0x5e && buf[1] == 0xa7, "expected 5ea7, got %02x%02x\n", buf[0], buf[1]);
-            }
         }
         else
             ok(count == 0, "expected 0, got %u\n", count);

@@ -420,11 +420,9 @@ HRESULT WINAPI SHCreateStreamOnFileEx(LPCWSTR lpszPath, DWORD dwMode,
   /* Access */
   switch (STGM_ACCESS_MODE(dwMode))
   {
+  case STGM_WRITE:
   case STGM_READWRITE:
     dwAccess = GENERIC_READ|GENERIC_WRITE;
-    break;
-  case STGM_WRITE:
-    dwAccess = GENERIC_WRITE;
     break;
   case STGM_READ:
     dwAccess = GENERIC_READ;
