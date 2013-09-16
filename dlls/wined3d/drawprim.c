@@ -676,8 +676,8 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
     }
 
     stream_info = &context->stream_info;
-    if (device->instance_count)
-        instance_count = device->instance_count;
+    if (context->instance_count)
+        instance_count = context->instance_count;
 
     if (indexed)
     {

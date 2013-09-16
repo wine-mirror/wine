@@ -4060,13 +4060,12 @@ static void unload_numbered_arrays(struct wined3d_context *context)
 static void load_numbered_arrays(struct wined3d_context *context,
         const struct wined3d_stream_info *stream_info, const struct wined3d_state *state)
 {
-    struct wined3d_device *device = context->swapchain->device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     GLuint curVBO = gl_info->supported[ARB_VERTEX_BUFFER_OBJECT] ? ~0U : 0;
     int i;
 
     /* Default to no instancing */
-    device->instance_count = 0;
+    context->instance_count = 0;
 
     for (i = 0; i < MAX_ATTRIBS; i++)
     {
@@ -4085,8 +4084,8 @@ static void load_numbered_arrays(struct wined3d_context *context,
 
         if (stream->flags & WINED3DSTREAMSOURCE_INSTANCEDATA)
         {
-            if (!device->instance_count)
-                device->instance_count = state->streams[0].frequency ? state->streams[0].frequency : 1;
+            if (!context->instance_count)
+                context->instance_count = state->streams[0].frequency ? state->streams[0].frequency : 1;
 
             if (!gl_info->supported[ARB_INSTANCED_ARRAYS])
             {
@@ -4232,10 +4231,9 @@ static void load_numbered_arrays(struct wined3d_context *context,
     checkGLcall("Loading numbered arrays");
 }
 
-static void load_vertex_data(const struct wined3d_context *context,
+static void load_vertex_data(struct wined3d_context *context,
         const struct wined3d_stream_info *si, const struct wined3d_state *state)
 {
-    struct wined3d_device *device = context->swapchain->device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     GLuint curVBO = gl_info->supported[ARB_VERTEX_BUFFER_OBJECT] ? ~0U : 0;
     const struct wined3d_stream_info_element *e;
@@ -4243,7 +4241,7 @@ static void load_vertex_data(const struct wined3d_context *context,
     TRACE("Using fast vertex array code\n");
 
     /* This is fixed function pipeline only, and the fixed function pipeline doesn't do instancing */
-    device->instance_count = 0;
+    context->instance_count = 0;
 
     /* Blend Data ---------------------------------------------- */
     if ((si->use_map & (1 << WINED3D_FFP_BLENDWEIGHT))

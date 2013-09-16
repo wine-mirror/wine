@@ -1098,6 +1098,8 @@ struct wined3d_context
     DWORD active_texture;
     DWORD texture_type[MAX_COMBINED_SAMPLERS];
 
+    UINT instance_count;
+
     /* The actual opengl context */
     UINT level;
     HGLRC restore_ctx;
@@ -1884,8 +1886,6 @@ struct wined3d_device
     /* Array of functions for states which are handled by more than one pipeline part */
     APPLYSTATEFUNC *multistate_funcs[STATE_HIGHEST + 1];
     const struct blit_shader *blitter;
-
-    UINT instance_count;
 
     BYTE vertexBlendUsed : 1;           /* To avoid needless setting of the blend matrices */
     BYTE bCursorVisible : 1;
