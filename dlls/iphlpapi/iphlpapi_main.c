@@ -1027,13 +1027,11 @@ static BOOL is_ip_address_string(const char *str)
 static ULONG get_dns_suffix(WCHAR *suffix, ULONG *len)
 {
     ULONG size, i;
-    char *found_suffix = NULL;
+    const char *found_suffix = "";
+    /* Always return a NULL-terminated string, even if it's empty. */
 
     initialise_resolver();
-    /* Always return a NULL-terminated string, even if it's empty. */
-    size = sizeof(WCHAR);
-    for (i = 0, found_suffix = NULL;
-         !found_suffix && i < MAXDNSRCH + 1 && _res.dnsrch[i]; i++)
+    for (i = 0; !*found_suffix && i < MAXDNSRCH + 1 && _res.dnsrch[i]; i++)
     {
         /* This uses a heuristic to select a DNS suffix:
          * the first, non-IP address string is selected.
@@ -1041,22 +1039,14 @@ static ULONG get_dns_suffix(WCHAR *suffix, ULONG *len)
         if (!is_ip_address_string(_res.dnsrch[i]))
             found_suffix = _res.dnsrch[i];
     }
-    if (found_suffix)
-        size += strlen(found_suffix) * sizeof(WCHAR);
+
+    size = MultiByteToWideChar( CP_UNIXCP, 0, found_suffix, -1, NULL, 0 ) * sizeof(WCHAR);
     if (!suffix || *len < size)
     {
         *len = size;
         return ERROR_BUFFER_OVERFLOW;
     }
-    *len = size;
-    if (found_suffix)
-    {
-        char *p;
-
-        for (p = found_suffix; *p; p++)
-            *suffix++ = *p;
-    }
-    *suffix = 0;
+    *len = MultiByteToWideChar( CP_UNIXCP, 0, found_suffix, -1, suffix, *len / sizeof(WCHAR) ) * sizeof(WCHAR);
     return ERROR_SUCCESS;
 }
 
@@ -1139,7 +1129,7 @@ ULONG WINAPI DECLSPEC_HOTPATCH GetAdaptersAddresses(ULONG family, ULONG flags, P
             if (aa->IfType != IF_TYPE_SOFTWARE_LOOPBACK && aa->OperStatus == IfOperStatusUp)
                 aa->DnsSuffix = dnsSuffix;
             else
-                aa->DnsSuffix = (WCHAR *)((BYTE*)dnsSuffix + dns_suffix_size - 2);
+                aa->DnsSuffix = dnsSuffix + dns_suffix_size / sizeof(WCHAR) - 1;
         }
         ret = ERROR_SUCCESS;
     }
