@@ -1523,6 +1523,8 @@ UINT WINAPI ImmGetDescriptionA(
 
   /* find out how many characters in the unicode buffer */
   len = ImmGetDescriptionW( hKL, NULL, 0 );
+  if (!len)
+    return 0;
 
   /* allocate a buffer of that size */
   buf = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof (WCHAR) );
@@ -1550,6 +1552,7 @@ UINT WINAPI ImmGetDescriptionW(HKL hKL, LPWSTR lpszDescription, UINT uBufLen)
 
   FIXME("(%p, %p, %d): semi stub\n", hKL, lpszDescription, uBufLen);
 
+  if (!hKL) return 0;
   if (!uBufLen) return lstrlenW( name );
   lstrcpynW( lpszDescription, name, uBufLen );
   return lstrlenW( lpszDescription );
