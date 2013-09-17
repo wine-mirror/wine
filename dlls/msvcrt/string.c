@@ -1642,6 +1642,14 @@ void* __cdecl MSVCRT_memchr(const void *ptr, int c, MSVCRT_size_t n)
 }
 
 /*********************************************************************
+ *                  strcmp (MSVCRT.@)
+ */
+int __cdecl MSVCRT_strcmp(const char *str1, const char *str2)
+{
+    return strcmp(str1, str2);
+}
+
+/*********************************************************************
  *                  strncmp   (MSVCRT.@)
  */
 int __cdecl MSVCRT_strncmp(const char *str1, const char *str2, MSVCRT_size_t len)

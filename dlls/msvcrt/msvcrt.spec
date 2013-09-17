@@ -1419,7 +1419,7 @@
 @ cdecl strcat(str str) ntdll.strcat
 @ cdecl strcat_s(str long str) MSVCRT_strcat_s
 @ cdecl strchr(str long) MSVCRT_strchr
-@ cdecl strcmp(str str) ntdll.strcmp
+@ cdecl strcmp(str str) MSVCRT_strcmp
 @ cdecl strcoll(str str) MSVCRT_strcoll
 @ cdecl strcpy(ptr str) ntdll.strcpy
 @ cdecl strcpy_s(ptr long str) MSVCRT_strcpy_s
