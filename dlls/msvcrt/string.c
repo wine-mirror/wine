@@ -1610,6 +1610,14 @@ void * __cdecl MSVCRT_memcpy(void *dst, const void *src, MSVCRT_size_t n)
 }
 
 /*********************************************************************
+ *                  memmove (MSVCRT.@)
+ */
+void * __cdecl MSVCRT_memmove(void *dst, const void *src, MSVCRT_size_t n)
+{
+    return memmove(dst, src, n);
+}
+
+/*********************************************************************
  *		    memset (MSVCRT.@)
  */
 void* __cdecl MSVCRT_memset(void *dst, int c, MSVCRT_size_t n)

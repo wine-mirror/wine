@@ -1373,7 +1373,7 @@
 @ cdecl memcmp(ptr ptr long) MSVCRT_memcmp
 @ cdecl memcpy(ptr ptr long) MSVCRT_memcpy
 @ cdecl memcpy_s(ptr long ptr long)
-@ cdecl memmove(ptr ptr long) ntdll.memmove
+@ cdecl memmove(ptr ptr long) MSVCRT_memmove
 @ cdecl memmove_s(ptr long ptr long)
 @ cdecl memset(ptr long long) MSVCRT_memset
 @ cdecl mktime(ptr) MSVCRT_mktime
