@@ -2344,6 +2344,12 @@ AC_CHECK_MEMBERS([struct sockaddr_in6.sin6_scope_id],,,
 #include <netinet/in.h>
 #endif])
 
+dnl Check for struct __res_state
+AC_CHECK_TYPES([struct __res_state],,,
+[#ifdef HAVE_RESOLV_H
+#include <resolv.h>
+#endif])
+
 dnl Check for _u._ext.nscount6
 AC_CHECK_MEMBERS([struct __res_state._u._ext.nscount6],,,
 [#ifdef HAVE_RESOLV_H

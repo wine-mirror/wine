@@ -14792,6 +14792,20 @@ _ACEOF
 fi
 
 
+ac_fn_c_check_type "$LINENO" "struct __res_state" "ac_cv_type_struct___res_state" "#ifdef HAVE_RESOLV_H
+#include <resolv.h>
+#endif
+"
+if test "x$ac_cv_type_struct___res_state" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT___RES_STATE 1
+_ACEOF
+
+
+fi
+
+
 ac_fn_c_check_member "$LINENO" "struct __res_state" "_u._ext.nscount6" "ac_cv_member_struct___res_state__u__ext_nscount6" "#ifdef HAVE_RESOLV_H
 #include <resolv.h>
 #endif
