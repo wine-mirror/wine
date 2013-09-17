@@ -1946,7 +1946,6 @@ todo_wine
     pi[0].iSocketType = SOCK_DGRAM;
     pi[0].iAddressFamily = AF_INET;
     sock = WSASocketA(0, 0, 0, &pi[0], 0, 0);
-todo_wine {
     ok(sock != INVALID_SOCKET, "Failed to create socket: %d\n",
             WSAGetLastError());
     size = sizeof(socktype);
@@ -1956,7 +1955,7 @@ todo_wine {
     ok(socktype == SOCK_DGRAM, "Wrong socket type, expected %d received %d\n",
        SOCK_DGRAM, socktype);
     closesocket(sock);
-}
+
     sock = WSASocketA(AF_INET, SOCK_STREAM, IPPROTO_TCP, &pi[0], 0, 0);
     ok(sock != INVALID_SOCKET, "Failed to create socket: %d\n",
             WSAGetLastError());

@@ -5884,19 +5884,19 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
       return ret;
     }
 
+    if (lpProtocolInfo)
+    {
+        if (af == FROM_PROTOCOL_INFO || !af)
+            af = lpProtocolInfo->iAddressFamily;
+        if (type == FROM_PROTOCOL_INFO || !type)
+            type = lpProtocolInfo->iSocketType;
+        if (protocol == FROM_PROTOCOL_INFO || !protocol)
+            protocol = lpProtocolInfo->iProtocol;
+    }
+
     /* convert the socket family and type */
     af = convert_af_w2u(af);
     type = convert_socktype_w2u(type);
-
-    if (lpProtocolInfo)
-    {
-        if (af == FROM_PROTOCOL_INFO)
-            af = lpProtocolInfo->iAddressFamily;
-        if (type == FROM_PROTOCOL_INFO)
-            type = lpProtocolInfo->iSocketType;
-        if (protocol == FROM_PROTOCOL_INFO)
-            protocol = lpProtocolInfo->iProtocol;
-    }
 
     if ( af == AF_UNSPEC)  /* did they not specify the address family? */
     {
