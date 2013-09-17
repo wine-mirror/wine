@@ -1610,8 +1610,8 @@ static void STDMETHODCALLTYPE d3d10_device_CheckCounterInfo(ID3D10Device *iface,
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_device_CheckCounter(ID3D10Device *iface,
-        const D3D10_COUNTER_DESC *desc, D3D10_COUNTER_TYPE *type, UINT *active_counters, LPSTR name,
-        UINT *name_length, LPSTR units, UINT *units_length, LPSTR description, UINT *description_length)
+        const D3D10_COUNTER_DESC *desc, D3D10_COUNTER_TYPE *type, UINT *active_counters, char *name,
+        UINT *name_length, char *units, UINT *units_length, char *description, UINT *description_length)
 {
     FIXME("iface %p, desc %p, type %p, active_counters %p, name %p, name_length %p,\n"
             "\tunits %p, units_length %p, description %p, description_length %p stub!\n",

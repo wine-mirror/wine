@@ -1559,11 +1559,11 @@ interface ID3D10Device : IUnknown
             [in] const D3D10_COUNTER_DESC *pDesc,
             [out] D3D10_COUNTER_TYPE *pType,
             [out] UINT *pActiveCounters,
-            [out] LPSTR szName,
+            [out] char *name,
             [in, out] UINT *pNameLength,
-            [out] LPSTR szUnits,
+            [out] char *units,
             [in, out] UINT *pUnitsLength,
-            [out] LPSTR szDescription,
+            [out] char *description,
             [in, out] UINT *pDescriptionLength);
         UINT GetCreationFlags();
         HRESULT OpenSharedResource(
