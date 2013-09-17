@@ -1788,7 +1788,6 @@ todo_wine
     ok(err == WSAEINVAL, "Expected 10022, received %d\n", err);
 
     sock = WSASocketA(AF_INET, 0, 0, NULL, 0, 0);
-todo_wine
     ok(sock != INVALID_SOCKET, "WSASocketA should have succeeded\n");
     closesocket(sock);
 
@@ -1800,14 +1799,12 @@ todo_wine
     ok(WSASocketA(0, SOCK_STREAM, -1, NULL, 0, 0) == INVALID_SOCKET,
        "WSASocketA should have failed\n");
     err = WSAGetLastError();
-todo_wine
     ok(err == WSAEPROTONOSUPPORT, "Expected 10043, received %d\n", err);
 
     SetLastError(0xdeadbeef);
     ok(WSASocketA(0, -1, IPPROTO_UDP, NULL, 0, 0) == INVALID_SOCKET,
        "WSASocketA should have failed\n");
     err = WSAGetLastError();
-todo_wine
     ok(err == WSAESOCKTNOSUPPORT, "Expected 10044, received %d\n", err);
 
     SetLastError(0xdeadbeef);
@@ -1821,7 +1818,6 @@ todo_wine
     ok(WSASocketA(0, -1, -1, NULL, 0, 0) == INVALID_SOCKET,
        "WSASocketA should have failed\n");
     err = WSAGetLastError();
-todo_wine
     ok(err == WSAESOCKTNOSUPPORT, "Expected 10044, received %d\n", err);
 
     SetLastError(0xdeadbeef);
@@ -1832,7 +1828,6 @@ todo_wine
     ok(err == WSAEAFNOSUPPORT, "Expected 10047, received %d\n", err);
 
     sock = WSASocketA(AF_INET, 0, IPPROTO_TCP, NULL, 0, 0);
-todo_wine
     ok(sock != INVALID_SOCKET, "WSASocketA should have succeeded\n");
     closesocket(sock);
 
@@ -1864,7 +1859,6 @@ todo_wine
     ok(err == WSAEINVAL, "Expected 10022, received %d\n", err);
 
     sock = WSASocketA(0, 0, IPPROTO_TCP, NULL, 0, 0);
-todo_wine
     ok(sock != INVALID_SOCKET, "WSASocketA should have succeeded\n");
     closesocket(sock);
 
@@ -1992,20 +1986,17 @@ todo_wine
      * from WSAEnumProtocols that has the flag PFL_MATCHES_PROTOCOL_ZERO
      * is returned */
     sock = WSASocketA(AF_INET, 0, 0, NULL, 0, 0);
-todo_wine
     ok(sock != INVALID_SOCKET, "Failed to create socket: %d\n",
             WSAGetLastError());
 
     size = sizeof(socktype);
     socktype = 0xdead;
     err = getsockopt(sock, SOL_SOCKET, SO_TYPE, (char *) &socktype, &size);
-todo_wine
     ok(!err, "getsockopt failed with %d\n", WSAGetLastError());
     for(i = 0; i < items; i++)
     {
         if(pi[i].dwProviderFlags & PFL_MATCHES_PROTOCOL_ZERO)
         {
-todo_wine
             ok(socktype == pi[i].iSocketType, "Wrong socket type, expected %d received %d\n",
                pi[i].iSocketType, socktype);
              break;
@@ -2019,14 +2010,12 @@ todo_wine
     for (i = 0; i < sizeof(autoprotocols) / sizeof(autoprotocols[0]); i++)
     {
         sock = WSASocketA(0, 0, autoprotocols[i], NULL, 0, 0);
-todo_wine
         ok(sock != INVALID_SOCKET, "Failed to create socket for protocol %d, received %d\n",
                 autoprotocols[i], WSAGetLastError());
 
         size = sizeof(socktype);
         socktype = 0xdead;
         err = getsockopt(sock, SOL_SOCKET, SO_TYPE, (char *) &socktype, &size);
-todo_wine
         ok(!err, "getsockopt failed with %d\n", WSAGetLastError());
 
         for (err = 1, j = 0; j < items; j++)
@@ -2036,13 +2025,11 @@ todo_wine
                 if (socktype == pi[j].iSocketType)
                     err = 0;
                 else
-todo_wine
                     ok(0, "Wrong socket type, expected %d received %d\n",
                        pi[j].iSocketType, socktype);
                 break;
             }
         }
-todo_wine
         ok(!err, "Protocol %d not found in WSAEnumProtocols\n", autoprotocols[i]);
 
         closesocket(sock);

@@ -5894,23 +5894,28 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
             protocol = lpProtocolInfo->iProtocol;
     }
 
+    if (!type && (af || protocol))
+    {
+        WSAPROTOCOL_INFOW infow;
+
+        /* default to the first valid protocol */
+        if (!protocol)
+            protocol = valid_protocols[0];
+
+        if (WS_EnterSingleProtocolW(protocol, &infow))
+        {
+            type = infow.iSocketType;
+
+            /* after win2003 it's no longer possible to pass AF_UNSPEC
+               using the protocol info struct */
+            if (!lpProtocolInfo && af == WS_AF_UNSPEC)
+                af = infow.iAddressFamily;
+        }
+    }
+
     /* convert the socket family and type */
     af = convert_af_w2u(af);
     type = convert_socktype_w2u(type);
-
-    if ( af == AF_UNSPEC)  /* did they not specify the address family? */
-    {
-        if ((protocol == IPPROTO_TCP && type == SOCK_STREAM) ||
-            (protocol == IPPROTO_UDP && type == SOCK_DGRAM))
-        {
-            af = AF_INET;
-        }
-        else
-        {
-            SetLastError(WSAEPROTOTYPE);
-            return INVALID_SOCKET;
-        }
-    }
 
     SERVER_START_REQ( create_socket )
     {
