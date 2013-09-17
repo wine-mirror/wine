@@ -975,7 +975,6 @@ static void test_WithoutWSAStartup(void)
     WSASetLastError(0xdeadbeef);
     ok(WSASocketA(0, 0, 0, NULL, 0, 0) == INVALID_SOCKET, "WSASocketA should have failed\n");
     err = WSAGetLastError();
-todo_wine
     ok(err == WSANOTINITIALISED, "Expected 10093, received %d\n", err);
 
     WSASetLastError(0xdeadbeef);
