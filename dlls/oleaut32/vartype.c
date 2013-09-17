@@ -5137,7 +5137,7 @@ static int VARIANT_int_addlossy(
    in case of quotient overflow.
  */
 static HRESULT VARIANT_DI_div(const VARIANT_DI * dividend, const VARIANT_DI * divisor,
-                              VARIANT_DI * quotient)
+                              VARIANT_DI * quotient, BOOL round_remainder)
 {
     HRESULT r_overflow = S_OK;
 
@@ -5180,8 +5180,21 @@ static HRESULT VARIANT_DI_div(const VARIANT_DI * dividend, const VARIANT_DI * di
             underflow = VARIANT_int_addlossy(
                 quotient->bitsnum, &quotientscale, sizeof(quotient->bitsnum) / sizeof(DWORD),
                 remainderplusquotient, &tempquotientscale, 4);
-            VARIANT_int_mulbychar(remainderplusquotient + 4, 4, 10);
-            memcpy(remainderplusquotient, remainderplusquotient + 4, 4 * sizeof(DWORD));
+            if (round_remainder) {
+                if(remainderplusquotient[4] >= 5){
+                    unsigned int i;
+                    unsigned char remainder = 1;
+                    for (i = 0; i < sizeof(quotient->bitsnum) / sizeof(DWORD) && remainder; i++) {
+                        ULONGLONG digit = quotient->bitsnum[i] + 1;
+                        remainder = (digit > 0xFFFFFFFF) ? 1 : 0;
+                        quotient->bitsnum[i] = digit & 0xFFFFFFFF;
+                    }
+                }
+                memset(remainderplusquotient, 0, sizeof(remainderplusquotient));
+            } else {
+                VARIANT_int_mulbychar(remainderplusquotient + 4, 4, 10);
+                memcpy(remainderplusquotient, remainderplusquotient + 4, 4 * sizeof(DWORD));
+            }
             tempquotientscale = ++remainderscale;
         } while (!underflow && !VARIANT_int_iszero(remainderplusquotient + 4, 4));
 
@@ -5485,31 +5498,16 @@ static HRESULT VARIANT_DI_FromR8(double source, VARIANT_DI * dest)
     return hres;
 }
 
-/************************************************************************
- * VarDecDiv (OLEAUT32.178)
- *
- * Divide one DECIMAL by another.
- *
- * PARAMS
- *  pDecLeft  [I] Source
- *  pDecRight [I] Value to divide by
- *  pDecOut   [O] Destination
- *
- * RETURNS
- *  Success: S_OK.
- *  Failure: DISP_E_OVERFLOW, if the value will not fit in the destination
- */
-HRESULT WINAPI VarDecDiv(const DECIMAL* pDecLeft, const DECIMAL* pDecRight, DECIMAL* pDecOut)
+static HRESULT VARIANT_do_division(const DECIMAL *pDecLeft, const DECIMAL *pDecRight, DECIMAL *pDecOut,
+        BOOL round)
 {
   HRESULT hRet = S_OK;
   VARIANT_DI di_left, di_right, di_result;
   HRESULT divresult;
 
-  if (!pDecLeft || !pDecRight || !pDecOut) return E_INVALIDARG;
-
   VARIANT_DIFromDec(pDecLeft, &di_left);
   VARIANT_DIFromDec(pDecRight, &di_right);
-  divresult = VARIANT_DI_div(&di_left, &di_right, &di_result);
+  divresult = VARIANT_DI_div(&di_left, &di_right, &di_result, round);
   if (divresult != S_OK)
   {
       /* division actually overflowed */
@@ -5554,6 +5552,27 @@ HRESULT WINAPI VarDecDiv(const DECIMAL* pDecLeft, const DECIMAL* pDecRight, DECI
       VARIANT_DecFromDI(&di_result, pDecOut);
   }
   return hRet;
+}
+
+/************************************************************************
+ * VarDecDiv (OLEAUT32.178)
+ *
+ * Divide one DECIMAL by another.
+ *
+ * PARAMS
+ *  pDecLeft  [I] Source
+ *  pDecRight [I] Value to divide by
+ *  pDecOut   [O] Destination
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: DISP_E_OVERFLOW, if the value will not fit in the destination
+ */
+HRESULT WINAPI VarDecDiv(const DECIMAL* pDecLeft, const DECIMAL* pDecRight, DECIMAL* pDecOut)
+{
+  if (!pDecLeft || !pDecRight || !pDecOut) return E_INVALIDARG;
+
+  return VARIANT_do_division(pDecLeft, pDecRight, pDecOut, FALSE);
 }
 
 /************************************************************************
@@ -5765,6 +5784,10 @@ HRESULT WINAPI VarDecNeg(const DECIMAL* pDecIn, DECIMAL* pDecOut)
  */
 HRESULT WINAPI VarDecRound(const DECIMAL* pDecIn, int cDecimals, DECIMAL* pDecOut)
 {
+  DECIMAL divisor, tmp;
+  HRESULT hr;
+  unsigned int i;
+
   if (cDecimals < 0 || (DEC_SIGN(pDecIn) & ~DECIMAL_NEG) || DEC_SCALE(pDecIn) > DEC_MAX_SCALE)
     return E_INVALIDARG;
 
@@ -5774,9 +5797,26 @@ HRESULT WINAPI VarDecRound(const DECIMAL* pDecIn, int cDecimals, DECIMAL* pDecOu
     return S_OK;
   }
 
-  FIXME("semi-stub!\n");
+  /* truncate significant digits and rescale */
+  memset(&divisor, 0, sizeof(divisor));
+  DEC_LO64(&divisor) = 1;
 
-  return DISP_E_OVERFLOW;
+  memset(&tmp, 0, sizeof(tmp));
+  DEC_LO64(&tmp) = 10;
+  for (i = 0; i < DEC_SCALE(pDecIn) - cDecimals; ++i)
+  {
+    hr = VarDecMul(&divisor, &tmp, &divisor);
+    if (FAILED(hr))
+      return hr;
+  }
+
+  hr = VARIANT_do_division(pDecIn, &divisor, pDecOut, TRUE);
+  if (FAILED(hr))
+    return hr;
+
+  DEC_SCALE(pDecOut) = cDecimals;
+
+  return S_OK;
 }
 
 /************************************************************************

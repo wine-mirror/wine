@@ -455,6 +455,7 @@ static HRESULT (WINAPI *pVarDecDiv)(const DECIMAL*,const DECIMAL*,DECIMAL*);
 static HRESULT (WINAPI *pVarDecCmp)(const DECIMAL*,const DECIMAL*);
 static HRESULT (WINAPI *pVarDecCmpR8)(const DECIMAL*,double);
 static HRESULT (WINAPI *pVarDecNeg)(const DECIMAL*,DECIMAL*);
+static HRESULT (WINAPI *pVarDecRound)(const DECIMAL*,int,DECIMAL*);
 
 static HRESULT (WINAPI *pVarBoolFromUI1)(BYTE,VARIANT_BOOL*);
 static HRESULT (WINAPI *pVarBoolFromI2)(SHORT,VARIANT_BOOL*);
@@ -4545,6 +4546,39 @@ static void test_VarDecCmpR8(void)
   SETDEC(l,0,DECIMAL_NEG,-1,-1); r = DECIMAL_NEG; MATH3(VarDecCmpR8); EXPECT_LT;
 }
 
+#define CLEAR(x) memset(&(x), 0xBB, sizeof(x))
+
+static void test_VarDecRound(void)
+{
+    HRESULT hres;
+    DECIMAL l, out;
+
+    CHECKPTR(VarDecRound);
+
+    CLEAR(out); SETDEC(l, 0, 0, 0, 1); hres = pVarDecRound(&l, 3, &out); EXPECTDEC(0, 0, 0, 1);
+
+    CLEAR(out); SETDEC(l, 0, 0, 0, 1); hres = pVarDecRound(&l, 0, &out); EXPECTDEC(0, 0, 0, 1);
+    CLEAR(out); SETDEC(l, 1, 0, 0, 1); hres = pVarDecRound(&l, 0, &out); EXPECTDEC(0, 0, 0, 0);
+    CLEAR(out); SETDEC(l, 1, 0, 0, 1); hres = pVarDecRound(&l, 1, &out); EXPECTDEC(1, 0, 0, 1);
+    CLEAR(out); SETDEC(l, 2, 0, 0, 11); hres = pVarDecRound(&l, 1, &out); EXPECTDEC(1, 0, 0, 1);
+    CLEAR(out); SETDEC(l, 2, 0, 0, 15); hres = pVarDecRound(&l, 1, &out); EXPECTDEC(1, 0, 0, 2);
+    CLEAR(out); SETDEC(l, 6, 0, 0, 550001); hres = pVarDecRound(&l, 1, &out); EXPECTDEC(1, 0, 0, 6);
+
+    CLEAR(out); SETDEC(l, 0, DECIMAL_NEG, 0, 1); hres = pVarDecRound(&l, 0, &out); EXPECTDEC(0, DECIMAL_NEG, 0, 1);
+    CLEAR(out); SETDEC(l, 1, DECIMAL_NEG, 0, 1); hres = pVarDecRound(&l, 0, &out); EXPECTDEC(0, DECIMAL_NEG, 0, 0);
+    CLEAR(out); SETDEC(l, 1, DECIMAL_NEG, 0, 1); hres = pVarDecRound(&l, 1, &out); EXPECTDEC(1, DECIMAL_NEG, 0, 1);
+    CLEAR(out); SETDEC(l, 2, DECIMAL_NEG, 0, 11); hres = pVarDecRound(&l, 1, &out); EXPECTDEC(1, DECIMAL_NEG, 0, 1);
+    CLEAR(out); SETDEC(l, 2, DECIMAL_NEG, 0, 15); hres = pVarDecRound(&l, 1, &out); EXPECTDEC(1, DECIMAL_NEG, 0, 2);
+    CLEAR(out); SETDEC(l, 6, DECIMAL_NEG, 0, 550001); hres = pVarDecRound(&l, 1, &out); EXPECTDEC(1, DECIMAL_NEG, 0, 6);
+
+    CLEAR(out); SETDEC64(l, 0, 0, 0xffffffff, 0xffffffff, 0xffffffff); hres = pVarDecRound(&l, 0, &out); EXPECTDEC64(0, 0, 0xffffffff, 0xffffffff, 0xffffffff);
+    CLEAR(out); SETDEC64(l, 28, 0, 0xffffffff, 0xffffffff, 0xffffffff); hres = pVarDecRound(&l, 0, &out); EXPECTDEC64(0, 0, 0, 0, 8);
+    CLEAR(out); SETDEC64(l, 0, DECIMAL_NEG, 0xffffffff, 0xffffffff, 0xffffffff); hres = pVarDecRound(&l, 0, &out); EXPECTDEC64(0, DECIMAL_NEG, 0xffffffff, 0xffffffff, 0xffffffff);
+    CLEAR(out); SETDEC64(l, 28, DECIMAL_NEG, 0xffffffff, 0xffffffff, 0xffffffff); hres = pVarDecRound(&l, 0, &out); EXPECTDEC64(0, DECIMAL_NEG, 0, 0, 8);
+
+    CLEAR(out); SETDEC(l, 2, 0, 0, 0); hres = pVarDecRound(&l, 1, &out); EXPECTDEC(1, 0, 0, 0);
+}
+
 /*
  * VT_BOOL
  */
@@ -6334,6 +6368,7 @@ START_TEST(vartype)
   test_VarDecCmpR8();
   test_VarDecMul();
   test_VarDecDiv();
+  test_VarDecRound();
 
   test_VarBoolFromI1();
   test_VarBoolFromUI1();
