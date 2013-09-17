@@ -594,7 +594,7 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
                     static const char inf_str[] = "#INF";
                     static const char ind_str[] = "#IND";
 
-                    for(i=1; i<=sizeof(inf ? inf_str : ind_str); i++) {
+                    for(i=1; i<(inf ? sizeof(inf_str) : sizeof(ind_str)); i++) {
                         if(decimal_point[i]<'0' || decimal_point[i]>'9')
                             break;
 
