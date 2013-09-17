@@ -5740,18 +5740,18 @@ HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw,
     if (desc->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
         desc->ddsCaps.dwCaps |= DDSCAPS_VISIBLE;
 
-    if ((desc->ddsCaps.dwCaps & DDSCAPS_3DDEVICE) && !(desc->ddsCaps.dwCaps & DDSCAPS_ZBUFFER))
+    if (!(desc->ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY))
     {
-        usage |= WINED3DUSAGE_RENDERTARGET;
+        if (desc->ddsCaps.dwCaps & DDSCAPS_ZBUFFER)
+            usage |= WINED3DUSAGE_DEPTHSTENCIL;
+        else if (desc->ddsCaps.dwCaps & DDSCAPS_3DDEVICE)
+            usage |= WINED3DUSAGE_RENDERTARGET;
     }
 
     if (desc->ddsCaps.dwCaps & (DDSCAPS_OVERLAY))
     {
         usage |= WINED3DUSAGE_OVERLAY;
     }
-
-    if (desc->ddsCaps.dwCaps & DDSCAPS_ZBUFFER)
-        usage |= WINED3DUSAGE_DEPTHSTENCIL;
 
     if (desc->ddsCaps.dwCaps & DDSCAPS_OWNDC)
         usage |= WINED3DUSAGE_OWNDC;
