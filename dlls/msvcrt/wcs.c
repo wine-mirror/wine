@@ -1848,3 +1848,11 @@ MSVCRT_wchar_t* CDECL MSVCRT_wcschr(const MSVCRT_wchar_t *str, MSVCRT_wchar_t ch
 {
     return strchrW(str, ch);
 }
+
+/***********************************************************************
+ *              wcslen (MSVCRT.@)
+ */
+int CDECL MSVCRT_wcslen(const MSVCRT_wchar_t *str)
+{
+    return strlenW(str);
+}

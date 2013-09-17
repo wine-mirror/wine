@@ -1489,7 +1489,7 @@
 @ cdecl wcscpy_s(ptr long wstr) MSVCRT_wcscpy_s
 @ cdecl wcscspn(wstr wstr) ntdll.wcscspn
 @ cdecl wcsftime(ptr long wstr ptr) MSVCRT_wcsftime
-@ cdecl wcslen(wstr) ntdll.wcslen
+@ cdecl wcslen(wstr) MSVCRT_wcslen
 @ cdecl wcsncat(wstr wstr long) ntdll.wcsncat
 @ cdecl wcsncat_s(wstr long wstr long) MSVCRT_wcsncat_s
 @ cdecl wcsncmp(wstr wstr long) ntdll.wcsncmp
