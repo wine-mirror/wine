@@ -1840,3 +1840,11 @@ int CDECL MSVCRT_towlower(MSVCRT_wint_t c)
 {
     return MSVCRT__towlower_l(c, NULL);
 }
+
+/*********************************************************************
+ *              wcschr (MSVCRT.@)
+ */
+MSVCRT_wchar_t* CDECL MSVCRT_wcschr(const MSVCRT_wchar_t *str, MSVCRT_wchar_t ch)
+{
+    return strchrW(str, ch);
+}
