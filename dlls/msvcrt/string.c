@@ -1594,11 +1594,19 @@ int CDECL MSVCRT_I10_OUTPUT(MSVCRT__LDOUBLE ld80, int prec, int flag, struct _I1
 #undef I10_OUTPUT_MAX_PREC
 
 /*********************************************************************
+ *                  memcmp (MSVCRT.@)
+ */
+int __cdecl MSVCRT_memcmp(const void *ptr1, const void *ptr2, MSVCRT_size_t n)
+{
+    return memcmp(ptr1, ptr2, n);
+}
+
+/*********************************************************************
  *                  memcpy   (MSVCRT.@)
  */
-void * __cdecl MSVCRT_memcpy( void *dst, const void *src, size_t n )
+void * __cdecl MSVCRT_memcpy(void *dst, const void *src, MSVCRT_size_t n)
 {
-    return memmove( dst, src, n );
+    return memmove(dst, src, n);
 }
 
 /*********************************************************************
