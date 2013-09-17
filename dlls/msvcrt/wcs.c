@@ -1856,3 +1856,11 @@ int CDECL MSVCRT_wcslen(const MSVCRT_wchar_t *str)
 {
     return strlenW(str);
 }
+
+/*********************************************************************
+ *              wcsstr (MSVCRT.@)
+ */
+MSVCRT_wchar_t* CDECL MSVCRT_wcsstr(const MSVCRT_wchar_t *str, const MSVCRT_wchar_t *sub)
+{
+    return strstrW(str, sub);
+}
