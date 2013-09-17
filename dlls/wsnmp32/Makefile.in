@@ -1,4 +1,5 @@
-MODULE = wsnmp32.dll
+MODULE    = wsnmp32.dll
+IMPORTLIB = wsnmp32
 
 C_SRCS = wsnmp32.c
 

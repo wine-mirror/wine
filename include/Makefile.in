@@ -589,6 +589,7 @@ SRCDIR_INCLUDES = \
 	winsafer.h \
 	winscard.h \
 	winsmcrd.h \
+	winsnmp.h \
 	winsock.h \
 	winsock2.h \
 	winspool.h \

@@ -1,0 +1,7 @@
+TESTDLL   = wsnmp32.dll
+IMPORTS   = wsnmp32
+
+C_SRCS = \
+	wsnmp.c
+
+@MAKE_TEST_RULES@

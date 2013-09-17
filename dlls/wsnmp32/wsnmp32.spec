@@ -1,7 +1,7 @@
 100 stub SnmpGetTranslateMode
-101 stub SnmpSetTranslateMode
+101 stdcall SnmpSetTranslateMode(long)
 102 stub SnmpGetRetransmitMode
-103 stub SnmpSetRetransmitMode
+103 stdcall SnmpSetRetransmitMode(long)
 104 stub SnmpGetTimeout
 105 stub SnmpSetTimeout
 106 stub SnmpSetRetry
@@ -9,8 +9,8 @@
 108 stub _SnmpConveyAgentAddress@4
 109 stub _SnmpSetAgentAddress@4
 120 stub SnmpGetVendorInfo
-200 stub SnmpStartup
-201 stub SnmpCleanup
+200 stdcall SnmpStartup(ptr ptr ptr ptr ptr)
+201 stdcall SnmpCleanup()
 202 stub SnmpOpen
 203 stub SnmpClose
 204 stub SnmpSendMsg

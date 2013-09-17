@@ -19,6 +19,7 @@
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
+#include "winsnmp.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wsnmp32);
@@ -36,4 +37,35 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
             break;
     }
     return TRUE;
+}
+
+SNMPAPI_STATUS WINAPI SnmpCleanup( void )
+{
+    FIXME( "\n" );
+    return SNMPAPI_SUCCESS;
+}
+
+SNMPAPI_STATUS WINAPI SnmpSetRetransmitMode( smiUINT32 retransmit_mode )
+{
+    FIXME( "%u\n", retransmit_mode );
+    return SNMPAPI_SUCCESS;
+}
+
+SNMPAPI_STATUS WINAPI SnmpSetTranslateMode( smiUINT32 translate_mode )
+{
+    FIXME( "%u\n", translate_mode );
+    return SNMPAPI_SUCCESS;
+}
+
+SNMPAPI_STATUS WINAPI SnmpStartup( smiLPUINT32 major, smiLPUINT32 minor, smiLPUINT32 level,
+                                   smiLPUINT32 translate_mode, smiLPUINT32 retransmit_mode )
+{
+    FIXME( "%p, %p, %p, %p, %p\n", major, minor, level, translate_mode, retransmit_mode );
+
+    if (major) *major = 2;
+    if (minor) *minor = 0;
+    if (level) *level = SNMPAPI_V2_SUPPORT;
+    if (translate_mode) *translate_mode = SNMPAPI_UNTRANSLATED_V1;
+    if (retransmit_mode) *retransmit_mode = SNMPAPI_ON;
+    return SNMPAPI_SUCCESS;
 }
