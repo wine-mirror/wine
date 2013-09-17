@@ -1435,7 +1435,7 @@
 @ cdecl strncpy_s(ptr long str long)
 @ cdecl strnlen(str long) MSVCRT_strnlen
 @ cdecl strpbrk(str str) ntdll.strpbrk
-@ cdecl strrchr(str long) ntdll.strrchr
+@ cdecl strrchr(str long) MSVCRT_strrchr
 @ cdecl strspn(str str) ntdll.strspn
 @ cdecl strstr(str str) ntdll.strstr
 @ cdecl strtod(str ptr) MSVCRT_strtod
