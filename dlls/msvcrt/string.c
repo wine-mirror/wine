@@ -1735,3 +1735,11 @@ int __cdecl MSVCRT__stricmp(const char *s1, const char *s2)
 {
     return MSVCRT__strnicmp_l(s1, s2, -1, NULL);
 }
+
+/*********************************************************************
+ *                  strstr   (MSVCRT.@)
+ */
+char* __cdecl MSVCRT_strstr(const char *haystack, const char *needle)
+{
+    return strstr(haystack, needle);
+}

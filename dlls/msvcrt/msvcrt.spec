@@ -1437,7 +1437,7 @@
 @ cdecl strpbrk(str str) ntdll.strpbrk
 @ cdecl strrchr(str long) MSVCRT_strrchr
 @ cdecl strspn(str str) ntdll.strspn
-@ cdecl strstr(str str) ntdll.strstr
+@ cdecl strstr(str str) MSVCRT_strstr
 @ cdecl strtod(str ptr) MSVCRT_strtod
 @ cdecl strtok(str str) MSVCRT_strtok
 @ cdecl strtok_s(ptr str ptr) MSVCRT_strtok_s
