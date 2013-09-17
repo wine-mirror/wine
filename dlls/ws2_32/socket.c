@@ -5538,6 +5538,9 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
    TRACE("af=%d type=%d protocol=%d protocol_info=%p group=%d flags=0x%x\n",
          af, type, protocol, lpProtocolInfo, g, dwFlags );
 
+    if (!num_startup)
+        return WSANOTINITIALISED;
+
     /* hack for WSADuplicateSocket */
     if (lpProtocolInfo && lpProtocolInfo->dwServiceFlags4 == 0xff00ff00) {
       ret = lpProtocolInfo->dwCatalogEntryId;
