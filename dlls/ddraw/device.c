@@ -6745,6 +6745,13 @@ HRESULT d3d_device_create(struct ddraw *ddraw, struct ddraw_surface *target, IUn
     TRACE("ddraw %p, target %p, version %u, device %p, outer_unknown %p.\n",
             ddraw, target, version, device, outer_unknown);
 
+    if (!(target->surface_desc.ddsCaps.dwCaps & DDSCAPS_3DDEVICE)
+            || (target->surface_desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER))
+    {
+        WARN("Surface %p is not a render target.\n", target);
+        return DDERR_INVALIDCAPS;
+    }
+
     if (ddraw->flags & DDRAW_NO3D)
     {
         ERR_(winediag)("The application wants to create a Direct3D device, "
