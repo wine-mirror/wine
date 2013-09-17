@@ -781,6 +781,14 @@ MSVCRT_ulong CDECL MSVCRT_strtoul(const char* nptr, char** end, int base)
     return ret;
 }
 
+/*********************************************************************
+ *              strlen (MSVCRT.@)
+ */
+MSVCRT_size_t __cdecl MSVCRT_strlen(const char *str)
+{
+    return strlen(str);
+}
+
 /******************************************************************
  *              strnlen (MSVCRT.@)
  */
