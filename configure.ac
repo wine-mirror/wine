@@ -1997,6 +1997,8 @@ dnl **** Check for functions ****
 ac_save_CFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS $BUILTINFLAG"
 AC_CHECK_FUNCS(\
+        __res_get_state \
+        __res_getservers \
 	_finite \
 	_isnan \
 	_pclose \

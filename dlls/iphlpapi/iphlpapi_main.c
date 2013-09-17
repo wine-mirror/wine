@@ -978,7 +978,56 @@ static int get_dns_servers( SOCKADDR_STORAGE *servers, int num, BOOL ip4_only )
     }
     return addr - servers;
 }
+#elif defined(HAVE___RES_GET_STATE) && defined(HAVE___RES_GETSERVERS)
+
+static int get_dns_servers( SOCKADDR_STORAGE *servers, int num, BOOL ip4_only )
+{
+    extern struct res_state *__res_get_state( void );
+    extern int __res_getservers( struct res_state *, struct sockaddr_storage *, int );
+    struct res_state *state = __res_get_state();
+    int i, found = 0, total = __res_getservers( state, NULL, 0 );
+    SOCKADDR_STORAGE *addr = servers;
+    struct sockaddr_storage *buf;
+
+    if ((!servers || !num) && !ip4_only) return total;
+
+    buf = HeapAlloc( GetProcessHeap(), 0, total * sizeof(struct sockaddr_storage) );
+    total = __res_getservers( state, buf, total );
+
+    for (i = 0; i < total; i++)
+    {
+        if (buf[i].ss_family == AF_INET6 && ip4_only) continue;
+        if (buf[i].ss_family != AF_INET && buf[i].ss_family != AF_INET6) continue;
+
+        found++;
+        if (!servers || !num) continue;
+
+        if (buf[i].ss_family == AF_INET6)
+        {
+            SOCKADDR_IN6 *s = (SOCKADDR_IN6 *)addr;
+            struct sockaddr_in6 *ptr = (struct sockaddr_in6 *)(buf + i);
+            s->sin6_family = WS_AF_INET6;
+            s->sin6_port = ptr->sin6_port;
+            s->sin6_flowinfo = ptr->sin6_flowinfo;
+            memcpy( &s->sin6_addr, &ptr->sin6_addr, sizeof(IN6_ADDR) );
+            s->sin6_scope_id = ptr->sin6_scope_id;
+            memset( (char *)s + sizeof(SOCKADDR_IN6), 0,
+                    sizeof(SOCKADDR_STORAGE) - sizeof(SOCKADDR_IN6) );
+        }
+        else
+        {
+            *(struct sockaddr_in *)addr = *(struct sockaddr_in *)(buf + i);
+            memset( (char *)addr + sizeof(struct sockaddr_in), 0,
+                    sizeof(SOCKADDR_STORAGE) - sizeof(struct sockaddr_in) );
+        }
+        if (++addr >= servers + num) break;
+    }
+
+    HeapFree( GetProcessHeap(), 0, buf );
+    return found;
+}
 #else
+
 static int get_dns_servers( SOCKADDR_STORAGE *servers, int num, BOOL ip4_only )
 {
     FIXME("Unimplemented on this system\n");

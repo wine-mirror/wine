@@ -13370,6 +13370,8 @@ esac
 ac_save_CFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS $BUILTINFLAG"
 for ac_func in \
+        __res_get_state \
+        __res_getservers \
 	_finite \
 	_isnan \
 	_pclose \

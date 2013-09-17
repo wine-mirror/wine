@@ -1233,6 +1233,12 @@
 /* Define to 1 if you have the `_vsnprintf' function. */
 #undef HAVE__VSNPRINTF
 
+/* Define to 1 if you have the `__res_getservers' function. */
+#undef HAVE___RES_GETSERVERS
+
+/* Define to 1 if you have the `__res_get_state' function. */
+#undef HAVE___RES_GET_STATE
+
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
 
