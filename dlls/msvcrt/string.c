@@ -677,6 +677,14 @@ int CDECL MSVCRT_strncat_s( char* dst, MSVCRT_size_t elem, const char* src, MSVC
 }
 
 /*********************************************************************
+ *      strncat (MSVCRT.@)
+ */
+char* __cdecl MSVCRT_strncat(char *dst, const char *src, MSVCRT_size_t len)
+{
+    return strncat(dst, src, len);
+}
+
+/*********************************************************************
  *		strxfrm (MSVCRT.@)
  */
 MSVCRT_size_t CDECL MSVCRT_strxfrm( char *dest, const char *src, MSVCRT_size_t len )
