@@ -25,14 +25,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d10core);
 
-BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
+BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)
 {
-    TRACE("fdwReason %u\n", fdwReason);
-
-    switch(fdwReason)
+    switch (reason)
     {
         case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(hInstDLL);
+            DisableThreadLibraryCalls(inst);
             break;
     }
 
