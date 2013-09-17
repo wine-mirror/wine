@@ -629,18 +629,19 @@ static void test_ImmGetContext(void)
 static void test_ImmGetDescription(void)
 {
     HKL hkl;
-    WCHAR japime[] = { 'E', '0', '0', '1', '0', '4', '1', '1', 0 };
     WCHAR descW[100];
     CHAR descA[100];
     UINT ret, lret;
 
     /* FIXME: invalid keyboard layouts should not pass */
     ret = ImmGetDescriptionW(NULL, NULL, 0);
-    todo_wine ok(!ret, "ImmGetDescriptionW failed, expected 0 received %d.\n", ret);
+    ok(!ret, "ImmGetDescriptionW failed, expected 0 received %d.\n", ret);
+    ret = ImmGetDescriptionA(NULL, NULL, 0);
+    ok(!ret, "ImmGetDescriptionA failed, expected 0 received %d.\n", ret);
 
     /* load a language with valid IMM descriptions */
-    hkl = LoadKeyboardLayoutW(japime, KLF_ACTIVATE);
-    todo_wine ok(hkl != 0, "LoadKeyboardLayoutW failed, expected != 0.\n");
+    hkl = GetKeyboardLayout(0);
+    ok(hkl != 0, "GetKeyboardLayout failed, expected != 0.\n");
 
     ret = ImmGetDescriptionW(hkl, NULL, 0);
     if(!ret)
@@ -648,6 +649,12 @@ static void test_ImmGetDescription(void)
         win_skip("ImmGetDescriptionW is not working for current loaded keyboard.\n");
         return;
     }
+
+    SetLastError(0xdeadcafe);
+    ret = ImmGetDescriptionW(0, NULL, 100);
+    ok (ret == 0, "ImmGetDescriptionW with 0 hkl should return 0\n");
+    ret = GetLastError();
+    ok (ret == 0xdeadcafe, "Last Error should remain unchanged\n");
 
     ret = ImmGetDescriptionW(hkl, descW, 0);
     ok(ret, "ImmGetDescriptionW failed, expected != 0 received 0.\n");
