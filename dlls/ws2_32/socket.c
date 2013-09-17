@@ -5868,6 +5868,7 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
 {
     SOCKET ret;
     DWORD err;
+    int unixaf, unixtype;
 
    /*
       FIXME: The "advanced" parameters of WSASocketW (lpProtocolInfo,
@@ -5913,14 +5914,50 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
         }
     }
 
-    /* convert the socket family and type */
-    af = convert_af_w2u(af);
-    type = convert_socktype_w2u(type);
+    /* convert the socket family, type and protocol */
+    unixaf = convert_af_w2u(af);
+    unixtype = convert_socktype_w2u(type);
+    protocol = convert_proto_w2u(protocol);
+    if (unixaf == AF_UNSPEC) unixaf = -1;
+
+    /* filter invalid parameters */
+    if (protocol < 0)
+    {
+        /* the type could not be converted */
+        if (type && unixtype < 0)
+        {
+            err = WSAESOCKTNOSUPPORT;
+            goto done;
+        }
+
+        err = WSAEPROTONOSUPPORT;
+        goto done;
+    }
+    if (unixaf < 0)
+    {
+        /* both family and protocol can't be invalid */
+        if (protocol <= 0)
+        {
+            err = WSAEINVAL;
+            goto done;
+        }
+
+        /* family could not be converted and neither socket type */
+        if (unixtype < 0 && af >= 0)
+        {
+
+            err = WSAESOCKTNOSUPPORT;
+            goto done;
+        }
+
+        err = WSAEAFNOSUPPORT;
+        goto done;
+    }
 
     SERVER_START_REQ( create_socket )
     {
-        req->family     = af;
-        req->type       = type;
+        req->family     = unixaf;
+        req->type       = unixtype;
         req->protocol   = protocol;
         req->access     = GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE;
         req->attributes = OBJ_INHERIT;
@@ -5952,6 +5989,7 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
             err = WSAEPROTONOSUPPORT;
     }
 
+done:
     WARN("\t\tfailed, error %d!\n", err);
     SetLastError(err);
     return INVALID_SOCKET;

@@ -1784,7 +1784,6 @@ static void test_WSASocket(void)
     ok(WSASocketA(0, 0, 0, NULL, 0, 0) == INVALID_SOCKET,
        "WSASocketA should have failed\n");
     err = WSAGetLastError();
-todo_wine
     ok(err == WSAEINVAL, "Expected 10022, received %d\n", err);
 
     sock = WSASocketA(AF_INET, 0, 0, NULL, 0, 0);
@@ -1811,8 +1810,19 @@ todo_wine
     ok(WSASocketA(0, -1, 0, NULL, 0, 0) == INVALID_SOCKET,
        "WSASocketA should have failed\n");
     err = WSAGetLastError();
-todo_wine
     ok(err == WSAEINVAL, "Expected 10022, received %d\n", err);
+
+    SetLastError(0xdeadbeef);
+    ok(WSASocketA(AF_INET, -1, 0, NULL, 0, 0) == INVALID_SOCKET,
+       "WSASocketA should have failed\n");
+    err = WSAGetLastError();
+    ok(err == WSAESOCKTNOSUPPORT, "Expected 10044, received %d\n", err);
+
+    SetLastError(0xdeadbeef);
+    ok(WSASocketA(AF_INET, 0, -1, NULL, 0, 0) == INVALID_SOCKET,
+       "WSASocketA should have failed\n");
+    err = WSAGetLastError();
+    ok(err == WSAEPROTONOSUPPORT, "Expected 10043, received %d\n", err);
 
     SetLastError(0xdeadbeef);
     ok(WSASocketA(0, -1, -1, NULL, 0, 0) == INVALID_SOCKET,
@@ -1824,7 +1834,6 @@ todo_wine
     ok(WSASocketA(-1, SOCK_STREAM, IPPROTO_UDP, NULL, 0, 0) == INVALID_SOCKET,
        "WSASocketA should have failed\n");
     err = WSAGetLastError();
-todo_wine
     ok(err == WSAEAFNOSUPPORT, "Expected 10047, received %d\n", err);
 
     sock = WSASocketA(AF_INET, 0, IPPROTO_TCP, NULL, 0, 0);
@@ -1835,14 +1844,12 @@ todo_wine
     ok(WSASocketA(0, SOCK_STREAM, 0, NULL, 0, 0) == INVALID_SOCKET,
        "WSASocketA should have failed\n");
     err = WSAGetLastError();
-todo_wine
     ok(err == WSAEINVAL, "Expected 10022, received %d\n", err);
 
     SetLastError(0xdeadbeef);
     ok(WSASocketA(0, 0, 0xdead, NULL, 0, 0) == INVALID_SOCKET,
        "WSASocketA should have failed\n");
     err = WSAGetLastError();
-todo_wine
     ok(err == WSAEPROTONOSUPPORT, "Expected 10043, received %d\n", err);
 
     SetLastError(0xdeadbeef);
@@ -1855,7 +1862,6 @@ todo_wine
     ok(WSASocketA(0, 0xdead, 0, NULL, 0, 0) == INVALID_SOCKET,
        "WSASocketA should have failed\n");
     err = WSAGetLastError();
-todo_wine
     ok(err == WSAEINVAL, "Expected 10022, received %d\n", err);
 
     sock = WSASocketA(0, 0, IPPROTO_TCP, NULL, 0, 0);
@@ -1917,7 +1923,6 @@ todo_wine
     ok(WSASocketA(0, 0, IPPROTO_UDP, &pi[0], 0, 0) == INVALID_SOCKET,
        "WSASocketA should have failed\n");
     err = WSAGetLastError();
-todo_wine
     ok(err == WSAEAFNOSUPPORT, "Expected 10047, received %d\n", err);
 
     pi[0].iProtocol = 0;
@@ -1932,7 +1937,6 @@ todo_wine
     else
     {
       err = WSAGetLastError();
-todo_wine
       ok(err == WSAEAFNOSUPPORT, "Expected 10047, received %d\n", err);
     }
 
