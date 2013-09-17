@@ -277,7 +277,7 @@ struct d3d_device
     IUnknown *outer_unknown;
     struct wined3d_device *wined3d_device;
     struct ddraw *ddraw;
-    struct ddraw_surface *target;
+    IUnknown *rt_iface;
 
     struct wined3d_buffer *index_buffer;
     UINT index_buffer_size;
@@ -315,7 +315,7 @@ struct d3d_device
     D3DMATRIXHANDLE          world, proj, view;
 };
 
-HRESULT d3d_device_create(struct ddraw *ddraw, struct ddraw_surface *target,
+HRESULT d3d_device_create(struct ddraw *ddraw, struct ddraw_surface *target, IUnknown *rt_iface,
         UINT version, struct d3d_device **device, IUnknown *outer_unknown) DECLSPEC_HIDDEN;
 enum wined3d_depth_buffer_type d3d_device_update_depth_stencil(struct d3d_device *device) DECLSPEC_HIDDEN;
 
