@@ -6939,6 +6939,366 @@ static void test_create_rt_ds_fail(void)
     DestroyWindow(window);
 }
 
+static void test_volume_blocks(void)
+{
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d9;
+    UINT refcount;
+    HWND window;
+    HRESULT hr;
+    D3DCAPS9 caps;
+    IDirect3DVolumeTexture9 *texture;
+    unsigned int w, h, d, i, j;
+    static const struct
+    {
+        D3DFORMAT fmt;
+        const char *name;
+        unsigned int block_width;
+        unsigned int block_height;
+        unsigned int block_depth;
+        unsigned int block_size;
+        BOOL broken;
+        BOOL create_size_checked, core_fmt;
+    }
+    formats[] =
+    {
+        /* Scratch volumes enforce DXTn block locks, unlike their surface counterparts.
+         * ATI2N and YUV blocks are not enforced on any tested card (r200, gtx 460). */
+        {D3DFMT_DXT1,                 "D3DFMT_DXT1", 4, 4, 1, 8,  FALSE, TRUE,  TRUE },
+        {D3DFMT_DXT2,                 "D3DFMT_DXT2", 4, 4, 1, 16, FALSE, TRUE,  TRUE },
+        {D3DFMT_DXT3,                 "D3DFMT_DXT3", 4, 4, 1, 16, FALSE, TRUE,  TRUE },
+        {D3DFMT_DXT4,                 "D3DFMT_DXT4", 4, 4, 1, 16, FALSE, TRUE,  TRUE },
+        {D3DFMT_DXT5,                 "D3DFMT_DXT5", 4, 4, 1, 16, FALSE, TRUE,  TRUE },
+        {D3DFMT_DXT5,                 "D3DFMT_DXT5", 4, 4, 1, 16, FALSE, TRUE,  TRUE },
+        /* ATI2N has 2x2 blocks on all AMD cards and Geforce 7 cards,
+         * which doesn't match the format spec. On newer Nvidia cards
+         * it has the correct 4x4 block size */
+        {MAKEFOURCC('A','T','I','2'), "ATI2N",       4, 4, 1, 16, TRUE,  FALSE, FALSE},
+        {D3DFMT_YUY2,                 "D3DFMT_YUY2", 2, 1, 1, 4,  TRUE,  FALSE, TRUE },
+        {D3DFMT_UYVY,                 "D3DFMT_UYVY", 2, 1, 1, 4,  TRUE,  FALSE, TRUE },
+    };
+    static const struct
+    {
+        D3DPOOL pool;
+        const char *name;
+        BOOL need_driver_support, need_runtime_support;
+    }
+    create_tests[] =
+    {
+        {D3DPOOL_DEFAULT,       "D3DPOOL_DEFAULT",  TRUE,  FALSE},
+        {D3DPOOL_SCRATCH,       "D3DPOOL_SCRATCH",  FALSE, TRUE },
+        {D3DPOOL_SYSTEMMEM,     "D3DPOOL_SYSTEMMEM",TRUE,  FALSE},
+        {D3DPOOL_MANAGED,       "D3DPOOL_MANAGED",  TRUE,  FALSE},
+    };
+    static const struct
+    {
+        unsigned int x, y, z, x2, y2, z2;
+    }
+    offset_tests[] =
+    {
+        {0, 0, 0, 8, 8, 8},
+        {0, 0, 3, 8, 8, 8},
+        {0, 4, 0, 8, 8, 8},
+        {0, 4, 3, 8, 8, 8},
+        {4, 0, 0, 8, 8, 8},
+        {4, 0, 3, 8, 8, 8},
+        {4, 4, 0, 8, 8, 8},
+        {4, 4, 3, 8, 8, 8},
+    };
+    D3DBOX box;
+    D3DLOCKED_BOX locked_box;
+    BYTE *base;
+    INT expected_row_pitch, expected_slice_pitch;
+    BOOL support, support_2d;
+    BOOL pow2;
+    unsigned int offset, expected_offset;
+
+    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create IDirect3D9 object, skipping tests.\n");
+        return;
+    }
+    hr = IDirect3D9_GetDeviceCaps(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, &caps);
+    ok(SUCCEEDED(hr), "Failed to get caps, hr %#x.\n", hr);
+    pow2 = !!(caps.TextureCaps & D3DPTEXTURECAPS_VOLUMEMAP_POW2);
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(d3d9, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d9);
+        DestroyWindow(window);
+        return;
+    }
+
+    for (i = 0; i < sizeof(formats) / sizeof(*formats); i++)
+    {
+        hr = IDirect3D9_CheckDeviceFormat(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
+                0, D3DRTYPE_VOLUMETEXTURE, formats[i].fmt);
+        support = SUCCEEDED(hr);
+        hr = IDirect3D9_CheckDeviceFormat(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
+                0, D3DRTYPE_TEXTURE, formats[i].fmt);
+        support_2d = SUCCEEDED(hr);
+
+        /* Test creation restrictions */
+        for (w = 1; w <= 8; w++)
+        {
+            for (h = 1; h <= 8; h++)
+            {
+                for (d = 1; d <= 8; d++)
+                {
+                    HRESULT expect_hr;
+                    BOOL size_is_pow2;
+                    BOOL block_aligned = TRUE;
+
+                    if (w & (formats[i].block_width - 1) || h & (formats[i].block_height - 1))
+                        block_aligned = FALSE;
+
+                    size_is_pow2 = !((w & (w - 1)) || (h & (h - 1)) || (d & (d - 1)));
+
+                    for (j = 0; j < sizeof(create_tests) / sizeof(*create_tests); j++)
+                    {
+                        BOOL may_succeed = FALSE;
+                        BOOL todo = FALSE;
+
+                        if (create_tests[j].need_runtime_support && !formats[i].core_fmt && !support)
+                            expect_hr = D3DERR_INVALIDCALL;
+                        else if (formats[i].create_size_checked && !block_aligned)
+                            expect_hr = D3DERR_INVALIDCALL;
+                        else if (pow2 && !size_is_pow2 && create_tests[j].need_driver_support)
+                            expect_hr = D3DERR_INVALIDCALL;
+                        else if (create_tests[j].need_driver_support && !support)
+                        {
+                            todo = support_2d;
+                            expect_hr = D3DERR_INVALIDCALL;
+                        }
+                        else
+                            expect_hr = D3D_OK;
+
+                        texture = (IDirect3DVolumeTexture9 *)0xdeadbeef;
+                        hr = IDirect3DDevice9_CreateVolumeTexture(device, w, h, d, 1, 0,
+                                formats[i].fmt, create_tests[j].pool, &texture, NULL);
+
+                        /* Wine knows about ATI2N and happily creates a scratch resource even if GL
+                         * does not support it. Accept scratch creation of extension formats on
+                         * Windows as well if it occurs. We don't really care if e.g. a Windows 7
+                         * on an r200 GPU creates scratch ATI2N texture even though the card doesn't
+                         * support it. */
+                        if (!formats[i].core_fmt && !support && FAILED(expect_hr))
+                            may_succeed = TRUE;
+
+                        if (todo)
+                        {
+                            todo_wine ok(hr == expect_hr || ((SUCCEEDED(hr) && may_succeed)),
+                                    "Got unexpected hr %#x for format %s, pool %s, size %ux%ux%u.\n",
+                                    hr, formats[i].name, create_tests[j].name, w, h, d);
+                        }
+                        else
+                        {
+                            ok(hr == expect_hr || ((SUCCEEDED(hr) && may_succeed)),
+                                    "Got unexpected hr %#x for format %s, pool %s, size %ux%ux%u.\n",
+                                    hr, formats[i].name, create_tests[j].name, w, h, d);
+                        }
+
+                        if (FAILED(hr))
+                            ok(texture == NULL, "Got texture ptr %p, expected NULL.\n", texture);
+                        else
+                            IDirect3DVolumeTexture9_Release(texture);
+                    }
+                }
+            }
+        }
+
+        if (!support && !formats[i].core_fmt)
+            continue;
+
+        hr = IDirect3DDevice9_CreateVolumeTexture(device, 24, 8, 8, 1, 0,
+                formats[i].fmt, D3DPOOL_SCRATCH, &texture, NULL);
+        ok(SUCCEEDED(hr), "Failed to create volume texture, hr %#x.\n", hr);
+
+        /* Test lockrect offset */
+        for (j = 0; j < sizeof(offset_tests) / sizeof(*offset_tests); j++)
+        {
+            unsigned int bytes_per_pixel;
+            bytes_per_pixel = formats[i].block_size / (formats[i].block_width * formats[i].block_height);
+
+            hr = IDirect3DVolumeTexture9_LockBox(texture, 0, &locked_box, NULL, 0);
+            ok(SUCCEEDED(hr), "Failed to unlock volume texture, hr %#x.\n", hr);
+
+            base = locked_box.pBits;
+            if (formats[i].broken)
+            {
+                expected_row_pitch = bytes_per_pixel * 24;
+            }
+            else
+            {
+                expected_row_pitch = (24 /* tex width */ + formats[i].block_height - 1) / formats[i].block_width
+                        * formats[i].block_size;
+            }
+            ok(locked_box.RowPitch == expected_row_pitch, "Got unexpected row pitch %d for format %s, expected %d.\n",
+                    locked_box.RowPitch, formats[i].name, expected_row_pitch);
+
+            if (formats[i].broken)
+            {
+                expected_slice_pitch = expected_row_pitch * 8;
+            }
+            else
+            {
+                expected_slice_pitch = (8 /* tex height */ + formats[i].block_depth - 1) / formats[i].block_height
+                        * expected_row_pitch;
+            }
+            ok(locked_box.SlicePitch == expected_slice_pitch,
+                    "Got unexpected slice pitch %d for format %s, expected %d.\n",
+                    locked_box.SlicePitch, formats[i].name, expected_slice_pitch);
+
+            hr = IDirect3DVolumeTexture9_UnlockBox(texture, 0);
+            ok(SUCCEEDED(hr), "Failed to unlock volume texture, hr %#x, j %u.\n", hr, j);
+
+            box.Left = offset_tests[j].x;
+            box.Top = offset_tests[j].y;
+            box.Front = offset_tests[j].z;
+            box.Right = offset_tests[j].x2;
+            box.Bottom = offset_tests[j].y2;
+            box.Back = offset_tests[j].z2;
+            hr = IDirect3DVolumeTexture9_LockBox(texture, 0, &locked_box, &box, 0);
+            ok(SUCCEEDED(hr), "Failed to lock volume texture, hr %#x, j %u.\n", hr, j);
+
+            offset = (BYTE *)locked_box.pBits - base;
+            if (formats[i].broken)
+            {
+                expected_offset = box.Front * expected_slice_pitch
+                        + box.Top * expected_row_pitch
+                        + box.Left * bytes_per_pixel;
+            }
+            else
+            {
+                expected_offset = (box.Front / formats[i].block_depth) * expected_slice_pitch
+                        + (box.Top / formats[i].block_height) * expected_row_pitch
+                        + (box.Left / formats[i].block_width) * formats[i].block_size;
+            }
+            ok(offset == expected_offset, "Got unexpected offset %u for format %s, expected %u, box start %ux%ux%u.\n",
+                    offset, formats[i].name, expected_offset, box.Left, box.Top, box.Front);
+
+            hr = IDirect3DVolumeTexture9_UnlockBox(texture, 0);
+            ok(SUCCEEDED(hr), "Failed to unlock volume texture, hr %#x.\n", hr);
+        }
+
+        /* Test partial block locks */
+        box.Front = 0;
+        box.Back = 1;
+        if (formats[i].block_width > 1)
+        {
+            box.Left = formats[i].block_width >> 1;
+            box.Top = 0;
+            box.Right = formats[i].block_width;
+            box.Bottom = formats[i].block_height;
+            hr = IDirect3DVolumeTexture9_LockBox(texture, 0, &locked_box, &box, 0);
+            ok(FAILED(hr) || broken(formats[i].broken),
+                    "Partial block lock succeeded, expected failure, format %s.\n",
+                    formats[i].name);
+            if (SUCCEEDED(hr))
+            {
+                hr = IDirect3DVolumeTexture9_UnlockBox(texture, 0);
+                ok(SUCCEEDED(hr), "Failed to unlock volume texture, hr %#x.\n", hr);
+            }
+
+            box.Left = 0;
+            box.Top = 0;
+            box.Right = formats[i].block_width >> 1;
+            box.Bottom = formats[i].block_height;
+            hr = IDirect3DVolumeTexture9_LockBox(texture, 0, &locked_box, &box, 0);
+            ok(FAILED(hr) || broken(formats[i].broken),
+                    "Partial block lock succeeded, expected failure, format %s.\n",
+                    formats[i].name);
+            if (SUCCEEDED(hr))
+            {
+                hr = IDirect3DVolumeTexture9_UnlockBox(texture, 0);
+                ok(SUCCEEDED(hr), "Failed to unlock volume texture, hr %#x.\n", hr);
+            }
+        }
+
+        if (formats[i].block_height > 1)
+        {
+            box.Left = 0;
+            box.Top = formats[i].block_height >> 1;
+            box.Right = formats[i].block_width;
+            box.Bottom = formats[i].block_height;
+            hr = IDirect3DVolumeTexture9_LockBox(texture, 0, &locked_box, &box, 0);
+            ok(FAILED(hr) || broken(formats[i].broken),
+                    "Partial block lock succeeded, expected failure, format %s.\n",
+                    formats[i].name);
+            if (SUCCEEDED(hr))
+            {
+                hr = IDirect3DVolumeTexture9_UnlockBox(texture, 0);
+                ok(SUCCEEDED(hr), "Failed to unlock volume texture, hr %#x.\n", hr);
+            }
+
+            box.Left = 0;
+            box.Top = 0;
+            box.Right = formats[i].block_width;
+            box.Bottom = formats[i].block_height >> 1;
+            hr = IDirect3DVolumeTexture9_LockBox(texture, 0, &locked_box, &box, 0);
+            ok(FAILED(hr) || broken(formats[i].broken),
+                    "Partial block lock succeeded, expected failure, format %s.\n",
+                    formats[i].name);
+            if (SUCCEEDED(hr))
+            {
+                hr = IDirect3DVolumeTexture9_UnlockBox(texture, 0);
+                ok(SUCCEEDED(hr), "Failed to unlock volume texture, hr %#x.\n", hr);
+            }
+        }
+
+        /* Test full block lock */
+        box.Left = 0;
+        box.Top = 0;
+        box.Right = formats[i].block_width;
+        box.Bottom = formats[i].block_height;
+        hr = IDirect3DVolumeTexture9_LockBox(texture, 0, &locked_box, &box, 0);
+        ok(SUCCEEDED(hr), "Failed to lock volume texture, hr %#x.\n", hr);
+        hr = IDirect3DVolumeTexture9_UnlockBox(texture, 0);
+        ok(SUCCEEDED(hr), "Failed to unlock volume texture, hr %#x.\n", hr);
+
+        IDirect3DVolumeTexture9_Release(texture);
+
+        /* Test mipmap locks. Don't do this with ATI2N, AMD warns that the runtime
+         * does not allocate surfaces smaller than the blocksize properly. */
+        if ((formats[i].block_width > 1 || formats[i].block_height > 1) && formats[i].core_fmt)
+        {
+            hr = IDirect3DDevice9_CreateVolumeTexture(device, formats[i].block_width, formats[i].block_height,
+                    2, 2, 0, formats[i].fmt, D3DPOOL_SCRATCH, &texture, NULL);
+
+            hr = IDirect3DVolumeTexture9_LockBox(texture, 1, &locked_box, NULL, 0);
+            ok(SUCCEEDED(hr), "Failed to lock volume texture mipmap, hr %#x.\n", hr);
+            hr = IDirect3DVolumeTexture9_UnlockBox(texture, 1);
+            ok(SUCCEEDED(hr), "Failed to unlock volume texture, hr %#x.\n", hr);
+
+            box.Left = box.Top = box.Front = 0;
+            box.Right = formats[i].block_width == 1 ? 1 : formats[i].block_width >> 1;
+            box.Bottom = formats[i].block_height == 1 ? 1 : formats[i].block_height >> 1;
+            box.Back = 1;
+            hr = IDirect3DVolumeTexture9_LockBox(texture, 1, &locked_box, &box, 0);
+            ok(SUCCEEDED(hr), "Failed to lock volume texture mipmap, hr %#x.\n", hr);
+            hr = IDirect3DVolumeTexture9_UnlockBox(texture, 1);
+            ok(SUCCEEDED(hr), "Failed to unlock volume texture, hr %#x.\n", hr);
+
+            box.Right = formats[i].block_width;
+            box.Bottom = formats[i].block_height;
+            hr = IDirect3DVolumeTexture9_LockBox(texture, 1, &locked_box, &box, 0);
+            ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+            if (SUCCEEDED(hr))
+                IDirect3DVolumeTexture9_UnlockBox(texture, 1);
+
+            IDirect3DVolumeTexture9_Release(texture);
+        }
+    }
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d9);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     HMODULE d3d9_handle = LoadLibraryA( "d3d9.dll" );
@@ -7032,6 +7392,7 @@ START_TEST(device)
         test_volume_locking();
         test_update_volumetexture();
         test_create_rt_ds_fail();
+        test_volume_blocks();
     }
 
 out:
