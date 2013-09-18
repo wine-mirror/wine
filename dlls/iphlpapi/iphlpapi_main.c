@@ -925,6 +925,30 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
     return ERROR_SUCCESS;
 }
 
+static void sockaddr_in_to_WS_storage( SOCKADDR_STORAGE *dst, const struct sockaddr_in *src )
+{
+    SOCKADDR_IN *s = (SOCKADDR_IN *)dst;
+
+    s->sin_family = WS_AF_INET;
+    s->sin_port = src->sin_port;
+    memcpy( &s->sin_addr, &src->sin_addr, sizeof(IN_ADDR) );
+    memset( (char *)s + FIELD_OFFSET( SOCKADDR_IN, sin_zero ), 0,
+            sizeof(SOCKADDR_STORAGE) - FIELD_OFFSET( SOCKADDR_IN, sin_zero) );
+}
+
+static void sockaddr_in6_to_WS_storage( SOCKADDR_STORAGE *dst, const struct sockaddr_in6 *src )
+{
+    SOCKADDR_IN6 *s = (SOCKADDR_IN6 *)dst;
+
+    s->sin6_family = WS_AF_INET6;
+    s->sin6_port = src->sin6_port;
+    s->sin6_flowinfo = src->sin6_flowinfo;
+    memcpy( &s->sin6_addr, &src->sin6_addr, sizeof(IN6_ADDR) );
+    s->sin6_scope_id = src->sin6_scope_id;
+    memset( (char *)s + sizeof(SOCKADDR_IN6), 0,
+                    sizeof(SOCKADDR_STORAGE) - sizeof(SOCKADDR_IN6) );
+}
+
 #ifdef HAVE_STRUCT___RES_STATE
 /* call res_init() just once because of a bug in Mac OS X 10.4 */
 /* Call once per thread on systems that have per-thread _res. */
@@ -957,22 +981,13 @@ static int get_dns_servers( SOCKADDR_STORAGE *servers, int num, BOOL ip4_only )
 #ifdef HAVE_STRUCT___RES_STATE__U__EXT_NSCOUNT6
         if (_res._u._ext.nsaddrs[i])
         {
-            SOCKADDR_IN6 *s = (SOCKADDR_IN6 *)addr;
             if (ip4_only) continue;
-            s->sin6_family = WS_AF_INET6;
-            s->sin6_port = _res._u._ext.nsaddrs[i]->sin6_port;
-            s->sin6_flowinfo = _res._u._ext.nsaddrs[i]->sin6_flowinfo;
-            memcpy( &s->sin6_addr, &_res._u._ext.nsaddrs[i]->sin6_addr, sizeof(IN6_ADDR) );
-            s->sin6_scope_id = _res._u._ext.nsaddrs[i]->sin6_scope_id;
-            memset( (char *)s + sizeof(SOCKADDR_IN6), 0,
-                    sizeof(SOCKADDR_STORAGE) - sizeof(SOCKADDR_IN6) );
+            sockaddr_in6_to_WS_storage( addr, _res._u._ext.nsaddrs[i] );
         }
         else
 #endif
         {
-            *(struct sockaddr_in *)addr = _res.nsaddr_list[i];
-            memset( (char *)addr + sizeof(struct sockaddr_in), 0,
-                    sizeof(SOCKADDR_STORAGE) - sizeof(struct sockaddr_in) );
+            sockaddr_in_to_WS_storage( addr, _res.nsaddr_list + i );
         }
         addr++;
     }
@@ -1004,21 +1019,11 @@ static int get_dns_servers( SOCKADDR_STORAGE *servers, int num, BOOL ip4_only )
 
         if (buf[i].ss_family == AF_INET6)
         {
-            SOCKADDR_IN6 *s = (SOCKADDR_IN6 *)addr;
-            struct sockaddr_in6 *ptr = (struct sockaddr_in6 *)(buf + i);
-            s->sin6_family = WS_AF_INET6;
-            s->sin6_port = ptr->sin6_port;
-            s->sin6_flowinfo = ptr->sin6_flowinfo;
-            memcpy( &s->sin6_addr, &ptr->sin6_addr, sizeof(IN6_ADDR) );
-            s->sin6_scope_id = ptr->sin6_scope_id;
-            memset( (char *)s + sizeof(SOCKADDR_IN6), 0,
-                    sizeof(SOCKADDR_STORAGE) - sizeof(SOCKADDR_IN6) );
+            sockaddr_in6_to_WS_storage( addr, (struct sockaddr_in6 *)(buf + i) );
         }
         else
         {
-            *(struct sockaddr_in *)addr = *(struct sockaddr_in *)(buf + i);
-            memset( (char *)addr + sizeof(struct sockaddr_in), 0,
-                    sizeof(SOCKADDR_STORAGE) - sizeof(struct sockaddr_in) );
+            sockaddr_in_to_WS_storage( addr, (struct sockaddr_in *)(buf + i) );
         }
         if (++addr >= servers + num) break;
     }
