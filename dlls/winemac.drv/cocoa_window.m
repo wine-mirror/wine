@@ -1476,6 +1476,13 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
     - (void) windowDidEndLiveResize:(NSNotification *)notification
     {
+        macdrv_query* query = macdrv_create_query();
+        query->type = QUERY_RESIZE_END;
+        query->window = (macdrv_window)[self retain];
+
+        [self.queue query:query timeout:0.3];
+        macdrv_release_query(query);
+
         self.liveResizeDisplayTimer = nil;
     }
 
