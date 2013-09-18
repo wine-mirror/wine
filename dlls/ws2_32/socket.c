@@ -2937,7 +2937,6 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
         case WS_SO_RCVBUF:
         case WS_SO_REUSEADDR:
         case WS_SO_SNDBUF:
-        case WS_SO_TYPE:
             if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
                 return SOCKET_ERROR;
             convert_sockopt(&level, &optname);
@@ -3136,6 +3135,27 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             return ret;
         }
 #endif
+        case WS_SO_TYPE:
+        {
+            if (!optlen || *optlen < sizeof(int) || !optval)
+            {
+                SetLastError(WSAEFAULT);
+                return SOCKET_ERROR;
+            }
+            if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
+                return SOCKET_ERROR;
+
+            if (getsockopt(fd, SOL_SOCKET, SO_TYPE, optval, (socklen_t *)optlen) != 0 )
+            {
+                SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
+                ret = SOCKET_ERROR;
+            }
+            else
+                (*(int *)optval) = convert_socktype_u2w(*(int *)optval);
+
+            release_sock_fd( s, fd );
+            return ret;
+        }
         default:
             TRACE("Unknown SOL_SOCKET optname: 0x%08x\n", optname);
             SetLastError(WSAENOPROTOOPT);
