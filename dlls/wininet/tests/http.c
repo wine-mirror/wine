@@ -4777,7 +4777,36 @@ static const struct notification async_send_request_ex_resolve_failure_test[] =
     { internet_close_handle, INTERNET_STATUS_HANDLE_CLOSING, 0, }
 };
 
+static const struct notification async_send_request_ex_chunked_test[] =
+{
+    { internet_connect,      INTERNET_STATUS_HANDLE_CREATED },
+    { http_open_request,     INTERNET_STATUS_HANDLE_CREATED },
+    { http_send_request_ex,  INTERNET_STATUS_DETECTING_PROXY, 1, 0, 1 },
+    { http_send_request_ex,  INTERNET_STATUS_COOKIE_SENT, 1, 0, 1 },
+    { http_send_request_ex,  INTERNET_STATUS_RESOLVING_NAME, 1, 0, 1 },
+    { http_send_request_ex,  INTERNET_STATUS_NAME_RESOLVED, 1, 0, 1 },
+    { http_send_request_ex,  INTERNET_STATUS_CONNECTING_TO_SERVER, 1 },
+    { http_send_request_ex,  INTERNET_STATUS_CONNECTED_TO_SERVER, 1 },
+    { http_send_request_ex,  INTERNET_STATUS_SENDING_REQUEST, 1 },
+    { http_send_request_ex,  INTERNET_STATUS_REQUEST_SENT, 1 },
+    { http_send_request_ex,  INTERNET_STATUS_REQUEST_COMPLETE, 1 },
+    { http_end_request,      INTERNET_STATUS_RECEIVING_RESPONSE, 1 },
+    { http_end_request,      INTERNET_STATUS_RESPONSE_RECEIVED, 1 },
+    { http_end_request,      INTERNET_STATUS_REQUEST_COMPLETE, 1 },
+    { internet_close_handle, INTERNET_STATUS_CLOSING_CONNECTION },
+    { internet_close_handle, INTERNET_STATUS_CONNECTION_CLOSED },
+    { internet_close_handle, INTERNET_STATUS_HANDLE_CLOSING },
+    { internet_close_handle, INTERNET_STATUS_HANDLE_CLOSING }
+};
+
 static const struct notification_data notification_data[] = {
+    {
+        async_send_request_ex_chunked_test,
+        sizeof(async_send_request_ex_chunked_test)/sizeof(async_send_request_ex_chunked_test[0]),
+        "GET",
+        "test.winehq.org",
+        "tests/data.php"
+    },
     {
         async_send_request_ex_test,
         sizeof(async_send_request_ex_test)/sizeof(async_send_request_ex_test[0]),
@@ -5100,6 +5129,7 @@ START_TEST(http)
     test_async_HttpSendRequestEx(&notification_data[0]);
     test_async_HttpSendRequestEx(&notification_data[1]);
     test_async_HttpSendRequestEx(&notification_data[2]);
+    test_async_HttpSendRequestEx(&notification_data[3]);
     InternetOpenRequest_test();
     test_http_cache();
     InternetOpenUrlA_test();
