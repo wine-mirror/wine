@@ -93,9 +93,9 @@ static struct ID3D10ShaderReflectionConstantBuffer * STDMETHODCALLTYPE d3d10_sha
 }
 
 static struct ID3D10ShaderReflectionConstantBuffer * STDMETHODCALLTYPE d3d10_shader_reflection_GetConstantBufferByName(
-        ID3D10ShaderReflection *iface, LPCSTR name)
+        ID3D10ShaderReflection *iface, const char *name)
 {
-    FIXME("iface %p, name \"%s\" stub!\n", iface, name);
+    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
 
     return NULL;
 }

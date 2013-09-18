@@ -261,21 +261,21 @@ HRESULT WINAPI D3D10CompileEffectFromMemory(void *data, SIZE_T data_size, const 
 }
 
 
-LPCSTR WINAPI D3D10GetVertexShaderProfile(ID3D10Device *device)
+const char * WINAPI D3D10GetVertexShaderProfile(ID3D10Device *device)
 {
     FIXME("device %p stub!\n", device);
 
     return "vs_4_0";
 }
 
-LPCSTR WINAPI D3D10GetGeometryShaderProfile(ID3D10Device *device)
+const char * WINAPI D3D10GetGeometryShaderProfile(ID3D10Device *device)
 {
     FIXME("device %p stub!\n", device);
 
     return "gs_4_0";
 }
 
-LPCSTR WINAPI D3D10GetPixelShaderProfile(ID3D10Device *device)
+const char * WINAPI D3D10GetPixelShaderProfile(ID3D10Device *device)
 {
     FIXME("device %p stub!\n", device);
 

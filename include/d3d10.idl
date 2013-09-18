@@ -795,8 +795,9 @@ typedef struct D3D10_SUBRESOURCE_DATA {
     UINT SysMemSlicePitch;
 } D3D10_SUBRESOURCE_DATA;
 
-typedef struct D3D10_SO_DECLARATION_ENTRY {
-    LPCSTR SemanticName;
+typedef struct D3D10_SO_DECLARATION_ENTRY
+{
+    const char *SemanticName;
     UINT SemanticIndex;
     BYTE StartComponent;
     BYTE ComponentCount;
@@ -808,8 +809,9 @@ typedef enum D3D10_INPUT_CLASSIFICATION {
     D3D10_INPUT_PER_INSTANCE_DATA,
 } D3D10_INPUT_CLASSIFICATION;
 
-typedef struct D3D10_INPUT_ELEMENT_DESC {
-    LPCSTR SemanticName;
+typedef struct D3D10_INPUT_ELEMENT_DESC
+{
+    const char *SemanticName;
     UINT SemanticIndex;
     DXGI_FORMAT Format;
     UINT InputSlot;
