@@ -210,6 +210,22 @@ void call_docview_84(HTMLDocumentObj *doc)
         FIXME("handle result\n");
 }
 
+static void set_document_navigation(HTMLDocumentObj *doc, BOOL doc_can_navigate)
+{
+    VARIANT var;
+
+    if(!doc->client_cmdtrg)
+        return;
+
+    if(doc_can_navigate) {
+        V_VT(&var) = VT_UNKNOWN;
+        V_UNKNOWN(&var) = (IUnknown*)&doc->basedoc.window->base.IHTMLWindow2_iface;
+    }
+
+    IOleCommandTarget_Exec(doc->client_cmdtrg, &CGID_DocHostCmdPriv, DOCHOST_DOCCANNAVIGATE, 0,
+            doc_can_navigate ? &var : NULL, NULL);
+}
+
 static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite *pClientSite)
 {
     HTMLDocument *This = impl_from_IOleObject(iface);
@@ -359,9 +375,7 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
             IDocObjectService *doc_object_service;
             IWebBrowser2 *wb;
 
-            V_VT(&var) = VT_UNKNOWN;
-            V_UNKNOWN(&var) = (IUnknown*)&This->window->base.IHTMLWindow2_iface;
-            IOleCommandTarget_Exec(cmdtrg, &CGID_DocHostCmdPriv, DOCHOST_DOCCANNAVIGATE, 0, &var, NULL);
+            set_document_navigation(This->doc_obj, TRUE);
 
             if(browser_service) {
                 hres = IBrowserService_QueryInterface(browser_service,
