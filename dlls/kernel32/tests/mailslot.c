@@ -77,6 +77,24 @@ static int mailslot_test(void)
     ok( hSlot != INVALID_HANDLE_VALUE , "valid mailslot failed\n");
 
     /* try and read/write to it */
+    count = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = ReadFile(INVALID_HANDLE_VALUE, buffer, 0, &count, NULL);
+todo_wine
+    ok(!ret, "ReadFile should fail\n");
+todo_wine
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "wrong error %u\n", GetLastError());
+    ok(count == 0, "expected 0, got %u\n", count);
+
+    count = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = ReadFile(hSlot, buffer, 0, &count, NULL);
+todo_wine
+    ok(!ret, "ReadFile should fail\n");
+todo_wine
+    ok(GetLastError() == ERROR_SEM_TIMEOUT, "wrong error %u\n", GetLastError());
+    ok(count == 0, "expected 0, got %u\n", count);
+
     count = 0;
     memset(buffer, 0, sizeof buffer);
     ret = ReadFile( hSlot, buffer, sizeof buffer, &count, NULL);
