@@ -272,6 +272,7 @@ enum {
     QUERY_DRAG_OPERATION,
     QUERY_IME_CHAR_RECT,
     QUERY_PASTEBOARD_DATA,
+    QUERY_RESIZE_START,
     NUM_QUERY_TYPES
 };
 
@@ -373,6 +374,7 @@ extern void macdrv_set_window_color_key(macdrv_window w, CGFloat keyRed, CGFloat
 extern void macdrv_clear_window_color_key(macdrv_window w) DECLSPEC_HIDDEN;
 extern void macdrv_window_use_per_pixel_alpha(macdrv_window w, int use_per_pixel_alpha) DECLSPEC_HIDDEN;
 extern void macdrv_give_cocoa_window_focus(macdrv_window w, int activate) DECLSPEC_HIDDEN;
+extern void macdrv_set_window_min_max_sizes(macdrv_window w, CGSize min_size, CGSize max_size) DECLSPEC_HIDDEN;
 extern macdrv_view macdrv_create_view(macdrv_window w, CGRect rect) DECLSPEC_HIDDEN;
 extern void macdrv_dispose_view(macdrv_view v) DECLSPEC_HIDDEN;
 extern void macdrv_set_view_window_and_frame(macdrv_view v, macdrv_window w, CGRect rect) DECLSPEC_HIDDEN;
