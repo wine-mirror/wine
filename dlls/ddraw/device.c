@@ -1796,12 +1796,28 @@ static HRESULT WINAPI d3d_device2_GetCurrentViewport(IDirect3DDevice2 *iface, ID
             (IDirect3DViewport3 **)viewport);
 }
 
+static BOOL validate_surface_palette(struct ddraw_surface *surface)
+{
+    return !(surface->surface_desc.u4.ddpfPixelFormat.dwFlags
+            & (DDPF_PALETTEINDEXED1 | DDPF_PALETTEINDEXED2
+            | DDPF_PALETTEINDEXED4 | DDPF_PALETTEINDEXED8
+            | DDPF_PALETTEINDEXEDTO8))
+            || wined3d_surface_get_palette(surface->wined3d_surface);
+}
+
 static HRESULT d3d_device_set_render_target(struct d3d_device *device,
         struct ddraw_surface *target, IUnknown *rt_iface)
 {
     HRESULT hr;
 
     wined3d_mutex_lock();
+
+    if (!validate_surface_palette(target))
+    {
+        WARN("Surface %p has an indexed pixel format, but no palette.\n", target);
+        wined3d_mutex_unlock();
+        return DDERR_INVALIDCAPS;
+    }
 
     if (device->rt_iface == rt_iface)
     {
@@ -6752,11 +6768,7 @@ HRESULT d3d_device_create(struct ddraw *ddraw, struct ddraw_surface *target, IUn
         return DDERR_INVALIDCAPS;
     }
 
-    if ((target->surface_desc.u4.ddpfPixelFormat.dwFlags
-            & (DDPF_PALETTEINDEXED1 | DDPF_PALETTEINDEXED2
-            | DDPF_PALETTEINDEXED4 | DDPF_PALETTEINDEXED8
-            | DDPF_PALETTEINDEXEDTO8))
-            && !wined3d_surface_get_palette(target->wined3d_surface))
+    if (!validate_surface_palette(target))
     {
         WARN("Surface %p has an indexed pixel format, but no palette.\n", target);
         return DDERR_NOPALETTEATTACHED;
