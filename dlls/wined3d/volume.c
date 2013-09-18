@@ -566,6 +566,28 @@ static BOOL volume_check_block_align(const struct wined3d_volume *volume,
     return TRUE;
 }
 
+static BOOL wined3d_volume_check_box_dimensions(const struct wined3d_volume *volume,
+        const struct wined3d_box *box)
+{
+    if (!box)
+        return TRUE;
+
+    if (box->left >= box->right)
+        return FALSE;
+    if (box->top >= box->bottom)
+        return FALSE;
+    if (box->front >= box->back)
+        return FALSE;
+    if (box->right > volume->resource.width)
+        return FALSE;
+    if (box->bottom > volume->resource.height)
+        return FALSE;
+    if (box->back > volume->resource.depth)
+        return FALSE;
+
+    return TRUE;
+}
+
 HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
         struct wined3d_map_desc *map_desc, const struct wined3d_box *box, DWORD flags)
 {
@@ -587,6 +609,11 @@ HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
     if (volume->resource.map_count)
     {
         WARN("Volume is already mapped.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+    if (!wined3d_volume_check_box_dimensions(volume, box))
+    {
+        WARN("Map box is invalid.\n");
         return WINED3DERR_INVALIDCALL;
     }
     if ((format->flags & WINED3DFMT_FLAG_BLOCKS) && !volume_check_block_align(volume, box))
