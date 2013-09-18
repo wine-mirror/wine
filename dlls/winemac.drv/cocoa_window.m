@@ -158,6 +158,8 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 @property (assign, nonatomic) void* imeData;
 @property (nonatomic) BOOL commandDone;
 
+@property (retain, nonatomic) NSTimer* liveResizeDisplayTimer;
+
     - (void) updateColorSpace;
 
     - (BOOL) becameEligibleParentOrChild;
@@ -468,6 +470,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
     @synthesize colorKeyed, colorKeyRed, colorKeyGreen, colorKeyBlue;
     @synthesize usePerPixelAlpha;
     @synthesize imeData, commandDone;
+    @synthesize liveResizeDisplayTimer;
 
     + (WineWindow*) createWindowWithFeatures:(const struct macdrv_window_features*)wf
                                  windowFrame:(NSRect)window_frame
@@ -1183,6 +1186,16 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         [self checkTransparency];
     }
 
+    - (void) setLiveResizeDisplayTimer:(NSTimer*)newTimer
+    {
+        if (newTimer != liveResizeDisplayTimer)
+        {
+            [liveResizeDisplayTimer invalidate];
+            [liveResizeDisplayTimer release];
+            liveResizeDisplayTimer = [newTimer retain];
+        }
+    }
+
     - (void) makeFocused:(BOOL)activate
     {
         [self orderBelow:nil orAbove:nil activate:activate];
@@ -1463,9 +1476,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
     - (void) windowDidEndLiveResize:(NSNotification *)notification
     {
-        [liveResizeDisplayTimer invalidate];
-        [liveResizeDisplayTimer release];
-        liveResizeDisplayTimer = nil;
+        self.liveResizeDisplayTimer = nil;
     }
 
     - (void)windowDidMiniaturize:(NSNotification *)notification
@@ -1587,13 +1598,11 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         //
         // We address this by "manually" asking our windows to check if they need
         // redrawing every so often (during live resize only).
-        [self windowDidEndLiveResize:nil];
-        liveResizeDisplayTimer = [NSTimer scheduledTimerWithTimeInterval:1.0/30.0
-                                                                  target:self
-                                                                selector:@selector(displayIfNeeded)
-                                                                userInfo:nil
-                                                                 repeats:YES];
-        [liveResizeDisplayTimer retain];
+        self.liveResizeDisplayTimer = [NSTimer scheduledTimerWithTimeInterval:1.0/30.0
+                                                                       target:self
+                                                                     selector:@selector(displayIfNeeded)
+                                                                     userInfo:nil
+                                                                      repeats:YES];
         [[NSRunLoop currentRunLoop] addTimer:liveResizeDisplayTimer
                                      forMode:NSRunLoopCommonModes];
     }
