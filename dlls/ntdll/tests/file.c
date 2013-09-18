@@ -1986,9 +1986,7 @@ static void test_read_write(void)
     bytes = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = ReadFile(INVALID_HANDLE_VALUE, buf, 0, &bytes, NULL);
-todo_wine
     ok(!ret, "ReadFile should fail\n");
-todo_wine
     ok(GetLastError() == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
     ok(bytes == 0, "bytes %u\n", bytes);
 
@@ -2201,9 +2199,7 @@ todo_wine
     bytes = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = ReadFile(INVALID_HANDLE_VALUE, buf, 0, &bytes, NULL);
-todo_wine
     ok(!ret, "ReadFile should fail\n");
-todo_wine
     ok(GetLastError() == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
     ok(bytes == 0, "bytes %u\n", bytes);
 
@@ -2220,7 +2216,6 @@ todo_wine
     ok(bytes == 0, "bytes %u\n", bytes);
 todo_wine
     ok((NTSTATUS)ovl.Internal == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx\n", ovl.Internal);
-todo_wine
     ok(ovl.InternalHigh == 0, "expected 0, got %lu\n", ovl.InternalHigh);
 
     bytes = 0xdeadbeef;

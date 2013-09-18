@@ -2152,7 +2152,6 @@ todo_wine
                 bytes = 0xdeadbeef;
                 SetLastError(0xdeadbeef);
                 ret = ReadFile(hcom, buf, 0, &bytes, NULL);
-todo_wine
                 ok(!ret, "ReadFile should fail\n");
 todo_wine
                 ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());

@@ -408,7 +408,6 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
           bytesRead, overlapped );
 
     if (bytesRead) *bytesRead = 0;  /* Do this before anything else */
-    if (!bytesToRead) return TRUE;
 
     if (is_console_handle(hFile))
     {

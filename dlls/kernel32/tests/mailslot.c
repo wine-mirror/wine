@@ -80,16 +80,13 @@ static int mailslot_test(void)
     count = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = ReadFile(INVALID_HANDLE_VALUE, buffer, 0, &count, NULL);
-todo_wine
     ok(!ret, "ReadFile should fail\n");
-todo_wine
     ok(GetLastError() == ERROR_INVALID_HANDLE, "wrong error %u\n", GetLastError());
     ok(count == 0, "expected 0, got %u\n", count);
 
     count = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = ReadFile(hSlot, buffer, 0, &count, NULL);
-todo_wine
     ok(!ret, "ReadFile should fail\n");
 todo_wine
     ok(GetLastError() == ERROR_SEM_TIMEOUT, "wrong error %u\n", GetLastError());

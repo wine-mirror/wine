@@ -1860,9 +1860,7 @@ static void test_readfileex_pending(void)
     num_bytes = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = ReadFile(INVALID_HANDLE_VALUE, read_buf, 0, &num_bytes, NULL);
-todo_wine
     ok(!ret, "ReadFile should fail\n");
-todo_wine
     ok(GetLastError() == ERROR_INVALID_HANDLE, "wrong error %u\n", GetLastError());
     ok(num_bytes == 0, "expected 0, got %u\n", num_bytes);
 
@@ -1877,12 +1875,11 @@ todo_wine
 todo_wine
     ok(GetLastError() == ERROR_IO_PENDING, "expected ERROR_IO_PENDING, got %d\n", GetLastError());
     ok(num_bytes == 0, "bytes %u\n", num_bytes);
-todo_wine
     ok((NTSTATUS)overlapped.Internal == STATUS_PENDING, "expected STATUS_PENDING, got %#lx\n", overlapped.Internal);
+todo_wine
     ok(overlapped.InternalHigh == -1, "expected -1, got %lu\n", overlapped.InternalHigh);
 
     wait = WaitForSingleObject(event, 100);
-todo_wine
     ok(wait == WAIT_TIMEOUT, "WaitForSingleObject returned %x\n", wait);
 
     num_bytes = 0xdeadbeef;
@@ -1890,13 +1887,13 @@ todo_wine
     ok(ret, "WriteFile failed\n");
     ok(num_bytes == 1, "bytes %u\n", num_bytes);
 
-    wait = WaitForSingleObject(event, 0);
+    wait = WaitForSingleObject(event, 100);
+todo_wine
     ok(wait == WAIT_OBJECT_0, "WaitForSingleObject returned %x\n", wait);
 
     ok(num_bytes == 1, "bytes %u\n", num_bytes);
 todo_wine
     ok((NTSTATUS)overlapped.Internal == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx\n", overlapped.Internal);
-todo_wine
     ok(overlapped.InternalHigh == 0, "expected 0, got %lu\n", overlapped.InternalHigh);
 
     /* read the pending byte and clear the pipe */
