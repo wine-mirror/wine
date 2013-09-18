@@ -1983,7 +1983,7 @@ const UINT D3D11_SDK_VERSION = 7;
 
 cpp_quote("#include <d3d10_1.h>")
 cpp_quote("#ifndef D3D11_IGNORE_SDK_LAYERS")
-cpp_quote("/* FIXME: # include <d3d11sdklayers.h> */")
+cpp_quote("# include <d3d11sdklayers.h>")
 cpp_quote("#endif")
 cpp_quote("#include <d3d10misc.h>")
 cpp_quote("#include <d3d10shader.h>")

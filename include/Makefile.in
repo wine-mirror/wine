@@ -24,6 +24,7 @@ PUBLIC_IDL_H_SRCS = \
 	d3d10.idl \
 	d3d10_1.idl \
 	d3d11.idl \
+	d3d11sdklayers.idl \
 	d3dcommon.idl \
 	ddstream.idl \
 	devicetopology.idl \
