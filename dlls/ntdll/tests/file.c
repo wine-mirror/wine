@@ -1985,6 +1985,22 @@ static void test_read_write(void)
 
     bytes = 0xdeadbeef;
     SetLastError(0xdeadbeef);
+    ret = ReadFile(INVALID_HANDLE_VALUE, buf, 0, &bytes, NULL);
+todo_wine
+    ok(!ret, "ReadFile should fail\n");
+todo_wine
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+    ok(bytes == 0, "bytes %u\n", bytes);
+
+    bytes = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = ReadFile(hfile, buf, 0, &bytes, NULL);
+    ok(ret, "ReadFile error %d\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
+    ok(bytes == 0, "bytes %u\n", bytes);
+
+    bytes = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
     ret = ReadFile(hfile, buf, sizeof(buf), &bytes, NULL);
     ok(ret, "ReadFile error %d\n", GetLastError());
     ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
@@ -2181,6 +2197,31 @@ todo_wine
 
     hfile = create_temp_file(FILE_FLAG_OVERLAPPED);
     if (!hfile) return;
+
+    bytes = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = ReadFile(INVALID_HANDLE_VALUE, buf, 0, &bytes, NULL);
+todo_wine
+    ok(!ret, "ReadFile should fail\n");
+todo_wine
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+    ok(bytes == 0, "bytes %u\n", bytes);
+
+    S(U(ovl)).Offset = 0;
+    S(U(ovl)).OffsetHigh = 0;
+    ovl.Internal = -1;
+    ovl.InternalHigh = -1;
+    ovl.hEvent = 0;
+    bytes = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = ReadFile(hfile, buf, 0, &bytes, &ovl);
+    /* ReadFile return value depends on Windows version and testing it is not practical */
+    if (!ret) ok(GetLastError() == ERROR_IO_PENDING, "expected ERROR_IO_PENDING, got %d\n", GetLastError());
+    ok(bytes == 0, "bytes %u\n", bytes);
+todo_wine
+    ok((NTSTATUS)ovl.Internal == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx\n", ovl.Internal);
+todo_wine
+    ok(ovl.InternalHigh == 0, "expected 0, got %lu\n", ovl.InternalHigh);
 
     bytes = 0xdeadbeef;
     SetLastError(0xdeadbeef);
