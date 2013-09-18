@@ -1137,7 +1137,7 @@ static UINT set(struct ID3DXConstantTableImpl *table, IDirect3DDevice9 *device, 
             break;
 
         case D3DXPC_MATRIX_COLUMNS:
-            regcount = desc->Columns;
+            regcount = min(desc->RegisterCount, desc->Columns);
             if (inclass == D3DXPC_MATRIX_ROWS) rin = incol;
             else cin = incol;
             regsize = desc->Rows;
