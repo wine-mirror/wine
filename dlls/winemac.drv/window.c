@@ -1991,6 +1991,22 @@ fail:
 BOOL query_resize_start(HWND hwnd)
 {
     TRACE("hwnd %p\n", hwnd);
+
     sync_window_min_max_info(hwnd);
+    SendMessageW(hwnd, WM_ENTERSIZEMOVE, 0, 0);
+
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *              query_resize_end
+ *
+ * Handler for QUERY_RESIZE_END query.
+ */
+BOOL query_resize_end(HWND hwnd)
+{
+    TRACE("hwnd %p\n", hwnd);
+    SendMessageW(hwnd, WM_EXITSIZEMOVE, 0, 0);
     return TRUE;
 }

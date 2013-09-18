@@ -146,6 +146,10 @@ static void macdrv_query_event(HWND hwnd, const macdrv_event *event)
             TRACE("QUERY_PASTEBOARD_DATA\n");
             success = query_pasteboard_data(hwnd, query->pasteboard_data.type);
             break;
+        case QUERY_RESIZE_END:
+            TRACE("QUERY_RESIZE_END\n");
+            success = query_resize_end(hwnd);
+            break;
         case QUERY_RESIZE_START:
             TRACE("QUERY_RESIZE_START\n");
             success = query_resize_start(hwnd);
