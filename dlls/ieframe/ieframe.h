@@ -58,6 +58,7 @@ typedef struct {
     IHlinkFrame    IHlinkFrame_iface;
     ITargetFrame2  ITargetFrame2_iface;
     ITargetFramePriv2 ITargetFramePriv2_iface;
+    IWebBrowserPriv2IE8 IWebBrowserPriv2IE8_iface;
 
     IUnknown *outer;
     DocHost *doc_host;

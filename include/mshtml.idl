@@ -18516,3 +18516,40 @@ interface IHTMLPrivateWindow : IUnknown
     HRESULT FindWindowByName(LPCWSTR name, IHTMLWindow2 **ret);
     HRESULT GetAddressBarUrl(BSTR *url);
 }
+
+/*****************************************************************************
+ *    IWebBrowserPriv interface
+ */
+[
+    object,
+    uuid(3050f804-98b5-11cf-bb82-00aa00bdce0b),
+    local
+]
+interface IWebBrowserPriv : IUnknown
+{
+    HRESULT NavigateWithBindCtx(VARIANT *uri, VARIANT *flags, VARIANT *target_frame, VARIANT *post_data,
+            VARIANT *headers, IBindCtx *bind_ctx, LPOLESTR url_fragment);
+    HRESULT OnClose();
+}
+
+/*****************************************************************************
+ *    IWebBrowserPriv2IE8 interface
+ */
+[
+    object,
+    uuid(3ed72303-6ffc-4214-ba90-faf1862dec8a),
+    local
+]
+interface IWebBrowserPriv2IE8 : IUnknown
+{
+  HRESULT NavigateWithBindCtx2(IUri *uri, VARIANT *flags, VARIANT *target_frame, VARIANT *post_data,
+          VARIANT *headers, IBindCtx *bind_ctx, LPOLESTR url_fragment);
+  HRESULT SetBrowserFrameOptions(DWORD opt1, DWORD opt2);
+  HRESULT DetachConnectionPoints();
+  HRESULT GetProcessId(DWORD *pid);
+  HRESULT CompatAttachEditEvents();
+  HRESULT HandleOpenOptions(IUnknown *obj, BSTR bstr, int options);
+  HRESULT SetSearchTerm(BSTR term);
+  HRESULT GetSearchTerm(BSTR *term);
+  HRESULT GetCurrentDocument(IDispatch** doc);
+}

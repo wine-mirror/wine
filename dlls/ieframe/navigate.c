@@ -1451,6 +1451,109 @@ static const ITargetFramePriv2Vtbl TargetFramePriv2Vtbl = {
     TargetFramePriv2_AggregatedNavigation2
 };
 
+static inline HlinkFrame *impl_from_IWebBrowserPriv2IE8(IWebBrowserPriv2IE8 *iface)
+{
+    return CONTAINING_RECORD(iface, HlinkFrame, IWebBrowserPriv2IE8_iface);
+}
+
+static HRESULT WINAPI WebBrowserPriv2IE8_QueryInterface(IWebBrowserPriv2IE8 *iface, REFIID riid, void **ppv)
+{
+    HlinkFrame *This = impl_from_IWebBrowserPriv2IE8(iface);
+    return IUnknown_QueryInterface(This->outer, riid, ppv);
+}
+
+static ULONG WINAPI WebBrowserPriv2IE8_AddRef(IWebBrowserPriv2IE8 *iface)
+{
+    HlinkFrame *This = impl_from_IWebBrowserPriv2IE8(iface);
+    return IUnknown_AddRef(This->outer);
+}
+
+static ULONG WINAPI WebBrowserPriv2IE8_Release(IWebBrowserPriv2IE8 *iface)
+{
+    HlinkFrame *This = impl_from_IWebBrowserPriv2IE8(iface);
+    return IUnknown_Release(This->outer);
+}
+
+static HRESULT WINAPI WebBrowserPriv2IE8_NavigateWithBindCtx2(IWebBrowserPriv2IE8 *iface, IUri *uri, VARIANT *flags,
+        VARIANT *target_frame, VARIANT *post_data, VARIANT *headers, IBindCtx *bind_ctx, LPOLESTR url_fragment)
+{
+    HlinkFrame *This = impl_from_IWebBrowserPriv2IE8(iface);
+    FIXME("(%p)->(%p %s %s %s %s %p %s)\n", This, uri, debugstr_variant(flags), debugstr_variant(target_frame),
+          debugstr_variant(post_data), debugstr_variant(headers), bind_ctx, debugstr_w(url_fragment));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowserPriv2IE8_SetBrowserFrameOptions(IWebBrowserPriv2IE8 *iface, DWORD opt1, DWORD opt2)
+{
+    HlinkFrame *This = impl_from_IWebBrowserPriv2IE8(iface);
+    FIXME("(%p)->(%x %x)\n", This, opt1, opt2);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowserPriv2IE8_DetachConnectionPoints(IWebBrowserPriv2IE8 *iface)
+{
+    HlinkFrame *This = impl_from_IWebBrowserPriv2IE8(iface);
+    FIXME("(%p)->()\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowserPriv2IE8_GetProcessId(IWebBrowserPriv2IE8 *iface, DWORD *pid)
+{
+    HlinkFrame *This = impl_from_IWebBrowserPriv2IE8(iface);
+    FIXME("(%p)->(%p)\n", This, pid);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowserPriv2IE8_CompatAttachEditEvents(IWebBrowserPriv2IE8 *iface)
+{
+    HlinkFrame *This = impl_from_IWebBrowserPriv2IE8(iface);
+    FIXME("(%p)->()\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowserPriv2IE8_HandleOpenOptions(IWebBrowserPriv2IE8 *iface, IUnknown *obj, BSTR bstr, int options)
+{
+    HlinkFrame *This = impl_from_IWebBrowserPriv2IE8(iface);
+    FIXME("(%p)->(%p %s %x)\n", This, obj, debugstr_w(bstr), options);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowserPriv2IE8_SetSearchTerm(IWebBrowserPriv2IE8 *iface, BSTR term)
+{
+    HlinkFrame *This = impl_from_IWebBrowserPriv2IE8(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(term));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowserPriv2IE8_GetSearchTerm(IWebBrowserPriv2IE8 *iface, BSTR *term)
+{
+    HlinkFrame *This = impl_from_IWebBrowserPriv2IE8(iface);
+    FIXME("(%p)->(%p)\n", This, term);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowserPriv2IE8_GetCurrentDocument(IWebBrowserPriv2IE8 *iface, IDispatch **doc)
+{
+    HlinkFrame *This = impl_from_IWebBrowserPriv2IE8(iface);
+    FIXME("(%p)->(%p)\n", This, doc);
+    return E_NOTIMPL;
+}
+
+static const IWebBrowserPriv2IE8Vtbl WebBrowserPriv2IE8Vtbl = {
+    WebBrowserPriv2IE8_QueryInterface,
+    WebBrowserPriv2IE8_AddRef,
+    WebBrowserPriv2IE8_Release,
+    WebBrowserPriv2IE8_NavigateWithBindCtx2,
+    WebBrowserPriv2IE8_SetBrowserFrameOptions,
+    WebBrowserPriv2IE8_DetachConnectionPoints,
+    WebBrowserPriv2IE8_GetProcessId,
+    WebBrowserPriv2IE8_CompatAttachEditEvents,
+    WebBrowserPriv2IE8_HandleOpenOptions,
+    WebBrowserPriv2IE8_SetSearchTerm,
+    WebBrowserPriv2IE8_GetSearchTerm,
+    WebBrowserPriv2IE8_GetCurrentDocument
+};
+
 BOOL HlinkFrame_QI(HlinkFrame *This, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(&IID_IHlinkFrame, riid)) {
@@ -1465,6 +1568,9 @@ BOOL HlinkFrame_QI(HlinkFrame *This, REFIID riid, void **ppv)
     }else if(IsEqualGUID(&IID_ITargetFramePriv2, riid)) {
         TRACE("(%p)->(IID_ITargetFramePriv2 %p)\n", This, ppv);
         *ppv = &This->ITargetFramePriv2_iface;
+    }else if(IsEqualGUID(&IID_IWebBrowserPriv2IE8, riid)) {
+        TRACE("(%p)->(IID_IWebBrowserPriv2IE8 %p)\n", This, ppv);
+        *ppv = &This->IWebBrowserPriv2IE8_iface;
     }else {
         return FALSE;
     }
@@ -1478,6 +1584,7 @@ void HlinkFrame_Init(HlinkFrame *This, IUnknown *outer, DocHost *doc_host)
     This->IHlinkFrame_iface.lpVtbl   = &HlinkFrameVtbl;
     This->ITargetFrame2_iface.lpVtbl = &TargetFrame2Vtbl;
     This->ITargetFramePriv2_iface.lpVtbl = &TargetFramePriv2Vtbl;
+    This->IWebBrowserPriv2IE8_iface.lpVtbl = &WebBrowserPriv2IE8Vtbl;
 
     This->outer = outer;
     This->doc_host = doc_host;
