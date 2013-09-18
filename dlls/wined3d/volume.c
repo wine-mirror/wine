@@ -524,10 +524,15 @@ HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
     TRACE("volume %p, map_desc %p, box %p, flags %#x.\n",
             volume, map_desc, box, flags);
 
+    map_desc->data = NULL;
     if (!(volume->resource.access_flags & WINED3D_RESOURCE_ACCESS_CPU))
     {
         WARN("Volume %p is not CPU accessible.\n", volume);
-        map_desc->data = NULL;
+        return WINED3DERR_INVALIDCALL;
+    }
+    if (volume->resource.map_count)
+    {
+        WARN("Volume is already mapped.\n");
         return WINED3DERR_INVALIDCALL;
     }
     flags = wined3d_resource_sanitize_map_flags(&volume->resource, flags);
@@ -614,7 +619,7 @@ HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
             wined3d_volume_invalidate_location(volume, ~WINED3D_LOCATION_SYSMEM);
     }
 
-    volume->flags |= WINED3D_VFLAG_LOCKED;
+    volume->resource.map_count++;
 
     TRACE("Returning memory %p, row pitch %d, slice pitch %d.\n",
             map_desc->data, map_desc->row_pitch, map_desc->slice_pitch);
@@ -631,9 +636,9 @@ HRESULT CDECL wined3d_volume_unmap(struct wined3d_volume *volume)
 {
     TRACE("volume %p.\n", volume);
 
-    if (!(volume->flags & WINED3D_VFLAG_LOCKED))
+    if (!volume->resource.map_count)
     {
-        WARN("Trying to unlock unlocked volume %p.\n", volume);
+        WARN("Trying to unlock an unlocked volume %p.\n", volume);
         return WINED3DERR_INVALIDCALL;
     }
 
@@ -651,7 +656,7 @@ HRESULT CDECL wined3d_volume_unmap(struct wined3d_volume *volume)
         context_release(context);
     }
 
-    volume->flags &= ~WINED3D_VFLAG_LOCKED;
+    volume->resource.map_count--;
 
     return WINED3D_OK;
 }
