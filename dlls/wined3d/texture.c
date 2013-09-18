@@ -1276,7 +1276,7 @@ static void texture3d_prepare_texture(struct wined3d_texture *texture, struct wi
         void *mem = NULL;
 
         if (gl_info->supported[APPLE_CLIENT_STORAGE] && !format->convert
-                && volume_prepare_system_memory(volume))
+                && wined3d_resource_prepare_system_memory(&volume->resource))
         {
             TRACE("Enabling GL_UNPACK_CLIENT_STORAGE_APPLE for volume %p\n", volume);
             gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);

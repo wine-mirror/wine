@@ -316,41 +316,9 @@ void wined3d_volume_load(struct wined3d_volume *volume, struct wined3d_context *
             srgb_mode ? WINED3D_LOCATION_TEXTURE_SRGB : WINED3D_LOCATION_TEXTURE_RGB);
 }
 
-/* Context activation is done by the caller. */
-static void wined3d_volume_prepare_pbo(struct wined3d_volume *volume, struct wined3d_context *context)
-{
-    const struct wined3d_gl_info *gl_info = context->gl_info;
-
-    if (volume->resource.buffer_object)
-        return;
-
-    GL_EXTCALL(glGenBuffers(1, &volume->resource.buffer_object));
-    GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, volume->resource.buffer_object));
-    GL_EXTCALL(glBufferData(GL_PIXEL_UNPACK_BUFFER, volume->resource.size, NULL, GL_STREAM_DRAW));
-    GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
-    checkGLcall("Create PBO");
-
-    TRACE("Created PBO %u for volume %p.\n", volume->resource.buffer_object, volume);
-}
-
-static void wined3d_volume_free_pbo(struct wined3d_volume *volume)
-{
-    struct wined3d_context *context = context_acquire(volume->resource.device, NULL);
-    const struct wined3d_gl_info *gl_info = context->gl_info;
-
-    TRACE("Deleting PBO %u belonging to volume %p.\n", volume->resource.buffer_object, volume);
-    GL_EXTCALL(glDeleteBuffers(1, &volume->resource.buffer_object));
-    checkGLcall("glDeleteBuffersARB");
-    volume->resource.buffer_object = 0;
-    context_release(context);
-}
-
 void wined3d_volume_destroy(struct wined3d_volume *volume)
 {
     TRACE("volume %p.\n", volume);
-
-    if (volume->resource.buffer_object)
-        wined3d_volume_free_pbo(volume);
 
     resource_cleanup(&volume->resource);
     volume->resource.parent_ops->wined3d_object_destroyed(volume->resource.parent);
@@ -368,7 +336,7 @@ static void volume_unload(struct wined3d_resource *resource)
 
     TRACE("texture %p.\n", resource);
 
-    if (volume_prepare_system_memory(volume))
+    if (wined3d_resource_prepare_system_memory(&volume->resource))
     {
         context = context_acquire(device, NULL);
         wined3d_resource_load_location(&volume->resource, context, WINED3D_LOCATION_SYSMEM);
@@ -380,15 +348,6 @@ static void volume_unload(struct wined3d_resource *resource)
         ERR("Out of memory when unloading volume %p.\n", volume);
         wined3d_resource_validate_location(&volume->resource, WINED3D_LOCATION_DISCARDED);
         wined3d_resource_invalidate_location(&volume->resource, ~WINED3D_LOCATION_DISCARDED);
-    }
-
-    if (volume->resource.buffer_object)
-    {
-        /* Should not happen because only dynamic default pool volumes
-         * have a buffer, and those are not evicted by device_evit_managed_resources
-         * and must be freed before a non-ex device reset. */
-        ERR("Unloading a volume with a buffer\n");
-        wined3d_volume_free_pbo(volume);
     }
 
     /* The texture name is managed by the container. */
@@ -480,24 +439,6 @@ static BOOL wined3d_volume_check_box_dimensions(const struct wined3d_volume *vol
     return TRUE;
 }
 
-/* Context activation is done by the caller. */
-static BOOL wined3d_volume_prepare_map_memory(struct wined3d_volume *volume, struct wined3d_context *context)
-{
-    switch (volume->resource.map_binding)
-    {
-        case WINED3D_LOCATION_BUFFER:
-            wined3d_volume_prepare_pbo(volume, context);
-            return TRUE;
-
-        case WINED3D_LOCATION_SYSMEM:
-            return volume_prepare_system_memory(volume);
-
-        default:
-            ERR("Unexpected map binding %s.\n", wined3d_debug_location(volume->resource.map_binding));
-            return FALSE;
-    }
-}
-
 HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
         struct wined3d_map_desc *map_desc, const struct wined3d_box *box, DWORD flags)
 {
@@ -536,7 +477,7 @@ HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
     flags = wined3d_resource_sanitize_map_flags(&volume->resource, flags);
 
     context = context_acquire(device, NULL);
-    if (!wined3d_volume_prepare_map_memory(volume, context))
+    if (!wined3d_resource_prepare_map_memory(&volume->resource, context))
     {
         WARN("Out of memory.\n");
         map_desc->data = NULL;

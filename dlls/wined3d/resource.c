@@ -223,6 +223,18 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
     return WINED3D_OK;
 }
 
+static void wined3d_resource_free_bo(struct wined3d_resource *resource)
+{
+    struct wined3d_context *context = context_acquire(resource->device, NULL);
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+
+    TRACE("Deleting GL buffer %u belonging to resource %p.\n", resource->buffer_object, resource);
+    GL_EXTCALL(glDeleteBuffers(1, &resource->buffer_object));
+    checkGLcall("glDeleteBuffers");
+    resource->buffer_object = 0;
+    context_release(context);
+}
+
 void resource_cleanup(struct wined3d_resource *resource)
 {
     const struct wined3d *d3d = resource->device->wined3d;
@@ -235,6 +247,9 @@ void resource_cleanup(struct wined3d_resource *resource)
         adapter_adjust_memory(resource->device->adapter, (INT64)0 - resource->size);
     }
 
+    if (resource->buffer_object)
+        wined3d_resource_free_bo(resource);
+
     wined3d_resource_free_sysmem(resource);
 
     device_resource_released(resource->device, resource);
@@ -244,6 +259,9 @@ void resource_unload(struct wined3d_resource *resource)
 {
     if (resource->map_count)
         ERR("Resource %p is being unloaded while mapped.\n", resource);
+
+    if (resource->buffer_object)
+        wined3d_resource_free_bo(resource);
 
     context_resource_unloaded(resource->device,
             resource, resource->type);
@@ -579,5 +597,53 @@ void wined3d_resource_release_map_ptr(const struct wined3d_resource *resource,
         default:
             ERR("Unexpected map binding %s.\n", wined3d_debug_location(resource->map_binding));
             return;
+    }
+}
+
+/* Context activation is done by the caller. */
+static void wined3d_resource_prepare_bo(struct wined3d_resource *resource, const struct wined3d_context *context)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+
+    if (resource->buffer_object)
+        return;
+
+    GL_EXTCALL(glGenBuffers(1, &resource->buffer_object));
+    GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, resource->buffer_object));
+    GL_EXTCALL(glBufferData(GL_PIXEL_UNPACK_BUFFER, resource->size, NULL, GL_STREAM_DRAW));
+    GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
+    checkGLcall("Create GL buffer");
+
+    TRACE("Created GL buffer %u for resource %p.\n", resource->buffer_object, resource);
+}
+
+BOOL wined3d_resource_prepare_system_memory(struct wined3d_resource *resource)
+{
+    if (resource->heap_memory)
+        return TRUE;
+
+    if (!wined3d_resource_allocate_sysmem(resource))
+    {
+        ERR("Failed to allocate system memory.\n");
+        return FALSE;
+    }
+    return TRUE;
+}
+
+/* Context activation is done by the caller. */
+BOOL wined3d_resource_prepare_map_memory(struct wined3d_resource *resource, struct wined3d_context *context)
+{
+    switch (resource->map_binding)
+    {
+        case WINED3D_LOCATION_BUFFER:
+            wined3d_resource_prepare_bo(resource, context);
+            return TRUE;
+
+        case WINED3D_LOCATION_SYSMEM:
+            return wined3d_resource_prepare_system_memory(resource);
+
+        default:
+            ERR("Unexpected map binding %s.\n", wined3d_debug_location(resource->map_binding));
+            return FALSE;
     }
 }

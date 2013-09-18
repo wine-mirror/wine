@@ -2205,6 +2205,9 @@ void wined3d_resource_invalidate_location(struct wined3d_resource *resource, DWO
 BOOL wined3d_resource_is_offscreen(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 void wined3d_resource_load_location(struct wined3d_resource *resource,
         struct wined3d_context *context, DWORD location) DECLSPEC_HIDDEN;
+BOOL wined3d_resource_prepare_map_memory(struct wined3d_resource *resource,
+        struct wined3d_context *context) DECLSPEC_HIDDEN;
+BOOL wined3d_resource_prepare_system_memory(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 void wined3d_resource_release_map_ptr(const struct wined3d_resource *resource,
         const struct wined3d_context *context) DECLSPEC_HIDDEN;
 DWORD wined3d_resource_sanitize_map_flags(const struct wined3d_resource *resource, DWORD flags) DECLSPEC_HIDDEN;
@@ -2337,7 +2340,6 @@ static inline struct wined3d_volume *volume_from_resource(struct wined3d_resourc
     return CONTAINING_RECORD(resource, struct wined3d_volume, resource);
 }
 
-BOOL volume_prepare_system_memory(struct wined3d_volume *volume) DECLSPEC_HIDDEN;
 HRESULT wined3d_volume_create(struct wined3d_texture *container, const struct wined3d_resource_desc *desc,
         unsigned int level, struct wined3d_volume **volume) DECLSPEC_HIDDEN;
 void wined3d_volume_destroy(struct wined3d_volume *volume) DECLSPEC_HIDDEN;
