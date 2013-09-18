@@ -55,6 +55,9 @@
     void* imeData;
     BOOL commandDone;
 
+    NSSize savedContentMinSize;
+    NSSize savedContentMaxSize;
+
     BOOL causing_becomeKeyWindow;
     BOOL ignore_windowMiniaturize;
     BOOL ignore_windowDeminiaturize;
