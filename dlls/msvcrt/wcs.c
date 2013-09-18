@@ -392,7 +392,7 @@ double CDECL MSVCRT__wcstod_l(const MSVCRT_wchar_t* str, MSVCRT_wchar_t** end,
 /*********************************************************************
  * wcsrtombs_l (INTERNAL)
  */
-static MSVCRT_size_t CDECL MSVCRT_wcsrtombs_l(char *mbstr, const MSVCRT_wchar_t **wcstr,
+static MSVCRT_size_t MSVCRT_wcsrtombs_l(char *mbstr, const MSVCRT_wchar_t **wcstr,
         MSVCRT_size_t count, MSVCRT__locale_t locale)
 {
     MSVCRT_pthreadlocinfo locinfo;
