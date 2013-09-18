@@ -140,7 +140,7 @@ typedef struct _D3D10_SHADER_VARIABLE_DESC
     UINT StartOffset;
     UINT Size;
     UINT uFlags;
-    LPVOID DefaultValue;
+    void *DefaultValue;
 } D3D10_SHADER_VARIABLE_DESC;
 
 typedef struct _D3D10_SHADER_TYPE_DESC
@@ -193,7 +193,7 @@ DEFINE_GUID(IID_ID3D10ShaderReflection, 0xd40e20b6, 0xf8f7, 0x42ad, 0xab, 0x20, 
 DECLARE_INTERFACE_(ID3D10ShaderReflection, IUnknown)
 {
     /* IUnknown methods */
-    STDMETHOD(QueryInterface)(THIS_ REFIID riid, LPVOID *object) PURE;
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
     STDMETHOD_(ULONG, AddRef)(THIS) PURE;
     STDMETHOD_(ULONG, Release)(THIS) PURE;
     /* ID3D10ShaderReflection methods */
