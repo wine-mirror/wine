@@ -6752,6 +6752,16 @@ HRESULT d3d_device_create(struct ddraw *ddraw, struct ddraw_surface *target, IUn
         return DDERR_INVALIDCAPS;
     }
 
+    if ((target->surface_desc.u4.ddpfPixelFormat.dwFlags
+            & (DDPF_PALETTEINDEXED1 | DDPF_PALETTEINDEXED2
+            | DDPF_PALETTEINDEXED4 | DDPF_PALETTEINDEXED8
+            | DDPF_PALETTEINDEXEDTO8))
+            && !wined3d_surface_get_palette(target->wined3d_surface))
+    {
+        WARN("Surface %p has an indexed pixel format, but no palette.\n", target);
+        return DDERR_NOPALETTEATTACHED;
+    }
+
     if (ddraw->flags & DDRAW_NO3D)
     {
         ERR_(winediag)("The application wants to create a Direct3D device, "
