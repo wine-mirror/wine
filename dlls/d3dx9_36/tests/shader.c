@@ -5560,6 +5560,47 @@ static const struct registerset_test registerset_test_bigvec_float[] =
         0x42800123, 0x43200123, 0x43600123}},
 };
 
+/*
+ * fxc.exe /Tvs_3_0
+ */
+#if 0
+float4x4 cf = {1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8, 9.9, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8};
+float f = 33.33;
+float4 main(float4 pos : POSITION) : POSITION
+{
+    float4 tmp = 0;
+    tmp.y += cf._22;
+    tmp.z = f;
+    return tmp;
+}
+#endif
+static const DWORD registerset_blob_matrix_column_clamp[] =
+{
+0xfffe0300, 0x003efffe, 0x42415443, 0x0000001c, 0x000000c3, 0xfffe0300, 0x00000002, 0x0000001c,
+0x00000100, 0x000000bc, 0x00000044, 0x00000002, 0x00000002, 0x00000048, 0x00000058, 0x00000098,
+0x00020002, 0x00000001, 0x0000009c, 0x000000ac, 0xab006663, 0x00030003, 0x00040004, 0x00000001,
+0x00000000, 0x3f8ccccd, 0x40b00000, 0x411e6666, 0x3fc00000, 0x400ccccd, 0x40d33333, 0x3f99999a,
+0x3fcccccd, 0x40533333, 0x40f66666, 0x3fa66666, 0x3fd9999a, 0x408ccccd, 0x410ccccd, 0x3fb33333,
+0x3fe66666, 0xabab0066, 0x00030000, 0x00010001, 0x00000001, 0x00000000, 0x420551ec, 0x00000000,
+0x00000000, 0x00000000, 0x335f7376, 0x4d00305f, 0x6f726369, 0x74666f73, 0x29522820, 0x534c4820,
+0x6853204c, 0x72656461, 0x6d6f4320, 0x656c6970, 0x2e392072, 0x392e3932, 0x332e3235, 0x00313131,
+0x05000051, 0xa00f0003, 0x00000000, 0x3f800000, 0x00000000, 0x00000000, 0x0200001f, 0x80000000,
+0xe00f0000, 0x02000001, 0x80020000, 0xa0550001, 0x03000005, 0xe00b0000, 0x80550000, 0xa0240003,
+0x02000001, 0xe0040000, 0xa0000002, 0x0000ffff,
+};
+
+static const struct registerset_constants registerset_constants_matrix_column_clamp[] =
+{
+    {"cf", {"cf", D3DXRS_FLOAT4, 0, 2, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 4, 4, 1, 0, 64, NULL}, 0},
+    {"f", {"f", D3DXRS_FLOAT4, 2, 1, D3DXPC_SCALAR, D3DXPT_FLOAT, 1, 1, 1, 0, 4, NULL}, 0},
+};
+
+static const struct registerset_test registerset_test_matrix_column_clamp[] =
+{
+    {SetMatrix, 0, 0, 0, 8,
+        {0x40000123, 0x40c00123, 0x41200123, 0x41600123, 0x00000000, 0x40e00123, 0x41300123, 0x41700123}},
+};
+
 static const struct
 {
     const char *name;
@@ -5831,6 +5872,11 @@ registerset_data[] =
         sizeof(registerset_test_bigvec_float) / sizeof(*registerset_test_bigvec_float),
         registerset_constants_bigvec_float,
         sizeof(registerset_constants_bigvec_float) / sizeof(*registerset_constants_bigvec_float)},
+    {"cf", "cf", 0, D3DXRS_FLOAT4, registerset_blob_matrix_column_clamp,
+        registerset_test_matrix_column_clamp,
+        sizeof(registerset_test_matrix_column_clamp) / sizeof(*registerset_test_matrix_column_clamp),
+        registerset_constants_matrix_column_clamp,
+        sizeof(registerset_constants_matrix_column_clamp) / sizeof(*registerset_constants_matrix_column_clamp)},
 };
 
 static void registerset_clear(IDirect3DDevice9 *device)
@@ -6283,6 +6329,11 @@ registerset_defaults_data[] =
         {0x00000000}},
     /* DefaultValue = NULL */
     {"big vector", registerset_blob_bigvec},
+    {"matrix column clamp", registerset_blob_matrix_column_clamp, 12, 0, 0,
+        {0x3f8ccccd, 0x40b00000, 0x411e6666, 0x3fc00000, 0x400ccccd, 0x40d33333, 0x3f99999a, 0x3fcccccd,
+        0x420551ec, 0x00000000, 0x00000000, 0x00000000},
+        {0x00000000},
+        {0x00000000}},
 };
 
 static void test_registerset_defaults(void)
