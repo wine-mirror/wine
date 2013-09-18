@@ -4,6 +4,13 @@ MODCFLAGS = @BUILTINFLAG@
 EXTRAINCL = -I$(top_srcdir)/include/msvcrt
 
 C_SRCS = \
-	msvcp80.c
+	exception.c \
+	ios.c \
+	locale.c \
+	math.c \
+	memory.c \
+	misc.c \
+	msvcp80_main.c \
+	string.c
 
 @MAKE_DLL_RULES@
