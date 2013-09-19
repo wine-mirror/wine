@@ -198,7 +198,7 @@ static int compare_dll( const void *ptr1, const void *ptr2 )
 }
 
 /* check if dll is recommended as builtin only */
-static inline int is_builtin_only( const char *name )
+static inline BOOL is_builtin_only( const char *name )
 {
     const char *ext = strrchr( name, '.' );
 
@@ -214,7 +214,7 @@ static inline int is_builtin_only( const char *name )
 }
 
 /* check if dll should be offered in the drop-down list */
-static int show_dll_in_list( const char *name )
+static BOOL show_dll_in_list( const char *name )
 {
     const char *ext = strrchr( name, '.' );
 
