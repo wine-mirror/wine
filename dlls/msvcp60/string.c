@@ -1714,8 +1714,8 @@ void __thiscall basic_string_char_reserve(basic_string_char *this, MSVCP_size_t 
     if(len > size)
         return;
 
-    basic_string_char__Grow(this, size, FALSE);
-    basic_string_char__Eos(this, len);
+    if(basic_string_char__Grow(this, size, FALSE))
+        basic_string_char__Eos(this, len);
 }
 
 /* ?empty@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBE_NXZ */
@@ -3429,8 +3429,8 @@ void __thiscall basic_string_wchar_reserve(basic_string_wchar *this, MSVCP_size_
     if(len > size)
         return;
 
-    basic_string_wchar__Grow(this, size, FALSE);
-    basic_string_wchar__Eos(this, len);
+    if(basic_string_wchar__Grow(this, size, FALSE))
+        basic_string_wchar__Eos(this, len);
 }
 
 /* ?empty@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBE_NXZ */
