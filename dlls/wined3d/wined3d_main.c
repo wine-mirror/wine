@@ -506,18 +506,17 @@ void wined3d_unregister_window(HWND window)
 }
 
 /* At process attach */
-BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
+BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)
 {
-    TRACE("WineD3D DLLMain Reason=%u\n", fdwReason);
-
-    switch (fdwReason)
+    switch (reason)
     {
         case DLL_PROCESS_ATTACH:
-            return wined3d_dll_init(hInstDLL);
+            return wined3d_dll_init(inst);
 
         case DLL_PROCESS_DETACH:
-            if (lpv) break;
-            return wined3d_dll_destroy(hInstDLL);
+            if (!reserved)
+                return wined3d_dll_destroy(inst);
+            break;
 
         case DLL_THREAD_DETACH:
             if (!context_set_current(NULL))
