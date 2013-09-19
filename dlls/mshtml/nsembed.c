@@ -48,6 +48,7 @@ WINE_DECLARE_DEBUG_CHANNEL(gecko);
 #define NS_EDITORCONTROLLER_CONTRACTID "@mozilla.org/editor/editorcontroller;1"
 #define NS_PREFERENCES_CONTRACTID "@mozilla.org/preferences;1"
 #define NS_VARIANT_CONTRACTID "@mozilla.org/variant;1"
+#define NS_CATEGORYMANAGER_CONTRACTID "@mozilla.org/categorymanager;1"
 
 #define PR_UINT32_MAX 0xffffffff
 
@@ -73,6 +74,7 @@ static HINSTANCE xul_handle = NULL;
 
 static nsIServiceManager *pServMgr = NULL;
 static nsIComponentManager *pCompMgr = NULL;
+static nsICategoryManager *cat_mgr;
 static nsIMemory *nsmem = NULL;
 static nsIFile *profile_directory, *plugin_directory;
 
@@ -725,6 +727,11 @@ static BOOL init_xpcom(const PRUnichar *gre_path)
     if(NS_FAILED(nsres))
         ERR("Could not get nsIMemory: %08x\n", nsres);
 
+    nsres = nsIServiceManager_GetServiceByContractID(pServMgr, NS_CATEGORYMANAGER_CONTRACTID,
+            &IID_nsICategoryManager, (void**)&cat_mgr);
+    if(NS_FAILED(nsres))
+        ERR("Could not get category manager service: %08x\n", nsres);
+
     if(registrar) {
         register_nsservice(registrar, pServMgr);
         nsIComponentRegistrar_Release(registrar);
@@ -899,6 +906,15 @@ nsIWritableVariant *create_nsvariant(void)
         ERR("Could not get nsIVariant\n");
 
     return ret;
+}
+
+char *get_nscategory_entry(const char *category, const char *entry)
+{
+    char *ret = NULL;
+    nsresult nsres;
+
+    nsres = nsICategoryManager_GetCategoryEntry(cat_mgr, category, entry, &ret);
+    return NS_SUCCEEDED(nsres) ? ret : NULL;
 }
 
 nsresult get_nsinterface(nsISupports *iface, REFIID riid, void **ppv)
@@ -1092,6 +1108,9 @@ void close_gecko(void)
 
     if(pServMgr)
         nsIServiceManager_Release(pServMgr);
+
+    if(cat_mgr)
+        nsICategoryManager_Release(cat_mgr);
 
     if(nsmem)
         nsIMemory_Release(nsmem);

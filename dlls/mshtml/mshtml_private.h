@@ -832,6 +832,7 @@ void get_editor_controller(NSContainer*) DECLSPEC_HIDDEN;
 nsresult get_nsinterface(nsISupports*,REFIID,void**) DECLSPEC_HIDDEN;
 nsIWritableVariant *create_nsvariant(void) DECLSPEC_HIDDEN;
 nsresult create_nsfile(const PRUnichar*,nsIFile**) DECLSPEC_HIDDEN;
+char *get_nscategory_entry(const char*,const char*) DECLSPEC_HIDDEN;
 
 HRESULT create_pending_window(HTMLOuterWindow*,nsChannelBSC*) DECLSPEC_HIDDEN;
 HRESULT start_binding(HTMLInnerWindow*,BSCallback*,IBindCtx*) DECLSPEC_HIDDEN;

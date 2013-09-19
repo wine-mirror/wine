@@ -3263,6 +3263,22 @@ interface nsICommandManager : nsISupports
 
 [
     object,
+    uuid(3275b2cd-af6d-429a-80d7-f0c5120342ac),
+    local
+]
+interface nsICategoryManager : nsISupports
+{
+    nsresult GetCategoryEntry(const char *aCategory, const char *aEntry, char **_retval);
+    nsresult AddCategoryEntry(const char *aCategory, const char *aEntry, const char *aValue, bool aPersist,
+            bool aReplace, char **_retval);
+    nsresult DeleteCategoryEntry(const char *aCategory, const char *aEntry, bool aPersist);
+    nsresult DeleteCategory(const char *aCategory);
+    nsresult EnumerateCategory(const char *aCategory, nsISimpleEnumerator **_retval);
+    nsresult EnumerateCategories(nsISimpleEnumerator **_retval);
+}
+
+[
+    object,
     uuid(47b82b60-a36f-4167-8072-6f421151ed50),
     local
 ]

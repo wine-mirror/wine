@@ -1161,6 +1161,9 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
         }
     }
 
+    if(!This->nschannel)
+        return S_OK;
+
     if(!This->nslistener) {
         BYTE buf[1024];
 
@@ -1544,7 +1547,7 @@ static HRESULT nsChannelBSC_stop_binding(BSCallback *bsc, HRESULT result)
     if(result != E_ABORT) {
         if(FAILED(result))
             handle_navigation_error(This, result);
-        else if(This->is_doc_channel) {
+        else if(This->is_doc_channel && This->nschannel) {
             result = async_stop_request(This);
             if(SUCCEEDED(result))
                 return S_OK;
@@ -1604,12 +1607,36 @@ static HRESULT handle_redirect(nsChannelBSC *This, const WCHAR *new_url)
     return hres;
 }
 
+static BOOL is_supported_doc_mime(const WCHAR *mime)
+{
+    char *nscat, *mimea;
+    BOOL ret;
+
+    mimea = heap_strdupWtoA(mime);
+    if(!mimea)
+        return FALSE;
+
+    nscat = get_nscategory_entry("Gecko-Content-Viewers", mimea);
+
+    ret = nscat != NULL && !strcmp(nscat, "@mozilla.org/content/document-loader-factory;1");
+
+    heap_free(mimea);
+    nsfree(nscat);
+    return ret;
+}
+
 static HRESULT nsChannelBSC_on_progress(BSCallback *bsc, ULONG status_code, LPCWSTR status_text)
 {
     nsChannelBSC *This = nsChannelBSC_from_BSCallback(bsc);
 
     switch(status_code) {
     case BINDSTATUS_MIMETYPEAVAILABLE:
+        if(This->is_doc_channel && !is_supported_doc_mime(status_text)) {
+            FIXME("External MIME: %s\n", debugstr_w(status_text));
+
+            This->nschannel = NULL;
+        }
+
         if(!This->nschannel)
             return S_OK;
 
