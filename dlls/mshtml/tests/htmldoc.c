@@ -126,6 +126,7 @@ DEFINE_EXPECT(Exec_HTTPEQUIV_DONE);
 DEFINE_EXPECT(Exec_SETDOWNLOADSTATE_0);
 DEFINE_EXPECT(Exec_SETDOWNLOADSTATE_1);
 DEFINE_EXPECT(Exec_ShellDocView_37);
+DEFINE_EXPECT(Exec_ShellDocView_62);
 DEFINE_EXPECT(Exec_ShellDocView_63);
 DEFINE_EXPECT(Exec_ShellDocView_67);
 DEFINE_EXPECT(Exec_ShellDocView_84);
@@ -141,6 +142,7 @@ DEFINE_EXPECT(Exec_MSHTML_PARSECOMPLETE);
 DEFINE_EXPECT(Exec_Explorer_38);
 DEFINE_EXPECT(Exec_Explorer_69);
 DEFINE_EXPECT(Exec_DOCCANNAVIGATE);
+DEFINE_EXPECT(Exec_DOCCANNAVIGATE_NULL);
 DEFINE_EXPECT(Invoke_AMBIENT_USERMODE);
 DEFINE_EXPECT(Invoke_AMBIENT_DLCONTROL);
 DEFINE_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
@@ -200,6 +202,7 @@ DEFINE_EXPECT(FindConnectionPoint);
 DEFINE_EXPECT(EnumConnections);
 DEFINE_EXPECT(EnumConnections_Next);
 DEFINE_EXPECT(WindowClosing);
+DEFINE_EXPECT(NavigateWithBindCtx);
 
 static IUnknown *doc_unk;
 static IMoniker *doc_mon;
@@ -371,8 +374,8 @@ static void test_timer(DWORD flags)
 
 static IMoniker Moniker;
 
-#define test_GetCurMoniker(u,m,v) _test_GetCurMoniker(__LINE__,u,m,v)
-static void _test_GetCurMoniker(unsigned line, IUnknown *unk, IMoniker *exmon, const char *exurl)
+#define test_GetCurMoniker(u,m,v,t) _test_GetCurMoniker(__LINE__,u,m,v,t)
+static void _test_GetCurMoniker(unsigned line, IUnknown *unk, IMoniker *exmon, const char *exurl, BOOL is_todo)
 {
     IHTMLDocument2 *doc;
     IPersistMoniker *permon;
@@ -429,7 +432,10 @@ static void _test_GetCurMoniker(unsigned line, IUnknown *unk, IMoniker *exmon, c
         hres = IMoniker_GetDisplayName(mon, NULL, NULL, &url);
         ok(hres == S_OK, "GetDisplayName failed: %08x\n", hres);
 
-        ok_(__FILE__,line)(!strcmp_wa(url, exurl), "unexpected url %s\n", wine_dbgstr_w(url));
+        if(is_todo)
+            todo_wine ok_(__FILE__,line)(!strcmp_wa(url, exurl), "unexpected url %s\n", wine_dbgstr_w(url));
+        else
+            ok_(__FILE__,line)(!strcmp_wa(url, exurl), "unexpected url %s\n", wine_dbgstr_w(url));
         if(!*ptr)
             ok_(__FILE__,line)(!lstrcmpW(url, doc_url), "url %s != doc_url %s\n", wine_dbgstr_w(url), wine_dbgstr_w(doc_url));
 
@@ -2854,11 +2860,11 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
                 load_state = LD_LOADING;
             }else {
                 if(nav_url)
-                    test_GetCurMoniker(doc_unk, NULL, nav_serv_url);
+                    test_GetCurMoniker(doc_unk, NULL, nav_serv_url, FALSE);
                 else if(load_from_stream)
-                    test_GetCurMoniker(doc_unk, NULL, "about:blank");
+                    test_GetCurMoniker(doc_unk, NULL, "about:blank", FALSE);
                 else if(!editmode)
-                    test_GetCurMoniker(doc_unk, doc_mon, NULL);
+                    test_GetCurMoniker(doc_unk, doc_mon, NULL, FALSE);
             }
 
             ok(pvaOut == NULL, "pvaOut=%p, expected NULL\n", pvaOut);
@@ -2867,6 +2873,12 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
                 ok(V_VT(pvaIn) == VT_I4, "V_VT(pvaIn)=%d, expected VT_I4\n", V_VT(pvaIn));
                 ok(V_I4(pvaIn) == 0, "V_I4(pvaIn)=%d, expected 0\n", V_I4(pvaIn));
             }
+            return S_OK;
+
+        case 62:
+            CHECK_EXPECT(Exec_ShellDocView_62);
+            ok(!pvaIn, "pvaIn != NULL\n");
+            ok(!pvaOut, "pvaOut != NULL\n");
             return S_OK;
 
         case 63: {
@@ -2973,14 +2985,16 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
     if(IsEqualGUID(&CGID_DocHostCmdPriv, pguidCmdGroup)) {
         switch(nCmdID) {
         case DOCHOST_DOCCANNAVIGATE:
-            CHECK_EXPECT(Exec_DOCCANNAVIGATE);
+            if(pvaIn) {
+                CHECK_EXPECT(Exec_DOCCANNAVIGATE);
+                ok(V_VT(pvaIn) == VT_UNKNOWN, "V_VT(pvaIn) != VT_UNKNOWN\n");
+                /* FIXME: test V_UNKNOWN(pvaIn) == window */
+            }else {
+                CHECK_EXPECT(Exec_DOCCANNAVIGATE_NULL);
+            }
 
             test_readyState(NULL);
-
-            ok(pvaIn != NULL, "pvaIn == NULL\n");
             ok(pvaOut == NULL, "pvaOut != NULL\n");
-            ok(V_VT(pvaIn) == VT_UNKNOWN, "V_VT(pvaIn) != VT_UNKNOWN\n");
-            /* FIXME: test V_UNKNOWN(pvaIn) == window */
             return S_OK;
         case 1: {
             SAFEARRAY *sa;
@@ -4214,26 +4228,168 @@ static const IConnectionPointContainerVtbl ConnectionPointContainerVtbl = {
 
 static IConnectionPointContainer ConnectionPointContainer = { &ConnectionPointContainerVtbl };
 
+static HRESULT wb_qi(REFIID riid, void **ppv);
+
+static HRESULT WINAPI WebBrowserPriv_QueryInterface(IWebBrowserPriv *iface, REFIID riid, void **ppv)
+{
+    return wb_qi(riid, ppv);
+}
+
+static ULONG WINAPI WebBrowserPriv_AddRef(IWebBrowserPriv *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI WebBrowserPriv_Release(IWebBrowserPriv *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI WebBrowserPriv_NavigateWithBindCtx(IWebBrowserPriv *iface, VARIANT *uri, VARIANT *flags,
+        VARIANT *target_frame, VARIANT *post_data, VARIANT *headers, IBindCtx *bind_ctx, LPOLESTR url_fragment)
+{
+    trace("NavigateWithBindCtx\n");
+
+    CHECK_EXPECT(NavigateWithBindCtx);
+
+    ok(V_VT(uri) == VT_BSTR, "V_VT(uri) = %d\n", V_VT(uri));
+    ok(!strcmp_wa(V_BSTR(uri), nav_url), "V_BSTR(uri) = %s\n", wine_dbgstr_w(V_BSTR(uri)));
+    ok(V_VT(flags) == VT_I4, "V_VT(flags) = %d\n", V_VT(flags));
+    ok(V_I4(flags) == navHyperlink, "V_I4(flags) = %x\n", V_I4(flags));
+    ok(!target_frame, "target_frame != NULL\n");
+    ok(!post_data, "post_data != NULL\n");
+    ok(!headers, "headers != NULL\n");
+    ok(bind_ctx != NULL, "bind_ctx == NULL\n");
+    ok(!url_fragment, "url_dragment = %s\n", wine_dbgstr_w(url_fragment));
+
+    return S_OK;
+}
+
+static HRESULT WINAPI WebBrowserPriv_OnClose(IWebBrowserPriv *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IWebBrowserPrivVtbl WebBrowserPrivVtbl = {
+    WebBrowserPriv_QueryInterface,
+    WebBrowserPriv_AddRef,
+    WebBrowserPriv_Release,
+    WebBrowserPriv_NavigateWithBindCtx,
+    WebBrowserPriv_OnClose
+};
+
+static IWebBrowserPriv WebBrowserPriv = { &WebBrowserPrivVtbl };
+
+static HRESULT WINAPI WebBrowserPriv2IE8_QueryInterface(IWebBrowserPriv2IE8 *iface, REFIID riid, void **ppv)
+{
+    return wb_qi(riid, ppv);
+}
+
+static ULONG WINAPI WebBrowserPriv2IE8_AddRef(IWebBrowserPriv2IE8 *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI WebBrowserPriv2IE8_Release(IWebBrowserPriv2IE8 *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI WebBrowserPriv2IE8_NavigateWithBindCtx2(IWebBrowserPriv2IE8 *iface, IUri *uri, VARIANT *flags,
+        VARIANT *target_frame, VARIANT *post_data, VARIANT *headers, IBindCtx *bind_ctx, LPOLESTR url_fragment)
+{
+    BSTR str;
+    HRESULT hres;
+
+    trace("NavigateWithBindCtx2\n");
+
+    CHECK_EXPECT(NavigateWithBindCtx);
+
+    hres = IUri_GetDisplayUri(uri, &str);
+    ok(hres == S_OK, "GetDisplayUri failed: %08x\n", hres);
+    ok(!strcmp_wa(str, nav_url), "V_BSTR(uri) = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    ok(V_VT(flags) == VT_I4, "V_VT(flags) = %d\n", V_VT(flags));
+    ok(V_I4(flags) == navHyperlink, "V_I4(flags) = %x\n", V_I4(flags));
+    ok(!target_frame, "target_frame != NULL\n");
+    ok(!post_data, "post_data != NULL\n");
+    ok(!headers, "headers != NULL\n");
+    ok(bind_ctx != NULL, "bind_ctx == NULL\n");
+    ok(!url_fragment, "url_dragment = %s\n", wine_dbgstr_w(url_fragment));
+
+    return S_OK;
+}
+
+static HRESULT WINAPI WebBrowserPriv2IE8_SetBrowserFrameOptions(IWebBrowserPriv2IE8 *iface, DWORD opt1, DWORD opt2)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowserPriv2IE8_DetachConnectionPoints(IWebBrowserPriv2IE8 *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowserPriv2IE8_GetProcessId(IWebBrowserPriv2IE8 *iface, DWORD *pid)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowserPriv2IE8_CompatAttachEditEvents(IWebBrowserPriv2IE8 *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowserPriv2IE8_HandleOpenOptions(IWebBrowserPriv2IE8 *iface, IUnknown *obj, BSTR bstr, int options)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowserPriv2IE8_SetSearchTerm(IWebBrowserPriv2IE8 *iface, BSTR term)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowserPriv2IE8_GetSearchTerm(IWebBrowserPriv2IE8 *iface, BSTR *term)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowserPriv2IE8_GetCurrentDocument(IWebBrowserPriv2IE8 *iface, IDispatch **doc)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IWebBrowserPriv2IE8Vtbl WebBrowserPriv2IE8Vtbl = {
+    WebBrowserPriv2IE8_QueryInterface,
+    WebBrowserPriv2IE8_AddRef,
+    WebBrowserPriv2IE8_Release,
+    WebBrowserPriv2IE8_NavigateWithBindCtx2,
+    WebBrowserPriv2IE8_SetBrowserFrameOptions,
+    WebBrowserPriv2IE8_DetachConnectionPoints,
+    WebBrowserPriv2IE8_GetProcessId,
+    WebBrowserPriv2IE8_CompatAttachEditEvents,
+    WebBrowserPriv2IE8_HandleOpenOptions,
+    WebBrowserPriv2IE8_SetSearchTerm,
+    WebBrowserPriv2IE8_GetSearchTerm,
+    WebBrowserPriv2IE8_GetCurrentDocument
+};
+
+static IWebBrowserPriv2IE8 WebBrowserPriv2IE8 = { &WebBrowserPriv2IE8Vtbl };
+
 static HRESULT WINAPI WebBrowser_QueryInterface(IWebBrowser2 *iface, REFIID riid, void **ppv)
 {
-    *ppv = NULL;
-
-    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IWebBrowser, riid)
-            || IsEqualGUID(&IID_IWebBrowserApp, riid) || IsEqualGUID(&IID_IWebBrowser2, riid)) {
-        *ppv = iface;
-        return S_OK;
-    }
-
-    if(IsEqualGUID(riid, &IID_IOleObject))
-        return E_NOINTERFACE; /* TODO */
-
-    if(IsEqualGUID(riid, &IID_IConnectionPointContainer)) {
-        *ppv = &ConnectionPointContainer;
-        return S_OK;
-    }
-
-    ok(0, "unexpected call %s\n", debugstr_guid(riid));
-    return E_NOINTERFACE;
+    return wb_qi(riid, ppv);
 }
 
 static ULONG WINAPI WebBrowser_AddRef(IWebBrowser2 *iface)
@@ -4742,6 +4898,38 @@ static const IWebBrowser2Vtbl WebBrowser2Vtbl =
 };
 
 static IWebBrowser2 WebBrowser2 = { &WebBrowser2Vtbl };
+
+static HRESULT wb_qi(REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+
+    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IWebBrowser, riid)
+            || IsEqualGUID(&IID_IWebBrowserApp, riid) || IsEqualGUID(&IID_IWebBrowser2, riid)) {
+        *ppv = &WebBrowser2;
+        return S_OK;
+    }
+
+    if(IsEqualGUID(riid, &IID_IOleObject))
+        return E_NOINTERFACE; /* TODO */
+
+    if(IsEqualGUID(riid, &IID_IConnectionPointContainer)) {
+        *ppv = &ConnectionPointContainer;
+        return S_OK;
+    }
+
+    if(IsEqualGUID(riid, &IID_IWebBrowserPriv)) {
+        *ppv = &WebBrowserPriv;
+        return S_OK;
+    }
+
+    if(IsEqualGUID(riid, &IID_IWebBrowserPriv2IE8)) {
+        *ppv = &WebBrowserPriv2IE8;
+        return S_OK;
+    }
+
+    ok(0, "unexpected call %s\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
 
 static HRESULT WINAPI ServiceProvider_QueryInterface(IServiceProvider *iface,
                                                      REFIID riid, void **ppv)
@@ -5320,7 +5508,7 @@ static void test_Load(IPersistMoniker *persist, IMoniker *mon)
 
     set_clientsite = container_locked = TRUE;
 
-    test_GetCurMoniker((IUnknown*)persist, mon, NULL);
+    test_GetCurMoniker((IUnknown*)persist, mon, NULL, FALSE);
 
     IBindCtx_Release(bind);
 
@@ -5338,15 +5526,22 @@ static void test_Load(IPersistMoniker *persist, IMoniker *mon)
 #define DWL_FROM_HISTORY       0x0100
 #define DWL_REFRESH            0x0200
 #define DWL_EX_GETHOSTINFO     0x0400
+#define DWL_EXTERNAL           0x0800
 
 static void test_download(DWORD flags)
 {
+    const BOOL is_extern = (flags & DWL_EXTERNAL) != 0;
     const BOOL is_js = (flags & DWL_JAVASCRIPT) != 0;
     HWND hwnd;
     BOOL *b;
     MSG msg;
 
-    b = is_js ? &called_Exec_SETDOWNLOADSTATE_0 : &called_Exec_HTTPEQUIV_DONE;
+    if(is_js)
+        b = &called_Exec_SETDOWNLOADSTATE_0;
+    else if(is_extern)
+        b = &called_NavigateWithBindCtx;
+    else
+        b = &called_Exec_HTTPEQUIV_DONE;
     is_refresh = (flags & DWL_REFRESH) != 0;
 
     hwnd = FindWindowA("Internet Explorer_Hidden", NULL);
@@ -5383,14 +5578,14 @@ static void test_download(DWORD flags)
         SET_EXPECT(Invoke_OnReadyStateChange_Loading);
     if(!(flags & (DWL_EMPTY|DWL_JAVASCRIPT)))
         SET_EXPECT(Invoke_OnReadyStateChange_Interactive);
-    if(!is_js)
+    if(!is_js && !is_extern)
         SET_EXPECT(Invoke_OnReadyStateChange_Complete);
     SET_EXPECT(Exec_Explorer_69);
     SET_EXPECT(EnableModeless_TRUE); /* IE7 */
     SET_EXPECT(Frame_EnableModeless_TRUE); /* IE7 */
     SET_EXPECT(EnableModeless_FALSE); /* IE7 */
     SET_EXPECT(Frame_EnableModeless_FALSE); /* IE7 */
-    if((nav_url && !is_js) || (flags & (DWL_CSS|DWL_HTTP)))
+    if((nav_url && !is_js && !is_extern) || (flags & (DWL_CSS|DWL_HTTP)))
         SET_EXPECT(Exec_ShellDocView_37);
     if(flags & DWL_HTTP) {
         if(!(flags & DWL_FROM_HISTORY))
@@ -5398,7 +5593,7 @@ static void test_download(DWORD flags)
         SET_EXPECT(Exec_HTTPEQUIV);
         SET_EXPECT(Exec_SETTITLE);
     }
-    if(!is_js)
+    if(!is_js && !is_extern)
         SET_EXPECT(OnChanged_1005);
     SET_EXPECT(OnChanged_READYSTATE);
     SET_EXPECT(Exec_SETPROGRESSPOS);
@@ -5407,7 +5602,7 @@ static void test_download(DWORD flags)
     SET_EXPECT(Exec_ShellDocView_103);
     SET_EXPECT(Exec_ShellDocView_105);
     SET_EXPECT(Exec_ShellDocView_140);
-    if(!is_js) {
+    if(!is_js && !is_extern) {
         SET_EXPECT(Exec_MSHTML_PARSECOMPLETE);
         if(support_wbapp) /* Called on some Vista installations */
             SET_EXPECT(CountEntries);
@@ -5422,7 +5617,7 @@ static void test_download(DWORD flags)
             SET_EXPECT(Exec_Explorer_38);
         SET_EXPECT(UpdateBackForwardState);
     }
-    if(!is_js) {
+    if(!is_js && !is_extern) {
         if(!editmode && !(flags & DWL_REFRESH)) {
             if(!(flags & DWL_EMPTY))
                 SET_EXPECT(FireNavigateComplete2);
@@ -5431,6 +5626,12 @@ static void test_download(DWORD flags)
         SET_EXPECT(ActiveElementChanged);
     }
     SET_EXPECT(IsErrorUrl);
+    if(is_extern) {
+        SET_EXPECT(Exec_ShellDocView_62);
+        SET_EXPECT(Exec_DOCCANNAVIGATE_NULL);
+        SET_EXPECT(NavigateWithBindCtx);
+        SET_EXPECT(Exec_Explorer_38); /* todo_wine */
+    }
     expect_status_text = (LPWSTR)0xdeadbeef; /* TODO */
 
     while(!*b && GetMessage(&msg, NULL, 0, 0)) {
@@ -5471,16 +5672,20 @@ static void test_download(DWORD flags)
     }
     if(flags & DWL_ONREADY_LOADING)
         CHECK_CALLED(Invoke_OnReadyStateChange_Loading);
-    if(!(flags & (DWL_EMPTY|DWL_JAVASCRIPT)))
-        CHECK_CALLED(Invoke_OnReadyStateChange_Interactive);
-    if(!is_js)
+    if(!(flags & (DWL_EMPTY|DWL_JAVASCRIPT))) {
+        if(!is_extern)
+            CHECK_CALLED(Invoke_OnReadyStateChange_Interactive);
+        else
+            todo_wine CHECK_CALLED(Invoke_OnReadyStateChange_Interactive);
+    }
+    if(!is_js && !is_extern)
         CHECK_CALLED(Invoke_OnReadyStateChange_Complete);
     SET_CALLED(Exec_Explorer_69);
     SET_CALLED(EnableModeless_TRUE); /* IE7 */
     SET_CALLED(Frame_EnableModeless_TRUE); /* IE7 */
     SET_CALLED(EnableModeless_FALSE); /* IE7 */
     SET_CALLED(Frame_EnableModeless_FALSE); /* IE7 */
-    if(nav_url && !is_js && !(flags & DWL_REFRESH))
+    if(nav_url && !is_js && !is_extern && !(flags & DWL_REFRESH))
         todo_wine CHECK_CALLED(Exec_ShellDocView_37);
     else if(flags & (DWL_CSS|DWL_HTTP))
         CLEAR_CALLED(Exec_ShellDocView_37); /* Called by IE9 */
@@ -5494,19 +5699,24 @@ static void test_download(DWORD flags)
             CHECK_CALLED(Exec_SETTITLE);
     }
     if(!is_js) {
-        CHECK_CALLED(OnChanged_1005);
+        if(!is_extern)
+            CHECK_CALLED(OnChanged_1005);
         CHECK_CALLED(OnChanged_READYSTATE);
         CHECK_CALLED(Exec_SETPROGRESSPOS);
     }else {
         CLEAR_CALLED(OnChanged_READYSTATE); /* sometimes called */
         todo_wine CHECK_CALLED(Exec_SETPROGRESSPOS);
     }
-    if(!(flags & DWL_EMPTY))
-        CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
+    if(!(flags & DWL_EMPTY)) {
+        if(!is_extern)
+            CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
+        else
+            todo_wine CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
+    }
     CLEAR_CALLED(Exec_ShellDocView_103);
     CLEAR_CALLED(Exec_ShellDocView_105);
     CLEAR_CALLED(Exec_ShellDocView_140);
-    if(!is_js) {
+    if(!is_js && !is_extern) {
         CHECK_CALLED(Exec_MSHTML_PARSECOMPLETE);
         if(support_wbapp) /* Called on some Vista installations */
             CLEAR_CALLED(CountEntries);
@@ -5521,7 +5731,7 @@ static void test_download(DWORD flags)
             CHECK_CALLED(Exec_Explorer_38);
         todo_wine CHECK_CALLED_BROKEN(UpdateBackForwardState);
     }
-    if(!is_js) {
+    if(!is_js && !is_extern) {
         if(!editmode && !(flags & DWL_REFRESH)) {
             if(!(flags & DWL_EMPTY)) {
                 if(support_wbapp)
@@ -5534,8 +5744,15 @@ static void test_download(DWORD flags)
         todo_wine CHECK_CALLED(ActiveElementChanged);
     }
     todo_wine CHECK_CALLED_BROKEN(IsErrorUrl);
+    if(is_extern) {
+        CHECK_CALLED(Exec_ShellDocView_62);
+        CHECK_CALLED(Exec_DOCCANNAVIGATE_NULL);
+        CHECK_CALLED(NavigateWithBindCtx);
+        todo_wine CHECK_NOT_CALLED(Exec_Explorer_38);
+    }
 
-    load_state = LD_COMPLETE;
+    if(!is_extern)
+        load_state = LD_COMPLETE;
 
     test_readyState(NULL);
 }
@@ -5712,7 +5929,7 @@ static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace, const char *hre
     }
 
     if(doc_mon) {
-        test_GetCurMoniker(doc_unk, doc_mon, NULL);
+        test_GetCurMoniker(doc_unk, doc_mon, NULL, FALSE);
         doc_mon = NULL;
     }
 
@@ -5722,9 +5939,15 @@ static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace, const char *hre
         ok(!strcmp_wa(str2, prev_nav_url), "unexpected address bar url:  %s, expected %s\n", wine_dbgstr_w(str2), prev_nav_url);
         SysFreeString(str2);
 
-        if(is_js)
+        if(is_js) {
             ignore_external_qi = TRUE;
-        test_download(DWL_VERBDONE | (is_js ? DWL_JAVASCRIPT : DWL_ONREADY_LOADING|DWL_EX_GETHOSTINFO) | dwl_flags);
+            dwl_flags |= DWL_JAVASCRIPT;
+        }else {
+            if(!(dwl_flags & DWL_EXTERNAL))
+                dwl_flags |= DWL_EX_GETHOSTINFO;
+            dwl_flags |= DWL_ONREADY_LOADING;
+        }
+        test_download(DWL_VERBDONE | dwl_flags);
         if(is_js)
             ignore_external_qi = FALSE;
 
@@ -5734,6 +5957,8 @@ static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace, const char *hre
     ok(hres == S_OK, "GetAddressBarUrl failed: %08x\n", hres);
     if(is_js)
         ok(!strcmp_wa(str2, prev_nav_url), "unexpected address bar url:  %s\n", wine_dbgstr_w(str2));
+    else if (dwl_flags & DWL_EXTERNAL)
+        todo_wine ok(!strcmp_wa(str2, prev_nav_url), "unexpected address bar url:  %s\n", wine_dbgstr_w(str2));
     else
         ok(!strcmp_wa(str2, nav_url), "unexpected address bar url:  %s\n", wine_dbgstr_w(str2));
     SysFreeString(str2);
@@ -6979,7 +7204,7 @@ static void test_StreamLoad(IHTMLDocument2 *doc)
     todo_wine CHECK_CALLED(GetPendingUrl);
 
     test_timer(EXPECT_SETTITLE);
-    test_GetCurMoniker((IUnknown*)doc, NULL, "about:blank");
+    test_GetCurMoniker((IUnknown*)doc, NULL, "about:blank", FALSE);
 
     IPersistStreamInit_Release(init);
 }
@@ -7013,7 +7238,7 @@ static void test_StreamInitNew(IHTMLDocument2 *doc)
     todo_wine CHECK_CALLED(GetPendingUrl);
 
     test_timer(EXPECT_SETTITLE);
-    test_GetCurMoniker((IUnknown*)doc, NULL, "about:blank");
+    test_GetCurMoniker((IUnknown*)doc, NULL, "about:blank", FALSE);
 
     IPersistStreamInit_Release(init);
 }
@@ -7114,7 +7339,7 @@ static void test_HTMLDocument(BOOL do_load, BOOL mime)
     test_external(doc, FALSE);
     test_ViewAdviseSink(doc);
     test_ConnectionPointContainer(doc);
-    test_GetCurMoniker((IUnknown*)doc, NULL, NULL);
+    test_GetCurMoniker((IUnknown*)doc, NULL, NULL, FALSE);
     test_Persist(doc, &Moniker);
     if(!do_load)
         test_OnAmbientPropertyChange2(doc);
@@ -7124,7 +7349,7 @@ static void test_HTMLDocument(BOOL do_load, BOOL mime)
     if(do_load) {
         set_custom_uihandler(doc, &CustomDocHostUIHandler);
         test_download(DWL_CSS|DWL_TRYCSS);
-        test_GetCurMoniker((IUnknown*)doc, &Moniker, NULL);
+        test_GetCurMoniker((IUnknown*)doc, &Moniker, NULL, FALSE);
         test_elem_from_point(doc);
     }
 
@@ -7173,7 +7398,7 @@ static void test_HTMLDocument(BOOL do_load, BOOL mime)
     test_CloseView();
     test_Close(doc, TRUE);
     test_OnAmbientPropertyChange2(doc);
-    test_GetCurMoniker((IUnknown*)doc, do_load ? &Moniker : NULL, NULL);
+    test_GetCurMoniker((IUnknown*)doc, do_load ? &Moniker : NULL, NULL, FALSE);
 
     if(!do_load) {
         /* Activate HTMLDocument again, calling UIActivate after showing the window */
@@ -7211,7 +7436,7 @@ static void test_HTMLDocument_hlink(DWORD status)
     set_custom_uihandler(doc, &CustomDocHostUIHandler);
     test_ViewAdviseSink(doc);
     test_ConnectionPointContainer(doc);
-    test_GetCurMoniker((IUnknown*)doc, NULL, NULL);
+    test_GetCurMoniker((IUnknown*)doc, NULL, NULL, FALSE);
     test_Persist(doc, &Moniker);
     test_Navigate(doc);
 
@@ -7227,9 +7452,9 @@ static void test_HTMLDocument_hlink(DWORD status)
     test_InPlaceDeactivate(doc, TRUE);
     test_Close(doc, FALSE);
     test_IsDirty(doc, S_FALSE);
-    test_GetCurMoniker((IUnknown*)doc, &Moniker, NULL);
+    test_GetCurMoniker((IUnknown*)doc, &Moniker, NULL, FALSE);
     test_clear(doc);
-    test_GetCurMoniker((IUnknown*)doc, &Moniker, NULL);
+    test_GetCurMoniker((IUnknown*)doc, &Moniker, NULL, FALSE);
 
     if(view)
         IOleDocumentView_Release(view);
@@ -7268,7 +7493,8 @@ static void test_cookies(IHTMLDocument2 *doc)
     b = InternetGetCookieW(http_urlW, NULL, buf, &size);
     ok(b, "InternetGetCookieW failed: %08x\n", GetLastError());
     ok(!lstrcmpW(buf, str2), "cookie = %s, expected %s\n", wine_dbgstr_w(str2), wine_dbgstr_w(buf));
-    ok(strstrW(str2, str) != NULL, "could not find %s in %s\n", wine_dbgstr_w(str), wine_dbgstr_w(str2));
+    if(str2)
+        ok(strstrW(str2, str) != NULL, "could not find %s in %s\n", wine_dbgstr_w(str), wine_dbgstr_w(str2));
     SysFreeString(str);
     SysFreeString(str2);
 
@@ -7284,7 +7510,8 @@ static void test_cookies(IHTMLDocument2 *doc)
     b = InternetGetCookieW(http_urlW, NULL, buf, &size);
     ok(b, "InternetGetCookieW failed: %08x\n", GetLastError());
     ok(!lstrcmpW(buf, str2), "cookie = %s, expected %s\n", wine_dbgstr_w(str2), wine_dbgstr_w(buf));
-    ok(strstrW(str2, str) != NULL, "could not find %s in %s\n", wine_dbgstr_w(str), wine_dbgstr_w(str2));
+    if(str2)
+        ok(strstrW(str2, str) != NULL, "could not find %s in %s\n", wine_dbgstr_w(str), wine_dbgstr_w(str2));
     SysFreeString(str);
     SysFreeString(str2);
 }
@@ -7316,14 +7543,14 @@ static void test_HTMLDocument_http(BOOL with_wbapp)
 
     test_ViewAdviseSink(doc);
     test_ConnectionPointContainer(doc);
-    test_GetCurMoniker((IUnknown*)doc, NULL, NULL);
+    test_GetCurMoniker((IUnknown*)doc, NULL, NULL, FALSE);
     test_Persist(doc, http_mon);
     test_Navigate(doc);
     test_download(DWL_HTTP);
     test_cookies(doc);
     test_IsDirty(doc, S_FALSE);
     test_MSHTML_QueryStatus(doc, OLECMDF_SUPPORTED);
-    test_GetCurMoniker((IUnknown*)doc, http_mon, NULL);
+    test_GetCurMoniker((IUnknown*)doc, http_mon, NULL, FALSE);
     test_travellog(doc);
     test_binding_ui((IUnknown*)doc);
 
@@ -7346,13 +7573,15 @@ static void test_HTMLDocument_http(BOOL with_wbapp)
     test_open_window(doc, TRUE);
     if(!support_wbapp) /* FIXME */
         test_open_window(doc, FALSE);
-    if(support_wbapp)
+    if(support_wbapp) {
+        test_put_href(doc, FALSE, NULL, "http://test.winehq.org/tests/file.winetest", FALSE, FALSE, DWL_EXTERNAL);
         test_window_close(doc);
+    }
 
     test_InPlaceDeactivate(doc, TRUE);
     test_Close(doc, FALSE);
     test_IsDirty(doc, S_FALSE);
-    test_GetCurMoniker((IUnknown*)doc, NULL, prev_url);
+    test_GetCurMoniker((IUnknown*)doc, NULL, prev_url, support_wbapp);
 
     if(view)
         IOleDocumentView_Release(view);
@@ -7438,7 +7667,7 @@ static void test_HTMLDocument_StreamLoad(void)
     test_DoVerb(oleobj);
     test_MSHTML_QueryStatus(doc, OLECMDF_SUPPORTED);
 
-    test_GetCurMoniker((IUnknown*)doc, NULL, NULL);
+    test_GetCurMoniker((IUnknown*)doc, NULL, NULL, FALSE);
     test_StreamLoad(doc);
     test_download(DWL_VERBDONE|DWL_TRYCSS);
     test_MSHTML_QueryStatus(doc, OLECMDF_SUPPORTED);
@@ -7499,7 +7728,7 @@ static void test_HTMLDocument_StreamInitNew(void)
 
     IOleObject_Release(oleobj);
 
-    test_GetCurMoniker((IUnknown*)doc, NULL, NULL);
+    test_GetCurMoniker((IUnknown*)doc, NULL, NULL, FALSE);
     test_StreamInitNew(doc);
 
     SET_EXPECT(Invoke_OnReadyStateChange_Interactive);
