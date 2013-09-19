@@ -1810,32 +1810,14 @@ static HRESULT d3d_device_set_render_target(struct d3d_device *device,
 {
     HRESULT hr;
 
-    wined3d_mutex_lock();
-
-    if (!validate_surface_palette(target))
-    {
-        WARN("Surface %p has an indexed pixel format, but no palette.\n", target);
-        wined3d_mutex_unlock();
-        return DDERR_INVALIDCAPS;
-    }
-
-    if (!(target->surface_desc.ddsCaps.dwCaps & DDSCAPS_3DDEVICE))
-    {
-        WARN("Surface %p is not a render target.\n", target);
-        wined3d_mutex_unlock();
-        return DDERR_INVALIDCAPS;
-    }
-
     if (device->rt_iface == rt_iface)
     {
         TRACE("No-op SetRenderTarget operation, not doing anything\n");
-        wined3d_mutex_unlock();
         return D3D_OK;
     }
     if (!target)
     {
         WARN("Trying to set render target to NULL.\n");
-        wined3d_mutex_unlock();
         return DDERR_INVALIDPARAMS;
     }
 
@@ -1844,13 +1826,8 @@ static HRESULT d3d_device_set_render_target(struct d3d_device *device,
     device->rt_iface = rt_iface;
     if (FAILED(hr = wined3d_device_set_render_target(device->wined3d_device,
             0, target->wined3d_surface, FALSE)))
-    {
-        wined3d_mutex_unlock();
         return hr;
-    }
     d3d_device_update_depth_stencil(device);
-
-    wined3d_mutex_unlock();
 
     return D3D_OK;
 }
@@ -1860,10 +1837,36 @@ static HRESULT d3d_device7_SetRenderTarget(IDirect3DDevice7 *iface,
 {
     struct ddraw_surface *target_impl = unsafe_impl_from_IDirectDrawSurface7(target);
     struct d3d_device *device = impl_from_IDirect3DDevice7(iface);
+    HRESULT hr;
 
     TRACE("iface %p, target %p, flags %#x.\n", iface, target, flags);
 
-    return d3d_device_set_render_target(device, target_impl, (IUnknown *)target);
+    wined3d_mutex_lock();
+
+    if (!validate_surface_palette(target_impl))
+    {
+        WARN("Surface %p has an indexed pixel format, but no palette.\n", target_impl);
+        wined3d_mutex_unlock();
+        return DDERR_INVALIDCAPS;
+    }
+
+    if (!(target_impl->surface_desc.ddsCaps.dwCaps & DDSCAPS_3DDEVICE))
+    {
+        WARN("Surface %p is not a render target.\n", target_impl);
+        wined3d_mutex_unlock();
+        return DDERR_INVALIDCAPS;
+    }
+
+    if (!(target_impl->surface_desc.ddsCaps.dwCaps & DDSCAPS_VIDEOMEMORY))
+    {
+        WARN("Surface %p is not in video memory.\n", target_impl);
+        wined3d_mutex_unlock();
+        return DDERR_INVALIDPARAMS;
+    }
+
+    hr = d3d_device_set_render_target(device, target_impl, (IUnknown *)target);
+    wined3d_mutex_unlock();
+    return hr;
 }
 
 static HRESULT WINAPI d3d_device7_SetRenderTarget_FPUSetup(IDirect3DDevice7 *iface,
@@ -1890,10 +1893,39 @@ static HRESULT WINAPI d3d_device3_SetRenderTarget(IDirect3DDevice3 *iface,
 {
     struct ddraw_surface *target_impl = unsafe_impl_from_IDirectDrawSurface4(target);
     struct d3d_device *device = impl_from_IDirect3DDevice3(iface);
+    HRESULT hr;
 
     TRACE("iface %p, target %p, flags %#x.\n", iface, target, flags);
 
-    return d3d_device_set_render_target(device, target_impl, (IUnknown *)target);
+    wined3d_mutex_lock();
+
+    if (!validate_surface_palette(target_impl))
+    {
+        WARN("Surface %p has an indexed pixel format, but no palette.\n", target_impl);
+        wined3d_mutex_unlock();
+        return DDERR_INVALIDCAPS;
+    }
+
+    if (!(target_impl->surface_desc.ddsCaps.dwCaps & DDSCAPS_3DDEVICE))
+    {
+        WARN("Surface %p is not a render target.\n", target_impl);
+        wined3d_mutex_unlock();
+        return DDERR_INVALIDCAPS;
+    }
+
+    if (!(target_impl->surface_desc.ddsCaps.dwCaps & DDSCAPS_VIDEOMEMORY))
+    {
+        WARN("Surface %p is not in video memory.\n", target_impl);
+        IDirectDrawSurface4_AddRef(target);
+        IUnknown_Release(device->rt_iface);
+        device->rt_iface = (IUnknown *)target;
+        wined3d_mutex_unlock();
+        return D3D_OK;
+    }
+
+    hr = d3d_device_set_render_target(device, target_impl, (IUnknown *)target);
+    wined3d_mutex_unlock();
+    return hr;
 }
 
 static HRESULT WINAPI d3d_device2_SetRenderTarget(IDirect3DDevice2 *iface,
@@ -1901,10 +1933,39 @@ static HRESULT WINAPI d3d_device2_SetRenderTarget(IDirect3DDevice2 *iface,
 {
     struct ddraw_surface *target_impl = unsafe_impl_from_IDirectDrawSurface(target);
     struct d3d_device *device = impl_from_IDirect3DDevice2(iface);
+    HRESULT hr;
 
     TRACE("iface %p, target %p, flags %#x.\n", iface, target, flags);
 
-    return d3d_device_set_render_target(device, target_impl, (IUnknown *)target);
+    wined3d_mutex_lock();
+
+    if (!validate_surface_palette(target_impl))
+    {
+        WARN("Surface %p has an indexed pixel format, but no palette.\n", target_impl);
+        wined3d_mutex_unlock();
+        return DDERR_INVALIDCAPS;
+    }
+
+    if (!(target_impl->surface_desc.ddsCaps.dwCaps & DDSCAPS_3DDEVICE))
+    {
+        WARN("Surface %p is not a render target.\n", target_impl);
+        wined3d_mutex_unlock();
+        return DDERR_INVALIDCAPS;
+    }
+
+    if (!(target_impl->surface_desc.ddsCaps.dwCaps & DDSCAPS_VIDEOMEMORY))
+    {
+        WARN("Surface %p is not in video memory.\n", target_impl);
+        IDirectDrawSurface_AddRef(target);
+        IUnknown_Release(device->rt_iface);
+        device->rt_iface = (IUnknown *)target;
+        wined3d_mutex_unlock();
+        return D3D_OK;
+    }
+
+    hr = d3d_device_set_render_target(device, target_impl, (IUnknown *)target);
+    wined3d_mutex_unlock();
+    return hr;
 }
 
 /*****************************************************************************
