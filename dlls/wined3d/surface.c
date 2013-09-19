@@ -3931,6 +3931,12 @@ static HRESULT surface_load_drawable(struct wined3d_surface *surface,
 {
     RECT r;
 
+    if (surface->resource.locations & WINED3D_LOCATION_DISCARDED)
+    {
+        TRACE("Surface was discarded, nothing to do.\n");
+        return WINED3D_OK;
+    }
+
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO
             && wined3d_resource_is_offscreen(&surface->container->resource))
     {
