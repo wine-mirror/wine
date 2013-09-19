@@ -322,6 +322,96 @@ static void test_get_adapter_luid(void)
     IDirect3D9Ex_Release(d3d9ex);
 }
 
+static void test_swapchain_get_displaymode_ex(void)
+{
+    IDirect3DSwapChain9 *swapchain = NULL;
+    IDirect3DSwapChain9Ex *swapchainEx = NULL;
+    IDirect3DDevice9Ex *device;
+    D3DDISPLAYMODE mode;
+    D3DDISPLAYMODEEX mode_ex;
+    D3DDISPLAYROTATION rotation;
+    HWND window;
+    HRESULT hr;
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping swapchain GetDisplayModeEx tests.\n");
+        goto out;
+    }
+
+    /* Get the implicit swapchain */
+    hr = IDirect3DDevice9Ex_GetSwapChain(device, 0, &swapchain);
+    if (FAILED(hr))
+    {
+        skip("Failed to get the implicit swapchain, skipping swapchain GetDisplayModeEx tests.\n");
+        goto out;
+    }
+
+    hr = IDirect3DSwapChain9_QueryInterface(swapchain, &IID_IDirect3DSwapChain9Ex, (void **)&swapchainEx);
+    IDirect3DSwapChain9_Release(swapchain);
+    if (FAILED(hr))
+    {
+        skip("Failed to QI for IID_IDirect3DSwapChain9Ex, skipping swapchain GetDisplayModeEx tests.\n");
+        goto out;
+    }
+
+    /* invalid size */
+    memset(&mode_ex, 0, sizeof(mode_ex));
+    hr = IDirect3DSwapChain9Ex_GetDisplayModeEx(swapchainEx, &mode_ex, &rotation);
+    ok(hr == D3DERR_INVALIDCALL, "GetDisplayModeEx returned %#x instead of D3DERR_INVALIDCALL.\n", hr);
+
+    mode_ex.Size = sizeof(D3DDISPLAYMODEEX);
+    rotation = (D3DDISPLAYROTATION)0xdeadbeef;
+    /* valid count and valid size */
+    hr = IDirect3DSwapChain9Ex_GetDisplayModeEx(swapchainEx, &mode_ex, &rotation);
+    ok(SUCCEEDED(hr), "GetDisplayModeEx failed, hr %#x.\n", hr);
+
+    /* compare what GetDisplayMode returns with what GetDisplayModeEx returns */
+    hr = IDirect3DSwapChain9Ex_GetDisplayMode(swapchainEx, &mode);
+    ok(SUCCEEDED(hr), "GetDisplayMode failed, hr %#x.\n", hr);
+
+    ok(mode_ex.Size == sizeof(D3DDISPLAYMODEEX), "Size is %d.\n", mode_ex.Size);
+    ok(mode_ex.Width == mode.Width, "Width is %d instead of %d.\n", mode_ex.Width, mode.Width);
+    ok(mode_ex.Height == mode.Height, "Height is %d instead of %d.\n", mode_ex.Height, mode.Height);
+    ok(mode_ex.RefreshRate == mode.RefreshRate, "RefreshRate is %d instead of %d.\n",
+            mode_ex.RefreshRate, mode.RefreshRate);
+    ok(mode_ex.Format == mode.Format, "Format is %x instead of %x.\n", mode_ex.Format, mode.Format);
+    /* Don't know yet how to test for ScanLineOrdering, just testing that it
+     * is set to a value by GetDisplayModeEx(). */
+    ok(mode_ex.ScanLineOrdering != 0, "ScanLineOrdering returned 0.\n");
+    /* Don't know how to compare the rotation in this case, test that it is set */
+    ok(rotation != (D3DDISPLAYROTATION)0xdeadbeef, "rotation is %d, expected != 0xdeadbeef.\n", rotation);
+
+    trace("GetDisplayModeEx returned Width = %d, Height = %d, RefreshRate = %d, Format = %x, ScanLineOrdering = %x, rotation = %d.\n",
+          mode_ex.Width, mode_ex.Height, mode_ex.RefreshRate, mode_ex.Format, mode_ex.ScanLineOrdering, rotation);
+
+    /* test GetDisplayModeEx with null pointer for D3DDISPLAYROTATION */
+    memset(&mode_ex, 0, sizeof(mode_ex));
+    mode_ex.Size = sizeof(D3DDISPLAYMODEEX);
+
+    hr = IDirect3DSwapChain9Ex_GetDisplayModeEx(swapchainEx, &mode_ex, NULL);
+    ok(SUCCEEDED(hr), "GetDisplayModeEx failed, hr %#x.\n", hr);
+
+    ok(mode_ex.Size == sizeof(D3DDISPLAYMODEEX), "Size is %d.\n", mode_ex.Size);
+    ok(mode_ex.Width == mode.Width, "Width is %d instead of %d.\n", mode_ex.Width, mode.Width);
+    ok(mode_ex.Height == mode.Height, "Height is %d instead of %d.\n", mode_ex.Height, mode.Height);
+    ok(mode_ex.RefreshRate == mode.RefreshRate, "RefreshRate is %d instead of %d.\n",
+            mode_ex.RefreshRate, mode.RefreshRate);
+    ok(mode_ex.Format == mode.Format, "Format is %x instead of %x.\n", mode_ex.Format, mode.Format);
+    /* Don't know yet how to test for ScanLineOrdering, just testing that it
+     * is set to a value by GetDisplayModeEx(). */
+    ok(mode_ex.ScanLineOrdering != 0, "ScanLineOrdering returned 0.\n");
+
+    IDirect3DSwapChain9Ex_Release(swapchainEx);
+
+out:
+    if (device)
+        IDirect3DDevice9Ex_Release(device);
+    DestroyWindow(window);
+}
+
 static void test_get_adapter_displaymode_ex(void)
 {
     HWND window = create_window();
@@ -1015,6 +1105,7 @@ START_TEST(d3d9ex)
 
     test_qi_base_to_ex();
     test_qi_ex_to_base();
+    test_swapchain_get_displaymode_ex();
     test_get_adapter_luid();
     test_get_adapter_displaymode_ex();
     test_texture_sysmem_create();
