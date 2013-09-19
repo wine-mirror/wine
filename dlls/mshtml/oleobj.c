@@ -210,7 +210,7 @@ void call_docview_84(HTMLDocumentObj *doc)
         FIXME("handle result\n");
 }
 
-static void set_document_navigation(HTMLDocumentObj *doc, BOOL doc_can_navigate)
+void set_document_navigation(HTMLDocumentObj *doc, BOOL doc_can_navigate)
 {
     VARIANT var;
 

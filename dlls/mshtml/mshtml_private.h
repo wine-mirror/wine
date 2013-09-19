@@ -965,6 +965,7 @@ void do_ns_command(HTMLDocument*,const char*,nsICommandParams*) DECLSPEC_HIDDEN;
 
 void update_doc(HTMLDocument*,DWORD) DECLSPEC_HIDDEN;
 void update_title(HTMLDocumentObj*) DECLSPEC_HIDDEN;
+void set_document_navigation(HTMLDocumentObj*,BOOL) DECLSPEC_HIDDEN;
 
 HRESULT do_query_service(IUnknown*,REFGUID,REFIID,void**) DECLSPEC_HIDDEN;
 
