@@ -223,7 +223,7 @@ DWORD WINAPI IcmpSendEcho(
     struct pollfd fdr;
     DWORD send_time,recv_time;
     struct sockaddr_in addr;
-    unsigned int addrlen;
+    socklen_t addrlen;
     unsigned short id,seq,cksum;
     int res;
 
@@ -266,7 +266,7 @@ DWORD WINAPI IcmpSendEcho(
     if (RequestOptions!=NULL) {
         int val;
         if (icp->default_opts.OptionsSize==IP_OPTS_UNKNOWN) {
-            unsigned int len;
+            socklen_t len;
             /* Before we mess with the options, get the default values */
             len=sizeof(val);
             getsockopt(icp->sid,IPPROTO_IP,IP_TTL,(char *)&val,&len);
