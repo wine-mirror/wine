@@ -3960,6 +3960,13 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     POINT dst_point = {0, 0};
     BYTE *mem = NULL;
 
+    if (surface->resource.locations & WINED3D_LOCATION_DISCARDED)
+    {
+        TRACE("Surface was discarded, nothing to do.\n");
+        wined3d_texture_prepare_texture(texture, context, srgb);
+        return WINED3D_OK;
+    }
+
     if (wined3d_settings.offscreen_rendering_mode != ORM_FBO
             && wined3d_resource_is_offscreen(&texture->resource)
             && (surface->resource.locations & WINED3D_LOCATION_DRAWABLE))
