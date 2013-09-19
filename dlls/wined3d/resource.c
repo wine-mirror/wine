@@ -689,3 +689,31 @@ BOOL wined3d_resource_prepare_map_memory(struct wined3d_resource *resource, stru
             return FALSE;
     }
 }
+
+BOOL wined3d_resource_check_block_align(const struct wined3d_resource *resource,
+        const struct wined3d_box *box)
+{
+    UINT width_mask, height_mask;
+    const struct wined3d_format *format = resource->format;
+
+    if (!box)
+        return TRUE;
+
+    /* This assumes power of two block sizes, but NPOT block sizes would be
+     * silly anyway.
+     *
+     * This also assumes that the format's block depth is 1. */
+    width_mask = format->block_width - 1;
+    height_mask = format->block_height - 1;
+
+    if (box->left & width_mask)
+        return FALSE;
+    if (box->top & height_mask)
+        return FALSE;
+    if (box->right & width_mask && box->right != resource->width)
+        return FALSE;
+    if (box->bottom & height_mask && box->bottom != resource->height)
+        return FALSE;
+
+    return TRUE;
+}

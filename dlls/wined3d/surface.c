@@ -1477,23 +1477,18 @@ void wined3d_surface_upload_data(struct wined3d_surface *surface, const struct w
 
 static BOOL surface_check_block_align(struct wined3d_surface *surface, const RECT *rect)
 {
-    UINT width_mask, height_mask;
+    struct wined3d_box box;
 
-    if (!rect->left && !rect->top
-            && rect->right == surface->resource.width
-            && rect->bottom == surface->resource.height)
-        return TRUE;
+    if (!rect)
+        return wined3d_resource_check_block_align(&surface->resource, NULL);
 
-    /* This assumes power of two block sizes, but NPOT block sizes would be
-     * silly anyway. */
-    width_mask = surface->resource.format->block_width - 1;
-    height_mask = surface->resource.format->block_height - 1;
-
-    if (!(rect->left & width_mask) && !(rect->top & height_mask)
-            && !(rect->right & width_mask) && !(rect->bottom & height_mask))
-        return TRUE;
-
-    return FALSE;
+    box.left = rect->left;
+    box.top = rect->top;
+    box.front = 0;
+    box.right = rect->right;
+    box.bottom = rect->bottom;
+    box.back = 1;
+    return wined3d_resource_check_block_align(&surface->resource, &box);
 }
 
 HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const POINT *dst_point,

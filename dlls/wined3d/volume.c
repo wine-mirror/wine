@@ -379,34 +379,6 @@ struct wined3d_resource * CDECL wined3d_volume_get_resource(struct wined3d_volum
     return &volume->resource;
 }
 
-static BOOL volume_check_block_align(const struct wined3d_volume *volume,
-        const struct wined3d_box *box)
-{
-    UINT width_mask, height_mask;
-    const struct wined3d_format *format = volume->resource.format;
-
-    if (!box)
-        return TRUE;
-
-    /* This assumes power of two block sizes, but NPOT block sizes would be
-     * silly anyway.
-     *
-     * This also assumes that the format's block depth is 1. */
-    width_mask = format->block_width - 1;
-    height_mask = format->block_height - 1;
-
-    if (box->left & width_mask)
-        return FALSE;
-    if (box->top & height_mask)
-        return FALSE;
-    if (box->right & width_mask && box->right != volume->resource.width)
-        return FALSE;
-    if (box->bottom & height_mask && box->bottom != volume->resource.height)
-        return FALSE;
-
-    return TRUE;
-}
-
 static BOOL wined3d_volume_check_box_dimensions(const struct wined3d_volume *volume,
         const struct wined3d_box *box)
 {
@@ -457,7 +429,7 @@ HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
         WARN("Map box is invalid.\n");
         return WINED3DERR_INVALIDCALL;
     }
-    if ((fmt_flags & WINED3DFMT_FLAG_BLOCKS) && !volume_check_block_align(volume, box))
+    if ((fmt_flags & WINED3DFMT_FLAG_BLOCKS) && !wined3d_resource_check_block_align(&volume->resource, box))
     {
         WARN("Map box is misaligned for %ux%u blocks.\n",
                 format->block_width, format->block_height);
