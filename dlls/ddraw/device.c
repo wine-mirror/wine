@@ -1819,6 +1819,13 @@ static HRESULT d3d_device_set_render_target(struct d3d_device *device,
         return DDERR_INVALIDCAPS;
     }
 
+    if (!(target->surface_desc.ddsCaps.dwCaps & DDSCAPS_3DDEVICE))
+    {
+        WARN("Surface %p is not a render target.\n", target);
+        wined3d_mutex_unlock();
+        return DDERR_INVALIDCAPS;
+    }
+
     if (device->rt_iface == rt_iface)
     {
         TRACE("No-op SetRenderTarget operation, not doing anything\n");
