@@ -183,6 +183,7 @@
 
 @ cdecl wined3d_resource_get_desc(ptr ptr)
 @ cdecl wined3d_resource_get_parent(ptr)
+@ cdecl wined3d_resource_get_pitch(ptr ptr ptr)
 @ cdecl wined3d_resource_get_priority(ptr)
 @ cdecl wined3d_resource_set_parent(ptr ptr)
 @ cdecl wined3d_resource_set_priority(ptr long)
@@ -228,7 +229,6 @@
 @ cdecl wined3d_surface_get_flip_status(ptr long)
 @ cdecl wined3d_surface_get_overlay_position(ptr ptr ptr)
 @ cdecl wined3d_surface_get_parent(ptr)
-@ cdecl wined3d_surface_get_pitch(ptr)
 @ cdecl wined3d_surface_get_render_target_data(ptr ptr)
 @ cdecl wined3d_surface_get_resource(ptr)
 @ cdecl wined3d_surface_getdc(ptr ptr)

@@ -1242,7 +1242,7 @@ static void texture3d_sub_resource_upload_data(struct wined3d_resource *sub_reso
     struct wined3d_const_bo_address addr;
     unsigned int row_pitch, slice_pitch;
 
-    wined3d_volume_get_pitch(volume, &row_pitch, &slice_pitch);
+    wined3d_resource_get_pitch(sub_resource, &row_pitch, &slice_pitch);
     if (row_pitch != data->row_pitch || slice_pitch != data->slice_pitch)
         FIXME("Ignoring row/slice pitch (%u/%u).\n", data->row_pitch, data->slice_pitch);
 

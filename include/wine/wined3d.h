@@ -2431,6 +2431,8 @@ static inline HRESULT wined3d_private_store_set_private_data(struct wined3d_priv
 void __cdecl wined3d_resource_get_desc(const struct wined3d_resource *resource,
         struct wined3d_resource_desc *desc);
 void * __cdecl wined3d_resource_get_parent(const struct wined3d_resource *resource);
+void __cdecl wined3d_resource_get_pitch(const struct wined3d_resource *resource, UINT *row_pitch,
+        UINT *slice_pitch);
 DWORD __cdecl wined3d_resource_get_priority(const struct wined3d_resource *resource);
 void __cdecl wined3d_resource_set_parent(struct wined3d_resource *resource, void *parent);
 DWORD __cdecl wined3d_resource_set_priority(struct wined3d_resource *resource, DWORD priority);
@@ -2489,7 +2491,6 @@ HRESULT __cdecl wined3d_surface_get_blt_status(const struct wined3d_surface *sur
 HRESULT __cdecl wined3d_surface_get_flip_status(const struct wined3d_surface *surface, DWORD flags);
 HRESULT __cdecl wined3d_surface_get_overlay_position(const struct wined3d_surface *surface, LONG *x, LONG *y);
 void * __cdecl wined3d_surface_get_parent(const struct wined3d_surface *surface);
-DWORD __cdecl wined3d_surface_get_pitch(const struct wined3d_surface *surface);
 HRESULT __cdecl wined3d_surface_get_render_target_data(struct wined3d_surface *surface,
         struct wined3d_surface *render_target);
 struct wined3d_resource * __cdecl wined3d_surface_get_resource(struct wined3d_surface *surface);

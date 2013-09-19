@@ -2164,6 +2164,7 @@ struct wined3d_resource
     UINT size;
     DWORD priority;
     void *heap_memory;
+    UINT custom_row_pitch, custom_slice_pitch;
     struct list resource_list_entry;
 
     void *parent;
@@ -2328,7 +2329,6 @@ BOOL volume_prepare_system_memory(struct wined3d_volume *volume) DECLSPEC_HIDDEN
 HRESULT wined3d_volume_create(struct wined3d_texture *container, const struct wined3d_resource_desc *desc,
         unsigned int level, struct wined3d_volume **volume) DECLSPEC_HIDDEN;
 void wined3d_volume_destroy(struct wined3d_volume *volume) DECLSPEC_HIDDEN;
-void wined3d_volume_get_pitch(const struct wined3d_volume *volume, UINT *row_pitch, UINT *slice_pitch) DECLSPEC_HIDDEN;
 void wined3d_volume_load(struct wined3d_volume *volume, struct wined3d_context *context,
         BOOL srgb_mode) DECLSPEC_HIDDEN;
 void wined3d_volume_invalidate_location(struct wined3d_volume *volume, DWORD location) DECLSPEC_HIDDEN;
@@ -2378,7 +2378,6 @@ struct wined3d_surface
 
     DWORD flags;
 
-    UINT pitch;
     UINT pow2Width;
     UINT pow2Height;
 
