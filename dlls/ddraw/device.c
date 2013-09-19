@@ -1821,12 +1821,13 @@ static HRESULT d3d_device_set_render_target(struct d3d_device *device,
         return DDERR_INVALIDPARAMS;
     }
 
-    IUnknown_AddRef(rt_iface);
-    IUnknown_Release(device->rt_iface);
-    device->rt_iface = rt_iface;
     if (FAILED(hr = wined3d_device_set_render_target(device->wined3d_device,
             0, target->wined3d_surface, FALSE)))
         return hr;
+
+    IUnknown_AddRef(rt_iface);
+    IUnknown_Release(device->rt_iface);
+    device->rt_iface = rt_iface;
     d3d_device_update_depth_stencil(device);
 
     return D3D_OK;
@@ -1862,6 +1863,16 @@ static HRESULT d3d_device7_SetRenderTarget(IDirect3DDevice7 *iface,
         WARN("Surface %p is not in video memory.\n", target_impl);
         wined3d_mutex_unlock();
         return DDERR_INVALIDPARAMS;
+    }
+
+    if (target_impl->surface_desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER)
+    {
+        WARN("Surface %p is a depth buffer.\n", target_impl);
+        IDirectDrawSurface7_AddRef(target);
+        IUnknown_Release(device->rt_iface);
+        device->rt_iface = (IUnknown *)target;
+        wined3d_mutex_unlock();
+        return DDERR_INVALIDPIXELFORMAT;
     }
 
     hr = d3d_device_set_render_target(device, target_impl, (IUnknown *)target);
@@ -1913,6 +1924,16 @@ static HRESULT WINAPI d3d_device3_SetRenderTarget(IDirect3DDevice3 *iface,
         return DDERR_INVALIDCAPS;
     }
 
+    if (target_impl->surface_desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER)
+    {
+        WARN("Surface %p is a depth buffer.\n", target_impl);
+        IDirectDrawSurface4_AddRef(target);
+        IUnknown_Release(device->rt_iface);
+        device->rt_iface = (IUnknown *)target;
+        wined3d_mutex_unlock();
+        return DDERR_INVALIDPIXELFORMAT;
+    }
+
     if (!(target_impl->surface_desc.ddsCaps.dwCaps & DDSCAPS_VIDEOMEMORY))
     {
         WARN("Surface %p is not in video memory.\n", target_impl);
@@ -1951,6 +1972,15 @@ static HRESULT WINAPI d3d_device2_SetRenderTarget(IDirect3DDevice2 *iface,
         WARN("Surface %p is not a render target.\n", target_impl);
         wined3d_mutex_unlock();
         return DDERR_INVALIDCAPS;
+    }
+
+    if (target_impl->surface_desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER)
+    {
+        WARN("Surface %p is a depth buffer.\n", target_impl);
+        IUnknown_Release(device->rt_iface);
+        device->rt_iface = (IUnknown *)target;
+        wined3d_mutex_unlock();
+        return DDERR_INVALIDPIXELFORMAT;
     }
 
     if (!(target_impl->surface_desc.ddsCaps.dwCaps & DDSCAPS_VIDEOMEMORY))
