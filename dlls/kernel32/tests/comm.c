@@ -2153,20 +2153,14 @@ todo_wine
                 SetLastError(0xdeadbeef);
                 ret = ReadFile(hcom, buf, 0, &bytes, NULL);
                 ok(!ret, "ReadFile should fail\n");
-todo_wine
                 ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
                 ok(bytes == 0, "bytes %u\n", bytes);
 
                 iob.Status = -1;
                 iob.Information = -1;
                 status = pNtReadFile(hcom, 0, NULL, NULL, &iob, buf, 0, NULL, NULL);
-todo_wine
                 ok(status == STATUS_INVALID_PARAMETER, "expected STATUS_INVALID_PARAMETER, got %#x\n", status);
-                /* FIXME: Remove once Wine is fixed */
-                if (status == STATUS_PENDING) WaitForSingleObject(hcom, TIMEOUT);
-todo_wine
                 ok(iob.Status == -1, "expected -1, got %#x\n", iob.Status);
-todo_wine
                 ok(iob.Information == -1, "expected -1, got %ld\n", iob.Information);
 
                 for (i = -20; i < 20; i++)
@@ -2187,11 +2181,8 @@ todo_wine
                     }
                     else
                     {
-todo_wine
                         ok(status == STATUS_INVALID_PARAMETER, "%d: expected STATUS_INVALID_PARAMETER, got %#x\n", i, status);
-todo_wine
                         ok(iob.Status == -1, "%d: expected -1, got %#x\n", i, iob.Status);
-todo_wine
                         ok(iob.Information == -1, "%d: expected -1, got %ld\n", i, iob.Information);
                     }
                 }
