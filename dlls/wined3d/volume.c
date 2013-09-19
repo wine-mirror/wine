@@ -404,24 +404,14 @@ static BOOL wined3d_volume_check_box_dimensions(const struct wined3d_volume *vol
 HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
         struct wined3d_map_desc *map_desc, const struct wined3d_box *box, DWORD flags)
 {
-    struct wined3d_device *device = volume->resource.device;
-    struct wined3d_context *context;
-    BYTE *base_memory;
+    HRESULT hr;
     const struct wined3d_format *format = volume->resource.format;
     const unsigned int fmt_flags = volume->container->resource.format_flags;
-
-    TRACE("volume %p, map_desc %p, box %p, flags %#x.\n",
-            volume, map_desc, box, flags);
 
     map_desc->data = NULL;
     if (!(volume->resource.access_flags & WINED3D_RESOURCE_ACCESS_CPU))
     {
         WARN("Volume %p is not CPU accessible.\n", volume);
-        return WINED3DERR_INVALIDCALL;
-    }
-    if (volume->resource.map_count)
-    {
-        WARN("Volume is already mapped.\n");
         return WINED3DERR_INVALIDCALL;
     }
     if (!wined3d_volume_check_box_dimensions(volume, box))
@@ -436,74 +426,11 @@ HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
         return WINED3DERR_INVALIDCALL;
     }
 
-    flags = wined3d_resource_sanitize_map_flags(&volume->resource, flags);
+    hr = wined3d_resource_map(&volume->resource, map_desc, box, flags);
+    if (FAILED(hr))
+        return hr;
 
-    context = context_acquire(device, NULL);
-    if (!wined3d_resource_prepare_map_memory(&volume->resource, context))
-    {
-        WARN("Out of memory.\n");
-        map_desc->data = NULL;
-        context_release(context);
-        return E_OUTOFMEMORY;
-    }
-
-    if (flags & WINED3D_MAP_DISCARD)
-        wined3d_resource_validate_location(&volume->resource, volume->resource.map_binding);
-    else
-        wined3d_resource_load_location(&volume->resource, context, volume->resource.map_binding);
-
-    base_memory = wined3d_resource_get_map_ptr(&volume->resource, context, flags);
-    context_release(context);
-
-    TRACE("Base memory pointer %p.\n", base_memory);
-
-    if (fmt_flags & WINED3DFMT_FLAG_BROKEN_PITCH)
-    {
-        map_desc->row_pitch = volume->resource.width * format->byte_count;
-        map_desc->slice_pitch = map_desc->row_pitch * volume->resource.height;
-    }
-    else
-    {
-        wined3d_resource_get_pitch(&volume->resource, &map_desc->row_pitch, &map_desc->slice_pitch);
-    }
-
-    if (!box)
-    {
-        TRACE("No box supplied - all is ok\n");
-        map_desc->data = base_memory;
-    }
-    else
-    {
-        TRACE("Lock Box (%p) = l %u, t %u, r %u, b %u, fr %u, ba %u\n",
-                box, box->left, box->top, box->right, box->bottom, box->front, box->back);
-
-        if ((fmt_flags & (WINED3DFMT_FLAG_BLOCKS | WINED3DFMT_FLAG_BROKEN_PITCH)) == WINED3DFMT_FLAG_BLOCKS)
-        {
-            /* Compressed textures are block based, so calculate the offset of
-             * the block that contains the top-left pixel of the locked rectangle. */
-            map_desc->data = base_memory
-                    + (box->front * map_desc->slice_pitch)
-                    + ((box->top / format->block_height) * map_desc->row_pitch)
-                    + ((box->left / format->block_width) * format->block_byte_count);
-        }
-        else
-        {
-            map_desc->data = base_memory
-                    + (map_desc->slice_pitch * box->front)
-                    + (map_desc->row_pitch * box->top)
-                    + (box->left * volume->resource.format->byte_count);
-        }
-    }
-
-    if (!(flags & (WINED3D_MAP_NO_DIRTY_UPDATE | WINED3D_MAP_READONLY)))
-        wined3d_resource_invalidate_location(&volume->resource, ~volume->resource.map_binding);
-
-    volume->resource.map_count++;
-
-    TRACE("Returning memory %p, row pitch %d, slice pitch %d.\n",
-            map_desc->data, map_desc->row_pitch, map_desc->slice_pitch);
-
-    return WINED3D_OK;
+    return hr;
 }
 
 struct wined3d_volume * CDECL wined3d_volume_from_resource(struct wined3d_resource *resource)
@@ -513,23 +440,7 @@ struct wined3d_volume * CDECL wined3d_volume_from_resource(struct wined3d_resour
 
 HRESULT CDECL wined3d_volume_unmap(struct wined3d_volume *volume)
 {
-    struct wined3d_device *device = volume->resource.device;
-    struct wined3d_context *context;
-    TRACE("volume %p.\n", volume);
-
-    if (!volume->resource.map_count)
-    {
-        WARN("Trying to unlock an unlocked volume %p.\n", volume);
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    context = context_acquire(device, NULL);
-    wined3d_resource_release_map_ptr(&volume->resource, context);
-    context_release(context);
-
-    volume->resource.map_count--;
-
-    return WINED3D_OK;
+    return wined3d_resource_unmap(&volume->resource);
 }
 
 static ULONG volume_resource_incref(struct wined3d_resource *resource)

@@ -2210,12 +2210,15 @@ void wined3d_resource_invalidate_location(struct wined3d_resource *resource, DWO
 BOOL wined3d_resource_is_offscreen(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 void wined3d_resource_load_location(struct wined3d_resource *resource,
         struct wined3d_context *context, DWORD location) DECLSPEC_HIDDEN;
+HRESULT wined3d_resource_map(struct wined3d_resource *resource, struct wined3d_map_desc *map_desc,
+        const struct wined3d_box *box, DWORD flags) DECLSPEC_HIDDEN;
 BOOL wined3d_resource_prepare_map_memory(struct wined3d_resource *resource,
         struct wined3d_context *context) DECLSPEC_HIDDEN;
 BOOL wined3d_resource_prepare_system_memory(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 void wined3d_resource_release_map_ptr(const struct wined3d_resource *resource,
         const struct wined3d_context *context) DECLSPEC_HIDDEN;
 DWORD wined3d_resource_sanitize_map_flags(const struct wined3d_resource *resource, DWORD flags) DECLSPEC_HIDDEN;
+HRESULT wined3d_resource_unmap(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 void wined3d_resource_update_draw_binding(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 void wined3d_resource_validate_location(struct wined3d_resource *resource, DWORD location) DECLSPEC_HIDDEN;
 

@@ -765,3 +765,118 @@ BOOL wined3d_resource_check_block_align(const struct wined3d_resource *resource,
 
     return TRUE;
 }
+
+HRESULT wined3d_resource_map(struct wined3d_resource *resource,
+        struct wined3d_map_desc *map_desc, const struct wined3d_box *box, DWORD flags)
+{
+    struct wined3d_device *device = resource->device;
+    struct wined3d_context *context = NULL;
+    BYTE *base_memory;
+    const struct wined3d_format *format = resource->format;
+    const unsigned int fmt_flags = resource->format->flags[WINED3D_GL_RES_TYPE_TEX_2D];
+
+    TRACE("resource %p, map_desc %p, box %p, flags %#x.\n",
+            resource, map_desc, box, flags);
+
+    if (resource->map_count)
+    {
+        WARN("Volume is already mapped.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    flags = wined3d_resource_sanitize_map_flags(resource, flags);
+
+    if (device->d3d_initialized)
+        context = context_acquire(device, NULL);
+
+    if (!wined3d_resource_prepare_map_memory(resource, context))
+    {
+        WARN("Out of memory.\n");
+        map_desc->data = NULL;
+        context_release(context);
+        return E_OUTOFMEMORY;
+    }
+
+    if (flags & WINED3D_MAP_DISCARD)
+        wined3d_resource_validate_location(resource, resource->map_binding);
+    else
+        wined3d_resource_load_location(resource, context, resource->map_binding);
+
+    base_memory = wined3d_resource_get_map_ptr(resource, context, flags);
+
+    if (context)
+        context_release(context);
+
+    TRACE("Base memory pointer %p.\n", base_memory);
+
+    if (fmt_flags & WINED3DFMT_FLAG_BROKEN_PITCH)
+    {
+        map_desc->row_pitch = resource->width * format->byte_count;
+        map_desc->slice_pitch = map_desc->row_pitch * resource->height;
+    }
+    else
+    {
+        wined3d_resource_get_pitch(resource, &map_desc->row_pitch, &map_desc->slice_pitch);
+    }
+
+    if (!box)
+    {
+        TRACE("No box supplied - all is ok\n");
+        map_desc->data = base_memory;
+    }
+    else
+    {
+        TRACE("Lock Box (%p) = l %u, t %u, r %u, b %u, fr %u, ba %u\n",
+                box, box->left, box->top, box->right, box->bottom, box->front, box->back);
+
+        if ((fmt_flags & (WINED3DFMT_FLAG_BLOCKS | WINED3DFMT_FLAG_BROKEN_PITCH)) == WINED3DFMT_FLAG_BLOCKS)
+        {
+            /* Compressed textures are block based, so calculate the offset of
+             * the block that contains the top-left pixel of the locked rectangle. */
+            map_desc->data = base_memory
+                    + (box->front * map_desc->slice_pitch)
+                    + ((box->top / format->block_height) * map_desc->row_pitch)
+                    + ((box->left / format->block_width) * format->block_byte_count);
+        }
+        else
+        {
+            map_desc->data = base_memory
+                    + (map_desc->slice_pitch * box->front)
+                    + (map_desc->row_pitch * box->top)
+                    + (box->left * format->byte_count);
+        }
+    }
+
+    if (!(flags & (WINED3D_MAP_NO_DIRTY_UPDATE | WINED3D_MAP_READONLY)))
+        wined3d_resource_invalidate_location(resource, ~resource->map_binding);
+
+    resource->map_count++;
+
+    TRACE("Returning memory %p, row pitch %d, slice pitch %d.\n",
+            map_desc->data, map_desc->row_pitch, map_desc->slice_pitch);
+
+    return WINED3D_OK;
+}
+
+HRESULT wined3d_resource_unmap(struct wined3d_resource *resource)
+{
+    struct wined3d_device *device = resource->device;
+    struct wined3d_context *context = NULL;
+    TRACE("resource %p.\n", resource);
+
+    if (!resource->map_count)
+    {
+        WARN("Trying to unlock an unlocked resource %p.\n", resource);
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    if (device->d3d_initialized)
+        context = context_acquire(device, NULL);
+    wined3d_resource_release_map_ptr(resource, context);
+    if (context)
+        context_release(context);
+
+    resource->map_count--;
+
+    return WINED3D_OK;
+}
