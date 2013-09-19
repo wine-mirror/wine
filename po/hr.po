@@ -1072,7 +1072,7 @@ msgstr "Pisač nije povezan; "
 
 #: comdlg32.rc:88
 msgid "I/O Active; "
-msgstr "I/O aktivan; "
+msgstr "U/I aktivan; "
 
 #: comdlg32.rc:89
 msgid "Busy; "
@@ -1413,10 +1413,8 @@ msgid "Surname"
 msgstr "Prezime"
 
 #: crypt32.rc:78
-#, fuzzy
-#| msgid "Unknown component.\n"
 msgid "Domain Component"
-msgstr "Nepoznata komponenta.\n"
+msgstr ""
 
 #: crypt32.rc:79
 msgid "Street Address"
@@ -1604,7 +1602,7 @@ msgstr "Nuncij pošiljatelja"
 
 #: crypt32.rc:125
 msgid "Recipient Nonce"
-msgstr "Nuncija primatelja"
+msgstr "Nuncij primatelja"
 
 #: crypt32.rc:126
 msgid "Reg Info"
@@ -2103,7 +2101,7 @@ msgstr "Status certifikata:"
 
 #: cryptui.rc:221
 msgid "Disclaimer"
-msgstr ""
+msgstr "Izjava o odgovornosti"
 
 #: cryptui.rc:228
 msgid "More &Info"
@@ -4082,11 +4080,11 @@ msgstr "Putanja je zauzeta.\n"
 
 #: winerror.mc:611
 msgid "Already a SUBST target.\n"
-msgstr ""
+msgstr "Već je SUBST meta.\n"
 
 #: winerror.mc:616
 msgid "System trace not specified or disallowed.\n"
-msgstr ""
+msgstr "Sistemski trag nije naveden ili odbijen.\n"
 
 #: winerror.mc:621
 msgid "Event count for DosMuxSemWait incorrect.\n"
@@ -4106,7 +4104,7 @@ msgstr "Oznaka jedinice je predugačka.\n"
 
 #: winerror.mc:641
 msgid "Too many TCBs.\n"
-msgstr "Previše TCBs.\n"
+msgstr "Previše TCBa.\n"
 
 #: winerror.mc:646
 msgid "Signal refused.\n"
@@ -4214,7 +4212,7 @@ msgstr "Dynlink iz neispravnog prstena.\n"
 
 #: winerror.mc:776
 msgid "IOPL not enabled.\n"
-msgstr "IDPL nije omogućeno.\n"
+msgstr "IOPL nije omogućen.\n"
 
 #: winerror.mc:781
 msgid "Invalid SEGDPL in %1.\n"
@@ -4390,15 +4388,15 @@ msgstr "Odbijen pristup proširenom atributu.\n"
 
 #: winerror.mc:996
 msgid "I/O operation aborted.\n"
-msgstr "I/O operacija prekinuta.\n"
+msgstr "U/I operacija prekinuta.\n"
 
 #: winerror.mc:1001
 msgid "Overlapped I/O incomplete.\n"
-msgstr "Preklapajući I/O nepotpun.\n"
+msgstr "Preklapajući U/I nepotpun.\n"
 
 #: winerror.mc:1006
 msgid "Overlapped I/O pending.\n"
-msgstr "Preklapajući I/O u tijeku.\n"
+msgstr "Preklapajući U/I u tijeku.\n"
 
 #: winerror.mc:1011
 msgid "No access to memory location.\n"
@@ -4470,7 +4468,7 @@ msgstr "Registar je oštećen.\n"
 
 #: winerror.mc:1096
 msgid "I/O to registry failed.\n"
-msgstr "I/O u registar neuspio.\n"
+msgstr "U/I u registar neuspio.\n"
 
 #: winerror.mc:1101
 msgid "Not registry file.\n"
@@ -4674,7 +4672,7 @@ msgstr "Promijenjen medij.\n"
 
 #: winerror.mc:1351
 msgid "I/O bus reset.\n"
-msgstr "Reset I/O sabirnice.\n"
+msgstr "Reset U/I sabirnice.\n"
 
 #: winerror.mc:1356
 msgid "No media in drive.\n"
@@ -4698,7 +4696,7 @@ msgstr "Nema gašenja u tijeku.\n"
 
 #: winerror.mc:1381
 msgid "I/O device error.\n"
-msgstr "Greška I/O uređaja.\n"
+msgstr "Greška U/I uređaja.\n"
 
 #: winerror.mc:1386
 msgid "No serial devices found.\n"
@@ -4710,11 +4708,11 @@ msgstr "Dijeljeni IRQ je zauzet.\n"
 
 #: winerror.mc:1396
 msgid "Serial I/O completed.\n"
-msgstr "Serijski I/O završen.\n"
+msgstr "Serijski U/I završen.\n"
 
 #: winerror.mc:1401
 msgid "Serial I/O counter timeout.\n"
-msgstr "Istek vremena serijskog I/O brojača.\n"
+msgstr "Istek vremena serijskog U/I brojača.\n"
 
 #: winerror.mc:1406
 msgid "Floppy ID address mark not found.\n"
@@ -5382,7 +5380,7 @@ msgstr "Neispravna vrsta prijave.\n"
 
 #: winerror.mc:2241
 msgid "Cannot impersonate.\n"
-msgstr ""
+msgstr "Ne mogu oponašati.\n"
 
 #: winerror.mc:2246
 msgid "Invalid transaction state.\n"
@@ -6742,7 +6740,7 @@ msgid ""
 msgstr ""
 "Windows instalacija programa %s\n"
 "\n"
-"Upotreba:\n"
+"Uporaba:\n"
 "msiexec naredba {obavezan parametar} [neobavezan parametar]\n"
 "\n"
 "Instalacija proizvoda:\n"
@@ -8447,15 +8445,15 @@ msgstr ""
 
 #: winmm.rc:37
 msgid "An error number was specified that is not defined in the system."
-msgstr ""
+msgstr "Broj greške je naveden koji nije definiran u sistemu."
 
 #: winmm.rc:38
 msgid "An invalid flag was passed to a system function."
-msgstr ""
+msgstr "Neispravna zastavica je predata funkciji sistema."
 
 #: winmm.rc:39
 msgid "An invalid parameter was passed to a system function."
-msgstr ""
+msgstr "Neispravan parametar je predat funkciji sistema."
 
 #: winmm.rc:42
 msgid ""
@@ -9228,34 +9226,36 @@ msgid ""
 "CD <dir> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
 msgstr ""
+"CD <dir> je kraća verzija CHDIR. Mijenja trenutan podrazumijevan\n"
+"direktorij.\n"
 
 #: cmd.rc:41
 msgid "CHDIR <dir> changes the current default directory.\n"
-msgstr ""
+msgstr "CHDIR <dir> mijenja trenutan podrazumijevan direktorij.\n"
 
 #: cmd.rc:43
 msgid "CLS clears the console screen.\n"
-msgstr ""
+msgstr "CLS briše ekran konzole.\n"
 
 #: cmd.rc:45
 msgid "COPY <filename> copies a file.\n"
-msgstr ""
+msgstr "COPY <imeDatoteke> kopira datoteku.\n"
 
 #: cmd.rc:46
 msgid "CTTY changes the input/output device.\n"
-msgstr ""
+msgstr "CTTY mijenja U/I uređaj.\n"
 
 #: cmd.rc:47
 msgid "DATE shows or changes the system date.\n"
-msgstr ""
+msgstr "DATE prikazuje ili mijenja vrijeme sustava.\n"
 
 #: cmd.rc:48
 msgid "DEL <filename> deletes a file or set of files.\n"
-msgstr ""
+msgstr "DEL <imeDatoteke> briše datoteku ili skup datoteka.\n"
 
 #: cmd.rc:49
 msgid "DIR lists the contents of a directory.\n"
-msgstr ""
+msgstr "DIR ispisuje sadržaj direktorija.\n"
 
 #: cmd.rc:59
 msgid ""
@@ -9271,7 +9271,7 @@ msgstr ""
 
 #: cmd.rc:61
 msgid "ERASE <filename> deletes a file or set of files.\n"
-msgstr ""
+msgstr "ERASE <imeDatoteke> briše datoteku ili skup datoteka.\n"
 
 #: cmd.rc:66
 msgid ""
@@ -9299,6 +9299,8 @@ msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
 msgstr ""
+"HELP <naredba> prikazuje kratku pomoć o temi.\n"
+"HELP bez argumenta prikazuje sve CMD ugrađene naredbe.\n"
 
 #: cmd.rc:91
 msgid ""
@@ -9323,11 +9325,11 @@ msgstr ""
 
 #: cmd.rc:100
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
-msgstr ""
+msgstr "MD <ime> je kraća verzija MKDIR. Stvara poddirektorij.\n"
 
 #: cmd.rc:101
 msgid "MKDIR <name> creates a subdirectory.\n"
-msgstr ""
+msgstr "MKDIR <ime> stvara poddirektorij.\n"
 
 #: cmd.rc:108
 msgid ""
@@ -9392,19 +9394,19 @@ msgstr ""
 
 #: cmd.rc:153
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
-msgstr ""
+msgstr "REN <imeDatoteke> je kraća verzija RENAME. Preimenuje datoteku.\n"
 
 #: cmd.rc:154
 msgid "RENAME <filename> renames a file.\n"
-msgstr ""
+msgstr "RENAME <imeDatoteke> preimenuje datoteku.\n"
 
 #: cmd.rc:156
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
-msgstr ""
+msgstr "RD <dir> je kraća verzija RMDIR. Briše poddirektorij.\n"
 
 #: cmd.rc:157
 msgid "RMDIR <dir> deletes a subdirectory.\n"
-msgstr ""
+msgstr "RMDIR <dir> briše poddirektorij.\n"
 
 #: cmd.rc:201
 msgid ""
@@ -9465,11 +9467,11 @@ msgstr ""
 
 #: cmd.rc:208
 msgid "TIME sets or shows the current system time.\n"
-msgstr ""
+msgstr "TIME postavlja ili prikazuje trenutno vrijeme sistema.\n"
 
 #: cmd.rc:210
 msgid "TITLE <string> sets the window title for the cmd window.\n"
-msgstr ""
+msgstr "TITLE <string> postavlja naslov prozora za cmd prozor.\n"
 
 #: cmd.rc:214
 msgid ""
@@ -9490,7 +9492,7 @@ msgstr ""
 
 #: cmd.rc:226
 msgid "VER displays the version of cmd you are running.\n"
-msgstr ""
+msgstr "VER prikazuje verziju cmd koju izvodite.\n"
 
 #: cmd.rc:228
 msgid "VOL shows the volume label of a disk device.\n"
@@ -9609,7 +9611,7 @@ msgstr ""
 
 #: cmd.rc:314
 msgid "Are you sure?"
-msgstr ""
+msgstr "Da li ste sigurni?"
 
 #: cmd.rc:315 xcopy.rc:40
 msgctxt "Yes key"
@@ -9643,11 +9645,11 @@ msgstr ""
 
 #: cmd.rc:323
 msgid "Argument missing\n"
-msgstr ""
+msgstr "Nedostaje argument\n"
 
 #: cmd.rc:324
 msgid "Syntax error\n"
-msgstr ""
+msgstr "Sintaksna greška\n"
 
 #: cmd.rc:326
 msgid "No help available for %1\n"
@@ -9663,23 +9665,23 @@ msgstr "Trenutni datum je %1\n"
 
 #: cmd.rc:329
 msgid "Current Time is %1\n"
-msgstr ""
+msgstr "Trenutno vrijeme je %1\n"
 
 #: cmd.rc:330
 msgid "Enter new date: "
-msgstr ""
+msgstr "Unesite novi datum: "
 
 #: cmd.rc:331
 msgid "Enter new time: "
-msgstr ""
+msgstr "Unesite novo vrijeme: "
 
 #: cmd.rc:332
 msgid "Environment variable %1 not defined\n"
-msgstr ""
+msgstr "Varijabla okruženja %1 nije definirana\n"
 
 #: cmd.rc:333 xcopy.rc:38
 msgid "Failed to open '%1'\n"
-msgstr ""
+msgstr "Neuspjelo otvaranje '%1'\n"
 
 #: cmd.rc:334
 msgid "Cannot call batch label outside of a batch script\n"
@@ -9708,7 +9710,7 @@ msgstr ""
 
 #: cmd.rc:340
 msgid "Parameter error\n"
-msgstr ""
+msgstr "Greška parametra\n"
 
 #: cmd.rc:341
 msgid ""
@@ -9722,11 +9724,11 @@ msgstr ""
 
 #: cmd.rc:343
 msgid "PATH not found\n"
-msgstr ""
+msgstr "PATH nije nađen\n"
 
 #: cmd.rc:344
 msgid "Press any key to continue... "
-msgstr ""
+msgstr "Pritisnite bilo koju tipku za nastavak... "
 
 #: cmd.rc:345
 msgid "Wine Command Prompt"
@@ -9734,15 +9736,15 @@ msgstr ""
 
 #: cmd.rc:346
 msgid "Wine CMD Version %1!S!\n"
-msgstr ""
+msgstr "Wine CMD verzija %1!5!\n"
 
 #: cmd.rc:347
 msgid "More? "
-msgstr ""
+msgstr "Više? "
 
 #: cmd.rc:348
 msgid "The input line is too long.\n"
-msgstr ""
+msgstr "Ulazni redak je predugačak.\n"
 
 #: cmd.rc:349
 msgid "Volume in drive %1!c! is %2\n"
@@ -9767,19 +9769,19 @@ msgstr ""
 
 #: cmd.rc:354
 msgid "Division by zero error.\n"
-msgstr ""
+msgstr "Greška dijeljenja sa nulom.\n"
 
 #: cmd.rc:355
 msgid "Expected an operand.\n"
-msgstr ""
+msgstr "Očekivan operand.\n"
 
 #: cmd.rc:356
 msgid "Expected an operator.\n"
-msgstr ""
+msgstr "Očekivan operator.\n"
 
 #: cmd.rc:357
 msgid "Mismatch in parentheses.\n"
-msgstr ""
+msgstr "Nepodudaranje u zagradama.\n"
 
 #: cmd.rc:358
 msgid ""
@@ -9789,11 +9791,12 @@ msgstr ""
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
-msgstr ""
+msgstr "DirectX Dijagnostički Alat"
 
 #: dxdiag.rc:28
 msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
 msgstr ""
+"Uporaba: dxdiag [/whql:off | /whql:on] [/t imeDatoteke | /x imeDatoteke]"
 
 #: explorer.rc:28
 msgid "Wine Explorer"
@@ -9801,11 +9804,11 @@ msgstr "Wine Explorer"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
-msgstr ""
+msgstr "Uporaba: hostname\n"
 
 #: hostname.rc:28
 msgid "Error: Invalid option '%c'.\n"
-msgstr ""
+msgstr "Greška: Neispravna opcija '%c'.\n"
 
 #: hostname.rc:29
 msgid ""
@@ -9815,7 +9818,7 @@ msgstr ""
 
 #: ipconfig.rc:27
 msgid "Usage: ipconfig [ /? | /all ]\n"
-msgstr "Upotreba: ipconfig [ /? | /all ]\n"
+msgstr "Uporaba: ipconfig [ /? | /sve ]\n"
 
 #: ipconfig.rc:28
 msgid "Error: Unknown or invalid command line parameters specified\n"
@@ -9824,7 +9827,7 @@ msgstr ""
 
 #: ipconfig.rc:29
 msgid "%1 adapter %2\n"
-msgstr ""
+msgstr "%1 adapter %2\n"
 
 #: ipconfig.rc:30
 msgid "Ethernet"
@@ -9911,6 +9914,11 @@ msgid ""
 "\n"
 "Where 'service' is the name of the service to stop.\n"
 msgstr ""
+"Sintaksa ove naredbe je:\n"
+"\n"
+"NET STOP servis\n"
+"\n"
+"Gdje je 'servis' ime servisa koji će se zaustaviti.\n"
 
 #: net.rc:30
 msgid "Stopping dependent service: %1\n"
@@ -9962,10 +9970,13 @@ msgid ""
 "Status  Local   Remote\n"
 "---------------------------------------------------------------\n"
 msgstr ""
+"\n"
+"Status  Lokalno   Udaljeno\n"
+"---------------------------------------------------------------\n"
 
 #: net.rc:43
 msgid "%1      %2      %3      Open resources: %4!u!\n"
-msgstr ""
+msgstr "%1      %2      %3      Otvoreni resursi: %4!u!\n"
 
 #: net.rc:45
 msgid "Paused"
@@ -9977,7 +9988,7 @@ msgstr "Odspojeno"
 
 #: net.rc:47
 msgid "A network error occurred"
-msgstr ""
+msgstr "Dogodila se mrežna pogreška"
 
 #: net.rc:48
 msgid "Connection is being made"
@@ -10001,11 +10012,11 @@ msgstr ""
 
 #: netstat.rc:29
 msgid "Local Address"
-msgstr ""
+msgstr "Lokalna adresa"
 
 #: netstat.rc:30
 msgid "Foreign Address"
-msgstr ""
+msgstr "Strana adresa"
 
 #: netstat.rc:31
 msgid "State"
@@ -10013,15 +10024,15 @@ msgstr "Stanje"
 
 #: netstat.rc:32
 msgid "Interface Statistics"
-msgstr ""
+msgstr "Statistike sučelja"
 
 #: netstat.rc:33
 msgid "Sent"
-msgstr ""
+msgstr "Poslano"
 
 #: netstat.rc:34
 msgid "Received"
-msgstr ""
+msgstr "Primljeno"
 
 #: netstat.rc:35
 msgid "Bytes"
@@ -10029,15 +10040,15 @@ msgstr "okteti"
 
 #: netstat.rc:36
 msgid "Unicast packets"
-msgstr ""
+msgstr "Unicast paketi"
 
 #: netstat.rc:37
 msgid "Non-unicast packets"
-msgstr ""
+msgstr "Ne-Unicast paketi"
 
 #: netstat.rc:38
 msgid "Discards"
-msgstr ""
+msgstr "Odbačaji"
 
 #: netstat.rc:39
 msgid "Errors"
@@ -10049,7 +10060,7 @@ msgstr "Nepoznati protokoli"
 
 #: netstat.rc:41
 msgid "TCP Statistics for IPv4"
-msgstr ""
+msgstr "TCP statistike za IPv4"
 
 #: netstat.rc:42
 msgid "Active Opens"
@@ -10061,7 +10072,7 @@ msgstr ""
 
 #: netstat.rc:44
 msgid "Failed Connection Attempts"
-msgstr ""
+msgstr "Neuspjele uspostave veze"
 
 #: netstat.rc:45
 msgid "Reset Connections"
@@ -10069,27 +10080,27 @@ msgstr ""
 
 #: netstat.rc:46
 msgid "Current Connections"
-msgstr ""
+msgstr "Trenutne veze"
 
 #: netstat.rc:47
 msgid "Segments Received"
-msgstr ""
+msgstr "Primljeni segmenti"
 
 #: netstat.rc:48
 msgid "Segments Sent"
-msgstr ""
+msgstr "Poslani segmenti"
 
 #: netstat.rc:49
 msgid "Segments Retransmitted"
-msgstr ""
+msgstr "Ponovno poslani segmenti"
 
 #: netstat.rc:50
 msgid "UDP Statistics for IPv4"
-msgstr ""
+msgstr "UDP statistike za IPv4"
 
 #: netstat.rc:51
 msgid "Datagrams Received"
-msgstr ""
+msgstr "Primljeni satagrami"
 
 #: netstat.rc:52
 msgid "No Ports"
@@ -10097,11 +10108,11 @@ msgstr "Nema vratiju"
 
 #: netstat.rc:53
 msgid "Receive Errors"
-msgstr "Greška u primanju"
+msgstr "Greške u primanju"
 
 #: netstat.rc:54
 msgid "Datagrams Sent"
-msgstr ""
+msgstr "Poslani datagrami"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
@@ -10309,7 +10320,7 @@ msgstr ""
 
 #: notepad.rc:80
 msgid "'%s' could not be found."
-msgstr "Datoteka '%s' nije pronađena."
+msgstr "'%s' nije pronađeno."
 
 #: notepad.rc:82
 msgid "Unicode (UTF-16)"
@@ -10391,7 +10402,7 @@ msgstr ""
 
 #: oleview.rc:53
 msgid "Copy C&LSID to clipboard"
-msgstr ""
+msgstr "Kopiraj C&LSID u ostavu"
 
 #: oleview.rc:54
 msgid "Copy &HTML object Tag to clipboard"
@@ -10407,11 +10418,11 @@ msgstr ""
 
 #: oleview.rc:64 oleview.rc:86 winefile.rc:62 wordpad.rc:68 wordpad.rc:261
 msgid "&Toolbar"
-msgstr ""
+msgstr "&Alatna traka"
 
 #: oleview.rc:65 oleview.rc:87 winefile.rc:64 wordpad.rc:71 wordpad.rc:264
 msgid "&Status Bar"
-msgstr ""
+msgstr "&Statusna traka"
 
 #: oleview.rc:67 regedit.rc:69 winefile.rc:76
 msgid "&Refresh\tF5"
@@ -10431,11 +10442,11 @@ msgstr ""
 
 #: oleview.rc:154
 msgid "Connect to another machine"
-msgstr ""
+msgstr "Poveži se s drugim uređajem"
 
 #: oleview.rc:157
 msgid "&Machine name:"
-msgstr ""
+msgstr "&Ime uređaja:"
 
 #: oleview.rc:165
 msgid "System Configuration"
@@ -10447,21 +10458,23 @@ msgstr "Postavke sistema"
 
 #: oleview.rc:169
 msgid "&Enable Distributed COM"
-msgstr ""
+msgstr "&Omogući distribuirani COM"
 
 #: oleview.rc:170
 msgid "Enable &Remote Connections (Win95 only)"
-msgstr ""
+msgstr "Omogući &udaljene veze (samo Win95)"
 
 #: oleview.rc:171
 msgid ""
 "These settings change only registry values.\n"
 "They have no effect on Wine performance."
 msgstr ""
+"Ove postavke mijenjaju samo vrijednosti registra.\n"
+"Nemaju nikakav utjecaj na performanse Wine-a."
 
 #: oleview.rc:178
 msgid "Default Interface Viewer"
-msgstr ""
+msgstr "Pretpostavljeni preglednik sučelja"
 
 #: oleview.rc:181
 msgid "Interface"
@@ -10469,7 +10482,7 @@ msgstr "Sučelje"
 
 #: oleview.rc:183
 msgid "IID:"
-msgstr ""
+msgstr "IID:"
 
 #: oleview.rc:186
 msgid "&View Type Info"
@@ -10477,19 +10490,19 @@ msgstr "Prikaži informacije o &tipu"
 
 #: oleview.rc:191
 msgid "IPersist Interface Viewer"
-msgstr ""
+msgstr "IPersist preglednik sučelja"
 
 #: oleview.rc:194 oleview.rc:206
 msgid "Class Name:"
-msgstr ""
+msgstr "Ime klase:"
 
 #: oleview.rc:196 oleview.rc:208
 msgid "CLSID:"
-msgstr ""
+msgstr "CLSID:"
 
 #: oleview.rc:203
 msgid "IPersistStream Interface Viewer"
-msgstr ""
+msgstr "IPersistStream preglednik sučelja"
 
 #: oleview.rc:93 oleview.rc:94
 msgid "OleView"
@@ -10497,11 +10510,11 @@ msgstr "OleView"
 
 #: oleview.rc:98
 msgid "ITypeLib viewer"
-msgstr ""
+msgstr "ITypeLib preglednik"
 
 #: oleview.rc:96
 msgid "OleView - OLE/COM Object Viewer"
-msgstr ""
+msgstr "OleView - OLE/COM preglednik objekata"
 
 #: oleview.rc:97
 msgid "version 1.0"
@@ -10509,7 +10522,7 @@ msgstr "verzija 1.0"
 
 #: oleview.rc:100
 msgid "TypeLib files (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
-msgstr ""
+msgstr "TypeLib datoteke (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
 
 #: oleview.rc:103
 msgid "Bind to file via a File Moniker"
@@ -10517,15 +10530,15 @@ msgstr ""
 
 #: oleview.rc:104
 msgid "Open a TypeLib file and view the contents"
-msgstr ""
+msgstr "Otvori TypeLib datoteku i prikaži sadržaj"
 
 #: oleview.rc:105
 msgid "Change machine wide Distributed COM settings"
-msgstr ""
+msgstr "Promijeni distribuirane COM postavke uređaja"
 
 #: oleview.rc:106
 msgid "Run the Wine registry editor"
-msgstr ""
+msgstr "Pokreni Wine uređivač registra"
 
 #: oleview.rc:107
 msgid "Quit the application. Prompts to save changes"
@@ -10533,11 +10546,11 @@ msgstr ""
 
 #: oleview.rc:108
 msgid "Create an instance of the selected object"
-msgstr ""
+msgstr "Stvori instancu odabranog objekta"
 
 #: oleview.rc:109
 msgid "Create an instance of the selected object on a specific machine"
-msgstr ""
+msgstr "Stvori isntancu odabranog objekta na specifičnom uređaju"
 
 #: oleview.rc:110
 msgid "Release the currently selected object instance"
@@ -10549,7 +10562,7 @@ msgstr ""
 
 #: oleview.rc:112
 msgid "Display the viewer for the selected item"
-msgstr ""
+msgstr "Prikaži preglednik za odabran predmet"
 
 #: oleview.rc:117
 msgid "Toggle between expert and novice display mode"
@@ -10562,15 +10575,15 @@ msgstr ""
 
 #: oleview.rc:119
 msgid "Show or hide the toolbar"
-msgstr ""
+msgstr "Prikaži ili sakrij alatnu traku"
 
 #: oleview.rc:120
 msgid "Show or hide the status bar"
-msgstr ""
+msgstr "Prikaži ili sakrij statusnu traku"
 
 #: oleview.rc:121
 msgid "Refresh all lists"
-msgstr ""
+msgstr "Osvježi sve liste"
 
 #: oleview.rc:122
 msgid "Display program information, version number and copyright"
@@ -10630,7 +10643,7 @@ msgstr "Sučelja"
 
 #: oleview.rc:138
 msgid "Registry"
-msgstr ""
+msgstr "Registar"
 
 #: oleview.rc:139
 msgid "Implementation"
@@ -10654,7 +10667,7 @@ msgstr "okteta"
 
 #: oleview.rc:148
 msgid "LoadTypeLib( %1 ) failed ($%2!x!)"
-msgstr ""
+msgstr "LoadTypeLib( %1 ) neuspio ($%2!x!)"
 
 #: oleview.rc:149
 msgid "Inherited Interfaces"
@@ -10678,11 +10691,11 @@ msgstr "&Novo..."
 
 #: progman.rc:31
 msgid "O&pen\tEnter"
-msgstr ""
+msgstr "O&tvori\tEnter"
 
 #: progman.rc:32 winefile.rc:27
 msgid "&Move...\tF7"
-msgstr ""
+msgstr "P&remjesti...\tF7"
 
 #: progman.rc:33 winefile.rc:28
 msgid "&Copy...\tF8"
@@ -10706,7 +10719,7 @@ msgstr "&Opcije"
 
 #: progman.rc:42
 msgid "&Arrange automatically"
-msgstr ""
+msgstr "R&asporedi automatski"
 
 #: progman.rc:43
 msgid "&Minimize on run"
@@ -10714,11 +10727,11 @@ msgstr ""
 
 #: progman.rc:44 winefile.rc:67
 msgid "&Save settings on exit"
-msgstr ""
+msgstr "&Spremi postavke na izlasku"
 
 #: progman.rc:46 taskmgr.rc:78 taskmgr.rc:255
 msgid "&Windows"
-msgstr ""
+msgstr "&Prozori"
 
 #: progman.rc:47
 msgid "&Overlapped\tShift+F5"
@@ -10730,7 +10743,7 @@ msgstr ""
 
 #: progman.rc:49
 msgid "&Arrange Icons"
-msgstr ""
+msgstr "Raspor&edi ikone"
 
 #: progman.rc:54
 msgid "&About Program Manager"
@@ -10830,11 +10843,11 @@ msgstr "Informacije"
 
 #: progman.rc:65
 msgid "Delete group `%s'?"
-msgstr ""
+msgstr "Izbrisati grupu `%s'?"
 
 #: progman.rc:66
 msgid "Delete program `%s'?"
-msgstr ""
+msgstr "Izbrisati program `%s'?"
 
 #: progman.rc:67
 msgid "Not implemented"
@@ -10842,11 +10855,11 @@ msgstr "Nije još implementirano"
 
 #: progman.rc:68
 msgid "Error reading `%s'."
-msgstr ""
+msgstr "Greška prilikom čitanja `%s'."
 
 #: progman.rc:69
 msgid "Error writing `%s'."
-msgstr ""
+msgstr "Greška prilikom pisanja `%s'."
 
 #: progman.rc:72
 msgid ""
@@ -10860,27 +10873,27 @@ msgstr "Pomoć nije dostupna."
 
 #: progman.rc:75
 msgid "Unknown feature in %s"
-msgstr ""
+msgstr "Nepoznato svojstvo u %s"
 
 #: progman.rc:76
 msgid "File `%s' exists. Not overwritten."
-msgstr ""
+msgstr "Datoteka `%s' postoji. Nije prepisana."
 
 #: progman.rc:77
 msgid "Save group as `%s to prevent overwriting original files."
-msgstr ""
+msgstr "Spremi grupi kao `%s' kako "
 
 #: progman.rc:81
 msgid "Libraries (*.dll)"
-msgstr ""
+msgstr "Biblioteke (*.dll)"
 
 #: progman.rc:82
 msgid "Icon files"
-msgstr ""
+msgstr "Datoteke ikona"
 
 #: progman.rc:83
 msgid "Icons (*.ico)"
-msgstr ""
+msgstr "Ikone (*.ico)"
 
 #: reg.rc:27
 msgid ""
@@ -10906,11 +10919,11 @@ msgstr ""
 
 #: reg.rc:31
 msgid "The operation completed successfully\n"
-msgstr ""
+msgstr "Operacija uspješno dovršena\n"
 
 #: reg.rc:32
 msgid "Error: Invalid key name\n"
-msgstr ""
+msgstr "Greška: Neispravan naziv ključa\n"
 
 #: reg.rc:33
 msgid "Error: Invalid command line parameters\n"
@@ -10928,27 +10941,27 @@ msgstr ""
 
 #: regedit.rc:31
 msgid "&Registry"
-msgstr ""
+msgstr "&Registar"
 
 #: regedit.rc:33
 msgid "&Import Registry File..."
-msgstr ""
+msgstr "&Uvoz datoteke registra..."
 
 #: regedit.rc:34
 msgid "&Export Registry File..."
-msgstr ""
+msgstr "&Izvoz datoteke registra..."
 
 #: regedit.rc:46 regedit.rc:97
 msgid "&Key"
-msgstr ""
+msgstr "&Ključ"
 
 #: regedit.rc:48 regedit.rc:99
 msgid "&String Value"
-msgstr ""
+msgstr "&Znakovna vrijednost"
 
 #: regedit.rc:49 regedit.rc:100
 msgid "&Binary Value"
-msgstr ""
+msgstr "&Binarna vrijednost"
 
 #: regedit.rc:50 regedit.rc:101
 msgid "&DWORD Value"
@@ -10968,7 +10981,7 @@ msgstr "Pr&eimenuj\tF2"
 
 #: regedit.rc:58 regedit.rc:110
 msgid "&Copy Key Name"
-msgstr ""
+msgstr "&Kopiraj ime ključa"
 
 #: regedit.rc:60 regedit.rc:112 wordpad.rc:50
 msgid "&Find...\tCtrl+F"
@@ -10976,15 +10989,15 @@ msgstr "&Traži...\tCtrl+P"
 
 #: regedit.rc:61
 msgid "Find Ne&xt\tF3"
-msgstr ""
+msgstr "Nađi slje&deći\tF3"
 
 #: regedit.rc:65
 msgid "Status &Bar"
-msgstr "linija stanja"
+msgstr "Statusna &traka"
 
 #: regedit.rc:67 winefile.rc:46
 msgid "Sp&lit"
-msgstr ""
+msgstr "P&odijeli"
 
 #: regedit.rc:74
 msgid "&Remove Favorite..."
@@ -11016,7 +11029,7 @@ msgstr ""
 
 #: regedit.rc:229
 msgid "Keys"
-msgstr ""
+msgstr "Ključevi"
 
 #: regedit.rc:230
 msgid "Value names"
@@ -11060,15 +11073,15 @@ msgstr ""
 
 #: regedit.rc:281
 msgid "Base"
-msgstr ""
+msgstr "Baza"
 
 #: regedit.rc:282
 msgid "Hexadecimal"
-msgstr ""
+msgstr "Heksadecimalno"
 
 #: regedit.rc:283
 msgid "Decimal"
-msgstr ""
+msgstr "Decimalno"
 
 #: regedit.rc:290
 msgid "Edit Binary"
@@ -11105,7 +11118,7 @@ msgstr ""
 
 #: regedit.rc:124
 msgid "Data"
-msgstr ""
+msgstr "Podaci"
 
 #: regedit.rc:129
 msgid "Registry Editor"
@@ -11121,7 +11134,7 @@ msgstr ""
 
 #: regedit.rc:193
 msgid "Registry files (*.reg)"
-msgstr ""
+msgstr "Datotoeke registra (*.reg)"
 
 #: regedit.rc:194
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
@@ -11157,7 +11170,7 @@ msgstr ""
 
 #: regedit.rc:163
 msgid "Shows or hides the status bar"
-msgstr ""
+msgstr "Prikazuje ili skriva statusnu traku"
 
 #: regedit.rc:164
 msgid "Change position of split between two panes"
@@ -11233,7 +11246,7 @@ msgstr ""
 
 #: regedit.rc:180
 msgid "Value is too big (%u)"
-msgstr ""
+msgstr "Vrijednost je prevelika (%u)"
 
 #: regedit.rc:181
 msgid "Confirm Value Delete"
@@ -11253,11 +11266,11 @@ msgstr ""
 
 #: regedit.rc:184
 msgid "New Key #%d"
-msgstr ""
+msgstr "Novi ključ #%d"
 
 #: regedit.rc:185
 msgid "New Value #%d"
-msgstr ""
+msgstr "Nova vrijednost #%d"
 
 #: regedit.rc:177
 msgid "Can't query key '%s'"
@@ -11277,14 +11290,17 @@ msgid ""
 "specified file.\n"
 "ShellExecuteEx failed"
 msgstr ""
+"Aplikacija se nije mogla pokrenuti, ili nema aplikacije asocirane sa "
+"navedenom datotekom.\n"
+"ShellExecuteEx nije uspio"
 
 #: start.rc:54
 msgid "Could not translate the specified Unix filename to a DOS filename."
-msgstr ""
+msgstr "Navedeno Unix ime datoteke ne mogu prevesti u DOS ime datoteke."
 
 #: taskkill.rc:27
 msgid "Usage: taskkill [/?] [/f] [/im ProcessName | /pid ProcessID]\n"
-msgstr ""
+msgstr "Uporaba: taskkill [/?] [/f] [/im ImeProcesa | /pid IDProcesa]\n"
 
 #: taskkill.rc:28
 msgid "Error: Unknown or invalid command line option specified.\n"
@@ -11341,7 +11357,7 @@ msgstr ""
 
 #: taskmgr.rc:37 taskmgr.rc:108
 msgid "&New Task (Run...)"
-msgstr ""
+msgstr "&Novi zadatak (Pokreni...)"
 
 #: taskmgr.rc:39
 msgid "E&xit Task Manager"
@@ -11357,7 +11373,7 @@ msgstr ""
 
 #: taskmgr.rc:49 taskmgr.rc:257
 msgid "&Show 16-bit tasks"
-msgstr ""
+msgstr "&Prikaži 16-bitne zadatke"
 
 #: taskmgr.rc:54
 msgid "&Refresh Now"
@@ -11365,39 +11381,39 @@ msgstr "&Osvježi sada"
 
 #: taskmgr.rc:55
 msgid "&Update Speed"
-msgstr ""
+msgstr "&Brzina osvježavanja"
 
 #: taskmgr.rc:57 taskmgr.rc:158
 msgid "&High"
-msgstr ""
+msgstr "&Visoka"
 
 #: taskmgr.rc:58 taskmgr.rc:162
 msgid "&Normal"
-msgstr ""
+msgstr "&Normalna"
 
 #: taskmgr.rc:60 taskmgr.rc:166
 msgid "&Low"
-msgstr ""
+msgstr "&Niska"
 
 #: taskmgr.rc:61
 msgid "&Paused"
-msgstr ""
+msgstr "&Pauzirana"
 
 #: taskmgr.rc:68 taskmgr.rc:256
 msgid "&Select Columns..."
-msgstr ""
+msgstr "&Odaberi stupce..."
 
 #: taskmgr.rc:69 taskmgr.rc:258
 msgid "&CPU History"
-msgstr ""
+msgstr "&CPU povijest"
 
 #: taskmgr.rc:71 taskmgr.rc:259
 msgid "&One Graph, All CPUs"
-msgstr ""
+msgstr "&Jedan graf, svi CPU-i"
 
 #: taskmgr.rc:73 taskmgr.rc:260
 msgid "One Graph &Per CPU"
-msgstr ""
+msgstr "Jedan graf po &CPU"
 
 #: taskmgr.rc:76 taskmgr.rc:261
 msgid "&Show Kernel Times"
@@ -11433,19 +11449,19 @@ msgstr ""
 
 #: taskmgr.rc:129 taskmgr.rc:353
 msgid "&End Task"
-msgstr ""
+msgstr "&Zaustavi zadatak"
 
 #: taskmgr.rc:130
 msgid "&Go To Process"
-msgstr ""
+msgstr "&Idi na proces"
 
 #: taskmgr.rc:149 taskmgr.rc:363
 msgid "&End Process"
-msgstr ""
+msgstr "&Završi proces"
 
 #: taskmgr.rc:150
 msgid "End Process &Tree"
-msgstr ""
+msgstr "Završi &stablo procesa"
 
 #: taskmgr.rc:152 winedbg.rc:29
 msgid "&Debug"
@@ -11481,23 +11497,23 @@ msgstr ""
 
 #: taskmgr.rc:351
 msgid "&New Task..."
-msgstr ""
+msgstr "&Novi zadatak..."
 
 #: taskmgr.rc:364
 msgid "&Show processes from all users"
-msgstr ""
+msgstr "&Prikaži procese svih korisnika"
 
 #: taskmgr.rc:372
 msgid "CPU usage"
-msgstr ""
+msgstr "CPU upotreba"
 
 #: taskmgr.rc:373
 msgid "Mem usage"
-msgstr ""
+msgstr "Mem upotreba"
 
 #: taskmgr.rc:374
 msgid "Totals"
-msgstr ""
+msgstr "Ukupno"
 
 #: taskmgr.rc:375
 msgid "Commit charge (K)"
@@ -11517,23 +11533,23 @@ msgstr ""
 
 #: taskmgr.rc:379 taskmgr.rc:291
 msgid "Threads"
-msgstr ""
+msgstr "Niti"
 
 #: taskmgr.rc:380 taskmgr.rc:263
 msgid "Processes"
-msgstr ""
+msgstr "Procesa"
 
 #: taskmgr.rc:387 taskmgr.rc:396 taskmgr.rc:405
 msgid "Total"
-msgstr ""
+msgstr "Ukupno"
 
 #: taskmgr.rc:388
 msgid "Limit"
-msgstr ""
+msgstr "Ograničenje"
 
 #: taskmgr.rc:389
 msgid "Peak"
-msgstr ""
+msgstr "Vršno"
 
 #: taskmgr.rc:398
 msgid "System Cache"
@@ -11541,19 +11557,19 @@ msgstr ""
 
 #: taskmgr.rc:406
 msgid "Paged"
-msgstr ""
+msgstr "Straničeno"
 
 #: taskmgr.rc:407
 msgid "Nonpaged"
-msgstr ""
+msgstr "Nestraničeno"
 
 #: taskmgr.rc:414
 msgid "CPU usage history"
-msgstr ""
+msgstr "Povijest CPU uporabe"
 
 #: taskmgr.rc:415
 msgid "Memory usage history"
-msgstr ""
+msgstr "Povijest memorijske uporabe"
 
 #: taskmgr.rc:428 taskmgr.rc:327
 msgid "Debug Channels"
@@ -11561,7 +11577,7 @@ msgstr ""
 
 #: taskmgr.rc:439
 msgid "Processor Affinity"
-msgstr ""
+msgstr "Afinitet procesora"
 
 #: taskmgr.rc:444
 msgid ""
@@ -11712,27 +11728,27 @@ msgstr "Naziv s&like"
 
 #: taskmgr.rc:523
 msgid "&PID (Process Identifier)"
-msgstr ""
+msgstr "&PID (Identifikator procesa)"
 
 #: taskmgr.rc:525
 msgid "&CPU Usage"
-msgstr ""
+msgstr "&CPU uporaba"
 
 #: taskmgr.rc:527
 msgid "CPU Tim&e"
-msgstr ""
+msgstr "&CPU vri&jeme"
 
 #: taskmgr.rc:529
 msgid "&Memory Usage"
-msgstr ""
+msgstr "&Memorijska uporaba"
 
 #: taskmgr.rc:531
 msgid "Memory Usage &Delta"
-msgstr ""
+msgstr "Delta memorijske &uporabe"
 
 #: taskmgr.rc:533
 msgid "Pea&k Memory Usage"
-msgstr ""
+msgstr "&Vršna uporaba memorije"
 
 #: taskmgr.rc:535
 msgid "Page &Faults"
@@ -11740,23 +11756,23 @@ msgstr ""
 
 #: taskmgr.rc:537
 msgid "&USER Objects"
-msgstr ""
+msgstr "&USER objekti"
 
 #: taskmgr.rc:539 taskmgr.rc:281
 msgid "I/O Reads"
-msgstr ""
+msgstr "U/I čitanja"
 
 #: taskmgr.rc:541 taskmgr.rc:282
 msgid "I/O Read Bytes"
-msgstr ""
+msgstr "U/I okteti čitanja"
 
 #: taskmgr.rc:543
 msgid "&Session ID"
-msgstr ""
+msgstr "&ID sjednice"
 
 #: taskmgr.rc:545
 msgid "User &Name"
-msgstr ""
+msgstr "Korisničko &ime"
 
 #: taskmgr.rc:547
 msgid "Page F&aults Delta"
@@ -11764,7 +11780,7 @@ msgstr ""
 
 #: taskmgr.rc:549
 msgid "&Virtual Memory Size"
-msgstr ""
+msgstr "Vel&ičina virtualne memorije"
 
 #: taskmgr.rc:551
 msgid "Pa&ged Pool"
@@ -11776,7 +11792,7 @@ msgstr ""
 
 #: taskmgr.rc:555
 msgid "Base P&riority"
-msgstr ""
+msgstr "Osnovni p&rioritet"
 
 #: taskmgr.rc:557
 msgid "&Handle Count"
@@ -11784,35 +11800,35 @@ msgstr ""
 
 #: taskmgr.rc:559
 msgid "&Thread Count"
-msgstr ""
+msgstr "Broj &niti"
 
 #: taskmgr.rc:561 taskmgr.rc:292
 msgid "GDI Objects"
-msgstr ""
+msgstr "GDI objekti"
 
 #: taskmgr.rc:563 taskmgr.rc:293
 msgid "I/O Writes"
-msgstr ""
+msgstr "U/I pisanja"
 
 #: taskmgr.rc:565 taskmgr.rc:294
 msgid "I/O Write Bytes"
-msgstr ""
+msgstr "U/I okteti pisanja"
 
 #: taskmgr.rc:567 taskmgr.rc:295
 msgid "I/O Other"
-msgstr "I/O ostalo"
+msgstr "U/I ostalo"
 
 #: taskmgr.rc:569 taskmgr.rc:296
 msgid "I/O Other Bytes"
-msgstr ""
+msgstr "U/I drugi okteti"
 
 #: taskmgr.rc:182
 msgid "Create New Task"
-msgstr ""
+msgstr "Stvori novi tadatak"
 
 #: taskmgr.rc:187
 msgid "Runs a new program"
-msgstr ""
+msgstr "Pokreće novi program"
 
 #: taskmgr.rc:188
 msgid "Task Manager remains in front of all other windows unless minimized"
@@ -11832,31 +11848,31 @@ msgstr ""
 
 #: taskmgr.rc:193
 msgid "Displays tasks by using large icons"
-msgstr ""
+msgstr "Prikazuje zadatke koristeći velike ikone"
 
 #: taskmgr.rc:194
 msgid "Displays tasks by using small icons"
-msgstr ""
+msgstr "Prikazuje zadatke koristeći male ikone"
 
 #: taskmgr.rc:195
 msgid "Displays information about each task"
-msgstr ""
+msgstr "Prikazuje informacije o svakom zadatku"
 
 #: taskmgr.rc:196
 msgid "Updates the display twice per second"
-msgstr ""
+msgstr "Osvježava prikaz dva puta u sekundi"
 
 #: taskmgr.rc:197
 msgid "Updates the display every two seconds"
-msgstr ""
+msgstr "Osvježava prikaz svake dvije sekunde"
 
 #: taskmgr.rc:198
 msgid "Updates the display every four seconds"
-msgstr ""
+msgstr "Osvježava prikaz svake četiri sekunde"
 
 #: taskmgr.rc:203
 msgid "Does not automatically update"
-msgstr ""
+msgstr "Ne osvježava prikaz automatski"
 
 #: taskmgr.rc:205
 msgid "Tiles the windows horizontally on the desktop"
@@ -11980,15 +11996,15 @@ msgstr "Performanse"
 
 #: taskmgr.rc:265
 msgid "CPU Usage: %3d%%"
-msgstr ""
+msgstr "CPU uporaba: %3d%%"
 
 #: taskmgr.rc:266
 msgid "Processes: %d"
-msgstr ""
+msgstr "Procesi: %d"
 
 #: taskmgr.rc:267
 msgid "Mem Usage: %1!u!kB / %2!u!kB"
-msgstr ""
+msgstr "Mem uporaba: %1!u!kB / %2!u!kB"
 
 #: taskmgr.rc:272
 msgid "Image Name"
@@ -11996,27 +12012,27 @@ msgstr "Naziv slike"
 
 #: taskmgr.rc:273
 msgid "PID"
-msgstr ""
+msgstr "PID"
 
 #: taskmgr.rc:274
 msgid "CPU"
-msgstr ""
+msgstr "CPU"
 
 #: taskmgr.rc:275
 msgid "CPU Time"
-msgstr ""
+msgstr "CPU vrijeme"
 
 #: taskmgr.rc:276
 msgid "Mem Usage"
-msgstr ""
+msgstr "Mem uporaba"
 
 #: taskmgr.rc:277
 msgid "Mem Delta"
-msgstr ""
+msgstr "Mem delta"
 
 #: taskmgr.rc:278
 msgid "Peak Mem Usage"
-msgstr ""
+msgstr "Vršna mem uporaba"
 
 #: taskmgr.rc:279
 msgid "Page Faults"
@@ -12024,11 +12040,11 @@ msgstr ""
 
 #: taskmgr.rc:280
 msgid "USER Objects"
-msgstr ""
+msgstr "USER objektis"
 
 #: taskmgr.rc:283
 msgid "Session ID"
-msgstr ""
+msgstr "ID sjednice"
 
 #: taskmgr.rc:284
 msgid "Username"
@@ -12040,7 +12056,7 @@ msgstr ""
 
 #: taskmgr.rc:286
 msgid "VM Size"
-msgstr ""
+msgstr "VM veličina"
 
 #: taskmgr.rc:287
 msgid "Paged Pool"
@@ -12110,19 +12126,19 @@ msgstr ""
 
 #: taskmgr.rc:323
 msgid "Not Responding"
-msgstr ""
+msgstr "Ne reagira"
 
 #: taskmgr.rc:324
 msgid "Running"
-msgstr ""
+msgstr "Izvodi se"
 
 #: taskmgr.rc:325
 msgid "Task"
-msgstr ""
+msgstr "Zadatak"
 
 #: uninstaller.rc:26
 msgid "Wine Application Uninstaller"
-msgstr "Wine deinstalacioni program"
+msgstr "Wine deinstalacijski program"
 
 #: uninstaller.rc:27
 msgid ""
@@ -12273,8 +12289,8 @@ msgid ""
 "(provided by Wine) or native (taken from Windows or provided by the "
 "application)."
 msgstr ""
-"Biblioteke mogu biti podešene zasebno da budu ili builtin (omogućene od Wine-"
-"a) ili native (uzete od Windowsa ili od aplikacije)."
+"Biblioteke mogu biti podešene zasebno da budu ili ugrađene (omogućene od "
+"Wine-a) ili nativne (uzete od Windowsa ili od aplikacije)."
 
 #: winecfg.rc:185
 msgid "&New override for library:"
@@ -12530,7 +12546,7 @@ msgstr "ugrađena, nativna"
 
 #: winecfg.rc:57
 msgid "disabled"
-msgstr "isključen"
+msgstr "onemogućen"
 
 #: winecfg.rc:58
 msgid "Default Settings"
@@ -12927,7 +12943,7 @@ msgid ""
 "Options:\n"
 msgstr ""
 "\n"
-"Korištenje:\n"
+"Uporaba:\n"
 "  wineconsole [opcije] <naredba>\n"
 "\n"
 "Opcije:\n"
@@ -12942,7 +12958,7 @@ msgstr ""
 
 #: wineconsole.rc:50
 msgid "  <command>                The Wine program to launch in the console.\n"
-msgstr ""
+msgstr "  <naredba>                Wine program za pokrenuti u konzoli.\n"
 
 #: wineconsole.rc:51
 msgid ""
@@ -12952,6 +12968,11 @@ msgid ""
 "Starts the Wine command prompt in a Wine console.\n"
 "\n"
 msgstr ""
+"\n"
+"Primjer:\n"
+"  wineconsole cmd\n"
+"Pokreće Wine naredbenu liniju u Wine konzoli\n"
+"\n"
 
 #: winedbg.rc:46
 msgid "Program Error"
@@ -12966,17 +12987,14 @@ msgstr ""
 "se zbog neugodnosti."
 
 #: winedbg.rc:55
-#, fuzzy
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
 "Database</a> for tips about running this application."
 msgstr ""
 "Uzrok ovome može biti problem u programu ili nedostatak u Wine-u. Provjerite "
-"http://appdb.winehq.org za savjete o pokretanju ovog programa.\n"
-"\n"
-"Ako ovaj problem nije prisutan pod Windows-om i još uvijek nije prijavljen, "
-"prijavite ga na http://bugs.winehq.org."
+"<a href=\"http://appdb.winehq.org\">bazu aplikacija</a>za savjete o "
+"pokretanjuovog programa."
 
 #: winedbg.rc:58
 msgid "Show &Details"
@@ -13204,22 +13222,16 @@ msgid "Not yet implemented"
 msgstr "Nije još implementirano"
 
 #: winefile.rc:106
-#, fuzzy
-#| msgid "Creation failed.\n"
 msgid "Creation date"
-msgstr "Stvaranje neuspjelo.\n"
+msgstr "Datum stvaranja"
 
 #: winefile.rc:107
-#, fuzzy
-#| msgid "Access denied.\n"
 msgid "Access date"
-msgstr "Pristup odbijen.\n"
+msgstr "Datum pristupa"
 
 #: winefile.rc:108
-#, fuzzy
-#| msgid "Certification Path"
 msgid "Modification date"
-msgstr "Putanja certifikacije"
+msgstr "Datum promjene"
 
 #: winefile.rc:109
 msgid "Index/Inode"
@@ -13374,7 +13386,7 @@ msgstr "&Pomoć za pomoć\tF1"
 
 #: winhlp32.rc:55
 msgid "Always on &top"
-msgstr "Uvek na &vrhu"
+msgstr "Uvijek na &vrhu"
 
 #: winhlp32.rc:56
 msgid "&About Wine Help"
@@ -13849,12 +13861,12 @@ msgstr "Čitanje '%1' datoteke nije uspjelo\n"
 #: xcopy.rc:43
 msgctxt "File key"
 msgid "F"
-msgstr ""
+msgstr "F"
 
 #: xcopy.rc:44
 msgctxt "Directory key"
 msgid "D"
-msgstr ""
+msgstr "D"
 
 #: xcopy.rc:77
 msgid ""
