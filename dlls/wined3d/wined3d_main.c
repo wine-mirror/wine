@@ -158,8 +158,8 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
     wc.cbClsExtra           = 0;
     wc.cbWndExtra           = 0;
     wc.hInstance            = hInstDLL;
-    wc.hIcon                = LoadIconA(NULL, (LPCSTR)IDI_WINLOGO);
-    wc.hCursor              = LoadCursorA(NULL, (LPCSTR)IDC_ARROW);
+    wc.hIcon                = LoadIconA(NULL, (const char *)IDI_WINLOGO);
+    wc.hCursor              = LoadCursorA(NULL, (const char *)IDC_ARROW);
     wc.hbrBackground        = NULL;
     wc.lpszMenuName         = NULL;
     wc.lpszClassName        = WINED3D_OPENGL_WINDOW_CLASS_NAME;
