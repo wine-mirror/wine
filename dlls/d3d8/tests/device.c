@@ -5733,6 +5733,126 @@ static void test_volume_blocks(void)
     DestroyWindow(window);
 }
 
+static void test_lockbox_invalid(void)
+{
+    static const struct
+    {
+        D3DBOX box;
+        HRESULT result;
+    }
+    test_data[] =
+    {
+        {{0, 0, 2, 2, 0, 1},    D3D_OK},                /* Valid */
+        {{0, 0, 4, 4, 0, 1},    D3D_OK},                /* Valid */
+        {{0, 0, 0, 4, 0, 1},    D3DERR_INVALIDCALL},    /* 0 height */
+        {{0, 0, 4, 0, 0, 1},    D3DERR_INVALIDCALL},    /* 0 width */
+        {{0, 0, 4, 4, 1, 1},    D3DERR_INVALIDCALL},    /* 0 depth */
+        {{4, 0, 0, 4, 0, 1},    D3DERR_INVALIDCALL},    /* left > right */
+        {{0, 4, 4, 0, 0, 1},    D3DERR_INVALIDCALL},    /* top > bottom */
+        {{0, 0, 4, 4, 1, 0},    D3DERR_INVALIDCALL},    /* back > front */
+        {{0, 0, 8, 4, 0, 1},    D3DERR_INVALIDCALL},    /* right > surface */
+        {{0, 0, 4, 8, 0, 1},    D3DERR_INVALIDCALL},    /* bottom > surface */
+        {{0, 0, 4, 4, 0, 3},    D3DERR_INVALIDCALL},    /* back > surface */
+        {{8, 0, 16, 4, 0, 1},   D3DERR_INVALIDCALL},    /* left > surface */
+        {{0, 8, 4, 16, 0, 1},   D3DERR_INVALIDCALL},    /* top > surface */
+        {{0, 0, 4, 4, 2, 4},    D3DERR_INVALIDCALL},    /* top > surface */
+    };
+    static const D3DBOX test_boxt_2 = {2, 2, 4, 4, 0, 1};
+    IDirect3DVolumeTexture8 *texture = NULL;
+    D3DLOCKED_BOX locked_box;
+    IDirect3DDevice8 *device;
+    IDirect3D8 *d3d;
+    unsigned int i;
+    ULONG refcount;
+    HWND window;
+    BYTE *base;
+    HRESULT hr;
+
+    if (!(d3d = pDirect3DCreate8(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create D3D object, skipping tests.\n");
+        return;
+    }
+
+    window = CreateWindowA("d3d8_test_wc", "d3d8_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D8_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice8_CreateVolumeTexture(device, 4, 4, 2, 1, 0,
+            D3DFMT_A8R8G8B8, D3DPOOL_SCRATCH, &texture);
+    ok(SUCCEEDED(hr), "Failed to create volume texture, hr %#x.\n", hr);
+    hr = IDirect3DVolumeTexture8_LockBox(texture, 0, &locked_box, NULL, 0);
+    ok(SUCCEEDED(hr), "Failed to lock volume texture, hr %#x.\n", hr);
+    base = locked_box.pBits;
+    hr = IDirect3DVolumeTexture8_UnlockBox(texture, 0);
+    ok(SUCCEEDED(hr), "Failed to unlock volume texture, hr %#x.\n", hr);
+
+    for (i = 0; i < (sizeof(test_data) / sizeof(*test_data)); ++i)
+    {
+        unsigned int offset, expected_offset;
+        const D3DBOX *box = &test_data[i].box;
+
+        locked_box.pBits = (BYTE *)0xdeadbeef;
+        locked_box.RowPitch = 0xdeadbeef;
+        locked_box.SlicePitch = 0xdeadbeef;
+
+        hr = IDirect3DVolumeTexture8_LockBox(texture, 0, &locked_box, box, 0);
+        /* Unlike surfaces, volumes properly check the box even in Windows XP */
+        ok(hr == test_data[i].result,
+                "Got unexpected hr %#x with box [%u, %u, %u]->[%u, %u, %u], expected %#x.\n",
+                hr, box->Left, box->Top, box->Front, box->Right, box->Bottom, box->Back,
+                test_data[i].result);
+        if (FAILED(hr))
+            continue;
+
+        offset = (BYTE *)locked_box.pBits - base;
+        expected_offset = box->Front * locked_box.SlicePitch + box->Top * locked_box.RowPitch + box->Left * 4;
+        ok(offset == expected_offset,
+                "Got unexpected offset %u (expected %u) for rect [%u, %u, %u]->[%u, %u, %u].\n",
+                offset, expected_offset, box->Left, box->Top, box->Front, box->Right, box->Bottom, box->Back);
+
+        hr = IDirect3DVolumeTexture8_UnlockBox(texture, 0);
+        ok(SUCCEEDED(hr), "Failed to unlock volume texture, hr %#x.\n", hr);
+    }
+
+    /* locked_box = NULL throws an exception on Windows */
+    hr = IDirect3DVolumeTexture8_LockBox(texture, 0, &locked_box, NULL, 0);
+    ok(SUCCEEDED(hr), "Failed to lock volume texture, hr %#x.\n", hr);
+    hr = IDirect3DVolumeTexture8_LockBox(texture, 0, &locked_box, NULL, 0);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DVolumeTexture8_UnlockBox(texture, 0);
+    ok(SUCCEEDED(hr), "Failed to unlock volume texture, hr %#x.\n", hr);
+    hr = IDirect3DVolumeTexture8_UnlockBox(texture, 0);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DVolumeTexture8_LockBox(texture, 0, &locked_box, &test_data[0].box, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x for rect [%u, %u, %u]->[%u, %u, %u].\n",
+            hr, test_data[0].box.Left, test_data[0].box.Top, test_data[0].box.Front,
+            test_data[0].box.Right, test_data[0].box.Bottom, test_data[0].box.Back);
+    hr = IDirect3DVolumeTexture8_LockBox(texture, 0, &locked_box, &test_data[0].box, 0);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for rect [%u, %u, %u]->[%u, %u, %u].\n",
+            hr, test_data[0].box.Left, test_data[0].box.Top, test_data[0].box.Front,
+            test_data[0].box.Right, test_data[0].box.Bottom, test_data[0].box.Back);
+    hr = IDirect3DVolumeTexture8_LockBox(texture, 0, &locked_box, &test_boxt_2, 0);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for rect [%u, %u, %u]->[%u, %u, %u].\n",
+            hr, test_boxt_2.Left, test_boxt_2.Top, test_boxt_2.Front,
+            test_boxt_2.Right, test_boxt_2.Bottom, test_boxt_2.Back);
+    hr = IDirect3DVolumeTexture8_UnlockBox(texture, 0);
+    ok(SUCCEEDED(hr), "Failed to unlock volume texture, hr %#x.\n", hr);
+
+    IDirect3DVolumeTexture8_Release(texture);
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     HMODULE d3d8_handle = LoadLibraryA( "d3d8.dll" );
@@ -5814,6 +5934,7 @@ START_TEST(device)
         test_update_volumetexture();
         test_create_rt_ds_fail();
         test_volume_blocks();
+        test_lockbox_invalid();
     }
     UnregisterClassA("d3d8_test_wc", GetModuleHandleA(NULL));
 }
