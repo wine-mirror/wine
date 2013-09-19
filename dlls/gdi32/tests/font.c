@@ -4029,6 +4029,8 @@ static void test_GetGlyphOutline(void)
     LOGFONTA lf;
     HFONT hfont, old_hfont;
     INT ret, ret2;
+    const UINT fmt[] = { GGO_METRICS, GGO_BITMAP, GGO_GRAY2_BITMAP,
+                         GGO_GRAY4_BITMAP, GGO_GRAY8_BITMAP };
     static const struct
     {
         UINT cs;
@@ -4103,6 +4105,72 @@ static void test_GetGlyphOutline(void)
     {
        ok(ret == GDI_ERROR, "GetGlyphOutlineW should return GDI_ERROR\n");
        ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %u\n", GetLastError());
+    }
+
+    for (i = 0; i < sizeof(fmt) / sizeof(fmt[0]); ++i)
+    {
+        DWORD dummy;
+
+        memset(&gm, 0xab, sizeof(gm));
+        SetLastError(0xdeadbeef);
+        ret = GetGlyphOutlineW(hdc, ' ', fmt[i], &gm, 0, NULL, &mat);
+        if (GetLastError() != ERROR_CALL_NOT_IMPLEMENTED)
+        {
+            if (fmt[i] == GGO_METRICS)
+                ok(ret != GDI_ERROR, "%2d:GetGlyphOutlineW should succeed, got %d\n", fmt[i], ret);
+            else
+                ok(ret == 0, "%2d:GetGlyphOutlineW should return 0, got %d\n", fmt[i], ret);
+            todo_wine {
+                ok(gm.gmBlackBoxX == 1, "%2d:expected 1, got %u\n", fmt[i], gm.gmBlackBoxX);
+                ok(gm.gmBlackBoxY == 1, "%2d:expected 1, got %u\n", fmt[i], gm.gmBlackBoxX);
+            }
+        }
+
+        memset(&gm, 0xab, sizeof(gm));
+        SetLastError(0xdeadbeef);
+        ret = GetGlyphOutlineW(hdc, ' ', fmt[i], &gm, 0, &dummy, &mat);
+        if (GetLastError() != ERROR_CALL_NOT_IMPLEMENTED)
+        {
+            if (fmt[i] == GGO_METRICS)
+                ok(ret != GDI_ERROR, "%2d:GetGlyphOutlineW should succeed, got %d\n", fmt[i], ret);
+            else
+                ok(ret == 0, "%2d:GetGlyphOutlineW should return 0, got %d\n", fmt[i], ret);
+            todo_wine {
+                ok(gm.gmBlackBoxX == 1, "%2d:expected 1, got %u\n", fmt[i], gm.gmBlackBoxX);
+                ok(gm.gmBlackBoxY == 1, "%2d:expected 1, got %u\n", fmt[i], gm.gmBlackBoxX);
+            }
+        }
+
+        memset(&gm, 0xab, sizeof(gm));
+        SetLastError(0xdeadbeef);
+        ret = GetGlyphOutlineW(hdc, ' ', fmt[i], &gm, sizeof(dummy), NULL, &mat);
+        if (GetLastError() != ERROR_CALL_NOT_IMPLEMENTED)
+        {
+            if (fmt[i] == GGO_METRICS)
+                ok(ret != GDI_ERROR, "%2d:GetGlyphOutlineW should succeed, got %d\n", fmt[i], ret);
+            else
+                ok(ret == 0, "%2d:GetGlyphOutlineW should return 0, got %d\n", fmt[i], ret);
+            todo_wine {
+                ok(gm.gmBlackBoxX == 1, "%2d:expected 1, got %u\n", fmt[i], gm.gmBlackBoxX);
+                ok(gm.gmBlackBoxY == 1, "%2d:expected 1, got %u\n", fmt[i], gm.gmBlackBoxX);
+            }
+        }
+
+        memset(&gm, 0xab, sizeof(gm));
+        SetLastError(0xdeadbeef);
+        ret = GetGlyphOutlineW(hdc, ' ', fmt[i], &gm, sizeof(dummy), &dummy, &mat);
+        if (GetLastError() != ERROR_CALL_NOT_IMPLEMENTED)
+        {
+            if (fmt[i] == GGO_METRICS) {
+                ok(ret != GDI_ERROR, "%2d:GetGlyphOutlineW should succeed, got %d\n", fmt[i], ret);
+                todo_wine {
+                    ok(gm.gmBlackBoxX == 1, "%2d:expected 1, got %u\n", fmt[i], gm.gmBlackBoxX);
+                    ok(gm.gmBlackBoxY == 1, "%2d:expected 1, got %u\n", fmt[i], gm.gmBlackBoxX);
+                }
+            }
+            else
+                todo_wine ok(ret == GDI_ERROR, "%2d:GetGlyphOutlineW should return GDI_ERROR, got %d\n", fmt[i], ret);
+        }
     }
 
     SelectObject(hdc, old_hfont);
