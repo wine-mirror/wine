@@ -29,7 +29,9 @@
 # error You must include port.h before all other headers
 #endif
 
-#define _GNU_SOURCE  /* for pread/pwrite */
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE  /* for pread/pwrite */
+#endif
 #include <fcntl.h>
 #include <math.h>
 #include <sys/types.h>
