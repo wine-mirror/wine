@@ -38,6 +38,7 @@
 #include "implglue.h"
 #include "objbase.h"
 #include "rpcproxy.h"
+#include "aclapi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
@@ -3674,6 +3675,7 @@ BOOL WINAPI RSAENH_CPGetKeyParam(HCRYPTPROV hProv, HCRYPTKEY hKey, DWORD dwParam
  *   - PP_SIG_KEYSIZE_INC: RSA signature keywidth granularity in bits.
  *   - PP_KEYX_KEYSIZE_INC: RSA key-exchange keywidth granularity in bits.
  *   - PP_ENUMALGS{_EX}: Query provider capabilities.
+ *   - PP_KEYSET_SEC_DESCR: Retrieve security descriptor on container.
  */
 BOOL WINAPI RSAENH_CPGetProvParam(HCRYPTPROV hProv, DWORD dwParam, BYTE *pbData, 
                                   DWORD *pdwDataLen, DWORD dwFlags)
@@ -3833,6 +3835,34 @@ BOOL WINAPI RSAENH_CPGetProvParam(HCRYPTPROV hProv, DWORD dwParam, BYTE *pbData,
 
         case PP_CRYPT_COUNT_KEY_USE: /* Asked for by IE About dialog */
             return copy_param(pbData, pdwDataLen, abWTF, sizeof(abWTF));
+
+        case PP_KEYSET_SEC_DESCR:
+        {
+            SECURITY_DESCRIPTOR *sd;
+            DWORD err, len, flags = (pKeyContainer->dwFlags & CRYPT_MACHINE_KEYSET);
+
+            if (!open_container_key(pKeyContainer->szName, flags, &hKey))
+            {
+                SetLastError(NTE_BAD_KEYSET);
+                return FALSE;
+            }
+
+            err = GetSecurityInfo(hKey, SE_REGISTRY_KEY, dwFlags, NULL, NULL, NULL, NULL, (void **)&sd);
+            RegCloseKey(hKey);
+            if (err)
+            {
+                SetLastError(err);
+                return FALSE;
+            }
+
+            len = GetSecurityDescriptorLength(sd);
+            if (*pdwDataLen >= len) memcpy(pbData, sd, len);
+            else SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            *pdwDataLen = len;
+
+            LocalFree(sd);
+            return TRUE;
+        }
 
         default:
             /* MSDN: Unknown parameter number in dwParam */
