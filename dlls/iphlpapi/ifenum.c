@@ -79,6 +79,10 @@
 #include <ifaddrs.h>
 #endif
 
+#ifdef HAVE_LINUX_RTNETLINK_H
+#include <linux/rtnetlink.h>
+#endif
+
 #include "ifenum.h"
 #include "ws2ipdef.h"
 
@@ -161,7 +165,7 @@ BOOL isIfIndexLoopback(ULONG idx)
   return ret;
 }
 
-
+#ifdef HAVE_IF_NAMEINDEX
 DWORD get_interface_indices( BOOL skip_loopback, InterfaceIndexTable **table )
 {
     DWORD count = 0, i;
@@ -198,6 +202,200 @@ end:
     if_freenameindex( indices );
     return count;
 }
+
+#elif defined(HAVE_LINUX_RTNETLINK_H)
+static int open_netlink( int *pid )
+{
+    int fd = socket( AF_NETLINK, SOCK_RAW, NETLINK_ROUTE );
+    struct sockaddr_nl addr;
+    socklen_t len;
+
+    if (fd < 0) return fd;
+
+    memset( &addr, 0, sizeof(addr) );
+    addr.nl_family = AF_NETLINK;
+
+    if (bind( fd, (struct sockaddr *)&addr, sizeof(addr) ) < 0)
+        goto fail;
+
+    len = sizeof(addr);
+    if (getsockname( fd, (struct sockaddr *)&addr, &len ) < 0)
+        goto fail;
+
+    *pid = addr.nl_pid;
+    return fd;
+fail:
+    close( fd );
+    return -1;
+}
+
+static int send_netlink_req( int fd, int pid, int type, int *seq_no )
+{
+    static LONG seq;
+    struct request
+    {
+        struct nlmsghdr hdr;
+        struct rtgenmsg gen;
+    } req;
+    struct sockaddr_nl addr;
+
+    req.hdr.nlmsg_len = sizeof(req);
+    req.hdr.nlmsg_type = type;
+    req.hdr.nlmsg_flags = NLM_F_ROOT | NLM_F_MATCH | NLM_F_REQUEST;
+    req.hdr.nlmsg_pid = pid;
+    req.hdr.nlmsg_seq = InterlockedIncrement( &seq );
+    req.gen.rtgen_family = AF_UNSPEC;
+
+    memset( &addr, 0, sizeof(addr) );
+    addr.nl_family = AF_NETLINK;
+    if (sendto( fd, &req, sizeof(req), 0, (struct sockaddr *)&addr, sizeof(addr) ) != sizeof(req))
+        return -1;
+    *seq_no = req.hdr.nlmsg_seq;
+    return 0;
+}
+
+struct netlink_reply
+{
+    struct netlink_reply *next;
+    int size;
+    struct nlmsghdr *hdr;
+};
+
+static void free_netlink_reply( struct netlink_reply *data )
+{
+    struct netlink_reply *ptr;
+    while( data )
+    {
+        ptr = data->next;
+        HeapFree( GetProcessHeap(), 0, data );
+        data = ptr;
+    }
+}
+
+static int recv_netlink_reply( int fd, int pid, int seq, struct netlink_reply **data )
+{
+    int bufsize = getpagesize();
+    int left, read, done = 0;
+    socklen_t sa_len;
+    struct sockaddr_nl addr;
+    struct netlink_reply *cur, *last = NULL;
+    struct nlmsghdr *hdr;
+    char *buf;
+
+    *data = NULL;
+    buf = HeapAlloc( GetProcessHeap(), 0, bufsize );
+    if (!buf) return -1;
+
+    do
+    {
+        left = read = recvfrom( fd, buf, bufsize, 0, (struct sockaddr *)&addr, &sa_len );
+        if (read < 0) goto fail;
+        if (addr.nl_pid != 0) continue; /* not from kernel */
+
+        for (hdr = (struct nlmsghdr *)buf; NLMSG_OK(hdr, left); hdr = NLMSG_NEXT(hdr, left))
+        {
+            if (hdr->nlmsg_pid != pid || hdr->nlmsg_seq != seq) continue;
+            if (hdr->nlmsg_type == NLMSG_DONE)
+            {
+                done = 1;
+                break;
+            }
+        }
+
+        cur = HeapAlloc( GetProcessHeap(), 0, sizeof(*cur) + read );
+        if (!cur) goto fail;
+        cur->next = NULL;
+        cur->size = read;
+        cur->hdr = (struct nlmsghdr *)(cur + 1);
+        memcpy( cur->hdr, buf, read );
+        if (last) last->next = cur;
+        else *data = cur;
+        last = cur;
+    } while (!done);
+
+    HeapFree( GetProcessHeap(), 0, buf );
+    return 0;
+
+fail:
+    free_netlink_reply( *data );
+    HeapFree( GetProcessHeap(), 0, buf );
+    return -1;
+}
+
+
+static DWORD get_indices_from_reply( struct netlink_reply *reply, int pid, int seq,
+                                     BOOL skip_loopback, InterfaceIndexTable *table )
+{
+    struct nlmsghdr *hdr;
+    struct netlink_reply *r;
+    int count = 0;
+
+    for (r = reply; r; r = r->next)
+    {
+        int size = r->size;
+        for (hdr = r->hdr; NLMSG_OK(hdr, size); hdr = NLMSG_NEXT(hdr, size))
+        {
+            if (hdr->nlmsg_pid != pid || hdr->nlmsg_seq != seq) continue;
+            if (hdr->nlmsg_type == NLMSG_DONE) break;
+
+            if (hdr->nlmsg_type == RTM_NEWLINK)
+            {
+                struct ifinfomsg *info = NLMSG_DATA(hdr);
+
+                if (skip_loopback && (info->ifi_flags & IFF_LOOPBACK)) continue;
+                if (table) table->indexes[count] = info->ifi_index;
+                count++;
+            }
+        }
+    }
+    return count;
+}
+
+DWORD get_interface_indices( BOOL skip_loopback, InterfaceIndexTable **table )
+{
+    int fd, pid, seq;
+    struct netlink_reply *reply = NULL;
+    DWORD count = 0;
+
+    if (table) *table = NULL;
+    fd = open_netlink( &pid );
+    if (fd < 0) return 0;
+
+    if (send_netlink_req( fd, pid, RTM_GETLINK, &seq ) < 0)
+        goto end;
+
+    if (recv_netlink_reply( fd, pid, seq, &reply ) < 0)
+        goto end;
+
+    count = get_indices_from_reply( reply, pid, seq, skip_loopback, NULL );
+
+    if (table)
+    {
+        InterfaceIndexTable *ret = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET(InterfaceIndexTable, indexes[count]) );
+        if (!ret)
+        {
+            count = 0;
+            goto end;
+        }
+
+        ret->numIndexes = count;
+        get_indices_from_reply( reply, pid, seq, skip_loopback, ret );
+        *table = ret;
+    }
+
+end:
+    free_netlink_reply( reply );
+    close( fd );
+    return count;
+}
+
+#else
+DWORD get_interface_indices( BOOL skip_loopback, InterfaceIndexTable **table )
+{
+    if (table) *table = NULL;
+    return 0;
+}
+#endif
 
 static DWORD getInterfaceBCastAddrByName(const char *name)
 {

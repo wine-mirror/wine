@@ -606,7 +606,7 @@ AC_CHECK_HEADERS([netinet/tcp_timer.h netinet/udp_var.h netinet/icmp_var.h netin
      #include <netinet/tcp_timer.h>
      #endif])
 
-AC_CHECK_HEADERS([linux/ipx.h linux/irda.h],,,
+AC_CHECK_HEADERS([linux/ipx.h linux/irda.h linux/rtnetlink.h],,,
     [#include <sys/types.h>
      #ifdef HAVE_ASM_TYPES_H
      # include <asm/types.h>
@@ -2032,6 +2032,7 @@ AC_CHECK_FUNCS(\
 	getpwuid \
 	gettimeofday \
 	getuid \
+	if_nameindex \
 	kqueue \
 	lstat \
 	memmove \
