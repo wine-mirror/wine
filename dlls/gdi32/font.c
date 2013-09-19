@@ -1812,7 +1812,11 @@ static DWORD get_glyph_bitmap( HDC hdc, UINT index, UINT flags, UINT aa_flags,
 
     image->ptr = NULL;
     image->free = NULL;
-    if (!ret) return ERROR_SUCCESS; /* empty glyph */
+    if (!ret)  /* empty glyph */
+    {
+        metrics->gmBlackBoxX = metrics->gmBlackBoxY = 0;
+        return ERROR_SUCCESS;
+    }
 
     stride = get_dib_stride( metrics->gmBlackBoxX, 1 );
     size = metrics->gmBlackBoxY * stride;
