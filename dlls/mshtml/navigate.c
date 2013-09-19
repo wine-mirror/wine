@@ -360,6 +360,11 @@ static HRESULT WINAPI BindStatusCallback_OnStopBinding(IBindStatusCallback *ifac
         This->binding = NULL;
     }
 
+    if(This->mon) {
+        IMoniker_Release(This->mon);
+        This->mon = NULL;
+    }
+
     list_remove(&This->entry);
     list_init(&This->entry);
     This->window = NULL;
@@ -822,9 +827,6 @@ HRESULT start_binding(HTMLInnerWindow *inner_window, BSCallback *bscallback, IBi
 
     if(str)
         IStream_Release(str);
-
-    IMoniker_Release(bscallback->mon);
-    bscallback->mon = NULL;
 
     return S_OK;
 }
