@@ -1121,11 +1121,15 @@ static BOOL wglUseFontBitmaps_common( HDC hdc, DWORD first, DWORD count, DWORD l
              bitmap = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
              gl_bitmap = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
          }
-         if (unicode)
-             ret = (GetGlyphOutlineW(hdc, glyph, GGO_BITMAP, &gm, size, bitmap, &identity) != GDI_ERROR);
-         else
-             ret = (GetGlyphOutlineA(hdc, glyph, GGO_BITMAP, &gm, size, bitmap, &identity) != GDI_ERROR);
-         if (!ret) break;
+         if (needed_size != 0) {
+             if (unicode)
+                 ret = (GetGlyphOutlineW(hdc, glyph, GGO_BITMAP, &gm,
+                                         size, bitmap, &identity) != GDI_ERROR);
+             else
+                 ret = (GetGlyphOutlineA(hdc, glyph, GGO_BITMAP, &gm,
+                                         size, bitmap, &identity) != GDI_ERROR);
+             if (!ret) break;
+         }
 
          if (TRACE_ON(wgl)) {
              unsigned int bitmask;
