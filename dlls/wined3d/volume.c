@@ -168,7 +168,6 @@ static void wined3d_volume_download_data(struct wined3d_volume *volume,
 static void wined3d_volume_evict_sysmem(struct wined3d_volume *volume)
 {
     wined3d_resource_free_sysmem(&volume->resource);
-    volume->resource.allocatedMemory = NULL;
     wined3d_volume_invalidate_location(volume, WINED3D_LOCATION_SYSMEM);
 }
 
@@ -202,7 +201,7 @@ static void wined3d_volume_srgb_transfer(struct wined3d_volume *volume,
      * implementing EXT_SRGB_DECODE in the driver or finding out why we
      * picked the wrong copy for the original upload and fixing that.
      *
-     * Also keep in mind that we want to avoid using resource.allocatedMemory
+     * Also keep in mind that we want to avoid using resource.heap_memory
      * for DEFAULT pool surfaces. */
 
     WARN_(d3d_perf)("Performing slow rgb/srgb volume transfer.\n");
@@ -258,7 +257,7 @@ static void wined3d_volume_load_location(struct wined3d_volume *volume,
             }
             else if (volume->locations & WINED3D_LOCATION_SYSMEM)
             {
-                struct wined3d_bo_address data = {0, volume->resource.allocatedMemory};
+                struct wined3d_bo_address data = {0, volume->resource.heap_memory};
                 wined3d_volume_upload_data(volume, context, &data);
             }
             else if (volume->locations & WINED3D_LOCATION_BUFFER)
@@ -287,11 +286,8 @@ static void wined3d_volume_load_location(struct wined3d_volume *volume,
             break;
 
         case WINED3D_LOCATION_SYSMEM:
-            if (!volume->resource.allocatedMemory || !volume->resource.heap_memory)
-            {
+            if (!volume->resource.heap_memory)
                 ERR("Trying to load WINED3D_LOCATION_SYSMEM without setting it up first.\n");
-                return;
-            }
 
             if (volume->locations & WINED3D_LOCATION_DISCARDED)
             {
@@ -300,7 +296,7 @@ static void wined3d_volume_load_location(struct wined3d_volume *volume,
             }
             else if (volume->locations & (WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_TEXTURE_SRGB))
             {
-                struct wined3d_bo_address data = {0, volume->resource.allocatedMemory};
+                struct wined3d_bo_address data = {0, volume->resource.heap_memory};
 
                 if (volume->locations & WINED3D_LOCATION_TEXTURE_RGB)
                     volume_bind_and_dirtify(volume, context, FALSE);
@@ -412,7 +408,7 @@ static void wined3d_volume_free_pbo(struct wined3d_volume *volume)
 
 static BOOL volume_prepare_system_memory(struct wined3d_volume *volume)
 {
-    if (volume->resource.allocatedMemory)
+    if (volume->resource.heap_memory)
         return TRUE;
 
     if (!wined3d_resource_allocate_sysmem(&volume->resource))
@@ -420,7 +416,6 @@ static BOOL volume_prepare_system_memory(struct wined3d_volume *volume)
         ERR("Failed to allocate system memory.\n");
         return FALSE;
     }
-    volume->resource.allocatedMemory = volume->resource.heap_memory;
     return TRUE;
 }
 
@@ -674,7 +669,7 @@ HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
             wined3d_volume_load_location(volume, context, WINED3D_LOCATION_SYSMEM);
             context_release(context);
         }
-        base_memory = volume->resource.allocatedMemory;
+        base_memory = volume->resource.heap_memory;
     }
 
     TRACE("Base memory pointer %p.\n", base_memory);
@@ -815,7 +810,6 @@ static HRESULT volume_init(struct wined3d_volume *volume, struct wined3d_device 
             && gl_info->supported[ARB_PIXEL_BUFFER_OBJECT])
     {
         wined3d_resource_free_sysmem(&volume->resource);
-        volume->resource.allocatedMemory = NULL;
         volume->flags |= WINED3D_VFLAG_PBO;
     }
 
