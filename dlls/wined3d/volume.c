@@ -642,7 +642,8 @@ HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
         }
         else
         {
-            base_memory = GL_EXTCALL(glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
+            GLenum access = wined3d_resource_gl_legacy_map_flags(flags);
+            base_memory = GL_EXTCALL(glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, access));
         }
 
         GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));

@@ -419,3 +419,12 @@ GLbitfield wined3d_resource_gl_map_flags(DWORD d3d_flags)
 
     return ret;
 }
+
+GLenum wined3d_resource_gl_legacy_map_flags(DWORD d3d_flags)
+{
+    if (d3d_flags & WINED3D_MAP_READONLY)
+        return GL_READ_ONLY_ARB;
+    if (d3d_flags & (WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE))
+        return GL_WRITE_ONLY_ARB;
+    return GL_READ_WRITE_ARB;
+}
