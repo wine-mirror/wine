@@ -1129,7 +1129,10 @@ static void UploadGlyph(struct xrender_physdev *physDev, UINT glyph, enum glyph_
 
 
     buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, buflen);
-    GetGlyphOutlineW(physDev->dev.hdc, glyph, ggo_format, &gm, buflen, buf, &identity);
+    if (buflen)
+        GetGlyphOutlineW(physDev->dev.hdc, glyph, ggo_format, &gm, buflen, buf, &identity);
+    else
+        gm.gmBlackBoxX = gm.gmBlackBoxY = 0;  /* empty glyph */
     formatEntry->realized[glyph] = TRUE;
 
     TRACE("buflen = %d. Got metrics: %dx%d adv=%d,%d origin=%d,%d\n",
