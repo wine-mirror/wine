@@ -2378,7 +2378,7 @@ struct fbo_entry
 struct wined3d_surface_ops
 {
     HRESULT (*surface_private_setup)(struct wined3d_surface *surface);
-    void (*surface_unmap)(struct wined3d_surface *surface);
+    void (*surface_frontbuffer_updated)(struct wined3d_surface *surface);
 };
 
 struct wined3d_surface
