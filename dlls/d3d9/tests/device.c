@@ -7018,9 +7018,6 @@ static void test_volume_blocks(void)
         skip("Failed to create IDirect3D9 object, skipping tests.\n");
         return;
     }
-    hr = IDirect3D9_GetDeviceCaps(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, &caps);
-    ok(SUCCEEDED(hr), "Failed to get caps, hr %#x.\n", hr);
-    pow2 = !!(caps.TextureCaps & D3DPTEXTURECAPS_VOLUMEMAP_POW2);
 
     window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
             0, 0, 640, 480, 0, 0, 0, 0);
@@ -7031,6 +7028,9 @@ static void test_volume_blocks(void)
         DestroyWindow(window);
         return;
     }
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get caps, hr %#x.\n", hr);
+    pow2 = !!(caps.TextureCaps & D3DPTEXTURECAPS_VOLUMEMAP_POW2);
 
     for (i = 0; i < sizeof(formats) / sizeof(*formats); i++)
     {
