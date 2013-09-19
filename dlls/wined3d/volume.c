@@ -247,12 +247,7 @@ static void wined3d_volume_load_location(struct wined3d_resource *resource,
             if (!volume->resource.heap_memory)
                 ERR("Trying to load WINED3D_LOCATION_SYSMEM without setting it up first.\n");
 
-            if (volume->resource.locations & WINED3D_LOCATION_DISCARDED)
-            {
-                TRACE("Volume previously discarded, nothing to do.\n");
-                wined3d_resource_invalidate_location(&volume->resource, WINED3D_LOCATION_DISCARDED);
-            }
-            else if (volume->resource.locations & (WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_TEXTURE_SRGB))
+            if (volume->resource.locations & (WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_TEXTURE_SRGB))
             {
                 struct wined3d_bo_address data = {0, volume->resource.heap_memory};
 
@@ -277,12 +272,7 @@ static void wined3d_volume_load_location(struct wined3d_resource *resource,
             if (!volume->resource.buffer_object)
                 ERR("Trying to load WINED3D_LOCATION_BUFFER without setting it up first.\n");
 
-            if (volume->resource.locations & WINED3D_LOCATION_DISCARDED)
-            {
-                TRACE("Volume previously discarded, nothing to do.\n");
-                wined3d_resource_invalidate_location(&volume->resource, WINED3D_LOCATION_DISCARDED);
-            }
-            else if (volume->resource.locations & (WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_TEXTURE_SRGB))
+            if (volume->resource.locations & (WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_TEXTURE_SRGB))
             {
                 struct wined3d_bo_address data = {volume->resource.buffer_object, NULL};
 
