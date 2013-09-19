@@ -161,103 +161,42 @@ BOOL isIfIndexLoopback(ULONG idx)
   return ret;
 }
 
-DWORD getNumNonLoopbackInterfaces(void)
+
+DWORD get_interface_indices( BOOL skip_loopback, InterfaceIndexTable **table )
 {
-  DWORD numInterfaces;
-  int fd = socket(PF_INET, SOCK_DGRAM, 0);
+    DWORD count = 0, i;
+    struct if_nameindex *p, *indices = if_nameindex();
+    InterfaceIndexTable *ret;
 
-  if (fd != -1) {
-    struct if_nameindex *indexes = if_nameindex();
+    if (table) *table = NULL;
+    if (!indices) return 0;
 
-    if (indexes) {
-      struct if_nameindex *p;
-
-      for (p = indexes, numInterfaces = 0; p && p->if_name; p++)
-        if (!isLoopbackInterface(fd, p->if_name))
-          numInterfaces++;
-      if_freenameindex(indexes);
+    for (p = indices; p->if_name; p++)
+    {
+        if (skip_loopback && isIfIndexLoopback( p->if_index )) continue;
+        count++;
     }
-    else
-      numInterfaces = 0;
-    close(fd);
-  }
-  else
-    numInterfaces = 0;
-  return numInterfaces;
-}
 
-DWORD getNumInterfaces(void)
-{
-  DWORD numInterfaces;
-  struct if_nameindex *indexes = if_nameindex();
-
-  if (indexes) {
-    struct if_nameindex *p;
-
-    for (p = indexes, numInterfaces = 0; p && p->if_name; p++)
-      numInterfaces++;
-    if_freenameindex(indexes);
-  }
-  else
-    numInterfaces = 0;
-  return numInterfaces;
-}
-
-InterfaceIndexTable *getInterfaceIndexTable(void)
-{
-  DWORD numInterfaces;
-  InterfaceIndexTable *ret;
-  struct if_nameindex *indexes = if_nameindex();
-
-  if (indexes) {
-    struct if_nameindex *p;
-
-    for (p = indexes, numInterfaces = 0; p && p->if_name; p++)
-      numInterfaces++;
-    ret = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(InterfaceIndexTable, indexes[numInterfaces]));
-    if (ret) {
-      ret->numIndexes = 0;
-      for (p = indexes; p && p->if_name; p++)
-        ret->indexes[ret->numIndexes++] = p->if_index;
+    if (table)
+    {
+        ret = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET(InterfaceIndexTable, indexes[count]) );
+        if (!ret)
+        {
+            count = 0;
+            goto end;
+        }
+        for (p = indices, i = 0; p->if_name && i < count; p++)
+        {
+            if (skip_loopback && isIfIndexLoopback( p->if_index )) continue;
+            ret->indexes[i++] = p->if_index;
+        }
+        ret->numIndexes = count = i;
+        *table = ret;
     }
-    if_freenameindex(indexes);
-  }
-  else
-    ret = NULL;
-  return ret;
-}
 
-InterfaceIndexTable *getNonLoopbackInterfaceIndexTable(void)
-{
-  DWORD numInterfaces;
-  InterfaceIndexTable *ret;
-  int fd = socket(PF_INET, SOCK_DGRAM, 0);
-
-  if (fd != -1) {
-    struct if_nameindex *indexes = if_nameindex();
-
-    if (indexes) {
-      struct if_nameindex *p;
-
-      for (p = indexes, numInterfaces = 0; p && p->if_name; p++)
-        if (!isLoopbackInterface(fd, p->if_name))
-          numInterfaces++;
-      ret = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(InterfaceIndexTable, indexes[numInterfaces]));
-      if (ret) {
-        ret->numIndexes = 0;
-        for (p = indexes; p && p->if_name; p++)
-          if (!isLoopbackInterface(fd, p->if_name))
-            ret->indexes[ret->numIndexes++] = p->if_index;
-      }
-      if_freenameindex(indexes);
-    }
-    else
-      ret = NULL;
-    close(fd);
-  }
-  else
-    ret = NULL;
-  return ret;
+end:
+    if_freenameindex( indices );
+    return count;
 }
 
 static DWORD getInterfaceBCastAddrByName(const char *name)

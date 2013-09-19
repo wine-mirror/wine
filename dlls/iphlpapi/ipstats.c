@@ -763,7 +763,7 @@ DWORD WINAPI GetIpStatisticsEx(PMIB_IPSTATS stats, DWORD family)
     if (family != WS_AF_INET && family != WS_AF_INET6) return ERROR_INVALID_PARAMETER;
     memset( stats, 0, sizeof(*stats) );
 
-    stats->dwNumIf = stats->dwNumAddr = getNumInterfaces();
+    stats->dwNumIf = stats->dwNumAddr = get_interface_indices( FALSE, NULL );
     if (!AllocateAndGetIpForwardTableFromStack( &fwd_table, FALSE, GetProcessHeap(), 0 ))
     {
         stats->dwNumRoutes = fwd_table->dwNumEntries;
@@ -1174,7 +1174,7 @@ DWORD WINAPI GetUdpStatisticsEx(PMIB_UDPSTATS stats, DWORD family)
     if (family != WS_AF_INET && family != WS_AF_INET6) return ERROR_INVALID_PARAMETER;
     memset( stats, 0, sizeof(*stats) );
 
-    stats->dwNumAddrs = getNumInterfaces();
+    stats->dwNumAddrs = get_interface_indices( FALSE, NULL );
 
     if (family == WS_AF_INET6)
     {

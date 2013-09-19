@@ -463,7 +463,7 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
   if (!pOutBufLen)
     ret = ERROR_INVALID_PARAMETER;
   else {
-    DWORD numNonLoopbackInterfaces = getNumNonLoopbackInterfaces();
+    DWORD numNonLoopbackInterfaces = get_interface_indices( TRUE, NULL );
 
     if (numNonLoopbackInterfaces > 0) {
       DWORD numIPAddresses = getNumIPAddresses();
@@ -489,7 +489,7 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
         if (!ret)
           ret = AllocateAndGetIpForwardTableFromStack(&routeTable, FALSE, GetProcessHeap(), 0);
         if (!ret)
-          table = getNonLoopbackInterfaceIndexTable();
+          get_interface_indices( TRUE, &table );
         if (table) {
           size = sizeof(IP_ADAPTER_INFO) * table->numIndexes;
           size += ipAddrTable->dwNumEntries * sizeof(IP_ADDR_STRING); 
@@ -1129,7 +1129,7 @@ ULONG WINAPI DECLSPEC_HOTPATCH GetAdaptersAddresses(ULONG family, ULONG flags, P
 
     if (!buflen) return ERROR_INVALID_PARAMETER;
 
-    table = getInterfaceIndexTable();
+    get_interface_indices( FALSE, &table );
     if (!table || !table->numIndexes)
     {
         HeapFree(GetProcessHeap(), 0, table);
@@ -1431,7 +1431,7 @@ DWORD WINAPI GetIfTable(PMIB_IFTABLE pIfTable, PULONG pdwSize, BOOL bOrder)
   if (!pdwSize)
     ret = ERROR_INVALID_PARAMETER;
   else {
-    DWORD numInterfaces = getNumInterfaces();
+    DWORD numInterfaces = get_interface_indices( FALSE, NULL );
     ULONG size = sizeof(MIB_IFTABLE);
 
     if (numInterfaces > 1)
@@ -1441,7 +1441,8 @@ DWORD WINAPI GetIfTable(PMIB_IFTABLE pIfTable, PULONG pdwSize, BOOL bOrder)
       ret = ERROR_INSUFFICIENT_BUFFER;
     }
     else {
-      InterfaceIndexTable *table = getInterfaceIndexTable();
+      InterfaceIndexTable *table;
+      get_interface_indices( FALSE, &table );
 
       if (table) {
         size = sizeof(MIB_IFTABLE);
@@ -1501,7 +1502,7 @@ DWORD WINAPI GetInterfaceInfo(PIP_INTERFACE_INFO pIfTable, PULONG dwOutBufLen)
   if (!dwOutBufLen)
     ret = ERROR_INVALID_PARAMETER;
   else {
-    DWORD numInterfaces = getNumInterfaces();
+    DWORD numInterfaces = get_interface_indices( FALSE, NULL );
     ULONG size = sizeof(IP_INTERFACE_INFO);
 
     if (numInterfaces > 1)
@@ -1511,7 +1512,8 @@ DWORD WINAPI GetInterfaceInfo(PIP_INTERFACE_INFO pIfTable, PULONG dwOutBufLen)
       ret = ERROR_INSUFFICIENT_BUFFER;
     }
     else {
-      InterfaceIndexTable *table = getInterfaceIndexTable();
+      InterfaceIndexTable *table;
+      get_interface_indices( FALSE, &table );
 
       if (table) {
         size = sizeof(IP_INTERFACE_INFO);
@@ -1837,7 +1839,7 @@ DWORD WINAPI GetNumberOfInterfaces(PDWORD pdwNumIf)
   if (!pdwNumIf)
     ret = ERROR_INVALID_PARAMETER;
   else {
-    *pdwNumIf = getNumInterfaces();
+    *pdwNumIf = get_interface_indices( FALSE, NULL );
     ret = NO_ERROR;
   }
   TRACE("returning %d\n", ret);
