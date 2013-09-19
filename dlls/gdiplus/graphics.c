@@ -6242,10 +6242,14 @@ static GpStatus SOFTWARE_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UI
     /* Generate a mask for the text */
     for (i=0; i<length; i++)
     {
+        DWORD ret;
         int left, top, stride;
 
-        GetGlyphOutlineW(hdc, text[i], ggo_flags,
+        ret = GetGlyphOutlineW(hdc, text[i], ggo_flags,
             &glyphmetrics, max_glyphsize, glyph_mask, &identity);
+
+        if (ret == GDI_ERROR || ret == 0)
+            continue; /* empty glyph */
 
         left = pti[i].x + glyphmetrics.gmptGlyphOrigin.x;
         top = pti[i].y - glyphmetrics.gmptGlyphOrigin.y;
