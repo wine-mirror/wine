@@ -440,7 +440,12 @@ struct wined3d_volume * CDECL wined3d_volume_from_resource(struct wined3d_resour
 
 HRESULT CDECL wined3d_volume_unmap(struct wined3d_volume *volume)
 {
-    return wined3d_resource_unmap(&volume->resource);
+    HRESULT hr;
+
+    hr = wined3d_resource_unmap(&volume->resource);
+    if (hr == WINEDDERR_NOTLOCKED)
+        return WINED3DERR_INVALIDCALL;
+    return hr;
 }
 
 static ULONG volume_resource_incref(struct wined3d_resource *resource)

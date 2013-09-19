@@ -2302,47 +2302,26 @@ struct wined3d_surface * CDECL wined3d_surface_from_resource(struct wined3d_reso
 
 HRESULT CDECL wined3d_surface_unmap(struct wined3d_surface *surface)
 {
-    struct wined3d_device *device = surface->resource.device;
-    struct wined3d_context *context = NULL;
+    HRESULT hr;
     TRACE("surface %p.\n", surface);
 
-    if (!surface->resource.map_count)
-    {
-        WARN("Trying to unmap unmapped surface.\n");
-        return WINEDDERR_NOTLOCKED;
-    }
-    --surface->resource.map_count;
-
-    if (device->d3d_initialized)
-        context = context_acquire(device, NULL);
-    wined3d_resource_release_map_ptr(&surface->resource, context);
-    if (context)
-        context_release(context);
+    hr = wined3d_resource_unmap(&surface->resource);
+    if (FAILED(hr))
+        return hr;
 
     if (surface->container->swapchain && surface->container == surface->container->swapchain->front_buffer)
         surface->surface_ops->surface_frontbuffer_updated(surface);
     memset(&surface->lockedRect, 0, sizeof(surface->lockedRect));
 
-    return WINED3D_OK;
+    return hr;
 }
 
 HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
         struct wined3d_map_desc *map_desc, const RECT *rect, DWORD flags)
 {
+    struct wined3d_box box;
     const struct wined3d_format *format = surface->resource.format;
     unsigned int fmt_flags = surface->container->resource.format_flags;
-    struct wined3d_device *device = surface->resource.device;
-    struct wined3d_context *context = NULL;
-    BYTE *base_memory;
-
-    TRACE("surface %p, map_desc %p, rect %s, flags %#x.\n",
-            surface, map_desc, wine_dbgstr_rect(rect), flags);
-
-    if (surface->resource.map_count)
-    {
-        WARN("Surface is already mapped.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
 
     if ((fmt_flags & WINED3DFMT_FLAG_BLOCKS) && rect
             && !surface_check_block_align(surface, rect))
@@ -2353,11 +2332,6 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
         if (surface->resource.pool == WINED3D_POOL_DEFAULT)
             return WINED3DERR_INVALIDCALL;
     }
-
-    ++surface->resource.map_count;
-
-    if (!(surface->resource.access_flags & WINED3D_RESOURCE_ACCESS_CPU))
-        WARN("Trying to lock unlockable surface.\n");
 
     /* Performance optimization: Count how often a surface is mapped, if it is
      * mapped regularly do not throw away the system memory copy. This avoids
@@ -2374,72 +2348,26 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
         }
     }
 
-    if (device->d3d_initialized)
-        context = context_acquire(device, NULL);
-
-    wined3d_resource_prepare_map_memory(&surface->resource, context);
-    if (flags & WINED3D_MAP_DISCARD)
+    if (rect)
     {
-        TRACE("WINED3D_MAP_DISCARD flag passed, marking %s as up to date.\n",
-                wined3d_debug_location(surface->resource.map_binding));
-        wined3d_resource_validate_location(&surface->resource, surface->resource.map_binding);
+        surface->lockedRect = *rect;
+
+        box.left = rect->left;
+        box.top = rect->top;
+        box.front = 0;
+        box.right = rect->right;
+        box.bottom = rect->bottom;
+        box.back = 1;
     }
     else
     {
-        if (surface->resource.usage & WINED3DUSAGE_DYNAMIC)
-            WARN_(d3d_perf)("Mapping a dynamic surface without WINED3D_MAP_DISCARD.\n");
-
-        wined3d_resource_load_location(&surface->resource, context, surface->resource.map_binding);
-    }
-
-    if (!(flags & (WINED3D_MAP_NO_DIRTY_UPDATE | WINED3D_MAP_READONLY)))
-        wined3d_resource_invalidate_location(&surface->resource, ~surface->resource.map_binding);
-
-    base_memory = wined3d_resource_get_map_ptr(&surface->resource, context, flags);
-
-    if (context)
-        context_release(context);
-
-    if (fmt_flags & WINED3DFMT_FLAG_BROKEN_PITCH)
-        map_desc->row_pitch = surface->resource.width * format->byte_count;
-    else
-        wined3d_resource_get_pitch(&surface->resource, &map_desc->row_pitch, &map_desc->slice_pitch);
-    map_desc->slice_pitch = 0;
-
-    if (!rect)
-    {
-        map_desc->data = base_memory;
         surface->lockedRect.left = 0;
         surface->lockedRect.top = 0;
         surface->lockedRect.right = surface->resource.width;
         surface->lockedRect.bottom = surface->resource.height;
     }
-    else
-    {
-        if ((fmt_flags & (WINED3DFMT_FLAG_BLOCKS | WINED3DFMT_FLAG_BROKEN_PITCH)) == WINED3DFMT_FLAG_BLOCKS)
-        {
-            /* Compressed textures are block based, so calculate the offset of
-             * the block that contains the top-left pixel of the locked rectangle. */
-            map_desc->data = base_memory
-                    + ((rect->top / format->block_height) * map_desc->row_pitch)
-                    + ((rect->left / format->block_width) * format->block_byte_count);
-        }
-        else
-        {
-            map_desc->data = base_memory
-                    + (map_desc->row_pitch * rect->top)
-                    + (rect->left * format->byte_count);
-        }
-        surface->lockedRect.left = rect->left;
-        surface->lockedRect.top = rect->top;
-        surface->lockedRect.right = rect->right;
-        surface->lockedRect.bottom = rect->bottom;
-    }
 
-    TRACE("Locked rect %s.\n", wine_dbgstr_rect(&surface->lockedRect));
-    TRACE("Returning memory %p, pitch %u.\n", map_desc->data, map_desc->row_pitch);
-
-    return WINED3D_OK;
+    return wined3d_resource_map(&surface->resource, map_desc, rect ? &box : NULL, flags);
 }
 
 HRESULT CDECL wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)

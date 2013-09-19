@@ -867,7 +867,7 @@ HRESULT wined3d_resource_unmap(struct wined3d_resource *resource)
     if (!resource->map_count)
     {
         WARN("Trying to unlock an unlocked resource %p.\n", resource);
-        return WINED3DERR_INVALIDCALL;
+        return WINEDDERR_NOTLOCKED;
     }
 
     if (device->d3d_initialized)
