@@ -10722,8 +10722,19 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncDocString(ICreateTypeInfo2 *ifac
         UINT index, LPOLESTR docString)
 {
     ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
-    FIXME("%p %u %s - stub\n", This, index, wine_dbgstr_w(docString));
-    return E_NOTIMPL;
+    TLBFuncDesc *func_desc = &This->funcdescs[index];
+
+    TRACE("%p %u %s\n", This, index, wine_dbgstr_w(docString));
+
+    if(!docString)
+        return E_INVALIDARG;
+
+    if(index >= This->cFuncs)
+        return TYPE_E_ELEMENTNOTFOUND;
+
+    func_desc->HelpString = TLB_append_str(&This->pTypeLib->string_list, docString);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ICreateTypeInfo2_fnSetVarDocString(ICreateTypeInfo2 *iface,

@@ -4325,9 +4325,10 @@ static void test_SetFuncAndParamNames(void)
     DeleteFileA(filenameA);
 }
 
-static void test_SetVarDocString(void)
+static void test_SetDocString(void)
 {
     static OLECHAR nameW[] = {'n','a','m','e',0};
+    static OLECHAR name2W[] = {'n','a','m','e','2',0};
     static OLECHAR doc1W[] = {'d','o','c','1',0};
     static OLECHAR doc2W[] = {'d','o','c','2',0};
     static OLECHAR var_nameW[] = {'v','a','r','n','a','m','e',0};
@@ -4339,6 +4340,7 @@ static void test_SetVarDocString(void)
     ITypeInfo *ti;
     BSTR namestr, docstr;
     VARDESC desc, *pdesc;
+    FUNCDESC funcdesc, *pfuncdesc;
     HRESULT hr;
     VARIANT v;
 
@@ -4393,6 +4395,29 @@ static void test_SetVarDocString(void)
 
     ICreateTypeInfo_Release(cti);
 
+    hr = ICreateTypeLib2_CreateTypeInfo(ctl, name2W, TKIND_INTERFACE, &cti);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_SetFuncDocString(cti, 0, doc1W);
+    ok(hr == TYPE_E_ELEMENTNOTFOUND, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_SetFuncDocString(cti, 0, NULL);
+    ok(hr == E_INVALIDARG, "got %08x\n", hr);
+
+    memset(&funcdesc, 0, sizeof(funcdesc));
+    funcdesc.memid = MEMBERID_NIL;
+    funcdesc.funckind = FUNC_PUREVIRTUAL;
+    funcdesc.invkind = INVOKE_FUNC;
+    funcdesc.callconv = CC_STDCALL;
+
+    hr = ICreateTypeInfo_AddFuncDesc(cti, 0, &funcdesc);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_SetFuncDocString(cti, 0, doc1W);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    ICreateTypeInfo_Release(cti);
+
     hr = ICreateTypeLib2_SaveAllChanges(ctl);
     ok(hr == S_OK, "got: %08x\n", hr);
 
@@ -4422,6 +4447,27 @@ static void test_SetVarDocString(void)
 
     ITypeInfo_ReleaseVarDesc(ti, pdesc);
     ITypeInfo_Release(ti);
+
+    hr = ITypeLib_GetTypeInfo(tl, 1, &ti);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ITypeInfo_GetFuncDesc(ti, 0, &pfuncdesc);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(pfuncdesc->memid == 0x60000000, "got wrong memid: %x\n", pfuncdesc->memid);
+    ok(pfuncdesc->funckind == FUNC_PUREVIRTUAL, "got wrong funckind: %x\n", pfuncdesc->funckind);
+    ok(pfuncdesc->invkind == INVOKE_FUNC, "got wrong invkind: %x\n", pfuncdesc->invkind);
+    ok(pfuncdesc->callconv == CC_STDCALL, "got wrong callconv: %x\n", pfuncdesc->callconv);
+
+    hr = ITypeInfo_GetDocumentation(ti, pfuncdesc->memid, &namestr, &docstr, NULL, NULL);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(namestr == NULL, "got wrong name: %s\n", wine_dbgstr_w(namestr));
+    ok(memcmp(docstr, doc1W, sizeof(doc1W)) == 0, "got wrong docstring: %s\n", wine_dbgstr_w(docstr));
+
+    SysFreeString(docstr);
+
+    ITypeInfo_ReleaseFuncDesc(ti, pfuncdesc);
+    ITypeInfo_Release(ti);
+
     ITypeLib_Release(tl);
 
     DeleteFileA(filenameA);
@@ -5001,7 +5047,7 @@ START_TEST(typelib)
     test_inheritance();
     test_SetVarHelpContext();
     test_SetFuncAndParamNames();
-    test_SetVarDocString();
+    test_SetDocString();
     test_FindName();
 
     if ((filename = create_test_typelib(2)))
