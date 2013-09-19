@@ -100,7 +100,8 @@ static void test_WSAEnumProtocolsA(void)
     ret = WSAEnumProtocolsA( ptest, NULL, &len );
     ok( ret == SOCKET_ERROR, "WSAEnumProtocolsA() succeeded unexpectedly\n");
     error = WSAGetLastError();
-    ok( error == WSAENOBUFS, "Expected 10055, received %d\n", error);
+    ok( error == WSAENOBUFS || broken(error == WSAEFAULT) /* NT4 */,
+       "Expected 10055, received %d\n", error);
 
     buffer = HeapAlloc( GetProcessHeap(), 0, len );
 
@@ -166,7 +167,8 @@ static void test_WSAEnumProtocolsW(void)
     ret = WSAEnumProtocolsW( ptest, NULL, &len );
     ok( ret == SOCKET_ERROR, "WSAEnumProtocolsW() succeeded unexpectedly\n");
     error = WSAGetLastError();
-    ok( error == WSAENOBUFS, "Expected 10055, received %d\n", error);
+    ok( error == WSAENOBUFS || broken(error == WSAEFAULT) /* NT4 */,
+       "Expected 10055, received %d\n", error);
 
     buffer = HeapAlloc( GetProcessHeap(), 0, len );
 
