@@ -577,25 +577,25 @@ DECLARE_INTERFACE_(IDirectPlay8Client,IUnknown)
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IDirectPlay8Client methods ***/
-    STDMETHOD(Initialize)(THIS_ PVOID CONST pvUserContext, CONST PFNDPNMESSAGEHANDLER pfn, CONST DWORD dwFlags) PURE;
-    STDMETHOD(EnumServiceProviders)(THIS_ CONST GUID * CONST pguidServiceProvider, CONST GUID * CONST pguidApplication, DPN_SERVICE_PROVIDER_INFO * CONST pSPInfoBuffer, PDWORD CONST pcbEnumData, PDWORD CONST pcReturned, CONST DWORD dwFlags) PURE;
-    STDMETHOD(EnumHosts)(THIS_ PDPN_APPLICATION_DESC CONST pApplicationDesc,IDirectPlay8Address * CONST pAddrHost,IDirectPlay8Address * CONST pDeviceInfo, PVOID CONST pUserEnumData, CONST DWORD dwUserEnumDataSize, CONST DWORD dwEnumCount, CONST DWORD dwRetryInterval, CONST DWORD dwTimeOut, PVOID CONST pvUserContext, DPNHANDLE * CONST pAsyncHandle, CONST DWORD dwFlags) PURE;
-    STDMETHOD(CancelAsyncOperation)(THIS_ CONST DPNHANDLE hAsyncHandle, CONST DWORD dwFlags) PURE;
-    STDMETHOD(Connect)(THIS_ CONST DPN_APPLICATION_DESC * CONST pdnAppDesc,IDirectPlay8Address * CONST pHostAddr,IDirectPlay8Address * CONST pDeviceInfo, CONST DPN_SECURITY_DESC * CONST pdnSecurity, CONST DPN_SECURITY_CREDENTIALS * CONST pdnCredentials, CONST void * CONST pvUserConnectData, CONST DWORD dwUserConnectDataSize,void * CONST pvAsyncContext, DPNHANDLE * CONST phAsyncHandle, CONST DWORD dwFlags) PURE;
-    STDMETHOD(Send)(THIS_ CONST DPN_BUFFER_DESC * CONST prgBufferDesc, CONST DWORD cBufferDesc, CONST DWORD dwTimeOut, void * CONST pvAsyncContext, DPNHANDLE * CONST phAsyncHandle, CONST DWORD dwFlags) PURE;
-    STDMETHOD(GetSendQueueInfo)(THIS_ DWORD * CONST pdwNumMsgs, DWORD * CONST pdwNumBytes, CONST DWORD dwFlags) PURE;
-    STDMETHOD(GetApplicationDesc)(THIS_ DPN_APPLICATION_DESC * CONST pAppDescBuffer, DWORD * CONST pcbDataSize, CONST DWORD dwFlags) PURE;
-    STDMETHOD(SetClientInfo)(THIS_ CONST DPN_PLAYER_INFO * CONST pdpnPlayerInfo, PVOID CONST pvAsyncContext, DPNHANDLE * CONST phAsyncHandle, CONST DWORD dwFlags) PURE;
-    STDMETHOD(GetServerInfo)(THIS_ DPN_PLAYER_INFO * CONST pdpnPlayerInfo, DWORD * CONST pdwSize, CONST DWORD dwFlags) PURE;
-    STDMETHOD(GetServerAddress)(THIS_ IDirectPlay8Address ** CONST pAddress, CONST DWORD dwFlags) PURE;
-    STDMETHOD(Close)(THIS_ CONST DWORD dwFlags) PURE;
-    STDMETHOD(ReturnBuffer)(THIS_ CONST DPNHANDLE hBufferHandle, CONST DWORD dwFlags) PURE;
-    STDMETHOD(GetCaps)(THIS_ DPN_CAPS * CONST pdpCaps, CONST DWORD dwFlags) PURE;
-    STDMETHOD(SetCaps)(THIS_ CONST DPN_CAPS * CONST pdpCaps, CONST DWORD dwFlags) PURE;
-    STDMETHOD(SetSPCaps)(THIS_ CONST GUID * CONST pguidSP, CONST DPN_SP_CAPS * CONST pdpspCaps, CONST DWORD dwFlags ) PURE;
-    STDMETHOD(GetSPCaps)(THIS_ CONST GUID * CONST pguidSP, DPN_SP_CAPS * CONST pdpspCaps, CONST DWORD dwFlags) PURE;
-    STDMETHOD(GetConnectionInfo)(THIS_ DPN_CONNECTION_INFO * CONST pdpConnectionInfo, CONST DWORD dwFlags) PURE;
-    STDMETHOD(RegisterLobby)(THIS_ CONST DPNHANDLE dpnHandle, struct IDirectPlay8LobbiedApplication * CONST pIDP8LobbiedApplication, CONST DWORD dwFlags) PURE;
+    STDMETHOD(Initialize)(THIS_ PVOID pvUserContext, PFNDPNMESSAGEHANDLER pfn, DWORD dwFlags) PURE;
+    STDMETHOD(EnumServiceProviders)(THIS_ const GUID *pguidServiceProvider, const GUID *pguidApplication, DPN_SERVICE_PROVIDER_INFO *pSPInfoBuffer, PDWORD pcbEnumData, PDWORD pcReturned, DWORD dwFlags) PURE;
+    STDMETHOD(EnumHosts)(THIS_ PDPN_APPLICATION_DESC pApplicationDesc,IDirectPlay8Address *pAddrHost,IDirectPlay8Address *pDeviceInfo, PVOID pUserEnumData, DWORD dwUserEnumDataSize, DWORD dwEnumCount, DWORD dwRetryInterval, DWORD dwTimeOut, PVOID pvUserContext, DPNHANDLE *pAsyncHandle, DWORD dwFlags) PURE;
+    STDMETHOD(CancelAsyncOperation)(THIS_ DPNHANDLE hAsyncHandle, DWORD dwFlags) PURE;
+    STDMETHOD(Connect)(THIS_ const DPN_APPLICATION_DESC *pdnAppDesc,IDirectPlay8Address *pHostAddr,IDirectPlay8Address *pDeviceInfo, const DPN_SECURITY_DESC *pdnSecurity, const DPN_SECURITY_CREDENTIALS *pdnCredentials, const void *pvUserConnectData, DWORD dwUserConnectDataSize,void *pvAsyncContext, DPNHANDLE *phAsyncHandle, DWORD dwFlags) PURE;
+    STDMETHOD(Send)(THIS_ const DPN_BUFFER_DESC *prgBufferDesc, DWORD cBufferDesc, DWORD dwTimeOut, void *pvAsyncContext, DPNHANDLE *phAsyncHandle, DWORD dwFlags) PURE;
+    STDMETHOD(GetSendQueueInfo)(THIS_ DWORD *pdwNumMsgs, DWORD *pdwNumBytes, DWORD dwFlags) PURE;
+    STDMETHOD(GetApplicationDesc)(THIS_ DPN_APPLICATION_DESC *pAppDescBuffer, DWORD *pcbDataSize, DWORD dwFlags) PURE;
+    STDMETHOD(SetClientInfo)(THIS_ const DPN_PLAYER_INFO *pdpnPlayerInfo, PVOID pvAsyncContext, DPNHANDLE *phAsyncHandle, DWORD dwFlags) PURE;
+    STDMETHOD(GetServerInfo)(THIS_ DPN_PLAYER_INFO *pdpnPlayerInfo, DWORD *pdwSize, DWORD dwFlags) PURE;
+    STDMETHOD(GetServerAddress)(THIS_ IDirectPlay8Address ** pAddress, DWORD dwFlags) PURE;
+    STDMETHOD(Close)(THIS_ DWORD dwFlags) PURE;
+    STDMETHOD(ReturnBuffer)(THIS_ DPNHANDLE hBufferHandle, DWORD dwFlags) PURE;
+    STDMETHOD(GetCaps)(THIS_ DPN_CAPS *pdpCaps, DWORD dwFlags) PURE;
+    STDMETHOD(SetCaps)(THIS_ const DPN_CAPS *pdpCaps, DWORD dwFlags) PURE;
+    STDMETHOD(SetSPCaps)(THIS_ const GUID *pguidSP, const DPN_SP_CAPS *pdpspCaps, DWORD dwFlags ) PURE;
+    STDMETHOD(GetSPCaps)(THIS_ const GUID *pguidSP, DPN_SP_CAPS *pdpspCaps, DWORD dwFlags) PURE;
+    STDMETHOD(GetConnectionInfo)(THIS_ DPN_CONNECTION_INFO *pdpConnectionInfo, DWORD dwFlags) PURE;
+    STDMETHOD(RegisterLobby)(THIS_ DPNHANDLE dpnHandle, struct IDirectPlay8LobbiedApplication *pIDP8LobbiedApplication, DWORD dwFlags) PURE;
 };
 #undef INTERFACE
 
@@ -662,37 +662,37 @@ DECLARE_INTERFACE_(IDirectPlay8Server,IUnknown)
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IDirectPlay8Server methods ***/
-    STDMETHOD(Initialize)(THIS_ PVOID CONST pvUserContext, CONST PFNDPNMESSAGEHANDLER pfn, CONST DWORD dwFlags) PURE;
-    STDMETHOD(EnumServiceProviders)(THIS_ CONST GUID * CONST pguidServiceProvider, CONST GUID * CONST pguidApplication, DPN_SERVICE_PROVIDER_INFO * CONST pSPInfoBuffer, PDWORD CONST pcbEnumData, PDWORD CONST pcReturned, CONST DWORD dwFlags) PURE;
-    STDMETHOD(CancelAsyncOperation)(THIS_ CONST DPNHANDLE hAsyncHandle, CONST DWORD dwFlags) PURE;
-    STDMETHOD(GetSendQueueInfo)(THIS_ CONST DPNID dpnid, DWORD * CONST pdwNumMsgs, DWORD * CONST pdwNumBytes, CONST DWORD dwFlags) PURE;
-    STDMETHOD(GetApplicationDesc)(THIS_ DPN_APPLICATION_DESC * CONST pAppDescBuffer, DWORD * CONST pcbDataSize, CONST DWORD dwFlags) PURE;
-    STDMETHOD(SetServerInfo)(THIS_ CONST DPN_PLAYER_INFO * CONST pdpnPlayerInfo, PVOID CONST pvAsyncContext, DPNHANDLE * CONST phAsyncHandle, CONST DWORD dwFlags) PURE;
-    STDMETHOD(GetClientInfo)(THIS_ CONST DPNID dpnid, DPN_PLAYER_INFO * CONST pdpnPlayerInfo, DWORD * CONST pdwSize, CONST DWORD dwFlags) PURE;
-    STDMETHOD(GetClientAddress)(THIS_ CONST DPNID dpnid, IDirectPlay8Address ** CONST pAddress, CONST DWORD dwFlags) PURE;
-    STDMETHOD(GetLocalHostAddresses)(THIS_ IDirectPlay8Address ** CONST prgpAddress, DWORD * CONST pcAddress, CONST DWORD dwFlags) PURE;
-    STDMETHOD(SetApplicationDesc)(THIS_ CONST DPN_APPLICATION_DESC * CONST pad, CONST DWORD dwFlags) PURE;
-    STDMETHOD(Host)(THIS_ CONST DPN_APPLICATION_DESC * CONST pdnAppDesc, IDirectPlay8Address ** CONST prgpDeviceInfo, CONST DWORD cDeviceInfo, CONST DPN_SECURITY_DESC * CONST pdnSecurity, CONST DPN_SECURITY_CREDENTIALS * CONST pdnCredentials, void * CONST pvPlayerContext, CONST DWORD dwFlags) PURE;
-    STDMETHOD(SendTo)(THIS_ CONST DPNID dpnid, CONST DPN_BUFFER_DESC * CONST prgBufferDesc, CONST DWORD cBufferDesc, CONST DWORD dwTimeOut, void * CONST pvAsyncContext, DPNHANDLE * CONST phAsyncHandle, CONST DWORD dwFlags) PURE;
-    STDMETHOD(CreateGroup)(THIS_ CONST DPN_GROUP_INFO * CONST pdpnGroupInfo, void * CONST pvGroupContext, void * CONST pvAsyncContext, DPNHANDLE * CONST phAsyncHandle, CONST DWORD dwFlags) PURE;
-    STDMETHOD(DestroyGroup)(THIS_ CONST DPNID idGroup, PVOID CONST pvAsyncContext, DPNHANDLE * CONST phAsyncHandle, CONST DWORD dwFlags) PURE;
-    STDMETHOD(AddPlayerToGroup)(THIS_ CONST DPNID idGroup, CONST DPNID idClient, PVOID CONST pvAsyncContext, DPNHANDLE * CONST phAsyncHandle, CONST DWORD dwFlags) PURE;
-    STDMETHOD(RemovePlayerFromGroup)(THIS_ CONST DPNID idGroup, CONST DPNID idClient, PVOID CONST pvAsyncContext, DPNHANDLE * CONST phAsyncHandle, CONST DWORD dwFlags) PURE;
-    STDMETHOD(SetGroupInfo)(THIS_ CONST DPNID dpnid, DPN_GROUP_INFO * CONST pdpnGroupInfo, PVOID CONST pvAsyncContext, DPNHANDLE * CONST phAsyncHandle, CONST DWORD dwFlags) PURE;
-    STDMETHOD(GetGroupInfo)(THIS_ CONST DPNID dpnid, DPN_GROUP_INFO * CONST pdpnGroupInfo, DWORD * CONST pdwSize, CONST DWORD dwFlags) PURE;
-    STDMETHOD(EnumPlayersAndGroups)(THIS_ DPNID * CONST prgdpnid, DWORD * CONST pcdpnid, CONST DWORD dwFlags) PURE;
-    STDMETHOD(EnumGroupMembers)(THIS_ CONST DPNID dpnid, DPNID * CONST prgdpnid, DWORD * CONST pcdpnid, CONST DWORD dwFlags) PURE;
-    STDMETHOD(Close)(THIS_ CONST DWORD dwFlags) PURE;
-    STDMETHOD(DestroyClient)(THIS_ CONST DPNID dpnidClient, CONST void * CONST pvDestroyData, CONST DWORD dwDestroyDataSize, CONST DWORD dwFlags) PURE;
-    STDMETHOD(ReturnBuffer)(THIS_ CONST DPNHANDLE hBufferHandle, CONST DWORD dwFlags) PURE;
-    STDMETHOD(GetPlayerContext)(THIS_ CONST DPNID dpnid, PVOID * CONST ppvPlayerContext, CONST DWORD dwFlags) PURE;
-    STDMETHOD(GetGroupContext)(THIS_ CONST DPNID dpnid, PVOID * CONST ppvGroupContext, CONST DWORD dwFlags) PURE;
-    STDMETHOD(GetCaps)(THIS_ DPN_CAPS * CONST pdpCaps, CONST DWORD dwFlags) PURE;
-    STDMETHOD(SetCaps)(THIS_ CONST DPN_CAPS * CONST pdpCaps, CONST DWORD dwFlags) PURE;
-    STDMETHOD(SetSPCaps)(THIS_ CONST GUID * CONST pguidSP, CONST DPN_SP_CAPS * CONST pdpspCaps, CONST DWORD dwFlags ) PURE;
-    STDMETHOD(GetSPCaps)(THIS_ CONST GUID * CONST pguidSP, DPN_SP_CAPS * CONST pdpspCaps, CONST DWORD dwFlags) PURE;
-    STDMETHOD(GetConnectionInfo)(THIS_ CONST DPNID dpnid, DPN_CONNECTION_INFO * CONST pdpConnectionInfo, CONST DWORD dwFlags) PURE;
-    STDMETHOD(RegisterLobby)(THIS_ CONST DPNHANDLE dpnHandle, struct IDirectPlay8LobbiedApplication * CONST pIDP8LobbiedApplication, CONST DWORD dwFlags) PURE;
+    STDMETHOD(Initialize)(THIS_ PVOID pvUserContext, PFNDPNMESSAGEHANDLER pfn, DWORD dwFlags) PURE;
+    STDMETHOD(EnumServiceProviders)(THIS_ const GUID *pguidServiceProvider, const GUID *pguidApplication, DPN_SERVICE_PROVIDER_INFO *pSPInfoBuffer, PDWORD pcbEnumData, PDWORD pcReturned, DWORD dwFlags) PURE;
+    STDMETHOD(CancelAsyncOperation)(THIS_ DPNHANDLE hAsyncHandle, DWORD dwFlags) PURE;
+    STDMETHOD(GetSendQueueInfo)(THIS_ DPNID dpnid, DWORD *pdwNumMsgs, DWORD *pdwNumBytes, DWORD dwFlags) PURE;
+    STDMETHOD(GetApplicationDesc)(THIS_ DPN_APPLICATION_DESC *pAppDescBuffer, DWORD *pcbDataSize, DWORD dwFlags) PURE;
+    STDMETHOD(SetServerInfo)(THIS_ const DPN_PLAYER_INFO *pdpnPlayerInfo, PVOID pvAsyncContext, DPNHANDLE *phAsyncHandle, DWORD dwFlags) PURE;
+    STDMETHOD(GetClientInfo)(THIS_ DPNID dpnid, DPN_PLAYER_INFO *pdpnPlayerInfo, DWORD *pdwSize, DWORD dwFlags) PURE;
+    STDMETHOD(GetClientAddress)(THIS_ DPNID dpnid, IDirectPlay8Address ** pAddress, DWORD dwFlags) PURE;
+    STDMETHOD(GetLocalHostAddresses)(THIS_ IDirectPlay8Address ** prgpAddress, DWORD *pcAddress, DWORD dwFlags) PURE;
+    STDMETHOD(SetApplicationDesc)(THIS_ const DPN_APPLICATION_DESC *pad, DWORD dwFlags) PURE;
+    STDMETHOD(Host)(THIS_ const DPN_APPLICATION_DESC *pdnAppDesc, IDirectPlay8Address ** prgpDeviceInfo, DWORD cDeviceInfo, const DPN_SECURITY_DESC *pdnSecurity, const DPN_SECURITY_CREDENTIALS *pdnCredentials, void *pvPlayerContext, DWORD dwFlags) PURE;
+    STDMETHOD(SendTo)(THIS_ DPNID dpnid, const DPN_BUFFER_DESC *prgBufferDesc, DWORD cBufferDesc, DWORD dwTimeOut, void *pvAsyncContext, DPNHANDLE *phAsyncHandle, DWORD dwFlags) PURE;
+    STDMETHOD(CreateGroup)(THIS_ const DPN_GROUP_INFO *pdpnGroupInfo, void *pvGroupContext, void *pvAsyncContext, DPNHANDLE *phAsyncHandle, DWORD dwFlags) PURE;
+    STDMETHOD(DestroyGroup)(THIS_ DPNID idGroup, PVOID pvAsyncContext, DPNHANDLE *phAsyncHandle, DWORD dwFlags) PURE;
+    STDMETHOD(AddPlayerToGroup)(THIS_ DPNID idGroup, DPNID idClient, PVOID pvAsyncContext, DPNHANDLE *phAsyncHandle, DWORD dwFlags) PURE;
+    STDMETHOD(RemovePlayerFromGroup)(THIS_ DPNID idGroup, DPNID idClient, PVOID pvAsyncContext, DPNHANDLE *phAsyncHandle, DWORD dwFlags) PURE;
+    STDMETHOD(SetGroupInfo)(THIS_ DPNID dpnid, DPN_GROUP_INFO *pdpnGroupInfo, PVOID pvAsyncContext, DPNHANDLE *phAsyncHandle, DWORD dwFlags) PURE;
+    STDMETHOD(GetGroupInfo)(THIS_ DPNID dpnid, DPN_GROUP_INFO *pdpnGroupInfo, DWORD *pdwSize, DWORD dwFlags) PURE;
+    STDMETHOD(EnumPlayersAndGroups)(THIS_ DPNID *prgdpnid, DWORD *pcdpnid, DWORD dwFlags) PURE;
+    STDMETHOD(EnumGroupMembers)(THIS_ DPNID dpnid, DPNID *prgdpnid, DWORD *pcdpnid, DWORD dwFlags) PURE;
+    STDMETHOD(Close)(THIS_ DWORD dwFlags) PURE;
+    STDMETHOD(DestroyClient)(THIS_ DPNID dpnidClient, const void *pvDestroyData, DWORD dwDestroyDataSize, DWORD dwFlags) PURE;
+    STDMETHOD(ReturnBuffer)(THIS_ DPNHANDLE hBufferHandle, DWORD dwFlags) PURE;
+    STDMETHOD(GetPlayerContext)(THIS_ DPNID dpnid, PVOID *ppvPlayerContext, DWORD dwFlags) PURE;
+    STDMETHOD(GetGroupContext)(THIS_ DPNID dpnid, PVOID *ppvGroupContext, DWORD dwFlags) PURE;
+    STDMETHOD(GetCaps)(THIS_ DPN_CAPS *pdpCaps, DWORD dwFlags) PURE;
+    STDMETHOD(SetCaps)(THIS_ const DPN_CAPS *pdpCaps, DWORD dwFlags) PURE;
+    STDMETHOD(SetSPCaps)(THIS_ const GUID *pguidSP, const DPN_SP_CAPS *pdpspCaps, DWORD dwFlags ) PURE;
+    STDMETHOD(GetSPCaps)(THIS_ const GUID *pguidSP, DPN_SP_CAPS *pdpspCaps, DWORD dwFlags) PURE;
+    STDMETHOD(GetConnectionInfo)(THIS_ DPNID dpnid, DPN_CONNECTION_INFO *pdpConnectionInfo, DWORD dwFlags) PURE;
+    STDMETHOD(RegisterLobby)(THIS_ DPNHANDLE dpnHandle, struct IDirectPlay8LobbiedApplication *pIDP8LobbiedApplication, DWORD dwFlags) PURE;
 };
 #undef INTERFACE
 
@@ -783,40 +783,40 @@ DECLARE_INTERFACE_(IDirectPlay8Peer,IUnknown)
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IDirectPlay8Peer methods ***/
-    STDMETHOD(Initialize)(THIS_ PVOID CONST pvUserContext, CONST PFNDPNMESSAGEHANDLER pfn, CONST DWORD dwFlags) PURE;
-    STDMETHOD(EnumServiceProviders)(THIS_ CONST GUID* CONST pguidServiceProvider, CONST GUID* CONST pguidApplication, DPN_SERVICE_PROVIDER_INFO* CONST pSPInfoBuffer, DWORD* CONST pcbEnumData, DWORD* CONST pcReturned, CONST DWORD dwFlags) PURE;
-    STDMETHOD(CancelAsyncOperation)(THIS_ CONST DPNHANDLE hAsyncHandle, CONST DWORD dwFlags) PURE;
-    STDMETHOD(Connect)(THIS_ CONST DPN_APPLICATION_DESC* CONST pdnAppDesc, IDirectPlay8Address* CONST pHostAddr, IDirectPlay8Address* CONST pDeviceInfo, CONST DPN_SECURITY_DESC* CONST pdnSecurity, CONST DPN_SECURITY_CREDENTIALS* CONST pdnCredentials, CONST void* CONST pvUserConnectData, CONST DWORD dwUserConnectDataSize, void* CONST pvPlayerContext, void* CONST pvAsyncContext, DPNHANDLE* CONST phAsyncHandle, CONST DWORD dwFlags) PURE;
-    STDMETHOD(SendTo)(THIS_ CONST DPNID dpnid, CONST DPN_BUFFER_DESC* CONST prgBufferDesc, CONST DWORD cBufferDesc, CONST DWORD dwTimeOut, void* CONST pvAsyncContext, DPNHANDLE* CONST phAsyncHandle, CONST DWORD dwFlags) PURE;
-    STDMETHOD(GetSendQueueInfo)(THIS_ CONST DPNID dpnid, DWORD* CONST pdwNumMsgs, DWORD* CONST pdwNumBytes, CONST DWORD dwFlags) PURE;
-    STDMETHOD(Host)(THIS_ CONST DPN_APPLICATION_DESC* CONST pdnAppDesc, IDirectPlay8Address **CONST prgpDeviceInfo, CONST DWORD cDeviceInfo, CONST DPN_SECURITY_DESC* CONST pdnSecurity, CONST DPN_SECURITY_CREDENTIALS* CONST pdnCredentials, void* CONST pvPlayerContext, CONST DWORD dwFlags) PURE;
-    STDMETHOD(GetApplicationDesc)(THIS_ DPN_APPLICATION_DESC* CONST pAppDescBuffer, DWORD* CONST pcbDataSize, CONST DWORD dwFlags) PURE;
-    STDMETHOD(SetApplicationDesc)(THIS_ CONST DPN_APPLICATION_DESC* CONST pad, CONST DWORD dwFlags) PURE;
-    STDMETHOD(CreateGroup)(THIS_ CONST DPN_GROUP_INFO* CONST pdpnGroupInfo, void* CONST pvGroupContext, void* CONST pvAsyncContext, DPNHANDLE* CONST phAsyncHandle, CONST DWORD dwFlags) PURE;
-    STDMETHOD(DestroyGroup)(THIS_ CONST DPNID idGroup, PVOID CONST pvAsyncContext, DPNHANDLE* CONST phAsyncHandle, CONST DWORD dwFlags) PURE;
-    STDMETHOD(AddPlayerToGroup)(THIS_ CONST DPNID idGroup, CONST DPNID idClient, PVOID CONST pvAsyncContext, DPNHANDLE* CONST phAsyncHandle, CONST DWORD dwFlags) PURE;
-    STDMETHOD(RemovePlayerFromGroup)(THIS_ CONST DPNID idGroup, CONST DPNID idClient, PVOID CONST pvAsyncContext, DPNHANDLE* CONST phAsyncHandle, CONST DWORD dwFlags) PURE;
-    STDMETHOD(SetGroupInfo)(THIS_ CONST DPNID dpnid, DPN_GROUP_INFO* CONST pdpnGroupInfo,PVOID CONST pvAsyncContext, DPNHANDLE* CONST phAsyncHandle, CONST DWORD dwFlags) PURE;
-    STDMETHOD(GetGroupInfo)(THIS_ CONST DPNID dpnid, DPN_GROUP_INFO* CONST pdpnGroupInfo, DWORD* CONST pdwSize, CONST DWORD dwFlags) PURE;
-    STDMETHOD(EnumPlayersAndGroups)(THIS_ DPNID* CONST prgdpnid, DWORD* CONST pcdpnid, CONST DWORD dwFlags) PURE;
-    STDMETHOD(EnumGroupMembers)(THIS_ CONST DPNID dpnid, DPNID* CONST prgdpnid, DWORD* CONST pcdpnid, CONST DWORD dwFlags) PURE;
-    STDMETHOD(SetPeerInfo)(THIS_ CONST DPN_PLAYER_INFO* CONST pdpnPlayerInfo,PVOID CONST pvAsyncContext, DPNHANDLE* CONST phAsyncHandle, CONST DWORD dwFlags) PURE;
-    STDMETHOD(GetPeerInfo)(THIS_ CONST DPNID dpnid, DPN_PLAYER_INFO* CONST pdpnPlayerInfo, DWORD* CONST pdwSize, CONST DWORD dwFlags) PURE;
-    STDMETHOD(GetPeerAddress)(THIS_ CONST DPNID dpnid, IDirectPlay8Address** CONST pAddress, CONST DWORD dwFlags) PURE;
-    STDMETHOD(GetLocalHostAddresses)(THIS_ IDirectPlay8Address** CONST prgpAddress, DWORD* CONST pcAddress, CONST DWORD dwFlags) PURE;
-    STDMETHOD(Close)(THIS_ CONST DWORD dwFlags) PURE;
-    STDMETHOD(EnumHosts)(THIS_ PDPN_APPLICATION_DESC CONST pApplicationDesc, IDirectPlay8Address* CONST pAddrHost, IDirectPlay8Address* CONST pDeviceInfo,PVOID CONST pUserEnumData, CONST DWORD dwUserEnumDataSize, CONST DWORD dwEnumCount, CONST DWORD dwRetryInterval, CONST DWORD dwTimeOut,PVOID CONST pvUserContext, DPNHANDLE* CONST pAsyncHandle, CONST DWORD dwFlags) PURE;
-    STDMETHOD(DestroyPeer)(THIS_ CONST DPNID dpnidClient, CONST void* CONST pvDestroyData, CONST DWORD dwDestroyDataSize, CONST DWORD dwFlags) PURE;
-    STDMETHOD(ReturnBuffer)(THIS_ CONST DPNHANDLE hBufferHandle, CONST DWORD dwFlags) PURE;
-    STDMETHOD(GetPlayerContext)(THIS_ CONST DPNID dpnid,PVOID* CONST ppvPlayerContext, CONST DWORD dwFlags) PURE;
-    STDMETHOD(GetGroupContext)(THIS_ CONST DPNID dpnid,PVOID* CONST ppvGroupContext, CONST DWORD dwFlags) PURE;
-    STDMETHOD(GetCaps)(THIS_ DPN_CAPS* CONST pdpCaps, CONST DWORD dwFlags) PURE;
-    STDMETHOD(SetCaps)(THIS_ CONST DPN_CAPS* CONST pdpCaps, CONST DWORD dwFlags) PURE;
-    STDMETHOD(SetSPCaps)(THIS_ CONST GUID* CONST pguidSP, CONST DPN_SP_CAPS* CONST pdpspCaps, CONST DWORD dwFlags ) PURE;
-    STDMETHOD(GetSPCaps)(THIS_ CONST GUID* CONST pguidSP, DPN_SP_CAPS* CONST pdpspCaps, CONST DWORD dwFlags) PURE;
-    STDMETHOD(GetConnectionInfo)(THIS_ CONST DPNID dpnid, DPN_CONNECTION_INFO* CONST pdpConnectionInfo, CONST DWORD dwFlags) PURE;
-    STDMETHOD(RegisterLobby)(THIS_ CONST DPNHANDLE dpnHandle, struct IDirectPlay8LobbiedApplication* CONST pIDP8LobbiedApplication, CONST DWORD dwFlags) PURE;
-    STDMETHOD(TerminateSession)(THIS_ void* CONST pvTerminateData, CONST DWORD dwTerminateDataSize, CONST DWORD dwFlags) PURE;
+    STDMETHOD(Initialize)(THIS_ PVOID pvUserContext, PFNDPNMESSAGEHANDLER pfn, DWORD dwFlags) PURE;
+    STDMETHOD(EnumServiceProviders)(THIS_ const GUID* pguidServiceProvider, const GUID* pguidApplication, DPN_SERVICE_PROVIDER_INFO* pSPInfoBuffer, DWORD* pcbEnumData, DWORD* pcReturned, DWORD dwFlags) PURE;
+    STDMETHOD(CancelAsyncOperation)(THIS_ DPNHANDLE hAsyncHandle, DWORD dwFlags) PURE;
+    STDMETHOD(Connect)(THIS_ const DPN_APPLICATION_DESC* pdnAppDesc, IDirectPlay8Address* pHostAddr, IDirectPlay8Address* pDeviceInfo, const DPN_SECURITY_DESC* pdnSecurity, const DPN_SECURITY_CREDENTIALS* pdnCredentials, const void* pvUserConnectData, DWORD dwUserConnectDataSize, void* pvPlayerContext, void* pvAsyncContext, DPNHANDLE* phAsyncHandle, DWORD dwFlags) PURE;
+    STDMETHOD(SendTo)(THIS_ DPNID dpnid, const DPN_BUFFER_DESC* prgBufferDesc, DWORD cBufferDesc, DWORD dwTimeOut, void* pvAsyncContext, DPNHANDLE* phAsyncHandle, DWORD dwFlags) PURE;
+    STDMETHOD(GetSendQueueInfo)(THIS_ DPNID dpnid, DWORD* pdwNumMsgs, DWORD* pdwNumBytes, DWORD dwFlags) PURE;
+    STDMETHOD(Host)(THIS_ const DPN_APPLICATION_DESC* pdnAppDesc, IDirectPlay8Address **prgpDeviceInfo, DWORD cDeviceInfo, const DPN_SECURITY_DESC* pdnSecurity, const DPN_SECURITY_CREDENTIALS* pdnCredentials, void* pvPlayerContext, DWORD dwFlags) PURE;
+    STDMETHOD(GetApplicationDesc)(THIS_ DPN_APPLICATION_DESC* pAppDescBuffer, DWORD* pcbDataSize, DWORD dwFlags) PURE;
+    STDMETHOD(SetApplicationDesc)(THIS_ const DPN_APPLICATION_DESC* pad, DWORD dwFlags) PURE;
+    STDMETHOD(CreateGroup)(THIS_ const DPN_GROUP_INFO* pdpnGroupInfo, void* pvGroupContext, void* pvAsyncContext, DPNHANDLE* phAsyncHandle, DWORD dwFlags) PURE;
+    STDMETHOD(DestroyGroup)(THIS_ DPNID idGroup, PVOID pvAsyncContext, DPNHANDLE* phAsyncHandle, DWORD dwFlags) PURE;
+    STDMETHOD(AddPlayerToGroup)(THIS_ DPNID idGroup, DPNID idClient, PVOID pvAsyncContext, DPNHANDLE* phAsyncHandle, DWORD dwFlags) PURE;
+    STDMETHOD(RemovePlayerFromGroup)(THIS_ DPNID idGroup, DPNID idClient, PVOID pvAsyncContext, DPNHANDLE* phAsyncHandle, DWORD dwFlags) PURE;
+    STDMETHOD(SetGroupInfo)(THIS_ DPNID dpnid, DPN_GROUP_INFO* pdpnGroupInfo,PVOID pvAsyncContext, DPNHANDLE* phAsyncHandle, DWORD dwFlags) PURE;
+    STDMETHOD(GetGroupInfo)(THIS_ DPNID dpnid, DPN_GROUP_INFO* pdpnGroupInfo, DWORD* pdwSize, DWORD dwFlags) PURE;
+    STDMETHOD(EnumPlayersAndGroups)(THIS_ DPNID* prgdpnid, DWORD* pcdpnid, DWORD dwFlags) PURE;
+    STDMETHOD(EnumGroupMembers)(THIS_ DPNID dpnid, DPNID* prgdpnid, DWORD* pcdpnid, DWORD dwFlags) PURE;
+    STDMETHOD(SetPeerInfo)(THIS_ const DPN_PLAYER_INFO* pdpnPlayerInfo,PVOID pvAsyncContext, DPNHANDLE* phAsyncHandle, DWORD dwFlags) PURE;
+    STDMETHOD(GetPeerInfo)(THIS_ DPNID dpnid, DPN_PLAYER_INFO* pdpnPlayerInfo, DWORD* pdwSize, DWORD dwFlags) PURE;
+    STDMETHOD(GetPeerAddress)(THIS_ DPNID dpnid, IDirectPlay8Address** pAddress, DWORD dwFlags) PURE;
+    STDMETHOD(GetLocalHostAddresses)(THIS_ IDirectPlay8Address** prgpAddress, DWORD* pcAddress, DWORD dwFlags) PURE;
+    STDMETHOD(Close)(THIS_ DWORD dwFlags) PURE;
+    STDMETHOD(EnumHosts)(THIS_ PDPN_APPLICATION_DESC pApplicationDesc, IDirectPlay8Address* pAddrHost, IDirectPlay8Address* pDeviceInfo,PVOID pUserEnumData, DWORD dwUserEnumDataSize, DWORD dwEnumCount, DWORD dwRetryInterval, DWORD dwTimeOut,PVOID pvUserContext, DPNHANDLE* pAsyncHandle, DWORD dwFlags) PURE;
+    STDMETHOD(DestroyPeer)(THIS_ DPNID dpnidClient, const void* pvDestroyData, DWORD dwDestroyDataSize, DWORD dwFlags) PURE;
+    STDMETHOD(ReturnBuffer)(THIS_ DPNHANDLE hBufferHandle, DWORD dwFlags) PURE;
+    STDMETHOD(GetPlayerContext)(THIS_ DPNID dpnid,PVOID* ppvPlayerContext, DWORD dwFlags) PURE;
+    STDMETHOD(GetGroupContext)(THIS_ DPNID dpnid,PVOID* ppvGroupContext, DWORD dwFlags) PURE;
+    STDMETHOD(GetCaps)(THIS_ DPN_CAPS* pdpCaps, DWORD dwFlags) PURE;
+    STDMETHOD(SetCaps)(THIS_ const DPN_CAPS* pdpCaps, DWORD dwFlags) PURE;
+    STDMETHOD(SetSPCaps)(THIS_ const GUID* pguidSP, const DPN_SP_CAPS* pdpspCaps, DWORD dwFlags ) PURE;
+    STDMETHOD(GetSPCaps)(THIS_ const GUID* pguidSP, DPN_SP_CAPS* pdpspCaps, DWORD dwFlags) PURE;
+    STDMETHOD(GetConnectionInfo)(THIS_ DPNID dpnid, DPN_CONNECTION_INFO* pdpConnectionInfo, DWORD dwFlags) PURE;
+    STDMETHOD(RegisterLobby)(THIS_ DPNHANDLE dpnHandle, struct IDirectPlay8LobbiedApplication* pIDP8LobbiedApplication, DWORD dwFlags) PURE;
+    STDMETHOD(TerminateSession)(THIS_ void* pvTerminateData, DWORD dwTerminateDataSize, DWORD dwFlags) PURE;
 };
 #undef INTERFACE
 
@@ -914,12 +914,12 @@ DECLARE_INTERFACE_(IDirectPlay8ThreadPool,IUnknown)
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
-    /*** IDirectPlay8ThreadPool methods ***/	
-    STDMETHOD(Initialize)(THIS_ PVOID CONST pvUserContext, CONST PFNDPNMESSAGEHANDLER pfn, CONST DWORD dwFlags) PURE;
-    STDMETHOD(Close)(THIS_ CONST DWORD dwFlags) PURE;
-    STDMETHOD(GetThreadCount)(THIS_ CONST DWORD dwProcessorNum, DWORD* CONST pdwNumThreads, CONST DWORD dwFlags) PURE;
-    STDMETHOD(SetThreadCount)(THIS_ CONST DWORD dwProcessorNum, CONST DWORD dwNumThreads, CONST DWORD dwFlags) PURE;
-    STDMETHOD(DoWork)(THIS_ CONST DWORD dwAllowedTimeSlice, CONST DWORD dwFlags) PURE;
+    /*** IDirectPlay8ThreadPool methods ***/
+    STDMETHOD(Initialize)(THIS_ PVOID pvUserContext, PFNDPNMESSAGEHANDLER pfn, DWORD dwFlags) PURE;
+    STDMETHOD(Close)(THIS_ DWORD dwFlags) PURE;
+    STDMETHOD(GetThreadCount)(THIS_ DWORD dwProcessorNum, DWORD* pdwNumThreads, DWORD dwFlags) PURE;
+    STDMETHOD(SetThreadCount)(THIS_ DWORD dwProcessorNum, DWORD dwNumThreads, DWORD dwFlags) PURE;
+    STDMETHOD(DoWork)(THIS_ DWORD dwAllowedTimeSlice, DWORD dwFlags) PURE;
 };
 #undef INTERFACE
 
@@ -957,12 +957,12 @@ DECLARE_INTERFACE_(IDirectPlay8NATResolver,IUnknown)
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
-    /*** IDirectPlay8NATResolver methods ***/	
-    STDMETHOD(Initialize)(THIS_ PVOID CONST pvUserContext, CONST PFNDPNMESSAGEHANDLER pfn, CONST DWORD dwFlags) PURE;
-    STDMETHOD(Start)(THIS_ IDirectPlay8Address** CONST ppDevices, CONST DWORD dwNumDevices, CONST DWORD dwFlags) PURE;
-    STDMETHOD(Close)(THIS_ CONST DWORD dwFlags) PURE;
-    STDMETHOD(EnumDevices)(THIS_ DPN_SERVICE_PROVIDER_INFO* CONST pSPInfoBuffer, PDWORD CONST pdwBufferSize, PDWORD CONST pdwNumDevices, CONST DWORD dwFlags) PURE;
-    STDMETHOD(GetAddresses)(THIS_ IDirectPlay8Address** CONST ppAddresses, DWORD* CONST pdwNumAddresses, CONST DWORD dwFlags) PURE;
+    /*** IDirectPlay8NATResolver methods ***/
+    STDMETHOD(Initialize)(THIS_ PVOID pvUserContext, PFNDPNMESSAGEHANDLER pfn, DWORD dwFlags) PURE;
+    STDMETHOD(Start)(THIS_ IDirectPlay8Address** ppDevices, DWORD dwNumDevices, DWORD dwFlags) PURE;
+    STDMETHOD(Close)(THIS_ DWORD dwFlags) PURE;
+    STDMETHOD(EnumDevices)(THIS_ DPN_SERVICE_PROVIDER_INFO* pSPInfoBuffer, PDWORD pdwBufferSize, PDWORD pdwNumDevices, DWORD dwFlags) PURE;
+    STDMETHOD(GetAddresses)(THIS_ IDirectPlay8Address** ppAddresses, DWORD* pdwNumAddresses, DWORD dwFlags) PURE;
 };
 #undef INTERFACE
 
@@ -992,7 +992,7 @@ DECLARE_INTERFACE_(IDirectPlay8NATResolver,IUnknown)
 
 /* Export functions */
 
-HRESULT WINAPI DirectPlay8Create(CONST CLSID* pcIID, LPVOID* ppvInterface, IUnknown* pUnknown);
+HRESULT WINAPI DirectPlay8Create(const CLSID* pcIID, LPVOID* ppvInterface, IUnknown* pUnknown);
 
 #ifdef __cplusplus
 }

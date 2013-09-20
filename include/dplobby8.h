@@ -151,15 +151,15 @@ DECLARE_INTERFACE_(IDirectPlay8LobbiedApplication,IUnknown)
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IDirectPlay8LobbiedApplication methods ***/
-    STDMETHOD(Initialize)(THIS_ CONST PVOID pvUserContext, CONST PFNDPNMESSAGEHANDLER pfn, DPNHANDLE* CONST pdpnhConnection, CONST DWORD dwFlags) PURE;
-    STDMETHOD(RegisterProgram)(THIS_ PDPL_PROGRAM_DESC pdplProgramDesc, CONST DWORD dwFlags) PURE;
-    STDMETHOD(UnRegisterProgram)(THIS_ GUID* pguidApplication, CONST DWORD dwFlags) PURE;
-    STDMETHOD(Send)(THIS_ CONST DPNHANDLE hConnection, BYTE* CONST pBuffer, CONST DWORD pBufferSize, CONST DWORD dwFlags) PURE;
-    STDMETHOD(SetAppAvailable)(THIS_ CONST BOOL fAvailable, CONST DWORD dwFlags) PURE;
-    STDMETHOD(UpdateStatus)(THIS_ CONST DPNHANDLE hConnection, CONST DWORD dwStatus, CONST DWORD dwFlags) PURE;
-    STDMETHOD(Close)(THIS_ CONST DWORD dwFlags) PURE;
-    STDMETHOD(GetConnectionSettings)(THIS_ CONST DPNHANDLE hConnection, DPL_CONNECTION_SETTINGS* CONST pdplSessionInfo, DWORD* pdwInfoSize, CONST DWORD dwFlags) PURE;
-    STDMETHOD(SetConnectionSettings)(THIS_ CONST DPNHANDLE hConnection, CONST DPL_CONNECTION_SETTINGS* CONST pdplSessionInfo, CONST DWORD dwFlags) PURE;
+    STDMETHOD(Initialize)(THIS_ PVOID pvUserContext, PFNDPNMESSAGEHANDLER pfn, DPNHANDLE* pdpnhConnection, DWORD dwFlags) PURE;
+    STDMETHOD(RegisterProgram)(THIS_ PDPL_PROGRAM_DESC pdplProgramDesc, DWORD dwFlags) PURE;
+    STDMETHOD(UnRegisterProgram)(THIS_ GUID* pguidApplication, DWORD dwFlags) PURE;
+    STDMETHOD(Send)(THIS_ DPNHANDLE hConnection, BYTE* pBuffer, DWORD pBufferSize, DWORD dwFlags) PURE;
+    STDMETHOD(SetAppAvailable)(THIS_ BOOL fAvailable, DWORD dwFlags) PURE;
+    STDMETHOD(UpdateStatus)(THIS_ DPNHANDLE hConnection, DWORD dwStatus, DWORD dwFlags) PURE;
+    STDMETHOD(Close)(THIS_ DWORD dwFlags) PURE;
+    STDMETHOD(GetConnectionSettings)(THIS_ DPNHANDLE hConnection, DPL_CONNECTION_SETTINGS* pdplSessionInfo, DWORD* pdwInfoSize, DWORD dwFlags) PURE;
+    STDMETHOD(SetConnectionSettings)(THIS_ DPNHANDLE hConnection, const DPL_CONNECTION_SETTINGS* pdplSessionInfo, DWORD dwFlags) PURE;
 };
 #undef INTERFACE
 
@@ -206,14 +206,14 @@ DECLARE_INTERFACE_(IDirectPlay8LobbyClient,IUnknown)
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IDirectPlay8LobbyClient methods ***/
-    STDMETHOD(Initialize)(THIS_ CONST PVOID pvUserContext, CONST PFNDPNMESSAGEHANDLER pfn, CONST DWORD dwFlags) PURE;
-    STDMETHOD(EnumLocalPrograms)(THIS_ GUID* CONST pGuidApplication, BYTE* CONST pEnumData, DWORD* CONST pdwEnumData, DWORD* CONST pdwItems, CONST DWORD dwFlags) PURE;
-    STDMETHOD(ConnectApplication)(THIS_ DPL_CONNECT_INFO* CONST pdplConnectionInfo, CONST PVOID pvConnectionContext, DPNHANDLE* CONST hApplication, CONST DWORD dwTimeOut, CONST DWORD dwFlags) PURE;
-    STDMETHOD(Send)(THIS_ CONST DPNHANDLE hConnection, BYTE* CONST pBuffer, CONST DWORD pBufferSize, CONST DWORD dwFlags) PURE;
-    STDMETHOD(ReleaseApplication)(THIS_ CONST DPNHANDLE hConnection, CONST DWORD dwFlags) PURE;
-    STDMETHOD(Close)(THIS_ CONST DWORD dwFlags) PURE;
-    STDMETHOD(GetConnectionSettings)(THIS_ CONST DPNHANDLE hConnection, DPL_CONNECTION_SETTINGS* CONST pdplSessionInfo, DWORD* pdwInfoSize, CONST DWORD dwFlags) PURE;	
-    STDMETHOD(SetConnectionSettings)(THIS_ CONST DPNHANDLE hConnection, CONST DPL_CONNECTION_SETTINGS* CONST pdplSessionInfo, CONST DWORD dwFlags) PURE;
+    STDMETHOD(Initialize)(THIS_ PVOID pvUserContext, PFNDPNMESSAGEHANDLER pfn, DWORD dwFlags) PURE;
+    STDMETHOD(EnumLocalPrograms)(THIS_ GUID* pGuidApplication, BYTE* pEnumData, DWORD* pdwEnumData, DWORD* pdwItems, DWORD dwFlags) PURE;
+    STDMETHOD(ConnectApplication)(THIS_ DPL_CONNECT_INFO* pdplConnectionInfo, PVOID pvConnectionContext, DPNHANDLE* hApplication, DWORD dwTimeOut, DWORD dwFlags) PURE;
+    STDMETHOD(Send)(THIS_ DPNHANDLE hConnection, BYTE* pBuffer, DWORD pBufferSize, DWORD dwFlags) PURE;
+    STDMETHOD(ReleaseApplication)(THIS_ DPNHANDLE hConnection, DWORD dwFlags) PURE;
+    STDMETHOD(Close)(THIS_ DWORD dwFlags) PURE;
+    STDMETHOD(GetConnectionSettings)(THIS_ DPNHANDLE hConnection, DPL_CONNECTION_SETTINGS* pdplSessionInfo, DWORD* pdwInfoSize, DWORD dwFlags) PURE;
+    STDMETHOD(SetConnectionSettings)(THIS_ DPNHANDLE hConnection, const DPL_CONNECTION_SETTINGS* pdplSessionInfo, DWORD dwFlags) PURE;
 };
 #undef INTERFACE
 
@@ -250,7 +250,7 @@ DECLARE_INTERFACE_(IDirectPlay8LobbyClient,IUnknown)
 
 /* Export functions */
 
-HRESULT WINAPI DirectPlay8LobbyCreate(CONST GUID* pcIID, LPVOID* ppvInterface, IUnknown* pUnknown);
+HRESULT WINAPI DirectPlay8LobbyCreate(const GUID* pcIID, LPVOID* ppvInterface, IUnknown* pUnknown);
 
 #ifdef __cplusplus
 }

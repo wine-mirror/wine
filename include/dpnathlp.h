@@ -115,56 +115,56 @@ DECLARE_INTERFACE_(IDirectPlayNATHelp,IUnknown)
 
    /*** IDirectPlayNATHelp functions ***/
    STDMETHOD(Initialize)     (THIS_
-                              const DWORD dwFlags) PURE;
+                              DWORD dwFlags) PURE;
 
    STDMETHOD(Close)          (THIS_
-                              const DWORD dwFlags) PURE;
+                              DWORD dwFlags) PURE;
 
    STDMETHOD(GetCaps)        (THIS_
-                              const PDPNHCAPS pCaps,
-                              const DWORD dwFlags) PURE;
+                              PDPNHCAPS pCaps,
+                              DWORD dwFlags) PURE;
 
    STDMETHOD(RegisterPorts)  (THIS_
-                              const PSOCKADDR aLocalAddresses,
-                              const DWORD dwAddressSize,
-                              const DWORD dwAddresses,
-                              const DWORD dwTime,
-                              const PDPNHHANDLE phRegisteredPorts,
-                              const DWORD dwFlags) PURE;
+                              PSOCKADDR aLocalAddresses,
+                              DWORD dwAddressSize,
+                              DWORD dwAddresses,
+                              DWORD dwTime,
+                              PDPNHHANDLE phRegisteredPorts,
+                              DWORD dwFlags) PURE;
 
    STDMETHOD(GetRegisteredAddresses) (THIS_
-                              const PDPNHHANDLE hRegisteredPorts,
-                              const PSOCKADDR paPublicAddresses,
+                              PDPNHHANDLE hRegisteredPorts,
+                              PSOCKADDR paPublicAddresses,
                               const DWORD *dwAddressSize,
                               const DWORD *dwAddressFlags,
                               const DWORD *dwRemaining,
-                              const DWORD dwFlags) PURE;
+                              DWORD dwFlags) PURE;
 
    STDMETHOD(DeregisterPorts)(THIS_
-                              const DPNHHANDLE hRegPorts,
-                              const DWORD dwFlags) PURE;
+                              DPNHHANDLE hRegPorts,
+                              DWORD dwFlags) PURE;
 
    STDMETHOD(QueryAddress)   (THIS_
-                              const PSOCKADDR pSource,
-                              const PSOCKADDR pQuery,
-                              const PSOCKADDR pResponse,
-                              const INT iAddresses,
-                              const DWORD dwFlags) PURE;
+                              PSOCKADDR pSource,
+                              PSOCKADDR pQuery,
+                              PSOCKADDR pResponse,
+                              INT iAddresses,
+                              DWORD dwFlags) PURE;
 
    STDMETHOD(SetAlertEvent)  (THIS_
-                              const HANDLE hEvent,
-                              const DWORD dwFlags) PURE;
+                              HANDLE hEvent,
+                              DWORD dwFlags) PURE;
 
    STDMETHOD(SetAlertIOCompletionPort)(THIS_
-                              const HANDLE hIOCompletionPort,
-                              const DWORD dwCompletion,
-                              const DWORD dwMaxThreads,
-                              const DWORD dwFlags) PURE;
+                              HANDLE hIOCompletionPort,
+                              DWORD dwCompletion,
+                              DWORD dwMaxThreads,
+                              DWORD dwFlags) PURE;
 
    STDMETHOD(ExtendRegisteredPortsLease)(THIS_
-                              const DPNHHANDLE hRegisteredPorts,
-                              const DWORD dwLeaseTime,
-                              const DWORD dwFlags) PURE;
+                              DPNHHANDLE hRegisteredPorts,
+                              DWORD dwLeaseTime,
+                              DWORD dwFlags) PURE;
 };
 
 #undef INTERFACE
