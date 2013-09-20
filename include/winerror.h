@@ -1147,6 +1147,7 @@ static inline HRESULT HRESULT_FROM_WIN32(unsigned int x)
 #define ERROR_PRINTER_NOT_FOUND                            3012
 #define ERROR_PRINTER_DRIVER_WARNED                        3013
 #define ERROR_PRINTER_DRIVER_BLOCKED                       3014
+#define ERROR_REQUEST_PAUSED                               3050
 #define ERROR_WINS_INTERNAL                                4000
 #define ERROR_CAN_NOT_DEL_LOCAL_WINS                       4001
 #define ERROR_STATIC_INIT                                  4002
