@@ -2726,6 +2726,8 @@ static BOOL WINAPI WS2_ConnectEx(SOCKET s, const struct WS_sockaddr* name, int n
                           PVOID sendBuf, DWORD sendBufLen, LPDWORD sent, LPOVERLAPPED ov)
 {
     int fd, ret, status;
+    union generic_unix_sockaddr uaddr;
+    socklen_t uaddrlen = sizeof(uaddr);
 
     if (!ov)
     {
@@ -2743,7 +2745,17 @@ static BOOL WINAPI WS2_ConnectEx(SOCKET s, const struct WS_sockaddr* name, int n
     TRACE("socket %04lx, ptr %p %s, length %d, sendptr %p, len %d, ov %p\n",
           s, name, debugstr_sockaddr(name), namelen, sendBuf, sendBufLen, ov);
 
-    /* FIXME: technically the socket has to be bound */
+    if (getsockname(fd, &uaddr.addr, &uaddrlen) != 0)
+    {
+        SetLastError(wsaErrno());
+        return FALSE;
+    }
+    else if (!is_sockaddr_bound(&uaddr.addr, uaddrlen))
+    {
+        SetLastError(WSAEINVAL);
+        return FALSE;
+    }
+
     ret = do_connect(fd, name, namelen);
     if (ret == 0)
     {
