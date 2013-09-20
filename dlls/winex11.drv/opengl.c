@@ -2520,7 +2520,7 @@ static BOOL X11DRV_wglChoosePixelFormatARB( HDC hdc, const int *piAttribIList, c
                 {
                     piFormats[pfmt_it++] = i + 1;
                     TRACE("at %d/%d found FBCONFIG_ID 0x%x (%d)\n",
-                          it + 1, nCfgs, fmt_id, piFormats[pfmt_it]);
+                          it + 1, nCfgs, fmt_id, i + 1);
                     break;
                 }
             }
