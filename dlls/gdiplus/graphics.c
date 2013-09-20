@@ -6208,15 +6208,18 @@ static GpStatus SOFTWARE_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UI
         if (glyphsize > max_glyphsize)
             max_glyphsize = glyphsize;
 
-        left = pti[i].x + glyphmetrics.gmptGlyphOrigin.x;
-        top = pti[i].y - glyphmetrics.gmptGlyphOrigin.y;
-        right = pti[i].x + glyphmetrics.gmptGlyphOrigin.x + glyphmetrics.gmBlackBoxX;
-        bottom = pti[i].y - glyphmetrics.gmptGlyphOrigin.y + glyphmetrics.gmBlackBoxY;
+        if (glyphsize != 0)
+        {
+            left = pti[i].x + glyphmetrics.gmptGlyphOrigin.x;
+            top = pti[i].y - glyphmetrics.gmptGlyphOrigin.y;
+            right = pti[i].x + glyphmetrics.gmptGlyphOrigin.x + glyphmetrics.gmBlackBoxX;
+            bottom = pti[i].y - glyphmetrics.gmptGlyphOrigin.y + glyphmetrics.gmBlackBoxY;
 
-        if (left < min_x) min_x = left;
-        if (top < min_y) min_y = top;
-        if (right > max_x) max_x = right;
-        if (bottom > max_y) max_y = bottom;
+            if (left < min_x) min_x = left;
+            if (top < min_y) min_y = top;
+            if (right > max_x) max_x = right;
+            if (bottom > max_y) max_y = bottom;
+        }
 
         if (i+1 < length && (flags & DriverStringOptionsRealizedAdvance) == DriverStringOptionsRealizedAdvance)
         {
