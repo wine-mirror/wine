@@ -69,17 +69,17 @@ static void UI_EndDialog(HWND hwnd, INT_PTR rc)
     EndDialog(hwnd, rc);
 }
 
-static int GetAllImages(void)
+static BOOL GetAllImages(void)
 {
     struct gphoto2_file *file;
-    int has_images = 0;
+    BOOL has_images = FALSE;
 
     LIST_FOR_EACH_ENTRY( file, &activeDS.files, struct gphoto2_file, entry)
     {
         if (strstr(file->filename,".JPG") || strstr(file->filename,".jpg"))
         {
             file->download = TRUE;
-            has_images = 1;
+            has_images = TRUE;
         }
     }
     return has_images;
