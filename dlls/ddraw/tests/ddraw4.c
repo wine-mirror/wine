@@ -4232,6 +4232,307 @@ static void test_unsupported_formats(void)
     IDirect3DDevice3_Release(device);
     DestroyWindow(window);
 }
+
+static void test_rt_caps(void)
+{
+    PALETTEENTRY palette_entries[256];
+    IDirectDrawPalette *palette;
+    IDirectDraw4 *ddraw;
+    DDPIXELFORMAT z_fmt;
+    IDirect3D3 *d3d;
+    unsigned int i;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    static const DDPIXELFORMAT p8_fmt =
+    {
+        sizeof(DDPIXELFORMAT), DDPF_PALETTEINDEXED8 | DDPF_RGB, 0,
+        {8}, {0x00000000}, {0x00000000}, {0x00000000}, {0x00000000},
+    };
+
+    const struct
+    {
+        const DDPIXELFORMAT *pf;
+        DWORD caps_in;
+        DWORD caps_out;
+        HRESULT create_device_hr;
+        HRESULT set_rt_hr;
+    }
+    test_data[] =
+    {
+        {
+            NULL,
+            DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE | DDSCAPS_VIDEOMEMORY,
+            DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE | DDSCAPS_VIDEOMEMORY | DDSCAPS_LOCALVIDMEM,
+            D3D_OK,
+            D3D_OK,
+        },
+        {
+            NULL,
+            DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE,
+            DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE | DDSCAPS_VIDEOMEMORY | DDSCAPS_LOCALVIDMEM,
+            D3D_OK,
+            D3D_OK,
+        },
+        {
+            NULL,
+            DDSCAPS_OFFSCREENPLAIN,
+            DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY | DDSCAPS_LOCALVIDMEM,
+            DDERR_INVALIDCAPS,
+            DDERR_INVALIDCAPS,
+        },
+        {
+            NULL,
+            DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY | DDSCAPS_3DDEVICE,
+            DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY | DDSCAPS_3DDEVICE,
+            D3DERR_SURFACENOTINVIDMEM,
+            D3D_OK,
+        },
+        {
+            NULL,
+            DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY,
+            DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY,
+            DDERR_INVALIDCAPS,
+            DDERR_INVALIDCAPS,
+        },
+        {
+            NULL,
+            DDSCAPS_3DDEVICE | DDSCAPS_VIDEOMEMORY,
+            DDSCAPS_3DDEVICE | DDSCAPS_VIDEOMEMORY | DDSCAPS_LOCALVIDMEM,
+            D3D_OK,
+            D3D_OK,
+        },
+        {
+            NULL,
+            DDSCAPS_3DDEVICE,
+            DDSCAPS_3DDEVICE | DDSCAPS_VIDEOMEMORY | DDSCAPS_LOCALVIDMEM,
+            D3D_OK,
+            D3D_OK,
+        },
+        {
+            NULL,
+            0,
+            DDSCAPS_VIDEOMEMORY | DDSCAPS_LOCALVIDMEM,
+            DDERR_INVALIDCAPS,
+            DDERR_INVALIDCAPS,
+        },
+        {
+            NULL,
+            DDSCAPS_SYSTEMMEMORY | DDSCAPS_3DDEVICE,
+            DDSCAPS_SYSTEMMEMORY | DDSCAPS_3DDEVICE,
+            D3DERR_SURFACENOTINVIDMEM,
+            D3D_OK,
+        },
+        {
+            NULL,
+            DDSCAPS_SYSTEMMEMORY,
+            DDSCAPS_SYSTEMMEMORY,
+            DDERR_INVALIDCAPS,
+            DDERR_INVALIDCAPS,
+        },
+        {
+            &p8_fmt,
+            0,
+            DDSCAPS_VIDEOMEMORY | DDSCAPS_LOCALVIDMEM,
+            DDERR_INVALIDCAPS,
+            DDERR_INVALIDCAPS,
+        },
+        {
+            &p8_fmt,
+            DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE,
+            DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY | DDSCAPS_3DDEVICE,
+            DDERR_NOPALETTEATTACHED,
+            DDERR_INVALIDCAPS,
+        },
+        {
+            &p8_fmt,
+            DDSCAPS_OFFSCREENPLAIN,
+            DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY | DDSCAPS_LOCALVIDMEM,
+            DDERR_INVALIDCAPS,
+            DDERR_INVALIDCAPS,
+        },
+        {
+            &p8_fmt,
+            DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY | DDSCAPS_3DDEVICE,
+            DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY | DDSCAPS_3DDEVICE,
+            DDERR_NOPALETTEATTACHED,
+            DDERR_INVALIDCAPS,
+        },
+        {
+            &p8_fmt,
+            DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY,
+            DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY,
+            DDERR_INVALIDCAPS,
+            DDERR_INVALIDCAPS,
+        },
+        {
+            &z_fmt,
+            DDSCAPS_3DDEVICE | DDSCAPS_VIDEOMEMORY | DDSCAPS_ZBUFFER,
+            DDSCAPS_3DDEVICE | DDSCAPS_VIDEOMEMORY | DDSCAPS_ZBUFFER | DDSCAPS_LOCALVIDMEM,
+            DDERR_INVALIDCAPS,
+            DDERR_INVALIDPIXELFORMAT,
+        },
+        {
+            &z_fmt,
+            DDSCAPS_3DDEVICE | DDSCAPS_ZBUFFER,
+            DDSCAPS_3DDEVICE | DDSCAPS_VIDEOMEMORY | DDSCAPS_ZBUFFER | DDSCAPS_LOCALVIDMEM,
+            DDERR_INVALIDCAPS,
+            DDERR_INVALIDPIXELFORMAT,
+        },
+        {
+            &z_fmt,
+            DDSCAPS_ZBUFFER,
+            DDSCAPS_VIDEOMEMORY | DDSCAPS_ZBUFFER | DDSCAPS_LOCALVIDMEM,
+            DDERR_INVALIDCAPS,
+            DDERR_INVALIDCAPS,
+        },
+        {
+            &z_fmt,
+            DDSCAPS_SYSTEMMEMORY | DDSCAPS_3DDEVICE | DDSCAPS_ZBUFFER,
+            DDSCAPS_SYSTEMMEMORY | DDSCAPS_3DDEVICE | DDSCAPS_ZBUFFER,
+            DDERR_INVALIDCAPS,
+            DDERR_INVALIDPIXELFORMAT,
+        },
+        {
+            &z_fmt,
+            DDSCAPS_SYSTEMMEMORY | DDSCAPS_ZBUFFER,
+            DDSCAPS_SYSTEMMEMORY | DDSCAPS_ZBUFFER,
+            DDERR_INVALIDCAPS,
+            DDERR_INVALIDCAPS,
+        },
+    };
+
+    if (!(ddraw = create_ddraw()))
+    {
+        skip("Failed to create ddraw object, skipping tests.\n");
+        return;
+    }
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    hr = IDirectDraw4_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    if (FAILED(hr = IDirectDraw4_QueryInterface(ddraw, &IID_IDirect3D3, (void **)&d3d)))
+    {
+        skip("D3D interface is not available, skipping test.\n");
+        goto done;
+    }
+
+    memset(&z_fmt, 0, sizeof(z_fmt));
+    hr = IDirect3D3_EnumZBufferFormats(d3d, &IID_IDirect3DHALDevice, enum_z_fmt, &z_fmt);
+    if (FAILED(hr) || !z_fmt.dwSize)
+    {
+        skip("No depth buffer formats available, skipping test.\n");
+        IDirect3D3_Release(d3d);
+        goto done;
+    }
+
+    memset(palette_entries, 0, sizeof(palette_entries));
+    hr = IDirectDraw4_CreatePalette(ddraw, DDPCAPS_ALLOW256 | DDPCAPS_8BIT, palette_entries, &palette, NULL);
+    ok(SUCCEEDED(hr), "Failed to create palette, hr %#x.\n", hr);
+
+    for (i = 0; i < sizeof(test_data) / sizeof(*test_data); ++i)
+    {
+        IDirectDrawSurface4 *surface, *rt, *expected_rt, *tmp;
+        DDSURFACEDESC2 surface_desc;
+        IDirect3DDevice3 *device;
+
+        memset(&surface_desc, 0, sizeof(surface_desc));
+        surface_desc.dwSize = sizeof(surface_desc);
+        surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+        surface_desc.ddsCaps.dwCaps = test_data[i].caps_in;
+        if (test_data[i].pf)
+        {
+            surface_desc.dwFlags |= DDSD_PIXELFORMAT;
+            U4(surface_desc).ddpfPixelFormat = *test_data[i].pf;
+        }
+        surface_desc.dwWidth = 640;
+        surface_desc.dwHeight = 480;
+        hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+        ok(SUCCEEDED(hr), "Test %u: Failed to create surface with caps %#x, hr %#x.\n",
+                i, test_data[i].caps_in, hr);
+
+        memset(&surface_desc, 0, sizeof(surface_desc));
+        surface_desc.dwSize = sizeof(surface_desc);
+        hr = IDirectDrawSurface4_GetSurfaceDesc(surface, &surface_desc);
+        ok(SUCCEEDED(hr), "Test %u: Failed to get surface desc, hr %#x.\n", i, hr);
+        ok(surface_desc.ddsCaps.dwCaps == test_data[i].caps_out,
+                "Test %u: Got unexpected caps %#x, expected %#x.\n",
+                i, surface_desc.ddsCaps.dwCaps, test_data[i].caps_out);
+
+        hr = IDirect3D3_CreateDevice(d3d, &IID_IDirect3DHALDevice, surface, &device, NULL);
+        ok(hr == test_data[i].create_device_hr, "Test %u: Got unexpected hr %#x, expected %#x.\n",
+                i, hr, test_data[i].create_device_hr);
+        if (FAILED(hr))
+        {
+            if (hr == DDERR_NOPALETTEATTACHED)
+            {
+                hr = IDirectDrawSurface4_SetPalette(surface, palette);
+                ok(SUCCEEDED(hr), "Test %u: Failed to set palette, hr %#x.\n", i, hr);
+                hr = IDirect3D3_CreateDevice(d3d, &IID_IDirect3DHALDevice, surface, &device, NULL);
+                ok(hr == D3DERR_SURFACENOTINVIDMEM, "Test %u: Got unexpected hr %#x.\n", i, hr);
+            }
+            IDirectDrawSurface4_Release(surface);
+
+            memset(&surface_desc, 0, sizeof(surface_desc));
+            surface_desc.dwSize = sizeof(surface_desc);
+            surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+            surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE;
+            surface_desc.dwWidth = 640;
+            surface_desc.dwHeight = 480;
+            hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+            ok(SUCCEEDED(hr), "Test %u: Failed to create surface, hr %#x.\n", i, hr);
+
+            hr = IDirect3D3_CreateDevice(d3d, &IID_IDirect3DHALDevice, surface, &device, NULL);
+            ok(SUCCEEDED(hr), "Test %u: Failed to create device, hr %#x.\n", i, hr);
+        }
+
+        memset(&surface_desc, 0, sizeof(surface_desc));
+        surface_desc.dwSize = sizeof(surface_desc);
+        surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+        surface_desc.ddsCaps.dwCaps = test_data[i].caps_in;
+        if (test_data[i].pf)
+        {
+            surface_desc.dwFlags |= DDSD_PIXELFORMAT;
+            U4(surface_desc).ddpfPixelFormat = *test_data[i].pf;
+        }
+        surface_desc.dwWidth = 640;
+        surface_desc.dwHeight = 480;
+        hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &rt, NULL);
+        ok(SUCCEEDED(hr), "Test %u: Failed to create surface with caps %#x, hr %#x.\n",
+                i, test_data[i].caps_in, hr);
+
+        hr = IDirect3DDevice3_SetRenderTarget(device, rt, 0);
+        ok(hr == test_data[i].set_rt_hr, "Test %u: Got unexpected hr %#x, expected %#x.\n",
+                i, hr, test_data[i].set_rt_hr);
+        if (SUCCEEDED(hr) || hr == DDERR_INVALIDPIXELFORMAT)
+            expected_rt = rt;
+        else
+            expected_rt = surface;
+
+        hr = IDirect3DDevice3_GetRenderTarget(device, &tmp);
+        ok(SUCCEEDED(hr), "Test %u: Failed to get render target, hr %#x.\n", i, hr);
+        ok(tmp == expected_rt, "Test %u: Got unexpected rt %p.\n", i, tmp);
+
+        IDirectDrawSurface4_Release(tmp);
+        IDirectDrawSurface4_Release(rt);
+        refcount = IDirect3DDevice3_Release(device);
+        ok(refcount == 0, "Test %u: The device was not properly freed, refcount %u.\n", i, refcount);
+        refcount = IDirectDrawSurface4_Release(surface);
+        ok(refcount == 0, "Test %u: The surface was not properly freed, refcount %u.\n", i, refcount);
+    }
+
+    IDirectDrawPalette_Release(palette);
+    IDirect3D3_Release(d3d);
+
+done:
+    refcount = IDirectDraw4_Release(ddraw);
+    ok(refcount == 0, "The ddraw object was not properly freed, refcount %u.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw4)
 {
     test_process_vertices();
@@ -4265,4 +4566,5 @@ START_TEST(ddraw4)
     test_texturemanage();
     test_block_formats_creation();
     test_unsupported_formats();
+    test_rt_caps();
 }
