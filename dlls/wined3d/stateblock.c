@@ -1181,8 +1181,7 @@ void state_init_default(struct wined3d_state *state, struct wined3d_device *devi
         DWORD d;
     } tmpfloat;
     unsigned int i;
-    struct wined3d_swapchain *swapchain;
-    struct wined3d_surface *backbuffer;
+    struct wined3d_swapchain_desc *swapchain_desc;
     static const struct wined3d_matrix identity =
     {{{
         1.0f, 0.0f, 0.0f, 0.0f,
@@ -1386,32 +1385,21 @@ void state_init_default(struct wined3d_state *state, struct wined3d_device *devi
         state->textures[i] = NULL;
     }
 
-    /* check the return values, because the GetBackBuffer call isn't valid for ddraw */
-    if ((swapchain = wined3d_device_get_swapchain(device, 0)))
-    {
-        if ((backbuffer = wined3d_swapchain_get_back_buffer(swapchain, 0, WINED3D_BACKBUFFER_TYPE_MONO)))
-        {
-            struct wined3d_resource_desc desc;
+    swapchain_desc = &device->swapchains[0]->desc;
 
-            wined3d_resource_get_desc(&backbuffer->resource, &desc);
+    /* Set the default scissor rect values */
+    state->scissor_rect.left = 0;
+    state->scissor_rect.right = swapchain_desc->backbuffer_width;
+    state->scissor_rect.top = 0;
+    state->scissor_rect.bottom = swapchain_desc->backbuffer_height;
 
-            /* Set the default scissor rect values */
-            state->scissor_rect.left = 0;
-            state->scissor_rect.right = desc.width;
-            state->scissor_rect.top = 0;
-            state->scissor_rect.bottom = desc.height;
-        }
-
-        /* Set the default viewport */
-        state->viewport.x = 0;
-        state->viewport.y = 0;
-        state->viewport.width = swapchain->desc.backbuffer_width;
-        state->viewport.height = swapchain->desc.backbuffer_height;
-        state->viewport.min_z = 0.0f;
-        state->viewport.max_z = 1.0f;
-    }
-
-    TRACE("Done.\n");
+    /* Set the default viewport */
+    state->viewport.x = 0;
+    state->viewport.y = 0;
+    state->viewport.width = swapchain_desc->backbuffer_width;
+    state->viewport.height = swapchain_desc->backbuffer_height;
+    state->viewport.min_z = 0.0f;
+    state->viewport.max_z = 1.0f;
 }
 
 static HRESULT stateblock_init(struct wined3d_stateblock *stateblock,
