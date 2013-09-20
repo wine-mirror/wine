@@ -6225,6 +6225,10 @@ static GpStatus SOFTWARE_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UI
         }
     }
 
+    if (max_glyphsize == 0)
+        /* Nothing to draw. */
+        return Ok;
+
     glyph_mask = GdipAlloc(max_glyphsize);
     text_mask = GdipAlloc((max_x - min_x) * (max_y - min_y));
     text_mask_stride = max_x - min_x;
