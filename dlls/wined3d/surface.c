@@ -5524,7 +5524,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
             context_release(context);
             return E_OUTOFMEMORY;
         }
-        format.convert(surface->resource.allocatedMemory, mem, src_pitch, width, height);
+        format.convert(surface->resource.allocatedMemory, mem, src_pitch, dst_pitch, width, height);
         format.byte_count = format.conv_byte_count;
         src_pitch = dst_pitch;
     }

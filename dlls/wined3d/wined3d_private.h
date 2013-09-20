@@ -2970,7 +2970,7 @@ struct wined3d_format
     unsigned int flags;
     struct wined3d_rational height_scale;
     struct color_fixup_desc color_fixup;
-    void (*convert)(const BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height);
+    void (*convert)(const BYTE *src, BYTE *dst, UINT src_pitch, UINT dst_pitch, UINT width, UINT height);
 };
 
 const struct wined3d_format *wined3d_get_format(const struct wined3d_gl_info *gl_info,
