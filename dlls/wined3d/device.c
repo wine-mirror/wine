@@ -3997,7 +3997,7 @@ HRESULT CDECL wined3d_device_set_render_target(struct wined3d_device *device,
 
     if (render_target && !(render_target->resource.usage & WINED3DUSAGE_RENDERTARGET))
     {
-        FIXME("Surface %p doesn't have render target usage.\n", render_target);
+        WARN("Surface %p doesn't have render target usage.\n", render_target);
         return WINED3DERR_INVALIDCALL;
     }
 
