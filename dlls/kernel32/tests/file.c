@@ -3903,6 +3903,9 @@ static void test_file_access(void)
         { FILE_READ_DATA | FILE_WRITE_DATA, 0, 0, 0 },
         { FILE_WRITE_DATA, 0, 0, ERROR_ACCESS_DENIED },
         { FILE_READ_DATA, 0, ERROR_ACCESS_DENIED, 0 },
+        { FILE_APPEND_DATA, 0, 0, ERROR_ACCESS_DENIED },
+        { FILE_READ_DATA | FILE_APPEND_DATA, 0, 0, 0 },
+        { FILE_WRITE_DATA | FILE_APPEND_DATA, 0, 0, ERROR_ACCESS_DENIED },
         { 0, 0, ERROR_ACCESS_DENIED, ERROR_ACCESS_DENIED },
     };
     char path[MAX_PATH], fname[MAX_PATH];
@@ -3938,6 +3941,17 @@ static void test_file_access(void)
         }
         else
         {
+            /* FIXME: remove once Wine is fixed */
+            if (!ret && (td[i].access & FILE_APPEND_DATA))
+            {
+todo_wine
+                ok(ret, "%d: WriteFile error %d\n", i, GetLastError());
+todo_wine
+                ok(bytes == 2, "%d: expected 2, got %u\n", i, bytes);
+                CloseHandle(hfile);
+                continue;
+            }
+
             ok(ret, "%d: WriteFile error %d\n", i, GetLastError());
             ok(bytes == 2, "%d: expected 2, got %u\n", i, bytes);
         }
