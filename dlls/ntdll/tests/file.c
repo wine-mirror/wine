@@ -851,43 +851,85 @@ todo_wine
 
 static void append_file_test(void)
 {
-    const char text[] = "foobar";
+    static const char text[6] = "foobar";
     HANDLE handle;
     NTSTATUS status;
     IO_STATUS_BLOCK iosb;
-    DWORD written;
-    char path[MAX_PATH], buffer[MAX_PATH];
+    LARGE_INTEGER offset;
+    char path[MAX_PATH], buffer[MAX_PATH], buf[16];
 
     GetTempPathA( MAX_PATH, path );
     GetTempFileNameA( path, "foo", 0, buffer );
-    /* It is possible to open a file with only FILE_APPEND_DATA access flags.
-       It matches the O_WRONLY|O_APPEND open() posix behavior */
-    handle = CreateFileA(buffer, FILE_APPEND_DATA, 0, NULL, CREATE_ALWAYS,
-                         FILE_FLAG_DELETE_ON_CLOSE, 0);
-    ok( handle != INVALID_HANDLE_VALUE, "Failed to create a temp file in FILE_APPEND_DATA mode.\n" );
-    if(handle == INVALID_HANDLE_VALUE)
-    {
-        skip("Couldn't create a temporary file, skipping FILE_APPEND_DATA test\n");
-        return;
-    }
 
-    U(iosb).Status = STATUS_PENDING;
-    iosb.Information = 0;
+    handle = CreateFile(buffer, FILE_WRITE_DATA, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(handle != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
 
-    status = pNtWriteFile(handle, NULL, NULL, NULL, &iosb,
-                          text, sizeof(text), NULL, NULL);
-
-    if (status == STATUS_PENDING)
-    {
-        WaitForSingleObject( handle, 1000 );
-        status = U(iosb).Status;
-    }
-    written = iosb.Information;
-
-    todo_wine
-    ok(status == STATUS_SUCCESS && written == sizeof(text), "FILE_APPEND_DATA NtWriteFile failed\n");
+    U(iosb).Status = -1;
+    iosb.Information = -1;
+    status = pNtWriteFile(handle, NULL, NULL, NULL, &iosb, text, 3, NULL, NULL);
+    ok(status == STATUS_SUCCESS, "NtWriteFile error %#x\n", status);
+    ok(iosb.Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", iosb.Status);
+    ok(iosb.Information == 3, "expected 3, got %lu\n", iosb.Information);
 
     CloseHandle(handle);
+
+    /* It is possible to open a file with only FILE_APPEND_DATA access flags.
+       It matches the O_WRONLY|O_APPEND open() posix behavior */
+    handle = CreateFile(buffer, FILE_APPEND_DATA, 0, NULL, OPEN_EXISTING, 0, 0);
+    ok(handle != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
+
+    U(iosb).Status = -1;
+    iosb.Information = -1;
+    offset.QuadPart = 0;
+    status = pNtWriteFile(handle, NULL, NULL, NULL, &iosb, text + 3, 3, &offset, NULL);
+todo_wine
+    ok(status == STATUS_SUCCESS, "NtWriteFile error %#x\n", status);
+todo_wine
+    ok(iosb.Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", iosb.Status);
+todo_wine
+    ok(iosb.Information == 3, "expected 3, got %lu\n", iosb.Information);
+
+    CloseHandle(handle);
+
+    handle = CreateFile(buffer, FILE_READ_DATA | FILE_WRITE_DATA | FILE_APPEND_DATA, 0, NULL, OPEN_EXISTING, 0, 0);
+    ok(handle != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
+
+    memset(buf, 0, sizeof(buf));
+    U(iosb).Status = -1;
+    iosb.Information = -1;
+    offset.QuadPart = 0;
+    status = pNtReadFile(handle, 0, NULL, NULL, &iosb, buf, sizeof(buf), &offset, NULL);
+    ok(status == STATUS_SUCCESS, "NtReadFile error %#x\n", status);
+    ok(iosb.Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", iosb.Status);
+todo_wine
+    ok(iosb.Information == 6, "expected 6, got %lu\n", iosb.Information);
+    buf[6] = 0;
+todo_wine
+    ok(memcmp(buf, text, 6) == 0, "wrong file contents: %s\n", buf);
+
+    U(iosb).Status = -1;
+    iosb.Information = -1;
+    offset.QuadPart = 0;
+    status = pNtWriteFile(handle, NULL, NULL, NULL, &iosb, text + 3, 3, &offset, NULL);
+    ok(status == STATUS_SUCCESS, "NtWriteFile error %#x\n", status);
+    ok(iosb.Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", iosb.Status);
+    ok(iosb.Information == 3, "expected 3, got %lu\n", iosb.Information);
+
+    memset(buf, 0, sizeof(buf));
+    U(iosb).Status = -1;
+    iosb.Information = -1;
+    offset.QuadPart = 0;
+    status = pNtReadFile(handle, 0, NULL, NULL, &iosb, buf, sizeof(buf), &offset, NULL);
+    ok(status == STATUS_SUCCESS, "NtReadFile error %#x\n", status);
+    ok(iosb.Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", iosb.Status);
+todo_wine
+    ok(iosb.Information == 6, "expected 6, got %lu\n", iosb.Information);
+    buf[6] = 0;
+todo_wine
+    ok(memcmp(buf, "barbar", 6) == 0, "wrong file contents: %s\n", buf);
+
+    CloseHandle(handle);
+    DeleteFile(buffer);
 }
 
 static void nt_mailslot_test(void)
