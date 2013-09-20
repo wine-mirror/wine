@@ -155,21 +155,20 @@ failed:
     return D3DXERR_INVALIDDATA;
 }
 
-static HRESULT WINAPI ID3DXLineImpl_Draw(ID3DXLine* iface, CONST D3DXVECTOR2* vertexlist, DWORD vertexlistcount, D3DCOLOR color)
+static HRESULT WINAPI ID3DXLineImpl_Draw(ID3DXLine *iface, const D3DXVECTOR2 *vertex_list,
+        DWORD vertex_list_count, D3DCOLOR color)
 {
-    ID3DXLineImpl *This = impl_from_ID3DXLine(iface);
-
-    FIXME("(%p)->(%p, %u, %#x): stub\n", This, vertexlist, vertexlistcount, color);
+    FIXME("iface %p, vertex_list %p, vertex_list_count %u, color 0x%08x stub!\n",
+            iface, vertex_list, vertex_list_count, color);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ID3DXLineImpl_DrawTransform(ID3DXLine* iface, CONST D3DXVECTOR3* vertexlist, DWORD vertexlistcount,
-                                                  CONST D3DXMATRIX* transform, D3DCOLOR color)
+static HRESULT WINAPI ID3DXLineImpl_DrawTransform(ID3DXLine *iface, const D3DXVECTOR3 *vertex_list,
+        DWORD vertex_list_count, const D3DXMATRIX *transform, D3DCOLOR color)
 {
-    ID3DXLineImpl *This = impl_from_ID3DXLine(iface);
-
-    FIXME("(%p)->(%p, %u, %p, %#x): stub\n", This, vertexlist, vertexlistcount, transform, color);
+    FIXME("iface %p, vertex_list %p, vertex_list_count %u, transform %p, color 0x%08x stub!\n",
+            iface, vertex_list, vertex_list_count, transform, color);
 
     return E_NOTIMPL;
 }

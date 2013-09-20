@@ -344,7 +344,7 @@ static INT simple_round(FLOAT value)
     return res;
 }
 
-static void convert_float4(BYTE *dst, CONST D3DXVECTOR4 *src, D3DDECLTYPE type_dst)
+static void convert_float4(BYTE *dst, const D3DXVECTOR4 *src, D3DDECLTYPE type_dst)
 {
     BOOL fixme_once = FALSE;
 
@@ -658,7 +658,7 @@ cleanup:
     return hr;
 }
 
-static BOOL declaration_equals(CONST D3DVERTEXELEMENT9 *declaration1, CONST D3DVERTEXELEMENT9 *declaration2)
+static BOOL declaration_equals(const D3DVERTEXELEMENT9 *declaration1, const D3DVERTEXELEMENT9 *declaration2)
 {
     UINT size1 = 0, size2 = 0;
 
@@ -875,7 +875,8 @@ struct edge_face_map
  * is at most one edge to face mapping, i.e. an edge can only belong to one
  * face.
  */
-static HRESULT init_edge_face_map(struct edge_face_map *edge_face_map, CONST DWORD *index_buffer, CONST DWORD *point_reps, CONST DWORD num_faces)
+static HRESULT init_edge_face_map(struct edge_face_map *edge_face_map, const DWORD *index_buffer,
+        const DWORD *point_reps, DWORD num_faces)
 {
     DWORD face, edge;
     DWORD i;
@@ -915,7 +916,7 @@ static HRESULT init_edge_face_map(struct edge_face_map *edge_face_map, CONST DWO
     return D3D_OK;
 }
 
-static DWORD find_adjacent_face(struct edge_face_map *edge_face_map, DWORD vertex1, DWORD vertex2, CONST DWORD num_faces)
+static DWORD find_adjacent_face(struct edge_face_map *edge_face_map, DWORD vertex1, DWORD vertex2, DWORD num_faces)
 {
     struct edge_face *edge_face_ptr;
 
@@ -945,9 +946,9 @@ static DWORD *generate_identity_point_reps(DWORD num_vertices)
         return id_point_reps;
 }
 
-static HRESULT WINAPI ID3DXMeshImpl_ConvertPointRepsToAdjacency(ID3DXMesh *iface, CONST DWORD *point_reps, DWORD *adjacency)
+static HRESULT WINAPI ID3DXMeshImpl_ConvertPointRepsToAdjacency(ID3DXMesh *iface,
+        const DWORD *point_reps, DWORD *adjacency)
 {
-    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
     HRESULT hr;
     DWORD num_faces = iface->lpVtbl->GetNumFaces(iface);
     DWORD num_vertices = iface->lpVtbl->GetNumVertices(iface);
@@ -958,10 +959,10 @@ static HRESULT WINAPI ID3DXMeshImpl_ConvertPointRepsToAdjacency(ID3DXMesh *iface
     DWORD face;
     DWORD edge;
     struct edge_face_map edge_face_map = {0};
-    CONST DWORD *point_reps_ptr = NULL;
+    const DWORD *point_reps_ptr = NULL;
     DWORD *id_point_reps = NULL;
 
-    TRACE("(%p)->(%p,%p)\n", This, point_reps, adjacency);
+    TRACE("iface %p, point_reps %p, adjacency %p.\n", iface, point_reps, adjacency);
 
     if (!adjacency) return D3DERR_INVALIDCALL;
 
@@ -1046,9 +1047,8 @@ cleanup:
  * vertex 5 is replaced by vertex 3 then index 5 would contain 3. If no vertex
  * replaces it, then it contains the same number as the index itself, e.g.
  * index 5 would contain 5. */
-static HRESULT propagate_face_vertices(CONST DWORD *adjacency, DWORD *point_reps,
-                                    CONST DWORD *indices, DWORD *new_indices,
-                                    CONST DWORD face, CONST DWORD numfaces)
+static HRESULT propagate_face_vertices(const DWORD *adjacency, DWORD *point_reps,
+        const DWORD *indices, DWORD *new_indices, DWORD face, DWORD numfaces)
 {
     const unsigned int VERTS_PER_FACE = 3;
     DWORD edge, opp_edge;
@@ -1096,7 +1096,8 @@ static HRESULT propagate_face_vertices(CONST DWORD *adjacency, DWORD *point_reps
     return D3D_OK;
 }
 
-static HRESULT WINAPI ID3DXMeshImpl_ConvertAdjacencyToPointReps(ID3DXMesh *iface, CONST DWORD *adjacency, DWORD *point_reps)
+static HRESULT WINAPI ID3DXMeshImpl_ConvertAdjacencyToPointReps(ID3DXMesh *iface,
+        const DWORD *adjacency, DWORD *point_reps)
 {
     HRESULT hr;
     DWORD face;
@@ -1108,7 +1109,7 @@ static HRESULT WINAPI ID3DXMeshImpl_ConvertAdjacencyToPointReps(ID3DXMesh *iface
 
     ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 
-    TRACE("(%p)->(%p,%p)\n", This, adjacency, point_reps);
+    TRACE("iface %p, adjacency %p, point_reps %p.\n", iface, adjacency, point_reps);
 
     if (!adjacency)
     {
@@ -1826,12 +1827,13 @@ cleanup:
     return hr;
 }
 
-static HRESULT WINAPI ID3DXMeshImpl_SetAttributeTable(ID3DXMesh *iface, CONST D3DXATTRIBUTERANGE *attrib_table, DWORD attrib_table_size)
+static HRESULT WINAPI ID3DXMeshImpl_SetAttributeTable(ID3DXMesh *iface,
+        const D3DXATTRIBUTERANGE *attrib_table, DWORD attrib_table_size)
 {
     ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
     D3DXATTRIBUTERANGE *new_table = NULL;
 
-    TRACE("(%p)->(%p,%u)\n", This, attrib_table, attrib_table_size);
+    TRACE("iface %p, attrib_table %p, attrib_table_size %u.\n", iface, attrib_table, attrib_table_size);
 
     if (attrib_table_size) {
         size_t size = attrib_table_size * sizeof(*attrib_table);
@@ -1887,10 +1889,6 @@ static const struct ID3DXMeshVtbl D3DXMesh_Vtbl =
     ID3DXMeshImpl_SetAttributeTable
 };
 
-/*************************************************************************
- * D3DXBoxBoundProbe
- */
-BOOL WINAPI D3DXBoxBoundProbe(CONST D3DXVECTOR3 *pmin, CONST D3DXVECTOR3 *pmax, CONST D3DXVECTOR3 *prayposition, CONST D3DXVECTOR3 *praydirection)
 
 /* Algorithm taken from the article: An Efficient and Robust Ray-Box Intersection Algorithm
 Amy Williams             University of Utah
@@ -1906,9 +1904,9 @@ This algorithm is free of patents or of copyrights, as confirmed by Peter Shirle
 
 Algorithm: Consider the box as the intersection of three slabs. Clip the ray
 against each slab, if there's anything left of the ray after we're
-done we've got an intersection of the ray with the box.
-*/
-
+done we've got an intersection of the ray with the box. */
+BOOL WINAPI D3DXBoxBoundProbe(const D3DXVECTOR3 *pmin, const D3DXVECTOR3 *pmax,
+        const D3DXVECTOR3 *prayposition, const D3DXVECTOR3 *praydirection)
 {
     FLOAT div, tmin, tmax, tymin, tymax, tzmin, tzmax;
 
@@ -1960,10 +1958,8 @@ done we've got an intersection of the ray with the box.
     return TRUE;
 }
 
-/*************************************************************************
- * D3DXComputeBoundingBox
- */
-HRESULT WINAPI D3DXComputeBoundingBox(CONST D3DXVECTOR3 *pfirstposition, DWORD numvertices, DWORD dwstride, D3DXVECTOR3 *pmin, D3DXVECTOR3 *pmax)
+HRESULT WINAPI D3DXComputeBoundingBox(const D3DXVECTOR3 *pfirstposition,
+        DWORD numvertices, DWORD dwstride, D3DXVECTOR3 *pmin, D3DXVECTOR3 *pmax)
 {
     D3DXVECTOR3 vec;
     unsigned int i;
@@ -1990,10 +1986,8 @@ HRESULT WINAPI D3DXComputeBoundingBox(CONST D3DXVECTOR3 *pfirstposition, DWORD n
     return D3D_OK;
 }
 
-/*************************************************************************
- * D3DXComputeBoundingSphere
- */
-HRESULT WINAPI D3DXComputeBoundingSphere(CONST D3DXVECTOR3* pfirstposition, DWORD numvertices, DWORD dwstride, D3DXVECTOR3 *pcenter, FLOAT *pradius)
+HRESULT WINAPI D3DXComputeBoundingSphere(const D3DXVECTOR3 *pfirstposition,
+        DWORD numvertices, DWORD dwstride, D3DXVECTOR3 *pcenter, float *pradius)
 {
     D3DXVECTOR3 temp;
     FLOAT d;
@@ -2367,10 +2361,8 @@ UINT WINAPI D3DXGetDeclLength(const D3DVERTEXELEMENT9 *decl)
     return element - decl;
 }
 
-/*************************************************************************
- * D3DXIntersectTri
- */
-BOOL WINAPI D3DXIntersectTri(CONST D3DXVECTOR3 *p0, CONST D3DXVECTOR3 *p1, CONST D3DXVECTOR3 *p2, CONST D3DXVECTOR3 *praypos, CONST D3DXVECTOR3 *praydir, FLOAT *pu, FLOAT *pv, FLOAT *pdist)
+BOOL WINAPI D3DXIntersectTri(const D3DXVECTOR3 *p0, const D3DXVECTOR3 *p1, const D3DXVECTOR3 *p2,
+        const D3DXVECTOR3 *praypos, const D3DXVECTOR3 *praydir, float *pu, float *pv, float *pdist)
 {
     D3DXMATRIX m;
     D3DXVECTOR4 vec;
@@ -2412,10 +2404,8 @@ BOOL WINAPI D3DXIntersectTri(CONST D3DXVECTOR3 *p0, CONST D3DXVECTOR3 *p1, CONST
     return FALSE;
 }
 
-/*************************************************************************
- * D3DXSphereBoundProbe
- */
-BOOL WINAPI D3DXSphereBoundProbe(CONST D3DXVECTOR3 *pcenter, FLOAT radius, CONST D3DXVECTOR3 *prayposition, CONST D3DXVECTOR3 *praydirection)
+BOOL WINAPI D3DXSphereBoundProbe(const D3DXVECTOR3 *pcenter, float radius,
+        const D3DXVECTOR3 *prayposition, const D3DXVECTOR3 *praydirection)
 {
     D3DXVECTOR3 difference;
     FLOAT a, b, c, d;

@@ -144,11 +144,11 @@ static HRESULT WINAPI ID3DXSpriteImpl_GetTransform(ID3DXSprite *iface, D3DXMATRI
     return D3D_OK;
 }
 
-static HRESULT WINAPI ID3DXSpriteImpl_SetTransform(ID3DXSprite *iface, CONST D3DXMATRIX *transform)
+static HRESULT WINAPI ID3DXSpriteImpl_SetTransform(ID3DXSprite *iface, const D3DXMATRIX *transform)
 {
     ID3DXSpriteImpl *This = impl_from_ID3DXSprite(iface);
 
-    TRACE("(%p)->(%p)\n", This, transform);
+    TRACE("iface %p, transform %p.\n", iface, transform);
 
     if(transform==NULL) return D3DERR_INVALIDCALL;
     This->transform=*transform;
@@ -156,19 +156,19 @@ static HRESULT WINAPI ID3DXSpriteImpl_SetTransform(ID3DXSprite *iface, CONST D3D
     return D3D_OK;
 }
 
-static HRESULT WINAPI ID3DXSpriteImpl_SetWorldViewRH(ID3DXSprite *iface, CONST D3DXMATRIX *world,
-        CONST D3DXMATRIX *view)
+static HRESULT WINAPI ID3DXSpriteImpl_SetWorldViewRH(ID3DXSprite *iface,
+        const D3DXMATRIX *world, const D3DXMATRIX *view)
 {
-    ID3DXSpriteImpl *This = impl_from_ID3DXSprite(iface);
-    FIXME("(%p)->(%p, %p): stub\n", This, world, view);
+    FIXME("iface %p, world %p, view %p stub!\n", iface, world, view);
+
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ID3DXSpriteImpl_SetWorldViewLH(ID3DXSprite *iface, CONST D3DXMATRIX *world,
-        CONST D3DXMATRIX *view)
+static HRESULT WINAPI ID3DXSpriteImpl_SetWorldViewLH(ID3DXSprite *iface,
+        const D3DXMATRIX *world, const D3DXMATRIX *view)
 {
-    ID3DXSpriteImpl *This = impl_from_ID3DXSprite(iface);
-    FIXME("(%p)->(%p, %p): stub\n", This, world, view);
+    FIXME("iface %p, world %p, view %p stub!\n", iface, world, view);
+
     return E_NOTIMPL;
 }
 

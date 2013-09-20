@@ -1334,7 +1334,7 @@ static void init_argb_conversion_info(const struct pixel_format_desc *srcformat,
     }
 }
 
-static DWORD dword_from_bytes(CONST BYTE *src, UINT bytes_per_pixel)
+static DWORD dword_from_bytes(const BYTE *src, UINT bytes_per_pixel)
 {
     DWORD ret = 0;
     static BOOL fixme_once;
@@ -1367,7 +1367,7 @@ static void dword_to_bytes(BYTE *dst, DWORD dword, UINT bytes_per_pixel)
  * Extracts the relevant components from the source color and
  * drops the less significant bits if they aren't used by the destination format.
  */
-static void get_relevant_argb_components(CONST struct argb_conversion_info *info, CONST DWORD col, DWORD *out)
+static void get_relevant_argb_components(const struct argb_conversion_info *info, DWORD col, DWORD *out)
 {
     UINT i = 0;
     for(;i < 4;i++)
@@ -1381,7 +1381,7 @@ static void get_relevant_argb_components(CONST struct argb_conversion_info *info
  * Recombines the output of get_relevant_argb_components and converts
  * it to the destination format.
  */
-static DWORD make_argb_color(CONST struct argb_conversion_info *info, CONST DWORD *in)
+static DWORD make_argb_color(const struct argb_conversion_info *info, const DWORD *in)
 {
     UINT i;
     DWORD val = 0;

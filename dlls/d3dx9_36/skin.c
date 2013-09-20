@@ -96,14 +96,16 @@ static ULONG WINAPI ID3DXSkinInfoImpl_Release(ID3DXSkinInfo *iface)
     return ref;
 }
 
-static HRESULT WINAPI ID3DXSkinInfoImpl_SetBoneInfluence(ID3DXSkinInfo *iface, DWORD bone_num, DWORD num_influences, CONST DWORD *vertices, CONST FLOAT *weights)
+static HRESULT WINAPI ID3DXSkinInfoImpl_SetBoneInfluence(ID3DXSkinInfo *iface,
+        DWORD bone_num, DWORD num_influences, const DWORD *vertices, const float *weights)
 {
     ID3DXSkinInfoImpl *This = impl_from_ID3DXSkinInfo(iface);
     struct bone *bone;
     DWORD *new_vertices = NULL;
     FLOAT *new_weights = NULL;
 
-    TRACE("(%p, %u, %u, %p, %p)\n", This, bone_num, num_influences, vertices, weights);
+    TRACE("iface %p, bone_num %u, num_influences %u, vertices %p, weights %p.\n",
+            iface, bone_num, num_influences, vertices, weights);
 
     if (bone_num >= This->num_bones || !vertices || !weights)
         return D3DERR_INVALIDCALL;
@@ -272,11 +274,12 @@ static const char * WINAPI ID3DXSkinInfoImpl_GetBoneName(ID3DXSkinInfo *iface, D
     return This->bones[bone_idx].name;
 }
 
-static HRESULT WINAPI ID3DXSkinInfoImpl_SetBoneOffsetMatrix(ID3DXSkinInfo *iface, DWORD bone_num, CONST D3DXMATRIX *bone_transform)
+static HRESULT WINAPI ID3DXSkinInfoImpl_SetBoneOffsetMatrix(ID3DXSkinInfo *iface,
+        DWORD bone_num, const D3DXMATRIX *bone_transform)
 {
     ID3DXSkinInfoImpl *This = impl_from_ID3DXSkinInfo(iface);
 
-    TRACE("(%p, %u, %p)\n", This, bone_num, bone_transform);
+    TRACE("iface %p, bone_num %u, bone_transform %p.\n", iface, bone_num, bone_transform);
 
     if (bone_num >= This->num_bones || !bone_transform)
         return D3DERR_INVALIDCALL;
@@ -329,13 +332,13 @@ static HRESULT WINAPI ID3DXSkinInfoImpl_SetFVF(ID3DXSkinInfo *iface, DWORD fvf)
     return iface->lpVtbl->SetDeclaration(iface, declaration);
 }
 
-static HRESULT WINAPI ID3DXSkinInfoImpl_SetDeclaration(ID3DXSkinInfo *iface, CONST D3DVERTEXELEMENT9 *declaration)
+static HRESULT WINAPI ID3DXSkinInfoImpl_SetDeclaration(ID3DXSkinInfo *iface, const D3DVERTEXELEMENT9 *declaration)
 {
     ID3DXSkinInfoImpl *This = impl_from_ID3DXSkinInfo(iface);
     HRESULT hr;
     int count;
 
-    TRACE("(%p, %p)\n", This, declaration);
+    TRACE("iface %p, declaration %p.\n", iface, declaration);
 
     if (!declaration)
         return D3DERR_INVALIDCALL;

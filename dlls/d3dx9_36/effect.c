@@ -788,7 +788,7 @@ static void get_vector(struct d3dx_parameter *param, D3DXVECTOR4 *vector)
     }
 }
 
-static void set_vector(struct d3dx_parameter *param, CONST D3DXVECTOR4 *vector)
+static void set_vector(struct d3dx_parameter *param, const D3DXVECTOR4 *vector)
 {
     UINT i;
 
