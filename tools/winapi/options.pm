@@ -414,7 +414,7 @@ sub c_files($) {
 
     my $c_files = \@{$self->{_C_FILES}};
 
-    if(!defined(@$c_files)) {
+    if(!@$c_files) {
 	$self->parse_files;
     }
 
@@ -426,7 +426,7 @@ sub h_files($) {
 
     my $h_files = \@{$self->{_H_FILES}};
 
-    if(!defined(@$h_files)) {
+    if(!@$h_files) {
 	$self->parse_files;
     }
 
@@ -438,7 +438,7 @@ sub directories($) {
 
     my $directories = \@{$self->{_DIRECTORIES}};
 
-    if(!defined(@$directories)) {
+    if(!@$directories) {
 	$self->parse_files;
     }
 
