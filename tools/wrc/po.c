@@ -124,10 +124,10 @@ static char *get_message_context( char **msgid )
     return context;
 }
 
-static int control_has_title( const control_t *ctrl )
+static BOOL control_has_title( const control_t *ctrl )
 {
-    if (!ctrl->title) return 0;
-    if (ctrl->title->type != name_str) return 0;
+    if (!ctrl->title) return FALSE;
+    if (ctrl->title->type != name_str) return FALSE;
     /* check for text static control */
     if (ctrl->ctlclass && ctrl->ctlclass->type == name_ord && ctrl->ctlclass->name.i_name == CT_STATIC)
     {
@@ -136,12 +136,12 @@ static int control_has_title( const control_t *ctrl )
         case SS_LEFT:
         case SS_CENTER:
         case SS_RIGHT:
-            return 1;
+            return TRUE;
         default:
-            return 0;
+            return FALSE;
         }
     }
-    return 1;
+    return TRUE;
 }
 
 static resource_t *dup_resource( resource_t *res, language_t *lang )
