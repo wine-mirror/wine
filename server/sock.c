@@ -785,7 +785,7 @@ static int accept_into_socket( struct sock *sock, struct sock *acceptsock )
     return TRUE;
 }
 
-/* set the last error depending on errno */
+/* return an errno value mapped to a WSA error */
 static int sock_get_error( int err )
 {
     switch (err)
