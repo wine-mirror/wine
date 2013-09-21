@@ -11245,11 +11245,11 @@ basic_ostringstream_char* __thiscall basic_ostringstream_char_ctor_mode(
 
 /* ??_F?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEXXZ */
 /* ??_F?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAXXZ */
-DEFINE_THISCALL_WRAPPER(basic_ostringstream_char_ctor, 8)
+DEFINE_THISCALL_WRAPPER(basic_ostringstream_char_ctor, 4)
 basic_ostringstream_char* __thiscall basic_ostringstream_char_ctor(
-        basic_ostringstream_char *this, MSVCP_bool virt_init)
+        basic_ostringstream_char *this)
 {
-    return basic_ostringstream_char_ctor_mode(this, 0, virt_init);
+    return basic_ostringstream_char_ctor_mode(this, 0, TRUE);
 }
 
 /* ??1?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@UAE@XZ */
@@ -11408,20 +11408,20 @@ basic_ostringstream_wchar* __thiscall basic_ostringstream_short_ctor_mode(
 
 /* ??_F?$basic_ostringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEXXZ */
 /* ??_F?$basic_ostringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAXXZ */
-DEFINE_THISCALL_WRAPPER(basic_ostringstream_wchar_ctor, 8)
+DEFINE_THISCALL_WRAPPER(basic_ostringstream_wchar_ctor, 4)
 basic_ostringstream_wchar* __thiscall basic_ostringstream_wchar_ctor(
-        basic_ostringstream_wchar *this, MSVCP_bool virt_init)
+        basic_ostringstream_wchar *this)
 {
-    return basic_ostringstream_wchar_ctor_mode(this, 0, virt_init);
+    return basic_ostringstream_wchar_ctor_mode(this, 0, TRUE);
 }
 
 /* ??_F?$basic_ostringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEXXZ */
 /* ??_F?$basic_ostringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEAAXXZ */
-DEFINE_THISCALL_WRAPPER(basic_ostringstream_short_ctor, 8)
+DEFINE_THISCALL_WRAPPER(basic_ostringstream_short_ctor, 4)
 basic_ostringstream_wchar* __thiscall basic_ostringstream_short_ctor(
-        basic_ostringstream_wchar *this, MSVCP_bool virt_init)
+        basic_ostringstream_wchar *this)
 {
-    return basic_ostringstream_short_ctor_mode(this, 0, virt_init);
+    return basic_ostringstream_short_ctor_mode(this, 0, TRUE);
 }
 
 /* ??1?$basic_ostringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@UAE@XZ */
@@ -11568,11 +11568,11 @@ basic_istringstream_char* __thiscall basic_istringstream_char_ctor_mode(
 
 /* ??_F?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEXXZ */
 /* ??_F?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAXXZ */
-DEFINE_THISCALL_WRAPPER(basic_istringstream_char_ctor, 8)
+DEFINE_THISCALL_WRAPPER(basic_istringstream_char_ctor, 4)
 basic_istringstream_char* __thiscall basic_istringstream_char_ctor(
-        basic_istringstream_char *this, MSVCP_bool virt_init)
+        basic_istringstream_char *this)
 {
-    return basic_istringstream_char_ctor_mode(this, 0, virt_init);
+    return basic_istringstream_char_ctor_mode(this, 0, TRUE);
 }
 
 /* ??1?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@UAE@XZ */
@@ -11731,20 +11731,20 @@ basic_istringstream_wchar* __thiscall basic_istringstream_short_ctor_mode(
 
 /* ??_F?$basic_istringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEXXZ */
 /* ??_F?$basic_istringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAXXZ */
-DEFINE_THISCALL_WRAPPER(basic_istringstream_wchar_ctor, 8)
+DEFINE_THISCALL_WRAPPER(basic_istringstream_wchar_ctor, 4)
 basic_istringstream_wchar* __thiscall basic_istringstream_wchar_ctor(
-        basic_istringstream_wchar *this, MSVCP_bool virt_init)
+        basic_istringstream_wchar *this)
 {
-    return basic_istringstream_wchar_ctor_mode(this, 0, virt_init);
+    return basic_istringstream_wchar_ctor_mode(this, 0, TRUE);
 }
 
 /* ??_F?$basic_istringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEXXZ */
 /* ??_F?$basic_istringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEAAXXZ */
-DEFINE_THISCALL_WRAPPER(basic_istringstream_short_ctor, 8)
+DEFINE_THISCALL_WRAPPER(basic_istringstream_short_ctor, 4)
 basic_istringstream_wchar* __thiscall basic_istringstream_short_ctor(
-        basic_istringstream_wchar *this, MSVCP_bool virt_init)
+        basic_istringstream_wchar *this)
 {
-    return basic_istringstream_short_ctor_mode(this, 0, virt_init);
+    return basic_istringstream_short_ctor_mode(this, 0, TRUE);
 }
 
 /* ??1?$basic_istringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@UAE@XZ */
@@ -11893,12 +11893,12 @@ basic_stringstream_char* __thiscall basic_stringstream_char_ctor_mode(
 
 /* ??_F?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEXXZ */
 /* ??_F?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAXXZ */
-DEFINE_THISCALL_WRAPPER(basic_stringstream_char_ctor, 8)
+DEFINE_THISCALL_WRAPPER(basic_stringstream_char_ctor, 4)
 basic_stringstream_char* __thiscall basic_stringstream_char_ctor(
-        basic_stringstream_char *this, MSVCP_bool virt_init)
+        basic_stringstream_char *this)
 {
     return basic_stringstream_char_ctor_mode(
-            this, OPENMODE_out|OPENMODE_in, virt_init);
+            this, OPENMODE_out|OPENMODE_in, TRUE);
 }
 
 /* ??1?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@UAE@XZ */
@@ -12059,22 +12059,22 @@ basic_stringstream_wchar* __thiscall basic_stringstream_short_ctor_mode(
 
 /* ??_F?$basic_stringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEXXZ */
 /* ??_F?$basic_stringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAXXZ */
-DEFINE_THISCALL_WRAPPER(basic_stringstream_wchar_ctor, 8)
+DEFINE_THISCALL_WRAPPER(basic_stringstream_wchar_ctor, 4)
 basic_stringstream_wchar* __thiscall basic_stringstream_wchar_ctor(
-        basic_stringstream_wchar *this, MSVCP_bool virt_init)
+        basic_stringstream_wchar *this)
 {
     return basic_stringstream_wchar_ctor_mode(
-            this, OPENMODE_out|OPENMODE_in, virt_init);
+            this, OPENMODE_out|OPENMODE_in, TRUE);
 }
 
 /* ??_F?$basic_stringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEXXZ */
 /* ??_F?$basic_stringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEAAXXZ */
-DEFINE_THISCALL_WRAPPER(basic_stringstream_short_ctor, 8)
+DEFINE_THISCALL_WRAPPER(basic_stringstream_short_ctor, 4)
 basic_stringstream_wchar* __thiscall basic_stringstream_short_ctor(
-        basic_stringstream_wchar *this, MSVCP_bool virt_init)
+        basic_stringstream_wchar *this)
 {
     return basic_stringstream_short_ctor_mode(
-            this, OPENMODE_out|OPENMODE_in, virt_init);
+            this, OPENMODE_out|OPENMODE_in, TRUE);
 }
 
 /* ??1?$basic_stringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@UAE@XZ */

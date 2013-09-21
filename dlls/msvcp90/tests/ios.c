@@ -423,12 +423,12 @@ typedef struct {
 } fpos_int;
 
 /* stringstream */
-static basic_stringstream_char* (*__thiscall p_basic_stringstream_char_ctor)(basic_stringstream_char*, MSVCP_bool);
+static basic_stringstream_char* (*__thiscall p_basic_stringstream_char_ctor)(basic_stringstream_char*);
 static basic_stringstream_char* (*__thiscall p_basic_stringstream_char_ctor_str)(basic_stringstream_char*, const basic_string_char*, int, MSVCP_bool);
 static basic_string_char* (*__thiscall p_basic_stringstream_char_str_get)(const basic_stringstream_char*, basic_string_char*);
 static void (*__thiscall p_basic_stringstream_char_vbase_dtor)(basic_stringstream_char*);
 
-static basic_stringstream_wchar* (*__thiscall p_basic_stringstream_wchar_ctor)(basic_stringstream_wchar*, MSVCP_bool);
+static basic_stringstream_wchar* (*__thiscall p_basic_stringstream_wchar_ctor)(basic_stringstream_wchar*);
 static basic_stringstream_wchar* (*__thiscall p_basic_stringstream_wchar_ctor_str)(basic_stringstream_wchar*, const basic_string_wchar*, int, MSVCP_bool);
 static basic_string_wchar* (*__thiscall p_basic_stringstream_wchar_str_get)(const basic_stringstream_wchar*, basic_string_wchar*);
 static void (*__thiscall p_basic_stringstream_wchar_vbase_dtor)(basic_stringstream_wchar*);
@@ -1299,7 +1299,7 @@ static void test_num_put_put_double(void)
 
     for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
         /* char version */
-        call_func2(p_basic_stringstream_char_ctor, &ss, TRUE);
+        call_func1(p_basic_stringstream_char_ctor, &ss);
 
         if(tests[i].lcl) {
             call_func3(p_locale_ctor_cstr, &lcl, tests[i].lcl, 0x3f /* FIXME: support categories */);
@@ -1325,7 +1325,7 @@ static void test_num_put_put_double(void)
         call_func1(p_basic_stringstream_char_vbase_dtor, &ss);
 
         /* wchar_t version */
-        call_func2(p_basic_stringstream_wchar_ctor, &wss, TRUE);
+        call_func1(p_basic_stringstream_wchar_ctor, &wss);
 
         if(tests[i].lcl) {
             call_func3(p_locale_ctor_cstr, &lcl, tests[i].lcl, 0x3f /* FIXME: support categories */);
@@ -1919,7 +1919,6 @@ static void test_istream_getline(void)
         call_func1(p_basic_string_wchar_dtor, &wstr);
     }
 }
-
 
 START_TEST(ios)
 {
