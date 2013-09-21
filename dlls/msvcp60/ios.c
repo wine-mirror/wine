@@ -6148,6 +6148,34 @@ basic_ostream_wchar* __thiscall basic_ostream_short_print_short(basic_ostream_wc
                 &basic_ios_wchar_rdbuf_get(basic_ostream_wchar_get_basic_ios(this))->loc));
 }
 
+static basic_ostream_wchar* basic_ostream_print_ushort(basic_ostream_wchar *this, unsigned short val, const num_put *numput)
+{
+    basic_ios_wchar *base = basic_ostream_wchar_get_basic_ios(this);
+    int state = IOSTATE_goodbit;
+
+    TRACE("(%p %d)\n", this, val);
+
+    if(basic_ostream_wchar_sentry_create(this)) {
+        basic_streambuf_wchar *strbuf = basic_ios_wchar_rdbuf_get(base);
+        ostreambuf_iterator_wchar dest = {0, strbuf};
+
+        num_put_wchar_put_ulong(numput, &dest, dest, &base->base, basic_ios_wchar_fill_get(base), val);
+    }
+    basic_ostream_wchar_sentry_destroy(this);
+
+    basic_ios_wchar_setstate(base, state);
+    return this;
+}
+
+/* ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEAAV01@G@Z */
+/* ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAAAEAV01@G@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_short_print_ushort, 8)
+basic_ostream_wchar* __thiscall basic_ostream_short_print_ushort(basic_ostream_wchar *this, unsigned short val)
+{
+    return basic_ostream_print_ushort(this, val, num_put_short_use_facet(
+                &basic_ios_wchar_rdbuf_get(basic_ostream_wchar_get_basic_ios(this))->loc));
+}
+
 static basic_ostream_wchar* basic_ostream_print_int(basic_ostream_wchar *this, int val, const num_put *numput)
 {
     basic_ios_wchar *base = basic_ostream_wchar_get_basic_ios(this);

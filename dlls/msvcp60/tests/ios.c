@@ -454,6 +454,8 @@ static basic_ostream_char* (*__thiscall p_basic_ostream_char_print_double)(basic
 
 static basic_ostream_wchar* (*__thiscall p_basic_ostream_wchar_print_double)(basic_ostream_wchar*, double);
 
+static basic_ostream_wchar* (*__thiscall p_basic_ostream_short_print_ushort)(basic_ostream_wchar*, unsigned short);
+
 /* basic_ios */
 static locale*  (*__thiscall p_basic_ios_char_imbue)(basic_ios_char*, locale*, const locale*);
 
@@ -646,6 +648,9 @@ static BOOL init(void)
         SET(p_basic_ostream_wchar_print_double,
             "??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAAAEAV01@N@Z");
 
+        SET(p_basic_ostream_short_print_ushort,
+            "??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAAAEAV01@G@Z");
+
         SET(p_ios_base_rdstate,
             "?rdstate@ios_base@std@@QEBAHXZ");
         SET(p_ios_base_setf_mask,
@@ -751,6 +756,9 @@ static BOOL init(void)
 
         SET(p_basic_ostream_wchar_print_double,
             "??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEAAV01@N@Z");
+
+        SET(p_basic_ostream_short_print_ushort,
+            "??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEAAV01@G@Z");
 
         SET(p_ios_base_rdstate,
             "?rdstate@ios_base@std@@QBEHXZ");
@@ -1608,6 +1616,25 @@ static void test_istream_getline(void)
     }
 }
 
+static void test_ostream_print_ushort(void)
+{
+    static const wchar_t str65[] = { '6','5',0 };
+
+    basic_stringstream_wchar wss;
+    basic_string_wchar pwstr;
+    const wchar_t *wstr;
+
+    call_func3(p_basic_stringstream_wchar_ctor_mode, &wss, OPENMODE_in|OPENMODE_out, TRUE);
+    call_func2(p_basic_ostream_short_print_ushort, &wss.base.base2, 65);
+
+    call_func2(p_basic_stringstream_wchar_str_get, &wss, &pwstr);
+    wstr = call_func1(p_basic_string_wchar_cstr, &pwstr);
+    ok(!lstrcmpW(str65, wstr), "wstr = %s\n", wine_dbgstr_w(wstr));
+
+    call_func1(p_basic_string_wchar_dtor, &pwstr);
+    call_func1(p_basic_stringstream_wchar_vbase_dtor, &wss);
+}
+
 
 START_TEST(ios)
 {
@@ -1623,4 +1650,5 @@ START_TEST(ios)
     test_istream_peek();
     test_istream_tellg();
     test_istream_getline();
+    test_ostream_print_ushort();
 }
