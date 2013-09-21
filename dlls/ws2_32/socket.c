@@ -2967,10 +2967,11 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
                 SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
                 ret = SOCKET_ERROR;
             }
-
-            /* BSD returns != 0 while Windows return exact == 1 */
-            if (*(int *)optval) *(int *)optval = 1;
-
+            else
+            {
+                /* BSD returns != 0 while Windows return exact == 1 */
+                if (*(int *)optval) *(int *)optval = 1;
+            }
             release_sock_fd( s, fd );
             return ret;
         case WS_SO_DONTLINGER:
