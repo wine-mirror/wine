@@ -332,7 +332,7 @@ static BOOL crypt_export_key(
 
 static BOOL import_key(
     HCRYPTPROV hProv, 
-    CONST BYTE *pbData, 
+    const BYTE *pbData,
     DWORD dwDataLen, 
     HCRYPTKEY hPubKey, 
     DWORD dwFlags, 
@@ -344,7 +344,7 @@ BOOL WINAPI
 RSAENH_CPHashData(
     HCRYPTPROV hProv, 
     HCRYPTHASH hHash, 
-    CONST BYTE *pbData, 
+    const BYTE *pbData,
     DWORD dwDataLen, 
     DWORD dwFlags
 );
@@ -395,8 +395,8 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, PVOID reserved)
  *  Success: TRUE (pbParam was copied into pbBuffer or pbBuffer is NULL)
  *  Failure: FALSE (pbBuffer is not large enough to hold pbParam). Last error: ERROR_MORE_DATA
  */
-static inline BOOL copy_param(
-    BYTE *pbBuffer, DWORD *pdwBufferSize, CONST BYTE *pbParam, DWORD dwParamSize) 
+static inline BOOL copy_param(BYTE *pbBuffer, DWORD *pdwBufferSize, const BYTE *pbParam,
+                              DWORD dwParamSize)
 {
     if (pbBuffer) 
     {
@@ -458,7 +458,8 @@ static inline const PROV_ENUMALGS_EX* get_algid_info(HCRYPTPROV hProv, ALG_ID al
  * NOTES
  *  Use free_data_blob to release resources occupied by copy_data_blob.
  */
-static inline BOOL copy_data_blob(PCRYPT_DATA_BLOB dst, CONST PCRYPT_DATA_BLOB src) {
+static inline BOOL copy_data_blob(PCRYPT_DATA_BLOB dst, const PCRYPT_DATA_BLOB src)
+{
     dst->pbData = HeapAlloc(GetProcessHeap(), 0, src->cbData);
     if (!dst->pbData) {
         SetLastError(NTE_NO_MEMORY);
@@ -486,8 +487,8 @@ static inline BOOL copy_data_blob(PCRYPT_DATA_BLOB dst, CONST PCRYPT_DATA_BLOB s
  * NOTES
  *  Release resources occupied by concat_data_blobs with free_data_blobs
  */
-static inline BOOL concat_data_blobs(PCRYPT_DATA_BLOB dst, CONST PCRYPT_DATA_BLOB src1, 
-                                     CONST PCRYPT_DATA_BLOB src2) 
+static inline BOOL concat_data_blobs(PCRYPT_DATA_BLOB dst, const PCRYPT_DATA_BLOB src1,
+                                     const PCRYPT_DATA_BLOB src2)
 {
     dst->cbData = src1->cbData + src2->cbData;
     dst->pbData = HeapAlloc(GetProcessHeap(), 0, dst->cbData);
@@ -652,7 +653,8 @@ static inline BOOL init_hash(CRYPTHASH *pCryptHash) {
  *  pbData     [I] Pointer to data stream to be hashed.
  *  dwDataLen  [I] Length of data stream.
  */
-static inline void update_hash(CRYPTHASH *pCryptHash, CONST BYTE *pbData, DWORD dwDataLen) {
+static inline void update_hash(CRYPTHASH *pCryptHash, const BYTE *pbData, DWORD dwDataLen)
+{
     BYTE *pbTemp;
 
     switch (pCryptHash->aiAlgid)
@@ -1431,14 +1433,14 @@ static HCRYPTPROV read_key_container(PCHAR pszContainerName, DWORD dwFlags, cons
  *  Failure: FALSE (NTE_BAD_ALGID)
  */
 static BOOL build_hash_signature(BYTE *pbSignature, DWORD dwLen, ALG_ID aiAlgid, 
-                                 CONST BYTE *abHashValue, DWORD dwHashLen, DWORD dwFlags) 
+                                 const BYTE *abHashValue, DWORD dwHashLen, DWORD dwFlags)
 {
     /* These prefixes are meant to be concatenated with hash values of the
      * respective kind to form a PKCS #7 DigestInfo. */
     static const struct tagOIDDescriptor {
         ALG_ID aiAlgid;
         DWORD dwLen;
-        CONST BYTE abOID[19];
+        const BYTE abOID[19];
     } aOIDDescriptor[] = {
         { CALG_MD2, 18, { 0x30, 0x20, 0x30, 0x0c, 0x06, 0x08, 0x2a, 0x86, 0x48,
                           0x86, 0xf7, 0x0d, 0x02, 0x02, 0x05, 0x00, 0x04, 0x10 } },
@@ -1526,7 +1528,8 @@ static BOOL build_hash_signature(BYTE *pbSignature, DWORD dwLen, ALG_ID aiAlgid,
  *  Success: TRUE
  *  Failure: FALSE
  */
-static BOOL tls1_p(HCRYPTHASH hHMAC, CONST PCRYPT_DATA_BLOB pblobSeed, PBYTE pbBuffer, DWORD dwBufferLen)
+static BOOL tls1_p(HCRYPTHASH hHMAC, const PCRYPT_DATA_BLOB pblobSeed, BYTE *pbBuffer,
+                   DWORD dwBufferLen)
 {
     CRYPTHASH *pHMAC;
     BYTE abAi[RSAENH_MAX_HASH_SIZE];
@@ -1584,8 +1587,8 @@ static BOOL tls1_p(HCRYPTHASH hHMAC, CONST PCRYPT_DATA_BLOB pblobSeed, PBYTE pbB
  *  Success: TRUE
  *  Failure: FALSE
  */ 
-static BOOL tls1_prf(HCRYPTPROV hProv, HCRYPTPROV hSecret, CONST PCRYPT_DATA_BLOB pblobLabel,
-                     CONST PCRYPT_DATA_BLOB pblobSeed, PBYTE pbBuffer, DWORD dwBufferLen)
+static BOOL tls1_prf(HCRYPTPROV hProv, HCRYPTPROV hSecret, const PCRYPT_DATA_BLOB pblobLabel,
+                     const PCRYPT_DATA_BLOB pblobSeed, BYTE *pbBuffer, DWORD dwBufferLen)
 {
     HMAC_INFO hmacInfo = { 0, NULL, 0, NULL, 0 };
     HCRYPTHASH hHMAC = (HCRYPTHASH)INVALID_HANDLE_VALUE;
@@ -1653,7 +1656,7 @@ exit:
  *  Success: TRUE
  *  Failure: FALSE (NTE_BAD_LEN, too much data to pad)
  */
-static BOOL pad_data(CONST BYTE *abData, DWORD dwDataLen, BYTE *abBuffer, DWORD dwBufferLen, 
+static BOOL pad_data(const BYTE *abData, DWORD dwDataLen, BYTE *abBuffer, DWORD dwBufferLen,
                      DWORD dwFlags)
 {
     DWORD i;
@@ -1694,7 +1697,7 @@ static BOOL pad_data(CONST BYTE *abData, DWORD dwDataLen, BYTE *abBuffer, DWORD 
  *  Success: TRUE
  *  Failure: FALSE, (NTE_BAD_DATA, no valid PKCS1 padding or buffer too small)
  */
-static BOOL unpad_data(CONST BYTE *abData, DWORD dwDataLen, BYTE *abBuffer, DWORD *dwBufferLen, 
+static BOOL unpad_data(const BYTE *abData, DWORD dwDataLen, BYTE *abBuffer, DWORD *dwBufferLen,
                        DWORD dwFlags)
 {
     DWORD i;
@@ -2718,13 +2721,13 @@ static void release_and_install_key(HCRYPTPROV hProv, HCRYPTKEY src,
  *  Success: TRUE.
  *  Failure: FALSE.
  */
-static BOOL import_private_key(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDataLen,
+static BOOL import_private_key(HCRYPTPROV hProv, const BYTE *pbData, DWORD dwDataLen,
                                DWORD dwFlags, BOOL fStoreKey, HCRYPTKEY *phKey)
 {
     KEYCONTAINER *pKeyContainer;
     CRYPTKEY *pCryptKey;
-    CONST BLOBHEADER *pBlobHeader = (CONST BLOBHEADER*)pbData;
-    CONST RSAPUBKEY *pRSAPubKey = (CONST RSAPUBKEY*)(pBlobHeader+1);
+    const BLOBHEADER *pBlobHeader = (const BLOBHEADER*)pbData;
+    const RSAPUBKEY *pRSAPubKey = (const RSAPUBKEY*)(pBlobHeader+1);
     BOOL ret;
 
     if (dwFlags & CRYPT_IPSEC_HMAC_KEY)
@@ -2768,7 +2771,7 @@ static BOOL import_private_key(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
     *phKey = new_key(hProv, pBlobHeader->aiKeyAlg, MAKELONG(0,pRSAPubKey->bitlen), &pCryptKey);
     if (*phKey == (HCRYPTKEY)INVALID_HANDLE_VALUE) return FALSE;
     setup_key(pCryptKey);
-    ret = import_private_key_impl((CONST BYTE*)(pRSAPubKey+1), &pCryptKey->context,
+    ret = import_private_key_impl((const BYTE*)(pRSAPubKey+1), &pCryptKey->context,
                                    pRSAPubKey->bitlen/8, dwDataLen, pRSAPubKey->pubexp);
     if (ret) {
         if (dwFlags & CRYPT_EXPORTABLE)
@@ -2815,13 +2818,13 @@ static BOOL import_private_key(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
  *  Success: TRUE.
  *  Failure: FALSE.
  */
-static BOOL import_public_key(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDataLen,
+static BOOL import_public_key(HCRYPTPROV hProv, const BYTE *pbData, DWORD dwDataLen,
                               DWORD dwFlags, BOOL fStoreKey, HCRYPTKEY *phKey)
 {
     KEYCONTAINER *pKeyContainer;
     CRYPTKEY *pCryptKey;
-    CONST BLOBHEADER *pBlobHeader = (CONST BLOBHEADER*)pbData;
-    CONST RSAPUBKEY *pRSAPubKey = (CONST RSAPUBKEY*)(pBlobHeader+1);
+    const BLOBHEADER *pBlobHeader = (const BLOBHEADER*)pbData;
+    const RSAPUBKEY *pRSAPubKey = (const RSAPUBKEY*)(pBlobHeader+1);
     ALG_ID algID;
     BOOL ret;
 
@@ -2853,7 +2856,7 @@ static BOOL import_public_key(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwData
     *phKey = new_key(hProv, algID, MAKELONG(0,pRSAPubKey->bitlen), &pCryptKey);
     if (*phKey == (HCRYPTKEY)INVALID_HANDLE_VALUE) return FALSE;
     setup_key(pCryptKey);
-    ret = import_public_key_impl((CONST BYTE*)(pRSAPubKey+1), &pCryptKey->context,
+    ret = import_public_key_impl((const BYTE*)(pRSAPubKey+1), &pCryptKey->context,
                                   pRSAPubKey->bitlen >> 3, pRSAPubKey->pubexp);
     if (ret) {
         if (dwFlags & CRYPT_EXPORTABLE)
@@ -2894,14 +2897,13 @@ static BOOL import_public_key(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwData
  *  Success: TRUE.
  *  Failure: FALSE.
  */
-static BOOL import_symmetric_key(HCRYPTPROV hProv, CONST BYTE *pbData,
-                                 DWORD dwDataLen, HCRYPTKEY hPubKey,
-                                 DWORD dwFlags, HCRYPTKEY *phKey)
+static BOOL import_symmetric_key(HCRYPTPROV hProv, const BYTE *pbData, DWORD dwDataLen,
+                                 HCRYPTKEY hPubKey, DWORD dwFlags, HCRYPTKEY *phKey)
 {
     CRYPTKEY *pCryptKey, *pPubKey;
-    CONST BLOBHEADER *pBlobHeader = (CONST BLOBHEADER*)pbData;
-    CONST ALG_ID *pAlgid = (CONST ALG_ID*)(pBlobHeader+1);
-    CONST BYTE *pbKeyStream = (CONST BYTE*)(pAlgid + 1);
+    const BLOBHEADER *pBlobHeader = (const BLOBHEADER*)pbData;
+    const ALG_ID *pAlgid = (const ALG_ID*)(pBlobHeader+1);
+    const BYTE *pbKeyStream = (const BYTE*)(pAlgid + 1);
     BYTE *pbDecrypted;
     DWORD dwKeyLen;
 
@@ -2971,14 +2973,13 @@ static BOOL import_symmetric_key(HCRYPTPROV hProv, CONST BYTE *pbData,
  *  Success: TRUE.
  *  Failure: FALSE.
  */
-static BOOL import_plaintext_key(HCRYPTPROV hProv, CONST BYTE *pbData,
-                                 DWORD dwDataLen, DWORD dwFlags,
-                                 HCRYPTKEY *phKey)
+static BOOL import_plaintext_key(HCRYPTPROV hProv, const BYTE *pbData, DWORD dwDataLen,
+                                 DWORD dwFlags, HCRYPTKEY *phKey)
 {
     CRYPTKEY *pCryptKey;
-    CONST BLOBHEADER *pBlobHeader = (CONST BLOBHEADER*)pbData;
-    CONST DWORD *pKeyLen = (CONST DWORD *)(pBlobHeader + 1);
-    CONST BYTE *pbKeyStream = (CONST BYTE*)(pKeyLen + 1);
+    const BLOBHEADER *pBlobHeader = (const BLOBHEADER*)pbData;
+    const DWORD *pKeyLen = (const DWORD *)(pBlobHeader + 1);
+    const BYTE *pbKeyStream = (const BYTE*)(pKeyLen + 1);
 
     if (dwDataLen < sizeof(BLOBHEADER)+sizeof(DWORD)+*pKeyLen)
     {
@@ -3050,12 +3051,11 @@ static BOOL import_plaintext_key(HCRYPTPROV hProv, CONST BYTE *pbData,
  *  Success: TRUE.
  *  Failure: FALSE.
  */
-static BOOL import_key(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDataLen,
-                       HCRYPTKEY hPubKey, DWORD dwFlags, BOOL fStoreKey,
-                       HCRYPTKEY *phKey)
+static BOOL import_key(HCRYPTPROV hProv, const BYTE *pbData, DWORD dwDataLen, HCRYPTKEY hPubKey,
+                       DWORD dwFlags, BOOL fStoreKey, HCRYPTKEY *phKey)
 {
     KEYCONTAINER *pKeyContainer;
-    CONST BLOBHEADER *pBlobHeader = (CONST BLOBHEADER*)pbData;
+    const BLOBHEADER *pBlobHeader = (const BLOBHEADER*)pbData;
 
     if (!lookup_handle(&handle_table, hProv, RSAENH_MAGIC_CONTAINER,
                        (OBJECTHDR**)&pKeyContainer)) 
@@ -3121,7 +3121,7 @@ static BOOL import_key(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDataLen,
  *  Success: TRUE.
  *  Failure: FALSE.
  */
-BOOL WINAPI RSAENH_CPImportKey(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDataLen,
+BOOL WINAPI RSAENH_CPImportKey(HCRYPTPROV hProv, const BYTE *pbData, DWORD dwDataLen,
                                HCRYPTKEY hPubKey, DWORD dwFlags, HCRYPTKEY *phKey)
 {
     TRACE("(hProv=%08lx, pbData=%p, dwDataLen=%d, hPubKey=%08lx, dwFlags=%08x, phKey=%p)\n",
@@ -3318,11 +3318,11 @@ BOOL WINAPI RSAENH_CPGetHashParam(HCRYPTPROV hProv, HCRYPTHASH hHash, DWORD dwPa
     switch (dwParam)
     {
         case HP_ALGID:
-            return copy_param(pbData, pdwDataLen, (CONST BYTE*)&pCryptHash->aiAlgid, 
+            return copy_param(pbData, pdwDataLen, (const BYTE*)&pCryptHash->aiAlgid,
                               sizeof(ALG_ID));
 
         case HP_HASHSIZE:
-            return copy_param(pbData, pdwDataLen, (CONST BYTE*)&pCryptHash->dwHashSize, 
+            return copy_param(pbData, pdwDataLen, (const BYTE*)&pCryptHash->dwHashSize,
                               sizeof(DWORD));
 
         case HP_HASHVAL:
@@ -3616,37 +3616,37 @@ BOOL WINAPI RSAENH_CPGetKeyParam(HCRYPTPROV hProv, HCRYPTKEY hKey, DWORD dwParam
 
         case KP_PADDING:
             dwValue = PKCS5_PADDING;
-            return copy_param(pbData, pdwDataLen, (CONST BYTE*)&dwValue, sizeof(DWORD));
+            return copy_param(pbData, pdwDataLen, (const BYTE*)&dwValue, sizeof(DWORD));
 
         case KP_KEYLEN:
             dwValue = pCryptKey->dwKeyLen << 3;
-            return copy_param(pbData, pdwDataLen, (CONST BYTE*)&dwValue, sizeof(DWORD));
-        
+            return copy_param(pbData, pdwDataLen, (const BYTE*)&dwValue, sizeof(DWORD));
+
         case KP_EFFECTIVE_KEYLEN:
             if (pCryptKey->dwEffectiveKeyLen)
                 dwValue = pCryptKey->dwEffectiveKeyLen;
             else
                 dwValue = pCryptKey->dwKeyLen << 3;
-            return copy_param(pbData, pdwDataLen, (CONST BYTE*)&dwValue, sizeof(DWORD));
+            return copy_param(pbData, pdwDataLen, (const BYTE*)&dwValue, sizeof(DWORD));
 
         case KP_BLOCKLEN:
             dwValue = pCryptKey->dwBlockLen << 3;
-            return copy_param(pbData, pdwDataLen, (CONST BYTE*)&dwValue, sizeof(DWORD));
-    
+            return copy_param(pbData, pdwDataLen, (const BYTE*)&dwValue, sizeof(DWORD));
+
         case KP_MODE:
-            return copy_param(pbData, pdwDataLen, (CONST BYTE*)&pCryptKey->dwMode, sizeof(DWORD));
+            return copy_param(pbData, pdwDataLen, (const BYTE*)&pCryptKey->dwMode, sizeof(DWORD));
 
         case KP_MODE_BITS:
-            return copy_param(pbData, pdwDataLen, (CONST BYTE*)&pCryptKey->dwModeBits, 
+            return copy_param(pbData, pdwDataLen, (const BYTE*)&pCryptKey->dwModeBits,
                               sizeof(DWORD));
-    
+
         case KP_PERMISSIONS:
-            return copy_param(pbData, pdwDataLen, (CONST BYTE*)&pCryptKey->dwPermissions, 
+            return copy_param(pbData, pdwDataLen, (const BYTE*)&pCryptKey->dwPermissions,
                               sizeof(DWORD));
 
         case KP_ALGID:
-            return copy_param(pbData, pdwDataLen, (CONST BYTE*)&pCryptKey->aiAlgid, sizeof(DWORD));
-            
+            return copy_param(pbData, pdwDataLen, (const BYTE*)&pCryptKey->aiAlgid, sizeof(DWORD));
+
         default:
             SetLastError(NTE_BAD_TYPE);
             return FALSE;
@@ -3690,7 +3690,7 @@ BOOL WINAPI RSAENH_CPGetProvParam(HCRYPTPROV hProv, DWORD dwParam, BYTE *pbData,
      * Returning this BLOB seems to satisfy IE. The marked 0x00 seem 
      * to be 'don't care's. If you know anything more specific about
      * this provider parameter, please report to wine-devel@winehq.org */
-    static CONST BYTE abWTF[96] = { 
+    static const BYTE abWTF[96] = {
         0xb0, 0x25,     0x63,     0x86, 0x9c, 0xab,     0xb6,     0x37, 
         0xe8, 0x82, /**/0x00,/**/ 0x72, 0x06, 0xb2, /**/0x00,/**/ 0x3b, 
         0x60, 0x35, /**/0x00,/**/ 0x3b, 0x88, 0xce, /**/0x00,/**/ 0x82, 
@@ -3725,42 +3725,42 @@ BOOL WINAPI RSAENH_CPGetProvParam(HCRYPTPROV hProv, DWORD dwParam, BYTE *pbData,
     {
         case PP_CONTAINER:
         case PP_UNIQUE_CONTAINER:/* MSDN says we can return the same value as PP_CONTAINER */
-            return copy_param(pbData, pdwDataLen, (CONST BYTE*)pKeyContainer->szName, 
+            return copy_param(pbData, pdwDataLen, (const BYTE*)pKeyContainer->szName,
                               strlen(pKeyContainer->szName)+1);
 
         case PP_NAME:
-            return copy_param(pbData, pdwDataLen, (CONST BYTE*)pKeyContainer->szProvName, 
+            return copy_param(pbData, pdwDataLen, (const BYTE*)pKeyContainer->szProvName,
                               strlen(pKeyContainer->szProvName)+1);
 
         case PP_PROVTYPE:
             dwTemp = PROV_RSA_FULL;
-            return copy_param(pbData, pdwDataLen, (CONST BYTE*)&dwTemp, sizeof(dwTemp));
+            return copy_param(pbData, pdwDataLen, (const BYTE*)&dwTemp, sizeof(dwTemp));
 
         case PP_KEYSPEC:
             dwTemp = AT_SIGNATURE | AT_KEYEXCHANGE;
-            return copy_param(pbData, pdwDataLen, (CONST BYTE*)&dwTemp, sizeof(dwTemp));
+            return copy_param(pbData, pdwDataLen, (const BYTE*)&dwTemp, sizeof(dwTemp));
 
         case PP_KEYSET_TYPE:
             dwTemp = pKeyContainer->dwFlags & CRYPT_MACHINE_KEYSET;
-            return copy_param(pbData, pdwDataLen, (CONST BYTE*)&dwTemp, sizeof(dwTemp));
+            return copy_param(pbData, pdwDataLen, (const BYTE*)&dwTemp, sizeof(dwTemp));
 
         case PP_KEYSTORAGE:
             dwTemp = CRYPT_SEC_DESCR;
-            return copy_param(pbData, pdwDataLen, (CONST BYTE*)&dwTemp, sizeof(dwTemp));
+            return copy_param(pbData, pdwDataLen, (const BYTE*)&dwTemp, sizeof(dwTemp));
 
         case PP_SIG_KEYSIZE_INC:
         case PP_KEYX_KEYSIZE_INC:
             dwTemp = 8;
-            return copy_param(pbData, pdwDataLen, (CONST BYTE*)&dwTemp, sizeof(dwTemp));
+            return copy_param(pbData, pdwDataLen, (const BYTE*)&dwTemp, sizeof(dwTemp));
 
         case PP_IMPTYPE:
             dwTemp = CRYPT_IMPL_SOFTWARE;
-            return copy_param(pbData, pdwDataLen, (CONST BYTE*)&dwTemp, sizeof(dwTemp));
+            return copy_param(pbData, pdwDataLen, (const BYTE*)&dwTemp, sizeof(dwTemp));
 
         case PP_VERSION:
             dwTemp = 0x00000200;
-            return copy_param(pbData, pdwDataLen, (CONST BYTE*)&dwTemp, sizeof(dwTemp));
-            
+            return copy_param(pbData, pdwDataLen, (const BYTE*)&dwTemp, sizeof(dwTemp));
+
         case PP_ENUMCONTAINERS:
             if ((dwFlags & CRYPT_FIRST) == CRYPT_FIRST) pKeyContainer->dwEnumContainersCtr = 0;
 
@@ -3819,16 +3819,16 @@ BOOL WINAPI RSAENH_CPGetProvParam(HCRYPTPROV hProv, DWORD dwParam, BYTE *pbData,
                 memcpy(provEnumalgs.szName, aProvEnumAlgsEx
                        [pKeyContainer->dwPersonality][pKeyContainer->dwEnumAlgsCtr].szName, 
                        20*sizeof(CHAR));
-            
-                return copy_param(pbData, pdwDataLen, (CONST BYTE*)&provEnumalgs, 
+
+                return copy_param(pbData, pdwDataLen, (const BYTE*)&provEnumalgs,
                                   sizeof(PROV_ENUMALGS));
             } else {
                 if (pbData && (*pdwDataLen >= sizeof(PROV_ENUMALGS_EX))) 
                     pKeyContainer->dwEnumAlgsCtr = ((dwFlags & CRYPT_FIRST) == CRYPT_FIRST) ? 
                         0 : pKeyContainer->dwEnumAlgsCtr+1;
-            
+
                 return copy_param(pbData, pdwDataLen, 
-                                  (CONST BYTE*)&aProvEnumAlgsEx
+                                  (const BYTE*)&aProvEnumAlgsEx
                                       [pKeyContainer->dwPersonality][pKeyContainer->dwEnumAlgsCtr], 
                                   sizeof(PROV_ENUMALGS_EX));
             }
@@ -4106,7 +4106,7 @@ BOOL WINAPI RSAENH_CPGetUserKey(HCRYPTPROV hProv, DWORD dwKeySpec, HCRYPTKEY *ph
  *  The actual hash value is queried with CPGetHashParam, which will finalize 
  *  the hash. Updating a finalized hash will fail with a last error NTE_BAD_HASH_STATE.
  */
-BOOL WINAPI RSAENH_CPHashData(HCRYPTPROV hProv, HCRYPTHASH hHash, CONST BYTE *pbData, 
+BOOL WINAPI RSAENH_CPHashData(HCRYPTPROV hProv, HCRYPTHASH hHash, const BYTE *pbData,
                               DWORD dwDataLen, DWORD dwFlags)
 {
     CRYPTHASH *pCryptHash;
@@ -4404,7 +4404,7 @@ BOOL WINAPI RSAENH_CPSignHash(HCRYPTPROV hProv, HCRYPTHASH hHash, DWORD dwKeySpe
     *pdwSigLen = pCryptKey->dwKeyLen;
 
     if (sDescription) {
-        if (!RSAENH_CPHashData(hProv, hHash, (CONST BYTE*)sDescription, 
+        if (!RSAENH_CPHashData(hProv, hHash, (const BYTE*)sDescription,
                                 (DWORD)lstrlenW(sDescription)*sizeof(WCHAR), 0))
         {
             goto out;
@@ -4446,7 +4446,7 @@ out:
  *  Success: TRUE  (Signature is valid)
  *  Failure: FALSE (GetLastError() == NTE_BAD_SIGNATURE, if signature is invalid)
  */
-BOOL WINAPI RSAENH_CPVerifySignature(HCRYPTPROV hProv, HCRYPTHASH hHash, CONST BYTE *pbSignature, 
+BOOL WINAPI RSAENH_CPVerifySignature(HCRYPTPROV hProv, HCRYPTHASH hHash, const BYTE *pbSignature,
                                      DWORD dwSigLen, HCRYPTKEY hPubKey, LPCWSTR sDescription, 
                                      DWORD dwFlags)
 {
@@ -4495,7 +4495,7 @@ BOOL WINAPI RSAENH_CPVerifySignature(HCRYPTPROV hProv, HCRYPTHASH hHash, CONST B
     }
 
     if (sDescription) {
-        if (!RSAENH_CPHashData(hProv, hHash, (CONST BYTE*)sDescription, 
+        if (!RSAENH_CPHashData(hProv, hHash, (const BYTE*)sDescription,
                                 (DWORD)lstrlenW(sDescription)*sizeof(WCHAR), 0))
         {
             return FALSE;
