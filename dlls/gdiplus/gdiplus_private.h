@@ -60,7 +60,7 @@ extern GpStatus METAFILE_ReleaseDC(GpMetafile* metafile, HDC hdc) DECLSPEC_HIDDE
 extern GpStatus METAFILE_GraphicsDeleted(GpMetafile* metafile) DECLSPEC_HIDDEN;
 extern MetafileType METAFILE_GetEmfType(HENHMETAFILE hemf) DECLSPEC_HIDDEN;
 
-extern void calc_curve_bezier(CONST GpPointF *pts, REAL tension, REAL *x1,
+extern void calc_curve_bezier(const GpPointF *pts, REAL tension, REAL *x1,
     REAL *y1, REAL *x2, REAL *y2) DECLSPEC_HIDDEN;
 extern void calc_curve_bezier_endp(REAL xend, REAL yend, REAL xadj, REAL yadj,
     REAL tension, REAL *x, REAL *y) DECLSPEC_HIDDEN;
@@ -114,9 +114,9 @@ static inline ARGB color_over(ARGB bg, ARGB fg)
     return (a<<24)|(r<<16)|(g<<8)|b;
 }
 
-extern const char *debugstr_rectf(CONST RectF* rc) DECLSPEC_HIDDEN;
+extern const char *debugstr_rectf(const RectF* rc) DECLSPEC_HIDDEN;
 
-extern const char *debugstr_pointf(CONST PointF* pt) DECLSPEC_HIDDEN;
+extern const char *debugstr_pointf(const PointF* pt) DECLSPEC_HIDDEN;
 
 extern void convert_32bppARGB_to_32bppPARGB(UINT width, UINT height,
     BYTE *dst_bits, INT dst_stride, const BYTE *src_bits, INT src_stride) DECLSPEC_HIDDEN;
