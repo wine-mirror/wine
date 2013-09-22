@@ -1176,7 +1176,7 @@ LSTATUS WINAPI RegDeleteKeyA( HKEY hkey, LPCSTR name )
  *  Failure: Error code
  */
 LSTATUS WINAPI RegSetValueExW( HKEY hkey, LPCWSTR name, DWORD reserved,
-                            DWORD type, CONST BYTE *data, DWORD count )
+                            DWORD type, const BYTE *data, DWORD count )
 {
     UNICODE_STRING nameW;
 
@@ -1208,7 +1208,7 @@ LSTATUS WINAPI RegSetValueExW( HKEY hkey, LPCWSTR name, DWORD reserved,
  *  NT does definitely care (aj)
  */
 LSTATUS WINAPI RegSetValueExA( HKEY hkey, LPCSTR name, DWORD reserved, DWORD type,
-                            CONST BYTE *data, DWORD count )
+                            const BYTE *data, DWORD count )
 {
     ANSI_STRING nameA;
     UNICODE_STRING nameW;
