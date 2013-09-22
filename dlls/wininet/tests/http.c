@@ -1468,6 +1468,7 @@ static void HttpHeaders_test(void)
     DWORD     len = 256;
     DWORD     oldlen;
     DWORD     index = 0;
+    BOOL      ret;
 
     hSession = InternetOpen("Wine Regression Test",
             INTERNET_OPEN_TYPE_PRECONFIG,NULL,NULL,0);
@@ -1759,19 +1760,19 @@ static void HttpHeaders_test(void)
     ok(index == 1, "Index was not incremented\n");
     ok(strcmp(buffer,"value3")==0, "incorrect string was returned(%s)\n",buffer);
 
-    ok(HttpAddRequestHeaders(hRequest, "Authorization: Basic\r\n", -1, HTTP_ADDREQ_FLAG_ADD),
-       "unable to add header %u\n", GetLastError());
+    ret = HttpAddRequestHeaders(hRequest, "Authorization: Basic\r\n", -1, HTTP_ADDREQ_FLAG_ADD);
+    ok(ret, "unable to add header %u\n", GetLastError());
 
     index = 0;
     buffer[0] = 0;
     len = sizeof(buffer);
-    ok(HttpQueryInfo(hRequest, HTTP_QUERY_AUTHORIZATION|HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer, &len, &index),
-       "unable to query header %u\n", GetLastError());
+    ret = HttpQueryInfo(hRequest, HTTP_QUERY_AUTHORIZATION|HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer, &len, &index);
+    ok(ret, "unable to query header %u\n", GetLastError());
     ok(index == 1, "index was not incremented\n");
     ok(!strcmp(buffer, "Basic"), "incorrect string was returned (%s)\n", buffer);
 
-    ok(HttpAddRequestHeaders(hRequest, "Authorization:\r\n", -1, HTTP_ADDREQ_FLAG_REPLACE),
-       "unable to remove header %u\n", GetLastError());
+    ret = HttpAddRequestHeaders(hRequest, "Authorization:\r\n", -1, HTTP_ADDREQ_FLAG_REPLACE);
+    ok(ret, "unable to remove header %u\n", GetLastError());
 
     index = 0;
     len = sizeof(buffer);
