@@ -197,8 +197,7 @@ static HRESULT register_interfaces(struct regsvr_interface const *list)
 	if (res != ERROR_SUCCESS) goto error_close_interface_key;
 
 	if (list->name) {
-	    res = RegSetValueExA(iid_key, NULL, 0, REG_SZ,
-				 (CONST BYTE*)(list->name),
+            res = RegSetValueExA(iid_key, NULL, 0, REG_SZ, (const BYTE*)list->name,
 				 strlen(list->name) + 1);
 	    if (res != ERROR_SUCCESS) goto error_close_iid_key;
 	}
@@ -217,8 +216,7 @@ static HRESULT register_interfaces(struct regsvr_interface const *list)
 	    if (res != ERROR_SUCCESS) goto error_close_iid_key;
 
 	    sprintfW(buf, fmt, list->num_methods);
-	    res = RegSetValueExW(key, NULL, 0, REG_SZ,
-				 (CONST BYTE*)buf,
+            res = RegSetValueExW(key, NULL, 0, REG_SZ, (const BYTE*)buf,
 				 (lstrlenW(buf) + 1) * sizeof(WCHAR));
 	    RegCloseKey(key);
 
@@ -293,8 +291,7 @@ static HRESULT register_coclasses(struct regsvr_coclass const *list)
 	if (res != ERROR_SUCCESS) goto error_close_coclass_key;
 
 	if (list->name) {
-	    res = RegSetValueExA(clsid_key, NULL, 0, REG_SZ,
-				 (CONST BYTE*)(list->name),
+            res = RegSetValueExA(clsid_key, NULL, 0, REG_SZ, (const BYTE*)list->name,
 				 strlen(list->name) + 1);
 	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
 	}
@@ -312,12 +309,11 @@ static HRESULT register_coclasses(struct regsvr_coclass const *list)
 				  &ips32_key, NULL);
 	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
 
-	    res = RegSetValueExA(ips32_key, NULL, 0, REG_SZ,
-				 (CONST BYTE*)list->ips32,
+            res = RegSetValueExA(ips32_key, NULL, 0, REG_SZ, (const BYTE*)list->ips32,
 				 lstrlenA(list->ips32) + 1);
 	    if (res == ERROR_SUCCESS && list->ips32_tmodel)
 		res = RegSetValueExA(ips32_key, tmodel_valuename, 0, REG_SZ,
-				     (CONST BYTE*)list->ips32_tmodel,
+                                     (const BYTE*)list->ips32_tmodel,
 				     strlen(list->ips32_tmodel) + 1);
 	    RegCloseKey(ips32_key);
 	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
@@ -422,14 +418,14 @@ static HRESULT register_mediatypes_parsing(struct regsvr_mediatype_parsing const
 	if (res != ERROR_SUCCESS) goto error_close_keys;
 
 	StringFromGUID2(&CLSID_AsyncReader, buf, 39);
-	res = RegSetValueExW(subtype_key, sourcefilter_valuename, 0, REG_SZ, (CONST BYTE*)buf,
+        res = RegSetValueExW(subtype_key, sourcefilter_valuename, 0, REG_SZ, (const BYTE*)buf,
 			     (lstrlenW(buf) + 1) * sizeof(WCHAR));
 	if (res != ERROR_SUCCESS) goto error_close_keys;
 
 	for(i = 0; list->line[i]; i++) {
 	    char buffer[3];
 	    wsprintfA(buffer, "%d", i);
-	    res = RegSetValueExA(subtype_key, buffer, 0, REG_SZ, (CONST BYTE*)list->line[i],
+            res = RegSetValueExA(subtype_key, buffer, 0, REG_SZ, (const BYTE*)list->line[i],
 				 lstrlenA(list->line[i]));
 	    if (res != ERROR_SUCCESS) goto error_close_keys;
 	}
@@ -472,17 +468,17 @@ static HRESULT register_mediatypes_extension(struct regsvr_mediatype_extension c
 	if (res != ERROR_SUCCESS) break;
 
 	StringFromGUID2(list->majortype, buf, 39);
-	res = RegSetValueExW(extension_key, mediatype_name, 0, REG_SZ, (CONST BYTE*)buf,
+        res = RegSetValueExW(extension_key, mediatype_name, 0, REG_SZ, (const BYTE*)buf,
 			     (lstrlenW(buf) + 1) * sizeof(WCHAR));
 	if (res != ERROR_SUCCESS) goto error_close_key;
 
 	StringFromGUID2(list->subtype, buf, 39);
-	res = RegSetValueExW(extension_key, subtype_valuename, 0, REG_SZ, (CONST BYTE*)buf,
+        res = RegSetValueExW(extension_key, subtype_valuename, 0, REG_SZ, (const BYTE*)buf,
 			     (lstrlenW(buf) + 1) * sizeof(WCHAR));
 	if (res != ERROR_SUCCESS) goto error_close_key;
 
 	StringFromGUID2(&CLSID_AsyncReader, buf, 39);
-	res = RegSetValueExW(extension_key, sourcefilter_valuename, 0, REG_SZ, (CONST BYTE*)buf,
+        res = RegSetValueExW(extension_key, sourcefilter_valuename, 0, REG_SZ, (const BYTE*)buf,
 			     (lstrlenW(buf) + 1) * sizeof(WCHAR));
 	if (res != ERROR_SUCCESS) goto error_close_key;
 
@@ -702,7 +698,7 @@ static LONG register_key_defvalueW(
     res = RegCreateKeyExW(base, name, 0, NULL, 0,
 			  KEY_READ | KEY_WRITE, NULL, &key, NULL);
     if (res != ERROR_SUCCESS) return res;
-    res = RegSetValueExW(key, NULL, 0, REG_SZ, (CONST BYTE*)value,
+    res = RegSetValueExW(key, NULL, 0, REG_SZ, (const BYTE*)value,
 			 (lstrlenW(value) + 1) * sizeof(WCHAR));
     RegCloseKey(key);
     return res;
@@ -722,8 +718,7 @@ static LONG register_key_defvalueA(
     res = RegCreateKeyExW(base, name, 0, NULL, 0,
 			  KEY_READ | KEY_WRITE, NULL, &key, NULL);
     if (res != ERROR_SUCCESS) return res;
-    res = RegSetValueExA(key, NULL, 0, REG_SZ, (CONST BYTE*)value,
-			 lstrlenA(value) + 1);
+    res = RegSetValueExA(key, NULL, 0, REG_SZ, (const BYTE*)value, lstrlenA(value) + 1);
     RegCloseKey(key);
     return res;
 }
@@ -747,8 +742,7 @@ static LONG register_progid(
     if (res != ERROR_SUCCESS) return res;
 
     if (name) {
-	res = RegSetValueExA(progid_key, NULL, 0, REG_SZ,
-			     (CONST BYTE*)name, strlen(name) + 1);
+        res = RegSetValueExA(progid_key, NULL, 0, REG_SZ, (const BYTE*)name, strlen(name) + 1);
 	if (res != ERROR_SUCCESS) goto error_close_progid_key;
     }
 
