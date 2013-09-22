@@ -2692,11 +2692,8 @@ typedef struct gdi_mf_comment
  *         Translate from old style to new style.
  *
  */
-HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
-					   CONST BYTE *lpbBuffer,
-					   HDC hdcRef,
-					   CONST METAFILEPICT *lpmfp
-					   )
+HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer, const BYTE *lpbBuffer, HDC hdcRef,
+                                       const METAFILEPICT *lpmfp)
 {
     static const WCHAR szDisplayW[] = { 'D','I','S','P','L','A','Y','\0' };
     HMETAFILE hmf = NULL;

@@ -503,7 +503,7 @@ COLORREF EMFDRV_SetDCPenColor( PHYSDEV dev, COLORREF color )
 /******************************************************************
  *         EMFDRV_GdiComment
  */
-BOOL EMFDRV_GdiComment(PHYSDEV dev, UINT bytes, CONST BYTE *buffer)
+BOOL EMFDRV_GdiComment(PHYSDEV dev, UINT bytes, const BYTE *buffer)
 {
     EMRGDICOMMENT *emr;
     UINT total, rounded_size;
