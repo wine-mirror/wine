@@ -1310,14 +1310,9 @@ HKEY WINAPI SetupDiCreateDevRegKeyW(
 /***********************************************************************
  *              SetupDiCreateDeviceInfoA (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiCreateDeviceInfoA(
-       HDEVINFO DeviceInfoSet,
-       PCSTR DeviceName,
-       CONST GUID *ClassGuid,
-       PCSTR DeviceDescription,
-       HWND hwndParent,
-       DWORD CreationFlags,
-       PSP_DEVINFO_DATA DeviceInfoData)
+BOOL WINAPI SetupDiCreateDeviceInfoA(HDEVINFO DeviceInfoSet, PCSTR DeviceName,
+        const GUID *ClassGuid, PCSTR DeviceDescription, HWND hwndParent, DWORD CreationFlags,
+        PSP_DEVINFO_DATA DeviceInfoData)
 {
     BOOL ret = FALSE;
     LPWSTR DeviceNameW = NULL;
@@ -1373,14 +1368,9 @@ static DWORD SETUPDI_DevNameToDevID(LPCWSTR devName)
 /***********************************************************************
  *              SetupDiCreateDeviceInfoW (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiCreateDeviceInfoW(
-       HDEVINFO DeviceInfoSet,
-       PCWSTR DeviceName,
-       CONST GUID *ClassGuid,
-       PCWSTR DeviceDescription,
-       HWND hwndParent,
-       DWORD CreationFlags,
-       PSP_DEVINFO_DATA DeviceInfoData)
+BOOL WINAPI SetupDiCreateDeviceInfoW(HDEVINFO DeviceInfoSet, PCWSTR DeviceName,
+        const GUID *ClassGuid, PCWSTR DeviceDescription, HWND hwndParent, DWORD CreationFlags,
+        PSP_DEVINFO_DATA DeviceInfoData)
 {
     struct DeviceInfoSet *set = DeviceInfoSet;
     BOOL ret = FALSE, allocatedInstanceId = FALSE;
@@ -1922,11 +1912,7 @@ BOOL WINAPI SetupDiGetClassDescriptionExW(
 /***********************************************************************
  *		SetupDiGetClassDevsA (SETUPAPI.@)
  */
-HDEVINFO WINAPI SetupDiGetClassDevsA(
-       CONST GUID *class,
-       LPCSTR enumstr,
-       HWND parent,
-       DWORD flags)
+HDEVINFO WINAPI SetupDiGetClassDevsA(const GUID *class, LPCSTR enumstr, HWND parent, DWORD flags)
 {
     HDEVINFO ret;
     LPWSTR enumstrW = NULL;
@@ -2328,11 +2314,7 @@ static void SETUPDI_EnumerateDevices(HDEVINFO DeviceInfoSet, const GUID *class,
 /***********************************************************************
  *		SetupDiGetClassDevsW (SETUPAPI.@)
  */
-HDEVINFO WINAPI SetupDiGetClassDevsW(
-       CONST GUID *class,
-       LPCWSTR enumstr,
-       HWND parent,
-       DWORD flags)
+HDEVINFO WINAPI SetupDiGetClassDevsW(const GUID *class, LPCWSTR enumstr, HWND parent, DWORD flags)
 {
     return SetupDiGetClassDevsExW(class, enumstr, parent, flags, NULL, NULL,
             NULL);
@@ -2341,14 +2323,8 @@ HDEVINFO WINAPI SetupDiGetClassDevsW(
 /***********************************************************************
  *              SetupDiGetClassDevsExW (SETUPAPI.@)
  */
-HDEVINFO WINAPI SetupDiGetClassDevsExW(
-        CONST GUID *class,
-        PCWSTR enumstr,
-        HWND parent,
-        DWORD flags,
-        HDEVINFO deviceset,
-        PCWSTR machine,
-        PVOID reserved)
+HDEVINFO WINAPI SetupDiGetClassDevsExW(const GUID *class, PCWSTR enumstr, HWND parent, DWORD flags,
+        HDEVINFO deviceset, PCWSTR machine, void *reserved)
 {
     static const DWORD unsupportedFlags = DIGCF_DEFAULT | DIGCF_PRESENT |
         DIGCF_PROFILE;
@@ -2790,12 +2766,9 @@ BOOL WINAPI SetupDiDeleteDeviceInterfaceRegKey(
  *   Success: non-zero value.
  *   Failure: FALSE.  Call GetLastError() for more info.
  */
-BOOL WINAPI SetupDiEnumDeviceInterfaces(
-       HDEVINFO DeviceInfoSet,
-       PSP_DEVINFO_DATA DeviceInfoData,
-       CONST GUID * InterfaceClassGuid,
-       DWORD MemberIndex,
-       PSP_DEVICE_INTERFACE_DATA DeviceInterfaceData)
+BOOL WINAPI SetupDiEnumDeviceInterfaces(HDEVINFO DeviceInfoSet, PSP_DEVINFO_DATA DeviceInfoData,
+        const GUID *InterfaceClassGuid, DWORD MemberIndex,
+        PSP_DEVICE_INTERFACE_DATA DeviceInterfaceData)
 {
     struct DeviceInfoSet *set = DeviceInfoSet;
     BOOL ret = FALSE;
