@@ -1098,7 +1098,7 @@ DECLARE_INTERFACE_(IDirect3DRMFrame,IDirect3DRMVisual)
     /*** IDirect3DRMFrame methods ***/
     STDMETHOD(AddChild)(THIS_ IDirect3DRMFrame *child) PURE;
     STDMETHOD(AddLight)(THIS_ struct IDirect3DRMLight *light) PURE;
-    STDMETHOD(AddMoveCallback)(THIS_ D3DRMFRAMEMOVECALLBACK, VOID *arg) PURE;
+    STDMETHOD(AddMoveCallback)(THIS_ D3DRMFRAMEMOVECALLBACK cb, void *ctx) PURE;
     STDMETHOD(AddTransform)(THIS_ D3DRMCOMBINETYPE, D3DRMMATRIX4D) PURE;
     STDMETHOD(AddTranslation)(THIS_ D3DRMCOMBINETYPE, D3DVALUE x, D3DVALUE y, D3DVALUE z) PURE;
     STDMETHOD(AddScale)(THIS_ D3DRMCOMBINETYPE, D3DVALUE sx, D3DVALUE sy, D3DVALUE sz) PURE;
@@ -1127,7 +1127,7 @@ DECLARE_INTERFACE_(IDirect3DRMFrame,IDirect3DRMVisual)
     STDMETHOD(Move)(THIS_ D3DVALUE delta) PURE;
     STDMETHOD(DeleteChild)(THIS_ IDirect3DRMFrame *child) PURE;
     STDMETHOD(DeleteLight)(THIS_ struct IDirect3DRMLight *light) PURE;
-    STDMETHOD(DeleteMoveCallback)(THIS_ D3DRMFRAMEMOVECALLBACK, VOID *arg) PURE;
+    STDMETHOD(DeleteMoveCallback)(THIS_ D3DRMFRAMEMOVECALLBACK cb, void *ctx) PURE;
     STDMETHOD(DeleteVisual)(THIS_ IDirect3DRMVisual *visual) PURE;
     STDMETHOD_(D3DCOLOR, GetSceneBackground)(THIS) PURE;
     STDMETHOD(GetSceneBackgroundDepth)(THIS_ IDirectDrawSurface **surface) PURE;
@@ -1331,7 +1331,7 @@ DECLARE_INTERFACE_(IDirect3DRMFrame2,IDirect3DRMFrame)
     /*** IDirect3DRMFrame methods ***/
     STDMETHOD(AddChild)(THIS_ IDirect3DRMFrame *child) PURE;
     STDMETHOD(AddLight)(THIS_ struct IDirect3DRMLight *light) PURE;
-    STDMETHOD(AddMoveCallback)(THIS_ D3DRMFRAMEMOVECALLBACK, VOID *arg) PURE;
+    STDMETHOD(AddMoveCallback)(THIS_ D3DRMFRAMEMOVECALLBACK cb, void *ctx) PURE;
     STDMETHOD(AddTransform)(THIS_ D3DRMCOMBINETYPE, D3DRMMATRIX4D) PURE;
     STDMETHOD(AddTranslation)(THIS_ D3DRMCOMBINETYPE, D3DVALUE x, D3DVALUE y, D3DVALUE z) PURE;
     STDMETHOD(AddScale)(THIS_ D3DRMCOMBINETYPE, D3DVALUE sx, D3DVALUE sy, D3DVALUE sz) PURE;
@@ -1360,7 +1360,7 @@ DECLARE_INTERFACE_(IDirect3DRMFrame2,IDirect3DRMFrame)
     STDMETHOD(Move)(THIS_ D3DVALUE delta) PURE;
     STDMETHOD(DeleteChild)(THIS_ IDirect3DRMFrame *child) PURE;
     STDMETHOD(DeleteLight)(THIS_ struct IDirect3DRMLight *light) PURE;
-    STDMETHOD(DeleteMoveCallback)(THIS_ D3DRMFRAMEMOVECALLBACK, VOID *arg) PURE;
+    STDMETHOD(DeleteMoveCallback)(THIS_ D3DRMFRAMEMOVECALLBACK cb, void *ctx) PURE;
     STDMETHOD(DeleteVisual)(THIS_ IDirect3DRMVisual *visual) PURE;
     STDMETHOD_(D3DCOLOR, GetSceneBackground)(THIS) PURE;
     STDMETHOD(GetSceneBackgroundDepth)(THIS_ IDirectDrawSurface **surface) PURE;
@@ -1392,7 +1392,7 @@ DECLARE_INTERFACE_(IDirect3DRMFrame2,IDirect3DRMFrame)
     STDMETHOD(SetZbufferMode)(THIS_ D3DRMZBUFFERMODE) PURE;
     STDMETHOD(Transform)(THIS_ D3DVECTOR *d, D3DVECTOR *s) PURE;
     /*** IDirect3DRMFrame2 methods ***/
-    STDMETHOD(AddMoveCallback2)(THIS_ D3DRMFRAMEMOVECALLBACK, VOID *arg, DWORD flags) PURE;
+    STDMETHOD(AddMoveCallback2)(THIS_ D3DRMFRAMEMOVECALLBACK cb, void *ctx, DWORD flags) PURE;
     STDMETHOD(GetBox)(THIS_ D3DRMBOX *box) PURE;
     STDMETHOD_(BOOL, GetBoxEnable)(THIS) PURE;
     STDMETHOD(GetAxes)(THIS_ D3DVECTOR *dir, D3DVECTOR *up);
@@ -1613,7 +1613,7 @@ DECLARE_INTERFACE_(IDirect3DRMFrame3,IDirect3DRMVisual)
     /*** IDirect3DRMFrame3 methods ***/
     STDMETHOD(AddChild)(THIS_ IDirect3DRMFrame3 *child) PURE;
     STDMETHOD(AddLight)(THIS_ struct IDirect3DRMLight *light) PURE;
-    STDMETHOD(AddMoveCallback)(THIS_ D3DRMFRAME3MOVECALLBACK, VOID *arg, DWORD flags) PURE;
+    STDMETHOD(AddMoveCallback)(THIS_ D3DRMFRAME3MOVECALLBACK cb, void *ctx, DWORD flags) PURE;
     STDMETHOD(AddTransform)(THIS_ D3DRMCOMBINETYPE, D3DRMMATRIX4D) PURE;
     STDMETHOD(AddTranslation)(THIS_ D3DRMCOMBINETYPE, D3DVALUE x, D3DVALUE y, D3DVALUE z) PURE;
     STDMETHOD(AddScale)(THIS_ D3DRMCOMBINETYPE, D3DVALUE sx, D3DVALUE sy, D3DVALUE sz) PURE;
@@ -1641,7 +1641,7 @@ DECLARE_INTERFACE_(IDirect3DRMFrame3,IDirect3DRMVisual)
     STDMETHOD(Move)(THIS_ D3DVALUE delta) PURE;
     STDMETHOD(DeleteChild)(THIS_ IDirect3DRMFrame3 *child) PURE;
     STDMETHOD(DeleteLight)(THIS_ struct IDirect3DRMLight *light) PURE;
-    STDMETHOD(DeleteMoveCallback)(THIS_ D3DRMFRAME3MOVECALLBACK, VOID *arg) PURE;
+    STDMETHOD(DeleteMoveCallback)(THIS_ D3DRMFRAME3MOVECALLBACK cb, void *ctx) PURE;
     STDMETHOD(DeleteVisual)(THIS_ IUnknown *visual) PURE;
     STDMETHOD_(D3DCOLOR, GetSceneBackground)(THIS) PURE;
     STDMETHOD(GetSceneBackgroundDepth)(THIS_ IDirectDrawSurface **surface) PURE;
