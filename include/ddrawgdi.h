@@ -27,7 +27,7 @@ extern "C" {
 
 #define DdQueryDisplaySettingsUniqueness    GdiEntry13
 
-ULONG APIENTRY DdQueryDisplaySettingsUniqueness(VOID);
+ULONG APIENTRY DdQueryDisplaySettingsUniqueness(void);
 
 #ifdef __cplusplus
 }

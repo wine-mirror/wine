@@ -511,7 +511,8 @@ static void LimitTest(void)
     IDirectDrawSurface7_Release(pTexture);
 }
 
-static HRESULT WINAPI enumDevicesCallback(GUID *Guid,LPSTR DeviceDescription,LPSTR DeviceName, D3DDEVICEDESC *hal, D3DDEVICEDESC *hel, VOID *ctx)
+static HRESULT WINAPI enumDevicesCallback(GUID *Guid, char *DeviceDescription,
+        char *DeviceName, D3DDEVICEDESC *hal, D3DDEVICEDESC *hel, void *ctx)
 {
     UINT ver = *((UINT *) ctx);
     if(IsEqualGUID(&IID_IDirect3DRGBDevice, Guid))
