@@ -57,18 +57,48 @@ void volume_set_container(struct wined3d_volume *volume, struct wined3d_texture 
     volume->container = container;
 }
 
+static BOOL volume_prepare_system_memory(struct wined3d_volume *volume)
+{
+    if (volume->resource.heap_memory)
+        return TRUE;
+
+    if (!wined3d_resource_allocate_sysmem(&volume->resource))
+    {
+        ERR("Failed to allocate system memory.\n");
+        return FALSE;
+    }
+    return TRUE;
+}
+
 /* Context activation is done by the caller. */
-static void wined3d_volume_allocate_texture(const struct wined3d_volume *volume,
+static void wined3d_volume_allocate_texture(struct wined3d_volume *volume,
         const struct wined3d_context *context, BOOL srgb)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_format *format = volume->resource.format;
+    void *mem = NULL;
+
+    if (gl_info->supported[APPLE_CLIENT_STORAGE] && !format->convert
+            && volume_prepare_system_memory(volume))
+    {
+        TRACE("Enabling GL_UNPACK_CLIENT_STORAGE_APPLE for volume %p\n", volume);
+        gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+        checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE)");
+        mem = volume->resource.heap_memory;
+        volume->flags |= WINED3D_VFLAG_CLIENT_STORAGE;
+    }
 
     GL_EXTCALL(glTexImage3DEXT(GL_TEXTURE_3D, volume->texture_level,
             srgb ? format->glGammaInternal : format->glInternal,
             volume->resource.width, volume->resource.height, volume->resource.depth,
-            0, format->glFormat, format->glType, NULL));
+            0, format->glFormat, format->glType, mem));
     checkGLcall("glTexImage3D");
+
+    if (mem)
+    {
+        gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
+        checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE)");
+    }
 }
 
 static void wined3d_volume_get_pitch(const struct wined3d_volume *volume, UINT *row_pitch,
@@ -261,6 +291,8 @@ static BOOL wined3d_volume_can_evict(const struct wined3d_volume *volume)
         return FALSE;
     if (volume->resource.format->convert)
         return FALSE;
+    if (volume->flags & WINED3D_VFLAG_CLIENT_STORAGE)
+        return FALSE;
 
     return TRUE;
 }
@@ -452,20 +484,6 @@ static void wined3d_volume_free_pbo(struct wined3d_volume *volume)
     context_release(context);
 }
 
-static BOOL volume_prepare_system_memory(struct wined3d_volume *volume)
-{
-    if (volume->resource.heap_memory)
-        return TRUE;
-
-    if (!wined3d_resource_allocate_sysmem(&volume->resource))
-    {
-        ERR("Failed to allocate system memory.\n");
-        return FALSE;
-    }
-    return TRUE;
-}
-
-
 static void volume_unload(struct wined3d_resource *resource)
 {
     struct wined3d_volume *volume = volume_from_resource(resource);
@@ -501,7 +519,8 @@ static void volume_unload(struct wined3d_resource *resource)
     }
 
     /* The texture name is managed by the container. */
-    volume->flags &= ~(WINED3D_VFLAG_ALLOCATED | WINED3D_VFLAG_SRGB_ALLOCATED);
+    volume->flags &= ~(WINED3D_VFLAG_ALLOCATED | WINED3D_VFLAG_SRGB_ALLOCATED
+            | WINED3D_VFLAG_CLIENT_STORAGE);
 
     resource_unload(resource);
 }
