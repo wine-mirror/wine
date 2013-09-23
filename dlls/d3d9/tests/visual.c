@@ -14635,6 +14635,151 @@ static void volume_dxt5_test(IDirect3DDevice9 *device)
     IDirect3DVolumeTexture9_Release(texture);
 }
 
+static void volume_v16u16_test(IDirect3DDevice9 *device)
+{
+    HRESULT hr;
+    IDirect3D9 *d3d9;
+    IDirect3DVolumeTexture9 *texture;
+    IDirect3DPixelShader9 *shader;
+    D3DLOCKED_BOX box;
+    unsigned int i;
+    DWORD color;
+    SHORT *texel;
+    static const struct
+    {
+        struct vec3 position;
+        struct vec3 texcrd;
+    }
+    quads[] =
+    {
+        {{ -1.0f,  -1.0f,  0.0f}, { 0.0f, 0.0f, 0.25f}},
+        {{  0.0f,  -1.0f,  1.0f}, { 1.0f, 0.0f, 0.25f}},
+        {{ -1.0f,   1.0f,  0.0f}, { 0.0f, 1.0f, 0.25f}},
+        {{  0.0f,   1.0f,  1.0f}, { 1.0f, 1.0f, 0.25f}},
+
+        {{  0.0f,  -1.0f,  0.0f}, { 0.0f, 0.0f, 0.75f}},
+        {{  1.0f,  -1.0f,  1.0f}, { 1.0f, 0.0f, 0.75f}},
+        {{  0.0f,   1.0f,  0.0f}, { 0.0f, 1.0f, 0.75f}},
+        {{  1.0f,   1.0f,  1.0f}, { 1.0f, 1.0f, 0.75f}},
+    };
+    static const DWORD shader_code[] =
+    {
+        0xffff0101,                                                     /* ps_1_1               */
+        0x00000051, 0xa00f0000, 0x3f000000, 0x3f000000,                 /* def c0, 0.5, 0.5,    */
+        0x3f000000, 0x3f000000,                                         /*         0.5, 0.5     */
+        0x00000042, 0xb00f0000,                                         /* tex t0               */
+        0x00000004, 0x800f0000, 0xb0e40000, 0xa0e40000, 0xa0e40000,     /* mad r0, t0, c0, c0   */
+        0x0000ffff                                                      /* end                  */
+    };
+
+    hr = IDirect3DDevice9_GetDirect3D(device, &d3d9);
+    ok(SUCCEEDED(hr), "Failed to get d3d9 interface, hr %#x.\n", hr);
+    hr = IDirect3D9_CheckDeviceFormat(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+            D3DFMT_X8R8G8B8, 0, D3DRTYPE_VOLUMETEXTURE, D3DFMT_V16U16);
+    IDirect3D9_Release(d3d9);
+    if (FAILED(hr))
+    {
+        skip("Volume V16U16 textures are not supported, skipping test.\n");
+        return;
+    }
+
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1 | D3DFVF_TEXCOORDSIZE3(0));
+    ok(SUCCEEDED(hr), "Failed to set FVF, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreatePixelShader(device, shader_code, &shader);
+    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetPixelShader(device, shader);
+    ok(SUCCEEDED(hr), "Failed to set pixel shader, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
+    ok(SUCCEEDED(hr), "Failed to set filter, hr %#x.\n", hr);
+
+    for (i = 0; i < 2; i++)
+    {
+        D3DPOOL pool;
+
+        if (i)
+            pool = D3DPOOL_SYSTEMMEM;
+        else
+            pool = D3DPOOL_MANAGED;
+
+        hr = IDirect3DDevice9_CreateVolumeTexture(device, 1, 2, 2, 1, 0, D3DFMT_V16U16,
+                pool, &texture, NULL);
+        ok(SUCCEEDED(hr), "Failed to create volume texture, hr %#x.\n", hr);
+
+        hr = IDirect3DVolumeTexture9_LockBox(texture, 0, &box, NULL, 0);
+        ok(SUCCEEDED(hr), "Failed to lock volume texture, hr %#x.\n", hr);
+
+        texel = (SHORT *)((BYTE *)box.pBits + 0 * box.RowPitch + 0 * box.SlicePitch);
+        texel[0] = 32767;
+        texel[1] = 32767;
+        texel = (SHORT *)((BYTE *)box.pBits + 1 * box.RowPitch + 0 * box.SlicePitch);
+        texel[0] = -32768;
+        texel[1] = 0;
+        texel = (SHORT *)((BYTE *)box.pBits + 0 * box.RowPitch + 1 * box.SlicePitch);
+        texel[0] = -16384;
+        texel[1] =  16384;
+        texel = (SHORT *)((BYTE *)box.pBits + 1 * box.RowPitch + 1 * box.SlicePitch);
+        texel[0] =  0;
+        texel[1] =  0;
+
+        hr = IDirect3DVolumeTexture9_UnlockBox(texture, 0);
+        ok(SUCCEEDED(hr), "Failed to unlock volume texture, hr %#x.\n", hr);
+
+        if (i)
+        {
+            IDirect3DVolumeTexture9 *texture2;
+
+            hr = IDirect3DDevice9_CreateVolumeTexture(device, 1, 2, 2, 1, 0, D3DFMT_V16U16,
+                    D3DPOOL_DEFAULT, &texture2, NULL);
+            ok(SUCCEEDED(hr), "Failed to create volume texture, hr %#x.\n", hr);
+
+            hr = IDirect3DDevice9_UpdateTexture(device, (IDirect3DBaseTexture9 *)texture,
+                    (IDirect3DBaseTexture9 *)texture2);
+            ok(SUCCEEDED(hr), "Failed to update texture, hr %#x.\n", hr);
+
+            IDirect3DVolumeTexture9_Release(texture);
+            texture = texture2;
+        }
+
+        hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *) texture);
+        ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x00ff00ff, 0.0f, 0);
+        ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, &quads[0], sizeof(*quads));
+        ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, &quads[4], sizeof(*quads));
+        ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+        ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+        color = getPixelColor(device, 120, 160);
+        ok (color_match(color, 0x000080ff, 2),
+                "Expected color 0x000080ff, got 0x%08x, V16U16 input -32768, 0.\n", color);
+        color = getPixelColor(device, 120, 400);
+        ok (color_match(color, 0x00ffffff, 2),
+                "Expected color 0x00ffffff, got 0x%08x, V16U16 input 32767, 32767.\n", color);
+        color = getPixelColor(device, 360, 160);
+        ok (color_match(color, 0x007f7fff, 2),
+                "Expected color 0x007f7fff, got 0x%08x, V16U16 input 0, 0.\n", color);
+        color = getPixelColor(device, 360, 400);
+        ok (color_match(color, 0x0040c0ff, 2),
+                "Expected color 0x0040c0ff, got 0x%08x, V16U16 input -16384, 16384.\n", color);
+
+        IDirect3DVolumeTexture9_Release(texture);
+    }
+
+    hr = IDirect3DDevice9_SetPixelShader(device, NULL);
+    ok(SUCCEEDED(hr), "Failed to set pixel shader, hr %#x.\n", hr);
+    IDirect3DPixelShader9_Release(shader);
+    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
+    ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
+}
+
 START_TEST(visual)
 {
     IDirect3D9 *d3d9;
@@ -14712,6 +14857,7 @@ START_TEST(visual)
     {
         skip("No mipmap support\n");
     }
+
     offscreen_test(device_ptr);
     ds_size_test(device_ptr);
     alpha_test(device_ptr);
@@ -14775,6 +14921,7 @@ START_TEST(visual)
         texdepth_test(device_ptr);
         texkill_test(device_ptr);
         x8l8v8u8_test(device_ptr);
+        volume_v16u16_test(device_ptr);
         if (caps.PixelShaderVersion >= D3DPS_VERSION(1, 4)) {
             constant_clamp_ps_test(device_ptr);
             cnd_test(device_ptr);
