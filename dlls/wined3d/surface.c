@@ -2161,11 +2161,14 @@ static inline const struct d3dfmt_converter_desc *find_converter(enum wined3d_fo
 
 static struct wined3d_texture *surface_convert_format(struct wined3d_surface *source, enum wined3d_format_id to_fmt)
 {
-    struct wined3d_map_desc src_map, dst_map;
+    void *dst_data = NULL, *src_data = NULL;
+    UINT src_row_pitch, src_slice_pitch, dst_row_pitch, dst_slice_pitch;
     const struct d3dfmt_converter_desc *conv;
     struct wined3d_texture *ret = NULL;
     struct wined3d_resource_desc desc;
     struct wined3d_surface *dst;
+    struct wined3d_context *context = NULL;
+    struct wined3d_device *device = source->resource.device;
 
     conv = find_converter(source->resource.format->id, to_fmt);
     if (!conv)
@@ -2189,30 +2192,46 @@ static struct wined3d_texture *surface_convert_format(struct wined3d_surface *so
     }
     dst = surface_from_resource(wined3d_texture_get_sub_resource(ret, 0));
 
-    memset(&src_map, 0, sizeof(src_map));
-    memset(&dst_map, 0, sizeof(dst_map));
+    wined3d_resource_get_pitch(&source->resource, &src_row_pitch, &src_slice_pitch);
+    wined3d_resource_get_pitch(&ret->resource, &dst_row_pitch, &dst_slice_pitch);
 
-    if (FAILED(wined3d_surface_map(source, &src_map, NULL, WINED3D_MAP_READONLY)))
-    {
-        ERR("Failed to lock the source surface.\n");
-        wined3d_texture_decref(ret);
-        return NULL;
-    }
-    if (FAILED(wined3d_surface_map(dst, &dst_map, NULL, 0)))
-    {
-        ERR("Failed to lock the destination surface.\n");
-        wined3d_surface_unmap(source);
-        wined3d_texture_decref(ret);
-        return NULL;
-    }
+    if (device->d3d_initialized)
+        context = context_acquire(device, NULL);
 
-    conv->convert(src_map.data, dst_map.data, src_map.row_pitch, dst_map.row_pitch,
+    wined3d_resource_load_location(&source->resource, context, source->resource.map_binding);
+    src_data = wined3d_resource_get_map_ptr(&source->resource, context, WINED3D_MAP_READONLY);
+    if (!src_data)
+        goto error;
+
+    if (!wined3d_resource_prepare_map_memory(&dst->resource, context))
+        goto error;
+    dst_data = wined3d_resource_get_map_ptr(&dst->resource, context, 0);
+    if (!dst_data)
+        goto error;
+
+    conv->convert(src_data, dst_data, src_row_pitch, dst_row_pitch,
             source->resource.width, source->resource.height);
 
-    wined3d_surface_unmap(dst);
-    wined3d_surface_unmap(source);
+    wined3d_resource_release_map_ptr(&dst->resource, context);
+    wined3d_resource_release_map_ptr(&source->resource, context);
+
+    if (context)
+        context_release(context);
 
     return ret;
+
+error:
+    ERR("Surface conversion failed.\n");
+
+    if (src_data)
+        wined3d_resource_release_map_ptr(&source->resource, context);
+    if (dst_data)
+        wined3d_resource_release_map_ptr(&ret->resource, context);
+    if (ret)
+        wined3d_texture_decref(ret);
+    if (context)
+        context_release(context);
+    return NULL;
 }
 
 static HRESULT _Blt_ColorFill(BYTE *buf, unsigned int width, unsigned int height,
