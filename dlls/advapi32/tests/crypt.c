@@ -1144,7 +1144,7 @@ static void test_container_sd(void)
 {
     HCRYPTPROV prov;
     SECURITY_DESCRIPTOR *sd;
-    DWORD len;
+    DWORD len, err;
     BOOL ret;
 
     ret = CryptAcquireContextA(&prov, "winetest", "Microsoft Enhanced Cryptographic Provider v1.0",
@@ -1154,8 +1154,9 @@ static void test_container_sd(void)
     len = 0;
     SetLastError(0xdeadbeef);
     ret = CryptGetProvParam(prov, PP_KEYSET_SEC_DESCR, NULL, &len, OWNER_SECURITY_INFORMATION);
-    ok(ret, "got %u\n", GetLastError());
-    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %u\n", GetLastError());
+    err = GetLastError();
+    ok(ret, "got %u\n", err);
+    ok(err == ERROR_INSUFFICIENT_BUFFER || broken(err == ERROR_INVALID_PARAMETER), "got %u\n", err);
     ok(len, "expected len > 0\n");
 
     sd = HeapAlloc(GetProcessHeap(), 0, len);
