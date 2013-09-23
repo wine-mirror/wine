@@ -3874,18 +3874,6 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
                 return WINED3DERR_NOTAVAILABLE;
             }
 
-            /* Filter formats that need conversion; For one part, this
-             * conversion is unimplemented, and volume textures are huge, so
-             * it would be a big performance hit. Unless we hit an application
-             * needing one of those formats, don't advertize them to avoid
-             * leading applications into temptation. The windows drivers don't
-             * support most of those formats on volumes anyway. */
-            if (format->convert)
-            {
-                TRACE("[FAILED] - No converted formats on volumes.\n");
-                return WINED3DERR_NOTAVAILABLE;
-            }
-
             /* The GL_EXT_texture_compression_s3tc spec requires that loading
              * an s3tc compressed texture results in an error. While the D3D
              * refrast does support s3tc volumes, at least the nvidia Windows
