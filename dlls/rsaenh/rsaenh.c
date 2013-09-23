@@ -1098,7 +1098,7 @@ static BOOL create_container_key(KEYCONTAINER *pKeyContainer, REGSAM sam, HKEY *
  *  dwFlags          [I] Flags indicating which keyset to be opened.
  *  phKey            [O] Returned key
  */
-static BOOL open_container_key(LPCSTR pszContainerName, DWORD dwFlags, HKEY *phKey)
+static BOOL open_container_key(LPCSTR pszContainerName, DWORD dwFlags, REGSAM access, HKEY *phKey)
 {
     CHAR szRSABase[MAX_PATH];
     HKEY hRootKey;
@@ -1112,7 +1112,7 @@ static BOOL open_container_key(LPCSTR pszContainerName, DWORD dwFlags, HKEY *phK
 
     /* @@ Wine registry key: HKLM\Software\Wine\Crypto\RSA */
     /* @@ Wine registry key: HKCU\Software\Wine\Crypto\RSA */
-    return RegOpenKeyExA(hRootKey, szRSABase, 0, KEY_READ, phKey) ==
+    return RegOpenKeyExA(hRootKey, szRSABase, 0, access, phKey) ==
                          ERROR_SUCCESS;
 }
 
@@ -1382,7 +1382,7 @@ static HCRYPTPROV read_key_container(PCHAR pszContainerName, DWORD dwFlags, cons
     HCRYPTPROV hKeyContainer;
     HCRYPTKEY hCryptKey;
 
-    if (!open_container_key(pszContainerName, dwFlags, &hKey))
+    if (!open_container_key(pszContainerName, dwFlags, KEY_READ, &hKey))
     {
         SetLastError(NTE_BAD_KEYSET);
         return (HCRYPTPROV)INVALID_HANDLE_VALUE;
@@ -3769,7 +3769,7 @@ BOOL WINAPI RSAENH_CPGetProvParam(HCRYPTPROV hProv, DWORD dwParam, BYTE *pbData,
                 return TRUE;
             }
  
-            if (!open_container_key("", dwFlags, &hKey))
+            if (!open_container_key("", dwFlags, KEY_READ, &hKey))
             {
                 SetLastError(ERROR_NO_MORE_ITEMS);
                 return FALSE;
@@ -3841,7 +3841,7 @@ BOOL WINAPI RSAENH_CPGetProvParam(HCRYPTPROV hProv, DWORD dwParam, BYTE *pbData,
             SECURITY_DESCRIPTOR *sd;
             DWORD err, len, flags = (pKeyContainer->dwFlags & CRYPT_MACHINE_KEYSET);
 
-            if (!open_container_key(pKeyContainer->szName, flags, &hKey))
+            if (!open_container_key(pKeyContainer->szName, flags, KEY_READ, &hKey))
             {
                 SetLastError(NTE_BAD_KEYSET);
                 return FALSE;
@@ -4339,8 +4339,56 @@ BOOL WINAPI RSAENH_CPSetHashParam(HCRYPTPROV hProv, HCRYPTHASH hHash, DWORD dwPa
  */
 BOOL WINAPI RSAENH_CPSetProvParam(HCRYPTPROV hProv, DWORD dwParam, BYTE *pbData, DWORD dwFlags)
 {
-    FIXME("(stub)\n");
-    return FALSE;
+    KEYCONTAINER *pKeyContainer;
+    HKEY hKey;
+
+    TRACE("(hProv=%08lx, dwParam=%08x, pbData=%p, dwFlags=%08x)\n", hProv, dwParam, pbData, dwFlags);
+
+    if (!lookup_handle(&handle_table, hProv, RSAENH_MAGIC_CONTAINER, (OBJECTHDR **)&pKeyContainer))
+    {
+        SetLastError(NTE_BAD_UID);
+        return FALSE;
+    }
+
+    switch (dwParam)
+    {
+    case PP_KEYSET_SEC_DESCR:
+    {
+        SECURITY_DESCRIPTOR *sd = (SECURITY_DESCRIPTOR *)pbData;
+        DWORD err, flags = (pKeyContainer->dwFlags & CRYPT_MACHINE_KEYSET);
+        BOOL def, present;
+        REGSAM access = WRITE_DAC | WRITE_OWNER | ACCESS_SYSTEM_SECURITY;
+        PSID owner = NULL, group = NULL;
+        PACL dacl = NULL, sacl = NULL;
+
+        if (!open_container_key(pKeyContainer->szName, flags, access, &hKey))
+        {
+            SetLastError(NTE_BAD_KEYSET);
+            return FALSE;
+        }
+
+        if ((dwFlags & OWNER_SECURITY_INFORMATION && !GetSecurityDescriptorOwner(sd, &owner, &def)) ||
+            (dwFlags & GROUP_SECURITY_INFORMATION && !GetSecurityDescriptorGroup(sd, &group, &def)) ||
+            (dwFlags & DACL_SECURITY_INFORMATION && !GetSecurityDescriptorDacl(sd, &present, &dacl, &def)) ||
+            (dwFlags & SACL_SECURITY_INFORMATION && !GetSecurityDescriptorSacl(sd, &present, &sacl, &def)))
+        {
+            RegCloseKey(hKey);
+            return FALSE;
+        }
+
+        err = SetSecurityInfo(hKey, SE_REGISTRY_KEY, dwFlags, owner, group, dacl, sacl);
+        RegCloseKey(hKey);
+        if (err)
+        {
+            SetLastError(err);
+            return FALSE;
+        }
+        return TRUE;
+    }
+    default:
+        FIXME("unimplemented parameter %08x\n", dwParam);
+        return FALSE;
+    }
 }
 
 /******************************************************************************
