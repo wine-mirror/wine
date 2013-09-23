@@ -2554,16 +2554,13 @@ AH_BOTTOM([#endif /* WINE_CROSSTEST */
 
 AC_CONFIG_COMMANDS([include/stamp-h], [echo timestamp > include/stamp-h])
 
-WINE_CONFIG_SYMLINK(dlls/shell32/AUTHORS,AUTHORS)
-WINE_CONFIG_SYMLINK(dlls/wineps.drv/generic.ppd)
-WINE_CONFIG_SYMLINK(fonts/marlett.ttf,,enable_fonts)
-WINE_CONFIG_SYMLINK(fonts/symbol.ttf,,enable_fonts)
-WINE_CONFIG_SYMLINK(fonts/tahoma.ttf,,enable_fonts)
-WINE_CONFIG_SYMLINK(fonts/tahomabd.ttf,,enable_fonts)
-WINE_CONFIG_SYMLINK(po/LINGUAS)
-WINE_CONFIG_SYMLINK(tools/l_intl.nls,,enable_tools)
-WINE_CONFIG_SYMLINK(wine,tools/winewrapper)
-WINE_CONFIG_SYMLINK(wine64,tools/winewrapper,enable_win64)
+WINE_CONFIG_SYMLINK(dlls/shell32,,[AUTHORS])
+WINE_CONFIG_SYMLINK(dlls/wineps.drv,dlls/wineps.drv,[generic.ppd])
+WINE_CONFIG_SYMLINK(fonts,fonts,[marlett.ttf,symbol.ttf,tahoma.ttf,tahomabd.ttf],enable_fonts)
+WINE_CONFIG_SYMLINK(po,po,[LINGUAS])
+WINE_CONFIG_SYMLINK(tools,tools,[l_intl.nls],enable_tools)
+WINE_CONFIG_SYMLINK(,tools,[wine],,winewrapper)
+WINE_CONFIG_SYMLINK(,tools,[wine64],enable_win64,winewrapper)
 
 WINE_CONFIG_EXTRA_DIR(dlls/gdi32/dibdrv)
 WINE_CONFIG_EXTRA_DIR(dlls/gdi32/enhmfdrv)

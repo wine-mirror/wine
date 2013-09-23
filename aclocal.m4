@@ -599,12 +599,20 @@ distclean::
 
 wine_fn_config_symlink ()
 {
-    ac_link=$[1]
+    ac_linkdir=
+    if test "x$[1]" = "x-d"
+    then
+        ac_linkdir=$[2]
+        shift; shift
+    fi
+    ac_links=$[@]
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"$ac_link:
-	@./config.status $ac_link
+"$ac_links:
+	@./config.status \$[@]
 distclean::
-	\$(RM) $ac_link"
+	\$(RM) $ac_links"
+    test -n "$ac_linkdir" || return
+    wine_fn_append_rule ALL_MAKEFILE_DEPENDS "$ac_linkdir/Makefile $ac_linkdir/__depend__: $ac_links"
 }
 
 if test "x$CROSSTEST_DISABLE" != x
@@ -635,13 +643,16 @@ AC_DEFUN([WINE_CONFIG_EXTRA_DIR],
 
 dnl **** Create symlinks from config.status ****
 dnl
-dnl Usage: WINE_CONFIG_SYMLINK(name,target,enable)
+dnl Usage: WINE_CONFIG_SYMLINK(target,src,files,enable,srcfile)
 dnl
 AC_DEFUN([WINE_CONFIG_SYMLINK],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
-m4_ifval([$3],[if test "x$[$3]" != xno; then
-])AC_CONFIG_LINKS([$1:]m4_default([$2],[$1]))dnl
-m4_if([$2],,[test "$srcdir" = "." || ])wine_fn_config_symlink $1[]m4_ifval([$3],[
-fi])])
+m4_ifval([$4],[if test "x$[$4]" != xno; then
+])m4_foreach([f],[$3],
+[AC_CONFIG_LINKS(m4_ifval([$1],[$1/])f[:]m4_ifval([$2],[$2/])m4_ifval([$5],[$5],f))])dnl
+m4_if([$1],[$2],[test "$srcdir" = "." || ])dnl
+wine_fn_config_symlink[]m4_if([$1],[$2],,m4_ifval([$1],[ -d $1]))[]m4_foreach([f],[$3],[ ]m4_ifval([$1],[$1/])f)m4_ifval([$4],[
+fi])[]dnl
+])])
 
 dnl **** Create a make rules file from config.status ****
 dnl
