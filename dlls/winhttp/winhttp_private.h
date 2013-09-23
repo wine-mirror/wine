@@ -187,9 +187,11 @@ typedef struct
     int send_timeout;
     int recv_timeout;
     LPWSTR status_text;
-    DWORD content_length; /* total number of bytes to be read (per chunk) */
+    DWORD content_length; /* total number of bytes to be read */
     DWORD content_read;   /* bytes read so far */
     BOOL  read_chunked;   /* are we reading in chunked mode? */
+    BOOL  read_chunked_eof;  /* end of stream in chunked mode */
+    BOOL  read_chunked_size; /* chunk size remaining */
     DWORD read_pos;       /* current read position in read_buf */
     DWORD read_size;      /* valid data size in read_buf */
     char  read_buf[4096]; /* buffer for already read but not returned data */
