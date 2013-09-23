@@ -2203,6 +2203,14 @@ AC_CHECK_TYPES([struct xinpgen],,,
 #include <netinet/in_pcb.h>
 #endif])
 
+AC_CHECK_TYPES([struct r_debug, struct link_map],,,
+[#ifdef HAVE_LINK_H
+#include <link.h>
+#endif
+#ifdef HAVE_SYS_LINK_H
+#include <sys/link.h>
+#endif])
+
 AC_CHECK_MEMBERS([struct ff_effect.direction],,,
 [#ifdef HAVE_LINUX_INPUT_H
 #include <linux/input.h>

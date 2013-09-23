@@ -60,6 +60,32 @@
 #define NT_GNU_BUILD_ID 3
 #endif
 
+#ifndef HAVE_STRUCT_R_DEBUG
+struct r_debug
+{
+    int r_version;
+    struct link_map *r_map;
+    ElfW(Addr) r_brk;
+    enum
+    {
+        RT_CONSISTENT,
+        RT_ADD,
+        RT_DELETE
+    } r_state;
+    ElfW(Addr) r_ldbase;
+};
+#endif /* HAVE_STRUCT_R_DEBUG */
+
+#ifndef HAVE_STRUCT_LINK_MAP
+struct link_map
+{
+    ElfW(Addr) l_addr;
+    char *l_name;
+    ElfW(Dyn) *l_ld;
+    struct link_map *l_next, *l_prev;
+};
+#endif /* HAVE_STRUCT_LINK_MAP */
+
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
 struct elf_info
