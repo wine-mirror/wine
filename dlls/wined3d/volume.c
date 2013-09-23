@@ -104,7 +104,7 @@ void wined3d_volume_upload_data(struct wined3d_volume *volume, const struct wine
     const struct wined3d_format *format = volume->resource.format;
     UINT width = volume->resource.width;
     UINT height = volume->resource.height;
-    UINT depth = volume->resource.depth, z;
+    UINT depth = volume->resource.depth;
     BYTE *mem = data->addr;
 
     TRACE("volume %p, context %p, level %u, format %s (%#x).\n",
@@ -129,9 +129,8 @@ void wined3d_volume_upload_data(struct wined3d_volume *volume, const struct wine
         wined3d_volume_get_pitch(volume, &src_row_pitch, &src_slice_pitch);
 
         mem = HeapAlloc(GetProcessHeap(), 0, dst_slice_pitch * depth);
-        for (z = 0; z < depth; z++)
-            format->convert(data->addr + z * src_slice_pitch, mem + z * dst_slice_pitch,
-                    src_row_pitch, dst_row_pitch, width, height);
+        format->convert(data->addr, mem, src_row_pitch, src_slice_pitch,
+                dst_row_pitch, dst_slice_pitch, width, height, depth);
     }
 
     if (data->buffer_object)
