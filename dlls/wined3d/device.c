@@ -4505,9 +4505,12 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
 
     /* No special treatment of these parameters. Just store them */
     swapchain->desc.swap_effect = swapchain_desc->swap_effect;
+    swapchain->desc.enable_auto_depth_stencil = swapchain_desc->enable_auto_depth_stencil;
+    swapchain->desc.auto_depth_stencil_format = swapchain_desc->auto_depth_stencil_format;
     swapchain->desc.flags = swapchain_desc->flags;
-    swapchain->desc.swap_interval = swapchain_desc->swap_interval;
     swapchain->desc.refresh_rate = swapchain_desc->refresh_rate;
+    swapchain->desc.swap_interval = swapchain_desc->swap_interval;
+    swapchain->desc.auto_restore_display_mode = swapchain_desc->auto_restore_display_mode;
 
     /* What to do about these? */
     if (swapchain_desc->backbuffer_count
