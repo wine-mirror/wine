@@ -528,9 +528,15 @@ void get_selector_entry( struct thread *thread, int entry, unsigned int *base,
 }
 
 
-#if defined(linux) && defined(HAVE_SYS_USER_H) && (defined(__i386__) || defined(__x86_64__))
+#if defined(linux) && (defined(HAVE_SYS_USER_H) || defined(HAVE_ASM_USER_H)) \
+    && (defined(__i386__) || defined(__x86_64__))
 
+#ifdef HAVE_SYS_USER_H
 #include <sys/user.h>
+#endif
+#ifdef HAVE_ASM_USER_H
+#include <asm/user.h>
+#endif
 
 /* debug register offset in struct user */
 #define DR_OFFSET(dr) ((((struct user *)0)->u_debugreg) + (dr))

@@ -409,6 +409,7 @@ AC_CHECK_HEADERS(\
 	arpa/inet.h \
 	arpa/nameser.h \
 	asm/types.h \
+	asm/user.h \
 	curses.h \
 	direct.h \
 	dirent.h \

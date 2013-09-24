@@ -5949,6 +5949,7 @@ for ac_header in \
 	arpa/inet.h \
 	arpa/nameser.h \
 	asm/types.h \
+	asm/user.h \
 	curses.h \
 	direct.h \
 	dirent.h \
