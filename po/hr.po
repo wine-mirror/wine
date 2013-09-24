@@ -9736,7 +9736,7 @@ msgstr ""
 
 #: cmd.rc:346
 msgid "Wine CMD Version %1!S!\n"
-msgstr "Wine CMD verzija %1!5!\n"
+msgstr "Wine CMD verzija %1!S!\n"
 
 #: cmd.rc:347
 msgid "More? "
@@ -9895,6 +9895,13 @@ msgid ""
 "\n"
 "Where 'command' is one of HELP, START, STOP or USE.\n"
 msgstr ""
+"Sintaksa ove naredbe je:\n"
+"\n"
+"NET naredba [argumenti]\n"
+"    -ili-\n"
+"NET naredba /HELP\n"
+"\n"
+"Gdje 'naredba' je jedno od HELP, START, STOP ili USE.\n"
 
 #: net.rc:28
 msgid ""
@@ -9905,6 +9912,12 @@ msgid ""
 "Displays the list of running services if 'service' is omitted. Otherwise "
 "'service' is the name of the service to start.\n"
 msgstr ""
+"Sintaksa ove naredbe je:\n"
+"\n"
+"NET START [servis]\n"
+"\n"
+"Prikazuje popis servisa koji se izvode ukoliko se 'servis' izostavi. Inače "
+"'servis' je ime servisa koji će se pokrenuti.\n"
 
 #: net.rc:29
 msgid ""
@@ -9938,31 +9951,31 @@ msgstr ""
 
 #: net.rc:34
 msgid "The %1 service is starting.\n"
-msgstr ""
+msgstr "Servis %1 se pokreće.\n"
 
 #: net.rc:35
 msgid "The %1 service was started successfully.\n"
-msgstr ""
+msgstr "Servis %1 je uspješno pokrenut.\n"
 
 #: net.rc:36
 msgid "The %1 service failed to start.\n"
-msgstr ""
+msgstr "Servis %1 nije uspješno pokrenut.\n"
 
 #: net.rc:37
 msgid "The %1 service is stopping.\n"
-msgstr ""
+msgstr "Servis %1 se zaustavlja.\n"
 
 #: net.rc:38
 msgid "The %1 service was stopped successfully.\n"
-msgstr ""
+msgstr "Servis %1 je uspješno zaustavljen.\n"
 
 #: net.rc:39
 msgid "The %1 service failed to stop.\n"
-msgstr ""
+msgstr "Servis %1 nije uspješno zaustavljen.\n"
 
 #: net.rc:41
 msgid "There are no entries in the list.\n"
-msgstr ""
+msgstr "Nema unosa u listi.\n"
 
 #: net.rc:42
 msgid ""
@@ -9992,15 +10005,15 @@ msgstr "Dogodila se mrežna pogreška"
 
 #: net.rc:48
 msgid "Connection is being made"
-msgstr ""
+msgstr "Veza se stvara"
 
 #: net.rc:49
 msgid "Reconnecting"
-msgstr ""
+msgstr "Ponovno povezivanje"
 
 #: net.rc:40
 msgid "The following services are running:\n"
-msgstr ""
+msgstr "Sljedeći servisi se izvode:\n"
 
 #: netstat.rc:27
 msgid "Active Connections"
@@ -10008,7 +10021,7 @@ msgstr "Aktivne veze"
 
 #: netstat.rc:28
 msgid "Proto"
-msgstr ""
+msgstr "Proto"
 
 #: netstat.rc:29
 msgid "Local Address"
@@ -10902,20 +10915,26 @@ msgid ""
 "REG [ ADD | DELETE | QUERY ]\n"
 "REG command /?\n"
 msgstr ""
+"Sintaksa ove naredbe je:\n"
+"\n"
+"REG [ ADD | DELETE | QUERY ]\n"
+"REG naredba /?\n"
 
 #: reg.rc:28
 msgid ""
 "REG ADD key_name [/v value_name | /ve] [/t type] [/s separator] [/d data] [/"
 "f]\n"
 msgstr ""
+"REG ADD ime_ključa [/v ime_vrijednosti | /ve] [/t vrsta] [/s separator] [/d "
+"podaci] [/f]\n"
 
 #: reg.rc:29
 msgid "REG DELETE key_name [/v value_name | /ve | /va] [/f]\n"
-msgstr ""
+msgstr "REG DELETE ime_ključa [/v ime_vrijednosti | /ve | /va] [/f]\n"
 
 #: reg.rc:30
 msgid "REG QUERY key_name [/v value_name | /ve] [/s]\n"
-msgstr ""
+msgstr "REG QUERY ime_ključa [/v ime_vrijednosti | /ve] [/s]\n"
 
 #: reg.rc:31
 msgid "The operation completed successfully\n"
@@ -10938,6 +10957,7 @@ msgstr ""
 msgid ""
 "Error: The system was unable to find the specified registry key or value\n"
 msgstr ""
+"Greška: Sustav nije mogao pronaći navedeni ključ ili vrijednost u registru.\n"
 
 #: regedit.rc:31
 msgid "&Registry"
@@ -11021,11 +11041,11 @@ msgstr ""
 
 #: regedit.rc:226
 msgid "Find:"
-msgstr ""
+msgstr "Pronađi:"
 
 #: regedit.rc:228
 msgid "Find in:"
-msgstr ""
+msgstr "Pronađi u:"
 
 #: regedit.rc:229
 msgid "Keys"
@@ -11033,11 +11053,11 @@ msgstr "Ključevi"
 
 #: regedit.rc:230
 msgid "Value names"
-msgstr ""
+msgstr "Imena vrijednosti"
 
 #: regedit.rc:231
 msgid "Value content"
-msgstr ""
+msgstr "Sadržaj vrijednosti"
 
 #: regedit.rc:232
 msgid "Whole string only"
@@ -11061,11 +11081,11 @@ msgstr "&Izmjeni"
 
 #: regedit.rc:264 regedit.rc:277 regedit.rc:293 regedit.rc:306
 msgid "Value name:"
-msgstr ""
+msgstr "Ime vrijednosti:"
 
 #: regedit.rc:266 regedit.rc:279 regedit.rc:295 regedit.rc:308
 msgid "Value data:"
-msgstr ""
+msgstr "Podaci vrijednosti:"
 
 #: regedit.rc:274
 msgid "Edit DWORD"
@@ -12994,7 +13014,7 @@ msgid ""
 msgstr ""
 "Uzrok ovome može biti problem u programu ili nedostatak u Wine-u. Provjerite "
 "<a href=\"http://appdb.winehq.org\">bazu aplikacija</a>za savjete o "
-"pokretanjuovog programa."
+"pokretanju ovog programa."
 
 #: winedbg.rc:58
 msgid "Show &Details"
