@@ -117,6 +117,7 @@ static void test_getregiondata(void)
     DWORD buf[100];
     GpRect rect;
     GpPath *path;
+    GpMatrix *matrix;
 
     memset(buf, 0xee, sizeof(buf));
 
@@ -375,6 +376,14 @@ static void test_getregiondata(void)
     /* flags 0x4000 means its a path of shorts instead of FLOAT */
     ok((*(buf + 8) & (~ 0x00004000)) == 0x00000000,
        "expected 00000000 got %08x\n", *(buf + 8) & (~ 0x00004000));
+
+    /* Transform an empty region */
+    status = GdipCreateMatrix(&matrix);
+    expect(Ok, status);
+    status = GdipTransformRegion(region, matrix);
+todo_wine
+    expect(Ok, status);
+    GdipDeleteMatrix(matrix);
 
     status = GdipDeleteRegion(region);
     expect(Ok, status);
