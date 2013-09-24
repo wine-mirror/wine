@@ -610,8 +610,7 @@ LRESULT WINAPI ImeEscape(HIMC hIMC, UINT uSubFunc, LPVOID lpData)
     return 0;
 }
 
-BOOL WINAPI ImeProcessKey(HIMC hIMC, UINT vKey, LPARAM lKeyData,
-                             CONST LPBYTE lpbKeyState)
+BOOL WINAPI ImeProcessKey(HIMC hIMC, UINT vKey, LPARAM lKeyData, const LPBYTE lpbKeyState)
 {
     /* See the comment at the head of this file */
     TRACE("We do no processing via this route\n");
@@ -661,9 +660,8 @@ BOOL WINAPI ImeSetActiveContext(HIMC hIMC,BOOL fFlag)
     return TRUE;
 }
 
-UINT WINAPI ImeToAsciiEx (UINT uVKey, UINT uScanCode,
-                          CONST LPBYTE lpbKeyState, LPDWORD lpdwTransKey,
-                          UINT fuState, HIMC hIMC)
+UINT WINAPI ImeToAsciiEx (UINT uVKey, UINT uScanCode, const LPBYTE lpbKeyState,
+                          LPDWORD lpdwTransKey, UINT fuState, HIMC hIMC)
 {
     /* See the comment at the head of this file */
     TRACE("We do no processing via this route\n");
