@@ -1344,7 +1344,7 @@ static void test_file_both_information(void)
 
 static void test_file_disposition_information(void)
 {
-    char buffer[MAX_PATH + 16];
+    char tmp_path[MAX_PATH], buffer[MAX_PATH + 16];
     DWORD dirpos;
     HANDLE handle, handle2;
     NTSTATUS res;
@@ -1352,8 +1352,10 @@ static void test_file_disposition_information(void)
     FILE_DISPOSITION_INFORMATION fdi;
     BOOL fileDeleted;
 
+    GetTempPathA( MAX_PATH, tmp_path );
+
     /* cannot set disposition on file not opened with delete access */
-    GetTempFileNameA( ".", "dis", 0, buffer );
+    GetTempFileNameA( tmp_path, "dis", 0, buffer );
     handle = CreateFileA(buffer, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
     ok( handle != INVALID_HANDLE_VALUE, "failed to create temp file\n" );
     res = pNtQueryInformationFile( handle, &io, &fdi, sizeof fdi, FileDispositionInformation );
@@ -1368,7 +1370,7 @@ static void test_file_disposition_information(void)
     DeleteFileA( buffer );
 
     /* can set disposition on file opened with proper access */
-    GetTempFileNameA( ".", "dis", 0, buffer );
+    GetTempFileNameA( tmp_path, "dis", 0, buffer );
     handle = CreateFileA(buffer, GENERIC_WRITE | DELETE, 0, NULL, CREATE_ALWAYS, 0, 0);
     ok( handle != INVALID_HANDLE_VALUE, "failed to create temp file\n" );
     fdi.DoDeleteFile = TRUE;
@@ -1382,7 +1384,7 @@ static void test_file_disposition_information(void)
     DeleteFileA( buffer );
 
     /* cannot set disposition on readonly file */
-    GetTempFileNameA( ".", "dis", 0, buffer );
+    GetTempFileNameA( tmp_path, "dis", 0, buffer );
     handle = CreateFileA(buffer, GENERIC_WRITE | DELETE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_READONLY, 0);
     ok( handle != INVALID_HANDLE_VALUE, "failed to create temp file\n" );
     fdi.DoDeleteFile = TRUE;
@@ -1396,7 +1398,7 @@ static void test_file_disposition_information(void)
     DeleteFileA( buffer );
 
     /* can set disposition on file and then reset it */
-    GetTempFileNameA( ".", "dis", 0, buffer );
+    GetTempFileNameA( tmp_path, "dis", 0, buffer );
     handle = CreateFileA(buffer, GENERIC_WRITE | DELETE, 0, NULL, CREATE_ALWAYS, 0, 0);
     ok( handle != INVALID_HANDLE_VALUE, "failed to create temp file\n" );
     fdi.DoDeleteFile = TRUE;
@@ -1413,7 +1415,7 @@ static void test_file_disposition_information(void)
     DeleteFileA( buffer );
 
     /* Delete-on-close flag doesn't change file disposition until a handle is closed */
-    GetTempFileNameA( ".", "dis", 0, buffer );
+    GetTempFileNameA( tmp_path, "dis", 0, buffer );
     handle = CreateFileA(buffer, GENERIC_WRITE | DELETE, 0, NULL, CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, 0);
     ok( handle != INVALID_HANDLE_VALUE, "failed to create temp file\n" );
     fdi.DoDeleteFile = FALSE;
@@ -1426,7 +1428,7 @@ static void test_file_disposition_information(void)
     DeleteFileA( buffer );
 
     /* Delete-on-close flag sets disposition when a handle is closed and then it could be changed back */
-    GetTempFileNameA( ".", "dis", 0, buffer );
+    GetTempFileNameA( tmp_path, "dis", 0, buffer );
     handle = CreateFileA(buffer, GENERIC_WRITE | DELETE, 0, NULL, CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, 0);
     ok( handle != INVALID_HANDLE_VALUE, "failed to create temp file\n" );
     ok( DuplicateHandle( GetCurrentProcess(), handle, GetCurrentProcess(), &handle2, 0, FALSE, DUPLICATE_SAME_ACCESS ), "DuplicateHandle failed\n" );
@@ -1441,7 +1443,7 @@ static void test_file_disposition_information(void)
     DeleteFileA( buffer );
 
     /* can set disposition on a directory opened with proper access */
-    GetTempFileNameA( ".", "dis", 0, buffer );
+    GetTempFileNameA( tmp_path, "dis", 0, buffer );
     DeleteFileA( buffer );
     ok( CreateDirectoryA( buffer, NULL ), "CreateDirectory failed\n" );
     handle = CreateFileA(buffer, DELETE, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
@@ -1457,7 +1459,7 @@ static void test_file_disposition_information(void)
     RemoveDirectoryA( buffer );
 
     /* RemoveDirectory sets directory disposition and it can be undone */
-    GetTempFileNameA( ".", "dis", 0, buffer );
+    GetTempFileNameA( tmp_path, "dis", 0, buffer );
     DeleteFileA( buffer );
     ok( CreateDirectoryA( buffer, NULL ), "CreateDirectory failed\n" );
     handle = CreateFileA(buffer, DELETE, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
@@ -1473,7 +1475,7 @@ static void test_file_disposition_information(void)
     RemoveDirectoryA( buffer );
 
     /* cannot set disposition on a non-empty directory */
-    GetTempFileNameA( ".", "dis", 0, buffer );
+    GetTempFileNameA( tmp_path, "dis", 0, buffer );
     DeleteFileA( buffer );
     ok( CreateDirectoryA( buffer, NULL ), "CreateDirectory failed\n" );
     handle = CreateFileA(buffer, DELETE, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
