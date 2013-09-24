@@ -381,7 +381,6 @@ static void test_getregiondata(void)
     status = GdipCreateMatrix(&matrix);
     expect(Ok, status);
     status = GdipTransformRegion(region, matrix);
-todo_wine
     expect(Ok, status);
     GdipDeleteMatrix(matrix);
 

@@ -1310,6 +1310,9 @@ static GpStatus transform_region_element(region_element* element, GpMatrix *matr
         }
         /* Fall-through to do the actual conversion. */
         case RegionDataPath:
+            if (!element->elementdata.pathdata.path->pathdata.Count)
+                return Ok;
+
             stat = GdipTransformMatrixPoints(matrix,
                 element->elementdata.pathdata.path->pathdata.Points,
                 element->elementdata.pathdata.path->pathdata.Count);
