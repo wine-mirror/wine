@@ -47,7 +47,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
-typedef struct ID3DXMeshImpl
+struct d3dx9_mesh
 {
     ID3DXMesh ID3DXMesh_iface;
     LONG ref;
@@ -67,7 +67,7 @@ typedef struct ID3DXMeshImpl
     int attrib_buffer_lock_count;
     DWORD attrib_table_size;
     D3DXATTRIBUTERANGE *attrib_table;
-} ID3DXMeshImpl;
+};
 
 const UINT d3dx_decltype_size[] =
 {
@@ -90,12 +90,12 @@ const UINT d3dx_decltype_size[] =
    /* D3DDECLTYPE_FLOAT16_4 */ 4 * sizeof(D3DXFLOAT16),
 };
 
-static inline ID3DXMeshImpl *impl_from_ID3DXMesh(ID3DXMesh *iface)
+static inline struct d3dx9_mesh *impl_from_ID3DXMesh(ID3DXMesh *iface)
 {
-    return CONTAINING_RECORD(iface, ID3DXMeshImpl, ID3DXMesh_iface);
+    return CONTAINING_RECORD(iface, struct d3dx9_mesh, ID3DXMesh_iface);
 }
 
-static HRESULT WINAPI ID3DXMeshImpl_QueryInterface(ID3DXMesh *iface, REFIID riid, void **out)
+static HRESULT WINAPI d3dx9_mesh_QueryInterface(ID3DXMesh *iface, REFIID riid, void **out)
 {
     TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
 
@@ -113,47 +113,47 @@ static HRESULT WINAPI ID3DXMeshImpl_QueryInterface(ID3DXMesh *iface, REFIID riid
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI ID3DXMeshImpl_AddRef(ID3DXMesh *iface)
+static ULONG WINAPI d3dx9_mesh_AddRef(ID3DXMesh *iface)
 {
-    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
+    struct d3dx9_mesh *mesh = impl_from_ID3DXMesh(iface);
+    ULONG refcount = InterlockedIncrement(&mesh->ref);
 
-    TRACE("(%p)->(): AddRef from %d\n", This, This->ref);
+    TRACE("%p increasing refcount to %u.\n", mesh, refcount);
 
-    return InterlockedIncrement(&This->ref);
+    return refcount;
 }
 
-static ULONG WINAPI ID3DXMeshImpl_Release(ID3DXMesh *iface)
+static ULONG WINAPI d3dx9_mesh_Release(ID3DXMesh *iface)
 {
-    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
+    struct d3dx9_mesh *mesh = impl_from_ID3DXMesh(iface);
+    ULONG refcount = InterlockedDecrement(&mesh->ref);
 
-    TRACE("(%p)->(): Release from %d\n", This, ref + 1);
+    TRACE("%p decreasing refcount to %u.\n", mesh, refcount);
 
-    if (!ref)
+    if (!refcount)
     {
-        IDirect3DIndexBuffer9_Release(This->index_buffer);
-        IDirect3DVertexBuffer9_Release(This->vertex_buffer);
-        if (This->vertex_declaration)
-            IDirect3DVertexDeclaration9_Release(This->vertex_declaration);
-        IDirect3DDevice9_Release(This->device);
-        HeapFree(GetProcessHeap(), 0, This->attrib_buffer);
-        HeapFree(GetProcessHeap(), 0, This->attrib_table);
-        HeapFree(GetProcessHeap(), 0, This);
+        IDirect3DIndexBuffer9_Release(mesh->index_buffer);
+        IDirect3DVertexBuffer9_Release(mesh->vertex_buffer);
+        if (mesh->vertex_declaration)
+            IDirect3DVertexDeclaration9_Release(mesh->vertex_declaration);
+        IDirect3DDevice9_Release(mesh->device);
+        HeapFree(GetProcessHeap(), 0, mesh->attrib_buffer);
+        HeapFree(GetProcessHeap(), 0, mesh->attrib_table);
+        HeapFree(GetProcessHeap(), 0, mesh);
     }
 
-    return ref;
+    return refcount;
 }
 
-/*** ID3DXBaseMesh ***/
-static HRESULT WINAPI ID3DXMeshImpl_DrawSubset(ID3DXMesh *iface, DWORD attrib_id)
+static HRESULT WINAPI d3dx9_mesh_DrawSubset(ID3DXMesh *iface, DWORD attrib_id)
 {
-    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
+    struct d3dx9_mesh *This = impl_from_ID3DXMesh(iface);
     HRESULT hr;
     DWORD face_start;
     DWORD face_end = 0;
     DWORD vertex_size;
 
-    TRACE("(%p)->(%u)\n", This, attrib_id);
+    TRACE("iface %p, attrib_id %u.\n", iface, attrib_id);
 
     if (!This->vertex_declaration)
     {
@@ -193,31 +193,31 @@ static HRESULT WINAPI ID3DXMeshImpl_DrawSubset(ID3DXMesh *iface, DWORD attrib_id
     return D3D_OK;
 }
 
-static DWORD WINAPI ID3DXMeshImpl_GetNumFaces(ID3DXMesh *iface)
+static DWORD WINAPI d3dx9_mesh_GetNumFaces(ID3DXMesh *iface)
 {
-    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
+    struct d3dx9_mesh *mesh = impl_from_ID3DXMesh(iface);
 
-    TRACE("(%p)\n", This);
+    TRACE("iface %p.\n", iface);
 
-    return This->numfaces;
+    return mesh->numfaces;
 }
 
-static DWORD WINAPI ID3DXMeshImpl_GetNumVertices(ID3DXMesh *iface)
+static DWORD WINAPI d3dx9_mesh_GetNumVertices(ID3DXMesh *iface)
 {
-    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
+    struct d3dx9_mesh *mesh = impl_from_ID3DXMesh(iface);
 
-    TRACE("(%p)\n", This);
+    TRACE("iface %p.\n", iface);
 
-    return This->numvertices;
+    return mesh->numvertices;
 }
 
-static DWORD WINAPI ID3DXMeshImpl_GetFVF(ID3DXMesh *iface)
+static DWORD WINAPI d3dx9_mesh_GetFVF(ID3DXMesh *iface)
 {
-    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
+    struct d3dx9_mesh *mesh = impl_from_ID3DXMesh(iface);
 
-    TRACE("(%p)\n", This);
+    TRACE("iface %p.\n", iface);
 
-    return This->fvf;
+    return mesh->fvf;
 }
 
 static void copy_declaration(D3DVERTEXELEMENT9 *dst, const D3DVERTEXELEMENT9 *src, UINT num_elem)
@@ -225,61 +225,63 @@ static void copy_declaration(D3DVERTEXELEMENT9 *dst, const D3DVERTEXELEMENT9 *sr
     memcpy(dst, src, num_elem * sizeof(*src));
 }
 
-static HRESULT WINAPI ID3DXMeshImpl_GetDeclaration(ID3DXMesh *iface, D3DVERTEXELEMENT9 declaration[MAX_FVF_DECL_SIZE])
+static HRESULT WINAPI d3dx9_mesh_GetDeclaration(ID3DXMesh *iface, D3DVERTEXELEMENT9 declaration[MAX_FVF_DECL_SIZE])
 {
-    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
+    struct d3dx9_mesh *mesh = impl_from_ID3DXMesh(iface);
 
-    TRACE("(%p)\n", This);
+    TRACE("iface %p, declaration %p.\n", iface, declaration);
 
-    if (declaration == NULL) return D3DERR_INVALIDCALL;
+    if (!declaration)
+        return D3DERR_INVALIDCALL;
 
-    copy_declaration(declaration, This->cached_declaration, This->num_elem);
+    copy_declaration(declaration, mesh->cached_declaration, mesh->num_elem);
 
     return D3D_OK;
 }
 
-static DWORD WINAPI ID3DXMeshImpl_GetNumBytesPerVertex(ID3DXMesh *iface)
+static DWORD WINAPI d3dx9_mesh_GetNumBytesPerVertex(ID3DXMesh *iface)
 {
-    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
+    struct d3dx9_mesh *mesh = impl_from_ID3DXMesh(iface);
 
-    TRACE("iface (%p)\n", This);
+    TRACE("iface %p.\n", iface);
 
-    return This->vertex_declaration_size;
+    return mesh->vertex_declaration_size;
 }
 
-static DWORD WINAPI ID3DXMeshImpl_GetOptions(ID3DXMesh *iface)
+static DWORD WINAPI d3dx9_mesh_GetOptions(ID3DXMesh *iface)
 {
-    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
+    struct d3dx9_mesh *mesh = impl_from_ID3DXMesh(iface);
 
-    TRACE("(%p)\n", This);
+    TRACE("iface %p.\n", iface);
 
-    return This->options;
+    return mesh->options;
 }
 
-static HRESULT WINAPI ID3DXMeshImpl_GetDevice(struct ID3DXMesh *iface, struct IDirect3DDevice9 **device)
+static HRESULT WINAPI d3dx9_mesh_GetDevice(struct ID3DXMesh *iface, struct IDirect3DDevice9 **device)
 {
-    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
+    struct d3dx9_mesh *mesh = impl_from_ID3DXMesh(iface);
 
-    TRACE("(%p)->(%p)\n", This, device);
+    TRACE("iface %p, device %p.\n", iface, device);
 
-    if (device == NULL) return D3DERR_INVALIDCALL;
-    *device = This->device;
-    IDirect3DDevice9_AddRef(This->device);
+    if (!device)
+        return D3DERR_INVALIDCALL;
+    *device = mesh->device;
+    IDirect3DDevice9_AddRef(mesh->device);
 
     return D3D_OK;
 }
 
-static HRESULT WINAPI ID3DXMeshImpl_CloneMeshFVF(struct ID3DXMesh *iface, DWORD options, DWORD fvf,
+static HRESULT WINAPI d3dx9_mesh_CloneMeshFVF(struct ID3DXMesh *iface, DWORD options, DWORD fvf,
         struct IDirect3DDevice9 *device, struct ID3DXMesh **clone_mesh)
 {
-    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
     HRESULT hr;
     D3DVERTEXELEMENT9 declaration[MAX_FVF_DECL_SIZE];
 
-    TRACE("(%p)->(%x,%x,%p,%p)\n", This, options, fvf, device, clone_mesh);
+    TRACE("iface %p, options %#x, fvf %#x, device %p, clone_mesh %p.\n",
+            iface, options, fvf, device, clone_mesh);
 
-    hr = D3DXDeclaratorFromFVF(fvf, declaration);
-    if (FAILED(hr)) return hr;
+    if (FAILED(hr = D3DXDeclaratorFromFVF(fvf, declaration)))
+        return hr;
 
     return iface->lpVtbl->CloneMesh(iface, options, declaration, device, clone_mesh);
 }
@@ -677,11 +679,11 @@ static BOOL declaration_equals(const D3DVERTEXELEMENT9 *declaration1, const D3DV
     return FALSE;
 }
 
-static HRESULT WINAPI ID3DXMeshImpl_CloneMesh(struct ID3DXMesh *iface, DWORD options,
+static HRESULT WINAPI d3dx9_mesh_CloneMesh(struct ID3DXMesh *iface, DWORD options,
         const D3DVERTEXELEMENT9 *declaration, struct IDirect3DDevice9 *device, struct ID3DXMesh **clone_mesh_out)
 {
-    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
-    ID3DXMeshImpl *cloned_this;
+    struct d3dx9_mesh *This = impl_from_ID3DXMesh(iface);
+    struct d3dx9_mesh *cloned_this;
     ID3DXMesh *clone_mesh;
     D3DVERTEXELEMENT9 orig_declaration[MAX_FVF_DECL_SIZE] = { D3DDECL_END() };
     void *data_in, *data_out;
@@ -689,7 +691,8 @@ static HRESULT WINAPI ID3DXMeshImpl_CloneMesh(struct ID3DXMesh *iface, DWORD opt
     HRESULT hr;
     BOOL same_declaration;
 
-    TRACE("(%p)->(%x,%p,%p,%p)\n", This, options, declaration, device, clone_mesh_out);
+    TRACE("iface %p, options %#x, declaration %p, device %p, clone_mesh_out %p.\n",
+            iface, options, declaration, device, clone_mesh_out);
 
     if (!clone_mesh_out)
         return D3DERR_INVALIDCALL;
@@ -773,81 +776,87 @@ error:
     return hr;
 }
 
-static HRESULT WINAPI ID3DXMeshImpl_GetVertexBuffer(struct ID3DXMesh *iface,
+static HRESULT WINAPI d3dx9_mesh_GetVertexBuffer(struct ID3DXMesh *iface,
         struct IDirect3DVertexBuffer9 **vertex_buffer)
 {
-    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
+    struct d3dx9_mesh *mesh = impl_from_ID3DXMesh(iface);
 
-    TRACE("(%p)->(%p)\n", This, vertex_buffer);
+    TRACE("iface %p, vertex_buffer %p.\n", iface, vertex_buffer);
 
-    if (vertex_buffer == NULL) return D3DERR_INVALIDCALL;
-    *vertex_buffer = This->vertex_buffer;
-    IDirect3DVertexBuffer9_AddRef(This->vertex_buffer);
+    if (!vertex_buffer)
+        return D3DERR_INVALIDCALL;
+    *vertex_buffer = mesh->vertex_buffer;
+    IDirect3DVertexBuffer9_AddRef(mesh->vertex_buffer);
 
     return D3D_OK;
 }
 
-static HRESULT WINAPI ID3DXMeshImpl_GetIndexBuffer(struct ID3DXMesh *iface,
+static HRESULT WINAPI d3dx9_mesh_GetIndexBuffer(struct ID3DXMesh *iface,
         struct IDirect3DIndexBuffer9 **index_buffer)
 {
-    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
+    struct d3dx9_mesh *mesh = impl_from_ID3DXMesh(iface);
 
-    TRACE("(%p)->(%p)\n", This, index_buffer);
+    TRACE("iface %p, index_buffer %p.\n", iface, index_buffer);
 
-    if (index_buffer == NULL) return D3DERR_INVALIDCALL;
-    *index_buffer = This->index_buffer;
-    IDirect3DIndexBuffer9_AddRef(This->index_buffer);
+    if (!index_buffer)
+        return D3DERR_INVALIDCALL;
+    *index_buffer = mesh->index_buffer;
+    IDirect3DIndexBuffer9_AddRef(mesh->index_buffer);
 
     return D3D_OK;
 }
 
-static HRESULT WINAPI ID3DXMeshImpl_LockVertexBuffer(ID3DXMesh *iface, DWORD flags, void **data)
+static HRESULT WINAPI d3dx9_mesh_LockVertexBuffer(ID3DXMesh *iface, DWORD flags, void **data)
 {
-    ID3DXMeshImpl *mesh = impl_from_ID3DXMesh(iface);
+    struct d3dx9_mesh *mesh = impl_from_ID3DXMesh(iface);
 
     TRACE("iface %p, flags %#x, data %p.\n", iface, flags, data);
 
     return IDirect3DVertexBuffer9_Lock(mesh->vertex_buffer, 0, 0, data, flags);
 }
 
-static HRESULT WINAPI ID3DXMeshImpl_UnlockVertexBuffer(ID3DXMesh *iface)
+static HRESULT WINAPI d3dx9_mesh_UnlockVertexBuffer(ID3DXMesh *iface)
 {
-    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
+    struct d3dx9_mesh *mesh = impl_from_ID3DXMesh(iface);
 
-    TRACE("(%p)\n", This);
+    TRACE("iface %p.\n", iface);
 
-    return IDirect3DVertexBuffer9_Unlock(This->vertex_buffer);
+    return IDirect3DVertexBuffer9_Unlock(mesh->vertex_buffer);
 }
 
-static HRESULT WINAPI ID3DXMeshImpl_LockIndexBuffer(ID3DXMesh *iface, DWORD flags, void **data)
+static HRESULT WINAPI d3dx9_mesh_LockIndexBuffer(ID3DXMesh *iface, DWORD flags, void **data)
 {
-    ID3DXMeshImpl *mesh = impl_from_ID3DXMesh(iface);
+    struct d3dx9_mesh *mesh = impl_from_ID3DXMesh(iface);
 
     TRACE("iface %p, flags %#x, data %p.\n", iface, flags, data);
 
     return IDirect3DIndexBuffer9_Lock(mesh->index_buffer, 0, 0, data, flags);
 }
 
-static HRESULT WINAPI ID3DXMeshImpl_UnlockIndexBuffer(ID3DXMesh *iface)
+static HRESULT WINAPI d3dx9_mesh_UnlockIndexBuffer(ID3DXMesh *iface)
 {
-    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
+    struct d3dx9_mesh *mesh = impl_from_ID3DXMesh(iface);
 
-    TRACE("(%p)\n", This);
+    TRACE("iface %p.\n", iface);
 
-    return IDirect3DIndexBuffer9_Unlock(This->index_buffer);
+    return IDirect3DIndexBuffer9_Unlock(mesh->index_buffer);
 }
 
-static HRESULT WINAPI ID3DXMeshImpl_GetAttributeTable(ID3DXMesh *iface, D3DXATTRIBUTERANGE *attrib_table, DWORD *attrib_table_size)
+/* FIXME: This looks just wrong, we never check *attrib_table_size before
+ * copying the data. */
+static HRESULT WINAPI d3dx9_mesh_GetAttributeTable(ID3DXMesh *iface,
+        D3DXATTRIBUTERANGE *attrib_table, DWORD *attrib_table_size)
 {
-    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
+    struct d3dx9_mesh *mesh = impl_from_ID3DXMesh(iface);
 
-    TRACE("(%p)->(%p,%p)\n", This, attrib_table, attrib_table_size);
+    TRACE("iface %p, attrib_table %p, attrib_table_size %p.\n",
+            iface, attrib_table, attrib_table_size);
 
     if (attrib_table_size)
-        *attrib_table_size = This->attrib_table_size;
+        *attrib_table_size = mesh->attrib_table_size;
 
     if (attrib_table)
-        CopyMemory(attrib_table, This->attrib_table, This->attrib_table_size * sizeof(*attrib_table));
+        memcpy(attrib_table, mesh->attrib_table, mesh->attrib_table_size * sizeof(*attrib_table));
 
     return D3D_OK;
 }
@@ -946,7 +955,7 @@ static DWORD *generate_identity_point_reps(DWORD num_vertices)
         return id_point_reps;
 }
 
-static HRESULT WINAPI ID3DXMeshImpl_ConvertPointRepsToAdjacency(ID3DXMesh *iface,
+static HRESULT WINAPI d3dx9_mesh_ConvertPointRepsToAdjacency(ID3DXMesh *iface,
         const DWORD *point_reps, DWORD *adjacency)
 {
     HRESULT hr;
@@ -1096,9 +1105,10 @@ static HRESULT propagate_face_vertices(const DWORD *adjacency, DWORD *point_reps
     return D3D_OK;
 }
 
-static HRESULT WINAPI ID3DXMeshImpl_ConvertAdjacencyToPointReps(ID3DXMesh *iface,
+static HRESULT WINAPI d3dx9_mesh_ConvertAdjacencyToPointReps(ID3DXMesh *iface,
         const DWORD *adjacency, DWORD *point_reps)
 {
+    struct d3dx9_mesh *This = impl_from_ID3DXMesh(iface);
     HRESULT hr;
     DWORD face;
     DWORD i;
@@ -1106,8 +1116,6 @@ static HRESULT WINAPI ID3DXMeshImpl_ConvertAdjacencyToPointReps(ID3DXMesh *iface
     WORD *indices_16bit = NULL;
     DWORD *new_indices = NULL;
     const unsigned int VERTS_PER_FACE = 3;
-
-    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 
     TRACE("iface %p, adjacency %p, point_reps %p.\n", iface, adjacency, point_reps);
 
@@ -1218,9 +1226,9 @@ static int compare_vertex_keys(const void *a, const void *b)
     return left->key < right->key ? -1 : 1;
 }
 
-static HRESULT WINAPI ID3DXMeshImpl_GenerateAdjacency(ID3DXMesh *iface, FLOAT epsilon, DWORD *adjacency)
+static HRESULT WINAPI d3dx9_mesh_GenerateAdjacency(ID3DXMesh *iface, float epsilon, DWORD *adjacency)
 {
-    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
+    struct d3dx9_mesh *This = impl_from_ID3DXMesh(iface);
     HRESULT hr;
     BYTE *vertices = NULL;
     const DWORD *indices = NULL;
@@ -1234,7 +1242,7 @@ static HRESULT WINAPI ID3DXMeshImpl_GenerateAdjacency(ID3DXMesh *iface, FLOAT ep
     const FLOAT epsilon_sq = epsilon * epsilon;
     DWORD i;
 
-    TRACE("(%p)->(%f,%p)\n", This, epsilon, adjacency);
+    TRACE("iface %p, epsilon %.8e, adjacency %p.\n", iface, epsilon, adjacency);
 
     if (!adjacency)
         return D3DERR_INVALIDCALL;
@@ -1364,14 +1372,14 @@ cleanup:
     return hr;
 }
 
-static HRESULT WINAPI ID3DXMeshImpl_UpdateSemantics(ID3DXMesh *iface, D3DVERTEXELEMENT9 declaration[MAX_FVF_DECL_SIZE])
+static HRESULT WINAPI d3dx9_mesh_UpdateSemantics(ID3DXMesh *iface, D3DVERTEXELEMENT9 declaration[MAX_FVF_DECL_SIZE])
 {
+    struct d3dx9_mesh *This = impl_from_ID3DXMesh(iface);
     HRESULT hr;
-    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
     UINT vertex_declaration_size;
     int i;
 
-    TRACE("(%p)->(%p)\n", This, declaration);
+    TRACE("iface %p, declaration %p.\n", iface, declaration);
 
     if (!declaration)
     {
@@ -1423,53 +1431,54 @@ static HRESULT WINAPI ID3DXMeshImpl_UpdateSemantics(ID3DXMesh *iface, D3DVERTEXE
     return D3D_OK;
 }
 
-/*** ID3DXMesh ***/
-static HRESULT WINAPI ID3DXMeshImpl_LockAttributeBuffer(ID3DXMesh *iface, DWORD flags, DWORD **data)
+static HRESULT WINAPI d3dx9_mesh_LockAttributeBuffer(ID3DXMesh *iface, DWORD flags, DWORD **data)
 {
-    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
+    struct d3dx9_mesh *mesh = impl_from_ID3DXMesh(iface);
 
-    TRACE("(%p)->(%u,%p)\n", This, flags, data);
+    TRACE("iface %p, flags %#x, data %p.\n", iface, flags, data);
 
-    InterlockedIncrement(&This->attrib_buffer_lock_count);
+    InterlockedIncrement(&mesh->attrib_buffer_lock_count);
 
-    if (!(flags & D3DLOCK_READONLY)) {
-        D3DXATTRIBUTERANGE *attrib_table = This->attrib_table;
-        This->attrib_table_size = 0;
-        This->attrib_table = NULL;
+    if (!(flags & D3DLOCK_READONLY))
+    {
+        D3DXATTRIBUTERANGE *attrib_table = mesh->attrib_table;
+        mesh->attrib_table_size = 0;
+        mesh->attrib_table = NULL;
         HeapFree(GetProcessHeap(), 0, attrib_table);
     }
 
-    *data = This->attrib_buffer;
+    *data = mesh->attrib_buffer;
 
     return D3D_OK;
 }
 
-static HRESULT WINAPI ID3DXMeshImpl_UnlockAttributeBuffer(ID3DXMesh *iface)
+static HRESULT WINAPI d3dx9_mesh_UnlockAttributeBuffer(ID3DXMesh *iface)
 {
-    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
+    struct d3dx9_mesh *mesh = impl_from_ID3DXMesh(iface);
     int lock_count;
 
-    TRACE("(%p)\n", This);
+    TRACE("iface %p.\n", iface);
 
-    lock_count = InterlockedDecrement(&This->attrib_buffer_lock_count);
-
-    if (lock_count < 0) {
-        InterlockedIncrement(&This->attrib_buffer_lock_count);
+    lock_count = InterlockedDecrement(&mesh->attrib_buffer_lock_count);
+    if (lock_count < 0)
+    {
+        InterlockedIncrement(&mesh->attrib_buffer_lock_count);
         return D3DERR_INVALIDCALL;
     }
 
     return D3D_OK;
 }
 
-static HRESULT WINAPI ID3DXMeshImpl_Optimize(ID3DXMesh *iface, DWORD flags, const DWORD *adjacency_in,
+static HRESULT WINAPI d3dx9_mesh_Optimize(ID3DXMesh *iface, DWORD flags, const DWORD *adjacency_in,
         DWORD *adjacency_out, DWORD *face_remap, ID3DXBuffer **vertex_remap, ID3DXMesh **opt_mesh)
 {
-    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
+    struct d3dx9_mesh *mesh = impl_from_ID3DXMesh(iface);
     HRESULT hr;
     D3DVERTEXELEMENT9 declaration[MAX_FVF_DECL_SIZE] = { D3DDECL_END() };
     ID3DXMesh *optimized_mesh;
 
-    TRACE("(%p)->(%x,%p,%p,%p,%p,%p)\n", This, flags, adjacency_in, adjacency_out, face_remap, vertex_remap, opt_mesh);
+    TRACE("iface %p, flags %#x, adjacency_in %p, adjacency_out %p, face_remap %p, vertex_remap %p, opt_mesh %p.\n",
+            iface, flags, adjacency_in, adjacency_out, face_remap, vertex_remap, opt_mesh);
 
     if (!opt_mesh)
         return D3DERR_INVALIDCALL;
@@ -1477,8 +1486,8 @@ static HRESULT WINAPI ID3DXMeshImpl_Optimize(ID3DXMesh *iface, DWORD flags, cons
     hr = iface->lpVtbl->GetDeclaration(iface, declaration);
     if (FAILED(hr)) return hr;
 
-    hr = iface->lpVtbl->CloneMesh(iface, This->options, declaration, This->device, &optimized_mesh);
-    if (FAILED(hr)) return hr;
+    if (FAILED(hr = iface->lpVtbl->CloneMesh(iface, mesh->options, declaration, mesh->device, &optimized_mesh)))
+        return hr;
 
     hr = optimized_mesh->lpVtbl->OptimizeInplace(optimized_mesh, flags, adjacency_in, adjacency_out, face_remap, vertex_remap);
     if (SUCCEEDED(hr))
@@ -1490,7 +1499,8 @@ static HRESULT WINAPI ID3DXMeshImpl_Optimize(ID3DXMesh *iface, DWORD flags, cons
 
 /* Creates a vertex_remap that removes unused vertices.
  * Indices are updated according to the vertex_remap. */
-static HRESULT compact_mesh(ID3DXMeshImpl *This, DWORD *indices, DWORD *new_num_vertices, ID3DXBuffer **vertex_remap)
+static HRESULT compact_mesh(struct d3dx9_mesh *This, DWORD *indices,
+        DWORD *new_num_vertices, ID3DXBuffer **vertex_remap)
 {
     HRESULT hr;
     DWORD *vertex_remap_ptr;
@@ -1599,7 +1609,7 @@ static int attrib_entry_compare(const DWORD **a, const DWORD **b)
 }
 
 /* Create face_remap, a new attribute buffer for attribute sort optimization. */
-static HRESULT remap_faces_for_attrsort(ID3DXMeshImpl *This, const DWORD *indices,
+static HRESULT remap_faces_for_attrsort(struct d3dx9_mesh *This, const DWORD *indices,
         const DWORD *attrib_buffer, DWORD **sorted_attrib_buffer, DWORD **face_remap)
 {
     const DWORD **sorted_attrib_ptr_buffer = NULL;
@@ -1630,10 +1640,10 @@ static HRESULT remap_faces_for_attrsort(ID3DXMeshImpl *This, const DWORD *indice
     return D3D_OK;
 }
 
-static HRESULT WINAPI ID3DXMeshImpl_OptimizeInplace(ID3DXMesh *iface, DWORD flags, const DWORD *adjacency_in,
+static HRESULT WINAPI d3dx9_mesh_OptimizeInplace(ID3DXMesh *iface, DWORD flags, const DWORD *adjacency_in,
         DWORD *adjacency_out, DWORD *face_remap_out, ID3DXBuffer **vertex_remap_out)
 {
-    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
+    struct d3dx9_mesh *This = impl_from_ID3DXMesh(iface);
     void *indices = NULL;
     DWORD *attrib_buffer = NULL;
     HRESULT hr;
@@ -1646,7 +1656,8 @@ static HRESULT WINAPI ID3DXMeshImpl_OptimizeInplace(ID3DXMesh *iface, DWORD flag
     DWORD *sorted_attrib_buffer = NULL;
     DWORD i;
 
-    TRACE("(%p)->(%x,%p,%p,%p,%p)\n", This, flags, adjacency_in, adjacency_out, face_remap_out, vertex_remap_out);
+    TRACE("iface %p, flags %#x, adjacency_in %p, adjacency_out %p, face_remap_out %p, vertex_remap_out %p.\n",
+            iface, flags, adjacency_in, adjacency_out, face_remap_out, vertex_remap_out);
 
     if (!flags)
         return D3DERR_INVALIDCALL;
@@ -1827,10 +1838,10 @@ cleanup:
     return hr;
 }
 
-static HRESULT WINAPI ID3DXMeshImpl_SetAttributeTable(ID3DXMesh *iface,
+static HRESULT WINAPI d3dx9_mesh_SetAttributeTable(ID3DXMesh *iface,
         const D3DXATTRIBUTERANGE *attrib_table, DWORD attrib_table_size)
 {
-    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
+    struct d3dx9_mesh *mesh = impl_from_ID3DXMesh(iface);
     D3DXATTRIBUTERANGE *new_table = NULL;
 
     TRACE("iface %p, attrib_table %p, attrib_table_size %u.\n", iface, attrib_table, attrib_table_size);
@@ -1846,47 +1857,44 @@ static HRESULT WINAPI ID3DXMeshImpl_SetAttributeTable(ID3DXMesh *iface,
     } else if (attrib_table) {
         return D3DERR_INVALIDCALL;
     }
-    HeapFree(GetProcessHeap(), 0, This->attrib_table);
-    This->attrib_table = new_table;
-    This->attrib_table_size = attrib_table_size;
+    HeapFree(GetProcessHeap(), 0, mesh->attrib_table);
+    mesh->attrib_table = new_table;
+    mesh->attrib_table_size = attrib_table_size;
 
     return D3D_OK;
 }
 
 static const struct ID3DXMeshVtbl D3DXMesh_Vtbl =
 {
-    /*** IUnknown methods ***/
-    ID3DXMeshImpl_QueryInterface,
-    ID3DXMeshImpl_AddRef,
-    ID3DXMeshImpl_Release,
-    /*** ID3DXBaseMesh ***/
-    ID3DXMeshImpl_DrawSubset,
-    ID3DXMeshImpl_GetNumFaces,
-    ID3DXMeshImpl_GetNumVertices,
-    ID3DXMeshImpl_GetFVF,
-    ID3DXMeshImpl_GetDeclaration,
-    ID3DXMeshImpl_GetNumBytesPerVertex,
-    ID3DXMeshImpl_GetOptions,
-    ID3DXMeshImpl_GetDevice,
-    ID3DXMeshImpl_CloneMeshFVF,
-    ID3DXMeshImpl_CloneMesh,
-    ID3DXMeshImpl_GetVertexBuffer,
-    ID3DXMeshImpl_GetIndexBuffer,
-    ID3DXMeshImpl_LockVertexBuffer,
-    ID3DXMeshImpl_UnlockVertexBuffer,
-    ID3DXMeshImpl_LockIndexBuffer,
-    ID3DXMeshImpl_UnlockIndexBuffer,
-    ID3DXMeshImpl_GetAttributeTable,
-    ID3DXMeshImpl_ConvertPointRepsToAdjacency,
-    ID3DXMeshImpl_ConvertAdjacencyToPointReps,
-    ID3DXMeshImpl_GenerateAdjacency,
-    ID3DXMeshImpl_UpdateSemantics,
-    /*** ID3DXMesh ***/
-    ID3DXMeshImpl_LockAttributeBuffer,
-    ID3DXMeshImpl_UnlockAttributeBuffer,
-    ID3DXMeshImpl_Optimize,
-    ID3DXMeshImpl_OptimizeInplace,
-    ID3DXMeshImpl_SetAttributeTable
+    d3dx9_mesh_QueryInterface,
+    d3dx9_mesh_AddRef,
+    d3dx9_mesh_Release,
+    d3dx9_mesh_DrawSubset,
+    d3dx9_mesh_GetNumFaces,
+    d3dx9_mesh_GetNumVertices,
+    d3dx9_mesh_GetFVF,
+    d3dx9_mesh_GetDeclaration,
+    d3dx9_mesh_GetNumBytesPerVertex,
+    d3dx9_mesh_GetOptions,
+    d3dx9_mesh_GetDevice,
+    d3dx9_mesh_CloneMeshFVF,
+    d3dx9_mesh_CloneMesh,
+    d3dx9_mesh_GetVertexBuffer,
+    d3dx9_mesh_GetIndexBuffer,
+    d3dx9_mesh_LockVertexBuffer,
+    d3dx9_mesh_UnlockVertexBuffer,
+    d3dx9_mesh_LockIndexBuffer,
+    d3dx9_mesh_UnlockIndexBuffer,
+    d3dx9_mesh_GetAttributeTable,
+    d3dx9_mesh_ConvertPointRepsToAdjacency,
+    d3dx9_mesh_ConvertAdjacencyToPointReps,
+    d3dx9_mesh_GenerateAdjacency,
+    d3dx9_mesh_UpdateSemantics,
+    d3dx9_mesh_LockAttributeBuffer,
+    d3dx9_mesh_UnlockAttributeBuffer,
+    d3dx9_mesh_Optimize,
+    d3dx9_mesh_OptimizeInplace,
+    d3dx9_mesh_SetAttributeTable,
 };
 
 
@@ -2434,7 +2442,7 @@ HRESULT WINAPI D3DXCreateMesh(DWORD numfaces, DWORD numvertices, DWORD options,
     IDirect3DVertexBuffer9 *vertex_buffer;
     IDirect3DIndexBuffer9 *index_buffer;
     DWORD *attrib_buffer;
-    ID3DXMeshImpl *object;
+    struct d3dx9_mesh *object;
     DWORD index_usage = 0;
     D3DPOOL index_pool = D3DPOOL_DEFAULT;
     D3DFORMAT index_format = D3DFMT_INDEX16;
@@ -2442,7 +2450,8 @@ HRESULT WINAPI D3DXCreateMesh(DWORD numfaces, DWORD numvertices, DWORD options,
     D3DPOOL vertex_pool = D3DPOOL_DEFAULT;
     int i;
 
-    TRACE("(%d, %d, %x, %p, %p, %p)\n", numfaces, numvertices, options, declaration, device, mesh);
+    TRACE("numfaces %u, numvertices %u, options %#x, declaration %p, device %p, mesh %p.\n",
+            numfaces, numvertices, options, declaration, device, mesh);
 
     if (numfaces == 0 || numvertices == 0 || declaration == NULL || device == NULL || mesh == NULL ||
         /* D3DXMESH_VB_SHARE is for cloning, and D3DXMESH_USEHWONLY is for ConvertToBlendedMesh */
@@ -2548,7 +2557,7 @@ HRESULT WINAPI D3DXCreateMesh(DWORD numfaces, DWORD numvertices, DWORD options,
     }
 
     attrib_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, numfaces * sizeof(*attrib_buffer));
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ID3DXMeshImpl));
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (object == NULL || attrib_buffer == NULL)
     {
         HeapFree(GetProcessHeap(), 0, object);
@@ -6666,13 +6675,13 @@ HRESULT WINAPI D3DXWeldVertices(ID3DXMesh *mesh, DWORD flags, const D3DXWELDEPSI
     BOOL indices_are_32bit = mesh->lpVtbl->GetOptions(mesh) & D3DXMESH_32BIT;
     DWORD optimize_flags;
     DWORD *point_reps = NULL;
-    ID3DXMeshImpl *This = impl_from_ID3DXMesh(mesh);
+    struct d3dx9_mesh *This = impl_from_ID3DXMesh(mesh);
     DWORD *vertex_face_map = NULL;
     ID3DXBuffer *vertex_remap = NULL;
     BYTE *vertices = NULL;
 
-    TRACE("(%p, %x, %p, %p, %p, %p, %p)\n", mesh, flags, epsilons,
-           adjacency, adjacency_out, face_remap_out, vertex_remap_out);
+    TRACE("mesh %p, flags %#x, epsilons %p, adjacency %p, adjacency_out %p, face_remap_out %p, vertex_remap_out %p.\n",
+            mesh, flags, epsilons, adjacency, adjacency_out, face_remap_out, vertex_remap_out);
 
     if (flags == 0)
     {
