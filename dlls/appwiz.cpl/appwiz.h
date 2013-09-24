@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "wine/unicode.h"
+
 typedef enum {
     ADDON_GECKO,
     ADDON_MONO
@@ -38,6 +40,22 @@ static inline void *heap_realloc(void *mem, size_t len)
 static inline BOOL heap_free(void *mem)
 {
     return HeapFree(GetProcessHeap(), 0, mem);
+}
+
+static inline WCHAR *heap_strdupW(const WCHAR *str)
+{
+    WCHAR *ret;
+
+    if(str) {
+        size_t size = strlenW(str)+1;
+        ret = heap_alloc(size*sizeof(WCHAR));
+        if(ret)
+            memcpy(ret, str, size*sizeof(WCHAR));
+    }else {
+        ret = NULL;
+    }
+
+    return ret;
 }
 
 static inline WCHAR *heap_strdupAtoW(const char *str)

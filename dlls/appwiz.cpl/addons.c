@@ -48,7 +48,6 @@
 #include "res.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "wine/library.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(appwizcpl);
@@ -107,6 +106,7 @@ static const addon_info_t *addon;
 static HWND install_dialog = NULL;
 static LPWSTR url = NULL;
 static IBinding *dwl_binding;
+static WCHAR *msi_file;
 
 static WCHAR * (CDECL *p_wine_get_dos_file_name)(const char*);
 static const WCHAR kernel32_dllW[] = {'k','e','r','n','e','l','3','2','.','d','l','l',0};
@@ -134,9 +134,11 @@ static BOOL sha_check(const WCHAR *file_name)
     SHA_CTX ctx;
     DWORD size, i;
 
-    file = CreateFileW(file_name, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, NULL);
-    if(file == INVALID_HANDLE_VALUE)
+    file = CreateFileW(file_name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, NULL);
+    if(file == INVALID_HANDLE_VALUE) {
+        WARN("Could not open file: %u\n", GetLastError());
         return FALSE;
+    }
 
     size = GetFileSize(file, NULL);
 
@@ -185,8 +187,6 @@ enum install_res {
 static enum install_res install_file(const WCHAR *file_name)
 {
     ULONG res;
-
-    EnableWindow(GetDlgItem(install_dialog, IDCANCEL), 0);
 
     res = MsiInstallProductW(file_name, NULL);
     if(res != ERROR_SUCCESS) {
@@ -488,23 +488,57 @@ static HRESULT WINAPI InstallCallback_OnStopBinding(IBindStatusCallback *iface,
         return S_OK;
     }
 
+    if(!msi_file) {
+        ERR("No MSI file\n");
+        return E_FAIL;
+    }
+
     set_status(IDS_INSTALLING);
+    EnableWindow(GetDlgItem(install_dialog, IDCANCEL), 0);
+
+    if(sha_check(msi_file)) {
+        WCHAR *cache_file_name;
+
+        install_file(msi_file);
+
+        cache_file_name = get_cache_file_name(TRUE);
+        if(cache_file_name) {
+            MoveFileW(msi_file, cache_file_name);
+            heap_free(cache_file_name);
+        }
+    }else {
+        WCHAR message[256];
+
+        if(LoadStringW(hInst, IDS_INVALID_SHA, message, sizeof(message)/sizeof(WCHAR)))
+            MessageBoxW(NULL, message, NULL, MB_ICONERROR);
+    }
+
+    DeleteFileW(msi_file);
+    heap_free(msi_file);
+    msi_file = NULL;
+
+    EndDialog(install_dialog, 0);
     return S_OK;
 }
 
 static HRESULT WINAPI InstallCallback_GetBindInfo(IBindStatusCallback *iface,
         DWORD* grfBINDF, BINDINFO* pbindinfo)
 {
-    /* FIXME */
-    *grfBINDF = 0;
+    TRACE("()\n");
+
+    *grfBINDF = BINDF_ASYNCHRONOUS;
     return S_OK;
 }
 
 static HRESULT WINAPI InstallCallback_OnDataAvailable(IBindStatusCallback *iface, DWORD grfBSCF,
         DWORD dwSize, FORMATETC* pformatetc, STGMEDIUM* pstgmed)
 {
-    ERR("\n");
-    return E_NOTIMPL;
+    if(!msi_file) {
+        msi_file = heap_strdupW(pstgmed->u.lpszFileName);
+        TRACE("got file name %s\n", debugstr_w(msi_file));
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI InstallCallback_OnObjectAvailable(IBindStatusCallback *iface,
@@ -578,42 +612,29 @@ found:
     return url;
 }
 
-static DWORD WINAPI download_proc(PVOID arg)
+static BOOL start_download(void)
 {
-    WCHAR tmp_dir[MAX_PATH], tmp_file[MAX_PATH];
+    IBindCtx *bind_ctx;
+    IMoniker *mon;
+    IUnknown *tmp;
     HRESULT hres;
 
-    GetTempPathW(sizeof(tmp_dir)/sizeof(WCHAR), tmp_dir);
-    GetTempFileNameW(tmp_dir, NULL, 0, tmp_file);
+    hres = CreateURLMoniker(NULL, url, &mon);
+    if(FAILED(hres))
+        return FALSE;
 
-    TRACE("using temp file %s\n", debugstr_w(tmp_file));
-
-    hres = URLDownloadToFileW(NULL, url, tmp_file, 0, &InstallCallback);
-    if(FAILED(hres)) {
-        ERR("URLDownloadToFile failed: %08x\n", hres);
-        return 0;
+    hres = CreateAsyncBindCtx(0, &InstallCallback, NULL, &bind_ctx);
+    if(SUCCEEDED(hres)) {
+        hres = IMoniker_BindToStorage(mon, bind_ctx, NULL, &IID_IUnknown, (void**)&tmp);
+        IBindCtx_Release(bind_ctx);
     }
+    IMoniker_Release(mon);
+    if(FAILED(hres))
+        return FALSE;
 
-    if(sha_check(tmp_file)) {
-        WCHAR *cache_file_name;
-
-        install_file(tmp_file);
-
-        cache_file_name = get_cache_file_name(TRUE);
-        if(cache_file_name) {
-            MoveFileW(tmp_file, cache_file_name);
-            heap_free(cache_file_name);
-        }
-    }else {
-        WCHAR message[256];
-
-        if(LoadStringW(hInst, IDS_INVALID_SHA, message, sizeof(message)/sizeof(WCHAR)))
-            MessageBoxW(NULL, message, NULL, MB_ICONERROR);
-    }
-
-    DeleteFileW(tmp_file);
-    EndDialog(install_dialog, 0);
-    return 0;
+    if(tmp)
+        IUnknown_Release(tmp);
+    return TRUE;
 }
 
 static void run_winebrowser(const WCHAR *url)
@@ -683,8 +704,8 @@ static INT_PTR CALLBACK installer_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
         case ID_DWL_INSTALL:
             ShowWindow(GetDlgItem(hwnd, ID_DWL_PROGRESS), SW_SHOW);
             EnableWindow(GetDlgItem(hwnd, ID_DWL_INSTALL), 0);
-            CloseHandle( CreateThread(NULL, 0, download_proc, NULL, 0, NULL));
-            return FALSE;
+            if(!start_download())
+                EndDialog(install_dialog, 0);
         }
     }
 
