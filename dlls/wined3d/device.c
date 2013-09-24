@@ -2244,7 +2244,7 @@ struct wined3d_sampler * CDECL wined3d_device_get_vs_sampler(const struct wined3
     return device->state.vs_sampler[idx];
 }
 
-void device_invalidate_shader_constants(const struct wined3d_device *device, DWORD mask)
+static void device_invalidate_shader_constants(const struct wined3d_device *device, DWORD mask)
 {
     UINT i;
 
