@@ -1606,8 +1606,8 @@
 @ cdecl -arch=win64 ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@_N@Z(ptr long) basic_ostream_char_print_bool
 @ thiscall -arch=i386 ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEAAV01@F@Z(ptr long) basic_ostream_short_print_short
 @ cdecl -arch=win64 ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAAAEAV01@F@Z(ptr long) basic_ostream_short_print_short
-@ stub -arch=win32 ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEAAV01@G@Z
-@ stub -arch=win64 ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAAAEAV01@G@Z
+@ thiscall -arch=win32 ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEAAV01@G@Z(ptr long) basic_ostream_short_print_ushort
+@ cdecl -arch=win64 ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAAAEAV01@G@Z(ptr long) basic_ostream_short_print_ushort
 @ thiscall -arch=i386 ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEAAV01@H@Z(ptr long) basic_ostream_short_print_int
 @ cdecl -arch=win64 ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAAAEAV01@H@Z(ptr long) basic_ostream_short_print_int
 @ thiscall -arch=i386 ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEAAV01@I@Z(ptr long) basic_ostream_short_print_uint
