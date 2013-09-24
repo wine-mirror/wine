@@ -486,12 +486,8 @@ BOOL WINAPI SHWaitForFileToOpen(
 	DWORD dwFlags,
 	DWORD dwTimeout);
 
-WORD WINAPI ArrangeWindows(
-	HWND hwndParent,
-	DWORD dwReserved,
-	LPCRECT lpRect,
-	WORD cKids,
-	CONST HWND * lpKids);
+WORD WINAPI ArrangeWindows(HWND hwndParent, DWORD dwReserved, const RECT *lpRect,
+        WORD cKids, const HWND *lpKids);
 
 /* RegisterShellHook types */
 #define RSH_DEREGISTER        0

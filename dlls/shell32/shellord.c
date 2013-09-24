@@ -596,12 +596,8 @@ HRESULT WINAPI SHDoDragDrop(
  * ArrangeWindows				[SHELL32.184]
  *
  */
-WORD WINAPI ArrangeWindows(
-	HWND hwndParent,
-	DWORD dwReserved,
-	LPCRECT lpRect,
-	WORD cKids,
-	CONST HWND * lpKids)
+WORD WINAPI ArrangeWindows(HWND hwndParent, DWORD dwReserved, const RECT *lpRect,
+        WORD cKids, const HWND *lpKids)
 {
     FIXME("(%p 0x%08x %p 0x%04x %p):stub.\n",
 	   hwndParent, dwReserved, lpRect, cKids, lpKids);
