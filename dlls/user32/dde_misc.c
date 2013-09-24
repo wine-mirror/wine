@@ -241,7 +241,7 @@ BOOL WINAPI ImpersonateDdeClientWindow(HWND hWndClient, HWND hWndServer)
  *            DdeSetQualityOfService (USER32.@)
  */
 
-BOOL WINAPI DdeSetQualityOfService(HWND hwndClient, CONST SECURITY_QUALITY_OF_SERVICE *pqosNew,
+BOOL WINAPI DdeSetQualityOfService(HWND hwndClient, const SECURITY_QUALITY_OF_SERVICE *pqosNew,
 				   PSECURITY_QUALITY_OF_SERVICE pqosPrev)
 {
      FIXME("(%p %p %p): stub\n", hwndClient, pqosNew, pqosPrev);

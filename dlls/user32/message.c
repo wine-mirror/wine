@@ -4080,7 +4080,7 @@ BOOL WINAPI WaitMessage(void)
 /***********************************************************************
  *		MsgWaitForMultipleObjectsEx   (USER32.@)
  */
-DWORD WINAPI MsgWaitForMultipleObjectsEx( DWORD count, CONST HANDLE *pHandles,
+DWORD WINAPI MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *pHandles,
                                           DWORD timeout, DWORD mask, DWORD flags )
 {
     HANDLE handles[MAXIMUM_WAIT_OBJECTS];
@@ -4114,7 +4114,7 @@ DWORD WINAPI MsgWaitForMultipleObjectsEx( DWORD count, CONST HANDLE *pHandles,
 /***********************************************************************
  *		MsgWaitForMultipleObjects (USER32.@)
  */
-DWORD WINAPI MsgWaitForMultipleObjects( DWORD count, CONST HANDLE *handles,
+DWORD WINAPI MsgWaitForMultipleObjects( DWORD count, const HANDLE *handles,
                                         BOOL wait_all, DWORD timeout, DWORD mask )
 {
     return MsgWaitForMultipleObjectsEx( count, handles, timeout, mask,

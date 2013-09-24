@@ -331,7 +331,7 @@ static void test_accel2(void)
 }
 
 static void test_PrivateExtractIcons(void) {
-    CONST CHAR szShell32Dll[] = "shell32.dll";
+    const CHAR szShell32Dll[] = "shell32.dll";
     HICON ahIcon[256];
     UINT aIconId[256];
     UINT cIcons, cIcons2;
