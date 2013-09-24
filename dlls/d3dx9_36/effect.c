@@ -109,9 +109,17 @@ struct d3dx_parameter
     UINT member_count;
     DWORD flags;
     UINT bytes;
+    DWORD object_id;
 
     struct d3dx_parameter *annotations;
     struct d3dx_parameter *members;
+};
+
+struct d3dx_object
+{
+    UINT size;
+    void *data;
+    struct d3dx_parameter *param;
 };
 
 struct d3dx_state
@@ -154,9 +162,11 @@ struct d3dx9_base_effect
 
     UINT parameter_count;
     UINT technique_count;
+    UINT object_count;
 
     struct d3dx_parameter *parameters;
     struct d3dx_technique *techniques;
+    struct d3dx_object *objects;
 };
 
 struct ID3DXEffectImpl
@@ -187,8 +197,9 @@ static struct d3dx_parameter *get_parameter_by_name(struct d3dx9_base_effect *ba
         struct d3dx_parameter *parameter, const char *name);
 static struct d3dx_parameter *get_annotation_by_name(UINT count, struct d3dx_parameter *parameters,
         const char *name);
-static HRESULT d3dx9_parse_state(struct d3dx_state *state, const char *data, const char **ptr, D3DXHANDLE *objects);
-static void free_parameter_state(struct d3dx_parameter *param, BOOL element, BOOL child, enum STATE_TYPE st);
+static HRESULT d3dx9_parse_state(struct d3dx_state *state, const char *data, const char **ptr,
+        struct d3dx_object *objects);
+static void free_parameter(struct d3dx_parameter *param, BOOL element, BOOL child);
 
 static const struct
 {
@@ -412,11 +423,6 @@ static void skip_dword_unknown(const char **ptr, unsigned int count)
     }
 }
 
-static inline struct d3dx_parameter *get_parameter_struct(D3DXHANDLE handle)
-{
-    return (struct d3dx_parameter *) handle;
-}
-
 static inline D3DXHANDLE get_parameter_handle(struct d3dx_parameter *parameter)
 {
     return (D3DXHANDLE) parameter;
@@ -552,7 +558,13 @@ static struct d3dx_parameter *get_valid_parameter(struct d3dx9_base_effect *base
 
 static void free_state(struct d3dx_state *state)
 {
-    free_parameter_state(state->parameter, FALSE, FALSE, state->type);
+    free_parameter(state->parameter, FALSE, FALSE);
+    HeapFree(GetProcessHeap(), 0, state->parameter);
+}
+
+static void free_object(struct d3dx_object *object)
+{
+    HeapFree(GetProcessHeap(), 0, object->data);
 }
 
 static void free_sampler(struct d3dx_sampler *sampler)
@@ -568,15 +580,10 @@ static void free_sampler(struct d3dx_sampler *sampler)
 
 static void free_parameter(struct d3dx_parameter *param, BOOL element, BOOL child)
 {
-    free_parameter_state(param, element, child, ST_CONSTANT);
-}
-
-static void free_parameter_state(struct d3dx_parameter *param, BOOL element, BOOL child, enum STATE_TYPE st)
-{
     unsigned int i;
 
-    TRACE("Free parameter %p, name %s, type %s, child %s, state_type %x\n", param, param->name,
-            debug_d3dxparameter_type(param->type), child ? "yes" : "no", st);
+    TRACE("Free parameter %p, name %s, type %s, child %s\n", param, param->name,
+            debug_d3dxparameter_type(param->type), child ? "yes" : "no");
 
     if (!param)
         return;
@@ -604,8 +611,6 @@ static void free_parameter_state(struct d3dx_parameter *param, BOOL element, BOO
         switch (param->type)
         {
             case D3DXPT_STRING:
-                HeapFree(GetProcessHeap(), 0, *(char **)param->data);
-                if (!child) HeapFree(GetProcessHeap(), 0, param->data);
                 break;
 
             case D3DXPT_TEXTURE:
@@ -615,15 +620,7 @@ static void free_parameter_state(struct d3dx_parameter *param, BOOL element, BOO
             case D3DXPT_TEXTURECUBE:
             case D3DXPT_PIXELSHADER:
             case D3DXPT_VERTEXSHADER:
-                if (st == ST_CONSTANT)
-                {
-                    if (*(IUnknown **)param->data) IUnknown_Release(*(IUnknown **)param->data);
-                }
-                else
-                {
-                    HeapFree(GetProcessHeap(), 0, *(char **)param->data);
-                }
-                if (!child) HeapFree(GetProcessHeap(), 0, param->data);
+                if (*(IUnknown **)param->data) IUnknown_Release(*(IUnknown **)param->data);
                 break;
 
             case D3DXPT_SAMPLER:
@@ -631,16 +628,7 @@ static void free_parameter_state(struct d3dx_parameter *param, BOOL element, BOO
             case D3DXPT_SAMPLER2D:
             case D3DXPT_SAMPLER3D:
             case D3DXPT_SAMPLERCUBE:
-                if (st == ST_CONSTANT)
-                {
-                    free_sampler((struct d3dx_sampler *)param->data);
-                }
-                else
-                {
-                    HeapFree(GetProcessHeap(), 0, *(char **)param->data);
-                }
-                /* samplers have always own data, so free that */
-                HeapFree(GetProcessHeap(), 0, param->data);
+                free_sampler((struct d3dx_sampler *)param->data);
                 break;
 
             default:
@@ -648,16 +636,10 @@ static void free_parameter_state(struct d3dx_parameter *param, BOOL element, BOO
                 break;
         }
     }
-    else
+
+    if (!child)
     {
-        if (!child)
-        {
-            if (st != ST_CONSTANT)
-            {
-                HeapFree(GetProcessHeap(), 0, *(char **)param->data);
-            }
-            HeapFree(GetProcessHeap(), 0, param->data);
-        }
+        HeapFree(GetProcessHeap(), 0, param->data);
     }
 
     /* only the parent has to release name and semantic */
@@ -746,6 +728,16 @@ static void d3dx9_base_effect_cleanup(struct d3dx9_base_effect *base)
             free_technique(&base->techniques[i]);
         HeapFree(GetProcessHeap(), 0, base->techniques);
         base->techniques = NULL;
+    }
+
+    if (base->objects)
+    {
+        for (i = 0; i < base->object_count; ++i)
+        {
+            free_object(&base->objects[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, base->objects);
+        base->objects = NULL;
     }
 }
 
@@ -4149,17 +4141,17 @@ static const struct ID3DXEffectCompilerVtbl ID3DXEffectCompiler_Vtbl =
     ID3DXEffectCompilerImpl_CompileShader,
 };
 
-static HRESULT d3dx9_parse_sampler(struct d3dx_sampler *sampler, const char *data, const char **ptr, D3DXHANDLE *objects)
+static HRESULT d3dx9_parse_sampler(struct d3dx_sampler *sampler, const char *data, const char **ptr,
+        struct d3dx_object *objects)
 {
     HRESULT hr;
     UINT i;
-    struct d3dx_state *states;
 
     read_dword(ptr, &sampler->state_count);
     TRACE("Count: %u\n", sampler->state_count);
 
-    states = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*states) * sampler->state_count);
-    if (!states)
+    sampler->states = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*sampler->states) * sampler->state_count);
+    if (!sampler->states)
     {
         ERR("Out of memory\n");
         return E_OUTOFMEMORY;
@@ -4167,7 +4159,7 @@ static HRESULT d3dx9_parse_sampler(struct d3dx_sampler *sampler, const char *dat
 
     for (i = 0; i < sampler->state_count; ++i)
     {
-        hr = d3dx9_parse_state(&states[i], data, ptr, objects);
+        hr = d3dx9_parse_state(&sampler->states[i], data, ptr, objects);
         if (hr != D3D_OK)
         {
             WARN("Failed to parse state %u\n", i);
@@ -4175,28 +4167,26 @@ static HRESULT d3dx9_parse_sampler(struct d3dx_sampler *sampler, const char *dat
         }
     }
 
-    sampler->states = states;
-
     return D3D_OK;
 
 err_out:
 
     for (i = 0; i < sampler->state_count; ++i)
     {
-        free_state(&states[i]);
+        free_state(&sampler->states[i]);
     }
-
-    HeapFree(GetProcessHeap(), 0, states);
+    HeapFree(GetProcessHeap(), 0, sampler->states);
+    sampler->states = NULL;
 
     return hr;
 }
 
-static HRESULT d3dx9_parse_value(struct d3dx_parameter *param, void *value, const char *data, const char **ptr, D3DXHANDLE *objects)
+static HRESULT d3dx9_parse_value(struct d3dx_parameter *param, void *value, const char *data,
+        const char **ptr, struct d3dx_object *objects)
 {
     unsigned int i;
     HRESULT hr;
     UINT old_size = 0;
-    DWORD id;
 
     if (param->element_count)
     {
@@ -4257,9 +4247,9 @@ static HRESULT d3dx9_parse_value(struct d3dx_parameter *param, void *value, cons
                 case D3DXPT_TEXTURECUBE:
                 case D3DXPT_PIXELSHADER:
                 case D3DXPT_VERTEXSHADER:
-                    read_dword(ptr, &id);
-                    TRACE("Id: %u\n", id);
-                    objects[id] = get_parameter_handle(param);
+                    read_dword(ptr, &param->object_id);
+                    TRACE("Id: %u\n", param->object_id);
+                    objects[param->object_id].param = param;
                     param->data = value;
                     break;
 
@@ -4301,7 +4291,8 @@ static HRESULT d3dx9_parse_value(struct d3dx_parameter *param, void *value, cons
     return D3D_OK;
 }
 
-static HRESULT d3dx9_parse_init_value(struct d3dx_parameter *param, const char *data, const char *ptr, D3DXHANDLE *objects)
+static HRESULT d3dx9_parse_init_value(struct d3dx_parameter *param, const char *data, const char *ptr,
+        struct d3dx_object *objects)
 {
     UINT size = param->bytes;
     HRESULT hr;
@@ -4374,80 +4365,25 @@ static HRESULT d3dx9_parse_name(char **name, const char *ptr)
     return D3D_OK;
 }
 
-static HRESULT d3dx9_copy_data(char **str, const char **ptr)
+static HRESULT d3dx9_copy_data(struct d3dx_object *object, const char **ptr)
 {
-    DWORD size;
+    if (object->size || object->data)
+        FIXME("Object already initialized!\n");
 
-    read_dword(ptr, &size);
-    TRACE("Data size: %#x\n", size);
+    read_dword(ptr, &object->size);
+    TRACE("Data size: %#x\n", object->size);
 
-    *str = HeapAlloc(GetProcessHeap(), 0, size);
-    if (!*str)
+    object->data = HeapAlloc(GetProcessHeap(), 0, object->size);
+    if (!object->data)
     {
         ERR("Failed to allocate name memory.\n");
         return E_OUTOFMEMORY;
     }
 
-    TRACE("Data: %s.\n", debugstr_an(*ptr, size));
-    memcpy(*str, *ptr, size);
+    TRACE("Data: %s.\n", debugstr_an(*ptr, object->size));
+    memcpy(object->data, *ptr, object->size);
 
-    *ptr += ((size + 3) & ~3);
-
-    return D3D_OK;
-}
-
-static HRESULT d3dx9_parse_data(struct d3dx_parameter *param, const char **ptr, struct IDirect3DDevice9 *device)
-{
-    DWORD size;
-    HRESULT hr;
-
-    TRACE("Parse data for parameter %s, type %s\n", debugstr_a(param->name), debug_d3dxparameter_type(param->type));
-
-    read_dword(ptr, &size);
-    TRACE("Data size: %#x\n", size);
-
-    if (!size)
-    {
-        TRACE("Size is 0\n");
-        *(void **)param->data = NULL;
-        return D3D_OK;
-    }
-
-    switch (param->type)
-    {
-        case D3DXPT_STRING:
-            /* re-read with size (sizeof(DWORD) = 4) */
-            hr = d3dx9_parse_name((char **)param->data, *ptr - 4);
-            if (hr != D3D_OK)
-            {
-                WARN("Failed to parse string data\n");
-                return hr;
-            }
-            break;
-
-        case D3DXPT_VERTEXSHADER:
-            if (FAILED(hr = IDirect3DDevice9_CreateVertexShader(device, (DWORD *)*ptr, param->data)))
-            {
-                WARN("Failed to create vertex shader\n");
-                return hr;
-            }
-            break;
-
-        case D3DXPT_PIXELSHADER:
-            if (FAILED(hr = IDirect3DDevice9_CreatePixelShader(device, (DWORD *)*ptr, param->data)))
-            {
-                WARN("Failed to create pixel shader\n");
-                return hr;
-            }
-            break;
-
-        default:
-            FIXME("Unhandled type %s\n", debug_d3dxparameter_type(param->type));
-            break;
-    }
-
-
-    *ptr += ((size + 3) & ~3);
+    *ptr += ((object->size + 3) & ~3);
 
     return D3D_OK;
 }
@@ -4645,7 +4581,8 @@ err_out:
     return hr;
 }
 
-static HRESULT d3dx9_parse_effect_annotation(struct d3dx_parameter *anno, const char *data, const char **ptr, D3DXHANDLE *objects)
+static HRESULT d3dx9_parse_effect_annotation(struct d3dx_parameter *anno, const char *data,
+        const char **ptr, struct d3dx_object *objects)
 {
     DWORD offset;
     const char *ptr2;
@@ -4675,7 +4612,8 @@ static HRESULT d3dx9_parse_effect_annotation(struct d3dx_parameter *anno, const 
     return D3D_OK;
 }
 
-static HRESULT d3dx9_parse_state(struct d3dx_state *state, const char *data, const char **ptr, D3DXHANDLE *objects)
+static HRESULT d3dx9_parse_state(struct d3dx_state *state, const char *data, const char **ptr,
+        struct d3dx_object *objects)
 {
     DWORD offset;
     const char *ptr2;
@@ -4724,7 +4662,8 @@ err_out:
     return hr;
 }
 
-static HRESULT d3dx9_parse_effect_parameter(struct d3dx_parameter *param, const char *data, const char **ptr, D3DXHANDLE *objects)
+static HRESULT d3dx9_parse_effect_parameter(struct d3dx_parameter *param, const char *data,
+        const char **ptr, struct d3dx_object *objects)
 {
     DWORD offset;
     HRESULT hr;
@@ -4795,7 +4734,8 @@ err_out:
     return hr;
 }
 
-static HRESULT d3dx9_parse_effect_pass(struct d3dx_pass *pass, const char *data, const char **ptr, D3DXHANDLE *objects)
+static HRESULT d3dx9_parse_effect_pass(struct d3dx_pass *pass, const char *data, const char **ptr,
+        struct d3dx_object *objects)
 {
     DWORD offset;
     HRESULT hr;
@@ -4890,7 +4830,8 @@ err_out:
     return hr;
 }
 
-static HRESULT d3dx9_parse_effect_technique(struct d3dx_technique *technique, const char *data, const char **ptr, D3DXHANDLE *objects)
+static HRESULT d3dx9_parse_effect_technique(struct d3dx_technique *technique, const char *data,
+        const char **ptr, struct d3dx_object *objects)
 {
     DWORD offset;
     HRESULT hr;
@@ -5068,6 +5009,9 @@ static HRESULT d3dx9_parse_resource(struct d3dx9_base_effect *base, const char *
 
     param = state->parameter;
 
+    /*
+     * TODO: Do we need to create the shader/string here or later when we access them?
+     */
     switch (usage)
     {
         case 0:
@@ -5077,7 +5021,7 @@ static HRESULT d3dx9_parse_resource(struct d3dx9_base_effect *base, const char *
                 case D3DXPT_VERTEXSHADER:
                 case D3DXPT_PIXELSHADER:
                     state->type = ST_CONSTANT;
-                    hr = d3dx9_parse_data(param, ptr, base->effect->device);
+                    hr = d3dx9_copy_data(&base->objects[param->object_id], ptr);
                     break;
 
                 case D3DXPT_BOOL:
@@ -5085,7 +5029,7 @@ static HRESULT d3dx9_parse_resource(struct d3dx9_base_effect *base, const char *
                 case D3DXPT_FLOAT:
                 case D3DXPT_STRING:
                     state->type = ST_FXLC;
-                    hr = d3dx9_copy_data(param->data, ptr);
+                    hr = d3dx9_copy_data(&base->objects[param->object_id], ptr);
                     break;
 
                 default:
@@ -5096,11 +5040,7 @@ static HRESULT d3dx9_parse_resource(struct d3dx9_base_effect *base, const char *
 
         case 1:
             state->type = ST_PARAMETER;
-            hr = d3dx9_copy_data(param->data, ptr);
-            if (hr == D3D_OK)
-            {
-                TRACE("Mapping to parameter %s\n", *(char **)param->data);
-            }
+            hr = d3dx9_copy_data(&base->objects[param->object_id], ptr);
             break;
 
         default:
@@ -5114,8 +5054,7 @@ static HRESULT d3dx9_parse_resource(struct d3dx9_base_effect *base, const char *
 static HRESULT d3dx9_parse_effect(struct d3dx9_base_effect *base, const char *data, UINT data_size, DWORD start)
 {
     const char *ptr = data + start;
-    D3DXHANDLE *objects = NULL;
-    UINT stringcount, objectcount, resourcecount;
+    UINT stringcount, resourcecount;
     HRESULT hr;
     UINT i;
 
@@ -5127,11 +5066,11 @@ static HRESULT d3dx9_parse_effect(struct d3dx9_base_effect *base, const char *da
 
     skip_dword_unknown(&ptr, 1);
 
-    read_dword(&ptr, &objectcount);
-    TRACE("Object count: %u\n", objectcount);
+    read_dword(&ptr, &base->object_count);
+    TRACE("Object count: %u\n", base->object_count);
 
-    objects = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*objects) * objectcount);
-    if (!objects)
+    base->objects = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*base->objects) * base->object_count);
+    if (!base->objects)
     {
         ERR("Out of memory\n");
         hr = E_OUTOFMEMORY;
@@ -5151,7 +5090,7 @@ static HRESULT d3dx9_parse_effect(struct d3dx9_base_effect *base, const char *da
 
         for (i = 0; i < base->parameter_count; ++i)
         {
-            hr = d3dx9_parse_effect_parameter(&base->parameters[i], data, &ptr, objects);
+            hr = d3dx9_parse_effect_parameter(&base->parameters[i], data, &ptr, base->objects);
             if (hr != D3D_OK)
             {
                 WARN("Failed to parse parameter %u\n", i);
@@ -5173,7 +5112,7 @@ static HRESULT d3dx9_parse_effect(struct d3dx9_base_effect *base, const char *da
 
         for (i = 0; i < base->technique_count; ++i)
         {
-            hr = d3dx9_parse_effect_technique(&base->techniques[i], data, &ptr, objects);
+            hr = d3dx9_parse_effect_technique(&base->techniques[i], data, &ptr, base->objects);
             if (hr != D3D_OK)
             {
                 WARN("Failed to parse technique %u\n", i);
@@ -5191,14 +5130,11 @@ static HRESULT d3dx9_parse_effect(struct d3dx9_base_effect *base, const char *da
     for (i = 0; i < stringcount; ++i)
     {
         DWORD id;
-        struct d3dx_parameter *param;
 
         read_dword(&ptr, &id);
         TRACE("Id: %u\n", id);
 
-        param = get_parameter_struct(objects[id]);
-
-        hr = d3dx9_parse_data(param, &ptr, base->effect->device);
+        hr = d3dx9_copy_data(&base->objects[id], &ptr);
         if (hr != D3D_OK)
         {
             WARN("Failed to parse data %u\n", i);
@@ -5217,8 +5153,6 @@ static HRESULT d3dx9_parse_effect(struct d3dx9_base_effect *base, const char *da
             goto err_out;
         }
     }
-
-    HeapFree(GetProcessHeap(), 0, objects);
 
     return D3D_OK;
 
@@ -5242,7 +5176,15 @@ err_out:
         base->parameters = NULL;
     }
 
-    HeapFree(GetProcessHeap(), 0, objects);
+    if (base->objects)
+    {
+        for (i = 0; i < base->object_count; ++i)
+        {
+            free_object(&base->objects[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, base->objects);
+        base->objects = NULL;
+    }
 
     return hr;
 }
