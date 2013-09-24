@@ -664,7 +664,7 @@ static HMMIO MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo, DWORD dwOpenFlags,
         wm->bBufferLoaded = TRUE;
 
     /* see mmioDosIOProc for that one */
-    wm->info.adwInfo[0] = refmminfo->adwInfo[0];
+    memcpy( wm->info.adwInfo, refmminfo->adwInfo, sizeof(wm->info.adwInfo) );
 
     /* call IO proc to actually open file */
     refmminfo->wErrorRet = send_message(wm->ioProc, &wm->info, MMIOM_OPEN,
