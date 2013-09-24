@@ -536,6 +536,20 @@ HRESULT WINAPI LoadRegTypeLib(
     {
         res= LoadTypeLib(bstr, ppTLib);
         SysFreeString(bstr);
+
+        if (*ppTLib)
+        {
+            TLIBATTR *attr;
+
+            res = ITypeLib_GetLibAttr(*ppTLib, &attr);
+            if (res == S_OK && (attr->wMajorVerNum != wVerMajor || attr->wMinorVerNum < wVerMinor))
+            {
+                ITypeLib_ReleaseTLibAttr(*ppTLib, attr);
+                ITypeLib_Release(*ppTLib);
+                *ppTLib = NULL;
+                res = TYPE_E_LIBNOTREGISTERED;
+            }
+        }
     }
 
     TRACE("(IID: %s) load %s (%p)\n",debugstr_guid(rguid), SUCCEEDED(res)? "SUCCESS":"FAILED", *ppTLib);
