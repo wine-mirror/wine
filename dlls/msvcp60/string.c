@@ -1809,9 +1809,15 @@ static MSVCP_size_t char_traits_wchar_length(const wchar_t *str)
     return wcslen((WCHAR*)str);
 }
 
-static wchar_t* char_traits_wchar_assignn(wchar_t *str, MSVCP_size_t num, wchar_t c)
+static wchar_t* char_traits_wchar_assignn(wchar_t *str,
+        MSVCP_size_t num, wchar_t c)
 {
-    return memset(str, c, num);
+    MSVCP_size_t i;
+
+    for(i=0; i<num; i++)
+        str[i] = c;
+
+    return str;
 }
 
 static int char_traits_wchar_compare(const wchar_t *s1,
