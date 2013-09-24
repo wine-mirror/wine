@@ -4702,19 +4702,24 @@ static void test_LoadRegTypeLib(void)
 
     path = NULL;
     hr = QueryPathOfRegTypeLib(&LIBID_TestTypelib, 2, 0, LOCALE_NEUTRAL, &path);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
     SysFreeString(path);
 
     path = NULL;
     hr = QueryPathOfRegTypeLib(&LIBID_TestTypelib, 2, 0, lcid_en, &path);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
     SysFreeString(path);
 
     path = NULL;
     hr = QueryPathOfRegTypeLib(&LIBID_TestTypelib, 2, 0, lcid_ru, &path);
-todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    SysFreeString(path);
+
+    hr = QueryPathOfRegTypeLib(&LIBID_TestTypelib, 2, 8, LOCALE_NEUTRAL, &path);
+    ok(hr == TYPE_E_LIBNOTREGISTERED || broken(hr == S_OK) /* winxp */, "got 0x%08x\n", hr);
+
+    path = NULL;
+    hr = QueryPathOfRegTypeLib(&LIBID_TestTypelib, 2, 7, LOCALE_NEUTRAL, &path);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     SysFreeString(path);
 
@@ -4729,49 +4734,44 @@ todo_wine
     if (hr == S_OK) ITypeLib_Release(tl);
 
     hr = LoadRegTypeLib(&LIBID_register_test, 2, 0, LOCALE_NEUTRAL, &tl);
+todo_wine
     ok(hr == TYPE_E_LIBNOTREGISTERED, "got 0x%08x\n", hr);
 
     /* manifest version is 2.7, actual is 2.5 */
     hr = LoadRegTypeLib(&LIBID_TestTypelib, 2, 0, LOCALE_NEUTRAL, &tl);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
     if (hr == S_OK) ITypeLib_Release(tl);
 
     hr = LoadRegTypeLib(&LIBID_TestTypelib, 2, 1, LOCALE_NEUTRAL, &tl);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
     if (hr == S_OK) ITypeLib_Release(tl);
 
     hr = LoadRegTypeLib(&LIBID_TestTypelib, 2, 0, lcid_en, &tl);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
     if (hr == S_OK) ITypeLib_Release(tl);
 
     hr = LoadRegTypeLib(&LIBID_TestTypelib, 2, 0, lcid_ru, &tl);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
     if (hr == S_OK) ITypeLib_Release(tl);
 
     hr = LoadRegTypeLib(&LIBID_TestTypelib, 2, 7, LOCALE_NEUTRAL, &tl);
+todo_wine
     ok(hr == TYPE_E_LIBNOTREGISTERED, "got 0x%08x\n", hr);
 
     hr = LoadRegTypeLib(&LIBID_TestTypelib, 2, 5, LOCALE_NEUTRAL, &tl);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-if (hr == S_OK)
-{
     hr = ITypeLib_GetLibAttr(tl, &attr);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     ok(attr->lcid == 0, "got %x\n", attr->lcid);
     ok(attr->wMajorVerNum == 2, "got %d\n", attr->wMajorVerNum);
     ok(attr->wMinorVerNum == 5, "got %d\n", attr->wMinorVerNum);
+todo_wine
     ok(attr->wLibFlags == LIBFLAG_FHASDISKIMAGE, "got %x\n", attr->wLibFlags);
 
     ITypeLib_ReleaseTLibAttr(tl, attr);
     ITypeLib_Release(tl);
-}
 
     hr = LoadRegTypeLib(&LIBID_TestTypelib, 1, 7, LOCALE_NEUTRAL, &tl);
     ok(hr == TYPE_E_LIBNOTREGISTERED, "got 0x%08x\n", hr);

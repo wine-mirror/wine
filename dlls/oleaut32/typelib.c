@@ -286,10 +286,23 @@ static WCHAR *get_lcid_subkey( LCID lcid, SYSKIND syskind, WCHAR *buffer )
 
 static HRESULT TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath, ITypeLib2 **ppTypeLib);
 
+struct tlibredirect_data
+{
+    ULONG  size;
+    DWORD  res;
+    ULONG  name_len;
+    ULONG  name_offset;
+    LANGID langid;
+    WORD   flags;
+    ULONG  help_len;
+    ULONG  help_offset;
+    WORD   major_version;
+    WORD   minor_version;
+};
 
 /* Get the path to a registered type library. Helper for QueryPathOfRegTypeLib. */
 static HRESULT query_typelib_path( REFGUID guid, WORD wMaj, WORD wMin,
-                                   SYSKIND syskind, LCID lcid, LPBSTR path )
+                                   SYSKIND syskind, LCID lcid, BSTR *path, BOOL redir )
 {
     HRESULT hr = TYPE_E_LIBNOTREGISTERED;
     LCID myLCID = lcid;
@@ -299,6 +312,30 @@ static HRESULT query_typelib_path( REFGUID guid, WORD wMaj, WORD wMin,
     LONG res;
 
     TRACE_(typelib)("(%s, %x.%x, 0x%x, %p)\n", debugstr_guid(guid), wMaj, wMin, lcid, path);
+
+    if (redir)
+    {
+        ACTCTX_SECTION_KEYED_DATA data;
+
+        data.cbSize = sizeof(data);
+        if (FindActCtxSectionGuid( 0, NULL, ACTIVATION_CONTEXT_SECTION_COM_TYPE_LIBRARY_REDIRECTION, guid, &data ))
+        {
+            struct tlibredirect_data *tlib = (struct tlibredirect_data*)data.lpData;
+            WCHAR *nameW;
+            DWORD len;
+
+            if (tlib->major_version != wMaj || tlib->minor_version < wMin)
+                return TYPE_E_LIBNOTREGISTERED;
+
+            nameW = (WCHAR*)((BYTE*)data.lpSectionBase + tlib->name_offset);
+            len = SearchPathW( NULL, nameW, NULL, sizeof(Path)/sizeof(WCHAR), Path, NULL );
+            if (!len) return TYPE_E_LIBNOTREGISTERED;
+
+            TRACE_(typelib)("got path from context %s\n", debugstr_w(Path));
+            *path = SysAllocString( Path );
+            return S_OK;
+        }
+    }
 
     if (!find_typelib_key( guid, &wMaj, &wMin )) return TYPE_E_LIBNOTREGISTERED;
     get_typelib_key( guid, wMaj, wMin, buffer );
@@ -371,12 +408,14 @@ static HRESULT query_typelib_path( REFGUID guid, WORD wMaj, WORD wMin,
  */
 HRESULT WINAPI QueryPathOfRegTypeLib( REFGUID guid, WORD wMaj, WORD wMin, LCID lcid, LPBSTR path )
 {
+    BOOL redir = TRUE;
 #ifdef _WIN64
-    HRESULT hres = query_typelib_path( guid, wMaj, wMin, SYS_WIN64, lcid, path );
+    HRESULT hres = query_typelib_path( guid, wMaj, wMin, SYS_WIN64, lcid, path, TRUE );
     if(SUCCEEDED(hres))
         return hres;
+    redir = FALSE;
 #endif
-    return query_typelib_path( guid, wMaj, wMin, SYS_WIN32, lcid, path );
+    return query_typelib_path( guid, wMaj, wMin, SYS_WIN32, lcid, path, redir );
 }
 
 /******************************************************************************
@@ -808,7 +847,7 @@ HRESULT WINAPI UnRegisterTypeLib(
     }
 
     /* get the path to the typelib on disk */
-    if (query_typelib_path(libid, wVerMajor, wVerMinor, syskind, lcid, &tlibPath) != S_OK) {
+    if (query_typelib_path(libid, wVerMajor, wVerMinor, syskind, lcid, &tlibPath, FALSE) != S_OK) {
         result = E_INVALIDARG;
         goto end;
     }
@@ -7644,7 +7683,7 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
                         ref_type->pImpTLInfo->wVersionMajor,
                         ref_type->pImpTLInfo->wVersionMinor,
                         This->pTypeLib->syskind,
-                        ref_type->pImpTLInfo->lcid, &libnam);
+                        ref_type->pImpTLInfo->lcid, &libnam, TRUE);
                 if(FAILED(result))
                     libnam = SysAllocString(ref_type->pImpTLInfo->name);
 
