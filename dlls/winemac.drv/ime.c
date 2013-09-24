@@ -613,7 +613,7 @@ LRESULT WINAPI ImeEscape(HIMC hIMC, UINT uSubFunc, LPVOID lpData)
     return 0;
 }
 
-BOOL WINAPI ImeProcessKey(HIMC hIMC, UINT vKey, LPARAM lKeyData, CONST LPBYTE lpbKeyState)
+BOOL WINAPI ImeProcessKey(HIMC hIMC, UINT vKey, LPARAM lKeyData, const LPBYTE lpbKeyState)
 {
     LPINPUTCONTEXT lpIMC;
     BOOL inIME;
@@ -700,7 +700,7 @@ BOOL WINAPI ImeSetActiveContext(HIMC hIMC, BOOL fFlag)
     return TRUE;
 }
 
-UINT WINAPI ImeToAsciiEx(UINT uVKey, UINT uScanCode, CONST LPBYTE lpbKeyState,
+UINT WINAPI ImeToAsciiEx(UINT uVKey, UINT uScanCode, const LPBYTE lpbKeyState,
                          LPDWORD lpdwTransKey, UINT fuState, HIMC hIMC)
 {
     UINT vkey;
