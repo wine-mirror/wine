@@ -1378,11 +1378,6 @@ void state_init_default(struct wined3d_state *state, struct wined3d_device *devi
         /* TODO: Vertex offset in the presampled displacement map. */
         state->sampler_states[i][WINED3D_SAMP_DMAP_OFFSET] = 0;
     }
-
-    for (i = 0; i < gl_info->limits.textures; ++i)
-    {
-        state->textures[i] = NULL;
-    }
 }
 
 static HRESULT stateblock_init(struct wined3d_stateblock *stateblock,
