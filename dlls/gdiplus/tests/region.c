@@ -860,12 +860,10 @@ static void test_gethrgn(void)
     status = GdipGetRegionHRgn(region, NULL, &hrgn);
     ok(status == Ok, "status %08x\n", status);
     ok(hrgn == NULL, "hrgn=%p\n", hrgn);
-    DeleteObject(hrgn);
 
     status = GdipGetRegionHRgn(region, graphics, &hrgn);
     ok(status == Ok, "status %08x\n", status);
     ok(hrgn == NULL, "hrgn=%p\n", hrgn);
-    DeleteObject(hrgn);
 
     status = GdipSetEmpty(region);
     ok(status == Ok, "status %08x\n", status);
