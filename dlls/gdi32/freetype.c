@@ -6518,12 +6518,14 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
         }
     }
 
-    lpgm->gmBlackBoxX = (right - left) >> 6;
-    lpgm->gmBlackBoxY = (top - bottom) >> 6;
+    width  = (right - left) >> 6;
+    height = (top - bottom) >> 6;
+    lpgm->gmBlackBoxX = width;
+    lpgm->gmBlackBoxY = height;
     lpgm->gmptGlyphOrigin.x = origin_x >> 6;
     lpgm->gmptGlyphOrigin.y = origin_y >> 6;
     abc->abcA = left >> 6;
-    abc->abcB = (right - left) >> 6;
+    abc->abcB = width;
     abc->abcC = adv - abc->abcA - abc->abcB;
 
     TRACE("%u,%u,%s,%d,%d\n", lpgm->gmBlackBoxX, lpgm->gmBlackBoxY,
@@ -6552,12 +6554,11 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 
     switch(format) {
     case GGO_BITMAP:
-        width = lpgm->gmBlackBoxX;
-	height = lpgm->gmBlackBoxY;
 	pitch = ((width + 31) >> 5) << 2;
         needed = pitch * height;
 
 	if(!buf || !buflen) break;
+        if (!needed) return GDI_ERROR;  /* empty glyph */
 
 	switch(ft_face->glyph->format) {
 	case ft_glyph_format_bitmap:
@@ -6604,12 +6605,11 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 	unsigned int max_level, row, col;
 	BYTE *start, *ptr;
 
-        width = lpgm->gmBlackBoxX;
-	height = lpgm->gmBlackBoxY;
 	pitch = (width + 3) / 4 * 4;
 	needed = pitch * height;
 
 	if(!buf || !buflen) break;
+        if (!needed) return GDI_ERROR;  /* empty glyph */
 
         max_level = get_max_level( format );
 
@@ -6677,12 +6677,11 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
             BYTE *src, *dst;
             INT src_pitch, x;
 
-            width  = lpgm->gmBlackBoxX;
-            height = lpgm->gmBlackBoxY;
             pitch  = width * 4;
             needed = pitch * height;
 
             if (!buf || !buflen) break;
+            if (!needed) return GDI_ERROR;  /* empty glyph */
 
             memset(buf, 0, buflen);
             dst = buf;
@@ -6715,6 +6714,12 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
             FT_Render_Mode render_mode =
                 (format == WINE_GGO_HRGB_BITMAP || format == WINE_GGO_HBGR_BITMAP)?
                     FT_RENDER_MODE_LCD: FT_RENDER_MODE_LCD_V;
+
+            if (!width || !height)
+            {
+                if (!buf || !buflen) return 0;
+                return GDI_ERROR;
+            }
 
             if ( lcdfilter == FT_LCD_FILTER_DEFAULT || lcdfilter == FT_LCD_FILTER_LIGHT )
             {

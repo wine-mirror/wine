@@ -4169,7 +4169,7 @@ static void test_GetGlyphOutline(void)
                 }
             }
             else
-                todo_wine ok(ret == GDI_ERROR, "%2d:GetGlyphOutlineW should return GDI_ERROR, got %d\n", fmt[i], ret);
+                ok(ret == GDI_ERROR, "%2d:GetGlyphOutlineW should return GDI_ERROR, got %d\n", fmt[i], ret);
         }
     }
 
