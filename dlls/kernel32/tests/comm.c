@@ -830,9 +830,7 @@ static void test_waittxempty(void)
 
     SetLastError(0xdeadbeef);
     res = WriteFile(hcom, tbuf, sizeof(tbuf), &bytes, NULL);
-todo_wine
     ok(!res, "WriteFile on an overlapped handle without ovl structure should fail\n");
-todo_wine
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
     S(U(ovl_write)).Offset = 0;
@@ -2057,20 +2055,15 @@ static void test_read_write(void)
     bytes = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = WriteFile(hcom, atz, 0, &bytes, NULL);
-todo_wine
     ok(!ret, "WriteFile should fail\n");
-todo_wine
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
     ok(bytes == 0, "bytes %u\n", bytes);
 
     iob.Status = -1;
     iob.Information = -1;
     status = pNtWriteFile(hcom, 0, NULL, NULL, &iob, atz, 0, NULL, NULL);
-todo_wine
     ok(status == STATUS_INVALID_PARAMETER, "expected STATUS_INVALID_PARAMETER, got %#x\n", status);
-todo_wine
     ok(iob.Status == -1, "expected -1, got %#x\n", iob.Status);
-todo_wine
     ok(iob.Information == -1, "expected -1, got %ld\n", iob.Information);
 
     for (i = -20; i < 20; i++)
@@ -2087,11 +2080,8 @@ todo_wine
         }
         else
         {
-todo_wine
             ok(status == STATUS_INVALID_PARAMETER, "%d: expected STATUS_INVALID_PARAMETER, got %#x\n", i, status);
-todo_wine
             ok(iob.Status == -1, "%d: expected -1, got %#x\n", i, iob.Status);
-todo_wine
             ok(iob.Information == -1, "%d: expected -1, got %ld\n", i, iob.Information);
         }
     }
