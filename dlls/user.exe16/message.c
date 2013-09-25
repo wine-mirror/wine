@@ -1849,7 +1849,7 @@ BOOL16 WINAPI IsDialogMessage16( HWND16 hwndDlg, MSG16 *msg16 )
 /***********************************************************************
  *		MsgWaitForMultipleObjects  (USER.640)
  */
-DWORD WINAPI MsgWaitForMultipleObjects16( DWORD count, CONST HANDLE *handles,
+DWORD WINAPI MsgWaitForMultipleObjects16( DWORD count, const HANDLE *handles,
                                           BOOL wait_all, DWORD timeout, DWORD mask )
 {
     return MsgWaitForMultipleObjectsEx( count, handles, timeout, mask,
@@ -2632,7 +2632,7 @@ static LRESULT static_proc16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
 /***********************************************************************
  *           wait_message16
  */
-static DWORD wait_message16( DWORD count, CONST HANDLE *handles, DWORD timeout, DWORD mask, DWORD flags )
+static DWORD wait_message16( DWORD count, const HANDLE *handles, DWORD timeout, DWORD mask, DWORD flags )
 {
     DWORD lock, ret;
 

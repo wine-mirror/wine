@@ -348,8 +348,7 @@ static HRESULT WINAPI COMCAT_ICatRegister_RegisterCategories(
 
 	/* Set the value for this locale's description. */
 	wsprintfW(valname, fmt, rgci->lcid);
-	RegSetValueExW(cat_key, valname, 0, REG_SZ,
-		       (CONST BYTE*)(rgci->szDescription),
+        RegSetValueExW(cat_key, valname, 0, REG_SZ, (const BYTE*)rgci->szDescription,
 		       (lstrlenW(rgci->szDescription) + 1) * sizeof(WCHAR));
 
 	RegCloseKey(cat_key);

@@ -34,8 +34,8 @@ static BOOL (WINAPI *pCreateUrlCacheContainerA)(DWORD, DWORD, DWORD, DWORD,
                                                 DWORD, DWORD, DWORD, DWORD);
 static BOOL (WINAPI *pCreateUrlCacheContainerW)(DWORD, DWORD, DWORD, DWORD,
                                                 DWORD, DWORD, DWORD, DWORD);
-static BOOL (WINAPI *pInternetTimeFromSystemTimeA)(CONST SYSTEMTIME *,DWORD ,LPSTR ,DWORD);
-static BOOL (WINAPI *pInternetTimeFromSystemTimeW)(CONST SYSTEMTIME *,DWORD ,LPWSTR ,DWORD);
+static BOOL (WINAPI *pInternetTimeFromSystemTimeA)(const SYSTEMTIME *, DWORD, LPSTR, DWORD);
+static BOOL (WINAPI *pInternetTimeFromSystemTimeW)(const SYSTEMTIME *, DWORD, LPWSTR, DWORD);
 static BOOL (WINAPI *pInternetTimeToSystemTimeA)(LPCSTR ,SYSTEMTIME *,DWORD);
 static BOOL (WINAPI *pInternetTimeToSystemTimeW)(LPCWSTR ,SYSTEMTIME *,DWORD);
 static BOOL (WINAPI *pIsDomainLegalCookieDomainW)(LPCWSTR, LPCWSTR);

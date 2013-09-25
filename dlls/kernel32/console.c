@@ -690,7 +690,7 @@ BOOL WINAPI WriteConsoleOutputCharacterA( HANDLE hConsoleOutput, LPCSTR str, DWO
  *    Failure: FALSE
  *
  */
-BOOL WINAPI WriteConsoleOutputAttribute( HANDLE hConsoleOutput, CONST WORD *attr, DWORD length,
+BOOL WINAPI WriteConsoleOutputAttribute( HANDLE hConsoleOutput, const WORD *attr, DWORD length,
                                          COORD coord, LPDWORD lpNumAttrsWritten )
 {
     BOOL ret;

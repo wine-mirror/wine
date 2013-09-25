@@ -712,7 +712,7 @@ NTSTATUS WINAPI IoDeleteSymbolicLink( UNICODE_STRING *name )
 /***********************************************************************
  *           IoGetDeviceInterfaces   (NTOSKRNL.EXE.@)
  */
-NTSTATUS WINAPI IoGetDeviceInterfaces( CONST GUID *InterfaceClassGuid,
+NTSTATUS WINAPI IoGetDeviceInterfaces( const GUID *InterfaceClassGuid,
                                        PDEVICE_OBJECT PhysicalDeviceObject,
                                        ULONG Flags, PWSTR *SymbolicLinkList )
 {

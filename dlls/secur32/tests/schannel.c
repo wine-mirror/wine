@@ -49,7 +49,7 @@ static PCCERT_CONTEXT (WINAPI *pCertEnumCertificatesInStore)(HCERTSTORE,PCCERT_C
 
 static BOOL (WINAPI *pCryptAcquireContextW)(HCRYPTPROV*, LPCWSTR, LPCWSTR, DWORD, DWORD);
 static BOOL (WINAPI *pCryptDestroyKey)(HCRYPTKEY);
-static BOOL (WINAPI *pCryptImportKey)(HCRYPTPROV,CONST BYTE*,DWORD,HCRYPTKEY,DWORD,HCRYPTKEY*);
+static BOOL (WINAPI *pCryptImportKey)(HCRYPTPROV,const BYTE*,DWORD,HCRYPTKEY,DWORD,HCRYPTKEY*);
 static BOOL (WINAPI *pCryptReleaseContext)(HCRYPTPROV,ULONG_PTR);
 
 static const BYTE bigCert[] = { 0x30, 0x7a, 0x02, 0x01, 0x01, 0x30, 0x02, 0x06,

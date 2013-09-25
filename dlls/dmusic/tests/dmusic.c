@@ -29,7 +29,7 @@
 #include "dmusici.h"
 #include "dmksctrl.h"
 
-static inline const char* debugstr_guid(CONST GUID *id)
+static inline const char* debugstr_guid(const GUID *id)
 {
     static char string[39];
     sprintf(string, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",

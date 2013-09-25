@@ -3160,7 +3160,7 @@ static HBITMAP ImageList_CreateImage(HDC hdc, HIMAGELIST himl, UINT count)
  */
 
 UINT WINAPI
-ImageList_SetColorTable (HIMAGELIST himl, UINT uStartIndex, UINT cEntries, CONST RGBQUAD * prgb)
+ImageList_SetColorTable(HIMAGELIST himl, UINT uStartIndex, UINT cEntries, const RGBQUAD *prgb)
 {
     return SetDIBColorTable(himl->hdcImage, uStartIndex, cEntries, prgb);
 }

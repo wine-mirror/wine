@@ -102,7 +102,7 @@ BOOL WINAPI EnumPropPages(LPDEVICE_INFO pdi, LPFNADDPROPSHEETPAGE pfnAdd, LPARAM
 typedef struct tagPARAM2STRDATA
 {
     DWORD        val;
-    CONST CHAR  *name;
+    const CHAR  *name;
 } PARAM2STRDATA, *LPPARAM2STRDATA;
 
 typedef struct tagPARAM2STR

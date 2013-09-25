@@ -42,7 +42,7 @@ static DWORD (WINAPI *pRegOpenKeyA)(HKEY,LPCSTR,PHKEY);
 static DWORD (WINAPI *pRegQueryValueA)(HKEY,LPCSTR,LPSTR,LPLONG);
 static DWORD (WINAPI *pRegQueryValueExA)(HKEY,LPCSTR,LPDWORD,LPDWORD,LPBYTE,LPDWORD);
 static DWORD (WINAPI *pRegSetValueA)(HKEY,LPCSTR,DWORD,LPCSTR,DWORD);
-static DWORD (WINAPI *pRegSetValueExA)(HKEY,LPCSTR,DWORD,DWORD,CONST BYTE*,DWORD);
+static DWORD (WINAPI *pRegSetValueExA)(HKEY,LPCSTR,DWORD,DWORD,const BYTE*,DWORD);
 
 static HMODULE advapi32;
 
@@ -194,7 +194,7 @@ DWORD WINAPI RegQueryValueEx16( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWOR
  *           RegSetValueEx   [KERNEL.226]
  */
 DWORD WINAPI RegSetValueEx16( HKEY hkey, LPCSTR name, DWORD reserved, DWORD type,
-                              CONST BYTE *data, DWORD count )
+                              const BYTE *data, DWORD count )
 {
     if (!advapi32) init_func_ptrs();
     fix_win16_hkey( &hkey );

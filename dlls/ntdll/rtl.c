@@ -450,7 +450,7 @@ ULONG RtlNumberGenericTableElements(PVOID pTable)
  *  Nothing.
  */
 #undef RtlMoveMemory
-VOID WINAPI RtlMoveMemory( VOID *Destination, CONST VOID *Source, SIZE_T Length )
+VOID WINAPI RtlMoveMemory( void *Destination, const void *Source, SIZE_T Length )
 {
     memmove(Destination, Source, Length);
 }

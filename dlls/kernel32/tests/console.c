@@ -2001,7 +2001,7 @@ static void test_WriteConsoleOutputAttribute(HANDLE output_handle)
     const struct
     {
         HANDLE hConsoleOutput;
-        CONST WORD *attr;
+        const WORD *attr;
         DWORD length;
         COORD coord;
         LPDWORD lpNumAttrsWritten;
