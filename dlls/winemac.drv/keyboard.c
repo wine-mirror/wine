@@ -940,6 +940,8 @@ void macdrv_hotkey_press(const macdrv_event *event)
                                   0x15B, 0x15C, event->hotkey_press.time_ms, FALSE);
         }
 
+        activate_on_following_focus();
+
         flags = (scan & 0x100) ? KEYEVENTF_EXTENDEDKEY : 0;
         macdrv_send_keyboard_input(NULL, event->hotkey_press.vkey, scan & 0xff,
                                    flags, event->key.time_ms);

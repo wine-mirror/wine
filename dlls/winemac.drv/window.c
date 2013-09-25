@@ -911,6 +911,16 @@ static void move_window_bits(HWND hwnd, macdrv_window window, const RECT *old_re
 
 
 /**********************************************************************
+ *              activate_on_following_focus
+ */
+void activate_on_following_focus(void)
+{
+    activate_on_focus_time = GetTickCount();
+    if (!activate_on_focus_time) activate_on_focus_time = 1;
+}
+
+
+/**********************************************************************
  *              CreateDesktopWindow   (MACDRV.@)
  */
 BOOL CDECL macdrv_CreateDesktopWindow(HWND hwnd)
@@ -1384,8 +1394,7 @@ LRESULT CDECL macdrv_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         SendMessageW(hwnd, WM_DISPLAYCHANGE, wp, lp);
         return 0;
     case WM_MACDRV_ACTIVATE_ON_FOLLOWING_FOCUS:
-        activate_on_focus_time = GetTickCount();
-        if (!activate_on_focus_time) activate_on_focus_time = 1;
+        activate_on_following_focus();
         TRACE("WM_MACDRV_ACTIVATE_ON_FOLLOWING_FOCUS time %u\n", activate_on_focus_time);
         return 0;
     }
