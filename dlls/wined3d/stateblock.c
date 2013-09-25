@@ -1203,10 +1203,7 @@ void state_init_default(struct wined3d_state *state, struct wined3d_device *devi
 
     TRACE("Render states\n");
     /* Render states: */
-    if (device->auto_depth_stencil)
-       state->render_states[WINED3D_RS_ZENABLE] = WINED3D_ZB_TRUE;
-    else
-       state->render_states[WINED3D_RS_ZENABLE] = WINED3D_ZB_FALSE;
+    state->render_states[WINED3D_RS_ZENABLE] = WINED3D_ZB_TRUE;
     state->render_states[WINED3D_RS_FILLMODE] = WINED3D_FILL_SOLID;
     state->render_states[WINED3D_RS_SHADEMODE] = WINED3D_SHADE_GOURAUD;
     lp.lp.repeat_factor = 0;
