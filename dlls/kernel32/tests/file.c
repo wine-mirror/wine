@@ -3890,11 +3890,27 @@ static void test_SetFileValidData(void)
     DeleteFile(filename);
 }
 
+static unsigned file_map_access(unsigned access)
+{
+    if (access & GENERIC_READ)    access |= FILE_GENERIC_READ;
+    if (access & GENERIC_WRITE)   access |= FILE_GENERIC_WRITE;
+    if (access & GENERIC_EXECUTE) access |= FILE_GENERIC_EXECUTE;
+    if (access & GENERIC_ALL)     access |= FILE_ALL_ACCESS;
+    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
+}
+
+static BOOL is_access_compatible(unsigned obj_access, unsigned desired_access)
+{
+    obj_access = file_map_access(obj_access);
+    desired_access = file_map_access(desired_access);
+    return (obj_access & desired_access) == desired_access;
+}
+
 static void test_file_access(void)
 {
     static const struct
     {
-        int access, create_error, write_error, read_error;
+        unsigned access, create_error, write_error, read_error;
     } td[] =
     {
         { GENERIC_READ | GENERIC_WRITE, 0, 0, 0 },
@@ -3910,8 +3926,8 @@ static void test_file_access(void)
     };
     char path[MAX_PATH], fname[MAX_PATH];
     unsigned char buf[16];
-    HANDLE hfile;
-    DWORD i, ret, bytes;
+    HANDLE hfile, hdup;
+    DWORD i, j, ret, bytes;
 
     GetTempPath(MAX_PATH, path);
     GetTempFileName(path, "foo", 0, fname);
@@ -3929,6 +3945,35 @@ static void test_file_access(void)
         }
         else
             ok(hfile != INVALID_HANDLE_VALUE, "%d: CreateFile error %d\n", i, GetLastError());
+
+        for (j = 0; j < sizeof(td)/sizeof(td[0]); j++)
+        {
+            SetLastError(0xdeadbeef);
+            ret = DuplicateHandle(GetCurrentProcess(), hfile, GetCurrentProcess(), &hdup,
+                                  td[j].access, 0, 0);
+            if (is_access_compatible(td[i].access, td[j].access))
+                ok(ret, "DuplicateHandle(%#x => %#x) error %d\n", td[i].access, td[j].access, GetLastError());
+            else
+            {
+                /* FIXME: Remove once Wine is fixed */
+                if ((td[j].access & (GENERIC_READ | GENERIC_WRITE)) ||
+                    (!(td[i].access & (GENERIC_WRITE | FILE_WRITE_DATA)) && (td[j].access & FILE_WRITE_DATA)) ||
+                    (!(td[i].access & (GENERIC_READ | FILE_READ_DATA)) && (td[j].access & FILE_READ_DATA)) ||
+                    (!(td[i].access & (GENERIC_WRITE)) && (td[j].access & FILE_APPEND_DATA)))
+                {
+todo_wine
+                ok(!ret, "DuplicateHandle(%#x => %#x) should fail\n", td[i].access, td[j].access);
+todo_wine
+                ok(GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
+                }
+                else
+                {
+                ok(!ret, "DuplicateHandle(%#x => %#x) should fail\n", td[i].access, td[j].access);
+                ok(GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
+                }
+            }
+            if (ret) CloseHandle(hdup);
+        }
 
         SetLastError(0xdeadbeef);
         bytes = 0xdeadbeef;
