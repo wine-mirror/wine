@@ -1341,6 +1341,26 @@ static void test_strtol(void)
     ul = strtoul("9223372036854775807L", &e, 0);
     ok(ul==4294967295ul, "wrong value %u\n", ul);
     ok(errno == ERANGE, "wrong errno %d\n", errno);
+
+    errno = 0;
+    ul = strtoul("-2", NULL, 0);
+    ok(ul == -2, "wrong value %u\n", ul);
+    ok(errno == 0, "wrong errno %d\n", errno);
+
+    errno = 0;
+    ul = strtoul("-4294967294", NULL, 0);
+    ok(ul == 2, "wrong value %u\n", ul);
+    ok(errno == 0, "wrong errno %d\n", errno);
+
+    errno = 0;
+    ul = strtoul("-4294967295", NULL, 0);
+    ok(ul==1, "wrong value %u\n", ul);
+    ok(errno == 0, "wrong errno %d\n", errno);
+
+    errno = 0;
+    ul = strtoul("-4294967296", NULL, 0);
+    ok(ul == 1, "wrong value %u\n", ul);
+    ok(errno == ERANGE, "wrong errno %d\n", errno);
 }
 
 static void test_strnlen(void)
