@@ -29,6 +29,7 @@
 #include "macdrv.h"
 #include "winuser.h"
 #include "wine/unicode.h"
+#include "wine/server.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(keyboard);
 WINE_DECLARE_DEBUG_CHANNEL(key);
@@ -786,6 +787,67 @@ static void macdrv_send_keyboard_input(HWND hwnd, WORD vkey, WORD scan, DWORD fl
 
 
 /***********************************************************************
+ *           get_async_key_state
+ */
+static BOOL get_async_key_state(BYTE state[256])
+{
+    BOOL ret;
+
+    SERVER_START_REQ(get_key_state)
+    {
+        req->tid = 0;
+        req->key = -1;
+        wine_server_set_reply(req, state, 256);
+        ret = !wine_server_call(req);
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
+/***********************************************************************
+ *           update_modifier_state
+ */
+static void update_modifier_state(unsigned int modifier, unsigned int modifiers, const BYTE *keystate,
+                                  WORD vkey, WORD alt_vkey, WORD scan, WORD alt_scan,
+                                  DWORD event_time, BOOL restore)
+{
+    int key_pressed = (modifiers & modifier) != 0;
+    int vkey_pressed = (keystate[vkey] & 0x80) || (keystate[alt_vkey] & 0x80);
+    DWORD flags;
+
+    if (key_pressed != vkey_pressed)
+    {
+        if (key_pressed)
+        {
+            flags = (scan & 0x100) ? KEYEVENTF_EXTENDEDKEY : 0;
+            if (restore)
+                flags |= KEYEVENTF_KEYUP;
+
+            macdrv_send_keyboard_input(NULL, vkey, scan & 0xff, flags, event_time);
+        }
+        else
+        {
+            flags = restore ? 0 : KEYEVENTF_KEYUP;
+
+            if (keystate[vkey] & 0x80)
+            {
+                macdrv_send_keyboard_input(NULL, vkey, scan & 0xff,
+                                           flags | ((scan & 0x100) ? KEYEVENTF_EXTENDEDKEY : 0),
+                                           event_time);
+            }
+            if (keystate[alt_vkey] & 0x80)
+            {
+                macdrv_send_keyboard_input(NULL, alt_vkey, alt_scan & 0xff,
+                                           flags | ((alt_scan & 0x100) ? KEYEVENTF_EXTENDEDKEY : 0),
+                                           event_time);
+            }
+        }
+    }
+}
+
+
+/***********************************************************************
  *              macdrv_key_event
  *
  * Handler for KEY_PRESS and KEY_RELEASE events.
@@ -843,6 +905,59 @@ void macdrv_keyboard_changed(const macdrv_event *event)
     thread_data->dead_key_state = 0;
 
     macdrv_compute_keyboard_layout(thread_data);
+}
+
+
+/***********************************************************************
+ *              macdrv_hotkey_press
+ *
+ * Handler for HOTKEY_PRESS events.
+ */
+void macdrv_hotkey_press(const macdrv_event *event)
+{
+    struct macdrv_thread_data *thread_data = macdrv_thread_data();
+
+    TRACE_(key)("vkey 0x%04x mod_flags 0x%04x keycode 0x%04x time %lu\n",
+                event->hotkey_press.vkey, event->hotkey_press.mod_flags, event->hotkey_press.keycode,
+                event->hotkey_press.time_ms);
+
+    if (event->hotkey_press.keycode < sizeof(thread_data->keyc2vkey) / sizeof(thread_data->keyc2vkey[0]))
+    {
+        WORD scan = thread_data->keyc2scan[event->hotkey_press.keycode];
+        BYTE keystate[256];
+        BOOL got_keystate;
+        DWORD flags;
+
+        if ((got_keystate = get_async_key_state(keystate)))
+        {
+            update_modifier_state(MOD_ALT, event->hotkey_press.mod_flags, keystate, VK_LMENU, VK_RMENU,
+                                  0x38, 0x138, event->hotkey_press.time_ms, FALSE);
+            update_modifier_state(MOD_CONTROL, event->hotkey_press.mod_flags, keystate, VK_LCONTROL, VK_RCONTROL,
+                                  0x1D, 0x11D, event->hotkey_press.time_ms, FALSE);
+            update_modifier_state(MOD_SHIFT, event->hotkey_press.mod_flags, keystate, VK_LSHIFT, VK_RSHIFT,
+                                  0x2A, 0x36, event->hotkey_press.time_ms, FALSE);
+            update_modifier_state(MOD_WIN, event->hotkey_press.mod_flags, keystate, VK_LWIN, VK_RWIN,
+                                  0x15B, 0x15C, event->hotkey_press.time_ms, FALSE);
+        }
+
+        flags = (scan & 0x100) ? KEYEVENTF_EXTENDEDKEY : 0;
+        macdrv_send_keyboard_input(NULL, event->hotkey_press.vkey, scan & 0xff,
+                                   flags, event->key.time_ms);
+        macdrv_send_keyboard_input(NULL, event->hotkey_press.vkey, scan & 0xff,
+                                   flags | KEYEVENTF_KEYUP, event->key.time_ms);
+
+        if (got_keystate)
+        {
+            update_modifier_state(MOD_ALT, event->hotkey_press.mod_flags, keystate, VK_LMENU, VK_RMENU,
+                                  0x38, 0x138, event->hotkey_press.time_ms, TRUE);
+            update_modifier_state(MOD_CONTROL, event->hotkey_press.mod_flags, keystate, VK_LCONTROL, VK_RCONTROL,
+                                  0x1D, 0x11D, event->hotkey_press.time_ms, TRUE);
+            update_modifier_state(MOD_SHIFT, event->hotkey_press.mod_flags, keystate, VK_LSHIFT, VK_RSHIFT,
+                                  0x2A, 0x36, event->hotkey_press.time_ms, TRUE);
+            update_modifier_state(MOD_WIN, event->hotkey_press.mod_flags, keystate, VK_LWIN, VK_RWIN,
+                                  0x15B, 0x15C, event->hotkey_press.time_ms, TRUE);
+        }
+    }
 }
 
 
@@ -1244,6 +1359,48 @@ UINT CDECL macdrv_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
 
 
 /***********************************************************************
+ *              RegisterHotKey (MACDRV.@)
+ */
+BOOL CDECL macdrv_RegisterHotKey(HWND hwnd, UINT mod_flags, UINT vkey)
+{
+    struct macdrv_thread_data *thread_data = macdrv_init_thread_data();
+    unsigned int keyc, modifiers = 0;
+    int ret;
+
+    TRACE_(key)("hwnd %p mod_flags 0x%04x vkey 0x%04x\n", hwnd, mod_flags, vkey);
+
+    /* Find the Mac keycode corresponding to the vkey */
+    for (keyc = 0; keyc < sizeof(thread_data->keyc2vkey) / sizeof(thread_data->keyc2vkey[0]); keyc++)
+        if (thread_data->keyc2vkey[keyc] == vkey) break;
+
+    if (keyc >= sizeof(thread_data->keyc2vkey) / sizeof(thread_data->keyc2vkey[0]))
+    {
+        WARN_(key)("ignoring unknown virtual key 0x%04x\n", vkey);
+        return TRUE;
+    }
+
+    if (mod_flags & MOD_ALT)        modifiers |= cmdKey;
+    if (mod_flags & MOD_CONTROL)    modifiers |= controlKey;
+    if (mod_flags & MOD_SHIFT)      modifiers |= shiftKey;
+    if (mod_flags & MOD_WIN)
+    {
+        WARN_(key)("MOD_WIN not supported; ignoring\n");
+        return TRUE;
+    }
+
+    ret = macdrv_register_hot_key(thread_data->queue, vkey, mod_flags, keyc, modifiers);
+    TRACE_(key)("keyc 0x%04x modifiers 0x%08x -> %d\n", keyc, modifiers, ret);
+
+    if (ret == MACDRV_HOTKEY_ALREADY_REGISTERED)
+        SetLastError(ERROR_HOTKEY_ALREADY_REGISTERED);
+    else if (ret != MACDRV_HOTKEY_SUCCESS)
+        SetLastError(ERROR_GEN_FAILURE);
+
+    return ret == MACDRV_HOTKEY_SUCCESS;
+}
+
+
+/***********************************************************************
  *              ToUnicodeEx (MACDRV.@)
  *
  * The ToUnicode function translates the specified virtual-key code and keyboard
@@ -1442,6 +1599,20 @@ done:
 
     TRACE_(key)("returning %d / %s\n", ret, debugstr_wn(bufW, abs(ret)));
     return ret;
+}
+
+
+/***********************************************************************
+ *              UnregisterHotKey (MACDRV.@)
+ */
+void CDECL macdrv_UnregisterHotKey(HWND hwnd, UINT modifiers, UINT vkey)
+{
+    struct macdrv_thread_data *thread_data = macdrv_thread_data();
+
+    TRACE_(key)("hwnd %p modifiers 0x%04x vkey 0x%04x\n", hwnd, modifiers, vkey);
+
+    if (thread_data)
+        macdrv_unregister_hot_key(thread_data->queue, vkey, modifiers);
 }
 
 

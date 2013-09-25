@@ -34,6 +34,9 @@
     int             kq; /* kqueue for waiting in OnMainThread(). */
 
     macdrv_event_handler event_handler;
+
+    NSMutableDictionary* hotKeysByMacID;
+    NSMutableDictionary* hotKeysByWinID;
 }
 
     - (void) postEvent:(macdrv_event*)inEvent;

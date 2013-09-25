@@ -22,6 +22,7 @@
 #include <sys/event.h>
 #include <sys/time.h>
 #include <libkern/OSAtomic.h>
+#import <Carbon/Carbon.h>
 
 #include "macdrv_cocoa.h"
 #import "cocoa_event.h"
@@ -30,6 +31,13 @@
 
 
 static NSString* const WineEventQueueThreadDictionaryKey = @"WineEventQueueThreadDictionaryKey";
+
+static NSString* const WineHotKeyMacIDKey       = @"macID";
+static NSString* const WineHotKeyVkeyKey        = @"vkey";
+static NSString* const WineHotKeyModFlagsKey    = @"modFlags";
+static NSString* const WineHotKeyKeyCodeKey     = @"keyCode";
+static NSString* const WineHotKeyCarbonRefKey   = @"hotKeyRef";
+static const OSType WineHotKeySignature = 'Wine';
 
 
 @interface MacDrvEvent : NSObject
@@ -127,6 +135,16 @@ static NSString* const WineEventQueueThreadDictionaryKey = @"WineEventQueueThrea
 
     - (void) dealloc
     {
+        NSNumber* hotKeyMacID;
+
+        for (hotKeyMacID in hotKeysByMacID)
+        {
+            NSDictionary* hotKeyDict = [hotKeysByMacID objectForKey:hotKeyMacID];
+            EventHotKeyRef hotKeyRef = [[hotKeyDict objectForKey:WineHotKeyCarbonRefKey] pointerValue];
+            UnregisterEventHotKey(hotKeyRef);
+        }
+        [hotKeysByMacID release];
+        [hotKeysByWinID release];
         [events release];
         [eventsLock release];
 
@@ -302,6 +320,125 @@ static NSString* const WineEventQueueThreadDictionaryKey = @"WineEventQueueThrea
         }
 
         [eventsLock unlock];
+    }
+
+    - (BOOL) postHotKeyEvent:(UInt32)hotKeyNumber time:(double)time
+    {
+        NSDictionary* hotKeyDict = [hotKeysByMacID objectForKey:[NSNumber numberWithUnsignedInt:hotKeyNumber]];
+        if (hotKeyDict)
+        {
+            macdrv_event* event;
+
+            event = macdrv_create_event(HOTKEY_PRESS, nil);
+            event->hotkey_press.vkey        = [[hotKeyDict objectForKey:WineHotKeyVkeyKey] unsignedIntValue];
+            event->hotkey_press.mod_flags   = [[hotKeyDict objectForKey:WineHotKeyModFlagsKey] unsignedIntValue];
+            event->hotkey_press.keycode     = [[hotKeyDict objectForKey:WineHotKeyKeyCodeKey] unsignedIntValue];
+            event->hotkey_press.time_ms     = [[WineApplicationController sharedController] ticksForEventTime:time];
+
+            [self postEvent:event];
+
+            macdrv_release_event(event);
+        }
+
+        return hotKeyDict != nil;
+    }
+
+    static OSStatus HotKeyHandler(EventHandlerCallRef nextHandler, EventRef theEvent, void* userData)
+    {
+        WineEventQueue* self = userData;
+        OSStatus status;
+        EventHotKeyID hotKeyID;
+
+        status = GetEventParameter(theEvent, kEventParamDirectObject, typeEventHotKeyID, NULL,
+                                   sizeof(hotKeyID), NULL, &hotKeyID);
+        if (status == noErr)
+        {
+            if (hotKeyID.signature != WineHotKeySignature ||
+                ![self postHotKeyEvent:hotKeyID.id time:GetEventTime(theEvent)])
+                status = eventNotHandledErr;
+        }
+
+        return status;
+    }
+
+    - (void) unregisterHotKey:(unsigned int)vkey modFlags:(unsigned int)modFlags
+    {
+        NSNumber* vkeyNumber = [NSNumber numberWithUnsignedInt:vkey];
+        NSNumber* modFlagsNumber = [NSNumber numberWithUnsignedInt:modFlags];
+        NSArray* winIDPair = [NSArray arrayWithObjects:vkeyNumber, modFlagsNumber, nil];
+        NSDictionary* hotKeyDict = [hotKeysByWinID objectForKey:winIDPair];
+        if (hotKeyDict)
+        {
+            EventHotKeyRef hotKeyRef = [[hotKeyDict objectForKey:WineHotKeyCarbonRefKey] pointerValue];
+            NSNumber* macID = [hotKeyDict objectForKey:WineHotKeyMacIDKey];
+
+            UnregisterEventHotKey(hotKeyRef);
+            [hotKeysByMacID removeObjectForKey:macID];
+            [hotKeysByWinID removeObjectForKey:winIDPair];
+        }
+    }
+
+    - (int) registerHotKey:(UInt32)keyCode modifiers:(UInt32)modifiers vkey:(unsigned int)vkey modFlags:(unsigned int)modFlags
+    {
+        static EventHandlerRef handler;
+        static UInt32 hotKeyNumber;
+        OSStatus status;
+        NSNumber* vkeyNumber;
+        NSNumber* modFlagsNumber;
+        NSArray* winIDPair;
+        EventHotKeyID hotKeyID;
+        EventHotKeyRef hotKeyRef;
+        NSNumber* macIDNumber;
+        NSDictionary* hotKeyDict;
+
+        if (!handler)
+        {
+            EventTypeSpec eventType = { kEventClassKeyboard, kEventHotKeyPressed };
+            status = InstallApplicationEventHandler(HotKeyHandler, 1, &eventType, self, &handler);
+            if (status != noErr)
+            {
+                ERR(@"InstallApplicationEventHandler() failed: %d\n", status);
+                handler = NULL;
+                return MACDRV_HOTKEY_FAILURE;
+            }
+        }
+
+        if (!hotKeysByMacID && !(hotKeysByMacID = [[NSMutableDictionary alloc] init]))
+            return MACDRV_HOTKEY_FAILURE;
+        if (!hotKeysByWinID && !(hotKeysByWinID = [[NSMutableDictionary alloc] init]))
+            return MACDRV_HOTKEY_FAILURE;
+
+        vkeyNumber = [NSNumber numberWithUnsignedInt:vkey];
+        modFlagsNumber = [NSNumber numberWithUnsignedInt:modFlags];
+        winIDPair = [NSArray arrayWithObjects:vkeyNumber, modFlagsNumber, nil];
+        if ([hotKeysByWinID objectForKey:winIDPair])
+            return MACDRV_HOTKEY_ALREADY_REGISTERED;
+
+        hotKeyID.signature  = WineHotKeySignature;
+        hotKeyID.id         = hotKeyNumber++;
+
+        status = RegisterEventHotKey(keyCode, modifiers, hotKeyID, GetApplicationEventTarget(),
+                                     kEventHotKeyExclusive, &hotKeyRef);
+        if (status == eventHotKeyExistsErr)
+            return MACDRV_HOTKEY_ALREADY_REGISTERED;
+        if (status != noErr)
+        {
+            ERR(@"RegisterEventHotKey() failed: %d\n", status);
+            return MACDRV_HOTKEY_FAILURE;
+        }
+
+        macIDNumber = [NSNumber numberWithUnsignedInt:hotKeyID.id];
+        hotKeyDict = [NSDictionary dictionaryWithObjectsAndKeys:
+                      macIDNumber, WineHotKeyMacIDKey,
+                      vkeyNumber, WineHotKeyVkeyKey,
+                      modFlagsNumber, WineHotKeyModFlagsKey,
+                      [NSNumber numberWithUnsignedInt:keyCode], WineHotKeyKeyCodeKey,
+                      [NSValue valueWithPointer:hotKeyRef], WineHotKeyCarbonRefKey,
+                      nil];
+        [hotKeysByMacID setObject:hotKeyDict forKey:macIDNumber];
+        [hotKeysByWinID setObject:hotKeyDict forKey:winIDPair];
+
+        return MACDRV_HOTKEY_SUCCESS;
     }
 
 
@@ -574,3 +711,33 @@ void macdrv_set_query_done(macdrv_query *query)
 }
 
 @end
+
+
+/***********************************************************************
+ *              macdrv_register_hot_key
+ */
+int macdrv_register_hot_key(macdrv_event_queue q, unsigned int vkey, unsigned int mod_flags,
+                            unsigned int keycode, unsigned int modifiers)
+{
+    WineEventQueue* queue = (WineEventQueue*)q;
+    __block int ret;
+
+    OnMainThread(^{
+        ret = [queue registerHotKey:keycode modifiers:modifiers vkey:vkey modFlags:mod_flags];
+    });
+
+    return ret;
+}
+
+
+/***********************************************************************
+ *              macdrv_unregister_hot_key
+ */
+void macdrv_unregister_hot_key(macdrv_event_queue q, unsigned int vkey, unsigned int mod_flags)
+{
+    WineEventQueue* queue = (WineEventQueue*)q;
+
+    OnMainThreadAsync(^{
+        [queue unregisterHotKey:vkey modFlags:mod_flags];
+    });
+}
