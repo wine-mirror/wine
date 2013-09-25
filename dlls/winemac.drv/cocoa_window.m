@@ -464,6 +464,8 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
 @implementation WineWindow
 
+    static WineWindow* causing_becomeKeyWindow;
+
     @synthesize disabled, noActivate, floating, fullscreen, latentParentWindow, hwnd, queue;
     @synthesize surface, surface_mutex;
     @synthesize shape, shapeChangedSinceLastDraw;
@@ -1200,9 +1202,9 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
     {
         [self orderBelow:nil orAbove:nil activate:activate];
 
-        causing_becomeKeyWindow = TRUE;
+        causing_becomeKeyWindow = self;
         [self makeKeyWindow];
-        causing_becomeKeyWindow = FALSE;
+        causing_becomeKeyWindow = nil;
     }
 
     - (void) postKey:(uint16_t)keyCode
@@ -1263,7 +1265,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
      */
     - (BOOL) canBecomeKeyWindow
     {
-        if (causing_becomeKeyWindow) return YES;
+        if (causing_becomeKeyWindow == self) return YES;
         if (self.disabled || self.noActivate) return NO;
         return [self isKeyWindow];
     }
@@ -1432,7 +1434,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         if (event)
             [self flagsChanged:event];
 
-        if (causing_becomeKeyWindow) return;
+        if (causing_becomeKeyWindow == self) return;
 
         [controller windowGotFocus:self];
     }
@@ -1465,9 +1467,9 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
         if (!self.disabled && !self.noActivate)
         {
-            causing_becomeKeyWindow = TRUE;
+            causing_becomeKeyWindow = self;
             [self makeKeyWindow];
-            causing_becomeKeyWindow = FALSE;
+            causing_becomeKeyWindow = nil;
             [controller windowGotFocus:self];
         }
 
