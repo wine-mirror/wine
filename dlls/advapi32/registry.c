@@ -79,7 +79,7 @@ static const WCHAR * const root_key_names[] =
 static HKEY special_root_keys[NB_SPECIAL_ROOT_KEYS];
 static BOOL hkcu_cache_disabled;
 
-static const int is_win64 = (sizeof(void *) > sizeof(int));
+static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 
 /* check if value type needs string conversion (Ansi<->Unicode) */
 static inline int is_string( DWORD type )
