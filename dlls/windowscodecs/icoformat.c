@@ -232,7 +232,7 @@ static HRESULT ReadIcoDib(IStream *stream, IcoFrameDecode *result)
     IWICBitmapFrameDecode *framedecode;
     WICPixelFormatGUID pixelformat;
     IWICBitmapSource *source;
-    int has_alpha=FALSE; /* if TRUE, alpha data might be in the image data */
+    BOOL has_alpha=FALSE; /* if TRUE, alpha data might be in the image data */
     WICRect rc;
 
     hr = IcoDibDecoder_CreateInstance(&bmp_decoder);
