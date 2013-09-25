@@ -488,7 +488,7 @@ static BOOL load_xul(const PRUnichar *gre_path)
     }
 
 #define NS_DLSYM(func) \
-    func = (void *)GetProcAddress(xul_handle, #func "_P"); \
+    func = (void *)GetProcAddress(xul_handle, #func); \
     if(!func) \
         ERR("Could not GetProcAddress(" #func ") failed\n")
 

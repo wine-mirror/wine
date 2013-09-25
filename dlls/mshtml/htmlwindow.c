@@ -38,6 +38,7 @@
 #include "mshtml_private.h"
 #include "htmlevent.h"
 #include "htmlscript.h"
+#include "pluginhost.h"
 #include "binding.h"
 #include "resource.h"
 
@@ -114,8 +115,12 @@ static void detach_inner_window(HTMLInnerWindow *window)
     if(outer_window && outer_window->doc_obj && outer_window == outer_window->doc_obj->basedoc.window)
         window->doc->basedoc.cp_container.forward_container = NULL;
 
-    if(window->doc)
+    if(window->doc) {
         detach_events(window->doc);
+        while(!list_empty(&window->doc->plugin_hosts))
+            detach_plugin_host(LIST_ENTRY(list_head(&window->doc->plugin_hosts), PluginHost, entry));
+    }
+
     abort_window_bindings(window);
     remove_target_tasks(window->task_magic);
     release_script_hosts(window);
