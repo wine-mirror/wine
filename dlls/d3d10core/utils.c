@@ -345,6 +345,28 @@ enum wined3d_format_id wined3dformat_from_dxgi_format(DXGI_FORMAT format)
     }
 }
 
+DWORD wined3d_usage_from_d3d10core(UINT bind_flags, enum D3D10_USAGE usage)
+{
+    static const DWORD handled = D3D10_BIND_SHADER_RESOURCE
+            | D3D10_BIND_RENDER_TARGET
+            | D3D10_BIND_DEPTH_STENCIL;
+    DWORD wined3d_usage = 0;
+
+    if (bind_flags & D3D10_BIND_SHADER_RESOURCE)
+        wined3d_usage |= WINED3DUSAGE_TEXTURE;
+    if (bind_flags & D3D10_BIND_RENDER_TARGET)
+        wined3d_usage |= WINED3DUSAGE_RENDERTARGET;
+    if (bind_flags & D3D10_BIND_DEPTH_STENCIL)
+        wined3d_usage |= WINED3DUSAGE_DEPTHSTENCIL;
+    if (bind_flags & ~handled)
+        FIXME("Unhandled bind flags %#x.\n", usage & ~handled);
+
+    if (usage == D3D10_USAGE_DYNAMIC)
+        wined3d_usage |= WINED3DUSAGE_DYNAMIC;
+
+    return wined3d_usage;
+}
+
 void skip_dword_unknown(const char **ptr, unsigned int count)
 {
     unsigned int i;

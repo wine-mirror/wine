@@ -258,7 +258,6 @@ HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d10_devic
         }
     }
 
-    FIXME("Implement DXGI<->wined3d usage conversion\n");
     if (desc->ArraySize != 1)
         FIXME("Array textures not implemented.\n");
     if (desc->SampleDesc.Count > 1)
@@ -268,7 +267,7 @@ HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d10_devic
     wined3d_desc.format = wined3dformat_from_dxgi_format(desc->Format);
     wined3d_desc.multisample_type = desc->SampleDesc.Count > 1 ? desc->SampleDesc.Count : WINED3D_MULTISAMPLE_NONE;
     wined3d_desc.multisample_quality = desc->SampleDesc.Quality;
-    wined3d_desc.usage = desc->Usage;
+    wined3d_desc.usage = wined3d_usage_from_d3d10core(desc->BindFlags, desc->Usage);
     wined3d_desc.pool = WINED3D_POOL_DEFAULT;
     wined3d_desc.width = desc->Width;
     wined3d_desc.height = desc->Height;
@@ -482,13 +481,11 @@ HRESULT d3d10_texture3d_init(struct d3d10_texture3d *texture, struct d3d10_devic
     texture->refcount = 1;
     texture->desc = *desc;
 
-    FIXME("Implement DXGI<->wined3d usage conversion.\n");
-
     wined3d_desc.resource_type = WINED3D_RTYPE_VOLUME_TEXTURE;
     wined3d_desc.format = wined3dformat_from_dxgi_format(desc->Format);
     wined3d_desc.multisample_type = WINED3D_MULTISAMPLE_NONE;
     wined3d_desc.multisample_quality = 0;
-    wined3d_desc.usage = desc->Usage;
+    wined3d_desc.usage = wined3d_usage_from_d3d10core(desc->BindFlags, desc->Usage);
     wined3d_desc.pool = WINED3D_POOL_DEFAULT;
     wined3d_desc.width = desc->Width;
     wined3d_desc.height = desc->Height;
