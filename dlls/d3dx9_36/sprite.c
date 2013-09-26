@@ -25,11 +25,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 /* the combination of all possible D3DXSPRITE flags */
 #define D3DXSPRITE_FLAGLIMIT 511
 
-typedef struct _SPRITEVERTEX {
+struct sprite_vertex
+{
     D3DXVECTOR3 pos;
     DWORD col;
     D3DXVECTOR2 tex;
-} SPRITEVERTEX;
+};
 
 typedef struct _SPRITE {
     IDirect3DTexture9 *texture;
@@ -315,7 +316,7 @@ D3DXSPRITE_SORT_TEXTURE: sort by texture (so that it doesn't change too often)
             set_states(This);
 
             IDirect3DDevice9_SetVertexDeclaration(This->device, This->vdecl);
-            IDirect3DDevice9_SetStreamSource(This->device, 0, NULL, 0, sizeof(SPRITEVERTEX));
+            IDirect3DDevice9_SetStreamSource(This->device, 0, NULL, 0, sizeof(struct sprite_vertex));
             IDirect3DDevice9_SetIndices(This->device, NULL);
             IDirect3DDevice9_SetTexture(This->device, 0, NULL);
 
@@ -398,7 +399,7 @@ static HRESULT WINAPI d3dx9_sprite_Draw(ID3DXSprite *iface, IDirect3DTexture9 *t
 static HRESULT WINAPI d3dx9_sprite_Flush(ID3DXSprite *iface)
 {
     struct d3dx9_sprite *This = impl_from_ID3DXSprite(iface);
-    SPRITEVERTEX *vertices;
+    struct sprite_vertex *vertices;
     int i, count=0, start;
 
     TRACE("iface %p.\n", iface);
@@ -407,7 +408,7 @@ static HRESULT WINAPI d3dx9_sprite_Flush(ID3DXSprite *iface)
     if(!This->sprite_count) return D3D_OK;
 
 /* TODO: use of a vertex buffer here */
-    vertices=HeapAlloc(GetProcessHeap(), 0, sizeof(SPRITEVERTEX)*6*This->sprite_count);
+    vertices = HeapAlloc(GetProcessHeap(), 0, sizeof(*vertices) * 6 * This->sprite_count);
 
     for(start=0;start<This->sprite_count;start+=count,count=0) {
         i=start;
@@ -444,9 +445,8 @@ static HRESULT WINAPI d3dx9_sprite_Flush(ID3DXSprite *iface)
             vertices[6*i+4]=vertices[6*i];
             vertices[6*i+5]=vertices[6*i+2];
 
-            D3DXVec3TransformCoordArray(&vertices[6*i].pos, sizeof(SPRITEVERTEX),
-                                        &vertices[6*i].pos, sizeof(SPRITEVERTEX),
-                                        &This->sprites[i].transform, 6);
+            D3DXVec3TransformCoordArray(&vertices[6 * i].pos, sizeof(*vertices),
+                    &vertices[6 * i].pos, sizeof(*vertices), &This->sprites[i].transform, 6);
             count++;
             i++;
         }
@@ -454,7 +454,8 @@ static HRESULT WINAPI d3dx9_sprite_Flush(ID3DXSprite *iface)
         IDirect3DDevice9_SetTexture(This->device, 0, (struct IDirect3DBaseTexture9 *)This->sprites[start].texture);
         IDirect3DDevice9_SetVertexDeclaration(This->device, This->vdecl);
 
-        IDirect3DDevice9_DrawPrimitiveUP(This->device, D3DPT_TRIANGLELIST, 2*count, vertices+6*start, sizeof(SPRITEVERTEX));
+        IDirect3DDevice9_DrawPrimitiveUP(This->device, D3DPT_TRIANGLELIST,
+                2 * count, vertices + 6 * start, sizeof(*vertices));
     }
     HeapFree(GetProcessHeap(), 0, vertices);
 
