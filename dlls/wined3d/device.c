@@ -4710,7 +4710,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
 
         if (FAILED(hr = state_init(&device->state, &device->fb, &device->adapter->d3d_info)))
             ERR("Failed to initialize device state, hr %#x.\n", hr);
-        state_init_default(&device->state, device);
+        state_init_default(&device->state, &device->adapter->gl_info);
         device->update_state = &device->state;
 
         device_init_swapchain_state(device, swapchain);
@@ -4982,7 +4982,7 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
         wined3d_decref(device->wined3d);
         return hr;
     }
-    state_init_default(&device->state, device);
+    state_init_default(&device->state, &adapter->gl_info);
     device->update_state = &device->state;
 
     return WINED3D_OK;
