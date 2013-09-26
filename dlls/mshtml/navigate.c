@@ -1855,12 +1855,17 @@ HRESULT create_channelbsc(IMoniker *mon, const WCHAR *headers, BYTE *post_data, 
         BOOL is_doc_binding, nsChannelBSC **retval)
 {
     nsChannelBSC *ret;
+    DWORD bindf;
 
     ret = heap_alloc_zero(sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 
-    init_bscallback(&ret->bsc, &nsChannelBSCVtbl, mon, BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA);
+    bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA;
+    if(post_data_size)
+        bindf |= BINDF_FORMS_SUBMIT | BINDF_PRAGMA_NO_CACHE | BINDF_HYPERLINK | BINDF_GETNEWESTVERSION;
+
+    init_bscallback(&ret->bsc, &nsChannelBSCVtbl, mon, bindf);
     ret->is_doc_channel = is_doc_binding;
 
     if(headers) {
