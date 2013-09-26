@@ -766,11 +766,39 @@ BOOL wined3d_resource_check_block_align(const struct wined3d_resource *resource,
     return TRUE;
 }
 
+void *wined3d_resource_map_internal(struct wined3d_resource *resource, DWORD flags)
+{
+    struct wined3d_device *device = resource->device;
+    struct wined3d_context *context = NULL;
+    void *mem;
+
+    if (device->d3d_initialized)
+        context = context_acquire(device, NULL);
+
+    if (!wined3d_resource_prepare_map_memory(resource, context))
+    {
+        WARN("Out of memory.\n");
+        context_release(context);
+        return NULL;
+    }
+
+    if (flags & WINED3D_MAP_DISCARD)
+        wined3d_resource_validate_location(resource, resource->map_binding);
+    else
+        wined3d_resource_load_location(resource, context, resource->map_binding);
+
+    mem = wined3d_resource_get_map_ptr(resource, context, flags);
+
+    if (context)
+        context_release(context);
+
+    return mem;
+}
+
 HRESULT wined3d_resource_map(struct wined3d_resource *resource,
         struct wined3d_map_desc *map_desc, const struct wined3d_box *box, DWORD flags)
 {
     struct wined3d_device *device = resource->device;
-    struct wined3d_context *context = NULL;
     BYTE *base_memory;
     const struct wined3d_format *format = resource->format;
     const unsigned int fmt_flags = resource->format->flags[WINED3D_GL_RES_TYPE_TEX_2D];
@@ -786,33 +814,12 @@ HRESULT wined3d_resource_map(struct wined3d_resource *resource,
 
     flags = wined3d_resource_sanitize_map_flags(resource, flags);
 
-    if (wined3d_settings.cs_multithreaded)
+    base_memory = wined3d_cs_emit_resource_map(device->cs, resource, flags);
+    if (!base_memory)
     {
-        FIXME("Waiting for cs.\n");
-        wined3d_cs_emit_glfinish(device->cs);
-        device->cs->ops->finish(device->cs);
+        WARN("Map failed.\n");
+        return WINED3DERR_INVALIDCALL;
     }
-
-    if (device->d3d_initialized)
-        context = context_acquire(device, NULL);
-
-    if (!wined3d_resource_prepare_map_memory(resource, context))
-    {
-        WARN("Out of memory.\n");
-        map_desc->data = NULL;
-        context_release(context);
-        return E_OUTOFMEMORY;
-    }
-
-    if (flags & WINED3D_MAP_DISCARD)
-        wined3d_resource_validate_location(resource, resource->map_binding);
-    else
-        wined3d_resource_load_location(resource, context, resource->map_binding);
-
-    base_memory = wined3d_resource_get_map_ptr(resource, context, flags);
-
-    if (context)
-        context_release(context);
 
     TRACE("Base memory pointer %p.\n", base_memory);
 
@@ -865,10 +872,21 @@ HRESULT wined3d_resource_map(struct wined3d_resource *resource,
     return WINED3D_OK;
 }
 
-HRESULT wined3d_resource_unmap(struct wined3d_resource *resource)
+void wined3d_resource_unmap_internal(struct wined3d_resource *resource)
 {
     struct wined3d_device *device = resource->device;
     struct wined3d_context *context = NULL;
+
+    if (device->d3d_initialized)
+        context = context_acquire(device, NULL);
+    wined3d_resource_release_map_ptr(resource, context);
+    if (context)
+        context_release(context);
+}
+
+HRESULT wined3d_resource_unmap(struct wined3d_resource *resource)
+{
+    struct wined3d_device *device = resource->device;
     TRACE("resource %p.\n", resource);
 
     if (!resource->map_count)
@@ -877,12 +895,7 @@ HRESULT wined3d_resource_unmap(struct wined3d_resource *resource)
         return WINEDDERR_NOTLOCKED;
     }
 
-    if (device->d3d_initialized)
-        context = context_acquire(device, NULL);
-    wined3d_resource_release_map_ptr(resource, context);
-    if (context)
-        context_release(context);
-
+    wined3d_cs_emit_resource_unmap(device->cs, resource);
     resource->map_count--;
 
     return WINED3D_OK;

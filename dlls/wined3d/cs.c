@@ -76,6 +76,8 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_LIGHT_ENABLE,
     WINED3D_CS_OP_BLT,
     WINED3D_CS_OP_CLEAR_RTV,
+    WINED3D_CS_OP_RESOURCE_MAP,
+    WINED3D_CS_OP_RESOURCE_UNMAP,
     WINED3D_CS_OP_STOP,
 };
 
@@ -360,6 +362,20 @@ struct wined3d_cs_clear_rtv
     struct wined3d_rendertarget_view *view;
     RECT rect;
     struct wined3d_color color;
+};
+
+struct wined3d_cs_resource_map
+{
+    enum wined3d_cs_op opcode;
+    struct wined3d_resource *resource;
+    DWORD flags;
+    void **mem;
+};
+
+struct wined3d_cs_resource_unmap
+{
+    enum wined3d_cs_op opcode;
+    struct wined3d_resource *resource;
 };
 
 /* FIXME: The list synchronization probably isn't particularly fast. */
@@ -1801,6 +1817,57 @@ void wined3d_cs_emit_clear_rtv(struct wined3d_cs *cs, struct wined3d_rendertarge
     cs->ops->submit(cs);
 }
 
+static UINT wined3d_cs_exec_resource_map(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_resource_map *op = data;
+
+    *op->mem = wined3d_resource_map_internal(op->resource, op->flags);
+
+    return sizeof(*op);
+}
+
+void *wined3d_cs_emit_resource_map(struct wined3d_cs *cs, struct wined3d_resource *resource,
+        DWORD flags)
+{
+    struct wined3d_cs_resource_map *op;
+    void *ret;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_RESOURCE_MAP;
+    op->resource = resource;
+    op->flags = flags;
+    op->mem = &ret;
+
+    cs->ops->finish(cs);
+
+    if (flags & (WINED3D_MAP_NOOVERWRITE | WINED3D_MAP_DISCARD))
+    {
+        FIXME("Dynamic resource map is inefficient\n");
+    }
+    return ret;
+}
+
+static UINT wined3d_cs_exec_resource_unmap(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_resource_unmap *op = data;
+    struct wined3d_resource *resource = op->resource;
+
+    wined3d_resource_unmap_internal(resource);
+
+    return sizeof(*op);
+}
+
+void wined3d_cs_emit_resource_unmap(struct wined3d_cs *cs, struct wined3d_resource *resource)
+{
+    struct wined3d_cs_resource_unmap *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_RESOURCE_UNMAP;
+    op->resource = resource;
+
+    cs->ops->submit(cs);
+}
+
 static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
 {
     /* WINED3D_CS_OP_FENCE                      */ wined3d_cs_exec_fence,
@@ -1843,6 +1910,8 @@ static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_LIGHT_ENABLE           */ wined3d_cs_exec_set_light_enable,
     /* WINED3D_CS_OP_BLT                        */ wined3d_cs_exec_blt,
     /* WINED3D_CS_OP_CLEAR_RTV                  */ wined3d_cs_exec_clear_rtv,
+    /* WINED3D_CS_OP_RESOURCE_MAP               */ wined3d_cs_exec_resource_map,
+    /* WINED3D_CS_OP_RESOURCE_UNMAP             */ wined3d_cs_exec_resource_unmap,
 };
 
 static void *wined3d_cs_st_require_space(struct wined3d_cs *cs, size_t size)

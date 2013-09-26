@@ -2237,6 +2237,7 @@ void wined3d_resource_load_location(struct wined3d_resource *resource,
         struct wined3d_context *context, DWORD location) DECLSPEC_HIDDEN;
 HRESULT wined3d_resource_map(struct wined3d_resource *resource, struct wined3d_map_desc *map_desc,
         const struct wined3d_box *box, DWORD flags) DECLSPEC_HIDDEN;
+void *wined3d_resource_map_internal(struct wined3d_resource *resource, DWORD flags) DECLSPEC_HIDDEN;
 BOOL wined3d_resource_prepare_map_memory(struct wined3d_resource *resource,
         struct wined3d_context *context) DECLSPEC_HIDDEN;
 BOOL wined3d_resource_prepare_system_memory(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
@@ -2244,6 +2245,7 @@ void wined3d_resource_release_map_ptr(const struct wined3d_resource *resource,
         const struct wined3d_context *context) DECLSPEC_HIDDEN;
 DWORD wined3d_resource_sanitize_map_flags(const struct wined3d_resource *resource, DWORD flags) DECLSPEC_HIDDEN;
 HRESULT wined3d_resource_unmap(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
+void wined3d_resource_unmap_internal(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 void wined3d_resource_update_draw_binding(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 void wined3d_resource_validate_location(struct wined3d_resource *resource, DWORD location) DECLSPEC_HIDDEN;
 
@@ -2726,6 +2728,9 @@ void wined3d_cs_emit_blt(struct wined3d_cs *cs, struct wined3d_surface *dst_surf
         enum wined3d_texture_filter_type filter) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_clear_rtv(struct wined3d_cs *cs, struct wined3d_rendertarget_view *view,
         const RECT *rect, const struct wined3d_color *color) DECLSPEC_HIDDEN;
+void *wined3d_cs_emit_resource_map(struct wined3d_cs *cs, struct wined3d_resource *resource,
+        DWORD flags) DECLSPEC_HIDDEN;
+void wined3d_cs_emit_resource_unmap(struct wined3d_cs *cs, struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 
 /* Direct3D terminology with little modifications. We do not have an issued state
  * because only the driver knows about it, but we have a created state because d3d
