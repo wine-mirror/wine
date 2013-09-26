@@ -392,19 +392,20 @@ static char *build_command_line( char **argv )
     len = 0;
     for (arg = argv; *arg; arg++)
     {
-        int has_space,bcount;
+        BOOL has_space;
+        int bcount;
         char* a;
 
-        has_space=0;
+        has_space=FALSE;
         bcount=0;
         a=*arg;
-        if( !*a ) has_space=1;
+        if( !*a ) has_space=TRUE;
         while (*a!='\0') {
             if (*a=='\\') {
                 bcount++;
             } else {
                 if (*a==' ' || *a=='\t') {
-                    has_space=1;
+                    has_space=TRUE;
                 } else if (*a=='"') {
                     /* doubling of '\' preceding a '"',
                      * plus escaping of said '"'
@@ -427,20 +428,20 @@ static char *build_command_line( char **argv )
     *p++ = (len < 256) ? len : 255;
     for (arg = argv; *arg; arg++)
     {
-        int has_space,has_quote;
+        BOOL has_space,has_quote;
         char* a;
 
         /* Check for quotes and spaces in this argument */
-        has_space=has_quote=0;
+        has_space=has_quote=FALSE;
         a=*arg;
-        if( !*a ) has_space=1;
+        if( !*a ) has_space=TRUE;
         while (*a!='\0') {
             if (*a==' ' || *a=='\t') {
-                has_space=1;
+                has_space=TRUE;
                 if (has_quote)
                     break;
             } else if (*a=='"') {
-                has_quote=1;
+                has_quote=TRUE;
                 if (has_space)
                     break;
             }
