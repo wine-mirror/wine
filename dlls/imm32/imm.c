@@ -1540,7 +1540,10 @@ UINT WINAPI ImmGetDescriptionA(
 
   HeapFree( GetProcessHeap(), 0, buf );
 
-  return len;
+  if (len == 0)
+    return 0;
+
+  return len - 1;
 }
 
 /***********************************************************************
