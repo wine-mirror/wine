@@ -1022,7 +1022,7 @@ static HRESULT read_post_data_stream(nsIInputStream *stream, BOOL contains_heade
     if(NS_FAILED(nsres))
         return E_FAIL;
 
-    post_data = data = GlobalAlloc(0, available);
+    post_data = data = GlobalAlloc(0, available+1);
     if(!data)
         return E_OUTOFMEMORY;
 
@@ -1080,7 +1080,7 @@ static HRESULT read_post_data_stream(nsIInputStream *stream, BOOL contains_heade
     }else if(post_data != data) {
         char *new_data;
 
-        new_data = GlobalAlloc(0, data_len);
+        new_data = GlobalAlloc(0, data_len+1);
         if(new_data)
             memcpy(new_data, post_data, data_len);
         GlobalFree(data);
@@ -1089,6 +1089,7 @@ static HRESULT read_post_data_stream(nsIInputStream *stream, BOOL contains_heade
         post_data = new_data;
     }
 
+    post_data[data_len] = 0;
     request_data->post_data = post_data;
     request_data->post_data_len = data_len;
     TRACE("post_data = %s\n", debugstr_an(request_data->post_data, request_data->post_data_len));
@@ -1877,7 +1878,7 @@ HRESULT create_channelbsc(IMoniker *mon, const WCHAR *headers, BYTE *post_data, 
     }
 
     if(post_data) {
-        ret->bsc.request_data.post_data = GlobalAlloc(0, post_data_size);
+        ret->bsc.request_data.post_data = GlobalAlloc(0, post_data_size+1);
         if(!ret->bsc.request_data.post_data) {
             release_request_data(&ret->bsc.request_data);
             IBindStatusCallback_Release(&ret->bsc.IBindStatusCallback_iface);
@@ -1885,6 +1886,7 @@ HRESULT create_channelbsc(IMoniker *mon, const WCHAR *headers, BYTE *post_data, 
         }
 
         memcpy(ret->bsc.request_data.post_data, post_data, post_data_size);
+        ((BYTE*)ret->bsc.request_data.post_data)[post_data_size] = 0;
         ret->bsc.request_data.post_data_len = post_data_size;
     }
 
