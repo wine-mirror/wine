@@ -228,6 +228,13 @@ static nsProtocolStream *create_nsprotocol_stream(void)
     return ret;
 }
 
+static void release_request_data(request_data_t *request_data)
+{
+    heap_free(request_data->headers);
+    if(request_data->post_data)
+        GlobalFree(request_data->post_data);
+}
+
 static inline BSCallback *impl_from_IBindStatusCallback(IBindStatusCallback *iface)
 {
     return CONTAINING_RECORD(iface, BSCallback, IBindStatusCallback_iface);
@@ -286,15 +293,13 @@ static ULONG WINAPI BindStatusCallback_Release(IBindStatusCallback *iface)
     TRACE("(%p) ref = %d\n", This, ref);
 
     if(!ref) {
-        if(This->post_data)
-            GlobalFree(This->post_data);
+        release_request_data(&This->request_data);
         if(This->mon)
             IMoniker_Release(This->mon);
         if(This->binding)
             IBinding_Release(This->binding);
         list_remove(&This->entry);
         list_init(&This->entry);
-        heap_free(This->headers);
 
         This->vtbl->destroy(This);
     }
@@ -396,15 +401,15 @@ static HRESULT WINAPI BindStatusCallback_GetBindInfo(IBindStatusCallback *iface,
     memset(pbindinfo, 0, size);
     pbindinfo->cbSize = size;
 
-    pbindinfo->cbstgmedData = This->post_data_len;
+    pbindinfo->cbstgmedData = This->request_data.post_data_len;
     pbindinfo->dwCodePage = CP_UTF8;
     pbindinfo->dwOptions = 0x80000;
 
-    if(This->post_data) {
+    if(This->request_data.post_data_len) {
         pbindinfo->dwBindVerb = BINDVERB_POST;
 
         pbindinfo->stgmedData.tymed = TYMED_HGLOBAL;
-        pbindinfo->stgmedData.u.hGlobal = This->post_data;
+        pbindinfo->stgmedData.u.hGlobal = This->request_data.post_data;
         pbindinfo->stgmedData.pUnkForRelease = (IUnknown*)&This->IBindStatusCallback_iface;
         IBindStatusCallback_AddRef(&This->IBindStatusCallback_iface);
     }
@@ -483,14 +488,14 @@ static HRESULT WINAPI HttpNegotiate_BeginningTransaction(IHttpNegotiate2 *iface,
     if(hres != S_FALSE)
         return hres;
 
-    if(This->headers) {
+    if(This->request_data.headers) {
         DWORD size;
 
-        size = (strlenW(This->headers)+1)*sizeof(WCHAR);
+        size = (strlenW(This->request_data.headers)+1)*sizeof(WCHAR);
         *pszAdditionalHeaders = CoTaskMemAlloc(size);
         if(!*pszAdditionalHeaders)
             return E_OUTOFMEMORY;
-        memcpy(*pszAdditionalHeaders, This->headers, size);
+        memcpy(*pszAdditionalHeaders, This->request_data.headers, size);
     }
 
     return S_OK;
@@ -1001,7 +1006,8 @@ HRESULT bind_mon_to_wstr(HTMLInnerWindow *window, IMoniker *mon, WCHAR **ret)
     return S_OK;
 }
 
-static HRESULT read_post_data_stream(nsChannelBSC *This, nsChannel *nschannel)
+static HRESULT read_post_data_stream(nsIInputStream *stream, BOOL contains_headers, struct list *headers_list,
+        request_data_t *request_data)
 {
     UINT64 available = 0;
     UINT32 data_len = 0;
@@ -1009,10 +1015,10 @@ static HRESULT read_post_data_stream(nsChannelBSC *This, nsChannel *nschannel)
     nsresult nsres;
     HRESULT hres = S_OK;
 
-    if(!nschannel->post_data_stream)
+    if(!stream)
         return S_OK;
 
-    nsres =  nsIInputStream_Available(nschannel->post_data_stream, &available);
+    nsres =  nsIInputStream_Available(stream, &available);
     if(NS_FAILED(nsres))
         return E_FAIL;
 
@@ -1020,13 +1026,13 @@ static HRESULT read_post_data_stream(nsChannelBSC *This, nsChannel *nschannel)
     if(!data)
         return E_OUTOFMEMORY;
 
-    nsres = nsIInputStream_Read(nschannel->post_data_stream, data, available, &data_len);
+    nsres = nsIInputStream_Read(stream, data, available, &data_len);
     if(NS_FAILED(nsres)) {
         GlobalFree(data);
         return E_FAIL;
     }
 
-    if(nschannel->post_data_contains_headers) {
+    if(contains_headers) {
         if(data_len >= 2 && data[0] == '\r' && data[1] == '\n') {
             post_data = data+2;
             data_len -= 2;
@@ -1038,21 +1044,23 @@ static HRESULT read_post_data_stream(nsChannelBSC *This, nsChannel *nschannel)
             post_data += data_len;
             for(ptr = data; ptr+4 < data+data_len; ptr++) {
                 if(!memcmp(ptr, "\r\n\r\n", 4)) {
-                    post_data = ptr+4;
+                    ptr += 2;
+                    post_data = ptr+2;
                     break;
                 }
             }
 
             data_len -= post_data-data;
 
-            size = MultiByteToWideChar(CP_ACP, 0, data, post_data-data, NULL, 0);
+            size = MultiByteToWideChar(CP_ACP, 0, data, ptr-data, NULL, 0);
             headers = heap_alloc((size+1)*sizeof(WCHAR));
             if(headers) {
-                MultiByteToWideChar(CP_ACP, 0, data, post_data-data, headers, size);
+                MultiByteToWideChar(CP_ACP, 0, data, ptr-data, headers, size);
                 headers[size] = 0;
-                hres = parse_headers(headers , &nschannel->request_headers);
+                if(headers_list)
+                    hres = parse_headers(headers, headers_list);
                 if(SUCCEEDED(hres))
-                    This->bsc.headers = headers;
+                    request_data->headers = headers;
                 else
                     heap_free(headers);
             }else {
@@ -1081,9 +1089,9 @@ static HRESULT read_post_data_stream(nsChannelBSC *This, nsChannel *nschannel)
         post_data = new_data;
     }
 
-    This->bsc.post_data = post_data;
-    This->bsc.post_data_len = data_len;
-    TRACE("post_data = %s\n", debugstr_a(This->bsc.post_data));
+    request_data->post_data = post_data;
+    request_data->post_data_len = data_len;
+    TRACE("post_data = %s\n", debugstr_an(request_data->post_data, request_data->post_data_len));
     return S_OK;
 }
 
@@ -1399,10 +1407,12 @@ static HRESULT nsChannelBSC_start_binding(BSCallback *bsc)
 static HRESULT nsChannelBSC_init_bindinfo(BSCallback *bsc)
 {
     nsChannelBSC *This = nsChannelBSC_from_BSCallback(bsc);
+    nsChannel *nschannel = This->nschannel;
     HRESULT hres;
 
-    if(This->nschannel && This->nschannel->post_data_stream) {
-        hres = read_post_data_stream(This, This->nschannel);
+    if(nschannel && nschannel->post_data_stream) {
+        hres = read_post_data_stream(nschannel->post_data_stream, nschannel->post_data_contains_headers,
+                &nschannel->request_headers, &This->bsc.request_data);
         if(FAILED(hres))
             return hres;
     }
@@ -1854,23 +1864,23 @@ HRESULT create_channelbsc(IMoniker *mon, const WCHAR *headers, BYTE *post_data, 
     ret->is_doc_channel = is_doc_binding;
 
     if(headers) {
-        ret->bsc.headers = heap_strdupW(headers);
-        if(!ret->bsc.headers) {
+        ret->bsc.request_data.headers = heap_strdupW(headers);
+        if(!ret->bsc.request_data.headers) {
             IBindStatusCallback_Release(&ret->bsc.IBindStatusCallback_iface);
             return E_OUTOFMEMORY;
         }
     }
 
     if(post_data) {
-        ret->bsc.post_data = GlobalAlloc(0, post_data_size);
-        if(!ret->bsc.post_data) {
-            heap_free(ret->bsc.headers);
+        ret->bsc.request_data.post_data = GlobalAlloc(0, post_data_size);
+        if(!ret->bsc.request_data.post_data) {
+            release_request_data(&ret->bsc.request_data);
             IBindStatusCallback_Release(&ret->bsc.IBindStatusCallback_iface);
             return E_OUTOFMEMORY;
         }
 
-        memcpy(ret->bsc.post_data, post_data, post_data_size);
-        ret->bsc.post_data_len = post_data_size;
+        memcpy(ret->bsc.request_data.post_data, post_data, post_data_size);
+        ret->bsc.request_data.post_data_len = post_data_size;
     }
 
     TRACE("created %p\n", ret);
@@ -1994,12 +2004,12 @@ void channelbsc_set_channel(nsChannelBSC *This, nsChannel *channel, nsIStreamLis
         This->nscontext = context;
     }
 
-    if(This->bsc.headers) {
+    if(This->bsc.request_data.headers) {
         HRESULT hres;
 
-        hres = parse_headers(This->bsc.headers, &channel->request_headers);
-        heap_free(This->bsc.headers);
-        This->bsc.headers = NULL;
+        hres = parse_headers(This->bsc.request_data.headers, &channel->request_headers);
+        heap_free(This->bsc.request_data.headers);
+        This->bsc.request_data.headers = NULL;
         if(FAILED(hres))
             WARN("parse_headers failed: %08x\n", hres);
     }
@@ -2347,7 +2357,8 @@ HRESULT hlink_frame_navigate(HTMLDocument *doc, LPCWSTR url, nsChannel *nschanne
     }
 
     if(nschannel)
-        read_post_data_stream(callback, nschannel);
+        read_post_data_stream(nschannel->post_data_stream, nschannel->post_data_contains_headers,
+                &nschannel->request_headers, &callback->bsc.request_data);
 
     hres = CreateAsyncBindCtx(0, &callback->bsc.IBindStatusCallback_iface, NULL, &bindctx);
     if(SUCCEEDED(hres))

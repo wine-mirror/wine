@@ -49,6 +49,12 @@ typedef struct {
     struct list request_headers;
 } nsChannel;
 
+typedef struct {
+    WCHAR *headers;
+    HGLOBAL post_data;
+    ULONG post_data_len;
+} request_data_t;
+
 typedef struct BSCallbackVtbl BSCallbackVtbl;
 
 struct BSCallback {
@@ -61,9 +67,7 @@ struct BSCallback {
 
     LONG ref;
 
-    LPWSTR headers;
-    HGLOBAL post_data;
-    ULONG post_data_len;
+    request_data_t request_data;
     ULONG readed;
     DWORD bindf;
     BOOL bindinfo_ready;
