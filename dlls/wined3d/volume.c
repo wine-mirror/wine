@@ -442,6 +442,9 @@ HRESULT CDECL wined3d_volume_unmap(struct wined3d_volume *volume)
 {
     HRESULT hr;
 
+    if (volume->resource.unmap_dirtify)
+        wined3d_texture_set_dirty(volume->container);
+
     hr = wined3d_resource_unmap(&volume->resource);
     if (hr == WINEDDERR_NOTLOCKED)
         return WINED3DERR_INVALIDCALL;

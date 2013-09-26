@@ -2203,6 +2203,7 @@ struct wined3d_resource
     struct list resource_list_entry;
     DWORD locations;
     LONG access_fence;
+    BOOL unmap_dirtify;
 
     void *parent;
     const struct wined3d_parent_ops *parent_ops;

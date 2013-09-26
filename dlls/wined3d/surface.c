@@ -2313,6 +2313,10 @@ HRESULT CDECL wined3d_surface_unmap(struct wined3d_surface *surface)
     HRESULT hr;
     TRACE("surface %p.\n", surface);
 
+    if (surface->resource.unmap_dirtify && surface->container)
+        wined3d_texture_set_dirty(surface->container);
+
+
     hr = wined3d_resource_unmap(&surface->resource);
     if (FAILED(hr))
         return hr;
