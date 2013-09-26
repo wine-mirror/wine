@@ -88,6 +88,9 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
+#ifdef HAVE_SYS_SYSCALL_H
+#include <sys/syscall.h>
+#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
