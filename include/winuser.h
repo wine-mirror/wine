@@ -2463,14 +2463,14 @@ typedef struct tagUPDATELAYEREDWINDOWINFO
 {
     DWORD                cbSize;
     HDC                  hdcDst;
-    POINT CONST*         pptDst;
-    SIZE CONST*          psize;
+    POINT const*         pptDst;
+    SIZE const*          psize;
     HDC                  hdcSrc;
-    POINT CONST*         pptSrc;
+    POINT const*         pptSrc;
     COLORREF             crKey;
-    BLENDFUNCTION CONST* pblend;
+    BLENDFUNCTION const* pblend;
     DWORD                dwFlags;
-    RECT CONST*          prcDirty;
+    RECT const*          prcDirty;
 } UPDATELAYEREDWINDOWINFO, *PUPDATELAYEREDWINDOWINFO;
 
 #endif /* defined(_WINGDI_) && !defined(NOGDI) */
@@ -3239,7 +3239,7 @@ WINUSERAPI BOOL        WINAPI EnumDisplaySettingsExA(LPCSTR,DWORD,LPDEVMODEA,DWO
 WINUSERAPI BOOL        WINAPI EnumDisplaySettingsExW(LPCWSTR,DWORD,LPDEVMODEW,DWORD);
 #define                       EnumDisplaySettingsEx WINELIB_NAME_AW(EnumDisplaySettingsEx)
 WINUSERAPI BOOL        WINAPI UpdateLayeredWindow(HWND,HDC,POINT*,SIZE*,HDC,POINT*,COLORREF,BLENDFUNCTION*,DWORD);
-WINUSERAPI BOOL        WINAPI UpdateLayeredWindowIndirect(HWND,UPDATELAYEREDWINDOWINFO CONST*);
+WINUSERAPI BOOL        WINAPI UpdateLayeredWindowIndirect(HWND,UPDATELAYEREDWINDOWINFO const*);
 #endif /* defined(_WINGDI_) && !defined(NOGDI) */
 
 WINUSERAPI HKL         WINAPI ActivateKeyboardLayout(HKL,UINT);
@@ -3773,8 +3773,8 @@ WINUSERAPI HMONITOR    WINAPI MonitorFromPoint(POINT,DWORD);
 WINUSERAPI HMONITOR    WINAPI MonitorFromRect(LPRECT,DWORD);
 WINUSERAPI HMONITOR    WINAPI MonitorFromWindow(HWND,DWORD);
 WINUSERAPI BOOL        WINAPI MoveWindow(HWND,INT,INT,INT,INT,BOOL);
-WINUSERAPI DWORD       WINAPI MsgWaitForMultipleObjects(DWORD,CONST HANDLE*,BOOL,DWORD,DWORD);
-WINUSERAPI DWORD       WINAPI MsgWaitForMultipleObjectsEx(DWORD,CONST HANDLE*,DWORD,DWORD,DWORD);
+WINUSERAPI DWORD       WINAPI MsgWaitForMultipleObjects(DWORD,const HANDLE*,BOOL,DWORD,DWORD);
+WINUSERAPI DWORD       WINAPI MsgWaitForMultipleObjectsEx(DWORD,const HANDLE*,DWORD,DWORD,DWORD);
 WINUSERAPI VOID        WINAPI NotifyWinEvent(DWORD,HWND,LONG,LONG);
 WINUSERAPI DWORD       WINAPI OemKeyScan(WORD);
 WINUSERAPI BOOL        WINAPI OemToCharA(LPCSTR,LPSTR);

@@ -96,7 +96,7 @@ struct gdi_dc_funcs
     BOOL     (*pFlattenPath)(PHYSDEV);
     BOOL     (*pFontIsLinked)(PHYSDEV);
     BOOL     (*pFrameRgn)(PHYSDEV,HRGN,HBRUSH,INT,INT);
-    BOOL     (*pGdiComment)(PHYSDEV,UINT,CONST BYTE*);
+    BOOL     (*pGdiComment)(PHYSDEV,UINT,const BYTE*);
     BOOL     (*pGdiRealizationInfo)(PHYSDEV,void*);
     UINT     (*pGetBoundsRect)(PHYSDEV,RECT*,UINT);
     BOOL     (*pGetCharABCWidths)(PHYSDEV,UINT,UINT,LPABC);

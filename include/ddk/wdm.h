@@ -899,7 +899,7 @@ typedef struct _IO_STACK_LOCATION {
       DEVICE_RELATION_TYPE  Type;
     } QueryDeviceRelations;
     struct {
-      CONST GUID  *InterfaceType;
+      const GUID  *InterfaceType;
       USHORT  Size;
       USHORT  Version;
       PINTERFACE  Interface;
@@ -1209,7 +1209,7 @@ void      WINAPI IoDeleteDriver(DRIVER_OBJECT*);
 NTSTATUS  WINAPI IoDeleteSymbolicLink(UNICODE_STRING*);
 void      WINAPI IoFreeIrp(IRP*);
 PEPROCESS WINAPI IoGetCurrentProcess(void);
-NTSTATUS  WINAPI IoGetDeviceInterfaces(CONST GUID*,PDEVICE_OBJECT,ULONG,PWSTR*);
+NTSTATUS  WINAPI IoGetDeviceInterfaces(const GUID*,PDEVICE_OBJECT,ULONG,PWSTR*);
 NTSTATUS  WINAPI IoGetDeviceObjectPointer(UNICODE_STRING*,ACCESS_MASK,PFILE_OBJECT*,PDEVICE_OBJECT*);
 NTSTATUS  WINAPI IoGetDeviceProperty(PDEVICE_OBJECT,DEVICE_REGISTRY_PROPERTY,ULONG,PVOID,PULONG);
 PVOID     WINAPI IoGetDriverObjectExtension(PDRIVER_OBJECT,PVOID);

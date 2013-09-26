@@ -387,8 +387,8 @@ typedef struct _INTERNET_DIAGNOSTIC_SOCKET_INFO
 #define IDSI_FLAG_PROXY      0x00000004
 #define IDSI_FLAG_TUNNEL     0x00000008
 
-BOOLAPI InternetTimeFromSystemTimeA(CONST SYSTEMTIME *,DWORD ,LPSTR ,DWORD);
-BOOLAPI InternetTimeFromSystemTimeW(CONST SYSTEMTIME *,DWORD ,LPWSTR ,DWORD);
+BOOLAPI InternetTimeFromSystemTimeA(const SYSTEMTIME *,DWORD ,LPSTR ,DWORD);
+BOOLAPI InternetTimeFromSystemTimeW(const SYSTEMTIME *,DWORD ,LPWSTR ,DWORD);
 #define InternetTimeFromSystemTime WINELIB_NAME_AW(InternetTimeFromSystemTime)
 
 #define INTERNET_RFC1123_FORMAT    0

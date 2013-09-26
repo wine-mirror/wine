@@ -37,7 +37,7 @@ extern "C" {
 typedef LONG NTSTATUS;
 #endif
 
-typedef CONST char *PCSZ;
+typedef const char *PCSZ;
 
 typedef short CSHORT;
 typedef CSHORT *PCSHORT;

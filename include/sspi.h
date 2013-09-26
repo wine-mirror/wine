@@ -36,10 +36,10 @@ typedef LONG SECURITY_STATUS;
 
 #ifdef UNICODE
 typedef SEC_WCHAR * SECURITY_PSTR;
-typedef CONST SEC_WCHAR *  SECURITY_PCSTR;
+typedef const SEC_WCHAR *  SECURITY_PCSTR;
 #else
 typedef SEC_CHAR * SECURITY_PSTR;
-typedef CONST SEC_CHAR *  SECURITY_PCSTR;
+typedef const SEC_CHAR *  SECURITY_PCSTR;
 #endif
 
 #ifndef __SECHANDLE_DEFINED__
