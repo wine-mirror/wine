@@ -386,11 +386,12 @@ HRESULT WINAPI D3DXSaveMeshHierarchyToFileW(const WCHAR *filename, DWORD format,
         ID3DXSaveUserData *user_data_saver);
 #define D3DXSaveMeshHierarchyToFile WINELIB_NAME_AW(D3DXSaveMeshHierarchyToFile)
 HRESULT WINAPI D3DXFrameDestroy(D3DXFRAME *frame_root, ID3DXAllocateHierarchy *alloc);
-HRESULT WINAPI D3DXFrameAppendChild(LPD3DXFRAME, CONST D3DXFRAME*);
+HRESULT WINAPI D3DXFrameAppendChild(D3DXFRAME *parent, const D3DXFRAME *child);
 D3DXFRAME * WINAPI D3DXFrameFind(const D3DXFRAME *root, const char *name);
 HRESULT WINAPI D3DXFrameRegisterNamedMatrices(D3DXFRAME *frame_root, ID3DXAnimationController *animation_controller);
-UINT WINAPI D3DXFrameNumNamedMatrices(CONST D3DXFRAME *frame_root);
-HRESULT WINAPI D3DXFrameCalculateBoundingSphere(CONST D3DXFRAME*, LPD3DXVECTOR3, FLOAT*);
+UINT WINAPI D3DXFrameNumNamedMatrices(const D3DXFRAME *frame_root);
+HRESULT WINAPI D3DXFrameCalculateBoundingSphere(const D3DXFRAME *frame_root, D3DXVECTOR3 *center,
+        FLOAT *radius);
 HRESULT WINAPI D3DXCreateKeyframedAnimationSet(const char *name, double ticks_per_second,
         D3DXPLAYBACK_TYPE playback_type, UINT animation_count, UINT callback_key_count,
         const D3DXKEY_CALLBACK *callback_keys, ID3DXKeyframedAnimationSet **animation_set);
