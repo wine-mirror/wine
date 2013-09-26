@@ -6470,7 +6470,7 @@ static void test_COM_dplobby(void)
             &IID_IUnknown, (void**)&dpl);
     ok(hr == CLASS_E_NOAGGREGATION || broken(hr == E_INVALIDARG),
             "DirectPlayLobby create failed: %08x, expected CLASS_E_NOAGGREGATION\n", hr);
-    ok(!dpl || dpl == (IDirectPlayLobby*)0xdeadbeef, "dp4 = %p\n", dpl);
+    ok(!dpl || dpl == (IDirectPlayLobby*)0xdeadbeef, "dpl = %p\n", dpl);
 
     /* Invalid RIID */
     hr = CoCreateInstance(&CLSID_DirectPlayLobby, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectPlay,
