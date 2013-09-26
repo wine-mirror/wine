@@ -1939,6 +1939,9 @@ struct wined3d_device
     UINT dummy_texture_3d[MAX_COMBINED_SAMPLERS];
     UINT dummy_texture_cube[MAX_COMBINED_SAMPLERS];
 
+    /* Command stream */
+    struct wined3d_cs *cs;
+
     /* Context management */
     struct wined3d_context **contexts;
     UINT context_count;
@@ -2451,6 +2454,27 @@ HRESULT state_init(struct wined3d_state *state, struct wined3d_fb_state *fb,
         const struct wined3d_d3d_info *d3d_info) DECLSPEC_HIDDEN;
 void state_init_default(struct wined3d_state *state, const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
 void state_unbind_resources(struct wined3d_state *state) DECLSPEC_HIDDEN;
+
+struct wined3d_cs_ops
+{
+    void *(*require_space)(struct wined3d_cs *cs, size_t size);
+    void (*submit)(struct wined3d_cs *cs);
+};
+
+struct wined3d_cs
+{
+    const struct wined3d_cs_ops *ops;
+
+    size_t data_size;
+    void *data;
+};
+
+struct wined3d_cs *wined3d_cs_create(void) DECLSPEC_HIDDEN;
+void wined3d_cs_destroy(struct wined3d_cs *cs) DECLSPEC_HIDDEN;
+
+void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *swapchain,
+        const RECT *src_rect, const RECT *dst_rect, HWND dst_window_override,
+        const RGNDATA *dirty_region, DWORD flags) DECLSPEC_HIDDEN;
 
 /* Direct3D terminology with little modifications. We do not have an issued state
  * because only the driver knows about it, but we have a created state because d3d

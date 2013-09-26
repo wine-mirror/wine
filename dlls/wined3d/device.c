@@ -485,6 +485,8 @@ ULONG CDECL wined3d_device_decref(struct wined3d_device *device)
     {
         UINT i;
 
+        wined3d_cs_destroy(device->cs);
+
         if (device->recording && wined3d_stateblock_decref(device->recording))
             FIXME("Something's still holding the recording stateblock.\n");
         device->recording = NULL;
@@ -4975,17 +4977,28 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
     if (FAILED(hr = state_init(&device->state, &device->fb, &adapter->d3d_info)))
     {
         ERR("Failed to initialize device state, hr %#x.\n", hr);
-        for (i = 0; i < sizeof(device->multistate_funcs) / sizeof(device->multistate_funcs[0]); ++i)
-        {
-            HeapFree(GetProcessHeap(), 0, device->multistate_funcs[i]);
-        }
-        wined3d_decref(device->wined3d);
-        return hr;
+        goto err;
     }
     state_init_default(&device->state, &adapter->gl_info);
     device->update_state = &device->state;
 
+    if (!(device->cs = wined3d_cs_create()))
+    {
+        WARN("Failed to create command stream.\n");
+        state_cleanup(&device->state);
+        hr = E_FAIL;
+        goto err;
+    }
+
     return WINED3D_OK;
+
+err:
+    for (i = 0; i < sizeof(device->multistate_funcs) / sizeof(device->multistate_funcs[0]); ++i)
+    {
+        HeapFree(GetProcessHeap(), 0, device->multistate_funcs[i]);
+    }
+    wined3d_decref(device->wined3d);
+    return hr;
 }
 
 

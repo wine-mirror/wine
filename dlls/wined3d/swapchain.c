@@ -149,9 +149,8 @@ HRESULT CDECL wined3d_swapchain_present(struct wined3d_swapchain *swapchain,
         return WINED3DERR_INVALIDCALL;
     }
 
-    wined3d_swapchain_set_window(swapchain, dst_window_override);
-
-    swapchain->swapchain_ops->swapchain_present(swapchain, src_rect, dst_rect, dirty_region, flags);
+    wined3d_cs_emit_present(swapchain->device->cs, swapchain, src_rect,
+            dst_rect, dst_window_override, dirty_region, flags);
 
     return WINED3D_OK;
 }
