@@ -2475,6 +2475,8 @@ void wined3d_cs_destroy(struct wined3d_cs *cs) DECLSPEC_HIDDEN;
 
 void wined3d_cs_emit_clear(struct wined3d_cs *cs, DWORD rect_count, const RECT *rects,
         DWORD flags, const struct wined3d_color *color, float depth, DWORD stencil) DECLSPEC_HIDDEN;
+void wined3d_cs_emit_draw(struct wined3d_cs *cs, UINT start_idx, UINT index_count,
+        UINT start_instance, UINT instance_count, BOOL indexed) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *swapchain,
         const RECT *src_rect, const RECT *dst_rect, HWND dst_window_override,
         const RGNDATA *dirty_region, DWORD flags) DECLSPEC_HIDDEN;
