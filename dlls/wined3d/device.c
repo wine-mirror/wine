@@ -896,8 +896,6 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
         goto err_out;
     }
     device->swapchains[0] = swapchain;
-
-    state_init_default(&device->state, device);
     device_init_swapchain_state(device, swapchain);
 
     context = context_acquire(device, swapchain->front_buffer);
@@ -4984,6 +4982,7 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
         wined3d_decref(device->wined3d);
         return hr;
     }
+    state_init_default(&device->state, device);
     device->update_state = &device->state;
 
     return WINED3D_OK;
