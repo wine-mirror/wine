@@ -947,7 +947,16 @@ static DWORD CALLBACK wait_for_event(LPVOID arg)
         }
         if (needs_close) close( fd );
     }
-    if (commio->iosb) commio->iosb->u.Status = *commio->events ? STATUS_SUCCESS : STATUS_CANCELLED;
+    if (commio->iosb)
+    {
+        if (*commio->events)
+        {
+            commio->iosb->u.Status = STATUS_SUCCESS;
+            commio->iosb->Information = sizeof(DWORD);
+        }
+        else
+            commio->iosb->u.Status = STATUS_CANCELLED;
+    }
     if (commio->hEvent) NtSetEvent(commio->hEvent, NULL);
     RtlFreeHeap(GetProcessHeap(), 0, commio);
     return 0;
