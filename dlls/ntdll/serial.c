@@ -575,35 +575,33 @@ static NTSTATUS set_line_control(int fd, const SERIAL_LINE_CONTROL* slc)
 {
     struct termios port;
     unsigned bytesize, stopbits;
-    
+
     if (tcgetattr(fd, &port) == -1)
     {
         ERR("tcgetattr error '%s'\n", strerror(errno));
         return FILE_GetNtStatus();
     }
-    
+
 #ifdef IMAXBEL
     port.c_iflag &= ~(ISTRIP|BRKINT|IGNCR|ICRNL|INLCR|PARMRK|IMAXBEL);
 #else
     port.c_iflag &= ~(ISTRIP|BRKINT|IGNCR|ICRNL|INLCR|PARMRK);
 #endif
     port.c_iflag |= IGNBRK | INPCK;
-    
     port.c_oflag &= ~(OPOST);
-    
     port.c_cflag &= ~(HUPCL);
     port.c_cflag |= CLOCAL | CREAD;
-    
+
     /*
      * on FreeBSD, turning off ICANON does not disable IEXTEN,
      * so we must turn it off explicitly. No harm done on Linux.
      */
     port.c_lflag &= ~(ICANON|ECHO|ISIG|IEXTEN);
     port.c_lflag |= NOFLSH;
-    
+
     bytesize = slc->WordLength;
     stopbits = slc->StopBits;
-    
+
 #ifdef CMSPAR
     port.c_cflag &= ~(PARENB | PARODD | CMSPAR);
 #else
@@ -633,7 +631,7 @@ static NTSTATUS set_line_control(int fd, const SERIAL_LINE_CONTROL* slc)
         }
         else
         {
-            ERR("Cannot set MARK Parity\n");
+            FIXME("Cannot set MARK Parity\n");
             return STATUS_NOT_SUPPORTED;
         }
         break;
@@ -645,16 +643,16 @@ static NTSTATUS set_line_control(int fd, const SERIAL_LINE_CONTROL* slc)
         }
         else
         {
-            ERR("Cannot set SPACE Parity\n");
+            FIXME("Cannot set SPACE Parity\n");
             return STATUS_NOT_SUPPORTED;
         }
         break;
 #endif
     default:
-        ERR("Parity\n");
+        FIXME("Parity %d is not supported\n", slc->Parity);
         return STATUS_NOT_SUPPORTED;
     }
-    
+
     port.c_cflag &= ~CSIZE;
     switch (bytesize)
     {
@@ -663,17 +661,17 @@ static NTSTATUS set_line_control(int fd, const SERIAL_LINE_CONTROL* slc)
     case 7:	port.c_cflag |= CS7;	break;
     case 8:	port.c_cflag |= CS8;	break;
     default:
-        ERR("ByteSize\n");
+        FIXME("ByteSize %d is not supported\n", bytesize);
         return STATUS_NOT_SUPPORTED;
     }
-    
+
     switch (stopbits)
     {
     case ONESTOPBIT:    port.c_cflag &= ~CSTOPB;        break;
     case ONE5STOPBITS: /* will be selected if bytesize is 5 */
     case TWOSTOPBITS:	port.c_cflag |= CSTOPB;		break;
     default:
-        ERR("StopBits\n");
+        FIXME("StopBits %d is not supported\n", stopbits);
         return STATUS_NOT_SUPPORTED;
     }
     /* otherwise it hangs with pending input*/
