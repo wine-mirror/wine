@@ -844,11 +844,12 @@ static HRESULT WINAPI PersistStreamInit_Load(IPersistStreamInit *iface, LPSTREAM
 
     prepare_for_binding(This, mon, FALSE);
     hres = set_moniker(This->window, mon, NULL, NULL, NULL, TRUE);
-    IMoniker_Release(mon);
     if(FAILED(hres))
         return hres;
 
-    return channelbsc_load_stream(This->window->pending_window, pStm);
+    hres = channelbsc_load_stream(This->window->pending_window, mon, pStm);
+    IMoniker_Release(mon);
+    return hres;
 }
 
 static HRESULT WINAPI PersistStreamInit_Save(IPersistStreamInit *iface, LPSTREAM pStm,
@@ -901,11 +902,12 @@ static HRESULT WINAPI PersistStreamInit_InitNew(IPersistStreamInit *iface)
 
     prepare_for_binding(This, mon, FALSE);
     hres = set_moniker(This->window, mon, NULL, NULL, NULL, FALSE);
-    IMoniker_Release(mon);
     if(FAILED(hres))
         return hres;
 
-    return channelbsc_load_stream(This->window->pending_window, NULL);
+    hres = channelbsc_load_stream(This->window->pending_window, mon, NULL);
+    IMoniker_Release(mon);
+    return hres;
 }
 
 static const IPersistStreamInitVtbl PersistStreamInitVtbl = {

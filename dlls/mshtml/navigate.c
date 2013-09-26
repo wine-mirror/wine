@@ -1953,7 +1953,7 @@ void abort_window_bindings(HTMLInnerWindow *window)
     }
 }
 
-HRESULT channelbsc_load_stream(HTMLInnerWindow *pending_window, IStream *stream)
+HRESULT channelbsc_load_stream(HTMLInnerWindow *pending_window, IMoniker *mon, IStream *stream)
 {
     nsChannelBSC *bscallback = pending_window->bscallback;
     HRESULT hres = S_OK;
@@ -1966,6 +1966,8 @@ HRESULT channelbsc_load_stream(HTMLInnerWindow *pending_window, IStream *stream)
     bscallback->nschannel->content_type = heap_strdupA("text/html");
     if(!bscallback->nschannel->content_type)
         return E_OUTOFMEMORY;
+
+    set_current_mon(pending_window->base.outer_window, mon, 0);
 
     bscallback->bsc.window = pending_window;
     if(stream)

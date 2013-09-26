@@ -118,7 +118,7 @@ HRESULT navigate_new_window(HTMLOuterWindow*,IUri*,const WCHAR*,IHTMLWindow2**) 
 HRESULT navigate_url(HTMLOuterWindow*,const WCHAR*,IUri*,DWORD) DECLSPEC_HIDDEN;
 
 HRESULT create_channelbsc(IMoniker*,const WCHAR*,BYTE*,DWORD,BOOL,nsChannelBSC**) DECLSPEC_HIDDEN;
-HRESULT channelbsc_load_stream(HTMLInnerWindow*,IStream*) DECLSPEC_HIDDEN;
+HRESULT channelbsc_load_stream(HTMLInnerWindow*,IMoniker*,IStream*) DECLSPEC_HIDDEN;
 void channelbsc_set_channel(nsChannelBSC*,nsChannel*,nsIStreamListener*,nsISupports*) DECLSPEC_HIDDEN;
 IUri *nsuri_get_uri(nsWineURI*) DECLSPEC_HIDDEN;
 
