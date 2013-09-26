@@ -677,6 +677,7 @@ AC_CHECK_HEADERS([libprocstat.h],,,
 dnl **** Check for working dll ****
 
 AC_SUBST(DLLEXT,"")
+AC_SUBST(DLLPREFIX,"")
 AC_SUBST(DLLFLAGS,"-D_REENTRANT")
 AC_SUBST(IMPLIBEXT,"def")
 AC_SUBST(LDRPATH_INSTALL,"")

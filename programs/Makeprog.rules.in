@@ -26,7 +26,7 @@ $(MODULE) $(MODULE).so $(MODULE).fake: $(OBJS) Makefile.in
 .PHONY: install_prog install_prog.so install_prog.fake
 
 install_prog.so: $(MODULE).so $(DESTDIR)$(dlldir) dummy
-	$(INSTALL_PROGRAM) $(MODULE).so $(DESTDIR)$(dlldir)/$(MODULE).so
+	$(INSTALL_PROGRAM) $(MODULE).so $(DESTDIR)$(dlldir)/$(DLLPREFIX)$(MODULE).so
 
 install_prog.fake: $(MODULE).fake $(DESTDIR)$(fakedlldir) dummy
 	$(INSTALL_DATA) $(MODULE).fake $(DESTDIR)$(fakedlldir)/$(MODULE)
@@ -37,7 +37,7 @@ install_prog: $(MODULE) $(DESTDIR)$(bindir) dummy
 install install-lib:: install_prog$(DLLEXT) install_prog$(FAKEEXT)
 
 uninstall::
-	$(RM) $(DESTDIR)$(bindir)/$(MODULE) $(DESTDIR)$(dlldir)/$(MODULE)$(DLLEXT) $(DESTDIR)$(fakedlldir)/$(MODULE)
+	$(RM) $(DESTDIR)$(bindir)/$(MODULE) $(DESTDIR)$(dlldir)/$(DLLPREFIX)$(MODULE)$(DLLEXT) $(DESTDIR)$(fakedlldir)/$(MODULE)
 
 clean::
 	$(RM) $(MODULE)

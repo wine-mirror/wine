@@ -381,10 +381,10 @@ __uninstall__: $ac_dir/__uninstall__"
             then
                 wine_fn_append_rule \
 "$ac_dir/__install-lib__:: $ac_dir \$(DESTDIR)\$(dlldir) \$(DESTDIR)\$(fakedlldir)
-	\$(INSTALL_PROGRAM) $ac_dir/$ac_dll$DLLEXT \$(DESTDIR)\$(dlldir)/$ac_dll$DLLEXT
+	\$(INSTALL_PROGRAM) $ac_dir/$ac_dll$DLLEXT \$(DESTDIR)\$(dlldir)/$DLLPREFIX$ac_dll$DLLEXT
 	\$(INSTALL_DATA) $ac_dir/$ac_dll.fake \$(DESTDIR)\$(fakedlldir)/$ac_dll
 $ac_dir/__uninstall__::
-	\$(RM) \$(DESTDIR)\$(dlldir)/$ac_dll$DLLEXT \$(DESTDIR)\$(fakedlldir)/$ac_dll"
+	\$(RM) \$(DESTDIR)\$(dlldir)/$DLLPREFIX$ac_dll$DLLEXT \$(DESTDIR)\$(fakedlldir)/$ac_dll"
             else
                 wine_fn_append_rule \
 "$ac_dir/__install-lib__:: $ac_dir \$(DESTDIR)\$(dlldir)
@@ -501,10 +501,10 @@ __uninstall__: $ac_dir/__uninstall__"
     then
         wine_fn_append_rule \
 "$ac_dir/__install__:: $ac_dir \$(DESTDIR)\$(dlldir) \$(DESTDIR)\$(fakedlldir)
-	\$(INSTALL_PROGRAM) $ac_dir/$ac_program$DLLEXT \$(DESTDIR)\$(dlldir)/$ac_program$DLLEXT
+	\$(INSTALL_PROGRAM) $ac_dir/$ac_program$DLLEXT \$(DESTDIR)\$(dlldir)/$DLLPREFIX$ac_program$DLLEXT
 	\$(INSTALL_DATA) $ac_dir/$ac_program.fake \$(DESTDIR)\$(fakedlldir)/$ac_program
 $ac_dir/__uninstall__::
-	\$(RM) \$(DESTDIR)\$(dlldir)/$ac_program$DLLEXT \$(DESTDIR)\$(fakedlldir)/$ac_program"
+	\$(RM) \$(DESTDIR)\$(dlldir)/$DLLPREFIX$ac_program$DLLEXT \$(DESTDIR)\$(fakedlldir)/$ac_program"
 
         if test "x$enable_tools" != xno && wine_fn_has_flag installbin $ac_flags
         then

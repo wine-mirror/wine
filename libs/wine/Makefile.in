@@ -107,6 +107,7 @@ EXTRA_OBJS = version.o
 CONFIGDIRS = \
 	-DBINDIR='"$(bindir)"' \
 	-DDLLDIR='"$(dlldir)"' \
+	-DDLLPREFIX='"$(DLLPREFIX)"' \
 	-DLIB_TO_BINDIR=\"`$(RELPATH) $(libdir) $(bindir)`\" \
 	-DLIB_TO_DLLDIR=\"`$(RELPATH) $(libdir) $(dlldir)`\" \
 	-DBIN_TO_DLLDIR=\"`$(RELPATH) $(bindir) $(dlldir)`\" \

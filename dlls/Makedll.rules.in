@@ -72,7 +72,7 @@ install_dll: $(MODULE) $(DESTDIR)$(dlldir) dummy
 	$(INSTALL_PROGRAM) $(MODULE) $(DESTDIR)$(dlldir)/$(MODULE)
 
 install_dll.so: $(MODULE).so $(DESTDIR)$(dlldir) dummy
-	$(INSTALL_PROGRAM) $(MODULE).so $(DESTDIR)$(dlldir)/$(MODULE).so
+	$(INSTALL_PROGRAM) $(MODULE).so $(DESTDIR)$(dlldir)/$(DLLPREFIX)$(MODULE).so
 
 install_dll.fake: $(MODULE).fake $(DESTDIR)$(fakedlldir) dummy
 	$(INSTALL_DATA) $(MODULE).fake $(DESTDIR)$(fakedlldir)/$(MODULE)
@@ -80,7 +80,7 @@ install_dll.fake: $(MODULE).fake $(DESTDIR)$(fakedlldir) dummy
 install install-lib:: install_dll$(DLLEXT) install_dll$(FAKEEXT)
 
 uninstall::
-	$(RM) $(DESTDIR)$(dlldir)/$(MODULE)$(DLLEXT) $(DESTDIR)$(fakedlldir)/$(MODULE)
+	$(RM) $(DESTDIR)$(dlldir)/$(DLLPREFIX)$(MODULE)$(DLLEXT) $(DESTDIR)$(fakedlldir)/$(MODULE)
 
 # Misc. rules
 
