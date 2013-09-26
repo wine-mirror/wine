@@ -715,6 +715,7 @@ IMPLIBEXT
 DLLFLAGS
 DLLPREFIX
 DLLEXT
+dlldir
 CPP
 OPENGL_LIBS
 XLIB
@@ -6408,6 +6409,8 @@ done
 
 
 
+dlldir="\${libdir}/wine"
+
 DLLEXT=""
 
 DLLPREFIX=""
@@ -6904,6 +6907,7 @@ clean::
     DLLFLAGS="$DLLFLAGS -fPIC"
     DLLEXT=".so"
     DLLPREFIX="lib"
+    dlldir="\${libdir}"
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fPIC -Wl,--export-dynamic" >&5
 $as_echo_n "checking whether the compiler supports -fPIC -Wl,--export-dynamic... " >&6; }
 if ${ac_cv_cflags__fPIC__Wl___export_dynamic+:} false; then :
