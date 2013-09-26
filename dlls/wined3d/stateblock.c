@@ -598,9 +598,12 @@ void state_cleanup(struct wined3d_state *state)
     HeapFree(GetProcessHeap(), 0, state->ps_consts_f);
 }
 
-HRESULT state_init(struct wined3d_state *state, const struct wined3d_d3d_info *d3d_info)
+HRESULT state_init(struct wined3d_state *state, struct wined3d_fb_state *fb,
+        const struct wined3d_d3d_info *d3d_info)
 {
     unsigned int i;
+
+    state->fb = fb;
 
     for (i = 0; i < LIGHTMAP_SIZE; i++)
     {
@@ -1199,8 +1202,6 @@ void state_init_default(struct wined3d_state *state, struct wined3d_device *devi
         state->transforms[WINED3D_TS_WORLD_MATRIX(i)] = identity;
     }
 
-    state->fb = &device->fb;
-
     TRACE("Render states\n");
     /* Render states: */
     state->render_states[WINED3D_RS_ZENABLE] = WINED3D_ZB_TRUE;
@@ -1386,7 +1387,7 @@ static HRESULT stateblock_init(struct wined3d_stateblock *stateblock,
     stateblock->ref = 1;
     stateblock->device = device;
 
-    if (FAILED(hr = state_init(&stateblock->state, d3d_info)))
+    if (FAILED(hr = state_init(&stateblock->state, NULL, d3d_info)))
         return hr;
 
     if (FAILED(hr = stateblock_allocate_shader_constants(stateblock)))

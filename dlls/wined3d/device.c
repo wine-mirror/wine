@@ -4708,7 +4708,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         if (device->d3d_initialized)
             delete_opengl_contexts(device, swapchain);
 
-        if (FAILED(hr = state_init(&device->state, &device->adapter->d3d_info)))
+        if (FAILED(hr = state_init(&device->state, &device->fb, &device->adapter->d3d_info)))
             ERR("Failed to initialize device state, hr %#x.\n", hr);
         state_init_default(&device->state, device);
         device->update_state = &device->state;
@@ -4972,7 +4972,7 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
 
     device->blitter = adapter->blitter;
 
-    if (FAILED(hr = state_init(&device->state, &adapter->d3d_info)))
+    if (FAILED(hr = state_init(&device->state, &device->fb, &adapter->d3d_info)))
     {
         ERR("Failed to initialize device state, hr %#x.\n", hr);
         for (i = 0; i < sizeof(device->multistate_funcs) / sizeof(device->multistate_funcs[0]); ++i)

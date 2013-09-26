@@ -2447,7 +2447,8 @@ struct wined3d_stateblock
 void stateblock_init_contained_states(struct wined3d_stateblock *stateblock) DECLSPEC_HIDDEN;
 
 void state_cleanup(struct wined3d_state *state) DECLSPEC_HIDDEN;
-HRESULT state_init(struct wined3d_state *state, const struct wined3d_d3d_info *d3d_info) DECLSPEC_HIDDEN;
+HRESULT state_init(struct wined3d_state *state, struct wined3d_fb_state *fb,
+        const struct wined3d_d3d_info *d3d_info) DECLSPEC_HIDDEN;
 void state_init_default(struct wined3d_state *state, struct wined3d_device *device) DECLSPEC_HIDDEN;
 void state_unbind_resources(struct wined3d_state *state) DECLSPEC_HIDDEN;
 
