@@ -3466,8 +3466,6 @@ HRESULT CDECL wined3d_device_present(const struct wined3d_device *device, const 
 HRESULT CDECL wined3d_device_clear(struct wined3d_device *device, DWORD rect_count,
         const RECT *rects, DWORD flags, const struct wined3d_color *color, float depth, DWORD stencil)
 {
-    RECT draw_rect;
-
     TRACE("device %p, rect_count %u, rects %p, flags %#x, color {%.8e, %.8e, %.8e, %.8e}, depth %.8e, stencil %u.\n",
             device, rect_count, rects, flags, color->r, color->g, color->b, color->a, depth, stencil);
 
@@ -3497,9 +3495,7 @@ HRESULT CDECL wined3d_device_clear(struct wined3d_device *device, DWORD rect_cou
         }
     }
 
-    wined3d_get_draw_rect(&device->state, &draw_rect);
-    device_clear_render_targets(device, device->adapter->gl_info.limits.buffers,
-            &device->fb, rect_count, rects, &draw_rect, flags, color, depth, stencil);
+    wined3d_cs_emit_clear(device->cs, rect_count, rects, flags, color, depth, stencil);
 
     return WINED3D_OK;
 }
@@ -4982,7 +4978,7 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
     state_init_default(&device->state, &adapter->gl_info);
     device->update_state = &device->state;
 
-    if (!(device->cs = wined3d_cs_create()))
+    if (!(device->cs = wined3d_cs_create(device)))
     {
         WARN("Failed to create command stream.\n");
         state_cleanup(&device->state);

@@ -26,6 +26,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 enum wined3d_cs_op
 {
     WINED3D_CS_OP_PRESENT,
+    WINED3D_CS_OP_CLEAR,
 };
 
 struct wined3d_cs_present
@@ -39,7 +40,18 @@ struct wined3d_cs_present
     DWORD flags;
 };
 
-static void wined3d_cs_exec_present(const void *data)
+struct wined3d_cs_clear
+{
+    enum wined3d_cs_op opcode;
+    DWORD rect_count;
+    const RECT *rects;
+    DWORD flags;
+    const struct wined3d_color *color;
+    float depth;
+    DWORD stencil;
+};
+
+static void wined3d_cs_exec_present(struct wined3d_cs *cs, const void *data)
 {
     const struct wined3d_cs_present *op = data;
     struct wined3d_swapchain *swapchain;
@@ -69,9 +81,40 @@ void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *sw
     cs->ops->submit(cs);
 }
 
-static void (* const wined3d_cs_op_handlers[])(const void *data) =
+static void wined3d_cs_exec_clear(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_clear *op = data;
+    struct wined3d_device *device;
+    RECT draw_rect;
+
+    device = cs->device;
+    wined3d_get_draw_rect(&device->state, &draw_rect);
+    device_clear_render_targets(device, device->adapter->gl_info.limits.buffers,
+            &device->fb, op->rect_count, op->rects, &draw_rect, op->flags,
+            op->color, op->depth, op->stencil);
+}
+
+void wined3d_cs_emit_clear(struct wined3d_cs *cs, DWORD rect_count, const RECT *rects,
+        DWORD flags, const struct wined3d_color *color, float depth, DWORD stencil)
+{
+    struct wined3d_cs_clear *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_CLEAR;
+    op->rect_count = rect_count;
+    op->rects = rects;
+    op->flags = flags;
+    op->color = color;
+    op->depth = depth;
+    op->stencil = stencil;
+
+    cs->ops->submit(cs);
+}
+
+static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
 {
     /* WINED3D_CS_OP_PRESENT                */ wined3d_cs_exec_present,
+    /* WINED3D_CS_OP_CLEAR                  */ wined3d_cs_exec_clear,
 };
 
 static void *wined3d_cs_st_require_space(struct wined3d_cs *cs, size_t size)
@@ -94,7 +137,7 @@ static void wined3d_cs_st_submit(struct wined3d_cs *cs)
 {
     enum wined3d_cs_op opcode = *(const enum wined3d_cs_op *)cs->data;
 
-    wined3d_cs_op_handlers[opcode](cs->data);
+    wined3d_cs_op_handlers[opcode](cs, cs->data);
 }
 
 static const struct wined3d_cs_ops wined3d_cs_st_ops =
@@ -103,7 +146,7 @@ static const struct wined3d_cs_ops wined3d_cs_st_ops =
     wined3d_cs_st_submit,
 };
 
-struct wined3d_cs *wined3d_cs_create(void)
+struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device)
 {
     struct wined3d_cs *cs;
 
@@ -111,6 +154,7 @@ struct wined3d_cs *wined3d_cs_create(void)
         return NULL;
 
     cs->ops = &wined3d_cs_st_ops;
+    cs->device = device;
 
     cs->data_size = WINED3D_INITIAL_CS_SIZE;
     if (!(cs->data = HeapAlloc(GetProcessHeap(), 0, cs->data_size)))

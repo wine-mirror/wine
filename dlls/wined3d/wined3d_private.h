@@ -2464,14 +2464,17 @@ struct wined3d_cs_ops
 struct wined3d_cs
 {
     const struct wined3d_cs_ops *ops;
+    struct wined3d_device *device;
 
     size_t data_size;
     void *data;
 };
 
-struct wined3d_cs *wined3d_cs_create(void) DECLSPEC_HIDDEN;
+struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device) DECLSPEC_HIDDEN;
 void wined3d_cs_destroy(struct wined3d_cs *cs) DECLSPEC_HIDDEN;
 
+void wined3d_cs_emit_clear(struct wined3d_cs *cs, DWORD rect_count, const RECT *rects,
+        DWORD flags, const struct wined3d_color *color, float depth, DWORD stencil) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *swapchain,
         const RECT *src_rect, const RECT *dst_rect, HWND dst_window_override,
         const RGNDATA *dirty_region, DWORD flags) DECLSPEC_HIDDEN;
