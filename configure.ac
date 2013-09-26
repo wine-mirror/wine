@@ -872,6 +872,7 @@ clean::
   linux-android*)
     DLLFLAGS="$DLLFLAGS -fPIC"
     DLLEXT=".so"
+    DLLPREFIX="lib"
     WINE_TRY_CFLAGS([-fPIC -Wl,--export-dynamic],
                     [AC_SUBST(LDEXECFLAGS,["-Wl,--export-dynamic"])])
     WINE_TRY_CFLAGS([-fPIC -Wl,--rpath,\$ORIGIN/../lib],
