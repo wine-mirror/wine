@@ -6,4 +6,6 @@ EXTRADEFS = -D_ATL_VER=_ATL_VER_80
 
 C_SRCS = atl80.c
 
+RC_SRCS = atl80.rc
+
 @MAKE_DLL_RULES@
