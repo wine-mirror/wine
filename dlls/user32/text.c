@@ -357,7 +357,7 @@ static void TEXT_WordBreak (HDC hdc, WCHAR *str, unsigned int max_str,
                             unsigned int *chars_used, SIZE *size)
 {
     WCHAR *p;
-    int word_fits;
+    BOOL word_fits;
     SCRIPT_LOGATTR *sla;
     SCRIPT_ANALYSIS sa;
     int i;
@@ -395,7 +395,7 @@ static void TEXT_WordBreak (HDC hdc, WCHAR *str, unsigned int max_str,
     /* If there was one or the first character didn't fit then */
     if (word_fits)
     {
-        int next_is_space;
+        BOOL next_is_space;
         /* break the line before/after that character */
         if (!(format & (DT_RIGHT | DT_CENTER)) || *p != SPACE)
             p++;
@@ -562,7 +562,7 @@ static int TEXT_Reprefix (const WCHAR *str, unsigned int ns,
  *  newline representation or nothing
  */
 
-static int remainder_is_none_or_newline (int num_chars, const WCHAR *str)
+static BOOL remainder_is_none_or_newline (int num_chars, const WCHAR *str)
 {
     if (!num_chars) return TRUE;
     if (*str != LF && *str != CR) return FALSE;
@@ -615,10 +615,8 @@ static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
     int seg_i, seg_count, seg_j;
     int max_seg_width;
     int num_fit;
-    int word_broken;
-    int line_fits;
+    BOOL word_broken, line_fits, ellipsified;
     unsigned int j_in_seg;
-    int ellipsified;
     *pprefix_offset = -1;
 
     /* For each text segment in the line */
@@ -699,7 +697,7 @@ static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
          * combined, and may differ between versions (to say nothing of the
          * several bugs in the Microsoft versions).
          */
-        word_broken = 0;
+        word_broken = FALSE;
         line_fits = (num_fit >= j_in_seg);
         if (!line_fits && (format & DT_WORDBREAK))
         {
@@ -712,19 +710,19 @@ static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
             TEXT_SkipChars (count, &s, seg_count, str+seg_i, i-seg_i,
                             chars_used, !(format & DT_NOPREFIX));
             i = s - str;
-            word_broken = 1;
+            word_broken = TRUE;
         }
         pellip->before = j_in_seg;
         pellip->under = 0;
         pellip->after = 0;
         pellip->len = 0;
-        ellipsified = 0;
+        ellipsified = FALSE;
         if (!line_fits && (format & DT_PATH_ELLIPSIS))
         {
             TEXT_PathEllipsify (hdc, dest + seg_j, maxl-seg_j, &j_in_seg,
                                 max_seg_width, &size, *p_retstr, pellip);
             line_fits = (size.cx <= max_seg_width);
-            ellipsified = 1;
+            ellipsified = TRUE;
         }
         /* NB we may end up ellipsifying a word-broken or path_ellipsified
          * string */
@@ -885,7 +883,7 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
     int tabwidth /* to keep gcc happy */ = 0;
     int prefix_offset;
     ellipsis_data ellip;
-    int invert_y=0;
+    BOOL invert_y=FALSE;
 
     TRACE("%s, %d, [%s] %08x\n", debugstr_wn (str, count), count,
         wine_dbgstr_rect(rect), flags);
@@ -935,7 +933,7 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
         GetWindowExtEx(hdc, &window_ext);
         GetViewportExtEx(hdc, &viewport_ext);
         if ((window_ext.cy > 0) != (viewport_ext.cy > 0))
-            invert_y = 1;
+            invert_y = TRUE;
     }
 
     if (dtp)
