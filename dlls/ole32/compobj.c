@@ -123,6 +123,18 @@ struct comclassredirect_data
     DWORD miscstatusdocprint;
 };
 
+struct ifacepsredirect_data
+{
+    ULONG size;
+    DWORD mask;
+    GUID  iid;
+    ULONG nummethods;
+    GUID  tlbid;
+    GUID  base;
+    ULONG name_len;
+    ULONG name_offset;
+};
+
 struct class_reg_data
 {
     union
@@ -2359,6 +2371,7 @@ HRESULT WINAPI CoGetPSClsid(REFIID riid, CLSID *pclsid)
     HKEY hkey;
     APARTMENT *apt = COM_CurrentApt();
     struct registered_psclsid *registered_psclsid;
+    ACTCTX_SECTION_KEYED_DATA data;
 
     TRACE("() riid=%s, pclsid=%p\n", debugstr_guid(riid), pclsid);
 
@@ -2385,6 +2398,15 @@ HRESULT WINAPI CoGetPSClsid(REFIID riid, CLSID *pclsid)
         }
 
     LeaveCriticalSection(&apt->cs);
+
+    data.cbSize = sizeof(data);
+    if (FindActCtxSectionGuid(0, NULL, ACTIVATION_CONTEXT_SECTION_COM_INTERFACE_REDIRECTION,
+                              riid, &data))
+    {
+        struct ifacepsredirect_data *ifaceps = (struct ifacepsredirect_data*)data.lpData;
+        *pclsid = ifaceps->iid;
+        return S_OK;
+    }
 
     /* Interface\\{string form of riid}\\ProxyStubClsid32 */
     strcpyW(path, wszInterface);

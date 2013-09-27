@@ -1031,7 +1031,6 @@ static void test_CoGetPSClsid(void)
 
     if ((handle = activate_context(actctx_manifest, &cookie)))
     {
-todo_wine {
         memset(&clsid, 0, sizeof(clsid));
         hr = CoGetPSClsid(&IID_Testiface, &clsid);
         ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -1051,7 +1050,15 @@ todo_wine {
         hr = CoGetPSClsid(&IID_Testiface4, &clsid);
         ok(hr == S_OK, "got 0x%08x\n", hr);
         ok(IsEqualGUID(&clsid, &GUID_NULL), "got clsid %s\n", debugstr_guid(&clsid));
-}
+
+        /* register same interface and try to get CLSID back */
+        hr = CoRegisterPSClsid(&IID_Testiface, &IID_Testiface4);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        memset(&clsid, 0, sizeof(clsid));
+        hr = CoGetPSClsid(&IID_Testiface, &clsid);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(IsEqualGUID(&clsid, &IID_Testiface4), "got clsid %s\n", debugstr_guid(&clsid));
+
         pDeactivateActCtx(0, cookie);
         pReleaseActCtx(handle);
     }
