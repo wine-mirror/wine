@@ -987,7 +987,7 @@ int CDECL _ltoa_s(MSVCRT_long value, char *str, MSVCRT_size_t size, int radix)
 {
     MSVCRT_ulong val;
     unsigned int digit;
-    int is_negative;
+    BOOL is_negative;
     char buffer[33], *pos;
     size_t len;
 
@@ -1001,12 +1001,12 @@ int CDECL _ltoa_s(MSVCRT_long value, char *str, MSVCRT_size_t size, int radix)
 
     if (value < 0 && radix == 10)
     {
-        is_negative = 1;
+        is_negative = TRUE;
         val = -value;
     }
     else
     {
-        is_negative = 0;
+        is_negative = FALSE;
         val = value;
     }
 
@@ -1062,7 +1062,7 @@ int CDECL _ltow_s(MSVCRT_long value, MSVCRT_wchar_t *str, MSVCRT_size_t size, in
 {
     MSVCRT_ulong val;
     unsigned int digit;
-    int is_negative;
+    BOOL is_negative;
     MSVCRT_wchar_t buffer[33], *pos;
     size_t len;
 
@@ -1076,12 +1076,12 @@ int CDECL _ltow_s(MSVCRT_long value, MSVCRT_wchar_t *str, MSVCRT_size_t size, in
 
     if (value < 0 && radix == 10)
     {
-        is_negative = 1;
+        is_negative = TRUE;
         val = -value;
     }
     else
     {
-        is_negative = 0;
+        is_negative = FALSE;
         val = value;
     }
 
@@ -1338,7 +1338,7 @@ int CDECL _i64toa_s(__int64 value, char *str, MSVCRT_size_t size, int radix)
 {
     unsigned __int64 val;
     unsigned int digit;
-    int is_negative;
+    BOOL is_negative;
     char buffer[65], *pos;
     size_t len;
 
@@ -1352,12 +1352,12 @@ int CDECL _i64toa_s(__int64 value, char *str, MSVCRT_size_t size, int radix)
 
     if (value < 0 && radix == 10)
     {
-        is_negative = 1;
+        is_negative = TRUE;
         val = -value;
     }
     else
     {
-        is_negative = 0;
+        is_negative = FALSE;
         val = value;
     }
 
@@ -1413,7 +1413,7 @@ int CDECL _i64tow_s(__int64 value, MSVCRT_wchar_t *str, MSVCRT_size_t size, int 
 {
     unsigned __int64 val;
     unsigned int digit;
-    int is_negative;
+    BOOL is_negative;
     MSVCRT_wchar_t buffer[65], *pos;
     size_t len;
 
@@ -1427,12 +1427,12 @@ int CDECL _i64tow_s(__int64 value, MSVCRT_wchar_t *str, MSVCRT_size_t size, int 
 
     if (value < 0 && radix == 10)
     {
-        is_negative = 1;
+        is_negative = TRUE;
         val = -value;
     }
     else
     {
-        is_negative = 0;
+        is_negative = FALSE;
         val = value;
     }
 
