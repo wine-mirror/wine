@@ -836,7 +836,8 @@ RGNDATA *get_region_data(HRGN hrgn, HDC hdc_lptodp)
  *
  * Synchronize the Mac window position with the Windows one
  */
-static void sync_window_position(struct macdrv_win_data *data, UINT swp_flags, const RECT *old_window_rect)
+static void sync_window_position(struct macdrv_win_data *data, UINT swp_flags, const RECT *old_window_rect,
+                                 const RECT *old_whole_rect)
 {
     CGRect frame;
 
@@ -848,7 +849,10 @@ static void sync_window_position(struct macdrv_win_data *data, UINT swp_flags, c
         frame.size.width = frame.size.height = 1;
 
     data->on_screen = macdrv_set_cocoa_window_frame(data->cocoa_window, &frame);
-    if (old_window_rect && IsRectEmpty(old_window_rect) != IsRectEmpty(&data->window_rect))
+    if (old_window_rect && old_whole_rect &&
+        (IsRectEmpty(old_window_rect) != IsRectEmpty(&data->window_rect) ||
+         old_window_rect->left - old_whole_rect->left != data->window_rect.left - data->whole_rect.left ||
+         old_window_rect->top - old_whole_rect->top != data->window_rect.top - data->whole_rect.top))
         sync_window_region(data, (HRGN)1);
 
     TRACE("win %p/%p whole_rect %s frame %s\n", data->hwnd, data->cocoa_window,
@@ -1120,6 +1124,9 @@ void CDECL macdrv_SetWindowStyle(HWND hwnd, INT offset, STYLESTRUCT *style)
             sync_window_opacity(data, 0, 0, FALSE, 0);
             if (data->surface) set_surface_use_alpha(data->surface, FALSE);
         }
+
+        if (offset == GWL_EXSTYLE && (changed & WS_EX_LAYOUTRTL))
+            sync_window_region(data, (HRGN)1);
     }
 
     release_win_data(data);
@@ -1371,7 +1378,7 @@ LRESULT CDECL macdrv_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         if ((data = get_win_data(hwnd)))
         {
             if (data->cocoa_window && data->on_screen)
-                sync_window_position(data, SWP_NOZORDER | SWP_NOACTIVATE, NULL);
+                sync_window_position(data, SWP_NOZORDER | SWP_NOACTIVATE, NULL, NULL);
             release_win_data(data);
         }
         SendMessageW(hwnd, WM_DISPLAYCHANGE, wp, lp);
@@ -1557,7 +1564,7 @@ void CDECL macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags,
          thread_data->current_event->type != WINDOW_DID_MINIMIZE &&
          thread_data->current_event->type != WINDOW_DID_UNMINIMIZE))
     {
-        sync_window_position(data, swp_flags, &old_window_rect);
+        sync_window_position(data, swp_flags, &old_window_rect, &old_whole_rect);
         set_cocoa_window_properties(data);
     }
 
