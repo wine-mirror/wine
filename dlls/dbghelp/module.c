@@ -422,6 +422,16 @@ static BOOL module_is_container_loaded(const struct process* pcs,
     size_t              len;
     struct module*      module;
     PCWSTR              filename, modname;
+    static WCHAR*       dll_prefix;
+    static int          dll_prefix_len;
+
+    if (!dll_prefix)
+    {
+        dll_prefix_len = MultiByteToWideChar( CP_UNIXCP, 0, DLLPREFIX, -1, NULL, 0 );
+        dll_prefix = HeapAlloc( GetProcessHeap(), 0, dll_prefix_len * sizeof(WCHAR) );
+        MultiByteToWideChar( CP_UNIXCP, 0, DLLPREFIX, -1, dll_prefix, dll_prefix_len );
+        dll_prefix_len--;
+    }
 
     if (!base) return FALSE;
     filename = get_filename(ImageName, NULL);
@@ -434,6 +444,7 @@ static BOOL module_is_container_loaded(const struct process* pcs,
             base < module->module.BaseOfImage + module->module.ImageSize)
         {
             modname = get_filename(module->module.LoadedImageName, NULL);
+            if (dll_prefix_len && !strncmpW( modname, dll_prefix, dll_prefix_len )) modname += dll_prefix_len;
             if (!strncmpiW(modname, filename, len) &&
                 !memcmp(modname + len, S_DotSoW, 3 * sizeof(WCHAR)))
             {
