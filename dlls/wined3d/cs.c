@@ -1933,19 +1933,15 @@ void *wined3d_cs_emit_resource_map(struct wined3d_cs *cs, struct wined3d_resourc
     struct wined3d_cs_resource_map *op;
     void *ret;
 
-    op = cs->ops->require_space(cs, sizeof(*op));
+    op = cs->ops->require_space_prio(cs, sizeof(*op));
     op->opcode = WINED3D_CS_OP_RESOURCE_MAP;
     op->resource = resource;
     op->flags = flags;
     op->mem = &ret;
 
-    cs->ops->submit(cs, sizeof(*op));
+    cs->ops->submit_prio(cs, sizeof(*op));
 
-    if (flags & (WINED3D_MAP_NOOVERWRITE | WINED3D_MAP_DISCARD))
-    {
-        FIXME("Dynamic resource map is inefficient\n");
-    }
-    cs->ops->finish(cs);
+    cs->ops->finish_prio(cs);
 
     return ret;
 }
@@ -1964,11 +1960,11 @@ void wined3d_cs_emit_resource_unmap(struct wined3d_cs *cs, struct wined3d_resour
 {
     struct wined3d_cs_resource_unmap *op;
 
-    op = cs->ops->require_space(cs, sizeof(*op));
+    op = cs->ops->require_space_prio(cs, sizeof(*op));
     op->opcode = WINED3D_CS_OP_RESOURCE_UNMAP;
     op->resource = resource;
 
-    cs->ops->submit(cs, sizeof(*op));
+    cs->ops->submit_prio(cs, sizeof(*op));
 }
 
 static UINT wined3d_cs_exec_query_issue(struct wined3d_cs *cs, const void *data)
