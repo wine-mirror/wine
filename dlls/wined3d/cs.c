@@ -1864,6 +1864,8 @@ static UINT wined3d_cs_exec_clear_rtv(struct wined3d_cs *cs, const void *data)
 
     surface_color_fill(surface_from_resource(resource), &op->rect, &op->color);
 
+    wined3d_resource_dec_fence(op->view->resource);
+
     return sizeof(*op);
 }
 
@@ -1877,6 +1879,8 @@ void wined3d_cs_emit_clear_rtv(struct wined3d_cs *cs, struct wined3d_rendertarge
     op->view = view;
     op->rect = *rect;
     op->color = *color;
+
+    wined3d_resource_inc_fence(view->resource);
 
     cs->ops->submit(cs, sizeof(*op));
 }
