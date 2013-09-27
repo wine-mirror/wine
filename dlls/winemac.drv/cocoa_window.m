@@ -139,6 +139,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 @property (readwrite, nonatomic) BOOL disabled;
 @property (readwrite, nonatomic) BOOL noActivate;
 @property (readwrite, nonatomic) BOOL floating;
+@property (readwrite, getter=isFakingClose, nonatomic) BOOL fakingClose;
 @property (retain, nonatomic) NSWindow* latentParentWindow;
 
 @property (nonatomic) void* hwnd;
@@ -466,7 +467,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
     static WineWindow* causing_becomeKeyWindow;
 
-    @synthesize disabled, noActivate, floating, fullscreen, latentParentWindow, hwnd, queue;
+    @synthesize disabled, noActivate, floating, fullscreen, fakingClose, latentParentWindow, hwnd, queue;
     @synthesize surface, surface_mutex;
     @synthesize shape, shapeChangedSinceLastDraw;
     @synthesize colorKeyed, colorKeyRed, colorKeyGreen, colorKeyBlue;
@@ -497,6 +498,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         [window setHidesOnDeactivate:NO];
         [window setReleasedWhenClosed:NO];
 
+        [window setOneShot:YES];
         [window disableCursorRects];
         [window setShowsResizeIndicator:NO];
         [window setHasShadow:wf->shadow];
@@ -1039,7 +1041,14 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
             pendingMinimize = TRUE;
 
         [self becameIneligibleParentOrChild];
-        [self orderOut:nil];
+        if ([self isMiniaturized])
+        {
+            fakingClose = TRUE;
+            [self close];
+            fakingClose = FALSE;
+        }
+        else
+            [self orderOut:nil];
         if (wasVisible && wasOnActiveSpace && fullscreen)
             [controller updateFullscreenWindows];
         [controller adjustWindowLevels];
@@ -1548,6 +1557,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
     {
         WineWindow* child;
 
+        if (fakingClose) return;
         if (latentParentWindow)
         {
             [latentParentWindow->latentChildWindows removeObjectIdenticalTo:self];

@@ -1809,6 +1809,8 @@ int macdrv_err_on;
                          queue:[NSOperationQueue mainQueue]
                     usingBlock:^(NSNotification *note){
             NSWindow* window = [note object];
+            if ([window isKindOfClass:[WineWindow class]] && [(WineWindow*)window isFakingClose])
+                return;
             [keyWindows removeObjectIdenticalTo:window];
             if (window == lastTargetWindow)
                 lastTargetWindow = nil;
