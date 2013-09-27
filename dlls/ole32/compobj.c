@@ -90,6 +90,54 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION csApartment = { &critsect_debug, -1, 0, 0, 0, 0 };
 
+enum comclass_threadingmodel
+{
+    ThreadingModel_Apartment = 1,
+    ThreadingModel_Free      = 2,
+    ThreadingModel_No        = 3,
+    ThreadingModel_Both      = 4,
+    ThreadingModel_Neutral   = 5
+};
+
+struct comclassredirect_data
+{
+    ULONG size;
+    BYTE  res;
+    BYTE  miscmask;
+    BYTE  res1[2];
+    DWORD model;
+    GUID  clsid;
+    GUID  alias;
+    GUID  clsid2;
+    GUID  tlbid;
+    ULONG name_len;
+    ULONG name_offset;
+    ULONG progid_len;
+    ULONG progid_offset;
+    ULONG clrdata_len;
+    ULONG clrdata_offset;
+    DWORD miscstatus;
+    DWORD miscstatuscontent;
+    DWORD miscstatusthumbnail;
+    DWORD miscstatusicon;
+    DWORD miscstatusdocprint;
+};
+
+struct class_reg_data
+{
+    union
+    {
+        struct
+        {
+            struct comclassredirect_data *data;
+            void *section;
+            HANDLE hactctx;
+        } actctx;
+        HKEY hkey;
+    } u;
+    BOOL hkey;
+};
+
 struct registered_psclsid
 {
     struct list entry;
@@ -1227,14 +1275,17 @@ static HRESULT apartment_getclassobject(struct apartment *apt, LPCWSTR dllpath,
  *
  *	Reads a registry value and expands it when necessary
  */
-static DWORD COM_RegReadPath(HKEY hkeyroot, WCHAR * dst, DWORD dstlen)
+static DWORD COM_RegReadPath(const struct class_reg_data *regdata, WCHAR *dst, DWORD dstlen)
 {
-	DWORD ret;
+    DWORD ret;
+
+    if (regdata->hkey)
+    {
 	DWORD keytype;
 	WCHAR src[MAX_PATH];
 	DWORD dwLength = dstlen * sizeof(WCHAR);
 
-        if( (ret = RegQueryValueExW(hkeyroot, NULL, NULL, &keytype, (LPBYTE)src, &dwLength)) == ERROR_SUCCESS ) {
+        if( (ret = RegQueryValueExW(regdata->u.hkey, NULL, NULL, &keytype, (BYTE*)src, &dwLength)) == ERROR_SUCCESS ) {
             if (keytype == REG_EXPAND_SZ) {
               if (dstlen <= ExpandEnvironmentStringsW(src, dst, dstlen)) ret = ERROR_MORE_DATA;
             } else {
@@ -1252,11 +1303,24 @@ static DWORD COM_RegReadPath(HKEY hkeyroot, WCHAR * dst, DWORD dstlen)
             }
         }
 	return ret;
+    }
+    else
+    {
+        ULONG_PTR cookie;
+        WCHAR *nameW;
+
+        *dst = 0;
+        nameW = (WCHAR*)((BYTE*)regdata->u.actctx.section + regdata->u.actctx.data->name_offset);
+        ActivateActCtx(regdata->u.actctx.hactctx, &cookie);
+        ret = SearchPathW(NULL, nameW, NULL, dstlen, dst, NULL);
+        DeactivateActCtx(0, cookie);
+        return !*dst;
+    }
 }
 
 struct host_object_params
 {
-    HKEY hkeydll;
+    struct class_reg_data regdata;
     CLSID clsid; /* clsid of object to marshal */
     IID iid; /* interface to marshal */
     HANDLE event; /* event signalling when ready for multi-threaded case */
@@ -1275,7 +1339,7 @@ static HRESULT apartment_hostobject(struct apartment *apt,
 
     TRACE("clsid %s, iid %s\n", debugstr_guid(&params->clsid), debugstr_guid(&params->iid));
 
-    if (COM_RegReadPath(params->hkeydll, dllpath, ARRAYSIZE(dllpath)) != ERROR_SUCCESS)
+    if (COM_RegReadPath(&params->regdata, dllpath, ARRAYSIZE(dllpath)) != ERROR_SUCCESS)
     {
         /* failure: CLSID is not found in registry */
         WARN("class %s not registered inproc\n", debugstr_guid(&params->clsid));
@@ -1372,7 +1436,7 @@ static DWORD CALLBACK apartment_hostobject_thread(LPVOID p)
  * caller of this function */
 static HRESULT apartment_hostobject_in_hostapt(
     struct apartment *apt, BOOL multi_threaded, BOOL main_apartment,
-    HKEY hkeydll, REFCLSID rclsid, REFIID riid, void **ppv)
+    const struct class_reg_data *regdata, REFCLSID rclsid, REFIID riid, void **ppv)
 {
     struct host_object_params params;
     HWND apartment_hwnd = NULL;
@@ -1442,7 +1506,7 @@ static HRESULT apartment_hostobject_in_hostapt(
         }
     }
 
-    params.hkeydll = hkeydll;
+    params.regdata = *regdata;
     params.clsid = *rclsid;
     params.iid = *riid;
     hr = CreateStreamOnHGlobal(NULL, TRUE, &params.stream);
@@ -2586,19 +2650,36 @@ HRESULT WINAPI CoRegisterClassObject(
   return S_OK;
 }
 
-static void get_threading_model(HKEY key, LPWSTR value, DWORD len)
+static enum comclass_threadingmodel get_threading_model(const struct class_reg_data *data)
 {
-    static const WCHAR wszThreadingModel[] = {'T','h','r','e','a','d','i','n','g','M','o','d','e','l',0};
-    DWORD keytype;
-    DWORD ret;
-    DWORD dwLength = len * sizeof(WCHAR);
+    if (data->hkey)
+    {
+        static const WCHAR wszThreadingModel[] = {'T','h','r','e','a','d','i','n','g','M','o','d','e','l',0};
+        static const WCHAR wszApartment[] = {'A','p','a','r','t','m','e','n','t',0};
+        static const WCHAR wszFree[] = {'F','r','e','e',0};
+        static const WCHAR wszBoth[] = {'B','o','t','h',0};
+        WCHAR threading_model[10 /* strlenW(L"apartment")+1 */];
+        DWORD dwLength = sizeof(threading_model);
+        DWORD keytype;
+        DWORD ret;
 
-    ret = RegQueryValueExW(key, wszThreadingModel, NULL, &keytype, (LPBYTE)value, &dwLength);
-    if ((ret != ERROR_SUCCESS) || (keytype != REG_SZ))
-        value[0] = '\0';
+        ret = RegQueryValueExW(data->u.hkey, wszThreadingModel, NULL, &keytype, (BYTE*)threading_model, &dwLength);
+        if ((ret != ERROR_SUCCESS) || (keytype != REG_SZ))
+            threading_model[0] = '\0';
+
+        if (!strcmpiW(threading_model, wszApartment)) return ThreadingModel_Apartment;
+        if (!strcmpiW(threading_model, wszFree)) return ThreadingModel_Free;
+        if (!strcmpiW(threading_model, wszBoth)) return ThreadingModel_Both;
+
+        /* there's not specific handling for this case */
+        if (threading_model[0]) return ThreadingModel_Neutral;
+        return ThreadingModel_No;
+    }
+    else
+        return data->u.actctx.data->model;
 }
 
-static HRESULT get_inproc_class_object(APARTMENT *apt, HKEY hkeydll,
+static HRESULT get_inproc_class_object(APARTMENT *apt, const struct class_reg_data *regdata,
                                        REFCLSID rclsid, REFIID riid,
                                        BOOL hostifnecessary, void **ppv)
 {
@@ -2607,37 +2688,30 @@ static HRESULT get_inproc_class_object(APARTMENT *apt, HKEY hkeydll,
 
     if (hostifnecessary)
     {
-        static const WCHAR wszApartment[] = {'A','p','a','r','t','m','e','n','t',0};
-        static const WCHAR wszFree[] = {'F','r','e','e',0};
-        static const WCHAR wszBoth[] = {'B','o','t','h',0};
-        WCHAR threading_model[10 /* strlenW(L"apartment")+1 */];
+        enum comclass_threadingmodel model = get_threading_model(regdata);
 
-        get_threading_model(hkeydll, threading_model, ARRAYSIZE(threading_model));
-        /* "Apartment" */
-        if (!strcmpiW(threading_model, wszApartment))
+        if (model == ThreadingModel_Apartment)
         {
             apartment_threaded = TRUE;
             if (apt->multi_threaded)
-                return apartment_hostobject_in_hostapt(apt, FALSE, FALSE, hkeydll, rclsid, riid, ppv);
+                return apartment_hostobject_in_hostapt(apt, FALSE, FALSE, regdata, rclsid, riid, ppv);
         }
-        /* "Free" */
-        else if (!strcmpiW(threading_model, wszFree))
+        else if (model == ThreadingModel_Free)
         {
             apartment_threaded = FALSE;
             if (!apt->multi_threaded)
-                return apartment_hostobject_in_hostapt(apt, TRUE, FALSE, hkeydll, rclsid, riid, ppv);
+                return apartment_hostobject_in_hostapt(apt, TRUE, FALSE, regdata, rclsid, riid, ppv);
         }
         /* everything except "Apartment", "Free" and "Both" */
-        else if (strcmpiW(threading_model, wszBoth))
+        else if (model != ThreadingModel_Both)
         {
             apartment_threaded = TRUE;
             /* everything else is main-threaded */
-            if (threading_model[0])
-                FIXME("unrecognised threading model %s for object %s, should be main-threaded?\n",
-                    debugstr_w(threading_model), debugstr_guid(rclsid));
+            if (model != ThreadingModel_No)
+                FIXME("unrecognised threading model %d for object %s, should be main-threaded?\n", model, debugstr_guid(rclsid));
 
             if (apt->multi_threaded || !apt->main)
-                return apartment_hostobject_in_hostapt(apt, FALSE, TRUE, hkeydll, rclsid, riid, ppv);
+                return apartment_hostobject_in_hostapt(apt, FALSE, TRUE, regdata, rclsid, riid, ppv);
         }
         else
             apartment_threaded = FALSE;
@@ -2645,7 +2719,7 @@ static HRESULT get_inproc_class_object(APARTMENT *apt, HKEY hkeydll,
     else
         apartment_threaded = !apt->multi_threaded;
 
-    if (COM_RegReadPath(hkeydll, dllpath, ARRAYSIZE(dllpath)) != ERROR_SUCCESS)
+    if (COM_RegReadPath(regdata, dllpath, ARRAYSIZE(dllpath)) != ERROR_SUCCESS)
     {
         /* failure: CLSID is not found in registry */
         WARN("class %s not registered inproc\n", debugstr_guid(rclsid));
@@ -2686,7 +2760,8 @@ HRESULT WINAPI CoGetClassObject(
     REFCLSID rclsid, DWORD dwClsContext, COSERVERINFO *pServerInfo,
     REFIID iid, LPVOID *ppv)
 {
-    LPUNKNOWN	regClassObject;
+    struct class_reg_data clsreg;
+    IUnknown *regClassObject;
     HRESULT	hres = E_UNEXPECTED;
     APARTMENT  *apt;
     BOOL release_apt = FALSE;
@@ -2711,6 +2786,37 @@ HRESULT WINAPI CoGetClassObject(
     if (pServerInfo) {
 	FIXME("pServerInfo->name=%s pAuthInfo=%p\n",
               debugstr_w(pServerInfo->pwszName), pServerInfo->pAuthInfo);
+    }
+
+    if (CLSCTX_INPROC_SERVER & dwClsContext)
+    {
+        if (IsEqualCLSID(rclsid, &CLSID_InProcFreeMarshaler))
+        {
+            if (release_apt) apartment_release(apt);
+            return FTMarshalCF_Create(iid, ppv);
+        }
+    }
+
+    if (CLSCTX_INPROC & dwClsContext)
+    {
+        ACTCTX_SECTION_KEYED_DATA data;
+
+        data.cbSize = sizeof(data);
+        /* search activation context first */
+        if (FindActCtxSectionGuid(FIND_ACTCTX_SECTION_KEY_RETURN_HACTCTX, NULL,
+                                  ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION,
+                                  rclsid, &data))
+        {
+            clsreg.u.actctx.hactctx = data.hActCtx;
+            clsreg.u.actctx.data = data.lpData;
+            clsreg.u.actctx.section = data.lpSectionBase;
+            clsreg.hkey = FALSE;
+
+            hres = get_inproc_class_object(apt, &clsreg, rclsid, iid, !(dwClsContext & WINE_CLSCTX_DONT_HOST), ppv);
+            ReleaseActCtx(data.hActCtx);
+            if (release_apt) apartment_release(apt);
+            return hres;
+        }
     }
 
     /*
@@ -2739,12 +2845,6 @@ HRESULT WINAPI CoGetClassObject(
         static const WCHAR wszInprocServer32[] = {'I','n','p','r','o','c','S','e','r','v','e','r','3','2',0};
         HKEY hkey;
 
-        if (IsEqualCLSID(rclsid, &CLSID_InProcFreeMarshaler))
-        {
-            if (release_apt) apartment_release(apt);
-            return FTMarshalCF_Create(iid, ppv);
-        }
-
         hres = COM_OpenKeyForCLSID(rclsid, wszInprocServer32, KEY_READ, &hkey);
         if (FAILED(hres))
         {
@@ -2759,8 +2859,10 @@ HRESULT WINAPI CoGetClassObject(
 
         if (SUCCEEDED(hres))
         {
-            hres = get_inproc_class_object(apt, hkey, rclsid, iid,
-                !(dwClsContext & WINE_CLSCTX_DONT_HOST), ppv);
+            clsreg.u.hkey = hkey;
+            clsreg.hkey = TRUE;
+
+            hres = get_inproc_class_object(apt, &clsreg, rclsid, iid, !(dwClsContext & WINE_CLSCTX_DONT_HOST), ppv);
             RegCloseKey(hkey);
         }
 
@@ -2793,8 +2895,10 @@ HRESULT WINAPI CoGetClassObject(
 
         if (SUCCEEDED(hres))
         {
-            hres = get_inproc_class_object(apt, hkey, rclsid, iid,
-                !(dwClsContext & WINE_CLSCTX_DONT_HOST), ppv);
+            clsreg.u.hkey = hkey;
+            clsreg.hkey = TRUE;
+
+            hres = get_inproc_class_object(apt, &clsreg, rclsid, iid, !(dwClsContext & WINE_CLSCTX_DONT_HOST), ppv);
             RegCloseKey(hkey);
         }
 
@@ -4557,9 +4661,13 @@ HRESULT Handler_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
     hres = COM_OpenKeyForCLSID(rclsid, wszInprocHandler32, KEY_READ, &hkey);
     if (SUCCEEDED(hres))
     {
+        struct class_reg_data regdata;
         WCHAR dllpath[MAX_PATH+1];
 
-        if (COM_RegReadPath(hkey, dllpath, ARRAYSIZE(dllpath)) == ERROR_SUCCESS)
+        regdata.u.hkey = hkey;
+        regdata.hkey = TRUE;
+
+        if (COM_RegReadPath(&regdata, dllpath, ARRAYSIZE(dllpath)) == ERROR_SUCCESS)
         {
             static const WCHAR wszOle32[] = {'o','l','e','3','2','.','d','l','l',0};
             if (!strcmpiW(dllpath, wszOle32))

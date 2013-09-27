@@ -63,6 +63,8 @@ static const GUID IID_Testiface5 = { 0x62222222, 0x1234, 0x1234, { 0x12, 0x34, 0
 static const GUID IID_Testiface6 = { 0x72222222, 0x1234, 0x1234, { 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0 } };
 static const GUID IID_TestPS = { 0x66666666, 0x8888, 0x7777, { 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55 } };
 
+DEFINE_GUID(CLSID_InProcFreeMarshaler, 0x0000033a,0x0000,0x0000,0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
+
 static WCHAR stdfont[] = {'S','t','d','F','o','n','t',0};
 static const WCHAR wszNonExistent[] = {'N','o','n','E','x','i','s','t','e','n','t',0};
 static WCHAR wszCLSID_StdFont[] =
@@ -225,6 +227,14 @@ static const char actctx_manifest[] =
 "<assemblyIdentity version=\"1.2.3.4\"  name=\"Wine.Test\" type=\"win32\""
 " publicKeyToken=\"6595b6414666f1df\" />"
 "<file name=\"testlib.dll\">"
+"    <comClass"
+"              clsid=\"{0000033a-0000-0000-c000-000000000046}\""
+"              progid=\"FTMarshal\""
+"    />"
+"    <comClass"
+"              clsid=\"{5201163f-8164-4fd0-a1a2-5d5a3654d3bd}\""
+"              progid=\"WineOOPTest\""
+"    />"
 "    <comClass description=\"Test com class\""
 "              clsid=\"{12345678-1234-1234-1234-56789abcdef0}\""
 "              progid=\"ProgId.ProgId\""
@@ -579,8 +589,9 @@ static void test_CoCreateInstance(void)
 static void test_CoGetClassObject(void)
 {
     HRESULT hr;
-    HANDLE thread;
+    HANDLE thread, handle;
     DWORD tid, exitcode;
+    ULONG_PTR cookie;
     IUnknown *pUnk;
     struct info info;
     REFCLSID rclsid = &CLSID_InternetZoneManager;
@@ -660,6 +671,22 @@ static void test_CoGetClassObject(void)
         if (hr == S_OK) IUnknown_Release(pUnk);
         RegCloseKey(hkey);
     }
+
+    hr = CoGetClassObject(&CLSID_InProcFreeMarshaler, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void **)&pUnk);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IUnknown_Release(pUnk);
+
+    /* context redefines FreeMarshaler CLSID */
+    if ((handle = activate_context(actctx_manifest, &cookie)))
+    {
+        hr = CoGetClassObject(&CLSID_InProcFreeMarshaler, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void **)&pUnk);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        IUnknown_Release(pUnk);
+
+        pDeactivateActCtx(0, cookie);
+        pReleaseActCtx(handle);
+    }
+
     CoUninitialize();
 }
 
@@ -1147,6 +1174,8 @@ static void test_CoMarshalInterThreadInterfaceInStream(void)
 
 static void test_CoRegisterClassObject(void)
 {
+    ULONG_PTR ctxcookie;
+    HANDLE handle;
     DWORD cookie;
     HRESULT hr;
     IClassFactory *pcf;
@@ -1221,6 +1250,33 @@ static void test_CoRegisterClassObject(void)
     /* crashes with at least win9x DCOM! */
     if (0)
         CoRevokeClassObject(cookie);
+
+    /* test that object is accessible */
+    hr = CoRegisterClassObject(&CLSID_WineOOPTest, (IUnknown *)&Test_ClassFactory, CLSCTX_INPROC_SERVER,
+        REGCLS_MULTIPLEUSE, &cookie);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = CoGetClassObject(&CLSID_WineOOPTest, CLSCTX_INPROC_SERVER, NULL, &IID_IClassFactory, (void**)&pcf);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IClassFactory_Release(pcf);
+
+    /* context now contains CLSID_WineOOPTest, test if registered one could still be used */
+    if ((handle = activate_context(actctx_manifest, &ctxcookie)))
+    {
+        hr = CoGetClassObject(&CLSID_WineOOPTest, CLSCTX_INPROC_SERVER, NULL, &IID_IClassFactory, (void**)&pcf);
+todo_wine
+        ok(hr == HRESULT_FROM_WIN32(ERROR_MOD_NOT_FOUND), "got 0x%08x\n", hr);
+
+        pDeactivateActCtx(0, ctxcookie);
+        pReleaseActCtx(handle);
+    }
+
+    hr = CoGetClassObject(&CLSID_WineOOPTest, CLSCTX_INPROC_SERVER, NULL, &IID_IClassFactory, (void**)&pcf);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IClassFactory_Release(pcf);
+
+    hr = CoRevokeClassObject(cookie);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
 
     CoUninitialize();
 }
@@ -1877,6 +1933,9 @@ START_TEST(compobj)
         trace("You need DCOM95 installed to run this test\n");
         return;
     }
+
+    if (!pCreateActCtxW)
+        win_skip("Activation contexts are not supported, some tests will be skipped.\n");
 
     test_ProgIDFromCLSID();
     test_CLSIDFromProgID();
