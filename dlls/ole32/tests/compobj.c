@@ -309,19 +309,14 @@ static void test_ProgIDFromCLSID(void)
         static const WCHAR customfontW[] = {'C','u','s','t','o','m','F','o','n','t',0};
 
         hr = ProgIDFromCLSID(&CLSID_non_existent, &progid);
-todo_wine
         ok(hr == S_OK, "got 0x%08x\n", hr);
-        if (hr == S_OK)
-        {
-            ok(!lstrcmpiW(progid, progidW), "got %s\n", wine_dbgstr_w(progid));
-            CoTaskMemFree(progid);
-        }
+        ok(!lstrcmpiW(progid, progidW), "got %s\n", wine_dbgstr_w(progid));
+        CoTaskMemFree(progid);
 
         /* try something registered and redirected */
         progid = NULL;
         hr = ProgIDFromCLSID(&CLSID_StdFont, &progid);
         ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine
         ok(!lstrcmpiW(progid, customfontW), "got wrong progid %s\n", wine_dbgstr_w(progid));
         CoTaskMemFree(progid);
 

@@ -2227,6 +2227,7 @@ HRESULT COM_OpenKeyForAppIdFromCLSID(REFCLSID clsid, REGSAM access, HKEY *subkey
 HRESULT WINAPI ProgIDFromCLSID(REFCLSID clsid, LPOLESTR *ppszProgID)
 {
     static const WCHAR wszProgID[] = {'P','r','o','g','I','D',0};
+    ACTCTX_SECTION_KEYED_DATA data;
     HKEY     hkey;
     HRESULT  ret;
     LONG progidlen = 0;
@@ -2238,6 +2239,27 @@ HRESULT WINAPI ProgIDFromCLSID(REFCLSID clsid, LPOLESTR *ppszProgID)
     }
 
     *ppszProgID = NULL;
+
+    data.cbSize = sizeof(data);
+    if (FindActCtxSectionGuid(0, NULL, ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION,
+                              clsid, &data))
+    {
+        struct comclassredirect_data *comclass = (struct comclassredirect_data*)data.lpData;
+        if (comclass->progid_len)
+        {
+            WCHAR *ptrW;
+
+            *ppszProgID = CoTaskMemAlloc(comclass->progid_len + sizeof(WCHAR));
+            if (!*ppszProgID) return E_OUTOFMEMORY;
+
+            ptrW = (WCHAR*)((BYTE*)comclass + comclass->progid_offset);
+            memcpy(*ppszProgID, ptrW, comclass->progid_len + sizeof(WCHAR));
+            return S_OK;
+        }
+        else
+            return REGDB_E_CLASSNOTREG;
+    }
+
     ret = COM_OpenKeyForCLSID(clsid, wszProgID, KEY_READ, &hkey);
     if (FAILED(ret))
         return ret;
