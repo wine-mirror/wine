@@ -385,7 +385,10 @@ struct HTMLOuterWindow {
     nsIDOMWindow *nswindow;
     HTMLOuterWindow *parent;
     HTMLFrameBase *frame_element;
+
     READYSTATE readystate;
+    BOOL readystate_locked;
+    unsigned readystate_pending;
 
     HTMLInnerWindow *pending_window;
     IMoniker *mon;

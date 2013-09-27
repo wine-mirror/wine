@@ -106,6 +106,7 @@ typedef struct {
 #define BINDING_REPLACE      0x0002
 #define BINDING_FROMHIST     0x0004
 #define BINDING_REFRESH      0x0008
+#define BINDING_SUBMIT       0x0010
 
 HRESULT set_http_header(struct list*,const WCHAR*,int,const WCHAR*,int) DECLSPEC_HIDDEN;
 HRESULT create_redirect_nschannel(const WCHAR*,nsChannel*,nsChannel**) DECLSPEC_HIDDEN;
@@ -120,6 +121,7 @@ HRESULT super_navigate(HTMLOuterWindow*,IUri*,DWORD,const WCHAR*,BYTE*,DWORD) DE
 HRESULT load_uri(HTMLOuterWindow*,IUri*,DWORD) DECLSPEC_HIDDEN;
 HRESULT navigate_new_window(HTMLOuterWindow*,IUri*,const WCHAR*,IHTMLWindow2**) DECLSPEC_HIDDEN;
 HRESULT navigate_url(HTMLOuterWindow*,const WCHAR*,IUri*,DWORD) DECLSPEC_HIDDEN;
+HRESULT submit_form(HTMLOuterWindow*,IUri*,nsIInputStream*) DECLSPEC_HIDDEN;
 
 HRESULT create_channelbsc(IMoniker*,const WCHAR*,BYTE*,DWORD,BOOL,nsChannelBSC**) DECLSPEC_HIDDEN;
 HRESULT channelbsc_load_stream(HTMLInnerWindow*,IMoniker*,IStream*) DECLSPEC_HIDDEN;

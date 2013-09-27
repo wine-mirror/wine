@@ -2238,7 +2238,32 @@ HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, DWORD flags, const WC
     prepare_for_binding(&window->doc_obj->basedoc, mon, flags);
 
     hres = IUri_GetScheme(uri, &scheme);
-    if(SUCCEEDED(hres) && scheme != URL_SCHEME_JAVASCRIPT) {
+    if(SUCCEEDED(hres) && scheme == URL_SCHEME_JAVASCRIPT) {
+        navigate_javascript_task_t *task;
+
+        IBindStatusCallback_Release(&bsc->bsc.IBindStatusCallback_iface);
+        IMoniker_Release(mon);
+
+        task = heap_alloc(sizeof(*task));
+        if(!task)
+            return E_OUTOFMEMORY;
+
+        /* Why silently? */
+        window->readystate = READYSTATE_COMPLETE;
+        if(!(flags & BINDING_FROMHIST))
+            call_docview_84(window->doc_obj);
+
+        IUri_AddRef(uri);
+        task->window = window;
+        task->uri = uri;
+        hres = push_task(&task->header, navigate_javascript_proc, navigate_javascript_task_destr, window->task_magic);
+    }else if(flags & BINDING_SUBMIT) {
+        hres = set_moniker(window, mon, uri, NULL, bsc, TRUE);
+        if(SUCCEEDED(hres))
+            hres = start_binding(window->pending_window, &bsc->bsc, NULL);
+        IBindStatusCallback_Release(&bsc->bsc.IBindStatusCallback_iface);
+        IMoniker_Release(mon);
+    }else {
         navigate_task_t *task;
 
         task = heap_alloc(sizeof(*task));
@@ -2261,25 +2286,6 @@ HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, DWORD flags, const WC
         IUri_AddRef(uri);
         task->uri = uri;
         hres = push_task(&task->header, navigate_proc, navigate_task_destr, window->task_magic);
-    }else {
-        navigate_javascript_task_t *task;
-
-        IBindStatusCallback_Release(&bsc->bsc.IBindStatusCallback_iface);
-        IMoniker_Release(mon);
-
-        task = heap_alloc(sizeof(*task));
-        if(!task)
-            return E_OUTOFMEMORY;
-
-        /* Why silently? */
-        window->readystate = READYSTATE_COMPLETE;
-        if(!(flags & BINDING_FROMHIST))
-            call_docview_84(window->doc_obj);
-
-        IUri_AddRef(uri);
-        task->window = window;
-        task->uri = uri;
-        hres = push_task(&task->header, navigate_javascript_proc, navigate_javascript_task_destr, window->task_magic);
     }
 
     return hres;
@@ -2396,7 +2402,8 @@ HRESULT hlink_frame_navigate(HTMLDocument *doc, LPCWSTR url, nsChannel *nschanne
     return hres;
 }
 
-static HRESULT navigate_uri(HTMLOuterWindow *window, IUri *uri, const WCHAR *display_uri, DWORD flags)
+static HRESULT navigate_uri(HTMLOuterWindow *window, IUri *uri, const WCHAR *display_uri, const request_data_t *request_data,
+        DWORD flags)
 {
     nsWineURI *nsuri;
     HRESULT hres;
@@ -2404,18 +2411,22 @@ static HRESULT navigate_uri(HTMLOuterWindow *window, IUri *uri, const WCHAR *dis
     TRACE("%s\n", debugstr_w(display_uri));
 
     if(window->doc_obj && window->doc_obj->webbrowser && window == window->doc_obj->basedoc.window) {
+        DWORD post_data_len = request_data ? request_data->post_data_len : 0;
+        void *post_data = post_data_len ? request_data->post_data : NULL;
+        const WCHAR *headers = request_data ? request_data->headers : NULL;
+
         if(!(flags & BINDING_REFRESH)) {
             BOOL cancel = FALSE;
 
             hres = IDocObjectService_FireBeforeNavigate2(window->doc_obj->doc_object_service, NULL, display_uri, 0x40,
-                    NULL, NULL, 0, NULL, TRUE, &cancel);
+                    NULL, post_data, post_data_len ? post_data_len+1 : 0, headers, TRUE, &cancel);
             if(SUCCEEDED(hres) && cancel) {
                 TRACE("Navigation canceled\n");
                 return S_OK;
             }
         }
 
-        return super_navigate(window, uri, flags, NULL, NULL, 0);
+        return super_navigate(window, uri, flags, headers, post_data, post_data_len);
     }
 
     if(window->doc_obj && window == window->doc_obj->basedoc.window) {
@@ -2449,30 +2460,20 @@ HRESULT load_uri(HTMLOuterWindow *window, IUri *uri, DWORD flags)
     if(FAILED(hres))
         return hres;
 
-    hres = navigate_uri(window, uri, display_uri, flags);
+    hres = navigate_uri(window, uri, display_uri, NULL, flags);
     SysFreeString(display_uri);
     return hres;
 }
 
-HRESULT navigate_url(HTMLOuterWindow *window, const WCHAR *new_url, IUri *base_uri, DWORD flags)
+static HRESULT translate_uri(HTMLOuterWindow *window, IUri *orig_uri, BSTR *ret_display_uri, IUri **ret_uri)
 {
+    IUri *uri = NULL;
     BSTR display_uri;
-    IUri *uri;
     HRESULT hres;
 
-    if(new_url && base_uri)
-        hres = CoInternetCombineUrlEx(base_uri, new_url, URL_ESCAPE_SPACES_ONLY|URL_DONT_ESCAPE_EXTRA_INFO,
-                &uri, 0);
-    else
-        hres = create_uri(new_url, 0, &uri);
+    hres = IUri_GetDisplayUri(orig_uri, &display_uri);
     if(FAILED(hres))
         return hres;
-
-    hres = IUri_GetDisplayUri(uri, &display_uri);
-    if(FAILED(hres)) {
-        IUri_Release(uri);
-        return hres;
-    }
 
     if(window->doc_obj && window->doc_obj->hostui) {
         OLECHAR *translated_url = NULL;
@@ -2482,7 +2483,6 @@ HRESULT navigate_url(HTMLOuterWindow *window, const WCHAR *new_url, IUri *base_u
         if(hres == S_OK) {
             TRACE("%08x %s -> %s\n", hres, debugstr_w(display_uri), debugstr_w(translated_url));
             SysFreeString(display_uri);
-            IUri_Release(uri);
             hres = create_uri(translated_url, 0, &uri);
             CoTaskMemFree(translated_url);
             if(FAILED(hres))
@@ -2496,8 +2496,57 @@ HRESULT navigate_url(HTMLOuterWindow *window, const WCHAR *new_url, IUri *base_u
         }
     }
 
-    hres = navigate_uri(window, uri, display_uri, flags);
+    if(!uri) {
+        IUri_AddRef(orig_uri);
+        uri = orig_uri;
+    }
 
+    *ret_display_uri = display_uri;
+    *ret_uri = uri;
+    return S_OK;
+}
+
+HRESULT submit_form(HTMLOuterWindow *window, IUri *submit_uri, nsIInputStream *post_stream)
+{
+    request_data_t request_data = {NULL};
+    BSTR display_uri;
+    IUri *uri;
+    HRESULT hres;
+
+    hres = read_post_data_stream(post_stream, TRUE, NULL, &request_data);
+    if(FAILED(hres))
+        return hres;
+
+    hres = translate_uri(window, submit_uri, &display_uri, &uri);
+    if(SUCCEEDED(hres)) {
+        hres = navigate_uri(window, uri, display_uri, &request_data, BINDING_NAVIGATED|BINDING_SUBMIT);
+        IUri_Release(uri);
+        SysFreeString(display_uri);
+    }
+    release_request_data(&request_data);
+    return hres;
+}
+
+HRESULT navigate_url(HTMLOuterWindow *window, const WCHAR *new_url, IUri *base_uri, DWORD flags)
+{
+    IUri *uri, *nav_uri;
+    BSTR display_uri;
+    HRESULT hres;
+
+    if(new_url && base_uri)
+        hres = CoInternetCombineUrlEx(base_uri, new_url, URL_ESCAPE_SPACES_ONLY|URL_DONT_ESCAPE_EXTRA_INFO,
+                &nav_uri, 0);
+    else
+        hres = create_uri(new_url, 0, &nav_uri);
+    if(FAILED(hres))
+        return hres;
+
+    hres = translate_uri(window, nav_uri, &display_uri, &uri);
+    IUri_Release(nav_uri);
+    if(FAILED(hres))
+        return hres;
+
+    hres = navigate_uri(window, uri, display_uri, NULL, flags);
     IUri_Release(uri);
     SysFreeString(display_uri);
     return hres;
