@@ -1823,6 +1823,10 @@ static UINT wined3d_cs_exec_blt(struct wined3d_cs *cs, const void *data)
             op->src_surface, &op->src_rect,
             op->flags, &op->fx, op->filter);
 
+    wined3d_resource_dec_fence(&op->dst_surface->container->resource);
+    if (op->src_surface && op->src_surface != op->dst_surface)
+        wined3d_resource_dec_fence(&op->src_surface->container->resource);
+
     return sizeof(*op);
 }
 
@@ -1843,6 +1847,10 @@ void wined3d_cs_emit_blt(struct wined3d_cs *cs, struct wined3d_surface *dst_surf
     op->filter = filter;
     if (fx)
         op->fx = *fx;
+
+    wined3d_resource_inc_fence(&dst_surface->container->resource);
+    if (src_surface && src_surface != dst_surface)
+        wined3d_resource_inc_fence(&src_surface->container->resource);
 
     cs->ops->submit(cs, sizeof(*op));
 }
