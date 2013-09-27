@@ -2210,7 +2210,7 @@ struct wined3d_resource
     UINT depth;
     UINT size;
     DWORD priority;
-    void *heap_memory, *user_memory, *bitmap_data;
+    void *heap_memory, *map_heap_memory, *user_memory, *bitmap_data;
     UINT custom_row_pitch, custom_slice_pitch;
     struct wined3d_gl_bo *buffer, *map_buffer;
     struct list resource_list_entry;
@@ -2244,7 +2244,7 @@ void resource_unload(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 DWORD wined3d_resource_access_from_location(DWORD location) DECLSPEC_HIDDEN;
 BOOL wined3d_resource_allocate_sysmem(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 void wined3d_resource_changed(struct wined3d_resource *resource,
-        struct wined3d_gl_bo *swap_buffer) DECLSPEC_HIDDEN;
+        struct wined3d_gl_bo *swap_buffer, void *swap_heap_memory) DECLSPEC_HIDDEN;
 BOOL wined3d_resource_check_block_align(const struct wined3d_resource *resource,
         const struct wined3d_box *box) DECLSPEC_HIDDEN;
 void wined3d_resource_free_bo(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
@@ -2764,7 +2764,7 @@ void wined3d_cs_emit_blt(struct wined3d_cs *cs, struct wined3d_surface *dst_surf
 void wined3d_cs_emit_clear_rtv(struct wined3d_cs *cs, struct wined3d_rendertarget_view *view,
         const RECT *rect, const struct wined3d_color *color) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_resource_changed(struct wined3d_cs *cs, struct wined3d_resource *resource,
-        struct wined3d_gl_bo *swap_buffer) DECLSPEC_HIDDEN;
+        struct wined3d_gl_bo *swap_buffer, void *swap_heap_memory) DECLSPEC_HIDDEN;
 void *wined3d_cs_emit_resource_map(struct wined3d_cs *cs, struct wined3d_resource *resource,
         DWORD flags) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_resource_unmap(struct wined3d_cs *cs, struct wined3d_resource *resource) DECLSPEC_HIDDEN;

@@ -200,6 +200,7 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
             ERR("Failed to allocate system memory.\n");
             return E_OUTOFMEMORY;
         }
+        resource->heap_memory = resource->map_heap_memory;
     }
     else
     {
@@ -253,6 +254,7 @@ void resource_cleanup(struct wined3d_resource *resource)
         wined3d_resource_free_bo(resource);
 
     wined3d_resource_free_sysmem(resource);
+    resource->map_heap_memory = NULL;
 
     device_resource_released(resource->device, resource);
 }
@@ -327,7 +329,7 @@ BOOL wined3d_resource_allocate_sysmem(struct wined3d_resource *resource)
     p = (void **)(((ULONG_PTR)mem + align) & ~(RESOURCE_ALIGNMENT - 1)) - 1;
     *p = mem;
 
-    resource->heap_memory = ++p;
+    resource->map_heap_memory = ++p;
 
     return TRUE;
 }
@@ -642,7 +644,7 @@ BYTE *wined3d_resource_get_map_ptr(const struct wined3d_resource *resource,
             return ptr;
 
         case WINED3D_LOCATION_SYSMEM:
-            return resource->heap_memory;
+            return resource->map_heap_memory;
 
         case WINED3D_LOCATION_DIB:
             return resource->bitmap_data;
@@ -704,6 +706,7 @@ BOOL wined3d_resource_prepare_system_memory(struct wined3d_resource *resource)
         ERR("Failed to allocate system memory.\n");
         return FALSE;
     }
+    resource->heap_memory = resource->map_heap_memory;
     return TRUE;
 }
 
@@ -788,6 +791,10 @@ void *wined3d_resource_map_internal(struct wined3d_resource *resource, DWORD fla
                         GL_STREAM_DRAW, GL_PIXEL_UNPACK_BUFFER, context);
                 break;
 
+            case WINED3D_LOCATION_SYSMEM:
+                wined3d_resource_allocate_sysmem(resource);
+                break;
+
             default:
                 if (resource->access_fence)
                     ERR("Location %s does not support DISCARD maps.\n",
@@ -857,7 +864,21 @@ HRESULT wined3d_resource_map(struct wined3d_resource *resource,
     if (flags & WINED3D_MAP_NOOVERWRITE)
         FIXME("WINED3D_MAP_NOOVERWRITE are not implemented yet.\n");
 
-    if (!(flags & WINED3D_MAP_DISCARD) || resource->map_binding != WINED3D_LOCATION_BUFFER)
+    if (flags & WINED3D_MAP_DISCARD)
+    {
+        switch (resource->map_binding)
+        {
+            case WINED3D_LOCATION_BUFFER:
+            case WINED3D_LOCATION_SYSMEM:
+                break;
+
+            default:
+                FIXME("Implement discard maps with %s map binding.\n",
+                        wined3d_debug_location(resource->map_binding));
+                wined3d_resource_sync(resource);
+        }
+    }
+    else
         wined3d_resource_sync(resource);
 
     base_memory = wined3d_cs_emit_resource_map(device->cs, resource, flags);
@@ -944,7 +965,10 @@ HRESULT wined3d_resource_unmap(struct wined3d_resource *resource)
     wined3d_cs_emit_resource_unmap(device->cs, resource);
 
     if (resource->unmap_dirtify)
-        wined3d_cs_emit_resource_changed(device->cs, resource, resource->map_buffer);
+    {
+        wined3d_cs_emit_resource_changed(device->cs, resource,
+                resource->map_buffer, resource->map_heap_memory);
+    }
     resource->unmap_dirtify = FALSE;
 
     resource->map_count--;
@@ -952,7 +976,8 @@ HRESULT wined3d_resource_unmap(struct wined3d_resource *resource)
     return WINED3D_OK;
 }
 
-void wined3d_resource_changed(struct wined3d_resource *resource, struct wined3d_gl_bo *swap_buffer)
+void wined3d_resource_changed(struct wined3d_resource *resource, struct wined3d_gl_bo *swap_buffer,
+        void *swap_heap_memory)
 {
     struct wined3d_device *device = resource->device;
 
@@ -962,6 +987,11 @@ void wined3d_resource_changed(struct wined3d_resource *resource, struct wined3d_
         wined3d_device_release_bo(device, resource->buffer, context);
         context_release(context);
         resource->buffer = swap_buffer;
+    }
+    if (swap_heap_memory && swap_heap_memory != resource->heap_memory)
+    {
+        wined3d_resource_free_sysmem(resource);
+        resource->heap_memory = swap_heap_memory;
     }
 
     wined3d_resource_invalidate_location(resource, ~resource->map_binding);

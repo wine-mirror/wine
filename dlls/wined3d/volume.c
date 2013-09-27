@@ -134,6 +134,7 @@ static void wined3d_volume_download_data(struct wined3d_volume *volume,
 static void wined3d_volume_evict_sysmem(struct wined3d_volume *volume)
 {
     wined3d_resource_free_sysmem(&volume->resource);
+    volume->resource.map_heap_memory = NULL;
     wined3d_resource_invalidate_location(&volume->resource, WINED3D_LOCATION_SYSMEM);
 }
 
@@ -515,6 +516,7 @@ static HRESULT volume_init(struct wined3d_volume *volume, struct wined3d_texture
     {
         wined3d_resource_free_sysmem(&volume->resource);
         volume->resource.map_binding = WINED3D_LOCATION_BUFFER;
+        volume->resource.map_heap_memory = NULL;
     }
 
     volume->container = container;
