@@ -495,6 +495,7 @@ static UINT wined3d_cs_exec_present(struct wined3d_cs *cs, const void *data)
     const RECT *src_rect = op->set_data & CS_PRESENT_SRC_RECT ? &op->src_rect : NULL;
     const RECT *dst_rect = op->set_data & CS_PRESENT_DST_RECT ? &op->dst_rect : NULL;
     const RGNDATA *dirty_region = op->set_data & CS_PRESENT_DIRTY_RGN ? &op->dirty_region : NULL;
+    unsigned int i;
 
     swapchain = op->swapchain;
     wined3d_swapchain_set_window(swapchain, op->dst_window_override);
@@ -505,6 +506,10 @@ static UINT wined3d_cs_exec_present(struct wined3d_cs *cs, const void *data)
 
     InterlockedDecrement(&cs->pending_presents);
 
+    wined3d_resource_dec_fence(&swapchain->front_buffer->resource);
+    for (i = 0; i < swapchain->desc.backbuffer_count; i++)
+        wined3d_resource_dec_fence(&swapchain->back_buffers[i]->resource);
+
     return sizeof(*op);
 }
 
@@ -514,6 +519,7 @@ void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *sw
 {
     struct wined3d_cs_present *op;
     LONG pending;
+    unsigned int i;
 
     op = cs->ops->require_space(cs, sizeof(*op));
     op->opcode = WINED3D_CS_OP_PRESENT;
@@ -536,6 +542,10 @@ void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *sw
         op->set_data = CS_PRESENT_DIRTY_RGN;
     }
     op->flags = flags;
+
+    wined3d_resource_inc_fence(&swapchain->front_buffer->resource);
+    for (i = 0; i < swapchain->desc.backbuffer_count; i++)
+        wined3d_resource_inc_fence(&swapchain->back_buffers[i]->resource);
 
     pending = InterlockedIncrement(&cs->pending_presents);
 
