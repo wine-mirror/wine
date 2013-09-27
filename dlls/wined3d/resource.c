@@ -914,11 +914,6 @@ void wined3d_resource_unmap_internal(struct wined3d_resource *resource)
     wined3d_resource_release_map_ptr(resource, context);
     if (context)
         context_release(context);
-
-    if (resource->unmap_dirtify)
-        wined3d_resource_invalidate_location(resource, ~resource->map_binding);
-    resource->unmap_dirtify = FALSE;
-
 }
 
 HRESULT wined3d_resource_unmap(struct wined3d_resource *resource)
@@ -933,7 +928,17 @@ HRESULT wined3d_resource_unmap(struct wined3d_resource *resource)
     }
 
     wined3d_cs_emit_resource_unmap(device->cs, resource);
+
+    if (resource->unmap_dirtify)
+        wined3d_cs_emit_resource_changed(device->cs, resource);
+    resource->unmap_dirtify = FALSE;
+
     resource->map_count--;
 
     return WINED3D_OK;
+}
+
+void wined3d_resource_changed(struct wined3d_resource *resource)
+{
+    wined3d_resource_invalidate_location(resource, ~resource->map_binding);
 }

@@ -2230,6 +2230,7 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
 void resource_unload(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 DWORD wined3d_resource_access_from_location(DWORD location) DECLSPEC_HIDDEN;
 BOOL wined3d_resource_allocate_sysmem(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
+void wined3d_resource_changed(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 BOOL wined3d_resource_check_block_align(const struct wined3d_resource *resource,
         const struct wined3d_box *box) DECLSPEC_HIDDEN;
 void wined3d_resource_free_bo(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
@@ -2748,6 +2749,7 @@ void wined3d_cs_emit_blt(struct wined3d_cs *cs, struct wined3d_surface *dst_surf
         enum wined3d_texture_filter_type filter) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_clear_rtv(struct wined3d_cs *cs, struct wined3d_rendertarget_view *view,
         const RECT *rect, const struct wined3d_color *color) DECLSPEC_HIDDEN;
+void wined3d_cs_emit_resource_changed(struct wined3d_cs *cs, struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 void *wined3d_cs_emit_resource_map(struct wined3d_cs *cs, struct wined3d_resource *resource,
         DWORD flags) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_resource_unmap(struct wined3d_cs *cs, struct wined3d_resource *resource) DECLSPEC_HIDDEN;

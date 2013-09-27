@@ -66,6 +66,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_LIGHT_ENABLE,
     WINED3D_CS_OP_BLT,
     WINED3D_CS_OP_CLEAR_RTV,
+    WINED3D_CS_OP_RESOURCE_CHANGED,
     WINED3D_CS_OP_RESOURCE_MAP,
     WINED3D_CS_OP_RESOURCE_UNMAP,
     WINED3D_CS_OP_QUERY_ISSUE,
@@ -370,6 +371,12 @@ struct wined3d_cs_resource_map
 };
 
 struct wined3d_cs_resource_unmap
+{
+    enum wined3d_cs_op opcode;
+    struct wined3d_resource *resource;
+};
+
+struct wined3d_cs_resource_changed
 {
     enum wined3d_cs_op opcode;
     struct wined3d_resource *resource;
@@ -1918,6 +1925,27 @@ void wined3d_cs_emit_clear_rtv(struct wined3d_cs *cs, struct wined3d_rendertarge
     cs->ops->submit(cs, sizeof(*op));
 }
 
+static UINT wined3d_cs_exec_resource_changed(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_resource_changed *op = data;
+    struct wined3d_resource *resource = op->resource;
+
+    wined3d_resource_changed(resource);
+
+    return sizeof(*op);
+}
+
+void wined3d_cs_emit_resource_changed(struct wined3d_cs *cs, struct wined3d_resource *resource)
+{
+    struct wined3d_cs_resource_changed *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_RESOURCE_CHANGED;
+    op->resource = resource;
+
+    cs->ops->submit(cs, sizeof(*op));
+}
+
 static UINT wined3d_cs_exec_resource_map(struct wined3d_cs *cs, const void *data)
 {
     const struct wined3d_cs_resource_map *op = data;
@@ -2224,11 +2252,11 @@ static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_INDEX_BUFFER           */ wined3d_cs_exec_set_index_buffer,
     /* WINED3D_CS_OP_SET_CONSTANT_BUFFER        */ wined3d_cs_exec_set_constant_buffer,
     /* WINED3D_CS_OP_SET_TEXTURE                */ wined3d_cs_exec_set_texture,
-    /* WINED3D_CS_OP_SET_SHADER_RESOURCE_VIEW   */ wined3d_cs_exec_set_shader_resource_view,
     /* WINED3D_CS_OP_SET_SAMPLER                */ wined3d_cs_exec_set_sampler,
     /* WINED3D_CS_OP_SET_SHADER                 */ wined3d_cs_exec_set_shader,
     /* WINED3D_CS_OP_SET_RENDER_STATE           */ wined3d_cs_exec_set_render_state,
     /* WINED3D_CS_OP_SET_TEXTURE_STATE          */ wined3d_cs_exec_set_texture_state,
+    /* WINED3D_CS_OP_SET_SHADER_RESOURCE_VIEW   */ wined3d_cs_exec_set_shader_resource_view,
     /* WINED3D_CS_OP_SET_SAMPLER_STATE          */ wined3d_cs_exec_set_sampler_state,
     /* WINED3D_CS_OP_SET_TRANSFORM              */ wined3d_cs_exec_set_transform,
     /* WINED3D_CS_OP_SET_CLIP_PLANE             */ wined3d_cs_exec_set_clip_plane,
@@ -2248,6 +2276,7 @@ static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_LIGHT_ENABLE           */ wined3d_cs_exec_set_light_enable,
     /* WINED3D_CS_OP_BLT                        */ wined3d_cs_exec_blt,
     /* WINED3D_CS_OP_CLEAR_RTV                  */ wined3d_cs_exec_clear_rtv,
+    /* WINED3D_CS_OP_RESOURCE_CHANGED           */ wined3d_cs_exec_resource_changed,
     /* WINED3D_CS_OP_RESOURCE_MAP               */ wined3d_cs_exec_resource_map,
     /* WINED3D_CS_OP_RESOURCE_UNMAP             */ wined3d_cs_exec_resource_unmap,
     /* WINED3D_CS_OP_QUERY_ISSUE                */ wined3d_cs_exec_query_issue,
