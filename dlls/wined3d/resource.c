@@ -780,9 +780,27 @@ void *wined3d_resource_map_internal(struct wined3d_resource *resource, DWORD fla
     }
 
     if (flags & WINED3D_MAP_DISCARD)
+    {
+        switch (resource->map_binding)
+        {
+            case WINED3D_LOCATION_BUFFER:
+                resource->map_buffer = wined3d_device_get_bo(device, resource->size,
+                        GL_STREAM_DRAW, GL_PIXEL_UNPACK_BUFFER, context);
+                break;
+
+            default:
+                if (resource->access_fence)
+                    ERR("Location %s does not support DISCARD maps.\n",
+                            wined3d_debug_location(resource->map_binding));
+                if (resource->pool != WINED3D_POOL_DEFAULT)
+                    FIXME("Discard used on %s pool resource.\n", debug_d3dpool(resource->pool));
+        }
         wined3d_resource_validate_location(resource, resource->map_binding);
+    }
     else
+    {
         wined3d_resource_load_location(resource, context, resource->map_binding);
+    }
 
     mem = wined3d_resource_get_map_ptr(resource, context, flags);
 
@@ -836,12 +854,11 @@ HRESULT wined3d_resource_map(struct wined3d_resource *resource,
 
     flags = wined3d_resource_sanitize_map_flags(resource, flags);
 
-    if (flags & (WINED3D_MAP_NOOVERWRITE | WINED3D_MAP_DISCARD))
-    {
-        FIXME("Dynamic resource map is inefficient\n");
-    }
+    if (flags & WINED3D_MAP_NOOVERWRITE)
+        FIXME("WINED3D_MAP_NOOVERWRITE are not implemented yet.\n");
 
-    wined3d_resource_sync(resource);
+    if (!(flags & WINED3D_MAP_DISCARD) || resource->map_binding != WINED3D_LOCATION_BUFFER)
+        wined3d_resource_sync(resource);
 
     base_memory = wined3d_cs_emit_resource_map(device->cs, resource, flags);
     if (!base_memory)
@@ -927,7 +944,7 @@ HRESULT wined3d_resource_unmap(struct wined3d_resource *resource)
     wined3d_cs_emit_resource_unmap(device->cs, resource);
 
     if (resource->unmap_dirtify)
-        wined3d_cs_emit_resource_changed(device->cs, resource);
+        wined3d_cs_emit_resource_changed(device->cs, resource, resource->map_buffer);
     resource->unmap_dirtify = FALSE;
 
     resource->map_count--;
@@ -935,7 +952,17 @@ HRESULT wined3d_resource_unmap(struct wined3d_resource *resource)
     return WINED3D_OK;
 }
 
-void wined3d_resource_changed(struct wined3d_resource *resource)
+void wined3d_resource_changed(struct wined3d_resource *resource, struct wined3d_gl_bo *swap_buffer)
 {
+    struct wined3d_device *device = resource->device;
+
+    if (swap_buffer && swap_buffer != resource->buffer)
+    {
+        struct wined3d_context *context = context_acquire(device, NULL);
+        wined3d_device_release_bo(device, resource->buffer, context);
+        context_release(context);
+        resource->buffer = swap_buffer;
+    }
+
     wined3d_resource_invalidate_location(resource, ~resource->map_binding);
 }

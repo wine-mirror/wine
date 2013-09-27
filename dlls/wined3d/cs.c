@@ -380,6 +380,7 @@ struct wined3d_cs_resource_changed
 {
     enum wined3d_cs_op opcode;
     struct wined3d_resource *resource;
+    struct wined3d_gl_bo *swap_buffer;
 };
 
 struct wined3d_cs_skip
@@ -1930,18 +1931,20 @@ static UINT wined3d_cs_exec_resource_changed(struct wined3d_cs *cs, const void *
     const struct wined3d_cs_resource_changed *op = data;
     struct wined3d_resource *resource = op->resource;
 
-    wined3d_resource_changed(resource);
+    wined3d_resource_changed(resource, op->swap_buffer);
 
     return sizeof(*op);
 }
 
-void wined3d_cs_emit_resource_changed(struct wined3d_cs *cs, struct wined3d_resource *resource)
+void wined3d_cs_emit_resource_changed(struct wined3d_cs *cs, struct wined3d_resource *resource,
+        struct wined3d_gl_bo *swap_buffer)
 {
     struct wined3d_cs_resource_changed *op;
 
     op = cs->ops->require_space(cs, sizeof(*op));
     op->opcode = WINED3D_CS_OP_RESOURCE_CHANGED;
     op->resource = resource;
+    op->swap_buffer = swap_buffer;
 
     cs->ops->submit(cs, sizeof(*op));
 }
