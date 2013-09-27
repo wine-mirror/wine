@@ -167,7 +167,7 @@ extern "C" {
 #define _CDECL      __cdecl
 #define WINAPIV     __cdecl
 #define APIENTRY    WINAPI
-#define CONST       const
+#define CONST       __ONLY_IN_WINELIB(const)
 
 /* Misc. constants. */
 
