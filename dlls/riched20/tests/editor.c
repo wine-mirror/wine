@@ -3913,6 +3913,23 @@ static void test_EM_SETTEXTEX(void)
   SendMessage(hwndRichEdit, EM_GETTEXTEX, (WPARAM)&getText, (LPARAM) bufACP);
   ok(!strcmp(bufACP, "morerichtext"), "expected 'morerichtext' but got '%s'\n", bufACP);
 
+  /* test for utf8 text with BOM */
+  setText.flags = 0;
+  setText.codepage = CP_ACP;
+  SendMessage(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM)"\xef\xbb\xbfTestUTF8WithBOM");
+  result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)bufACP);
+  todo_wine ok(result == 15, "EM_SETTEXTEX: Test UTF8 with BOM returned %d, expected 15\n", result);
+  result = strcmp(bufACP, "TestUTF8WithBOM");
+  todo_wine ok(result == 0, "EM_SETTEXTEX: Test UTF8 with BOM set wrong text: Result: %s\n", bufACP);
+
+  setText.flags = 0;
+  setText.codepage = CP_UTF8;
+  SendMessage(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM)"\xef\xbb\xbfTestUTF8WithBOM");
+  result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)bufACP);
+  todo_wine ok(result == 15, "EM_SETTEXTEX: Test UTF8 with BOM returned %d, expected 15\n", result);
+  result = strcmp(bufACP, "TestUTF8WithBOM");
+  todo_wine ok(result == 0, "EM_SETTEXTEX: Test UTF8 with BOM set wrong text: Result: %s\n", bufACP);
+
   DestroyWindow(hwndRichEdit);
 }
 
