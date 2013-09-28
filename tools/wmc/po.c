@@ -297,7 +297,7 @@ static void po_xerror2( int severity, po_message_t message1,
 
 static const struct po_xerror_handler po_xerror_handler = { po_xerror, po_xerror2 };
 
-static int is_english( int lan )
+static BOOL is_english( int lan )
 {
     return lan == MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT );
 }
