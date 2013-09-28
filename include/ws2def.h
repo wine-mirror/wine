@@ -78,6 +78,21 @@ typedef enum {
     ScopeLevelGlobal       = 14
 } SCOPE_LEVEL;
 
+typedef struct _WSABUF
+{
+    ULONG len;
+    CHAR* buf;
+} WSABUF, *LPWSABUF;
+
+typedef struct _WSAMSG {
+    LPSOCKADDR  name;
+    INT         namelen;
+    LPWSABUF    lpBuffers;
+    DWORD       dwBufferCount;
+    WSABUF      Control;
+    DWORD       dwFlags;
+} WSAMSG, *PWSAMSG, *LPWSAMSG;
+
 /*
  * Macros for retrieving control message data returned by WSARecvMsg()
  */

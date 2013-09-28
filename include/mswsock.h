@@ -157,15 +157,6 @@ typedef struct _TRANSMIT_PACKETS_ELEMENT {
     } DUMMYUNIONNAME;
 } TRANSMIT_PACKETS_ELEMENT, *PTRANSMIT_PACKETS_ELEMENT, *LPTRANSMIT_PACKETS_ELEMENT;
 
-typedef struct _WSAMSG {
-    LPSOCKADDR  name;
-    INT         namelen;
-    LPWSABUF    lpBuffers;
-    DWORD       dwBufferCount;
-    WSABUF      Control;
-    DWORD       dwFlags;
-} WSAMSG, *PWSAMSG, *LPWSAMSG;
-
 typedef struct _WSACMSGHDR {
     SIZE_T      cmsg_len;
     INT         cmsg_level;
