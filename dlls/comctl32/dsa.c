@@ -100,7 +100,7 @@ HDSA WINAPI DSA_Create (INT nSize, INT nGrow)
  *     Success: TRUE
  *     Failure: FALSE
  */
-BOOL WINAPI DSA_Destroy (const HDSA hdsa)
+BOOL WINAPI DSA_Destroy (HDSA hdsa)
 {
     TRACE("(%p)\n", hdsa);
 
@@ -128,7 +128,7 @@ BOOL WINAPI DSA_Destroy (const HDSA hdsa)
  *     Success: TRUE
  *     Failure: FALSE
  */
-BOOL WINAPI DSA_GetItem (const HDSA hdsa, INT nIndex, LPVOID pDest)
+BOOL WINAPI DSA_GetItem (HDSA hdsa, INT nIndex, LPVOID pDest)
 {
     LPVOID pSrc;
 
@@ -159,7 +159,7 @@ BOOL WINAPI DSA_GetItem (const HDSA hdsa, INT nIndex, LPVOID pDest)
  *     Success: pointer to an item
  *     Failure: NULL
  */
-LPVOID WINAPI DSA_GetItemPtr (const HDSA hdsa, INT nIndex)
+LPVOID WINAPI DSA_GetItemPtr (HDSA hdsa, INT nIndex)
 {
     LPVOID pSrc;
 
@@ -192,7 +192,7 @@ LPVOID WINAPI DSA_GetItemPtr (const HDSA hdsa, INT nIndex)
  *     Success: TRUE
  *     Failure: FALSE
  */
-BOOL WINAPI DSA_SetItem (const HDSA hdsa, INT nIndex, LPVOID pSrc)
+BOOL WINAPI DSA_SetItem (HDSA hdsa, INT nIndex, LPVOID pSrc)
 {
     INT  nSize, nNewItems;
     LPVOID pDest, lpTemp;
@@ -248,7 +248,7 @@ BOOL WINAPI DSA_SetItem (const HDSA hdsa, INT nIndex, LPVOID pSrc)
  *     Success: position of the new item
  *     Failure: -1
  */
-INT WINAPI DSA_InsertItem (const HDSA hdsa, INT nIndex, LPVOID pSrc)
+INT WINAPI DSA_InsertItem (HDSA hdsa, INT nIndex, LPVOID pSrc)
 {
     INT   nNewItems, nSize;
     LPVOID  lpTemp, lpDest;
@@ -309,7 +309,7 @@ INT WINAPI DSA_InsertItem (const HDSA hdsa, INT nIndex, LPVOID pSrc)
  *     Success: number of the deleted element
  *     Failure: -1
  */
-INT WINAPI DSA_DeleteItem (const HDSA hdsa, INT nIndex)
+INT WINAPI DSA_DeleteItem (HDSA hdsa, INT nIndex)
 {
     LPVOID lpDest,lpSrc;
     INT  nSize;
@@ -361,7 +361,7 @@ INT WINAPI DSA_DeleteItem (const HDSA hdsa, INT nIndex)
  *     Success: TRUE
  *     Failure: FALSE
  */
-BOOL WINAPI DSA_DeleteAllItems (const HDSA hdsa)
+BOOL WINAPI DSA_DeleteAllItems (HDSA hdsa)
 {
     TRACE("(%p)\n", hdsa);
 
