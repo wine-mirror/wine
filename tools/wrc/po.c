@@ -54,17 +54,17 @@ struct mo_file
     /* ... rest of file data here */
 };
 
-static int is_english( const language_t *lan )
+static BOOL is_english( const language_t *lan )
 {
     return lan->id == LANG_ENGLISH && lan->sub == SUBLANG_DEFAULT;
 }
 
-static int is_rtl_language( const language_t *lan )
+static BOOL is_rtl_language( const language_t *lan )
 {
     return lan->id == LANG_ARABIC || lan->id == LANG_HEBREW || lan->id == LANG_PERSIAN;
 }
 
-static int uses_larger_font( const language_t *lan )
+static BOOL uses_larger_font( const language_t *lan )
 {
     return lan->id == LANG_CHINESE || lan->id == LANG_JAPANESE || lan->id == LANG_KOREAN;
 }
@@ -810,7 +810,7 @@ static void add_po_menu( const resource_t *english, const resource_t *res )
     add_po_menu_items( po, english_items, items, res->res.men->lvc.language );
 }
 
-static int string_has_context( const string_t *str )
+static BOOL string_has_context( const string_t *str )
 {
     char *id, *id_buffer, *context;
 
