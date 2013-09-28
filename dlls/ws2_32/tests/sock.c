@@ -5814,7 +5814,7 @@ static void test_getpeername(void)
 
     sa_len = 0;
     ret = getpeername(sock, (struct sockaddr*)&sa_out, &sa_len);
-    ok(ret == SOCKET_ERROR, "Expected getpeername to return 0, got %d\n", ret);
+    ok(ret == SOCKET_ERROR, "Expected getpeername to return SOCKET_ERROR, got %d\n", ret);
     ok(WSAGetLastError() == WSAEFAULT,
        "Expected WSAGetLastError() to return WSAEFAULT, got %d\n", WSAGetLastError());
 
