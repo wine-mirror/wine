@@ -1598,6 +1598,8 @@ void CDECL X11DRV_DestroyWindow( HWND hwnd )
     struct x11drv_thread_data *thread_data = x11drv_thread_data();
     struct x11drv_win_data *data;
 
+    destroy_gl_drawable( hwnd );
+
     if (!(data = get_win_data( hwnd ))) return;
 
     destroy_whole_window( data, FALSE );
@@ -1609,7 +1611,6 @@ void CDECL X11DRV_DestroyWindow( HWND hwnd )
     XDeleteContext( gdi_display, (XID)hwnd, win_data_context );
     release_win_data( data );
     HeapFree( GetProcessHeap(), 0, data );
-    destroy_gl_drawable( hwnd );
 }
 
 
