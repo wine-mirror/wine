@@ -58,7 +58,8 @@ CGImageRef create_cgimage_from_icon_bitmaps(HDC hdc, HANDLE icon, HBITMAP hbmCol
                                             unsigned char *mask_bits, int mask_size, int width,
                                             int height, int istep)
 {
-    int i, has_alpha = FALSE;
+    int i;
+    BOOL has_alpha = FALSE;
     DWORD *ptr;
     CGBitmapInfo alpha_format;
     CGColorSpaceRef colorspace;
