@@ -539,8 +539,10 @@ static char* get_template_name(struct parsed_symbol* sym)
     struct array array_pmt;
 
     sym->names.start = sym->names.num;
-    if (!(name = get_literal_string(sym)))
+    if (!(name = get_literal_string(sym))) {
+        sym->names.start = start_mark;
         return FALSE;
+    }
     str_array_init(&array_pmt);
     args = get_args(sym, &array_pmt, FALSE, '<', '>');
     if (args != NULL)
