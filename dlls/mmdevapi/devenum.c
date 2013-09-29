@@ -1343,10 +1343,10 @@ static HRESULT WINAPI MMDevPropStore_GetCount(IPropertyStore *iface, DWORD *npro
     *nprops = 0;
     do {
         DWORD len = sizeof(buffer)/sizeof(*buffer);
-        if (RegEnumKeyExW(propkey, i, buffer, &len, NULL, NULL, NULL, NULL) != ERROR_SUCCESS)
+        if (RegEnumValueW(propkey, i, buffer, &len, NULL, NULL, NULL, NULL) != ERROR_SUCCESS)
             break;
         i++;
-    } while (0);
+    } while (1);
     RegCloseKey(propkey);
     TRACE("Returning %i\n", i);
     *nprops = i;
@@ -1369,16 +1369,16 @@ static HRESULT WINAPI MMDevPropStore_GetAt(IPropertyStore *iface, DWORD prop, PR
     if (FAILED(hr))
         return hr;
 
-    if (RegEnumKeyExW(propkey, prop, buffer, &len, NULL, NULL, NULL, NULL) != ERROR_SUCCESS
-        || len <= 40)
+    if (RegEnumValueW(propkey, prop, buffer, &len, NULL, NULL, NULL, NULL) != ERROR_SUCCESS
+        || len <= 39)
     {
         WARN("GetAt %u failed\n", prop);
         return E_INVALIDARG;
     }
     RegCloseKey(propkey);
-    buffer[39] = 0;
+    buffer[38] = 0;
     CLSIDFromString(buffer, &key->fmtid);
-    key->pid = atoiW(&buffer[40]);
+    key->pid = atoiW(&buffer[39]);
     return S_OK;
 }
 
