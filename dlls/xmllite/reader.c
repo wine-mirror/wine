@@ -2226,6 +2226,8 @@ static HRESULT reader_parse_chardata(xmlreader *reader)
 
             reader_init_strvalue(start, ptr-start, &value);
             reader_set_strvalue(reader, StringValue_Value, &value);
+            reader->resume[XmlReadResume_Body] = NULL;
+            reader->resumestate = XmlReadResumeState_Initial;
             return S_OK;
         }
 

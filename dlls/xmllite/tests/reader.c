@@ -944,7 +944,9 @@ static const char misc_test_xml[] =
     "<!-- comment4 -->"
     "<a>"
     "<b/>"
+    "text"
     "<!-- comment -->"
+    "text2"
     "<?pi pibody ?>"
     "</a>"
 ;
@@ -960,7 +962,9 @@ static struct nodes_test misc_test = {
         XmlNodeType_Comment,
         XmlNodeType_Element,
         XmlNodeType_Element,
+        XmlNodeType_Text,
         XmlNodeType_Comment,
+        XmlNodeType_Text,
         XmlNodeType_ProcessingInstruction,
         XmlNodeType_EndElement,
         XmlNodeType_None
