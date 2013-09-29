@@ -166,8 +166,10 @@ static HMETAFILE GetPlaceableMetaFile( LPCWSTR szFileName )
   }
   CloseHandle( handle );
 
-  if (!(hmf = SetMetaFileBitsEx(mfHeader.mtSize*2, lpData)))
+  if (!(hmf = SetMetaFileBitsEx(mfHeader.mtSize*2, lpData))) {
+    GlobalFree(lpData);
     return 0;
+  }
 
 
   width = APMHeader.bbox.Right - APMHeader.bbox.Left;
@@ -181,6 +183,7 @@ static HMETAFILE GetPlaceableMetaFile( LPCWSTR szFileName )
 
   deltax = 0;
   deltay = 0 ;
+  GlobalFree(lpData);
   return hmf;
 }
 
