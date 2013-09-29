@@ -2205,7 +2205,7 @@ static HRESULT reader_parse_chardata(xmlreader *reader)
         ptr = start = reader_get_cur(reader);
         /* There's no text */
         if (!*ptr || *ptr == '<') return S_OK;
-        reader->nodetype = XmlNodeType_Text;
+        reader->nodetype = is_wchar_space(*ptr) ? XmlNodeType_Whitespace : XmlNodeType_Text;
         reader->resume[XmlReadResume_Body] = start;
         reader->resumestate = XmlReadResumeState_CharData;
         reader_set_strvalue(reader, StringValue_LocalName, &strval_empty);
@@ -2232,6 +2232,9 @@ static HRESULT reader_parse_chardata(xmlreader *reader)
         }
 
         reader_skipn(reader, 1);
+
+        /* this covers a case when text has leading whitespace chars */
+        if (!is_wchar_space(*ptr)) reader->nodetype = XmlNodeType_Text;
         ptr++;
     }
 
