@@ -90,7 +90,7 @@ static int __cdecl NETSTAT_wprintf(const WCHAR *format, ...)
      */
 
     if (!output_bufW) output_bufW = HeapAlloc(GetProcessHeap(), 0,
-                                              MAX_WRITECONSOLE_SIZE);
+                                              MAX_WRITECONSOLE_SIZE*sizeof(WCHAR));
     if (!output_bufW) {
         WINE_FIXME("Out of memory - could not allocate 2 x 64K buffers\n");
         return 0;
