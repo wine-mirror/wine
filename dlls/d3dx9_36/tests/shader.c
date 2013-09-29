@@ -20,11 +20,22 @@
 #include "wine/test.h"
 #include "d3dx9.h"
 
+#define FCC_TEXT MAKEFOURCC('T','E','X','T')
+#define FCC_CTAB MAKEFOURCC('C','T','A','B')
+
 static const DWORD shader_zero[] = {0x0};
 
 static const DWORD shader_invalid[] = {0xeeee0100};
 
 static const DWORD shader_empty[] = {0xfffeffff, 0x0000ffff};
+
+static const DWORD simple_fx[] = {0x46580000, 0x0002fffe, FCC_TEXT, 0x00000000, 0x0000ffff};
+
+static const DWORD simple_tx[] = {0x54580000, 0x0002fffe, FCC_TEXT, 0x00000000, 0x0000ffff};
+
+static const DWORD simple_7ffe[] = {0x7ffe0000, 0x0002fffe, FCC_TEXT, 0x00000000, 0x0000ffff};
+
+static const DWORD simple_7fff[] = {0x7fff0000, 0x0002fffe, FCC_TEXT, 0x00000000, 0x0000ffff};
 
 static const DWORD simple_vs[] = {
     0xfffe0101,                                                             /* vs_1_1                       */
@@ -43,9 +54,6 @@ static const DWORD simple_ps[] = {
     0x00000005, 0x800f0000, 0x90e40000, 0x80e40000,                         /* mul r0, v0, r0               */
     0x00000005, 0x800f0000, 0xb0e40000, 0x80e40000,                         /* mul r0, t0, r0               */
     0x0000ffff};                                                            /* END                          */
-
-#define FCC_TEXT MAKEFOURCC('T','E','X','T')
-#define FCC_CTAB MAKEFOURCC('C','T','A','B')
 
 static const DWORD shader_with_ctab[] = {
     0xfffe0300,                                                             /* vs_3_0                       */
@@ -320,7 +328,7 @@ static void test_find_shader_comment(void)
 
     hr = D3DXFindShaderComment(shader_with_ctab, MAKEFOURCC('C','T','A','B'), &data, NULL);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
-    ok(data == shader_with_ctab + 6, "Got result %p, expected %p.\n", data, shader_with_ctab + 6);
+    ok(data == shader_with_ctab + 6, "Got result %p, expected %p\n", data, shader_with_ctab + 6);
 
     hr = D3DXFindShaderComment(shader_with_ctab, 0, &data, &size);
     ok(hr == S_FALSE, "Got result %x, expected 1 (S_FALSE)\n", hr);
@@ -334,8 +342,8 @@ static void test_find_shader_comment(void)
 
     hr = D3DXFindShaderComment(shader_with_ctab, MAKEFOURCC('C','T','A','B'), &data, &size);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
-    ok(data == shader_with_ctab + 6, "Got result %p, expected %p.\n", data, shader_with_ctab + 6);
-    ok(size == 28, "Got result %d, expected 28\n", size);
+    ok(data == shader_with_ctab + 6, "Got result %p, expected %p\n", data, shader_with_ctab + 6);
+    ok(size == 28, "Got result %u, expected 28\n", size);
 
     hr = D3DXFindShaderComment(shader_zero, MAKEFOURCC('C','T','A','B'), &data, &size);
     ok(hr == D3DXERR_INVALIDDATA, "Got result %x, expected %x (D3DXERR_INVALIDDATA)\n", hr, D3DXERR_INVALIDDATA);
@@ -351,6 +359,26 @@ static void test_find_shader_comment(void)
     ok(hr == S_FALSE, "Got result %x, expected %x (S_FALSE)\n", hr, S_FALSE);
     ok(!data, "Got %p, expected NULL\n", data);
     ok(!size, "Got %u, expected 0\n", size);
+
+    hr = D3DXFindShaderComment(simple_fx, FCC_TEXT, &data, &size);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    ok(data == simple_fx + 3, "Got result %p, expected %p\n", data, simple_fx + 3);
+    ok(size == 4, "Got result %u, expected 4\n", size);
+
+    hr = D3DXFindShaderComment(simple_tx, FCC_TEXT, &data, &size);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    ok(data == simple_tx + 3, "Got result %p, expected %p\n", data, simple_tx + 3);
+    ok(size == 4, "Got result %u, expected 4\n", size);
+
+    hr = D3DXFindShaderComment(simple_7ffe, FCC_TEXT, &data, &size);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    ok(data == simple_7ffe + 3, "Got result %p, expected %p\n", data, simple_7ffe + 3);
+    ok(size == 4, "Got result %u, expected 4\n", size);
+
+    hr = D3DXFindShaderComment(simple_7fff, FCC_TEXT, &data, &size);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    ok(data == simple_7fff + 3, "Got result %p, expected %p\n", data, simple_7fff + 3);
+    ok(size == 4, "Got result %u, expected 4\n", size);
 }
 
 static void test_get_shader_constant_table_ex(void)

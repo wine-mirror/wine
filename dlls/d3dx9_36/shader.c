@@ -154,6 +154,7 @@ const char * WINAPI D3DXGetVertexShaderProfile(struct IDirect3DDevice9 *device)
 HRESULT WINAPI D3DXFindShaderComment(const DWORD *byte_code, DWORD fourcc, const void **data, UINT *size)
 {
     const DWORD *ptr = byte_code;
+    DWORD version;
 
     TRACE("byte_code %p, fourcc %x, data %p, size %p\n", byte_code, fourcc, data, size);
 
@@ -161,7 +162,18 @@ HRESULT WINAPI D3DXFindShaderComment(const DWORD *byte_code, DWORD fourcc, const
     if (size) *size = 0;
 
     if (!byte_code) return D3DERR_INVALIDCALL;
-    if (!is_valid_bytecode(*byte_code)) return D3DXERR_INVALIDDATA;
+
+    version = *ptr >> 16;
+    if (version != 0x4658         /* FX */
+            && version != 0x5458  /* TX */
+            && version != 0x7ffe
+            && version != 0x7fff
+            && version != 0xfffe  /* VS */
+            && version != 0xffff) /* PS */
+    {
+        WARN("Invalid data supplied\n");
+        return D3DXERR_INVALIDDATA;
+    }
 
     while (*++ptr != D3DSIO_END)
     {
