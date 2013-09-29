@@ -3988,7 +3988,7 @@ static DWORD find_input_signature(struct shader_arb_priv *priv, const struct win
         TRACE("Found existing signature %u\n", found_sig->idx);
         return found_sig->idx;
     }
-    found_sig = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*sig));
+    found_sig = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*found_sig));
     found_sig->sig = clone_sig(sig);
     found_sig->idx = priv->ps_sig_number++;
     TRACE("New signature stored and assigned number %u\n", found_sig->idx);
