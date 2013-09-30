@@ -950,7 +950,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
     ULONG total = 0;
     enum server_fd_type type;
     ULONG_PTR cvalue = apc ? 0 : (ULONG_PTR)apc_user;
-    BOOL send_completion = FALSE;
+    BOOL send_completion = FALSE, async_write;
 
     TRACE("(%p,%p,%p,%p,%p,%p,0x%08x,%p,%p)!\n",
           hFile,hEvent,apc,apc_user,io_status,buffer,length,offset,key);
@@ -967,9 +967,11 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
         goto done;
     }
 
+    async_write = !(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT));
+
     if (type == FD_TYPE_FILE)
     {
-        if (!(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)) && (!offset || offset->QuadPart < 0))
+        if (async_write && (!offset || offset->QuadPart < 0))
         {
             status = STATUS_INVALID_PARAMETER;
             goto done;
@@ -1007,7 +1009,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
                 }
             }
 
-            if (options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT))
+            if (!async_write)
                 /* update file pointer position */
                 lseek( unix_handle, off + result, SEEK_SET );
 
@@ -1018,7 +1020,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
     }
     else if (type == FD_TYPE_SERIAL)
     {
-        if (!(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)) &&
+        if (async_write &&
             (!offset || (offset->QuadPart < 0 && offset->QuadPart != (LONGLONG)-1 /* FILE_WRITE_TO_END_OF_FILE */)))
         {
             status = STATUS_INVALID_PARAMETER;
@@ -1055,7 +1057,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
             goto done;
         }
 
-        if (!(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)))
+        if (async_write)
         {
             async_fileio_write *fileio;
 
