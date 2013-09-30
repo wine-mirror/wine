@@ -1188,7 +1188,6 @@ UINT CDECL macdrv_ShowWindow(HWND hwnd, INT cmd, RECT *rect, UINT swp)
         goto done;
 
     if (thread_data->current_event->type != WINDOW_FRAME_CHANGED &&
-        thread_data->current_event->type != WINDOW_DID_MINIMIZE &&
         thread_data->current_event->type != WINDOW_DID_UNMINIMIZE)
         goto done;
 
@@ -1570,7 +1569,6 @@ void CDECL macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags,
     if (!thread_data || !thread_data->current_event ||
         thread_data->current_event->window != data->cocoa_window ||
         (thread_data->current_event->type != WINDOW_FRAME_CHANGED &&
-         thread_data->current_event->type != WINDOW_DID_MINIMIZE &&
          thread_data->current_event->type != WINDOW_DID_UNMINIMIZE))
     {
         sync_window_position(data, swp_flags, &old_window_rect, &old_whole_rect);
@@ -1768,34 +1766,57 @@ void macdrv_app_deactivated(void)
 
 
 /***********************************************************************
- *              macdrv_window_did_minimize
+ *              macdrv_window_minimize_requested
  *
- * Handler for WINDOW_DID_MINIMIZE events.
+ * Handler for WINDOW_MINIMIZE_REQUESTED events.
  */
-void macdrv_window_did_minimize(HWND hwnd)
+void macdrv_window_minimize_requested(HWND hwnd)
 {
-    struct macdrv_win_data *data;
     DWORD style;
-
-    TRACE("win %p\n", hwnd);
-
-    if (!(data = get_win_data(hwnd))) return;
-    if (data->minimized) goto done;
+    HMENU hSysMenu;
 
     style = GetWindowLongW(hwnd, GWL_STYLE);
-
-    data->minimized = TRUE;
-    if ((style & WS_MINIMIZEBOX) && !(style & WS_DISABLED))
+    if (!(style & WS_MINIMIZEBOX) || (style & (WS_DISABLED | WS_MINIMIZE)))
     {
-        TRACE("minimizing win %p/%p\n", hwnd, data->cocoa_window);
-        release_win_data(data);
-        SendMessageW(hwnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+        TRACE("not minimizing win %p style 0x%08x\n", hwnd, style);
         return;
     }
-    TRACE("not minimizing win %p/%p style %08x\n", hwnd, data->cocoa_window, style);
 
-done:
-    release_win_data(data);
+    hSysMenu = GetSystemMenu(hwnd, FALSE);
+    if (hSysMenu)
+    {
+        UINT state = GetMenuState(hSysMenu, SC_MINIMIZE, MF_BYCOMMAND);
+        if (state == 0xFFFFFFFF || (state & (MF_DISABLED | MF_GRAYED)))
+        {
+            TRACE("not minimizing win %p menu state 0x%08x\n", hwnd, state);
+            return;
+        }
+    }
+
+    if (GetActiveWindow() != hwnd)
+    {
+        LRESULT ma = SendMessageW(hwnd, WM_MOUSEACTIVATE, (WPARAM)GetAncestor(hwnd, GA_ROOT),
+                                  MAKELPARAM(HTMINBUTTON, WM_NCLBUTTONDOWN));
+        switch (ma)
+        {
+            case MA_NOACTIVATEANDEAT:
+            case MA_ACTIVATEANDEAT:
+                TRACE("not minimizing win %p mouse-activate result %ld\n", hwnd, ma);
+                return;
+            case MA_NOACTIVATE:
+                break;
+            case MA_ACTIVATE:
+            case 0:
+                SetActiveWindow(hwnd);
+                break;
+            default:
+                WARN("unknown WM_MOUSEACTIVATE code %ld\n", ma);
+                break;
+        }
+    }
+
+    TRACE("minimizing win %p\n", hwnd);
+    SendMessageW(hwnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
 }
 
 

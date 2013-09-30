@@ -689,10 +689,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         if (state->minimized && ![self isMiniaturized])
         {
             if ([self isVisible])
-            {
-                ignore_windowMiniaturize = TRUE;
-                [self miniaturize:nil];
-            }
+                [super miniaturize:nil];
             else
                 pendingMinimize = TRUE;
         }
@@ -703,8 +700,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         }
 
         /* Whatever events regarding minimization might have been in the queue are now stale. */
-        [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_DID_MINIMIZE) |
-                                         event_mask_for_type(WINDOW_DID_UNMINIMIZE)
+        [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_DID_UNMINIMIZE)
                                forWindow:self];
     }
 
@@ -1012,8 +1008,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
             if (pendingMinimize)
             {
-                ignore_windowMiniaturize = TRUE;
-                [self miniaturize:nil];
+                [super miniaturize:nil];
                 pendingMinimize = FALSE;
             }
 
@@ -1333,6 +1328,13 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
             [super sendEvent:event];
     }
 
+    - (void) miniaturize:(id)sender
+    {
+        macdrv_event* event = macdrv_create_event(WINDOW_MINIMIZE_REQUESTED, self);
+        [queue postEvent:event];
+        macdrv_release_event(event);
+    }
+
     // We normally use the generic/calibrated RGB color space for the window,
     // rather than the device color space, to avoid expensive color conversion
     // which slows down drawing.  However, for windows displaying OpenGL, having
@@ -1457,8 +1459,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
             macdrv_event* event;
 
             /* Coalesce events by discarding any previous ones still in the queue. */
-            [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_DID_MINIMIZE) |
-                                             event_mask_for_type(WINDOW_DID_UNMINIMIZE)
+            [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_DID_UNMINIMIZE)
                                    forWindow:self];
 
             event = macdrv_create_event(WINDOW_DID_UNMINIMIZE, self);
@@ -1575,22 +1576,6 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
     - (void)windowWillMiniaturize:(NSNotification *)notification
     {
         [self becameIneligibleParentOrChild];
-
-        if (!ignore_windowMiniaturize)
-        {
-            macdrv_event* event;
-
-            /* Coalesce events by discarding any previous ones still in the queue. */
-            [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_DID_MINIMIZE) |
-                                             event_mask_for_type(WINDOW_DID_UNMINIMIZE)
-                                   forWindow:self];
-
-            event = macdrv_create_event(WINDOW_DID_MINIMIZE, self);
-            [queue postEvent:event];
-            macdrv_release_event(event);
-        }
-
-        ignore_windowMiniaturize = FALSE;
     }
 
     - (void) windowWillStartLiveResize:(NSNotification *)notification

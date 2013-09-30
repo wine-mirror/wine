@@ -58,7 +58,6 @@
     NSSize savedContentMinSize;
     NSSize savedContentMaxSize;
 
-    BOOL ignore_windowMiniaturize;
     BOOL ignore_windowDeminiaturize;
     BOOL fakingClose;
 }
