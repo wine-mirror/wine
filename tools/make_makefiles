@@ -320,8 +320,8 @@ sub parse_makefile($)
         {
             my $var = $1;
             $make{$var} = $2;
-            push @{$make{"=flags"}}, "implib" if $var eq "IMPORTLIB";
-            push @{$make{"=flags"}}, "manpage" if $var eq "MANPAGE";
+            ${$make{"=flags"}}{"implib"} = 1 if $var eq "IMPORTLIB";
+            ${$make{"=flags"}}{"manpage"} = 1 if $var eq "MANPAGE";
             next;
         }
         if (/^\s*(BISON_SRCS|LEX_SRCS|IDL_[CHIPRS]_SRCS|IDL_TLB_SRCS|IMPLIB_SRCS|C_SRCS|OBJC_SRCS|MC_SRCS|RC_SRCS|PO_SRCS|SVG_SRCS|PROGRAMS)\s*=\s*(.*)/)
@@ -329,14 +329,15 @@ sub parse_makefile($)
             my $var = $1;
             my @list = split(/\s+/, $2);
             $make{$var} = \@list;
-            push @{$make{"=flags"}}, "mc" if $var eq "MC_SRCS";
-            push @{$make{"=flags"}}, "po" if $var eq "PO_SRCS";
-            push @{$make{"=flags"}}, "staticimplib" if $var eq "IMPLIB_SRCS";
+            ${$make{"=flags"}}{"mc"} = 1 if $var eq "MC_SRCS";
+            ${$make{"=flags"}}{"po"} = 1 if $var eq "PO_SRCS";
+            ${$make{"=flags"}}{"staticimplib"} = 1 if $var eq "IMPLIB_SRCS";
+            ${$make{"=flags"}}{"clean"} = 1 if $var =~ /IDL_[CHIPRS]_SRCS|IDL_TLB_SRCS|PROGRAMS/;
             next;
         }
-        if (/(install-lib|install-dev)\s*:/)
+        if (/(install-lib|install-dev|clean)\s*:/)
         {
-            push @{$make{"=flags"}}, $1;
+            ${$make{"=flags"}}{$1} = 1;
             next;
         }
         if (/^\s*(TOPSRCDIR|TOPOBJDIR|SRCDIR|VPATH)\s*=\s*(.*)/)
@@ -347,8 +348,8 @@ sub parse_makefile($)
 
     if ($file =~ /^programs\/([^\/]+)\/Makefile/)
     {
-        push @{$make{"=flags"}}, "install" unless $dont_install{$1};
-        push @{$make{"=flags"}}, "installbin" if $bin_install{$1};
+        ${$make{"=flags"}}{"install"} = 1 unless $dont_install{$1};
+        ${$make{"=flags"}}{"installbin"} = 1 if $bin_install{$1};
     }
 
     return %make;
@@ -439,7 +440,7 @@ sub update_makefiles(@)
         my $rules = $make{"=rules"};
         my $args = "";
         my $is_win16 = $make{"MODULE"} && ($make{"MODULE"} =~ /16$/ || $modules16{$make{"MODULE"}});
-        my $flag_args = defined $make{"=flags"} ? ",[" . join(",",sort @{$make{"=flags"}}) ."]" : "";
+        my $flag_args = defined $make{"=flags"} ? ",[" . join(",",sort keys %{$make{"=flags"}}) ."]" : "";
         if ($rules eq $makerules{"MAKE_DLL_RULES"})
         {
             (my $name = $file) =~ s/^dlls\/(.*)\/Makefile/$1/;

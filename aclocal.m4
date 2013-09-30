@@ -232,12 +232,7 @@ wine_fn_all_dir_rules ()
     esac
 
     wine_fn_append_rule \
-"__clean__: $ac_dir/__clean__
-.PHONY: $ac_dir/__clean__
-$ac_dir/__clean__: $ac_dir/Makefile
-	@cd $ac_dir && \$(MAKE) clean
-	\$(RM) $ac_dir/Makefile
-$ac_dir/Makefile: $ac_dir/Makefile.in Make.vars.in config.status $ac_alldeps
+"$ac_dir/Makefile: $ac_dir/Makefile.in Make.vars.in config.status $ac_alldeps
 	@./config.status --file $ac_dir/Makefile:$ac_input && cd $ac_dir && \$(MAKE) depend
 depend: $ac_dir/__depend__
 .PHONY: $ac_dir/__depend__
@@ -270,7 +265,7 @@ $ac_dir/rsrc.pot: tools/wrc include"
     fi
 }
 
-wine_fn_config_makefile ()
+wine_fn_config_all_make_rules ()
 {
     ac_dir=$[1]
     ac_enable=$[2]
@@ -315,12 +310,45 @@ install-dev:: $ac_dir/__install-dev__"
     fi
 }
 
+wine_fn_clean_rules ()
+{
+    ac_dir=$[1]
+    ac_flags=$[2]
+    shift; shift
+    ac_clean=$[@]
+
+    if wine_fn_has_flag clean $ac_flags
+    then
+        wine_fn_append_rule \
+"__clean__: $ac_dir/__clean__
+.PHONY: $ac_dir/__clean__
+$ac_dir/__clean__: $ac_dir/Makefile
+	@cd $ac_dir && \$(MAKE) clean
+	\$(RM) $ac_dir/Makefile"
+    else
+        wine_fn_append_rule \
+"clean::
+	\$(RM) \$(CLEAN_FILES:%=$ac_dir/%) $ac_clean $ac_dir/Makefile"
+    fi
+}
+
+wine_fn_config_makefile ()
+{
+    ac_dir=$[1]
+    ac_enable=$[2]
+    ac_flags=$[3]
+
+    wine_fn_config_all_make_rules $ac_dir $ac_enable $ac_flags
+    wine_fn_clean_rules $ac_dir $ac_flags
+}
+
 wine_fn_config_lib ()
 {
     ac_name=$[1]
     ac_flags=$[2]
     ac_dir=dlls/$ac_name
-    wine_fn_config_makefile $ac_dir enable_$ac_name "$ac_flags" dlls/Makeimplib.rules
+    wine_fn_config_all_make_rules $ac_dir enable_$ac_name "$ac_flags" dlls/Makeimplib.rules
+    wine_fn_clean_rules $ac_dir $ac_flags
 
     if wine_fn_has_flag install-dev $ac_flags
     then :
@@ -358,7 +386,13 @@ wine_fn_config_dll ()
       *)   ac_dll=$ac_dll.dll ;;
     esac
 
-    wine_fn_config_makefile $ac_dir $ac_enable "$ac_flags" dlls/Makedll.rules
+    wine_fn_config_all_make_rules $ac_dir $ac_enable "$ac_flags" dlls/Makedll.rules
+
+    ac_clean=
+    wine_fn_has_flag implib $ac_flags && ac_clean="$ac_clean $ac_file.$IMPLIBEXT"
+    wine_fn_has_flag mc $ac_flags && ac_clean="$ac_clean $ac_dir/msg.pot"
+    wine_fn_has_flag po $ac_flags && ac_clean="$ac_clean $ac_dir/rsrc.pot"
+    wine_fn_clean_rules $ac_dir "$ac_flags" $ac_clean
 
     AS_VAR_IF([$ac_enable],[no],
               dnl enable_win16 is special in that it disables import libs too
@@ -485,7 +519,14 @@ wine_fn_config_program ()
       *)   ac_program=$ac_program.exe ;;
     esac
 
-    wine_fn_config_makefile $ac_dir $ac_enable "$ac_flags" programs/Makeprog.rules
+    wine_fn_config_all_make_rules $ac_dir $ac_enable "$ac_flags" programs/Makeprog.rules
+
+    ac_clean=
+    wine_fn_has_flag mc $ac_flags && ac_clean="$ac_clean $ac_dir/msg.pot"
+    wine_fn_has_flag po $ac_flags && ac_clean="$ac_clean $ac_dir/rsrc.pot"
+    wine_fn_has_flag manpage $ac_flags && ac_clean="$ac_clean $ac_dir/$ac_name.man"
+    test -n "$DLLEXT" || ac_clean="$ac_clean $ac_dir/$ac_program"
+    wine_fn_clean_rules $ac_dir "$ac_flags" $ac_clean
 
     AS_VAR_IF([$ac_enable],[no],,[wine_fn_append_rule "$ac_dir: __builddeps__"
 
@@ -537,8 +578,15 @@ wine_fn_config_test ()
     ac_dir=$[1]
     ac_name=$[2]
     ac_flags=$[3]
+
+    ac_clean=
+    test "x$CROSSTEST_DISABLE" = x && ac_clean=`expr $ac_dir/${ac_name} : "\\(.*\\)_test"`_crosstest.exe
+    test -n "$DLLEXT" || ac_clean=$ac_dir/${ac_name}.exe
+    ac_clean="$ac_clean $ac_dir/*.ok $ac_dir/testlist.c"
+
     wine_fn_append_file ALL_TEST_RESOURCES $ac_name.res
     wine_fn_all_dir_rules $ac_dir Maketest.rules
+    wine_fn_clean_rules $ac_dir "$ac_flags" $ac_clean
 
     AS_VAR_IF([enable_tests],[no],,[wine_fn_append_rule \
 "all: $ac_dir
@@ -569,7 +617,8 @@ wine_fn_config_tool ()
     ac_flags=$[2]
     AS_VAR_IF([enable_tools],[no],[return 0])
 
-    wine_fn_config_makefile $ac_dir enable_tools $ac_flags
+    wine_fn_config_all_make_rules $ac_dir enable_tools $ac_flags
+    wine_fn_clean_rules $ac_dir $ac_flags
 
     wine_fn_append_rule "__tooldeps__: $ac_dir"
     wine_fn_append_rule "$ac_dir: libs/port"
@@ -631,7 +680,10 @@ dnl
 dnl Usage: WINE_CONFIG_EXTRA_DIR(dirname)
 dnl
 AC_DEFUN([WINE_CONFIG_EXTRA_DIR],
-[AC_CONFIG_COMMANDS([$1],[test -d "$1" || { AC_MSG_NOTICE([creating $1]); AS_MKDIR_P("$1"); }])])
+[AC_CONFIG_COMMANDS([$1],[test -d "$1" || { AC_MSG_NOTICE([creating $1]); AS_MKDIR_P("$1"); }])dnl
+wine_fn_append_rule \
+"clean::
+	\$(RM) \$(CLEAN_FILES:%=[$1]/%)"])
 
 dnl **** Create symlinks from config.status ****
 dnl

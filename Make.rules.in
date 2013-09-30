@@ -24,10 +24,9 @@ IDL_GEN_C_SRCS  = $(IDL_C_SRCS:.idl=_c.c) $(IDL_I_SRCS:.idl=_i.c) \
 IDL_GEN_HEADERS = $(IDL_H_SRCS:.idl=.h) $(IDL_C_SRCS:.idl=.h) $(IDL_I_SRCS:.idl=.h) \
                   $(IDL_P_SRCS:.idl=.h) $(IDL_S_SRCS:.idl=.h)
 
-CLEAN_FILES   = *.o *.a *.so *.mo *.ln *.res *.fake core
+CLEAN_FILES   = *.o *.a *.so *.mo *.ln *.res *.fake *.tab.[ch] *.yy.c
 CLEAN_TARGETS = $(IDL_GEN_C_SRCS) $(IDL_GEN_HEADERS) \
                 $(IDL_TLB_SRCS:.idl=.tlb) $(IDL_P_SRCS:.idl=_p.c dlldata.c) \
-                $(BISON_SRCS:.y=.tab.c) $(BISON_SRCS:.y=.tab.h) $(LEX_SRCS:.l=.yy.c) \
                 $(PO_SRCS:.rc=.res rsrc.pot) $(MC_SRCS:.mc=.res msg.pot) $(XTEMPLATE_SRCS:.x=.h)
 
 OBJS = $(C_SRCS:.c=.o) $(BISON_SRCS:.y=.tab.o) $(LEX_SRCS:.l=.yy.o) $(IDL_GEN_C_SRCS:.c=.o) $(OBJC_SRCS:.m=.o) \
