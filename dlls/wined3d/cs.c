@@ -29,6 +29,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_CLEAR,
     WINED3D_CS_OP_DRAW,
     WINED3D_CS_OP_SET_VIEWPORT,
+    WINED3D_CS_OP_SET_SCISSOR_RECT,
 };
 
 struct wined3d_cs_present
@@ -67,6 +68,12 @@ struct wined3d_cs_set_viewport
 {
     enum wined3d_cs_op opcode;
     const struct wined3d_viewport *viewport;
+};
+
+struct wined3d_cs_set_scissor_rect
+{
+    enum wined3d_cs_op opcode;
+    const RECT *rect;
 };
 
 static void wined3d_cs_exec_present(struct wined3d_cs *cs, const void *data)
@@ -172,12 +179,32 @@ void wined3d_cs_emit_set_viewport(struct wined3d_cs *cs, const struct wined3d_vi
     cs->ops->submit(cs);
 }
 
+static void wined3d_cs_exec_set_scissor_rect(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_set_scissor_rect *op = data;
+
+    cs->state.scissor_rect = *op->rect;
+    device_invalidate_state(cs->device, STATE_SCISSORRECT);
+}
+
+void wined3d_cs_emit_set_scissor_rect(struct wined3d_cs *cs, const RECT *rect)
+{
+    struct wined3d_cs_set_scissor_rect *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_SET_SCISSOR_RECT;
+    op->rect = rect;
+
+    cs->ops->submit(cs);
+}
+
 static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
 {
     /* WINED3D_CS_OP_PRESENT                */ wined3d_cs_exec_present,
     /* WINED3D_CS_OP_CLEAR                  */ wined3d_cs_exec_clear,
     /* WINED3D_CS_OP_DRAW                   */ wined3d_cs_exec_draw,
     /* WINED3D_CS_OP_SET_VIEWPORT           */ wined3d_cs_exec_set_viewport,
+    /* WINED3D_CS_OP_SET_SCISSOR_RECT       */ wined3d_cs_exec_set_scissor_rect,
 };
 
 static void *wined3d_cs_st_require_space(struct wined3d_cs *cs, size_t size)

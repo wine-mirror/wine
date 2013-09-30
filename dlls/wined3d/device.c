@@ -2060,7 +2060,7 @@ void CDECL wined3d_device_set_scissor_rect(struct wined3d_device *device, const 
         return;
     }
 
-    device_invalidate_state(device, STATE_SCISSORRECT);
+    wined3d_cs_emit_set_scissor_rect(device->cs, rect);
 }
 
 void CDECL wined3d_device_get_scissor_rect(const struct wined3d_device *device, RECT *rect)
@@ -4021,7 +4021,7 @@ HRESULT CDECL wined3d_device_set_render_target(struct wined3d_device *device,
         state->scissor_rect.left = 0;
         state->scissor_rect.right = render_target->resource.width;
         state->scissor_rect.bottom = render_target->resource.height;
-        device_invalidate_state(device, STATE_SCISSORRECT);
+        wined3d_cs_emit_set_scissor_rect(device->cs, &state->scissor_rect);
     }
 
 
@@ -4728,7 +4728,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         state->scissor_rect.left = 0;
         state->scissor_rect.right = rt->resource.width;
         state->scissor_rect.bottom = rt->resource.height;
-        device_invalidate_state(device, STATE_SCISSORRECT);
+        wined3d_cs_emit_set_scissor_rect(device->cs, &state->scissor_rect);
     }
 
     swapchain_update_render_to_fbo(swapchain);
