@@ -702,15 +702,19 @@ static HRESULT WINAPI HTMLStyle6_get_counterReset(IHTMLStyle6 *iface, BSTR *p)
 static HRESULT WINAPI HTMLStyle6_put_outline(IHTMLStyle6 *iface, BSTR v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle6(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    return set_nsstyle_attr(This->nsstyle, STYLEID_OUTLINE, v, 0);
 }
 
 static HRESULT WINAPI HTMLStyle6_get_outline(IHTMLStyle6 *iface, BSTR *p)
 {
     HTMLStyle *This = impl_from_IHTMLStyle6(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_nsstyle_attr(This->nsstyle, STYLEID_OUTLINE, p, ATTR_NO_NULL);
 }
 
 static HRESULT WINAPI HTMLStyle6_put_outlineWidth(IHTMLStyle6 *iface, VARIANT v)

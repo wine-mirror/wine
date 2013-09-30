@@ -83,6 +83,7 @@ typedef enum {
     STYLEID_MARGIN_RIGHT,
     STYLEID_MARGIN_TOP,
     STYLEID_MIN_HEIGHT,
+    STYLEID_OUTLINE,
     STYLEID_OVERFLOW,
     STYLEID_OVERFLOW_X,
     STYLEID_OVERFLOW_Y,
@@ -123,3 +124,4 @@ HRESULT get_nsstyle_attr_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, 
 #define ATTR_STR_TO_INT     0x0004
 #define ATTR_HEX_INT        0x0008
 #define ATTR_REMOVE_COMMA   0x0010
+#define ATTR_NO_NULL        0x0020

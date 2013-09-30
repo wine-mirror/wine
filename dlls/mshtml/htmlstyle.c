@@ -135,6 +135,8 @@ static const WCHAR attrMarginTop[] =
     {'m','a','r','g','i','n','-','t','o','p',0};
 static const WCHAR attrMinHeight[] =
     {'m','i','n','-','h','e','i','g','h','t',0};
+static const WCHAR attrOutline[] =
+    {'o','u','t','l','i','n','e',0};
 static const WCHAR attrOverflow[] =
     {'o','v','e','r','f','l','o','w',0};
 static const WCHAR attrOverflowX[] =
@@ -241,6 +243,7 @@ static const style_tbl_entry_t style_tbl[] = {
     {attrMarginRight,          DISPID_IHTMLSTYLE_MARGINRIGHT},
     {attrMarginTop,            DISPID_IHTMLSTYLE_MARGINTOP},
     {attrMinHeight,            DISPID_IHTMLSTYLE4_MINHEIGHT},
+    {attrOutline,              DISPID_IHTMLSTYLE6_OUTLINE},
     {attrOverflow,             DISPID_IHTMLSTYLE_OVERFLOW},
     {attrOverflowX,            DISPID_IHTMLSTYLE2_OVERFLOWX},
     {attrOverflowY,            DISPID_IHTMLSTYLE2_OVERFLOWY},
@@ -464,7 +467,7 @@ static HRESULT nsstyle_to_bstr(const WCHAR *val, DWORD flags, BSTR *p)
     DWORD len;
 
     if(!*val) {
-        *p = NULL;
+        *p = (flags & ATTR_NO_NULL) ? SysAllocStringLen(NULL, 0) : NULL;
         return S_OK;
     }
 
