@@ -1804,8 +1804,11 @@ struct wined3d_stream_state
     UINT flags;
 };
 
+#define WINED3D_STATE_NO_REF        0x00000001
+
 struct wined3d_state
 {
+    DWORD flags;
     const struct wined3d_fb_state *fb;
 
     struct wined3d_vertex_declaration *vertex_declaration;
@@ -2451,7 +2454,7 @@ void stateblock_init_contained_states(struct wined3d_stateblock *stateblock) DEC
 
 void state_cleanup(struct wined3d_state *state) DECLSPEC_HIDDEN;
 HRESULT state_init(struct wined3d_state *state, struct wined3d_fb_state *fb,
-        const struct wined3d_d3d_info *d3d_info) DECLSPEC_HIDDEN;
+        const struct wined3d_d3d_info *d3d_info, DWORD flags) DECLSPEC_HIDDEN;
 void state_init_default(struct wined3d_state *state, const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
 void state_unbind_resources(struct wined3d_state *state) DECLSPEC_HIDDEN;
 
@@ -2465,6 +2468,8 @@ struct wined3d_cs
 {
     const struct wined3d_cs_ops *ops;
     struct wined3d_device *device;
+    struct wined3d_fb_state fb;
+    struct wined3d_state state;
 
     size_t data_size;
     void *data;
@@ -2480,6 +2485,7 @@ void wined3d_cs_emit_draw(struct wined3d_cs *cs, UINT start_idx, UINT index_coun
 void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *swapchain,
         const RECT *src_rect, const RECT *dst_rect, HWND dst_window_override,
         const RGNDATA *dirty_region, DWORD flags) DECLSPEC_HIDDEN;
+void wined3d_cs_emit_set_viewport(struct wined3d_cs *cs, const struct wined3d_viewport *viewport) DECLSPEC_HIDDEN;
 
 /* Direct3D terminology with little modifications. We do not have an issued state
  * because only the driver knows about it, but we have a created state because d3d

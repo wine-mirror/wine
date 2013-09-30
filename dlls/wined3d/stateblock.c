@@ -581,7 +581,8 @@ void state_cleanup(struct wined3d_state *state)
 {
     unsigned int counter;
 
-    state_unbind_resources(state);
+    if (!(state->flags & WINED3D_STATE_NO_REF))
+        state_unbind_resources(state);
 
     for (counter = 0; counter < LIGHTMAP_SIZE; ++counter)
     {
@@ -599,10 +600,11 @@ void state_cleanup(struct wined3d_state *state)
 }
 
 HRESULT state_init(struct wined3d_state *state, struct wined3d_fb_state *fb,
-        const struct wined3d_d3d_info *d3d_info)
+        const struct wined3d_d3d_info *d3d_info, DWORD flags)
 {
     unsigned int i;
 
+    state->flags = flags;
     state->fb = fb;
 
     for (i = 0; i < LIGHTMAP_SIZE; i++)
@@ -1386,7 +1388,7 @@ static HRESULT stateblock_init(struct wined3d_stateblock *stateblock,
     stateblock->ref = 1;
     stateblock->device = device;
 
-    if (FAILED(hr = state_init(&stateblock->state, NULL, d3d_info)))
+    if (FAILED(hr = state_init(&stateblock->state, NULL, d3d_info, 0)))
         return hr;
 
     if (FAILED(hr = stateblock_allocate_shader_constants(stateblock)))

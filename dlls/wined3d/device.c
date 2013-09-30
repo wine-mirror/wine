@@ -1922,7 +1922,7 @@ void CDECL wined3d_device_set_viewport(struct wined3d_device *device, const stru
         return;
     }
 
-    device_invalidate_state(device, STATE_VIEWPORT);
+    wined3d_cs_emit_set_viewport(device->cs, viewport);
 }
 
 void CDECL wined3d_device_get_viewport(const struct wined3d_device *device, struct wined3d_viewport *viewport)
@@ -4015,7 +4015,7 @@ HRESULT CDECL wined3d_device_set_render_target(struct wined3d_device *device,
         state->viewport.height = render_target->resource.height;
         state->viewport.min_z = 0.0f;
         state->viewport.max_z = 1.0f;
-        device_invalidate_state(device, STATE_VIEWPORT);
+        wined3d_cs_emit_set_viewport(device->cs, &state->viewport);
 
         state->scissor_rect.top = 0;
         state->scissor_rect.left = 0;
@@ -4705,7 +4705,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         if (device->d3d_initialized)
             delete_opengl_contexts(device, swapchain);
 
-        if (FAILED(hr = state_init(&device->state, &device->fb, &device->adapter->d3d_info)))
+        if (FAILED(hr = state_init(&device->state, &device->fb, &device->adapter->d3d_info, 0)))
             ERR("Failed to initialize device state, hr %#x.\n", hr);
         state_init_default(&device->state, &device->adapter->gl_info);
         device->update_state = &device->state;
@@ -4722,7 +4722,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         state->viewport.y = 0;
         state->viewport.width = rt->resource.width;
         state->viewport.height = rt->resource.height;
-        device_invalidate_state(device, STATE_VIEWPORT);
+        wined3d_cs_emit_set_viewport(device->cs, &state->viewport);
 
         state->scissor_rect.top = 0;
         state->scissor_rect.left = 0;
@@ -4969,7 +4969,7 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
 
     device->blitter = adapter->blitter;
 
-    if (FAILED(hr = state_init(&device->state, &device->fb, &adapter->d3d_info)))
+    if (FAILED(hr = state_init(&device->state, &device->fb, &adapter->d3d_info, 0)))
     {
         ERR("Failed to initialize device state, hr %#x.\n", hr);
         goto err;
