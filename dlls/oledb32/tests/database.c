@@ -547,6 +547,53 @@ static void test_rowpos_setrowposition(void)
     IRowPosition_Release(rowpos);
 }
 
+static void test_dslocator(void)
+{
+    IDataSourceLocator *dslocator = NULL;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_DataLinks, NULL, CLSCTX_INPROC_SERVER, &IID_IDataSourceLocator,(void**)&dslocator);
+    ok(hr == S_OK, "got %08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        COMPATIBLE_LONG hwnd = 0;
+
+        /* Crashes under Window 7
+        hr = IDataSourceLocator_get_hWnd(dslocator, NULL);
+        ok(hr == E_INVALIDARG, "got %08x\n", hr);
+        */
+
+        hr = IDataSourceLocator_get_hWnd(dslocator, &hwnd);
+        ok(hr == S_OK, "got %08x\n", hr);
+        ok(hwnd == 0, "got %p\n", (HWND)hwnd);
+
+        hwnd = 0xDEADBEEF;
+        hr = IDataSourceLocator_get_hWnd(dslocator, &hwnd);
+        ok(hr == S_OK, "got %08x\n", hr);
+        ok(hwnd == 0, "got %p\n", (HWND)hwnd);
+
+        hwnd = 0xDEADBEEF;
+        hr = IDataSourceLocator_put_hWnd(dslocator, hwnd);
+        ok(hr == S_OK, "got %08x\n", hr);
+
+        hwnd = 0xDEADBEEF;
+        hr = IDataSourceLocator_get_hWnd(dslocator, &hwnd);
+        ok(hr == S_OK, "got %08x\n", hr);
+        ok(hwnd == 0xDEADBEEF, "got %p\n", (HWND)hwnd);
+
+        hwnd = 0;
+        hr = IDataSourceLocator_put_hWnd(dslocator, hwnd);
+        ok(hr == S_OK, "got %08x\n", hr);
+
+        hwnd = 0xDEADBEEF;
+        hr = IDataSourceLocator_get_hWnd(dslocator, &hwnd);
+        ok(hr == S_OK, "got %08x\n", hr);
+        ok(hwnd == 0, "got %p\n", (HWND)hwnd);
+
+        IDataSourceLocator_Release(dslocator);
+    }
+}
+
 START_TEST(database)
 {
     OleInitialize(NULL);
@@ -554,6 +601,7 @@ START_TEST(database)
     test_database();
     test_errorinfo();
     test_initializationstring();
+    test_dslocator();
 
     /* row position */
     test_rowposition();

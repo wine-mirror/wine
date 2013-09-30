@@ -42,6 +42,7 @@ typedef struct DSLocatorImpl
     IDataSourceLocator     IDataSourceLocator_iface;
     LONG ref;
 
+    HWND hwnd;
 } DSLocatorImpl;
 
 static inline DSLocatorImpl *impl_from_IDataSourceLocator( IDataSourceLocator *iface )
@@ -139,18 +140,22 @@ static HRESULT WINAPI dslocator_get_hWnd(IDataSourceLocator *iface, COMPATIBLE_L
 {
     DSLocatorImpl *This = impl_from_IDataSourceLocator(iface);
 
-    FIXME("(%p)->(%p)\n",This, phwndParent);
+    TRACE("(%p)->(%p)\n",This, phwndParent);
 
-    return E_NOTIMPL;
+    *phwndParent = (COMPATIBLE_LONG)This->hwnd;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dslocator_put_hWnd(IDataSourceLocator *iface, COMPATIBLE_LONG hwndParent)
 {
     DSLocatorImpl *This = impl_from_IDataSourceLocator(iface);
 
-    FIXME("(%p)->(%p)\n",This, (HWND)hwndParent);
+    TRACE("(%p)->(%p)\n",This, (HWND)hwndParent);
 
-    return E_NOTIMPL;
+    This->hwnd = (HWND)hwndParent;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dslocator_PromptNew(IDataSourceLocator *iface, IDispatch **ppADOConnection)
@@ -201,6 +206,7 @@ HRESULT create_dslocator(IUnknown *outer, void **obj)
 
     This->IDataSourceLocator_iface.lpVtbl = &DSLocatorVtbl;
     This->ref = 1;
+    This->hwnd = 0;
 
     *obj = &This->IDataSourceLocator_iface;
 
