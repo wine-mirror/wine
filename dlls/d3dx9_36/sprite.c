@@ -32,7 +32,8 @@ struct sprite_vertex
     D3DXVECTOR2 tex;
 };
 
-typedef struct _SPRITE {
+struct sprite
+{
     IDirect3DTexture9 *texture;
     UINT texw, texh;
     RECT rect;
@@ -40,7 +41,7 @@ typedef struct _SPRITE {
     D3DXVECTOR3 pos;
     D3DCOLOR color;
     D3DXMATRIX transform;
-} SPRITE;
+};
 
 struct d3dx9_sprite
 {
@@ -60,7 +61,7 @@ struct d3dx9_sprite
     DWORD maxanisotropy;
     DWORD alphacmp_caps;
 
-    SPRITE *sprites;
+    struct sprite *sprites;
     int sprite_count;      /* number of sprites to be drawn */
     int allocated_sprites; /* number of (pre-)allocated sprites */
 };
@@ -346,12 +347,16 @@ static HRESULT WINAPI d3dx9_sprite_Draw(ID3DXSprite *iface, IDirect3DTexture9 *t
     if(texture==NULL) return D3DERR_INVALIDCALL;
     if(!This->ready) return D3DERR_INVALIDCALL;
 
-    if(This->allocated_sprites==0) {
-        This->sprites=HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 32*sizeof(SPRITE));
-        This->allocated_sprites=32;
-    } else if(This->allocated_sprites<=This->sprite_count) {
-        This->allocated_sprites=This->allocated_sprites*3/2;
-        This->sprites=HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->sprites, This->allocated_sprites*sizeof(SPRITE));
+    if (!This->allocated_sprites)
+    {
+        This->sprites = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 32 * sizeof(*This->sprites));
+        This->allocated_sprites = 32;
+    }
+    else if (This->allocated_sprites <= This->sprite_count)
+    {
+        This->allocated_sprites += This->allocated_sprites / 2;
+        This->sprites = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                This->sprites, This->allocated_sprites * sizeof(*This->sprites));
     }
     This->sprites[This->sprite_count].texture=texture;
     if(!(This->flags & D3DXSPRITE_DO_NOT_ADDREF_TEXTURE))
