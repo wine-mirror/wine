@@ -599,33 +599,6 @@ void state_cleanup(struct wined3d_state *state)
     HeapFree(GetProcessHeap(), 0, state->ps_consts_f);
 }
 
-HRESULT state_init(struct wined3d_state *state, struct wined3d_fb_state *fb,
-        const struct wined3d_d3d_info *d3d_info, DWORD flags)
-{
-    unsigned int i;
-
-    state->flags = flags;
-    state->fb = fb;
-
-    for (i = 0; i < LIGHTMAP_SIZE; i++)
-    {
-        list_init(&state->light_map[i]);
-    }
-
-    if (!(state->vs_consts_f = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            4 * sizeof(float) * d3d_info->limits.vs_uniform_count)))
-        return E_OUTOFMEMORY;
-
-    if (!(state->ps_consts_f = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            4 * sizeof(float) * d3d_info->limits.ps_uniform_count)))
-    {
-        HeapFree(GetProcessHeap(), 0, state->vs_consts_f);
-        return E_OUTOFMEMORY;
-    }
-
-    return WINED3D_OK;
-}
-
 ULONG CDECL wined3d_stateblock_decref(struct wined3d_stateblock *stateblock)
 {
     ULONG refcount = InterlockedDecrement(&stateblock->ref);
@@ -1173,7 +1146,7 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock)
     TRACE("Applied stateblock %p.\n", stateblock);
 }
 
-void state_init_default(struct wined3d_state *state, const struct wined3d_gl_info *gl_info)
+static void state_init_default(struct wined3d_state *state, const struct wined3d_gl_info *gl_info)
 {
     union
     {
@@ -1379,6 +1352,37 @@ void state_init_default(struct wined3d_state *state, const struct wined3d_gl_inf
     }
 }
 
+HRESULT state_init(struct wined3d_state *state, struct wined3d_fb_state *fb,
+        const struct wined3d_gl_info *gl_info, const struct wined3d_d3d_info *d3d_info,
+        DWORD flags)
+{
+    unsigned int i;
+
+    state->flags = flags;
+    state->fb = fb;
+
+    for (i = 0; i < LIGHTMAP_SIZE; i++)
+    {
+        list_init(&state->light_map[i]);
+    }
+
+    if (!(state->vs_consts_f = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+            4 * sizeof(float) * d3d_info->limits.vs_uniform_count)))
+        return E_OUTOFMEMORY;
+
+    if (!(state->ps_consts_f = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+            4 * sizeof(float) * d3d_info->limits.ps_uniform_count)))
+    {
+        HeapFree(GetProcessHeap(), 0, state->vs_consts_f);
+        return E_OUTOFMEMORY;
+    }
+
+    if (flags & WINED3D_STATE_INIT_DEFAULT)
+        state_init_default(state, gl_info);
+
+    return WINED3D_OK;
+}
+
 static HRESULT stateblock_init(struct wined3d_stateblock *stateblock,
         struct wined3d_device *device, enum wined3d_stateblock_type type)
 {
@@ -1388,7 +1392,7 @@ static HRESULT stateblock_init(struct wined3d_stateblock *stateblock,
     stateblock->ref = 1;
     stateblock->device = device;
 
-    if (FAILED(hr = state_init(&stateblock->state, NULL, d3d_info, 0)))
+    if (FAILED(hr = state_init(&stateblock->state, NULL, &device->adapter->gl_info, d3d_info, 0)))
         return hr;
 
     if (FAILED(hr = stateblock_allocate_shader_constants(stateblock)))

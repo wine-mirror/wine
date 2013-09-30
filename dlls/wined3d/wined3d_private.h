@@ -1805,6 +1805,7 @@ struct wined3d_stream_state
 };
 
 #define WINED3D_STATE_NO_REF        0x00000001
+#define WINED3D_STATE_INIT_DEFAULT  0x00000002
 
 struct wined3d_state
 {
@@ -2454,8 +2455,8 @@ void stateblock_init_contained_states(struct wined3d_stateblock *stateblock) DEC
 
 void state_cleanup(struct wined3d_state *state) DECLSPEC_HIDDEN;
 HRESULT state_init(struct wined3d_state *state, struct wined3d_fb_state *fb,
-        const struct wined3d_d3d_info *d3d_info, DWORD flags) DECLSPEC_HIDDEN;
-void state_init_default(struct wined3d_state *state, const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
+        const struct wined3d_gl_info *gl_info, const struct wined3d_d3d_info *d3d_info,
+        DWORD flags) DECLSPEC_HIDDEN;
 void state_unbind_resources(struct wined3d_state *state) DECLSPEC_HIDDEN;
 
 struct wined3d_cs_ops

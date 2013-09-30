@@ -224,13 +224,13 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device)
         return NULL;
     }
 
-    if (FAILED(state_init(&cs->state, &cs->fb, &device->adapter->d3d_info, WINED3D_STATE_NO_REF)))
+    if (FAILED(state_init(&cs->state, &cs->fb, gl_info, &device->adapter->d3d_info,
+            WINED3D_STATE_NO_REF | WINED3D_STATE_INIT_DEFAULT)))
     {
         HeapFree(GetProcessHeap(), 0, cs->fb.render_targets);
         HeapFree(GetProcessHeap(), 0, cs);
         return NULL;
     }
-    state_init_default(&cs->state, gl_info);
 
     cs->ops = &wined3d_cs_st_ops;
     cs->device = device;
