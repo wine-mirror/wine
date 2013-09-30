@@ -780,6 +780,9 @@ static UINT WINECON_ParseOptions(const char* lpCmdLine, struct wc_init* wci)
             else
                 return IDS_CMD_INVALID_BACKEND;
         }
+        else if (!strncmp(wci->ptr, "--help", 6) &&
+                 (!wci->ptr[6] || wci->ptr[6] == ' ' || wci->ptr[6] == '\t'))
+            return IDS_CMD_ABOUT|WINECON_CMD_SHOW_USAGE;
         else
             return IDS_CMD_INVALID_OPTION|WINECON_CMD_SHOW_USAGE;
     }
@@ -788,8 +791,7 @@ static UINT WINECON_ParseOptions(const char* lpCmdLine, struct wc_init* wci)
         return 0;
 
     while (*wci->ptr == ' ' || *wci->ptr == '\t') wci->ptr++;
-    if (*wci->ptr == 0)
-        return IDS_CMD_ABOUT|WINECON_CMD_SHOW_USAGE;
+    if (*wci->ptr == 0) wci->ptr = "cmd";
 
     return 0;
 }
