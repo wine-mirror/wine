@@ -343,7 +343,7 @@ static inline saxlocator *impl_from_ISAXAttributes( ISAXAttributes *iface )
     return CONTAINING_RECORD(iface, saxlocator, ISAXAttributes_iface);
 }
 
-static inline int saxreader_has_handler(const saxlocator *locator, enum saxhandler_type type)
+static inline BOOL saxreader_has_handler(const saxlocator *locator, enum saxhandler_type type)
 {
     struct saxanyhandler_iface *iface = &locator->saxreader->saxhandlers[type].u.anyhandler;
     return (locator->vbInterface && iface->vbhandler) || (!locator->vbInterface && iface->handler);
