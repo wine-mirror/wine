@@ -48,11 +48,11 @@ static const char *dbgstr_event(int type)
         "STATUS_ITEM_MOUSE_BUTTON",
         "STATUS_ITEM_MOUSE_MOVE",
         "WINDOW_CLOSE_REQUESTED",
-        "WINDOW_DID_MINIMIZE",
         "WINDOW_DID_UNMINIMIZE",
         "WINDOW_FRAME_CHANGED",
         "WINDOW_GOT_FOCUS",
         "WINDOW_LOST_FOCUS",
+        "WINDOW_MINIMIZE_REQUESTED",
     };
 
     if (0 <= type && type < NUM_EVENT_TYPES) return event_names[type];
@@ -97,7 +97,6 @@ static macdrv_event_mask get_event_mask(DWORD mask)
         event_mask |= event_mask_for_type(STATUS_ITEM_MOUSE_BUTTON);
         event_mask |= event_mask_for_type(STATUS_ITEM_MOUSE_MOVE);
         event_mask |= event_mask_for_type(WINDOW_CLOSE_REQUESTED);
-        event_mask |= event_mask_for_type(WINDOW_DID_MINIMIZE);
         event_mask |= event_mask_for_type(WINDOW_DID_UNMINIMIZE);
         event_mask |= event_mask_for_type(WINDOW_FRAME_CHANGED);
         event_mask |= event_mask_for_type(WINDOW_GOT_FOCUS);
@@ -108,6 +107,7 @@ static macdrv_event_mask get_event_mask(DWORD mask)
     {
         event_mask |= event_mask_for_type(QUERY_EVENT);
         event_mask |= event_mask_for_type(RELEASE_CAPTURE);
+        event_mask |= event_mask_for_type(WINDOW_MINIMIZE_REQUESTED);
     }
 
     return event_mask;
@@ -226,9 +226,6 @@ void macdrv_handle_event(const macdrv_event *event)
     case WINDOW_CLOSE_REQUESTED:
         macdrv_window_close_requested(hwnd);
         break;
-    case WINDOW_DID_MINIMIZE:
-        macdrv_window_did_minimize(hwnd);
-        break;
     case WINDOW_DID_UNMINIMIZE:
         macdrv_window_did_unminimize(hwnd);
         break;
@@ -240,6 +237,9 @@ void macdrv_handle_event(const macdrv_event *event)
         break;
     case WINDOW_LOST_FOCUS:
         macdrv_window_lost_focus(hwnd, event);
+        break;
+    case WINDOW_MINIMIZE_REQUESTED:
+        macdrv_window_minimize_requested(hwnd);
         break;
     default:
         TRACE("    ignoring\n");
