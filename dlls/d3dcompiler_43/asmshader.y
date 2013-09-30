@@ -92,7 +92,7 @@ int asmshader_lex(void);
         DWORD           mod;
         DWORD           shift;
     } modshift;
-    BWRITER_COMPARISON_TYPE comptype;
+    enum bwriter_comparison_type comptype;
     struct {
         DWORD           dclusage;
         unsigned int    regnum;

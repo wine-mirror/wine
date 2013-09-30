@@ -54,7 +54,8 @@ enum shader_type
     ST_PIXEL
 };
 
-typedef enum BWRITER_COMPARISON_TYPE {
+enum bwriter_comparison_type
+{
     BWRITER_COMPARISON_NONE,
     BWRITER_COMPARISON_GT,
     BWRITER_COMPARISON_EQ,
@@ -62,7 +63,7 @@ typedef enum BWRITER_COMPARISON_TYPE {
     BWRITER_COMPARISON_LT,
     BWRITER_COMPARISON_NE,
     BWRITER_COMPARISON_LE
-} BWRITER_COMPARISON_TYPE;
+};
 
 struct constant {
     DWORD                   regnum;
@@ -89,7 +90,7 @@ struct instruction {
     DWORD                   opcode;
     DWORD                   dstmod;
     DWORD                   shift;
-    BWRITER_COMPARISON_TYPE comptype;
+    enum bwriter_comparison_type comptype;
     BOOL                    has_dst;
     struct shader_reg       dst;
     struct shader_reg       *src;
@@ -215,9 +216,9 @@ struct asmparser_backend {
 
     void (*end)(struct asm_parser *This);
 
-    void (*instr)(struct asm_parser *This, DWORD opcode, DWORD mod, DWORD shift,
-                  BWRITER_COMPARISON_TYPE comp, const struct shader_reg *dst,
-                  const struct src_regs *srcs, int expectednsrcs);
+    void (*instr)(struct asm_parser *parser, DWORD opcode, DWORD mod, DWORD shift,
+            enum bwriter_comparison_type comp, const struct shader_reg *dst,
+            const struct src_regs *srcs, int expectednsrcs);
 };
 
 struct instruction *alloc_instr(unsigned int srcs) DECLSPEC_HIDDEN;
