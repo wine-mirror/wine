@@ -569,7 +569,8 @@ static HRESULT WINAPI MMDevice_Activate(IMMDevice *iface, REFIID riid, DWORD cls
             {
                 /* ::Load cannot assume the interface stays alive after the function returns,
                  * so just create the interface on the stack, saves a lot of complicated code */
-                IPropertyBagImpl bag = { { &PB_Vtbl }, This->devguid };
+                IPropertyBagImpl bag = { { &PB_Vtbl } };
+                bag.devguid = This->devguid;
                 hr = IPersistPropertyBag_Load(ppb, &bag.IPropertyBag_iface, NULL);
                 IPersistPropertyBag_Release(ppb);
                 if (FAILED(hr))

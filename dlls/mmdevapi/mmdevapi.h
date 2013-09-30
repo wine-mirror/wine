@@ -41,18 +41,18 @@ typedef struct _DriverFuncs {
      * If multiple drivers think they are valid, they will return a
      * priority value reflecting the likelihood that they are actually
      * valid. See enum _DriverPriority. */
-    int WINAPI (*pGetPriority)(void);
+    int (WINAPI *pGetPriority)(void);
 
     /* ids gets an array of human-friendly endpoint names
      * keys gets an array of driver-specific stuff that is used
      *   in GetAudioEndpoint to identify the endpoint
      * it is the caller's responsibility to free both arrays, and
      *   all of the elements in both arrays with HeapFree() */
-    HRESULT WINAPI (*pGetEndpointIDs)(EDataFlow flow, WCHAR ***ids,
+    HRESULT (WINAPI *pGetEndpointIDs)(EDataFlow flow, WCHAR ***ids,
             GUID **guids, UINT *num, UINT *default_index);
-    HRESULT WINAPI (*pGetAudioEndpoint)(void *key, IMMDevice *dev,
+    HRESULT (WINAPI *pGetAudioEndpoint)(void *key, IMMDevice *dev,
             IAudioClient **out);
-    HRESULT WINAPI (*pGetAudioSessionManager)(IMMDevice *device,
+    HRESULT (WINAPI *pGetAudioSessionManager)(IMMDevice *device,
             IAudioSessionManager2 **out);
 } DriverFuncs;
 
