@@ -578,7 +578,8 @@ static void test_layout(void)
     check_sizes();
 
     /* an image will increase the band height */
-    himl = ImageList_LoadImage(LoadLibrary("comctl32"), MAKEINTRESOURCE(121), 24, 2, CLR_NONE, IMAGE_BITMAP, LR_DEFAULTCOLOR);
+    himl = ImageList_LoadImageA(GetModuleHandleA("comctl32"), MAKEINTRESOURCEA(121), 24, 2,
+            CLR_NONE, IMAGE_BITMAP, LR_DEFAULTCOLOR);
     ri.cbSize = sizeof(ri);
     ri.fMask = RBIM_IMAGELIST;
     ri.himl = himl;
