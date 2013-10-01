@@ -465,6 +465,7 @@ static void test_ImmThreads(void)
     BOOL rc;
     LOGFONT lf;
     COMPOSITIONFORM cf;
+    CANDIDATEFORM cdf;
     DWORD status, sentence;
     POINT pt;
 
@@ -551,6 +552,23 @@ static void test_ImmThreads(void)
     todo_wine ok(rc == 0, "ImmSetStatusWindowPos should fail\n");
     rc = ImmGetStatusWindowPos(otherHimc, &pt);
     ok(rc != 0 || broken(rc == 0), "ImmGetStatusWindowPos failed\n");
+
+    /* Candidate Window */
+    rc = ImmGetCandidateWindow(himc, 0, &cdf);
+    ok (rc == 0, "ImmGetCandidateWindow should fail\n");
+    cdf.dwIndex = 0;
+    cdf.dwStyle = CFS_CANDIDATEPOS;
+    cdf.ptCurrentPos.x = 0;
+    cdf.ptCurrentPos.y = 0;
+    rc = ImmSetCandidateWindow(himc, &cdf);
+    ok (rc == 1, "ImmSetCandidateWindow should succeed\n");
+    rc = ImmGetCandidateWindow(himc, 0, &cdf);
+    ok (rc == 1, "ImmGetCandidateWindow should succeed\n");
+
+    rc = ImmGetCandidateWindow(otherHimc, 0, &cdf);
+    todo_wine ok (rc == 0, "ImmGetCandidateWindow should fail\n");
+    rc = ImmSetCandidateWindow(otherHimc, &cdf);
+    todo_wine ok (rc == 0, "ImmSetCandidateWindow should fail\n");
 
     ImmReleaseContext(threadinfo.hwnd,otherHimc);
     ImmReleaseContext(hwnd,himc);
