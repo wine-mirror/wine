@@ -8544,17 +8544,12 @@ msgstr ""
 "terminarem de ser transmitidos e tente novamente."
 
 #: winmm.rc:52 winmm.rc:125
-#, fuzzy
-#| msgid ""
-#| "The current MIDI Mapper setup refers to a MIDI device that is not "
-#| "installed on the system. Use MIDI Mapper to edit the setup."
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
 "on the system."
 msgstr ""
 "A configuração atual do Mapeador MIDI refere-se a um dispositivo MIDI que "
-"não está instalado no sistema. Use o Mapeador MIDI para editar a "
-"configuração."
+"não está instalado no sistema."
 
 #: winmm.rc:53
 msgid ""
@@ -9401,21 +9396,16 @@ msgstr ""
 "procedimento chamado são herdados pelo chamador.\n"
 
 #: cmd.rc:40
-#, fuzzy
-#| msgid ""
-#| "CD <dir> is the short version of CHDIR. It changes the current\n"
-#| "default directory.\n"
 msgid ""
 "CD <directory> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
 msgstr ""
-"CD <dir> é a abreviação de CHDIR. Ele altera o diretório padrão atual.\n"
+"CD <diretório> é a abreviação de CHDIR. Ele altera o diretório padrão "
+"atual.\n"
 
 #: cmd.rc:41
-#, fuzzy
-#| msgid "CHDIR <dir> changes the current default directory.\n"
 msgid "CHDIR <directory> changes the current default directory.\n"
-msgstr "CHDIR <dir> altera o diretório padrão atual.\n"
+msgstr "CHDIR <diretório> altera o diretório padrão atual.\n"
 
 #: cmd.rc:43
 msgid "CLS clears the console screen.\n"
@@ -9467,11 +9457,6 @@ msgid "ERASE <filename> deletes a file or set of files.\n"
 msgstr "ERASE <nomedearquivo> exclui um arquivo ou conjunto de arquivos.\n"
 
 #: cmd.rc:68
-#, fuzzy
-#| msgid ""
-#| "The FOR command is used to execute a command for each of a set of files.\n"
-#| "\n"
-#| "Syntax: FOR %variable IN (set) DO command\n"
 msgid ""
 "The FOR command is used to execute a command for each of a set of files.\n"
 "\n"
@@ -9479,10 +9464,13 @@ msgid ""
 "\n"
 "The % sign must be doubled when using FOR in a batch file.\n"
 msgstr ""
-"O comando FOR é usado para executar um comando a cada vez em\n"
-"um conjunto de arquivos.\n"
+"O comando FOR é usado para executar um comando em cada arquivo de um "
+"conjunto\n"
+"de arquivos.\n"
 "\n"
 "Sintaxe: FOR %variável IN (conjunto) DO comando\n"
+"\n"
+"O sinal de % deve ser duplicado quando se usa o FOR em um arquivo de lotes.\n"
 
 #: cmd.rc:80
 msgid ""
@@ -9674,16 +9662,12 @@ msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <nomedearquivo> renomeia um arquivo.\n"
 
 #: cmd.rc:158
-#, fuzzy
-#| msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
 msgid "RD <directory> is the short version of RMDIR. It deletes a directory.\n"
-msgstr "RD <dir> é a abreviação de RMDIR. Ela exclui um subdiretório.\n"
+msgstr "RD <diretório> é a abreviação de RMDIR. Ela exclui um diretório.\n"
 
 #: cmd.rc:159
-#, fuzzy
-#| msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgid "RMDIR <directory> deletes a directory.\n"
-msgstr "RMDIR <dir> exclui um subdiretório.\n"
+msgstr "RMDIR <diretório> exclui um diretório.\n"
 
 #: cmd.rc:203
 msgid ""
@@ -9856,15 +9840,11 @@ msgstr ""
 "anteriores são restauradas.\n"
 
 #: cmd.rc:245
-#, fuzzy
-#| msgid ""
-#| "PUSHD <directoryname> saves the current directory onto a\n"
-#| "stack, and then changes the current directory to the supplied one.\n"
 msgid ""
 "PUSHD <directory> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
 msgstr ""
-"PUSHD <nomedediretório> salva o diretório atual numa pilha e então altera o\n"
+"PUSHD <diretório> salva o diretório atual em uma pilha e então altera o\n"
 "diretório atual para o que foi fornecido.\n"
 
 #: cmd.rc:247
