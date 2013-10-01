@@ -459,7 +459,8 @@ enum bwritershader_instruction_opcode_type
     BWRITERSIO_END,
 };
 
-typedef enum _BWRITERSHADER_PARAM_REGISTER_TYPE {
+enum bwritershader_param_register_type
+{
     BWRITERSPR_TEMP,
     BWRITERSPR_INPUT,
     BWRITERSPR_CONST,
@@ -478,7 +479,7 @@ typedef enum _BWRITERSHADER_PARAM_REGISTER_TYPE {
     BWRITERSPR_MISCTYPE,
     BWRITERSPR_LABEL,
     BWRITERSPR_PREDICATE
-} BWRITERSHADER_PARAM_REGISTER_TYPE;
+};
 
 typedef enum _BWRITERVS_RASTOUT_OFFSETS
 {
