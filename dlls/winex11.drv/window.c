@@ -472,7 +472,8 @@ static unsigned long *get_bitmap_argb( HDC hdc, HBITMAP color, HBITMAP mask, uns
     BITMAP bm;
     unsigned int *ptr, *bits = NULL;
     unsigned char *mask_bits = NULL;
-    int i, j, has_alpha = 0;
+    int i, j;
+    BOOL has_alpha = FALSE;
 
     if (!GetObjectW( color, sizeof(bm), &bm )) return NULL;
     info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);

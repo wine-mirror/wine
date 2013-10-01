@@ -623,7 +623,8 @@ static XcursorImage *create_xcursor_frame( HDC hdc, const ICONINFOEXW *iinfo, HA
 {
     XcursorImage *image, *ret = NULL;
     DWORD delay_jiffies, num_steps;
-    int x, y, i, has_alpha = FALSE;
+    int x, y, i;
+    BOOL has_alpha = FALSE;
     XcursorPixel *ptr;
 
     image = pXcursorImageCreate( width, height );
@@ -1137,7 +1138,8 @@ static Cursor create_xlib_color_cursor( HDC hdc, const ICONINFOEXW *icon, int wi
     struct gdi_image_bits bits;
     unsigned int *color_bits = NULL, *ptr;
     unsigned char *mask_bits = NULL, *xor_bits = NULL;
-    int i, x, y, has_alpha = 0;
+    int i, x, y;
+    BOOL has_alpha = FALSE;
     int rfg, gfg, bfg, rbg, gbg, bbg, fgBits, bgBits;
     unsigned int width_bytes = (width + 31) / 32 * 4;
 
