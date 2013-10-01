@@ -694,13 +694,14 @@ static struct cached_glyph *cache_glyph_bitmap( HDC hdc, struct cached_font *fon
         if (ret != GDI_ERROR) break;
     }
     if (ret == GDI_ERROR) return NULL;
+    if (!ret) metrics.gmBlackBoxX = metrics.gmBlackBoxY = 0; /* empty glyph */
 
     bit_count = get_glyph_depth( font->aa_flags );
     stride = get_dib_stride( metrics.gmBlackBoxX, bit_count );
     size = metrics.gmBlackBoxY * stride;
     glyph = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET( struct cached_glyph, bits[size] ));
     if (!glyph) return NULL;
-    if (!ret) goto done;  /* zero-size glyph */
+    if (!size) goto done;  /* empty glyph */
 
     if (bit_count == 8) pad = padding[ metrics.gmBlackBoxX % 4 ];
 
