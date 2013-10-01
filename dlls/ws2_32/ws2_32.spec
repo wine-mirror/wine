@@ -97,6 +97,7 @@
 @ stdcall WSAResetEvent(long) kernel32.ResetEvent
 @ stdcall WSASend(long ptr long ptr long ptr ptr)
 @ stdcall WSASendDisconnect(long ptr)
+@ stdcall WSASendMsg(long ptr long ptr ptr ptr)
 @ stdcall WSASendTo(long ptr long ptr long ptr long ptr ptr)
 @ stdcall WSASetEvent(long) kernel32.SetEvent
 @ stdcall WSASetServiceA(ptr long long)
