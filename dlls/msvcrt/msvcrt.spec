@@ -646,7 +646,7 @@
 # stub _iswupper_l(long ptr)
 # stub _iswxdigit_l(long ptr)
 @ cdecl _isxdigit_l(long ptr) MSVCRT__isxdigit_l
-@ cdecl _itoa(long ptr long) ntdll._itoa
+@ cdecl _itoa(long ptr long)
 @ cdecl _itoa_s(long ptr long long)
 @ cdecl _itow(long ptr long) ntdll._itow
 @ cdecl _itow_s(long ptr long long)

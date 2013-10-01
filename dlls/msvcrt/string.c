@@ -1139,6 +1139,14 @@ int CDECL _itoa_s(int value, char *str, MSVCRT_size_t size, int radix)
 }
 
 /*********************************************************************
+ *  _itoa (MSVCRT.@)
+ */
+char* CDECL _itoa(int value, char *str, int radix)
+{
+    return _itoa_s(value, str, MSVCRT_SIZE_MAX, radix) ? NULL : str;
+}
+
+/*********************************************************************
  *  _itow_s (MSVCRT.@)
  */
 int CDECL _itow_s(int value, MSVCRT_wchar_t *str, MSVCRT_size_t size, int radix)
