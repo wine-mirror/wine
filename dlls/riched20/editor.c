@@ -286,6 +286,9 @@ static LRESULT ME_StreamInText(ME_TextEditor *editor, DWORD dwFormat, ME_InStrea
   WCHAR *pText;
   LRESULT total_bytes_read = 0;
   BOOL is_read = FALSE;
+  DWORD cp = CP_ACP, copy = 0;
+  char conv_buf[4 + STREAMIN_BUFFER_SIZE]; /* up to 4 additional UTF-8 bytes */
+
   static const char bom_utf8[] = {0xEF, 0xBB, 0xBF};
 
   TRACE("%08x %p\n", dwFormat, stream);
@@ -307,8 +310,7 @@ static LRESULT ME_StreamInText(ME_TextEditor *editor, DWORD dwFormat, ME_InStrea
     if (!(dwFormat & SF_UNICODE))
     {
       char * buf = stream->buffer;
-      DWORD size = stream->dwSize;
-      DWORD cp = CP_ACP;
+      DWORD size = stream->dwSize, end;
 
       if (!is_read)
       {
@@ -321,8 +323,56 @@ static LRESULT ME_StreamInText(ME_TextEditor *editor, DWORD dwFormat, ME_InStrea
         }
       }
 
-      nWideChars = MultiByteToWideChar(cp, 0, buf, size, wszText, STREAMIN_BUFFER_SIZE);
+      if (cp == CP_UTF8)
+      {
+        if (copy)
+        {
+          memcpy(conv_buf + copy, buf, size);
+          buf = conv_buf;
+          size += copy;
+        }
+        end = size;
+        while ((buf[end-1] & 0xC0) == 0x80)
+        {
+          --end;
+          --total_bytes_read; /* strange, but seems to match windows */
+        }
+        if (buf[end-1] & 0x80)
+        {
+          DWORD need = 0;
+          if ((buf[end-1] & 0xE0) == 0xC0)
+            need = 1;
+          if ((buf[end-1] & 0xF0) == 0xE0)
+            need = 2;
+          if ((buf[end-1] & 0xF8) == 0xF0)
+            need = 3;
+
+          if (size - end >= need)
+          {
+            /* we have enough bytes for this sequence */
+            end = size;
+          }
+          else
+          {
+            /* need more bytes, so don't transcode this sequence */
+            --end;
+          }
+        }
+      }
+      else
+        end = size;
+
+      nWideChars = MultiByteToWideChar(cp, 0, buf, end, wszText, STREAMIN_BUFFER_SIZE);
       pText = wszText;
+
+      if (cp == CP_UTF8)
+      {
+        if (end != size)
+        {
+          memcpy(conv_buf, buf + end, size - end);
+          copy = size - end;
+        }
+      }
     }
     else
     {
