@@ -152,7 +152,7 @@ static HBITMAP create_dib(int width, int height, int bpp, LOGPALETTE *pal, const
     hdib = CreateDIBSection(0, bmi, DIB_RGB_COLORS, &bits, NULL, 0);
     ok(hdib != 0, "CreateDIBSection(%dx%d,%d bpp) failed\n", width, height, bpp);
 
-    GetObject(hdib, sizeof(bm), &bm);
+    GetObjectW(hdib, sizeof(bm), &bm);
     ok(bm.bmWidth == width, "expected %d, got %d\n", width, bm.bmWidth);
     ok(bm.bmHeight == height, "expected %d, got %d\n", height, bm.bmHeight);
     ok(bm.bmPlanes == 1, "expected 1, got %d\n", bm.bmPlanes);
