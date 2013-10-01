@@ -878,7 +878,6 @@ int macdrv_err_on;
         }
 
         self.applicationIcon = nsimage;
-        [NSApp setApplicationIconImage:nsimage];
     }
 
     - (void) handleCommandTab
