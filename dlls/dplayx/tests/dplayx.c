@@ -667,7 +667,7 @@ static void init_TCPIP_provider( IDirectPlay4 *pDP, LPCSTR strIPAddressString, W
 
     /* IP address string */
     addressElements[1].guidDataType = DPAID_INet;
-    addressElements[1].dwDataSize   = lstrlen(strIPAddressString) + 1;
+    addressElements[1].dwDataSize   = lstrlenA(strIPAddressString) + 1;
     addressElements[1].lpData       = (LPVOID) strIPAddressString;
 
     /* Optional Port number */

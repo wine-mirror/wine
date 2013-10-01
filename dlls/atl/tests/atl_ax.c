@@ -51,12 +51,12 @@ static ATOM register_class(void)
     WNDCLASSA wndclassA;
 
     wndclassA.style = 0;
-    wndclassA.lpfnWndProc = DefWindowProc;
+    wndclassA.lpfnWndProc = DefWindowProcA;
     wndclassA.cbClsExtra = 0;
     wndclassA.cbWndExtra = 0;
     wndclassA.hInstance = GetModuleHandleA(NULL);
     wndclassA.hIcon = NULL;
-    wndclassA.hCursor = LoadCursorA(NULL, IDC_ARROW);
+    wndclassA.hCursor = LoadCursorA(NULL, (LPSTR)IDC_ARROW);
     wndclassA.hbrBackground = (HBRUSH)(COLOR_BTNFACE+1);
     wndclassA.lpszMenuName = NULL;
     wndclassA.lpszClassName = "WineAtlTestClass";

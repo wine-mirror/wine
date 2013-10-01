@@ -366,7 +366,7 @@ static void run_test(const char *file_name)
     CHECK_CALLED(reportSuccess);
 }
 
-static BOOL WINAPI test_enum_proc(HMODULE module, LPCTSTR type, LPSTR name, LONG_PTR param)
+static BOOL WINAPI test_enum_proc(HMODULE module, LPCSTR type, LPSTR name, LONG_PTR param)
 {
     const char *script_data, *ext;
     DWORD script_size, size;
@@ -418,7 +418,7 @@ static BOOL init_key(const char *key_name, const char *def_value, BOOL init)
     DWORD res;
 
     if(!init) {
-        RegDeleteKey(HKEY_CLASSES_ROOT, key_name);
+        RegDeleteKeyA(HKEY_CLASSES_ROOT, key_name);
         return TRUE;
     }
 
