@@ -1923,3 +1923,11 @@ __int64 CDECL _wtoi64(const MSVCRT_wchar_t *str)
 {
     return _wtoi64_l(str, NULL);
 }
+
+/*********************************************************************
+ *           wcsncmp    (MSVCRT.@)
+ */
+int CDECL MSVCRT_wcsncmp(const MSVCRT_wchar_t *str1, const MSVCRT_wchar_t *str2, int n)
+{
+    return strncmpW(str1, str2, n);
+}
