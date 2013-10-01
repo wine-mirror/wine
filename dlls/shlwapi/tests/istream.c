@@ -683,7 +683,7 @@ START_TEST(istream)
 
     int i, j, k;
 
-    hShlwapi = LoadLibrary("shlwapi.dll");
+    hShlwapi = LoadLibraryA("shlwapi.dll");
 
     pSHCreateStreamOnFileA = (void*)GetProcAddress(hShlwapi, "SHCreateStreamOnFileA");
     pSHCreateStreamOnFileW = (void*)GetProcAddress(hShlwapi, "SHCreateStreamOnFileW");

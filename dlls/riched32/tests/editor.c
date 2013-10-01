@@ -1208,7 +1208,7 @@ START_TEST( editor )
 
   /* Must explicitly LoadLibrary(). The test has no references to functions in
    * RICHED32.DLL, so the linker doesn't actually link to it. */
-  hmoduleRichEdit = LoadLibrary("RICHED32.DLL");
+  hmoduleRichEdit = LoadLibraryA("riched32.dll");
   ok(hmoduleRichEdit != NULL, "error: %d\n", (int) GetLastError());
 
   test_WM_SETTEXT();

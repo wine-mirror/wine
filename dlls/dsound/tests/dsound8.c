@@ -1176,7 +1176,7 @@ START_TEST(dsound8)
 
     CoInitialize(NULL);
 
-    hDsound = LoadLibrary("dsound.dll");
+    hDsound = LoadLibraryA("dsound.dll");
     if (hDsound)
     {
 

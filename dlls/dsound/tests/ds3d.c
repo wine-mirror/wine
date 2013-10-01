@@ -1323,7 +1323,7 @@ START_TEST(ds3d)
 
     CoInitialize(NULL);
 
-    hDsound = LoadLibrary("dsound.dll");
+    hDsound = LoadLibraryA("dsound.dll");
     if (hDsound)
     {
 

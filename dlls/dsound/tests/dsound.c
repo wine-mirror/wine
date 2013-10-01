@@ -1646,7 +1646,7 @@ START_TEST(dsound)
 
     CoInitialize(NULL);
 
-    hDsound = LoadLibrary("dsound.dll");
+    hDsound = LoadLibraryA("dsound.dll");
     if (hDsound)
     {
         BOOL ret;
@@ -1655,7 +1655,7 @@ START_TEST(dsound)
         ok( ret, "FreeLibrary(1) returned %d\n", GetLastError());
     }
 
-    hDsound = LoadLibrary("dsound.dll");
+    hDsound = LoadLibraryA("dsound.dll");
     if (hDsound)
     {
 

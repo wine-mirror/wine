@@ -495,7 +495,7 @@ static void test_AdvInstallFile(void)
     HMODULE hmod;
     char destFolder[MAX_PATH];
 
-    hmod = LoadLibrary("setupapi.dll");
+    hmod = LoadLibraryA("setupapi.dll");
     if (!hmod)
     {
         skip("setupapi.dll not present\n");

@@ -1217,7 +1217,7 @@ static void test_shell_imagelist(void)
     int cx, cy;
 
     /* Try to load function from shell32 */
-    hShell32 = LoadLibrary("shell32.dll");
+    hShell32 = LoadLibraryA("shell32.dll");
     pSHGetImageList = (void*)GetProcAddress(hShell32, (LPCSTR) 727);
 
     if (!pSHGetImageList)

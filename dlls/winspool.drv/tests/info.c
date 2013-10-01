@@ -2761,7 +2761,7 @@ static void test_DeviceCapabilities(void)
     INT n_papers, n_paper_size, n_paper_names, n_copies, ret;
     DWORD fields;
 
-    hComdlg32 = LoadLibrary("comdlg32.dll");
+    hComdlg32 = LoadLibraryA("comdlg32.dll");
     assert(hComdlg32);
     pPrintDlgA = (void *)GetProcAddress(hComdlg32, "PrintDlgA");
     assert(pPrintDlgA);
@@ -2993,7 +2993,7 @@ todo_wine
 
 START_TEST(info)
 {
-    hwinspool = LoadLibrary("winspool.drv");
+    hwinspool = LoadLibraryA("winspool.drv");
     pAddPortExA = (void *) GetProcAddress(hwinspool, "AddPortExA");
     pEnumPrinterDriversW = (void *) GetProcAddress(hwinspool, "EnumPrinterDriversW");
     pGetDefaultPrinterA = (void *) GetProcAddress(hwinspool, "GetDefaultPrinterA");

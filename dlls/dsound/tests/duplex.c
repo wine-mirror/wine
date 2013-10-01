@@ -340,7 +340,7 @@ START_TEST(duplex)
 
     CoInitialize(NULL);
 
-    hDsound = LoadLibrary("dsound.dll");
+    hDsound = LoadLibraryA("dsound.dll");
     if (hDsound)
     {
 

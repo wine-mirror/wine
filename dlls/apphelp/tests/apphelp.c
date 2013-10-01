@@ -105,7 +105,7 @@ static void test_ApphelpCheckShellObject(void)
 START_TEST(apphelp)
 {
 
-    hdll = LoadLibrary("apphelp.dll");
+    hdll = LoadLibraryA("apphelp.dll");
     if (!hdll) {
         win_skip("apphelp.dll not available\n");
         return;

@@ -63,7 +63,7 @@ static struct IUnknownVtbl aggregator_vtbl =
 
 static BOOL init_function_pointers(void)
 {
-    sti_dll = LoadLibrary("sti.dll");
+    sti_dll = LoadLibraryA("sti.dll");
     if (sti_dll)
     {
         pStiCreateInstance = (void*)

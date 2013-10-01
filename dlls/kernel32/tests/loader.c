@@ -375,7 +375,7 @@ static void test_Loader(void)
         CloseHandle(hfile);
 
         SetLastError(0xdeadbeef);
-        hlib = LoadLibrary(dll_name);
+        hlib = LoadLibraryA(dll_name);
         if (hlib)
         {
             MEMORY_BASIC_INFORMATION info;
@@ -701,7 +701,7 @@ static void test_image_mapping(const char *dll_name, DWORD scn_page_access, BOOL
     UnmapViewOfFile(addr2);
 
     SetLastError(0xdeadbeef);
-    addr2 = LoadLibrary(dll_name);
+    addr2 = LoadLibraryA(dll_name);
     if (is_dll)
     {
         ok(!addr2, "LoadLibrary should fail, is_dll %d\n", is_dll);
@@ -983,7 +983,7 @@ static void test_section_access(void)
         CloseHandle(hfile);
 
         SetLastError(0xdeadbeef);
-        hlib = LoadLibrary(dll_name);
+        hlib = LoadLibraryA(dll_name);
         ok(hlib != 0, "LoadLibrary error %d\n", GetLastError());
 
         SetLastError(0xdeadbeef);
@@ -1364,7 +1364,7 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
         handle = GetModuleHandle("winver.exe");
         ok(!handle, "winver.exe shouldn't be loaded yet\n");
         SetLastError(0xdeadbeef);
-        handle = LoadLibrary("winver.exe");
+        handle = LoadLibraryA("winver.exe");
         ok(handle != 0, "LoadLibrary error %d\n", GetLastError());
         SetLastError(0xdeadbeef);
         ret = FreeLibrary(handle);
@@ -1491,7 +1491,7 @@ static void child_process(const char *dll_name, DWORD target_offset)
     CloseHandle(file);
 
     SetLastError(0xdeadbeef);
-    hmod = LoadLibrary(dll_name);
+    hmod = LoadLibraryA(dll_name);
     ok(hmod != 0, "LoadLibrary error %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
@@ -2232,7 +2232,7 @@ static void test_ResolveDelayLoadedAPI(void)
         ULONG size;
 
         SetLastError(0xdeadbeef);
-        hlib = LoadLibrary(td[i]);
+        hlib = LoadLibraryA(td[i]);
         ok(hlib != NULL, "LoadLibrary error %u\n", GetLastError());
         if (!hlib)
         {
@@ -2261,7 +2261,7 @@ static void test_ResolveDelayLoadedAPI(void)
 
             itdn = RVAToAddr(delaydir->ImportNameTableRVA, hlib);
             itda = RVAToAddr(delaydir->ImportAddressTableRVA, hlib);
-            htarget = LoadLibrary(RVAToAddr(delaydir->DllNameRVA, hlib));
+            htarget = LoadLibraryA(RVAToAddr(delaydir->DllNameRVA, hlib));
             for (j = 0; itdn[j].u1.Ordinal; j++)
             {
                 void *ret, *load;

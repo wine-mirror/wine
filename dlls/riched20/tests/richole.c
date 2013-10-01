@@ -335,7 +335,7 @@ START_TEST(richole)
 {
   /* Must explicitly LoadLibrary(). The test has no references to functions in
    * RICHED20.DLL, so the linker doesn't actually link to it. */
-  hmoduleRichEdit = LoadLibrary("RICHED20.DLL");
+  hmoduleRichEdit = LoadLibraryA("riched20.dll");
   ok(hmoduleRichEdit != NULL, "error: %d\n", (int) GetLastError());
 
   test_Interfaces();

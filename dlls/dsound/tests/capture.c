@@ -759,7 +759,7 @@ START_TEST(capture)
 
     CoInitialize(NULL);
 
-    hDsound = LoadLibrary("dsound.dll");
+    hDsound = LoadLibraryA("dsound.dll");
     if (!hDsound) {
         skip("dsound.dll not found - skipping all tests\n");
         return;

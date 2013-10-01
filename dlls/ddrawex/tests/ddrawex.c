@@ -95,7 +95,7 @@ START_TEST(ddrawex)
     IClassFactory *classfactory = NULL;
     ULONG ref;
     HRESULT hr;
-    HMODULE hmod = LoadLibrary("ddrawex.dll");
+    HMODULE hmod = LoadLibraryA("ddrawex.dll");
     if(hmod == NULL) {
         skip("Failed to load ddrawex.dll\n");
         return;

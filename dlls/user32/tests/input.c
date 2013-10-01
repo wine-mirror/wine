@@ -1171,7 +1171,7 @@ static void test_Input_unicode(void)
         return;
     }
 
-    hModuleImm32 = LoadLibrary("imm32.dll");
+    hModuleImm32 = LoadLibraryA("imm32.dll");
     if (hModuleImm32) {
         pImmDisableIME = (void *)GetProcAddress(hModuleImm32, "ImmDisableIME");
         if (pImmDisableIME)

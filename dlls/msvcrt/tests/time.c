@@ -54,7 +54,7 @@ static char*      (__cdecl *p_asctime)(const struct tm *);
 
 static void init(void)
 {
-    HMODULE hmod = LoadLibrary("msvcrt.dll");
+    HMODULE hmod = LoadLibraryA("msvcrt.dll");
 
     p_gmtime32 = (void*)GetProcAddress(hmod, "_gmtime32");
     p_gmtime = (void*)GetProcAddress(hmod, "gmtime");
