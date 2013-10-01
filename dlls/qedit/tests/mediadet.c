@@ -84,7 +84,7 @@ static BOOL unpack_avi_file(int id, WCHAR name[MAX_PATH])
     DWORD size, written;
     HANDLE fh;
 
-    res = FindResource(NULL, MAKEINTRESOURCE(id), MAKEINTRESOURCE(AVI_RES_TYPE));
+    res = FindResourceW(NULL, MAKEINTRESOURCEW(id), MAKEINTRESOURCEW(AVI_RES_TYPE));
     if (!res)
         return FALSE;
 
