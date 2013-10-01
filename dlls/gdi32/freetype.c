@@ -6520,8 +6520,8 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 
     width  = (right - left) >> 6;
     height = (top - bottom) >> 6;
-    lpgm->gmBlackBoxX = width;
-    lpgm->gmBlackBoxY = height;
+    lpgm->gmBlackBoxX = width  ? width  : 1;
+    lpgm->gmBlackBoxY = height ? height : 1;
     lpgm->gmptGlyphOrigin.x = origin_x >> 6;
     lpgm->gmptGlyphOrigin.y = origin_y >> 6;
     abc->abcA = left >> 6;
