@@ -1334,7 +1334,15 @@ static void state_init_default(struct wined3d_state *state, const struct wined3d
         state->sampler_states[i][WINED3D_SAMP_ELEMENT_INDEX] = 0;
         /* TODO: Vertex offset in the presampled displacement map. */
         state->sampler_states[i][WINED3D_SAMP_DMAP_OFFSET] = 0;
+        state->textures[i] = NULL;
     }
+
+    state->index_buffer = NULL;
+    for (i = 0; i < sizeof(state->streams) / sizeof(*state->streams); i++)
+        memset(&state->streams[i], 0, sizeof(state->streams[i]));
+
+    state->shader[WINED3D_SHADER_TYPE_VERTEX] = NULL;
+    state->shader[WINED3D_SHADER_TYPE_PIXEL] = NULL;
 }
 
 HRESULT state_init(struct wined3d_state *state, const struct wined3d_gl_info *gl_info,
