@@ -4054,43 +4054,12 @@ void CDECL wined3d_device_set_depth_stencil(struct wined3d_device *device, struc
         return;
     }
 
-    if (prev)
-    {
-        if (device->swapchains[0]->desc.flags & WINED3DPRESENTFLAG_DISCARD_DEPTHSTENCIL
-                || prev->flags & SFLAG_DISCARD)
-        {
-            surface_modify_ds_location(prev, SFLAG_DISCARDED,
-                    prev->resource.width, prev->resource.height);
-            if (prev == device->onscreen_depth_stencil)
-            {
-                wined3d_surface_decref(device->onscreen_depth_stencil);
-                device->onscreen_depth_stencil = NULL;
-            }
-        }
-    }
-
     device->fb.depth_stencil = depth_stencil;
     if (depth_stencil)
         wined3d_surface_incref(depth_stencil);
-
-    if (!prev != !depth_stencil)
-    {
-        /* Swapping NULL / non NULL depth stencil affects the depth and tests */
-        device_invalidate_state(device, STATE_RENDER(WINED3D_RS_ZENABLE));
-        device_invalidate_state(device, STATE_RENDER(WINED3D_RS_STENCILENABLE));
-        device_invalidate_state(device, STATE_RENDER(WINED3D_RS_STENCILWRITEMASK));
-        device_invalidate_state(device, STATE_RENDER(WINED3D_RS_DEPTHBIAS));
-    }
-    else if (prev && prev->resource.format->depth_size != depth_stencil->resource.format->depth_size)
-    {
-        device_invalidate_state(device, STATE_RENDER(WINED3D_RS_DEPTHBIAS));
-    }
+    wined3d_cs_emit_set_depth_stencil(device->cs, depth_stencil);
     if (prev)
         wined3d_surface_decref(prev);
-
-    device_invalidate_state(device, STATE_FRAMEBUFFER);
-
-    return;
 }
 
 HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device,
