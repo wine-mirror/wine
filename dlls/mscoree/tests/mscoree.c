@@ -21,6 +21,7 @@
 
 #include "corerror.h"
 #include "mscoree.h"
+#include "metahost.h"
 #include "shlwapi.h"
 #include "wine/test.h"
 
@@ -31,6 +32,7 @@ static HRESULT (WINAPI *pGetCORSystemDirectory)(LPWSTR, DWORD, DWORD*);
 static HRESULT (WINAPI *pGetRequestedRuntimeInfo)(LPCWSTR, LPCWSTR, LPCWSTR, DWORD, DWORD, LPWSTR, DWORD, DWORD*, LPWSTR, DWORD, DWORD*);
 static HRESULT (WINAPI *pLoadLibraryShim)(LPCWSTR, LPCWSTR, LPVOID, HMODULE*);
 static HRESULT (WINAPI *pCreateConfigStream)(LPCWSTR, IStream**);
+static HRESULT (WINAPI *pCreateInterface)(REFCLSID, REFIID, VOID**);
 
 static BOOL init_functionpointers(void)
 {
@@ -47,8 +49,10 @@ static BOOL init_functionpointers(void)
     pGetRequestedRuntimeInfo = (void *)GetProcAddress(hmscoree, "GetRequestedRuntimeInfo");
     pLoadLibraryShim = (void *)GetProcAddress(hmscoree, "LoadLibraryShim");
     pCreateConfigStream = (void *)GetProcAddress(hmscoree, "CreateConfigStream");
+    pCreateInterface =  (void *)GetProcAddress(hmscoree, "CreateInterface");
 
-    if (!pGetCORVersion || !pGetCORSystemDirectory || !pGetRequestedRuntimeInfo || !pLoadLibraryShim)
+    if (!pGetCORVersion || !pGetCORSystemDirectory || !pGetRequestedRuntimeInfo || !pLoadLibraryShim ||
+        !pCreateInterface)
     {
         win_skip("functions not available\n");
         FreeLibrary(hmscoree);
@@ -386,6 +390,28 @@ static void test_createconfigstream(void)
     DeleteFileW(file);
 }
 
+void test_createinstance(void)
+{
+    HRESULT hr;
+    ICLRMetaHost *host;
+
+    if(!pCreateInterface)
+    {
+        win_skip("Function CreateInterface not found.\n");
+        return;
+    }
+
+    hr = pCreateInterface(&CLSID_CLRMetaHost, &IID_ICLRMetaHost, (void**)&host);
+    if(SUCCEEDED(hr))
+    {
+        ICLRMetaHost_Release(host);
+    }
+    else
+    {
+        win_skip(".NET 4 not installed.\n");
+    }
+}
+
 START_TEST(mscoree)
 {
     if (!init_functionpointers())
@@ -394,6 +420,7 @@ START_TEST(mscoree)
     test_versioninfo();
     test_loadlibraryshim();
     test_createconfigstream();
+    test_createinstance();
 
     FreeLibrary(hmscoree);
 }

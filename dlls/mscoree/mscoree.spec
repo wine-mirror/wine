@@ -30,6 +30,7 @@
 @ stub CorTickleSvc
 @ stdcall CreateConfigStream(wstr ptr)
 @ stdcall CreateDebuggingInterfaceFromVersion(long wstr ptr)
+@ stdcall CreateInterface(ptr ptr ptr)
 @ stdcall -private DllCanUnloadNow()
 @ stdcall -private DllGetClassObject(ptr ptr ptr)
 @ stdcall -private DllRegisterServer()
