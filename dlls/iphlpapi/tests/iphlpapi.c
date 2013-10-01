@@ -1062,7 +1062,7 @@ static void testNotifyAddrChange(void)
 
     handle = NULL;
     ZeroMemory(&overlapped, sizeof(overlapped));
-    overlapped.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+    overlapped.hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
     ret = pNotifyAddrChange(&handle, &overlapped);
     ok(ret == ERROR_IO_PENDING, "NotifyAddrChange returned %d, expected ERROR_IO_PENDING\n", ret);
     todo_wine ok(handle != INVALID_HANDLE_VALUE, "NotifyAddrChange returned invalid file handle\n");
@@ -1077,7 +1077,7 @@ static void testNotifyAddrChange(void)
     {
         handle = NULL;
         ZeroMemory(&overlapped, sizeof(overlapped));
-        overlapped.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+        overlapped.hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
         trace("Testing asynchronous ipv4 address change notification. Please "
               "change the ipv4 address of one of your network interfaces\n");
         ret = pNotifyAddrChange(&handle, &overlapped);
