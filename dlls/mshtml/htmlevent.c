@@ -1510,11 +1510,11 @@ HRESULT detach_event(event_target_t *event_target, HTMLDocument *doc, BSTR name,
     return S_OK;
 }
 
-void bind_elem_event(HTMLDocumentNode *doc, HTMLElement *elem, const WCHAR *event, IDispatch *disp)
+void bind_node_event(HTMLDocumentNode *doc, event_target_t **event_target, HTMLDOMNode *node, const WCHAR *event, IDispatch *disp)
 {
     eventid_t eid;
 
-    TRACE("(%p %p %s %p)\n", doc, elem, debugstr_w(event), disp);
+    TRACE("(%p %p %p %s %p)\n", doc, event_target, node, debugstr_w(event), disp);
 
     eid = attr_to_eid(event);
     if(eid == EVENTID_LAST) {
@@ -1522,7 +1522,7 @@ void bind_elem_event(HTMLDocumentNode *doc, HTMLElement *elem, const WCHAR *even
         return;
     }
 
-    set_event_handler_disp(&elem->node.event_target, elem->node.nsnode, doc, eid, disp);
+    set_event_handler_disp(event_target, node ? node->nsnode : NULL, doc, eid, disp);
 }
 
 void update_cp_events(HTMLInnerWindow *window, event_target_t **event_target_ptr, cp_static_data_t *cp, nsIDOMNode *nsnode)

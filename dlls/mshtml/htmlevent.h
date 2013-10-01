@@ -62,7 +62,7 @@ void update_cp_events(HTMLInnerWindow*,event_target_t**,cp_static_data_t*,nsIDOM
 HRESULT doc_init_events(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 void detach_events(HTMLDocumentNode *doc) DECLSPEC_HIDDEN;
 HRESULT create_event_obj(IHTMLEventObj**) DECLSPEC_HIDDEN;
-void bind_elem_event(HTMLDocumentNode*,HTMLElement*,const WCHAR*,IDispatch*) DECLSPEC_HIDDEN;
+void bind_node_event(HTMLDocumentNode*,event_target_t**,HTMLDOMNode*,const WCHAR*,IDispatch*) DECLSPEC_HIDDEN;
 
 void init_nsevents(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 void release_nsevents(HTMLDocumentNode*) DECLSPEC_HIDDEN;
