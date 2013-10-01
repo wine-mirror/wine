@@ -29,7 +29,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(taskkill);
 
-static int force_termination;
+static BOOL force_termination = FALSE;
 
 static WCHAR **task_list;
 static unsigned int task_count;
@@ -456,7 +456,7 @@ static BOOL process_arguments(int argc, WCHAR *argv[])
     if (argc > 1)
     {
         int i;
-        BOOL has_im = 0, has_pid = 0;
+        BOOL has_im = FALSE, has_pid = FALSE;
 
         /* Only the lone help option is recognized. */
         if (argc == 2 && !strcmpW(slashHelp, argv[1]))
@@ -472,7 +472,7 @@ static BOOL process_arguments(int argc, WCHAR *argv[])
             if (!strcmpiW(slashTerminateChildren, argv[i]))
                 WINE_FIXME("/T not supported\n");
             if (!strcmpiW(slashForceTerminate, argv[i]))
-                force_termination = 1;
+                force_termination = TRUE;
             /* Options /IM and /PID appear to behave identically, except for
              * the fact that they cannot be specified at the same time. */
             else if ((got_im = !strcmpiW(slashImage, argv[i])) ||
@@ -485,8 +485,8 @@ static BOOL process_arguments(int argc, WCHAR *argv[])
                     return FALSE;
                 }
 
-                if (got_im) has_im = 1;
-                if (got_pid) has_pid = 1;
+                if (got_im) has_im = TRUE;
+                if (got_pid) has_pid = TRUE;
 
                 if (has_im && has_pid)
                 {
