@@ -1257,7 +1257,7 @@
 @ cdecl atof(str) MSVCRT_atof
 @ cdecl atoi(str) MSVCRT_atoi
 @ cdecl atol(str) ntdll.atol
-@ cdecl bsearch(ptr ptr long long ptr) ntdll.bsearch
+@ cdecl bsearch(ptr ptr long long ptr) MSVCRT_bsearch
 @ cdecl bsearch_s(ptr ptr long long ptr ptr) MSVCRT_bsearch_s
 @ cdecl btowc(long) MSVCRT_btowc
 @ cdecl calloc(long long) MSVCRT_calloc

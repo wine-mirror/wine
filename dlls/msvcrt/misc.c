@@ -151,6 +151,20 @@ void* CDECL MSVCRT_bsearch_s(const void *key, const void *base,
     return NULL;
 }
 
+static int CDECL compare_wrapper(void *ctx, const void *e1, const void *e2)
+{
+    int (__cdecl *compare)(const void *, const void *) = ctx;
+    return compare(e1, e2);
+}
+
+/*********************************************************************
+ *                  bsearch (msvcrt.@)
+ */
+void* CDECL MSVCRT_bsearch(const void *key, const void *base, MSVCRT_size_t nmemb,
+        MSVCRT_size_t size, int (__cdecl *compar)(const void *, const void *))
+{
+    return MSVCRT_bsearch_s(key, base, nmemb, size, compare_wrapper, compar);
+}
 /*********************************************************************
  *		_chkesp (MSVCRT.@)
  *
