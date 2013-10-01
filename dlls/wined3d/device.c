@@ -4032,12 +4032,11 @@ HRESULT CDECL wined3d_device_set_render_target(struct wined3d_device *device,
     if (render_target)
         wined3d_surface_incref(render_target);
     device->fb.render_targets[render_target_idx] = render_target;
+    wined3d_cs_emit_set_render_target(device->cs, render_target_idx, render_target);
     /* Release after the assignment, to prevent device_resource_released()
      * from seeing the surface as still in use. */
     if (prev)
         wined3d_surface_decref(prev);
-
-    device_invalidate_state(device, STATE_FRAMEBUFFER);
 
     return WINED3D_OK;
 }
