@@ -294,6 +294,15 @@ void CDECL MSVCRT_qsort_s(void *base, MSVCRT_size_t nmemb, MSVCRT_size_t size,
 }
 
 /*********************************************************************
+ * qsort (MSVCRT.@)
+ */
+void CDECL MSVCRT_qsort(void *base, MSVCRT_size_t nmemb, MSVCRT_size_t size,
+        int (CDECL *compar)(const void*, const void*))
+{
+    return MSVCRT_qsort_s(base, nmemb, size, compare_wrapper, compar);
+}
+
+/*********************************************************************
  * _get_output_format (MSVCRT.@)
  */
 unsigned int CDECL _get_output_format(void)
