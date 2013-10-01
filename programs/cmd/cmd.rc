@@ -63,7 +63,9 @@ preceding it with an @ sign.\n"
   WCMD_FOR,
 "The FOR command is used to execute a command for each of a set of files.\n\
 \n\
-Syntax: FOR %variable IN (set) DO command\n"
+Usage: FOR %variable IN (set) DO command\n\
+\n\
+The % sign must be doubled when using FOR in a batch file.\n"
 
   WCMD_GOTO,
 "The GOTO command transfers execution to another statement within a\n\

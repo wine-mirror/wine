@@ -9286,7 +9286,7 @@ msgstr "Ciklus a beszámolók kezelése közben"
 msgid "Referral hop limit exceeded"
 msgstr "Beszámolási ugrás limit túllépve"
 
-#: attrib.rc:27 cmd.rc:322
+#: attrib.rc:27 cmd.rc:324
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -9294,7 +9294,7 @@ msgstr ""
 "Még nincs megvalósítva\n"
 "\n"
 
-#: attrib.rc:28 cmd.rc:325
+#: attrib.rc:28 cmd.rc:327
 msgid "%1: File Not Found\n"
 msgstr "%1 fájl nem található\n"
 
@@ -9458,17 +9458,24 @@ msgstr ""
 msgid "ERASE <filename> deletes a file or set of files.\n"
 msgstr "ERASE <fájlnév> törli a fáljt vagy fájlokat.\n"
 
-#: cmd.rc:66
+#: cmd.rc:68
+#, fuzzy
+#| msgid ""
+#| "The FOR command is used to execute a command for each of a set of files.\n"
+#| "\n"
+#| "Syntax: FOR %variable IN (set) DO command\n"
 msgid ""
 "The FOR command is used to execute a command for each of a set of files.\n"
 "\n"
-"Syntax: FOR %variable IN (set) DO command\n"
+"Usage: FOR %variable IN (set) DO command\n"
+"\n"
+"The % sign must be doubled when using FOR in a batch file.\n"
 msgstr ""
 "A FOR parancs végrehajt parancsokat egy fájl halmaz minden egyes elemére.\n"
 "\n"
 "Szintaxis: FOR %változó IN (készlet) DO parancs\n"
 
-#: cmd.rc:78
+#: cmd.rc:80
 msgid ""
 "The GOTO command transfers execution to another statement within a\n"
 "batch file.\n"
@@ -9492,7 +9499,7 @@ msgstr ""
 "\n"
 "GOTO parancsnak nincs hatása interaktív használat esetén.\n"
 
-#: cmd.rc:81
+#: cmd.rc:83
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
@@ -9500,7 +9507,7 @@ msgstr ""
 "HELP <parancs> megjeleníti a témához tartozó súgót.\n"
 "HELP paraméter nélkül, megmutat minden beépített CMD parancsot.\n"
 
-#: cmd.rc:91
+#: cmd.rc:93
 msgid ""
 "IF is used to conditionally execute a command.\n"
 "\n"
@@ -9521,7 +9528,7 @@ msgstr ""
 "közé kell tenni. Az összehasonlítás nem veszi figyelembe a kis- és "
 "nagybetűket.\n"
 
-#: cmd.rc:97
+#: cmd.rc:99
 msgid ""
 "LABEL is used to set a disk volume label.\n"
 "\n"
@@ -9535,15 +9542,15 @@ msgstr ""
 "A parancs bekéri az új kötet címkét az adott meghajtóhoz.\n"
 "Kijelezheti a lemez kötet címkéjét a VOL parancs használatával.\n"
 
-#: cmd.rc:100
+#: cmd.rc:102
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
 msgstr "MD <név> az MKDIR rövidített változata. Alkönyvtárat hoz létre.\n"
 
-#: cmd.rc:101
+#: cmd.rc:103
 msgid "MKDIR <name> creates a subdirectory.\n"
 msgstr "MKDIR <név> alkönyvtárat hoz létre.\n"
 
-#: cmd.rc:108
+#: cmd.rc:110
 msgid ""
 "MOVE relocates a file or directory to a new point within the file system.\n"
 "\n"
@@ -9562,7 +9569,7 @@ msgstr ""
 "MOVE hibával tér vissza, ha a régi és új útvonal különböző DOS meghajtókon "
 "található.\n"
 
-#: cmd.rc:119
+#: cmd.rc:121
 msgid ""
 "PATH displays or changes the cmd search path.\n"
 "\n"
@@ -9584,7 +9591,7 @@ msgstr ""
 "változó használatával, például:\n"
 "PATH %PATH%;c:\\temp\n"
 
-#: cmd.rc:125
+#: cmd.rc:127
 msgid ""
 "PAUSE displays a message on the screen asking the user to press a key.\n"
 "\n"
@@ -9598,7 +9605,7 @@ msgstr ""
 "parancs\n"
 "kimenetének elolvasását, mielőtt legördül a képernyőről.\n"
 
-#: cmd.rc:146
+#: cmd.rc:148
 msgid ""
 "PROMPT sets the command-line prompt.\n"
 "\n"
@@ -9642,7 +9649,7 @@ msgstr ""
 "így a parancs 'SET PROMPT=szöveg' ugyanolyan hatással bír, mint a 'PROMPT "
 "szöveg'.\n"
 
-#: cmd.rc:150
+#: cmd.rc:152
 msgid ""
 "A command line beginning with REM (followed by a space) performs no\n"
 "action, and can therefore be used as a comment in a batch file.\n"
@@ -9650,24 +9657,24 @@ msgstr ""
 "Egy REM-el kezdődő (szüközzel folytatótó) parancssor nem hajt végre\n"
 "műveletet, és ezért kötegelt fájlban megjegyzés beírásra használható.\n"
 
-#: cmd.rc:153
+#: cmd.rc:155
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
 msgstr ""
 "REN <fájlnév> a RENAME parancs rövidített változata. Átnevez egy fájlt.\n"
 
-#: cmd.rc:154
+#: cmd.rc:156
 msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <fájlnév> átnevez egy fájlt.\n"
 
-#: cmd.rc:156
+#: cmd.rc:158
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
 msgstr "RD <mappa> az RMDIR rövidített változata. Töröl egy alkönyvtárat.\n"
 
-#: cmd.rc:157
+#: cmd.rc:159
 msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgstr "RMDIR <mappa> törlöl egy alkönyvtárat.\n"
 
-#: cmd.rc:201
+#: cmd.rc:203
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
 "\n"
@@ -9704,7 +9711,7 @@ msgstr ""
 "nem lehetséges befolyásolni az operációs rendszer környezetet a cmd "
 "parancssorral.\n"
 
-#: cmd.rc:206
+#: cmd.rc:208
 msgid ""
 "SHIFT is used in a batch file to remove one parameter from the head of\n"
 "the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
@@ -9715,7 +9722,7 @@ msgstr ""
 "nincs hatása,\n"
 "ha parancssorból történik a meghívás.\n"
 
-#: cmd.rc:183 start.rc:50
+#: cmd.rc:185 start.rc:50
 msgid ""
 "Start a program, or open a document in the program normally used for files "
 "with that suffix.\n"
@@ -9745,15 +9752,15 @@ msgid ""
 "/?           Display this help and exit.\n"
 msgstr ""
 
-#: cmd.rc:208
+#: cmd.rc:210
 msgid "TIME sets or shows the current system time.\n"
 msgstr "TIME beállít vagy megmutatja az aktuális rendszeridőt.\n"
 
-#: cmd.rc:210
+#: cmd.rc:212
 msgid "TITLE <string> sets the window title for the cmd window.\n"
 msgstr "TITLE <karakterlánc> beállítja a cmd ablak címsorát.\n"
 
-#: cmd.rc:214
+#: cmd.rc:216
 msgid ""
 "TYPE <filename> copies <filename> to the console device (or elsewhere\n"
 "if redirected). No check is made that the file is readable text.\n"
@@ -9762,7 +9769,7 @@ msgstr ""
 "bárhová\n"
 "ha átirányítják). Nincs ellenőrzés, hogy a fájl olvasható szöveg-e.\n"
 
-#: cmd.rc:223
+#: cmd.rc:225
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
@@ -9782,15 +9789,15 @@ msgstr ""
 "\n"
 "A verify jelzőnek nincs funkciója a Wine-ban.\n"
 
-#: cmd.rc:226
+#: cmd.rc:228
 msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER kijelzi az éppen futó cmd verzióját.\n"
 
-#: cmd.rc:228
+#: cmd.rc:230
 msgid "VOL shows the volume label of a disk device.\n"
 msgstr "VOL megmutatja a lemez kötet nevét.\n"
 
-#: cmd.rc:232
+#: cmd.rc:234
 msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file\n"
 "which were introduced by a preceding SETLOCAL.\n"
@@ -9798,7 +9805,7 @@ msgstr ""
 "ENDLOCAL megszünteti a környezeti területi beállítást a kötegelt fájlban\n"
 "amelyet egy megelőző SETLOCAL parancs állított be.\n"
 
-#: cmd.rc:240
+#: cmd.rc:242
 msgid ""
 "SETLOCAL starts localization of environment changes in a batch file.\n"
 "\n"
@@ -9817,7 +9824,7 @@ msgstr ""
 "amely esetén az előző környezeti változó\n"
 "visszaállítódik.\n"
 
-#: cmd.rc:243
+#: cmd.rc:245
 msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
@@ -9825,11 +9832,11 @@ msgstr ""
 "PUSHD <mappanév> elmenti az aktuális mappát a verembe,\n"
 "és azután módosítja az aktuális mappát a megadottra.\n"
 
-#: cmd.rc:245
+#: cmd.rc:247
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
 msgstr "POPD módosítja az aktuális mappát a PUSHD-vel utoljára mentettre.\n"
 
-#: cmd.rc:253
+#: cmd.rc:255
 msgid ""
 "ASSOC shows or modifies file extension associations.\n"
 "\n"
@@ -9850,7 +9857,7 @@ msgstr ""
 "Az egyenlőségjel után a fájltípus megadása nélkül, törli az aktuális "
 "társítást és nem csinál mást.\n"
 
-#: cmd.rc:264
+#: cmd.rc:266
 msgid ""
 "FTYPE shows or modifies open commands associated with file types.\n"
 "\n"
@@ -9875,11 +9882,11 @@ msgstr ""
 "Amennyiben nincs társítási parancs megadva az egyenlőség jel után, akkor "
 "törli a parancs társítást, amely társítva van a megadott fájltípushoz.\n"
 
-#: cmd.rc:266
+#: cmd.rc:268
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr "MORE lapokra tördelve jeleníti meg a fájlt vagy a pipe bemenetet.\n"
 
-#: cmd.rc:270
+#: cmd.rc:272
 msgid ""
 "CHOICE displays a text and waits, until the User\n"
 "presses an allowed Key from a selectable list.\n"
@@ -9889,7 +9896,7 @@ msgstr ""
 "leüt egy megengedett billentyűt a kiválasztható listából.\n"
 "CHOICE főként batch fájl menü kiválasztására használt.\n"
 
-#: cmd.rc:274
+#: cmd.rc:276
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
@@ -9897,7 +9904,7 @@ msgstr ""
 "EXIT megszakít egy aktuális parancs futtatást és visszatér\n"
 "az operációs rendszerhez vagy ahhoz a parancssorhoz, amely meghívta.\n"
 
-#: cmd.rc:312
+#: cmd.rc:314
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -9979,110 +9986,110 @@ msgstr ""
 "\n"
 "HELP <parancs> további információkat jelenít meg a fenti parancsokról.\n"
 
-#: cmd.rc:314
+#: cmd.rc:316
 msgid "Are you sure?"
 msgstr "Biztos benne?"
 
-#: cmd.rc:315 xcopy.rc:40
+#: cmd.rc:317 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "I"
 
-#: cmd.rc:316 xcopy.rc:41
+#: cmd.rc:318 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: cmd.rc:317
+#: cmd.rc:319
 msgid "File association missing for extension %1\n"
 msgstr "%1 kiterjesztéshez hiányzik a fájl társítás\n"
 
-#: cmd.rc:318
+#: cmd.rc:320
 msgid "No open command associated with file type '%1'\n"
 msgstr "'%1' fájltípushoz nincs társított parancs\n"
 
-#: cmd.rc:319
+#: cmd.rc:321
 msgid "Overwrite %1?"
 msgstr "%1 felülírható?"
 
-#: cmd.rc:320
+#: cmd.rc:322
 msgid "More..."
 msgstr "Több..."
 
-#: cmd.rc:321
+#: cmd.rc:323
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "A kötegelt feldolgozásban lévő sor lehet csonkítva lesz. Használja:\n"
 
-#: cmd.rc:323
+#: cmd.rc:325
 msgid "Argument missing\n"
 msgstr "Hiányzó paraméter\n"
 
-#: cmd.rc:324
+#: cmd.rc:326
 msgid "Syntax error\n"
 msgstr "Szintaktikai hiba\n"
 
-#: cmd.rc:326
+#: cmd.rc:328
 msgid "No help available for %1\n"
 msgstr "%1 -hez nem érhető el súgó\n"
 
-#: cmd.rc:327
+#: cmd.rc:329
 msgid "Target to GOTO not found\n"
 msgstr "Ugrási cél nem található\n"
 
-#: cmd.rc:328
+#: cmd.rc:330
 msgid "Current Date is %1\n"
 msgstr "Aktuális dátum %1\n"
 
-#: cmd.rc:329
+#: cmd.rc:331
 msgid "Current Time is %1\n"
 msgstr "Aktuális idő %1\n"
 
-#: cmd.rc:330
+#: cmd.rc:332
 msgid "Enter new date: "
 msgstr "Új dátum: "
 
-#: cmd.rc:331
+#: cmd.rc:333
 msgid "Enter new time: "
 msgstr "Új idő: "
 
-#: cmd.rc:332
+#: cmd.rc:334
 msgid "Environment variable %1 not defined\n"
 msgstr "%1 környezeti változó nincs meghatározva\n"
 
-#: cmd.rc:333 xcopy.rc:38
+#: cmd.rc:335 xcopy.rc:38
 msgid "Failed to open '%1'\n"
 msgstr "'%1' megnyitása sikertelen\n"
 
-#: cmd.rc:334
+#: cmd.rc:336
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "Nem lehet hívi batch címkét a batch szkripten kívűl\n"
 
-#: cmd.rc:335 xcopy.rc:42
+#: cmd.rc:337 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "M"
 
-#: cmd.rc:336
+#: cmd.rc:338
 msgid "Delete %1?"
 msgstr "%1 töröleató?"
 
-#: cmd.rc:337
+#: cmd.rc:339
 msgid "Echo is %1\n"
 msgstr "%1 ismétlése\n"
 
-#: cmd.rc:338
+#: cmd.rc:340
 msgid "Verify is %1\n"
 msgstr "%1 ellenőrzése\n"
 
-#: cmd.rc:339
+#: cmd.rc:341
 msgid "Verify must be ON or OFF\n"
 msgstr "Verify ON vagy OFF lehet\n"
 
-#: cmd.rc:340
+#: cmd.rc:342
 msgid "Parameter error\n"
 msgstr "Paraméter hiba\n"
 
-#: cmd.rc:341
+#: cmd.rc:343
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
@@ -10090,76 +10097,76 @@ msgstr ""
 "Kötet sorozatszáma %1!04x!-%2!04x!\n"
 "\n"
 
-#: cmd.rc:342
+#: cmd.rc:344
 msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "Kötet címke (11 karakter, <Enter> üresen hagyáshoz)?"
 
-#: cmd.rc:343
+#: cmd.rc:345
 msgid "PATH not found\n"
 msgstr "Útvonal nem található\n"
 
-#: cmd.rc:344
+#: cmd.rc:346
 msgid "Press any key to continue... "
 msgstr "Nyomjon meg egy billentyűt a folytatáshoz... "
 
-#: cmd.rc:345
+#: cmd.rc:347
 msgid "Wine Command Prompt"
 msgstr "Wine parancssor"
 
-#: cmd.rc:346
+#: cmd.rc:348
 #, fuzzy
 #| msgid "CMD Version %1!S!\n"
 msgid "Wine CMD Version %1!S!\n"
 msgstr "CMD verzió %1!S!\n"
 
-#: cmd.rc:347
+#: cmd.rc:349
 msgid "More? "
 msgstr "Több? "
 
-#: cmd.rc:348
+#: cmd.rc:350
 msgid "The input line is too long.\n"
 msgstr "A bemenő sor túl hosszú.\n"
 
-#: cmd.rc:349
+#: cmd.rc:351
 msgid "Volume in drive %1!c! is %2\n"
 msgstr "%1!c! meghajtó kötet neve %2\n"
 
-#: cmd.rc:350
+#: cmd.rc:352
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr "%1!c! kötetnek nincs címkéje.\n"
 
-#: cmd.rc:351
+#: cmd.rc:353
 msgid " (Yes|No)"
 msgstr " (Igen|Nem)"
 
-#: cmd.rc:352
+#: cmd.rc:354
 msgid " (Yes|No|All)"
 msgstr " (Igen|Nem|Mind)"
 
-#: cmd.rc:353
+#: cmd.rc:355
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
 msgstr ""
 
-#: cmd.rc:354
+#: cmd.rc:356
 msgid "Division by zero error.\n"
 msgstr ""
 
-#: cmd.rc:355
+#: cmd.rc:357
 msgid "Expected an operand.\n"
 msgstr ""
 
-#: cmd.rc:356
+#: cmd.rc:358
 #, fuzzy
 #| msgid "Unexpected network error.\n"
 msgid "Expected an operator.\n"
 msgstr "Nem várt hálózati hiba.\n"
 
-#: cmd.rc:357
+#: cmd.rc:359
 msgid "Mismatch in parentheses.\n"
 msgstr ""
 
-#: cmd.rc:358
+#: cmd.rc:360
 msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"

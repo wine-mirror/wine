@@ -9377,7 +9377,7 @@ msgstr "Cicla mentre processant referències"
 msgid "Referral hop limit exceeded"
 msgstr "Límit de salta de referències superat"
 
-#: attrib.rc:27 cmd.rc:322
+#: attrib.rc:27 cmd.rc:324
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -9385,7 +9385,7 @@ msgstr ""
 "Encara no Implementat\n"
 "\n"
 
-#: attrib.rc:28 cmd.rc:325
+#: attrib.rc:28 cmd.rc:327
 msgid "%1: File Not Found\n"
 msgstr "%1: Fitxer No Trobat\n"
 
@@ -9544,18 +9544,25 @@ msgstr ""
 msgid "ERASE <filename> deletes a file or set of files.\n"
 msgstr "ERASE <nom de fitxer> suprimeix un fitxer o conjunt de fitxers.\n"
 
-#: cmd.rc:66
+#: cmd.rc:68
+#, fuzzy
+#| msgid ""
+#| "The FOR command is used to execute a command for each of a set of files.\n"
+#| "\n"
+#| "Syntax: FOR %variable IN (set) DO command\n"
 msgid ""
 "The FOR command is used to execute a command for each of a set of files.\n"
 "\n"
-"Syntax: FOR %variable IN (set) DO command\n"
+"Usage: FOR %variable IN (set) DO command\n"
+"\n"
+"The % sign must be doubled when using FOR in a batch file.\n"
 msgstr ""
 "L'ordre FOR s'usa per executar un ordre per cada un d'un conjunt de "
 "fitxers.\n"
 "\n"
 "Sintaxi: FOR %variable IN (conjunt) DO ordre\n"
 
-#: cmd.rc:78
+#: cmd.rc:80
 msgid ""
 "The GOTO command transfers execution to another statement within a\n"
 "batch file.\n"
@@ -9581,7 +9588,7 @@ msgstr ""
 "\n"
 "GOTO no té cap efecte quan s'usa de forma interactiva.\n"
 
-#: cmd.rc:81
+#: cmd.rc:83
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
@@ -9589,7 +9596,7 @@ msgstr ""
 "HELP <ordre> mostra detalls d'ajuda breus sobre un tema.\n"
 "HELP sense argument mostra tots els ordres integrats de CMD.\n"
 
-#: cmd.rc:91
+#: cmd.rc:93
 msgid ""
 "IF is used to conditionally execute a command.\n"
 "\n"
@@ -9609,7 +9616,7 @@ msgstr ""
 "En la segona forma de la comanda, cadena1 i cadena2 han d'estar entre\n"
 "cometes dobles. La comparació no distingeix entre majúscules i minúscules.\n"
 
-#: cmd.rc:97
+#: cmd.rc:99
 msgid ""
 "LABEL is used to set a disk volume label.\n"
 "\n"
@@ -9623,15 +9630,15 @@ msgstr ""
 "L'ordre us demanarà la nova etiqueta de volum per a la unitat donada.\n"
 "Podeu mostrar l'etiqueta de volum del disc amb l'ordre VOL.\n"
 
-#: cmd.rc:100
+#: cmd.rc:102
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
 msgstr "MD <nom> és la versió curta de MKDIR. Crea un subdirectori.\n"
 
-#: cmd.rc:101
+#: cmd.rc:103
 msgid "MKDIR <name> creates a subdirectory.\n"
 msgstr "MKDIR <nom> crea un subdirectori.\n"
 
-#: cmd.rc:108
+#: cmd.rc:110
 msgid ""
 "MOVE relocates a file or directory to a new point within the file system.\n"
 "\n"
@@ -9650,7 +9657,7 @@ msgstr ""
 "MOVE falla si els llocs antics i nous es troben en lletres d'unitat DOS\n"
 "diferents.\n"
 
-#: cmd.rc:119
+#: cmd.rc:121
 msgid ""
 "PATH displays or changes the cmd search path.\n"
 "\n"
@@ -9672,7 +9679,7 @@ msgstr ""
 "PATH, per exemple:\n"
 "PATH %PATH%;c:\\temp\n"
 
-#: cmd.rc:125
+#: cmd.rc:127
 msgid ""
 "PAUSE displays a message on the screen asking the user to press a key.\n"
 "\n"
@@ -9686,7 +9693,7 @@ msgstr ""
 "llegeixi la sortida d'un ordre anterior abans que es desplaci fora de la\n"
 "pantalla.\n"
 
-#: cmd.rc:146
+#: cmd.rc:148
 msgid ""
 "PROMPT sets the command-line prompt.\n"
 "\n"
@@ -9730,7 +9737,7 @@ msgstr ""
 "L'indicador també es pot canviar per modificar la variable d'entorn PROMPT,\n"
 "així que l'ordre 'SET PROMPT=text' té el mateix efecte que 'PROMPT text'.\n"
 
-#: cmd.rc:150
+#: cmd.rc:152
 msgid ""
 "A command line beginning with REM (followed by a space) performs no\n"
 "action, and can therefore be used as a comment in a batch file.\n"
@@ -9738,25 +9745,25 @@ msgstr ""
 "Una línia d'ordres començant amb REM (seguit per un espai) no realitza\n"
 "cap acció, i per tant es pot usar com comentari en un fitxer batch.\n"
 
-#: cmd.rc:153
+#: cmd.rc:155
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
 msgstr ""
 "REN <nom de fitxer> és la versió curta de RENAME. Canvia el nom\n"
 "d'un fitxer.\n"
 
-#: cmd.rc:154
+#: cmd.rc:156
 msgid "RENAME <filename> renames a file.\n"
 msgstr "REN <nom de fitxer> canvia el nom d'un fitxer.\n"
 
-#: cmd.rc:156
+#: cmd.rc:158
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
 msgstr "RD <dir> és la versió curta de RMDIR. Suprimeix un subdirectori.\n"
 
-#: cmd.rc:157
+#: cmd.rc:159
 msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgstr "RMDIR <dir> suprimeix un subdirectori.\n"
 
-#: cmd.rc:201
+#: cmd.rc:203
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
 "\n"
@@ -9792,7 +9799,7 @@ msgstr ""
 "implementació nativa de Win32. Tingueu en compte que no és possible\n"
 "afectar l'entorn del sistema operatiu dins cmd.\n"
 
-#: cmd.rc:206
+#: cmd.rc:208
 msgid ""
 "SHIFT is used in a batch file to remove one parameter from the head of\n"
 "the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
@@ -9802,7 +9809,7 @@ msgstr ""
 "la llista, de manera que el paràmetre 2 es converteix en el paràmetre 1\n"
 "etc. No té cap efecte si es truca des de la línia d'ordres.\n"
 
-#: cmd.rc:183 start.rc:50
+#: cmd.rc:185 start.rc:50
 msgid ""
 "Start a program, or open a document in the program normally used for files "
 "with that suffix.\n"
@@ -9832,15 +9839,15 @@ msgid ""
 "/?           Display this help and exit.\n"
 msgstr ""
 
-#: cmd.rc:208
+#: cmd.rc:210
 msgid "TIME sets or shows the current system time.\n"
 msgstr "TIME estableix o mostra l'hora actual del sistema.\n"
 
-#: cmd.rc:210
+#: cmd.rc:212
 msgid "TITLE <string> sets the window title for the cmd window.\n"
 msgstr "TITLE <cadena> estableix el títol de la finestra de cmd.\n"
 
-#: cmd.rc:214
+#: cmd.rc:216
 msgid ""
 "TYPE <filename> copies <filename> to the console device (or elsewhere\n"
 "if redirected). No check is made that the file is readable text.\n"
@@ -9848,7 +9855,7 @@ msgstr ""
 "TYPE <nom de fitxer> copia <nom de fitxer> al dispositiu de consola (o un\n"
 "altre lloc si redirigit). No es comprova que el fitxer és text llegible.\n"
 
-#: cmd.rc:223
+#: cmd.rc:225
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
@@ -9867,15 +9874,15 @@ msgstr ""
 "\n"
 "La bandera de verificació no té cap funció en el Wine.\n"
 
-#: cmd.rc:226
+#: cmd.rc:228
 msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER mostra la versió de cmd que s'està executant.\n"
 
-#: cmd.rc:228
+#: cmd.rc:230
 msgid "VOL shows the volume label of a disk device.\n"
 msgstr "VOL mostra l'etiqueta de volum d'un dispositiu de disc.\n"
 
-#: cmd.rc:232
+#: cmd.rc:234
 msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file\n"
 "which were introduced by a preceding SETLOCAL.\n"
@@ -9883,7 +9890,7 @@ msgstr ""
 "ENDLOCAL acaba la localització de canvis en l'entorn en un fitxer\n"
 "batch, els quals un SETLOCAL anterior ha introduït.\n"
 
-#: cmd.rc:240
+#: cmd.rc:242
 msgid ""
 "SETLOCAL starts localization of environment changes in a batch file.\n"
 "\n"
@@ -9899,7 +9906,7 @@ msgstr ""
 "fitxer, el que passi primer), al qual punt la configuració de l'entorn\n"
 "anterior es restaura.\n"
 
-#: cmd.rc:243
+#: cmd.rc:245
 msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
@@ -9907,11 +9914,11 @@ msgstr ""
 "PUSHD <nom de directori> desa el directori actual en una pila, i\n"
 "després canvia el directori actual al proporcionat.\n"
 
-#: cmd.rc:245
+#: cmd.rc:247
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
 msgstr "POPD canvia el directori actual al últim desat amb PUSHD.\n"
 
-#: cmd.rc:253
+#: cmd.rc:255
 msgid ""
 "ASSOC shows or modifies file extension associations.\n"
 "\n"
@@ -9931,7 +9938,7 @@ msgstr ""
 "actual. Especificar cap tipus de fitxer després del signe igual treu\n"
 "l'associació actual, si hi ha.\n"
 
-#: cmd.rc:264
+#: cmd.rc:266
 msgid ""
 "FTYPE shows or modifies open commands associated with file types.\n"
 "\n"
@@ -9956,12 +9963,12 @@ msgstr ""
 "cap ordre d'obertura després del signe igual treu la cadena de ordre\n"
 "associada al tipus de fitxer especificat.\n"
 
-#: cmd.rc:266
+#: cmd.rc:268
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr ""
 "MORE mostra la sortida dels fitxers o entrada de canonada en pàgines.\n"
 
-#: cmd.rc:270
+#: cmd.rc:272
 msgid ""
 "CHOICE displays a text and waits, until the User\n"
 "presses an allowed Key from a selectable list.\n"
@@ -9972,7 +9979,7 @@ msgstr ""
 "CHOICE s'usa principalment per construir un menú de selecció en un fitxer\n"
 "batch.\n"
 
-#: cmd.rc:274
+#: cmd.rc:276
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
@@ -9981,7 +9988,7 @@ msgstr ""
 "des\n"
 "del qual heu invocat cmd.\n"
 
-#: cmd.rc:312
+#: cmd.rc:314
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -10064,110 +10071,110 @@ msgstr ""
 "Introduïu HELP <ordre> per més informació sobre qualsevol de les ordres\n"
 "anteriors.\n"
 
-#: cmd.rc:314
+#: cmd.rc:316
 msgid "Are you sure?"
 msgstr "Esteu segur?"
 
-#: cmd.rc:315 xcopy.rc:40
+#: cmd.rc:317 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "S"
 
-#: cmd.rc:316 xcopy.rc:41
+#: cmd.rc:318 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: cmd.rc:317
+#: cmd.rc:319
 msgid "File association missing for extension %1\n"
 msgstr "Falta l'associació de fitxer per l'extensió %1\n"
 
-#: cmd.rc:318
+#: cmd.rc:320
 msgid "No open command associated with file type '%1'\n"
 msgstr "Cap ordre d'obertura associat amb el tipus de fitxer '%1'\n"
 
-#: cmd.rc:319
+#: cmd.rc:321
 msgid "Overwrite %1?"
 msgstr "Sobreescriure %1?"
 
-#: cmd.rc:320
+#: cmd.rc:322
 msgid "More..."
 msgstr "Més..."
 
-#: cmd.rc:321
+#: cmd.rc:323
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "Línia en processament batch possiblement truncada. Usant:\n"
 
-#: cmd.rc:323
+#: cmd.rc:325
 msgid "Argument missing\n"
 msgstr "Falta la paràmetre\n"
 
-#: cmd.rc:324
+#: cmd.rc:326
 msgid "Syntax error\n"
 msgstr "Error de sintaxi\n"
 
-#: cmd.rc:326
+#: cmd.rc:328
 msgid "No help available for %1\n"
 msgstr "Cap ajuda disponible per %1\n"
 
-#: cmd.rc:327
+#: cmd.rc:329
 msgid "Target to GOTO not found\n"
 msgstr "Destinació del GOTO no trobat\n"
 
-#: cmd.rc:328
+#: cmd.rc:330
 msgid "Current Date is %1\n"
 msgstr "La Data Actual és %1\n"
 
-#: cmd.rc:329
+#: cmd.rc:331
 msgid "Current Time is %1\n"
 msgstr "L'Hora Actual és %1\n"
 
-#: cmd.rc:330
+#: cmd.rc:332
 msgid "Enter new date: "
 msgstr "Introduïu data nova: "
 
-#: cmd.rc:331
+#: cmd.rc:333
 msgid "Enter new time: "
 msgstr "Introduïu hora nova: "
 
-#: cmd.rc:332
+#: cmd.rc:334
 msgid "Environment variable %1 not defined\n"
 msgstr "Variable d'entorn %1 no definida\n"
 
-#: cmd.rc:333 xcopy.rc:38
+#: cmd.rc:335 xcopy.rc:38
 msgid "Failed to open '%1'\n"
 msgstr "S'ha fallat en obrir '%1'\n"
 
-#: cmd.rc:334
+#: cmd.rc:336
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "No es pot trucar a una etiqueta batch fora d'un script batch\n"
 
-#: cmd.rc:335 xcopy.rc:42
+#: cmd.rc:337 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr ""
 
-#: cmd.rc:336
+#: cmd.rc:338
 msgid "Delete %1?"
 msgstr "Suprimeix %1?"
 
-#: cmd.rc:337
+#: cmd.rc:339
 msgid "Echo is %1\n"
 msgstr "L'eco està %1\n"
 
-#: cmd.rc:338
+#: cmd.rc:340
 msgid "Verify is %1\n"
 msgstr "La verificació està %1\n"
 
-#: cmd.rc:339
+#: cmd.rc:341
 msgid "Verify must be ON or OFF\n"
 msgstr "La verificació ha d'estar ON o OFF\n"
 
-#: cmd.rc:340
+#: cmd.rc:342
 msgid "Parameter error\n"
 msgstr "Error de paràmetre\n"
 
-#: cmd.rc:341
+#: cmd.rc:343
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
@@ -10175,76 +10182,76 @@ msgstr ""
 "El Nombre de Sèrie del Volum és %1!04x!-%2!04x!\n"
 "\n"
 
-#: cmd.rc:342
+#: cmd.rc:344
 msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "Etiqueta de volum (11 caràcters, <Enter> per cap)?"
 
-#: cmd.rc:343
+#: cmd.rc:345
 msgid "PATH not found\n"
 msgstr "PATH no trobada\n"
 
-#: cmd.rc:344
+#: cmd.rc:346
 msgid "Press any key to continue... "
 msgstr "Premeu qualsevol tecla per continuar... "
 
-#: cmd.rc:345
+#: cmd.rc:347
 msgid "Wine Command Prompt"
 msgstr "Línia d'Ordres del Wine"
 
-#: cmd.rc:346
+#: cmd.rc:348
 #, fuzzy
 #| msgid "CMD Version %1!S!\n"
 msgid "Wine CMD Version %1!S!\n"
 msgstr "Versió de CMD %1!S!\n"
 
-#: cmd.rc:347
+#: cmd.rc:349
 msgid "More? "
 msgstr "Més? "
 
-#: cmd.rc:348
+#: cmd.rc:350
 msgid "The input line is too long.\n"
 msgstr "La línia d'entrada és massa llarga.\n"
 
-#: cmd.rc:349
+#: cmd.rc:351
 msgid "Volume in drive %1!c! is %2\n"
 msgstr "El volum en la unitat %1!c! és %2\n"
 
-#: cmd.rc:350
+#: cmd.rc:352
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr "El volum en la unitat %1!c! no té etiqueta.\n"
 
-#: cmd.rc:351
+#: cmd.rc:353
 msgid " (Yes|No)"
 msgstr " (Sí|No)"
 
-#: cmd.rc:352
+#: cmd.rc:354
 msgid " (Yes|No|All)"
 msgstr " (Sí|No|Tots)"
 
-#: cmd.rc:353
+#: cmd.rc:355
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
 msgstr ""
 
-#: cmd.rc:354
+#: cmd.rc:356
 msgid "Division by zero error.\n"
 msgstr ""
 
-#: cmd.rc:355
+#: cmd.rc:357
 msgid "Expected an operand.\n"
 msgstr ""
 
-#: cmd.rc:356
+#: cmd.rc:358
 #, fuzzy
 #| msgid "Unexpected network error.\n"
 msgid "Expected an operator.\n"
 msgstr "Error de xarxa inesperat.\n"
 
-#: cmd.rc:357
+#: cmd.rc:359
 msgid "Mismatch in parentheses.\n"
 msgstr ""
 
-#: cmd.rc:358
+#: cmd.rc:360
 msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"

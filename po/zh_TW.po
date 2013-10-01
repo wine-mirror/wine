@@ -9109,7 +9109,7 @@ msgstr "處理參照時產生迴圈"
 msgid "Referral hop limit exceeded"
 msgstr "超出了參照躍點限制"
 
-#: attrib.rc:27 cmd.rc:322
+#: attrib.rc:27 cmd.rc:324
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -9117,7 +9117,7 @@ msgstr ""
 "尚未實作\n"
 "\n"
 
-#: attrib.rc:28 cmd.rc:325
+#: attrib.rc:28 cmd.rc:327
 msgid "%1: File Not Found\n"
 msgstr "%1: 找不到檔案\n"
 
@@ -9275,17 +9275,24 @@ msgstr ""
 msgid "ERASE <filename> deletes a file or set of files.\n"
 msgstr "ERASE <檔名> 刪除一個檔案或一組檔案。\n"
 
-#: cmd.rc:66
+#: cmd.rc:68
+#, fuzzy
+#| msgid ""
+#| "The FOR command is used to execute a command for each of a set of files.\n"
+#| "\n"
+#| "Syntax: FOR %variable IN (set) DO command\n"
 msgid ""
 "The FOR command is used to execute a command for each of a set of files.\n"
 "\n"
-"Syntax: FOR %variable IN (set) DO command\n"
+"Usage: FOR %variable IN (set) DO command\n"
+"\n"
+"The % sign must be doubled when using FOR in a batch file.\n"
 msgstr ""
 "FOR 命令用來向檔案集合中的每一個檔案執行命令。\n"
 "\n"
 "語法：FOR %變數 IN (集合) DO 命令\n"
 
-#: cmd.rc:78
+#: cmd.rc:80
 msgid ""
 "The GOTO command transfers execution to another statement within a\n"
 "batch file.\n"
@@ -9309,7 +9316,7 @@ msgstr ""
 "\n"
 "GOTO 用於互動模式中將沒有任何效果。\n"
 
-#: cmd.rc:81
+#: cmd.rc:83
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
@@ -9317,7 +9324,7 @@ msgstr ""
 "HELP <命令> 顯示關於某一主題的簡明細節。\n"
 "HELP 不加引數時將顯示 CMD 所有的內建命令。\n"
 
-#: cmd.rc:91
+#: cmd.rc:93
 msgid ""
 "IF is used to conditionally execute a command.\n"
 "\n"
@@ -9337,7 +9344,7 @@ msgstr ""
 "在命令的第二種形式中，字串一和字串二必須位於雙引號之中。\n"
 "比較的動作是不分大小寫的。\n"
 
-#: cmd.rc:97
+#: cmd.rc:99
 msgid ""
 "LABEL is used to set a disk volume label.\n"
 "\n"
@@ -9351,15 +9358,15 @@ msgstr ""
 "命令將向您提示詢問新的卷冊標貼用於給定的儲存裝置。\n"
 "您可以利用 VOL 命令來顯示磁碟卷冊標貼。\n"
 
-#: cmd.rc:100
+#: cmd.rc:102
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
 msgstr "MD <名稱> 是 MKDIR 的縮寫版本。它會建立子目錄。\n"
 
-#: cmd.rc:101
+#: cmd.rc:103
 msgid "MKDIR <name> creates a subdirectory.\n"
 msgstr "MKDIR <名稱> 建立子目錄。\n"
 
-#: cmd.rc:108
+#: cmd.rc:110
 msgid ""
 "MOVE relocates a file or directory to a new point within the file system.\n"
 "\n"
@@ -9376,7 +9383,7 @@ msgstr ""
 "\n"
 "如果舊的和新的位置在不同的 DOS 儲存裝置代號之上，MOVE 將會失敗。\n"
 
-#: cmd.rc:119
+#: cmd.rc:121
 msgid ""
 "PATH displays or changes the cmd search path.\n"
 "\n"
@@ -9398,7 +9405,7 @@ msgstr ""
 "舉例來說：\n"
 "PATH %PATH%;c:\\temp\n"
 
-#: cmd.rc:125
+#: cmd.rc:127
 msgid ""
 "PAUSE displays a message on the screen asking the user to press a key.\n"
 "\n"
@@ -9410,7 +9417,7 @@ msgstr ""
 "主要用於批次檔中，以允許使用者在前一個命令的\n"
 "輸出捲動離開螢幕之前能夠去讀取它。\n"
 
-#: cmd.rc:146
+#: cmd.rc:148
 msgid ""
 "PROMPT sets the command-line prompt.\n"
 "\n"
@@ -9451,7 +9458,7 @@ msgstr ""
 "提示字串也可以經由改變 PROMPT 環境變數而變更，\n"
 "因此命令 SET PROMPT=text 與 PROMPT text 具有相同的效果。\n"
 
-#: cmd.rc:150
+#: cmd.rc:152
 msgid ""
 "A command line beginning with REM (followed by a space) performs no\n"
 "action, and can therefore be used as a comment in a batch file.\n"
@@ -9459,23 +9466,23 @@ msgstr ""
 "以 REM 起始的命令列 (之後緊接空格) 不會進行任何\n"
 "動作，因而可以做為批次檔中的註釋。\n"
 
-#: cmd.rc:153
+#: cmd.rc:155
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
 msgstr "REN <檔名> 是 RENAME 的簡短版本。它會重新命名檔案。\n"
 
-#: cmd.rc:154
+#: cmd.rc:156
 msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <檔名> 重新命名檔案。\n"
 
-#: cmd.rc:156
+#: cmd.rc:158
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
 msgstr "RD <目錄> 是 RMDIR 的簡短版本。它會刪除子目錄。\n"
 
-#: cmd.rc:157
+#: cmd.rc:159
 msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgstr "RMDIR <目錄> 刪除子目錄。\n"
 
-#: cmd.rc:201
+#: cmd.rc:203
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
 "\n"
@@ -9510,7 +9517,7 @@ msgstr ""
 "還要多出更多變數值。要注意的是，從 cmd 之中是不可能\n"
 "去影響作業系統的環境。\n"
 
-#: cmd.rc:206
+#: cmd.rc:208
 msgid ""
 "SHIFT is used in a batch file to remove one parameter from the head of\n"
 "the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
@@ -9520,7 +9527,7 @@ msgstr ""
 "參數，因此參數 2 會成為參數 1... 等等。如果從命令列呼叫它，\n"
 "將不會有任何效果。\n"
 
-#: cmd.rc:183 start.rc:50
+#: cmd.rc:185 start.rc:50
 msgid ""
 "Start a program, or open a document in the program normally used for files "
 "with that suffix.\n"
@@ -9574,15 +9581,15 @@ msgstr ""
 "/ProgIDOpen  使用指定的 progID 開啟文件。\n"
 "/?           顯示這份說明然後離開。\n"
 
-#: cmd.rc:208
+#: cmd.rc:210
 msgid "TIME sets or shows the current system time.\n"
 msgstr "TIME 設定或顯示目前的系統時間。\n"
 
-#: cmd.rc:210
+#: cmd.rc:212
 msgid "TITLE <string> sets the window title for the cmd window.\n"
 msgstr "TITLE <字串> 設定 cmd 視窗的視窗標題。\n"
 
-#: cmd.rc:214
+#: cmd.rc:216
 msgid ""
 "TYPE <filename> copies <filename> to the console device (or elsewhere\n"
 "if redirected). No check is made that the file is readable text.\n"
@@ -9590,7 +9597,7 @@ msgstr ""
 "TYPE <檔名> 將 <檔名> 的內容複製到主控臺裝置 (或是其他被\n"
 "重新導向的地方)。不會檢查該檔案是否為可讀的文字。\n"
 
-#: cmd.rc:223
+#: cmd.rc:225
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
@@ -9608,15 +9615,15 @@ msgstr ""
 "\n"
 "驗證旗標在 Wine 中沒有任何功能。\n"
 
-#: cmd.rc:226
+#: cmd.rc:228
 msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER 顯示您正在執行的 cmd 版本。\n"
 
-#: cmd.rc:228
+#: cmd.rc:230
 msgid "VOL shows the volume label of a disk device.\n"
 msgstr "VOL 顯示磁碟裝置的卷冊標貼。\n"
 
-#: cmd.rc:232
+#: cmd.rc:234
 msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file\n"
 "which were introduced by a preceding SETLOCAL.\n"
@@ -9624,7 +9631,7 @@ msgstr ""
 "ENDLOCAL 在批次檔中結束本地的環境變更\n"
 "而這些是由之前的 SETLOCAL 所引入。\n"
 
-#: cmd.rc:240
+#: cmd.rc:242
 msgid ""
 "SETLOCAL starts localization of environment changes in a batch file.\n"
 "\n"
@@ -9640,7 +9647,7 @@ msgstr ""
 "的結束，取決於誰先出現)，前一個環境的設定值\n"
 "則於該點被儲存。\n"
 
-#: cmd.rc:243
+#: cmd.rc:245
 msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
@@ -9648,11 +9655,11 @@ msgstr ""
 "PUSHD <目錄名> 儲存目前的目錄到\n"
 "堆疊中，然後變更現行目錄到所給定的目錄。\n"
 
-#: cmd.rc:245
+#: cmd.rc:247
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
 msgstr "POPD 變更現行目錄到上一個利用 PUSHD 儲存的目錄。\n"
 
-#: cmd.rc:253
+#: cmd.rc:255
 msgid ""
 "ASSOC shows or modifies file extension associations.\n"
 "\n"
@@ -9671,7 +9678,7 @@ msgstr ""
 "如果只使用副檔名，則顯示它目前的關聯。\n"
 "在等號之號如果沒有指定檔案類型就移除目前的任何關聯。\n"
 
-#: cmd.rc:264
+#: cmd.rc:266
 msgid ""
 "FTYPE shows or modifies open commands associated with file types.\n"
 "\n"
@@ -9692,11 +9699,11 @@ msgstr ""
 "如果只使用檔案類型，則顯示關聯的任何開啟命令字串。\n"
 "在等號之號如果沒有指定檔案類型就移除對於給定檔案型態的任何關聯命令字串。\n"
 
-#: cmd.rc:266
+#: cmd.rc:268
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr "MORE 以分頁的方式顯示檔案的輸出或管線的輸入。\n"
 
-#: cmd.rc:270
+#: cmd.rc:272
 msgid ""
 "CHOICE displays a text and waits, until the User\n"
 "presses an allowed Key from a selectable list.\n"
@@ -9706,7 +9713,7 @@ msgstr ""
 "從可選取的清單中按下允許的鍵。\n"
 "CHOICE 主要用來在批次檔中建構選單選擇。\n"
 
-#: cmd.rc:274
+#: cmd.rc:276
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
@@ -9714,7 +9721,7 @@ msgstr ""
 "EXIT 終止目前的命令作業階段並回到\n"
 "您從其調用 cmd 的作業系統或命令殼。\n"
 
-#: cmd.rc:312
+#: cmd.rc:314
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -9794,110 +9801,110 @@ msgstr ""
 "\n"
 "輸入 HELP <命令> 以獲得關於以上任何命令的進一步資訊。\n"
 
-#: cmd.rc:314
+#: cmd.rc:316
 msgid "Are you sure?"
 msgstr "您確定嗎？"
 
-#: cmd.rc:315 xcopy.rc:40
+#: cmd.rc:317 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "Y"
 
-#: cmd.rc:316 xcopy.rc:41
+#: cmd.rc:318 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: cmd.rc:317
+#: cmd.rc:319
 msgid "File association missing for extension %1\n"
 msgstr "缺少用於延伸檔名 %1 的檔案關聯\n"
 
-#: cmd.rc:318
+#: cmd.rc:320
 msgid "No open command associated with file type '%1'\n"
 msgstr "沒有與檔案類型 %1 相關聯的開啟命令\n"
 
-#: cmd.rc:319
+#: cmd.rc:321
 msgid "Overwrite %1?"
 msgstr "覆寫 %1？"
 
-#: cmd.rc:320
+#: cmd.rc:322
 msgid "More..."
 msgstr "更多..."
 
-#: cmd.rc:321
+#: cmd.rc:323
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "命令列於批次處理時可能會被截斷。使用：\n"
 
-#: cmd.rc:323
+#: cmd.rc:325
 msgid "Argument missing\n"
 msgstr "缺少引數\n"
 
-#: cmd.rc:324
+#: cmd.rc:326
 msgid "Syntax error\n"
 msgstr "語法錯誤\n"
 
-#: cmd.rc:326
+#: cmd.rc:328
 msgid "No help available for %1\n"
 msgstr "沒有關於 %1 的說明\n"
 
-#: cmd.rc:327
+#: cmd.rc:329
 msgid "Target to GOTO not found\n"
 msgstr "找不到 GOTO 的目標\n"
 
-#: cmd.rc:328
+#: cmd.rc:330
 msgid "Current Date is %1\n"
 msgstr "今天是 %1\n"
 
-#: cmd.rc:329
+#: cmd.rc:331
 msgid "Current Time is %1\n"
 msgstr "現在時間是 %1\n"
 
-#: cmd.rc:330
+#: cmd.rc:332
 msgid "Enter new date: "
 msgstr "輸入新日期："
 
-#: cmd.rc:331
+#: cmd.rc:333
 msgid "Enter new time: "
 msgstr "輸入新時間："
 
-#: cmd.rc:332
+#: cmd.rc:334
 msgid "Environment variable %1 not defined\n"
 msgstr "環境變數 %1 未定義\n"
 
-#: cmd.rc:333 xcopy.rc:38
+#: cmd.rc:335 xcopy.rc:38
 msgid "Failed to open '%1'\n"
 msgstr "開啟 %1 失敗\n"
 
-#: cmd.rc:334
+#: cmd.rc:336
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "無法呼叫批次命令稿外部的批次標貼\n"
 
-#: cmd.rc:335 xcopy.rc:42
+#: cmd.rc:337 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "A"
 
-#: cmd.rc:336
+#: cmd.rc:338
 msgid "Delete %1?"
 msgstr "刪除 %1？"
 
-#: cmd.rc:337
+#: cmd.rc:339
 msgid "Echo is %1\n"
 msgstr "回應為 %1\n"
 
-#: cmd.rc:338
+#: cmd.rc:340
 msgid "Verify is %1\n"
 msgstr "驗證為 %1\n"
 
-#: cmd.rc:339
+#: cmd.rc:341
 msgid "Verify must be ON or OFF\n"
 msgstr "驗證必須為 ON 或 OFF\n"
 
-#: cmd.rc:340
+#: cmd.rc:342
 msgid "Parameter error\n"
 msgstr "參數錯誤\n"
 
-#: cmd.rc:341
+#: cmd.rc:343
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
@@ -9905,74 +9912,74 @@ msgstr ""
 "卷冊序號是 %1!04x!-%2!04x!\n"
 "\n"
 
-#: cmd.rc:342
+#: cmd.rc:344
 msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "卷冊標貼 (11 個字元，<Enter> 表示沒有)？"
 
-#: cmd.rc:343
+#: cmd.rc:345
 msgid "PATH not found\n"
 msgstr "找不到 PATH\n"
 
-#: cmd.rc:344
+#: cmd.rc:346
 msgid "Press any key to continue... "
 msgstr "按下任何鍵繼續... "
 
-#: cmd.rc:345
+#: cmd.rc:347
 msgid "Wine Command Prompt"
 msgstr "Wine 命令提示符號"
 
-#: cmd.rc:346
+#: cmd.rc:348
 msgid "Wine CMD Version %1!S!\n"
 msgstr "Wine CMD 版本 %1!S!\n"
 
-#: cmd.rc:347
+#: cmd.rc:349
 msgid "More? "
 msgstr "更多？"
 
-#: cmd.rc:348
+#: cmd.rc:350
 msgid "The input line is too long.\n"
 msgstr "輸入列太長。\n"
 
-#: cmd.rc:349
+#: cmd.rc:351
 msgid "Volume in drive %1!c! is %2\n"
 msgstr "位於儲存裝置 %1!c! 的卷冊為 %2\n"
 
-#: cmd.rc:350
+#: cmd.rc:352
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr "位於儲存裝置 %1!c! 的卷冊沒有任何標貼。\n"
 
-#: cmd.rc:351
+#: cmd.rc:353
 #, fuzzy
 msgid " (Yes|No)"
 msgstr " (是|否)"
 
-#: cmd.rc:352
+#: cmd.rc:354
 #, fuzzy
 msgid " (Yes|No|All)"
 msgstr " (是|否|全部)"
 
-#: cmd.rc:353
+#: cmd.rc:355
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
 msgstr "無法識別 %1 為內部、外部命令或是批次命令稿。\n"
 
-#: cmd.rc:354
+#: cmd.rc:356
 msgid "Division by zero error.\n"
 msgstr "被零除的錯誤。\n"
 
-#: cmd.rc:355
+#: cmd.rc:357
 msgid "Expected an operand.\n"
 msgstr "預期為一個運算元。\n"
 
-#: cmd.rc:356
+#: cmd.rc:358
 msgid "Expected an operator.\n"
 msgstr "預期為一個運算子。\n"
 
-#: cmd.rc:357
+#: cmd.rc:359
 msgid "Mismatch in parentheses.\n"
 msgstr "小括號不匹配。\n"
 
-#: cmd.rc:358
+#: cmd.rc:360
 msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"

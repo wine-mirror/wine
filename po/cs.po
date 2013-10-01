@@ -9153,7 +9153,7 @@ msgstr ""
 msgid "Referral hop limit exceeded"
 msgstr ""
 
-#: attrib.rc:27 cmd.rc:322
+#: attrib.rc:27 cmd.rc:324
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -9161,7 +9161,7 @@ msgstr ""
 "Doposud neimplementováno\n"
 "\n"
 
-#: attrib.rc:28 cmd.rc:325
+#: attrib.rc:28 cmd.rc:327
 msgid "%1: File Not Found\n"
 msgstr "%1: Soubor nebyl nalezen\n"
 
@@ -9302,17 +9302,24 @@ msgstr ""
 msgid "ERASE <filename> deletes a file or set of files.\n"
 msgstr "ERASE <název_souboru> smaže jeden či více souborů.\n"
 
-#: cmd.rc:66
+#: cmd.rc:68
+#, fuzzy
+#| msgid ""
+#| "The FOR command is used to execute a command for each of a set of files.\n"
+#| "\n"
+#| "Syntax: FOR %variable IN (set) DO command\n"
 msgid ""
 "The FOR command is used to execute a command for each of a set of files.\n"
 "\n"
-"Syntax: FOR %variable IN (set) DO command\n"
+"Usage: FOR %variable IN (set) DO command\n"
+"\n"
+"The % sign must be doubled when using FOR in a batch file.\n"
 msgstr ""
 "Příkaz FOR vykoná zadanou akci pro každý ze zadané skupiny souborů.\n"
 "\n"
 "Syntaxe: FOR %proměnná IN (skupina souborů) DO akce\n"
 
-#: cmd.rc:78
+#: cmd.rc:80
 msgid ""
 "The GOTO command transfers execution to another statement within a\n"
 "batch file.\n"
@@ -9336,7 +9343,7 @@ msgstr ""
 "\n"
 "GOTO se nedá použít interaktivně.\n"
 
-#: cmd.rc:81
+#: cmd.rc:83
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
@@ -9345,7 +9352,7 @@ msgstr ""
 "HELP bez argumentů zobrazí nápovědu pro všechny příkazy, které jsou součástí "
 "CMD.\n"
 
-#: cmd.rc:91
+#: cmd.rc:93
 msgid ""
 "IF is used to conditionally execute a command.\n"
 "\n"
@@ -9365,7 +9372,7 @@ msgstr ""
 "Ve druhé formě příkazu musí být řetězec1 a řetězec2 uzavřeny v dvojitých\n"
 "uvozovkách. Srovnání nezohledňuje velikost písmen.\n"
 
-#: cmd.rc:97
+#: cmd.rc:99
 msgid ""
 "LABEL is used to set a disk volume label.\n"
 "\n"
@@ -9379,15 +9386,15 @@ msgstr ""
 "Budete vyzváni k zadání jmenovky.\n"
 "Jmenovku si můžete zobrazit příkazem VOL.\n"
 
-#: cmd.rc:100
+#: cmd.rc:102
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
 msgstr "MD <název> je zkratka pro MKDIR. Vytvoří podsložku.\n"
 
-#: cmd.rc:101
+#: cmd.rc:103
 msgid "MKDIR <name> creates a subdirectory.\n"
 msgstr "MKDIR <název> vytvoří podsložku.\n"
 
-#: cmd.rc:108
+#: cmd.rc:110
 msgid ""
 "MOVE relocates a file or directory to a new point within the file system.\n"
 "\n"
@@ -9404,7 +9411,7 @@ msgstr ""
 "MOVE selže jsou-li zdrojová a cílová oblast na jednotkách s jinými DOS "
 "písmeny disků.\n"
 
-#: cmd.rc:119
+#: cmd.rc:121
 msgid ""
 "PATH displays or changes the cmd search path.\n"
 "\n"
@@ -9426,7 +9433,7 @@ msgstr ""
 "například:\n"
 "PATH %PATH%;c:\\temp\n"
 
-#: cmd.rc:125
+#: cmd.rc:127
 msgid ""
 "PAUSE displays a message on the screen asking the user to press a key.\n"
 "\n"
@@ -9434,7 +9441,7 @@ msgid ""
 "of a previous command before it scrolls off the screen.\n"
 msgstr ""
 
-#: cmd.rc:146
+#: cmd.rc:148
 #, fuzzy
 msgid ""
 "PROMPT sets the command-line prompt.\n"
@@ -9478,7 +9485,7 @@ msgstr ""
 "Prompt může být změněn i změnou proměnné prostředí PROMPT,\n"
 "čili příkaz 'SET PROMPT=text' má tentýž efekt jako 'PROMPT text'\n"
 
-#: cmd.rc:150
+#: cmd.rc:152
 msgid ""
 "A command line beginning with REM (followed by a space) performs no\n"
 "action, and can therefore be used as a comment in a batch file.\n"
@@ -9486,24 +9493,24 @@ msgstr ""
 "Řádky začínající REM (následovaným mezerou)\n"
 "nejsou vykonány. REM je proto používán jako komentářový příkaz.\n"
 
-#: cmd.rc:153
+#: cmd.rc:155
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
 msgstr ""
 "REN <název_souboru> je zkratkou pro RENAME. Přejmenuje určený soubor.\n"
 
-#: cmd.rc:154
+#: cmd.rc:156
 msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <název_souboru> přejmenuje soubor.\n"
 
-#: cmd.rc:156
+#: cmd.rc:158
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
 msgstr "RD <složka> je zkratkou pro RMDIR. Smaže zadanou podsložku.\n"
 
-#: cmd.rc:157
+#: cmd.rc:159
 msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgstr "RMDIR <složka> smaže podsložku.\n"
 
-#: cmd.rc:201
+#: cmd.rc:203
 #, fuzzy
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
@@ -9540,7 +9547,7 @@ msgstr ""
 "prostředí, než u nativní Win32 implementace. Není možné\n"
 "měnit proměnné prostředí hostitelského operačního systému z cmd.\n"
 
-#: cmd.rc:206
+#: cmd.rc:208
 msgid ""
 "SHIFT is used in a batch file to remove one parameter from the head of\n"
 "the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
@@ -9551,7 +9558,7 @@ msgstr ""
 "jejich seznamu, takže parametr 2 se stane parametrem 1 atd. Nemá žádný\n"
 "efekt, je-li zadán na příkazovou řádku.\n"
 
-#: cmd.rc:183 start.rc:50
+#: cmd.rc:185 start.rc:50
 msgid ""
 "Start a program, or open a document in the program normally used for files "
 "with that suffix.\n"
@@ -9581,15 +9588,15 @@ msgid ""
 "/?           Display this help and exit.\n"
 msgstr ""
 
-#: cmd.rc:208
+#: cmd.rc:210
 msgid "TIME sets or shows the current system time.\n"
 msgstr "TIME nastaví či zobrazí aktuální systémový čas.\n"
 
-#: cmd.rc:210
+#: cmd.rc:212
 msgid "TITLE <string> sets the window title for the cmd window.\n"
 msgstr "TITLE <řetězec> nastaví titulek terminálového okna.\n"
 
-#: cmd.rc:214
+#: cmd.rc:216
 msgid ""
 "TYPE <filename> copies <filename> to the console device (or elsewhere\n"
 "if redirected). No check is made that the file is readable text.\n"
@@ -9597,7 +9604,7 @@ msgstr ""
 "TYPE <soubor> vypíše <soubor> na konzolové zařízení (nebo jinam,\n"
 "je-li výstup přesměrován). Není zjišťováno, bude-li vypsán čitelný text.\n"
 
-#: cmd.rc:223
+#: cmd.rc:225
 #, fuzzy
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
@@ -9617,15 +9624,15 @@ msgstr ""
 "\n"
 "Příznak verify nemá ve Wine žádnou funkci.\n"
 
-#: cmd.rc:226
+#: cmd.rc:228
 msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER zobrazí verzi spuštěného programu cmd.\n"
 
-#: cmd.rc:228
+#: cmd.rc:230
 msgid "VOL shows the volume label of a disk device.\n"
 msgstr "VOL zobrazí označení svazku diskového zařízení.\n"
 
-#: cmd.rc:232
+#: cmd.rc:234
 msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file\n"
 "which were introduced by a preceding SETLOCAL.\n"
@@ -9633,7 +9640,7 @@ msgstr ""
 "ENDLOCAL zakončuje lokalizaci změn prostředí v dávkovém souboru\n"
 "které byly zavedeny předchozím SETLOCAL.\n"
 
-#: cmd.rc:240
+#: cmd.rc:242
 msgid ""
 "SETLOCAL starts localization of environment changes in a batch file.\n"
 "\n"
@@ -9643,17 +9650,17 @@ msgid ""
 "settings are restored.\n"
 msgstr ""
 
-#: cmd.rc:243
+#: cmd.rc:245
 msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
 msgstr ""
 
-#: cmd.rc:245
+#: cmd.rc:247
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
 msgstr ""
 
-#: cmd.rc:253
+#: cmd.rc:255
 msgid ""
 "ASSOC shows or modifies file extension associations.\n"
 "\n"
@@ -9665,7 +9672,7 @@ msgid ""
 "association, if any.\n"
 msgstr ""
 
-#: cmd.rc:264
+#: cmd.rc:266
 msgid ""
 "FTYPE shows or modifies open commands associated with file types.\n"
 "\n"
@@ -9679,18 +9686,18 @@ msgid ""
 "associated to the specified file type.\n"
 msgstr ""
 
-#: cmd.rc:266
+#: cmd.rc:268
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr "MORE zobrazuje obsah souborů či směrovaný vstup po obrazovkách.\n"
 
-#: cmd.rc:270
+#: cmd.rc:272
 msgid ""
 "CHOICE displays a text and waits, until the User\n"
 "presses an allowed Key from a selectable list.\n"
 "CHOICE is mainly used to build a menu selection in a batch file.\n"
 msgstr ""
 
-#: cmd.rc:274
+#: cmd.rc:276
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
@@ -9698,7 +9705,7 @@ msgstr ""
 "EXIT ukončí běžící sezení a vrátí kontrolu operačnímu systému\n"
 "nebo příkazovému interpretu, ze kterého byl cmd spuštěn.\n"
 
-#: cmd.rc:312
+#: cmd.rc:314
 #, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
@@ -9772,110 +9779,110 @@ msgstr ""
 "Zadejte HELP <příkaz> pro podrobnější informace o některém z výše uvedených "
 "příkazů\n"
 
-#: cmd.rc:314
+#: cmd.rc:316
 msgid "Are you sure?"
 msgstr "Jste si jist(á)?"
 
-#: cmd.rc:315 xcopy.rc:40
+#: cmd.rc:317 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "A"
 
-#: cmd.rc:316 xcopy.rc:41
+#: cmd.rc:318 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: cmd.rc:317
+#: cmd.rc:319
 msgid "File association missing for extension %1\n"
 msgstr "Pro soubory s příponou %1 není přiřazena aplikace\n"
 
-#: cmd.rc:318
+#: cmd.rc:320
 msgid "No open command associated with file type '%1'\n"
 msgstr "Pro otevírání souboru typu „%1“ není přiřazen žádný soubor\n"
 
-#: cmd.rc:319
+#: cmd.rc:321
 msgid "Overwrite %1?"
 msgstr "Přepsat %1?"
 
-#: cmd.rc:320
+#: cmd.rc:322
 msgid "More..."
 msgstr "Více..."
 
-#: cmd.rc:321
+#: cmd.rc:323
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "Řádek v dávkovém zpracování je možná zkrácen. Použití:\n"
 
-#: cmd.rc:323
+#: cmd.rc:325
 msgid "Argument missing\n"
 msgstr "Chybějící argument\n"
 
-#: cmd.rc:324
+#: cmd.rc:326
 msgid "Syntax error\n"
 msgstr "Chyba syntaxe\n"
 
-#: cmd.rc:326
+#: cmd.rc:328
 msgid "No help available for %1\n"
 msgstr "Pro %1 není k dispozici nápověda\n"
 
-#: cmd.rc:327
+#: cmd.rc:329
 msgid "Target to GOTO not found\n"
 msgstr "Cíl určený, v GOTO, nebyl nalezen\n"
 
-#: cmd.rc:328
+#: cmd.rc:330
 msgid "Current Date is %1\n"
 msgstr "Aktuální datum je %1\n"
 
-#: cmd.rc:329
+#: cmd.rc:331
 msgid "Current Time is %1\n"
 msgstr "Aktuální čas je %1\n"
 
-#: cmd.rc:330
+#: cmd.rc:332
 msgid "Enter new date: "
 msgstr "Zadejte nový čas: "
 
-#: cmd.rc:331
+#: cmd.rc:333
 msgid "Enter new time: "
 msgstr "Zadejte nové datum: "
 
-#: cmd.rc:332
+#: cmd.rc:334
 msgid "Environment variable %1 not defined\n"
 msgstr "Proměnná prostředí %1 není definovaná\n"
 
-#: cmd.rc:333 xcopy.rc:38
+#: cmd.rc:335 xcopy.rc:38
 msgid "Failed to open '%1'\n"
 msgstr "Otevření „%1“ se nezdařilo\n"
 
-#: cmd.rc:334
+#: cmd.rc:336
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "Nelze volat označení dávky vně dávkového skriptu\n"
 
-#: cmd.rc:335 xcopy.rc:42
+#: cmd.rc:337 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "V"
 
-#: cmd.rc:336
+#: cmd.rc:338
 msgid "Delete %1?"
 msgstr "Smazat %1?"
 
-#: cmd.rc:337
+#: cmd.rc:339
 msgid "Echo is %1\n"
 msgstr ""
 
-#: cmd.rc:338
+#: cmd.rc:340
 msgid "Verify is %1\n"
 msgstr ""
 
-#: cmd.rc:339
+#: cmd.rc:341
 msgid "Verify must be ON or OFF\n"
 msgstr ""
 
-#: cmd.rc:340
+#: cmd.rc:342
 msgid "Parameter error\n"
 msgstr "Chyba parametru\n"
 
-#: cmd.rc:341
+#: cmd.rc:343
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
@@ -9883,72 +9890,72 @@ msgstr ""
 "Sériové číslo svazku je %1!04x!-%2!04x!\n"
 "\n"
 
-#: cmd.rc:342
+#: cmd.rc:344
 msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "Název svazku (max. 11 znaků, pro vynechání stiskněte <Enter>)?"
 
-#: cmd.rc:343
+#: cmd.rc:345
 msgid "PATH not found\n"
 msgstr "(proměnná) PATH nenalezena\n"
 
-#: cmd.rc:344
+#: cmd.rc:346
 msgid "Press any key to continue... "
 msgstr "Pro pokračování stiskněte libovolnou klávesu... "
 
-#: cmd.rc:345
+#: cmd.rc:347
 msgid "Wine Command Prompt"
 msgstr "Příkazový řádek Wine"
 
-#: cmd.rc:346
+#: cmd.rc:348
 msgid "Wine CMD Version %1!S!\n"
 msgstr "Verze příkazové řádky Wine  %1!S!\n"
 
-#: cmd.rc:347
+#: cmd.rc:349
 msgid "More? "
 msgstr "Více? "
 
-#: cmd.rc:348
+#: cmd.rc:350
 msgid "The input line is too long.\n"
 msgstr "Vstupní řádek je příliš dlouhý.\n"
 
-#: cmd.rc:349
+#: cmd.rc:351
 msgid "Volume in drive %1!c! is %2\n"
 msgstr "Svazek na disku %1!c! je %2\n"
 
-#: cmd.rc:350
+#: cmd.rc:352
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr "Svazek na disku %1!c! není pojmenován.\n"
 
-#: cmd.rc:351
+#: cmd.rc:353
 msgid " (Yes|No)"
 msgstr " (Ano|Ne)"
 
-#: cmd.rc:352
+#: cmd.rc:354
 msgid " (Yes|No|All)"
 msgstr " (Ano|Ne|Vše)"
 
-#: cmd.rc:353
+#: cmd.rc:355
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
 msgstr ""
 
-#: cmd.rc:354
+#: cmd.rc:356
 msgid "Division by zero error.\n"
 msgstr "Chyba – dělení nulou.\n"
 
-#: cmd.rc:355
+#: cmd.rc:357
 msgid "Expected an operand.\n"
 msgstr "Očekáván operand.\n"
 
-#: cmd.rc:356
+#: cmd.rc:358
 msgid "Expected an operator.\n"
 msgstr "Očekáván operátor.\n"
 
-#: cmd.rc:357
+#: cmd.rc:359
 msgid "Mismatch in parentheses.\n"
 msgstr ""
 
-#: cmd.rc:358
+#: cmd.rc:360
 msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"

@@ -9457,13 +9457,13 @@ msgstr "Понављај при руковању с упућивачима"
 msgid "Referral hop limit exceeded"
 msgstr "Ограничење чвора упућивача је прекорачено"
 
-#: attrib.rc:27 cmd.rc:322
+#: attrib.rc:27 cmd.rc:324
 msgid ""
 "Not Yet Implemented\n"
 "\n"
 msgstr ""
 
-#: attrib.rc:28 cmd.rc:325
+#: attrib.rc:28 cmd.rc:327
 #, fuzzy
 msgid "%1: File Not Found\n"
 msgstr "Датотека није пронађена"
@@ -9588,14 +9588,16 @@ msgstr ""
 msgid "ERASE <filename> deletes a file or set of files.\n"
 msgstr ""
 
-#: cmd.rc:66
+#: cmd.rc:68
 msgid ""
 "The FOR command is used to execute a command for each of a set of files.\n"
 "\n"
-"Syntax: FOR %variable IN (set) DO command\n"
+"Usage: FOR %variable IN (set) DO command\n"
+"\n"
+"The % sign must be doubled when using FOR in a batch file.\n"
 msgstr ""
 
-#: cmd.rc:78
+#: cmd.rc:80
 msgid ""
 "The GOTO command transfers execution to another statement within a\n"
 "batch file.\n"
@@ -9609,13 +9611,13 @@ msgid ""
 "GOTO has no effect when used interactively.\n"
 msgstr ""
 
-#: cmd.rc:81
+#: cmd.rc:83
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
 msgstr ""
 
-#: cmd.rc:91
+#: cmd.rc:93
 msgid ""
 "IF is used to conditionally execute a command.\n"
 "\n"
@@ -9627,7 +9629,7 @@ msgid ""
 "quotes. The comparison is not case-sensitive.\n"
 msgstr ""
 
-#: cmd.rc:97
+#: cmd.rc:99
 msgid ""
 "LABEL is used to set a disk volume label.\n"
 "\n"
@@ -9636,15 +9638,15 @@ msgid ""
 "You can display the disk volume label with the VOL command.\n"
 msgstr ""
 
-#: cmd.rc:100
+#: cmd.rc:102
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
 msgstr ""
 
-#: cmd.rc:101
+#: cmd.rc:103
 msgid "MKDIR <name> creates a subdirectory.\n"
 msgstr ""
 
-#: cmd.rc:108
+#: cmd.rc:110
 msgid ""
 "MOVE relocates a file or directory to a new point within the file system.\n"
 "\n"
@@ -9655,7 +9657,7 @@ msgid ""
 "MOVE fails if the old and new locations are on different DOS drive letters.\n"
 msgstr ""
 
-#: cmd.rc:119
+#: cmd.rc:121
 msgid ""
 "PATH displays or changes the cmd search path.\n"
 "\n"
@@ -9668,7 +9670,7 @@ msgid ""
 "PATH %PATH%;c:\\temp\n"
 msgstr ""
 
-#: cmd.rc:125
+#: cmd.rc:127
 msgid ""
 "PAUSE displays a message on the screen asking the user to press a key.\n"
 "\n"
@@ -9676,7 +9678,7 @@ msgid ""
 "of a previous command before it scrolls off the screen.\n"
 msgstr ""
 
-#: cmd.rc:146
+#: cmd.rc:148
 msgid ""
 "PROMPT sets the command-line prompt.\n"
 "\n"
@@ -9699,29 +9701,29 @@ msgid ""
 "so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'.\n"
 msgstr ""
 
-#: cmd.rc:150
+#: cmd.rc:152
 msgid ""
 "A command line beginning with REM (followed by a space) performs no\n"
 "action, and can therefore be used as a comment in a batch file.\n"
 msgstr ""
 
-#: cmd.rc:153
+#: cmd.rc:155
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
 msgstr ""
 
-#: cmd.rc:154
+#: cmd.rc:156
 msgid "RENAME <filename> renames a file.\n"
 msgstr ""
 
-#: cmd.rc:156
+#: cmd.rc:158
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
 msgstr ""
 
-#: cmd.rc:157
+#: cmd.rc:159
 msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgstr ""
 
-#: cmd.rc:201
+#: cmd.rc:203
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
 "\n"
@@ -9741,14 +9743,14 @@ msgid ""
 "not possible to affect the operating system environment from within cmd.\n"
 msgstr ""
 
-#: cmd.rc:206
+#: cmd.rc:208
 msgid ""
 "SHIFT is used in a batch file to remove one parameter from the head of\n"
 "the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
 "if called from the command line.\n"
 msgstr ""
 
-#: cmd.rc:183 start.rc:50
+#: cmd.rc:185 start.rc:50
 msgid ""
 "Start a program, or open a document in the program normally used for files "
 "with that suffix.\n"
@@ -9778,21 +9780,21 @@ msgid ""
 "/?           Display this help and exit.\n"
 msgstr ""
 
-#: cmd.rc:208
+#: cmd.rc:210
 msgid "TIME sets or shows the current system time.\n"
 msgstr ""
 
-#: cmd.rc:210
+#: cmd.rc:212
 msgid "TITLE <string> sets the window title for the cmd window.\n"
 msgstr ""
 
-#: cmd.rc:214
+#: cmd.rc:216
 msgid ""
 "TYPE <filename> copies <filename> to the console device (or elsewhere\n"
 "if redirected). No check is made that the file is readable text.\n"
 msgstr ""
 
-#: cmd.rc:223
+#: cmd.rc:225
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
@@ -9803,21 +9805,21 @@ msgid ""
 "The verify flag has no function in Wine.\n"
 msgstr ""
 
-#: cmd.rc:226
+#: cmd.rc:228
 msgid "VER displays the version of cmd you are running.\n"
 msgstr ""
 
-#: cmd.rc:228
+#: cmd.rc:230
 msgid "VOL shows the volume label of a disk device.\n"
 msgstr ""
 
-#: cmd.rc:232
+#: cmd.rc:234
 msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file\n"
 "which were introduced by a preceding SETLOCAL.\n"
 msgstr ""
 
-#: cmd.rc:240
+#: cmd.rc:242
 msgid ""
 "SETLOCAL starts localization of environment changes in a batch file.\n"
 "\n"
@@ -9827,17 +9829,17 @@ msgid ""
 "settings are restored.\n"
 msgstr ""
 
-#: cmd.rc:243
+#: cmd.rc:245
 msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
 msgstr ""
 
-#: cmd.rc:245
+#: cmd.rc:247
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
 msgstr ""
 
-#: cmd.rc:253
+#: cmd.rc:255
 msgid ""
 "ASSOC shows or modifies file extension associations.\n"
 "\n"
@@ -9849,7 +9851,7 @@ msgid ""
 "association, if any.\n"
 msgstr ""
 
-#: cmd.rc:264
+#: cmd.rc:266
 msgid ""
 "FTYPE shows or modifies open commands associated with file types.\n"
 "\n"
@@ -9863,24 +9865,24 @@ msgid ""
 "associated to the specified file type.\n"
 msgstr ""
 
-#: cmd.rc:266
+#: cmd.rc:268
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr ""
 
-#: cmd.rc:270
+#: cmd.rc:272
 msgid ""
 "CHOICE displays a text and waits, until the User\n"
 "presses an allowed Key from a selectable list.\n"
 "CHOICE is mainly used to build a menu selection in a batch file.\n"
 msgstr ""
 
-#: cmd.rc:274
+#: cmd.rc:276
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
 msgstr ""
 
-#: cmd.rc:312
+#: cmd.rc:314
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -9922,188 +9924,188 @@ msgid ""
 "Enter HELP <command> for further information on any of the above commands.\n"
 msgstr ""
 
-#: cmd.rc:314
+#: cmd.rc:316
 msgid "Are you sure?"
 msgstr ""
 
-#: cmd.rc:315 xcopy.rc:40
+#: cmd.rc:317 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr ""
 
-#: cmd.rc:316 xcopy.rc:41
+#: cmd.rc:318 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr ""
 
-#: cmd.rc:317
+#: cmd.rc:319
 msgid "File association missing for extension %1\n"
 msgstr ""
 
-#: cmd.rc:318
+#: cmd.rc:320
 msgid "No open command associated with file type '%1'\n"
 msgstr ""
 
-#: cmd.rc:319
+#: cmd.rc:321
 #, fuzzy
 msgid "Overwrite %1?"
 msgstr "Заменити %s? (Да|Не|Све)\n"
 
-#: cmd.rc:320
+#: cmd.rc:322
 msgid "More..."
 msgstr ""
 
-#: cmd.rc:321
+#: cmd.rc:323
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr ""
 
-#: cmd.rc:323
+#: cmd.rc:325
 msgid "Argument missing\n"
 msgstr ""
 
-#: cmd.rc:324
-msgid "Syntax error\n"
-msgstr ""
-
 #: cmd.rc:326
-#, fuzzy
-msgid "No help available for %1\n"
-msgstr "Недоступно; "
-
-#: cmd.rc:327
-msgid "Target to GOTO not found\n"
+msgid "Syntax error\n"
 msgstr ""
 
 #: cmd.rc:328
 #, fuzzy
-msgid "Current Date is %1\n"
-msgstr "&Текућа страна"
+msgid "No help available for %1\n"
+msgstr "Недоступно; "
 
 #: cmd.rc:329
-msgid "Current Time is %1\n"
+msgid "Target to GOTO not found\n"
 msgstr ""
 
 #: cmd.rc:330
-msgid "Enter new date: "
-msgstr ""
+#, fuzzy
+msgid "Current Date is %1\n"
+msgstr "&Текућа страна"
 
 #: cmd.rc:331
-msgid "Enter new time: "
+msgid "Current Time is %1\n"
 msgstr ""
 
 #: cmd.rc:332
+msgid "Enter new date: "
+msgstr ""
+
+#: cmd.rc:333
+msgid "Enter new time: "
+msgstr ""
+
+#: cmd.rc:334
 msgid "Environment variable %1 not defined\n"
 msgstr ""
 
-#: cmd.rc:333 xcopy.rc:38
+#: cmd.rc:335 xcopy.rc:38
 #, fuzzy
 msgid "Failed to open '%1'\n"
 msgstr "Отварање „%s“ датотеке није успело\n"
 
-#: cmd.rc:334
+#: cmd.rc:336
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr ""
 
-#: cmd.rc:335 xcopy.rc:42
+#: cmd.rc:337 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr ""
 
-#: cmd.rc:336
+#: cmd.rc:338
 #, fuzzy
 msgid "Delete %1?"
 msgstr "&Избриши"
 
-#: cmd.rc:337
+#: cmd.rc:339
 msgid "Echo is %1\n"
 msgstr ""
 
-#: cmd.rc:338
+#: cmd.rc:340
 msgid "Verify is %1\n"
 msgstr ""
 
-#: cmd.rc:339
+#: cmd.rc:341
 msgid "Verify must be ON or OFF\n"
 msgstr ""
 
-#: cmd.rc:340
+#: cmd.rc:342
 msgid "Parameter error\n"
 msgstr ""
 
-#: cmd.rc:341
+#: cmd.rc:343
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
 msgstr ""
 
-#: cmd.rc:342
+#: cmd.rc:344
 msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr ""
 
-#: cmd.rc:343
+#: cmd.rc:345
 msgid "PATH not found\n"
 msgstr ""
 
-#: cmd.rc:344
+#: cmd.rc:346
 msgid "Press any key to continue... "
 msgstr ""
 
-#: cmd.rc:345
+#: cmd.rc:347
 msgid "Wine Command Prompt"
 msgstr ""
 
-#: cmd.rc:346
+#: cmd.rc:348
 msgid "Wine CMD Version %1!S!\n"
 msgstr ""
 
-#: cmd.rc:347
+#: cmd.rc:349
 msgid "More? "
 msgstr ""
 
-#: cmd.rc:348
+#: cmd.rc:350
 msgid "The input line is too long.\n"
 msgstr ""
 
-#: cmd.rc:349
+#: cmd.rc:351
 msgid "Volume in drive %1!c! is %2\n"
 msgstr ""
 
-#: cmd.rc:350
+#: cmd.rc:352
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr ""
 
-#: cmd.rc:351
+#: cmd.rc:353
 #, fuzzy
 msgid " (Yes|No)"
 msgstr "%s? (Да|Не)\n"
 
-#: cmd.rc:352
+#: cmd.rc:354
 #, fuzzy
 msgid " (Yes|No|All)"
 msgstr "%s? (Да|Не)\n"
 
-#: cmd.rc:353
+#: cmd.rc:355
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
 msgstr ""
 
-#: cmd.rc:354
+#: cmd.rc:356
 msgid "Division by zero error.\n"
 msgstr ""
 
-#: cmd.rc:355
+#: cmd.rc:357
 msgid "Expected an operand.\n"
 msgstr ""
 
-#: cmd.rc:356
+#: cmd.rc:358
 msgid "Expected an operator.\n"
 msgstr ""
 
-#: cmd.rc:357
+#: cmd.rc:359
 msgid "Mismatch in parentheses.\n"
 msgstr ""
 
-#: cmd.rc:358
+#: cmd.rc:360
 msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"
