@@ -8515,10 +8515,14 @@ msgstr ""
 "ポートはデバイスにデータを送信中です。データの送信が終わるまで待ってからやり"
 "直して下さい。"
 
-#: winmm.rc:52
+#: winmm.rc:52 winmm.rc:125
+#, fuzzy
+#| msgid ""
+#| "The current MIDI Mapper setup refers to a MIDI device that is not "
+#| "installed on the system. Use MIDI Mapper to edit the setup."
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
-"on the system. Use MIDI Mapper to edit the setup."
+"on the system."
 msgstr ""
 "MIDIマッパの設定がシステムに装着されていないデバイスを参照しています。設定を"
 "変更するにはコントロールパネルの「MIDIマッパ」アプレットを使用して下さい。"
@@ -8932,15 +8936,6 @@ msgstr ""
 "指定されたMIDIデバイスはシステムに装着されていません。MIDIデバイスをインス"
 "トールするにはコントロールパネル内の「ハードウェアの追加と削除」アプレットを"
 "使用して下さい。"
-
-#: winmm.rc:125
-msgid ""
-"The current MIDI Mapper setup refers to a MIDI device that is not installed "
-"on the system. Use the MIDI Mapper option from the Control Panel to edit the "
-"setup."
-msgstr ""
-"MIDIマッパの設定がシステムに装着されていないデバイスを参照しています。設定を"
-"変更するにはコントロールパネルの「MIDIマッパ」アプレットを使用して下さい。"
 
 #: winmm.rc:126
 msgid "An error occurred with the specified port."

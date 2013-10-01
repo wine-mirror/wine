@@ -49,7 +49,7 @@ MIDIERR_UNPREPARED, 		"The MIDI header was not prepared. Use the Prepare functio
 MIDIERR_STILLPLAYING, 		"Cannot perform this operation while media data is still playing. Reset the device, or wait until the data is finished playing."
 MIDIERR_NOMAP, 			"A MIDI map was not found. There may be a problem with the driver, or the MIDIMAP.CFG file may be corrupt or missing."
 MIDIERR_NOTREADY, 		"The port is transmitting data to the device. Wait until the data has been transmitted, and then try again."
-MIDIERR_NODEVICE, 		"The current MIDI Mapper setup refers to a MIDI device that is not installed on the system. Use MIDI Mapper to edit the setup."
+MIDIERR_NODEVICE, 		"The current MIDI Mapper setup refers to a MIDI device that is not installed on the system."
 MIDIERR_INVALIDSETUP, 		"The current MIDI setup is damaged. Copy the original MIDIMAP.CFG file to the Windows SYSTEM directory, and then try again."
 
 /* MCI errors */
@@ -122,7 +122,7 @@ MCIERR_FILE_WRITE, 		"Cannot write to the specified file. Make sure you have eno
 MCIERR_SEQ_DIV_INCOMPATIBLE, 	"The time formats of the ""song pointer"" and SMPTE are mutually exclusive. You can't use them together."
 MCIERR_SEQ_NOMIDIPRESENT, 	"The system has no installed MIDI devices. Use the Drivers option from the Control Panel to install a MIDI driver."
 MCIERR_SEQ_PORT_INUSE, 		"The specified MIDI port is already in use. Wait until it is free; then try again."
-MCIERR_SEQ_PORT_MAPNODEVICE, 	"The current MIDI Mapper setup refers to a MIDI device that is not installed on the system. Use the MIDI Mapper option from the Control Panel to edit the setup."
+MCIERR_SEQ_PORT_MAPNODEVICE, 	"The current MIDI Mapper setup refers to a MIDI device that is not installed on the system."
 MCIERR_SEQ_PORT_MISCERROR, 	"An error occurred with the specified port."
 MCIERR_SEQ_PORT_NONEXISTENT, 	"The specified MIDI device is not installed on the system. Use the Drivers option from the Control Panel to install a MIDI device."
 MCIERR_SEQ_PORTUNSPECIFIED, 	"The system doesn't have a current MIDI port specified."

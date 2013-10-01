@@ -8590,10 +8590,14 @@ msgstr ""
 "De poort is bezig data ter versturen naar het apparaat. Wacht totdat alle "
 "data is verstuurd en probeer het dan opnieuw."
 
-#: winmm.rc:52
+#: winmm.rc:52 winmm.rc:125
+#, fuzzy
+#| msgid ""
+#| "The current MIDI Mapper setup refers to a MIDI device that is not "
+#| "installed on the system. Use MIDI Mapper to edit the setup."
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
-"on the system. Use MIDI Mapper to edit the setup."
+"on the system."
 msgstr ""
 "De huidige MIDI Mapper setup verwijst naar een MIDI-apparaat dat niet op het "
 "systeem aanwezig is. Gebruik MIDI Mapper om de instellingen aan te passen."
@@ -9023,16 +9027,6 @@ msgstr ""
 "Het opgegeven MIDI Mapper apparaat is niet op het systeem geïnstalleerd. "
 "Gebruik de 'MIDI mapper'-optie in het Configuratiescherm om het te "
 "installeren."
-
-#: winmm.rc:125
-msgid ""
-"The current MIDI Mapper setup refers to a MIDI device that is not installed "
-"on the system. Use the MIDI Mapper option from the Control Panel to edit the "
-"setup."
-msgstr ""
-"De huidige MIDI Mapper setup verwijst naar een MIDI-apparaat dat niet op het "
-"systeem is geïnstalleerd. Gebruik de 'MIDI mapper'-optie in het "
-"Configuratiescherm om een MIDI-apparaat te installeren."
 
 #: winmm.rc:126
 msgid "An error occurred with the specified port."

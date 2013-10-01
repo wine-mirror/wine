@@ -8519,10 +8519,14 @@ msgstr ""
 "Portti siirtää dataa laitteelle. Odota, kunnes data on siirretty, ja yritä "
 "uudelleen."
 
-#: winmm.rc:52
+#: winmm.rc:52 winmm.rc:125
+#, fuzzy
+#| msgid ""
+#| "The current MIDI Mapper setup refers to a MIDI device that is not "
+#| "installed on the system. Use MIDI Mapper to edit the setup."
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
-"on the system. Use MIDI Mapper to edit the setup."
+"on the system."
 msgstr ""
 "Nykyiset MIDI Mapper -asetukset viittaavat laitteeseen, jota ei ole "
 "asennettu järjestelmään. Avaa MIDI Mapper muokataksesi asetuksia."
@@ -8923,16 +8927,6 @@ msgid ""
 msgstr ""
 "Annettua MIDI-porttia ei ole asennettu järjestelmään. Käytä Ohjauspaneelin "
 "Ajurit-kohtaa asentaaksesi MIDI-laitteen."
-
-#: winmm.rc:125
-msgid ""
-"The current MIDI Mapper setup refers to a MIDI device that is not installed "
-"on the system. Use the MIDI Mapper option from the Control Panel to edit the "
-"setup."
-msgstr ""
-"Nykyiset MIDI Mapper -asetukset viittaavat laitteeseen, jota ei ole "
-"asennettu järjestelmään. Käytä Ohjauspaneelin MIDI Mapper -kohtaa "
-"muokataksesi asetuksia."
 
 #: winmm.rc:126
 msgid "An error occurred with the specified port."

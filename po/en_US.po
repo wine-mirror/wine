@@ -8526,13 +8526,13 @@ msgstr ""
 "The port is transmitting data to the device. Wait until the data has been "
 "transmitted, and then try again."
 
-#: winmm.rc:52
+#: winmm.rc:52 winmm.rc:125
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
-"on the system. Use MIDI Mapper to edit the setup."
+"on the system."
 msgstr ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
-"on the system. Use MIDI Mapper to edit the setup."
+"on the system."
 
 #: winmm.rc:53
 msgid ""
@@ -8946,16 +8946,6 @@ msgid ""
 msgstr ""
 "The specified MIDI device is not installed on the system. Use the Drivers "
 "option from the Control Panel to install a MIDI device."
-
-#: winmm.rc:125
-msgid ""
-"The current MIDI Mapper setup refers to a MIDI device that is not installed "
-"on the system. Use the MIDI Mapper option from the Control Panel to edit the "
-"setup."
-msgstr ""
-"The current MIDI Mapper setup refers to a MIDI device that is not installed "
-"on the system. Use the MIDI Mapper option from the Control Panel to edit the "
-"setup."
 
 #: winmm.rc:126
 msgid "An error occurred with the specified port."

@@ -8505,10 +8505,14 @@ msgstr ""
 "이 포트는 장치로 데이타를 옮기는 중입니다. 데이타가 다 옮겨질 때까지 기다리십"
 "시오,그리고 다시 시도하십시오."
 
-#: winmm.rc:52
+#: winmm.rc:52 winmm.rc:125
+#, fuzzy
+#| msgid ""
+#| "The current MIDI Mapper setup refers to a MIDI device that is not "
+#| "installed on the system. Use MIDI Mapper to edit the setup."
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
-"on the system. Use MIDI Mapper to edit the setup."
+"on the system."
 msgstr ""
 "MIDI 장치를 지원하는 MIDI Mapper 설정은 시스템에 설치되어 있지 않습니다. "
 "MIDI Mapper 를 사용해서 설정을 고치십시오."
@@ -8910,15 +8914,6 @@ msgid ""
 msgstr ""
 "지정된 MIDI 장치는 시스템에 설치되어 있지 않습니다. 제어판에서 장치 옵션을 사"
 "용해서 MIDI 장치를 설치하십시오."
-
-#: winmm.rc:125
-msgid ""
-"The current MIDI Mapper setup refers to a MIDI device that is not installed "
-"on the system. Use the MIDI Mapper option from the Control Panel to edit the "
-"setup."
-msgstr ""
-"MIDI 정차에 관련된  MIDI Mapper 설정은 시스템에 설치되어있지 않습니다. 제어판"
-"의 MIDI Mapper 옵션을 사용해서 설정을 고치십시오."
 
 #: winmm.rc:126
 msgid "An error occurred with the specified port."

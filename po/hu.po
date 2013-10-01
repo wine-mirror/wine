@@ -8553,10 +8553,14 @@ msgstr ""
 "A port adatokat továbbít az eszköznek. Várjon míg az adat továbbítás "
 "befejeződik és próbálja meg újból."
 
-#: winmm.rc:52
+#: winmm.rc:52 winmm.rc:125
+#, fuzzy
+#| msgid ""
+#| "The current MIDI Mapper setup refers to a MIDI device that is not "
+#| "installed on the system. Use MIDI Mapper to edit the setup."
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
-"on the system. Use MIDI Mapper to edit the setup."
+"on the system."
 msgstr ""
 "Az aktuális MIDI Mapper telepítő hivatkozik egy MIDI eszközre, amely nincs "
 "telepítve a rendszerben. Használja a MIDI Mapper-t, hogy szerkessze a "
@@ -8981,16 +8985,6 @@ msgid ""
 msgstr ""
 "A megadott MIDI eszköz nincs telepítve a rendszerben. Használja a Driverek "
 "ablakot a Vezérlőpultból, hogy telepítsen MIDI eszközt."
-
-#: winmm.rc:125
-msgid ""
-"The current MIDI Mapper setup refers to a MIDI device that is not installed "
-"on the system. Use the MIDI Mapper option from the Control Panel to edit the "
-"setup."
-msgstr ""
-"Az aktuális MIDI Mapper telepítő hivatkozik egy MIDI eszközre, amely nincs "
-"telepítve a rendszerben. Használja a MIDI Mapper beállítást a "
-"Vezérlőpultból, hogy szerkessze a telepítőt."
 
 #: winmm.rc:126
 msgid "An error occurred with the specified port."

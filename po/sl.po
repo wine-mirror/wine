@@ -8604,10 +8604,14 @@ msgstr ""
 "Prek vrat trenutno poteka prenos podatkov na napravo. Počakajte na konec "
 "prenosa in poskusite znova."
 
-#: winmm.rc:52
+#: winmm.rc:52 winmm.rc:125
+#, fuzzy
+#| msgid ""
+#| "The current MIDI Mapper setup refers to a MIDI device that is not "
+#| "installed on the system. Use MIDI Mapper to edit the setup."
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
-"on the system. Use MIDI Mapper to edit the setup."
+"on the system."
 msgstr ""
 "Trenutna nastavitev MIDI se sklicuje na napravo MIDI, ki ni prisotna. "
 "Uporabite Preslikovalnik MIDI za urejanje nastavitev."
@@ -9017,16 +9021,6 @@ msgid ""
 msgstr ""
 "Navedena naprava MIDI ni nameščena. Če želite namestiti nov gonilnik, "
 "uporabite možnost Gonilniki na Nadzorni plošči."
-
-#: winmm.rc:125
-msgid ""
-"The current MIDI Mapper setup refers to a MIDI device that is not installed "
-"on the system. Use the MIDI Mapper option from the Control Panel to edit the "
-"setup."
-msgstr ""
-"Trenutna nastavitev MIDI se sklicuje na napravo, ki ni nameščena na sistemu. "
-"Uporabite možnost 'Preslikovalnik MIDI' na Nadzorni plošči in uredite "
-"nastavitev."
 
 #: winmm.rc:126
 msgid "An error occurred with the specified port."

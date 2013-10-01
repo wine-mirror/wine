@@ -8733,10 +8733,14 @@ msgstr ""
 "Portul transmite date către dispozitiv. Așteptați finalizarea transmiterii "
 "și apoi încercați din nou."
 
-#: winmm.rc:52
+#: winmm.rc:52 winmm.rc:125
+#, fuzzy
+#| msgid ""
+#| "The current MIDI Mapper setup refers to a MIDI device that is not "
+#| "installed on the system. Use MIDI Mapper to edit the setup."
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
-"on the system. Use MIDI Mapper to edit the setup."
+"on the system."
 msgstr ""
 "Configurația curentă pentru MIDI Mapper se referă la un dispozitiv MIDI care "
 "nu este instalat în sistem. Utilizați MIDI Mapper pentru a edita "
@@ -9175,16 +9179,6 @@ msgid ""
 msgstr ""
 "Dispozitivul MIDI specificat nu este instalat în sistem. Utilizați opțiunea "
 "Drivere din Panoul de control pentru a instala un dispozitiv MIDI."
-
-#: winmm.rc:125
-msgid ""
-"The current MIDI Mapper setup refers to a MIDI device that is not installed "
-"on the system. Use the MIDI Mapper option from the Control Panel to edit the "
-"setup."
-msgstr ""
-"Configurația curentă a MIDI Mapper se referă la un dispozitiv MIDI care nu "
-"este instalat în sistem. Utilizați opțiunea MIDI Mapper din panoul de "
-"control pentru a edita configurația."
 
 #: winmm.rc:126
 msgid "An error occurred with the specified port."

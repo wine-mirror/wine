@@ -8530,10 +8530,14 @@ msgstr ""
 "Порт передает информацию в устройство. Подождите, пока информация будет "
 "передана и попробуйте заново."
 
-#: winmm.rc:52
+#: winmm.rc:52 winmm.rc:125
+#, fuzzy
+#| msgid ""
+#| "The current MIDI Mapper setup refers to a MIDI device that is not "
+#| "installed on the system. Use MIDI Mapper to edit the setup."
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
-"on the system. Use MIDI Mapper to edit the setup."
+"on the system."
 msgstr ""
 "Текущие установки MIDI Mapper ссылаются на устройство MIDI, которое не "
 "установлено в системе. Используйте MIDI Mapper для редактирования установок."
@@ -8949,16 +8953,6 @@ msgid ""
 msgstr ""
 "В системе не установлены устройства MIDI. Используйте Drivers в Control "
 "Panel, чтобы установить драйвер MIDI."
-
-#: winmm.rc:125
-msgid ""
-"The current MIDI Mapper setup refers to a MIDI device that is not installed "
-"on the system. Use the MIDI Mapper option from the Control Panel to edit the "
-"setup."
-msgstr ""
-"Текущие установки MIDI Mapper ссылаются на не установленное в системе "
-"устройство MIDI. Используйте MIDI Mapper в Control Panel, чтобы "
-"отредактировать установки."
 
 #: winmm.rc:126
 msgid "An error occurred with the specified port."

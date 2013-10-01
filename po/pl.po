@@ -8554,10 +8554,14 @@ msgstr ""
 "Port przesyła dane do urządzenia. Poczekaj, aż dane zostaną przesłane  i "
 "spróbuj ponownie."
 
-#: winmm.rc:52
+#: winmm.rc:52 winmm.rc:125
+#, fuzzy
+#| msgid ""
+#| "The current MIDI Mapper setup refers to a MIDI device that is not "
+#| "installed on the system. Use MIDI Mapper to edit the setup."
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
-"on the system. Use MIDI Mapper to edit the setup."
+"on the system."
 msgstr ""
 "Bieżące ustawienia mapowania MIDI odwołują się do urządzenia MIDI, które nie "
 "jest zainstalowane w systemie. Użyj Mapowania MIDI do edycji ustawień."
@@ -8984,15 +8988,6 @@ msgstr ""
 "Określone urządzenie MIDI nie jest zainstalowane w systemie. Aby "
 "zainstalować sterownik, przejdź do Panelu sterowania, a następnie kliknij "
 "ikonę Dodaj sprzęt."
-
-#: winmm.rc:125
-msgid ""
-"The current MIDI Mapper setup refers to a MIDI device that is not installed "
-"on the system. Use the MIDI Mapper option from the Control Panel to edit the "
-"setup."
-msgstr ""
-"Bieżące ustawienia mapowania MIDI odwołują się do urządzenia MIDI, które nie "
-"jest zainstalowane w systemie. Użyj Mapowania MIDI do edycji ustawień."
 
 #: winmm.rc:126
 msgid "An error occurred with the specified port."

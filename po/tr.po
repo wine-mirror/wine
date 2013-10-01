@@ -8523,10 +8523,14 @@ msgstr ""
 "Bağlantı noktası aygıta veri gönderiyor. Veri gönderilene kadar bekleyip "
 "yeniden deneyin."
 
-#: winmm.rc:52
+#: winmm.rc:52 winmm.rc:125
+#, fuzzy
+#| msgid ""
+#| "The current MIDI Mapper setup refers to a MIDI device that is not "
+#| "installed on the system. Use MIDI Mapper to edit the setup."
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
-"on the system. Use MIDI Mapper to edit the setup."
+"on the system."
 msgstr ""
 "Geçerli MIDI Eşleyicisi kurulumu sistemde yüklü olmayan bir MIDI aygıtını "
 "gösteriyor. Kurulumu düzenlemek için MIDI Eşleyicisini kullanın."
@@ -8942,16 +8946,6 @@ msgid ""
 msgstr ""
 "Belirtilen MIDI aygıtı sistemde yüklü değil. Bir MIDI aygıtı yüklemek için "
 "Denetim Masası'ndan Sürücüler seçeneğini kullanın."
-
-#: winmm.rc:125
-msgid ""
-"The current MIDI Mapper setup refers to a MIDI device that is not installed "
-"on the system. Use the MIDI Mapper option from the Control Panel to edit the "
-"setup."
-msgstr ""
-"Geçerli MIDI haritalama ayarı sistemde yüklü olmayan bir MIDI aygıtını "
-"işaret ediyor. Ayarları düzenlemek için Denetim Masası'ndan MIDI haritalama "
-"seçeneğini kullanın."
 
 #: winmm.rc:126
 msgid "An error occurred with the specified port."

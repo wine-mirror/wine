@@ -8493,10 +8493,14 @@ msgstr ""
 "Porten överför data till enheten. Vänta till allt data överförts och försök "
 "sedan igen."
 
-#: winmm.rc:52
+#: winmm.rc:52 winmm.rc:125
+#, fuzzy
+#| msgid ""
+#| "The current MIDI Mapper setup refers to a MIDI device that is not "
+#| "installed on the system. Use MIDI Mapper to edit the setup."
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
-"on the system. Use MIDI Mapper to edit the setup."
+"on the system."
 msgstr ""
 "Den nuvarande MIDI Mapper-installationen refererar till en MIDI-enhet som "
 "inte är installerad på systemet. Använd MIDI Mapper för att ändra "
@@ -8909,16 +8913,6 @@ msgid ""
 msgstr ""
 "Den angivna MIDI-enheten är inte installerad på systemet. Använd valet "
 "Drivers från Control Panel för att installera en MIDI-enhet."
-
-#: winmm.rc:125
-msgid ""
-"The current MIDI Mapper setup refers to a MIDI device that is not installed "
-"on the system. Use the MIDI Mapper option from the Control Panel to edit the "
-"setup."
-msgstr ""
-"Aktuell MIDI Mapper-installation refererar till en MIDI-enhet som inte är "
-"installerad på systemet. Använd valet MIDI Mapper från Control Panel för att "
-"ändra installationen."
 
 #: winmm.rc:126
 msgid "An error occurred with the specified port."

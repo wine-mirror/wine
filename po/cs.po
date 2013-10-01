@@ -8439,10 +8439,14 @@ msgstr ""
 "Port přenáší data na zařízení. Počkejte na dokončení přenosu a zkuste to "
 "znovu."
 
-#: winmm.rc:52
+#: winmm.rc:52 winmm.rc:125
+#, fuzzy
+#| msgid ""
+#| "The current MIDI Mapper setup refers to a MIDI device that is not "
+#| "installed on the system. Use MIDI Mapper to edit the setup."
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
-"on the system. Use MIDI Mapper to edit the setup."
+"on the system."
 msgstr ""
 "Současné nastavení MIDI mapperu se odkazuje na MIDI zařízení nepřítomné v "
 "systému. Upravte nastavení MIDI mapperu."
@@ -8847,15 +8851,6 @@ msgid ""
 msgstr ""
 "Toto MIDI zařízení není nainstalováno v systému. Nainstalujte ho v Ovládacím "
 "panelu na záložce Driver."
-
-#: winmm.rc:125
-msgid ""
-"The current MIDI Mapper setup refers to a MIDI device that is not installed "
-"on the system. Use the MIDI Mapper option from the Control Panel to edit the "
-"setup."
-msgstr ""
-"Nastavení MIDI mapperu odkazuje na MIDI zařízení, které není v systému "
-"nainstalováno. Nainstalujte ho pomocí záložky MIDI Mapper v Ovládacím panelu."
 
 #: winmm.rc:126
 msgid "An error occurred with the specified port."

@@ -8443,10 +8443,14 @@ msgid ""
 "transmitted, and then try again."
 msgstr "通訊埠正在傳送資料給裝置。等到資料傳輸完成，然後再試一次。"
 
-#: winmm.rc:52
+#: winmm.rc:52 winmm.rc:125
+#, fuzzy
+#| msgid ""
+#| "The current MIDI Mapper setup refers to a MIDI device that is not "
+#| "installed on the system. Use MIDI Mapper to edit the setup."
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
-"on the system. Use MIDI Mapper to edit the setup."
+"on the system."
 msgstr ""
 "目前的 MIDI 對映表設定，參照了未被安裝於系統上的 MIDI 裝置。使用 MIDI 對映表"
 "以編輯設定。"
@@ -8808,15 +8812,6 @@ msgid ""
 msgstr ""
 "指定的 MIDI 裝置未被安裝在系統上。使用「控制面板」中的「驅動程式」選項以安裝 "
 "MIDI 裝置。"
-
-#: winmm.rc:125
-msgid ""
-"The current MIDI Mapper setup refers to a MIDI device that is not installed "
-"on the system. Use the MIDI Mapper option from the Control Panel to edit the "
-"setup."
-msgstr ""
-"目前的 MIDI 對映表設定，參照了未被安裝在系統上的 MIDI 裝置。使用「控制面板」"
-"中的「MIDI 對映表」選項以編輯設定。"
 
 #: winmm.rc:126
 msgid "An error occurred with the specified port."
