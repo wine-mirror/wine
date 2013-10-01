@@ -374,10 +374,11 @@ static void *wined3d_cs_st_require_space(struct wined3d_cs *cs, size_t size)
     {
         void *new_data;
 
-        if (!(new_data = HeapReAlloc(GetProcessHeap(), 0, cs->data, cs->data_size * 2)))
+        size = max( size, cs->data_size * 2 );
+        if (!(new_data = HeapReAlloc(GetProcessHeap(), 0, cs->data, size)))
             return NULL;
 
-        cs->data_size *= 2;
+        cs->data_size = size;
         cs->data = new_data;
     }
 
