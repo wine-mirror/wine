@@ -3157,6 +3157,7 @@ static BOOL glxdrv_wglSwapBuffers( HDC hdc )
         pglXSwapBuffers(gdi_display, gl->drawable);
         break;
     case DC_GL_CHILD_WIN:
+        if (ctx) sync_context( ctx );
         escape.gl_drawable = gl->drawable;
         /* fall through */
     default:
