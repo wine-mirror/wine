@@ -1888,3 +1888,38 @@ MSVCRT_wchar_t* CDECL MSVCRT_wcsstr(const MSVCRT_wchar_t *str, const MSVCRT_wcha
 {
     return strstrW(str, sub);
 }
+
+/*********************************************************************
+ *              _wtoi64_l (MSVCRT.@)
+ */
+__int64 CDECL _wtoi64_l(const MSVCRT_wchar_t *str, MSVCRT__locale_t locale)
+{
+    ULONGLONG RunningTotal = 0;
+    char bMinus = 0;
+
+    while (isspaceW(*str)) {
+        str++;
+    } /* while */
+
+    if (*str == '+') {
+        str++;
+    } else if (*str == '-') {
+        bMinus = 1;
+        str++;
+    } /* if */
+
+    while (*str >= '0' && *str <= '9') {
+        RunningTotal = RunningTotal * 10 + *str - '0';
+        str++;
+    } /* while */
+
+    return bMinus ? -RunningTotal : RunningTotal;
+}
+
+/*********************************************************************
+ *              _wtoi64 (MSVCRT.@)
+ */
+__int64 CDECL _wtoi64(const MSVCRT_wchar_t *str)
+{
+    return _wtoi64_l(str, NULL);
+}
