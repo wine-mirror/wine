@@ -9322,15 +9322,21 @@ msgstr ""
 "과정에만 적용됩니다.\n"
 
 #: cmd.rc:40
+#, fuzzy
+#| msgid ""
+#| "CD <dir> is the short version of CHDIR. It changes the current\n"
+#| "default directory.\n"
 msgid ""
-"CD <dir> is the short version of CHDIR. It changes the current\n"
+"CD <directory> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
 msgstr ""
 "CD <디렉토리> 는  CHDIR의 단축버젼입니다. 현재 기본 디렉토리를\n"
 "바꿉니다.\n"
 
 #: cmd.rc:41
-msgid "CHDIR <dir> changes the current default directory.\n"
+#, fuzzy
+#| msgid "CHDIR <dir> changes the current default directory.\n"
+msgid "CHDIR <directory> changes the current default directory.\n"
 msgstr "CHDIR <디렉토리> 는 현재 기본 디렉토리를 바꿉니다.\n"
 
 #: cmd.rc:43
@@ -9583,12 +9589,16 @@ msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <파일이름> 은 파일의 이름을 바꿈.\n"
 
 #: cmd.rc:158
-msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
+#, fuzzy
+#| msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
+msgid "RD <directory> is the short version of RMDIR. It deletes a directory.\n"
 msgstr ""
 "RD <디렉토리> 는 RMDIR의 단축버젼입니다. 이것은 하위 디렉토리를 지웁니다.\n"
 
 #: cmd.rc:159
-msgid "RMDIR <dir> deletes a subdirectory.\n"
+#, fuzzy
+#| msgid "RMDIR <dir> deletes a subdirectory.\n"
+msgid "RMDIR <directory> deletes a directory.\n"
 msgstr "RMDIR <디렉토리>는 하위 디렉토리를 지움.\n"
 
 #: cmd.rc:203
@@ -9760,8 +9770,12 @@ msgstr ""
 "어느 똑이든 먼저 오는 지점이),이전의 환경 설정이 복원되는 지정입니다.\n"
 
 #: cmd.rc:245
+#, fuzzy
+#| msgid ""
+#| "PUSHD <directoryname> saves the current directory onto a\n"
+#| "stack, and then changes the current directory to the supplied one.\n"
 msgid ""
-"PUSHD <directoryname> saves the current directory onto a\n"
+"PUSHD <directory> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
 msgstr ""
 "PUSHD <디렉토리 이름> 은 현재 디렉토리를 스택에 저장한다.\n"

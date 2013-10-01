@@ -36,9 +36,9 @@ called procedure.\n\
 Changes to default directory, environment variables etc made within a\n\
 called procedure are inherited by the caller.\n"
 
-  WCMD_CD,     "CD <dir> is the short version of CHDIR. It changes the current\n\
+  WCMD_CD,     "CD <directory> is the short version of CHDIR. It changes the current\n\
 default directory.\n"
-  WCMD_CHDIR,  "CHDIR <dir> changes the current default directory.\n"
+  WCMD_CHDIR,  "CHDIR <directory> changes the current default directory.\n"
 
   WCMD_CLS,    "CLS clears the console screen.\n"
 
@@ -155,8 +155,8 @@ action, and can therefore be used as a comment in a batch file.\n"
 "REN <filename> is the short version of RENAME. It renames a file.\n"
   WCMD_RENAME, "RENAME <filename> renames a file.\n"
   WCMD_RD,
-"RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
-  WCMD_RMDIR,  "RMDIR <dir> deletes a subdirectory.\n"
+"RD <directory> is the short version of RMDIR. It deletes a directory.\n"
+  WCMD_RMDIR,  "RMDIR <directory> deletes a directory.\n"
 
   WCMD_START,
 "Start a program, or open a document in the program normally used for files with that suffix.\n\
@@ -241,7 +241,7 @@ are preserved until the next ENDLOCAL is encountered (or at the end of the\n\
 file, whichever comes first), at which point the previous environment\n\
 settings are restored.\n"
 
-  WCMD_PUSHD,  "PUSHD <directoryname> saves the current directory onto a\n\
+  WCMD_PUSHD,  "PUSHD <directory> saves the current directory onto a\n\
 stack, and then changes the current directory to the supplied one.\n"
 
   WCMD_POPD,   "POPD changes current directory to the last one saved with PUSHD.\n"

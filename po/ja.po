@@ -9348,15 +9348,21 @@ msgstr ""
 "し元に引き継がれます。\n"
 
 #: cmd.rc:40
+#, fuzzy
+#| msgid ""
+#| "CD <dir> is the short version of CHDIR. It changes the current\n"
+#| "default directory.\n"
 msgid ""
-"CD <dir> is the short version of CHDIR. It changes the current\n"
+"CD <directory> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
 msgstr ""
 "CD <ディレクトリ> は CHDIR の短縮版です。現在のデフォルト ディレクトリ\n"
 "を変更します。\n"
 
 #: cmd.rc:41
-msgid "CHDIR <dir> changes the current default directory.\n"
+#, fuzzy
+#| msgid "CHDIR <dir> changes the current default directory.\n"
+msgid "CHDIR <directory> changes the current default directory.\n"
 msgstr "CHDIR <ディレクトリ> は現在のデフォルト ディレクトリを変更します。\n"
 
 #: cmd.rc:43
@@ -9610,12 +9616,16 @@ msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <ファイル名> はファイルを変名します。\n"
 
 #: cmd.rc:158
-msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
+#, fuzzy
+#| msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
+msgid "RD <directory> is the short version of RMDIR. It deletes a directory.\n"
 msgstr ""
 "RD <ディレクトリ> は RMDIR の短縮版です。サブディレクトリを削除します。\n"
 
 #: cmd.rc:159
-msgid "RMDIR <dir> deletes a subdirectory.\n"
+#, fuzzy
+#| msgid "RMDIR <dir> deletes a subdirectory.\n"
+msgid "RMDIR <directory> deletes a directory.\n"
 msgstr "RMDIR <ディレクトリ> はサブディレクトリを削除します。\n"
 
 #: cmd.rc:203
@@ -9789,8 +9799,12 @@ msgstr ""
 "まで保持されます。終了時点で以前の環境設定が復元されます。\n"
 
 #: cmd.rc:245
+#, fuzzy
+#| msgid ""
+#| "PUSHD <directoryname> saves the current directory onto a\n"
+#| "stack, and then changes the current directory to the supplied one.\n"
 msgid ""
-"PUSHD <directoryname> saves the current directory onto a\n"
+"PUSHD <directory> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
 msgstr ""
 "PUSHD <ディレクトリ名> はカレント ディレクトリをスタック上に保存し、カ\n"

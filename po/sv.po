@@ -9303,15 +9303,21 @@ msgstr ""
 "process ärvs av den som anropar processen.\n"
 
 #: cmd.rc:40
+#, fuzzy
+#| msgid ""
+#| "CD <dir> is the short version of CHDIR. It changes the current\n"
+#| "default directory.\n"
 msgid ""
-"CD <dir> is the short version of CHDIR. It changes the current\n"
+"CD <directory> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
 msgstr ""
 "CD <dir> är en synonym för CHDIR. Den används för att\n"
 "ändra standardsökväg.\n"
 
 #: cmd.rc:41
-msgid "CHDIR <dir> changes the current default directory.\n"
+#, fuzzy
+#| msgid "CHDIR <dir> changes the current default directory.\n"
+msgid "CHDIR <directory> changes the current default directory.\n"
 msgstr "CHDIR <dir> ändrar standardsökväg.\n"
 
 #: cmd.rc:43
@@ -9568,11 +9574,15 @@ msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <filnamn> döper om en fil.\n"
 
 #: cmd.rc:158
-msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
+#, fuzzy
+#| msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
+msgid "RD <directory> is the short version of RMDIR. It deletes a directory.\n"
 msgstr "RD <plats> är en synonym för RMDIR. RD tar bort vald plats.\n"
 
 #: cmd.rc:159
-msgid "RMDIR <dir> deletes a subdirectory.\n"
+#, fuzzy
+#| msgid "RMDIR <dir> deletes a subdirectory.\n"
+msgid "RMDIR <directory> deletes a directory.\n"
 msgstr "RMDIR <plats> tar bort vald plats.\n"
 
 #: cmd.rc:203
@@ -9710,8 +9720,12 @@ msgid ""
 msgstr ""
 
 #: cmd.rc:245
+#, fuzzy
+#| msgid ""
+#| "PUSHD <directoryname> saves the current directory onto a\n"
+#| "stack, and then changes the current directory to the supplied one.\n"
 msgid ""
-"PUSHD <directoryname> saves the current directory onto a\n"
+"PUSHD <directory> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
 msgstr ""
 "PUSHD <mappnamn> sparar nuvarande sökväg i en stack,\n"

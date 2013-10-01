@@ -9471,15 +9471,21 @@ msgstr ""
 "por el procedimiento que realizo la llamada.\n"
 
 #: cmd.rc:40
+#, fuzzy
+#| msgid ""
+#| "CD <dir> is the short version of CHDIR. It changes the current\n"
+#| "default directory.\n"
 msgid ""
-"CD <dir> is the short version of CHDIR. It changes the current\n"
+"CD <directory> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
 msgstr ""
 "CD <directorio> es la versión corta del comando CHDIR. Este\n"
 "comando cambia el directorio actual.\n"
 
 #: cmd.rc:41
-msgid "CHDIR <dir> changes the current default directory.\n"
+#, fuzzy
+#| msgid "CHDIR <dir> changes the current default directory.\n"
+msgid "CHDIR <directory> changes the current default directory.\n"
 msgstr "CHDIR <directorio> cambia el directorio actual.\n"
 
 #: cmd.rc:43
@@ -9746,14 +9752,16 @@ msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <archivo> renombra un archivo.\n"
 
 #: cmd.rc:158
-msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
+#, fuzzy
+#| msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
+msgid "RD <directory> is the short version of RMDIR. It deletes a directory.\n"
 msgstr ""
 "RD <directorio> es la versión corta de RMDIR. Este comando borra\n"
 "un subdirectorio.\n"
 
 #: cmd.rc:159
 #, fuzzy
-msgid "RMDIR <dir> deletes a subdirectory.\n"
+msgid "RMDIR <directory> deletes a directory.\n"
 msgstr ""
 "RMDIR <directorio> es la versión corta de RMDIR. Este comando borra un "
 "subdirectorio.\n"
@@ -9905,8 +9913,12 @@ msgstr ""
 "los parámetros de entorno anteriores son restaurados.\n"
 
 #: cmd.rc:245
+#, fuzzy
+#| msgid ""
+#| "PUSHD <directoryname> saves the current directory onto a\n"
+#| "stack, and then changes the current directory to the supplied one.\n"
 msgid ""
-"PUSHD <directoryname> saves the current directory onto a\n"
+"PUSHD <directory> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
 msgstr ""
 "PUSHD <directorio> almacena el directorio actual en una\n"

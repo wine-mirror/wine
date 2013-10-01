@@ -9355,15 +9355,15 @@ msgstr ""
 
 #: cmd.rc:40
 msgid ""
-"CD <dir> is the short version of CHDIR. It changes the current\n"
+"CD <directory> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
 msgstr ""
-"CD <dir> is the short version of CHDIR. It changes the current\n"
+"CD <directory> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
 
 #: cmd.rc:41
-msgid "CHDIR <dir> changes the current default directory.\n"
-msgstr "CHDIR <dir> changes the current default directory.\n"
+msgid "CHDIR <directory> changes the current default directory.\n"
+msgstr "CHDIR <directory> changes the current default directory.\n"
 
 #: cmd.rc:43
 msgid "CLS clears the console screen.\n"
@@ -9612,12 +9612,13 @@ msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <filename> renames a file.\n"
 
 #: cmd.rc:158
-msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
-msgstr "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
+msgid "RD <directory> is the short version of RMDIR. It deletes a directory.\n"
+msgstr ""
+"RD <directory> is the short version of RMDIR. It deletes a directory.\n"
 
 #: cmd.rc:159
-msgid "RMDIR <dir> deletes a subdirectory.\n"
-msgstr "RMDIR <dir> deletes a subdirectory.\n"
+msgid "RMDIR <directory> deletes a directory.\n"
+msgstr "RMDIR <directory> deletes a directory.\n"
 
 #: cmd.rc:203
 msgid ""
@@ -9789,10 +9790,10 @@ msgstr ""
 
 #: cmd.rc:245
 msgid ""
-"PUSHD <directoryname> saves the current directory onto a\n"
+"PUSHD <directory> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
 msgstr ""
-"PUSHD <directoryname> saves the current directory onto a\n"
+"PUSHD <directory> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
 
 #: cmd.rc:247
