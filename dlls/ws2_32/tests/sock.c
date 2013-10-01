@@ -4755,6 +4755,181 @@ end:
         closesocket(v6);
 }
 
+static void test_WSASendMsg(void)
+{
+    SOCKET sock, dst;
+    struct sockaddr_in sendaddr, sockaddr;
+    GUID WSASendMsg_GUID = WSAID_WSASENDMSG;
+    LPFN_WSASENDMSG pWSASendMsg = NULL;
+    char teststr[12] = "hello world", buffer[32];
+    WSABUF iovec[2];
+    WSAMSG msg;
+    DWORD bytesSent, err;
+    int ret, addrlen;
+
+    /* FIXME: Missing OVERLAPPED and OVERLAPPED COMPLETION ROUTINE tests */
+
+    sock = socket(AF_INET, SOCK_DGRAM, 0);
+    ok(sock != INVALID_SOCKET, "socket() failed\n");
+
+    /* Obtain the WSASendMsg function */
+    WSAIoctl(sock, SIO_GET_EXTENSION_FUNCTION_POINTER, &WSASendMsg_GUID, sizeof(WSASendMsg_GUID),
+             &pWSASendMsg, sizeof(pWSASendMsg), &err, NULL, NULL);
+    if (!pWSASendMsg)
+    {
+        closesocket(sock);
+        win_skip("WSASendMsg is unsupported, some tests will be skipped.\n");
+        return;
+    }
+
+    /* fake address for now */
+    sendaddr.sin_family = AF_INET;
+    sendaddr.sin_port = htons(139);
+    sendaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    memset(&msg, 0, sizeof(msg));
+    iovec[0].buf      = teststr;
+    iovec[0].len      = sizeof(teststr);
+    iovec[1].buf      = teststr;
+    iovec[1].len      = sizeof(teststr) / 2;
+    msg.name          = (struct sockaddr *) &sendaddr;
+    msg.namelen       = sizeof(sendaddr);
+    msg.lpBuffers     = iovec;
+    msg.dwBufferCount = 1; /* send only one buffer for now */
+
+    WSASetLastError(0xdeadbeef);
+    ret = pWSASendMsg(INVALID_SOCKET, &msg, 0, NULL, NULL, NULL);
+    ok(ret == SOCKET_ERROR, "WSASendMsg should have failed\n");
+    err = WSAGetLastError();
+    ok(err == WSAENOTSOCK, "expected 10038, got %d instead\n", err);
+
+    WSASetLastError(0xdeadbeef);
+    ret = pWSASendMsg(sock, NULL, 0, NULL, NULL, NULL);
+    ok(ret == SOCKET_ERROR, "WSASendMsg should have failed\n");
+    err = WSAGetLastError();
+    ok(err == WSAEFAULT, "expected 10014, got %d instead\n", err);
+
+    WSASetLastError(0xdeadbeef);
+    ret = pWSASendMsg(sock, NULL, 0, &bytesSent, NULL, NULL);
+    ok(ret == SOCKET_ERROR, "WSASendMsg should have failed\n");
+    err = WSAGetLastError();
+    ok(err == WSAEFAULT, "expected 10014, got %d instead\n", err);
+
+    WSASetLastError(0xdeadbeef);
+    ret = pWSASendMsg(sock, &msg, 0, NULL, NULL, NULL);
+    ok(ret == SOCKET_ERROR, "WSASendMsg should have failed\n");
+    err = WSAGetLastError();
+    ok(err == WSAEFAULT, "expected 10014, got %d instead\n", err);
+
+    closesocket(sock);
+
+    sock = socket(AF_INET, SOCK_DGRAM, 0);
+    ok(sock != INVALID_SOCKET, "socket() failed\n");
+
+    dst = socket(AF_INET, SOCK_DGRAM, 0);
+    ok(dst != INVALID_SOCKET, "socket() failed\n");
+
+    memset(&sockaddr, 0, sizeof(sockaddr));
+    sockaddr.sin_family = AF_INET;
+    sockaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    ok(!bind(dst, (struct sockaddr*)&sockaddr, sizeof(sockaddr)),
+       "bind should have worked\n");
+
+    /* read address to find out the port number to be used in send */
+    memset(&sendaddr, 0, sizeof(sendaddr));
+    addrlen = sizeof(sendaddr);
+    ok(!getsockname(dst, (struct sockaddr *) &sendaddr, &addrlen),
+       "getsockname should have worked\n");
+    ok(sendaddr.sin_port, "socket port should be != 0\n");
+
+    /* ensure the sending socket is not bound */
+    WSASetLastError(0xdeadbeef);
+    addrlen = sizeof(sockaddr);
+    ret = getsockname(sock, (struct sockaddr*)&sockaddr, &addrlen);
+    ok(ret == SOCKET_ERROR, "getsockname should have failed\n");
+    err = WSAGetLastError();
+    ok(err == WSAEINVAL, "expected 10022, got %d instead\n", err);
+
+    set_blocking(sock, TRUE);
+
+    bytesSent = 0;
+    ret = pWSASendMsg(sock, &msg, 0, &bytesSent, NULL, NULL);
+    ok(!ret, "WSASendMsg should have worked\n");
+    ok(bytesSent == iovec[0].len, "incorret bytes sent, expected %d, sent %d\n",
+       iovec[0].len, bytesSent);
+
+    /* receive data */
+    addrlen = sizeof(sockaddr);
+    memset(buffer, 0, sizeof(buffer));
+    ret = recvfrom(dst, buffer, sizeof(buffer), 0, (struct sockaddr *) &sockaddr, &addrlen);
+    ok(ret == bytesSent, "got %d, expected %d\n",
+       ret, bytesSent);
+
+    /* A successful call to WSASendMsg must have bound the socket */
+    addrlen = sizeof(sockaddr);
+    sockaddr.sin_port = 0;
+    sockaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    ret = getsockname(sock, (struct sockaddr*)&sockaddr, &addrlen);
+    ok(!ret, "getsockname should have worked\n");
+    ok(sockaddr.sin_addr.s_addr == htonl(INADDR_ANY), "expected 0.0.0.0, got %s\n",
+       inet_ntoa(sockaddr.sin_addr));
+    ok(sockaddr.sin_port, "sin_port should be != 0\n");
+
+    msg.dwBufferCount = 2; /* send both buffers */
+
+    bytesSent = 0;
+    ret = pWSASendMsg(sock, &msg, 0, &bytesSent, NULL, NULL);
+    ok(!ret, "WSASendMsg should have worked\n");
+    ok(bytesSent == iovec[0].len + iovec[1].len, "incorret bytes sent, expected %d, sent %d\n",
+       iovec[0].len + iovec[1].len, bytesSent);
+
+    /* receive data */
+    addrlen = sizeof(sockaddr);
+    memset(buffer, 0, sizeof(buffer));
+    ret = recvfrom(dst, buffer, sizeof(buffer), 0, (struct sockaddr *) &sockaddr, &addrlen);
+    ok(ret == bytesSent, "got %d, expected %d\n",
+       ret, bytesSent);
+
+    closesocket(sock);
+    closesocket(dst);
+
+    /* a bad call to WSASendMsg will also bind the socket */
+    addrlen = sizeof(sockaddr);
+    sockaddr.sin_port = 0;
+    sockaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    sock = socket(AF_INET, SOCK_DGRAM, 0);
+    ok(sock != INVALID_SOCKET, "socket() failed\n");
+    ok(pWSASendMsg(sock, &msg, 0, NULL, NULL, NULL) == SOCKET_ERROR, "WSASendMsg should have failed\n");
+todo_wine {
+    ok(!getsockname(sock, (struct sockaddr*)&sockaddr, &addrlen), "getsockname should have worked\n");
+    ok(sockaddr.sin_addr.s_addr == htonl(INADDR_ANY), "expected 0.0.0.0, got %s\n",
+       inet_ntoa(sockaddr.sin_addr));
+    ok(sockaddr.sin_port, "sin_port should be > 0\n");
+}
+    closesocket(sock);
+
+    /* a bad call without msg parameter will not trigger the auto-bind */
+    sock = socket(AF_INET, SOCK_DGRAM, 0);
+    ok(sock != INVALID_SOCKET, "socket() failed\n");
+    ok(pWSASendMsg(sock, NULL, 0, NULL, NULL, NULL) == SOCKET_ERROR, "WSASendMsg should have failed\n");
+    ok(getsockname(sock, (struct sockaddr*)&sockaddr, &addrlen), "getsockname should have failed\n");
+    err = WSAGetLastError();
+    ok(err == WSAEINVAL, "expected 10022, got %d instead\n", err);
+    closesocket(sock);
+
+    /* SOCK_STREAM sockets are not supported */
+    bytesSent = 0;
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    ok(sock != INVALID_SOCKET, "socket() failed\n");
+    SetLastError(0xdeadbeef);
+    ret = pWSASendMsg(sock, &msg, 0, &bytesSent, NULL, NULL);
+    ok(ret == SOCKET_ERROR, "WSASendMsg should have failed\n");
+    err = WSAGetLastError();
+todo_wine
+    ok(err == WSAEINVAL, "expected 10014, got %d instead\n", err);
+    closesocket(sock);
+}
+
 static void test_WSASendTo(void)
 {
     SOCKET s;
@@ -6750,6 +6925,7 @@ START_TEST( sock )
     test_dns();
     test_gethostbyname_hack();
 
+    test_WSASendMsg();
     test_WSASendTo();
     test_WSARecv();
 

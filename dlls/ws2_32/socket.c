@@ -2427,6 +2427,24 @@ static void WINAPI WS2_GetAcceptExSockaddrs(PVOID buffer, DWORD data_size, DWORD
 }
 
 /***********************************************************************
+ *     WSASendMsg
+ */
+int WINAPI WSASendMsg( SOCKET s, LPWSAMSG msg, DWORD dwFlags, LPDWORD lpNumberOfBytesSent,
+                       LPWSAOVERLAPPED lpOverlapped,
+                       LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
+{
+    if (!msg)
+    {
+        SetLastError( WSAEFAULT );
+        return SOCKET_ERROR;
+    }
+
+    return WS2_sendto( s, msg->lpBuffers, msg->dwBufferCount, lpNumberOfBytesSent,
+                       dwFlags, msg->name, msg->namelen,
+                       lpOverlapped, lpCompletionRoutine );
+}
+
+/***********************************************************************
  *     WSARecvMsg
  *
  * Perform a receive operation that is capable of returning message
@@ -3905,7 +3923,8 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
         }
         else if ( IsEqualGUID(&wsasendmsg_guid, in_buff) )
         {
-            FIXME("SIO_GET_EXTENSION_FUNCTION_POINTER: unimplemented WSASendMsg\n");
+            *(LPFN_WSASENDMSG *)out_buff = WSASendMsg;
+            break;
         }
         else
             FIXME("SIO_GET_EXTENSION_FUNCTION_POINTER %s: stub\n", debugstr_guid(in_buff));
