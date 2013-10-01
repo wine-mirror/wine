@@ -458,7 +458,7 @@ static void testWriteWrappedProcessed(HANDLE hCon, COORD sbSize)
 
 static void testWrite(HANDLE hCon, COORD sbSize)
 {
-    /* FIXME: should in fact insure that the sb is at least 10 character wide */
+    /* FIXME: should in fact ensure that the sb is at least 10 characters wide */
     ok(SetConsoleTextAttribute(hCon, TEST_ATTRIB), "Setting default text color\n");
     resetContent(hCon, sbSize, FALSE);
     testEmptyWrite(hCon);
@@ -654,8 +654,8 @@ static void testCtrlHandler(void)
     ok(!SetConsoleCtrlHandler(mch, FALSE), "Shouldn't succeed\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "Bad error %u\n", GetLastError());
     ok(SetConsoleCtrlHandler(mch, TRUE), "Couldn't set handler\n");
-    /* wine requires the event for the test, as we cannot insure, so far, that event
-     * are processed synchronously in GenerateConsoleCtrlEvent()
+    /* wine requires the event for the test, as we cannot ensure, so far, that
+     * events are processed synchronously in GenerateConsoleCtrlEvent()
      */
     mch_event = CreateEventA(NULL, TRUE, FALSE, NULL);
     mch_count = 0;

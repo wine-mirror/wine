@@ -473,7 +473,7 @@ const char *get_nm_command(void)
     if (!nm_command)
         fatal_error( "cannot find suitable name lister\n" );
     if (nm_command->count > 1)
-        fatal_error( "multiple arguemnts in nm command not supported yet\n" );
+        fatal_error( "multiple arguments in nm command not supported yet\n" );
     return nm_command->str[0];
 }
 

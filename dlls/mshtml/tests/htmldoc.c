@@ -219,7 +219,7 @@ static BOOL asynchronous_binding = FALSE;
 static BOOL support_wbapp, allow_new_window, no_travellog;
 static BOOL report_mime;
 static BOOL testing_submit;
-static BOOL reseting_document;
+static BOOL resetting_document;
 static int stream_read, protocol_read;
 static IStream *history_stream;
 static enum load_state_t {
@@ -950,7 +950,7 @@ static ULONG WINAPI PropertyNotifySink_Release(IPropertyNotifySink *iface)
 
 static HRESULT WINAPI PropertyNotifySink_OnChanged(IPropertyNotifySink *iface, DISPID dispID)
 {
-    if(reseting_document)
+    if(resetting_document)
         return S_OK;
 
     switch(dispID) {
@@ -1853,7 +1853,7 @@ static HRESULT WINAPI InPlaceFrame_RemoveMenus(IOleInPlaceFrame *iface, HMENU hm
 
 static HRESULT WINAPI InPlaceFrame_SetStatusText(IOleInPlaceFrame *iface, LPCOLESTR pszStatusText)
 {
-    if(!reseting_document)
+    if(!resetting_document)
         CHECK_EXPECT2(SetStatusText);
     if(!expect_status_text)
         ok(pszStatusText == NULL, "pszStatusText=%p, expected NULL\n", pszStatusText);
@@ -2490,7 +2490,7 @@ static HRESULT WINAPI DocHostUIHandler_ShowContextMenu(IDocHostUIHandler2 *iface
 
 static HRESULT WINAPI DocHostUIHandler_GetHostInfo(IDocHostUIHandler2 *iface, DOCHOSTUIINFO *pInfo)
 {
-    if(!reseting_document)
+    if(!resetting_document)
         CHECK_EXPECT(GetHostInfo);
     ok(iface == expect_uihandler_iface, "called on unexpected iface\n");
     ok(pInfo != NULL, "pInfo=NULL\n");
@@ -2783,7 +2783,7 @@ static void test_save_history(IUnknown *unk)
 static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID *pguidCmdGroup,
         DWORD nCmdID, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    if(reseting_document)
+    if(resetting_document)
         return E_FAIL;
 
     if(!pguidCmdGroup) {
@@ -3160,7 +3160,7 @@ static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REF
         LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
         EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    if(reseting_document)
+    if(resetting_document)
         return E_FAIL;
 
     ok(IsEqualGUID(&IID_NULL, riid), "riid != IID_NULL\n");
@@ -3231,7 +3231,7 @@ static HRESULT WINAPI EventDispatch_Invoke(IDispatch *iface, DISPID dispIdMember
     IHTMLDocument2 *doc;
     BSTR state;
 
-    if(reseting_document)
+    if(resetting_document)
         return E_FAIL;
 
     ok(IsEqualGUID(&IID_NULL, riid), "riid = %s\n", debugstr_guid(riid));
@@ -3514,7 +3514,7 @@ static HRESULT  WINAPI DocObjectService_GetPendingUrl(
         IDocObjectService* This,
         BSTR *pbstrPendingUrl)
 {
-    if(!reseting_document)
+    if(!resetting_document)
         CHECK_EXPECT(GetPendingUrl);
     return E_NOTIMPL;
 }
@@ -5294,7 +5294,7 @@ static void _test_readyState(unsigned line, IUnknown *unk)
         "uninitialized"
     };
 
-    if(open_call || reseting_document)
+    if(open_call || resetting_document)
         return; /* FIXME */
 
     if(!unk)
@@ -7679,12 +7679,12 @@ static void reset_document(IHTMLDocument2 *doc)
     if(FAILED(hres))
         return;
 
-    reseting_document = TRUE;
+    resetting_document = TRUE;
 
     hres = IPersistStreamInit_InitNew(init);
     ok(hres == S_OK, "Load failed: %08x\n", hres);
 
-    reseting_document = FALSE;
+    resetting_document = FALSE;
 
     test_GetCurMoniker((IUnknown*)doc, NULL, "about:blank", FALSE);
 

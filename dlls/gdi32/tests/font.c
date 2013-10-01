@@ -1304,7 +1304,7 @@ static void test_GetCharABCWidths(void)
     strcpy(lf.lfFaceName, "Tahoma");
     lf.lfHeight = 20;
 
-    trace("ABC sign test for a varity of transforms:\n");
+    trace("ABC sign test for a variety of transforms:\n");
     hfont = CreateFontIndirectA(&lf);
     hwnd = CreateWindowEx(0, "static", "", WS_POPUP, 0,0,100,100,
                            0, 0, 0, NULL);

@@ -3692,7 +3692,7 @@ interface nsIDocShell : nsIDocShellTreeItem
     nsresult GetHasEditingSession(bool *aHasEditingSession);
     nsresult MakeEditable(bool inWaitForUriLoad);
     nsresult GetChildSHEntry(int32_t aChildOffset, nsISHEntry **_retval);
-    nsresult AddChildSHEntry(nsISHEntry *aCloneReference, nsISHEntry *aHistoryEntry, int32_t aChildOffset, uint32_t aLoadType, bool aCloneChilden);
+    nsresult AddChildSHEntry(nsISHEntry *aCloneReference, nsISHEntry *aHistoryEntry, int32_t aChildOffset, uint32_t aLoadType, bool aCloneChildren);
     nsresult GetUseGlobalHistory(bool *aUseGlobalHistory);
     nsresult SetUseGlobalHistory(bool aUseGlobalHistory);
     nsresult RemoveFromSessionHistory();

@@ -731,7 +731,7 @@ static void test_selection(HWND hWndTrackbar){
     expect(8, r);
 
     ok_sequence(sequences, TRACKBAR_SEQ_INDEX, selection_test_seq, "selection test sequence", TRUE);
-    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_selection_test_seq, "parent selection test seqence", TRUE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_selection_test_seq, "parent selection test sequence", TRUE);
 }
 
 static void test_thumb_length(HWND hWndTrackbar){

@@ -1056,7 +1056,7 @@ static void test_InvalidIMC(void)
     imc2 = ImmGetContext(hwnd);
     ok(imc1 == imc2, "imc should not changed! imc1 %p, imc2 %p\n", imc1, imc2);
 
-    /* Test associating NULL imc, which is different to invalid imc */
+    /* Test associating NULL imc, which is different from an invalid imc */
     oldimc = ImmAssociateContext(hwnd, imc_null);
     ok(oldimc != NULL, "Associating to NULL imc should success!\n");
     imc2 = ImmGetContext(hwnd);
