@@ -7460,7 +7460,8 @@ HRESULT arbfp_blit_surface(struct wined3d_device *device, DWORD filter,
 
     /* Now load the surface */
     if (wined3d_settings.offscreen_rendering_mode != ORM_FBO
-            && (src_surface->flags & (SFLAG_INTEXTURE | SFLAG_INDRAWABLE)) == SFLAG_INDRAWABLE)
+            && (src_surface->flags & (SFLAG_INTEXTURE | SFLAG_INDRAWABLE)) == SFLAG_INDRAWABLE
+            && !surface_is_offscreen(src_surface))
     {
         /* Without FBO blits transferring from the drawable to the texture is
          * expensive, because we have to flip the data in sysmem. Since we can
