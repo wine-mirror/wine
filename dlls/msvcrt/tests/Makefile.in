@@ -2,6 +2,7 @@ TESTDLL   = msvcrt.dll
 APPMODE   = -mno-cygwin
 MODCFLAGS = @BUILTINFLAG@
 EXTRAINCL = -I$(top_srcdir)/include/msvcrt -I$(srcdir)/..
+EXTRADEFS = -U__WINESRC__ -DWINE_STRICT_PROTOTYPES -DWINE_NO_NAMELESS_EXTENSION -DWIDL_C_INLINE_WRAPPERS
 
 C_SRCS = \
 	cpp.c \

@@ -1,5 +1,6 @@
 TESTDLL   = comdlg32.dll
 IMPORTS   = uuid shell32 ole32 comdlg32 winspool user32 gdi32
+EXTRADEFS = -U__WINESRC__ -DWINE_STRICT_PROTOTYPES -DWINE_NO_NAMELESS_EXTENSION -DWIDL_C_INLINE_WRAPPERS
 
 C_SRCS = \
 	filedlg.c \
