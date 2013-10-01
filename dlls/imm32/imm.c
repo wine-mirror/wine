@@ -636,6 +636,7 @@ HIMC WINAPI ImmCreateContext(void)
     InputContextData *new_context;
     LPGUIDELINE gl;
     LPCANDIDATEINFO ci;
+    int i;
 
     new_context = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(InputContextData));
 
@@ -662,6 +663,9 @@ HIMC WINAPI ImmCreateContext(void)
     memset(gl,0,sizeof(GUIDELINE));
     gl->dwSize = sizeof(GUIDELINE);
     ImmUnlockIMCC(new_context->IMC.hGuideLine);
+
+    for (i = 0; i < sizeof(new_context->IMC.cfCandForm) / sizeof(CANDIDATEFORM); i++)
+        new_context->IMC.cfCandForm[i].dwIndex = ~0u;
 
     /* Initialize the IME Private */
     new_context->IMC.hPrivate = ImmCreateIMCC(new_context->immKbd->imeInfo.dwPrivateDataSize);
@@ -1033,6 +1037,9 @@ BOOL WINAPI ImmGetCandidateWindow(
         return FALSE;
 
     if ( dwIndex >= (sizeof(data->IMC.cfCandForm) / sizeof(CANDIDATEFORM)) )
+        return FALSE;
+
+    if (data->IMC.cfCandForm[dwIndex].dwIndex != dwIndex)
         return FALSE;
 
     *lpCandidate = data->IMC.cfCandForm[dwIndex];
