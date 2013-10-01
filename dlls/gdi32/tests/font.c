@@ -4122,7 +4122,7 @@ static void test_GetGlyphOutline(void)
                 ok(ret == 0, "%2d:GetGlyphOutlineW should return 0, got %d\n", fmt[i], ret);
             todo_wine {
                 ok(gm.gmBlackBoxX == 1, "%2d:expected 1, got %u\n", fmt[i], gm.gmBlackBoxX);
-                ok(gm.gmBlackBoxY == 1, "%2d:expected 1, got %u\n", fmt[i], gm.gmBlackBoxX);
+                ok(gm.gmBlackBoxY == 1, "%2d:expected 1, got %u\n", fmt[i], gm.gmBlackBoxY);
             }
         }
 
@@ -4137,7 +4137,7 @@ static void test_GetGlyphOutline(void)
                 ok(ret == 0, "%2d:GetGlyphOutlineW should return 0, got %d\n", fmt[i], ret);
             todo_wine {
                 ok(gm.gmBlackBoxX == 1, "%2d:expected 1, got %u\n", fmt[i], gm.gmBlackBoxX);
-                ok(gm.gmBlackBoxY == 1, "%2d:expected 1, got %u\n", fmt[i], gm.gmBlackBoxX);
+                ok(gm.gmBlackBoxY == 1, "%2d:expected 1, got %u\n", fmt[i], gm.gmBlackBoxY);
             }
         }
 
@@ -4152,7 +4152,7 @@ static void test_GetGlyphOutline(void)
                 ok(ret == 0, "%2d:GetGlyphOutlineW should return 0, got %d\n", fmt[i], ret);
             todo_wine {
                 ok(gm.gmBlackBoxX == 1, "%2d:expected 1, got %u\n", fmt[i], gm.gmBlackBoxX);
-                ok(gm.gmBlackBoxY == 1, "%2d:expected 1, got %u\n", fmt[i], gm.gmBlackBoxX);
+                ok(gm.gmBlackBoxY == 1, "%2d:expected 1, got %u\n", fmt[i], gm.gmBlackBoxY);
             }
         }
 
@@ -4165,7 +4165,7 @@ static void test_GetGlyphOutline(void)
                 ok(ret != GDI_ERROR, "%2d:GetGlyphOutlineW should succeed, got %d\n", fmt[i], ret);
                 todo_wine {
                     ok(gm.gmBlackBoxX == 1, "%2d:expected 1, got %u\n", fmt[i], gm.gmBlackBoxX);
-                    ok(gm.gmBlackBoxY == 1, "%2d:expected 1, got %u\n", fmt[i], gm.gmBlackBoxX);
+                    ok(gm.gmBlackBoxY == 1, "%2d:expected 1, got %u\n", fmt[i], gm.gmBlackBoxY);
                 }
             }
             else
