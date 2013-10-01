@@ -1175,10 +1175,10 @@ static void test_nonblocking_file_access(void)
 
     arg.read = filer;
     arg.write = filew;
-    arg.init = CreateEvent(NULL, FALSE, FALSE, NULL);
-    arg.finish = CreateEvent(NULL, FALSE, FALSE, NULL);
-    ok(arg.init != NULL, "CreateEvent failed\n");
-    ok(arg.finish != NULL, "CreateEvent failed\n");
+    arg.init = CreateEventW(NULL, FALSE, FALSE, NULL);
+    arg.finish = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(arg.init != NULL, "CreateEventW failed\n");
+    ok(arg.finish != NULL, "CreateEventW failed\n");
     thread = CreateThread(NULL, 0, block_file, (void*)&arg, 0, NULL);
     ok(thread != NULL, "CreateThread failed\n");
     WaitForSingleObject(arg.init, INFINITE);
