@@ -2078,28 +2078,19 @@ void CDECL wined3d_device_set_vertex_declaration(struct wined3d_device *device,
 
     TRACE("device %p, declaration %p.\n", device, declaration);
 
-    if (declaration)
-        wined3d_vertex_declaration_incref(declaration);
-    if (prev)
-        wined3d_vertex_declaration_decref(prev);
-
-    device->update_state->vertex_declaration = declaration;
-
     if (device->recording)
-    {
-        TRACE("Recording... not performing anything.\n");
         device->recording->changed.vertexDecl = TRUE;
-        return;
-    }
 
     if (declaration == prev)
-    {
-        /* Checked after the assignment to allow proper stateblock recording. */
-        TRACE("Application is setting the old declaration over, nothing to do.\n");
         return;
-    }
 
-    device_invalidate_state(device, STATE_VDECL);
+    if (declaration)
+        wined3d_vertex_declaration_incref(declaration);
+    device->update_state->vertex_declaration = declaration;
+    if (!device->recording)
+        wined3d_cs_emit_set_vertex_declaration(device->cs, declaration);
+    if (prev)
+        wined3d_vertex_declaration_decref(prev);
 }
 
 struct wined3d_vertex_declaration * CDECL wined3d_device_get_vertex_declaration(const struct wined3d_device *device)

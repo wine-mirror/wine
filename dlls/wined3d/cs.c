@@ -32,6 +32,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_SCISSOR_RECT,
     WINED3D_CS_OP_SET_RENDER_TARGET,
     WINED3D_CS_OP_SET_DEPTH_STENCIL,
+    WINED3D_CS_OP_SET_VERTEX_DECLARATION,
 };
 
 struct wined3d_cs_present
@@ -89,6 +90,12 @@ struct wined3d_cs_set_depth_stencil
 {
     enum wined3d_cs_op opcode;
     struct wined3d_surface *depth_stencil;
+};
+
+struct wined3d_cs_set_vertex_declaration
+{
+    enum wined3d_cs_op opcode;
+    struct wined3d_vertex_declaration *declaration;
 };
 
 static void wined3d_cs_exec_present(struct wined3d_cs *cs, const void *data)
@@ -284,6 +291,25 @@ void wined3d_cs_emit_set_depth_stencil(struct wined3d_cs *cs, struct wined3d_sur
     cs->ops->submit(cs);
 }
 
+static void wined3d_cs_exec_set_vertex_declaration(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_set_vertex_declaration *op = data;
+
+    cs->state.vertex_declaration = op->declaration;
+    device_invalidate_state(cs->device, STATE_VDECL);
+}
+
+void wined3d_cs_emit_set_vertex_declaration(struct wined3d_cs *cs, struct wined3d_vertex_declaration *declaration)
+{
+    struct wined3d_cs_set_vertex_declaration *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_SET_VERTEX_DECLARATION;
+    op->declaration = declaration;
+
+    cs->ops->submit(cs);
+}
+
 static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
 {
     /* WINED3D_CS_OP_PRESENT                */ wined3d_cs_exec_present,
@@ -293,6 +319,7 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_SCISSOR_RECT       */ wined3d_cs_exec_set_scissor_rect,
     /* WINED3D_CS_OP_SET_RENDER_TARGET      */ wined3d_cs_exec_set_render_target,
     /* WINED3D_CS_OP_SET_DEPTH_STENCIL      */ wined3d_cs_exec_set_depth_stencil,
+    /* WINED3D_CS_OP_SET_VERTEX_DECLARATION */ wined3d_cs_exec_set_vertex_declaration,
 };
 
 static void *wined3d_cs_st_require_space(struct wined3d_cs *cs, size_t size)

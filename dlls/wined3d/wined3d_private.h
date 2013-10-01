@@ -2490,6 +2490,8 @@ void wined3d_cs_emit_set_depth_stencil(struct wined3d_cs *cs, struct wined3d_sur
 void wined3d_cs_emit_set_render_target(struct wined3d_cs *cs, UINT render_target_idx,
         struct wined3d_surface *render_target) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_scissor_rect(struct wined3d_cs *cs, const RECT *rect) DECLSPEC_HIDDEN;
+void wined3d_cs_emit_set_vertex_declaration(struct wined3d_cs *cs,
+        struct wined3d_vertex_declaration *declaration) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_viewport(struct wined3d_cs *cs, const struct wined3d_viewport *viewport) DECLSPEC_HIDDEN;
 
 /* Direct3D terminology with little modifications. We do not have an issued state
