@@ -50,6 +50,7 @@ typedef enum
     NT40,    /* Windows NT 4.0 */
     NT2K,    /* Windows 2000 */
     WINXP,   /* Windows XP */
+    WINXP64, /* Windows XP 64-bit */
     WIN2K3,  /* Windows 2003 */
     WINVISTA,/* Windows Vista */
     WIN2K8,  /* Windows 2008 */
@@ -134,6 +135,12 @@ static const RTL_OSVERSIONINFOEXW VersionData[NB_WINDOWS_VERSIONS] =
         {'S','e','r','v','i','c','e',' ','P','a','c','k',' ','3',0},
         3, 0, VER_SUITE_SINGLEUSERTS, VER_NT_WORKSTATION, 30 /* FIXME: Great, a reserved field with a value! */
     },
+    /* WINXP64 */
+    {
+        sizeof(RTL_OSVERSIONINFOEXW), 5, 2, 0xECE, VER_PLATFORM_WIN32_NT,
+        {'S','e','r','v','i','c','e',' ','P','a','c','k',' ','1',0},
+        1, 0, VER_SUITE_SINGLEUSERTS, VER_NT_WORKSTATION, 0
+    },
     /* WIN2K3 */
     {
         sizeof(RTL_OSVERSIONINFOEXW), 5, 2, 0xECE, VER_PLATFORM_WIN32_NT,
@@ -185,6 +192,7 @@ static const char * const WinVersionNames[NB_WINDOWS_VERSIONS] =
     "nt40",                       /* NT40 */
     "win2000,win2k,nt2k,nt2000",  /* NT2K */
     "winxp",                      /* WINXP */
+    "winxp64",                    /* WINXP64 */
     "win2003,win2k3",             /* WIN2K3 */
     "vista,winvista",             /* WINVISTA*/
     "win2008,win2k8",             /* WIN2K8 */
@@ -468,13 +476,16 @@ void version_init( const WCHAR *appname )
 {
     static const WCHAR configW[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e',0};
     static const WCHAR appdefaultsW[] = {'A','p','p','D','e','f','a','u','l','t','s','\\',0};
-
+    static const int is_win64 = (sizeof(void *) > sizeof(int));
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
     HANDLE root, hkey, config_key;
     BOOL got_win_ver = FALSE;
 
-    current_version = &VersionData[WINXP];  /* default if nothing else is specified */
+    if (is_win64 || is_wow64)
+        current_version = &VersionData[WINXP64];  /* default if nothing else is specified */
+    else
+        current_version = &VersionData[WINXP];
 
     RtlOpenCurrentUser( KEY_ALL_ACCESS, &root );
     attr.Length = sizeof(attr);

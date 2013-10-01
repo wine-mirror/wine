@@ -55,6 +55,9 @@ static const struct
     { "win2008",     "Windows 2008",      6,  0, 0x1772,VER_PLATFORM_WIN32_NT, "Service Pack 2", 2, 0, "ServerNT"},
     { "vista",       "Windows Vista",     6,  0, 0x1772,VER_PLATFORM_WIN32_NT, "Service Pack 2", 2, 0, "WinNT"},
     { "win2003",     "Windows 2003",      5,  2, 0xECE, VER_PLATFORM_WIN32_NT, "Service Pack 2", 2, 0, "ServerNT"},
+#ifdef _WIN64
+    { "winxp64",     "Windows XP",        5,  2, 0xECE, VER_PLATFORM_WIN32_NT, "Service Pack 1", 1, 0, "WinNT"},
+#else
     { "winxp",       "Windows XP",        5,  1, 0xA28, VER_PLATFORM_WIN32_NT, "Service Pack 3", 3, 0, "WinNT"},
     { "win2k",       "Windows 2000",      5,  0, 0x893, VER_PLATFORM_WIN32_NT, "Service Pack 4", 4, 0, "WinNT"},
     { "winme",       "Windows ME",        4, 90, 0xBB8, VER_PLATFORM_WIN32_WINDOWS, " ", 0, 0, ""},
@@ -65,6 +68,7 @@ static const struct
     { "win31",       "Windows 3.1",       3, 10,     0, VER_PLATFORM_WIN32s, "Win32s 1.3", 0, 0, ""},
     { "win30",       "Windows 3.0",       3,  0,     0, VER_PLATFORM_WIN32s, "Win32s 1.3", 0, 0, ""},
     { "win20",       "Windows 2.0",       2,  0,     0, VER_PLATFORM_WIN32s, "Win32s 1.3", 0, 0, ""}
+#endif
 };
 
 #define NB_VERSIONS (sizeof(win_versions)/sizeof(win_versions[0]))
