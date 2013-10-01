@@ -3245,7 +3245,7 @@ static void test_rt_caps(void)
         if (test_data[i].pf)
         {
             surface_desc.dwFlags |= DDSD_PIXELFORMAT;
-            U4(surface_desc).ddpfPixelFormat = *test_data[i].pf;
+            surface_desc.ddpfPixelFormat = *test_data[i].pf;
         }
         if (test_data[i].caps_in & DDSCAPS_ZBUFFER)
         {
