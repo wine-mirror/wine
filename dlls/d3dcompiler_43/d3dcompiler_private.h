@@ -365,11 +365,10 @@ const char *debug_print_opcode(DWORD opcode) DECLSPEC_HIDDEN;
 /* Used to signal an incorrect swizzle/writemask */
 #define SWIZZLE_ERR ~0U
 
-/*
-  Enumerations and defines used in the bytecode writer
-  intermediate representation
-*/
-typedef enum _BWRITERSHADER_INSTRUCTION_OPCODE_TYPE {
+/* Enumerations and defines used in the bytecode writer intermediate
+ * representation. */
+enum bwritershader_instruction_opcode_type
+{
     BWRITERSIO_NOP,
     BWRITERSIO_MOV,
     BWRITERSIO_ADD,
@@ -458,7 +457,7 @@ typedef enum _BWRITERSHADER_INSTRUCTION_OPCODE_TYPE {
     BWRITERSIO_PHASE,
     BWRITERSIO_COMMENT,
     BWRITERSIO_END,
-} BWRITERSHADER_INSTRUCTION_OPCODE_TYPE;
+};
 
 typedef enum _BWRITERSHADER_PARAM_REGISTER_TYPE {
     BWRITERSPR_TEMP,
