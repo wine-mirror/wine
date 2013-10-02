@@ -1298,11 +1298,22 @@ static void test_GetCharABCWidths(void)
         DeleteObject(hfont);
     }
 
-    ReleaseDC(NULL, hdc);
-
     memset(&lf, 0, sizeof(lf));
     strcpy(lf.lfFaceName, "Tahoma");
     lf.lfHeight = 20;
+    hfont = CreateFontIndirectA(&lf);
+
+    /* test empty glyph's metrics */
+    hfont = SelectObject(hdc, hfont);
+    ret = pGetCharABCWidthsFloatW(hdc, ' ', ' ', abcf);
+    ok(ret, "GetCharABCWidthsFloatW should have succeeded\n");
+    ok(abcf[0].abcfB == 1.0, "got %f\n", abcf[0].abcfB);
+    ret = pGetCharABCWidthsW(hdc, ' ', ' ', abcw);
+    ok(ret, "GetCharABCWidthsW should have succeeded\n");
+    ok(abcw[0].abcB == 1, "got %u\n", abcw[0].abcB);
+
+    DeleteObject(SelectObject(hdc, hfont));
+    ReleaseDC(NULL, hdc);
 
     trace("ABC sign test for a variety of transforms:\n");
     hfont = CreateFontIndirectA(&lf);
@@ -1318,7 +1329,7 @@ static void test_GetCharABCWidths(void)
     ret = pGetCharABCWidthsI(hdc, 0, 1, glyphs, abc);
     ok(ret, "GetCharABCWidthsI should have succeeded\n");
     ret = pGetCharABCWidthsW(hdc, 'i', 'i', abcw);
-    ok(ret, "GetCharABCWidthsI should have succeeded\n");
+    ok(ret, "GetCharABCWidthsW should have succeeded\n");
     ret = pGetCharABCWidthsFloatW(hdc, 'i', 'i', abcf);
     ok(ret, "GetCharABCWidthsFloatW should have succeeded\n");
 

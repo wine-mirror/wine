@@ -6525,7 +6525,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
     lpgm->gmptGlyphOrigin.x = origin_x >> 6;
     lpgm->gmptGlyphOrigin.y = origin_y >> 6;
     abc->abcA = left >> 6;
-    abc->abcB = width;
+    abc->abcB = lpgm->gmBlackBoxX;
     abc->abcC = adv - abc->abcA - abc->abcB;
 
     TRACE("%u,%u,%s,%d,%d\n", lpgm->gmBlackBoxX, lpgm->gmBlackBoxY,
