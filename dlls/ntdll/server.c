@@ -790,8 +790,8 @@ static int receive_fd( obj_handle_t *handle )
 struct fd_cache_entry
 {
     int fd;
-    enum server_fd_type type : 6;
-    unsigned int        access : 2;
+    enum server_fd_type type : 5;
+    unsigned int        access : 3;
     unsigned int        options : 24;
 };
 
@@ -899,7 +899,7 @@ int server_get_unix_fd( HANDLE handle, unsigned int wanted_access, int *unix_fd,
 
     *unix_fd = -1;
     *needs_close = 0;
-    wanted_access &= FILE_READ_DATA | FILE_WRITE_DATA;
+    wanted_access &= FILE_READ_DATA | FILE_WRITE_DATA | FILE_APPEND_DATA;
 
     server_enter_uninterrupted_section( &fd_cache_section, &sigset );
 
