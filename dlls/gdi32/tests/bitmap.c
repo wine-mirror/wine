@@ -1564,7 +1564,7 @@ static COLORREF get_nearest( int r, int g, int b )
     return (r*r + g*g + b*b < (255-r)*(255-r) + (255-g)*(255-g) + (255-b)*(255-b)) ? 0x000000 : 0xffffff;
 }
 
-static int is_black_pen( COLORREF fg, COLORREF bg, int r, int g, int b )
+static BOOL is_black_pen( COLORREF fg, COLORREF bg, int r, int g, int b )
 {
     if (fg == 0 || bg == 0xffffff) return RGB(r,g,b) != 0xffffff && RGB(r,g,b) != bg;
     return RGB(r,g,b) == 0x000000 || RGB(r,g,b) == bg;
