@@ -2956,7 +2956,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
     INT ret = 0;
 
     TRACE("socket: %04lx, level 0x%x, name 0x%x, ptr %p, len %d\n",
-          s, level, optname, optval, *optlen);
+          s, level, optname, optval, optlen ? *optlen : 0);
 
     switch(level)
     {
