@@ -2421,6 +2421,7 @@ void wined3d_volume_load(struct wined3d_volume *volume, struct wined3d_context *
         BOOL srgb_mode) DECLSPEC_HIDDEN;
 void wined3d_volume_upload_data(struct wined3d_volume *volume, const struct wined3d_context *context,
         const struct wined3d_const_bo_address *data) DECLSPEC_HIDDEN;
+void wined3d_volume_cleanup_cs(struct wined3d_volume *volume) DECLSPEC_HIDDEN;
 
 struct wined3d_surface_dib
 {
@@ -2796,6 +2797,7 @@ void wined3d_cs_emit_create_vbo(struct wined3d_cs *cs, struct wined3d_buffer *bu
 void wined3d_cs_emit_resource_cleanup(struct wined3d_cs *cs,
         struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_buffer_cleanup(struct wined3d_cs *cs, struct wined3d_buffer *buffer) DECLSPEC_HIDDEN;
+void wined3d_cs_emit_volume_cleanup(struct wined3d_cs *cs, struct wined3d_volume *volume) DECLSPEC_HIDDEN;
 
 /* Direct3D terminology with little modifications. We do not have an issued state
  * because only the driver knows about it, but we have a created state because d3d
