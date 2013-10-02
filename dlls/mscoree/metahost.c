@@ -986,6 +986,8 @@ static const struct IEnumUnknownVtbl InstalledRuntimeEnum_Vtbl = {
 struct CLRMetaHost
 {
     ICLRMetaHost ICLRMetaHost_iface;
+
+    RuntimeLoadedCallbackFnPtr callback;
 };
 
 static struct CLRMetaHost GlobalCLRMetaHost;
@@ -1168,9 +1170,16 @@ static HRESULT WINAPI CLRMetaHost_EnumerateLoadedRuntimes(ICLRMetaHost* iface,
 static HRESULT WINAPI CLRMetaHost_RequestRuntimeLoadedNotification(ICLRMetaHost* iface,
     RuntimeLoadedCallbackFnPtr pCallbackFunction)
 {
-    FIXME("%p\n", pCallbackFunction);
+    TRACE("%p\n", pCallbackFunction);
 
-    return E_NOTIMPL;
+    if(!pCallbackFunction)
+        return E_POINTER;
+
+    WARN("Callback currently will not be called.\n");
+
+    GlobalCLRMetaHost.callback = pCallbackFunction;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI CLRMetaHost_QueryLegacyV2RuntimeBinding(ICLRMetaHost* iface,

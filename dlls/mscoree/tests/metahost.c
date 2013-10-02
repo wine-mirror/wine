@@ -142,6 +142,23 @@ static void test_getruntime(void)
     ok(hr == CLR_E_SHIM_RUNTIME, "GetVersion failed, hr=%x\n", hr);
 }
 
+static void WINAPI notification_callback(ICLRRuntimeInfo *pRuntimeInfo, CallbackThreadSetFnPtr pfnCallbackThreadSet,
+    CallbackThreadUnsetFnPtr pfnCallbackThreadUnset)
+{
+    ok(0, "Unexpected call\n");
+}
+
+static void test_notification(void)
+{
+    HRESULT hr;
+
+    hr = ICLRMetaHost_RequestRuntimeLoadedNotification(metahost, NULL);
+    ok(hr == E_POINTER, "GetVersion failed, hr=%x\n", hr);
+
+    hr = ICLRMetaHost_RequestRuntimeLoadedNotification(metahost,notification_callback);
+    ok(hr == S_OK, "GetVersion failed, hr=%x\n", hr);
+}
+
 START_TEST(metahost)
 {
     if (!init_pointers())
@@ -150,6 +167,7 @@ START_TEST(metahost)
     test_enumruntimes();
 
     test_getruntime();
+    test_notification();
 
     cleanup();
 }
