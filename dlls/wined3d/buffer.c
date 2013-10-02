@@ -117,7 +117,7 @@ static void delete_gl_buffer(struct wined3d_buffer *This, const struct wined3d_g
 }
 
 /* Context activation is done by the caller. */
-static void buffer_create_buffer_object(struct wined3d_buffer *This, struct wined3d_context *context)
+void buffer_create_buffer_object(struct wined3d_buffer *This, struct wined3d_context *context)
 {
     GLenum gl_usage = GL_STATIC_DRAW_ARB;
     GLenum error;
@@ -185,8 +185,6 @@ static void buffer_create_buffer_object(struct wined3d_buffer *This, struct wine
         ERR("glBufferData failed with error %s (%#x)\n", debug_glerror(error), error);
         goto fail;
     }
-    if (wined3d_settings.strict_draw_ordering || wined3d_settings.cs_multithreaded)
-        gl_info->gl_ops.gl.p_glFlush(); /* Flush to ensure ordering across contexts. */
 
     This->buffer_object_usage = gl_usage;
 
@@ -933,9 +931,7 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
      * on buffer creation won't work either. */
     if (buffer->flags & WINED3D_BUFFER_CREATEBO)
     {
-        context = context_acquire(device, NULL);
-        buffer_create_buffer_object(buffer, context);
-        context_release(context);
+        wined3d_cs_emit_create_vbo(device->cs, buffer);
         buffer->flags &= ~WINED3D_BUFFER_CREATEBO;
     }
 

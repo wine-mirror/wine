@@ -82,6 +82,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_VIEW_DESTROY,
     WINED3D_CS_OP_VDECL_DESTROY,
     WINED3D_CS_OP_SHADER_CLEANUP,
+    WINED3D_CS_OP_CREATE_VBO,
     WINED3D_CS_OP_STOP,
 };
 
@@ -478,6 +479,12 @@ struct wined3d_cs_shader_cleanup
 {
     enum wined3d_cs_op opcode;
     struct wined3d_shader *shader;
+};
+
+struct wined3d_cs_create_vbo
+{
+    enum wined3d_cs_op opcode;
+    struct wined3d_buffer *buffer;
 };
 
 static void wined3d_cs_mt_submit(struct wined3d_cs *cs, size_t size)
@@ -2421,6 +2428,30 @@ void wined3d_cs_emit_shader_cleanup(struct wined3d_cs *cs, struct wined3d_shader
     cs->ops->submit(cs, sizeof(*op));
 }
 
+static UINT wined3d_cs_exec_create_vbo(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_create_vbo *op = data;
+    struct wined3d_context *context = context_acquire(cs->device, NULL);
+
+    buffer_create_buffer_object(op->buffer, context);
+
+    context_release(context);
+
+    return sizeof(*op);
+}
+
+void wined3d_cs_emit_create_vbo(struct wined3d_cs *cs, struct wined3d_buffer *buffer)
+{
+    struct wined3d_cs_create_vbo *op;
+
+    op = cs->ops->require_space_prio(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_CREATE_VBO;
+    op->buffer = buffer;
+
+    cs->ops->submit_prio(cs, sizeof(*op));
+    cs->ops->finish_prio(cs);
+}
+
 static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
 {
     /* WINED3D_CS_OP_NOP                        */ wined3d_cs_exec_nop,
@@ -2481,6 +2512,7 @@ static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_VIEW_DESTROY               */ wined3d_cs_exec_view_destroy,
     /* WINED3D_CS_OP_VDECL_DESTROY              */ wined3d_cs_exec_vertex_declaration_destroy,
     /* WINED3D_CS_OP_SHADER_CLEANUP             */ wined3d_cs_exec_shader_cleanup,
+    /* WINED3D_CS_OP_CREATE_VBO                 */ wined3d_cs_exec_create_vbo,
 };
 
 static inline void *_wined3d_cs_mt_require_space(struct wined3d_cs *cs, size_t size, BOOL prio)
