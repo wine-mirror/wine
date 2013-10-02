@@ -424,7 +424,7 @@ HRESULT surface_init(struct d3d9_surface *surface, struct d3d9_device *device, U
 
     wined3d_mutex_lock();
     hr = wined3d_surface_create(device->wined3d_device, width, height, wined3dformat_from_d3dformat(format),
-            usage & WINED3DUSAGE_MASK, (enum wined3d_pool)pool, multisample_type, multisample_quality,
+            usage, (enum wined3d_pool)pool, multisample_type, multisample_quality,
             flags, surface, &d3d9_surface_wined3d_parent_ops, &surface->wined3d_surface);
     wined3d_mutex_unlock();
     if (FAILED(hr))
