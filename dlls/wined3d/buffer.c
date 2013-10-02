@@ -570,6 +570,9 @@ ULONG CDECL wined3d_buffer_decref(struct wined3d_buffer *buffer)
         }
 
         resource_cleanup(&buffer->resource);
+        if (wined3d_settings.cs_multithreaded)
+            buffer->resource.device->cs->ops->finish(buffer->resource.device->cs);
+
         buffer->resource.parent_ops->wined3d_object_destroyed(buffer->resource.parent);
         HeapFree(GetProcessHeap(), 0, buffer->maps);
         HeapFree(GetProcessHeap(), 0, buffer);

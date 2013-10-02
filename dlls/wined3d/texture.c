@@ -68,6 +68,8 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
     {
         ERR("Failed to allocate sub-resource array.\n");
         resource_cleanup(&texture->resource);
+        if (wined3d_settings.cs_multithreaded)
+            texture->resource.device->cs->ops->finish(texture->resource.device->cs);
         return E_OUTOFMEMORY;
     }
 
@@ -136,6 +138,8 @@ static void wined3d_texture_cleanup(struct wined3d_texture *texture)
     wined3d_texture_unload_gl_texture(texture);
     HeapFree(GetProcessHeap(), 0, texture->sub_resources);
     resource_cleanup(&texture->resource);
+    if (wined3d_settings.cs_multithreaded)
+        texture->resource.device->cs->ops->finish(texture->resource.device->cs);
 }
 
 void wined3d_texture_set_swapchain(struct wined3d_texture *texture, struct wined3d_swapchain *swapchain)

@@ -101,9 +101,12 @@ static void surface_cleanup(struct wined3d_surface *surface)
 
 void wined3d_surface_destroy(struct wined3d_surface *surface)
 {
+    struct wined3d_device *device = surface->resource.device;
     TRACE("surface %p.\n", surface);
 
     surface_cleanup(surface);
+    if (wined3d_settings.cs_multithreaded)
+        device->cs->ops->finish(device->cs);
     surface->resource.parent_ops->wined3d_object_destroyed(surface->resource.parent);
     HeapFree(GetProcessHeap(), 0, surface);
 }
@@ -5237,6 +5240,8 @@ static HRESULT surface_init(struct wined3d_surface *surface, struct wined3d_text
     {
         ERR("Private setup failed, hr %#x.\n", hr);
         surface_cleanup(surface);
+        if (wined3d_settings.cs_multithreaded)
+            surface->resource.device->cs->ops->finish(surface->resource.device->cs);
         return hr;
     }
 

@@ -309,9 +309,12 @@ void wined3d_volume_load(struct wined3d_volume *volume, struct wined3d_context *
 
 void wined3d_volume_destroy(struct wined3d_volume *volume)
 {
+    struct wined3d_device *device = volume->resource.device;
     TRACE("volume %p.\n", volume);
 
     resource_cleanup(&volume->resource);
+    if (wined3d_settings.cs_multithreaded)
+        device->cs->ops->finish(device->cs);
     volume->resource.parent_ops->wined3d_object_destroyed(volume->resource.parent);
     HeapFree(GetProcessHeap(), 0, volume);
 }
