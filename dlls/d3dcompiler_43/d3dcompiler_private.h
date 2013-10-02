@@ -494,12 +494,13 @@ enum bwritervs_rastout_offsets
 #define BWRITERSP_WRITEMASK_3   0x8 /* .w a */
 #define BWRITERSP_WRITEMASK_ALL 0xf /* all */
 
-typedef enum _BWRITERSHADER_PARAM_DSTMOD_TYPE {
+enum bwritershader_param_dstmod_type
+{
     BWRITERSPDM_NONE = 0,
     BWRITERSPDM_SATURATE = 1,
     BWRITERSPDM_PARTIALPRECISION = 2,
     BWRITERSPDM_MSAMPCENTROID = 4,
-} BWRITERSHADER_PARAM_DSTMOD_TYPE;
+};
 
 typedef enum _BWRITERSAMPLER_TEXTURE_TYPE {
     BWRITERSTT_UNKNOWN = 0,
