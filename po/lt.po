@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2013-06-18 22:58+0300\n"
+"PO-Revision-Date: 2013-10-02 08:42+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -2256,7 +2256,7 @@ msgstr "Liudijimai"
 
 #: cryptui.rc:337
 msgid "I&ntended purpose:"
-msgstr "&Numatytos paskirtys:"
+msgstr "&Numatytosios paskirtys:"
 
 #: cryptui.rc:341
 msgid "&Import..."
@@ -2272,7 +2272,7 @@ msgstr "Išs&amiau..."
 
 #: cryptui.rc:345
 msgid "Certificate intended purposes"
-msgstr "Liudijimo numatytos paskirtys"
+msgstr "Liudijimo numatytosios paskirtys"
 
 #: cryptui.rc:347 ieframe.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56
 #: oleview.rc:58 oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:45
@@ -8532,16 +8532,12 @@ msgstr ""
 "ir mėginkite vėl."
 
 #: winmm.rc:52 winmm.rc:125
-#, fuzzy
-#| msgid ""
-#| "The current MIDI Mapper setup refers to a MIDI device that is not "
-#| "installed on the system. Use MIDI Mapper to edit the setup."
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
 "on the system."
 msgstr ""
-"Dabartinė MIDI atvaizdžio konfigūracija kreipiasi į MIDI įrenginį, kuris "
-"nėra įdiegtas sistemoje. Naudokite MIDI Mapper konfigūracijai redaguoti."
+"Dabartinė MIDI atvaizdžio konfigūracija rodo į MIDI įrenginį, kuris nėra "
+"įdiegtas sistemoje."
 
 #: winmm.rc:53
 msgid ""
@@ -9363,22 +9359,16 @@ msgstr ""
 "iškviestoje procedūroje paveldimi kviečiančiosios procedūros.\n"
 
 #: cmd.rc:40
-#, fuzzy
-#| msgid ""
-#| "CD <dir> is the short version of CHDIR. It changes the current\n"
-#| "default directory.\n"
 msgid ""
 "CD <directory> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
 msgstr ""
 "CD <katalogas> yra trumpa CHDIR versija. Pakeičia dabartinį\n"
-"numatytą katalogą.\n"
+"numatytąjį katalogą.\n"
 
 #: cmd.rc:41
-#, fuzzy
-#| msgid "CHDIR <dir> changes the current default directory.\n"
 msgid "CHDIR <directory> changes the current default directory.\n"
-msgstr "CHDIR <katalogas> pakeičia dabartinį numatytą katalogą.\n"
+msgstr "CHDIR <katalogas> pakeičia dabartinį numatytąjį katalogą.\n"
 
 #: cmd.rc:43
 msgid "CLS clears the console screen.\n"
@@ -9429,11 +9419,6 @@ msgid "ERASE <filename> deletes a file or set of files.\n"
 msgstr "ERASE <failas> pašalina failą ar failų rinkinį.\n"
 
 #: cmd.rc:68
-#, fuzzy
-#| msgid ""
-#| "The FOR command is used to execute a command for each of a set of files.\n"
-#| "\n"
-#| "Syntax: FOR %variable IN (set) DO command\n"
 msgid ""
 "The FOR command is used to execute a command for each of a set of files.\n"
 "\n"
@@ -9444,6 +9429,8 @@ msgstr ""
 "FOR komanda naudojama įvykdyti komandą kiekvienam failų aibės elementui.\n"
 "\n"
 "Sintaksė: FOR %kintamasis IN (aibė) DO komanda\n"
+"\n"
+"Simbolis % privalo būti dubliuotas, kai FOR naudojamas komandų faile.\n"
 
 #: cmd.rc:80
 msgid ""
@@ -9607,7 +9594,7 @@ msgstr ""
 "$q    Lygybės ženklas     $t    Dabartinis laikas   $v    cmd versija\n"
 "\n"
 "Pastebėkite, kad PROMPT komandos be raginimo eilutės įvedimas atkuria\n"
-"numatytą raginimo reikšmę, kuri yra dabartinis kelias (įskaitant\n"
+"numatytąją raginimo reikšmę, kuri yra dabartinis kelias (įskaitant\n"
 "dabartinio disko raidę) ir daugiau-už (>) simbolis.\n"
 "(Taip pat, kaip komanda PROMPT $p$g).\n"
 "\n"
@@ -9632,14 +9619,10 @@ msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <failas> pervadina failą.\n"
 
 #: cmd.rc:158
-#, fuzzy
-#| msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
 msgid "RD <directory> is the short version of RMDIR. It deletes a directory.\n"
 msgstr "RD <katalogas> yra trumpa RMDIR versija. Pašalina katalogą.\n"
 
 #: cmd.rc:159
-#, fuzzy
-#| msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgid "RMDIR <directory> deletes a directory.\n"
 msgstr "RMDIR <katalogas> pašalina katalogą.\n"
 
@@ -9812,10 +9795,6 @@ msgstr ""
 "pasitaiko pirmiau), tada atkuriami ankstesnės aplinkos nustatymai.\n"
 
 #: cmd.rc:245
-#, fuzzy
-#| msgid ""
-#| "PUSHD <directoryname> saves the current directory onto a\n"
-#| "stack, and then changes the current directory to the supplied one.\n"
 msgid ""
 "PUSHD <directory> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
@@ -13924,7 +13903,7 @@ msgstr "Rašmenų &formatas"
 
 #: wordpad.rc:61
 msgid "&Def. char format"
-msgstr "&Numatytas rašmenų formatas"
+msgstr "&Numatytasis rašmenų formatas"
 
 #: wordpad.rc:62
 msgid "Paragrap&h format"
