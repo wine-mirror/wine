@@ -459,7 +459,7 @@ static mode_t file_access_to_mode( unsigned int access )
 
     access = generic_file_map_access( access );
     if (access & FILE_READ_DATA)  mode |= 4;
-    if (access & FILE_WRITE_DATA) mode |= 2;
+    if (access & (FILE_WRITE_DATA|FILE_APPEND_DATA)) mode |= 2;
     if (access & FILE_EXECUTE)    mode |= 1;
     return mode;
 }
