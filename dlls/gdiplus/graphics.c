@@ -621,7 +621,7 @@ static ARGB transform_color(ARGB color, const ColorMatrix *matrix)
     return (a << 24) | (r << 16) | (g << 8) | b;
 }
 
-static int color_is_gray(ARGB color)
+static BOOL color_is_gray(ARGB color)
 {
     unsigned char r, g, b;
 
@@ -944,12 +944,12 @@ static REAL intersect_line_scanline(const GpPointF *p1, const GpPointF *p2, REAL
     return (p1->X - p2->X) * (p2->Y - y) / (p2->Y - p1->Y) + p2->X;
 }
 
-static INT brush_can_fill_path(GpBrush *brush)
+static BOOL brush_can_fill_path(GpBrush *brush)
 {
     switch (brush->bt)
     {
     case BrushTypeSolidColor:
-        return 1;
+        return TRUE;
     case BrushTypeHatchFill:
     {
         GpHatch *hatch = (GpHatch*)brush;
@@ -960,7 +960,7 @@ static INT brush_can_fill_path(GpBrush *brush)
     case BrushTypeTextureFill:
     /* Gdi32 isn't much help with these, so we should use brush_fill_pixels instead. */
     default:
-        return 0;
+        return FALSE;
     }
 }
 
@@ -1012,7 +1012,7 @@ static void brush_fill_path(GpGraphics *graphics, GpBrush* brush)
     }
 }
 
-static INT brush_can_fill_pixels(GpBrush *brush)
+static BOOL brush_can_fill_pixels(GpBrush *brush)
 {
     switch (brush->bt)
     {
@@ -1021,9 +1021,9 @@ static INT brush_can_fill_pixels(GpBrush *brush)
     case BrushTypeLinearGradient:
     case BrushTypeTextureFill:
     case BrushTypePathGradient:
-        return 1;
+        return TRUE;
     default:
-        return 0;
+        return FALSE;
     }
 }
 
