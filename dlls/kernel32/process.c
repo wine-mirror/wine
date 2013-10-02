@@ -84,7 +84,7 @@ typedef struct
 static DWORD shutdown_flags = 0;
 static DWORD shutdown_priority = 0x280;
 static BOOL is_wow64;
-static const int is_win64 = (sizeof(void *) > sizeof(int));
+static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 
 HMODULE kernel32_handle = 0;
 SYSTEM_BASIC_INFORMATION system_info = { 0 };
@@ -116,7 +116,7 @@ extern void SHELL_LoadRegistry(void);
 /***********************************************************************
  *           contains_path
  */
-static inline int contains_path( LPCWSTR name )
+static inline BOOL contains_path( LPCWSTR name )
 {
     return ((*name && (name[1] == ':')) || strchrW(name, '/') || strchrW(name, '\\'));
 }
@@ -128,7 +128,7 @@ static inline int contains_path( LPCWSTR name )
  * Check if an environment variable needs to be handled specially when
  * passed through the Unix environment (i.e. prefixed with "WINE").
  */
-static inline int is_special_env_var( const char *var )
+static inline BOOL is_special_env_var( const char *var )
 {
     return (!strncmp( var, "PATH=", sizeof("PATH=")-1 ) ||
             !strncmp( var, "PWD=", sizeof("PWD=")-1 ) ||
