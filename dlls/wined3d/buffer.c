@@ -545,37 +545,38 @@ static void buffer_unload(struct wined3d_resource *resource)
     resource_unload(resource);
 }
 
+void wined3d_buffer_cleanup_cs(struct wined3d_buffer *buffer)
+{
+    struct wined3d_context *context;
+    struct wined3d_device *device = buffer->resource.device;
+
+    if (buffer->buffer_object)
+    {
+        context = context_acquire(device, NULL);
+        delete_gl_buffer(buffer, context->gl_info);
+        context_release(context);
+
+        HeapFree(GetProcessHeap(), 0, buffer->conversion_map);
+    }
+
+    HeapFree(GetProcessHeap(), 0, buffer->maps);
+    HeapFree(GetProcessHeap(), 0, buffer);
+}
+
 ULONG CDECL wined3d_buffer_decref(struct wined3d_buffer *buffer)
 {
     ULONG refcount = InterlockedDecrement(&buffer->resource.ref);
-    struct wined3d_context *context;
 
     TRACE("%p decreasing refcount to %u.\n", buffer, refcount);
 
     if (!refcount)
     {
-        if (wined3d_settings.cs_multithreaded)
-        {
-            FIXME("Waiting for cs.\n");
-            buffer->resource.device->cs->ops->finish(buffer->resource.device->cs);
-        }
-
-        if (buffer->buffer_object)
-        {
-            context = context_acquire(buffer->resource.device, NULL);
-            delete_gl_buffer(buffer, context->gl_info);
-            context_release(context);
-
-            HeapFree(GetProcessHeap(), 0, buffer->conversion_map);
-        }
+        struct wined3d_device *device = buffer->resource.device;
 
         resource_cleanup(&buffer->resource);
-        if (wined3d_settings.cs_multithreaded)
-            buffer->resource.device->cs->ops->finish(buffer->resource.device->cs);
 
         buffer->resource.parent_ops->wined3d_object_destroyed(buffer->resource.parent);
-        HeapFree(GetProcessHeap(), 0, buffer->maps);
-        HeapFree(GetProcessHeap(), 0, buffer);
+        wined3d_cs_emit_buffer_cleanup(device->cs, buffer);
     }
 
     return refcount;

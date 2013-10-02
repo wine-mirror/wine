@@ -2795,6 +2795,7 @@ void wined3d_cs_emit_shader_cleanup(struct wined3d_cs *cs, struct wined3d_shader
 void wined3d_cs_emit_create_vbo(struct wined3d_cs *cs, struct wined3d_buffer *buffer) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_resource_cleanup(struct wined3d_cs *cs,
         struct wined3d_resource *resource) DECLSPEC_HIDDEN;
+void wined3d_cs_emit_buffer_cleanup(struct wined3d_cs *cs, struct wined3d_buffer *buffer) DECLSPEC_HIDDEN;
 
 /* Direct3D terminology with little modifications. We do not have an issued state
  * because only the driver knows about it, but we have a created state because d3d
@@ -2885,6 +2886,7 @@ void buffer_invalidate_bo_range(struct wined3d_buffer *This, UINT offset, UINT s
 void buffer_swap_mem(struct wined3d_buffer *buffer, BYTE *mem) DECLSPEC_HIDDEN;
 void buffer_create_buffer_object(struct wined3d_buffer *This,
         struct wined3d_context *context) DECLSPEC_HIDDEN;
+void wined3d_buffer_cleanup_cs(struct wined3d_buffer *buffer) DECLSPEC_HIDDEN;
 
 struct wined3d_rendertarget_view
 {
