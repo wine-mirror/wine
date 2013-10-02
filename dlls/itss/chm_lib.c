@@ -1424,8 +1424,8 @@ int chm_enumerate_dir(struct chmFile *h,
     UChar *cur;
     unsigned int lenRemain;
 
-    /* set to 1 once we've started */
-    int it_has_begun=0;
+    /* set to TRUE once we've started */
+    BOOL it_has_begun = FALSE;
 
     /* the current ui */
     struct chmUnitInfo ui;
@@ -1493,7 +1493,7 @@ int chm_enumerate_dir(struct chmFile *h,
             if (! it_has_begun)
             {
                 if (ui.length == 0  &&  strncmpiW(ui.path, prefixRectified, prefixLen) == 0)
-                    it_has_begun = 1;
+                    it_has_begun = TRUE;
                 else
                     continue;
 
