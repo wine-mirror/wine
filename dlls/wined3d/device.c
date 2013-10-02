@@ -4402,20 +4402,22 @@ static void delete_opengl_contexts(struct wined3d_device *device, struct wined3d
     struct wined3d_context *context;
     struct wined3d_shader *shader;
 
-    context = context_acquire(device, NULL);
-    gl_info = context->gl_info;
-
     LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &device->resources, struct wined3d_resource, resource_list_entry)
     {
         TRACE("Unloading resource %p.\n", resource);
 
-        resource->resource_ops->resource_unload(resource);
+        wined3d_cs_emit_evict_resource(device->cs, resource);
     }
+    if (wined3d_settings.cs_multithreaded)
+        device->cs->ops->finish(device->cs);
 
     LIST_FOR_EACH_ENTRY(shader, &device->shaders, struct wined3d_shader, shader_list_entry)
     {
         device->shader_backend->shader_destroy(shader);
     }
+
+    context = context_acquire(device, NULL);
+    gl_info = context->gl_info;
 
     if (device->depth_blt_texture)
     {
