@@ -5092,6 +5092,8 @@ static void test_GetAddrInfoW(void)
     static const WCHAR port[] = {'8','0',0};
     static const WCHAR empty[] = {0};
     static const WCHAR localhost[] = {'l','o','c','a','l','h','o','s','t',0};
+    static const WCHAR nxdomain[] =
+        {'n','x','d','o','m','a','i','n','.','c','o','d','e','w','e','a','v','e','r','s','.','c','o','m',0};
     static const WCHAR zero[] = {'0',0};
     int ret;
     ADDRINFOW *result, hint;
@@ -5103,8 +5105,10 @@ static void test_GetAddrInfoW(void)
     }
     memset(&hint, 0, sizeof(ADDRINFOW));
 
+    result = (ADDRINFOW *)0xdeadbeef;
     ret = pGetAddrInfoW(NULL, NULL, NULL, &result);
     ok(ret == WSAHOST_NOT_FOUND, "got %d expected WSAHOST_NOT_FOUND\n", ret);
+    ok(result == NULL, "got %p\n", result);
 
     result = NULL;
     ret = pGetAddrInfoW(empty, NULL, NULL, &result);
@@ -5145,9 +5149,24 @@ static void test_GetAddrInfoW(void)
     pFreeAddrInfoW(result);
 
     result = NULL;
+    ret = pGetAddrInfoW(localhost, NULL, &hint, &result);
+    ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
+    pFreeAddrInfoW(result);
+
+    result = NULL;
     ret = pGetAddrInfoW(localhost, port, &hint, &result);
     ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
     pFreeAddrInfoW(result);
+
+    result = (ADDRINFOW *)0xdeadbeef;
+    ret = pGetAddrInfoW(NULL, NULL, NULL, &result);
+    ok(ret == WSAHOST_NOT_FOUND, "got %d expected WSAHOST_NOT_FOUND\n", ret);
+    ok(result == NULL, "got %p\n", result);
+
+    result = (ADDRINFOW *)0xdeadbeef;
+    ret = pGetAddrInfoW(nxdomain, NULL, NULL, &result);
+    ok(ret == WSAHOST_NOT_FOUND, "got %d expected WSAHOST_NOT_FOUND\n", ret);
+    ok(result == NULL, "got %p\n", result);
 }
 
 static void test_getaddrinfo(void)
@@ -5162,8 +5181,10 @@ static void test_getaddrinfo(void)
     }
     memset(&hint, 0, sizeof(ADDRINFOA));
 
+    result = (ADDRINFOA *)0xdeadbeef;
     ret = pgetaddrinfo(NULL, NULL, NULL, &result);
     ok(ret == WSAHOST_NOT_FOUND, "got %d expected WSAHOST_NOT_FOUND\n", ret);
+    ok(result == NULL, "got %p\n", result);
 
     result = NULL;
     ret = pgetaddrinfo("", NULL, NULL, &result);
@@ -5204,9 +5225,19 @@ static void test_getaddrinfo(void)
     pfreeaddrinfo(result);
 
     result = NULL;
+    ret = pgetaddrinfo("localhost", NULL, &hint, &result);
+    ok(!ret, "getaddrinfo failed with %d\n", WSAGetLastError());
+    pfreeaddrinfo(result);
+
+    result = NULL;
     ret = pgetaddrinfo("localhost", "80", &hint, &result);
     ok(!ret, "getaddrinfo failed with %d\n", WSAGetLastError());
     pfreeaddrinfo(result);
+
+    result = (ADDRINFOA *)0xdeadbeef;
+    ret = pgetaddrinfo("nxdomain.codeweavers.com", NULL, NULL, &result);
+    ok(ret == WSAHOST_NOT_FOUND, "got %d expected WSAHOST_NOT_FOUND\n", ret);
+    ok(result == NULL, "got %p\n", result);
 }
 
 static void test_ConnectEx(void)

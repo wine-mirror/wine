@@ -5397,6 +5397,7 @@ int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addr
     char *hostname = NULL;
     const char *node;
 
+    *res = NULL;
     if (!nodename && !servname) return WSAHOST_NOT_FOUND;
 
     if (!nodename)
@@ -5479,16 +5480,14 @@ int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addr
             xuai = xuai->ai_next;
         }
         freeaddrinfo(unixaires);
-    } else {
+    } else
         result = convert_eai_u2w(result);
-        *res = NULL;
-    }
+
     return result;
 
 outofmem:
     if (*res) WS_freeaddrinfo(*res);
     if (unixaires) freeaddrinfo(unixaires);
-    *res = NULL;
     return WSA_NOT_ENOUGH_MEMORY;
 #else
     FIXME("getaddrinfo() failed, not found during buildtime.\n");
@@ -5595,6 +5594,7 @@ int WINAPI GetAddrInfoW(LPCWSTR nodename, LPCWSTR servname, const ADDRINFOW *hin
     char *nodenameA = NULL, *servnameA = NULL;
     struct WS_addrinfo *resA, *hintsA = NULL;
 
+    *res = NULL;
     if (nodename)
     {
         len = WideCharToMultiByte(CP_ACP, 0, nodename, -1, NULL, 0, NULL, NULL);
