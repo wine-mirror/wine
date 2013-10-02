@@ -8552,17 +8552,12 @@ msgstr ""
 "Übertragung abgeschlossen ist und versuchen Sie es erneut."
 
 #: winmm.rc:52 winmm.rc:125
-#, fuzzy
-#| msgid ""
-#| "The current MIDI Mapper setup refers to a MIDI device that is not "
-#| "installed on the system. Use MIDI Mapper to edit the setup."
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
 "on the system."
 msgstr ""
 "Die gegenwärtigen MIDI-Mapper Einstellungen beziehen sich auf ein MIDI-"
-"Gerät, das nicht installiert ist. Benutzen Sie den MIDI-Mapper, um dies zu "
-"ändern."
+"Gerät, das nicht installiert ist."
 
 #: winmm.rc:53
 msgid ""
@@ -9409,22 +9404,16 @@ msgstr ""
 "einer gerufenen Prozedur werden von der aufrufenden geerbt.\n"
 
 #: cmd.rc:40
-#, fuzzy
-#| msgid ""
-#| "CD <dir> is the short version of CHDIR. It changes the current\n"
-#| "default directory.\n"
 msgid ""
 "CD <directory> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
 msgstr ""
-"CD <Ver> ist die Kurzform von CHDIR. Es wechselt das aktuelle\n"
+"CD <Verzeichnis> ist die Kurzform von CHDIR. Es wechselt das aktuelle\n"
 "Verzeichnis.\n"
 
 #: cmd.rc:41
-#, fuzzy
-#| msgid "CHDIR <dir> changes the current default directory.\n"
 msgid "CHDIR <directory> changes the current default directory.\n"
-msgstr "CHDIR Wechselt in ein Verzeichnis.\n"
+msgstr "CHDIR <Verzeichnis> wechselt in ein Verzeichnis.\n"
 
 #: cmd.rc:43
 msgid "CLS clears the console screen.\n"
@@ -9432,7 +9421,7 @@ msgstr "CLS löscht den Bildschirminhalt der Konsole.\n"
 
 #: cmd.rc:45
 msgid "COPY <filename> copies a file.\n"
-msgstr "COPY Kopiert eine Datei.\n"
+msgstr "COPY <Dateiname> kopiert eine Datei.\n"
 
 #: cmd.rc:46
 msgid "CTTY changes the input/output device.\n"
@@ -9444,7 +9433,7 @@ msgstr "DATE zeigt oder ändert das Systemdatum.\n"
 
 #: cmd.rc:48
 msgid "DEL <filename> deletes a file or set of files.\n"
-msgstr "DEL löscht eine oder mehrere Dateien.\n"
+msgstr "DEL <Dateiname> löscht eine oder mehrere Dateien.\n"
 
 #: cmd.rc:49
 msgid "DIR lists the contents of a directory.\n"
@@ -9473,14 +9462,9 @@ msgstr ""
 
 #: cmd.rc:61
 msgid "ERASE <filename> deletes a file or set of files.\n"
-msgstr "ERASE löscht die angegebenen Dateien.\n"
+msgstr "ERASE <Dateiname> löscht die angegebenen Dateien.\n"
 
 #: cmd.rc:68
-#, fuzzy
-#| msgid ""
-#| "The FOR command is used to execute a command for each of a set of files.\n"
-#| "\n"
-#| "Syntax: FOR %variable IN (set) DO command\n"
 msgid ""
 "The FOR command is used to execute a command for each of a set of files.\n"
 "\n"
@@ -9488,10 +9472,13 @@ msgid ""
 "\n"
 "The % sign must be doubled when using FOR in a batch file.\n"
 msgstr ""
-"Der FOR Befehl wird genutzt, um einen Befehl für eine Menge von Dateien\n"
-"einzeln auszuführen.\n"
+"Der FOR-Befehl wird genutzt, um einen Befehl für jede Datei in einer Menge\n"
+"von Dateien einzeln auszuführen.\n"
 "\n"
-"Syntax: FOR %Variable IN (set) DO Befehl\n"
+"Syntax: FOR %Variable IN (Menge) DO Befehl\n"
+"\n"
+"Das %-Zeichen muss doppelt angegeben werden, wenn FOR in Batchdateien\n"
+"verwendet wird.\n"
 
 #: cmd.rc:80
 msgid ""
@@ -9523,8 +9510,8 @@ msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
 msgstr ""
-"HELP <Kommando> zeigt eine kurze Hilfe zu einem Thema.\n"
-"HELP ohne Argumente zeigt alle CMD Kommandos.\n"
+"HELP <Befehl> zeigt eine kurze Hilfe zu einem Thema.\n"
+"HELP ohne Argumente zeigt alle eingebauten CMD-Befehle.\n"
 
 #: cmd.rc:93
 msgid ""
@@ -9688,16 +9675,12 @@ msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <Dateiname> benennt die angegebenen Dateien um.\n"
 
 #: cmd.rc:158
-#, fuzzy
-#| msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
 msgid "RD <directory> is the short version of RMDIR. It deletes a directory.\n"
-msgstr "RD ist die Kurzform von RMDIR.\n"
+msgstr "RD <Verzeichnis> ist die Kurzform von RMDIR. Löscht ein Verzeichnis.\n"
 
 #: cmd.rc:159
-#, fuzzy
-#| msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgid "RMDIR <directory> deletes a directory.\n"
-msgstr "RMDIR löscht das angegebene Verzeichnis.\n"
+msgstr "RMDIR <Verzeichnis> löscht das angegebene Verzeichnis.\n"
 
 #: cmd.rc:203
 msgid ""
@@ -9874,15 +9857,11 @@ msgstr ""
 "Ab diesem Punkt wird die vorherige Umgebung wiederhergestellt.\n"
 
 #: cmd.rc:245
-#, fuzzy
-#| msgid ""
-#| "PUSHD <directoryname> saves the current directory onto a\n"
-#| "stack, and then changes the current directory to the supplied one.\n"
 msgid ""
 "PUSHD <directory> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
 msgstr ""
-"PUSHD <Verzeichnisname> speichert das aktuelle Verzeichnis auf einem\n"
+"PUSHD <Verzeichnis> speichert das aktuelle Verzeichnis auf einem\n"
 "Stack und wechselt das Arbeitsverzeichnis zu dem angegebenen.\n"
 
 #: cmd.rc:247
