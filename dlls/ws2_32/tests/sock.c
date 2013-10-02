@@ -5960,6 +5960,7 @@ static void test_getpeername(void)
 {
     SOCKET sock;
     struct sockaddr_in sa, sa_out;
+    SOCKADDR_STORAGE ss;
     int sa_len;
     const char buf[] = "hello world";
     int ret;
@@ -6018,17 +6019,31 @@ static void test_getpeername(void)
            "Expected WSAGetLastError() to return WSAEFAULT, got %d\n", WSAGetLastError());
     }
 
-    sa_len = 0;
-    ret = getpeername(sock, (struct sockaddr*)&sa_out, &sa_len);
-    ok(ret == SOCKET_ERROR, "Expected getpeername to return SOCKET_ERROR, got %d\n", ret);
+    ret = getpeername(sock, (struct sockaddr*)&sa_out, NULL);
+    ok(ret == SOCKET_ERROR, "Expected getpeername to return 0, got %d\n", ret);
     ok(WSAGetLastError() == WSAEFAULT,
        "Expected WSAGetLastError() to return WSAEFAULT, got %d\n", WSAGetLastError());
 
-    sa_len = sizeof(sa_out);
-    ret = getpeername(sock, (struct sockaddr*)&sa_out, &sa_len);
+    sa_len = 0;
+    ret = getpeername(sock, NULL, &sa_len);
+    ok(ret == SOCKET_ERROR, "Expected getpeername to return 0, got %d\n", ret);
+    ok(WSAGetLastError() == WSAEFAULT,
+       "Expected WSAGetLastError() to return WSAEFAULT, got %d\n", WSAGetLastError());
+    ok(!sa_len, "got %d\n", sa_len);
+
+    sa_len = 0;
+    ret = getpeername(sock, (struct sockaddr *)&ss, &sa_len);
+    ok(ret == SOCKET_ERROR, "Expected getpeername to return 0, got %d\n", ret);
+    ok(WSAGetLastError() == WSAEFAULT,
+       "Expected WSAGetLastError() to return WSAEFAULT, got %d\n", WSAGetLastError());
+    ok(!sa_len, "got %d\n", sa_len);
+
+    sa_len = sizeof(ss);
+    ret = getpeername(sock, (struct sockaddr *)&ss, &sa_len);
     ok(ret == 0, "Expected getpeername to return 0, got %d\n", ret);
-    ok(!memcmp(&sa, &sa_out, sizeof(sa)),
+    ok(!memcmp(&sa, &ss, sizeof(sa)),
        "Expected the returned structure to be identical to the connect structure\n");
+    ok(sa_len == sizeof(sa), "got %d\n", sa_len);
 
     closesocket(sock);
 }
