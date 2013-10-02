@@ -33,6 +33,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_RENDER_TARGET,
     WINED3D_CS_OP_SET_DEPTH_STENCIL,
     WINED3D_CS_OP_SET_VERTEX_DECLARATION,
+    WINED3D_CS_OP_SET_STREAM_SOURCE,
 };
 
 struct wined3d_cs_present
@@ -96,6 +97,15 @@ struct wined3d_cs_set_vertex_declaration
 {
     enum wined3d_cs_op opcode;
     struct wined3d_vertex_declaration *declaration;
+};
+
+struct wined3d_cs_set_stream_source
+{
+    enum wined3d_cs_op opcode;
+    UINT stream_idx;
+    struct wined3d_buffer *buffer;
+    UINT offset;
+    UINT stride;
 };
 
 static void wined3d_cs_exec_present(struct wined3d_cs *cs, const void *data)
@@ -310,6 +320,41 @@ void wined3d_cs_emit_set_vertex_declaration(struct wined3d_cs *cs, struct wined3
     cs->ops->submit(cs);
 }
 
+static void wined3d_cs_exec_set_stream_source(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_set_stream_source *op = data;
+    struct wined3d_stream_state *stream;
+    struct wined3d_buffer *prev;
+
+    stream = &cs->state.streams[op->stream_idx];
+    prev = stream->buffer;
+    stream->buffer = op->buffer;
+    stream->offset = op->offset;
+    stream->stride = op->stride;
+
+    if (op->buffer)
+        InterlockedIncrement(&op->buffer->resource.bind_count);
+    if (prev)
+        InterlockedDecrement(&prev->resource.bind_count);
+
+    device_invalidate_state(cs->device, STATE_STREAMSRC);
+}
+
+void wined3d_cs_emit_set_stream_source(struct wined3d_cs *cs, UINT stream_idx,
+        struct wined3d_buffer *buffer, UINT offset, UINT stride)
+{
+    struct wined3d_cs_set_stream_source *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_SET_STREAM_SOURCE;
+    op->stream_idx = stream_idx;
+    op->buffer = buffer;
+    op->offset = offset;
+    op->stride = stride;
+
+    cs->ops->submit(cs);
+}
+
 static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
 {
     /* WINED3D_CS_OP_PRESENT                */ wined3d_cs_exec_present,
@@ -320,6 +365,7 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_RENDER_TARGET      */ wined3d_cs_exec_set_render_target,
     /* WINED3D_CS_OP_SET_DEPTH_STENCIL      */ wined3d_cs_exec_set_depth_stencil,
     /* WINED3D_CS_OP_SET_VERTEX_DECLARATION */ wined3d_cs_exec_set_vertex_declaration,
+    /* WINED3D_CS_OP_SET_STREAM_SOURCE      */ wined3d_cs_exec_set_stream_source,
 };
 
 static void *wined3d_cs_st_require_space(struct wined3d_cs *cs, size_t size)

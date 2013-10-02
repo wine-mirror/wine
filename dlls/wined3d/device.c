@@ -1239,29 +1239,12 @@ HRESULT CDECL wined3d_device_set_stream_source(struct wined3d_device *device, UI
         stream->offset = offset;
     }
 
-    /* Handle recording of state blocks. */
-    if (device->recording)
-    {
-        TRACE("Recording... not performing anything.\n");
-        if (buffer)
-            wined3d_buffer_incref(buffer);
-        if (prev_buffer)
-            wined3d_buffer_decref(prev_buffer);
-        return WINED3D_OK;
-    }
-
     if (buffer)
-    {
-        InterlockedIncrement(&buffer->resource.bind_count);
         wined3d_buffer_incref(buffer);
-    }
+    if (!device->recording)
+        wined3d_cs_emit_set_stream_source(device->cs, stream_idx, buffer, offset, stride);
     if (prev_buffer)
-    {
-        InterlockedDecrement(&prev_buffer->resource.bind_count);
         wined3d_buffer_decref(prev_buffer);
-    }
-
-    device_invalidate_state(device, STATE_STREAMSRC);
 
     return WINED3D_OK;
 }
