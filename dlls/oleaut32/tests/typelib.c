@@ -1258,7 +1258,7 @@ static void test_inheritance(void)
     CHAR pathA[MAX_PATH];
     static const WCHAR tl_path[] = {'.','\\','m','i','d','l','_','t','m','a','r','s','h','a','l','.','t','l','b',0};
 
-    BOOL use_midl_tlb = 0;
+    BOOL use_midl_tlb = FALSE;
 
     GetModuleFileNameA(NULL, pathA, MAX_PATH);
     MultiByteToWideChar(CP_ACP, 0, pathA, -1, path, MAX_PATH);
