@@ -481,12 +481,12 @@ enum bwritershader_param_register_type
     BWRITERSPR_PREDICATE
 };
 
-typedef enum _BWRITERVS_RASTOUT_OFFSETS
+enum bwritervs_rastout_offsets
 {
     BWRITERSRO_POSITION,
     BWRITERSRO_FOG,
     BWRITERSRO_POINT_SIZE
-} BWRITERVS_RASTOUT_OFFSETS;
+};
 
 #define BWRITERSP_WRITEMASK_0   0x1 /* .x r */
 #define BWRITERSP_WRITEMASK_1   0x2 /* .y g */
