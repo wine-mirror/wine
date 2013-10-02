@@ -171,7 +171,7 @@ extern void fd_copy_completion( struct fd *src, struct fd *dst );
 #define FILE_UNIX_READ_ACCESS (FILE_READ_DATA|FILE_READ_ATTRIBUTES|FILE_READ_EA)
 
 /* access rights that require Unix write permission */
-#define FILE_UNIX_WRITE_ACCESS (FILE_WRITE_DATA|FILE_WRITE_ATTRIBUTES|FILE_WRITE_EA)
+#define FILE_UNIX_WRITE_ACCESS (FILE_WRITE_DATA|FILE_APPEND_DATA|FILE_WRITE_ATTRIBUTES|FILE_WRITE_EA)
 
 /* magic file access rights for mappings */
 #define FILE_MAPPING_IMAGE  0x80000000  /* set for SEC_IMAGE mappings */
