@@ -149,11 +149,12 @@ int macdrv_err_on;
             keyWindows = [[NSMutableArray alloc] init];
 
             originalDisplayModes = [[NSMutableDictionary alloc] init];
+            latentDisplayModes = [[NSMutableDictionary alloc] init];
 
             warpRecords = [[NSMutableArray alloc] init];
 
             if (!requests || !requestsManipQueue || !eventQueues || !eventQueuesLock ||
-                !keyWindows || !originalDisplayModes || !warpRecords)
+                !keyWindows || !originalDisplayModes || !latentDisplayModes || !warpRecords)
             {
                 [self release];
                 return nil;
@@ -176,6 +177,7 @@ int macdrv_err_on;
         [warpRecords release];
         [cursorTimer release];
         [cursorFrames release];
+        [latentDisplayModes release];
         [originalDisplayModes release];
         [keyWindows release];
         [eventQueues release];
@@ -686,10 +688,14 @@ int macdrv_err_on;
     - (BOOL) setMode:(CGDisplayModeRef)mode forDisplay:(CGDirectDisplayID)displayID
     {
         BOOL ret = FALSE;
+        BOOL active = [NSApp isActive];
         NSNumber* displayIDKey = [NSNumber numberWithUnsignedInt:displayID];
-        CGDisplayModeRef currentMode, originalMode;
+        CGDisplayModeRef currentMode = NULL, originalMode;
 
-        currentMode = CGDisplayCopyDisplayMode(displayID);
+        if (!active)
+            currentMode = CGDisplayModeRetain((CGDisplayModeRef)[latentDisplayModes objectForKey:displayIDKey]);
+        if (!currentMode)
+            currentMode = CGDisplayCopyDisplayMode(displayID);
         if (!currentMode) // Invalid display ID
             return FALSE;
 
@@ -714,34 +720,47 @@ int macdrv_err_on;
         {
             if ([originalDisplayModes count] == 1) // If this is the last changed display, do a blanket reset
             {
-                CGRestorePermanentDisplayConfiguration();
-                if (!displaysCapturedForFullscreen)
-                    CGReleaseAllDisplays();
+                if (active)
+                {
+                    CGRestorePermanentDisplayConfiguration();
+                    if (!displaysCapturedForFullscreen)
+                        CGReleaseAllDisplays();
+                }
                 [originalDisplayModes removeAllObjects];
+                [latentDisplayModes removeAllObjects];
                 ret = TRUE;
             }
             else // ... otherwise, try to restore just the one display
             {
-                if (CGDisplaySetDisplayMode(displayID, mode, NULL) == CGDisplayNoErr)
+                if (active)
+                    ret = (CGDisplaySetDisplayMode(displayID, mode, NULL) == CGDisplayNoErr);
+                else
                 {
-                    [originalDisplayModes removeObjectForKey:displayIDKey];
+                    [latentDisplayModes removeObjectForKey:displayIDKey];
                     ret = TRUE;
                 }
+                if (ret)
+                    [originalDisplayModes removeObjectForKey:displayIDKey];
             }
         }
         else
         {
             if ([originalDisplayModes count] || displaysCapturedForFullscreen ||
-                CGCaptureAllDisplays() == CGDisplayNoErr)
+                !active || CGCaptureAllDisplays() == CGDisplayNoErr)
             {
-                if (CGDisplaySetDisplayMode(displayID, mode, NULL) == CGDisplayNoErr)
+                if (active)
+                    ret = (CGDisplaySetDisplayMode(displayID, mode, NULL) == CGDisplayNoErr);
+                else
                 {
-                    [originalDisplayModes setObject:(id)originalMode forKey:displayIDKey];
+                    [latentDisplayModes setObject:(id)mode forKey:displayIDKey];
                     ret = TRUE;
                 }
+                if (ret)
+                    [originalDisplayModes setObject:(id)originalMode forKey:displayIDKey];
                 else if (![originalDisplayModes count])
                 {
                     CGRestorePermanentDisplayConfiguration();
+                    [latentDisplayModes removeAllObjects];
                     if (!displaysCapturedForFullscreen)
                         CGReleaseAllDisplays();
                 }
@@ -890,6 +909,14 @@ int macdrv_err_on;
 
             if ([originalDisplayModes count] || displaysCapturedForFullscreen)
             {
+                NSNumber* displayID;
+                for (displayID in originalDisplayModes)
+                {
+                    CGDisplayModeRef mode = CGDisplayCopyDisplayMode([displayID unsignedIntValue]);
+                    [latentDisplayModes setObject:(id)mode forKey:displayID];
+                    CGDisplayModeRelease(mode);
+                }
+
                 CGRestorePermanentDisplayConfiguration();
                 CGReleaseAllDisplays();
                 [originalDisplayModes removeAllObjects];
@@ -1894,6 +1921,15 @@ int macdrv_err_on;
      */
     - (void)applicationDidBecomeActive:(NSNotification *)notification
     {
+        NSNumber* displayID;
+
+        for (displayID in latentDisplayModes)
+        {
+            CGDisplayModeRef mode = (CGDisplayModeRef)[latentDisplayModes objectForKey:displayID];
+            [self setMode:mode forDisplay:[displayID unsignedIntValue]];
+        }
+        [latentDisplayModes removeAllObjects];
+
         [self activateCursorClipping];
 
         [self updateFullscreenWindows];
