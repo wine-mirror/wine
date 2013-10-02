@@ -3246,7 +3246,7 @@ static void test_accept(void)
 
     socklen = 0;
     accepted = WSAAccept(server_socket, (struct sockaddr *)&ss, &socklen, NULL, 0);
-    todo_wine ok(accepted == INVALID_SOCKET && WSAGetLastError() == WSAEFAULT, "got %d\n", WSAGetLastError());
+    ok(accepted == INVALID_SOCKET && WSAGetLastError() == WSAEFAULT, "got %d\n", WSAGetLastError());
     ok(!socklen, "got %d\n", socklen);
     closesocket(connector);
     connector = INVALID_SOCKET;
@@ -3269,8 +3269,8 @@ static void test_accept(void)
     memset(&ss, 0, sizeof(ss));
     accepted = WSAAccept(server_socket, (struct sockaddr *)&ss, &socklen, NULL, 0);
     ok(accepted != INVALID_SOCKET, "Failed to accept connection, %d\n", WSAGetLastError());
-    todo_wine ok(socklen != sizeof(ss), "unexpected length\n");
-    todo_wine ok(ss.ss_family, "family not set\n");
+    ok(socklen != sizeof(ss), "unexpected length\n");
+    ok(ss.ss_family, "family not set\n");
     closesocket(accepted);
     closesocket(connector);
     accepted = connector = INVALID_SOCKET;
