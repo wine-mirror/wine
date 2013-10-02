@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2013-01-03 21:13+0100\n"
+"PO-Revision-Date: 2013-10-01 21:13+0100\n"
 "Last-Translator: Frédéric Delanoy <frederic.delanoy@gmail.com>\n"
 "Language-Team: none\n"
 "Language: French\n"
@@ -8569,17 +8569,12 @@ msgstr ""
 "transmission, puis essayez à nouveau."
 
 #: winmm.rc:52 winmm.rc:125
-#, fuzzy
-#| msgid ""
-#| "The current MIDI Mapper setup refers to a MIDI device that is not "
-#| "installed on the system. Use MIDI Mapper to edit the setup."
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
 "on the system."
 msgstr ""
 "La configuration actuelle du mappeur MIDI fait référence à un périphérique "
-"MIDI non installé sur votre système. Utilisez le mappeur MIDI pour changer "
-"la configuration."
+"MIDI non installé sur votre système."
 
 #: winmm.rc:53
 msgid ""
@@ -9437,10 +9432,6 @@ msgstr ""
 "dans une procédure appelée sont transmis à l'appelant.\n"
 
 #: cmd.rc:40
-#, fuzzy
-#| msgid ""
-#| "CD <dir> is the short version of CHDIR. It changes the current\n"
-#| "default directory.\n"
 msgid ""
 "CD <directory> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
@@ -9448,8 +9439,6 @@ msgstr ""
 "CD <rép> est la version courte de CHDIR. Elle change le répertoire courant.\n"
 
 #: cmd.rc:41
-#, fuzzy
-#| msgid "CHDIR <dir> changes the current default directory.\n"
 msgid "CHDIR <directory> changes the current default directory.\n"
 msgstr "CHDIR <rép> change le répertoire courant.\n"
 
@@ -9502,11 +9491,6 @@ msgid "ERASE <filename> deletes a file or set of files.\n"
 msgstr "ERASE <fichier> efface un ou plusieurs fichiers.\n"
 
 #: cmd.rc:68
-#, fuzzy
-#| msgid ""
-#| "The FOR command is used to execute a command for each of a set of files.\n"
-#| "\n"
-#| "Syntax: FOR %variable IN (set) DO command\n"
 msgid ""
 "The FOR command is used to execute a command for each of a set of files.\n"
 "\n"
@@ -9514,10 +9498,12 @@ msgid ""
 "\n"
 "The % sign must be doubled when using FOR in a batch file.\n"
 msgstr ""
-"La commande FOR sert à exécuter une commande pour chaque fichier d'une liste "
+"L1 commande FOR sert à exécuter une commande pour chaque fichier d'une liste "
 "de fichiers.\n"
 "\n"
-"Syntaxe : FOR %variable IN (liste) DO commande\n"
+"Usage : FOR %variable IN (liste) DO commande\n"
+"\n"
+"Le signe % doit être doublé quand FOR est utilisé dans un fichier batch.\n"
 
 #: cmd.rc:80
 msgid ""
@@ -9716,14 +9702,10 @@ msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <fichier> renomme un fichier.\n"
 
 #: cmd.rc:158
-#, fuzzy
-#| msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
 msgid "RD <directory> is the short version of RMDIR. It deletes a directory.\n"
 msgstr "RD <rép> est la version courte de RMDIR. Elle efface un répertoire.\n"
 
 #: cmd.rc:159
-#, fuzzy
-#| msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgid "RMDIR <directory> deletes a directory.\n"
 msgstr "RMDIR <rép> efface un sous-répertoire.\n"
 
@@ -9909,16 +9891,12 @@ msgstr ""
 "l'environnement sont restaurés.\n"
 
 #: cmd.rc:245
-#, fuzzy
-#| msgid ""
-#| "PUSHD <directoryname> saves the current directory onto a\n"
-#| "stack, and then changes the current directory to the supplied one.\n"
 msgid ""
 "PUSHD <directory> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
 msgstr ""
-"PUSHD <répertoire> enregistre le répertoire courant sur\n"
-"une pile et remplace le répertoire courant par le répertoire spécifié.\n"
+"PUSHD <rép> enregistre le répertoire courant sur une pile et \n"
+"remplace le répertoire courant par le répertoire spécifié.\n"
 
 #: cmd.rc:247
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
