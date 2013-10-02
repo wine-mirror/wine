@@ -1066,9 +1066,10 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
     LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &device->resources, struct wined3d_resource, resource_list_entry)
     {
         TRACE("Unloading resource %p.\n", resource);
-
-        resource->resource_ops->resource_unload(resource);
+        wined3d_cs_emit_evict_resource(device->cs, resource);
     }
+    if (wined3d_settings.cs_multithreaded)
+        device->cs->ops->finish(device->cs);
 
     wine_rb_clear(&device->samplers, device_free_sampler, NULL);
 
