@@ -2247,8 +2247,7 @@ static int WS2_register_async_shutdown( SOCKET s, int type )
 /***********************************************************************
  *		accept		(WS2_32.1)
  */
-SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr,
-                                 int *addrlen32)
+SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr, int *addrlen32)
 {
     NTSTATUS status;
     SOCKET as;
@@ -2275,7 +2274,11 @@ SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr,
         SERVER_END_REQ;
         if (!status)
         {
-            if (addr) WS_getpeername(as, addr, addrlen32);
+            if (addr && WS_getpeername(as, addr, addrlen32))
+            {
+                WS_closesocket(as);
+                return SOCKET_ERROR;
+            }
             return as;
         }
         if (is_blocking && status == STATUS_CANT_WAIT)
