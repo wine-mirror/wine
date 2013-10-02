@@ -23,6 +23,7 @@
 extern char *WtoA(LPCWSTR wstr) DECLSPEC_HIDDEN;
 
 extern HRESULT CLRMetaHost_CreateInstance(REFIID riid, void **ppobj) DECLSPEC_HIDDEN;
+extern HRESULT CLRMetaHostPolicy_CreateInstance(REFIID riid, void **ppobj) DECLSPEC_HIDDEN;
 
 extern HRESULT WINAPI CLRMetaHost_GetVersionFromFile(ICLRMetaHost* iface,
     LPCWSTR pwzFilePath, LPWSTR pwzBuffer, DWORD *pcchBuffer) DECLSPEC_HIDDEN;

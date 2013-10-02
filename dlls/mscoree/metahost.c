@@ -1220,6 +1220,70 @@ HRESULT CLRMetaHost_CreateInstance(REFIID riid, void **ppobj)
     return ICLRMetaHost_QueryInterface(&GlobalCLRMetaHost.ICLRMetaHost_iface, riid, ppobj);
 }
 
+struct CLRMetaHostPolicy
+{
+    ICLRMetaHostPolicy ICLRMetaHostPolicy_iface;
+};
+
+static struct CLRMetaHostPolicy GlobalCLRMetaHostPolicy;
+
+static HRESULT WINAPI metahostpolicy_QueryInterface(ICLRMetaHostPolicy *iface, REFIID riid, void **obj)
+{
+    TRACE("%s %p\n", debugstr_guid(riid), obj);
+
+    if ( IsEqualGUID( riid, &IID_ICLRMetaHostPolicy ) ||
+         IsEqualGUID( riid, &IID_IUnknown ) )
+    {
+        ICLRMetaHostPolicy_AddRef( iface );
+        *obj = iface;
+        return S_OK;
+    }
+
+    FIXME("Unsupported interface %s\n", debugstr_guid(riid));
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI metahostpolicy_AddRef(ICLRMetaHostPolicy *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI metahostpolicy_Release(ICLRMetaHostPolicy *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI metahostpolicy_GetRequestedRuntime(ICLRMetaHostPolicy *iface, METAHOST_POLICY_FLAGS dwPolicyFlags,
+    LPCWSTR pwzBinary, IStream *pCfgStream, LPWSTR pwzVersion, DWORD *pcchVersion,
+    LPWSTR pwzImageVersion, DWORD *pcchImageVersion, DWORD *pdwConfigFlags, REFIID riid,
+    LPVOID *ppRuntime)
+{
+    FIXME("%d %p %p %p %p %p %p %p %s %p\n", dwPolicyFlags, pwzBinary, pCfgStream,
+        pwzVersion, pcchVersion, pwzImageVersion, pcchImageVersion, pdwConfigFlags,
+        debugstr_guid(riid), ppRuntime);
+
+    return E_NOTIMPL;
+}
+
+static const struct ICLRMetaHostPolicyVtbl CLRMetaHostPolicy_vtbl =
+{
+    metahostpolicy_QueryInterface,
+    metahostpolicy_AddRef,
+    metahostpolicy_Release,
+    metahostpolicy_GetRequestedRuntime
+};
+
+static struct CLRMetaHostPolicy GlobalCLRMetaHostPolicy = {
+    { &CLRMetaHostPolicy_vtbl }
+};
+
+HRESULT CLRMetaHostPolicy_CreateInstance(REFIID riid, void **ppobj)
+{
+    return ICLRMetaHostPolicy_QueryInterface(&GlobalCLRMetaHostPolicy.ICLRMetaHostPolicy_iface, riid, ppobj);
+}
+
 HRESULT get_file_from_strongname(WCHAR* stringnameW, WCHAR* assemblies_path, int path_length)
 {
     HRESULT hr=S_OK;

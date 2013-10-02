@@ -588,6 +588,8 @@ HRESULT WINAPI CLRCreateInstance(REFCLSID clsid, REFIID riid, LPVOID *ppInterfac
 
     if (IsEqualGUID(clsid, &CLSID_CLRMetaHost))
         return CLRMetaHost_CreateInstance(riid, ppInterface);
+    if (IsEqualGUID(clsid, &CLSID_CLRMetaHostPolicy))
+        return CLRMetaHostPolicy_CreateInstance(riid, ppInterface);
 
     FIXME("not implemented for class %s\n", debugstr_guid(clsid));
 
