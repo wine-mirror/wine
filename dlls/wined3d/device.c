@@ -2077,27 +2077,19 @@ void CDECL wined3d_device_set_vertex_shader(struct wined3d_device *device, struc
 
     TRACE("device %p, shader %p.\n", device, shader);
 
-    if (shader)
-        wined3d_shader_incref(shader);
-    if (prev)
-        wined3d_shader_decref(prev);
-
-    device->update_state->vertex_shader = shader;
-
     if (device->recording)
-    {
-        TRACE("Recording... not performing anything.\n");
         device->recording->changed.vertexShader = TRUE;
-        return;
-    }
 
     if (shader == prev)
-    {
-        TRACE("Application is setting the old shader over, nothing to do.\n");
         return;
-    }
 
-    device_invalidate_state(device, STATE_VSHADER);
+    if (shader)
+        wined3d_shader_incref(shader);
+    device->update_state->vertex_shader = shader;
+    if (!device->recording)
+        wined3d_cs_emit_set_vertex_shader(device->cs, shader);
+    if (prev)
+        wined3d_shader_decref(prev);
 }
 
 struct wined3d_shader * CDECL wined3d_device_get_vertex_shader(const struct wined3d_device *device)
