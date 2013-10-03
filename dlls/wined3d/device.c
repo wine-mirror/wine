@@ -1828,42 +1828,30 @@ void CDECL wined3d_device_get_material(const struct wined3d_device *device, stru
 void CDECL wined3d_device_set_index_buffer(struct wined3d_device *device,
         struct wined3d_buffer *buffer, enum wined3d_format_id format_id)
 {
+    enum wined3d_format_id prev_format;
     struct wined3d_buffer *prev_buffer;
 
     TRACE("device %p, buffer %p, format %s.\n",
             device, buffer, debug_d3dformat(format_id));
 
     prev_buffer = device->update_state->index_buffer;
+    prev_format = device->update_state->index_format;
 
     device->update_state->index_buffer = buffer;
     device->update_state->index_format = format_id;
 
-    /* Handle recording of state blocks. */
     if (device->recording)
-    {
-        TRACE("Recording... not performing anything.\n");
         device->recording->changed.indices = TRUE;
-        if (buffer)
-            wined3d_buffer_incref(buffer);
-        if (prev_buffer)
-            wined3d_buffer_decref(prev_buffer);
-        return;
-    }
 
-    if (prev_buffer != buffer)
-    {
-        device_invalidate_state(device, STATE_INDEXBUFFER);
-        if (buffer)
-        {
-            InterlockedIncrement(&buffer->resource.bind_count);
-            wined3d_buffer_incref(buffer);
-        }
-        if (prev_buffer)
-        {
-            InterlockedDecrement(&prev_buffer->resource.bind_count);
-            wined3d_buffer_decref(prev_buffer);
-        }
-    }
+    if (prev_buffer == buffer && prev_format == format_id)
+        return;
+
+    if (buffer)
+        wined3d_buffer_incref(buffer);
+    if (!device->recording)
+        wined3d_cs_emit_set_index_buffer(device->cs, buffer, format_id);
+    if (prev_buffer)
+        wined3d_buffer_decref(prev_buffer);
 }
 
 struct wined3d_buffer * CDECL wined3d_device_get_index_buffer(const struct wined3d_device *device,
