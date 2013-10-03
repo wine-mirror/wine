@@ -137,27 +137,6 @@ static void wined3d_volume_evict_sysmem(struct wined3d_volume *volume)
     wined3d_resource_invalidate_location(&volume->resource, WINED3D_LOCATION_SYSMEM);
 }
 
-static DWORD volume_access_from_location(DWORD location)
-{
-    switch (location)
-    {
-        case WINED3D_LOCATION_DISCARDED:
-            return 0;
-
-        case WINED3D_LOCATION_SYSMEM:
-            return WINED3D_RESOURCE_ACCESS_CPU;
-
-        case WINED3D_LOCATION_BUFFER:
-        case WINED3D_LOCATION_TEXTURE_RGB:
-        case WINED3D_LOCATION_TEXTURE_SRGB:
-            return WINED3D_RESOURCE_ACCESS_GPU;
-
-        default:
-            FIXME("Unhandled location %#x.\n", location);
-            return 0;
-    }
-}
-
 /* Context activation is done by the caller. */
 static void wined3d_volume_srgb_transfer(struct wined3d_volume *volume,
         struct wined3d_context *context, BOOL dest_is_srgb)
@@ -197,20 +176,16 @@ static BOOL wined3d_volume_can_evict(const struct wined3d_volume *volume)
 
     return TRUE;
 }
+
 /* Context activation is done by the caller. */
-static void wined3d_volume_load_location(struct wined3d_volume *volume,
+static void wined3d_volume_load_location(struct wined3d_resource *resource,
         struct wined3d_context *context, DWORD location)
 {
-    DWORD required_access = volume_access_from_location(location);
+    struct wined3d_volume *volume = volume_from_resource(resource);
+    DWORD required_access = wined3d_resource_access_from_location(location);
 
     TRACE("Volume %p, loading %s, have %s.\n", volume, wined3d_debug_location(location),
         wined3d_debug_location(volume->resource.locations));
-
-    if ((volume->resource.locations & location) == location)
-    {
-        TRACE("Location(s) already up to date.\n");
-        return;
-    }
 
     if ((volume->resource.access_flags & required_access) != required_access)
     {
@@ -337,7 +312,7 @@ static void wined3d_volume_load_location(struct wined3d_volume *volume,
 void wined3d_volume_load(struct wined3d_volume *volume, struct wined3d_context *context, BOOL srgb_mode)
 {
     wined3d_texture_prepare_texture(volume->container, context, srgb_mode);
-    wined3d_volume_load_location(volume, context,
+    wined3d_resource_load_location(&volume->resource, context,
             srgb_mode ? WINED3D_LOCATION_TEXTURE_SRGB : WINED3D_LOCATION_TEXTURE_RGB);
 }
 
@@ -396,7 +371,7 @@ static void volume_unload(struct wined3d_resource *resource)
     if (volume_prepare_system_memory(volume))
     {
         context = context_acquire(device, NULL);
-        wined3d_volume_load_location(volume, context, WINED3D_LOCATION_SYSMEM);
+        wined3d_resource_load_location(&volume->resource, context, WINED3D_LOCATION_SYSMEM);
         context_release(context);
         wined3d_resource_invalidate_location(&volume->resource, ~WINED3D_LOCATION_SYSMEM);
     }
@@ -552,7 +527,7 @@ HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
         if (flags & WINED3D_MAP_DISCARD)
             wined3d_resource_validate_location(&volume->resource, WINED3D_LOCATION_BUFFER);
         else
-            wined3d_volume_load_location(volume, context, WINED3D_LOCATION_BUFFER);
+            wined3d_resource_load_location(&volume->resource, context, WINED3D_LOCATION_BUFFER);
 
         GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, volume->pbo));
 
@@ -590,7 +565,7 @@ HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
         else if (!(volume->resource.locations & WINED3D_LOCATION_SYSMEM))
         {
             context = context_acquire(device, NULL);
-            wined3d_volume_load_location(volume, context, WINED3D_LOCATION_SYSMEM);
+            wined3d_resource_load_location(&volume->resource, context, WINED3D_LOCATION_SYSMEM);
             context_release(context);
         }
         base_memory = volume->resource.heap_memory;
@@ -705,6 +680,7 @@ static const struct wined3d_resource_ops volume_resource_ops =
     volume_resource_decref,
     volume_unload,
     wined3d_volume_location_invalidated,
+    wined3d_volume_load_location,
 };
 
 static HRESULT volume_init(struct wined3d_volume *volume, struct wined3d_texture *container,

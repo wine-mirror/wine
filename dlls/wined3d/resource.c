@@ -461,3 +461,53 @@ void wined3d_resource_invalidate_location(struct wined3d_resource *resource, DWO
 
     resource->resource_ops->resource_location_invalidated(resource, location);
 }
+
+DWORD wined3d_resource_access_from_location(DWORD location)
+{
+    switch (location)
+    {
+        case WINED3D_LOCATION_DISCARDED:
+            return 0;
+
+        case WINED3D_LOCATION_SYSMEM:
+        case WINED3D_LOCATION_USER_MEMORY:
+        case WINED3D_LOCATION_DIB:
+            return WINED3D_RESOURCE_ACCESS_CPU;
+
+        case WINED3D_LOCATION_BUFFER:
+        case WINED3D_LOCATION_TEXTURE_RGB:
+        case WINED3D_LOCATION_TEXTURE_SRGB:
+        case WINED3D_LOCATION_DRAWABLE:
+        case WINED3D_LOCATION_RB_MULTISAMPLE:
+        case WINED3D_LOCATION_RB_RESOLVED:
+            return WINED3D_RESOURCE_ACCESS_GPU;
+
+        default:
+            FIXME("Unhandled location %#x.\n", location);
+            return 0;
+    }
+}
+
+/* Context activation is optionally by the caller. Context may be NULL. */
+void wined3d_resource_load_location(struct wined3d_resource *resource,
+        struct wined3d_context *context, DWORD location)
+{
+    DWORD required_access = wined3d_resource_access_from_location(location);
+
+    if ((resource->locations & location) == location)
+    {
+        TRACE("Location(s) already up to date.\n");
+        return;
+    }
+
+    /* Keep this a WARN for now until surfaces are cleaned up. */
+    if ((resource->access_flags & required_access) != required_access)
+        WARN("Operation requires %#x access, but resource only has %#x.\n",
+                required_access, resource->access_flags);
+
+    /* Context is NULL in ddraw-only operation without OpenGL. */
+    if (!context)
+        ERR("A context is required for non-sysmem operation.\n");
+
+    resource->resource_ops->resource_load_location(resource, context, location);
+}
