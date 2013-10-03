@@ -34,6 +34,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_DEPTH_STENCIL,
     WINED3D_CS_OP_SET_VERTEX_DECLARATION,
     WINED3D_CS_OP_SET_STREAM_SOURCE,
+    WINED3D_CS_OP_SET_STREAM_SOURCE_FREQ,
 };
 
 struct wined3d_cs_present
@@ -106,6 +107,14 @@ struct wined3d_cs_set_stream_source
     struct wined3d_buffer *buffer;
     UINT offset;
     UINT stride;
+};
+
+struct wined3d_cs_set_stream_source_freq
+{
+    enum wined3d_cs_op opcode;
+    UINT stream_idx;
+    UINT frequency;
+    UINT flags;
 };
 
 static void wined3d_cs_exec_present(struct wined3d_cs *cs, const void *data)
@@ -355,6 +364,31 @@ void wined3d_cs_emit_set_stream_source(struct wined3d_cs *cs, UINT stream_idx,
     cs->ops->submit(cs);
 }
 
+static void wined3d_cs_exec_set_stream_source_freq(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_set_stream_source_freq *op = data;
+    struct wined3d_stream_state *stream;
+
+    stream = &cs->state.streams[op->stream_idx];
+    stream->frequency = op->frequency;
+    stream->flags = op->flags;
+
+    device_invalidate_state(cs->device, STATE_STREAMSRC);
+}
+
+void wined3d_cs_emit_set_stream_source_freq(struct wined3d_cs *cs, UINT stream_idx, UINT frequency, UINT flags)
+{
+    struct wined3d_cs_set_stream_source_freq *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_SET_STREAM_SOURCE_FREQ;
+    op->stream_idx = stream_idx;
+    op->frequency = frequency;
+    op->flags = flags;
+
+    cs->ops->submit(cs);
+}
+
 static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
 {
     /* WINED3D_CS_OP_PRESENT                */ wined3d_cs_exec_present,
@@ -366,6 +400,7 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_DEPTH_STENCIL      */ wined3d_cs_exec_set_depth_stencil,
     /* WINED3D_CS_OP_SET_VERTEX_DECLARATION */ wined3d_cs_exec_set_vertex_declaration,
     /* WINED3D_CS_OP_SET_STREAM_SOURCE      */ wined3d_cs_exec_set_stream_source,
+    /* WINED3D_CS_OP_SET_STREAM_SOURCE_FREQ */ wined3d_cs_exec_set_stream_source_freq,
 };
 
 static void *wined3d_cs_st_require_space(struct wined3d_cs *cs, size_t size)

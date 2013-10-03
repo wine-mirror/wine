@@ -1308,7 +1308,7 @@ HRESULT CDECL wined3d_device_set_stream_source_freq(struct wined3d_device *devic
     if (device->recording)
         device->recording->changed.streamFreq |= 1 << stream_idx;
     else if (stream->frequency != old_freq || stream->flags != old_flags)
-        device_invalidate_state(device, STATE_STREAMSRC);
+        wined3d_cs_emit_set_stream_source_freq(device->cs, stream_idx, stream->frequency, stream->flags);
 
     return WINED3D_OK;
 }
