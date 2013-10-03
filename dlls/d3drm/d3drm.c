@@ -1326,7 +1326,7 @@ static HRESULT WINAPI IDirect3DRM3Impl_Load(IDirect3DRM3 *iface, void *source, v
     HRESULT hr;
     const GUID* pGuid;
     DWORD size;
-    Header* pHeader;
+    struct d3drm_file_header *header;
     HRESULT ret = D3DRMERR_BADOBJECT;
     DWORD i;
 
@@ -1382,14 +1382,14 @@ static HRESULT WINAPI IDirect3DRM3Impl_Load(IDirect3DRM3 *iface, void *source, v
         goto end;
     }
 
-    hr = IDirectXFileData_GetData(data, NULL, &size, (void **)&pHeader);
-    if ((hr != DXFILE_OK) || (size != sizeof(Header)))
+    hr = IDirectXFileData_GetData(data, NULL, &size, (void **)&header);
+    if ((hr != DXFILE_OK) || (size != sizeof(*header)))
         goto end;
 
-    TRACE("Version is %d %d %d\n", pHeader->major, pHeader->minor, pHeader->flags);
+    TRACE("Version is %u.%u, flags %#x.\n", header->major, header->minor, header->flags);
 
     /* Version must be 1.0.x */
-    if ((pHeader->major != 1) || (pHeader->minor != 0))
+    if ((header->major != 1) || (header->minor != 0))
     {
         ret = D3DRMERR_BADFILE;
         goto end;

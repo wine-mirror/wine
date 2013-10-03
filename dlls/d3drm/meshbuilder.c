@@ -1521,11 +1521,12 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_Load(IDirect3DRMMeshBuilder3* 
     IDirectXFileData *data = NULL;
     const GUID* guid;
     DWORD size;
-    Header* header;
+    struct d3drm_file_header *header;
     HRESULT hr;
     HRESULT ret = D3DRMERR_BADOBJECT;
 
-    TRACE("(%p)->(%p,%p,%x,%p,%p)\n", This, filename, name, loadflags, cb, arg);
+    TRACE("iface %p, filename %p, name %p, loadflags %#x, cb %p, arg %p.\n",
+            iface, filename, name, loadflags, cb, arg);
 
     clean_mesh_builder_data(This);
 
@@ -1573,10 +1574,10 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_Load(IDirect3DRMMeshBuilder3* 
     }
 
     hr = IDirectXFileData_GetData(data, NULL, &size, (void**)&header);
-    if ((hr != DXFILE_OK) || (size != sizeof(Header)))
+    if ((hr != DXFILE_OK) || (size != sizeof(*header)))
         goto end;
 
-    TRACE("Version is %d %d %d\n", header->major, header->minor, header->flags);
+    TRACE("Version is %u.%u, flags %#x.\n", header->major, header->minor, header->flags);
 
     /* Version must be 1.0.x */
     if ((header->major != 1) || (header->minor != 0))
