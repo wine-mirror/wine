@@ -97,7 +97,7 @@ int asmshader_lex(void);
         DWORD           dclusage;
         unsigned int    regnum;
     } declaration;
-    BWRITERSAMPLER_TEXTURE_TYPE samplertype;
+    enum bwritersampler_texture_type samplertype;
     struct rel_reg      rel_reg;
     struct src_regs     sregs;
 }

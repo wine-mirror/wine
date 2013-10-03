@@ -502,13 +502,14 @@ enum bwritershader_param_dstmod_type
     BWRITERSPDM_MSAMPCENTROID = 4,
 };
 
-typedef enum _BWRITERSAMPLER_TEXTURE_TYPE {
+enum bwritersampler_texture_type
+{
     BWRITERSTT_UNKNOWN = 0,
     BWRITERSTT_1D = 1,
     BWRITERSTT_2D = 2,
     BWRITERSTT_CUBE = 3,
     BWRITERSTT_VOLUME = 4,
-} BWRITERSAMPLER_TEXTURE_TYPE;
+};
 
 #define BWRITERSI_TEXLD_PROJECT 1
 #define BWRITERSI_TEXLD_BIAS    2
