@@ -3510,7 +3510,7 @@ static HRESULT device_update_volume(struct wined3d_device *device,
     data.buffer_object = 0;
     data.addr = src.data;
     wined3d_volume_upload_data(dst_volume, context, &data);
-    wined3d_volume_invalidate_location(dst_volume, ~WINED3D_LOCATION_TEXTURE_RGB);
+    wined3d_resource_invalidate_location(&dst_volume->resource, ~WINED3D_LOCATION_TEXTURE_RGB);
 
     context_release(context);
 

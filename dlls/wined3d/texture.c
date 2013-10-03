@@ -1224,9 +1224,7 @@ static void texture3d_sub_resource_cleanup(struct wined3d_resource *sub_resource
 
 static void texture3d_sub_resource_invalidate_location(struct wined3d_resource *sub_resource, DWORD location)
 {
-    struct wined3d_volume *volume = volume_from_resource(sub_resource);
-
-    wined3d_volume_invalidate_location(volume, location);
+    wined3d_resource_invalidate_location(sub_resource, location);
 }
 
 static void texture3d_sub_resource_validate_location(struct wined3d_resource *sub_resource, DWORD location)

@@ -99,13 +99,6 @@ void wined3d_volume_upload_data(struct wined3d_volume *volume, const struct wine
     HeapFree(GetProcessHeap(), 0, converted_mem);
 }
 
-void wined3d_volume_invalidate_location(struct wined3d_volume *volume, DWORD location)
-{
-    TRACE("Volume %p, clearing %s.\n", volume, wined3d_debug_location(location));
-    volume->resource.locations &= ~location;
-    TRACE("new location flags are %s.\n", wined3d_debug_location(volume->resource.locations));
-}
-
 /* Context activation is done by the caller. */
 static void wined3d_volume_download_data(struct wined3d_volume *volume,
         const struct wined3d_context *context, const struct wined3d_bo_address *data)
@@ -141,7 +134,7 @@ static void wined3d_volume_download_data(struct wined3d_volume *volume,
 static void wined3d_volume_evict_sysmem(struct wined3d_volume *volume)
 {
     wined3d_resource_free_sysmem(&volume->resource);
-    wined3d_volume_invalidate_location(volume, WINED3D_LOCATION_SYSMEM);
+    wined3d_resource_invalidate_location(&volume->resource, WINED3D_LOCATION_SYSMEM);
 }
 
 static DWORD volume_access_from_location(DWORD location)
@@ -239,7 +232,7 @@ static void wined3d_volume_load_location(struct wined3d_volume *volume,
             if (volume->resource.locations & WINED3D_LOCATION_DISCARDED)
             {
                 TRACE("Volume previously discarded, nothing to do.\n");
-                wined3d_volume_invalidate_location(volume, WINED3D_LOCATION_DISCARDED);
+                wined3d_resource_invalidate_location(&volume->resource, WINED3D_LOCATION_DISCARDED);
             }
             else if (volume->resource.locations & WINED3D_LOCATION_SYSMEM)
             {
@@ -282,7 +275,7 @@ static void wined3d_volume_load_location(struct wined3d_volume *volume,
             if (volume->resource.locations & WINED3D_LOCATION_DISCARDED)
             {
                 TRACE("Volume previously discarded, nothing to do.\n");
-                wined3d_volume_invalidate_location(volume, WINED3D_LOCATION_DISCARDED);
+                wined3d_resource_invalidate_location(&volume->resource, WINED3D_LOCATION_DISCARDED);
             }
             else if (volume->resource.locations & (WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_TEXTURE_SRGB))
             {
@@ -312,7 +305,7 @@ static void wined3d_volume_load_location(struct wined3d_volume *volume,
             if (volume->resource.locations & WINED3D_LOCATION_DISCARDED)
             {
                 TRACE("Volume previously discarded, nothing to do.\n");
-                wined3d_volume_invalidate_location(volume, WINED3D_LOCATION_DISCARDED);
+                wined3d_resource_invalidate_location(&volume->resource, WINED3D_LOCATION_DISCARDED);
             }
             else if (volume->resource.locations & (WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_TEXTURE_SRGB))
             {
@@ -405,13 +398,13 @@ static void volume_unload(struct wined3d_resource *resource)
         context = context_acquire(device, NULL);
         wined3d_volume_load_location(volume, context, WINED3D_LOCATION_SYSMEM);
         context_release(context);
-        wined3d_volume_invalidate_location(volume, ~WINED3D_LOCATION_SYSMEM);
+        wined3d_resource_invalidate_location(&volume->resource, ~WINED3D_LOCATION_SYSMEM);
     }
     else
     {
         ERR("Out of memory when unloading volume %p.\n", volume);
         wined3d_resource_validate_location(&volume->resource, WINED3D_LOCATION_DISCARDED);
-        wined3d_volume_invalidate_location(volume, ~WINED3D_LOCATION_DISCARDED);
+        wined3d_resource_invalidate_location(&volume->resource, ~WINED3D_LOCATION_DISCARDED);
     }
 
     if (volume->pbo)
@@ -646,7 +639,7 @@ HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
     if (!(flags & (WINED3D_MAP_NO_DIRTY_UPDATE | WINED3D_MAP_READONLY)))
     {
         wined3d_texture_set_dirty(volume->container);
-        wined3d_volume_invalidate_location(volume, ~volume->resource.map_binding);
+        wined3d_resource_invalidate_location(&volume->resource, ~volume->resource.map_binding);
     }
 
     volume->resource.map_count++;
