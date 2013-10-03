@@ -40,6 +40,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_TEXTURE,
     WINED3D_CS_OP_SET_VERTEX_SHADER,
     WINED3D_CS_OP_SET_GEOMETRY_SHADER,
+    WINED3D_CS_OP_SET_PIXEL_SHADER,
 };
 
 struct wined3d_cs_present
@@ -551,6 +552,25 @@ void wined3d_cs_emit_set_geometry_shader(struct wined3d_cs *cs, struct wined3d_s
     cs->ops->submit(cs);
 }
 
+static void wined3d_cs_exec_set_pixel_shader(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_set_shader *op = data;
+
+    cs->state.pixel_shader = op->shader;
+    device_invalidate_state(cs->device, STATE_PIXELSHADER);
+}
+
+void wined3d_cs_emit_set_pixel_shader(struct wined3d_cs *cs, struct wined3d_shader *shader)
+{
+    struct wined3d_cs_set_shader *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_SET_PIXEL_SHADER;
+    op->shader = shader;
+
+    cs->ops->submit(cs);
+}
+
 static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
 {
     /* WINED3D_CS_OP_PRESENT                */ wined3d_cs_exec_present,
@@ -567,6 +587,7 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_TEXTURE            */ wined3d_cs_exec_set_texture,
     /* WINED3D_CS_OP_SET_VERTEX_SHADER      */ wined3d_cs_exec_set_vertex_shader,
     /* WINED3D_CS_OP_SET_GEOMETRY_SHADER    */ wined3d_cs_exec_set_geometry_shader,
+    /* WINED3D_CS_OP_SET_PIXEL_SHADER       */ wined3d_cs_exec_set_pixel_shader,
 };
 
 static void *wined3d_cs_st_require_space(struct wined3d_cs *cs, size_t size)

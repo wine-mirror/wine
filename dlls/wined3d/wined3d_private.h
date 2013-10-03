@@ -2490,6 +2490,7 @@ void wined3d_cs_emit_set_depth_stencil(struct wined3d_cs *cs, struct wined3d_sur
 void wined3d_cs_emit_set_geometry_shader(struct wined3d_cs *cs, struct wined3d_shader *shader) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_index_buffer(struct wined3d_cs *cs, struct wined3d_buffer *buffer,
         enum wined3d_format_id format_id) DECLSPEC_HIDDEN;
+void wined3d_cs_emit_set_pixel_shader(struct wined3d_cs *cs, struct wined3d_shader *shader) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_render_target(struct wined3d_cs *cs, UINT render_target_idx,
         struct wined3d_surface *render_target) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_scissor_rect(struct wined3d_cs *cs, const RECT *rect) DECLSPEC_HIDDEN;
