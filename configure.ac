@@ -257,11 +257,15 @@ then
 fi
 
 AC_CHECK_TOOLS(AR,[ar gar],ar)
+AC_CHECK_TOOL(STRIP,strip,strip)
 AC_SUBST(ARFLAGS,rc)
 AC_PROG_RANLIB
 AC_PROG_LN_S
 AC_PROG_EGREP
 AC_PATH_PROG(LDCONFIG, ldconfig, true, [/sbin /usr/sbin $PATH])
+
+dnl Use the correct strip to install programs
+test -z "$INSTALL_PROGRAM" && INSTALL_PROGRAM="env STRIPPROG=\"\$(STRIP)\" \$(top_srcdir)/tools/install-sh"
 AC_PROG_INSTALL
 dnl Prepend src dir to install path dir if it's a relative path
 case "$INSTALL" in
