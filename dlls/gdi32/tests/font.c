@@ -4172,7 +4172,12 @@ static void test_GetGlyphOutline(void)
                 ok(gm.gmBlackBoxY == 1, "%2d:expected 1, got %u\n", fmt[i], gm.gmBlackBoxY);
             }
             else
+            {
                 ok(ret == GDI_ERROR, "%2d:GetGlyphOutlineW should return GDI_ERROR, got %d\n", fmt[i], ret);
+                memset(&gm2, 0xab, sizeof(gm2));
+                ok(memcmp(&gm, &gm2, sizeof(GLYPHMETRICS)) == 0,
+                   "%2d:GLYPHMETRICS shouldn't be touched on error\n", fmt[i]);
+            }
         }
     }
 
