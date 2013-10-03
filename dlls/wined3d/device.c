@@ -3164,7 +3164,6 @@ DWORD CDECL wined3d_device_get_texture_stage_state(const struct wined3d_device *
 HRESULT CDECL wined3d_device_set_texture(struct wined3d_device *device,
         UINT stage, struct wined3d_texture *texture)
 {
-    const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
     struct wined3d_texture *prev;
 
     TRACE("device %p, stage %u, texture %p.\n", device, stage, texture);
@@ -3200,70 +3199,12 @@ HRESULT CDECL wined3d_device_set_texture(struct wined3d_device *device,
     TRACE("Setting new texture to %p.\n", texture);
     device->update_state->textures[stage] = texture;
 
-    if (device->recording)
-    {
-        TRACE("Recording... not performing anything\n");
-
-        if (texture) wined3d_texture_incref(texture);
-        if (prev) wined3d_texture_decref(prev);
-
-        return WINED3D_OK;
-    }
-
     if (texture)
-    {
-        LONG bind_count = InterlockedIncrement(&texture->resource.bind_count);
-
         wined3d_texture_incref(texture);
-
-        if (!prev || texture->target != prev->target)
-            device_invalidate_state(device, STATE_PIXELSHADER);
-
-        if (!prev && stage < d3d_info->limits.ffp_blend_stages)
-        {
-            /* The source arguments for color and alpha ops have different
-             * meanings when a NULL texture is bound, so the COLOR_OP and
-             * ALPHA_OP have to be dirtified. */
-            device_invalidate_state(device, STATE_TEXTURESTAGE(stage, WINED3D_TSS_COLOR_OP));
-            device_invalidate_state(device, STATE_TEXTURESTAGE(stage, WINED3D_TSS_ALPHA_OP));
-        }
-
-        if (bind_count == 1)
-            texture->sampler = stage;
-    }
-
+    if (!device->recording)
+        wined3d_cs_emit_set_texture(device->cs, stage, texture);
     if (prev)
-    {
-        LONG bind_count = InterlockedDecrement(&prev->resource.bind_count);
-
-        if (!texture && stage < d3d_info->limits.ffp_blend_stages)
-        {
-            device_invalidate_state(device, STATE_TEXTURESTAGE(stage, WINED3D_TSS_COLOR_OP));
-            device_invalidate_state(device, STATE_TEXTURESTAGE(stage, WINED3D_TSS_ALPHA_OP));
-        }
-
-        if (bind_count && prev->sampler == stage)
-        {
-            unsigned int i;
-
-            /* Search for other stages the texture is bound to. Shouldn't
-             * happen if applications bind textures to a single stage only. */
-            TRACE("Searching for other stages the texture is bound to.\n");
-            for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i)
-            {
-                if (device->update_state->textures[i] == prev)
-                {
-                    TRACE("Texture is also bound to stage %u.\n", i);
-                    prev->sampler = i;
-                    break;
-                }
-            }
-        }
-
         wined3d_texture_decref(prev);
-    }
-
-    device_invalidate_state(device, STATE_SAMPLER(stage));
 
     return WINED3D_OK;
 }
