@@ -514,7 +514,8 @@ enum bwritersampler_texture_type
 #define BWRITERSI_TEXLD_PROJECT 1
 #define BWRITERSI_TEXLD_BIAS    2
 
-typedef enum _BWRITERSHADER_PARAM_SRCMOD_TYPE {
+enum bwritershader_param_srcmod_type
+{
     BWRITERSPSM_NONE = 0,
     BWRITERSPSM_NEG,
     BWRITERSPSM_BIAS,
@@ -529,7 +530,7 @@ typedef enum _BWRITERSHADER_PARAM_SRCMOD_TYPE {
     BWRITERSPSM_ABS,
     BWRITERSPSM_ABSNEG,
     BWRITERSPSM_NOT,
-} BWRITERSHADER_PARAM_SRCMOD_TYPE;
+};
 
 #define BWRITER_SM1_VS  0xfffe
 #define BWRITER_SM1_PS  0xffff
