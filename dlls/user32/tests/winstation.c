@@ -475,6 +475,180 @@ static void test_getuserobjectinformation(void)
     ok(CloseDesktop(desk), "CloseDesktop failed\n");
 }
 
+static void test_inputdesktop(void)
+{
+    HDESK input_desk, old_input_desk, thread_desk, old_thread_desk, new_desk;
+    DWORD ret;
+    CHAR name[1024];
+    INPUT inputs[1];
+
+    inputs[0].type = INPUT_KEYBOARD;
+    inputs[0].ki.wVk = 0;
+    inputs[0].ki.wScan = 0x3c0;
+    inputs[0].ki.dwFlags = KEYEVENTF_UNICODE;
+
+    /* OpenInputDesktop creates new handles for each calls */
+    old_input_desk = OpenInputDesktop(0, FALSE, DESKTOP_ALL_ACCESS);
+todo_wine
+    ok(old_input_desk != NULL, "OpenInputDesktop failed!\n");
+    memset(name, 0, sizeof(name));
+    ret = GetUserObjectInformationA(old_input_desk, UOI_NAME, name, 1024, NULL);
+todo_wine
+    ok(ret, "GetUserObjectInformation failed!\n");
+todo_wine
+    ok(!strcmp(name, "Default"), "unexpected desktop %s\n", name);
+
+    input_desk = OpenInputDesktop(0, FALSE, DESKTOP_ALL_ACCESS);
+todo_wine
+    ok(input_desk != NULL, "OpenInputDesktop failed!\n");
+    memset(name, 0, sizeof(name));
+    ret = GetUserObjectInformationA(input_desk, UOI_NAME, name, 1024, NULL);
+todo_wine
+    ok(ret, "GetUserObjectInformation failed!\n");
+todo_wine
+    ok(!strcmp(name, "Default"), "unexpected desktop %s\n", name);
+
+todo_wine
+    ok(old_input_desk != input_desk, "returned the same handle!\n");
+    ret = CloseDesktop(input_desk);
+todo_wine
+    ok(ret, "CloseDesktop failed!\n");
+
+    /* by default, GetThreadDesktop is the input desktop, SendInput should success. */
+    old_thread_desk = GetThreadDesktop(GetCurrentThreadId());
+    ok(old_thread_desk != NULL, "GetThreadDesktop faile!\n");
+    memset(name, 0, sizeof(name));
+    ret = GetUserObjectInformationA(old_thread_desk, UOI_NAME, name, 1024, NULL);
+    ok(!strcmp(name, "Default"), "unexpected desktop %s\n", name);
+
+    SetLastError(0xdeadbeef);
+    ret = SendInput(1, inputs, sizeof(INPUT));
+    ok(GetLastError() == 0xdeadbeef, "unexpected last error %08x\n", GetLastError());
+    ok(ret == 1, "unexpected return count %d\n", ret);
+
+    /* Set thread desktop to the new desktop, SendInput should failed. */
+    new_desk = CreateDesktopA("new_desk", NULL, NULL, 0, DESKTOP_ALL_ACCESS, NULL);
+    ok(new_desk != NULL, "CreateDesktop failed!\n");
+    ret = SetThreadDesktop(new_desk);
+    ok(ret, "SetThreadDesktop failed!\n");
+    thread_desk = GetThreadDesktop(GetCurrentThreadId());
+    ok(thread_desk == new_desk, "thread desktop doesn't match!\n");
+    memset(name, 0, sizeof(name));
+    ret = GetUserObjectInformationA(thread_desk, UOI_NAME, name, 1024, NULL);
+    ok(!strcmp(name, "new_desk"), "unexpected desktop %s\n", name);
+
+    SetLastError(0xdeadbeef);
+    ret = SendInput(1, inputs, sizeof(INPUT));
+todo_wine
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "unexpected last error %08x\n", GetLastError());
+    ok(ret == 1 || broken(ret == 0) /* Win64 */, "unexpected return count %d\n", ret);
+
+    /* Set thread desktop back to the old thread desktop, SendInput should success. */
+    ret = SetThreadDesktop(old_thread_desk);
+    ok(ret, "SetThreadDesktop failed!\n");
+    thread_desk = GetThreadDesktop(GetCurrentThreadId());
+    ok(thread_desk == old_thread_desk, "thread desktop doesn't match!\n");
+    memset(name, 0, sizeof(name));
+    ret = GetUserObjectInformationA(thread_desk, UOI_NAME, name, 1024, NULL);
+    ok(!strcmp(name, "Default"), "unexpected desktop %s\n", name);
+
+    SetLastError(0xdeadbeef);
+    ret = SendInput(1, inputs, sizeof(INPUT));
+    ok(GetLastError() == 0xdeadbeef, "unexpected last error %08x\n", GetLastError());
+    ok(ret == 1, "unexpected return count %d\n", ret);
+
+    /* Set thread desktop to the input desktop, SendInput should success. */
+    ret = SetThreadDesktop(old_input_desk);
+todo_wine
+    ok(ret, "SetThreadDesktop failed!\n");
+    thread_desk = GetThreadDesktop(GetCurrentThreadId());
+todo_wine
+    ok(thread_desk == old_input_desk, "thread desktop doesn't match!\n");
+    memset(name, 0, sizeof(name));
+    ret = GetUserObjectInformationA(thread_desk, UOI_NAME, name, 1024, NULL);
+    ok(!strcmp(name, "Default"), "unexpected desktop %s\n", name);
+
+    SetLastError(0xdeadbeef);
+    ret = SendInput(1, inputs, sizeof(INPUT));
+    ok(GetLastError() == 0xdeadbeef, "unexpected last error %08x\n", GetLastError());
+    ok(ret == 1, "unexpected return count %d\n", ret);
+
+    /* Switch input desktop to the new desktop, SendInput should failed. */
+    ret = SwitchDesktop(new_desk);
+    ok(ret, "SwitchDesktop failed!\n");
+    input_desk = OpenInputDesktop(0, FALSE, DESKTOP_ALL_ACCESS);
+todo_wine
+    ok(input_desk != NULL, "OpenInputDesktop failed!\n");
+    ok(input_desk != new_desk, "returned the same handle!\n");
+    memset(name, 0, sizeof(name));
+    ret = GetUserObjectInformationA(input_desk, UOI_NAME, name, 1024, NULL);
+todo_wine
+    ok(ret, "GetUserObjectInformation failed!\n");
+todo_wine
+    ok(!strcmp(name, "new_desk"), "unexpected desktop %s\n", name);
+    ret = CloseDesktop(input_desk);
+todo_wine
+    ok(ret, "CloseDesktop failed!\n");
+
+    SetLastError(0xdeadbeef);
+    ret = SendInput(1, inputs, sizeof(INPUT));
+todo_wine
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "unexpected last error %08x\n", GetLastError());
+    ok(ret == 1 || broken(ret == 0) /* Win64 */, "unexpected return count %d\n", ret);
+
+    /* Set thread desktop to the new desktop, SendInput should success. */
+    ret = SetThreadDesktop(new_desk);
+    ok(ret, "SetThreadDesktop failed!\n");
+    thread_desk = GetThreadDesktop(GetCurrentThreadId());
+    ok(thread_desk == new_desk, "thread desktop doesn't match!\n");
+    memset(name, 0, sizeof(name));
+    ret = GetUserObjectInformationA(thread_desk, UOI_NAME, name, 1024, NULL);
+    ok(!strcmp(name, "new_desk"), "unexpected desktop %s\n", name);
+
+    SetLastError(0xdeadbeef);
+    ret = SendInput(1, inputs, sizeof(INPUT));
+    ok(GetLastError() == 0xdeadbeef, "unexpected last error %08x\n", GetLastError());
+    ok(ret == 1, "unexpected return count %d\n", ret);
+
+    /* Switch input desktop to the old input desktop, set thread desktop to the old
+     * thread desktop, clean side effects. SendInput should success. */
+    ret = SwitchDesktop(old_input_desk);
+    input_desk = OpenInputDesktop(0, FALSE, DESKTOP_ALL_ACCESS);
+todo_wine
+    ok(input_desk != NULL, "OpenInputDesktop failed!\n");
+todo_wine
+    ok(input_desk != old_input_desk, "returned the same handle!\n");
+    memset(name, 0, sizeof(name));
+    ret = GetUserObjectInformationA(input_desk, UOI_NAME, name, 1024, NULL);
+todo_wine
+    ok(ret, "GetUserObjectInformation failed!\n");
+todo_wine
+    ok(!strcmp(name, "Default"), "unexpected desktop %s\n", name);
+
+    ret = SetThreadDesktop(old_thread_desk);
+    ok(ret, "SetThreadDesktop failed!\n");
+    thread_desk = GetThreadDesktop(GetCurrentThreadId());
+    ok(thread_desk == old_thread_desk, "thread desktop doesn't match!\n");
+    memset(name, 0, sizeof(name));
+    ret = GetUserObjectInformationA(thread_desk, UOI_NAME, name, 1024, NULL);
+    ok(!strcmp(name, "Default"), "unexpected desktop %s\n", name);
+
+    SetLastError(0xdeadbeef);
+    ret = SendInput(1, inputs, sizeof(INPUT));
+    ok(GetLastError() == 0xdeadbeef, "unexpected last error %08x\n", GetLastError());
+    ok(ret == 1, "unexpected return count %d\n", ret);
+
+    /* free resources */
+    ret = CloseDesktop(input_desk);
+todo_wine
+    ok(ret, "CloseDesktop failed!\n");
+    ret = CloseDesktop(old_input_desk);
+todo_wine
+    ok(ret, "CloseDesktop failed!\n");
+    ret = CloseDesktop(new_desk);
+    ok(ret, "CloseDesktop failed!\n");
+}
+
 START_TEST(winstation)
 {
     /* Check whether this platform supports WindowStation calls */
@@ -487,6 +661,7 @@ START_TEST(winstation)
         return;
     }
 
+    test_inputdesktop();
     test_enumstations();
     test_enumdesktops();
     test_handles();
