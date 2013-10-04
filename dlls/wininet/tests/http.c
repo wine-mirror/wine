@@ -1403,9 +1403,12 @@ static void test_http_cache(void)
     ok(file_size == 106, "file size = %u\n", file_size);
     CloseHandle(file);
 
+    ret = DeleteFileA(file_name);
+    ok(!ret && GetLastError() == ERROR_SHARING_VIOLATION, "Deleting file returned %x(%u)\n", ret, GetLastError());
+
     ok(InternetCloseHandle(request), "Close request handle failed\n");
 
-    file = CreateFile(file_name, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+    file = CreateFile(file_name, GENERIC_READ, 0, NULL, OPEN_EXISTING,
                       FILE_ATTRIBUTE_NORMAL, NULL);
     ok(file != INVALID_HANDLE_VALUE, "Could not create file: %u\n", GetLastError());
     CloseHandle(file);
@@ -1456,6 +1459,78 @@ static void test_http_cache(void)
     ok(InternetCloseHandle(session), "Close session handle failed\n");
 
     test_cache_read();
+}
+
+static void InternetLockRequestFile_test(void)
+{
+    HINTERNET session, connect, request;
+    char file_name[MAX_PATH];
+    HANDLE lock, lock2;
+    DWORD size;
+    BOOL ret;
+
+    static const char *types[] = { "*", "", NULL };
+
+    session = InternetOpenA("Wine Regression Test", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
+    ok(session != NULL ,"Unable to open Internet session\n");
+
+    connect = InternetConnectA(session, "test.winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL,
+                              INTERNET_SERVICE_HTTP, 0, 0);
+    ok(connect != NULL, "Unable to connect to http://test.winehq.org with error %d\n", GetLastError());
+
+    request = HttpOpenRequestA(connect, NULL, "/tests/hello.html", NULL, NULL, types, INTERNET_FLAG_NEED_FILE|INTERNET_FLAG_RELOAD, 0);
+    if (!request && GetLastError() == ERROR_INTERNET_NAME_NOT_RESOLVED)
+    {
+        skip( "Network unreachable, skipping test\n" );
+
+        ok(InternetCloseHandle(connect), "Close connect handle failed\n");
+        ok(InternetCloseHandle(session), "Close session handle failed\n");
+
+        return;
+    }
+    ok(request != NULL, "Failed to open request handle err %u\n", GetLastError());
+
+    size = sizeof(file_name);
+    ret = InternetQueryOptionA(request, INTERNET_OPTION_DATAFILE_NAME, file_name, &size);
+    ok(!ret, "InternetQueryOptionA(INTERNET_OPTION_DATAFILE_NAME) succeeded\n");
+    ok(GetLastError() == ERROR_INTERNET_ITEM_NOT_FOUND, "GetLastError()=%u\n", GetLastError());
+    ok(!size, "size = %d\n", size);
+
+    lock = NULL;
+    ret = InternetLockRequestFile(request, &lock);
+    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND, "InternetLockRequestFile returned: %x(%u)\n", ret, GetLastError());
+
+    ret = HttpSendRequest(request, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed: %u\n", GetLastError());
+
+    size = sizeof(file_name);
+    ret = InternetQueryOptionA(request, INTERNET_OPTION_DATAFILE_NAME, file_name, &size);
+    ok(ret, "InternetQueryOptionA(INTERNET_OPTION_DATAFILE_NAME) failed: %u\n", GetLastError());
+
+    ret = InternetLockRequestFile(request, &lock);
+    ok(ret, "InternetLockRequestFile returned: %x(%u)\n", ret, GetLastError());
+    ok(lock != NULL, "lock == NULL\n");
+
+    ret = InternetLockRequestFile(request, &lock2);
+    ok(ret, "InternetLockRequestFile returned: %x(%u)\n", ret, GetLastError());
+    ok(lock == lock2, "lock != lock2\n");
+
+    ret = InternetUnlockRequestFile(lock2);
+    ok(ret, "InternetUnlockRequestFile failed: %u\n", GetLastError());
+
+    ret = DeleteFileA(file_name);
+    ok(!ret && GetLastError() == ERROR_SHARING_VIOLATION, "Deleting file returned %x(%u)\n", ret, GetLastError());
+
+    ok(InternetCloseHandle(request), "Close request handle failed\n");
+
+    ret = DeleteFileA(file_name);
+    ok(!ret && GetLastError() == ERROR_SHARING_VIOLATION, "Deleting file returned %x(%u)\n", ret, GetLastError());
+
+    ret = InternetUnlockRequestFile(lock);
+    ok(ret, "InternetUnlockRequestFile failed: %u\n", GetLastError());
+
+    ret = DeleteFileA(file_name);
+    ok(ret, "Deleting file returned %x(%u)\n", ret, GetLastError());
 }
 
 static void HttpHeaders_test(void)
@@ -5133,6 +5208,7 @@ START_TEST(http)
     test_async_HttpSendRequestEx(&notification_data[3]);
     InternetOpenRequest_test();
     test_http_cache();
+    InternetLockRequestFile_test();
     InternetOpenUrlA_test();
     HttpHeaders_test();
     test_http_connection();
