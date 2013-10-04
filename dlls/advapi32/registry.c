@@ -140,10 +140,9 @@ static NTSTATUS create_key( HKEY *retkey, ACCESS_MASK access, OBJECT_ATTRIBUTES 
         if (i == len && !force_wow32) return status;
 
         attrs = attr->Attributes;
-        attr->Attributes &= ~OBJ_OPENLINK;
         attr->ObjectName = &str;
 
-        while (i < len)
+        for (;;)
         {
             str.Buffer = buffer + pos;
             str.Length = (i - pos) * sizeof(WCHAR);
@@ -157,20 +156,25 @@ static NTSTATUS create_key( HKEY *retkey, ACCESS_MASK access, OBJECT_ATTRIBUTES 
                     force_wow32 = FALSE;
                 }
             }
-            status = NtCreateKey( &subkey, access, attr, 0, class,
-                                  options & ~REG_OPTION_CREATE_LINK, dispos );
+            if (i == len)
+            {
+                attr->Attributes = attrs;
+                status = NtCreateKey( (PHANDLE)retkey, access, attr, 0, class, options, dispos );
+            }
+            else
+            {
+                attr->Attributes = attrs & ~OBJ_OPENLINK;
+                status = NtCreateKey( &subkey, access, attr, 0, class,
+                                      options & ~REG_OPTION_CREATE_LINK, dispos );
+            }
             if (attr->RootDirectory != root) NtClose( attr->RootDirectory );
             if (status) return status;
+            if (i == len) break;
             attr->RootDirectory = subkey;
             while (i < len && buffer[i] == '\\') i++;
             pos = i;
             while (i < len && buffer[i] != '\\') i++;
         }
-        str.Buffer = buffer + pos;
-        str.Length = (i - pos) * sizeof(WCHAR);
-        attr->Attributes = attrs;
-        status = NtCreateKey( (PHANDLE)retkey, access, attr, 0, class, options, dispos );
-        if (attr->RootDirectory != root) NtClose( attr->RootDirectory );
     }
     return status;
 }
@@ -190,10 +194,9 @@ static NTSTATUS open_key( HKEY *retkey, ACCESS_MASK access, OBJECT_ATTRIBUTES *a
     if (len && buffer[0] == '\\') return STATUS_OBJECT_PATH_INVALID;
     while (i < len && buffer[i] != '\\') i++;
     attrs = attr->Attributes;
-    attr->Attributes &= ~OBJ_OPENLINK;
     attr->ObjectName = &str;
 
-    while (i < len)
+    for (;;)
     {
         str.Buffer = buffer + pos;
         str.Length = (i - pos) * sizeof(WCHAR);
@@ -207,21 +210,25 @@ static NTSTATUS open_key( HKEY *retkey, ACCESS_MASK access, OBJECT_ATTRIBUTES *a
                 force_wow32 = FALSE;
             }
         }
-        status = NtOpenKey( &subkey, access, attr );
+        if (i == len)
+        {
+            attr->Attributes = attrs;
+            status = NtOpenKey( (PHANDLE)retkey, access, attr );
+        }
+        else
+        {
+            attr->Attributes = attrs & ~OBJ_OPENLINK;
+            status = NtOpenKey( &subkey, access, attr );
+        }
         if (attr->RootDirectory != root) NtClose( attr->RootDirectory );
         if (status) return status;
+        if (i == len) break;
         attr->RootDirectory = subkey;
         while (i < len && buffer[i] == '\\') i++;
         pos = i;
         while (i < len && buffer[i] != '\\') i++;
     }
-    str.Buffer = buffer + pos;
-    str.Length = (i - pos) * sizeof(WCHAR);
-    attr->Attributes = attrs;
-    status = NtOpenKey( (PHANDLE)retkey, access, attr );
-    if (attr->RootDirectory != root) NtClose( attr->RootDirectory );
     return status;
-
 }
 
 /* create one of the HKEY_* special root keys */
