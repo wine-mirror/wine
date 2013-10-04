@@ -74,9 +74,9 @@ WRC             = $(TOOLSDIR)/tools/wrc/wrc$(TOOLSEXT)
 LIBPORT         = $(top_builddir)/libs/port/libwine_port.a
 LIBWPP          = $(top_builddir)/libs/wpp/libwpp.a
 LIBWINE         = -L$(top_builddir)/libs/wine -lwine
+LIBWINE_STATIC  = $(top_builddir)/libs/wine/libwine_static.a
 WINEGCC         = $(TOOLSDIR)/tools/winegcc/winegcc $(TARGETFLAGS) -B$(TOOLSDIR)/tools/winebuild --sysroot=$(top_builddir) @UNWINDFLAGS@
 CROSSWINEGCC    = $(TOOLSDIR)/tools/winegcc/winegcc $(CROSSTARGET:%=-b %) -B$(TOOLSDIR)/tools/winebuild --sysroot=$(top_builddir) --lib-suffix=.cross.a
-LDPATH          = @LDPATH@
 LDRPATH_INSTALL = @LDRPATH_INSTALL@
 LDRPATH_LOCAL   = @LDRPATH_LOCAL@
 INSTALL         = @INSTALL@ $(INSTALL_FLAGS)

@@ -35,7 +35,7 @@ $(WINETEST_EXE): $(OBJS) Makefile.in
 	$(WINEGCC) -s -Wb,-F,$(MODULE) $(APPMODE) $(OBJS) -o $@ $(ALL_LIBS)
 
 $(WINETEST_RES): $(WINETEST_EXE)
-	echo "$(MODULE) TESTRES \"$(WINETEST_EXE)\"" | $(LDPATH) $(WRC) $(RCFLAGS) -o $@
+	echo "$(MODULE) TESTRES \"$(WINETEST_EXE)\"" | $(WRC) $(RCFLAGS) -o $@
 
 .PHONY: check test testclean crosstest
 

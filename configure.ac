@@ -1976,17 +1976,8 @@ AC_DEFINE([__ASM_STDCALL_FUNC(name,args,code)],[__ASM_DEFINE_FUNC(name,__ASM_STD
 
 dnl **** Platform-specific checks ****
 
-AC_SUBST(LDPATH,"")
 case $build_os in
-  cygwin*|mingw32*)
-    AC_SUBST(TOOLSEXT,".exe")
-    LDPATH="PATH=\"\$(TOOLSDIR)/libs/wine:\$\$PATH\""
-    ;;
-  darwin*|macosx*)
-    ;;
-  *)
-    LDPATH="LD_LIBRARY_PATH=\"\$(TOOLSDIR)/libs/wine:\$\$LD_LIBRARY_PATH\""
-    ;;
+  cygwin*|mingw32*) AC_SUBST(TOOLSEXT,".exe") ;;
 esac
 
 AC_SUBST(MAIN_BINARY,"wine")

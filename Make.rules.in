@@ -63,10 +63,10 @@ filter: dummy
 	$(FLEX) $(LEXFLAGS) -o$@ $<
 
 .mc.res:
-	$(LDPATH) $(WMC) -U -O res -P $(top_srcdir)/po -o $@ $<
+	$(WMC) -U -O res -P $(top_srcdir)/po -o $@ $<
 
 .rc.res:
-	$(LDPATH) $(WRC) $(RCFLAGS) -o $@ $<
+	$(WRC) $(RCFLAGS) -o $@ $<
 
 .idl.h:
 	$(WIDL) $(IDLFLAGS) -h -o $@ $<
@@ -189,10 +189,10 @@ install install-lib install-dev uninstall::
 # Rules for resources
 
 rsrc.pot: $(WRC)
-	$(LDPATH) $(WRC) $(RCFLAGS) -O pot -o $@ $(PO_SRCS)
+	$(WRC) $(RCFLAGS) -O pot -o $@ $(PO_SRCS)
 
 msg.pot: $(WMC)
-	$(LDPATH) $(WMC) -O pot -o $@ $(MC_SRCS)
+	$(WMC) -O pot -o $@ $(MC_SRCS)
 
 $(MC_SRCS:.mc=.res): $(WMC) $(ALL_MO_FILES)
 $(RC_SRCS:.rc=.res): $(WRC)

@@ -1,7 +1,7 @@
-DEFS      = -D__WINESRC__ -DINCLUDEDIR="\"$(includedir)\"" $(EXTRADEFS)
-PROGRAMS = wrc$(EXEEXT) wrc-installed
+DEFS     = -D__WINESRC__ -DINCLUDEDIR="\"$(includedir)\"" -DWINE_UNICODE_API=""
+PROGRAMS = wrc$(EXEEXT)
 MANPAGE  = wrc.man
-ALL_LIBS = @LIBGETTEXTPO@ $(LIBWPP) $(LIBWINE) $(LIBPORT)
+ALL_LIBS = @LIBGETTEXTPO@ $(LIBWPP) $(LIBWINE_STATIC) $(LIBPORT)
 
 C_SRCS = \
 	dumpres.c \
@@ -24,13 +24,10 @@ all: $(PROGRAMS)
 @MAKE_RULES@
 
 wrc$(EXEEXT): $(OBJS) $(LIBWPP)
-	$(CC) $(CFLAGS) -o $@ $(OBJS) $(ALL_LIBS) $(LDFLAGS) $(LDRPATH_LOCAL)
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(ALL_LIBS) $(LDFLAGS)
 
-wrc-installed: $(OBJS) $(LIBWPP)
-	$(CC) $(CFLAGS) -o $@ $(OBJS) $(ALL_LIBS) $(LDFLAGS) $(LDRPATH_INSTALL)
-
-install install-dev:: wrc-installed $(DESTDIR)$(bindir) install-man-pages
-	$(INSTALL_PROGRAM) wrc-installed $(DESTDIR)$(bindir)/wrc$(EXEEXT)
+install install-dev:: wrc$(EXEEXT) $(DESTDIR)$(bindir) install-man-pages
+	$(INSTALL_PROGRAM) wrc$(EXEEXT) $(DESTDIR)$(bindir)/wrc$(EXEEXT)
 
 uninstall::
 	$(RM) $(DESTDIR)$(bindir)/wrc$(EXEEXT)

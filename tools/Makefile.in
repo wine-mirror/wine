@@ -1,4 +1,4 @@
-DEFS      = -D__WINESRC__ $(EXTRADEFS)
+DEFS      = -D__WINESRC__ -DWINE_UNICODE_API=""
 EXTRAINCL = @FREETYPE_CFLAGS@
 FREETYPELIBS = @FREETYPE_LIBS@
 
@@ -57,7 +57,7 @@ relpath$(EXEEXT): relpath.o
 	$(CC) $(CFLAGS) -o $@ relpath.o $(LIBPORT) $(LDFLAGS)
 
 sfnt2fnt$(EXEEXT): sfnt2fnt.o relpath$(EXEEXT)
-	$(CC) $(CFLAGS) -o $@ sfnt2fnt.o $(LIBWINE) $(LIBPORT) $(LDFLAGS) $(FREETYPELIBS) $(LDRPATH_LOCAL)
+	$(CC) $(CFLAGS) -o $@ sfnt2fnt.o $(LIBWINE_STATIC) $(LIBPORT) $(LDFLAGS) $(FREETYPELIBS)
 
 wine.inf: wine.inf.in
 	LC_ALL=C sed -e 's,@PACKAGE_STRING\@,@PACKAGE_STRING@,g' $(srcdir)/wine.inf.in >$@ || ($(RM) $@ && false)

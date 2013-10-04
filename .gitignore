@@ -325,9 +325,7 @@ tools/winegcc/winegcc
 tools/wmc/mcy.tab.c
 tools/wmc/mcy.tab.h
 tools/wmc/wmc
-tools/wmc/wmc-installed
 tools/wrc/parser.tab.c
 tools/wrc/parser.tab.h
 tools/wrc/parser.yy.c
 tools/wrc/wrc
-tools/wrc/wrc-installed

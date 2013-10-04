@@ -122,6 +122,11 @@ version.c: dummy
 $(RELPATH):
 	@cd $(TOOLSDIR)/tools && $(MAKE) relpath$(TOOLSEXT)
 
+all: libwine_static.a
+
+libwine_static.a: $(OBJS) Makefile.in
+	$(AR) $(ARFLAGS) $@ $(OBJS)
+
 # Make sure that make_makefiles sees the generated rules
 install install-lib::
 install install-dev::
