@@ -714,6 +714,8 @@ dnl Usage: WINE_CONFIG_MAKEFILE(file,enable,flags)
 dnl
 AC_DEFUN([WINE_CONFIG_MAKEFILE],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
 AS_VAR_PUSHDEF([ac_enable],m4_default([$2],[enable_]$1))dnl
+m4_append_uniq([_AC_USER_OPTS],ac_enable,[
+])dnl
 wine_fn_config_makefile [$1] ac_enable [$3]dnl
 AS_VAR_POPDEF([ac_enable])])
 
@@ -723,6 +725,8 @@ dnl Usage: WINE_CONFIG_DLL(name,enable,flags,implib)
 dnl
 AC_DEFUN([WINE_CONFIG_DLL],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
 AS_VAR_PUSHDEF([ac_enable],m4_default([$2],[enable_]$1))dnl
+m4_append_uniq([_AC_USER_OPTS],ac_enable,[
+])dnl
 wine_fn_config_dll [$1] ac_enable [$3] [$4]dnl
 AS_VAR_POPDEF([ac_enable])])
 
@@ -732,6 +736,8 @@ dnl Usage: WINE_CONFIG_PROGRAM(name,enable,flags)
 dnl
 AC_DEFUN([WINE_CONFIG_PROGRAM],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
 AS_VAR_PUSHDEF([ac_enable],m4_default([$2],[enable_]$1))dnl
+m4_append_uniq([_AC_USER_OPTS],ac_enable,[
+])dnl
 wine_fn_config_program [$1] ac_enable [$3]dnl
 AS_VAR_POPDEF([ac_enable])])
 
@@ -758,6 +764,8 @@ dnl
 dnl Usage: WINE_CONFIG_TOOL(name,flags)
 dnl
 AC_DEFUN([WINE_CONFIG_TOOL],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
+m4_append_uniq([_AC_USER_OPTS],[enable_tools],[
+])dnl
 wine_fn_config_tool [$1] [$2]])
 
 dnl **** Add a message to the list displayed at the end ****
