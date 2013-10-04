@@ -63,7 +63,7 @@ filter: dummy
 	$(FLEX) $(LEXFLAGS) -o$@ $<
 
 .mc.res:
-	$(WMC) -U -O res -P $(top_srcdir)/po -o $@ $<
+	$(WMC) -U -O res $(PORCFLAGS) -o $@ $<
 
 .rc.res:
 	$(WRC) $(RCFLAGS) -o $@ $<
