@@ -28,7 +28,7 @@
 
 /* ##### */
 
-static int resizesupported = TRUE;
+static BOOL resizesupported = TRUE;
 
 static void toolbarcheck( HWND hDlg)
 {
