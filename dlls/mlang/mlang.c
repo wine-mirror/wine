@@ -574,8 +574,8 @@ static inline void sjis2jis(unsigned char *p1, unsigned char *p2)
 
 static int han2zen(unsigned char *p1, unsigned char *p2)
 {
-    int maru = FALSE;
-    int nigori = FALSE;
+    BOOL maru = FALSE;
+    BOOL nigori = FALSE;
     static const unsigned char char1[] = {129,129,129,129,129,131,131,131,131,
         131,131,131,131,131,131,129,131,131,131,131,131,131,131,131,131,131,
         131,131,131,131,131,131,131,131,131,131,131,131,131,131,131,131,131,
@@ -622,7 +622,7 @@ static UINT ConvertJIS2SJIS(LPCSTR input, DWORD count, LPSTR output)
     DWORD i = 0;
     int j = 0;
     unsigned char p2,p;
-    int shifted = FALSE;
+    BOOL shifted = FALSE;
 
     while (i < count)
     {
@@ -690,7 +690,7 @@ static UINT ConvertSJIS2JIS(LPCSTR input, DWORD count, LPSTR output)
     DWORD i = 0;
     int j = 0;
     unsigned char p2,p;
-    int shifted = FALSE;
+    BOOL shifted = FALSE;
 
     while (i < count)
     {
