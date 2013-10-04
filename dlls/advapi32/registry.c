@@ -82,13 +82,13 @@ static BOOL hkcu_cache_disabled;
 static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 
 /* check if value type needs string conversion (Ansi<->Unicode) */
-static inline int is_string( DWORD type )
+static inline BOOL is_string( DWORD type )
 {
     return (type == REG_SZ) || (type == REG_EXPAND_SZ) || (type == REG_MULTI_SZ);
 }
 
 /* check if current version is NT or Win95 */
-static inline int is_version_nt(void)
+static inline BOOL is_version_nt(void)
 {
     return !(GetVersion() & 0x80000000);
 }
