@@ -4292,7 +4292,6 @@ then
 
     enable_fonts=${enable_fonts:-no}
     enable_server=${enable_server:-no}
-    enable_tools=${enable_tools:-no}
 elif test "x$enable_win64" = "xyes"
 then
     test "x$libdir" != "x\${exec_prefix}/lib" || libdir="\${exec_prefix}/lib64"
@@ -4318,6 +4317,7 @@ else
        /*) ;;
        *)  wine_cv_toolsdir="\$(top_builddir)/$wine_cv_toolsdir" ;;
      esac
+     enable_tools=${enable_tools:-no}
    else
      as_fn_error $? "could not find Wine tools in $wine_cv_toolsdir" "$LINENO" 5
    fi
