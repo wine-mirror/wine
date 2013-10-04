@@ -34,8 +34,8 @@ NON-FUNCTIONAL; Use decimal values in output
 .B \-D
 Set debug flag. This results is a parser trace and a lot of extra messages.
 .TP
-.B \-h
-Print an informative usage message.
+.BR \-h ,\  \-\-help
+Print an informative usage message and exits.
 .TP
 .BI \-H\  file
 Write headerfile to \fIfile\fR. Default is \fIinputfile.h\fR.
@@ -45,14 +45,14 @@ Inline messagetable(s). This option skips the generation of all \fI.bin\fR files
 and writes all output into the \fI.rc\fR file. This encoding is parsable with
 wrc(1).
 .TP
-.BI \-o\  file
+.BR \-o ,\  \-\-output =\fIfile
 Output to \fIfile\fR. Default is \fIinputfile.rc\fR.
 .TP
-.BI \-O\  format
+.BR \-O ,\  \-\-output\-format =\fIformat
 Set the output format. Supported formats are \fBrc\fR (the default),
 \fBres\fR, and \fBpot\fR.
 .TP
-.BI \-P\  directory
+.BR \-P ,\  \-\-po-dir =\fIdirectory
 Enable the generation of resource translations based on po files
 loaded from the specified directory. That directory must follow the
 gettext convention, in particular in must contain one \fI.po\fR file for
@@ -67,10 +67,10 @@ Write resource output in unicode formatted messagetable(s).
 .B \-v
 Show all supported codepages and languages.
 .TP
-.B \-V
+.BR \-V ,\  \-\-version
 Print version end exit.
 .TP
-.B \-W
+.BR \-W ,\  \-\-pedantic
 Enable pedantic warnings.
 .SH EXTENSIONS
 The original syntax is extended to support codepages more smoothly. Normally,
