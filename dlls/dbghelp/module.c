@@ -105,7 +105,7 @@ void module_set_module(struct module* module, const WCHAR* name)
 
 const WCHAR *get_wine_loader_name(void)
 {
-    static const int is_win64 = sizeof(void *) > sizeof(int); /* FIXME: should depend on target process */
+    static const BOOL is_win64 = sizeof(void *) > sizeof(int); /* FIXME: should depend on target process */
     static const WCHAR wineW[] = {'w','i','n','e',0};
     static const WCHAR suffixW[] = {'6','4',0};
     static const WCHAR *loader;
