@@ -250,6 +250,7 @@ typedef enum
 typedef struct
 {
     LONG ref;
+    HANDLE file_handle;
     WCHAR *file_name;
     BOOL is_committed;
 } req_file_t;

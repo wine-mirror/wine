@@ -3255,8 +3255,16 @@ done:
 static DWORD HTTPREQ_LockRequestFile(object_header_t *hdr, req_file_t **ret)
 {
     http_request_t *req = (http_request_t*)hdr;
-    FIXME("(%p)\n", req);
-    return ERROR_NOT_SUPPORTED;
+
+    TRACE("(%p)\n", req);
+
+    if(!req->req_file) {
+        WARN("No cache file name available\n");
+        return ERROR_FILE_NOT_FOUND;
+    }
+
+    *ret = req_file_addref(req->req_file);
+    return ERROR_SUCCESS;
 }
 
 static const object_vtbl_t HTTPREQVtbl = {

@@ -3917,6 +3917,13 @@ DWORD create_req_file(const WCHAR *file_name, req_file_t **ret)
         return ERROR_NOT_ENOUGH_MEMORY;
     }
 
+    req_file->file_handle = CreateFileW(req_file->file_name, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE,
+              NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if(req_file->file_handle == INVALID_HANDLE_VALUE) {
+        req_file_release(req_file);
+        return GetLastError();
+    }
+
     *ret = req_file;
     return ERROR_SUCCESS;
 }
@@ -3928,6 +3935,8 @@ void req_file_release(req_file_t *req_file)
 
     if(!req_file->is_committed)
         DeleteFileW(req_file->file_name);
+    if(req_file->file_handle && req_file->file_handle != INVALID_HANDLE_VALUE)
+        CloseHandle(req_file->file_handle);
     heap_free(req_file->file_name);
     heap_free(req_file);
 }
