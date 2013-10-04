@@ -25,6 +25,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#ifdef HAVE_GETOPT_H
+# include <getopt.h>
+#endif
 
 #include "wmc.h"
 #include "utils.h"
@@ -33,28 +36,28 @@
 
 static const char usage[] =
 	"Usage: wmc [options...] [inputfile.mc]\n"
-	"   -B x        Set output byte-order x={n[ative], l[ittle], b[ig]}\n"
-	"               (default is n[ative] which equals "
+	"   -B x                       Set output byte-order x={n[ative], l[ittle], b[ig]}\n"
+	"                              (default is n[ative] which equals "
 #ifdef WORDS_BIGENDIAN
 	"big"
 #else
 	"little"
 #endif
 	"-endian)\n"
-	"   -c          Set 'custom-bit' in values\n"
-	"   -d          Use decimal values in output\n"
-	"   -D		Set debug flag\n"
-	"   -h          This message\n"
-	"   -H file     Write headerfile to file (default is inputfile.h)\n"
-	"   -i          Inline messagetable(s)\n"
-	"   -o file     Output to file (default is inputfile.rc)\n"
-	"   -O fmt      Set output format (rc, res, pot)\n"
-	"   -P dir      Directory where to find po files\n"
-	"   -u          Inputfile is in unicode\n"
-	"   -U          Output unicode messagetable(s)\n"
-	"   -v          Show supported codepages and languages\n"
-	"   -V          Print version end exit\n"
-	"   -W          Enable pedantic warnings\n"
+	"   -c                         Set 'custom-bit' in values\n"
+	"   -d                         Use decimal values in output\n"
+	"   -D                         Set debug flag\n"
+	"   -h, --help                 Print this message\n"
+	"   -H FILE                    Write header file to FILE (default is inputfile.h)\n"
+	"   -i                         Inline messagetable(s)\n"
+	"   -o, --output=FILE          Output to FILE (default is infile.rc)\n"
+	"   -O, --output-format=FORMAT The output format (`rc', `res', or `pot')\n"
+	"   -P, --po-dir=DIR           Directory containing po files for translations\n"
+	"   -u                         Input file is in unicode\n"
+	"   -U                         Output unicode messagetable(s)\n"
+	"   -v                         Show supported codepages and languages\n"
+	"   -V, --version              Print version end exit\n"
+	"   -W, --pedantic             Enable pedantic warnings\n"
 	"Input is taken from stdin if no inputfile is specified.\n"
 	"Byteorder of unicode input is based upon the first couple of\n"
 	"bytes read, which should be 0x0000..0x00ff.\n"
@@ -128,7 +131,17 @@ static enum
     FORMAT_POT
 } output_format;
 
-int getopt (int argc, char *const *argv, const char *optstring);
+static const char short_options[] = "B:cdDhH:io:O:P:uUvVW";
+static const struct option long_options[] =
+{
+	{ "help", 0, NULL, 'h' },
+	{ "output", 1, NULL, 'o' },
+	{ "output-format", 1, NULL, 'O' },
+	{ "pedantic", 0, NULL, 'W' },
+	{ "po-dir", 1, NULL, 'P' },
+	{ "version", 0, NULL, 'v' }
+};
+
 static void segvhandler(int sig);
 
 static void cleanup_files(void)
@@ -147,6 +160,7 @@ int main(int argc,char *argv[])
 	extern char* optarg;
 	extern int   optind;
 	int optc;
+	int opti = 0;
 	int lose = 0;
 	int ret;
 	int i;
@@ -176,7 +190,7 @@ int main(int argc,char *argv[])
 			strcat(cmdline, " ");
 	}
 
-	while((optc = getopt(argc, argv, "B:cdDhH:io:O:P:uUvVW")) != EOF)
+	while((optc = getopt_long(argc, argv, short_options, long_options, &opti)) != EOF)
 	{
 		switch(optc)
 		{
@@ -325,7 +339,7 @@ int main(int argc,char *argv[])
 		write_bin_files();
             break;
         case FORMAT_RES:
-            if (po_dir) add_translations( po_dir );
+            add_translations( po_dir );
             write_res_file( output_name );
             break;
         case FORMAT_POT:
