@@ -41,6 +41,7 @@ ARFLAGS         = @ARFLAGS@
 RANLIB          = @RANLIB@
 STRIP           = @STRIP@
 LN_S            = @LN_S@
+MKDIR_P         = @MKDIR_P@
 TOOLSDIR        = @TOOLSDIR@
 LDFLAGS         = @LDFLAGS@
 PRELINK         = @PRELINK@
@@ -57,7 +58,6 @@ ALL_MO_FILES    = $(LINGUAS:%=@top_builddir@/po/%.mo)
 PORCFLAGS       = @PORCFLAGS@
 CROSSAR         = $(CROSSTARGET)-ar
 CROSSRANLIB     = $(CROSSTARGET)-ranlib
-MKINSTALLDIRS   = $(top_srcdir)/tools/mkinstalldirs -m 755
 WINAPI_CHECK    = $(top_srcdir)/tools/winapi/winapi_check
 BUILDIMAGE      = $(top_srcdir)/tools/buildimage
 C2MAN           = $(top_srcdir)/tools/c2man.pl
