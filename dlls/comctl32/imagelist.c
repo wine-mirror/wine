@@ -209,7 +209,7 @@ static void add_dib_bits( HIMAGELIST himl, int pos, int count, int width, int he
 
     for (n = 0; n < count; n++)
     {
-        int has_alpha = 0;
+        BOOL has_alpha = FALSE;
 
         imagelist_point_from_index( himl, pos + n, &pt );
 
