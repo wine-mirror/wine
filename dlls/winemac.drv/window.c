@@ -89,13 +89,11 @@ static void get_cocoa_window_features(struct macdrv_win_data *data,
 static inline BOOL can_activate_window(HWND hwnd)
 {
     LONG style = GetWindowLongW(hwnd, GWL_STYLE);
-    RECT rect;
 
     if (!(style & WS_VISIBLE)) return FALSE;
     if ((style & (WS_POPUP|WS_CHILD)) == WS_CHILD) return FALSE;
     if (GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_NOACTIVATE) return FALSE;
     if (hwnd == GetDesktopWindow()) return FALSE;
-    if (GetWindowRect(hwnd, &rect) && IsRectEmpty(&rect)) return FALSE;
     return !(style & WS_DISABLED);
 }
 
@@ -112,9 +110,10 @@ static void get_cocoa_window_state(struct macdrv_win_data *data,
     state->no_activate = !can_activate_window(data->hwnd);
     state->floating = (ex_style & WS_EX_TOPMOST) != 0;
     state->excluded_by_expose = state->excluded_by_cycle =
-        IsRectEmpty(&data->window_rect) ||
         (!(ex_style & WS_EX_APPWINDOW) &&
          (GetWindow(data->hwnd, GW_OWNER) || (ex_style & (WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE))));
+    if (IsRectEmpty(&data->window_rect))
+        state->excluded_by_expose = TRUE;
     state->minimized = (style & WS_MINIMIZE) != 0;
 }
 
