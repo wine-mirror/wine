@@ -510,11 +510,11 @@ static BOOL is_name(parse_buffer* buf)
   char tmp[512];
   DWORD pos = 0;
   char c;
-  BOOL error = 0;
+  BOOL error = FALSE;
   while (pos < buf->rem_bytes && !is_separator(c = *(buf->buffer+pos)))
   {
     if (!(((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z')) || ((c >= '0') && (c <= '9')) || (c == '_') || (c == '-')))
-      error = 1;
+      error = TRUE;
     if (pos < sizeof(tmp))
         tmp[pos] = c;
     pos++;
@@ -602,7 +602,7 @@ static BOOL is_string(parse_buffer* buf)
   char tmp[512];
   DWORD pos = 0;
   char c;
-  BOOL ok = 0;
+  BOOL ok = FALSE;
 
   if (*buf->buffer != '"')
     return FALSE;
@@ -612,7 +612,7 @@ static BOOL is_string(parse_buffer* buf)
     c = *(buf->buffer+pos+1);
     if (c == '"')
     {
-      ok = 1;
+      ok = TRUE;
       break;
     }
     if (pos < sizeof(tmp))
