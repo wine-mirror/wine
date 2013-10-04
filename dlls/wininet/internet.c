@@ -3964,10 +3964,12 @@ BOOL WINAPI InternetLockRequestFile(HINTERNET hInternet, HANDLE *lphLockReqHandl
     return res == ERROR_SUCCESS;
 }
 
-BOOL WINAPI InternetUnlockRequestFile( HANDLE hLockHandle)
+BOOL WINAPI InternetUnlockRequestFile(HANDLE hLockHandle)
 {
-    FIXME("STUB\n");
-    return FALSE;
+    TRACE("(%p)\n", hLockHandle);
+
+    req_file_release(hLockHandle);
+    return TRUE;
 }
 
 
