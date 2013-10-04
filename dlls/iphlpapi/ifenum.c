@@ -109,9 +109,9 @@
 
 /* Functions */
 
-static int isLoopbackInterface(int fd, const char *name)
+static BOOL isLoopbackInterface(int fd, const char *name)
 {
-  int ret = 0;
+  BOOL ret = FALSE;
 
   if (name) {
     struct ifreq ifr;
@@ -120,7 +120,7 @@ static int isLoopbackInterface(int fd, const char *name)
     if (ioctl(fd, SIOCGIFFLAGS, &ifr) == 0)
       ret = ifr.ifr_flags & IFF_LOOPBACK;
   }
-  return ret;
+  return !!ret;
 }
 
 /* The comments say MAX_ADAPTER_NAME is required, but really only IF_NAMESIZE
@@ -275,7 +275,8 @@ static void free_netlink_reply( struct netlink_reply *data )
 static int recv_netlink_reply( int fd, int pid, int seq, struct netlink_reply **data )
 {
     int bufsize = getpagesize();
-    int left, read, done = 0;
+    int left, read;
+    BOOL done = FALSE;
     socklen_t sa_len;
     struct sockaddr_nl addr;
     struct netlink_reply *cur, *last = NULL;
@@ -297,7 +298,7 @@ static int recv_netlink_reply( int fd, int pid, int seq, struct netlink_reply **
             if (hdr->nlmsg_pid != pid || hdr->nlmsg_seq != seq) continue;
             if (hdr->nlmsg_type == NLMSG_DONE)
             {
-                done = 1;
+                done = TRUE;
                 break;
             }
         }
