@@ -247,6 +247,13 @@ typedef enum
 #define INET_OPENURL 0x0001
 #define INET_CALLBACKW 0x0002
 
+typedef struct
+{
+    LONG ref;
+    WCHAR *file_name;
+    BOOL is_committed;
+} req_file_t;
+
 typedef struct _object_header_t object_header_t;
 
 typedef struct {
@@ -279,7 +286,6 @@ struct _object_header_t
     struct list entry;
     struct list children;
 };
-
 
 typedef struct
 {
@@ -357,7 +363,7 @@ typedef struct
     DWORD nCustHeaders;
     FILETIME last_modified;
     HANDLE hCacheFile;
-    LPWSTR cacheFile;
+    req_file_t *req_file;
     FILETIME expires;
     struct HttpAuthInfo *authInfo;
     struct HttpAuthInfo *proxyAuthInfo;
@@ -443,6 +449,15 @@ DWORD NETCON_set_timeout(netconn_t *connection, BOOL send, DWORD value) DECLSPEC
 int sock_get_error(int) DECLSPEC_HIDDEN;
 
 server_t *get_server(const WCHAR*,INTERNET_PORT,BOOL,BOOL);
+
+DWORD create_req_file(const WCHAR*,req_file_t**) DECLSPEC_HIDDEN;
+void req_file_release(req_file_t*) DECLSPEC_HIDDEN;
+
+static inline req_file_t *req_file_addref(req_file_t *req_file)
+{
+    InterlockedIncrement(&req_file->ref);
+    return req_file;
+}
 
 BOOL init_urlcache(void) DECLSPEC_HIDDEN;
 void free_urlcache(void) DECLSPEC_HIDDEN;

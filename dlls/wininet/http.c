@@ -1912,11 +1912,10 @@ static void HTTPREQ_Destroy(object_header_t *hdr)
 
     TRACE("\n");
 
-    if(request->hCacheFile) {
+    if(request->hCacheFile)
         CloseHandle(request->hCacheFile);
-        DeleteFileW(request->cacheFile);
-    }
-    heap_free(request->cacheFile);
+    if(request->req_file)
+        req_file_release(request->req_file);
 
     request->read_section.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection( &request->read_section );
@@ -2194,25 +2193,25 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
 
         TRACE("INTERNET_OPTION_DATAFILE_NAME\n");
 
-        if(!req->cacheFile) {
+        if(!req->req_file) {
             *size = 0;
             return ERROR_INTERNET_ITEM_NOT_FOUND;
         }
 
         if(unicode) {
-            req_size = (lstrlenW(req->cacheFile)+1) * sizeof(WCHAR);
+            req_size = (lstrlenW(req->req_file->file_name)+1) * sizeof(WCHAR);
             if(*size < req_size)
                 return ERROR_INSUFFICIENT_BUFFER;
 
             *size = req_size;
-            memcpy(buffer, req->cacheFile, *size);
+            memcpy(buffer, req->req_file->file_name, *size);
             return ERROR_SUCCESS;
         }else {
-            req_size = WideCharToMultiByte(CP_ACP, 0, req->cacheFile, -1, NULL, 0, NULL, NULL);
+            req_size = WideCharToMultiByte(CP_ACP, 0, req->req_file->file_name, -1, NULL, 0, NULL, NULL);
             if (req_size > *size)
                 return ERROR_INSUFFICIENT_BUFFER;
 
-            *size = WideCharToMultiByte(CP_ACP, 0, req->cacheFile,
+            *size = WideCharToMultiByte(CP_ACP, 0, req->req_file->file_name,
                     -1, buffer, *size, NULL, NULL);
             return ERROR_SUCCESS;
         }
@@ -2376,12 +2375,17 @@ static void commit_cache_entry(http_request_t *req)
     if(HTTP_GetRequestURL(req, url)) {
         WCHAR *header;
         DWORD header_len;
+        BOOL res;
 
         header = build_response_header(req, TRUE);
         header_len = (header ? strlenW(header) : 0);
-        CommitUrlCacheEntryW(url, req->cacheFile, req->expires,
+        res = CommitUrlCacheEntryW(url, req->req_file->file_name, req->expires,
                 req->last_modified, NORMAL_CACHE_ENTRY,
                 header, header_len, NULL, 0);
+        if(res)
+            req->req_file->is_committed = TRUE;
+        else
+            WARN("CommitUrlCacheEntry failed: %u\n", GetLastError());
         heap_free(header);
     }
 }
@@ -2396,9 +2400,14 @@ static void create_cache_entry(http_request_t *req)
     BOOL b = TRUE;
 
     /* FIXME: We should free previous cache file earlier */
-    heap_free(req->cacheFile);
-    CloseHandle(req->hCacheFile);
-    req->hCacheFile = NULL;
+    if(req->req_file) {
+        req_file_release(req->req_file);
+        req->req_file = NULL;
+    }
+    if(req->hCacheFile) {
+        CloseHandle(req->hCacheFile);
+        req->hCacheFile = NULL;
+    }
 
     if(req->hdr.dwFlags & INTERNET_FLAG_NO_CACHE_WRITE)
         b = FALSE;
@@ -2450,8 +2459,9 @@ static void create_cache_entry(http_request_t *req)
         return;
     }
 
-    req->cacheFile = heap_strdupW(file_name);
-    req->hCacheFile = CreateFileW(req->cacheFile, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
+    create_req_file(file_name, &req->req_file);
+
+    req->hCacheFile = CreateFileW(file_name, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
               NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if(req->hCacheFile == INVALID_HANDLE_VALUE) {
         WARN("Could not create file: %u\n", GetLastError());

@@ -3901,6 +3901,36 @@ BOOL WINAPI InternetQueryDataAvailable( HINTERNET hFile,
     return res == ERROR_SUCCESS;
 }
 
+DWORD create_req_file(const WCHAR *file_name, req_file_t **ret)
+{
+    req_file_t *req_file;
+
+    req_file = heap_alloc_zero(sizeof(*req_file));
+    if(!req_file)
+        return ERROR_NOT_ENOUGH_MEMORY;
+
+    req_file->ref = 1;
+
+    req_file->file_name = heap_strdupW(file_name);
+    if(!req_file->file_name) {
+        heap_free(req_file);
+        return ERROR_NOT_ENOUGH_MEMORY;
+    }
+
+    *ret = req_file;
+    return ERROR_SUCCESS;
+}
+
+void req_file_release(req_file_t *req_file)
+{
+    if(InterlockedDecrement(&req_file->ref))
+        return;
+
+    if(!req_file->is_committed)
+        DeleteFileW(req_file->file_name);
+    heap_free(req_file->file_name);
+    heap_free(req_file);
+}
 
 /***********************************************************************
  *      InternetLockRequestFile (WININET.@)
