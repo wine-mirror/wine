@@ -1869,8 +1869,9 @@ static void _check_key_value( int line, HANDLE root, const char *name, DWORD fla
 static void test_redirection(void)
 {
     DWORD err, type, dw, len;
-    HKEY key, root32, root64, key32, key64;
+    HKEY key, root32, root64, key32, key64, native, op_key;
     BOOL is_vista = FALSE;
+    REGSAM opposite = (sizeof(void*) == 8 ? KEY_WOW64_32KEY : KEY_WOW64_64KEY);
 
     if (ptr_size != 64)
     {
@@ -2104,6 +2105,39 @@ static void test_redirection(void)
     RegCloseKey( key64 );
     RegCloseKey( root32 );
     RegCloseKey( root64 );
+
+    /* open key in native bit mode */
+    err = RegOpenKeyExA(HKEY_CLASSES_ROOT, "Interface", 0, KEY_ALL_ACCESS, &native);
+    ok(err == ERROR_SUCCESS, "got %i\n", err);
+
+    RegDeleteKeyExA(native, "AWineTest", 0, 0);
+
+    /* write subkey in opposite bit mode */
+    err = RegOpenKeyExA(HKEY_CLASSES_ROOT, "Interface", 0, KEY_ALL_ACCESS | opposite, &op_key);
+    ok(err == ERROR_SUCCESS, "got %i\n", err);
+
+    err = RegCreateKeyExA(op_key, "AWineTest", 0, NULL, 0, KEY_ALL_ACCESS | opposite,
+            NULL, &key, NULL);
+    ok(err == ERROR_SUCCESS || err == ERROR_ACCESS_DENIED, "got %i\n", err);
+    if(err != ERROR_SUCCESS){
+        win_skip("Can't write to registry\n");
+        RegCloseKey(op_key);
+        RegCloseKey(native);
+        return;
+    }
+    RegCloseKey(key);
+
+    /* verify subkey is not present in native mode */
+    err = RegOpenKeyExA(native, "AWineTest", 0, KEY_ALL_ACCESS, &key);
+    ok(err == ERROR_FILE_NOT_FOUND ||
+            broken(err == ERROR_SUCCESS), /* before Win7, HKCR is reflected instead of redirected */
+            "got %i\n", err);
+
+    err = RegDeleteKeyExA(op_key, "AWineTest", opposite, 0);
+    ok(err == ERROR_SUCCESS, "got %i\n", err);
+
+    RegCloseKey(op_key);
+    RegCloseKey(native);
 }
 
 static void test_classesroot(void)
