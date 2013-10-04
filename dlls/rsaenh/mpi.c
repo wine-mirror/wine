@@ -1745,17 +1745,17 @@ __Q:mp_clear (&q);
   return res;
 }
 
-static int s_is_power_of_two(mp_digit b, int *p)
+static BOOL s_is_power_of_two(mp_digit b, int *p)
 {
    int x;
 
    for (x = 1; x < DIGIT_BIT; x++) {
       if (b == (((mp_digit)1)<<x)) {
          *p = x;
-         return 1;
+         return TRUE;
       }
    }
-   return 0;
+   return FALSE;
 }
 
 /* single digit division (based on routine from MPI) */
