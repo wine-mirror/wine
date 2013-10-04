@@ -262,23 +262,34 @@ static HKEY create_special_root_hkey( HKEY hkey, DWORD access )
         TRACE( "%s -> %p\n", debugstr_w(attr.ObjectName->Buffer), hkey );
     }
 
-    if (!(ret = InterlockedCompareExchangePointer( (void **)&special_root_keys[idx], hkey, 0 )))
-        ret = hkey;
+    if (!(access & (KEY_WOW64_64KEY | KEY_WOW64_32KEY)))
+    {
+        if (!(ret = InterlockedCompareExchangePointer( (void **)&special_root_keys[idx], hkey, 0 )))
+            ret = hkey;
+        else
+            NtClose( hkey );  /* somebody beat us to it */
+    }
     else
-        NtClose( hkey );  /* somebody beat us to it */
+        ret = hkey;
     return ret;
 }
 
 /* map the hkey from special root to normal key if necessary */
-static inline HKEY get_special_root_hkey( HKEY hkey )
+static inline HKEY get_special_root_hkey( HKEY hkey, REGSAM access )
 {
     HKEY ret = hkey;
 
     if ((HandleToUlong(hkey) >= HandleToUlong(HKEY_SPECIAL_ROOT_FIRST))
             && (HandleToUlong(hkey) <= HandleToUlong(HKEY_SPECIAL_ROOT_LAST)))
     {
-        if (!(ret = special_root_keys[HandleToUlong(hkey) - HandleToUlong(HKEY_SPECIAL_ROOT_FIRST)]))
-            ret = create_special_root_hkey( hkey, MAXIMUM_ALLOWED );
+        REGSAM mask = 0;
+
+        if (HandleToUlong(hkey) == HandleToUlong(HKEY_CLASSES_ROOT))
+            mask = KEY_WOW64_32KEY | KEY_WOW64_64KEY;
+
+        if ((access & mask) ||
+                !(ret = special_root_keys[HandleToUlong(hkey) - HandleToUlong(HKEY_SPECIAL_ROOT_FIRST)]))
+            ret = create_special_root_hkey( hkey, MAXIMUM_ALLOWED | (access & mask) );
     }
     return ret;
 }
@@ -326,7 +337,7 @@ LSTATUS WINAPI RegCreateKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, LPWSTR 
     UNICODE_STRING nameW, classW;
 
     if (reserved) return ERROR_INVALID_PARAMETER;
-    if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
+    if (!(hkey = get_special_root_hkey( hkey, access ))) return ERROR_INVALID_HANDLE;
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = hkey;
@@ -380,7 +391,7 @@ LSTATUS WINAPI RegCreateKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, LPSTR cl
         access = MAXIMUM_ALLOWED;  /* Win95 ignores the access mask */
         if (name && *name == '\\') name++; /* win9x,ME ignores one (and only one) beginning backslash */
     }
-    if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
+    if (!(hkey = get_special_root_hkey( hkey, access ))) return ERROR_INVALID_HANDLE;
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = hkey;
@@ -455,7 +466,7 @@ LSTATUS WINAPI RegOpenKeyExW( HKEY hkey, LPCWSTR name, DWORD options, REGSAM acc
     if (HandleToUlong(hkey) == HandleToUlong(HKEY_CLASSES_ROOT) && name && *name == '\\') name++;
 
     if (!retkey) return ERROR_INVALID_PARAMETER;
-    if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
+    if (!(hkey = get_special_root_hkey( hkey, access ))) return ERROR_INVALID_HANDLE;
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = hkey;
@@ -502,7 +513,7 @@ LSTATUS WINAPI RegOpenKeyExA( HKEY hkey, LPCSTR name, DWORD options, REGSAM acce
         if (HandleToUlong(hkey) == HandleToUlong(HKEY_CLASSES_ROOT) && name && *name == '\\') name++;
     }
 
-    if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
+    if (!(hkey = get_special_root_hkey( hkey, access ))) return ERROR_INVALID_HANDLE;
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = hkey;
@@ -628,7 +639,7 @@ LSTATUS WINAPI RegEnumKeyExW( HKEY hkey, DWORD index, LPWSTR name, LPDWORD name_
            name_len ? *name_len : 0, reserved, class, class_len, ft );
 
     if (reserved) return ERROR_INVALID_PARAMETER;
-    if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
+    if (!(hkey = get_special_root_hkey( hkey, 0 ))) return ERROR_INVALID_HANDLE;
 
     status = NtEnumerateKey( hkey, index, KeyNodeInformation,
                              buffer, sizeof(buffer), &total_size );
@@ -692,7 +703,7 @@ LSTATUS WINAPI RegEnumKeyExA( HKEY hkey, DWORD index, LPSTR name, LPDWORD name_l
            name_len ? *name_len : 0, reserved, class, class_len, ft );
 
     if (reserved) return ERROR_INVALID_PARAMETER;
-    if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
+    if (!(hkey = get_special_root_hkey( hkey, 0 ))) return ERROR_INVALID_HANDLE;
 
     status = NtEnumerateKey( hkey, index, KeyNodeInformation,
                              buffer, sizeof(buffer), &total_size );
@@ -819,7 +830,7 @@ LSTATUS WINAPI RegQueryInfoKeyW( HKEY hkey, LPWSTR class, LPDWORD class_len, LPD
            reserved, subkeys, max_subkey, values, max_value, max_data, security, modif );
 
     if (class && !class_len && is_version_nt()) return ERROR_INVALID_PARAMETER;
-    if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
+    if (!(hkey = get_special_root_hkey( hkey, 0 ))) return ERROR_INVALID_HANDLE;
 
     status = NtQueryKey( hkey, KeyFullInformation, buffer, sizeof(buffer), &total_size );
     if (status && status != STATUS_BUFFER_OVERFLOW) goto done;
@@ -1005,7 +1016,7 @@ LSTATUS WINAPI RegQueryInfoKeyA( HKEY hkey, LPSTR class, LPDWORD class_len, LPDW
            reserved, subkeys, max_subkey, values, max_value, max_data, security, modif );
 
     if (class && !class_len && is_version_nt()) return ERROR_INVALID_PARAMETER;
-    if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
+    if (!(hkey = get_special_root_hkey( hkey, 0 ))) return ERROR_INVALID_HANDLE;
 
     status = NtQueryKey( hkey, KeyFullInformation, buffer, sizeof(buffer), &total_size );
     if (status && status != STATUS_BUFFER_OVERFLOW) goto done;
@@ -1083,7 +1094,7 @@ LSTATUS WINAPI RegDeleteKeyExW( HKEY hkey, LPCWSTR name, REGSAM access, DWORD re
 
     if (!name) return ERROR_INVALID_PARAMETER;
 
-    if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
+    if (!(hkey = get_special_root_hkey( hkey, access ))) return ERROR_INVALID_HANDLE;
 
     access &= KEY_WOW64_64KEY | KEY_WOW64_32KEY;
     if (!(ret = RegOpenKeyExW( hkey, name, 0, access | DELETE, &tmp )))
@@ -1117,7 +1128,7 @@ LSTATUS WINAPI RegDeleteKeyExA( HKEY hkey, LPCSTR name, REGSAM access, DWORD res
 
     if (!name) return ERROR_INVALID_PARAMETER;
 
-    if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
+    if (!(hkey = get_special_root_hkey( hkey, access ))) return ERROR_INVALID_HANDLE;
 
     access &= KEY_WOW64_64KEY | KEY_WOW64_32KEY;
     if (!(ret = RegOpenKeyExA( hkey, name, 0, access | DELETE, &tmp )))
@@ -1198,7 +1209,7 @@ LSTATUS WINAPI RegSetValueExW( HKEY hkey, LPCWSTR name, DWORD reserved,
         if (str[count / sizeof(WCHAR) - 1] && !str[count / sizeof(WCHAR)])
             count += sizeof(WCHAR);
     }
-    if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
+    if (!(hkey = get_special_root_hkey( hkey, 0 ))) return ERROR_INVALID_HANDLE;
 
     RtlInitUnicodeString( &nameW, name );
     return RtlNtStatusToDosError( NtSetValueKey( hkey, &nameW, 0, type, data, count ) );
@@ -1236,7 +1247,7 @@ LSTATUS WINAPI RegSetValueExA( HKEY hkey, LPCSTR name, DWORD reserved, DWORD typ
         if (data[count-1] && !data[count]) count++;
     }
 
-    if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
+    if (!(hkey = get_special_root_hkey( hkey, 0 ))) return ERROR_INVALID_HANDLE;
 
     if (is_string( type )) /* need to convert to Unicode */
     {
@@ -1341,7 +1352,7 @@ LSTATUS WINAPI RegQueryValueExW( HKEY hkey, LPCWSTR name, LPDWORD reserved, LPDW
           (count && data) ? *count : 0 );
 
     if ((data && !count) || reserved) return ERROR_INVALID_PARAMETER;
-    if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
+    if (!(hkey = get_special_root_hkey( hkey, 0 ))) return ERROR_INVALID_HANDLE;
 
     RtlInitUnicodeString( &name_str, name );
 
@@ -1431,7 +1442,7 @@ LSTATUS WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWO
           hkey, debugstr_a(name), reserved, type, data, count, count ? *count : 0 );
 
     if ((data && !count) || reserved) return ERROR_INVALID_PARAMETER;
-    if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
+    if (!(hkey = get_special_root_hkey( hkey, 0 ))) return ERROR_INVALID_HANDLE;
 
     if (count) datalen = *count;
     if (!data && count) *count = 0;
@@ -1869,7 +1880,7 @@ LSTATUS WINAPI RegEnumValueW( HKEY hkey, DWORD index, LPWSTR value, LPDWORD val_
 
     /* NT only checks count, not val_count */
     if ((data && !count) || reserved) return ERROR_INVALID_PARAMETER;
-    if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
+    if (!(hkey = get_special_root_hkey( hkey, 0 ))) return ERROR_INVALID_HANDLE;
 
     total_size = info_size + (MAX_PATH + 1) * sizeof(WCHAR);
     if (data) total_size += *count;
@@ -1954,7 +1965,7 @@ LSTATUS WINAPI RegEnumValueA( HKEY hkey, DWORD index, LPSTR value, LPDWORD val_c
 
     /* NT only checks count, not val_count */
     if ((data && !count) || reserved) return ERROR_INVALID_PARAMETER;
-    if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
+    if (!(hkey = get_special_root_hkey( hkey, 0 ))) return ERROR_INVALID_HANDLE;
 
     total_size = info_size + (MAX_PATH + 1) * sizeof(WCHAR);
     if (data) total_size += *count;
@@ -2050,7 +2061,7 @@ LSTATUS WINAPI RegDeleteValueW( HKEY hkey, LPCWSTR name )
 {
     UNICODE_STRING nameW;
 
-    if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
+    if (!(hkey = get_special_root_hkey( hkey, 0 ))) return ERROR_INVALID_HANDLE;
 
     RtlInitUnicodeString( &nameW, name );
     return RtlNtStatusToDosError( NtDeleteValueKey( hkey, &nameW ) );
@@ -2076,7 +2087,7 @@ LSTATUS WINAPI RegDeleteValueA( HKEY hkey, LPCSTR name )
     UNICODE_STRING nameW;
     NTSTATUS status;
 
-    if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
+    if (!(hkey = get_special_root_hkey( hkey, 0 ))) return ERROR_INVALID_HANDLE;
 
     RtlInitAnsiString( &nameA, name );
     if (!(status = RtlAnsiStringToUnicodeString( &nameW, &nameA, TRUE )))
@@ -2109,7 +2120,7 @@ LSTATUS WINAPI RegLoadKeyW( HKEY hkey, LPCWSTR subkey, LPCWSTR filename )
     UNICODE_STRING subkeyW, filenameW;
     NTSTATUS status;
 
-    if (!(hkey = get_special_root_hkey(hkey))) return ERROR_INVALID_HANDLE;
+    if (!(hkey = get_special_root_hkey(hkey, 0))) return ERROR_INVALID_HANDLE;
 
     destkey.Length = sizeof(destkey);
     destkey.RootDirectory = hkey;               /* root key: HKLM or HKU */
@@ -2189,7 +2200,7 @@ LSTATUS WINAPI RegSaveKeyW( HKEY hkey, LPCWSTR file, LPSECURITY_ATTRIBUTES sa )
     TRACE( "(%p,%s,%p)\n", hkey, debugstr_w(file), sa );
 
     if (!file || !*file) return ERROR_INVALID_PARAMETER;
-    if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
+    if (!(hkey = get_special_root_hkey( hkey, 0 ))) return ERROR_INVALID_HANDLE;
 
     err = GetLastError();
     GetFullPathNameW( file, sizeof(buffer)/sizeof(WCHAR), buffer, &nameW );
@@ -2452,7 +2463,7 @@ LSTATUS WINAPI RegGetKeySecurity( HKEY hkey, SECURITY_INFORMATION SecurityInform
     TRACE("(%p,%d,%p,%d)\n",hkey,SecurityInformation,pSecurityDescriptor,
           *lpcbSecurityDescriptor);
 
-    if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
+    if (!(hkey = get_special_root_hkey( hkey, 0 ))) return ERROR_INVALID_HANDLE;
 
     return RtlNtStatusToDosError( NtQuerySecurityObject( hkey,
                 SecurityInformation, pSecurityDescriptor,
@@ -2474,7 +2485,7 @@ LSTATUS WINAPI RegGetKeySecurity( HKEY hkey, SECURITY_INFORMATION SecurityInform
  */
 LSTATUS WINAPI RegFlushKey( HKEY hkey )
 {
-    hkey = get_special_root_hkey( hkey );
+    hkey = get_special_root_hkey( hkey, 0 );
     if (!hkey) return ERROR_INVALID_HANDLE;
 
     return RtlNtStatusToDosError( NtFlushKey( hkey ) );
@@ -2570,7 +2581,7 @@ LSTATUS WINAPI RegNotifyChangeKeyValue( HKEY hkey, BOOL fWatchSubTree,
     NTSTATUS status;
     IO_STATUS_BLOCK iosb;
 
-    hkey = get_special_root_hkey( hkey );
+    hkey = get_special_root_hkey( hkey, 0 );
     if (!hkey) return ERROR_INVALID_HANDLE;
 
     TRACE("(%p,%i,%d,%p,%i)\n", hkey, fWatchSubTree, fdwNotifyFilter,
