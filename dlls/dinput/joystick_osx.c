@@ -841,13 +841,13 @@ static const char *osx_ff_axis_name(UInt8 axis)
     return ret;
 }
 
-static int osx_axis_has_ff(FFCAPABILITIES *ffcaps, UInt8 axis)
+static BOOL osx_axis_has_ff(FFCAPABILITIES *ffcaps, UInt8 axis)
 {
     int i;
     for(i = 0; i < ffcaps->numFfAxes; ++i)
         if(ffcaps->ffAxes[i] == axis)
-            return 1;
-    return 0;
+            return TRUE;
+    return FALSE;
 }
 
 static HRESULT alloc_device(REFGUID rguid, IDirectInputImpl *dinput,
@@ -948,7 +948,8 @@ static HRESULT alloc_device(REFGUID rguid, IDirectInputImpl *dinput,
 
     for (i = 0; i < newDevice->generic.devcaps.dwAxes; i++)
     {
-        int wine_obj = -1, has_ff = 0;
+        int wine_obj = -1;
+        BOOL has_ff  = FALSE;
         switch (axis_map[i])
         {
             case kHIDUsage_GD_X:

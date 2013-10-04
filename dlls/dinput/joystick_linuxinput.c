@@ -97,7 +97,7 @@ struct JoyDev {
 	char *name;
 	GUID guid;
 
-	int has_ff;
+        BOOL has_ff;
         int num_effects;
 
 	/* data returned by EVIOCGBIT for caps, EV_ABS, EV_KEY, and EV_FF */
@@ -275,7 +275,7 @@ static void find_joydevs(void)
             joydev.num_effects > 0)
         {
 	    TRACE(" ... with force feedback\n");
-	    joydev.has_ff = 1;
+            joydev.has_ff = TRUE;
         }
 #endif
 
