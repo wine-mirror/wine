@@ -4078,7 +4078,7 @@ static GpStatus encode_image_WIC(GpImage *image, IStream* stream,
             {
                 if (IsEqualGUID(&wicformat, pixel_formats[i].wic_format))
                 {
-                    gdipformat = bitmap->format;
+                    gdipformat = pixel_formats[i].gdip_format;
                     break;
                 }
             }
