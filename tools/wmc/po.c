@@ -19,6 +19,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,7 +37,17 @@
 #include "write.h"
 #include "windef.h"
 
-#ifdef HAVE_LIBGETTEXTPO
+struct mo_file
+{
+    unsigned int magic;
+    unsigned int revision;
+    unsigned int count;
+    unsigned int msgid_off;
+    unsigned int msgstr_off;
+    /* ... rest of file data here */
+};
+
+static lan_blk_t *new_top, *new_tail;
 
 static const struct
 {
@@ -272,42 +283,9 @@ static const struct
 #endif
 };
 
-static void po_xerror( int severity, po_message_t message,
-                       const char *filename, size_t lineno, size_t column,
-                       int multiline_p, const char *message_text )
-{
-    fprintf( stderr, "%s:%u:%u: %s\n",
-             filename, (unsigned int)lineno, (unsigned int)column, message_text );
-    if (severity) exit(1);
-}
-
-static void po_xerror2( int severity, po_message_t message1,
-                        const char *filename1, size_t lineno1, size_t column1,
-                        int multiline_p1, const char *message_text1,
-                        po_message_t message2,
-                        const char *filename2, size_t lineno2, size_t column2,
-                        int multiline_p2, const char *message_text2 )
-{
-    fprintf( stderr, "%s:%u:%u: %s\n",
-             filename1, (unsigned int)lineno1, (unsigned int)column1, message_text1 );
-    fprintf( stderr, "%s:%u:%u: %s\n",
-             filename2, (unsigned int)lineno2, (unsigned int)column2, message_text2 );
-    if (severity) exit(1);
-}
-
-static const struct po_xerror_handler po_xerror_handler = { po_xerror, po_xerror2 };
-
 static int is_english( int lan )
 {
     return lan == MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT );
-}
-
-static char *convert_string_utf8( const lanmsg_t *msg )
-{
-    char *buffer = xmalloc( msg->len * 4 + 1 );
-    int len = wine_utf8_wcstombs( 0, msg->msg, msg->len, buffer, msg->len * 4 );
-    buffer[len] = 0;
-    return buffer;
 }
 
 static char *convert_msgid_ascii( const lanmsg_t *msg, int error_on_invalid_char )
@@ -346,6 +324,16 @@ static char *get_message_context( char **msgid )
     return context;
 }
 
+#ifdef HAVE_LIBGETTEXTPO
+
+static char *convert_string_utf8( const lanmsg_t *msg )
+{
+    char *buffer = xmalloc( msg->len * 4 + 1 );
+    int len = wine_utf8_wcstombs( 0, msg->msg, msg->len, buffer, msg->len * 4 );
+    buffer[len] = 0;
+    return buffer;
+}
+
 static po_message_t find_message( po_file_t po, const char *msgid, const char *msgctxt,
                                   po_message_iterator_t *iterator )
 {
@@ -362,6 +350,31 @@ static po_message_t find_message( po_file_t po, const char *msgid, const char *m
     }
     return msg;
 }
+
+static void po_xerror( int severity, po_message_t message,
+                       const char *filename, size_t lineno, size_t column,
+                       int multiline_p, const char *message_text )
+{
+    fprintf( stderr, "%s:%u:%u: %s\n",
+             filename, (unsigned int)lineno, (unsigned int)column, message_text );
+    if (severity) exit(1);
+}
+
+static void po_xerror2( int severity, po_message_t message1,
+                        const char *filename1, size_t lineno1, size_t column1,
+                        int multiline_p1, const char *message_text1,
+                        po_message_t message2,
+                        const char *filename2, size_t lineno2, size_t column2,
+                        int multiline_p2, const char *message_text2 )
+{
+    fprintf( stderr, "%s:%u:%u: %s\n",
+             filename1, (unsigned int)lineno1, (unsigned int)column1, message_text1 );
+    fprintf( stderr, "%s:%u:%u: %s\n",
+             filename2, (unsigned int)lineno2, (unsigned int)column2, message_text2 );
+    if (severity) exit(1);
+}
+
+static const struct po_xerror_handler po_xerror_handler = { po_xerror, po_xerror2 };
 
 static void add_po_string( po_file_t po, const lanmsg_t *msgid, const lanmsg_t *msgstr )
 {
@@ -437,12 +450,120 @@ void write_pot_file( const char *outname )
     po_file_free( po );
 }
 
-static lan_blk_t *new_top, *new_tail;
 
-static lanmsg_t *translate_string( po_file_t po, lanmsg_t *str, int lang, int *found )
+#else  /* HAVE_LIBGETTEXTPO */
+
+void write_pot_file( const char *outname )
 {
-    po_message_t msg;
-    po_message_iterator_t iterator;
+    error( "PO files not supported in this wmc build\n" );
+}
+
+#endif
+
+static struct mo_file *mo_file;
+
+static void byteswap( unsigned int *data, unsigned int count )
+{
+    unsigned int i;
+
+    for (i = 0; i < count; i++)
+        data[i] = data[i] >> 24 | (data[i] >> 8 & 0xff00) | (data[i] << 8 & 0xff0000) | data[i] << 24;
+}
+
+static void load_mo_file( const char *name )
+{
+    struct stat st;
+    int res, fd;
+
+    fd = open( name, O_RDONLY | O_BINARY );
+    if (fd == -1) fatal_perror( "Failed to open %s", name );
+    fstat( fd, &st );
+    mo_file = xmalloc( st.st_size );
+    res = read( fd, mo_file, st.st_size );
+    if (res == -1) fatal_perror( "Failed to read %s", name );
+    else if (res != st.st_size) error( "Failed to read %s\n", name );
+    close( fd );
+
+    /* sanity checks */
+
+    if (st.st_size < sizeof(*mo_file))
+        error( "%s is not a valid .mo file\n", name );
+    if (mo_file->magic == 0xde120495)
+        byteswap( &mo_file->revision, 4 );
+    else if (mo_file->magic != 0x950412de)
+        error( "%s is not a valid .mo file\n", name );
+    if ((mo_file->revision >> 16) > 1)
+        error( "%s: unsupported file version %x\n", name, mo_file->revision );
+    if (mo_file->msgid_off >= st.st_size ||
+        mo_file->msgstr_off >= st.st_size ||
+        st.st_size < sizeof(*mo_file) + 2 * 8 * mo_file->count)
+        error( "%s: corrupted file\n", name );
+
+    if (mo_file->magic == 0xde120495)
+    {
+        byteswap( (unsigned int *)((char *)mo_file + mo_file->msgid_off), 2 * mo_file->count );
+        byteswap( (unsigned int *)((char *)mo_file + mo_file->msgstr_off), 2 * mo_file->count );
+    }
+}
+
+static void free_mo_file(void)
+{
+    free( mo_file );
+    mo_file = NULL;
+}
+
+static inline const char *get_mo_msgid( int index )
+{
+    const char *base = (const char *)mo_file;
+    const unsigned int *offsets = (const unsigned int *)(base + mo_file->msgid_off);
+    return base + offsets[2 * index + 1];
+}
+
+static inline const char *get_mo_msgstr( int index )
+{
+    const char *base = (const char *)mo_file;
+    const unsigned int *offsets = (const unsigned int *)(base + mo_file->msgstr_off);
+    return base + offsets[2 * index + 1];
+}
+
+static const char *get_msgstr( const char *msgid, const char *context, int *found )
+{
+    int pos, res, min, max;
+    const char *ret = msgid;
+    char *id = NULL;
+
+    if (!mo_file)  /* strings containing a context still need to be transformed */
+    {
+        if (context) (*found)++;
+        return ret;
+    }
+
+    if (context) id = strmake( "%s%c%s", context, 4, msgid );
+    min = 0;
+    max = mo_file->count - 1;
+    while (min <= max)
+    {
+        pos = (min + max) / 2;
+        res = strcmp( get_mo_msgid(pos), id ? id : msgid );
+        if (!res)
+        {
+            const char *str = get_mo_msgstr( pos );
+            if (str[0])  /* ignore empty strings */
+            {
+                ret = str;
+                (*found)++;
+            }
+            break;
+        }
+        if (res > 0) max = pos - 1;
+        else min = pos + 1;
+    }
+    free( id );
+    return ret;
+}
+
+static lanmsg_t *translate_string( lanmsg_t *str, int lang, int *found )
+{
     lanmsg_t *new;
     const char *transl;
     int res;
@@ -452,16 +573,7 @@ static lanmsg_t *translate_string( po_file_t po, lanmsg_t *str, int lang, int *f
 
     msgid = buffer;
     context = get_message_context( &msgid );
-    msg = find_message( po, msgid, context, &iterator );
-    po_message_iterator_free( iterator );
-
-    if (msg && !po_message_is_fuzzy( msg ))
-    {
-        transl = po_message_msgstr( msg );
-        if (!transl[0]) transl = msgid;  /* ignore empty strings */
-        else (*found)++;
-    }
-    else transl = msgid;
+    transl = get_msgstr( msgid, context, found );
 
     new = xmalloc( sizeof(*new) );
     new->lan  = lang;
@@ -477,7 +589,7 @@ static lanmsg_t *translate_string( po_file_t po, lanmsg_t *str, int lang, int *f
     return new;
 }
 
-static void translate_block( po_file_t po, block_t *blk, block_t *new, int lang, int *found )
+static void translate_block( block_t *blk, block_t *new, int lang, int *found )
 {
     int i;
 
@@ -488,12 +600,12 @@ static void translate_block( po_file_t po, block_t *blk, block_t *new, int lang,
     new->nmsg = blk->nmsg;
     for (i = 0; i < blk->nmsg; i++)
     {
-        new->msgs[i] = translate_string( po, blk->msgs[i], lang, found );
+        new->msgs[i] = translate_string( blk->msgs[i], lang, found );
         new->size += ((2 * new->msgs[i]->len + 3) & ~3) + 4;
     }
 }
 
-static void translate_messages( po_file_t po, int lang )
+static void translate_messages( int lang )
 {
     int i, found;
     lan_blk_t *lbp, *new;
@@ -510,7 +622,7 @@ static void translate_messages( po_file_t po, int lang )
         new->nblk = lbp->nblk;
 
         for (i = 0; i < lbp->nblk; i++)
-            translate_block( po, &lbp->blks[i], &new->blks[i], lang, &found );
+            translate_block( &lbp->blks[i], &new->blks[i], lang, &found );
         if (found)
         {
             if (new_tail) new_tail->next = new;
@@ -529,7 +641,6 @@ static void translate_messages( po_file_t po, int lang )
 void add_translations( const char *po_dir )
 {
     lan_blk_t *lbp;
-    po_file_t po;
     char buffer[256];
     char *p, *tok, *name;
     unsigned int i;
@@ -538,6 +649,12 @@ void add_translations( const char *po_dir )
     /* first check if we have English resources to translate */
     for (lbp = lanblockhead; lbp; lbp = lbp->next) if (is_english( lbp->lan )) break;
     if (!lbp) return;
+
+    if (!po_dir)  /* run through the translation process to remove msg contexts */
+    {
+        translate_messages( MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT ));
+        goto done;
+    }
 
     new_top = new_tail = NULL;
 
@@ -555,16 +672,16 @@ void add_translations( const char *po_dir )
             if (i == sizeof(languages)/sizeof(languages[0]))
                 error( "unknown language '%s'\n", tok );
 
-            name = strmake( "%s/%s.po", po_dir, tok );
-            if (!(po = po_file_read( name, &po_xerror_handler )))
-                error( "cannot load po file for language '%s'\n", tok );
-            translate_messages( po, MAKELANGID(languages[i].id, languages[i].sub) );
-            po_file_free( po );
+            name = strmake( "%s/%s.mo", po_dir, tok );
+            load_mo_file( name );
+            translate_messages( MAKELANGID(languages[i].id, languages[i].sub) );
+            free_mo_file();
             free( name );
         }
     }
     fclose( f );
 
+done:
     /* prepend the translated messages to the global list */
     if (new_tail)
     {
@@ -573,16 +690,3 @@ void add_translations( const char *po_dir )
         lanblockhead = new_top;
     }
 }
-
-#else  /* HAVE_LIBGETTEXTPO */
-
-void write_pot_file( const char *outname )
-{
-    error( "PO files not supported in this wmc build\n" );
-}
-
-void add_translations( const char *po_dir )
-{
-}
-
-#endif

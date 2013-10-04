@@ -64,7 +64,7 @@ filter: dummy
 	$(FLEX) $(LEXFLAGS) -o$@ $<
 
 .mc.res:
-	$(LDPATH) $(WMC) -U -O res -P $(top_srcdir)/po -o $@ $<
+	$(LDPATH) $(WMC) -U -O res $(PORCFLAGS) -o $@ $<
 
 .rc.res:
 	$(LDPATH) $(WRC) $(RCFLAGS) -o $@ $<
