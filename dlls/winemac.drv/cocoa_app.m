@@ -1915,6 +1915,21 @@ int macdrv_err_on;
         }
     }
 
+    - (void) unminimizeWindowIfNoneVisible
+    {
+        if (![self frontWineWindow])
+        {
+            for (WineWindow* window in [NSApp windows])
+            {
+                if ([window isKindOfClass:[WineWindow class]] && [window isMiniaturized])
+                {
+                    [window deminiaturize:self];
+                    break;
+                }
+            }
+        }
+    }
+
 
     /*
      * ---------- NSApplicationDelegate methods ----------
@@ -1935,17 +1950,8 @@ int macdrv_err_on;
         [self updateFullscreenWindows];
         [self adjustWindowLevels:YES];
 
-        if (beenActive && ![self frontWineWindow])
-        {
-            for (WineWindow* window in [NSApp windows])
-            {
-                if ([window isKindOfClass:[WineWindow class]] && [window isMiniaturized])
-                {
-                    [window deminiaturize:self];
-                    break;
-                }
-            }
-        }
+        if (beenActive)
+            [self unminimizeWindowIfNoneVisible];
         beenActive = TRUE;
 
         // If a Wine process terminates abruptly while it has the display captured
@@ -1995,6 +2001,14 @@ int macdrv_err_on;
         macdrv_release_event(event);
 
         [self releaseMouseCapture];
+    }
+
+    - (BOOL) applicationShouldHandleReopen:(NSApplication*)theApplication hasVisibleWindows:(BOOL)flag
+    {
+        // Note that "flag" is often wrong.  WineWindows are NSPanels and NSPanels
+        // don't count as "visible windows" for this purpose.
+        [self unminimizeWindowIfNoneVisible];
+        return YES;
     }
 
     - (NSApplicationTerminateReply) applicationShouldTerminate:(NSApplication *)sender
