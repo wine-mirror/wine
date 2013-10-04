@@ -266,6 +266,7 @@ typedef struct {
     DWORD (*WriteFile)(object_header_t*,const void*,DWORD,DWORD*);
     DWORD (*QueryDataAvailable)(object_header_t*,DWORD*,DWORD,DWORD_PTR);
     DWORD (*FindNextFileW)(object_header_t*,void*);
+    DWORD (*LockRequestFile)(object_header_t*,req_file_t**);
 } object_vtbl_t;
 
 #define INTERNET_HANDLE_IN_USE 1

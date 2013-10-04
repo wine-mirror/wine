@@ -3252,6 +3252,13 @@ done:
     return ERROR_SUCCESS;
 }
 
+static DWORD HTTPREQ_LockRequestFile(object_header_t *hdr, req_file_t **ret)
+{
+    http_request_t *req = (http_request_t*)hdr;
+    FIXME("(%p)\n", req);
+    return ERROR_NOT_SUPPORTED;
+}
+
 static const object_vtbl_t HTTPREQVtbl = {
     HTTPREQ_Destroy,
     HTTPREQ_CloseConnection,
@@ -3261,7 +3268,8 @@ static const object_vtbl_t HTTPREQVtbl = {
     HTTPREQ_ReadFileEx,
     HTTPREQ_WriteFile,
     HTTPREQ_QueryDataAvailable,
-    NULL
+    NULL,
+    HTTPREQ_LockRequestFile
 };
 
 /***********************************************************************

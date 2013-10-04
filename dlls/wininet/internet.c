@@ -3935,11 +3935,33 @@ void req_file_release(req_file_t *req_file)
 /***********************************************************************
  *      InternetLockRequestFile (WININET.@)
  */
-BOOL WINAPI InternetLockRequestFile( HINTERNET hInternet, HANDLE
-*lphLockReqHandle)
+BOOL WINAPI InternetLockRequestFile(HINTERNET hInternet, HANDLE *lphLockReqHandle)
 {
-    FIXME("STUB\n");
-    return FALSE;
+    req_file_t *req_file = NULL;
+    object_header_t *hdr;
+    DWORD res;
+
+    TRACE("(%p %p)\n", hInternet, lphLockReqHandle);
+
+    hdr = get_handle_object(hInternet);
+    if (!hdr) {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+
+    if(hdr->vtbl->LockRequestFile) {
+        res = hdr->vtbl->LockRequestFile(hdr, &req_file);
+    }else {
+        WARN("wrong handle\n");
+        res = ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
+    }
+
+    WININET_Release(hdr);
+
+    *lphLockReqHandle = req_file;
+    if(res != ERROR_SUCCESS)
+        SetLastError(res);
+    return res == ERROR_SUCCESS;
 }
 
 BOOL WINAPI InternetUnlockRequestFile( HANDLE hLockHandle)
