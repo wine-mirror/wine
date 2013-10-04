@@ -2048,7 +2048,7 @@ static int fdi_decomp(const struct fdi_file *fi, int savemode, fdi_decomp_state 
         FDICABINETINFO fdici;
         char emptystring = '\0';
         cab_UBYTE buf2[64];
-        int success = FALSE;
+        BOOL success = FALSE;
         struct fdi_folder *fol = NULL, *linkfol = NULL; 
         struct fdi_file   *file = NULL, *linkfile = NULL;
 
