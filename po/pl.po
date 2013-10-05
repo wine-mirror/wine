@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2013-03-31 08:50+0200\n"
+"PO-Revision-Date: 2013-10-05 16:55+0200\n"
 "Last-Translator: Łukasz Wojniłowicz <lukasz.wojnilowicz@gmail.com>\n"
 "Language-Team: Polish <kde-i18n-doc@kde.org>\n"
 "Language: Polish\n"
@@ -8555,16 +8555,12 @@ msgstr ""
 "spróbuj ponownie."
 
 #: winmm.rc:52 winmm.rc:125
-#, fuzzy
-#| msgid ""
-#| "The current MIDI Mapper setup refers to a MIDI device that is not "
-#| "installed on the system. Use MIDI Mapper to edit the setup."
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
 "on the system."
 msgstr ""
 "Bieżące ustawienia mapowania MIDI odwołują się do urządzenia MIDI, które nie "
-"jest zainstalowane w systemie. Użyj Mapowania MIDI do edycji ustawień."
+"jest zainstalowane w systemie."
 
 #: winmm.rc:53
 msgid ""
@@ -9398,22 +9394,16 @@ msgstr ""
 "wywołaną procedurę są dziedziczone przez skrypt wywołujący CALL.\n"
 
 #: cmd.rc:40
-#, fuzzy
-#| msgid ""
-#| "CD <dir> is the short version of CHDIR. It changes the current\n"
-#| "default directory.\n"
 msgid ""
 "CD <directory> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
 msgstr ""
-"CD <katalog> jest krótką wersją CHDIR. Zmienia aktualny\n"
+"CD <katalog> jest krótką wersją CHDIR. Zmienia bieżący\n"
 "domyślny katalog.\n"
 
 #: cmd.rc:41
-#, fuzzy
-#| msgid "CHDIR <dir> changes the current default directory.\n"
 msgid "CHDIR <directory> changes the current default directory.\n"
-msgstr "CHDIR <katalog> zmienia aktualny domyślny katalog.\n"
+msgstr "CHDIR <katalog> zmienia bieżący domyślny katalog.\n"
 
 #: cmd.rc:43
 msgid "CLS clears the console screen.\n"
@@ -9464,11 +9454,6 @@ msgid "ERASE <filename> deletes a file or set of files.\n"
 msgstr "ERASE <nazwapliku> usuwa plik lub zestaw plików.\n"
 
 #: cmd.rc:68
-#, fuzzy
-#| msgid ""
-#| "The FOR command is used to execute a command for each of a set of files.\n"
-#| "\n"
-#| "Syntax: FOR %variable IN (set) DO command\n"
 msgid ""
 "The FOR command is used to execute a command for each of a set of files.\n"
 "\n"
@@ -9476,9 +9461,10 @@ msgid ""
 "\n"
 "The % sign must be doubled when using FOR in a batch file.\n"
 msgstr ""
-"Komenda FOR służy do uruchomienia komendy dla każdego z plików ze zbioru.\n"
+"Polecenie FOR służy do uruchomienia polecenia dla każdego ze zbioru plików.\n"
 "\n"
-"Składnia: FOR %zmienna IN (zbiór) DO polecenie\n"
+"Użycie: FOR %zmienna IN (zbiór) DO polecenie\n"
+"Należy podwoić znak % jeśli FOR jest używane w pliku wsadowym.\n"
 
 #: cmd.rc:80
 msgid ""
@@ -9673,16 +9659,12 @@ msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <nazwapliku> zmienia nazwę pliku.\n"
 
 #: cmd.rc:158
-#, fuzzy
-#| msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
 msgid "RD <directory> is the short version of RMDIR. It deletes a directory.\n"
-msgstr "RD <katalog> jest krótką wersją RMDIR. usuwa podkatalog.\n"
+msgstr "RD <katalog> jest krótką wersją RMDIR. Usuwa katalog.\n"
 
 #: cmd.rc:159
-#, fuzzy
-#| msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgid "RMDIR <directory> deletes a directory.\n"
-msgstr "RMDIR <katalog> usuwa podkatalog.\n"
+msgstr "RMDIR <katalog> usuwa katalog.\n"
 
 #: cmd.rc:203
 msgid ""
@@ -9856,15 +9838,11 @@ msgstr ""
 "ustawienia środowiska.\n"
 
 #: cmd.rc:245
-#, fuzzy
-#| msgid ""
-#| "PUSHD <directoryname> saves the current directory onto a\n"
-#| "stack, and then changes the current directory to the supplied one.\n"
 msgid ""
 "PUSHD <directory> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
 msgstr ""
-"PUSHD <nazwakatalogu> zapamiętuje aktualny katalog na stosie, a\n"
+"PUSHD <nazwakatalogu> zapamiętuje bieżący katalog na stosie, a\n"
 "następnie przechodzi do katalogu podanego jako parametr.\n"
 
 #: cmd.rc:247
@@ -12327,7 +12305,7 @@ msgstr "Aktualizuje okno co cztery sekundy"
 
 #: taskmgr.rc:203
 msgid "Does not automatically update"
-msgstr "Okno nie jest automatycznie aktualizowane"
+msgstr "Okno nie uaktualnia się samoczynnie"
 
 #: taskmgr.rc:205
 msgid "Tiles the windows horizontally on the desktop"
@@ -12822,7 +12800,7 @@ msgstr "&Dodaj..."
 
 #: winecfg.rc:229
 msgid "Auto&detect"
-msgstr "Automatyczne wykrywanie"
+msgstr "Wykryj &samoczynnie"
 
 #: winecfg.rc:232
 msgid "&Path:"
@@ -13034,7 +13012,7 @@ msgstr "Wybierz plik wykonywalny"
 
 #: winecfg.rc:66
 msgid "Autodetect"
-msgstr "Wykryj automatycznie"
+msgstr "Wykryj samoczynnie"
 
 #: winecfg.rc:67
 msgid "Local hard disk"
@@ -13697,22 +13675,16 @@ msgid "Not yet implemented"
 msgstr "Jeszcze nie zaimplementowane"
 
 #: winefile.rc:106
-#, fuzzy
-#| msgid "Creation failed.\n"
 msgid "Creation date"
-msgstr "Utworzenie zakończone niepowodzeniem.\n"
+msgstr "Data utworzenia"
 
 #: winefile.rc:107
-#, fuzzy
-#| msgid "Access denied.\n"
 msgid "Access date"
-msgstr "Dostęp zastrzeżony.\n"
+msgstr "Data dostępu"
 
 #: winefile.rc:108
-#, fuzzy
-#| msgid "Certification Path"
 msgid "Modification date"
-msgstr "Ścieżka certyfikacji"
+msgstr "Data modyfikacji"
 
 #: winefile.rc:109
 msgid "Index/Inode"
@@ -13767,7 +13739,7 @@ msgstr "Plansza &użytkownika..."
 
 #: winemine.rc:44
 msgid "&Fastest Times"
-msgstr "Najszybsze czasy"
+msgstr "&Najlepsze Wyniki"
 
 #: winemine.rc:49
 msgid "&About WineMine"
@@ -14037,7 +14009,7 @@ msgstr "Wine Wordpad - &informacje"
 
 #: wordpad.rc:130
 msgid "Automatic"
-msgstr "Automatycznie"
+msgstr "Samoczynnie"
 
 #: wordpad.rc:199
 msgid "Date and time"
