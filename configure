@@ -16294,8 +16294,8 @@ fi
         wine_fn_append_rule \
 "__builddeps__: $ac_file.$IMPLIBEXT $ac_file.$STATIC_IMPLIBEXT
 $ac_file.$IMPLIBEXT $ac_file.$STATIC_IMPLIBEXT $ac_file.cross.a: $ac_deps
-$ac_file.def: $ac_dir/$ac_name.spec $ac_dir/Makefile
-	@cd $ac_dir && \$(MAKE) lib$ac_implib.def
+$ac_file.def: $ac_dir/$ac_name.spec $ac_dir/Makefile \$(WINEBUILD)
+	\$(WINEBUILD) \$(TARGETFLAGS)$ac_implibflags -w --def -o \$@ --export \$(srcdir)/$ac_dir/$ac_name.spec
 $ac_file.$STATIC_IMPLIBEXT: $ac_dir/Makefile dummy
 	@cd $ac_dir && \$(MAKE) lib$ac_implib.$STATIC_IMPLIBEXT
 .PHONY: $ac_dir/install-dev $ac_dir/uninstall

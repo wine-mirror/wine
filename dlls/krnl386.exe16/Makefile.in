@@ -2,7 +2,6 @@ MODULE    = krnl386.exe16
 IMPORTLIB = kernel
 IMPORTS   = winecrt0 kernel32 ntdll
 DELAYIMPORTS = ddraw dsound user32
-EXTRAIMPLIBFLAGS = -m16
 EXTRADLLFLAGS = -m16 -nodefaultlibs -Wb,--dll-name,kernel
 EXTRARCFLAGS  = -m16
 

@@ -12,10 +12,6 @@ BASEMODULE  = $(MODULE:%.dll=%)
 MAINSPEC    = $(BASEMODULE).spec
 ALL_LIBS    = $(LIBPORT) $(EXTRALIBS) $(LDFLAGS) $(LIBS)
 IDL_TLB_RES = $(IDL_TLB_SRCS:.idl=_t.res)
-IMPLIB_OBJS = $(IMPLIB_SRCS:.c=.o)
-IMPLIBFLAGS = $(TARGETFLAGS) $(EXTRAIMPLIBFLAGS)
-IMPORTLIBFILE = $(IMPORTLIB:%=lib%.@IMPLIBEXT@)
-STATICIMPLIB  = $(IMPORTLIBFILE:.def=.def.a)
 
 @MAKE_RULES@
 
@@ -23,30 +19,6 @@ all: $(MODULE)$(DLLEXT) $(MODULE)$(FAKEEXT)
 
 $(MODULE) $(MODULE).so $(MODULE).fake: $(MAINSPEC) $(OBJS) Makefile.in
 	$(WINEGCC) -shared $(srcdir)/$(MAINSPEC) $(OBJS) $(EXTRADLLFLAGS) -o $@ $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(DELAYIMPORTS:%=-Wb,-d%) $(ALL_LIBS)
-
-# Rules for import libraries
-
-IMPLIB_CROSSOBJS = $(IMPLIB_OBJS:.o=.cross.o)
-
-.PHONY: $(IMPLIB_SRCS:%=__static_implib__%)
-
-all: $(IMPORTLIBFILE) $(IMPLIB_SRCS:%=__static_implib__%) @CROSSTEST_DISABLE@ $(IMPORTLIB:%=lib%.cross.a)
-
-$(IMPLIB_SRCS:%=__static_implib__%): $(STATICIMPLIB)
-
-$(IMPORTLIB:%=lib%.def): $(MAINSPEC)
-	$(WINEBUILD) $(IMPLIBFLAGS) -w --def -o $@ --export $(srcdir)/$(MAINSPEC)
-
-$(IMPORTLIB:%=lib%.def.a): $(IMPLIB_OBJS)
-	$(RM) $@
-	$(AR) $(ARFLAGS) $@ $(IMPLIB_OBJS)
-	$(RANLIB) $@
-
-$(IMPORTLIB:%=lib%.a): $(MAINSPEC) $(IMPLIB_OBJS)
-	$(WINEBUILD) $(IMPLIBFLAGS) -w --implib -o $@ --export $(srcdir)/$(MAINSPEC) $(IMPLIB_OBJS)
-
-$(IMPORTLIB:%=lib%.cross.a): $(MAINSPEC) $(IMPLIB_CROSSOBJS)
-	$(WINEBUILD) $(IMPLIBFLAGS) $(CROSSTARGET:%=-b %) -w --implib -o $@ --export $(srcdir)/$(MAINSPEC) $(IMPLIB_CROSSOBJS)
 
 # Rules for auto documentation
 
@@ -61,10 +33,5 @@ sgmlpages:: $(C_SRCS) dummy
 
 xmlpages:: $(C_SRCS) dummy
 	$(C2MAN) -o $(top_builddir)/documentation/api-guide-xml -R$(top_builddir) -C$(srcdir) $(INCLUDES) -Tx $(MAINSPEC:%=-w %) $(C_SRCS)
-
-# Misc. rules
-
-clean::
-	$(RM) $(IMPORTLIBFILE)
 
 # End of global dll rules
