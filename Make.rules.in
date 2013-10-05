@@ -170,13 +170,13 @@ uninstall:: @WOW64_DISABLE@ $(MANPAGE:.man=.man.in uninstall-man-pages)
 
 # Rules for cleaning
 
-$(EXTRASUBDIRS:%=%/__clean__): dummy
+$(EXTRASUBDIRS:%=%/clean): dummy
 	-cd `dirname $@` && $(RM) $(CLEAN_FILES)
 
-clean:: $(EXTRASUBDIRS:%=%/__clean__)
+clean:: $(EXTRASUBDIRS:%=%/clean)
 	$(RM) $(CLEAN_FILES) $(CLEAN_TARGETS) $(PROGRAMS) $(MANPAGES)
 
-.PHONY: clean $(EXTRASUBDIRS:%=%/__clean__)
+.PHONY: clean $(EXTRASUBDIRS:%=%/clean)
 
 # Rules for installing
 
