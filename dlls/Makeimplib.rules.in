@@ -9,20 +9,6 @@
 DLLFLAGS = @DLLFLAGS@
 MAKEDEPFLAGS = -xo -xcross.o
 
+@CROSSTEST_DISABLE@ all: $(STATICLIB:.a=.cross.a)
+
 @MAKE_RULES@
-
-all: $(MODULE) @CROSSTEST_DISABLE@ $(MODULE:.a=.cross.a)
-
-# Rules for .a library
-
-$(MODULE): $(OBJS) Makefile.in
-	$(RM) $@
-	$(AR) $(ARFLAGS) $@ $(OBJS)
-	$(RANLIB) $@
-
-$(MODULE:.a=.cross.a): $(CROSSOBJS) Makefile.in
-	$(RM) $@
-	$(CROSSAR) $(ARFLAGS) $@ $(CROSSOBJS)
-	$(CROSSRANLIB) $@
-
-# End of global library rules

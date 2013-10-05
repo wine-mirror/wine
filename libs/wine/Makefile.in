@@ -1,6 +1,7 @@
 DLLFLAGS  = @DLLFLAGS@
 EXTRALIBS = $(LIBPORT) @LIBDL@ @COREFOUNDATIONLIB@ @CORESERVICESLIB@
 EXTRADEFS = -DWINE_UNICODE_API=""
+STATICLIB = libwine_static.a
 
 VERSION   = 1.0
 SOVERSION = 1
@@ -121,11 +122,6 @@ version.c: dummy
 
 $(RELPATH):
 	@cd $(TOOLSDIR)/tools && $(MAKE) relpath$(TOOLSEXT)
-
-all: libwine_static.a
-
-libwine_static.a: $(OBJS) Makefile.in
-	$(AR) $(ARFLAGS) $@ $(OBJS)
 
 # Make sure that make_makefiles sees the generated rules
 install install-lib::

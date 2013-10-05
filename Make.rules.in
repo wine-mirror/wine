@@ -109,6 +109,20 @@ CROSSOBJS = $(OBJS:.o=.cross.o)
 dlldata.c: $(WIDL) Makefile.in
 	$(WIDL) $(IDLFLAGS) --dlldata-only -o $@ $(IDL_P_SRCS)
 
+# Rules for static libraries
+
+all: $(STATICLIB)
+
+$(STATICLIB): $(OBJS) Makefile.in
+	$(RM) $@
+	$(AR) $(ARFLAGS) $@ $(OBJS)
+	$(RANLIB) $@
+
+$(STATICLIB:.a=.cross.a): $(CROSSOBJS) Makefile.in
+	$(RM) $@
+	$(CROSSAR) $(ARFLAGS) $@ $(CROSSOBJS)
+	$(CROSSRANLIB) $@
+
 # Rules for dependencies
 
 DEPEND_SRCS = $(C_SRCS) $(OBJC_SRCS) $(RC_SRCS) $(MC_SRCS) \

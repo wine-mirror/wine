@@ -1,5 +1,5 @@
 DLLFLAGS  = @DLLFLAGS@
-MODULE    = libwpp.a
+STATICLIB = libwpp.a
 
 C_SRCS = \
 	preproc.c \
@@ -8,11 +8,4 @@ C_SRCS = \
 LEX_SRCS   = ppl.l
 BISON_SRCS = ppy.y
 
-all: $(MODULE)
-
 @MAKE_RULES@
-
-$(MODULE): $(OBJS)
-	$(RM) $@
-	$(AR) $(ARFLAGS) $@ $(OBJS)
-	$(RANLIB) $@

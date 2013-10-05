@@ -1,5 +1,5 @@
 DLLFLAGS  = @DLLFLAGS@
-MODULE    = libwine_port.a
+STATICLIB = libwine_port.a
 
 C_SRCS = \
 	ffs.c \
@@ -25,11 +25,4 @@ C_SRCS = \
 	symlink.c \
 	usleep.c
 
-all: $(MODULE)
-
 @MAKE_RULES@
-
-$(MODULE): $(OBJS) Makefile.in
-	$(RM) $@
-	$(AR) $(ARFLAGS) $@ $(OBJS)
-	$(RANLIB) $@
