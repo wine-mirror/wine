@@ -63,7 +63,7 @@ static HRESULT get_component_info(const GUID *clsid, IWICComponentInfo **result)
     return hr;
 }
 
-static int is_pixelformat(GUID *format)
+static BOOL is_pixelformat(GUID *format)
 {
     IWICComponentInfo *info;
     HRESULT hr;
