@@ -351,6 +351,14 @@ sub parse_makefile($)
         ${$make{"=flags"}}{"installbin"} = 1 if $bin_install{$1};
     }
 
+    if (defined $make{"=flags"} && defined $make{"=rules"} &&
+        ($make{"=rules"} eq $makerules{"MAKE_DLL_RULES"} ||
+         $make{"=rules"} eq $makerules{"MAKE_PROG_RULES"}))
+    {
+        die "Custom install-lib rule not allowed in $file" if defined ${$make{"=flags"}}{"install-lib"};
+        die "Custom install-dev rule not allowed in $file" if defined ${$make{"=flags"}}{"install-dev"};
+    }
+
     return %make;
 }
 
