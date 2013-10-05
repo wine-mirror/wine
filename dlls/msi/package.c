@@ -1077,6 +1077,7 @@ static UINT msi_load_summary_properties( MSIPACKAGE *package )
     if (rc != ERROR_SUCCESS)
     {
         WARN("Unable to query rev number: %d\n", rc);
+        msi_free( package_code );
         goto done;
     }
 
