@@ -7,7 +7,6 @@
 #
 
 DLLFLAGS = @DLLFLAGS@
-DEFS     = -D__WINESRC__ $(EXTRADEFS)
 MAKEDEPFLAGS = -xo -xcross.o
 
 @MAKE_RULES@

@@ -1,5 +1,3 @@
-DEFS      = -D__WINESRC__ $(EXTRADEFS)
-
 PROGRAMS = winedump$(EXEEXT)
 MANPAGE  = winedump.man
 

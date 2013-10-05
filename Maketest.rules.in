@@ -9,8 +9,6 @@
 #
 
 DLLFLAGS     = @DLLFLAGS@
-DEFS         = -D__WINESRC__ $(EXTRADEFS)
-
 MODULE       = $(TESTDLL:%.dll=%)_test.exe
 TESTRESULTS  = $(C_SRCS:.c=.ok)
 TESTPROGRAM  = $(MODULE)$(DLLEXT)

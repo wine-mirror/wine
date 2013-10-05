@@ -14,6 +14,7 @@
 # First some useful definitions
 
 INCLUDES     = -I$(srcdir) -I. -I$(top_srcdir)/include -I$(top_builddir)/include $(EXTRAINCL)
+DEFS         = -D__WINESRC__ $(EXTRADEFS)
 ALLCFLAGS    = $(INCLUDES) $(DEFS) $(DLLFLAGS) $(EXTRACFLAGS) $(CPPFLAGS) $(CFLAGS) $(MODCFLAGS)
 ALLLINTFLAGS = $(INCLUDES) $(DEFS) $(LINTFLAGS)
 IDLFLAGS     = $(INCLUDES) $(DEFS) $(EXTRAIDLFLAGS)

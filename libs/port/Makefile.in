@@ -1,4 +1,3 @@
-DEFS      = -D__WINESRC__
 DLLFLAGS  = @DLLFLAGS@
 MODULE    = libwine_port.a
 

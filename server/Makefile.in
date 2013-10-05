@@ -1,4 +1,3 @@
-DEFS      = -D__WINESRC__
 EXTRALIBS = @LIBPOLL@ @LIBRT@
 
 C_SRCS = \

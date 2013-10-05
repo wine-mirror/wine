@@ -1,4 +1,4 @@
-DEFS = \
+EXTRADEFS = \
 	-DINCLUDEDIR="\"$(includedir)\"" \
 	-DDLLDIR="\"$(dlldir)\"" \
 	-DLIBDIR="\"$(libdir)\"" \

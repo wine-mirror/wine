@@ -10,7 +10,6 @@
 #
 
 DLLFLAGS    = @DLLFLAGS@
-DEFS        = -D__WINESRC__ $(EXTRADEFS)
 ALL_LIBS    = $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(EXTRALIBS) -lwine $(LIBPORT) $(LDFLAGS) $(LIBS)
 INSTALLDIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(dlldir) $(DESTDIR)$(fakedlldir) $(DESTDIR)$(mandir)/man$(prog_manext)
 
