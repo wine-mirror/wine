@@ -2058,34 +2058,34 @@ static void test_read_write(void)
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
     ok(bytes == 0, "bytes %u\n", bytes);
 
-    iob.Status = -1;
+    U(iob).Status = -1;
     iob.Information = -1;
     status = pNtWriteFile(hcom, 0, NULL, NULL, &iob, atz, 0, NULL, NULL);
     ok(status == STATUS_INVALID_PARAMETER, "expected STATUS_INVALID_PARAMETER, got %#x\n", status);
-    ok(iob.Status == -1, "expected -1, got %#x\n", iob.Status);
+    ok(U(iob).Status == -1, "expected -1, got %#x\n", U(iob).Status);
     ok(iob.Information == -1, "expected -1, got %ld\n", iob.Information);
 
     for (i = -20; i < 20; i++)
     {
-        iob.Status = -1;
+        U(iob).Status = -1;
         iob.Information = -1;
         offset.QuadPart = (LONGLONG)i;
         status = pNtWriteFile(hcom, 0, NULL, NULL, &iob, atz, 0, &offset, NULL);
         if (i >= 0 || i == -1)
         {
             ok(status == STATUS_SUCCESS, "%d: expected STATUS_SUCCESS, got %#x\n", i, status);
-            ok(iob.Status == STATUS_SUCCESS, "%d: expected STATUS_SUCCESS, got %#x\n", i, iob.Status);
+            ok(U(iob).Status == STATUS_SUCCESS, "%d: expected STATUS_SUCCESS, got %#x\n", i, U(iob).Status);
             ok(iob.Information == 0, "%d: expected 0, got %lu\n", i, iob.Information);
         }
         else
         {
             ok(status == STATUS_INVALID_PARAMETER, "%d: expected STATUS_INVALID_PARAMETER, got %#x\n", i, status);
-            ok(iob.Status == -1, "%d: expected -1, got %#x\n", i, iob.Status);
+            ok(U(iob).Status == -1, "%d: expected -1, got %#x\n", i, U(iob).Status);
             ok(iob.Information == -1, "%d: expected -1, got %ld\n", i, iob.Information);
         }
     }
 
-    iob.Status = -1;
+    U(iob).Status = -1;
     iob.Information = -1;
     offset.QuadPart = 0;
     status = pNtWriteFile(hcom, 0, NULL, NULL, &iob, atz, sizeof(atz), &offset, NULL);
@@ -2103,7 +2103,7 @@ todo_wine
         return;
     }
     ok(ret == WAIT_OBJECT_0, "WaitForSingleObject error %d\n", ret);
-    ok(iob.Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", iob.Status);
+    ok(U(iob).Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", U(iob).Status);
     ok(iob.Information == sizeof(atz), "expected sizeof(atz), got %lu\n", iob.Information);
 
     ret = SetCommMask(hcom, EV_RXCHAR);
@@ -2144,16 +2144,16 @@ todo_wine
                 ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
                 ok(bytes == 0, "bytes %u\n", bytes);
 
-                iob.Status = -1;
+                U(iob).Status = -1;
                 iob.Information = -1;
                 status = pNtReadFile(hcom, 0, NULL, NULL, &iob, buf, 0, NULL, NULL);
                 ok(status == STATUS_INVALID_PARAMETER, "expected STATUS_INVALID_PARAMETER, got %#x\n", status);
-                ok(iob.Status == -1, "expected -1, got %#x\n", iob.Status);
+                ok(U(iob).Status == -1, "expected -1, got %#x\n", U(iob).Status);
                 ok(iob.Information == -1, "expected -1, got %ld\n", iob.Information);
 
                 for (i = -20; i < 20; i++)
                 {
-                    iob.Status = -1;
+                    U(iob).Status = -1;
                     iob.Information = -1;
                     offset.QuadPart = (LONGLONG)i;
                     status = pNtReadFile(hcom, 0, NULL, NULL, &iob, buf, 0, &offset, NULL);
@@ -2164,23 +2164,23 @@ todo_wine
 todo_wine
                         ok(status == STATUS_SUCCESS, "%d: expected STATUS_SUCCESS, got %#x\n", i, status);
 todo_wine
-                        ok(iob.Status == STATUS_SUCCESS, "%d: expected STATUS_SUCCESS, got %#x\n", i, iob.Status);
+                        ok(U(iob).Status == STATUS_SUCCESS, "%d: expected STATUS_SUCCESS, got %#x\n", i, U(iob).Status);
                         ok(iob.Information == 0, "%d: expected 0, got %lu\n", i, iob.Information);
                     }
                     else
                     {
                         ok(status == STATUS_INVALID_PARAMETER, "%d: expected STATUS_INVALID_PARAMETER, got %#x\n", i, status);
-                        ok(iob.Status == -1, "%d: expected -1, got %#x\n", i, iob.Status);
+                        ok(U(iob).Status == -1, "%d: expected -1, got %#x\n", i, U(iob).Status);
                         ok(iob.Information == -1, "%d: expected -1, got %ld\n", i, iob.Information);
                     }
                 }
 
-                iob.Status = -1;
+                U(iob).Status = -1;
                 iob.Information = -1;
                 offset.QuadPart = 0;
                 status = pNtReadFile(hcom, 0, NULL, NULL, &iob, buf, 1, &offset, NULL);
                 ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", status);
-                ok(iob.Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", iob.Status);
+                ok(U(iob).Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", U(iob).Status);
                 ok(iob.Information == 1, "expected 1, got %lu\n", iob.Information);
                 goto done;
             }
