@@ -930,7 +930,6 @@ static void build(struct options* opts)
             add_library(opts, lib_dirs, files, "kernel32");
             add_library(opts, lib_dirs, files, "ntdll");
         }
-        if (opts->shared && !opts->nostdlib) add_library(opts, lib_dirs, files, "wine");
         if (!opts->shared && opts->use_msvcrt && opts->target_platform == PLATFORM_CYGWIN)
             add_library(opts, lib_dirs, files, "msvcrt");
 

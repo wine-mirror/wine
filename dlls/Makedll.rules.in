@@ -8,14 +8,10 @@
 #
 
 DLLFLAGS    = @DLLFLAGS@
-BASEMODULE  = $(MODULE:%.dll=%)
-MAINSPEC    = $(BASEMODULE).spec
-ALL_LIBS    = $(LIBPORT) $(EXTRALIBS) $(LDFLAGS) $(LIBS)
+MAINSPEC    = $(MODULE:%.dll=%).spec
 IDL_TLB_RES = $(IDL_TLB_SRCS:.idl=_t.res)
-
-@MAKE_RULES@
+MODULEFLAGS = -shared $(srcdir)/$(MAINSPEC) $(EXTRADLLFLAGS)
 
 all: $(MODULE)$(DLLEXT) $(MODULE)$(FAKEEXT)
 
-$(MODULE) $(MODULE).so $(MODULE).fake: $(MAINSPEC) $(OBJS) Makefile.in
-	$(WINEGCC) -shared $(srcdir)/$(MAINSPEC) $(OBJS) $(EXTRADLLFLAGS) -o $@ $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(DELAYIMPORTS:%=-Wb,-d%) $(ALL_LIBS)
+@MAKE_RULES@

@@ -25,7 +25,7 @@ IDL_GEN_HEADERS = $(IDL_H_SRCS:.idl=.h) $(IDL_C_SRCS:.idl=.h) $(IDL_I_SRCS:.idl=
                   $(IDL_P_SRCS:.idl=.h) $(IDL_S_SRCS:.idl=.h)
 
 CLEAN_FILES   = *.o *.a *.so *.mo *.res *.fake *.ok *.tab.[ch] *.yy.c
-CLEAN_TARGETS = $(IMPORTLIB:%=lib%.@IMPLIBEXT@) $(IDL_GEN_C_SRCS) $(IDL_GEN_HEADERS) \
+CLEAN_TARGETS = $(MODULE) $(IMPORTLIB:%=lib%.@IMPLIBEXT@) $(IDL_GEN_C_SRCS) $(IDL_GEN_HEADERS) \
                 $(IDL_TLB_SRCS:.idl=.tlb) $(IDL_P_SRCS:.idl=_p.c dlldata.c) \
                 $(PO_SRCS:.rc=.res rsrc.pot) $(MC_SRCS:.mc=.res msg.pot) $(XTEMPLATE_SRCS:.x=.h)
 
@@ -108,6 +108,11 @@ CROSSOBJS = $(OBJS:.o=.cross.o)
 
 dlldata.c: $(WIDL) Makefile.in
 	$(WIDL) $(IDLFLAGS) --dlldata-only -o $@ $(IDL_P_SRCS)
+
+# Rules for main module
+
+$(MODULE) $(MODULE:%=%.so) $(MODULE:%=%.fake): $(MAINSPEC) $(OBJS) Makefile.in
+	$(WINEGCC) $(APPMODE) $(MODULEFLAGS) $(OBJS) -o $@ $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(DELAYIMPORTS:%=-Wb,-d%) -lwine $(LIBPORT) $(EXTRALIBS) $(LDFLAGS) $(LIBS)
 
 # Rules for static libraries
 

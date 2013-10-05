@@ -10,14 +10,7 @@
 #
 
 DLLFLAGS    = @DLLFLAGS@
-ALL_LIBS    = $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(EXTRALIBS) -lwine $(LIBPORT) $(LDFLAGS) $(LIBS)
-
-@MAKE_RULES@
 
 all: $(MODULE)$(DLLEXT) $(MODULE)$(FAKEEXT)
 
-$(MODULE) $(MODULE).so $(MODULE).fake: $(OBJS) Makefile.in
-	$(WINEGCC) $(APPMODE) $(OBJS) -o $@ $(ALL_LIBS) $(DELAYIMPORTS:%=-Wb,-d%)
-
-clean::
-	$(RM) $(MODULE)
+@MAKE_RULES@
