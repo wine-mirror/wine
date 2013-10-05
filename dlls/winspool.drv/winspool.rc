@@ -42,6 +42,9 @@ END
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
+/* @makedep: generic.ppd */
+1 PPDFILE generic.ppd
+
 #define WINE_FILENAME_STR "winspool.drv"
 #define WINE_FILEDESCRIPTION_STR "Wine core printer driver"
 

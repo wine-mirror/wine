@@ -646,7 +646,6 @@ static char *get_fallback_ppd_name( const char *printer_name )
     HKEY hkey;
     DWORD needed, type;
     char *ret = NULL;
-    const char *data_dir, *filename;
 
     if (RegOpenKeyW( HKEY_CURRENT_USER, ppds_key, &hkey ) == ERROR_SUCCESS )
     {
@@ -666,22 +665,7 @@ static char *get_fallback_ppd_name( const char *printer_name )
         RegCloseKey( hkey );
         if (ret) return expand_env_string( ret, type );
     }
-
-    if ((data_dir = wine_get_data_dir())) filename = "/generic.ppd";
-    else if ((data_dir = wine_get_build_dir())) filename = "/dlls/wineps.drv/generic.ppd";
-    else
-    {
-        ERR( "Error getting PPD file name for printer '%s'\n", debugstr_a(printer_name) );
-        return NULL;
-    }
-    ret = HeapAlloc( GetProcessHeap(), 0, strlen(data_dir) + strlen(filename) + 1 );
-    if (ret)
-    {
-        strcpy( ret, data_dir );
-        strcat( ret, filename );
-    }
-
-    return ret;
+    return NULL;
 }
 
 static BOOL copy_file( const char *src, const char *dst )
@@ -707,15 +691,39 @@ fail:
     return ret;
 }
 
+static BOOL get_internal_fallback_ppd( const WCHAR *ppd )
+{
+    static const WCHAR typeW[] = {'P','P','D','F','I','L','E',0};
+
+    char *ptr, *end;
+    DWORD size, written;
+    HANDLE file;
+    BOOL ret;
+    HRSRC res = FindResourceW( WINSPOOL_hInstance, MAKEINTRESOURCEW(1), typeW );
+
+    if (!res || !(ptr = LoadResource( WINSPOOL_hInstance, res ))) return FALSE;
+    size = SizeofResource( WINSPOOL_hInstance, res );
+    end = memchr( ptr, 0, size );  /* resource file may contain additional nulls */
+    if (end) size = end - ptr;
+    file = CreateFileW( ppd, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, 0, 0 );
+    if (file == INVALID_HANDLE_VALUE) return FALSE;
+    ret = WriteFile( file, ptr, size, &written, NULL ) && written == size;
+    CloseHandle( file );
+    if (ret) TRACE( "using internal fallback for %s\n", debugstr_w( ppd ));
+    else DeleteFileW( ppd );
+    return ret;
+}
+
 static BOOL get_fallback_ppd( const char *printer_name, const WCHAR *ppd )
 {
-    char *src = get_fallback_ppd_name( printer_name );
-    char *dst = wine_get_unix_file_name( ppd );
+    char *dst, *src = get_fallback_ppd_name( printer_name );
     BOOL ret = FALSE;
+
+    if (!src) return get_internal_fallback_ppd( ppd );
 
     TRACE( "(%s %s) found %s\n", debugstr_a(printer_name), debugstr_w(ppd), debugstr_a(src) );
 
-    if (!src || !dst) goto fail;
+    if (!(dst = wine_get_unix_file_name( ppd ))) goto fail;
 
     if (symlink( src, dst ) == -1)
         if (errno != ENOSYS || !copy_file( src, dst ))

@@ -16598,8 +16598,6 @@ Makefile: Makefile.in Make.vars.in Make.rules config.status
 
 ac_config_links="$ac_config_links dlls/shell32/AUTHORS:AUTHORS"
 wine_fn_config_symlink -d dlls/shell32 dlls/shell32/AUTHORS
-ac_config_links="$ac_config_links dlls/wineps.drv/generic.ppd:dlls/wineps.drv/generic.ppd"
-test "$srcdir" = "." || wine_fn_config_symlink dlls/wineps.drv/generic.ppd
 if test "x$enable_fonts" != xno; then
 ac_config_links="$ac_config_links fonts/marlett.ttf:fonts/marlett.ttf"
 ac_config_links="$ac_config_links fonts/symbol.ttf:fonts/symbol.ttf"
@@ -17228,7 +17226,7 @@ wine_fn_config_dll winemac.drv enable_winemac_drv
 wine_fn_config_dll winemapi enable_winemapi
 wine_fn_config_dll winemp3.acm enable_winemp3_acm
 wine_fn_config_dll wineoss.drv enable_wineoss_drv
-wine_fn_config_dll wineps.drv enable_wineps_drv install-lib,po
+wine_fn_config_dll wineps.drv enable_wineps_drv po
 wine_fn_config_dll wineps16.drv16 enable_win16
 wine_fn_config_dll wineqtdecoder enable_wineqtdecoder
 wine_fn_config_dll winex11.drv enable_winex11_drv
@@ -18217,7 +18215,6 @@ do
     "include/config.h") CONFIG_HEADERS="$CONFIG_HEADERS include/config.h" ;;
     "include/stamp-h") CONFIG_COMMANDS="$CONFIG_COMMANDS include/stamp-h" ;;
     "dlls/shell32/AUTHORS") CONFIG_LINKS="$CONFIG_LINKS dlls/shell32/AUTHORS:AUTHORS" ;;
-    "dlls/wineps.drv/generic.ppd") CONFIG_LINKS="$CONFIG_LINKS dlls/wineps.drv/generic.ppd:dlls/wineps.drv/generic.ppd" ;;
     "fonts/marlett.ttf") CONFIG_LINKS="$CONFIG_LINKS fonts/marlett.ttf:fonts/marlett.ttf" ;;
     "fonts/symbol.ttf") CONFIG_LINKS="$CONFIG_LINKS fonts/symbol.ttf:fonts/symbol.ttf" ;;
     "fonts/tahoma.ttf") CONFIG_LINKS="$CONFIG_LINKS fonts/tahoma.ttf:fonts/tahoma.ttf" ;;
