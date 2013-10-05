@@ -163,9 +163,6 @@ install-man-pages:: $(MANPAGE) $(DESTDIR)$(mandir)/man$(prog_manext)
 uninstall-man-pages::
 	$(RM) $(DESTDIR)$(mandir)/man$(prog_manext)/$(MANPAGE:.man=).$(prog_manext)
 
-install:: @WOW64_DISABLE@ $(MANPAGE:.man=.man.in install-man-pages)
-uninstall:: @WOW64_DISABLE@ $(MANPAGE:.man=.man.in uninstall-man-pages)
-
 .PHONY: install-man-pages uninstall-man-pages
 
 # Rules for cleaning

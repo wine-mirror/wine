@@ -194,7 +194,6 @@ then
         AC_MSG_ERROR([--enable-win64 and --with-wine64 are mutually exclusive.
 --enable-win64 should be used in the 64-bit build tree, --with-wine64 in the 32-bit Wow64 build tree.])
     fi
-    AC_SUBST([WOW64_DISABLE],[\#])
     enable_fonts=${enable_fonts:-no}
     enable_server=${enable_server:-no}
 elif test "x$enable_win64" = "xyes"

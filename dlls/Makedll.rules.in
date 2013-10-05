@@ -16,7 +16,6 @@ IMPLIB_OBJS = $(IMPLIB_SRCS:.c=.o)
 IMPLIBFLAGS = $(TARGETFLAGS) $(EXTRAIMPLIBFLAGS)
 IMPORTLIBFILE = $(IMPORTLIB:%=lib%.@IMPLIBEXT@)
 STATICIMPLIB  = $(IMPORTLIBFILE:.def=.def.a)
-INSTALLDIRS = $(DESTDIR)$(dlldir) $(DESTDIR)$(fakedlldir) $(DESTDIR)$(datadir)/wine
 
 @MAKE_RULES@
 
@@ -62,24 +61,6 @@ sgmlpages:: $(C_SRCS) dummy
 
 xmlpages:: $(C_SRCS) dummy
 	$(C2MAN) -o $(top_builddir)/documentation/api-guide-xml -R$(top_builddir) -C$(srcdir) $(INCLUDES) -Tx $(MAINSPEC:%=-w %) $(C_SRCS)
-
-# Rules for installation
-
-.PHONY: install_dll install_dll.so install_dll.fake
-
-install_dll: $(MODULE) $(DESTDIR)$(dlldir) dummy
-	$(INSTALL_PROGRAM) $(MODULE) $(DESTDIR)$(dlldir)/$(MODULE)
-
-install_dll.so: $(MODULE).so $(DESTDIR)$(dlldir) dummy
-	$(INSTALL_PROGRAM) $(MODULE).so $(DESTDIR)$(dlldir)/$(DLLPREFIX)$(MODULE).so
-
-install_dll.fake: $(MODULE).fake $(DESTDIR)$(fakedlldir) dummy
-	$(INSTALL_DATA) $(MODULE).fake $(DESTDIR)$(fakedlldir)/$(MODULE)
-
-install install-lib:: install_dll$(DLLEXT) install_dll$(FAKEEXT)
-
-uninstall::
-	$(RM) $(DESTDIR)$(dlldir)/$(DLLPREFIX)$(MODULE)$(DLLEXT) $(DESTDIR)$(fakedlldir)/$(MODULE)
 
 # Misc. rules
 
