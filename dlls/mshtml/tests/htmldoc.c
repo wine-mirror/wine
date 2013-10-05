@@ -616,7 +616,7 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         ok(bindinfo.dwBindVerb == BINDVERB_POST, "bindinfo.dwBindVerb=%d\n", bindinfo.dwBindVerb);
         ok(bindinfo.cbstgmedData == 8, "bindinfo.cbstgmedData=%d\n", bindinfo.cbstgmedData);
         ok(bindinfo.stgmedData.tymed == TYMED_HGLOBAL, "bindinfo.stgmedData.tymed=%d\n", bindinfo.stgmedData.tymed);
-        ok(!memcmp(bindinfo.stgmedData.hGlobal, "cmd=TEST", 8), "unexpected hGlobal\n");
+        ok(!memcmp(U(bindinfo.stgmedData).hGlobal, "cmd=TEST", 8), "unexpected hGlobal\n");
     }
     ok(bindinfo.szCustomVerb == 0, "bindinfo.szCustomVerb=%p\n", bindinfo.szCustomVerb);
     ok(bindinfo.dwOptions == 0x80000 ||
