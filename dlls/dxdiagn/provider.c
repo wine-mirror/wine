@@ -66,6 +66,9 @@ static const WCHAR szSubSysId[] = {'s','z','S','u','b','S','y','s','I','d',0};
 static const WCHAR szRevisionId[] = {'s','z','R','e','v','i','s','i','o','n','I','d',0};
 static const WCHAR dwRefreshRate[] = {'d','w','R','e','f','r','e','s','h','R','a','t','e',0};
 static const WCHAR szManufacturer[] = {'s','z','M','a','n','u','f','a','c','t','u','r','e','r',0};
+static const WCHAR szChipType[] = {'s','z','C','h','i','p','T','y','p','e',0};
+static const WCHAR szDACType[] = {'s','z','D','A','C','T','y','p','e',0};
+static const WCHAR szRevision[] = {'s','z','R','e','v','i','s','i','o','n',0};
 
 struct IDxDiagProviderImpl
 {
@@ -1016,6 +1019,18 @@ static HRESULT fill_display_information_d3d(IDxDiagContainerImpl_Container *node
         if (FAILED(hr))
             goto cleanup;
 
+        hr = add_bstr_property(display_adapter, szChipType, szEmpty);
+        if (FAILED(hr))
+            goto cleanup;
+
+        hr = add_bstr_property(display_adapter, szDACType, szEmpty);
+        if (FAILED(hr))
+            goto cleanup;
+
+        hr = add_bstr_property(display_adapter, szRevision, szEmpty);
+        if (FAILED(hr))
+            goto cleanup;
+
         if (!get_texture_memory(&adapter_info.DeviceIdentifier, &available_mem))
             WARN("get_texture_memory helper failed\n");
 
@@ -1042,7 +1057,7 @@ static HRESULT fill_display_information_fallback(IDxDiagContainerImpl_Container 
     static const WCHAR *empty_properties[] = {szDeviceIdentifier, szVendorId, szDeviceId,
                                               szKeyDeviceKey, szKeyDeviceID, szDriverName,
                                               szDriverVersion, szSubSysId, szRevisionId,
-                                              szManufacturer};
+                                              szManufacturer, szChipType, szDACType, szRevision};
 
     IDxDiagContainerImpl_Container *display_adapter;
     HRESULT hr;
