@@ -533,8 +533,7 @@ void get_selector_entry( struct thread *thread, int entry, unsigned int *base,
 
 #ifdef HAVE_SYS_USER_H
 #include <sys/user.h>
-#endif
-#ifdef HAVE_ASM_USER_H
+#elif defined(HAVE_ASM_USER_H)
 #include <asm/user.h>
 #endif
 
