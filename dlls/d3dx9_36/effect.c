@@ -127,7 +127,7 @@ struct d3dx_state
     UINT operation;
     UINT index;
     enum STATE_TYPE type;
-    struct d3dx_parameter *parameter;
+    struct d3dx_parameter parameter;
 };
 
 struct d3dx_sampler
@@ -558,8 +558,7 @@ static struct d3dx_parameter *get_valid_parameter(struct d3dx9_base_effect *base
 
 static void free_state(struct d3dx_state *state)
 {
-    free_parameter(state->parameter, FALSE, FALSE);
-    HeapFree(GetProcessHeap(), 0, state->parameter);
+    free_parameter(&state->parameter, FALSE, FALSE);
 }
 
 static void free_object(struct d3dx_object *object)
@@ -4618,11 +4617,6 @@ static HRESULT d3dx9_parse_state(struct d3dx_state *state, const char *data, con
     DWORD offset;
     const char *ptr2;
     HRESULT hr;
-    struct d3dx_parameter *parameter;
-
-    parameter = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*parameter));
-    if (!parameter)
-        return E_OUTOFMEMORY;
 
     state->type = ST_CONSTANT;
 
@@ -4635,7 +4629,7 @@ static HRESULT d3dx9_parse_state(struct d3dx_state *state, const char *data, con
     read_dword(ptr, &offset);
     TRACE("Typedef offset: %#x\n", offset);
     ptr2 = data + offset;
-    hr = d3dx9_parse_effect_typedef(parameter, data, &ptr2, NULL, 0);
+    hr = d3dx9_parse_effect_typedef(&state->parameter, data, &ptr2, NULL, 0);
     if (hr != D3D_OK)
     {
         WARN("Failed to parse type definition\n");
@@ -4644,20 +4638,18 @@ static HRESULT d3dx9_parse_state(struct d3dx_state *state, const char *data, con
 
     read_dword(ptr, &offset);
     TRACE("Value offset: %#x\n", offset);
-    hr = d3dx9_parse_init_value(parameter, data, data + offset, objects);
+    hr = d3dx9_parse_init_value(&state->parameter, data, data + offset, objects);
     if (hr != D3D_OK)
     {
         WARN("Failed to parse value\n");
         goto err_out;
     }
 
-    state->parameter = parameter;
-
     return D3D_OK;
 
 err_out:
 
-    free_parameter(parameter, FALSE, FALSE);
+    free_parameter(&state->parameter, FALSE, FALSE);
 
     return hr;
 }
@@ -5007,7 +4999,7 @@ static HRESULT d3dx9_parse_resource(struct d3dx9_base_effect *base, const char *
         state = &pass->states[state_index];
     }
 
-    param = state->parameter;
+    param = &state->parameter;
 
     /*
      * TODO: Do we need to create the shader/string here or later when we access them?
