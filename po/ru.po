@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2013-01-18 00:48+0400\n"
+"PO-Revision-Date: 2013-10-06 21:40+0400\n"
 "Last-Translator: Nikolay Sivov <nsivov@codeweavers.com>\n"
 "Language-Team: none\n"
 "Language: Russian\n"
@@ -8531,16 +8531,12 @@ msgstr ""
 "передана и попробуйте заново."
 
 #: winmm.rc:52 winmm.rc:125
-#, fuzzy
-#| msgid ""
-#| "The current MIDI Mapper setup refers to a MIDI device that is not "
-#| "installed on the system. Use MIDI Mapper to edit the setup."
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
 "on the system."
 msgstr ""
 "Текущие установки MIDI Mapper ссылаются на устройство MIDI, которое не "
-"установлено в системе. Используйте MIDI Mapper для редактирования установок."
+"установлено в системе."
 
 #: winmm.rc:53
 msgid ""
@@ -9361,10 +9357,6 @@ msgstr ""
 "вызванной процедурой, наследуются вызвавшему.\n"
 
 #: cmd.rc:40
-#, fuzzy
-#| msgid ""
-#| "CD <dir> is the short version of CHDIR. It changes the current\n"
-#| "default directory.\n"
 msgid ""
 "CD <directory> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
@@ -9373,8 +9365,6 @@ msgstr ""
 "директорию.\n"
 
 #: cmd.rc:41
-#, fuzzy
-#| msgid "CHDIR <dir> changes the current default directory.\n"
 msgid "CHDIR <directory> changes the current default directory.\n"
 msgstr "CHDIR <директория> изменяет текущую директорию.\n"
 
@@ -9426,11 +9416,6 @@ msgid "ERASE <filename> deletes a file or set of files.\n"
 msgstr "ERASE <файл> удаляет файл или несколько файлов.\n"
 
 #: cmd.rc:68
-#, fuzzy
-#| msgid ""
-#| "The FOR command is used to execute a command for each of a set of files.\n"
-#| "\n"
-#| "Syntax: FOR %variable IN (set) DO command\n"
 msgid ""
 "The FOR command is used to execute a command for each of a set of files.\n"
 "\n"
@@ -9439,9 +9424,11 @@ msgid ""
 "The % sign must be doubled when using FOR in a batch file.\n"
 msgstr ""
 "FOR используется для применения заданной <команды> для\n"
-"одного файла или набора файлов.\n"
+"каждого файла из набора файлов.\n"
 "\n"
-"Синтаксис: FOR %переменная IN (набор) DO команда\n"
+"Использование: FOR %переменная IN (набор) DO команда\n"
+"\n"
+"Знак % должен быть удвоен при использовании FOR в bat-файлах.\n"
 
 #: cmd.rc:80
 msgid ""
@@ -9632,17 +9619,12 @@ msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <файла> переименовывает файл.\n"
 
 #: cmd.rc:158
-#, fuzzy
-#| msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
 msgid "RD <directory> is the short version of RMDIR. It deletes a directory.\n"
-msgstr ""
-"RD <директория> это краткий вариант RMDIR. Она удаляет поддиректорию.\n"
+msgstr "RD <директория> это краткий вариант RMDIR. Она удаляет директорию.\n"
 
 #: cmd.rc:159
-#, fuzzy
-#| msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgid "RMDIR <directory> deletes a directory.\n"
-msgstr "RMDIR <директория> удаляет поддиректорию.\n"
+msgstr "RMDIR <директория> удаляет директорию.\n"
 
 #: cmd.rc:203
 msgid ""
@@ -9815,15 +9797,11 @@ msgstr ""
 "окружения восстанавливаются.\n"
 
 #: cmd.rc:245
-#, fuzzy
-#| msgid ""
-#| "PUSHD <directoryname> saves the current directory onto a\n"
-#| "stack, and then changes the current directory to the supplied one.\n"
 msgid ""
 "PUSHD <directory> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
 msgstr ""
-"PUSHD <directoryname> сохраняет текущий каталог в стек,\n"
+"PUSHD <директория> сохраняет текущий каталог в стек,\n"
 "а затем переходит в указанный каталог.\n"
 
 #: cmd.rc:247
