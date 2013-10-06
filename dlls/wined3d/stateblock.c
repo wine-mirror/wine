@@ -1133,16 +1133,6 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock)
         wined3d_device_set_clip_plane(device, i, &stateblock->state.clip_planes[i]);
     }
 
-    stateblock->device->state.lowest_disabled_stage = MAX_TEXTURES - 1;
-    for (i = 0; i < MAX_TEXTURES - 1; ++i)
-    {
-        if (stateblock->device->state.texture_states[i][WINED3D_TSS_COLOR_OP] == WINED3D_TOP_DISABLE)
-        {
-            stateblock->device->state.lowest_disabled_stage = i;
-            break;
-        }
-    }
-
     TRACE("Applied stateblock %p.\n", stateblock);
 }
 
