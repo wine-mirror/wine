@@ -144,9 +144,9 @@ static const char *arb_get_helper_value(enum wined3d_shader_type shader, enum ar
     }
 }
 
-static inline BOOL ffp_clip_emul(const struct wined3d_state *state)
+static inline BOOL ffp_clip_emul(const struct wined3d_context *context)
 {
-    return state->lowest_disabled_stage < 7;
+    return context->lowest_disabled_stage < 7;
 }
 
 /* ARB_program_shader private data */
@@ -4596,9 +4596,7 @@ static void find_arb_vs_compile_args(const struct wined3d_state *state,
     {
         args->ps_signature = ~0;
         if (!d3d_info->vs_clipping && adapter->fragment_pipe == &arbfp_fragment_pipeline)
-        {
-            args->clip.boolclip.clip_texcoord = ffp_clip_emul(state) ? d3d_info->limits.ffp_blend_stages : 0;
-        }
+            args->clip.boolclip.clip_texcoord = ffp_clip_emul(context) ? d3d_info->limits.ffp_blend_stages : 0;
         /* Otherwise: Setting boolclip_compare set clip_texcoord to 0 */
     }
 

@@ -3569,7 +3569,7 @@ void sampler_texdim(struct wined3d_context *context, const struct wined3d_state 
      * shaders, or if tex_colorop will take care of this business. */
     if (mapped_stage == WINED3D_UNMAPPED_STAGE || mapped_stage >= context->gl_info->limits.textures)
         return;
-    if (sampler >= state->lowest_disabled_stage)
+    if (sampler >= context->lowest_disabled_stage)
         return;
     if (isStateDirty(context, STATE_TEXTURESTAGE(sampler, WINED3D_TSS_COLOR_OP)))
         return;

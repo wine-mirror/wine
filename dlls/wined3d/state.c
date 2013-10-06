@@ -3151,7 +3151,7 @@ static void tex_colorop(struct wined3d_context *context, const struct wined3d_st
         context_active_texture(context, gl_info, mapped_stage);
     }
 
-    if (stage >= state->lowest_disabled_stage)
+    if (stage >= context->lowest_disabled_stage)
     {
         TRACE("Stage disabled\n");
         if (mapped_stage != WINED3D_UNMAPPED_STAGE)
@@ -3655,7 +3655,7 @@ static void sampler(struct wined3d_context *context, const struct wined3d_state 
             checkGLcall("glTexEnvf(GL_TEXTURE_LOD_BIAS_EXT, ...)");
         }
 
-        if (!use_ps(state) && sampler < state->lowest_disabled_stage)
+        if (!use_ps(state) && sampler < context->lowest_disabled_stage)
         {
             if (state->render_states[WINED3D_RS_COLORKEYENABLE] && !sampler)
             {
@@ -3671,7 +3671,7 @@ static void sampler(struct wined3d_context *context, const struct wined3d_state 
     }
     else
     {
-        if (sampler < state->lowest_disabled_stage)
+        if (sampler < context->lowest_disabled_stage)
         {
             /* TODO: What should I do with pixel shaders here ??? */
             if (state->render_states[WINED3D_RS_COLORKEYENABLE] && !sampler)

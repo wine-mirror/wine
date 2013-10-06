@@ -1318,9 +1318,7 @@ static void state_init_default(struct wined3d_state *state, const struct wined3d
         state->texture_states[i][WINED3D_TSS_ALPHA_ARG0] = WINED3DTA_CURRENT;
         state->texture_states[i][WINED3D_TSS_RESULT_ARG] = WINED3DTA_CURRENT;
     }
-    state->lowest_disabled_stage = 1;
 
-        /* Sampler states*/
     for (i = 0 ; i <  MAX_COMBINED_SAMPLERS; ++i)
     {
         TRACE("Setting up default samplers states for sampler %u.\n", i);

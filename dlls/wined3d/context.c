@@ -2368,7 +2368,7 @@ static void context_invalidate_texture_stage(struct wined3d_context *context, DW
 static void context_update_fixed_function_usage_map(struct wined3d_context *context,
         const struct wined3d_state *state)
 {
-    UINT i;
+    UINT i, start, end;
 
     context->fixed_function_usage_map = 0;
     for (i = 0; i < MAX_TEXTURES; ++i)
@@ -2400,6 +2400,23 @@ static void context_update_fixed_function_usage_map(struct wined3d_context *cont
                 && i < MAX_TEXTURES - 1)
             context->fixed_function_usage_map |= (1 << (i + 1));
     }
+
+    if (i < context->lowest_disabled_stage)
+    {
+        start = i;
+        end = context->lowest_disabled_stage;
+    }
+    else
+    {
+        start = context->lowest_disabled_stage;
+        end = i;
+    }
+
+    context->lowest_disabled_stage = i;
+    for (i = start + 1; i < end; ++i)
+    {
+        context_invalidate_state(context, STATE_TEXTURESTAGE(i, WINED3D_TSS_COLOR_OP));
+    }
 }
 
 static void context_map_fixed_function_samplers(struct wined3d_context *context,
@@ -2413,7 +2430,7 @@ static void context_map_fixed_function_samplers(struct wined3d_context *context,
     ffu_map = context->fixed_function_usage_map;
 
     if (d3d_info->limits.ffp_textures == d3d_info->limits.ffp_blend_stages
-            || state->lowest_disabled_stage <= d3d_info->limits.ffp_textures)
+            || context->lowest_disabled_stage <= d3d_info->limits.ffp_textures)
     {
         for (i = 0; ffu_map; ffu_map >>= 1, ++i)
         {

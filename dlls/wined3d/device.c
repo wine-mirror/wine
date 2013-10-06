@@ -3074,56 +3074,6 @@ void CDECL wined3d_device_set_texture_stage_state(struct wined3d_device *device,
         return;
     }
 
-    if (stage > device->state.lowest_disabled_stage
-            && device->StateTable[STATE_TEXTURESTAGE(0, state)].representative
-            == STATE_TEXTURESTAGE(0, WINED3D_TSS_COLOR_OP))
-    {
-        /* Colorop change above lowest disabled stage? That won't change
-         * anything in the GL setup. Changes in other states are important on
-         * disabled stages too. */
-        return;
-    }
-
-    if (state == WINED3D_TSS_COLOR_OP)
-    {
-        unsigned int i;
-
-        if (value == WINED3D_TOP_DISABLE && old_value != WINED3D_TOP_DISABLE)
-        {
-            /* Previously enabled stage disabled now. Make sure to dirtify
-             * all enabled stages above stage, they have to be disabled.
-             *
-             * The current stage is dirtified below. */
-            for (i = stage + 1; i < device->state.lowest_disabled_stage; ++i)
-            {
-                TRACE("Additionally dirtifying stage %u.\n", i);
-                device_invalidate_state(device, STATE_TEXTURESTAGE(i, WINED3D_TSS_COLOR_OP));
-            }
-            device->state.lowest_disabled_stage = stage;
-            TRACE("New lowest disabled: %u.\n", stage);
-        }
-        else if (value != WINED3D_TOP_DISABLE && old_value == WINED3D_TOP_DISABLE)
-        {
-            /* Previously disabled stage enabled. Stages above it may need
-             * enabling. Stage must be lowest_disabled_stage here, if it's
-             * bigger success is returned above, and stages below the lowest
-             * disabled stage can't be enabled (because they are enabled
-             * already).
-             *
-             * Again stage stage doesn't need to be dirtified here, it is
-             * handled below. */
-            for (i = stage + 1; i < d3d_info->limits.ffp_blend_stages; ++i)
-            {
-                if (device->update_state->texture_states[i][WINED3D_TSS_COLOR_OP] == WINED3D_TOP_DISABLE)
-                    break;
-                TRACE("Additionally dirtifying stage %u due to enable.\n", i);
-                device_invalidate_state(device, STATE_TEXTURESTAGE(i, WINED3D_TSS_COLOR_OP));
-            }
-            device->state.lowest_disabled_stage = i;
-            TRACE("New lowest disabled: %u.\n", i);
-        }
-    }
-
     device_invalidate_state(device, STATE_TEXTURESTAGE(stage, state));
 }
 

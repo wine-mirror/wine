@@ -1087,7 +1087,8 @@ struct wined3d_context
     DWORD texShaderBumpMap : 8;         /* MAX_TEXTURES, 8 */
     DWORD lastWasPow2Texture : 8;       /* MAX_TEXTURES, 8 */
     DWORD fixed_function_usage_map : 8; /* MAX_TEXTURES, 8 */
-    DWORD padding : 24;
+    DWORD lowest_disabled_stage : 4;    /* Max MAX_TEXTURES, 8 */
+    DWORD padding : 20;
     DWORD shader_update_mask;
     DWORD constant_update_mask;
     DWORD                   numbered_array_mask;
@@ -1842,7 +1843,6 @@ struct wined3d_state
     struct wined3d_texture *textures[MAX_COMBINED_SAMPLERS];
     DWORD sampler_states[MAX_COMBINED_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
     DWORD texture_states[MAX_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
-    DWORD lowest_disabled_stage;
 
     struct wined3d_matrix transforms[HIGHEST_TRANSFORMSTATE + 1];
     struct wined3d_vec4 clip_planes[MAX_CLIPPLANES];

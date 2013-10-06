@@ -498,16 +498,16 @@ static void nvrc_colorop(struct wined3d_context *context, const struct wined3d_s
         context_active_texture(context, gl_info, mapped_stage);
     }
 
-    if (state->lowest_disabled_stage > 0)
+    if (context->lowest_disabled_stage > 0)
     {
         gl_info->gl_ops.gl.p_glEnable(GL_REGISTER_COMBINERS_NV);
-        GL_EXTCALL(glCombinerParameteriNV(GL_NUM_GENERAL_COMBINERS_NV, state->lowest_disabled_stage));
+        GL_EXTCALL(glCombinerParameteriNV(GL_NUM_GENERAL_COMBINERS_NV, context->lowest_disabled_stage));
     }
     else
     {
         gl_info->gl_ops.gl.p_glDisable(GL_REGISTER_COMBINERS_NV);
     }
-    if (stage >= state->lowest_disabled_stage)
+    if (stage >= context->lowest_disabled_stage)
     {
         TRACE("Stage disabled\n");
         if (mapped_stage != WINED3D_UNMAPPED_STAGE)
@@ -590,7 +590,7 @@ static void nvts_texdim(struct wined3d_context *context, const struct wined3d_st
     * will take care of this business. */
     if (mapped_stage == WINED3D_UNMAPPED_STAGE || mapped_stage >= context->gl_info->limits.textures)
         return;
-    if (sampler >= state->lowest_disabled_stage)
+    if (sampler >= context->lowest_disabled_stage)
         return;
     if (isStateDirty(context, STATE_TEXTURESTAGE(sampler, WINED3D_TSS_COLOR_OP)))
         return;
