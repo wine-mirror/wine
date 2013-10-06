@@ -1940,7 +1940,7 @@ void CDECL wined3d_device_set_render_state(struct wined3d_device *device,
     if (value == old_value)
         TRACE("Application is setting the old value over, nothing to do.\n");
     else
-        device_invalidate_state(device, STATE_RENDER(state));
+        wined3d_cs_emit_set_render_state(device->cs, state, value);
 
     if (state == WINED3D_RS_POINTSIZE && value == WINED3D_RESZ_CODE)
     {

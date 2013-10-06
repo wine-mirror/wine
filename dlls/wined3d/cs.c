@@ -41,6 +41,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_VERTEX_SHADER,
     WINED3D_CS_OP_SET_GEOMETRY_SHADER,
     WINED3D_CS_OP_SET_PIXEL_SHADER,
+    WINED3D_CS_OP_SET_RENDER_STATE,
 };
 
 struct wined3d_cs_present
@@ -141,6 +142,13 @@ struct wined3d_cs_set_shader
 {
     enum wined3d_cs_op opcode;
     struct wined3d_shader *shader;
+};
+
+struct wined3d_cs_set_render_state
+{
+    enum wined3d_cs_op opcode;
+    enum wined3d_render_state state;
+    DWORD value;
 };
 
 static void wined3d_cs_exec_present(struct wined3d_cs *cs, const void *data)
@@ -571,6 +579,26 @@ void wined3d_cs_emit_set_pixel_shader(struct wined3d_cs *cs, struct wined3d_shad
     cs->ops->submit(cs);
 }
 
+static void wined3d_cs_exec_set_render_state(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_set_render_state *op = data;
+
+    cs->state.render_states[op->state] = op->value;
+    device_invalidate_state(cs->device, STATE_RENDER(op->state));
+}
+
+void wined3d_cs_emit_set_render_state(struct wined3d_cs *cs, enum wined3d_render_state state, DWORD value)
+{
+    struct wined3d_cs_set_render_state *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_SET_RENDER_STATE;
+    op->state = state;
+    op->value = value;
+
+    cs->ops->submit(cs);
+}
+
 static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
 {
     /* WINED3D_CS_OP_PRESENT                */ wined3d_cs_exec_present,
@@ -588,6 +616,7 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_VERTEX_SHADER      */ wined3d_cs_exec_set_vertex_shader,
     /* WINED3D_CS_OP_SET_GEOMETRY_SHADER    */ wined3d_cs_exec_set_geometry_shader,
     /* WINED3D_CS_OP_SET_PIXEL_SHADER       */ wined3d_cs_exec_set_pixel_shader,
+    /* WINED3D_CS_OP_SET_RENDER_STATE       */ wined3d_cs_exec_set_render_state,
 };
 
 static void *wined3d_cs_st_require_space(struct wined3d_cs *cs, size_t size)
