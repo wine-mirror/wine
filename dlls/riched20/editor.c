@@ -3999,6 +3999,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   }
   case WM_CREATE:
   {
+    void *text = NULL;
     INT max;
 
     ME_SetDefaultFormatRect(editor);
@@ -4022,6 +4023,29 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
         ITextHost_TxEnableScrollBar(editor->texthost, SB_HORZ, ESB_DISABLE_BOTH);
         ITextHost_TxShowScrollBar(editor->texthost, SB_HORZ, TRUE);
       }
+    }
+
+    if (lParam)
+    {
+        text = (unicode ? (void*)((CREATESTRUCTW*)lParam)->lpszName
+                : (void*)((CREATESTRUCTA*)lParam)->lpszName);
+    }
+    if (text)
+    {
+      WCHAR *textW;
+      int len;
+
+      textW = ME_ToUnicode(unicode, text, &len);
+      if (!(editor->styleFlags & ES_MULTILINE))
+      {
+        len = 0;
+        while(textW[len] != '0' && textW[len] != '\r' && textW[len] != '\n')
+          len++;
+      }
+      ME_InsertTextFromCursor(editor, 0, textW, len, editor->pBuffer->pDefaultStyle);
+      ME_EndToUnicode(unicode, textW);
+      ME_SetCursorToStart(editor, &editor->pCursors[0]);
+      ME_SetCursorToStart(editor, &editor->pCursors[1]);
     }
 
     ME_CommitUndo(editor);

@@ -7410,6 +7410,43 @@ static void test_enter(void)
   DestroyWindow(hwndRichEdit);
 }
 
+static void test_WM_CREATE(void)
+{
+    static const WCHAR titleW[] = {'l','i','n','e','1','\n','l','i','n','e','2',0};
+    static const char title[] = "line1\nline2";
+
+    HWND rich_edit;
+    LRESULT res;
+    char buf[64];
+    int len;
+
+    rich_edit = CreateWindowA(RICHEDIT_CLASS20A, title, WS_POPUP|WS_VISIBLE,
+            0, 0, 200, 80, NULL, NULL, NULL, NULL);
+    ok(rich_edit != NULL, "class: %s, error: %d\n", RICHEDIT_CLASS20A, (int) GetLastError());
+
+    len = GetWindowText(rich_edit, buf, sizeof(buf));
+    ok(len == 5, "GetWindowText returned %d\n", len);
+    ok(!strcmp(buf, "line1"), "buf = %s\n", buf);
+
+    res = SendMessage(rich_edit, EM_GETSEL, 0, 0);
+    ok(res == 0, "SendMessage(EM_GETSEL) returned %lx\n", res);
+
+    DestroyWindow(rich_edit);
+
+    rich_edit = CreateWindowW(RICHEDIT_CLASS20W, titleW, WS_POPUP|WS_VISIBLE|ES_MULTILINE,
+            0, 0, 200, 80, NULL, NULL, NULL, NULL);
+    ok(rich_edit != NULL, "class: %s, error: %d\n", wine_dbgstr_w(RICHEDIT_CLASS20W), (int) GetLastError());
+
+    len = GetWindowText(rich_edit, buf, sizeof(buf));
+    ok(len == 12, "GetWindowText returned %d\n", len);
+    ok(!strcmp(buf, "line1\r\nline2"), "buf = %s\n", buf);
+
+    res = SendMessage(rich_edit, EM_GETSEL, 0, 0);
+    ok(res == 0, "SendMessage(EM_GETSEL) returned %lx\n", res);
+
+    DestroyWindow(rich_edit);
+}
+
 START_TEST( editor )
 {
   BOOL ret;
@@ -7470,6 +7507,7 @@ START_TEST( editor )
   test_EM_FINDWORDBREAK_W();
   test_EM_FINDWORDBREAK_A();
   test_enter();
+  test_WM_CREATE();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.
