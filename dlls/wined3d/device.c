@@ -1990,7 +1990,7 @@ void CDECL wined3d_device_set_sampler_state(struct wined3d_device *device,
         return;
     }
 
-    device_invalidate_state(device, STATE_SAMPLER(sampler_idx));
+    wined3d_cs_emit_set_sampler_state(device->cs, sampler_idx, state, value);
 }
 
 DWORD CDECL wined3d_device_get_sampler_state(const struct wined3d_device *device,
