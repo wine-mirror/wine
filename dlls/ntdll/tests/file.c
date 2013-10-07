@@ -782,8 +782,7 @@ static void read_file_test(void)
     iosb.Information = 0xdeadbeef;
     offset.QuadPart = strlen(text) + 2;
     status = pNtReadFile( handle, event, apc, &apc_count, &iosb, buffer, 2, &offset, NULL );
-todo_wine
-    ok(status == STATUS_PENDING || broken(status == STATUS_END_OF_FILE) /* before Vista */, "expected STATUS_PENDING, got %#x\n", status);
+    ok(status == STATUS_PENDING || status == STATUS_END_OF_FILE /* before Vista */, "expected STATUS_PENDING or STATUS_END_OF_FILE, got %#x\n", status);
     if (status == STATUS_PENDING)  /* vista */
     {
         WaitForSingleObject( event, 1000 );
@@ -2299,22 +2298,9 @@ todo_wine
     iob.Information = -1;
     offset.QuadPart = 0;
     status = pNtWriteFile(hfile, 0, NULL, NULL, &iob, contents, sizeof(contents), &offset, NULL);
-todo_wine
-    ok(status == STATUS_PENDING || broken(status == STATUS_SUCCESS) /* see below */, "expected STATUS_PENDING, got %#x\n", status);
+    ok(status == STATUS_PENDING || status == STATUS_SUCCESS /* before Vista */, "expected STATUS_PENDING or STATUS_SUCCESS, got %#x\n", status);
     ok(iob.Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", iob.Status);
     ok(iob.Information == sizeof(contents), "expected sizeof(contents), got %lu\n", iob.Information);
-    /* even fully updated XP passes this test, but it looks like some VMs
-     * in a testbot get never updated, so overlapped IO is broken. Instead
-     * of fighting with broken tests and adding a bunch of broken() statements
-     * it's better to skip further tests completely.
-     */
-    if (status != STATUS_PENDING)
-    {
-todo_wine
-        win_skip("broken overlapped IO implementation, update your OS\n");
-        CloseHandle(hfile);
-        return;
-    }
 
     ret = WaitForSingleObject(hfile, 3000);
     ok(ret == WAIT_OBJECT_0, "WaitForSingleObject error %d\n", ret);
@@ -2356,33 +2342,27 @@ todo_wine
     bytes = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = ReadFile(hfile, buf, sizeof(buf), &bytes, &ovl);
+todo_wine
     ok(!ret, "ReadFile should fail\n");
-    ok(GetLastError() == ERROR_IO_PENDING || broken(GetLastError() == ERROR_HANDLE_EOF), "expected ERROR_IO_PENDING, got %d\n", GetLastError());
-    /* even fully updated XP passes this test, but it looks like some VMs
-     * in a testbot get never updated, so overlapped IO is broken. Instead
-     * of fighting with broken tests and adding a bunch of broken() statements
-     * it's better to skip further tests completely.
-     */
-    if (GetLastError() != ERROR_IO_PENDING)
-    {
-        win_skip("broken overlapped IO implementation, update your OS\n");
-        CloseHandle(hfile);
-        return;
-    }
+    ret = GetLastError();
+todo_wine
+    ok(ret == ERROR_IO_PENDING || ret == ERROR_HANDLE_EOF /* before Vista */, "expected ERROR_IO_PENDING or ERROR_HANDLE_EOF, got %d\n", ret);
     ok(bytes == 0, "bytes %u\n", bytes);
-    ok((NTSTATUS)ovl.Internal == STATUS_END_OF_FILE, "expected STATUS_END_OF_FILE, got %#lx\n", ovl.Internal);
-    ok(ovl.InternalHigh == 0, "expected 0, got %lu\n", ovl.InternalHigh);
 
     off = SetFilePointer(hfile, 0, NULL, FILE_CURRENT);
     ok(off == 0, "expected 0, got %u\n", off);
 
-    bytes = 0xdeadbeef;
-    ret = GetOverlappedResult(hfile, &ovl, &bytes, TRUE);
-    ok(!ret, "GetOverlappedResult should report FALSE\n");
-    ok(GetLastError() == ERROR_HANDLE_EOF, "expected ERROR_HANDLE_EOF, got %d\n", GetLastError());
-    ok(bytes == 0, "expected 0, read %u\n", bytes);
-    ok((NTSTATUS)ovl.Internal == STATUS_END_OF_FILE, "expected STATUS_END_OF_FILE, got %#lx\n", ovl.Internal);
-    ok(ovl.InternalHigh == 0, "expected 0, got %lu\n", ovl.InternalHigh);
+    if (ret == ERROR_IO_PENDING)
+    {
+        bytes = 0xdeadbeef;
+        SetLastError(0xdeadbeef);
+        ret = GetOverlappedResult(hfile, &ovl, &bytes, TRUE);
+        ok(!ret, "GetOverlappedResult should report FALSE\n");
+        ok(GetLastError() == ERROR_HANDLE_EOF, "expected ERROR_HANDLE_EOF, got %d\n", GetLastError());
+        ok(bytes == 0, "expected 0, read %u\n", bytes);
+        ok((NTSTATUS)ovl.Internal == STATUS_END_OF_FILE, "expected STATUS_END_OF_FILE, got %#lx\n", ovl.Internal);
+        ok(ovl.InternalHigh == 0, "expected 0, got %lu\n", ovl.InternalHigh);
+    }
 
     off = SetFilePointer(hfile, 0, NULL, FILE_CURRENT);
     ok(off == 0, "expected 0, got %u\n", off);
@@ -2391,25 +2371,17 @@ todo_wine
     iob.Information = -1;
     offset.QuadPart = sizeof(contents);
     status = pNtReadFile(hfile, 0, NULL, NULL, &iob, buf, sizeof(buf), &offset, NULL);
-    ok(status == STATUS_PENDING, "expected STATUS_PENDING, got %#x\n", status);
-    ok(iob.Status == STATUS_END_OF_FILE, "expected STATUS_END_OF_FILE, got %#x\n", iob.Status);
-    ok(iob.Information == 0, "expected 0, got %lu\n", iob.Information);
-
-    off = SetFilePointer(hfile, 0, NULL, FILE_CURRENT);
-    ok(off == 0, "expected 0, got %u\n", off);
-
-    S(U(ovl)).Offset = offset.u.LowPart;
-    S(U(ovl)).OffsetHigh = offset.u.HighPart;
-    ovl.Internal = iob.Status;
-    ovl.InternalHigh = iob.Information;
-    ovl.hEvent = 0;
-    bytes = 0xdeadbeef;
-    ret = GetOverlappedResult(hfile, &ovl, &bytes, TRUE);
-    ok(!ret, "GetOverlappedResult should report FALSE\n");
-    ok(GetLastError() == ERROR_HANDLE_EOF, "expected ERROR_HANDLE_EOF, got %d\n", GetLastError());
-    ok(bytes == 0, "expected 0, read %u\n", bytes);
-    ok((NTSTATUS)ovl.Internal == STATUS_END_OF_FILE, "expected STATUS_END_OF_FILE, got %#lx\n", ovl.Internal);
-    ok(ovl.InternalHigh == 0, "expected 0, got %lu\n", ovl.InternalHigh);
+    if (status == STATUS_PENDING)
+    {
+        ok(iob.Status == STATUS_END_OF_FILE, "expected STATUS_END_OF_FILE, got %#x\n", iob.Status);
+        ok(iob.Information == 0, "expected 0, got %lu\n", iob.Information);
+    }
+    else
+    {
+        ok(status == STATUS_END_OF_FILE, "expected STATUS_END_OF_FILE, got %#x\n", status);
+        ok(iob.Status == -1, "expected -1, got %#x\n", iob.Status);
+        ok(iob.Information == -1, "expected -1, got %lu\n", iob.Information);
+    }
 
     off = SetFilePointer(hfile, 0, NULL, FILE_CURRENT);
     ok(off == 0, "expected 0, got %u\n", off);
@@ -2422,9 +2394,13 @@ todo_wine
     bytes = 0;
     SetLastError(0xdeadbeef);
     ret = ReadFile(hfile, buf, sizeof(buf), &bytes, &ovl);
-    ok(!ret, "ReadFile should fail\n");
-    ok(GetLastError() == ERROR_IO_PENDING, "expected ERROR_IO_PENDING, got %d\n", GetLastError());
-    ok(bytes == 0, "bytes %u\n", bytes);
+    /* ReadFile return value depends on Windows version and testing it is not practical */
+    if (!ret)
+    {
+        ok(GetLastError() == ERROR_IO_PENDING, "expected ERROR_IO_PENDING, got %d\n", GetLastError());
+        ok(bytes == 0, "bytes %u\n", bytes);
+    }
+    else ok(bytes == 14, "bytes %u\n", bytes);
     ok((NTSTATUS)ovl.Internal == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx\n", ovl.Internal);
     ok(ovl.InternalHigh == sizeof(contents), "expected sizeof(contents), got %lu\n", ovl.InternalHigh);
 
@@ -2450,8 +2426,11 @@ todo_wine
     iob.Information = -1;
     offset.QuadPart = (LONGLONG)-1 /* FILE_WRITE_TO_END_OF_FILE */;
     status = pNtWriteFile(hfile, 0, NULL, NULL, &iob, "DCBA", 4, &offset, NULL);
-    ok(status == STATUS_PENDING || broken(status == STATUS_SUCCESS) /* before Vista */, "expected STATUS_PENDING, got %#x\n", status);
+todo_wine
+    ok(status == STATUS_PENDING || status == STATUS_SUCCESS /* before Vista */, "expected STATUS_PENDING or STATUS_SUCCESS, got %#x\n", status);
+todo_wine
     ok(iob.Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", iob.Status);
+todo_wine
     ok(iob.Information == 4, "expected 4, got %lu\n", iob.Information);
 
     off = SetFilePointer(hfile, 0, NULL, FILE_CURRENT);
@@ -2467,8 +2446,9 @@ todo_wine
     iob.Information = -1;
     offset.QuadPart = 0;
     status = pNtReadFile(hfile, 0, NULL, NULL, &iob, buf, sizeof(buf), &offset, NULL);
-    ok(status == STATUS_PENDING, "expected STATUS_PENDING, got %#x\n", status);
+    ok(status == STATUS_PENDING || status == STATUS_SUCCESS, "expected STATUS_PENDING or STATUS_SUCCESS, got %#x\n", status);
     ok(iob.Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", iob.Status);
+todo_wine
     ok(iob.Information == sizeof(contents), "expected sizeof(contents), got %lu\n", iob.Information);
 
     off = SetFilePointer(hfile, 0, NULL, FILE_CURRENT);
@@ -2477,6 +2457,7 @@ todo_wine
     ret = WaitForSingleObject(hfile, 3000);
     ok(ret == WAIT_OBJECT_0, "WaitForSingleObject error %d\n", ret);
     ok(!memcmp(contents, buf, sizeof(contents) - 4), "file contents mismatch\n");
+todo_wine
     ok(!memcmp(buf + sizeof(contents) - 4, "DCBA", 4), "file contents mismatch\n");
 
     off = SetFilePointer(hfile, 0, NULL, FILE_CURRENT);
@@ -2490,9 +2471,13 @@ todo_wine
     bytes = 0;
     SetLastError(0xdeadbeef);
     ret = WriteFile(hfile, "ABCD", 4, &bytes, &ovl);
-    ok(!ret || broken(ret) /* before Vista */, "WriteFile should fail\n");
-    ok(GetLastError() == ERROR_IO_PENDING || broken(GetLastError() == 0xdeadbeef) /* before Vista */, "expected ERROR_IO_PENDING, got %d\n", GetLastError());
-    ok(bytes == 0 || broken(bytes == 4) /* before Vista */, "bytes %u\n", bytes);
+    /* WriteFile return value depends on Windows version and testing it is not practical */
+    if (!ret)
+    {
+        ok(GetLastError() == ERROR_IO_PENDING, "expected ERROR_IO_PENDING, got %d\n", GetLastError());
+        ok(bytes == 0, "bytes %u\n", bytes);
+    }
+    else ok(bytes == 4, "bytes %u\n", bytes);
     ok((NTSTATUS)ovl.Internal == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx\n", ovl.Internal);
     ok(ovl.InternalHigh == 4, "expected 4, got %lu\n", ovl.InternalHigh);
 
@@ -2517,9 +2502,13 @@ todo_wine
     bytes = 0;
     SetLastError(0xdeadbeef);
     ret = ReadFile(hfile, buf, sizeof(buf), &bytes, &ovl);
-    ok(!ret, "ReadFile should fail\n");
-    ok(GetLastError() == ERROR_IO_PENDING, "expected ERROR_IO_PENDING, got %d\n", GetLastError());
-    ok(bytes == 0, "bytes %u\n", bytes);
+    /* ReadFile return value depends on Windows version and testing it is not practical */
+    if (!ret)
+    {
+        ok(GetLastError() == ERROR_IO_PENDING, "expected ERROR_IO_PENDING, got %d\n", GetLastError());
+        ok(bytes == 0, "bytes %u\n", bytes);
+    }
+    else ok(bytes == 14, "bytes %u\n", bytes);
     ok((NTSTATUS)ovl.Internal == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx\n", ovl.Internal);
     ok(ovl.InternalHigh == sizeof(contents), "expected sizeof(contents), got %lu\n", ovl.InternalHigh);
 
