@@ -857,6 +857,7 @@ static void append_file_test(void)
     IO_STATUS_BLOCK iosb;
     LARGE_INTEGER offset;
     char path[MAX_PATH], buffer[MAX_PATH], buf[16];
+    DWORD ret;
 
     GetTempPathA( MAX_PATH, path );
     GetTempFileNameA( path, "foo", 0, buffer );
@@ -866,10 +867,10 @@ static void append_file_test(void)
 
     U(iosb).Status = -1;
     iosb.Information = -1;
-    status = pNtWriteFile(handle, NULL, NULL, NULL, &iosb, text, 3, NULL, NULL);
+    status = pNtWriteFile(handle, NULL, NULL, NULL, &iosb, text, 2, NULL, NULL);
     ok(status == STATUS_SUCCESS, "NtWriteFile error %#x\n", status);
     ok(iosb.Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", iosb.Status);
-    ok(iosb.Information == 3, "expected 3, got %lu\n", iosb.Information);
+    ok(iosb.Information == 2, "expected 2, got %lu\n", iosb.Information);
 
     CloseHandle(handle);
 
@@ -880,14 +881,33 @@ static void append_file_test(void)
 
     U(iosb).Status = -1;
     iosb.Information = -1;
-    offset.QuadPart = 0;
-    status = pNtWriteFile(handle, NULL, NULL, NULL, &iosb, text + 3, 3, &offset, NULL);
+    offset.QuadPart = 1;
+    status = pNtWriteFile(handle, NULL, NULL, NULL, &iosb, text + 2, 2, &offset, NULL);
 todo_wine
     ok(status == STATUS_SUCCESS, "NtWriteFile error %#x\n", status);
 todo_wine
     ok(iosb.Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", iosb.Status);
 todo_wine
-    ok(iosb.Information == 3, "expected 3, got %lu\n", iosb.Information);
+    ok(iosb.Information == 2, "expected 2, got %lu\n", iosb.Information);
+
+    ret = SetFilePointer(handle, 0, NULL, FILE_CURRENT);
+todo_wine
+    ok(ret == 4, "expected 4, got %u\n", ret);
+
+    U(iosb).Status = -1;
+    iosb.Information = -1;
+    offset.QuadPart = 3;
+    status = pNtWriteFile(handle, NULL, NULL, NULL, &iosb, text + 4, 2, &offset, NULL);
+todo_wine
+    ok(status == STATUS_SUCCESS, "NtWriteFile error %#x\n", status);
+todo_wine
+    ok(iosb.Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", iosb.Status);
+todo_wine
+    ok(iosb.Information == 2, "expected 2, got %lu\n", iosb.Information);
+
+    ret = SetFilePointer(handle, 0, NULL, FILE_CURRENT);
+todo_wine
+    ok(ret == 6, "expected 6, got %u\n", ret);
 
     CloseHandle(handle);
 
