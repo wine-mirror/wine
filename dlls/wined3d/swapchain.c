@@ -566,31 +566,6 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain, const RECT
         }
     }
 
-    /* This is disabled, but the code left in for debug purposes.
-     *
-     * Since we're allowed to modify the new back buffer on a D3DSWAPEFFECT_DISCARD flip,
-     * we can clear it with some ugly color to make bad drawing visible and ease debugging.
-     * The Debug runtime does the same on Windows. However, a few games do not redraw the
-     * screen properly, like Max Payne 2, which leaves a few pixels undefined.
-     *
-     * Tests show that the content of the back buffer after a discard flip is indeed not
-     * reliable, so no game can depend on the exact content. However, it resembles the
-     * old contents in some way, for example by showing fragments at other locations. In
-     * general, the color theme is still intact. So Max payne, which draws rather dark scenes
-     * gets a dark background image. If we clear it with a bright ugly color, the game's
-     * bug shows up much more than it does on Windows, and the players see single pixels
-     * with wrong colors.
-     * (The Max Payne bug has been confirmed on Windows with the debug runtime) */
-    if (FALSE && swapchain->desc.swap_effect == WINED3D_SWAP_EFFECT_DISCARD)
-    {
-        static const struct wined3d_color cyan = {0.0f, 1.0f, 1.0f, 1.0f};
-
-        TRACE("Clearing the color buffer with cyan color\n");
-
-        wined3d_device_clear(swapchain->device, 0, NULL,
-                WINED3DCLEAR_TARGET, &cyan, 1.0f, 0);
-    }
-
     if (!swapchain->render_to_fbo && ((swapchain->front_buffer->flags & SFLAG_INSYSMEM)
             || (back_buffer->flags & SFLAG_INSYSMEM)))
     {
