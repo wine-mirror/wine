@@ -564,8 +564,12 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
                 if (routeTable->table[i].dwForwardIfIndex == ptr->Index
                  && routeTable->table[i].u1.ForwardType ==
                  MIB_IPROUTE_TYPE_INDIRECT)
+                {
                   toIPAddressString(routeTable->table[i].dwForwardNextHop,
                    ptr->GatewayList.IpAddress.String);
+                  toIPAddressString(routeTable->table[i].dwForwardMask,
+                   ptr->GatewayList.IpMask.String);
+                }
               if (winsEnabled) {
                 ptr->HaveWins = TRUE;
                 memcpy(ptr->PrimaryWinsServer.IpAddress.String,
