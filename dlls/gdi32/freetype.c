@@ -157,7 +157,6 @@ static void *ft_handle = NULL;
 MAKE_FUNCPTR(FT_Done_Face);
 MAKE_FUNCPTR(FT_Get_Char_Index);
 MAKE_FUNCPTR(FT_Get_First_Char);
-MAKE_FUNCPTR(FT_Get_Module);
 MAKE_FUNCPTR(FT_Get_Next_Char);
 MAKE_FUNCPTR(FT_Get_Sfnt_Name);
 MAKE_FUNCPTR(FT_Get_Sfnt_Name_Count);
@@ -915,14 +914,6 @@ static BOOL is_hinting_enabled(void)
             FT_TrueTypeEngineType type = pFT_Get_TrueType_Engine_Type(library);
             enabled = (type == FT_TRUETYPE_ENGINE_TYPE_PATENTED);
         }
-#ifdef FT_DRIVER_HAS_HINTER
-        else
-        {
-            /* otherwise if we've been compiled with < 2.2.0 headers use the internal macro */
-            FT_Module mod = pFT_Get_Module(library, "truetype");
-            enabled = (mod && FT_DRIVER_HAS_HINTER(mod));
-        }
-#endif
         else enabled = FALSE;
         TRACE("hinting is %senabled\n", enabled ? "" : "NOT ");
     }
@@ -3896,7 +3887,6 @@ static BOOL init_freetype(void)
     LOAD_FUNCPTR(FT_Done_Face)
     LOAD_FUNCPTR(FT_Get_Char_Index)
     LOAD_FUNCPTR(FT_Get_First_Char)
-    LOAD_FUNCPTR(FT_Get_Module)
     LOAD_FUNCPTR(FT_Get_Next_Char)
     LOAD_FUNCPTR(FT_Get_Sfnt_Name)
     LOAD_FUNCPTR(FT_Get_Sfnt_Name_Count)
