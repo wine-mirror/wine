@@ -5065,7 +5065,8 @@ static struct WS_hostent* WS_get_local_ips( char *hostname )
     for (n = 0; n < routes->dwNumEntries; n++)
     {
         IF_INDEX ifindex;
-        DWORD ifmetric, exists = FALSE;
+        DWORD ifmetric;
+        BOOL exists = FALSE;
 
         if (routes->table[n].u1.ForwardType != MIB_IPROUTE_TYPE_DIRECT)
             continue;
