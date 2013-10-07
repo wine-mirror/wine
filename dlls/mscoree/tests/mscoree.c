@@ -390,7 +390,7 @@ static void test_createconfigstream(void)
     DeleteFileW(file);
 }
 
-void test_createinstance(void)
+static void test_createinstance(void)
 {
     HRESULT hr;
     ICLRMetaHost *host;
