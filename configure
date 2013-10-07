@@ -631,8 +631,6 @@ LDAPLIBS
 LIBRT
 LIBPOLL
 LIBDL
-EXTRA_BINARIES
-MAIN_BINARY
 TOOLSEXT
 UNWINDFLAGS
 BUILTINFLAG
@@ -696,7 +694,6 @@ FRAMEWORK_OPENAL
 COREAUDIO
 SECURITYLIB
 DISKARBITRATIONLIB
-LDEXECFLAGS
 APPKITLIB
 CORESERVICESLIB
 APPLICATIONSERVICESLIB
@@ -706,6 +703,7 @@ COREFOUNDATIONLIB
 LIBWINE_RULES
 SOCKETLIBS
 DLLTOOL
+LOADER_RULES
 READELF
 LDD
 LDRPATH_LOCAL
@@ -7182,6 +7180,20 @@ else
 fi
 
 
+wine_binary="wine"
+test "x$enable_win64" != "xyes" || wine_binary="wine64"
+
+LOADER_RULES="
+all: $wine_binary wine-installed
+
+install install-lib:: wine-installed \$(DESTDIR)\$(bindir)
+	\$(INSTALL_PROGRAM) wine-installed \$(DESTDIR)\$(bindir)/$wine_binary
+
+uninstall::
+	\$(RM) \$(DESTDIR)\$(bindir)/$wine_binary
+"
+
+
 case $host_os in
   cygwin*|mingw32*)
     if test -n "$ac_tool_prefix"; then
@@ -7340,13 +7352,9 @@ clean::
 
     APPKITLIB="-framework AppKit"
 
+    LDEXECFLAGS="-image_base 0x7bf00000 -Wl,-segaddr,WINE_DOS,0x00001000,-segaddr,WINE_SHAREDHEAP,0x7f000000,-sectcreate,__TEXT,__info_plist,wine_info.plist"
     case $host_os in
-      darwin11*)
-        LDEXECFLAGS="-image_base 0x7bf00000 -Wl,-macosx_version_min,10.6,-segaddr,WINE_DOS,0x00001000,-segaddr,WINE_SHAREDHEAP,0x7f000000,-sectcreate,__TEXT,__info_plist,wine_info.plist"
- ;;
-      *)
-        LDEXECFLAGS="-image_base 0x7bf00000 -Wl,-segaddr,WINE_DOS,0x00001000,-segaddr,WINE_SHAREDHEAP,0x7f000000,-sectcreate,__TEXT,__info_plist,wine_info.plist"
- ;;
+      darwin11*) LDEXECFLAGS="-Wl,-macosx_version_min,10.6 $LDEXECFLAGS" ;;
     esac
     if test "$ac_cv_header_DiskArbitration_DiskArbitration_h" = "yes"
     then
@@ -7523,12 +7531,24 @@ clean::
 	\$(RM) libwine.dylib libwine.\$(VERSION).dylib libwine.\$(SOVERSION).dylib version.c
 "
 
+
+    as_fn_append LOADER_RULES "
+$wine_binary: main.o Makefile.in wine_info.plist
+	\$(CC) -o \$@ $LDEXECFLAGS main.o \$(LIBWINE) \$(LIBPORT) \$(EXTRALIBS) \$(LDFLAGS) \$(LDRPATH_LOCAL)
+
+wine-installed: main.o Makefile.in wine_info.plist
+	\$(CC) -o \$@ $LDEXECFLAGS main.o \$(LIBWINE) \$(LIBPORT) \$(EXTRALIBS) \$(LDFLAGS) \$(LDRPATH_INSTALL)
+
+wine_info.plist: wine_info.plist.in \$(top_builddir)/include/config.h
+	LC_ALL=C sed -e 's,@PACKAGE_VERSION@,$PACKAGE_VERSION,g' \$(srcdir)/wine_info.plist.in >\$@ || (\$(RM) \$@ && false)
+"
     ;;
 
   linux-android*)
     DLLFLAGS="$DLLFLAGS -fPIC"
     DLLEXT=".so"
     DLLPREFIX="lib"
+    LDEXECFLAGS=""
     dlldir="\${libdir}"
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fPIC -Wl,--export-dynamic" >&5
 $as_echo_n "checking whether the compiler supports -fPIC -Wl,--export-dynamic... " >&6; }
@@ -7554,7 +7574,6 @@ fi
 $as_echo "$ac_cv_cflags__fPIC__Wl___export_dynamic" >&6; }
 if test $ac_cv_cflags__fPIC__Wl___export_dynamic = yes; then :
   LDEXECFLAGS="-Wl,--export-dynamic"
-
 fi
     as_ac_var=`$as_echo "ac_cv_cflags_-fPIC -Wl,--rpath,\\$ORIGIN/../lib" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fPIC -Wl,--rpath,\$ORIGIN/../lib" >&5
@@ -7686,11 +7705,20 @@ clean::
 	\$(RM) libwine.so version.c
 "
 
+
+    as_fn_append LOADER_RULES "
+$wine_binary: main.o Makefile.in
+	\$(CC) -o \$@ $LDEXECFLAGS main.o \$(LIBWINE) \$(LIBPORT) \$(EXTRALIBS) \$(LDFLAGS) \$(LDRPATH_LOCAL)
+
+wine-installed: main.o Makefile.in
+	\$(CC) -o \$@ $LDEXECFLAGS main.o \$(LIBWINE) \$(LIBPORT) \$(EXTRALIBS) \$(LDFLAGS) \$(LDRPATH_INSTALL)
+"
     ;;
 
   *)
     DLLFLAGS="$DLLFLAGS -fPIC"
     DLLEXT=".so"
+    LDEXECFLAGS=""
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we can build a GNU style ELF dll" >&5
 $as_echo_n "checking whether we can build a GNU style ELF dll... " >&6; }
 if ${ac_cv_c_dll_gnuelf+:} false; then :
@@ -7820,7 +7848,6 @@ fi
 $as_echo "$ac_cv_cflags__fPIC__Wl___export_dynamic" >&6; }
 if test $ac_cv_cflags__fPIC__Wl___export_dynamic = yes; then :
   LDEXECFLAGS="-Wl,--export-dynamic"
-
 fi
 
       as_ac_var=`$as_echo "ac_cv_cflags_-fPIC -Wl,--rpath,\\$ORIGIN/../lib" | $as_tr_sh`
@@ -8040,6 +8067,14 @@ clean::
 	\$(RM) libwine.so.\$(SOVERSION) libwine.so.\$(VERSION) version.c
 "
 
+
+    as_fn_append LOADER_RULES "
+$wine_binary: main.o Makefile.in
+	\$(CC) -o \$@ $LDEXECFLAGS main.o \$(LIBWINE) \$(LIBPORT) \$(EXTRALIBS) \$(LDFLAGS) \$(LDRPATH_LOCAL)
+
+wine-installed: main.o Makefile.in
+	\$(CC) -o \$@ $LDEXECFLAGS main.o \$(LIBWINE) \$(LIBPORT) \$(EXTRALIBS) \$(LDFLAGS) \$(LDRPATH_INSTALL)
+"
     ;;
 esac
 
@@ -13972,17 +14007,22 @@ case $build_os in
  ;;
 esac
 
-MAIN_BINARY="wine"
-
-test "x$enable_win64" != "xyes" || MAIN_BINARY="wine64"
-
 case $host_os in
   linux*)
     case $host_cpu in
-      *i[3456789]86*) EXTRA_BINARIES="wine-preloader"
- ;;
-      x86_64*) EXTRA_BINARIES="wine64-preloader"
- ;;
+      *i[3456789]86*|x86_64*)
+        as_fn_append LOADER_RULES "
+all: $wine_binary-preloader
+
+$wine_binary-preloader: preloader.o Makefile.in
+	\$(CC) -o \$@ -static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7c400000 preloader.o \$(LIBPORT) \$(LDFLAGS)
+
+install install-lib:: $wine_binary-preloader \$(DESTDIR)\$(bindir)
+	\$(INSTALL_PROGRAM) $wine_binary-preloader \$(DESTDIR)\$(bindir)/$wine_binary-preloader
+
+uninstall::
+	\$(RM) \$(DESTDIR)\$(bindir)/$wine_binary-preloader
+" ;;
     esac
     ;;
 esac
@@ -17439,7 +17479,7 @@ fi
 
 if test -n "$with_wine64"
 then
-wine_fn_append_rule "all: fonts server tools $with_wine64/loader/wine $with_wine64/loader/wine-preloader
+    wine_fn_append_rule "all: fonts server tools $with_wine64/loader/wine $with_wine64/loader/wine-preloader
 fonts server tools:
 	\$(RM) \$@ && \$(LN_S) $with_wine64/\$@ \$@
 $with_wine64/loader/wine:
@@ -17448,6 +17488,9 @@ $with_wine64/loader/wine-preloader:
 	\$(RM) \$@ && \$(LN_S) $ac_pwd/loader/wine-preloader \$@
 clean::
 	\$(RM) fonts server tools $with_wine64/loader/wine $with_wine64/loader/wine-preloader"
+else
+    as_fn_append LOADER_RULES "
+install install-lib:: install-man-pages"
 fi
 
 $as_echo " done" >&6

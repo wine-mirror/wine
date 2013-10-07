@@ -95,7 +95,6 @@ my @ignores = (
     "*/*/tests/testlist.c",
     "include/config.h",
     "include/stamp-h",
-    "loader/wine_info.plist",
     "msg.pot",
     "po/*.mo",
     "programs/winetest/build.nfo",
