@@ -4984,15 +4984,7 @@ static HRESULT surface_blt_special(struct wined3d_surface *dst_surface, const RE
             fb_copy_to_texture_hwstretch(dst_surface, src_surface, src_rect, dst_rect, filter);
         }
 
-        if (!dst_surface->resource.map_count && !(dst_surface->flags & SFLAG_DONOTFREE))
-        {
-            wined3d_resource_free_sysmem(&dst_surface->resource);
-            dst_surface->resource.allocatedMemory = NULL;
-        }
-        else
-        {
-            dst_surface->flags &= ~SFLAG_INSYSMEM;
-        }
+        surface_evict_sysmem(dst_surface);
 
         return WINED3D_OK;
     }
