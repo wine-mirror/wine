@@ -59,7 +59,7 @@ static struct CLRRuntimeInfo runtimes[NUM_RUNTIMES] = {
     {{&CLRRuntimeInfoVtbl}, net_40_subdir, 4, 0, 30319, 0}
 };
 
-static int runtimes_initialized;
+static BOOL runtimes_initialized = FALSE;
 
 static CRITICAL_SECTION runtime_list_cs;
 static CRITICAL_SECTION_DEBUG runtime_list_cs_debug =
@@ -818,7 +818,7 @@ static void find_runtimes(void)
             runtimes[i].mono_abi_version = -1;
     }
 
-    runtimes_initialized = 1;
+    runtimes_initialized = TRUE;
 
 end:
     LeaveCriticalSection(&runtime_list_cs);
@@ -1335,7 +1335,7 @@ HRESULT get_runtime_info(LPCWSTR exefile, LPCWSTR version, LPCWSTR config_file,
 
     if (config_file)
     {
-        int found=0;
+        BOOL found = FALSE;
         hr = parse_config_file(config_file, &parsed_config);
 
         if (SUCCEEDED(hr))
@@ -1346,7 +1346,7 @@ HRESULT get_runtime_info(LPCWSTR exefile, LPCWSTR version, LPCWSTR config_file,
                 hr = CLRMetaHost_GetRuntime(0, entry->version, &IID_ICLRRuntimeInfo, (void**)result);
                 if (SUCCEEDED(hr))
                 {
-                    found = 1;
+                    found = TRUE;
                     break;
                 }
             }

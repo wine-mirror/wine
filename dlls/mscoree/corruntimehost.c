@@ -60,7 +60,7 @@ static struct list dll_fixups;
 struct dll_fixup
 {
     struct list entry;
-    int done;
+    BOOL done;
     HMODULE dll;
     void *thunk_code; /* pointer into dll_fixup_heap */
     VTableFixup *fixup;
@@ -939,7 +939,7 @@ static void CDECL ReallyFixupVTable(struct dll_fixup *fixup)
             }
         }
 
-        fixup->done = 1;
+        fixup->done = TRUE;
     }
 
     if (info != NULL)
@@ -972,7 +972,7 @@ static void FixupVTableEntry(HMODULE hmodule, VTableFixup *vtable_fixup)
     fixup->thunk_code = HeapAlloc(dll_fixup_heap, 0, sizeof(struct vtable_fixup_thunk) * vtable_fixup->count);
     fixup->fixup = vtable_fixup;
     fixup->vtable = (BYTE*)hmodule + vtable_fixup->rva;
-    fixup->done = 0;
+    fixup->done = FALSE;
 
     if (vtable_fixup->type & COR_VTABLE_32BIT)
     {
