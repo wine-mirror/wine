@@ -6610,7 +6610,7 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
     if (dst_surface->flags & SFLAG_CONVERTED)
     {
         WARN_(d3d_perf)("Converted surface, using CPU blit.\n");
-        return surface_cpu_blt(dst_surface, &dst_rect, src_surface, &src_rect, flags, fx, filter);
+        goto cpu;
     }
 
     if (flags & ~simple_blit)
@@ -6687,7 +6687,7 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
             else if (convert)
                 TRACE("Not doing sysmem blit because of format conversion.\n");
             else
-                return surface_cpu_blt(dst_surface, &dst_rect, src_surface, &src_rect, flags, fx, filter);
+                goto cpu;
         }
 
         if (flags & WINEDDBLT_COLORFILL)
