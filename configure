@@ -16474,23 +16474,23 @@ __uninstall__: $ac_dir/__uninstall__"
 $ac_dir/__uninstall__::
 	\$(RM) \$(DESTDIR)\$(dlldir)/$DLLPREFIX$ac_program$DLLEXT \$(DESTDIR)\$(fakedlldir)/$ac_program"
 
-        if test "x$enable_tools" != xno && wine_fn_has_flag installbin $ac_flags
+        if test -z "$with_wine64" && wine_fn_has_flag installbin $ac_flags
         then
             wine_fn_append_rule \
-"$ac_dir/__install__:: tools \$(DESTDIR)\$(bindir)
-	\$(INSTALL_SCRIPT) tools/wineapploader \$(DESTDIR)\$(bindir)/$ac_name
+"$ac_dir/__install__:: __tooldeps__ \$(DESTDIR)\$(bindir)
+	\$(INSTALL_SCRIPT) \$(TOOLSDIR)/tools/wineapploader \$(DESTDIR)\$(bindir)/$ac_name
 $ac_dir/__uninstall__::
 	\$(RM) \$(DESTDIR)\$(bindir)/$ac_name"
         fi
     else
         wine_fn_append_rule \
-"$ac_dir/__install-lib__:: $ac_dir \$(DESTDIR)\$(dlldir)
-	\$(INSTALL_PROGRAM) $ac_dir/$ac_program \$(DESTDIR)\$(dlldir)/$ac_program
+"$ac_dir/__install__:: $ac_dir \$(DESTDIR)\$(bindir)
+	\$(INSTALL_PROGRAM) $ac_dir/$ac_program \$(DESTDIR)\$(bindir)/$ac_program
 $ac_dir/__uninstall__::
-	\$(RM) \$(DESTDIR)\$(dlldir)/$ac_program"
+	\$(RM) \$(DESTDIR)\$(bindir)/$ac_program"
     fi
 
-    if test "x$enable_tools" != xno && wine_fn_has_flag manpage $ac_flags
+    if test -z "$with_wine64" && wine_fn_has_flag manpage $ac_flags
     then
         wine_fn_append_rule \
 "$ac_dir/__install__:: $ac_dir \$(DESTDIR)\$(mandir)/man\$(prog_manext)
