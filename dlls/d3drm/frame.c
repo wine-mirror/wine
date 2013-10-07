@@ -72,12 +72,13 @@ typedef struct {
     IDirect3DRMVisual **visuals;
 } IDirect3DRMVisualArrayImpl;
 
-typedef struct {
+struct d3drm_light_array
+{
     IDirect3DRMLightArray IDirect3DRMLightArray_iface;
     LONG ref;
     ULONG size;
     IDirect3DRMLight **lights;
-} IDirect3DRMLightArrayImpl;
+};
 
 static inline IDirect3DRMFrameImpl *impl_from_IDirect3DRMFrame2(IDirect3DRMFrame2 *iface)
 {
@@ -91,9 +92,9 @@ static inline IDirect3DRMFrameImpl *impl_from_IDirect3DRMFrame3(IDirect3DRMFrame
 
 static inline IDirect3DRMFrameImpl *unsafe_impl_from_IDirect3DRMFrame3(IDirect3DRMFrame3 *iface);
 
-static inline IDirect3DRMLightArrayImpl *impl_from_IDirect3DRMLightArray(IDirect3DRMLightArray *iface)
+static inline struct d3drm_light_array *impl_from_IDirect3DRMLightArray(IDirect3DRMLightArray *iface)
 {
-    return CONTAINING_RECORD(iface, IDirect3DRMLightArrayImpl, IDirect3DRMLightArray_iface);
+    return CONTAINING_RECORD(iface, struct d3drm_light_array, IDirect3DRMLightArray_iface);
 }
 
 /*** IUnknown methods ***/
@@ -328,122 +329,106 @@ static HRESULT Direct3DRMVisualArray_create(IDirect3DRMVisualArray** ret_iface)
     return S_OK;
 }
 
-/*** IUnknown methods ***/
-static HRESULT WINAPI IDirect3DRMLightArrayImpl_QueryInterface(IDirect3DRMLightArray* iface,
-                                                               REFIID riid, void** object)
+static HRESULT WINAPI d3drm_light_array_QueryInterface(IDirect3DRMLightArray *iface, REFIID riid, void **out)
 {
-    IDirect3DRMLightArrayImpl *This = impl_from_IDirect3DRMLightArray(iface);
+    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
 
-    TRACE("(%p/%p)->(%s, %p)\n", iface, This, debugstr_guid(riid), object);
-
-    *object = NULL;
-
-    if (IsEqualGUID(riid, &IID_IUnknown) ||
-        IsEqualGUID(riid, &IID_IDirect3DRMLightArray))
+    if (IsEqualGUID(riid, &IID_IDirect3DRMLightArray)
+            || IsEqualGUID(riid, &IID_IUnknown))
     {
-        *object = &This->IDirect3DRMLightArray_iface;
-    }
-    else
-    {
-        FIXME("interface %s not implemented\n", debugstr_guid(riid));
-        return E_NOINTERFACE;
+        IDirect3DRMLightArray_AddRef(iface);
+        *out = iface;
+        return S_OK;
     }
 
-    IDirect3DRMLightArray_AddRef(iface);
-    return S_OK;
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+
+    *out = NULL;
+    return E_NOINTERFACE;
 }
 
-static ULONG WINAPI IDirect3DRMLightArrayImpl_AddRef(IDirect3DRMLightArray* iface)
+static ULONG WINAPI d3drm_light_array_AddRef(IDirect3DRMLightArray *iface)
 {
-    IDirect3DRMLightArrayImpl *This = impl_from_IDirect3DRMLightArray(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
+    struct d3drm_light_array *array = impl_from_IDirect3DRMLightArray(iface);
+    ULONG refcount = InterlockedIncrement(&array->ref);
 
-    TRACE("(%p)->(): new ref = %u\n", This, ref);
+    TRACE("%p increasing refcount to %u.\n", iface, refcount);
 
-    return ref;
+    return refcount;
 }
 
-static ULONG WINAPI IDirect3DRMLightArrayImpl_Release(IDirect3DRMLightArray* iface)
+static ULONG WINAPI d3drm_light_array_Release(IDirect3DRMLightArray *iface)
 {
-    IDirect3DRMLightArrayImpl *This = impl_from_IDirect3DRMLightArray(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
+    struct d3drm_light_array *array = impl_from_IDirect3DRMLightArray(iface);
+    ULONG refcount = InterlockedDecrement(&array->ref);
     ULONG i;
 
-    TRACE("(%p)->(): new ref = %u\n", This, ref);
+    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
-    if (!ref)
+    if (!refcount)
     {
-        for (i = 0; i < This->size; i++)
-            IDirect3DRMLight_Release(This->lights[i]);
-        HeapFree(GetProcessHeap(), 0, This->lights);
-        HeapFree(GetProcessHeap(), 0, This);
+        for (i = 0; i < array->size; ++i)
+        {
+            IDirect3DRMLight_Release(array->lights[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, array->lights);
+        HeapFree(GetProcessHeap(), 0, array);
     }
 
-    return ref;
+    return refcount;
 }
 
-/*** IDirect3DRMArray methods ***/
-static DWORD WINAPI IDirect3DRMLightArrayImpl_GetSize(IDirect3DRMLightArray* iface)
+static DWORD WINAPI d3drm_light_array_GetSize(IDirect3DRMLightArray *iface)
 {
-    IDirect3DRMLightArrayImpl *This = impl_from_IDirect3DRMLightArray(iface);
+    struct d3drm_light_array *array = impl_from_IDirect3DRMLightArray(iface);
 
-    TRACE("(%p)->() = %d\n", This,  This->size);
+    TRACE("iface %p.\n", iface);
 
-    return This->size;
+    return array->size;
 }
 
-/*** IDirect3DRMLightArray methods ***/
-static HRESULT WINAPI IDirect3DRMLightArrayImpl_GetElement(IDirect3DRMLightArray *iface,
+static HRESULT WINAPI d3drm_light_array_GetElement(IDirect3DRMLightArray *iface,
         DWORD index, IDirect3DRMLight **light)
 {
-    IDirect3DRMLightArrayImpl *This = impl_from_IDirect3DRMLightArray(iface);
+    struct d3drm_light_array *array = impl_from_IDirect3DRMLightArray(iface);
 
-    TRACE("(%p)->(%u, %p)\n", This, index, light);
+    TRACE("iface %p, index %u, light %p.\n", iface, index, light);
 
     if (!light)
         return D3DRMERR_BADVALUE;
 
-    *light = NULL;
-
-    if (index >= This->size)
+    if (index >= array->size)
+    {
+        *light = NULL;
         return D3DRMERR_BADVALUE;
+    }
 
-    IDirect3DRMLight_AddRef(This->lights[index]);
-    *light = This->lights[index];
+    IDirect3DRMLight_AddRef(array->lights[index]);
+    *light = array->lights[index];
 
     return D3DRM_OK;
 }
 
-static const struct IDirect3DRMLightArrayVtbl Direct3DRMLightArray_Vtbl =
+static const struct IDirect3DRMLightArrayVtbl d3drm_light_array_vtbl =
 {
-    /*** IUnknown methods ***/
-    IDirect3DRMLightArrayImpl_QueryInterface,
-    IDirect3DRMLightArrayImpl_AddRef,
-    IDirect3DRMLightArrayImpl_Release,
-    /*** IDirect3DRMArray methods ***/
-    IDirect3DRMLightArrayImpl_GetSize,
-    /*** IDirect3DRMLightArray methods ***/
-    IDirect3DRMLightArrayImpl_GetElement
+    d3drm_light_array_QueryInterface,
+    d3drm_light_array_AddRef,
+    d3drm_light_array_Release,
+    d3drm_light_array_GetSize,
+    d3drm_light_array_GetElement,
 };
 
-static HRESULT Direct3DRMLightArray_create(IDirect3DRMLightArray** obj)
+static struct d3drm_light_array *d3drm_light_array_create(void)
 {
-    IDirect3DRMLightArrayImpl* object;
+    struct d3drm_light_array *array;
 
-    TRACE("(%p)\n", obj);
+    if (!(array = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*array))))
+        return NULL;
 
-    *obj = NULL;
+    array->IDirect3DRMLightArray_iface.lpVtbl = &d3drm_light_array_vtbl;
+    array->ref = 1;
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DRMLightArrayImpl));
-    if (!object)
-        return E_OUTOFMEMORY;
-
-    object->IDirect3DRMLightArray_iface.lpVtbl = &Direct3DRMLightArray_Vtbl;
-    object->ref = 1;
-
-    *obj = &object->IDirect3DRMLightArray_iface;
-
-    return S_OK;
+    return array;
 }
 
 /*** IUnknown methods ***/
@@ -1678,31 +1663,31 @@ static D3DCOLOR WINAPI IDirect3DRMFrame3Impl_GetColor(IDirect3DRMFrame3* iface)
 
 static HRESULT WINAPI IDirect3DRMFrame3Impl_GetLights(IDirect3DRMFrame3 *iface, IDirect3DRMLightArray **lights)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-    IDirect3DRMLightArrayImpl* obj;
-    HRESULT hr;
+    IDirect3DRMFrameImpl *frame = impl_from_IDirect3DRMFrame3(iface);
+    struct d3drm_light_array *array;
 
-    TRACE("(%p/%p)->(%p)\n", iface, This, lights);
+    TRACE("iface %p, lights %p.\n", iface, lights);
 
     if (!lights)
         return D3DRMERR_BADVALUE;
 
-    hr = Direct3DRMLightArray_create(lights);
+    if (!(array = d3drm_light_array_create()))
+        return E_OUTOFMEMORY;
 
-    if (hr != D3DRM_OK)
-        return hr;
-
-    obj = (IDirect3DRMLightArrayImpl*)*lights;
-
-    obj->size = This->nb_lights;
-    if (This->nb_lights)
+    array->size = frame->nb_lights;
+    if (frame->nb_lights)
     {
         ULONG i;
-        if (!(obj->lights = HeapAlloc(GetProcessHeap(), 0, This->nb_lights * sizeof(*obj->lights))))
+
+        if (!(array->lights = HeapAlloc(GetProcessHeap(), 0, frame->nb_lights * sizeof(*array->lights))))
             return E_OUTOFMEMORY;
-        for (i = 0; i < This->nb_lights; i++)
-            IDirect3DRMLight_QueryInterface(This->lights[i], &IID_IDirect3DRMLight, (void**)&obj->lights[i]);
+        for (i = 0; i < frame->nb_lights; ++i)
+        {
+            IDirect3DRMLight_QueryInterface(frame->lights[i], &IID_IDirect3DRMLight, (void **)&array->lights[i]);
+        }
     }
+
+    *lights = &array->IDirect3DRMLightArray_iface;
 
     return D3DRM_OK;
 }
