@@ -12766,7 +12766,7 @@ static void test_MsiGetPatchInfo(void)
 static void test_MsiEnumProducts(void)
 {
     UINT r;
-    int found1, found2, found3;
+    BOOL found1, found2, found3;
     DWORD index;
     char product1[39], product2[39], product3[39], guid[39];
     char product_squashed1[33], product_squashed2[33], product_squashed3[33];
@@ -12824,12 +12824,12 @@ static void test_MsiEnumProducts(void)
     r = MsiEnumProductsA(index, guid);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
-    found1 = found2 = found3 = 0;
+    found1 = found2 = found3 = FALSE;
     while ((r = MsiEnumProductsA(index, guid)) == ERROR_SUCCESS)
     {
-        if (!strcmp(product1, guid)) found1 = 1;
-        if (!strcmp(product2, guid)) found2 = 1;
-        if (!strcmp(product3, guid)) found3 = 1;
+        if (!strcmp(product1, guid)) found1 = TRUE;
+        if (!strcmp(product2, guid)) found2 = TRUE;
+        if (!strcmp(product3, guid)) found3 = TRUE;
         index++;
     }
     ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %u\n", r);
