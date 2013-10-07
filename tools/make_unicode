@@ -2164,7 +2164,7 @@ dump_mirroring( "dlls/usp10/mirror.c" );
 dump_shaping( "dlls/usp10/shaping.c" );
 dump_linebreak( "dlls/usp10/linebreak.c" );
 dump_indic( "dlls/usp10/indicsyllable.c" );
-dump_intl_nls("tools/l_intl.nls");
+dump_intl_nls("loader/l_intl.nls");
 dump_nameprep( "dlls/kernel32/nameprep.c" );
 
 foreach my $file (@allfiles) { HANDLE_FILE( @{$file} ); }

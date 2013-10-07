@@ -9,6 +9,7 @@ PROGRAMS = \
 	wine \
 	wine-installed \
 	wine-preloader \
+	wine.inf \
 	wine_info.plist \
 	wine64 \
 	wine64-preloader
@@ -22,6 +23,7 @@ EXTRA_MANPAGES = \
 
 INSTALLDIRS = \
 	$(DESTDIR)$(bindir) \
+	$(DESTDIR)$(datadir)/wine \
 	$(DESTDIR)$(mandir)/man$(prog_manext) \
 	$(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext) \
 	$(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext) \

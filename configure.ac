@@ -2619,8 +2619,8 @@ Makefile: Makefile.in Make.vars.in Make.rules config.status
 WINE_CONFIG_SYMLINK(dlls/shell32,,[AUTHORS])
 WINE_CONFIG_SYMLINK(dlls/wineps.drv,dlls/wineps.drv,[generic.ppd])
 WINE_CONFIG_SYMLINK(fonts,fonts,[marlett.ttf,symbol.ttf,tahoma.ttf,tahomabd.ttf],enable_fonts)
+WINE_CONFIG_SYMLINK(loader,loader,[l_intl.nls])
 WINE_CONFIG_SYMLINK(po,po,[LINGUAS])
-WINE_CONFIG_SYMLINK(tools,tools,[l_intl.nls],enable_tools)
 WINE_CONFIG_SYMLINK(,tools,[wine],,winewrapper)
 WINE_CONFIG_SYMLINK(,tools,[wine64],enable_win64,winewrapper)
 
@@ -3467,7 +3467,18 @@ clean::
 	\$(RM) fonts server tools $with_wine64/loader/wine $with_wine64/loader/wine-preloader])
 else
     AS_VAR_APPEND([LOADER_RULES],["
-install install-lib:: install-man-pages"])
+all: wine.inf
+
+wine.inf: wine.inf.in \$(top_builddir)/include/config.h
+	LC_ALL=C sed -e 's,@PACKAGE_STRING@,$PACKAGE_STRING,g' \$(srcdir)/wine.inf.in >\$@ || (\$(RM) \$@ && false)
+
+install install-lib:: wine.inf \$(DESTDIR)\$(datadir)/wine install-man-pages
+	\$(INSTALL_DATA) wine.inf \$(DESTDIR)\$(datadir)/wine/wine.inf
+	\$(INSTALL_DATA) \$(srcdir)/l_intl.nls \$(DESTDIR)\$(datadir)/wine/l_intl.nls
+
+uninstall::
+	\$(RM) \$(DESTDIR)\$(datadir)/wine/wine.inf \$(DESTDIR)\$(datadir)/wine/l_intl.nls
+"])
 fi
 
 AS_ECHO(" done") >&AS_MESSAGE_FD

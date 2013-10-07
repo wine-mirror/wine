@@ -282,6 +282,7 @@ libs/wpp/ppy.tab.h
 loader/wine
 loader/wine-installed
 loader/wine-preloader
+loader/wine.inf
 loader/wine64
 loader/wine64-preloader
 loader/wine_info.plist
@@ -315,7 +316,6 @@ tools/widl/parser.tab.c
 tools/widl/parser.tab.h
 tools/widl/parser.yy.c
 tools/widl/widl
-tools/wine.inf
 tools/wineapploader
 tools/winebuild/winebuild
 tools/winedump/winedump

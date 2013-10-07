@@ -16607,12 +16607,10 @@ ac_config_links="$ac_config_links fonts/tahoma.ttf:fonts/tahoma.ttf"
 ac_config_links="$ac_config_links fonts/tahomabd.ttf:fonts/tahomabd.ttf"
 test "$srcdir" = "." || wine_fn_config_symlink fonts/marlett.ttf fonts/symbol.ttf fonts/tahoma.ttf fonts/tahomabd.ttf
 fi
+ac_config_links="$ac_config_links loader/l_intl.nls:loader/l_intl.nls"
+test "$srcdir" = "." || wine_fn_config_symlink loader/l_intl.nls
 ac_config_links="$ac_config_links po/LINGUAS:po/LINGUAS"
 test "$srcdir" = "." || wine_fn_config_symlink po/LINGUAS
-if test "x$enable_tools" != xno; then
-ac_config_links="$ac_config_links tools/l_intl.nls:tools/l_intl.nls"
-test "$srcdir" = "." || wine_fn_config_symlink tools/l_intl.nls
-fi
 ac_config_links="$ac_config_links wine:tools/winewrapper"
 wine_fn_config_symlink wine
 if test "x$enable_win64" != xno; then
@@ -17490,7 +17488,18 @@ clean::
 	\$(RM) fonts server tools $with_wine64/loader/wine $with_wine64/loader/wine-preloader"
 else
     as_fn_append LOADER_RULES "
-install install-lib:: install-man-pages"
+all: wine.inf
+
+wine.inf: wine.inf.in \$(top_builddir)/include/config.h
+	LC_ALL=C sed -e 's,@PACKAGE_STRING@,$PACKAGE_STRING,g' \$(srcdir)/wine.inf.in >\$@ || (\$(RM) \$@ && false)
+
+install install-lib:: wine.inf \$(DESTDIR)\$(datadir)/wine install-man-pages
+	\$(INSTALL_DATA) wine.inf \$(DESTDIR)\$(datadir)/wine/wine.inf
+	\$(INSTALL_DATA) \$(srcdir)/l_intl.nls \$(DESTDIR)\$(datadir)/wine/l_intl.nls
+
+uninstall::
+	\$(RM) \$(DESTDIR)\$(datadir)/wine/wine.inf \$(DESTDIR)\$(datadir)/wine/l_intl.nls
+"
 fi
 
 $as_echo " done" >&6
@@ -18213,8 +18222,8 @@ do
     "fonts/symbol.ttf") CONFIG_LINKS="$CONFIG_LINKS fonts/symbol.ttf:fonts/symbol.ttf" ;;
     "fonts/tahoma.ttf") CONFIG_LINKS="$CONFIG_LINKS fonts/tahoma.ttf:fonts/tahoma.ttf" ;;
     "fonts/tahomabd.ttf") CONFIG_LINKS="$CONFIG_LINKS fonts/tahomabd.ttf:fonts/tahomabd.ttf" ;;
+    "loader/l_intl.nls") CONFIG_LINKS="$CONFIG_LINKS loader/l_intl.nls:loader/l_intl.nls" ;;
     "po/LINGUAS") CONFIG_LINKS="$CONFIG_LINKS po/LINGUAS:po/LINGUAS" ;;
-    "tools/l_intl.nls") CONFIG_LINKS="$CONFIG_LINKS tools/l_intl.nls:tools/l_intl.nls" ;;
     "wine") CONFIG_LINKS="$CONFIG_LINKS wine:tools/winewrapper" ;;
     "wine64") CONFIG_LINKS="$CONFIG_LINKS wine64:tools/winewrapper" ;;
     "dlls/gdi32/dibdrv") CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/gdi32/dibdrv" ;;

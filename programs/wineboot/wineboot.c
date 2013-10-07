@@ -108,10 +108,10 @@ static char *get_wine_inf_path(void)
     }
     else if ((build_dir = wine_get_build_dir()))
     {
-        if (!(name = HeapAlloc( GetProcessHeap(), 0, strlen(build_dir) + sizeof("/tools/wine.inf") )))
+        if (!(name = HeapAlloc( GetProcessHeap(), 0, strlen(build_dir) + sizeof("/loader/wine.inf") )))
             return NULL;
         strcpy( name, build_dir );
-        strcat( name, "/tools/wine.inf" );
+        strcat( name, "/loader/wine.inf" );
     }
     return name;
 }
