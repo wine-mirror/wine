@@ -1113,12 +1113,15 @@ static BOOL handle_method(struct parsed_symbol* sym, BOOL cast_op)
      * "$4" public: thunk vtordisp
      * "$5" public: thunk vtordisp
      * "$B" vcall thunk
+     * "$R" thunk vtordispex
      */
     accmem = *sym->current++;
     if (accmem == '$')
     {
         if (*sym->current >= '0' && *sym->current <= '5')
             access_id = (*sym->current - '0') / 2;
+        else if (*sym->current == 'R')
+            access_id = (sym->current[1] - '0') / 2;
         else if (*sym->current != 'B')
             goto done;
     }
@@ -1136,7 +1139,7 @@ static BOOL handle_method(struct parsed_symbol* sym, BOOL cast_op)
     if (accmem == '$' || (accmem - 'A') % 8 == 6 || (accmem - 'A') % 8 == 7)
         access = str_printf(sym, "[thunk]:%s", access ? access : " ");
 
-    if (accmem == '$' && *sym->current >= '0' && *sym->current <= '5')
+    if (accmem == '$' && *sym->current != 'B')
         member_type = "virtual ";
     else if (accmem <= 'X')
     {
@@ -1154,19 +1157,38 @@ static BOOL handle_method(struct parsed_symbol* sym, BOOL cast_op)
 
     name = get_class_string(sym, 0);
 
-    if (accmem == '$' && *sym->current++ == 'B') /* vcall thunk */
+    if (accmem == '$' && *sym->current == 'B') /* vcall thunk */
     {
-        const char *n = get_number(sym);
+        const char *n;
+
+        sym->current++;
+        n = get_number(sym);
 
         if(!n || *sym->current++ != 'A') goto done;
         name = str_printf(sym, "%s{%s,{flat}}' }'", name, n);
         has_args = FALSE;
         has_ret = FALSE;
     }
+    else if (accmem == '$' && *sym->current == 'R') /* vtordispex thunk */
+    {
+        const char *n1, *n2, *n3, *n4;
+
+        sym->current += 2;
+        n1 = get_number(sym);
+        n2 = get_number(sym);
+        n3 = get_number(sym);
+        n4 = get_number(sym);
+
+        if(!n1 || !n2 || !n3 || !n4) goto done;
+        name = str_printf(sym, "%s`vtordispex{%s,%s,%s,%s}' ", name, n1, n2, n3, n4);
+    }
     else if (accmem == '$') /* vtordisp thunk */
     {
-        const char *n1 = get_number(sym);
-        const char *n2 = get_number(sym);
+        const char *n1, *n2;
+
+        sym->current++;
+        n1 = get_number(sym);
+        n2 = get_number(sym);
 
         if (!n1 || !n2) goto done;
         name = str_printf(sym, "%s`vtordisp{%s,%s}' ", name, n1, n2);

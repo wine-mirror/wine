@@ -1315,6 +1315,9 @@ static void test_demangle(void)
 /* 124 */ {"??_9CView@@$BBII@AE",
            "[thunk]: __thiscall CView::`vcall'{392,{flat}}' }'",
            "[thunk]: __thiscall CView::`vcall'{392,{flat}}' "},
+/* 125 */ {"?_dispatch@_impl_Engine@SalomeApp@@$R4CE@BA@PPPPPPPM@7AE_NAAVomniCallHandle@@@Z",
+           "[thunk]:public: virtual bool __thiscall SalomeApp::_impl_Engine::_dispatch`vtordispex{36,16,4294967292,8}' (class omniCallHandle &)",
+           "?_dispatch@_impl_Engine@SalomeApp@@$R4CE@BA@PPPPPPPM@7AE_NAAVomniCallHandle@@@Z"},
     };
     int i, num_test = (sizeof(test)/sizeof(test[0]));
     char* name;
