@@ -3476,7 +3476,7 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
 
     ++surface->resource.map_count;
 
-    if (!(surface->flags & SFLAG_LOCKABLE))
+    if (!(surface->resource.access_flags & WINED3D_RESOURCE_ACCESS_CPU))
         WARN("Trying to lock unlockable surface.\n");
 
     /* Performance optimization: Count how often a surface is mapped, if it is
@@ -6876,7 +6876,8 @@ static HRESULT surface_init(struct wined3d_surface *surface, UINT alignment, UIN
     if (flags & WINED3D_SURFACE_PIN_SYSMEM)
         surface->flags |= SFLAG_PIN_SYSMEM;
     if (lockable || format_id == WINED3DFMT_D16_LOCKABLE)
-        surface->flags |= SFLAG_LOCKABLE;
+        surface->resource.access_flags |= WINED3D_RESOURCE_ACCESS_CPU;
+
     /* I'm not sure if this qualifies as a hack or as an optimization. It
      * seems reasonable to assume that lockable render targets will get
      * locked, so we might as well set SFLAG_DYNLOCK right at surface
