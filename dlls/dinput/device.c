@@ -575,7 +575,7 @@ static DWORD semantic_to_obj_id(IDirectInputDeviceImpl* This, DWORD dwSemantic)
     DWORD type = (0x0000ff00 & dwSemantic) >> 8;
     DWORD offset = 0x000000ff & dwSemantic;
     DWORD obj_instance = 0;
-    DWORD found = 0;
+    BOOL found = FALSE;
     int i;
 
     for (i = 0; i < This->data_format.wine_df->dwNumObjs; i++)
@@ -585,7 +585,7 @@ static DWORD semantic_to_obj_id(IDirectInputDeviceImpl* This, DWORD dwSemantic)
         if (odf->dwOfs == offset)
         {
             obj_instance = DIDFT_GETINSTANCE(odf->dwType);
-            found = 1;
+            found = TRUE;
             break;
         }
     }
