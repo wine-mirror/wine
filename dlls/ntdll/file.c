@@ -952,7 +952,8 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
     ULONG total = 0;
     enum server_fd_type type;
     ULONG_PTR cvalue = apc ? 0 : (ULONG_PTR)apc_user;
-    BOOL send_completion = FALSE, async_write;
+    BOOL send_completion = FALSE, async_write, append_write = FALSE;
+    LARGE_INTEGER offset_eof;
 
     TRACE("(%p,%p,%p,%p,%p,%p,0x%08x,%p,%p)!\n",
           hFile,hEvent,apc,apc_user,io_status,buffer,length,offset,key);
@@ -961,6 +962,12 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
 
     status = server_get_unix_fd( hFile, FILE_WRITE_DATA, &unix_handle,
                                  &needs_close, &type, &options );
+    if (status == STATUS_ACCESS_DENIED)
+    {
+        status = server_get_unix_fd( hFile, FILE_APPEND_DATA, &unix_handle,
+                                     &needs_close, &type, &options );
+        append_write = TRUE;
+    }
     if (status) return status;
 
     if (!virtual_check_buffer_for_read( buffer, length ))
@@ -977,6 +984,12 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
         {
             status = STATUS_INVALID_PARAMETER;
             goto done;
+        }
+
+        if (append_write)
+        {
+            offset_eof.QuadPart = (LONGLONG)-1; /* FILE_WRITE_TO_END_OF_FILE */
+            offset = &offset_eof;
         }
 
         if (offset && offset->QuadPart != (LONGLONG)-2 /* FILE_USE_FILE_POINTER_POSITION */)

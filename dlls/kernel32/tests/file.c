@@ -3986,17 +3986,6 @@ todo_wine
         }
         else
         {
-            /* FIXME: remove once Wine is fixed */
-            if (!ret && (td[i].access & FILE_APPEND_DATA))
-            {
-todo_wine
-                ok(ret, "%d: WriteFile error %d\n", i, GetLastError());
-todo_wine
-                ok(bytes == 2, "%d: expected 2, got %u\n", i, bytes);
-                CloseHandle(hfile);
-                continue;
-            }
-
             ok(ret, "%d: WriteFile error %d\n", i, GetLastError());
             ok(bytes == 2, "%d: expected 2, got %u\n", i, bytes);
         }

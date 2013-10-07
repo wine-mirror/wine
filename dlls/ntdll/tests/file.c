@@ -883,30 +883,22 @@ static void append_file_test(void)
     iosb.Information = -1;
     offset.QuadPart = 1;
     status = pNtWriteFile(handle, NULL, NULL, NULL, &iosb, text + 2, 2, &offset, NULL);
-todo_wine
     ok(status == STATUS_SUCCESS, "NtWriteFile error %#x\n", status);
-todo_wine
     ok(iosb.Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", iosb.Status);
-todo_wine
     ok(iosb.Information == 2, "expected 2, got %lu\n", iosb.Information);
 
     ret = SetFilePointer(handle, 0, NULL, FILE_CURRENT);
-todo_wine
     ok(ret == 4, "expected 4, got %u\n", ret);
 
     U(iosb).Status = -1;
     iosb.Information = -1;
     offset.QuadPart = 3;
     status = pNtWriteFile(handle, NULL, NULL, NULL, &iosb, text + 4, 2, &offset, NULL);
-todo_wine
     ok(status == STATUS_SUCCESS, "NtWriteFile error %#x\n", status);
-todo_wine
     ok(iosb.Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", iosb.Status);
-todo_wine
     ok(iosb.Information == 2, "expected 2, got %lu\n", iosb.Information);
 
     ret = SetFilePointer(handle, 0, NULL, FILE_CURRENT);
-todo_wine
     ok(ret == 6, "expected 6, got %u\n", ret);
 
     CloseHandle(handle);
@@ -921,10 +913,8 @@ todo_wine
     status = pNtReadFile(handle, 0, NULL, NULL, &iosb, buf, sizeof(buf), &offset, NULL);
     ok(status == STATUS_SUCCESS, "NtReadFile error %#x\n", status);
     ok(iosb.Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", iosb.Status);
-todo_wine
     ok(iosb.Information == 6, "expected 6, got %lu\n", iosb.Information);
     buf[6] = 0;
-todo_wine
     ok(memcmp(buf, text, 6) == 0, "wrong file contents: %s\n", buf);
 
     U(iosb).Status = -1;
@@ -942,10 +932,8 @@ todo_wine
     status = pNtReadFile(handle, 0, NULL, NULL, &iosb, buf, sizeof(buf), &offset, NULL);
     ok(status == STATUS_SUCCESS, "NtReadFile error %#x\n", status);
     ok(iosb.Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", iosb.Status);
-todo_wine
     ok(iosb.Information == 6, "expected 6, got %lu\n", iosb.Information);
     buf[6] = 0;
-todo_wine
     ok(memcmp(buf, "barbar", 6) == 0, "wrong file contents: %s\n", buf);
 
     CloseHandle(handle);
