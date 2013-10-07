@@ -1219,23 +1219,6 @@ done:
     return ret;
 }
 
-/******************************************************************
- *             handle_template
- * Does the final parsing and handling for a name with templates
- */
-static BOOL handle_template(struct parsed_symbol* sym)
-{
-    const char* name;
-    const char* args;
-
-    assert(*sym->current == '$');
-    sym->current++;
-    if (!(name = get_literal_string(sym))) return FALSE;
-    if (!(args = get_args(sym, NULL, FALSE, '<', '>'))) return FALSE;
-    sym->result = str_printf(sym, "%s%s", name, args);
-    return TRUE;
-}
-
 /*******************************************************************
  *         symbol_demangle
  * Demangle a C++ linker symbol
@@ -1469,8 +1452,6 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
     /* Function/Data type and access level */
     if (*sym->current >= '0' && *sym->current <= '9')
         ret = handle_data(sym);
-    else if (sym->current[0] == '$' && (sym->current[1] < '0' || sym->current[1] > '9'))
-        ret = handle_template(sym);
     else if ((*sym->current >= 'A' && *sym->current <= 'Z') || *sym->current == '$')
         ret = handle_method(sym, do_after == 3);
     else ret = FALSE;
