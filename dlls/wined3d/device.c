@@ -3074,7 +3074,7 @@ void CDECL wined3d_device_set_texture_stage_state(struct wined3d_device *device,
         return;
     }
 
-    device_invalidate_state(device, STATE_TEXTURESTAGE(stage, state));
+    wined3d_cs_emit_set_texture_state(device->cs, stage, state, value);
 }
 
 DWORD CDECL wined3d_device_get_texture_stage_state(const struct wined3d_device *device,

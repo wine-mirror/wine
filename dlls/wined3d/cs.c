@@ -42,6 +42,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_GEOMETRY_SHADER,
     WINED3D_CS_OP_SET_PIXEL_SHADER,
     WINED3D_CS_OP_SET_RENDER_STATE,
+    WINED3D_CS_OP_SET_TEXTURE_STATE,
 };
 
 struct wined3d_cs_present
@@ -148,6 +149,14 @@ struct wined3d_cs_set_render_state
 {
     enum wined3d_cs_op opcode;
     enum wined3d_render_state state;
+    DWORD value;
+};
+
+struct wined3d_cs_set_texture_state
+{
+    enum wined3d_cs_op opcode;
+    UINT stage;
+    enum wined3d_texture_stage_state state;
     DWORD value;
 };
 
@@ -599,6 +608,28 @@ void wined3d_cs_emit_set_render_state(struct wined3d_cs *cs, enum wined3d_render
     cs->ops->submit(cs);
 }
 
+static void wined3d_cs_exec_set_texture_state(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_set_texture_state *op = data;
+
+    cs->state.texture_states[op->stage][op->state] = op->value;
+    device_invalidate_state(cs->device, STATE_TEXTURESTAGE(op->stage, op->state));
+}
+
+void wined3d_cs_emit_set_texture_state(struct wined3d_cs *cs, UINT stage,
+        enum wined3d_texture_stage_state state, DWORD value)
+{
+    struct wined3d_cs_set_texture_state *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_SET_TEXTURE_STATE;
+    op->stage = stage;
+    op->state = state;
+    op->value = value;
+
+    cs->ops->submit(cs);
+}
+
 static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
 {
     /* WINED3D_CS_OP_PRESENT                */ wined3d_cs_exec_present,
@@ -617,6 +648,7 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_GEOMETRY_SHADER    */ wined3d_cs_exec_set_geometry_shader,
     /* WINED3D_CS_OP_SET_PIXEL_SHADER       */ wined3d_cs_exec_set_pixel_shader,
     /* WINED3D_CS_OP_SET_RENDER_STATE       */ wined3d_cs_exec_set_render_state,
+    /* WINED3D_CS_OP_SET_TEXTURE_STATE      */ wined3d_cs_exec_set_texture_state,
 };
 
 static void *wined3d_cs_st_require_space(struct wined3d_cs *cs, size_t size)
