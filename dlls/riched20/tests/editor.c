@@ -1637,27 +1637,27 @@ static void test_EM_SETOPTIONS(void)
     DestroyWindow(hwndRichEdit);
 }
 
-static int check_CFE_LINK_selection(HWND hwnd, int sel_start, int sel_end)
+static BOOL check_CFE_LINK_selection(HWND hwnd, int sel_start, int sel_end)
 {
   CHARFORMAT2W text_format;
   text_format.cbSize = sizeof(text_format);
   SendMessage(hwnd, EM_SETSEL, sel_start, sel_end);
   SendMessage(hwnd, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM) &text_format);
-  return (text_format.dwEffects & CFE_LINK) ? 1 : 0;
+  return (text_format.dwEffects & CFE_LINK) != 0;
 }
 
-static void check_CFE_LINK_rcvd(HWND hwnd, int is_url, const char * url)
+static void check_CFE_LINK_rcvd(HWND hwnd, BOOL is_url, const char * url)
 {
-  int link_present = 0;
+  BOOL link_present = FALSE;
 
   link_present = check_CFE_LINK_selection(hwnd, 0, 1);
   if (is_url) 
   { /* control text is url; should get CFE_LINK */
-	ok(0 != link_present, "URL Case: CFE_LINK not set for [%s].\n", url);
+    ok(link_present, "URL Case: CFE_LINK not set for [%s].\n", url);
   }
   else 
   {
-    ok(0 == link_present, "Non-URL Case: CFE_LINK set for [%s].\n", url);
+    ok(!link_present, "Non-URL Case: CFE_LINK set for [%s].\n", url);
   }
 }
 
@@ -1672,20 +1672,20 @@ static void test_EM_AUTOURLDETECT(void)
      one non-URL and one URL */
   struct urls_s {
     const char *text;
-    int is_url;
+    BOOL is_url;
   } urls[12] = {
-    {"winehq.org", 0},
-    {"http://www.winehq.org", 1},
-    {"http//winehq.org", 0},
-    {"ww.winehq.org", 0},
-    {"www.winehq.org", 1},
-    {"ftp://192.168.1.1", 1},
-    {"ftp//192.168.1.1", 0},
-    {"mailto:your@email.com", 1},    
-    {"prospero:prosperoserver", 1},
-    {"telnet:test", 1},
-    {"news:newserver", 1},
-    {"wais:waisserver", 1}  
+    {"winehq.org", FALSE},
+    {"http://www.winehq.org", TRUE},
+    {"http//winehq.org", FALSE},
+    {"ww.winehq.org", FALSE},
+    {"www.winehq.org", TRUE},
+    {"ftp://192.168.1.1", TRUE},
+    {"ftp//192.168.1.1", FALSE},
+    {"mailto:your@email.com", TRUE},
+    {"prospero:prosperoserver", TRUE},
+    {"telnet:test", TRUE},
+    {"news:newserver", TRUE},
+    {"wais:waisserver", TRUE}
   };
 
   int i, j;
@@ -1769,7 +1769,7 @@ static void test_EM_AUTOURLDETECT(void)
 
     SendMessage(hwndRichEdit, EM_AUTOURLDETECT, FALSE, 0);
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) urls[i].text);
-    check_CFE_LINK_rcvd(hwndRichEdit, 0, urls[i].text);
+    check_CFE_LINK_rcvd(hwndRichEdit, FALSE, urls[i].text);
 
     /* Link detection should happen immediately upon WM_SETTEXT */
     SendMessage(hwndRichEdit, EM_AUTOURLDETECT, TRUE, 0);
