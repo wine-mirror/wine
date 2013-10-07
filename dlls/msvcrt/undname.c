@@ -1067,6 +1067,7 @@ static BOOL handle_method(struct parsed_symbol* sym, BOOL cast_op)
 {
     char                accmem;
     const char*         access = NULL;
+    int                 access_id = -1;
     const char*         member_type = NULL;
     struct datatype_t   ct_ret;
     const char*         call_conv;
@@ -1074,7 +1075,7 @@ static BOOL handle_method(struct parsed_symbol* sym, BOOL cast_op)
     const char*         exported;
     const char*         args_str = NULL;
     const char*         name = NULL;
-    BOOL                ret = FALSE;
+    BOOL                ret = FALSE, has_args = TRUE, has_ret = TRUE;
     unsigned            mark;
     struct array        array_pmt;
 
@@ -1111,48 +1112,58 @@ static BOOL handle_method(struct parsed_symbol* sym, BOOL cast_op)
      * "$3" protected: thunk vtordisp
      * "$4" public: thunk vtordisp
      * "$5" public: thunk vtordisp
+     * "$B" vcall thunk
      */
     accmem = *sym->current++;
     if (accmem == '$')
     {
-        accmem = *sym->current++;
-        if (accmem < '0' || accmem > '5') goto done;
+        if (*sym->current >= '0' && *sym->current <= '5')
+            access_id = (*sym->current - '0') / 2;
+        else if (*sym->current != 'B')
+            goto done;
     }
-    else if (accmem < 'A' || accmem > 'Z') goto done;
+    else if (accmem >= 'A' && accmem <= 'Z')
+        access_id = (accmem - 'A') / 8;
+    else
+        goto done;
 
-    if (!(sym->flags & UNDNAME_NO_ACCESS_SPECIFIERS))
+    switch (access_id)
     {
-        switch (accmem >= '0' && accmem <= '5' ? (accmem - '0') / 2 : (accmem - 'A') / 8)
+    case 0: access = "private: "; break;
+    case 1: access = "protected: "; break;
+    case 2: access = "public: "; break;
+    }
+    if (accmem == '$' || (accmem - 'A') % 8 == 6 || (accmem - 'A') % 8 == 7)
+        access = str_printf(sym, "[thunk]:%s", access ? access : " ");
+
+    if (accmem == '$' && *sym->current >= '0' && *sym->current <= '5')
+        member_type = "virtual ";
+    else if (accmem <= 'X')
+    {
+        switch ((accmem - 'A') % 8)
         {
-        case 0: access = "private: "; break;
-        case 1: access = "protected: "; break;
-        case 2: access = "public: "; break;
+        case 2: case 3: member_type = "static "; break;
+        case 4: case 5: case 6: case 7: member_type = "virtual "; break;
         }
     }
-    if (!(sym->flags & UNDNAME_NO_MEMBER_TYPE))
-    {
-        if (accmem >= '0' && accmem <= '5')
-        {
-            access = str_printf(sym, "[thunk]:%s", access);
-            member_type = "virtual ";
-        }
-        else if (accmem <= 'X')
-        {
-            switch ((accmem - 'A') % 8)
-            {
-            case 2: case 3: member_type = "static "; break;
-            case 4: case 5: member_type = "virtual "; break;
-            case 6: case 7:
-                access = str_printf(sym, "[thunk]:%s", access);
-                member_type = "virtual ";
-                break;
-            }
-        }
-    }
+
+    if (sym->flags & UNDNAME_NO_ACCESS_SPECIFIERS)
+        access = NULL;
+    if (sym->flags & UNDNAME_NO_MEMBER_TYPE)
+        member_type = NULL;
 
     name = get_class_string(sym, 0);
 
-    if (accmem >= '0' && accmem <='5') /* vtordisp thunk */
+    if (accmem == '$' && *sym->current++ == 'B') /* vcall thunk */
+    {
+        const char *n = get_number(sym);
+
+        if(!n || *sym->current++ != 'A') goto done;
+        name = str_printf(sym, "%s{%s,{flat}}' }'", name, n);
+        has_args = FALSE;
+        has_ret = FALSE;
+    }
+    else if (accmem == '$') /* vtordisp thunk */
     {
         const char *n1 = get_number(sym);
         const char *n2 = get_number(sym);
@@ -1163,16 +1174,14 @@ static BOOL handle_method(struct parsed_symbol* sym, BOOL cast_op)
     else if ((accmem - 'A') % 8 == 6 || (accmem - 'A') % 8 == 7) /* a thunk */
         name = str_printf(sym, "%s`adjustor{%s}' ", name, get_number(sym));
 
-    if (accmem <= 'X')
+    if (has_args && (accmem == '$' ||
+                (accmem <= 'X' && (accmem - 'A') % 8 != 2 && (accmem - 'A') % 8 != 3)))
     {
-        if (((accmem - 'A') % 8) != 2 && ((accmem - 'A') % 8) != 3)
-        {
-            const char *ptr_modif;
-            /* Implicit 'this' pointer */
-            /* If there is an implicit this pointer, const modifier follows */
-            if (!get_modifier(sym, &modifier, &ptr_modif)) goto done;
-            if (modifier || ptr_modif) modifier = str_printf(sym, "%s %s", modifier, ptr_modif);
-        }
+        const char *ptr_modif;
+        /* Implicit 'this' pointer */
+        /* If there is an implicit this pointer, const modifier follows */
+        if (!get_modifier(sym, &modifier, &ptr_modif)) goto done;
+        if (modifier || ptr_modif) modifier = str_printf(sym, "%s %s", modifier, ptr_modif);
     }
 
     if (!get_calling_convention(*sym->current++, &call_conv, &exported,
@@ -1182,18 +1191,18 @@ static BOOL handle_method(struct parsed_symbol* sym, BOOL cast_op)
     str_array_init(&array_pmt);
 
     /* Return type, or @ if 'void' */
-    if (*sym->current == '@')
+    if (has_ret && *sym->current == '@')
     {
         ct_ret.left = "void";
         ct_ret.right = NULL;
         sym->current++;
     }
-    else
+    else if (has_ret)
     {
         if (!demangle_datatype(sym, &ct_ret, &array_pmt, FALSE))
             goto done;
     }
-    if (sym->flags & UNDNAME_NO_FUNCTION_RETURNS)
+    if (!has_ret || sym->flags & UNDNAME_NO_FUNCTION_RETURNS)
         ct_ret.left = ct_ret.right = NULL;
     if (cast_op)
     {
@@ -1202,7 +1211,7 @@ static BOOL handle_method(struct parsed_symbol* sym, BOOL cast_op)
     }
 
     mark = sym->stack.num;
-    if (!(args_str = get_args(sym, &array_pmt, TRUE, '(', ')'))) goto done;
+    if (has_args && !(args_str = get_args(sym, &array_pmt, TRUE, '(', ')'))) goto done;
     if (sym->flags & UNDNAME_NAME_ONLY) args_str = modifier = NULL;
     sym->stack.num = mark;
 
@@ -1210,7 +1219,7 @@ static BOOL handle_method(struct parsed_symbol* sym, BOOL cast_op)
      * Yet!!! FIXME
      */
     sym->result = str_printf(sym, "%s%s%s%s%s%s%s%s%s%s%s",
-                             access, member_type, ct_ret.left, 
+                             access, member_type, ct_ret.left,
                              (ct_ret.left && !ct_ret.right) ? " " : NULL,
                              call_conv, call_conv ? " " : NULL, exported,
                              name, args_str, modifier, ct_ret.right);
