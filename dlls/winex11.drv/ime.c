@@ -124,11 +124,11 @@ static BOOL UnlockRealIMC(HIMC hIMC)
 
 static void IME_RegisterClasses(void)
 {
-    static int done;
+    static BOOL done = FALSE;
     WNDCLASSW wndClass;
 
     if (done) return;
-    done = 1;
+    done = TRUE;
 
     ZeroMemory(&wndClass, sizeof(WNDCLASSW));
     wndClass.style = CS_GLOBALCLASS | CS_IME | CS_HREDRAW | CS_VREDRAW;
