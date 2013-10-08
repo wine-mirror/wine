@@ -1382,7 +1382,8 @@ static void test_ip_pktinfo(void)
     struct sockaddr_in s1addr, s2addr, s3addr;
     GUID WSARecvMsg_GUID = WSAID_WSARECVMSG;
     LPFN_WSARECVMSG pWSARecvMsg = NULL;
-    unsigned int rc, foundhdr, yes = 1;
+    unsigned int rc, yes = 1;
+    BOOL foundhdr;
     DWORD dwBytes, dwSize, dwFlags;
     socklen_t addrlen;
     WSACMSGHDR *cmsg;
@@ -3836,7 +3837,7 @@ static void test_ioctlsocket(void)
     closesocket(sock);
 }
 
-static int drain_pause=0;
+static BOOL drain_pause = FALSE;
 static DWORD WINAPI drain_socket_thread(LPVOID arg)
 {
     char buffer[1024];
@@ -4664,12 +4665,12 @@ static void test_events(int useMessages)
      * take some of it, and we will get a short write. This will trigger
      * another FD_WRITE event as soon as data is sent and more space becomes
      * available, but not any earlier. */
-    drain_pause=1;
+    drain_pause = TRUE;
     do
     {
         ret = send(src, buffer, bufferSize, 0);
     } while (ret == bufferSize);
-    drain_pause=0;
+    drain_pause = FALSE;
     if (ret >= 0 || WSAGetLastError() == WSAEWOULDBLOCK)
     {
         Sleep(400); /* win9x */
