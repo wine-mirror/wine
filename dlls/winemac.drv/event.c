@@ -48,6 +48,7 @@ static const char *dbgstr_event(int type)
         "RELEASE_CAPTURE",
         "STATUS_ITEM_MOUSE_BUTTON",
         "STATUS_ITEM_MOUSE_MOVE",
+        "WINDOW_BROUGHT_FORWARD",
         "WINDOW_CLOSE_REQUESTED",
         "WINDOW_DID_UNMINIMIZE",
         "WINDOW_FRAME_CHANGED",
@@ -111,6 +112,7 @@ static macdrv_event_mask get_event_mask(DWORD mask)
     {
         event_mask |= event_mask_for_type(QUERY_EVENT);
         event_mask |= event_mask_for_type(RELEASE_CAPTURE);
+        event_mask |= event_mask_for_type(WINDOW_BROUGHT_FORWARD);
         event_mask |= event_mask_for_type(WINDOW_MINIMIZE_REQUESTED);
     }
 
@@ -233,6 +235,9 @@ void macdrv_handle_event(const macdrv_event *event)
         break;
     case STATUS_ITEM_MOUSE_MOVE:
         macdrv_status_item_mouse_move(event);
+        break;
+    case WINDOW_BROUGHT_FORWARD:
+        macdrv_window_brought_forward(hwnd);
         break;
     case WINDOW_CLOSE_REQUESTED:
         macdrv_window_close_requested(hwnd);

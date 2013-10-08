@@ -73,5 +73,8 @@
     - (void) updateFullscreen;
 
     - (void) postKeyEvent:(NSEvent *)theEvent;
+    - (void) postBroughtForwardEvent;
+
+    - (WineWindow*) ancestorWineWindow;
 
 @end

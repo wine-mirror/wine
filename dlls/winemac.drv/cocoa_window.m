@@ -1268,6 +1268,27 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         }
     }
 
+    - (WineWindow*) ancestorWineWindow
+    {
+        WineWindow* ancestor = self;
+        for (;;)
+        {
+            WineWindow* parent = (WineWindow*)[ancestor parentWindow];
+            if ([parent isKindOfClass:[WineWindow class]])
+                ancestor = parent;
+            else
+                break;
+        }
+        return ancestor;
+    }
+
+    - (void) postBroughtForwardEvent
+    {
+        macdrv_event* event = macdrv_create_event(WINDOW_BROUGHT_FORWARD, self);
+        [queue postEvent:event];
+        macdrv_release_event(event);
+    }
+
 
     /*
      * ---------- NSWindow method overrides ----------
@@ -1313,12 +1334,13 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
     /* We don't call this.  It's the action method of the items in the Window menu. */
     - (void) makeKeyAndOrderFront:(id)sender
     {
-        if (![self isKeyWindow] && !self.disabled && !self.noActivate)
-            [[WineApplicationController sharedController] windowGotFocus:self];
-
         if ([self isMiniaturized])
             [self deminiaturize:nil];
         [self orderBelow:nil orAbove:nil activate:NO];
+        [[self ancestorWineWindow] postBroughtForwardEvent];
+
+        if (![self isKeyWindow] && !self.disabled && !self.noActivate)
+            [[WineApplicationController sharedController] windowGotFocus:self];
     }
 
     - (void) sendEvent:(NSEvent*)event
@@ -1479,6 +1501,9 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         if (fullscreen && [self isOnActiveSpace])
             [controller updateFullscreenWindows];
         [controller adjustWindowLevels];
+
+        if (![self parentWindow])
+            [self postBroughtForwardEvent];
 
         if (!self.disabled && !self.noActivate)
         {
