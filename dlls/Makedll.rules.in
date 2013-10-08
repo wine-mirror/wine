@@ -19,19 +19,3 @@ all: $(MODULE)$(DLLEXT) $(MODULE)$(FAKEEXT)
 
 $(MODULE) $(MODULE).so $(MODULE).fake: $(MAINSPEC) $(OBJS) Makefile.in
 	$(WINEGCC) -shared $(srcdir)/$(MAINSPEC) $(OBJS) $(EXTRADLLFLAGS) -o $@ $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(DELAYIMPORTS:%=-Wb,-d%) $(ALL_LIBS)
-
-# Rules for auto documentation
-
-manpages:: $(C_SRCS) dummy
-	$(C2MAN) -o $(top_builddir)/documentation/man$(api_manext) -R$(top_builddir) -C$(srcdir) -S$(api_manext) $(INCLUDES) $(MAINSPEC:%=-w %) $(C_SRCS)
-
-htmlpages:: $(C_SRCS) dummy
-	$(C2MAN) -o $(top_builddir)/documentation/html -R$(top_builddir) -C$(srcdir) $(INCLUDES) -Th $(MAINSPEC:%=-w %) $(C_SRCS)
-
-sgmlpages:: $(C_SRCS) dummy
-	$(C2MAN) -o $(top_builddir)/documentation/api-guide -R$(top_builddir) -C$(srcdir) $(INCLUDES) -Ts $(MAINSPEC:%=-w %) $(C_SRCS)
-
-xmlpages:: $(C_SRCS) dummy
-	$(C2MAN) -o $(top_builddir)/documentation/api-guide-xml -R$(top_builddir) -C$(srcdir) $(INCLUDES) -Tx $(MAINSPEC:%=-w %) $(C_SRCS)
-
-# End of global dll rules

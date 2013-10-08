@@ -162,6 +162,20 @@ uninstall-man-pages::
 
 .PHONY: install-man-pages uninstall-man-pages
 
+# Rules for auto documentation
+
+manpages:: $(C_SRCS) dummy
+	$(C2MAN) -o $(top_builddir)/documentation/man$(api_manext) -R$(top_builddir) -C$(srcdir) $(INCLUDES) -S$(api_manext) $(MAINSPEC:%=-w %) $(C_SRCS)
+
+htmlpages:: $(C_SRCS) dummy
+	$(C2MAN) -o $(top_builddir)/documentation/html -R$(top_builddir) -C$(srcdir) $(INCLUDES) -Th $(MAINSPEC:%=-w %) $(C_SRCS)
+
+sgmlpages:: $(C_SRCS) dummy
+	$(C2MAN) -o $(top_builddir)/documentation/api-guide -R$(top_builddir) -C$(srcdir) $(INCLUDES) -Ts $(MAINSPEC:%=-w %) $(C_SRCS)
+
+xmlpages:: $(C_SRCS) dummy
+	$(C2MAN) -o $(top_builddir)/documentation/api-guide-xml -R$(top_builddir) -C$(srcdir) $(INCLUDES) -Tx $(MAINSPEC:%=-w %) $(C_SRCS)
+
 # Rules for cleaning
 
 $(EXTRASUBDIRS:%=%/clean): dummy
