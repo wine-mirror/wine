@@ -154,6 +154,10 @@ static void macdrv_query_event(HWND hwnd, const macdrv_event *event)
             TRACE("QUERY_RESIZE_START\n");
             success = query_resize_start(hwnd);
             break;
+        case QUERY_MIN_MAX_INFO:
+            TRACE("QUERY_MIN_MAX_INFO\n");
+            success = query_min_max_info(hwnd);
+            break;
         default:
             FIXME("unrecognized query type %d\n", query->type);
             break;

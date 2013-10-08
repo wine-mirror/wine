@@ -1606,6 +1606,47 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
                                      forMode:NSRunLoopCommonModes];
     }
 
+    - (NSRect) windowWillUseStandardFrame:(NSWindow*)window defaultFrame:(NSRect)proposedFrame
+    {
+        macdrv_query* query;
+        NSRect currentContentRect, proposedContentRect, newContentRect, screenRect;
+        NSSize maxSize;
+
+        query = macdrv_create_query();
+        query->type = QUERY_MIN_MAX_INFO;
+        query->window = (macdrv_window)[self retain];
+        [self.queue query:query timeout:0.5];
+        macdrv_release_query(query);
+
+        currentContentRect = [self contentRectForFrameRect:[self frame]];
+        proposedContentRect = [self contentRectForFrameRect:proposedFrame];
+
+        maxSize = [self contentMaxSize];
+        newContentRect.size.width = MIN(NSWidth(proposedContentRect), maxSize.width);
+        newContentRect.size.height = MIN(NSHeight(proposedContentRect), maxSize.height);
+
+        // Try to keep the top-left corner where it is.
+        newContentRect.origin.x = NSMinX(currentContentRect);
+        newContentRect.origin.y = NSMaxY(currentContentRect) - NSHeight(newContentRect);
+
+        // If that pushes the bottom or right off the screen, pull it up and to the left.
+        screenRect = [self contentRectForFrameRect:[[self screen] visibleFrame]];
+        if (NSMaxX(newContentRect) > NSMaxX(screenRect))
+            newContentRect.origin.x = NSMaxX(screenRect) - NSWidth(newContentRect);
+        if (NSMinY(newContentRect) < NSMinY(screenRect))
+            newContentRect.origin.y = NSMinY(screenRect);
+
+        // If that pushes the top or left off the screen, push it down and the right
+        // again.  Do this last because the top-left corner is more important than the
+        // bottom-right.
+        if (NSMinX(newContentRect) < NSMinX(screenRect))
+            newContentRect.origin.x = NSMinX(screenRect);
+        if (NSMaxY(newContentRect) > NSMaxY(screenRect))
+            newContentRect.origin.y = NSMaxY(screenRect) - NSHeight(newContentRect);
+
+        return [self frameRectForContentRect:newContentRect];
+    }
+
 
     /*
      * ---------- NSPasteboardOwner methods ----------

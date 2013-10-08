@@ -2032,3 +2032,16 @@ BOOL query_resize_end(HWND hwnd)
     SendMessageW(hwnd, WM_EXITSIZEMOVE, 0, 0);
     return TRUE;
 }
+
+
+/***********************************************************************
+ *              query_min_max_info
+ *
+ * Handler for QUERY_MIN_MAX_INFO query.
+ */
+BOOL query_min_max_info(HWND hwnd)
+{
+    TRACE("hwnd %p\n", hwnd);
+    sync_window_min_max_info(hwnd);
+    return TRUE;
+}
