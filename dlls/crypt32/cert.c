@@ -184,7 +184,7 @@ PCCERT_CONTEXT WINAPI CertDuplicateCertificateContext(
     if (!pCertContext)
         return NULL;
 
-    Context_AddRef((void *)pCertContext, sizeof(CERT_CONTEXT));
+    Context_AddRef((void *)pCertContext);
     return pCertContext;
 }
 

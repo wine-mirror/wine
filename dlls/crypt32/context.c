@@ -81,13 +81,13 @@ void *Context_CreateLinkContext(unsigned int contextSize, void *linked, unsigned
     context->type = ContextTypeLink;
     context->u.linked = BASE_CONTEXT_FROM_CONTEXT(linked);
     if (addRef)
-        Context_AddRef(linked, contextSize);
+        Context_AddRef(linked);
 
     TRACE("returning %p\n", context);
     return CONTEXT_FROM_BASE_CONTEXT(context);
 }
 
-void Context_AddRef(void *context, size_t contextSize)
+void Context_AddRef(void *context)
 {
     BASE_CONTEXT *baseContext = BASE_CONTEXT_FROM_CONTEXT(context);
 

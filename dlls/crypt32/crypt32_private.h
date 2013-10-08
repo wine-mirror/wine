@@ -359,7 +359,7 @@ void Context_CopyProperties(const void *to, const void *from,
  */
 CONTEXT_PROPERTY_LIST *Context_GetProperties(const void *context, size_t contextSize) DECLSPEC_HIDDEN;
 
-void Context_AddRef(void *context, size_t contextSize) DECLSPEC_HIDDEN;
+void Context_AddRef(void *context) DECLSPEC_HIDDEN;
 
 typedef void (*ContextFreeFunc)(void *context);
 

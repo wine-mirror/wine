@@ -327,7 +327,7 @@ PCCRL_CONTEXT WINAPI CertDuplicateCRLContext(PCCRL_CONTEXT pCrlContext)
 {
     TRACE("(%p)\n", pCrlContext);
     if (pCrlContext)
-        Context_AddRef((void *)pCrlContext, sizeof(CRL_CONTEXT));
+        Context_AddRef((void *)pCrlContext);
     return pCrlContext;
 }
 
