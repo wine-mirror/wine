@@ -542,7 +542,7 @@ static void midReceiveChar(WORD wDevID, unsigned char value, DWORD dwTime)
 
     if (MidiInDev[wDevID].state & 2) { /* system exclusive */
 	LPMIDIHDR	lpMidiHdr;
-	WORD 		sbfb = FALSE;
+        BOOL            sbfb = FALSE;
 
 	EnterCriticalSection(&crit_sect);
 	if ((lpMidiHdr = MidiInDev[wDevID].lpQueueHdr) != NULL) {
