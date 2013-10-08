@@ -4039,7 +4039,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       if (!(editor->styleFlags & ES_MULTILINE))
       {
         len = 0;
-        while(textW[len] != '0' && textW[len] != '\r' && textW[len] != '\n')
+        while(textW[len] != '\0' && textW[len] != '\r' && textW[len] != '\n')
           len++;
       }
       ME_InsertTextFromCursor(editor, 0, textW, len, editor->pBuffer->pDefaultStyle);
