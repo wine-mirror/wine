@@ -3048,12 +3048,12 @@ static void load_extensions(void)
 
 static BOOL init_opengl(void)
 {
-    static int init_done;
+    static BOOL init_done = FALSE;
     unsigned int i;
     char buffer[200];
 
     if (init_done) return (opengl_handle != NULL);
-    init_done = 1;
+    init_done = TRUE;
 
     TRACE("()\n");
 
