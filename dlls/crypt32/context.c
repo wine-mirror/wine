@@ -35,37 +35,27 @@ typedef struct _BASE_CONTEXT
 {
     LONG        ref;
     ContextType type;
+    union {
+        CONTEXT_PROPERTY_LIST *properties;
+        struct _BASE_CONTEXT *linked;
+    } u;
 } BASE_CONTEXT;
-
-typedef struct _DATA_CONTEXT
-{
-    LONG                   ref;
-    ContextType            type; /* always ContextTypeData */
-    CONTEXT_PROPERTY_LIST *properties;
-} DATA_CONTEXT;
-
-typedef struct _LINK_CONTEXT
-{
-    LONG          ref;
-    ContextType   type; /* always ContextTypeLink */
-    BASE_CONTEXT *linked;
-} LINK_CONTEXT;
 
 #define CONTEXT_FROM_BASE_CONTEXT(p, s) ((LPBYTE)(p) - (s))
 #define BASE_CONTEXT_FROM_CONTEXT(p, s) (BASE_CONTEXT*)((LPBYTE)(p) + (s))
 
 void *Context_CreateDataContext(size_t contextSize)
 {
-    void *ret = CryptMemAlloc(contextSize + sizeof(DATA_CONTEXT));
+    void *ret = CryptMemAlloc(contextSize + sizeof(BASE_CONTEXT));
 
     if (ret)
     {
-        DATA_CONTEXT *context = (DATA_CONTEXT*)((LPBYTE)ret + contextSize);
+        BASE_CONTEXT *context = (BASE_CONTEXT*)((LPBYTE)ret + contextSize);
 
         context->ref = 1;
         context->type = ContextTypeData;
-        context->properties = ContextPropertyList_Create();
-        if (!context->properties)
+        context->u.properties = ContextPropertyList_Create();
+        if (!context->u.properties)
         {
             CryptMemFree(ret);
             ret = NULL;
@@ -78,13 +68,13 @@ void *Context_CreateDataContext(size_t contextSize)
 void *Context_CreateLinkContext(unsigned int contextSize, void *linked, unsigned int extra,
  BOOL addRef)
 {
-    void *context = CryptMemAlloc(contextSize + sizeof(LINK_CONTEXT) + extra);
+    void *context = CryptMemAlloc(contextSize + sizeof(BASE_CONTEXT) + extra);
 
     TRACE("(%d, %p, %d)\n", contextSize, linked, extra);
 
     if (context)
     {
-        LINK_CONTEXT *linkContext = (LINK_CONTEXT*)BASE_CONTEXT_FROM_CONTEXT(
+        BASE_CONTEXT *linkContext = (BASE_CONTEXT*)BASE_CONTEXT_FROM_CONTEXT(
          context, contextSize);
         BASE_CONTEXT *linkedBase = BASE_CONTEXT_FROM_CONTEXT(linked,
          contextSize);
@@ -92,7 +82,7 @@ void *Context_CreateLinkContext(unsigned int contextSize, void *linked, unsigned
         memcpy(context, linked, contextSize);
         linkContext->ref = 1;
         linkContext->type = ContextTypeLink;
-        linkContext->linked = linkedBase;
+        linkContext->u.linked = linkedBase;
         if (addRef)
             Context_AddRef(linked, contextSize);
         TRACE("%p's ref count is %d\n", context, linkContext->ref);
@@ -144,7 +134,7 @@ void *Context_GetExtra(const void *context, size_t contextSize)
     BASE_CONTEXT *baseContext = BASE_CONTEXT_FROM_CONTEXT(context, contextSize);
 
     assert(baseContext->type == ContextTypeLink);
-    return (LPBYTE)baseContext + sizeof(LINK_CONTEXT);
+    return (LPBYTE)baseContext + sizeof(BASE_CONTEXT);
 }
 
 void *Context_GetLinkedContext(void *context, size_t contextSize)
@@ -152,7 +142,7 @@ void *Context_GetLinkedContext(void *context, size_t contextSize)
     BASE_CONTEXT *baseContext = BASE_CONTEXT_FROM_CONTEXT(context, contextSize);
 
     assert(baseContext->type == ContextTypeLink);
-    return CONTEXT_FROM_BASE_CONTEXT(((LINK_CONTEXT*)baseContext)->linked, contextSize);
+    return CONTEXT_FROM_BASE_CONTEXT(baseContext->u.linked, contextSize);
 }
 
 CONTEXT_PROPERTY_LIST *Context_GetProperties(const void *context, size_t contextSize)
@@ -160,8 +150,8 @@ CONTEXT_PROPERTY_LIST *Context_GetProperties(const void *context, size_t context
     BASE_CONTEXT *ptr = BASE_CONTEXT_FROM_CONTEXT(context, contextSize);
 
     while (ptr && ptr->type == ContextTypeLink)
-        ptr = ((LINK_CONTEXT*)ptr)->linked;
-    return (ptr && ptr->type == ContextTypeData) ? ((DATA_CONTEXT*)ptr)->properties : NULL;
+        ptr = ptr->u.linked;
+    return (ptr && ptr->type == ContextTypeData) ? ptr->u.properties : NULL;
 }
 
 BOOL Context_Release(void *context, size_t contextSize,
@@ -181,15 +171,14 @@ BOOL Context_Release(void *context, size_t contextSize,
          * it as well, using the same offset and data free function.
          */
         ret = Context_Release(CONTEXT_FROM_BASE_CONTEXT(
-         ((LINK_CONTEXT*)base)->linked, contextSize), contextSize,
-         dataContextFree);
+         base->u.linked, contextSize), contextSize, dataContextFree);
     }
     if (InterlockedDecrement(&base->ref) == 0)
     {
         TRACE("freeing %p\n", context);
         if (base->type == ContextTypeData)
         {
-            ContextPropertyList_Free(((DATA_CONTEXT*)base)->properties);
+            ContextPropertyList_Free(base->u.properties);
             dataContextFree(context);
         }
         CryptMemFree(context);
@@ -249,7 +238,7 @@ static inline struct list *ContextList_ContextToEntry(const struct ContextList *
 static inline void *ContextList_EntryToContext(const struct ContextList *list,
  struct list *entry)
 {
-    return (LPBYTE)entry - sizeof(LINK_CONTEXT) - list->contextSize;
+    return (LPBYTE)entry - sizeof(BASE_CONTEXT) - list->contextSize;
 }
 
 void *ContextList_Add(struct ContextList *list, void *toLink, void *toReplace)
