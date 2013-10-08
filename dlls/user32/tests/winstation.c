@@ -652,6 +652,71 @@ todo_wine
     ok(ret, "CloseDesktop failed!\n");
 }
 
+static void test_inputdesktop2(void)
+{
+    HWINSTA w1, w2;
+    HDESK thread_desk, new_desk, input_desk, hdesk;
+    DWORD ret;
+
+    thread_desk = GetThreadDesktop(GetCurrentThreadId());
+    ok(thread_desk != NULL, "GetThreadDesktop failed!\n");
+    w1 = GetProcessWindowStation();
+    ok(w1 != NULL, "GetProcessWindowStation failed!\n");
+    w2 = CreateWindowStation("winsta_test", 0, WINSTA_ALL_ACCESS, NULL);
+    ok(w2 != NULL, "CreateWindowStation failed!\n");
+    ret = EnumDesktopsA(GetProcessWindowStation(), desktop_callbackA, 0);
+    ok(!ret, "EnumDesktopsA failed!\n");
+    input_desk = OpenInputDesktop(0, FALSE, DESKTOP_ALL_ACCESS);
+todo_wine
+    ok(input_desk != NULL, "OpenInputDesktop failed!\n");
+    ret = CloseDesktop(input_desk);
+todo_wine
+    ok(ret, "CloseDesktop failed!\n");
+
+    ret = SetProcessWindowStation(w2);
+    ok(ret, "SetProcessWindowStation failed!\n");
+    hdesk = GetThreadDesktop(GetCurrentThreadId());
+    ok(hdesk != NULL, "GetThreadDesktop failed!\n");
+    ok(hdesk == thread_desk, "thread desktop should not change after winstation changed!\n");
+    ret = EnumDesktopsA(GetProcessWindowStation(), desktop_callbackA, 0);
+
+    new_desk = CreateDesktop("desk_test", NULL, NULL, 0, DESKTOP_ALL_ACCESS, NULL);
+    ok(new_desk != NULL, "CreateDesktop failed!\n");
+    ret = EnumDesktopsA(GetProcessWindowStation(), desktop_callbackA, 0);
+    ok(!ret, "EnumDesktopsA failed!\n");
+    SetLastError(0xdeadbeef);
+    input_desk = OpenInputDesktop(0, FALSE, DESKTOP_ALL_ACCESS);
+    ok(input_desk == NULL, "OpenInputDesktop should fail on non default winstation!\n");
+todo_wine
+    ok(GetLastError() == ERROR_INVALID_FUNCTION || broken(GetLastError() == 0xdeadbeef), "last error %08x\n", GetLastError());
+
+    hdesk = OpenDesktop("desk_test", 0, TRUE, DESKTOP_ALL_ACCESS);
+    ok(hdesk != NULL, "OpenDesktop failed!\n");
+    SetLastError(0xdeadbeef);
+    ret = SwitchDesktop(hdesk);
+todo_wine
+    ok(!ret, "Switch to desktop belong to non default winstation should fail!\n");
+todo_wine
+    ok(GetLastError() == ERROR_ACCESS_DENIED || broken(GetLastError() == 0xdeadbeef), "last error %08x\n", GetLastError());
+    ret = SetThreadDesktop(hdesk);
+    ok(ret, "SetThreadDesktop failed!\n");
+
+    /* clean side effect */
+    ret = SetThreadDesktop(thread_desk);
+todo_wine
+    ok(ret, "SetThreadDesktop should success even desktop is not belong to process winstation!\n");
+    ret = SetProcessWindowStation(w1);
+    ok(ret, "SetProcessWindowStation failed!\n");
+    ret = SetThreadDesktop(thread_desk);
+    ok(ret, "SetThreadDesktop failed!\n");
+    ret = CloseWindowStation(w2);
+    ok(ret, "CloseWindowStation failed!\n");
+    ret = CloseDesktop(new_desk);
+    ok(ret, "CloseDesktop failed!\n");
+    ret = CloseDesktop(hdesk);
+    ok(ret, "CloseDesktop failed!\n");
+}
+
 START_TEST(winstation)
 {
     /* Check whether this platform supports WindowStation calls */
@@ -665,6 +730,7 @@ START_TEST(winstation)
     }
 
     test_inputdesktop();
+    test_inputdesktop2();
     test_enumstations();
     test_enumdesktops();
     test_handles();
