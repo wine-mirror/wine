@@ -131,12 +131,12 @@ struct macdrv_win_data
     macdrv_view         gl_view;                /* view for GL */
     RECT                gl_rect;                /* GL view rectangle relative to whole_rect */
     COLORREF            color_key;              /* color key for layered window; CLR_INVALID is not color keyed */
-    BOOL                on_screen : 1;          /* is window ordered in? (minimized or not) */
-    BOOL                shaped : 1;             /* is window using a custom region shape? */
-    BOOL                layered : 1;            /* is window layered and with valid attributes? */
-    BOOL                ulw_layered : 1;        /* has UpdateLayeredWindow() been called for window? */
-    BOOL                per_pixel_alpha : 1;    /* is window using per-pixel alpha? */
-    BOOL                minimized : 1;          /* is window minimized? */
+    unsigned int        on_screen : 1;          /* is window ordered in? (minimized or not) */
+    unsigned int        shaped : 1;             /* is window using a custom region shape? */
+    unsigned int        layered : 1;            /* is window layered and with valid attributes? */
+    unsigned int        ulw_layered : 1;        /* has UpdateLayeredWindow() been called for window? */
+    unsigned int        per_pixel_alpha : 1;    /* is window using per-pixel alpha? */
+    unsigned int        minimized : 1;          /* is window minimized? */
     struct window_surface *surface;
     struct window_surface *unminimized_surface;
 };
