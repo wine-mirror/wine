@@ -45,8 +45,6 @@ MKDIR_P         = @MKDIR_P@
 TOOLSDIR        = @TOOLSDIR@
 LDFLAGS         = @LDFLAGS@
 PRELINK         = @PRELINK@
-LINT            = @LINT@
-LINTFLAGS       = @LINTFLAGS@
 FONTFORGE       = @FONTFORGE@
 RSVG            = @RSVG@
 CONVERT         = @CONVERT@
@@ -58,7 +56,6 @@ ALL_MO_FILES    = $(LINGUAS:%=@top_builddir@/po/%.mo)
 PORCFLAGS       = @PORCFLAGS@
 CROSSAR         = $(CROSSTARGET)-ar
 CROSSRANLIB     = $(CROSSTARGET)-ranlib
-WINAPI_CHECK    = $(top_srcdir)/tools/winapi/winapi_check
 BUILDIMAGE      = $(top_srcdir)/tools/buildimage
 C2MAN           = $(top_srcdir)/tools/c2man.pl
 RUNTEST         = $(top_srcdir)/tools/runtest
@@ -89,5 +86,7 @@ conf_manext     = 5
 @SET_MAKE@
 
 all:
+dummy:
+.PHONY: all dummy
 
 # End of common header

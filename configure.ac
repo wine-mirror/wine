@@ -268,15 +268,6 @@ dnl Use the correct strip to install programs
 test -z "$INSTALL_PROGRAM" && INSTALL_PROGRAM="STRIPPROG=\"\$(STRIP)\" \$(top_srcdir)/tools/install-sh"
 AC_PROG_INSTALL
 
-dnl Check for lint
-AC_CHECK_PROGS(LINT, lclint lint)
-if test "$LINT" = "lint"
-then
-  LINTFLAGS="$LINTFLAGS -errchk=%all,no%longptr64 -errhdr=%user -Ncheck=macro -Nlevel=4"
-  dnl LINTFLAGS='-D_SIZE_T "-Dsize_t=unsigned long" -errchk=longptr64'
-fi
-AC_SUBST(LINTFLAGS)
-
 dnl Check for various programs
 AC_CHECK_PROGS(FONTFORGE, fontforge, false)
 AC_CHECK_PROGS(RSVG, rsvg, false)

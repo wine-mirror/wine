@@ -35,8 +35,6 @@ INSTALLDIRS = \
 all: wine
 	@echo "Wine build complete."
 
-WINAPI_CHECK_EXTRA_FLAGS = --global
-
 @MAKE_RULES@
 
 # Rules for re-running configure

@@ -16,7 +16,6 @@
 INCLUDES     = -I$(srcdir) -I. -I$(top_srcdir)/include -I$(top_builddir)/include $(EXTRAINCL)
 DEFS         = -D__WINESRC__ $(EXTRADEFS)
 ALLCFLAGS    = $(INCLUDES) $(DEFS) $(DLLFLAGS) $(EXTRACFLAGS) $(CPPFLAGS) $(CFLAGS) $(MODCFLAGS)
-ALLLINTFLAGS = $(INCLUDES) $(DEFS) $(LINTFLAGS)
 IDLFLAGS     = $(INCLUDES) $(DEFS) $(EXTRAIDLFLAGS)
 RCFLAGS      = --nostdinc $(PORCFLAGS) $(TARGETFLAGS) $(INCLUDES) $(DEFS) $(EXTRARCFLAGS)
 
@@ -25,7 +24,7 @@ IDL_GEN_C_SRCS  = $(IDL_C_SRCS:.idl=_c.c) $(IDL_I_SRCS:.idl=_i.c) \
 IDL_GEN_HEADERS = $(IDL_H_SRCS:.idl=.h) $(IDL_C_SRCS:.idl=.h) $(IDL_I_SRCS:.idl=.h) \
                   $(IDL_P_SRCS:.idl=.h) $(IDL_S_SRCS:.idl=.h)
 
-CLEAN_FILES   = *.o *.a *.so *.mo *.ln *.res *.fake *.ok *.tab.[ch] *.yy.c
+CLEAN_FILES   = *.o *.a *.so *.mo *.res *.fake *.ok *.tab.[ch] *.yy.c
 CLEAN_TARGETS = $(IDL_GEN_C_SRCS) $(IDL_GEN_HEADERS) \
                 $(IDL_TLB_SRCS:.idl=.tlb) $(IDL_P_SRCS:.idl=_p.c dlldata.c) \
                 $(PO_SRCS:.rc=.res rsrc.pot) $(MC_SRCS:.mc=.res msg.pot) $(XTEMPLATE_SRCS:.x=.h)
@@ -34,12 +33,6 @@ OBJS = $(C_SRCS:.c=.o) $(BISON_SRCS:.y=.tab.o) $(LEX_SRCS:.l=.yy.o) $(IDL_GEN_C_
        $(IDL_R_SRCS:.idl=_r.res) $(IDL_TLB_RES) $(RC_SRCS:.rc=.res) $(MC_SRCS:.mc=.res) $(EXTRA_OBJS)
 
 CROSSOBJS = $(OBJS:.o=.cross.o)
-LINTS  = $(C_SRCS:.c=.ln)
-
-filter: dummy
-	@$(top_srcdir)/tools/winapi/make_filter --make $(MAKE) all
-
-.PHONY: all filter
 
 # Implicit rules
 
@@ -93,9 +86,6 @@ filter: dummy
 .idl_t.res:
 	$(WIDL) $(TARGETFLAGS) $(IDLFLAGS) -t -o $@ $<
 
-.c.ln:
-	$(LINT) -c $(ALLLINTFLAGS) $< || ( $(RM) $@ && exit 1 )
-
 .c.ok:
 	$(RUNTEST) $(RUNTESTFLAGS) $< && touch $@
 
@@ -118,26 +108,6 @@ filter: dummy
 
 dlldata.c: $(WIDL) Makefile.in
 	$(WIDL) $(IDLFLAGS) --dlldata-only -o $@ $(IDL_P_SRCS)
-
-# Rule for linting
-
-$(MODULE).ln : $(LINTS)
-	if test "$(LINTS)" ; \
-	then \
-		$(LINT) $(ALLLINTFLAGS) -o$(MODULE) $(LINTS) ; \
-	        $(MV) llib-l$(MODULE).ln $(MODULE).ln ; \
-	else \
-		$(LINT) $(ALLLINTFLAGS) -C$(MODULE) /dev/null ; \
-	fi
-
-lint:: $(MODULE).ln
-
-# Rules for Windows API checking
-
-winapi_check:: dummy
-	$(WINAPI_CHECK) $(WINAPI_CHECK_FLAGS) $(WINAPI_CHECK_EXTRA_FLAGS) .
-
-.PHONY: winapi_check
 
 # Rules for dependencies
 
@@ -199,9 +169,5 @@ $(PO_SRCS:.rc=.res): $(ALL_MO_FILES)
 # Misc. rules
 
 $(IDL_GEN_HEADERS) $(IDL_GEN_C_SRCS) $(IDL_TLB_SRCS:.idl=.tlb) $(IDL_TLB_RES) $(IDL_R_SRCS:.idl=_r.res): $(WIDL)
-
-dummy:
-
-.PHONY: dummy
 
 # End of global rules
