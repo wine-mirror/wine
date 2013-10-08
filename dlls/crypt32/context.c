@@ -123,7 +123,7 @@ void *Context_GetExtra(const void *context, size_t contextSize)
     return (LPBYTE)CONTEXT_FROM_BASE_CONTEXT(baseContext) + contextSize;
 }
 
-void *Context_GetLinkedContext(void *context, size_t contextSize)
+void *Context_GetLinkedContext(void *context)
 {
     BASE_CONTEXT *baseContext = BASE_CONTEXT_FROM_CONTEXT(context);
 

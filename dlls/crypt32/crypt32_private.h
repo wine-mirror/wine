@@ -348,7 +348,7 @@ void *Context_CreateLinkContext(unsigned int contextSize, void *linked, unsigned
 void *Context_GetExtra(const void *context, size_t contextSize) DECLSPEC_HIDDEN;
 
 /* Gets the context linked to by context, which must be a link context. */
-void *Context_GetLinkedContext(void *context, size_t contextSize) DECLSPEC_HIDDEN;
+void *Context_GetLinkedContext(void *context) DECLSPEC_HIDDEN;
 
 /* Copies properties from fromContext to toContext. */
 void Context_CopyProperties(const void *to, const void *from,

@@ -87,7 +87,7 @@ static BOOL CRYPT_CollectionAddContext(WINE_COLLECTIONSTORE *store,
     ret = FALSE;
     if (toReplace)
     {
-        void *existingLinked = Context_GetLinkedContext(toReplace, contextSize);
+        void *existingLinked = Context_GetLinkedContext(toReplace);
         CONTEXT_FUNCS *contextFuncs;
 
         storeEntry = *(WINE_STORE_LIST_ENTRY **)Context_GetExtra(toReplace,
@@ -147,7 +147,7 @@ static void *CRYPT_CollectionAdvanceEnum(WINE_COLLECTIONSTORE *store,
         /* Ref-counting funny business: "duplicate" (addref) the child, because
          * the free(pPrev) below can cause the ref count to become negative.
          */
-        child = Context_GetLinkedContext(pPrev, contextSize);
+        child = Context_GetLinkedContext(pPrev);
         contextInterface->duplicate(child);
         child = contextFuncs->enumContext(storeEntry->store, child);
         contextInterface->free(pPrev);
@@ -265,7 +265,7 @@ static BOOL CRYPT_CollectionDeleteCert(WINECRYPT_CERTSTORE *store,
      * CertFreeCertificateContext.  Increase ref count of linked context to
      * compensate.
      */
-    linked = Context_GetLinkedContext(pCertContext, sizeof(CERT_CONTEXT));
+    linked = Context_GetLinkedContext(pCertContext);
     CertDuplicateCertificateContext(linked);
     ret = CertDeleteCertificateFromStore(linked);
     return ret;
@@ -349,7 +349,7 @@ static BOOL CRYPT_CollectionDeleteCRL(WINECRYPT_CERTSTORE *store, void *pCrlCont
      * decreases pCrlContext's ref count, by calling CertFreeCRLContext.
      * Increase ref count of linked context to compensate.
      */
-    linked = Context_GetLinkedContext(pCrlContext, sizeof(CRL_CONTEXT));
+    linked = Context_GetLinkedContext(pCrlContext);
     CertDuplicateCRLContext(linked);
     ret = CertDeleteCRLFromStore(linked);
     return ret;
@@ -433,7 +433,7 @@ static BOOL CRYPT_CollectionDeleteCTL(WINECRYPT_CERTSTORE *store,
      * decreases pCtlContext's ref count, by calling CertFreeCTLContext.
      * Increase ref count of linked context to compensate.
      */
-    linked = Context_GetLinkedContext(pCtlContext, sizeof(CTL_CONTEXT));
+    linked = Context_GetLinkedContext(pCtlContext);
     CertDuplicateCTLContext(linked);
     ret = CertDeleteCTLFromStore(linked);
     return ret;
