@@ -44,7 +44,7 @@ DWORD service_kill_timeout = 60000;
 static DWORD default_preshutdown_timeout = 180000;
 static void *env = NULL;
 
-static const int is_win64 = (sizeof(void *) > sizeof(int));
+static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 
 static const WCHAR SZ_LOCAL_SYSTEM[] = {'L','o','c','a','l','S','y','s','t','e','m',0};
 
