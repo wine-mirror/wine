@@ -1846,6 +1846,18 @@ done:
 }
 
 
+/***********************************************************************
+ *              macdrv_window_brought_forward
+ *
+ * Handler for WINDOW_BROUGHT_FORWARD events.
+ */
+void macdrv_window_brought_forward(HWND hwnd)
+{
+    TRACE("win %p\n", hwnd);
+    SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+}
+
+
 struct quit_info {
     HWND               *wins;
     UINT                capacity;

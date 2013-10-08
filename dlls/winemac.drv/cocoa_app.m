@@ -1629,8 +1629,12 @@ int macdrv_err_on;
 
                 macdrv_release_event(event);
             }
-            else if (broughtWindowForward && ![window isKeyWindow])
-                [self windowGotFocus:window];
+            else if (broughtWindowForward)
+            {
+                [[window ancestorWineWindow] postBroughtForwardEvent];
+                if (![window isKeyWindow])
+                    [self windowGotFocus:window];
+            }
         }
 
         // Since mouse button events deliver absolute cursor position, the
