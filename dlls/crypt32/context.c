@@ -41,7 +41,7 @@ typedef struct _BASE_CONTEXT
     } u;
 } BASE_CONTEXT;
 
-#define CONTEXT_FROM_BASE_CONTEXT(p) (LPBYTE)(p+1)
+#define CONTEXT_FROM_BASE_CONTEXT(p) (void*)(p+1)
 #define BASE_CONTEXT_FROM_CONTEXT(p) ((BASE_CONTEXT*)(p)-1)
 
 void *Context_CreateDataContext(size_t contextSize)
@@ -93,26 +93,6 @@ void Context_AddRef(void *context)
 
     InterlockedIncrement(&baseContext->ref);
     TRACE("%p's ref count is %d\n", context, baseContext->ref);
-    if (baseContext->type == ContextTypeLink)
-    {
-        BASE_CONTEXT *linkedBase = baseContext->u.linked;
-
-        /* Add-ref the linked contexts too */
-        while (linkedBase && linkedBase->type == ContextTypeLink)
-        {
-            InterlockedIncrement(&linkedBase->ref);
-            TRACE("%p's ref count is %d\n", linkedBase, linkedBase->ref);
-            linkedBase = linkedBase->u.linked;
-        }
-        if (linkedBase)
-        {
-            /* It's not a link context, so it wasn't add-ref'ed in the while
-             * loop, so add-ref it here.
-             */
-            InterlockedIncrement(&linkedBase->ref);
-            TRACE("%p's ref count is %d\n", linkedBase, linkedBase->ref);
-        }
-    }
 }
 
 void *Context_GetExtra(const void *context, size_t contextSize)
@@ -151,14 +131,6 @@ BOOL Context_Release(void *context, ContextFreeFunc dataContextFree)
         ERR("%p's ref count is %d\n", context, base->ref);
         return FALSE;
     }
-    if (base->type == ContextTypeLink)
-    {
-        /* The linked context is of the same type as this, so release
-         * it as well, using the same offset and data free function.
-         */
-        ret = Context_Release(CONTEXT_FROM_BASE_CONTEXT(
-         base->u.linked), dataContextFree);
-    }
     if (InterlockedDecrement(&base->ref) == 0)
     {
         TRACE("freeing %p\n", context);
@@ -166,6 +138,8 @@ BOOL Context_Release(void *context, ContextFreeFunc dataContextFree)
         {
             ContextPropertyList_Free(base->u.properties);
             dataContextFree(context);
+        } else {
+            Context_Release(CONTEXT_FROM_BASE_CONTEXT(base->u.linked), dataContextFree);
         }
         CryptMemFree(base);
     }
