@@ -270,6 +270,9 @@ static void test_handles(void)
     trace( "get other thread desktop: %p\n", GetThreadDesktop(id) );
     WaitForSingleObject( hthread, INFINITE );
     CloseHandle( hthread );
+
+    /* clean side effect */
+    SetProcessWindowStation( w1 );
 }
 
 /* Enumeration tests */
