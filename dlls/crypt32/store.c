@@ -160,8 +160,9 @@ static BOOL CRYPT_MemAddCert(WINECRYPT_CERTSTORE *store, void *cert,
     if (context)
     {
         context->hCertStore = store;
-        if (ppStoreContext)
+        if (ppStoreContext) {
             *ppStoreContext = CertDuplicateCertificateContext(context);
+        }
     }
     return context != 0;
 }
