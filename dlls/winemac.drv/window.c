@@ -115,6 +115,7 @@ static void get_cocoa_window_state(struct macdrv_win_data *data,
     if (IsRectEmpty(&data->window_rect))
         state->excluded_by_expose = TRUE;
     state->minimized = (style & WS_MINIMIZE) != 0;
+    state->minimized_valid = state->minimized != data->minimized;
 }
 
 
@@ -312,7 +313,8 @@ static void set_cocoa_window_properties(struct macdrv_win_data *data)
 
     get_cocoa_window_state(data, style, ex_style, &state);
     macdrv_set_cocoa_window_state(data->cocoa_window, &state);
-    data->minimized = state.minimized;
+    if (state.minimized_valid)
+        data->minimized = state.minimized;
 }
 
 

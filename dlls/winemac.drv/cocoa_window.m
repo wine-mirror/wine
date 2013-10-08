@@ -685,23 +685,26 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         }
         [self setCollectionBehavior:behavior];
 
-        pendingMinimize = FALSE;
-        if (state->minimized && ![self isMiniaturized])
+        if (state->minimized_valid)
         {
-            if ([self isVisible])
-                [super miniaturize:nil];
-            else
-                pendingMinimize = TRUE;
-        }
-        else if (!state->minimized && [self isMiniaturized])
-        {
-            ignore_windowDeminiaturize = TRUE;
-            [self deminiaturize:nil];
-        }
+            pendingMinimize = FALSE;
+            if (state->minimized && ![self isMiniaturized])
+            {
+                if ([self isVisible])
+                    [super miniaturize:nil];
+                else
+                    pendingMinimize = TRUE;
+            }
+            else if (!state->minimized && [self isMiniaturized])
+            {
+                ignore_windowDeminiaturize = TRUE;
+                [self deminiaturize:nil];
+            }
 
-        /* Whatever events regarding minimization might have been in the queue are now stale. */
-        [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_DID_UNMINIMIZE)
-                               forWindow:self];
+            /* Whatever events regarding minimization might have been in the queue are now stale. */
+            [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_DID_UNMINIMIZE)
+                                   forWindow:self];
+        }
     }
 
     - (BOOL) addChildWineWindow:(WineWindow*)child assumeVisible:(BOOL)assumeVisible
