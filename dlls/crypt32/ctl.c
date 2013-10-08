@@ -481,8 +481,7 @@ BOOL WINAPI CertFreeCTLContext(PCCTL_CONTEXT pCTLContext)
     TRACE("(%p)\n", pCTLContext);
 
     if (pCTLContext)
-        ret = Context_Release((void *)pCTLContext, sizeof(CTL_CONTEXT),
-         CTLDataContext_Free);
+        ret = Context_Release((void *)pCTLContext, CTLDataContext_Free);
     return ret;
 }
 

@@ -203,8 +203,7 @@ BOOL WINAPI CertFreeCertificateContext(PCCERT_CONTEXT pCertContext)
     TRACE("(%p)\n", pCertContext);
 
     if (pCertContext)
-        ret = Context_Release((void *)pCertContext, sizeof(CERT_CONTEXT),
-         CertDataContext_Free);
+        ret = Context_Release((void *)pCertContext, CertDataContext_Free);
     return ret;
 }
 

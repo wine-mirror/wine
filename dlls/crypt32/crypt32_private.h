@@ -368,8 +368,7 @@ typedef void (*ContextFreeFunc)(void *context);
  * If a data context has its ref count reach 0, calls dataContextFree on it.
  * Returns FALSE if the reference count is <= 0 when called.
  */
-BOOL Context_Release(void *context, size_t contextSize,
- ContextFreeFunc dataContextFree) DECLSPEC_HIDDEN;
+BOOL Context_Release(void *context, ContextFreeFunc dataContextFree) DECLSPEC_HIDDEN;
 
 /**
  *  Context property list functions

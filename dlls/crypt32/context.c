@@ -141,8 +141,7 @@ CONTEXT_PROPERTY_LIST *Context_GetProperties(const void *context)
     return (ptr && ptr->type == ContextTypeData) ? ptr->u.properties : NULL;
 }
 
-BOOL Context_Release(void *context, size_t contextSize,
- ContextFreeFunc dataContextFree)
+BOOL Context_Release(void *context, ContextFreeFunc dataContextFree)
 {
     BASE_CONTEXT *base = BASE_CONTEXT_FROM_CONTEXT(context);
     BOOL ret = TRUE;
@@ -158,7 +157,7 @@ BOOL Context_Release(void *context, size_t contextSize,
          * it as well, using the same offset and data free function.
          */
         ret = Context_Release(CONTEXT_FROM_BASE_CONTEXT(
-         base->u.linked), contextSize, dataContextFree);
+         base->u.linked), dataContextFree);
     }
     if (InterlockedDecrement(&base->ref) == 0)
     {
