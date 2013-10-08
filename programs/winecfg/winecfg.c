@@ -43,7 +43,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 #include "winecfg.h"
 #include "resource.h"
 
-static const int is_win64 = (sizeof(void *) > sizeof(int));
+static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 
 HKEY config_key = NULL;
 HMENU hPopupMenus = 0;
