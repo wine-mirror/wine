@@ -6877,7 +6877,7 @@ BOOL WINAPI AddPrinterDriverExA(LPSTR pName, DWORD Level, LPBYTE pDriverInfo, DW
     LPWSTR  nameW = NULL;
     DWORD   lenA;
     DWORD   len;
-    DWORD   res = FALSE;
+    BOOL    res = FALSE;
 
     TRACE("(%s, %d, %p, 0x%x)\n", debugstr_a(pName), Level, pDriverInfo, dwFileCopyFlags);
 
