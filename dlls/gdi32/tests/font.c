@@ -4009,6 +4009,7 @@ static int CALLBACK create_fixed_pitch_font_proc(const LOGFONT *lpelfe,
     CHARSETINFO csi;
     LOGFONT lf = *lpelfe;
     HFONT hfont;
+    DWORD found_subset;
 
     /* skip bitmap, proportional or vertical font */
     if ((FontType & TRUETYPE_FONTTYPE) == 0 ||
@@ -4019,6 +4020,25 @@ static int CALLBACK create_fixed_pitch_font_proc(const LOGFONT *lpelfe,
     /* skip linked font */
     if (!TranslateCharsetInfo((DWORD*)(INT_PTR)lpelfe->lfCharSet, &csi, TCI_SRCCHARSET) ||
         (lpntmex->ntmFontSig.fsCsb[0] & csi.fs.fsCsb[0]) == 0)
+        return 1;
+
+    /* skip linked font, like SimSun-ExtB */
+    switch (lpelfe->lfCharSet) {
+    case SHIFTJIS_CHARSET:
+        found_subset = lpntmex->ntmFontSig.fsUsb[1] & (1 << 17); /* Hiragana */
+        break;
+    case GB2312_CHARSET:
+    case CHINESEBIG5_CHARSET:
+        found_subset = lpntmex->ntmFontSig.fsUsb[1] & (1 << 16); /* CJK Symbols And Punctuation */
+        break;
+    case HANGEUL_CHARSET:
+        found_subset = lpntmex->ntmFontSig.fsUsb[1] & (1 << 24); /* Hangul Syllables */
+        break;
+    default:
+        found_subset = lpntmex->ntmFontSig.fsUsb[0] & (1 <<  0); /* Basic Latin */
+        break;
+    }
+    if (!found_subset)
         return 1;
 
     /* test with an odd height */
