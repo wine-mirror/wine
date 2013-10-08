@@ -569,8 +569,10 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
     - (void) setWindowFeatures:(const struct macdrv_window_features*)wf
     {
+        static const NSUInteger usedStyles = NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask |
+                                             NSResizableWindowMask | NSUtilityWindowMask | NSBorderlessWindowMask;
         NSUInteger currentStyle = [self styleMask];
-        NSUInteger newStyle = style_mask_for_features(wf);
+        NSUInteger newStyle = style_mask_for_features(wf) | (currentStyle & ~usedStyles);
 
         if (newStyle != currentStyle)
         {
