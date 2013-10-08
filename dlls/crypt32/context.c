@@ -131,7 +131,7 @@ void *Context_GetLinkedContext(void *context)
     return CONTEXT_FROM_BASE_CONTEXT(baseContext->u.linked);
 }
 
-CONTEXT_PROPERTY_LIST *Context_GetProperties(const void *context, size_t contextSize)
+CONTEXT_PROPERTY_LIST *Context_GetProperties(const void *context)
 {
     BASE_CONTEXT *ptr = BASE_CONTEXT_FROM_CONTEXT(context);
 
@@ -180,8 +180,8 @@ void Context_CopyProperties(const void *to, const void *from,
 {
     CONTEXT_PROPERTY_LIST *toProperties, *fromProperties;
 
-    toProperties = Context_GetProperties(to, contextSize);
-    fromProperties = Context_GetProperties(from, contextSize);
+    toProperties = Context_GetProperties(to);
+    fromProperties = Context_GetProperties(from);
     assert(toProperties && fromProperties);
     ContextPropertyList_Copy(toProperties, fromProperties);
 }

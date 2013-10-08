@@ -357,7 +357,7 @@ void Context_CopyProperties(const void *to, const void *from,
 /* Returns context's properties, or the linked context's properties if context
  * is a link context.
  */
-CONTEXT_PROPERTY_LIST *Context_GetProperties(const void *context, size_t contextSize) DECLSPEC_HIDDEN;
+CONTEXT_PROPERTY_LIST *Context_GetProperties(const void *context) DECLSPEC_HIDDEN;
 
 void Context_AddRef(void *context) DECLSPEC_HIDDEN;
 
