@@ -623,7 +623,7 @@ static NET_IF_CONNECTION_TYPE connectionTypeFromMibType(DWORD mib_type)
     }
 }
 
-static ULONG v4addressesFromIndex(IF_INDEX index, DWORD **addrs, ULONG *num_addrs)
+static ULONG v4addressesFromIndex(IF_INDEX index, DWORD **addrs, ULONG *num_addrs, DWORD **masks)
 {
     ULONG ret, i, j;
     MIB_IPADDRTABLE *at;
@@ -639,9 +639,20 @@ static ULONG v4addressesFromIndex(IF_INDEX index, DWORD **addrs, ULONG *num_addr
         HeapFree(GetProcessHeap(), 0, at);
         return ERROR_OUTOFMEMORY;
     }
+    if (!(*masks = HeapAlloc(GetProcessHeap(), 0, *num_addrs * sizeof(DWORD))))
+    {
+        HeapFree(GetProcessHeap(), 0, *addrs);
+        HeapFree(GetProcessHeap(), 0, at);
+        return ERROR_OUTOFMEMORY;
+    }
     for (i = 0, j = 0; i < at->dwNumEntries; i++)
     {
-        if (at->table[i].dwIndex == index) (*addrs)[j++] = at->table[i].dwAddr;
+        if (at->table[i].dwIndex == index)
+        {
+            (*addrs)[j] = at->table[i].dwAddr;
+            (*masks)[j] = at->table[i].dwMask;
+            j++;
+        }
     }
     HeapFree(GetProcessHeap(), 0, at);
     return ERROR_SUCCESS;
@@ -724,41 +735,35 @@ static PMIB_IPFORWARDROW findIPv4Gateway(DWORD index,
 static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index,
                                        IP_ADAPTER_ADDRESSES *aa, ULONG *size)
 {
-    ULONG ret = ERROR_SUCCESS, i, num_v4addrs = 0, num_v4_gateways = 0, num_v6addrs = 0, total_size;
-    DWORD *v4addrs = NULL;
-    SOCKET_ADDRESS *v6addrs = NULL;
+    ULONG ret = ERROR_SUCCESS, i, j, num_v4addrs = 0, num_v4_gateways = 0, num_v6addrs = 0, total_size;
+    DWORD *v4addrs = NULL, *v4masks = NULL;
+    SOCKET_ADDRESS *v6addrs = NULL, *v6masks = NULL;
     PMIB_IPFORWARDTABLE routeTable = NULL;
 
     if (family == WS_AF_INET)
     {
-        if (!(flags & GAA_FLAG_SKIP_UNICAST))
-            ret = v4addressesFromIndex(index, &v4addrs, &num_v4addrs);
+        ret = v4addressesFromIndex(index, &v4addrs, &num_v4addrs, &v4masks);
+
         if (!ret && flags & GAA_FLAG_INCLUDE_ALL_GATEWAYS)
         {
-            ret = AllocateAndGetIpForwardTableFromStack(&routeTable, FALSE,
-                                                        GetProcessHeap(), 0);
-            if (!ret)
-                num_v4_gateways = count_v4_gateways(index, routeTable);
+            ret = AllocateAndGetIpForwardTableFromStack(&routeTable, FALSE, GetProcessHeap(), 0);
+            if (!ret) num_v4_gateways = count_v4_gateways(index, routeTable);
         }
     }
     else if (family == WS_AF_INET6)
     {
-        if (!(flags & GAA_FLAG_SKIP_UNICAST))
-            ret = v6addressesFromIndex(index, &v6addrs, &num_v6addrs);
+        ret = v6addressesFromIndex(index, &v6addrs, &num_v6addrs, &v6masks);
     }
     else if (family == WS_AF_UNSPEC)
     {
-        if (!(flags & GAA_FLAG_SKIP_UNICAST))
-            ret = v4addressesFromIndex(index, &v4addrs, &num_v4addrs);
+        ret = v4addressesFromIndex(index, &v4addrs, &num_v4addrs, &v4masks);
+
         if (!ret && flags & GAA_FLAG_INCLUDE_ALL_GATEWAYS)
         {
-            ret = AllocateAndGetIpForwardTableFromStack(&routeTable, FALSE,
-                                                        GetProcessHeap(), 0);
-            if (!ret)
-                num_v4_gateways = count_v4_gateways(index, routeTable);
+            ret = AllocateAndGetIpForwardTableFromStack(&routeTable, FALSE, GetProcessHeap(), 0);
+            if (!ret) num_v4_gateways = count_v4_gateways(index, routeTable);
         }
-        if (!ret && !(flags & GAA_FLAG_SKIP_UNICAST))
-            ret = v6addressesFromIndex(index, &v6addrs, &num_v6addrs);
+        if (!ret) ret = v6addressesFromIndex(index, &v6addrs, &num_v6addrs, &v6masks);
     }
     else
     {
@@ -768,6 +773,9 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
     if (ret)
     {
         HeapFree(GetProcessHeap(), 0, v4addrs);
+        HeapFree(GetProcessHeap(), 0, v4masks);
+        HeapFree(GetProcessHeap(), 0, v6addrs);
+        HeapFree(GetProcessHeap(), 0, v6masks);
         HeapFree(GetProcessHeap(), 0, routeTable);
         return ret;
     }
@@ -777,6 +785,14 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
     total_size += IF_NAMESIZE * sizeof(WCHAR);
     if (!(flags & GAA_FLAG_SKIP_FRIENDLY_NAME))
         total_size += IF_NAMESIZE * sizeof(WCHAR);
+    if (flags & GAA_FLAG_INCLUDE_PREFIX)
+    {
+        total_size += sizeof(IP_ADAPTER_PREFIX) * num_v4addrs;
+        total_size += sizeof(IP_ADAPTER_PREFIX) * num_v6addrs;
+        total_size += sizeof(struct sockaddr_in) * num_v4addrs;
+        for (i = 0; i < num_v6addrs; i++)
+            total_size += v6masks[i].iSockaddrLength;
+    }
     total_size += sizeof(IP_ADAPTER_UNICAST_ADDRESS) * num_v4addrs;
     total_size += sizeof(struct sockaddr_in) * num_v4addrs;
     total_size += (sizeof(IP_ADAPTER_GATEWAY_ADDRESS) + sizeof(SOCKADDR_IN)) * num_v4_gateways;
@@ -841,7 +857,7 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
                 ptr += sizeof(SOCKADDR_IN);
             }
         }
-        if (num_v4addrs)
+        if (num_v4addrs && !(flags & GAA_FLAG_SKIP_UNICAST))
         {
             IP_ADAPTER_UNICAST_ADDRESS *ua;
             struct WS_sockaddr_in *sa;
@@ -871,7 +887,7 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
                 }
             }
         }
-        if (num_v6addrs)
+        if (num_v6addrs && !(flags & GAA_FLAG_SKIP_UNICAST))
         {
             IP_ADAPTER_UNICAST_ADDRESS *ua;
             struct WS_sockaddr_in6 *sa;
@@ -908,6 +924,99 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
                 }
             }
         }
+        if (num_v4addrs && (flags & GAA_FLAG_INCLUDE_PREFIX))
+        {
+            IP_ADAPTER_PREFIX *prefix;
+
+            prefix = aa->FirstPrefix = (IP_ADAPTER_PREFIX *)ptr;
+            for (i = 0; i < num_v4addrs; i++)
+            {
+                char addr_buf[16];
+                struct WS_sockaddr_in *sa;
+
+                prefix->u.s.Length = sizeof(*prefix);
+                prefix->u.s.Flags  = 0;
+                prefix->Next       = NULL;
+                prefix->Address.iSockaddrLength = sizeof(struct sockaddr_in);
+                prefix->Address.lpSockaddr      = (SOCKADDR *)((char *)prefix + prefix->u.s.Length);
+
+                sa = (struct WS_sockaddr_in *)prefix->Address.lpSockaddr;
+                sa->sin_family           = WS_AF_INET;
+                sa->sin_addr.S_un.S_addr = v4addrs[i] & v4masks[i];
+                sa->sin_port             = 0;
+
+                prefix->PrefixLength = 0;
+                for (j = 0; j < sizeof(*v4masks) * 8; j++)
+                {
+                    if (v4masks[i] & 1 << j) prefix->PrefixLength++;
+                    else break;
+                }
+                TRACE("IPv4 network: %s/%u\n",
+                      debugstr_ipv4((const in_addr_t *)&sa->sin_addr.S_un.S_addr, addr_buf),
+                      prefix->PrefixLength);
+
+                ptr += prefix->u.s.Length + prefix->Address.iSockaddrLength;
+                if (i < num_v4addrs - 1)
+                {
+                    prefix->Next = (IP_ADAPTER_PREFIX *)ptr;
+                    prefix = prefix->Next;
+                }
+            }
+        }
+        if (num_v6addrs && (flags & GAA_FLAG_INCLUDE_PREFIX))
+        {
+            IP_ADAPTER_PREFIX *prefix;
+
+            if (aa->FirstPrefix)
+            {
+                for (prefix = aa->FirstPrefix; prefix->Next; prefix = prefix->Next)
+                    ;
+                prefix->Next = (IP_ADAPTER_PREFIX *)ptr;
+                prefix = (IP_ADAPTER_PREFIX *)ptr;
+            }
+            else
+                prefix = aa->FirstPrefix = (IP_ADAPTER_PREFIX *)ptr;
+            for (i = 0; i < num_v6addrs; i++)
+            {
+                char addr_buf[46];
+                struct WS_sockaddr_in6 *sa;
+                const IN6_ADDR *addr, *mask;
+                BOOL done = FALSE;
+
+                prefix->u.s.Length = sizeof(*prefix);
+                prefix->u.s.Flags  = 0;
+                prefix->Next       = NULL;
+                prefix->Address.iSockaddrLength = sizeof(struct sockaddr_in6);
+                prefix->Address.lpSockaddr      = (SOCKADDR *)((char *)prefix + prefix->u.s.Length);
+
+                sa = (struct WS_sockaddr_in6 *)prefix->Address.lpSockaddr;
+                sa->sin6_family   = WS_AF_INET6;
+                sa->sin6_port     = 0;
+                sa->sin6_flowinfo = 0;
+                addr = &((struct WS_sockaddr_in6 *)v6addrs[i].lpSockaddr)->sin6_addr;
+                mask = &((struct WS_sockaddr_in6 *)v6masks[i].lpSockaddr)->sin6_addr;
+                for (j = 0; j < 8; j++) sa->sin6_addr.u.Word[j] = addr->u.Word[j] & mask->u.Word[j];
+                sa->sin6_scope_id = 0;
+
+                prefix->PrefixLength = 0;
+                for (i = 0; i < 8 && !done; i++)
+                {
+                    for (j = 0; j < sizeof(WORD) * 8 && !done; j++)
+                    {
+                        if (mask->u.Word[i] & 1 << j) prefix->PrefixLength++;
+                        else done = TRUE;
+                    }
+                }
+                TRACE("IPv6 network: %s/%u\n", debugstr_ipv6(sa, addr_buf), prefix->PrefixLength);
+
+                ptr += prefix->u.s.Length + prefix->Address.iSockaddrLength;
+                if (i < num_v6addrs - 1)
+                {
+                    prefix->Next = (IP_ADAPTER_PREFIX *)ptr;
+                    prefix = prefix->Next;
+                }
+            }
+        }
 
         buflen = MAX_INTERFACE_PHYSADDR;
         getInterfacePhysicalByIndex(index, &buflen, aa->PhysicalAddress, &type);
@@ -925,7 +1034,9 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
     *size = total_size;
     HeapFree(GetProcessHeap(), 0, routeTable);
     HeapFree(GetProcessHeap(), 0, v6addrs);
+    HeapFree(GetProcessHeap(), 0, v6masks);
     HeapFree(GetProcessHeap(), 0, v4addrs);
+    HeapFree(GetProcessHeap(), 0, v4masks);
     return ERROR_SUCCESS;
 }
 

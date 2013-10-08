@@ -886,7 +886,7 @@ DWORD getIPAddrTable(PMIB_IPADDRTABLE *ppIpAddrTable, HANDLE heap, DWORD flags)
   return ret;
 }
 
-ULONG v6addressesFromIndex(IF_INDEX index, SOCKET_ADDRESS **addrs, ULONG *num_addrs)
+ULONG v6addressesFromIndex(IF_INDEX index, SOCKET_ADDRESS **addrs, ULONG *num_addrs, SOCKET_ADDRESS **masks)
 {
   struct ifaddrs *ifa;
   ULONG ret;
@@ -906,10 +906,14 @@ ULONG v6addressesFromIndex(IF_INDEX index, SOCKET_ADDRESS **addrs, ULONG *num_ad
     {
       *addrs = HeapAlloc(GetProcessHeap(), 0, n * (sizeof(SOCKET_ADDRESS) +
                          sizeof(struct WS_sockaddr_in6)));
-      if (*addrs)
+      *masks = HeapAlloc(GetProcessHeap(), 0, n * (sizeof(SOCKET_ADDRESS) +
+                         sizeof(struct WS_sockaddr_in6)));
+      if (*addrs && *masks)
       {
         struct WS_sockaddr_in6 *next_addr = (struct WS_sockaddr_in6 *)(
             (BYTE *)*addrs + n * sizeof(SOCKET_ADDRESS));
+        struct WS_sockaddr_in6 *mask_addr = (struct WS_sockaddr_in6 *)(
+            (BYTE *)*masks + n * sizeof(SOCKET_ADDRESS));
 
         for (p = ifa, n = 0; p; p = p->ifa_next)
         {
@@ -917,6 +921,7 @@ ULONG v6addressesFromIndex(IF_INDEX index, SOCKET_ADDRESS **addrs, ULONG *num_ad
               !strcmp(name, p->ifa_name))
           {
             struct sockaddr_in6 *addr = (struct sockaddr_in6 *)p->ifa_addr;
+            struct sockaddr_in6 *mask = (struct sockaddr_in6 *)p->ifa_netmask;
 
             next_addr->sin6_family = WS_AF_INET6;
             next_addr->sin6_port = addr->sin6_port;
@@ -927,6 +932,16 @@ ULONG v6addressesFromIndex(IF_INDEX index, SOCKET_ADDRESS **addrs, ULONG *num_ad
             (*addrs)[n].lpSockaddr = (LPSOCKADDR)next_addr;
             (*addrs)[n].iSockaddrLength = sizeof(struct WS_sockaddr_in6);
             next_addr++;
+
+            mask_addr->sin6_family = WS_AF_INET6;
+            mask_addr->sin6_port = mask->sin6_port;
+            mask_addr->sin6_flowinfo = mask->sin6_flowinfo;
+            memcpy(&mask_addr->sin6_addr, &mask->sin6_addr,
+             sizeof(mask_addr->sin6_addr));
+            mask_addr->sin6_scope_id = mask->sin6_scope_id;
+            (*masks)[n].lpSockaddr = (LPSOCKADDR)mask_addr;
+            (*masks)[n].iSockaddrLength = sizeof(struct WS_sockaddr_in6);
+            mask_addr++;
             n++;
           }
         }
@@ -934,12 +949,17 @@ ULONG v6addressesFromIndex(IF_INDEX index, SOCKET_ADDRESS **addrs, ULONG *num_ad
         ret = ERROR_SUCCESS;
       }
       else
+      {
+        HeapFree(GetProcessHeap(), 0, *addrs);
+        HeapFree(GetProcessHeap(), 0, *masks);
         ret = ERROR_OUTOFMEMORY;
+      }
     }
     else
     {
       *addrs = NULL;
       *num_addrs = 0;
+      *masks = NULL;
       ret = ERROR_SUCCESS;
     }
     freeifaddrs(ifa);
@@ -1073,10 +1093,11 @@ DWORD getIPAddrTable(PMIB_IPADDRTABLE *ppIpAddrTable, HANDLE heap, DWORD flags)
   return ret;
 }
 
-ULONG v6addressesFromIndex(IF_INDEX index, SOCKET_ADDRESS **addrs, ULONG *num_addrs)
+ULONG v6addressesFromIndex(IF_INDEX index, SOCKET_ADDRESS **addrs, ULONG *num_addrs, SOCKET_ADDRESS **masks)
 {
   *addrs = NULL;
   *num_addrs = 0;
+  *masks = NULL;
   return ERROR_SUCCESS;
 }
 
