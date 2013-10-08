@@ -174,8 +174,7 @@ BOOL Context_Release(void *context, ContextFreeFunc dataContextFree)
     return ret;
 }
 
-void Context_CopyProperties(const void *to, const void *from,
- size_t contextSize)
+void Context_CopyProperties(const void *to, const void *from)
 {
     CONTEXT_PROPERTY_LIST *toProperties, *fromProperties;
 

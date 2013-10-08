@@ -877,9 +877,6 @@ HCERTSTORE WINAPI CertOpenSystemStoreW(HCRYPTPROV_LEGACY hProv,
      CERT_SYSTEM_STORE_CURRENT_USER, szSubSystemProtocol);
 }
 
-#define CertContext_CopyProperties(to, from) \
- Context_CopyProperties((to), (from), sizeof(CERT_CONTEXT))
-
 BOOL WINAPI CertAddCertificateContextToStore(HCERTSTORE hCertStore,
  PCCERT_CONTEXT pCertContext, DWORD dwAddDisposition,
  PCCERT_CONTEXT *ppStoreContext)
@@ -944,12 +941,12 @@ BOOL WINAPI CertAddCertificateContextToStore(HCERTSTORE hCertStore,
     case CERT_STORE_ADD_REPLACE_EXISTING_INHERIT_PROPERTIES:
         toAdd = CertDuplicateCertificateContext(pCertContext);
         if (existing)
-            CertContext_CopyProperties(toAdd, existing);
+            Context_CopyProperties(toAdd, existing);
         break;
     case CERT_STORE_ADD_USE_EXISTING:
         if (existing)
         {
-            CertContext_CopyProperties(existing, pCertContext);
+            Context_CopyProperties(existing, pCertContext);
             if (ppStoreContext)
                 *ppStoreContext = CertDuplicateCertificateContext(existing);
         }
@@ -985,7 +982,7 @@ BOOL WINAPI CertAddCertificateContextToStore(HCERTSTORE hCertStore,
             else
             {
                 toAdd = CertDuplicateCertificateContext(pCertContext);
-                CertContext_CopyProperties(toAdd, existing);
+                Context_CopyProperties(toAdd, existing);
             }
         }
         else
@@ -1116,7 +1113,7 @@ BOOL WINAPI CertAddCRLContextToStore(HCERTSTORE hCertStore,
             if (newer < 0)
             {
                 toAdd = CertDuplicateCRLContext(pCrlContext);
-                CrlContext_CopyProperties(toAdd, existing);
+                Context_CopyProperties(toAdd, existing);
             }
             else
             {
@@ -1134,12 +1131,12 @@ BOOL WINAPI CertAddCRLContextToStore(HCERTSTORE hCertStore,
     case CERT_STORE_ADD_REPLACE_EXISTING_INHERIT_PROPERTIES:
         toAdd = CertDuplicateCRLContext(pCrlContext);
         if (existing)
-            CrlContext_CopyProperties(toAdd, existing);
+            Context_CopyProperties(toAdd, existing);
         break;
     case CERT_STORE_ADD_USE_EXISTING:
         if (existing)
         {
-            CrlContext_CopyProperties(existing, pCrlContext);
+            Context_CopyProperties(existing, pCrlContext);
             if (ppStoreContext)
                 *ppStoreContext = CertDuplicateCRLContext(existing);
         }

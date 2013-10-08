@@ -351,8 +351,7 @@ void *Context_GetExtra(const void *context, size_t contextSize) DECLSPEC_HIDDEN;
 void *Context_GetLinkedContext(void *context) DECLSPEC_HIDDEN;
 
 /* Copies properties from fromContext to toContext. */
-void Context_CopyProperties(const void *to, const void *from,
- size_t contextSize) DECLSPEC_HIDDEN;
+void Context_CopyProperties(const void *to, const void *from) DECLSPEC_HIDDEN;
 
 /* Returns context's properties, or the linked context's properties if context
  * is a link context.

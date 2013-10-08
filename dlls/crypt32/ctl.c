@@ -29,9 +29,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
-#define CtlContext_CopyProperties(to, from) \
- Context_CopyProperties((to), (from), sizeof(CTL_CONTEXT))
-
 BOOL WINAPI CertAddCTLContextToStore(HCERTSTORE hCertStore,
  PCCTL_CONTEXT pCtlContext, DWORD dwAddDisposition,
  PCCTL_CONTEXT* ppStoreContext)
@@ -91,7 +88,7 @@ BOOL WINAPI CertAddCTLContextToStore(HCERTSTORE hCertStore,
             if (newer < 0)
             {
                 toAdd = CertDuplicateCTLContext(pCtlContext);
-                CtlContext_CopyProperties(existing, pCtlContext);
+                Context_CopyProperties(existing, pCtlContext);
             }
             else
             {
@@ -109,12 +106,12 @@ BOOL WINAPI CertAddCTLContextToStore(HCERTSTORE hCertStore,
     case CERT_STORE_ADD_REPLACE_EXISTING_INHERIT_PROPERTIES:
         toAdd = CertDuplicateCTLContext(pCtlContext);
         if (existing)
-            CtlContext_CopyProperties(toAdd, existing);
+            Context_CopyProperties(toAdd, existing);
         break;
     case CERT_STORE_ADD_USE_EXISTING:
         if (existing)
         {
-            CtlContext_CopyProperties(existing, pCtlContext);
+            Context_CopyProperties(existing, pCtlContext);
             if (ppStoreContext)
                 *ppStoreContext = CertDuplicateCTLContext(existing);
         }
