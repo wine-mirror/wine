@@ -526,7 +526,7 @@ todo_wine
     ok(GetLastError() == 0xdeadbeef, "unexpected last error %08x\n", GetLastError());
     ok(ret == 1, "unexpected return count %d\n", ret);
 
-    /* Set thread desktop to the new desktop, SendInput should failed. */
+    /* Set thread desktop to the new desktop, SendInput should fail. */
     new_desk = CreateDesktopA("new_desk", NULL, NULL, 0, DESKTOP_ALL_ACCESS, NULL);
     ok(new_desk != NULL, "CreateDesktop failed!\n");
     ret = SetThreadDesktop(new_desk);
@@ -573,7 +573,7 @@ todo_wine
     ok(GetLastError() == 0xdeadbeef, "unexpected last error %08x\n", GetLastError());
     ok(ret == 1, "unexpected return count %d\n", ret);
 
-    /* Switch input desktop to the new desktop, SendInput should failed. */
+    /* Switch input desktop to the new desktop, SendInput should fail. */
     ret = SwitchDesktop(new_desk);
     ok(ret, "SwitchDesktop failed!\n");
     input_desk = OpenInputDesktop(0, FALSE, DESKTOP_ALL_ACCESS);
