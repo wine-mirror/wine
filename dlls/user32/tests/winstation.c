@@ -717,6 +717,152 @@ todo_wine
     ok(ret, "CloseDesktop failed!\n");
 }
 
+static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    if (msg == WM_DESTROY)
+    {
+        trace("destroying hwnd %p\n", hWnd);
+        PostQuitMessage(0);
+        return 0;
+    }
+    return DefWindowProcA( hWnd, msg, wParam, lParam );
+}
+
+typedef struct tag_wnd_param
+{
+    const char *wnd_name;
+    HWND hwnd;
+    HDESK hdesk;
+    HANDLE hevent;
+} wnd_param;
+
+static DWORD WINAPI create_window(LPVOID param)
+{
+    wnd_param *param1 = param;
+    DWORD ret;
+    MSG msg;
+
+    ret = SetThreadDesktop(param1->hdesk);
+    ok(ret, "SetThreadDesktop failed!\n");
+    param1->hwnd = CreateWindowA("test_class", param1->wnd_name, WS_POPUP, 0, 0, 100, 100, NULL, NULL, NULL, NULL);
+    ok(param1->hwnd != 0, "CreateWindowA failed!\n");
+    ret = SetEvent(param1->hevent);
+    ok(ret, "SetEvent failed!\n");
+
+    while (GetMessageA(&msg, 0, 0, 0))
+    {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+
+    return 0;
+}
+
+static void test_foregroundwindow(void)
+{
+    HWND hwnd, hwnd_test, partners[2], hwnds[2];
+    HDESK hdesks[2];
+    int thread_desk_id, input_desk_id, hwnd_id;
+    WNDCLASSA wclass;
+    wnd_param param;
+    DWORD ret;
+
+#define DESKTOPS 2
+
+    memset( &wclass, 0, sizeof(wclass) );
+    wclass.lpszClassName = "test_class";
+    wclass.lpfnWndProc   = WndProc;
+    RegisterClassA(&wclass);
+    param.wnd_name = "win_name";
+
+    hdesks[0] = GetThreadDesktop(GetCurrentThreadId());
+    ok(hdesks[0] != NULL, "OpenDesktop failed!\n");
+    hdesks[1] = CreateDesktop("desk2", NULL, NULL, 0, DESKTOP_ALL_ACCESS, NULL);
+    ok(hdesks[1] != NULL, "CreateDesktop failed!\n");
+
+    for (thread_desk_id = 0; thread_desk_id < DESKTOPS; thread_desk_id++)
+    {
+        param.hdesk = hdesks[thread_desk_id];
+        param.hevent = CreateEventA(NULL, TRUE, FALSE, NULL);
+        CreateThread(NULL, 0, create_window, &param, 0, NULL);
+        ret = WaitForSingleObject(param.hevent, INFINITE);
+        ok(ret == WAIT_OBJECT_0, "wait failed!\n");
+        hwnds[thread_desk_id] = param.hwnd;
+    }
+
+    for (thread_desk_id = 0; thread_desk_id < DESKTOPS; thread_desk_id++)
+    {
+        param.hdesk = hdesks[thread_desk_id];
+        param.hevent = CreateEventA(NULL, TRUE, FALSE, NULL);
+        CreateThread(NULL, 0, create_window, &param, 0, NULL);
+        ret = WaitForSingleObject(param.hevent, INFINITE);
+        ok(ret == WAIT_OBJECT_0, "wait failed!\n");
+        partners[thread_desk_id] = param.hwnd;
+    }
+
+    trace("hwnd0 %p hwnd1 %p partner0 %p partner1 %p\n", hwnds[0], hwnds[1], partners[0], partners[1]);
+
+    for (hwnd_id = 0; hwnd_id < DESKTOPS; hwnd_id++)
+        for (thread_desk_id = 0; thread_desk_id < DESKTOPS; thread_desk_id++)
+            for (input_desk_id = 0; input_desk_id < DESKTOPS; input_desk_id++)
+            {
+                trace("testing thread_desk %d input_desk %d hwnd %d\n",
+                        thread_desk_id, input_desk_id, hwnd_id);
+                hwnd_test = hwnds[hwnd_id];
+                ret = SetThreadDesktop(hdesks[thread_desk_id]);
+                ok(ret, "set thread desktop failed!\n");
+                ret = SwitchDesktop(hdesks[input_desk_id]);
+                ok(ret, "switch desktop failed!\n");
+                SetForegroundWindow(partners[0]);
+                SetForegroundWindow(partners[1]);
+                hwnd = GetForegroundWindow();
+                ok(hwnd != hwnd_test, "unexpected foreground window %p\n", hwnd);
+                ret = SetForegroundWindow(hwnd_test);
+                Sleep(250);
+                hwnd = GetForegroundWindow();
+                if (input_desk_id == hwnd_id)
+                {
+                    if (input_desk_id == thread_desk_id)
+                    {
+                        ok(ret, "SetForegroundWindow failed!\n");
+                        ok(hwnd == hwnd_test , "unexpected foreground window %p\n", hwnd);
+                    }
+                    else
+                    {
+                        todo_wine ok(ret, "SetForegroundWindow failed!\n");
+                        todo_wine ok(hwnd == 0, "unexpected foreground window %p\n", hwnd);
+                    }
+                }
+                else
+                {
+                    if (input_desk_id == thread_desk_id)
+                    {
+                        ok(!ret, "SetForegroundWindow should fail!\n");
+                        ok(hwnd == partners[input_desk_id] , "unexpected foreground window %p\n", hwnd);
+                    }
+                    else
+                    {
+                        todo_wine ok(!ret, "SetForegroundWindow should fail!\n");
+                        todo_wine ok(hwnd == 0, "unexpected foreground window %p\n", hwnd);
+                    }
+                }
+            }
+
+    /* Clean up */
+
+    for (thread_desk_id = DESKTOPS - 1; thread_desk_id >= 0; thread_desk_id--)
+    {
+        ret = SetThreadDesktop(hdesks[thread_desk_id]);
+        ok(ret, "set thread desktop failed!\n");
+        SendMessage(hwnds[thread_desk_id], WM_DESTROY, 0, 0);
+        SendMessage(partners[thread_desk_id], WM_DESTROY, 0, 0);
+    }
+
+    ret = SwitchDesktop(hdesks[0]);
+    ok(ret, "switch desktop failed!\n");
+    CloseDesktop(hdesks[1]);
+}
+
 START_TEST(winstation)
 {
     /* Check whether this platform supports WindowStation calls */
@@ -735,4 +881,5 @@ START_TEST(winstation)
     test_enumdesktops();
     test_handles();
     test_getuserobjectinformation();
+    test_foregroundwindow();
 }
