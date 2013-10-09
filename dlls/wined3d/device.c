@@ -1785,15 +1785,10 @@ void CDECL wined3d_device_set_material(struct wined3d_device *device, const stru
 
     device->update_state->material = *material;
 
-    /* Handle recording of state blocks */
     if (device->recording)
-    {
         device->recording->changed.material = TRUE;
-        TRACE("Recording... not performing anything.\n");
-        return;
-    }
-
-    device_invalidate_state(device, STATE_MATERIAL);
+    else
+        wined3d_cs_emit_set_material(device->cs, material);
 }
 
 void CDECL wined3d_device_get_material(const struct wined3d_device *device, struct wined3d_material *material)
