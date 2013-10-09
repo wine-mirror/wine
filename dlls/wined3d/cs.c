@@ -509,7 +509,7 @@ static void wined3d_cs_exec_set_texture(struct wined3d_cs *cs, const void *data)
             op->texture->sampler = op->stage;
 
         if (!prev || op->texture->target != prev->target)
-            device_invalidate_state(cs->device, STATE_PIXELSHADER);
+            device_invalidate_state(cs->device, STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL));
 
         if (!prev && op->stage < d3d_info->limits.ffp_blend_stages)
         {
@@ -568,7 +568,7 @@ static void wined3d_cs_exec_set_vertex_shader(struct wined3d_cs *cs, const void 
     const struct wined3d_cs_set_shader *op = data;
 
     cs->state.vertex_shader = op->shader;
-    device_invalidate_state(cs->device, STATE_VSHADER);
+    device_invalidate_state(cs->device, STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX));
 }
 
 void wined3d_cs_emit_set_vertex_shader(struct wined3d_cs *cs, struct wined3d_shader *shader)
@@ -587,7 +587,7 @@ static void wined3d_cs_exec_set_geometry_shader(struct wined3d_cs *cs, const voi
     const struct wined3d_cs_set_shader *op = data;
 
     cs->state.geometry_shader = op->shader;
-    device_invalidate_state(cs->device, STATE_GEOMETRY_SHADER);
+    device_invalidate_state(cs->device, STATE_SHADER(WINED3D_SHADER_TYPE_GEOMETRY));
 }
 
 void wined3d_cs_emit_set_geometry_shader(struct wined3d_cs *cs, struct wined3d_shader *shader)
@@ -606,7 +606,7 @@ static void wined3d_cs_exec_set_pixel_shader(struct wined3d_cs *cs, const void *
     const struct wined3d_cs_set_shader *op = data;
 
     cs->state.pixel_shader = op->shader;
-    device_invalidate_state(cs->device, STATE_PIXELSHADER);
+    device_invalidate_state(cs->device, STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL));
 }
 
 void wined3d_cs_emit_set_pixel_shader(struct wined3d_cs *cs, struct wined3d_shader *shader)

@@ -2626,6 +2626,21 @@ const char *debug_d3dtstype(enum wined3d_transform_state tstype)
     }
 }
 
+static const char *debug_shader_type(enum wined3d_shader_type type)
+{
+    switch(type)
+    {
+#define WINED3D_TO_STR(type) case type: return #type
+        WINED3D_TO_STR(WINED3D_SHADER_TYPE_PIXEL);
+        WINED3D_TO_STR(WINED3D_SHADER_TYPE_VERTEX);
+        WINED3D_TO_STR(WINED3D_SHADER_TYPE_GEOMETRY);
+#undef WINED3D_TO_STR
+        default:
+            FIXME("Unrecognized shader type %#x.\n", type);
+            return "unrecognized";
+    }
+}
+
 const char *debug_d3dstate(DWORD state)
 {
     if (STATE_IS_RENDER(state))
@@ -2639,8 +2654,8 @@ const char *debug_d3dstate(DWORD state)
     }
     if (STATE_IS_SAMPLER(state))
         return wine_dbg_sprintf("STATE_SAMPLER(%#x)", state - STATE_SAMPLER(0));
-    if (STATE_IS_PIXELSHADER(state))
-        return "STATE_PIXELSHADER";
+    if (STATE_IS_SHADER(state))
+        return wine_dbg_sprintf("STATE_SHADER(%s)", debug_shader_type(state - STATE_SHADER(0)));
     if (STATE_IS_TRANSFORM(state))
         return wine_dbg_sprintf("STATE_TRANSFORM(%s)", debug_d3dtstype(state - STATE_TRANSFORM(0)));
     if (STATE_IS_STREAMSRC(state))
@@ -2649,10 +2664,6 @@ const char *debug_d3dstate(DWORD state)
         return "STATE_INDEXBUFFER";
     if (STATE_IS_VDECL(state))
         return "STATE_VDECL";
-    if (STATE_IS_VSHADER(state))
-        return "STATE_VSHADER";
-    if (STATE_IS_GEOMETRY_SHADER(state))
-        return "STATE_GEOMETRY_SHADER";
     if (STATE_IS_VIEWPORT(state))
         return "STATE_VIEWPORT";
     if (STATE_IS_LIGHT_TYPE(state))
