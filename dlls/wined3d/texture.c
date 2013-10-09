@@ -658,6 +658,7 @@ static HRESULT texture2d_bind(struct wined3d_texture *texture,
 
 static BOOL texture_srgb_mode(const struct wined3d_texture *texture, enum WINED3DSRGB srgb)
 {
+    const struct wined3d_gl_info *gl_info = &texture->resource.device->adapter->gl_info;
     switch (srgb)
     {
         case SRGB_RGB:
@@ -667,7 +668,8 @@ static BOOL texture_srgb_mode(const struct wined3d_texture *texture, enum WINED3
             return TRUE;
 
         default:
-            return texture->flags & WINED3D_TEXTURE_IS_SRGB;
+            return !gl_info->supported[EXT_TEXTURE_SRGB_DECODE]
+                    && texture->flags & WINED3D_TEXTURE_IS_SRGB;
     }
 }
 
