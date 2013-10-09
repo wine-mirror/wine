@@ -92,6 +92,11 @@ static inline IDirect3DRMFrameImpl *impl_from_IDirect3DRMFrame3(IDirect3DRMFrame
 
 static inline IDirect3DRMFrameImpl *unsafe_impl_from_IDirect3DRMFrame3(IDirect3DRMFrame3 *iface);
 
+static inline IDirect3DRMFrameArrayImpl *impl_from_IDirect3DRMFrameArray(IDirect3DRMFrameArray *iface)
+{
+    return CONTAINING_RECORD(iface, IDirect3DRMFrameArrayImpl, IDirect3DRMFrameArray_iface);
+}
+
 static inline IDirect3DRMVisualArrayImpl *impl_from_IDirect3DRMVisualArray(IDirect3DRMVisualArray *iface)
 {
     return CONTAINING_RECORD(iface, IDirect3DRMVisualArrayImpl, IDirect3DRMVisualArray_iface);
@@ -102,34 +107,27 @@ static inline struct d3drm_light_array *impl_from_IDirect3DRMLightArray(IDirect3
     return CONTAINING_RECORD(iface, struct d3drm_light_array, IDirect3DRMLightArray_iface);
 }
 
-/*** IUnknown methods ***/
-static HRESULT WINAPI IDirect3DRMFrameArrayImpl_QueryInterface(IDirect3DRMFrameArray* iface,
-                                                               REFIID riid, void** object)
+static HRESULT WINAPI IDirect3DRMFrameArrayImpl_QueryInterface(IDirect3DRMFrameArray *iface, REFIID riid, void **out)
 {
-    IDirect3DRMFrameArrayImpl *This = (IDirect3DRMFrameArrayImpl*)iface;
+    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
 
-    TRACE("(%p/%p)->(%s, %p)\n", iface, This, debugstr_guid(riid), object);
-
-    *object = NULL;
-
-    if (IsEqualGUID(riid, &IID_IUnknown) ||
-        IsEqualGUID(riid, &IID_IDirect3DRMFrameArray))
+    if (IsEqualGUID(riid, &IID_IDirect3DRMFrameArray)
+            || IsEqualGUID(riid, &IID_IUnknown))
     {
-        *object = &This->IDirect3DRMFrameArray_iface;
-    }
-    else
-    {
-        FIXME("interface %s not implemented\n", debugstr_guid(riid));
-        return E_NOINTERFACE;
+        IDirect3DRMFrameArray_AddRef(iface);
+        *out = iface;
+        return S_OK;
     }
 
-    IDirect3DRMFrameArray_AddRef(iface);
-    return S_OK;
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+
+    *out = NULL;
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI IDirect3DRMFrameArrayImpl_AddRef(IDirect3DRMFrameArray* iface)
 {
-    IDirect3DRMFrameArrayImpl *This = (IDirect3DRMFrameArrayImpl*)iface;
+    IDirect3DRMFrameArrayImpl *This = impl_from_IDirect3DRMFrameArray(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p)->(): new ref = %u\n", This, ref);
@@ -139,7 +137,7 @@ static ULONG WINAPI IDirect3DRMFrameArrayImpl_AddRef(IDirect3DRMFrameArray* ifac
 
 static ULONG WINAPI IDirect3DRMFrameArrayImpl_Release(IDirect3DRMFrameArray* iface)
 {
-    IDirect3DRMFrameArrayImpl *This = (IDirect3DRMFrameArrayImpl*)iface;
+    IDirect3DRMFrameArrayImpl *This = impl_from_IDirect3DRMFrameArray(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
     ULONG i;
 
@@ -159,7 +157,7 @@ static ULONG WINAPI IDirect3DRMFrameArrayImpl_Release(IDirect3DRMFrameArray* ifa
 /*** IDirect3DRMArray methods ***/
 static DWORD WINAPI IDirect3DRMFrameArrayImpl_GetSize(IDirect3DRMFrameArray* iface)
 {
-    IDirect3DRMFrameArrayImpl *This = (IDirect3DRMFrameArrayImpl*)iface;
+    IDirect3DRMFrameArrayImpl *This = impl_from_IDirect3DRMFrameArray(iface);
 
     TRACE("(%p)->() = %d\n", This,  This->size);
 
@@ -170,7 +168,7 @@ static DWORD WINAPI IDirect3DRMFrameArrayImpl_GetSize(IDirect3DRMFrameArray* ifa
 static HRESULT WINAPI IDirect3DRMFrameArrayImpl_GetElement(IDirect3DRMFrameArray *iface,
         DWORD index, IDirect3DRMFrame **frame)
 {
-    IDirect3DRMFrameArrayImpl *This = (IDirect3DRMFrameArrayImpl*)iface;
+    IDirect3DRMFrameArrayImpl *This = impl_from_IDirect3DRMFrameArray(iface);
 
     TRACE("(%p)->(%u, %p)\n", This, index, frame);
 
