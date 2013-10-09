@@ -1138,7 +1138,7 @@ static void Direct3D1Test(void)
     struct v_out out[sizeof(testverts) / sizeof(testverts[0])];
     D3DHVERTEX outH[sizeof(testverts) / sizeof(testverts[0])];
     D3DTRANSFORMDATA transformdata;
-    DWORD i = FALSE;
+    DWORD i = 0;
 
     /* Interface consistency check. */
     hr = IDirect3DDevice_GetDirect3D(Direct3DDevice1, &Direct3D_alt);
