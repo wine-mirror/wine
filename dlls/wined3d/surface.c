@@ -5600,9 +5600,6 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location, c
         }
     }
 
-    if (location == SFLAG_INSRGBTEX && gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
-        location = SFLAG_INTEXTURE;
-
     if (surface->flags & location)
     {
         TRACE("Location already up to date.\n");
@@ -5661,12 +5658,6 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location, c
 
         if (location != SFLAG_INSYSMEM && (surface->flags & SFLAG_INSYSMEM))
             surface_evict_sysmem(surface);
-    }
-
-    if (surface->flags & (SFLAG_INTEXTURE | SFLAG_INSRGBTEX)
-            && gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
-    {
-        surface->flags |= (SFLAG_INTEXTURE | SFLAG_INSRGBTEX);
     }
 
     return WINED3D_OK;
