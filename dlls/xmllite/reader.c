@@ -703,7 +703,7 @@ static HRESULT readerinput_growraw(xmlreaderinput *readerinput)
 
     read = 0;
     hr = ISequentialStream_Read(readerinput->stream, buffer->data + buffer->written, len, &read);
-    TRACE("requested %d, read %d, ret 0x%08x\n", len, read, hr);
+    TRACE("written=%d, alloc=%d, requested=%d, read=%d, ret=0x%08x\n", buffer->written, buffer->allocated, len, read, hr);
     readerinput->pending = hr == E_PENDING;
     if (FAILED(hr)) return hr;
     buffer->written += read;
@@ -903,14 +903,14 @@ static HRESULT reader_more(xmlreader *reader)
     if (cp == ~0)
     {
         readerinput_grow(readerinput, len);
-        memcpy(dest->data, src->data + src->cur, len);
+        memcpy(dest->data + dest->written, src->data + src->cur, len);
         dest->written += len*sizeof(WCHAR);
         return hr;
     }
 
     dest_len = MultiByteToWideChar(cp, 0, src->data + src->cur, len, NULL, 0);
     readerinput_grow(readerinput, dest_len);
-    ptr = (WCHAR*)dest->data;
+    ptr = (WCHAR*)(dest->data + dest->written);
     MultiByteToWideChar(cp, 0, src->data + src->cur, len, ptr, dest_len);
     ptr[dest_len] = 0;
     dest->written += dest_len*sizeof(WCHAR);
@@ -930,7 +930,7 @@ static inline WCHAR *reader_get_ptr(xmlreader *reader)
     encoded_buffer *buffer = &reader->input->buffer->utf16;
     WCHAR *ptr = (WCHAR*)buffer->data + buffer->cur;
     if (!*ptr) reader_more(reader);
-    return ptr;
+    return (WCHAR*)buffer->data + buffer->cur;
 }
 
 static int reader_cmp(xmlreader *reader, const WCHAR *str)
