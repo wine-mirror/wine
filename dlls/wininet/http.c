@@ -1451,7 +1451,7 @@ HINTERNET WINAPI HttpOpenRequestA(HINTERNET hHttpSession,
 {
     LPWSTR szVerb = NULL, szObjectName = NULL;
     LPWSTR szVersion = NULL, szReferrer = NULL, *szAcceptTypes = NULL;
-    HINTERNET rc = FALSE;
+    HINTERNET rc = NULL;
 
     TRACE("(%p, %s, %s, %s, %s, %p, %08x, %08lx)\n", hHttpSession,
           debugstr_a(lpszVerb), debugstr_a(lpszObjectName),

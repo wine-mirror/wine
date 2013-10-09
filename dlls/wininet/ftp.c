@@ -531,7 +531,7 @@ static BOOL FTP_FtpSetCurrentDirectoryW(ftp_session_t *lpwfs, LPCWSTR lpszDirect
 {
     INT nResCode;
     appinfo_t *hIC = NULL;
-    DWORD bSuccess = FALSE;
+    BOOL bSuccess = FALSE;
 
     TRACE("lpszDirectory(%s)\n", debugstr_w(lpszDirectory));
 
@@ -1046,7 +1046,7 @@ static BOOL FTP_FtpGetCurrentDirectoryW(ftp_session_t *lpwfs, LPWSTR lpszCurrent
 {
     INT nResCode;
     appinfo_t *hIC = NULL;
-    DWORD bSuccess = FALSE;
+    BOOL bSuccess = FALSE;
 
     /* Clear any error information */
     INTERNET_SetLastError(0);
