@@ -1791,8 +1791,11 @@ void macdrv_destroy_cocoa_window(macdrv_window w)
     NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
     WineWindow* window = (WineWindow*)w;
 
+    OnMainThread(^{
+        [window doOrderOut];
+        [window close];
+    });
     [window.queue discardEventsMatchingMask:-1 forWindow:window];
-    [window close];
     [window release];
 
     [pool release];
