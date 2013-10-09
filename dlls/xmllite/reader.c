@@ -726,7 +726,7 @@ static void readerinput_grow(xmlreaderinput *readerinput, int length)
     }
 }
 
-static inline int readerinput_is_utf8(xmlreaderinput *readerinput)
+static inline BOOL readerinput_is_utf8(xmlreaderinput *readerinput)
 {
     static char startA[] = {'<','?'};
     static char commentA[] = {'<','!'};
@@ -953,7 +953,7 @@ static void reader_skipn(xmlreader *reader, int n)
     }
 }
 
-static inline int is_wchar_space(WCHAR ch)
+static inline BOOL is_wchar_space(WCHAR ch)
 {
     return ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n';
 }
@@ -1055,7 +1055,7 @@ static HRESULT reader_parse_versioninfo(xmlreader *reader)
 }
 
 /* ([A-Za-z0-9._] | '-') */
-static inline int is_wchar_encname(WCHAR ch)
+static inline BOOL is_wchar_encname(WCHAR ch)
 {
     return ((ch >= 'A' && ch <= 'Z') ||
             (ch >= 'a' && ch <= 'z') ||
@@ -1269,7 +1269,7 @@ static HRESULT reader_parse_comment(xmlreader *reader)
 }
 
 /* [2] Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF] */
-static inline int is_char(WCHAR ch)
+static inline BOOL is_char(WCHAR ch)
 {
     return (ch == '\t') || (ch == '\r') || (ch == '\n') ||
            (ch >= 0x20 && ch <= 0xd7ff) ||
@@ -1279,7 +1279,7 @@ static inline int is_char(WCHAR ch)
 }
 
 /* [13] PubidChar ::= #x20 | #xD | #xA | [a-zA-Z0-9] | [-'()+,./:=?;!*#@$_%] */
-static inline int is_pubchar(WCHAR ch)
+static inline BOOL is_pubchar(WCHAR ch)
 {
     return (ch == ' ') ||
            (ch >= 'a' && ch <= 'z') ||
@@ -1292,7 +1292,7 @@ static inline int is_pubchar(WCHAR ch)
            (ch == '_') || (ch == '\r') || (ch == '\n');
 }
 
-static inline int is_namestartchar(WCHAR ch)
+static inline BOOL is_namestartchar(WCHAR ch)
 {
     return (ch == ':') || (ch >= 'A' && ch <= 'Z') ||
            (ch == '_') || (ch >= 'a' && ch <= 'z') ||
@@ -1312,7 +1312,7 @@ static inline int is_namestartchar(WCHAR ch)
 }
 
 /* [4 NS] NCName ::= Name - (Char* ':' Char*) */
-static inline int is_ncnamechar(WCHAR ch)
+static inline BOOL is_ncnamechar(WCHAR ch)
 {
     return (ch >= 'A' && ch <= 'Z') ||
            (ch == '_') || (ch >= 'a' && ch <= 'z') ||
@@ -1336,7 +1336,7 @@ static inline int is_ncnamechar(WCHAR ch)
            (ch >= 0xfdf0 && ch <= 0xfffd);
 }
 
-static inline int is_namechar(WCHAR ch)
+static inline BOOL is_namechar(WCHAR ch)
 {
     return (ch == ':') || is_ncnamechar(ch);
 }
