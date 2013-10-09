@@ -980,7 +980,8 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
 
     if (type == FD_TYPE_FILE)
     {
-        if (async_write && (!offset || offset->QuadPart < 0))
+        if (async_write &&
+            (!offset || (offset->QuadPart < 0 && offset->QuadPart != (LONGLONG)-1 /* FILE_WRITE_TO_END_OF_FILE */)))
         {
             status = STATUS_INVALID_PARAMETER;
             goto done;
