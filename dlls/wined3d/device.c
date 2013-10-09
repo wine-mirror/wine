@@ -2144,11 +2144,10 @@ struct wined3d_buffer * CDECL wined3d_device_get_vs_cb(const struct wined3d_devi
     return device->state.cb[WINED3D_SHADER_TYPE_VERTEX][idx];
 }
 
-void CDECL wined3d_device_set_vs_sampler(struct wined3d_device *device, UINT idx, struct wined3d_sampler *sampler)
+static void wined3d_device_set_sampler(struct wined3d_device *device,
+        enum wined3d_shader_type type, UINT idx, struct wined3d_sampler *sampler)
 {
     struct wined3d_sampler *prev;
-
-    TRACE("device %p, idx %u, sampler %p.\n", device, idx, sampler);
 
     if (idx >= MAX_SAMPLER_OBJECTS)
     {
@@ -2156,13 +2155,20 @@ void CDECL wined3d_device_set_vs_sampler(struct wined3d_device *device, UINT idx
         return;
     }
 
-    prev = device->update_state->vs_sampler[idx];
-    device->update_state->vs_sampler[idx] = sampler;
+    prev = device->update_state->sampler[type][idx];
+    device->update_state->sampler[type][idx] = sampler;
 
     if (sampler)
         wined3d_sampler_incref(sampler);
     if (prev)
         wined3d_sampler_decref(prev);
+}
+
+void CDECL wined3d_device_set_vs_sampler(struct wined3d_device *device, UINT idx, struct wined3d_sampler *sampler)
+{
+    TRACE("device %p, idx %u, sampler %p.\n", device, idx, sampler);
+
+    wined3d_device_set_sampler(device, WINED3D_SHADER_TYPE_VERTEX, idx, sampler);
 }
 
 struct wined3d_sampler * CDECL wined3d_device_get_vs_sampler(const struct wined3d_device *device, UINT idx)
@@ -2175,7 +2181,7 @@ struct wined3d_sampler * CDECL wined3d_device_get_vs_sampler(const struct wined3
         return NULL;
     }
 
-    return device->state.vs_sampler[idx];
+    return device->state.sampler[WINED3D_SHADER_TYPE_VERTEX][idx];
 }
 
 static void device_invalidate_shader_constants(const struct wined3d_device *device, DWORD mask)
@@ -2382,23 +2388,9 @@ struct wined3d_buffer * CDECL wined3d_device_get_ps_cb(const struct wined3d_devi
 
 void CDECL wined3d_device_set_ps_sampler(struct wined3d_device *device, UINT idx, struct wined3d_sampler *sampler)
 {
-    struct wined3d_sampler *prev;
-
     TRACE("device %p, idx %u, sampler %p.\n", device, idx, sampler);
 
-    if (idx >= MAX_SAMPLER_OBJECTS)
-    {
-        WARN("Invalid sampler index %u.\n", idx);
-        return;
-    }
-
-    prev = device->update_state->ps_sampler[idx];
-    device->update_state->ps_sampler[idx] = sampler;
-
-    if (sampler)
-        wined3d_sampler_incref(sampler);
-    if (prev)
-        wined3d_sampler_decref(prev);
+    wined3d_device_set_sampler(device, WINED3D_SHADER_TYPE_PIXEL, idx, sampler);
 }
 
 struct wined3d_sampler * CDECL wined3d_device_get_ps_sampler(const struct wined3d_device *device, UINT idx)
@@ -2411,7 +2403,7 @@ struct wined3d_sampler * CDECL wined3d_device_get_ps_sampler(const struct wined3
         return NULL;
     }
 
-    return device->state.ps_sampler[idx];
+    return device->state.sampler[WINED3D_SHADER_TYPE_PIXEL][idx];
 }
 
 HRESULT CDECL wined3d_device_set_ps_consts_b(struct wined3d_device *device,
@@ -2603,23 +2595,9 @@ struct wined3d_buffer * CDECL wined3d_device_get_gs_cb(const struct wined3d_devi
 
 void CDECL wined3d_device_set_gs_sampler(struct wined3d_device *device, UINT idx, struct wined3d_sampler *sampler)
 {
-    struct wined3d_sampler *prev;
-
     TRACE("device %p, idx %u, sampler %p.\n", device, idx, sampler);
 
-    if (idx >= MAX_SAMPLER_OBJECTS)
-    {
-        WARN("Invalid sampler index %u.\n", idx);
-        return;
-    }
-
-    prev = device->update_state->gs_sampler[idx];
-    device->update_state->gs_sampler[idx] = sampler;
-
-    if (sampler)
-        wined3d_sampler_incref(sampler);
-    if (prev)
-        wined3d_sampler_decref(prev);
+    wined3d_device_set_sampler(device, WINED3D_SHADER_TYPE_GEOMETRY, idx, sampler);
 }
 
 struct wined3d_sampler * CDECL wined3d_device_get_gs_sampler(const struct wined3d_device *device, UINT idx)
@@ -2632,7 +2610,7 @@ struct wined3d_sampler * CDECL wined3d_device_get_gs_sampler(const struct wined3
         return NULL;
     }
 
-    return device->state.gs_sampler[idx];
+    return device->state.sampler[WINED3D_SHADER_TYPE_GEOMETRY][idx];
 }
 
 /* Context activation is done by the caller. */

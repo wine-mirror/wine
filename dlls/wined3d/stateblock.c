@@ -520,32 +520,14 @@ void state_unbind_resources(struct wined3d_state *state)
                 wined3d_buffer_decref(buffer);
             }
         }
-    }
 
-    for (i = 0; i < MAX_SAMPLER_OBJECTS; ++i)
-    {
-        if ((sampler = state->vs_sampler[i]))
+        for (j = 0; j < MAX_SAMPLER_OBJECTS; ++j)
         {
-            state->vs_sampler[i] = NULL;
-            wined3d_sampler_decref(sampler);
-        }
-    }
-
-    for (i = 0; i < MAX_SAMPLER_OBJECTS; ++i)
-    {
-        if ((sampler = state->gs_sampler[i]))
-        {
-            state->gs_sampler[i] = NULL;
-            wined3d_sampler_decref(sampler);
-        }
-    }
-
-    for (i = 0; i < MAX_SAMPLER_OBJECTS; ++i)
-    {
-        if ((sampler = state->ps_sampler[i]))
-        {
-            state->ps_sampler[i] = NULL;
-            wined3d_sampler_decref(sampler);
+            if ((sampler = state->sampler[i][j]))
+            {
+                state->sampler[i][j] = NULL;
+                wined3d_sampler_decref(sampler);
+            }
         }
     }
 }
