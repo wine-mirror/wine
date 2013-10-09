@@ -855,6 +855,7 @@ static struct test_entry pi_tests[] = {
     { "<?pi  ?>", "pi", "", S_OK },
     { "<?pi pi data?>", "pi", "pi data", S_OK },
     { "<?pi pi data  ?>", "pi", "pi data  ", S_OK },
+    { "<?pi    data  ?>", "pi", "data  ", S_OK },
     { "<?pi:pi?>", NULL, NULL, NC_E_NAMECOLON, WC_E_NAMECHARACTER },
     { "<?:pi ?>", NULL, NULL, WC_E_PI, WC_E_NAMECHARACTER },
     { "<?-pi ?>", NULL, NULL, WC_E_PI, WC_E_NAMECHARACTER },
