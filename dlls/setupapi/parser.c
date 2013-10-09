@@ -471,14 +471,14 @@ static inline enum parser_state set_state( struct parser *parser, enum parser_st
 
 
 /* check if the pointer points to an end of file */
-static inline int is_eof( const struct parser *parser, const WCHAR *ptr )
+static inline BOOL is_eof( const struct parser *parser, const WCHAR *ptr )
 {
     return (ptr >= parser->end || *ptr == CONTROL_Z);
 }
 
 
 /* check if the pointer points to an end of line */
-static inline int is_eol( const struct parser *parser, const WCHAR *ptr )
+static inline BOOL is_eol( const struct parser *parser, const WCHAR *ptr )
 {
     return (ptr >= parser->end || *ptr == CONTROL_Z || *ptr == '\n');
 }
@@ -528,7 +528,7 @@ static int add_section_from_token( struct parser *parser )
 
 
 /* add a field containing the current token to the current line */
-static struct field *add_field_from_token( struct parser *parser, int is_key )
+static struct field *add_field_from_token( struct parser *parser, BOOL is_key )
 {
     struct field *field;
     WCHAR *text;
@@ -648,14 +648,14 @@ static const WCHAR *key_name_state( struct parser *parser, const WCHAR *pos )
 
          case '=':
             push_token( parser, token_end );
-            if (!add_field_from_token( parser, 1 )) return NULL;
+            if (!add_field_from_token( parser, TRUE )) return NULL;
             parser->start = p + 1;
             push_state( parser, VALUE_NAME );
             set_state( parser, LEADING_SPACES );
             return p + 1;
         case ';':
             push_token( parser, token_end );
-            if (!add_field_from_token( parser, 0 )) return NULL;
+            if (!add_field_from_token( parser, FALSE )) return NULL;
             push_state( parser, LINE_START );
             set_state( parser, COMMENT );
             return p + 1;
@@ -700,13 +700,13 @@ static const WCHAR *value_name_state( struct parser *parser, const WCHAR *pos )
         {
         case ';':
             push_token( parser, token_end );
-            if (!add_field_from_token( parser, 0 )) return NULL;
+            if (!add_field_from_token( parser, FALSE )) return NULL;
             push_state( parser, LINE_START );
             set_state( parser, COMMENT );
             return p + 1;
         case ',':
             push_token( parser, token_end );
-            if (!add_field_from_token( parser, 0 )) return NULL;
+            if (!add_field_from_token( parser, FALSE )) return NULL;
             parser->start = p + 1;
             push_state( parser, VALUE_NAME );
             set_state( parser, LEADING_SPACES );
@@ -736,7 +736,7 @@ static const WCHAR *value_name_state( struct parser *parser, const WCHAR *pos )
         }
     }
     push_token( parser, token_end );
-    if (!add_field_from_token( parser, 0 )) return NULL;
+    if (!add_field_from_token( parser, FALSE )) return NULL;
     set_state( parser, LINE_START );
     return p;
 }

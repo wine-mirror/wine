@@ -1502,7 +1502,7 @@ static DWORD decompress_file_cab( LPCWSTR source, LPCWSTR target )
  */
 DWORD WINAPI SetupDecompressOrCopyFileA( PCSTR source, PCSTR target, PUINT type )
 {
-    DWORD ret = FALSE;
+    DWORD ret = 0;
     WCHAR *sourceW = NULL, *targetW = NULL;
 
     if (source && !(sourceW = MultiByteToUnicode( source, CP_ACP ))) return FALSE;
