@@ -711,11 +711,12 @@ static HRESULT readerinput_growraw(xmlreaderinput *readerinput)
     return hr;
 }
 
-/* grows UTF-16 buffer so it has at least 'length' bytes free on return */
+/* grows UTF-16 buffer so it has at least 'length' WCHAR chars free on return */
 static void readerinput_grow(xmlreaderinput *readerinput, int length)
 {
     encoded_buffer *buffer = &readerinput->buffer->utf16;
 
+    length *= sizeof(WCHAR);
     /* grow if needed, plus 4 bytes to be sure null terminator will fit in */
     if (buffer->allocated < buffer->written + length + 4)
     {
