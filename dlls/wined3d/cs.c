@@ -45,6 +45,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_TEXTURE_STATE,
     WINED3D_CS_OP_SET_SAMPLER_STATE,
     WINED3D_CS_OP_SET_TRANSFORM,
+    WINED3D_CS_OP_SET_CLIP_PLANE,
 };
 
 struct wined3d_cs_present
@@ -175,6 +176,13 @@ struct wined3d_cs_set_transform
     enum wined3d_cs_op opcode;
     enum wined3d_transform_state state;
     const struct wined3d_matrix *matrix;
+};
+
+struct wined3d_cs_set_clip_plane
+{
+    enum wined3d_cs_op opcode;
+    UINT plane_idx;
+    const struct wined3d_vec4 *plane;
 };
 
 static void wined3d_cs_exec_present(struct wined3d_cs *cs, const void *data)
@@ -691,6 +699,26 @@ void wined3d_cs_emit_set_transform(struct wined3d_cs *cs, enum wined3d_transform
     cs->ops->submit(cs);
 }
 
+static void wined3d_cs_exec_set_clip_plane(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_set_clip_plane *op = data;
+
+    cs->state.clip_planes[op->plane_idx] = *op->plane;
+    device_invalidate_state(cs->device, STATE_CLIPPLANE(op->plane_idx));
+}
+
+void wined3d_cs_emit_set_clip_plane(struct wined3d_cs *cs, UINT plane_idx, const struct wined3d_vec4 *plane)
+{
+    struct wined3d_cs_set_clip_plane *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_SET_CLIP_PLANE;
+    op->plane_idx = plane_idx;
+    op->plane = plane;
+
+    cs->ops->submit(cs);
+}
+
 static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
 {
     /* WINED3D_CS_OP_PRESENT                */ wined3d_cs_exec_present,
@@ -712,6 +740,7 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_TEXTURE_STATE      */ wined3d_cs_exec_set_texture_state,
     /* WINED3D_CS_OP_SET_SAMPLER_STATE      */ wined3d_cs_exec_set_sampler_state,
     /* WINED3D_CS_OP_SET_TRANSFORM          */ wined3d_cs_exec_set_transform,
+    /* WINED3D_CS_OP_SET_CLIP_PLANE         */ wined3d_cs_exec_set_clip_plane,
 };
 
 static void *wined3d_cs_st_require_space(struct wined3d_cs *cs, size_t size)

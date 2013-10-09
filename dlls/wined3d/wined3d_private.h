@@ -2485,6 +2485,8 @@ void wined3d_cs_emit_draw(struct wined3d_cs *cs, UINT start_idx, UINT index_coun
 void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *swapchain,
         const RECT *src_rect, const RECT *dst_rect, HWND dst_window_override,
         const RGNDATA *dirty_region, DWORD flags) DECLSPEC_HIDDEN;
+void wined3d_cs_emit_set_clip_plane(struct wined3d_cs *cs, UINT plane_idx,
+        const struct wined3d_vec4 *plane) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_depth_stencil(struct wined3d_cs *cs, struct wined3d_surface *depth_stencil) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_geometry_shader(struct wined3d_cs *cs, struct wined3d_shader *shader) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_index_buffer(struct wined3d_cs *cs, struct wined3d_buffer *buffer,

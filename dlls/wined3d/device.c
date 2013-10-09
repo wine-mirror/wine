@@ -1734,14 +1734,8 @@ HRESULT CDECL wined3d_device_set_clip_plane(struct wined3d_device *device,
 
     device->update_state->clip_planes[plane_idx] = *plane;
 
-    /* Handle recording of state blocks. */
-    if (device->recording)
-    {
-        TRACE("Recording... not performing anything.\n");
-        return WINED3D_OK;
-    }
-
-    device_invalidate_state(device, STATE_CLIPPLANE(plane_idx));
+    if (!device->recording)
+        wined3d_cs_emit_set_clip_plane(device->cs, plane_idx, plane);
 
     return WINED3D_OK;
 }
