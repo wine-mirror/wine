@@ -10,57 +10,16 @@
 
 DLLFLAGS     = @DLLFLAGS@
 TESTMODULE   = $(TESTDLL:%.dll=%)_test.exe
-TESTRESULTS  = $(C_SRCS:.c=.ok)
-TESTPROGRAM  = $(TESTMODULE)$(DLLEXT)
-WINETEST_EXE = $(TESTDLL:%.dll=%)_test-stripped.exe$(DLLEXT)
 WINETEST_RES = $(top_builddir)/programs/winetest/$(TESTDLL:%.dll=%)_test.res
-RUNTESTFLAGS = -q -P wine -M $(TESTDLL) -T $(top_builddir) -p $(TESTPROGRAM)
-
-ALL_LIBS     = $(IMPORTS:%=-l%) $(LDFLAGS) $(LIBS)
 EXTRA_OBJS   = testlist.o
-
-CROSSTEST    = $(TESTDLL:%.dll=%)_crosstest.exe
 MAKEDEPFLAGS = -xo -xcross.o
 
+all: $(TESTMODULE)$(DLLEXT) $(WINETEST_RES)
+
+check test: $(C_SRCS:.c=.ok)
+
+crosstest: @CROSSTEST_DISABLE@ $(TESTDLL:%.dll=%)_crosstest.exe
+
+.PHONY: check test crosstest
+
 @MAKE_RULES@
-
-all: $(TESTPROGRAM) $(WINETEST_RES)
-
-$(TESTMODULE) $(TESTMODULE).so: $(OBJS) Makefile.in
-	$(WINEGCC) $(APPMODE) $(OBJS) -o $@ $(ALL_LIBS)
-
-$(WINETEST_EXE): $(OBJS) Makefile.in
-	$(WINEGCC) -s -Wb,-F,$(TESTMODULE) $(APPMODE) $(OBJS) -o $@ $(ALL_LIBS)
-
-$(WINETEST_RES): $(WINETEST_EXE)
-	echo "$(TESTMODULE) TESTRES \"$(WINETEST_EXE)\"" | $(WRC) $(RCFLAGS) -o $@
-
-.PHONY: check test testclean crosstest
-
-# Rules for building test list
-
-testlist.c: Makefile.in $(MAKECTESTS)
-	$(MAKECTESTS) -o $@ $(C_SRCS)
-
-testlist.o testlist.cross.o: testlist.c $(top_srcdir)/include/wine/test.h
-
-# Rules for testing
-
-check test: $(TESTRESULTS)
-
-$(TESTRESULTS): $(TESTMODULE)$(DLLEXT) ../$(TESTDLL)$(DLLEXT)
-
-# Rules for cross-compiling tests
-
-crosstest: @CROSSTEST_DISABLE@ $(CROSSTEST)
-
-$(CROSSTEST): $(CROSSOBJS) Makefile.in
-	$(CROSSWINEGCC) $(CROSSOBJS) -o $@ $(ALL_LIBS)
-
-# Rules for cleaning
-
-testclean::
-	$(RM) $(TESTRESULTS)
-
-clean::
-	$(RM) testlist.c $(TESTMODULE) $(TESTRESULTS) $(CROSSTEST)
