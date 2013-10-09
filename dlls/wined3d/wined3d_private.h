@@ -1818,17 +1818,15 @@ struct wined3d_state
     GLenum gl_primitive_type;
 
     struct wined3d_shader *shader[WINED3D_SHADER_TYPE_COUNT];
+    struct wined3d_buffer *cb[WINED3D_SHADER_TYPE_COUNT][MAX_CONSTANT_BUFFERS];
 
-    struct wined3d_buffer *vs_cb[MAX_CONSTANT_BUFFERS];
     struct wined3d_sampler *vs_sampler[MAX_SAMPLER_OBJECTS];
     BOOL vs_consts_b[MAX_CONST_B];
     INT vs_consts_i[MAX_CONST_I * 4];
     float *vs_consts_f;
 
-    struct wined3d_buffer *gs_cb[MAX_CONSTANT_BUFFERS];
     struct wined3d_sampler *gs_sampler[MAX_SAMPLER_OBJECTS];
 
-    struct wined3d_buffer *ps_cb[MAX_CONSTANT_BUFFERS];
     struct wined3d_sampler *ps_sampler[MAX_SAMPLER_OBJECTS];
     BOOL ps_consts_b[MAX_CONST_B];
     INT ps_consts_i[MAX_CONST_I * 4];

@@ -463,7 +463,7 @@ void state_unbind_resources(struct wined3d_state *state)
     struct wined3d_texture *texture;
     struct wined3d_buffer *buffer;
     struct wined3d_shader *shader;
-    unsigned int i;
+    unsigned int i, j;
 
     if ((decl = state->vertex_declaration))
     {
@@ -511,14 +511,14 @@ void state_unbind_resources(struct wined3d_state *state)
             state->shader[i] = NULL;
             wined3d_shader_decref(shader);
         }
-    }
 
-    for (i = 0; i < MAX_CONSTANT_BUFFERS; ++i)
-    {
-        if ((buffer = state->vs_cb[i]))
+        for (j = 0; j < MAX_CONSTANT_BUFFERS; ++j)
         {
-            state->vs_cb[i] = NULL;
-            wined3d_buffer_decref(buffer);
+            if ((buffer = state->cb[i][j]))
+            {
+                state->cb[i][j] = NULL;
+                wined3d_buffer_decref(buffer);
+            }
         }
     }
 
@@ -528,15 +528,6 @@ void state_unbind_resources(struct wined3d_state *state)
         {
             state->vs_sampler[i] = NULL;
             wined3d_sampler_decref(sampler);
-        }
-    }
-
-    for (i = 0; i < MAX_CONSTANT_BUFFERS; ++i)
-    {
-        if ((buffer = state->gs_cb[i]))
-        {
-            state->gs_cb[i] = NULL;
-            wined3d_buffer_decref(buffer);
         }
     }
 
@@ -555,15 +546,6 @@ void state_unbind_resources(struct wined3d_state *state)
         {
             state->ps_sampler[i] = NULL;
             wined3d_sampler_decref(sampler);
-        }
-    }
-
-    for (i = 0; i < MAX_CONSTANT_BUFFERS; ++i)
-    {
-        if ((buffer = state->ps_cb[i]))
-        {
-            state->ps_cb[i] = NULL;
-            wined3d_buffer_decref(buffer);
         }
     }
 }
