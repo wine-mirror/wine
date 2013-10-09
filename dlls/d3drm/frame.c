@@ -215,24 +215,21 @@ static HRESULT Direct3DRMFrameArray_create(IDirect3DRMFrameArray** obj)
     return S_OK;
 }
 
-/*** IUnknown methods ***/
-static HRESULT WINAPI IDirect3DRMVisualArrayImpl_QueryInterface(IDirect3DRMVisualArray* iface,
-                                                                REFIID riid, void** ret_iface)
+static HRESULT WINAPI IDirect3DRMVisualArrayImpl_QueryInterface(IDirect3DRMVisualArray *iface, REFIID riid, void **out)
 {
-    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ret_iface);
+    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
 
-    if (IsEqualGUID(riid, &IID_IUnknown) ||
-        IsEqualGUID(riid, &IID_IDirect3DRMFrameArray))
+    if (IsEqualGUID(riid, &IID_IDirect3DRMVisualArray)
+            || IsEqualGUID(riid, &IID_IUnknown))
     {
-        *ret_iface = iface;
         IDirect3DRMVisualArray_AddRef(iface);
+        *out = iface;
         return S_OK;
     }
 
-    *ret_iface = NULL;
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
 
-    WARN("Interface %s not implemented\n", debugstr_guid(riid));
-
+    *out = NULL;
     return E_NOINTERFACE;
 }
 
