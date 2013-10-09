@@ -154,13 +154,16 @@ static HRESULT wined3d_texture_bind(struct wined3d_texture *texture,
 
     TRACE("texture %p, context %p, srgb %#x, set_surface_desc %p.\n", texture, context, srgb, set_surface_desc);
 
+    if (gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
+        srgb = FALSE;
+
     /* sRGB mode cache for preload() calls outside drawprim. */
     if (srgb)
         texture->flags |= WINED3D_TEXTURE_IS_SRGB;
     else
         texture->flags &= ~WINED3D_TEXTURE_IS_SRGB;
 
-    gl_tex = wined3d_texture_get_gl_texture(texture, context->gl_info, srgb);
+    gl_tex = wined3d_texture_get_gl_texture(texture, srgb);
     target = texture->target;
 
     /* Generate a texture name if we don't already have one. */
@@ -282,8 +285,7 @@ void wined3d_texture_apply_state_changes(struct wined3d_texture *texture,
 
     TRACE("texture %p, sampler_states %p.\n", texture, sampler_states);
 
-    gl_tex = wined3d_texture_get_gl_texture(texture, gl_info,
-            texture->flags & WINED3D_TEXTURE_IS_SRGB);
+    gl_tex = wined3d_texture_get_gl_texture(texture, texture->flags & WINED3D_TEXTURE_IS_SRGB);
 
     /* This function relies on the correct texture being bound and loaded. */
 
@@ -612,12 +614,11 @@ static HRESULT texture2d_bind(struct wined3d_texture *texture,
     if (set_gl_texture_desc && SUCCEEDED(hr))
     {
         UINT sub_count = texture->level_count * texture->layer_count;
-        BOOL srgb_tex = !context->gl_info->supported[EXT_TEXTURE_SRGB_DECODE]
-                && (texture->flags & WINED3D_TEXTURE_IS_SRGB);
+        BOOL srgb_tex = texture->flags & WINED3D_TEXTURE_IS_SRGB;
         struct gl_texture *gl_tex;
         UINT i;
 
-        gl_tex = wined3d_texture_get_gl_texture(texture, context->gl_info, srgb_tex);
+        gl_tex = wined3d_texture_get_gl_texture(texture, srgb_tex);
 
         for (i = 0; i < sub_count; ++i)
         {
@@ -658,7 +659,6 @@ static HRESULT texture2d_bind(struct wined3d_texture *texture,
 
 static BOOL texture_srgb_mode(const struct wined3d_texture *texture, enum WINED3DSRGB srgb)
 {
-    const struct wined3d_gl_info *gl_info = &texture->resource.device->adapter->gl_info;
     switch (srgb)
     {
         case SRGB_RGB:
@@ -668,8 +668,7 @@ static BOOL texture_srgb_mode(const struct wined3d_texture *texture, enum WINED3
             return TRUE;
 
         default:
-            return !gl_info->supported[EXT_TEXTURE_SRGB_DECODE]
-                    && texture->flags & WINED3D_TEXTURE_IS_SRGB;
+            return texture->flags & WINED3D_TEXTURE_IS_SRGB;
     }
 }
 
@@ -685,8 +684,11 @@ static void texture2d_preload(struct wined3d_texture *texture,
 
     TRACE("texture %p, srgb %#x.\n", texture, srgb);
 
+    if (gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
+        srgb = SRGB_RGB;
+
     srgb_mode = texture_srgb_mode(texture, srgb);
-    if (srgb_mode && !gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
+    if (srgb_mode)
         flag = WINED3D_TEXTURE_SRGB_VALID;
     else
         flag = WINED3D_TEXTURE_RGB_VALID;
@@ -1058,8 +1060,11 @@ static void texture3d_preload(struct wined3d_texture *texture,
 
     TRACE("texture %p, srgb %#x.\n", texture, srgb);
 
+    if (gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
+        srgb = SRGB_RGB;
+
     srgb_mode = texture_srgb_mode(texture, srgb);
-    if (srgb_mode && !gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
+    if (srgb_mode)
         flag = WINED3D_TEXTURE_SRGB_VALID;
     else
         flag = WINED3D_TEXTURE_RGB_VALID;

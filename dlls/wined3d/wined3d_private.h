@@ -2102,10 +2102,9 @@ static inline struct wined3d_texture *wined3d_texture_from_resource(struct wined
 }
 
 static inline struct gl_texture *wined3d_texture_get_gl_texture(struct wined3d_texture *texture,
-        const struct wined3d_gl_info *gl_info, BOOL srgb)
+        BOOL srgb)
 {
-    return srgb && !gl_info->supported[EXT_TEXTURE_SRGB_DECODE]
-            ? &texture->texture_srgb : &texture->texture_rgb;
+    return srgb ? &texture->texture_srgb : &texture->texture_rgb;
 }
 
 void wined3d_texture_apply_state_changes(struct wined3d_texture *texture,
