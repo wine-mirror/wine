@@ -657,7 +657,9 @@ static void shader_arb_load_constants_internal(struct shader_arb_priv *priv,
 
     if (!from_shader_select)
     {
-        const struct wined3d_shader *vshader = state->vertex_shader, *pshader = state->pixel_shader;
+        const struct wined3d_shader *vshader = state->shader[WINED3D_SHADER_TYPE_VERTEX];
+        const struct wined3d_shader *pshader = state->shader[WINED3D_SHADER_TYPE_PIXEL];
+
         if (vshader
                 && (vshader->reg_maps.boolean_constants
                 || (!gl_info->supported[NV_VERTEX_PROGRAM2_OPTION]
@@ -691,7 +693,7 @@ static void shader_arb_load_constants_internal(struct shader_arb_priv *priv,
 
     if (useVertexShader)
     {
-        struct wined3d_shader *vshader = state->vertex_shader;
+        const struct wined3d_shader *vshader = state->shader[WINED3D_SHADER_TYPE_VERTEX];
         const struct arb_vs_compiled_shader *gl_shader = priv->compiled_vprog;
 
         /* Load DirectX 9 float constants for vertex shader */
@@ -702,7 +704,7 @@ static void shader_arb_load_constants_internal(struct shader_arb_priv *priv,
 
     if (usePixelShader)
     {
-        struct wined3d_shader *pshader = state->pixel_shader;
+        const struct wined3d_shader *pshader = state->shader[WINED3D_SHADER_TYPE_PIXEL];
         const struct arb_ps_compiled_shader *gl_shader = priv->compiled_fprog;
         UINT rt_height = state->fb->render_targets[0]->resource.height;
 
@@ -4586,7 +4588,7 @@ static void find_arb_vs_compile_args(const struct wined3d_state *state,
     args->clip.boolclip_compare = 0;
     if (use_ps(state))
     {
-        const struct wined3d_shader *ps = state->pixel_shader;
+        const struct wined3d_shader *ps = state->shader[WINED3D_SHADER_TYPE_PIXEL];
         const struct arb_pshader_private *shader_priv = ps->backend_data;
         args->ps_signature = shader_priv->input_signature_idx;
 
@@ -4658,7 +4660,7 @@ static void shader_arb_select(void *shader_priv, struct wined3d_context *context
     /* Deal with pixel shaders first so the vertex shader arg function has the input signature ready */
     if (use_ps(state))
     {
-        struct wined3d_shader *ps = state->pixel_shader;
+        struct wined3d_shader *ps = state->shader[WINED3D_SHADER_TYPE_PIXEL];
         struct arb_ps_compile_args compile_args;
         struct arb_ps_compiled_shader *compiled;
 
@@ -4725,7 +4727,7 @@ static void shader_arb_select(void *shader_priv, struct wined3d_context *context
 
     if (use_vs(state))
     {
-        struct wined3d_shader *vs = state->vertex_shader;
+        struct wined3d_shader *vs = state->shader[WINED3D_SHADER_TYPE_VERTEX];
         struct arb_vs_compile_args compile_args;
         struct arb_vs_compiled_shader *compiled;
         const struct wined3d_shader_signature_element *ps_input_sig;
@@ -4739,7 +4741,7 @@ static void shader_arb_select(void *shader_priv, struct wined3d_context *context
         if (compile_args.ps_signature == ~0U)
             ps_input_sig = NULL;
         else
-            ps_input_sig = state->pixel_shader->input_signature;
+            ps_input_sig = state->shader[WINED3D_SHADER_TYPE_PIXEL]->input_signature;
 
         compiled = find_arb_vshader(vs, context->gl_info, context->stream_info.use_map,
                 &compile_args, ps_input_sig);

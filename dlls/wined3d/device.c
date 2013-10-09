@@ -2060,7 +2060,7 @@ struct wined3d_vertex_declaration * CDECL wined3d_device_get_vertex_declaration(
 
 void CDECL wined3d_device_set_vertex_shader(struct wined3d_device *device, struct wined3d_shader *shader)
 {
-    struct wined3d_shader *prev = device->update_state->vertex_shader;
+    struct wined3d_shader *prev = device->update_state->shader[WINED3D_SHADER_TYPE_VERTEX];
 
     TRACE("device %p, shader %p.\n", device, shader);
 
@@ -2072,9 +2072,9 @@ void CDECL wined3d_device_set_vertex_shader(struct wined3d_device *device, struc
 
     if (shader)
         wined3d_shader_incref(shader);
-    device->update_state->vertex_shader = shader;
+    device->update_state->shader[WINED3D_SHADER_TYPE_VERTEX] = shader;
     if (!device->recording)
-        wined3d_cs_emit_set_vertex_shader(device->cs, shader);
+        wined3d_cs_emit_set_shader(device->cs, WINED3D_SHADER_TYPE_VERTEX, shader);
     if (prev)
         wined3d_shader_decref(prev);
 }
@@ -2083,7 +2083,7 @@ struct wined3d_shader * CDECL wined3d_device_get_vertex_shader(const struct wine
 {
     TRACE("device %p.\n", device);
 
-    return device->state.vertex_shader;
+    return device->state.shader[WINED3D_SHADER_TYPE_VERTEX];
 }
 
 void CDECL wined3d_device_set_vs_cb(struct wined3d_device *device, UINT idx, struct wined3d_buffer *buffer)
@@ -2328,7 +2328,7 @@ HRESULT CDECL wined3d_device_get_vs_consts_f(const struct wined3d_device *device
 
 void CDECL wined3d_device_set_pixel_shader(struct wined3d_device *device, struct wined3d_shader *shader)
 {
-    struct wined3d_shader *prev = device->update_state->pixel_shader;
+    struct wined3d_shader *prev = device->update_state->shader[WINED3D_SHADER_TYPE_PIXEL];
 
     TRACE("device %p, shader %p.\n", device, shader);
 
@@ -2340,9 +2340,9 @@ void CDECL wined3d_device_set_pixel_shader(struct wined3d_device *device, struct
 
     if (shader)
         wined3d_shader_incref(shader);
-    device->update_state->pixel_shader = shader;
+    device->update_state->shader[WINED3D_SHADER_TYPE_PIXEL] = shader;
     if (!device->recording)
-        wined3d_cs_emit_set_pixel_shader(device->cs, shader);
+        wined3d_cs_emit_set_shader(device->cs, WINED3D_SHADER_TYPE_PIXEL, shader);
     if (prev)
         wined3d_shader_decref(prev);
 }
@@ -2351,7 +2351,7 @@ struct wined3d_shader * CDECL wined3d_device_get_pixel_shader(const struct wined
 {
     TRACE("device %p.\n", device);
 
-    return device->state.pixel_shader;
+    return device->state.shader[WINED3D_SHADER_TYPE_PIXEL];
 }
 
 void CDECL wined3d_device_set_ps_cb(struct wined3d_device *device, UINT idx, struct wined3d_buffer *buffer)
@@ -2586,7 +2586,7 @@ HRESULT CDECL wined3d_device_get_ps_consts_f(const struct wined3d_device *device
 
 void CDECL wined3d_device_set_geometry_shader(struct wined3d_device *device, struct wined3d_shader *shader)
 {
-    struct wined3d_shader *prev = device->update_state->geometry_shader;
+    struct wined3d_shader *prev = device->update_state->shader[WINED3D_SHADER_TYPE_GEOMETRY];
 
     TRACE("device %p, shader %p.\n", device, shader);
 
@@ -2594,8 +2594,8 @@ void CDECL wined3d_device_set_geometry_shader(struct wined3d_device *device, str
         return;
     if (shader)
         wined3d_shader_incref(shader);
-    device->update_state->geometry_shader = shader;
-    wined3d_cs_emit_set_geometry_shader(device->cs, shader);
+    device->update_state->shader[WINED3D_SHADER_TYPE_GEOMETRY] = shader;
+    wined3d_cs_emit_set_shader(device->cs, WINED3D_SHADER_TYPE_GEOMETRY, shader);
     if (prev)
         wined3d_shader_decref(prev);
 }
@@ -2604,7 +2604,7 @@ struct wined3d_shader * CDECL wined3d_device_get_geometry_shader(const struct wi
 {
     TRACE("device %p.\n", device);
 
-    return device->state.geometry_shader;
+    return device->state.shader[WINED3D_SHADER_TYPE_GEOMETRY];
 }
 
 void CDECL wined3d_device_set_gs_cb(struct wined3d_device *device, UINT idx, struct wined3d_buffer *buffer)
@@ -2984,10 +2984,10 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
     context = context_acquire(device, NULL);
     gl_info = context->gl_info;
 
-    vs = state->vertex_shader;
-    state->vertex_shader = NULL;
+    vs = state->shader[WINED3D_SHADER_TYPE_VERTEX];
+    state->shader[WINED3D_SHADER_TYPE_VERTEX] = NULL;
     context_stream_info_from_declaration(context, state, &stream_info);
-    state->vertex_shader = vs;
+    state->shader[WINED3D_SHADER_TYPE_VERTEX] = vs;
 
     /* We can't convert FROM a VBO, and vertex buffers used to source into
      * process_vertices() are unlikely to ever be used for drawing. Release

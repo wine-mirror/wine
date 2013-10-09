@@ -38,9 +38,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_STREAM_SOURCE_FREQ,
     WINED3D_CS_OP_SET_INDEX_BUFFER,
     WINED3D_CS_OP_SET_TEXTURE,
-    WINED3D_CS_OP_SET_VERTEX_SHADER,
-    WINED3D_CS_OP_SET_GEOMETRY_SHADER,
-    WINED3D_CS_OP_SET_PIXEL_SHADER,
+    WINED3D_CS_OP_SET_SHADER,
     WINED3D_CS_OP_SET_RENDER_STATE,
     WINED3D_CS_OP_SET_TEXTURE_STATE,
     WINED3D_CS_OP_SET_SAMPLER_STATE,
@@ -146,6 +144,7 @@ struct wined3d_cs_set_texture
 struct wined3d_cs_set_shader
 {
     enum wined3d_cs_op opcode;
+    enum wined3d_shader_type type;
     struct wined3d_shader *shader;
 };
 
@@ -563,58 +562,21 @@ void wined3d_cs_emit_set_texture(struct wined3d_cs *cs, UINT stage, struct wined
     cs->ops->submit(cs);
 }
 
-static void wined3d_cs_exec_set_vertex_shader(struct wined3d_cs *cs, const void *data)
+static void wined3d_cs_exec_set_shader(struct wined3d_cs *cs, const void *data)
 {
     const struct wined3d_cs_set_shader *op = data;
 
-    cs->state.vertex_shader = op->shader;
-    device_invalidate_state(cs->device, STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX));
+    cs->state.shader[op->type] = op->shader;
+    device_invalidate_state(cs->device, STATE_SHADER(op->type));
 }
 
-void wined3d_cs_emit_set_vertex_shader(struct wined3d_cs *cs, struct wined3d_shader *shader)
+void wined3d_cs_emit_set_shader(struct wined3d_cs *cs, enum wined3d_shader_type type, struct wined3d_shader *shader)
 {
     struct wined3d_cs_set_shader *op;
 
     op = cs->ops->require_space(cs, sizeof(*op));
-    op->opcode = WINED3D_CS_OP_SET_VERTEX_SHADER;
-    op->shader = shader;
-
-    cs->ops->submit(cs);
-}
-
-static void wined3d_cs_exec_set_geometry_shader(struct wined3d_cs *cs, const void *data)
-{
-    const struct wined3d_cs_set_shader *op = data;
-
-    cs->state.geometry_shader = op->shader;
-    device_invalidate_state(cs->device, STATE_SHADER(WINED3D_SHADER_TYPE_GEOMETRY));
-}
-
-void wined3d_cs_emit_set_geometry_shader(struct wined3d_cs *cs, struct wined3d_shader *shader)
-{
-    struct wined3d_cs_set_shader *op;
-
-    op = cs->ops->require_space(cs, sizeof(*op));
-    op->opcode = WINED3D_CS_OP_SET_GEOMETRY_SHADER;
-    op->shader = shader;
-
-    cs->ops->submit(cs);
-}
-
-static void wined3d_cs_exec_set_pixel_shader(struct wined3d_cs *cs, const void *data)
-{
-    const struct wined3d_cs_set_shader *op = data;
-
-    cs->state.pixel_shader = op->shader;
-    device_invalidate_state(cs->device, STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL));
-}
-
-void wined3d_cs_emit_set_pixel_shader(struct wined3d_cs *cs, struct wined3d_shader *shader)
-{
-    struct wined3d_cs_set_shader *op;
-
-    op = cs->ops->require_space(cs, sizeof(*op));
-    op->opcode = WINED3D_CS_OP_SET_PIXEL_SHADER;
+    op->opcode = WINED3D_CS_OP_SET_SHADER;
+    op->type = type;
     op->shader = shader;
 
     cs->ops->submit(cs);
@@ -759,9 +721,7 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_STREAM_SOURCE_FREQ */ wined3d_cs_exec_set_stream_source_freq,
     /* WINED3D_CS_OP_SET_INDEX_BUFFER       */ wined3d_cs_exec_set_index_buffer,
     /* WINED3D_CS_OP_SET_TEXTURE            */ wined3d_cs_exec_set_texture,
-    /* WINED3D_CS_OP_SET_VERTEX_SHADER      */ wined3d_cs_exec_set_vertex_shader,
-    /* WINED3D_CS_OP_SET_GEOMETRY_SHADER    */ wined3d_cs_exec_set_geometry_shader,
-    /* WINED3D_CS_OP_SET_PIXEL_SHADER       */ wined3d_cs_exec_set_pixel_shader,
+    /* WINED3D_CS_OP_SET_SHADER             */ wined3d_cs_exec_set_shader,
     /* WINED3D_CS_OP_SET_RENDER_STATE       */ wined3d_cs_exec_set_render_state,
     /* WINED3D_CS_OP_SET_TEXTURE_STATE      */ wined3d_cs_exec_set_texture_state,
     /* WINED3D_CS_OP_SET_SAMPLER_STATE      */ wined3d_cs_exec_set_sampler_state,

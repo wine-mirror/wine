@@ -761,8 +761,8 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
         const struct wined3d_state *state)
 {
     const struct glsl_context_data *ctx_data = context->shader_backend_data;
-    const struct wined3d_shader *vshader = state->vertex_shader;
-    const struct wined3d_shader *pshader = state->pixel_shader;
+    const struct wined3d_shader *vshader = state->shader[WINED3D_SHADER_TYPE_VERTEX];
+    const struct wined3d_shader *pshader = state->shader[WINED3D_SHADER_TYPE_PIXEL];
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct shader_glsl_priv *priv = shader_priv;
     float position_fixup[4];
@@ -5791,8 +5791,8 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
 
         if (use_vs(state))
         {
-            vshader = state->vertex_shader;
-            gshader = state->geometry_shader;
+            vshader = state->shader[WINED3D_SHADER_TYPE_VERTEX];
+            gshader = state->shader[WINED3D_SHADER_TYPE_GEOMETRY];
 
             if (!(context->shader_update_mask & (1 << WINED3D_SHADER_TYPE_GEOMETRY))
                     && ctx_data->glsl_program->gs.id)
@@ -5804,13 +5804,13 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
     else if (use_vs(state))
     {
         struct vs_compile_args vs_compile_args;
-        vshader = state->vertex_shader;
+        vshader = state->shader[WINED3D_SHADER_TYPE_VERTEX];
 
         find_vs_compile_args(state, vshader, context->stream_info.swizzle_map, &vs_compile_args);
         vs_id = find_glsl_vshader(context, &priv->shader_buffer, vshader, &vs_compile_args);
         vs_list = &vshader->linked_programs;
 
-        if ((gshader = state->geometry_shader))
+        if ((gshader = state->shader[WINED3D_SHADER_TYPE_GEOMETRY]))
             gs_id = find_glsl_geometry_shader(context, &priv->shader_buffer, gshader);
     }
     else if (priv->vertex_pipe == &glsl_vertex_pipe)
@@ -5830,12 +5830,12 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
         ps_list = &ctx_data->glsl_program->ps.shader_entry;
 
         if (use_ps(state))
-            pshader = state->pixel_shader;
+            pshader = state->shader[WINED3D_SHADER_TYPE_PIXEL];
     }
     else if (use_ps(state))
     {
         struct ps_compile_args ps_compile_args;
-        pshader = state->pixel_shader;
+        pshader = state->shader[WINED3D_SHADER_TYPE_PIXEL];
         find_ps_compile_args(state, pshader, context->stream_info.position_transformed, &ps_compile_args, gl_info);
         ps_id = find_glsl_pshader(context, &priv->shader_buffer,
                 pshader, &ps_compile_args, &np2fixup_info);

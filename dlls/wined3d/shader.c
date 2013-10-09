@@ -2057,7 +2057,7 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
             {
                 DWORD tex_transform = flags & ~WINED3D_TTFF_PROJECTED;
 
-                if (!state->vertex_shader)
+                if (!state->shader[WINED3D_SHADER_TYPE_VERTEX])
                 {
                     unsigned int j;
                     unsigned int index = state->texture_states[i][WINED3D_TSS_TEXCOORD_INDEX];

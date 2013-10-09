@@ -4075,7 +4075,7 @@ static void load_numbered_arrays(struct wined3d_context *context,
         {
             if (context->numbered_array_mask & (1 << i))
                 unload_numbered_array(context, i);
-            if (state->vertex_shader->reg_maps.input_registers & (1 << i))
+            if (state->shader[WINED3D_SHADER_TYPE_VERTEX]->reg_maps.input_registers & (1 << i))
                 GL_EXTCALL(glVertexAttrib4fARB(i, 0.0f, 0.0f, 0.0f, 0.0f));
             continue;
         }
@@ -4632,8 +4632,8 @@ void vertexdeclaration(struct wined3d_context *context, const struct wined3d_sta
                 transform_texture(context, state, STATE_TEXTURESTAGE(i, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS));
         }
 
-        if (use_ps(state) && state->pixel_shader->reg_maps.shader_version.major == 1
-                && state->pixel_shader->reg_maps.shader_version.minor <= 3)
+        if (use_ps(state) && state->shader[WINED3D_SHADER_TYPE_PIXEL]->reg_maps.shader_version.major == 1
+                && state->shader[WINED3D_SHADER_TYPE_PIXEL]->reg_maps.shader_version.minor <= 3)
             context->shader_update_mask |= 1 << WINED3D_SHADER_TYPE_PIXEL;
     }
 

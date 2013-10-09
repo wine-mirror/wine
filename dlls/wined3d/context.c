@@ -2291,7 +2291,7 @@ static DWORD find_draw_buffers_mask(const struct wined3d_context *context, const
 {
     const struct wined3d_state *state = &device->state;
     struct wined3d_surface **rts = state->fb->render_targets;
-    struct wined3d_shader *ps = state->pixel_shader;
+    struct wined3d_shader *ps = state->shader[WINED3D_SHADER_TYPE_PIXEL];
     DWORD rt_mask, rt_mask_bits;
     unsigned int i;
 
@@ -2468,7 +2468,7 @@ static void context_map_fixed_function_samplers(struct wined3d_context *context,
 static void context_map_psamplers(struct wined3d_context *context, const struct wined3d_state *state)
 {
     const enum wined3d_sampler_texture_type *sampler_type =
-            state->pixel_shader->reg_maps.sampler_type;
+            state->shader[WINED3D_SHADER_TYPE_PIXEL]->reg_maps.sampler_type;
     unsigned int i;
     const struct wined3d_d3d_info *d3d_info = context->d3d_info;
 
@@ -2515,7 +2515,7 @@ static BOOL context_unit_free_for_vs(const struct wined3d_context *context,
 static void context_map_vsamplers(struct wined3d_context *context, BOOL ps, const struct wined3d_state *state)
 {
     const enum wined3d_sampler_texture_type *vshader_sampler_type =
-            state->vertex_shader->reg_maps.sampler_type;
+            state->shader[WINED3D_SHADER_TYPE_VERTEX]->reg_maps.sampler_type;
     const enum wined3d_sampler_texture_type *pshader_sampler_type = NULL;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     int start = min(MAX_COMBINED_SAMPLERS, gl_info->limits.combined_samplers) - 1;
@@ -2525,7 +2525,7 @@ static void context_map_vsamplers(struct wined3d_context *context, BOOL ps, cons
     {
         /* Note that we only care if a sampler is sampled or not, not the sampler's specific type.
          * Otherwise we'd need to call shader_update_samplers() here for 1.x pixelshaders. */
-        pshader_sampler_type = state->pixel_shader->reg_maps.sampler_type;
+        pshader_sampler_type = state->shader[WINED3D_SHADER_TYPE_PIXEL]->reg_maps.sampler_type;
     }
 
     for (i = 0; i < MAX_VERTEX_SAMPLERS; ++i) {
@@ -2627,17 +2627,14 @@ void context_stream_info_from_declaration(struct wined3d_context *context,
 {
     /* We need to deal with frequency data! */
     struct wined3d_vertex_declaration *declaration = state->vertex_declaration;
-    BOOL use_vshader;
+    BOOL use_vshader = use_vs(state);
     unsigned int i;
     WORD map;
 
     stream_info->use_map = 0;
     stream_info->swizzle_map = 0;
     stream_info->all_vbo = 1;
-
-    /* Check for transformed vertices, disable vertex shader if present. */
     stream_info->position_transformed = declaration->position_transformed;
-    use_vshader = state->vertex_shader && !declaration->position_transformed;
 
     /* Translate the declaration into strided data. */
     for (i = 0; i < declaration->element_count; ++i)
@@ -2686,7 +2683,7 @@ void context_stream_info_from_declaration(struct wined3d_context *context,
                 /* TODO: Assuming vertexdeclarations are usually used with the
                  * same or a similar shader, it might be worth it to store the
                  * last used output slot and try that one first. */
-                stride_used = vshader_get_input(state->vertex_shader,
+                stride_used = vshader_get_input(state->shader[WINED3D_SHADER_TYPE_VERTEX],
                         element->usage, element->usage_idx, &idx);
             }
             else
@@ -2774,7 +2771,7 @@ static void context_update_stream_info(struct wined3d_context *context, const st
     TRACE("============================= Vertex Declaration =============================\n");
     context_stream_info_from_declaration(context, state, stream_info);
 
-    if (state->vertex_shader && !stream_info->position_transformed)
+    if (use_vs(state))
     {
         if (state->vertex_declaration->half_float_conv_needed && !stream_info->all_vbo)
         {
@@ -2826,7 +2823,7 @@ static void context_preload_textures(struct wined3d_context *context, const stru
     {
         for (i = 0; i < MAX_VERTEX_SAMPLERS; ++i)
         {
-            if (state->vertex_shader->reg_maps.sampler_type[i])
+            if (state->shader[WINED3D_SHADER_TYPE_VERTEX]->reg_maps.sampler_type[i])
                 context_preload_texture(context, state, MAX_FRAGMENT_SAMPLERS + i);
         }
     }
@@ -2835,7 +2832,7 @@ static void context_preload_textures(struct wined3d_context *context, const stru
     {
         for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i)
         {
-            if (state->pixel_shader->reg_maps.sampler_type[i])
+            if (state->shader[WINED3D_SHADER_TYPE_PIXEL]->reg_maps.sampler_type[i])
                 context_preload_texture(context, state, i);
         }
     }

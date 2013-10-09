@@ -1817,18 +1817,17 @@ struct wined3d_state
     INT load_base_vertex_index; /* Non-indexed drawing needs 0 here, indexed needs base_vertex_index. */
     GLenum gl_primitive_type;
 
-    struct wined3d_shader *vertex_shader;
+    struct wined3d_shader *shader[WINED3D_SHADER_TYPE_COUNT];
+
     struct wined3d_buffer *vs_cb[MAX_CONSTANT_BUFFERS];
     struct wined3d_sampler *vs_sampler[MAX_SAMPLER_OBJECTS];
     BOOL vs_consts_b[MAX_CONST_B];
     INT vs_consts_i[MAX_CONST_I * 4];
     float *vs_consts_f;
 
-    struct wined3d_shader *geometry_shader;
     struct wined3d_buffer *gs_cb[MAX_CONSTANT_BUFFERS];
     struct wined3d_sampler *gs_sampler[MAX_SAMPLER_OBJECTS];
 
-    struct wined3d_shader *pixel_shader;
     struct wined3d_buffer *ps_cb[MAX_CONSTANT_BUFFERS];
     struct wined3d_sampler *ps_sampler[MAX_SAMPLER_OBJECTS];
     BOOL ps_consts_b[MAX_CONST_B];
@@ -2482,11 +2481,9 @@ void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *sw
 void wined3d_cs_emit_set_clip_plane(struct wined3d_cs *cs, UINT plane_idx,
         const struct wined3d_vec4 *plane) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_depth_stencil(struct wined3d_cs *cs, struct wined3d_surface *depth_stencil) DECLSPEC_HIDDEN;
-void wined3d_cs_emit_set_geometry_shader(struct wined3d_cs *cs, struct wined3d_shader *shader) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_index_buffer(struct wined3d_cs *cs, struct wined3d_buffer *buffer,
         enum wined3d_format_id format_id) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_material(struct wined3d_cs *cs, const struct wined3d_material *material) DECLSPEC_HIDDEN;
-void wined3d_cs_emit_set_pixel_shader(struct wined3d_cs *cs, struct wined3d_shader *shader) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_render_state(struct wined3d_cs *cs,
         enum wined3d_render_state state, DWORD value) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_render_target(struct wined3d_cs *cs, UINT render_target_idx,
@@ -2494,6 +2491,8 @@ void wined3d_cs_emit_set_render_target(struct wined3d_cs *cs, UINT render_target
 void wined3d_cs_emit_set_sampler_state(struct wined3d_cs *cs, UINT sampler_idx,
         enum wined3d_sampler_state state, DWORD value) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_scissor_rect(struct wined3d_cs *cs, const RECT *rect) DECLSPEC_HIDDEN;
+void wined3d_cs_emit_set_shader(struct wined3d_cs *cs, enum wined3d_shader_type type,
+        struct wined3d_shader *shader) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_stream_source(struct wined3d_cs *cs, UINT stream_idx,
         struct wined3d_buffer *buffer, UINT offset, UINT stride) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_stream_source_freq(struct wined3d_cs *cs, UINT stream_idx,
@@ -2505,7 +2504,6 @@ void wined3d_cs_emit_set_transform(struct wined3d_cs *cs, enum wined3d_transform
         const struct wined3d_matrix *matrix) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_vertex_declaration(struct wined3d_cs *cs,
         struct wined3d_vertex_declaration *declaration) DECLSPEC_HIDDEN;
-void wined3d_cs_emit_set_vertex_shader(struct wined3d_cs *cs, struct wined3d_shader *shader) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_viewport(struct wined3d_cs *cs, const struct wined3d_viewport *viewport) DECLSPEC_HIDDEN;
 
 /* Direct3D terminology with little modifications. We do not have an issued state
@@ -3043,12 +3041,12 @@ static inline BOOL use_vs(const struct wined3d_state *state)
 {
     /* Check state->vertex_declaration to allow this to be used before the
      * stream info is validated, for example in device_update_tex_unit_map(). */
-    return state->vertex_shader && !state->vertex_declaration->position_transformed;
+    return state->shader[WINED3D_SHADER_TYPE_VERTEX] && !state->vertex_declaration->position_transformed;
 }
 
 static inline BOOL use_ps(const struct wined3d_state *state)
 {
-    return !!state->pixel_shader;
+    return !!state->shader[WINED3D_SHADER_TYPE_PIXEL];
 }
 
 static inline void context_apply_state(struct wined3d_context *context,
