@@ -117,6 +117,24 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         *modifiers &= ~NX_ALTERNATEMASK;
 }
 
+static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modifiers)
+{
+    fix_device_modifiers_by_generic(&modifiers);
+    if (left_option_is_alt && (modifiers & NX_DEVICELALTKEYMASK))
+    {
+        modifiers |= NX_DEVICELCMDKEYMASK;
+        modifiers &= ~NX_DEVICELALTKEYMASK;
+    }
+    if (right_option_is_alt && (modifiers & NX_DEVICERALTKEYMASK))
+    {
+        modifiers |= NX_DEVICERCMDKEYMASK;
+        modifiers &= ~NX_DEVICERALTKEYMASK;
+    }
+    fix_generic_modifiers_by_device(&modifiers);
+
+    return modifiers;
+}
+
 
 @interface WineContentView : NSView <NSTextInputClient>
 {
@@ -1253,7 +1271,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         [self flagsChanged:theEvent];
         [self postKey:[theEvent keyCode]
               pressed:[theEvent type] == NSKeyDown
-            modifiers:[theEvent modifierFlags]
+            modifiers:adjusted_modifiers_for_option_behavior([theEvent modifierFlags])
                 event:theEvent];
     }
 
@@ -1416,7 +1434,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
             { NX_DEVICERCMDKEYMASK,     kVK_RightCommand },
         };
 
-        NSUInteger modifierFlags = [theEvent modifierFlags];
+        NSUInteger modifierFlags = adjusted_modifiers_for_option_behavior([theEvent modifierFlags]);
         NSUInteger changed;
         int i, last_changed;
 
