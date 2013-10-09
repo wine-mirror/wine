@@ -377,7 +377,7 @@ INT WINAPI SetMapMode( HDC hdc, INT mode )
  */
 BOOL WINAPI SetViewportExtEx( HDC hdc, INT x, INT y, LPSIZE size )
 {
-    INT ret = FALSE;
+    BOOL ret = FALSE;
     DC * dc = get_dc_ptr( hdc );
 
     if (dc)
@@ -395,7 +395,7 @@ BOOL WINAPI SetViewportExtEx( HDC hdc, INT x, INT y, LPSIZE size )
  */
 BOOL WINAPI SetViewportOrgEx( HDC hdc, INT x, INT y, LPPOINT pt )
 {
-    INT ret = FALSE;
+    BOOL ret = FALSE;
     DC * dc = get_dc_ptr( hdc );
 
     if (dc)
@@ -413,7 +413,7 @@ BOOL WINAPI SetViewportOrgEx( HDC hdc, INT x, INT y, LPPOINT pt )
  */
 BOOL WINAPI SetWindowExtEx( HDC hdc, INT x, INT y, LPSIZE size )
 {
-    INT ret = FALSE;
+    BOOL ret = FALSE;
     DC * dc = get_dc_ptr( hdc );
 
     if (dc)
@@ -431,7 +431,7 @@ BOOL WINAPI SetWindowExtEx( HDC hdc, INT x, INT y, LPSIZE size )
  */
 BOOL WINAPI SetWindowOrgEx( HDC hdc, INT x, INT y, LPPOINT pt )
 {
-    INT ret = FALSE;
+    BOOL ret = FALSE;
     DC * dc = get_dc_ptr( hdc );
 
     if (dc)
@@ -449,7 +449,7 @@ BOOL WINAPI SetWindowOrgEx( HDC hdc, INT x, INT y, LPPOINT pt )
  */
 BOOL WINAPI OffsetViewportOrgEx( HDC hdc, INT x, INT y, LPPOINT pt)
 {
-    INT ret = FALSE;
+    BOOL ret = FALSE;
     DC * dc = get_dc_ptr( hdc );
 
     if (dc)
@@ -467,7 +467,7 @@ BOOL WINAPI OffsetViewportOrgEx( HDC hdc, INT x, INT y, LPPOINT pt)
  */
 BOOL WINAPI OffsetWindowOrgEx( HDC hdc, INT x, INT y, LPPOINT pt )
 {
-    INT ret = FALSE;
+    BOOL ret = FALSE;
     DC * dc = get_dc_ptr( hdc );
 
     if (dc)
@@ -486,7 +486,7 @@ BOOL WINAPI OffsetWindowOrgEx( HDC hdc, INT x, INT y, LPPOINT pt )
 BOOL WINAPI ScaleViewportExtEx( HDC hdc, INT xNum, INT xDenom,
                                     INT yNum, INT yDenom, LPSIZE size )
 {
-    INT ret = FALSE;
+    BOOL ret = FALSE;
     DC * dc = get_dc_ptr( hdc );
 
     if (dc)
@@ -505,7 +505,7 @@ BOOL WINAPI ScaleViewportExtEx( HDC hdc, INT xNum, INT xDenom,
 BOOL WINAPI ScaleWindowExtEx( HDC hdc, INT xNum, INT xDenom,
                                   INT yNum, INT yDenom, LPSIZE size )
 {
-    INT ret = FALSE;
+    BOOL ret = FALSE;
     DC * dc = get_dc_ptr( hdc );
 
     if (dc)
