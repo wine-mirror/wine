@@ -1126,7 +1126,7 @@ static HRESULT WINAPI Protocol_Read(IInternetProtocol *iface, void *pv,
     }
 
     if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST || test_protocol == WINETEST_TEST) {
-        static int pending = TRUE;
+        static BOOL pending = TRUE;
 
         pending = !pending;
 
