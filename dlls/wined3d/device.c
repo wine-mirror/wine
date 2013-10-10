@@ -4380,8 +4380,6 @@ static void delete_opengl_contexts(struct wined3d_device *device, struct wined3d
 
 static HRESULT create_primary_opengl_context(struct wined3d_device *device, struct wined3d_swapchain *swapchain)
 {
-    struct wined3d_context *context;
-    struct wined3d_surface *target;
     HRESULT hr;
 
     if (FAILED(hr = device->shader_backend->shader_alloc_private(device,
@@ -4398,32 +4396,16 @@ static HRESULT create_primary_opengl_context(struct wined3d_device *device, stru
         return hr;
     }
 
-    /* Recreate the primary swapchain's context */
-    swapchain->context = HeapAlloc(GetProcessHeap(), 0, sizeof(*swapchain->context));
-    if (!swapchain->context)
-    {
-        ERR("Failed to allocate memory for swapchain context array.\n");
-        device->blitter->free_private(device);
-        device->shader_backend->shader_free_private(device);
-        return E_OUTOFMEMORY;
-    }
-
-    target = swapchain->back_buffers
-            ? surface_from_resource(wined3d_texture_get_sub_resource(swapchain->back_buffers[0], 0))
-            : surface_from_resource(wined3d_texture_get_sub_resource(swapchain->front_buffer, 0));
-    if (!(context = context_create(swapchain, target, swapchain->ds_format)))
+    hr = wined3d_cs_emit_create_swapchain_context(device->cs, swapchain);
+    if (FAILED(hr))
     {
         WARN("Failed to create context.\n");
         device->blitter->free_private(device);
         device->shader_backend->shader_free_private(device);
-        HeapFree(GetProcessHeap(), 0, swapchain->context);
-        return E_FAIL;
+        return hr;
     }
 
-    swapchain->context[0] = context;
-    swapchain->num_contexts = 1;
-    device_create_dummy_textures(device, context);
-    context_release(context);
+    wined3d_cs_emit_create_dummy_textures(device->cs);
 
     return WINED3D_OK;
 }
