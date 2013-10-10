@@ -246,7 +246,7 @@ void macdrv_handle_event(const macdrv_event *event)
         macdrv_window_did_unminimize(hwnd);
         break;
     case WINDOW_FRAME_CHANGED:
-        macdrv_window_frame_changed(hwnd, event->window_frame_changed.frame);
+        macdrv_window_frame_changed(hwnd, event);
         break;
     case WINDOW_GOT_FOCUS:
         macdrv_window_got_focus(hwnd, event);

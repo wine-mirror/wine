@@ -58,6 +58,11 @@
     NSSize savedContentMinSize;
     NSSize savedContentMaxSize;
 
+    BOOL enteringFullScreen;
+    BOOL exitingFullScreen;
+    NSRect nonFullscreenFrame;
+    NSTimeInterval enteredFullScreenTime;
+
     BOOL ignore_windowDeminiaturize;
     BOOL fakingClose;
 }

@@ -273,7 +273,8 @@ typedef struct macdrv_event {
             macdrv_status_item  item;
         }                                           status_item_mouse_move;
         struct {
-            CGRect frame;
+            CGRect  frame;
+            int     fullscreen;
         }                                           window_frame_changed;
         struct {
             unsigned long   serial;

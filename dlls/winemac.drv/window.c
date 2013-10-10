@@ -1654,7 +1654,7 @@ void macdrv_window_close_requested(HWND hwnd)
  *
  * Handler for WINDOW_FRAME_CHANGED events.
  */
-void macdrv_window_frame_changed(HWND hwnd, CGRect frame)
+void macdrv_window_frame_changed(HWND hwnd, const macdrv_event *event)
 {
     struct macdrv_win_data *data;
     RECT rect;
@@ -1674,9 +1674,10 @@ void macdrv_window_frame_changed(HWND hwnd, CGRect frame)
 
     parent = GetAncestor(hwnd, GA_PARENT);
 
-    TRACE("win %p/%p new Cocoa frame %s\n", hwnd, data->cocoa_window, wine_dbgstr_cgrect(frame));
+    TRACE("win %p/%p new Cocoa frame %s\n", hwnd, data->cocoa_window,
+          wine_dbgstr_cgrect(event->window_frame_changed.frame));
 
-    rect = rect_from_cgrect(frame);
+    rect = rect_from_cgrect(event->window_frame_changed.frame);
     macdrv_mac_to_window_rect(data, &rect);
     MapWindowPoints(0, parent, (POINT *)&rect, 2);
 
@@ -1699,6 +1700,8 @@ void macdrv_window_frame_changed(HWND hwnd, CGRect frame)
 
     release_win_data(data);
 
+    if (event->window_frame_changed.fullscreen)
+        flags |= SWP_NOSENDCHANGING;
     if (!(flags & SWP_NOSIZE) || !(flags & SWP_NOMOVE))
         SetWindowPos(hwnd, 0, rect.left, rect.top, width, height, flags);
 }

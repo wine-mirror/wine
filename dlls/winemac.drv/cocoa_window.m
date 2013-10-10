@@ -28,6 +28,20 @@
 #import "cocoa_opengl.h"
 
 
+#if !defined(MAC_OS_X_VERSION_10_7) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_7
+enum {
+    NSWindowCollectionBehaviorFullScreenPrimary = 1 << 7,
+    NSWindowCollectionBehaviorFullScreenAuxiliary = 1 << 8,
+    NSWindowFullScreenButton = 7,
+    NSFullScreenWindowMask = 1 << 14,
+};
+
+@interface NSWindow (WineFullScreenExtensions)
+    - (void) toggleFullScreen:(id)sender;
+@end
+#endif
+
+
 /* Additional Mac virtual keycode, to complement those in Carbon's <HIToolbox/Events.h>. */
 enum {
     kVK_RightCommand              = 0x36, /* Invented for Wine; was unused */
@@ -583,6 +597,39 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
             [[self standardWindowButton:NSWindowMiniaturizeButton] setEnabled:!self.disabled];
         if (style & NSResizableWindowMask)
             [[self standardWindowButton:NSWindowZoomButton] setEnabled:!self.disabled];
+        if ([self respondsToSelector:@selector(toggleFullScreen:)])
+        {
+            if ([self collectionBehavior] & NSWindowCollectionBehaviorFullScreenPrimary)
+                [[self standardWindowButton:NSWindowFullScreenButton] setEnabled:!self.disabled];
+        }
+    }
+
+    - (void) adjustFullScreenBehavior:(NSWindowCollectionBehavior)behavior
+    {
+        if ([self respondsToSelector:@selector(toggleFullScreen:)])
+        {
+            NSUInteger style = [self styleMask];
+
+            if (behavior & NSWindowCollectionBehaviorParticipatesInCycle &&
+                style & NSResizableWindowMask && !(style & NSUtilityWindowMask))
+            {
+                behavior |= NSWindowCollectionBehaviorFullScreenPrimary;
+                behavior &= ~NSWindowCollectionBehaviorFullScreenAuxiliary;
+            }
+            else
+            {
+                behavior &= ~NSWindowCollectionBehaviorFullScreenPrimary;
+                behavior |= NSWindowCollectionBehaviorFullScreenAuxiliary;
+                if (style & NSFullScreenWindowMask)
+                    [self toggleFullScreen:nil];
+            }
+        }
+
+        if (behavior != [self collectionBehavior])
+        {
+            [self setCollectionBehavior:behavior];
+            [self adjustFeaturesForState];
+        }
     }
 
     - (void) setWindowFeatures:(const struct macdrv_window_features*)wf
@@ -606,6 +653,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
                 [self setStyleMask:newStyle ^ NSClosableWindowMask];
             }
             [self setStyleMask:newStyle];
+            [self adjustFullScreenBehavior:[self collectionBehavior]];
         }
 
         [self adjustFeaturesForState];
@@ -646,6 +694,19 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         }
 
         return level;
+    }
+
+    - (void) postDidUnminimizeEvent
+    {
+        macdrv_event* event;
+
+        /* Coalesce events by discarding any previous ones still in the queue. */
+        [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_DID_UNMINIMIZE)
+                               forWindow:self];
+
+        event = macdrv_create_event(WINDOW_DID_UNMINIMIZE, self);
+        [queue postEvent:event];
+        macdrv_release_event(event);
     }
 
     - (void) setMacDrvState:(const struct macdrv_window_state*)state
@@ -703,15 +764,25 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
             if ([self isOrderedIn])
                 [NSApp addWindowsItem:self title:[self title] filename:NO];
         }
-        [self setCollectionBehavior:behavior];
+        [self adjustFullScreenBehavior:behavior];
 
         if (state->minimized_valid)
         {
+            BOOL discardUnminimize = TRUE;
+
             pendingMinimize = FALSE;
             if (state->minimized && ![self isMiniaturized])
             {
                 if ([self isVisible])
-                    [super miniaturize:nil];
+                {
+                    if ([self styleMask] & NSFullScreenWindowMask)
+                    {
+                        [self postDidUnminimizeEvent];
+                        discardUnminimize = FALSE;
+                    }
+                    else
+                        [super miniaturize:nil];
+                }
                 else
                     pendingMinimize = TRUE;
             }
@@ -721,9 +792,12 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
                 [self deminiaturize:nil];
             }
 
-            /* Whatever events regarding minimization might have been in the queue are now stale. */
-            [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_DID_UNMINIMIZE)
-                                   forWindow:self];
+            if (discardUnminimize)
+            {
+                /* Whatever events regarding minimization might have been in the queue are now stale. */
+                [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_DID_UNMINIMIZE)
+                                       forWindow:self];
+            }
         }
     }
 
@@ -1076,7 +1150,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
     - (void) updateFullscreen
     {
         NSRect contentRect = [self contentRectForFrameRect:[self frame]];
-        BOOL nowFullscreen = (screen_covered_by_rect(contentRect, [NSScreen screens]) != nil);
+        BOOL nowFullscreen = !([self styleMask] & NSFullScreenWindowMask) && screen_covered_by_rect(contentRect, [NSScreen screens]);
 
         if (nowFullscreen != fullscreen)
         {
@@ -1129,6 +1203,10 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
                     [self setFrame:frame display:YES];
                     [self updateColorSpace];
                 }
+
+                if (!enteringFullScreen &&
+                    [[NSProcessInfo processInfo] systemUptime] - enteredFullScreenTime > 1.0)
+                    nonFullscreenFrame = frame;
 
                 [self updateFullscreen];
 
@@ -1345,6 +1423,8 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
 
         if ([menuItem action] == @selector(makeKeyAndOrderFront:))
             ret = [self isKeyWindow] || (!self.disabled && !self.noActivate);
+        if ([menuItem action] == @selector(toggleFullScreen:) && self.disabled)
+            ret = NO;
 
         return ret;
     }
@@ -1378,6 +1458,12 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         macdrv_event* event = macdrv_create_event(WINDOW_MINIMIZE_REQUESTED, self);
         [queue postEvent:event];
         macdrv_release_event(event);
+    }
+
+    - (void) toggleFullScreen:(id)sender
+    {
+        if (!self.disabled)
+            [super toggleFullScreen:sender];
     }
 
     // We normally use the generic/calibrated RGB color space for the window,
@@ -1483,6 +1569,25 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
     /*
      * ---------- NSWindowDelegate methods ----------
      */
+    - (NSSize) window:(NSWindow*)window willUseFullScreenContentSize:(NSSize)proposedSize
+    {
+        macdrv_query* query;
+        NSSize size;
+
+        query = macdrv_create_query();
+        query->type = QUERY_MIN_MAX_INFO;
+        query->window = (macdrv_window)[self retain];
+        [self.queue query:query timeout:0.5];
+        macdrv_release_query(query);
+
+        size = [self contentMaxSize];
+        if (proposedSize.width < size.width)
+            size.width = proposedSize.width;
+        if (proposedSize.height < size.height)
+            size.height = proposedSize.height;
+        return size;
+    }
+
     - (void)windowDidBecomeKey:(NSNotification *)notification
     {
         WineApplicationController* controller = [WineApplicationController sharedController];
@@ -1500,18 +1605,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         WineApplicationController* controller = [WineApplicationController sharedController];
 
         if (!ignore_windowDeminiaturize)
-        {
-            macdrv_event* event;
-
-            /* Coalesce events by discarding any previous ones still in the queue. */
-            [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_DID_UNMINIMIZE)
-                                   forWindow:self];
-
-            event = macdrv_create_event(WINDOW_DID_UNMINIMIZE, self);
-            [queue postEvent:event];
-            macdrv_release_event(event);
-        }
-
+            [self postDidUnminimizeEvent];
         ignore_windowDeminiaturize = FALSE;
 
         [self becameEligibleParentOrChild];
@@ -1546,6 +1640,31 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         self.liveResizeDisplayTimer = nil;
     }
 
+    - (void) windowDidEnterFullScreen:(NSNotification*)notification
+    {
+        enteringFullScreen = FALSE;
+        enteredFullScreenTime = [[NSProcessInfo processInfo] systemUptime];
+    }
+
+    - (void) windowDidExitFullScreen:(NSNotification*)notification
+    {
+        exitingFullScreen = FALSE;
+        [self setFrame:nonFullscreenFrame display:YES animate:NO];
+        [self windowDidResize:nil];
+    }
+
+    - (void) windowDidFailToEnterFullScreen:(NSWindow*)window
+    {
+        enteringFullScreen = FALSE;
+        enteredFullScreenTime = 0;
+    }
+
+    - (void) windowDidFailToExitFullScreen:(NSWindow*)window
+    {
+        exitingFullScreen = FALSE;
+        [self windowDidResize:nil];
+    }
+
     - (void)windowDidMiniaturize:(NSNotification *)notification
     {
         if (fullscreen && [self isOnActiveSpace])
@@ -1573,6 +1692,8 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         macdrv_event* event;
         NSRect frame = [self contentRectForFrameRect:[self frame]];
 
+        if (exitingFullScreen) return;
+
         if (self.disabled)
         {
             [self setContentMinSize:frame.size];
@@ -1587,6 +1708,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
 
         event = macdrv_create_event(WINDOW_FRAME_CHANGED, self);
         event->window_frame_changed.frame = NSRectToCGRect(frame);
+        event->window_frame_changed.fullscreen = ([self styleMask] & NSFullScreenWindowMask) != 0;
         [queue postEvent:event];
         macdrv_release_event(event);
 
@@ -1619,6 +1741,17 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
                 child.latentParentWindow = nil;
         }
         [latentChildWindows removeAllObjects];
+    }
+
+    - (void) windowWillEnterFullScreen:(NSNotification*)notification
+    {
+        enteringFullScreen = TRUE;
+        nonFullscreenFrame = [self frame];
+    }
+
+    - (void) windowWillExitFullScreen:(NSNotification*)notification
+    {
+        exitingFullScreen = TRUE;
     }
 
     - (void)windowWillMiniaturize:(NSNotification *)notification
