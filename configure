@@ -627,6 +627,7 @@ LIBOBJS
 PORCFLAGS
 LINGUAS
 ALL_TEST_RESOURCES
+MAKE_TEST_RULES
 MAKE_PROG_RULES
 MAKE_DLL_RULES
 MAKE_IMPLIB_RULES
@@ -686,9 +687,8 @@ X_PRE_LIBS
 X_CFLAGS
 XMKMF
 LIBPTHREAD
-CROSSTARGET
 CROSSCC
-CROSSTEST_DISABLE
+CROSSTARGET
 PRELINK
 CARBONLIB
 QUICKTIMELIB
@@ -714,7 +714,6 @@ LDRPATH_INSTALL
 IMPLIBEXT
 DLLFLAGS
 DLLPREFIX
-DLLEXT
 dlldir
 CPP
 OPENGL_LIBS
@@ -801,8 +800,7 @@ PACKAGE_TARNAME
 PACKAGE_NAME
 PATH_SEPARATOR
 SHELL'
-ac_subst_files='MAKE_RULES
-MAKE_TEST_RULES'
+ac_subst_files='MAKE_RULES'
 ac_user_opts='
 enable_option_checking
 enable_win16
@@ -6978,8 +6976,6 @@ done
 
 dlldir="\${libdir}/wine"
 
-DLLEXT=""
-
 DLLPREFIX=""
 
 DLLFLAGS="-D_REENTRANT"
@@ -6991,6 +6987,7 @@ LDRPATH_INSTALL=""
 LDRPATH_LOCAL=""
 
 LIBEXT="so"
+DLLEXT=".so"
 STATIC_IMPLIBEXT="def.a"
 # Extract the first word of "ldd", so it can be a program name with args.
 set dummy ldd; ac_word=$2
@@ -7236,6 +7233,7 @@ else
 fi
 
     LIBEXT="dll"
+    DLLEXT=""
     IMPLIBEXT="a"
     STATIC_IMPLIBEXT="a"
         enable_iphlpapi=${enable_iphlpapi:-no}
@@ -7281,7 +7279,6 @@ clean::
     ;;
 
   darwin*|macosx*)
-    DLLEXT=".so"
     LIBEXT="dylib"
     DLLFLAGS="$DLLFLAGS -fPIC"
     LIBWINE_LDFLAGS="-multiply_defined suppress"
@@ -7493,7 +7490,6 @@ wine_info.plist: wine_info.plist.in \$(top_builddir)/include/config.h
 
   linux-android*)
     DLLFLAGS="$DLLFLAGS -fPIC"
-    DLLEXT=".so"
     DLLPREFIX="lib"
     LDEXECFLAGS=""
     dlldir="\${libdir}"
@@ -7664,7 +7660,6 @@ wine-installed: main.o Makefile.in
 
   *)
     DLLFLAGS="$DLLFLAGS -fPIC"
-    DLLEXT=".so"
     LDEXECFLAGS=""
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we can build a GNU style ELF dll" >&5
 $as_echo_n "checking whether we can build a GNU style ELF dll... " >&6; }
@@ -8028,7 +8023,7 @@ esac
 enable_wineqtdecoder=${enable_wineqtdecoder:-no}
 enable_winemac_drv=${enable_winemac_drv:-no}
 
-CROSSTEST_DISABLE=\#
+CROSSTARGET=""
 
 if test "$cross_compiling" = "no" -a "x$enable_tests" != xno -a "$LIBEXT" != "dll"
 then
@@ -8106,20 +8101,13 @@ if ac_fn_c_try_compile "$LINENO"; then :
 $as_echo "yes" >&6; }
                            set x $CROSSCC
                            shift
-                           target=""
                            while test $# -ge 1
                            do
                                case "$1" in
-                                 *-gcc) target=`expr "$1" : '\(.*\)-gcc'` ;;
+                                 *-gcc) CROSSTARGET=`expr "$1" : '\(.*\)-gcc'` ;;
                                esac
                                shift
                            done
-                           if test -n "$target"
-                           then
-                               CROSSTEST_DISABLE=""
-                               CROSSTARGET="$target"
-
-                           fi
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
@@ -16057,7 +16045,7 @@ $as_echo_n "creating Makefile rules..." >&6
 MAKE_IMPLIB_RULES="DLLFLAGS = $DLLFLAGS
 "
 
-if test "x$CROSSTEST_DISABLE" = x
+if test -n "$CROSSTARGET"
 then
     as_fn_append MAKE_IMPLIB_RULES "MAKEDEPFLAGS = -xo -xcross.o
 all: \$(STATICLIB:.a=.cross.a)
@@ -16088,6 +16076,34 @@ DLLFLAGS    = $DLLFLAGS
 all: $deps
 "
 
+
+
+MAKE_TEST_RULES="
+DLLFLAGS     = $DLLFLAGS
+TESTMODULE   = \$(TESTDLL:%.dll=%)_test.exe
+TESTMODULE_STRIPPED = \$(TESTDLL:%.dll=%)_test-stripped.exe$DLLEXT
+WINETEST_RES = \$(top_builddir)/programs/winetest/\$(TESTDLL:%.dll=%)_test.res
+RUNTESTFLAGS = -q -P wine -T \$(top_builddir) -M \$(TESTDLL) -p \$(TESTMODULE)$DLLEXT
+EXTRA_OBJS   = testlist.o
+
+all: \$(TESTMODULE)$DLLEXT \$(WINETEST_RES)
+
+\$(C_SRCS:.c=.ok): \$(TESTMODULE)$DLLEXT \$(TESTDLL:%=../%$DLLEXT)
+
+check test: \$(C_SRCS:.c=.ok)
+
+.PHONY: check test crosstest
+"
+
+if test -n "$CROSSTARGET"
+then
+    as_fn_append MAKE_TEST_RULES "
+MAKEDEPFLAGS    = -xo -xcross.o
+CROSSTESTMODULE = \$(TESTDLL:%.dll=%)_crosstest.exe
+
+crosstest: \$(CROSSTESTMODULE)
+"
+fi
 
 
 wine_rules_file=conf$$rules.make
@@ -16352,7 +16368,7 @@ $ac_dir/uninstall::
 	\$(RM) \$(DESTDIR)\$(dlldir)/lib$ac_implib.$STATIC_IMPLIBEXT"
         fi
 
-        if test "x$CROSSTEST_DISABLE" = x
+        if test -n "$CROSSTARGET"
         then
             wine_fn_append_rule \
 "__builddeps__: $ac_file.cross.a
@@ -16375,7 +16391,7 @@ $ac_dir/uninstall::
 	\$(RM) \$(DESTDIR)\$(dlldir)/lib$ac_implib.$IMPLIBEXT
 install install-dev:: $ac_dir/install-dev
 __uninstall__: $ac_dir/uninstall"
-        if test "x$CROSSTEST_DISABLE" = x
+        if test -n "$CROSSTARGET"
         then
             wine_fn_append_rule \
 "__builddeps__: $ac_file.cross.a
@@ -16391,7 +16407,7 @@ dlls/lib$ac_implib.$IMPLIBEXT: $ac_file.$IMPLIBEXT
 	\$(RM) \$@ && \$(LN_S) $ac_name/lib$ac_implib.$IMPLIBEXT \$@
 clean::
 	\$(RM) dlls/lib$ac_implib.$IMPLIBEXT"
-            if test "x$CROSSTEST_DISABLE" = x
+            if test -n "$CROSSTARGET"
             then
                 wine_fn_append_rule \
 "__builddeps__: dlls/lib$ac_implib.cross.a
@@ -16478,7 +16494,7 @@ wine_fn_config_test ()
     ac_flags=$3
 
     ac_clean=
-    test "x$CROSSTEST_DISABLE" = x && ac_clean=`expr $ac_dir/${ac_name} : "\\(.*\\)_test"`_crosstest.exe
+    test -n "$CROSSTARGET" && ac_clean=`expr $ac_dir/${ac_name} : "\\(.*\\)_test"`_crosstest.exe
     test -n "$DLLEXT" || ac_clean=$ac_dir/${ac_name}.exe
     ac_clean="$ac_clean $ac_dir/testlist.c"
 
@@ -16487,7 +16503,7 @@ wine_fn_config_test ()
 fi
 
     wine_fn_append_file ALL_TEST_RESOURCES $ac_name.res
-    wine_fn_all_rules Maketest.rules
+    wine_fn_all_rules Make.rules.in
     wine_fn_clean_rules $ac_clean
 
     wine_fn_append_rule \
@@ -16500,7 +16516,7 @@ $ac_dir/test: dummy
 testclean::
 	\$(RM) $ac_dir/*.ok"
 
-        if test "x$CROSSTEST_DISABLE" = x
+        if test -n "$CROSSTARGET"
         then
             wine_fn_append_rule \
 "crosstest: $ac_dir/crosstest
@@ -16558,7 +16574,7 @@ distclean::
     wine_fn_append_rule "$ac_linkdir/Makefile $ac_linkdir/depend: $ac_links"
 }
 
-if test "x$CROSSTEST_DISABLE" != x
+if test -z "$CROSSTARGET"
 then
     wine_fn_append_rule \
 "crosstest:
@@ -16625,10 +16641,6 @@ wine_fn_append_rule \
 wine_fn_config_makerules Make.rules
 MAKE_RULES=Make.rules
 ac_config_files="$ac_config_files Make.rules"
-
-wine_fn_config_makerules Maketest.rules Make.rules
-MAKE_TEST_RULES=Maketest.rules
-ac_config_files="$ac_config_files Maketest.rules"
 
 
 wine_fn_config_dll acledit enable_acledit
@@ -18196,7 +18208,6 @@ do
     "dlls/wineps.drv/data") CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/wineps.drv/data" ;;
     "include/wine") CONFIG_COMMANDS="$CONFIG_COMMANDS include/wine" ;;
     "Make.rules") CONFIG_FILES="$CONFIG_FILES Make.rules" ;;
-    "Maketest.rules") CONFIG_FILES="$CONFIG_FILES Maketest.rules" ;;
     "Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS Makefile" ;;
     "Make.tmp") CONFIG_FILES="$CONFIG_FILES Make.tmp:Make.vars.in:Makefile.in" ;;
 

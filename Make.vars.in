@@ -29,10 +29,7 @@ LIBS            = @LIBS@
 BISON           = @BISON@
 FLEX            = @FLEX@
 EXEEXT          = @EXEEXT@
-OBJEXT          = @OBJEXT@
-DLLEXT          = @DLLEXT@
 DLLPREFIX       = @DLLPREFIX@
-FAKEEXT         = $(DLLEXT:.so=.fake)
 TOOLSEXT        = @TOOLSEXT@
 IMPLIBEXT       = @IMPLIBEXT@
 DLLTOOL         = @DLLTOOL@

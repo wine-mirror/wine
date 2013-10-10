@@ -8,7 +8,6 @@
 *.so
 */*/tests/testlist.c
 /Make.rules
-/Maketest.rules
 /TAGS
 /autom4te.cache
 /config.cache

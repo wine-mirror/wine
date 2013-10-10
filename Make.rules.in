@@ -18,15 +18,11 @@ DEFS         = -D__WINESRC__ $(EXTRADEFS)
 ALLCFLAGS    = $(INCLUDES) $(DEFS) $(DLLFLAGS) $(EXTRACFLAGS) $(CPPFLAGS) $(CFLAGS) $(MODCFLAGS)
 IDLFLAGS     = $(INCLUDES) $(DEFS) $(EXTRAIDLFLAGS)
 RCFLAGS      = --nostdinc $(PORCFLAGS) $(TARGETFLAGS) $(INCLUDES) $(DEFS) $(EXTRARCFLAGS)
-RUNTESTFLAGS = -q -P wine -T $(top_builddir) $(TESTDLL:%=-M %) $(TESTMODULE:%=-p %@DLLEXT@)
 
 IDL_GEN_C_SRCS  = $(IDL_C_SRCS:.idl=_c.c) $(IDL_I_SRCS:.idl=_i.c) \
                   $(IDL_P_SRCS:.idl=_p.c) $(IDL_S_SRCS:.idl=_s.c)
 IDL_GEN_HEADERS = $(IDL_H_SRCS:.idl=.h) $(IDL_C_SRCS:.idl=.h) $(IDL_I_SRCS:.idl=.h) \
                   $(IDL_P_SRCS:.idl=.h) $(IDL_S_SRCS:.idl=.h)
-
-TESTMODULE_STRIPPED = $(TESTMODULE:%.exe=%-stripped.exe@DLLEXT@)
-CROSSTESTMODULE     = $(TESTMODULE:%_test.exe=%_crosstest.exe)
 
 CLEAN_FILES   = *.o *.a *.so *.mo *.res *.fake *.ok *.tab.[ch] *.yy.c
 CLEAN_TARGETS = $(MODULE) $(IMPORTLIB:%=lib%.@IMPLIBEXT@) $(IDL_GEN_C_SRCS) $(IDL_GEN_HEADERS) \
@@ -176,8 +172,6 @@ testlist.c: Makefile.in $(MAKECTESTS)
 	$(MAKECTESTS) -o $@ $(C_SRCS)
 
 testlist.o testlist.cross.o: testlist.c $(top_srcdir)/include/wine/test.h
-
-$(C_SRCS:.c=.ok): $(TESTMODULE:%=%@DLLEXT@) $(TESTDLL:%=../%@DLLEXT@)
 
 testclean::
 	$(RM) *.ok

@@ -667,13 +667,13 @@ AC_CHECK_HEADERS([libprocstat.h],,,
 dnl **** Check for working dll ****
 
 AC_SUBST(dlldir,"\${libdir}/wine")
-AC_SUBST(DLLEXT,"")
 AC_SUBST(DLLPREFIX,"")
 AC_SUBST(DLLFLAGS,"-D_REENTRANT")
 AC_SUBST(IMPLIBEXT,"def")
 AC_SUBST(LDRPATH_INSTALL,"")
 AC_SUBST(LDRPATH_LOCAL,"")
 LIBEXT="so"
+DLLEXT=".so"
 STATIC_IMPLIBEXT="def.a"
 WINE_PATH_SONAME_TOOLS
 
@@ -694,6 +694,7 @@ case $host_os in
   cygwin*|mingw32*)
     AC_CHECK_TOOL(DLLTOOL,dlltool,false)
     LIBEXT="dll"
+    DLLEXT=""
     IMPLIBEXT="a"
     STATIC_IMPLIBEXT="a"
     dnl Disable modules that can't be used on Windows
@@ -740,7 +741,6 @@ clean::
     ;;
 
   darwin*|macosx*)
-    DLLEXT=".so"
     LIBEXT="dylib"
     DLLFLAGS="$DLLFLAGS -fPIC"
     LIBWINE_LDFLAGS="-multiply_defined suppress"
@@ -884,7 +884,6 @@ wine_info.plist: wine_info.plist.in \$(top_builddir)/include/config.h
 
   linux-android*)
     DLLFLAGS="$DLLFLAGS -fPIC"
-    DLLEXT=".so"
     DLLPREFIX="lib"
     LDEXECFLAGS=""
     dlldir="\${libdir}"
@@ -934,7 +933,6 @@ wine-installed: main.o Makefile.in
 
   *)
     DLLFLAGS="$DLLFLAGS -fPIC"
-    DLLEXT=".so"
     LDEXECFLAGS=""
     AC_CACHE_CHECK([whether we can build a GNU style ELF dll], ac_cv_c_dll_gnuelf,
         [WINE_TRY_SHLIB_FLAGS([-fPIC -shared -Wl,-Bsymbolic],
@@ -1030,7 +1028,7 @@ enable_wineqtdecoder=${enable_wineqtdecoder:-no}
 enable_winemac_drv=${enable_winemac_drv:-no}
 
 dnl Check for cross compiler to build test programs
-AC_SUBST([CROSSTEST_DISABLE],[\#])
+AC_SUBST(CROSSTARGET,"")
 if test "$cross_compiling" = "no" -a "x$enable_tests" != xno -a "$LIBEXT" != "dll"
 then
     WINE_CHECK_MINGW_PROG(CROSSCC,gcc,false)
@@ -1043,19 +1041,13 @@ then
                           [AC_MSG_RESULT([yes])
                            set x $CROSSCC
                            shift
-                           target=""
                            while test $# -ge 1
                            do
                                case "$1" in
-                                 *-gcc) target=`expr "$1" : '\(.*\)-gcc'` ;;
+                                 *-gcc) CROSSTARGET=`expr "$1" : '\(.*\)-gcc'` ;;
                                esac
                                shift
-                           done
-                           if test -n "$target"
-                           then
-                               CROSSTEST_DISABLE=""
-                               AC_SUBST(CROSSTARGET,"$target")
-                           fi],
+                           done],
                           [AC_MSG_RESULT([no])])
         CC="$ac_save_CC"
     fi
@@ -2601,7 +2593,7 @@ dnl Import library rules
 
 AC_SUBST(MAKE_IMPLIB_RULES,"DLLFLAGS = $DLLFLAGS
 ")
-if test "x$CROSSTEST_DISABLE" = x
+if test -n "$CROSSTARGET"
 then
     AS_VAR_APPEND([MAKE_IMPLIB_RULES],"MAKEDEPFLAGS = -xo -xcross.o
 all: \$(STATICLIB:.a=.cross.a)
@@ -2632,6 +2624,34 @@ DLLFLAGS    = $DLLFLAGS
 all: $deps
 ")
 
+dnl Test rules
+
+AC_SUBST(MAKE_TEST_RULES,"
+DLLFLAGS     = $DLLFLAGS
+TESTMODULE   = \$(TESTDLL:%.dll=%)_test.exe
+TESTMODULE_STRIPPED = \$(TESTDLL:%.dll=%)_test-stripped.exe$DLLEXT
+WINETEST_RES = \$(top_builddir)/programs/winetest/\$(TESTDLL:%.dll=%)_test.res
+RUNTESTFLAGS = -q -P wine -T \$(top_builddir) -M \$(TESTDLL) -p \$(TESTMODULE)$DLLEXT
+EXTRA_OBJS   = testlist.o
+
+all: \$(TESTMODULE)$DLLEXT \$(WINETEST_RES)
+
+\$(C_SRCS:.c=.ok): \$(TESTMODULE)$DLLEXT \$(TESTDLL:%=../%$DLLEXT)
+
+check test: \$(C_SRCS:.c=.ok)
+
+.PHONY: check test crosstest
+")
+if test -n "$CROSSTARGET"
+then
+    AS_VAR_APPEND([MAKE_TEST_RULES],"
+MAKEDEPFLAGS    = -xo -xcross.o
+CROSSTESTMODULE = \$(TESTDLL:%.dll=%)_crosstest.exe
+
+crosstest: \$(CROSSTESTMODULE)
+")
+fi
+
 dnl Main makefile
 
 WINE_APPEND_RULE([
@@ -2659,7 +2679,6 @@ WINE_CONFIG_EXTRA_DIR(dlls/wineps.drv/data)
 WINE_CONFIG_EXTRA_DIR(include/wine)
 
 WINE_CONFIG_MAKERULES([Make.rules],[MAKE_RULES])
-WINE_CONFIG_MAKERULES([Maketest.rules],[MAKE_TEST_RULES],[Make.rules])
 
 WINE_CONFIG_DLL(acledit)
 WINE_CONFIG_DLL(aclui,,[implib])
