@@ -291,7 +291,8 @@ static void Gstreamer_transform_pad_added(GstElement *filter, GstPad *pad, GstTf
 
 static HRESULT Gstreamer_transform_ConnectInput(GstTfImpl *This, const AM_MEDIA_TYPE *amt, GstCaps *capsin, GstCaps *capsout) {
     GstIterator *it;
-    int done = 0, found = 0, ret;
+    BOOL done = FALSE, found = FALSE;
+    int ret;
 
     This->filter = gst_element_factory_make(This->gstreamer_name, NULL);
     if (!This->filter) {
@@ -330,7 +331,7 @@ static HRESULT Gstreamer_transform_ConnectInput(GstTfImpl *This, const AM_MEDIA_
             This->their_sink = item;
         case GST_ITERATOR_ERROR:
         case GST_ITERATOR_DONE:
-            done = 1;
+            done = TRUE;
             break;
         }
     }
@@ -342,7 +343,7 @@ static HRESULT Gstreamer_transform_ConnectInput(GstTfImpl *This, const AM_MEDIA_
 
     it = gst_element_iterate_src_pads(This->filter);
     gst_iterator_resync(it);
-    done = 0;
+    done = FALSE;
     while (!done) {
         gpointer item;
 
@@ -354,7 +355,7 @@ static HRESULT Gstreamer_transform_ConnectInput(GstTfImpl *This, const AM_MEDIA_
             This->their_src = item;
         case GST_ITERATOR_ERROR:
         case GST_ITERATOR_DONE:
-            done = 1;
+            done = TRUE;
             break;
         }
     }
@@ -733,7 +734,8 @@ static HRESULT WINAPI Gstreamer_AudioConvert_SetMediaType(TransformFilter *tf, P
     WAVEFORMATEX *outwfe;
     WAVEFORMATEXTENSIBLE *outwfx;
     HRESULT hr;
-    int inisfloat = 0, indepth;
+    BOOL inisfloat = FALSE;
+    int indepth;
 
     if (dir != PINDIR_INPUT)
         return S_OK;
