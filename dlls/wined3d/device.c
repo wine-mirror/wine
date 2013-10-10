@@ -2098,30 +2098,16 @@ static void wined3d_device_set_constant_buffer(struct wined3d_device *device,
     }
 
     prev = device->update_state->cb[type][idx];
-    device->update_state->cb[type][idx] = buffer;
-
-    if (device->recording)
-    {
-        if (buffer)
-            wined3d_buffer_incref(buffer);
-        if (prev)
-            wined3d_buffer_decref(prev);
+    if (buffer == prev)
         return;
-    }
 
-    if (prev != buffer)
-    {
-        if (buffer)
-        {
-            InterlockedIncrement(&buffer->resource.bind_count);
-            wined3d_buffer_incref(buffer);
-        }
-        if (prev)
-        {
-            InterlockedDecrement(&prev->resource.bind_count);
-            wined3d_buffer_decref(prev);
-        }
-    }
+    if (buffer)
+        wined3d_buffer_incref(buffer);
+    device->update_state->cb[type][idx] = buffer;
+    if (!device->recording)
+        wined3d_cs_emit_set_constant_buffer(device->cs, type, idx, buffer);
+    if (prev)
+        wined3d_buffer_decref(prev);
 }
 
 void CDECL wined3d_device_set_vs_cb(struct wined3d_device *device, UINT idx, struct wined3d_buffer *buffer)
