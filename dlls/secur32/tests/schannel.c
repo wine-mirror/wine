@@ -675,7 +675,7 @@ static void test_communication(void)
     init_cred(&cred);
     cred.dwFlags = SCH_CRED_NO_DEFAULT_CREDS|SCH_CRED_MANUAL_CRED_VALIDATION;
 
-    status = pAcquireCredentialsHandleA(NULL, (SEC_CHAR *)UNISP_NAME, SECPKG_CRED_OUTBOUND, NULL,
+    status = pAcquireCredentialsHandleA(NULL, (SEC_CHAR *)UNISP_NAME_A, SECPKG_CRED_OUTBOUND, NULL,
         &cred, NULL, NULL, &cred_handle, NULL);
     ok(status == SEC_E_OK, "AcquireCredentialsHandleA failed: %08x\n", status);
     if (status != SEC_E_OK) return;

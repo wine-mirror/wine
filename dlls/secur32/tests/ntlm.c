@@ -67,7 +67,7 @@ typedef struct _SspiData {
     CtxtHandle ctxt;
     PSecBufferDesc in_buf;
     PSecBufferDesc out_buf;
-    PSEC_WINNT_AUTH_IDENTITY id;
+    PSEC_WINNT_AUTH_IDENTITY_A id;
     ULONG max_token;
 } SspiData;
 
@@ -565,9 +565,9 @@ static void communicate(SspiData *from, SspiData *to)
 static void testInitializeSecurityContextFlags(void)
 {
     SECURITY_STATUS         sec_status;
-    PSecPkgInfo             pkg_info = NULL;
+    PSecPkgInfoA            pkg_info = NULL;
     SspiData                client;
-    SEC_WINNT_AUTH_IDENTITY id;
+    SEC_WINNT_AUTH_IDENTITY_A id;
     static char             sec_pkg_name[] = "NTLM",
                             test_user[]    = "testuser",
                             workgroup[]    = "WORKGROUP",
@@ -788,10 +788,10 @@ static void testAuth(ULONG data_rep, BOOL fake)
     SECURITY_STATUS         client_stat = SEC_I_CONTINUE_NEEDED;
     SECURITY_STATUS         server_stat = SEC_I_CONTINUE_NEEDED;
     SECURITY_STATUS         sec_status;
-    PSecPkgInfo             pkg_info = NULL;
+    PSecPkgInfoA            pkg_info = NULL;
     BOOL                    first = TRUE;
     SspiData                client, server;
-    SEC_WINNT_AUTH_IDENTITY id;
+    SEC_WINNT_AUTH_IDENTITY_A id;
     SecPkgContext_Sizes     ctxt_sizes;
     static char             sec_pkg_name[] = "NTLM",
                             test_user[] = "testuser",
@@ -921,10 +921,10 @@ static void testSignSeal(void)
     SECURITY_STATUS         client_stat = SEC_I_CONTINUE_NEEDED;
     SECURITY_STATUS         server_stat = SEC_I_CONTINUE_NEEDED;
     SECURITY_STATUS         sec_status;
-    PSecPkgInfo             pkg_info = NULL;
+    PSecPkgInfoA            pkg_info = NULL;
     BOOL                    first = TRUE;
     SspiData                client, server;
-    SEC_WINNT_AUTH_IDENTITY id;
+    SEC_WINNT_AUTH_IDENTITY_A id;
     static char             sec_pkg_name[] = "NTLM";
     SecBufferDesc           crypt;
     SecBuffer               data[2], fake_data[2], complex_data[4];
@@ -1004,7 +1004,7 @@ static void testSignSeal(void)
     fake_data[0].pvBuffer = HeapAlloc(GetProcessHeap(), 0, fake_data[0].cbBuffer);
 
     fake_data[1].BufferType = SECBUFFER_DATA;
-    fake_data[1].cbBuffer = lstrlen(message);
+    fake_data[1].cbBuffer = lstrlenA(message);
     fake_data[1].pvBuffer = HeapAlloc(GetProcessHeap(), 0, fake_data[1].cbBuffer);
 
     sec_status = pMakeSignature(&client.ctxt, 0, &crypt, 0);
@@ -1019,7 +1019,7 @@ static void testSignSeal(void)
     data[0].pvBuffer = HeapAlloc(GetProcessHeap(), 0, data[0].cbBuffer);
 
     data[1].BufferType = SECBUFFER_DATA;
-    data[1].cbBuffer = lstrlen(message);
+    data[1].cbBuffer = lstrlenA(message);
     data[1].pvBuffer = HeapAlloc(GetProcessHeap(), 0, data[1].cbBuffer);
     memcpy(data[1].pvBuffer, message, data[1].cbBuffer);
 
@@ -1106,7 +1106,7 @@ static void testSignSeal(void)
     complex_data[0].pvBuffer = message_header;
 
     complex_data[1].BufferType = SECBUFFER_DATA;
-    complex_data[1].cbBuffer = lstrlen(message);
+    complex_data[1].cbBuffer = lstrlenA(message);
     complex_data[1].pvBuffer = HeapAlloc(GetProcessHeap(), 0, data[1].cbBuffer);
     memcpy(complex_data[1].pvBuffer, message, complex_data[1].cbBuffer);
 
@@ -1187,8 +1187,8 @@ static BOOL testAcquireCredentialsHandle(void)
                 test_pass[] = "testpass",
                 sec_pkg_name[] = "NTLM";
     SECURITY_STATUS ret;
-    SEC_WINNT_AUTH_IDENTITY id;
-    PSecPkgInfo             pkg_info = NULL;
+    SEC_WINNT_AUTH_IDENTITY_A id;
+    PSecPkgInfoA pkg_info = NULL;
 
     if(pQuerySecurityPackageInfoA(sec_pkg_name, &pkg_info) != SEC_E_OK)
     {
@@ -1254,8 +1254,8 @@ static void test_cred_multiple_use(void)
                 test_pass[] = "testpass",
                 sec_pkg_name[] = "NTLM";
     SECURITY_STATUS ret;
-    SEC_WINNT_AUTH_IDENTITY id;
-    PSecPkgInfo             pkg_info = NULL;
+    SEC_WINNT_AUTH_IDENTITY_A id;
+    PSecPkgInfoA            pkg_info = NULL;
     CredHandle              cred;
     CtxtHandle              ctxt1;
     CtxtHandle              ctxt2;
@@ -1315,7 +1315,7 @@ static void test_cred_multiple_use(void)
 static void test_null_auth_data(void)
 {
     SECURITY_STATUS status;
-    PSecPkgInfo info;
+    PSecPkgInfoA info;
     CredHandle cred;
     CtxtHandle ctx;
     SecBufferDesc buffer_desc;

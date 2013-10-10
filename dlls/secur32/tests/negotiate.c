@@ -99,7 +99,7 @@ struct sspi_data
     CtxtHandle ctxt;
     PSecBufferDesc in_buf;
     PSecBufferDesc out_buf;
-    PSEC_WINNT_AUTH_IDENTITY id;
+    PSEC_WINNT_AUTH_IDENTITY_A id;
     ULONG max_token;
 };
 
@@ -256,10 +256,10 @@ static void test_authentication(void)
     SECURITY_STATUS status_c = SEC_I_CONTINUE_NEEDED,
                     status_s = SEC_I_CONTINUE_NEEDED, status;
     struct sspi_data client, server;
-    SEC_WINNT_AUTH_IDENTITY id;
-    SecPkgContext_NegotiationInfo info;
+    SEC_WINNT_AUTH_IDENTITY_A id;
+    SecPkgContext_NegotiationInfoA info;
     SecPkgContext_Sizes sizes;
-    SecPkgInfo *pi;
+    SecPkgInfoA *pi;
     BOOL first = TRUE;
 
     id.User = (unsigned char *)"user";
@@ -357,7 +357,7 @@ done:
 
 START_TEST(negotiate)
 {
-    SecPkgInfo *info;
+    SecPkgInfoA *info;
 
     init_function_ptrs();
 
