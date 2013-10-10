@@ -38,13 +38,12 @@ static D3DRMMATRIX4D identity = {
     { 0.0f, 0.0f, 0.0f, 1.0f }
 };
 
-typedef struct IDirect3DRMFrameImpl IDirect3DRMFrameImpl;
-
-struct IDirect3DRMFrameImpl {
+struct d3drm_frame
+{
     IDirect3DRMFrame2 IDirect3DRMFrame2_iface;
     IDirect3DRMFrame3 IDirect3DRMFrame3_iface;
     LONG ref;
-    IDirect3DRMFrameImpl* parent;
+    struct d3drm_frame *parent;
     ULONG nb_children;
     ULONG children_capacity;
     IDirect3DRMFrame3** children;
@@ -82,17 +81,17 @@ struct d3drm_light_array
     IDirect3DRMLight **lights;
 };
 
-static inline IDirect3DRMFrameImpl *impl_from_IDirect3DRMFrame2(IDirect3DRMFrame2 *iface)
+static inline struct d3drm_frame *impl_from_IDirect3DRMFrame2(IDirect3DRMFrame2 *iface)
 {
-    return CONTAINING_RECORD(iface, IDirect3DRMFrameImpl, IDirect3DRMFrame2_iface);
+    return CONTAINING_RECORD(iface, struct d3drm_frame, IDirect3DRMFrame2_iface);
 }
 
-static inline IDirect3DRMFrameImpl *impl_from_IDirect3DRMFrame3(IDirect3DRMFrame3 *iface)
+static inline struct d3drm_frame *impl_from_IDirect3DRMFrame3(IDirect3DRMFrame3 *iface)
 {
-    return CONTAINING_RECORD(iface, IDirect3DRMFrameImpl, IDirect3DRMFrame3_iface);
+    return CONTAINING_RECORD(iface, struct d3drm_frame, IDirect3DRMFrame3_iface);
 }
 
-static inline IDirect3DRMFrameImpl *unsafe_impl_from_IDirect3DRMFrame3(IDirect3DRMFrame3 *iface);
+static inline struct d3drm_frame *unsafe_impl_from_IDirect3DRMFrame3(IDirect3DRMFrame3 *iface);
 
 static inline struct d3drm_frame_array *impl_from_IDirect3DRMFrameArray(IDirect3DRMFrameArray *iface)
 {
@@ -415,73 +414,75 @@ static struct d3drm_light_array *d3drm_light_array_create(void)
     return array;
 }
 
-/*** IUnknown methods ***/
-static HRESULT WINAPI IDirect3DRMFrame2Impl_QueryInterface(IDirect3DRMFrame2* iface,
-                                                           REFIID riid, void** object)
+static HRESULT WINAPI d3drm_frame2_QueryInterface(IDirect3DRMFrame2 *iface, REFIID riid, void **out)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame2(iface);
 
-    TRACE("(%p/%p)->(%s, %p)\n", iface, This, debugstr_guid(riid), object);
+    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
 
-    *object = NULL;
-
-    if(IsEqualGUID(riid, &IID_IUnknown) ||
-       IsEqualGUID(riid, &IID_IDirect3DRMFrame) ||
-       IsEqualGUID(riid, &IID_IDirect3DRMFrame2))
+    if (IsEqualGUID(riid, &IID_IDirect3DRMFrame2)
+            || IsEqualGUID(riid, &IID_IDirect3DRMFrame)
+            || IsEqualGUID(riid, &IID_IUnknown))
     {
-        *object = &This->IDirect3DRMFrame2_iface;
+        *out = &frame->IDirect3DRMFrame2_iface;
     }
-    else if(IsEqualGUID(riid, &IID_IDirect3DRMFrame3))
+    else if (IsEqualGUID(riid, &IID_IDirect3DRMFrame3))
     {
-        *object = &This->IDirect3DRMFrame3_iface;
+        *out = &frame->IDirect3DRMFrame3_iface;
     }
     else
     {
-        FIXME("interface %s not implemented\n", debugstr_guid(riid));
+        *out = NULL;
+        WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
         return E_NOINTERFACE;
     }
 
-    IDirect3DRMFrame2_AddRef(iface);
+    IUnknown_AddRef((IUnknown *)*out);
     return S_OK;
 }
 
-static ULONG WINAPI IDirect3DRMFrame2Impl_AddRef(IDirect3DRMFrame2* iface)
+static ULONG WINAPI d3drm_frame2_AddRef(IDirect3DRMFrame2 *iface)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame2(iface);
+    ULONG refcount = InterlockedIncrement(&frame->ref);
 
-    TRACE("(%p)->(): new ref = %d\n", This, ref);
+    TRACE("%p increasing refcount to %u.\n", iface, refcount);
 
-    return ref;
+    return refcount;
 }
 
-static ULONG WINAPI IDirect3DRMFrame2Impl_Release(IDirect3DRMFrame2* iface)
+static ULONG WINAPI d3drm_frame2_Release(IDirect3DRMFrame2 *iface)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame2(iface);
+    ULONG refcount = InterlockedDecrement(&frame->ref);
     ULONG i;
 
-    TRACE("(%p)->(): new ref = %d\n", This, ref);
+    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
-    if (!ref)
+    if (!refcount)
     {
-        for (i = 0; i < This->nb_children; i++)
-            IDirect3DRMFrame3_Release(This->children[i]);
-        HeapFree(GetProcessHeap(), 0, This->children);
-        for (i = 0; i < This->nb_visuals; i++)
-            IDirect3DRMVisual_Release(This->visuals[i]);
-        HeapFree(GetProcessHeap(), 0, This->visuals);
-        for (i = 0; i < This->nb_lights; i++)
-            IDirect3DRMLight_Release(This->lights[i]);
-        HeapFree(GetProcessHeap(), 0, This->lights);
-        HeapFree(GetProcessHeap(), 0, This);
+        for (i = 0; i < frame->nb_children; ++i)
+        {
+            IDirect3DRMFrame3_Release(frame->children[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, frame->children);
+        for (i = 0; i < frame->nb_visuals; ++i)
+        {
+            IDirect3DRMVisual_Release(frame->visuals[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, frame->visuals);
+        for (i = 0; i < frame->nb_lights; ++i)
+        {
+            IDirect3DRMLight_Release(frame->lights[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, frame->lights);
+        HeapFree(GetProcessHeap(), 0, frame);
     }
 
-    return ref;
+    return refcount;
 }
 
-/*** IDirect3DRMObject methods ***/
-static HRESULT WINAPI IDirect3DRMFrame2Impl_Clone(IDirect3DRMFrame2 *iface,
+static HRESULT WINAPI d3drm_frame2_Clone(IDirect3DRMFrame2 *iface,
         IUnknown *outer, REFIID iid, void **out)
 {
     FIXME("iface %p, outer %p, iid %s, out %p stub!\n", iface, outer, debugstr_guid(iid), out);
@@ -489,7 +490,7 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_Clone(IDirect3DRMFrame2 *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_AddDestroyCallback(IDirect3DRMFrame2 *iface,
+static HRESULT WINAPI d3drm_frame2_AddDestroyCallback(IDirect3DRMFrame2 *iface,
         D3DRMOBJECTCALLBACK cb, void *ctx)
 {
     FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
@@ -497,7 +498,7 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_AddDestroyCallback(IDirect3DRMFrame2
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_DeleteDestroyCallback(IDirect3DRMFrame2 *iface,
+static HRESULT WINAPI d3drm_frame2_DeleteDestroyCallback(IDirect3DRMFrame2 *iface,
         D3DRMOBJECTCALLBACK cb, void *ctx)
 {
     FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
@@ -505,77 +506,71 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_DeleteDestroyCallback(IDirect3DRMFra
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_SetAppData(IDirect3DRMFrame2* iface,
-                                                       DWORD data)
+static HRESULT WINAPI d3drm_frame2_SetAppData(IDirect3DRMFrame2 *iface, DWORD data)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%u): stub\n", iface, This, data);
+    FIXME("iface %p, data %#x stub!\n", iface, data);
 
     return E_NOTIMPL;
 }
 
-static DWORD WINAPI IDirect3DRMFrame2Impl_GetAppData(IDirect3DRMFrame2* iface)
+static DWORD WINAPI d3drm_frame2_GetAppData(IDirect3DRMFrame2 *iface)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    FIXME("iface %p stub!\n", iface);
 
     return 0;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_SetName(IDirect3DRMFrame2 *iface, const char *name)
+static HRESULT WINAPI d3drm_frame2_SetName(IDirect3DRMFrame2 *iface, const char *name)
 {
     FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_GetName(IDirect3DRMFrame2 *iface, DWORD *size, char *name)
+static HRESULT WINAPI d3drm_frame2_GetName(IDirect3DRMFrame2 *iface, DWORD *size, char *name)
 {
     FIXME("iface %p, size %p, name %p stub!\n", iface, size, name);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_GetClassName(IDirect3DRMFrame2 *iface, DWORD *size, char *name)
+static HRESULT WINAPI d3drm_frame2_GetClassName(IDirect3DRMFrame2 *iface, DWORD *size, char *name)
 {
-    IDirect3DRMFrameImpl *frame = impl_from_IDirect3DRMFrame2(iface);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame2(iface);
 
     TRACE("iface %p, size %p, name %p.\n", iface, size, name);
 
     return IDirect3DRMFrame3_GetClassName(&frame->IDirect3DRMFrame3_iface, size, name);
 }
 
-/*** IDirect3DRMFrame methods ***/
-static HRESULT WINAPI IDirect3DRMFrame2Impl_AddChild(IDirect3DRMFrame2 *iface, IDirect3DRMFrame *child)
+static HRESULT WINAPI d3drm_frame2_AddChild(IDirect3DRMFrame2 *iface, IDirect3DRMFrame *child)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-    IDirect3DRMFrame3 *frame;
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame2(iface);
+    IDirect3DRMFrame3 *child3;
     HRESULT hr;
 
-    TRACE("(%p/%p)->(%p)\n", iface, This, child);
+    TRACE("iface %p, child %p.\n", iface, child);
 
     if (!child)
         return D3DRMERR_BADOBJECT;
-    hr = IDirect3DRMFrame_QueryInterface(child, &IID_IDirect3DRMFrame3, (void**)&frame);
+    hr = IDirect3DRMFrame_QueryInterface(child, &IID_IDirect3DRMFrame3, (void **)&child3);
     if (hr != S_OK)
         return D3DRMERR_BADOBJECT;
     IDirect3DRMFrame_Release(child);
 
-    return IDirect3DRMFrame3_AddChild(&This->IDirect3DRMFrame3_iface, frame);
+    return IDirect3DRMFrame3_AddChild(&frame->IDirect3DRMFrame3_iface, child3);
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_AddLight(IDirect3DRMFrame2 *iface, IDirect3DRMLight *light)
+static HRESULT WINAPI d3drm_frame2_AddLight(IDirect3DRMFrame2 *iface, IDirect3DRMLight *light)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame2(iface);
 
-    TRACE("(%p/%p)->(%p)\n", iface, This, light);
+    TRACE("iface %p, light %p.\n", iface, light);
 
-    return IDirect3DRMFrame3_AddLight(&This->IDirect3DRMFrame3_iface, light);
+    return IDirect3DRMFrame3_AddLight(&frame->IDirect3DRMFrame3_iface, light);
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_AddMoveCallback(IDirect3DRMFrame2 *iface,
+static HRESULT WINAPI d3drm_frame2_AddMoveCallback(IDirect3DRMFrame2 *iface,
         D3DRMFRAMEMOVECALLBACK cb, void *ctx)
 {
     FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
@@ -583,196 +578,170 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_AddMoveCallback(IDirect3DRMFrame2 *i
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_AddTransform(IDirect3DRMFrame2* iface,
-                                                         D3DRMCOMBINETYPE type,
-                                                         D3DRMMATRIX4D matrix)
+static HRESULT WINAPI d3drm_frame2_AddTransform(IDirect3DRMFrame2 *iface, D3DRMCOMBINETYPE type, D3DRMMATRIX4D matrix)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame2(iface);
 
-    TRACE("(%p/%p)->(%u,%p)\n", iface, This, type, matrix);
+    TRACE("iface %p, type %#x, matrix %p.\n", iface, type, matrix);
 
-    return IDirect3DRMFrame3_AddTransform(&This->IDirect3DRMFrame3_iface, type, matrix);
+    return IDirect3DRMFrame3_AddTransform(&frame->IDirect3DRMFrame3_iface, type, matrix);
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_AddTranslation(IDirect3DRMFrame2* iface,
-                                                           D3DRMCOMBINETYPE type,
-                                                           D3DVALUE x, D3DVALUE y, D3DVALUE z)
+static HRESULT WINAPI d3drm_frame2_AddTranslation(IDirect3DRMFrame2 *iface,
+        D3DRMCOMBINETYPE type, D3DVALUE x, D3DVALUE y, D3DVALUE z)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%u,%f,%f,%f): stub\n", iface, This, type, x, y, z);
+    FIXME("iface %p, type %#x, x %.8e, y %.8e, z %.8e stub!\n", iface, type, x, y, z);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_AddScale(IDirect3DRMFrame2* iface,
-                                                     D3DRMCOMBINETYPE type,
-                                                     D3DVALUE sx, D3DVALUE sy, D3DVALUE sz)
+static HRESULT WINAPI d3drm_frame2_AddScale(IDirect3DRMFrame2 *iface,
+        D3DRMCOMBINETYPE type, D3DVALUE sx, D3DVALUE sy, D3DVALUE sz)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%u,%f,%f,%f): stub\n", iface, This, type, sx, sy, sz);
+    FIXME("iface %p, type %#x, sx %.8e, sy %.8e, sz %.8e stub!\n", iface, type, sx, sy, sz);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_AddRotation(IDirect3DRMFrame2* iface,
-                                                        D3DRMCOMBINETYPE type,
-                                                        D3DVALUE x, D3DVALUE y, D3DVALUE z,
-                                                        D3DVALUE theta)
+static HRESULT WINAPI d3drm_frame2_AddRotation(IDirect3DRMFrame2 *iface,
+        D3DRMCOMBINETYPE type, D3DVALUE x, D3DVALUE y, D3DVALUE z, D3DVALUE theta)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%u,%f,%f,%f,%f): stub\n", iface, This, type, x, y, z, theta);
+    FIXME("iface %p, type %#x, x %.8e, y %.8e, z %.8e, theta %.8e stub!\n", iface, type, x, y, z, theta);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_AddVisual(IDirect3DRMFrame2 *iface, IDirect3DRMVisual *visual)
+static HRESULT WINAPI d3drm_frame2_AddVisual(IDirect3DRMFrame2 *iface, IDirect3DRMVisual *visual)
 {
-    IDirect3DRMFrameImpl *frame = impl_from_IDirect3DRMFrame2(iface);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame2(iface);
 
     TRACE("iface %p, visual %p.\n", iface, visual);
 
     return IDirect3DRMFrame3_AddVisual(&frame->IDirect3DRMFrame3_iface, (IUnknown *)visual);
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_GetChildren(IDirect3DRMFrame2 *iface, IDirect3DRMFrameArray **children)
+static HRESULT WINAPI d3drm_frame2_GetChildren(IDirect3DRMFrame2 *iface, IDirect3DRMFrameArray **children)
 {
-    IDirect3DRMFrameImpl *frame = impl_from_IDirect3DRMFrame2(iface);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame2(iface);
 
     TRACE("iface %p, children %p.\n", iface, children);
 
     return IDirect3DRMFrame3_GetChildren(&frame->IDirect3DRMFrame3_iface, children);
 }
 
-static D3DCOLOR WINAPI IDirect3DRMFrame2Impl_GetColor(IDirect3DRMFrame2* iface)
+static D3DCOLOR WINAPI d3drm_frame2_GetColor(IDirect3DRMFrame2 *iface)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    FIXME("iface %p stub!\n", iface);
 
     return 0;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_GetLights(IDirect3DRMFrame2 *iface, IDirect3DRMLightArray **lights)
+static HRESULT WINAPI d3drm_frame2_GetLights(IDirect3DRMFrame2 *iface, IDirect3DRMLightArray **lights)
 {
-    IDirect3DRMFrameImpl *frame = impl_from_IDirect3DRMFrame2(iface);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame2(iface);
 
     TRACE("iface %p, lights %p.\n", iface, lights);
 
     return IDirect3DRMFrame3_GetLights(&frame->IDirect3DRMFrame3_iface, lights);
 }
 
-static D3DRMMATERIALMODE WINAPI IDirect3DRMFrame2Impl_GetMaterialMode(IDirect3DRMFrame2* iface)
+static D3DRMMATERIALMODE WINAPI d3drm_frame2_GetMaterialMode(IDirect3DRMFrame2 *iface)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    FIXME("iface %p stub!\n", iface);
 
     return D3DRMMATERIAL_FROMPARENT;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_GetParent(IDirect3DRMFrame2 *iface, IDirect3DRMFrame **frame)
+static HRESULT WINAPI d3drm_frame2_GetParent(IDirect3DRMFrame2 *iface, IDirect3DRMFrame **parent)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame2(iface);
 
-    TRACE("(%p/%p)->(%p)\n", iface, This, frame);
+    TRACE("iface %p, parent %p.\n", iface, parent);
 
-    if (!frame)
+    if (!parent)
         return D3DRMERR_BADVALUE;
 
-    if (This->parent)
+    if (frame->parent)
     {
-        *frame = (IDirect3DRMFrame *)&This->parent->IDirect3DRMFrame2_iface;
-        IDirect3DRMFrame_AddRef(*frame);
+        *parent = (IDirect3DRMFrame *)&frame->parent->IDirect3DRMFrame2_iface;
+        IDirect3DRMFrame_AddRef(*parent);
     }
     else
     {
-        *frame = NULL;
+        *parent = NULL;
     }
 
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_GetPosition(IDirect3DRMFrame2 *iface,
-        IDirect3DRMFrame *reference, D3DVECTOR *return_position)
+static HRESULT WINAPI d3drm_frame2_GetPosition(IDirect3DRMFrame2 *iface,
+        IDirect3DRMFrame *reference, D3DVECTOR *position)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%p,%p): stub\n", iface, This, reference, return_position);
+    FIXME("iface %p, reference %p, position %p stub!\n", iface, reference, position);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_GetRotation(IDirect3DRMFrame2 *iface,
-        IDirect3DRMFrame *reference, D3DVECTOR *axis, D3DVALUE *return_theta)
+static HRESULT WINAPI d3drm_frame2_GetRotation(IDirect3DRMFrame2 *iface,
+        IDirect3DRMFrame *reference, D3DVECTOR *axis, D3DVALUE *theta)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%p,%p,%p): stub\n", iface, This, reference, axis, return_theta);
+    FIXME("iface %p, reference %p, axis %p, theta %p stub!\n", iface, reference, axis, theta);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_GetScene(IDirect3DRMFrame2 *iface, IDirect3DRMFrame **scene)
+static HRESULT WINAPI d3drm_frame2_GetScene(IDirect3DRMFrame2 *iface, IDirect3DRMFrame **scene)
 {
-    FIXME("iface %p, frame %p stub!\n", iface, scene);
+    FIXME("iface %p, scene %p stub!\n", iface, scene);
 
     return E_NOTIMPL;
 }
 
-static D3DRMSORTMODE WINAPI IDirect3DRMFrame2Impl_GetSortMode(IDirect3DRMFrame2* iface)
+static D3DRMSORTMODE WINAPI d3drm_frame2_GetSortMode(IDirect3DRMFrame2 *iface)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    FIXME("iface %p stub!\n", iface);
 
     return D3DRMSORT_FROMPARENT;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_GetTexture(IDirect3DRMFrame2 *iface, IDirect3DRMTexture **texture)
+static HRESULT WINAPI d3drm_frame2_GetTexture(IDirect3DRMFrame2 *iface, IDirect3DRMTexture **texture)
 {
     FIXME("iface %p, texture %p stub!\n", iface, texture);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_GetTransform(IDirect3DRMFrame2* iface,
-                                                         D3DRMMATRIX4D return_matrix)
+static HRESULT WINAPI d3drm_frame2_GetTransform(IDirect3DRMFrame2 *iface, D3DRMMATRIX4D matrix)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame2(iface);
 
-    TRACE("(%p/%p)->(%p)\n", iface, This, return_matrix);
+    TRACE("iface %p, matrix %p.\n", iface, matrix);
 
-    memcpy(return_matrix, This->transform, sizeof(D3DRMMATRIX4D));
+    memcpy(matrix, frame->transform, sizeof(D3DRMMATRIX4D));
 
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_GetVelocity(IDirect3DRMFrame2 *iface,
-        IDirect3DRMFrame *reference, D3DVECTOR *return_velocity, BOOL with_rotation)
+static HRESULT WINAPI d3drm_frame2_GetVelocity(IDirect3DRMFrame2 *iface,
+        IDirect3DRMFrame *reference, D3DVECTOR *velocity, BOOL with_rotation)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%p,%p,%d): stub\n", iface, This, reference, return_velocity, with_rotation);
+    FIXME("iface %p, reference %p, velocity %p, with_rotation %#x stub!\n",
+            iface, reference, velocity, with_rotation);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_GetOrientation(IDirect3DRMFrame2 *iface,
+static HRESULT WINAPI d3drm_frame2_GetOrientation(IDirect3DRMFrame2 *iface,
         IDirect3DRMFrame *reference, D3DVECTOR *dir, D3DVECTOR *up)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%p,%p,%p): stub\n", iface, This, reference, dir, up);
+    FIXME("iface %p, reference %p, dir %p, up %p stub!\n", iface, reference, dir, up);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_GetVisuals(IDirect3DRMFrame2 *iface, IDirect3DRMVisualArray **visuals)
+static HRESULT WINAPI d3drm_frame2_GetVisuals(IDirect3DRMFrame2 *iface, IDirect3DRMVisualArray **visuals)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame2(iface);
     struct d3drm_visual_array *array;
 
     TRACE("iface %p, visuals %p.\n", iface, visuals);
@@ -783,17 +752,17 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_GetVisuals(IDirect3DRMFrame2 *iface,
     if (!(array = d3drm_visual_array_create()))
         return E_OUTOFMEMORY;
 
-    array->size = This->nb_visuals;
-    if (This->nb_visuals)
+    array->size = frame->nb_visuals;
+    if (frame->nb_visuals)
     {
         ULONG i;
 
-        if (!(array->visuals = HeapAlloc(GetProcessHeap(), 0, This->nb_visuals * sizeof(*array->visuals))))
+        if (!(array->visuals = HeapAlloc(GetProcessHeap(), 0, frame->nb_visuals * sizeof(*array->visuals))))
             return E_OUTOFMEMORY;
-        for (i = 0; i < This->nb_visuals; i++)
+        for (i = 0; i < frame->nb_visuals; ++i)
         {
-            array->visuals[i] = This->visuals[i];
-            IDirect3DRMVisual_AddRef(This->visuals[i]);
+            array->visuals[i] = frame->visuals[i];
+            IDirect3DRMVisual_AddRef(frame->visuals[i]);
         }
     }
 
@@ -802,27 +771,21 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_GetVisuals(IDirect3DRMFrame2 *iface,
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_GetTextureTopology(IDirect3DRMFrame2* iface,
-                                                               BOOL *wrap_u, BOOL *wrap_v)
+static HRESULT WINAPI d3drm_frame2_GetTextureTopology(IDirect3DRMFrame2 *iface, BOOL *wrap_u, BOOL *wrap_v)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%p,%p): stub\n", iface, This, wrap_u, wrap_v);
+    FIXME("iface %p, wrap_u %p, wrap_v %p stub!\n", iface, wrap_u, wrap_v);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_InverseTransform(IDirect3DRMFrame2* iface,
-                                                             D3DVECTOR *d, D3DVECTOR *s)
+static HRESULT WINAPI d3drm_frame2_InverseTransform(IDirect3DRMFrame2 *iface, D3DVECTOR *d, D3DVECTOR *s)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%p,%p): stub\n", iface, This, d, s);
+    FIXME("iface %p, d %p, s %p stub!\n", iface, d, s);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_Load(IDirect3DRMFrame2 *iface, void *filename,
+static HRESULT WINAPI d3drm_frame2_Load(IDirect3DRMFrame2 *iface, void *filename,
         void *name, D3DRMLOADOPTIONS flags, D3DRMLOADTEXTURECALLBACK cb, void *ctx)
 {
     FIXME("iface %p, filename %p, name %p, flags %#x, cb %p, ctx %p stub!\n",
@@ -831,7 +794,7 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_Load(IDirect3DRMFrame2 *iface, void 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_LookAt(IDirect3DRMFrame2 *iface, IDirect3DRMFrame *target,
+static HRESULT WINAPI d3drm_frame2_LookAt(IDirect3DRMFrame2 *iface, IDirect3DRMFrame *target,
         IDirect3DRMFrame *reference, D3DRMFRAMECONSTRAINT constraint)
 {
     FIXME("iface %p, target %p, reference %p, constraint %#x stub!\n", iface, target, reference, constraint);
@@ -839,43 +802,40 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_LookAt(IDirect3DRMFrame2 *iface, IDi
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_Move(IDirect3DRMFrame2* iface, D3DVALUE delta)
+static HRESULT WINAPI d3drm_frame2_Move(IDirect3DRMFrame2 *iface, D3DVALUE delta)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%f): stub\n", iface, This, delta);
+    FIXME("iface %p, delta %.8e stub!\n", iface, delta);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_DeleteChild(IDirect3DRMFrame2 *iface, IDirect3DRMFrame *frame)
+static HRESULT WINAPI d3drm_frame2_DeleteChild(IDirect3DRMFrame2 *iface, IDirect3DRMFrame *child)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-    IDirect3DRMFrame3 *child;
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame2(iface);
+    IDirect3DRMFrame3 *child3;
     HRESULT hr;
 
-    TRACE("(%p/%p)->(%p)\n", iface, This, frame);
+    TRACE("iface %p, child %p.\n", iface, child);
 
-    if (!frame)
+    if (!child)
         return D3DRMERR_BADOBJECT;
-    hr = IDirect3DRMFrame_QueryInterface(frame, &IID_IDirect3DRMFrame3, (void**)&child);
-    if (hr != S_OK)
+    if (FAILED(hr = IDirect3DRMFrame_QueryInterface(child, &IID_IDirect3DRMFrame3, (void **)&child3)))
         return D3DRMERR_BADOBJECT;
-    IDirect3DRMFrame_Release(frame);
+    IDirect3DRMFrame_Release(child);
 
-    return IDirect3DRMFrame3_DeleteChild(&This->IDirect3DRMFrame3_iface, child);
+    return IDirect3DRMFrame3_DeleteChild(&frame->IDirect3DRMFrame3_iface, child3);
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_DeleteLight(IDirect3DRMFrame2 *iface, IDirect3DRMLight *light)
+static HRESULT WINAPI d3drm_frame2_DeleteLight(IDirect3DRMFrame2 *iface, IDirect3DRMLight *light)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame2(iface);
 
-    TRACE("(%p/%p)->(%p)\n", iface, This, light);
+    TRACE("iface %p, light %p.\n", iface, light);
 
-    return IDirect3DRMFrame3_DeleteLight(&This->IDirect3DRMFrame3_iface, light);
+    return IDirect3DRMFrame3_DeleteLight(&frame->IDirect3DRMFrame3_iface, light);
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_DeleteMoveCallback(IDirect3DRMFrame2 *iface,
+static HRESULT WINAPI d3drm_frame2_DeleteMoveCallback(IDirect3DRMFrame2 *iface,
         D3DRMFRAMEMOVECALLBACK cb, void *ctx)
 {
     FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
@@ -883,191 +843,153 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_DeleteMoveCallback(IDirect3DRMFrame2
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_DeleteVisual(IDirect3DRMFrame2 *iface, IDirect3DRMVisual *visual)
+static HRESULT WINAPI d3drm_frame2_DeleteVisual(IDirect3DRMFrame2 *iface, IDirect3DRMVisual *visual)
 {
-    IDirect3DRMFrameImpl *frame = impl_from_IDirect3DRMFrame2(iface);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame2(iface);
 
     TRACE("iface %p, visual %p.\n", iface, visual);
 
     return IDirect3DRMFrame3_DeleteVisual(&frame->IDirect3DRMFrame3_iface, (IUnknown *)visual);
 }
 
-static D3DCOLOR WINAPI IDirect3DRMFrame2Impl_GetSceneBackground(IDirect3DRMFrame2* iface)
+static D3DCOLOR WINAPI d3drm_frame2_GetSceneBackground(IDirect3DRMFrame2 *iface)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame2(iface);
 
-    TRACE("(%p/%p)->()\n", iface, This);
+    TRACE("iface %p.\n", iface);
 
-    return IDirect3DRMFrame3_GetSceneBackground(&This->IDirect3DRMFrame3_iface);
+    return IDirect3DRMFrame3_GetSceneBackground(&frame->IDirect3DRMFrame3_iface);
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_GetSceneBackgroundDepth(IDirect3DRMFrame2 *iface,
+static HRESULT WINAPI d3drm_frame2_GetSceneBackgroundDepth(IDirect3DRMFrame2 *iface,
         IDirectDrawSurface **surface)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, surface);
+    FIXME("iface %p, surface %p stub!\n", iface, surface);
 
     return E_NOTIMPL;
 }
 
-static D3DCOLOR WINAPI IDirect3DRMFrame2Impl_GetSceneFogColor(IDirect3DRMFrame2* iface)
+static D3DCOLOR WINAPI d3drm_frame2_GetSceneFogColor(IDirect3DRMFrame2 *iface)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    FIXME("iface %p stub!\n", iface);
 
     return 0;
 }
 
-static BOOL WINAPI IDirect3DRMFrame2Impl_GetSceneFogEnable(IDirect3DRMFrame2* iface)
+static BOOL WINAPI d3drm_frame2_GetSceneFogEnable(IDirect3DRMFrame2 *iface)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    FIXME("iface %p stub!\n", iface);
 
     return FALSE;
 }
 
-static D3DRMFOGMODE WINAPI IDirect3DRMFrame2Impl_GetSceneFogMode(IDirect3DRMFrame2* iface)
+static D3DRMFOGMODE WINAPI d3drm_frame2_GetSceneFogMode(IDirect3DRMFrame2 *iface)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    FIXME("iface %p stub!\n", iface);
 
     return D3DRMFOG_LINEAR;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_GetSceneFogParams(IDirect3DRMFrame2* iface,
-                                                              D3DVALUE *return_start,
-                                                              D3DVALUE *return_end,
-                                                              D3DVALUE *return_density)
+static HRESULT WINAPI d3drm_frame2_GetSceneFogParams(IDirect3DRMFrame2 *iface,
+        D3DVALUE *start, D3DVALUE *end, D3DVALUE *density)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%p,%p,%p): stub\n", iface, This, return_start, return_end, return_density);
+    FIXME("iface %p, start %p, end %p, density %p stub!\n", iface, start, end, density);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_SetSceneBackground(IDirect3DRMFrame2* iface,
-                                                               D3DCOLOR color)
+static HRESULT WINAPI d3drm_frame2_SetSceneBackground(IDirect3DRMFrame2 *iface, D3DCOLOR color)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame2(iface);
 
-    TRACE("(%p/%p)->(%u)\n", iface, This, color);
+    TRACE("iface %p, color 0x%08x.\n", iface, color);
 
-    return IDirect3DRMFrame3_SetSceneBackground(&This->IDirect3DRMFrame3_iface, color);
+    return IDirect3DRMFrame3_SetSceneBackground(&frame->IDirect3DRMFrame3_iface, color);
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_SetSceneBackgroundRGB(IDirect3DRMFrame2* iface,
-                                                                  D3DVALUE red, D3DVALUE green,
-                                                                  D3DVALUE blue)
+static HRESULT WINAPI d3drm_frame2_SetSceneBackgroundRGB(IDirect3DRMFrame2 *iface,
+        D3DVALUE red, D3DVALUE green, D3DVALUE blue)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame2(iface);
 
-    TRACE("(%p/%p)->(%f,%f,%f)\n", iface, This, red, green, blue);
+    TRACE("iface %p, red %.8e, green %.8e, blue %.8e.\n", iface, red, green, blue);
 
-    return IDirect3DRMFrame3_SetSceneBackgroundRGB(&This->IDirect3DRMFrame3_iface, red, green, blue);
+    return IDirect3DRMFrame3_SetSceneBackgroundRGB(&frame->IDirect3DRMFrame3_iface, red, green, blue);
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_SetSceneBackgroundDepth(IDirect3DRMFrame2 *iface,
-        IDirectDrawSurface *surface)
+static HRESULT WINAPI d3drm_frame2_SetSceneBackgroundDepth(IDirect3DRMFrame2 *iface, IDirectDrawSurface *surface)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, surface);
+    FIXME("iface %p, surface %p stub!\n", iface, surface);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_SetSceneBackgroundImage(IDirect3DRMFrame2 *iface,
-        IDirect3DRMTexture *texture)
+static HRESULT WINAPI d3drm_frame2_SetSceneBackgroundImage(IDirect3DRMFrame2 *iface, IDirect3DRMTexture *texture)
 {
     FIXME("iface %p, texture %p stub!\n", iface, texture);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_SetSceneFogEnable(IDirect3DRMFrame2* iface, BOOL enable)
+static HRESULT WINAPI d3drm_frame2_SetSceneFogEnable(IDirect3DRMFrame2 *iface, BOOL enable)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%d): stub\n", iface, This, enable);
+    FIXME("iface %p, enable %#x stub!\n", iface, enable);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_SetSceneFogColor(IDirect3DRMFrame2* iface,
-                                                             D3DCOLOR color)
+static HRESULT WINAPI d3drm_frame2_SetSceneFogColor(IDirect3DRMFrame2 *iface, D3DCOLOR color)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%u): stub\n", iface, This, color);
+    FIXME("iface %p, color 0x%08x stub!\n", iface, color);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_SetSceneFogMode(IDirect3DRMFrame2* iface,
-                                                            D3DRMFOGMODE mode)
+static HRESULT WINAPI d3drm_frame2_SetSceneFogMode(IDirect3DRMFrame2 *iface, D3DRMFOGMODE mode)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%u): stub\n", iface, This, mode);
+    FIXME("iface %p, mode %#x stub!\n", iface, mode);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_SetSceneFogParams(IDirect3DRMFrame2* iface,
-                                                              D3DVALUE start, D3DVALUE end,
-                                                              D3DVALUE density)
+static HRESULT WINAPI d3drm_frame2_SetSceneFogParams(IDirect3DRMFrame2 *iface,
+        D3DVALUE start, D3DVALUE end, D3DVALUE density)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%f,%f,%f): stub\n", iface, This, start, end, density);
+    FIXME("iface %p, start %.8e, end %.8e, density %.8e stub!\n", iface, start, end, density);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_SetColor(IDirect3DRMFrame2* iface, D3DCOLOR color)
+static HRESULT WINAPI d3drm_frame2_SetColor(IDirect3DRMFrame2 *iface, D3DCOLOR color)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%u): stub\n", iface, This, color);
+    FIXME("iface %p, color 0x%08x stub!\n", iface, color);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_SetColorRGB(IDirect3DRMFrame2* iface, D3DVALUE red,
-                                                        D3DVALUE green, D3DVALUE blue)
+static HRESULT WINAPI d3drm_frame2_SetColorRGB(IDirect3DRMFrame2 *iface,
+        D3DVALUE red, D3DVALUE green, D3DVALUE blue)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%f,%f,%f): stub\n", iface, This, red, green, blue);
+    FIXME("iface %p, red %.8e, green %.8e, blue %.8e stub!\n", iface, red, green, blue);
 
     return E_NOTIMPL;
 }
 
-static D3DRMZBUFFERMODE WINAPI IDirect3DRMFrame2Impl_GetZbufferMode(IDirect3DRMFrame2* iface)
+static D3DRMZBUFFERMODE WINAPI d3drm_frame2_GetZbufferMode(IDirect3DRMFrame2 *iface)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    FIXME("iface %p stub!\n", iface);
 
     return D3DRMZBUFFER_FROMPARENT;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_SetMaterialMode(IDirect3DRMFrame2* iface,
-                                                            D3DRMMATERIALMODE mode)
+static HRESULT WINAPI d3drm_frame2_SetMaterialMode(IDirect3DRMFrame2 *iface, D3DRMMATERIALMODE mode)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%u): stub\n", iface, This, mode);
+    FIXME("iface %p, mode %#x stub!\n", iface, mode);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_SetOrientation(IDirect3DRMFrame2 *iface, IDirect3DRMFrame *reference,
+static HRESULT WINAPI d3drm_frame2_SetOrientation(IDirect3DRMFrame2 *iface, IDirect3DRMFrame *reference,
         D3DVALUE dx, D3DVALUE dy, D3DVALUE dz, D3DVALUE ux, D3DVALUE uy, D3DVALUE uz)
 {
     FIXME("iface %p, reference %p, dx %.8e, dy %.8e, dz %.8e, ux %.8e, uy %.8e, uz %.8e stub!\n",
@@ -1076,15 +998,15 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_SetOrientation(IDirect3DRMFrame2 *if
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_SetPosition(IDirect3DRMFrame2 *iface, IDirect3DRMFrame *reference,
-        D3DVALUE x, D3DVALUE y, D3DVALUE z)
+static HRESULT WINAPI d3drm_frame2_SetPosition(IDirect3DRMFrame2 *iface,
+        IDirect3DRMFrame *reference, D3DVALUE x, D3DVALUE y, D3DVALUE z)
 {
     FIXME("iface %p, reference %p, x %.8e, y %.8e, z %.8e stub!\n", iface, reference, x, y, z);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_SetRotation(IDirect3DRMFrame2 *iface,
+static HRESULT WINAPI d3drm_frame2_SetRotation(IDirect3DRMFrame2 *iface,
         IDirect3DRMFrame *reference, D3DVALUE x, D3DVALUE y, D3DVALUE z, D3DVALUE theta)
 {
     FIXME("iface %p, reference %p, x %.8e, y %.8e, z %.8e, theta %.8e stub!\n",
@@ -1093,34 +1015,28 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_SetRotation(IDirect3DRMFrame2 *iface
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_SetSortMode(IDirect3DRMFrame2* iface,
-                                                        D3DRMSORTMODE mode)
+static HRESULT WINAPI d3drm_frame2_SetSortMode(IDirect3DRMFrame2 *iface, D3DRMSORTMODE mode)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%u): stub\n", iface, This, mode);
+    FIXME("iface %p, mode %#x stub!\n", iface, mode);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_SetTexture(IDirect3DRMFrame2 *iface, IDirect3DRMTexture *texture)
+static HRESULT WINAPI d3drm_frame2_SetTexture(IDirect3DRMFrame2 *iface, IDirect3DRMTexture *texture)
 {
     FIXME("iface %p, texture %p stub!\n", iface, texture);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_SetTextureTopology(IDirect3DRMFrame2* iface,
-                                                               BOOL wrap_u, BOOL wrap_v)
+static HRESULT WINAPI d3drm_frame2_SetTextureTopology(IDirect3DRMFrame2 *iface, BOOL wrap_u, BOOL wrap_v)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%d,%d): stub\n", iface, This, wrap_u, wrap_v);
+    FIXME("iface %p, wrap_u %#x, wrap_v %#x stub!\n", iface, wrap_u, wrap_v);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_SetVelocity(IDirect3DRMFrame2 *iface,
+static HRESULT WINAPI d3drm_frame2_SetVelocity(IDirect3DRMFrame2 *iface,
         IDirect3DRMFrame *reference, D3DVALUE x, D3DVALUE y, D3DVALUE z, BOOL with_rotation)
 {
     FIXME("iface %p, reference %p, x %.8e, y %.8e, z %.8e, with_rotation %#x stub!\n",
@@ -1129,28 +1045,21 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_SetVelocity(IDirect3DRMFrame2 *iface
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_SetZbufferMode(IDirect3DRMFrame2* iface,
-                                                           D3DRMZBUFFERMODE mode)
+static HRESULT WINAPI d3drm_frame2_SetZbufferMode(IDirect3DRMFrame2 *iface, D3DRMZBUFFERMODE mode)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%u): stub\n", iface, This, mode);
+    FIXME("iface %p, mode %#x stub!\n", iface, mode);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_Transform(IDirect3DRMFrame2* iface, D3DVECTOR *d,
-                                                      D3DVECTOR *s)
+static HRESULT WINAPI d3drm_frame2_Transform(IDirect3DRMFrame2 *iface, D3DVECTOR *d, D3DVECTOR *s)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%p,%p): stub\n", iface, This, d, s);
+    FIXME("iface %p, d %p, s %p stub!\n", iface, d, s);
 
     return E_NOTIMPL;
 }
 
-/*** IDirect3DRMFrame2 methods ***/
-static HRESULT WINAPI IDirect3DRMFrame2Impl_AddMoveCallback2(IDirect3DRMFrame2 *iface,
+static HRESULT WINAPI d3drm_frame2_AddMoveCallback2(IDirect3DRMFrame2 *iface,
         D3DRMFRAMEMOVECALLBACK cb, void *ctx, DWORD flags)
 {
     FIXME("iface %p, cb %p, ctx %p, flags %#x stub!\n", iface, cb, ctx, flags);
@@ -1158,165 +1067,156 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_AddMoveCallback2(IDirect3DRMFrame2 *
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_GetBox(IDirect3DRMFrame2 *iface, D3DRMBOX *box)
+static HRESULT WINAPI d3drm_frame2_GetBox(IDirect3DRMFrame2 *iface, D3DRMBOX *box)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, box);
+    FIXME("iface %p, box %p stub!\n", iface, box);
 
     return E_NOTIMPL;
 }
 
-static BOOL WINAPI IDirect3DRMFrame2Impl_GetBoxEnable(IDirect3DRMFrame2* iface)
+static BOOL WINAPI d3drm_frame2_GetBoxEnable(IDirect3DRMFrame2 *iface)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    FIXME("iface %p stub!\n", iface);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_GetAxes(IDirect3DRMFrame2 *iface,
-        D3DVECTOR *dir, D3DVECTOR *up)
+static HRESULT WINAPI d3drm_frame2_GetAxes(IDirect3DRMFrame2 *iface, D3DVECTOR *dir, D3DVECTOR *up)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%p,%p): stub\n", iface, This, dir, up);
+    FIXME("iface %p, dir %p, up %p stub!\n", iface, dir, up);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_GetMaterial(IDirect3DRMFrame2 *iface, IDirect3DRMMaterial **material)
+static HRESULT WINAPI d3drm_frame2_GetMaterial(IDirect3DRMFrame2 *iface, IDirect3DRMMaterial **material)
 {
     FIXME("iface %p, material %p stub!\n", iface, material);
 
     return E_NOTIMPL;
 }
 
-static BOOL WINAPI IDirect3DRMFrame2Impl_GetInheritAxes(IDirect3DRMFrame2* iface)
+static BOOL WINAPI d3drm_frame2_GetInheritAxes(IDirect3DRMFrame2 *iface)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    FIXME("iface %p stub!\n", iface);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_GetHierarchyBox(IDirect3DRMFrame2 *iface, D3DRMBOX *box)
+static HRESULT WINAPI d3drm_frame2_GetHierarchyBox(IDirect3DRMFrame2 *iface, D3DRMBOX *box)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, box);
+    FIXME("iface %p, box %p stub!\n", iface, box);
 
     return E_NOTIMPL;
 }
 
-static const struct IDirect3DRMFrame2Vtbl Direct3DRMFrame2_Vtbl =
+static const struct IDirect3DRMFrame2Vtbl d3drm_frame2_vtbl =
 {
-    /*** IUnknown methods ***/
-    IDirect3DRMFrame2Impl_QueryInterface,
-    IDirect3DRMFrame2Impl_AddRef,
-    IDirect3DRMFrame2Impl_Release,
-    /*** IDirect3DRMObject methods ***/
-    IDirect3DRMFrame2Impl_Clone,
-    IDirect3DRMFrame2Impl_AddDestroyCallback,
-    IDirect3DRMFrame2Impl_DeleteDestroyCallback,
-    IDirect3DRMFrame2Impl_SetAppData,
-    IDirect3DRMFrame2Impl_GetAppData,
-    IDirect3DRMFrame2Impl_SetName,
-    IDirect3DRMFrame2Impl_GetName,
-    IDirect3DRMFrame2Impl_GetClassName,
-    /*** IDirect3DRMFrame methods ***/
-    IDirect3DRMFrame2Impl_AddChild,
-    IDirect3DRMFrame2Impl_AddLight,
-    IDirect3DRMFrame2Impl_AddMoveCallback,
-    IDirect3DRMFrame2Impl_AddTransform,
-    IDirect3DRMFrame2Impl_AddTranslation,
-    IDirect3DRMFrame2Impl_AddScale,
-    IDirect3DRMFrame2Impl_AddRotation,
-    IDirect3DRMFrame2Impl_AddVisual,
-    IDirect3DRMFrame2Impl_GetChildren,
-    IDirect3DRMFrame2Impl_GetColor,
-    IDirect3DRMFrame2Impl_GetLights,
-    IDirect3DRMFrame2Impl_GetMaterialMode,
-    IDirect3DRMFrame2Impl_GetParent,
-    IDirect3DRMFrame2Impl_GetPosition,
-    IDirect3DRMFrame2Impl_GetRotation,
-    IDirect3DRMFrame2Impl_GetScene,
-    IDirect3DRMFrame2Impl_GetSortMode,
-    IDirect3DRMFrame2Impl_GetTexture,
-    IDirect3DRMFrame2Impl_GetTransform,
-    IDirect3DRMFrame2Impl_GetVelocity,
-    IDirect3DRMFrame2Impl_GetOrientation,
-    IDirect3DRMFrame2Impl_GetVisuals,
-    IDirect3DRMFrame2Impl_GetTextureTopology,
-    IDirect3DRMFrame2Impl_InverseTransform,
-    IDirect3DRMFrame2Impl_Load,
-    IDirect3DRMFrame2Impl_LookAt,
-    IDirect3DRMFrame2Impl_Move,
-    IDirect3DRMFrame2Impl_DeleteChild,
-    IDirect3DRMFrame2Impl_DeleteLight,
-    IDirect3DRMFrame2Impl_DeleteMoveCallback,
-    IDirect3DRMFrame2Impl_DeleteVisual,
-    IDirect3DRMFrame2Impl_GetSceneBackground,
-    IDirect3DRMFrame2Impl_GetSceneBackgroundDepth,
-    IDirect3DRMFrame2Impl_GetSceneFogColor,
-    IDirect3DRMFrame2Impl_GetSceneFogEnable,
-    IDirect3DRMFrame2Impl_GetSceneFogMode,
-    IDirect3DRMFrame2Impl_GetSceneFogParams,
-    IDirect3DRMFrame2Impl_SetSceneBackground,
-    IDirect3DRMFrame2Impl_SetSceneBackgroundRGB,
-    IDirect3DRMFrame2Impl_SetSceneBackgroundDepth,
-    IDirect3DRMFrame2Impl_SetSceneBackgroundImage,
-    IDirect3DRMFrame2Impl_SetSceneFogEnable,
-    IDirect3DRMFrame2Impl_SetSceneFogColor,
-    IDirect3DRMFrame2Impl_SetSceneFogMode,
-    IDirect3DRMFrame2Impl_SetSceneFogParams,
-    IDirect3DRMFrame2Impl_SetColor,
-    IDirect3DRMFrame2Impl_SetColorRGB,
-    IDirect3DRMFrame2Impl_GetZbufferMode,
-    IDirect3DRMFrame2Impl_SetMaterialMode,
-    IDirect3DRMFrame2Impl_SetOrientation,
-    IDirect3DRMFrame2Impl_SetPosition,
-    IDirect3DRMFrame2Impl_SetRotation,
-    IDirect3DRMFrame2Impl_SetSortMode,
-    IDirect3DRMFrame2Impl_SetTexture,
-    IDirect3DRMFrame2Impl_SetTextureTopology,
-    IDirect3DRMFrame2Impl_SetVelocity,
-    IDirect3DRMFrame2Impl_SetZbufferMode,
-    IDirect3DRMFrame2Impl_Transform,
-    /*** IDirect3DRMFrame2 methods ***/
-    IDirect3DRMFrame2Impl_AddMoveCallback2,
-    IDirect3DRMFrame2Impl_GetBox,
-    IDirect3DRMFrame2Impl_GetBoxEnable,
-    IDirect3DRMFrame2Impl_GetAxes,
-    IDirect3DRMFrame2Impl_GetMaterial,
-    IDirect3DRMFrame2Impl_GetInheritAxes,
-    IDirect3DRMFrame2Impl_GetHierarchyBox
+    d3drm_frame2_QueryInterface,
+    d3drm_frame2_AddRef,
+    d3drm_frame2_Release,
+    d3drm_frame2_Clone,
+    d3drm_frame2_AddDestroyCallback,
+    d3drm_frame2_DeleteDestroyCallback,
+    d3drm_frame2_SetAppData,
+    d3drm_frame2_GetAppData,
+    d3drm_frame2_SetName,
+    d3drm_frame2_GetName,
+    d3drm_frame2_GetClassName,
+    d3drm_frame2_AddChild,
+    d3drm_frame2_AddLight,
+    d3drm_frame2_AddMoveCallback,
+    d3drm_frame2_AddTransform,
+    d3drm_frame2_AddTranslation,
+    d3drm_frame2_AddScale,
+    d3drm_frame2_AddRotation,
+    d3drm_frame2_AddVisual,
+    d3drm_frame2_GetChildren,
+    d3drm_frame2_GetColor,
+    d3drm_frame2_GetLights,
+    d3drm_frame2_GetMaterialMode,
+    d3drm_frame2_GetParent,
+    d3drm_frame2_GetPosition,
+    d3drm_frame2_GetRotation,
+    d3drm_frame2_GetScene,
+    d3drm_frame2_GetSortMode,
+    d3drm_frame2_GetTexture,
+    d3drm_frame2_GetTransform,
+    d3drm_frame2_GetVelocity,
+    d3drm_frame2_GetOrientation,
+    d3drm_frame2_GetVisuals,
+    d3drm_frame2_GetTextureTopology,
+    d3drm_frame2_InverseTransform,
+    d3drm_frame2_Load,
+    d3drm_frame2_LookAt,
+    d3drm_frame2_Move,
+    d3drm_frame2_DeleteChild,
+    d3drm_frame2_DeleteLight,
+    d3drm_frame2_DeleteMoveCallback,
+    d3drm_frame2_DeleteVisual,
+    d3drm_frame2_GetSceneBackground,
+    d3drm_frame2_GetSceneBackgroundDepth,
+    d3drm_frame2_GetSceneFogColor,
+    d3drm_frame2_GetSceneFogEnable,
+    d3drm_frame2_GetSceneFogMode,
+    d3drm_frame2_GetSceneFogParams,
+    d3drm_frame2_SetSceneBackground,
+    d3drm_frame2_SetSceneBackgroundRGB,
+    d3drm_frame2_SetSceneBackgroundDepth,
+    d3drm_frame2_SetSceneBackgroundImage,
+    d3drm_frame2_SetSceneFogEnable,
+    d3drm_frame2_SetSceneFogColor,
+    d3drm_frame2_SetSceneFogMode,
+    d3drm_frame2_SetSceneFogParams,
+    d3drm_frame2_SetColor,
+    d3drm_frame2_SetColorRGB,
+    d3drm_frame2_GetZbufferMode,
+    d3drm_frame2_SetMaterialMode,
+    d3drm_frame2_SetOrientation,
+    d3drm_frame2_SetPosition,
+    d3drm_frame2_SetRotation,
+    d3drm_frame2_SetSortMode,
+    d3drm_frame2_SetTexture,
+    d3drm_frame2_SetTextureTopology,
+    d3drm_frame2_SetVelocity,
+    d3drm_frame2_SetZbufferMode,
+    d3drm_frame2_Transform,
+    d3drm_frame2_AddMoveCallback2,
+    d3drm_frame2_GetBox,
+    d3drm_frame2_GetBoxEnable,
+    d3drm_frame2_GetAxes,
+    d3drm_frame2_GetMaterial,
+    d3drm_frame2_GetInheritAxes,
+    d3drm_frame2_GetHierarchyBox,
 };
 
-/*** IUnknown methods ***/
-static HRESULT WINAPI IDirect3DRMFrame3Impl_QueryInterface(IDirect3DRMFrame3* iface,
-                                                           REFIID riid, void** object)
+static HRESULT WINAPI d3drm_frame3_QueryInterface(IDirect3DRMFrame3 *iface, REFIID riid, void **out)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-    return IDirect3DRMFrame_QueryInterface(&This->IDirect3DRMFrame2_iface, riid, object);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame3(iface);
+
+    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
+
+    return d3drm_frame2_QueryInterface(&frame->IDirect3DRMFrame2_iface, riid, out);
 }
 
-static ULONG WINAPI IDirect3DRMFrame3Impl_AddRef(IDirect3DRMFrame3* iface)
+static ULONG WINAPI d3drm_frame3_AddRef(IDirect3DRMFrame3 *iface)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-    return IDirect3DRMFrame2_AddRef(&This->IDirect3DRMFrame2_iface);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame3(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return d3drm_frame2_AddRef(&frame->IDirect3DRMFrame2_iface);
 }
 
-static ULONG WINAPI IDirect3DRMFrame3Impl_Release(IDirect3DRMFrame3* iface)
+static ULONG WINAPI d3drm_frame3_Release(IDirect3DRMFrame3 *iface)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-    return IDirect3DRMFrame2_Release(&This->IDirect3DRMFrame2_iface);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame3(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return d3drm_frame2_Release(&frame->IDirect3DRMFrame2_iface);
 }
 
-/*** IDirect3DRMObject methods ***/
-static HRESULT WINAPI IDirect3DRMFrame3Impl_Clone(IDirect3DRMFrame3 *iface,
+static HRESULT WINAPI d3drm_frame3_Clone(IDirect3DRMFrame3 *iface,
         IUnknown *outer, REFIID iid, void **out)
 {
     FIXME("iface %p, outer %p, iid %s, out %p stub!\n", iface, outer, debugstr_guid(iid), out);
@@ -1324,7 +1224,7 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_Clone(IDirect3DRMFrame3 *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_AddDestroyCallback(IDirect3DRMFrame3 *iface,
+static HRESULT WINAPI d3drm_frame3_AddDestroyCallback(IDirect3DRMFrame3 *iface,
         D3DRMOBJECTCALLBACK cb, void *ctx)
 {
     FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
@@ -1332,7 +1232,7 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_AddDestroyCallback(IDirect3DRMFrame3
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_DeleteDestroyCallback(IDirect3DRMFrame3 *iface,
+static HRESULT WINAPI d3drm_frame3_DeleteDestroyCallback(IDirect3DRMFrame3 *iface,
         D3DRMOBJECTCALLBACK cb, void *ctx)
 {
     FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
@@ -1340,40 +1240,35 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_DeleteDestroyCallback(IDirect3DRMFra
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_SetAppData(IDirect3DRMFrame3* iface,
-                                                       DWORD data)
+static HRESULT WINAPI d3drm_frame3_SetAppData(IDirect3DRMFrame3 *iface, DWORD data)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%u): stub\n", iface, This, data);
+    FIXME("iface %p, data %#x stub!\n", iface, data);
 
     return E_NOTIMPL;
 }
 
-static DWORD WINAPI IDirect3DRMFrame3Impl_GetAppData(IDirect3DRMFrame3* iface)
+static DWORD WINAPI d3drm_frame3_GetAppData(IDirect3DRMFrame3 *iface)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    FIXME("iface %p stub!\n", iface);
 
     return 0;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_SetName(IDirect3DRMFrame3 *iface, const char *name)
+static HRESULT WINAPI d3drm_frame3_SetName(IDirect3DRMFrame3 *iface, const char *name)
 {
     FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_GetName(IDirect3DRMFrame3 *iface, DWORD *size, char *name)
+static HRESULT WINAPI d3drm_frame3_GetName(IDirect3DRMFrame3 *iface, DWORD *size, char *name)
 {
     FIXME("iface %p, size %p, name %p stub!\n", iface, size, name);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_GetClassName(IDirect3DRMFrame3 *iface, DWORD *size, char *name)
+static HRESULT WINAPI d3drm_frame3_GetClassName(IDirect3DRMFrame3 *iface, DWORD *size, char *name)
 {
     TRACE("iface %p, size %p, name %p.\n", iface, size, name);
 
@@ -1386,13 +1281,12 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_GetClassName(IDirect3DRMFrame3 *ifac
     return D3DRM_OK;
 }
 
-/*** IDirect3DRMFrame methods ***/
-static HRESULT WINAPI IDirect3DRMFrame3Impl_AddChild(IDirect3DRMFrame3 *iface, IDirect3DRMFrame3 *child)
+static HRESULT WINAPI d3drm_frame3_AddChild(IDirect3DRMFrame3 *iface, IDirect3DRMFrame3 *child)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-    IDirect3DRMFrameImpl *child_obj = unsafe_impl_from_IDirect3DRMFrame3(child);
+    struct d3drm_frame *This = impl_from_IDirect3DRMFrame3(iface);
+    struct d3drm_frame *child_obj = unsafe_impl_from_IDirect3DRMFrame3(child);
 
-    TRACE("(%p/%p)->(%p)\n", iface, This, child);
+    TRACE("iface %p, child %p.\n", iface, child);
 
     if (!child_obj)
         return D3DRMERR_BADOBJECT;
@@ -1443,13 +1337,13 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_AddChild(IDirect3DRMFrame3 *iface, I
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_AddLight(IDirect3DRMFrame3 *iface, IDirect3DRMLight *light)
+static HRESULT WINAPI d3drm_frame3_AddLight(IDirect3DRMFrame3 *iface, IDirect3DRMLight *light)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
+    struct d3drm_frame *This = impl_from_IDirect3DRMFrame3(iface);
     ULONG i;
     IDirect3DRMLight** lights;
 
-    TRACE("(%p/%p)->(%p)\n", iface, This, light);
+    TRACE("iface %p, light %p.\n", iface, light);
 
     if (!light)
         return D3DRMERR_BADOBJECT;
@@ -1487,7 +1381,7 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_AddLight(IDirect3DRMFrame3 *iface, I
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_AddMoveCallback(IDirect3DRMFrame3 *iface,
+static HRESULT WINAPI d3drm_frame3_AddMoveCallback(IDirect3DRMFrame3 *iface,
         D3DRMFRAME3MOVECALLBACK cb, void *ctx, DWORD flags)
 {
     FIXME("iface %p, cb %p, ctx %p flags %#x stub!\n", iface, cb, ctx, flags);
@@ -1495,18 +1389,17 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_AddMoveCallback(IDirect3DRMFrame3 *i
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_AddTransform(IDirect3DRMFrame3* iface,
-                                                         D3DRMCOMBINETYPE type,
-                                                         D3DRMMATRIX4D matrix)
+static HRESULT WINAPI d3drm_frame3_AddTransform(IDirect3DRMFrame3 *iface,
+        D3DRMCOMBINETYPE type, D3DRMMATRIX4D matrix)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame3(iface);
 
-    TRACE("(%p/%p)->(%u,%p)\n", iface, This, type, matrix);
+    TRACE("iface %p, type %#x, matrix %p.\n", iface, type, matrix);
 
     switch (type)
     {
         case D3DRMCOMBINE_REPLACE:
-            memcpy(This->transform, matrix, sizeof(D3DRMMATRIX4D));
+            memcpy(frame->transform, matrix, sizeof(D3DRMMATRIX4D));
             break;
 
         case D3DRMCOMBINE_BEFORE:
@@ -1525,43 +1418,34 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_AddTransform(IDirect3DRMFrame3* ifac
     return S_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_AddTranslation(IDirect3DRMFrame3* iface,
-                                                           D3DRMCOMBINETYPE type,
-                                                           D3DVALUE x, D3DVALUE y, D3DVALUE z)
+static HRESULT WINAPI d3drm_frame3_AddTranslation(IDirect3DRMFrame3 *iface,
+        D3DRMCOMBINETYPE type, D3DVALUE x, D3DVALUE y, D3DVALUE z)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%u,%f,%f,%f): stub\n", iface, This, type, x, y, z);
+    FIXME("iface %p, type %#x, x %.8e, y %.8e, z %.8e stub!\n", iface, type, x, y, z);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_AddScale(IDirect3DRMFrame3* iface,
-                                                     D3DRMCOMBINETYPE type,
-                                                     D3DVALUE sx, D3DVALUE sy, D3DVALUE sz)
+static HRESULT WINAPI d3drm_frame3_AddScale(IDirect3DRMFrame3 *iface,
+        D3DRMCOMBINETYPE type, D3DVALUE sx, D3DVALUE sy, D3DVALUE sz)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%u,%f,%f,%f): stub\n", iface, This, type, sx, sy, sz);
+    FIXME("iface %p, type %#x, sx %.8e, sy %.8e, sz %.8e stub!\n", iface, type, sx, sy, sz);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_AddRotation(IDirect3DRMFrame3* iface,
-                                                        D3DRMCOMBINETYPE type,
-                                                        D3DVALUE x, D3DVALUE y, D3DVALUE z,
-                                                        D3DVALUE theta)
+static HRESULT WINAPI d3drm_frame3_AddRotation(IDirect3DRMFrame3 *iface,
+        D3DRMCOMBINETYPE type, D3DVALUE x, D3DVALUE y, D3DVALUE z, D3DVALUE theta)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%u,%f,%f,%f,%f): stub\n", iface, This, type, x, y, z, theta);
+    FIXME("iface %p, type %#x, x %.8e, y %.8e, z %.8e, theta %.8e stub!\n",
+            iface, type, x, y, z, theta);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_AddVisual(IDirect3DRMFrame3 *iface, IUnknown *visual)
+static HRESULT WINAPI d3drm_frame3_AddVisual(IDirect3DRMFrame3 *iface, IUnknown *visual)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
+    struct d3drm_frame *This = impl_from_IDirect3DRMFrame3(iface);
     ULONG i;
     IDirect3DRMVisual** visuals;
 
@@ -1603,9 +1487,9 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_AddVisual(IDirect3DRMFrame3 *iface, 
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_GetChildren(IDirect3DRMFrame3 *iface, IDirect3DRMFrameArray **children)
+static HRESULT WINAPI d3drm_frame3_GetChildren(IDirect3DRMFrame3 *iface, IDirect3DRMFrameArray **children)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame3(iface);
     struct d3drm_frame_array *array;
 
     TRACE("iface %p, children %p.\n", iface, children);
@@ -1616,16 +1500,16 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_GetChildren(IDirect3DRMFrame3 *iface
     if (!(array = d3drm_frame_array_create()))
         return E_OUTOFMEMORY;
 
-    array->size = This->nb_children;
-    if (This->nb_children)
+    array->size = frame->nb_children;
+    if (frame->nb_children)
     {
         ULONG i;
 
-        if (!(array->frames = HeapAlloc(GetProcessHeap(), 0, This->nb_children * sizeof(*array->frames))))
+        if (!(array->frames = HeapAlloc(GetProcessHeap(), 0, frame->nb_children * sizeof(*array->frames))))
             return E_OUTOFMEMORY;
-        for (i = 0; i < This->nb_children; ++i)
+        for (i = 0; i < frame->nb_children; ++i)
         {
-            IDirect3DRMFrame3_QueryInterface(This->children[i], &IID_IDirect3DRMFrame, (void **)&array->frames[i]);
+            IDirect3DRMFrame3_QueryInterface(frame->children[i], &IID_IDirect3DRMFrame, (void **)&array->frames[i]);
         }
     }
 
@@ -1634,18 +1518,16 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_GetChildren(IDirect3DRMFrame3 *iface
     return D3DRM_OK;
 }
 
-static D3DCOLOR WINAPI IDirect3DRMFrame3Impl_GetColor(IDirect3DRMFrame3* iface)
+static D3DCOLOR WINAPI d3drm_frame3_GetColor(IDirect3DRMFrame3 *iface)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    FIXME("iface %p stub!\n", iface);
 
     return 0;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_GetLights(IDirect3DRMFrame3 *iface, IDirect3DRMLightArray **lights)
+static HRESULT WINAPI d3drm_frame3_GetLights(IDirect3DRMFrame3 *iface, IDirect3DRMLightArray **lights)
 {
-    IDirect3DRMFrameImpl *frame = impl_from_IDirect3DRMFrame3(iface);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame3(iface);
     struct d3drm_light_array *array;
 
     TRACE("iface %p, lights %p.\n", iface, lights);
@@ -1674,116 +1556,105 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_GetLights(IDirect3DRMFrame3 *iface, 
     return D3DRM_OK;
 }
 
-static D3DRMMATERIALMODE WINAPI IDirect3DRMFrame3Impl_GetMaterialMode(IDirect3DRMFrame3* iface)
+static D3DRMMATERIALMODE WINAPI d3drm_frame3_GetMaterialMode(IDirect3DRMFrame3 *iface)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    FIXME("iface %p stub!\n", iface);
 
     return D3DRMMATERIAL_FROMPARENT;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_GetParent(IDirect3DRMFrame3 *iface, IDirect3DRMFrame3 **frame)
+static HRESULT WINAPI d3drm_frame3_GetParent(IDirect3DRMFrame3 *iface, IDirect3DRMFrame3 **parent)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame3(iface);
 
-    TRACE("(%p/%p)->(%p)\n", iface, This, frame);
+    TRACE("iface %p, parent %p.\n", iface, parent);
 
-    if (!frame)
+    if (!parent)
         return D3DRMERR_BADVALUE;
 
-    if (This->parent)
+    if (frame->parent)
     {
-        *frame = &This->parent->IDirect3DRMFrame3_iface;
-        IDirect3DRMFrame_AddRef(*frame);
+        *parent = &frame->parent->IDirect3DRMFrame3_iface;
+        IDirect3DRMFrame_AddRef(*parent);
     }
     else
     {
-        *frame = NULL;
+        *parent = NULL;
     }
 
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_GetPosition(IDirect3DRMFrame3 *iface,
-        IDirect3DRMFrame3 *reference, D3DVECTOR *return_position)
+static HRESULT WINAPI d3drm_frame3_GetPosition(IDirect3DRMFrame3 *iface,
+        IDirect3DRMFrame3 *reference, D3DVECTOR *position)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%p,%p): stub\n", iface, This, reference, return_position);
+    FIXME("iface %p, reference %p, position %p stub!\n", iface, reference, position);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_GetRotation(IDirect3DRMFrame3 *iface,
-        IDirect3DRMFrame3 *reference, D3DVECTOR *axis, D3DVALUE *return_theta)
+static HRESULT WINAPI d3drm_frame3_GetRotation(IDirect3DRMFrame3 *iface,
+        IDirect3DRMFrame3 *reference, D3DVECTOR *axis, D3DVALUE *theta)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%p,%p,%p): stub\n", iface, This, reference, axis, return_theta);
+    FIXME("iface %p, reference %p, axis %p, theta %p stub!\n", iface, reference, axis, theta);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_GetScene(IDirect3DRMFrame3 *iface, IDirect3DRMFrame3 **scene)
+static HRESULT WINAPI d3drm_frame3_GetScene(IDirect3DRMFrame3 *iface, IDirect3DRMFrame3 **scene)
 {
     FIXME("iface %p, scene %p stub!\n", iface, scene);
 
     return E_NOTIMPL;
 }
 
-static D3DRMSORTMODE WINAPI IDirect3DRMFrame3Impl_GetSortMode(IDirect3DRMFrame3* iface)
+static D3DRMSORTMODE WINAPI d3drm_frame3_GetSortMode(IDirect3DRMFrame3 *iface)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    FIXME("iface %p stub!\n", iface);
 
     return D3DRMSORT_FROMPARENT;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_GetTexture(IDirect3DRMFrame3 *iface, IDirect3DRMTexture3 **texture)
+static HRESULT WINAPI d3drm_frame3_GetTexture(IDirect3DRMFrame3 *iface, IDirect3DRMTexture3 **texture)
 {
     FIXME("iface %p, texture %p stub!\n", iface, texture);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_GetTransform(IDirect3DRMFrame3 *iface,
-        IDirect3DRMFrame3 *reference, D3DRMMATRIX4D return_matrix)
+static HRESULT WINAPI d3drm_frame3_GetTransform(IDirect3DRMFrame3 *iface,
+        IDirect3DRMFrame3 *reference, D3DRMMATRIX4D matrix)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame3(iface);
 
-    TRACE("(%p/%p)->(%p,%p)\n", iface, This, reference, return_matrix);
+    TRACE("iface %p, reference %p, matrix %p.\n", iface, reference, matrix);
 
     if (reference)
         FIXME("Specifying a frame as the root of the scene different from the current root frame is not supported yet\n");
 
-    memcpy(return_matrix, This->transform, sizeof(D3DRMMATRIX4D));
+    memcpy(matrix, frame->transform, sizeof(D3DRMMATRIX4D));
 
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_GetVelocity(IDirect3DRMFrame3 *iface,
-        IDirect3DRMFrame3 *reference, D3DVECTOR *return_velocity, BOOL with_rotation)
+static HRESULT WINAPI d3drm_frame3_GetVelocity(IDirect3DRMFrame3 *iface,
+        IDirect3DRMFrame3 *reference, D3DVECTOR *velocity, BOOL with_rotation)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%p,%p,%d): stub\n", iface, This, reference, return_velocity, with_rotation);
+    FIXME("iface %p, reference %p, velocity %p, with_rotation %#x stub!\n",
+            iface, reference, velocity, with_rotation);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_GetOrientation(IDirect3DRMFrame3 *iface,
+static HRESULT WINAPI d3drm_frame3_GetOrientation(IDirect3DRMFrame3 *iface,
         IDirect3DRMFrame3 *reference, D3DVECTOR *dir, D3DVECTOR *up)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%p,%p,%p): stub\n", iface, This, reference, dir, up);
+    FIXME("iface %p, reference %p, dir %p, up %p stub!\n", iface, reference, dir, up);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_GetVisuals(IDirect3DRMFrame3 *iface,
+static HRESULT WINAPI d3drm_frame3_GetVisuals(IDirect3DRMFrame3 *iface,
         DWORD *count, IUnknown **visuals)
 {
     FIXME("iface %p, count %p, visuals %p stub!\n", iface, count, visuals);
@@ -1791,17 +1662,14 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_GetVisuals(IDirect3DRMFrame3 *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_InverseTransform(IDirect3DRMFrame3* iface,
-                                                             D3DVECTOR *d, D3DVECTOR *s)
+static HRESULT WINAPI d3drm_frame3_InverseTransform(IDirect3DRMFrame3 *iface, D3DVECTOR *d, D3DVECTOR *s)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%p,%p): stub\n", iface, This, d, s);
+    FIXME("iface %p, d %p, s %p stub!\n", iface, d, s);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_Load(IDirect3DRMFrame3 *iface, void *filename,
+static HRESULT WINAPI d3drm_frame3_Load(IDirect3DRMFrame3 *iface, void *filename,
         void *name, D3DRMLOADOPTIONS flags, D3DRMLOADTEXTURE3CALLBACK cb, void *ctx)
 {
     FIXME("iface %p, filename %p, name %p, flags %#x, cb %p, ctx %p stub!\n",
@@ -1810,7 +1678,7 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_Load(IDirect3DRMFrame3 *iface, void 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_LookAt(IDirect3DRMFrame3 *iface, IDirect3DRMFrame3 *target,
+static HRESULT WINAPI d3drm_frame3_LookAt(IDirect3DRMFrame3 *iface, IDirect3DRMFrame3 *target,
         IDirect3DRMFrame3 *reference, D3DRMFRAMECONSTRAINT constraint)
 {
     FIXME("iface %p, target %p, reference %p, constraint %#x stub!\n", iface, target, reference, constraint);
@@ -1818,68 +1686,70 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_LookAt(IDirect3DRMFrame3 *iface, IDi
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_Move(IDirect3DRMFrame3* iface, D3DVALUE delta)
+static HRESULT WINAPI d3drm_frame3_Move(IDirect3DRMFrame3 *iface, D3DVALUE delta)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%f): stub\n", iface, This, delta);
+    FIXME("iface %p, delta %.8e stub!\n", iface, delta);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_DeleteChild(IDirect3DRMFrame3 *iface, IDirect3DRMFrame3 *frame)
+static HRESULT WINAPI d3drm_frame3_DeleteChild(IDirect3DRMFrame3 *iface, IDirect3DRMFrame3 *child)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-    IDirect3DRMFrameImpl *frame_obj = unsafe_impl_from_IDirect3DRMFrame3(frame);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame3(iface);
+    struct d3drm_frame *child_impl = unsafe_impl_from_IDirect3DRMFrame3(child);
     ULONG i;
 
-    TRACE("(%p/%p)->(%p)\n", iface, This, frame);
+    TRACE("iface %p, child %p.\n", iface, child);
 
-    if (!frame_obj)
+    if (!child_impl)
         return D3DRMERR_BADOBJECT;
 
     /* Check if child exists */
-    for (i = 0; i < This->nb_children; i++)
-        if (This->children[i] == frame)
+    for (i = 0; i < frame->nb_children; ++i)
+    {
+        if (frame->children[i] == child)
             break;
+    }
 
-    if (i == This->nb_children)
+    if (i == frame->nb_children)
         return D3DRMERR_BADVALUE;
 
-    memmove(This->children + i, This->children + i + 1, sizeof(IDirect3DRMFrame3*) * (This->nb_children - 1 - i));
-    IDirect3DRMFrame3_Release(frame);
-    frame_obj->parent = NULL;
-    This->nb_children--;
+    memmove(frame->children + i, frame->children + i + 1, sizeof(*frame->children) * (frame->nb_children - 1 - i));
+    IDirect3DRMFrame3_Release(child);
+    child_impl->parent = NULL;
+    --frame->nb_children;
 
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_DeleteLight(IDirect3DRMFrame3 *iface, IDirect3DRMLight *light)
+static HRESULT WINAPI d3drm_frame3_DeleteLight(IDirect3DRMFrame3 *iface, IDirect3DRMLight *light)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame3(iface);
     ULONG i;
 
-    TRACE("(%p/%p)->(%p)\n", iface, This, light);
+    TRACE("iface %p, light %p.\n", iface, light);
 
     if (!light)
         return D3DRMERR_BADOBJECT;
 
     /* Check if visual exists */
-    for (i = 0; i < This->nb_lights; i++)
-        if (This->lights[i] == light)
+    for (i = 0; i < frame->nb_lights; ++i)
+    {
+        if (frame->lights[i] == light)
             break;
+    }
 
-    if (i == This->nb_lights)
+    if (i == frame->nb_lights)
         return D3DRMERR_BADVALUE;
 
-    memmove(This->lights + i, This->lights + i + 1, sizeof(IDirect3DRMLight*) * (This->nb_lights - 1 - i));
+    memmove(frame->lights + i, frame->lights + i + 1, sizeof(*frame->lights) * (frame->nb_lights - 1 - i));
     IDirect3DRMLight_Release(light);
-    This->nb_lights--;
+    --frame->nb_lights;
 
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_DeleteMoveCallback(IDirect3DRMFrame3 *iface,
+static HRESULT WINAPI d3drm_frame3_DeleteMoveCallback(IDirect3DRMFrame3 *iface,
         D3DRMFRAME3MOVECALLBACK cb, void *ctx)
 {
     FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
@@ -1887,9 +1757,9 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_DeleteMoveCallback(IDirect3DRMFrame3
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_DeleteVisual(IDirect3DRMFrame3 *iface, IUnknown *visual)
+static HRESULT WINAPI d3drm_frame3_DeleteVisual(IDirect3DRMFrame3 *iface, IUnknown *visual)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame3(iface);
     ULONG i;
 
     TRACE("iface %p, visual %p.\n", iface, visual);
@@ -1898,115 +1768,101 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_DeleteVisual(IDirect3DRMFrame3 *ifac
         return D3DRMERR_BADOBJECT;
 
     /* Check if visual exists */
-    for (i = 0; i < This->nb_visuals; i++)
-        if (This->visuals[i] == (IDirect3DRMVisual *)visual)
+    for (i = 0; i < frame->nb_visuals; ++i)
+    {
+        if (frame->visuals[i] == (IDirect3DRMVisual *)visual)
             break;
+    }
 
-    if (i == This->nb_visuals)
+    if (i == frame->nb_visuals)
         return D3DRMERR_BADVALUE;
 
-    memmove(This->visuals + i, This->visuals + i + 1, sizeof(IDirect3DRMVisual*) * (This->nb_visuals - 1 - i));
+    memmove(frame->visuals + i, frame->visuals + i + 1, sizeof(*frame->visuals) * (frame->nb_visuals - 1 - i));
     IDirect3DRMVisual_Release(visual);
-    This->nb_visuals--;
+    --frame->nb_visuals;
 
     return D3DRM_OK;
 }
 
-static D3DCOLOR WINAPI IDirect3DRMFrame3Impl_GetSceneBackground(IDirect3DRMFrame3* iface)
+static D3DCOLOR WINAPI d3drm_frame3_GetSceneBackground(IDirect3DRMFrame3 *iface)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame3(iface);
 
-    TRACE("(%p/%p)->()\n", iface, This);
+    TRACE("iface %p.\n", iface);
 
-    return This->scenebackground;
+    return frame->scenebackground;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_GetSceneBackgroundDepth(IDirect3DRMFrame3 *iface,
+static HRESULT WINAPI d3drm_frame3_GetSceneBackgroundDepth(IDirect3DRMFrame3 *iface,
         IDirectDrawSurface **surface)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, surface);
+    FIXME("iface %p, surface %p stub!\n", iface, surface);
 
     return E_NOTIMPL;
 }
 
-static D3DCOLOR WINAPI IDirect3DRMFrame3Impl_GetSceneFogColor(IDirect3DRMFrame3* iface)
+static D3DCOLOR WINAPI d3drm_frame3_GetSceneFogColor(IDirect3DRMFrame3 *iface)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    FIXME("iface %p stub!\n", iface);
 
     return 0;
 }
 
-static BOOL WINAPI IDirect3DRMFrame3Impl_GetSceneFogEnable(IDirect3DRMFrame3* iface)
+static BOOL WINAPI d3drm_frame3_GetSceneFogEnable(IDirect3DRMFrame3 *iface)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    FIXME("iface %p stub!\n", iface);
 
     return FALSE;
 }
 
-static D3DRMFOGMODE WINAPI IDirect3DRMFrame3Impl_GetSceneFogMode(IDirect3DRMFrame3* iface)
+static D3DRMFOGMODE WINAPI d3drm_frame3_GetSceneFogMode(IDirect3DRMFrame3 *iface)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    FIXME("iface %p stub!\n", iface);
 
     return D3DRMFOG_LINEAR;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_GetSceneFogParams(IDirect3DRMFrame3* iface,
-                                                              D3DVALUE *return_start,
-                                                              D3DVALUE *return_end,
-                                                              D3DVALUE *return_density)
+static HRESULT WINAPI d3drm_frame3_GetSceneFogParams(IDirect3DRMFrame3 *iface,
+        D3DVALUE *start, D3DVALUE *end, D3DVALUE *density)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%p,%p,%p): stub\n", iface, This, return_start, return_end, return_density);
+    FIXME("iface %p, start %p, end %p, density %p stub!\n", iface, start, end, density);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_SetSceneBackground(IDirect3DRMFrame3* iface,
-                                                               D3DCOLOR color)
+static HRESULT WINAPI d3drm_frame3_SetSceneBackground(IDirect3DRMFrame3 *iface, D3DCOLOR color)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame3(iface);
 
-    TRACE("(%p/%p)->(%u)\n", iface, This, color);
+    TRACE("iface %p, color 0x%08x.\n", iface, color);
 
-    This->scenebackground = color;
+    frame->scenebackground = color;
 
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_SetSceneBackgroundRGB(IDirect3DRMFrame3* iface,
-                                                                  D3DVALUE red, D3DVALUE green,
-                                                                  D3DVALUE blue)
+static HRESULT WINAPI d3drm_frame3_SetSceneBackgroundRGB(IDirect3DRMFrame3 *iface,
+        D3DVALUE red, D3DVALUE green, D3DVALUE blue)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame3(iface);
 
-    TRACE("(%p/%p)->(%f,%f,%f)\n", iface, This, red, green, blue);
+    TRACE("iface %p, red %.8e, green %.8e, blue %.8e stub!\n", iface, red, green, blue);
 
-    This->scenebackground = RGBA_MAKE((BYTE)(red * 255.0f),
+    frame->scenebackground = RGBA_MAKE((BYTE)(red * 255.0f),
             (BYTE)(green * 255.0f), (BYTE)(blue * 255.0f), 0xff);
 
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_SetSceneBackgroundDepth(IDirect3DRMFrame3 *iface,
+static HRESULT WINAPI d3drm_frame3_SetSceneBackgroundDepth(IDirect3DRMFrame3 *iface,
         IDirectDrawSurface *surface)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, surface);
+    FIXME("iface %p, surface %p stub!\n", iface, surface);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_SetSceneBackgroundImage(IDirect3DRMFrame3 *iface,
+static HRESULT WINAPI d3drm_frame3_SetSceneBackgroundImage(IDirect3DRMFrame3 *iface,
         IDirect3DRMTexture3 *texture)
 {
     FIXME("iface %p, texture %p stub!\n", iface, texture);
@@ -2014,85 +1870,65 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_SetSceneBackgroundImage(IDirect3DRMF
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_SetSceneFogEnable(IDirect3DRMFrame3* iface, BOOL enable)
+static HRESULT WINAPI d3drm_frame3_SetSceneFogEnable(IDirect3DRMFrame3 *iface, BOOL enable)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%d): stub\n", iface, This, enable);
+    FIXME("iface %p, enable %#x stub!\n", iface, enable);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_SetSceneFogColor(IDirect3DRMFrame3* iface,
-                                                             D3DCOLOR color)
+static HRESULT WINAPI d3drm_frame3_SetSceneFogColor(IDirect3DRMFrame3 *iface, D3DCOLOR color)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%u): stub\n", iface, This, color);
+    FIXME("iface %p, color 0x%08x stub!\n", iface, color);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_SetSceneFogMode(IDirect3DRMFrame3* iface,
-                                                            D3DRMFOGMODE mode)
+static HRESULT WINAPI d3drm_frame3_SetSceneFogMode(IDirect3DRMFrame3 *iface, D3DRMFOGMODE mode)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%u): stub\n", iface, This, mode);
+    FIXME("iface %p, mode %#x stub!\n", iface, mode);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_SetSceneFogParams(IDirect3DRMFrame3* iface,
-                                                              D3DVALUE start, D3DVALUE end,
-                                                              D3DVALUE density)
+static HRESULT WINAPI d3drm_frame3_SetSceneFogParams(IDirect3DRMFrame3 *iface,
+        D3DVALUE start, D3DVALUE end, D3DVALUE density)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%f,%f,%f): stub\n", iface, This, start, end, density);
+    FIXME("iface %p, start %.8e, end %.8e, density %.8e stub!\n", iface, start, end, density);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_SetColor(IDirect3DRMFrame3* iface, D3DCOLOR color)
+static HRESULT WINAPI d3drm_frame3_SetColor(IDirect3DRMFrame3 *iface, D3DCOLOR color)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%u): stub\n", iface, This, color);
+    FIXME("iface %p, color 0x%08x stub!\n", iface, color);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_SetColorRGB(IDirect3DRMFrame3* iface, D3DVALUE red,
-                                                        D3DVALUE green, D3DVALUE blue)
+static HRESULT WINAPI d3drm_frame3_SetColorRGB(IDirect3DRMFrame3 *iface,
+        D3DVALUE red, D3DVALUE green, D3DVALUE blue)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%f,%f,%f): stub\n", iface, This, red, green, blue);
+    FIXME("iface %p, red %.8e, green %.8e, blue %.8e stub!\n", iface, red, green, blue);
 
     return E_NOTIMPL;
 }
 
-static D3DRMZBUFFERMODE WINAPI IDirect3DRMFrame3Impl_GetZbufferMode(IDirect3DRMFrame3* iface)
+static D3DRMZBUFFERMODE WINAPI d3drm_frame3_GetZbufferMode(IDirect3DRMFrame3 *iface)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    FIXME("iface %p stub!\n", iface);
 
     return D3DRMZBUFFER_FROMPARENT;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_SetMaterialMode(IDirect3DRMFrame3* iface,
-                                                            D3DRMMATERIALMODE mode)
+static HRESULT WINAPI d3drm_frame3_SetMaterialMode(IDirect3DRMFrame3 *iface, D3DRMMATERIALMODE mode)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%u): stub\n", iface, This, mode);
+    FIXME("iface %p, mode %#x stub!\n", iface, mode);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_SetOrientation(IDirect3DRMFrame3 *iface, IDirect3DRMFrame3 *reference,
+static HRESULT WINAPI d3drm_frame3_SetOrientation(IDirect3DRMFrame3 *iface, IDirect3DRMFrame3 *reference,
         D3DVALUE dx, D3DVALUE dy, D3DVALUE dz, D3DVALUE ux, D3DVALUE uy, D3DVALUE uz)
 {
     FIXME("iface %p, reference %p, dx %.8e, dy %.8e, dz %.8e, ux %.8e, uy %.8e, uz %.8e stub!\n",
@@ -2101,7 +1937,7 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_SetOrientation(IDirect3DRMFrame3 *if
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_SetPosition(IDirect3DRMFrame3 *iface,
+static HRESULT WINAPI d3drm_frame3_SetPosition(IDirect3DRMFrame3 *iface,
         IDirect3DRMFrame3 *reference, D3DVALUE x, D3DVALUE y, D3DVALUE z)
 {
     FIXME("iface %p, reference %p, x %.8e, y %.8e, z %.8e stub!\n", iface, reference, x, y, z);
@@ -2109,7 +1945,7 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_SetPosition(IDirect3DRMFrame3 *iface
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_SetRotation(IDirect3DRMFrame3 *iface,
+static HRESULT WINAPI d3drm_frame3_SetRotation(IDirect3DRMFrame3 *iface,
         IDirect3DRMFrame3 *reference, D3DVALUE x, D3DVALUE y, D3DVALUE z, D3DVALUE theta)
 {
     FIXME("iface %p, reference %p, x %.8e, y %.8e, z %.8e, theta %.8e stub!\n",
@@ -2118,24 +1954,21 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_SetRotation(IDirect3DRMFrame3 *iface
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_SetSortMode(IDirect3DRMFrame3* iface,
-                                                        D3DRMSORTMODE mode)
+static HRESULT WINAPI d3drm_frame3_SetSortMode(IDirect3DRMFrame3 *iface, D3DRMSORTMODE mode)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%u): stub\n", iface, This, mode);
+    FIXME("iface %p, mode %#x stub!\n", iface, mode);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_SetTexture(IDirect3DRMFrame3 *iface, IDirect3DRMTexture3 *texture)
+static HRESULT WINAPI d3drm_frame3_SetTexture(IDirect3DRMFrame3 *iface, IDirect3DRMTexture3 *texture)
 {
     FIXME("iface %p, texture %p stub!\n", iface, texture);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_SetVelocity(IDirect3DRMFrame3 *iface,
+static HRESULT WINAPI d3drm_frame3_SetVelocity(IDirect3DRMFrame3 *iface,
         IDirect3DRMFrame3 *reference, D3DVALUE x, D3DVALUE y, D3DVALUE z, BOOL with_rotation)
 {
     FIXME("iface %p, reference %p, x %.8e, y %.8e, z %.8e, with_rotation %#x.\n",
@@ -2144,125 +1977,100 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_SetVelocity(IDirect3DRMFrame3 *iface
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_SetZbufferMode(IDirect3DRMFrame3* iface,
-                                                           D3DRMZBUFFERMODE mode)
+static HRESULT WINAPI d3drm_frame3_SetZbufferMode(IDirect3DRMFrame3 *iface, D3DRMZBUFFERMODE mode)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%u): stub\n", iface, This, mode);
+    FIXME("iface %p, mode %#x stub!\n", iface, mode);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_Transform(IDirect3DRMFrame3* iface, D3DVECTOR *d,
-                                                      D3DVECTOR *s)
+static HRESULT WINAPI d3drm_frame3_Transform(IDirect3DRMFrame3 *iface, D3DVECTOR *d, D3DVECTOR *s)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%p,%p): stub\n", iface, This, d, s);
+    FIXME("iface %p, d %p, s %p stub!\n", iface, d, s);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_GetBox(IDirect3DRMFrame3 *iface, D3DRMBOX *box)
+static HRESULT WINAPI d3drm_frame3_GetBox(IDirect3DRMFrame3 *iface, D3DRMBOX *box)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, box);
+    FIXME("iface %p, box %p stub!\n", iface, box);
 
     return E_NOTIMPL;
 }
 
-static BOOL WINAPI IDirect3DRMFrame3Impl_GetBoxEnable(IDirect3DRMFrame3* iface)
+static BOOL WINAPI d3drm_frame3_GetBoxEnable(IDirect3DRMFrame3 *iface)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    FIXME("iface %p stub!\n", iface);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_GetAxes(IDirect3DRMFrame3 *iface, D3DVECTOR *dir, D3DVECTOR *up)
+static HRESULT WINAPI d3drm_frame3_GetAxes(IDirect3DRMFrame3 *iface, D3DVECTOR *dir, D3DVECTOR *up)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%p,%p): stub\n", iface, This, dir, up);
+    FIXME("iface %p, dir %p, up %p stub!\n", iface, dir, up);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_GetMaterial(IDirect3DRMFrame3 *iface, IDirect3DRMMaterial2 **material)
+static HRESULT WINAPI d3drm_frame3_GetMaterial(IDirect3DRMFrame3 *iface, IDirect3DRMMaterial2 **material)
 {
     FIXME("iface %p, material %p stub!\n", iface, material);
 
     return E_NOTIMPL;
 }
 
-static BOOL WINAPI IDirect3DRMFrame3Impl_GetInheritAxes(IDirect3DRMFrame3* iface)
+static BOOL WINAPI d3drm_frame3_GetInheritAxes(IDirect3DRMFrame3 *iface)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    FIXME("iface %p stub!\n", iface);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_GetHierarchyBox(IDirect3DRMFrame3* iface, D3DRMBOX *box)
+static HRESULT WINAPI d3drm_frame3_GetHierarchyBox(IDirect3DRMFrame3 *iface, D3DRMBOX *box)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, box);
+    FIXME("iface %p, box %p stub!\n", iface, box);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_SetBox(IDirect3DRMFrame3 *iface, D3DRMBOX *box)
+static HRESULT WINAPI d3drm_frame3_SetBox(IDirect3DRMFrame3 *iface, D3DRMBOX *box)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, box);
+    FIXME("iface %p, box %p stub!\n", iface, box);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_SetBoxEnable(IDirect3DRMFrame3* iface, BOOL enable)
+static HRESULT WINAPI d3drm_frame3_SetBoxEnable(IDirect3DRMFrame3 *iface, BOOL enable)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%u): stub\n", iface, This, enable);
+    FIXME("iface %p, enable %#x stub!\n", iface, enable);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_SetAxes(IDirect3DRMFrame3* iface,
-                                                    D3DVALUE dx, D3DVALUE dy, D3DVALUE dz,
-                                                    D3DVALUE ux, D3DVALUE uy, D3DVALUE uz)
+static HRESULT WINAPI d3drm_frame3_SetAxes(IDirect3DRMFrame3 *iface,
+        D3DVALUE dx, D3DVALUE dy, D3DVALUE dz, D3DVALUE ux, D3DVALUE uy, D3DVALUE uz)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%f,%f,%f,%f,%f,%f): stub\n", iface, This, dx, dy, dz, ux, uy, uz);
+    FIXME("iface %p, dx %.8e, dy %.8e, dz %.8e, ux %.8e, uy %.8e, uz %.8e stub!\n",
+            iface, dx, dy, dz, ux, uy, uz);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_SetInheritAxes(IDirect3DRMFrame3* iface,
-                                                           BOOL inherit_from_parent)
+static HRESULT WINAPI d3drm_frame3_SetInheritAxes(IDirect3DRMFrame3 *iface, BOOL inherit)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%u): stub\n", iface, This, inherit_from_parent);
+    FIXME("iface %p, inherit %#x stub!\n", iface, inherit);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_SetMaterial(IDirect3DRMFrame3 *iface, IDirect3DRMMaterial2 *material)
+static HRESULT WINAPI d3drm_frame3_SetMaterial(IDirect3DRMFrame3 *iface, IDirect3DRMMaterial2 *material)
 {
     FIXME("iface %p, material %p stub!\n", iface, material);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_SetQuaternion(IDirect3DRMFrame3 *iface,
+static HRESULT WINAPI d3drm_frame3_SetQuaternion(IDirect3DRMFrame3 *iface,
         IDirect3DRMFrame3 *reference, D3DRMQUATERNION *q)
 {
     FIXME("iface %p, reference %p, q %p stub!\n", iface, reference, q);
@@ -2270,17 +2078,16 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_SetQuaternion(IDirect3DRMFrame3 *ifa
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_RayPick(IDirect3DRMFrame3 *iface, IDirect3DRMFrame3 *reference,
-        D3DRMRAY *ray, DWORD flags, IDirect3DRMPicked2Array **return_visuals)
+static HRESULT WINAPI d3drm_frame3_RayPick(IDirect3DRMFrame3 *iface, IDirect3DRMFrame3 *reference,
+        D3DRMRAY *ray, DWORD flags, IDirect3DRMPicked2Array **visuals)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%p,%p,%u,%p): stub\n", iface, This, reference, ray, flags, return_visuals);
+    FIXME("iface %p, reference %p, ray %p, flags %#x, visuals %p stub!\n",
+            iface, reference, ray, flags, visuals);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_Save(IDirect3DRMFrame3 *iface,
+static HRESULT WINAPI d3drm_frame3_Save(IDirect3DRMFrame3 *iface,
         const char *filename, D3DRMXOFFORMAT format, D3DRMSAVEOPTIONS flags)
 {
     FIXME("iface %p, filename %s, format %#x, flags %#x stub!\n",
@@ -2289,198 +2096,180 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_Save(IDirect3DRMFrame3 *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_TransformVectors(IDirect3DRMFrame3 *iface,
+static HRESULT WINAPI d3drm_frame3_TransformVectors(IDirect3DRMFrame3 *iface,
         IDirect3DRMFrame3 *reference, DWORD num, D3DVECTOR *dst, D3DVECTOR *src)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%p,%u,%p,%p): stub\n", iface, This, reference, num, dst, src);
+    FIXME("iface %p, reference %p, num %u, dst %p, src %p stub!\n", iface, reference, num, dst, src);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_InverseTransformVectors(IDirect3DRMFrame3 *iface,
+static HRESULT WINAPI d3drm_frame3_InverseTransformVectors(IDirect3DRMFrame3 *iface,
         IDirect3DRMFrame3 *reference, DWORD num, D3DVECTOR *dst, D3DVECTOR *src)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%p,%u,%p,%p): stub\n", iface, This, reference, num, dst, src);
+    FIXME("iface %p, reference %p, num %u, dst %p, src %p stub!\n", iface, reference, num, dst, src);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_SetTraversalOptions(IDirect3DRMFrame3* iface,
-                                                                DWORD flags)
+static HRESULT WINAPI d3drm_frame3_SetTraversalOptions(IDirect3DRMFrame3 *iface, DWORD flags)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%u): stub\n", iface, This, flags);
+    FIXME("iface %p, flags %#x stub!\n", iface, flags);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_GetTraversalOptions(IDirect3DRMFrame3 *iface, DWORD *flags)
+static HRESULT WINAPI d3drm_frame3_GetTraversalOptions(IDirect3DRMFrame3 *iface, DWORD *flags)
 {
     FIXME("iface %p, flags %p stub!\n", iface, flags);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_SetSceneFogMethod(IDirect3DRMFrame3* iface,
-                                                              DWORD flags)
+static HRESULT WINAPI d3drm_frame3_SetSceneFogMethod(IDirect3DRMFrame3 *iface, DWORD flags)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%u): stub\n", iface, This, flags);
+    FIXME("iface %p, flags %#x stub!\n", iface, flags);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_GetSceneFogMethod(IDirect3DRMFrame3 *iface, DWORD *fog_mode)
+static HRESULT WINAPI d3drm_frame3_GetSceneFogMethod(IDirect3DRMFrame3 *iface, DWORD *fog_mode)
 {
-    FIXME("iface %p, fogmode %p stub!\n", iface, fog_mode);
+    FIXME("iface %p, fog_mode %p stub!\n", iface, fog_mode);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_SetMaterialOverride(IDirect3DRMFrame3 *iface,
+static HRESULT WINAPI d3drm_frame3_SetMaterialOverride(IDirect3DRMFrame3 *iface,
         D3DRMMATERIALOVERRIDE *override)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, override);
+    FIXME("iface %p, override %p stub!\n", iface, override);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_GetMaterialOverride(IDirect3DRMFrame3 *iface,
+static HRESULT WINAPI d3drm_frame3_GetMaterialOverride(IDirect3DRMFrame3 *iface,
         D3DRMMATERIALOVERRIDE *override)
 {
-    IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, override);
+    FIXME("iface %p, override %p stub!\n", iface, override);
 
     return E_NOTIMPL;
 }
 
-static const struct IDirect3DRMFrame3Vtbl Direct3DRMFrame3_Vtbl =
+static const struct IDirect3DRMFrame3Vtbl d3drm_frame3_vtbl =
 {
-    /*** IUnknown methods ***/
-    IDirect3DRMFrame3Impl_QueryInterface,
-    IDirect3DRMFrame3Impl_AddRef,
-    IDirect3DRMFrame3Impl_Release,
-    /*** IDirect3DRMObject methods ***/
-    IDirect3DRMFrame3Impl_Clone,
-    IDirect3DRMFrame3Impl_AddDestroyCallback,
-    IDirect3DRMFrame3Impl_DeleteDestroyCallback,
-    IDirect3DRMFrame3Impl_SetAppData,
-    IDirect3DRMFrame3Impl_GetAppData,
-    IDirect3DRMFrame3Impl_SetName,
-    IDirect3DRMFrame3Impl_GetName,
-    IDirect3DRMFrame3Impl_GetClassName,
-    /*** IDirect3DRMFrame3 methods ***/
-    IDirect3DRMFrame3Impl_AddChild,
-    IDirect3DRMFrame3Impl_AddLight,
-    IDirect3DRMFrame3Impl_AddMoveCallback,
-    IDirect3DRMFrame3Impl_AddTransform,
-    IDirect3DRMFrame3Impl_AddTranslation,
-    IDirect3DRMFrame3Impl_AddScale,
-    IDirect3DRMFrame3Impl_AddRotation,
-    IDirect3DRMFrame3Impl_AddVisual,
-    IDirect3DRMFrame3Impl_GetChildren,
-    IDirect3DRMFrame3Impl_GetColor,
-    IDirect3DRMFrame3Impl_GetLights,
-    IDirect3DRMFrame3Impl_GetMaterialMode,
-    IDirect3DRMFrame3Impl_GetParent,
-    IDirect3DRMFrame3Impl_GetPosition,
-    IDirect3DRMFrame3Impl_GetRotation,
-    IDirect3DRMFrame3Impl_GetScene,
-    IDirect3DRMFrame3Impl_GetSortMode,
-    IDirect3DRMFrame3Impl_GetTexture,
-    IDirect3DRMFrame3Impl_GetTransform,
-    IDirect3DRMFrame3Impl_GetVelocity,
-    IDirect3DRMFrame3Impl_GetOrientation,
-    IDirect3DRMFrame3Impl_GetVisuals,
-    IDirect3DRMFrame3Impl_InverseTransform,
-    IDirect3DRMFrame3Impl_Load,
-    IDirect3DRMFrame3Impl_LookAt,
-    IDirect3DRMFrame3Impl_Move,
-    IDirect3DRMFrame3Impl_DeleteChild,
-    IDirect3DRMFrame3Impl_DeleteLight,
-    IDirect3DRMFrame3Impl_DeleteMoveCallback,
-    IDirect3DRMFrame3Impl_DeleteVisual,
-    IDirect3DRMFrame3Impl_GetSceneBackground,
-    IDirect3DRMFrame3Impl_GetSceneBackgroundDepth,
-    IDirect3DRMFrame3Impl_GetSceneFogColor,
-    IDirect3DRMFrame3Impl_GetSceneFogEnable,
-    IDirect3DRMFrame3Impl_GetSceneFogMode,
-    IDirect3DRMFrame3Impl_GetSceneFogParams,
-    IDirect3DRMFrame3Impl_SetSceneBackground,
-    IDirect3DRMFrame3Impl_SetSceneBackgroundRGB,
-    IDirect3DRMFrame3Impl_SetSceneBackgroundDepth,
-    IDirect3DRMFrame3Impl_SetSceneBackgroundImage,
-    IDirect3DRMFrame3Impl_SetSceneFogEnable,
-    IDirect3DRMFrame3Impl_SetSceneFogColor,
-    IDirect3DRMFrame3Impl_SetSceneFogMode,
-    IDirect3DRMFrame3Impl_SetSceneFogParams,
-    IDirect3DRMFrame3Impl_SetColor,
-    IDirect3DRMFrame3Impl_SetColorRGB,
-    IDirect3DRMFrame3Impl_GetZbufferMode,
-    IDirect3DRMFrame3Impl_SetMaterialMode,
-    IDirect3DRMFrame3Impl_SetOrientation,
-    IDirect3DRMFrame3Impl_SetPosition,
-    IDirect3DRMFrame3Impl_SetRotation,
-    IDirect3DRMFrame3Impl_SetSortMode,
-    IDirect3DRMFrame3Impl_SetTexture,
-    IDirect3DRMFrame3Impl_SetVelocity,
-    IDirect3DRMFrame3Impl_SetZbufferMode,
-    IDirect3DRMFrame3Impl_Transform,
-    IDirect3DRMFrame3Impl_GetBox,
-    IDirect3DRMFrame3Impl_GetBoxEnable,
-    IDirect3DRMFrame3Impl_GetAxes,
-    IDirect3DRMFrame3Impl_GetMaterial,
-    IDirect3DRMFrame3Impl_GetInheritAxes,
-    IDirect3DRMFrame3Impl_GetHierarchyBox,
-    IDirect3DRMFrame3Impl_SetBox,
-    IDirect3DRMFrame3Impl_SetBoxEnable,
-    IDirect3DRMFrame3Impl_SetAxes,
-    IDirect3DRMFrame3Impl_SetInheritAxes,
-    IDirect3DRMFrame3Impl_SetMaterial,
-    IDirect3DRMFrame3Impl_SetQuaternion,
-    IDirect3DRMFrame3Impl_RayPick,
-    IDirect3DRMFrame3Impl_Save,
-    IDirect3DRMFrame3Impl_TransformVectors,
-    IDirect3DRMFrame3Impl_InverseTransformVectors,
-    IDirect3DRMFrame3Impl_SetTraversalOptions,
-    IDirect3DRMFrame3Impl_GetTraversalOptions,
-    IDirect3DRMFrame3Impl_SetSceneFogMethod,
-    IDirect3DRMFrame3Impl_GetSceneFogMethod,
-    IDirect3DRMFrame3Impl_SetMaterialOverride,
-    IDirect3DRMFrame3Impl_GetMaterialOverride
+    d3drm_frame3_QueryInterface,
+    d3drm_frame3_AddRef,
+    d3drm_frame3_Release,
+    d3drm_frame3_Clone,
+    d3drm_frame3_AddDestroyCallback,
+    d3drm_frame3_DeleteDestroyCallback,
+    d3drm_frame3_SetAppData,
+    d3drm_frame3_GetAppData,
+    d3drm_frame3_SetName,
+    d3drm_frame3_GetName,
+    d3drm_frame3_GetClassName,
+    d3drm_frame3_AddChild,
+    d3drm_frame3_AddLight,
+    d3drm_frame3_AddMoveCallback,
+    d3drm_frame3_AddTransform,
+    d3drm_frame3_AddTranslation,
+    d3drm_frame3_AddScale,
+    d3drm_frame3_AddRotation,
+    d3drm_frame3_AddVisual,
+    d3drm_frame3_GetChildren,
+    d3drm_frame3_GetColor,
+    d3drm_frame3_GetLights,
+    d3drm_frame3_GetMaterialMode,
+    d3drm_frame3_GetParent,
+    d3drm_frame3_GetPosition,
+    d3drm_frame3_GetRotation,
+    d3drm_frame3_GetScene,
+    d3drm_frame3_GetSortMode,
+    d3drm_frame3_GetTexture,
+    d3drm_frame3_GetTransform,
+    d3drm_frame3_GetVelocity,
+    d3drm_frame3_GetOrientation,
+    d3drm_frame3_GetVisuals,
+    d3drm_frame3_InverseTransform,
+    d3drm_frame3_Load,
+    d3drm_frame3_LookAt,
+    d3drm_frame3_Move,
+    d3drm_frame3_DeleteChild,
+    d3drm_frame3_DeleteLight,
+    d3drm_frame3_DeleteMoveCallback,
+    d3drm_frame3_DeleteVisual,
+    d3drm_frame3_GetSceneBackground,
+    d3drm_frame3_GetSceneBackgroundDepth,
+    d3drm_frame3_GetSceneFogColor,
+    d3drm_frame3_GetSceneFogEnable,
+    d3drm_frame3_GetSceneFogMode,
+    d3drm_frame3_GetSceneFogParams,
+    d3drm_frame3_SetSceneBackground,
+    d3drm_frame3_SetSceneBackgroundRGB,
+    d3drm_frame3_SetSceneBackgroundDepth,
+    d3drm_frame3_SetSceneBackgroundImage,
+    d3drm_frame3_SetSceneFogEnable,
+    d3drm_frame3_SetSceneFogColor,
+    d3drm_frame3_SetSceneFogMode,
+    d3drm_frame3_SetSceneFogParams,
+    d3drm_frame3_SetColor,
+    d3drm_frame3_SetColorRGB,
+    d3drm_frame3_GetZbufferMode,
+    d3drm_frame3_SetMaterialMode,
+    d3drm_frame3_SetOrientation,
+    d3drm_frame3_SetPosition,
+    d3drm_frame3_SetRotation,
+    d3drm_frame3_SetSortMode,
+    d3drm_frame3_SetTexture,
+    d3drm_frame3_SetVelocity,
+    d3drm_frame3_SetZbufferMode,
+    d3drm_frame3_Transform,
+    d3drm_frame3_GetBox,
+    d3drm_frame3_GetBoxEnable,
+    d3drm_frame3_GetAxes,
+    d3drm_frame3_GetMaterial,
+    d3drm_frame3_GetInheritAxes,
+    d3drm_frame3_GetHierarchyBox,
+    d3drm_frame3_SetBox,
+    d3drm_frame3_SetBoxEnable,
+    d3drm_frame3_SetAxes,
+    d3drm_frame3_SetInheritAxes,
+    d3drm_frame3_SetMaterial,
+    d3drm_frame3_SetQuaternion,
+    d3drm_frame3_RayPick,
+    d3drm_frame3_Save,
+    d3drm_frame3_TransformVectors,
+    d3drm_frame3_InverseTransformVectors,
+    d3drm_frame3_SetTraversalOptions,
+    d3drm_frame3_GetTraversalOptions,
+    d3drm_frame3_SetSceneFogMethod,
+    d3drm_frame3_GetSceneFogMethod,
+    d3drm_frame3_SetMaterialOverride,
+    d3drm_frame3_GetMaterialOverride,
 };
 
-static inline IDirect3DRMFrameImpl *unsafe_impl_from_IDirect3DRMFrame3(IDirect3DRMFrame3 *iface)
+static inline struct d3drm_frame *unsafe_impl_from_IDirect3DRMFrame3(IDirect3DRMFrame3 *iface)
 {
     if (!iface)
         return NULL;
-    assert(iface->lpVtbl == &Direct3DRMFrame3_Vtbl);
+    assert(iface->lpVtbl == &d3drm_frame3_vtbl);
 
     return impl_from_IDirect3DRMFrame3(iface);
 }
 
-HRESULT Direct3DRMFrame_create(REFIID riid, IUnknown* parent, IUnknown** ret_iface)
+HRESULT Direct3DRMFrame_create(REFIID riid, IUnknown *parent, IUnknown **out)
 {
-    IDirect3DRMFrameImpl* object;
+    struct d3drm_frame *object;
     HRESULT hr;
 
-    TRACE("(%s, %p, %p)\n", wine_dbgstr_guid(riid), parent, ret_iface);
+    TRACE("riid %s, parent %p, out %p.\n", debugstr_guid(riid), parent, out);
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DRMFrameImpl));
-    if (!object)
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    object->IDirect3DRMFrame2_iface.lpVtbl = &Direct3DRMFrame2_Vtbl;
-    object->IDirect3DRMFrame3_iface.lpVtbl = &Direct3DRMFrame3_Vtbl;
+    object->IDirect3DRMFrame2_iface.lpVtbl = &d3drm_frame2_vtbl;
+    object->IDirect3DRMFrame3_iface.lpVtbl = &d3drm_frame3_vtbl;
     object->ref = 1;
     object->scenebackground = RGBA_MAKE(0, 0, 0, 0xff);
 
@@ -2500,7 +2289,7 @@ HRESULT Direct3DRMFrame_create(REFIID riid, IUnknown* parent, IUnknown** ret_ifa
         IDirect3DRMFrame3_AddChild(p, &object->IDirect3DRMFrame3_iface);
     }
 
-    hr = IDirect3DRMFrame3_QueryInterface(&object->IDirect3DRMFrame3_iface, riid, (void**)ret_iface);
+    hr = IDirect3DRMFrame3_QueryInterface(&object->IDirect3DRMFrame3_iface, riid, (void **)out);
     IDirect3DRMFrame3_Release(&object->IDirect3DRMFrame3_iface);
     return S_OK;
 }
