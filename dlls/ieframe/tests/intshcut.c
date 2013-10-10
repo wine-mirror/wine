@@ -265,7 +265,7 @@ static void test_ReadAndWriteProperties(void)
 
         hr = urlAFromFile->lpVtbl->GetURL(urlAFromFile, &url);
         ok(hr == S_OK, "Unable to get url from file, hr=0x%x\n", hr);
-        ok(lstrcmp(url, testurl) == 0, "Wrong url read from file: %s\n",url);
+        ok(lstrcmpA(url, testurl) == 0, "Wrong url read from file: %s\n",url);
 
 
         hr = urlAFromFile->lpVtbl->QueryInterface(urlAFromFile, &IID_IPropertySetStorage, (void **) &pPropSetStg);

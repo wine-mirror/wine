@@ -222,7 +222,7 @@ static void test_navigate(IWebBrowser2 *wb, const char *url)
 
     while(!navigate_complete && GetMessageW(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
-        DispatchMessage(&msg);
+        DispatchMessageW(&msg);
     }
 
     CHECK_CALLED(Invoke_NAVIGATECOMPLETE2);
