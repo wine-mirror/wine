@@ -1541,7 +1541,7 @@ BOOL WINAPI MirrorIcon(HICON *phicon1, HICON *phicon2)
     return FALSE;
 }
 
-static inline int IsDelimiter(WCHAR c)
+static inline BOOL IsDelimiter(WCHAR c)
 {
     switch(c)
     {
