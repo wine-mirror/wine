@@ -283,7 +283,7 @@ static LRESULT WINAPI plugin_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
     }
     }
 
-    return DefWindowProc(hwnd, msg, wParam, lParam);
+    return DefWindowProcW(hwnd, msg, wParam, lParam);
 }
 
 static void create_plugin_window(HWND parent, const RECT *rect)
@@ -2334,9 +2334,9 @@ static IHTMLDocument2 *create_doc(const char *str)
     doc_load_string(doc, str);
     do_advise((IUnknown*)doc, &IID_IPropertyNotifySink, (IUnknown*)&PropertyNotifySink);
 
-    while(!doc_complete && GetMessage(&msg, NULL, 0, 0)) {
+    while(!doc_complete && GetMessageW(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
-        DispatchMessage(&msg);
+        DispatchMessageW(&msg);
     }
 
     return doc;
@@ -2591,7 +2591,7 @@ static void test_nooleobj_ax(void)
 
 static LRESULT WINAPI wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    return DefWindowProc(hwnd, msg, wParam, lParam);
+    return DefWindowProcW(hwnd, msg, wParam, lParam);
 }
 
 static HWND create_container_window(void)
@@ -2639,7 +2639,7 @@ static BOOL init_key(const char *key_name, const char *def_value, BOOL init)
     DWORD res;
 
     if(!init) {
-        RegDeleteKey(HKEY_CLASSES_ROOT, key_name);
+        RegDeleteKeyA(HKEY_CLASSES_ROOT, key_name);
         return TRUE;
     }
 

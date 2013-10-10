@@ -1398,12 +1398,12 @@ static void pump_msgs(BOOL *b)
     if(b) {
         while(!*b && GetMessageW(&msg, NULL, 0, 0)) {
             TranslateMessage(&msg);
-            DispatchMessage(&msg);
+            DispatchMessageW(&msg);
         }
     }else {
         while(!b && PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE)) {
             TranslateMessage(&msg);
-            DispatchMessage(&msg);
+            DispatchMessageW(&msg);
         }
     }
 }
@@ -2722,9 +2722,9 @@ static void run_test(const char *str, testfunc_t test)
     doc_load_string(doc, str);
     do_advise((IUnknown*)doc, &IID_IPropertyNotifySink, (IUnknown*)&PropertyNotifySink);
 
-    while(!doc_complete && GetMessage(&msg, NULL, 0, 0)) {
+    while(!doc_complete && GetMessageA(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
-        DispatchMessage(&msg);
+        DispatchMessageA(&msg);
     }
 
     hres = IHTMLDocument2_get_body(doc, &body);
@@ -2751,7 +2751,7 @@ static void run_test(const char *str, testfunc_t test)
 
 static LRESULT WINAPI wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    return DefWindowProc(hwnd, msg, wParam, lParam);
+    return DefWindowProcA(hwnd, msg, wParam, lParam);
 }
 
 static HWND create_container_window(void)

@@ -7542,9 +7542,9 @@ static void run_domtest(const char *str, domtest_t test)
 
     do_advise((IUnknown*)doc, &IID_IPropertyNotifySink, (IUnknown*)&PropertyNotifySink);
 
-    while(!doc_complete && GetMessage(&msg, NULL, 0, 0)) {
+    while(!doc_complete && GetMessageW(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
-        DispatchMessage(&msg);
+        DispatchMessageW(&msg);
     }
 
     test(doc);

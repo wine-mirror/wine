@@ -201,7 +201,7 @@ static BOOL init_key(const char *key_name, const char *def_value, BOOL init)
     DWORD res;
 
     if(!init) {
-        RegDeleteKey(HKEY_CLASSES_ROOT, key_name);
+        RegDeleteKeyA(HKEY_CLASSES_ROOT, key_name);
         return TRUE;
     }
 
@@ -1285,9 +1285,9 @@ static void load_doc(IHTMLDocument2 *doc, const char *str)
     load_string(doc, str);
     do_advise(doc, &IID_IPropertyNotifySink, (IUnknown*)&PropertyNotifySink);
 
-    while(!doc_complete && GetMessage(&msg, NULL, 0, 0)) {
+    while(!doc_complete && GetMessageW(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
-        DispatchMessage(&msg);
+        DispatchMessageW(&msg);
     }
 
     hres = IHTMLDocument2_get_body(doc, &body);
@@ -2826,9 +2826,9 @@ static void run_js_script(const char *test_name)
 
     SET_EXPECT(external_success);
 
-    while(!called_external_success && GetMessage(&msg, NULL, 0, 0)) {
+    while(!called_external_success && GetMessageW(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
-        DispatchMessage(&msg);
+        DispatchMessageW(&msg);
     }
 
     CHECK_CALLED(external_success);
@@ -2873,7 +2873,7 @@ static BOOL register_script_engine(void)
 
 static LRESULT WINAPI wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    return DefWindowProc(hwnd, msg, wParam, lParam);
+    return DefWindowProcA(hwnd, msg, wParam, lParam);
 }
 
 static HWND create_container_window(void)

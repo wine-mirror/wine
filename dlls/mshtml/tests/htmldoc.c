@@ -368,9 +368,9 @@ static void test_timer(DWORD flags)
     if(flags & EXPECT_SETTITLE)
         SET_EXPECT(Exec_SETTITLE);
 
-    while(!*b && GetMessage(&msg, doc_hwnd, 0, 0)) {
+    while(!*b && GetMessageA(&msg, doc_hwnd, 0, 0)) {
         TranslateMessage(&msg);
-        DispatchMessage(&msg);
+        DispatchMessageA(&msg);
     }
 
     if(flags & EXPECT_UPDATEUI) {
@@ -1243,7 +1243,7 @@ static HRESULT WINAPI Binding_Abort(IBinding *iface)
 {
     CHECK_EXPECT(Abort);
     if(asynchronous_binding)
-        PeekMessage(NULL, container_hwnd, WM_CONTINUE_BINDING, WM_CONTINUE_BINDING, PM_REMOVE);
+        PeekMessageA(NULL, container_hwnd, WM_CONTINUE_BINDING, WM_CONTINUE_BINDING, PM_REMOVE);
     return S_OK;
 }
 
@@ -5225,7 +5225,7 @@ static LRESULT WINAPI wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
         continue_binding(callback);
     }
 
-    return DefWindowProc(hwnd, msg, wParam, lParam);
+    return DefWindowProcW(hwnd, msg, wParam, lParam);
 }
 
 static void test_doscroll(IUnknown *unk)
@@ -5680,9 +5680,9 @@ static void test_download(DWORD flags)
     }
     expect_status_text = (LPWSTR)0xdeadbeef; /* TODO */
 
-    while(!*b && GetMessage(&msg, NULL, 0, 0)) {
+    while(!*b && GetMessageW(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
-        DispatchMessage(&msg);
+        DispatchMessageA(&msg);
     }
 
     if(flags & DWL_REFRESH) {
