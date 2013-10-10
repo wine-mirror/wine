@@ -88,6 +88,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_VOLUME_CLEANUP,
     WINED3D_CS_OP_SURFACE_CLEANUP,
     WINED3D_CS_OP_TEXTURE_CLEANUP,
+    WINED3D_CS_OP_CREATE_DUMMY_TEXTURES,
     WINED3D_CS_OP_STOP,
 };
 
@@ -520,6 +521,11 @@ struct wined3d_cs_texture_cleanup
 {
     enum wined3d_cs_op opcode;
     struct wined3d_texture *texture;
+};
+
+struct wined3d_cs_create_dummy_textures
+{
+    enum wined3d_cs_op opcode;
 };
 
 static void wined3d_cs_mt_submit(struct wined3d_cs *cs, size_t size)
@@ -2587,6 +2593,28 @@ void wined3d_cs_emit_texture_cleanup(struct wined3d_cs *cs, struct wined3d_textu
     cs->ops->submit(cs, sizeof(*op));
 }
 
+static UINT wined3d_cs_exec_create_dummy_textures(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_create_dummy_textures *op = data;
+    struct wined3d_context *context = context_acquire(cs->device, NULL);
+
+    device_create_dummy_textures(cs->device, context);
+
+    context_release(context);
+    return sizeof(*op);
+}
+
+void wined3d_cs_emit_create_dummy_textures(struct wined3d_cs *cs)
+{
+    struct wined3d_cs_create_dummy_textures *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_CREATE_DUMMY_TEXTURES;
+
+    cs->ops->submit(cs, sizeof(*op));
+    cs->ops->finish(cs);
+}
+
 static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
 {
     /* WINED3D_CS_OP_NOP                        */ wined3d_cs_exec_nop,
@@ -2653,6 +2681,7 @@ static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_VOLUME_CLEANUP             */ wined3d_cs_exec_volume_cleanup,
     /* WINED3D_CS_OP_SURFACE_CLEANUP            */ wined3d_cs_exec_surface_cleanup,
     /* WINED3D_CS_OP_TEXTURE_CLEANUP            */ wined3d_cs_exec_texture_cleanup,
+    /* WINED3D_CS_OP_CREATE_DUMMY_TEXTURES      */ wined3d_cs_exec_create_dummy_textures,
 };
 
 static inline void *_wined3d_cs_mt_require_space(struct wined3d_cs *cs, size_t size, BOOL prio)
