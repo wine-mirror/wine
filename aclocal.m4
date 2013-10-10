@@ -351,7 +351,7 @@ wine_fn_config_lib ()
     ac_flags=$[2]
     ac_dir=dlls/$ac_name
 
-    wine_fn_all_rules dlls/Makeimplib.rules
+    wine_fn_all_rules Make.rules.in
     wine_fn_clean_rules
 
     wine_fn_append_rule \

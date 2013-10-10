@@ -627,6 +627,7 @@ LIBOBJS
 PORCFLAGS
 LINGUAS
 ALL_TEST_RESOURCES
+MAKE_IMPLIB_RULES
 LDAPLIBS
 LIBRT
 LIBPOLL
@@ -801,7 +802,6 @@ SHELL'
 ac_subst_files='MAKE_RULES
 MAKE_TEST_RULES
 MAKE_DLL_RULES
-MAKE_IMPLIB_RULES
 MAKE_PROG_RULES'
 ac_user_opts='
 enable_option_checking
@@ -16053,6 +16053,18 @@ ac_config_commands="$ac_config_commands include/stamp-h"
 
 $as_echo_n "creating Makefile rules..." >&6
 
+
+MAKE_IMPLIB_RULES="DLLFLAGS = $DLLFLAGS
+"
+
+if test "x$CROSSTEST_DISABLE" = x
+then
+    as_fn_append MAKE_IMPLIB_RULES "MAKEDEPFLAGS = -xo -xcross.o
+all: \$(STATICLIB:.a=.cross.a)
+"
+fi
+
+
 wine_rules_file=conf$$rules.make
 rm -f $wine_rules_file
 ALL_POT_FILES=""
@@ -16213,7 +16225,7 @@ wine_fn_config_lib ()
     ac_flags=$2
     ac_dir=dlls/$ac_name
 
-    wine_fn_all_rules dlls/Makeimplib.rules
+    wine_fn_all_rules Make.rules.in
     wine_fn_clean_rules
 
     wine_fn_append_rule \
@@ -16596,10 +16608,6 @@ ac_config_files="$ac_config_files Maketest.rules"
 wine_fn_config_makerules dlls/Makedll.rules Make.rules
 MAKE_DLL_RULES=dlls/Makedll.rules
 ac_config_files="$ac_config_files dlls/Makedll.rules"
-
-wine_fn_config_makerules dlls/Makeimplib.rules Make.rules
-MAKE_IMPLIB_RULES=dlls/Makeimplib.rules
-ac_config_files="$ac_config_files dlls/Makeimplib.rules"
 
 wine_fn_config_makerules programs/Makeprog.rules Make.rules
 MAKE_PROG_RULES=programs/Makeprog.rules
@@ -18173,7 +18181,6 @@ do
     "Make.rules") CONFIG_FILES="$CONFIG_FILES Make.rules" ;;
     "Maketest.rules") CONFIG_FILES="$CONFIG_FILES Maketest.rules" ;;
     "dlls/Makedll.rules") CONFIG_FILES="$CONFIG_FILES dlls/Makedll.rules" ;;
-    "dlls/Makeimplib.rules") CONFIG_FILES="$CONFIG_FILES dlls/Makeimplib.rules" ;;
     "programs/Makeprog.rules") CONFIG_FILES="$CONFIG_FILES programs/Makeprog.rules" ;;
     "Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS Makefile" ;;
     "Make.tmp") CONFIG_FILES="$CONFIG_FILES Make.tmp:Make.vars.in:Makefile.in" ;;

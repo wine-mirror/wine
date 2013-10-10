@@ -22,7 +22,6 @@ Makefile
 dlldata.c
 dlls/*/*.def
 dlls/Makedll.rules
-dlls/Makeimplib.rules
 dlls/actxprxy/actxprxy_activscp.h
 dlls/actxprxy/actxprxy_activscp_p.c
 dlls/actxprxy/actxprxy_comcat.h

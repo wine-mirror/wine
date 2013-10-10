@@ -26,7 +26,6 @@ my %makerules =
 (
  "MAKE_RULES" => "Make.rules",
  "MAKE_DLL_RULES" => "dlls/Makedll.rules",
- "MAKE_IMPLIB_RULES" => "dlls/Makeimplib.rules",
  "MAKE_TEST_RULES" => "Maketest.rules",
  "MAKE_PROG_RULES" => "programs/Makeprog.rules",
 );
@@ -312,7 +311,7 @@ sub parse_makefile($)
         if (/^\@(MAKE.*RULES)\@/)
         {
             my $var = $1;
-            $make{"=rules"} = $makerules{$var};
+            $make{"=rules"} = $makerules{$var} || $var;
             next;
         }
         if (/^\s*(MODULE|IMPORTLIB|TESTDLL|MANPAGE)\s*=\s*(.*)/)
@@ -486,7 +485,7 @@ sub update_makefiles(@)
             (my $dir = $file) =~ s/^(.*)\/Makefile/$1/;
             push @lines, "WINE_CONFIG_TEST($dir$flag_args)\n";
         }
-        elsif ($rules eq $makerules{"MAKE_IMPLIB_RULES"})
+        elsif ($rules eq "MAKE_IMPLIB_RULES")
         {
             (my $name = $file) =~ s/^dlls\/(.*)\/Makefile/$1/;
             push @lines, "WINE_CONFIG_LIB($name$flag_args)\n";
