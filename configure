@@ -627,6 +627,7 @@ LIBOBJS
 PORCFLAGS
 LINGUAS
 ALL_TEST_RESOURCES
+MAKE_DLL_RULES
 MAKE_IMPLIB_RULES
 LDAPLIBS
 LIBRT
@@ -801,7 +802,6 @@ PATH_SEPARATOR
 SHELL'
 ac_subst_files='MAKE_RULES
 MAKE_TEST_RULES
-MAKE_DLL_RULES
 MAKE_PROG_RULES'
 ac_user_opts='
 enable_option_checking
@@ -16065,6 +16065,24 @@ all: \$(STATICLIB:.a=.cross.a)
 fi
 
 
+if test -n "$DLLEXT"
+then
+    deps="\$(MODULE)$DLLEXT \$(MODULE).fake"
+else
+    deps="\$(MODULE)"
+fi
+
+MAKE_DLL_RULES="
+DLLFLAGS    = $DLLFLAGS
+MAINSPEC    = \$(MODULE:%.dll=%).spec
+IDL_TLB_RES = \$(IDL_TLB_SRCS:.idl=_t.res)
+MODULEFLAGS = -shared \$(srcdir)/\$(MAINSPEC) \$(EXTRADLLFLAGS)
+
+all: $deps
+"
+
+
+
 wine_rules_file=conf$$rules.make
 rm -f $wine_rules_file
 ALL_POT_FILES=""
@@ -16266,14 +16284,14 @@ wine_fn_config_dll ()
     if eval test \"x\$"$ac_enable"\" = x"no"; then :
                 if wine_fn_has_flag implib && test "$ac_enable" != enable_win16
                then
-                   wine_fn_depend_rules dlls/Makedll.rules
+                   wine_fn_depend_rules Make.rules.in
                    wine_fn_clean_rules $ac_clean
                else
                    wine_fn_disabled_rules $ac_clean
                    return
                fi
 else
-  wine_fn_all_rules dlls/Makedll.rules
+  wine_fn_all_rules Make.rules.in
                wine_fn_clean_rules $ac_clean
                wine_fn_append_rule \
 "$ac_dir: __builddeps__
@@ -16604,10 +16622,6 @@ ac_config_files="$ac_config_files Make.rules"
 wine_fn_config_makerules Maketest.rules Make.rules
 MAKE_TEST_RULES=Maketest.rules
 ac_config_files="$ac_config_files Maketest.rules"
-
-wine_fn_config_makerules dlls/Makedll.rules Make.rules
-MAKE_DLL_RULES=dlls/Makedll.rules
-ac_config_files="$ac_config_files dlls/Makedll.rules"
 
 wine_fn_config_makerules programs/Makeprog.rules Make.rules
 MAKE_PROG_RULES=programs/Makeprog.rules
@@ -18180,7 +18194,6 @@ do
     "include/wine") CONFIG_COMMANDS="$CONFIG_COMMANDS include/wine" ;;
     "Make.rules") CONFIG_FILES="$CONFIG_FILES Make.rules" ;;
     "Maketest.rules") CONFIG_FILES="$CONFIG_FILES Maketest.rules" ;;
-    "dlls/Makedll.rules") CONFIG_FILES="$CONFIG_FILES dlls/Makedll.rules" ;;
     "programs/Makeprog.rules") CONFIG_FILES="$CONFIG_FILES programs/Makeprog.rules" ;;
     "Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS Makefile" ;;
     "Make.tmp") CONFIG_FILES="$CONFIG_FILES Make.tmp:Make.vars.in:Makefile.in" ;;

@@ -2608,6 +2608,24 @@ all: \$(STATICLIB:.a=.cross.a)
 ")
 fi
 
+dnl Dll rules
+
+if test -n "$DLLEXT"
+then
+    deps="\$(MODULE)$DLLEXT \$(MODULE).fake"
+else
+    deps="\$(MODULE)"
+fi
+
+AC_SUBST(MAKE_DLL_RULES,"
+DLLFLAGS    = $DLLFLAGS
+MAINSPEC    = \$(MODULE:%.dll=%).spec
+IDL_TLB_RES = \$(IDL_TLB_SRCS:.idl=_t.res)
+MODULEFLAGS = -shared \$(srcdir)/\$(MAINSPEC) \$(EXTRADLLFLAGS)
+
+all: $deps
+")
+
 dnl Main makefile
 
 WINE_APPEND_RULE([
@@ -2636,7 +2654,6 @@ WINE_CONFIG_EXTRA_DIR(include/wine)
 
 WINE_CONFIG_MAKERULES([Make.rules],[MAKE_RULES])
 WINE_CONFIG_MAKERULES([Maketest.rules],[MAKE_TEST_RULES],[Make.rules])
-WINE_CONFIG_MAKERULES([dlls/Makedll.rules],[MAKE_DLL_RULES],[Make.rules])
 WINE_CONFIG_MAKERULES([programs/Makeprog.rules],[MAKE_PROG_RULES],[Make.rules])
 
 WINE_CONFIG_DLL(acledit)

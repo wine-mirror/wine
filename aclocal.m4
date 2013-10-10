@@ -393,14 +393,14 @@ wine_fn_config_dll ()
               dnl enable_win16 is special in that it disables import libs too
               [if wine_fn_has_flag implib && test "$ac_enable" != enable_win16
                then
-                   wine_fn_depend_rules dlls/Makedll.rules
+                   wine_fn_depend_rules Make.rules.in
                    wine_fn_clean_rules $ac_clean
                else
                    wine_fn_disabled_rules $ac_clean
                    return
                fi],
 
-              [wine_fn_all_rules dlls/Makedll.rules
+              [wine_fn_all_rules Make.rules.in
                wine_fn_clean_rules $ac_clean
                wine_fn_append_rule \
 "$ac_dir: __builddeps__
