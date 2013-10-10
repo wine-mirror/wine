@@ -286,7 +286,6 @@ loader/wine64-preloader
 loader/wine_info.plist
 msg.pot
 po/*.mo
-programs/Makeprog.rules
 programs/rpcss/epm.h
 programs/rpcss/epm_s.c
 programs/rpcss/irot.h

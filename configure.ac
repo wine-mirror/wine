@@ -2608,7 +2608,7 @@ all: \$(STATICLIB:.a=.cross.a)
 ")
 fi
 
-dnl Dll rules
+dnl Dll and program rules
 
 if test -n "$DLLEXT"
 then
@@ -2622,6 +2622,12 @@ DLLFLAGS    = $DLLFLAGS
 MAINSPEC    = \$(MODULE:%.dll=%).spec
 IDL_TLB_RES = \$(IDL_TLB_SRCS:.idl=_t.res)
 MODULEFLAGS = -shared \$(srcdir)/\$(MAINSPEC) \$(EXTRADLLFLAGS)
+
+all: $deps
+")
+
+AC_SUBST(MAKE_PROG_RULES,"
+DLLFLAGS    = $DLLFLAGS
 
 all: $deps
 ")
@@ -2654,7 +2660,6 @@ WINE_CONFIG_EXTRA_DIR(include/wine)
 
 WINE_CONFIG_MAKERULES([Make.rules],[MAKE_RULES])
 WINE_CONFIG_MAKERULES([Maketest.rules],[MAKE_TEST_RULES],[Make.rules])
-WINE_CONFIG_MAKERULES([programs/Makeprog.rules],[MAKE_PROG_RULES],[Make.rules])
 
 WINE_CONFIG_DLL(acledit)
 WINE_CONFIG_DLL(aclui,,[implib])

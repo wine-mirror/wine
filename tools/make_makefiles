@@ -26,7 +26,6 @@ my %makerules =
 (
  "MAKE_RULES" => "Make.rules",
  "MAKE_TEST_RULES" => "Maketest.rules",
- "MAKE_PROG_RULES" => "programs/Makeprog.rules",
 );
 
 # Programs that we want to install in the bin directory too
@@ -351,7 +350,7 @@ sub parse_makefile($)
 
     if (defined $make{"=flags"} && defined $make{"=rules"} &&
         ($make{"=rules"} eq "MAKE_DLL_RULES" ||
-         $make{"=rules"} eq $makerules{"MAKE_PROG_RULES"}))
+         $make{"=rules"} eq "MAKE_PROG_RULES"))
     {
         die "Custom install-lib rule not allowed in $file" if defined ${$make{"=flags"}}{"install-lib"};
         die "Custom install-dev rule not allowed in $file" if defined ${$make{"=flags"}}{"install-dev"};
@@ -472,7 +471,7 @@ sub update_makefiles(@)
             $args .= ",[$implib]" if $implib && $implib ne $name;
             push @lines, "WINE_CONFIG_DLL($name$args)\n";
         }
-        elsif ($rules eq $makerules{"MAKE_PROG_RULES"})
+        elsif ($rules eq "MAKE_PROG_RULES")
         {
             (my $name = $file) =~ s/^programs\/(.*)\/Makefile/$1/;
             if ($name =~ /\./)

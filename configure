@@ -627,6 +627,7 @@ LIBOBJS
 PORCFLAGS
 LINGUAS
 ALL_TEST_RESOURCES
+MAKE_PROG_RULES
 MAKE_DLL_RULES
 MAKE_IMPLIB_RULES
 LDAPLIBS
@@ -801,8 +802,7 @@ PACKAGE_NAME
 PATH_SEPARATOR
 SHELL'
 ac_subst_files='MAKE_RULES
-MAKE_TEST_RULES
-MAKE_PROG_RULES'
+MAKE_TEST_RULES'
 ac_user_opts='
 enable_option_checking
 enable_win16
@@ -16082,6 +16082,13 @@ all: $deps
 "
 
 
+MAKE_PROG_RULES="
+DLLFLAGS    = $DLLFLAGS
+
+all: $deps
+"
+
+
 
 wine_rules_file=conf$$rules.make
 rm -f $wine_rules_file
@@ -16418,7 +16425,7 @@ wine_fn_config_program ()
   wine_fn_disabled_rules $ac_clean; return
 fi
 
-    wine_fn_all_rules programs/Makeprog.rules
+    wine_fn_all_rules Make.rules.in
     wine_fn_clean_rules $ac_clean
     wine_fn_append_rule "$ac_dir: __builddeps__"
     wine_fn_pot_rules
@@ -16622,10 +16629,6 @@ ac_config_files="$ac_config_files Make.rules"
 wine_fn_config_makerules Maketest.rules Make.rules
 MAKE_TEST_RULES=Maketest.rules
 ac_config_files="$ac_config_files Maketest.rules"
-
-wine_fn_config_makerules programs/Makeprog.rules Make.rules
-MAKE_PROG_RULES=programs/Makeprog.rules
-ac_config_files="$ac_config_files programs/Makeprog.rules"
 
 
 wine_fn_config_dll acledit enable_acledit
@@ -18194,7 +18197,6 @@ do
     "include/wine") CONFIG_COMMANDS="$CONFIG_COMMANDS include/wine" ;;
     "Make.rules") CONFIG_FILES="$CONFIG_FILES Make.rules" ;;
     "Maketest.rules") CONFIG_FILES="$CONFIG_FILES Maketest.rules" ;;
-    "programs/Makeprog.rules") CONFIG_FILES="$CONFIG_FILES programs/Makeprog.rules" ;;
     "Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS Makefile" ;;
     "Make.tmp") CONFIG_FILES="$CONFIG_FILES Make.tmp:Make.vars.in:Makefile.in" ;;
 

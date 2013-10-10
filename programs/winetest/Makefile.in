@@ -16,8 +16,6 @@ SVG_SRCS = winetest.svg
 
 EXTRA_OBJS = build.res @ALL_TEST_RESOURCES@
 
-@MAKE_PROG_RULES@
-
 clean::
 	$(RM) build.rc build.nfo
 
@@ -28,3 +26,5 @@ build.nfo:
 	-$(CC) -v 2>$@
 
 build.res: build.nfo
+
+@MAKE_PROG_RULES@

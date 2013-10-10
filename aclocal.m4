@@ -524,7 +524,7 @@ wine_fn_config_program ()
 
     AS_VAR_IF([$ac_enable],[no],[wine_fn_disabled_rules $ac_clean; return])
 
-    wine_fn_all_rules programs/Makeprog.rules
+    wine_fn_all_rules Make.rules.in
     wine_fn_clean_rules $ac_clean
     wine_fn_append_rule "$ac_dir: __builddeps__"
     wine_fn_pot_rules
