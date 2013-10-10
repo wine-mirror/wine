@@ -9453,6 +9453,17 @@ static const struct message sl_edit_setfocus[] =
     { WM_COMMAND, sent|parent|wparam, MAKEWPARAM(ID_EDIT, EN_SETFOCUS) },
     { 0 }
 };
+static const struct message sl_edit_invisible[] =
+{
+    { HCBT_SETFOCUS, hook },
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 1 },
+    { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { WM_KILLFOCUS, sent|parent },
+    { WM_SETFOCUS, sent },
+    { WM_COMMAND, sent|parent|wparam, MAKEWPARAM(ID_EDIT, EN_SETFOCUS) },
+    { 0 }
+};
 static const struct message ml_edit_setfocus[] =
 {
     { HCBT_SETFOCUS, hook },
@@ -9601,6 +9612,10 @@ static void test_edit_messages(void)
 
     dlg_code = SendMessageA(hwnd, WM_GETDLGCODE, 0, 0);
     ok(dlg_code == (DLGC_WANTCHARS|DLGC_HASSETSEL|DLGC_WANTARROWS), "wrong dlg_code %08x\n", dlg_code);
+
+    flush_sequence();
+    SetFocus(hwnd);
+    ok_sequence(sl_edit_invisible, "SetFocus(hwnd) on an invisible edit", FALSE);
 
     ShowWindow(hwnd, SW_SHOW);
     UpdateWindow(hwnd);
