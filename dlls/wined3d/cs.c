@@ -39,6 +39,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_INDEX_BUFFER,
     WINED3D_CS_OP_SET_CONSTANT_BUFFER,
     WINED3D_CS_OP_SET_TEXTURE,
+    WINED3D_CS_OP_SET_SAMPLER,
     WINED3D_CS_OP_SET_SHADER,
     WINED3D_CS_OP_SET_RENDER_STATE,
     WINED3D_CS_OP_SET_TEXTURE_STATE,
@@ -148,6 +149,14 @@ struct wined3d_cs_set_texture
     enum wined3d_cs_op opcode;
     UINT stage;
     struct wined3d_texture *texture;
+};
+
+struct wined3d_cs_set_sampler
+{
+    enum wined3d_cs_op opcode;
+    enum wined3d_shader_type type;
+    UINT sampler_idx;
+    struct wined3d_sampler *sampler;
 };
 
 struct wined3d_cs_set_shader
@@ -599,6 +608,27 @@ void wined3d_cs_emit_set_texture(struct wined3d_cs *cs, UINT stage, struct wined
     cs->ops->submit(cs);
 }
 
+static void wined3d_cs_exec_set_sampler(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_set_sampler *op = data;
+
+    cs->state.sampler[op->type][op->sampler_idx] = op->sampler;
+}
+
+void wined3d_cs_emit_set_sampler(struct wined3d_cs *cs, enum wined3d_shader_type type,
+        UINT sampler_idx, struct wined3d_sampler *sampler)
+{
+    struct wined3d_cs_set_sampler *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_SET_SAMPLER;
+    op->type = type;
+    op->sampler_idx = sampler_idx;
+    op->sampler = sampler;
+
+    cs->ops->submit(cs);
+}
+
 static void wined3d_cs_exec_set_shader(struct wined3d_cs *cs, const void *data)
 {
     const struct wined3d_cs_set_shader *op = data;
@@ -759,6 +789,7 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_INDEX_BUFFER       */ wined3d_cs_exec_set_index_buffer,
     /* WINED3D_CS_OP_SET_CONSTANT_BUFFER    */ wined3d_cs_exec_set_constant_buffer,
     /* WINED3D_CS_OP_SET_TEXTURE            */ wined3d_cs_exec_set_texture,
+    /* WINED3D_CS_OP_SET_SAMPLER            */ wined3d_cs_exec_set_sampler,
     /* WINED3D_CS_OP_SET_SHADER             */ wined3d_cs_exec_set_shader,
     /* WINED3D_CS_OP_SET_RENDER_STATE       */ wined3d_cs_exec_set_render_state,
     /* WINED3D_CS_OP_SET_TEXTURE_STATE      */ wined3d_cs_exec_set_texture_state,
