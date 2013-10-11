@@ -41,9 +41,9 @@ typedef struct _WINE_PROVIDERSTORE
     PFN_CERT_STORE_PROV_CONTROL     provControl;
 } WINE_PROVIDERSTORE;
 
-static void WINAPI CRYPT_ProvCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
+static void ProvStore_closeStore(WINECRYPT_CERTSTORE *cert_store, DWORD dwFlags)
 {
-    WINE_PROVIDERSTORE *store = hCertStore;
+    WINE_PROVIDERSTORE *store = (WINE_PROVIDERSTORE*)cert_store;
 
     TRACE("(%p, %08x)\n", store, dwFlags);
 
@@ -247,13 +247,12 @@ static BOOL CRYPT_ProvDeleteCTL(WINECRYPT_CERTSTORE *store, void *ctl)
     return ret;
 }
 
-static BOOL WINAPI CRYPT_ProvControl(HCERTSTORE hCertStore, DWORD dwFlags,
- DWORD dwCtrlType, void const *pvCtrlPara)
+static BOOL ProvStore_control(WINECRYPT_CERTSTORE *cert_store, DWORD dwFlags, DWORD dwCtrlType, void const *pvCtrlPara)
 {
-    WINE_PROVIDERSTORE *store = hCertStore;
+    WINE_PROVIDERSTORE *store = (WINE_PROVIDERSTORE*)cert_store;
     BOOL ret = TRUE;
 
-    TRACE("(%p, %08x, %d, %p)\n", hCertStore, dwFlags, dwCtrlType,
+    TRACE("(%p, %08x, %d, %p)\n", store, dwFlags, dwCtrlType,
      pvCtrlPara);
 
     if (store->provControl)
@@ -262,6 +261,11 @@ static BOOL WINAPI CRYPT_ProvControl(HCERTSTORE hCertStore, DWORD dwFlags,
     return ret;
 }
 
+static const store_vtbl_t ProvStoreVtbl = {
+    ProvStore_closeStore,
+    ProvStore_control
+};
+
 WINECRYPT_CERTSTORE *CRYPT_ProvCreateStore(DWORD dwFlags,
  WINECRYPT_CERTSTORE *memStore, const CERT_STORE_PROV_INFO *pProvInfo)
 {
@@ -269,7 +273,7 @@ WINECRYPT_CERTSTORE *CRYPT_ProvCreateStore(DWORD dwFlags,
 
     if (ret)
     {
-        CRYPT_InitStore(&ret->hdr, dwFlags, StoreTypeProvider);
+        CRYPT_InitStore(&ret->hdr, dwFlags, StoreTypeProvider, &ProvStoreVtbl);
         ret->dwStoreProvFlags = pProvInfo->dwStoreProvFlags;
         if (ret->dwStoreProvFlags & CERT_STORE_PROV_EXTERNAL_FLAG)
         {
@@ -279,7 +283,6 @@ WINECRYPT_CERTSTORE *CRYPT_ProvCreateStore(DWORD dwFlags,
         else
             ret->memStore = memStore;
         ret->hStoreProv = pProvInfo->hStoreProv;
-        ret->hdr.closeStore = CRYPT_ProvCloseStore;
         ret->hdr.certs.addContext = CRYPT_ProvAddCert;
         ret->hdr.certs.enumContext = CRYPT_ProvEnumCert;
         ret->hdr.certs.deleteContext = CRYPT_ProvDeleteCert;
@@ -289,7 +292,6 @@ WINECRYPT_CERTSTORE *CRYPT_ProvCreateStore(DWORD dwFlags,
         ret->hdr.ctls.addContext = CRYPT_ProvAddCTL;
         ret->hdr.ctls.enumContext = CRYPT_ProvEnumCTL;
         ret->hdr.ctls.deleteContext = CRYPT_ProvDeleteCTL;
-        ret->hdr.control = CRYPT_ProvControl;
         if (pProvInfo->cStoreProvFunc > CERT_STORE_PROV_CLOSE_FUNC)
             ret->provCloseStore =
              pProvInfo->rgpvStoreProvFunc[CERT_STORE_PROV_CLOSE_FUNC];

@@ -244,22 +244,28 @@ typedef struct _CONTEXT_PROPERTY_LIST CONTEXT_PROPERTY_LIST;
  * - control is optional, but should be implemented by any store that supports
  *   persistence
  */
+
+typedef struct {
+    void (*closeStore)(struct WINE_CRYPTCERTSTORE*,DWORD);
+    BOOL (*control)(struct WINE_CRYPTCERTSTORE*,DWORD,DWORD,void const*);
+} store_vtbl_t;
+
 typedef struct WINE_CRYPTCERTSTORE
 {
     DWORD                       dwMagic;
     LONG                        ref;
     DWORD                       dwOpenFlags;
     CertStoreType               type;
-    PFN_CERT_STORE_PROV_CLOSE   closeStore;
+    const store_vtbl_t         *vtbl;
+    /* FIXME: Move to vtbl (requires collections clean up) */
     CONTEXT_FUNCS               certs;
     CONTEXT_FUNCS               crls;
     CONTEXT_FUNCS               ctls;
-    PFN_CERT_STORE_PROV_CONTROL control; /* optional */
     CONTEXT_PROPERTY_LIST      *properties;
 } WINECRYPT_CERTSTORE;
 
 void CRYPT_InitStore(WINECRYPT_CERTSTORE *store, DWORD dwFlags,
- CertStoreType type) DECLSPEC_HIDDEN;
+ CertStoreType type, const store_vtbl_t*) DECLSPEC_HIDDEN;
 void CRYPT_FreeStore(WINECRYPT_CERTSTORE *store) DECLSPEC_HIDDEN;
 BOOL WINAPI I_CertUpdateStore(HCERTSTORE store1, HCERTSTORE store2, DWORD unk0,
  DWORD unk1) DECLSPEC_HIDDEN;

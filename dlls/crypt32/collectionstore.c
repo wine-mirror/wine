@@ -40,9 +40,9 @@ typedef struct _WINE_COLLECTIONSTORE
     struct list         stores;
 } WINE_COLLECTIONSTORE;
 
-static void WINAPI CRYPT_CollectionCloseStore(HCERTSTORE store, DWORD dwFlags)
+static void Collection_closeStore(WINECRYPT_CERTSTORE *store, DWORD dwFlags)
 {
-    WINE_COLLECTIONSTORE *cs = store;
+    WINE_COLLECTIONSTORE *cs = (WINE_COLLECTIONSTORE*)store;
     WINE_STORE_LIST_ENTRY *entry, *next;
 
     TRACE("(%p, %08x)\n", store, dwFlags);
@@ -439,15 +439,14 @@ static BOOL CRYPT_CollectionDeleteCTL(WINECRYPT_CERTSTORE *store,
     return ret;
 }
 
-static BOOL WINAPI CRYPT_CollectionControl(HCERTSTORE hCertStore, DWORD dwFlags,
+static BOOL Collection_control(WINECRYPT_CERTSTORE *cert_store, DWORD dwFlags,
  DWORD dwCtrlType, void const *pvCtrlPara)
 {
     BOOL ret;
-    WINE_COLLECTIONSTORE *store = hCertStore;
+    WINE_COLLECTIONSTORE *store = (WINE_COLLECTIONSTORE*)cert_store;
     WINE_STORE_LIST_ENTRY *entry;
 
-    TRACE("(%p, %08x, %d, %p)\n", hCertStore, dwFlags, dwCtrlType,
-     pvCtrlPara);
+    TRACE("(%p, %08x, %d, %p)\n", cert_store, dwFlags, dwCtrlType, pvCtrlPara);
 
     if (!store)
         return TRUE;
@@ -466,10 +465,9 @@ static BOOL WINAPI CRYPT_CollectionControl(HCERTSTORE hCertStore, DWORD dwFlags,
     EnterCriticalSection(&store->cs);
     LIST_FOR_EACH_ENTRY(entry, &store->stores, WINE_STORE_LIST_ENTRY, entry)
     {
-        if (entry->store->control)
+        if (entry->store->vtbl->control)
         {
-            ret = entry->store->control(entry->store, dwFlags, dwCtrlType,
-             pvCtrlPara);
+            ret = entry->store->vtbl->control(entry->store, dwFlags, dwCtrlType, pvCtrlPara);
             if (!ret)
                 break;
         }
@@ -477,6 +475,11 @@ static BOOL WINAPI CRYPT_CollectionControl(HCERTSTORE hCertStore, DWORD dwFlags,
     LeaveCriticalSection(&store->cs);
     return ret;
 }
+
+static const store_vtbl_t CollectionStoreVtbl = {
+    Collection_closeStore,
+    Collection_control
+};
 
 WINECRYPT_CERTSTORE *CRYPT_CollectionOpenStore(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara)
@@ -494,8 +497,7 @@ WINECRYPT_CERTSTORE *CRYPT_CollectionOpenStore(HCRYPTPROV hCryptProv,
         if (store)
         {
             memset(store, 0, sizeof(WINE_COLLECTIONSTORE));
-            CRYPT_InitStore(&store->hdr, dwFlags, StoreTypeCollection);
-            store->hdr.closeStore          = CRYPT_CollectionCloseStore;
+            CRYPT_InitStore(&store->hdr, dwFlags, StoreTypeCollection, &CollectionStoreVtbl);
             store->hdr.certs.addContext    = CRYPT_CollectionAddCert;
             store->hdr.certs.enumContext   = CRYPT_CollectionEnumCert;
             store->hdr.certs.deleteContext = CRYPT_CollectionDeleteCert;
@@ -505,7 +507,6 @@ WINECRYPT_CERTSTORE *CRYPT_CollectionOpenStore(HCRYPTPROV hCryptProv,
             store->hdr.ctls.addContext     = CRYPT_CollectionAddCTL;
             store->hdr.ctls.enumContext    = CRYPT_CollectionEnumCTL;
             store->hdr.ctls.deleteContext  = CRYPT_CollectionDeleteCTL;
-            store->hdr.control             = CRYPT_CollectionControl;
             InitializeCriticalSection(&store->cs);
             store->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": PWINE_COLLECTIONSTORE->cs");
             list_init(&store->stores);
