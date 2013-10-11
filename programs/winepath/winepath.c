@@ -105,7 +105,7 @@ static int parse_options(WCHAR *argv[])
     static const WCHAR nullW[] = { 0 };
     static const WCHAR *longopts[] = { longW, shortW, unixW, windowsW, helpW, versionW, nullW };
     int outputformats = 0;
-    int done = 0;
+    BOOL done = FALSE;
     int i, j;
 
     for (i = 1; argv[i] && !done; )
@@ -119,7 +119,7 @@ static int parse_options(WCHAR *argv[])
         if (argv[i][1] == '-') {
             if (argv[i][2] == 0) {
                 /* '--' end of options */
-                done = 1;
+                done = TRUE;
             } else {
                 /* long option */
                 for (j = 0; longopts[j][0]; j++)
