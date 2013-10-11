@@ -766,6 +766,7 @@ static void test_foregroundwindow(void)
     WNDCLASSA wclass;
     wnd_param param;
     DWORD ret;
+    char win_text[1024];
 
 #define DESKTOPS 2
 
@@ -820,6 +821,8 @@ static void test_foregroundwindow(void)
                 ret = SetForegroundWindow(hwnd_test);
                 Sleep(250);
                 hwnd = GetForegroundWindow();
+                GetWindowText(hwnd, win_text, 1024);
+                trace("hwnd %p name %s\n", hwnd, win_text);
                 if (input_desk_id == hwnd_id)
                 {
                     if (input_desk_id == thread_desk_id)
