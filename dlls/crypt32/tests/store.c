@@ -104,6 +104,15 @@ static void (WINAPI *pCertRemoveStoreFromCollection)(HCERTSTORE,HCERTSTORE);
 static BOOL (WINAPI *pCertSetStoreProperty)(HCERTSTORE,DWORD,DWORD,const void*);
 static BOOL (WINAPI *pCertAddCertificateLinkToStore)(HCERTSTORE,PCCERT_CONTEXT,DWORD,PCCERT_CONTEXT*);
 
+#define test_store_is_empty(store) _test_store_is_empty(__LINE__,store)
+static void _test_store_is_empty(unsigned line, HCERTSTORE store)
+{
+    const CERT_CONTEXT *cert;
+
+    cert = CertEnumCertificatesInStore(store, NULL);
+    ok_(__FILE__,line)(!cert && GetLastError() == CRYPT_E_NOT_FOUND, "store is not epmty\n");
+}
+
 static void testMemStore(void)
 {
     HCERTSTORE store1, store2;
@@ -2498,6 +2507,60 @@ static DWORD countCRLsInStore(HCERTSTORE store)
     return crls;
 }
 
+static void testEmptyStore(void)
+{
+    const CERT_CONTEXT *cert, *cert2, *cert3;
+    HCERTSTORE store;
+    BOOL res;
+
+    cert = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert, sizeof(bigCert));
+    ok(cert != NULL, "CertCreateCertificateContext failed\n");
+    todo_wine ok(cert->hCertStore != NULL, "cert->hCertStore == NULL\n");
+    if(!cert->hCertStore) {
+        CertFreeCertificateContext(cert);
+        return;
+    }
+
+    test_store_is_empty(cert->hCertStore);
+
+    cert2 = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert2, sizeof(bigCert2));
+    ok(cert2 != NULL, "CertCreateCertificateContext failed\n");
+    ok(cert2->hCertStore == cert->hCertStore, "Unexpected hCertStore\n");
+
+    test_store_is_empty(cert2->hCertStore);
+
+    res = CertAddCertificateContextToStore(cert->hCertStore, cert2, CERT_STORE_ADD_NEW, &cert3);
+    ok(res, "CertAddCertificateContextToStore failed\n");
+    todo_wine
+    ok(cert3 && cert3 != cert2, "Unexpected cert3\n");
+    ok(cert3->hCertStore == cert->hCertStore, "Unexpected hCertStore\n");
+
+    test_store_is_empty(cert->hCertStore);
+
+    res = CertDeleteCertificateFromStore(cert3);
+    ok(res, "CertDeleteCertificateContextFromStore failed\n");
+    ok(cert3->hCertStore == cert->hCertStore, "Unexpected hCertStore\n");
+
+    CertFreeCertificateContext(cert3);
+
+    store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0, CERT_STORE_CREATE_NEW_FLAG, NULL);
+    ok(store != NULL, "CertOpenStore failed\n");
+
+    res = CertAddCertificateContextToStore(store, cert2, CERT_STORE_ADD_NEW, &cert3);
+    ok(res, "CertAddCertificateContextToStore failed\n");
+    ok(cert3 && cert3 != cert2, "Unexpected cert3\n");
+    ok(cert3->hCertStore == store, "Unexpected hCertStore\n");
+
+    res = CertDeleteCertificateFromStore(cert3);
+    ok(res, "CertDeleteCertificateContextFromStore failed\n");
+    ok(cert3->hCertStore == store, "Unexpected hCertStore\n");
+
+    CertCloseStore(store, 0);
+
+    CertFreeCertificateContext(cert2);
+    CertFreeCertificateContext(cert);
+}
+
 static void test_I_UpdateStore(void)
 {
     HMODULE lib = GetModuleHandleA("crypt32");
@@ -2603,6 +2666,8 @@ START_TEST(store)
 
     testAddSerialized();
     testAddCertificateLink();
+
+    testEmptyStore();
 
     test_I_UpdateStore();
 }
