@@ -4333,21 +4333,11 @@ void CDECL wined3d_device_evict_managed_resources(struct wined3d_device *device)
     }
 }
 
-static void delete_opengl_contexts(struct wined3d_device *device, struct wined3d_swapchain *swapchain)
+void device_delete_opengl_contexts_cs(struct wined3d_device *device, struct wined3d_swapchain *swapchain)
 {
-    struct wined3d_resource *resource, *cursor;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
     struct wined3d_shader *shader;
-
-    LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &device->resources, struct wined3d_resource, resource_list_entry)
-    {
-        TRACE("Unloading resource %p.\n", resource);
-
-        wined3d_cs_emit_evict_resource(device->cs, resource);
-    }
-    if (wined3d_settings.cs_multithreaded)
-        device->cs->ops->finish(device->cs);
 
     LIST_FOR_EACH_ENTRY(shader, &device->shaders, struct wined3d_shader, shader_list_entry)
     {
@@ -4376,6 +4366,20 @@ static void delete_opengl_contexts(struct wined3d_device *device, struct wined3d
 
     HeapFree(GetProcessHeap(), 0, swapchain->context);
     swapchain->context = NULL;
+}
+
+static void delete_opengl_contexts(struct wined3d_device *device, struct wined3d_swapchain *swapchain)
+{
+    struct wined3d_resource *resource, *cursor;
+
+    LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &device->resources, struct wined3d_resource, resource_list_entry)
+    {
+        TRACE("Unloading resource %p.\n", resource);
+
+        wined3d_cs_emit_evict_resource(device->cs, resource);
+    }
+
+    wined3d_cs_emit_delete_opengl_contexts(device->cs, swapchain);
 }
 
 static HRESULT create_primary_opengl_context(struct wined3d_device *device, struct wined3d_swapchain *swapchain)

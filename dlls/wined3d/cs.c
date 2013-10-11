@@ -90,6 +90,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_TEXTURE_CLEANUP,
     WINED3D_CS_OP_CREATE_DUMMY_TEXTURES,
     WINED3D_CS_OP_CREATE_SWAPCHAIN_CONTEXT,
+    WINED3D_CS_OP_DELETE_GL_CONTEXTS,
     WINED3D_CS_OP_STOP,
 };
 
@@ -534,6 +535,12 @@ struct wined3d_cs_create_swapchain_context
     enum wined3d_cs_op opcode;
     struct wined3d_swapchain *swapchain;
     HRESULT *ret;
+};
+
+struct wined3d_cs_delete_gl_contexts
+{
+    enum wined3d_cs_op opcode;
+    struct wined3d_swapchain *swapchain;
 };
 
 static void wined3d_cs_mt_submit(struct wined3d_cs *cs, size_t size)
@@ -2648,6 +2655,27 @@ HRESULT wined3d_cs_emit_create_swapchain_context(struct wined3d_cs *cs, struct w
     return ret;
 }
 
+static UINT wined3d_cs_exec_delete_gl_contexts(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_delete_gl_contexts *op = data;
+
+    device_delete_opengl_contexts_cs(cs->device, op->swapchain);
+
+    return sizeof(*op);
+}
+
+void wined3d_cs_emit_delete_opengl_contexts(struct wined3d_cs *cs, struct wined3d_swapchain *swapchain)
+{
+    struct wined3d_cs_delete_gl_contexts *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_DELETE_GL_CONTEXTS;
+    op->swapchain = swapchain;
+
+    cs->ops->submit(cs, sizeof(*op));
+    cs->ops->finish(cs);
+}
+
 static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
 {
     /* WINED3D_CS_OP_NOP                        */ wined3d_cs_exec_nop,
@@ -2716,6 +2744,7 @@ static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_TEXTURE_CLEANUP            */ wined3d_cs_exec_texture_cleanup,
     /* WINED3D_CS_OP_CREATE_DUMMY_TEXTURES      */ wined3d_cs_exec_create_dummy_textures,
     /* WINED3D_CS_OP_CREATE_SWAPCHAIN_CONTEXT   */ wined3d_cs_exec_create_swapchain_context,
+    /* WINED3D_CS_OP_DELETE_GL_CONTEXTS         */ wined3d_cs_exec_delete_gl_contexts,
 };
 
 static inline void *_wined3d_cs_mt_require_space(struct wined3d_cs *cs, size_t size, BOOL prio)
