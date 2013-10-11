@@ -2664,7 +2664,7 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
     struct list AET;                 /* header for AET     */
     EdgeTableEntry *pETEs;           /* EdgeTableEntries pool   */
     ScanLineListBlock SLLBlock;      /* header for scanlinelist */
-    int fixWAET = FALSE;
+    BOOL fixWAET = FALSE;
     struct point_block FirstPtBlock, *block; /* PtBlock buffers    */
     struct edge_table_entry *active, *next;
     INT poly, total;

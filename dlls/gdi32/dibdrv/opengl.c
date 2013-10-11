@@ -98,13 +98,13 @@ static const int nb_formats = sizeof(pixel_formats) / sizeof(pixel_formats[0]);
 
 static BOOL init_opengl(void)
 {
-    static int init_done;
+    static BOOL init_done = FALSE;
     static void *osmesa_handle;
     char buffer[200];
     unsigned int i;
 
     if (init_done) return (osmesa_handle != NULL);
-    init_done = 1;
+    init_done = TRUE;
 
     osmesa_handle = wine_dlopen( SONAME_LIBOSMESA, RTLD_NOW, buffer, sizeof(buffer) );
     if (osmesa_handle == NULL)
