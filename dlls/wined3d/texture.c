@@ -658,7 +658,10 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
     }
 
     if (device->d3d_initialized)
-        texture->resource.resource_ops->resource_unload(&texture->resource);
+    {
+        wined3d_cs_emit_evict_resource(device->cs, &surface->resource);
+        device->cs->ops->finish(device->cs);
+    }
 
     texture->resource.format = format;
     texture->resource.multisample_type = multisample_type;
