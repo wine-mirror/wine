@@ -2139,9 +2139,7 @@ todo_wine
     bytes = -1;
     SetLastError(0xdeadbeef);
     ret = ReadFile(hfile, buf, sizeof(buf), &bytes, &ovl);
-todo_wine
     ok(!ret, "ReadFile should fail\n");
-todo_wine
     ok(GetLastError() == ERROR_HANDLE_EOF, "expected ERROR_HANDLE_EOF, got %d\n", GetLastError());
     ok(bytes == 0, "bytes %u\n", bytes);
 todo_wine
@@ -2287,9 +2285,8 @@ todo_wine
     ovl.hEvent = 0;
     bytes = 0xdeadbeef;
     SetLastError(0xdeadbeef);
-    ret = ReadFile(hfile, buf, 0, &bytes, &ovl);
     /* ReadFile return value depends on Windows version and testing it is not practical */
-    if (!ret) ok(GetLastError() == ERROR_IO_PENDING, "expected ERROR_IO_PENDING, got %d\n", GetLastError());
+    ReadFile(hfile, buf, 0, &bytes, &ovl);
     ok(bytes == 0, "bytes %u\n", bytes);
 todo_wine
     ok((NTSTATUS)ovl.Internal == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx\n", ovl.Internal);
@@ -2372,10 +2369,8 @@ todo_wine
     bytes = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = ReadFile(hfile, buf, sizeof(buf), &bytes, &ovl);
-todo_wine
     ok(!ret, "ReadFile should fail\n");
     ret = GetLastError();
-todo_wine
     ok(ret == ERROR_IO_PENDING || ret == ERROR_HANDLE_EOF /* before Vista */, "expected ERROR_IO_PENDING or ERROR_HANDLE_EOF, got %d\n", ret);
     ok(bytes == 0, "bytes %u\n", bytes);
 

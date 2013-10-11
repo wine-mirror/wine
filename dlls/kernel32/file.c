@@ -451,7 +451,15 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     if (status != STATUS_PENDING && bytesRead)
         *bytesRead = io_status->Information;
 
-    if (status && status != STATUS_END_OF_FILE && status != STATUS_TIMEOUT)
+    if (status == STATUS_END_OF_FILE)
+    {
+        if (overlapped != NULL)
+        {
+            SetLastError( RtlNtStatusToDosError(status) );
+            return FALSE;
+        }
+    }
+    else if (status && status != STATUS_TIMEOUT)
     {
         SetLastError( RtlNtStatusToDosError(status) );
         return FALSE;
