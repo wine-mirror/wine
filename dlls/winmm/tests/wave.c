@@ -278,7 +278,7 @@ const char* wave_out_error(MMRESULT error)
 const char * wave_open_flags(DWORD flags)
 {
     static char msg[1024];
-    int first = TRUE;
+    BOOL first = TRUE;
     msg[0] = 0;
     if ((flags & CALLBACK_TYPEMASK) == CALLBACK_EVENT) {
         strcat(msg, "CALLBACK_EVENT");
@@ -330,7 +330,7 @@ static const char * wave_header_flags(DWORD flags)
 {
 #define WHDR_MASK (WHDR_BEGINLOOP|WHDR_DONE|WHDR_ENDLOOP|WHDR_INQUEUE|WHDR_PREPARED)
     static char msg[1024];
-    int first = TRUE;
+    BOOL first = TRUE;
     msg[0] = 0;
     if (flags & WHDR_BEGINLOOP) {
         strcat(msg, "WHDR_BEGINLOOP");
