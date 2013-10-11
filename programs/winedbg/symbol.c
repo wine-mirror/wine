@@ -642,7 +642,8 @@ BOOL symbol_get_line(const char* filename, const char* name,
     struct sgv_data     sgv;
     char                buffer[512];
     DWORD               opt, disp;
-    unsigned            i, found = FALSE;
+    unsigned            i;
+    BOOL                found = FALSE;
     IMAGEHLP_LINE64     il;
 
     sgv.num        = 0;
