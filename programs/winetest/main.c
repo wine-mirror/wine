@@ -143,15 +143,15 @@ static char * get_file_version(char * file_name)
     return version;
 }
 
-static int running_under_wine (void)
+static BOOL running_under_wine (void)
 {
     HMODULE module = GetModuleHandleA("ntdll.dll");
 
-    if (!module) return 0;
+    if (!module) return FALSE;
     return (GetProcAddress(module, "wine_server_call") != NULL);
 }
 
-static int check_mount_mgr(void)
+static BOOL check_mount_mgr(void)
 {
     HANDLE handle = CreateFileA( "\\\\.\\MountPointManager", GENERIC_READ,
                                  FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0 );
@@ -160,7 +160,7 @@ static int check_mount_mgr(void)
     return TRUE;
 }
 
-static int check_wow64_registry(void)
+static BOOL check_wow64_registry(void)
 {
     char buffer[MAX_PATH];
     DWORD type, size = MAX_PATH;
@@ -175,7 +175,7 @@ static int check_wow64_registry(void)
     return ret;
 }
 
-static int check_display_driver(void)
+static BOOL check_display_driver(void)
 {
     HWND hwnd = CreateWindowA( "STATIC", "", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0,
                                0, 0, GetModuleHandleA(0), 0 );
@@ -184,7 +184,7 @@ static int check_display_driver(void)
     return TRUE;
 }
 
-static int running_on_visible_desktop (void)
+static BOOL running_on_visible_desktop (void)
 {
     HWND desktop;
     HMODULE huser32 = GetModuleHandleA("user32.dll");
@@ -407,7 +407,7 @@ static void print_language(void)
         xprintf ("    ThreadUILanguage=%x\n", pGetThreadUILanguage());
 }
 
-static inline int is_dot_dir(const char* x)
+static inline BOOL is_dot_dir(const char* x)
 {
     return ((x[0] == '.') && ((x[1] == 0) || ((x[1] == '.') && (x[2] == 0))));
 }
