@@ -819,8 +819,8 @@ static GLenum gl_stencil_op(enum wined3d_stencil_op op)
 static void state_stencil(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    DWORD onesided_enable = FALSE;
-    DWORD twosided_enable = FALSE;
+    DWORD onesided_enable;
+    DWORD twosided_enable;
     GLint func = GL_ALWAYS;
     GLint func_ccw = GL_ALWAYS;
     GLint ref = 0;
