@@ -174,7 +174,7 @@ static HRESULT WINAPI bsc_OnStopBinding(
             DWORD len = GlobalSize(hglobal);
             char *ptr = GlobalLock(hglobal);
 
-            This->hres = hr = This->onDataAvailable(This->obj, ptr, len);
+            This->hres = This->onDataAvailable(This->obj, ptr, len);
 
             GlobalUnlock(hglobal);
         }

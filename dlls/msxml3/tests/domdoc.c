@@ -405,6 +405,8 @@ static const char win1252decl[] =
 DECL_WIN_1252
 ;
 
+static const char nocontent[] = "no xml content here";
+
 static const char szExampleXML[] =
 "<?xml version='1.0' encoding='utf-8'?>\n"
 "<root xmlns:foo='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29' a=\"attr a\" foo:b=\"attr b\" >\n"
@@ -1125,10 +1127,9 @@ static void test_domdoc( void )
             V_VT(&var) = VT_BSTR;
             V_BSTR(&var) = _bstr_(path);
             hr = IXMLDOMDocument_load(doc, var, &b);
-        todo_wine {
             EXPECT_HR(hr, class_ptr->ret[0].hr);
             ok(b == class_ptr->ret[0].b, "%d:%d, got %d, expected %d\n", index, i, b, class_ptr->ret[0].b);
-        }
+
             DeleteFileA(path);
 
             b = 0xc;
@@ -9512,28 +9513,33 @@ static void test_selection(void)
     free_bstrs();
 }
 
+static void write_to_file(const char *name, const char *data)
+{
+    DWORD written;
+    HANDLE hfile;
+    BOOL ret;
+
+    hfile = CreateFileA(name, GENERIC_WRITE|GENERIC_READ, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
+    ok(hfile != INVALID_HANDLE_VALUE, "failed to create test file: %s\n", name);
+
+    ret = WriteFile(hfile, data, strlen(data), &written, NULL);
+    ok(ret, "WriteFile failed: %s, %d\n", name, GetLastError());
+
+    CloseHandle(hfile);
+}
+
 static void test_load(void)
 {
     IXMLDOMDocument *doc;
     IXMLDOMNodeList *list;
     VARIANT_BOOL b;
-    HANDLE hfile;
     VARIANT src;
     HRESULT hr;
-    BOOL ret;
     BSTR path, bstr1, bstr2;
-    DWORD written;
     void* ptr;
 
     /* prepare a file */
-    hfile = CreateFileA("test.xml", GENERIC_WRITE|GENERIC_READ, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
-    ok(hfile != INVALID_HANDLE_VALUE, "failed to create test file\n");
-    if(hfile == INVALID_HANDLE_VALUE) return;
-
-    ret = WriteFile(hfile, win1252xml, strlen(win1252xml), &written, NULL);
-    ok(ret, "WriteFile failed\n");
-
-    CloseHandle(hfile);
+    write_to_file("test.xml", win1252xml);
 
     doc = create_document(&IID_IXMLDOMDocument);
 
@@ -9567,9 +9573,20 @@ static void test_load(void)
     EXPECT_HR(hr, E_INVALIDARG);
     ok(b == VARIANT_FALSE, "got %d\n", b);
 
-    IXMLDOMDocument_Release(doc);
+    DeleteFileA("test.xml");
+
+    /* load from existing path, no xml content */
+    write_to_file("test.xml", nocontent);
+
+    V_VT(&src) = VT_BSTR;
+    V_BSTR(&src) = path;
+    b = VARIANT_TRUE;
+    hr = IXMLDOMDocument_load(doc, src, &b);
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(b == VARIANT_FALSE, "got %d\n", b);
 
     DeleteFileA("test.xml");
+    IXMLDOMDocument_Release(doc);
 
     doc = create_document(&IID_IXMLDOMDocument);
 

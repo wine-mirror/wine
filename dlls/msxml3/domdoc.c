@@ -129,7 +129,6 @@ struct domdoc
     VARIANT_BOOL validating;
     VARIANT_BOOL resolving;
     domdoc_properties* properties;
-    bsc_t *bsc;
     HRESULT error;
 
     /* IObjectWithSite*/
@@ -939,9 +938,6 @@ static ULONG WINAPI domdoc_Release( IXMLDOMDocument3 *iface )
     if ( ref == 0 )
     {
         int eid;
-
-        if(This->bsc)
-            detach_bsc(This->bsc);
 
         if (This->site)
             IUnknown_Release( This->site );
@@ -2067,7 +2063,7 @@ static HRESULT domdoc_onDataAvailable(void *obj, char *ptr, DWORD len)
         return attach_xmldoc(This, xmldoc);
     }
 
-    return S_OK;
+    return E_FAIL;
 }
 
 static HRESULT domdoc_load_moniker(domdoc *This, IMoniker *mon)
@@ -2079,14 +2075,7 @@ static HRESULT domdoc_load_moniker(domdoc *This, IMoniker *mon)
     if(FAILED(hr))
         return hr;
 
-    if(This->bsc) {
-        hr = detach_bsc(This->bsc);
-        if(FAILED(hr))
-            return hr;
-    }
-
-    This->bsc = bsc;
-    return S_OK;
+    return detach_bsc(bsc);
 }
 
 static HRESULT WINAPI domdoc_load(
@@ -3555,7 +3544,6 @@ HRESULT get_domdoc_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document)
     doc->error = S_OK;
     doc->site = NULL;
     doc->safeopt = 0;
-    doc->bsc = NULL;
     doc->cp_list = NULL;
     doc->namespaces = NULL;
     memset(doc->events, 0, sizeof(doc->events));
