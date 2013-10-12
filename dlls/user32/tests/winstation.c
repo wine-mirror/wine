@@ -758,6 +758,32 @@ static DWORD WINAPI create_window(LPVOID param)
     return 0;
 }
 
+static DWORD set_foreground(HWND hwnd)
+{
+    HWND hwnd_fore;
+    DWORD set_id, fore_id, ret;
+    char win_text[1024];
+
+    hwnd_fore = GetForegroundWindow();
+    GetWindowText(hwnd_fore, win_text, 1024);
+    set_id = GetWindowThreadProcessId(hwnd, NULL);
+    fore_id = GetWindowThreadProcessId(hwnd_fore, NULL);
+    trace("\"%s\" %p %08x hwnd %p %08x\n", win_text, hwnd_fore, fore_id, hwnd, set_id);
+    ret = AttachThreadInput(set_id, fore_id, TRUE);
+    trace("AttachThreadInput returned %08x\n", ret);
+    ret = ShowWindow(hwnd, SW_SHOWNORMAL);
+    trace("ShowWindow returned %08x\n", ret);
+    ret = SetWindowPos(hwnd, HWND_TOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
+    trace("set topmost returned %08x\n", ret);
+    ret = SetWindowPos(hwnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
+    trace("set notopmost returned %08x\n", ret);
+    ret = SetForegroundWindow(hwnd);
+    trace("SetForegroundWindow returned %08x\n", ret);
+    Sleep(250);
+    AttachThreadInput(set_id, fore_id, FALSE);
+    return ret;
+}
+
 static void test_foregroundwindow(void)
 {
     HWND hwnd, hwnd_test, partners[2], hwnds[2];
@@ -824,12 +850,11 @@ static void test_foregroundwindow(void)
                 ok(ret, "set thread desktop failed!\n");
                 ret = SwitchDesktop(hdesks[input_desk_id]);
                 ok(ret, "switch desktop failed!\n");
-                SetForegroundWindow(partners[0]);
-                SetForegroundWindow(partners[1]);
+                set_foreground(partners[0]);
+                set_foreground(partners[1]);
                 hwnd = GetForegroundWindow();
                 ok(hwnd != hwnd_test, "unexpected foreground window %p\n", hwnd);
-                ret = SetForegroundWindow(hwnd_test);
-                Sleep(250);
+                ret = set_foreground(hwnd_test);
                 hwnd = GetForegroundWindow();
                 GetWindowText(hwnd, win_text, 1024);
                 trace("hwnd %p name %s\n", hwnd, win_text);
