@@ -1,0 +1,7 @@
+MODULE    = atl90.dll
+IMPORTS   = atl100 oleaut32 user32 ole32
+EXTRADEFS = -D_ATL_VER=_ATL_VER_90
+
+C_SRCS = atl90.c
+
+@MAKE_DLL_RULES@

@@ -881,6 +881,7 @@ enable_atl
 enable_atl100
 enable_atl110
 enable_atl80
+enable_atl90
 enable_authz
 enable_avicap32
 enable_avifil32
@@ -16679,6 +16680,7 @@ wine_fn_config_test dlls/atl100/tests atl100_test
 wine_fn_config_dll atl110 enable_atl110
 wine_fn_config_dll atl80 enable_atl80 implib
 wine_fn_config_test dlls/atl80/tests atl80_test
+wine_fn_config_dll atl90 enable_atl90
 wine_fn_config_dll authz enable_authz
 wine_fn_config_dll avicap32 enable_avicap32 implib
 wine_fn_config_dll avifil32 enable_avifil32 clean,implib,po
