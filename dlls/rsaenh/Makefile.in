@@ -1,4 +1,3 @@
-EXTRADEFS = -DCOM_NO_WINDOWS_H
 MODULE    = rsaenh.dll
 IMPORTLIB = rsaenh
 IMPORTS   = crypt32 advapi32

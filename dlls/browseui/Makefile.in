@@ -1,6 +1,5 @@
 MODULE    = browseui.dll
 IMPORTS   = uuid ole32 comctl32 user32 advapi32
-EXTRADEFS = -DCOM_NO_WINDOWS_H
 
 C_SRCS = \
 	aclmulti.c \

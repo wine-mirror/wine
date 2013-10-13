@@ -1,4 +1,3 @@
-EXTRADEFS = -DCOM_NO_WINDOWS_H
 MODULE    = msxml4.dll
 IMPORTS   = ole32 advapi32
 

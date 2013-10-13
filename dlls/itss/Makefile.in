@@ -1,6 +1,5 @@
 MODULE    = itss.dll
 IMPORTS   = uuid urlmon shlwapi ole32
-EXTRADEFS = -DCOM_NO_WINDOWS_H
 
 C_SRCS = \
 	chm_lib.c \

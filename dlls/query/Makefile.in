@@ -1,6 +1,5 @@
 MODULE    = query.dll
 IMPORTS   = uuid
-EXTRADEFS = -DCOM_NO_WINDOWS_H
 
 C_SRCS = \
 	query_main.c

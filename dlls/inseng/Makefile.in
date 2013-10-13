@@ -1,6 +1,5 @@
 MODULE    = inseng.dll
 IMPORTS   = uuid ole32 advapi32
-EXTRADEFS = -DCOM_NO_WINDOWS_H
 
 C_SRCS = \
 	inseng_main.c

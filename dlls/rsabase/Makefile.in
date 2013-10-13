@@ -1,4 +1,3 @@
-EXTRADEFS = -DCOM_NO_WINDOWS_H
 MODULE    = rsabase.dll
 IMPORTS   = rsaenh
 

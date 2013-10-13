@@ -1,4 +1,3 @@
-EXTRADEFS = -DCOM_NO_WINDOWS_H
 MODULE    = explorerframe.dll
 IMPORTS   = uuid ole32 shell32 user32
 
