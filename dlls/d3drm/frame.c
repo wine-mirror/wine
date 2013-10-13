@@ -758,7 +758,10 @@ static HRESULT WINAPI d3drm_frame2_GetVisuals(IDirect3DRMFrame2 *iface, IDirect3
         ULONG i;
 
         if (!(array->visuals = HeapAlloc(GetProcessHeap(), 0, frame->nb_visuals * sizeof(*array->visuals))))
+        {
+            HeapFree(GetProcessHeap(), 0, array);
             return E_OUTOFMEMORY;
+        }
         for (i = 0; i < frame->nb_visuals; ++i)
         {
             array->visuals[i] = frame->visuals[i];
@@ -1506,7 +1509,10 @@ static HRESULT WINAPI d3drm_frame3_GetChildren(IDirect3DRMFrame3 *iface, IDirect
         ULONG i;
 
         if (!(array->frames = HeapAlloc(GetProcessHeap(), 0, frame->nb_children * sizeof(*array->frames))))
+        {
+            HeapFree(GetProcessHeap(), 0, array);
             return E_OUTOFMEMORY;
+        }
         for (i = 0; i < frame->nb_children; ++i)
         {
             IDirect3DRMFrame3_QueryInterface(frame->children[i], &IID_IDirect3DRMFrame, (void **)&array->frames[i]);
@@ -1544,7 +1550,10 @@ static HRESULT WINAPI d3drm_frame3_GetLights(IDirect3DRMFrame3 *iface, IDirect3D
         ULONG i;
 
         if (!(array->lights = HeapAlloc(GetProcessHeap(), 0, frame->nb_lights * sizeof(*array->lights))))
+        {
+            HeapFree(GetProcessHeap(), 0, array);
             return E_OUTOFMEMORY;
+        }
         for (i = 0; i < frame->nb_lights; ++i)
         {
             IDirect3DRMLight_QueryInterface(frame->lights[i], &IID_IDirect3DRMLight, (void **)&array->lights[i]);
