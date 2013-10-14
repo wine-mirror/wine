@@ -45,7 +45,7 @@ struct Win87EmInfoStruct
  */
 /* FIXME: Still rather skeletal implementation only */
 
-static BOOL Installed = 1; /* 8087 is installed */
+static BOOL Installed = TRUE; /* 8087 is installed */
 static WORD RefCount = 0;
 static WORD CtrlWord_1 = 0;
 static WORD CtrlWord_2 = 0;
