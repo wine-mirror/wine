@@ -2557,8 +2557,39 @@ static void testEmptyStore(void)
 
     CertCloseStore(store, 0);
 
+    res = CertCloseStore(cert->hCertStore, CERT_CLOSE_STORE_CHECK_FLAG);
+    ok(!res && GetLastError() == E_UNEXPECTED, "CertCloseStore returned: %x(%x)\n", res, GetLastError());
+
+    res = CertCloseStore(cert->hCertStore, 0);
+    ok(!res && GetLastError() == E_UNEXPECTED, "CertCloseStore returned: %x(%x)\n", res, GetLastError());
+
     CertFreeCertificateContext(cert2);
     CertFreeCertificateContext(cert);
+}
+
+static void testCloseStore(void)
+{
+    HCERTSTORE store, store2;
+    BOOL res;
+
+    store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0, CERT_STORE_CREATE_NEW_FLAG, NULL);
+    ok(store != NULL, "CertOpenStore failed\n");
+
+    res = CertCloseStore(store, CERT_CLOSE_STORE_CHECK_FLAG);
+    ok(res, "CertCloseStore failed\n");
+
+    store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0, CERT_STORE_CREATE_NEW_FLAG, NULL);
+    ok(store != NULL, "CertOpenStore failed\n");
+
+    store2 = CertDuplicateStore(store);
+    ok(store2 != NULL, "CertCloneStore failed\n");
+    ok(store2 == store, "unexpected store2\n");
+
+    res = CertCloseStore(store, CERT_CLOSE_STORE_CHECK_FLAG);
+    ok(!res && GetLastError() == CRYPT_E_PENDING_CLOSE, "CertCloseStore failed\n");
+
+    res = CertCloseStore(store2, CERT_CLOSE_STORE_CHECK_FLAG);
+    ok(res, "CertCloseStore failed\n");
 }
 
 static void test_I_UpdateStore(void)
@@ -2659,6 +2690,7 @@ START_TEST(store)
     testFileNameStore();
     testMessageStore();
     testSerializedStore();
+    testCloseStore();
 
     testCertOpenSystemStore();
     testCertEnumSystemStore();

@@ -296,13 +296,13 @@ static DWORD MemStore_release(WINECRYPT_CERTSTORE *cert_store, DWORD flags)
     WINE_MEMSTORE *store = (WINE_MEMSTORE*)cert_store;
     LONG ref;
 
-    if(flags)
+    if(flags & ~CERT_CLOSE_STORE_CHECK_FLAG)
         FIXME("Unimplemented flags %x\n", flags);
 
     ref = InterlockedDecrement(&store->hdr.ref);
     TRACE("(%p) ref=%d\n", store, ref);
     if(ref)
-        return ERROR_SUCCESS;
+        return (flags & CERT_CLOSE_STORE_CHECK_FLAG) ? CRYPT_E_PENDING_CLOSE : ERROR_SUCCESS;
 
     ContextList_Free(store->certs);
     ContextList_Free(store->crls);
