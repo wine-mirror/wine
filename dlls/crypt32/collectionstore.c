@@ -161,7 +161,7 @@ static void *CRYPT_CollectionAdvanceEnum(WINE_COLLECTIONSTORE *store,
          * the free(pPrev) below can cause the ref count to become negative.
          */
         child = Context_GetLinkedContext(pPrev);
-        contextInterface->duplicate(child);
+        Context_AddRef(context_from_ptr(child));
         child = contextFuncs->enumContext(storeEntry->store, child);
         contextInterface->free(pPrev);
         pPrev = NULL;

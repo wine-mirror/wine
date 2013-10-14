@@ -271,7 +271,10 @@ static BOOL CRYPT_QuerySerializedContextObject(DWORD dwObjectType,
             *phCertStore = CertDuplicateStore(
              *(HCERTSTORE *)((const BYTE *)context + certStoreOffset));
         if (ppvContext)
-            *ppvContext = contextInterface->duplicate(context);
+        {
+            *ppvContext = context;
+            Context_AddRef(context_from_ptr(context));
+        }
     }
 
 end:

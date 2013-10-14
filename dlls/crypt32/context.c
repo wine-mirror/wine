@@ -235,7 +235,7 @@ void *ContextList_Enum(struct ContextList *list, void *pPrev)
     if (listNext)
     {
         ret = ContextList_EntryToContext(list, listNext);
-        list->contextInterface->duplicate(ret);
+        Context_AddRef(context_from_ptr(ret));
     }
     else
         ret = NULL;
