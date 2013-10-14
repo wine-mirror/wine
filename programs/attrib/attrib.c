@@ -253,7 +253,7 @@ int wmain(int argc, WCHAR *argv[])
     WCHAR originalname[MAX_PATH];
     DWORD attrib_set = 0;
     DWORD attrib_clear = 0;
-    BOOL  attrib_recurse = 0;
+    BOOL  attrib_recurse = FALSE;
     BOOL  attrib_includedirs = FALSE;
     static const WCHAR help_option[] = {'/','?','\0'};
     static const WCHAR wildcardsW[] = {'*','?','\0'};
