@@ -2124,13 +2124,16 @@ NTSTATUS WINAPI LdrAddRefDll( ULONG flags, HMODULE module )
     NTSTATUS ret = STATUS_SUCCESS;
     WINE_MODREF *wm;
 
-    if (flags) FIXME( "%p flags %x not implemented\n", module, flags );
+    if (flags & ~LDR_ADDREF_DLL_PIN) FIXME( "%p flags %x not implemented\n", module, flags );
 
     RtlEnterCriticalSection( &loader_section );
 
     if ((wm = get_modref( module )))
     {
-        if (wm->ldr.LoadCount != -1) wm->ldr.LoadCount++;
+        if (flags & LDR_ADDREF_DLL_PIN)
+            wm->ldr.LoadCount = -1;
+        else
+            if (wm->ldr.LoadCount != -1) wm->ldr.LoadCount++;
         TRACE( "(%s) ldr.LoadCount: %d\n", debugstr_w(wm->ldr.BaseDllName.Buffer), wm->ldr.LoadCount );
     }
     else ret = STATUS_INVALID_PARAMETER;
