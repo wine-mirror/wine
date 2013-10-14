@@ -810,11 +810,6 @@ static void parse_generated_idl( struct incl_file *source )
         add_include( source, "wine/exception.h", 1 );
         add_include( source, header, 0 );
     }
-    else if (!strcmp( source->name, "dlldata.c" ))
-    {
-        add_include( source, "objbase.h", 1 );
-        add_include( source, "rpcproxy.h", 1 );
-    }
 
     free( header );
     free( basename );
@@ -823,46 +818,68 @@ static void parse_generated_idl( struct incl_file *source )
 /*******************************************************************
  *         parse_file
  */
-static void parse_file( struct incl_file *pFile, int src )
+static void parse_file( struct incl_file *source, int src )
 {
     FILE *file;
 
     /* special case for source files generated from idl */
-    if (strendswith( pFile->name, "_c.c" ) ||
-        strendswith( pFile->name, "_i.c" ) ||
-        strendswith( pFile->name, "_p.c" ) ||
-        strendswith( pFile->name, "_s.c" ) ||
-        !strcmp( pFile->name, "dlldata.c" ))
+    if (strendswith( source->name, "_c.c" ) ||
+        strendswith( source->name, "_i.c" ) ||
+        strendswith( source->name, "_p.c" ) ||
+        strendswith( source->name, "_s.c" ))
     {
-        parse_generated_idl( pFile );
+        parse_generated_idl( source );
+        return;
+    }
+
+    if (!strcmp( source->name, "dlldata.o" ))
+    {
+        source->filename = xstrdup( "dlldata.c" );
+        add_include( source, "objbase.h", 1 );
+        add_include( source, "rpcproxy.h", 1 );
+        return;
+    }
+
+    if (!strcmp( source->name, "testlist.o" ))
+    {
+        source->filename = xstrdup( "testlist.c" );
+        add_include( source, "wine/test.h", 1 );
+        return;
+    }
+
+    if (strendswith( source->name, ".o" ))
+    {
+        /* default to .c for unknown extra object files */
+        source->filename = xstrdup( source->name );
+        source->filename[strlen(source->filename) - 1] = 'c';
         return;
     }
 
     /* don't try to open certain types of files */
-    if (strendswith( pFile->name, ".tlb" ) ||
-        strendswith( pFile->name, ".res" ) ||
-        strendswith( pFile->name, ".x" ))
+    if (strendswith( source->name, ".tlb" ) ||
+        strendswith( source->name, ".res" ) ||
+        strendswith( source->name, ".x" ))
     {
-        pFile->filename = xstrdup( pFile->name );
+        source->filename = xstrdup( source->name );
         return;
     }
 
-    file = src ? open_src_file( pFile ) : open_include_file( pFile );
+    file = src ? open_src_file( source ) : open_include_file( source );
     if (!file) return;
-    input_file_name = pFile->filename;
+    input_file_name = source->filename;
 
-    if (pFile->sourcename && strendswith( pFile->sourcename, ".idl" ))
-        parse_idl_file( pFile, file, 1 );
-    else if (strendswith( pFile->filename, ".idl" ))
-        parse_idl_file( pFile, file, 0 );
-    else if (strendswith( pFile->filename, ".c" ) ||
-             strendswith( pFile->filename, ".m" ) ||
-             strendswith( pFile->filename, ".h" ) ||
-             strendswith( pFile->filename, ".l" ) ||
-             strendswith( pFile->filename, ".y" ))
-        parse_c_file( pFile, file );
-    else if (strendswith( pFile->filename, ".rc" ))
-        parse_rc_file( pFile, file );
+    if (source->sourcename && strendswith( source->sourcename, ".idl" ))
+        parse_idl_file( source, file, 1 );
+    else if (strendswith( source->filename, ".idl" ))
+        parse_idl_file( source, file, 0 );
+    else if (strendswith( source->filename, ".c" ) ||
+             strendswith( source->filename, ".m" ) ||
+             strendswith( source->filename, ".h" ) ||
+             strendswith( source->filename, ".l" ) ||
+             strendswith( source->filename, ".y" ))
+        parse_c_file( source, file );
+    else if (strendswith( source->filename, ".rc" ))
+        parse_rc_file( source, file );
     fclose(file);
     input_file_name = NULL;
 }
@@ -1151,11 +1168,8 @@ int main( int argc, char *argv[] )
         free( path );
     }
 
-    for (i = 1; i < argc; i++)
-    {
-        add_src_file( argv[i] );
-        if (strendswith( argv[i], "_p.c" )) add_src_file( "dlldata.c" );
-    }
+    for (i = 1; i < argc; i++) add_src_file( argv[i] );
+
     LIST_FOR_EACH_ENTRY( pFile, &includes, struct incl_file, entry ) parse_file( pFile, 0 );
     output_dependencies();
     return 0;

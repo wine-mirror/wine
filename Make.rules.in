@@ -4,7 +4,6 @@
 # C_SRCS       : C sources for the module
 # OBJC_SRCS    : Objective-C sources for the module
 # RC_SRCS      : resource source files
-# EXTRA_SRCS   : extra source files for make depend
 # EXTRA_OBJS   : extra object files
 # IMPORTS      : dlls to import
 # DELAYIMPORTS : dlls to import in delayed mode
@@ -147,7 +146,7 @@ $(IMPORTLIB:%=lib%.cross.a): $(MAINSPEC) $(IMPLIB_SRCS:.c=.cross.o)
 DEPEND_SRCS = $(C_SRCS) $(OBJC_SRCS) $(RC_SRCS) $(MC_SRCS) \
               $(IDL_H_SRCS) $(IDL_C_SRCS) $(IDL_I_SRCS) $(IDL_P_SRCS) $(IDL_S_SRCS) \
               $(IDL_GEN_C_SRCS) $(IDL_R_SRCS:.idl=_r.res) $(IDL_TLB_SRCS) $(IDL_TLB_SRCS:.idl=.tlb) \
-              $(BISON_SRCS) $(LEX_SRCS) $(EXTRA_SRCS)
+              $(BISON_SRCS) $(LEX_SRCS) $(EXTRA_OBJS)
 
 depend: dummy
 	$(MAKEDEP) $(MAKEDEPFLAGS) -C$(srcdir) -S$(top_srcdir) -T$(top_builddir) $(EXTRAINCL) $(DEPEND_SRCS)
@@ -170,8 +169,6 @@ $(WINETEST_RES): $(TESTMODULE_STRIPPED)
 
 testlist.c: Makefile.in $(MAKECTESTS)
 	$(MAKECTESTS) -o $@ $(C_SRCS)
-
-testlist.o testlist.cross.o: testlist.c $(top_srcdir)/include/wine/test.h
 
 testclean::
 	$(RM) *.ok
