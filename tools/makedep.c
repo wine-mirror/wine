@@ -947,6 +947,8 @@ static void output_sources(void)
         }
         else if (!strcmp( ext, "l" ))  /* lex file */
         {
+            output( "%s.yy.c: %s\n", obj, source->filename );
+            output( "\t$(FLEX) $(LEXFLAGS) -o$@ %s\n", source->filename );
             column += output( "%s.yy.o: %s.yy.c", obj, obj );
         }
         else if (!strcmp( ext, "rc" ))  /* resource file */

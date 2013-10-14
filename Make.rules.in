@@ -36,7 +36,7 @@ CROSSOBJS = $(OBJS:.o=.cross.o)
 
 # Implicit rules
 
-.SUFFIXES: .mc .rc .res .idl .tlb .h .y .l .tab.c .tab.h .yy.c .ok .man.in .man _c.c _i.c _p.c _s.c _r.res _t.res .cross.o .po .mo @MAINTAINER_MODE@ .sfd .ttf .svg .ico .bmp
+.SUFFIXES: .mc .rc .res .idl .tlb .h .y .tab.c .tab.h .ok .man.in .man _c.c _i.c _p.c _s.c _r.res _t.res .cross.o .po .mo @MAINTAINER_MODE@ .sfd .ttf .svg .ico .bmp
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $@ $<
@@ -52,9 +52,6 @@ CROSSOBJS = $(OBJS:.o=.cross.o)
 
 .y.tab.h:
 	$(BISON) $(BISONFLAGS) -p $*_ -o $*.tab.c -d $<
-
-.l.yy.c:
-	$(FLEX) $(LEXFLAGS) -o$@ $<
 
 .mc.res:
 	$(WMC) -U -O res $(PORCFLAGS) -o $@ $<
