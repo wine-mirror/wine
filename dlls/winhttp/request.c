@@ -2391,6 +2391,12 @@ static BOOL query_data_available( request_t *request, DWORD *available, BOOL asy
 {
     DWORD count = get_available_data( request );
 
+    if (!count)
+    {
+        refill_buffer( request, async );
+        count = get_available_data( request );
+    }
+
     if (async) send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE, &count, sizeof(count) );
     TRACE("%u bytes available\n", count);
     if (available) *available = count;

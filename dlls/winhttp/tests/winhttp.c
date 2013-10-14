@@ -1800,6 +1800,8 @@ struct server_info
     int port;
 };
 
+#define BIG_BUFFER_LEN 0x2250
+
 static DWORD CALLBACK server_thread(LPVOID param)
 {
     struct server_info *si = param;
@@ -1856,6 +1858,13 @@ static DWORD CALLBACK server_thread(LPVOID param)
                 send(c, okmsg, sizeof okmsg - 1, 0);
             else
                 send(c, noauthmsg, sizeof noauthmsg - 1, 0);
+        }
+        if (strstr(buffer, "/big"))
+        {
+            char msg[BIG_BUFFER_LEN];
+            memset(msg, 'm', sizeof(msg));
+            send(c, okmsg, sizeof(okmsg) - 1, 0);
+            send(c, msg, sizeof(msg), 0);
         }
         if (strstr(buffer, "/no_headers"))
         {
@@ -2127,6 +2136,55 @@ static void test_bad_header( int port )
     WinHttpCloseHandle( req );
     WinHttpCloseHandle( con );
     WinHttpCloseHandle( ses );
+}
+
+static void test_multiple_reads(int port)
+{
+    static const WCHAR bigW[] = {'b','i','g',0};
+    HINTERNET ses, con, req;
+    DWORD total_len = 0;
+    BOOL ret;
+
+    ses = WinHttpOpen(test_useragent, 0, NULL, NULL, 0);
+    ok(ses != NULL, "failed to open session %u\n", GetLastError());
+
+    con = WinHttpConnect(ses, localhostW, port, 0);
+    ok(con != NULL, "failed to open a connection %u\n", GetLastError());
+
+    req = WinHttpOpenRequest(con, NULL, bigW, NULL, NULL, NULL, 0);
+    ok(req != NULL, "failed to open a request %u\n", GetLastError());
+
+    ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
+    ok(ret, "failed to send request %u\n", GetLastError());
+
+    ret = WinHttpReceiveResponse(req, NULL);
+    ok(ret == TRUE, "expected success\n");
+
+    for (;;)
+    {
+        DWORD len = 0xdeadbeef;
+        ret = WinHttpQueryDataAvailable( req, &len );
+        ok( ret, "WinHttpQueryDataAvailable failed with error %u\n", GetLastError() );
+        if (ret) ok( len != 0xdeadbeef, "WinHttpQueryDataAvailable return wrong length\n" );
+        if (len)
+        {
+            DWORD bytes_read;
+            char *buf = HeapAlloc( GetProcessHeap(), 0, len + 1 );
+
+            ret = WinHttpReadData( req, buf, len, &bytes_read );
+            ok( len == bytes_read, "only got %u of %u available\n", bytes_read, len );
+
+            HeapFree( GetProcessHeap(), 0, buf );
+            if (!bytes_read) break;
+            total_len += bytes_read;
+        }
+        if (!len) break;
+    }
+    ok(total_len == BIG_BUFFER_LEN, "got wrong length: 0x%x\n", total_len);
+
+    WinHttpCloseHandle(req);
+    WinHttpCloseHandle(con);
+    WinHttpCloseHandle(ses);
 }
 
 static void test_connection_info( int port )
@@ -3038,6 +3096,7 @@ START_TEST (winhttp)
     test_no_headers(si.port);
     test_basic_authentication(si.port);
     test_bad_header(si.port);
+    test_multiple_reads(si.port);
 
     /* send the basic request again to shutdown the server thread */
     test_basic_request(si.port, NULL, quitW);
