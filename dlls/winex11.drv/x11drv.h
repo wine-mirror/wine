@@ -364,8 +364,6 @@ extern Colormap default_colormap DECLSPEC_HIDDEN;
 extern XPixmapFormatValues **pixmap_formats DECLSPEC_HIDDEN;
 extern Window root_window DECLSPEC_HIDDEN;
 extern int clipping_cursor DECLSPEC_HIDDEN;
-extern unsigned int screen_width DECLSPEC_HIDDEN;
-extern unsigned int screen_height DECLSPEC_HIDDEN;
 extern unsigned int screen_bpp DECLSPEC_HIDDEN;
 extern int use_xkb DECLSPEC_HIDDEN;
 extern int usexrandr DECLSPEC_HIDDEN;
@@ -628,6 +626,7 @@ extern void X11DRV_X_to_window_rect( struct x11drv_win_data *data, RECT *rect ) 
 extern POINT virtual_screen_to_root( INT x, INT y ) DECLSPEC_HIDDEN;
 extern POINT root_to_virtual_screen( INT x, INT y ) DECLSPEC_HIDDEN;
 extern RECT get_virtual_screen_rect(void) DECLSPEC_HIDDEN;
+extern RECT get_primary_monitor_rect(void) DECLSPEC_HIDDEN;
 extern void xinerama_init( unsigned int width, unsigned int height ) DECLSPEC_HIDDEN;
 
 struct x11drv_mode_info
@@ -675,8 +674,9 @@ static inline BOOL is_window_rect_mapped( const RECT *rect )
 
 static inline BOOL is_window_rect_fullscreen( const RECT *rect )
 {
-    return (rect->left <= 0 && rect->right >= screen_width &&
-            rect->top <= 0 && rect->bottom >= screen_height);
+    RECT primary_rect = get_primary_monitor_rect();
+    return (rect->left <= primary_rect.left && rect->right >= primary_rect.right &&
+            rect->top <= primary_rect.top && rect->bottom >= primary_rect.bottom);
 }
 
 #endif  /* __WINE_X11DRV_H */

@@ -509,7 +509,7 @@ BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
     if (!(thread_data = x11drv_thread_data())) return FALSE;
     if (GetTickCount() - thread_data->clip_reset < 1000) return FALSE;
     if (!reset && clipping_cursor && thread_data->clip_hwnd) return FALSE;  /* already clipping */
-    SetRect( &rect, 0, 0, screen_width, screen_height );
+    rect = get_primary_monitor_rect();
     if (!grab_fullscreen)
     {
         RECT virtual_rect = get_virtual_screen_rect();

@@ -146,11 +146,12 @@ static LONG X11DRV_nores_SetCurrentMode(int mode)
 /* default handler only gets the current X desktop resolution */
 void X11DRV_Settings_Init(void)
 {
+    RECT primary = get_primary_monitor_rect();
     X11DRV_Settings_SetHandlers("NoRes", 
                                 X11DRV_nores_GetCurrentMode, 
                                 X11DRV_nores_SetCurrentMode, 
                                 1, 0);
-    X11DRV_Settings_AddOneMode(screen_width, screen_height, 0, 60);
+    X11DRV_Settings_AddOneMode( primary.right - primary.left, primary.bottom - primary.top, 0, 60);
 }
 
 static BOOL get_display_device_reg_key(char *key, unsigned len)

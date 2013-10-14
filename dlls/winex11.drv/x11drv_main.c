@@ -60,8 +60,6 @@ XVisualInfo default_visual = { 0 };
 XVisualInfo argb_visual = { 0 };
 Colormap default_colormap = None;
 XPixmapFormatValues **pixmap_formats;
-unsigned int screen_width;
-unsigned int screen_height;
 unsigned int screen_bpp;
 Window root_window;
 int usexvidmode = 1;

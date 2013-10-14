@@ -47,7 +47,11 @@ static const unsigned int heights[] = {200, 300, 384, 480, 600,  768,  864, 1024
 /* create the mode structures */
 static void make_modes(void)
 {
+    RECT primary_rect = get_primary_monitor_rect();
     unsigned int i;
+    unsigned int screen_width = primary_rect.right - primary_rect.left;
+    unsigned int screen_height = primary_rect.bottom - primary_rect.top;
+
     /* original specified desktop size */
     X11DRV_Settings_AddOneMode(screen_width, screen_height, 0, 60);
     for (i=0; i<NUM_DESKTOP_MODES; i++)
@@ -73,10 +77,12 @@ static int X11DRV_desktop_GetCurrentMode(void)
 {
     unsigned int i;
     DWORD dwBpp = screen_bpp;
+    RECT primary_rect = get_primary_monitor_rect();
+
     for (i=0; i<dd_mode_count; i++)
     {
-        if ( (screen_width == dd_modes[i].width) &&
-             (screen_height == dd_modes[i].height) &&
+        if ( (primary_rect.right - primary_rect.left == dd_modes[i].width) &&
+             (primary_rect.bottom - primary_rect.top == dd_modes[i].height) &&
              (dwBpp == dd_modes[i].bpp))
             return i;
     }
@@ -108,10 +114,12 @@ static LONG X11DRV_desktop_SetCurrentMode(int mode)
  */
 void X11DRV_init_desktop( Window win, unsigned int width, unsigned int height )
 {
+    RECT primary_rect = get_primary_monitor_rect();
+
     root_window = win;
     managed_mode = 0;  /* no managed windows in desktop mode */
-    max_width = screen_width;
-    max_height = screen_height;
+    max_width = primary_rect.right - primary_rect.left;
+    max_height = primary_rect.bottom - primary_rect.top;
     xinerama_init( width, height );
 
     /* initialize the available resolutions */
@@ -135,6 +143,7 @@ BOOL CDECL X11DRV_create_desktop( UINT width, UINT height )
     XSetWindowAttributes win_attr;
     Window win;
     Display *display = thread_init_display();
+    RECT rect;
 
     TRACE( "%u x %u\n", width, height );
 
@@ -154,7 +163,8 @@ BOOL CDECL X11DRV_create_desktop( UINT width, UINT height )
                          CWEventMask | CWCursor | CWColormap, &win_attr );
     if (!win) return FALSE;
 
-    if (width == screen_width && height == screen_height)
+    SetRect( &rect, 0, 0, width, height );
+    if (is_window_rect_fullscreen( &rect ))
     {
         TRACE("setting desktop to fullscreen\n");
         XChangeProperty( display, win, x11drv_atom(_NET_WM_STATE), XA_ATOM, 32,
@@ -202,7 +212,9 @@ static BOOL CALLBACK update_windows_on_desktop_resize( HWND hwnd, LPARAM lparam 
 
 BOOL is_desktop_fullscreen(void)
 {
-    return screen_width == max_width && screen_height == max_height;
+    RECT primary_rect = get_primary_monitor_rect();
+    return (primary_rect.right - primary_rect.left == max_width &&
+            primary_rect.bottom - primary_rect.top == max_height);
 }
 
 static void update_desktop_fullscreen( unsigned int width, unsigned int height)
@@ -246,7 +258,7 @@ void X11DRV_resize_desktop( unsigned int width, unsigned int height )
     HWND hwnd = GetDesktopWindow();
     struct desktop_resize_data resize_data;
 
-    SetRect( &resize_data.old_screen_rect, 0, 0, screen_width, screen_height );
+    resize_data.old_screen_rect = get_primary_monitor_rect();
     resize_data.old_virtual_rect = get_virtual_screen_rect();
 
     xinerama_init( width, height );

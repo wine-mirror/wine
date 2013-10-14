@@ -180,6 +180,11 @@ RECT get_virtual_screen_rect(void)
     return virtual_screen_rect;
 }
 
+RECT get_primary_monitor_rect(void)
+{
+    return get_primary()->rcMonitor;
+}
+
 void xinerama_init( unsigned int width, unsigned int height )
 {
     MONITORINFOEXW *primary;
@@ -213,10 +218,8 @@ void xinerama_init( unsigned int width, unsigned int height )
                (monitors[i].dwFlags & MONITORINFOF_PRIMARY) ? " (primary)" : "" );
     }
 
-    screen_width = primary->rcMonitor.right - primary->rcMonitor.left;
-    screen_height = primary->rcMonitor.bottom - primary->rcMonitor.top;
-    TRACE( "virtual size: %s primary size: %dx%d\n",
-           wine_dbgstr_rect(&virtual_screen_rect), screen_width, screen_height );
+    TRACE( "virtual size: %s primary: %s\n",
+           wine_dbgstr_rect(&virtual_screen_rect), wine_dbgstr_rect(&primary->rcMonitor) );
 }
 
 
