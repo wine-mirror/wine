@@ -662,7 +662,7 @@ static WCHAR *skip_whitespace(WCHAR *p)
    Example: 'XCOPY "c:\DIR A" "c:DIR B\"' is OK. */
 static int find_end_of_word(const WCHAR *word, WCHAR **end)
 {
-    BOOL in_quotes = 0;
+    BOOL in_quotes = FALSE;
     const WCHAR *ptr = word;
     for (;;) {
         for (; *ptr != '\0' && *ptr != '"' &&
