@@ -131,12 +131,15 @@ BOOL WINAPI DnsRecordCompare( PDNS_RECORD r1, PDNS_RECORD r2 )
 
     TRACE( "(%p,%p)\n", r1, r2 );
 
-    if (r1->wType       != r2->wType       ||
-        r1->wDataLength != r2->wDataLength ||
-        r1->Flags.DW    != r2->Flags.DW    ||
-        r1->dwReserved  != r2->dwReserved) return FALSE;
+    if (r1->wType            != r2->wType            ||
+        r1->wDataLength      != r2->wDataLength      ||
+        r1->Flags.S.Section  != r2->Flags.S.Section  ||
+        r1->Flags.S.Delete   != r2->Flags.S.Delete   ||
+        r1->Flags.S.Unused   != r2->Flags.S.Unused   ||
+        r1->Flags.S.Reserved != r2->Flags.S.Reserved ||
+        r1->dwReserved       != r2->dwReserved) return FALSE;
 
-    wide = r1->Flags.S.CharSet == DnsCharSetUnicode;
+    wide = (r1->Flags.S.CharSet == DnsCharSetUnicode || r1->Flags.S.CharSet == DnsCharSetUnknown);
     if (dns_strcmpX( r1->pName, r2->pName, wide )) return FALSE;
 
     switch (r1->wType)
