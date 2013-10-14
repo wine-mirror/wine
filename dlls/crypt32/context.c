@@ -26,19 +26,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(context);
 
-typedef enum _ContextType {
-    ContextTypeData,
-    ContextTypeLink,
-} ContextType;
-
 typedef struct _BASE_CONTEXT
 {
     LONG        ref;
-    ContextType type;
-    union {
-        CONTEXT_PROPERTY_LIST *properties;
-        struct _BASE_CONTEXT *linked;
-    } u;
+    struct _BASE_CONTEXT *linked;
+    CONTEXT_PROPERTY_LIST *properties;
 } BASE_CONTEXT;
 
 #define CONTEXT_FROM_BASE_CONTEXT(p) (void*)(p+1)
@@ -53,9 +45,9 @@ void *Context_CreateDataContext(size_t contextSize)
         return NULL;
 
     context->ref = 1;
-    context->type = ContextTypeData;
-    context->u.properties = ContextPropertyList_Create();
-    if (!context->u.properties)
+    context->linked = NULL;
+    context->properties = ContextPropertyList_Create();
+    if (!context->properties)
     {
         CryptMemFree(context);
         return NULL;
@@ -78,8 +70,7 @@ void *Context_CreateLinkContext(unsigned int contextSize, void *linked, unsigned
 
     memcpy(CONTEXT_FROM_BASE_CONTEXT(context), linked, contextSize);
     context->ref = 1;
-    context->type = ContextTypeLink;
-    context->u.linked = BASE_CONTEXT_FROM_CONTEXT(linked);
+    context->linked = BASE_CONTEXT_FROM_CONTEXT(linked);
     if (addRef)
         Context_AddRef(linked);
 
@@ -99,7 +90,7 @@ void *Context_GetExtra(const void *context, size_t contextSize)
 {
     BASE_CONTEXT *baseContext = BASE_CONTEXT_FROM_CONTEXT(context);
 
-    assert(baseContext->type == ContextTypeLink);
+    assert(baseContext->linked != NULL);
     return (LPBYTE)CONTEXT_FROM_BASE_CONTEXT(baseContext) + contextSize;
 }
 
@@ -107,18 +98,18 @@ void *Context_GetLinkedContext(void *context)
 {
     BASE_CONTEXT *baseContext = BASE_CONTEXT_FROM_CONTEXT(context);
 
-    assert(baseContext->type == ContextTypeLink);
-    return CONTEXT_FROM_BASE_CONTEXT(baseContext->u.linked);
+    assert(baseContext->linked != NULL);
+    return CONTEXT_FROM_BASE_CONTEXT(baseContext->linked);
 }
 
 CONTEXT_PROPERTY_LIST *Context_GetProperties(const void *context)
 {
     BASE_CONTEXT *ptr = BASE_CONTEXT_FROM_CONTEXT(context);
 
-    while (ptr && ptr->type == ContextTypeLink)
-        ptr = ptr->u.linked;
+    while (ptr && ptr->linked)
+        ptr = ptr->linked;
 
-    return (ptr && ptr->type == ContextTypeData) ? ptr->u.properties : NULL;
+    return ptr->properties;
 }
 
 BOOL Context_Release(void *context, ContextFreeFunc dataContextFree)
@@ -134,12 +125,12 @@ BOOL Context_Release(void *context, ContextFreeFunc dataContextFree)
     if (InterlockedDecrement(&base->ref) == 0)
     {
         TRACE("freeing %p\n", context);
-        if (base->type == ContextTypeData)
+        if (!base->linked)
         {
-            ContextPropertyList_Free(base->u.properties);
+            ContextPropertyList_Free(base->properties);
             dataContextFree(context);
         } else {
-            Context_Release(CONTEXT_FROM_BASE_CONTEXT(base->u.linked), dataContextFree);
+            Context_Release(CONTEXT_FROM_BASE_CONTEXT(base->linked), dataContextFree);
         }
         CryptMemFree(base);
     }
