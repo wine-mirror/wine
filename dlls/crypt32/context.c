@@ -103,30 +103,29 @@ CONTEXT_PROPERTY_LIST *Context_GetProperties(const void *context)
     return ptr->properties;
 }
 
-BOOL Context_Release(void *context, ContextFreeFunc dataContextFree)
+BOOL Context_Release(context_t *context, ContextFreeFunc dataContextFree)
 {
-    BASE_CONTEXT *base = BASE_CONTEXT_FROM_CONTEXT(context);
     BOOL ret = TRUE;
 
-    if (base->ref <= 0)
+    if (context->ref <= 0)
     {
-        ERR("%p's ref count is %d\n", context, base->ref);
+        ERR("%p's ref count is %d\n", context, context->ref);
         return FALSE;
     }
-    if (InterlockedDecrement(&base->ref) == 0)
+    if (InterlockedDecrement(&context->ref) == 0)
     {
         TRACE("freeing %p\n", context);
-        if (!base->linked)
+        if (!context->linked)
         {
-            ContextPropertyList_Free(base->properties);
-            dataContextFree(context);
+            ContextPropertyList_Free(context->properties);
+            dataContextFree(CONTEXT_FROM_BASE_CONTEXT(context));
         } else {
-            Context_Release(CONTEXT_FROM_BASE_CONTEXT(base->linked), dataContextFree);
+            Context_Release(context->linked, dataContextFree);
         }
-        CryptMemFree(base);
+        CryptMemFree(context);
     }
     else
-        TRACE("%p's ref count is %d\n", context, base->ref);
+        TRACE("%p's ref count is %d\n", context, context->ref);
     return ret;
 }
 

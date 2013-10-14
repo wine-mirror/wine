@@ -346,7 +346,7 @@ BOOL WINAPI CertFreeCRLContext( PCCRL_CONTEXT pCrlContext)
     TRACE("(%p)\n", pCrlContext);
 
     if (pCrlContext)
-        ret = Context_Release((void *)pCrlContext, CrlDataContext_Free);
+        ret = Context_Release(&crl_from_ptr(pCrlContext)->base, CrlDataContext_Free);
     return ret;
 }
 
