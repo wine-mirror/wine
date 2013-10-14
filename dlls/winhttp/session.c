@@ -1365,7 +1365,11 @@ BOOL WINAPI WinHttpDetectAutoProxyConfigUrl( DWORD flags, LPWSTR *url )
     FIXME("getaddrinfo not found at build time\n");
 #endif
     }
-    if (!ret) set_last_error( ERROR_WINHTTP_AUTODETECTION_FAILED );
+    if (!ret)
+    {
+        set_last_error( ERROR_WINHTTP_AUTODETECTION_FAILED );
+        *url = NULL;
+    }
     return ret;
 }
 

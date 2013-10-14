@@ -2759,7 +2759,7 @@ if (0) /* crashes on some win2k systems */
     if (!ret)
     {
         ok( error == ERROR_WINHTTP_AUTODETECTION_FAILED, "got %u\n", error );
-        ok( url == (WCHAR *)0xdeadbeef, "got %p\n", url );
+        ok( !url || broken(url == (WCHAR *)0xdeadbeef), "got %p\n", url );
     }
     else
     {
@@ -2774,7 +2774,7 @@ if (0) /* crashes on some win2k systems */
     if (!ret)
     {
         ok( error == ERROR_WINHTTP_AUTODETECTION_FAILED, "got %u\n", error );
-        ok( url == (WCHAR *)0xdeadbeef, "got %p\n", url );
+        ok( !url || broken(url == (WCHAR *)0xdeadbeef), "got %p\n", url );
     }
     else
     {
