@@ -171,6 +171,7 @@ struct desktop_resize_data
 {
     RECT  old_screen_rect;
     RECT  old_virtual_rect;
+    RECT  new_virtual_rect;
 };
 
 static BOOL CALLBACK update_windows_on_desktop_resize( HWND hwnd, LPARAM lparam )
@@ -184,8 +185,8 @@ static BOOL CALLBACK update_windows_on_desktop_resize( HWND hwnd, LPARAM lparam 
     /* update the full screen state */
     update_net_wm_states( data );
 
-    if (resize_data->old_virtual_rect.left != virtual_screen_rect.left) mask |= CWX;
-    if (resize_data->old_virtual_rect.top != virtual_screen_rect.top) mask |= CWY;
+    if (resize_data->old_virtual_rect.left != resize_data->new_virtual_rect.left) mask |= CWX;
+    if (resize_data->old_virtual_rect.top != resize_data->new_virtual_rect.top) mask |= CWY;
     if (mask && data->whole_window)
     {
         POINT pos = virtual_screen_to_root( data->whole_rect.left, data->whole_rect.top );
@@ -246,9 +247,10 @@ void X11DRV_resize_desktop( unsigned int width, unsigned int height )
     struct desktop_resize_data resize_data;
 
     SetRect( &resize_data.old_screen_rect, 0, 0, screen_width, screen_height );
-    resize_data.old_virtual_rect = virtual_screen_rect;
+    resize_data.old_virtual_rect = get_virtual_screen_rect();
 
     xinerama_init( width, height );
+    resize_data.new_virtual_rect = get_virtual_screen_rect();
 
     if (GetWindowThreadProcessId( hwnd, NULL ) != GetCurrentThreadId())
     {
@@ -258,9 +260,9 @@ void X11DRV_resize_desktop( unsigned int width, unsigned int height )
     {
         TRACE( "desktop %p change to (%dx%d)\n", hwnd, width, height );
         update_desktop_fullscreen( width, height );
-        SetWindowPos( hwnd, 0, virtual_screen_rect.left, virtual_screen_rect.top,
-                      virtual_screen_rect.right - virtual_screen_rect.left,
-                      virtual_screen_rect.bottom - virtual_screen_rect.top,
+        SetWindowPos( hwnd, 0, resize_data.new_virtual_rect.left, resize_data.new_virtual_rect.top,
+                      resize_data.new_virtual_rect.right - resize_data.new_virtual_rect.left,
+                      resize_data.new_virtual_rect.bottom - resize_data.new_virtual_rect.top,
                       SWP_NOZORDER | SWP_NOACTIVATE | SWP_DEFERERASE );
         ungrab_clipping_window();
         SendMessageTimeoutW( HWND_BROADCAST, WM_DISPLAYCHANGE, screen_bpp,

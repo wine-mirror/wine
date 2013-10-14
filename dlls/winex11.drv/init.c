@@ -128,8 +128,8 @@ static BOOL X11DRV_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
 
     physDev->depth         = default_visual.depth;
     physDev->color_shifts  = &X11DRV_PALETTE_default_shifts;
-    SetRect( &physDev->dc_rect, 0, 0, virtual_screen_rect.right - virtual_screen_rect.left,
-             virtual_screen_rect.bottom - virtual_screen_rect.top );
+    physDev->dc_rect       = get_virtual_screen_rect();
+    OffsetRect( &physDev->dc_rect, -physDev->dc_rect.left, -physDev->dc_rect.top );
     push_dc_driver( pdev, &physDev->dev, &x11drv_funcs );
     if (xrender_funcs && !xrender_funcs->pCreateDC( pdev, driver, device, output, initData )) return FALSE;
     return TRUE;
@@ -212,9 +212,15 @@ static INT X11DRV_GetDeviceCaps( PHYSDEV dev, INT cap )
     case VERTRES:
         return screen_height;
     case DESKTOPHORZRES:
-        return virtual_screen_rect.right - virtual_screen_rect.left;
+    {
+        RECT virtual_rect = get_virtual_screen_rect();
+        return virtual_rect.right - virtual_rect.left;
+    }
     case DESKTOPVERTRES:
-        return virtual_screen_rect.bottom - virtual_screen_rect.top;
+    {
+        RECT virtual_rect = get_virtual_screen_rect();
+        return virtual_rect.bottom - virtual_rect.top;
+    }
     case BITSPIXEL:
         return screen_bpp;
     case PLANES:

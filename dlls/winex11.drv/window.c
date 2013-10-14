@@ -1684,15 +1684,17 @@ BOOL CDECL X11DRV_CreateDesktopWindow( HWND hwnd )
 
     if (!width && !height)  /* not initialized yet */
     {
+        RECT rect = get_virtual_screen_rect();
+
         SERVER_START_REQ( set_window_pos )
         {
             req->handle        = wine_server_user_handle( hwnd );
             req->previous      = 0;
             req->swp_flags     = SWP_NOZORDER;
-            req->window.left   = virtual_screen_rect.left;
-            req->window.top    = virtual_screen_rect.top;
-            req->window.right  = virtual_screen_rect.right;
-            req->window.bottom = virtual_screen_rect.bottom;
+            req->window.left   = rect.left;
+            req->window.top    = rect.top;
+            req->window.right  = rect.right;
+            req->window.bottom = rect.bottom;
             req->client        = req->window;
             wine_server_call( req );
         }
@@ -2016,9 +2018,8 @@ void CDECL X11DRV_ReleaseDC( HWND hwnd, HDC hdc )
     escape.hwnd = GetDesktopWindow();
     escape.drawable = root_window;
     escape.mode = IncludeInferiors;
-    SetRect( &escape.dc_rect, 0, 0, virtual_screen_rect.right - virtual_screen_rect.left,
-             virtual_screen_rect.bottom - virtual_screen_rect.top );
-    OffsetRect( &escape.dc_rect, -virtual_screen_rect.left, -virtual_screen_rect.top );
+    escape.dc_rect = get_virtual_screen_rect();
+    OffsetRect( &escape.dc_rect, -2 * escape.dc_rect.left, -2 * escape.dc_rect.top );
     escape.fbconfig_id = 0;
     ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
 }
@@ -2123,9 +2124,9 @@ done:
 
 static inline RECT get_surface_rect( const RECT *visible_rect )
 {
-    RECT rect;
+    RECT rect = get_virtual_screen_rect();
 
-    IntersectRect( &rect, visible_rect, &virtual_screen_rect );
+    IntersectRect( &rect, &rect, visible_rect );
     OffsetRect( &rect, -visible_rect->left, -visible_rect->top );
     rect.left &= ~31;
     rect.top  &= ~31;

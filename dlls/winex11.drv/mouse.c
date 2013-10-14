@@ -473,11 +473,11 @@ LRESULT clip_cursor_notify( HWND hwnd, HWND new_clip_hwnd )
     }
     else if (hwnd == GetForegroundWindow())  /* request to clip */
     {
-        RECT clip;
+        RECT clip, virtual_rect = get_virtual_screen_rect();
 
         GetClipCursor( &clip );
-        if (clip.left > virtual_screen_rect.left || clip.right < virtual_screen_rect.right ||
-            clip.top > virtual_screen_rect.top   || clip.bottom < virtual_screen_rect.bottom)
+        if (clip.left > virtual_rect.left || clip.right < virtual_rect.right ||
+            clip.top > virtual_rect.top   || clip.bottom < virtual_rect.bottom)
             return grab_clipping_window( &clip );
     }
     return 0;
@@ -512,7 +512,8 @@ BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
     SetRect( &rect, 0, 0, screen_width, screen_height );
     if (!grab_fullscreen)
     {
-        if (!EqualRect( &rect, &virtual_screen_rect )) return FALSE;
+        RECT virtual_rect = get_virtual_screen_rect();
+        if (!EqualRect( &rect, &virtual_rect )) return FALSE;
         if (root_window != DefaultRootWindow( gdi_display )) return FALSE;
     }
     TRACE( "win %p clipping fullscreen\n", hwnd );
@@ -1382,15 +1383,17 @@ BOOL CDECL X11DRV_GetCursorPos(LPPOINT pos)
  */
 BOOL CDECL X11DRV_ClipCursor( LPCRECT clip )
 {
-    if (!clip) clip = &virtual_screen_rect;
+    RECT virtual_rect = get_virtual_screen_rect();
+
+    if (!clip) clip = &virtual_rect;
 
     if (grab_pointer)
     {
         HWND foreground = GetForegroundWindow();
 
         /* we are clipping if the clip rectangle is smaller than the screen */
-        if (clip->left > virtual_screen_rect.left || clip->right < virtual_screen_rect.right ||
-            clip->top > virtual_screen_rect.top || clip->bottom < virtual_screen_rect.bottom)
+        if (clip->left > virtual_rect.left || clip->right < virtual_rect.right ||
+            clip->top > virtual_rect.top || clip->bottom < virtual_rect.bottom)
         {
             DWORD tid, pid;
 
@@ -1616,6 +1619,7 @@ static void X11DRV_RawMotion( XGenericEventCookie *xev )
 {
     XIRawEvent *event = xev->data;
     const double *values = event->valuators.values;
+    RECT virtual_rect;
     INPUT input;
     int i, j;
     double dx = 0, dy = 0;
@@ -1632,6 +1636,7 @@ static void X11DRV_RawMotion( XGenericEventCookie *xev )
     input.u.mi.dx          = 0;
     input.u.mi.dy          = 0;
 
+    virtual_rect = get_virtual_screen_rect();
     for (i = 0; i < thread_data->xi2_device_count; ++i)
     {
         if (devices[i].deviceid != event->deviceid) continue;
@@ -1648,7 +1653,7 @@ static void X11DRV_RawMotion( XGenericEventCookie *xev )
                 {
                     input.u.mi.dx = dx = val;
                     if (class->min < class->max)
-                        input.u.mi.dx = val * (virtual_screen_rect.right - virtual_screen_rect.left)
+                        input.u.mi.dx = val * (virtual_rect.right - virtual_rect.left)
                                             / (class->max - class->min);
                 }
                 else if (class->label == x11drv_atom( Rel_Y ) ||
@@ -1656,7 +1661,7 @@ static void X11DRV_RawMotion( XGenericEventCookie *xev )
                 {
                     input.u.mi.dy = dy = val;
                     if (class->min < class->max)
-                        input.u.mi.dy = val * (virtual_screen_rect.bottom - virtual_screen_rect.top)
+                        input.u.mi.dy = val * (virtual_rect.bottom - virtual_rect.top)
                                             / (class->max - class->min);
                 }
             }

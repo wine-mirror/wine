@@ -367,7 +367,6 @@ extern int clipping_cursor DECLSPEC_HIDDEN;
 extern unsigned int screen_width DECLSPEC_HIDDEN;
 extern unsigned int screen_height DECLSPEC_HIDDEN;
 extern unsigned int screen_bpp DECLSPEC_HIDDEN;
-extern RECT virtual_screen_rect DECLSPEC_HIDDEN;
 extern int use_xkb DECLSPEC_HIDDEN;
 extern int usexrandr DECLSPEC_HIDDEN;
 extern int usexvidmode DECLSPEC_HIDDEN;
@@ -599,20 +598,6 @@ static inline void mirror_rect( const RECT *window_rect, RECT *rect )
     rect->right = width - tmp;
 }
 
-static inline BOOL is_window_rect_mapped( const RECT *rect )
-{
-    return (rect->left < virtual_screen_rect.right &&
-            rect->top < virtual_screen_rect.bottom &&
-            max( rect->right, rect->left + 1 ) > virtual_screen_rect.left &&
-            max( rect->bottom, rect->top + 1 ) > virtual_screen_rect.top);
-}
-
-static inline BOOL is_window_rect_fullscreen( const RECT *rect )
-{
-    return (rect->left <= 0 && rect->right >= screen_width &&
-            rect->top <= 0 && rect->bottom >= screen_height);
-}
-
 /* X context to associate a hwnd to an X window */
 extern XContext winContext DECLSPEC_HIDDEN;
 /* X context to associate a struct x11drv_win_data to an hwnd */
@@ -642,6 +627,7 @@ extern int X11DRV_check_error(void) DECLSPEC_HIDDEN;
 extern void X11DRV_X_to_window_rect( struct x11drv_win_data *data, RECT *rect ) DECLSPEC_HIDDEN;
 extern POINT virtual_screen_to_root( INT x, INT y ) DECLSPEC_HIDDEN;
 extern POINT root_to_virtual_screen( INT x, INT y ) DECLSPEC_HIDDEN;
+extern RECT get_virtual_screen_rect(void) DECLSPEC_HIDDEN;
 extern void xinerama_init( unsigned int width, unsigned int height ) DECLSPEC_HIDDEN;
 
 struct x11drv_mode_info
@@ -677,5 +663,20 @@ extern void X11DRV_ForceXIMReset(HWND hwnd) DECLSPEC_HIDDEN;
 extern void X11DRV_SetPreeditState(HWND hwnd, BOOL fOpen) DECLSPEC_HIDDEN;
 
 #define XEMBED_MAPPED  (1 << 0)
+
+static inline BOOL is_window_rect_mapped( const RECT *rect )
+{
+    RECT virtual_rect = get_virtual_screen_rect();
+    return (rect->left < virtual_rect.right &&
+            rect->top < virtual_rect.bottom &&
+            max( rect->right, rect->left + 1 ) > virtual_rect.left &&
+            max( rect->bottom, rect->top + 1 ) > virtual_rect.top);
+}
+
+static inline BOOL is_window_rect_fullscreen( const RECT *rect )
+{
+    return (rect->left <= 0 && rect->right >= screen_width &&
+            rect->top <= 0 && rect->bottom >= screen_height);
+}
 
 #endif  /* __WINE_X11DRV_H */

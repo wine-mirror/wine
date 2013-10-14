@@ -33,6 +33,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
+static RECT virtual_screen_rect;
+
 static MONITORINFOEXW default_monitor =
 {
     sizeof(default_monitor),    /* cbSize */
@@ -171,6 +173,11 @@ POINT root_to_virtual_screen( INT x, INT y )
     pt.x = x + virtual_screen_rect.left;
     pt.y = y + virtual_screen_rect.top;
     return pt;
+}
+
+RECT get_virtual_screen_rect(void)
+{
+    return virtual_screen_rect;
 }
 
 void xinerama_init( unsigned int width, unsigned int height )

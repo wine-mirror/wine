@@ -63,7 +63,6 @@ XPixmapFormatValues **pixmap_formats;
 unsigned int screen_width;
 unsigned int screen_height;
 unsigned int screen_bpp;
-RECT virtual_screen_rect;
 Window root_window;
 int usexvidmode = 1;
 int usexrandr = 1;
