@@ -420,7 +420,7 @@ static void test_async( void )
     info.test  = async_test;
     info.count = sizeof(async_test) / sizeof(async_test[0]);
     info.index = 0;
-    info.wait = CreateEvent( NULL, FALSE, FALSE, NULL );
+    info.wait = CreateEventW( NULL, FALSE, FALSE, NULL );
 
     ses = WinHttpOpen( user_agent, 0, NULL, NULL, WINHTTP_FLAG_ASYNC );
     ok(ses != NULL, "failed to open session %u\n", GetLastError());

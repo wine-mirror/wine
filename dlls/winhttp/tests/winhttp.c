@@ -28,7 +28,6 @@
 #include <winhttp.h>
 #include <wincrypt.h>
 #include <winreg.h>
-#include <winsock.h>
 #include "initguid.h"
 #include <httprequest.h>
 
@@ -350,7 +349,7 @@ static void test_SendRequest (void)
     ret = WinHttpReadData(request, buffer, sizeof(buffer) - 1, &bytes_rw);
     ok(ret == TRUE, "WinHttpReadData failed: %u.\n", GetLastError());
 
-    ok(bytes_rw == strlen(test_post), "Read %u bytes instead of %d.\n", bytes_rw, lstrlen(test_post));
+    ok(bytes_rw == strlen(test_post), "Read %u bytes instead of %d.\n", bytes_rw, lstrlenA(test_post));
     ok(strncmp(buffer, test_post, bytes_rw) == 0, "Data read did not match, got '%s'.\n", buffer);
 
     ret = WinHttpCloseHandle(request);
@@ -3023,7 +3022,7 @@ START_TEST (winhttp)
     test_WinHttpGetProxyForUrl();
     test_chunked_read();
 
-    si.event = CreateEvent(NULL, 0, 0, NULL);
+    si.event = CreateEventW(NULL, 0, 0, NULL);
     si.port = 7532;
 
     thread = CreateThread(NULL, 0, server_thread, (LPVOID)&si, 0, NULL);
