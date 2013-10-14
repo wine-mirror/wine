@@ -409,7 +409,7 @@ const void *CRYPT_ReadSerializedElement(const BYTE *pbElement, DWORD cbElement,
             }
             else
             {
-                contextInterface->free(context);
+                Context_Release(context_from_ptr(context));
                 context = NULL;
             }
         }
@@ -461,7 +461,7 @@ static BOOL CRYPT_ReadSerializedStore(void *handle,
                      propHdr.propID == CERT_CTL_PROP_ID))
                     {
                         /* We have a new context, so free the existing one */
-                        contextInterface->free(context);
+                        Context_Release(context_from_ptr(context));
                     }
                     if (propHdr.cb > bufSize)
                     {
@@ -522,7 +522,7 @@ static BOOL CRYPT_ReadSerializedStore(void *handle,
             if (contextInterface && context)
             {
                 /* Free the last context added */
-                contextInterface->free(context);
+                Context_Release(context_from_ptr(context));
             }
             CryptMemFree(buf);
             ret = TRUE;
@@ -638,7 +638,7 @@ static BOOL CRYPT_SerializeContextsToStream(SerializedOutputFunc output,
             ret = TRUE;
     } while (ret && context != NULL);
     if (context)
-        contextInterface->free(context);
+        Context_Release(context_from_ptr(context));
     return ret;
 }
 
@@ -996,7 +996,7 @@ BOOL WINAPI CertAddSerializedElementToStore(HCERTSTORE hCertStore,
                 *pdwContentType = type;
             ret = contextInterface->addContextToStore(hCertStore, context,
              dwAddDisposition, ppvContext);
-            contextInterface->free(context);
+            Context_Release(context_from_ptr(context));
         }
         else
             ret = FALSE;

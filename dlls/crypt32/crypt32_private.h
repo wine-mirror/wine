@@ -226,7 +226,6 @@ typedef BOOL (WINAPI *SetContextPropertyFunc)(const void *context,
  DWORD dwPropID, DWORD dwFlags, const void *pvData);
 typedef BOOL (WINAPI *SerializeElementFunc)(const void *context, DWORD dwFlags,
  BYTE *pbElement, DWORD *pcbElement);
-typedef BOOL (WINAPI *FreeContextFunc)(const void *context);
 typedef BOOL (WINAPI *DeleteContextFunc)(const void *contex);
 
 /* An abstract context (certificate, CRL, or CTL) interface */
@@ -240,7 +239,6 @@ typedef struct _WINE_CONTEXT_INTERFACE
     GetContextPropertyFunc       getProp;
     SetContextPropertyFunc       setProp;
     SerializeElementFunc         serialize;
-    FreeContextFunc              free;
     DeleteContextFunc            deleteFromStore;
 } WINE_CONTEXT_INTERFACE;
 

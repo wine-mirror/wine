@@ -163,7 +163,7 @@ static void *CRYPT_CollectionAdvanceEnum(WINE_COLLECTIONSTORE *store,
         child = Context_GetLinkedContext(pPrev);
         Context_AddRef(context_from_ptr(child));
         child = contextFuncs->enumContext(storeEntry->store, child);
-        contextInterface->free(pPrev);
+        Context_Release(context_from_ptr(pPrev));
         pPrev = NULL;
     }
     else

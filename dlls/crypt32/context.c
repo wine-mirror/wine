@@ -206,7 +206,7 @@ void *ContextList_Add(struct ContextList *list, void *toLink, void *toReplace)
             entry->prev->next = entry;
             entry->next->prev = entry;
             existing->prev = existing->next = existing;
-            list->contextInterface->free(toReplace);
+            Context_Release(context_from_ptr(toReplace));
         }
         else
             list_add_head(&list->contexts, entry);
@@ -226,7 +226,7 @@ void *ContextList_Enum(struct ContextList *list, void *pPrev)
         struct list *prevEntry = ContextList_ContextToEntry(list, pPrev);
 
         listNext = list_next(&list->contexts, prevEntry);
-        list->contextInterface->free(pPrev);
+        Context_Release(context_from_ptr(pPrev));
     }
     else
         listNext = list_next(&list->contexts, &list->contexts);
@@ -270,7 +270,7 @@ static void ContextList_Empty(struct ContextList *list)
 
         TRACE("removing %p\n", context);
         list_remove(entry);
-        list->contextInterface->free(context);
+        Context_Release(context_from_ptr(context));
     }
     LeaveCriticalSection(&list->cs);
 }

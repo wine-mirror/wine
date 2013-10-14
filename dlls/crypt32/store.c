@@ -50,7 +50,6 @@ static const WINE_CONTEXT_INTERFACE gCertInterface = {
     (GetContextPropertyFunc)CertGetCertificateContextProperty,
     (SetContextPropertyFunc)CertSetCertificateContextProperty,
     (SerializeElementFunc)CertSerializeCertificateStoreElement,
-    (FreeContextFunc)CertFreeCertificateContext,
     (DeleteContextFunc)CertDeleteCertificateFromStore,
 };
 const WINE_CONTEXT_INTERFACE *pCertInterface = &gCertInterface;
@@ -64,7 +63,6 @@ static const WINE_CONTEXT_INTERFACE gCRLInterface = {
     (GetContextPropertyFunc)CertGetCRLContextProperty,
     (SetContextPropertyFunc)CertSetCRLContextProperty,
     (SerializeElementFunc)CertSerializeCRLStoreElement,
-    (FreeContextFunc)CertFreeCRLContext,
     (DeleteContextFunc)CertDeleteCRLFromStore,
 };
 const WINE_CONTEXT_INTERFACE *pCRLInterface = &gCRLInterface;
@@ -78,7 +76,6 @@ static const WINE_CONTEXT_INTERFACE gCTLInterface = {
     (GetContextPropertyFunc)CertGetCTLContextProperty,
     (SetContextPropertyFunc)CertSetCTLContextProperty,
     (SerializeElementFunc)CertSerializeCTLStoreElement,
-    (FreeContextFunc)CertFreeCTLContext,
     (DeleteContextFunc)CertDeleteCTLFromStore,
 };
 const WINE_CONTEXT_INTERFACE *pCTLInterface = &gCTLInterface;

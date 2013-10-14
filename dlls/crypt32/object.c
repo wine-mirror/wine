@@ -279,7 +279,7 @@ static BOOL CRYPT_QuerySerializedContextObject(DWORD dwObjectType,
 
 end:
     if (contextInterface && context)
-        contextInterface->free(context);
+        Context_Release(context_from_ptr(context));
     if (blob == &fileBlob)
         CryptMemFree(blob->pbData);
     TRACE("returning %d\n", ret);
