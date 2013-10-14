@@ -37,35 +37,35 @@
 /* Max first-level includes per file */
 #define MAX_INCLUDES 200
 
-typedef struct _INCL_FILE
+struct incl_file
 {
     struct list        entry;
     char              *name;
     char              *filename;
     char              *sourcename;    /* source file name for generated headers */
-    struct _INCL_FILE *included_by;   /* file that included this one */
+    struct incl_file  *included_by;   /* file that included this one */
     int                included_line; /* line where this file was included */
     int                system;        /* is it a system include (#include <name>) */
-    struct _INCL_FILE *owner;
-    struct _INCL_FILE *files[MAX_INCLUDES];
-} INCL_FILE;
+    struct incl_file  *owner;
+    struct incl_file  *files[MAX_INCLUDES];
+};
 
 static struct list sources = LIST_INIT(sources);
 static struct list includes = LIST_INIT(includes);
 
-typedef struct _OBJECT_EXTENSION
+struct object_extension
 {
     struct list entry;
     const char *extension;
-} OBJECT_EXTENSION;
+};
 
 static struct list object_extensions = LIST_INIT(object_extensions);
 
-typedef struct _INCL_PATH
+struct incl_path
 {
     struct list entry;
     const char *name;
-} INCL_PATH;
+};
 
 static struct list paths = LIST_INIT(paths);
 
@@ -232,7 +232,7 @@ static char *get_line( FILE *file )
  */
 static void add_object_extension( const char *ext )
 {
-    OBJECT_EXTENSION *object_extension = xmalloc( sizeof(*object_extension) );
+    struct object_extension *object_extension = xmalloc( sizeof(*object_extension) );
     list_add_tail( &object_extensions, &object_extension->entry );
     object_extension->extension = ext;
 }
@@ -244,7 +244,7 @@ static void add_object_extension( const char *ext )
  */
 static void add_include_path( const char *name )
 {
-    INCL_PATH *path = xmalloc( sizeof(*path) );
+    struct incl_path *path = xmalloc( sizeof(*path) );
     list_add_tail( &paths, &path->entry );
     path->name = name;
 }
@@ -252,11 +252,11 @@ static void add_include_path( const char *name )
 /*******************************************************************
  *         find_src_file
  */
-static INCL_FILE *find_src_file( const char *name )
+static struct incl_file *find_src_file( const char *name )
 {
-    INCL_FILE *file;
+    struct incl_file *file;
 
-    LIST_FOR_EACH_ENTRY( file, &sources, INCL_FILE, entry )
+    LIST_FOR_EACH_ENTRY( file, &sources, struct incl_file, entry )
         if (!strcmp( name, file->name )) return file;
     return NULL;
 }
@@ -264,11 +264,11 @@ static INCL_FILE *find_src_file( const char *name )
 /*******************************************************************
  *         find_include_file
  */
-static INCL_FILE *find_include_file( const char *name )
+static struct incl_file *find_include_file( const char *name )
 {
-    INCL_FILE *file;
+    struct incl_file *file;
 
-    LIST_FOR_EACH_ENTRY( file, &includes, INCL_FILE, entry )
+    LIST_FOR_EACH_ENTRY( file, &includes, struct incl_file, entry )
         if (!strcmp( name, file->name )) return file;
     return NULL;
 }
@@ -278,9 +278,9 @@ static INCL_FILE *find_include_file( const char *name )
  *
  * Add an include file if it doesn't already exists.
  */
-static INCL_FILE *add_include( INCL_FILE *pFile, const char *name, int line, int system )
+static struct incl_file *add_include( struct incl_file *pFile, const char *name, int line, int system )
 {
-    INCL_FILE *include;
+    struct incl_file *include;
     char *ext;
     int pos;
 
@@ -319,11 +319,11 @@ static INCL_FILE *add_include( INCL_FILE *pFile, const char *name, int line, int
                          pFile->filename, line );
     }
 
-    LIST_FOR_EACH_ENTRY( include, &includes, INCL_FILE, entry )
+    LIST_FOR_EACH_ENTRY( include, &includes, struct incl_file, entry )
         if (!strcmp( name, include->name )) goto found;
 
-    include = xmalloc( sizeof(INCL_FILE) );
-    memset( include, 0, sizeof(INCL_FILE) );
+    include = xmalloc( sizeof(*include) );
+    memset( include, 0, sizeof(*include) );
     include->name = xstrdup(name);
     include->included_by = pFile;
     include->included_line = line;
@@ -338,7 +338,7 @@ found:
 /*******************************************************************
  *         open_src_file
  */
-static FILE *open_src_file( INCL_FILE *pFile )
+static FILE *open_src_file( struct incl_file *pFile )
 {
     FILE *file;
 
@@ -367,11 +367,11 @@ static FILE *open_src_file( INCL_FILE *pFile )
 /*******************************************************************
  *         open_include_file
  */
-static FILE *open_include_file( INCL_FILE *pFile )
+static FILE *open_include_file( struct incl_file *pFile )
 {
     FILE *file = NULL;
     char *filename, *p;
-    INCL_PATH *path;
+    struct incl_path *path;
 
     errno = ENOENT;
 
@@ -509,7 +509,7 @@ static FILE *open_include_file( INCL_FILE *pFile )
     }
 
     /* now search in include paths */
-    LIST_FOR_EACH_ENTRY( path, &paths, INCL_PATH, entry )
+    LIST_FOR_EACH_ENTRY( path, &paths, struct incl_path, entry )
     {
         filename = strmake( "%s/%s", path->name, pFile->name );
         if ((file = fopen( filename, "r" ))) goto found;
@@ -553,7 +553,7 @@ found:
  * If for_h_file is non-zero, it means we are not interested in the idl file
  * itself, but only in the contents of the .h file that will be generated from it.
  */
-static void parse_idl_file( INCL_FILE *pFile, FILE *file, int for_h_file )
+static void parse_idl_file( struct incl_file *pFile, FILE *file, int for_h_file )
 {
     char *buffer, *include;
 
@@ -641,7 +641,7 @@ static void parse_idl_file( INCL_FILE *pFile, FILE *file, int for_h_file )
 /*******************************************************************
  *         parse_c_file
  */
-static void parse_c_file( INCL_FILE *pFile, FILE *file )
+static void parse_c_file( struct incl_file *pFile, FILE *file )
 {
     char *buffer, *include;
 
@@ -673,7 +673,7 @@ static void parse_c_file( INCL_FILE *pFile, FILE *file )
 /*******************************************************************
  *         parse_rc_file
  */
-static void parse_rc_file( INCL_FILE *pFile, FILE *file )
+static void parse_rc_file( struct incl_file *pFile, FILE *file )
 {
     char *buffer, *include;
 
@@ -730,7 +730,7 @@ static void parse_rc_file( INCL_FILE *pFile, FILE *file )
 /*******************************************************************
  *         parse_generated_idl
  */
-static void parse_generated_idl( INCL_FILE *source )
+static void parse_generated_idl( struct incl_file *source )
 {
     char *header, *basename;
 
@@ -774,7 +774,7 @@ static void parse_generated_idl( INCL_FILE *source )
 /*******************************************************************
  *         parse_file
  */
-static void parse_file( INCL_FILE *pFile, int src )
+static void parse_file( struct incl_file *pFile, int src )
 {
     FILE *file;
 
@@ -822,9 +822,9 @@ static void parse_file( INCL_FILE *pFile, int src )
  *
  * Add a source file to the list.
  */
-static INCL_FILE *add_src_file( const char *name )
+static struct incl_file *add_src_file( const char *name )
 {
-    INCL_FILE *file;
+    struct incl_file *file;
 
     if (find_src_file( name )) return NULL;  /* we already have it */
     file = xmalloc( sizeof(*file) );
@@ -839,8 +839,8 @@ static INCL_FILE *add_src_file( const char *name )
 /*******************************************************************
  *         output_include
  */
-static void output_include( FILE *file, INCL_FILE *pFile,
-                            INCL_FILE *owner, int *column )
+static void output_include( FILE *file, struct incl_file *pFile,
+                            struct incl_file *owner, int *column )
 {
     int i;
 
@@ -863,7 +863,7 @@ static void output_include( FILE *file, INCL_FILE *pFile,
 /*******************************************************************
  *         output_src
  */
-static int output_src( FILE *file, INCL_FILE *pFile, int *column )
+static int output_src( FILE *file, struct incl_file *pFile, int *column )
 {
     char *obj = xstrdup( pFile->name );
     char *ext = get_extension( obj );
@@ -929,8 +929,8 @@ static int output_src( FILE *file, INCL_FILE *pFile, int *column )
         }
         else
         {
-            OBJECT_EXTENSION *ext;
-            LIST_FOR_EACH_ENTRY( ext, &object_extensions, OBJECT_EXTENSION, entry )
+            struct object_extension *ext;
+            LIST_FOR_EACH_ENTRY( ext, &object_extensions, struct object_extension, entry )
                 *column += fprintf( file, "%s.%s ", obj, ext->extension );
             *column += fprintf( file, ": %s", pFile->filename );
         }
@@ -973,7 +973,7 @@ static FILE *create_temp_file( char **tmp_name )
  */
 static void output_dependencies(void)
 {
-    INCL_FILE *pFile;
+    struct incl_file *pFile;
     int i, column;
     FILE *file = NULL;
     char *tmp_name = NULL;
@@ -1002,7 +1002,7 @@ static void output_dependencies(void)
             exit(1);
         }
     }
-    LIST_FOR_EACH_ENTRY( pFile, &sources, INCL_FILE, entry )
+    LIST_FOR_EACH_ENTRY( pFile, &sources, struct incl_file, entry )
     {
         column = 0;
         if (!output_src( file, pFile, &column )) continue;
@@ -1075,8 +1075,8 @@ static void parse_option( const char *opt )
  */
 int main( int argc, char *argv[] )
 {
-    INCL_FILE *pFile;
-    INCL_PATH *path, *next;
+    struct incl_file *pFile;
+    struct incl_path *path, *next;
     int i, j;
 
     if ((ProgramName = strrchr( argv[0], '/' ))) ProgramName++;
@@ -1103,7 +1103,7 @@ int main( int argc, char *argv[] )
         add_object_extension( "o" );
 
     /* get rid of absolute paths that don't point into the source dir */
-    LIST_FOR_EACH_ENTRY_SAFE( path, next, &paths, INCL_PATH, entry )
+    LIST_FOR_EACH_ENTRY_SAFE( path, next, &paths, struct incl_path, entry )
     {
         if (path->name[0] != '/') continue;
         if (top_src_dir)
@@ -1120,7 +1120,7 @@ int main( int argc, char *argv[] )
         add_src_file( argv[i] );
         if (strendswith( argv[i], "_p.c" )) add_src_file( "dlldata.c" );
     }
-    LIST_FOR_EACH_ENTRY( pFile, &includes, INCL_FILE, entry ) parse_file( pFile, 0 );
+    LIST_FOR_EACH_ENTRY( pFile, &includes, struct incl_file, entry ) parse_file( pFile, 0 );
     output_dependencies();
     return 0;
 }
