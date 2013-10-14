@@ -28,8 +28,8 @@
 #include <math.h>
 
 #include "wine/test.h"
+#include "mmsystem.h"
 #include "dsound.h"
-#include "mmreg.h"
 #include "ks.h"
 #include "ksmedia.h"
 #include "dsound_test.h"

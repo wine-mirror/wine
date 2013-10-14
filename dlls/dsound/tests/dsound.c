@@ -29,9 +29,9 @@
 #include <windows.h>
 
 #include "wine/test.h"
+#include "mmsystem.h"
 #include "dsound.h"
 #include "dsconf.h"
-#include "mmreg.h"
 #include "initguid.h"
 #include "ks.h"
 #include "ksmedia.h"
@@ -1135,7 +1135,7 @@ static HRESULT test_duplicate(LPGUID lpGuid)
 
             /* Prepare notify events */
             for (i=0;i<sizeof(event)/sizeof(event[0]);i++) {
-                event[i] = CreateEvent(NULL,FALSE,FALSE,NULL);
+                event[i] = CreateEventW(NULL, FALSE, FALSE, NULL);
             }
 
             /* Make silent buffer */

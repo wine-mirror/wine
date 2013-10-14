@@ -24,8 +24,8 @@
 #include "initguid.h"
 #include "windows.h"
 #include "wine/test.h"
+#include "mmsystem.h"
 #include "dsound.h"
-#include "mmreg.h"
 #include "dsconf.h"
 
 #include "dsound_test.h"
@@ -373,7 +373,7 @@ static void test_capture_buffer(LPDIRECTSOUNDCAPTURE dsco,
     state.wfx=&wfx;
     state.buffer_size = dscbcaps.dwBufferBytes;
     for (i = 0; i < NOTIFICATIONS; i++)
-	state.event[i] = CreateEvent( NULL, FALSE, FALSE, NULL );
+        state.event[i] = CreateEventW(NULL, FALSE, FALSE, NULL);
     state.size = dscbcaps.dwBufferBytes / NOTIFICATIONS;
 
     rc=IDirectSoundCaptureBuffer_QueryInterface(dscbo,&IID_IDirectSoundNotify,

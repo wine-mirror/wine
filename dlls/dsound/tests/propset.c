@@ -23,6 +23,7 @@
 #include <windows.h>
 
 #include "wine/test.h"
+#include "mmsystem.h"
 #include "dsound.h"
 #include "dsconf.h"
 

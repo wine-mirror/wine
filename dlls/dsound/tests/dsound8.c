@@ -31,9 +31,9 @@
 #include <stdio.h>
 
 #include "wine/test.h"
+#include "mmsystem.h"
 #include "dsound.h"
 #include "dsconf.h"
-#include "mmreg.h"
 #include "ks.h"
 #include "ksmedia.h"
 
