@@ -815,6 +815,7 @@ static void X11DRV_Expose( HWND hwnd, XEvent *xev )
 {
     XExposeEvent *event = &xev->xexpose;
     RECT rect;
+    POINT pos;
     struct x11drv_win_data *data;
     HRGN surface_region = 0;
     UINT flags = RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN;
@@ -822,12 +823,19 @@ static void X11DRV_Expose( HWND hwnd, XEvent *xev )
     TRACE( "win %p (%lx) %d,%d %dx%d\n",
            hwnd, event->window, event->x, event->y, event->width, event->height );
 
+    if (event->window != root_window)
+    {
+        pos.x = event->x;
+        pos.y = event->y;
+    }
+    else pos = root_to_virtual_screen( event->x, event->y );
+
     if (!(data = get_win_data( hwnd ))) return;
 
-    rect.left   = event->x;
-    rect.top    = event->y;
-    rect.right  = event->x + event->width;
-    rect.bottom = event->y + event->height;
+    rect.left   = pos.x;
+    rect.top    = pos.y;
+    rect.right  = pos.x + event->width;
+    rect.bottom = pos.y + event->height;
 
     if (event->window != data->client_window)
     {
@@ -861,11 +869,8 @@ static void X11DRV_Expose( HWND hwnd, XEvent *xev )
         }
         SERVER_END_REQ;
     }
-    else
-    {
-        OffsetRect( &rect, virtual_screen_rect.left, virtual_screen_rect.top );
-        flags &= ~RDW_ALLCHILDREN;
-    }
+    else flags &= ~RDW_ALLCHILDREN;
+
     release_win_data( data );
 
     if (flags) RedrawWindow( hwnd, &rect, surface_region, flags );
@@ -1002,6 +1007,7 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
     XConfigureEvent *event = &xev->xconfigure;
     struct x11drv_win_data *data;
     RECT rect;
+    POINT pos;
     UINT flags;
     HWND parent;
     BOOL root_coords;
@@ -1034,11 +1040,18 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
                                0, 0, &x, &y, &child );
         root_coords = TRUE;
     }
-    rect.left   = x;
-    rect.top    = y;
-    rect.right  = x + event->width;
-    rect.bottom = y + event->height;
-    if (root_coords) OffsetRect( &rect, virtual_screen_rect.left, virtual_screen_rect.top );
+
+    if (!root_coords)
+    {
+        pos.x = x;
+        pos.y = y;
+    }
+    else pos = root_to_virtual_screen( x, y );
+
+    rect.left   = pos.x;
+    rect.top    = pos.y;
+    rect.right  = pos.x + event->width;
+    rect.bottom = pos.y + event->height;
     TRACE( "win %p/%lx new X rect %d,%d,%dx%d (event %d,%d,%dx%d)\n",
            hwnd, data->whole_window, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top,
            event->x, event->y, event->width, event->height );
@@ -1384,12 +1397,12 @@ static HWND find_drop_window( HWND hQueryWnd, LPPOINT lpPt )
 static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
 {
     struct x11drv_win_data *data;
+    POINT pt;
     unsigned long	data_length;
     unsigned long	aux_long;
     unsigned char*	p_data = NULL;
     Atom atom_aux;
     int			x, y, cx, cy, dummy;
-    BOOL	        bAccept;
     Window		win, w_aux_root, w_aux_child;
 
     if (!(data = get_win_data( hWnd ))) return;
@@ -1400,33 +1413,18 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
 
     XQueryPointer( event->display, win, &w_aux_root, &w_aux_child,
                    &x, &y, &dummy, &dummy, (unsigned int*)&aux_long);
-    x += virtual_screen_rect.left;
-    y += virtual_screen_rect.top;
+    pt = root_to_virtual_screen( x, y );
 
     /* find out drop point and drop window */
-    if (x < 0 || y < 0 || x > cx || y > cy)
+    if (pt.x < 0 || pt.y < 0 || pt.x > cx || pt.y > cy)
     {
-	bAccept = GetWindowLongW( hWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES;
-	x = 0;
-	y = 0; 
+	if (!(GetWindowLongW( hWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES)) return;
+	pt.x = pt.y = 0;
     }
     else
     {
-    	POINT	pt = { x, y };
-        HWND    hwndDrop = find_drop_window( hWnd, &pt );
-	if (hwndDrop)
-	{
-	    x = pt.x;
-	    y = pt.y;
-	    bAccept = TRUE;
-	}
-	else
-	{
-	    bAccept = FALSE;
-	}
+        if (!find_drop_window( hWnd, &pt )) return;
     }
-
-    if (!bAccept) return;
 
     XGetWindowProperty( event->display, DefaultRootWindow(event->display),
                         x11drv_atom(DndSelection), 0, 65535, FALSE,
@@ -1457,8 +1455,7 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
             if( lpDrop )
             {
                 lpDrop->pFiles = sizeof(DROPFILES);
-                lpDrop->pt.x = x;
-                lpDrop->pt.y = y;
+                lpDrop->pt = pt;
                 lpDrop->fNC = FALSE;
                 lpDrop->fWide = FALSE;
                 p_drop = (char *)(lpDrop + 1);
@@ -1494,6 +1491,7 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
   char		*p_drop = NULL;
   char          *p, *next;
   int		x, y;
+  POINT pos;
   DROPFILES *lpDrop;
   HDROP hDrop;
   union {
@@ -1535,8 +1533,7 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
     if( drop_len && drop_len < 65535 ) {
       XQueryPointer( event->display, root_window, &u.w_aux, &u.w_aux,
                      &x, &y, &u.i, &u.i, &u.u);
-      x += virtual_screen_rect.left;
-      y += virtual_screen_rect.top;
+      pos = root_to_virtual_screen( x, y );
 
       drop_len += sizeof(DROPFILES) + 1;
       hDrop = GlobalAlloc( GMEM_SHARE, drop_len );
@@ -1545,13 +1542,12 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
       if( lpDrop && (win_data = get_win_data( hWnd )))
       {
 	  lpDrop->pFiles = sizeof(DROPFILES);
-	  lpDrop->pt.x = x;
-	  lpDrop->pt.y = y;
+	  lpDrop->pt = pos;
 	  lpDrop->fNC =
-	    ( x < (win_data->client_rect.left - win_data->whole_rect.left)  ||
-	      y < (win_data->client_rect.top - win_data->whole_rect.top)    ||
-	      x > (win_data->client_rect.right - win_data->whole_rect.left) ||
-	      y > (win_data->client_rect.bottom - win_data->whole_rect.top) );
+	    (pos.x < (win_data->client_rect.left - win_data->whole_rect.left)  ||
+	     pos.y < (win_data->client_rect.top - win_data->whole_rect.top)    ||
+	     pos.x > (win_data->client_rect.right - win_data->whole_rect.left) ||
+	     pos.y > (win_data->client_rect.bottom - win_data->whole_rect.top) );
 	  lpDrop->fWide = FALSE;
 	  p_drop = (char*)(lpDrop + 1);
           release_win_data( win_data );

@@ -157,6 +157,22 @@ static inline int query_screens(void)
 
 #endif  /* SONAME_LIBXINERAMA */
 
+POINT virtual_screen_to_root( INT x, INT y )
+{
+    POINT pt;
+    pt.x = x - virtual_screen_rect.left;
+    pt.y = y - virtual_screen_rect.top;
+    return pt;
+}
+
+POINT root_to_virtual_screen( INT x, INT y )
+{
+    POINT pt;
+    pt.x = x + virtual_screen_rect.left;
+    pt.y = y + virtual_screen_rect.top;
+    return pt;
+}
+
 void xinerama_init( unsigned int width, unsigned int height )
 {
     MONITORINFOEXW *primary;

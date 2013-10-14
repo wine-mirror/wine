@@ -188,10 +188,10 @@ static BOOL CALLBACK update_windows_on_desktop_resize( HWND hwnd, LPARAM lparam 
     if (resize_data->old_virtual_rect.top != virtual_screen_rect.top) mask |= CWY;
     if (mask && data->whole_window)
     {
+        POINT pos = virtual_screen_to_root( data->whole_rect.left, data->whole_rect.top );
         XWindowChanges changes;
-
-        changes.x = data->whole_rect.left - virtual_screen_rect.left;
-        changes.y = data->whole_rect.top - virtual_screen_rect.top;
+        changes.x = pos.x;
+        changes.y = pos.y;
         XReconfigureWMWindow( data->display, data->whole_window, data->vis.screen, mask, &changes );
     }
     release_win_data( data );
