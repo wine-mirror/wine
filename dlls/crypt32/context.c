@@ -51,10 +51,9 @@ void *Context_CreateDataContext(size_t contextSize, const context_vtbl_t *vtbl)
     return CONTEXT_FROM_BASE_CONTEXT(context);
 }
 
-void *Context_CreateLinkContext(unsigned int contextSize, void *linked, unsigned int extra,
- BOOL addRef)
+context_t *Context_CreateLinkContext(unsigned int contextSize, context_t *linked, unsigned int extra)
 {
-    BASE_CONTEXT *context;
+    context_t *context;
 
     TRACE("(%d, %p, %d)\n", contextSize, linked, extra);
 
@@ -62,15 +61,14 @@ void *Context_CreateLinkContext(unsigned int contextSize, void *linked, unsigned
     if (!context)
         return NULL;
 
-    memcpy(CONTEXT_FROM_BASE_CONTEXT(context), linked, contextSize);
-    context->vtbl = BASE_CONTEXT_FROM_CONTEXT(linked)->vtbl;
+    memcpy(context_ptr(context), context_ptr(linked), contextSize);
+    context->vtbl = linked->vtbl;
     context->ref = 1;
-    context->linked = BASE_CONTEXT_FROM_CONTEXT(linked);
-    if (addRef)
-        Context_AddRef(BASE_CONTEXT_FROM_CONTEXT(linked));
+    context->linked = linked;
+    Context_AddRef(linked);
 
     TRACE("returning %p\n", context);
-    return CONTEXT_FROM_BASE_CONTEXT(context);
+    return context;
 }
 
 void Context_AddRef(context_t *context)
@@ -185,15 +183,14 @@ static inline void *ContextList_EntryToContext(const struct ContextList *list,
 
 void *ContextList_Add(struct ContextList *list, void *toLink, void *toReplace)
 {
-    void *context;
+    context_t *context;
 
     TRACE("(%p, %p, %p)\n", list, toLink, toReplace);
 
-    context = Context_CreateLinkContext(list->contextSize, toLink,
-     sizeof(struct list), TRUE);
+    context = Context_CreateLinkContext(list->contextSize, context_from_ptr(toLink), sizeof(struct list));
     if (context)
     {
-        struct list *entry = ContextList_ContextToEntry(list, context);
+        struct list *entry = ContextList_ContextToEntry(list, CONTEXT_FROM_BASE_CONTEXT(context));
 
         TRACE("adding %p\n", context);
         EnterCriticalSection(&list->cs);
@@ -212,7 +209,7 @@ void *ContextList_Add(struct ContextList *list, void *toLink, void *toReplace)
             list_add_head(&list->contexts, entry);
         LeaveCriticalSection(&list->cs);
     }
-    return context;
+    return CONTEXT_FROM_BASE_CONTEXT(context);
 }
 
 void *ContextList_Enum(struct ContextList *list, void *pPrev)

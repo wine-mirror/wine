@@ -73,17 +73,15 @@ static DWORD Collection_release(WINECRYPT_CERTSTORE *store, DWORD flags)
 }
 
 static void *CRYPT_CollectionCreateContextFromChild(WINE_COLLECTIONSTORE *store,
- WINE_STORE_LIST_ENTRY *storeEntry, void *child, size_t contextSize,
- BOOL addRef)
+ WINE_STORE_LIST_ENTRY *storeEntry, void *child, size_t contextSize)
 {
-    void *ret = Context_CreateLinkContext(contextSize, child,
-     sizeof(WINE_STORE_LIST_ENTRY*), addRef);
+    context_t *ret = Context_CreateLinkContext(contextSize, context_from_ptr(child),
+     sizeof(WINE_STORE_LIST_ENTRY*));
 
     if (ret)
-        *(WINE_STORE_LIST_ENTRY **)Context_GetExtra(ret, contextSize)
-         = storeEntry;
+        *(WINE_STORE_LIST_ENTRY **)Context_GetExtra(context_ptr(ret), contextSize) = storeEntry;
 
-    return ret;
+    return context_ptr(ret);
 }
 
 static BOOL CRYPT_CollectionAddContext(WINE_COLLECTIONSTORE *store,
@@ -168,9 +166,10 @@ static void *CRYPT_CollectionAdvanceEnum(WINE_COLLECTIONSTORE *store,
     }
     else
         child = contextFuncs->enumContext(storeEntry->store, NULL);
-    if (child)
-        ret = CRYPT_CollectionCreateContextFromChild(store, storeEntry, child,
-         contextSize, FALSE);
+    if (child) {
+        ret = CRYPT_CollectionCreateContextFromChild(store, storeEntry, child, contextSize);
+        Context_Release(context_from_ptr(child));
+    }
     else
     {
         if (storeNext)
@@ -211,8 +210,7 @@ static BOOL Collection_addCert(WINECRYPT_CERTSTORE *store, void *cert,
         WINE_STORE_LIST_ENTRY *storeEntry = *(WINE_STORE_LIST_ENTRY **)
          Context_GetExtra(childContext, sizeof(CERT_CONTEXT));
         PCERT_CONTEXT context =
-         CRYPT_CollectionCreateContextFromChild(cs, storeEntry, childContext,
-         sizeof(CERT_CONTEXT), TRUE);
+         CRYPT_CollectionCreateContextFromChild(cs, storeEntry, childContext, sizeof(CERT_CONTEXT));
 
         if (context)
             context->hCertStore = store;
@@ -291,8 +289,7 @@ static BOOL Collection_addCRL(WINECRYPT_CERTSTORE *store, void *crl,
         WINE_STORE_LIST_ENTRY *storeEntry = *(WINE_STORE_LIST_ENTRY **)
          Context_GetExtra(childContext, sizeof(CRL_CONTEXT));
         PCRL_CONTEXT context =
-         CRYPT_CollectionCreateContextFromChild(cs, storeEntry, childContext,
-         sizeof(CRL_CONTEXT), TRUE);
+         CRYPT_CollectionCreateContextFromChild(cs, storeEntry, childContext, sizeof(CRL_CONTEXT));
 
         if (context)
             context->hCertStore = store;
@@ -370,8 +367,7 @@ static BOOL Collection_addCTL(WINECRYPT_CERTSTORE *store, void *ctl,
         WINE_STORE_LIST_ENTRY *storeEntry = *(WINE_STORE_LIST_ENTRY **)
          Context_GetExtra(childContext, sizeof(CTL_CONTEXT));
         PCTL_CONTEXT context =
-         CRYPT_CollectionCreateContextFromChild(cs, storeEntry, childContext,
-         sizeof(CTL_CONTEXT), TRUE);
+         CRYPT_CollectionCreateContextFromChild(cs, storeEntry, childContext, sizeof(CTL_CONTEXT));
 
         if (context)
             context->hCertStore = store;

@@ -177,6 +177,11 @@ static inline context_t *context_from_ptr(const void *ptr)
     return (context_t*)ptr-1;
 }
 
+static inline void *context_ptr(context_t *context)
+{
+    return context+1;
+}
+
 typedef struct {
     context_t base;
     CERT_CONTEXT ctx;
@@ -390,8 +395,7 @@ void *Context_CreateDataContext(size_t contextSize, const context_vtbl_t *vtbl) 
  * it should be) linked is addref'd.
  * Free with Context_Release.
  */
-void *Context_CreateLinkContext(unsigned int contextSize, void *linked, unsigned int extra,
- BOOL addRef) DECLSPEC_HIDDEN;
+context_t *Context_CreateLinkContext(unsigned contextSize, context_t *linked, unsigned extra) DECLSPEC_HIDDEN;
 
 /* Returns a pointer to the extra bytes allocated with context, which must be
  * a link context.
