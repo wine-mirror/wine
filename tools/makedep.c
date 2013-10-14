@@ -96,6 +96,7 @@ static const char Usage[] =
 static void fatal_error( const char *msg, ... ) __attribute__ ((__format__ (__printf__, 1, 2)));
 static void fatal_perror( const char *msg, ... ) __attribute__ ((__format__ (__printf__, 1, 2)));
 static int output( const char *format, ... ) __attribute__ ((__format__ (__printf__, 1, 2)));
+static char *strmake( const char* fmt, ... ) __attribute__ ((__format__ (__printf__, 1, 2)));
 
 /*******************************************************************
  *         fatal_error
@@ -338,6 +339,24 @@ static struct incl_file *find_include_file( const char *name )
     LIST_FOR_EACH_ENTRY( file, &includes, struct incl_file, entry )
         if (!strcmp( name, file->name )) return file;
     return NULL;
+}
+
+/*******************************************************************
+ *         find_target_src_file
+ *
+ * Check if we have a source file as a target for the specified source with a different extension.
+ */
+static struct incl_file *find_target_src_file( const char *name, const char *ext )
+{
+    struct incl_file *ret;
+    char *p, *match = xmalloc( strlen( name ) + strlen( ext ) + 1 );
+
+    strcpy( match, name );
+    if ((p = get_extension( match ))) strcpy( p, ext );
+    else strcat( match, ext );
+    ret = find_src_file( match );
+    free( match );
+    return ret;
 }
 
 /*******************************************************************
@@ -858,6 +877,7 @@ static void parse_file( struct incl_file *source, int src )
     /* don't try to open certain types of files */
     if (strendswith( source->name, ".tlb" ) ||
         strendswith( source->name, ".res" ) ||
+        strendswith( source->name, ".pot" ) ||
         strendswith( source->name, ".x" ))
     {
         source->filename = xstrdup( source->name );
@@ -926,7 +946,7 @@ static void output_include( struct incl_file *pFile, struct incl_file *owner, in
 static void output_sources(void)
 {
     struct incl_file *source;
-    int i, column, mc_srcs = 0;
+    int i, column, po_srcs = 0, mc_srcs = 0;
 
     LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
     {
@@ -962,7 +982,19 @@ static void output_sources(void)
         }
         else if (!strcmp( ext, "rc" ))  /* resource file */
         {
-            column += output( "rsrc.pot %s.res: %s", obj, source->filename );
+            if (find_target_src_file( source->name, ".pot" ))
+            {
+                output( "%s.res: $(WRC) $(ALL_MO_FILES) %s\n", obj, source->filename );
+                output( "\t$(WRC) $(RCFLAGS) -o $@ %s\n", source->filename );
+                column += output( "%s.res rsrc.pot:", obj );
+                po_srcs++;
+            }
+            else
+            {
+                output( "%s.res: $(WRC) %s\n", obj, source->filename );
+                output( "\t$(WRC) $(RCFLAGS) -o $@ %s\n", source->filename );
+                column += output( "%s.res:", obj );
+            }
         }
         else if (!strcmp( ext, "mc" ))  /* message file */
         {
@@ -1004,7 +1036,7 @@ static void output_sources(void)
 
             column += output( ": %s", source->filename );
         }
-        else if (!strcmp( ext, "tlb" ) || !strcmp( ext, "res" ))
+        else if (!strcmp( ext, "tlb" ) || !strcmp( ext, "res" ) || !strcmp( ext, "pot" ))
         {
             continue;  /* nothing to do for typelib files */
         }
@@ -1023,6 +1055,20 @@ static void output_sources(void)
     }
 
     /* rules for files that depend on multiple sources */
+
+    if (po_srcs)
+    {
+        column = output( "rsrc.pot: $(WRC)" );
+        LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
+            if (strendswith( source->name, ".rc" ) && find_target_src_file( source->name, ".pot" ))
+                output_filename( source->filename, &column );
+        output( "\n" );
+        column = output( "\t$(WRC) $(RCFLAGS) -O pot -o $@" );
+        LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
+            if (strendswith( source->name, ".rc" ) && find_target_src_file( source->name, ".pot" ))
+                output_filename( source->filename, &column );
+        output( "\n" );
+    }
 
     if (mc_srcs)
     {

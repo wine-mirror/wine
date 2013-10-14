@@ -36,7 +36,7 @@ CROSSOBJS = $(OBJS:.o=.cross.o)
 
 # Implicit rules
 
-.SUFFIXES: .rc .res .idl .tlb .h .ok .man.in .man _c.c _i.c _p.c _s.c _r.res _t.res .cross.o .po .mo @MAINTAINER_MODE@ .sfd .ttf .svg .ico .bmp
+.SUFFIXES: .idl .tlb .h .ok .man.in .man _c.c _i.c _p.c _s.c _r.res _t.res .cross.o .po .mo @MAINTAINER_MODE@ .sfd .ttf .svg .ico .bmp
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $@ $<
@@ -46,9 +46,6 @@ CROSSOBJS = $(OBJS:.o=.cross.o)
 
 .c.cross.o:
 	$(CROSSCC) -c $(INCLUDES) $(DEFS) -DWINE_CROSSTEST $(CPPFLAGS) $(CFLAGS) -o $@ $<
-
-.rc.res:
-	$(WRC) $(RCFLAGS) -o $@ $<
 
 .idl.h:
 	$(WIDL) $(IDLFLAGS) -h -o $@ $<
@@ -131,7 +128,7 @@ $(IMPORTLIB:%=lib%.cross.a): $(MAINSPEC) $(IMPLIB_SRCS:.c=.cross.o)
 
 # Rules for dependencies
 
-DEPEND_SRCS = $(C_SRCS) $(OBJC_SRCS) $(RC_SRCS) $(MC_SRCS) \
+DEPEND_SRCS = $(C_SRCS) $(OBJC_SRCS) $(RC_SRCS) $(MC_SRCS) $(PO_SRCS:.rc=.pot) \
               $(IDL_H_SRCS) $(IDL_C_SRCS) $(IDL_I_SRCS) $(IDL_P_SRCS) $(IDL_S_SRCS) \
               $(IDL_GEN_C_SRCS) $(IDL_R_SRCS:.idl=_r.res) $(IDL_TLB_SRCS) $(IDL_TLB_SRCS:.idl=.tlb) \
               $(BISON_SRCS) $(LEX_SRCS) $(EXTRA_OBJS)
@@ -209,14 +206,6 @@ $(INSTALLDIRS):
 install install-lib install-dev uninstall::
 
 .PHONY: install install-lib install-dev uninstall
-
-# Rules for resources
-
-rsrc.pot: $(WRC)
-	$(WRC) $(RCFLAGS) -O pot -o $@ $(PO_SRCS)
-
-$(RC_SRCS:.rc=.res): $(WRC)
-$(PO_SRCS:.rc=.res): $(ALL_MO_FILES)
 
 # Misc. rules
 

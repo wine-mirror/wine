@@ -25,6 +25,7 @@ build.rc: dummy
 build.nfo:
 	-$(CC) -v 2>$@
 
-build.res: build.nfo
+build.res: build.rc build.nfo
+	$(WRC) $(RCFLAGS) -o $@ build.rc
 
 @MAKE_PROG_RULES@
