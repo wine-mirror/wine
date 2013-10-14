@@ -1088,7 +1088,7 @@ static BOOL init_key(const char *key_name, const char *def_value, BOOL init)
     DWORD res;
 
     if(!init) {
-        RegDeleteKey(HKEY_CLASSES_ROOT, key_name);
+        RegDeleteKeyA(HKEY_CLASSES_ROOT, key_name);
         return TRUE;
     }
 
