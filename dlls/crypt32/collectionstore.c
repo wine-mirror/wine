@@ -271,15 +271,9 @@ static BOOL Collection_deleteCert(WINECRYPT_CERTSTORE *store, void *pCertContext
 
     TRACE("(%p, %p)\n", store, pCertContext);
 
-    /* Deleting the linked context results in its ref count getting
-     * decreased, but the caller of this (CertDeleteCertificateFromStore) also
-     * decreases pCertContext's ref count, by calling
-     * CertFreeCertificateContext.  Increase ref count of linked context to
-     * compensate.
-     */
     linked = Context_GetLinkedContext(pCertContext);
-    CertDuplicateCertificateContext(linked);
     ret = CertDeleteCertificateFromStore(linked);
+    CertFreeCertificateContext(pCertContext);
     return ret;
 }
 
@@ -356,14 +350,9 @@ static BOOL Collection_deleteCRL(WINECRYPT_CERTSTORE *store, void *pCrlContext)
 
     TRACE("(%p, %p)\n", store, pCrlContext);
 
-    /* Deleting the linked context results in its ref count getting
-     * decreased, but the caller of this (CertDeleteCRLFromStore) also
-     * decreases pCrlContext's ref count, by calling CertFreeCRLContext.
-     * Increase ref count of linked context to compensate.
-     */
     linked = Context_GetLinkedContext(pCrlContext);
-    CertDuplicateCRLContext(linked);
     ret = CertDeleteCRLFromStore(linked);
+    CertFreeCRLContext(pCrlContext);
     return ret;
 }
 
@@ -432,22 +421,16 @@ static void *Collection_enumCTL(WINECRYPT_CERTSTORE *store, void *pPrev)
     return ret;
 }
 
-static BOOL Collection_deleteCTL(WINECRYPT_CERTSTORE *store,
- void *pCtlContext)
+static BOOL Collection_deleteCTL(WINECRYPT_CERTSTORE *store, void *pCtlContext)
 {
     BOOL ret;
     PCCTL_CONTEXT linked;
 
     TRACE("(%p, %p)\n", store, pCtlContext);
 
-    /* Deleting the linked context results in its ref count getting
-     * decreased, but the caller of this (CertDeleteCTLFromStore) also
-     * decreases pCtlContext's ref count, by calling CertFreeCTLContext.
-     * Increase ref count of linked context to compensate.
-     */
     linked = Context_GetLinkedContext(pCtlContext);
-    CertDuplicateCTLContext(linked);
     ret = CertDeleteCTLFromStore(linked);
+    CertFreeCTLContext(pCtlContext);
     return ret;
 }
 

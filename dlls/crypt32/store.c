@@ -1060,14 +1060,9 @@ BOOL WINAPI CertDeleteCertificateFromStore(PCCERT_CONTEXT pCertContext)
             ret = FALSE;
         else
             ret = hcs->vtbl->certs.deleteContext(hcs, (void *)pCertContext);
-        if (ret)
-            ret = CertFreeCertificateContext(pCertContext);
     }
     return ret;
 }
-
-#define CrlContext_CopyProperties(to, from) \
- Context_CopyProperties((to), (from), sizeof(CRL_CONTEXT))
 
 BOOL WINAPI CertAddCRLContextToStore(HCERTSTORE hCertStore,
  PCCRL_CONTEXT pCrlContext, DWORD dwAddDisposition,
