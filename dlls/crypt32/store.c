@@ -284,6 +284,12 @@ static BOOL CRYPT_MemDeleteCtl(WINECRYPT_CERTSTORE *store, void *pCtlContext)
     return ret;
 }
 
+static void MemStore_addref(WINECRYPT_CERTSTORE *store)
+{
+    LONG ref = InterlockedIncrement(&store->ref);
+    TRACE("ref = %d\n", ref);
+}
+
 static void MemStore_closeStore(WINECRYPT_CERTSTORE *cert_store, DWORD dwFlags)
 {
     WINE_MEMSTORE *store = (WINE_MEMSTORE*)cert_store;
@@ -306,6 +312,7 @@ static BOOL MemStore_control(WINECRYPT_CERTSTORE *store, DWORD dwFlags,
 }
 
 static const store_vtbl_t MemStoreVtbl = {
+    MemStore_addref,
     MemStore_closeStore,
     MemStore_control
 };
@@ -1213,7 +1220,7 @@ HCERTSTORE WINAPI CertDuplicateStore(HCERTSTORE hCertStore)
     TRACE("(%p)\n", hCertStore);
 
     if (hcs && hcs->dwMagic == WINE_CRYPTCERTSTORE_MAGIC)
-        InterlockedIncrement(&hcs->ref);
+        hcs->vtbl->addref(hcs);
     return hCertStore;
 }
 

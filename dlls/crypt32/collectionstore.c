@@ -40,6 +40,12 @@ typedef struct _WINE_COLLECTIONSTORE
     struct list         stores;
 } WINE_COLLECTIONSTORE;
 
+static void Collection_addref(WINECRYPT_CERTSTORE *store)
+{
+    LONG ref = InterlockedIncrement(&store->ref);
+    TRACE("ref = %d\n", ref);
+}
+
 static void Collection_closeStore(WINECRYPT_CERTSTORE *store, DWORD dwFlags)
 {
     WINE_COLLECTIONSTORE *cs = (WINE_COLLECTIONSTORE*)store;
@@ -477,6 +483,7 @@ static BOOL Collection_control(WINECRYPT_CERTSTORE *cert_store, DWORD dwFlags,
 }
 
 static const store_vtbl_t CollectionStoreVtbl = {
+    Collection_addref,
     Collection_closeStore,
     Collection_control
 };

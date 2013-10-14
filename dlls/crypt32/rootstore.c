@@ -832,7 +832,7 @@ WINECRYPT_CERTSTORE *CRYPT_RootOpenStore(HCRYPTPROV hCryptProv, DWORD dwFlags)
         if (CRYPT_rootStore != root)
             CertCloseStore(root, 0);
     }
-    CertDuplicateStore(CRYPT_rootStore);
+    CRYPT_rootStore->vtbl->addref(CRYPT_rootStore);
     return CRYPT_rootStore;
 }
 

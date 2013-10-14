@@ -41,6 +41,12 @@ typedef struct _WINE_PROVIDERSTORE
     PFN_CERT_STORE_PROV_CONTROL     provControl;
 } WINE_PROVIDERSTORE;
 
+static void ProvStore_addref(WINECRYPT_CERTSTORE *store)
+{
+    LONG ref = InterlockedIncrement(&store->ref);
+    TRACE("ref = %d\n", ref);
+}
+
 static void ProvStore_closeStore(WINECRYPT_CERTSTORE *cert_store, DWORD dwFlags)
 {
     WINE_PROVIDERSTORE *store = (WINE_PROVIDERSTORE*)cert_store;
@@ -262,6 +268,7 @@ static BOOL ProvStore_control(WINECRYPT_CERTSTORE *cert_store, DWORD dwFlags, DW
 }
 
 static const store_vtbl_t ProvStoreVtbl = {
+    ProvStore_addref,
     ProvStore_closeStore,
     ProvStore_control
 };
