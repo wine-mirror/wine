@@ -418,10 +418,10 @@ static void process_msgs(void)
     do {
         got_msg = FALSE;
         Sleep(100);
-        while(PeekMessage( &msg, NULL, 0, 0, PM_REMOVE))
+        while(PeekMessageW( &msg, NULL, 0, 0, PM_REMOVE))
         {
             TranslateMessage(&msg);
-            DispatchMessage(&msg);
+            DispatchMessageW(&msg);
             got_msg = TRUE;
         }
     } while(got_msg);
@@ -432,10 +432,10 @@ static void process_msgs(void)
        sending WM_TIMER manually does not seem to help us.) */
     Sleep(500);
 
-    while(PeekMessage( &msg, NULL, 0, 0, PM_REMOVE))
+    while(PeekMessageW( &msg, NULL, 0, 0, PM_REMOVE))
     {
         TranslateMessage(&msg);
-        DispatchMessage(&msg);
+        DispatchMessageW(&msg);
     }
 }
 
@@ -1928,17 +1928,17 @@ static void test_events(void)
 
         /* Test On*Expand */
         hroot = (HTREEITEM)SendMessageW(hwnd_tv, TVM_GETNEXTITEM, TVGN_ROOT, 0);
-        SendMessage(hwnd_tv, TVM_EXPAND, TVE_EXPAND, (LPARAM)hroot);
+        SendMessageW(hwnd_tv, TVM_EXPAND, TVE_EXPAND, (LPARAM)hroot);
         process_msgs();
         ok_event_count(pnstceimpl, OnBeforeExpand, 1);
         ok_event_count(pnstceimpl, OnAfterExpand, 1);
         ok_event_broken(pnstceimpl, OnItemAdded); /* No event on Vista */
         todo_wine ok_event_count(pnstceimpl, OnSelectionChanged, 1);
         ok_no_events(pnstceimpl);
-        SendMessage(hwnd_tv, TVM_EXPAND, TVE_COLLAPSE, (LPARAM)hroot);
+        SendMessageW(hwnd_tv, TVM_EXPAND, TVE_COLLAPSE, (LPARAM)hroot);
         process_msgs();
         ok_no_events(pnstceimpl);
-        SendMessage(hwnd_tv, TVM_EXPAND, TVE_EXPAND, (LPARAM)hroot);
+        SendMessageW(hwnd_tv, TVM_EXPAND, TVE_EXPAND, (LPARAM)hroot);
         process_msgs();
         ok_no_events(pnstceimpl);
 
