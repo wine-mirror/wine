@@ -33,8 +33,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
-#define LONGLONG_MAX (((LONGLONG)0x7fffffff<<32)|0xffffffff)
-
 static const WCHAR breakW[] = {'b','r','e','a','k',0};
 static const WCHAR caseW[] = {'c','a','s','e',0};
 static const WCHAR catchW[] = {'c','a','t','c','h',0};
@@ -397,7 +395,7 @@ static int parse_double_literal(parser_ctx_t *ctx, LONG int_part, literal_t **li
     d = int_part;
     while(ctx->ptr < ctx->end && isdigitW(*ctx->ptr)) {
         hlp = d*10 + *(ctx->ptr++) - '0';
-        if(d>LONGLONG_MAX/10 || hlp<0) {
+        if(d>MAXLONGLONG/10 || hlp<0) {
             exp++;
             break;
         }
@@ -414,7 +412,7 @@ static int parse_double_literal(parser_ctx_t *ctx, LONG int_part, literal_t **li
 
         while(ctx->ptr < ctx->end && isdigitW(*ctx->ptr)) {
             hlp = d*10 + *(ctx->ptr++) - '0';
-            if(d>LONGLONG_MAX/10 || hlp<0)
+            if(d>MAXLONGLONG/10 || hlp<0)
                 break;
 
             d = hlp;

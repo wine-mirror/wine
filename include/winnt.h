@@ -742,6 +742,7 @@ typedef struct _MEMORY_BASIC_INFORMATION
 #define MAXBYTE       0xff
 #define MAXWORD       0xffff
 #define MAXDWORD      0xffffffff
+#define MAXLONGLONG   (((LONGLONG)0x7fffffff << 32) | 0xffffffff)
 
 #define UNICODE_STRING_MAX_CHARS 32767
 
