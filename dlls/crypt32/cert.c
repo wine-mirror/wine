@@ -169,7 +169,7 @@ PCCERT_CONTEXT WINAPI CertCreateCertificateContext(DWORD dwCertEncodingType,
         cert->pbCertEncoded      = data;
         cert->cbCertEncoded      = cbCertEncoded;
         cert->pCertInfo          = certInfo;
-        cert->hCertStore         = 0;
+        cert->hCertStore         = &empty_store;
     }
 
 end:

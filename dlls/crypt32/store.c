@@ -1488,3 +1488,75 @@ BOOL WINAPI CertRegisterPhysicalStore(const void *pvSystemStore, DWORD dwFlags,
          dwFlags, debugstr_w(pwszStoreName), pStoreInfo, pvReserved);
     return FALSE;
 }
+
+static void EmptyStore_addref(WINECRYPT_CERTSTORE *store)
+{
+    TRACE("(%p)\n", store);
+}
+
+static DWORD EmptyStore_release(WINECRYPT_CERTSTORE *store, DWORD flags)
+{
+    TRACE("(%p)\n", store);
+    return E_UNEXPECTED;
+}
+
+static BOOL EmptyStore_add(WINECRYPT_CERTSTORE *store, void *context,
+ void *replace, const void **ret_context)
+{
+    TRACE("(%p, %p, %p, %p)\n", store, context, replace, ret_context);
+
+    /* FIXME: We should clone the context */
+    if(ret_context) {
+        Context_AddRef(context);
+        *ret_context = context;
+    }
+
+    return TRUE;
+}
+
+static void *EmptyStore_enum(WINECRYPT_CERTSTORE *store, void *prev)
+{
+    TRACE("(%p, %p)\n", store, prev);
+
+    SetLastError(CRYPT_E_NOT_FOUND);
+    return FALSE;
+}
+
+static BOOL EmptyStore_delete(WINECRYPT_CERTSTORE *store, void *context)
+{
+    return TRUE;
+}
+
+static BOOL EmptyStore_control(WINECRYPT_CERTSTORE *store, DWORD flags, DWORD ctrl_type, void const *ctrl_para)
+{
+    TRACE("()\n");
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+static const store_vtbl_t EmptyStoreVtbl = {
+    EmptyStore_addref,
+    EmptyStore_release,
+    EmptyStore_control,
+    {
+        EmptyStore_add,
+        EmptyStore_enum,
+        EmptyStore_delete
+    }, {
+        EmptyStore_add,
+        EmptyStore_enum,
+        EmptyStore_delete
+    }, {
+        EmptyStore_add,
+        EmptyStore_enum,
+        EmptyStore_delete
+    }
+};
+
+WINECRYPT_CERTSTORE empty_store;
+
+void init_empty_store(void)
+{
+    CRYPT_InitStore(&empty_store, CERT_STORE_READONLY_FLAG, StoreTypeEmpty, &EmptyStoreVtbl);
+}

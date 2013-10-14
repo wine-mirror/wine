@@ -660,7 +660,6 @@ static void testCreateCert(void)
      selfSignedCert, sizeof(selfSignedCert));
     ok(cert != NULL, "creating cert failed: %08x\n", GetLastError());
     /* Even in-memory certs are expected to have a store associated with them */
-    todo_wine
     ok(cert->hCertStore != NULL, "expected created cert to have a store\n");
     /* The cert doesn't have the archived property set (which would imply it
      * doesn't show up in enumerations.)

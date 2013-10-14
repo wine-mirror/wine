@@ -2515,7 +2515,7 @@ static void testEmptyStore(void)
 
     cert = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert, sizeof(bigCert));
     ok(cert != NULL, "CertCreateCertificateContext failed\n");
-    todo_wine ok(cert->hCertStore != NULL, "cert->hCertStore == NULL\n");
+    ok(cert->hCertStore != NULL, "cert->hCertStore == NULL\n");
     if(!cert->hCertStore) {
         CertFreeCertificateContext(cert);
         return;
@@ -2554,6 +2554,8 @@ static void testEmptyStore(void)
     res = CertDeleteCertificateFromStore(cert3);
     ok(res, "CertDeleteCertificateContextFromStore failed\n");
     ok(cert3->hCertStore == store, "Unexpected hCertStore\n");
+
+    CertFreeCertificateContext(cert3);
 
     CertCloseStore(store, 0);
 

@@ -231,6 +231,7 @@ typedef enum _CertStoreType {
     StoreTypeMem,
     StoreTypeCollection,
     StoreTypeProvider,
+    StoreTypeEmpty
 } CertStoreType;
 
 typedef struct _CONTEXT_PROPERTY_LIST CONTEXT_PROPERTY_LIST;
@@ -419,6 +420,9 @@ void *ContextList_Enum(struct ContextList *list, void *pPrev) DECLSPEC_HIDDEN;
 BOOL ContextList_Remove(struct ContextList *list, void *context) DECLSPEC_HIDDEN;
 
 void ContextList_Free(struct ContextList *list) DECLSPEC_HIDDEN;
+
+extern WINECRYPT_CERTSTORE empty_store;
+void init_empty_store(void) DECLSPEC_HIDDEN;
 
 /**
  *  Utilities.
