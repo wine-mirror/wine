@@ -68,7 +68,8 @@ typedef enum
     XmlReadResumeState_CDATA,
     XmlReadResumeState_Comment,
     XmlReadResumeState_STag,
-    XmlReadResumeState_CharData
+    XmlReadResumeState_CharData,
+    XmlReadResumeState_Whitespace
 } XmlReaderResumeState;
 
 /* saved pointer index to resume from particular input position */
@@ -962,11 +963,11 @@ static inline BOOL is_wchar_space(WCHAR ch)
 static int reader_skipspaces(xmlreader *reader)
 {
     encoded_buffer *buffer = &reader->input->buffer->utf16;
-    const WCHAR *ptr = reader_get_ptr(reader), *start = ptr;
+    const WCHAR *ptr = reader_get_ptr(reader);
+    UINT start = reader_get_cur(reader);
 
     while (is_wchar_space(*ptr))
     {
-        buffer->cur++;
         if (*ptr == '\r')
             reader->pos = 0;
         else if (*ptr == '\n')
@@ -976,10 +977,12 @@ static int reader_skipspaces(xmlreader *reader)
         }
         else
             reader->pos++;
-        ptr++;
+
+        buffer->cur++;
+        ptr = reader_get_ptr(reader);
     }
 
-    return ptr - start;
+    return reader_get_cur(reader) - start;
 }
 
 /* [26] VersionNum ::= '1.' [0-9]+ */
@@ -1488,19 +1491,34 @@ static HRESULT reader_parse_pi(xmlreader *reader)
 /* This one is used to parse significant whitespace nodes, like in Misc production */
 static HRESULT reader_parse_whitespace(xmlreader *reader)
 {
-    WCHAR *start, *ptr;
+    switch (reader->resumestate)
+    {
+    case XmlReadResumeState_Initial:
+        reader_shrink(reader);
+        reader->resumestate = XmlReadResumeState_Whitespace;
+        reader->resume[XmlReadResume_Body] = reader_get_cur(reader);
+        reader->nodetype = XmlNodeType_Whitespace;
+        reader_set_strvalue(reader, StringValue_LocalName, &strval_empty);
+        reader_set_strvalue(reader, StringValue_QualifiedName, &strval_empty);
+        reader_set_strvalue(reader, StringValue_Value, &strval_empty);
+    case XmlReadResumeState_Whitespace:
+    {
+        strval value;
+        UINT start;
 
-    reader_shrink(reader);
-    start = reader_get_ptr(reader);
+        reader_skipspaces(reader);
+        if (is_reader_pending(reader)) return S_OK;
 
-    reader_skipspaces(reader);
-    ptr = reader_get_ptr(reader);
-    TRACE("%s\n", debugstr_wn(start, ptr-start));
+        start = reader->resume[XmlReadResume_Body];
+        reader_init_strvalue(start, reader_get_cur(reader)-start, &value);
+        reader_set_strvalue(reader, StringValue_Value, &value);
+        TRACE("%s\n", debug_strval(reader, &value));
+        reader->resumestate = XmlReadResumeState_Initial;
+    }
+    default:
+        ;
+    }
 
-    reader->nodetype = XmlNodeType_Whitespace;
-    reader_set_strvalue(reader, StringValue_LocalName, &strval_empty);
-    reader_set_strvalue(reader, StringValue_QualifiedName, &strval_empty);
-    reader_set_strvalue(reader, StringValue_Value, &strval_empty);
     return S_OK;
 }
 
@@ -1522,6 +1540,8 @@ static HRESULT reader_parse_misc(xmlreader *reader)
             return reader_parse_pi(reader);
         case XmlReadResumeState_Comment:
             return reader_parse_comment(reader);
+        case XmlReadResumeState_Whitespace:
+            return reader_parse_whitespace(reader);
         default:
             ERR("unknown resume state %d\n", reader->resumestate);
         }
