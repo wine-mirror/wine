@@ -1726,7 +1726,7 @@ static BSTR get_script_from_file(const char *filename)
 
     size = GetFileSize(file, NULL);
 
-    map = CreateFileMapping(file, NULL, PAGE_READONLY, 0, 0, NULL);
+    map = CreateFileMappingW(file, NULL, PAGE_READONLY, 0, 0, NULL);
     CloseHandle(file);
     if(map == INVALID_HANDLE_VALUE) {
         trace("Could not create file mapping: %u\n", GetLastError());
