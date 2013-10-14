@@ -51,13 +51,13 @@ static void test_ldap_parse_sort_control( LDAP *ld )
     if (ret == LDAP_SERVER_DOWN)
     {
         skip("test server can't be reached\n");
-        ldap_control_free( sort );
+        ldap_control_freeA( sort );
         return;
     }
     ok( !ret, "ldap_search_ext_sA failed 0x%x\n", ret );
     ok( res != NULL, "expected res != NULL\n" );
 
-    if (GetProcAddress(GetModuleHandle("wldap32.dll"), "ber_init"))
+    if (GetProcAddress(GetModuleHandleA("wldap32.dll"), "ber_init"))
     {
         ret = ldap_parse_resultA( NULL, res, &result, NULL, NULL, NULL, &server_ctrls, 1 );
         ok( ret == LDAP_PARAM_ERROR, "ldap_parse_resultA failed 0x%x\n", ret );
@@ -82,8 +82,8 @@ static void test_ldap_parse_sort_control( LDAP *ld )
     ret = ldap_parse_sort_controlA( ld, server_ctrls, &result, NULL );
     ok( ret == LDAP_CONTROL_NOT_FOUND, "ldap_parse_sort_controlA failed 0x%x\n", ret );
 
-    ldap_control_free( sort );
-    ldap_controls_free( server_ctrls );
+    ldap_control_freeA( sort );
+    ldap_controls_freeA( server_ctrls );
 }
 
 static void test_ldap_search_extW( LDAP *ld )
