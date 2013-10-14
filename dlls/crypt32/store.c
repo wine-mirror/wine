@@ -1507,7 +1507,7 @@ static BOOL EmptyStore_add(WINECRYPT_CERTSTORE *store, void *context,
 
     /* FIXME: We should clone the context */
     if(ret_context) {
-        Context_AddRef(context);
+        Context_AddRef(context_from_ptr(context));
         *ret_context = context;
     }
 

@@ -157,6 +157,49 @@ void crypt_sip_free(void) DECLSPEC_HIDDEN;
 void root_store_free(void) DECLSPEC_HIDDEN;
 void default_chain_engine_free(void) DECLSPEC_HIDDEN;
 
+typedef struct _CONTEXT_PROPERTY_LIST CONTEXT_PROPERTY_LIST;
+
+typedef struct _context_t {
+    LONG ref;
+    struct _context_t *linked;
+    CONTEXT_PROPERTY_LIST *properties;
+} BASE_CONTEXT, context_t;
+
+static inline context_t *context_from_ptr(const void *ptr)
+{
+    return (context_t*)ptr-1;
+}
+
+typedef struct {
+    context_t base;
+    CERT_CONTEXT ctx;
+} cert_t;
+
+static inline cert_t *cert_from_ptr(const CERT_CONTEXT *ptr)
+{
+    return CONTAINING_RECORD(ptr, cert_t, ctx);
+}
+
+typedef struct {
+    context_t base;
+    CRL_CONTEXT ctx;
+} crl_t;
+
+static inline crl_t *crl_from_ptr(const CRL_CONTEXT *ptr)
+{
+    return CONTAINING_RECORD(ptr, crl_t, ctx);
+}
+
+typedef struct {
+    context_t base;
+    CTL_CONTEXT ctx;
+} ctl_t;
+
+static inline ctl_t *ctl_from_ptr(const CTL_CONTEXT *ptr)
+{
+    return CONTAINING_RECORD(ptr, ctl_t, ctx);
+}
+
 /* Some typedefs that make it easier to abstract which type of context we're
  * working with.
  */
@@ -233,8 +276,6 @@ typedef enum _CertStoreType {
     StoreTypeProvider,
     StoreTypeEmpty
 } CertStoreType;
-
-typedef struct _CONTEXT_PROPERTY_LIST CONTEXT_PROPERTY_LIST;
 
 #define WINE_CRYPTCERTSTORE_MAGIC 0x74726563
 
@@ -365,7 +406,7 @@ void Context_CopyProperties(const void *to, const void *from) DECLSPEC_HIDDEN;
  */
 CONTEXT_PROPERTY_LIST *Context_GetProperties(const void *context) DECLSPEC_HIDDEN;
 
-void Context_AddRef(void *context) DECLSPEC_HIDDEN;
+void Context_AddRef(context_t*) DECLSPEC_HIDDEN;
 
 typedef void (*ContextFreeFunc)(void *context);
 

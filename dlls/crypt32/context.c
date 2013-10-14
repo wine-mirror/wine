@@ -26,13 +26,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(context);
 
-typedef struct _BASE_CONTEXT
-{
-    LONG        ref;
-    struct _BASE_CONTEXT *linked;
-    CONTEXT_PROPERTY_LIST *properties;
-} BASE_CONTEXT;
-
 #define CONTEXT_FROM_BASE_CONTEXT(p) (void*)(p+1)
 #define BASE_CONTEXT_FROM_CONTEXT(p) ((BASE_CONTEXT*)(p)-1)
 
@@ -72,18 +65,16 @@ void *Context_CreateLinkContext(unsigned int contextSize, void *linked, unsigned
     context->ref = 1;
     context->linked = BASE_CONTEXT_FROM_CONTEXT(linked);
     if (addRef)
-        Context_AddRef(linked);
+        Context_AddRef(BASE_CONTEXT_FROM_CONTEXT(linked));
 
     TRACE("returning %p\n", context);
     return CONTEXT_FROM_BASE_CONTEXT(context);
 }
 
-void Context_AddRef(void *context)
+void Context_AddRef(context_t *context)
 {
-    BASE_CONTEXT *baseContext = BASE_CONTEXT_FROM_CONTEXT(context);
-
-    InterlockedIncrement(&baseContext->ref);
-    TRACE("%p's ref count is %d\n", context, baseContext->ref);
+    InterlockedIncrement(&context->ref);
+    TRACE("(%p) ref=%d\n", context, context->ref);
 }
 
 void *Context_GetExtra(const void *context, size_t contextSize)

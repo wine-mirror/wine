@@ -457,7 +457,7 @@ PCCTL_CONTEXT WINAPI CertDuplicateCTLContext(PCCTL_CONTEXT pCtlContext)
 {
     TRACE("(%p)\n", pCtlContext);
     if (pCtlContext)
-        Context_AddRef((void *)pCtlContext);
+        Context_AddRef(&ctl_from_ptr(pCtlContext)->base);
     return pCtlContext;
 }
 

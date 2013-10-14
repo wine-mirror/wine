@@ -176,15 +176,14 @@ end:
     return cert;
 }
 
-PCCERT_CONTEXT WINAPI CertDuplicateCertificateContext(
- PCCERT_CONTEXT pCertContext)
+PCCERT_CONTEXT WINAPI CertDuplicateCertificateContext(PCCERT_CONTEXT pCertContext)
 {
     TRACE("(%p)\n", pCertContext);
 
     if (!pCertContext)
         return NULL;
 
-    Context_AddRef((void *)pCertContext);
+    Context_AddRef(&cert_from_ptr(pCertContext)->base);
     return pCertContext;
 }
 
