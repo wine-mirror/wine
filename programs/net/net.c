@@ -235,7 +235,7 @@ static BOOL StopService(SC_HANDLE SCManager, SC_HANDLE serviceHandle)
 static BOOL net_service(int operation, const WCHAR* service_name)
 {
     SC_HANDLE SCManager, serviceHandle;
-    BOOL result = 0;
+    BOOL result = FALSE;
     WCHAR service_display_name[4096];
     DWORD buffer_size;
 
@@ -288,7 +288,7 @@ static BOOL net_service(int operation, const WCHAR* service_name)
     return result;
 }
 
-static int arg_is(const WCHAR* str1, const WCHAR* str2)
+static BOOL arg_is(const WCHAR* str1, const WCHAR* str2)
 {
     return CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE, str1, -1, str2, -1) == CSTR_EQUAL;
 }
