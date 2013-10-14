@@ -108,6 +108,7 @@ void CRYPT_FreeStore(WINECRYPT_CERTSTORE *store)
 {
     if (store->properties)
         ContextPropertyList_Free(store->properties);
+    store->dwMagic = 0;
     CryptMemFree(store);
 }
 
@@ -290,18 +291,24 @@ static void MemStore_addref(WINECRYPT_CERTSTORE *store)
     TRACE("ref = %d\n", ref);
 }
 
-static void MemStore_closeStore(WINECRYPT_CERTSTORE *cert_store, DWORD dwFlags)
+static DWORD MemStore_release(WINECRYPT_CERTSTORE *cert_store, DWORD flags)
 {
     WINE_MEMSTORE *store = (WINE_MEMSTORE*)cert_store;
+    LONG ref;
 
-    TRACE("(%p, %08x)\n", store, dwFlags);
-    if (dwFlags)
-        FIXME("Unimplemented flags: %08x\n", dwFlags);
+    if(flags)
+        FIXME("Unimplemented flags %x\n", flags);
+
+    ref = InterlockedDecrement(&store->hdr.ref);
+    TRACE("(%p) ref=%d\n", store, ref);
+    if(ref)
+        return ERROR_SUCCESS;
 
     ContextList_Free(store->certs);
     ContextList_Free(store->crls);
     ContextList_Free(store->ctls);
-    CRYPT_FreeStore((WINECRYPT_CERTSTORE*)store);
+    CRYPT_FreeStore(&store->hdr);
+    return ERROR_SUCCESS;
 }
 
 static BOOL MemStore_control(WINECRYPT_CERTSTORE *store, DWORD dwFlags,
@@ -313,7 +320,7 @@ static BOOL MemStore_control(WINECRYPT_CERTSTORE *store, DWORD dwFlags,
 
 static const store_vtbl_t MemStoreVtbl = {
     MemStore_addref,
-    MemStore_closeStore,
+    MemStore_release,
     MemStore_control
 };
 
@@ -1227,6 +1234,7 @@ HCERTSTORE WINAPI CertDuplicateStore(HCERTSTORE hCertStore)
 BOOL WINAPI CertCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
 {
     WINECRYPT_CERTSTORE *hcs = hCertStore;
+    DWORD res;
 
     TRACE("(%p, %08x)\n", hCertStore, dwFlags);
 
@@ -1236,16 +1244,12 @@ BOOL WINAPI CertCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
     if ( hcs->dwMagic != WINE_CRYPTCERTSTORE_MAGIC )
         return FALSE;
 
-    if (hcs->ref <= 0)
-        ERR("%p's ref count is %d\n", hcs, hcs->ref);
-    if (InterlockedDecrement(&hcs->ref) == 0)
-    {
-        TRACE("%p's ref count is 0, freeing\n", hcs);
-        hcs->dwMagic = 0;
-        hcs->vtbl->closeStore(hcs, dwFlags);
+    res = hcs->vtbl->release(hcs, dwFlags);
+    if (res != ERROR_SUCCESS) {
+        SetLastError(res);
+        return FALSE;
     }
-    else
-        TRACE("%p's ref count is %d\n", hcs, hcs->ref);
+
     return TRUE;
 }
 

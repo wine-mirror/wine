@@ -47,17 +47,26 @@ static void ProvStore_addref(WINECRYPT_CERTSTORE *store)
     TRACE("ref = %d\n", ref);
 }
 
-static void ProvStore_closeStore(WINECRYPT_CERTSTORE *cert_store, DWORD dwFlags)
+static DWORD ProvStore_release(WINECRYPT_CERTSTORE *cert_store, DWORD flags)
 {
     WINE_PROVIDERSTORE *store = (WINE_PROVIDERSTORE*)cert_store;
+    LONG ref;
 
-    TRACE("(%p, %08x)\n", store, dwFlags);
+    if(flags)
+        FIXME("Unimplemented flags %x\n", flags);
+
+    ref = InterlockedDecrement(&store->hdr.ref);
+    TRACE("(%p) ref=%d\n", store, ref);
+
+    if(ref)
+        return ERROR_SUCCESS;
 
     if (store->provCloseStore)
-        store->provCloseStore(store->hStoreProv, dwFlags);
+        store->provCloseStore(store->hStoreProv, flags);
     if (!(store->dwStoreProvFlags & CERT_STORE_PROV_EXTERNAL_FLAG))
-        CertCloseStore(store->memStore, dwFlags);
-    CRYPT_FreeStore((WINECRYPT_CERTSTORE*)store);
+        store->memStore->vtbl->release(store->memStore, flags);
+    CRYPT_FreeStore(&store->hdr);
+    return ERROR_SUCCESS;
 }
 
 static BOOL CRYPT_ProvAddCert(WINECRYPT_CERTSTORE *store, void *cert,
@@ -269,7 +278,7 @@ static BOOL ProvStore_control(WINECRYPT_CERTSTORE *cert_store, DWORD dwFlags, DW
 
 static const store_vtbl_t ProvStoreVtbl = {
     ProvStore_addref,
-    ProvStore_closeStore,
+    ProvStore_release,
     ProvStore_control
 };
 

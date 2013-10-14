@@ -247,7 +247,7 @@ typedef struct _CONTEXT_PROPERTY_LIST CONTEXT_PROPERTY_LIST;
 
 typedef struct {
     void (*addref)(struct WINE_CRYPTCERTSTORE*);
-    void (*closeStore)(struct WINE_CRYPTCERTSTORE*,DWORD);
+    DWORD (*release)(struct WINE_CRYPTCERTSTORE*,DWORD);
     BOOL (*control)(struct WINE_CRYPTCERTSTORE*,DWORD,DWORD,void const*);
 } store_vtbl_t;
 

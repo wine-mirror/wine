@@ -46,23 +46,30 @@ static void Collection_addref(WINECRYPT_CERTSTORE *store)
     TRACE("ref = %d\n", ref);
 }
 
-static void Collection_closeStore(WINECRYPT_CERTSTORE *store, DWORD dwFlags)
+static DWORD Collection_release(WINECRYPT_CERTSTORE *store, DWORD flags)
 {
     WINE_COLLECTIONSTORE *cs = (WINE_COLLECTIONSTORE*)store;
     WINE_STORE_LIST_ENTRY *entry, *next;
+    LONG ref;
 
-    TRACE("(%p, %08x)\n", store, dwFlags);
+    if(flags)
+        FIXME("Unimplemented flags %x\n", flags);
 
-    LIST_FOR_EACH_ENTRY_SAFE(entry, next, &cs->stores, WINE_STORE_LIST_ENTRY,
-     entry)
+    ref = InterlockedDecrement(&cs->hdr.ref);
+    TRACE("(%p) ref=%d\n", store, ref);
+    if(ref)
+        return ERROR_SUCCESS;
+
+    LIST_FOR_EACH_ENTRY_SAFE(entry, next, &cs->stores, WINE_STORE_LIST_ENTRY, entry)
     {
         TRACE("closing %p\n", entry);
-        CertCloseStore(entry->store, dwFlags);
+        entry->store->vtbl->release(entry->store, flags);
         CryptMemFree(entry);
     }
     cs->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&cs->cs);
     CRYPT_FreeStore(store);
+    return ERROR_SUCCESS;
 }
 
 static void *CRYPT_CollectionCreateContextFromChild(WINE_COLLECTIONSTORE *store,
@@ -484,7 +491,7 @@ static BOOL Collection_control(WINECRYPT_CERTSTORE *cert_store, DWORD dwFlags,
 
 static const store_vtbl_t CollectionStoreVtbl = {
     Collection_addref,
-    Collection_closeStore,
+    Collection_release,
     Collection_control
 };
 
