@@ -36,7 +36,7 @@ CROSSOBJS = $(OBJS:.o=.cross.o)
 
 # Implicit rules
 
-.SUFFIXES: .mc .rc .res .idl .tlb .h .ok .man.in .man _c.c _i.c _p.c _s.c _r.res _t.res .cross.o .po .mo @MAINTAINER_MODE@ .sfd .ttf .svg .ico .bmp
+.SUFFIXES: .rc .res .idl .tlb .h .ok .man.in .man _c.c _i.c _p.c _s.c _r.res _t.res .cross.o .po .mo @MAINTAINER_MODE@ .sfd .ttf .svg .ico .bmp
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $@ $<
@@ -46,9 +46,6 @@ CROSSOBJS = $(OBJS:.o=.cross.o)
 
 .c.cross.o:
 	$(CROSSCC) -c $(INCLUDES) $(DEFS) -DWINE_CROSSTEST $(CPPFLAGS) $(CFLAGS) -o $@ $<
-
-.mc.res:
-	$(WMC) -U -O res $(PORCFLAGS) -o $@ $<
 
 .rc.res:
 	$(WRC) $(RCFLAGS) -o $@ $<
@@ -218,10 +215,6 @@ install install-lib install-dev uninstall::
 rsrc.pot: $(WRC)
 	$(WRC) $(RCFLAGS) -O pot -o $@ $(PO_SRCS)
 
-msg.pot: $(WMC)
-	$(WMC) -O pot -o $@ $(MC_SRCS)
-
-$(MC_SRCS:.mc=.res): $(WMC) $(ALL_MO_FILES)
 $(RC_SRCS:.rc=.res): $(WRC)
 $(PO_SRCS:.rc=.res): $(ALL_MO_FILES)
 

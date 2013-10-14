@@ -926,7 +926,7 @@ static void output_include( struct incl_file *pFile, struct incl_file *owner, in
 static void output_sources(void)
 {
     struct incl_file *source;
-    int i, column;
+    int i, column, mc_srcs = 0;
 
     LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
     {
@@ -966,7 +966,10 @@ static void output_sources(void)
         }
         else if (!strcmp( ext, "mc" ))  /* message file */
         {
-            column += output( "msg.pot %s.res: %s", obj, source->filename );
+            output( "%s.res: $(WMC) $(ALL_MO_FILES) %s\n", obj, source->filename );
+            output( "\t$(WMC) -U -O res $(PORCFLAGS) -o $@ %s\n", source->filename );
+            mc_srcs++;
+            column += output( "msg.pot %s.res:", obj );
         }
         else if (!strcmp( ext, "idl" ))  /* IDL file */
         {
@@ -1016,6 +1019,20 @@ static void output_sources(void)
 
         for (i = 0; i < MAX_INCLUDES; i++)
             if (source->files[i]) output_include( source->files[i], source, &column );
+        output( "\n" );
+    }
+
+    /* rules for files that depend on multiple sources */
+
+    if (mc_srcs)
+    {
+        column = output( "msg.pot: $(WMC)" );
+        LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
+            if (strendswith( source->name, ".mc" )) output_filename( source->filename, &column );
+        output( "\n" );
+        column = output( "\t$(WMC) -O pot -o $@" );
+        LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
+            if (strendswith( source->name, ".mc" )) output_filename( source->filename, &column );
         output( "\n" );
     }
 }
