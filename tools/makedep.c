@@ -941,9 +941,18 @@ static void output_sources(void)
         {
             /* add source file dependency for parallel makes */
             char *header = strmake( "%s.tab.h", obj );
-            if (find_include_file( header )) output( "%s.tab.c: %s\n", obj, header );
-            free( header );
+            if (find_include_file( header ))
+            {
+                output( "%s.tab.h: %s\n", obj, source->filename );
+                output( "\t$(BISON) $(BISONFLAGS) -p %s_ -o %s.tab.c -d %s\n",
+                        obj, obj, source->filename );
+                output( "%s.tab.c: %s %s\n", obj, source->filename, header );
+            }
+            else output( "%s.tab.c: %s\n", obj, source->filename );
+
+            output( "\t$(BISON) $(BISONFLAGS) -p %s_ -o $@ %s\n", obj, source->filename );
             column += output( "%s.tab.o: %s.tab.c", obj, obj );
+            free( header );
         }
         else if (!strcmp( ext, "l" ))  /* lex file */
         {
