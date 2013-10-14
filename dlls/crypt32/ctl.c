@@ -29,6 +29,20 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
+static void CTL_free(context_t *context)
+{
+    ctl_t *ctl = (ctl_t*)context;
+
+    CryptMsgClose(ctl->ctx.hCryptMsg);
+    CryptMemFree(ctl->ctx.pbCtlEncoded);
+    CryptMemFree(ctl->ctx.pbCtlContext);
+    LocalFree(ctl->ctx.pCtlInfo);
+}
+
+static const context_vtbl_t ctl_vtbl = {
+    CTL_free
+};
+
 BOOL WINAPI CertAddCTLContextToStore(HCERTSTORE hCertStore,
  PCCTL_CONTEXT pCtlContext, DWORD dwAddDisposition,
  PCCTL_CONTEXT* ppStoreContext)
@@ -403,7 +417,7 @@ PCCTL_CONTEXT WINAPI CertCreateCTLContext(DWORD dwMsgAndCertEncodingType,
              &ctlInfo, &size);
             if (ret)
             {
-                ctl = Context_CreateDataContext(sizeof(CTL_CONTEXT));
+                ctl = Context_CreateDataContext(sizeof(CTL_CONTEXT), &ctl_vtbl);
                 if (ctl)
                 {
                     BYTE *data = CryptMemAlloc(cbCtlEncoded);
@@ -461,16 +475,6 @@ PCCTL_CONTEXT WINAPI CertDuplicateCTLContext(PCCTL_CONTEXT pCtlContext)
     return pCtlContext;
 }
 
-static void CTLDataContext_Free(void *context)
-{
-    PCTL_CONTEXT ctlContext = context;
-
-    CryptMsgClose(ctlContext->hCryptMsg);
-    CryptMemFree(ctlContext->pbCtlEncoded);
-    CryptMemFree(ctlContext->pbCtlContext);
-    LocalFree(ctlContext->pCtlInfo);
-}
-
 BOOL WINAPI CertFreeCTLContext(PCCTL_CONTEXT pCTLContext)
 {
     BOOL ret = TRUE;
@@ -478,7 +482,7 @@ BOOL WINAPI CertFreeCTLContext(PCCTL_CONTEXT pCTLContext)
     TRACE("(%p)\n", pCTLContext);
 
     if (pCTLContext)
-        ret = Context_Release(&ctl_from_ptr(pCTLContext)->base, CTLDataContext_Free);
+        ret = Context_Release(&ctl_from_ptr(pCTLContext)->base);
     return ret;
 }
 

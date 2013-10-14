@@ -29,7 +29,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(context);
 #define CONTEXT_FROM_BASE_CONTEXT(p) (void*)(p+1)
 #define BASE_CONTEXT_FROM_CONTEXT(p) ((BASE_CONTEXT*)(p)-1)
 
-void *Context_CreateDataContext(size_t contextSize)
+void *Context_CreateDataContext(size_t contextSize, const context_vtbl_t *vtbl)
 {
     BASE_CONTEXT *context;
 
@@ -37,6 +37,7 @@ void *Context_CreateDataContext(size_t contextSize)
     if (!context)
         return NULL;
 
+    context->vtbl = vtbl;
     context->ref = 1;
     context->linked = NULL;
     context->properties = ContextPropertyList_Create();
@@ -62,6 +63,7 @@ void *Context_CreateLinkContext(unsigned int contextSize, void *linked, unsigned
         return NULL;
 
     memcpy(CONTEXT_FROM_BASE_CONTEXT(context), linked, contextSize);
+    context->vtbl = BASE_CONTEXT_FROM_CONTEXT(linked)->vtbl;
     context->ref = 1;
     context->linked = BASE_CONTEXT_FROM_CONTEXT(linked);
     if (addRef)
@@ -103,7 +105,7 @@ CONTEXT_PROPERTY_LIST *Context_GetProperties(const void *context)
     return ptr->properties;
 }
 
-BOOL Context_Release(context_t *context, ContextFreeFunc dataContextFree)
+BOOL Context_Release(context_t *context)
 {
     BOOL ret = TRUE;
 
@@ -118,9 +120,9 @@ BOOL Context_Release(context_t *context, ContextFreeFunc dataContextFree)
         if (!context->linked)
         {
             ContextPropertyList_Free(context->properties);
-            dataContextFree(CONTEXT_FROM_BASE_CONTEXT(context));
+            context->vtbl->free(context);
         } else {
-            Context_Release(context->linked, dataContextFree);
+            Context_Release(context->linked);
         }
         CryptMemFree(context);
     }

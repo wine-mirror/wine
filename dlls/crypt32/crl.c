@@ -29,6 +29,18 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
+static void CRL_free(context_t *context)
+{
+    crl_t *crl = (crl_t*)context;
+
+    CryptMemFree(crl->ctx.pbCrlEncoded);
+    LocalFree(crl->ctx.pCrlInfo);
+}
+
+static const context_vtbl_t crl_vtbl = {
+    CRL_free
+};
+
 PCCRL_CONTEXT WINAPI CertCreateCRLContext(DWORD dwCertEncodingType,
  const BYTE* pbCrlEncoded, DWORD cbCrlEncoded)
 {
@@ -52,7 +64,7 @@ PCCRL_CONTEXT WINAPI CertCreateCRLContext(DWORD dwCertEncodingType,
     {
         BYTE *data = NULL;
 
-        crl = Context_CreateDataContext(sizeof(CRL_CONTEXT));
+        crl = Context_CreateDataContext(sizeof(CRL_CONTEXT), &crl_vtbl);
         if (!crl)
             goto end;
         data = CryptMemAlloc(cbCrlEncoded);
@@ -331,14 +343,6 @@ PCCRL_CONTEXT WINAPI CertDuplicateCRLContext(PCCRL_CONTEXT pCrlContext)
     return pCrlContext;
 }
 
-static void CrlDataContext_Free(void *context)
-{
-    PCRL_CONTEXT crlContext = context;
-
-    CryptMemFree(crlContext->pbCrlEncoded);
-    LocalFree(crlContext->pCrlInfo);
-}
-
 BOOL WINAPI CertFreeCRLContext( PCCRL_CONTEXT pCrlContext)
 {
     BOOL ret = TRUE;
@@ -346,7 +350,7 @@ BOOL WINAPI CertFreeCRLContext( PCCRL_CONTEXT pCrlContext)
     TRACE("(%p)\n", pCrlContext);
 
     if (pCrlContext)
-        ret = Context_Release(&crl_from_ptr(pCrlContext)->base, CrlDataContext_Free);
+        ret = Context_Release(&crl_from_ptr(pCrlContext)->base);
     return ret;
 }
 

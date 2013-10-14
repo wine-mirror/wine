@@ -159,11 +159,18 @@ void default_chain_engine_free(void) DECLSPEC_HIDDEN;
 
 typedef struct _CONTEXT_PROPERTY_LIST CONTEXT_PROPERTY_LIST;
 
+typedef struct _context_t context_t;
+
+typedef struct {
+    void (*free)(context_t*);
+} context_vtbl_t;
+
 typedef struct _context_t {
+    const context_vtbl_t *vtbl;
     LONG ref;
     struct _context_t *linked;
     CONTEXT_PROPERTY_LIST *properties;
-} BASE_CONTEXT, context_t;
+} BASE_CONTEXT;
 
 static inline context_t *context_from_ptr(const void *ptr)
 {
@@ -380,7 +387,7 @@ DWORD cert_name_to_str_with_indent(DWORD dwCertEncodingType, DWORD indent,
  * which should be one of CERT_CONTEXT, CRL_CONTEXT, or CTL_CONTEXT.
  * Free with Context_Release.
  */
-void *Context_CreateDataContext(size_t contextSize) DECLSPEC_HIDDEN;
+void *Context_CreateDataContext(size_t contextSize, const context_vtbl_t *vtbl) DECLSPEC_HIDDEN;
 
 /* Creates a new link context with extra bytes.  The context refers to linked
  * rather than owning its own properties.  If addRef is TRUE (which ordinarily
@@ -396,7 +403,7 @@ void *Context_CreateLinkContext(unsigned int contextSize, void *linked, unsigned
 void *Context_GetExtra(const void *context, size_t contextSize) DECLSPEC_HIDDEN;
 
 /* Gets the context linked to by context, which must be a link context. */
-void *Context_GetLinkedContext(void *context) DECLSPEC_HIDDEN;
+void *Context_GetLinkedContext(void*) DECLSPEC_HIDDEN;
 
 /* Copies properties from fromContext to toContext. */
 void Context_CopyProperties(const void *to, const void *from) DECLSPEC_HIDDEN;
@@ -408,14 +415,12 @@ CONTEXT_PROPERTY_LIST *Context_GetProperties(const void *context) DECLSPEC_HIDDE
 
 void Context_AddRef(context_t*) DECLSPEC_HIDDEN;
 
-typedef void (*ContextFreeFunc)(void *context);
-
 /* Decrements context's ref count.  If context is a link context, releases its
  * linked context as well.
  * If a data context has its ref count reach 0, calls dataContextFree on it.
  * Returns FALSE if the reference count is <= 0 when called.
  */
-BOOL Context_Release(context_t *context, ContextFreeFunc dataContextFree) DECLSPEC_HIDDEN;
+BOOL Context_Release(context_t *context) DECLSPEC_HIDDEN;
 
 /**
  *  Context property list functions

@@ -109,6 +109,18 @@ BOOL WINAPI CertAddEncodedCertificateToSystemStoreW(LPCWSTR pszCertStoreName,
     return ret;
 }
 
+static void Cert_free(context_t *context)
+{
+    cert_t *cert = (cert_t*)context;
+
+    CryptMemFree(cert->ctx.pbCertEncoded);
+    LocalFree(cert->ctx.pCertInfo);
+}
+
+static const context_vtbl_t cert_vtbl = {
+    Cert_free
+};
+
 BOOL WINAPI CertAddCertificateLinkToStore(HCERTSTORE hCertStore,
  PCCERT_CONTEXT pCertContext, DWORD dwAddDisposition,
  PCCERT_CONTEXT *ppCertContext)
@@ -154,7 +166,7 @@ PCCERT_CONTEXT WINAPI CertCreateCertificateContext(DWORD dwCertEncodingType,
     {
         BYTE *data = NULL;
 
-        cert = Context_CreateDataContext(sizeof(CERT_CONTEXT));
+        cert = Context_CreateDataContext(sizeof(CERT_CONTEXT), &cert_vtbl);
         if (!cert)
             goto end;
         data = CryptMemAlloc(cbCertEncoded);
@@ -187,14 +199,6 @@ PCCERT_CONTEXT WINAPI CertDuplicateCertificateContext(PCCERT_CONTEXT pCertContex
     return pCertContext;
 }
 
-static void CertDataContext_Free(void *context)
-{
-    PCERT_CONTEXT certContext = context;
-
-    CryptMemFree(certContext->pbCertEncoded);
-    LocalFree(certContext->pCertInfo);
-}
-
 BOOL WINAPI CertFreeCertificateContext(PCCERT_CONTEXT pCertContext)
 {
     BOOL ret = TRUE;
@@ -202,7 +206,7 @@ BOOL WINAPI CertFreeCertificateContext(PCCERT_CONTEXT pCertContext)
     TRACE("(%p)\n", pCertContext);
 
     if (pCertContext)
-        ret = Context_Release(&cert_from_ptr(pCertContext)->base, CertDataContext_Free);
+        ret = Context_Release(&cert_from_ptr(pCertContext)->base);
     return ret;
 }
 
