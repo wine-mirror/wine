@@ -331,7 +331,7 @@ struct stub_manager *get_stub_manager_from_object(APARTMENT *apt, void *object)
  * threads have a reference to it */
 void apartment_disconnectobject(struct apartment *apt, void *object)
 {
-    int found = FALSE;
+    BOOL found = FALSE;
     struct stub_manager *stubmgr;
 
     EnterCriticalSection(&apt->cs);

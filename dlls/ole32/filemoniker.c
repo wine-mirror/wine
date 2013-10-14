@@ -1360,7 +1360,7 @@ static HRESULT FileMonikerImpl_Construct(FileMonikerImpl* This, LPCOLESTR lpszPa
     LPOLESTR *tabStr=0;
     static const WCHAR twoPoint[]={'.','.',0};
     static const WCHAR bkSlash[]={'\\',0};
-    BYTE addBkSlash;
+    BOOL addBkSlash;
 
     TRACE("(%p,%s)\n",This,debugstr_w(lpszPathName));
 
@@ -1381,14 +1381,14 @@ static HRESULT FileMonikerImpl_Construct(FileMonikerImpl* This, LPCOLESTR lpszPa
 
     if (nb > 0 ){
 
-        addBkSlash=1;
+        addBkSlash = TRUE;
         if (lstrcmpW(tabStr[0],twoPoint)!=0)
-            addBkSlash=0;
+            addBkSlash = FALSE;
         else
             for(i=0;i<nb;i++){
 
                 if ( (lstrcmpW(tabStr[i],twoPoint)!=0) && (lstrcmpW(tabStr[i],bkSlash)!=0) ){
-                    addBkSlash=0;
+                    addBkSlash = FALSE;
                     break;
                 }
                 else
@@ -1396,13 +1396,13 @@ static HRESULT FileMonikerImpl_Construct(FileMonikerImpl* This, LPCOLESTR lpszPa
                     if (lstrcmpW(tabStr[i],bkSlash)==0 && i<nb-1 && lstrcmpW(tabStr[i+1],bkSlash)==0){
                         *tabStr[i]=0;
                         sizeStr--;
-                        addBkSlash=0;
+                        addBkSlash = FALSE;
                         break;
                     }
             }
 
         if (lstrcmpW(tabStr[nb-1],bkSlash)==0)
-            addBkSlash=0;
+            addBkSlash = FALSE;
 
         This->filePathName=HeapReAlloc(GetProcessHeap(),0,This->filePathName,(sizeStr+1)*sizeof(WCHAR));
 

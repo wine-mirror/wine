@@ -1423,7 +1423,7 @@ static HRESULT insertIntoTree(
      * The root storage contains some element, therefore, start the research
      * for the appropriate location.
      */
-    BOOL found = 0;
+    BOOL found = FALSE;
     DirRef current, next, previous, currentEntryId;
 
     /*
@@ -1442,7 +1442,7 @@ static HRESULT insertIntoTree(
     next     = currentEntry.rightChild;
     current  = currentEntryId;
 
-    while (found == 0)
+    while (!found)
     {
       LONG diff = entryNameCmp( newEntry.name, currentEntry.name);
 
@@ -1461,7 +1461,7 @@ static HRESULT insertIntoTree(
           StorageBaseImpl_WriteDirEntry(This,
                                         current,
                                         &currentEntry);
-          found = 1;
+          found = TRUE;
         }
       }
       else if (diff > 0)
@@ -1479,7 +1479,7 @@ static HRESULT insertIntoTree(
           StorageBaseImpl_WriteDirEntry(This,
                                         current,
                                         &currentEntry);
-          found = 1;
+          found = TRUE;
         }
       }
       else
@@ -2786,7 +2786,7 @@ static HRESULT StorageImpl_Construct(
   else
     This->base.lockingrole = SWMR_None;
 
-  This->base.reverted = 0;
+  This->base.reverted = FALSE;
 
   /*
    * Initialize the big block cache.
@@ -3016,7 +3016,7 @@ static void StorageImpl_Invalidate(StorageBaseImpl* iface)
 
   StorageBaseImpl_DeleteAll(&This->base);
 
-  This->base.reverted = 1;
+  This->base.reverted = TRUE;
 }
 
 static void StorageImpl_Destroy(StorageBaseImpl* iface)
@@ -4850,7 +4850,7 @@ static void TransactedSnapshotImpl_Invalidate(StorageBaseImpl* This)
   {
     TRACE("Storage invalidated (stg=%p)\n", This);
 
-    This->reverted = 1;
+    This->reverted = TRUE;
 
     StorageBaseImpl_DeleteAll(This);
   }
@@ -5255,7 +5255,7 @@ static void StorageInternalImpl_Invalidate( StorageBaseImpl *base )
   {
     TRACE("Storage invalidated (stg=%p)\n", This);
 
-    This->base.reverted = 1;
+    This->base.reverted = TRUE;
 
     This->parentStorage = NULL;
 
@@ -5740,7 +5740,7 @@ static StorageInternalImpl* StorageInternalImpl_Construct(
     newStorage->base.baseVtbl = &StorageInternalImpl_BaseVtbl;
     newStorage->base.openFlags = (openFlags & ~STGM_CREATE);
 
-    newStorage->base.reverted = 0;
+    newStorage->base.reverted = FALSE;
 
     newStorage->base.ref = 1;
 
@@ -5751,7 +5751,7 @@ static StorageInternalImpl* StorageInternalImpl_Construct(
      */
     newStorage->base.storageDirEntry = storageDirEntry;
 
-    newStorage->base.create = 0;
+    newStorage->base.create = FALSE;
 
     return newStorage;
   }
