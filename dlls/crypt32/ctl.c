@@ -126,7 +126,7 @@ BOOL WINAPI CertAddCTLContextToStore(HCERTSTORE hCertStore,
     if (toAdd)
     {
         if (store)
-            ret = store->ctls.addContext(store, (void *)toAdd,
+            ret = store->vtbl->ctls.addContext(store, (void *)toAdd,
              (void *)existing, (const void **)ppStoreContext);
         else if (ppStoreContext)
             *ppStoreContext = CertDuplicateCTLContext(toAdd);
@@ -173,7 +173,7 @@ PCCTL_CONTEXT WINAPI CertEnumCTLsInStore(HCERTSTORE hCertStore,
     else if (hcs->dwMagic != WINE_CRYPTCERTSTORE_MAGIC)
         ret = NULL;
     else
-        ret = (PCCTL_CONTEXT)hcs->ctls.enumContext(hcs, (void *)pPrev);
+        ret = (PCCTL_CONTEXT)hcs->vtbl->ctls.enumContext(hcs, (void *)pPrev);
     return ret;
 }
 
@@ -320,7 +320,7 @@ BOOL WINAPI CertDeleteCTLFromStore(PCCTL_CONTEXT pCtlContext)
         if (hcs->dwMagic != WINE_CRYPTCERTSTORE_MAGIC)
             ret = FALSE;
         else
-            ret = hcs->ctls.deleteContext(hcs, (void *)pCtlContext);
+            ret = hcs->vtbl->ctls.deleteContext(hcs, (void *)pCtlContext);
         if (ret)
             ret = CertFreeCTLContext(pCtlContext);
     }

@@ -249,6 +249,9 @@ typedef struct {
     void (*addref)(struct WINE_CRYPTCERTSTORE*);
     DWORD (*release)(struct WINE_CRYPTCERTSTORE*,DWORD);
     BOOL (*control)(struct WINE_CRYPTCERTSTORE*,DWORD,DWORD,void const*);
+    CONTEXT_FUNCS certs;
+    CONTEXT_FUNCS crls;
+    CONTEXT_FUNCS ctls;
 } store_vtbl_t;
 
 typedef struct WINE_CRYPTCERTSTORE
@@ -258,10 +261,6 @@ typedef struct WINE_CRYPTCERTSTORE
     DWORD                       dwOpenFlags;
     CertStoreType               type;
     const store_vtbl_t         *vtbl;
-    /* FIXME: Move to vtbl (requires collections clean up) */
-    CONTEXT_FUNCS               certs;
-    CONTEXT_FUNCS               crls;
-    CONTEXT_FUNCS               ctls;
     CONTEXT_PROPERTY_LIST      *properties;
 } WINECRYPT_CERTSTORE;
 

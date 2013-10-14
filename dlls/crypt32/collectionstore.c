@@ -105,7 +105,7 @@ static BOOL CRYPT_CollectionAddContext(WINE_COLLECTIONSTORE *store,
 
         storeEntry = *(WINE_STORE_LIST_ENTRY **)Context_GetExtra(toReplace,
          contextSize);
-        contextFuncs = (CONTEXT_FUNCS*)((LPBYTE)storeEntry->store +
+        contextFuncs = (CONTEXT_FUNCS*)((LPBYTE)storeEntry->store->vtbl +
          contextFuncsOffset);
         ret = contextFuncs->addContext(storeEntry->store, context,
          existingLinked, (const void **)&childContext);
@@ -121,7 +121,7 @@ static BOOL CRYPT_CollectionAddContext(WINE_COLLECTIONSTORE *store,
             if (entry->dwUpdateFlags & CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG)
             {
                 CONTEXT_FUNCS *contextFuncs = (CONTEXT_FUNCS*)(
-                 (LPBYTE)entry->store + contextFuncsOffset);
+                 (LPBYTE)entry->store->vtbl + contextFuncsOffset);
 
                 storeEntry = entry;
                 ret = contextFuncs->addContext(entry->store, context, NULL,
@@ -178,11 +178,11 @@ static void *CRYPT_CollectionAdvanceEnum(WINE_COLLECTIONSTORE *store,
             /* We always want the same function pointers (from certs, crls)
              * in the next store, so use the same offset into the next store.
              */
-            size_t offset = (const BYTE *)contextFuncs - (LPBYTE)storeEntry->store;
+            size_t offset = (const BYTE *)contextFuncs - (LPBYTE)storeEntry->store->vtbl;
             WINE_STORE_LIST_ENTRY *storeNextEntry =
              LIST_ENTRY(storeNext, WINE_STORE_LIST_ENTRY, entry);
             CONTEXT_FUNCS *storeNextContexts =
-             (CONTEXT_FUNCS*)((LPBYTE)storeNextEntry->store + offset);
+             (CONTEXT_FUNCS*)((LPBYTE)storeNextEntry->store->vtbl + offset);
 
             ret = CRYPT_CollectionAdvanceEnum(store, storeNextEntry,
              storeNextContexts, contextInterface, NULL, contextSize);
@@ -197,14 +197,14 @@ static void *CRYPT_CollectionAdvanceEnum(WINE_COLLECTIONSTORE *store,
     return ret;
 }
 
-static BOOL CRYPT_CollectionAddCert(WINECRYPT_CERTSTORE *store, void *cert,
+static BOOL Collection_addCert(WINECRYPT_CERTSTORE *store, void *cert,
  void *toReplace, const void **ppStoreContext)
 {
     BOOL ret;
     void *childContext = NULL;
     WINE_COLLECTIONSTORE *cs = (WINE_COLLECTIONSTORE*)store;
 
-    ret = CRYPT_CollectionAddContext(cs, offsetof(WINECRYPT_CERTSTORE, certs),
+    ret = CRYPT_CollectionAddContext(cs, offsetof(store_vtbl_t, certs),
      cert, toReplace, sizeof(CERT_CONTEXT), &childContext);
     if (ppStoreContext && childContext)
     {
@@ -222,7 +222,7 @@ static BOOL CRYPT_CollectionAddCert(WINECRYPT_CERTSTORE *store, void *cert,
     return ret;
 }
 
-static void *CRYPT_CollectionEnumCert(WINECRYPT_CERTSTORE *store, void *pPrev)
+static void *Collection_enumCert(WINECRYPT_CERTSTORE *store, void *pPrev)
 {
     WINE_COLLECTIONSTORE *cs = (WINE_COLLECTIONSTORE*)store;
     void *ret;
@@ -237,7 +237,7 @@ static void *CRYPT_CollectionEnumCert(WINECRYPT_CERTSTORE *store, void *pPrev)
          sizeof(CERT_CONTEXT));
 
         ret = CRYPT_CollectionAdvanceEnum(cs, storeEntry,
-         &storeEntry->store->certs, pCertInterface, pPrev,
+         &storeEntry->store->vtbl->certs, pCertInterface, pPrev,
          sizeof(CERT_CONTEXT));
     }
     else
@@ -248,7 +248,7 @@ static void *CRYPT_CollectionEnumCert(WINECRYPT_CERTSTORE *store, void *pPrev)
              WINE_STORE_LIST_ENTRY, entry);
 
             ret = CRYPT_CollectionAdvanceEnum(cs, storeEntry,
-             &storeEntry->store->certs, pCertInterface, NULL,
+             &storeEntry->store->vtbl->certs, pCertInterface, NULL,
              sizeof(CERT_CONTEXT));
         }
         else
@@ -264,8 +264,7 @@ static void *CRYPT_CollectionEnumCert(WINECRYPT_CERTSTORE *store, void *pPrev)
     return ret;
 }
 
-static BOOL CRYPT_CollectionDeleteCert(WINECRYPT_CERTSTORE *store,
- void *pCertContext)
+static BOOL Collection_deleteCert(WINECRYPT_CERTSTORE *store, void *pCertContext)
 {
     BOOL ret;
     PCCERT_CONTEXT linked;
@@ -284,14 +283,14 @@ static BOOL CRYPT_CollectionDeleteCert(WINECRYPT_CERTSTORE *store,
     return ret;
 }
 
-static BOOL CRYPT_CollectionAddCRL(WINECRYPT_CERTSTORE *store, void *crl,
+static BOOL Collection_addCRL(WINECRYPT_CERTSTORE *store, void *crl,
  void *toReplace, const void **ppStoreContext)
 {
     BOOL ret;
     void *childContext = NULL;
     WINE_COLLECTIONSTORE *cs = (WINE_COLLECTIONSTORE*)store;
 
-    ret = CRYPT_CollectionAddContext(cs, offsetof(WINECRYPT_CERTSTORE, crls),
+    ret = CRYPT_CollectionAddContext(cs, offsetof(store_vtbl_t, crls),
      crl, toReplace, sizeof(CRL_CONTEXT), &childContext);
     if (ppStoreContext && childContext)
     {
@@ -309,7 +308,7 @@ static BOOL CRYPT_CollectionAddCRL(WINECRYPT_CERTSTORE *store, void *crl,
     return ret;
 }
 
-static void *CRYPT_CollectionEnumCRL(WINECRYPT_CERTSTORE *store, void *pPrev)
+static void *Collection_enumCRL(WINECRYPT_CERTSTORE *store, void *pPrev)
 {
     WINE_COLLECTIONSTORE *cs = (WINE_COLLECTIONSTORE*)store;
     void *ret;
@@ -324,7 +323,7 @@ static void *CRYPT_CollectionEnumCRL(WINECRYPT_CERTSTORE *store, void *pPrev)
          sizeof(CRL_CONTEXT));
 
         ret = CRYPT_CollectionAdvanceEnum(cs, storeEntry,
-         &storeEntry->store->crls, pCRLInterface, pPrev, sizeof(CRL_CONTEXT));
+         &storeEntry->store->vtbl->crls, pCRLInterface, pPrev, sizeof(CRL_CONTEXT));
     }
     else
     {
@@ -334,7 +333,7 @@ static void *CRYPT_CollectionEnumCRL(WINECRYPT_CERTSTORE *store, void *pPrev)
              WINE_STORE_LIST_ENTRY, entry);
 
             ret = CRYPT_CollectionAdvanceEnum(cs, storeEntry,
-             &storeEntry->store->crls, pCRLInterface, NULL,
+             &storeEntry->store->vtbl->crls, pCRLInterface, NULL,
              sizeof(CRL_CONTEXT));
         }
         else
@@ -350,7 +349,7 @@ static void *CRYPT_CollectionEnumCRL(WINECRYPT_CERTSTORE *store, void *pPrev)
     return ret;
 }
 
-static BOOL CRYPT_CollectionDeleteCRL(WINECRYPT_CERTSTORE *store, void *pCrlContext)
+static BOOL Collection_deleteCRL(WINECRYPT_CERTSTORE *store, void *pCrlContext)
 {
     BOOL ret;
     PCCRL_CONTEXT linked;
@@ -368,14 +367,14 @@ static BOOL CRYPT_CollectionDeleteCRL(WINECRYPT_CERTSTORE *store, void *pCrlCont
     return ret;
 }
 
-static BOOL CRYPT_CollectionAddCTL(WINECRYPT_CERTSTORE *store, void *ctl,
+static BOOL Collection_addCTL(WINECRYPT_CERTSTORE *store, void *ctl,
  void *toReplace, const void **ppStoreContext)
 {
     BOOL ret;
     void *childContext = NULL;
     WINE_COLLECTIONSTORE *cs = (WINE_COLLECTIONSTORE*)store;
 
-    ret = CRYPT_CollectionAddContext(cs, offsetof(WINECRYPT_CERTSTORE, ctls),
+    ret = CRYPT_CollectionAddContext(cs, offsetof(store_vtbl_t, ctls),
      ctl, toReplace, sizeof(CTL_CONTEXT), &childContext);
     if (ppStoreContext && childContext)
     {
@@ -393,7 +392,7 @@ static BOOL CRYPT_CollectionAddCTL(WINECRYPT_CERTSTORE *store, void *ctl,
     return ret;
 }
 
-static void *CRYPT_CollectionEnumCTL(WINECRYPT_CERTSTORE *store, void *pPrev)
+static void *Collection_enumCTL(WINECRYPT_CERTSTORE *store, void *pPrev)
 {
     WINE_COLLECTIONSTORE *cs = (WINE_COLLECTIONSTORE*)store;
     void *ret;
@@ -407,7 +406,7 @@ static void *CRYPT_CollectionEnumCTL(WINECRYPT_CERTSTORE *store, void *pPrev)
          *(WINE_STORE_LIST_ENTRY **)Context_GetExtra(pPrev, sizeof(CTL_CONTEXT));
 
         ret = CRYPT_CollectionAdvanceEnum(cs, storeEntry,
-         &storeEntry->store->ctls, pCTLInterface, pPrev, sizeof(CTL_CONTEXT));
+         &storeEntry->store->vtbl->ctls, pCTLInterface, pPrev, sizeof(CTL_CONTEXT));
     }
     else
     {
@@ -417,7 +416,7 @@ static void *CRYPT_CollectionEnumCTL(WINECRYPT_CERTSTORE *store, void *pPrev)
              WINE_STORE_LIST_ENTRY, entry);
 
             ret = CRYPT_CollectionAdvanceEnum(cs, storeEntry,
-             &storeEntry->store->ctls, pCTLInterface, NULL,
+             &storeEntry->store->vtbl->ctls, pCTLInterface, NULL,
              sizeof(CTL_CONTEXT));
         }
         else
@@ -433,7 +432,7 @@ static void *CRYPT_CollectionEnumCTL(WINECRYPT_CERTSTORE *store, void *pPrev)
     return ret;
 }
 
-static BOOL CRYPT_CollectionDeleteCTL(WINECRYPT_CERTSTORE *store,
+static BOOL Collection_deleteCTL(WINECRYPT_CERTSTORE *store,
  void *pCtlContext)
 {
     BOOL ret;
@@ -492,7 +491,20 @@ static BOOL Collection_control(WINECRYPT_CERTSTORE *cert_store, DWORD dwFlags,
 static const store_vtbl_t CollectionStoreVtbl = {
     Collection_addref,
     Collection_release,
-    Collection_control
+    Collection_control,
+    {
+        Collection_addCert,
+        Collection_enumCert,
+        Collection_deleteCert
+    }, {
+        Collection_addCRL,
+        Collection_enumCRL,
+        Collection_deleteCRL
+    }, {
+        Collection_addCTL,
+        Collection_enumCTL,
+        Collection_deleteCTL
+    }
 };
 
 WINECRYPT_CERTSTORE *CRYPT_CollectionOpenStore(HCRYPTPROV hCryptProv,
@@ -512,15 +524,6 @@ WINECRYPT_CERTSTORE *CRYPT_CollectionOpenStore(HCRYPTPROV hCryptProv,
         {
             memset(store, 0, sizeof(WINE_COLLECTIONSTORE));
             CRYPT_InitStore(&store->hdr, dwFlags, StoreTypeCollection, &CollectionStoreVtbl);
-            store->hdr.certs.addContext    = CRYPT_CollectionAddCert;
-            store->hdr.certs.enumContext   = CRYPT_CollectionEnumCert;
-            store->hdr.certs.deleteContext = CRYPT_CollectionDeleteCert;
-            store->hdr.crls.addContext     = CRYPT_CollectionAddCRL;
-            store->hdr.crls.enumContext    = CRYPT_CollectionEnumCRL;
-            store->hdr.crls.deleteContext  = CRYPT_CollectionDeleteCRL;
-            store->hdr.ctls.addContext     = CRYPT_CollectionAddCTL;
-            store->hdr.ctls.enumContext    = CRYPT_CollectionEnumCTL;
-            store->hdr.ctls.deleteContext  = CRYPT_CollectionDeleteCTL;
             InitializeCriticalSection(&store->cs);
             store->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": PWINE_COLLECTIONSTORE->cs");
             list_init(&store->stores);
