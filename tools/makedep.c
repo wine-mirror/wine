@@ -1096,6 +1096,16 @@ static void output_sources(void)
             if (strendswith( source->name, ".mc" )) output_filename( source->filename, &column );
         output( "\n" );
     }
+
+    if (find_src_file( "dlldata.o" ))
+    {
+        output( "dlldata.c: $(WIDL) Makefile.in\n" );
+        column = output( "\t$(WIDL) $(IDLFLAGS) --dlldata-only -o $@" );
+        LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
+            if (strendswith( source->name, ".idl" ) && find_target_src_file( source->name, "_p.c" ))
+                output_filename( source->filename, &column );
+        output( "\n" );
+    }
 }
 
 
