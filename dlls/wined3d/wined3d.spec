@@ -275,7 +275,7 @@
 @ cdecl wined3d_vertex_declaration_get_parent(ptr)
 @ cdecl wined3d_vertex_declaration_incref(ptr)
 
-@ cdecl wined3d_volume_create(ptr long long long long long long ptr ptr ptr)
+@ cdecl wined3d_volume_create(ptr long long long long long long long ptr ptr ptr)
 @ cdecl wined3d_volume_decref(ptr)
 @ cdecl wined3d_volume_from_resource(ptr)
 @ cdecl wined3d_volume_get_parent(ptr)
