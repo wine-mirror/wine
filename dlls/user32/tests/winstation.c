@@ -662,8 +662,16 @@ static void test_inputdesktop2(void)
     ok(thread_desk != NULL, "GetThreadDesktop failed!\n");
     w1 = GetProcessWindowStation();
     ok(w1 != NULL, "GetProcessWindowStation failed!\n");
+    SetLastError(0xdeadbeef);
     w2 = CreateWindowStation("winsta_test", 0, WINSTA_ALL_ACCESS, NULL);
-    ok(w2 != NULL, "CreateWindowStation failed!\n");
+    ret = GetLastError();
+    ok(w2 != NULL || ret == ERROR_ACCESS_DENIED, "CreateWindowStation failed (%u)\n", ret);
+    if (!w2)
+    {
+        win_skip("Not enough privileges for CreateWindowStation\n");
+        return;
+    }
+
     ret = EnumDesktopsA(GetProcessWindowStation(), desktop_callbackA, 0);
     ok(!ret, "EnumDesktopsA failed!\n");
     input_desk = OpenInputDesktop(0, FALSE, DESKTOP_ALL_ACCESS);
@@ -804,8 +812,15 @@ static void test_foregroundwindow(void)
 
     hdesks[0] = GetThreadDesktop(GetCurrentThreadId());
     ok(hdesks[0] != NULL, "OpenDesktop failed!\n");
+    SetLastError(0xdeadbeef);
     hdesks[1] = CreateDesktop("desk2", NULL, NULL, 0, DESKTOP_ALL_ACCESS, NULL);
-    ok(hdesks[1] != NULL, "CreateDesktop failed!\n");
+    ret = GetLastError();
+    ok(hdesks[1] != NULL || ret == ERROR_ACCESS_DENIED, "CreateDesktop failed (%u)\n", ret);
+    if(!hdesks[1])
+    {
+        win_skip("Not enough privileges for CreateDesktop\n");
+        return;
+    }
 
     for (thread_desk_id = 0; thread_desk_id < DESKTOPS; thread_desk_id++)
     {
