@@ -65,7 +65,7 @@ static DWORD CALLBACK host_object_proc(LPVOID p)
     hr = CoMarshalInterface(data->stream, &data->iid, data->object, MSHCTX_INPROC, NULL, data->marshal_flags);
 
     /* force the message queue to be created before signaling parent thread */
-    PeekMessage(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
+    PeekMessageA(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
 
     if(hr == S_OK)
         SetEvent(data->marshal_event);
@@ -76,7 +76,7 @@ static DWORD CALLBACK host_object_proc(LPVOID p)
         return hr;
     }
 
-    while (GetMessage(&msg, NULL, 0, 0))
+    while (GetMessageA(&msg, NULL, 0, 0))
     {
         if (msg.hwnd == NULL && msg.message == RELEASEMARSHALDATA)
         {
@@ -85,7 +85,7 @@ static DWORD CALLBACK host_object_proc(LPVOID p)
             SetEvent((HANDLE)msg.lParam);
         }
         else
-            DispatchMessage(&msg);
+            DispatchMessageA(&msg);
     }
 
     HeapFree(GetProcessHeap(), 0, data);
@@ -105,8 +105,8 @@ static DWORD start_host_object2(IStream *stream, REFIID riid, IUnknown *object, 
     data->iid = *riid;
     data->object = object;
     data->marshal_flags = marshal_flags;
-    data->marshal_event = events[0] = CreateEvent(NULL, FALSE, FALSE, NULL);
-    data->error_event   = events[1] = CreateEvent(NULL, FALSE, FALSE, NULL);
+    data->marshal_event = events[0] = CreateEventW(NULL, FALSE, FALSE, NULL);
+    data->error_event   = events[1] = CreateEventW(NULL, FALSE, FALSE, NULL);
     data->filter = filter;
 
     *thread = CreateThread(NULL, 0, host_object_proc, data, 0, &tid);
@@ -131,7 +131,7 @@ static DWORD start_host_object(IStream *stream, REFIID riid, IUnknown *object, M
 
 static void end_host_object(DWORD tid, HANDLE thread)
 {
-    BOOL ret = PostThreadMessage(tid, WM_QUIT, 0, 0);
+    BOOL ret = PostThreadMessageA(tid, WM_QUIT, 0, 0);
     ok(ret, "PostThreadMessage failed with error %d\n", GetLastError());
     /* be careful of races - don't return until hosting thread has terminated */
     WaitForSingleObject(thread, INFINITE);
