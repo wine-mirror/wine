@@ -822,6 +822,21 @@ static void test_foregroundwindow(void)
         return;
     }
 
+    ret = SystemParametersInfo(SPI_GETFOREGROUNDLOCKTIMEOUT, 0, &timeout_old, 0);
+    if(!ret)
+    {
+        win_skip("Skip tests on NT4\n");
+        CloseDesktop(hdesks[1]);
+        return;
+    }
+    trace("old timeout %d\n", timeout_old);
+    timeout = 0;
+    ret = SystemParametersInfo(SPI_SETFOREGROUNDLOCKTIMEOUT, 0, 0, SPIF_SENDCHANGE | SPIF_UPDATEINIFILE);
+    ok(ret, "set foreground lock timeout failed!\n");
+    ret = SystemParametersInfo(SPI_GETFOREGROUNDLOCKTIMEOUT, 0, &timeout, 0);
+    ok(ret, "get foreground lock timeout failed!\n");
+    ok(timeout == 0, "unexpected timeout %d\n", timeout);
+
     for (thread_desk_id = 0; thread_desk_id < DESKTOPS; thread_desk_id++)
     {
         param.hdesk = hdesks[thread_desk_id];
@@ -843,16 +858,6 @@ static void test_foregroundwindow(void)
     }
 
     trace("hwnd0 %p hwnd1 %p partner0 %p partner1 %p\n", hwnds[0], hwnds[1], partners[0], partners[1]);
-
-    ret = SystemParametersInfo(SPI_GETFOREGROUNDLOCKTIMEOUT, 0, &timeout_old, 0);
-    ok(ret, "get foreground lock timeout failed!\n");
-    trace("old timeout %d\n", timeout_old);
-    timeout = 0;
-    ret = SystemParametersInfo(SPI_SETFOREGROUNDLOCKTIMEOUT, 0, 0, SPIF_SENDCHANGE | SPIF_UPDATEINIFILE);
-    ok(ret, "set foreground lock timeout failed!\n");
-    ret = SystemParametersInfo(SPI_GETFOREGROUNDLOCKTIMEOUT, 0, &timeout, 0);
-    ok(ret, "get foreground lock timeout failed!\n");
-    ok(timeout == 0, "unexpected timeout %d\n", timeout);
 
     for (hwnd_id = 0; hwnd_id < DESKTOPS; hwnd_id++)
         for (thread_desk_id = 0; thread_desk_id < DESKTOPS; thread_desk_id++)
