@@ -21,7 +21,6 @@
 #include "winbase.h"
 #include "wincrypt.h"
 #include "wine/debug.h"
-#include "wine/list.h"
 #include "crypt32_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(context);
@@ -163,50 +162,30 @@ struct ContextList *ContextList_Create(
     return list;
 }
 
-static inline struct list *ContextList_ContextToEntry(const struct ContextList *list,
- const void *context)
-{
-    struct list *ret;
-
-    if (context)
-        ret = Context_GetExtra(context, list->contextSize);
-    else
-        ret = NULL;
-    return ret;
-}
-
-static inline void *ContextList_EntryToContext(const struct ContextList *list,
- struct list *entry)
-{
-    return (LPBYTE)entry - list->contextSize;
-}
-
 void *ContextList_Add(struct ContextList *list, void *toLink, void *toReplace)
 {
     context_t *context;
 
     TRACE("(%p, %p, %p)\n", list, toLink, toReplace);
 
-    context = Context_CreateLinkContext(list->contextSize, context_from_ptr(toLink), sizeof(struct list));
+    context = Context_CreateLinkContext(list->contextSize, context_from_ptr(toLink), 0);
     if (context)
     {
-        struct list *entry = ContextList_ContextToEntry(list, CONTEXT_FROM_BASE_CONTEXT(context));
-
         TRACE("adding %p\n", context);
         EnterCriticalSection(&list->cs);
         if (toReplace)
         {
-            struct list *existing = ContextList_ContextToEntry(list, toReplace);
+            context_t *existing = context_from_ptr(toReplace);
 
-            entry->prev = existing->prev;
-            entry->next = existing->next;
-            entry->prev->next = entry;
-            entry->next->prev = entry;
-            existing->prev = existing->next = existing;
+            context->u.entry.prev = existing->u.entry.prev;
+            context->u.entry.next = existing->u.entry.next;
+            context->u.entry.prev->next = &context->u.entry;
+            context->u.entry.next->prev = &context->u.entry;
+            list_init(&existing->u.entry);
             Context_Release(context_from_ptr(toReplace));
         }
         else
-            list_add_head(&list->contexts, entry);
+            list_add_head(&list->contexts, &context->u.entry);
         LeaveCriticalSection(&list->cs);
     }
     return CONTEXT_FROM_BASE_CONTEXT(context);
@@ -220,9 +199,7 @@ void *ContextList_Enum(struct ContextList *list, void *pPrev)
     EnterCriticalSection(&list->cs);
     if (pPrev)
     {
-        struct list *prevEntry = ContextList_ContextToEntry(list, pPrev);
-
-        listNext = list_next(&list->contexts, prevEntry);
+        listNext = list_next(&list->contexts, &context_from_ptr(pPrev)->u.entry);
         Context_Release(context_from_ptr(pPrev));
     }
     else
@@ -231,7 +208,7 @@ void *ContextList_Enum(struct ContextList *list, void *pPrev)
 
     if (listNext)
     {
-        ret = ContextList_EntryToContext(list, listNext);
+        ret = CONTEXT_FROM_BASE_CONTEXT(LIST_ENTRY(listNext, context_t, u.entry));
         Context_AddRef(context_from_ptr(ret));
     }
     else
@@ -239,35 +216,33 @@ void *ContextList_Enum(struct ContextList *list, void *pPrev)
     return ret;
 }
 
-BOOL ContextList_Remove(struct ContextList *list, void *context)
+BOOL ContextList_Remove(struct ContextList *list, void *ctx)
 {
-    struct list *entry = ContextList_ContextToEntry(list, context);
+    context_t *context = context_from_ptr(ctx);
     BOOL inList = FALSE;
 
     EnterCriticalSection(&list->cs);
-    if (!list_empty(entry))
+    if (!list_empty(&context->u.entry))
     {
-        list_remove(entry);
+        list_remove(&context->u.entry);
+        list_init(&context->u.entry);
         inList = TRUE;
     }
     LeaveCriticalSection(&list->cs);
-    if (inList)
-        list_init(entry);
+
     return inList;
 }
 
 static void ContextList_Empty(struct ContextList *list)
 {
-    struct list *entry, *next;
+    context_t *context, *next;
 
     EnterCriticalSection(&list->cs);
-    LIST_FOR_EACH_SAFE(entry, next, &list->contexts)
+    LIST_FOR_EACH_ENTRY_SAFE(context, next, &list->contexts, context_t, u.entry)
     {
-        const void *context = ContextList_EntryToContext(list, entry);
-
         TRACE("removing %p\n", context);
-        list_remove(entry);
-        Context_Release(context_from_ptr(context));
+        list_remove(&context->u.entry);
+        Context_Release(context);
     }
     LeaveCriticalSection(&list->cs);
 }

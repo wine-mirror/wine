@@ -19,6 +19,8 @@
 #ifndef __CRYPT32_PRIVATE_H__
 #define __CRYPT32_PRIVATE_H__
 
+#include "wine/list.h"
+
 /* a few asn.1 tags we need */
 #define ASN_BOOL            (ASN_UNIVERSAL | ASN_PRIMITIVE | 0x01)
 #define ASN_BITSTRING       (ASN_UNIVERSAL | ASN_PRIMITIVE | 0x03)
@@ -170,6 +172,9 @@ typedef struct _context_t {
     LONG ref;
     struct _context_t *linked;
     CONTEXT_PROPERTY_LIST *properties;
+    union {
+        struct list entry;
+    } u;
 } BASE_CONTEXT;
 
 static inline context_t *context_from_ptr(const void *ptr)

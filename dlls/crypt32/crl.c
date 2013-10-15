@@ -343,7 +343,7 @@ PCCRL_CONTEXT WINAPI CertDuplicateCRLContext(PCCRL_CONTEXT pCrlContext)
     return pCrlContext;
 }
 
-BOOL WINAPI CertFreeCRLContext( PCCRL_CONTEXT pCrlContext)
+BOOL WINAPI CertFreeCRLContext(PCCRL_CONTEXT pCrlContext)
 {
     BOOL ret = TRUE;
 
