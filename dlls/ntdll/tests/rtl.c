@@ -1494,6 +1494,12 @@ static void test_LdrAddRefDll(void)
     NTSTATUS status;
     BOOL ret;
 
+    if (!pLdrAddRefDll)
+    {
+        win_skip( "LdrAddRefDll not supported\n" );
+        return;
+    }
+
     mod = LoadLibraryA("comctl32.dll");
     ok(mod != NULL, "got %p\n", mod);
     ret = FreeLibrary(mod);
