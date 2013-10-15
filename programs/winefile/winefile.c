@@ -2658,7 +2658,7 @@ static void format_bytes(LPWSTR buffer, LONGLONG bytes)
 			fBytes = ((float)bytes)/1048576.f+.5f;
 			resid = IDS_UNIT_MB;
 		}
-		else if (bytes >= 1024)		/* 1 kB */
+		else /* bytes >= 1024 */	/* 1 kB */
 		{
 			fBytes = ((float)bytes)/1024.f+.5f;
 			resid = IDS_UNIT_KB;
