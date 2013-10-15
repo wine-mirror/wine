@@ -402,9 +402,6 @@ void *Context_CreateDataContext(size_t contextSize, const context_vtbl_t *vtbl) 
  */
 context_t *Context_CreateLinkContext(unsigned contextSize, context_t *linked) DECLSPEC_HIDDEN;
 
-/* Gets the context linked to by context, which must be a link context. */
-void *Context_GetLinkedContext(void*) DECLSPEC_HIDDEN;
-
 /* Copies properties from fromContext to toContext. */
 void Context_CopyProperties(const void *to, const void *from) DECLSPEC_HIDDEN;
 

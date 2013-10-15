@@ -98,14 +98,14 @@ static BOOL CRYPT_CollectionAddContext(WINE_COLLECTIONSTORE *store,
     ret = FALSE;
     if (toReplace)
     {
-        void *existingLinked = Context_GetLinkedContext(toReplace);
+        context_t *existingLinked = context_from_ptr(toReplace)->linked;
         CONTEXT_FUNCS *contextFuncs;
 
         storeEntry = context_from_ptr(toReplace)->u.ptr;
         contextFuncs = (CONTEXT_FUNCS*)((LPBYTE)storeEntry->store->vtbl +
          contextFuncsOffset);
         ret = contextFuncs->addContext(storeEntry->store, context,
-         existingLinked, (const void **)&childContext);
+         context_ptr(existingLinked), (const void **)&childContext);
     }
     else
     {
@@ -147,7 +147,8 @@ static void *CRYPT_CollectionAdvanceEnum(WINE_COLLECTIONSTORE *store,
  WINE_STORE_LIST_ENTRY *storeEntry, const CONTEXT_FUNCS *contextFuncs,
  const WINE_CONTEXT_INTERFACE *contextInterface, void *pPrev, size_t contextSize)
 {
-    void *ret, *child;
+    context_t *child;
+    void *ret, *tmp;
     struct list *storeNext = list_next(&store->stores, &storeEntry->entry);
 
     TRACE("(%p, %p, %p)\n", store, storeEntry, pPrev);
@@ -157,17 +158,21 @@ static void *CRYPT_CollectionAdvanceEnum(WINE_COLLECTIONSTORE *store,
         /* Ref-counting funny business: "duplicate" (addref) the child, because
          * the free(pPrev) below can cause the ref count to become negative.
          */
-        child = Context_GetLinkedContext(pPrev);
-        Context_AddRef(context_from_ptr(child));
-        child = contextFuncs->enumContext(storeEntry->store, child);
+        child = context_from_ptr(pPrev)->linked;
+        Context_AddRef(child);
+        tmp = contextFuncs->enumContext(storeEntry->store, context_ptr(child));
+        child = tmp ? context_from_ptr(tmp) : NULL;
         Context_Release(context_from_ptr(pPrev));
         pPrev = NULL;
     }
     else
-        child = contextFuncs->enumContext(storeEntry->store, NULL);
+    {
+        tmp = contextFuncs->enumContext(storeEntry->store, NULL);
+        child = tmp ? context_from_ptr(tmp) : NULL;
+    }
     if (child) {
-        ret = CRYPT_CollectionCreateContextFromChild(store, storeEntry, context_from_ptr(child), contextSize);
-        Context_Release(context_from_ptr(child));
+        ret = CRYPT_CollectionCreateContextFromChild(store, storeEntry, child, contextSize);
+        Context_Release(child);
     }
     else
     {
@@ -259,13 +264,13 @@ static void *Collection_enumCert(WINECRYPT_CERTSTORE *store, void *pPrev)
 static BOOL Collection_deleteCert(WINECRYPT_CERTSTORE *store, context_t *context)
 {
     cert_t *cert = (cert_t*)context;
+    cert_t *linked;
     BOOL ret;
-    PCCERT_CONTEXT linked;
 
     TRACE("(%p, %p)\n", store, cert);
 
-    linked = Context_GetLinkedContext(&cert->ctx);
-    ret = CertDeleteCertificateFromStore(linked);
+    linked = (cert_t*)context->linked;
+    ret = CertDeleteCertificateFromStore(&linked->ctx);
     Context_Release(&cert->base);
     return ret;
 }
@@ -332,14 +337,13 @@ static void *Collection_enumCRL(WINECRYPT_CERTSTORE *store, void *pPrev)
 
 static BOOL Collection_deleteCRL(WINECRYPT_CERTSTORE *store, context_t *context)
 {
-    crl_t *crl = (crl_t*)context;
+    crl_t *crl = (crl_t*)context, *linked;
     BOOL ret;
-    PCCRL_CONTEXT linked;
 
     TRACE("(%p, %p)\n", store, crl);
 
-    linked = Context_GetLinkedContext(&crl->ctx);
-    ret = CertDeleteCRLFromStore(linked);
+    linked = (crl_t*)context->linked;
+    ret = CertDeleteCRLFromStore(&linked->ctx);
     Context_Release(&crl->base);
     return ret;
 }
@@ -406,14 +410,13 @@ static void *Collection_enumCTL(WINECRYPT_CERTSTORE *store, void *pPrev)
 
 static BOOL Collection_deleteCTL(WINECRYPT_CERTSTORE *store, context_t *context)
 {
-    ctl_t *ctl = (ctl_t*)context;
+    ctl_t *ctl = (ctl_t*)context, *linked;
     BOOL ret;
-    PCCTL_CONTEXT linked;
 
     TRACE("(%p, %p)\n", store, ctl);
 
-    linked = Context_GetLinkedContext(&ctl->ctx);
-    ret = CertDeleteCTLFromStore(linked);
+    linked = (ctl_t*)context->linked;
+    ret = CertDeleteCTLFromStore(&linked->ctx);
     Context_Release(&ctl->base);
     return ret;
 }
