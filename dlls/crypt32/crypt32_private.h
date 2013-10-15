@@ -174,6 +174,7 @@ typedef struct _context_t {
     CONTEXT_PROPERTY_LIST *properties;
     union {
         struct list entry;
+        void *ptr;
     } u;
 } BASE_CONTEXT;
 
@@ -395,17 +396,12 @@ DWORD cert_name_to_str_with_indent(DWORD dwCertEncodingType, DWORD indent,
  */
 void *Context_CreateDataContext(size_t contextSize, const context_vtbl_t *vtbl) DECLSPEC_HIDDEN;
 
-/* Creates a new link context with extra bytes.  The context refers to linked
+/* Creates a new link context.  The context refers to linked
  * rather than owning its own properties.  If addRef is TRUE (which ordinarily
  * it should be) linked is addref'd.
  * Free with Context_Release.
  */
-context_t *Context_CreateLinkContext(unsigned contextSize, context_t *linked, unsigned extra) DECLSPEC_HIDDEN;
-
-/* Returns a pointer to the extra bytes allocated with context, which must be
- * a link context.
- */
-void *Context_GetExtra(const void *context, size_t contextSize) DECLSPEC_HIDDEN;
+context_t *Context_CreateLinkContext(unsigned contextSize, context_t *linked) DECLSPEC_HIDDEN;
 
 /* Gets the context linked to by context, which must be a link context. */
 void *Context_GetLinkedContext(void*) DECLSPEC_HIDDEN;

@@ -50,13 +50,13 @@ void *Context_CreateDataContext(size_t contextSize, const context_vtbl_t *vtbl)
     return CONTEXT_FROM_BASE_CONTEXT(context);
 }
 
-context_t *Context_CreateLinkContext(unsigned int contextSize, context_t *linked, unsigned int extra)
+context_t *Context_CreateLinkContext(unsigned int contextSize, context_t *linked)
 {
     context_t *context;
 
-    TRACE("(%d, %p, %d)\n", contextSize, linked, extra);
+    TRACE("(%d, %p)\n", contextSize, linked);
 
-    context = CryptMemAlloc(contextSize + sizeof(BASE_CONTEXT) + extra);
+    context = CryptMemAlloc(sizeof(context_t) + contextSize);
     if (!context)
         return NULL;
 
@@ -168,7 +168,7 @@ void *ContextList_Add(struct ContextList *list, void *toLink, void *toReplace)
 
     TRACE("(%p, %p, %p)\n", list, toLink, toReplace);
 
-    context = Context_CreateLinkContext(list->contextSize, context_from_ptr(toLink), 0);
+    context = Context_CreateLinkContext(list->contextSize, context_from_ptr(toLink));
     if (context)
     {
         TRACE("adding %p\n", context);
