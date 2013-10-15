@@ -37,8 +37,21 @@ static void CRL_free(context_t *context)
     LocalFree(crl->ctx.pCrlInfo);
 }
 
+static context_t *CRL_clone(context_t *context, WINECRYPT_CERTSTORE *store)
+{
+    crl_t *crl;
+
+    crl = (crl_t*)Context_CreateLinkContext(sizeof(CRL_CONTEXT), context);
+    if(!crl)
+        return NULL;
+
+    crl->ctx.hCertStore = store;
+    return &crl->base;
+}
+
 static const context_vtbl_t crl_vtbl = {
-    CRL_free
+    CRL_free,
+    CRL_clone
 };
 
 PCCRL_CONTEXT WINAPI CertCreateCRLContext(DWORD dwCertEncodingType,

@@ -150,15 +150,13 @@ static BOOL MemStore_addCert(WINECRYPT_CERTSTORE *store, void *cert,
 
     TRACE("(%p, %p, %p, %p)\n", store, cert, toReplace, ppStoreContext);
 
-    context = ContextList_Add(ms->certs, cert, toReplace);
-    if (context)
-    {
-        context->hCertStore = store;
-        if (ppStoreContext) {
-            *ppStoreContext = CertDuplicateCertificateContext(context);
-        }
-    }
-    return context != 0;
+    context = ContextList_Add(ms->certs, cert, toReplace, store);
+    if (!context)
+        return FALSE;
+
+    if (ppStoreContext)
+        *ppStoreContext = CertDuplicateCertificateContext(context);
+    return TRUE;
 }
 
 static void *MemStore_enumCert(WINECRYPT_CERTSTORE *store, void *pPrev)
@@ -194,14 +192,13 @@ static BOOL MemStore_addCRL(WINECRYPT_CERTSTORE *store, void *crl,
 
     TRACE("(%p, %p, %p, %p)\n", store, crl, toReplace, ppStoreContext);
 
-    context = ContextList_Add(ms->crls, crl, toReplace);
-    if (context)
-    {
-        context->hCertStore = store;
-        if (ppStoreContext)
-            *ppStoreContext = CertDuplicateCRLContext(context);
-    }
-    return context != 0;
+    context = ContextList_Add(ms->crls, crl, toReplace, store);
+    if (!context)
+        return FALSE;
+
+    if (ppStoreContext)
+        *ppStoreContext = CertDuplicateCRLContext(context);
+    return TRUE;
 }
 
 static void *MemStore_enumCRL(WINECRYPT_CERTSTORE *store, void *pPrev)
@@ -237,14 +234,13 @@ static BOOL MemStore_addCTL(WINECRYPT_CERTSTORE *store, void *ctl,
 
     TRACE("(%p, %p, %p, %p)\n", store, ctl, toReplace, ppStoreContext);
 
-    context = ContextList_Add(ms->ctls, ctl, toReplace);
-    if (context)
-    {
-        context->hCertStore = store;
-        if (ppStoreContext)
-            *ppStoreContext = CertDuplicateCTLContext(context);
-    }
-    return context != 0;
+    context = ContextList_Add(ms->ctls, ctl, toReplace, store);
+    if (!context)
+        return FALSE;
+
+    if (ppStoreContext)
+        *ppStoreContext = CertDuplicateCTLContext(context);
+    return TRUE;
 }
 
 static void *MemStore_enumCTL(WINECRYPT_CERTSTORE *store, void *pPrev)

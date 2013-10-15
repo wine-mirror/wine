@@ -117,8 +117,21 @@ static void Cert_free(context_t *context)
     LocalFree(cert->ctx.pCertInfo);
 }
 
+static context_t *Cert_clone(context_t *context, WINECRYPT_CERTSTORE *store)
+{
+    cert_t *cert;
+
+    cert = (cert_t*)Context_CreateLinkContext(sizeof(CERT_CONTEXT), context);
+    if(!cert)
+        return NULL;
+
+    cert->ctx.hCertStore = store;
+    return &cert->base;
+}
+
 static const context_vtbl_t cert_vtbl = {
-    Cert_free
+    Cert_free,
+    Cert_clone
 };
 
 BOOL WINAPI CertAddCertificateContextToStore(HCERTSTORE hCertStore,

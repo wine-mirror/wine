@@ -159,12 +159,16 @@ void crypt_sip_free(void) DECLSPEC_HIDDEN;
 void root_store_free(void) DECLSPEC_HIDDEN;
 void default_chain_engine_free(void) DECLSPEC_HIDDEN;
 
+/* (Internal) certificate store types and functions */
+struct WINE_CRYPTCERTSTORE;
+
 typedef struct _CONTEXT_PROPERTY_LIST CONTEXT_PROPERTY_LIST;
 
 typedef struct _context_t context_t;
 
 typedef struct {
     void (*free)(context_t*);
+    struct _context_t *(*clone)(context_t*,struct WINE_CRYPTCERTSTORE*);
 } context_vtbl_t;
 
 typedef struct _context_t {
@@ -256,9 +260,6 @@ typedef struct _WINE_CONTEXT_INTERFACE
 extern const WINE_CONTEXT_INTERFACE *pCertInterface DECLSPEC_HIDDEN;
 extern const WINE_CONTEXT_INTERFACE *pCRLInterface DECLSPEC_HIDDEN;
 extern const WINE_CONTEXT_INTERFACE *pCTLInterface DECLSPEC_HIDDEN;
-
-/* (Internal) certificate store types and functions */
-struct WINE_CRYPTCERTSTORE;
 
 typedef struct WINE_CRYPTCERTSTORE * (*StoreOpenFunc)(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara);
@@ -454,7 +455,7 @@ struct ContextList;
 struct ContextList *ContextList_Create(
  const WINE_CONTEXT_INTERFACE *contextInterface, size_t contextSize) DECLSPEC_HIDDEN;
 
-void *ContextList_Add(struct ContextList *list, void *toLink, void *toReplace) DECLSPEC_HIDDEN;
+void *ContextList_Add(struct ContextList *list, void *toLink, void *toReplace, struct WINE_CRYPTCERTSTORE *store) DECLSPEC_HIDDEN;
 
 void *ContextList_Enum(struct ContextList *list, void *pPrev) DECLSPEC_HIDDEN;
 

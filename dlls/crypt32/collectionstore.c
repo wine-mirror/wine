@@ -76,7 +76,7 @@ static void *CRYPT_CollectionCreateContextFromChild(WINE_COLLECTIONSTORE *store,
 {
     context_t *ret;
 
-    ret = Context_CreateLinkContext(contextSize, child);
+    ret = child->vtbl->clone(child, &store->hdr);
     if (!ret)
         return NULL;
 
@@ -210,8 +210,6 @@ static BOOL Collection_addCert(WINECRYPT_CERTSTORE *store, void *cert,
         PCERT_CONTEXT context =
          CRYPT_CollectionCreateContextFromChild(cs, storeEntry, context_from_ptr(childContext), sizeof(CERT_CONTEXT));
 
-        if (context)
-            context->hCertStore = store;
         *ppStoreContext = context;
     }
     CertFreeCertificateContext(childContext);
@@ -287,8 +285,6 @@ static BOOL Collection_addCRL(WINECRYPT_CERTSTORE *store, void *crl,
         PCRL_CONTEXT context =
          CRYPT_CollectionCreateContextFromChild(cs, storeEntry, context_from_ptr(childContext), sizeof(CRL_CONTEXT));
 
-        if (context)
-            context->hCertStore = store;
         *ppStoreContext = context;
     }
     CertFreeCRLContext(childContext);
@@ -363,8 +359,6 @@ static BOOL Collection_addCTL(WINECRYPT_CERTSTORE *store, void *ctl,
         PCTL_CONTEXT context =
          CRYPT_CollectionCreateContextFromChild(cs, storeEntry, context_from_ptr(childContext), sizeof(CTL_CONTEXT));
 
-        if (context)
-            context->hCertStore = store;
         *ppStoreContext = context;
     }
     CertFreeCTLContext(childContext);
