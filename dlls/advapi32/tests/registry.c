@@ -31,6 +31,11 @@
 #include "winerror.h"
 #include "aclapi.h"
 
+#undef SE_BACKUP_NAME
+#undef SE_RESTORE_NAME
+#define SE_BACKUP_NAME "SeBackupPrivilege"
+#define SE_RESTORE_NAME "SeRestorePrivilege"
+
 #define IS_HKCR(hk) ((UINT_PTR)hk > 0 && ((UINT_PTR)hk & 3) == 2)
 
 static HKEY hkey_main;
@@ -1084,8 +1089,8 @@ static void test_reg_create_key(void)
     ok(!ret, "RegCreateKeyExA failed with error %d\n", ret);
 
     /* clean up */
-    RegDeleteKey(hkey2, "");
-    RegDeleteKey(hkey1, "");
+    RegDeleteKeyA(hkey2, "");
+    RegDeleteKeyA(hkey1, "");
     RegCloseKey(hkey2);
     RegCloseKey(hkey1);
 
@@ -1103,8 +1108,8 @@ static void test_reg_create_key(void)
     ok(!ret, "RegCreateKeyExA failed with error %d\n", ret);
 
     /* clean up */
-    RegDeleteKey(hkey2, "");
-    RegDeleteKey(hkey1, "");
+    RegDeleteKeyA(hkey2, "");
+    RegDeleteKeyA(hkey1, "");
     RegCloseKey(hkey2);
     RegCloseKey(hkey1);
 
@@ -1114,7 +1119,7 @@ static void test_reg_create_key(void)
         ok(ret == ERROR_BAD_PATHNAME, "expected ERROR_BAD_PATHNAME, got %d\n", ret);
     else {
         ok(!ret, "RegCreateKeyExA failed with error %d\n", ret);
-        RegDeleteKey(hkey1, NULL);
+        RegDeleteKeyA(hkey1, NULL);
         RegCloseKey(hkey1);
     }
 
@@ -1248,7 +1253,7 @@ static void test_reg_delete_key(void)
 {
     DWORD ret;
 
-    ret = RegDeleteKey(hkey_main, NULL);
+    ret = RegDeleteKeyA(hkey_main, NULL);
 
     /* There is a bug in NT4 and W2K that doesn't check if the subkey is NULL. If
      * there are also no subkeys available it will delete the key pointed to by hkey_main.
@@ -1271,7 +1276,7 @@ static void test_reg_save_key(void)
 {
     DWORD ret;
 
-    ret = RegSaveKey(hkey_main, "saved_key", NULL);
+    ret = RegSaveKeyA(hkey_main, "saved_key", NULL);
     ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
 }
 
@@ -1280,10 +1285,10 @@ static void test_reg_load_key(void)
     DWORD ret;
     HKEY hkHandle;
 
-    ret = RegLoadKey(HKEY_LOCAL_MACHINE, "Test", "saved_key");
+    ret = RegLoadKeyA(HKEY_LOCAL_MACHINE, "Test", "saved_key");
     ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
 
-    ret = RegOpenKey(HKEY_LOCAL_MACHINE, "Test", &hkHandle);
+    ret = RegOpenKeyA(HKEY_LOCAL_MACHINE, "Test", &hkHandle);
     ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
 
     RegCloseKey(hkHandle);
@@ -1293,11 +1298,11 @@ static void test_reg_unload_key(void)
 {
     DWORD ret;
 
-    ret = RegUnLoadKey(HKEY_LOCAL_MACHINE, "Test");
+    ret = RegUnLoadKeyA(HKEY_LOCAL_MACHINE, "Test");
     ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
 
-    DeleteFile("saved_key");
-    DeleteFile("saved_key.LOG");
+    DeleteFileA("saved_key");
+    DeleteFileA("saved_key.LOG");
 }
 
 static BOOL set_privileges(LPCSTR privilege, BOOL set)
@@ -1309,7 +1314,7 @@ static BOOL set_privileges(LPCSTR privilege, BOOL set)
     if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken))
         return FALSE;
 
-    if(!LookupPrivilegeValue(NULL, privilege, &luid))
+    if(!LookupPrivilegeValueA(NULL, privilege, &luid))
     {
         CloseHandle(hToken);
         return FALSE;
@@ -1704,7 +1709,7 @@ static void test_rw_order(void)
     ok(!RegEnumValueA(hKey, 3, value_buf, &value_len, NULL, NULL, NULL, NULL), "RegEnumValueA failed\n");
     todo_wine ok(strcmp(value_buf, "B") == 0, "Expected name \"B\", got %s\n", value_buf);
 
-    ok(!RegDeleteKey(HKEY_CURRENT_USER, keyname), "Failed to delete key\n");
+    ok(!RegDeleteKeyA(HKEY_CURRENT_USER, keyname), "Failed to delete key\n");
 }
 
 static void test_symlinks(void)
@@ -1822,10 +1827,10 @@ static void test_symlinks(void)
                            KEY_ALL_ACCESS, NULL, &key, NULL );
     ok( err == ERROR_ALREADY_EXISTS, "RegCreateKeyEx wrong error %u\n", err );
 
-    err = RegDeleteKey( hkey_main, "target" );
+    err = RegDeleteKeyA( hkey_main, "target" );
     ok( err == ERROR_SUCCESS, "RegDeleteKey failed error %u\n", err );
 
-    err = RegDeleteKey( hkey_main, "link" );
+    err = RegDeleteKeyA( hkey_main, "link" );
     ok( err == ERROR_FILE_NOT_FOUND, "RegDeleteKey wrong error %u\n", err );
 
     status = pNtDeleteKey( link );
@@ -2362,7 +2367,7 @@ static void test_classesroot(void)
     RegCloseKey( hklmsub1 );
 
     /* delete subkey1 from hkcr (should point at user's classes) */
-    res = RegDeleteKey(hkcr, "subkey1");
+    res = RegDeleteKeyA(hkcr, "subkey1");
     ok(res == ERROR_SUCCESS, "RegDeleteKey failed: %d\n", res);
 
     /* confirm key was removed in hkey but not hklm */
@@ -2373,7 +2378,7 @@ static void test_classesroot(void)
     ok(!IS_HKCR(hklmsub1), "hkcr mask set in %p\n", hklmsub1);
 
     /* delete subkey1 from hkcr again (which should now point at hklm) */
-    res = RegDeleteKey(hkcr, "subkey1");
+    res = RegDeleteKeyA(hkcr, "subkey1");
     ok(res == ERROR_SUCCESS, "RegDeleteKey failed: %d\n", res);
 
     /* confirm hkey was removed in hklm */

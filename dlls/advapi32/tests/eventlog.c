@@ -761,11 +761,11 @@ static void test_readwrite(void)
     }
 
     SetLastError(0xdeadbeef);
-    ret = ReportEvent(handle, 0x20, 0, 0, NULL, 0, 0, NULL, NULL);
+    ret = ReportEventA(handle, 0x20, 0, 0, NULL, 0, 0, NULL, NULL);
     if (!ret && GetLastError() == ERROR_CRC)
     {
         win_skip("Win7 fails when using incorrect event types\n");
-        ret = ReportEvent(handle, 0, 0, 0, NULL, 0, 0, NULL, NULL);
+        ret = ReportEventA(handle, 0, 0, 0, NULL, 0, 0, NULL, NULL);
         ok(ret, "Expected success : %d\n", GetLastError());
     }
     else
@@ -822,9 +822,9 @@ static void test_readwrite(void)
         ok(handle != NULL, "Expected a handle\n");
 
         SetLastError(0xdeadbeef);
-        ret = ReportEvent(handle, read_write[i].evt_type, read_write[i].evt_cat,
-                          read_write[i].evt_id, run_sidtests ? user : NULL,
-                          read_write[i].evt_numstrings, 0, read_write[i].evt_strings, NULL);
+        ret = ReportEventA(handle, read_write[i].evt_type, read_write[i].evt_cat,
+                           read_write[i].evt_id, run_sidtests ? user : NULL,
+                           read_write[i].evt_numstrings, 0, read_write[i].evt_strings, NULL);
         ok(ret, "Expected ReportEvent success : %d\n", GetLastError());
 
         count = 0xdeadbeef;

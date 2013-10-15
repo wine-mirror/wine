@@ -166,7 +166,7 @@ static void test_open_svc(void)
     /* Try to open the service with this displayname, unless the displayname equals
      * the servicename as that would defeat the purpose of this test.
      */
-    if (!lstrcmpi(spooler, displayname))
+    if (!lstrcmpiA(spooler, displayname))
     {
         skip("displayname equals servicename\n");
         CloseServiceHandle(scm_handle);
@@ -701,7 +701,7 @@ static void test_get_displayname(void)
     SetLastError(0xdeadbeef);
     ret = GetServiceDisplayNameA(scm_handle, servicename, displayname, &displaysize);
     ok(ret, "Expected success, got error %u\n", GetLastError());
-    ok(!lstrcmpi(displayname, servicename),
+    ok(!lstrcmpiA(displayname, servicename),
        "Expected displayname to be %s, got %s\n", servicename, displayname);
 
     /* Delete the service */
@@ -869,7 +869,7 @@ static void test_get_servicekeyname(void)
     {
         ok(strlen(servicename) == tempsize/2,
            "Expected the buffer to be twice the length of the string\n") ;
-        ok(!lstrcmpi(servicename, spooler), "Expected %s, got %s\n", spooler, servicename);
+        ok(!lstrcmpiA(servicename, spooler), "Expected %s, got %s\n", spooler, servicename);
         ok(servicesize == (tempsize * 2),
            "Expected servicesize not to change if buffer not insufficient\n") ;
     }
@@ -1057,9 +1057,9 @@ static void test_enum_svc(void)
     DWORD neededW, returnedW;
     DWORD tempneeded, tempreturned, missing;
     DWORD servicecountactive, servicecountinactive;
-    ENUM_SERVICE_STATUS *services;
+    ENUM_SERVICE_STATUSA *services;
     ENUM_SERVICE_STATUSW *servicesW;
-    ENUM_SERVICE_STATUS_PROCESS *exservices;
+    ENUM_SERVICE_STATUS_PROCESSA *exservices;
     UINT i;
 
     /* All NULL or wrong  */
@@ -1289,7 +1289,7 @@ static void test_enum_svc(void)
 
     /* Allocate less than the needed bytes and don't specify a resume handle */
     services = HeapAlloc(GetProcessHeap(), 0, tempneeded);
-    bufsize = (tempreturned - 1) * sizeof(ENUM_SERVICE_STATUS);
+    bufsize = (tempreturned - 1) * sizeof(ENUM_SERVICE_STATUSA);
     needed = 0xdeadbeef;
     returned = 0xdeadbeef;
     SetLastError(0xdeadbeef);
@@ -1302,7 +1302,7 @@ static void test_enum_svc(void)
        "Expected ERROR_MORE_DATA, got %d\n", GetLastError());
 
     /* Allocate less than the needed bytes, this time with a correct resume handle */
-    bufsize = (tempreturned - 1) * sizeof(ENUM_SERVICE_STATUS);
+    bufsize = (tempreturned - 1) * sizeof(ENUM_SERVICE_STATUSA);
     needed = 0xdeadbeef;
     returned = 0xdeadbeef;
     resume = 0;
@@ -1604,7 +1604,7 @@ static void test_enum_svc(void)
 
     /* Allocate less than the needed bytes and don't specify a resume handle */
     exservices = HeapAlloc(GetProcessHeap(), 0, tempneeded);
-    bufsize = (tempreturned - 1) * sizeof(ENUM_SERVICE_STATUS);
+    bufsize = (tempreturned - 1) * sizeof(ENUM_SERVICE_STATUSA);
     needed = 0xdeadbeef;
     returned = 0xdeadbeef;
     SetLastError(0xdeadbeef);
@@ -1617,7 +1617,7 @@ static void test_enum_svc(void)
        "Expected ERROR_MORE_DATA, got %d\n", GetLastError());
 
     /* Allocate less than the needed bytes, this time with a correct resume handle */
-    bufsize = (tempreturned - 1) * sizeof(ENUM_SERVICE_STATUS);
+    bufsize = (tempreturned - 1) * sizeof(ENUM_SERVICE_STATUSA);
     needed = 0xdeadbeef;
     returned = 0xdeadbeef;
     resume = 0;

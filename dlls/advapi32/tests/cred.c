@@ -187,7 +187,7 @@ static void test_CredReadDomainCredentialsA(void)
     char target_name[] = "no_such_target";
     CREDENTIAL_TARGET_INFORMATIONA info = {target_name, NULL, target_name, NULL, NULL, NULL, NULL, 0, 0, NULL};
     DWORD count;
-    PCREDENTIAL* creds;
+    PCREDENTIALA* creds;
 
     if (!pCredReadDomainCredentialsA)
     {
@@ -744,18 +744,19 @@ static void test_CredIsMarshaledCredentialA(void)
 START_TEST(cred)
 {
     DWORD persists[CRED_TYPE_MAXIMUM];
+    HMODULE mod = GetModuleHandleA("advapi32.dll");
 
-    pCredEnumerateA = (void *)GetProcAddress(GetModuleHandle("advapi32.dll"), "CredEnumerateA");
-    pCredFree = (void *)GetProcAddress(GetModuleHandle("advapi32.dll"), "CredFree");
-    pCredGetSessionTypes = (void *)GetProcAddress(GetModuleHandle("advapi32.dll"), "CredGetSessionTypes");
-    pCredWriteA = (void *)GetProcAddress(GetModuleHandle("advapi32.dll"), "CredWriteA");
-    pCredDeleteA = (void *)GetProcAddress(GetModuleHandle("advapi32.dll"), "CredDeleteA");
-    pCredReadA = (void *)GetProcAddress(GetModuleHandle("advapi32.dll"), "CredReadA");
-    pCredRenameA = (void *)GetProcAddress(GetModuleHandle("advapi32.dll"), "CredRenameA");
-    pCredReadDomainCredentialsA = (void *)GetProcAddress(GetModuleHandle("advapi32.dll"), "CredReadDomainCredentialsA");
-    pCredMarshalCredentialA = (void *)GetProcAddress(GetModuleHandle("advapi32.dll"), "CredMarshalCredentialA");
-    pCredUnmarshalCredentialA = (void *)GetProcAddress(GetModuleHandle("advapi32.dll"), "CredUnmarshalCredentialA");
-    pCredIsMarshaledCredentialA = (void *)GetProcAddress(GetModuleHandle("advapi32.dll"), "CredIsMarshaledCredentialA");
+    pCredEnumerateA = (void *)GetProcAddress(mod, "CredEnumerateA");
+    pCredFree = (void *)GetProcAddress(mod, "CredFree");
+    pCredGetSessionTypes = (void *)GetProcAddress(mod, "CredGetSessionTypes");
+    pCredWriteA = (void *)GetProcAddress(mod, "CredWriteA");
+    pCredDeleteA = (void *)GetProcAddress(mod, "CredDeleteA");
+    pCredReadA = (void *)GetProcAddress(mod, "CredReadA");
+    pCredRenameA = (void *)GetProcAddress(mod, "CredRenameA");
+    pCredReadDomainCredentialsA = (void *)GetProcAddress(mod, "CredReadDomainCredentialsA");
+    pCredMarshalCredentialA = (void *)GetProcAddress(mod, "CredMarshalCredentialA");
+    pCredUnmarshalCredentialA = (void *)GetProcAddress(mod, "CredUnmarshalCredentialA");
+    pCredIsMarshaledCredentialA = (void *)GetProcAddress(mod, "CredIsMarshaledCredentialA");
 
     if (!pCredEnumerateA || !pCredFree || !pCredWriteA || !pCredDeleteA || !pCredReadA)
     {

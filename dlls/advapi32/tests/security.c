@@ -101,7 +101,7 @@ static BOOL (WINAPI *pSetFileSecurityA)(LPCSTR, SECURITY_INFORMATION,
 static DWORD (WINAPI *pGetNamedSecurityInfoA)(LPSTR, SE_OBJECT_TYPE, SECURITY_INFORMATION,
                                               PSID*, PSID*, PACL*, PACL*,
                                               PSECURITY_DESCRIPTOR*);
-static DWORD (WINAPI *pSetNamedSecurityInfoA)(LPTSTR, SE_OBJECT_TYPE, SECURITY_INFORMATION,
+static DWORD (WINAPI *pSetNamedSecurityInfoA)(LPSTR, SE_OBJECT_TYPE, SECURITY_INFORMATION,
                                               PSID, PSID, PACL, PACL);
 static PDWORD (WINAPI *pGetSidSubAuthority)(PSID, DWORD);
 static PUCHAR (WINAPI *pGetSidSubAuthorityCount)(PSID);
@@ -157,7 +157,7 @@ static void init(void)
     pNtQueryObject = (void *)GetProcAddress( hntdll, "NtQueryObject" );
     pNtAccessCheck = (void *)GetProcAddress( hntdll, "NtAccessCheck" );
 
-    hmod = GetModuleHandle("advapi32.dll");
+    hmod = GetModuleHandleA("advapi32.dll");
     pAddAccessAllowedAceEx = (void *)GetProcAddress(hmod, "AddAccessAllowedAceEx");
     pAddAccessDeniedAceEx = (void *)GetProcAddress(hmod, "AddAccessDeniedAceEx");
     pAddAuditAccessAceEx = (void *)GetProcAddress(hmod, "AddAuditAccessAceEx");
@@ -342,9 +342,9 @@ static void test_trustee(void)
     GUID ObjectType = {0x12345678, 0x1234, 0x5678, {0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88}};
     GUID InheritedObjectType = {0x23456789, 0x2345, 0x6786, {0x2, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99}};
     GUID ZeroGuid;
-    OBJECTS_AND_NAME_ oan;
+    OBJECTS_AND_NAME_A oan;
     OBJECTS_AND_SID oas;
-    TRUSTEE trustee;
+    TRUSTEEA trustee;
     PSID psid;
     char szObjectTypeName[] = "ObjectTypeName";
     char szInheritedObjectTypeName[] = "InheritedObjectTypeName";
@@ -440,7 +440,7 @@ static void test_trustee(void)
     ok(trustee.MultipleTrusteeOperation == NO_MULTIPLE_TRUSTEE, "MultipleTrusteeOperation wrong\n");
     ok(trustee.TrusteeForm == TRUSTEE_IS_OBJECTS_AND_NAME, "TrusteeForm wrong\n");
     ok(trustee.TrusteeType == TRUSTEE_IS_UNKNOWN, "TrusteeType wrong\n");
-    ok(trustee.ptstrName == (LPTSTR)&oan, "ptstrName wrong\n");
+    ok(trustee.ptstrName == (LPSTR)&oan, "ptstrName wrong\n");
  
     ok(oan.ObjectsPresent == (ACE_OBJECT_TYPE_PRESENT | ACE_INHERITED_OBJECT_TYPE_PRESENT), "ObjectsPresent wrong\n");
     ok(oan.ObjectType == SE_KERNEL_OBJECT, "ObjectType wrong\n");
@@ -477,7 +477,7 @@ static void test_trustee(void)
     ok(trustee.MultipleTrusteeOperation == NO_MULTIPLE_TRUSTEE, "MultipleTrusteeOperation wrong\n");
     ok(trustee.TrusteeForm == TRUSTEE_IS_OBJECTS_AND_NAME, "TrusteeForm wrong\n");
     ok(trustee.TrusteeType == TRUSTEE_IS_UNKNOWN, "TrusteeType wrong\n");
-    ok(trustee.ptstrName == (LPTSTR)&oan, "ptstrName wrong\n");
+    ok(trustee.ptstrName == (LPSTR)&oan, "ptstrName wrong\n");
  
     ok(oan.ObjectsPresent == ACE_OBJECT_TYPE_PRESENT, "ObjectsPresent wrong\n");
     ok(oan.ObjectType == SE_KERNEL_OBJECT, "ObjectType wrong\n");
@@ -830,20 +830,20 @@ cleanup:
 
     /* Test file access permissions for a file with FILE_ATTRIBUTE_ARCHIVE */
     SetLastError(0xdeadbeef);
-    rc = GetTempPath(sizeof(wintmpdir), wintmpdir);
+    rc = GetTempPathA(sizeof(wintmpdir), wintmpdir);
     ok(rc, "GetTempPath error %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    rc = GetTempFileName(wintmpdir, "tmp", 0, file);
+    rc = GetTempFileNameA(wintmpdir, "tmp", 0, file);
     ok(rc, "GetTempFileName error %d\n", GetLastError());
 
-    rc = GetFileAttributes(file);
+    rc = GetFileAttributesA(file);
     rc &= ~FILE_ATTRIBUTE_NOT_CONTENT_INDEXED;
     ok(rc == FILE_ATTRIBUTE_ARCHIVE, "expected FILE_ATTRIBUTE_ARCHIVE got %#x\n", rc);
 
     retSize = 0xdeadbeef;
-    rc = GetFileSecurity(file, OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION,
-                         NULL, 0, &sdSize);
+    rc = GetFileSecurityA(file, OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION,
+                          NULL, 0, &sdSize);
     ok(!rc, "GetFileSecurity should fail\n");
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "expected ERROR_INSUFFICIENT_BUFFER got %d\n", GetLastError());
@@ -852,8 +852,8 @@ cleanup:
     sd = HeapAlloc(GetProcessHeap (), 0, sdSize);
     retSize = 0xdeadbeef;
     SetLastError(0xdeadbeef);
-    rc = GetFileSecurity(file, OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION,
-                         sd, sdSize, &retSize);
+    rc = GetFileSecurityA(file, OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION,
+                          sd, sdSize, &retSize);
     ok(rc, "GetFileSecurity error %d\n", GetLastError());
     ok(retSize == sdSize || broken(retSize == 0) /* NT4 */, "expected %d, got %d\n", sdSize, retSize);
 
@@ -938,7 +938,7 @@ cleanup:
 
     /* Test file access permissions for a file with FILE_ATTRIBUTE_READONLY */
     SetLastError(0xdeadbeef);
-    fh = CreateFile(file, FILE_READ_DATA, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_READONLY, 0);
+    fh = CreateFileA(file, FILE_READ_DATA, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_READONLY, 0);
     ok(fh != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
     retSize = 0xdeadbeef;
     SetLastError(0xdeadbeef);
@@ -948,21 +948,21 @@ cleanup:
     ok(retSize == 0, "expected 0, got %d\n", retSize);
     CloseHandle(fh);
 
-    rc = GetFileAttributes(file);
+    rc = GetFileAttributesA(file);
     rc &= ~FILE_ATTRIBUTE_NOT_CONTENT_INDEXED;
 todo_wine
     ok(rc == (FILE_ATTRIBUTE_ARCHIVE|FILE_ATTRIBUTE_READONLY),
        "expected FILE_ATTRIBUTE_ARCHIVE|FILE_ATTRIBUTE_READONLY got %#x\n", rc);
 
     SetLastError(0xdeadbeef);
-    rc = SetFileAttributes(file, FILE_ATTRIBUTE_ARCHIVE);
+    rc = SetFileAttributesA(file, FILE_ATTRIBUTE_ARCHIVE);
     ok(rc, "SetFileAttributes error %d\n", GetLastError());
     SetLastError(0xdeadbeef);
-    rc = DeleteFile(file);
+    rc = DeleteFileA(file);
     ok(rc, "DeleteFile error %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    fh = CreateFile(file, FILE_READ_DATA, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_READONLY, 0);
+    fh = CreateFileA(file, FILE_READ_DATA, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_READONLY, 0);
     ok(fh != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
     retSize = 0xdeadbeef;
     SetLastError(0xdeadbeef);
@@ -972,15 +972,15 @@ todo_wine
     ok(retSize == 0, "expected 0, got %d\n", retSize);
     CloseHandle(fh);
 
-    rc = GetFileAttributes(file);
+    rc = GetFileAttributesA(file);
     rc &= ~FILE_ATTRIBUTE_NOT_CONTENT_INDEXED;
     ok(rc == (FILE_ATTRIBUTE_ARCHIVE|FILE_ATTRIBUTE_READONLY),
        "expected FILE_ATTRIBUTE_ARCHIVE|FILE_ATTRIBUTE_READONLY got %#x\n", rc);
 
     retSize = 0xdeadbeef;
     SetLastError(0xdeadbeef);
-    rc = GetFileSecurity(file, OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION,
-                         sd, sdSize, &retSize);
+    rc = GetFileSecurityA(file, OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION,
+                          sd, sdSize, &retSize);
     ok(rc, "GetFileSecurity error %d\n", GetLastError());
     ok(retSize == sdSize || broken(retSize == 0) /* NT4 */, "expected %d, got %d\n", sdSize, retSize);
 
@@ -1047,14 +1047,14 @@ todo_wine {
     ok(granted == FILE_ALL_ACCESS, "expected FILE_ALL_ACCESS, got %#x\n", granted);
 }
     SetLastError(0xdeadbeef);
-    rc = DeleteFile(file);
+    rc = DeleteFileA(file);
     ok(!rc, "DeleteFile should fail\n");
     ok(GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
     SetLastError(0xdeadbeef);
-    rc = SetFileAttributes(file, FILE_ATTRIBUTE_ARCHIVE);
+    rc = SetFileAttributesA(file, FILE_ATTRIBUTE_ARCHIVE);
     ok(rc, "SetFileAttributes error %d\n", GetLastError());
     SetLastError(0xdeadbeef);
-    rc = DeleteFile(file);
+    rc = DeleteFileA(file);
     ok(rc, "DeleteFile error %d\n", GetLastError());
 
     CloseHandle(token);
@@ -1082,7 +1082,7 @@ static void test_AccessCheck(void)
     DWORD err;
     NTSTATUS ntret, ntAccessStatus;
 
-    NtDllModule = GetModuleHandle("ntdll.dll");
+    NtDllModule = GetModuleHandleA("ntdll.dll");
     if (!NtDllModule)
     {
         skip("not running on NT, skipping test\n");
@@ -1490,13 +1490,13 @@ static void test_token_attr(void)
     for (i = 0; i < Groups->GroupCount; i++)
     {
         DWORD NameLength = 255;
-        TCHAR Name[255];
+        CHAR Name[255];
         DWORD DomainLength = 255;
-        TCHAR Domain[255];
+        CHAR Domain[255];
         SID_NAME_USE SidNameUse;
         Name[0] = '\0';
         Domain[0] = '\0';
-        ret = LookupAccountSid(NULL, Groups->Groups[i].Sid, Name, &NameLength, Domain, &DomainLength, &SidNameUse);
+        ret = LookupAccountSidA(NULL, Groups->Groups[i].Sid, Name, &NameLength, Domain, &DomainLength, &SidNameUse);
         if (ret)
         {
             pConvertSidToStringSidA(Groups->Groups[i].Sid, &SidString);
@@ -1532,9 +1532,9 @@ static void test_token_attr(void)
     trace("TokenPrivileges:\n");
     for (i = 0; i < Privileges->PrivilegeCount; i++)
     {
-        TCHAR Name[256];
+        CHAR Name[256];
         DWORD NameLen = sizeof(Name)/sizeof(Name[0]);
-        LookupPrivilegeName(NULL, &Privileges->Privileges[i].Luid, Name, &NameLen);
+        LookupPrivilegeNameA(NULL, &Privileges->Privileges[i].Luid, Name, &NameLen);
         trace("\t%s, 0x%x\n", Name, Privileges->Privileges[i].Attributes);
     }
     HeapFree(GetProcessHeap(), 0, Privileges);
@@ -1615,7 +1615,7 @@ static void test_sid_str(PSID * sid)
         SID_NAME_USE use;
         DWORD acc_size = MAX_PATH;
         DWORD dom_size = MAX_PATH;
-        ret = LookupAccountSid(NULL, sid, account, &acc_size, domain, &dom_size, &use);
+        ret = LookupAccountSidA (NULL, sid, account, &acc_size, domain, &dom_size, &use);
         ok(ret || (!ret && (GetLastError() == ERROR_NONE_MAPPED)),
            "LookupAccountSid(%s) failed: %d\n", str_sid, GetLastError());
         if (ret)
@@ -2117,8 +2117,8 @@ static void check_wellknown_name(const char* name, WELL_KNOWN_SID_TYPE result)
 
     ok(EqualSid(psid,wk_sid),"(%s) Sids fail to match well known sid!\n",name);
 
-    ok(!lstrcmp(account, wk_account), "Expected %s , got %s\n", account, wk_account);
-    ok(!lstrcmp(domain, wk_domain), "Expected %s, got %s\n", wk_domain, domain);
+    ok(!lstrcmpA(account, wk_account), "Expected %s , got %s\n", account, wk_account);
+    ok(!lstrcmpA(domain, wk_domain), "Expected %s, got %s\n", wk_domain, domain);
     ok(sid_use == SidTypeWellKnownGroup , "Expected Use (5), got %d\n", sid_use);
 
 cleanup:
@@ -2179,10 +2179,10 @@ static void test_LookupAccountName(void)
     get_sid_info(psid, &account, &sid_dom);
     ok(ret, "Failed to lookup account name\n");
     ok(sid_size == GetLengthSid(psid), "Expected %d, got %d\n", GetLengthSid(psid), sid_size);
-    ok(!lstrcmp(account, user_name), "Expected %s, got %s\n", user_name, account);
-    ok(!lstrcmp(domain, sid_dom), "Expected %s, got %s\n", sid_dom, domain);
+    ok(!lstrcmpA(account, user_name), "Expected %s, got %s\n", user_name, account);
+    ok(!lstrcmpA(domain, sid_dom), "Expected %s, got %s\n", sid_dom, domain);
     ok(domain_size == domain_save - 1, "Expected %d, got %d\n", domain_save - 1, domain_size);
-    ok(strlen(domain) == domain_size, "Expected %d, got %d\n", lstrlen(domain), domain_size);
+    ok(strlen(domain) == domain_size, "Expected %d, got %d\n", lstrlenA(domain), domain_size);
     ok(sid_use == SidTypeUser, "Expected SidTypeUser (%d), got %d\n", SidTypeUser, sid_use);
     domain_size = domain_save;
     sid_size = sid_save;
@@ -2197,10 +2197,10 @@ static void test_LookupAccountName(void)
         get_sid_info(psid, &account, &sid_dom);
         ok(ret, "Failed to lookup account name\n");
         ok(sid_size != 0, "sid_size was zero\n");
-        ok(!lstrcmp(account, "Everyone"), "Expected Everyone, got %s\n", account);
-        ok(!lstrcmp(domain, sid_dom), "Expected %s, got %s\n", sid_dom, domain);
+        ok(!lstrcmpA(account, "Everyone"), "Expected Everyone, got %s\n", account);
+        ok(!lstrcmpA(domain, sid_dom), "Expected %s, got %s\n", sid_dom, domain);
         ok(domain_size == 0, "Expected 0, got %d\n", domain_size);
-        ok(strlen(domain) == domain_size, "Expected %d, got %d\n", lstrlen(domain), domain_size);
+        ok(strlen(domain) == domain_size, "Expected %d, got %d\n", lstrlenA(domain), domain_size);
         ok(sid_use == SidTypeWellKnownGroup, "Expected SidTypeWellKnownGroup (%d), got %d\n", SidTypeWellKnownGroup, sid_use);
         domain_size = domain_save;
     }
@@ -2263,7 +2263,7 @@ static void test_LookupAccountName(void)
         get_sid_info(psid, &account, &sid_dom);
         ok(ret, "Failed to lookup account name\n");
         /* Using a fixed string will not work on different locales */
-        ok(!lstrcmp(account, domain),
+        ok(!lstrcmpA(account, domain),
            "Got %s for account and %s for domain, these should be the same\n",
            account, domain);
         ok(sid_use == SidTypeDomain, "Expected SidTypeDomain (%d), got %d\n", SidTypeDomain, sid_use);
@@ -2519,7 +2519,7 @@ static void test_process_security(void)
     res = InitializeSecurityDescriptor(SecurityDescriptor, SECURITY_DESCRIPTOR_REVISION);
     ok(res, "InitializeSecurityDescriptor failed with error %d\n", GetLastError());
 
-    event = CreateEvent( NULL, TRUE, TRUE, "test_event" );
+    event = CreateEventA( NULL, TRUE, TRUE, "test_event" );
     ok(event != NULL, "CreateEvent %d\n", GetLastError());
 
     SecurityDescriptor->Revision = 0;
@@ -2661,7 +2661,7 @@ static void test_impersonation_level(void)
     ok(error == ERROR_CANT_OPEN_ANONYMOUS, "OpenThreadToken on anonymous token should have returned ERROR_CANT_OPEN_ANONYMOUS instead of %d\n", error);
     /* can't perform access check when opening object against an anonymous impersonation token */
     todo_wine {
-    error = RegOpenKeyEx(HKEY_CURRENT_USER, "Software", 0, KEY_READ, &hkey);
+    error = RegOpenKeyExA(HKEY_CURRENT_USER, "Software", 0, KEY_READ, &hkey);
     ok(error == ERROR_INVALID_HANDLE || error == ERROR_CANT_OPEN_ANONYMOUS,
        "RegOpenKeyEx should have failed with ERROR_INVALID_HANDLE or ERROR_CANT_OPEN_ANONYMOUS instead of %d\n", error);
     }
@@ -2714,7 +2714,7 @@ static void test_impersonation_level(void)
     ok(ret, "OpenThreadToken failed with error %d\n", GetLastError());
 
     /* can't perform access check when opening object against an identification impersonation token */
-    error = RegOpenKeyEx(HKEY_CURRENT_USER, "Software", 0, KEY_READ, &hkey);
+    error = RegOpenKeyExA(HKEY_CURRENT_USER, "Software", 0, KEY_READ, &hkey);
     todo_wine {
     ok(error == ERROR_INVALID_HANDLE || error == ERROR_BAD_IMPERSONATION_LEVEL,
        "RegOpenKeyEx should have failed with ERROR_INVALID_HANDLE or ERROR_BAD_IMPERSONATION_LEVEL instead of %d\n", error);
@@ -2728,7 +2728,7 @@ static void test_impersonation_level(void)
     ok(ret, "ImpersonateSelf(SecurityImpersonation) failed with error %d\n", GetLastError());
     ret = OpenThreadToken(GetCurrentThread(), TOKEN_QUERY | TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY_SOURCE | TOKEN_IMPERSONATE | TOKEN_ADJUST_DEFAULT, TRUE, &Token);
     ok(ret, "OpenThreadToken failed with error %d\n", GetLastError());
-    error = RegOpenKeyEx(HKEY_CURRENT_USER, "Software", 0, KEY_READ, &hkey);
+    error = RegOpenKeyExA(HKEY_CURRENT_USER, "Software", 0, KEY_READ, &hkey);
     ok(error == ERROR_SUCCESS, "RegOpenKeyEx should have succeeded instead of failing with %d\n", error);
     RegCloseKey(hkey);
     ret = PrivilegeCheck(Token, PrivilegeSet, &AccessGranted);
@@ -2879,7 +2879,7 @@ static void test_SetEntriesInAclA(void)
     PACL OldAcl = NULL, NewAcl;
     SID_IDENTIFIER_AUTHORITY SIDAuthWorld = { SECURITY_WORLD_SID_AUTHORITY };
     SID_IDENTIFIER_AUTHORITY SIDAuthNT = { SECURITY_NT_AUTHORITY };
-    EXPLICIT_ACCESS ExplicitAccess;
+    EXPLICIT_ACCESSA ExplicitAccess;
     static const CHAR szEveryone[] = {'E','v','e','r','y','o','n','e',0};
     static const CHAR szCurrentUser[] = { 'C','U','R','R','E','N','T','_','U','S','E','R','\0'};
 
@@ -3399,12 +3399,12 @@ static void test_ConvertSecurityDescriptorToString(void)
  * don't replicate this feature so we only test len >= strlen+1. */
 #define CHECK_RESULT_AND_FREE(exp_str) \
     ok(strcmp(string, (exp_str)) == 0, "String mismatch (expected \"%s\", got \"%s\")\n", (exp_str), string); \
-    ok(len >= (strlen(exp_str) + 1), "Length mismatch (expected %d, got %d)\n", lstrlen(exp_str) + 1, len); \
+    ok(len >= (strlen(exp_str) + 1), "Length mismatch (expected %d, got %d)\n", lstrlenA(exp_str) + 1, len); \
     LocalFree(string);
 
 #define CHECK_ONE_OF_AND_FREE(exp_str1, exp_str2) \
     ok(strcmp(string, (exp_str1)) == 0 || strcmp(string, (exp_str2)) == 0, "String mismatch (expected\n\"%s\" or\n\"%s\", got\n\"%s\")\n", (exp_str1), (exp_str2), string); \
-    ok(len >= (strlen(exp_str1) + 1) || len >= (strlen(exp_str2) + 1), "Length mismatch (expected %d or %d, got %d)\n", lstrlen(exp_str1) + 1, lstrlen(exp_str2) + 1, len); \
+    ok(len >= (strlen(exp_str1) + 1) || len >= (strlen(exp_str2) + 1), "Length mismatch (expected %d or %d, got %d)\n", lstrlenA(exp_str1) + 1, lstrlenA(exp_str2) + 1, len); \
     LocalFree(string);
 
     InitializeSecurityDescriptor(&desc, SECURITY_DESCRIPTOR_REVISION);
@@ -3757,8 +3757,8 @@ static void test_GetSecurityInfo(void)
     user_sid = ((TOKEN_USER *)b)->User.Sid;
 
     /* Create something.  Files have lots of associated security info.  */
-    obj = CreateFile(myARGV[0], GENERIC_READ|WRITE_DAC, FILE_SHARE_READ, NULL,
-                     OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    obj = CreateFileA(myARGV[0], GENERIC_READ|WRITE_DAC, FILE_SHARE_READ, NULL,
+                      OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (obj == INVALID_HANDLE_VALUE)
     {
         skip("Couldn't create an object for GetSecurityInfo test\n");
@@ -4397,12 +4397,12 @@ static void test_mutex_security(HANDLE token)
                                 STANDARD_RIGHTS_ALL | MUTEX_ALL_ACCESS };
 
     SetLastError(0xdeadbeef);
-    mutex = OpenMutex(0, FALSE, "WineTestMutex");
+    mutex = OpenMutexA(0, FALSE, "WineTestMutex");
     ok(!mutex, "mutex should not exist\n");
     ok(GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    mutex = CreateMutex(NULL, FALSE, "WineTestMutex");
+    mutex = CreateMutexA(NULL, FALSE, "WineTestMutex");
     ok(mutex != 0, "CreateMutex error %d\n", GetLastError());
 
     test_default_handle_security(token, mutex, &mapping);
@@ -4419,12 +4419,12 @@ static void test_event_security(HANDLE token)
                                 STANDARD_RIGHTS_ALL | EVENT_ALL_ACCESS };
 
     SetLastError(0xdeadbeef);
-    event = OpenEvent(0, FALSE, "WineTestEvent");
+    event = OpenEventA(0, FALSE, "WineTestEvent");
     ok(!event, "event should not exist\n");
     ok(GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    event = CreateEvent(NULL, FALSE, FALSE, "WineTestEvent");
+    event = CreateEventA(NULL, FALSE, FALSE, "WineTestEvent");
     ok(event != 0, "CreateEvent error %d\n", GetLastError());
 
     test_default_handle_security(token, event, &mapping);
@@ -4442,22 +4442,22 @@ static void test_named_pipe_security(HANDLE token)
                                 STANDARD_RIGHTS_ALL | FILE_ALL_ACCESS };
 
     SetLastError(0xdeadbeef);
-    pipe = CreateNamedPipe(WINE_TEST_PIPE, PIPE_ACCESS_DUPLEX | FILE_FLAG_FIRST_PIPE_INSTANCE,
-                           PIPE_TYPE_BYTE | PIPE_NOWAIT, PIPE_UNLIMITED_INSTANCES,
-                           0, 0, NMPWAIT_USE_DEFAULT_WAIT, NULL);
+    pipe = CreateNamedPipeA(WINE_TEST_PIPE, PIPE_ACCESS_DUPLEX | FILE_FLAG_FIRST_PIPE_INSTANCE,
+                            PIPE_TYPE_BYTE | PIPE_NOWAIT, PIPE_UNLIMITED_INSTANCES,
+                            0, 0, NMPWAIT_USE_DEFAULT_WAIT, NULL);
     ok(pipe != INVALID_HANDLE_VALUE, "CreateNamedPipe error %d\n", GetLastError());
 
     test_default_handle_security(token, pipe, &mapping);
 
     SetLastError(0xdeadbeef);
-    file = CreateFile(WINE_TEST_PIPE, FILE_ALL_ACCESS, 0, NULL, OPEN_EXISTING, 0, 0);
+    file = CreateFileA(WINE_TEST_PIPE, FILE_ALL_ACCESS, 0, NULL, OPEN_EXISTING, 0, 0);
     ok(file != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
     CloseHandle(file);
 
     CloseHandle(pipe);
 
     SetLastError(0xdeadbeef);
-    file = CreateFile("\\\\.\\pipe\\", FILE_ALL_ACCESS, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
+    file = CreateFileA("\\\\.\\pipe\\", FILE_ALL_ACCESS, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
     ok(file != INVALID_HANDLE_VALUE || broken(file == INVALID_HANDLE_VALUE) /* before Vista */, "CreateFile error %d\n", GetLastError());
     CloseHandle(file);
 }
@@ -4609,7 +4609,7 @@ static void test_default_dacl_owner_sid(void)
     sa.nLength              = sizeof(SECURITY_ATTRIBUTES);
     sa.lpSecurityDescriptor = sd;
     sa.bInheritHandle       = FALSE;
-    handle = CreateEvent( &sa, TRUE, TRUE, "test_event" );
+    handle = CreateEventA( &sa, TRUE, TRUE, "test_event" );
     ok( handle != NULL, "error %u\n", GetLastError() );
 
     size = 0;

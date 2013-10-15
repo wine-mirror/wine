@@ -47,7 +47,7 @@ static NTSTATUS (WINAPI *pLsaLookupSids)(LSA_HANDLE,ULONG,PSID*,LSA_REFERENCED_D
 
 static BOOL init(void)
 {
-    hadvapi32 = GetModuleHandle("advapi32.dll");
+    hadvapi32 = GetModuleHandleA("advapi32.dll");
 
     pLsaClose = (void*)GetProcAddress(hadvapi32, "LsaClose");
     pLsaEnumerateAccountRights = (void*)GetProcAddress(hadvapi32, "LsaEnumerateAccountRights");
