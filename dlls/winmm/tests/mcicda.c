@@ -98,7 +98,7 @@ static void test_play(HWND hwnd)
     memset(buf, 0, sizeof(buf));
     parm.gen.dwCallback = (DWORD_PTR)hwnd; /* once to rule them all */
 
-    err = mciSendString("open cdaudio alias c notify shareable", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("open cdaudio alias c notify shareable", buf, sizeof(buf), hwnd);
     ok(!err || err == MCIERR_CANNOT_LOAD_DRIVER || err == MCIERR_MUST_USE_SHAREABLE,
        "mci open cdaudio notify returned %s\n", dbg_mcierr(err));
     ok_open = err;
@@ -115,20 +115,20 @@ static void test_play(HWND hwnd)
     ok(!strcmp(buf,"1"), "mci open deviceId: %s, expected 1\n", buf);
     /* Win9X-ME may start the MCI and media player upon insertion of a CD. */
 
-    err = mciSendString("sysinfo all name 1 open", buf, sizeof(buf), NULL);
+    err = mciSendStringA("sysinfo all name 1 open", buf, sizeof(buf), NULL);
     ok(!err,"sysinfo all name 1 returned %s\n", dbg_mcierr(err));
     if(!err && wDeviceID != 1) trace("Device '%s' is open.\n", buf);
 
-    err = mciSendString("capability c has video notify", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("capability c has video notify", buf, sizeof(buf), hwnd);
     ok(!err, "capability video: %s\n", dbg_mcierr(err));
     if(!err) ok(!strcmp(buf, "false"), "capability video is %s\n", buf);
     test_notification(hwnd, "capability notify", MCI_NOTIFY_SUCCESSFUL);
 
-    err = mciSendString("capability c can play", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("capability c can play", buf, sizeof(buf), hwnd);
     ok(!err, "capability video: %s\n", dbg_mcierr(err));
     if(!err) ok(!strcmp(buf, "true"), "capability play is %s\n", buf);
 
-    err = mciSendString("capability c", buf, sizeof(buf), NULL);
+    err = mciSendStringA("capability c", buf, sizeof(buf), NULL);
     ok(err == MCIERR_MISSING_PARAMETER, "capability nokeyword: %s\n", dbg_mcierr(err));
 
     parm.caps.dwItem = 0x4001;
@@ -160,7 +160,7 @@ static void test_play(HWND hwnd)
     if(!err) ok(parm.status.dwReturn == MCI_FORMAT_MSF, "status time default format: %ld\n", parm.status.dwReturn);
 
     /* "CD-Audio" */
-    err = mciSendString("info c product wait notify", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("info c product wait notify", buf, sizeof(buf), hwnd);
     ok(!err, "info product: %s\n", dbg_mcierr(err));
     test_notification(hwnd, "info notify", err ? 0 : MCI_NOTIFY_SUCCESSFUL);
 
@@ -194,24 +194,24 @@ static void test_play(HWND hwnd)
     }
 
     /* Initial mode is "stopped" with a CD in drive */
-    err = mciSendString("status c mode", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("status c mode", buf, sizeof(buf), hwnd);
     ok(!err, "status mode: %s\n", dbg_mcierr(err));
     if(!err) ok(!strcmp(buf, "stopped"), "status mode is initially %s\n", buf);
 
-    err = mciSendString("status c ready", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("status c ready", buf, sizeof(buf), hwnd);
     ok(!err, "status ready: %s\n", dbg_mcierr(err));
     if(!err) ok(!strcmp(buf, "true"), "status ready with media is %s\n", buf);
 
-    err = mciSendString("info c product identity", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("info c product identity", buf, sizeof(buf), hwnd);
     ok(!err, "info 2flags: %s\n", dbg_mcierr(err)); /* not MCIERR_FLAGS_NOT_COMPATIBLE */
     /* Precedence rule p>u>i verified experimentally, not tested here. */
 
-    err = mciSendString("info c identity", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("info c identity", buf, sizeof(buf), hwnd);
     ok(!err || err == MCIERR_HARDWARE, "info identity: %s\n", dbg_mcierr(err));
     /* a blank disk causes MCIERR_HARDWARE and other commands to fail likewise. */
     ok_hw = err;
 
-    err = mciSendString("info c upc", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("info c upc", buf, sizeof(buf), hwnd);
     ok(err == ok_hw || err == MCIERR_NO_IDENTITY, "info upc: %s\n", dbg_mcierr(err));
 
     parm.status.dwItem = MCI_STATUS_NUMBER_OF_TRACKS;
@@ -222,7 +222,7 @@ static void test_play(HWND hwnd)
     /* cf. MAXIMUM_NUMBER_TRACKS */
     ok(0 < numtracks && numtracks <= 99, "number of tracks=%ld\n", parm.status.dwReturn);
 
-    err = mciSendString("status c length", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("status c length", buf, sizeof(buf), hwnd);
     ok(err == ok_hw, "status length: %s\n", dbg_mcierr(err));
     if(!err) trace("CD length %s\n", buf);
 
@@ -233,76 +233,76 @@ static void test_play(HWND hwnd)
 
     /* Linux leaves the drive at some random position,
      * native initialises to the start position below. */
-    err = mciSendString("status c position", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("status c position", buf, sizeof(buf), hwnd);
     ok(!err, "status position: %s\n", dbg_mcierr(err));
     if(!err) todo_wine ok(!strcmp(buf, "00:02:00") || !strcmp(buf, "00:02:33") || !strcmp(buf, "00:03:00"),
                 "status position initially %s\n", buf);
     /* 2 seconds is the initial position even with data tracks. */
 
-    err = mciSendString("status c position start notify", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("status c position start notify", buf, sizeof(buf), hwnd);
     ok(err == ok_hw, "status position start: %s\n", dbg_mcierr(err));
     if(!err) ok(!strcmp(buf, "00:02:00") || !strcmp(buf, "00:02:33") || !strcmp(buf, "00:03:00"),
                 "status position start %s\n", buf);
     test_notification(hwnd, "status notify", err ? 0 : MCI_NOTIFY_SUCCESSFUL);
 
-    err = mciSendString("status c position start track 1 notify", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("status c position start track 1 notify", buf, sizeof(buf), hwnd);
     ok(err == MCIERR_FLAGS_NOT_COMPATIBLE, "status position start: %s\n", dbg_mcierr(err));
     test_notification(hwnd, "status 2flags", err ? 0 : MCI_NOTIFY_SUCCESSFUL);
 
-    err = mciSendString("play c from 00:02:00 to 00:01:00 notify", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("play c from 00:02:00 to 00:01:00 notify", buf, sizeof(buf), hwnd);
     ok(err == MCIERR_OUTOFRANGE, "play 2s to 1s: %s\n", dbg_mcierr(err));
     test_notification(hwnd, "play 2s to 1s", err ? 0 : MCI_NOTIFY_SUCCESSFUL);
 
-    err = mciSendString("resume c", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("resume c", buf, sizeof(buf), hwnd);
     ok(err == MCIERR_HARDWARE || /* Win9x */ err == MCIERR_UNSUPPORTED_FUNCTION,
        "resume without play: %s\n", dbg_mcierr(err)); /* not NONAPPLICABLE_FUNCTION */
     /* vmware with a .iso (data-only) yields no error on NT/w2k */
 
-    err = mciSendString("seek c wait", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("seek c wait", buf, sizeof(buf), hwnd);
     ok(err == MCIERR_MISSING_PARAMETER, "seek noflag: %s\n", dbg_mcierr(err));
 
-    err = mciSendString("seek c to start to end", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("seek c to start to end", buf, sizeof(buf), hwnd);
     ok(err == MCIERR_FLAGS_NOT_COMPATIBLE || broken(!err), "seek to start+end: %s\n", dbg_mcierr(err));
     /* Win9x only errors out with Seek to start to <position> */
 
     /* set Wine to a defined position before play */
-    err = mciSendString("seek c to start notify", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("seek c to start notify", buf, sizeof(buf), hwnd);
     ok(!err, "seek to start: %s\n", dbg_mcierr(err));
     test_notification(hwnd, "seek to start", err ? 0 : MCI_NOTIFY_SUCCESSFUL);
     /* Win9X Status position / current track then sometimes report the end position / track! */
 
-    err = mciSendString("status c mode", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("status c mode", buf, sizeof(buf), hwnd);
     ok(!err, "status mode: %s\n", dbg_mcierr(err));
     if(!err) ok(!strcmp(buf, "stopped"), "status mode after seek is %s\n", buf);
 
     /* MCICDA ignores MCI_SET_VIDEO */
-    err = mciSendString("set c video on", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("set c video on", buf, sizeof(buf), hwnd);
     ok(!err, "set video: %s\n", dbg_mcierr(err));
 
     /* One xp machine ignored SET_AUDIO, one w2k and one w7 machine honoured it
      * and simultaneously toggled the mute button in the mixer control panel.
      * Or does it only depend on the HW, not the OS?
      * Some vmware machines return MCIERR_HARDWARE. */
-    err = mciSendString("set c audio all on", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("set c audio all on", buf, sizeof(buf), hwnd);
     ok(!err || err == MCIERR_HARDWARE, "set audio: %s\n", dbg_mcierr(err));
 
-    err = mciSendString("set c time format ms", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("set c time format ms", buf, sizeof(buf), hwnd);
     ok(!err, "set time format ms: %s\n", dbg_mcierr(err));
 
     memset(buf, 0, sizeof(buf));
-    err = mciSendString("status c position start", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("status c position start", buf, sizeof(buf), hwnd);
     ok(!err, "status position start (ms): %s\n", dbg_mcierr(err));
     duration = atoi(buf);
     if(!err) ok(duration > 2000, "status position initially %sms\n", buf);
     /* 00:02:00 corresponds to 2001 ms, 02:33 -> 2441 etc. */
 
-    err = mciSendString("status c position start track 1", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("status c position start track 1", buf, sizeof(buf), hwnd);
     ok(err == MCIERR_FLAGS_NOT_COMPATIBLE, "status position start+track: %s\n", dbg_mcierr(err));
 
-    err = mciSendString("status c notify wait", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("status c notify wait", buf, sizeof(buf), hwnd);
     ok(err == MCIERR_MISSING_PARAMETER, "status noflag: %s\n", dbg_mcierr(err));
 
-    err = mciSendString("status c length track 1", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("status c length track 1", buf, sizeof(buf), hwnd);
     ok(!err, "status length (ms): %s\n", dbg_mcierr(err));
     if(!err) {
         trace("track #1 length %sms\n", buf);
@@ -311,7 +311,7 @@ static void test_play(HWND hwnd)
 
     if (0) { /* causes some native systems to return Seek and Play with MCIERR_HARDWARE */
         /* depending on capability can eject only? */
-        err = mciSendString("set c door closed notify", buf, sizeof(buf), hwnd);
+        err = mciSendStringA("set c door closed notify", buf, sizeof(buf), hwnd);
         ok(!err, "set door closed: %s\n", dbg_mcierr(err));
         test_notification(hwnd, "door closed", err ? 0 : MCI_NOTIFY_SUCCESSFUL);
     }
@@ -352,7 +352,7 @@ static void test_play(HWND hwnd)
          * On some native systems, status position fluctuates around the target position;
          * Successive calls return varying positions! */
 
-        err = mciSendString("set c time format msf", buf, sizeof(buf), hwnd);
+        err = mciSendStringA("set c time format msf", buf, sizeof(buf), hwnd);
         ok(!err, "set time format msf: %s\n", dbg_mcierr(err));
 
         parm.status.dwItem = MCI_STATUS_LENGTH;
@@ -374,7 +374,7 @@ static void test_play(HWND hwnd)
 
         Sleep(1500*factor); /* Time to spin up, hopefully less than track length */
 
-        err = mciSendString("status c mode", buf, sizeof(buf), hwnd);
+        err = mciSendStringA("status c mode", buf, sizeof(buf), hwnd);
         ok(!err, "status mode: %s\n", dbg_mcierr(err));
         if(!err) ok(!strcmp(buf, "stopped"), "status mode on data is %s\n", buf);
     } else if (parm.status.dwReturn == MCI_CDA_TRACK_AUDIO) {
@@ -387,7 +387,7 @@ static void test_play(HWND hwnd)
         return;
     }
 
-    err = mciSendString("set c time format msf", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("set c time format msf", buf, sizeof(buf), hwnd);
     ok(!err, "set time format msf: %s\n", dbg_mcierr(err));
 
     parm.status.dwItem = MCI_STATUS_LENGTH;
@@ -417,7 +417,7 @@ static void test_play(HWND hwnd)
     err = mciSendCommand(wDeviceID, MCI_SEEK, MCI_TO, (DWORD_PTR)&parm);
     ok(err == MCIERR_OUTOFRANGE, "SEEK past %08X position last + length: %s\n", parm.seek.dwTo, dbg_mcierr(err));
 
-    err = mciSendString("set c time format tmsf", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("set c time format tmsf", buf, sizeof(buf), hwnd);
     ok(!err, "set time format tmsf: %s\n", dbg_mcierr(err));
 
     parm.play.dwFrom = track;
@@ -431,18 +431,18 @@ static void test_play(HWND hwnd)
 
     Sleep(1800*factor); /* Time to spin up, hopefully less than track length */
 
-    err = mciSendString("status c mode", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("status c mode", buf, sizeof(buf), hwnd);
     ok(!err, "status mode: %s\n", dbg_mcierr(err));
     if(!err) ok(!strcmp(buf, "playing"), "status mode during play is %s\n", buf);
 
-    err = mciSendString("pause c", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("pause c", buf, sizeof(buf), hwnd);
     ok(!err, "pause: %s\n", dbg_mcierr(err));
 
     test_notification(hwnd, "pause should abort notification", MCI_NOTIFY_ABORTED);
 
     /* Native returns stopped when paused,
      * yet the Stop command is different as it would disallow Resume. */
-    err = mciSendString("status c mode", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("status c mode", buf, sizeof(buf), hwnd);
     ok(!err, "status mode: %s\n", dbg_mcierr(err));
     if(!err) todo_wine ok(!strcmp(buf, "stopped"), "status mode while paused is %s\n", buf);
 
@@ -461,7 +461,7 @@ static void test_play(HWND hwnd)
     err = mciSendCommand(wDeviceID, MCI_PLAY, MCI_FROM|MCI_TO, (DWORD_PTR)&parm);
     ok(err == MCIERR_OUTOFRANGE, "PLAY: %s\n", dbg_mcierr(err));
 
-    err = mciSendString("status c mode", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("status c mode", buf, sizeof(buf), hwnd);
     ok(!err, "status mode: %s\n", dbg_mcierr(err));
     if(!err) ok(!strcmp(buf, "playing"), "status mode after play is %s\n", buf);
 
@@ -483,7 +483,7 @@ static void test_play(HWND hwnd)
      * and reflect the new position only seconds after issuing the command. */
 
     /* Seek stops */
-    err = mciSendString("status c mode", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("status c mode", buf, sizeof(buf), hwnd);
     ok(!err, "status mode: %s\n", dbg_mcierr(err));
     if(!err) ok(!strcmp(buf, "stopped"), "status mode after play is %s\n", buf);
 
@@ -497,7 +497,7 @@ static void test_play(HWND hwnd)
 
     Sleep(2200*factor);
 
-    err = mciSendString("status c mode", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("status c mode", buf, sizeof(buf), hwnd);
     ok(!err, "status mode: %s\n", dbg_mcierr(err));
     if(!err) ok(!strcmp(buf, "stopped") || broken(!strcmp(buf, "playing")), "status mode after play is %s\n", buf);
     if(!err && !strcmp(buf, "playing")) trace("status playing after sleep\n");
@@ -505,7 +505,7 @@ static void test_play(HWND hwnd)
     /* Playing to end asynchronously sends no notification! */
     test_notification(hwnd, "PLAY to end", 0);
 
-    err = mciSendString("status c mode notify", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("status c mode notify", buf, sizeof(buf), hwnd);
     ok(!err, "status mode: %s\n", dbg_mcierr(err));
     if(!err) ok(!strcmp(buf, "stopped") || broken(!strcmp(buf, "playing")), "status mode after play is %s\n", buf);
     if(!err && !strcmp(buf, "playing")) trace("status still playing\n");
@@ -515,7 +515,7 @@ static void test_play(HWND hwnd)
     test_notification(hwnd, "dangling from PLAY", MCI_NOTIFY_SUPERSEDED);
     test_notification(hwnd, "status mode", MCI_NOTIFY_SUCCESSFUL);
 
-    err = mciSendString("stop c", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("stop c", buf, sizeof(buf), hwnd);
     ok(!err, "stop: %s\n", dbg_mcierr(err));
 
     test_notification(hwnd, "PLAY to end", 0);
@@ -537,7 +537,7 @@ static void test_play(HWND hwnd)
 
     Sleep(1400*factor);
 
-    err = mciSendString("status c current track", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("status c current track", buf, sizeof(buf), hwnd);
     ok(!err, "status track: %s\n", dbg_mcierr(err));
     if(!err) todo_wine ok(numtracks == atoi(buf), "status current track gave %s, expected %u\n", buf, numtracks);
     /* fails in Wine because SEEK is independent on IOCTL_CDROM_RAW_READ */
@@ -605,7 +605,7 @@ START_TEST(mcicda)
     err = mciSendCommand(MCI_ALL_DEVICE_ID, MCI_STOP, 0, 0);
     todo_wine ok(!err || broken(err == MCIERR_HARDWARE /* blank CD or testbot without CD-ROM */),
        "STOP all returned %s\n", dbg_mcierr(err));
-    err = mciSendString("close all", NULL, 0, hwnd);
+    err = mciSendStringA("close all", NULL, 0, hwnd);
     ok(!err, "final close all returned %s\n", dbg_mcierr(err));
     test_notification(hwnd, "-tests complete-", 0);
     DestroyWindow(hwnd);

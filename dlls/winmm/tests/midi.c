@@ -244,13 +244,13 @@ static void test_midi_mci(HWND hwnd)
     char buf[1024];
     memset(buf, 0, sizeof(buf));
 
-    err = mciSendString("sysinfo sequencer quantity", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("sysinfo sequencer quantity", buf, sizeof(buf), hwnd);
     ok(!err, "mci sysinfo sequencer quantity returned %d\n", err);
     if (!err) trace("Found %s MCI sequencer devices\n", buf);
 
     if (!strcmp(buf, "0")) return;
 
-    err = mciSendString("capability sequencer can record", buf, sizeof(buf), hwnd);
+    err = mciSendStringA("capability sequencer can record", buf, sizeof(buf), hwnd);
     ok(!err, "mci sysinfo sequencer quantity returned %d\n", err);
     if(!err) ok(!strcmp(buf, "false"), "capability can record is %s\n", buf);
 }
