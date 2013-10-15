@@ -139,9 +139,9 @@ static DWORD map_file(const char *file_name, const char **ret)
 
     size = GetFileSize(file, NULL);
 
-    map = CreateFileMapping(file, NULL, PAGE_READONLY, 0, 0, NULL);
+    map = CreateFileMappingA(file, NULL, PAGE_READONLY, 0, 0, NULL);
     CloseHandle(file);
-    ok(map != NULL, "CreateFileMapping(%s) failed: %u\n", file_name, GetLastError());
+    ok(map != NULL, "CreateFileMappingA(%s) failed: %u\n", file_name, GetLastError());
     if(!map)
         return 0;
 
@@ -408,7 +408,7 @@ static DWORD load_resource(const char *name, const char *type, const char **ret)
     return size;
 }
 
-static BOOL WINAPI test_enum_proc(HMODULE module, LPCTSTR type, LPSTR name, LONG_PTR param)
+static BOOL WINAPI test_enum_proc(HMODULE module, LPCSTR type, LPSTR name, LONG_PTR param)
 {
     const char *cmd_data, *out_data;
     DWORD cmd_size, out_size;
