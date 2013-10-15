@@ -250,6 +250,18 @@ static char *get_extension( char *filename )
 
 
 /*******************************************************************
+ *         replace_extension
+ */
+static char *replace_extension( const char *name, unsigned int old_len, const char *new_ext )
+{
+    char *ret = xmalloc( strlen( name ) + strlen( new_ext ) + 1 );
+    strcpy( ret, name );
+    strcpy( ret + strlen( ret ) - old_len, new_ext );
+    return ret;
+}
+
+
+/*******************************************************************
  *         get_line
  */
 static char *get_line( FILE *file )
@@ -452,10 +464,8 @@ static FILE *open_include_file( struct incl_file *pFile )
 
     if (strendswith( pFile->name, ".tab.h" ))
     {
-        if (src_dir)
-            filename = strmake( "%s/%.*s.y", src_dir, strlen(pFile->name) - 6, pFile->name );
-        else
-            filename = strmake( "%.*s.y", strlen(pFile->name) - 6, pFile->name );
+        filename = replace_extension( pFile->name, 6, ".y" );
+        if (src_dir) filename = strmake( "%s/%s", src_dir, filename );
 
         if ((file = fopen( filename, "r" )))
         {
@@ -472,10 +482,8 @@ static FILE *open_include_file( struct incl_file *pFile )
 
     if (strendswith( pFile->name, ".h" ))
     {
-        if (src_dir)
-            filename = strmake( "%s/%.*s.idl", src_dir, strlen(pFile->name) - 2, pFile->name );
-        else
-            filename = strmake( "%.*s.idl", strlen(pFile->name) - 2, pFile->name );
+        filename = replace_extension( pFile->name, 2, ".idl" );
+        if (src_dir) filename = strmake( "%s/%s", src_dir, filename );
 
         if ((file = fopen( filename, "r" )))
         {
@@ -505,12 +513,11 @@ static FILE *open_include_file( struct incl_file *pFile )
 
     if (strendswith( pFile->name, ".h" ))
     {
+        filename = replace_extension( pFile->name, 2, ".idl" );
         if (top_src_dir)
-            filename = strmake( "%s/include/%.*s.idl",
-                                top_src_dir, strlen(pFile->name) - 2, pFile->name );
+            filename = strmake( "%s/include/%s", top_src_dir, filename );
         else if (top_obj_dir)
-            filename = strmake( "%s/include/%.*s.idl",
-                                top_obj_dir, strlen(pFile->name) - 2, pFile->name );
+            filename = strmake( "%s/include/%s", top_obj_dir, filename );
         else
             filename = NULL;
 
@@ -527,12 +534,11 @@ static FILE *open_include_file( struct incl_file *pFile )
 
     if (strendswith( pFile->name, "tmpl.h" ))
     {
+        filename = replace_extension( pFile->name, 2, ".x" );
         if (top_src_dir)
-            filename = strmake( "%s/include/%.*s.x",
-                                top_src_dir, strlen(pFile->name) - 2, pFile->name );
+            filename = strmake( "%s/include/%s", top_src_dir, filename );
         else if (top_obj_dir)
-            filename = strmake( "%s/include/%.*s.x",
-                                top_obj_dir, strlen(pFile->name) - 2, pFile->name );
+            filename = strmake( "%s/include/%s", top_obj_dir, filename );
         else
             filename = NULL;
 
@@ -778,11 +784,8 @@ static void parse_rc_file( struct incl_file *pFile, FILE *file )
  */
 static void parse_generated_idl( struct incl_file *source )
 {
-    char *header, *basename;
+    char *header = replace_extension( source->name, 4, ".h" );
 
-    basename = xstrdup( source->name );
-    basename[strlen(basename) - 4] = 0;
-    header = strmake( "%s.h", basename );
     source->filename = xstrdup( source->name );
 
     if (strendswith( source->name, "_c.c" ))
@@ -809,7 +812,6 @@ static void parse_generated_idl( struct incl_file *source )
     }
 
     free( header );
-    free( basename );
 }
 
 /*******************************************************************
@@ -855,8 +857,7 @@ static void parse_file( struct incl_file *source, int src )
     if (strendswith( source->name, ".o" ))
     {
         /* default to .c for unknown extra object files */
-        source->filename = xstrdup( source->name );
-        source->filename[strlen(source->filename) - 1] = 'c';
+        source->filename = replace_extension( source->name, 2, ".c" );
         return;
     }
 
