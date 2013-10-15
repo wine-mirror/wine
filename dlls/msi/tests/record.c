@@ -547,7 +547,7 @@ static void test_fieldzero(void)
 
     MsiCloseHandle(rec);
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "MsiOpenDatabase failed\n");
 
     query = "CREATE TABLE `drone` ( "

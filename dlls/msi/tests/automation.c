@@ -275,9 +275,14 @@ static void create_database(const CHAR *name, const msi_table *tables, int num_t
 {
     MSIHANDLE db;
     UINT r;
-    int j;
+    WCHAR *nameW;
+    int j, len;
 
-    r = MsiOpenDatabaseA(name, MSIDBOPEN_CREATE, &db);
+    len = MultiByteToWideChar( CP_ACP, 0, name, -1, NULL, 0 );
+    if (!(nameW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return;
+    MultiByteToWideChar( CP_ACP, 0, name, -1, nameW, len );
+
+    r = MsiOpenDatabaseW(nameW, MSIDBOPEN_CREATE, &db);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     /* import the tables into the database */
@@ -299,6 +304,7 @@ static void create_database(const CHAR *name, const msi_table *tables, int num_t
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     MsiCloseHandle(db);
+    HeapFree( GetProcessHeap(), 0, nameW );
 }
 
 static BOOL create_package(LPWSTR path)

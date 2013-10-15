@@ -1045,9 +1045,14 @@ static void create_database_wordcount(const CHAR *name, const msi_table *tables,
 {
     MSIHANDLE db;
     UINT r;
-    int j;
+    WCHAR *nameW;
+    int j, len;
 
-    r = MsiOpenDatabaseA(name, MSIDBOPEN_CREATE, &db);
+    len = MultiByteToWideChar( CP_ACP, 0, name, -1, NULL, 0 );
+    if (!(nameW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return;
+    MultiByteToWideChar( CP_ACP, 0, name, -1, nameW, len );
+
+    r = MsiOpenDatabaseW(nameW, MSIDBOPEN_CREATE, &db);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     /* import the tables into the database */
@@ -1069,6 +1074,7 @@ static void create_database_wordcount(const CHAR *name, const msi_table *tables,
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     MsiCloseHandle(db);
+    HeapFree( GetProcessHeap(), 0, nameW );
 }
 
 static UINT run_query(MSIHANDLE hdb, const char *query)
@@ -1140,7 +1146,7 @@ static MSIHANDLE create_package_db(LPSTR prodcode)
     DeleteFileA(msifile);
 
     /* create an empty database */
-    res = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    res = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok( res == ERROR_SUCCESS , "Failed to create database\n" );
     if (res != ERROR_SUCCESS)
         return hdb;

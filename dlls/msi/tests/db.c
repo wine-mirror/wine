@@ -41,19 +41,19 @@ static void test_msidatabase(void)
     MSIHANDLE hdb = 0, hdb2 = 0;
     UINT res;
 
-    DeleteFileA(msifile);
+    DeleteFileW(msifileW);
 
-    res = MsiOpenDatabaseA( msifile, msifile2, &hdb );
+    res = MsiOpenDatabaseW( msifileW, msifile2W, &hdb );
     ok( res == ERROR_OPEN_FAILED, "expected failure\n");
 
-    res = MsiOpenDatabaseA( msifile, (LPSTR)0xff, &hdb );
+    res = MsiOpenDatabaseW( msifileW, (LPWSTR)0xff, &hdb );
     ok( res == ERROR_INVALID_PARAMETER, "expected failure\n");
 
     res = MsiCloseHandle( hdb );
     ok( res == ERROR_SUCCESS , "Failed to close database\n" );
 
     /* create an empty database */
-    res = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb );
+    res = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb );
     ok( res == ERROR_SUCCESS , "Failed to create database\n" );
 
     res = MsiDatabaseCommit( hdb );
@@ -63,7 +63,7 @@ static void test_msidatabase(void)
 
     res = MsiCloseHandle( hdb );
     ok( res == ERROR_SUCCESS , "Failed to close database\n" );
-    res = MsiOpenDatabaseA( msifile, msifile2, &hdb2 );
+    res = MsiOpenDatabaseW( msifileW, msifile2W, &hdb2 );
     ok( res == ERROR_SUCCESS , "Failed to open database\n" );
 
     ok( GetFileAttributesA( msifile2 ) != INVALID_FILE_ATTRIBUTES, "database should exist\n");
@@ -74,7 +74,7 @@ static void test_msidatabase(void)
     res = MsiCloseHandle( hdb2 );
     ok( res == ERROR_SUCCESS , "Failed to close database\n" );
 
-    res = MsiOpenDatabaseA( msifile, msifile2, &hdb2 );
+    res = MsiOpenDatabaseW( msifileW, msifile2W, &hdb2 );
     ok( res == ERROR_SUCCESS , "Failed to open database\n" );
 
     res = MsiCloseHandle( hdb2 );
@@ -82,7 +82,7 @@ static void test_msidatabase(void)
 
     ok( GetFileAttributesA( msifile2 ) == INVALID_FILE_ATTRIBUTES, "uncommitted database should not exist\n");
 
-    res = MsiOpenDatabaseA( msifile, msifile2, &hdb2 );
+    res = MsiOpenDatabaseW( msifileW, msifile2W, &hdb2 );
     ok( res == ERROR_SUCCESS , "Failed to close database\n" );
 
     res = MsiDatabaseCommit( hdb2 );
@@ -93,7 +93,7 @@ static void test_msidatabase(void)
 
     ok( GetFileAttributesA( msifile2 ) != INVALID_FILE_ATTRIBUTES, "committed database should exist\n");
 
-    res = MsiOpenDatabaseA( msifile, MSIDBOPEN_READONLY, &hdb );
+    res = MsiOpenDatabaseW( msifileW, MSIDBOPEN_READONLY, &hdb );
     ok( res == ERROR_SUCCESS , "Failed to open database\n" );
 
     res = MsiDatabaseCommit( hdb );
@@ -102,13 +102,13 @@ static void test_msidatabase(void)
     res = MsiCloseHandle( hdb );
     ok( res == ERROR_SUCCESS , "Failed to close database\n" );
 
-    res = MsiOpenDatabaseA( msifile, MSIDBOPEN_DIRECT, &hdb );
+    res = MsiOpenDatabaseW( msifileW, MSIDBOPEN_DIRECT, &hdb );
     ok( res == ERROR_SUCCESS , "Failed to open database\n" );
 
     res = MsiCloseHandle( hdb );
     ok( res == ERROR_SUCCESS , "Failed to close database\n" );
 
-    res = MsiOpenDatabaseA( msifile, MSIDBOPEN_TRANSACT, &hdb );
+    res = MsiOpenDatabaseW( msifileW, MSIDBOPEN_TRANSACT, &hdb );
     ok( res == ERROR_SUCCESS , "Failed to open database\n" );
 
     res = MsiCloseHandle( hdb );
@@ -116,7 +116,7 @@ static void test_msidatabase(void)
     ok( GetFileAttributesA( msifile ) != INVALID_FILE_ATTRIBUTES, "database should exist\n");
 
     /* MSIDBOPEN_CREATE deletes the database if MsiCommitDatabase isn't called */
-    res = MsiOpenDatabaseA( msifile, MSIDBOPEN_CREATE, &hdb );
+    res = MsiOpenDatabaseW( msifileW, MSIDBOPEN_CREATE, &hdb );
     ok( res == ERROR_SUCCESS , "Failed to open database\n" );
 
     ok( GetFileAttributesA( msifile ) != INVALID_FILE_ATTRIBUTES, "database should exist\n");
@@ -126,7 +126,7 @@ static void test_msidatabase(void)
 
     ok( GetFileAttributesA( msifile ) == INVALID_FILE_ATTRIBUTES, "database should exist\n");
 
-    res = MsiOpenDatabaseA( msifile, MSIDBOPEN_CREATE, &hdb );
+    res = MsiOpenDatabaseW( msifileW, MSIDBOPEN_CREATE, &hdb );
     ok( res == ERROR_SUCCESS , "Failed to open database\n" );
 
     res = MsiDatabaseCommit( hdb );
@@ -306,7 +306,7 @@ static void test_msiinsert(void)
     DeleteFileA(msifile);
 
     /* just MsiOpenDatabase should not create a file */
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "MsiOpenDatabase failed\n");
 
     /* create a table */
@@ -574,7 +574,7 @@ static void test_msibadqueries(void)
     DeleteFileA(msifile);
 
     /* just MsiOpenDatabase should not create a file */
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "MsiOpenDatabase failed\n");
 
     r = MsiDatabaseCommit( hdb );
@@ -584,7 +584,7 @@ static void test_msibadqueries(void)
     ok(r == ERROR_SUCCESS , "Failed to close database\n");
 
     /* open it readonly */
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_READONLY, &hdb );
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_READONLY, &hdb );
     ok(r == ERROR_SUCCESS , "Failed to open database r/o\n");
 
     /* add a table to it */
@@ -595,7 +595,7 @@ static void test_msibadqueries(void)
     ok(r == ERROR_SUCCESS , "Failed to close database r/o\n");
 
     /* open it read/write */
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_TRANSACT, &hdb );
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_TRANSACT, &hdb );
     ok(r == ERROR_SUCCESS , "Failed to open database r/w\n");
 
     /* a bunch of test queries that fail with the native MSI */
@@ -797,7 +797,7 @@ static void test_viewmodify(void)
     DeleteFileA(msifile);
 
     /* just MsiOpenDatabase should not create a file */
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "MsiOpenDatabase failed\n");
 
     query = "CREATE TABLE `phone` ( "
@@ -1140,10 +1140,10 @@ static MSIHANDLE create_db(void)
     MSIHANDLE hdb = 0;
     UINT res;
 
-    DeleteFileA(msifile);
+    DeleteFileW(msifileW);
 
     /* create an empty database */
-    res = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb );
+    res = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb );
     ok( res == ERROR_SUCCESS , "Failed to create database\n" );
     if( res != ERROR_SUCCESS )
         return hdb;
@@ -1397,10 +1397,10 @@ static void test_msiexport(void)
         "phone\tid\r\n"
         "1\tAbe\t8675309\r\n";
 
-    DeleteFileA(msifile);
+    DeleteFileW(msifileW);
 
     /* just MsiOpenDatabase should not create a file */
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "MsiOpenDatabase failed\n");
 
     /* create a table */
@@ -1466,9 +1466,9 @@ static void test_longstrings(void)
     UINT r;
     const DWORD STRING_LENGTH = 0x10005;
 
-    DeleteFileA(msifile);
+    DeleteFileW(msifileW);
     /* just MsiOpenDatabase should not create a file */
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "MsiOpenDatabase failed\n");
 
     /* create a table */
@@ -1491,7 +1491,7 @@ static void test_longstrings(void)
     ok(r == ERROR_SUCCESS, "MsiDatabaseCommit failed\n");
     MsiCloseHandle(hdb);
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_READONLY, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_READONLY, &hdb);
     ok(r == ERROR_SUCCESS, "MsiOpenDatabase failed\n");
 
     r = MsiDatabaseOpenViewA(hdb, "select * from `strings` where `id` = 1", &hview);
@@ -1564,7 +1564,7 @@ static void test_streamtable(void)
 
     MsiCloseHandle( hdb );
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_TRANSACT, &hdb );
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_TRANSACT, &hdb );
     ok( r == ERROR_SUCCESS , "Failed to open database\n" );
 
     /* check the column types */
@@ -1777,7 +1777,7 @@ static void test_binary(void)
     UINT r;
 
     /* insert a file into the Binary table */
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb );
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb );
     ok( r == ERROR_SUCCESS , "Failed to open database\n" );
 
     query = "CREATE TABLE `Binary` ( `Name` CHAR(72) NOT NULL, `ID` INT NOT NULL, `Data` OBJECT  PRIMARY KEY `Name`, `ID`)";
@@ -1804,7 +1804,7 @@ static void test_binary(void)
     ok( r == ERROR_SUCCESS , "Failed to close database\n" );
 
     /* read file from the Stream table */
-    r = MsiOpenDatabaseA( msifile, MSIDBOPEN_READONLY, &hdb );
+    r = MsiOpenDatabaseW( msifileW, MSIDBOPEN_READONLY, &hdb );
     ok( r == ERROR_SUCCESS , "Failed to open database\n" );
 
     query = "SELECT * FROM `_Streams`";
@@ -2162,7 +2162,7 @@ static void test_suminfo_import(void)
 
     GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     r = add_table_to_db(hdb, suminfo);
@@ -2282,7 +2282,7 @@ static void test_msiimport(void)
 
     GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = add_table_to_db(hdb, test_data);
@@ -2499,7 +2499,7 @@ static void test_binary_import(void)
     create_file_data("bin_import/filename1.ibd", "just some words", 15);
 
     /* import files into database */
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok( r == ERROR_SUCCESS , "Failed to open database\n");
 
     GetCurrentDirectoryA(MAX_PATH, path);
@@ -2766,13 +2766,13 @@ static void generate_transform(void)
     /* start with two identical databases */
     CopyFileA(msifile2, msifile, FALSE);
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_TRANSACT, &hdb1 );
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_TRANSACT, &hdb1 );
     ok( r == ERROR_SUCCESS , "Failed to create database\n" );
 
     r = MsiDatabaseCommit( hdb1 );
     ok( r == ERROR_SUCCESS , "Failed to commit database\n" );
 
-    r = MsiOpenDatabaseA(msifile2, MSIDBOPEN_READONLY, &hdb2 );
+    r = MsiOpenDatabaseW(msifile2W, MSIDBOPEN_READONLY, &hdb2 );
     ok( r == ERROR_SUCCESS , "Failed to create database\n" );
 
     /* the transform between two identical database should be empty */
@@ -3018,15 +3018,15 @@ static UINT set_summary_info(MSIHANDLE hdb)
     return res;
 }
 
-static MSIHANDLE create_package_db(LPCSTR filename)
+static MSIHANDLE create_package_db(const WCHAR *filename)
 {
     MSIHANDLE hdb = 0;
     UINT res;
 
-    DeleteFileA(msifile);
+    DeleteFileW(msifileW);
 
     /* create an empty database */
-    res = MsiOpenDatabaseA(filename, MSIDBOPEN_CREATE, &hdb );
+    res = MsiOpenDatabaseW(filename, MSIDBOPEN_CREATE, &hdb );
     ok( res == ERROR_SUCCESS , "Failed to create database\n" );
     if( res != ERROR_SUCCESS )
         return hdb;
@@ -3077,7 +3077,7 @@ static void test_try_transform(void)
     DeleteFileA(mstfile);
 
     /* create the database */
-    hdb = create_package_db(msifile);
+    hdb = create_package_db(msifileW);
     ok(hdb, "Failed to create package db\n");
 
     query = "CREATE TABLE `MOO` ( `NOO` SHORT NOT NULL, `OOO` CHAR(255) PRIMARY KEY `NOO`)";
@@ -3130,7 +3130,7 @@ static void test_try_transform(void)
     else
         generate_transform_manual();
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_DIRECT, &hdb );
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_DIRECT, &hdb );
     ok( r == ERROR_SUCCESS , "Failed to create database\n" );
 
     r = MsiDatabaseApplyTransformA( hdb, mstfile, 0 );
@@ -4297,7 +4297,7 @@ static void test_integers(void)
     UINT r;
 
     /* just MsiOpenDatabase should not create a file */
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "MsiOpenDatabase failed\n");
 
     /* create a table */
@@ -4425,7 +4425,7 @@ static void test_update(void)
     UINT r;
 
     /* just MsiOpenDatabase should not create a file */
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "MsiOpenDatabase failed\n");
 
     /* create the Control table */
@@ -4728,7 +4728,7 @@ static void test_special_tables(void)
     MSIHANDLE hdb = 0;
     UINT r;
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "MsiOpenDatabase failed\n");
 
     query = "CREATE TABLE `_Properties` ( "
@@ -4768,7 +4768,7 @@ static void test_tables_order(void)
     char buffer[100];
     DWORD sz;
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "MsiOpenDatabase failed\n");
 
     query = "CREATE TABLE `foo` ( "
@@ -4922,7 +4922,7 @@ static void test_rows_order(void)
     char buffer[100];
     DWORD sz;
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "MsiOpenDatabase failed\n");
 
     query = "CREATE TABLE `foo` ( "
@@ -5087,7 +5087,7 @@ static void test_collation(void)
     WCHAR bufferW[100];
     DWORD sz;
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "MsiOpenDatabase failed\n");
 
     query = "CREATE TABLE `bar` ( "
@@ -5366,7 +5366,7 @@ static void test_viewmodify_update(void)
 
     DeleteFileA(msifile);
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "MsiOpenDatabase failed\n");
 
     query = "CREATE TABLE `table` (`A` INT, `B` INT PRIMARY KEY `A`)";
@@ -5624,7 +5624,7 @@ static void test_viewmodify_assign(void)
     /* setup database */
     DeleteFileA(msifile);
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "MsiOpenDatabase failed\n");
 
     query = "CREATE TABLE `table` (`A` INT, `B` INT PRIMARY KEY `A`)";
@@ -5786,7 +5786,7 @@ static void test_stringtable(void)
 
     DeleteFileA(msifile);
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     query = "CREATE TABLE `MOO` (`A` INT, `B` CHAR(72) PRIMARY KEY `A`)";
@@ -5848,7 +5848,7 @@ static void test_stringtable(void)
     r = MsiCloseHandle(hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_READONLY, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_READONLY, &hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     query = "SELECT * FROM `MOO`";
@@ -6014,7 +6014,7 @@ static void test_viewmodify_delete(void)
     DeleteFileA(msifile);
 
     /* just MsiOpenDatabase should not create a file */
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     query = "CREATE TABLE `phone` ( "
@@ -6188,7 +6188,7 @@ static void test_defaultdatabase(void)
 
     DeleteFileA(msifile);
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = MsiDatabaseCommit(hdb);
@@ -6472,7 +6472,7 @@ static void test_viewmodify_delete_temporary(void)
 
     DeleteFileA(msifile);
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     query = "CREATE TABLE `Table` ( `A` SHORT PRIMARY KEY `A` )";
@@ -6590,7 +6590,7 @@ static void test_deleterow(void)
 
     DeleteFileA(msifile);
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     query = "CREATE TABLE `Table` ( `A` CHAR(72) NOT NULL PRIMARY KEY `A` )";
@@ -6614,7 +6614,7 @@ static void test_deleterow(void)
 
     MsiCloseHandle(hdb);
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_READONLY, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_READONLY, &hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     query = "SELECT * FROM `Table`";
@@ -6657,7 +6657,7 @@ static void test_quotes(void)
 
     DeleteFileA(msifile);
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     query = "CREATE TABLE `Table` ( `A` CHAR(72) NOT NULL PRIMARY KEY `A` )";
@@ -6763,7 +6763,7 @@ static void test_carriagereturn(void)
 
     DeleteFileA(msifile);
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     query = "CREATE TABLE `Table`\r ( `A` CHAR(72) NOT NULL PRIMARY KEY `A` )";
@@ -6949,7 +6949,7 @@ static void test_noquotes(void)
 
     DeleteFileA(msifile);
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     query = "CREATE TABLE Table ( `A` CHAR(72) NOT NULL PRIMARY KEY `A` )";
@@ -7158,7 +7158,7 @@ static void test_forcecodepage(void)
     DeleteFileA(msifile);
     GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     query = "SELECT * FROM `_ForceCodepage`";
@@ -7182,7 +7182,7 @@ static void test_forcecodepage(void)
 
     MsiCloseHandle(hdb);
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_DIRECT, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_DIRECT, &hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     query = "SELECT * FROM `_ForceCodepage`";
@@ -7228,7 +7228,7 @@ static void test_viewmodify_refresh(void)
 
     DeleteFileA(msifile);
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     query = "CREATE TABLE `Table` ( `A` CHAR(72) NOT NULL, `B` INT PRIMARY KEY `A` )";
@@ -7316,7 +7316,7 @@ static void test_where_viewmodify(void)
 
     DeleteFileA(msifile);
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     query = "CREATE TABLE `Table` ( `A` INT, `B` INT PRIMARY KEY `A` )";
@@ -7461,7 +7461,7 @@ static void test_storages_table(void)
 
     MsiCloseHandle(hdb);
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_TRANSACT, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_TRANSACT, &hdb);
     ok(r == ERROR_SUCCESS , "Failed to open database\n");
 
     /* check the column types */
@@ -7571,7 +7571,7 @@ static void test_dbtopackage(void)
     UINT r;
 
     /* create an empty database, transact mode */
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "Failed to create database\n");
 
     set_summary_info(hdb);
@@ -7635,7 +7635,7 @@ static void test_dbtopackage(void)
     MsiCloseHandle(hpkg);
 
     /* create an empty database, direct mode */
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATEDIRECT, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATEDIRECT, &hdb);
     ok(r == ERROR_SUCCESS, "Failed to create database\n");
 
     set_summary_info(hdb);
@@ -7705,7 +7705,7 @@ static void test_droptable(void)
     DWORD size;
     UINT r;
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     query = "CREATE TABLE `One` ( `A` INT PRIMARY KEY `A` )";
@@ -7918,16 +7918,17 @@ static void test_droptable(void)
 
 static void test_dbmerge(void)
 {
+    static const WCHAR refdbW[] = {'r','e','f','d','b','.','m','s','i',0};
     MSIHANDLE hdb, href, hview, hrec;
     CHAR buf[MAX_PATH];
     LPCSTR query;
     DWORD size;
     UINT r;
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
-    r = MsiOpenDatabaseA("refdb.msi", MSIDBOPEN_CREATE, &href);
+    r = MsiOpenDatabaseW(refdbW, MSIDBOPEN_CREATE, &href);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* hDatabase is invalid */
@@ -8536,7 +8537,7 @@ static void test_dbmerge(void)
     MsiCloseHandle(hdb);
     MsiCloseHandle(href);
     DeleteFileA(msifile);
-    DeleteFileA("refdb.msi");
+    DeleteFileW(refdbW);
     DeleteFileA("codepage.idt");
     DeleteFileA("binary.dat");
 }
@@ -9322,7 +9323,7 @@ static void test_createtable(void)
         res = MsiCloseHandle(hdb);
         ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
-        res = MsiOpenDatabaseA(msifile, MSIDBOPEN_TRANSACT, &hdb );
+        res = MsiOpenDatabaseW(msifileW, MSIDBOPEN_TRANSACT, &hdb );
         ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
         query = "SELECT * FROM `a`";
@@ -9368,7 +9369,7 @@ static void test_embedded_nulls(void)
     MSIHANDLE hdb, hrec;
     char buffer[32];
 
-    r = MsiOpenDatabaseA( msifile, MSIDBOPEN_CREATE, &hdb );
+    r = MsiOpenDatabaseW( msifileW, MSIDBOPEN_CREATE, &hdb );
     ok( r == ERROR_SUCCESS, "failed to open database %u\n", r );
 
     GetCurrentDirectoryA( MAX_PATH, CURR_DIR );
@@ -9399,7 +9400,7 @@ static void test_select_column_names(void)
 
     DeleteFileA(msifile);
 
-    r = MsiOpenDatabaseA( msifile, MSIDBOPEN_CREATE, &hdb );
+    r = MsiOpenDatabaseW( msifileW, MSIDBOPEN_CREATE, &hdb );
     ok( r == ERROR_SUCCESS , "failed to open database: %u\n", r );
 
     r = try_query( hdb, "CREATE TABLE `t` (`a` CHAR NOT NULL, `b` CHAR PRIMARY KEY `a`)");

@@ -759,7 +759,7 @@ static MSIHANDLE create_package_db(void)
     DeleteFileA(msifile);
 
     /* create an empty database */
-    res = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb );
+    res = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb );
     ok( res == ERROR_SUCCESS , "Failed to create database %u\n", res );
     if( res != ERROR_SUCCESS )
         return hdb;
@@ -2435,7 +2435,7 @@ static void test_msipackage(void)
     r = MsiOpenPackageA(name, &hpack);
     ok(r == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got %d\n", r);
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* database exists, but is emtpy */
@@ -2466,7 +2466,7 @@ static void test_msipackage(void)
     DeleteFileA(msifile);
 
     /* start with a clean database to show what constitutes a valid package */
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     sprintf(name, "#%d", hdb);
@@ -2650,6 +2650,12 @@ static void test_states(void)
     static char msifile2[] = "winetest2-package.msi";
     static char msifile3[] = "winetest3-package.msi";
     static char msifile4[] = "winetest4-package.msi";
+    static const WCHAR msifile2W[] =
+        {'w','i','n','e','t','e','s','t','2','-','p','a','c','k','a','g','e','.','m','s','i',0};
+    static const WCHAR msifile3W[] =
+        {'w','i','n','e','t','e','s','t','3','-','p','a','c','k','a','g','e','.','m','s','i',0};
+    static const WCHAR msifile4W[] =
+        {'w','i','n','e','t','e','s','t','4','-','p','a','c','k','a','g','e','.','m','s','i',0};
     MSIHANDLE hpkg;
     UINT r;
     MSIHANDLE hdb;
@@ -3098,7 +3104,7 @@ static void test_states(void)
     r = MsiInstallProductA(msifile, "ADDLOCAL=one,four ADDSOURCE=two,three REMOVE=six,seven REINSTALL=eight,nine,ten");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_DIRECT, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_DIRECT, &hdb);
     ok(r == ERROR_SUCCESS, "failed to open database: %d\n", r);
 
     /* these properties must not be in the saved msi file */
@@ -3182,7 +3188,7 @@ static void test_states(void)
     r = MsiInstallProductA(msifile2, "ADDLOCAL=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
-    r = MsiOpenDatabaseA(msifile2, MSIDBOPEN_DIRECT, &hdb);
+    r = MsiOpenDatabaseW(msifile2W, MSIDBOPEN_DIRECT, &hdb);
     ok(r == ERROR_SUCCESS, "failed to open database: %d\n", r);
 
     /* these properties must not be in the saved msi file */
@@ -3249,7 +3255,7 @@ static void test_states(void)
     r = MsiInstallProductA(msifile3, "ADDSOURCE=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
-    r = MsiOpenDatabaseA(msifile3, MSIDBOPEN_DIRECT, &hdb);
+    r = MsiOpenDatabaseW(msifile3W, MSIDBOPEN_DIRECT, &hdb);
     ok(r == ERROR_SUCCESS, "failed to open database: %d\n", r);
 
     /* this property must not be in the saved msi file */
@@ -3318,7 +3324,7 @@ static void test_states(void)
     r = MsiInstallProductA(msifile3, "REINSTALL=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
-    r = MsiOpenDatabaseA(msifile4, MSIDBOPEN_DIRECT, &hdb);
+    r = MsiOpenDatabaseW(msifile4W, MSIDBOPEN_DIRECT, &hdb);
     ok(r == ERROR_SUCCESS, "failed to open database: %d\n", r);
 
     /* this property must not be in the saved msi file */
@@ -6826,7 +6832,7 @@ static void test_MsiGetSourcePath(void)
 
     /* compressed source */
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_DIRECT, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_DIRECT, &hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     set_suminfo_prop(hdb, PID_WORDCOUNT, msidbSumInfoSourceTypeCompressed);
@@ -7340,7 +7346,7 @@ static void test_shortlongsource(void)
 
     /* short file names */
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_DIRECT, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_DIRECT, &hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     set_suminfo_prop(hdb, PID_WORDCOUNT, msidbSumInfoSourceTypeSFN);
@@ -7960,7 +7966,7 @@ static void test_access(void)
     MSIHANDLE hdb;
     UINT r;
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     test_file_access(msifile, create);
@@ -7974,7 +7980,7 @@ static void test_access(void)
     test_file_access(msifile, create_close);
     DeleteFileA(msifile);
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATEDIRECT, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATEDIRECT, &hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     test_file_access(msifile, create);
@@ -8177,7 +8183,7 @@ static void test_MsiGetProductProperty(void)
     if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = MsiDatabaseCommit(hdb);

@@ -203,7 +203,7 @@ static MSIHANDLE create_package_db(void)
     DeleteFileW(msifileW);
 
     /* create an empty database */
-    res = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATEDIRECT, &hdb );
+    res = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATEDIRECT, &hdb );
     ok( res == ERROR_SUCCESS , "Failed to create database %u\n", res );
     if( res != ERROR_SUCCESS )
         return 0;
@@ -267,11 +267,19 @@ static UINT helper_createpackage( const char *szName, MSIHANDLE *handle )
 {
     MSIHANDLE hPackage, suminfo, hdb = 0;
     UINT res;
+    WCHAR *nameW;
+    int len;
 
     DeleteFileA(szName);
 
+    len = MultiByteToWideChar( CP_ACP, 0, szName, -1, NULL, 0 );
+    if (!(nameW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+        return ERROR_OUTOFMEMORY;
+    MultiByteToWideChar( CP_ACP, 0, szName, -1, nameW, len );
+
     /* create an empty database */
-    res = MsiOpenDatabaseA( szName, MSIDBOPEN_CREATEDIRECT, &hdb );
+    res = MsiOpenDatabaseW( nameW, MSIDBOPEN_CREATEDIRECT, &hdb );
+    HeapFree( GetProcessHeap(), 0, nameW );
     ok( res == ERROR_SUCCESS , "Failed to create database %u\n", res );
     if (res != ERROR_SUCCESS)
         return res;

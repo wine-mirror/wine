@@ -79,7 +79,7 @@ static void test_suminfo(void)
     DeleteFileA(msifile);
 
     /* just MsiOpenDatabase should not create a file */
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "MsiOpenDatabase failed\n");
 
     r = MsiGetSummaryInformationA(hdb, NULL, 0, NULL);
@@ -411,7 +411,7 @@ static void test_summary_binary(void)
     ok(GetFileAttributesA(msifile) != INVALID_FILE_ATTRIBUTES, "file doesn't exist!\n");
 
     /* just MsiOpenDatabase should not create a file */
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_READONLY, &hdb);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_READONLY, &hdb);
     ok(r == ERROR_SUCCESS, "MsiOpenDatabase failed\n");
 
     r = MsiGetSummaryInformationA(hdb, NULL, 0, &hsuminfo);

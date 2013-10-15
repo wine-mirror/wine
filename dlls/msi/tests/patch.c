@@ -266,12 +266,12 @@ static void write_file( const char *filename, const char *data, DWORD data_size 
     CloseHandle( file );
 }
 
-static void set_suminfo( const char *filename )
+static void set_suminfo( const WCHAR *filename )
 {
     UINT r;
     MSIHANDLE hsi, hdb;
 
-    r = MsiOpenDatabaseA( filename, MSIDBOPEN_DIRECT, &hdb );
+    r = MsiOpenDatabaseW( filename, MSIDBOPEN_DIRECT, &hdb );
     ok( r == ERROR_SUCCESS, "failed to open database %u\n", r );
 
     r = MsiGetSummaryInformationA( hdb, NULL, 7, &hsi );
@@ -312,8 +312,14 @@ static void create_database( const char *filename, const struct msi_table *table
 {
     MSIHANDLE hdb;
     UINT r, i;
+    WCHAR *filenameW;
+    int len;
 
-    r = MsiOpenDatabaseA( filename, MSIDBOPEN_CREATE, &hdb );
+    len = MultiByteToWideChar( CP_ACP, 0, filename, -1, NULL, 0 );
+    if (!(filenameW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return;
+    MultiByteToWideChar( CP_ACP, 0, filename, -1, filenameW, len );
+
+    r = MsiOpenDatabaseW( filenameW, MSIDBOPEN_CREATE, &hdb );
     ok(r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r);
 
     /* import the tables into the database */
@@ -333,7 +339,8 @@ static void create_database( const char *filename, const struct msi_table *table
     ok(r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r);
 
     MsiCloseHandle( hdb );
-    set_suminfo( filename );
+    set_suminfo( filenameW );
+    HeapFree( GetProcessHeap(), 0, filenameW );
 }
 
 /* data for generating a patch */
@@ -712,6 +719,7 @@ static void test_simple_patch( void )
     DWORD size;
     char path[MAX_PATH], install_source[MAX_PATH], buffer[32];
     const char *query;
+    WCHAR pathW[MAX_PATH];
     MSIHANDLE hpackage, hdb, hview, hrec;
 
     if (!pMsiApplyPatchA)
@@ -860,7 +868,8 @@ static void test_simple_patch( void )
                             "LocalPackage", path, &size );
     ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
 
-    r = MsiOpenDatabaseA( path, MSIDBOPEN_READONLY, &hdb );
+    MultiByteToWideChar( CP_ACP, 0, path, -1, pathW, MAX_PATH );
+    r = MsiOpenDatabaseW( pathW, MSIDBOPEN_READONLY, &hdb );
     ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
 
     r = MsiDatabaseOpenViewA( hdb, query, &hview );
@@ -902,25 +911,25 @@ static void test_MsiOpenDatabase( void )
     UINT r;
     MSIHANDLE hdb;
 
-    r = MsiOpenDatabaseA( mspfile, MSIDBOPEN_CREATE, &hdb );
+    r = MsiOpenDatabaseW( mspfileW, MSIDBOPEN_CREATE, &hdb );
     ok(r == ERROR_SUCCESS, "failed to open database %u\n", r);
 
     r = MsiDatabaseCommit( hdb );
     ok(r == ERROR_SUCCESS, "failed to commit database %u\n", r);
     MsiCloseHandle( hdb );
 
-    r = MsiOpenDatabaseA( mspfile, MSIDBOPEN_READONLY + MSIDBOPEN_PATCHFILE, &hdb );
+    r = MsiOpenDatabaseW( mspfileW, MSIDBOPEN_READONLY + MSIDBOPEN_PATCHFILE, &hdb );
     ok(r == ERROR_OPEN_FAILED, "expected ERROR_OPEN_FAILED, got %u\n", r);
     DeleteFileA( mspfile );
 
-    r = MsiOpenDatabaseA( mspfile, MSIDBOPEN_CREATE + MSIDBOPEN_PATCHFILE, &hdb );
+    r = MsiOpenDatabaseW( mspfileW, MSIDBOPEN_CREATE + MSIDBOPEN_PATCHFILE, &hdb );
     ok(r == ERROR_SUCCESS , "failed to open database %u\n", r);
 
     r = MsiDatabaseCommit( hdb );
     ok(r == ERROR_SUCCESS, "failed to commit database %u\n", r);
     MsiCloseHandle( hdb );
 
-    r = MsiOpenDatabaseA( mspfile, MSIDBOPEN_READONLY + MSIDBOPEN_PATCHFILE, &hdb );
+    r = MsiOpenDatabaseW( mspfileW, MSIDBOPEN_READONLY + MSIDBOPEN_PATCHFILE, &hdb );
     ok(r == ERROR_SUCCESS, "failed to open database %u\n", r);
     MsiCloseHandle( hdb );
     DeleteFileA( mspfile );
@@ -928,10 +937,10 @@ static void test_MsiOpenDatabase( void )
     create_database( msifile, tables, sizeof(tables) / sizeof(struct msi_table) );
     create_patch( mspfile );
 
-    r = MsiOpenDatabaseA( msifile, MSIDBOPEN_READONLY + MSIDBOPEN_PATCHFILE, &hdb );
+    r = MsiOpenDatabaseW( msifileW, MSIDBOPEN_READONLY + MSIDBOPEN_PATCHFILE, &hdb );
     ok(r == ERROR_OPEN_FAILED, "failed to open database %u\n", r );
 
-    r = MsiOpenDatabaseA( mspfile, MSIDBOPEN_READONLY + MSIDBOPEN_PATCHFILE, &hdb );
+    r = MsiOpenDatabaseW( mspfileW, MSIDBOPEN_READONLY + MSIDBOPEN_PATCHFILE, &hdb );
     ok(r == ERROR_SUCCESS, "failed to open database %u\n", r );
     MsiCloseHandle( hdb );
 

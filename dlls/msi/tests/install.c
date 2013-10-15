@@ -2306,9 +2306,14 @@ static void create_database_wordcount(const CHAR *name, const msi_table *tables,
 {
     MSIHANDLE db;
     UINT r;
-    int j;
+    WCHAR *nameW;
+    int j, len;
 
-    r = MsiOpenDatabaseA(name, MSIDBOPEN_CREATE, &db);
+    len = MultiByteToWideChar( CP_ACP, 0, name, -1, NULL, 0 );
+    if (!(nameW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return;
+    MultiByteToWideChar( CP_ACP, 0, name, -1, nameW, len );
+
+    r = MsiOpenDatabaseW(nameW, MSIDBOPEN_CREATE, &db);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     /* import the tables into the database */
@@ -2330,6 +2335,7 @@ static void create_database_wordcount(const CHAR *name, const msi_table *tables,
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     MsiCloseHandle(db);
+    HeapFree( GetProcessHeap(), 0, nameW );
 }
 
 static void check_service_is_installed(void)
@@ -2729,6 +2735,7 @@ static void test_packagecoltypes(void)
 {
     MSIHANDLE hdb, view, rec;
     char path[MAX_PATH];
+    WCHAR pathW[MAX_PATH];
     LPCSTR query;
     UINT r, count;
 
@@ -2739,8 +2746,9 @@ static void test_packagecoltypes(void)
     lstrcpyA(path, CURR_DIR);
     lstrcatA(path, "\\");
     lstrcatA(path, msifile);
+    MultiByteToWideChar( CP_ACP, 0, path, -1, pathW, MAX_PATH );
 
-    r = MsiOpenDatabaseA(path, MSIDBOPEN_READONLY, &hdb);
+    r = MsiOpenDatabaseW(pathW, MSIDBOPEN_READONLY, &hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     query = "SELECT * FROM `Media`";
@@ -3413,13 +3421,13 @@ static void generate_transform(void)
     /* start with two identical databases */
     CopyFileA(msifile, msifile2, FALSE);
 
-    r = MsiOpenDatabaseA(msifile2, MSIDBOPEN_TRANSACT, &hdb1);
+    r = MsiOpenDatabaseW(msifile2W, MSIDBOPEN_TRANSACT, &hdb1);
     ok(r == ERROR_SUCCESS , "Failed to create database\n");
 
     r = MsiDatabaseCommit(hdb1);
     ok(r == ERROR_SUCCESS , "Failed to commit database\n");
 
-    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_READONLY, &hdb2);
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_READONLY, &hdb2);
     ok(r == ERROR_SUCCESS , "Failed to create database\n");
 
     query = "INSERT INTO `Property` ( `Property`, `Value` ) VALUES ( 'prop', 'val' )";
@@ -3629,12 +3637,12 @@ error:
     RemoveDirectoryA("diffdir");
 }
 
-static void set_admin_summary_info(const CHAR *name)
+static void set_admin_summary_info(const WCHAR *name)
 {
     MSIHANDLE db, summary;
     UINT r;
 
-    r = MsiOpenDatabaseA(name, MSIDBOPEN_DIRECT, &db);
+    r = MsiOpenDatabaseW(name, MSIDBOPEN_DIRECT, &db);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     r = MsiGetSummaryInformationA(db, NULL, 1, &summary);
@@ -3663,7 +3671,7 @@ static void test_admin(void)
     create_file("msitest\\augustus", 500);
 
     create_database(msifile, adm_tables, sizeof(adm_tables) / sizeof(msi_table));
-    set_admin_summary_info(msifile);
+    set_admin_summary_info(msifileW);
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
@@ -3740,7 +3748,7 @@ static void test_adminprops(void)
     create_file("msitest\\augustus", 500);
 
     create_database(msifile, amp_tables, sizeof(amp_tables) / sizeof(msi_table));
-    set_admin_summary_info(msifile);
+    set_admin_summary_info(msifileW);
     set_admin_property_stream(msifile);
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
@@ -4615,6 +4623,9 @@ error:
 
 static void test_int_widths( void )
 {
+    static const WCHAR msitestW[] = {'m','s','i','t','e','s','t','.','m','s','i',0};
+    static const WCHAR msitableW[] = {'m','s','i','t','a','b','l','e','.','i','d','t',0};
+    static const WCHAR slashW[] = {'\\',0};
     static const char int0[] = "int0\ni0\nint0\tint0\n1";
     static const char int1[] = "int1\ni1\nint1\tint1\n1";
     static const char int2[] = "int2\ni2\nint2\tint2\n1";
@@ -4638,41 +4649,43 @@ static void test_int_widths( void )
         { int5, sizeof(int5) - 1, ERROR_FUNCTION_FAILED },
         { int8, sizeof(int8) - 1, ERROR_FUNCTION_FAILED }
     };
-    char tmpdir[MAX_PATH], msitable[MAX_PATH], msidb[MAX_PATH];
+    WCHAR tmpdir[MAX_PATH], msitable[MAX_PATH], msidb[MAX_PATH];
     MSIHANDLE db;
     UINT r, i;
 
-    GetTempPathA(MAX_PATH, tmpdir);
-    CreateDirectoryA(tmpdir, NULL);
+    GetTempPathW(MAX_PATH, tmpdir);
+    CreateDirectoryW(tmpdir, NULL);
 
-    lstrcpyA(msitable, tmpdir);
-    lstrcatA(msitable, "\\msitable.idt");
+    lstrcpyW(msitable, tmpdir);
+    lstrcatW(msitable, slashW);
+    lstrcatW(msitable, msitableW);
 
-    lstrcpyA(msidb, tmpdir);
-    lstrcatA(msidb, "\\msitest.msi");
+    lstrcpyW(msidb, tmpdir);
+    lstrcatW(msidb, slashW);
+    lstrcatW(msidb, msitestW);
 
-    r = MsiOpenDatabaseA(msidb, MSIDBOPEN_CREATE, &db);
+    r = MsiOpenDatabaseW(msidb, MSIDBOPEN_CREATE, &db);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
     {
         DWORD count;
-        HANDLE handle = CreateFileA(msitable, GENERIC_WRITE, 0, NULL,
+        HANDLE handle = CreateFileW(msitable, GENERIC_WRITE, 0, NULL,
                                     CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
         WriteFile(handle, tests[i].data, tests[i].size, &count, NULL);
         CloseHandle(handle);
 
-        r = MsiDatabaseImportA(db, tmpdir, "msitable.idt");
+        r = MsiDatabaseImportW(db, tmpdir, msitableW);
         ok(r == tests[i].ret, " %u expected %u, got %u\n", i, tests[i].ret, r);
 
         r = MsiDatabaseCommit(db);
         ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
-        DeleteFileA(msitable);
+        DeleteFileW(msitable);
     }
 
     MsiCloseHandle(db);
-    DeleteFileA(msidb);
-    RemoveDirectoryA(tmpdir);
+    DeleteFileW(msidb);
+    RemoveDirectoryW(tmpdir);
 }
 
 static void test_shortcut(void)
@@ -5254,7 +5267,7 @@ static void test_icon_table(void)
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
-    res = MsiOpenDatabaseA(msifile, MSIDBOPEN_TRANSACT, &hdb);
+    res = MsiOpenDatabaseW(msifileW, MSIDBOPEN_TRANSACT, &hdb);
     ok(res == ERROR_SUCCESS, "failed to open db: %d\n", res);
 
     query = "CREATE TABLE `Icon` (`Name` CHAR(72) NOT NULL, `Data` OBJECT NOT NULL  PRIMARY KEY `Name`)";
