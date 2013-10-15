@@ -123,9 +123,6 @@ $(CROSSTESTMODULE): $(CROSSOBJS) Makefile.in
 $(WINETEST_RES): $(TESTMODULE_STRIPPED)
 	echo "$(TESTMODULE) TESTRES \"$(TESTMODULE_STRIPPED)\"" | $(WRC) $(RCFLAGS) -o $@
 
-testlist.c: Makefile.in $(MAKECTESTS)
-	$(MAKECTESTS) -o $@ $(C_SRCS)
-
 testclean::
 	$(RM) *.ok
 

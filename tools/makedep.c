@@ -835,6 +835,17 @@ static void parse_generated_idl( struct incl_file *source )
 }
 
 /*******************************************************************
+ *         is_generated_idl
+ */
+static int is_generated_idl( struct incl_file *source )
+{
+    return (strendswith( source->name, "_c.c" ) ||
+            strendswith( source->name, "_i.c" ) ||
+            strendswith( source->name, "_p.c" ) ||
+            strendswith( source->name, "_s.c" ));
+}
+
+/*******************************************************************
  *         parse_file
  */
 static void parse_file( struct incl_file *source, int src )
@@ -842,10 +853,7 @@ static void parse_file( struct incl_file *source, int src )
     FILE *file;
 
     /* special case for source files generated from idl */
-    if (strendswith( source->name, "_c.c" ) ||
-        strendswith( source->name, "_i.c" ) ||
-        strendswith( source->name, "_p.c" ) ||
-        strendswith( source->name, "_s.c" ))
+    if (is_generated_idl( source ))
     {
         parse_generated_idl( source );
         return;
@@ -1103,6 +1111,16 @@ static void output_sources(void)
         column = output( "\t$(WIDL) $(IDLFLAGS) --dlldata-only -o $@" );
         LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
             if (strendswith( source->name, ".idl" ) && find_target_src_file( source->name, "_p.c" ))
+                output_filename( source->filename, &column );
+        output( "\n" );
+    }
+
+    if (find_src_file( "testlist.o" ))
+    {
+        output( "testlist.c: $(MAKECTESTS) Makefile.in\n" );
+        column = output( "\t$(MAKECTESTS) -o $@" );
+        LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
+            if (strendswith( source->name, ".c" ) && !is_generated_idl( source ))
                 output_filename( source->filename, &column );
         output( "\n" );
     }
