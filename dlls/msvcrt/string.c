@@ -980,24 +980,13 @@ unsigned __int64 CDECL MSVCRT_strtoui64(const char *nptr, char **endptr, int bas
     return MSVCRT_strtoui64_l(nptr, endptr, base, NULL);
 }
 
-/*********************************************************************
- *  _ltoa_s (MSVCRT.@)
- */
-int CDECL _ltoa_s(MSVCRT_long value, char *str, MSVCRT_size_t size, int radix)
+static int ltoa_helper(MSVCRT_long value, char *str, MSVCRT_size_t size, int radix)
 {
     MSVCRT_ulong val;
     unsigned int digit;
     BOOL is_negative;
     char buffer[33], *pos;
     size_t len;
-
-    if (!MSVCRT_CHECK_PMT(str != NULL)) return MSVCRT_EINVAL;
-    if (!MSVCRT_CHECK_PMT(size > 0)) return MSVCRT_EINVAL;
-    if (!MSVCRT_CHECK_PMT(radix >= 2 && radix <= 36))
-    {
-        str[0] = '\0';
-        return MSVCRT_EINVAL;
-    }
 
     if (value < 0 && radix == 10)
     {
@@ -1053,6 +1042,22 @@ int CDECL _ltoa_s(MSVCRT_long value, char *str, MSVCRT_size_t size, int radix)
 
     memcpy(str, pos, len);
     return 0;
+}
+
+/*********************************************************************
+ *  _ltoa_s (MSVCRT.@)
+ */
+int CDECL _ltoa_s(MSVCRT_long value, char *str, MSVCRT_size_t size, int radix)
+{
+    if (!MSVCRT_CHECK_PMT(str != NULL)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(size > 0)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(radix >= 2 && radix <= 36))
+    {
+        str[0] = '\0';
+        return MSVCRT_EINVAL;
+    }
+
+    return ltoa_helper(value, str, size, radix);
 }
 
 /*********************************************************************
@@ -1143,7 +1148,7 @@ int CDECL _itoa_s(int value, char *str, MSVCRT_size_t size, int radix)
  */
 char* CDECL _itoa(int value, char *str, int radix)
 {
-    return _itoa_s(value, str, MSVCRT_SIZE_MAX, radix) ? NULL : str;
+    return ltoa_helper(value, str, MSVCRT_SIZE_MAX, radix) ? NULL : str;
 }
 
 /*********************************************************************

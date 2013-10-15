@@ -1882,6 +1882,11 @@ static void test__itoa_s(void)
     ok(!strcmp(buffer, "-12345678"),
        "Expected output buffer string to be \"-12345678\", got \"%s\"\n",
        buffer);
+
+    itoa(100, buffer, 100);
+    ok(!strcmp(buffer, "10"),
+            "Expected output buffer string to be \"10\", got \"%s\"\n", buffer);
+
     if (p_set_invalid_parameter_handler)
         ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
                 "Cannot reset invalid parameter handler\n");
