@@ -226,38 +226,38 @@ static void test_EditStreamSetInfo(void)
 {
     PAVISTREAM stream = NULL;
     HRESULT hres;
-    AVISTREAMINFO info, info2;
+    AVISTREAMINFOA info, info2;
 
     hres = CreateEditableStream(&stream, NULL);
     ok(hres == AVIERR_OK, "got 0x%08X, expected AVIERR_OK\n", hres);
 
     /* Size parameter is somehow checked (notice the crash with size=-1 below) */
-    hres = EditStreamSetInfo(stream, NULL, 0);
+    hres = EditStreamSetInfoA(stream, NULL, 0);
     ok( hres == AVIERR_BADSIZE, "got 0x%08X, expected AVIERR_BADSIZE\n", hres);
 
-    hres = EditStreamSetInfo(stream, NULL, sizeof(AVISTREAMINFO)-1 );
+    hres = EditStreamSetInfoA(stream, NULL, sizeof(AVISTREAMINFOA)-1 );
     ok( hres == AVIERR_BADSIZE, "got 0x%08X, expected AVIERR_BADSIZE\n", hres);
 
     if(0)
     {   
         /* Crashing - first parameter not checked */
-        EditStreamSetInfo(NULL, &info, sizeof(AVISTREAMINFO) );
+        EditStreamSetInfoA(NULL, &info, sizeof(info) );
 
         /* Crashing - second parameter not checked */
-        EditStreamSetInfo(stream, NULL, sizeof(AVISTREAMINFO) );
+        EditStreamSetInfoA(stream, NULL, sizeof(AVISTREAMINFOA) );
 
-        EditStreamSetInfo(stream, NULL, -1);
+        EditStreamSetInfoA(stream, NULL, -1);
     }
 
-    hres = AVIStreamInfo(stream, &info, sizeof(AVISTREAMINFO) );
+    hres = AVIStreamInfoA(stream, &info, sizeof(info) );
     ok( hres == 0, "got 0x%08X, expected 0\n", hres);
 
              /* Does the function check what's it's updating ? */
 
 #define IS_INFO_UPDATED(m) do { \
-    hres = EditStreamSetInfo(stream, &info, sizeof(AVISTREAMINFO) ); \
+    hres = EditStreamSetInfoA(stream, &info, sizeof(info) ); \
     ok( hres == 0, "got 0x%08X, expected 0\n", hres); \
-    hres = AVIStreamInfo(stream, &info2, sizeof(AVISTREAMINFO) ); \
+    hres = AVIStreamInfoA(stream, &info2, sizeof(info2) ); \
     ok( hres == 0, "got 0x%08X, expected 0\n", hres); \
     ok( info2.m == info.m, "EditStreamSetInfo did not update "#m" parameter\n" ); \
     } while(0)
@@ -332,7 +332,7 @@ static void create_avi_file(const COMMON_AVI_HEADERS *cah, char *filename)
     HANDLE hFile;
     DWORD written;
 
-    hFile = CreateFile(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    hFile = CreateFileA(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
     ok(hFile != INVALID_HANDLE_VALUE, "Couldn't create file\n");
 
@@ -360,17 +360,16 @@ static void test_default_data(void)
     LONG lSize;
     PAVISTREAM pStream0;
     PAVISTREAM pStream1;
-    AVISTREAMINFO asi0;
-    AVISTREAMINFO asi1;
+    AVISTREAMINFOA asi0, asi1;
     WAVEFORMATEX wfx;
 
-    GetTempPath(MAX_PATH, filename);
+    GetTempPathA(MAX_PATH, filename);
     strcpy(filename+strlen(filename), testfilename);
 
     init_test_struct(&cah);
     create_avi_file(&cah, filename);
 
-    res = AVIFileOpen(&pFile, filename, OF_SHARE_DENY_WRITE, 0L);
+    res = AVIFileOpenA(&pFile, filename, OF_SHARE_DENY_WRITE, 0L);
     ok(res != AVIERR_BADFORMAT, "Unable to open file: error1=%u\n", AVIERR_BADFORMAT);
     ok(res != AVIERR_MEMORY, "Unable to open file: error2=%u\n", AVIERR_MEMORY);
     ok(res != AVIERR_FILEREAD, "Unable to open file: error3=%u\n", AVIERR_FILEREAD);
@@ -384,10 +383,10 @@ static void test_default_data(void)
     res = AVIFileGetStream(pFile, &pStream1, 0, 1);
     ok(res == 0, "Unable to open audio stream: error=%u\n", res);
 
-    res = AVIStreamInfo(pStream0, &asi0, sizeof(AVISTREAMINFO));
+    res = AVIStreamInfoA(pStream0, &asi0, sizeof(asi0));
     ok(res == 0, "Unable to read stream info: error=%u\n", res);
 
-    res = AVIStreamInfo(pStream1, &asi1, sizeof(AVISTREAMINFO));
+    res = AVIStreamInfoA(pStream1, &asi1, sizeof(asi1));
     ok(res == 0, "Unable to read stream info: error=%u\n", res);
 
     res = AVIStreamReadFormat(pStream0, AVIStreamStart(pStream1), NULL, &lSize);
@@ -446,7 +445,7 @@ static void test_default_data(void)
     AVIStreamRelease(pStream0);
     AVIStreamRelease(pStream1);
     AVIFileRelease(pFile);
-    ok(DeleteFile(filename) !=0, "Deleting file %s failed\n", filename);
+    ok(DeleteFileA(filename) !=0, "Deleting file %s failed\n", filename);
 }
 
 static void test_amh_corruption(void)
@@ -456,7 +455,7 @@ static void test_amh_corruption(void)
     PAVIFILE pFile;
     int res;
 
-    GetTempPath(MAX_PATH, filename);
+    GetTempPathA(MAX_PATH, filename);
     strcpy(filename+strlen(filename), testfilename);
 
     /* Make sure only AVI files with the proper headers will be loaded */
@@ -464,10 +463,10 @@ static void test_amh_corruption(void)
     cah.fh[3] = mmioFOURCC('A', 'V', 'i', ' ');
 
     create_avi_file(&cah, filename);
-    res = AVIFileOpen(&pFile, filename, OF_SHARE_DENY_WRITE, 0L);
+    res = AVIFileOpenA(&pFile, filename, OF_SHARE_DENY_WRITE, 0L);
     ok(res != 0, "Able to open file: error=%u\n", res);
 
-    ok(DeleteFile(filename) !=0, "Deleting file %s failed\n", filename);
+    ok(DeleteFileA(filename) !=0, "Deleting file %s failed\n", filename);
 }
 
 static void test_ash1_corruption(void)
@@ -477,9 +476,9 @@ static void test_ash1_corruption(void)
     PAVIFILE pFile;
     int res;
     PAVISTREAM pStream1;
-    AVISTREAMINFO asi1;
+    AVISTREAMINFOA asi1;
 
-    GetTempPath(MAX_PATH, filename);
+    GetTempPathA(MAX_PATH, filename);
     strcpy(filename+strlen(filename), testfilename);
 
     /* Corrupt the sample size in the audio stream header */
@@ -488,13 +487,13 @@ static void test_ash1_corruption(void)
 
     create_avi_file(&cah, filename);
 
-    res = AVIFileOpen(&pFile, filename, OF_SHARE_DENY_WRITE, 0L);
+    res = AVIFileOpenA(&pFile, filename, OF_SHARE_DENY_WRITE, 0L);
     ok(res == 0, "Unable to open file: error=%u\n", res);
 
     res = AVIFileGetStream(pFile, &pStream1, 0, 1);
     ok(res == 0, "Unable to open audio stream: error=%u\n", res);
 
-    res = AVIStreamInfo(pStream1, &asi1, sizeof(AVISTREAMINFO));
+    res = AVIStreamInfoA(pStream1, &asi1, sizeof(asi1));
     ok(res == 0, "Unable to read stream info: error=%u\n", res);
 
     /* The result will still be 2, because the value is dynamically replaced with the nBlockAlign
@@ -503,7 +502,7 @@ static void test_ash1_corruption(void)
 
     AVIStreamRelease(pStream1);
     AVIFileRelease(pFile);
-    ok(DeleteFile(filename) !=0, "Deleting file %s failed\n", filename);
+    ok(DeleteFileA(filename) !=0, "Deleting file %s failed\n", filename);
 }
 
 static void test_ash1_corruption2(void)
@@ -513,9 +512,9 @@ static void test_ash1_corruption2(void)
     PAVIFILE pFile;
     int res;
     PAVISTREAM pStream1;
-    AVISTREAMINFO asi1;
+    AVISTREAMINFOA asi1;
 
-    GetTempPath(MAX_PATH, filename);
+    GetTempPathA(MAX_PATH, filename);
     strcpy(filename+strlen(filename), testfilename);
 
     /* Corrupt the block alignment in the audio format header */
@@ -524,20 +523,20 @@ static void test_ash1_corruption2(void)
 
     create_avi_file(&cah, filename);
 
-    res = AVIFileOpen(&pFile, filename, OF_SHARE_DENY_WRITE, 0L);
+    res = AVIFileOpenA(&pFile, filename, OF_SHARE_DENY_WRITE, 0L);
     ok(res == 0, "Unable to open file: error=%u\n", res);
 
     res = AVIFileGetStream(pFile, &pStream1, 0, 1);
     ok(res == 0, "Unable to open audio stream: error=%u\n", res);
 
-    ok(AVIStreamInfo(pStream1, &asi1, sizeof(AVISTREAMINFO)) == 0, "Unable to read stream info\n");
+    ok(AVIStreamInfoA(pStream1, &asi1, sizeof(asi1)) == 0, "Unable to read stream info\n");
 
     /* The result will also be the corrupt value, as explained above. */
     ok(asi1.dwSampleSize == 0xdead, "got 0x%x (expected 0xdead)\n", asi1.dwSampleSize);
 
     AVIStreamRelease(pStream1);
     AVIFileRelease(pFile);
-    ok(DeleteFile(filename) !=0, "Deleting file %s failed\n", filename);
+    ok(DeleteFileA(filename) !=0, "Deleting file %s failed\n", filename);
 }
 
 /* Outer IUnknown for COM aggregation tests */
