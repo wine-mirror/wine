@@ -1339,7 +1339,7 @@ static void test_data_cache(void)
         { NULL, 0 }
     };
 
-    GetSystemDirectory(szSystemDir, sizeof(szSystemDir)/sizeof(szSystemDir[0]));
+    GetSystemDirectoryA(szSystemDir, sizeof(szSystemDir)/sizeof(szSystemDir[0]));
 
     expected_method_list = methods_cacheinitnew;
 
@@ -1442,7 +1442,7 @@ static void test_data_cache(void)
     fmtetc.cfFormat = CF_METAFILEPICT;
     stgmedium.tymed = TYMED_MFPICT;
     U(stgmedium).hMetaFilePict = OleMetafilePictFromIconAndLabel(
-        LoadIcon(NULL, IDI_APPLICATION), wszPath, wszPath, 0);
+        LoadIconA(NULL, (LPSTR)IDI_APPLICATION), wszPath, wszPath, 0);
     stgmedium.pUnkForRelease = NULL;
 
     fmtetc.dwAspect = DVASPECT_CONTENT;

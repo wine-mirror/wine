@@ -270,21 +270,21 @@ static IDataObject DataObject = { &dataobject_vtbl };
 
 static ATOM register_dummy_class(void)
 {
-    WNDCLASS wc =
+    WNDCLASSA wc =
     {
         0,
-        DefWindowProc,
+        DefWindowProcA,
         0,
         0,
-        GetModuleHandle(NULL),
+        GetModuleHandleA(NULL),
         NULL,
-        LoadCursor(NULL, IDC_ARROW),
+        LoadCursorA(NULL, (LPSTR)IDC_ARROW),
         (HBRUSH)(COLOR_BTNFACE+1),
         NULL,
-        TEXT("WineOleTestClass"),
+        "WineOleTestClass",
     };
 
-    return RegisterClass(&wc);
+    return RegisterClassA(&wc);
 }
 
 static void test_Register_Revoke(void)

@@ -252,7 +252,7 @@ static void test_default_handler_run(void)
     DWORD class_reg;
     HRESULT hres;
 
-    if(!GetProcAddress(GetModuleHandle("ole32"), "CoRegisterSurrogateEx")) {
+    if(!GetProcAddress(GetModuleHandleA("ole32"), "CoRegisterSurrogateEx")) {
         win_skip("skipping OleCreateDefaultHandler tests\n");
         return;
     }

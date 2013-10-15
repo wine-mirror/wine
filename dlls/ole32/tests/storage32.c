@@ -250,7 +250,7 @@ static void test_create_storage_modes(void)
 static void test_stgcreatestorageex(void)
 {
    HRESULT (WINAPI *pStgCreateStorageEx)(const WCHAR* pwcsName, DWORD grfMode, DWORD stgfmt, DWORD grfAttrs, STGOPTIONS* pStgOptions, void* reserved, REFIID riid, void** ppObjectOpen);
-   HMODULE hOle32 = GetModuleHandle("ole32");
+   HMODULE hOle32 = GetModuleHandleA("ole32");
    IStorage *stg = NULL;
    STGOPTIONS stgoptions = {1, 0, 4096};
    HRESULT r;

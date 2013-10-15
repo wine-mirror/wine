@@ -19,6 +19,8 @@
  */
 
 #include "windows.h"
+#include "wtypes.h"
+#include "ddeml.h"
 
 #include "wine/test.h"
 

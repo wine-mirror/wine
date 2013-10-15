@@ -240,11 +240,11 @@ static DWORD CALLBACK host_object_proc(LPVOID p)
     ok_ole_success(hr, CoMarshalInterface);
 
     /* force the message queue to be created before signaling parent thread */
-    PeekMessage(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
+    PeekMessageA(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
 
     SetEvent(data->marshal_event);
 
-    while (GetMessage(&msg, NULL, 0, 0))
+    while (GetMessageA(&msg, NULL, 0, 0))
     {
         if (msg.hwnd == NULL && msg.message == RELEASEMARSHALDATA)
         {
@@ -252,7 +252,7 @@ static DWORD CALLBACK host_object_proc(LPVOID p)
             SetEvent((HANDLE)msg.lParam);
         }
         else
-            DispatchMessage(&msg);
+            DispatchMessageA(&msg);
     }
 
     HeapFree(GetProcessHeap(), 0, data);
@@ -265,7 +265,7 @@ static DWORD CALLBACK host_object_proc(LPVOID p)
 static DWORD start_host_object2(IStream *stream, REFIID riid, IUnknown *object, MSHLFLAGS marshal_flags, IMessageFilter *filter, HANDLE *thread)
 {
     DWORD tid = 0;
-    HANDLE marshal_event = CreateEvent(NULL, FALSE, FALSE, NULL);
+    HANDLE marshal_event = CreateEventA(NULL, FALSE, FALSE, NULL);
     struct host_object_data *data = HeapAlloc(GetProcessHeap(), 0, sizeof(*data));
 
     data->stream = stream;
@@ -293,15 +293,15 @@ static DWORD start_host_object(IStream *stream, REFIID riid, IUnknown *object, M
  * same thread that marshaled the interface in the first place. */
 static void release_host_object(DWORD tid)
 {
-    HANDLE event = CreateEvent(NULL, FALSE, FALSE, NULL);
-    PostThreadMessage(tid, RELEASEMARSHALDATA, 0, (LPARAM)event);
+    HANDLE event = CreateEventA(NULL, FALSE, FALSE, NULL);
+    PostThreadMessageA(tid, RELEASEMARSHALDATA, 0, (LPARAM)event);
     ok( !WaitForSingleObject(event, 10000), "wait timed out\n" );
     CloseHandle(event);
 }
 
 static void end_host_object(DWORD tid, HANDLE thread)
 {
-    BOOL ret = PostThreadMessage(tid, WM_QUIT, 0, 0);
+    BOOL ret = PostThreadMessageA(tid, WM_QUIT, 0, 0);
     ok(ret, "PostThreadMessage failed with error %d\n", GetLastError());
     /* be careful of races - don't return until hosting thread has terminated */
     ok( !WaitForSingleObject(thread, 10000), "wait timed out\n" );
@@ -865,8 +865,8 @@ static void test_no_couninitialize_server(void)
 
     cLocks = 0;
 
-    ncu_params.marshal_event = CreateEvent(NULL, TRUE, FALSE, NULL);
-    ncu_params.unmarshal_event = CreateEvent(NULL, TRUE, FALSE, NULL);
+    ncu_params.marshal_event = CreateEventA(NULL, TRUE, FALSE, NULL);
+    ncu_params.unmarshal_event = CreateEventA(NULL, TRUE, FALSE, NULL);
 
     hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
     ok_ole_success(hr, CreateStreamOnHGlobal);
@@ -1107,14 +1107,14 @@ static DWORD CALLBACK weak_and_normal_marshal_thread_proc(void *p)
     ok_ole_success(hr, "CoMarshalInterface");
 
     /* force the message queue to be created before signaling parent thread */
-    PeekMessage(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
+    PeekMessageA(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
 
     SetEvent(data->hReadyEvent);
 
     while (WAIT_OBJECT_0 + 1 == MsgWaitForMultipleObjects(1, &hQuitEvent, FALSE, 10000, QS_ALLINPUT))
     {
-        while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-            DispatchMessage(&msg);
+        while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE))
+            DispatchMessageA(&msg);
     }
     CloseHandle(hQuitEvent);
 
@@ -1135,8 +1135,8 @@ static void test_tableweak_and_normal_marshal_and_unmarshal(void)
 
     cLocks = 0;
 
-    data.hReadyEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-    data.hQuitEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+    data.hReadyEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+    data.hQuitEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
     hr = CreateStreamOnHGlobal(NULL, TRUE, &data.pStreamWeak);
     ok_ole_success(hr, CreateStreamOnHGlobal);
     hr = CreateStreamOnHGlobal(NULL, TRUE, &data.pStreamNormal);
@@ -1485,7 +1485,7 @@ static void test_proxy_used_in_wrong_thread(void)
     CloseHandle(thread);
 
     /* do release statement on Win9x that we should have done above */
-    if (!GetProcAddress(GetModuleHandle("ole32"), "CoRegisterSurrogateEx"))
+    if (!GetProcAddress(GetModuleHandleA("ole32"), "CoRegisterSurrogateEx"))
         IUnknown_Release(pProxy);
 
     ok_no_locks();
@@ -1825,7 +1825,7 @@ static HRESULT WINAPI TestRE_IClassFactory_CreateInstance(
     DWORD_PTR res;
     if (IsEqualIID(riid, &IID_IWineTest))
     {
-        BOOL ret = SendMessageTimeout(hwnd_app, WM_NULL, 0, 0, SMTO_BLOCK, 5000, &res);
+        BOOL ret = SendMessageTimeoutA(hwnd_app, WM_NULL, 0, 0, SMTO_BLOCK, 5000, &res);
         ok(ret, "Timed out sending a message to originating window during RPC call\n");
     }
     *ppvObj = NULL;
@@ -1882,7 +1882,7 @@ static LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
 
         end_host_object(tid, thread);
 
-        PostMessage(hwnd, WM_QUIT, 0, 0);
+        PostMessageA(hwnd, WM_QUIT, 0, 0);
 
         return 0;
     }
@@ -1912,7 +1912,7 @@ static LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
 
         /* post quit message before a doing a COM call to show that a pending
         * WM_QUIT message doesn't stop the call from succeeding */
-        PostMessage(hwnd, WM_QUIT, 0, 0);
+        PostMessageA(hwnd, WM_QUIT, 0, 0);
         hr = IClassFactory_CreateInstance(proxy, NULL, &IID_IUnknown, (void **)&object);
 	ok(hr == S_FALSE, "IClassFactory_CreateInstance returned 0x%08x, expected S_FALSE\n", hr);
 
@@ -1957,34 +1957,34 @@ static LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
         return 0;
     }
     default:
-        return DefWindowProc(hwnd, msg, wparam, lparam);
+        return DefWindowProcA(hwnd, msg, wparam, lparam);
     }
 }
 
 static void register_test_window(void)
 {
-    WNDCLASS wndclass;
+    WNDCLASSA wndclass;
 
     memset(&wndclass, 0, sizeof(wndclass));
     wndclass.lpfnWndProc = window_proc;
     wndclass.lpszClassName = "WineCOMTest";
-    RegisterClass(&wndclass);
+    RegisterClassA(&wndclass);
 }
 
 static void test_message_reentrancy(void)
 {
     MSG msg;
 
-    hwnd_app = CreateWindow("WineCOMTest", NULL, 0, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, NULL, 0);
+    hwnd_app = CreateWindowA("WineCOMTest", NULL, 0, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, NULL, 0);
     ok(hwnd_app != NULL, "Window creation failed\n");
 
     /* start message re-entrancy test */
-    PostMessage(hwnd_app, WM_USER, 0, 0);
+    PostMessageA(hwnd_app, WM_USER, 0, 0);
 
-    while (GetMessage(&msg, NULL, 0, 0))
+    while (GetMessageA(&msg, NULL, 0, 0))
     {
         TranslateMessage(&msg);
-        DispatchMessage(&msg);
+        DispatchMessageA(&msg);
     }
     DestroyWindow(hwnd_app);
 }
@@ -1996,7 +1996,7 @@ static HRESULT WINAPI TestMsg_IClassFactory_CreateInstance(
     LPVOID *ppvObj)
 {
     *ppvObj = NULL;
-    SendMessage(hwnd_app, WM_USER+2, 0, 0);
+    SendMessageA(hwnd_app, WM_USER+2, 0, 0);
     return S_OK;
 }
 
@@ -2021,7 +2021,7 @@ static void test_call_from_message(void)
     HANDLE thread;
     IUnknown *object;
 
-    hwnd_app = CreateWindow("WineCOMTest", NULL, 0, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, NULL, 0);
+    hwnd_app = CreateWindowA("WineCOMTest", NULL, 0, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, NULL, 0);
     ok(hwnd_app != NULL, "Window creation failed\n");
 
     hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
@@ -2047,10 +2047,10 @@ static void test_call_from_message(void)
 
     end_host_object(tid, thread);
 
-    while (GetMessage(&msg, NULL, 0, 0))
+    while (GetMessageA(&msg, NULL, 0, 0))
     {
         TranslateMessage(&msg);
-        DispatchMessage(&msg);
+        DispatchMessageA(&msg);
     }
     DestroyWindow(hwnd_app);
 }
@@ -2059,16 +2059,16 @@ static void test_WM_QUIT_handling(void)
 {
     MSG msg;
 
-    hwnd_app = CreateWindow("WineCOMTest", NULL, 0, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, NULL, 0);
+    hwnd_app = CreateWindowA("WineCOMTest", NULL, 0, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, NULL, 0);
     ok(hwnd_app != NULL, "Window creation failed\n");
 
     /* start WM_QUIT handling test */
-    PostMessage(hwnd_app, WM_USER+1, 0, 0);
+    PostMessageA(hwnd_app, WM_USER+1, 0, 0);
 
-    while (GetMessage(&msg, NULL, 0, 0))
+    while (GetMessageA(&msg, NULL, 0, 0))
     {
         TranslateMessage(&msg);
-        DispatchMessage(&msg);
+        DispatchMessageA(&msg);
     }
 }
 
@@ -2289,7 +2289,7 @@ static HRESULT reg_unreg_wine_test_class(BOOL Register)
     strcat(buffer, "\\InprocHandler32");
     if (Register)
     {
-        error = RegCreateKeyEx(HKEY_CLASSES_ROOT, buffer, 0, NULL, 0, KEY_SET_VALUE, NULL, &hkey, &dwDisposition);
+        error = RegCreateKeyExA(HKEY_CLASSES_ROOT, buffer, 0, NULL, 0, KEY_SET_VALUE, NULL, &hkey, &dwDisposition);
         if (error == ERROR_ACCESS_DENIED)
         {
             skip("Not authorized to modify the Classes key\n");
@@ -2297,16 +2297,16 @@ static HRESULT reg_unreg_wine_test_class(BOOL Register)
         }
         ok(error == ERROR_SUCCESS, "RegCreateKeyEx failed with error %d\n", error);
         if (error != ERROR_SUCCESS) hr = E_FAIL;
-        error = RegSetValueEx(hkey, NULL, 0, REG_SZ, (const unsigned char *)"\"ole32.dll\"", strlen("\"ole32.dll\"") + 1);
+        error = RegSetValueExA(hkey, NULL, 0, REG_SZ, (const unsigned char *)"\"ole32.dll\"", strlen("\"ole32.dll\"") + 1);
         ok(error == ERROR_SUCCESS, "RegSetValueEx failed with error %d\n", error);
         if (error != ERROR_SUCCESS) hr = E_FAIL;
         RegCloseKey(hkey);
     }
     else
     {
-        RegDeleteKey(HKEY_CLASSES_ROOT, buffer);
+        RegDeleteKeyA(HKEY_CLASSES_ROOT, buffer);
         *strrchr(buffer, '\\') = '\0';
-        RegDeleteKey(HKEY_CLASSES_ROOT, buffer);
+        RegDeleteKeyA(HKEY_CLASSES_ROOT, buffer);
     }
     return hr;
 }
@@ -2616,16 +2616,16 @@ static void test_register_local_server(void)
     HANDLE quit_event;
     DWORD wait;
 
-    heventShutdown = CreateEvent(NULL, TRUE, FALSE, NULL);
+    heventShutdown = CreateEventA(NULL, TRUE, FALSE, NULL);
 
     hr = CoRegisterClassObject(&CLSID_WineOOPTest, (IUnknown *)&TestOOP_ClassFactory,
                                CLSCTX_LOCAL_SERVER, REGCLS_SINGLEUSE, &cookie);
     ok_ole_success(hr, CoRegisterClassObject);
 
-    ready_event = CreateEvent(NULL, FALSE, FALSE, "Wine COM Test Ready Event");
+    ready_event = CreateEventA(NULL, FALSE, FALSE, "Wine COM Test Ready Event");
     SetEvent(ready_event);
 
-    quit_event = CreateEvent(NULL, FALSE, FALSE, "Wine COM Test Quit Event");
+    quit_event = CreateEventA(NULL, FALSE, FALSE, "Wine COM Test Quit Event");
 
     do
     {
@@ -2633,12 +2633,12 @@ static void test_register_local_server(void)
         if (wait == WAIT_OBJECT_0+1)
         {
             MSG msg;
-            BOOL ret = PeekMessage(&msg, NULL, 0, 0, PM_REMOVE);
-            if (ret)
+
+            if (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE))
             {
                 trace("Message 0x%x\n", msg.message);
                 TranslateMessage(&msg);
-                DispatchMessage(&msg);
+                DispatchMessageA(&msg);
             }
         }
     }
@@ -2655,14 +2655,14 @@ static HANDLE create_target_process(const char *arg)
     char cmdline[MAX_PATH];
     BOOL ret;
     PROCESS_INFORMATION pi;
-    STARTUPINFO si = { 0 };
+    STARTUPINFOA si = { 0 };
     si.cb = sizeof(si);
 
     pi.hThread = NULL;
     pi.hProcess = NULL;
     winetest_get_mainargs( &argv );
     sprintf(cmdline, "%s %s %s", argv[0], argv[1], arg);
-    ret = CreateProcess(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ret = CreateProcessA(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
     ok(ret, "CreateProcess failed with error: %u\n", GetLastError());
     if (pi.hThread) CloseHandle(pi.hThread);
     return pi.hProcess;
@@ -2679,7 +2679,7 @@ static void test_local_server(void)
     HANDLE quit_event;
     HANDLE ready_event;
 
-    heventShutdown = CreateEvent(NULL, TRUE, FALSE, NULL);
+    heventShutdown = CreateEventA(NULL, TRUE, FALSE, NULL);
 
     cLocks = 0;
 
@@ -2742,7 +2742,7 @@ static void test_local_server(void)
     process = create_target_process("-Embedding");
     ok(process != NULL, "couldn't start local server process, error was %d\n", GetLastError());
 
-    ready_event = CreateEvent(NULL, FALSE, FALSE, "Wine COM Test Ready Event");
+    ready_event = CreateEventA(NULL, FALSE, FALSE, "Wine COM Test Ready Event");
     ok( !WaitForSingleObject(ready_event, 10000), "wait timed out\n" );
     CloseHandle(ready_event);
 
@@ -2754,7 +2754,7 @@ static void test_local_server(void)
     hr = CoCreateInstance(&CLSID_WineOOPTest, NULL, CLSCTX_LOCAL_SERVER, &IID_IClassFactory, (void **)&cf);
     ok(hr == REGDB_E_CLASSNOTREG, "Second CoCreateInstance on REGCLS_SINGLEUSE object should have failed\n");
 
-    quit_event = CreateEvent(NULL, FALSE, FALSE, "Wine COM Test Quit Event");
+    quit_event = CreateEventA(NULL, FALSE, FALSE, "Wine COM Test Quit Event");
     SetEvent(quit_event);
 
     winetest_wait_child_process( process );
@@ -2847,8 +2847,8 @@ static void test_globalinterfacetable(void)
 	while (ret == WAIT_OBJECT_0 + 1)
 	{
 		MSG msg;
-		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-			DispatchMessage(&msg);
+		while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE))
+			DispatchMessageA(&msg);
 		ret = MsgWaitForMultipleObjects(1, &thread, FALSE, 10000, QS_ALLINPUT);
 	}
 
@@ -2956,12 +2956,12 @@ static const char *debugstr_iid(REFIID riid)
     LONG name_size = sizeof(name);
     StringFromGUID2(riid, bufferW, sizeof(bufferW)/sizeof(bufferW[0]));
     WideCharToMultiByte(CP_ACP, 0, bufferW, sizeof(bufferW)/sizeof(bufferW[0]), buffer, sizeof(buffer), NULL, NULL);
-    if (RegOpenKeyEx(HKEY_CLASSES_ROOT, "Interface", 0, KEY_QUERY_VALUE, &hkeyInterface) != ERROR_SUCCESS)
+    if (RegOpenKeyExA(HKEY_CLASSES_ROOT, "Interface", 0, KEY_QUERY_VALUE, &hkeyInterface) != ERROR_SUCCESS)
     {
         memcpy(name, buffer, sizeof(buffer));
         goto done;
     }
-    if (RegQueryValue(hkeyInterface, buffer, name, &name_size) != ERROR_SUCCESS)
+    if (RegQueryValueA(hkeyInterface, buffer, name, &name_size) != ERROR_SUCCESS)
     {
         memcpy(name, buffer, sizeof(buffer));
         goto done;
@@ -3160,7 +3160,7 @@ static void test_channel_hook(void)
 
 START_TEST(marshal)
 {
-    HMODULE hOle32 = GetModuleHandle("ole32");
+    HMODULE hOle32 = GetModuleHandleA("ole32");
     int argc;
     char **argv;
 

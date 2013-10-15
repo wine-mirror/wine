@@ -548,10 +548,10 @@ static void test_CoCreateInstance(void)
     /* show that COM doesn't have to be initialized for multi-threaded apartments if another
        thread has already done so */
 
-    info.wait = CreateEvent(NULL, TRUE, FALSE, NULL);
+    info.wait = CreateEventA(NULL, TRUE, FALSE, NULL);
     ok(info.wait != NULL, "CreateEvent failed with error %d\n", GetLastError());
 
-    info.stop = CreateEvent(NULL, TRUE, FALSE, NULL);
+    info.stop = CreateEventA(NULL, TRUE, FALSE, NULL);
     ok(info.stop != NULL, "CreateEvent failed with error %d\n", GetLastError());
 
     thread = CreateThread(NULL, 0, ole_initialize_thread, &info, 0, &tid);
@@ -599,10 +599,10 @@ static void test_CoGetClassObject(void)
     /* show that COM doesn't have to be initialized for multi-threaded apartments if another
        thread has already done so */
 
-    info.wait = CreateEvent(NULL, TRUE, FALSE, NULL);
+    info.wait = CreateEventA(NULL, TRUE, FALSE, NULL);
     ok(info.wait != NULL, "CreateEvent failed with error %d\n", GetLastError());
 
-    info.stop = CreateEvent(NULL, TRUE, FALSE, NULL);
+    info.stop = CreateEventA(NULL, TRUE, FALSE, NULL);
     ok(info.stop != NULL, "CreateEvent failed with error %d\n", GetLastError());
 
     thread = CreateThread(NULL, 0, ole_initialize_thread, &info, 0, &tid);
@@ -644,7 +644,7 @@ static void test_CoGetClassObject(void)
     {
         IUnknown_Release(pUnk);
 
-        res = RegCreateKeyEx(HKEY_CURRENT_USER, "Software\\Classes", 0, NULL, 0,
+        res = RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\Classes", 0, NULL, 0,
                              KEY_ALL_ACCESS, NULL, &hkey, NULL);
         ok(!res, "RegCreateKeyEx returned %d\n", res);
 
@@ -665,21 +665,21 @@ static void test_CoGetClassObject(void)
 
 static ATOM register_dummy_class(void)
 {
-    WNDCLASS wc =
+    WNDCLASSA wc =
     {
         0,
-        DefWindowProc,
+        DefWindowProcA,
         0,
         0,
-        GetModuleHandle(NULL),
+        GetModuleHandleA(NULL),
         NULL,
-        LoadCursor(NULL, IDC_ARROW),
+        LoadCursorA(NULL, (LPSTR)IDC_ARROW),
         (HBRUSH)(COLOR_BTNFACE+1),
         NULL,
-        TEXT("WineOleTestClass"),
+        "WineOleTestClass",
     };
 
-    return RegisterClass(&wc);
+    return RegisterClassA(&wc);
 }
 
 static void test_ole_menu(void)
@@ -687,7 +687,7 @@ static void test_ole_menu(void)
 	HWND hwndFrame;
 	HRESULT hr;
 
-	hwndFrame = CreateWindow(MAKEINTATOM(register_dummy_class()), "Test", 0, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, NULL, NULL);
+	hwndFrame = CreateWindowA((LPCSTR)MAKEINTATOM(register_dummy_class()), "Test", 0, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, NULL, NULL);
 	hr = OleSetMenuDescriptor(NULL, hwndFrame, NULL, NULL, NULL);
 	todo_wine ok_ole_success(hr, "OleSetMenuDescriptor");
 
@@ -983,8 +983,8 @@ static void test_CoGetPSClsid(void)
     hr = CoGetPSClsid(&IID_IClassFactory, &clsid);
     ok_ole_success(hr, "CoGetPSClsid");
 
-    res = RegCreateKeyEx(HKEY_CURRENT_USER, "Software\\Classes", 0, NULL, 0,
-                         KEY_ALL_ACCESS, NULL, &hkey, NULL);
+    res = RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\Classes", 0, NULL, 0,
+                          KEY_ALL_ACCESS, NULL, &hkey, NULL);
     ok(!res, "RegCreateKeyEx returned %d\n", res);
 
     res = pRegOverridePredefKey(HKEY_CLASSES_ROOT, hkey);
@@ -1403,7 +1403,7 @@ static DWORD CALLBACK free_libraries_thread(LPVOID p)
 
 static inline BOOL is_module_loaded(const char *module)
 {
-    return GetModuleHandle(module) != 0;
+    return GetModuleHandleA(module) != 0;
 }
 
 static void test_CoFreeUnusedLibraries(void)
@@ -1475,10 +1475,10 @@ static void test_CoGetObjectContext(void)
     /* show that COM doesn't have to be initialized for multi-threaded apartments if another
        thread has already done so */
 
-    info.wait = CreateEvent(NULL, TRUE, FALSE, NULL);
+    info.wait = CreateEventA(NULL, TRUE, FALSE, NULL);
     ok(info.wait != NULL, "CreateEvent failed with error %d\n", GetLastError());
 
-    info.stop = CreateEvent(NULL, TRUE, FALSE, NULL);
+    info.stop = CreateEventA(NULL, TRUE, FALSE, NULL);
     ok(info.stop != NULL, "CreateEvent failed with error %d\n", GetLastError());
 
     thread = CreateThread(NULL, 0, ole_initialize_thread, &info, 0, &tid);
@@ -1694,10 +1694,10 @@ static void test_CoGetContextToken(void)
     /* show that COM doesn't have to be initialized for multi-threaded apartments if another
        thread has already done so */
 
-    info.wait = CreateEvent(NULL, TRUE, FALSE, NULL);
+    info.wait = CreateEventA(NULL, TRUE, FALSE, NULL);
     ok(info.wait != NULL, "CreateEvent failed with error %d\n", GetLastError());
 
-    info.stop = CreateEvent(NULL, TRUE, FALSE, NULL);
+    info.stop = CreateEventA(NULL, TRUE, FALSE, NULL);
     ok(info.stop != NULL, "CreateEvent failed with error %d\n", GetLastError());
 
     thread = CreateThread(NULL, 0, ole_initialize_thread, &info, 0, &tid);
