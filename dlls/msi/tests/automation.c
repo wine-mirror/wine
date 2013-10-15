@@ -29,6 +29,7 @@
 #include <msidefs.h>
 #include <msi.h>
 #include <fci.h>
+#include <oaidl.h>
 
 #include "wine/test.h"
 
@@ -237,9 +238,8 @@ static void write_file(const CHAR *filename, const char *data, int data_size)
 {
     DWORD size;
 
-    HANDLE hf = CreateFile(filename, GENERIC_WRITE, 0, NULL,
-                           CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-
+    HANDLE hf = CreateFileA(filename, GENERIC_WRITE, 0, NULL,
+                            CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     WriteFile(hf, data, data_size, &size, NULL);
     CloseHandle(hf);
 }
@@ -333,13 +333,12 @@ static BOOL get_program_files_dir(LPSTR buf)
     HKEY hkey;
     DWORD type = REG_EXPAND_SZ, size;
 
-    if (RegOpenKey(HKEY_LOCAL_MACHINE,
-                   "Software\\Microsoft\\Windows\\CurrentVersion", &hkey))
+    if (RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows\\CurrentVersion", &hkey))
         return FALSE;
 
     size = MAX_PATH;
-    if (RegQueryValueEx(hkey, "ProgramFilesDir (x86)", 0, &type, (LPBYTE)buf, &size) &&
-        RegQueryValueEx(hkey, "ProgramFilesDir", 0, &type, (LPBYTE)buf, &size))
+    if (RegQueryValueExA(hkey, "ProgramFilesDir (x86)", 0, &type, (LPBYTE)buf, &size) &&
+        RegQueryValueExA(hkey, "ProgramFilesDir", 0, &type, (LPBYTE)buf, &size))
         return FALSE;
 
     RegCloseKey(hkey);
@@ -356,7 +355,7 @@ static void create_file(const CHAR *name, DWORD size)
     WriteFile(file, name, strlen(name), &written, NULL);
     WriteFile(file, "\n", strlen("\n"), &written, NULL);
 
-    left = size - lstrlen(name) - 1;
+    left = size - lstrlenA(name) - 1;
 
     SetFilePointer(file, left, NULL, FILE_CURRENT);
     SetEndOfFile(file);
@@ -2321,7 +2320,7 @@ static UINT delete_registry_key(HKEY hkeyParent, LPCSTR subkey, REGSAM access)
     HKEY hkey;
     DWORD dwSize;
 
-    ret = RegOpenKeyEx(hkeyParent, subkey, 0, access, &hkey);
+    ret = RegOpenKeyExA(hkeyParent, subkey, 0, access, &hkey);
     if (ret != ERROR_SUCCESS) return ret;
     ret = RegQueryInfoKeyA(hkey, NULL, NULL, NULL, NULL, &dwSize, NULL, NULL, NULL, NULL, NULL, NULL);
     if (ret != ERROR_SUCCESS) return ret;
@@ -2348,7 +2347,7 @@ static UINT find_registry_key(HKEY hkeyParent, LPCSTR subkey, LPCSTR findkey, RE
 
     *phkey = 0;
 
-    ret = RegOpenKeyEx(hkeyParent, subkey, 0, access, &hkey);
+    ret = RegOpenKeyExA(hkeyParent, subkey, 0, access, &hkey);
     if (ret != ERROR_SUCCESS) return ret;
     ret = RegQueryInfoKeyA(hkey, NULL, NULL, NULL, NULL, &dwSize, NULL, NULL, NULL, NULL, NULL, NULL);
     if (ret != ERROR_SUCCESS) return ret;
@@ -2525,7 +2524,7 @@ static void test_Installer_InstallProduct(void)
     ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
 
     /* Remove registry keys written by PublishProduct standard action */
-    res = RegOpenKey(HKEY_CURRENT_USER, "SOFTWARE\\Microsoft\\Installer", &hkey);
+    res = RegOpenKeyA(HKEY_CURRENT_USER, "SOFTWARE\\Microsoft\\Installer", &hkey);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     res = delete_registry_key(hkey, "Products\\af054738b93a8cb43b12803b397f483b", KEY_ALL_ACCESS);
@@ -2685,7 +2684,7 @@ START_TEST(automation)
     GetSystemTimeAsFileTime(&systemtime);
 
     GetCurrentDirectoryA(MAX_PATH, prev_path);
-    GetTempPath(MAX_PATH, temp_path);
+    GetTempPathA(MAX_PATH, temp_path);
     SetCurrentDirectoryA(temp_path);
 
     lstrcpyA(CURR_DIR, temp_path);
