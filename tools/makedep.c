@@ -468,28 +468,6 @@ static FILE *open_include_file( struct incl_file *pFile )
         free( filename );
     }
 
-    /* check for generated message resource */
-
-    if (strendswith( pFile->name, ".mc.rc" ))
-    {
-        if (src_dir)
-            filename = strmake( "%s/%s", src_dir, pFile->name );
-        else
-            filename = xstrdup( pFile->name );
-
-        filename[strlen(filename) - 3] = 0;
-
-        if ((file = fopen( filename, "r" )))
-        {
-            pFile->sourcename = filename;
-            pFile->filename = xstrdup( pFile->name );
-            /* don't bother to parse it */
-            fclose( file );
-            return NULL;
-        }
-        free( filename );
-    }
-
     /* check for corresponding idl file in source dir */
 
     if (strendswith( pFile->name, ".h" ))
