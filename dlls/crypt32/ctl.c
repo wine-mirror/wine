@@ -330,11 +330,12 @@ BOOL WINAPI CertDeleteCTLFromStore(PCCTL_CONTEXT pCtlContext)
     else
     {
         WINECRYPT_CERTSTORE *hcs = pCtlContext->hCertStore;
+        ctl_t *ctl = ctl_from_ptr(pCtlContext);
 
         if (hcs->dwMagic != WINE_CRYPTCERTSTORE_MAGIC)
             ret = FALSE;
         else
-            ret = hcs->vtbl->ctls.deleteContext(hcs, (void *)pCtlContext);
+            ret = hcs->vtbl->ctls.delete(hcs, &ctl->base);
         if (ret)
             ret = CertFreeCTLContext(pCtlContext);
     }

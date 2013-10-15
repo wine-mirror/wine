@@ -275,13 +275,11 @@ typedef void * (*EnumFunc)(struct WINE_CRYPTCERTSTORE *store, void *pPrev);
 typedef BOOL (*AddFunc)(struct WINE_CRYPTCERTSTORE *store, void *context,
  void *toReplace, const void **ppStoreContext);
 
-typedef BOOL (*DeleteFunc)(struct WINE_CRYPTCERTSTORE *store, void *context);
-
 typedef struct _CONTEXT_FUNCS
 {
     AddFunc    addContext;
     EnumFunc   enumContext;
-    DeleteFunc deleteContext;
+    BOOL (*delete)(struct WINE_CRYPTCERTSTORE*,context_t*);
 } CONTEXT_FUNCS;
 
 typedef enum _CertStoreType {
@@ -464,7 +462,7 @@ void *ContextList_Enum(struct ContextList *list, void *pPrev) DECLSPEC_HIDDEN;
  * or FALSE if not.  (The context may have been duplicated, so subsequent
  * removes have no effect.)
  */
-BOOL ContextList_Remove(struct ContextList *list, void *context) DECLSPEC_HIDDEN;
+BOOL ContextList_Remove(struct ContextList *list, context_t *context) DECLSPEC_HIDDEN;
 
 void ContextList_Free(struct ContextList *list) DECLSPEC_HIDDEN;
 

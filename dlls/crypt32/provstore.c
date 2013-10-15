@@ -113,17 +113,17 @@ static void *ProvStore_enumCert(WINECRYPT_CERTSTORE *store, void *pPrev)
     return ret;
 }
 
-static BOOL ProvStore_deleteCert(WINECRYPT_CERTSTORE *store, void *cert)
+static BOOL ProvStore_deleteCert(WINECRYPT_CERTSTORE *store, context_t *context)
 {
     WINE_PROVIDERSTORE *ps = (WINE_PROVIDERSTORE*)store;
     BOOL ret = TRUE;
 
-    TRACE("(%p, %p)\n", store, cert);
+    TRACE("(%p, %p)\n", store, context);
 
     if (ps->provDeleteCert)
-        ret = ps->provDeleteCert(ps->hStoreProv, cert, 0);
+        ret = ps->provDeleteCert(ps->hStoreProv, context_ptr(context), 0);
     if (ret)
-        ret = ps->memStore->vtbl->certs.deleteContext(ps->memStore, cert);
+        ret = ps->memStore->vtbl->certs.delete(ps->memStore, context);
     return ret;
 }
 
@@ -180,7 +180,7 @@ static void *ProvStore_enumCRL(WINECRYPT_CERTSTORE *store, void *pPrev)
     return ret;
 }
 
-static BOOL ProvStore_deleteCRL(WINECRYPT_CERTSTORE *store, void *crl)
+static BOOL ProvStore_deleteCRL(WINECRYPT_CERTSTORE *store, context_t *crl)
 {
     WINE_PROVIDERSTORE *ps = (WINE_PROVIDERSTORE*)store;
     BOOL ret = TRUE;
@@ -188,9 +188,9 @@ static BOOL ProvStore_deleteCRL(WINECRYPT_CERTSTORE *store, void *crl)
     TRACE("(%p, %p)\n", store, crl);
 
     if (ps->provDeleteCrl)
-        ret = ps->provDeleteCrl(ps->hStoreProv, crl, 0);
+        ret = ps->provDeleteCrl(ps->hStoreProv, context_ptr(crl), 0);
     if (ret)
-        ret = ps->memStore->vtbl->crls.deleteContext(ps->memStore, crl);
+        ret = ps->memStore->vtbl->crls.delete(ps->memStore, crl);
     return ret;
 }
 
@@ -247,7 +247,7 @@ static void *ProvStore_enumCTL(WINECRYPT_CERTSTORE *store, void *pPrev)
     return ret;
 }
 
-static BOOL ProvStore_deleteCTL(WINECRYPT_CERTSTORE *store, void *ctl)
+static BOOL ProvStore_deleteCTL(WINECRYPT_CERTSTORE *store, context_t *ctl)
 {
     WINE_PROVIDERSTORE *ps = (WINE_PROVIDERSTORE*)store;
     BOOL ret = TRUE;
@@ -255,9 +255,9 @@ static BOOL ProvStore_deleteCTL(WINECRYPT_CERTSTORE *store, void *ctl)
     TRACE("(%p, %p)\n", store, ctl);
 
     if (ps->provDeleteCtl)
-        ret = ps->provDeleteCtl(ps->hStoreProv, ctl, 0);
+        ret = ps->provDeleteCtl(ps->hStoreProv, context_ptr(ctl), 0);
     if (ret)
-        ret = ps->memStore->vtbl->ctls.deleteContext(ps->memStore, ctl);
+        ret = ps->memStore->vtbl->ctls.delete(ps->memStore, ctl);
     return ret;
 }
 

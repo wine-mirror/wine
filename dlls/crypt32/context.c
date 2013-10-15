@@ -216,9 +216,8 @@ void *ContextList_Enum(struct ContextList *list, void *pPrev)
     return ret;
 }
 
-BOOL ContextList_Remove(struct ContextList *list, void *ctx)
+BOOL ContextList_Remove(struct ContextList *list, context_t *context)
 {
-    context_t *context = context_from_ptr(ctx);
     BOOL inList = FALSE;
 
     EnterCriticalSection(&list->cs);

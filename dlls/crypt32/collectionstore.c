@@ -258,16 +258,17 @@ static void *Collection_enumCert(WINECRYPT_CERTSTORE *store, void *pPrev)
     return ret;
 }
 
-static BOOL Collection_deleteCert(WINECRYPT_CERTSTORE *store, void *pCertContext)
+static BOOL Collection_deleteCert(WINECRYPT_CERTSTORE *store, context_t *context)
 {
+    cert_t *cert = (cert_t*)context;
     BOOL ret;
     PCCERT_CONTEXT linked;
 
-    TRACE("(%p, %p)\n", store, pCertContext);
+    TRACE("(%p, %p)\n", store, cert);
 
-    linked = Context_GetLinkedContext(pCertContext);
+    linked = Context_GetLinkedContext(&cert->ctx);
     ret = CertDeleteCertificateFromStore(linked);
-    CertFreeCertificateContext(pCertContext);
+    Context_Release(&cert->base);
     return ret;
 }
 
@@ -333,16 +334,17 @@ static void *Collection_enumCRL(WINECRYPT_CERTSTORE *store, void *pPrev)
     return ret;
 }
 
-static BOOL Collection_deleteCRL(WINECRYPT_CERTSTORE *store, void *pCrlContext)
+static BOOL Collection_deleteCRL(WINECRYPT_CERTSTORE *store, context_t *context)
 {
+    crl_t *crl = (crl_t*)context;
     BOOL ret;
     PCCRL_CONTEXT linked;
 
-    TRACE("(%p, %p)\n", store, pCrlContext);
+    TRACE("(%p, %p)\n", store, crl);
 
-    linked = Context_GetLinkedContext(pCrlContext);
+    linked = Context_GetLinkedContext(&crl->ctx);
     ret = CertDeleteCRLFromStore(linked);
-    CertFreeCRLContext(pCrlContext);
+    Context_Release(&crl->base);
     return ret;
 }
 
@@ -408,16 +410,17 @@ static void *Collection_enumCTL(WINECRYPT_CERTSTORE *store, void *pPrev)
     return ret;
 }
 
-static BOOL Collection_deleteCTL(WINECRYPT_CERTSTORE *store, void *pCtlContext)
+static BOOL Collection_deleteCTL(WINECRYPT_CERTSTORE *store, context_t *context)
 {
+    ctl_t *ctl = (ctl_t*)context;
     BOOL ret;
     PCCTL_CONTEXT linked;
 
-    TRACE("(%p, %p)\n", store, pCtlContext);
+    TRACE("(%p, %p)\n", store, ctl);
 
-    linked = Context_GetLinkedContext(pCtlContext);
+    linked = Context_GetLinkedContext(&ctl->ctx);
     ret = CertDeleteCTLFromStore(linked);
-    CertFreeCTLContext(pCtlContext);
+    Context_Release(&ctl->base);
     return ret;
 }
 
