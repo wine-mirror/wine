@@ -51,6 +51,8 @@ UINT WINAPI WSOCK32_inet_network(const char *cp)
 {
 #ifdef HAVE_INET_NETWORK
     return inet_network(cp);
+#elif defined(HAVE_INET_ADDR)
+    return ntohl( inet_addr( cp ) );
 #else
     return 0;
 #endif
