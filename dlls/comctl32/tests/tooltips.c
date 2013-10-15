@@ -758,6 +758,62 @@ static void test_longtextW(void)
     DestroyWindow(hwnd);
 }
 
+static BOOL almost_eq(int a, int b)
+{
+    return a-5<b && a+5>b;
+}
+
+static void test_track(void)
+{
+    WCHAR textW[] = {'t','e','x','t',0};
+    TTTOOLINFOW info = { 0 };
+    HWND parent, tt;
+    LRESULT res;
+    RECT pos;
+
+    parent = CreateWindowExW(0, WC_STATICW, NULL, WS_CAPTION | WS_VISIBLE,
+            50, 50, 300, 300, NULL, NULL, NULL, 0);
+    ok(parent != NULL, "creation of parent window failed\n");
+
+    ShowWindow(parent, SW_SHOWNORMAL);
+    flush_events(100);
+
+    tt = CreateWindowExW(WS_EX_TOPMOST, TOOLTIPS_CLASSW, NULL, TTS_NOPREFIX | TTS_ALWAYSTIP,
+            CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+            parent, NULL, GetModuleHandleW(NULL), 0);
+    ok(tt != NULL, "creation of tooltip window failed\n");
+
+    info.cbSize = TTTOOLINFO_V1_SIZE;
+    info.uFlags = TTF_IDISHWND | TTF_TRACK | TTF_ABSOLUTE;
+    info.hwnd = parent;
+    info.hinst = GetModuleHandleW(NULL);
+    info.lpszText = textW;
+    info.uId = (UINT_PTR)parent;
+    GetClientRect(parent, &info.rect);
+
+    res = SendMessageW(tt, TTM_ADDTOOLW, 0, (LPARAM)&info);
+    ok(res, "adding the tool to the tooltip failed\n");
+
+    SendMessageW(tt, TTM_SETDELAYTIME, TTDT_INITIAL, MAKELPARAM(1,0));
+    SendMessageW(tt, TTM_TRACKACTIVATE, (WPARAM)TRUE, (LPARAM)&info);
+    SendMessageW(tt, TTM_TRACKPOSITION, 0, MAKELPARAM(10, 10));
+
+    GetWindowRect(tt, &pos);
+    ok(almost_eq(pos.left, 10), "pos.left = %d\n", pos.left);
+    ok(almost_eq(pos.top, 10), "pos.top = %d\n", pos.top);
+
+    info.uFlags = TTF_IDISHWND | TTF_ABSOLUTE;
+    SendMessageW(tt, TTM_SETTOOLINFO, 0, (LPARAM)&info);
+    SendMessageW(tt, TTM_TRACKPOSITION, 0, MAKELPARAM(10, 10));
+
+    GetWindowRect(tt, &pos);
+    ok(!almost_eq(pos.left, 10), "pos.left = %d\n", pos.left);
+    ok(!almost_eq(pos.top, 10), "pos.top = %d\n", pos.top);
+
+    DestroyWindow(tt);
+    DestroyWindow(parent);
+}
+
 START_TEST(tooltips)
 {
     InitCommonControls();
@@ -768,4 +824,5 @@ START_TEST(tooltips)
     test_ttm_gettoolinfo();
     test_longtextA();
     test_longtextW();
+    test_track();
 }
