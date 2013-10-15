@@ -36,6 +36,7 @@
 #include "unknwn.h"
 #include "uuids.h"
 #include "mmdeviceapi.h"
+#include "mmsystem.h"
 #include "audioclient.h"
 #include "audiopolicy.h"
 
