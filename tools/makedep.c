@@ -832,39 +832,8 @@ static void parse_file( struct incl_file *source, int src )
 {
     FILE *file;
 
-    /* special case for source files generated from idl */
-    if (is_generated_idl( source ))
-    {
-        parse_generated_idl( source );
-        return;
-    }
-
-    if (!strcmp( source->name, "dlldata.o" ))
-    {
-        source->filename = xstrdup( "dlldata.c" );
-        add_include( source, "objbase.h", 1 );
-        add_include( source, "rpcproxy.h", 1 );
-        return;
-    }
-
-    if (!strcmp( source->name, "testlist.o" ))
-    {
-        source->filename = xstrdup( "testlist.c" );
-        add_include( source, "wine/test.h", 1 );
-        return;
-    }
-
-    if (strendswith( source->name, ".o" ))
-    {
-        /* default to .c for unknown extra object files */
-        source->filename = replace_extension( source->name, 2, ".c" );
-        return;
-    }
-
     /* don't try to open certain types of files */
     if (strendswith( source->name, ".tlb" ) ||
-        strendswith( source->name, ".res" ) ||
-        strendswith( source->name, ".pot" ) ||
         strendswith( source->name, ".x" ))
     {
         source->filename = xstrdup( source->name );
@@ -900,13 +869,67 @@ static void parse_file( struct incl_file *source, int src )
 static struct incl_file *add_src_file( const char *name )
 {
     struct incl_file *file;
+    char *idl;
 
     if (find_src_file( name )) return NULL;  /* we already have it */
     file = xmalloc( sizeof(*file) );
     memset( file, 0, sizeof(*file) );
     file->name = xstrdup(name);
     list_add_tail( &sources, &file->entry );
+
+    /* special cases for generated files */
+
+    if (is_generated_idl( file ))
+    {
+        parse_generated_idl( file );
+        goto add_idl_source;
+    }
+
+    if (!strcmp( file->name, "dlldata.o" ))
+    {
+        file->filename = xstrdup( "dlldata.c" );
+        add_include( file, "objbase.h", 1 );
+        add_include( file, "rpcproxy.h", 1 );
+        return file;
+    }
+
+    if (!strcmp( file->name, "testlist.o" ))
+    {
+        file->filename = xstrdup( "testlist.c" );
+        add_include( file, "wine/test.h", 1 );
+        return file;
+    }
+
+    if (strendswith( file->name, ".o" ))
+    {
+        /* default to .c for unknown extra object files */
+        file->filename = replace_extension( file->name, 2, ".c" );
+        return file;
+    }
+
+    if (strendswith( file->name, ".tlb" ) ||
+        strendswith( file->name, "_r.res" ) ||
+        strendswith( file->name, "_t.res" ))
+    {
+        file->filename = xstrdup( file->name );
+        goto add_idl_source;
+    }
+
+    if (strendswith( file->name, ".res" ) ||
+        strendswith( file->name, ".pot" ) ||
+        strendswith( file->name, ".x" ))
+    {
+        file->filename = xstrdup( file->name );
+        return file;
+    }
+
     parse_file( file, 1 );
+    return file;
+
+add_idl_source:
+    idl = replace_extension( name, strendswith( name, ".res" ) ? 6 : 4, ".idl" );
+    add_src_file( idl );
+    free( idl );
     return file;
 }
 

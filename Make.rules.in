@@ -100,8 +100,7 @@ $(IMPORTLIB:%=lib%.cross.a): $(MAINSPEC) $(IMPLIB_SRCS:.c=.cross.o)
 # Rules for dependencies
 
 DEPEND_SRCS = $(C_SRCS) $(OBJC_SRCS) $(RC_SRCS) $(MC_SRCS) $(PO_SRCS:.rc=.pot) \
-              $(IDL_H_SRCS) $(IDL_C_SRCS) $(IDL_I_SRCS) $(IDL_P_SRCS) $(IDL_R_SRCS) $(IDL_S_SRCS) \
-              $(IDL_GEN_C_SRCS) $(IDL_R_SRCS:.idl=_r.res) $(IDL_TLB_SRCS) $(IDL_TLB_SRCS:.idl=.tlb) \
+              $(IDL_H_SRCS) $(IDL_GEN_C_SRCS) $(IDL_R_SRCS:.idl=_r.res) $(IDL_TLB_SRCS:.idl=.tlb) \
               $(BISON_SRCS) $(LEX_SRCS) $(EXTRA_OBJS)
 
 depend: dummy
