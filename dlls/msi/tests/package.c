@@ -33,6 +33,8 @@
 
 static BOOL is_wow64;
 static const char msifile[] = "winetest-package.msi";
+static const WCHAR msifileW[] =
+    {'w','i','n','e','t','e','s','t','-','p','a','c','k','a','g','e','.','m','s','i',0};
 static char CURR_DIR[MAX_PATH];
 
 static UINT (WINAPI *pMsiApplyMultiplePatchesA)(LPCSTR, LPCSTR, LPCSTR);
@@ -377,7 +379,7 @@ static UINT do_query(MSIHANDLE hdb, const char *query, MSIHANDLE *phrec)
     UINT r, ret;
 
     /* open a select query */
-    r = MsiDatabaseOpenView(hdb, query, &hview);
+    r = MsiDatabaseOpenViewA(hdb, query, &hview);
     if (r != ERROR_SUCCESS)
         return r;
     r = MsiViewExecute(hview, 0);
@@ -398,7 +400,7 @@ static UINT run_query( MSIHANDLE hdb, const char *query )
     MSIHANDLE hview = 0;
     UINT r;
 
-    r = MsiDatabaseOpenView(hdb, query, &hview);
+    r = MsiDatabaseOpenViewA(hdb, query, &hview);
     if( r != ERROR_SUCCESS )
         return r;
 
@@ -710,33 +712,33 @@ static UINT set_summary_info(MSIHANDLE hdb)
     MSIHANDLE suminfo;
 
     /* build summary info */
-    res = MsiGetSummaryInformation(hdb, NULL, 7, &suminfo);
+    res = MsiGetSummaryInformationA(hdb, NULL, 7, &suminfo);
     ok( res == ERROR_SUCCESS , "Failed to open summaryinfo\n" );
 
-    res = MsiSummaryInfoSetProperty(suminfo,2, VT_LPSTR, 0,NULL,
+    res = MsiSummaryInfoSetPropertyA(suminfo,2, VT_LPSTR, 0,NULL,
                         "Installation Database");
     ok( res == ERROR_SUCCESS , "Failed to set summary info\n" );
 
-    res = MsiSummaryInfoSetProperty(suminfo,3, VT_LPSTR, 0,NULL,
+    res = MsiSummaryInfoSetPropertyA(suminfo,3, VT_LPSTR, 0,NULL,
                         "Installation Database");
     ok( res == ERROR_SUCCESS , "Failed to set summary info\n" );
 
-    res = MsiSummaryInfoSetProperty(suminfo,4, VT_LPSTR, 0,NULL,
+    res = MsiSummaryInfoSetPropertyA(suminfo,4, VT_LPSTR, 0,NULL,
                         "Wine Hackers");
     ok( res == ERROR_SUCCESS , "Failed to set summary info\n" );
 
-    res = MsiSummaryInfoSetProperty(suminfo,7, VT_LPSTR, 0,NULL,
+    res = MsiSummaryInfoSetPropertyA(suminfo,7, VT_LPSTR, 0,NULL,
                     ";1033");
     ok( res == ERROR_SUCCESS , "Failed to set summary info\n" );
 
-    res = MsiSummaryInfoSetProperty(suminfo,9, VT_LPSTR, 0,NULL,
+    res = MsiSummaryInfoSetPropertyA(suminfo,9, VT_LPSTR, 0,NULL,
                     "{913B8D18-FBB6-4CAC-A239-C74C11E3FA74}");
     ok( res == ERROR_SUCCESS , "Failed to set summary info\n" );
 
-    res = MsiSummaryInfoSetProperty(suminfo, 14, VT_I4, 100, NULL, NULL);
+    res = MsiSummaryInfoSetPropertyA(suminfo, 14, VT_I4, 100, NULL, NULL);
     ok( res == ERROR_SUCCESS , "Failed to set summary info\n" );
 
-    res = MsiSummaryInfoSetProperty(suminfo, 15, VT_I4, 0, NULL, NULL);
+    res = MsiSummaryInfoSetPropertyA(suminfo, 15, VT_I4, 0, NULL, NULL);
     ok( res == ERROR_SUCCESS , "Failed to set summary info\n" );
 
     res = MsiSummaryInfoPersist(suminfo);
@@ -754,10 +756,10 @@ static MSIHANDLE create_package_db(void)
     MSIHANDLE hdb = 0;
     UINT res;
 
-    DeleteFile(msifile);
+    DeleteFileA(msifile);
 
     /* create an empty database */
-    res = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb );
+    res = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb );
     ok( res == ERROR_SUCCESS , "Failed to create database %u\n", res );
     if( res != ERROR_SUCCESS )
         return hdb;
@@ -786,7 +788,7 @@ static UINT package_from_db(MSIHANDLE hdb, MSIHANDLE *handle)
     MSIHANDLE hPackage;
 
     sprintf(szPackage, "#%u", hdb);
-    res = MsiOpenPackage(szPackage, &hPackage);
+    res = MsiOpenPackageA(szPackage, &hPackage);
     if (res != ERROR_SUCCESS)
     {
         MsiCloseHandle(hdb);
@@ -841,13 +843,13 @@ static BOOL create_file_with_version(const CHAR *name, LONG ms, LONG ls)
     HANDLE resource;
     BOOL ret = FALSE;
 
-    GetSystemDirectory(path, MAX_PATH);
+    GetSystemDirectoryA(path, MAX_PATH);
     /* Some dlls can't be updated on Vista/W2K8 */
     lstrcatA(path, "\\version.dll");
 
     CopyFileA(path, name, FALSE);
 
-    size = GetFileVersionInfoSize(path, &handle);
+    size = GetFileVersionInfoSizeA(path, &handle);
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
 
     GetFileVersionInfoA(path, 0, size, buffer);
@@ -861,15 +863,15 @@ static BOOL create_file_with_version(const CHAR *name, LONG ms, LONG ls)
     pFixedInfo->dwProductVersionMS = ms;
     pFixedInfo->dwProductVersionLS = ls;
 
-    resource = BeginUpdateResource(name, FALSE);
+    resource = BeginUpdateResourceA(name, FALSE);
     if (!resource)
         goto done;
 
-    if (!UpdateResource(resource, RT_VERSION, MAKEINTRESOURCE(VS_VERSION_INFO),
-                   MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), buffer, size))
+    if (!UpdateResourceA(resource, (LPCSTR)RT_VERSION, (LPCSTR)MAKEINTRESOURCE(VS_VERSION_INFO),
+                         MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), buffer, size))
         goto done;
 
-    if (!EndUpdateResource(resource, FALSE))
+    if (!EndUpdateResourceA(resource, FALSE))
         goto done;
 
     ret = TRUE;
@@ -909,14 +911,14 @@ static void test_createpackage(void)
     if (res == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
-        DeleteFile(msifile);
+        DeleteFileA(msifile);
         return;
     }
     ok( res == ERROR_SUCCESS, " Failed to create package %u\n", res );
 
     res = MsiCloseHandle( hPackage);
     ok( res == ERROR_SUCCESS , "Failed to close package\n" );
-    DeleteFile(msifile);
+    DeleteFileA(msifile);
 }
 
 static void test_doaction( void )
@@ -924,29 +926,29 @@ static void test_doaction( void )
     MSIHANDLE hpkg;
     UINT r;
 
-    r = MsiDoAction( -1, NULL );
+    r = MsiDoActionA( -1, NULL );
     ok( r == ERROR_INVALID_PARAMETER, "wrong return val\n");
 
     r = package_from_db(create_package_db(), &hpkg);
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
-        DeleteFile(msifile);
+        DeleteFileA(msifile);
         return;
     }
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r);
 
-    r = MsiDoAction(hpkg, NULL);
+    r = MsiDoActionA(hpkg, NULL);
     ok( r == ERROR_INVALID_PARAMETER, "wrong return val\n");
 
-    r = MsiDoAction(0, "boo");
+    r = MsiDoActionA(0, "boo");
     ok( r == ERROR_INVALID_HANDLE, "wrong return val\n");
 
-    r = MsiDoAction(hpkg, "boo");
+    r = MsiDoActionA(hpkg, "boo");
     ok( r == ERROR_FUNCTION_NOT_CALLED, "wrong return val\n");
 
     MsiCloseHandle( hpkg );
-    DeleteFile(msifile);
+    DeleteFileA(msifile);
 }
 
 static void test_gettargetpath_bad(void)
@@ -963,31 +965,31 @@ static void test_gettargetpath_bad(void)
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
-        DeleteFile(msifile);
+        DeleteFileA(msifile);
         return;
     }
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r);
 
-    r = MsiGetTargetPath( 0, NULL, NULL, NULL );
+    r = MsiGetTargetPathA( 0, NULL, NULL, NULL );
     ok( r == ERROR_INVALID_PARAMETER, "wrong return val\n");
 
-    r = MsiGetTargetPath( 0, NULL, NULL, &sz );
+    r = MsiGetTargetPathA( 0, NULL, NULL, &sz );
     ok( r == ERROR_INVALID_PARAMETER, "wrong return val\n");
 
-    r = MsiGetTargetPath( 0, "boo", NULL, NULL );
+    r = MsiGetTargetPathA( 0, "boo", NULL, NULL );
     ok( r == ERROR_INVALID_HANDLE, "wrong return val\n");
 
-    r = MsiGetTargetPath( 0, "boo", NULL, NULL );
+    r = MsiGetTargetPathA( 0, "boo", NULL, NULL );
     ok( r == ERROR_INVALID_HANDLE, "wrong return val\n");
 
-    r = MsiGetTargetPath( hpkg, "boo", NULL, NULL );
+    r = MsiGetTargetPathA( hpkg, "boo", NULL, NULL );
     ok( r == ERROR_DIRECTORY, "wrong return val\n");
 
-    r = MsiGetTargetPath( hpkg, "boo", buffer, NULL );
+    r = MsiGetTargetPathA( hpkg, "boo", buffer, NULL );
     ok( r == ERROR_DIRECTORY, "wrong return val\n");
 
     sz = 0;
-    r = MsiGetTargetPath( hpkg, "", buffer, &sz );
+    r = MsiGetTargetPathA( hpkg, "", buffer, &sz );
     ok( r == ERROR_DIRECTORY, "wrong return val\n");
 
     r = MsiGetTargetPathW( 0, NULL, NULL, NULL );
@@ -1013,7 +1015,7 @@ static void test_gettargetpath_bad(void)
     ok( r == ERROR_DIRECTORY, "wrong return val\n");
 
     MsiCloseHandle( hpkg );
-    DeleteFile(msifile);
+    DeleteFileA(msifile);
 }
 
 static void query_file_path(MSIHANDLE hpkg, LPCSTR file, LPSTR buff)
@@ -1025,11 +1027,11 @@ static void query_file_path(MSIHANDLE hpkg, LPCSTR file, LPSTR buff)
     rec = MsiCreateRecord( 1 );
     ok(rec, "MsiCreate record failed\n");
 
-    r = MsiRecordSetString( rec, 0, file );
+    r = MsiRecordSetStringA( rec, 0, file );
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r );
 
     size = MAX_PATH;
-    r = MsiFormatRecord( hpkg, rec, buff, &size );
+    r = MsiFormatRecordA( hpkg, rec, buff, &size );
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r );
 
     MsiCloseHandle( rec );
@@ -1089,129 +1091,129 @@ static void test_settargetpath(void)
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
-        DeleteFile(msifile);
+        DeleteFileA(msifile);
         return;
     }
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r);
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
-    r = MsiDoAction( hpkg, "CostInitialize");
+    r = MsiDoActionA( hpkg, "CostInitialize");
     ok( r == ERROR_SUCCESS, "cost init failed\n");
 
-    r = MsiDoAction( hpkg, "FileCost");
+    r = MsiDoActionA( hpkg, "FileCost");
     ok( r == ERROR_SUCCESS, "file cost failed\n");
 
-    r = MsiDoAction( hpkg, "CostFinalize");
+    r = MsiDoActionA( hpkg, "CostFinalize");
     ok( r == ERROR_SUCCESS, "cost finalize failed\n");
 
-    r = MsiSetTargetPath( 0, NULL, NULL );
+    r = MsiSetTargetPathA( 0, NULL, NULL );
     ok( r == ERROR_INVALID_PARAMETER, "wrong return val\n");
 
-    r = MsiSetTargetPath( 0, "boo", "C:\\bogusx" );
+    r = MsiSetTargetPathA( 0, "boo", "C:\\bogusx" );
     ok( r == ERROR_INVALID_HANDLE, "wrong return val\n");
 
-    r = MsiSetTargetPath( hpkg, "boo", NULL );
+    r = MsiSetTargetPathA( hpkg, "boo", NULL );
     ok( r == ERROR_INVALID_PARAMETER, "wrong return val\n");
 
-    r = MsiSetTargetPath( hpkg, "boo", "c:\\bogusx" );
+    r = MsiSetTargetPathA( hpkg, "boo", "c:\\bogusx" );
     ok( r == ERROR_DIRECTORY, "wrong return val\n");
 
     sz = sizeof tempdir - 1;
-    r = MsiGetTargetPath( hpkg, "TARGETDIR", tempdir, &sz );
+    r = MsiGetTargetPathA( hpkg, "TARGETDIR", tempdir, &sz );
     sprintf( file, "%srootfile.txt", tempdir );
     buffer[0] = 0;
     query_file_path( hpkg, "[#RootFile]", buffer );
     ok( r == ERROR_SUCCESS, "failed to get target path: %d\n", r);
-    ok( !lstrcmp(buffer, file), "Expected %s, got %s\n", file, buffer );
+    ok( !lstrcmpA(buffer, file), "Expected %s, got %s\n", file, buffer );
 
-    GetTempFileName( tempdir, "_wt", 0, buffer );
+    GetTempFileNameA( tempdir, "_wt", 0, buffer );
     sprintf( tempdir, "%s\\subdir", buffer );
 
-    r = MsiSetTargetPath( hpkg, "TARGETDIR", buffer );
+    r = MsiSetTargetPathA( hpkg, "TARGETDIR", buffer );
     ok( r == ERROR_SUCCESS || r == ERROR_DIRECTORY,
         "MsiSetTargetPath on file returned %d\n", r );
 
-    r = MsiSetTargetPath( hpkg, "TARGETDIR", tempdir );
+    r = MsiSetTargetPathA( hpkg, "TARGETDIR", tempdir );
     ok( r == ERROR_SUCCESS || r == ERROR_DIRECTORY,
         "MsiSetTargetPath on 'subdir' of file returned %d\n", r );
 
-    DeleteFile( buffer );
+    DeleteFileA( buffer );
 
-    r = MsiSetTargetPath( hpkg, "TARGETDIR", buffer );
+    r = MsiSetTargetPathA( hpkg, "TARGETDIR", buffer );
     ok( r == ERROR_SUCCESS, "MsiSetTargetPath returned %d\n", r );
 
-    r = GetFileAttributes( buffer );
+    r = GetFileAttributesA( buffer );
     ok ( r == INVALID_FILE_ATTRIBUTES, "file/directory exists after MsiSetTargetPath. Attributes: %08X\n", r );
 
-    r = MsiSetTargetPath( hpkg, "TARGETDIR", tempdir );
+    r = MsiSetTargetPathA( hpkg, "TARGETDIR", tempdir );
     ok( r == ERROR_SUCCESS, "MsiSetTargetPath on subsubdir returned %d\n", r );
 
     buffer[0] = 0;
     sz = sizeof buffer - 1;
-    lstrcat( tempdir, "\\" );
-    r = MsiGetTargetPath( hpkg, "TARGETDIR", buffer, &sz );
+    lstrcatA( tempdir, "\\" );
+    r = MsiGetTargetPathA( hpkg, "TARGETDIR", buffer, &sz );
     ok( r == ERROR_SUCCESS, "failed to get target path: %d\n", r);
-    ok( !lstrcmp(buffer, tempdir), "Expected %s, got %s\n", tempdir, buffer);
+    ok( !lstrcmpA(buffer, tempdir), "Expected %s, got %s\n", tempdir, buffer);
 
     sprintf( file, "%srootfile.txt", tempdir );
     query_file_path( hpkg, "[#RootFile]", buffer );
-    ok( !lstrcmp(buffer, file), "Expected %s, got %s\n", file, buffer);
+    ok( !lstrcmpA(buffer, file), "Expected %s, got %s\n", file, buffer);
 
     buffer[0] = 0;
     sz = sizeof(buffer);
     r = MsiGetPropertyA( hpkg, "TestParent", buffer, &sz );
     ok( r == ERROR_SUCCESS, "MsiGetProperty returned %u\n", r );
     lstrcatA( tempdir, "TestParent\\" );
-    ok( !lstrcmpi(buffer, tempdir), "Expected \"%s\", got \"%s\"\n", tempdir, buffer );
+    ok( !lstrcmpiA(buffer, tempdir), "Expected \"%s\", got \"%s\"\n", tempdir, buffer );
 
-    r = MsiSetTargetPath( hpkg, "TestParent", "C:\\one\\two" );
+    r = MsiSetTargetPathA( hpkg, "TestParent", "C:\\one\\two" );
     ok( r == ERROR_SUCCESS, "MsiSetTargetPath returned %d\n", r );
 
     buffer[0] = 0;
     sz = sizeof(buffer);
     r = MsiGetPropertyA( hpkg, "TestParent", buffer, &sz );
     ok( r == ERROR_SUCCESS, "MsiGetProperty returned %u\n", r );
-    ok( lstrcmpi(buffer, "C:\\one\\two\\TestDir\\"),
+    ok( lstrcmpiA(buffer, "C:\\one\\two\\TestDir\\"),
         "Expected \"C:\\one\\two\\TestDir\\\", got \"%s\"\n", buffer );
 
     buffer[0] = 0;
     query_file_path( hpkg, "[#TestFile]", buffer );
-    ok( !lstrcmpi(buffer, "C:\\one\\two\\TestDir\\testfile.txt"),
+    ok( !lstrcmpiA(buffer, "C:\\one\\two\\TestDir\\testfile.txt"),
         "Expected C:\\one\\two\\TestDir\\testfile.txt, got %s\n", buffer );
 
     buffer[0] = 0;
     sz = sizeof buffer - 1;
-    r = MsiGetTargetPath( hpkg, "TestParent", buffer, &sz );
+    r = MsiGetTargetPathA( hpkg, "TestParent", buffer, &sz );
     ok( r == ERROR_SUCCESS, "failed to get target path: %d\n", r);
-    ok( !lstrcmpi(buffer, "C:\\one\\two\\"), "Expected C:\\one\\two\\, got %s\n", buffer);
+    ok( !lstrcmpiA(buffer, "C:\\one\\two\\"), "Expected C:\\one\\two\\, got %s\n", buffer);
 
-    r = MsiSetTargetPath( hpkg, "TestParent", "C:\\one\\two\\three" );
+    r = MsiSetTargetPathA( hpkg, "TestParent", "C:\\one\\two\\three" );
     ok( r == ERROR_SUCCESS, "MsiSetTargetPath returned %d\n", r );
 
     buffer[0] = 0;
     sz = sizeof buffer - 1;
-    r = MsiGetTargetPath( hpkg, "TestParent", buffer, &sz );
+    r = MsiGetTargetPathA( hpkg, "TestParent", buffer, &sz );
     ok( r == ERROR_SUCCESS, "failed to get target path: %d\n", r);
-    ok( !lstrcmpi(buffer, "C:\\one\\two\\three\\"), "Expected C:\\one\\two\\three\\, got %s\n", buffer);
+    ok( !lstrcmpiA(buffer, "C:\\one\\two\\three\\"), "Expected C:\\one\\two\\three\\, got %s\n", buffer);
 
-    r = MsiSetTargetPath( hpkg, "TestParent", "C:\\\\one\\\\two  " );
+    r = MsiSetTargetPathA( hpkg, "TestParent", "C:\\\\one\\\\two  " );
     ok( r == ERROR_SUCCESS, "MsiSetTargetPath returned %d\n", r );
 
     buffer[0] = 0;
     sz = sizeof buffer - 1;
-    r = MsiGetTargetPath( hpkg, "TestParent", buffer, &sz );
+    r = MsiGetTargetPathA( hpkg, "TestParent", buffer, &sz );
     ok( r == ERROR_SUCCESS, "failed to get target path: %d\n", r);
-    ok( !lstrcmpi(buffer, "C:\\one\\two\\"), "Expected \"C:\\one\\two\\\", got %s\n", buffer);
+    ok( !lstrcmpiA(buffer, "C:\\one\\two\\"), "Expected \"C:\\one\\two\\\", got %s\n", buffer);
 
-    r = MsiSetTargetPath( hpkg, "TestParent", "C:\\\\ Program Files \\\\ " );
+    r = MsiSetTargetPathA( hpkg, "TestParent", "C:\\\\ Program Files \\\\ " );
     ok( r == ERROR_SUCCESS, "MsiSetTargetPath returned %d\n", r );
 
     buffer[0] = 0;
     sz = sizeof buffer - 1;
-    r = MsiGetTargetPath( hpkg, "TestParent", buffer, &sz );
+    r = MsiGetTargetPathA( hpkg, "TestParent", buffer, &sz );
     ok( r == ERROR_SUCCESS, "failed to get target path: %d\n", r);
-    ok( !lstrcmpi(buffer, "C:\\Program Files\\"), "Expected \"C:\\Program Files\\\", got %s\n", buffer);
+    ok( !lstrcmpiA(buffer, "C:\\Program Files\\"), "Expected \"C:\\Program Files\\\", got %s\n", buffer);
 
     MsiCloseHandle( hpkg );
 }
@@ -1229,716 +1231,716 @@ static void test_condition(void)
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
-        DeleteFile(msifile);
+        DeleteFileA(msifile);
         return;
     }
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r);
 
-    r = MsiEvaluateCondition(0, NULL);
+    r = MsiEvaluateConditionA(0, NULL);
     ok( r == MSICONDITION_ERROR, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, NULL);
+    r = MsiEvaluateConditionA(hpkg, NULL);
     ok( r == MSICONDITION_NONE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "");
+    r = MsiEvaluateConditionA(hpkg, "");
     ok( r == MSICONDITION_NONE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "1");
+    r = MsiEvaluateConditionA(hpkg, "1");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "0");
+    r = MsiEvaluateConditionA(hpkg, "0");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "-1");
+    r = MsiEvaluateConditionA(hpkg, "-1");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "0 = 0");
+    r = MsiEvaluateConditionA(hpkg, "0 = 0");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "0 <> 0");
+    r = MsiEvaluateConditionA(hpkg, "0 <> 0");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "0 = 1");
+    r = MsiEvaluateConditionA(hpkg, "0 = 1");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "0 > 1");
+    r = MsiEvaluateConditionA(hpkg, "0 > 1");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "0 ~> 1");
+    r = MsiEvaluateConditionA(hpkg, "0 ~> 1");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "1 > 1");
+    r = MsiEvaluateConditionA(hpkg, "1 > 1");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "1 ~> 1");
+    r = MsiEvaluateConditionA(hpkg, "1 ~> 1");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "0 >= 1");
+    r = MsiEvaluateConditionA(hpkg, "0 >= 1");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "0 ~>= 1");
+    r = MsiEvaluateConditionA(hpkg, "0 ~>= 1");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "1 >= 1");
+    r = MsiEvaluateConditionA(hpkg, "1 >= 1");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "1 ~>= 1");
+    r = MsiEvaluateConditionA(hpkg, "1 ~>= 1");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "0 < 1");
+    r = MsiEvaluateConditionA(hpkg, "0 < 1");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "0 ~< 1");
+    r = MsiEvaluateConditionA(hpkg, "0 ~< 1");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "1 < 1");
+    r = MsiEvaluateConditionA(hpkg, "1 < 1");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "1 ~< 1");
+    r = MsiEvaluateConditionA(hpkg, "1 ~< 1");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "0 <= 1");
+    r = MsiEvaluateConditionA(hpkg, "0 <= 1");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "0 ~<= 1");
+    r = MsiEvaluateConditionA(hpkg, "0 ~<= 1");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "1 <= 1");
+    r = MsiEvaluateConditionA(hpkg, "1 <= 1");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "1 ~<= 1");
+    r = MsiEvaluateConditionA(hpkg, "1 ~<= 1");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "0 >=");
+    r = MsiEvaluateConditionA(hpkg, "0 >=");
     ok( r == MSICONDITION_ERROR, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, " ");
+    r = MsiEvaluateConditionA(hpkg, " ");
     ok( r == MSICONDITION_NONE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "LicView <> \"1\"");
+    r = MsiEvaluateConditionA(hpkg, "LicView <> \"1\"");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "LicView <> \"0\"");
+    r = MsiEvaluateConditionA(hpkg, "LicView <> \"0\"");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "LicView <> LicView");
+    r = MsiEvaluateConditionA(hpkg, "LicView <> LicView");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "not 0");
+    r = MsiEvaluateConditionA(hpkg, "not 0");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "not LicView");
+    r = MsiEvaluateConditionA(hpkg, "not LicView");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "\"Testing\" ~<< \"Testing\"");
+    r = MsiEvaluateConditionA(hpkg, "\"Testing\" ~<< \"Testing\"");
     ok (r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "LicView ~<< \"Testing\"");
+    r = MsiEvaluateConditionA(hpkg, "LicView ~<< \"Testing\"");
     ok (r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "Not LicView ~<< \"Testing\"");
+    r = MsiEvaluateConditionA(hpkg, "Not LicView ~<< \"Testing\"");
     ok (r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "not \"A\"");
+    r = MsiEvaluateConditionA(hpkg, "not \"A\"");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "~not \"A\"");
+    r = MsiEvaluateConditionA(hpkg, "~not \"A\"");
     ok( r == MSICONDITION_ERROR, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "\"0\"");
+    r = MsiEvaluateConditionA(hpkg, "\"0\"");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "1 and 2");
+    r = MsiEvaluateConditionA(hpkg, "1 and 2");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "not 0 and 3");
+    r = MsiEvaluateConditionA(hpkg, "not 0 and 3");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "not 0 and 0");
+    r = MsiEvaluateConditionA(hpkg, "not 0 and 0");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "not 0 or 1");
+    r = MsiEvaluateConditionA(hpkg, "not 0 or 1");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "(0)");
+    r = MsiEvaluateConditionA(hpkg, "(0)");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "(((((1))))))");
+    r = MsiEvaluateConditionA(hpkg, "(((((1))))))");
     ok( r == MSICONDITION_ERROR, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "(((((1)))))");
+    r = MsiEvaluateConditionA(hpkg, "(((((1)))))");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, " \"A\" < \"B\" ");
+    r = MsiEvaluateConditionA(hpkg, " \"A\" < \"B\" ");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, " \"A\" > \"B\" ");
+    r = MsiEvaluateConditionA(hpkg, " \"A\" > \"B\" ");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, " \"1\" > \"12\" ");
+    r = MsiEvaluateConditionA(hpkg, " \"1\" > \"12\" ");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, " \"100\" < \"21\" ");
+    r = MsiEvaluateConditionA(hpkg, " \"100\" < \"21\" ");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "0 < > 0");
+    r = MsiEvaluateConditionA(hpkg, "0 < > 0");
     ok( r == MSICONDITION_ERROR, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "(1<<1) == 2");
+    r = MsiEvaluateConditionA(hpkg, "(1<<1) == 2");
     ok( r == MSICONDITION_ERROR, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, " \"A\" = \"a\" ");
+    r = MsiEvaluateConditionA(hpkg, " \"A\" = \"a\" ");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, " \"A\" ~ = \"a\" ");
+    r = MsiEvaluateConditionA(hpkg, " \"A\" ~ = \"a\" ");
     ok( r == MSICONDITION_ERROR, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, " \"A\" ~= \"a\" ");
+    r = MsiEvaluateConditionA(hpkg, " \"A\" ~= \"a\" ");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, " \"A\" ~= 1 ");
+    r = MsiEvaluateConditionA(hpkg, " \"A\" ~= 1 ");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, " \"A\" = 1 ");
+    r = MsiEvaluateConditionA(hpkg, " \"A\" = 1 ");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, " 1 ~= 1 ");
+    r = MsiEvaluateConditionA(hpkg, " 1 ~= 1 ");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, " 1 ~= \"1\" ");
+    r = MsiEvaluateConditionA(hpkg, " 1 ~= \"1\" ");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, " 1 = \"1\" ");
+    r = MsiEvaluateConditionA(hpkg, " 1 = \"1\" ");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, " 0 = \"1\" ");
+    r = MsiEvaluateConditionA(hpkg, " 0 = \"1\" ");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, " 0 < \"100\" ");
+    r = MsiEvaluateConditionA(hpkg, " 0 < \"100\" ");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, " 100 > \"0\" ");
+    r = MsiEvaluateConditionA(hpkg, " 100 > \"0\" ");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "1 XOR 1");
+    r = MsiEvaluateConditionA(hpkg, "1 XOR 1");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "1 IMP 1");
+    r = MsiEvaluateConditionA(hpkg, "1 IMP 1");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "1 IMP 0");
+    r = MsiEvaluateConditionA(hpkg, "1 IMP 0");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "0 IMP 0");
+    r = MsiEvaluateConditionA(hpkg, "0 IMP 0");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "0 EQV 0");
+    r = MsiEvaluateConditionA(hpkg, "0 EQV 0");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "0 EQV 1");
+    r = MsiEvaluateConditionA(hpkg, "0 EQV 1");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "1 IMP 1 OR 0");
+    r = MsiEvaluateConditionA(hpkg, "1 IMP 1 OR 0");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "1 IMPL 1");
+    r = MsiEvaluateConditionA(hpkg, "1 IMPL 1");
     ok( r == MSICONDITION_ERROR, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "\"ASFD\" >< \"S\" ");
+    r = MsiEvaluateConditionA(hpkg, "\"ASFD\" >< \"S\" ");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "\"ASFD\" ~>< \"s\" ");
+    r = MsiEvaluateConditionA(hpkg, "\"ASFD\" ~>< \"s\" ");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "\"ASFD\" ~>< \"\" ");
+    r = MsiEvaluateConditionA(hpkg, "\"ASFD\" ~>< \"\" ");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "\"ASFD\" ~>< \"sss\" ");
+    r = MsiEvaluateConditionA(hpkg, "\"ASFD\" ~>< \"sss\" ");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "mm", "5" );
+    MsiSetPropertyA(hpkg, "mm", "5" );
 
-    r = MsiEvaluateCondition(hpkg, "mm = 5");
+    r = MsiEvaluateConditionA(hpkg, "mm = 5");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "mm < 6");
+    r = MsiEvaluateConditionA(hpkg, "mm < 6");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "mm <= 5");
+    r = MsiEvaluateConditionA(hpkg, "mm <= 5");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "mm > 4");
+    r = MsiEvaluateConditionA(hpkg, "mm > 4");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "mm < 12");
+    r = MsiEvaluateConditionA(hpkg, "mm < 12");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "mm = \"5\"");
+    r = MsiEvaluateConditionA(hpkg, "mm = \"5\"");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "0 = \"\"");
+    r = MsiEvaluateConditionA(hpkg, "0 = \"\"");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "0 AND \"\"");
+    r = MsiEvaluateConditionA(hpkg, "0 AND \"\"");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "1 AND \"\"");
+    r = MsiEvaluateConditionA(hpkg, "1 AND \"\"");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "1 AND \"1\"");
+    r = MsiEvaluateConditionA(hpkg, "1 AND \"1\"");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "3 >< 1");
+    r = MsiEvaluateConditionA(hpkg, "3 >< 1");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "3 >< 4");
+    r = MsiEvaluateConditionA(hpkg, "3 >< 4");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "NOT 0 AND 0");
+    r = MsiEvaluateConditionA(hpkg, "NOT 0 AND 0");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "NOT 0 AND 1");
+    r = MsiEvaluateConditionA(hpkg, "NOT 0 AND 1");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "NOT 1 OR 0");
+    r = MsiEvaluateConditionA(hpkg, "NOT 1 OR 0");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "0 AND 1 OR 1");
+    r = MsiEvaluateConditionA(hpkg, "0 AND 1 OR 1");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "0 AND 0 OR 1");
+    r = MsiEvaluateConditionA(hpkg, "0 AND 0 OR 1");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "NOT 0 AND 1 OR 0");
+    r = MsiEvaluateConditionA(hpkg, "NOT 0 AND 1 OR 0");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "_1 = _1");
+    r = MsiEvaluateConditionA(hpkg, "_1 = _1");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "( 1 AND 1 ) = 2");
+    r = MsiEvaluateConditionA(hpkg, "( 1 AND 1 ) = 2");
     ok( r == MSICONDITION_ERROR, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "NOT ( 1 AND 1 )");
+    r = MsiEvaluateConditionA(hpkg, "NOT ( 1 AND 1 )");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "NOT A AND (BBBBBBBBBB=2 OR CCC=1) AND Ddddddddd");
+    r = MsiEvaluateConditionA(hpkg, "NOT A AND (BBBBBBBBBB=2 OR CCC=1) AND Ddddddddd");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "Installed<>\"\"");
+    r = MsiEvaluateConditionA(hpkg, "Installed<>\"\"");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "NOT 1 AND 0");
+    r = MsiEvaluateConditionA(hpkg, "NOT 1 AND 0");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "bandalmael=0");
+    r = MsiEvaluateConditionA(hpkg, "bandalmael=0");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "bandalmael<>0");
+    r = MsiEvaluateConditionA(hpkg, "bandalmael<>0");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "bandalmael<0");
+    r = MsiEvaluateConditionA(hpkg, "bandalmael<0");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "bandalmael>0");
+    r = MsiEvaluateConditionA(hpkg, "bandalmael>0");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "bandalmael>=0");
+    r = MsiEvaluateConditionA(hpkg, "bandalmael>=0");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "bandalmael<=0");
+    r = MsiEvaluateConditionA(hpkg, "bandalmael<=0");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    r = MsiEvaluateCondition(hpkg, "bandalmael~<>0");
+    r = MsiEvaluateConditionA(hpkg, "bandalmael~<>0");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "bandalmael", "0" );
-    r = MsiEvaluateCondition(hpkg, "bandalmael=0");
+    MsiSetPropertyA(hpkg, "bandalmael", "0" );
+    r = MsiEvaluateConditionA(hpkg, "bandalmael=0");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "bandalmael", "" );
-    r = MsiEvaluateCondition(hpkg, "bandalmael=0");
+    MsiSetPropertyA(hpkg, "bandalmael", "" );
+    r = MsiEvaluateConditionA(hpkg, "bandalmael=0");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "bandalmael", "asdf" );
-    r = MsiEvaluateCondition(hpkg, "bandalmael=0");
+    MsiSetPropertyA(hpkg, "bandalmael", "asdf" );
+    r = MsiEvaluateConditionA(hpkg, "bandalmael=0");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "bandalmael", "0asdf" );
-    r = MsiEvaluateCondition(hpkg, "bandalmael=0");
+    MsiSetPropertyA(hpkg, "bandalmael", "0asdf" );
+    r = MsiEvaluateConditionA(hpkg, "bandalmael=0");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "bandalmael", "0 " );
-    r = MsiEvaluateCondition(hpkg, "bandalmael=0");
+    MsiSetPropertyA(hpkg, "bandalmael", "0 " );
+    r = MsiEvaluateConditionA(hpkg, "bandalmael=0");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "bandalmael", "-0" );
-    r = MsiEvaluateCondition(hpkg, "bandalmael=0");
+    MsiSetPropertyA(hpkg, "bandalmael", "-0" );
+    r = MsiEvaluateConditionA(hpkg, "bandalmael=0");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "bandalmael", "0000000000000" );
-    r = MsiEvaluateCondition(hpkg, "bandalmael=0");
+    MsiSetPropertyA(hpkg, "bandalmael", "0000000000000" );
+    r = MsiEvaluateConditionA(hpkg, "bandalmael=0");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "bandalmael", "--0" );
-    r = MsiEvaluateCondition(hpkg, "bandalmael=0");
+    MsiSetPropertyA(hpkg, "bandalmael", "--0" );
+    r = MsiEvaluateConditionA(hpkg, "bandalmael=0");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "bandalmael", "0x00" );
-    r = MsiEvaluateCondition(hpkg, "bandalmael=0");
+    MsiSetPropertyA(hpkg, "bandalmael", "0x00" );
+    r = MsiEvaluateConditionA(hpkg, "bandalmael=0");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "bandalmael", "-" );
-    r = MsiEvaluateCondition(hpkg, "bandalmael=0");
+    MsiSetPropertyA(hpkg, "bandalmael", "-" );
+    r = MsiEvaluateConditionA(hpkg, "bandalmael=0");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "bandalmael", "+0" );
-    r = MsiEvaluateCondition(hpkg, "bandalmael=0");
+    MsiSetPropertyA(hpkg, "bandalmael", "+0" );
+    r = MsiEvaluateConditionA(hpkg, "bandalmael=0");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "bandalmael", "0.0" );
-    r = MsiEvaluateCondition(hpkg, "bandalmael=0");
+    MsiSetPropertyA(hpkg, "bandalmael", "0.0" );
+    r = MsiEvaluateConditionA(hpkg, "bandalmael=0");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
-    r = MsiEvaluateCondition(hpkg, "bandalmael<>0");
+    r = MsiEvaluateConditionA(hpkg, "bandalmael<>0");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "one", "hi");
-    MsiSetProperty(hpkg, "two", "hithere");
-    r = MsiEvaluateCondition(hpkg, "one >< two");
+    MsiSetPropertyA(hpkg, "one", "hi");
+    MsiSetPropertyA(hpkg, "two", "hithere");
+    r = MsiEvaluateConditionA(hpkg, "one >< two");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "one", "hithere");
-    MsiSetProperty(hpkg, "two", "hi");
-    r = MsiEvaluateCondition(hpkg, "one >< two");
+    MsiSetPropertyA(hpkg, "one", "hithere");
+    MsiSetPropertyA(hpkg, "two", "hi");
+    r = MsiEvaluateConditionA(hpkg, "one >< two");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "one", "hello");
-    MsiSetProperty(hpkg, "two", "hi");
-    r = MsiEvaluateCondition(hpkg, "one >< two");
+    MsiSetPropertyA(hpkg, "one", "hello");
+    MsiSetPropertyA(hpkg, "two", "hi");
+    r = MsiEvaluateConditionA(hpkg, "one >< two");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "one", "hellohithere");
-    MsiSetProperty(hpkg, "two", "hi");
-    r = MsiEvaluateCondition(hpkg, "one >< two");
+    MsiSetPropertyA(hpkg, "one", "hellohithere");
+    MsiSetPropertyA(hpkg, "two", "hi");
+    r = MsiEvaluateConditionA(hpkg, "one >< two");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "one", "");
-    MsiSetProperty(hpkg, "two", "hi");
-    r = MsiEvaluateCondition(hpkg, "one >< two");
+    MsiSetPropertyA(hpkg, "one", "");
+    MsiSetPropertyA(hpkg, "two", "hi");
+    r = MsiEvaluateConditionA(hpkg, "one >< two");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "one", "hi");
-    MsiSetProperty(hpkg, "two", "");
-    r = MsiEvaluateCondition(hpkg, "one >< two");
+    MsiSetPropertyA(hpkg, "one", "hi");
+    MsiSetPropertyA(hpkg, "two", "");
+    r = MsiEvaluateConditionA(hpkg, "one >< two");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "one", "");
-    MsiSetProperty(hpkg, "two", "");
-    r = MsiEvaluateCondition(hpkg, "one >< two");
+    MsiSetPropertyA(hpkg, "one", "");
+    MsiSetPropertyA(hpkg, "two", "");
+    r = MsiEvaluateConditionA(hpkg, "one >< two");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "one", "1234");
-    MsiSetProperty(hpkg, "two", "1");
-    r = MsiEvaluateCondition(hpkg, "one >< two");
+    MsiSetPropertyA(hpkg, "one", "1234");
+    MsiSetPropertyA(hpkg, "two", "1");
+    r = MsiEvaluateConditionA(hpkg, "one >< two");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "one", "one 1234");
-    MsiSetProperty(hpkg, "two", "1");
-    r = MsiEvaluateCondition(hpkg, "one >< two");
+    MsiSetPropertyA(hpkg, "one", "one 1234");
+    MsiSetPropertyA(hpkg, "two", "1");
+    r = MsiEvaluateConditionA(hpkg, "one >< two");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "one", "hithere");
-    MsiSetProperty(hpkg, "two", "hi");
-    r = MsiEvaluateCondition(hpkg, "one << two");
+    MsiSetPropertyA(hpkg, "one", "hithere");
+    MsiSetPropertyA(hpkg, "two", "hi");
+    r = MsiEvaluateConditionA(hpkg, "one << two");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "one", "hi");
-    MsiSetProperty(hpkg, "two", "hithere");
-    r = MsiEvaluateCondition(hpkg, "one << two");
+    MsiSetPropertyA(hpkg, "one", "hi");
+    MsiSetPropertyA(hpkg, "two", "hithere");
+    r = MsiEvaluateConditionA(hpkg, "one << two");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "one", "hi");
-    MsiSetProperty(hpkg, "two", "hi");
-    r = MsiEvaluateCondition(hpkg, "one << two");
+    MsiSetPropertyA(hpkg, "one", "hi");
+    MsiSetPropertyA(hpkg, "two", "hi");
+    r = MsiEvaluateConditionA(hpkg, "one << two");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "one", "abcdhithere");
-    MsiSetProperty(hpkg, "two", "hi");
-    r = MsiEvaluateCondition(hpkg, "one << two");
+    MsiSetPropertyA(hpkg, "one", "abcdhithere");
+    MsiSetPropertyA(hpkg, "two", "hi");
+    r = MsiEvaluateConditionA(hpkg, "one << two");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "one", "");
-    MsiSetProperty(hpkg, "two", "hi");
-    r = MsiEvaluateCondition(hpkg, "one << two");
+    MsiSetPropertyA(hpkg, "one", "");
+    MsiSetPropertyA(hpkg, "two", "hi");
+    r = MsiEvaluateConditionA(hpkg, "one << two");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "one", "hithere");
-    MsiSetProperty(hpkg, "two", "");
-    r = MsiEvaluateCondition(hpkg, "one << two");
+    MsiSetPropertyA(hpkg, "one", "hithere");
+    MsiSetPropertyA(hpkg, "two", "");
+    r = MsiEvaluateConditionA(hpkg, "one << two");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "one", "");
-    MsiSetProperty(hpkg, "two", "");
-    r = MsiEvaluateCondition(hpkg, "one << two");
+    MsiSetPropertyA(hpkg, "one", "");
+    MsiSetPropertyA(hpkg, "two", "");
+    r = MsiEvaluateConditionA(hpkg, "one << two");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "one", "1234");
-    MsiSetProperty(hpkg, "two", "1");
-    r = MsiEvaluateCondition(hpkg, "one << two");
+    MsiSetPropertyA(hpkg, "one", "1234");
+    MsiSetPropertyA(hpkg, "two", "1");
+    r = MsiEvaluateConditionA(hpkg, "one << two");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "one", "1234 one");
-    MsiSetProperty(hpkg, "two", "1");
-    r = MsiEvaluateCondition(hpkg, "one << two");
+    MsiSetPropertyA(hpkg, "one", "1234 one");
+    MsiSetPropertyA(hpkg, "two", "1");
+    r = MsiEvaluateConditionA(hpkg, "one << two");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "one", "hithere");
-    MsiSetProperty(hpkg, "two", "there");
-    r = MsiEvaluateCondition(hpkg, "one >> two");
+    MsiSetPropertyA(hpkg, "one", "hithere");
+    MsiSetPropertyA(hpkg, "two", "there");
+    r = MsiEvaluateConditionA(hpkg, "one >> two");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "one", "hithere");
-    MsiSetProperty(hpkg, "two", "hi");
-    r = MsiEvaluateCondition(hpkg, "one >> two");
+    MsiSetPropertyA(hpkg, "one", "hithere");
+    MsiSetPropertyA(hpkg, "two", "hi");
+    r = MsiEvaluateConditionA(hpkg, "one >> two");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "one", "there");
-    MsiSetProperty(hpkg, "two", "hithere");
-    r = MsiEvaluateCondition(hpkg, "one >> two");
+    MsiSetPropertyA(hpkg, "one", "there");
+    MsiSetPropertyA(hpkg, "two", "hithere");
+    r = MsiEvaluateConditionA(hpkg, "one >> two");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "one", "there");
-    MsiSetProperty(hpkg, "two", "there");
-    r = MsiEvaluateCondition(hpkg, "one >> two");
+    MsiSetPropertyA(hpkg, "one", "there");
+    MsiSetPropertyA(hpkg, "two", "there");
+    r = MsiEvaluateConditionA(hpkg, "one >> two");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "one", "abcdhithere");
-    MsiSetProperty(hpkg, "two", "hi");
-    r = MsiEvaluateCondition(hpkg, "one >> two");
+    MsiSetPropertyA(hpkg, "one", "abcdhithere");
+    MsiSetPropertyA(hpkg, "two", "hi");
+    r = MsiEvaluateConditionA(hpkg, "one >> two");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "one", "");
-    MsiSetProperty(hpkg, "two", "there");
-    r = MsiEvaluateCondition(hpkg, "one >> two");
+    MsiSetPropertyA(hpkg, "one", "");
+    MsiSetPropertyA(hpkg, "two", "there");
+    r = MsiEvaluateConditionA(hpkg, "one >> two");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "one", "there");
-    MsiSetProperty(hpkg, "two", "");
-    r = MsiEvaluateCondition(hpkg, "one >> two");
+    MsiSetPropertyA(hpkg, "one", "there");
+    MsiSetPropertyA(hpkg, "two", "");
+    r = MsiEvaluateConditionA(hpkg, "one >> two");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "one", "");
-    MsiSetProperty(hpkg, "two", "");
-    r = MsiEvaluateCondition(hpkg, "one >> two");
+    MsiSetPropertyA(hpkg, "one", "");
+    MsiSetPropertyA(hpkg, "two", "");
+    r = MsiEvaluateConditionA(hpkg, "one >> two");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "one", "1234");
-    MsiSetProperty(hpkg, "two", "4");
-    r = MsiEvaluateCondition(hpkg, "one >> two");
+    MsiSetPropertyA(hpkg, "one", "1234");
+    MsiSetPropertyA(hpkg, "two", "4");
+    r = MsiEvaluateConditionA(hpkg, "one >> two");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "one", "one 1234");
-    MsiSetProperty(hpkg, "two", "4");
-    r = MsiEvaluateCondition(hpkg, "one >> two");
+    MsiSetPropertyA(hpkg, "one", "one 1234");
+    MsiSetPropertyA(hpkg, "two", "4");
+    r = MsiEvaluateConditionA(hpkg, "one >> two");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "MsiNetAssemblySupport", NULL);  /* make sure it's empty */
+    MsiSetPropertyA(hpkg, "MsiNetAssemblySupport", NULL);  /* make sure it's empty */
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"1.1.4322\"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport < \"1.1.4322\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport > \"1.1.4322\"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport > \"1.1.4322\"");
     ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport >= \"1.1.4322\"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport >= \"1.1.4322\"");
     ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport <= \"1.1.4322\"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport <= \"1.1.4322\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport <> \"1.1.4322\"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport <> \"1.1.4322\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport ~< \"1.1.4322\"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport ~< \"1.1.4322\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"abcd\"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport < \"abcd\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"a1.1.4322\"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport < \"a1.1.4322\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"1.1.4322a\"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport < \"1.1.4322a\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"0000001.1.4322\"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport < \"0000001.1.4322\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"1.1.4322.1\"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport < \"1.1.4322.1\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"1.1.4322.1.1\"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport < \"1.1.4322.1.1\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "\"2\" < \"1.1");
+    r = MsiEvaluateConditionA(hpkg, "\"2\" < \"1.1");
     ok( r == MSICONDITION_ERROR, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "\"2\" < \"1.1\"");
+    r = MsiEvaluateConditionA(hpkg, "\"2\" < \"1.1\"");
     ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "\"2\" < \"12.1\"");
+    r = MsiEvaluateConditionA(hpkg, "\"2\" < \"12.1\"");
     ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "\"02.1\" < \"2.11\"");
+    r = MsiEvaluateConditionA(hpkg, "\"02.1\" < \"2.11\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "\"02.1.1\" < \"2.1\"");
+    r = MsiEvaluateConditionA(hpkg, "\"02.1.1\" < \"2.1\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"1.1\"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport < \"1.1\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"1\"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport < \"1\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"0\"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport < \"0\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"-1\"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport < \"-1\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"a\"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport < \"a\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"!\"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport < \"!\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"!\"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport < \"!\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"/\"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport < \"/\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \" \"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport < \" \"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"azAZ_\"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport < \"azAZ_\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"a[a]\"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport < \"a[a]\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"a[a]a\"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport < \"a[a]a\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"[a]\"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport < \"[a]\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"[a]a\"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport < \"[a]a\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"{a}\"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport < \"{a}\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"{a\"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport < \"{a\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"[a\"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport < \"[a\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"a{\"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport < \"a{\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"a]\"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport < \"a]\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"A\"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport < \"A\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    MsiSetProperty(hpkg, "MsiNetAssemblySupport", "1.1.4322");
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"1.1.4322\"");
+    MsiSetPropertyA(hpkg, "MsiNetAssemblySupport", "1.1.4322");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport < \"1.1.4322\"");
     ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"1.1.14322\"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport < \"1.1.14322\"");
     ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"1.1.5\"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport < \"1.1.5\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"1.1\"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport < \"1.1\"");
     ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"1\"");
+    r = MsiEvaluateConditionA(hpkg, "MsiNetAssemblySupport < \"1\"");
     ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
 
-    MsiSetProperty(hpkg, "one", "1");
-    r = MsiEvaluateCondition(hpkg, "one < \"1\"");
+    MsiSetPropertyA(hpkg, "one", "1");
+    r = MsiEvaluateConditionA(hpkg, "one < \"1\"");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
-    MsiSetProperty(hpkg, "X", "5.0");
+    MsiSetPropertyA(hpkg, "X", "5.0");
 
-    r = MsiEvaluateCondition(hpkg, "X != \"\"");
+    r = MsiEvaluateConditionA(hpkg, "X != \"\"");
     ok( r == MSICONDITION_ERROR, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "X =\"5.0\"");
+    r = MsiEvaluateConditionA(hpkg, "X =\"5.0\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "X =\"5.1\"");
+    r = MsiEvaluateConditionA(hpkg, "X =\"5.1\"");
     ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "X =\"6.0\"");
+    r = MsiEvaluateConditionA(hpkg, "X =\"6.0\"");
     ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "X =\"5.0\" or X =\"5.1\" or X =\"6.0\"");
+    r = MsiEvaluateConditionA(hpkg, "X =\"5.0\" or X =\"5.1\" or X =\"6.0\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "(X =\"5.0\" or X =\"5.1\" or X =\"6.0\")");
+    r = MsiEvaluateConditionA(hpkg, "(X =\"5.0\" or X =\"5.1\" or X =\"6.0\")");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "X !=\"\" and (X =\"5.0\" or X =\"5.1\" or X =\"6.0\")");
+    r = MsiEvaluateConditionA(hpkg, "X !=\"\" and (X =\"5.0\" or X =\"5.1\" or X =\"6.0\")");
     ok( r == MSICONDITION_ERROR, "wrong return val (%d)\n", r);
 
     /* feature doesn't exist */
-    r = MsiEvaluateCondition(hpkg, "&nofeature");
+    r = MsiEvaluateConditionA(hpkg, "&nofeature");
     ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
 
-    MsiSetProperty(hpkg, "A", "2");
-    MsiSetProperty(hpkg, "X", "50");
+    MsiSetPropertyA(hpkg, "A", "2");
+    MsiSetPropertyA(hpkg, "X", "50");
 
-    r = MsiEvaluateCondition(hpkg, "2 <= X");
+    r = MsiEvaluateConditionA(hpkg, "2 <= X");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "A <= X");
+    r = MsiEvaluateConditionA(hpkg, "A <= X");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "A <= 50");
+    r = MsiEvaluateConditionA(hpkg, "A <= 50");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    MsiSetProperty(hpkg, "X", "50val");
+    MsiSetPropertyA(hpkg, "X", "50val");
 
-    r = MsiEvaluateCondition(hpkg, "2 <= X");
+    r = MsiEvaluateConditionA(hpkg, "2 <= X");
     ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "A <= X");
+    r = MsiEvaluateConditionA(hpkg, "A <= X");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    MsiSetProperty(hpkg, "A", "7");
-    MsiSetProperty(hpkg, "X", "50");
+    MsiSetPropertyA(hpkg, "A", "7");
+    MsiSetPropertyA(hpkg, "X", "50");
 
-    r = MsiEvaluateCondition(hpkg, "7 <= X");
+    r = MsiEvaluateConditionA(hpkg, "7 <= X");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "A <= X");
+    r = MsiEvaluateConditionA(hpkg, "A <= X");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "A <= 50");
+    r = MsiEvaluateConditionA(hpkg, "A <= 50");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    MsiSetProperty(hpkg, "X", "50val");
+    MsiSetPropertyA(hpkg, "X", "50val");
 
-    r = MsiEvaluateCondition(hpkg, "2 <= X");
+    r = MsiEvaluateConditionA(hpkg, "2 <= X");
     ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
 
-    r = MsiEvaluateCondition(hpkg, "A <= X");
+    r = MsiEvaluateConditionA(hpkg, "A <= X");
     ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
 
     r = MsiEvaluateConditionW(hpkg, cond1);
@@ -1958,7 +1960,7 @@ static void test_condition(void)
         "wrong return val (%d)\n", r);
 
     MsiCloseHandle( hpkg );
-    DeleteFile(msifile);
+    DeleteFileA(msifile);
 }
 
 static BOOL check_prop_empty( MSIHANDLE hpkg, const char * prop)
@@ -1969,7 +1971,7 @@ static BOOL check_prop_empty( MSIHANDLE hpkg, const char * prop)
 
     sz = sizeof buffer;
     strcpy(buffer,"x");
-    r = MsiGetProperty( hpkg, prop, buffer, &sz );
+    r = MsiGetPropertyA( hpkg, prop, buffer, &sz );
     return r == ERROR_SUCCESS && buffer[0] == 0 && sz == 0;
 }
 
@@ -1998,160 +2000,160 @@ static void test_props(void)
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
-        DeleteFile(msifile);
+        DeleteFileA(msifile);
         return;
     }
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r);
 
     /* test invalid values */
-    r = MsiGetProperty( 0, NULL, NULL, NULL );
+    r = MsiGetPropertyA( 0, NULL, NULL, NULL );
     ok( r == ERROR_INVALID_PARAMETER, "wrong return val\n");
 
-    r = MsiGetProperty( hpkg, NULL, NULL, NULL );
+    r = MsiGetPropertyA( hpkg, NULL, NULL, NULL );
     ok( r == ERROR_INVALID_PARAMETER, "wrong return val\n");
 
-    r = MsiGetProperty( hpkg, "boo", NULL, NULL );
+    r = MsiGetPropertyA( hpkg, "boo", NULL, NULL );
     ok( r == ERROR_SUCCESS, "wrong return val\n");
 
-    r = MsiGetProperty( hpkg, "boo", buffer, NULL );
+    r = MsiGetPropertyA( hpkg, "boo", buffer, NULL );
     ok( r == ERROR_INVALID_PARAMETER, "wrong return val\n");
 
     /* test retrieving an empty/nonexistent property */
     sz = sizeof buffer;
-    r = MsiGetProperty( hpkg, "boo", NULL, &sz );
+    r = MsiGetPropertyA( hpkg, "boo", NULL, &sz );
     ok( r == ERROR_SUCCESS, "wrong return val\n");
     ok( sz == 0, "wrong size returned\n");
 
     check_prop_empty( hpkg, "boo");
     sz = 0;
     strcpy(buffer,"x");
-    r = MsiGetProperty( hpkg, "boo", buffer, &sz );
+    r = MsiGetPropertyA( hpkg, "boo", buffer, &sz );
     ok( r == ERROR_MORE_DATA, "wrong return val\n");
     ok( !strcmp(buffer,"x"), "buffer was changed\n");
     ok( sz == 0, "wrong size returned\n");
 
     sz = 1;
     strcpy(buffer,"x");
-    r = MsiGetProperty( hpkg, "boo", buffer, &sz );
+    r = MsiGetPropertyA( hpkg, "boo", buffer, &sz );
     ok( r == ERROR_SUCCESS, "wrong return val\n");
     ok( buffer[0] == 0, "buffer was not changed\n");
     ok( sz == 0, "wrong size returned\n");
 
     /* set the property to something */
-    r = MsiSetProperty( 0, NULL, NULL );
+    r = MsiSetPropertyA( 0, NULL, NULL );
     ok( r == ERROR_INVALID_HANDLE, "wrong return val\n");
 
-    r = MsiSetProperty( hpkg, NULL, NULL );
+    r = MsiSetPropertyA( hpkg, NULL, NULL );
     ok( r == ERROR_INVALID_PARAMETER, "wrong return val\n");
 
-    r = MsiSetProperty( hpkg, "", NULL );
+    r = MsiSetPropertyA( hpkg, "", NULL );
     ok( r == ERROR_SUCCESS, "wrong return val\n");
 
     /* try set and get some illegal property identifiers */
-    r = MsiSetProperty( hpkg, "", "asdf" );
+    r = MsiSetPropertyA( hpkg, "", "asdf" );
     ok( r == ERROR_FUNCTION_FAILED, "wrong return val\n");
 
-    r = MsiSetProperty( hpkg, "=", "asdf" );
+    r = MsiSetPropertyA( hpkg, "=", "asdf" );
     ok( r == ERROR_SUCCESS, "wrong return val\n");
 
-    r = MsiSetProperty( hpkg, " ", "asdf" );
+    r = MsiSetPropertyA( hpkg, " ", "asdf" );
     ok( r == ERROR_SUCCESS, "wrong return val\n");
 
-    r = MsiSetProperty( hpkg, "'", "asdf" );
+    r = MsiSetPropertyA( hpkg, "'", "asdf" );
     ok( r == ERROR_SUCCESS, "wrong return val\n");
 
     sz = sizeof buffer;
     buffer[0]=0;
-    r = MsiGetProperty( hpkg, "'", buffer, &sz );
+    r = MsiGetPropertyA( hpkg, "'", buffer, &sz );
     ok( r == ERROR_SUCCESS, "wrong return val\n");
     ok( !strcmp(buffer,"asdf"), "buffer was not changed\n");
 
     /* set empty values */
-    r = MsiSetProperty( hpkg, "boo", NULL );
+    r = MsiSetPropertyA( hpkg, "boo", NULL );
     ok( r == ERROR_SUCCESS, "wrong return val\n");
     ok( check_prop_empty( hpkg, "boo"), "prop wasn't empty\n");
 
-    r = MsiSetProperty( hpkg, "boo", "" );
+    r = MsiSetPropertyA( hpkg, "boo", "" );
     ok( r == ERROR_SUCCESS, "wrong return val\n");
     ok( check_prop_empty( hpkg, "boo"), "prop wasn't empty\n");
 
     /* set a non-empty value */
-    r = MsiSetProperty( hpkg, "boo", "xyz" );
+    r = MsiSetPropertyA( hpkg, "boo", "xyz" );
     ok( r == ERROR_SUCCESS, "wrong return val\n");
 
     sz = 1;
     strcpy(buffer,"x");
-    r = MsiGetProperty( hpkg, "boo", buffer, &sz );
+    r = MsiGetPropertyA( hpkg, "boo", buffer, &sz );
     ok( r == ERROR_MORE_DATA, "wrong return val\n");
     ok( buffer[0] == 0, "buffer was not changed\n");
     ok( sz == 3, "wrong size returned\n");
 
     sz = 4;
     strcpy(buffer,"x");
-    r = MsiGetProperty( hpkg, "boo", buffer, &sz );
+    r = MsiGetPropertyA( hpkg, "boo", buffer, &sz );
     ok( r == ERROR_SUCCESS, "wrong return val\n");
     ok( !strcmp(buffer,"xyz"), "buffer was not changed\n");
     ok( sz == 3, "wrong size returned\n");
 
     sz = 3;
     strcpy(buffer,"x");
-    r = MsiGetProperty( hpkg, "boo", buffer, &sz );
+    r = MsiGetPropertyA( hpkg, "boo", buffer, &sz );
     ok( r == ERROR_MORE_DATA, "wrong return val\n");
     ok( !strcmp(buffer,"xy"), "buffer was not changed\n");
     ok( sz == 3, "wrong size returned\n");
 
-    r = MsiSetProperty(hpkg, "SourceDir", "foo");
+    r = MsiSetPropertyA(hpkg, "SourceDir", "foo");
     ok( r == ERROR_SUCCESS, "wrong return val\n");
 
     sz = 4;
-    r = MsiGetProperty(hpkg, "SOURCEDIR", buffer, &sz);
-    ok( r == ERROR_SUCCESS, "wrong return val\n");
-    ok( !strcmp(buffer,""), "buffer wrong\n");
-    ok( sz == 0, "wrong size returned\n");
-
-    sz = 4;
-    r = MsiGetProperty(hpkg, "SOMERANDOMNAME", buffer, &sz);
+    r = MsiGetPropertyA(hpkg, "SOURCEDIR", buffer, &sz);
     ok( r == ERROR_SUCCESS, "wrong return val\n");
     ok( !strcmp(buffer,""), "buffer wrong\n");
     ok( sz == 0, "wrong size returned\n");
 
     sz = 4;
-    r = MsiGetProperty(hpkg, "SourceDir", buffer, &sz);
+    r = MsiGetPropertyA(hpkg, "SOMERANDOMNAME", buffer, &sz);
+    ok( r == ERROR_SUCCESS, "wrong return val\n");
+    ok( !strcmp(buffer,""), "buffer wrong\n");
+    ok( sz == 0, "wrong size returned\n");
+
+    sz = 4;
+    r = MsiGetPropertyA(hpkg, "SourceDir", buffer, &sz);
     ok( r == ERROR_SUCCESS, "wrong return val\n");
     ok( !strcmp(buffer,"foo"), "buffer wrong\n");
     ok( sz == 3, "wrong size returned\n");
 
-    r = MsiSetProperty(hpkg, "MetadataCompName", "Photoshop.dll");
+    r = MsiSetPropertyA(hpkg, "MetadataCompName", "Photoshop.dll");
     ok( r == ERROR_SUCCESS, "wrong return val\n");
 
     sz = 0;
-    r = MsiGetProperty(hpkg, "MetadataCompName", NULL, &sz );
+    r = MsiGetPropertyA(hpkg, "MetadataCompName", NULL, &sz );
     ok( r == ERROR_SUCCESS, "return wrong\n");
     ok( sz == 13, "size wrong (%d)\n", sz);
 
     sz = 13;
-    r = MsiGetProperty(hpkg, "MetadataCompName", buffer, &sz );
+    r = MsiGetPropertyA(hpkg, "MetadataCompName", buffer, &sz );
     ok( r == ERROR_MORE_DATA, "return wrong\n");
     ok( !strcmp(buffer,"Photoshop.dl"), "buffer wrong\n");
 
-    r = MsiSetProperty(hpkg, "property", "value");
+    r = MsiSetPropertyA(hpkg, "property", "value");
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     sz = 6;
-    r = MsiGetProperty(hpkg, "property", buffer, &sz);
+    r = MsiGetPropertyA(hpkg, "property", buffer, &sz);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok( !strcmp(buffer, "value"), "Expected value, got %s\n", buffer);
 
-    r = MsiSetProperty(hpkg, "property", NULL);
+    r = MsiSetPropertyA(hpkg, "property", NULL);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     sz = 6;
-    r = MsiGetProperty(hpkg, "property", buffer, &sz);
+    r = MsiGetPropertyA(hpkg, "property", buffer, &sz);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok( !strlen(buffer), "Expected empty string, got %s\n", buffer);
 
     MsiCloseHandle( hpkg );
-    DeleteFile(msifile);
+    DeleteFileA(msifile);
 }
 
 static BOOL find_prop_in_property(MSIHANDLE hdb, LPCSTR prop, LPCSTR val, int len)
@@ -2162,7 +2164,7 @@ static BOOL find_prop_in_property(MSIHANDLE hdb, LPCSTR prop, LPCSTR val, int le
     DWORD sz;
     UINT r;
 
-    r = MsiDatabaseOpenView(hdb, "SELECT * FROM `_Property`", &hview);
+    r = MsiDatabaseOpenViewA(hdb, "SELECT * FROM `_Property`", &hview);
     ok(r == ERROR_SUCCESS, "MsiDatabaseOpenView failed\n");
     r = MsiViewExecute(hview, 0);
     ok(r == ERROR_SUCCESS, "MsiViewExecute failed\n");
@@ -2175,11 +2177,11 @@ static BOOL find_prop_in_property(MSIHANDLE hdb, LPCSTR prop, LPCSTR val, int le
         if (r != ERROR_SUCCESS) break;
 
         sz = MAX_PATH;
-        r = MsiRecordGetString(hrec, 1, buffer, &sz);
+        r = MsiRecordGetStringA(hrec, 1, buffer, &sz);
         if (r == ERROR_SUCCESS && !lstrcmpA(buffer, prop))
         {
             sz = MAX_PATH;
-            r = MsiRecordGetString(hrec, 2, buffer, &sz);
+            r = MsiRecordGetStringA(hrec, 2, buffer, &sz);
             if (r == ERROR_SUCCESS && !memcmp(buffer, val, len) && !buffer[len])
             {
                 ok(sz == len, "wrong size %u\n", sz);
@@ -2210,7 +2212,7 @@ static void test_property_table(void)
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
-        DeleteFile(msifile);
+        DeleteFileA(msifile);
         return;
     }
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r);
@@ -2226,7 +2228,7 @@ static void test_property_table(void)
 
     MsiCloseHandle(hdb);
     MsiCloseHandle(hpkg);
-    DeleteFile(msifile);
+    DeleteFileA(msifile);
 
     hdb = create_package_db();
     ok( hdb, "failed to create package\n");
@@ -2249,7 +2251,7 @@ static void test_property_table(void)
     ok(r == ERROR_SUCCESS, "failed to add column\n");
 
     sprintf(package, "#%i", hdb);
-    r = MsiOpenPackage(package, &hpkg);
+    r = MsiOpenPackageA(package, &hpkg);
     ok(r != ERROR_SUCCESS, "MsiOpenPackage succeeded\n");
     if (r == ERROR_SUCCESS)
         MsiCloseHandle(hpkg);
@@ -2278,9 +2280,9 @@ static void test_property_table(void)
     MsiCloseHandle(hdb);
 
     sz = MAX_PATH;
-    r = MsiGetProperty(hpkg, "prop", buffer, &sz);
+    r = MsiGetPropertyA(hpkg, "prop", buffer, &sz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok(!lstrcmp(buffer, "val"), "Expected val, got %s\n", buffer);
+    ok(!lstrcmpA(buffer, "val"), "Expected val, got %s\n", buffer);
 
     hdb = MsiGetActiveDatabase(hpkg);
 
@@ -2298,23 +2300,23 @@ static void test_property_table(void)
     ok(found == FALSE, "dantes should not be in the _Property table\n");
 
     sz = MAX_PATH;
-    lstrcpy(buffer, "aaa");
-    r = MsiGetProperty(hpkg, "dantes", buffer, &sz);
+    lstrcpyA(buffer, "aaa");
+    r = MsiGetPropertyA(hpkg, "dantes", buffer, &sz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(lstrlenA(buffer) == 0, "Expected empty string, got %s\n", buffer);
 
-    r = MsiSetProperty(hpkg, "dantes", "mercedes");
+    r = MsiSetPropertyA(hpkg, "dantes", "mercedes");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     found = find_prop_in_property(hdb, "dantes", "mercedes", -1);
     ok(found == TRUE, "dantes should be in the _Property table\n");
 
-    r = MsiDoAction( hpkg, "EmbedNull" );
+    r = MsiDoActionA( hpkg, "EmbedNull" );
     ok( r == ERROR_SUCCESS, "EmbedNull failed: %d\n", r);
 
     sz = MAX_PATH;
     memset( buffer, 'a', sizeof(buffer) );
-    r = MsiGetProperty( hpkg, "prop2", buffer, &sz );
+    r = MsiGetPropertyA( hpkg, "prop2", buffer, &sz );
     ok( r == ERROR_SUCCESS, "get property failed: %d\n", r);
     ok( !memcmp( buffer, "\0np", sizeof("\0np") ), "wrong value\n");
     ok( sz == sizeof("\0np") - 1, "got %u\n", sz );
@@ -2324,7 +2326,7 @@ static void test_property_table(void)
 
     MsiCloseHandle(hdb);
     MsiCloseHandle(hpkg);
-    DeleteFile(msifile);
+    DeleteFileA(msifile);
 }
 
 static UINT try_query_param( MSIHANDLE hdb, LPCSTR szQuery, MSIHANDLE hrec )
@@ -2332,7 +2334,7 @@ static UINT try_query_param( MSIHANDLE hdb, LPCSTR szQuery, MSIHANDLE hrec )
     MSIHANDLE htab = 0;
     UINT res;
 
-    res = MsiDatabaseOpenView( hdb, szQuery, &htab );
+    res = MsiDatabaseOpenViewA( hdb, szQuery, &htab );
     if( res == ERROR_SUCCESS )
     {
         UINT r;
@@ -2402,11 +2404,11 @@ static void test_msipackage(void)
     char name[10];
 
     /* NULL szPackagePath */
-    r = MsiOpenPackage(NULL, &hpack);
+    r = MsiOpenPackageA(NULL, &hpack);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* empty szPackagePath */
-    r = MsiOpenPackage("", &hpack);
+    r = MsiOpenPackageA("", &hpack);
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
@@ -2421,24 +2423,24 @@ static void test_msipackage(void)
         MsiCloseHandle(hpack);
 
     /* nonexistent szPackagePath */
-    r = MsiOpenPackage("nonexistent", &hpack);
+    r = MsiOpenPackageA("nonexistent", &hpack);
     ok(r == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", r);
 
     /* NULL hProduct */
-    r = MsiOpenPackage(msifile, NULL);
+    r = MsiOpenPackageA(msifile, NULL);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     name[0]='#';
     name[1]=0;
-    r = MsiOpenPackage(name, &hpack);
+    r = MsiOpenPackageA(name, &hpack);
     ok(r == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got %d\n", r);
 
-    r = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* database exists, but is emtpy */
     sprintf(name, "#%d", hdb);
-    r = MsiOpenPackage(name, &hpack);
+    r = MsiOpenPackageA(name, &hpack);
     ok(r == ERROR_INSTALL_PACKAGE_INVALID,
        "Expected ERROR_INSTALL_PACKAGE_INVALID, got %d\n", r);
 
@@ -2456,15 +2458,15 @@ static void test_msipackage(void)
 
     /* a few key tables exist */
     sprintf(name, "#%d", hdb);
-    r = MsiOpenPackage(name, &hpack);
+    r = MsiOpenPackageA(name, &hpack);
     ok(r == ERROR_INSTALL_PACKAGE_INVALID,
        "Expected ERROR_INSTALL_PACKAGE_INVALID, got %d\n", r);
 
     MsiCloseHandle(hdb);
-    DeleteFile(msifile);
+    DeleteFileA(msifile);
 
     /* start with a clean database to show what constitutes a valid package */
-    r = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     sprintf(name, "#%d", hdb);
@@ -2475,18 +2477,18 @@ static void test_msipackage(void)
      */
 
     set_summary_dword(hdb, PID_PAGECOUNT, 100);
-    r = MsiOpenPackage(name, &hpack);
+    r = MsiOpenPackageA(name, &hpack);
     ok(r == ERROR_INSTALL_PACKAGE_INVALID,
        "Expected ERROR_INSTALL_PACKAGE_INVALID, got %d\n", r);
 
     set_summary_str(hdb, PID_REVNUMBER, "{004757CD-5092-49C2-AD20-28E1CE0DF5F2}");
-    r = MsiOpenPackage(name, &hpack);
+    r = MsiOpenPackageA(name, &hpack);
     ok(r == ERROR_SUCCESS,
        "Expected ERROR_SUCCESS, got %d\n", r);
 
     MsiCloseHandle(hpack);
     MsiCloseHandle(hdb);
-    DeleteFile(msifile);
+    DeleteFileA(msifile);
 }
 
 static void test_formatrecord2(void)
@@ -2500,83 +2502,83 @@ static void test_formatrecord2(void)
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
-        DeleteFile(msifile);
+        DeleteFileA(msifile);
         return;
     }
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r);
 
-    r = MsiSetProperty(hpkg, "Manufacturer", " " );
+    r = MsiSetPropertyA(hpkg, "Manufacturer", " " );
     ok( r == ERROR_SUCCESS, "set property failed\n");
 
     hrec = MsiCreateRecord(2);
     ok(hrec, "create record failed\n");
 
-    r = MsiRecordSetString( hrec, 0, "[ProgramFilesFolder][Manufacturer]\\asdf");
+    r = MsiRecordSetStringA( hrec, 0, "[ProgramFilesFolder][Manufacturer]\\asdf");
     ok( r == ERROR_SUCCESS, "format record failed\n");
 
     buffer[0] = 0;
     sz = sizeof buffer;
-    r = MsiFormatRecord( hpkg, hrec, buffer, &sz );
+    r = MsiFormatRecordA( hpkg, hrec, buffer, &sz );
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", r);
 
-    r = MsiRecordSetString(hrec, 0, "[foo][1]");
+    r = MsiRecordSetStringA(hrec, 0, "[foo][1]");
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", r);
-    r = MsiRecordSetString(hrec, 1, "hoo");
+    r = MsiRecordSetStringA(hrec, 1, "hoo");
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", r);
     sz = sizeof buffer;
-    r = MsiFormatRecord(hpkg, hrec, buffer, &sz);
+    r = MsiFormatRecordA(hpkg, hrec, buffer, &sz);
     ok( sz == 3, "size wrong\n");
     ok( 0 == strcmp(buffer,"hoo"), "wrong output %s\n",buffer);
     ok( r == ERROR_SUCCESS, "format failed\n");
 
-    r = MsiRecordSetString(hrec, 0, "x[~]x");
+    r = MsiRecordSetStringA(hrec, 0, "x[~]x");
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", r);
     sz = sizeof buffer;
-    r = MsiFormatRecord(hpkg, hrec, buffer, &sz);
+    r = MsiFormatRecordA(hpkg, hrec, buffer, &sz);
     ok( sz == 3, "size wrong\n");
     ok( 0 == strcmp(buffer,"x"), "wrong output %s\n",buffer);
     ok( r == ERROR_SUCCESS, "format failed\n");
 
-    r = MsiRecordSetString(hrec, 0, "[foo.$%}][1]");
+    r = MsiRecordSetStringA(hrec, 0, "[foo.$%}][1]");
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", r);
-    r = MsiRecordSetString(hrec, 1, "hoo");
+    r = MsiRecordSetStringA(hrec, 1, "hoo");
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", r);
     sz = sizeof buffer;
-    r = MsiFormatRecord(hpkg, hrec, buffer, &sz);
+    r = MsiFormatRecordA(hpkg, hrec, buffer, &sz);
     ok( sz == 3, "size wrong\n");
     ok( 0 == strcmp(buffer,"hoo"), "wrong output %s\n",buffer);
     ok( r == ERROR_SUCCESS, "format failed\n");
 
-    r = MsiRecordSetString(hrec, 0, "[\\[]");
+    r = MsiRecordSetStringA(hrec, 0, "[\\[]");
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", r);
     sz = sizeof buffer;
-    r = MsiFormatRecord(hpkg, hrec, buffer, &sz);
+    r = MsiFormatRecordA(hpkg, hrec, buffer, &sz);
     ok( sz == 1, "size wrong\n");
     ok( 0 == strcmp(buffer,"["), "wrong output %s\n",buffer);
     ok( r == ERROR_SUCCESS, "format failed\n");
 
-    SetEnvironmentVariable("FOO", "BAR");
-    r = MsiRecordSetString(hrec, 0, "[%FOO]");
+    SetEnvironmentVariableA("FOO", "BAR");
+    r = MsiRecordSetStringA(hrec, 0, "[%FOO]");
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", r);
     sz = sizeof buffer;
-    r = MsiFormatRecord(hpkg, hrec, buffer, &sz);
+    r = MsiFormatRecordA(hpkg, hrec, buffer, &sz);
     ok( sz == 3, "size wrong\n");
     ok( 0 == strcmp(buffer,"BAR"), "wrong output %s\n",buffer);
     ok( r == ERROR_SUCCESS, "format failed\n");
 
-    r = MsiRecordSetString(hrec, 0, "[[1]]");
+    r = MsiRecordSetStringA(hrec, 0, "[[1]]");
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", r);
-    r = MsiRecordSetString(hrec, 1, "%FOO");
+    r = MsiRecordSetStringA(hrec, 1, "%FOO");
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", r);
     sz = sizeof buffer;
-    r = MsiFormatRecord(hpkg, hrec, buffer, &sz);
+    r = MsiFormatRecordA(hpkg, hrec, buffer, &sz);
     ok( sz == 3, "size wrong\n");
     ok( 0 == strcmp(buffer,"BAR"), "wrong output %s\n",buffer);
     ok( r == ERROR_SUCCESS, "format failed\n");
 
     MsiCloseHandle( hrec );
     MsiCloseHandle( hpkg );
-    DeleteFile(msifile);
+    DeleteFileA(msifile);
 }
 
 static void test_feature_states( UINT line, MSIHANDLE package, const char *feature, UINT error,
@@ -2586,7 +2588,7 @@ static void test_feature_states( UINT line, MSIHANDLE package, const char *featu
     INSTALLSTATE state = 0xdeadbee;
     INSTALLSTATE action = 0xdeadbee;
 
-    r = MsiGetFeatureState( package, feature, &state, &action );
+    r = MsiGetFeatureStateA( package, feature, &state, &action );
     ok( r == error, "%u: expected %d got %d\n", line, error, r );
     if (r == ERROR_SUCCESS)
     {
@@ -2617,7 +2619,7 @@ static void test_component_states( UINT line, MSIHANDLE package, const char *com
     INSTALLSTATE state = 0xdeadbee;
     INSTALLSTATE action = 0xdeadbee;
 
-    r = MsiGetComponentState( package, component, &state, &action );
+    r = MsiGetComponentStateA( package, component, &state, &action );
     ok( r == error, "%u: expected %d got %d\n", line, error, r );
     if (r == ERROR_SUCCESS)
     {
@@ -3022,7 +3024,7 @@ static void test_states(void)
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
-        DeleteFile(msifile);
+        DeleteFileA(msifile);
         return;
     }
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r );
@@ -3036,7 +3038,7 @@ static void test_states(void)
     test_feature_states( __LINE__, hpkg, "one", ERROR_UNKNOWN_FEATURE, 0, 0, 0 );
     test_component_states( __LINE__, hpkg, "alpha", ERROR_UNKNOWN_COMPONENT, 0, 0, 0 );
 
-    r = MsiDoAction( hpkg, "CostInitialize");
+    r = MsiDoActionA( hpkg, "CostInitialize");
     ok( r == ERROR_SUCCESS, "cost init failed\n");
 
     test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
@@ -3044,13 +3046,13 @@ static void test_states(void)
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
-    r = MsiDoAction( hpkg, "FileCost");
+    r = MsiDoActionA( hpkg, "FileCost");
     ok( r == ERROR_SUCCESS, "file cost failed\n");
 
     test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
     test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
 
-    r = MsiDoAction( hpkg, "CostFinalize");
+    r = MsiDoActionA( hpkg, "CostFinalize");
     ok( r == ERROR_SUCCESS, "cost finalize failed: %d\n", r);
 
     test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_LOCAL, 0 );
@@ -3093,10 +3095,10 @@ static void test_states(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     /* publish the features and components */
-    r = MsiInstallProduct(msifile, "ADDLOCAL=one,four ADDSOURCE=two,three REMOVE=six,seven REINSTALL=eight,nine,ten");
+    r = MsiInstallProductA(msifile, "ADDLOCAL=one,four ADDSOURCE=two,three REMOVE=six,seven REINSTALL=eight,nine,ten");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
-    r = MsiOpenDatabase(msifile, MSIDBOPEN_DIRECT, &hdb);
+    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_DIRECT, &hdb);
     ok(r == ERROR_SUCCESS, "failed to open database: %d\n", r);
 
     /* these properties must not be in the saved msi file */
@@ -3120,19 +3122,19 @@ static void test_states(void)
     test_feature_states( __LINE__, hpkg, "one", ERROR_UNKNOWN_FEATURE, 0, 0, 0 );
     test_component_states( __LINE__, hpkg, "alpha", ERROR_UNKNOWN_COMPONENT, 0, 0, 0 );
 
-    r = MsiDoAction( hpkg, "CostInitialize");
+    r = MsiDoActionA( hpkg, "CostInitialize");
     ok( r == ERROR_SUCCESS, "cost init failed\n");
 
     test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
     test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
 
-    r = MsiDoAction( hpkg, "FileCost");
+    r = MsiDoActionA( hpkg, "FileCost");
     ok( r == ERROR_SUCCESS, "file cost failed\n");
 
     test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
     test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
 
-    r = MsiDoAction( hpkg, "CostFinalize");
+    r = MsiDoActionA( hpkg, "CostFinalize");
     ok( r == ERROR_SUCCESS, "cost finalize failed: %d\n", r);
 
     test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_LOCAL, 0 );
@@ -3173,14 +3175,14 @@ static void test_states(void)
     MsiCloseHandle(hpkg);
 
     /* uninstall the product */
-    r = MsiInstallProduct(msifile, "REMOVE=ALL");
+    r = MsiInstallProductA(msifile, "REMOVE=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* all features installed locally */
-    r = MsiInstallProduct(msifile2, "ADDLOCAL=ALL");
+    r = MsiInstallProductA(msifile2, "ADDLOCAL=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
-    r = MsiOpenDatabase(msifile2, MSIDBOPEN_DIRECT, &hdb);
+    r = MsiOpenDatabaseA(msifile2, MSIDBOPEN_DIRECT, &hdb);
     ok(r == ERROR_SUCCESS, "failed to open database: %d\n", r);
 
     /* these properties must not be in the saved msi file */
@@ -3193,13 +3195,13 @@ static void test_states(void)
     test_feature_states( __LINE__, hpkg, "one", ERROR_UNKNOWN_FEATURE, 0, 0, 0 );
     test_component_states( __LINE__, hpkg, "alpha", ERROR_UNKNOWN_COMPONENT, 0, 0, 0 );
 
-    r = MsiDoAction( hpkg, "CostInitialize");
+    r = MsiDoActionA( hpkg, "CostInitialize");
     ok( r == ERROR_SUCCESS, "cost init failed\n");
 
     test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
     test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
 
-    r = MsiDoAction( hpkg, "CostFinalize");
+    r = MsiDoActionA( hpkg, "CostFinalize");
     ok( r == ERROR_SUCCESS, "cost finalize failed: %d\n", r);
 
     test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_LOCAL, 0 );
@@ -3240,14 +3242,14 @@ static void test_states(void)
     MsiCloseHandle(hpkg);
 
     /* uninstall the product */
-    r = MsiInstallProduct(msifile2, "REMOVE=ALL");
+    r = MsiInstallProductA(msifile2, "REMOVE=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* all features installed from source */
-    r = MsiInstallProduct(msifile3, "ADDSOURCE=ALL");
+    r = MsiInstallProductA(msifile3, "ADDSOURCE=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
-    r = MsiOpenDatabase(msifile3, MSIDBOPEN_DIRECT, &hdb);
+    r = MsiOpenDatabaseA(msifile3, MSIDBOPEN_DIRECT, &hdb);
     ok(r == ERROR_SUCCESS, "failed to open database: %d\n", r);
 
     /* this property must not be in the saved msi file */
@@ -3260,19 +3262,19 @@ static void test_states(void)
     test_feature_states( __LINE__, hpkg, "one", ERROR_UNKNOWN_FEATURE, 0, 0, 0 );
     test_component_states( __LINE__, hpkg, "alpha", ERROR_UNKNOWN_COMPONENT, 0, 0, 0 );
 
-    r = MsiDoAction( hpkg, "CostInitialize");
+    r = MsiDoActionA( hpkg, "CostInitialize");
     ok( r == ERROR_SUCCESS, "cost init failed\n");
 
     test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
     test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
 
-    r = MsiDoAction( hpkg, "FileCost");
+    r = MsiDoActionA( hpkg, "FileCost");
     ok( r == ERROR_SUCCESS, "file cost failed\n");
 
     test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
     test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
 
-    r = MsiDoAction( hpkg, "CostFinalize");
+    r = MsiDoActionA( hpkg, "CostFinalize");
     ok( r == ERROR_SUCCESS, "cost finalize failed: %d\n", r);
 
     test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, 0 );
@@ -3313,10 +3315,10 @@ static void test_states(void)
     MsiCloseHandle(hpkg);
 
     /* reinstall the product */
-    r = MsiInstallProduct(msifile3, "REINSTALL=ALL");
+    r = MsiInstallProductA(msifile3, "REINSTALL=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
-    r = MsiOpenDatabase(msifile4, MSIDBOPEN_DIRECT, &hdb);
+    r = MsiOpenDatabaseA(msifile4, MSIDBOPEN_DIRECT, &hdb);
     ok(r == ERROR_SUCCESS, "failed to open database: %d\n", r);
 
     /* this property must not be in the saved msi file */
@@ -3329,19 +3331,19 @@ static void test_states(void)
     test_feature_states( __LINE__, hpkg, "one", ERROR_UNKNOWN_FEATURE, 0, 0, 0 );
     test_component_states( __LINE__, hpkg, "alpha", ERROR_UNKNOWN_COMPONENT, 0, 0, 0 );
 
-    r = MsiDoAction( hpkg, "CostInitialize");
+    r = MsiDoActionA( hpkg, "CostInitialize");
     ok( r == ERROR_SUCCESS, "cost init failed\n");
 
     test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
     test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
 
-    r = MsiDoAction( hpkg, "FileCost");
+    r = MsiDoActionA( hpkg, "FileCost");
     ok( r == ERROR_SUCCESS, "file cost failed\n");
 
     test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
     test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
 
-    r = MsiDoAction( hpkg, "CostFinalize");
+    r = MsiDoActionA( hpkg, "CostFinalize");
     ok( r == ERROR_SUCCESS, "cost finalize failed: %d\n", r);
 
     test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, 0 );
@@ -3382,7 +3384,7 @@ static void test_states(void)
     MsiCloseHandle(hpkg);
 
     /* uninstall the product */
-    r = MsiInstallProduct(msifile4, "REMOVE=ALL");
+    r = MsiInstallProductA(msifile4, "REMOVE=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     DeleteFileA(msifile);
@@ -3403,43 +3405,43 @@ static void test_getproperty(void)
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
-        DeleteFile(msifile);
+        DeleteFileA(msifile);
         return;
     }
     ok( r == ERROR_SUCCESS, "Failed to create package %u\n", r );
 
     /* set the property */
-    r = MsiSetProperty(hPackage, "Name", "Value");
+    r = MsiSetPropertyA(hPackage, "Name", "Value");
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* retrieve the size, NULL pointer */
     size = 0;
-    r = MsiGetProperty(hPackage, "Name", NULL, &size);
+    r = MsiGetPropertyA(hPackage, "Name", NULL, &size);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok( size == 5, "Expected 5, got %d\n", size);
 
     /* retrieve the size, empty string */
     size = 0;
-    r = MsiGetProperty(hPackage, "Name", empty, &size);
+    r = MsiGetPropertyA(hPackage, "Name", empty, &size);
     ok( r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", r);
     ok( size == 5, "Expected 5, got %d\n", size);
 
     /* don't change size */
-    r = MsiGetProperty(hPackage, "Name", prop, &size);
+    r = MsiGetPropertyA(hPackage, "Name", prop, &size);
     ok( r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", r);
     ok( size == 5, "Expected 5, got %d\n", size);
-    ok( !lstrcmp(prop, "Valu"), "Expected Valu, got %s\n", prop);
+    ok( !lstrcmpA(prop, "Valu"), "Expected Valu, got %s\n", prop);
 
     /* increase the size by 1 */
     size++;
-    r = MsiGetProperty(hPackage, "Name", prop, &size);
+    r = MsiGetPropertyA(hPackage, "Name", prop, &size);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok( size == 5, "Expected 5, got %d\n", size);
-    ok( !lstrcmp(prop, "Value"), "Expected Value, got %s\n", prop);
+    ok( !lstrcmpA(prop, "Value"), "Expected Value, got %s\n", prop);
 
     r = MsiCloseHandle( hPackage);
     ok( r == ERROR_SUCCESS , "Failed to close package\n" );
-    DeleteFile(msifile);
+    DeleteFileA(msifile);
 }
 
 static void test_removefiles(void)
@@ -3540,7 +3542,7 @@ static void test_removefiles(void)
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
-        DeleteFile(msifile);
+        DeleteFileA(msifile);
         return;
     }
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r );
@@ -3555,76 +3557,76 @@ static void test_removefiles(void)
     create_test_file( "carbon.txt" );
     create_test_file( "oxygen.txt" );
 
-    r = MsiSetProperty( hpkg, "TARGETDIR", CURR_DIR );
+    r = MsiSetPropertyA( hpkg, "TARGETDIR", CURR_DIR );
     ok( r == ERROR_SUCCESS, "set property failed\n");
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
-    r = MsiGetComponentState( hpkg, "oxygen", &installed, &action );
+    r = MsiGetComponentStateA( hpkg, "oxygen", &installed, &action );
     ok( r == ERROR_UNKNOWN_COMPONENT, "expected ERROR_UNKNOWN_COMPONENT, got %u\n", r );
 
-    r = MsiDoAction( hpkg, "CostInitialize");
+    r = MsiDoActionA( hpkg, "CostInitialize");
     ok( r == ERROR_SUCCESS, "cost init failed\n");
 
-    r = MsiDoAction( hpkg, "FileCost");
+    r = MsiDoActionA( hpkg, "FileCost");
     ok( r == ERROR_SUCCESS, "file cost failed\n");
 
     installed = action = 0xdeadbeef;
-    r = MsiGetComponentState( hpkg, "oxygen", &installed, &action );
+    r = MsiGetComponentStateA( hpkg, "oxygen", &installed, &action );
     ok( r == ERROR_SUCCESS, "failed to get component state %u\n", r );
     ok( installed == INSTALLSTATE_UNKNOWN, "expected INSTALLSTATE_UNKNOWN, got %d\n", installed );
     ok( action == INSTALLSTATE_UNKNOWN, "expected INSTALLSTATE_UNKNOWN, got %d\n", action );
 
-    r = MsiDoAction( hpkg, "CostFinalize");
+    r = MsiDoActionA( hpkg, "CostFinalize");
     ok( r == ERROR_SUCCESS, "cost finalize failed\n");
 
-    r = MsiDoAction( hpkg, "InstallValidate");
+    r = MsiDoActionA( hpkg, "InstallValidate");
     ok( r == ERROR_SUCCESS, "install validate failed\n");
 
-    r = MsiSetComponentState( hpkg, "hydrogen", INSTALLSTATE_ABSENT );
+    r = MsiSetComponentStateA( hpkg, "hydrogen", INSTALLSTATE_ABSENT );
     ok( r == ERROR_SUCCESS, "failed to set component state: %d\n", r);
 
     installed = action = 0xdeadbeef;
-    r = MsiGetComponentState( hpkg, "hydrogen", &installed, &action );
+    r = MsiGetComponentStateA( hpkg, "hydrogen", &installed, &action );
     ok( r == ERROR_SUCCESS, "failed to get component state %u\n", r );
     ok( installed == INSTALLSTATE_UNKNOWN, "expected INSTALLSTATE_UNKNOWN, got %d\n", installed );
     todo_wine ok( action == INSTALLSTATE_UNKNOWN, "expected INSTALLSTATE_UNKNOWN, got %d\n", action );
 
-    r = MsiSetComponentState( hpkg, "helium", INSTALLSTATE_LOCAL );
+    r = MsiSetComponentStateA( hpkg, "helium", INSTALLSTATE_LOCAL );
     ok( r == ERROR_SUCCESS, "failed to set component state: %d\n", r);
 
-    r = MsiSetComponentState( hpkg, "lithium", INSTALLSTATE_SOURCE );
+    r = MsiSetComponentStateA( hpkg, "lithium", INSTALLSTATE_SOURCE );
     ok( r == ERROR_SUCCESS, "failed to set component state: %d\n", r);
 
-    r = MsiSetComponentState( hpkg, "beryllium", INSTALLSTATE_ABSENT );
+    r = MsiSetComponentStateA( hpkg, "beryllium", INSTALLSTATE_ABSENT );
     ok( r == ERROR_SUCCESS, "failed to set component state: %d\n", r);
 
-    r = MsiSetComponentState( hpkg, "boron", INSTALLSTATE_LOCAL );
+    r = MsiSetComponentStateA( hpkg, "boron", INSTALLSTATE_LOCAL );
     ok( r == ERROR_SUCCESS, "failed to set component state: %d\n", r);
 
-    r = MsiSetComponentState( hpkg, "carbon", INSTALLSTATE_SOURCE );
+    r = MsiSetComponentStateA( hpkg, "carbon", INSTALLSTATE_SOURCE );
     ok( r == ERROR_SUCCESS, "failed to set component state: %d\n", r);
 
     installed = action = 0xdeadbeef;
-    r = MsiGetComponentState( hpkg, "oxygen", &installed, &action );
+    r = MsiGetComponentStateA( hpkg, "oxygen", &installed, &action );
     ok( r == ERROR_SUCCESS, "failed to get component state %u\n", r );
     ok( installed == INSTALLSTATE_UNKNOWN, "expected INSTALLSTATE_UNKNOWN, got %d\n", installed );
     ok( action == INSTALLSTATE_UNKNOWN, "expected INSTALLSTATE_UNKNOWN, got %d\n", action );
 
-    r = MsiSetComponentState( hpkg, "oxygen", INSTALLSTATE_ABSENT );
+    r = MsiSetComponentStateA( hpkg, "oxygen", INSTALLSTATE_ABSENT );
     ok( r == ERROR_SUCCESS, "failed to set component state: %d\n", r);
 
     installed = action = 0xdeadbeef;
-    r = MsiGetComponentState( hpkg, "oxygen", &installed, &action );
+    r = MsiGetComponentStateA( hpkg, "oxygen", &installed, &action );
     ok( r == ERROR_SUCCESS, "failed to get component state %u\n", r );
     ok( installed == INSTALLSTATE_UNKNOWN, "expected INSTALLSTATE_UNKNOWN, got %d\n", installed );
     ok( action == INSTALLSTATE_UNKNOWN, "expected INSTALLSTATE_UNKNOWN, got %d\n", action );
 
-    r = MsiDoAction( hpkg, "RemoveFiles");
+    r = MsiDoActionA( hpkg, "RemoveFiles");
     ok( r == ERROR_SUCCESS, "remove files failed\n");
 
     installed = action = 0xdeadbeef;
-    r = MsiGetComponentState( hpkg, "oxygen", &installed, &action );
+    r = MsiGetComponentStateA( hpkg, "oxygen", &installed, &action );
     ok( r == ERROR_SUCCESS, "failed to get component state %u\n", r );
     ok( installed == INSTALLSTATE_UNKNOWN, "expected INSTALLSTATE_UNKNOWN, got %d\n", installed );
     ok( action == INSTALLSTATE_UNKNOWN, "expected INSTALLSTATE_UNKNOWN, got %d\n", action );
@@ -3686,7 +3688,7 @@ static void test_appsearch(void)
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
-        DeleteFile(msifile);
+        DeleteFileA(msifile);
         return;
     }
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r );
@@ -3696,7 +3698,7 @@ static void test_appsearch(void)
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
-    r = MsiDoAction( hpkg, "AppSearch" );
+    r = MsiDoActionA( hpkg, "AppSearch" );
     ok( r == ERROR_SUCCESS, "AppSearch failed: %d\n", r);
 
     size = sizeof(prop);
@@ -3905,7 +3907,7 @@ static void test_appsearch_complocator(void)
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
-    r = MsiDoAction(hpkg, "AppSearch");
+    r = MsiDoActionA(hpkg, "AppSearch");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     size = MAX_PATH;
@@ -4453,7 +4455,7 @@ static void test_appsearch_reglocator(void)
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
-    r = MsiDoAction(hpkg, "AppSearch");
+    r = MsiDoActionA(hpkg, "AppSearch");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     size = MAX_PATH;
@@ -4674,7 +4676,7 @@ static void test_appsearch_reglocator(void)
     RegDeleteValueA(hklm, "Value15");
     RegDeleteValueA(hklm, "Value16");
     RegDeleteValueA(hklm, "Value17");
-    RegDeleteKey(hklm, "");
+    RegDeleteKeyA(hklm, "");
     RegCloseKey(hklm);
 
     RegDeleteValueA(classes, "Value1");
@@ -4881,7 +4883,7 @@ static void test_appsearch_inilocator(void)
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
-    r = MsiDoAction(hpkg, "AppSearch");
+    r = MsiDoActionA(hpkg, "AppSearch");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     size = MAX_PATH;
@@ -4987,7 +4989,7 @@ static void search_absolute_directory(LPSTR absolute, LPCSTR relative)
             continue;
 
         absolute[0] = 'A' + i;
-        if (GetDriveType(absolute) != DRIVE_FIXED)
+        if (GetDriveTypeA(absolute) != DRIVE_FIXED)
             continue;
 
         lstrcpynA(absolute + 3, relative, size + 1);
@@ -5186,7 +5188,7 @@ static void test_appsearch_drlocator(void)
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
-    r = MsiDoAction(hpkg, "AppSearch");
+    r = MsiDoActionA(hpkg, "AppSearch");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     size = MAX_PATH;
@@ -5455,7 +5457,7 @@ static void test_featureparents(void)
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
-        DeleteFile(msifile);
+        DeleteFileA(msifile);
         return;
     }
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r );
@@ -5464,13 +5466,13 @@ static void test_featureparents(void)
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
-    r = MsiDoAction( hpkg, "CostInitialize");
+    r = MsiDoActionA( hpkg, "CostInitialize");
     ok( r == ERROR_SUCCESS, "cost init failed\n");
 
-    r = MsiDoAction( hpkg, "FileCost");
+    r = MsiDoActionA( hpkg, "FileCost");
     ok( r == ERROR_SUCCESS, "file cost failed\n");
 
-    r = MsiDoAction( hpkg, "CostFinalize");
+    r = MsiDoActionA( hpkg, "CostFinalize");
     ok( r == ERROR_SUCCESS, "cost finalize failed\n");
 
     test_feature_states( __LINE__, hpkg, "zodiac", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_LOCAL, 0 );
@@ -5492,13 +5494,13 @@ static void test_featureparents(void)
     test_component_states( __LINE__, hpkg, "delphinus", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
     test_component_states( __LINE__, hpkg, "hydrus", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
 
-    r = MsiSetFeatureState(hpkg, "orion", INSTALLSTATE_ABSENT);
+    r = MsiSetFeatureStateA(hpkg, "orion", INSTALLSTATE_ABSENT);
     ok( r == ERROR_SUCCESS, "failed to set feature state: %d\n", r);
 
-    r = MsiSetFeatureState(hpkg, "lyra", INSTALLSTATE_ABSENT);
+    r = MsiSetFeatureStateA(hpkg, "lyra", INSTALLSTATE_ABSENT);
     ok( r == ERROR_SUCCESS, "failed to set feature state: %d\n", r);
 
-    r = MsiSetFeatureState(hpkg, "nosuchfeature", INSTALLSTATE_ABSENT);
+    r = MsiSetFeatureStateA(hpkg, "nosuchfeature", INSTALLSTATE_ABSENT);
     ok( r == ERROR_UNKNOWN_FEATURE, "Expected ERROR_UNKNOWN_FEATURE, got %u\n", r);
 
     test_feature_states( __LINE__, hpkg, "zodiac", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_LOCAL, 0 );
@@ -5540,9 +5542,9 @@ static void test_installprops(void)
     if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
-    GetCurrentDirectory(MAX_PATH, path);
-    lstrcat(path, "\\");
-    lstrcat(path, msifile);
+    GetCurrentDirectoryA(MAX_PATH, path);
+    lstrcatA(path, "\\");
+    lstrcatA(path, msifile);
 
     uilevel = MsiSetInternalUI(INSTALLUILEVEL_BASIC|INSTALLUILEVEL_SOURCERESONLY, NULL);
 
@@ -5554,7 +5556,7 @@ static void test_installprops(void)
     {
         skip("Not enough rights to perform tests\n");
         MsiSetInternalUI(uilevel, NULL);
-        DeleteFile(msifile);
+        DeleteFileA(msifile);
         return;
     }
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r );
@@ -5563,95 +5565,95 @@ static void test_installprops(void)
 
     buf[0] = 0;
     size = MAX_PATH;
-    r = MsiGetProperty(hpkg, "UILevel", buf, &size);
+    r = MsiGetPropertyA(hpkg, "UILevel", buf, &size);
     ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
-    ok( !lstrcmp(buf, "3"), "Expected \"3\", got \"%s\"\n", buf);
+    ok( !lstrcmpA(buf, "3"), "Expected \"3\", got \"%s\"\n", buf);
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     buf[0] = 0;
     size = MAX_PATH;
-    r = MsiGetProperty(hpkg, "UILevel", buf, &size);
+    r = MsiGetPropertyA(hpkg, "UILevel", buf, &size);
     ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
-    ok( !lstrcmp(buf, "3"), "Expected \"3\", got \"%s\"\n", buf);
+    ok( !lstrcmpA(buf, "3"), "Expected \"3\", got \"%s\"\n", buf);
 
     buf[0] = 0;
     size = MAX_PATH;
-    r = MsiGetProperty(hpkg, "DATABASE", buf, &size);
+    r = MsiGetPropertyA(hpkg, "DATABASE", buf, &size);
     ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
-    ok( !lstrcmp(buf, path), "Expected %s, got %s\n", path, buf);
+    ok( !lstrcmpA(buf, path), "Expected %s, got %s\n", path, buf);
 
-    RegOpenKey(HKEY_CURRENT_USER, "SOFTWARE\\Microsoft\\MS Setup (ACME)\\User Info", &hkey1);
-    RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", 0, access, &hkey2);
+    RegOpenKeyA(HKEY_CURRENT_USER, "SOFTWARE\\Microsoft\\MS Setup (ACME)\\User Info", &hkey1);
+    RegOpenKeyExA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", 0, access, &hkey2);
 
     size = MAX_PATH;
     type = REG_SZ;
     *path = '\0';
-    if (RegQueryValueEx(hkey1, "DefName", NULL, &type, (LPBYTE)path, &size) != ERROR_SUCCESS)
+    if (RegQueryValueExA(hkey1, "DefName", NULL, &type, (LPBYTE)path, &size) != ERROR_SUCCESS)
     {
         size = MAX_PATH;
         type = REG_SZ;
-        RegQueryValueEx(hkey2, "RegisteredOwner", NULL, &type, (LPBYTE)path, &size);
+        RegQueryValueExA(hkey2, "RegisteredOwner", NULL, &type, (LPBYTE)path, &size);
     }
 
     buf[0] = 0;
     size = MAX_PATH;
-    r = MsiGetProperty(hpkg, "USERNAME", buf, &size);
+    r = MsiGetPropertyA(hpkg, "USERNAME", buf, &size);
     ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
-    ok( !lstrcmp(buf, path), "Expected %s, got %s\n", path, buf);
+    ok( !lstrcmpA(buf, path), "Expected %s, got %s\n", path, buf);
 
     size = MAX_PATH;
     type = REG_SZ;
     *path = '\0';
-    if (RegQueryValueEx(hkey1, "DefCompany", NULL, &type, (LPBYTE)path, &size) != ERROR_SUCCESS)
+    if (RegQueryValueExA(hkey1, "DefCompany", NULL, &type, (LPBYTE)path, &size) != ERROR_SUCCESS)
     {
         size = MAX_PATH;
         type = REG_SZ;
-        RegQueryValueEx(hkey2, "RegisteredOrganization", NULL, &type, (LPBYTE)path, &size);
+        RegQueryValueExA(hkey2, "RegisteredOrganization", NULL, &type, (LPBYTE)path, &size);
     }
 
     if (*path)
     {
         buf[0] = 0;
         size = MAX_PATH;
-        r = MsiGetProperty(hpkg, "COMPANYNAME", buf, &size);
+        r = MsiGetPropertyA(hpkg, "COMPANYNAME", buf, &size);
         ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
-        ok( !lstrcmp(buf, path), "Expected %s, got %s\n", path, buf);
+        ok( !lstrcmpA(buf, path), "Expected %s, got %s\n", path, buf);
     }
 
     buf[0] = 0;
     size = MAX_PATH;
-    r = MsiGetProperty(hpkg, "VersionDatabase", buf, &size);
+    r = MsiGetPropertyA(hpkg, "VersionDatabase", buf, &size);
     ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
     trace("VersionDatabase = %s\n", buf);
 
     buf[0] = 0;
     size = MAX_PATH;
-    r = MsiGetProperty(hpkg, "VersionMsi", buf, &size);
+    r = MsiGetPropertyA(hpkg, "VersionMsi", buf, &size);
     ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
     trace("VersionMsi = %s\n", buf);
 
     buf[0] = 0;
     size = MAX_PATH;
-    r = MsiGetProperty(hpkg, "Date", buf, &size);
+    r = MsiGetPropertyA(hpkg, "Date", buf, &size);
     ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
     trace("Date = %s\n", buf);
 
     buf[0] = 0;
     size = MAX_PATH;
-    r = MsiGetProperty(hpkg, "Time", buf, &size);
+    r = MsiGetPropertyA(hpkg, "Time", buf, &size);
     ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
     trace("Time = %s\n", buf);
 
     buf[0] = 0;
     size = MAX_PATH;
-    r = MsiGetProperty(hpkg, "PackageCode", buf, &size);
+    r = MsiGetPropertyA(hpkg, "PackageCode", buf, &size);
     ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
     trace("PackageCode = %s\n", buf);
 
     buf[0] = 0;
     size = MAX_PATH;
-    r = MsiGetProperty(hpkg, "ComputerName", buf, &size);
+    r = MsiGetPropertyA(hpkg, "ComputerName", buf, &size);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", r);
     trace("ComputerName = %s\n", buf);
 
@@ -5660,21 +5662,21 @@ static void test_installprops(void)
 
     buf[0] = 0;
     size = MAX_PATH;
-    r = MsiGetProperty(hpkg, "UserLanguageID", buf, &size);
+    r = MsiGetPropertyA(hpkg, "UserLanguageID", buf, &size);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", r);
     ok( !lstrcmpA(buf, path), "Expected \"%s\", got \"%s\"\n", path, buf);
 
     res = GetSystemMetrics(SM_CXSCREEN);
     buf[0] = 0;
     size = MAX_PATH;
-    r = MsiGetProperty(hpkg, "ScreenX", buf, &size);
+    r = MsiGetPropertyA(hpkg, "ScreenX", buf, &size);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", r);
     ok(atol(buf) == res, "Expected %d, got %ld\n", res, atol(buf));
 
     res = GetSystemMetrics(SM_CYSCREEN);
     buf[0] = 0;
     size = MAX_PATH;
-    r = MsiGetProperty(hpkg, "ScreenY", buf, &size);
+    r = MsiGetPropertyA(hpkg, "ScreenY", buf, &size);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", r);
     ok(atol(buf) == res, "Expected %d, got %ld\n", res, atol(buf));
 
@@ -5685,25 +5687,25 @@ static void test_installprops(void)
         {
             buf[0] = 0;
             size = MAX_PATH;
-            r = MsiGetProperty(hpkg, "Intel", buf, &size);
+            r = MsiGetPropertyA(hpkg, "Intel", buf, &size);
             ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
             ok(buf[0], "property not set\n");
 
             buf[0] = 0;
             size = MAX_PATH;
-            r = MsiGetProperty(hpkg, "MsiAMD64", buf, &size);
+            r = MsiGetPropertyA(hpkg, "MsiAMD64", buf, &size);
             ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
             ok(buf[0], "property not set\n");
 
             buf[0] = 0;
             size = MAX_PATH;
-            r = MsiGetProperty(hpkg, "Msix64", buf, &size);
+            r = MsiGetPropertyA(hpkg, "Msix64", buf, &size);
             ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
             ok(buf[0], "property not set\n");
 
             buf[0] = 0;
             size = MAX_PATH;
-            r = MsiGetProperty(hpkg, "System64Folder", buf, &size);
+            r = MsiGetPropertyA(hpkg, "System64Folder", buf, &size);
             ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
             GetSystemDirectoryA(path, MAX_PATH);
             if (size) buf[size - 1] = 0;
@@ -5711,7 +5713,7 @@ static void test_installprops(void)
 
             buf[0] = 0;
             size = MAX_PATH;
-            r = MsiGetProperty(hpkg, "SystemFolder", buf, &size);
+            r = MsiGetPropertyA(hpkg, "SystemFolder", buf, &size);
             ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
             pGetSystemWow64DirectoryA(path, MAX_PATH);
             if (size) buf[size - 1] = 0;
@@ -5719,7 +5721,7 @@ static void test_installprops(void)
 
             buf[0] = 0;
             size = MAX_PATH;
-            r = MsiGetProperty(hpkg, "ProgramFiles64Folder", buf, &size);
+            r = MsiGetPropertyA(hpkg, "ProgramFiles64Folder", buf, &size);
             ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
             pSHGetFolderPathA(NULL, CSIDL_PROGRAM_FILES, NULL, 0, path);
             if (size) buf[size - 1] = 0;
@@ -5727,7 +5729,7 @@ static void test_installprops(void)
 
             buf[0] = 0;
             size = MAX_PATH;
-            r = MsiGetProperty(hpkg, "ProgramFilesFolder", buf, &size);
+            r = MsiGetPropertyA(hpkg, "ProgramFilesFolder", buf, &size);
             ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
             pSHGetFolderPathA(NULL, CSIDL_PROGRAM_FILESX86, NULL, 0, path);
             if (size) buf[size - 1] = 0;
@@ -5735,7 +5737,7 @@ static void test_installprops(void)
 
             buf[0] = 0;
             size = MAX_PATH;
-            r = MsiGetProperty(hpkg, "CommonFiles64Folder", buf, &size);
+            r = MsiGetPropertyA(hpkg, "CommonFiles64Folder", buf, &size);
             ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
             pSHGetFolderPathA(NULL, CSIDL_PROGRAM_FILES_COMMON, NULL, 0, path);
             if (size) buf[size - 1] = 0;
@@ -5743,7 +5745,7 @@ static void test_installprops(void)
 
             buf[0] = 0;
             size = MAX_PATH;
-            r = MsiGetProperty(hpkg, "CommonFilesFolder", buf, &size);
+            r = MsiGetPropertyA(hpkg, "CommonFilesFolder", buf, &size);
             ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
             pSHGetFolderPathA(NULL, CSIDL_PROGRAM_FILES_COMMONX86, NULL, 0, path);
             if (size) buf[size - 1] = 0;
@@ -5751,7 +5753,7 @@ static void test_installprops(void)
 
             buf[0] = 0;
             size = MAX_PATH;
-            r = MsiGetProperty(hpkg, "VersionNT64", buf, &size);
+            r = MsiGetPropertyA(hpkg, "VersionNT64", buf, &size);
             ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
             ok(buf[0], "property not set\n");
         }
@@ -5761,31 +5763,31 @@ static void test_installprops(void)
             {
                 buf[0] = 0;
                 size = MAX_PATH;
-                r = MsiGetProperty(hpkg, "Intel", buf, &size);
+                r = MsiGetPropertyA(hpkg, "Intel", buf, &size);
                 ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
                 ok(buf[0], "property not set\n");
 
                 buf[0] = 0;
                 size = MAX_PATH;
-                r = MsiGetProperty(hpkg, "MsiAMD64", buf, &size);
+                r = MsiGetPropertyA(hpkg, "MsiAMD64", buf, &size);
                 ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
                 ok(!buf[0], "property set\n");
 
                 buf[0] = 0;
                 size = MAX_PATH;
-                r = MsiGetProperty(hpkg, "Msix64", buf, &size);
+                r = MsiGetPropertyA(hpkg, "Msix64", buf, &size);
                 ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
                 ok(!buf[0], "property set\n");
 
                 buf[0] = 0;
                 size = MAX_PATH;
-                r = MsiGetProperty(hpkg, "System64Folder", buf, &size);
+                r = MsiGetPropertyA(hpkg, "System64Folder", buf, &size);
                 ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
                 ok(!buf[0], "property set\n");
 
                 buf[0] = 0;
                 size = MAX_PATH;
-                r = MsiGetProperty(hpkg, "SystemFolder", buf, &size);
+                r = MsiGetPropertyA(hpkg, "SystemFolder", buf, &size);
                 ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
                 GetSystemDirectoryA(path, MAX_PATH);
                 if (size) buf[size - 1] = 0;
@@ -5793,13 +5795,13 @@ static void test_installprops(void)
 
                 buf[0] = 0;
                 size = MAX_PATH;
-                r = MsiGetProperty(hpkg, "ProgramFiles64Folder", buf, &size);
+                r = MsiGetPropertyA(hpkg, "ProgramFiles64Folder", buf, &size);
                 ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
                 ok(!buf[0], "property set\n");
 
                 buf[0] = 0;
                 size = MAX_PATH;
-                r = MsiGetProperty(hpkg, "ProgramFilesFolder", buf, &size);
+                r = MsiGetPropertyA(hpkg, "ProgramFilesFolder", buf, &size);
                 ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
                 pSHGetFolderPathA(NULL, CSIDL_PROGRAM_FILES, NULL, 0, path);
                 if (size) buf[size - 1] = 0;
@@ -5807,13 +5809,13 @@ static void test_installprops(void)
 
                 buf[0] = 0;
                 size = MAX_PATH;
-                r = MsiGetProperty(hpkg, "CommonFiles64Folder", buf, &size);
+                r = MsiGetPropertyA(hpkg, "CommonFiles64Folder", buf, &size);
                 ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
                 ok(!buf[0], "property set\n");
 
                 buf[0] = 0;
                 size = MAX_PATH;
-                r = MsiGetProperty(hpkg, "CommonFilesFolder", buf, &size);
+                r = MsiGetPropertyA(hpkg, "CommonFilesFolder", buf, &size);
                 ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
                 pSHGetFolderPathA(NULL, CSIDL_PROGRAM_FILES_COMMON, NULL, 0, path);
                 if (size) buf[size - 1] = 0;
@@ -5821,7 +5823,7 @@ static void test_installprops(void)
 
                 buf[0] = 0;
                 size = MAX_PATH;
-                r = MsiGetProperty(hpkg, "VersionNT64", buf, &size);
+                r = MsiGetPropertyA(hpkg, "VersionNT64", buf, &size);
                 ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
                 ok(!buf[0], "property set\n");
             }
@@ -5829,25 +5831,25 @@ static void test_installprops(void)
             {
                 buf[0] = 0;
                 size = MAX_PATH;
-                r = MsiGetProperty(hpkg, "Intel", buf, &size);
+                r = MsiGetPropertyA(hpkg, "Intel", buf, &size);
                 ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
                 ok(buf[0], "property not set\n");
 
                 buf[0] = 0;
                 size = MAX_PATH;
-                r = MsiGetProperty(hpkg, "MsiAMD64", buf, &size);
+                r = MsiGetPropertyA(hpkg, "MsiAMD64", buf, &size);
                 ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
                 ok(buf[0], "property not set\n");
 
                 buf[0] = 0;
                 size = MAX_PATH;
-                r = MsiGetProperty(hpkg, "Msix64", buf, &size);
+                r = MsiGetPropertyA(hpkg, "Msix64", buf, &size);
                 ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
                 ok(buf[0], "property not set\n");
 
                 buf[0] = 0;
                 size = MAX_PATH;
-                r = MsiGetProperty(hpkg, "System64Folder", buf, &size);
+                r = MsiGetPropertyA(hpkg, "System64Folder", buf, &size);
                 ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
                 GetSystemDirectoryA(path, MAX_PATH);
                 if (size) buf[size - 1] = 0;
@@ -5855,7 +5857,7 @@ static void test_installprops(void)
 
                 buf[0] = 0;
                 size = MAX_PATH;
-                r = MsiGetProperty(hpkg, "SystemFolder", buf, &size);
+                r = MsiGetPropertyA(hpkg, "SystemFolder", buf, &size);
                 ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
                 pGetSystemWow64DirectoryA(path, MAX_PATH);
                 if (size) buf[size - 1] = 0;
@@ -5863,13 +5865,13 @@ static void test_installprops(void)
 
                 buf[0] = 0;
                 size = MAX_PATH;
-                r = MsiGetProperty(hpkg, "ProgramFilesFolder64", buf, &size);
+                r = MsiGetPropertyA(hpkg, "ProgramFilesFolder64", buf, &size);
                 ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
                 ok(!buf[0], "property set\n");
 
                 buf[0] = 0;
                 size = MAX_PATH;
-                r = MsiGetProperty(hpkg, "ProgramFilesFolder", buf, &size);
+                r = MsiGetPropertyA(hpkg, "ProgramFilesFolder", buf, &size);
                 ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
                 pSHGetFolderPathA(NULL, CSIDL_PROGRAM_FILESX86, NULL, 0, path);
                 if (size) buf[size - 1] = 0;
@@ -5877,13 +5879,13 @@ static void test_installprops(void)
 
                 buf[0] = 0;
                 size = MAX_PATH;
-                r = MsiGetProperty(hpkg, "CommonFilesFolder64", buf, &size);
+                r = MsiGetPropertyA(hpkg, "CommonFilesFolder64", buf, &size);
                 ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
                 ok(!buf[0], "property set\n");
 
                 buf[0] = 0;
                 size = MAX_PATH;
-                r = MsiGetProperty(hpkg, "CommonFilesFolder", buf, &size);
+                r = MsiGetPropertyA(hpkg, "CommonFilesFolder", buf, &size);
                 ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
                 pSHGetFolderPathA(NULL, CSIDL_PROGRAM_FILES_COMMONX86, NULL, 0, path);
                 if (size) buf[size - 1] = 0;
@@ -5891,7 +5893,7 @@ static void test_installprops(void)
 
                 buf[0] = 0;
                 size = MAX_PATH;
-                r = MsiGetProperty(hpkg, "VersionNT64", buf, &size);
+                r = MsiGetPropertyA(hpkg, "VersionNT64", buf, &size);
                 ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
                 ok(buf[0], "property not set\n");
             }
@@ -5901,7 +5903,7 @@ static void test_installprops(void)
     CloseHandle(hkey1);
     CloseHandle(hkey2);
     MsiCloseHandle(hpkg);
-    DeleteFile(msifile);
+    DeleteFileA(msifile);
     MsiSetInternalUI(uilevel, NULL);
 }
 
@@ -5930,31 +5932,31 @@ static void test_launchconditions(void)
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
-        DeleteFile(msifile);
+        DeleteFileA(msifile);
         return;
     }
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r );
 
     MsiCloseHandle( hdb );
 
-    r = MsiSetProperty( hpkg, "X", "1" );
+    r = MsiSetPropertyA( hpkg, "X", "1" );
     ok( r == ERROR_SUCCESS, "failed to set property\n" );
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     /* invalid conditions are ignored */
-    r = MsiDoAction( hpkg, "LaunchConditions" );
+    r = MsiDoActionA( hpkg, "LaunchConditions" );
     ok( r == ERROR_SUCCESS, "cost init failed\n" );
 
     /* verify LaunchConditions still does some verification */
-    r = MsiSetProperty( hpkg, "X", "2" );
+    r = MsiSetPropertyA( hpkg, "X", "2" );
     ok( r == ERROR_SUCCESS, "failed to set property\n" );
 
-    r = MsiDoAction( hpkg, "LaunchConditions" );
+    r = MsiDoActionA( hpkg, "LaunchConditions" );
     ok( r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %d\n", r );
 
     MsiCloseHandle( hpkg );
-    DeleteFile( msifile );
+    DeleteFileA( msifile );
 }
 
 static void test_ccpsearch(void)
@@ -5995,7 +5997,7 @@ static void test_ccpsearch(void)
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
-        DeleteFile(msifile);
+        DeleteFileA(msifile);
         return;
     }
     ok(r == ERROR_SUCCESS, "failed to create package %u\n", r);
@@ -6004,7 +6006,7 @@ static void test_ccpsearch(void)
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
-    r = MsiDoAction(hpkg, "CCPSearch");
+    r = MsiDoActionA(hpkg, "CCPSearch");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = MsiGetPropertyA(hpkg, "CCP_Success", prop, &size);
@@ -6159,7 +6161,7 @@ static void test_complocator(void)
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
-        DeleteFile(msifile);
+        DeleteFileA(msifile);
         return;
     }
     ok(r == ERROR_SUCCESS, "failed to create package %u\n", r);
@@ -6202,7 +6204,7 @@ static void test_complocator(void)
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
-    r = MsiDoAction(hpkg, "AppSearch");
+    r = MsiDoActionA(hpkg, "AppSearch");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     size = MAX_PATH;
@@ -6398,7 +6400,7 @@ static void test_MsiGetSourcePath(void)
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
-        DeleteFile(msifile);
+        DeleteFileA(msifile);
         return;
     }
     ok(r == ERROR_SUCCESS, "failed to create package %u\n", r);
@@ -6408,7 +6410,7 @@ static void test_MsiGetSourcePath(void)
     /* invalid database handle */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(-1, "TARGETDIR", path, &size);
+    r = MsiGetSourcePathA(-1, "TARGETDIR", path, &size);
     ok(r == ERROR_INVALID_HANDLE,
        "Expected ERROR_INVALID_HANDLE, got %d\n", r);
     ok(!lstrcmpA(path, "kiwi"),
@@ -6418,7 +6420,7 @@ static void test_MsiGetSourcePath(void)
     /* NULL szFolder */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, NULL, path, &size);
+    r = MsiGetSourcePathA(hpkg, NULL, path, &size);
     ok(r == ERROR_INVALID_PARAMETER,
        "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
     ok(!lstrcmpA(path, "kiwi"),
@@ -6428,7 +6430,7 @@ static void test_MsiGetSourcePath(void)
     /* empty szFolder */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "", path, &size);
+    r = MsiGetSourcePathA(hpkg, "", path, &size);
     ok(r == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %d\n", r);
     ok(!lstrcmpA(path, "kiwi"),
        "Expected path to be unchanged, got \"%s\"\n", path);
@@ -6437,7 +6439,7 @@ static void test_MsiGetSourcePath(void)
     /* try TARGETDIR */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "TARGETDIR", path, &size);
+    r = MsiGetSourcePathA(hpkg, "TARGETDIR", path, &size);
     ok(r == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %d\n", r);
     ok(!lstrcmpA(path, "kiwi"),
        "Expected path to be unchanged, got \"%s\"\n", path);
@@ -6445,14 +6447,14 @@ static void test_MsiGetSourcePath(void)
 
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SourceDir", path, &size);
+    r = MsiGetPropertyA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, ""), "Expected \"\", got \"%s\"\n", path);
     ok(size == 0, "Expected 0, got %d\n", size);
 
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetPropertyA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, ""), "Expected \"\", got \"%s\"\n", path);
     ok(size == 0, "Expected 0, got %d\n", size);
@@ -6460,7 +6462,7 @@ static void test_MsiGetSourcePath(void)
     /* try SourceDir */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SourceDir", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %d\n", r);
     ok(!lstrcmpA(path, "kiwi"),
        "Expected path to be unchanged, got \"%s\"\n", path);
@@ -6469,7 +6471,7 @@ static void test_MsiGetSourcePath(void)
     /* try SOURCEDIR */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %d\n", r);
     ok(!lstrcmpA(path, "kiwi"),
        "Expected path to be unchanged, got \"%s\"\n", path);
@@ -6478,14 +6480,14 @@ static void test_MsiGetSourcePath(void)
     /* source path does not exist, but the property exists */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SourceDir", path, &size);
+    r = MsiGetPropertyA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, ""), "Expected \"\", got \"%s\"\n", path);
     ok(size == 0, "Expected 0, got %d\n", size);
 
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetPropertyA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, ""), "Expected \"\", got \"%s\"\n", path);
     ok(size == 0, "Expected 0, got %d\n", size);
@@ -6493,7 +6495,7 @@ static void test_MsiGetSourcePath(void)
     /* try SubDir */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir", path, &size);
     ok(r == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %d\n", r);
     ok(!lstrcmpA(path, "kiwi"),
        "Expected path to be unchanged, got \"%s\"\n", path);
@@ -6502,7 +6504,7 @@ static void test_MsiGetSourcePath(void)
     /* try SubDir2 */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir2", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir2", path, &size);
     ok(r == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %d\n", r);
     ok(!lstrcmpA(path, "kiwi"),
        "Expected path to be unchanged, got \"%s\"\n", path);
@@ -6510,13 +6512,13 @@ static void test_MsiGetSourcePath(void)
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
-    r = MsiDoAction(hpkg, "CostInitialize");
+    r = MsiDoActionA(hpkg, "CostInitialize");
     ok(r == ERROR_SUCCESS, "cost init failed\n");
 
     /* try TARGETDIR after CostInitialize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "TARGETDIR", path, &size);
+    r = MsiGetSourcePathA(hpkg, "TARGETDIR", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -6524,7 +6526,7 @@ static void test_MsiGetSourcePath(void)
     /* try SourceDir after CostInitialize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SourceDir", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -6532,7 +6534,7 @@ static void test_MsiGetSourcePath(void)
     /* try SOURCEDIR after CostInitialize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %d\n", r);
     ok(!lstrcmpA(path, "kiwi"),
        "Expected path to be unchanged, got \"%s\"\n", path);
@@ -6541,14 +6543,14 @@ static void test_MsiGetSourcePath(void)
     /* source path does not exist, but the property exists */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SourceDir", path, &size);
+    r = MsiGetPropertyA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
 
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetPropertyA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -6556,7 +6558,7 @@ static void test_MsiGetSourcePath(void)
     /* try SubDir after CostInitialize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
     ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
@@ -6564,18 +6566,18 @@ static void test_MsiGetSourcePath(void)
     /* try SubDir2 after CostInitialize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir2", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir2", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, sub2), "Expected \"%s\", got \"%s\"\n", sub2, path);
     ok(size == lstrlenA(sub2), "Expected %d, got %d\n", lstrlenA(sub2), size);
 
-    r = MsiDoAction(hpkg, "ResolveSource");
+    r = MsiDoActionA(hpkg, "ResolveSource");
     ok(r == ERROR_SUCCESS, "file cost failed\n");
 
     /* try TARGETDIR after ResolveSource */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "TARGETDIR", path, &size);
+    r = MsiGetSourcePathA(hpkg, "TARGETDIR", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -6583,7 +6585,7 @@ static void test_MsiGetSourcePath(void)
     /* try SourceDir after ResolveSource */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SourceDir", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -6591,7 +6593,7 @@ static void test_MsiGetSourcePath(void)
     /* try SOURCEDIR after ResolveSource */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %d\n", r);
     ok(!lstrcmpA(path, "kiwi"),
        "Expected path to be unchanged, got \"%s\"\n", path);
@@ -6600,14 +6602,14 @@ static void test_MsiGetSourcePath(void)
     /* source path does not exist, but the property exists */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SourceDir", path, &size);
+    r = MsiGetPropertyA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
 
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetPropertyA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -6615,7 +6617,7 @@ static void test_MsiGetSourcePath(void)
     /* try SubDir after ResolveSource */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
     ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
@@ -6623,18 +6625,18 @@ static void test_MsiGetSourcePath(void)
     /* try SubDir2 after ResolveSource */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir2", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir2", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, sub2), "Expected \"%s\", got \"%s\"\n", sub2, path);
     ok(size == lstrlenA(sub2), "Expected %d, got %d\n", lstrlenA(sub2), size);
 
-    r = MsiDoAction(hpkg, "FileCost");
+    r = MsiDoActionA(hpkg, "FileCost");
     ok(r == ERROR_SUCCESS, "file cost failed\n");
 
     /* try TARGETDIR after FileCost */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "TARGETDIR", path, &size);
+    r = MsiGetSourcePathA(hpkg, "TARGETDIR", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -6642,7 +6644,7 @@ static void test_MsiGetSourcePath(void)
     /* try SourceDir after FileCost */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SourceDir", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -6650,7 +6652,7 @@ static void test_MsiGetSourcePath(void)
     /* try SOURCEDIR after FileCost */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %d\n", r);
     ok(!lstrcmpA(path, "kiwi"),
        "Expected path to be unchanged, got \"%s\"\n", path);
@@ -6659,14 +6661,14 @@ static void test_MsiGetSourcePath(void)
     /* source path does not exist, but the property exists */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SourceDir", path, &size);
+    r = MsiGetPropertyA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
 
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetPropertyA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -6674,7 +6676,7 @@ static void test_MsiGetSourcePath(void)
     /* try SubDir after FileCost */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
     ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
@@ -6682,18 +6684,18 @@ static void test_MsiGetSourcePath(void)
     /* try SubDir2 after FileCost */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir2", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir2", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, sub2), "Expected \"%s\", got \"%s\"\n", sub2, path);
     ok(size == lstrlenA(sub2), "Expected %d, got %d\n", lstrlenA(sub2), size);
 
-    r = MsiDoAction(hpkg, "CostFinalize");
+    r = MsiDoActionA(hpkg, "CostFinalize");
     ok(r == ERROR_SUCCESS, "file cost failed\n");
 
     /* try TARGETDIR after CostFinalize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "TARGETDIR", path, &size);
+    r = MsiGetSourcePathA(hpkg, "TARGETDIR", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -6701,7 +6703,7 @@ static void test_MsiGetSourcePath(void)
     /* try SourceDir after CostFinalize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SourceDir", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -6709,7 +6711,7 @@ static void test_MsiGetSourcePath(void)
     /* try SOURCEDIR after CostFinalize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %d\n", r);
     ok(!lstrcmpA(path, "kiwi"),
        "Expected path to be unchanged, got \"%s\"\n", path);
@@ -6718,14 +6720,14 @@ static void test_MsiGetSourcePath(void)
     /* source path does not exist, but the property exists */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SourceDir", path, &size);
+    r = MsiGetPropertyA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
 
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetPropertyA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -6733,7 +6735,7 @@ static void test_MsiGetSourcePath(void)
     /* try SubDir after CostFinalize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
     ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
@@ -6741,7 +6743,7 @@ static void test_MsiGetSourcePath(void)
     /* try SubDir2 after CostFinalize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir2", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir2", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, sub2), "Expected \"%s\", got \"%s\"\n", sub2, path);
     ok(size == lstrlenA(sub2), "Expected %d, got %d\n", lstrlenA(sub2), size);
@@ -6749,7 +6751,7 @@ static void test_MsiGetSourcePath(void)
     /* nonexistent directory */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "IDontExist", path, &size);
+    r = MsiGetSourcePathA(hpkg, "IDontExist", path, &size);
     ok(r == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %d\n", r);
     ok(!lstrcmpA(path, "kiwi"),
        "Expected path to be unchanged, got \"%s\"\n", path);
@@ -6757,13 +6759,13 @@ static void test_MsiGetSourcePath(void)
 
     /* NULL szPathBuf */
     size = MAX_PATH;
-    r = MsiGetSourcePath(hpkg, "SourceDir", NULL, &size);
+    r = MsiGetSourcePathA(hpkg, "SourceDir", NULL, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
 
     /* NULL pcchPathBuf */
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SourceDir", path, NULL);
+    r = MsiGetSourcePathA(hpkg, "SourceDir", path, NULL);
     ok(r == ERROR_INVALID_PARAMETER,
        "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
     ok(!lstrcmpA(path, "kiwi"),
@@ -6772,7 +6774,7 @@ static void test_MsiGetSourcePath(void)
     /* pcchPathBuf is 0 */
     size = 0;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SourceDir", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", r);
     ok(!lstrcmpA(path, "kiwi"),
        "Expected path to be unchanged, got \"%s\"\n", path);
@@ -6781,7 +6783,7 @@ static void test_MsiGetSourcePath(void)
     /* pcchPathBuf does not have room for NULL terminator */
     size = lstrlenA(cwd);
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SourceDir", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", r);
     ok(!strncmp(path, cwd, lstrlenA(cwd) - 1),
        "Expected path with no backslash, got \"%s\"\n", path);
@@ -6790,31 +6792,31 @@ static void test_MsiGetSourcePath(void)
     /* pcchPathBuf has room for NULL terminator */
     size = lstrlenA(cwd) + 1;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SourceDir", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
 
     /* remove property */
-    r = MsiSetProperty(hpkg, "SourceDir", NULL);
+    r = MsiSetPropertyA(hpkg, "SourceDir", NULL);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* try SourceDir again */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SourceDir", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
 
     /* set property to a valid directory */
-    r = MsiSetProperty(hpkg, "SOURCEDIR", cwd);
+    r = MsiSetPropertyA(hpkg, "SOURCEDIR", cwd);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* try SOURCEDIR again */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %d\n", r);
     ok(!lstrcmpA(path, "kiwi"),
        "Expected path to be unchanged, got \"%s\"\n", path);
@@ -6824,7 +6826,7 @@ static void test_MsiGetSourcePath(void)
 
     /* compressed source */
 
-    r = MsiOpenDatabase(msifile, MSIDBOPEN_DIRECT, &hdb);
+    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_DIRECT, &hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     set_suminfo_prop(hdb, PID_WORDCOUNT, msidbSumInfoSourceTypeCompressed);
@@ -6835,7 +6837,7 @@ static void test_MsiGetSourcePath(void)
     /* try TARGETDIR */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "TARGETDIR", path, &size);
+    r = MsiGetSourcePathA(hpkg, "TARGETDIR", path, &size);
     ok(r == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %d\n", r);
     ok(!lstrcmpA(path, "kiwi"),
        "Expected path to be unchanged, got \"%s\"\n", path);
@@ -6844,7 +6846,7 @@ static void test_MsiGetSourcePath(void)
     /* try SourceDir */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SourceDir", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %d\n", r);
     ok(!lstrcmpA(path, "kiwi"),
        "Expected path to be unchanged, got \"%s\"\n", path);
@@ -6853,7 +6855,7 @@ static void test_MsiGetSourcePath(void)
     /* try SOURCEDIR */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %d\n", r);
     ok(!lstrcmpA(path, "kiwi"),
        "Expected path to be unchanged, got \"%s\"\n", path);
@@ -6862,14 +6864,14 @@ static void test_MsiGetSourcePath(void)
     /* source path nor the property exist */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SourceDir", path, &size);
+    r = MsiGetPropertyA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, ""), "Expected \"\", got \"%s\"\n", path);
     ok(size == 0, "Expected 0, got %d\n", size);
 
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetPropertyA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, ""), "Expected \"\", got \"%s\"\n", path);
     ok(size == 0, "Expected 0, got %d\n", size);
@@ -6877,7 +6879,7 @@ static void test_MsiGetSourcePath(void)
     /* try SubDir */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir", path, &size);
     ok(r == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %d\n", r);
     ok(!lstrcmpA(path, "kiwi"),
        "Expected path to be unchanged, got \"%s\"\n", path);
@@ -6886,19 +6888,19 @@ static void test_MsiGetSourcePath(void)
     /* try SubDir2 */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir2", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir2", path, &size);
     ok(r == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %d\n", r);
     ok(!lstrcmpA(path, "kiwi"),
        "Expected path to be unchanged, got \"%s\"\n", path);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
 
-    r = MsiDoAction(hpkg, "CostInitialize");
+    r = MsiDoActionA(hpkg, "CostInitialize");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* try TARGETDIR after CostInitialize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "TARGETDIR", path, &size);
+    r = MsiGetSourcePathA(hpkg, "TARGETDIR", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -6906,7 +6908,7 @@ static void test_MsiGetSourcePath(void)
     /* try SourceDir after CostInitialize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SourceDir", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -6914,7 +6916,7 @@ static void test_MsiGetSourcePath(void)
     /* try SOURCEDIR after CostInitialize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SOURCEDIR", path, &size);
     todo_wine
     {
         ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -6925,14 +6927,14 @@ static void test_MsiGetSourcePath(void)
     /* source path does not exist, but the property exists */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SourceDir", path, &size);
+    r = MsiGetPropertyA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
 
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetPropertyA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -6940,7 +6942,7 @@ static void test_MsiGetSourcePath(void)
     /* try SubDir after CostInitialize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -6948,18 +6950,18 @@ static void test_MsiGetSourcePath(void)
     /* try SubDir2 after CostInitialize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir2", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir2", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
 
-    r = MsiDoAction(hpkg, "ResolveSource");
+    r = MsiDoActionA(hpkg, "ResolveSource");
     ok(r == ERROR_SUCCESS, "file cost failed\n");
 
     /* try TARGETDIR after ResolveSource */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "TARGETDIR", path, &size);
+    r = MsiGetSourcePathA(hpkg, "TARGETDIR", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -6967,7 +6969,7 @@ static void test_MsiGetSourcePath(void)
     /* try SourceDir after ResolveSource */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SourceDir", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -6975,7 +6977,7 @@ static void test_MsiGetSourcePath(void)
     /* try SOURCEDIR after ResolveSource */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SOURCEDIR", path, &size);
     todo_wine
     {
         ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -6986,14 +6988,14 @@ static void test_MsiGetSourcePath(void)
     /* source path and the property exist */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SourceDir", path, &size);
+    r = MsiGetPropertyA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
 
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetPropertyA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -7001,7 +7003,7 @@ static void test_MsiGetSourcePath(void)
     /* try SubDir after ResolveSource */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -7009,18 +7011,18 @@ static void test_MsiGetSourcePath(void)
     /* try SubDir2 after ResolveSource */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir2", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir2", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
 
-    r = MsiDoAction(hpkg, "FileCost");
+    r = MsiDoActionA(hpkg, "FileCost");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* try TARGETDIR after CostFinalize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "TARGETDIR", path, &size);
+    r = MsiGetSourcePathA(hpkg, "TARGETDIR", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -7028,7 +7030,7 @@ static void test_MsiGetSourcePath(void)
     /* try SourceDir after CostFinalize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SourceDir", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -7036,7 +7038,7 @@ static void test_MsiGetSourcePath(void)
     /* try SOURCEDIR after CostFinalize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SOURCEDIR", path, &size);
     todo_wine
     {
         ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -7047,14 +7049,14 @@ static void test_MsiGetSourcePath(void)
     /* source path and the property exist */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SourceDir", path, &size);
+    r = MsiGetPropertyA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
 
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetPropertyA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -7062,7 +7064,7 @@ static void test_MsiGetSourcePath(void)
     /* try SubDir after CostFinalize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -7070,18 +7072,18 @@ static void test_MsiGetSourcePath(void)
     /* try SubDir2 after CostFinalize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir2", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir2", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
 
-    r = MsiDoAction(hpkg, "CostFinalize");
+    r = MsiDoActionA(hpkg, "CostFinalize");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* try TARGETDIR after CostFinalize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "TARGETDIR", path, &size);
+    r = MsiGetSourcePathA(hpkg, "TARGETDIR", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -7089,7 +7091,7 @@ static void test_MsiGetSourcePath(void)
     /* try SourceDir after CostFinalize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SourceDir", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -7097,7 +7099,7 @@ static void test_MsiGetSourcePath(void)
     /* try SOURCEDIR after CostFinalize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SOURCEDIR", path, &size);
     todo_wine
     {
         ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -7108,14 +7110,14 @@ static void test_MsiGetSourcePath(void)
     /* source path and the property exist */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SourceDir", path, &size);
+    r = MsiGetPropertyA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
 
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetPropertyA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -7123,7 +7125,7 @@ static void test_MsiGetSourcePath(void)
     /* try SubDir after CostFinalize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -7131,13 +7133,13 @@ static void test_MsiGetSourcePath(void)
     /* try SubDir2 after CostFinalize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir2", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir2", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
 
     MsiCloseHandle(hpkg);
-    DeleteFile(msifile);
+    DeleteFileA(msifile);
 }
 
 static void test_shortlongsource(void)
@@ -7199,7 +7201,7 @@ static void test_shortlongsource(void)
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
-        DeleteFile(msifile);
+        DeleteFileA(msifile);
         return;
     }
     ok(r == ERROR_SUCCESS, "failed to create package %u\n", r);
@@ -7211,25 +7213,25 @@ static void test_shortlongsource(void)
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
-    r = MsiDoAction(hpkg, "CostInitialize");
+    r = MsiDoActionA(hpkg, "CostInitialize");
     ok(r == ERROR_SUCCESS, "file cost failed\n");
 
-    CreateDirectory("five", NULL);
-    CreateDirectory("eight", NULL);
+    CreateDirectoryA("five", NULL);
+    CreateDirectoryA("eight", NULL);
 
-    r = MsiDoAction(hpkg, "FileCost");
+    r = MsiDoActionA(hpkg, "FileCost");
     ok(r == ERROR_SUCCESS, "file cost failed\n");
 
-    CreateDirectory("nine", NULL);
-    CreateDirectory("twelve", NULL);
+    CreateDirectoryA("nine", NULL);
+    CreateDirectoryA("twelve", NULL);
 
-    r = MsiDoAction(hpkg, "CostFinalize");
+    r = MsiDoActionA(hpkg, "CostFinalize");
     ok(r == ERROR_SUCCESS, "file cost failed\n");
 
     /* neither short nor long source directories exist */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
     ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
@@ -7239,7 +7241,7 @@ static void test_shortlongsource(void)
     /* short source directory exists */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
     ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
@@ -7249,7 +7251,7 @@ static void test_shortlongsource(void)
     /* both short and long source directories exist */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
     ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
@@ -7261,7 +7263,7 @@ static void test_shortlongsource(void)
     /* short dir exists before CostInitialize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir2", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir2", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
     ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
@@ -7273,7 +7275,7 @@ static void test_shortlongsource(void)
     /* long dir exists before CostInitialize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir3", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir3", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
     ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
@@ -7285,7 +7287,7 @@ static void test_shortlongsource(void)
     /* short dir exists before FileCost */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir4", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir4", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
     ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
@@ -7297,7 +7299,7 @@ static void test_shortlongsource(void)
     /* long dir exists before FileCost */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir5", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir5", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
     ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
@@ -7309,7 +7311,7 @@ static void test_shortlongsource(void)
     /* short dir exists before CostFinalize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir6", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir6", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
     ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
@@ -7321,7 +7323,7 @@ static void test_shortlongsource(void)
     /* long dir exists before CostFinalize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir7", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir7", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
     ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
@@ -7338,7 +7340,7 @@ static void test_shortlongsource(void)
 
     /* short file names */
 
-    r = MsiOpenDatabase(msifile, MSIDBOPEN_DIRECT, &hdb);
+    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_DIRECT, &hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     set_suminfo_prop(hdb, PID_WORDCOUNT, msidbSumInfoSourceTypeSFN);
@@ -7351,19 +7353,19 @@ static void test_shortlongsource(void)
     CreateDirectoryA("one", NULL);
     CreateDirectoryA("four", NULL);
 
-    r = MsiDoAction(hpkg, "CostInitialize");
+    r = MsiDoActionA(hpkg, "CostInitialize");
     ok(r == ERROR_SUCCESS, "file cost failed\n");
 
-    CreateDirectory("five", NULL);
-    CreateDirectory("eight", NULL);
+    CreateDirectoryA("five", NULL);
+    CreateDirectoryA("eight", NULL);
 
-    r = MsiDoAction(hpkg, "FileCost");
+    r = MsiDoActionA(hpkg, "FileCost");
     ok(r == ERROR_SUCCESS, "file cost failed\n");
 
-    CreateDirectory("nine", NULL);
-    CreateDirectory("twelve", NULL);
+    CreateDirectoryA("nine", NULL);
+    CreateDirectoryA("twelve", NULL);
 
-    r = MsiDoAction(hpkg, "CostFinalize");
+    r = MsiDoActionA(hpkg, "CostFinalize");
     ok(r == ERROR_SUCCESS, "file cost failed\n");
 
     lstrcpyA(subsrc, cwd);
@@ -7373,7 +7375,7 @@ static void test_shortlongsource(void)
     /* neither short nor long source directories exist */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
     ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
@@ -7383,7 +7385,7 @@ static void test_shortlongsource(void)
     /* short source directory exists */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
     ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
@@ -7393,7 +7395,7 @@ static void test_shortlongsource(void)
     /* both short and long source directories exist */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
     ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
@@ -7405,7 +7407,7 @@ static void test_shortlongsource(void)
     /* short dir exists before CostInitialize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir2", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir2", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
     ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
@@ -7417,7 +7419,7 @@ static void test_shortlongsource(void)
     /* long dir exists before CostInitialize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir3", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir3", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
     ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
@@ -7429,7 +7431,7 @@ static void test_shortlongsource(void)
     /* short dir exists before FileCost */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir4", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir4", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
     ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
@@ -7441,7 +7443,7 @@ static void test_shortlongsource(void)
     /* long dir exists before FileCost */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir5", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir5", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
     ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
@@ -7453,7 +7455,7 @@ static void test_shortlongsource(void)
     /* short dir exists before CostFinalize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir6", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir6", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
     ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
@@ -7465,7 +7467,7 @@ static void test_shortlongsource(void)
     /* long dir exists before CostFinalize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SubDir7", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SubDir7", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
     ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
@@ -7506,7 +7508,7 @@ static void test_sourcedir(void)
     ok(r == S_OK, "failed\n");
 
     sprintf(package, "#%u", hdb);
-    r = MsiOpenPackage(package, &hpkg);
+    r = MsiOpenPackageA(package, &hpkg);
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
@@ -7519,7 +7521,7 @@ static void test_sourcedir(void)
     /* SourceDir prop */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SourceDir", path, &size);
+    r = MsiGetPropertyA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, ""), "Expected \"\", got \"%s\"\n", path);
     ok(size == 0, "Expected 0, got %d\n", size);
@@ -7527,20 +7529,20 @@ static void test_sourcedir(void)
     /* SOURCEDIR prop */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetPropertyA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, ""), "Expected \"\", got \"%s\"\n", path);
     ok(size == 0, "Expected 0, got %d\n", size);
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
-    r = MsiDoAction(hpkg, "CostInitialize");
+    r = MsiDoActionA(hpkg, "CostInitialize");
     ok(r == ERROR_SUCCESS, "file cost failed\n");
 
     /* SourceDir after CostInitialize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SourceDir", path, &size);
+    r = MsiGetPropertyA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, ""), "Expected \"\", got \"%s\"\n", path);
     ok(size == 0, "Expected 0, got %d\n", size);
@@ -7548,18 +7550,18 @@ static void test_sourcedir(void)
     /* SOURCEDIR after CostInitialize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetPropertyA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, ""), "Expected \"\", got \"%s\"\n", path);
     ok(size == 0, "Expected 0, got %d\n", size);
 
-    r = MsiDoAction(hpkg, "FileCost");
+    r = MsiDoActionA(hpkg, "FileCost");
     ok(r == ERROR_SUCCESS, "file cost failed\n");
 
     /* SourceDir after FileCost */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SourceDir", path, &size);
+    r = MsiGetPropertyA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, ""), "Expected \"\", got \"%s\"\n", path);
     ok(size == 0, "Expected 0, got %d\n", size);
@@ -7567,18 +7569,18 @@ static void test_sourcedir(void)
     /* SOURCEDIR after FileCost */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetPropertyA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, ""), "Expected \"\", got \"%s\"\n", path);
     ok(size == 0, "Expected 0, got %d\n", size);
 
-    r = MsiDoAction(hpkg, "CostFinalize");
+    r = MsiDoActionA(hpkg, "CostFinalize");
     ok(r == ERROR_SUCCESS, "file cost failed\n");
 
     /* SourceDir after CostFinalize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SourceDir", path, &size);
+    r = MsiGetPropertyA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, ""), "Expected \"\", got \"%s\"\n", path);
     ok(size == 0, "Expected 0, got %d\n", size);
@@ -7586,14 +7588,14 @@ static void test_sourcedir(void)
     /* SOURCEDIR after CostFinalize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetPropertyA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, ""), "Expected \"\", got \"%s\"\n", path);
     ok(size == 0, "Expected 0, got %d\n", size);
 
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %d\n", r);
     ok(!lstrcmpA(path, "kiwi"), "Expected \"kiwi\", got \"%s\"\n", path);
     ok(size == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, size);
@@ -7601,20 +7603,20 @@ static void test_sourcedir(void)
     /* SOURCEDIR after calling MsiGetSourcePath */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetPropertyA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     todo_wine {
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
     }
 
-    r = MsiDoAction(hpkg, "ResolveSource");
+    r = MsiDoActionA(hpkg, "ResolveSource");
     ok(r == ERROR_SUCCESS, "file cost failed\n");
 
     /* SourceDir after ResolveSource */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SourceDir", path, &size);
+    r = MsiGetPropertyA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -7622,7 +7624,7 @@ static void test_sourcedir(void)
     /* SOURCEDIR after ResolveSource */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetPropertyA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -7630,7 +7632,7 @@ static void test_sourcedir(void)
     /* random casing */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SoUrCeDiR", path, &size);
+    r = MsiGetPropertyA(hpkg, "SoUrCeDiR", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, ""), "Expected \"\", got \"%s\"\n", path);
     ok(size == 0, "Expected 0, got %d\n", size);
@@ -7639,7 +7641,7 @@ static void test_sourcedir(void)
 
     /* reset the package state */
     sprintf(package, "#%i", hdb);
-    r = MsiOpenPackage(package, &hpkg);
+    r = MsiOpenPackageA(package, &hpkg);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* test how MsiGetSourcePath affects the properties */
@@ -7647,7 +7649,7 @@ static void test_sourcedir(void)
     /* SourceDir prop */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SourceDir", path, &size);
+    r = MsiGetPropertyA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     todo_wine
     {
@@ -7657,7 +7659,7 @@ static void test_sourcedir(void)
 
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SourceDir", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %d\n", r);
     ok(!lstrcmpA(path, "kiwi"),
        "Expected path to be unchanged, got \"%s\"\n", path);
@@ -7666,7 +7668,7 @@ static void test_sourcedir(void)
     /* SourceDir after MsiGetSourcePath */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SourceDir", path, &size);
+    r = MsiGetPropertyA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     todo_wine
     {
@@ -7677,7 +7679,7 @@ static void test_sourcedir(void)
     /* SOURCEDIR prop */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetPropertyA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     todo_wine
     {
@@ -7687,7 +7689,7 @@ static void test_sourcedir(void)
 
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %d\n", r);
     ok(!lstrcmpA(path, "kiwi"),
        "Expected path to be unchanged, got \"%s\"\n", path);
@@ -7696,7 +7698,7 @@ static void test_sourcedir(void)
     /* SOURCEDIR prop after MsiGetSourcePath */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetPropertyA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     todo_wine
     {
@@ -7704,13 +7706,13 @@ static void test_sourcedir(void)
         ok(size == 0, "Expected 0, got %d\n", size);
     }
 
-    r = MsiDoAction(hpkg, "CostInitialize");
+    r = MsiDoActionA(hpkg, "CostInitialize");
     ok(r == ERROR_SUCCESS, "file cost failed\n");
 
     /* SourceDir after CostInitialize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SourceDir", path, &size);
+    r = MsiGetPropertyA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     todo_wine
     {
@@ -7720,7 +7722,7 @@ static void test_sourcedir(void)
 
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SourceDir", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -7728,7 +7730,7 @@ static void test_sourcedir(void)
     /* SourceDir after MsiGetSourcePath */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SourceDir", path, &size);
+    r = MsiGetPropertyA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -7736,7 +7738,7 @@ static void test_sourcedir(void)
     /* SOURCEDIR after CostInitialize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetPropertyA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -7744,19 +7746,19 @@ static void test_sourcedir(void)
     /* SOURCEDIR source path still does not exist */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %d\n", r);
     ok(!lstrcmpA(path, "kiwi"),
        "Expected path to be unchanged, got \"%s\"\n", path);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
 
-    r = MsiDoAction(hpkg, "FileCost");
+    r = MsiDoActionA(hpkg, "FileCost");
     ok(r == ERROR_SUCCESS, "file cost failed\n");
 
     /* SourceDir after FileCost */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SourceDir", path, &size);
+    r = MsiGetPropertyA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -7764,7 +7766,7 @@ static void test_sourcedir(void)
     /* SOURCEDIR after FileCost */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetPropertyA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -7772,19 +7774,19 @@ static void test_sourcedir(void)
     /* SOURCEDIR source path still does not exist */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %d\n", r);
     ok(!lstrcmpA(path, "kiwi"),
        "Expected path to be unchanged, got \"%s\"\n", path);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
 
-    r = MsiDoAction(hpkg, "CostFinalize");
+    r = MsiDoActionA(hpkg, "CostFinalize");
     ok(r == ERROR_SUCCESS, "file cost failed\n");
 
     /* SourceDir after CostFinalize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SourceDir", path, &size);
+    r = MsiGetPropertyA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -7792,7 +7794,7 @@ static void test_sourcedir(void)
     /* SOURCEDIR after CostFinalize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetPropertyA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -7800,19 +7802,19 @@ static void test_sourcedir(void)
     /* SOURCEDIR source path still does not exist */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %d\n", r);
     ok(!lstrcmpA(path, "kiwi"),
        "Expected path to be unchanged, got \"%s\"\n", path);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
 
-    r = MsiDoAction(hpkg, "ResolveSource");
+    r = MsiDoActionA(hpkg, "ResolveSource");
     ok(r == ERROR_SUCCESS, "file cost failed\n");
 
     /* SourceDir after ResolveSource */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SourceDir", path, &size);
+    r = MsiGetPropertyA(hpkg, "SourceDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -7820,7 +7822,7 @@ static void test_sourcedir(void)
     /* SOURCEDIR after ResolveSource */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetProperty(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetPropertyA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
@@ -7828,7 +7830,7 @@ static void test_sourcedir(void)
     /* SOURCEDIR source path still does not exist */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
-    r = MsiGetSourcePath(hpkg, "SOURCEDIR", path, &size);
+    r = MsiGetSourcePathA(hpkg, "SOURCEDIR", path, &size);
     ok(r == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %d\n", r);
     ok(!lstrcmpA(path, "kiwi"),
        "Expected path to be unchanged, got \"%s\"\n", path);
@@ -8013,7 +8015,7 @@ static void test_emptypackage(void)
         ok(hdb != 0, "Expected a valid database handle\n");
     }
 
-    r = MsiDatabaseOpenView(hdb, "SELECT * FROM `_Tables`", &hview);
+    r = MsiDatabaseOpenViewA(hdb, "SELECT * FROM `_Tables`", &hview);
     todo_wine
     {
         ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -8032,7 +8034,7 @@ static void test_emptypackage(void)
 
     buffer[0] = 0;
     size = MAX_PATH;
-    r = MsiRecordGetString(hrec, 1, buffer, &size);
+    r = MsiRecordGetStringA(hrec, 1, buffer, &size);
     todo_wine
     {
         ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -8049,7 +8051,7 @@ static void test_emptypackage(void)
     }
 
     size = MAX_PATH;
-    r = MsiRecordGetString(hrec, 1, buffer, &size);
+    r = MsiRecordGetStringA(hrec, 1, buffer, &size);
     todo_wine
     {
         ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -8068,7 +8070,7 @@ static void test_emptypackage(void)
            "Expected MSICONDITION_FALSE, got %d\n", condition);
     }
 
-    r = MsiDatabaseOpenView(hdb, "SELECT * FROM `_Property`", &hview);
+    r = MsiDatabaseOpenViewA(hdb, "SELECT * FROM `_Property`", &hview);
     todo_wine
     {
         ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -8097,7 +8099,7 @@ static void test_emptypackage(void)
            "Expected MSICONDITION_FALSE, got %d\n", condition);
     }
 
-    r = MsiDatabaseOpenView(hdb, "SELECT * FROM `#_FolderCache`", &hview);
+    r = MsiDatabaseOpenViewA(hdb, "SELECT * FROM `#_FolderCache`", &hview);
     todo_wine
     {
         ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -8119,14 +8121,14 @@ static void test_emptypackage(void)
     MsiViewClose(hview);
     MsiCloseHandle(hview);
 
-    r = MsiDatabaseOpenView(hdb, "SELECT * FROM `_Streams`", &hview);
+    r = MsiDatabaseOpenViewA(hdb, "SELECT * FROM `_Streams`", &hview);
     todo_wine
     {
         ok(r == ERROR_BAD_QUERY_SYNTAX,
            "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
     }
 
-    r = MsiDatabaseOpenView(hdb, "SELECT * FROM `_Storages`", &hview);
+    r = MsiDatabaseOpenViewA(hdb, "SELECT * FROM `_Storages`", &hview);
     todo_wine
     {
         ok(r == ERROR_BAD_QUERY_SYNTAX,
@@ -8175,7 +8177,7 @@ static void test_MsiGetProductProperty(void)
     if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
-    r = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb);
+    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = MsiDatabaseCommit(hdb);
@@ -8217,7 +8219,7 @@ static void test_MsiGetProductProperty(void)
     if (res == ERROR_ACCESS_DENIED)
     {
         skip("Not enough rights to perform tests\n");
-        DeleteFile(msifile);
+        DeleteFileA(msifile);
         return;
     }
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -8392,7 +8394,7 @@ static void test_MsiSetProperty(void)
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
-        DeleteFile(msifile);
+        DeleteFileA(msifile);
         return;
     }
     ok(r == ERROR_SUCCESS, "Expected a valid package %u\n", r);
@@ -8497,7 +8499,7 @@ static void test_MsiSetProperty(void)
 
 static void test_MsiApplyMultiplePatches(void)
 {
-    UINT r, type = GetDriveType(NULL);
+    UINT r, type = GetDriveTypeW(NULL);
 
     if (!pMsiApplyMultiplePatchesA) {
         win_skip("MsiApplyMultiplePatchesA not found\n");
@@ -8548,10 +8550,10 @@ static void test_MsiApplyPatch(void)
 {
     UINT r;
 
-    r = MsiApplyPatch(NULL, NULL, INSTALLTYPE_DEFAULT, NULL);
+    r = MsiApplyPatchA(NULL, NULL, INSTALLTYPE_DEFAULT, NULL);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %u\n", r);
 
-    r = MsiApplyPatch("", NULL, INSTALLTYPE_DEFAULT, NULL);
+    r = MsiApplyPatchA("", NULL, INSTALLTYPE_DEFAULT, NULL);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %u\n", r);
 }
 
@@ -8682,17 +8684,17 @@ static void test_MsiEnumComponentCosts(void)
 
     MsiSetInternalUI( INSTALLUILEVEL_NONE, NULL );
 
-    r = MsiDoAction( hpkg, "CostInitialize" );
+    r = MsiDoActionA( hpkg, "CostInitialize" );
     ok( r == ERROR_SUCCESS, "CostInitialize failed %u\n", r );
 
-    r = MsiDoAction( hpkg, "FileCost" );
+    r = MsiDoActionA( hpkg, "FileCost" );
     ok( r == ERROR_SUCCESS, "FileCost failed %u\n", r );
 
     len = sizeof(drive);
     r = MsiEnumComponentCostsA( hpkg, "one", 0, INSTALLSTATE_LOCAL, drive, &len, &cost, &temp );
     ok( r == ERROR_FUNCTION_NOT_CALLED, "Expected ERROR_FUNCTION_NOT_CALLED, got %u\n", r );
 
-    r = MsiDoAction( hpkg, "CostFinalize" );
+    r = MsiDoActionA( hpkg, "CostFinalize" );
     ok( r == ERROR_SUCCESS, "CostFinalize failed %u\n", r );
 
     /* contrary to what msdn says InstallValidate must be called too */
@@ -8700,7 +8702,7 @@ static void test_MsiEnumComponentCosts(void)
     r = MsiEnumComponentCostsA( hpkg, "one", 0, INSTALLSTATE_LOCAL, drive, &len, &cost, &temp );
     todo_wine ok( r == ERROR_FUNCTION_NOT_CALLED, "Expected ERROR_FUNCTION_NOT_CALLED, got %u\n", r );
 
-    r = MsiDoAction( hpkg, "InstallValidate" );
+    r = MsiDoActionA( hpkg, "InstallValidate" );
     ok( r == ERROR_SUCCESS, "InstallValidate failed %u\n", r );
 
     len = 0;
@@ -8794,7 +8796,7 @@ static void test_MsiDatabaseCommit(void)
     ok( r == ERROR_SUCCESS, "can't create Property table %u\n", r );
 
     sprintf( package, "#%u", hdb );
-    r = MsiOpenPackage( package, &hpkg );
+    r = MsiOpenPackageA( package, &hpkg );
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
