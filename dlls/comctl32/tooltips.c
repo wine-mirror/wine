@@ -626,7 +626,7 @@ TOOLTIPS_Show (TOOLTIPS_INFO *infoPtr, BOOL track_activate)
     TOOLTIPS_CalcTipSize (infoPtr, &size);
     TRACE("size %d x %d\n", size.cx, size.cy);
 
-    if (track_activate)
+    if (track_activate && (toolPtr->uFlags & TTF_TRACK))
     {
         rect.left = infoPtr->xTrackPos;
         rect.top  = infoPtr->yTrackPos;
