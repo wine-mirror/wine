@@ -1069,7 +1069,7 @@ if (0)
     {
         memset(buf, 0xbf, sizeof(buf));
         strret.uType = STRRET_CSTR;
-        StrCpyN(U(strret).cStr, str1, MAX_PATH);
+        StrCpyNA(U(strret).cStr, str1, MAX_PATH);
         expect_eq2(pStrRetToBufA(&strret, NULL, buf, 10), S_OK, HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER) /* Vista */, HRESULT, "%x");
         expect_eq(buf[9], 0, CHAR, "%x");
         expect_eq(buf[10], (CHAR)0xbf, CHAR, "%x");
@@ -1484,12 +1484,12 @@ static void test_StrStrNIW(void)
 START_TEST(string)
 {
   HMODULE hShlwapi;
-  TCHAR thousandDelim[8];
-  TCHAR decimalDelim[8];
+  CHAR thousandDelim[8];
+  CHAR decimalDelim[8];
   CoInitialize(0);
 
-  GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_STHOUSAND, thousandDelim, 8);
-  GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, decimalDelim, 8);
+  GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_STHOUSAND, thousandDelim, 8);
+  GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, decimalDelim, 8);
 
   hShlwapi = GetModuleHandleA("shlwapi");
   pChrCmpIA = (void *)GetProcAddress(hShlwapi, "ChrCmpIA");

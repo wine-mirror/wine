@@ -408,15 +408,15 @@ static void test_SHDeleteKey(void)
 
     if (!RegOpenKeyA(HKEY_CURRENT_USER, REG_TEST_KEY, &hKeyTest))
     {
-        if (!RegCreateKey(hKeyTest, "ODBC", &hKeyS))
+        if (!RegCreateKeyA(hKeyTest, "ODBC", &hKeyS))
         {
             HKEY hKeyO;
 
-            if (!RegCreateKey(hKeyS, "ODBC.INI", &hKeyO))
+            if (!RegCreateKeyA(hKeyS, "ODBC.INI", &hKeyO))
             {
                 RegCloseKey (hKeyO);
 
-                if (!RegCreateKey(hKeyS, "ODBCINST.INI", &hKeyO))
+                if (!RegCreateKeyA(hKeyS, "ODBCINST.INI", &hKeyO))
                 {
                     RegCloseKey (hKeyO);
                     sysfail = 0;

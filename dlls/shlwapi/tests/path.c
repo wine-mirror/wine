@@ -283,11 +283,11 @@ static void test_PathCreateFromUrl(void)
             ok(ret == TEST_PATHFROMURL[i].ret, "ret %08x from url %s\n", ret, TEST_PATHFROMURL[i].url);
         if(SUCCEEDED(ret) && TEST_PATHFROMURL[i].path) {
             if(!(TEST_PATHFROMURL[i].todo & 0x2)) {
-                ok(!lstrcmpi(ret_path, TEST_PATHFROMURL[i].path), "got %s expected %s from url %s\n", ret_path, TEST_PATHFROMURL[i].path,  TEST_PATHFROMURL[i].url);
+                ok(!lstrcmpiA(ret_path, TEST_PATHFROMURL[i].path), "got %s expected %s from url %s\n", ret_path, TEST_PATHFROMURL[i].path,  TEST_PATHFROMURL[i].url);
                 ok(len == strlen(ret_path), "ret len %d from url %s\n", len, TEST_PATHFROMURL[i].url);
             } else todo_wine
                 /* Wrong string, don't bother checking the length */
-                ok(!lstrcmpi(ret_path, TEST_PATHFROMURL[i].path), "got %s expected %s from url %s\n", ret_path, TEST_PATHFROMURL[i].path,  TEST_PATHFROMURL[i].url);
+                ok(!lstrcmpiA(ret_path, TEST_PATHFROMURL[i].path), "got %s expected %s from url %s\n", ret_path, TEST_PATHFROMURL[i].path,  TEST_PATHFROMURL[i].url);
         }
 
         if (pPathCreateFromUrlW) {
@@ -582,7 +582,7 @@ static void test_PathCombineA(void)
     lstrcpyA(dest, "control");
     str = PathCombineA(dest, "C:\\", NULL);
     ok(str == dest, "Expected str == dest, got %p\n", str);
-    ok(!lstrcmp(str, "C:\\"), "Expected C:\\, got %s\n", str);
+    ok(!lstrcmpA(str, "C:\\"), "Expected C:\\, got %s\n", str);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* try empty file part */
@@ -590,7 +590,7 @@ static void test_PathCombineA(void)
     lstrcpyA(dest, "control");
     str = PathCombineA(dest, "C:\\", "");
     ok(str == dest, "Expected str == dest, got %p\n", str);
-    ok(!lstrcmp(str, "C:\\"), "Expected C:\\, got %s\n", str);
+    ok(!lstrcmpA(str, "C:\\"), "Expected C:\\, got %s\n", str);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* try empty directory and file part */
@@ -598,8 +598,8 @@ static void test_PathCombineA(void)
     lstrcpyA(dest, "control");
     str = PathCombineA(dest, "", "");
     ok(str == dest, "Expected str == dest, got %p\n", str);
-    ok(!lstrcmp(str, "\\") ||
-       broken(!lstrcmp(str, "control")), /* Win95 and some W2K */
+    ok(!lstrcmpA(str, "\\") ||
+       broken(!lstrcmpA(str, "control")), /* Win95 and some W2K */
        "Expected \\, got %s\n", str);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
@@ -608,7 +608,7 @@ static void test_PathCombineA(void)
     lstrcpyA(dest, "control");
     str = PathCombineA(dest, NULL, "one\\two\\three");
     ok(str == dest, "Expected str == dest, got %p\n", str);
-    ok(!lstrcmp(str, "one\\two\\three"), "Expected one\\two\\three, got %s\n", str);
+    ok(!lstrcmpA(str, "one\\two\\three"), "Expected one\\two\\three, got %s\n", str);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* try NULL directory and empty file part */
@@ -616,8 +616,8 @@ static void test_PathCombineA(void)
     lstrcpyA(dest, "control");
     str = PathCombineA(dest, NULL, "");
     ok(str == dest, "Expected str == dest, got %p\n", str);
-    ok(!lstrcmp(str, "\\") ||
-       broken(!lstrcmp(str, "one\\two\\three")), /* Win95 and some W2K */
+    ok(!lstrcmpA(str, "\\") ||
+       broken(!lstrcmpA(str, "one\\two\\three")), /* Win95 and some W2K */
        "Expected \\, got %s\n", str);
     ok(GetLastError() == 0xdeadbeef ||
        broken(GetLastError() == ERROR_INVALID_PARAMETER), /* Win95 */
@@ -631,7 +631,7 @@ static void test_PathCombineA(void)
        broken(str != NULL), /* Win95 and some W2K */
        "Expected str == NULL, got %p\n", str);
     ok(lstrlenA(dest) == 0 ||
-       broken(!lstrcmp(dest, "control")), /* Win95 and some W2K */
+       broken(!lstrcmpA(dest, "control")), /* Win95 and some W2K */
        "Expected 0 length, got %i\n", lstrlenA(dest));
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
@@ -640,7 +640,7 @@ static void test_PathCombineA(void)
     lstrcpyA(dest, "control");
     str = PathCombineA(dest, "C:", "one\\two\\three");
     ok(str == dest, "Expected str == dest, got %p\n", str);
-    ok(!lstrcmp(str, "C:\\one\\two\\three"), "Expected C:\\one\\two\\three, got %s\n", str);
+    ok(!lstrcmpA(str, "C:\\one\\two\\three"), "Expected C:\\one\\two\\three, got %s\n", str);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* try directory with backslash */
@@ -648,7 +648,7 @@ static void test_PathCombineA(void)
     lstrcpyA(dest, "control");
     str = PathCombineA(dest, "C:\\", "one\\two\\three");
     ok(str == dest, "Expected str == dest, got %p\n", str);
-    ok(!lstrcmp(str, "C:\\one\\two\\three"), "Expected C:\\one\\two\\three, got %s\n", str);
+    ok(!lstrcmpA(str, "C:\\one\\two\\three"), "Expected C:\\one\\two\\three, got %s\n", str);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* try directory with backslash and file with prepended backslash */
@@ -656,7 +656,7 @@ static void test_PathCombineA(void)
     lstrcpyA(dest, "control");
     str = PathCombineA(dest, "C:\\", "\\one\\two\\three");
     ok(str == dest, "Expected str == dest, got %p\n", str);
-    ok(!lstrcmp(str, "C:\\one\\two\\three"), "Expected C:\\one\\two\\three, got %s\n", str);
+    ok(!lstrcmpA(str, "C:\\one\\two\\three"), "Expected C:\\one\\two\\three, got %s\n", str);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* try previous test, with backslash appended as well */
@@ -664,7 +664,7 @@ static void test_PathCombineA(void)
     lstrcpyA(dest, "control");
     str = PathCombineA(dest, "C:\\", "\\one\\two\\three\\");
     ok(str == dest, "Expected str == dest, got %p\n", str);
-    ok(!lstrcmp(str, "C:\\one\\two\\three\\"), "Expected C:\\one\\two\\three\\, got %s\n", str);
+    ok(!lstrcmpA(str, "C:\\one\\two\\three\\"), "Expected C:\\one\\two\\three\\, got %s\n", str);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* try a relative directory */
@@ -676,7 +676,7 @@ static void test_PathCombineA(void)
     if (str)
     {
         ok(str == dest, "Expected str == dest, got %p\n", str);
-        ok(!lstrcmp(str, "one\\two\\three\\"), "Expected one\\two\\three\\, got %s\n", str);
+        ok(!lstrcmpA(str, "one\\two\\three\\"), "Expected one\\two\\three\\, got %s\n", str);
     }
 
     /* try forward slashes */
@@ -684,7 +684,7 @@ static void test_PathCombineA(void)
     lstrcpyA(dest, "control");
     str = PathCombineA(dest, "C:\\", "one/two/three\\");
     ok(str == dest, "Expected str == dest, got %p\n", str);
-    ok(!lstrcmp(str, "C:\\one/two/three\\"), "Expected one/two/three\\, got %s\n", str);
+    ok(!lstrcmpA(str, "C:\\one/two/three\\"), "Expected one/two/three\\, got %s\n", str);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* try a really weird directory */
@@ -692,7 +692,7 @@ static void test_PathCombineA(void)
     lstrcpyA(dest, "control");
     str = PathCombineA(dest, "C:\\/\\/", "\\one\\two\\three\\");
     ok(str == dest, "Expected str == dest, got %p\n", str);
-    ok(!lstrcmp(str, "C:\\one\\two\\three\\"), "Expected C:\\one\\two\\three\\, got %s\n", str);
+    ok(!lstrcmpA(str, "C:\\one\\two\\three\\"), "Expected C:\\one\\two\\three\\, got %s\n", str);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* try periods */
@@ -700,7 +700,7 @@ static void test_PathCombineA(void)
     lstrcpyA(dest, "control");
     str = PathCombineA(dest, "C:\\", "one\\..\\two\\.\\three");
     ok(str == dest, "Expected str == dest, got %p\n", str);
-    ok(!lstrcmp(str, "C:\\two\\three"), "Expected C:\\two\\three, got %s\n", str);
+    ok(!lstrcmpA(str, "C:\\two\\three"), "Expected C:\\two\\three, got %s\n", str);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* try .. as file */
@@ -709,7 +709,7 @@ static void test_PathCombineA(void)
     lstrcpyA(dest, "control");
     str = PathCombineA(dest, "C:\\", "..");
     ok(str == dest, "Expected str == dest, got %p\n", str);
-    ok(!lstrcmp(str, "C:\\"), "Expected C:\\, got %s\n", str);
+    ok(!lstrcmpA(str, "C:\\"), "Expected C:\\, got %s\n", str);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     memset(too_long, 'a', LONG_LEN);
@@ -721,7 +721,7 @@ static void test_PathCombineA(void)
     str = PathCombineA(dest, "C:\\", too_long);
     ok(str == NULL, "Expected str == NULL, got %p\n", str);
     ok(lstrlenA(dest) == 0 ||
-       broken(!lstrcmp(dest, "control")), /* Win95 and some W2K */
+       broken(!lstrcmpA(dest, "control")), /* Win95 and some W2K */
        "Expected 0 length, got %i\n", lstrlenA(dest));
     todo_wine ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
@@ -731,7 +731,7 @@ static void test_PathCombineA(void)
     str = PathCombineA(dest, too_long, "one\\two\\three");
     ok(str == NULL, "Expected str == NULL, got %p\n", str);
     ok(lstrlenA(dest) == 0 ||
-       broken(!lstrcmp(dest, "control")), /* Win95 and some W2K */
+       broken(!lstrcmpA(dest, "control")), /* Win95 and some W2K */
        "Expected 0 length, got %i\n", lstrlenA(dest));
     todo_wine ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
@@ -746,7 +746,7 @@ static void test_PathCombineA(void)
     str = PathCombineA(dest, one, two);
     ok(str == NULL, "Expected str == NULL, got %p\n", str);
     ok(lstrlenA(dest) == 0 ||
-       broken(!lstrcmp(dest, "control")), /* Win95 and some W2K */
+       broken(!lstrcmpA(dest, "control")), /* Win95 and some W2K */
        "Expected 0 length, got %i\n", lstrlenA(dest));
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 }
@@ -776,7 +776,7 @@ static void test_PathAddBackslash(void)
     SetLastError(0xdeadbeef);
     str = PathAddBackslashA(path);
     ok(str == (path + lstrlenA(path)), "Expected str to point to end of path, got %p\n", str);
-    ok(!lstrcmp(path, "one\\two\\"), "Expected one\\two\\, got %s\n", path);
+    ok(!lstrcmpA(path, "one\\two\\"), "Expected one\\two\\, got %s\n", path);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* try periods */
@@ -784,7 +784,7 @@ static void test_PathAddBackslash(void)
     SetLastError(0xdeadbeef);
     str = PathAddBackslashA(path);
     ok(str == (path + lstrlenA(path)), "Expected str to point to end of path, got %p\n", str);
-    ok(!lstrcmp(path, "one\\..\\two\\"), "Expected one\\..\\two\\, got %s\n", path);
+    ok(!lstrcmpA(path, "one\\..\\two\\"), "Expected one\\..\\two\\, got %s\n", path);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* try just a space */
@@ -792,7 +792,7 @@ static void test_PathAddBackslash(void)
     SetLastError(0xdeadbeef);
     str = PathAddBackslashA(path);
     ok(str == (path + lstrlenA(path)), "Expected str to point to end of path, got %p\n", str);
-    ok(!lstrcmp(path, " \\"), "Expected  \\, got %s\n", path);
+    ok(!lstrcmpA(path, " \\"), "Expected  \\, got %s\n", path);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* path already has backslash */
@@ -800,7 +800,7 @@ static void test_PathAddBackslash(void)
     SetLastError(0xdeadbeef);
     str = PathAddBackslashA(path);
     ok(str == (path + lstrlenA(path)), "Expected str to point to end of path, got %p\n", str);
-    ok(!lstrcmp(path, "C:\\one\\"), "Expected C:\\one\\, got %s\n", path);
+    ok(!lstrcmpA(path, "C:\\one\\"), "Expected C:\\one\\, got %s\n", path);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     memset(too_long, 'a', LONG_LEN);
@@ -820,21 +820,21 @@ static void test_PathAppendA(void)
     char half[HALF_LEN];
     BOOL res;
 
-    lstrcpy(path, "C:\\one");
+    lstrcpyA(path, "C:\\one");
 
     /* try NULL pszMore */
     SetLastError(0xdeadbeef);
     res = PathAppendA(path, NULL);
     ok(!res, "Expected failure\n");
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
-    ok(!lstrcmp(path, "C:\\one"), "Expected C:\\one, got %s\n", path);
+    ok(!lstrcmpA(path, "C:\\one"), "Expected C:\\one, got %s\n", path);
 
     /* try empty pszMore */
     SetLastError(0xdeadbeef);
     res = PathAppendA(path, "");
     ok(res, "Expected success\n");
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
-    ok(!lstrcmp(path, "C:\\one"), "Expected C:\\one, got %s\n", path);
+    ok(!lstrcmpA(path, "C:\\one"), "Expected C:\\one, got %s\n", path);
 
     /* try NULL pszPath */
     SetLastError(0xdeadbeef);
@@ -848,7 +848,7 @@ static void test_PathAppendA(void)
     res = PathAppendA(path, "two\\three");
     ok(res, "Expected success\n");
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
-    ok(!lstrcmp(path, "two\\three"), "Expected \\two\\three, got %s\n", path);
+    ok(!lstrcmpA(path, "two\\three"), "Expected \\two\\three, got %s\n", path);
 
     /* try empty pszPath and empty pszMore */
     path[0] = '\0';
@@ -856,55 +856,55 @@ static void test_PathAppendA(void)
     res = PathAppendA(path, "");
     ok(res, "Expected success\n");
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
-    ok(!lstrcmp(path, "\\"), "Expected \\, got %s\n", path);
+    ok(!lstrcmpA(path, "\\"), "Expected \\, got %s\n", path);
 
     /* try legit params */
-    lstrcpy(path, "C:\\one");
+    lstrcpyA(path, "C:\\one");
     SetLastError(0xdeadbeef);
     res = PathAppendA(path, "two\\three");
     ok(res, "Expected success\n");
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
-    ok(!lstrcmp(path, "C:\\one\\two\\three"), "Expected C:\\one\\two\\three, got %s\n", path);
+    ok(!lstrcmpA(path, "C:\\one\\two\\three"), "Expected C:\\one\\two\\three, got %s\n", path);
 
     /* try pszPath with backslash after it */
-    lstrcpy(path, "C:\\one\\");
+    lstrcpyA(path, "C:\\one\\");
     SetLastError(0xdeadbeef);
     res = PathAppendA(path, "two\\three");
     ok(res, "Expected success\n");
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
-    ok(!lstrcmp(path, "C:\\one\\two\\three"), "Expected C:\\one\\two\\three, got %s\n", path);
+    ok(!lstrcmpA(path, "C:\\one\\two\\three"), "Expected C:\\one\\two\\three, got %s\n", path);
 
     /* try pszMore with backslash before it */
-    lstrcpy(path, "C:\\one");
+    lstrcpyA(path, "C:\\one");
     SetLastError(0xdeadbeef);
     res = PathAppendA(path, "\\two\\three");
     ok(res, "Expected success\n");
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
-    ok(!lstrcmp(path, "C:\\one\\two\\three"), "Expected C:\\one\\two\\three, got %s\n", path);
+    ok(!lstrcmpA(path, "C:\\one\\two\\three"), "Expected C:\\one\\two\\three, got %s\n", path);
 
     /* try pszMore with backslash after it */
-    lstrcpy(path, "C:\\one");
+    lstrcpyA(path, "C:\\one");
     SetLastError(0xdeadbeef);
     res = PathAppendA(path, "two\\three\\");
     ok(res, "Expected success\n");
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
-    ok(!lstrcmp(path, "C:\\one\\two\\three\\"), "Expected C:\\one\\two\\three\\, got %s\n", path);
+    ok(!lstrcmpA(path, "C:\\one\\two\\three\\"), "Expected C:\\one\\two\\three\\, got %s\n", path);
 
     /* try spaces in pszPath */
-    lstrcpy(path, "C: \\ one ");
+    lstrcpyA(path, "C: \\ one ");
     SetLastError(0xdeadbeef);
     res = PathAppendA(path, "two\\three");
     ok(res, "Expected success\n");
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
-    ok(!lstrcmp(path, "C: \\ one \\two\\three"), "Expected C: \\ one \\two\\three, got %s\n", path);
+    ok(!lstrcmpA(path, "C: \\ one \\two\\three"), "Expected C: \\ one \\two\\three, got %s\n", path);
 
     /* try spaces in pszMore */
-    lstrcpy(path, "C:\\one");
+    lstrcpyA(path, "C:\\one");
     SetLastError(0xdeadbeef);
     res = PathAppendA(path, " two \\ three ");
     ok(res, "Expected success\n");
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
-    ok(!lstrcmp(path, "C:\\one\\ two \\ three "), "Expected 'C:\\one\\ two \\ three ', got %s\n", path);
+    ok(!lstrcmpA(path, "C:\\one\\ two \\ three "), "Expected 'C:\\one\\ two \\ three ', got %s\n", path);
 
     /* pszPath is too long */
     memset(too_long, 'a', LONG_LEN);
@@ -913,21 +913,21 @@ static void test_PathAppendA(void)
     res = PathAppendA(too_long, "two\\three");
     ok(!res, "Expected failure\n");
     todo_wine ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
-    ok(lstrlen(too_long) == 0 ||
-       broken(lstrlen(too_long) == (LONG_LEN - 1)), /* Win95 and some W2K */
-       "Expected length of too_long to be zero, got %i\n", lstrlen(too_long));
+    ok(lstrlenA(too_long) == 0 ||
+       broken(lstrlenA(too_long) == (LONG_LEN - 1)), /* Win95 and some W2K */
+       "Expected length of too_long to be zero, got %i\n", lstrlenA(too_long));
 
     /* pszMore is too long */
-    lstrcpy(path, "C:\\one");
+    lstrcpyA(path, "C:\\one");
     memset(too_long, 'a', LONG_LEN);
     too_long[LONG_LEN - 1] = '\0';
     SetLastError(0xdeadbeef);
     res = PathAppendA(path, too_long);
     ok(!res, "Expected failure\n");
     todo_wine ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
-    ok(lstrlen(path) == 0 ||
-       broken(!lstrcmp(path, "C:\\one")), /* Win95 and some W2K */
-       "Expected length of path to be zero, got %i\n", lstrlen(path));
+    ok(lstrlenA(path) == 0 ||
+       broken(!lstrcmpA(path, "C:\\one")), /* Win95 and some W2K */
+       "Expected length of path to be zero, got %i\n", lstrlenA(path));
 
     /* both params combined are too long */
     memset(path, 'a', HALF_LEN);
@@ -937,9 +937,9 @@ static void test_PathAppendA(void)
     SetLastError(0xdeadbeef);
     res = PathAppendA(path, half);
     ok(!res, "Expected failure\n");
-    ok(lstrlen(path) == 0 ||
-       broken(lstrlen(path) == (HALF_LEN - 1)), /* Win95 and some W2K */
-       "Expected length of path to be zero, got %i\n", lstrlen(path));
+    ok(lstrlenA(path) == 0 ||
+       broken(lstrlenA(path) == (HALF_LEN - 1)), /* Win95 and some W2K */
+       "Expected length of path to be zero, got %i\n", lstrlenA(path));
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 }
 
@@ -950,23 +950,23 @@ static void test_PathCanonicalizeA(void)
     BOOL res;
 
     /* try a NULL source */
-    lstrcpy(dest, "test");
+    lstrcpyA(dest, "test");
     SetLastError(0xdeadbeef);
     res = PathCanonicalizeA(dest, NULL);
     ok(!res, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER, 
        "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-    ok(dest[0] == 0 || !lstrcmp(dest, "test"),
+    ok(dest[0] == 0 || !lstrcmpA(dest, "test"),
        "Expected either an empty string (Vista) or test, got %s\n", dest);
 
     /* try an empty source */
-    lstrcpy(dest, "test");
+    lstrcpyA(dest, "test");
     SetLastError(0xdeadbeef);
     res = PathCanonicalizeA(dest, "");
     ok(res, "Expected success\n");
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
-    ok(!lstrcmp(dest, "\\") ||
-       broken(!lstrcmp(dest, "test")), /* Win95 and some W2K */
+    ok(!lstrcmpA(dest, "\\") ||
+       broken(!lstrcmpA(dest, "test")), /* Win95 and some W2K */
        "Expected \\, got %s\n", dest);
 
     /* try a NULL dest */
@@ -982,82 +982,82 @@ static void test_PathCanonicalizeA(void)
     res = PathCanonicalizeA(dest, "C:\\");
     ok(res, "Expected success\n");
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
-    ok(!lstrcmp(dest, "C:\\"), "Expected C:\\, got %s\n", dest);
+    ok(!lstrcmpA(dest, "C:\\"), "Expected C:\\, got %s\n", dest);
 
     /* try non-empty dest */
-    lstrcpy(dest, "test");
+    lstrcpyA(dest, "test");
     SetLastError(0xdeadbeef);
     res = PathCanonicalizeA(dest, "C:\\");
     ok(res, "Expected success\n");
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
-    ok(!lstrcmp(dest, "C:\\"), "Expected C:\\, got %s\n", dest);
+    ok(!lstrcmpA(dest, "C:\\"), "Expected C:\\, got %s\n", dest);
 
     /* try a space for source */
-    lstrcpy(dest, "test");
+    lstrcpyA(dest, "test");
     SetLastError(0xdeadbeef);
     res = PathCanonicalizeA(dest, " ");
     ok(res, "Expected success\n");
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
-    ok(!lstrcmp(dest, " "), "Expected ' ', got %s\n", dest);
+    ok(!lstrcmpA(dest, " "), "Expected ' ', got %s\n", dest);
 
     /* try a relative path */
-    lstrcpy(dest, "test");
+    lstrcpyA(dest, "test");
     SetLastError(0xdeadbeef);
     res = PathCanonicalizeA(dest, "one\\two");
     ok(res, "Expected success\n");
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
-    ok(!lstrcmp(dest, "one\\two"), "Expected one\\two, got %s\n", dest);
+    ok(!lstrcmpA(dest, "one\\two"), "Expected one\\two, got %s\n", dest);
 
     /* try current dir and previous dir */
-    lstrcpy(dest, "test");
+    lstrcpyA(dest, "test");
     SetLastError(0xdeadbeef);
     res = PathCanonicalizeA(dest, "C:\\one\\.\\..\\two\\three\\..");
     ok(res, "Expected success\n");
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
-    ok(!lstrcmp(dest, "C:\\two"), "Expected C:\\two, got %s\n", dest);
+    ok(!lstrcmpA(dest, "C:\\two"), "Expected C:\\two, got %s\n", dest);
 
     /* try simple forward slashes */
-    lstrcpy(dest, "test");
+    lstrcpyA(dest, "test");
     SetLastError(0xdeadbeef);
     res = PathCanonicalizeA(dest, "C:\\one/two/three\\four/five\\six");
     ok(res, "Expected success\n");
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
-    ok(!lstrcmp(dest, "C:\\one/two/three\\four/five\\six"),
+    ok(!lstrcmpA(dest, "C:\\one/two/three\\four/five\\six"),
        "Expected C:\\one/two/three\\four/five\\six, got %s\n", dest);
 
     /* try simple forward slashes with same dir */
-    lstrcpy(dest, "test");
+    lstrcpyA(dest, "test");
     SetLastError(0xdeadbeef);
     res = PathCanonicalizeA(dest, "C:\\one/.\\two");
     ok(res, "Expected success\n");
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
-    ok(!lstrcmp(dest, "C:\\one/.\\two"), "Expected C:\\one/.\\two, got %s\n", dest);
+    ok(!lstrcmpA(dest, "C:\\one/.\\two"), "Expected C:\\one/.\\two, got %s\n", dest);
 
     /* try simple forward slashes with change dir */
-    lstrcpy(dest, "test");
+    lstrcpyA(dest, "test");
     SetLastError(0xdeadbeef);
     res = PathCanonicalizeA(dest, "C:\\one/.\\two\\..");
     ok(res, "Expected success\n");
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
-    ok(!lstrcmp(dest, "C:\\one/.") ||
-       !lstrcmp(dest, "C:\\one/"), /* Vista */
+    ok(!lstrcmpA(dest, "C:\\one/.") ||
+       !lstrcmpA(dest, "C:\\one/"), /* Vista */
        "Expected \"C:\\one/.\" or \"C:\\one/\", got \"%s\"\n", dest);
 
     /* try forward slashes with change dirs
      * NOTE: if there is a forward slash in between two backslashes,
      * everything in between the two backslashes is considered on dir
      */
-    lstrcpy(dest, "test");
+    lstrcpyA(dest, "test");
     SetLastError(0xdeadbeef);
     res = PathCanonicalizeA(dest, "C:\\one/.\\..\\two/three\\..\\four/.five");
     ok(res, "Expected success\n");
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
-    ok(!lstrcmp(dest, "C:\\four/.five"), "Expected C:\\four/.five, got %s\n", dest);
+    ok(!lstrcmpA(dest, "C:\\four/.five"), "Expected C:\\four/.five, got %s\n", dest);
 
     /* try src is too long */
     memset(too_long, 'a', LONG_LEN);
     too_long[LONG_LEN - 1] = '\0';
-    lstrcpy(dest, "test");
+    lstrcpyA(dest, "test");
     SetLastError(0xdeadbeef);
     res = PathCanonicalizeA(dest, too_long);
     ok(!res ||
@@ -1068,7 +1068,7 @@ static void test_PathCanonicalizeA(void)
         ok(GetLastError() == 0xdeadbeef || GetLastError() == ERROR_FILENAME_EXCED_RANGE /* Vista */,
         "Expected 0xdeadbeef or ERROR_FILENAME_EXCED_RANGE, got %d\n", GetLastError());
     }
-    ok(lstrlen(too_long) == LONG_LEN - 1, "Expected length LONG_LEN - 1, got %i\n", lstrlen(too_long));
+    ok(lstrlenA(too_long) == LONG_LEN - 1, "Expected length LONG_LEN - 1, got %i\n", lstrlenA(too_long));
 }
 
 static void test_PathFindExtensionA(void)
@@ -1088,33 +1088,33 @@ static void test_PathFindExtensionA(void)
     SetLastError(0xdeadbeef);
     ext = PathFindExtensionA(path);
     ok(ext == path, "Expected ext == path, got %p\n", ext);
-    ok(lstrlen(ext) == 0, "Expected length 0, got %i\n", lstrlen(ext));
+    ok(lstrlenA(ext) == 0, "Expected length 0, got %i\n", lstrlenA(ext));
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* try a path without an extension */
-    lstrcpy(path, "file");
+    lstrcpyA(path, "file");
     SetLastError(0xdeadbeef);
     ext = PathFindExtensionA(path);
-    ok(ext == path + lstrlen(path), "Expected ext == path, got %p\n", ext);
-    ok(lstrlen(ext) == 0, "Expected length 0, got %i\n", lstrlen(ext));
+    ok(ext == path + lstrlenA(path), "Expected ext == path, got %p\n", ext);
+    ok(lstrlenA(ext) == 0, "Expected length 0, got %i\n", lstrlenA(ext));
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* try a path with an extension */
-    lstrcpy(path, "file.txt");
+    lstrcpyA(path, "file.txt");
     SetLastError(0xdeadbeef);
     ext = PathFindExtensionA(path);
-    ok(ext == path + lstrlen("file"),
-       "Expected ext == path + lstrlen(\"file\"), got %p\n", ext);
-    ok(!lstrcmp(ext, ".txt"), "Expected .txt, got %s\n", ext);
+    ok(ext == path + lstrlenA("file"),
+       "Expected ext == path + lstrlenA(\"file\"), got %p\n", ext);
+    ok(!lstrcmpA(ext, ".txt"), "Expected .txt, got %s\n", ext);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* try a path with two extensions */
-    lstrcpy(path, "file.txt.doc");
+    lstrcpyA(path, "file.txt.doc");
     SetLastError(0xdeadbeef);
     ext = PathFindExtensionA(path);
-    ok(ext == path + lstrlen("file.txt"),
-       "Expected ext == path + lstrlen(\"file.txt\"), got %p\n", ext);
-    ok(!lstrcmp(ext, ".doc"), "Expected .txt, got %s\n", ext);
+    ok(ext == path + lstrlenA("file.txt"),
+       "Expected ext == path + lstrlenA(\"file.txt\"), got %p\n", ext);
+    ok(!lstrcmpA(ext, ".doc"), "Expected .txt, got %s\n", ext);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* try a path longer than MAX_PATH without an extension*/
@@ -1128,12 +1128,12 @@ static void test_PathFindExtensionA(void)
     /* try a path longer than MAX_PATH with an extension*/
     memset(too_long, 'a', LONG_LEN);
     too_long[LONG_LEN - 1] = '\0';
-    lstrcpy(too_long + 300, ".abcde");
-    too_long[lstrlen(too_long)] = 'a';
+    lstrcpyA(too_long + 300, ".abcde");
+    too_long[lstrlenA(too_long)] = 'a';
     SetLastError(0xdeadbeef);
     ext = PathFindExtensionA(too_long);
     ok(ext == too_long + 300, "Expected ext == too_long + 300, got %p\n", ext);
-    ok(lstrlen(ext) == LONG_LEN - 301, "Expected LONG_LEN - 301, got %i\n", lstrlen(ext));
+    ok(lstrlenA(ext) == LONG_LEN - 301, "Expected LONG_LEN - 301, got %i\n", lstrlenA(ext));
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 }
 
@@ -1153,39 +1153,39 @@ static void test_PathBuildRootA(void)
     for (j = 0; j < 26; j++)
     {
         SetLastError(0xdeadbeef);
-        lstrcpy(path, "aaaaaaaaa");
+        lstrcpyA(path, "aaaaaaaaa");
         root = PathBuildRootA(path, j);
         ok(root == path, "Expected root == path, got %p\n", root);
-        ok(!lstrcmp(root, root_expected[j]), "Expected %s, got %s\n", root_expected[j], root);
+        ok(!lstrcmpA(root, root_expected[j]), "Expected %s, got %s\n", root_expected[j], root);
         ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
     }
 
     /* test a negative drive number */
     SetLastError(0xdeadbeef);
-    lstrcpy(path, "aaaaaaaaa");
+    lstrcpyA(path, "aaaaaaaaa");
     root = PathBuildRootA(path, -1);
     ok(root == path, "Expected root == path, got %p\n", root);
-    ok(!lstrcmp(path, "aaaaaaaaa") ||
+    ok(!lstrcmpA(path, "aaaaaaaaa") ||
        lstrlenA(path) == 0, /* Vista */
        "Expected aaaaaaaaa or empty string, got %s\n", path);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* test a drive number greater than 25 */
     SetLastError(0xdeadbeef);
-    lstrcpy(path, "aaaaaaaaa");
+    lstrcpyA(path, "aaaaaaaaa");
     root = PathBuildRootA(path, 26);
     ok(root == path, "Expected root == path, got %p\n", root);
-    ok(!lstrcmp(path, "aaaaaaaaa") ||
+    ok(!lstrcmpA(path, "aaaaaaaaa") ||
        lstrlenA(path) == 0, /* Vista */
        "Expected aaaaaaaaa or empty string, got %s\n", path);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* length of path is less than 4 */
     SetLastError(0xdeadbeef);
-    lstrcpy(path, "aa");
+    lstrcpyA(path, "aa");
     root = PathBuildRootA(path, 0);
     ok(root == path, "Expected root == path, got %p\n", root);
-    ok(!lstrcmp(path, "A:\\"), "Expected A:\\, got %s\n", path);
+    ok(!lstrcmpA(path, "A:\\"), "Expected A:\\, got %s\n", path);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* path is NULL */
@@ -1203,206 +1203,206 @@ static void test_PathCommonPrefixA(void)
 
     /* test NULL path1 */
     SetLastError(0xdeadbeef);
-    lstrcpy(path2, "C:\\");
-    lstrcpy(out, "aaa");
+    lstrcpyA(path2, "C:\\");
+    lstrcpyA(out, "aaa");
     count = PathCommonPrefixA(NULL, path2, out);
     ok(count == 0, "Expected 0, got %i\n", count);
     todo_wine
     {
-        ok(!lstrcmp(out, "aaa"), "Expected aaa, got %s\n", out);
+        ok(!lstrcmpA(out, "aaa"), "Expected aaa, got %s\n", out);
     }
-    ok(!lstrcmp(path2, "C:\\"), "Expected C:\\, got %s\n", path2);
+    ok(!lstrcmpA(path2, "C:\\"), "Expected C:\\, got %s\n", path2);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* test NULL path2 */
     SetLastError(0xdeadbeef);
-    lstrcpy(path1, "C:\\");
-    lstrcpy(out, "aaa");
+    lstrcpyA(path1, "C:\\");
+    lstrcpyA(out, "aaa");
     count = PathCommonPrefixA(path1, NULL, out);
     ok(count == 0, "Expected 0, got %i\n", count);
     todo_wine
     {
-        ok(!lstrcmp(out, "aaa"), "Expected aaa, got %s\n", out);
+        ok(!lstrcmpA(out, "aaa"), "Expected aaa, got %s\n", out);
     }
-    ok(!lstrcmp(path1, "C:\\"), "Expected C:\\, got %s\n", path1);
+    ok(!lstrcmpA(path1, "C:\\"), "Expected C:\\, got %s\n", path1);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* test empty path1 */
     SetLastError(0xdeadbeef);
     path1[0] = '\0';
-    lstrcpy(path2, "C:\\");
-    lstrcpy(out, "aaa");
+    lstrcpyA(path2, "C:\\");
+    lstrcpyA(out, "aaa");
     count = PathCommonPrefixA(path1, path2, out);
     ok(count == 0, "Expected 0, got %i\n", count);
-    ok(lstrlen(out) == 0, "Expected 0 length out, got %i\n", lstrlen(out));
-    ok(lstrlen(path1) == 0, "Expected 0 length path1, got %i\n", lstrlen(path1));
-    ok(!lstrcmp(path2, "C:\\"), "Expected C:\\, got %s\n", path2);
+    ok(lstrlenA(out) == 0, "Expected 0 length out, got %i\n", lstrlenA(out));
+    ok(lstrlenA(path1) == 0, "Expected 0 length path1, got %i\n", lstrlenA(path1));
+    ok(!lstrcmpA(path2, "C:\\"), "Expected C:\\, got %s\n", path2);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* test empty path1 */
     SetLastError(0xdeadbeef);
     path2[0] = '\0';
-    lstrcpy(path1, "C:\\");
-    lstrcpy(out, "aaa");
+    lstrcpyA(path1, "C:\\");
+    lstrcpyA(out, "aaa");
     count = PathCommonPrefixA(path1, path2, out);
     ok(count == 0, "Expected 0, got %i\n", count);
-    ok(lstrlen(out) == 0, "Expected 0 length out, got %i\n", lstrlen(out));
-    ok(lstrlen(path2) == 0, "Expected 0 length path2, got %i\n", lstrlen(path2));
-    ok(!lstrcmp(path1, "C:\\"), "Expected C:\\, got %s\n", path1);
+    ok(lstrlenA(out) == 0, "Expected 0 length out, got %i\n", lstrlenA(out));
+    ok(lstrlenA(path2) == 0, "Expected 0 length path2, got %i\n", lstrlenA(path2));
+    ok(!lstrcmpA(path1, "C:\\"), "Expected C:\\, got %s\n", path1);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* paths are legit, out is NULL */
     SetLastError(0xdeadbeef);
-    lstrcpy(path1, "C:\\");
-    lstrcpy(path2, "C:\\");
+    lstrcpyA(path1, "C:\\");
+    lstrcpyA(path2, "C:\\");
     count = PathCommonPrefixA(path1, path2, NULL);
     ok(count == 3, "Expected 3, got %i\n", count);
-    ok(!lstrcmp(path1, "C:\\"), "Expected C:\\, got %s\n", path1);
-    ok(!lstrcmp(path2, "C:\\"), "Expected C:\\, got %s\n", path2);
+    ok(!lstrcmpA(path1, "C:\\"), "Expected C:\\, got %s\n", path1);
+    ok(!lstrcmpA(path2, "C:\\"), "Expected C:\\, got %s\n", path2);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* all parameters legit */
     SetLastError(0xdeadbeef);
-    lstrcpy(path1, "C:\\");
-    lstrcpy(path2, "C:\\");
-    lstrcpy(out, "aaa");
+    lstrcpyA(path1, "C:\\");
+    lstrcpyA(path2, "C:\\");
+    lstrcpyA(out, "aaa");
     count = PathCommonPrefixA(path1, path2, out);
     ok(count == 3, "Expected 3, got %i\n", count);
-    ok(!lstrcmp(path1, "C:\\"), "Expected C:\\, got %s\n", path1);
-    ok(!lstrcmp(path2, "C:\\"), "Expected C:\\, got %s\n", path2);
-    ok(!lstrcmp(out, "C:\\"), "Expected C:\\, got %s\n", out);
+    ok(!lstrcmpA(path1, "C:\\"), "Expected C:\\, got %s\n", path1);
+    ok(!lstrcmpA(path2, "C:\\"), "Expected C:\\, got %s\n", path2);
+    ok(!lstrcmpA(out, "C:\\"), "Expected C:\\, got %s\n", out);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* path1 and path2 not the same, but common prefix */
     SetLastError(0xdeadbeef);
-    lstrcpy(path1, "C:\\one\\two");
-    lstrcpy(path2, "C:\\one\\three");
-    lstrcpy(out, "aaa");
+    lstrcpyA(path1, "C:\\one\\two");
+    lstrcpyA(path2, "C:\\one\\three");
+    lstrcpyA(out, "aaa");
     count = PathCommonPrefixA(path1, path2, out);
     ok(count == 6, "Expected 6, got %i\n", count);
-    ok(!lstrcmp(path1, "C:\\one\\two"), "Expected C:\\one\\two, got %s\n", path1);
-    ok(!lstrcmp(path2, "C:\\one\\three"), "Expected C:\\one\\three, got %s\n", path2);
-    ok(!lstrcmp(out, "C:\\one"), "Expected C:\\one, got %s\n", out);
+    ok(!lstrcmpA(path1, "C:\\one\\two"), "Expected C:\\one\\two, got %s\n", path1);
+    ok(!lstrcmpA(path2, "C:\\one\\three"), "Expected C:\\one\\three, got %s\n", path2);
+    ok(!lstrcmpA(out, "C:\\one"), "Expected C:\\one, got %s\n", out);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* try . prefix */
     SetLastError(0xdeadbeef);
-    lstrcpy(path1, "one\\.two");
-    lstrcpy(path2, "one\\.three");
-    lstrcpy(out, "aaa");
+    lstrcpyA(path1, "one\\.two");
+    lstrcpyA(path2, "one\\.three");
+    lstrcpyA(out, "aaa");
     count = PathCommonPrefixA(path1, path2, out);
     ok(count == 3, "Expected 3, got %i\n", count);
-    ok(!lstrcmp(path1, "one\\.two"), "Expected one\\.two, got %s\n", path1);
-    ok(!lstrcmp(path2, "one\\.three"), "Expected one\\.three, got %s\n", path2);
-    ok(!lstrcmp(out, "one"), "Expected one, got %s\n", out);
+    ok(!lstrcmpA(path1, "one\\.two"), "Expected one\\.two, got %s\n", path1);
+    ok(!lstrcmpA(path2, "one\\.three"), "Expected one\\.three, got %s\n", path2);
+    ok(!lstrcmpA(out, "one"), "Expected one, got %s\n", out);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* try .. prefix */
     SetLastError(0xdeadbeef);
-    lstrcpy(path1, "one\\..two");
-    lstrcpy(path2, "one\\..three");
-    lstrcpy(out, "aaa");
+    lstrcpyA(path1, "one\\..two");
+    lstrcpyA(path2, "one\\..three");
+    lstrcpyA(out, "aaa");
     count = PathCommonPrefixA(path1, path2, out);
     ok(count == 3, "Expected 3, got %i\n", count);
-    ok(!lstrcmp(path1, "one\\..two"), "Expected one\\..two, got %s\n", path1);
-    ok(!lstrcmp(path2, "one\\..three"), "Expected one\\..three, got %s\n", path2);
-    ok(!lstrcmp(out, "one"), "Expected one, got %s\n", out);
+    ok(!lstrcmpA(path1, "one\\..two"), "Expected one\\..two, got %s\n", path1);
+    ok(!lstrcmpA(path2, "one\\..three"), "Expected one\\..three, got %s\n", path2);
+    ok(!lstrcmpA(out, "one"), "Expected one, got %s\n", out);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* try ... prefix */
     SetLastError(0xdeadbeef);
-    lstrcpy(path1, "one\\...two");
-    lstrcpy(path2, "one\\...three");
-    lstrcpy(out, "aaa");
+    lstrcpyA(path1, "one\\...two");
+    lstrcpyA(path2, "one\\...three");
+    lstrcpyA(out, "aaa");
     count = PathCommonPrefixA(path1, path2, out);
     ok(count == 3, "Expected 3, got %i\n", count);
-    ok(!lstrcmp(path1, "one\\...two"), "Expected one\\...two, got %s\n", path1);
-    ok(!lstrcmp(path2, "one\\...three"), "Expected one\\...three, got %s\n", path2);
-    ok(!lstrcmp(out, "one"), "Expected one, got %s\n", out);
+    ok(!lstrcmpA(path1, "one\\...two"), "Expected one\\...two, got %s\n", path1);
+    ok(!lstrcmpA(path2, "one\\...three"), "Expected one\\...three, got %s\n", path2);
+    ok(!lstrcmpA(out, "one"), "Expected one, got %s\n", out);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* try .\ prefix */
     SetLastError(0xdeadbeef);
-    lstrcpy(path1, "one\\.\\two");
-    lstrcpy(path2, "one\\.\\three");
-    lstrcpy(out, "aaa");
+    lstrcpyA(path1, "one\\.\\two");
+    lstrcpyA(path2, "one\\.\\three");
+    lstrcpyA(out, "aaa");
     count = PathCommonPrefixA(path1, path2, out);
     ok(count == 5, "Expected 5, got %i\n", count);
-    ok(!lstrcmp(path1, "one\\.\\two"), "Expected one\\.\\two, got %s\n", path1);
-    ok(!lstrcmp(path2, "one\\.\\three"), "Expected one\\.\\three, got %s\n", path2);
-    ok(!lstrcmp(out, "one\\."), "Expected one\\., got %s\n", out);
+    ok(!lstrcmpA(path1, "one\\.\\two"), "Expected one\\.\\two, got %s\n", path1);
+    ok(!lstrcmpA(path2, "one\\.\\three"), "Expected one\\.\\three, got %s\n", path2);
+    ok(!lstrcmpA(out, "one\\."), "Expected one\\., got %s\n", out);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* try ..\ prefix */
     SetLastError(0xdeadbeef);
-    lstrcpy(path1, "one\\..\\two");
-    lstrcpy(path2, "one\\..\\three");
-    lstrcpy(out, "aaa");
+    lstrcpyA(path1, "one\\..\\two");
+    lstrcpyA(path2, "one\\..\\three");
+    lstrcpyA(out, "aaa");
     count = PathCommonPrefixA(path1, path2, out);
     ok(count == 6, "Expected 6, got %i\n", count);
-    ok(!lstrcmp(path1, "one\\..\\two"), "Expected one\\..\\two, got %s\n", path1);
-    ok(!lstrcmp(path2, "one\\..\\three"), "Expected one\\..\\three, got %s\n", path2);
-    ok(!lstrcmp(out, "one\\.."), "Expected one\\.., got %s\n", out);
+    ok(!lstrcmpA(path1, "one\\..\\two"), "Expected one\\..\\two, got %s\n", path1);
+    ok(!lstrcmpA(path2, "one\\..\\three"), "Expected one\\..\\three, got %s\n", path2);
+    ok(!lstrcmpA(out, "one\\.."), "Expected one\\.., got %s\n", out);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* try ...\\ prefix */
     SetLastError(0xdeadbeef);
-    lstrcpy(path1, "one\\...\\two");
-    lstrcpy(path2, "one\\...\\three");
-    lstrcpy(out, "aaa");
+    lstrcpyA(path1, "one\\...\\two");
+    lstrcpyA(path2, "one\\...\\three");
+    lstrcpyA(out, "aaa");
     count = PathCommonPrefixA(path1, path2, out);
     ok(count == 7, "Expected 7, got %i\n", count);
-    ok(!lstrcmp(path1, "one\\...\\two"), "Expected one\\...\\two, got %s\n", path1);
-    ok(!lstrcmp(path2, "one\\...\\three"), "Expected one\\...\\three, got %s\n", path2);
-    ok(!lstrcmp(out, "one\\..."), "Expected one\\..., got %s\n", out);
+    ok(!lstrcmpA(path1, "one\\...\\two"), "Expected one\\...\\two, got %s\n", path1);
+    ok(!lstrcmpA(path2, "one\\...\\three"), "Expected one\\...\\three, got %s\n", path2);
+    ok(!lstrcmpA(out, "one\\..."), "Expected one\\..., got %s\n", out);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* try prefix that is not an msdn labeled prefix type */
     SetLastError(0xdeadbeef);
-    lstrcpy(path1, "same");
-    lstrcpy(path2, "same");
-    lstrcpy(out, "aaa");
+    lstrcpyA(path1, "same");
+    lstrcpyA(path2, "same");
+    lstrcpyA(out, "aaa");
     count = PathCommonPrefixA(path1, path2, out);
     ok(count == 4, "Expected 4, got %i\n", count);
-    ok(!lstrcmp(path1, "same"), "Expected same, got %s\n", path1);
-    ok(!lstrcmp(path2, "same"), "Expected same, got %s\n", path2);
-    ok(!lstrcmp(out, "same"), "Expected same, got %s\n", out);
+    ok(!lstrcmpA(path1, "same"), "Expected same, got %s\n", path1);
+    ok(!lstrcmpA(path2, "same"), "Expected same, got %s\n", path2);
+    ok(!lstrcmpA(out, "same"), "Expected same, got %s\n", out);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* try . after directory */
     SetLastError(0xdeadbeef);
-    lstrcpy(path1, "one\\mid.\\two");
-    lstrcpy(path2, "one\\mid.\\three");
-    lstrcpy(out, "aaa");
+    lstrcpyA(path1, "one\\mid.\\two");
+    lstrcpyA(path2, "one\\mid.\\three");
+    lstrcpyA(out, "aaa");
     count = PathCommonPrefixA(path1, path2, out);
     ok(count == 8, "Expected 8, got %i\n", count);
-    ok(!lstrcmp(path1, "one\\mid.\\two"), "Expected one\\mid.\\two, got %s\n", path1);
-    ok(!lstrcmp(path2, "one\\mid.\\three"), "Expected one\\mid.\\three, got %s\n", path2);
-    ok(!lstrcmp(out, "one\\mid."), "Expected one\\mid., got %s\n", out);
+    ok(!lstrcmpA(path1, "one\\mid.\\two"), "Expected one\\mid.\\two, got %s\n", path1);
+    ok(!lstrcmpA(path2, "one\\mid.\\three"), "Expected one\\mid.\\three, got %s\n", path2);
+    ok(!lstrcmpA(out, "one\\mid."), "Expected one\\mid., got %s\n", out);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* try . in the middle of a directory */
     SetLastError(0xdeadbeef);
-    lstrcpy(path1, "one\\mid.end\\two");
-    lstrcpy(path2, "one\\mid.end\\three");
-    lstrcpy(out, "aaa");
+    lstrcpyA(path1, "one\\mid.end\\two");
+    lstrcpyA(path2, "one\\mid.end\\three");
+    lstrcpyA(out, "aaa");
     count = PathCommonPrefixA(path1, path2, out);
     ok(count == 11, "Expected 11, got %i\n", count);
-    ok(!lstrcmp(path1, "one\\mid.end\\two"), "Expected one\\mid.end\\two, got %s\n", path1);
-    ok(!lstrcmp(path2, "one\\mid.end\\three"), "Expected one\\mid.end\\three, got %s\n", path2);
-    ok(!lstrcmp(out, "one\\mid.end"), "Expected one\\mid.end, got %s\n", out);
+    ok(!lstrcmpA(path1, "one\\mid.end\\two"), "Expected one\\mid.end\\two, got %s\n", path1);
+    ok(!lstrcmpA(path2, "one\\mid.end\\three"), "Expected one\\mid.end\\three, got %s\n", path2);
+    ok(!lstrcmpA(out, "one\\mid.end"), "Expected one\\mid.end, got %s\n", out);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* try comparing a .. with the expanded path */
     SetLastError(0xdeadbeef);
-    lstrcpy(path1, "one\\..\\two");
-    lstrcpy(path2, "two");
-    lstrcpy(out, "aaa");
+    lstrcpyA(path1, "one\\..\\two");
+    lstrcpyA(path2, "two");
+    lstrcpyA(out, "aaa");
     count = PathCommonPrefixA(path1, path2, out);
     ok(count == 0, "Expected 0, got %i\n", count);
-    ok(!lstrcmp(path1, "one\\..\\two"), "Expected one\\..\\two, got %s\n", path1);
-    ok(!lstrcmp(path2, "two"), "Expected two, got %s\n", path2);
-    ok(lstrlen(out) == 0, "Expected 0 length out, got %i\n", lstrlen(out));
+    ok(!lstrcmpA(path1, "one\\..\\two"), "Expected one\\..\\two, got %s\n", path1);
+    ok(!lstrcmpA(path2, "two"), "Expected two, got %s\n", path2);
+    ok(lstrlenA(out) == 0, "Expected 0 length out, got %i\n", lstrlenA(out));
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 }
 

@@ -1086,7 +1086,7 @@ static void test_url_combine(const char *szUrl1, const char *szUrl2, DWORD dwFla
     LPWSTR wszConvertedUrl;
 
     DWORD dwSize;
-    DWORD dwExpectLen = lstrlen(szExpectUrl);
+    DWORD dwExpectLen = lstrlenA(szExpectUrl);
 
     if (!pUrlCombineA) {
         win_skip("UrlCombineA not found\n");
@@ -1169,7 +1169,7 @@ static void test_UrlCreateFromPath(void)
         len = INTERNET_MAX_URL_LENGTH;
         ret = pUrlCreateFromPathA(TEST_URLFROMPATH[i].path, ret_url, &len, 0);
         ok(ret == TEST_URLFROMPATH[i].ret, "ret %08x from path %s\n", ret, TEST_URLFROMPATH[i].path);
-        ok(!lstrcmpi(ret_url, TEST_URLFROMPATH[i].url), "url %s from path %s\n", ret_url, TEST_URLFROMPATH[i].path);
+        ok(!lstrcmpiA(ret_url, TEST_URLFROMPATH[i].url), "url %s from path %s\n", ret_url, TEST_URLFROMPATH[i].path);
         ok(len == strlen(ret_url), "ret len %d from path %s\n", len, TEST_URLFROMPATH[i].path);
 
         if (pUrlCreateFromPathW) {
