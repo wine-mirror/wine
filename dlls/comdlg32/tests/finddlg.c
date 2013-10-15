@@ -21,6 +21,7 @@
 
 #include "windows.h"
 #include "commdlg.h"
+#include "cderr.h"
 #include "wine/test.h"
 
 static UINT ID_FINDMSGSTRING;
@@ -35,7 +36,7 @@ static LRESULT CALLBACK OwnerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
     if(msg == ID_FINDMSGSTRING) {
         return handle_findmsg((FINDREPLACEA*)lParam);
     }
-    return DefWindowProc(hwnd, msg, wParam, lParam);
+    return DefWindowProcA(hwnd, msg, wParam, lParam);
 }
 
 static void test_param_check(void)
@@ -126,7 +127,7 @@ static void test_param_check(void)
     CHECK_FINDREPLACE_FAIL(CDERR_FINDRESFAILURE);
     fr.Flags = FR_ENABLETEMPLATEHANDLE;
     CHECK_FINDREPLACE_FAIL(CDERR_NOHINSTANCE);
-    fr.hInstance = GetModuleHandle(NULL);
+    fr.hInstance = GetModuleHandleA(NULL);
 
     /* invalid lpTemplateName (NULL) when Flags has FR_ENABLETEMPLATE */
     fr.Flags = FR_ENABLETEMPLATE;

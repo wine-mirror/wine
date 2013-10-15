@@ -25,6 +25,9 @@
 #include "shlguid.h"
 #define COBJMACROS
 #include "shobjidl.h"
+#include "commdlg.h"
+#include "cderr.h"
+#include "dlgs.h"
 
 /* ##### */
 
@@ -41,14 +44,14 @@ static void toolbarcheck( HWND hDlg)
 
     for( ctrl = GetWindow( hDlg, GW_CHILD);
             ctrl ; ctrl = GetWindow( ctrl, GW_HWNDNEXT)) {
-        GetClassName( ctrl, classname, 10);
+        GetClassNameA( ctrl, classname, 10);
         classname[7] = '\0';
         if( !strcmp( classname, "Toolbar")) break;
     }
     ok( ctrl != NULL, "could not get the toolbar control\n");
-    ret = SendMessage( ctrl, TB_ADDSTRING, 0, (LPARAM)"winetestwinetest\0\0");
+    ret = SendMessageA( ctrl, TB_ADDSTRINGA, 0, (LPARAM)"winetestwinetest\0\0");
     ok( ret == 0, "addstring returned %d (expected 0)\n", ret);
-    maxtextrows = SendMessage( ctrl, TB_GETTEXTROWS, 0, 0);
+    maxtextrows = SendMessageA( ctrl, TB_GETTEXTROWS, 0, 0);
     ok( maxtextrows == 0 || broken(maxtextrows == 1),  /* Win2k and below */
         "Get(Max)TextRows returned %d (expected 0)\n", maxtextrows);
 }
@@ -63,14 +66,14 @@ static UINT_PTR CALLBACK OFNHookProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM
         nmh = (LPNMHDR) lParam;
         if( nmh->code == CDN_INITDONE)
         {
-            PostMessage( GetParent(hDlg), WM_COMMAND, IDCANCEL, FALSE);
+            PostMessageA( GetParent(hDlg), WM_COMMAND, IDCANCEL, FALSE);
         } else if (nmh->code == CDN_FOLDERCHANGE )
         {
             char buf[1024];
             int ret;
 
             memset(buf, 0x66, sizeof(buf));
-            ret = SendMessage( GetParent(hDlg), CDM_GETFOLDERIDLIST, 5, (LPARAM)buf);
+            ret = SendMessageA( GetParent(hDlg), CDM_GETFOLDERIDLIST, 5, (LPARAM)buf);
             ok(ret > 0, "CMD_GETFOLDERIDLIST not implemented\n");
             if (ret > 5)
                 ok(buf[0] == 0x66 && buf[1] == 0x66, "CMD_GETFOLDERIDLIST: The buffer was touched on failure\n");
@@ -89,7 +92,7 @@ static void test_DialogCancel(void)
     char szFileName[MAX_PATH] = "";
     char szInitialDir[MAX_PATH];
 
-    GetWindowsDirectory(szInitialDir, MAX_PATH);
+    GetWindowsDirectoryA(szInitialDir, MAX_PATH);
 
     ZeroMemory(&ofn, sizeof(ofn));
 
@@ -161,7 +164,7 @@ static UINT_PTR CALLBACK create_view_window2_hook(HWND dlg, UINT msg, WPARAM wPa
     {
         if (((LPNMHDR)lParam)->code == CDN_FOLDERCHANGE)
         {
-            IShellBrowser *shell_browser = (IShellBrowser *)SendMessage(GetParent(dlg), WM_USER + 7 /* WM_GETISHELLBROWSER */, 0, 0);
+            IShellBrowser *shell_browser = (IShellBrowser *)SendMessageA(GetParent(dlg), WM_USER + 7 /* WM_GETISHELLBROWSER */, 0, 0);
             IShellView *shell_view = NULL;
             IShellView2 *shell_view2 = NULL;
             SV2CVW2_PARAMS view_params;
@@ -233,7 +236,7 @@ static UINT_PTR CALLBACK create_view_window2_hook(HWND dlg, UINT msg, WPARAM wPa
 cleanup:
             if (shell_view2) IShellView2_Release(shell_view2);
             if (shell_view) IShellView_Release(shell_view);
-            PostMessage(GetParent(dlg), WM_COMMAND, IDCANCEL, 0);
+            PostMessageA(GetParent(dlg), WM_COMMAND, IDCANCEL, 0);
         }
     }
     return 0;
@@ -249,13 +252,13 @@ static UINT_PTR WINAPI template_hook(HWND dlg, UINT msg, WPARAM wParam, LPARAM l
         ok(p!=NULL, "Failed to get parent of template\n");
         cb = GetDlgItem(p,0x470);
         ok(cb!=NULL, "Failed to get filter combobox\n");
-        sel = SendMessage(cb, CB_GETCURSEL, 0, 0);
+        sel = SendMessageA(cb, CB_GETCURSEL, 0, 0);
         ok (sel != -1, "Failed to get selection from filter listbox\n");
     }
     if (msg == WM_NOTIFY)
     {
         if (((LPNMHDR)lParam)->code == CDN_FOLDERCHANGE)
-            PostMessage(GetParent(dlg), WM_COMMAND, IDCANCEL, 0);
+            PostMessageA(GetParent(dlg), WM_COMMAND, IDCANCEL, 0);
     }
     return 0;
 }
@@ -337,16 +340,16 @@ static UINT_PTR WINAPI resize_template_hook(HWND dlg, UINT msg, WPARAM wParam, L
         {
             DWORD style;
 
-            index = ((OPENFILENAME*)lParam)->lCustData;
+            index = ((OPENFILENAMEA*)lParam)->lCustData;
             count = 0;
             gotSWP_bottom = gotShowWindow = 0;
             /* test style */
-            style = GetWindowLong( parent, GWL_STYLE);
+            style = GetWindowLongA( parent, GWL_STYLE);
             if( resize_testcases[index].flags & OFN_ENABLESIZING)
                 if( !(style & WS_SIZEBOX)) {
                     win_skip( "OFN_ENABLESIZING flag not supported.\n");
                     resizesupported = FALSE;
-                    PostMessage( parent, WM_COMMAND, IDCANCEL, 0);
+                    PostMessageA( parent, WM_COMMAND, IDCANCEL, 0);
                 } else
                     ok( style & WS_SIZEBOX,
                             "testid %d: dialog should have a WS_SIZEBOX style.\n", index);
@@ -503,7 +506,7 @@ todo_wine
                     }
                 }
                 KillTimer( dlg, 0);
-                PostMessage( parent, WM_COMMAND, IDCANCEL, 0);
+                PostMessageA( parent, WM_COMMAND, IDCANCEL, 0);
             }
             count++;
         }
@@ -531,7 +534,7 @@ todo_wine
 
 static void test_resize(void)
 {
-    OPENFILENAME ofn = { OPENFILENAME_SIZE_VERSION_400 };
+    OPENFILENAMEA ofn = { OPENFILENAME_SIZE_VERSION_400A };
     char filename[1024] = {0};
     DWORD ret;
     int i;
@@ -539,13 +542,13 @@ static void test_resize(void)
     ofn.lpstrFile = filename;
     ofn.nMaxFile = 1024;
     ofn.lpfnHook = resize_template_hook;
-    ofn.hInstance = GetModuleHandle(NULL);
+    ofn.hInstance = GetModuleHandleA(NULL);
     ofn.lpTemplateName = "template_sz";
     for( i = 0; resize_testcases[i].flags != 0xffffffff; i++) {
         ofn.lCustData = i;
         ofn.Flags = resize_testcases[i].flags |
             OFN_ENABLEHOOK | OFN_EXPLORER| OFN_ENABLETEMPLATE | OFN_SHOWHELP ;
-        ret = GetOpenFileName(&ofn);
+        ret = GetOpenFileNameA(&ofn);
         ok(!ret, "GetOpenFileName returned %#x\n", ret);
         ret = CommDlgExtendedError();
         ok(!ret, "CommDlgExtendedError returned %#x\n", ret);
@@ -588,14 +591,14 @@ static UINT_PTR WINAPI test_ok_wndproc(HWND dlg, UINT msg, WPARAM wParam, LPARAM
     static UINT msgFILEOKSTRING;
     if (msg == WM_INITDIALOG)
     {
-        testcase = (ok_wndproc_testcase*)((OPENFILENAME*)lParam)->lCustData;
+        testcase = (ok_wndproc_testcase*)((OPENFILENAMEA*)lParam)->lCustData;
         testcase->actclose = TRUE;
-        msgFILEOKSTRING = RegisterWindowMessageA( FILEOKSTRING);
+        msgFILEOKSTRING = RegisterWindowMessageA( FILEOKSTRINGA);
     }
     if( msg == WM_NOTIFY) {
         if(((LPNMHDR)lParam)->code == CDN_FOLDERCHANGE) {
             SetTimer( dlg, 0, 100, 0);
-            PostMessage( parent, WM_COMMAND, IDOK, 0);
+            PostMessageA( parent, WM_COMMAND, IDOK, 0);
             return FALSE;
         } else if(((LPNMHDR)lParam)->code == CDN_FILEOK) {
             if( testcase->usemsgokstr)
@@ -616,11 +619,11 @@ static UINT_PTR WINAPI test_ok_wndproc(HWND dlg, UINT msg, WPARAM wParam, LPARAM
         /* the dialog did not close automatically */
         testcase->actclose = FALSE;
         KillTimer( dlg, 0);
-        PostMessage( parent, WM_COMMAND, IDCANCEL, 0);
+        PostMessageA( parent, WM_COMMAND, IDCANCEL, 0);
         return FALSE;
     }
     if( testcase && testcase->do_subclass)
-        return DefWindowProc( dlg, msg, wParam, lParam);
+        return DefWindowProcA( dlg, msg, wParam, lParam);
     return FALSE;
 }
 
@@ -633,7 +636,7 @@ static UINT_PTR WINAPI ok_template_hook(HWND dlg, UINT msg, WPARAM wParam, LPARA
 
 static void test_ok(void)
 {
-    OPENFILENAME ofn = { OPENFILENAME_SIZE_VERSION_400 };
+    OPENFILENAMEA ofn = { OPENFILENAME_SIZE_VERSION_400A };
     char filename[1024] = {0};
     char tmpfilename[ MAX_PATH];
     char curdir[MAX_PATH];
@@ -649,7 +652,7 @@ static void test_ok(void)
     }
     ofn.lpstrFile = filename;
     ofn.nMaxFile = 1024;
-    ofn.hInstance = GetModuleHandle(NULL);
+    ofn.hInstance = GetModuleHandleA(NULL);
     ofn.lpTemplateName = "template1";
     ofn.Flags =  OFN_ENABLEHOOK | OFN_EXPLORER| OFN_ENABLETEMPLATE ;
     for( i = 0; ok_testcases[i].retval != -1; i++) {
@@ -714,7 +717,7 @@ static UINT_PTR WINAPI template_hook_arrange(HWND dlgChild, UINT msg, WPARAM wPa
 
     dlgParent = GetParent( dlgChild);
     if (msg == WM_INITDIALOG) {
-        index = ((OPENFILENAME*)lParam)->lCustData;
+        index = ((OPENFILENAMEA*)lParam)->lCustData;
         /* get the positions before rearrangement */
         GetClientRect( dlgParent, &clrcParent);
         GetClientRect( dlgChild, &clrcChild);
@@ -769,7 +772,7 @@ static UINT_PTR WINAPI template_hook_arrange(HWND dlgChild, UINT msg, WPARAM wPa
                 else
                     expectx +=  clrcChild.right - ( rcStc32.right - rcStc32.left) ;
             }
-            style = GetWindowLong( dlgParent, GWL_STYLE);
+            style = GetWindowLongA( dlgParent, GWL_STYLE);
             if( !(style & WS_SIZEBOX)) {
                 /* without the OFN_ENABLESIZING flag */
                 ok( wrcParent.bottom - wrcParent.top == expecty,
@@ -789,7 +792,7 @@ static UINT_PTR WINAPI template_hook_arrange(HWND dlgChild, UINT msg, WPARAM wPa
             }
 
         }
-        PostMessage( dlgParent, WM_COMMAND, IDCANCEL, 0);
+        PostMessageA( dlgParent, WM_COMMAND, IDCANCEL, 0);
     }
     return 0;
 }
@@ -807,8 +810,8 @@ static void test_arrange(void)
     int i;
 
     /* load subdialog template into memory */
-    hRes = FindResource( GetModuleHandle(NULL), "template_stc32", (LPSTR)RT_DIALOG);
-    hDlgTmpl = LoadResource( GetModuleHandle(NULL), hRes );
+    hRes = FindResourceA( GetModuleHandleA(NULL), "template_stc32", (LPSTR)RT_DIALOG);
+    hDlgTmpl = LoadResource( GetModuleHandleA(NULL), hRes );
     /* get pointers to the structures for the dialog and the controls */
     pv = LockResource( hDlgTmpl );
     template = (DLGTEMPLATE*)pv;
@@ -882,7 +885,7 @@ static UINT_PTR CALLBACK path_hook_proc( HWND hDlg, UINT msg, WPARAM wParam, LPA
         nmh = (LPNMHDR) lParam;
         if( nmh->code == CDN_INITDONE)
         {
-            PostMessage( GetParent(hDlg), WM_COMMAND, IDCANCEL, FALSE);
+            PostMessageA( GetParent(hDlg), WM_COMMAND, IDCANCEL, FALSE);
         }
         else if ( nmh->code == CDN_FOLDERCHANGE)
         {
@@ -909,7 +912,7 @@ static void test_getfolderpath(void)
     /* We need to pick a different directory as the other tests because of new
      * Windows 7 behavior.
      */
-    GetSystemDirectory(szInitialDir, MAX_PATH);
+    GetSystemDirectoryA(szInitialDir, MAX_PATH);
     lstrcpyA(SYSDIR, szInitialDir);
 
     ZeroMemory(&ofn, sizeof(ofn));
@@ -964,7 +967,7 @@ static void test_resizable2(void)
     ret = CommDlgExtendedError();
     ok(!ret, "CommDlgExtendedError returned %#x\n", ret);
     ofn.Flags = OFN_EXPLORER | OFN_ENABLETEMPLATEHANDLE;
-    ofn.hInstance = LoadResource( GetModuleHandle(NULL), FindResource( GetModuleHandle(NULL), "template1", (LPSTR)RT_DIALOG));
+    ofn.hInstance = LoadResource( GetModuleHandleA(NULL), FindResourceA( GetModuleHandleA(NULL), "template1", (LPSTR)RT_DIALOG));
     ofn.lpTemplateName = NULL;
     ret = GetOpenFileNameA(&ofn);
     ok( ret != ISSIZABLE, "File Dialog should NOT have been sizable\n");
@@ -981,7 +984,7 @@ static void test_resizable2(void)
 static void test_mru(void)
 {
     ok_wndproc_testcase testcase = {0};
-    OPENFILENAME ofn = { OPENFILENAME_SIZE_VERSION_400 };
+    OPENFILENAMEA ofn = { OPENFILENAME_SIZE_VERSION_400A };
     const char *test_dir_name = "C:\\mru_test";
     const char *test_file_name = "test.txt";
     const char *test_full_path = "C:\\mru_test\\test.txt";
@@ -991,7 +994,7 @@ static void test_mru(void)
     ofn.lpstrFile = filename_buf;
     ofn.nMaxFile = sizeof(filename_buf);
     ofn.lpTemplateName = "template1";
-    ofn.hInstance = GetModuleHandle(NULL);
+    ofn.hInstance = GetModuleHandleA(NULL);
     ofn.Flags =  OFN_ENABLEHOOK | OFN_EXPLORER | OFN_ENABLETEMPLATE | OFN_NOCHANGEDIR;
     ofn.lCustData = (LPARAM)&testcase;
     ofn.lpfnHook = test_ok_wndproc;
@@ -1032,19 +1035,19 @@ static UINT_PTR WINAPI test_extension_wndproc(HWND dlg, UINT msg, WPARAM wParam,
     HWND parent = GetParent( dlg);
     if( msg == WM_NOTIFY) {
         SetTimer( dlg, 0, 1000, 0);
-        PostMessage( parent, WM_COMMAND, IDOK, 0);
+        PostMessageA( parent, WM_COMMAND, IDOK, 0);
     }
     if( msg == WM_TIMER) {
         /* the dialog did not close automatically */
         KillTimer( dlg, 0);
-        PostMessage( parent, WM_COMMAND, IDCANCEL, 0);
+        PostMessageA( parent, WM_COMMAND, IDCANCEL, 0);
     }
     return FALSE;
 }
 
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
 
-static void test_extension_helper(OPENFILENAME* ofn, const char *filter,
+static void test_extension_helper(OPENFILENAMEA* ofn, const char *filter,
                                   const char *expected_filename)
 {
     char *filename_ptr;
@@ -1067,7 +1070,7 @@ static void test_extension_helper(OPENFILENAME* ofn, const char *filter,
 
 static void test_extension(void)
 {
-    OPENFILENAME ofn = { OPENFILENAME_SIZE_VERSION_400 };
+    OPENFILENAMEA ofn = { OPENFILENAME_SIZE_VERSION_400A };
     char filename[1024] = {0};
     char curdir[MAX_PATH];
     unsigned int i;
@@ -1139,7 +1142,7 @@ static BOOL WINAPI test_null_enum(HWND hwnd, LPARAM lParam)
     CHAR className[20];
     if(GetClassNameA(hwnd, className, sizeof(className)) > 0 && !strcmp("Edit",className))
     {
-        SetWindowText(hwnd, "testfile");
+        SetWindowTextA(hwnd, "testfile");
         return FALSE; /* break window enumeration */
     }
     return TRUE;
@@ -1155,11 +1158,11 @@ static UINT_PTR WINAPI test_null_wndproc(HWND dlg, UINT msg, WPARAM wParam, LPAR
     }
     if( msg == WM_TIMER) {
         if(!wParam)
-            PostMessage( parent, WM_COMMAND, IDOK, 0);
+            PostMessageA( parent, WM_COMMAND, IDOK, 0);
         else {
             /* the dialog did not close automatically */
             KillTimer( dlg, 0);
-            PostMessage( parent, WM_COMMAND, IDCANCEL, 0);
+            PostMessageA( parent, WM_COMMAND, IDCANCEL, 0);
         }
     }
     return FALSE;

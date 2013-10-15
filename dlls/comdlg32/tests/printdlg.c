@@ -35,6 +35,8 @@
 
 #include "cderr.h"
 #include "commdlg.h"
+#include "dlgs.h"
+#include "winspool.h"
 
 #include "wine/test.h"
 
@@ -131,7 +133,7 @@ static UINT_PTR CALLBACK print_hook_proc(HWND hdlg, UINT msg, WPARAM wp, LPARAM 
         /* some driver popup a dialog and hung the test or silently limit the number of copies,
            when trying to set more than 999 copies */
         SetDlgItemInt(hdlg, edt3, 123, FALSE);
-        PostMessage(hdlg, WM_COMMAND, IDOK, FALSE);
+        PostMessageA(hdlg, WM_COMMAND, IDOK, FALSE);
     }
     return 0;
 }
@@ -146,7 +148,7 @@ static void test_PrintDlgA(void)
     LPCSTR port;
     CHAR   buffer[MAX_PATH];
     LPSTR  ptr;
-    DEVMODE *dm;
+    DEVMODEA *dm;
 
     pDlg = HeapAlloc(GetProcessHeap(), 0, (sizeof(PRINTDLGA)) * 2);
     if (!pDlg) return;
@@ -230,7 +232,7 @@ static void test_PrintDlgA(void)
         ok( lstrcmpiA(driver, buffer) == 0,
             "got driver '%s' (expected '%s')\n", driver, buffer);
 
-        n_copies = DeviceCapabilities(device, port, DC_COPIES, NULL, NULL);
+        n_copies = DeviceCapabilitiesA(device, port, DC_COPIES, NULL, NULL);
         ok(n_copies > 0, "DeviceCapabilities(DC_COPIES) failed\n");
     }
 
@@ -249,7 +251,7 @@ static void test_PrintDlgA(void)
         pDlg->lStructSize = sizeof(*pDlg);
         pDlg->Flags = PD_ENABLEPRINTHOOK;
         pDlg->lpfnPrintHook = print_hook_proc;
-        res = PrintDlg(pDlg);
+        res = PrintDlgA(pDlg);
         ok(res, "PrintDlg error %#x\n", CommDlgExtendedError());
         /* Version of Microsoft XPS Document Writer driver shipped before Win7
          * reports that it can print multiple copies, but returns 1.
@@ -268,7 +270,7 @@ static void test_PrintDlgA(void)
         pDlg->lStructSize = sizeof(*pDlg);
         pDlg->Flags = PD_ENABLEPRINTHOOK | PD_USEDEVMODECOPIES;
         pDlg->lpfnPrintHook = print_hook_proc;
-        res = PrintDlg(pDlg);
+        res = PrintDlgA(pDlg);
         ok(res, "PrintDlg error %#x\n", CommDlgExtendedError());
         ok(pDlg->nCopies == 1, "expected nCopies 1, got %d\n", pDlg->nCopies);
         ok(pDlg->hDevMode != 0, "hDevMode should not be 0\n");
@@ -390,7 +392,7 @@ static void test_PrintDlgExW(void)
     }
 
     /* Set CommDlgExtendedError != 0 */
-    PrintDlg(NULL);
+    PrintDlgA(NULL);
     SetLastError(0xdeadbeef);
     res = pPrintDlgExW(NULL);
     ok( (res == E_INVALIDARG),
@@ -404,7 +406,7 @@ static void test_PrintDlgExW(void)
     /* lStructSize must be exact */
     ZeroMemory(pDlg, sizeof(PRINTDLGEXW));
     pDlg->lStructSize = sizeof(PRINTDLGEXW) - 1;
-    PrintDlg(NULL);
+    PrintDlgA(NULL);
     SetLastError(0xdeadbeef);
     res = pPrintDlgExW(pDlg);
     ok( (res == E_INVALIDARG),
@@ -414,7 +416,7 @@ static void test_PrintDlgExW(void)
 
     ZeroMemory(pDlg, sizeof(PRINTDLGEXW));
     pDlg->lStructSize = sizeof(PRINTDLGEXW) + 1;
-    PrintDlg(NULL);
+    PrintDlgA(NULL);
     SetLastError(0xdeadbeef);
     res = pPrintDlgExW(pDlg);
     ok( (res == E_INVALIDARG),
