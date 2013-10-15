@@ -1005,36 +1005,51 @@ static void output_sources(void)
         }
         else if (!strcmp( ext, "idl" ))  /* IDL file */
         {
-            char *name;
-            int got_header = 0;
-            const char *suffix = "cips";
+            char *targets[8];
+            int nb_targets = 0;
+            char ending[] = "_?.c";
+            const char *suffix;
+            char *header = strmake( "%s.h", obj );
 
-            name = strmake( "%s.tlb", obj );
-            if (find_src_file( name )) column += output( "%s %s_t.res", name, obj );
-            else
+            if (find_target_src_file( source->name, ".tlb" ))
             {
-                got_header = 1;
-                column += output( "%s.h", obj );
-            }
-            free( name );
-
-            while (*suffix)
-            {
-                name = strmake( "%s_%c.c", obj, *suffix );
-                if (find_src_file( name ))
-                {
-                    if (!got_header++) column += output( " %s.h", obj );
-                    column += output( " %s", name );
-                }
-                free( name );
-                suffix++;
+                output( "%s.tlb %s_t.res: $(WIDL)\n", obj, obj );
+                output( "\t$(WIDL) $(TARGETFLAGS) $(IDLFLAGS) -t -o $@ %s\n", source->filename );
+                targets[nb_targets++] = strmake( "%s.tlb", obj );
+                targets[nb_targets++] = strmake( "%s_t.res", obj );
             }
 
-            name = strmake( "%s_r.res", obj );
-            if (find_src_file( name )) column += output( " %s", name );
-            free( name );
+            for (suffix = "cips"; *suffix; suffix++)
+            {
+                ending[1] = *suffix;
+                if (!find_target_src_file( source->name, ending )) continue;
+                output( "%s%s: $(WIDL)\n", obj, ending );
+                output( "\t$(WIDL) $(IDLFLAGS) -%c -o $@ %s\n",
+                        *suffix == 'i' ? 'u' : *suffix, source->filename );
+                targets[nb_targets++] = strmake( "%s%s", obj, ending );
+            }
 
-            column += output( ": %s", source->filename );
+            if (find_target_src_file( source->name, "_r.res" ))
+            {
+                output( "%s_r.res: $(WIDL)\n", obj );
+                output( "\t$(WIDL) $(IDLFLAGS) -r -o $@ %s\n", source->filename );
+                targets[nb_targets++] = strmake( "%s_r.res", obj );
+            }
+
+            if (!nb_targets || find_include_file( header ))
+            {
+                output( "%s.h: $(WIDL)\n", obj );
+                output( "\t$(WIDL) $(IDLFLAGS) -h -o $@ %s\n", source->filename );
+                targets[nb_targets++] = header;
+            }
+            else free( header );
+
+            for (i = 0; i < nb_targets; i++)
+            {
+                column += output( "%s%c", targets[i], i < nb_targets - 1 ? ' ' : ':' );
+                free( targets[i] );
+            }
+            column += output( " %s", source->filename );
         }
         else if (!strcmp( ext, "tlb" ) || !strcmp( ext, "res" ) || !strcmp( ext, "pot" ))
         {

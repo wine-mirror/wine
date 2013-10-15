@@ -36,7 +36,7 @@ CROSSOBJS = $(OBJS:.o=.cross.o)
 
 # Implicit rules
 
-.SUFFIXES: .idl .tlb .h .ok .man.in .man _c.c _i.c _p.c _s.c _r.res _t.res .cross.o .po .mo @MAINTAINER_MODE@ .sfd .ttf .svg .ico .bmp
+.SUFFIXES: .ok .man.in .man .cross.o .po .mo @MAINTAINER_MODE@ .sfd .ttf .svg .ico .bmp
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $@ $<
@@ -46,30 +46,6 @@ CROSSOBJS = $(OBJS:.o=.cross.o)
 
 .c.cross.o:
 	$(CROSSCC) -c $(INCLUDES) $(DEFS) -DWINE_CROSSTEST $(CPPFLAGS) $(CFLAGS) -o $@ $<
-
-.idl.h:
-	$(WIDL) $(IDLFLAGS) -h -o $@ $<
-
-.idl_c.c:
-	$(WIDL) $(IDLFLAGS) -c -o $@ $<
-
-.idl_i.c:
-	$(WIDL) $(IDLFLAGS) -u -o $@ $<
-
-.idl_p.c:
-	$(WIDL) $(IDLFLAGS) -p -o $@ $<
-
-.idl_r.res:
-	$(WIDL) $(IDLFLAGS) -r -o $@ $<
-
-.idl_s.c:
-	$(WIDL) $(IDLFLAGS) -s -o $@ $<
-
-.idl.tlb:
-	$(WIDL) $(TARGETFLAGS) $(IDLFLAGS) -t -o $@ $<
-
-.idl_t.res:
-	$(WIDL) $(TARGETFLAGS) $(IDLFLAGS) -t -o $@ $<
 
 .c.ok:
 	$(RUNTEST) $(RUNTESTFLAGS) $< && touch $@
@@ -129,7 +105,7 @@ $(IMPORTLIB:%=lib%.cross.a): $(MAINSPEC) $(IMPLIB_SRCS:.c=.cross.o)
 # Rules for dependencies
 
 DEPEND_SRCS = $(C_SRCS) $(OBJC_SRCS) $(RC_SRCS) $(MC_SRCS) $(PO_SRCS:.rc=.pot) \
-              $(IDL_H_SRCS) $(IDL_C_SRCS) $(IDL_I_SRCS) $(IDL_P_SRCS) $(IDL_S_SRCS) \
+              $(IDL_H_SRCS) $(IDL_C_SRCS) $(IDL_I_SRCS) $(IDL_P_SRCS) $(IDL_R_SRCS) $(IDL_S_SRCS) \
               $(IDL_GEN_C_SRCS) $(IDL_R_SRCS:.idl=_r.res) $(IDL_TLB_SRCS) $(IDL_TLB_SRCS:.idl=.tlb) \
               $(BISON_SRCS) $(LEX_SRCS) $(EXTRA_OBJS)
 
@@ -206,9 +182,5 @@ $(INSTALLDIRS):
 install install-lib install-dev uninstall::
 
 .PHONY: install install-lib install-dev uninstall
-
-# Misc. rules
-
-$(IDL_GEN_HEADERS) $(IDL_GEN_C_SRCS) $(IDL_TLB_SRCS:.idl=.tlb) $(IDL_TLB_RES) $(IDL_R_SRCS:.idl=_r.res): $(WIDL)
 
 # End of global rules
