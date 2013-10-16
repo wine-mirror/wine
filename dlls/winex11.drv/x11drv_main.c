@@ -609,6 +609,8 @@ static void thread_detach(void)
         if (data->font_set) XFreeFontSet( data->display, data->font_set );
         XCloseDisplay( data->display );
         HeapFree( GetProcessHeap(), 0, data );
+        /* clear data in case we get re-entered from user32 before the thread is truly dead */
+        TlsSetValue( thread_data_tls_index, NULL );
     }
 }
 
