@@ -37,6 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(atl);
  */
 DWORD WINAPI AtlGetVersion(void *pReserved)
 {
+    TRACE("version %04x (%p)\n", _ATL_VER, pReserved);
    return _ATL_VER;
 }
 
@@ -65,7 +66,7 @@ BOOL WINAPI AtlAxWinInit(void)
     const WCHAR AtlAxWin110[] = {'A','t','l','A','x','W','i','n','1','1','0',0};
     const WCHAR AtlAxWinLic110[] = {'A','t','l','A','x','W','i','n','L','i','c','1','1','0',0};
 
-    FIXME("semi-stub\n");
+    FIXME("version %04x semi-stub\n", _ATL_VER);
 
     if ( FAILED( OleInitialize(NULL) ) )
         return FALSE;
