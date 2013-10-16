@@ -1522,7 +1522,6 @@ if(use_midl_tlb) {
 }
 
 static void test_CreateTypeLib(SYSKIND sys) {
-    static const WCHAR stdoleW[] = {'s','t','d','o','l','e','2','.','t','l','b',0};
     static OLECHAR typelibW[] = {'t','y','p','e','l','i','b',0};
     static OLECHAR helpfileW[] = {'C',':','\\','b','o','g','u','s','.','h','l','p',0};
     static OLECHAR interface1W[] = {'i','n','t','e','r','f','a','c','e','1',0};
@@ -1591,7 +1590,7 @@ static void test_CreateTypeLib(SYSKIND sys) {
 
     trace("CreateTypeLib tests\n");
 
-    hres = LoadTypeLib(stdoleW, &stdole);
+    hres = LoadTypeLib(wszStdOle2, &stdole);
     ok(hres == S_OK, "got %08x\n", hres);
 
     hres = ITypeLib_GetTypeInfoOfGuid(stdole, &IID_IUnknown, &unknown);
@@ -5053,6 +5052,147 @@ static void test_GetLibAttr(void)
     ITypeLib_Release(tl);
 }
 
+HRESULT WINAPI uk_QueryInterface(IUnknown *obj, REFIID iid, void **out)
+{
+    return E_NOINTERFACE;
+}
+
+ULONG WINAPI uk_AddRef(IUnknown *obj)
+{
+    return 2;
+}
+
+ULONG WINAPI uk_Release(IUnknown *obj)
+{
+    return 1;
+}
+
+IUnknownVtbl vt = {
+    uk_QueryInterface,
+    uk_AddRef,
+    uk_Release,
+};
+
+IUnknown uk = {&vt};
+
+static void test_stub(void)
+{
+    HRESULT hr;
+    CLSID clsid;
+    IPSFactoryBuffer *factory;
+    IRpcStubBuffer *base_stub;
+    ITypeLib *stdole;
+    ICreateTypeLib2 *ctl;
+    ICreateTypeInfo *cti;
+    ITypeLib *tl;
+    ITypeInfo *unk, *ti;
+    HREFTYPE href;
+    char filenameA[MAX_PATH];
+    WCHAR filenameW[MAX_PATH];
+    HKEY hkey;
+    LONG lr;
+
+    static const GUID libguid = {0x3b9ff02e,0x9675,0x4861,{0xb7,0x81,0xce,0xae,0xa4,0x78,0x2a,0xcc}};
+    static const GUID interfaceguid = {0x3b9ff02f,0x9675,0x4861,{0xb7,0x81,0xce,0xae,0xa4,0x78,0x2a,0xcc}};
+    static const GUID coclassguid = {0x3b9ff030,0x9675,0x4861,{0xb7,0x81,0xce,0xae,0xa4,0x78,0x2a,0xcc}};
+    static OLECHAR interfaceW[] = {'i','n','t','e','r','f','a','c','e',0};
+    static OLECHAR classW[] = {'c','l','a','s','s',0};
+
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    hr = LoadTypeLib(wszStdOle2, &stdole);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ITypeLib_GetTypeInfoOfGuid(stdole, &IID_IUnknown, &unk);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    GetTempFileNameA(".", "tlb", 0, filenameA);
+    MultiByteToWideChar(CP_ACP, 0, filenameA, -1, filenameW, MAX_PATH);
+
+    hr = CreateTypeLib2(SYS_WIN32, filenameW, &ctl);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeLib2_SetGuid(ctl, &libguid);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeLib2_SetLcid(ctl, LOCALE_NEUTRAL);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeLib2_CreateTypeInfo(ctl, interfaceW, TKIND_INTERFACE, &cti);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_SetGuid(cti, &interfaceguid);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_SetTypeFlags(cti, TYPEFLAG_FOLEAUTOMATION);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_AddRefTypeInfo(cti, unk, &href);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_AddImplType(cti, 0, href);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_QueryInterface(cti, &IID_ITypeInfo, (void**)&ti);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    ICreateTypeInfo_Release(cti);
+    ITypeInfo_Release(unk);
+    ITypeLib_Release(stdole);
+
+    hr = ICreateTypeLib2_CreateTypeInfo(ctl, classW, TKIND_COCLASS, &cti);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_SetGuid(cti, &coclassguid);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_AddRefTypeInfo(cti, ti, &href);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_AddImplType(cti, 0, href);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    ITypeInfo_Release(ti);
+    ICreateTypeInfo_Release(cti);
+
+    hr = ICreateTypeLib2_SaveAllChanges(ctl);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeLib2_QueryInterface(ctl, &IID_ITypeLib, (void**)&tl);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = RegisterTypeLib(tl, filenameW, NULL);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    ITypeLib_Release(tl);
+    ok(0 == ICreateTypeLib2_Release(ctl), "Typelib still has references\n");
+
+    /* SYS_WIN32 typelibs should be registered only as 32-bit */
+    lr = RegOpenKeyExA(HKEY_CLASSES_ROOT, "TypeLib\\{3b9ff02e-9675-4861-b781-ceaea4782acc}\\0.0\\0\\win64", 0, KEY_READ, &hkey);
+    ok(lr == ERROR_FILE_NOT_FOUND, "got wrong return code: %u\n", lr);
+
+    lr = RegOpenKeyExA(HKEY_CLASSES_ROOT, "TypeLib\\{3b9ff02e-9675-4861-b781-ceaea4782acc}\\0.0\\0\\win32", 0, KEY_READ, &hkey);
+    ok(lr == ERROR_SUCCESS, "got wrong return code: %u\n", lr);
+    RegCloseKey(hkey);
+
+    hr = CoGetPSClsid(&interfaceguid, &clsid);
+    ok(hr == S_OK, "got: %x\n", hr);
+
+    hr = CoGetClassObject(&clsid, CLSCTX_INPROC_SERVER, NULL,
+            &IID_IPSFactoryBuffer, (void **)&factory);
+    ok(hr == S_OK, "got: %x\n", hr);
+
+    hr = IPSFactoryBuffer_CreateStub(factory, &interfaceguid, &uk, &base_stub);
+    ok(hr == S_OK, "got: %x\n", hr);
+
+    IPSFactoryBuffer_Release(factory);
+
+    UnRegisterTypeLib(&libguid, 0, 0, 0, SYS_WIN32);
+    DeleteFileW(filenameW);
+
+    CoUninitialize();
+}
+
 START_TEST(typelib)
 {
     const char *filename;
@@ -5091,4 +5231,5 @@ START_TEST(typelib)
     test_TypeInfo2_GetContainingTypeLib();
     test_LoadRegTypeLib();
     test_GetLibAttr();
+    test_stub();
 }
