@@ -308,7 +308,7 @@ static void test_createswapchain(IDXGIDevice *device)
     IDXGISwapChain *swapchain;
     DXGI_SWAP_CHAIN_DESC creation_desc, result_desc;
     HRESULT hr;
-    WNDCLASS wc = {0};
+    WNDCLASSA wc = {0};
     UINT i;
 
     const struct refresh_rates refresh_list[] =
@@ -321,10 +321,10 @@ static void test_createswapchain(IDXGIDevice *device)
     };
 
 
-    wc.lpfnWndProc = DefWindowProc;
+    wc.lpfnWndProc = DefWindowProcA;
     wc.lpszClassName = "dxgi_test_wc";
 
-    RegisterClass(&wc);
+    RegisterClassA(&wc);
 
     creation_desc.OutputWindow = 0;
     creation_desc.BufferDesc.Width = 800;
@@ -338,7 +338,7 @@ static void test_createswapchain(IDXGIDevice *device)
     creation_desc.SampleDesc.Quality = 0;
     creation_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     creation_desc.BufferCount = 1;
-    creation_desc.OutputWindow = CreateWindow("dxgi_test_wc", "dxgi_test", 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    creation_desc.OutputWindow = CreateWindowA("dxgi_test_wc", "dxgi_test", 0, 0, 0, 0, 0, 0, 0, 0, 0);
     creation_desc.Windowed = TRUE;
     creation_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
     creation_desc.Flags = 0;
