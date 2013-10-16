@@ -486,6 +486,7 @@ static const char * const CRYPT_knownLocations[] = {
  "/etc/ssl/certs/ca-certificates.crt",
  "/etc/ssl/certs",
  "/etc/pki/tls/certs/ca-bundle.crt",
+ "/usr/share/ca-certificates/ca-bundle.crt",
  "/usr/local/share/certs/",
  "/etc/sfw/openssl/certs",
 };
