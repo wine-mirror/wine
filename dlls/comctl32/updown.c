@@ -482,6 +482,25 @@ static LRESULT UPDOWN_KeyPressed(UPDOWN_INFO *infoPtr, int key)
     return 0;
 }
 
+static int UPDOWN_GetPos(UPDOWN_INFO *infoPtr, BOOL *err)
+{
+    BOOL succ = UPDOWN_GetBuddyInt(infoPtr);
+    int val = infoPtr->CurVal;
+
+    if(!UPDOWN_InBounds(infoPtr, val)) {
+        if((infoPtr->MinVal < infoPtr->MaxVal && val < infoPtr->MinVal)
+                || (infoPtr->MinVal > infoPtr->MaxVal && val > infoPtr->MinVal))
+            val = infoPtr->MinVal;
+        else
+            val = infoPtr->MaxVal;
+
+        succ = FALSE;
+    }
+
+    if(err) *err = !succ;
+    return val;
+}
+
 static int UPDOWN_SetPos(UPDOWN_INFO *infoPtr, int pos)
 {
     int ret = infoPtr->CurVal;
@@ -1090,8 +1109,11 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, L
 
 	case UDM_GETPOS:
 	{
-	    BOOL ret = UPDOWN_GetBuddyInt (infoPtr);
-	    return MAKELONG(infoPtr->CurVal, ret ? 0 : 1);
+            BOOL err;
+            int pos;
+
+            pos = UPDOWN_GetPos(infoPtr, &err);
+            return MAKELONG(pos, err);
 	}
 	case UDM_SETPOS:
 	{
@@ -1119,9 +1141,7 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, L
 
 	case UDM_GETPOS32:
 	{
-	    BOOL ret = UPDOWN_GetBuddyInt (infoPtr);
-	    if ((LPBOOL)lParam) *((LPBOOL)lParam) = !ret;
-	    return infoPtr->CurVal;
+            return UPDOWN_GetPos(infoPtr, (BOOL*)lParam);
 	}
 	case UDM_SETPOS32:
 	{
