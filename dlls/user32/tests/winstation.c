@@ -542,6 +542,15 @@ todo_wine
 
     SetLastError(0xdeadbeef);
     ret = SendInput(1, inputs, sizeof(INPUT));
+    if(broken(GetLastError() == 0xdeadbeef))
+    {
+        SetThreadDesktop(old_thread_desk);
+        CloseDesktop(old_input_desk);
+        CloseDesktop(input_desk);
+        CloseDesktop(new_desk);
+        win_skip("Skip tests on NT4\n");
+        return;
+    }
 todo_wine
     ok(GetLastError() == ERROR_ACCESS_DENIED, "unexpected last error %08x\n", GetLastError());
     ok(ret == 1 || broken(ret == 0) /* Win64 */, "unexpected return count %d\n", ret);
