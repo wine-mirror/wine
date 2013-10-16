@@ -59,7 +59,7 @@ static void test_bitmap_info(HBITMAP hbm, INT expected_depth, const BITMAPINFOHE
     INT ret, width_bytes;
     BYTE buf[512], buf_cmp[512];
 
-    ret = GetObject(hbm, sizeof(bm), &bm);
+    ret = GetObjectW(hbm, sizeof(bm), &bm);
     ok(ret == sizeof(bm), "GetObject returned %d\n", ret);
 
     ok(bm.bmType == 0, "wrong bm.bmType %d\n", bm.bmType);
@@ -88,19 +88,19 @@ static void test_bitmap_info(HBITMAP hbm, INT expected_depth, const BITMAPINFOHE
         "buffers do not match, depth %d\n", bmih->biBitCount);
 
     /* test various buffer sizes for GetObject */
-    ret = GetObject(hbm, sizeof(*bma) * 2, bma);
+    ret = GetObjectW(hbm, sizeof(*bma) * 2, bma);
     ok(ret == sizeof(*bma), "wrong size %d\n", ret);
 
-    ret = GetObject(hbm, sizeof(bm) / 2, &bm);
+    ret = GetObjectW(hbm, sizeof(bm) / 2, &bm);
     ok(ret == 0, "%d != 0\n", ret);
 
-    ret = GetObject(hbm, 0, &bm);
+    ret = GetObjectW(hbm, 0, &bm);
     ok(ret == 0, "%d != 0\n", ret);
 
-    ret = GetObject(hbm, 1, &bm);
+    ret = GetObjectW(hbm, 1, &bm);
     ok(ret == 0, "%d != 0\n", ret);
 
-    ret = GetObject(hbm, 0, NULL);
+    ret = GetObjectW(hbm, 0, NULL);
     ok(ret == sizeof(bm), "wrong size %d\n", ret);
 }
 
@@ -248,7 +248,7 @@ static void test_dib_info(HBITMAP hbm, const void *bits, const BITMAPINFOHEADER 
     INT ret, bm_width_bytes, dib_width_bytes;
     BYTE *buf;
 
-    ret = GetObject(hbm, sizeof(bm), &bm);
+    ret = GetObjectW(hbm, sizeof(bm), &bm);
     ok(ret == sizeof(bm), "GetObject returned %d\n", ret);
 
     ok(bm.bmType == 0, "wrong bm.bmType %d\n", bm.bmType);
@@ -280,30 +280,30 @@ static void test_dib_info(HBITMAP hbm, const void *bits, const BITMAPINFOHEADER 
 
     /* test various buffer sizes for GetObject */
     memset(&ds, 0xAA, sizeof(ds));
-    ret = GetObject(hbm, sizeof(*bma) * 2, bma);
+    ret = GetObjectW(hbm, sizeof(*bma) * 2, bma);
     ok(ret == sizeof(*bma), "wrong size %d\n", ret);
     ok(bm.bmWidth == bmih->biWidth, "wrong bm.bmWidth %d\n", bm.bmWidth);
     ok(bm.bmHeight == abs(bmih->biHeight), "wrong bm.bmHeight %d\n", bm.bmHeight);
     ok(bm.bmBits == bits, "wrong bm.bmBits %p != %p\n", bm.bmBits, bits);
 
-    ret = GetObject(hbm, sizeof(bm) / 2, &bm);
+    ret = GetObjectW(hbm, sizeof(bm) / 2, &bm);
     ok(ret == 0, "%d != 0\n", ret);
 
-    ret = GetObject(hbm, 0, &bm);
+    ret = GetObjectW(hbm, 0, &bm);
     ok(ret == 0, "%d != 0\n", ret);
 
-    ret = GetObject(hbm, 1, &bm);
+    ret = GetObjectW(hbm, 1, &bm);
     ok(ret == 0, "%d != 0\n", ret);
 
     /* test various buffer sizes for GetObject */
-    ret = GetObject(hbm, 0, NULL);
+    ret = GetObjectW(hbm, 0, NULL);
     ok(ret == sizeof(bm), "wrong size %d\n", ret);
 
-    ret = GetObject(hbm, sizeof(*dsa) * 2, dsa);
+    ret = GetObjectW(hbm, sizeof(*dsa) * 2, dsa);
     ok(ret == sizeof(*dsa), "wrong size %d\n", ret);
 
     memset(&ds, 0xAA, sizeof(ds));
-    ret = GetObject(hbm, sizeof(ds), &ds);
+    ret = GetObjectW(hbm, sizeof(ds), &ds);
     ok(ret == sizeof(ds), "wrong size %d\n", ret);
 
     ok(ds.dsBm.bmBits == bits, "wrong bm.bmBits %p != %p\n", ds.dsBm.bmBits, bits);
@@ -326,16 +326,16 @@ static void test_dib_info(HBITMAP hbm, const void *bits, const BITMAPINFOHEADER 
     ok(ds.dsBmih.biYPelsPerMeter == bmih->biYPelsPerMeter, "%d != %d\n", ds.dsBmih.biYPelsPerMeter, bmih->biYPelsPerMeter);
 
     memset(&ds, 0xAA, sizeof(ds));
-    ret = GetObject(hbm, sizeof(ds) - 4, &ds);
+    ret = GetObjectW(hbm, sizeof(ds) - 4, &ds);
     ok(ret == sizeof(ds.dsBm), "wrong size %d\n", ret);
     ok(ds.dsBm.bmWidth == bmih->biWidth, "%d != %d\n", ds.dsBmih.biWidth, bmih->biWidth);
     ok(ds.dsBm.bmHeight == abs(bmih->biHeight), "%d != %d\n", ds.dsBmih.biHeight, abs(bmih->biHeight));
     ok(ds.dsBm.bmBits == bits, "%p != %p\n", ds.dsBm.bmBits, bits);
 
-    ret = GetObject(hbm, 0, &ds);
+    ret = GetObjectW(hbm, 0, &ds);
     ok(ret == 0, "%d != 0\n", ret);
 
-    ret = GetObject(hbm, 1, &ds);
+    ret = GetObjectW(hbm, 1, &ds);
     ok(ret == 0, "%d != 0\n", ret);
 }
 
@@ -457,7 +457,7 @@ static void test_dibsections(void)
 
     hdib = CreateDIBSection(hdc, pbmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
     ok(hdib != NULL, "CreateDIBSection error %d\n", GetLastError());
-    ok(GetObject(hdib, sizeof(DIBSECTION), &dibsec) != 0, "GetObject failed for DIBSection\n");
+    ok(GetObjectW(hdib, sizeof(DIBSECTION), &dibsec) != 0, "GetObject failed for DIBSection\n");
     ok(dibsec.dsBm.bmBits == bits, "dibsec.dsBits %p != bits %p\n", dibsec.dsBm.bmBits, bits);
 
     /* test the DIB memory */
@@ -530,12 +530,12 @@ static void test_dibsections(void)
 
     hdib = CreateDIBSection(hdc, pbmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
     ok(hdib != NULL, "CreateDIBSection failed\n");
-    ok(GetObject(hdib, sizeof(DIBSECTION), &dibsec) != 0, "GetObject failed for DIBSection\n");
+    ok(GetObjectW(hdib, sizeof(DIBSECTION), &dibsec) != 0, "GetObject failed for DIBSection\n");
     ok(dibsec.dsBmih.biClrUsed == 2,
         "created DIBSection: wrong biClrUsed field: %u, should be: %u\n", dibsec.dsBmih.biClrUsed, 2);
 
-    /* Test if the old BITMAPCOREINFO structure is supported */    
-        
+    /* Test if the old BITMAPCOREINFO structure is supported */
+
     pbci->bmciHeader.bcSize = sizeof(BITMAPCOREHEADER);
     pbci->bmciHeader.bcBitCount = 0;
 
@@ -626,7 +626,7 @@ static void test_dibsections(void)
     }
     hdib = CreateDIBSection(hdcmem, pbmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
     ok(hdib != NULL, "CreateDIBSection failed\n");
-    ok(GetObject(hdib, sizeof(DIBSECTION), &dibsec) != 0, "GetObject failed for DIB Section\n");
+    ok(GetObjectW(hdib, sizeof(DIBSECTION), &dibsec) != 0, "GetObject failed for DIB Section\n");
     ok(dibsec.dsBmih.biClrUsed == 16,
        "created DIBSection: wrong biClrUsed field: %u, should be: %u\n", dibsec.dsBmih.biClrUsed, 16);
     test_dib_info(hdib, bits, &pbmi->bmiHeader);
@@ -644,7 +644,7 @@ static void test_dibsections(void)
     }
     hdib = CreateDIBSection(hdcmem, pbmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
     ok(hdib != NULL, "CreateDIBSection failed\n");
-    ok(GetObject(hdib, sizeof(DIBSECTION), &dibsec) != 0, "GetObject failed for DIB Section\n");
+    ok(GetObjectW(hdib, sizeof(DIBSECTION), &dibsec) != 0, "GetObject failed for DIB Section\n");
     ok(dibsec.dsBmih.biClrUsed == 256,
         "created DIBSection: wrong biClrUsed field: %u, should be: %u\n", dibsec.dsBmih.biClrUsed, 256);
 
@@ -678,7 +678,7 @@ static void test_dibsections(void)
     oldpal = SelectPalette(hdc, hpal, TRUE);
     hdib = CreateDIBSection(hdc, pbmi, DIB_PAL_COLORS, (void**)&bits, NULL, 0);
     ok(hdib != NULL, "CreateDIBSection failed\n");
-    ok(GetObject(hdib, sizeof(DIBSECTION), &dibsec) != 0, "GetObject failed for DIB Section\n");
+    ok(GetObjectW(hdib, sizeof(DIBSECTION), &dibsec) != 0, "GetObject failed for DIB Section\n");
     ok(dibsec.dsBmih.biClrUsed == 2, "created DIBSection: wrong biClrUsed field: %u, should be: %u\n", dibsec.dsBmih.biClrUsed, 2);
 
     /* The colour table has already been grabbed from the dc, so we select back the
@@ -767,7 +767,7 @@ static void test_dibsections(void)
     oldpal = SelectPalette(hdc, hpal, TRUE);
     hdib = CreateDIBSection(hdc, pbmi, DIB_PAL_COLORS, (void**)&bits, NULL, 0);
     ok(hdib != NULL, "CreateDIBSection failed\n");
-    ok(GetObject(hdib, sizeof(DIBSECTION), &dibsec) != 0, "GetObject failed for DIB Section\n");
+    ok(GetObjectW(hdib, sizeof(DIBSECTION), &dibsec) != 0, "GetObject failed for DIB Section\n");
     ok(dibsec.dsBmih.biClrUsed == 256, "created DIBSection: wrong biClrUsed field: %u, should be: %u\n", dibsec.dsBmih.biClrUsed, 256);
 
     test_dib_info(hdib, bits, &pbmi->bmiHeader);
@@ -805,7 +805,7 @@ static void test_dibsections(void)
     pbmi->bmiHeader.biClrUsed = 142;
     hdib = CreateDIBSection(hdc, pbmi, DIB_PAL_COLORS, (void**)&bits, NULL, 0);
     ok(hdib != NULL, "CreateDIBSection failed\n");
-    ok(GetObject(hdib, sizeof(DIBSECTION), &dibsec) != 0, "GetObject failed for DIB Section\n");
+    ok(GetObjectW(hdib, sizeof(DIBSECTION), &dibsec) != 0, "GetObject failed for DIB Section\n");
     ok(dibsec.dsBmih.biClrUsed == 256, "created DIBSection: wrong biClrUsed field: %u, should be: %u\n", dibsec.dsBmih.biClrUsed, 256);
 
     test_dib_info(hdib, bits, &pbmi->bmiHeader);
@@ -863,7 +863,7 @@ static void test_dibsections(void)
     pbmi->bmiHeader.biClrUsed = 37;
     hdib = CreateDIBSection(hdc, pbmi, DIB_PAL_COLORS, (void**)&bits, NULL, 0);
     ok(hdib != NULL, "CreateDIBSection failed\n");
-    ok(GetObject(hdib, sizeof(DIBSECTION), &dibsec) != 0, "GetObject failed for DIB Section\n");
+    ok(GetObjectW(hdib, sizeof(DIBSECTION), &dibsec) != 0, "GetObject failed for DIB Section\n");
     ok(dibsec.dsBmih.biClrUsed == 0, "created DIBSection: wrong biClrUsed field: %u\n", dibsec.dsBmih.biClrUsed);
     oldbm = SelectObject(hdcmem, hdib);
     ret = GetDIBColorTable(hdcmem, 0, 256, rgb);
@@ -1496,7 +1496,7 @@ static void test_bitmap(void)
     hbmp = CreateBitmap(15, 15, 1, 1, NULL);
     assert(hbmp != NULL);
 
-    ret = GetObject(hbmp, sizeof(bm), &bm);
+    ret = GetObjectW(hbmp, sizeof(bm), &bm);
     ok(ret == sizeof(bm), "wrong size %d\n", ret);
 
     ok(bm.bmType == 0, "wrong bm.bmType %d\n", bm.bmType);
@@ -1523,7 +1523,7 @@ static void test_bitmap(void)
 
     hbmp_old = SelectObject(hdc, hbmp);
 
-    ret = GetObject(hbmp, sizeof(bm), &bm);
+    ret = GetObjectW(hbmp, sizeof(bm), &bm);
     ok(ret == sizeof(bm), "wrong size %d\n", ret);
 
     ok(bm.bmType == 0, "wrong bm.bmType %d\n", bm.bmType);
@@ -1543,16 +1543,16 @@ static void test_bitmap(void)
     ok(hbmp_old == hbmp, "wrong old bitmap %p\n", hbmp_old);
 
     /* test various buffer sizes for GetObject */
-    ret = GetObject(hbmp, sizeof(*bma) * 2, bma);
+    ret = GetObjectW(hbmp, sizeof(*bma) * 2, bma);
     ok(ret == sizeof(*bma), "wrong size %d\n", ret);
 
-    ret = GetObject(hbmp, sizeof(bm) / 2, &bm);
+    ret = GetObjectW(hbmp, sizeof(bm) / 2, &bm);
     ok(ret == 0, "%d != 0\n", ret);
 
-    ret = GetObject(hbmp, 0, &bm);
+    ret = GetObjectW(hbmp, 0, &bm);
     ok(ret == 0, "%d != 0\n", ret);
 
-    ret = GetObject(hbmp, 1, &bm);
+    ret = GetObjectW(hbmp, 1, &bm);
     ok(ret == 0, "%d != 0\n", ret);
 
     DeleteObject(hbmp);
@@ -1747,7 +1747,7 @@ static void test_bmBits(void)
     ok(hbmp != NULL, "CreateBitmap failed\n");
 
     memset(&bmp, 0xFF, sizeof(bmp));
-    ok(GetObject(hbmp, sizeof(bmp), &bmp) == sizeof(bmp),
+    ok(GetObjectW(hbmp, sizeof(bmp), &bmp) == sizeof(bmp),
        "GetObject failed or returned a wrong structure size\n");
     ok(!bmp.bmBits, "bmBits must be NULL for device-dependent bitmaps\n");
 
@@ -2083,7 +2083,7 @@ static void test_GetDIBits(void)
     ok(hbmp != 0, "CreateBitmap failed\n");
 
     memset(&bm, 0xAA, sizeof(bm));
-    bytes = GetObject(hbmp, sizeof(bm), &bm);
+    bytes = GetObjectW(hbmp, sizeof(bm), &bm);
     ok(bytes == sizeof(bm), "GetObject returned %d\n", bytes);
     ok(bm.bmType == 0, "wrong bmType %d\n", bm.bmType);
     ok(bm.bmWidth == 16, "wrong bmWidth %d\n", bm.bmWidth);
@@ -2199,7 +2199,7 @@ static void test_GetDIBits(void)
        lines, bm.bmHeight, GetLastError());
 
     memset(&bm, 0xAA, sizeof(bm));
-    bytes = GetObject(hbmp, sizeof(bm), &bm);
+    bytes = GetObjectW(hbmp, sizeof(bm), &bm);
     ok(bytes == sizeof(bm), "GetObject returned %d\n", bytes);
     ok(bm.bmType == 0, "wrong bmType %d\n", bm.bmType);
     ok(bm.bmWidth == 16, "wrong bmWidth %d\n", bm.bmWidth);
@@ -2675,7 +2675,7 @@ static void test_select_object(void)
         }
 
         memset(&bm, 0xAA, sizeof(bm));
-        bytes = GetObject(hbm, sizeof(bm), &bm);
+        bytes = GetObjectW(hbm, sizeof(bm), &bm);
         ok(bytes == sizeof(bm), "GetObject returned %d\n", bytes);
         ok(bm.bmType == 0, "wrong bmType %d\n", bm.bmType);
         ok(bm.bmWidth == 10, "wrong bmWidth %d\n", bm.bmWidth);
@@ -2703,12 +2703,12 @@ static void test_mono_1x1_bmp_dbg(HBITMAP hbmp, int line)
     ret = GetObjectType(hbmp);
     ok_(__FILE__, line)(ret == OBJ_BITMAP, "the object %p is not bitmap\n", hbmp);
 
-    ret = GetObject(hbmp, 0, 0);
+    ret = GetObjectW(hbmp, 0, 0);
     ok_(__FILE__, line)(ret == sizeof(BITMAP), "object size %d\n", ret);
 
     memset(&bm, 0xDA, sizeof(bm));
     SetLastError(0xdeadbeef);
-    ret = GetObject(hbmp, sizeof(bm), &bm);
+    ret = GetObjectW(hbmp, sizeof(bm), &bm);
     if (!ret) /* XP, only for curObj2 */ return;
     ok_(__FILE__, line)(ret == sizeof(BITMAP), "GetObject returned %d, error %u\n", ret, GetLastError());
     ok_(__FILE__, line)(bm.bmType == 0, "wrong bmType, expected 0 got %d\n", bm.bmType);
@@ -2805,7 +2805,7 @@ todo_wine
             continue;
         }
         ok(bm != 0, "CreateBitmapIndirect error %u\n", GetLastError());
-        GetObject(bm, sizeof(bmp), &bmp);
+        GetObjectW(bm, sizeof(bmp), &bmp);
         if(i == 1) {
             expect = 1;
         } else if(i <= 4) {
@@ -5620,7 +5620,7 @@ START_TEST(bitmap)
 {
     HMODULE hdll;
 
-    hdll = GetModuleHandle("gdi32.dll");
+    hdll = GetModuleHandleA("gdi32.dll");
     pGdiAlphaBlend   = (void*)GetProcAddress(hdll, "GdiAlphaBlend");
     pGdiGradientFill = (void*)GetProcAddress(hdll, "GdiGradientFill");
     pSetLayout       = (void*)GetProcAddress(hdll, "SetLayout");
