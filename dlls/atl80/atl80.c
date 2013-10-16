@@ -95,7 +95,8 @@ HRESULT WINAPI AtlRegisterTypeLib(HINSTANCE inst, const WCHAR *index)
  */
 DWORD WINAPI AtlGetVersion(void *pReserved)
 {
-   return _ATL_VER;
+    TRACE("version %04x (%p)\n", _ATL_VER, pReserved);
+    return _ATL_VER;
 }
 
 /**********************************************************************
@@ -123,7 +124,7 @@ BOOL WINAPI AtlAxWinInit(void)
     const WCHAR AtlAxWin80[] = {'A','t','l','A','x','W','i','n','8','0',0};
     const WCHAR AtlAxWinLic80[] = {'A','t','l','A','x','W','i','n','L','i','c','8','0',0};
 
-    FIXME("semi-stub\n");
+    FIXME("version %04x semi-stub\n", _ATL_VER);
 
     if ( FAILED( OleInitialize(NULL) ) )
         return FALSE;
