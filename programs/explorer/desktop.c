@@ -552,23 +552,15 @@ static LRESULT WINAPI desktop_wnd_proc( HWND hwnd, UINT message, WPARAM wp, LPAR
 static BOOL create_desktop( const WCHAR *name, unsigned int width, unsigned int height )
 {
     static const WCHAR rootW[] = {'r','o','o','t',0};
-    HDESK desktop;
     BOOL ret = FALSE;
     BOOL (CDECL *create_desktop_func)(unsigned int, unsigned int);
 
-    desktop = CreateDesktopW( name, NULL, NULL, 0, DESKTOP_ALL_ACCESS, NULL );
-    if (!desktop)
-    {
-        WINE_ERR( "failed to create desktop %s error %d\n", wine_dbgstr_w(name), GetLastError() );
-        ExitProcess( 1 );
-    }
     /* magic: desktop "root" means use the root window */
     if (graphics_driver && strcmpiW( name, rootW ))
     {
         create_desktop_func = (void *)GetProcAddress( graphics_driver, "wine_create_desktop" );
         if (create_desktop_func) ret = create_desktop_func( width, height );
     }
-    SetThreadDesktop( desktop );
     return ret;
 }
 
@@ -703,8 +695,8 @@ static void set_desktop_window_title( HWND hwnd, const WCHAR *name )
 /* main desktop management function */
 void manage_desktop( WCHAR *arg )
 {
-    static const WCHAR displayW[] = {'D','I','S','P','L','A','Y',0};
     static const WCHAR messageW[] = {'M','e','s','s','a','g','e',0};
+    HDESK desktop = 0;
     MSG msg;
     HDC hdc;
     HWND hwnd, msg_hwnd;
@@ -737,10 +729,15 @@ void manage_desktop( WCHAR *arg )
         if (!get_default_desktop_size( name, &width, &height )) width = height = 0;
     }
 
-    hdc = CreateDCW( displayW, NULL, NULL, NULL );
-    graphics_driver = __wine_get_driver_module( hdc );
-
-    if (name && width && height) using_root = !create_desktop( name, width, height );
+    if (name && width && height)
+    {
+        if (!(desktop = CreateDesktopW( name, NULL, NULL, 0, DESKTOP_ALL_ACCESS, NULL )))
+        {
+            WINE_ERR( "failed to create desktop %s error %d\n", wine_dbgstr_w(name), GetLastError() );
+            ExitProcess( 1 );
+        }
+        SetThreadDesktop( desktop );
+    }
 
     /* create the desktop window */
     hwnd = CreateWindowExW( 0, DESKTOP_CLASS_ATOM, NULL,
@@ -750,13 +747,18 @@ void manage_desktop( WCHAR *arg )
     msg_hwnd = CreateWindowExW( 0, messageW, NULL, WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
                                 0, 0, 100, 100, 0, 0, 0, NULL );
 
-    DeleteDC( hdc );
-
     if (hwnd == GetDesktopWindow())
     {
         HMODULE shell32;
         void (WINAPI *pShellDDEInit)( BOOL );
 
+        if (desktop)
+        {
+            hdc = GetDC( hwnd );
+            graphics_driver = __wine_get_driver_module( hdc );
+            using_root = !create_desktop( name, width, height );
+            ReleaseDC( hwnd, hdc );
+        }
         SetWindowLongPtrW( hwnd, GWLP_WNDPROC, (LONG_PTR)desktop_wnd_proc );
         SendMessageW( hwnd, WM_SETICON, ICON_BIG, (LPARAM)LoadIconW( 0, MAKEINTRESOURCEW(OIC_WINLOGO)));
         if (name) set_desktop_window_title( hwnd, name );

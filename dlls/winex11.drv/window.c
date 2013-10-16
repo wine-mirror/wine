@@ -1651,16 +1651,19 @@ static struct x11drv_win_data *alloc_win_data( Display *display, HWND hwnd )
 
 
 /* initialize the desktop window id in the desktop manager process */
-static BOOL create_desktop_win_data( Display *display, HWND hwnd )
+BOOL create_desktop_win_data( Window win )
 {
+    struct x11drv_thread_data *thread_data = x11drv_thread_data();
+    Display *display = thread_data->display;
     struct x11drv_win_data *data;
 
-    if (!(data = alloc_win_data( display, hwnd ))) return FALSE;
-    data->whole_window = root_window;
+    if (!(data = alloc_win_data( display, GetDesktopWindow() ))) return FALSE;
+    data->whole_window = win;
     data->managed = TRUE;
-    SetPropA( data->hwnd, whole_window_prop, (HANDLE)root_window );
-    set_initial_wm_hints( display, root_window );
+    SetPropA( data->hwnd, whole_window_prop, (HANDLE)win );
+    set_initial_wm_hints( display, win );
     release_win_data( data );
+    if (thread_data->clip_window) XReparentWindow( display, thread_data->clip_window, win, 0, 0 );
     return TRUE;
 }
 
@@ -1718,12 +1721,6 @@ BOOL CDECL X11DRV_CreateWindow( HWND hwnd )
     {
         struct x11drv_thread_data *data = x11drv_init_thread_data();
         XSetWindowAttributes attr;
-
-        if (root_window != DefaultRootWindow( gdi_display ))
-        {
-            /* the desktop win data can't be created lazily */
-            if (!create_desktop_win_data( data->display, hwnd )) return FALSE;
-        }
 
         /* create the cursor clipping window */
         attr.override_redirect = TRUE;

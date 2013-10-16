@@ -171,6 +171,7 @@ BOOL CDECL X11DRV_create_desktop( UINT width, UINT height )
             PropModeReplace, (unsigned char*)&x11drv_atom(_NET_WM_STATE_FULLSCREEN),
             1);
     }
+    if (!create_desktop_win_data( win )) return FALSE;
     XFlush( display );
     X11DRV_init_desktop( win, width, height );
     return TRUE;
