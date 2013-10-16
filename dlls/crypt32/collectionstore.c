@@ -255,8 +255,6 @@ static void *Collection_enumCert(WINECRYPT_CERTSTORE *store, void *pPrev)
         }
     }
     LeaveCriticalSection(&cs->cs);
-    if (ret)
-        ((PCERT_CONTEXT)ret)->hCertStore = store;
     TRACE("returning %p\n", ret);
     return ret;
 }
@@ -329,8 +327,6 @@ static void *Collection_enumCRL(WINECRYPT_CERTSTORE *store, void *pPrev)
         }
     }
     LeaveCriticalSection(&cs->cs);
-    if (ret)
-        ((PCRL_CONTEXT)ret)->hCertStore = store;
     TRACE("returning %p\n", ret);
     return ret;
 }
@@ -402,8 +398,6 @@ static void *Collection_enumCTL(WINECRYPT_CERTSTORE *store, void *pPrev)
         }
     }
     LeaveCriticalSection(&cs->cs);
-    if (ret)
-        ((PCTL_CONTEXT)ret)->hCertStore = store;
     TRACE("returning %p\n", ret);
     return ret;
 }
