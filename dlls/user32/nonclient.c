@@ -289,7 +289,7 @@ BOOL WINAPI DrawCaptionTempW (HWND hwnd, HDC hdc, const RECT *rect, HFONT hFont,
         FillRect (hdc, &rc, GetSysColorBrush (COLOR_3DFACE));
 
         if (uFlags & DC_ACTIVE) {
-            HBRUSH hbr = SelectObject (hdc, SYSCOLOR_55AABrush);
+            HBRUSH hbr = SelectObject (hdc, SYSCOLOR_Get55AABrush());
             PatBlt (hdc, rc.left, rc.top,
                       rc.right-rc.left, rc.bottom-rc.top, 0xFA0089);
             SelectObject (hdc, hbr);

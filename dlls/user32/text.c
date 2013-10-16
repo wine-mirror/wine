@@ -1240,7 +1240,7 @@ static BOOL TEXT_GrayString(HDC hdc, HBRUSH hb, GRAYSTRINGPROC fn, LPARAM lp, IN
     if(retval || len != -1)
 #endif
     {
-        hbsave = SelectObject(memdc, SYSCOLOR_55AABrush);
+        hbsave = SelectObject(memdc, SYSCOLOR_Get55AABrush());
         PatBlt(memdc, 0, 0, cx, cy, 0x000A0329);
         SelectObject(memdc, hbsave);
     }

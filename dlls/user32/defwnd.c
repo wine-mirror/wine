@@ -167,7 +167,7 @@ HBRUSH DEFWND_ControlColor( HDC hDC, UINT ctlType )
          * look different from the window background.
          */
         if (bk == GetSysColor(COLOR_WINDOW))
-            return SYSCOLOR_55AABrush;
+            return SYSCOLOR_Get55AABrush();
 
         UnrealizeObject( hb );
         return hb;

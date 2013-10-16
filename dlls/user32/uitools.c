@@ -649,7 +649,7 @@ static void UITOOLS_DrawCheckedRect( HDC dc, LPRECT rect )
 
       FillRect(dc, rect, GetSysColorBrush(COLOR_BTNFACE));
       bg = SetBkColor(dc, RGB(255, 255, 255));
-      hbsave = SelectObject(dc, SYSCOLOR_55AABrush);
+      hbsave = SelectObject(dc, SYSCOLOR_Get55AABrush());
       PatBlt(dc, rect->left, rect->top, rect->right-rect->left, rect->bottom-rect->top, 0x00FA0089);
       SelectObject(dc, hbsave);
       SetBkColor(dc, bg);
@@ -1703,7 +1703,7 @@ static BOOL UITOOLS_DrawState(HDC hdc, HBRUSH hbr, DRAWSTATEPROC func, LPARAM lp
     /* This state cause the image to be dithered */
     if(flags & DSS_UNION)
     {
-        hbsave = SelectObject(memdc, SYSCOLOR_55AABrush);
+        hbsave = SelectObject(memdc, SYSCOLOR_Get55AABrush());
         if(!hbsave) goto cleanup;
         tmp = PatBlt(memdc, 0, 0, cx, cy, 0x00FA0089);
         SelectObject(memdc, hbsave);

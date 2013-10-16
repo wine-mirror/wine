@@ -242,11 +242,7 @@ static BOOL notify_change = TRUE;
 /* System parameters storage */
 static RECT work_area;
 
-static const WORD wPattern55AA[] = { 0x5555, 0xaaaa, 0x5555, 0xaaaa, 0x5555, 0xaaaa, 0x5555, 0xaaaa };
-
 static HKEY volatile_base_key;
-
-HBRUSH SYSCOLOR_55AABrush = 0;
 
 union sysparam_all_entry;
 
@@ -1346,11 +1342,6 @@ void SYSPARAMS_Init(void)
 {
     HKEY key;
     DWORD i, dispos;
-    HBITMAP h55AABitmap = CreateBitmap( 8, 8, 1, 1, wPattern55AA );
-
-    SYSCOLOR_55AABrush = CreatePatternBrush( h55AABitmap );
-    __wine_make_gdi_object_system( SYSCOLOR_55AABrush, TRUE );
-    DeleteObject( h55AABitmap );
 
     /* this one must be non-volatile */
     if (RegCreateKeyW( HKEY_CURRENT_USER, WINE_CURRENT_USER_REGKEY, &key ))
@@ -2714,6 +2705,29 @@ HPEN SYSCOLOR_GetPen( INT index )
     return system_colors[index].pen;
 }
 
+
+/***********************************************************************
+ *		SYSCOLOR_Get55AABrush
+ */
+HBRUSH SYSCOLOR_Get55AABrush(void)
+{
+    static const WORD pattern[] = { 0x5555, 0xaaaa, 0x5555, 0xaaaa, 0x5555, 0xaaaa, 0x5555, 0xaaaa };
+    static HBRUSH brush_55aa;
+
+    if (!brush_55aa)
+    {
+        HBITMAP bitmap = CreateBitmap( 8, 8, 1, 1, pattern );
+        HBRUSH brush = CreatePatternBrush( bitmap );
+        DeleteObject( bitmap );
+        __wine_make_gdi_object_system( brush, TRUE );
+        if (InterlockedCompareExchangePointer( (void **)&brush_55aa, brush, 0 ))
+        {
+            __wine_make_gdi_object_system( brush, FALSE );
+            DeleteObject( brush );
+        }
+    }
+    return brush_55aa;
+}
 
 /***********************************************************************
  *		ChangeDisplaySettingsA (USER32.@)
