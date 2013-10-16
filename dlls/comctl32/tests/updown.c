@@ -373,12 +373,14 @@ static void test_updown_pos(void)
 
     /* there's no attempt to update buddy Edit if text didn't change */
     SetWindowTextA(g_edit, "50");
-    updown = create_updown_control(UDS_ALIGNRIGHT | UDS_SETBUDDYINT, g_edit);
+    updown = create_updown_control(UDS_ALIGNRIGHT | UDS_SETBUDDYINT | UDS_ARROWKEYS, g_edit);
 
     /* test sequence only on 5.8x versions */
     r = SendMessage(updown, UDM_GETPOS32, 0, 0);
     if (r)
     {
+        UDACCEL accel;
+
         flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
         r = SendMessage(updown, UDM_SETPOS, 0, 50);
@@ -386,6 +388,46 @@ static void test_updown_pos(void)
 
         ok_sequence(sequences, EDIT_SEQ_INDEX, test_updown_pos_nochange_seq,
                     "test updown pos, no change", FALSE);
+
+        SendMessage(updown, UDM_SETRANGE, 0, MAKELONG(1, 40));
+        r = SendMessage(updown, UDM_GETRANGE, 0, 0);
+        expect(1, LOWORD(r));
+        expect(40, HIWORD(r));
+
+        accel.nSec = 0;
+        accel.nInc = 5;
+        r = SendMessage(updown, UDM_SETACCEL, 1, (LPARAM)&accel);
+        expect(TRUE, r);
+
+        r = SendMessage(updown, UDM_GETPOS, 0, 0);
+        expect(40, LOWORD(r));
+        expect(1, HIWORD(r));
+
+        r = SendMessage(updown, UDM_SETPOS, 0, MAKELONG(0, 0));
+        expect(40, LOWORD(r));
+        expect(0, HIWORD(r));
+
+        r = SendMessage(updown, UDM_GETPOS, 0, 0);
+        expect(1, LOWORD(r));
+        expect(0, HIWORD(r));
+
+        r = SendMessage(updown, UDM_SETPOS, 0, MAKELONG(2, 0));
+        expect(1, LOWORD(r));
+        expect(0, HIWORD(r));
+
+        r = SendMessage(g_edit, WM_KEYDOWN, VK_UP, 0);
+        expect(0, r);
+        r = SendMessage(updown, UDM_GETPOS, 0, 0);
+        expect(1, LOWORD(r));
+        expect(0, HIWORD(r));
+
+        r = SendMessage(updown, UDM_SETPOS, 0, MAKELONG(50, 0));
+        expect(1, LOWORD(r));
+        expect(0, HIWORD(r));
+
+        r = SendMessage(updown, UDM_GETPOS, 0, 0);
+        expect(40, LOWORD(r));
+        expect(0, HIWORD(r));
     }
 
     DestroyWindow(updown);
