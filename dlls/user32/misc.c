@@ -351,9 +351,6 @@ HMONITOR WINAPI MonitorFromRect( LPRECT rect, DWORD flags )
 {
     struct monitor_enum_info info;
 
-    /* make sure the desktop window exists */
-    GetDesktopWindow();
-
     info.rect         = *rect;
     info.max_area     = 0;
     info.min_distance = ~0u;
@@ -444,6 +441,9 @@ BOOL WINAPI GetMonitorInfoW(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
  */
 BOOL WINAPI EnumDisplayMonitors( HDC hdc, LPRECT rect, MONITORENUMPROC proc, LPARAM lp )
 {
+    /* make sure the desktop window exists */
+    GetDesktopWindow();
+
     return USER_Driver->pEnumDisplayMonitors( hdc, rect, proc, lp );
 }
 
