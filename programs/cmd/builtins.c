@@ -280,7 +280,7 @@ void WCMD_choice (const WCHAR * args) {
     DWORD opt_timeout = 0;
     DWORD count;
     DWORD oldmode;
-    DWORD have_console;
+    BOOL have_console;
     BOOL opt_n = FALSE;
     BOOL opt_s = FALSE;
 
@@ -2820,7 +2820,7 @@ syntax_err:
 
 void WCMD_move (void)
 {
-  int             status;
+  BOOL             status;
   WIN32_FIND_DATAW fd;
   HANDLE          hff;
   WCHAR            input[MAX_PATH];
@@ -2923,7 +2923,7 @@ void WCMD_move (void)
     if (ok) {
       status = MoveFileW(src, dest);
     } else {
-      status = 1; /* Anything other than 0 to prevent error msg below */
+      status = TRUE;
     }
 
     if (!status) {
@@ -3036,7 +3036,7 @@ void WCMD_remove_dir (WCHAR *args) {
 
 void WCMD_rename (void)
 {
-  int             status;
+  BOOL             status;
   HANDLE          hff;
   WIN32_FIND_DATAW fd;
   WCHAR            input[MAX_PATH];
@@ -4024,7 +4024,7 @@ void WCMD_setshow_env (WCHAR *s) {
 
   LPVOID env;
   WCHAR *p;
-  int status;
+  BOOL status;
   static const WCHAR parmP[] = {'/','P','\0'};
   static const WCHAR parmA[] = {'/','A','\0'};
   WCHAR string[MAXSTRING];
@@ -4140,7 +4140,7 @@ void WCMD_setshow_env (WCHAR *s) {
     gle = GetLastError();
     if ((!status) & (gle == ERROR_ENVVAR_NOT_FOUND)) {
       errorlevel = 1;
-    } else if ((!status)) WCMD_print_error();
+    } else if (!status) WCMD_print_error();
     else errorlevel = 0;
   }
 }
