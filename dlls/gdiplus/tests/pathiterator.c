@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "windows.h"
+#include "objbase.h"
 #include "gdiplus.h"
 #include "wine/test.h"
 

@@ -26,7 +26,7 @@
 #include <stdio.h>
 
 #include "initguid.h"
-#include "windows.h"
+#include "objbase.h"
 #include "gdiplus.h"
 #include "wine/test.h"
 
@@ -3809,7 +3809,7 @@ static void test_image_format(void)
         else
         {
             expect(Ok, status);
-            ret = GetObject(hbitmap, sizeof(bm), &bm);
+            ret = GetObjectW(hbitmap, sizeof(bm), &bm);
             expect(sizeof(bm), ret);
             expect(0, bm.bmType);
             expect(1, bm.bmWidth);

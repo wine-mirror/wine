@@ -21,7 +21,7 @@
 
 #include <math.h>
 
-#include "windows.h"
+#include "objbase.h"
 #include "gdiplus.h"
 #include "wine/test.h"
 
@@ -731,7 +731,7 @@ static void test_font_substitution(void)
     WCHAR ms_shell_dlg[LF_FACESIZE];
     HDC hdc;
     HFONT hfont;
-    LOGFONT lf;
+    LOGFONTA lf;
     GpStatus status;
     GpGraphics *graphics;
     GpFont *font;
@@ -746,9 +746,9 @@ static void test_font_substitution(void)
     ok(hfont != 0, "GetStockObject(DEFAULT_GUI_FONT) failed\n");
 
     memset(&lf, 0xfe, sizeof(lf));
-    ret = GetObject(hfont, sizeof(lf), &lf);
+    ret = GetObjectA(hfont, sizeof(lf), &lf);
     ok(ret == sizeof(lf), "GetObject failed\n");
-    ok(!lstrcmp(lf.lfFaceName, "MS Shell Dlg"), "wrong face name %s\n", lf.lfFaceName);
+    ok(!lstrcmpA(lf.lfFaceName, "MS Shell Dlg"), "wrong face name %s\n", lf.lfFaceName);
     MultiByteToWideChar(CP_ACP, 0, lf.lfFaceName, -1, ms_shell_dlg, LF_FACESIZE);
 
     status = GdipCreateFontFromLogfontA(hdc, &lf, &font);
@@ -756,8 +756,8 @@ static void test_font_substitution(void)
     memset(&lf, 0xfe, sizeof(lf));
     status = GdipGetLogFontA(font, graphics, &lf);
     expect(Ok, status);
-    ok(!lstrcmp(lf.lfFaceName, "Microsoft Sans Serif") ||
-       !lstrcmp(lf.lfFaceName, "Tahoma"), "wrong face name %s\n", lf.lfFaceName);
+    ok(!lstrcmpA(lf.lfFaceName, "Microsoft Sans Serif") ||
+       !lstrcmpA(lf.lfFaceName, "Tahoma"), "wrong face name %s\n", lf.lfFaceName);
     GdipDeleteFont(font);
 
     status = GdipCreateFontFamilyFromName(ms_shell_dlg, NULL, &family);
@@ -767,21 +767,21 @@ static void test_font_substitution(void)
     memset(&lf, 0xfe, sizeof(lf));
     status = GdipGetLogFontA(font, graphics, &lf);
     expect(Ok, status);
-    ok(!lstrcmp(lf.lfFaceName, "Microsoft Sans Serif") ||
-       !lstrcmp(lf.lfFaceName, "Tahoma"), "wrong face name %s\n", lf.lfFaceName);
+    ok(!lstrcmpA(lf.lfFaceName, "Microsoft Sans Serif") ||
+       !lstrcmpA(lf.lfFaceName, "Tahoma"), "wrong face name %s\n", lf.lfFaceName);
     GdipDeleteFont(font);
     GdipDeleteFontFamily(family);
 
     status = GdipCreateFontFamilyFromName(nonexistent, NULL, &family);
     ok(status == FontFamilyNotFound, "expected FontFamilyNotFound, got %d\n", status);
 
-    lstrcpy(lf.lfFaceName, "ThisFontShouldNotExist");
+    lstrcpyA(lf.lfFaceName, "ThisFontShouldNotExist");
     status = GdipCreateFontFromLogfontA(hdc, &lf, &font);
     expect(Ok, status);
     memset(&lf, 0xfe, sizeof(lf));
     status = GdipGetLogFontA(font, graphics, &lf);
     expect(Ok, status);
-    ok(!lstrcmp(lf.lfFaceName, "Arial"), "wrong face name %s\n", lf.lfFaceName);
+    ok(!lstrcmpA(lf.lfFaceName, "Arial"), "wrong face name %s\n", lf.lfFaceName);
     GdipDeleteFont(font);
 
     /* empty FaceName */
@@ -791,13 +791,13 @@ static void test_font_substitution(void)
     memset(&lf, 0xfe, sizeof(lf));
     status = GdipGetLogFontA(font, graphics, &lf);
     expect(Ok, status);
-    ok(!lstrcmp(lf.lfFaceName, "Arial"), "wrong face name %s\n", lf.lfFaceName);
+    ok(!lstrcmpA(lf.lfFaceName, "Arial"), "wrong face name %s\n", lf.lfFaceName);
     GdipDeleteFont(font);
 
     /* zeroing out lfWeight and lfCharSet leads to font creation failure */
     lf.lfWeight = 0;
     lf.lfCharSet = 0;
-    lstrcpy(lf.lfFaceName, "ThisFontShouldNotExist");
+    lstrcpyA(lf.lfFaceName, "ThisFontShouldNotExist");
     status = GdipCreateFontFromLogfontA(hdc, &lf, &font);
 todo_wine
     ok(status == NotTrueTypeFont || broken(status == FileNotFound), /* before XP */
@@ -819,7 +819,7 @@ static void test_font_transform(void)
     static const WCHAR string[] = { 'A',0 };
     GpStatus status;
     HDC hdc;
-    LOGFONT lf;
+    LOGFONTA lf;
     GpFont *font;
     GpGraphics *graphics;
     GpMatrix *matrix;
@@ -841,7 +841,7 @@ static void test_font_transform(void)
     expect(Ok, status);
 
     memset(&lf, 0, sizeof(lf));
-    lstrcpy(lf.lfFaceName, "Tahoma");
+    lstrcpyA(lf.lfFaceName, "Tahoma");
     lf.lfHeight = -100;
     lf.lfWidth = 100;
     status = GdipCreateFontFromLogfontA(hdc, &lf, &font);

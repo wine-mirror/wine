@@ -22,9 +22,8 @@
 #include <math.h>
 #include <assert.h>
 
-#include "windows.h"
+#include "objbase.h"
 #include "gdiplus.h"
-#include "wingdi.h"
 #include "wine/test.h"
 
 #define expect(expected, got) ok((got) == (expected), "Expected %d, got %d\n", (INT)(expected), (INT)(got))
@@ -5506,8 +5505,8 @@ START_TEST(graphics)
     class.style = CS_HREDRAW | CS_VREDRAW;
     class.lpfnWndProc = DefWindowProcA;
     class.hInstance = GetModuleHandleA(0);
-    class.hIcon = LoadIcon(0, IDI_APPLICATION);
-    class.hCursor = LoadCursor(NULL, IDC_ARROW);
+    class.hIcon = LoadIconA(0, (LPCSTR)IDI_APPLICATION);
+    class.hCursor = LoadCursorA(0, (LPCSTR)IDC_ARROW);
     class.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     RegisterClassA( &class );
     hwnd = CreateWindowA( "gdiplus_test", "graphics test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,

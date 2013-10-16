@@ -20,8 +20,7 @@
 
 #include <math.h>
 
-#include "windows.h"
-#include <stdio.h>
+#include "objbase.h"
 #include "gdiplus.h"
 #include "wine/test.h"
 
