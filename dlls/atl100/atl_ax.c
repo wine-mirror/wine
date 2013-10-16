@@ -89,7 +89,7 @@ BOOL WINAPI AtlAxWinInit(void)
     const WCHAR AtlAxWin100[] = {'A','t','l','A','x','W','i','n','1','0','0',0};
     const WCHAR AtlAxWinLic100[] = {'A','t','l','A','x','W','i','n','L','i','c','1','0','0',0};
 
-    FIXME("semi-stub\n");
+    FIXME("version %04x semi-stub\n", _ATL_VER);
 
     if ( FAILED( OleInitialize(NULL) ) )
         return FALSE;
