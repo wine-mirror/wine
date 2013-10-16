@@ -52,6 +52,7 @@ Tietoa NetBSD:lle:
 
 Tietoa Mac OS X:lle:
   Winen onnistuneeseen kääntämiseen x86:lla tarvitaan Xcode 2.4 tai uudempi.
+  Mac-ajuri vaatii OS X 10.6:n tai uudemman, ja sitä ei käännetä 10.5:ssä.
 
 
 Tuetut tiedostojärjestelmät:
