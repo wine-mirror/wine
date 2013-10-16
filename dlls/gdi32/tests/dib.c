@@ -2720,17 +2720,17 @@ static const BYTE masks[8] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
 static void draw_text_2( HDC hdc, BITMAPINFO *bmi, BYTE *bits, BOOL aa )
 {
     DWORD dib_size = get_dib_size(bmi), ret;
-    LOGFONT lf;
+    LOGFONTA lf;
     HFONT font;
     GLYPHMETRICS gm;
     BYTE g_buf[10000];
     int i, stride, x, y;
     static const MAT2 identity = { {0,1}, {0,0}, {0,0}, {0,1} };
     char *eto_hash = NULL, *diy_hash = NULL;
-    static const char *str = "Hello Wine";
+    static const char str[] = "Hello Wine";
     POINT origin, g_org;
     static const BYTE vals[4] = { 0x00, 0x00, 0x00, 0x00 };
-    TEXTMETRIC tm;
+    TEXTMETRICA tm;
     COLORREF text_color;
 
     for(i = 0; i < dib_size; i++)
@@ -2741,10 +2741,10 @@ static void draw_text_2( HDC hdc, BITMAPINFO *bmi, BYTE *bits, BOOL aa )
     lf.lfHeight = 24;
     lf.lfQuality = aa ? ANTIALIASED_QUALITY : NONANTIALIASED_QUALITY;
 
-    font = CreateFontIndirect( &lf );
+    font = CreateFontIndirectA( &lf );
     font = SelectObject( hdc, font );
 
-    GetTextMetrics( hdc, &tm );
+    GetTextMetricsA( hdc, &tm );
     if (!(tm.tmPitchAndFamily & TMPF_VECTOR))
     {
         skip( "skipping as a bitmap font has been selected for Tahoma.\n" );
@@ -2758,7 +2758,7 @@ static void draw_text_2( HDC hdc, BITMAPINFO *bmi, BYTE *bits, BOOL aa )
     origin.x = 10;
     origin.y = 100;
 
-    ExtTextOut( hdc, origin.x, origin.y, 0, NULL, str, strlen(str), NULL );
+    ExtTextOutA( hdc, origin.x, origin.y, 0, NULL, str, strlen(str), NULL );
     eto_hash = hash_dib( bmi, bits );
 
     for(i = 0; i < dib_size; i++)
@@ -2771,11 +2771,11 @@ static void draw_text_2( HDC hdc, BITMAPINFO *bmi, BYTE *bits, BOOL aa )
     {
         DWORD ggo_flags = aa ? GGO_GRAY4_BITMAP : GGO_BITMAP;
 
-        ret = GetGlyphOutline( hdc, str[i], ggo_flags, &gm, 0, NULL, &identity );
+        ret = GetGlyphOutlineA( hdc, str[i], ggo_flags, &gm, 0, NULL, &identity );
 
         if (ret == GDI_ERROR) continue;
 
-        if (ret) GetGlyphOutline( hdc, str[i], ggo_flags, &gm, sizeof(g_buf), g_buf, &identity );
+        if (ret) GetGlyphOutlineA( hdc, str[i], ggo_flags, &gm, sizeof(g_buf), g_buf, &identity );
 
         g_org.x = origin.x + gm.gmptGlyphOrigin.x;
         g_org.y = origin.y - gm.gmptGlyphOrigin.y;
