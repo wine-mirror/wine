@@ -2695,7 +2695,7 @@ static void create_tree_window(HWND parent, Pane* pane, UINT id, UINT id_header,
 {
 	static const WCHAR sListBox[] = {'L','i','s','t','B','o','x','\0'};
 
-	static int s_init = 0;
+        static BOOL s_init = FALSE;
 	Entry* entry = pane->root;
 
 	pane->hwnd = CreateWindowW(sListBox, sEmpty, WS_CHILD|WS_VISIBLE|WS_HSCROLL|WS_VSCROLL|
@@ -2713,7 +2713,7 @@ static void create_tree_window(HWND parent, Pane* pane, UINT id, UINT id_header,
 
 	/* calculate column widths */
 	if (!s_init) {
-		s_init = 1;
+                s_init = TRUE;
 		init_output(pane->hwnd);
 	}
 
