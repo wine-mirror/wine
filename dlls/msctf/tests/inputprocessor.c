@@ -2000,10 +2000,10 @@ static void processPendingMessages(void)
     {
         if (MsgWaitForMultipleObjects(0, NULL, FALSE, min_timeout, QS_ALLINPUT) == WAIT_TIMEOUT)
             break;
-        while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
+        while (PeekMessageW(&msg, 0, 0, 0, PM_REMOVE))
         {
             TranslateMessage(&msg);
-            DispatchMessage(&msg);
+            DispatchMessageW(&msg);
         }
         diff = time - GetTickCount();
     }
@@ -2032,11 +2032,11 @@ static void test_AssociateFocus(void)
     hr = ITfThreadMgr_CreateDocumentMgr(g_tm,&dm2);
     ok(SUCCEEDED(hr),"CreateDocumentMgr failed\n");
 
-    wnd1 = CreateWindow("edit",NULL,WS_POPUP,0,0,200,60,NULL,NULL,NULL,NULL);
+    wnd1 = CreateWindowA("edit",NULL,WS_POPUP,0,0,200,60,NULL,NULL,NULL,NULL);
     ok(wnd1!=NULL,"Unable to create window 1\n");
-    wnd2 = CreateWindow("edit",NULL,WS_POPUP,0,65,200,60,NULL,NULL,NULL,NULL);
+    wnd2 = CreateWindowA("edit",NULL,WS_POPUP,0,65,200,60,NULL,NULL,NULL,NULL);
     ok(wnd2!=NULL,"Unable to create window 2\n");
-    wnd3 = CreateWindow("edit",NULL,WS_POPUP,0,130,200,60,NULL,NULL,NULL,NULL);
+    wnd3 = CreateWindowA("edit",NULL,WS_POPUP,0,130,200,60,NULL,NULL,NULL,NULL);
     ok(wnd3!=NULL,"Unable to create window 3\n");
 
     processPendingMessages();
