@@ -4084,6 +4084,7 @@ static void test_register_typelib(BOOL system_registration)
     {
         ITypeInfo *typeinfo;
         TYPEATTR *attr;
+        REGSAM opposite = (sizeof(void*) == 8 ? KEY_WOW64_32KEY : KEY_WOW64_64KEY);
 
         hr = ITypeLib_GetTypeInfo(typelib, i, &typeinfo);
         ok(hr == S_OK, "got %08x\n", hr);
@@ -4130,6 +4131,11 @@ static void test_register_typelib(BOOL system_registration)
             expect_ret = ERROR_FILE_NOT_FOUND;
 
         ret = RegOpenKeyExA(HKEY_CLASSES_ROOT, key_name, 0, KEY_READ, &hkey);
+        ok(ret == expect_ret, "%d: got %d\n", i, ret);
+        if(ret == ERROR_SUCCESS) RegCloseKey(hkey);
+
+        /* 32-bit typelibs should be registered into both registry bit modes */
+        ret = RegOpenKeyExA(HKEY_CLASSES_ROOT, key_name, 0, KEY_READ | opposite, &hkey);
         ok(ret == expect_ret, "%d: got %d\n", i, ret);
         if(ret == ERROR_SUCCESS) RegCloseKey(hkey);
 
