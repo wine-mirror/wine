@@ -303,8 +303,8 @@ static void test_setpixelformat(HDC winhdc)
         else ok(!res, "Unexpectedly set an alternate pixel format\n");
     }
 
-    hwnd = CreateWindow("static", "Title", WS_OVERLAPPEDWINDOW,
-                        10, 10, 200, 200, NULL, NULL, NULL, NULL);
+    hwnd = CreateWindowA("static", "Title", WS_OVERLAPPEDWINDOW, 10, 10, 200, 200, NULL, NULL,
+            NULL, NULL);
     ok(hwnd != NULL, "err: %d\n", GetLastError());
     if (hwnd)
     {
@@ -323,8 +323,8 @@ static void test_setpixelformat(HDC winhdc)
         DestroyWindow( hwnd );
     }
 
-    hwnd = CreateWindow("static", "Title", WS_OVERLAPPEDWINDOW,
-                        10, 10, 200, 200, NULL, NULL, NULL, NULL);
+    hwnd = CreateWindowA("static", "Title", WS_OVERLAPPEDWINDOW, 10, 10, 200, 200, NULL, NULL,
+            NULL, NULL);
     ok(hwnd != NULL, "err: %d\n", GetLastError());
     if (hwnd)
     {
@@ -755,7 +755,7 @@ static void test_deletecontext(HWND hwnd, HDC hdc)
      */
     thread_params.hglrc = hglrc;
     thread_params.hwnd  = hwnd;
-    thread_params.test_finished = CreateEvent(NULL, FALSE, FALSE, NULL);
+    thread_params.test_finished = CreateEventW(NULL, FALSE, FALSE, NULL);
     thread_handle = CreateThread(NULL, 0, wgl_thread, &thread_params, 0, &tid);
     ok(!!thread_handle, "Failed to create thread, last error %#x.\n", GetLastError());
     if(thread_handle)
@@ -1620,8 +1620,8 @@ START_TEST(opengl)
         0, 0, 0                /* layer masks */
     };
 
-    hwnd = CreateWindow("static", "Title", WS_OVERLAPPEDWINDOW,
-                        10, 10, 200, 200, NULL, NULL, NULL, NULL);
+    hwnd = CreateWindowA("static", "Title", WS_OVERLAPPEDWINDOW, 10, 10, 200, 200, NULL, NULL,
+            NULL, NULL);
     ok(hwnd != NULL, "err: %d\n", GetLastError());
     if (hwnd)
     {
