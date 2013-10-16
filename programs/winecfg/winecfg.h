@@ -73,7 +73,7 @@ WCHAR* load_string (UINT id);
 char *keypath(const char *section);
 WCHAR *keypathW(const WCHAR *section);
 
-int initialize(HINSTANCE hInstance);
+BOOL initialize(HINSTANCE hInstance);
 extern HKEY config_key;
 
 /* hack for the property sheet control  */
@@ -91,7 +91,7 @@ INT_PTR CALLBACK AboutDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
 
 /* Drive management  */
 BOOL load_drives(void);
-int autodetect_drives(void);
+BOOL autodetect_drives(void);
 
 struct drive
 {

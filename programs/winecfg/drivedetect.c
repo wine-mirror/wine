@@ -302,7 +302,7 @@ static void ensure_drive_c_is_mapped(void)
     HeapFree(GetProcessHeap(), 0, drive_c_dir);
 }
 
-int autodetect_drives(void)
+BOOL autodetect_drives(void)
 {
 #ifdef HAVE_MNTENT_H
     struct mntent *ent;

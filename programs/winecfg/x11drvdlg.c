@@ -55,7 +55,7 @@ static const WCHAR x11_driverW[] = {'X','1','1',' ','D','r','i','v','e','r',0};
 static const WCHAR default_resW[] = {'8','0','0','x','6','0','0',0};
 
 
-int updating_ui;
+static BOOL updating_ui;
 
 /* convert the x11 desktop key to the new explorer config */
 static void convert_x11_desktop_key(void)
