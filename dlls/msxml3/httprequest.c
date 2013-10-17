@@ -458,9 +458,11 @@ static HRESULT WINAPI BSCHttpNegotiate_BeginningTransaction(IHttpNegotiate *ifac
 {
     static const WCHAR content_type_utf8W[] = {'C','o','n','t','e','n','t','-','T','y','p','e',':',' ',
         't','e','x','t','/','p','l','a','i','n',';','c','h','a','r','s','e','t','=','u','t','f','-','8','\r','\n',0};
+    static const WCHAR refererW[] = {'R','e','f','e','r','e','r',':',' ',0};
 
     BindStatusCallback *This = impl_from_IHttpNegotiate(iface);
     const struct httpheader *entry;
+    BSTR base_uri = NULL;
     WCHAR *buff, *ptr;
     int size = 0;
 
@@ -476,14 +478,33 @@ static HRESULT WINAPI BSCHttpNegotiate_BeginningTransaction(IHttpNegotiate *ifac
 
     if (!size) return S_OK;
 
+    if (This->request->base_uri)
+    {
+        IUri_GetRawUri(This->request->base_uri, &base_uri);
+        size += SysStringLen(base_uri)*sizeof(WCHAR) + sizeof(refererW) + sizeof(crlfW);
+    }
+
     buff = CoTaskMemAlloc(size);
-    if (!buff) return E_OUTOFMEMORY;
+    if (!buff)
+    {
+        SysFreeString(base_uri);
+        return E_OUTOFMEMORY;
+    }
 
     ptr = buff;
     if (This->request->use_utf8_content)
     {
         lstrcpyW(ptr, content_type_utf8W);
         ptr += sizeof(content_type_utf8W)/sizeof(WCHAR)-1;
+    }
+
+    if (base_uri)
+    {
+        strcpyW(ptr, refererW);
+        strcatW(ptr, base_uri);
+        strcatW(ptr, crlfW);
+        ptr += strlenW(refererW) + SysStringLen(base_uri) + strlenW(crlfW);
+        SysFreeString(base_uri);
     }
 
     /* user headers */
@@ -1571,6 +1592,8 @@ static void get_base_uri(httprequest *This)
         return;
 
     hr = IServiceProvider_QueryService(provider, &SID_SContainerDispatch, &IID_IHTMLDocument2, (void**)&doc);
+    if(FAILED(hr))
+        hr = IServiceProvider_QueryService(provider, &SID_SInternetHostSecurityManager, &IID_IHTMLDocument2, (void**)&doc);
     IServiceProvider_Release(provider);
     if(FAILED(hr))
         return;
