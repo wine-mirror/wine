@@ -112,7 +112,6 @@ void Context_CopyProperties(const void *to, const void *from)
 
 struct ContextList
 {
-    CRITICAL_SECTION cs;
     struct list contexts;
 };
 
@@ -122,14 +121,13 @@ struct ContextList *ContextList_Create(void)
 
     if (list)
     {
-        InitializeCriticalSection(&list->cs);
-        list->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": ContextList.cs");
         list_init(&list->contexts);
     }
     return list;
 }
 
-context_t *ContextList_Add(struct ContextList *list, context_t *toLink, context_t *existing, struct WINE_CRYPTCERTSTORE *store, BOOL use_link)
+context_t *ContextList_Add(struct ContextList *list, CRITICAL_SECTION *cs, context_t *toLink,
+ context_t *existing, struct WINE_CRYPTCERTSTORE *store, BOOL use_link)
 {
     context_t *context;
 
@@ -139,7 +137,7 @@ context_t *ContextList_Add(struct ContextList *list, context_t *toLink, context_
     if (context)
     {
         TRACE("adding %p\n", context);
-        EnterCriticalSection(&list->cs);
+        EnterCriticalSection(cs);
         if (existing)
         {
             context->u.entry.prev = existing->u.entry.prev;
@@ -151,17 +149,17 @@ context_t *ContextList_Add(struct ContextList *list, context_t *toLink, context_
         }
         else
             list_add_head(&list->contexts, &context->u.entry);
-        LeaveCriticalSection(&list->cs);
+        LeaveCriticalSection(cs);
     }
     return context;
 }
 
-context_t *ContextList_Enum(struct ContextList *list, context_t *prev)
+context_t *ContextList_Enum(struct ContextList *list, CRITICAL_SECTION *cs, context_t *prev)
 {
     struct list *listNext;
     context_t *ret;
 
-    EnterCriticalSection(&list->cs);
+    EnterCriticalSection(cs);
     if (prev)
     {
         listNext = list_next(&list->contexts, &prev->u.entry);
@@ -169,7 +167,7 @@ context_t *ContextList_Enum(struct ContextList *list, context_t *prev)
     }
     else
         listNext = list_next(&list->contexts, &list->contexts);
-    LeaveCriticalSection(&list->cs);
+    LeaveCriticalSection(cs);
 
     if (listNext)
     {
@@ -181,18 +179,18 @@ context_t *ContextList_Enum(struct ContextList *list, context_t *prev)
     return ret;
 }
 
-BOOL ContextList_Remove(struct ContextList *list, context_t *context)
+BOOL ContextList_Remove(struct ContextList *list, CRITICAL_SECTION *cs, context_t *context)
 {
     BOOL inList = FALSE;
 
-    EnterCriticalSection(&list->cs);
+    EnterCriticalSection(cs);
     if (!list_empty(&context->u.entry))
     {
         list_remove(&context->u.entry);
         list_init(&context->u.entry);
         inList = TRUE;
     }
-    LeaveCriticalSection(&list->cs);
+    LeaveCriticalSection(cs);
 
     return inList;
 }
@@ -201,20 +199,16 @@ static void ContextList_Empty(struct ContextList *list)
 {
     context_t *context, *next;
 
-    EnterCriticalSection(&list->cs);
     LIST_FOR_EACH_ENTRY_SAFE(context, next, &list->contexts, context_t, u.entry)
     {
         TRACE("removing %p\n", context);
         list_remove(&context->u.entry);
         Context_Release(context);
     }
-    LeaveCriticalSection(&list->cs);
 }
 
 void ContextList_Free(struct ContextList *list)
 {
     ContextList_Empty(list);
-    list->cs.DebugInfo->Spare[0] = 0;
-    DeleteCriticalSection(&list->cs);
     CryptMemFree(list);
 }

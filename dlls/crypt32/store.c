@@ -82,6 +82,7 @@ const WINE_CONTEXT_INTERFACE *pCTLInterface = &gCTLInterface;
 typedef struct _WINE_MEMSTORE
 {
     WINECRYPT_CERTSTORE hdr;
+    CRITICAL_SECTION cs;
     struct ContextList *certs;
     struct ContextList *crls;
     struct ContextList *ctls;
@@ -150,7 +151,7 @@ static BOOL MemStore_addCert(WINECRYPT_CERTSTORE *store, context_t *cert,
 
     TRACE("(%p, %p, %p, %p)\n", store, cert, toReplace, ppStoreContext);
 
-    context = ContextList_Add(ms->certs, cert, toReplace, store, use_link);
+    context = ContextList_Add(ms->certs, &ms->cs, cert, toReplace, store, use_link);
     if (!context)
         return FALSE;
 
@@ -168,7 +169,7 @@ static context_t *MemStore_enumCert(WINECRYPT_CERTSTORE *store, context_t *prev)
 
     TRACE("(%p, %p)\n", store, prev);
 
-    ret = ContextList_Enum(ms->certs, prev);
+    ret = ContextList_Enum(ms->certs, &ms->cs, prev);
     if (!ret)
         SetLastError(CRYPT_E_NOT_FOUND);
 
@@ -180,7 +181,7 @@ static BOOL MemStore_deleteCert(WINECRYPT_CERTSTORE *store, context_t *context)
 {
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
 
-    if (ContextList_Remove(ms->certs, context))
+    if (ContextList_Remove(ms->certs, &ms->cs, context))
         Context_Release(context);
 
     return TRUE;
@@ -194,7 +195,7 @@ static BOOL MemStore_addCRL(WINECRYPT_CERTSTORE *store, context_t *crl,
 
     TRACE("(%p, %p, %p, %p)\n", store, crl, toReplace, ppStoreContext);
 
-    context = ContextList_Add(ms->crls, crl, toReplace, store, use_link);
+    context = ContextList_Add(ms->crls, &ms->cs, crl, toReplace, store, use_link);
     if (!context)
         return FALSE;
 
@@ -212,7 +213,7 @@ static context_t *MemStore_enumCRL(WINECRYPT_CERTSTORE *store, context_t *prev)
 
     TRACE("(%p, %p)\n", store, prev);
 
-    ret = ContextList_Enum(ms->crls, prev);
+    ret = ContextList_Enum(ms->crls, &ms->cs, prev);
     if (!ret)
         SetLastError(CRYPT_E_NOT_FOUND);
 
@@ -224,7 +225,7 @@ static BOOL MemStore_deleteCRL(WINECRYPT_CERTSTORE *store, context_t *context)
 {
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
 
-    if (!ContextList_Remove(ms->crls, context))
+    if (!ContextList_Remove(ms->crls, &ms->cs, context))
         Context_Release(context);
 
     return TRUE;
@@ -238,7 +239,7 @@ static BOOL MemStore_addCTL(WINECRYPT_CERTSTORE *store, context_t *ctl,
 
     TRACE("(%p, %p, %p, %p)\n", store, ctl, toReplace, ppStoreContext);
 
-    context = ContextList_Add(ms->ctls, ctl, toReplace, store, use_link);
+    context = ContextList_Add(ms->ctls, &ms->cs, ctl, toReplace, store, use_link);
     if (!context)
         return FALSE;
 
@@ -256,7 +257,7 @@ static context_t *MemStore_enumCTL(WINECRYPT_CERTSTORE *store, context_t *prev)
 
     TRACE("(%p, %p)\n", store, prev);
 
-    ret = ContextList_Enum(ms->ctls, prev);
+    ret = ContextList_Enum(ms->ctls, &ms->cs, prev);
     if (!ret)
         SetLastError(CRYPT_E_NOT_FOUND);
 
@@ -268,7 +269,7 @@ static BOOL MemStore_deleteCTL(WINECRYPT_CERTSTORE *store, context_t *context)
 {
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
 
-    if (!ContextList_Remove(ms->ctls, context))
+    if (!ContextList_Remove(ms->ctls, &ms->cs, context))
         Context_Release(context);
 
     return TRUE;
@@ -296,6 +297,8 @@ static DWORD MemStore_release(WINECRYPT_CERTSTORE *cert_store, DWORD flags)
     ContextList_Free(store->certs);
     ContextList_Free(store->crls);
     ContextList_Free(store->ctls);
+    store->cs.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection(&store->cs);
     CRYPT_FreeStore(&store->hdr);
     return ERROR_SUCCESS;
 }
@@ -345,6 +348,8 @@ static WINECRYPT_CERTSTORE *CRYPT_MemOpenStore(HCRYPTPROV hCryptProv,
         {
             memset(store, 0, sizeof(WINE_MEMSTORE));
             CRYPT_InitStore(&store->hdr, dwFlags, StoreTypeMem, &MemStoreVtbl);
+            InitializeCriticalSection(&store->cs);
+            store->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": ContextList.cs");
             store->certs = ContextList_Create();
             store->crls = ContextList_Create();
             store->ctls = ContextList_Create();
