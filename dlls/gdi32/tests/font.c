@@ -5700,7 +5700,7 @@ static void test_fake_bold_font(void)
     ok(tm[0].tmOverhang == tm[1].tmOverhang, "expected %d, got %d\n", tm[0].tmOverhang, tm[1].tmOverhang);
     w[0] = abc[0].abcA + abc[0].abcB + abc[0].abcC;
     w[1] = abc[1].abcA + abc[1].abcB + abc[1].abcC;
-    todo_wine ok((w[0] + 1) == w[1], "expected %d, got %d\n", w[0] + 1, w[1]);
+    ok((w[0] + 1) == w[1], "expected %d, got %d\n", w[0] + 1, w[1]);
 
 }
 

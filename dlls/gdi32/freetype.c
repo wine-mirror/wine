@@ -175,6 +175,7 @@ MAKE_FUNCPTR(FT_MulFix);
 MAKE_FUNCPTR(FT_New_Face);
 MAKE_FUNCPTR(FT_New_Memory_Face);
 MAKE_FUNCPTR(FT_Outline_Get_Bitmap);
+MAKE_FUNCPTR(FT_Outline_Get_CBox);
 MAKE_FUNCPTR(FT_Outline_Transform);
 MAKE_FUNCPTR(FT_Outline_Translate);
 MAKE_FUNCPTR(FT_Render_Glyph);
@@ -183,6 +184,7 @@ MAKE_FUNCPTR(FT_Set_Charmap);
 MAKE_FUNCPTR(FT_Set_Pixel_Sizes);
 MAKE_FUNCPTR(FT_Vector_Transform);
 MAKE_FUNCPTR(FT_Vector_Unit);
+static FT_Error (*pFT_Outline_Embolden)(FT_Outline *, FT_Pos);
 static FT_TrueTypeEngineType (*pFT_Get_TrueType_Engine_Type)(FT_Library);
 #ifdef HAVE_FREETYPE_FTLCDFIL_H
 static FT_Error (*pFT_Library_SetLcdFilter)(FT_Library, FT_LcdFilter);
@@ -3903,6 +3905,7 @@ static BOOL init_freetype(void)
     LOAD_FUNCPTR(FT_New_Face)
     LOAD_FUNCPTR(FT_New_Memory_Face)
     LOAD_FUNCPTR(FT_Outline_Get_Bitmap)
+    LOAD_FUNCPTR(FT_Outline_Get_CBox)
     LOAD_FUNCPTR(FT_Outline_Transform)
     LOAD_FUNCPTR(FT_Outline_Translate)
     LOAD_FUNCPTR(FT_Render_Glyph)
@@ -3913,6 +3916,7 @@ static BOOL init_freetype(void)
     LOAD_FUNCPTR(FT_Vector_Unit)
 #undef LOAD_FUNCPTR
     /* Don't warn if these ones are missing */
+    pFT_Outline_Embolden = wine_dlsym(ft_handle, "FT_Outline_Embolden", NULL, 0);
     pFT_Get_TrueType_Engine_Type = wine_dlsym(ft_handle, "FT_Get_TrueType_Engine_Type", NULL, 0);
 #ifdef HAVE_FREETYPE_FTLCDFIL_H
     pFT_Library_SetLcdFilter = wine_dlsym(ft_handle, "FT_Library_SetLcdFilter", NULL, 0);
@@ -6106,6 +6110,44 @@ static inline BOOL is_identity_MAT2(const MAT2 *matrix)
     return !memcmp(matrix, &identity, sizeof(MAT2));
 }
 
+static void synthesize_bold_glyph(FT_GlyphSlot glyph, LONG ppem, FT_Glyph_Metrics *metrics)
+{
+    FT_Error err;
+    static UINT once;
+
+    switch(glyph->format) {
+    case FT_GLYPH_FORMAT_OUTLINE:
+    {
+        FT_Pos strength;
+        FT_BBox bbox;
+        if(!pFT_Outline_Embolden)
+            break;
+
+        strength = MulDiv(ppem, 1 << 6, 24);
+        err = pFT_Outline_Embolden(&glyph->outline, strength);
+        if(err) {
+            TRACE("FT_Ouline_Embolden returns %d, ignored\n", err);
+            break;
+        }
+
+        pFT_Outline_Get_CBox(&glyph->outline, &bbox);
+        metrics->width = bbox.xMax - bbox.xMin;
+        metrics->height = bbox.yMax - bbox.yMin;
+        metrics->horiBearingX = bbox.xMin;
+        metrics->horiBearingY = bbox.yMax;
+        metrics->horiAdvance += (1 << 6);
+        metrics->vertAdvance += (1 << 6);
+        metrics->vertBearingX = metrics->horiBearingX - metrics->horiAdvance / 2;
+        metrics->vertBearingY = (metrics->vertAdvance - metrics->height) / 2;
+        break;
+    }
+    default:
+        if (!once++)
+            WARN("Emboldening format 0x%x is not supported\n", glyph->format);
+        return;
+    }
+}
+
 static inline BYTE get_max_level( UINT format )
 {
     switch( format )
@@ -6370,10 +6412,13 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
         return GDI_ERROR;
     }
 
+    metrics = ft_face->glyph->metrics;
+    if(font->fake_bold)
+        synthesize_bold_glyph(ft_face->glyph, font->ppem, &metrics);
+
     /* Some poorly-created fonts contain glyphs that exceed the boundaries set
      * by the text metrics. The proper behavior is to clip the glyph metrics to
      * fit within the maximums specified in the text metrics. */
-    metrics = ft_face->glyph->metrics;
     if(incoming_font->potm || get_outline_text_metrics(incoming_font) ||
         get_bitmap_text_metrics(incoming_font)) {
         TEXTMETRICW *ptm = &incoming_font->potm->otmTextMetrics;
@@ -6388,7 +6433,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 
     em_scale = MulDiv(incoming_font->ppem, 1 << 16, incoming_font->ft_face->units_per_EM);
 
-    if(FT_IS_SCALABLE(incoming_font->ft_face)) {
+    if(FT_IS_SCALABLE(incoming_font->ft_face) && !font->fake_bold) {
         TEXTMETRICW tm;
         if (get_text_metrics(incoming_font, &tm) &&
             !(tm.tmPitchAndFamily & TMPF_FIXED_PITCH)) {
