@@ -1,8 +1,8 @@
 EXTRADEFS = -D_SHELL32_
 MODULE    = shell32.dll
 IMPORTLIB = shell32
-IMPORTS   = uuid shlwapi comctl32 user32 gdi32 advapi32
-DELAYIMPORTS = ole32 oleaut32 shdocvw version
+IMPORTS   = uuid shlwapi user32 gdi32 advapi32
+DELAYIMPORTS = ole32 oleaut32 shdocvw version comctl32
 EXTRALIBS = @CORESERVICESLIB@
 
 C_SRCS = \

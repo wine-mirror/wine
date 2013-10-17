@@ -2075,9 +2075,14 @@ static HRESULT WINAPI IShellView2_fnCreateViewWindow2(IShellView2 *iface,
         LPSV2CVW2_PARAMS view_params)
 {
     IShellViewImpl *This = impl_from_IShellView2(iface);
+    INITCOMMONCONTROLSEX icex;
     WNDCLASSW wc;
     HRESULT hr;
     HWND wnd;
+
+    icex.dwSize = sizeof( icex );
+    icex.dwICC = ICC_LISTVIEW_CLASSES;
+    InitCommonControlsEx( &icex );
 
     TRACE("(%p)->(view_params %p)\n", iface, view_params);
 
