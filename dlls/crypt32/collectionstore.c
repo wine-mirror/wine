@@ -76,7 +76,7 @@ static void *CRYPT_CollectionCreateContextFromChild(WINE_COLLECTIONSTORE *store,
 {
     context_t *ret;
 
-    ret = child->vtbl->clone(child, &store->hdr);
+    ret = child->vtbl->clone(child, &store->hdr, TRUE);
     if (!ret)
         return NULL;
 
@@ -105,7 +105,7 @@ static BOOL CRYPT_CollectionAddContext(WINE_COLLECTIONSTORE *store,
         contextFuncs = (CONTEXT_FUNCS*)((LPBYTE)storeEntry->store->vtbl +
          contextFuncsOffset);
         ret = contextFuncs->addContext(storeEntry->store, context,
-         context_ptr(existingLinked), (const void **)&childContext);
+         context_ptr(existingLinked), (const void **)&childContext, TRUE);
     }
     else
     {
@@ -122,7 +122,7 @@ static BOOL CRYPT_CollectionAddContext(WINE_COLLECTIONSTORE *store,
 
                 storeEntry = entry;
                 ret = contextFuncs->addContext(entry->store, context, NULL,
-                 (const void **)&childContext);
+                 (const void **)&childContext, TRUE);
                 break;
             }
         }
@@ -201,7 +201,7 @@ static void *CRYPT_CollectionAdvanceEnum(WINE_COLLECTIONSTORE *store,
 }
 
 static BOOL Collection_addCert(WINECRYPT_CERTSTORE *store, void *cert,
- void *toReplace, const void **ppStoreContext)
+ void *toReplace, const void **ppStoreContext, BOOL use_link)
 {
     BOOL ret;
     void *childContext = NULL;
@@ -274,7 +274,7 @@ static BOOL Collection_deleteCert(WINECRYPT_CERTSTORE *store, context_t *context
 }
 
 static BOOL Collection_addCRL(WINECRYPT_CERTSTORE *store, void *crl,
- void *toReplace, const void **ppStoreContext)
+ void *toReplace, const void **ppStoreContext, BOOL use_link)
 {
     BOOL ret;
     void *childContext = NULL;
@@ -345,7 +345,7 @@ static BOOL Collection_deleteCRL(WINECRYPT_CERTSTORE *store, context_t *context)
 }
 
 static BOOL Collection_addCTL(WINECRYPT_CERTSTORE *store, void *ctl,
- void *toReplace, const void **ppStoreContext)
+ void *toReplace, const void **ppStoreContext, BOOL use_link)
 {
     BOOL ret;
     void *childContext = NULL;

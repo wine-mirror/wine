@@ -37,9 +37,14 @@ static void CRL_free(context_t *context)
     LocalFree(crl->ctx.pCrlInfo);
 }
 
-static context_t *CRL_clone(context_t *context, WINECRYPT_CERTSTORE *store)
+static context_t *CRL_clone(context_t *context, WINECRYPT_CERTSTORE *store, BOOL use_link)
 {
     crl_t *crl;
+
+    if(!use_link) {
+        FIXME("Only links supported\n");
+        return NULL;
+    }
 
     crl = (crl_t*)Context_CreateLinkContext(sizeof(CRL_CONTEXT), context);
     if(!crl)

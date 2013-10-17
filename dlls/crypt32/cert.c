@@ -109,6 +109,8 @@ BOOL WINAPI CertAddEncodedCertificateToSystemStoreW(LPCWSTR pszCertStoreName,
     return ret;
 }
 
+static const context_vtbl_t cert_vtbl;
+
 static void Cert_free(context_t *context)
 {
     cert_t *cert = (cert_t*)context;
@@ -117,13 +119,41 @@ static void Cert_free(context_t *context)
     LocalFree(cert->ctx.pCertInfo);
 }
 
-static context_t *Cert_clone(context_t *context, WINECRYPT_CERTSTORE *store)
+static context_t *Cert_clone(context_t *context, WINECRYPT_CERTSTORE *store, BOOL use_link)
 {
     cert_t *cert;
 
-    cert = (cert_t*)Context_CreateLinkContext(sizeof(CERT_CONTEXT), context);
-    if(!cert)
-        return NULL;
+    if(use_link) {
+        cert = (cert_t*)Context_CreateLinkContext(sizeof(CERT_CONTEXT), context);
+        if(!cert)
+            return NULL;
+    }else {
+        const cert_t *cloned = (const cert_t*)context;
+        void *new_context;
+        DWORD size = 0;
+        BOOL res;
+
+        new_context = Context_CreateDataContext(sizeof(CERT_CONTEXT), &cert_vtbl);
+        if(!new_context)
+            return NULL;
+        cert = cert_from_ptr(new_context);
+
+        Context_CopyProperties(&cert->ctx, &cloned->ctx);
+
+        cert->ctx.dwCertEncodingType = cloned->ctx.dwCertEncodingType;
+        cert->ctx.pbCertEncoded = CryptMemAlloc(cloned->ctx.cbCertEncoded);
+        memcpy(cert->ctx.pbCertEncoded, cloned->ctx.pbCertEncoded, cloned->ctx.cbCertEncoded);
+        cert->ctx.cbCertEncoded = cloned->ctx.cbCertEncoded;
+
+        /* FIXME: We don't need to decode the object here, we could just clone cert info. */
+        res = CryptDecodeObjectEx(cert->ctx.dwCertEncodingType, X509_CERT_TO_BE_SIGNED,
+         cert->ctx.pbCertEncoded, cert->ctx.cbCertEncoded, CRYPT_DECODE_ALLOC_FLAG, NULL,
+         &cert->ctx.pCertInfo, &size);
+        if(!res) {
+            CertFreeCertificateContext(&cert->ctx);
+            return NULL;
+        }
+    }
 
     cert->ctx.hCertStore = store;
     return &cert->base;
@@ -134,18 +164,14 @@ static const context_vtbl_t cert_vtbl = {
     Cert_clone
 };
 
-BOOL WINAPI CertAddCertificateContextToStore(HCERTSTORE hCertStore,
- PCCERT_CONTEXT pCertContext, DWORD dwAddDisposition,
- PCCERT_CONTEXT *ppStoreContext)
+BOOL WINAPI add_cert_to_store(WINECRYPT_CERTSTORE *store, const CERT_CONTEXT *cert,
+ DWORD add_disposition, BOOL use_link, PCCERT_CONTEXT *ret_context)
 {
-    WINECRYPT_CERTSTORE *store = hCertStore;
-    BOOL ret = TRUE;
-    PCCERT_CONTEXT toAdd = NULL, existing = NULL;
+    const CERT_CONTEXT *existing = NULL;
+    BOOL ret = TRUE, inherit_props = FALSE;
+    CERT_CONTEXT *new_context = NULL;
 
-    TRACE("(%p, %p, %08x, %p)\n", hCertStore, pCertContext,
-     dwAddDisposition, ppStoreContext);
-
-    switch (dwAddDisposition)
+    switch (add_disposition)
     {
     case CERT_STORE_ADD_ALWAYS:
         break;
@@ -159,107 +185,108 @@ BOOL WINAPI CertAddCertificateContextToStore(HCERTSTORE hCertStore,
         BYTE hashToAdd[20];
         DWORD size = sizeof(hashToAdd);
 
-        ret = CertGetCertificateContextProperty(pCertContext, CERT_HASH_PROP_ID,
+        ret = CertGetCertificateContextProperty(cert, CERT_HASH_PROP_ID,
          hashToAdd, &size);
         if (ret)
         {
             CRYPT_HASH_BLOB blob = { sizeof(hashToAdd), hashToAdd };
 
-            existing = CertFindCertificateInStore(hCertStore,
-             pCertContext->dwCertEncodingType, 0, CERT_FIND_SHA1_HASH, &blob,
-             NULL);
+            existing = CertFindCertificateInStore(store, cert->dwCertEncodingType, 0,
+             CERT_FIND_SHA1_HASH, &blob, NULL);
         }
         break;
     }
     default:
-        FIXME("Unimplemented add disposition %d\n", dwAddDisposition);
+        FIXME("Unimplemented add disposition %d\n", add_disposition);
         SetLastError(E_INVALIDARG);
-        ret = FALSE;
+        return FALSE;
     }
 
-    switch (dwAddDisposition)
+    switch (add_disposition)
     {
     case CERT_STORE_ADD_ALWAYS:
-        toAdd = CertDuplicateCertificateContext(pCertContext);
         break;
     case CERT_STORE_ADD_NEW:
         if (existing)
         {
             TRACE("found matching certificate, not adding\n");
             SetLastError(CRYPT_E_EXISTS);
-            ret = FALSE;
+            return FALSE;
         }
-        else
-            toAdd = CertDuplicateCertificateContext(pCertContext);
         break;
     case CERT_STORE_ADD_REPLACE_EXISTING:
-        toAdd = CertDuplicateCertificateContext(pCertContext);
         break;
     case CERT_STORE_ADD_REPLACE_EXISTING_INHERIT_PROPERTIES:
-        toAdd = CertDuplicateCertificateContext(pCertContext);
+        if (use_link)
+            FIXME("CERT_STORE_ADD_REPLACE_EXISTING_INHERIT_PROPERTIES: semi-stub for links\n");
         if (existing)
-            Context_CopyProperties(toAdd, existing);
+            inherit_props = TRUE;
         break;
     case CERT_STORE_ADD_USE_EXISTING:
+        if(use_link)
+            FIXME("CERT_STORE_ADD_USE_EXISTING: semi-stub for links\n");
         if (existing)
         {
-            Context_CopyProperties(existing, pCertContext);
-            if (ppStoreContext)
-                *ppStoreContext = CertDuplicateCertificateContext(existing);
+            Context_CopyProperties(existing, cert);
+            if (ret_context)
+                *ret_context = CertDuplicateCertificateContext(existing);
+            return TRUE;
         }
-        else
-            toAdd = CertDuplicateCertificateContext(pCertContext);
         break;
     case CERT_STORE_ADD_NEWER:
-        if (existing)
+        if (existing && CompareFileTime(&existing->pCertInfo->NotBefore, &cert->pCertInfo->NotBefore) >= 0)
         {
-            if (CompareFileTime(&existing->pCertInfo->NotBefore,
-             &pCertContext->pCertInfo->NotBefore) >= 0)
-            {
-                TRACE("existing certificate is newer, not adding\n");
-                SetLastError(CRYPT_E_EXISTS);
-                ret = FALSE;
-            }
-            else
-                toAdd = CertDuplicateCertificateContext(pCertContext);
+            TRACE("existing certificate is newer, not adding\n");
+            SetLastError(CRYPT_E_EXISTS);
+            return FALSE;
         }
-        else
-            toAdd = CertDuplicateCertificateContext(pCertContext);
         break;
     case CERT_STORE_ADD_NEWER_INHERIT_PROPERTIES:
         if (existing)
         {
-            if (CompareFileTime(&existing->pCertInfo->NotBefore,
-             &pCertContext->pCertInfo->NotBefore) >= 0)
+            if (CompareFileTime(&existing->pCertInfo->NotBefore, &cert->pCertInfo->NotBefore) >= 0)
             {
                 TRACE("existing certificate is newer, not adding\n");
                 SetLastError(CRYPT_E_EXISTS);
-                ret = FALSE;
+                return FALSE;
             }
-            else
-            {
-                toAdd = CertDuplicateCertificateContext(pCertContext);
-                Context_CopyProperties(toAdd, existing);
-            }
+            inherit_props = TRUE;
         }
-        else
-            toAdd = CertDuplicateCertificateContext(pCertContext);
         break;
     }
 
-    if (toAdd)
-    {
-        if (store)
-            ret = store->vtbl->certs.addContext(store, (void *)toAdd,
-             (void *)existing, (const void **)ppStoreContext);
-        else if (ppStoreContext)
-            *ppStoreContext = CertDuplicateCertificateContext(toAdd);
-        CertFreeCertificateContext(toAdd);
+    /* FIXME: We have tests that this works, but what should we really do in this case? */
+    if(!store) {
+        if(ret_context)
+            *ret_context = CertDuplicateCertificateContext(cert);
+        return TRUE;
     }
-    CertFreeCertificateContext(existing);
+
+    ret = store->vtbl->certs.addContext(store, (void*)cert, (void*)existing,
+     (ret_context || inherit_props) ? (const void **)&new_context : NULL, use_link);
+    if(!ret)
+        return FALSE;
+
+    if(inherit_props)
+        Context_CopyProperties(new_context, existing);
+
+    if(ret_context)
+        *ret_context = CertDuplicateCertificateContext(new_context);
+    else if(new_context)
+        CertFreeCertificateContext(new_context);
 
     TRACE("returning %d\n", ret);
     return ret;
+}
+
+BOOL WINAPI CertAddCertificateContextToStore(HCERTSTORE hCertStore, PCCERT_CONTEXT pCertContext,
+ DWORD dwAddDisposition, PCCERT_CONTEXT *ppStoreContext)
+{
+    WINECRYPT_CERTSTORE *store = hCertStore;
+
+    TRACE("(%p, %p, %08x, %p)\n", hCertStore, pCertContext, dwAddDisposition, ppStoreContext);
+
+    return add_cert_to_store(store, pCertContext, dwAddDisposition, FALSE, ppStoreContext);
 }
 
 BOOL WINAPI CertAddCertificateLinkToStore(HCERTSTORE hCertStore,
@@ -279,8 +306,7 @@ BOOL WINAPI CertAddCertificateLinkToStore(HCERTSTORE hCertStore,
         SetLastError(E_INVALIDARG);
         return FALSE;
     }
-    return CertAddCertificateContextToStore(hCertStore, pCertContext,
-     dwAddDisposition, ppCertContext);
+    return add_cert_to_store(hCertStore, pCertContext, dwAddDisposition, TRUE, ppCertContext);
 }
 
 PCCERT_CONTEXT WINAPI CertCreateCertificateContext(DWORD dwCertEncodingType,

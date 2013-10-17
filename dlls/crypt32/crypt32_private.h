@@ -168,7 +168,7 @@ typedef struct _context_t context_t;
 
 typedef struct {
     void (*free)(context_t*);
-    struct _context_t *(*clone)(context_t*,struct WINE_CRYPTCERTSTORE*);
+    struct _context_t *(*clone)(context_t*,struct WINE_CRYPTCERTSTORE*,BOOL);
 } context_vtbl_t;
 
 typedef struct _context_t {
@@ -267,18 +267,15 @@ typedef struct WINE_CRYPTCERTSTORE * (*StoreOpenFunc)(HCRYPTPROV hCryptProv,
 /* Called to enumerate the next context in a store. */
 typedef void * (*EnumFunc)(struct WINE_CRYPTCERTSTORE *store, void *pPrev);
 
-/* Called to add a context to a store.  If toReplace is not NULL,
- * context replaces toReplace in the store, and access checks should not be
- * performed.  Otherwise context is a new context, and it should only be
- * added if the store allows it.  If ppStoreContext is not NULL, the added
- * context should be returned in *ppStoreContext.
- */
-typedef BOOL (*AddFunc)(struct WINE_CRYPTCERTSTORE *store, void *context,
- void *toReplace, const void **ppStoreContext);
-
 typedef struct _CONTEXT_FUNCS
 {
-    AddFunc    addContext;
+  /* Called to add a context to a store.  If toReplace is not NULL,
+   * context replaces toReplace in the store, and access checks should not be
+   * performed.  Otherwise context is a new context, and it should only be
+   * added if the store allows it.  If ppStoreContext is not NULL, the added
+   * context should be returned in *ppStoreContext.
+   */
+    BOOL (*addContext)(struct WINE_CRYPTCERTSTORE*,void*,void*,const void**,BOOL);
     EnumFunc   enumContext;
     BOOL (*delete)(struct WINE_CRYPTCERTSTORE*,context_t*);
 } CONTEXT_FUNCS;
@@ -452,7 +449,8 @@ struct ContextList;
 struct ContextList *ContextList_Create(
  const WINE_CONTEXT_INTERFACE *contextInterface, size_t contextSize) DECLSPEC_HIDDEN;
 
-void *ContextList_Add(struct ContextList *list, void *toLink, void *toReplace, struct WINE_CRYPTCERTSTORE *store) DECLSPEC_HIDDEN;
+void *ContextList_Add(struct ContextList *list, void *toLink, void *toReplace,
+ struct WINE_CRYPTCERTSTORE *store, BOOL use_link) DECLSPEC_HIDDEN;
 
 void *ContextList_Enum(struct ContextList *list, void *pPrev) DECLSPEC_HIDDEN;
 

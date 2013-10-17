@@ -143,14 +143,14 @@ BOOL WINAPI I_CertUpdateStore(HCERTSTORE store1, HCERTSTORE store2, DWORD unk0,
 }
 
 static BOOL MemStore_addCert(WINECRYPT_CERTSTORE *store, void *cert,
- void *toReplace, const void **ppStoreContext)
+ void *toReplace, const void **ppStoreContext, BOOL use_link)
 {
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
     PCERT_CONTEXT context;
 
     TRACE("(%p, %p, %p, %p)\n", store, cert, toReplace, ppStoreContext);
 
-    context = ContextList_Add(ms->certs, cert, toReplace, store);
+    context = ContextList_Add(ms->certs, cert, toReplace, store, use_link);
     if (!context)
         return FALSE;
 
@@ -185,14 +185,14 @@ static BOOL MemStore_deleteCert(WINECRYPT_CERTSTORE *store, context_t *context)
 }
 
 static BOOL MemStore_addCRL(WINECRYPT_CERTSTORE *store, void *crl,
- void *toReplace, const void **ppStoreContext)
+ void *toReplace, const void **ppStoreContext, BOOL use_link)
 {
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
     PCRL_CONTEXT context;
 
     TRACE("(%p, %p, %p, %p)\n", store, crl, toReplace, ppStoreContext);
 
-    context = ContextList_Add(ms->crls, crl, toReplace, store);
+    context = ContextList_Add(ms->crls, crl, toReplace, store, use_link);
     if (!context)
         return FALSE;
 
@@ -227,14 +227,14 @@ static BOOL MemStore_deleteCRL(WINECRYPT_CERTSTORE *store, context_t *context)
 }
 
 static BOOL MemStore_addCTL(WINECRYPT_CERTSTORE *store, void *ctl,
- void *toReplace, const void **ppStoreContext)
+ void *toReplace, const void **ppStoreContext, BOOL use_link)
 {
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
     PCTL_CONTEXT context;
 
     TRACE("(%p, %p, %p, %p)\n", store, ctl, toReplace, ppStoreContext);
 
-    context = ContextList_Add(ms->ctls, ctl, toReplace, store);
+    context = ContextList_Add(ms->ctls, ctl, toReplace, store, use_link);
     if (!context)
         return FALSE;
 
@@ -1022,8 +1022,7 @@ BOOL WINAPI CertAddCRLContextToStore(HCERTSTORE hCertStore,
     if (toAdd)
     {
         if (store)
-            ret = store->vtbl->crls.addContext(store, (void *)toAdd,
-             (void *)existing, (const void **)ppStoreContext);
+            ret = store->vtbl->crls.addContext(store, (void*)toAdd, (void*)existing, (const void **)ppStoreContext, TRUE);
         else if (ppStoreContext)
             *ppStoreContext = CertDuplicateCRLContext(toAdd);
         CertFreeCRLContext(toAdd);
@@ -1356,7 +1355,7 @@ static DWORD EmptyStore_release(WINECRYPT_CERTSTORE *store, DWORD flags)
 }
 
 static BOOL EmptyStore_add(WINECRYPT_CERTSTORE *store, void *context,
- void *replace, const void **ret_context)
+ void *replace, const void **ret_context, BOOL use_link)
 {
     TRACE("(%p, %p, %p, %p)\n", store, context, replace, ret_context);
 

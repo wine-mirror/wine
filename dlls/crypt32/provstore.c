@@ -69,7 +69,7 @@ static DWORD ProvStore_release(WINECRYPT_CERTSTORE *cert_store, DWORD flags)
 }
 
 static BOOL ProvStore_addCert(WINECRYPT_CERTSTORE *store, void *cert,
- void *toReplace, const void **ppStoreContext)
+ void *toReplace, const void **ppStoreContext, BOOL use_link)
 {
     WINE_PROVIDERSTORE *ps = (WINE_PROVIDERSTORE*)store;
     BOOL ret;
@@ -78,7 +78,7 @@ static BOOL ProvStore_addCert(WINECRYPT_CERTSTORE *store, void *cert,
 
     if (toReplace)
         ret = ps->memStore->vtbl->certs.addContext(ps->memStore, cert, toReplace,
-         ppStoreContext);
+         ppStoreContext, TRUE);
     else
     {
         ret = TRUE;
@@ -87,7 +87,7 @@ static BOOL ProvStore_addCert(WINECRYPT_CERTSTORE *store, void *cert,
              CERT_STORE_PROV_WRITE_ADD_FLAG);
         if (ret)
             ret = ps->memStore->vtbl->certs.addContext(ps->memStore, cert, NULL,
-             ppStoreContext);
+             ppStoreContext, TRUE);
     }
     /* dirty trick: replace the returned context's hCertStore with
      * store.
@@ -128,7 +128,7 @@ static BOOL ProvStore_deleteCert(WINECRYPT_CERTSTORE *store, context_t *context)
 }
 
 static BOOL ProvStore_addCRL(WINECRYPT_CERTSTORE *store, void *crl,
- void *toReplace, const void **ppStoreContext)
+ void *toReplace, const void **ppStoreContext, BOOL use_link)
 {
     WINE_PROVIDERSTORE *ps = (WINE_PROVIDERSTORE*)store;
     BOOL ret;
@@ -137,7 +137,7 @@ static BOOL ProvStore_addCRL(WINECRYPT_CERTSTORE *store, void *crl,
 
     if (toReplace)
         ret = ps->memStore->vtbl->crls.addContext(ps->memStore, crl, toReplace,
-         ppStoreContext);
+         ppStoreContext, TRUE);
     else
     {
         if (ps->hdr.dwOpenFlags & CERT_STORE_READONLY_FLAG)
@@ -153,7 +153,7 @@ static BOOL ProvStore_addCRL(WINECRYPT_CERTSTORE *store, void *crl,
                  CERT_STORE_PROV_WRITE_ADD_FLAG);
             if (ret)
                 ret = ps->memStore->vtbl->crls.addContext(ps->memStore, crl, NULL,
-                 ppStoreContext);
+                 ppStoreContext, TRUE);
         }
     }
     /* dirty trick: replace the returned context's hCertStore with
@@ -195,7 +195,7 @@ static BOOL ProvStore_deleteCRL(WINECRYPT_CERTSTORE *store, context_t *crl)
 }
 
 static BOOL ProvStore_addCTL(WINECRYPT_CERTSTORE *store, void *ctl,
- void *toReplace, const void **ppStoreContext)
+ void *toReplace, const void **ppStoreContext, BOOL use_link)
 {
     WINE_PROVIDERSTORE *ps = (WINE_PROVIDERSTORE*)store;
     BOOL ret;
@@ -204,7 +204,7 @@ static BOOL ProvStore_addCTL(WINECRYPT_CERTSTORE *store, void *ctl,
 
     if (toReplace)
         ret = ps->memStore->vtbl->ctls.addContext(ps->memStore, ctl, toReplace,
-         ppStoreContext);
+         ppStoreContext, TRUE);
     else
     {
         if (ps->hdr.dwOpenFlags & CERT_STORE_READONLY_FLAG)
@@ -220,7 +220,7 @@ static BOOL ProvStore_addCTL(WINECRYPT_CERTSTORE *store, void *ctl,
                  CERT_STORE_PROV_WRITE_ADD_FLAG);
             if (ret)
                 ret = ps->memStore->vtbl->ctls.addContext(ps->memStore, ctl, NULL,
-                 ppStoreContext);
+                 ppStoreContext, TRUE);
         }
     }
     /* dirty trick: replace the returned context's hCertStore with

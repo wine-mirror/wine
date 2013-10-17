@@ -39,9 +39,14 @@ static void CTL_free(context_t *context)
     LocalFree(ctl->ctx.pCtlInfo);
 }
 
-static context_t *CTL_clone(context_t *context, WINECRYPT_CERTSTORE *store)
+static context_t *CTL_clone(context_t *context, WINECRYPT_CERTSTORE *store, BOOL use_link)
 {
     ctl_t *ctl;
+
+    if(!use_link) {
+        FIXME("Only links supported\n");
+        return NULL;
+    }
 
     ctl = (ctl_t*)Context_CreateLinkContext(sizeof(CTL_CONTEXT), context);
     if(!ctl)
@@ -154,7 +159,7 @@ BOOL WINAPI CertAddCTLContextToStore(HCERTSTORE hCertStore,
     {
         if (store)
             ret = store->vtbl->ctls.addContext(store, (void *)toAdd,
-             (void *)existing, (const void **)ppStoreContext);
+             (void *)existing, (const void **)ppStoreContext, TRUE);
         else if (ppStoreContext)
             *ppStoreContext = CertDuplicateCTLContext(toAdd);
         CertFreeCTLContext(toAdd);

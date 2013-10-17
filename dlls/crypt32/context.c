@@ -162,13 +162,13 @@ struct ContextList *ContextList_Create(
     return list;
 }
 
-void *ContextList_Add(struct ContextList *list, void *toLink, void *toReplace, struct WINE_CRYPTCERTSTORE *store)
+void *ContextList_Add(struct ContextList *list, void *toLink, void *toReplace, struct WINE_CRYPTCERTSTORE *store, BOOL use_link)
 {
     context_t *context;
 
     TRACE("(%p, %p, %p)\n", list, toLink, toReplace);
 
-    context = context_from_ptr(toLink)->vtbl->clone(BASE_CONTEXT_FROM_CONTEXT(toLink), store);
+    context = context_from_ptr(toLink)->vtbl->clone(BASE_CONTEXT_FROM_CONTEXT(toLink), store, use_link);
     if (context)
     {
         TRACE("adding %p\n", context);
