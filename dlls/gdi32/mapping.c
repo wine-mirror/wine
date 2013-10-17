@@ -29,6 +29,30 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dc);
 
 
+static SIZE get_dc_virtual_size( DC *dc )
+{
+    SIZE ret = dc->virtual_size;
+
+    if (!ret.cx)
+    {
+        ret.cx = GetDeviceCaps( dc->hSelf, HORZSIZE );
+        ret.cy = GetDeviceCaps( dc->hSelf, VERTSIZE );
+    }
+    return ret;
+}
+
+static SIZE get_dc_virtual_res( DC *dc )
+{
+    SIZE ret = dc->virtual_res;
+
+    if (!ret.cx)
+    {
+        ret.cx = GetDeviceCaps( dc->hSelf, HORZRES );
+        ret.cy = GetDeviceCaps( dc->hSelf, VERTRES );
+    }
+    return ret;
+}
+
 /***********************************************************************
  *           MAPPING_FixIsotropic
  *
@@ -36,10 +60,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(dc);
  */
 static void MAPPING_FixIsotropic( DC * dc )
 {
-    double xdim = fabs((double)dc->vportExtX * dc->virtual_size.cx /
-                  (dc->virtual_res.cx * dc->wndExtX));
-    double ydim = fabs((double)dc->vportExtY * dc->virtual_size.cy /
-                  (dc->virtual_res.cy * dc->wndExtY));
+    SIZE virtual_size = get_dc_virtual_size( dc );
+    SIZE virtual_res = get_dc_virtual_res( dc );
+    double xdim = fabs((double)dc->vportExtX * virtual_size.cx / (virtual_res.cx * dc->wndExtX));
+    double ydim = fabs((double)dc->vportExtY * virtual_size.cy / (virtual_res.cy * dc->wndExtY));
 
     if (xdim > ydim)
     {
@@ -136,14 +160,12 @@ INT nulldrv_SetMapMode( PHYSDEV dev, INT mode )
 {
     DC *dc = get_nulldrv_dc( dev );
     INT ret = dc->MapMode;
-    INT horzSize, vertSize, horzRes, vertRes;
+    SIZE virtual_size, virtual_res;
 
     if (mode == dc->MapMode && (mode == MM_ISOTROPIC || mode == MM_ANISOTROPIC)) return ret;
 
-    horzSize = dc->virtual_size.cx;
-    vertSize = dc->virtual_size.cy;
-    horzRes  = dc->virtual_res.cx;
-    vertRes  = dc->virtual_res.cy;
+    virtual_size = get_dc_virtual_size( dc );
+    virtual_res = get_dc_virtual_res( dc );
     switch (mode)
     {
     case MM_TEXT:
@@ -154,34 +176,34 @@ INT nulldrv_SetMapMode( PHYSDEV dev, INT mode )
         break;
     case MM_LOMETRIC:
     case MM_ISOTROPIC:
-        dc->wndExtX   = horzSize * 10;
-        dc->wndExtY   = vertSize * 10;
-        dc->vportExtX = horzRes;
-        dc->vportExtY = -vertRes;
+        dc->wndExtX   = virtual_size.cx * 10;
+        dc->wndExtY   = virtual_size.cy * 10;
+        dc->vportExtX = virtual_res.cx;
+        dc->vportExtY = -virtual_res.cy;
         break;
     case MM_HIMETRIC:
-        dc->wndExtX   = horzSize * 100;
-        dc->wndExtY   = vertSize * 100;
-        dc->vportExtX = horzRes;
-        dc->vportExtY = -vertRes;
+        dc->wndExtX   = virtual_size.cx * 100;
+        dc->wndExtY   = virtual_size.cy * 100;
+        dc->vportExtX = virtual_res.cx;
+        dc->vportExtY = -virtual_res.cy;
         break;
     case MM_LOENGLISH:
-        dc->wndExtX   = MulDiv(1000, horzSize, 254);
-        dc->wndExtY   = MulDiv(1000, vertSize, 254);
-        dc->vportExtX = horzRes;
-        dc->vportExtY = -vertRes;
+        dc->wndExtX   = MulDiv(1000, virtual_size.cx, 254);
+        dc->wndExtY   = MulDiv(1000, virtual_size.cy, 254);
+        dc->vportExtX = virtual_res.cx;
+        dc->vportExtY = -virtual_res.cy;
         break;
     case MM_HIENGLISH:
-        dc->wndExtX   = MulDiv(10000, horzSize, 254);
-        dc->wndExtY   = MulDiv(10000, vertSize, 254);
-        dc->vportExtX = horzRes;
-        dc->vportExtY = -vertRes;
+        dc->wndExtX   = MulDiv(10000, virtual_size.cx, 254);
+        dc->wndExtY   = MulDiv(10000, virtual_size.cy, 254);
+        dc->vportExtX = virtual_res.cx;
+        dc->vportExtY = -virtual_res.cy;
         break;
     case MM_TWIPS:
-        dc->wndExtX   = MulDiv(14400, horzSize, 254);
-        dc->wndExtY   = MulDiv(14400, vertSize, 254);
-        dc->vportExtX = horzRes;
-        dc->vportExtY = -vertRes;
+        dc->wndExtX   = MulDiv(14400, virtual_size.cx, 254);
+        dc->wndExtY   = MulDiv(14400, virtual_size.cy, 254);
+        dc->vportExtX = virtual_res.cx;
+        dc->vportExtY = -virtual_res.cy;
         break;
     case MM_ANISOTROPIC:
         break;
@@ -596,15 +618,11 @@ BOOL WINAPI SetVirtualResolution(HDC hdc, DWORD horz_res, DWORD vert_res,
     DC * dc;
     TRACE("(%p %d %d %d %d)\n", hdc, horz_res, vert_res, horz_size, vert_size);
 
-    if(horz_res == 0 && vert_res == 0 && horz_size == 0 && vert_size == 0)
+    if (!horz_res || !vert_res || !horz_size || !vert_size)
     {
-        horz_res  = GetDeviceCaps(hdc, HORZRES);
-        vert_res  = GetDeviceCaps(hdc, VERTRES);
-        horz_size = GetDeviceCaps(hdc, HORZSIZE);
-        vert_size = GetDeviceCaps(hdc, VERTSIZE);
+        /* they must be all zero */
+        if (horz_res || vert_res || horz_size || vert_size) return FALSE;
     }
-    else if(horz_res == 0 || vert_res == 0 || horz_size == 0 || vert_size == 0)
-        return FALSE;
 
     dc = get_dc_ptr( hdc );
     if (!dc) return FALSE;
