@@ -137,33 +137,31 @@ struct ContextList *ContextList_Create(
     return list;
 }
 
-void *ContextList_Add(struct ContextList *list, void *toLink, void *toReplace, struct WINE_CRYPTCERTSTORE *store, BOOL use_link)
+context_t *ContextList_Add(struct ContextList *list, context_t *toLink, context_t *existing, struct WINE_CRYPTCERTSTORE *store, BOOL use_link)
 {
     context_t *context;
 
-    TRACE("(%p, %p, %p)\n", list, toLink, toReplace);
+    TRACE("(%p, %p, %p)\n", list, toLink, existing);
 
-    context = context_from_ptr(toLink)->vtbl->clone(BASE_CONTEXT_FROM_CONTEXT(toLink), store, use_link);
+    context = toLink->vtbl->clone(toLink, store, use_link);
     if (context)
     {
         TRACE("adding %p\n", context);
         EnterCriticalSection(&list->cs);
-        if (toReplace)
+        if (existing)
         {
-            context_t *existing = context_from_ptr(toReplace);
-
             context->u.entry.prev = existing->u.entry.prev;
             context->u.entry.next = existing->u.entry.next;
             context->u.entry.prev->next = &context->u.entry;
             context->u.entry.next->prev = &context->u.entry;
             list_init(&existing->u.entry);
-            Context_Release(context_from_ptr(toReplace));
+            Context_Release(existing);
         }
         else
             list_add_head(&list->contexts, &context->u.entry);
         LeaveCriticalSection(&list->cs);
     }
-    return CONTEXT_FROM_BASE_CONTEXT(context);
+    return context;
 }
 
 void *ContextList_Enum(struct ContextList *list, void *pPrev)

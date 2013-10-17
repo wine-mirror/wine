@@ -146,16 +146,18 @@ static BOOL MemStore_addCert(WINECRYPT_CERTSTORE *store, void *cert,
  void *toReplace, const void **ppStoreContext, BOOL use_link)
 {
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
-    PCERT_CONTEXT context;
+    context_t *context;
 
     TRACE("(%p, %p, %p, %p)\n", store, cert, toReplace, ppStoreContext);
 
-    context = ContextList_Add(ms->certs, cert, toReplace, store, use_link);
+    context = ContextList_Add(ms->certs, context_from_ptr(cert), toReplace ? context_from_ptr(toReplace) : NULL, store, use_link);
     if (!context)
         return FALSE;
 
-    if (ppStoreContext)
-        *ppStoreContext = CertDuplicateCertificateContext(context);
+    if (ppStoreContext) {
+        Context_AddRef(context);
+        *ppStoreContext = context_ptr(context);
+    }
     return TRUE;
 }
 
@@ -188,16 +190,18 @@ static BOOL MemStore_addCRL(WINECRYPT_CERTSTORE *store, void *crl,
  void *toReplace, const void **ppStoreContext, BOOL use_link)
 {
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
-    PCRL_CONTEXT context;
+    context_t *context;
 
     TRACE("(%p, %p, %p, %p)\n", store, crl, toReplace, ppStoreContext);
 
-    context = ContextList_Add(ms->crls, crl, toReplace, store, use_link);
+    context = ContextList_Add(ms->crls, context_from_ptr(crl), toReplace ? context_from_ptr(toReplace) : NULL, store, use_link);
     if (!context)
         return FALSE;
 
-    if (ppStoreContext)
-        *ppStoreContext = CertDuplicateCRLContext(context);
+    if (ppStoreContext) {
+        Context_AddRef(context);
+        *ppStoreContext = context_ptr(context);
+    }
     return TRUE;
 }
 
@@ -230,16 +234,18 @@ static BOOL MemStore_addCTL(WINECRYPT_CERTSTORE *store, void *ctl,
  void *toReplace, const void **ppStoreContext, BOOL use_link)
 {
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
-    PCTL_CONTEXT context;
+    context_t *context;
 
     TRACE("(%p, %p, %p, %p)\n", store, ctl, toReplace, ppStoreContext);
 
-    context = ContextList_Add(ms->ctls, ctl, toReplace, store, use_link);
+    context = ContextList_Add(ms->ctls, context_from_ptr(ctl), toReplace ? context_from_ptr(toReplace) : NULL, store, use_link);
     if (!context)
         return FALSE;
 
-    if (ppStoreContext)
-        *ppStoreContext = CertDuplicateCTLContext(context);
+    if (ppStoreContext) {
+        Context_AddRef(context);
+        *ppStoreContext = context_ptr(context);
+    }
     return TRUE;
 }
 
