@@ -375,22 +375,15 @@ BOOL WINAPI CertFreeCRLContext(PCCRL_CONTEXT pCrlContext)
 DWORD WINAPI CertEnumCRLContextProperties(PCCRL_CONTEXT pCRLContext,
  DWORD dwPropId)
 {
-    CONTEXT_PROPERTY_LIST *properties = Context_GetProperties(pCRLContext);
-    DWORD ret;
-
     TRACE("(%p, %d)\n", pCRLContext, dwPropId);
 
-    if (properties)
-        ret = ContextPropertyList_EnumPropIDs(properties, dwPropId);
-    else
-        ret = 0;
-    return ret;
+    return ContextPropertyList_EnumPropIDs(crl_from_ptr(pCRLContext)->base.properties, dwPropId);
 }
 
-static BOOL CRLContext_SetProperty(PCCRL_CONTEXT context, DWORD dwPropId,
+static BOOL CRLContext_SetProperty(crl_t *crl, DWORD dwPropId,
                                    DWORD dwFlags, const void *pvData);
 
-static BOOL CRLContext_GetHashProp(PCCRL_CONTEXT context, DWORD dwPropId,
+static BOOL CRLContext_GetHashProp(crl_t *crl, DWORD dwPropId,
  ALG_ID algID, const BYTE *toHash, DWORD toHashLen, void *pvData,
  DWORD *pcbData)
 {
@@ -400,22 +393,21 @@ static BOOL CRLContext_GetHashProp(PCCRL_CONTEXT context, DWORD dwPropId,
     {
         CRYPT_DATA_BLOB blob = { *pcbData, pvData };
 
-        ret = CRLContext_SetProperty(context, dwPropId, 0, &blob);
+        ret = CRLContext_SetProperty(crl, dwPropId, 0, &blob);
     }
     return ret;
 }
 
-static BOOL CRLContext_GetProperty(PCCRL_CONTEXT context, DWORD dwPropId,
+static BOOL CRLContext_GetProperty(crl_t *crl, DWORD dwPropId,
                                    void *pvData, DWORD *pcbData)
 {
-    CONTEXT_PROPERTY_LIST *properties = Context_GetProperties(context);
     BOOL ret;
     CRYPT_DATA_BLOB blob;
 
-    TRACE("(%p, %d, %p, %p)\n", context, dwPropId, pvData, pcbData);
+    TRACE("(%p, %d, %p, %p)\n", crl, dwPropId, pvData, pcbData);
 
-    if (properties)
-        ret = ContextPropertyList_FindProperty(properties, dwPropId, &blob);
+    if (crl->base.properties)
+        ret = ContextPropertyList_FindProperty(crl->base.properties, dwPropId, &blob);
     else
         ret = FALSE;
     if (ret)
@@ -440,13 +432,13 @@ static BOOL CRLContext_GetProperty(PCCRL_CONTEXT context, DWORD dwPropId,
         switch (dwPropId)
         {
         case CERT_SHA1_HASH_PROP_ID:
-            ret = CRLContext_GetHashProp(context, dwPropId, CALG_SHA1,
-                                         context->pbCrlEncoded, context->cbCrlEncoded, pvData,
+            ret = CRLContext_GetHashProp(crl, dwPropId, CALG_SHA1,
+                                         crl->ctx.pbCrlEncoded, crl->ctx.cbCrlEncoded, pvData,
              pcbData);
             break;
         case CERT_MD5_HASH_PROP_ID:
-            ret = CRLContext_GetHashProp(context, dwPropId, CALG_MD5,
-                                         context->pbCrlEncoded, context->cbCrlEncoded, pvData,
+            ret = CRLContext_GetHashProp(crl, dwPropId, CALG_MD5,
+                                         crl->ctx.pbCrlEncoded, crl->ctx.cbCrlEncoded, pvData,
              pcbData);
             break;
         default:
@@ -498,25 +490,23 @@ BOOL WINAPI CertGetCRLContextProperty(PCCRL_CONTEXT pCRLContext,
         }
         break;
     default:
-        ret = CRLContext_GetProperty(pCRLContext, dwPropId, pvData,
-         pcbData);
+        ret = CRLContext_GetProperty(crl_from_ptr(pCRLContext), dwPropId, pvData, pcbData);
     }
     return ret;
 }
 
-static BOOL CRLContext_SetProperty(PCCRL_CONTEXT context, DWORD dwPropId,
+static BOOL CRLContext_SetProperty(crl_t *crl, DWORD dwPropId,
  DWORD dwFlags, const void *pvData)
 {
-    CONTEXT_PROPERTY_LIST *properties = Context_GetProperties(context);
     BOOL ret;
 
-    TRACE("(%p, %d, %08x, %p)\n", context, dwPropId, dwFlags, pvData);
+    TRACE("(%p, %d, %08x, %p)\n", crl, dwPropId, dwFlags, pvData);
 
-    if (!properties)
+    if (!crl->base.properties)
         ret = FALSE;
     else if (!pvData)
     {
-        ContextPropertyList_RemoveProperty(properties, dwPropId);
+        ContextPropertyList_RemoveProperty(crl->base.properties, dwPropId);
         ret = TRUE;
     }
     else
@@ -543,12 +533,12 @@ static BOOL CRLContext_SetProperty(PCCRL_CONTEXT context, DWORD dwPropId,
         {
             PCRYPT_DATA_BLOB blob = (PCRYPT_DATA_BLOB)pvData;
 
-            ret = ContextPropertyList_SetProperty(properties, dwPropId,
+            ret = ContextPropertyList_SetProperty(crl->base.properties, dwPropId,
              blob->pbData, blob->cbData);
             break;
         }
         case CERT_DATE_STAMP_PROP_ID:
-            ret = ContextPropertyList_SetProperty(properties, dwPropId,
+            ret = ContextPropertyList_SetProperty(crl->base.properties, dwPropId,
              pvData, sizeof(FILETIME));
             break;
         default:
@@ -580,7 +570,7 @@ BOOL WINAPI CertSetCRLContextProperty(PCCRL_CONTEXT pCRLContext,
         SetLastError(E_INVALIDARG);
         return FALSE;
     }
-    ret = CRLContext_SetProperty(pCRLContext, dwPropId, dwFlags, pvData);
+    ret = CRLContext_SetProperty(crl_from_ptr(pCRLContext), dwPropId, dwFlags, pvData);
     TRACE("returning %d\n", ret);
     return ret;
 }

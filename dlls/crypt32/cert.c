@@ -38,7 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(crypt);
  * CertGetCertificateContextProperty, and are particular to the store in which
  * the property exists (which is separate from the context.)
  */
-static BOOL CertContext_GetProperty(void *context, DWORD dwPropId,
+static BOOL CertContext_GetProperty(cert_t *cert, DWORD dwPropId,
  void *pvData, DWORD *pcbData);
 
 /* Internal version of CertSetCertificateContextProperty that sets properties
@@ -46,7 +46,7 @@ static BOOL CertContext_GetProperty(void *context, DWORD dwPropId,
  * type.) Doesn't handle special cases, since they're handled by
  * CertSetCertificateContextProperty anyway.
  */
-static BOOL CertContext_SetProperty(void *context, DWORD dwPropId,
+static BOOL CertContext_SetProperty(cert_t *cert, DWORD dwPropId,
  DWORD dwFlags, const void *pvData);
 
 BOOL WINAPI CertAddEncodedCertificateToStore(HCERTSTORE hCertStore,
@@ -380,19 +380,19 @@ BOOL WINAPI CertFreeCertificateContext(PCCERT_CONTEXT pCertContext)
 DWORD WINAPI CertEnumCertificateContextProperties(PCCERT_CONTEXT pCertContext,
  DWORD dwPropId)
 {
-    CONTEXT_PROPERTY_LIST *properties = Context_GetProperties(pCertContext);
+    cert_t *cert = cert_from_ptr(pCertContext);
     DWORD ret;
 
     TRACE("(%p, %d)\n", pCertContext, dwPropId);
 
-    if (properties)
-        ret = ContextPropertyList_EnumPropIDs(properties, dwPropId);
+    if (cert->base.properties)
+        ret = ContextPropertyList_EnumPropIDs(cert->base.properties, dwPropId);
     else
         ret = 0;
     return ret;
 }
 
-static BOOL CertContext_GetHashProp(void *context, DWORD dwPropId,
+static BOOL CertContext_GetHashProp(cert_t *cert, DWORD dwPropId,
  ALG_ID algID, const BYTE *toHash, DWORD toHashLen, void *pvData,
  DWORD *pcbData)
 {
@@ -402,7 +402,7 @@ static BOOL CertContext_GetHashProp(void *context, DWORD dwPropId,
     {
         CRYPT_DATA_BLOB blob = { *pcbData, pvData };
 
-        ret = CertContext_SetProperty(context, dwPropId, 0, &blob);
+        ret = CertContext_SetProperty(cert, dwPropId, 0, &blob);
     }
     return ret;
 }
@@ -428,18 +428,16 @@ static BOOL CertContext_CopyParam(void *pvData, DWORD *pcbData, const void *pb,
     return ret;
 }
 
-static BOOL CertContext_GetProperty(void *context, DWORD dwPropId,
+static BOOL CertContext_GetProperty(cert_t *cert, DWORD dwPropId,
  void *pvData, DWORD *pcbData)
 {
-    PCCERT_CONTEXT pCertContext = context;
-    CONTEXT_PROPERTY_LIST *properties = Context_GetProperties(context);
     BOOL ret;
     CRYPT_DATA_BLOB blob;
 
-    TRACE("(%p, %d, %p, %p)\n", context, dwPropId, pvData, pcbData);
+    TRACE("(%p, %d, %p, %p)\n", cert, dwPropId, pvData, pcbData);
 
-    if (properties)
-        ret = ContextPropertyList_FindProperty(properties, dwPropId, &blob);
+    if (cert->base.properties)
+        ret = ContextPropertyList_FindProperty(cert->base.properties, dwPropId, &blob);
     else
         ret = FALSE;
     if (ret)
@@ -450,49 +448,49 @@ static BOOL CertContext_GetProperty(void *context, DWORD dwPropId,
         switch (dwPropId)
         {
         case CERT_SHA1_HASH_PROP_ID:
-            ret = CertContext_GetHashProp(context, dwPropId, CALG_SHA1,
-             pCertContext->pbCertEncoded, pCertContext->cbCertEncoded, pvData,
+            ret = CertContext_GetHashProp(cert, dwPropId, CALG_SHA1,
+             cert->ctx.pbCertEncoded, cert->ctx.cbCertEncoded, pvData,
              pcbData);
             break;
         case CERT_MD5_HASH_PROP_ID:
-            ret = CertContext_GetHashProp(context, dwPropId, CALG_MD5,
-             pCertContext->pbCertEncoded, pCertContext->cbCertEncoded, pvData,
+            ret = CertContext_GetHashProp(cert, dwPropId, CALG_MD5,
+             cert->ctx.pbCertEncoded, cert->ctx.cbCertEncoded, pvData,
              pcbData);
             break;
         case CERT_SUBJECT_NAME_MD5_HASH_PROP_ID:
-            ret = CertContext_GetHashProp(context, dwPropId, CALG_MD5,
-             pCertContext->pCertInfo->Subject.pbData,
-             pCertContext->pCertInfo->Subject.cbData,
+            ret = CertContext_GetHashProp(cert, dwPropId, CALG_MD5,
+             cert->ctx.pCertInfo->Subject.pbData,
+             cert->ctx.pCertInfo->Subject.cbData,
              pvData, pcbData);
             break;
         case CERT_SUBJECT_PUBLIC_KEY_MD5_HASH_PROP_ID:
-            ret = CertContext_GetHashProp(context, dwPropId, CALG_MD5,
-             pCertContext->pCertInfo->SubjectPublicKeyInfo.PublicKey.pbData,
-             pCertContext->pCertInfo->SubjectPublicKeyInfo.PublicKey.cbData,
+            ret = CertContext_GetHashProp(cert, dwPropId, CALG_MD5,
+             cert->ctx.pCertInfo->SubjectPublicKeyInfo.PublicKey.pbData,
+             cert->ctx.pCertInfo->SubjectPublicKeyInfo.PublicKey.cbData,
              pvData, pcbData);
             break;
         case CERT_ISSUER_SERIAL_NUMBER_MD5_HASH_PROP_ID:
-            ret = CertContext_GetHashProp(context, dwPropId, CALG_MD5,
-             pCertContext->pCertInfo->SerialNumber.pbData,
-             pCertContext->pCertInfo->SerialNumber.cbData,
+            ret = CertContext_GetHashProp(cert, dwPropId, CALG_MD5,
+             cert->ctx.pCertInfo->SerialNumber.pbData,
+             cert->ctx.pCertInfo->SerialNumber.cbData,
              pvData, pcbData);
             break;
         case CERT_SIGNATURE_HASH_PROP_ID:
-            ret = CryptHashToBeSigned(0, pCertContext->dwCertEncodingType,
-             pCertContext->pbCertEncoded, pCertContext->cbCertEncoded, pvData,
+            ret = CryptHashToBeSigned(0, cert->ctx.dwCertEncodingType,
+             cert->ctx.pbCertEncoded, cert->ctx.cbCertEncoded, pvData,
              pcbData);
             if (ret && pvData)
             {
                 CRYPT_DATA_BLOB blob = { *pcbData, pvData };
 
-                ret = CertContext_SetProperty(context, dwPropId, 0, &blob);
+                ret = CertContext_SetProperty(cert, dwPropId, 0, &blob);
             }
             break;
         case CERT_KEY_IDENTIFIER_PROP_ID:
         {
             PCERT_EXTENSION ext = CertFindExtension(
-             szOID_SUBJECT_KEY_IDENTIFIER, pCertContext->pCertInfo->cExtension,
-             pCertContext->pCertInfo->rgExtension);
+             szOID_SUBJECT_KEY_IDENTIFIER, cert->ctx.pCertInfo->cExtension,
+             cert->ctx.pCertInfo->rgExtension);
 
             if (ext)
             {
@@ -507,7 +505,7 @@ static BOOL CertContext_GetProperty(void *context, DWORD dwPropId,
                 {
                     ret = CertContext_CopyParam(pvData, pcbData, value.pbData,
                      value.cbData);
-                    CertContext_SetProperty(context, dwPropId, 0, &value);
+                    CertContext_SetProperty(cert, dwPropId, 0, &value);
                 }
             }
             else
@@ -548,6 +546,7 @@ void CRYPT_FixKeyProvInfoPointers(PCRYPT_KEY_PROV_INFO info)
 BOOL WINAPI CertGetCertificateContextProperty(PCCERT_CONTEXT pCertContext,
  DWORD dwPropId, void *pvData, DWORD *pcbData)
 {
+    cert_t *cert = cert_from_ptr(pCertContext);
     BOOL ret;
 
     TRACE("(%p, %d, %p, %p)\n", pCertContext, dwPropId, pvData, pcbData);
@@ -577,7 +576,7 @@ BOOL WINAPI CertGetCertificateContextProperty(PCCERT_CONTEXT pCertContext,
         CERT_KEY_CONTEXT keyContext;
         DWORD size = sizeof(keyContext);
 
-        ret = CertContext_GetProperty((void *)pCertContext,
+        ret = CertContext_GetProperty(cert,
          CERT_KEY_CONTEXT_PROP_ID, &keyContext, &size);
         if (ret)
             ret = CertContext_CopyParam(pvData, pcbData, &keyContext.hCryptProv,
@@ -585,13 +584,13 @@ BOOL WINAPI CertGetCertificateContextProperty(PCCERT_CONTEXT pCertContext,
         break;
     }
     case CERT_KEY_PROV_INFO_PROP_ID:
-        ret = CertContext_GetProperty((void *)pCertContext, dwPropId, pvData,
+        ret = CertContext_GetProperty(cert, dwPropId, pvData,
          pcbData);
         if (ret && pvData)
             CRYPT_FixKeyProvInfoPointers(pvData);
         break;
     default:
-        ret = CertContext_GetProperty((void *)pCertContext, dwPropId, pvData,
+        ret = CertContext_GetProperty(cert, dwPropId, pvData,
          pcbData);
     }
 
@@ -679,15 +678,14 @@ static BOOL CertContext_SetKeyProvInfoProperty(CONTEXT_PROPERTY_LIST *properties
     return ret;
 }
 
-static BOOL CertContext_SetProperty(void *context, DWORD dwPropId,
+static BOOL CertContext_SetProperty(cert_t *cert, DWORD dwPropId,
  DWORD dwFlags, const void *pvData)
 {
-    CONTEXT_PROPERTY_LIST *properties = Context_GetProperties(context);
     BOOL ret;
 
-    TRACE("(%p, %d, %08x, %p)\n", context, dwPropId, dwFlags, pvData);
+    TRACE("(%p, %d, %08x, %p)\n", cert, dwPropId, dwFlags, pvData);
 
-    if (!properties)
+    if (!cert->base.properties)
         ret = FALSE;
     else
     {
@@ -716,23 +714,23 @@ static BOOL CertContext_SetProperty(void *context, DWORD dwPropId,
             {
                 const CRYPT_DATA_BLOB *blob = pvData;
 
-                ret = ContextPropertyList_SetProperty(properties, dwPropId,
+                ret = ContextPropertyList_SetProperty(cert->base.properties, dwPropId,
                  blob->pbData, blob->cbData);
             }
             else
             {
-                ContextPropertyList_RemoveProperty(properties, dwPropId);
+                ContextPropertyList_RemoveProperty(cert->base.properties, dwPropId);
                 ret = TRUE;
             }
             break;
         }
         case CERT_DATE_STAMP_PROP_ID:
             if (pvData)
-                ret = ContextPropertyList_SetProperty(properties, dwPropId,
+                ret = ContextPropertyList_SetProperty(cert->base.properties, dwPropId,
                  pvData, sizeof(FILETIME));
             else
             {
-                ContextPropertyList_RemoveProperty(properties, dwPropId);
+                ContextPropertyList_RemoveProperty(cert->base.properties, dwPropId);
                 ret = TRUE;
             }
             break;
@@ -748,22 +746,22 @@ static BOOL CertContext_SetProperty(void *context, DWORD dwPropId,
                     ret = FALSE;
                 }
                 else
-                    ret = ContextPropertyList_SetProperty(properties, dwPropId,
+                    ret = ContextPropertyList_SetProperty(cert->base.properties, dwPropId,
                      (const BYTE *)keyContext, keyContext->cbSize);
             }
             else
             {
-                ContextPropertyList_RemoveProperty(properties, dwPropId);
+                ContextPropertyList_RemoveProperty(cert->base.properties, dwPropId);
                 ret = TRUE;
             }
             break;
         }
         case CERT_KEY_PROV_INFO_PROP_ID:
             if (pvData)
-                ret = CertContext_SetKeyProvInfoProperty(properties, pvData);
+                ret = CertContext_SetKeyProvInfoProperty(cert->base.properties, pvData);
             else
             {
-                ContextPropertyList_RemoveProperty(properties, dwPropId);
+                ContextPropertyList_RemoveProperty(cert->base.properties, dwPropId);
                 ret = TRUE;
             }
             break;
@@ -772,7 +770,7 @@ static BOOL CertContext_SetProperty(void *context, DWORD dwPropId,
             CERT_KEY_CONTEXT keyContext;
             DWORD size = sizeof(keyContext);
 
-            ret = CertContext_GetProperty(context, CERT_KEY_CONTEXT_PROP_ID,
+            ret = CertContext_GetProperty(cert, CERT_KEY_CONTEXT_PROP_ID,
              &keyContext, &size);
             if (ret)
             {
@@ -787,7 +785,7 @@ static BOOL CertContext_SetProperty(void *context, DWORD dwPropId,
                 keyContext.hCryptProv = 0;
                 keyContext.dwKeySpec = AT_SIGNATURE;
             }
-            ret = CertContext_SetProperty(context, CERT_KEY_CONTEXT_PROP_ID,
+            ret = CertContext_SetProperty(cert, CERT_KEY_CONTEXT_PROP_ID,
              0, &keyContext);
             break;
         }
@@ -820,7 +818,7 @@ BOOL WINAPI CertSetCertificateContextProperty(PCCERT_CONTEXT pCertContext,
         SetLastError(E_INVALIDARG);
         return FALSE;
     }
-    ret = CertContext_SetProperty((void *)pCertContext, dwPropId, dwFlags,
+    ret = CertContext_SetProperty(cert_from_ptr(pCertContext), dwPropId, dwFlags,
      pvData);
     TRACE("returning %d\n", ret);
     return ret;

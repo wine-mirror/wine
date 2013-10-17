@@ -64,6 +64,7 @@ context_t *Context_CreateLinkContext(unsigned int contextSize, context_t *linked
     context->vtbl = linked->vtbl;
     context->ref = 1;
     context->linked = linked;
+    context->properties = linked->properties;
     Context_AddRef(linked);
 
     TRACE("returning %p\n", context);
@@ -74,16 +75,6 @@ void Context_AddRef(context_t *context)
 {
     InterlockedIncrement(&context->ref);
     TRACE("(%p) ref=%d\n", context, context->ref);
-}
-
-CONTEXT_PROPERTY_LIST *Context_GetProperties(const void *context)
-{
-    BASE_CONTEXT *ptr = BASE_CONTEXT_FROM_CONTEXT(context);
-
-    while (ptr && ptr->linked)
-        ptr = ptr->linked;
-
-    return ptr->properties;
 }
 
 BOOL Context_Release(context_t *context)
@@ -116,8 +107,8 @@ void Context_CopyProperties(const void *to, const void *from)
 {
     CONTEXT_PROPERTY_LIST *toProperties, *fromProperties;
 
-    toProperties = Context_GetProperties(to);
-    fromProperties = Context_GetProperties(from);
+    toProperties = context_from_ptr(to)->properties;
+    fromProperties = context_from_ptr(from)->properties;
     assert(toProperties && fromProperties);
     ContextPropertyList_Copy(toProperties, fromProperties);
 }

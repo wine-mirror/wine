@@ -402,11 +402,6 @@ context_t *Context_CreateLinkContext(unsigned contextSize, context_t *linked) DE
 /* Copies properties from fromContext to toContext. */
 void Context_CopyProperties(const void *to, const void *from) DECLSPEC_HIDDEN;
 
-/* Returns context's properties, or the linked context's properties if context
- * is a link context.
- */
-CONTEXT_PROPERTY_LIST *Context_GetProperties(const void *context) DECLSPEC_HIDDEN;
-
 void Context_AddRef(context_t*) DECLSPEC_HIDDEN;
 
 /* Decrements context's ref count.  If context is a link context, releases its
