@@ -641,6 +641,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
 
         if (newStyle != currentStyle)
         {
+            NSString* title = [[[self title] copy] autorelease];
             BOOL showingButtons = (currentStyle & (NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask)) != 0;
             BOOL shouldShowButtons = (newStyle & (NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask)) != 0;
             if (shouldShowButtons != showingButtons && !((newStyle ^ currentStyle) & NSClosableWindowMask))
@@ -654,6 +655,9 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
             }
             [self setStyleMask:newStyle];
             [self adjustFullScreenBehavior:[self collectionBehavior]];
+
+            if ([[self title] length] == 0 && [title length] > 0)
+                [self setTitle:title];
         }
 
         [self adjustFeaturesForState];
