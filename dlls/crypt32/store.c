@@ -143,23 +143,45 @@ BOOL WINAPI I_CertUpdateStore(HCERTSTORE store1, HCERTSTORE store2, DWORD unk0,
     return TRUE;
 }
 
+static BOOL MemStore_addContext(WINE_MEMSTORE *store, struct list *list, context_t *orig_context,
+ context_t *existing, context_t **ret_context, BOOL use_link)
+{
+    context_t *context;
+
+    context = orig_context->vtbl->clone(orig_context, &store->hdr, use_link);
+    if (!context)
+        return FALSE;
+
+    TRACE("adding %p\n", context);
+    EnterCriticalSection(&store->cs);
+    if (existing) {
+        context->u.entry.prev = existing->u.entry.prev;
+        context->u.entry.next = existing->u.entry.next;
+        context->u.entry.prev->next = &context->u.entry;
+        context->u.entry.next->prev = &context->u.entry;
+        list_init(&existing->u.entry);
+        Context_Release(existing);
+    }else {
+        list_add_head(list, &context->u.entry);
+    }
+    LeaveCriticalSection(&store->cs);
+
+    if(ret_context) {
+        Context_AddRef(context);
+        *ret_context = context;
+    }
+
+    return TRUE;
+}
+
 static BOOL MemStore_addCert(WINECRYPT_CERTSTORE *store, context_t *cert,
  context_t *toReplace, context_t **ppStoreContext, BOOL use_link)
 {
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
-    context_t *context;
 
     TRACE("(%p, %p, %p, %p)\n", store, cert, toReplace, ppStoreContext);
 
-    context = ContextList_Add(&ms->certs, &ms->cs, cert, toReplace, store, use_link);
-    if (!context)
-        return FALSE;
-
-    if (ppStoreContext) {
-        Context_AddRef(context);
-        *ppStoreContext = context;
-    }
-    return TRUE;
+    return MemStore_addContext(ms, &ms->certs, cert, toReplace, ppStoreContext, use_link);
 }
 
 static context_t *MemStore_enumCert(WINECRYPT_CERTSTORE *store, context_t *prev)
@@ -191,19 +213,10 @@ static BOOL MemStore_addCRL(WINECRYPT_CERTSTORE *store, context_t *crl,
  context_t *toReplace, context_t **ppStoreContext, BOOL use_link)
 {
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
-    context_t *context;
 
     TRACE("(%p, %p, %p, %p)\n", store, crl, toReplace, ppStoreContext);
 
-    context = ContextList_Add(&ms->crls, &ms->cs, crl, toReplace, store, use_link);
-    if (!context)
-        return FALSE;
-
-    if (ppStoreContext) {
-        Context_AddRef(context);
-        *ppStoreContext = context;
-    }
-    return TRUE;
+    return MemStore_addContext(ms, &ms->crls, crl, toReplace, ppStoreContext, use_link);
 }
 
 static context_t *MemStore_enumCRL(WINECRYPT_CERTSTORE *store, context_t *prev)
@@ -235,19 +248,10 @@ static BOOL MemStore_addCTL(WINECRYPT_CERTSTORE *store, context_t *ctl,
  context_t *toReplace, context_t **ppStoreContext, BOOL use_link)
 {
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
-    context_t *context;
 
     TRACE("(%p, %p, %p, %p)\n", store, ctl, toReplace, ppStoreContext);
 
-    context = ContextList_Add(&ms->ctls, &ms->cs, ctl, toReplace, store, use_link);
-    if (!context)
-        return FALSE;
-
-    if (ppStoreContext) {
-        Context_AddRef(context);
-        *ppStoreContext = context;
-    }
-    return TRUE;
+    return MemStore_addContext(ms, &ms->ctls, ctl, toReplace, ppStoreContext, use_link);
 }
 
 static context_t *MemStore_enumCTL(WINECRYPT_CERTSTORE *store, context_t *prev)

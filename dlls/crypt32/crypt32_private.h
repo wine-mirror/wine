@@ -438,9 +438,6 @@ void ContextPropertyList_Free(CONTEXT_PROPERTY_LIST *list) DECLSPEC_HIDDEN;
  */
 typedef struct list ContextList;
 
-context_t *ContextList_Add(ContextList *list, CRITICAL_SECTION *cs, context_t *toLink, context_t *toReplace,
- struct WINE_CRYPTCERTSTORE *store, BOOL use_link) DECLSPEC_HIDDEN;
-
 context_t *ContextList_Enum(ContextList *list, CRITICAL_SECTION *cs, context_t *prev) DECLSPEC_HIDDEN;
 
 /* Removes a context from the list.  Returns TRUE if the context was removed,

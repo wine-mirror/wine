@@ -110,34 +110,6 @@ void Context_CopyProperties(const void *to, const void *from)
     ContextPropertyList_Copy(toProperties, fromProperties);
 }
 
-context_t *ContextList_Add(ContextList *list, CRITICAL_SECTION *cs, context_t *toLink,
- context_t *existing, struct WINE_CRYPTCERTSTORE *store, BOOL use_link)
-{
-    context_t *context;
-
-    TRACE("(%p, %p, %p)\n", list, toLink, existing);
-
-    context = toLink->vtbl->clone(toLink, store, use_link);
-    if (context)
-    {
-        TRACE("adding %p\n", context);
-        EnterCriticalSection(cs);
-        if (existing)
-        {
-            context->u.entry.prev = existing->u.entry.prev;
-            context->u.entry.next = existing->u.entry.next;
-            context->u.entry.prev->next = &context->u.entry;
-            context->u.entry.next->prev = &context->u.entry;
-            list_init(&existing->u.entry);
-            Context_Release(existing);
-        }
-        else
-            list_add_head(list, &context->u.entry);
-        LeaveCriticalSection(cs);
-    }
-    return context;
-}
-
 context_t *ContextList_Enum(ContextList *list, CRITICAL_SECTION *cs, context_t *prev)
 {
     struct list *listNext;
