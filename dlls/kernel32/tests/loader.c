@@ -299,11 +299,11 @@ static void test_Loader(void)
     /* prevent displaying of the "Unable to load this DLL" message box */
     SetErrorMode(SEM_FAILCRITICALERRORS);
 
-    GetTempPath(MAX_PATH, temp_path);
+    GetTempPathA(MAX_PATH, temp_path);
 
     for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
     {
-        GetTempFileName(temp_path, "ldr", 0, dll_name);
+        GetTempFileNameA(temp_path, "ldr", 0, dll_name);
 
         /*trace("creating %s\n", dll_name);*/
         hfile = CreateFileA(dll_name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
@@ -502,7 +502,7 @@ todo_wine
             }
 
             SetLastError(0xdeadbeef);
-            hlib_as_data_file = LoadLibraryEx(dll_name, 0, LOAD_LIBRARY_AS_DATAFILE);
+            hlib_as_data_file = LoadLibraryExA(dll_name, 0, LOAD_LIBRARY_AS_DATAFILE);
             ok(hlib_as_data_file != 0, "LoadLibraryEx error %u\n", GetLastError());
             ok(hlib_as_data_file == hlib, "hlib_as_file and hlib are different\n");
 
@@ -511,22 +511,22 @@ todo_wine
             ok(ret, "FreeLibrary error %d\n", GetLastError());
 
             SetLastError(0xdeadbeef);
-            hlib = GetModuleHandle(dll_name);
+            hlib = GetModuleHandleA(dll_name);
             ok(hlib != 0, "GetModuleHandle error %u\n", GetLastError());
 
             SetLastError(0xdeadbeef);
             ret = FreeLibrary(hlib_as_data_file);
             ok(ret, "FreeLibrary error %d\n", GetLastError());
 
-            hlib = GetModuleHandle(dll_name);
+            hlib = GetModuleHandleA(dll_name);
             ok(!hlib, "GetModuleHandle should fail\n");
 
             SetLastError(0xdeadbeef);
-            hlib_as_data_file = LoadLibraryEx(dll_name, 0, LOAD_LIBRARY_AS_DATAFILE);
+            hlib_as_data_file = LoadLibraryExA(dll_name, 0, LOAD_LIBRARY_AS_DATAFILE);
             ok(hlib_as_data_file != 0, "LoadLibraryEx error %u\n", GetLastError());
             ok((ULONG_PTR)hlib_as_data_file & 1, "hlib_as_data_file is even\n");
 
-            hlib = GetModuleHandle(dll_name);
+            hlib = GetModuleHandleA(dll_name);
             ok(!hlib, "GetModuleHandle should fail\n");
 
             SetLastError(0xdeadbeef);
@@ -549,7 +549,7 @@ todo_wine
         }
 
         SetLastError(0xdeadbeef);
-        ret = DeleteFile(dll_name);
+        ret = DeleteFileA(dll_name);
         ok(ret, "DeleteFile error %d\n", GetLastError());
     }
 }
@@ -624,11 +624,11 @@ static void test_image_mapping(const char *dll_name, DWORD scn_page_access, BOOL
     GetSystemInfo(&si);
 
     SetLastError(0xdeadbeef);
-    hfile = CreateFile(dll_name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
+    hfile = CreateFileA(dll_name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
     ok(hfile != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    hmap = CreateFileMapping(hfile, NULL, PAGE_READONLY | SEC_IMAGE, 0, 0, 0);
+    hmap = CreateFileMappingW(hfile, NULL, PAGE_READONLY | SEC_IMAGE, 0, 0, 0);
     ok(hmap != 0, "CreateFileMapping error %d\n", GetLastError());
 
     offset.u.LowPart  = 0;
@@ -918,7 +918,7 @@ static void test_section_access(void)
     char dll_name[MAX_PATH];
     SIZE_T size;
     MEMORY_BASIC_INFORMATION info;
-    STARTUPINFO sti;
+    STARTUPINFOA sti;
     PROCESS_INFORMATION pi;
     DWORD ret;
 
@@ -927,11 +927,11 @@ static void test_section_access(void)
     /* prevent displaying of the "Unable to load this DLL" message box */
     SetErrorMode(SEM_FAILCRITICALERRORS);
 
-    GetTempPath(MAX_PATH, temp_path);
+    GetTempPathA(MAX_PATH, temp_path);
 
     for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
     {
-        GetTempFileName(temp_path, "ldr", 0, dll_name);
+        GetTempFileNameA(temp_path, "ldr", 0, dll_name);
 
         /*trace("creating %s\n", dll_name);*/
         hfile = CreateFileA(dll_name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
@@ -1026,7 +1026,7 @@ static void test_section_access(void)
         /* reset IMAGE_FILE_DLL otherwise CreateProcess fails */
         nt_header.FileHeader.Characteristics = IMAGE_FILE_EXECUTABLE_IMAGE | IMAGE_FILE_RELOCS_STRIPPED;
         SetLastError(0xdeadbeef);
-        hfile = CreateFile(dll_name, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
+        hfile = CreateFileA(dll_name, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
         /* LoadLibrary called on an already memory-mapped file in
          * test_image_mapping() above leads to a file handle leak
          * under nt4, and inability to overwrite and delete the file
@@ -1045,7 +1045,7 @@ static void test_section_access(void)
         memset(&sti, 0, sizeof(sti));
         sti.cb = sizeof(sti);
         SetLastError(0xdeadbeef);
-        ret = CreateProcess(dll_name, NULL, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &sti, &pi);
+        ret = CreateProcessA(dll_name, NULL, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &sti, &pi);
         ok(ret, "CreateProcess() error %d\n", GetLastError());
 
         SetLastError(0xdeadbeef);
@@ -1080,7 +1080,7 @@ static void test_section_access(void)
 
 nt4_is_broken:
         SetLastError(0xdeadbeef);
-        ret = DeleteFile(dll_name);
+        ret = DeleteFileA(dll_name);
         ok(ret || broken(!ret) /* nt4 */, "DeleteFile error %d\n", GetLastError());
     }
 }
@@ -1345,7 +1345,7 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
         }
 
         SetLastError(0xdeadbeef);
-        handle = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 4096, NULL);
+        handle = CreateFileMappingW(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 4096, NULL);
         ok(handle != 0, "CreateFileMapping error %d\n", GetLastError());
 
         offset.u.LowPart = 0;
@@ -1361,7 +1361,7 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
         CloseHandle(handle);
         CloseHandle(process);
 
-        handle = GetModuleHandle("winver.exe");
+        handle = GetModuleHandleA("winver.exe");
         ok(!handle, "winver.exe shouldn't be loaded yet\n");
         SetLastError(0xdeadbeef);
         handle = LoadLibraryA("winver.exe");
@@ -1369,7 +1369,7 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
         SetLastError(0xdeadbeef);
         ret = FreeLibrary(handle);
         ok(ret, "FreeLibrary error %d\n", GetLastError());
-        handle = GetModuleHandle("winver.exe");
+        handle = GetModuleHandleA("winver.exe");
         if (param)
             ok(handle != 0, "winver.exe should not be unloaded\n");
         else
@@ -1450,34 +1450,34 @@ static void child_process(const char *dll_name, DWORD target_offset)
     trace("phase %d: writing %p at %#x\n", test_dll_phase, dll_entry_point, target_offset);
 
     SetLastError(0xdeadbeef);
-    mutex = CreateMutex(NULL, FALSE, NULL);
+    mutex = CreateMutexW(NULL, FALSE, NULL);
     ok(mutex != 0, "CreateMutex error %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    semaphore = CreateSemaphore(NULL, 1, 1, NULL);
+    semaphore = CreateSemaphoreW(NULL, 1, 1, NULL);
     ok(semaphore != 0, "CreateSemaphore error %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    event = CreateEvent(NULL, TRUE, FALSE, NULL);
+    event = CreateEventW(NULL, TRUE, FALSE, NULL);
     ok(event != 0, "CreateEvent error %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    loader_lock_event = CreateEvent(NULL, FALSE, FALSE, NULL);
+    loader_lock_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     ok(loader_lock_event != 0, "CreateEvent error %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    peb_lock_event = CreateEvent(NULL, FALSE, FALSE, NULL);
+    peb_lock_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     ok(peb_lock_event != 0, "CreateEvent error %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    heap_lock_event = CreateEvent(NULL, FALSE, FALSE, NULL);
+    heap_lock_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     ok(heap_lock_event != 0, "CreateEvent error %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    ack_event = CreateEvent(NULL, FALSE, FALSE, NULL);
+    ack_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     ok(ack_event != 0, "CreateEvent error %d\n", GetLastError());
 
-    file = CreateFile(dll_name, GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
+    file = CreateFileA(dll_name, GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
     if (file == INVALID_HANDLE_VALUE)
     {
         ok(0, "could not open %s\n", dll_name);
@@ -1495,7 +1495,7 @@ static void child_process(const char *dll_name, DWORD target_offset)
     ok(hmod != 0, "LoadLibrary error %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    stop_event = CreateEvent(NULL, TRUE, FALSE, NULL);
+    stop_event = CreateEventW(NULL, TRUE, FALSE, NULL);
     ok(stop_event != 0, "CreateEvent error %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
@@ -1575,7 +1575,7 @@ static void child_process(const char *dll_name, DWORD target_offset)
         ret = pRtlDllShutdownInProgress();
         ok(!ret, "RtlDllShutdownInProgress returned %d\n", ret);
 
-        hmod = GetModuleHandle(dll_name);
+        hmod = GetModuleHandleA(dll_name);
         ok(hmod != 0, "DLL should not be unloaded\n");
 
         SetLastError(0xdeadbeef);
@@ -1596,7 +1596,7 @@ static void child_process(const char *dll_name, DWORD target_offset)
         ret = pRtlDllShutdownInProgress();
         ok(ret, "RtlDllShutdownInProgress returned %d\n", ret);
 
-        hmod = GetModuleHandle(dll_name);
+        hmod = GetModuleHandleA(dll_name);
         ok(hmod != 0, "DLL should not be unloaded\n");
 
         memset(&pbi, 0, sizeof(pbi));
@@ -1621,7 +1621,7 @@ static void child_process(const char *dll_name, DWORD target_offset)
         SetLastError(0xdeadbeef);
         ret = FreeLibrary(hmod);
         ok(ret, "FreeLibrary error %d\n", GetLastError());
-        hmod = GetModuleHandle(dll_name);
+        hmod = GetModuleHandleA(dll_name);
         ok(!hmod, "DLL should be unloaded\n");
 
         if (test_dll_phase == 2)
@@ -1753,7 +1753,7 @@ static void test_ExitProcess(void)
     DWORD ret, target_offset, old_prot;
     char **argv, buf[256];
     PROCESS_INFORMATION pi;
-    STARTUPINFO si = { sizeof(si) };
+    STARTUPINFOA si = { sizeof(si) };
     CONTEXT ctx;
     struct PROCESS_BASIC_INFORMATION_PRIVATE pbi;
     MEMORY_BASIC_INFORMATION mbi;
@@ -1786,11 +1786,11 @@ static void test_ExitProcess(void)
     /* prevent displaying of the "Unable to load this DLL" message box */
     SetErrorMode(SEM_FAILCRITICALERRORS);
 
-    GetTempPath(MAX_PATH, temp_path);
-    GetTempFileName(temp_path, "ldr", 0, dll_name);
+    GetTempPathA(MAX_PATH, temp_path);
+    GetTempFileNameA(temp_path, "ldr", 0, dll_name);
 
     /*trace("creating %s\n", dll_name);*/
-    file = CreateFile(dll_name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    file = CreateFileA(dll_name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
     if (file == INVALID_HANDLE_VALUE)
     {
         ok(0, "could not create %s\n", dll_name);
@@ -1846,7 +1846,7 @@ static void test_ExitProcess(void)
     /* phase 0 */
     *child_failures = -1;
     sprintf(cmdline, "\"%s\" loader %s %u 0", argv[0], dll_name, target_offset);
-    ret = CreateProcess(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ret = CreateProcessA(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
     ok(ret, "CreateProcess(%s) error %d\n", cmdline, GetLastError());
     ret = WaitForSingleObject(pi.hProcess, 10000);
     ok(ret == WAIT_OBJECT_0, "child process failed to terminate\n");
@@ -1864,7 +1864,7 @@ static void test_ExitProcess(void)
     /* phase 1 */
     *child_failures = -1;
     sprintf(cmdline, "\"%s\" loader %s %u 1", argv[0], dll_name, target_offset);
-    ret = CreateProcess(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ret = CreateProcessA(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
     ok(ret, "CreateProcess(%s) error %d\n", cmdline, GetLastError());
     ret = WaitForSingleObject(pi.hProcess, 10000);
     ok(ret == WAIT_OBJECT_0, "child process failed to terminate\n");
@@ -1882,7 +1882,7 @@ static void test_ExitProcess(void)
     /* phase 2 */
     *child_failures = -1;
     sprintf(cmdline, "\"%s\" loader %s %u 2", argv[0], dll_name, target_offset);
-    ret = CreateProcess(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ret = CreateProcessA(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
     ok(ret, "CreateProcess(%s) error %d\n", cmdline, GetLastError());
     ret = WaitForSingleObject(pi.hProcess, 10000);
     ok(ret == WAIT_OBJECT_0, "child process failed to terminate\n");
@@ -1900,7 +1900,7 @@ static void test_ExitProcess(void)
     /* phase 3 */
     *child_failures = -1;
     sprintf(cmdline, "\"%s\" loader %s %u 3", argv[0], dll_name, target_offset);
-    ret = CreateProcess(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ret = CreateProcessA(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
     ok(ret, "CreateProcess(%s) error %d\n", cmdline, GetLastError());
     ret = WaitForSingleObject(pi.hProcess, 10000);
     ok(ret == WAIT_OBJECT_0, "child process failed to terminate\n");
@@ -1920,7 +1920,7 @@ static void test_ExitProcess(void)
     {
         *child_failures = -1;
         sprintf(cmdline, "\"%s\" loader %s %u 4", argv[0], dll_name, target_offset);
-        ret = CreateProcess(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+        ret = CreateProcessA(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
         ok(ret, "CreateProcess(%s) error %d\n", cmdline, GetLastError());
         ret = WaitForSingleObject(pi.hProcess, 10000);
         ok(ret == WAIT_OBJECT_0, "child process failed to terminate\n");
@@ -1943,7 +1943,7 @@ static void test_ExitProcess(void)
     {
         *child_failures = -1;
         sprintf(cmdline, "\"%s\" loader %s %u 5", argv[0], dll_name, target_offset);
-        ret = CreateProcess(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+        ret = CreateProcessA(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
         ok(ret, "CreateProcess(%s) error %d\n", cmdline, GetLastError());
         ret = WaitForSingleObject(pi.hProcess, 5000);
         ok(ret == WAIT_TIMEOUT, "child process should fail to terminate\n");
@@ -1970,7 +1970,7 @@ static void test_ExitProcess(void)
     /* phase 6 */
     *child_failures = -1;
     sprintf(cmdline, "\"%s\" loader %s %u 6", argv[0], dll_name, target_offset);
-    ret = CreateProcess(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ret = CreateProcessA(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
     ok(ret, "CreateProcess(%s) error %d\n", cmdline, GetLastError());
     ret = WaitForSingleObject(pi.hProcess, 5000);
     ok(ret == WAIT_TIMEOUT || broken(ret == WAIT_OBJECT_0) /* XP */, "child process should fail to terminate\n");
@@ -1993,7 +1993,7 @@ static void test_ExitProcess(void)
 
     /* test remote process termination */
     SetLastError(0xdeadbeef);
-    ret = CreateProcess(argv[0], NULL, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi);
+    ret = CreateProcessA(argv[0], NULL, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi);
     ok(ret, "CreateProcess(%s) error %d\n", argv[0], GetLastError());
 
     SetLastError(0xdeadbeef);
@@ -2013,7 +2013,7 @@ static void test_ExitProcess(void)
     ok(size == 4, "expected 4, got %lu\n", size);
 
     SetLastError(0xdeadbeef);
-    hmap = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 4096, NULL);
+    hmap = CreateFileMappingW(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 4096, NULL);
     ok(hmap != 0, "CreateFileMapping error %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
@@ -2185,7 +2185,7 @@ if (0)
     CloseHandle(pi.hThread);
     CloseHandle(pi.hProcess);
 
-    ret = DeleteFile(dll_name);
+    ret = DeleteFileA(dll_name);
     ok(ret, "DeleteFile error %d\n", GetLastError());
 }
 
@@ -2292,24 +2292,25 @@ START_TEST(loader)
 {
     int argc;
     char **argv;
-    HANDLE mapping;
+    HANDLE ntdll, mapping;
 
-    pNtMapViewOfSection = (void *)GetProcAddress(GetModuleHandle("ntdll.dll"), "NtMapViewOfSection");
-    pNtUnmapViewOfSection = (void *)GetProcAddress(GetModuleHandle("ntdll.dll"), "NtUnmapViewOfSection");
-    pNtTerminateProcess = (void *)GetProcAddress(GetModuleHandle("ntdll.dll"), "NtTerminateProcess");
-    pNtQueryInformationProcess = (void *)GetProcAddress(GetModuleHandle("ntdll.dll"), "NtQueryInformationProcess");
-    pNtSetInformationProcess = (void *)GetProcAddress(GetModuleHandle("ntdll.dll"), "NtSetInformationProcess");
-    pLdrShutdownProcess = (void *)GetProcAddress(GetModuleHandle("ntdll.dll"), "LdrShutdownProcess");
-    pRtlDllShutdownInProgress = (void *)GetProcAddress(GetModuleHandle("ntdll.dll"), "RtlDllShutdownInProgress");
-    pNtAllocateVirtualMemory = (void *)GetProcAddress(GetModuleHandle("ntdll.dll"), "NtAllocateVirtualMemory");
-    pNtFreeVirtualMemory = (void *)GetProcAddress(GetModuleHandle("ntdll.dll"), "NtFreeVirtualMemory");
-    pLdrLockLoaderLock = (void *)GetProcAddress(GetModuleHandle("ntdll.dll"), "LdrLockLoaderLock");
-    pLdrUnlockLoaderLock = (void *)GetProcAddress(GetModuleHandle("ntdll.dll"), "LdrUnlockLoaderLock");
-    pRtlAcquirePebLock = (void *)GetProcAddress(GetModuleHandle("ntdll.dll"), "RtlAcquirePebLock");
-    pRtlReleasePebLock = (void *)GetProcAddress(GetModuleHandle("ntdll.dll"), "RtlReleasePebLock");
-    pResolveDelayLoadedAPI = (void *)GetProcAddress(GetModuleHandle("kernel32.dll"), "ResolveDelayLoadedAPI");
+    ntdll = GetModuleHandleA("ntdll.dll");
+    pNtMapViewOfSection = (void *)GetProcAddress(ntdll, "NtMapViewOfSection");
+    pNtUnmapViewOfSection = (void *)GetProcAddress(ntdll, "NtUnmapViewOfSection");
+    pNtTerminateProcess = (void *)GetProcAddress(ntdll, "NtTerminateProcess");
+    pNtQueryInformationProcess = (void *)GetProcAddress(ntdll, "NtQueryInformationProcess");
+    pNtSetInformationProcess = (void *)GetProcAddress(ntdll, "NtSetInformationProcess");
+    pLdrShutdownProcess = (void *)GetProcAddress(ntdll, "LdrShutdownProcess");
+    pRtlDllShutdownInProgress = (void *)GetProcAddress(ntdll, "RtlDllShutdownInProgress");
+    pNtAllocateVirtualMemory = (void *)GetProcAddress(ntdll, "NtAllocateVirtualMemory");
+    pNtFreeVirtualMemory = (void *)GetProcAddress(ntdll, "NtFreeVirtualMemory");
+    pLdrLockLoaderLock = (void *)GetProcAddress(ntdll, "LdrLockLoaderLock");
+    pLdrUnlockLoaderLock = (void *)GetProcAddress(ntdll, "LdrUnlockLoaderLock");
+    pRtlAcquirePebLock = (void *)GetProcAddress(ntdll, "RtlAcquirePebLock");
+    pRtlReleasePebLock = (void *)GetProcAddress(ntdll, "RtlReleasePebLock");
+    pResolveDelayLoadedAPI = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"), "ResolveDelayLoadedAPI");
 
-    mapping = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 4096, "winetest_loader");
+    mapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 4096, "winetest_loader");
     ok(mapping != 0, "CreateFileMapping failed\n");
     child_failures = MapViewOfFile(mapping, FILE_MAP_READ|FILE_MAP_WRITE, 0, 0, 4096);
     if (*child_failures == -1)
