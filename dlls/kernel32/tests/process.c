@@ -1665,7 +1665,7 @@ static void test_GetProcessImageFileNameA(void)
         length = sizeof(image);
         expect_eq_d(TRUE, pQueryFullProcessImageNameA(GetCurrentProcess(), PROCESS_NAME_NATIVE, image, &length));
         expect_eq_d(length, lstrlenA(image));
-        ok(lstrcmpi(process, image) == 0, "expected '%s' to be equal to '%s'\n", process, image);
+        ok(lstrcmpiA(process, image) == 0, "expected '%s' to be equal to '%s'\n", process, image);
     }
 }
 
@@ -1691,7 +1691,7 @@ static void test_QueryFullProcessImageNameA(void)
     expect_eq_d(TRUE, pQueryFullProcessImageNameA(GetCurrentProcess(), 0, buf, &length));
     expect_eq_d(length, lstrlenA(buf));
     ok((buf[0] == '\\' && buf[1] == '\\') ||
-       lstrcmpi(buf, module) == 0, "expected %s to match %s\n", buf, module);
+       lstrcmpiA(buf, module) == 0, "expected %s to match %s\n", buf, module);
 
     /*  when the buffer is too small
      *  - function fail with error ERROR_INSUFFICIENT_BUFFER
@@ -1930,14 +1930,14 @@ static void test_TerminateProcess(void)
 {
     static char cmdline[] = "winver.exe";
     PROCESS_INFORMATION pi;
-    STARTUPINFO si;
+    STARTUPINFOA si;
     DWORD ret;
     HANDLE dummy, thread;
 
     memset(&si, 0, sizeof(si));
     si.cb = sizeof(si);
     SetLastError(0xdeadbeef);
-    ret = CreateProcess(NULL, cmdline, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi);
+    ret = CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi);
     ok(ret, "CreateProcess error %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
@@ -1990,9 +1990,9 @@ static void test_DuplicateHandle(void)
     ok(out != GetCurrentProcess(), "out = GetCurrentProcess()\n");
     CloseHandle(out);
 
-    GetTempPath(MAX_PATH, path);
-    GetTempFileName(path, "wt", 0, file_name);
-    f = CreateFile(file_name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    GetTempPathA(MAX_PATH, path);
+    GetTempFileNameA(path, "wt", 0, file_name);
+    f = CreateFileA(file_name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
     if (f == INVALID_HANDLE_VALUE)
     {
         ok(0, "could not create %s\n", file_name);
@@ -2043,9 +2043,9 @@ static void test_DuplicateHandle(void)
     ok(r, "DuplicateHandle error %u\n", GetLastError());
     ok(f == out, "f != out\n");
     CloseHandle(out);
-    DeleteFile(file_name);
+    DeleteFileA(file_name);
 
-    f = CreateFile("CONIN$", GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
+    f = CreateFileA("CONIN$", GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
     if (!is_console(f))
     {
         skip("DuplicateHandle on console handle\n");
