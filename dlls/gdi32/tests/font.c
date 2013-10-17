@@ -5645,6 +5645,65 @@ static void test_GetCharWidth32(void)
     DeleteObject(hfont);
 }
 
+static void test_fake_bold_font(void)
+{
+    HDC hdc;
+    HFONT hfont, hfont_old;
+    LOGFONTA lf;
+    BOOL ret;
+    TEXTMETRICA tm[2];
+    ABC abc[2];
+    INT w[2];
+
+    if (!pGetCharWidth32A || !pGetCharABCWidthsA) {
+        win_skip("GetCharWidth32A/GetCharABCWidthA is not available on this platform\n");
+        return;
+    }
+
+    /* Test outline font */
+    memset(&lf, 0, sizeof(lf));
+    strcpy(lf.lfFaceName, "Wingdings");
+    lf.lfWeight = FW_NORMAL;
+    lf.lfCharSet = SYMBOL_CHARSET;
+    hfont = CreateFontIndirectA(&lf);
+
+    hdc = GetDC(NULL);
+    hfont_old = SelectObject(hdc, hfont);
+
+    /* base metrics */
+    ret = GetTextMetricsA(hdc, &tm[0]);
+    ok(ret, "got %d\n", ret);
+    ret = pGetCharABCWidthsA(hdc, 0x76, 0x76, &abc[0]);
+    ok(ret, "got %d\n", ret);
+
+    lf.lfWeight = FW_BOLD;
+    hfont = CreateFontIndirectA(&lf);
+    DeleteObject(SelectObject(hdc, hfont));
+
+    /* bold metrics */
+    ret = GetTextMetricsA(hdc, &tm[1]);
+    ok(ret, "got %d\n", ret);
+    ret = pGetCharABCWidthsA(hdc, 0x76, 0x76, &abc[1]);
+    ok(ret, "got %d\n", ret);
+
+    DeleteObject(SelectObject(hdc, hfont_old));
+    ReleaseDC(NULL, hdc);
+
+    /* compare results (outline) */
+    ok(tm[0].tmHeight == tm[1].tmHeight, "expected %d, got %d\n", tm[0].tmHeight, tm[1].tmHeight);
+    ok(tm[0].tmAscent == tm[1].tmAscent, "expected %d, got %d\n", tm[0].tmAscent, tm[1].tmAscent);
+    ok(tm[0].tmDescent == tm[1].tmDescent, "expected %d, got %d\n", tm[0].tmDescent, tm[1].tmDescent);
+    todo_wine ok((tm[0].tmAveCharWidth + 1) == tm[1].tmAveCharWidth,
+       "expected %d, got %d\n", tm[0].tmAveCharWidth + 1, tm[1].tmAveCharWidth);
+    todo_wine ok((tm[0].tmMaxCharWidth + 1) == tm[1].tmMaxCharWidth,
+       "expected %d, got %d\n", tm[0].tmMaxCharWidth + 1, tm[1].tmMaxCharWidth);
+    ok(tm[0].tmOverhang == tm[1].tmOverhang, "expected %d, got %d\n", tm[0].tmOverhang, tm[1].tmOverhang);
+    w[0] = abc[0].abcA + abc[0].abcB + abc[0].abcC;
+    w[1] = abc[1].abcA + abc[1].abcB + abc[1].abcC;
+    todo_wine ok((w[0] + 1) == w[1], "expected %d, got %d\n", w[0] + 1, w[1]);
+
+}
+
 START_TEST(font)
 {
     init();
@@ -5704,6 +5763,7 @@ START_TEST(font)
     test_max_height();
     test_vertical_order();
     test_GetCharWidth32();
+    test_fake_bold_font();
 
     /* These tests should be last test until RemoveFontResource
      * is properly implemented.
