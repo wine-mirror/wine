@@ -869,6 +869,7 @@ static HRESULT WINAPI NSTC2_fnInitialize(INameSpaceTreeControl2* iface,
     NSTC2Impl *This = impl_from_INameSpaceTreeControl2(iface);
     WNDCLASSW wc;
     DWORD window_style, window_ex_style;
+    INITCOMMONCONTROLSEX icex;
     RECT rc;
     static const WCHAR NSTC2_CLASS_NAME[] =
         {'N','a','m','e','s','p','a','c','e','T','r','e','e',
@@ -881,6 +882,10 @@ static HRESULT WINAPI NSTC2_fnInitialize(INameSpaceTreeControl2* iface,
               nstcsFlags, nstcsFlags & unsupported_styles);
 
     This->style = nstcsFlags;
+
+    icex.dwSize = sizeof( icex );
+    icex.dwICC = ICC_TREEVIEW_CLASSES;
+    InitCommonControlsEx( &icex );
 
     if(!GetClassInfoW(explorerframe_hinstance, NSTC2_CLASS_NAME, &wc))
     {
