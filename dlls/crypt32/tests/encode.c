@@ -8054,9 +8054,9 @@ static void testPortPublicKeyInfo(void)
     PCERT_PUBLIC_KEY_INFO info = NULL;
 
     /* Just in case a previous run failed, delete this thing */
-    CryptAcquireContextA(&csp, cspName, MS_DEF_PROV, PROV_RSA_FULL,
+    CryptAcquireContextA(&csp, cspName, MS_DEF_PROV_A, PROV_RSA_FULL,
      CRYPT_DELETEKEYSET);
-    ret = CryptAcquireContextA(&csp, cspName, MS_DEF_PROV, PROV_RSA_FULL,
+    ret = CryptAcquireContextA(&csp, cspName, MS_DEF_PROV_A, PROV_RSA_FULL,
      CRYPT_NEWKEYSET);
     ok(ret,"CryptAcquireContextA failed\n");
 
@@ -8065,7 +8065,7 @@ static void testPortPublicKeyInfo(void)
 
     HeapFree(GetProcessHeap(), 0, info);
     CryptReleaseContext(csp, 0);
-    ret = CryptAcquireContextA(&csp, cspName, MS_DEF_PROV, PROV_RSA_FULL,
+    ret = CryptAcquireContextA(&csp, cspName, MS_DEF_PROV_A, PROV_RSA_FULL,
      CRYPT_DELETEKEYSET);
     ok(ret,"CryptAcquireContextA failed\n");
 }
