@@ -47,7 +47,6 @@ extern HIMAGELIST	ShellBigIconList DECLSPEC_HIDDEN;
 
 /* Iconcache */
 #define INVALID_INDEX -1
-BOOL SIC_Initialize(void) DECLSPEC_HIDDEN;
 void SIC_Destroy(void) DECLSPEC_HIDDEN;
 BOOL PidlToSicIndex (IShellFolder * sh, LPCITEMIDLIST pidl, BOOL bBigIcon, UINT uFlags, int * pIndex) DECLSPEC_HIDDEN;
 INT SIC_GetIconIndex (LPCWSTR sSourceFile, INT dwSourceIndex, DWORD dwFlags ) DECLSPEC_HIDDEN;
