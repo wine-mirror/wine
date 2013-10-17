@@ -1478,18 +1478,44 @@ static HRESULT apartment_hostobject_in_hostapt(
     return hr;
 }
 
+static BOOL WINAPI register_class( INIT_ONCE *once, void *param, void **context )
+{
+    WNDCLASSW wclass;
+
+    /* Dispatching to the correct thread in an apartment is done through
+     * window messages rather than RPC transports. When an interface is
+     * marshalled into another apartment in the same process, a window of the
+     * following class is created. The *caller* of CoMarshalInterface (i.e., the
+     * application) is responsible for pumping the message loop in that thread.
+     * The WM_USER messages which point to the RPCs are then dispatched to
+     * apartment_wndproc by the user's code from the apartment in which the
+     * interface was unmarshalled.
+     */
+    memset(&wclass, 0, sizeof(wclass));
+    wclass.lpfnWndProc = apartment_wndproc;
+    wclass.hInstance = hProxyDll;
+    wclass.lpszClassName = wszAptWinClass;
+    RegisterClassW(&wclass);
+    return TRUE;
+}
+
 /* create a window for the apartment or return the current one if one has
  * already been created */
 HRESULT apartment_createwindowifneeded(struct apartment *apt)
 {
+    static INIT_ONCE class_init_once = INIT_ONCE_STATIC_INIT;
+
     if (apt->multi_threaded)
         return S_OK;
 
     if (!apt->win)
     {
-        HWND hwnd = CreateWindowW(wszAptWinClass, NULL, 0,
-                                  0, 0, 0, 0,
-                                  HWND_MESSAGE, 0, hProxyDll, NULL);
+        HWND hwnd;
+
+        InitOnceExecuteOnce( &class_init_once, register_class, NULL, NULL );
+
+        hwnd = CreateWindowW(wszAptWinClass, NULL, 0, 0, 0, 0, 0,
+                             HWND_MESSAGE, 0, hProxyDll, NULL);
         if (!hwnd)
         {
             ERR("CreateWindow failed with error %d\n", GetLastError());
@@ -1514,31 +1540,6 @@ void apartment_joinmta(void)
 {
     apartment_addref(MTA);
     COM_CurrentInfo()->apt = MTA;
-}
-
-static void COMPOBJ_InitProcess( void )
-{
-    WNDCLASSW wclass;
-
-    /* Dispatching to the correct thread in an apartment is done through
-     * window messages rather than RPC transports. When an interface is
-     * marshalled into another apartment in the same process, a window of the
-     * following class is created. The *caller* of CoMarshalInterface (i.e., the
-     * application) is responsible for pumping the message loop in that thread.
-     * The WM_USER messages which point to the RPCs are then dispatched to
-     * apartment_wndproc by the user's code from the apartment in which the
-     * interface was unmarshalled.
-     */
-    memset(&wclass, 0, sizeof(wclass));
-    wclass.lpfnWndProc = apartment_wndproc;
-    wclass.hInstance = hProxyDll;
-    wclass.lpszClassName = wszAptWinClass;
-    RegisterClassW(&wclass);
-}
-
-static void COMPOBJ_UninitProcess( void )
-{
-    UnregisterClassW(wszAptWinClass, hProxyDll);
 }
 
 static void COM_TlsDestroy(void)
@@ -4585,13 +4586,12 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID reserved)
     switch(fdwReason) {
     case DLL_PROCESS_ATTACH:
         hProxyDll = hinstDLL;
-        COMPOBJ_InitProcess();
 	break;
 
     case DLL_PROCESS_DETACH:
         if (reserved) break;
         release_std_git();
-        COMPOBJ_UninitProcess();
+        UnregisterClassW( wszAptWinClass, hProxyDll );
         RPC_UnregisterAllChannelHooks();
         COMPOBJ_DllList_Free();
         DeleteCriticalSection(&csRegisteredClassList);
