@@ -23,6 +23,7 @@
 #include <stdio.h>
 
 #include "windows.h"
+#include "wincrypt.h"
 #include "mscat.h"
 
 #include "wine/test.h"
@@ -251,23 +252,23 @@ static void test_context(void)
     }
     ok(hca != NULL, "Expected a context handle, got NULL\n");
 
-    attrs = GetFileAttributes(catroot);
+    attrs = GetFileAttributesA(catroot);
     ok(attrs != INVALID_FILE_ATTRIBUTES, "Expected the CatRoot directory to exist\n");
 
     /* Windows creates the GUID directory in capitals */
     lstrcpyA(dummydir, catroot);
     lstrcatA(dummydir, "\\{DEADBEEF-DEAD-BEEF-DEAD-BEEFDEADBEEF}");
-    attrs = GetFileAttributes(dummydir);
+    attrs = GetFileAttributesA(dummydir);
     ok(attrs != INVALID_FILE_ATTRIBUTES,
        "Expected CatRoot\\{DEADBEEF-DEAD-BEEF-DEAD-BEEFDEADBEEF} directory to exist\n");
 
     /* Only present on XP or higher. */
-    attrs = GetFileAttributes(catroot2);
+    attrs = GetFileAttributesA(catroot2);
     if (attrs != INVALID_FILE_ATTRIBUTES)
     {
         lstrcpyA(dummydir, catroot2);
         lstrcatA(dummydir, "\\{DEADBEEF-DEAD-BEEF-DEAD-BEEFDEADBEEF}");
-        attrs = GetFileAttributes(dummydir);
+        attrs = GetFileAttributesA(dummydir);
         ok(attrs != INVALID_FILE_ATTRIBUTES,
             "Expected CatRoot2\\{DEADBEEF-DEAD-BEEF-DEAD-BEEFDEADBEEF} directory to exist\n");
     }
@@ -589,7 +590,7 @@ static void test_CryptCATAdminAddRemoveCatalog(void)
 
     lstrcpyA(catfilepath, catroot);
     lstrcatA(catfilepath, "\\{DEADBEEF-DEAD-BEEF-DEAD-BEEFDEADBEEF}\\winetest.cat");
-    attrs = GetFileAttributes(catfilepath);
+    attrs = GetFileAttributesA(catfilepath);
     ok(attrs != INVALID_FILE_ATTRIBUTES, "Expected %s to exist\n", catfilepath);
     todo_wine
     ok(attrs == FILE_ATTRIBUTE_SYSTEM ||
@@ -617,12 +618,12 @@ static void test_CryptCATAdminAddRemoveCatalog(void)
     ret = pCryptCATAdminRemoveCatalog(hcatadmin, info.wszCatalogFile, 0);
     ok(ret, "CryptCATAdminRemoveCatalog failed %u\n", GetLastError());
     /* The call succeeded with the full path but the file is not removed */
-    attrs = GetFileAttributes(catfilepath);
+    attrs = GetFileAttributesA(catfilepath);
     ok(attrs != INVALID_FILE_ATTRIBUTES, "Expected %s to exist\n", catfilepath);
     /* Given only the filename the file is removed */
     ret = pCryptCATAdminRemoveCatalog(hcatadmin, basenameW, 0);
     ok(ret, "CryptCATAdminRemoveCatalog failed %u\n", GetLastError());
-    attrs = GetFileAttributes(catfilepath);
+    attrs = GetFileAttributesA(catfilepath);
     ok(attrs == INVALID_FILE_ATTRIBUTES, "Expected %s to be removed\n", catfilepath);
 
 cleanup:
