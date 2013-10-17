@@ -680,8 +680,8 @@ static void testCreateCert(void)
 
 static void testDupCert(void)
 {
-    HCERTSTORE store;
-    PCCERT_CONTEXT context, dupContext;
+    PCCERT_CONTEXT context, dupContext, storeContext, storeContext2, context2;
+    HCERTSTORE store, store2;
     BOOL ret;
 
     store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
@@ -719,9 +719,81 @@ static void testDupCert(void)
     }
     CertCloseStore(store, 0);
 
+    context = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert, sizeof(bigCert));
+    ok(context != NULL, "CertCreateCertificateContext failed\n");
+
+    dupContext = CertDuplicateCertificateContext(context);
+    ok(dupContext == context, "context != dupContext\n");
+
+    CertFreeCertificateContext(dupContext);
+
+    store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0, CERT_STORE_CREATE_NEW_FLAG, NULL);
+    ok(store != NULL, "CertOpenStore failed: %d\n", GetLastError());
+
+    ret = CertAddCertificateContextToStore(store, context, CERT_STORE_ADD_NEW, &storeContext);
+    ok(ret, "CertAddCertificateContextToStore failed\n");
+    ok(storeContext != NULL && storeContext != context, "unexpected storeContext\n");
+    ok(storeContext->hCertStore == store, "unexpected hCertStore\n");
+
+    ok(storeContext->pbCertEncoded != context->pbCertEncoded, "unexpected pbCertEncoded\n");
+    ok(storeContext->cbCertEncoded == context->cbCertEncoded, "unexpected cbCertEncoded\n");
+    ok(storeContext->pCertInfo != context->pCertInfo, "unexpected pCertInfo\n");
+
+    store2 = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0, CERT_STORE_CREATE_NEW_FLAG, NULL);
+    ok(store2 != NULL, "CertOpenStore failed: %d\n", GetLastError());
+
+    ret = CertAddCertificateContextToStore(store2, storeContext, CERT_STORE_ADD_NEW, &storeContext2);
+    ok(ret, "CertAddCertificateContextToStore failed\n");
+    ok(storeContext2 != NULL && storeContext2 != storeContext, "unexpected storeContext\n");
+    ok(storeContext2->hCertStore == store2, "unexpected hCertStore\n");
+
+    ok(storeContext2->pbCertEncoded != storeContext->pbCertEncoded, "unexpected pbCertEncoded\n");
+    ok(storeContext2->cbCertEncoded == storeContext->cbCertEncoded, "unexpected cbCertEncoded\n");
+    ok(storeContext2->pCertInfo != storeContext->pCertInfo, "unexpected pCertInfo\n");
+
+    CertFreeCertificateContext(storeContext2);
+    CertFreeCertificateContext(storeContext);
+
+    context2 = CertCreateCertificateContext(X509_ASN_ENCODING, certWithUsage, sizeof(certWithUsage));
+    ok(context2 != NULL, "CertCreateCertificateContext failed\n");
+
+    ok(context2->hCertStore == context->hCertStore, "Unexpected hCertStore\n");
+
+    CertFreeCertificateContext(context2);
+    CertFreeCertificateContext(context);
+
+    CertCloseStore(store, 0);
+    CertCloseStore(store2, 0);
+
     SetLastError(0xdeadbeef);
     context = CertDuplicateCertificateContext(NULL);
     ok(context == NULL, "Expected context to be NULL\n");
+}
+
+static void testLinkCert(void)
+{
+    const CERT_CONTEXT *context, *link;
+    HCERTSTORE store;
+    BOOL ret;
+
+    context = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert, sizeof(bigCert));
+    ok(context != NULL, "CertCreateCertificateContext failed\n");
+
+    store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0, CERT_STORE_CREATE_NEW_FLAG, NULL);
+    ok(store != NULL, "CertOpenStore failed: %d\n", GetLastError());
+
+    ret = CertAddCertificateLinkToStore(store, context, CERT_STORE_ADD_NEW, &link);
+    ok(ret, "CertAddCertificateContextToStore failed\n");
+    ok(link != NULL && link != context, "unexpected storeContext\n");
+    ok(link->hCertStore == store, "unexpected hCertStore\n");
+
+    ok(link->pbCertEncoded == context->pbCertEncoded, "unexpected pbCertEncoded\n");
+    ok(link->cbCertEncoded == context->cbCertEncoded, "unexpected cbCertEncoded\n");
+    ok(link->pCertInfo == context->pCertInfo, "unexpected pCertInfo\n");
+
+    CertFreeCertificateContext(link);
+
+    CertCloseStore(store, 0);
 }
 
 static BYTE subjectName3[] = { 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06,
@@ -3902,6 +3974,7 @@ START_TEST(cert)
     testFindCert();
     testGetSubjectCert();
     testGetIssuerCert();
+    testLinkCert();
 
     testCryptHashCert();
     testCertSigs();
