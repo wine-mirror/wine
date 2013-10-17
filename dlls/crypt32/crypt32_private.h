@@ -436,22 +436,20 @@ void ContextPropertyList_Free(CONTEXT_PROPERTY_LIST *list) DECLSPEC_HIDDEN;
 /**
  *  Context list functions.  A context list is a simple list of link contexts.
  */
-struct ContextList;
+typedef struct list ContextList;
 
-struct ContextList *ContextList_Create(void) DECLSPEC_HIDDEN;
-
-context_t *ContextList_Add(struct ContextList *list, CRITICAL_SECTION *cs, context_t *toLink, context_t *toReplace,
+context_t *ContextList_Add(ContextList *list, CRITICAL_SECTION *cs, context_t *toLink, context_t *toReplace,
  struct WINE_CRYPTCERTSTORE *store, BOOL use_link) DECLSPEC_HIDDEN;
 
-context_t *ContextList_Enum(struct ContextList *list, CRITICAL_SECTION *cs, context_t *prev) DECLSPEC_HIDDEN;
+context_t *ContextList_Enum(ContextList *list, CRITICAL_SECTION *cs, context_t *prev) DECLSPEC_HIDDEN;
 
 /* Removes a context from the list.  Returns TRUE if the context was removed,
  * or FALSE if not.  (The context may have been duplicated, so subsequent
  * removes have no effect.)
  */
-BOOL ContextList_Remove(struct ContextList *list, CRITICAL_SECTION *cs, context_t *context) DECLSPEC_HIDDEN;
+BOOL ContextList_Remove(ContextList *list, CRITICAL_SECTION *cs, context_t *context) DECLSPEC_HIDDEN;
 
-void ContextList_Free(struct ContextList *list) DECLSPEC_HIDDEN;
+void ContextList_Free(ContextList *list) DECLSPEC_HIDDEN;
 
 extern WINECRYPT_CERTSTORE empty_store;
 void init_empty_store(void) DECLSPEC_HIDDEN;
