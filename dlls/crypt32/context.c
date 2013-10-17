@@ -164,16 +164,16 @@ context_t *ContextList_Add(struct ContextList *list, context_t *toLink, context_
     return context;
 }
 
-void *ContextList_Enum(struct ContextList *list, void *pPrev)
+context_t *ContextList_Enum(struct ContextList *list, context_t *prev)
 {
     struct list *listNext;
-    void *ret;
+    context_t *ret;
 
     EnterCriticalSection(&list->cs);
-    if (pPrev)
+    if (prev)
     {
-        listNext = list_next(&list->contexts, &context_from_ptr(pPrev)->u.entry);
-        Context_Release(context_from_ptr(pPrev));
+        listNext = list_next(&list->contexts, &prev->u.entry);
+        Context_Release(prev);
     }
     else
         listNext = list_next(&list->contexts, &list->contexts);
@@ -181,8 +181,8 @@ void *ContextList_Enum(struct ContextList *list, void *pPrev)
 
     if (listNext)
     {
-        ret = CONTEXT_FROM_BASE_CONTEXT(LIST_ENTRY(listNext, context_t, u.entry));
-        Context_AddRef(context_from_ptr(ret));
+        ret = LIST_ENTRY(listNext, context_t, u.entry);
+        Context_AddRef(ret);
     }
     else
         ret = NULL;

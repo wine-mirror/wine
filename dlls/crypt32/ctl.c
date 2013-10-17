@@ -193,11 +193,10 @@ BOOL WINAPI CertAddEncodedCTLToStore(HCERTSTORE hCertStore,
     return ret;
 }
 
-PCCTL_CONTEXT WINAPI CertEnumCTLsInStore(HCERTSTORE hCertStore,
- PCCTL_CONTEXT pPrev)
+PCCTL_CONTEXT WINAPI CertEnumCTLsInStore(HCERTSTORE hCertStore, PCCTL_CONTEXT pPrev)
 {
+    ctl_t *prev = pPrev ? ctl_from_ptr(pPrev) : NULL, *ret;
     WINECRYPT_CERTSTORE *hcs = hCertStore;
-    PCCTL_CONTEXT ret;
 
     TRACE("(%p, %p)\n", hCertStore, pPrev);
     if (!hCertStore)
@@ -205,8 +204,8 @@ PCCTL_CONTEXT WINAPI CertEnumCTLsInStore(HCERTSTORE hCertStore,
     else if (hcs->dwMagic != WINE_CRYPTCERTSTORE_MAGIC)
         ret = NULL;
     else
-        ret = (PCCTL_CONTEXT)hcs->vtbl->ctls.enumContext(hcs, (void *)pPrev);
-    return ret;
+        ret = (ctl_t*)hcs->vtbl->ctls.enumContext(hcs, prev ? &prev->base : NULL);
+    return ret ? &ret->ctx : NULL;
 }
 
 typedef BOOL (*CtlCompareFunc)(PCCTL_CONTEXT pCtlContext, DWORD dwType,

@@ -71,7 +71,7 @@ static DWORD Collection_release(WINECRYPT_CERTSTORE *store, DWORD flags)
     return ERROR_SUCCESS;
 }
 
-static void *CRYPT_CollectionCreateContextFromChild(WINE_COLLECTIONSTORE *store,
+static context_t *CRYPT_CollectionCreateContextFromChild(WINE_COLLECTIONSTORE *store,
  WINE_STORE_LIST_ENTRY *storeEntry, context_t *child, size_t contextSize)
 {
     context_t *ret;
@@ -81,7 +81,7 @@ static void *CRYPT_CollectionCreateContextFromChild(WINE_COLLECTIONSTORE *store,
         return NULL;
 
     ret->u.ptr = storeEntry;
-    return context_ptr(ret);
+    return ret;
 }
 
 static BOOL CRYPT_CollectionAddContext(WINE_COLLECTIONSTORE *store,
@@ -143,32 +143,29 @@ static BOOL CRYPT_CollectionAddContext(WINE_COLLECTIONSTORE *store,
  * Returns NULL if the collection contains no more items or on error.
  * Assumes the collection store's lock is held.
  */
-static void *CRYPT_CollectionAdvanceEnum(WINE_COLLECTIONSTORE *store,
+static context_t *CRYPT_CollectionAdvanceEnum(WINE_COLLECTIONSTORE *store,
  WINE_STORE_LIST_ENTRY *storeEntry, const CONTEXT_FUNCS *contextFuncs,
- const WINE_CONTEXT_INTERFACE *contextInterface, void *pPrev, size_t contextSize)
+ const WINE_CONTEXT_INTERFACE *contextInterface, context_t *prev, size_t contextSize)
 {
-    context_t *child;
-    void *ret, *tmp;
+    context_t *child, *ret;
     struct list *storeNext = list_next(&store->stores, &storeEntry->entry);
 
-    TRACE("(%p, %p, %p)\n", store, storeEntry, pPrev);
+    TRACE("(%p, %p, %p)\n", store, storeEntry, prev);
 
-    if (pPrev)
+    if (prev)
     {
         /* Ref-counting funny business: "duplicate" (addref) the child, because
          * the free(pPrev) below can cause the ref count to become negative.
          */
-        child = context_from_ptr(pPrev)->linked;
+        child = prev->linked;
         Context_AddRef(child);
-        tmp = contextFuncs->enumContext(storeEntry->store, context_ptr(child));
-        child = tmp ? context_from_ptr(tmp) : NULL;
-        Context_Release(context_from_ptr(pPrev));
-        pPrev = NULL;
+        child = contextFuncs->enumContext(storeEntry->store, child);
+        Context_Release(prev);
+        prev = NULL;
     }
     else
     {
-        tmp = contextFuncs->enumContext(storeEntry->store, NULL);
-        child = tmp ? context_from_ptr(tmp) : NULL;
+        child = contextFuncs->enumContext(storeEntry->store, NULL);
     }
     if (child) {
         ret = CRYPT_CollectionCreateContextFromChild(store, storeEntry, child, contextSize);
@@ -212,29 +209,29 @@ static BOOL Collection_addCert(WINECRYPT_CERTSTORE *store, void *cert,
     if (ppStoreContext && childContext)
     {
         WINE_STORE_LIST_ENTRY *storeEntry = context_from_ptr(childContext)->u.ptr;
-        PCERT_CONTEXT context =
-         CRYPT_CollectionCreateContextFromChild(cs, storeEntry, context_from_ptr(childContext), sizeof(CERT_CONTEXT));
+        cert_t *context = (cert_t*)CRYPT_CollectionCreateContextFromChild(cs, storeEntry,
+         context_from_ptr(childContext), sizeof(CERT_CONTEXT));
 
-        *ppStoreContext = context;
+        *ppStoreContext = &context->ctx;
     }
     CertFreeCertificateContext(childContext);
     return ret;
 }
 
-static void *Collection_enumCert(WINECRYPT_CERTSTORE *store, void *pPrev)
+static context_t *Collection_enumCert(WINECRYPT_CERTSTORE *store, context_t *prev)
 {
     WINE_COLLECTIONSTORE *cs = (WINE_COLLECTIONSTORE*)store;
-    void *ret;
+    context_t *ret;
 
-    TRACE("(%p, %p)\n", store, pPrev);
+    TRACE("(%p, %p)\n", store, prev);
 
     EnterCriticalSection(&cs->cs);
-    if (pPrev)
+    if (prev)
     {
-        WINE_STORE_LIST_ENTRY *storeEntry = context_from_ptr(pPrev)->u.ptr;
+        WINE_STORE_LIST_ENTRY *storeEntry = prev->u.ptr;
 
         ret = CRYPT_CollectionAdvanceEnum(cs, storeEntry,
-         &storeEntry->store->vtbl->certs, pCertInterface, pPrev,
+         &storeEntry->store->vtbl->certs, pCertInterface, prev,
          sizeof(CERT_CONTEXT));
     }
     else
@@ -285,29 +282,29 @@ static BOOL Collection_addCRL(WINECRYPT_CERTSTORE *store, void *crl,
     if (ppStoreContext && childContext)
     {
         WINE_STORE_LIST_ENTRY *storeEntry = context_from_ptr(childContext)->u.ptr;
-        PCRL_CONTEXT context =
-         CRYPT_CollectionCreateContextFromChild(cs, storeEntry, context_from_ptr(childContext), sizeof(CRL_CONTEXT));
+        crl_t *context = (crl_t*)CRYPT_CollectionCreateContextFromChild(cs, storeEntry,
+         context_from_ptr(childContext), sizeof(CRL_CONTEXT));
 
-        *ppStoreContext = context;
+        *ppStoreContext = &context->ctx;
     }
     CertFreeCRLContext(childContext);
     return ret;
 }
 
-static void *Collection_enumCRL(WINECRYPT_CERTSTORE *store, void *pPrev)
+static context_t *Collection_enumCRL(WINECRYPT_CERTSTORE *store, context_t *prev)
 {
     WINE_COLLECTIONSTORE *cs = (WINE_COLLECTIONSTORE*)store;
-    void *ret;
+    context_t *ret;
 
-    TRACE("(%p, %p)\n", store, pPrev);
+    TRACE("(%p, %p)\n", store, prev);
 
     EnterCriticalSection(&cs->cs);
-    if (pPrev)
+    if (prev)
     {
-        WINE_STORE_LIST_ENTRY *storeEntry = context_from_ptr(pPrev)->u.ptr;
+        WINE_STORE_LIST_ENTRY *storeEntry = prev->u.ptr;
 
         ret = CRYPT_CollectionAdvanceEnum(cs, storeEntry,
-         &storeEntry->store->vtbl->crls, pCRLInterface, pPrev, sizeof(CRL_CONTEXT));
+         &storeEntry->store->vtbl->crls, pCRLInterface, prev, sizeof(CRL_CONTEXT));
     }
     else
     {
@@ -356,29 +353,29 @@ static BOOL Collection_addCTL(WINECRYPT_CERTSTORE *store, void *ctl,
     if (ppStoreContext && childContext)
     {
         WINE_STORE_LIST_ENTRY *storeEntry = context_from_ptr(childContext)->u.ptr;
-        PCTL_CONTEXT context =
-         CRYPT_CollectionCreateContextFromChild(cs, storeEntry, context_from_ptr(childContext), sizeof(CTL_CONTEXT));
+        ctl_t *context = (ctl_t*)CRYPT_CollectionCreateContextFromChild(cs, storeEntry,
+         context_from_ptr(childContext), sizeof(CTL_CONTEXT));
 
-        *ppStoreContext = context;
+        *ppStoreContext = &context->ctx;
     }
     CertFreeCTLContext(childContext);
     return ret;
 }
 
-static void *Collection_enumCTL(WINECRYPT_CERTSTORE *store, void *pPrev)
+static context_t *Collection_enumCTL(WINECRYPT_CERTSTORE *store, context_t *prev)
 {
     WINE_COLLECTIONSTORE *cs = (WINE_COLLECTIONSTORE*)store;
     void *ret;
 
-    TRACE("(%p, %p)\n", store, pPrev);
+    TRACE("(%p, %p)\n", store, prev);
 
     EnterCriticalSection(&cs->cs);
-    if (pPrev)
+    if (prev)
     {
-        WINE_STORE_LIST_ENTRY *storeEntry = context_from_ptr(pPrev)->u.ptr;
+        WINE_STORE_LIST_ENTRY *storeEntry = prev->u.ptr;
 
         ret = CRYPT_CollectionAdvanceEnum(cs, storeEntry,
-         &storeEntry->store->vtbl->ctls, pCTLInterface, pPrev, sizeof(CTL_CONTEXT));
+         &storeEntry->store->vtbl->ctls, pCTLInterface, prev, sizeof(CTL_CONTEXT));
     }
     else
     {

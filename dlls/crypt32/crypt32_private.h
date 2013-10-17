@@ -264,9 +264,6 @@ extern const WINE_CONTEXT_INTERFACE *pCTLInterface DECLSPEC_HIDDEN;
 typedef struct WINE_CRYPTCERTSTORE * (*StoreOpenFunc)(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara);
 
-/* Called to enumerate the next context in a store. */
-typedef void * (*EnumFunc)(struct WINE_CRYPTCERTSTORE *store, void *pPrev);
-
 typedef struct _CONTEXT_FUNCS
 {
   /* Called to add a context to a store.  If toReplace is not NULL,
@@ -276,7 +273,7 @@ typedef struct _CONTEXT_FUNCS
    * context should be returned in *ppStoreContext.
    */
     BOOL (*addContext)(struct WINE_CRYPTCERTSTORE*,void*,void*,const void**,BOOL);
-    EnumFunc   enumContext;
+    context_t *(*enumContext)(struct WINE_CRYPTCERTSTORE *store, context_t *prev);
     BOOL (*delete)(struct WINE_CRYPTCERTSTORE*,context_t*);
 } CONTEXT_FUNCS;
 
@@ -447,7 +444,7 @@ struct ContextList *ContextList_Create(
 context_t *ContextList_Add(struct ContextList *list, context_t *toLink, context_t *toReplace,
  struct WINE_CRYPTCERTSTORE *store, BOOL use_link) DECLSPEC_HIDDEN;
 
-void *ContextList_Enum(struct ContextList *list, void *pPrev) DECLSPEC_HIDDEN;
+context_t *ContextList_Enum(struct ContextList *list, context_t *prev) DECLSPEC_HIDDEN;
 
 /* Removes a context from the list.  Returns TRUE if the context was removed,
  * or FALSE if not.  (The context may have been duplicated, so subsequent

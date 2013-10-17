@@ -161,14 +161,14 @@ static BOOL MemStore_addCert(WINECRYPT_CERTSTORE *store, void *cert,
     return TRUE;
 }
 
-static void *MemStore_enumCert(WINECRYPT_CERTSTORE *store, void *pPrev)
+static context_t *MemStore_enumCert(WINECRYPT_CERTSTORE *store, context_t *prev)
 {
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
-    void *ret;
+    context_t *ret;
 
-    TRACE("(%p, %p)\n", store, pPrev);
+    TRACE("(%p, %p)\n", store, prev);
 
-    ret = ContextList_Enum(ms->certs, pPrev);
+    ret = ContextList_Enum(ms->certs, prev);
     if (!ret)
         SetLastError(CRYPT_E_NOT_FOUND);
 
@@ -205,14 +205,14 @@ static BOOL MemStore_addCRL(WINECRYPT_CERTSTORE *store, void *crl,
     return TRUE;
 }
 
-static void *MemStore_enumCRL(WINECRYPT_CERTSTORE *store, void *pPrev)
+static context_t *MemStore_enumCRL(WINECRYPT_CERTSTORE *store, context_t *prev)
 {
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
-    void *ret;
+    context_t *ret;
 
-    TRACE("(%p, %p)\n", store, pPrev);
+    TRACE("(%p, %p)\n", store, prev);
 
-    ret = ContextList_Enum(ms->crls, pPrev);
+    ret = ContextList_Enum(ms->crls, prev);
     if (!ret)
         SetLastError(CRYPT_E_NOT_FOUND);
 
@@ -249,14 +249,14 @@ static BOOL MemStore_addCTL(WINECRYPT_CERTSTORE *store, void *ctl,
     return TRUE;
 }
 
-static void *MemStore_enumCTL(WINECRYPT_CERTSTORE *store, void *pPrev)
+static context_t *MemStore_enumCTL(WINECRYPT_CERTSTORE *store, context_t *prev)
 {
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
-    void *ret;
+    context_t *ret;
 
-    TRACE("(%p, %p)\n", store, pPrev);
+    TRACE("(%p, %p)\n", store, prev);
 
-    ret = ContextList_Enum(ms->ctls, pPrev);
+    ret = ContextList_Enum(ms->ctls, prev);
     if (!ret)
         SetLastError(CRYPT_E_NOT_FOUND);
 
@@ -887,11 +887,10 @@ HCERTSTORE WINAPI CertOpenSystemStoreW(HCRYPTPROV_LEGACY hProv,
      CERT_SYSTEM_STORE_CURRENT_USER, szSubSystemProtocol);
 }
 
-PCCERT_CONTEXT WINAPI CertEnumCertificatesInStore(HCERTSTORE hCertStore,
- PCCERT_CONTEXT pPrev)
+PCCERT_CONTEXT WINAPI CertEnumCertificatesInStore(HCERTSTORE hCertStore, PCCERT_CONTEXT pPrev)
 {
+    cert_t *prev = pPrev ? cert_from_ptr(pPrev) : NULL, *ret;
     WINECRYPT_CERTSTORE *hcs = hCertStore;
-    PCCERT_CONTEXT ret;
 
     TRACE("(%p, %p)\n", hCertStore, pPrev);
     if (!hCertStore)
@@ -899,8 +898,8 @@ PCCERT_CONTEXT WINAPI CertEnumCertificatesInStore(HCERTSTORE hCertStore,
     else if (hcs->dwMagic != WINE_CRYPTCERTSTORE_MAGIC)
         ret = NULL;
     else
-        ret = (PCCERT_CONTEXT)hcs->vtbl->certs.enumContext(hcs, (void *)pPrev);
-    return ret;
+        ret = (cert_t*)hcs->vtbl->certs.enumContext(hcs, prev ? &prev->base : NULL);
+    return ret ? &ret->ctx : NULL;
 }
 
 BOOL WINAPI CertDeleteCertificateFromStore(PCCERT_CONTEXT pCertContext)
@@ -1063,11 +1062,10 @@ BOOL WINAPI CertDeleteCRLFromStore(PCCRL_CONTEXT pCrlContext)
     return ret;
 }
 
-PCCRL_CONTEXT WINAPI CertEnumCRLsInStore(HCERTSTORE hCertStore,
- PCCRL_CONTEXT pPrev)
+PCCRL_CONTEXT WINAPI CertEnumCRLsInStore(HCERTSTORE hCertStore, PCCRL_CONTEXT pPrev)
 {
+    crl_t *ret, *prev = pPrev ? crl_from_ptr(pPrev) : NULL;
     WINECRYPT_CERTSTORE *hcs = hCertStore;
-    PCCRL_CONTEXT ret;
 
     TRACE("(%p, %p)\n", hCertStore, pPrev);
     if (!hCertStore)
@@ -1075,8 +1073,8 @@ PCCRL_CONTEXT WINAPI CertEnumCRLsInStore(HCERTSTORE hCertStore,
     else if (hcs->dwMagic != WINE_CRYPTCERTSTORE_MAGIC)
         ret = NULL;
     else
-        ret = (PCCRL_CONTEXT)hcs->vtbl->crls.enumContext(hcs, (void *)pPrev);
-    return ret;
+        ret = (crl_t*)hcs->vtbl->crls.enumContext(hcs, prev ? &prev->base : NULL);
+    return ret ? &ret->ctx : NULL;
 }
 
 HCERTSTORE WINAPI CertDuplicateStore(HCERTSTORE hCertStore)
@@ -1374,12 +1372,12 @@ static BOOL EmptyStore_add(WINECRYPT_CERTSTORE *store, void *context,
     return TRUE;
 }
 
-static void *EmptyStore_enum(WINECRYPT_CERTSTORE *store, void *prev)
+static context_t *EmptyStore_enum(WINECRYPT_CERTSTORE *store, context_t *prev)
 {
     TRACE("(%p, %p)\n", store, prev);
 
     SetLastError(CRYPT_E_NOT_FOUND);
-    return FALSE;
+    return NULL;
 }
 
 static BOOL EmptyStore_delete(WINECRYPT_CERTSTORE *store, context_t *context)
