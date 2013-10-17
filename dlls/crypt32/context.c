@@ -76,22 +76,6 @@ void Context_AddRef(context_t *context)
     TRACE("(%p) ref=%d\n", context, context->ref);
 }
 
-void *Context_GetExtra(const void *context, size_t contextSize)
-{
-    BASE_CONTEXT *baseContext = BASE_CONTEXT_FROM_CONTEXT(context);
-
-    assert(baseContext->linked != NULL);
-    return (LPBYTE)CONTEXT_FROM_BASE_CONTEXT(baseContext) + contextSize;
-}
-
-void *Context_GetLinkedContext(void *context)
-{
-    BASE_CONTEXT *baseContext = BASE_CONTEXT_FROM_CONTEXT(context);
-
-    assert(baseContext->linked != NULL);
-    return CONTEXT_FROM_BASE_CONTEXT(baseContext->linked);
-}
-
 CONTEXT_PROPERTY_LIST *Context_GetProperties(const void *context)
 {
     BASE_CONTEXT *ptr = BASE_CONTEXT_FROM_CONTEXT(context);
