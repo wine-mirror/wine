@@ -110,31 +110,6 @@ void Context_CopyProperties(const void *to, const void *from)
     ContextPropertyList_Copy(toProperties, fromProperties);
 }
 
-context_t *ContextList_Enum(ContextList *list, CRITICAL_SECTION *cs, context_t *prev)
-{
-    struct list *listNext;
-    context_t *ret;
-
-    EnterCriticalSection(cs);
-    if (prev)
-    {
-        listNext = list_next(list, &prev->u.entry);
-        Context_Release(prev);
-    }
-    else
-        listNext = list_next(list, list);
-    LeaveCriticalSection(cs);
-
-    if (listNext)
-    {
-        ret = LIST_ENTRY(listNext, context_t, u.entry);
-        Context_AddRef(ret);
-    }
-    else
-        ret = NULL;
-    return ret;
-}
-
 BOOL ContextList_Remove(ContextList *list, CRITICAL_SECTION *cs, context_t *context)
 {
     BOOL inList = FALSE;

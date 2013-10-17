@@ -174,6 +174,31 @@ static BOOL MemStore_addContext(WINE_MEMSTORE *store, struct list *list, context
     return TRUE;
 }
 
+static context_t *MemStore_enumContext(WINE_MEMSTORE *store, struct list *list, context_t *prev)
+{
+    struct list *next;
+    context_t *ret;
+
+    EnterCriticalSection(&store->cs);
+    if (prev) {
+        next = list_next(list, &prev->u.entry);
+        Context_Release(prev);
+    }else {
+        next = list_next(list, list);
+    }
+    LeaveCriticalSection(&store->cs);
+
+    if (!next) {
+        SetLastError(CRYPT_E_NOT_FOUND);
+        return NULL;
+    }
+
+    ret = LIST_ENTRY(next, context_t, u.entry);
+    Context_AddRef(ret);
+    return ret;
+}
+
+
 static BOOL MemStore_addCert(WINECRYPT_CERTSTORE *store, context_t *cert,
  context_t *toReplace, context_t **ppStoreContext, BOOL use_link)
 {
@@ -187,16 +212,10 @@ static BOOL MemStore_addCert(WINECRYPT_CERTSTORE *store, context_t *cert,
 static context_t *MemStore_enumCert(WINECRYPT_CERTSTORE *store, context_t *prev)
 {
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
-    context_t *ret;
 
     TRACE("(%p, %p)\n", store, prev);
 
-    ret = ContextList_Enum(&ms->certs, &ms->cs, prev);
-    if (!ret)
-        SetLastError(CRYPT_E_NOT_FOUND);
-
-    TRACE("returning %p\n", ret);
-    return ret;
+    return MemStore_enumContext(ms, &ms->certs, prev);
 }
 
 static BOOL MemStore_deleteCert(WINECRYPT_CERTSTORE *store, context_t *context)
@@ -222,16 +241,10 @@ static BOOL MemStore_addCRL(WINECRYPT_CERTSTORE *store, context_t *crl,
 static context_t *MemStore_enumCRL(WINECRYPT_CERTSTORE *store, context_t *prev)
 {
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
-    context_t *ret;
 
     TRACE("(%p, %p)\n", store, prev);
 
-    ret = ContextList_Enum(&ms->crls, &ms->cs, prev);
-    if (!ret)
-        SetLastError(CRYPT_E_NOT_FOUND);
-
-    TRACE("returning %p\n", ret);
-    return ret;
+    return MemStore_enumContext(ms, &ms->crls, prev);
 }
 
 static BOOL MemStore_deleteCRL(WINECRYPT_CERTSTORE *store, context_t *context)
@@ -257,16 +270,10 @@ static BOOL MemStore_addCTL(WINECRYPT_CERTSTORE *store, context_t *ctl,
 static context_t *MemStore_enumCTL(WINECRYPT_CERTSTORE *store, context_t *prev)
 {
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
-    context_t *ret;
 
     TRACE("(%p, %p)\n", store, prev);
 
-    ret = ContextList_Enum(&ms->ctls, &ms->cs, prev);
-    if (!ret)
-        SetLastError(CRYPT_E_NOT_FOUND);
-
-    TRACE("returning %p\n", ret);
-    return ret;
+    return MemStore_enumContext(ms, &ms->ctls, prev);
 }
 
 static BOOL MemStore_deleteCTL(WINECRYPT_CERTSTORE *store, context_t *context)

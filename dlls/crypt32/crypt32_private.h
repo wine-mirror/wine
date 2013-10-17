@@ -438,8 +438,6 @@ void ContextPropertyList_Free(CONTEXT_PROPERTY_LIST *list) DECLSPEC_HIDDEN;
  */
 typedef struct list ContextList;
 
-context_t *ContextList_Enum(ContextList *list, CRITICAL_SECTION *cs, context_t *prev) DECLSPEC_HIDDEN;
-
 /* Removes a context from the list.  Returns TRUE if the context was removed,
  * or FALSE if not.  (The context may have been duplicated, so subsequent
  * removes have no effect.)
