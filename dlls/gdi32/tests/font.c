@@ -5693,9 +5693,9 @@ static void test_fake_bold_font(void)
     ok(tm[0].tmHeight == tm[1].tmHeight, "expected %d, got %d\n", tm[0].tmHeight, tm[1].tmHeight);
     ok(tm[0].tmAscent == tm[1].tmAscent, "expected %d, got %d\n", tm[0].tmAscent, tm[1].tmAscent);
     ok(tm[0].tmDescent == tm[1].tmDescent, "expected %d, got %d\n", tm[0].tmDescent, tm[1].tmDescent);
-    todo_wine ok((tm[0].tmAveCharWidth + 1) == tm[1].tmAveCharWidth,
+    ok((tm[0].tmAveCharWidth + 1) == tm[1].tmAveCharWidth,
        "expected %d, got %d\n", tm[0].tmAveCharWidth + 1, tm[1].tmAveCharWidth);
-    todo_wine ok((tm[0].tmMaxCharWidth + 1) == tm[1].tmMaxCharWidth,
+    ok((tm[0].tmMaxCharWidth + 1) == tm[1].tmMaxCharWidth,
        "expected %d, got %d\n", tm[0].tmMaxCharWidth + 1, tm[1].tmMaxCharWidth);
     ok(tm[0].tmOverhang == tm[1].tmOverhang, "expected %d, got %d\n", tm[0].tmOverhang, tm[1].tmOverhang);
     w[0] = abc[0].abcA + abc[0].abcB + abc[0].abcC;

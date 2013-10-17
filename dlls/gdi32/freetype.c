@@ -7330,8 +7330,11 @@ static BOOL get_outline_text_metrics(GdiFont *font)
     }
     TM.tmMaxCharWidth = SCALE_X(ft_face->bbox.xMax - ft_face->bbox.xMin);
     TM.tmWeight = FW_REGULAR;
-    if (font->fake_bold)
+    if (font->fake_bold) {
+        TM.tmAveCharWidth++;
+        TM.tmMaxCharWidth++;
         TM.tmWeight = FW_BOLD;
+    }
     else
     {
         if (ft_face->style_flags & FT_STYLE_FLAG_BOLD)
