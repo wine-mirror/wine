@@ -171,7 +171,7 @@ typedef struct {
     struct _context_t *(*clone)(context_t*,struct WINE_CRYPTCERTSTORE*,BOOL);
 } context_vtbl_t;
 
-typedef struct _context_t {
+struct _context_t {
     const context_vtbl_t *vtbl;
     LONG ref;
     struct _context_t *linked;
@@ -180,7 +180,7 @@ typedef struct _context_t {
         struct list entry;
         void *ptr;
     } u;
-} BASE_CONTEXT;
+};
 
 static inline context_t *context_from_ptr(const void *ptr)
 {

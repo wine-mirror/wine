@@ -25,14 +25,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(context);
 
-#define CONTEXT_FROM_BASE_CONTEXT(p) (void*)(p+1)
-#define BASE_CONTEXT_FROM_CONTEXT(p) ((BASE_CONTEXT*)(p)-1)
-
 void *Context_CreateDataContext(size_t contextSize, const context_vtbl_t *vtbl)
 {
-    BASE_CONTEXT *context;
+    context_t *context;
 
-    context = CryptMemAlloc(contextSize + sizeof(BASE_CONTEXT));
+    context = CryptMemAlloc(sizeof(context_t) + contextSize);
     if (!context)
         return NULL;
 
@@ -47,7 +44,7 @@ void *Context_CreateDataContext(size_t contextSize, const context_vtbl_t *vtbl)
     }
 
     TRACE("returning %p\n", context);
-    return CONTEXT_FROM_BASE_CONTEXT(context);
+    return context_ptr(context);
 }
 
 context_t *Context_CreateLinkContext(unsigned int contextSize, context_t *linked)
