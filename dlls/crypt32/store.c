@@ -215,6 +215,18 @@ static BOOL MemStore_deleteContext(WINE_MEMSTORE *store, context_t *context)
     return TRUE;
 }
 
+static void free_contexts(struct list *list)
+{
+    context_t *context, *next;
+
+    LIST_FOR_EACH_ENTRY_SAFE(context, next, list, context_t, u.entry)
+    {
+        TRACE("freeing %p\n", context);
+        list_remove(&context->u.entry);
+        Context_Release(context);
+    }
+}
+
 static BOOL MemStore_addCert(WINECRYPT_CERTSTORE *store, context_t *cert,
  context_t *toReplace, context_t **ppStoreContext, BOOL use_link)
 {
@@ -317,9 +329,9 @@ static DWORD MemStore_release(WINECRYPT_CERTSTORE *cert_store, DWORD flags)
     if(ref)
         return (flags & CERT_CLOSE_STORE_CHECK_FLAG) ? CRYPT_E_PENDING_CLOSE : ERROR_SUCCESS;
 
-    ContextList_Free(&store->certs);
-    ContextList_Free(&store->crls);
-    ContextList_Free(&store->ctls);
+    free_contexts(&store->certs);
+    free_contexts(&store->crls);
+    free_contexts(&store->ctls);
     store->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&store->cs);
     CRYPT_FreeStore(&store->hdr);

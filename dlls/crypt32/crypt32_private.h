@@ -433,13 +433,6 @@ void ContextPropertyList_Copy(CONTEXT_PROPERTY_LIST *to,
 
 void ContextPropertyList_Free(CONTEXT_PROPERTY_LIST *list) DECLSPEC_HIDDEN;
 
-/**
- *  Context list functions.  A context list is a simple list of link contexts.
- */
-typedef struct list ContextList;
-
-void ContextList_Free(ContextList *list) DECLSPEC_HIDDEN;
-
 extern WINECRYPT_CERTSTORE empty_store;
 void init_empty_store(void) DECLSPEC_HIDDEN;
 

@@ -109,15 +109,3 @@ void Context_CopyProperties(const void *to, const void *from)
     assert(toProperties && fromProperties);
     ContextPropertyList_Copy(toProperties, fromProperties);
 }
-
-void ContextList_Free(ContextList *list)
-{
-    context_t *context, *next;
-
-    LIST_FOR_EACH_ENTRY_SAFE(context, next, list, context_t, u.entry)
-    {
-        TRACE("removing %p\n", context);
-        list_remove(&context->u.entry);
-        Context_Release(context);
-    }
-}
