@@ -56,9 +56,9 @@ static void test_acquire_context(void)
     ok(!result && GetLastError() == NTE_PROV_TYPE_NO_MATCH,
         "Expected NTE_PROV_TYPE_NO_MATCH, got %08x\n", GetLastError());
 
-    /* cannot acquire along with MS_DEF_RSA_SIG_PROV, not compatible */
+    /* cannot acquire along with MS_DEF_RSA_SIG_PROV_A, not compatible */
     SetLastError(0xdeadbeef);
-    result = CryptAcquireContextA(&hProv, NULL, MS_DEF_RSA_SIG_PROV, PROV_DSS, 0);
+    result = CryptAcquireContextA(&hProv, NULL, MS_DEF_RSA_SIG_PROV_A, PROV_DSS, 0);
     ok(!result && GetLastError() == NTE_KEYSET_NOT_DEF,
         "Expected NTE_KEYSET_NOT_DEF, got %08x\n", GetLastError());
 
@@ -101,7 +101,7 @@ static void test_acquire_context(void)
     /* test DSS Diffie Hellman provider (PROV_DSS_DH) */
 
     result = CryptAcquireContextA(
-        &hProv, NULL, MS_DEF_DSS_DH_PROV, PROV_DSS_DH, CRYPT_VERIFYCONTEXT);
+        &hProv, NULL, MS_DEF_DSS_DH_PROV_A, PROV_DSS_DH, CRYPT_VERIFYCONTEXT);
     ok(result, "Expected no errors.\n");
 
     result = CryptReleaseContext(hProv, 0);
@@ -113,14 +113,14 @@ static void test_acquire_context(void)
     result = CryptReleaseContext(hProv, 0);
     ok(result, "Expected release of the provider.\n");
 
-    result = CryptAcquireContextA(&hProv, NULL, MS_DEF_DSS_DH_PROV, PROV_DSS_DH, 0);
+    result = CryptAcquireContextA(&hProv, NULL, MS_DEF_DSS_DH_PROV_A, PROV_DSS_DH, 0);
     ok(result, "Expected no errors.\n");
 
-    /* test DSS Enhanced provider (MS_ENH_DSS_DH_PROV) */
+    /* test DSS Enhanced provider (MS_ENH_DSS_DH_PROV_A) */
 
     SetLastError(0xdeadbeef);
     result = CryptAcquireContextA(
-        &hProv, NULL, MS_ENH_DSS_DH_PROV, PROV_DSS_DH, CRYPT_VERIFYCONTEXT);
+        &hProv, NULL, MS_ENH_DSS_DH_PROV_A, PROV_DSS_DH, CRYPT_VERIFYCONTEXT);
     if(!result && GetLastError() == NTE_KEYSET_NOT_DEF)
     {
         win_skip("DSSENH and Schannel provider is broken on WinNT4\n");
@@ -131,7 +131,7 @@ static void test_acquire_context(void)
     result = CryptReleaseContext(hProv, 0);
     ok(result, "Expected release of the provider.\n");
 
-    result = CryptAcquireContextA(&hProv, NULL, MS_ENH_DSS_DH_PROV, PROV_DSS_DH, 0);
+    result = CryptAcquireContextA(&hProv, NULL, MS_ENH_DSS_DH_PROV_A, PROV_DSS_DH, 0);
     ok(result, "Expected no errors.\n");
 
     result = CryptReleaseContext(hProv, 0);
@@ -140,7 +140,7 @@ static void test_acquire_context(void)
     /* test DSS Schannel provider (PROV_DH_SCHANNEL) */
 
     result = CryptAcquireContextA(
-        &hProv, NULL, MS_DEF_DH_SCHANNEL_PROV, PROV_DH_SCHANNEL, CRYPT_VERIFYCONTEXT);
+        &hProv, NULL, MS_DEF_DH_SCHANNEL_PROV_A, PROV_DH_SCHANNEL, CRYPT_VERIFYCONTEXT);
     ok(result, "Expected no errors.\n");
 
     result = CryptReleaseContext(hProv, 0);
@@ -153,7 +153,7 @@ static void test_acquire_context(void)
     ok(result, "Expected release of the provider.\n");
 
     result = CryptAcquireContextA(
-        &hProv, NULL, MS_DEF_DH_SCHANNEL_PROV, PROV_DH_SCHANNEL, 0);
+        &hProv, NULL, MS_DEF_DH_SCHANNEL_PROV_A, PROV_DH_SCHANNEL, 0);
     ok(result, "Expected no errors.\n");
 
     result = CryptReleaseContext(hProv, 0);
@@ -162,19 +162,19 @@ static void test_acquire_context(void)
     /* failure tests, cannot acquire context because the key container already exists */
     SetLastError(0xdeadbeef);
     result = CryptAcquireContextA(
-        &hProv, NULL, MS_DEF_DSS_DH_PROV, PROV_DSS_DH, CRYPT_NEWKEYSET);
+        &hProv, NULL, MS_DEF_DSS_DH_PROV_A, PROV_DSS_DH, CRYPT_NEWKEYSET);
     ok(!result && GetLastError() == NTE_EXISTS,
         "Expected NTE_EXISTS, got %08x\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     result = CryptAcquireContextA(
-        &hProv, NULL, MS_ENH_DSS_DH_PROV, PROV_DSS_DH, CRYPT_NEWKEYSET);
+        &hProv, NULL, MS_ENH_DSS_DH_PROV_A, PROV_DSS_DH, CRYPT_NEWKEYSET);
     ok(!result && GetLastError() == NTE_EXISTS,
         "Expected NTE_EXISTS, got %08x\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     result = CryptAcquireContextA(
-        &hProv, NULL, MS_DEF_DH_SCHANNEL_PROV, PROV_DH_SCHANNEL, CRYPT_NEWKEYSET);
+        &hProv, NULL, MS_DEF_DH_SCHANNEL_PROV_A, PROV_DH_SCHANNEL, CRYPT_NEWKEYSET);
     ok(!result && GetLastError() == NTE_EXISTS,
         "Expected NTE_EXISTS, got %08x\n", GetLastError());
 }
@@ -358,7 +358,7 @@ static void test_keylength(void)
 
     /* acquire diffie hellman dss provider */
     result = CryptAcquireContextA(
-        &hProv, NULL, MS_DEF_DSS_DH_PROV, PROV_DSS_DH, CRYPT_VERIFYCONTEXT);
+        &hProv, NULL, MS_DEF_DSS_DH_PROV_A, PROV_DSS_DH, CRYPT_VERIFYCONTEXT);
     ok(result, "Expected no errors.\n");
 
     /* perform keylength tests */
@@ -370,7 +370,7 @@ static void test_keylength(void)
     /* acquire enhanced dss provider */
     SetLastError(0xdeadbeef);
     result = CryptAcquireContextA(
-        &hProv, NULL, MS_ENH_DSS_DH_PROV, PROV_DSS_DH, CRYPT_VERIFYCONTEXT);
+        &hProv, NULL, MS_ENH_DSS_DH_PROV_A, PROV_DSS_DH, CRYPT_VERIFYCONTEXT);
     if(!result && GetLastError() == NTE_KEYSET_NOT_DEF)
     {
         win_skip("DSSENH and Schannel provider is broken on WinNT4\n");
@@ -386,7 +386,7 @@ static void test_keylength(void)
 
     /* acquire schannel dss provider */
     result = CryptAcquireContextA(
-        &hProv, NULL, MS_DEF_DH_SCHANNEL_PROV, PROV_DH_SCHANNEL, CRYPT_VERIFYCONTEXT);
+        &hProv, NULL, MS_DEF_DH_SCHANNEL_PROV_A, PROV_DH_SCHANNEL, CRYPT_VERIFYCONTEXT);
     ok(result, "Expected no errors.\n");
 
     /* perform keylength tests */
@@ -438,7 +438,7 @@ static void test_hash(const struct hash_test *tests, int testLen)
     int i;
 
     result = CryptAcquireContextA(
-        &hProv, NULL, MS_ENH_DSS_DH_PROV, PROV_DSS_DH, CRYPT_VERIFYCONTEXT);
+        &hProv, NULL, MS_ENH_DSS_DH_PROV_A, PROV_DSS_DH, CRYPT_VERIFYCONTEXT);
     if(!result)
     {
         skip("DSSENH is currently not available, skipping hashing tests.\n");
@@ -592,7 +592,7 @@ static void test_data_encryption(const struct encrypt_test *tests, int testLen)
     /* acquire dss enhanced provider */
     SetLastError(0xdeadbeef);
     result = CryptAcquireContextA(
-        &hProv, NULL, MS_ENH_DSS_DH_PROV, PROV_DSS_DH, CRYPT_VERIFYCONTEXT);
+        &hProv, NULL, MS_ENH_DSS_DH_PROV_A, PROV_DSS_DH, CRYPT_VERIFYCONTEXT);
     if(!result && GetLastError() == NTE_KEYSET_NOT_DEF)
     {
         skip("DSSENH is currently not available, skipping encryption tests.\n");
@@ -682,7 +682,7 @@ static void test_cipher_modes(const struct ciphermode_test *tests, int testLen)
     /* acquire dss enhanced provider */
     SetLastError(0xdeadbeef);
     result = CryptAcquireContextA(
-        &hProv, NULL, MS_ENH_DSS_DH_PROV, PROV_DSS_DH, CRYPT_VERIFYCONTEXT);
+        &hProv, NULL, MS_ENH_DSS_DH_PROV_A, PROV_DSS_DH, CRYPT_VERIFYCONTEXT);
     if(!result && GetLastError() == NTE_KEYSET_NOT_DEF)
     {
         skip("DSSENH is currently not available, skipping block cipher mode tests.\n");
@@ -865,19 +865,19 @@ static void test_signhash_array(HCRYPTPROV hProv, const struct signature_test *t
         ok(!memcmp(hashValue1, hashValue2, hashLen2), "Hashes were not identical.\n");
 
         /* Sign hash 1 */
-        result = CryptSignHash(hHash1, AT_SIGNATURE, NULL, 0, NULL, &signLen1);
+        result = CryptSignHashA(hHash1, AT_SIGNATURE, NULL, 0, NULL, &signLen1);
         ok(result, "Failed to get signature length, got %x\n", GetLastError());
         ok(signLen1 == 40, "Expected a 40-byte signature, got %d\n", signLen1);
 
-        result = CryptSignHash(hHash1, AT_SIGNATURE, NULL, 0, signValue1, &signLen1);
+        result = CryptSignHashA(hHash1, AT_SIGNATURE, NULL, 0, signValue1, &signLen1);
         ok(result, "Failed to sign hash, got %x\n", GetLastError());
 
         /* Sign hash 2 */
-        result = CryptSignHash(hHash2, AT_SIGNATURE, NULL, 0, NULL, &signLen2);
+        result = CryptSignHashA(hHash2, AT_SIGNATURE, NULL, 0, NULL, &signLen2);
         ok(result, "Failed to get signature length, got %x\n", GetLastError());
         ok(signLen2 == 40, "Expected a 40-byte signature, got %d\n", signLen2);
 
-        result = CryptSignHash(hHash2, AT_SIGNATURE, NULL, 0, signValue2, &signLen2);
+        result = CryptSignHashA(hHash2, AT_SIGNATURE, NULL, 0, signValue2, &signLen2);
         ok(result, "Failed to sign hash2, got %x\n", GetLastError());
 
         /* Compare signatures to ensure they are both different, because every DSS signature
@@ -913,7 +913,7 @@ static void test_signhash_array(HCRYPTPROV hProv, const struct signature_test *t
         ok(result, "Failed to add data to hash1, got %x\n", GetLastError());
 
         /* Verify signed hash 1 */
-        result = CryptVerifySignature(hHash1, signValue1, sizeof(signValue1), pubKey, NULL, 0);
+        result = CryptVerifySignatureA(hHash1, signValue1, sizeof(signValue1), pubKey, NULL, 0);
         ok(result, "Failed to verify signature, got %x\n", GetLastError());
 
         result = CryptCreateHash(hProv, CALG_SHA, 0, 0, &hHash2);
@@ -924,7 +924,7 @@ static void test_signhash_array(HCRYPTPROV hProv, const struct signature_test *t
         ok(result, "Failed to add data to hash2, got %x\n", GetLastError());
 
         /* Verify signed hash 2 */
-        result = CryptVerifySignature(hHash2, signValue2, sizeof(signValue2), pubKey, NULL, 0);
+        result = CryptVerifySignatureA(hHash2, signValue2, sizeof(signValue2), pubKey, NULL, 0);
         ok(result, "Failed to verify signature, got %x\n", GetLastError());
 
         result = CryptDestroyHash(hHash1);
@@ -958,7 +958,7 @@ static void test_verify_signature(void)
     ok(result, "Failed to release CSP provider.\n");
 
     /* acquire diffie hellman dss provider */
-    result = CryptAcquireContextA(&hProv, NULL, MS_DEF_DSS_DH_PROV, PROV_DSS_DH, 0);
+    result = CryptAcquireContextA(&hProv, NULL, MS_DEF_DSS_DH_PROV_A, PROV_DSS_DH, 0);
     ok(result, "Failed to acquire CSP.\n");
 
     test_signhash_array(hProv, dssSign_data, TESTLEN(dssSign_data));
@@ -968,7 +968,7 @@ static void test_verify_signature(void)
 
     /* acquire enhanced dss provider */
     SetLastError(0xdeadbeef);
-    result = CryptAcquireContextA(&hProv, NULL, MS_ENH_DSS_DH_PROV, PROV_DSS_DH, 0);
+    result = CryptAcquireContextA(&hProv, NULL, MS_ENH_DSS_DH_PROV_A, PROV_DSS_DH, 0);
     if(!result && GetLastError() == NTE_KEYSET_NOT_DEF)
     {
         win_skip("DSSENH and Schannel provider is broken on WinNT4, skipping signature "
@@ -983,7 +983,7 @@ static void test_verify_signature(void)
     ok(result, "Failed to release CSP provider.\n");
 
     /* acquire schannel dss provider */
-    result = CryptAcquireContextA(&hProv, NULL, MS_DEF_DH_SCHANNEL_PROV, PROV_DH_SCHANNEL, 0);
+    result = CryptAcquireContextA(&hProv, NULL, MS_DEF_DH_SCHANNEL_PROV_A, PROV_DH_SCHANNEL, 0);
     ok(result, "Failed to acquire CSP.\n");
 
     test_signhash_array(hProv, dssSign_data, TESTLEN(dssSign_data));
@@ -1353,7 +1353,7 @@ static void test_key_exchange(void)
     ok(result, "Failed to release CSP provider.\n");
 
     /* acquire diffie hellman dss provider */
-    result = CryptAcquireContextA(&hProv, NULL, MS_DEF_DSS_DH_PROV, PROV_DSS_DH,
+    result = CryptAcquireContextA(&hProv, NULL, MS_DEF_DSS_DH_PROV_A, PROV_DSS_DH,
         CRYPT_VERIFYCONTEXT);
     ok(result, "Failed to acquire CSP.\n");
 
@@ -1363,7 +1363,7 @@ static void test_key_exchange(void)
     ok(result, "Failed to release CSP provider.\n");
 
     /* acquire enhanced dss provider */
-    result = CryptAcquireContextA(&hProv, NULL, MS_ENH_DSS_DH_PROV, PROV_DSS_DH,
+    result = CryptAcquireContextA(&hProv, NULL, MS_ENH_DSS_DH_PROV_A, PROV_DSS_DH,
         CRYPT_VERIFYCONTEXT);
     if(!result && GetLastError() == NTE_KEYSET_NOT_DEF)
     {
@@ -1378,7 +1378,7 @@ static void test_key_exchange(void)
     ok(result, "Failed to release CSP provider.\n");
 
     /* acquire schannel dss provider */
-    result = CryptAcquireContextA(&hProv, NULL, MS_DEF_DH_SCHANNEL_PROV, PROV_DH_SCHANNEL,
+    result = CryptAcquireContextA(&hProv, NULL, MS_DEF_DH_SCHANNEL_PROV_A, PROV_DH_SCHANNEL,
         CRYPT_VERIFYCONTEXT);
     ok(result, "Failed to acquire CSP.\n");
 
