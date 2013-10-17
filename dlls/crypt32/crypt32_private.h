@@ -272,7 +272,7 @@ typedef struct _CONTEXT_FUNCS
    * added if the store allows it.  If ppStoreContext is not NULL, the added
    * context should be returned in *ppStoreContext.
    */
-    BOOL (*addContext)(struct WINE_CRYPTCERTSTORE*,void*,void*,const void**,BOOL);
+    BOOL (*addContext)(struct WINE_CRYPTCERTSTORE*,context_t*,context_t*,context_t**,BOOL);
     context_t *(*enumContext)(struct WINE_CRYPTCERTSTORE *store, context_t *prev);
     BOOL (*delete)(struct WINE_CRYPTCERTSTORE*,context_t*);
 } CONTEXT_FUNCS;

@@ -169,7 +169,7 @@ BOOL WINAPI add_cert_to_store(WINECRYPT_CERTSTORE *store, const CERT_CONTEXT *ce
 {
     const CERT_CONTEXT *existing = NULL;
     BOOL ret = TRUE, inherit_props = FALSE;
-    CERT_CONTEXT *new_context = NULL;
+    context_t *new_context = NULL;
 
     switch (add_disposition)
     {
@@ -262,18 +262,20 @@ BOOL WINAPI add_cert_to_store(WINECRYPT_CERTSTORE *store, const CERT_CONTEXT *ce
         return TRUE;
     }
 
-    ret = store->vtbl->certs.addContext(store, (void*)cert, (void*)existing,
-     (ret_context || inherit_props) ? (const void **)&new_context : NULL, use_link);
+    ret = store->vtbl->certs.addContext(store, context_from_ptr(cert), existing ? context_from_ptr(existing) : NULL,
+     (ret_context || inherit_props) ? &new_context : NULL, use_link);
     if(!ret)
         return FALSE;
 
     if(inherit_props)
-        Context_CopyProperties(new_context, existing);
+        Context_CopyProperties(context_ptr(new_context), existing);
 
-    if(ret_context)
-        *ret_context = CertDuplicateCertificateContext(new_context);
-    else if(new_context)
-        CertFreeCertificateContext(new_context);
+    if(ret_context) {
+        Context_AddRef(new_context);
+        *ret_context = context_ptr(new_context);
+    }else if(new_context) {
+        Context_Release(new_context);
+    }
 
     TRACE("returning %d\n", ret);
     return ret;

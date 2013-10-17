@@ -157,11 +157,16 @@ BOOL WINAPI CertAddCTLContextToStore(HCERTSTORE hCertStore,
 
     if (toAdd)
     {
-        if (store)
-            ret = store->vtbl->ctls.addContext(store, (void *)toAdd,
-             (void *)existing, (const void **)ppStoreContext, TRUE);
-        else if (ppStoreContext)
+        if (store) {
+            context_t *ret_ctx;
+
+            ret = store->vtbl->ctls.addContext(store, context_from_ptr(toAdd),
+             existing ? context_from_ptr(existing) : NULL, ppStoreContext ? &ret_ctx : NULL, TRUE);
+            if(ret && ppStoreContext)
+                *ppStoreContext = context_ptr(ret_ctx);
+        }else if (ppStoreContext) {
             *ppStoreContext = CertDuplicateCTLContext(toAdd);
+        }
         CertFreeCTLContext(toAdd);
     }
     CertFreeCTLContext(existing);
