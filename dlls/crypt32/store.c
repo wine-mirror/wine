@@ -345,12 +345,9 @@ static WINECRYPT_CERTSTORE *CRYPT_MemOpenStore(HCRYPTPROV hCryptProv,
         {
             memset(store, 0, sizeof(WINE_MEMSTORE));
             CRYPT_InitStore(&store->hdr, dwFlags, StoreTypeMem, &MemStoreVtbl);
-            store->certs = ContextList_Create(pCertInterface,
-             sizeof(CERT_CONTEXT));
-            store->crls = ContextList_Create(pCRLInterface,
-             sizeof(CRL_CONTEXT));
-            store->ctls = ContextList_Create(pCTLInterface,
-             sizeof(CTL_CONTEXT));
+            store->certs = ContextList_Create();
+            store->crls = ContextList_Create();
+            store->ctls = ContextList_Create();
             /* Mem store doesn't need crypto provider, so close it */
             if (hCryptProv && !(dwFlags & CERT_STORE_NO_CRYPT_RELEASE_FLAG))
                 CryptReleaseContext(hCryptProv, 0);

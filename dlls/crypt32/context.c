@@ -112,21 +112,16 @@ void Context_CopyProperties(const void *to, const void *from)
 
 struct ContextList
 {
-    const WINE_CONTEXT_INTERFACE *contextInterface;
-    size_t contextSize;
     CRITICAL_SECTION cs;
     struct list contexts;
 };
 
-struct ContextList *ContextList_Create(
- const WINE_CONTEXT_INTERFACE *contextInterface, size_t contextSize)
+struct ContextList *ContextList_Create(void)
 {
     struct ContextList *list = CryptMemAlloc(sizeof(struct ContextList));
 
     if (list)
     {
-        list->contextInterface = contextInterface;
-        list->contextSize = contextSize;
         InitializeCriticalSection(&list->cs);
         list->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": ContextList.cs");
         list_init(&list->contexts);

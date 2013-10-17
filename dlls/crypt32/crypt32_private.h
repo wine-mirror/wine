@@ -438,8 +438,7 @@ void ContextPropertyList_Free(CONTEXT_PROPERTY_LIST *list) DECLSPEC_HIDDEN;
  */
 struct ContextList;
 
-struct ContextList *ContextList_Create(
- const WINE_CONTEXT_INTERFACE *contextInterface, size_t contextSize) DECLSPEC_HIDDEN;
+struct ContextList *ContextList_Create(void) DECLSPEC_HIDDEN;
 
 context_t *ContextList_Add(struct ContextList *list, context_t *toLink, context_t *toReplace,
  struct WINE_CRYPTCERTSTORE *store, BOOL use_link) DECLSPEC_HIDDEN;
