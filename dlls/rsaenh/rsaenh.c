@@ -4114,7 +4114,7 @@ BOOL WINAPI RSAENH_CPHashData(HCRYPTPROV hProv, HCRYPTHASH hHash, const BYTE *pb
     TRACE("(hProv=%08lx, hHash=%08lx, pbData=%p, dwDataLen=%d, dwFlags=%08x)\n",
           hProv, hHash, pbData, dwDataLen, dwFlags);
 
-    if (dwFlags)
+    if (dwFlags & ~CRYPT_USERDATA)
     {
         SetLastError(NTE_BAD_FLAGS);
         return FALSE;
