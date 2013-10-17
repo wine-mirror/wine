@@ -110,22 +110,6 @@ void Context_CopyProperties(const void *to, const void *from)
     ContextPropertyList_Copy(toProperties, fromProperties);
 }
 
-BOOL ContextList_Remove(ContextList *list, CRITICAL_SECTION *cs, context_t *context)
-{
-    BOOL inList = FALSE;
-
-    EnterCriticalSection(cs);
-    if (!list_empty(&context->u.entry))
-    {
-        list_remove(&context->u.entry);
-        list_init(&context->u.entry);
-        inList = TRUE;
-    }
-    LeaveCriticalSection(cs);
-
-    return inList;
-}
-
 void ContextList_Free(ContextList *list)
 {
     context_t *context, *next;

@@ -198,6 +198,22 @@ static context_t *MemStore_enumContext(WINE_MEMSTORE *store, struct list *list, 
     return ret;
 }
 
+static BOOL MemStore_deleteContext(WINE_MEMSTORE *store, context_t *context)
+{
+    BOOL in_list = FALSE;
+
+    EnterCriticalSection(&store->cs);
+    if (!list_empty(&context->u.entry)) {
+        list_remove(&context->u.entry);
+        list_init(&context->u.entry);
+        in_list = TRUE;
+    }
+    LeaveCriticalSection(&store->cs);
+
+    if(in_list)
+        Context_Release(context);
+    return TRUE;
+}
 
 static BOOL MemStore_addCert(WINECRYPT_CERTSTORE *store, context_t *cert,
  context_t *toReplace, context_t **ppStoreContext, BOOL use_link)
@@ -205,7 +221,6 @@ static BOOL MemStore_addCert(WINECRYPT_CERTSTORE *store, context_t *cert,
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
 
     TRACE("(%p, %p, %p, %p)\n", store, cert, toReplace, ppStoreContext);
-
     return MemStore_addContext(ms, &ms->certs, cert, toReplace, ppStoreContext, use_link);
 }
 
@@ -222,10 +237,9 @@ static BOOL MemStore_deleteCert(WINECRYPT_CERTSTORE *store, context_t *context)
 {
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
 
-    if (ContextList_Remove(&ms->certs, &ms->cs, context))
-        Context_Release(context);
+    TRACE("(%p, %p)\n", store, context);
 
-    return TRUE;
+    return MemStore_deleteContext(ms, context);
 }
 
 static BOOL MemStore_addCRL(WINECRYPT_CERTSTORE *store, context_t *crl,
@@ -251,10 +265,9 @@ static BOOL MemStore_deleteCRL(WINECRYPT_CERTSTORE *store, context_t *context)
 {
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
 
-    if (!ContextList_Remove(&ms->crls, &ms->cs, context))
-        Context_Release(context);
+    TRACE("(%p, %p)\n", store, context);
 
-    return TRUE;
+    return MemStore_deleteContext(ms, context);
 }
 
 static BOOL MemStore_addCTL(WINECRYPT_CERTSTORE *store, context_t *ctl,
@@ -280,10 +293,9 @@ static BOOL MemStore_deleteCTL(WINECRYPT_CERTSTORE *store, context_t *context)
 {
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
 
-    if (!ContextList_Remove(&ms->ctls, &ms->cs, context))
-        Context_Release(context);
+    TRACE("(%p, %p)\n", store, context);
 
-    return TRUE;
+    return MemStore_deleteContext(ms, context);
 }
 
 static void MemStore_addref(WINECRYPT_CERTSTORE *store)

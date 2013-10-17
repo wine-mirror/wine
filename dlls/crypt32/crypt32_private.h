@@ -438,12 +438,6 @@ void ContextPropertyList_Free(CONTEXT_PROPERTY_LIST *list) DECLSPEC_HIDDEN;
  */
 typedef struct list ContextList;
 
-/* Removes a context from the list.  Returns TRUE if the context was removed,
- * or FALSE if not.  (The context may have been duplicated, so subsequent
- * removes have no effect.)
- */
-BOOL ContextList_Remove(ContextList *list, CRITICAL_SECTION *cs, context_t *context) DECLSPEC_HIDDEN;
-
 void ContextList_Free(ContextList *list) DECLSPEC_HIDDEN;
 
 extern WINECRYPT_CERTSTORE empty_store;
