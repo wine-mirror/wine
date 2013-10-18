@@ -500,13 +500,11 @@ PCCTL_CONTEXT WINAPI CertDuplicateCTLContext(PCCTL_CONTEXT pCtlContext)
 
 BOOL WINAPI CertFreeCTLContext(PCCTL_CONTEXT pCTLContext)
 {
-    BOOL ret = TRUE;
-
     TRACE("(%p)\n", pCTLContext);
 
     if (pCTLContext)
-        ret = Context_Release(&ctl_from_ptr(pCTLContext)->base);
-    return ret;
+        Context_Release(&ctl_from_ptr(pCTLContext)->base);
+    return TRUE;
 }
 
 DWORD WINAPI CertEnumCTLContextProperties(PCCTL_CONTEXT pCTLContext,

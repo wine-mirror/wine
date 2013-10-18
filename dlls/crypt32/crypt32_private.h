@@ -403,10 +403,8 @@ void Context_AddRef(context_t*) DECLSPEC_HIDDEN;
 
 /* Decrements context's ref count.  If context is a link context, releases its
  * linked context as well.
- * If a data context has its ref count reach 0, calls dataContextFree on it.
- * Returns FALSE if the reference count is <= 0 when called.
  */
-BOOL Context_Release(context_t *context) DECLSPEC_HIDDEN;
+void Context_Release(context_t *context) DECLSPEC_HIDDEN;
 
 /**
  *  Context property list functions

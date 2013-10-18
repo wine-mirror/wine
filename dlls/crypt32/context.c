@@ -74,14 +74,11 @@ void Context_AddRef(context_t *context)
     TRACE("(%p) ref=%d\n", context, context->ref);
 }
 
-BOOL Context_Release(context_t *context)
+void Context_Release(context_t *context)
 {
-    BOOL ret = TRUE;
-
     if (context->ref <= 0)
     {
         ERR("%p's ref count is %d\n", context, context->ref);
-        return FALSE;
     }
     if (InterlockedDecrement(&context->ref) == 0)
     {
@@ -97,7 +94,6 @@ BOOL Context_Release(context_t *context)
     }
     else
         TRACE("%p's ref count is %d\n", context, context->ref);
-    return ret;
 }
 
 void Context_CopyProperties(const void *to, const void *from)
