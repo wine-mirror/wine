@@ -77,9 +77,9 @@ static void test_ifont_size(LONG lo_size, LONG hi_size,
 	S(fd.cySize).Hi   = hi_size;
 	fd.sWeight        = 0;
 	fd.sCharset       = 0;
-	fd.fItalic        = 0;
-	fd.fUnderline     = 0;
-	fd.fStrikethrough = 0;
+        fd.fItalic        = FALSE;
+        fd.fUnderline     = FALSE;
+        fd.fStrikethrough = FALSE;
 
 	/* Create font, test that it worked. */
 	hres = pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj);
@@ -539,9 +539,9 @@ static void test_IsEqual(void)
     S(fd.cySize).Hi   = 100;
     fd.sWeight        = 0;
     fd.sCharset       = 0;
-    fd.fItalic        = 0;
-    fd.fUnderline     = 0;
-    fd.fStrikethrough = 0;
+    fd.fItalic        = FALSE;
+    fd.fUnderline     = FALSE;
+    fd.fStrikethrough = FALSE;
 
     /* Create font */
     pOleCreateFontIndirect(&fd, &IID_IFont, (void **)&ifnt);
@@ -604,30 +604,30 @@ static void test_IsEqual(void)
     IFont_Release(ifnt2);
 
     /* Test italic setting */
-    fd.fItalic = 1;
+    fd.fItalic = TRUE;
     pOleCreateFontIndirect(&fd, &IID_IFont, (void **)&ifnt2);
     hres = IFont_IsEqual(ifnt,ifnt2);
     ok(hres == S_FALSE,
         "IFont_IsEqual: (Italic) Expected S_FALSE but got 0x%08x\n",hres);
-    fd.fItalic = 0;
+    fd.fItalic = FALSE;
     IFont_Release(ifnt2);
 
     /* Test underline setting */
-    fd.fUnderline = 1;
+    fd.fUnderline = TRUE;
     pOleCreateFontIndirect(&fd, &IID_IFont, (void **)&ifnt2);
     hres = IFont_IsEqual(ifnt,ifnt2);
     ok(hres == S_FALSE,
         "IFont_IsEqual: (Underline) Expected S_FALSE but got 0x%08x\n",hres);
-    fd.fUnderline = 0;
+    fd.fUnderline = FALSE;
     IFont_Release(ifnt2);
 
     /* Test strikethrough setting */
-    fd.fStrikethrough = 1;
+    fd.fStrikethrough = TRUE;
     pOleCreateFontIndirect(&fd, &IID_IFont, (void **)&ifnt2);
     hres = IFont_IsEqual(ifnt,ifnt2);
     ok(hres == S_FALSE,
         "IFont_IsEqual: (Strikethrough) Expected S_FALSE but got 0x%08x\n",hres);
-    fd.fStrikethrough = 0;
+    fd.fStrikethrough = FALSE;
     IFont_Release(ifnt2);
 
     /* Free IFont. */
@@ -652,9 +652,9 @@ static void test_ReleaseHfont(void)
     S(fd.cySize).Hi   = 100;
     fd.sWeight        = 0;
     fd.sCharset       = 0;
-    fd.fItalic        = 0;
-    fd.fUnderline     = 0;
-    fd.fStrikethrough = 0;
+    fd.fItalic        = FALSE;
+    fd.fUnderline     = FALSE;
+    fd.fStrikethrough = FALSE;
 
     /* Create HFONTs and IFONTs */
     pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj1);
@@ -722,9 +722,9 @@ static void test_AddRefHfont(void)
     S(fd.cySize).Hi   = 100;
     fd.sWeight        = 0;
     fd.sCharset       = 0;
-    fd.fItalic        = 0;
-    fd.fUnderline     = 0;
-    fd.fStrikethrough = 0;
+    fd.fItalic        = FALSE;
+    fd.fUnderline     = FALSE;
+    fd.fStrikethrough = FALSE;
 
     /* Create HFONTs and IFONTs */
     pOleCreateFontIndirect(&fd, &IID_IFont, (void **)&ifnt1);
@@ -813,7 +813,7 @@ static void test_AddRefHfont(void)
     IFont_Release(ifnt2);
 
     /* Need to make a new IFONT for testing */
-    fd.fUnderline = 1;
+    fd.fUnderline = TRUE;
     pOleCreateFontIndirect(&fd, &IID_IFont, (void **)&ifnt3);
     IFont_get_hFont(ifnt3,&hfnt3);
 

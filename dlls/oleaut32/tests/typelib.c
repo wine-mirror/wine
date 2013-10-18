@@ -76,7 +76,7 @@ static const WCHAR wszStdOle2[] = {'s','t','d','o','l','e','2','.','t','l','b',0
 static WCHAR wszGUID[] = {'G','U','I','D',0};
 static WCHAR wszguid[] = {'g','u','i','d',0};
 
-static const int is_win64 = sizeof(void *) > sizeof(int);
+static const BOOL is_win64 = sizeof(void *) > sizeof(int);
 
 static HRESULT WINAPI invoketest_QueryInterface(IInvokeTest *iface, REFIID riid, void **ret)
 {

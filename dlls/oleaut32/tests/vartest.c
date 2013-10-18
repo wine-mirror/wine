@@ -381,9 +381,9 @@ static const VARTYPE ExtraFlags[16] =
 };
 
 /* Determine if a vt is valid for VariantClear() */
-static int IsValidVariantClearVT(VARTYPE vt, VARTYPE extraFlags)
+static BOOL IsValidVariantClearVT(VARTYPE vt, VARTYPE extraFlags)
 {
-  int ret = 0;
+  BOOL ret = FALSE;
 
   /* Only the following flags/types are valid */
   if ((vt <= VT_LPWSTR || vt == VT_RECORD || vt == VT_CLSID) &&
@@ -392,10 +392,10 @@ static int IsValidVariantClearVT(VARTYPE vt, VARTYPE extraFlags)
       (!(extraFlags & (VT_BYREF|VT_ARRAY)) || vt > VT_NULL) &&
       (extraFlags == 0 || extraFlags == VT_BYREF || extraFlags == VT_ARRAY ||
        extraFlags == (VT_ARRAY|VT_BYREF)))
-    ret = 1; /* ok */
+    ret = TRUE; /* ok */
 
   if (!has_i8 && (vt == VT_I8 || vt == VT_UI8))
-    ret = 0; /* Old versions of oleaut32 */
+    ret = FALSE; /* Old versions of oleaut32 */
   return ret;
 }
 
@@ -681,15 +681,15 @@ static void test_VariantCopy(void)
 }
 
 /* Determine if a vt is valid for VariantCopyInd() */
-static int IsValidVariantCopyIndVT(VARTYPE vt, VARTYPE extraFlags)
+static BOOL IsValidVariantCopyIndVT(VARTYPE vt, VARTYPE extraFlags)
 {
-  int ret = 0;
+  BOOL ret = FALSE;
 
   if ((extraFlags & VT_ARRAY) ||
      (vt > VT_NULL && vt != (VARTYPE)15 && vt < VT_VOID &&
      !(extraFlags & (VT_VECTOR|VT_RESERVED))))
   {
-    ret = 1; /* ok */
+    ret = TRUE; /* ok */
   }
   return ret;
 }
@@ -2875,7 +2875,7 @@ static void test_VarFix(void)
 
         for (vt = 0; vt <= VT_BSTR_BLOB; vt++)
         {
-            HRESULT bFail = TRUE;
+            BOOL bFail = TRUE;
 
             SKIPTESTS(vt);
 
@@ -2990,7 +2990,7 @@ static void test_VarInt(void)
 
         for (vt = 0; vt <= VT_BSTR_BLOB; vt++)
         {
-            HRESULT bFail = TRUE;
+            BOOL bFail = TRUE;
 
             SKIPTESTS(vt);
 
@@ -3111,7 +3111,7 @@ static void test_VarNeg(void)
 
         for (vt = 0; vt <= VT_BSTR_BLOB; vt++)
         {
-            HRESULT bFail = TRUE;
+            BOOL bFail = TRUE;
 
             SKIPTESTS(vt);
 
