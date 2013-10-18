@@ -73,7 +73,10 @@ enum {
     NSArray*    cursorFrames;
     int         cursorFrame;
     NSTimer*    cursorTimer;
+    NSCursor*   cursor;
+    BOOL        cursorIsCurrent;
     BOOL        cursorHidden;
+    BOOL        clientWantsCursorHidden;
 
     BOOL clippingCursor;
     CGRect cursorClipRect;

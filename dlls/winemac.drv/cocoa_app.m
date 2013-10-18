@@ -80,6 +80,7 @@ int macdrv_err_on;
 @property (readwrite, copy, nonatomic) NSEvent* lastFlagsChanged;
 @property (copy, nonatomic) NSArray* cursorFrames;
 @property (retain, nonatomic) NSTimer* cursorTimer;
+@property (retain, nonatomic) NSCursor* cursor;
 @property (retain, nonatomic) NSImage* applicationIcon;
 @property (readonly, nonatomic) BOOL inputSourceIsInputMethod;
 @property (retain, nonatomic) WineWindow* mouseCaptureWindow;
@@ -96,7 +97,7 @@ int macdrv_err_on;
 
     @synthesize keyboardType, lastFlagsChanged;
     @synthesize applicationIcon;
-    @synthesize cursorFrames, cursorTimer;
+    @synthesize cursorFrames, cursorTimer, cursor;
     @synthesize mouseCaptureWindow;
 
     + (void) initialize
@@ -172,6 +173,7 @@ int macdrv_err_on;
 
     - (void) dealloc
     {
+        [cursor release];
         [screenFrameCGRects release];
         [applicationIcon release];
         [warpRecords release];
@@ -785,21 +787,69 @@ int macdrv_err_on;
         return ([originalDisplayModes count] > 0 || displaysCapturedForFullscreen);
     }
 
+    - (void) updateCursor
+    {
+        if (lastTargetWindow)
+        {
+            if (clientWantsCursorHidden && !cursorHidden)
+            {
+                [NSCursor hide];
+                cursorHidden = TRUE;
+            }
+
+            if (!cursorIsCurrent)
+            {
+                [cursor set];
+                cursorIsCurrent = TRUE;
+            }
+
+            if (!clientWantsCursorHidden && cursorHidden)
+            {
+                [NSCursor unhide];
+                cursorHidden = FALSE;
+            }
+        }
+        else
+        {
+            if (cursorIsCurrent)
+            {
+                [[NSCursor arrowCursor] set];
+                cursorIsCurrent = FALSE;
+            }
+            if (cursorHidden)
+            {
+                [NSCursor unhide];
+                cursorHidden = FALSE;
+            }
+        }
+    }
+
     - (void) hideCursor
     {
-        if (!cursorHidden)
+        if (!clientWantsCursorHidden)
         {
-            [NSCursor hide];
-            cursorHidden = TRUE;
+            clientWantsCursorHidden = TRUE;
+            [self updateCursor];
         }
     }
 
     - (void) unhideCursor
     {
-        if (cursorHidden)
+        if (clientWantsCursorHidden)
         {
-            [NSCursor unhide];
-            cursorHidden = FALSE;
+            clientWantsCursorHidden = FALSE;
+            [self updateCursor];
+        }
+    }
+
+    - (void) setCursor:(NSCursor*)newCursor
+    {
+        if (newCursor != cursor)
+        {
+            [cursor release];
+            cursor = [newCursor retain];
+            cursorIsCurrent = FALSE;
+            [self updateCursor];
         }
     }
 
@@ -810,15 +860,12 @@ int macdrv_err_on;
         NSImage* image = [[NSImage alloc] initWithCGImage:cgimage size:NSZeroSize];
         CFDictionaryRef hotSpotDict = (CFDictionaryRef)[frame objectForKey:@"hotSpot"];
         CGPoint hotSpot;
-        NSCursor* cursor;
 
         if (!CGPointMakeWithDictionaryRepresentation(hotSpotDict, &hotSpot))
             hotSpot = CGPointZero;
-        cursor = [[NSCursor alloc] initWithImage:image hotSpot:NSPointFromCGPoint(hotSpot)];
+        self.cursor = [[[NSCursor alloc] initWithImage:image hotSpot:NSPointFromCGPoint(hotSpot)] autorelease];
         [image release];
-        [cursor set];
         [self unhideCursor];
-        [cursor release];
     }
 
     - (void) nextCursorFrame:(NSTimer*)theTimer
@@ -1466,12 +1513,10 @@ int macdrv_err_on;
 
             lastTargetWindow = targetWindow;
         }
-        else if (lastTargetWindow)
-        {
-            [[NSCursor arrowCursor] set];
-            [self unhideCursor];
+        else
             lastTargetWindow = nil;
-        }
+
+        [self updateCursor];
     }
 
     - (void) handleMouseButton:(NSEvent*)theEvent
@@ -2247,9 +2292,8 @@ void macdrv_set_cursor(CFStringRef name, CFArrayRef frames)
     {
         OnMainThreadAsync(^{
             WineApplicationController* controller = [WineApplicationController sharedController];
-            NSCursor* cursor = [NSCursor performSelector:sel];
             [controller setCursorWithFrames:nil];
-            [cursor set];
+            controller.cursor = [NSCursor performSelector:sel];
             [controller unhideCursor];
         });
     }
