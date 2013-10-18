@@ -88,8 +88,10 @@ static RECT get_title_rect( unsigned int index )
 static const struct launcher *launcher_from_point( int x, int y )
 {
     RECT icon, title;
-    unsigned int index = x / launcher_size + (y / launcher_size) * launchers_per_row;
+    unsigned int index;
 
+    if (!nb_launchers) return NULL;
+    index = x / launcher_size + (y / launcher_size) * launchers_per_row;
     if (index >= nb_launchers) return NULL;
 
     icon = get_icon_rect( index );
@@ -523,6 +525,7 @@ static LRESULT WINAPI desktop_wnd_proc( HWND hwnd, UINT message, WPARAM wp, LPAR
         return 0;
 
     case WM_LBUTTONDBLCLK:
+        if (!using_root)
         {
             const struct launcher *launcher = launcher_from_point( (short)LOWORD(lp), (short)HIWORD(lp) );
             if (launcher) do_launch( launcher );
