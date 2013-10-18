@@ -453,7 +453,7 @@ PCCTL_CONTEXT WINAPI CertCreateCTLContext(DWORD dwMsgAndCertEncodingType,
                         ctl->pbCtlEncoded             = data;
                         ctl->cbCtlEncoded             = cbCtlEncoded;
                         ctl->pCtlInfo                 = ctlInfo;
-                        ctl->hCertStore               = NULL;
+                        ctl->hCertStore               = &empty_store;
                         ctl->hCryptMsg                = msg;
                         ctl->pbCtlContext             = content;
                         ctl->cbCtlContext             = contentSize;

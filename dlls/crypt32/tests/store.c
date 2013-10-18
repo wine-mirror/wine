@@ -2531,6 +2531,7 @@ static void testEmptyStore(void)
 {
     const CERT_CONTEXT *cert, *cert2, *cert3;
     const CRL_CONTEXT *crl;
+    const CTL_CONTEXT *ctl;
     HCERTSTORE store;
     BOOL res;
 
@@ -2593,6 +2594,12 @@ static void testEmptyStore(void)
     ok(crl->hCertStore == cert->hCertStore, "unexpected hCertStore\n");
 
     CertFreeCRLContext(crl);
+
+    ctl = CertCreateCTLContext(X509_ASN_ENCODING, signedCTLWithCTLInnerContent, sizeof(signedCTLWithCTLInnerContent));
+    ok(ctl != NULL, "CertCreateCTLContext failed\n");
+    ok(ctl->hCertStore == cert->hCertStore, "unexpected hCertStore\n");
+
+    CertFreeCTLContext(ctl);
 
     CertFreeCertificateContext(cert);
 }
