@@ -1312,47 +1312,10 @@ GpStatus WINGDIPAPI GdipCloneImage(GpImage *image, GpImage **cloneImage)
     }
     else if (image->type == ImageTypeBitmap)
     {
-        GpBitmap *bitmap = (GpBitmap*)image;
-        BitmapData lockeddata_src, lockeddata_dst;
-        int i;
-        UINT row_size;
+        GpBitmap *bitmap = (GpBitmap *)image;
 
-        stat = GdipBitmapLockBits(bitmap, NULL, ImageLockModeRead, bitmap->format,
-            &lockeddata_src);
-        if (stat != Ok) return stat;
-
-        stat = GdipCreateBitmapFromScan0(lockeddata_src.Width, lockeddata_src.Height,
-            0, lockeddata_src.PixelFormat, NULL, (GpBitmap**)cloneImage);
-        if (stat == Ok)
-        {
-            stat = GdipBitmapLockBits((GpBitmap*)*cloneImage, NULL, ImageLockModeWrite,
-                lockeddata_src.PixelFormat, &lockeddata_dst);
-
-            if (stat == Ok)
-            {
-                /* copy the image data */
-                row_size = (lockeddata_src.Width * PIXELFORMATBPP(lockeddata_src.PixelFormat) +7)/8;
-                for (i=0; i<lockeddata_src.Height; i++)
-                    memcpy((BYTE*)lockeddata_dst.Scan0+lockeddata_dst.Stride*i,
-                           (BYTE*)lockeddata_src.Scan0+lockeddata_src.Stride*i,
-                           row_size);
-
-                GdipBitmapUnlockBits((GpBitmap*)*cloneImage, &lockeddata_dst);
-            }
-
-            if (stat != Ok)
-                GdipDisposeImage(*cloneImage);
-        }
-
-        GdipBitmapUnlockBits(bitmap, &lockeddata_src);
-
-        if (stat != Ok)
-        {
-            *cloneImage = NULL;
-        }
-        else memcpy(&(*cloneImage)->format, &image->format, sizeof(GUID));
-
-        return stat;
+        return GdipCloneBitmapAreaI(0, 0, bitmap->width, bitmap->height,
+                                    bitmap->format, bitmap, (GpBitmap **)cloneImage);
     }
     else if (image->type == ImageTypeMetafile && ((GpMetafile*)image)->hemf)
     {
