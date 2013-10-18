@@ -40,7 +40,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(explorer);
 #define DESKTOP_CLASS_ATOM ((LPCWSTR)MAKEINTATOM(32769))
 #define DESKTOP_ALL_ACCESS 0x01ff
 
-static HMODULE graphics_driver;
 static BOOL using_root;
 
 struct launcher
@@ -549,16 +548,16 @@ static LRESULT WINAPI desktop_wnd_proc( HWND hwnd, UINT message, WPARAM wp, LPAR
 }
 
 /* create the desktop and the associated driver window, and make it the current desktop */
-static BOOL create_desktop( const WCHAR *name, unsigned int width, unsigned int height )
+static BOOL create_desktop( HMODULE driver, const WCHAR *name, unsigned int width, unsigned int height )
 {
     static const WCHAR rootW[] = {'r','o','o','t',0};
     BOOL ret = FALSE;
     BOOL (CDECL *create_desktop_func)(unsigned int, unsigned int);
 
     /* magic: desktop "root" means use the root window */
-    if (graphics_driver && strcmpiW( name, rootW ))
+    if (driver && strcmpiW( name, rootW ))
     {
-        create_desktop_func = (void *)GetProcAddress( graphics_driver, "wine_create_desktop" );
+        create_desktop_func = (void *)GetProcAddress( driver, "wine_create_desktop" );
         if (create_desktop_func) ret = create_desktop_func( width, height );
     }
     return ret;
@@ -749,16 +748,14 @@ void manage_desktop( WCHAR *arg )
 
     if (hwnd == GetDesktopWindow())
     {
-        HMODULE shell32;
+        HMODULE shell32, graphics_driver;
         void (WINAPI *pShellDDEInit)( BOOL );
 
-        if (desktop)
-        {
-            hdc = GetDC( hwnd );
-            graphics_driver = __wine_get_driver_module( hdc );
-            using_root = !create_desktop( name, width, height );
-            ReleaseDC( hwnd, hdc );
-        }
+        hdc = GetDC( hwnd );
+        graphics_driver = __wine_get_driver_module( hdc );
+        using_root = !desktop || !create_desktop( graphics_driver, name, width, height );
+        ReleaseDC( hwnd, hdc );
+
         SetWindowLongPtrW( hwnd, GWLP_WNDPROC, (LONG_PTR)desktop_wnd_proc );
         SendMessageW( hwnd, WM_SETICON, ICON_BIG, (LPARAM)LoadIconW( 0, MAKEINTRESOURCEW(OIC_WINLOGO)));
         if (name) set_desktop_window_title( hwnd, name );
