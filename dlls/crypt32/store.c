@@ -160,17 +160,17 @@ static BOOL MemStore_addContext(WINE_MEMSTORE *store, struct list *list, context
         context->u.entry.prev->next = &context->u.entry;
         context->u.entry.next->prev = &context->u.entry;
         list_init(&existing->u.entry);
-        Context_Release(existing);
+        if(!existing->ref)
+            Context_Release(existing);
     }else {
         list_add_head(list, &context->u.entry);
     }
     LeaveCriticalSection(&store->cs);
 
-    if(ret_context) {
-        Context_AddRef(context);
+    if(ret_context)
         *ret_context = context;
-    }
-
+    else
+        Context_Release(context);
     return TRUE;
 }
 
@@ -210,8 +210,8 @@ static BOOL MemStore_deleteContext(WINE_MEMSTORE *store, context_t *context)
     }
     LeaveCriticalSection(&store->cs);
 
-    if(in_list)
-        Context_Release(context);
+    if(in_list && !context->ref)
+        Context_Free(context);
     return TRUE;
 }
 
@@ -223,8 +223,15 @@ static void free_contexts(struct list *list)
     {
         TRACE("freeing %p\n", context);
         list_remove(&context->u.entry);
-        Context_Release(context);
+        Context_Free(context);
     }
+}
+
+static void MemStore_releaseContext(WINECRYPT_CERTSTORE *store, context_t *context)
+{
+    /* Free the context only if it's not in a list. Otherwise it may be reused later. */
+    if(list_empty(&context->u.entry))
+        Context_Free(context);
 }
 
 static BOOL MemStore_addCert(WINECRYPT_CERTSTORE *store, context_t *cert,
@@ -348,6 +355,7 @@ static BOOL MemStore_control(WINECRYPT_CERTSTORE *store, DWORD dwFlags,
 static const store_vtbl_t MemStoreVtbl = {
     MemStore_addref,
     MemStore_release,
+    MemStore_releaseContext,
     MemStore_control,
     {
         MemStore_addCert,
@@ -1401,6 +1409,11 @@ static DWORD EmptyStore_release(WINECRYPT_CERTSTORE *store, DWORD flags)
     return E_UNEXPECTED;
 }
 
+static void EmptyStore_releaseContext(WINECRYPT_CERTSTORE *store, context_t *context)
+{
+    Context_Free(context);
+}
+
 static BOOL EmptyStore_add(WINECRYPT_CERTSTORE *store, context_t *context,
  context_t *replace, context_t **ret_context, BOOL use_link)
 {
@@ -1439,6 +1452,7 @@ static BOOL EmptyStore_control(WINECRYPT_CERTSTORE *store, DWORD flags, DWORD ct
 static const store_vtbl_t EmptyStoreVtbl = {
     EmptyStore_addref,
     EmptyStore_release,
+    EmptyStore_releaseContext,
     EmptyStore_control,
     {
         EmptyStore_add,

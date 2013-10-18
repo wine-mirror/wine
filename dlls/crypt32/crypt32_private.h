@@ -174,6 +174,7 @@ typedef struct {
 struct _context_t {
     const context_vtbl_t *vtbl;
     LONG ref;
+    struct WINE_CRYPTCERTSTORE *store;
     struct _context_t *linked;
     CONTEXT_PROPERTY_LIST *properties;
     union {
@@ -297,6 +298,7 @@ typedef enum _CertStoreType {
 typedef struct {
     void (*addref)(struct WINE_CRYPTCERTSTORE*);
     DWORD (*release)(struct WINE_CRYPTCERTSTORE*,DWORD);
+    void (*releaseContext)(struct WINE_CRYPTCERTSTORE*,context_t*);
     BOOL (*control)(struct WINE_CRYPTCERTSTORE*,DWORD,DWORD,void const*);
     CONTEXT_FUNCS certs;
     CONTEXT_FUNCS crls;
@@ -387,24 +389,21 @@ DWORD cert_name_to_str_with_indent(DWORD dwCertEncodingType, DWORD indent,
  * which should be one of CERT_CONTEXT, CRL_CONTEXT, or CTL_CONTEXT.
  * Free with Context_Release.
  */
-void *Context_CreateDataContext(size_t contextSize, const context_vtbl_t *vtbl) DECLSPEC_HIDDEN;
+void *Context_CreateDataContext(size_t contextSize, const context_vtbl_t *vtbl, struct WINE_CRYPTCERTSTORE*) DECLSPEC_HIDDEN;
 
 /* Creates a new link context.  The context refers to linked
  * rather than owning its own properties.  If addRef is TRUE (which ordinarily
  * it should be) linked is addref'd.
  * Free with Context_Release.
  */
-context_t *Context_CreateLinkContext(unsigned contextSize, context_t *linked) DECLSPEC_HIDDEN;
+context_t *Context_CreateLinkContext(unsigned contextSize, context_t *linked, struct WINE_CRYPTCERTSTORE*) DECLSPEC_HIDDEN;
 
 /* Copies properties from fromContext to toContext. */
 void Context_CopyProperties(const void *to, const void *from) DECLSPEC_HIDDEN;
 
 void Context_AddRef(context_t*) DECLSPEC_HIDDEN;
-
-/* Decrements context's ref count.  If context is a link context, releases its
- * linked context as well.
- */
 void Context_Release(context_t *context) DECLSPEC_HIDDEN;
+void Context_Free(context_t*) DECLSPEC_HIDDEN;
 
 /**
  *  Context property list functions

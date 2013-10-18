@@ -48,7 +48,7 @@ static context_t *CTL_clone(context_t *context, WINECRYPT_CERTSTORE *store, BOOL
         return NULL;
     }
 
-    ctl = (ctl_t*)Context_CreateLinkContext(sizeof(CTL_CONTEXT), context);
+    ctl = (ctl_t*)Context_CreateLinkContext(sizeof(CTL_CONTEXT), context, store);
     if(!ctl)
         return NULL;
 
@@ -440,7 +440,7 @@ PCCTL_CONTEXT WINAPI CertCreateCTLContext(DWORD dwMsgAndCertEncodingType,
              &ctlInfo, &size);
             if (ret)
             {
-                ctl = Context_CreateDataContext(sizeof(CTL_CONTEXT), &ctl_vtbl);
+                ctl = Context_CreateDataContext(sizeof(CTL_CONTEXT), &ctl_vtbl, &empty_store);
                 if (ctl)
                 {
                     BYTE *data = CryptMemAlloc(cbCtlEncoded);

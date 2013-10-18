@@ -124,7 +124,7 @@ static context_t *Cert_clone(context_t *context, WINECRYPT_CERTSTORE *store, BOO
     cert_t *cert;
 
     if(use_link) {
-        cert = (cert_t*)Context_CreateLinkContext(sizeof(CERT_CONTEXT), context);
+        cert = (cert_t*)Context_CreateLinkContext(sizeof(CERT_CONTEXT), context, store);
         if(!cert)
             return NULL;
     }else {
@@ -133,7 +133,7 @@ static context_t *Cert_clone(context_t *context, WINECRYPT_CERTSTORE *store, BOO
         DWORD size = 0;
         BOOL res;
 
-        new_context = Context_CreateDataContext(sizeof(CERT_CONTEXT), &cert_vtbl);
+        new_context = Context_CreateDataContext(sizeof(CERT_CONTEXT), &cert_vtbl, store);
         if(!new_context)
             return NULL;
         cert = cert_from_ptr(new_context);
@@ -270,12 +270,10 @@ BOOL WINAPI add_cert_to_store(WINECRYPT_CERTSTORE *store, const CERT_CONTEXT *ce
     if(inherit_props)
         Context_CopyProperties(context_ptr(new_context), existing);
 
-    if(ret_context) {
-        Context_AddRef(new_context);
+    if(ret_context)
         *ret_context = context_ptr(new_context);
-    }else if(new_context) {
+    else if(new_context)
         Context_Release(new_context);
-    }
 
     TRACE("returning %d\n", ret);
     return ret;
@@ -335,7 +333,7 @@ PCCERT_CONTEXT WINAPI CertCreateCertificateContext(DWORD dwCertEncodingType,
     {
         BYTE *data = NULL;
 
-        cert = Context_CreateDataContext(sizeof(CERT_CONTEXT), &cert_vtbl);
+        cert = Context_CreateDataContext(sizeof(CERT_CONTEXT), &cert_vtbl, &empty_store);
         if (!cert)
             goto end;
         data = CryptMemAlloc(cbCertEncoded);

@@ -25,7 +25,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(context);
 
-void *Context_CreateDataContext(size_t contextSize, const context_vtbl_t *vtbl)
+void *Context_CreateDataContext(size_t contextSize, const context_vtbl_t *vtbl, WINECRYPT_CERTSTORE *store)
 {
     context_t *context;
 
@@ -33,9 +33,6 @@ void *Context_CreateDataContext(size_t contextSize, const context_vtbl_t *vtbl)
     if (!context)
         return NULL;
 
-    context->vtbl = vtbl;
-    context->ref = 1;
-    context->linked = NULL;
     context->properties = ContextPropertyList_Create();
     if (!context->properties)
     {
@@ -43,11 +40,18 @@ void *Context_CreateDataContext(size_t contextSize, const context_vtbl_t *vtbl)
         return NULL;
     }
 
+    context->vtbl = vtbl;
+    context->ref = 1;
+    context->linked = NULL;
+
+    store->vtbl->addref(store);
+    context->store = store;
+
     TRACE("returning %p\n", context);
     return context_ptr(context);
 }
 
-context_t *Context_CreateLinkContext(unsigned int contextSize, context_t *linked)
+context_t *Context_CreateLinkContext(unsigned int contextSize, context_t *linked, WINECRYPT_CERTSTORE *store)
 {
     context_t *context;
 
@@ -64,36 +68,54 @@ context_t *Context_CreateLinkContext(unsigned int contextSize, context_t *linked
     context->properties = linked->properties;
     Context_AddRef(linked);
 
+    store->vtbl->addref(store);
+    context->store = store;
+
     TRACE("returning %p\n", context);
     return context;
 }
 
 void Context_AddRef(context_t *context)
 {
-    InterlockedIncrement(&context->ref);
+    LONG ref = InterlockedIncrement(&context->ref);
+
     TRACE("(%p) ref=%d\n", context, context->ref);
+
+    if(ref == 1) {
+        /* This is the first external (non-store) reference. Increase store ref cnt. */
+        context->store->vtbl->addref(context->store);
+    }
+}
+
+void Context_Free(context_t *context)
+{
+    TRACE("(%p)\n", context);
+
+    assert(!context->ref);
+
+    if (!context->linked) {
+        ContextPropertyList_Free(context->properties);
+        context->vtbl->free(context);
+    }else {
+        Context_Release(context->linked);
+    }
+
+    CryptMemFree(context);
 }
 
 void Context_Release(context_t *context)
 {
-    if (context->ref <= 0)
-    {
-        ERR("%p's ref count is %d\n", context, context->ref);
+    LONG ref = InterlockedDecrement(&context->ref);
+
+    TRACE("(%p) ref=%d\n", context, ref);
+    assert(ref >= 0);
+
+    if (!ref) {
+        /* This is the last reference, but the context still may be in a store.
+         * We release our store reference, but leave it up to store to free or keep the context. */
+        context->store->vtbl->releaseContext(context->store, context);
+        context->store->vtbl->release(context->store, 0);
     }
-    if (InterlockedDecrement(&context->ref) == 0)
-    {
-        TRACE("freeing %p\n", context);
-        if (!context->linked)
-        {
-            ContextPropertyList_Free(context->properties);
-            context->vtbl->free(context);
-        } else {
-            Context_Release(context->linked);
-        }
-        CryptMemFree(context);
-    }
-    else
-        TRACE("%p's ref count is %d\n", context, context->ref);
 }
 
 void Context_CopyProperties(const void *to, const void *from)

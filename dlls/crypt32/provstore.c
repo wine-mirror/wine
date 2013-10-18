@@ -15,7 +15,10 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 #include <stdarg.h>
+#include <assert.h>
+
 #include "windef.h"
 #include "winbase.h"
 #include "wincrypt.h"
@@ -66,6 +69,13 @@ static DWORD ProvStore_release(WINECRYPT_CERTSTORE *cert_store, DWORD flags)
         store->memStore->vtbl->release(store->memStore, flags);
     CRYPT_FreeStore(&store->hdr);
     return ERROR_SUCCESS;
+}
+
+static void ProvStore_releaseContext(WINECRYPT_CERTSTORE *store, context_t *context)
+{
+    /* As long as we don't have contexts properly stored (and hack around hCertStore
+       in add* and enum* functions), this function should never be called. */
+    assert(0);
 }
 
 static BOOL ProvStore_addCert(WINECRYPT_CERTSTORE *store, context_t *cert,
@@ -277,6 +287,7 @@ static BOOL ProvStore_control(WINECRYPT_CERTSTORE *cert_store, DWORD dwFlags, DW
 static const store_vtbl_t ProvStoreVtbl = {
     ProvStore_addref,
     ProvStore_release,
+    ProvStore_releaseContext,
     ProvStore_control,
     {
         ProvStore_addCert,

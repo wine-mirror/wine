@@ -46,7 +46,7 @@ static context_t *CRL_clone(context_t *context, WINECRYPT_CERTSTORE *store, BOOL
         return NULL;
     }
 
-    crl = (crl_t*)Context_CreateLinkContext(sizeof(CRL_CONTEXT), context);
+    crl = (crl_t*)Context_CreateLinkContext(sizeof(CRL_CONTEXT), context, store);
     if(!crl)
         return NULL;
 
@@ -82,7 +82,7 @@ PCCRL_CONTEXT WINAPI CertCreateCRLContext(DWORD dwCertEncodingType,
     {
         BYTE *data = NULL;
 
-        crl = Context_CreateDataContext(sizeof(CRL_CONTEXT), &crl_vtbl);
+        crl = Context_CreateDataContext(sizeof(CRL_CONTEXT), &crl_vtbl, &empty_store);
         if (!crl)
             goto end;
         data = CryptMemAlloc(cbCrlEncoded);

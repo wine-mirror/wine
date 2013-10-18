@@ -71,6 +71,12 @@ static DWORD Collection_release(WINECRYPT_CERTSTORE *store, DWORD flags)
     return ERROR_SUCCESS;
 }
 
+static void Collection_releaseContext(WINECRYPT_CERTSTORE *store, context_t *context)
+{
+    /* We don't cache context links, so just free them. */
+    Context_Free(context);
+}
+
 static context_t *CRYPT_CollectionCreateContextFromChild(WINE_COLLECTIONSTORE *store,
  WINE_STORE_LIST_ENTRY *storeEntry, context_t *child)
 {
@@ -256,14 +262,11 @@ static BOOL Collection_deleteCert(WINECRYPT_CERTSTORE *store, context_t *context
 {
     cert_t *cert = (cert_t*)context;
     cert_t *linked;
-    BOOL ret;
 
     TRACE("(%p, %p)\n", store, cert);
 
     linked = (cert_t*)context->linked;
-    ret = CertDeleteCertificateFromStore(&linked->ctx);
-    Context_Release(&cert->base);
-    return ret;
+    return CertDeleteCertificateFromStore(&linked->ctx);
 }
 
 static BOOL Collection_addCRL(WINECRYPT_CERTSTORE *store, context_t *crl,
@@ -327,14 +330,11 @@ static context_t *Collection_enumCRL(WINECRYPT_CERTSTORE *store, context_t *prev
 static BOOL Collection_deleteCRL(WINECRYPT_CERTSTORE *store, context_t *context)
 {
     crl_t *crl = (crl_t*)context, *linked;
-    BOOL ret;
 
     TRACE("(%p, %p)\n", store, crl);
 
     linked = (crl_t*)context->linked;
-    ret = CertDeleteCRLFromStore(&linked->ctx);
-    Context_Release(&crl->base);
-    return ret;
+    return CertDeleteCRLFromStore(&linked->ctx);
 }
 
 static BOOL Collection_addCTL(WINECRYPT_CERTSTORE *store, context_t *ctl,
@@ -398,14 +398,11 @@ static context_t *Collection_enumCTL(WINECRYPT_CERTSTORE *store, context_t *prev
 static BOOL Collection_deleteCTL(WINECRYPT_CERTSTORE *store, context_t *context)
 {
     ctl_t *ctl = (ctl_t*)context, *linked;
-    BOOL ret;
 
     TRACE("(%p, %p)\n", store, ctl);
 
     linked = (ctl_t*)context->linked;
-    ret = CertDeleteCTLFromStore(&linked->ctx);
-    Context_Release(&ctl->base);
-    return ret;
+    return CertDeleteCTLFromStore(&linked->ctx);
 }
 
 static BOOL Collection_control(WINECRYPT_CERTSTORE *cert_store, DWORD dwFlags,
@@ -448,6 +445,7 @@ static BOOL Collection_control(WINECRYPT_CERTSTORE *cert_store, DWORD dwFlags,
 static const store_vtbl_t CollectionStoreVtbl = {
     Collection_addref,
     Collection_release,
+    Collection_releaseContext,
     Collection_control,
     {
         Collection_addCert,
