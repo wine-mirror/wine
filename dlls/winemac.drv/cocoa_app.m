@@ -1352,6 +1352,8 @@ int macdrv_err_on;
             windowUnderNumber = [NSWindow windowNumberAtPoint:point
                                   belowWindowWithWindowNumber:0];
             targetWindow = (WineWindow*)[NSApp windowWithWindowNumber:windowUnderNumber];
+            if (!NSMouseInRect(point, [targetWindow contentRectForFrameRect:[targetWindow frame]], NO))
+                targetWindow = nil;
         }
 
         if ([targetWindow isKindOfClass:[WineWindow class]])
