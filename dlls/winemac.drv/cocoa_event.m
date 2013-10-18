@@ -171,9 +171,15 @@ static const OSType WineHotKeySignature = 'Wine';
 
     - (void) postEventObject:(MacDrvEvent*)event
     {
+        NSIndexSet* indexes;
         MacDrvEvent* lastEvent;
 
         [eventsLock lock];
+
+        indexes = [events indexesOfObjectsPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop){
+            return ((MacDrvEvent*)obj)->event->deliver <= 0;
+        }];
+        [events removeObjectsAtIndexes:indexes];
 
         if ((event->event->type == MOUSE_MOVED ||
              event->event->type == MOUSE_MOVED_ABSOLUTE) &&
