@@ -363,13 +363,11 @@ PCCRL_CONTEXT WINAPI CertDuplicateCRLContext(PCCRL_CONTEXT pCrlContext)
 
 BOOL WINAPI CertFreeCRLContext(PCCRL_CONTEXT pCrlContext)
 {
-    BOOL ret = TRUE;
-
     TRACE("(%p)\n", pCrlContext);
 
     if (pCrlContext)
-        ret = Context_Release(&crl_from_ptr(pCrlContext)->base);
-    return ret;
+        Context_Release(&crl_from_ptr(pCrlContext)->base);
+    return TRUE;
 }
 
 DWORD WINAPI CertEnumCRLContextProperties(PCCRL_CONTEXT pCRLContext,

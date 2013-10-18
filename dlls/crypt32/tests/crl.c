@@ -120,6 +120,7 @@ static void testCreateCRL(void)
 static void testDupCRL(void)
 {
     PCCRL_CONTEXT context, dupContext;
+    BOOL res;
 
     context = CertDuplicateCRLContext(NULL);
     ok(context == NULL, "expected NULL\n");
@@ -128,8 +129,15 @@ static void testDupCRL(void)
     dupContext = CertDuplicateCRLContext(context);
     ok(dupContext != NULL, "expected a context\n");
     ok(dupContext == context, "expected identical context addresses\n");
-    CertFreeCRLContext(dupContext);
-    CertFreeCRLContext(context);
+
+    res = CertFreeCRLContext(dupContext);
+    ok(res, "CertFreeCRLContext failed\n");
+
+    res = CertFreeCRLContext(context);
+    ok(res, "CertFreeCRLContext failed\n");
+
+    res = CertFreeCRLContext(NULL);
+    ok(res, "CertFreeCRLContext failed\n");
 }
 
 static void testAddCRL(void)
