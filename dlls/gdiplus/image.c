@@ -1224,9 +1224,6 @@ GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
 GpStatus WINGDIPAPI GdipCloneBitmapArea(REAL x, REAL y, REAL width, REAL height,
     PixelFormat format, GpBitmap* srcBitmap, GpBitmap** dstBitmap)
 {
-    BitmapData lockeddata_src, lockeddata_dst;
-    int i;
-    UINT row_size;
     Rect area;
     GpStatus stat;
 
@@ -1248,39 +1245,19 @@ GpStatus WINGDIPAPI GdipCloneBitmapArea(REAL x, REAL y, REAL width, REAL height,
     area.Width = gdip_round(width);
     area.Height = gdip_round(height);
 
-    stat = GdipBitmapLockBits(srcBitmap, &area, ImageLockModeRead, format,
-        &lockeddata_src);
-    if (stat != Ok) return stat;
-
-    stat = GdipCreateBitmapFromScan0(lockeddata_src.Width, lockeddata_src.Height,
-        0, lockeddata_src.PixelFormat, NULL, dstBitmap);
+    stat = GdipCreateBitmapFromScan0(area.Width, area.Height, 0, format, NULL, dstBitmap);
     if (stat == Ok)
     {
-        stat = GdipBitmapLockBits(*dstBitmap, NULL, ImageLockModeWrite,
-            lockeddata_src.PixelFormat, &lockeddata_dst);
-
-        if (stat == Ok)
-        {
-            /* copy the image data */
-            row_size = (lockeddata_src.Width * PIXELFORMATBPP(lockeddata_src.PixelFormat) +7)/8;
-            for (i=0; i<lockeddata_src.Height; i++)
-                memcpy((BYTE*)lockeddata_dst.Scan0+lockeddata_dst.Stride*i,
-                       (BYTE*)lockeddata_src.Scan0+lockeddata_src.Stride*i,
-                       row_size);
-
-            GdipBitmapUnlockBits(*dstBitmap, &lockeddata_dst);
-        }
-
+        stat = convert_pixels(area.Width, area.Height, (*dstBitmap)->stride, (*dstBitmap)->bits, (*dstBitmap)->format,
+                              srcBitmap->stride,
+                              srcBitmap->bits + srcBitmap->stride * area.Y + PIXELFORMATBPP(srcBitmap->format) * area.X / 8,
+                              srcBitmap->format, srcBitmap->image.palette);
         if (stat != Ok)
             GdipDisposeImage((GpImage*)*dstBitmap);
     }
 
-    GdipBitmapUnlockBits(srcBitmap, &lockeddata_src);
-
     if (stat != Ok)
-    {
         *dstBitmap = NULL;
-    }
 
     return stat;
 }

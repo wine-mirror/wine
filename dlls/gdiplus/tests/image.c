@@ -4257,7 +4257,6 @@ static void test_CloneBitmapArea(void)
     expect(WrongState, status);
 
     status = GdipCloneBitmapAreaI(0, 0, 1, 1, PixelFormat24bppRGB, bitmap, &copy);
-todo_wine
     expect(Ok, status);
 
     status = GdipBitmapUnlockBits(bitmap, &data);
