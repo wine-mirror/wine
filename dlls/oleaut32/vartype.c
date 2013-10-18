@@ -4682,10 +4682,10 @@ static unsigned char VARIANT_int_divbychar(DWORD * p, unsigned int n, unsigned c
 }
 
 /* check to test if encoded number is a zero. Returns 1 if zero, 0 for nonzero */
-static int VARIANT_int_iszero(const DWORD * p, unsigned int n)
+static BOOL VARIANT_int_iszero(const DWORD * p, unsigned int n)
 {
-    for (; n > 0; n--) if (*p++ != 0) return 0;
-    return 1;
+    for (; n > 0; n--) if (*p++ != 0) return FALSE;
+    return TRUE;
 }
 
 /* multiply two DECIMALS, without changing either one, and place result in third
@@ -4695,7 +4695,7 @@ static int VARIANT_int_iszero(const DWORD * p, unsigned int n)
  */
 static int VARIANT_DI_mul(const VARIANT_DI * a, const VARIANT_DI * b, VARIANT_DI * result)
 {
-    int r_overflow = 0;
+    BOOL r_overflow = FALSE;
     DWORD running[6];
     signed int mulstart;
 
@@ -4786,12 +4786,12 @@ static int VARIANT_DI_mul(const VARIANT_DI * a, const VARIANT_DI * b, VARIANT_DI
 }
 
 /* cast DECIMAL into string. Any scale should be handled properly. en_US locale is
-   hardcoded (period for decimal separator, dash as negative sign). Returns 0 for
-   success, nonzero if insufficient space in output buffer.
+   hardcoded (period for decimal separator, dash as negative sign). Returns TRUE for
+   success, FALSE if insufficient space in output buffer.
  */
-static int VARIANT_DI_tostringW(const VARIANT_DI * a, WCHAR * s, unsigned int n)
+static BOOL VARIANT_DI_tostringW(const VARIANT_DI * a, WCHAR * s, unsigned int n)
 {
-    int overflow = 0;
+    BOOL overflow = FALSE;
     DWORD quotient[3];
     unsigned char remainder;
     unsigned int i;
@@ -4802,7 +4802,7 @@ static int VARIANT_DI_tostringW(const VARIANT_DI * a, WCHAR * s, unsigned int n)
             *s++ = '-';
             n--;
         }
-        else overflow = 1;
+        else overflow = TRUE;
     }
 
     /* prepare initial 0 */
@@ -4810,7 +4810,7 @@ static int VARIANT_DI_tostringW(const VARIANT_DI * a, WCHAR * s, unsigned int n)
         if (n >= 2) {
             s[0] = '0';
             s[1] = '\0';
-        } else overflow = 1;
+        } else overflow = TRUE;
     }
 
     i = 0;
@@ -4818,7 +4818,7 @@ static int VARIANT_DI_tostringW(const VARIANT_DI * a, WCHAR * s, unsigned int n)
     while (!overflow && !VARIANT_int_iszero(quotient, sizeof(quotient) / sizeof(DWORD))) {
         remainder = VARIANT_int_divbychar(quotient, sizeof(quotient) / sizeof(DWORD), 10);
         if (i + 2 > n) {
-            overflow = 1;
+            overflow = TRUE;
         } else {
             s[i++] = '0' + remainder;
             s[i] = '\0';
@@ -4839,7 +4839,7 @@ static int VARIANT_DI_tostringW(const VARIANT_DI * a, WCHAR * s, unsigned int n)
         if (i <= a->scale) {
             unsigned int numzeroes = a->scale + 1 - i;
             if (i + 1 + numzeroes >= n) {
-                overflow = 1;
+                overflow = TRUE;
             } else {
                 memmove(s + numzeroes, s, (i + 1) * sizeof(WCHAR));
                 i += numzeroes;
@@ -4853,7 +4853,7 @@ static int VARIANT_DI_tostringW(const VARIANT_DI * a, WCHAR * s, unsigned int n)
         if (a->scale > 0) {
             unsigned int periodpos = i - a->scale;
             if (i + 2 >= n) {
-                overflow = 1;
+                overflow = TRUE;
             } else {
                 memmove(s + periodpos + 1, s + periodpos, (i + 1 - periodpos) * sizeof(WCHAR));
                 s[periodpos] = '.'; i++;
@@ -4865,7 +4865,7 @@ static int VARIANT_DI_tostringW(const VARIANT_DI * a, WCHAR * s, unsigned int n)
         }
     }
 
-    return overflow;
+    return !overflow;
 }
 
 /* shift the bits of a DWORD array to the left. p[0] is assumed LSB */

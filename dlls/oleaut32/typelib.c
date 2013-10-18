@@ -2407,7 +2407,7 @@ static void MSFT_GetTdesc(TLBContext *pcx, INT type, TYPEDESC *pTd)
     TRACE_(typelib)("vt type = %X\n", pTd->vt);
 }
 
-static int TLB_is_propgetput(INVOKEKIND invkind)
+static BOOL TLB_is_propgetput(INVOKEKIND invkind)
 {
     return (invkind == INVOKE_PROPERTYGET ||
         invkind == INVOKE_PROPERTYPUT ||
@@ -5428,7 +5428,8 @@ static HRESULT WINAPI ITypeLibComp_fnBind(
     BINDPTR * pBindPtr)
 {
     ITypeLibImpl *This = impl_from_ITypeComp(iface);
-    int typemismatch=0, i;
+    BOOL typemismatch = FALSE;
+    int i;
 
     TRACE("(%p)->(%s, 0x%x, 0x%x, %p, %p, %p)\n", This, debugstr_w(szName), lHash, wFlags, ppTInfo, pDescKind, pBindPtr);
 
@@ -5469,7 +5470,7 @@ static HRESULT WINAPI ITypeLibComp_fnBind(
                 return S_OK;
             }
             else if (hr == TYPE_E_TYPEMISMATCH)
-                typemismatch = 1;
+                typemismatch = TRUE;
         }
 
         if ((pTypeInfo->typekind == TKIND_COCLASS) &&
@@ -5540,7 +5541,7 @@ static HRESULT WINAPI ITypeLibComp_fnBind(
                 return S_OK;
             }
             else if (hr == TYPE_E_TYPEMISMATCH)
-                typemismatch = 1;
+                typemismatch = TRUE;
         }
     }
 

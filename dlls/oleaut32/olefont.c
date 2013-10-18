@@ -353,9 +353,9 @@ HRESULT WINAPI OleCreateFontIndirect(
     fd.cySize.s.Hi    = 0;
     fd.sWeight 	      = 0;
     fd.sCharset       = 0;
-    fd.fItalic	      = 0;
-    fd.fUnderline     = 0;
-    fd.fStrikethrough = 0;
+    fd.fItalic        = FALSE;
+    fd.fUnderline     = FALSE;
+    fd.fStrikethrough = FALSE;
     lpFontDesc = &fd;
   }
 
