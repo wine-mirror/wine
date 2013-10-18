@@ -2530,6 +2530,7 @@ static DWORD countCRLsInStore(HCERTSTORE store)
 static void testEmptyStore(void)
 {
     const CERT_CONTEXT *cert, *cert2, *cert3;
+    const CRL_CONTEXT *crl;
     HCERTSTORE store;
     BOOL res;
 
@@ -2586,6 +2587,13 @@ static void testEmptyStore(void)
     ok(!res && GetLastError() == E_UNEXPECTED, "CertCloseStore returned: %x(%x)\n", res, GetLastError());
 
     CertFreeCertificateContext(cert2);
+
+    crl = CertCreateCRLContext(X509_ASN_ENCODING, signedCRL, sizeof(signedCRL));
+    ok(crl != NULL, "CertCreateCRLContext failed\n");
+    ok(crl->hCertStore == cert->hCertStore, "unexpected hCertStore\n");
+
+    CertFreeCRLContext(crl);
+
     CertFreeCertificateContext(cert);
 }
 

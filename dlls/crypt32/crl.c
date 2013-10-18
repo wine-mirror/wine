@@ -97,7 +97,7 @@ PCCRL_CONTEXT WINAPI CertCreateCRLContext(DWORD dwCertEncodingType,
         crl->pbCrlEncoded       = data;
         crl->cbCrlEncoded       = cbCrlEncoded;
         crl->pCrlInfo           = crlInfo;
-        crl->hCertStore         = 0;
+        crl->hCertStore         = &empty_store;
     }
 
 end:
