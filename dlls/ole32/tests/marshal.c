@@ -106,6 +106,52 @@ static void UnlockModule(void)
     InterlockedDecrement(&cLocks);
 }
 
+static BOOL with_external_conn;
+static DWORD external_connections;
+static BOOL last_release_closes;
+
+static HRESULT WINAPI ExternalConnection_QueryInterface(IExternalConnection *iface, REFIID riid, void **ppv)
+{
+    ok(0, "unxpected call\n");
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ExternalConnection_AddRef(IExternalConnection *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ExternalConnection_Release(IExternalConnection *iface)
+{
+    return 1;
+}
+
+static DWORD WINAPI ExternalConnection_AddConnection(IExternalConnection *iface, DWORD extconn, DWORD reserved)
+{
+    trace("add connection\n");
+    return ++external_connections;
+}
+
+
+static DWORD WINAPI ExternalConnection_ReleaseConnection(IExternalConnection *iface, DWORD extconn,
+        DWORD reserved, BOOL fLastReleaseCloses)
+{
+    trace("release connection %d\n", fLastReleaseCloses);
+    last_release_closes = fLastReleaseCloses;
+    return --external_connections;
+}
+
+static const IExternalConnectionVtbl ExternalConnectionVtbl = {
+    ExternalConnection_QueryInterface,
+    ExternalConnection_AddRef,
+    ExternalConnection_Release,
+    ExternalConnection_AddConnection,
+    ExternalConnection_ReleaseConnection
+};
+
+static IExternalConnection ExternalConnection = { &ExternalConnectionVtbl };
+
 
 static HRESULT WINAPI Test_IUnknown_QueryInterface(
     LPUNKNOWN iface,
@@ -161,6 +207,12 @@ static HRESULT WINAPI Test_IClassFactory_QueryInterface(
     {
         *ppvObj = iface;
         IClassFactory_AddRef(iface);
+        return S_OK;
+    }
+
+    if (with_external_conn && IsEqualGUID(riid, &IID_IExternalConnection))
+    {
+        *ppvObj = &ExternalConnection;
         return S_OK;
     }
 
@@ -1232,6 +1284,7 @@ static void test_lock_object_external(void)
     IStream *pStream = NULL;
 
     cLocks = 0;
+    with_external_conn = TRUE;
 
     /* test the stub manager creation aspect of CoLockObjectExternal when the
      * object hasn't been marshaled yet */
@@ -1270,6 +1323,7 @@ static void test_lock_object_external(void)
     CoLockObjectExternal((IUnknown*)&Test_ClassFactory, FALSE, TRUE);
 
     ok_no_locks();
+    ok(last_release_closes, "last_release_closes FALSE\n");
 
     /* test CoLockObjectExternal releases reference to object with
      * fLastUnlockReleases as TRUE and there are only strong references on
@@ -1281,6 +1335,8 @@ static void test_lock_object_external(void)
     CoLockObjectExternal((IUnknown*)&Test_ClassFactory, FALSE, FALSE);
 
     ok_no_locks();
+todo_wine
+    ok(!last_release_closes, "last_release_closes TRUE\n");
 
     /* test CoLockObjectExternal doesn't release the last reference to an
      * object with fLastUnlockReleases as TRUE and there is a weak reference
@@ -1301,8 +1357,11 @@ static void test_lock_object_external(void)
     CoDisconnectObject((IUnknown*)&Test_ClassFactory, 0);
 
     ok_no_locks();
+todo_wine
+    ok(!last_release_closes, "last_release_closes TRUE\n");
 
     IStream_Release(pStream);
+    with_external_conn = FALSE;
 }
 
 /* tests disconnecting stubs */
