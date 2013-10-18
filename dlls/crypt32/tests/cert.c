@@ -725,7 +725,8 @@ static void testDupCert(void)
     dupContext = CertDuplicateCertificateContext(context);
     ok(dupContext == context, "context != dupContext\n");
 
-    CertFreeCertificateContext(dupContext);
+    ret = CertFreeCertificateContext(dupContext);
+    ok(ret, "CertFreeCertificateContext failed\n");
 
     store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0, CERT_STORE_CREATE_NEW_FLAG, NULL);
     ok(store != NULL, "CertOpenStore failed: %d\n", GetLastError());
@@ -760,7 +761,8 @@ static void testDupCert(void)
     ok(context2->hCertStore == context->hCertStore, "Unexpected hCertStore\n");
 
     CertFreeCertificateContext(context2);
-    CertFreeCertificateContext(context);
+    ret = CertFreeCertificateContext(context);
+    ok(ret, "CertFreeCertificateContext failed\n");
 
     CertCloseStore(store, 0);
     CertCloseStore(store2, 0);
@@ -768,6 +770,9 @@ static void testDupCert(void)
     SetLastError(0xdeadbeef);
     context = CertDuplicateCertificateContext(NULL);
     ok(context == NULL, "Expected context to be NULL\n");
+
+    ret = CertFreeCertificateContext(NULL);
+    ok(ret, "CertFreeCertificateContext failed\n");
 }
 
 static void testLinkCert(void)

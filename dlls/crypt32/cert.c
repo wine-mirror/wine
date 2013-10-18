@@ -370,13 +370,11 @@ PCCERT_CONTEXT WINAPI CertDuplicateCertificateContext(PCCERT_CONTEXT pCertContex
 
 BOOL WINAPI CertFreeCertificateContext(PCCERT_CONTEXT pCertContext)
 {
-    BOOL ret = TRUE;
-
     TRACE("(%p)\n", pCertContext);
 
     if (pCertContext)
-        ret = Context_Release(&cert_from_ptr(pCertContext)->base);
-    return ret;
+        Context_Release(&cert_from_ptr(pCertContext)->base);
+    return TRUE;
 }
 
 DWORD WINAPI CertEnumCertificateContextProperties(PCCERT_CONTEXT pCertContext,
