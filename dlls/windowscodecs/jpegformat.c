@@ -773,13 +773,13 @@ typedef struct JpegEncoder {
     struct jpeg_compress_struct cinfo;
     struct jpeg_error_mgr jerr;
     struct jpeg_destination_mgr dest_mgr;
-    int initialized;
+    BOOL initialized;
     int frame_count;
-    int frame_initialized;
-    int started_compress;
+    BOOL frame_initialized;
+    BOOL started_compress;
     int lines_written;
-    int frame_committed;
-    int committed;
+    BOOL frame_committed;
+    BOOL committed;
     UINT width, height;
     double xres, yres;
     const jpeg_compress_format *format;
@@ -1050,7 +1050,7 @@ static HRESULT WINAPI JpegEncoder_Frame_WritePixels(IWICBitmapFrameEncode *iface
 
         pjpeg_start_compress(&This->cinfo, TRUE);
 
-        This->started_compress = 1;
+        This->started_compress = TRUE;
     }
 
     row_size = This->format->bpp / 8 * This->width;
@@ -1480,13 +1480,13 @@ HRESULT JpegEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     This->IWICBitmapEncoder_iface.lpVtbl = &JpegEncoder_Vtbl;
     This->IWICBitmapFrameEncode_iface.lpVtbl = &JpegEncoder_FrameVtbl;
     This->ref = 1;
-    This->initialized = 0;
+    This->initialized = FALSE;
     This->frame_count = 0;
-    This->frame_initialized = 0;
-    This->started_compress = 0;
+    This->frame_initialized = FALSE;
+    This->started_compress = FALSE;
     This->lines_written = 0;
-    This->frame_committed = 0;
-    This->committed = 0;
+    This->frame_committed = FALSE;
+    This->committed = FALSE;
     This->width = This->height = 0;
     This->xres = This->yres = 0.0;
     This->format = NULL;
