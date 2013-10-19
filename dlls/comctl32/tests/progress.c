@@ -48,12 +48,12 @@ static void flush_events(void)
     while (diff > 0)
     {
         if (MsgWaitForMultipleObjects( 0, NULL, FALSE, min(10,diff), QS_ALLINPUT ) == WAIT_TIMEOUT) break;
-        while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+        while (PeekMessageA( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageA( &msg );
         diff = time - GetTickCount();
     }
 }
 
-static LRESULT CALLBACK ProgressTestWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK progress_test_wnd_proc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch(msg) {
 
@@ -72,7 +72,7 @@ static WNDPROC progress_wndproc;
 static BOOL erased;
 static RECT last_paint_rect;
 
-static LRESULT CALLBACK ProgressSubclassProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK progress_subclass_proc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     if (msg == WM_PAINT)
     {
@@ -82,7 +82,7 @@ static LRESULT CALLBACK ProgressSubclassProc(HWND hWnd, UINT msg, WPARAM wParam,
     {
         erased = TRUE;
     }
-    return CallWindowProc(progress_wndproc, hWnd, msg, wParam, lParam);
+    return CallWindowProcA(progress_wndproc, hWnd, msg, wParam, lParam);
 }
 
 
@@ -117,11 +117,11 @@ static void init(void)
     wc.cbWndExtra = 0;
     wc.hInstance = GetModuleHandleA(NULL);
     wc.hIcon = NULL;
-    wc.hCursor = LoadCursorA(NULL, IDC_ARROW);
+    wc.hCursor = LoadCursorA(NULL, (LPCSTR)IDC_ARROW);
     wc.hbrBackground = GetSysColorBrush(COLOR_WINDOW);
     wc.lpszMenuName = NULL;
     wc.lpszClassName = progressTestClass;
-    wc.lpfnWndProc = ProgressTestWndProc;
+    wc.lpfnWndProc = progress_test_wnd_proc;
     RegisterClassA(&wc);
     
     rect.left = 0;
@@ -135,10 +135,10 @@ static void init(void)
     assert(hProgressParentWnd != NULL);
 
     GetClientRect(hProgressParentWnd, &rect);
-    hProgressWnd = CreateWindowEx(0, PROGRESS_CLASS, "", WS_CHILD | WS_VISIBLE,
+    hProgressWnd = CreateWindowExA(0, PROGRESS_CLASSA, "", WS_CHILD | WS_VISIBLE,
       0, 0, rect.right, rect.bottom, hProgressParentWnd, NULL, GetModuleHandleA(NULL), 0);
     assert(hProgressWnd != NULL);
-    progress_wndproc = (WNDPROC)SetWindowLongPtr(hProgressWnd, GWLP_WNDPROC, (LPARAM)ProgressSubclassProc);
+    progress_wndproc = (WNDPROC)SetWindowLongPtrA(hProgressWnd, GWLP_WNDPROC, (LPARAM)progress_subclass_proc);
     
     ShowWindow(hProgressParentWnd, SW_SHOWNORMAL);
     ok(GetUpdateRect(hProgressParentWnd, NULL, FALSE), "GetUpdateRect: There should be a region that needs to be updated\n");
@@ -201,13 +201,13 @@ static void test_redraw(void)
     position is not in the new range, it does.
     Don't test this, it may change in future Windows versions. */
 
-    SendMessage(hProgressWnd, PBM_SETPOS, 0, 0);
+    SendMessageA(hProgressWnd, PBM_SETPOS, 0, 0);
     update_window(hProgressWnd);
 
     /* increase to 10 - no background erase required */
     erased = FALSE;
     SetRectEmpty(&last_paint_rect);
-    SendMessage(hProgressWnd, PBM_SETPOS, 10, 0);
+    SendMessageA(hProgressWnd, PBM_SETPOS, 10, 0);
     GetClientRect(hProgressWnd, &client_rect);
     ok(EqualRect(&last_paint_rect, &client_rect),
        "last_paint_rect was { %d, %d, %d, %d } instead of { %d, %d, %d, %d }\n",
@@ -219,7 +219,7 @@ static void test_redraw(void)
     /* decrease to 0 - background erase will be required */
     erased = FALSE;
     SetRectEmpty(&last_paint_rect);
-    SendMessage(hProgressWnd, PBM_SETPOS, 0, 0);
+    SendMessageA(hProgressWnd, PBM_SETPOS, 0, 0);
     GetClientRect(hProgressWnd, &client_rect);
     ok(EqualRect(&last_paint_rect, &client_rect),
        "last_paint_rect was { %d, %d, %d, %d } instead of { %d, %d, %d, %d }\n",
