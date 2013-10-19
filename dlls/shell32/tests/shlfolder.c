@@ -3001,13 +3001,14 @@ static inline IUnknownImpl *impl_from_IUnknown(IUnknown *iface)
 static HRESULT WINAPI unk_fnQueryInterface(IUnknown *iunk, REFIID riid, void** punk)
 {
     IUnknownImpl *This = impl_from_IUnknown(iunk);
-    UINT i, found;
-    for(i = found = 0; This->ifaces[i].id != NULL; i++)
+    UINT i;
+    BOOL found = FALSE;
+    for(i = 0; This->ifaces[i].id != NULL; i++)
     {
         if(IsEqualIID(This->ifaces[i].id, riid))
         {
             This->ifaces[i].count++;
-            found = 1;
+            found = TRUE;
             break;
         }
     }

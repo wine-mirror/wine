@@ -687,12 +687,12 @@ static char **myARGV;
 static char   base[MAX_PATH];
 static char   selfname[MAX_PATH];
 
-static int init(void)
+static BOOL init(void)
 {
     myARGC = winetest_get_mainargs(&myARGV);
-    if (!GetCurrentDirectoryA(sizeof(base), base)) return 0;
+    if (!GetCurrentDirectoryA(sizeof(base), base)) return FALSE;
     strcpy(selfname, myARGV[0]);
-    return 1;
+    return TRUE;
 }
 
 static void doChild(const char *arg)

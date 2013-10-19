@@ -1885,7 +1885,7 @@ static void test_find_executable(void)
         }
         if (rc > 32)
         {
-            int equal;
+            BOOL equal;
             equal=strcmp(command, argv0) == 0 ||
                 /* NT4 returns an extra 0x8 character! */
                 (strlen(command) == strlen(argv0)+1 && strncmp(command, argv0, strlen(argv0)) == 0);

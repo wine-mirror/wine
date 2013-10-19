@@ -296,9 +296,9 @@ static int CALLBACK selection_callback(HWND hwnd, UINT uMsg, LPARAM lParam, LPAR
         ok(!ret, "SendMessage returned: %u\n", ret);
 
         SendMessage(hwnd, WM_COMMAND, IDOK, 0);
-        return TRUE;
+        return 1;
     default:
-        return FALSE;
+        return 0;
     }
 }
 
