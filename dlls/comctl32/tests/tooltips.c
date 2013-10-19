@@ -30,17 +30,17 @@ static void test_create_tooltip(void)
     HWND parent, hwnd;
     DWORD style, exp_style;
 
-    parent = CreateWindowEx(0, "static", NULL, WS_POPUP,
+    parent = CreateWindowExA(0, "static", NULL, WS_POPUP,
                           0, 0, 0, 0,
                           NULL, NULL, NULL, 0);
     assert(parent);
 
-    hwnd = CreateWindowEx(0, TOOLTIPS_CLASS, NULL, 0x7fffffff | WS_POPUP,
+    hwnd = CreateWindowExA(0, TOOLTIPS_CLASSA, NULL, 0x7fffffff | WS_POPUP,
                           10, 10, 300, 100,
                           parent, NULL, NULL, 0);
     assert(hwnd);
 
-    style = GetWindowLong(hwnd, GWL_STYLE);
+    style = GetWindowLongA(hwnd, GWL_STYLE);
     trace("style = %08x\n", style);
     exp_style = 0x7fffffff | WS_POPUP;
     exp_style &= ~(WS_CHILD | WS_MAXIMIZE | WS_BORDER | WS_DLGFRAME);
@@ -49,12 +49,12 @@ static void test_create_tooltip(void)
 
     DestroyWindow(hwnd);
 
-    hwnd = CreateWindowEx(0, TOOLTIPS_CLASS, NULL, 0,
+    hwnd = CreateWindowExA(0, TOOLTIPS_CLASSA, NULL, 0,
                           10, 10, 300, 100,
                           parent, NULL, NULL, 0);
     assert(hwnd);
 
-    style = GetWindowLong(hwnd, GWL_STYLE);
+    style = GetWindowLongA(hwnd, GWL_STYLE);
     trace("style = %08x\n", style);
     ok(style == (WS_POPUP | WS_CLIPSIBLINGS | WS_BORDER),
        "wrong style %08x\n", style);
@@ -74,7 +74,7 @@ static void flush_events(int waitTime)
     while (diff > 0)
     {
         if (MsgWaitForMultipleObjects( 0, NULL, FALSE, min(100,diff), QS_ALLEVENTS) == WAIT_TIMEOUT) break;
-        while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+        while (PeekMessageA( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageA( &msg );
         diff = time - GetTickCount();
     }
 }
@@ -93,7 +93,7 @@ static HWND g_hwnd;
 #define TEST_CDDS_ITEMPOSTERASE      0x00000080
 #define TEST_CDDS_SUBITEM            0x00000100
 
-static LRESULT CALLBACK CustomDrawWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK custom_draw_wnd_proc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch(msg) {
 
@@ -158,12 +158,12 @@ static void test_customdraw(void) {
    wc.cbWndExtra = 0;
    wc.hInstance = GetModuleHandleA(NULL);
    wc.hIcon = NULL;
-   wc.hCursor = LoadCursorA(NULL, IDC_ARROW);
+   wc.hCursor = LoadCursorA(NULL, (LPCSTR)IDC_ARROW);
    wc.hbrBackground = GetSysColorBrush(COLOR_WINDOW);
    wc.lpszMenuName = NULL;
    wc.lpszClassName = "CustomDrawClass";
-   wc.lpfnWndProc = CustomDrawWndProc;
-   RegisterClass(&wc);
+   wc.lpfnWndProc = custom_draw_wnd_proc;
+   RegisterClassA(&wc);
 
    for (iterationNumber = 0;
         iterationNumber < sizeof(expectedResults)/sizeof(expectedResults[0]);
@@ -171,10 +171,10 @@ static void test_customdraw(void) {
 
        HWND parent, hwndTip;
        RECT rect;
-       TOOLINFO toolInfo = { 0 };
+       TTTOOLINFOA toolInfo = { 0 };
 
        /* Create a main window */
-       parent = CreateWindowEx(0, "CustomDrawClass", NULL,
+       parent = CreateWindowExA(0, "CustomDrawClass", NULL,
                                WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX |
                                WS_MAXIMIZEBOX | WS_VISIBLE,
                                50, 50,
@@ -187,7 +187,7 @@ static void test_customdraw(void) {
        flush_events(100);
 
        /* Create Tooltip */
-       hwndTip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS,
+       hwndTip = CreateWindowExA(WS_EX_TOPMOST, TOOLTIPS_CLASSA,
                                 NULL, TTS_NOPREFIX | TTS_ALWAYSTIP,
                                 CW_USEDEFAULT, CW_USEDEFAULT,
                                 CW_USEDEFAULT, CW_USEDEFAULT,
@@ -204,7 +204,7 @@ static void test_customdraw(void) {
              SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 
        /* Create a tool */
-       toolInfo.cbSize = TTTOOLINFO_V1_SIZE;
+       toolInfo.cbSize = TTTOOLINFOA_V1_SIZE;
        toolInfo.hwnd = parent;
        toolInfo.hinst = GetModuleHandleA(NULL);
        toolInfo.uFlags = TTF_SUBCLASS;
@@ -212,11 +212,11 @@ static void test_customdraw(void) {
        toolInfo.lpszText = (LPSTR)"This is a test tooltip";
        toolInfo.lParam = 0xdeadbeef;
        GetClientRect (parent, &toolInfo.rect);
-       lResult = SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
+       lResult = SendMessageA(hwndTip, TTM_ADDTOOLA, 0, (LPARAM)&toolInfo);
        ok(lResult, "Adding the tool to the tooltip failed\n");
 
        /* Make tooltip appear quickly */
-       SendMessage(hwndTip, TTM_SETDELAYTIME, TTDT_INITIAL, MAKELPARAM(1,0));
+       SendMessageA(hwndTip, TTM_SETDELAYTIME, TTDT_INITIAL, MAKELPARAM(1,0));
 
        /* Put cursor inside window, tooltip will appear immediately */
        GetWindowRect( parent, &rect );
@@ -249,7 +249,7 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
         NMTTDISPINFOA *ttnmdi = (NMTTDISPINFOA*)lParam;
 
         if (ttnmdi->hdr.code == TTN_GETDISPINFOA)
-            lstrcpy(ttnmdi->lpszText, testcallbackA);
+            lstrcpyA(ttnmdi->lpszText, testcallbackA);
     }
 
     return DefWindowProcA(hwnd, message, wParam, lParam);
@@ -265,7 +265,7 @@ static BOOL register_parent_wnd_class(void)
     cls.cbWndExtra = 0;
     cls.hInstance = GetModuleHandleA(NULL);
     cls.hIcon = 0;
-    cls.hCursor = LoadCursorA(0, IDC_ARROW);
+    cls.hCursor = LoadCursorA(0, (LPCSTR)IDC_ARROW);
     cls.hbrBackground = GetStockObject(WHITE_BRUSH);
     cls.lpszMenuName = NULL;
     cls.lpszClassName = "Tooltips test parent class";
@@ -277,7 +277,7 @@ static HWND create_parent_window(void)
     if (!register_parent_wnd_class())
         return NULL;
 
-    return CreateWindowEx(0, "Tooltips test parent class",
+    return CreateWindowExA(0, "Tooltips test parent class",
                           "Tooltips test parent window",
                           WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX |
                           WS_MAXIMIZEBOX | WS_VISIBLE,
@@ -314,7 +314,7 @@ static void test_gettext(void)
     toolinfoA.lpszText = NULL;
     toolinfoA.lParam = 0xdeadbeef;
     GetClientRect(hwnd, &toolinfoA.rect);
-    r = SendMessageA(hwnd, TTM_ADDTOOL, 0, (LPARAM)&toolinfoA);
+    r = SendMessageA(hwnd, TTM_ADDTOOLA, 0, (LPARAM)&toolinfoA);
     if (r)
     {
         toolinfoA.hwnd = NULL;
@@ -345,13 +345,13 @@ static void test_gettext(void)
     toolinfoA.lpszText = bufA;
     toolinfoA.lParam = 0xdeadbeef;
     GetClientRect(hwnd, &toolinfoA.rect);
-    r = SendMessageA(hwnd, TTM_ADDTOOL, 0, (LPARAM)&toolinfoA);
+    r = SendMessageA(hwnd, TTM_ADDTOOLA, 0, (LPARAM)&toolinfoA);
     ok(r, "Adding the tool to the tooltip failed\n");
     if (r)
     {
         DWORD length;
 
-        length = SendMessage(hwnd, WM_GETTEXTLENGTH, 0, 0);
+        length = SendMessageA(hwnd, WM_GETTEXTLENGTH, 0, 0);
         ok(length == 0, "Expected 0, got %d\n", length);
 
         toolinfoA.hwnd = NULL;
@@ -366,7 +366,7 @@ static void test_gettext(void)
         ok(strcmp(toolinfoA.lpszText, testtipA) == 0,
            "expected %s, got %p\n", testtipA, toolinfoA.lpszText);
 
-        length = SendMessage(hwnd, WM_GETTEXTLENGTH, 0, 0);
+        length = SendMessageA(hwnd, WM_GETTEXTLENGTH, 0, 0);
         ok(length == 0, "Expected 0, got %d\n", length);
     }
 
@@ -379,7 +379,7 @@ static void test_gettext(void)
     toolinfoA.lpszText = LPSTR_TEXTCALLBACKA;
     toolinfoA.lParam = 0xdeadbeef;
     GetClientRect(hwnd, &toolinfoA.rect);
-    r = SendMessageA(hwnd, TTM_ADDTOOL, 0, (LPARAM)&toolinfoA);
+    r = SendMessageA(hwnd, TTM_ADDTOOLA, 0, (LPARAM)&toolinfoA);
     ok(r, "Adding the tool to the tooltip failed\n");
     if (r)
     {
@@ -419,7 +419,7 @@ static void test_gettext(void)
     toolinfoW.lpszText = NULL;
     toolinfoW.lParam = 0xdeadbeef;
     GetClientRect(hwnd, &toolinfoW.rect);
-    r = SendMessageW(hwnd, TTM_ADDTOOL, 0, (LPARAM)&toolinfoW);
+    r = SendMessageW(hwnd, TTM_ADDTOOLW, 0, (LPARAM)&toolinfoW);
     ok(r, "Adding the tool to the tooltip failed\n");
 
     if (0)  /* crashes on NT4 */
@@ -502,16 +502,16 @@ static void test_ttm_gettoolinfo(void)
     ti.lpszText = NULL;
     ti.lParam = 0xdeadbeef;
     GetClientRect(hwnd, &ti.rect);
-    r = SendMessage(hwnd, TTM_ADDTOOLA, 0, (LPARAM)&ti);
+    r = SendMessageA(hwnd, TTM_ADDTOOLA, 0, (LPARAM)&ti);
     ok(r, "Adding the tool to the tooltip failed\n");
-    r = SendMessage(hwnd, TTM_GETTOOLCOUNT, 0, 0);
+    r = SendMessageA(hwnd, TTM_GETTOOLCOUNT, 0, 0);
     expect(1, r);
 
     ti.cbSize = TTTOOLINFOA_V1_SIZE - 1;
     ti.hwnd = NULL;
     ti.uId = 0x1234ABCD;
-    SendMessage(hwnd, TTM_DELTOOLA, 0, (LPARAM)&ti);
-    r = SendMessage(hwnd, TTM_GETTOOLCOUNT, 0, 0);
+    SendMessageA(hwnd, TTM_DELTOOLA, 0, (LPARAM)&ti);
+    r = SendMessageA(hwnd, TTM_GETTOOLCOUNT, 0, 0);
     expect(0, r);
 
     ti.cbSize = TTTOOLINFOA_V2_SIZE - 1;
@@ -522,16 +522,16 @@ static void test_ttm_gettoolinfo(void)
     ti.lpszText = NULL;
     ti.lParam = 0xdeadbeef;
     GetClientRect(hwnd, &ti.rect);
-    r = SendMessage(hwnd, TTM_ADDTOOLA, 0, (LPARAM)&ti);
+    r = SendMessageA(hwnd, TTM_ADDTOOLA, 0, (LPARAM)&ti);
     ok(r, "Adding the tool to the tooltip failed\n");
-    r = SendMessage(hwnd, TTM_GETTOOLCOUNT, 0, 0);
+    r = SendMessageA(hwnd, TTM_GETTOOLCOUNT, 0, 0);
     expect(1, r);
 
     ti.cbSize = TTTOOLINFOA_V2_SIZE - 1;
     ti.hwnd = NULL;
     ti.uId = 0x1234ABCD;
-    SendMessage(hwnd, TTM_DELTOOLA, 0, (LPARAM)&ti);
-    r = SendMessage(hwnd, TTM_GETTOOLCOUNT, 0, 0);
+    SendMessageA(hwnd, TTM_DELTOOLA, 0, (LPARAM)&ti);
+    r = SendMessageA(hwnd, TTM_GETTOOLCOUNT, 0, 0);
     expect(0, r);
 
     ti.cbSize = TTTOOLINFOA_V2_SIZE + 1;
@@ -542,16 +542,16 @@ static void test_ttm_gettoolinfo(void)
     ti.lpszText = NULL;
     ti.lParam = 0xdeadbeef;
     GetClientRect(hwnd, &ti.rect);
-    r = SendMessage(hwnd, TTM_ADDTOOLA, 0, (LPARAM)&ti);
+    r = SendMessageA(hwnd, TTM_ADDTOOLA, 0, (LPARAM)&ti);
     ok(r, "Adding the tool to the tooltip failed\n");
-    r = SendMessage(hwnd, TTM_GETTOOLCOUNT, 0, 0);
+    r = SendMessageA(hwnd, TTM_GETTOOLCOUNT, 0, 0);
     expect(1, r);
 
     ti.cbSize = TTTOOLINFOA_V2_SIZE + 1;
     ti.hwnd = NULL;
     ti.uId = 0x1234ABCD;
-    SendMessage(hwnd, TTM_DELTOOLA, 0, (LPARAM)&ti);
-    r = SendMessage(hwnd, TTM_GETTOOLCOUNT, 0, 0);
+    SendMessageA(hwnd, TTM_DELTOOLA, 0, (LPARAM)&ti);
+    r = SendMessageA(hwnd, TTM_GETTOOLCOUNT, 0, 0);
     expect(0, r);
 
     DestroyWindow(hwnd);
@@ -783,7 +783,7 @@ static void test_track(void)
             parent, NULL, GetModuleHandleW(NULL), 0);
     ok(tt != NULL, "creation of tooltip window failed\n");
 
-    info.cbSize = TTTOOLINFO_V1_SIZE;
+    info.cbSize = TTTOOLINFOW_V1_SIZE;
     info.uFlags = TTF_IDISHWND | TTF_TRACK | TTF_ABSOLUTE;
     info.hwnd = parent;
     info.hinst = GetModuleHandleW(NULL);
@@ -803,7 +803,7 @@ static void test_track(void)
     ok(almost_eq(pos.top, 10), "pos.top = %d\n", pos.top);
 
     info.uFlags = TTF_IDISHWND | TTF_ABSOLUTE;
-    SendMessageW(tt, TTM_SETTOOLINFO, 0, (LPARAM)&info);
+    SendMessageW(tt, TTM_SETTOOLINFOW, 0, (LPARAM)&info);
     SendMessageW(tt, TTM_TRACKPOSITION, 0, MAKELPARAM(10, 10));
 
     GetWindowRect(tt, &pos);
