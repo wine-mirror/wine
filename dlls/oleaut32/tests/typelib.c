@@ -5052,17 +5052,17 @@ static void test_GetLibAttr(void)
     ITypeLib_Release(tl);
 }
 
-HRESULT WINAPI uk_QueryInterface(IUnknown *obj, REFIID iid, void **out)
+static HRESULT WINAPI uk_QueryInterface(IUnknown *obj, REFIID iid, void **out)
 {
     return E_NOINTERFACE;
 }
 
-ULONG WINAPI uk_AddRef(IUnknown *obj)
+static ULONG WINAPI uk_AddRef(IUnknown *obj)
 {
     return 2;
 }
 
-ULONG WINAPI uk_Release(IUnknown *obj)
+static ULONG WINAPI uk_Release(IUnknown *obj)
 {
     return 1;
 }
