@@ -1104,12 +1104,12 @@ HRESULT WINAPI SHCreateShellFolderViewEx(
 	  psvcbi->pshf, psvcbi->pidl, psvcbi->pfnCallback,
 	  psvcbi->fvm, psvcbi->psvOuter);
 
+	*ppv = NULL;
 	psf = IShellView_Constructor(psvcbi->pshf);
 
 	if (!psf)
 	  return E_OUTOFMEMORY;
 
-	IShellView_AddRef(psf);
 	hRes = IShellView_QueryInterface(psf, &IID_IShellView, (LPVOID *)ppv);
 	IShellView_Release(psf);
 
@@ -2224,6 +2224,10 @@ HRESULT WINAPI SHCreateShellFolderView(const SFV_CREATE *pcsfv,
 	IShellView * psf;
 	HRESULT hRes;
 
+	*ppsv = NULL;
+	if (!pcsfv || pcsfv->cbSize != sizeof(*pcsfv))
+	  return E_INVALIDARG;
+
 	TRACE("sf=%p outer=%p callback=%p\n",
 	  pcsfv->pshf, pcsfv->psvOuter, pcsfv->psfvcb);
 
@@ -2232,7 +2236,6 @@ HRESULT WINAPI SHCreateShellFolderView(const SFV_CREATE *pcsfv,
 	if (!psf)
 	  return E_OUTOFMEMORY;
 
-	IShellView_AddRef(psf);
 	hRes = IShellView_QueryInterface(psf, &IID_IShellView, (LPVOID *)ppsv);
 	IShellView_Release(psf);
 
