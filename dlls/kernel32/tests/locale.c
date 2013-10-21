@@ -72,9 +72,9 @@ static inline int isdigitW( WCHAR wc )
 static HMODULE hKernel32;
 static WORD enumCount;
 
-static BOOL (WINAPI *pEnumSystemLanguageGroupsA)(LANGUAGEGROUP_ENUMPROC, DWORD, LONG_PTR);
-static BOOL (WINAPI *pEnumLanguageGroupLocalesA)(LANGGROUPLOCALE_ENUMPROC, LGRPID, DWORD, LONG_PTR);
-static BOOL (WINAPI *pEnumUILanguagesA)(UILANGUAGE_ENUMPROC, DWORD, LONG_PTR);
+static BOOL (WINAPI *pEnumSystemLanguageGroupsA)(LANGUAGEGROUP_ENUMPROCA, DWORD, LONG_PTR);
+static BOOL (WINAPI *pEnumLanguageGroupLocalesA)(LANGGROUPLOCALE_ENUMPROCA, LGRPID, DWORD, LONG_PTR);
+static BOOL (WINAPI *pEnumUILanguagesA)(UILANGUAGE_ENUMPROCA, DWORD, LONG_PTR);
 static BOOL (WINAPI *pEnumSystemLocalesEx)(LOCALE_ENUMPROCEX, DWORD, LPARAM, LPVOID);
 static INT (WINAPI *pLCMapStringEx)(LPCWSTR, DWORD, LPCWSTR, INT, LPWSTR, INT, LPNLSVERSIONINFO, LPVOID, LPARAM);
 static LCID (WINAPI *pLocaleNameToLCID)(LPCWSTR, DWORD);
@@ -118,7 +118,7 @@ static void InitFunctionPointers(void)
 #define COUNTOF(x) (sizeof(x)/sizeof(x)[0])
 
 #define STRINGSA(x,y) strcpy(input, x); strcpy(Expected, y); SetLastError(0xdeadbeef); buffer[0] = '\0'
-#define EXPECT_LENA ok(ret == lstrlen(Expected)+1, "Expected Len %d, got %d\n", lstrlen(Expected)+1, ret)
+#define EXPECT_LENA ok(ret == lstrlenA(Expected)+1, "Expected len %d, got %d\n", lstrlenA(Expected)+1, ret)
 #define EXPECT_EQA ok(strncmp(buffer, Expected, strlen(Expected)) == 0, \
   "Expected '%s', got '%s'\n", Expected, buffer)
 
@@ -657,13 +657,13 @@ static void test_GetDateFormatA(void)
       "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
 
   STRINGSA("ddd',' MMM dd ''''yy","5/4/2002"); /* Default to DATE_SHORTDATE */
-  ret = GetDateFormat(lcid, NUO, &curtime, NULL, buffer, COUNTOF(buffer));
+  ret = GetDateFormatA(lcid, NUO, &curtime, NULL, buffer, COUNTOF(buffer));
   ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
   if (strncmp(buffer, Expected, strlen(Expected)) && strncmp(buffer, "5/4/02", strlen(Expected)) != 0)
 	  ok (0, "Expected '%s' or '5/4/02', got '%s'\n", Expected, buffer);
 
   STRINGSA("ddd',' MMM dd ''''yy", "Saturday, May 04, 2002"); /* DATE_LONGDATE */
-  ret = GetDateFormat(lcid, NUO|DATE_LONGDATE, &curtime, NULL, buffer, COUNTOF(buffer));
+  ret = GetDateFormatA(lcid, NUO|DATE_LONGDATE, &curtime, NULL, buffer, COUNTOF(buffer));
   ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
   EXPECT_LENA; EXPECT_EQA;
 
@@ -671,7 +671,7 @@ static void test_GetDateFormatA(void)
   /* NT4 returns ERROR_INVALID_FLAGS for DATE_YEARMONTH */
   STRINGSA("ddd',' MMM dd ''''yy", ""); /* DATE_YEARMONTH */
   SetLastError(0xdeadbeef);
-  ret = GetDateFormat(lcid, NUO|DATE_YEARMONTH, &curtime, input, buffer, COUNTOF(buffer));
+  ret = GetDateFormatA(lcid, NUO|DATE_YEARMONTH, &curtime, input, buffer, COUNTOF(buffer));
   ok(!ret && GetLastError() == ERROR_INVALID_FLAGS,
      "Expected ERROR_INVALID_FLAGS, got %d\n", GetLastError());
   EXPECT_EQA;
@@ -680,12 +680,12 @@ static void test_GetDateFormatA(void)
   /* and return values */
   STRINGSA("m/d/y", ""); /* Invalid flags */
   SetLastError(0xdeadbeef);
-  ret = GetDateFormat(lcid, DATE_YEARMONTH|DATE_SHORTDATE|DATE_LONGDATE,
+  ret = GetDateFormatA(lcid, DATE_YEARMONTH|DATE_SHORTDATE|DATE_LONGDATE,
                       &curtime, input, buffer, COUNTOF(buffer));
   ok(!ret && GetLastError() == ERROR_INVALID_FLAGS,
      "Expected ERROR_INVALID_FLAGS, got %d\n", GetLastError());
 
-  ret = GetDateFormat(lcid_ru, 0, &curtime, "ddMMMM", buffer, COUNTOF(buffer));
+  ret = GetDateFormatA(lcid_ru, 0, &curtime, "ddMMMM", buffer, COUNTOF(buffer));
   if (!ret)
   {
     win_skip("LANG_RUSSIAN locale data unavailable\n");
@@ -694,37 +694,37 @@ static void test_GetDateFormatA(void)
 
   /* month part should be in genitive form */
   strcpy(genitive_month, buffer + 2);
-  ret = GetDateFormat(lcid_ru, 0, &curtime, "MMMM", buffer, COUNTOF(buffer));
+  ret = GetDateFormatA(lcid_ru, 0, &curtime, "MMMM", buffer, COUNTOF(buffer));
   ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
   strcpy(month, buffer);
   ok(strcmp(genitive_month, month) != 0, "Expected different month forms\n");
 
-  ret = GetDateFormat(lcid_ru, 0, &curtime, "ddd", buffer, COUNTOF(buffer));
+  ret = GetDateFormatA(lcid_ru, 0, &curtime, "ddd", buffer, COUNTOF(buffer));
   ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
   strcpy(short_day, buffer);
 
   STRINGSA("dd MMMMddd dd", "");
   sprintf(Expected, "04 %s%s 04", genitive_month, short_day);
-  ret = GetDateFormat(lcid_ru, 0, &curtime, input, buffer, COUNTOF(buffer));
+  ret = GetDateFormatA(lcid_ru, 0, &curtime, input, buffer, COUNTOF(buffer));
   ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
   EXPECT_EQA;
 
   STRINGSA("MMMMddd dd", "");
   sprintf(Expected, "%s%s 04", month, short_day);
-  ret = GetDateFormat(lcid_ru, 0, &curtime, input, buffer, COUNTOF(buffer));
+  ret = GetDateFormatA(lcid_ru, 0, &curtime, input, buffer, COUNTOF(buffer));
   ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
   EXPECT_EQA;
 
   STRINGSA("MMMMddd", "");
   sprintf(Expected, "%s%s", month, short_day);
-  ret = GetDateFormat(lcid_ru, 0, &curtime, input, buffer, COUNTOF(buffer));
+  ret = GetDateFormatA(lcid_ru, 0, &curtime, input, buffer, COUNTOF(buffer));
   ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
   EXPECT_EQA;
 
   STRINGSA("MMMMdd", "");
   sprintf(Expected, "%s04", genitive_month);
   sprintf(Broken, "%s04", month);
-  ret = GetDateFormat(lcid_ru, 0, &curtime, input, buffer, COUNTOF(buffer));
+  ret = GetDateFormatA(lcid_ru, 0, &curtime, input, buffer, COUNTOF(buffer));
   ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
   ok(strncmp(buffer, Expected, strlen(Expected)) == 0 ||
      broken(strncmp(buffer, Broken, strlen(Broken)) == 0) /* nt4 */,
@@ -733,7 +733,7 @@ static void test_GetDateFormatA(void)
   STRINGSA("MMMMdd ddd", "");
   sprintf(Expected, "%s04 %s", genitive_month, short_day);
   sprintf(Broken, "%s04 %s", month, short_day);
-  ret = GetDateFormat(lcid_ru, 0, &curtime, input, buffer, COUNTOF(buffer));
+  ret = GetDateFormatA(lcid_ru, 0, &curtime, input, buffer, COUNTOF(buffer));
   ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
   ok(strncmp(buffer, Expected, strlen(Expected)) == 0 ||
      broken(strncmp(buffer, Broken, strlen(Broken)) == 0) /* nt4 */,
@@ -741,14 +741,14 @@ static void test_GetDateFormatA(void)
 
   STRINGSA("dd dddMMMM", "");
   sprintf(Expected, "04 %s%s", short_day, month);
-  ret = GetDateFormat(lcid_ru, 0, &curtime, input, buffer, COUNTOF(buffer));
+  ret = GetDateFormatA(lcid_ru, 0, &curtime, input, buffer, COUNTOF(buffer));
   ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
   EXPECT_EQA;
 
   STRINGSA("dd dddMMMM ddd MMMMdd", "");
   sprintf(Expected, "04 %s%s %s %s04", short_day, month, short_day, genitive_month);
   sprintf(Broken, "04 %s%s %s %s04", short_day, month, short_day, month);
-  ret = GetDateFormat(lcid_ru, 0, &curtime, input, buffer, COUNTOF(buffer));
+  ret = GetDateFormatA(lcid_ru, 0, &curtime, input, buffer, COUNTOF(buffer));
   ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
   ok(strncmp(buffer, Expected, strlen(Expected)) == 0 ||
      broken(strncmp(buffer, Broken, strlen(Broken)) == 0) /* nt4 */,
@@ -758,7 +758,7 @@ static void test_GetDateFormatA(void)
   STRINGSA("ddd',' MMMM dd", "");
   sprintf(Expected, "%s, %s 04", short_day, genitive_month);
   sprintf(Broken, "%s, %s 04", short_day, month);
-  ret = GetDateFormat(lcid_ru, 0, &curtime, input, buffer, COUNTOF(buffer));
+  ret = GetDateFormatA(lcid_ru, 0, &curtime, input, buffer, COUNTOF(buffer));
   ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
   ok(strncmp(buffer, Expected, strlen(Expected)) == 0 ||
      broken(strncmp(buffer, Broken, strlen(Broken)) == 0) /* nt4 */,
@@ -1452,7 +1452,7 @@ static void test_CompareStringA(void)
     ret = CompareStringA(lcid, NORM_IGNORECASE, "_", -1, ".", -1);
     todo_wine ok(ret == CSTR_GREATER_THAN, "\"_\" vs \".\" expected CSTR_GREATER_THAN, got %d\n", ret);
 
-    ret = lstrcmpi("#", ".");
+    ret = lstrcmpiA("#", ".");
     todo_wine ok(ret == -1, "\"#\" vs \".\" expected -1, got %d\n", ret);
 
     lcid = MAKELCID(MAKELANGID(LANG_POLISH, SUBLANG_DEFAULT), SORT_DEFAULT);
