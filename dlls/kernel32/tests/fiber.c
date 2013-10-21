@@ -39,7 +39,7 @@ static WORD cbCount;
 
 static VOID init_funcs(void)
 {
-    HMODULE hKernel32 = GetModuleHandle("kernel32");
+    HMODULE hKernel32 = GetModuleHandleA("kernel32.dll");
 
 #define X(f) p##f = (void*)GetProcAddress(hKernel32, #f);
     X(CreateFiber);
