@@ -1072,7 +1072,7 @@ static void test_GetLongPathNameA(void)
     memset(temppath, 0, MAX_PATH);
     length = pGetLongPathNameA(tempfile, temppath, 4);
     /* We have a failure so length should be the minimum plus the terminating '0'  */
-    ok(length >= lstrlen(tempfile) + 1, "Wrong length\n");
+    ok(length >= strlen(tempfile) + 1, "Wrong length\n");
     ok(temppath[0] == 0, "Buffer should not have been touched\n");
 
     /* Some UNC syntax tests */
@@ -1103,7 +1103,7 @@ static void test_GetLongPathNameA(void)
     /* Now an UNC path with the computername */
     lstrcpyA(unc_prefix, "\\\\");
     hostsize = sizeof(unc_prefix) - 2;
-    GetComputerName(unc_prefix + 2, &hostsize);
+    GetComputerNameA(unc_prefix + 2, &hostsize);
     lstrcatA(unc_prefix, "\\");
 
     /* Create a short syntax for the whole unc path */
@@ -1316,7 +1316,7 @@ static void test_GetSystemDirectory(void)
     DWORD   total;
 
     SetLastError(0xdeadbeef);
-    res = GetSystemDirectory(NULL, 0);
+    res = GetSystemDirectoryA(NULL, 0);
     /* res includes the terminating Zero */
     ok(res > 0, "returned %d with %d (expected '>0')\n", res, GetLastError());
 
@@ -1324,10 +1324,10 @@ static void test_GetSystemDirectory(void)
 
     /* this crashes on XP */
     if (0)
-        GetSystemDirectory(NULL, total);
+        GetSystemDirectoryA(NULL, total);
 
     SetLastError(0xdeadbeef);
-    res = GetSystemDirectory(NULL, total-1);
+    res = GetSystemDirectoryA(NULL, total-1);
     /* 95+NT: total (includes the terminating Zero)
        98+ME: 0 with ERROR_INVALID_PARAMETER */
     ok( (res == total) || (!res && (GetLastError() == ERROR_INVALID_PARAMETER)),
@@ -1338,7 +1338,7 @@ static void test_GetSystemDirectory(void)
 
     buffer[0] = '\0';
     SetLastError(0xdeadbeef);
-    res = GetSystemDirectory(buffer, total);
+    res = GetSystemDirectoryA(buffer, total);
     /* res does not include the terminating Zero */
     ok( (res == (total-1)) && (buffer[0]),
         "returned %d with %d and '%s' (expected '%d' and a string)\n",
@@ -1346,7 +1346,7 @@ static void test_GetSystemDirectory(void)
 
     buffer[0] = '\0';
     SetLastError(0xdeadbeef);
-    res = GetSystemDirectory(buffer, total + 1);
+    res = GetSystemDirectoryA(buffer, total + 1);
     /* res does not include the terminating Zero */
     ok( (res == (total-1)) && (buffer[0]),
         "returned %d with %d and '%s' (expected '%d' and a string)\n",
@@ -1355,7 +1355,7 @@ static void test_GetSystemDirectory(void)
     memset(buffer, '#', total + 1);
     buffer[total + 2] = '\0';
     SetLastError(0xdeadbeef);
-    res = GetSystemDirectory(buffer, total-1);
+    res = GetSystemDirectoryA(buffer, total-1);
     /* res includes the terminating Zero) */
     ok( res == total, "returned %d with %d and '%s' (expected '%d')\n",
         res, GetLastError(), buffer, total);
@@ -1363,7 +1363,7 @@ static void test_GetSystemDirectory(void)
     memset(buffer, '#', total + 1);
     buffer[total + 2] = '\0';
     SetLastError(0xdeadbeef);
-    res = GetSystemDirectory(buffer, total-2);
+    res = GetSystemDirectoryA(buffer, total-2);
     /* res includes the terminating Zero) */
     ok( res == total, "returned %d with %d and '%s' (expected '%d')\n",
         res, GetLastError(), buffer, total);
@@ -1376,17 +1376,17 @@ static void test_GetWindowsDirectory(void)
     DWORD   total;
 
     SetLastError(0xdeadbeef);
-    res = GetWindowsDirectory(NULL, 0);
+    res = GetWindowsDirectoryA(NULL, 0);
     /* res includes the terminating Zero */
     ok(res > 0, "returned %d with %d (expected '>0')\n", res, GetLastError());
 
     total = res;
     /* this crashes on XP */
     if (0)
-        GetWindowsDirectory(NULL, total);
+        GetWindowsDirectoryA(NULL, total);
 
     SetLastError(0xdeadbeef);
-    res = GetWindowsDirectory(NULL, total-1);
+    res = GetWindowsDirectoryA(NULL, total-1);
     /* 95+NT: total (includes the terminating Zero)
        98+ME: 0 with ERROR_INVALID_PARAMETER */
     ok( (res == total) || (!res && (GetLastError() == ERROR_INVALID_PARAMETER)),
@@ -1397,7 +1397,7 @@ static void test_GetWindowsDirectory(void)
 
     buffer[0] = '\0';
     SetLastError(0xdeadbeef);
-    res = GetWindowsDirectory(buffer, total);
+    res = GetWindowsDirectoryA(buffer, total);
     /* res does not include the terminating Zero */
     ok( (res == (total-1)) && (buffer[0]),
         "returned %d with %d and '%s' (expected '%d' and a string)\n",
@@ -1405,7 +1405,7 @@ static void test_GetWindowsDirectory(void)
 
     buffer[0] = '\0';
     SetLastError(0xdeadbeef);
-    res = GetWindowsDirectory(buffer, total + 1);
+    res = GetWindowsDirectoryA(buffer, total + 1);
     /* res does not include the terminating Zero */
     ok( (res == (total-1)) && (buffer[0]),
         "returned %d with %d and '%s' (expected '%d' and a string)\n",
@@ -1414,7 +1414,7 @@ static void test_GetWindowsDirectory(void)
     memset(buffer, '#', total + 1);
     buffer[total + 2] = '\0';
     SetLastError(0xdeadbeef);
-    res = GetWindowsDirectory(buffer, total-1);
+    res = GetWindowsDirectoryA(buffer, total-1);
     /* res includes the terminating Zero) */
     ok( res == total, "returned %d with %d and '%s' (expected '%d')\n",
         res, GetLastError(), buffer, total);
@@ -1422,7 +1422,7 @@ static void test_GetWindowsDirectory(void)
     memset(buffer, '#', total + 1);
     buffer[total + 2] = '\0';
     SetLastError(0xdeadbeef);
-    res = GetWindowsDirectory(buffer, total-2);
+    res = GetWindowsDirectoryA(buffer, total-2);
     /* res includes the terminating Zero) */
     ok( res == total, "returned %d with %d and '%s' (expected '%d')\n",
         res, GetLastError(), buffer, total);
@@ -1491,7 +1491,7 @@ static void test_drive_letter_case(void)
 
     memset(buf, 0, sizeof(buf));
     SetLastError(0xdeadbeef);
-    ret = GetWindowsDirectory(buf, sizeof(buf));
+    ret = GetWindowsDirectoryA(buf, sizeof(buf));
     ok(ret, "GetWindowsDirectory error %u\n", GetLastError());
     ok(ret < sizeof(buf), "buffer should be %u bytes\n", ret);
     ok(buf[1] == ':', "expected buf[1] == ':' got %c\n", buf[1]);
@@ -1500,7 +1500,7 @@ static void test_drive_letter_case(void)
     /* re-use the buffer returned by GetFullPathName */
     buf[2] = '/';
     SetLastError(0xdeadbeef);
-    ret = GetFullPathName(buf + 2, sizeof(buf), buf, NULL);
+    ret = GetFullPathNameA(buf + 2, sizeof(buf), buf, NULL);
     ok(ret, "GetFullPathName error %u\n", GetLastError());
     ok(ret < sizeof(buf), "buffer should be %u bytes\n", ret);
     ok(buf[1] == ':', "expected buf[1] == ':' got %c\n", buf[1]);
@@ -1508,7 +1508,7 @@ static void test_drive_letter_case(void)
 
     memset(buf, 0, sizeof(buf));
     SetLastError(0xdeadbeef);
-    ret = GetSystemDirectory(buf, sizeof(buf));
+    ret = GetSystemDirectoryA(buf, sizeof(buf));
     ok(ret, "GetSystemDirectory error %u\n", GetLastError());
     ok(ret < sizeof(buf), "buffer should be %u bytes\n", ret);
     ok(buf[1] == ':', "expected buf[1] == ':' got %c\n", buf[1]);
@@ -1516,7 +1516,7 @@ static void test_drive_letter_case(void)
 
     memset(buf, 0, sizeof(buf));
     SetLastError(0xdeadbeef);
-    ret = GetCurrentDirectory(sizeof(buf), buf);
+    ret = GetCurrentDirectoryA(sizeof(buf), buf);
     ok(ret, "GetCurrentDirectory error %u\n", GetLastError());
     ok(ret < sizeof(buf), "buffer should be %u bytes\n", ret);
     ok(buf[1] == ':', "expected buf[1] == ':' got %c\n", buf[1]);
@@ -1525,7 +1525,7 @@ static void test_drive_letter_case(void)
     /* TEMP is an environment variable, so it can't be tested for case-sensitivity */
     memset(buf, 0, sizeof(buf));
     SetLastError(0xdeadbeef);
-    ret = GetTempPath(sizeof(buf), buf);
+    ret = GetTempPathA(sizeof(buf), buf);
     ok(ret, "GetTempPath error %u\n", GetLastError());
     ok(ret < sizeof(buf), "buffer should be %u bytes\n", ret);
     if (buf[0])
@@ -1536,7 +1536,7 @@ static void test_drive_letter_case(void)
 
     memset(buf, 0, sizeof(buf));
     SetLastError(0xdeadbeef);
-    ret = GetFullPathName(".", sizeof(buf), buf, NULL);
+    ret = GetFullPathNameA(".", sizeof(buf), buf, NULL);
     ok(ret, "GetFullPathName error %u\n", GetLastError());
     ok(ret < sizeof(buf), "buffer should be %u bytes\n", ret);
     ok(buf[1] == ':', "expected buf[1] == ':' got %c\n", buf[1]);
@@ -1544,7 +1544,7 @@ static void test_drive_letter_case(void)
 
     /* re-use the buffer returned by GetFullPathName */
     SetLastError(0xdeadbeef);
-    ret = GetShortPathName(buf, buf, sizeof(buf));
+    ret = GetShortPathNameA(buf, buf, sizeof(buf));
     ok(ret, "GetShortPathName error %u\n", GetLastError());
     ok(ret < sizeof(buf), "buffer should be %u bytes\n", ret);
     ok(buf[1] == ':', "expected buf[1] == ':' got %c\n", buf[1]);
