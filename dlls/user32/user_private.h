@@ -73,7 +73,6 @@ typedef struct tagUSER_DRIVER {
     void   (CDECL *pUnregisterHotKey)(HWND, UINT, UINT);
     SHORT  (CDECL *pVkKeyScanEx)(WCHAR, HKL);
     /* cursor/icon functions */
-    void   (CDECL *pCreateCursorIcon)(HCURSOR);
     void   (CDECL *pDestroyCursorIcon)(HCURSOR);
     void   (CDECL *pSetCursor)(HCURSOR);
     BOOL   (CDECL *pGetCursorPos)(LPPOINT);

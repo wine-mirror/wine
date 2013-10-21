@@ -972,7 +972,6 @@ done:
             list_add_head( &icon_cache, &info->entry );
         }
         release_icon_ptr( hObj, info );
-        USER_Driver->pCreateCursorIcon( hObj );
     }
     else
     {
@@ -1609,7 +1608,6 @@ HICON WINAPI CopyIcon( HICON hIcon )
         release_icon_ptr( hNew, ptrNew );
     }
     release_icon_ptr( hIcon, ptrOld );
-    if (hNew) USER_Driver->pCreateCursorIcon( hNew );
     return hNew;
 }
 
@@ -2212,7 +2210,6 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
         }
 
         release_icon_ptr( hObj, info );
-        USER_Driver->pCreateCursorIcon( hObj );
     }
     return hObj;
 }

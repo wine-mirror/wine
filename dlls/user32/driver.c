@@ -67,7 +67,6 @@ static const USER_DRIVER *load_driver(void)
         GET_USER_FUNC(UnloadKeyboardLayout);
         GET_USER_FUNC(UnregisterHotKey);
         GET_USER_FUNC(VkKeyScanEx);
-        GET_USER_FUNC(CreateCursorIcon);
         GET_USER_FUNC(DestroyCursorIcon);
         GET_USER_FUNC(SetCursor);
         GET_USER_FUNC(GetCursorPos);
@@ -203,10 +202,6 @@ static void CDECL nulldrv_UnregisterHotKey( HWND hwnd, UINT modifiers, UINT vk )
 static SHORT CDECL nulldrv_VkKeyScanEx( WCHAR ch, HKL layout )
 {
     return -1;
-}
-
-static void CDECL nulldrv_CreateCursorIcon( HCURSOR cursor )
-{
 }
 
 static void CDECL nulldrv_DestroyCursorIcon( HCURSOR cursor )
@@ -439,7 +434,6 @@ static USER_DRIVER null_driver =
     nulldrv_UnregisterHotKey,
     nulldrv_VkKeyScanEx,
     /* cursor/icon functions */
-    nulldrv_CreateCursorIcon,
     nulldrv_DestroyCursorIcon,
     nulldrv_SetCursor,
     nulldrv_GetCursorPos,
@@ -557,11 +551,6 @@ static void CDECL loaderdrv_UnregisterHotKey( HWND hwnd, UINT modifiers, UINT vk
 static SHORT CDECL loaderdrv_VkKeyScanEx( WCHAR ch, HKL layout )
 {
     return load_driver()->pVkKeyScanEx( ch, layout );
-}
-
-static void CDECL loaderdrv_CreateCursorIcon( HCURSOR cursor )
-{
-    load_driver()->pCreateCursorIcon( cursor );
 }
 
 static void CDECL loaderdrv_DestroyCursorIcon( HCURSOR cursor )
@@ -787,7 +776,6 @@ static USER_DRIVER lazy_load_driver =
     loaderdrv_UnregisterHotKey,
     loaderdrv_VkKeyScanEx,
     /* cursor/icon functions */
-    loaderdrv_CreateCursorIcon,
     loaderdrv_DestroyCursorIcon,
     loaderdrv_SetCursor,
     loaderdrv_GetCursorPos,
