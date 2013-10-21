@@ -810,8 +810,8 @@ void MIDIIn_SendMessage(MIDIMessage msg)
     {
         CFMessagePortSendRequest(messagePort, 0, data, 0.0, 0.0, NULL, NULL);
         CFRelease(data);
-        CFRelease(messagePort);
     }
+    CFRelease(messagePort);
 }
 
 static CFDataRef MIDIIn_MessageHandler(CFMessagePortRef local, SInt32 msgid, CFDataRef data, void *info)
