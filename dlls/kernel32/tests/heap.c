@@ -534,7 +534,7 @@ static void test_HeapQueryInformation(void)
     SIZE_T size;
     BOOL ret;
 
-    pHeapQueryInformation = (void *)GetProcAddress(GetModuleHandle("kernel32.dll"), "HeapQueryInformation");
+    pHeapQueryInformation = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"), "HeapQueryInformation");
     if (!pHeapQueryInformation)
     {
         win_skip("HeapQueryInformation is not available\n");
