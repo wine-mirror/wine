@@ -563,25 +563,6 @@ static void UpdateDataInDefaultIMEWindow(HIMC hIMC, HWND hwnd, BOOL showable)
     UnlockRealIMC(hIMC);
 }
 
-BOOL WINAPI ImeInquire(LPIMEINFO lpIMEInfo, LPWSTR lpszUIClass, LPCWSTR lpszOption)
-{
-    TRACE("\n");
-    IME_RegisterClasses( macdrv_module );
-    lpIMEInfo->dwPrivateDataSize = sizeof(IMEPRIVATE);
-    lpIMEInfo->fdwProperty = IME_PROP_UNICODE | IME_PROP_AT_CARET;
-    lpIMEInfo->fdwConversionCaps = IME_CMODE_NATIVE;
-    lpIMEInfo->fdwSentenceCaps = IME_SMODE_AUTOMATIC;
-    lpIMEInfo->fdwUICaps = UI_CAP_2700;
-    /* Tell App we cannot accept ImeSetCompositionString calls */
-    /* FIXME: Can we? */
-    lpIMEInfo->fdwSCSCaps = 0;
-    lpIMEInfo->fdwSelectCaps = SELECT_CAP_CONVERSION;
-
-    lstrcpyW(lpszUIClass, UI_CLASS_NAME);
-
-    return TRUE;
-}
-
 BOOL WINAPI ImeConfigure(HKL hKL, HWND hWnd, DWORD dwMode, LPVOID lpData)
 {
     FIXME("(%p, %p, %d, %p): stub\n", hKL, hWnd, dwMode, lpData);
@@ -1394,10 +1375,7 @@ static LRESULT WINAPI IME_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
     return rc;
 }
 
-
-/* Interfaces to other parts of the Mac driver */
-
-void IME_RegisterClasses(HINSTANCE hImeInst)
+static BOOL WINAPI register_classes( INIT_ONCE *once, void *param, void **context )
 {
     WNDCLASSW wndClass;
     ZeroMemory(&wndClass, sizeof(WNDCLASSW));
@@ -1405,7 +1383,7 @@ void IME_RegisterClasses(HINSTANCE hImeInst)
     wndClass.lpfnWndProc = (WNDPROC) IME_WindowProc;
     wndClass.cbClsExtra = 0;
     wndClass.cbWndExtra = 2 * sizeof(LONG_PTR);
-    wndClass.hInstance = hImeInst;
+    wndClass.hInstance = macdrv_module;
     wndClass.hCursor = LoadCursorW(NULL, (LPWSTR)IDC_ARROW);
     wndClass.hIcon = LoadIconW(NULL, (LPWSTR)IDI_APPLICATION);
     wndClass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
@@ -1421,7 +1399,31 @@ void IME_RegisterClasses(HINSTANCE hImeInst)
     WM_MSIME_RECONVERT = RegisterWindowMessageA("MSIMEReconvert");
     WM_MSIME_QUERYPOSITION = RegisterWindowMessageA("MSIMEQueryPosition");
     WM_MSIME_DOCUMENTFEED = RegisterWindowMessageA("MSIMEDocumentFeed");
+    return TRUE;
 }
+
+BOOL WINAPI ImeInquire(LPIMEINFO lpIMEInfo, LPWSTR lpszUIClass, LPCWSTR lpszOption)
+{
+    static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
+
+    TRACE("\n");
+    InitOnceExecuteOnce( &init_once, register_classes, NULL, NULL );
+    lpIMEInfo->dwPrivateDataSize = sizeof(IMEPRIVATE);
+    lpIMEInfo->fdwProperty = IME_PROP_UNICODE | IME_PROP_AT_CARET;
+    lpIMEInfo->fdwConversionCaps = IME_CMODE_NATIVE;
+    lpIMEInfo->fdwSentenceCaps = IME_SMODE_AUTOMATIC;
+    lpIMEInfo->fdwUICaps = UI_CAP_2700;
+    /* Tell App we cannot accept ImeSetCompositionString calls */
+    /* FIXME: Can we? */
+    lpIMEInfo->fdwSCSCaps = 0;
+    lpIMEInfo->fdwSelectCaps = SELECT_CAP_CONVERSION;
+
+    lstrcpyW(lpszUIClass, UI_CLASS_NAME);
+
+    return TRUE;
+}
+
+/* Interfaces to other parts of the Mac driver */
 
 /***********************************************************************
  *              macdrv_im_set_text
