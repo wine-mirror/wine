@@ -25,12 +25,15 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-#include "wine/test.h"
+/* the tests intentionally pass invalid pointers and need an exception handler */
+#define WINE_NO_INLINE_STRING
+
 #include <windef.h>
 #include <winbase.h>
 #include <winnt.h>
 #include <winerror.h>
 #include <winnls.h>
+#include "wine/test.h"
 
 /* Specify the number of simultaneous threads to test */
 #define NUM_THREADS 4
@@ -86,12 +89,12 @@ static HANDLE create_target_process(const char *arg)
     char cmdline[MAX_PATH];
     PROCESS_INFORMATION pi;
     BOOL ret;
-    STARTUPINFO si = { 0 };
+    STARTUPINFOA si = { 0 };
     si.cb = sizeof(si);
 
     winetest_get_mainargs( &argv );
     sprintf(cmdline, "%s %s %s", argv[0], argv[1], arg);
-    ret = CreateProcess(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ret = CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
     ok(ret, "error: %u\n", GetLastError());
     ret = CloseHandle(pi.hThread);
     ok(ret, "error %u\n", GetLastError());
@@ -116,9 +119,9 @@ static LONG num_synced;
 
 static void init_thread_sync_helpers(void)
 {
-  start_event = CreateEvent(NULL, TRUE, FALSE, NULL);
+  start_event = CreateEventW(NULL, TRUE, FALSE, NULL);
   ok(start_event != NULL, "CreateEvent failed\n");
-  stop_event = CreateEvent(NULL, TRUE, FALSE, NULL);
+  stop_event = CreateEventW(NULL, TRUE, FALSE, NULL);
   ok(stop_event != NULL, "CreateEvent failed\n");
   num_synced = -1;
 }
@@ -298,10 +301,10 @@ static void create_function_addr_events(HANDLE events[2])
     char buffer[256];
 
     sprintf(buffer, "threadFunc_SetEvent %p", threadFunc_SetEvent);
-    events[0] = CreateEvent(NULL, FALSE, FALSE, buffer);
+    events[0] = CreateEventA(NULL, FALSE, FALSE, buffer);
 
     sprintf(buffer, "threadFunc_CloseHandle %p", threadFunc_CloseHandle);
-    events[1] = CreateEvent(NULL, FALSE, FALSE, buffer);
+    events[1] = CreateEventA(NULL, FALSE, FALSE, buffer);
 }
 
 /* check CreateRemoteThread */
@@ -325,7 +328,7 @@ static VOID test_CreateRemoteThread(void)
     }
     ok(ret == WAIT_OBJECT_0 || broken(ret == WAIT_OBJECT_0+1 /* nt4,w2k */), "WaitForAllObjects 2 events %d\n", ret);
 
-    hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+    hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
     ok(hEvent != NULL, "Can't create event, err=%u\n", GetLastError());
     ret = DuplicateHandle(GetCurrentProcess(), hEvent, hProcess, &hRemoteEvent,
                           0, FALSE, DUPLICATE_SAME_ACCESS);
@@ -953,7 +956,7 @@ static void test_SetThreadContext(void)
     BOOL ret;
 
     SetLastError(0xdeadbeef);
-    event = CreateEvent( NULL, TRUE, FALSE, NULL );
+    event = CreateEventW( NULL, TRUE, FALSE, NULL );
     thread = CreateThread( NULL, 0, threadFunc6, (void *)2, 0, &threadid );
     ok( thread != NULL, "CreateThread failed : (%d)\n", GetLastError() );
     if (!thread)
@@ -1034,7 +1037,7 @@ static void test_QueueUserWorkItem(void)
     /* QueueUserWorkItem not present on win9x */
     if (!pQueueUserWorkItem) return;
 
-    finish_event = CreateEvent(NULL, TRUE, FALSE, NULL);
+    finish_event = CreateEventW(NULL, TRUE, FALSE, NULL);
 
     before = GetTickCount();
 
@@ -1082,8 +1085,8 @@ static void test_RegisterWaitForSingleObject(void)
 
     /* test signaled case */
 
-    handle = CreateEvent(NULL, TRUE, TRUE, NULL);
-    complete_event = CreateEvent(NULL, FALSE, FALSE, NULL);
+    handle = CreateEventW(NULL, TRUE, TRUE, NULL);
+    complete_event = CreateEventW(NULL, FALSE, FALSE, NULL);
 
     ret = pRegisterWaitForSingleObject(&wait_handle, handle, signaled_function, complete_event, INFINITE, WT_EXECUTEONLYONCE);
     ok(ret, "RegisterWaitForSingleObject failed with error %d\n", GetLastError());
@@ -1426,7 +1429,7 @@ static WORD get_thread_fpu_cw(void)
     DWORD tid, res;
     HANDLE thread;
 
-    ctx.finished = CreateEvent(NULL, FALSE, FALSE, NULL);
+    ctx.finished = CreateEventW(NULL, FALSE, FALSE, NULL);
     ok(!!ctx.finished, "Failed to create event, last error %#x.\n", GetLastError());
 
     thread = CreateThread(NULL, 0, fpu_thread, &ctx, 0, &tid);
@@ -1598,7 +1601,7 @@ static void test_thread_actctx(void)
 
 static void init_funcs(void)
 {
-    HMODULE hKernel32 = GetModuleHandle("kernel32");
+    HMODULE hKernel32 = GetModuleHandleA("kernel32.dll");
 
 /* Neither Cygwin nor mingW export OpenThread, so do a dynamic check
    so that the compile passes */
