@@ -38,6 +38,7 @@
 extern BOOL skip_single_buffer_flushes DECLSPEC_HIDDEN;
 extern BOOL allow_vsync DECLSPEC_HIDDEN;
 extern BOOL allow_set_gamma DECLSPEC_HIDDEN;
+extern HMODULE macdrv_module DECLSPEC_HIDDEN;
 
 
 extern const char* debugstr_cf(CFTypeRef t) DECLSPEC_HIDDEN;

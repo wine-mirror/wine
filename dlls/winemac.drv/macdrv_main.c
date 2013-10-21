@@ -52,6 +52,7 @@ BOOL allow_vsync = TRUE;
 BOOL allow_set_gamma = TRUE;
 int left_option_is_alt = 0;
 int right_option_is_alt = 0;
+HMODULE macdrv_module = 0;
 
 
 /**************************************************************************
@@ -183,7 +184,7 @@ static void setup_options(void)
 /***********************************************************************
  *              process_attach
  */
-static BOOL process_attach( HINSTANCE instance )
+static BOOL process_attach(void)
 {
     SessionAttributeBits attributes;
     OSStatus status;
@@ -205,7 +206,6 @@ static BOOL process_attach( HINSTANCE instance )
 
     set_app_icon();
     macdrv_clipboard_process_attach();
-    IME_RegisterClasses( instance );
 
     return TRUE;
 }
@@ -301,7 +301,8 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved)
     switch(reason)
     {
     case DLL_PROCESS_ATTACH:
-        ret = process_attach( hinst );
+        macdrv_module = hinst;
+        ret = process_attach();
         break;
     case DLL_THREAD_DETACH:
         thread_detach();

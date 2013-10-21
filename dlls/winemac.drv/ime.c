@@ -566,6 +566,7 @@ static void UpdateDataInDefaultIMEWindow(HIMC hIMC, HWND hwnd, BOOL showable)
 BOOL WINAPI ImeInquire(LPIMEINFO lpIMEInfo, LPWSTR lpszUIClass, LPCWSTR lpszOption)
 {
     TRACE("\n");
+    IME_RegisterClasses( macdrv_module );
     lpIMEInfo->dwPrivateDataSize = sizeof(IMEPRIVATE);
     lpIMEInfo->fdwProperty = IME_PROP_UNICODE | IME_PROP_AT_CARET;
     lpIMEInfo->fdwConversionCaps = IME_CMODE_NATIVE;
