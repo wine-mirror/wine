@@ -985,10 +985,13 @@ void *wine_dlopen( const char *filename, int flag, char *error, size_t errorsize
     {
         if (pread( fd, magic, 2, 0 ) == 2 && magic[0] == 'M' && magic[1] == 'Z')
         {
-            static const char msg[] = "MZ format";
-            size_t len = min( errorsize, sizeof(msg) );
-            memcpy( error, msg, len );
-            error[len - 1] = 0;
+            if (error && errorsize)
+            {
+                static const char msg[] = "MZ format";
+                size_t len = min( errorsize, sizeof(msg) );
+                memcpy( error, msg, len );
+                error[len - 1] = 0;
+            }
             close( fd );
             return NULL;
         }
