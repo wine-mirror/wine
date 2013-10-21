@@ -23,12 +23,9 @@
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
-#include <windef.h>
-#include <winbase.h>
-#include <winsock.h>
-#include <wtypes.h>
-#include <winerror.h>
-
+#include "windef.h"
+#include "winbase.h"
+#include "winternl.h"
 #include "wine/test.h"
 
 #define PIPENAME "\\\\.\\PiPe\\tests_pipe.c"
@@ -64,7 +61,7 @@ static void test_CreateNamedPipe(int pipemode)
     else
         trace("test_CreateNamedPipe starting in message mode\n");
     /* Bad parameter checks */
-    hnp = CreateNamedPipe("not a named pipe", PIPE_ACCESS_DUPLEX, pipemode | PIPE_WAIT,
+    hnp = CreateNamedPipeA("not a named pipe", PIPE_ACCESS_DUPLEX, pipemode | PIPE_WAIT,
         /* nMaxInstances */ 1,
         /* nOutBufSize */ 1024,
         /* nInBufSize */ 1024,
@@ -76,7 +73,7 @@ static void test_CreateNamedPipe(int pipemode)
     if (pipemode == PIPE_TYPE_BYTE)
     {
         /* Bad parameter checks */
-        hnp = CreateNamedPipe(PIPENAME, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_READMODE_MESSAGE,
+        hnp = CreateNamedPipeA(PIPENAME, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_READMODE_MESSAGE,
             /* nMaxInstances */ 1,
             /* nOutBufSize */ 1024,
             /* nInBufSize */ 1024,
@@ -86,7 +83,7 @@ static void test_CreateNamedPipe(int pipemode)
             "CreateNamedPipe should fail with PIPE_TYPE_BYTE | PIPE_READMODE_MESSAGE\n");
     }
 
-    hnp = CreateNamedPipe(NULL,
+    hnp = CreateNamedPipeA(NULL,
         PIPE_ACCESS_DUPLEX, pipemode | PIPE_WAIT,
         1, 1024, 1024, NMPWAIT_USE_DEFAULT_WAIT, NULL);
     ok(hnp == INVALID_HANDLE_VALUE && GetLastError() == ERROR_PATH_NOT_FOUND,
@@ -99,7 +96,7 @@ static void test_CreateNamedPipe(int pipemode)
 
     /* Functional checks */
 
-    hnp = CreateNamedPipe(PIPENAME, PIPE_ACCESS_DUPLEX, pipemode | PIPE_WAIT,
+    hnp = CreateNamedPipeA(PIPENAME, PIPE_ACCESS_DUPLEX, pipemode | PIPE_WAIT,
         /* nMaxInstances */ 1,
         /* nOutBufSize */ 1024,
         /* nInBufSize */ 1024,
@@ -340,7 +337,7 @@ static void test_CreateNamedPipe_instances_must_match(void)
     HANDLE hnp, hnp2;
 
     /* Check no mismatch */
-    hnp = CreateNamedPipe(PIPENAME, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_WAIT,
+    hnp = CreateNamedPipeA(PIPENAME, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_WAIT,
         /* nMaxInstances */ 2,
         /* nOutBufSize */ 1024,
         /* nInBufSize */ 1024,
@@ -348,7 +345,7 @@ static void test_CreateNamedPipe_instances_must_match(void)
         /* lpSecurityAttrib */ NULL);
     ok(hnp != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
 
-    hnp2 = CreateNamedPipe(PIPENAME, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_WAIT,
+    hnp2 = CreateNamedPipeA(PIPENAME, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_WAIT,
         /* nMaxInstances */ 2,
         /* nOutBufSize */ 1024,
         /* nInBufSize */ 1024,
@@ -360,7 +357,7 @@ static void test_CreateNamedPipe_instances_must_match(void)
     ok(CloseHandle(hnp2), "CloseHandle\n");
 
     /* Check nMaxInstances */
-    hnp = CreateNamedPipe(PIPENAME, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_WAIT,
+    hnp = CreateNamedPipeA(PIPENAME, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_WAIT,
         /* nMaxInstances */ 1,
         /* nOutBufSize */ 1024,
         /* nInBufSize */ 1024,
@@ -368,7 +365,7 @@ static void test_CreateNamedPipe_instances_must_match(void)
         /* lpSecurityAttrib */ NULL);
     ok(hnp != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
 
-    hnp2 = CreateNamedPipe(PIPENAME, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_WAIT,
+    hnp2 = CreateNamedPipeA(PIPENAME, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_WAIT,
         /* nMaxInstances */ 1,
         /* nOutBufSize */ 1024,
         /* nInBufSize */ 1024,
@@ -380,7 +377,7 @@ static void test_CreateNamedPipe_instances_must_match(void)
     ok(CloseHandle(hnp), "CloseHandle\n");
 
     /* Check PIPE_ACCESS_* */
-    hnp = CreateNamedPipe(PIPENAME, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_WAIT,
+    hnp = CreateNamedPipeA(PIPENAME, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_WAIT,
         /* nMaxInstances */ 2,
         /* nOutBufSize */ 1024,
         /* nInBufSize */ 1024,
@@ -388,7 +385,7 @@ static void test_CreateNamedPipe_instances_must_match(void)
         /* lpSecurityAttrib */ NULL);
     ok(hnp != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
 
-    hnp2 = CreateNamedPipe(PIPENAME, PIPE_ACCESS_INBOUND, PIPE_TYPE_BYTE | PIPE_WAIT,
+    hnp2 = CreateNamedPipeA(PIPENAME, PIPE_ACCESS_INBOUND, PIPE_TYPE_BYTE | PIPE_WAIT,
         /* nMaxInstances */ 2,
         /* nOutBufSize */ 1024,
         /* nInBufSize */ 1024,
@@ -400,7 +397,7 @@ static void test_CreateNamedPipe_instances_must_match(void)
     ok(CloseHandle(hnp), "CloseHandle\n");
 
     /* check everything else */
-    hnp = CreateNamedPipe(PIPENAME, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_WAIT,
+    hnp = CreateNamedPipeA(PIPENAME, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_WAIT,
         /* nMaxInstances */ 4,
         /* nOutBufSize */ 1024,
         /* nInBufSize */ 1024,
@@ -408,7 +405,7 @@ static void test_CreateNamedPipe_instances_must_match(void)
         /* lpSecurityAttrib */ NULL);
     ok(hnp != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
 
-    hnp2 = CreateNamedPipe(PIPENAME, PIPE_ACCESS_DUPLEX, PIPE_TYPE_MESSAGE,
+    hnp2 = CreateNamedPipeA(PIPENAME, PIPE_ACCESS_DUPLEX, PIPE_TYPE_MESSAGE,
         /* nMaxInstances */ 3,
         /* nOutBufSize */ 102,
         /* nInBufSize */ 24,
@@ -442,7 +439,7 @@ static DWORD CALLBACK serverThreadMain1(LPVOID arg)
 
     trace("serverThreadMain1 start\n");
     /* Set up a simple echo server */
-    hnp = CreateNamedPipe(PIPENAME "serverThreadMain1", PIPE_ACCESS_DUPLEX,
+    hnp = CreateNamedPipeA(PIPENAME "serverThreadMain1", PIPE_ACCESS_DUPLEX,
         PIPE_TYPE_BYTE | PIPE_WAIT,
         /* nMaxInstances */ 1,
         /* nOutBufSize */ 1024,
@@ -494,7 +491,7 @@ static DWORD CALLBACK serverThreadMain2(LPVOID arg)
 
     trace("serverThreadMain2\n");
     /* Set up a simple echo server */
-    hnp = CreateNamedPipe(PIPENAME "serverThreadMain2", PIPE_ACCESS_DUPLEX,
+    hnp = CreateNamedPipeA(PIPENAME "serverThreadMain2", PIPE_ACCESS_DUPLEX,
         PIPE_TYPE_BYTE | PIPE_WAIT,
         /* nMaxInstances */ 2,
         /* nOutBufSize */ 1024,
@@ -546,7 +543,7 @@ static DWORD CALLBACK serverThreadMain2(LPVOID arg)
 
         /* Set up next echo server */
         hnpNext =
-            CreateNamedPipe(PIPENAME "serverThreadMain2", PIPE_ACCESS_DUPLEX,
+            CreateNamedPipeA(PIPENAME "serverThreadMain2", PIPE_ACCESS_DUPLEX,
             PIPE_TYPE_BYTE | PIPE_WAIT,
             /* nMaxInstances */ 2,
             /* nOutBufSize */ 1024,
@@ -570,7 +567,7 @@ static DWORD CALLBACK serverThreadMain3(LPVOID arg)
 
     trace("serverThreadMain3\n");
     /* Set up a simple echo server */
-    hnp = CreateNamedPipe(PIPENAME "serverThreadMain3", PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
+    hnp = CreateNamedPipeA(PIPENAME "serverThreadMain3", PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
         PIPE_TYPE_BYTE | PIPE_WAIT,
         /* nMaxInstances */ 1,
         /* nOutBufSize */ 1024,
@@ -579,7 +576,7 @@ static DWORD CALLBACK serverThreadMain3(LPVOID arg)
         /* lpSecurityAttrib */ NULL);
     ok(hnp != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
 
-    hEvent = CreateEvent(NULL,  /* security attribute */
+    hEvent = CreateEventW(NULL,  /* security attribute */
         TRUE,                   /* manual reset event */
         FALSE,                  /* initial state */
         NULL);                  /* name */
@@ -699,7 +696,7 @@ static DWORD CALLBACK serverThreadMain4(LPVOID arg)
 
     trace("serverThreadMain4\n");
     /* Set up a simple echo server */
-    hnp = CreateNamedPipe(PIPENAME "serverThreadMain4", PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
+    hnp = CreateNamedPipeA(PIPENAME "serverThreadMain4", PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
         PIPE_TYPE_BYTE | PIPE_WAIT,
         /* nMaxInstances */ 1,
         /* nOutBufSize */ 1024,
@@ -822,7 +819,7 @@ static DWORD CALLBACK serverThreadMain5(LPVOID arg)
 
     trace("serverThreadMain5\n");
     /* Set up a simple echo server */
-    hnp = CreateNamedPipe(PIPENAME "serverThreadMain5", PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
+    hnp = CreateNamedPipeA(PIPENAME "serverThreadMain5", PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
         PIPE_TYPE_BYTE | PIPE_WAIT,
         /* nMaxInstances */ 1,
         /* nOutBufSize */ 1024,
@@ -831,7 +828,7 @@ static DWORD CALLBACK serverThreadMain5(LPVOID arg)
         /* lpSecurityAttrib */ NULL);
     ok(hnp != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
 
-    hEvent = CreateEvent(NULL,  /* security attribute */
+    hEvent = CreateEventW(NULL,  /* security attribute */
         TRUE,                   /* manual reset event */
         FALSE,                  /* initial state */
         NULL);                  /* name */
@@ -966,7 +963,7 @@ static void test_NamedPipe_2(void)
 
     trace("test_NamedPipe_2 starting\n");
     /* Set up a twenty second timeout */
-    alarm_event = CreateEvent( NULL, TRUE, FALSE, NULL );
+    alarm_event = CreateEventW( NULL, TRUE, FALSE, NULL );
     SetLastError(0xdeadbeef);
     alarmThread = CreateThread(NULL, 0, alarmThreadMain, (void *) 20000, 0, &alarmThreadId);
     ok(alarmThread != NULL, "CreateThread failed: %d\n", GetLastError());
@@ -1022,7 +1019,7 @@ static int test_DisconnectNamedPipe(void)
     DWORD ret;
 
     SetLastError(0xdeadbeef);
-    hnp = CreateNamedPipe(PIPENAME, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_WAIT,
+    hnp = CreateNamedPipeA(PIPENAME, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_WAIT,
         /* nMaxInstances */ 1,
         /* nOutBufSize */ 1024,
         /* nInBufSize */ 1024,
@@ -1179,7 +1176,7 @@ static DWORD CALLBACK named_pipe_client_func(LPVOID p)
         CloseHandle(process_token);
     }
 
-    pipe = CreateFile(PIPE_NAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, params->security_flags, NULL);
+    pipe = CreateFileA(PIPE_NAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, params->security_flags, NULL);
     ok(pipe != INVALID_HANDLE_VALUE, "CreateFile for pipe failed with error %d\n", GetLastError());
 
     ret = WriteFile(pipe, message, sizeof(message), &bytes_written, NULL);
@@ -1260,7 +1257,7 @@ static void test_ImpersonateNamedPipeClient(HANDLE hClientToken, DWORD security_
     SECURITY_IMPERSONATION_LEVEL ImpersonationLevel;
     DWORD size;
 
-    hPipeServer = CreateNamedPipe(PIPE_NAME, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, 1, 100, 100, NMPWAIT_USE_DEFAULT_WAIT, NULL);
+    hPipeServer = CreateNamedPipeA(PIPE_NAME, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, 1, 100, 100, NMPWAIT_USE_DEFAULT_WAIT, NULL);
     ok(hPipeServer != INVALID_HANDLE_VALUE, "CreateNamedPipe failed with error %d\n", GetLastError());
 
     params.security_flags = security_flags;
@@ -1648,7 +1645,7 @@ static void test_NamedPipeHandleState(void)
     DWORD state, instances, maxCollectionCount, collectDataTimeout;
     char userName[MAX_PATH];
 
-    server = CreateNamedPipe(PIPENAME, PIPE_ACCESS_DUPLEX,
+    server = CreateNamedPipeA(PIPENAME, PIPE_ACCESS_DUPLEX,
         /* dwOpenMode */ PIPE_TYPE_BYTE | PIPE_WAIT,
         /* nMaxInstances */ 1,
         /* nOutBufSize */ 1024,
@@ -1656,10 +1653,10 @@ static void test_NamedPipeHandleState(void)
         /* nDefaultWait */ NMPWAIT_USE_DEFAULT_WAIT,
         /* lpSecurityAttrib */ NULL);
     ok(server != INVALID_HANDLE_VALUE, "cf failed\n");
-    ret = GetNamedPipeHandleState(server, NULL, NULL, NULL, NULL, NULL, 0);
+    ret = GetNamedPipeHandleStateA(server, NULL, NULL, NULL, NULL, NULL, 0);
     todo_wine
     ok(ret, "GetNamedPipeHandleState failed: %d\n", GetLastError());
-    ret = GetNamedPipeHandleState(server, &state, &instances, NULL, NULL, NULL,
+    ret = GetNamedPipeHandleStateA(server, &state, &instances, NULL, NULL, NULL,
         0);
     todo_wine
     ok(ret, "GetNamedPipeHandleState failed: %d\n", GetLastError());
@@ -1672,7 +1669,7 @@ static void test_NamedPipeHandleState(void)
      * on a local pipe.
      */
     SetLastError(0xdeadbeef);
-    ret = GetNamedPipeHandleState(server, &state, &instances,
+    ret = GetNamedPipeHandleStateA(server, &state, &instances,
         &maxCollectionCount, &collectDataTimeout, userName,
         sizeof(userName) / sizeof(userName[0]));
     todo_wine
@@ -1705,7 +1702,7 @@ static void test_NamedPipeHandleState(void)
     CloseHandle(client);
     CloseHandle(server);
 
-    server = CreateNamedPipe(PIPENAME, PIPE_ACCESS_DUPLEX,
+    server = CreateNamedPipeA(PIPENAME, PIPE_ACCESS_DUPLEX,
         /* dwOpenMode */ PIPE_TYPE_MESSAGE | PIPE_WAIT,
         /* nMaxInstances */ 1,
         /* nOutBufSize */ 1024,
@@ -1713,10 +1710,10 @@ static void test_NamedPipeHandleState(void)
         /* nDefaultWait */ NMPWAIT_USE_DEFAULT_WAIT,
         /* lpSecurityAttrib */ NULL);
     ok(server != INVALID_HANDLE_VALUE, "cf failed\n");
-    ret = GetNamedPipeHandleState(server, NULL, NULL, NULL, NULL, NULL, 0);
+    ret = GetNamedPipeHandleStateA(server, NULL, NULL, NULL, NULL, NULL, 0);
     todo_wine
     ok(ret, "GetNamedPipeHandleState failed: %d\n", GetLastError());
-    ret = GetNamedPipeHandleState(server, &state, &instances, NULL, NULL, NULL,
+    ret = GetNamedPipeHandleStateA(server, &state, &instances, NULL, NULL, NULL,
         0);
     todo_wine
     ok(ret, "GetNamedPipeHandleState failed: %d\n", GetLastError());
@@ -1763,7 +1760,7 @@ static void test_readfileex_pending(void)
     const char test_string[] = "test";
     int i;
 
-    server = CreateNamedPipe(PIPENAME, FILE_FLAG_OVERLAPPED | PIPE_ACCESS_DUPLEX,
+    server = CreateNamedPipeA(PIPENAME, FILE_FLAG_OVERLAPPED | PIPE_ACCESS_DUPLEX,
         /* dwOpenMode */ PIPE_TYPE_BYTE | PIPE_WAIT,
         /* nMaxInstances */ 1,
         /* nOutBufSize */ 1024,
@@ -1911,9 +1908,9 @@ START_TEST(pipe)
 {
     HMODULE hmod;
 
-    hmod = GetModuleHandle("advapi32.dll");
+    hmod = GetModuleHandleA("advapi32.dll");
     pDuplicateTokenEx = (void *) GetProcAddress(hmod, "DuplicateTokenEx");
-    hmod = GetModuleHandle("kernel32.dll");
+    hmod = GetModuleHandleA("kernel32.dll");
     pQueueUserAPC = (void *) GetProcAddress(hmod, "QueueUserAPC");
 
     if (test_DisconnectNamedPipe())
