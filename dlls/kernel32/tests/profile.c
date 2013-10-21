@@ -382,19 +382,19 @@ static void test_profile_existing(void)
 
     for (i=0; i < sizeof(pe)/sizeof(pe[0]); i++)
     {
-        h = CreateFile(testfile1, pe[i].dwDesiredAccess, pe[i].dwShareMode, NULL,
+        h = CreateFileA(testfile1, pe[i].dwDesiredAccess, pe[i].dwShareMode, NULL,
                        CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
         ok(INVALID_HANDLE_VALUE != h, "%d: CreateFile failed\n",i);
         SetLastError(0xdeadbeef);
 
-        ret = WritePrivateProfileString(SECTION, KEY, "12345", testfile1);
+        ret = WritePrivateProfileStringA(SECTION, KEY, "12345", testfile1);
         if (!pe[i].write_error)
         {
             if (!ret)
                 ok( broken(GetLastError() == pe[i].broken_error),
                     "%d: WritePrivateProfileString failed with error %u\n", i, GetLastError() );
             CloseHandle(h);
-            size = GetPrivateProfileString(SECTION, KEY, 0, buffer, MAX_PATH, testfile1);
+            size = GetPrivateProfileStringA(SECTION, KEY, 0, buffer, MAX_PATH, testfile1);
             if (ret)
                 ok( size == 5, "%d: test failed, number of characters copied: %d instead of 5\n", i, size );
             else
@@ -408,21 +408,21 @@ static void test_profile_existing(void)
                 ok( err == pe[i].write_error, "%d: WritePrivateProfileString failed with error %u/%u\n",
                     i, err, pe[i].write_error );
             CloseHandle(h);
-            size = GetPrivateProfileString(SECTION, KEY, 0, buffer, MAX_PATH, testfile1);
+            size = GetPrivateProfileStringA(SECTION, KEY, 0, buffer, MAX_PATH, testfile1);
             ok( !size, "%d: test failed, number of characters copied: %d instead of 0\n", i, size );
         }
 
-        ok( DeleteFile(testfile1), "delete failed\n" );
+        ok( DeleteFileA(testfile1), "delete failed\n" );
     }
 
-    h = CreateFile(testfile2, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    h = CreateFileA(testfile2, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     sprintf( buffer, "[%s]\r\n%s=123\r\n", SECTION, KEY );
     ok( WriteFile( h, buffer, strlen(buffer), &size, NULL ), "failed to write\n" );
     CloseHandle( h );
 
     for (i=0; i < sizeof(pe)/sizeof(pe[0]); i++)
     {
-        h = CreateFile(testfile2, pe[i].dwDesiredAccess, pe[i].dwShareMode, NULL,
+        h = CreateFileA(testfile2, pe[i].dwDesiredAccess, pe[i].dwShareMode, NULL,
                        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
         ok(INVALID_HANDLE_VALUE != h, "%d: CreateFile failed\n",i);
         SetLastError(0xdeadbeef);
@@ -436,7 +436,7 @@ static void test_profile_existing(void)
             ok( !ret, "%d: GetPrivateProfileString succeeded\n", i );
         CloseHandle(h);
     }
-    ok( DeleteFile(testfile2), "delete failed\n" );
+    ok( DeleteFileA(testfile2), "delete failed\n" );
 }
 
 static void test_profile_delete_on_close(void)
@@ -446,14 +446,14 @@ static void test_profile_delete_on_close(void)
     DWORD size, res;
     static const char contents[] = "[" SECTION "]\n" KEY "=123\n";
 
-    h = CreateFile(testfile, GENERIC_WRITE, FILE_SHARE_READ, NULL,
+    h = CreateFileA(testfile, GENERIC_WRITE, FILE_SHARE_READ, NULL,
                     CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, NULL);
     res = WriteFile( h, contents, sizeof contents - 1, &size, NULL );
     ok( res, "Cannot write test file: %x\n", GetLastError() );
     ok( size == sizeof contents - 1, "Test file: partial write\n");
 
     SetLastError(0xdeadbeef);
-    res = GetPrivateProfileInt(SECTION, KEY, 0, testfile);
+    res = GetPrivateProfileIntA(SECTION, KEY, 0, testfile);
     ok( res == 123 ||
         broken(res == 0 && GetLastError() == ERROR_SHARING_VIOLATION), /* Win9x, WinME */
         "Got %d instead of 123\n", res);
@@ -470,14 +470,14 @@ static void test_profile_refresh(void)
     static const char contents1[] = "[" SECTION "]\n" KEY "=123\n";
     static const char contents2[] = "[" SECTION "]\n" KEY "=124\n";
 
-    h = CreateFile(testfile, GENERIC_WRITE, FILE_SHARE_READ, NULL,
+    h = CreateFileA(testfile, GENERIC_WRITE, FILE_SHARE_READ, NULL,
                     CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, NULL);
     res = WriteFile( h, contents1, sizeof contents1 - 1, &size, NULL );
     ok( res, "Cannot write test file: %x\n", GetLastError() );
     ok( size == sizeof contents1 - 1, "Test file: partial write\n");
 
     SetLastError(0xdeadbeef);
-    res = GetPrivateProfileInt(SECTION, KEY, 0, testfile);
+    res = GetPrivateProfileIntA(SECTION, KEY, 0, testfile);
     ok( res == 123 ||
         broken(res == 0 && GetLastError() == ERROR_SHARING_VIOLATION), /* Win9x, WinME */
         "Got %d instead of 123\n", res);
@@ -486,14 +486,14 @@ static void test_profile_refresh(void)
 
     /* Test proper invalidation of wine's profile file cache */
 
-    h = CreateFile(testfile, GENERIC_WRITE, FILE_SHARE_READ, NULL,
+    h = CreateFileA(testfile, GENERIC_WRITE, FILE_SHARE_READ, NULL,
                     CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, NULL);
     res = WriteFile( h, contents2, sizeof contents2 - 1, &size, NULL );
     ok( res, "Cannot write test file: %x\n", GetLastError() );
     ok( size == sizeof contents2 - 1, "Test file: partial write\n");
 
     SetLastError(0xdeadbeef);
-    res = GetPrivateProfileInt(SECTION, KEY, 0, testfile);
+    res = GetPrivateProfileIntA(SECTION, KEY, 0, testfile);
     ok( res == 124 ||
         broken(res == 0 && GetLastError() == 0xdeadbeef), /* Win9x, WinME */
         "Got %d instead of 124\n", res);
@@ -503,7 +503,7 @@ static void test_profile_refresh(void)
 
     /* Cache must be invalidated if file no longer exists and default must be returned */
     SetLastError(0xdeadbeef);
-    res = GetPrivateProfileInt(SECTION, KEY, 421, testfile);
+    res = GetPrivateProfileIntA(SECTION, KEY, 421, testfile);
     ok( res == 421 ||
         broken(res == 0 && GetLastError() == 0xdeadbeef), /* Win9x, WinME */
         "Got %d instead of 421\n", res);
