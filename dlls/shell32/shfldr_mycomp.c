@@ -255,7 +255,8 @@ static DWORD get_drive_map(void)
                                       'P','o','l','i','c','i','e','s','\\',
                                       'E','x','p','l','o','r','e','r',0};
     static const WCHAR nodrivesW[] = {'N','o','D','r','i','v','e','s',0};
-    static DWORD drive_mask, init_done;
+    static DWORD drive_mask;
+    static BOOL init_done = FALSE;
 
     if (!init_done)
     {
@@ -277,7 +278,7 @@ static DWORD get_drive_map(void)
             RegCloseKey( hkey );
         }
         drive_mask = mask;
-        init_done = 1;
+        init_done = TRUE;
     }
 
     return GetLogicalDrives() & ~drive_mask;
@@ -626,7 +627,7 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDisplayNameOf (IShellFolder2 *iface,
                     static const WCHAR wantsForParsingW[] =
                      { 'W','a','n','t','s','F','o','r','P','a','r','s','i','n',
                      'g',0 };
-                    int bWantsForParsing = FALSE;
+                    BOOL bWantsForParsing = FALSE;
                     WCHAR szRegPath[100];
                     LONG r;
 

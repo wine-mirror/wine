@@ -282,7 +282,7 @@ BOOL XDG_MakeDirs(const char *path)
  */
 static int dskentry_encode(const char *value, char *output)
 {
-    int only_spc = TRUE;
+    BOOL only_spc = TRUE;
     int num_written = 0;
     const char *c;
     for (c = value; *c; c++)

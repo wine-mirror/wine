@@ -1138,7 +1138,7 @@ ISFHelper_fnAddFolder (ISFHelper * iface, HWND hwnd, LPCWSTR pwszName,
 {
     IGenericSFImpl *This = impl_from_ISFHelper(iface);
     WCHAR wszNewDir[MAX_PATH];
-    DWORD bRes;
+    BOOL bRes;
     HRESULT hres = E_FAIL;
 
     TRACE ("(%p)(%s %p)\n", This, debugstr_w(pwszName), ppidlOut);

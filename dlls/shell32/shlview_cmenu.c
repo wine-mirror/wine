@@ -203,7 +203,8 @@ static HRESULT WINAPI ItemMenu_QueryContextMenu(
 
 static void DoOpenExplore(ContextMenu *This, HWND hwnd, LPCSTR verb)
 {
-	UINT i, bFolderFound = FALSE;
+        UINT i;
+        BOOL bFolderFound = FALSE;
 	LPITEMIDLIST	pidlFQ;
 	SHELLEXECUTEINFOA	sei;
 

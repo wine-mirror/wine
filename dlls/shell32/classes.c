@@ -58,7 +58,7 @@ BOOL HCR_MapTypeToValueW(LPCWSTR szExtension, LPWSTR szFileType, LONG len, BOOL 
 
         /* added because we do not want to have double dots */
         if (szExtension[0] == '.')
-          bPrependDot = 0;
+          bPrependDot = FALSE;
 
 	if (bPrependDot)
 	  szTemp[0] = '.';
@@ -92,7 +92,7 @@ BOOL HCR_MapTypeToValueA(LPCSTR szExtension, LPSTR szFileType, LONG len, BOOL bP
 
         /* added because we do not want to have double dots */
         if (szExtension[0] == '.')
-          bPrependDot = 0;
+          bPrependDot = FALSE;
 
 	if (bPrependDot)
 	  szTemp[0] = '.';

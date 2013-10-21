@@ -711,7 +711,7 @@ static	void	Control_DoLaunch(CPanel* panel, HWND hWnd, LPCWSTR wszCmd)
     signed 	sp = -1;
     LPWSTR	extraPmtsBuf = NULL;
     LPWSTR	extraPmts = NULL;
-    int        quoted = 0;
+    BOOL        quoted = FALSE;
     CPlApplet *applet;
 
     buffer = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(wszCmd) + 1) * sizeof(*wszCmd));
@@ -746,7 +746,7 @@ static	void	Control_DoLaunch(CPanel* panel, HWND hWnd, LPCWSTR wszCmd)
     if (extraPmtsBuf != NULL)
     {
         beg = end = extraPmtsBuf;
-        quoted = 0;
+        quoted = FALSE;
 
         for (;;) {
             ch = *end;

@@ -209,7 +209,7 @@ static BOOL OleStrToStrNW (LPWSTR lpwStr, INT nwStr, LPCWSTR lpOle, INT nOle)
 	if (lstrcpynW ( lpwStr, lpOle, nwStr))
 	{ return lstrlenW (lpwStr);
 	}
-	return 0;
+        return FALSE;
 }
 
 BOOL WINAPI OleStrToStrNAW (LPVOID lpOut, INT nOut, LPCVOID lpIn, INT nIn)
