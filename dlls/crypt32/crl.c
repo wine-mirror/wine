@@ -37,18 +37,43 @@ static void CRL_free(context_t *context)
     LocalFree(crl->ctx.pCrlInfo);
 }
 
+static const context_vtbl_t crl_vtbl;
+
 static context_t *CRL_clone(context_t *context, WINECRYPT_CERTSTORE *store, BOOL use_link)
 {
     crl_t *crl;
 
-    if(!use_link) {
-        FIXME("Only links supported\n");
-        return NULL;
-    }
+    if(use_link) {
+        crl = (crl_t*)Context_CreateLinkContext(sizeof(CRL_CONTEXT), context, store);
+        if(!crl)
+            return NULL;
+    }else {
+        const crl_t *cloned = (const crl_t*)context;
+        void *new_context;
+        DWORD size = 0;
+        BOOL res;
 
-    crl = (crl_t*)Context_CreateLinkContext(sizeof(CRL_CONTEXT), context, store);
-    if(!crl)
-        return NULL;
+        new_context = Context_CreateDataContext(sizeof(CRL_CONTEXT), &crl_vtbl, store);
+        if(!new_context)
+            return NULL;
+        crl = crl_from_ptr(new_context);
+
+        Context_CopyProperties(&crl->ctx, &cloned->ctx);
+
+        crl->ctx.dwCertEncodingType = cloned->ctx.dwCertEncodingType;
+        crl->ctx.pbCrlEncoded = CryptMemAlloc(cloned->ctx.cbCrlEncoded);
+        memcpy(crl->ctx.pbCrlEncoded, cloned->ctx.pbCrlEncoded, cloned->ctx.cbCrlEncoded);
+        crl->ctx.cbCrlEncoded = cloned->ctx.cbCrlEncoded;
+
+        /* FIXME: We don't need to decode the object here, we could just clone crl info. */
+        res = CryptDecodeObjectEx(crl->ctx.dwCertEncodingType, X509_CERT_CRL_TO_BE_SIGNED,
+         crl->ctx.pbCrlEncoded, crl->ctx.cbCrlEncoded, CRYPT_DECODE_ALLOC_FLAG, NULL,
+         &crl->ctx.pCrlInfo, &size);
+        if(!res) {
+            CertFreeCRLContext(&crl->ctx);
+            return NULL;
+        }
+    }
 
     crl->ctx.hCertStore = store;
     return &crl->base;
