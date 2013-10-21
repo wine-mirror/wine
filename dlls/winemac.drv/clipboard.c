@@ -918,25 +918,25 @@ static HANDLE import_utf8_to_text(CFDataRef data)
 static HANDLE import_utf8_to_unicodetext(CFDataRef data)
 {
     const BYTE *src;
-    unsigned long data_len;
+    unsigned long src_len;
     unsigned long new_lines = 0;
     LPSTR dst;
     unsigned long i, j;
     HANDLE unicode_handle = NULL;
 
     src = CFDataGetBytePtr(data);
-    data_len = CFDataGetLength(data);
-    for (i = 0; i < data_len; i++)
+    src_len = CFDataGetLength(data);
+    for (i = 0; i < src_len; i++)
     {
         if (src[i] == '\n')
             new_lines++;
     }
 
-    if ((dst = HeapAlloc(GetProcessHeap(), 0, data_len + new_lines + 1)))
+    if ((dst = HeapAlloc(GetProcessHeap(), 0, src_len + new_lines + 1)))
     {
         UINT count;
 
-        for (i = 0, j = 0; i < data_len; i++)
+        for (i = 0, j = 0; i < src_len; i++)
         {
             if (src[i] == '\n')
                 dst[j++] = '\r';
@@ -1000,25 +1000,25 @@ static HANDLE import_utf16_to_text(CFDataRef data)
 static HANDLE import_utf16_to_unicodetext(CFDataRef data)
 {
     const WCHAR *src;
-    unsigned long data_len;
+    unsigned long src_len;
     unsigned long new_lines = 0;
     LPWSTR dst;
     unsigned long i, j;
     HANDLE unicode_handle;
 
     src = (const WCHAR *)CFDataGetBytePtr(data);
-    data_len = CFDataGetLength(data) / sizeof(WCHAR);
-    for (i = 0; i < data_len; i++)
+    src_len = CFDataGetLength(data) / sizeof(WCHAR);
+    for (i = 0; i < src_len; i++)
     {
         if (src[i] == '\n')
             new_lines++;
     }
 
-    if ((unicode_handle = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, (data_len + new_lines + 1) * sizeof(WCHAR))))
+    if ((unicode_handle = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, (src_len + new_lines + 1) * sizeof(WCHAR))))
     {
         dst = GlobalLock(unicode_handle);
 
-        for (i = 0, j = 0; i < data_len; i++)
+        for (i = 0, j = 0; i < src_len; i++)
         {
             if (src[i] == '\n')
                 dst[j++] = '\r';
@@ -1351,27 +1351,27 @@ static CFDataRef export_unicodetext_to_utf16(HANDLE data)
 {
     CFMutableDataRef ret;
     const WCHAR *src;
-    INT dst_len;
+    INT src_len;
 
     src = GlobalLock(data);
     if (!src) return NULL;
 
-    dst_len = GlobalSize(data) / sizeof(WCHAR);
-    if (dst_len) dst_len--; /* Leave off null terminator. */
-    ret = CFDataCreateMutable(NULL, dst_len * sizeof(WCHAR));
+    src_len = GlobalSize(data) / sizeof(WCHAR);
+    if (src_len) src_len--; /* Leave off null terminator. */
+    ret = CFDataCreateMutable(NULL, src_len * sizeof(WCHAR));
     if (ret)
     {
         LPWSTR dst;
         int i, j;
 
-        CFDataSetLength(ret, dst_len * sizeof(WCHAR));
+        CFDataSetLength(ret, src_len * sizeof(WCHAR));
         dst = (LPWSTR)CFDataGetMutableBytePtr(ret);
 
         /* Remove carriage returns */
-        for (i = 0, j = 0; i < dst_len; i++)
+        for (i = 0, j = 0; i < src_len; i++)
         {
             if (src[i] == '\r' &&
-                (i + 1 >= dst_len || src[i + 1] == '\n' || src[i + 1] == '\0'))
+                (i + 1 >= src_len || src[i + 1] == '\n' || src[i + 1] == '\0'))
                 continue;
             dst[j++] = src[i];
         }
