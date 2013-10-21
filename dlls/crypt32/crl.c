@@ -499,14 +499,7 @@ BOOL WINAPI CertGetCRLContextProperty(PCCRL_CONTEXT pCRLContext,
         }
         else
         {
-            if (pCRLContext->hCertStore)
-                ret = CertGetStoreProperty(pCRLContext->hCertStore, dwPropId,
-                 pvData, pcbData);
-            else
-            {
-                *(DWORD *)pvData = 0;
-                ret = TRUE;
-            }
+            ret = CertGetStoreProperty(pCRLContext->hCertStore, dwPropId, pvData, pcbData);
         }
         break;
     default:

@@ -341,26 +341,21 @@ PCCTL_CONTEXT WINAPI CertFindCTLInStore(HCERTSTORE hCertStore,
 
 BOOL WINAPI CertDeleteCTLFromStore(PCCTL_CONTEXT pCtlContext)
 {
+    WINECRYPT_CERTSTORE *hcs = pCtlContext->hCertStore;
+    ctl_t *ctl = ctl_from_ptr(pCtlContext);
     BOOL ret;
 
     TRACE("(%p)\n", pCtlContext);
 
     if (!pCtlContext)
-        ret = TRUE;
-    else if (!pCtlContext->hCertStore)
-        ret = CertFreeCTLContext(pCtlContext);
-    else
-    {
-        WINECRYPT_CERTSTORE *hcs = pCtlContext->hCertStore;
-        ctl_t *ctl = ctl_from_ptr(pCtlContext);
+        return TRUE;
 
-        if (hcs->dwMagic != WINE_CRYPTCERTSTORE_MAGIC)
-            ret = FALSE;
-        else
-            ret = hcs->vtbl->ctls.delete(hcs, &ctl->base);
-        if (ret)
-            ret = CertFreeCTLContext(pCtlContext);
-    }
+    if (hcs->dwMagic != WINE_CRYPTCERTSTORE_MAGIC)
+            return FALSE;
+
+    ret = hcs->vtbl->ctls.delete(hcs, &ctl->base);
+    if (ret)
+        ret = CertFreeCTLContext(pCtlContext);
     return ret;
 }
 
@@ -621,14 +616,7 @@ BOOL WINAPI CertGetCTLContextProperty(PCCTL_CONTEXT pCTLContext,
         }
         else
         {
-            if (pCTLContext->hCertStore)
-                ret = CertGetStoreProperty(pCTLContext->hCertStore, dwPropId,
-                 pvData, pcbData);
-            else
-            {
-                *(DWORD *)pvData = 0;
-                ret = TRUE;
-            }
+            ret = CertGetStoreProperty(pCTLContext->hCertStore, dwPropId, pvData, pcbData);
         }
         break;
     default:

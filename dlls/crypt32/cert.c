@@ -555,15 +555,7 @@ BOOL WINAPI CertGetCertificateContextProperty(PCCERT_CONTEXT pCertContext,
         ret = FALSE;
         break;
     case CERT_ACCESS_STATE_PROP_ID:
-        if (pCertContext->hCertStore)
-            ret = CertGetStoreProperty(pCertContext->hCertStore, dwPropId,
-             pvData, pcbData);
-        else
-        {
-            DWORD state = 0;
-
-            ret = CertContext_CopyParam(pvData, pcbData, &state, sizeof(state));
-        }
+        ret = CertGetStoreProperty(cert->ctx.hCertStore, dwPropId, pvData, pcbData);
         break;
     case CERT_KEY_PROV_HANDLE_PROP_ID:
     {
