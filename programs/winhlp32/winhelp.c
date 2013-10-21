@@ -70,7 +70,7 @@ static void WINHELP_InitFonts(HWND hWnd)
 #define FONTS_LEN (sizeof(logfontlist)/sizeof(*logfontlist))
 
     static HFONT fonts[FONTS_LEN];
-    static BOOL init = 0;
+    static BOOL init = FALSE;
 
     win->fonts_len = FONTS_LEN;
     win->fonts = fonts;
@@ -84,7 +84,7 @@ static void WINHELP_InitFonts(HWND hWnd)
             fonts[i] = CreateFontIndirectW(&logfontlist[i]);
 	}
 
-        init = 1;
+        init = TRUE;
     }
 }
 
