@@ -72,7 +72,7 @@ typedef struct
     RECT checkbox;  /* checkbox allowing the control to be enabled/disabled */
     RECT calbutton; /* button that toggles the dropdown of the monthcal control */
     BOOL bCalDepressed; /* TRUE = cal button is depressed */
-    int  bDropdownEnabled;
+    BOOL bDropdownEnabled;
     int  select;
     WCHAR charsEntered[4];
     int nCharsEntered;
