@@ -1635,7 +1635,7 @@ static LRESULT CALLBACK HeaderTestWndProc(HWND hWnd, UINT msg, WPARAM wParam, LP
     return 0L;
 }
 
-static int init(void)
+static BOOL init(void)
 {
     HMODULE hComctl32;
     BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
@@ -1650,7 +1650,7 @@ static int init(void)
     if (!pInitCommonControlsEx)
     {
         skip("InitCommonControlsEx() is missing. Skipping the tests\n");
-        return 0;
+        return FALSE;
     }
 
     iccex.dwSize = sizeof(iccex);
@@ -1686,7 +1686,7 @@ static int init(void)
       NULL, NULL, GetModuleHandleA(NULL), 0);
     assert(hHeaderParentWnd != NULL);
     ShowWindow(hHeaderParentWnd, SW_SHOW);
-    return 1;
+    return TRUE;
 }
 
 /* maximum 8 items allowed */

@@ -473,7 +473,7 @@ static LRESULT CALLBACK ComboExTestWndProc(HWND hWnd, UINT msg, WPARAM wParam, L
     return 0L;
 }
 
-static int init(void)
+static BOOL init(void)
 {
     HMODULE hComctl32;
     BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
@@ -485,7 +485,7 @@ static int init(void)
     if (!pInitCommonControlsEx)
     {
         win_skip("InitCommonControlsEx() is missing. Skipping the tests\n");
-        return 0;
+        return FALSE;
     }
     iccex.dwSize = sizeof(iccex);
     iccex.dwICC  = ICC_USEREX_CLASSES;
@@ -510,7 +510,7 @@ static int init(void)
     assert(hComboExParentWnd != NULL);
 
     hMainHinst = GetModuleHandleA(NULL);
-    return 1;
+    return TRUE;
 }
 
 static void cleanup(void)

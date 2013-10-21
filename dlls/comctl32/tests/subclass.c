@@ -279,7 +279,7 @@ static BOOL RegisterWindowClasses(void)
     return TRUE;
 }
 
-static int init_function_pointers(void)
+static BOOL init_function_pointers(void)
 {
     HMODULE hmod;
     void *ptr;
@@ -299,7 +299,7 @@ static int init_function_pointers(void)
     if(!pSetWindowSubclass || !pRemoveWindowSubclass || !pDefSubclassProc)
     {
         win_skip("SetWindowSubclass and friends are not available\n");
-        return 0;
+        return FALSE;
     }
 
     /* test named exports */
@@ -316,7 +316,7 @@ static int init_function_pointers(void)
 #undef TESTNAMED
     }
 
-    return 1;
+    return TRUE;
 }
 
 START_TEST(subclass)

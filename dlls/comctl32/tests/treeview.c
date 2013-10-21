@@ -957,8 +957,8 @@ static void test_get_set_tooltips(void)
 
 static void test_get_set_unicodeformat(void)
 {
-    BOOL bPreviousSetting = 0;
-    BOOL bNewSetting = 0;
+    BOOL bPreviousSetting = FALSE;
+    BOOL bNewSetting = FALSE;
     HWND hTree;
 
     hTree = create_treeview_control(0);
@@ -966,19 +966,19 @@ static void test_get_set_unicodeformat(void)
 
     /* Check that an invalid format returned by NF_QUERY defaults to ANSI */
     bPreviousSetting = (BOOL)SendMessage( hTree, TVM_GETUNICODEFORMAT, 0, 0 );
-    ok(bPreviousSetting == 0, "Format should be ANSI.\n");
+    ok(bPreviousSetting == FALSE, "Format should be ANSI.\n");
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     /* Set to Unicode */
     bPreviousSetting = (BOOL)SendMessage( hTree, TVM_SETUNICODEFORMAT, 1, 0 );
     bNewSetting = (BOOL)SendMessage( hTree, TVM_GETUNICODEFORMAT, 0, 0 );
-    ok(bNewSetting == 1, "Unicode setting did not work.\n");
+    ok(bNewSetting == TRUE, "Unicode setting did not work.\n");
 
     /* Set to ANSI */
     SendMessage( hTree, TVM_SETUNICODEFORMAT, 0, 0 );
     bNewSetting = (BOOL)SendMessage( hTree, TVM_GETUNICODEFORMAT, 0, 0 );
-    ok(bNewSetting == 0, "ANSI setting did not work.\n");
+    ok(bNewSetting == FALSE, "ANSI setting did not work.\n");
 
     /* Revert to original setting */
     SendMessage( hTree, TVM_SETUNICODEFORMAT, bPreviousSetting, 0 );
