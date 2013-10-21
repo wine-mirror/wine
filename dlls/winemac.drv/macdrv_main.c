@@ -52,6 +52,7 @@ BOOL allow_vsync = TRUE;
 BOOL allow_set_gamma = TRUE;
 int left_option_is_alt = 0;
 int right_option_is_alt = 0;
+BOOL allow_software_rendering = FALSE;
 HMODULE macdrv_module = 0;
 
 
@@ -175,6 +176,9 @@ static void setup_options(void)
         left_option_is_alt = IS_OPTION_TRUE(buffer[0]);
     if (!get_config_key(hkey, appkey, "RightOptionIsAlt", buffer, sizeof(buffer)))
         right_option_is_alt = IS_OPTION_TRUE(buffer[0]);
+
+    if (!get_config_key(hkey, appkey, "AllowSoftwareRendering", buffer, sizeof(buffer)))
+        allow_software_rendering = IS_OPTION_TRUE(buffer[0]);
 
     if (appkey) RegCloseKey(appkey);
     if (hkey) RegCloseKey(hkey);

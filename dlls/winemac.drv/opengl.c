@@ -619,6 +619,11 @@ static void enum_renderer_pixel_formats(renderer_properties renderer, CFMutableA
         attribs[n++] = kCGLPFAAccelerated;
         attribs[n++] = kCGLPFANoRecovery;
     }
+    else if (!allow_software_rendering)
+    {
+        TRACE("ignoring software renderer because AllowSoftwareRendering is off\n");
+        return;
+    }
 
     n_stack[++n_stack_idx] = n;
     for (double_buffer = 0; double_buffer <= 1; double_buffer++)
