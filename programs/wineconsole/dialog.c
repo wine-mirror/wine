@@ -369,12 +369,13 @@ static int CALLBACK font_enum_size(const LOGFONTW* lf, const TEXTMETRICW* tm,
 
     if (WCUSER_ValidateFontMetric(di->data, tm, FontType))
     {
-	int	idx;
+	int	idx = 0;
 
 	/* we want the string to be sorted with a numeric order, not a lexicographic...
 	 * do the job by hand... get where to insert the new string
 	 */
-	for (idx = 0; idx < di->nFont && tm->tmHeight > di->font[idx].height; idx++);
+	while (idx < di->nFont && tm->tmHeight > di->font[idx].height)
+            idx++;
         while (idx < di->nFont &&
                tm->tmHeight == di->font[idx].height &&
                tm->tmWeight > di->font[idx].weight)
