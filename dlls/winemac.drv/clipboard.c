@@ -1716,6 +1716,7 @@ INT CDECL macdrv_CountClipboardFormats(void)
         }
     }
 
+    CFRelease(types);
     CFRelease(seen_formats);
     TRACE(" -> %d\n", ret);
     return ret;
