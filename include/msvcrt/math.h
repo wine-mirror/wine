@@ -68,13 +68,13 @@ double __cdecl frexp(double, int*);
 double __cdecl modf(double, double*);
 double __cdecl fmod(double, double);
 
-double __cdecl hypot(double, double);
-double __cdecl j0(double);
-double __cdecl j1(double);
-double __cdecl jn(int, double);
-double __cdecl y0(double);
-double __cdecl y1(double);
-double __cdecl yn(int, double);
+double __cdecl _hypot(double, double);
+double __cdecl _j0(double);
+double __cdecl _j1(double);
+double __cdecl _jn(int, double);
+double __cdecl _y0(double);
+double __cdecl _y1(double);
+double __cdecl _yn(int, double);
 
 #ifdef __x86_64__
 
@@ -129,7 +129,7 @@ float __cdecl fmodf(float, float);
 #define fabsf(x) ((float)fabs((double)(x)))
 #define ldexpf(x,y) ((float)ldexp((double)(x),(y)))
 
-float __cdecl hypotf(float, float);
+float __cdecl _hypotf(float, float);
 
 int __cdecl _matherr(struct _exception*);
 double __cdecl _cabs(struct _complex);
@@ -170,5 +170,16 @@ static const union {
 #define M_SQRT1_2   0.707106781186547524401
 #endif /* !_MATH_DEFINES_DEFINED */
 #endif /* _USE_MATH_DEFINES */
+
+static inline double hypot( double x, double y ) { return _hypot( x, y ); }
+static inline double j0( double x ) { return _j0( x ); }
+static inline double j1( double x ) { return _j1( x ); }
+static inline double jn( int n, double x ) { return _jn( n, x ); }
+static inline double y0( double x ) { return _y0( x ); }
+static inline double y1( double x ) { return _y1( x ); }
+static inline double yn( int n, double x ) { return _yn( n, x ); }
+static inline double cabs(struct _complex z) { return _cabs( z ); }
+
+static inline float hypotf( float x, float y ) { return _hypotf( x, y ); }
 
 #endif /* __WINE_MATH_H */
