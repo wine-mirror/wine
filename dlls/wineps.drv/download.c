@@ -169,16 +169,15 @@ static BOOL is_room_for_font(PSDRV_PDEVICE *physDev)
  * the font size we'll get the data directly from the TrueType HEAD table rather
  * than using GetOutlineTextMetrics.
  */
-static BOOL get_bbox(HDC hdc, RECT *rc, UINT *emsize)
+static UINT get_bbox(HDC hdc, RECT *rc)
 {
     BYTE head[54]; /* the head table is 54 bytes long */
 
     if(GetFontData(hdc, MS_MAKE_TAG('h','e','a','d'), 0, head, sizeof(head)) == GDI_ERROR)
     {
         ERR("Can't retrieve head table\n");
-        return FALSE;
+        return 0;
     }
-    *emsize = GET_BE_WORD(head + 18); /* unitsPerEm */
     if(rc)
     {
         rc->left   = (signed short)GET_BE_WORD(head + 36); /* xMin */
@@ -186,7 +185,7 @@ static BOOL get_bbox(HDC hdc, RECT *rc, UINT *emsize)
         rc->right  = (signed short)GET_BE_WORD(head + 40); /* xMax */
         rc->top    = (signed short)GET_BE_WORD(head + 42); /* yMax */
     }
-    return TRUE;
+    return GET_BE_WORD(head + 18); /* unitsPerEm */
 }
 
 /****************************************************************************
@@ -231,7 +230,7 @@ static UINT calc_ppem_for_height(HDC hdc, LONG height)
 
     if(ascent + descent == 0) return height;
 
-    get_bbox(hdc, NULL, &emsize);
+    emsize = get_bbox(hdc, NULL);
 
     return MulDiv(emsize, height, ascent + descent);
 }
@@ -314,9 +313,9 @@ BOOL PSDRV_WriteSetDownloadFont(PHYSDEV dev, BOOL vertical)
 
     if(physDev->font.fontinfo.Download == NULL) {
         RECT bbox;
-        UINT emsize;
+        UINT emsize = get_bbox(dev->hdc, &bbox);
 
-        if (!get_bbox(dev->hdc, &bbox, &emsize)) {
+        if (!emsize) {
             HeapFree(GetProcessHeap(), 0, ps_name);
             HeapFree(GetProcessHeap(), 0, potm);
             return FALSE;
