@@ -2001,7 +2001,7 @@ static void run_child_process(void)
     char path[MAX_PATH];
     char **argv;
     PROCESS_INFORMATION pi;
-    STARTUPINFO si = { 0 };
+    STARTUPINFOA si = { 0 };
     HANDLE file;
     FILETIME now;
     BOOL ret;
@@ -2025,7 +2025,7 @@ static void run_child_process(void)
         CloseHandle(file);
     }
     sprintf(cmdline, "\"%s\" %s manifest1", argv[0], argv[1]);
-    ret = CreateProcess(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ret = CreateProcessA(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
     ok(ret, "Could not create process: %u\n", GetLastError());
     winetest_wait_child_process( pi.hProcess );
     CloseHandle(pi.hThread);
@@ -2125,7 +2125,7 @@ todo_wine
 
 static BOOL init_funcs(void)
 {
-    HMODULE hKernel32 = GetModuleHandle("kernel32");
+    HMODULE hKernel32 = GetModuleHandleA("kernel32.dll");
 
 #define X(f) if (!(p##f = (void*)GetProcAddress(hKernel32, #f))) return FALSE;
     X(ActivateActCtx);
