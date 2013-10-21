@@ -6386,11 +6386,12 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
         /* metrics.width = min( metrics.width, ptm->tmMaxCharWidth << 6 ); */
     }
 
+    em_scale = MulDiv(incoming_font->ppem, 1 << 16, incoming_font->ft_face->units_per_EM);
+
     if(FT_IS_SCALABLE(incoming_font->ft_face)) {
         TEXTMETRICW tm;
         if (get_text_metrics(incoming_font, &tm) &&
             !(tm.tmPitchAndFamily & TMPF_FIXED_PITCH)) {
-            em_scale = MulDiv(incoming_font->ppem, 1 << 16, incoming_font->ft_face->units_per_EM);
             avgAdvance = pFT_MulFix(incoming_font->ntmAvgWidth, em_scale);
             if (avgAdvance &&
                 (metrics.horiAdvance+63) >> 6 == pFT_MulFix(incoming_font->ntmAvgWidth*2, em_scale))
