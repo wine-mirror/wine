@@ -49,14 +49,12 @@ static context_t *CRL_clone(context_t *context, WINECRYPT_CERTSTORE *store, BOOL
             return NULL;
     }else {
         const crl_t *cloned = (const crl_t*)context;
-        void *new_context;
         DWORD size = 0;
         BOOL res;
 
-        new_context = Context_CreateDataContext(sizeof(CRL_CONTEXT), &crl_vtbl, store);
-        if(!new_context)
+        crl = (crl_t*)Context_CreateDataContext(sizeof(CRL_CONTEXT), &crl_vtbl, store);
+        if(!crl)
             return NULL;
-        crl = crl_from_ptr(new_context);
 
         Context_CopyProperties(&crl->ctx, &cloned->ctx);
 
@@ -87,9 +85,10 @@ static const context_vtbl_t crl_vtbl = {
 PCCRL_CONTEXT WINAPI CertCreateCRLContext(DWORD dwCertEncodingType,
  const BYTE* pbCrlEncoded, DWORD cbCrlEncoded)
 {
-    PCRL_CONTEXT crl = NULL;
+    crl_t *crl = NULL;
     BOOL ret;
     PCRL_INFO crlInfo = NULL;
+    BYTE *data = NULL;
     DWORD size = 0;
 
     TRACE("(%08x, %p, %d)\n", dwCertEncodingType, pbCrlEncoded,
@@ -103,30 +102,28 @@ PCCRL_CONTEXT WINAPI CertCreateCRLContext(DWORD dwCertEncodingType,
     ret = CryptDecodeObjectEx(dwCertEncodingType, X509_CERT_CRL_TO_BE_SIGNED,
      pbCrlEncoded, cbCrlEncoded, CRYPT_DECODE_ALLOC_FLAG, NULL,
      &crlInfo, &size);
-    if (ret)
-    {
-        BYTE *data = NULL;
+    if (!ret)
+        return NULL;
 
-        crl = Context_CreateDataContext(sizeof(CRL_CONTEXT), &crl_vtbl, &empty_store);
-        if (!crl)
-            goto end;
-        data = CryptMemAlloc(cbCrlEncoded);
-        if (!data)
-        {
-            CertFreeCRLContext(crl);
-            crl = NULL;
-            goto end;
-        }
-        memcpy(data, pbCrlEncoded, cbCrlEncoded);
-        crl->dwCertEncodingType = dwCertEncodingType;
-        crl->pbCrlEncoded       = data;
-        crl->cbCrlEncoded       = cbCrlEncoded;
-        crl->pCrlInfo           = crlInfo;
-        crl->hCertStore         = &empty_store;
+    crl = (crl_t*)Context_CreateDataContext(sizeof(CRL_CONTEXT), &crl_vtbl, &empty_store);
+    if (!crl)
+        return NULL;
+
+    data = CryptMemAlloc(cbCrlEncoded);
+    if (!data)
+    {
+        Context_Release(&crl->base);
+        return NULL;
     }
 
-end:
-    return crl;
+    memcpy(data, pbCrlEncoded, cbCrlEncoded);
+    crl->ctx.dwCertEncodingType = dwCertEncodingType;
+    crl->ctx.pbCrlEncoded       = data;
+    crl->ctx.cbCrlEncoded       = cbCrlEncoded;
+    crl->ctx.pCrlInfo           = crlInfo;
+    crl->ctx.hCertStore         = &empty_store;
+
+    return &crl->ctx;
 }
 
 BOOL WINAPI CertAddEncodedCRLToStore(HCERTSTORE hCertStore,

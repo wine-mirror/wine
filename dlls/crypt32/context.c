@@ -25,7 +25,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(context);
 
-void *Context_CreateDataContext(size_t contextSize, const context_vtbl_t *vtbl, WINECRYPT_CERTSTORE *store)
+context_t *Context_CreateDataContext(size_t contextSize, const context_vtbl_t *vtbl, WINECRYPT_CERTSTORE *store)
 {
     context_t *context;
 
@@ -48,7 +48,7 @@ void *Context_CreateDataContext(size_t contextSize, const context_vtbl_t *vtbl, 
     context->store = store;
 
     TRACE("returning %p\n", context);
-    return context_ptr(context);
+    return context;
 }
 
 context_t *Context_CreateLinkContext(unsigned int contextSize, context_t *linked, WINECRYPT_CERTSTORE *store)

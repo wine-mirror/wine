@@ -389,7 +389,7 @@ DWORD cert_name_to_str_with_indent(DWORD dwCertEncodingType, DWORD indent,
  * which should be one of CERT_CONTEXT, CRL_CONTEXT, or CTL_CONTEXT.
  * Free with Context_Release.
  */
-void *Context_CreateDataContext(size_t contextSize, const context_vtbl_t *vtbl, struct WINE_CRYPTCERTSTORE*) DECLSPEC_HIDDEN;
+context_t *Context_CreateDataContext(size_t contextSize, const context_vtbl_t *vtbl, struct WINE_CRYPTCERTSTORE*) DECLSPEC_HIDDEN;
 
 /* Creates a new link context.  The context refers to linked
  * rather than owning its own properties.  If addRef is TRUE (which ordinarily

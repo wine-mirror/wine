@@ -129,14 +129,12 @@ static context_t *Cert_clone(context_t *context, WINECRYPT_CERTSTORE *store, BOO
             return NULL;
     }else {
         const cert_t *cloned = (const cert_t*)context;
-        void *new_context;
         DWORD size = 0;
         BOOL res;
 
-        new_context = Context_CreateDataContext(sizeof(CERT_CONTEXT), &cert_vtbl, store);
-        if(!new_context)
+        cert = (cert_t*)Context_CreateDataContext(sizeof(CERT_CONTEXT), &cert_vtbl, store);
+        if(!cert)
             return NULL;
-        cert = cert_from_ptr(new_context);
 
         Context_CopyProperties(&cert->ctx, &cloned->ctx);
 
@@ -312,7 +310,8 @@ BOOL WINAPI CertAddCertificateLinkToStore(HCERTSTORE hCertStore,
 PCCERT_CONTEXT WINAPI CertCreateCertificateContext(DWORD dwCertEncodingType,
  const BYTE *pbCertEncoded, DWORD cbCertEncoded)
 {
-    PCERT_CONTEXT cert = NULL;
+    cert_t *cert = NULL;
+    BYTE *data = NULL;
     BOOL ret;
     PCERT_INFO certInfo = NULL;
     DWORD size = 0;
@@ -329,30 +328,27 @@ PCCERT_CONTEXT WINAPI CertCreateCertificateContext(DWORD dwCertEncodingType,
     ret = CryptDecodeObjectEx(dwCertEncodingType, X509_CERT_TO_BE_SIGNED,
      pbCertEncoded, cbCertEncoded, CRYPT_DECODE_ALLOC_FLAG, NULL,
      &certInfo, &size);
-    if (ret)
-    {
-        BYTE *data = NULL;
+    if (!ret)
+        return NULL;
 
-        cert = Context_CreateDataContext(sizeof(CERT_CONTEXT), &cert_vtbl, &empty_store);
-        if (!cert)
-            goto end;
-        data = CryptMemAlloc(cbCertEncoded);
-        if (!data)
-        {
-            CertFreeCertificateContext(cert);
-            cert = NULL;
-            goto end;
-        }
-        memcpy(data, pbCertEncoded, cbCertEncoded);
-        cert->dwCertEncodingType = dwCertEncodingType;
-        cert->pbCertEncoded      = data;
-        cert->cbCertEncoded      = cbCertEncoded;
-        cert->pCertInfo          = certInfo;
-        cert->hCertStore         = &empty_store;
+    cert = (cert_t*)Context_CreateDataContext(sizeof(CERT_CONTEXT), &cert_vtbl, &empty_store);
+    if (!cert)
+        return NULL;
+    data = CryptMemAlloc(cbCertEncoded);
+    if (!data)
+    {
+        Context_Release(&cert->base);
+        return NULL;
     }
 
-end:
-    return cert;
+    memcpy(data, pbCertEncoded, cbCertEncoded);
+    cert->ctx.dwCertEncodingType = dwCertEncodingType;
+    cert->ctx.pbCertEncoded      = data;
+    cert->ctx.cbCertEncoded      = cbCertEncoded;
+    cert->ctx.pCertInfo          = certInfo;
+    cert->ctx.hCertStore         = &empty_store;
+
+    return &cert->ctx;
 }
 
 PCCERT_CONTEXT WINAPI CertDuplicateCertificateContext(PCCERT_CONTEXT pCertContext)
