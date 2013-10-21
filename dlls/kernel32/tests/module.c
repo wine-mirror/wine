@@ -46,7 +46,7 @@ static void testGetModuleFileName(const char* name)
     WCHAR       bufW[MAX_PATH];
     DWORD       len1A, len1W = 0, len2A, len2W = 0;
 
-    hMod = (name) ? GetModuleHandle(name) : NULL;
+    hMod = (name) ? GetModuleHandleA(name) : NULL;
 
     /* first test, with enough space in buffer */
     memset(bufA, '-', sizeof(bufA));
@@ -157,7 +157,7 @@ static void testNestedLoadLibraryA(void)
      * - it must not already be loaded
      * - it must not have a 16-bit counterpart
      */
-    GetWindowsDirectory(path1, sizeof(path1));
+    GetWindowsDirectoryA(path1, sizeof(path1));
     strcat(path1, "\\system\\");
     strcat(path1, dllname);
     hModule1 = LoadLibraryA(path1);
@@ -167,7 +167,7 @@ static void testNestedLoadLibraryA(void)
         return;
     }
 
-    GetWindowsDirectory(path2, sizeof(path2));
+    GetWindowsDirectoryA(path2, sizeof(path2));
     strcat(path2, "\\system32\\");
     strcat(path2, dllname);
     hModule2 = LoadLibraryA(path2);
@@ -189,7 +189,7 @@ static void testNestedLoadLibraryA(void)
     ok(FreeLibrary(hModule3), "FreeLibrary() failed\n");
     ok(FreeLibrary(hModule2), "FreeLibrary() failed\n");
     ok(FreeLibrary(hModule1), "FreeLibrary() failed\n");
-    ok(GetModuleHandle(dllname) == NULL, "%s was not fully unloaded\n", dllname);
+    ok(GetModuleHandleA(dllname) == NULL, "%s was not fully unloaded\n", dllname);
 
     /* Try to load the dll again, if refcounting is ok, this should work */
     hModule1 = LoadLibraryA(path1);
