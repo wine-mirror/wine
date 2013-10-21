@@ -57,7 +57,7 @@ struct schan_context
 {
     schan_imp_session session;
     ULONG req_ctx_attr;
-    HCERTSTORE cert_store;
+    const CERT_CONTEXT *cert;
 };
 
 static struct schan_handle *schan_handle_table;
@@ -810,7 +810,7 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
         ctx = HeapAlloc(GetProcessHeap(), 0, sizeof(*ctx));
         if (!ctx) return SEC_E_INSUFFICIENT_MEMORY;
 
-        ctx->cert_store = NULL;
+        ctx->cert = NULL;
         handle = schan_alloc_handle(ctx, SCHAN_HANDLE_CTX);
         if (handle == SCHAN_INVALID_HANDLE)
         {
@@ -987,13 +987,22 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
         {
             PCCERT_CONTEXT *cert = buffer;
 
-            if (!ctx->cert_store) {
-                ctx->cert_store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0, CERT_STORE_CREATE_NEW_FLAG, NULL);
-                if(!ctx->cert_store)
+            if (!ctx->cert) {
+                HCERTSTORE cert_store;
+                SECURITY_STATUS status;
+
+                cert_store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0, CERT_STORE_CREATE_NEW_FLAG, NULL);
+                if(!cert_store)
                     return GetLastError();
+
+                status = schan_imp_get_session_peer_certificate(ctx->session, cert_store, &ctx->cert);
+                CertCloseStore(cert_store, 0);
+                if(status != SEC_E_OK)
+                    return status;
             }
 
-            return schan_imp_get_session_peer_certificate(ctx->session, ctx->cert_store, cert);
+            *cert = CertDuplicateCertificateContext(ctx->cert);
+            return SEC_E_OK;
         }
         case SECPKG_ATTR_CONNECTION_INFO:
         {
@@ -1301,8 +1310,8 @@ static SECURITY_STATUS SEC_ENTRY schan_DeleteSecurityContext(PCtxtHandle context
     ctx = schan_free_handle(context_handle->dwLower, SCHAN_HANDLE_CTX);
     if (!ctx) return SEC_E_INVALID_HANDLE;
 
-    if (ctx->cert_store)
-        CertCloseStore(ctx->cert_store, 0);
+    if (ctx->cert)
+        CertFreeCertificateContext(ctx->cert);
     schan_imp_dispose_session(ctx->session);
     HeapFree(GetProcessHeap(), 0, ctx);
 
