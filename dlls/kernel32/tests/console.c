@@ -50,7 +50,7 @@ static BOOL (WINAPI *pVerifyConsoleIoHandle)(HANDLE handle);
 
 #define okCHAR(hCon, c, ch, attr) do { \
   char __ch; WORD __attr; DWORD __len; BOOL expect; \
-  expect = ReadConsoleOutputCharacter((hCon), &__ch, 1, (c), &__len) == 1 && __len == 1 && __ch == (ch); \
+  expect = ReadConsoleOutputCharacterA((hCon), &__ch, 1, (c), &__len) == 1 && __len == 1 && __ch == (ch); \
   ok(expect, "At (%d,%d): expecting char '%c'/%02x got '%c'/%02x\n", (c).X, (c).Y, (ch), (ch), __ch, __ch); \
   expect = ReadConsoleOutputAttribute((hCon), &__attr, 1, (c), &__len) == 1 && __len == 1 && __attr == (attr); \
   ok(expect, "At (%d,%d): expecting attr %04x got %04x\n", (c).X, (c).Y, (attr), __attr); \
@@ -179,7 +179,7 @@ static void testEmptyWrite(HANDLE hCon)
     ok(SetConsoleCursorPosition(hCon, c) != 0, "Cursor in upper-left\n");
 
     len = -1;
-    ok(WriteConsole(hCon, NULL, 0, &len, NULL) != 0 && len == 0, "WriteConsole\n");
+    ok(WriteConsoleA(hCon, NULL, 0, &len, NULL) != 0 && len == 0, "WriteConsole\n");
     okCURSOR(hCon, c);
 
     /* Passing a NULL lpBuffer with sufficiently large non-zero length succeeds
@@ -188,22 +188,22 @@ static void testEmptyWrite(HANDLE hCon)
     if (0)
     {
         len = -1;
-        ok(!WriteConsole(hCon, NULL, 16, &len, NULL) && len == -1, "WriteConsole\n");
+        ok(!WriteConsoleA(hCon, NULL, 16, &len, NULL) && len == -1, "WriteConsole\n");
         okCURSOR(hCon, c);
 
         /* Cursor advances for this call. */
         len = -1;
-        ok(WriteConsole(hCon, NULL, 128, &len, NULL) != 0 && len == 128, "WriteConsole\n");
+        ok(WriteConsoleA(hCon, NULL, 128, &len, NULL) != 0 && len == 128, "WriteConsole\n");
     }
 
     len = -1;
-    ok(WriteConsole(hCon, emptybuf, 0, &len, NULL) != 0 && len == 0, "WriteConsole\n");
+    ok(WriteConsoleA(hCon, emptybuf, 0, &len, NULL) != 0 && len == 0, "WriteConsole\n");
     okCURSOR(hCon, c);
 
     /* WriteConsole does not halt on a null terminator and is happy to write
      * memory contents beyond the actual size of the buffer. */
     len = -1;
-    ok(WriteConsole(hCon, emptybuf, 16, &len, NULL) != 0 && len == 16, "WriteConsole\n");
+    ok(WriteConsoleA(hCon, emptybuf, 16, &len, NULL) != 0 && len == 16, "WriteConsole\n");
     c.X += 16;
     okCURSOR(hCon, c);
 }
@@ -219,7 +219,7 @@ static void testWriteSimple(HANDLE hCon)
     c.X = c.Y = 0;
     ok(SetConsoleCursorPosition(hCon, c) != 0, "Cursor in upper-left\n");
 
-    ok(WriteConsole(hCon, mytest, mylen, &len, NULL) != 0 && len == mylen, "WriteConsole\n");
+    ok(WriteConsoleA(hCon, mytest, mylen, &len, NULL) != 0 && len == mylen, "WriteConsole\n");
     c.Y = 0;
     for (c.X = 0; c.X < mylen; c.X++)
     {
@@ -246,7 +246,7 @@ static void testWriteNotWrappedNotProcessed(HANDLE hCon, COORD sbSize)
     c.X = sbSize.X - 3; c.Y = 0;
     ok(SetConsoleCursorPosition(hCon, c) != 0, "Cursor in upper-left-3\n");
 
-    ret = WriteConsole(hCon, mytest, mylen, &len, NULL);
+    ret = WriteConsoleA(hCon, mytest, mylen, &len, NULL);
     ok(ret != 0 && len == mylen, "Couldn't write, ret = %d, len = %d\n", ret, len);
     c.Y = 0;
     for (p = mylen - 3; p < mylen; p++)
@@ -265,7 +265,7 @@ static void testWriteNotWrappedNotProcessed(HANDLE hCon, COORD sbSize)
     c.X = sbSize.X - mylen; c.Y = 0;
     ok(SetConsoleCursorPosition(hCon, c) != 0, "Cursor in upper-left-3\n");
 
-    ok(WriteConsole(hCon, mytest, mylen, &len, NULL) != 0 && len == mylen, "WriteConsole\n");
+    ok(WriteConsoleA(hCon, mytest, mylen, &len, NULL) != 0 && len == mylen, "WriteConsole\n");
 }
 
 static void testWriteNotWrappedProcessed(HANDLE hCon, COORD sbSize)
@@ -285,7 +285,7 @@ static void testWriteNotWrappedProcessed(HANDLE hCon, COORD sbSize)
     c.X = sbSize.X - 5; c.Y = 0;
     ok(SetConsoleCursorPosition(hCon, c) != 0, "Cursor in upper-left-5\n");
 
-    ok(WriteConsole(hCon, mytest, mylen, &len, NULL) != 0 && len == mylen, "WriteConsole\n");
+    ok(WriteConsoleA(hCon, mytest, mylen, &len, NULL) != 0 && len == mylen, "WriteConsole\n");
     c.Y = 0;
     for (c.X = sbSize.X - 5; c.X < sbSize.X - 1; c.X++)
     {
@@ -316,7 +316,7 @@ static void testWriteNotWrappedProcessed(HANDLE hCon, COORD sbSize)
     c.X = sbSize.X - 4; c.Y = 0;
     ok(SetConsoleCursorPosition(hCon, c) != 0, "Cursor in upper-left-4\n");
 
-    ok(WriteConsole(hCon, mytest, mylen, &len, NULL) != 0 && len == mylen, "WriteConsole\n");
+    ok(WriteConsoleA(hCon, mytest, mylen, &len, NULL) != 0 && len == mylen, "WriteConsole\n");
     c.Y = 0;
     for (c.X = sbSize.X - 4; c.X < sbSize.X; c.X++)
     {
@@ -336,7 +336,7 @@ static void testWriteNotWrappedProcessed(HANDLE hCon, COORD sbSize)
     c.X = sbSize.X - 3; c.Y = 0;
     ok(SetConsoleCursorPosition(hCon, c) != 0, "Cursor in upper-left-4\n");
 
-    ok(WriteConsole(hCon, mytest, mylen, &len, NULL) != 0 && len == mylen, "WriteConsole\n");
+    ok(WriteConsoleA(hCon, mytest, mylen, &len, NULL) != 0 && len == mylen, "WriteConsole\n");
     c.Y = 0;
     for (p = mylen2 - 3; p < mylen2; p++)
     {
@@ -369,7 +369,7 @@ static void testWriteWrappedNotProcessed(HANDLE hCon, COORD sbSize)
     c.X = sbSize.X - 9; c.Y = 0;
     ok(SetConsoleCursorPosition(hCon, c) != 0, "Cursor in upper-left-9\n");
 
-    ok(WriteConsole(hCon, mytest, mylen, &len, NULL) != 0 && len == mylen, "WriteConsole\n");
+    ok(WriteConsoleA(hCon, mytest, mylen, &len, NULL) != 0 && len == mylen, "WriteConsole\n");
     c.Y = 0;
     for (p = 0; p < mylen; p++)
     {
@@ -406,7 +406,7 @@ static void testWriteWrappedProcessed(HANDLE hCon, COORD sbSize)
     c.X = sbSize.X - 9; c.Y = 0;
     ok(SetConsoleCursorPosition(hCon, c) != 0, "Cursor in upper-left-9\n");
 
-    ok(WriteConsole(hCon, mytest, mylen, &len, NULL) != 0 && len == mylen, "WriteConsole\n");
+    ok(WriteConsoleA(hCon, mytest, mylen, &len, NULL) != 0 && len == mylen, "WriteConsole\n");
     for (p = 0; p < 4; p++)
     {
         c.X = sbSize.X - 9 + p;
@@ -431,7 +431,7 @@ static void testWriteWrappedProcessed(HANDLE hCon, COORD sbSize)
     c.X = sbSize.X - 3; c.Y = 2;
     ok(SetConsoleCursorPosition(hCon, c) != 0, "Cursor in upper-left-3\n");
 
-    ok(WriteConsole(hCon, mytest, mylen, &len, NULL) != 0 && len == mylen, "WriteConsole\n");
+    ok(WriteConsoleA(hCon, mytest, mylen, &len, NULL) != 0 && len == mylen, "WriteConsole\n");
     for (p = 0; p < 3; p++)
     {
         c.X = sbSize.X - 3 + p;
@@ -504,7 +504,7 @@ static void testScroll(HANDLE hCon, COORD sbSize)
     clip.Top = 0;
     clip.Bottom = sbSize.Y - 1;
 
-    ok(ScrollConsoleScreenBuffer(hCon, &scroll, NULL, dst, &ci), "Scrolling SB\n");
+    ok(ScrollConsoleScreenBufferA(hCon, &scroll, NULL, dst, &ci), "Scrolling SB\n");
 
     for (c.Y = 0; c.Y < sbSize.Y; c.Y++)
     {
@@ -539,7 +539,7 @@ static void testScroll(HANDLE hCon, COORD sbSize)
     clip.Top = 0;
     clip.Bottom = sbSize.Y - 1;
 
-    ok(ScrollConsoleScreenBuffer(hCon, &scroll, NULL, dst, &ci), "Scrolling SB\n");
+    ok(ScrollConsoleScreenBufferA(hCon, &scroll, NULL, dst, &ci), "Scrolling SB\n");
 
     for (c.Y = 0; c.Y < sbSize.Y; c.Y++)
     {
@@ -574,7 +574,7 @@ static void testScroll(HANDLE hCon, COORD sbSize)
     clip.Bottom = min(H + H / 2, sbSize.Y - 1);
 
     SetLastError(0xdeadbeef);
-    ret = ScrollConsoleScreenBuffer(hCon, &scroll, &clip, dst, &ci);
+    ret = ScrollConsoleScreenBufferA(hCon, &scroll, &clip, dst, &ci);
     if (ret)
     {
         for (c.Y = 0; c.Y < sbSize.Y; c.Y++)
@@ -617,7 +617,7 @@ static void testScroll(HANDLE hCon, COORD sbSize)
     clip.Top = H / 2;
     clip.Bottom = min(H + H / 2, sbSize.Y - 1);
 
-    ok(ScrollConsoleScreenBuffer(hCon, &scroll, &clip, dst, &ci), "Scrolling SB\n");
+    ok(ScrollConsoleScreenBufferA(hCon, &scroll, &clip, dst, &ci), "Scrolling SB\n");
 
     for (c.Y = 0; c.Y < sbSize.Y; c.Y++)
     {
@@ -927,7 +927,7 @@ static void test_GetSetConsoleInputExeName(void)
     ok(ret, "GetConsoleInputExeNameA failed\n");
     ok(error == ERROR_BUFFER_OVERFLOW, "got %u expected ERROR_BUFFER_OVERFLOW\n", error);
 
-    GetModuleFileNameA(GetModuleHandle(NULL), module, sizeof(module));
+    GetModuleFileNameA(GetModuleHandleA(NULL), module, sizeof(module));
     p = strrchr(module, '\\') + 1;
 
     ret = pGetConsoleInputExeNameA(sizeof(buffer)/sizeof(buffer[0]), buffer);
