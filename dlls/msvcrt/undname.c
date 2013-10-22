@@ -1235,6 +1235,7 @@ static BOOL handle_method(struct parsed_symbol* sym, BOOL cast_op)
     mark = sym->stack.num;
     if (has_args && !(args_str = get_args(sym, &array_pmt, TRUE, '(', ')'))) goto done;
     if (sym->flags & UNDNAME_NAME_ONLY) args_str = modifier = NULL;
+    if (sym->flags & UNDNAME_NO_THISTYPE) modifier = NULL;
     sym->stack.num = mark;
 
     /* Note: '()' after 'Z' means 'throws', but we don't care here
