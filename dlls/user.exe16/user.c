@@ -2792,7 +2792,7 @@ DWORD WINAPI DumpIcon16( SEGPTR pInfo, WORD *lpLen,
  */
 static BOOL DRAG_QueryUpdate16( HWND hQueryWnd, SEGPTR spDragInfo )
 {
-    BOOL bResult = 0;
+    BOOL bResult;
     WPARAM wParam;
     POINT pt, old_pt;
     LPDRAGINFO16 ptrDragInfo = MapSL(spDragInfo);

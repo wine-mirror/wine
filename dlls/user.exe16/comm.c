@@ -83,7 +83,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(comm);
 
 struct DosDeviceStruct {
     HANDLE handle;
-    int suspended;
+    BOOL suspended;
     int unget,xmit;
     int evtchar;
     /* events */
@@ -577,7 +577,7 @@ INT16 WINAPI SetCommBreak16(INT16 cid)
 		return -1;
 	}
 
-	ptr->suspended = 1;
+        ptr->suspended = TRUE;
 	ptr->commerror = 0;
 	return 0;
 }
@@ -594,7 +594,7 @@ INT16 WINAPI ClearCommBreak16(INT16 cid)
 		FIXME("no cid=%d found!\n", cid);
 		return -1;
 	}
-	ptr->suspended = 0;
+        ptr->suspended = FALSE;
 	ptr->commerror = 0;
 	return 0;
 }
