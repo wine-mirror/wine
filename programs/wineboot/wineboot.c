@@ -948,7 +948,7 @@ static HANDLE start_rundll32( const char *inf_path, BOOL wow64 )
 }
 
 /* execute rundll32 on the wine.inf file if necessary */
-static void update_wineprefix( int force )
+static void update_wineprefix( BOOL force )
 {
     const char *config_dir = wine_get_config_dir();
     char *inf_path = get_wine_inf_path();
@@ -1123,11 +1123,12 @@ int main( int argc, char *argv[] )
 
     /* First, set the current directory to SystemRoot */
     int optc;
-    int end_session = 0, force = 0, init = 0, kill = 0, restart = 0, shutdown = 0, update = 0;
+    BOOL end_session, force, init, kill, restart, shutdown, update;
     HANDLE event;
     SECURITY_ATTRIBUTES sa;
     BOOL is_wow64;
 
+    end_session = force = init = kill = restart = shutdown = update = FALSE;
     GetWindowsDirectoryW( windowsdir, MAX_PATH );
     if( !SetCurrentDirectoryW( windowsdir ) )
         WINE_ERR("Cannot set the dir to %s (%d)\n", wine_dbgstr_w(windowsdir), GetLastError() );
@@ -1160,13 +1161,13 @@ int main( int argc, char *argv[] )
     {
         switch(optc)
         {
-        case 'e': end_session = 1; break;
-        case 'f': force = 1; break;
-        case 'i': init = 1; break;
-        case 'k': kill = 1; break;
-        case 'r': restart = 1; break;
-        case 's': shutdown = 1; break;
-        case 'u': update = 1; break;
+        case 'e': end_session = TRUE; break;
+        case 'f': force = TRUE; break;
+        case 'i': init = TRUE; break;
+        case 'k': kill = TRUE; break;
+        case 'r': restart = TRUE; break;
+        case 's': shutdown = TRUE; break;
+        case 'u': update = TRUE; break;
         case 'h': usage(); return 0;
         case '?': usage(); return 1;
         }

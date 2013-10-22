@@ -335,14 +335,14 @@ static BOOL CALLBACK shutdown_one_desktop( LPWSTR name, LPARAM force )
     if (hdesk == NULL)
     {
         WINE_ERR("Cannot open desktop %s, err=%i\n", wine_dbgstr_w(name), GetLastError());
-        return 0;
+        return FALSE;
     }
 
     if (!SetThreadDesktop( hdesk ))
     {
         CloseDesktop( hdesk );
         WINE_ERR("Cannot set thread desktop %s, err=%i\n", wine_dbgstr_w(name), GetLastError());
-        return 0;
+        return FALSE;
     }
 
     CloseDesktop( hdesk );
