@@ -22,13 +22,14 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
 #define NOFIX32
 #include "wintab.h"
 #include "wintab_internal.h"
-#include "wine/gdi_driver.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wintab32);
@@ -71,6 +72,38 @@ static VOID TABLET_Unregister(void)
     UnregisterClassW(WC_TABLETCLASSNAME, NULL);
 }
 
+static HMODULE load_graphics_driver(void)
+{
+    static const WCHAR display_device_guid_propW[] = {
+        '_','_','w','i','n','e','_','d','i','s','p','l','a','y','_',
+        'd','e','v','i','c','e','_','g','u','i','d',0 };
+    static const WCHAR key_pathW[] = {
+        'S','y','s','t','e','m','\\',
+        'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+        'C','o','n','t','r','o','l','\\',
+        'V','i','d','e','o','\\','{',0};
+    static const WCHAR displayW[] = {'}','\\','0','0','0','0',0};
+    static const WCHAR driverW[] = {'G','r','a','p','h','i','c','s','D','r','i','v','e','r',0};
+
+    HMODULE ret = 0;
+    HKEY hkey;
+    DWORD size;
+    WCHAR path[MAX_PATH];
+    WCHAR key[(sizeof(key_pathW) + sizeof(displayW)) / sizeof(WCHAR) + 40];
+    UINT guid_atom = HandleToULong( GetPropW( GetDesktopWindow(), display_device_guid_propW ));
+
+    if (!guid_atom) return 0;
+    memcpy( key, key_pathW, sizeof(key_pathW) );
+    if (!GlobalGetAtomNameW( guid_atom, key + strlenW(key), 40 )) return 0;
+    strcatW( key, displayW );
+    if (RegOpenKeyW( HKEY_LOCAL_MACHINE, key, &hkey )) return 0;
+    size = sizeof(path);
+    if (!RegQueryValueExW( hkey, driverW, NULL, NULL, (BYTE *)path, &size )) ret = LoadLibraryW( path );
+    RegCloseKey( hkey );
+    TRACE( "%s %p\n", debugstr_w(path), ret );
+    return ret;
+}
+
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
 {
     static const WCHAR name[] = {'T','a','b','l','e','t',0};
@@ -86,14 +119,11 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
                                         WS_POPUPWINDOW,0,0,0,0,0,0,hInstDLL,0);
             if (hwndDefault)
             {
-                HDC hdc = GetDC( hwndDefault );
-                HMODULE module = __wine_get_driver_module( hdc );
-
+                HMODULE module = load_graphics_driver();
                 pLoadTabletInfo = (void *)GetProcAddress(module, "LoadTabletInfo");
                 pAttachEventQueueToTablet = (void *)GetProcAddress(module, "AttachEventQueueToTablet");
                 pGetCurrentPacket = (void *)GetProcAddress(module, "GetCurrentPacket");
                 pWTInfoW = (void *)GetProcAddress(module, "WTInfoW");
-                ReleaseDC( hwndDefault, hdc );
             }
             else
                 return FALSE;

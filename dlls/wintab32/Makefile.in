@@ -1,6 +1,6 @@
 MODULE    = wintab32.dll
 IMPORTLIB = wintab32
-IMPORTS   = user32 gdi32
+IMPORTS   = user32 advapi32
 
 C_SRCS = \
 	context.c \
