@@ -633,24 +633,49 @@ static BOOL get_default_desktop_size( const WCHAR *name, unsigned int *width, un
     return found;
 }
 
-static void initialize_display_settings( HWND desktop )
+static void set_desktop_guid( HWND desktop, HMODULE driver )
 {
     static const WCHAR display_device_guid_propW[] = {
         '_','_','w','i','n','e','_','d','i','s','p','l','a','y','_',
         'd','e','v','i','c','e','_','g','u','i','d',0 };
+    static const WCHAR device_keyW[] = {
+        'S','y','s','t','e','m','\\',
+        'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+        'C','o','n','t','r','o','l','\\',
+        'V','i','d','e','o','\\',
+        '{','%','s','}','\\','0','0','0','0',0};
+    static const WCHAR driverW[] = {'G','r','a','p','h','i','c','s','D','r','i','v','e','r',0};
+
     GUID guid;
-    RPC_CSTR guid_str;
+    RPC_WSTR guid_str;
     ATOM guid_atom;
-    DEVMODEW dmW;
+    HKEY hkey;
+    WCHAR key[sizeof(device_keyW)/sizeof(WCHAR) + 39];
 
     UuidCreate( &guid );
-    UuidToStringA( &guid, &guid_str );
-    WINE_TRACE( "display guid %s\n", guid_str );
+    UuidToStringW( &guid, &guid_str );
+    TRACE( "display guid %s\n", debugstr_w(guid_str) );
 
-    guid_atom = GlobalAddAtomA( (LPCSTR)guid_str );
+    guid_atom = GlobalAddAtomW( guid_str );
     SetPropW( desktop, display_device_guid_propW, ULongToHandle(guid_atom) );
+    sprintfW( key, device_keyW, guid_str );
+    RpcStringFreeW( &guid_str );
 
-    RpcStringFreeA( &guid_str );
+    if (!RegCreateKeyExW( HKEY_LOCAL_MACHINE, key, 0, NULL,
+                          REG_OPTION_VOLATILE, KEY_SET_VALUE, NULL, &hkey, NULL  ))
+    {
+        WCHAR path[MAX_PATH];
+
+        GetModuleFileNameW( driver, path, MAX_PATH );
+        RegSetValueExW( hkey, driverW, 0, REG_SZ, (BYTE *)path, (strlenW(path) + 1) * sizeof(WCHAR) );
+        RegCloseKey( hkey );
+    }
+    else ERR( "failed to create %s\n", debugstr_w(key) );
+}
+
+static void initialize_display_settings(void)
+{
+    DEVMODEW dmW;
 
     /* Store current display mode in the registry */
     if (EnumDisplaySettingsExW( NULL, ENUM_CURRENT_SETTINGS, &dmW, 0 ))
@@ -760,6 +785,7 @@ void manage_desktop( WCHAR *arg )
         ReleaseDC( hwnd, hdc );
 
         SetWindowLongPtrW( hwnd, GWLP_WNDPROC, (LONG_PTR)desktop_wnd_proc );
+        set_desktop_guid( hwnd, graphics_driver );
         SendMessageW( hwnd, WM_SETICON, ICON_BIG, (LPARAM)LoadIconW( 0, MAKEINTRESOURCEW(OIC_WINLOGO)));
         if (name) set_desktop_window_title( hwnd, name );
         SetWindowPos( hwnd, 0, GetSystemMetrics(SM_XVIRTUALSCREEN), GetSystemMetrics(SM_YVIRTUALSCREEN),
@@ -767,7 +793,7 @@ void manage_desktop( WCHAR *arg )
                       SWP_NOZORDER | SWP_NOACTIVATE | SWP_SHOWWINDOW );
         SystemParametersInfoW( SPI_SETDESKWALLPAPER, 0, NULL, FALSE );
         ClipCursor( NULL );
-        initialize_display_settings( hwnd );
+        initialize_display_settings();
         initialize_appbar();
         initialize_systray( graphics_driver, using_root );
         if (!using_root) initialize_launchers( hwnd );
