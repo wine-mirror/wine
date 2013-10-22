@@ -111,10 +111,12 @@ void Context_Release(context_t *context)
     assert(ref >= 0);
 
     if (!ref) {
+        WINECRYPT_CERTSTORE *store = context->store;
+
         /* This is the last reference, but the context still may be in a store.
          * We release our store reference, but leave it up to store to free or keep the context. */
-        context->store->vtbl->releaseContext(context->store, context);
-        context->store->vtbl->release(context->store, 0);
+        store->vtbl->releaseContext(store, context);
+        store->vtbl->release(store, 0);
     }
 }
 
