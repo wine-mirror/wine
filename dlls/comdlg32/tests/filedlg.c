@@ -111,7 +111,7 @@ static void test_DialogCancel(void)
        "expected CDERR_INITIALIZATION, got %d\n", CommDlgExtendedError());
 
     result = GetOpenFileNameA(&ofn);
-    ok(0 == result, "expected 0, got %d\n", result);
+    ok(FALSE == result, "expected FALSE, got %d\n", result);
     ok(0 == CommDlgExtendedError(), "expected 0, got %d\n",
        CommDlgExtendedError());
 
@@ -120,7 +120,7 @@ static void test_DialogCancel(void)
        "expected CDERR_INITIALIZATION, got %d\n", CommDlgExtendedError());
 
     result = GetSaveFileNameA(&ofn);
-    ok(0 == result, "expected 0, got %d\n", result);
+    ok(FALSE == result, "expected FALSE, got %d\n", result);
     ok(0 == CommDlgExtendedError(), "expected 0, got %d\n",
        CommDlgExtendedError());
 
@@ -143,7 +143,7 @@ static void test_DialogCancel(void)
         win_skip("GetOpenFileNameW is not implemented\n");
     else
     {
-        ok(0 == result, "expected 0, got %d\n", result);
+        ok(FALSE == result, "expected FALSE, got %d\n", result);
         ok(0 == CommDlgExtendedError(), "expected 0, got %d\n", CommDlgExtendedError());
     }
 
@@ -153,7 +153,7 @@ static void test_DialogCancel(void)
         win_skip("GetSaveFileNameW is not implemented\n");
     else
     {
-        ok(0 == result, "expected 0, got %d\n", result);
+        ok(FALSE == result, "expected FALSE, got %d\n", result);
         ok(0 == CommDlgExtendedError(), "expected 0, got %d\n", CommDlgExtendedError());
     }
 }
@@ -928,12 +928,12 @@ static void test_getfolderpath(void)
     ofn.lpstrInitialDir = szInitialDir;
 
     result = GetOpenFileNameA(&ofn);
-    ok(0 == result, "expected 0, got %d\n", result);
+    ok(FALSE == result, "expected FALSE, got %d\n", result);
     ok(0 == CommDlgExtendedError(), "expected 0, got %d\n",
        CommDlgExtendedError());
 
     result = GetSaveFileNameA(&ofn);
-    ok(0 == result, "expected 0, got %d\n", result);
+    ok(FALSE == result, "expected FALSE, got %d\n", result);
     ok(0 == CommDlgExtendedError(), "expected 0, got %d\n",
        CommDlgExtendedError());
 }
@@ -956,7 +956,7 @@ static void test_resizable2(void)
     ofn.hInstance = GetModuleHandleA(NULL);
     ofn.lpTemplateName = "template1";
     ofn.Flags = OFN_EXPLORER;
-#define ISSIZABLE 1
+#define ISSIZABLE TRUE
     ret = GetOpenFileNameA(&ofn);
     ok( ret == ISSIZABLE, "File Dialog should have been sizable\n");
     ret = CommDlgExtendedError();
