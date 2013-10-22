@@ -407,6 +407,8 @@ static BOOL get_modifier(struct parsed_symbol *sym, const char **ret, const char
     if (*sym->current == 'E')
     {
         *ptr_modif = "__ptr64";
+        if (sym->flags & UNDNAME_NO_LEADING_UNDERSCORES)
+            *ptr_modif = *ptr_modif + 2;
         sym->current++;
     }
     switch (*sym->current++)
@@ -429,7 +431,10 @@ static BOOL get_modified_type(struct datatype_t *ct, struct parsed_symbol* sym,
 
     if (*sym->current == 'E')
     {
-        ptr_modif = " __ptr64";
+        if (sym->flags & UNDNAME_NO_LEADING_UNDERSCORES)
+            ptr_modif = " ptr64";
+        else
+            ptr_modif = " __ptr64";
         sym->current++;
     }
 
