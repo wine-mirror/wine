@@ -77,7 +77,7 @@ typedef struct tagFD31_DATA
  */
 static BOOL FD31_Init(void)
 {
-    static BOOL initialized = 0;
+    static BOOL initialized = FALSE;
 
     if (!initialized) {
         hFolder  = LoadImageA( COMDLG32_hInstance, "FOLDER", IMAGE_ICON, 16, 16, LR_SHARED );

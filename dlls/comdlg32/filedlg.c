@@ -461,7 +461,7 @@ static BOOL GetFileDialog95A(LPOPENFILENAMEA ofn,UINT iDlgType)
       ret = GetFileName95(&fodInfos);
       break;
     default :
-      ret = 0;
+      ret = FALSE;
   }
 
   if (lpstrSavDir)
@@ -553,7 +553,7 @@ static BOOL GetFileDialog95W(LPOPENFILENAMEW ofn,UINT iDlgType)
       ret = GetFileName95(&fodInfos);
       break;
   default :
-      ret = 0;
+      ret = FALSE;
   }
 
   if (lpstrSavDir)
