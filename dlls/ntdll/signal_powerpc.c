@@ -43,10 +43,6 @@
 # endif
 #endif
 
-#ifdef HAVE_SYS_VM86_H
-# include <sys/vm86.h>
-#endif
-
 #ifdef HAVE_SYS_SIGNAL_H
 # include <sys/signal.h>
 #endif
