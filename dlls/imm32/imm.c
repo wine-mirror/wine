@@ -32,8 +32,8 @@
 #include "ddk/imm.h"
 #include "winnls.h"
 #include "winreg.h"
-#include "wine/gdi_driver.h"
 #include "wine/list.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(imm);
 
@@ -245,6 +245,38 @@ static void IMM_FreeThreadData(void)
     }
 }
 
+static HMODULE load_graphics_driver(void)
+{
+    static const WCHAR display_device_guid_propW[] = {
+        '_','_','w','i','n','e','_','d','i','s','p','l','a','y','_',
+        'd','e','v','i','c','e','_','g','u','i','d',0 };
+    static const WCHAR key_pathW[] = {
+        'S','y','s','t','e','m','\\',
+        'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+        'C','o','n','t','r','o','l','\\',
+        'V','i','d','e','o','\\','{',0};
+    static const WCHAR displayW[] = {'}','\\','0','0','0','0',0};
+    static const WCHAR driverW[] = {'G','r','a','p','h','i','c','s','D','r','i','v','e','r',0};
+
+    HMODULE ret = 0;
+    HKEY hkey;
+    DWORD size;
+    WCHAR path[MAX_PATH];
+    WCHAR key[(sizeof(key_pathW) + sizeof(displayW)) / sizeof(WCHAR) + 40];
+    UINT guid_atom = HandleToULong( GetPropW( GetDesktopWindow(), display_device_guid_propW ));
+
+    if (!guid_atom) return 0;
+    memcpy( key, key_pathW, sizeof(key_pathW) );
+    if (!GlobalGetAtomNameW( guid_atom, key + strlenW(key), 40 )) return 0;
+    strcatW( key, displayW );
+    if (RegOpenKeyW( HKEY_LOCAL_MACHINE, key, &hkey )) return 0;
+    size = sizeof(path);
+    if (!RegQueryValueExW( hkey, driverW, NULL, NULL, (BYTE *)path, &size )) ret = LoadLibraryW( path );
+    RegCloseKey( hkey );
+    TRACE( "%s %p\n", debugstr_w(path), ret );
+    return ret;
+}
+
 /* ImmHkl loading and freeing */
 #define LOAD_FUNCPTR(f) if((ptr->p##f = (LPVOID)GetProcAddress(ptr->hIME, #f)) == NULL){WARN("Can't find function %s in ime\n", #f);}
 static ImmHkl *IMM_GetImmHkl(HKL hkl)
@@ -265,13 +297,7 @@ static ImmHkl *IMM_GetImmHkl(HKL hkl)
 
     ptr->hkl = hkl;
     if (ImmGetIMEFileNameW(hkl, filename, MAX_PATH)) ptr->hIME = LoadLibraryW(filename);
-    if (!ptr->hIME)
-    {
-        HDC hdc = GetDC( 0 );
-        GetModuleHandleExW( GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
-                            (LPCWSTR)__wine_get_driver_module( hdc ), &ptr->hIME );
-        ReleaseDC( 0, hdc );
-    }
+    if (!ptr->hIME) ptr->hIME = load_graphics_driver();
     if (ptr->hIME)
     {
         LOAD_FUNCPTR(ImeInquire);
