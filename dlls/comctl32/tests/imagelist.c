@@ -867,7 +867,7 @@ static HBITMAP create_bitmap(INT cx, INT cy, COLORREF color, const char *comment
     FillRect(hdc, &rc, hbrush);
     DeleteObject(hbrush);
 
-    DrawText(hdc, comment, -1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+    DrawTextA(hdc, comment, -1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
     SelectObject(hdc, hbmp_old);
     DeleteDC(hdc);
@@ -2064,7 +2064,7 @@ START_TEST(imagelist)
     ULONG_PTR ctx_cookie;
     HANDLE hCtx;
 
-    HMODULE hComCtl32 = GetModuleHandle("comctl32.dll");
+    HMODULE hComCtl32 = GetModuleHandleA("comctl32.dll");
     pImageList_Create = NULL;   /* These are not needed for non-v6.0 tests*/
     pImageList_Add = NULL;
     pImageList_DrawIndirect = (void*)GetProcAddress(hComCtl32, "ImageList_DrawIndirect");
