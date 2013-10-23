@@ -246,7 +246,7 @@ static BOOL do_test( HWND hwnd, int seqnr, const KEV td[] )
     if (winetest_debug > 1)
         trace("======== key stroke sequence #%d: %s =============\n",
             seqnr + 1, buf);
-    while( PeekMessage(&msg,hwnd,WM_KEYFIRST,WM_KEYLAST,PM_REMOVE) ) {
+    while( PeekMessageA(&msg,hwnd,WM_KEYFIRST,WM_KEYLAST,PM_REMOVE) ) {
         if (winetest_debug > 1)
             trace("message[%d] %-15s wParam %04lx lParam %08lx time %x\n", i,
                   MSGNAME[msg.message - WM_KEYFIRST], msg.wParam, msg.lParam, msg.time);
@@ -344,8 +344,8 @@ static void test_Input_whitebox(void)
     wclass.style         = CS_HREDRAW | CS_VREDRAW;
     wclass.lpfnWndProc   = WndProc;
     wclass.hInstance     = hInstance;
-    wclass.hIcon         = LoadIconA( 0, IDI_APPLICATION );
-    wclass.hCursor       = LoadCursorA( NULL, IDC_ARROW );
+    wclass.hIcon         = LoadIconA( 0, (LPCSTR)IDI_APPLICATION );
+    wclass.hCursor       = LoadCursorA( NULL, (LPCSTR)IDC_ARROW );
     wclass.hbrBackground = (HBRUSH)( COLOR_WINDOW + 1 );
     wclass.lpszMenuName = 0;
     wclass.cbClsExtra    = 0;
@@ -362,7 +362,7 @@ static void test_Input_whitebox(void)
     UpdateWindow( hWndTest);
 
     /* flush pending messages */
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageA( &msg );
+    while (PeekMessageA( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageA( &msg );
 
     SetFocus( hWndTest );
     TestSysKeys( hWndTest );
@@ -390,13 +390,13 @@ static void empty_message_queue(void)
     while (diff > 0)
     {
         if (MsgWaitForMultipleObjects(0, NULL, FALSE, min_timeout, QS_ALLINPUT) == WAIT_TIMEOUT) break;
-        while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
+        while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
         {
             if (is_keyboard_message(msg.message) || is_mouse_message(msg.message))
                 ok(msg.time != 0, "message %#x has time set to 0\n", msg.message);
 
             TranslateMessage(&msg);
-            DispatchMessage(&msg);
+            DispatchMessageA(&msg);
         }
         diff = time - GetTickCount();
     }
@@ -865,7 +865,7 @@ static LRESULT CALLBACK WndProc2(HWND hWnd, UINT Msg, WPARAM wParam,
             sent_messages[sent_messages_cnt++].lParam = HIWORD(lParam) & (KF_UP|KF_EXTENDED);
         }
     }
-    return DefWindowProc(hWnd, Msg, wParam, lParam);
+    return DefWindowProcA(hWnd, Msg, wParam, lParam);
 }
 
 static LRESULT CALLBACK hook_proc(int code, WPARAM wparam, LPARAM lparam)
@@ -911,7 +911,7 @@ static void test_Input_blackbox(void)
         skip("Skipping Input_blackbox test on non-US keyboard\n");
         return;
     }
-    window = CreateWindow("Static", NULL, WS_POPUP|WS_HSCROLL|WS_VSCROLL
+    window = CreateWindowA("Static", NULL, WS_POPUP|WS_HSCROLL|WS_VSCROLL
         |WS_VISIBLE, 0, 0, 200, 60, NULL, NULL,
         NULL, NULL);
     ok(window != NULL, "error: %d\n", (int) GetLastError());
@@ -929,7 +929,7 @@ static void test_Input_blackbox(void)
      * key state set by SendInput(). */
     empty_message_queue();
 
-    prevWndProc = SetWindowLongPtr(window, GWLP_WNDPROC, (LONG_PTR) WndProc2);
+    prevWndProc = SetWindowLongPtrA(window, GWLP_WNDPROC, (LONG_PTR) WndProc2);
     ok(prevWndProc != 0 || (prevWndProc == 0 && GetLastError() == 0),
        "error: %d\n", (int) GetLastError());
 
@@ -1160,8 +1160,8 @@ static void test_Input_unicode(void)
     wclass.style         = CS_HREDRAW | CS_VREDRAW;
     wclass.lpfnWndProc   = unicode_wnd_proc;
     wclass.hInstance     = hInstance;
-    wclass.hIcon         = LoadIcon(0, IDI_APPLICATION);
-    wclass.hCursor       = LoadCursor( NULL, IDC_ARROW);
+    wclass.hIcon         = LoadIconW(0, (LPCWSTR)IDI_APPLICATION);
+    wclass.hCursor       = LoadCursorW( NULL, (LPCWSTR)IDC_ARROW);
     wclass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     wclass.lpszMenuName  = 0;
     wclass.cbClsExtra    = 0;
@@ -1280,7 +1280,7 @@ static void test_mouse_ll_hook(void)
     RECT rc;
 
     GetCursorPos(&pt_org);
-    hwnd = CreateWindow("static", "Title", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+    hwnd = CreateWindowA("static", "Title", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                         10, 10, 200, 200, NULL, NULL, NULL, NULL);
     SetCursorPos(100, 100);
 
@@ -1503,34 +1503,34 @@ static void test_key_map(void)
         { VK_NUMPAD9, VK_PRIOR },
     };
 
-    s  = MapVirtualKeyEx(VK_SHIFT,  MAPVK_VK_TO_VSC, kl);
+    s  = MapVirtualKeyExA(VK_SHIFT,  MAPVK_VK_TO_VSC, kl);
     ok(s != 0, "MapVirtualKeyEx(VK_SHIFT) should return non-zero\n");
-    sL = MapVirtualKeyEx(VK_LSHIFT, MAPVK_VK_TO_VSC, kl);
+    sL = MapVirtualKeyExA(VK_LSHIFT, MAPVK_VK_TO_VSC, kl);
     ok(s == sL || broken(sL == 0), /* win9x */
        "%x != %x\n", s, sL);
 
-    kL = MapVirtualKeyEx(0x2a, MAPVK_VSC_TO_VK, kl);
+    kL = MapVirtualKeyExA(0x2a, MAPVK_VSC_TO_VK, kl);
     ok(kL == VK_SHIFT, "Scan code -> vKey = %x (not VK_SHIFT)\n", kL);
-    kR = MapVirtualKeyEx(0x36, MAPVK_VSC_TO_VK, kl);
+    kR = MapVirtualKeyExA(0x36, MAPVK_VSC_TO_VK, kl);
     ok(kR == VK_SHIFT, "Scan code -> vKey = %x (not VK_SHIFT)\n", kR);
 
-    kL = MapVirtualKeyEx(0x2a, MAPVK_VSC_TO_VK_EX, kl);
+    kL = MapVirtualKeyExA(0x2a, MAPVK_VSC_TO_VK_EX, kl);
     ok(kL == VK_LSHIFT || broken(kL == 0), /* win9x */
        "Scan code -> vKey = %x (not VK_LSHIFT)\n", kL);
-    kR = MapVirtualKeyEx(0x36, MAPVK_VSC_TO_VK_EX, kl);
+    kR = MapVirtualKeyExA(0x36, MAPVK_VSC_TO_VK_EX, kl);
     ok(kR == VK_RSHIFT || broken(kR == 0), /* win9x */
        "Scan code -> vKey = %x (not VK_RSHIFT)\n", kR);
 
     /* test that MAPVK_VSC_TO_VK prefers the non-numpad vkey if there's ambiguity */
     for (i = 0; i < sizeof(numpad_collisions)/sizeof(numpad_collisions[0]); i++)
     {
-        UINT numpad_scan = MapVirtualKeyEx(numpad_collisions[i][0],  MAPVK_VK_TO_VSC, kl);
-        UINT other_scan  = MapVirtualKeyEx(numpad_collisions[i][1],  MAPVK_VK_TO_VSC, kl);
+        UINT numpad_scan = MapVirtualKeyExA(numpad_collisions[i][0],  MAPVK_VK_TO_VSC, kl);
+        UINT other_scan  = MapVirtualKeyExA(numpad_collisions[i][1],  MAPVK_VK_TO_VSC, kl);
 
         /* do they really collide for this layout? */
         if (numpad_scan && other_scan == numpad_scan)
         {
-            UINT vkey = MapVirtualKeyEx(numpad_scan, MAPVK_VSC_TO_VK, kl);
+            UINT vkey = MapVirtualKeyExA(numpad_scan, MAPVK_VSC_TO_VK, kl);
             ok(vkey != numpad_collisions[i][0],
                "Got numpad vKey %x for scan code %x when there was another choice\n",
                vkey, numpad_scan);
