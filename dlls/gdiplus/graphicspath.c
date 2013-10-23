@@ -1941,12 +1941,35 @@ static void widen_dashed_figure(GpPath *path, GpPen *pen, int start, int end,
     REAL segment_pos;
     int num_tmp_points=0;
     int draw_start_cap=0;
+    static const REAL dash_dot_dot[6] = { 3.0, 1.0, 1.0, 1.0, 1.0, 1.0 };
 
     if (end <= start)
         return;
 
-    dash_pattern = pen->dashes;
-    dash_count = pen->numdashes;
+    switch (pen->dash)
+    {
+    case DashStyleDash:
+    default:
+        dash_pattern = dash_dot_dot;
+        dash_count = 2;
+        break;
+    case DashStyleDot:
+        dash_pattern = &dash_dot_dot[2];
+        dash_count = 2;
+        break;
+    case DashStyleDashDot:
+        dash_pattern = dash_dot_dot;
+        dash_count = 4;
+        break;
+    case DashStyleDashDotDot:
+        dash_pattern = dash_dot_dot;
+        dash_count = 6;
+        break;
+    case DashStyleCustom:
+        dash_pattern = pen->dashes;
+        dash_count = pen->numdashes;
+        break;
+    }
 
     tmp_points = GdipAlloc((end - start + 2) * sizeof(GpPoint));
     if (!tmp_points) return; /* FIXME */
@@ -2072,9 +2095,6 @@ GpStatus WINGDIPAPI GdipWidenPath(GpPath *path, GpPen *pen, GpMatrix *matrix,
         if (pen->join == LineJoinRound)
             FIXME("unimplemented line join %d\n", pen->join);
 
-        if (pen->dash != DashStyleSolid && pen->dash != DashStyleCustom)
-            FIXME("unimplemented dash style %d\n", pen->dash);
-
         if (pen->align != PenAlignmentCenter)
             FIXME("unimplemented pen alignment %d\n", pen->align);
 
@@ -2087,7 +2107,7 @@ GpStatus WINGDIPAPI GdipWidenPath(GpPath *path, GpPen *pen, GpMatrix *matrix,
 
             if ((type&PathPointTypeCloseSubpath) == PathPointTypeCloseSubpath)
             {
-                if (pen->dash == DashStyleCustom)
+                if (pen->dash != DashStyleSolid)
                     widen_dashed_figure(flat_path, pen, subpath_start, i, 1, &last_point);
                 else
                     widen_closed_figure(flat_path, pen, subpath_start, i, &last_point);
@@ -2095,7 +2115,7 @@ GpStatus WINGDIPAPI GdipWidenPath(GpPath *path, GpPen *pen, GpMatrix *matrix,
             else if (i == flat_path->pathdata.Count-1 ||
                 (flat_path->pathdata.Types[i+1]&PathPointTypePathTypeMask) == PathPointTypeStart)
             {
-                if (pen->dash == DashStyleCustom)
+                if (pen->dash != DashStyleSolid)
                     widen_dashed_figure(flat_path, pen, subpath_start, i, 0, &last_point);
                 else
                     widen_open_figure(flat_path->pathdata.Points, pen, subpath_start, i, pen->startcap, pen->customstart, pen->endcap, pen->customend, &last_point);
