@@ -161,7 +161,7 @@ static void test_ChangeDisplaySettingsEx(void)
     }
 
     SetLastError(0xdeadbeef);
-    res = EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &dm);
+    res = EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &dm);
     ok(res, "EnumDisplaySettings error %u\n", GetLastError());
 
     width = dm.dmPelsWidth;
@@ -356,12 +356,12 @@ static void test_work_area(void)
         mi.rcMonitor.left, mi.rcMonitor.top, mi.rcMonitor.right, mi.rcMonitor.bottom);
 
     SetLastError(0xdeadbeef);
-    ret = SystemParametersInfo(SPI_GETWORKAREA, 0, &rc_work, 0);
+    ret = SystemParametersInfoA(SPI_GETWORKAREA, 0, &rc_work, 0);
     ok(ret, "SystemParametersInfo error %u\n", GetLastError());
     trace("work area (%d,%d-%d,%d)\n", rc_work.left, rc_work.top, rc_work.right, rc_work.bottom);
     ok(EqualRect(&rc_work, &mi.rcWork), "work area is different\n");
 
-    hwnd = CreateWindowEx(0, "static", NULL, WS_OVERLAPPEDWINDOW|WS_VISIBLE,100,100,10,10,0,0,0,NULL);
+    hwnd = CreateWindowExA(0, "static", NULL, WS_OVERLAPPEDWINDOW|WS_VISIBLE,100,100,10,10,0,0,0,NULL);
     ok(hwnd != 0, "CreateWindowEx failed\n");
 
     ret = GetWindowRect(hwnd, &rc_normal);
@@ -383,7 +383,7 @@ static void test_work_area(void)
     else
         ok(EqualRect(&rc_normal, &wp.rcNormalPosition), "normal pos is different\n");
 
-    SetWindowLong(hwnd, GWL_EXSTYLE, WS_EX_TOOLWINDOW);
+    SetWindowLongA(hwnd, GWL_EXSTYLE, WS_EX_TOOLWINDOW);
 
     wp.length = sizeof(wp);
     ret = GetWindowPlacement(hwnd, &wp);
