@@ -5608,7 +5608,7 @@ HRESULT ddraw_surface_create_texture(struct ddraw_surface *surface, DWORD surfac
     else
         layers = 1;
 
-    if (desc->ddsCaps.dwCaps2 & DDSCAPS2_TEXTUREMANAGE)
+    if (desc->ddsCaps.dwCaps2 & (DDSCAPS2_TEXTUREMANAGE | DDSCAPS2_D3DTEXTUREMANAGE))
     {
         wined3d_desc.usage = WINED3DUSAGE_TEXTURE;
         pool = WINED3D_POOL_MANAGED;
@@ -5730,7 +5730,7 @@ HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw,
 
     if (!(desc->ddsCaps.dwCaps & (DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY))
             && !((desc->ddsCaps.dwCaps & DDSCAPS_TEXTURE)
-            && (desc->ddsCaps.dwCaps2 & DDSCAPS2_TEXTUREMANAGE)))
+            && (desc->ddsCaps.dwCaps2 & (DDSCAPS2_TEXTUREMANAGE | DDSCAPS2_D3DTEXTUREMANAGE))))
     {
         /* Tests show surfaces without memory flags get these flags added
          * right after creation. */
@@ -5760,7 +5760,7 @@ HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw,
     {
         pool = WINED3D_POOL_SYSTEM_MEM;
     }
-    else if (desc->ddsCaps.dwCaps2 & DDSCAPS2_TEXTUREMANAGE)
+    else if (desc->ddsCaps.dwCaps2 & (DDSCAPS2_TEXTUREMANAGE | DDSCAPS2_D3DTEXTUREMANAGE))
     {
         pool = WINED3D_POOL_MANAGED;
         /* Managed textures have the system memory flag set. */
