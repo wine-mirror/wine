@@ -59,7 +59,7 @@ static LRESULT WINAPI main_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
 static BOOL init_procs(void)
 {
     WNDCLASSA cls;
-    HANDLE user32 = GetModuleHandle("user32");
+    HANDLE user32 = GetModuleHandleA("user32.dll");
     pBroadcastA = (PBROADCAST)GetProcAddress(user32, "BroadcastSystemMessageA");
     if (!pBroadcastA)
         pBroadcastA = (PBROADCAST)GetProcAddress(user32, "BroadcastSystemMessage");
@@ -82,7 +82,7 @@ static BOOL init_procs(void)
     cls.cbWndExtra = 0;
     cls.hInstance = GetModuleHandleA(0);
     cls.hIcon = 0;
-    cls.hCursor = LoadCursorA(0, IDC_ARROW);
+    cls.hCursor = LoadCursorA(0, (LPCSTR)IDC_ARROW);
     cls.hbrBackground = GetStockObject(WHITE_BRUSH);
     cls.lpszMenuName = NULL;
     cls.lpszClassName = "MainWindowClass";
@@ -92,7 +92,7 @@ static BOOL init_procs(void)
 
     if (!CreateWindowExA(0, "MainWindowClass", "Main window", WS_CAPTION | WS_SYSMENU |
                                WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP, 100, 100, 200,
-                               200, 0, 0, GetModuleHandle(0), NULL))
+                               200, 0, 0, GetModuleHandleA(NULL), NULL))
         return FALSE;
     return TRUE;
 }
