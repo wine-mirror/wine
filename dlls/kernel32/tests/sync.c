@@ -244,8 +244,9 @@ static void test_slist(void)
     } item1, item2, item3, *pitem;
 
     SLIST_HEADER slist_header;
-    PSLIST_ENTRY entry;
+    PSLIST_ENTRY entry, next;
     USHORT size;
+    int i;
 
     VOID (WINAPI *pInitializeSListHead)(PSLIST_HEADER);
     USHORT (WINAPI *pQueryDepthSList)(PSLIST_HEADER);
@@ -323,6 +324,21 @@ static void test_slist(void)
     }
     ok(((struct item*)entry)->value == 2, "item 2 not in front of list\n");
     ok(((struct item*)entry->Next)->value == 1, "item 1 not at the back of list\n");
+
+    for (i = 0; i < 65536; i++)
+    {
+        entry = HeapAlloc(GetProcessHeap(), 0, sizeof(*entry));
+        pInterlockedPushEntrySList(&slist_header, entry);
+    }
+
+    entry = pInterlockedFlushSList(&slist_header);
+    ok(entry != NULL, "not flushed\n");
+    while (entry)
+    {
+        next = entry->Next;
+        HeapFree(GetProcessHeap(), 0, entry);
+        entry = next;
+    }
 }
 
 static void test_event(void)

@@ -1080,7 +1080,7 @@ PSLIST_ENTRY WINAPI RtlInterlockedFlushSList(PSLIST_HEADER list)
     SLIST_HEADER old, new;
 
 #ifdef _WIN64
-    if (!list->Header16.Depth) return NULL;
+    if (!list->Header16.NextEntry) return NULL;
     new.s.Alignment = new.s.Region = 0;
     new.Header16.HeaderType = 1;  /* we use the 16-byte header */
     do
@@ -1090,7 +1090,7 @@ PSLIST_ENTRY WINAPI RtlInterlockedFlushSList(PSLIST_HEADER list)
     } while (!interlocked_cmpxchg128((__int64 *)list, new.s.Region, new.s.Alignment, (__int64 *)&old));
     return (SLIST_ENTRY *)((ULONG_PTR)old.Header16.NextEntry << 4);
 #else
-    if (!list->s.Depth) return NULL;
+    if (!list->s.Next.Next) return NULL;
     new.Alignment = 0;
     do
     {
