@@ -102,9 +102,9 @@ static LRESULT CALLBACK call_wnd_proc_filter(int nCode, WPARAM wParam,
 static void msg_spy_pump_msg_queue(void) {
     MSG msg;
 
-    while(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+    while(PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE)) {
         TranslateMessage(&msg);
-        DispatchMessage(&msg);
+        DispatchMessageW(&msg);
     }
 
     return;
@@ -143,11 +143,11 @@ static imm_msgs* msg_spy_find_msg(UINT message) {
 static void msg_spy_init(HWND hwnd) {
     msg_spy.hwnd = hwnd;
     msg_spy.get_msg_hook =
-            SetWindowsHookEx(WH_GETMESSAGE, get_msg_filter, GetModuleHandle(0),
-                             GetCurrentThreadId());
+            SetWindowsHookExW(WH_GETMESSAGE, get_msg_filter, GetModuleHandleW(NULL),
+                              GetCurrentThreadId());
     msg_spy.call_wnd_proc_hook =
-            SetWindowsHookEx(WH_CALLWNDPROC, call_wnd_proc_filter,
-                             GetModuleHandle(0), GetCurrentThreadId());
+            SetWindowsHookExW(WH_CALLWNDPROC, call_wnd_proc_filter,
+                              GetModuleHandleW(NULL), GetCurrentThreadId());
     msg_spy.i_msg = 0;
 
     msg_spy_flush_msgs();
@@ -182,7 +182,7 @@ static LRESULT WINAPI wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 }
 
 static BOOL init(void) {
-    WNDCLASSEX wc;
+    WNDCLASSEXA wc;
     HIMC imc;
     HMODULE hmod,huser;
 
@@ -192,25 +192,25 @@ static BOOL init(void) {
     pImmIsUIMessageA = (void*)GetProcAddress(hmod, "ImmIsUIMessageA");
     pSendInput = (void*)GetProcAddress(huser, "SendInput");
 
-    wc.cbSize        = sizeof(WNDCLASSEX);
+    wc.cbSize        = sizeof(WNDCLASSEXA);
     wc.style         = 0;
     wc.lpfnWndProc   = wndProc;
     wc.cbClsExtra    = 0;
     wc.cbWndExtra    = 0;
-    wc.hInstance     = GetModuleHandle(0);
-    wc.hIcon         = LoadIcon(NULL, IDI_APPLICATION);
-    wc.hCursor       = LoadCursor(NULL, IDC_ARROW);
+    wc.hInstance     = GetModuleHandleA(NULL);
+    wc.hIcon         = LoadIconA(NULL, (LPCSTR)IDI_APPLICATION);
+    wc.hCursor       = LoadCursorA(NULL, (LPCSTR)IDC_ARROW);
     wc.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
     wc.lpszMenuName  = NULL;
     wc.lpszClassName = wndcls;
-    wc.hIconSm       = LoadIcon(NULL, IDI_APPLICATION);
+    wc.hIconSm       = LoadIconA(NULL, (LPCSTR)IDI_APPLICATION);
 
     if (!RegisterClassExA(&wc))
         return FALSE;
 
-    hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, wndcls, "Wine imm32.dll test",
-                          WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
-                          240, 120, NULL, NULL, GetModuleHandle(0), NULL);
+    hwnd = CreateWindowExA(WS_EX_CLIENTEDGE, wndcls, "Wine imm32.dll test",
+                           WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
+                           240, 120, NULL, NULL, GetModuleHandleW(NULL), NULL);
     if (!hwnd)
         return FALSE;
 
@@ -234,7 +234,7 @@ static void cleanup(void) {
     msg_spy_cleanup();
     if (hwnd)
         DestroyWindow(hwnd);
-    UnregisterClass(wndcls, GetModuleHandle(0));
+    UnregisterClassA(wndcls, GetModuleHandleW(NULL));
 }
 
 static void test_ImmNotifyIME(void) {
@@ -254,14 +254,14 @@ static void test_ImmNotifyIME(void) {
        "WM_IME_COMPOSITION in response to NI_COMPOSITIONSTR / CPS_CANCEL, if "
        "the composition string being canceled is empty.\n");
 
-    ImmSetCompositionString(imc, SCS_SETSTR, string, sizeof(string), NULL, 0);
+    ImmSetCompositionStringA(imc, SCS_SETSTR, string, sizeof(string), NULL, 0);
     msg_spy_flush_msgs();
 
     ImmNotifyIME(imc, NI_COMPOSITIONSTR, CPS_CANCEL, 0);
     msg_spy_flush_msgs();
 
     /* behavior differs between win9x and NT */
-    ret = ImmGetCompositionString(imc, GCS_COMPSTR, resstr, sizeof(resstr));
+    ret = ImmGetCompositionStringA(imc, GCS_COMPSTR, resstr, sizeof(resstr));
     ok(!ret, "After being cancelled the composition string is empty.\n");
 
     msg_spy_flush_msgs();
@@ -426,9 +426,9 @@ static DWORD WINAPI ImmGetContextThreadFunc( LPVOID lpParam)
     COMPOSITIONFORM cf;
     POINT pt;
     igc_threadinfo *info= (igc_threadinfo*)lpParam;
-    info->hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, wndcls, "Wine imm32.dll test",
-                          WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
-                          240, 120, NULL, NULL, GetModuleHandle(0), NULL);
+    info->hwnd = CreateWindowExA(WS_EX_CLIENTEDGE, wndcls, "Wine imm32.dll test",
+                                 WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
+                                 240, 120, NULL, NULL, GetModuleHandleW(NULL), NULL);
 
     h1 = ImmGetContext(hwnd);
     todo_wine ok(info->himc == h1, "hwnd context changed in new thread\n");
@@ -437,9 +437,9 @@ static DWORD WINAPI ImmGetContextThreadFunc( LPVOID lpParam)
     info->himc = h2;
     ImmReleaseContext(hwnd,h1);
 
-    hwnd2 = CreateWindowEx(WS_EX_CLIENTEDGE, wndcls, "Wine imm32.dll test",
-                          WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
-                          240, 120, NULL, NULL, GetModuleHandle(0), NULL);
+    hwnd2 = CreateWindowExA(WS_EX_CLIENTEDGE, wndcls, "Wine imm32.dll test",
+                            WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
+                            240, 120, NULL, NULL, GetModuleHandleW(NULL), NULL);
     h1 = ImmGetContext(hwnd2);
 
     ok(h1 == h2, "Windows in same thread should have same default context\n");
@@ -463,14 +463,14 @@ static void test_ImmThreads(void)
     HANDLE hThread;
     DWORD dwThreadId;
     BOOL rc;
-    LOGFONT lf;
+    LOGFONTA lf;
     COMPOSITIONFORM cf;
     CANDIDATEFORM cdf;
     DWORD status, sentence;
     POINT pt;
 
     himc = ImmGetContext(hwnd);
-    threadinfo.event = CreateEvent(NULL, TRUE, FALSE, NULL);
+    threadinfo.event = CreateEventA(NULL, TRUE, FALSE, NULL);
     threadinfo.himc = himc;
     hThread = CreateThread(NULL, 0, ImmGetContextThreadFunc, &threadinfo, 0, &dwThreadId );
     WaitForSingleObject(threadinfo.event, INFINITE);
@@ -510,14 +510,14 @@ static void test_ImmThreads(void)
     ok(rc == 0, "ImmGetOpenStatus failed\n");
 
     /* CompositionFont */
-    rc = ImmGetCompositionFont(himc, &lf);
+    rc = ImmGetCompositionFontA(himc, &lf);
     ok(rc != 0, "ImmGetCompositionFont failed\n");
-    rc = ImmSetCompositionFont(himc, &lf);
+    rc = ImmSetCompositionFontA(himc, &lf);
     ok(rc != 0, "ImmSetCompositionFont failed\n");
 
-    rc = ImmGetCompositionFont(otherHimc, &lf);
+    rc = ImmGetCompositionFontA(otherHimc, &lf);
     ok(rc != 0 || broken(rc == 0), "ImmGetCompositionFont failed\n");
-    rc = ImmSetCompositionFont(otherHimc, &lf);
+    rc = ImmSetCompositionFontA(otherHimc, &lf);
     todo_wine ok(rc == 0, "ImmSetCompositionFont should fail\n");
 
     /* CompositionWindow */
@@ -705,9 +705,9 @@ static void test_ImmDefaultHwnd(void)
     HWND def1, def3;
     HWND hwnd;
 
-    hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, "EDIT", "Wine imm32.dll test",
-                          WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
-                          240, 120, NULL, NULL, GetModuleHandle(0), NULL);
+    hwnd = CreateWindowExA(WS_EX_CLIENTEDGE, "EDIT", "Wine imm32.dll test",
+                           WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
+                           240, 120, NULL, NULL, GetModuleHandleW(NULL), NULL);
 
     ShowWindow(hwnd, SW_SHOWNORMAL);
 
@@ -907,9 +907,9 @@ static void test_ImmMessages(void)
     HIMC imc;
     UINT idx = 0;
 
-    HWND hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, "EDIT", "Wine imm32.dll test",
-                          WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
-                          240, 120, NULL, NULL, GetModuleHandle(0), NULL);
+    HWND hwnd = CreateWindowExA(WS_EX_CLIENTEDGE, "EDIT", "Wine imm32.dll test",
+                                WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
+                                240, 120, NULL, NULL, GetModuleHandleA(NULL), NULL);
 
     ShowWindow(hwnd, SW_SHOWNORMAL);
     defwnd = ImmGetDefaultIMEWnd(hwnd);
@@ -917,7 +917,7 @@ static void test_ImmMessages(void)
 
     ImmSetOpenStatus(imc, TRUE);
     msg_spy_flush_msgs();
-    SendMessage(defwnd, WM_IME_CONTROL, IMC_GETCANDIDATEPOS, (LPARAM)&cf );
+    SendMessageA(defwnd, WM_IME_CONTROL, IMC_GETCANDIDATEPOS, (LPARAM)&cf );
     do
     {
         msg = msg_spy_find_next_msg(WM_IME_CONTROL,&idx);
@@ -952,8 +952,8 @@ static void test_ime_processkey(void)
     wclass.style         = CS_HREDRAW | CS_VREDRAW;
     wclass.lpfnWndProc   = processkey_wnd_proc;
     wclass.hInstance     = hInstance;
-    wclass.hIcon         = LoadIcon(0, IDI_APPLICATION);
-    wclass.hCursor       = LoadCursor( NULL, IDC_ARROW);
+    wclass.hIcon         = LoadIconW(0, (LPCWSTR)IDI_APPLICATION);
+    wclass.hCursor       = LoadCursorW( NULL, (LPCWSTR)IDC_ARROW);
     wclass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     wclass.lpszMenuName  = 0;
     wclass.cbClsExtra    = 0;
