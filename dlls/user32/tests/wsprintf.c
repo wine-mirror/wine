@@ -118,7 +118,7 @@ static void CharUpperTest(void)
     failed = 0;
     for (i=0;i<256;i++)
     	{
-	out = (INT_PTR)CharUpper((LPTSTR)i);
+	out = (INT_PTR)CharUpperA((LPSTR)i);
 	/* printf("%0x ",out); */
 	if ((out >> 16) != 0)
 	   {
@@ -136,7 +136,7 @@ static void CharLowerTest(void)
     failed = 0;
     for (i=0;i<256;i++)
     	{
-	out = (INT_PTR)CharLower((LPTSTR)i);
+	out = (INT_PTR)CharLowerA((LPSTR)i);
 	/* printf("%0x ",out); */
 	if ((out >> 16) != 0)
 	   {
