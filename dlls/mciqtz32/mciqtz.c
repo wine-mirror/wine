@@ -261,7 +261,7 @@ err:
 
     if (wma->uninit)
         CoUninitialize();
-    wma->uninit = 0;
+    wma->uninit = FALSE;
 
     return MCIERR_INTERNAL;
 }
