@@ -4353,6 +4353,201 @@ done:
     DestroyWindow(window);
 }
 
+static void test_surface_lock(void)
+{
+    IDirectDraw7 *ddraw;
+    IDirect3D7 *d3d = NULL;
+    IDirectDrawSurface7 *surface;
+    IDirect3DDevice7 *device;
+    HRESULT hr;
+    HWND window;
+    unsigned int i;
+    DDSURFACEDESC2 ddsd;
+    ULONG refcount;
+    DDPIXELFORMAT z_fmt;
+    BOOL hal_ok = FALSE;
+    const GUID *devtype = &IID_IDirect3DHALDevice;
+    D3DDEVICEDESC7 device_desc;
+    BOOL cubemap_supported;
+    static const struct
+    {
+        DWORD caps;
+        DWORD caps2;
+        const char *name;
+    }
+    tests[] =
+    {
+        {
+            DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY,
+            0,
+            "videomemory offscreenplain"
+        },
+        {
+            DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY,
+            0,
+            "systemmemory offscreenplain"
+        },
+        {
+            DDSCAPS_PRIMARYSURFACE,
+            0,
+            "primary"
+        },
+        {
+            DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY,
+            0,
+            "videomemory texture"
+        },
+        {
+            DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY,
+            DDSCAPS2_OPAQUE,
+            "opaque videomemory texture"
+        },
+        {
+            DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY,
+            0,
+            "systemmemory texture"
+        },
+        {
+            DDSCAPS_TEXTURE,
+            DDSCAPS2_TEXTUREMANAGE,
+            "managed texture"
+        },
+        {
+            DDSCAPS_TEXTURE,
+            DDSCAPS2_TEXTUREMANAGE | DDSCAPS2_OPAQUE,
+            "opaque managed texture"
+        },
+        {
+            DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE,
+            0,
+            "render target"
+        },
+        {
+            DDSCAPS_ZBUFFER,
+            0,
+            "Z buffer"
+        },
+        {
+            DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_VIDEOMEMORY,
+            DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_ALLFACES,
+            "videomemory cube"
+        },
+        {
+            DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_VIDEOMEMORY,
+            DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_ALLFACES | DDSCAPS2_OPAQUE,
+            "opaque videomemory cube"
+        },
+        {
+            DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_SYSTEMMEMORY,
+            DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_ALLFACES,
+            "systemmemory cube"
+        },
+        {
+            DDSCAPS_TEXTURE | DDSCAPS_COMPLEX,
+            DDSCAPS2_TEXTUREMANAGE | DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_ALLFACES,
+            "managed cube"
+        },
+        {
+            DDSCAPS_TEXTURE | DDSCAPS_COMPLEX,
+            DDSCAPS2_TEXTUREMANAGE | DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_ALLFACES | DDSCAPS2_OPAQUE,
+            "opaque managed cube"
+        },
+    };
+
+    if (!(ddraw = create_ddraw()))
+    {
+        skip("Failed to create ddraw object, skipping tests.\n");
+        return;
+    }
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    if (FAILED(hr = IDirectDraw7_QueryInterface(ddraw, &IID_IDirect3D7, (void **)&d3d)))
+    {
+        skip("D3D interface is not available, skipping test.\n");
+        goto done;
+    }
+
+    hr = IDirect3D7_EnumDevices(d3d, enum_devtype_cb, &hal_ok);
+    ok(SUCCEEDED(hr), "Failed to enumerate devices, hr %#x.\n", hr);
+    if (hal_ok)
+        devtype = &IID_IDirect3DTnLHalDevice;
+
+    memset(&z_fmt, 0, sizeof(z_fmt));
+    hr = IDirect3D7_EnumZBufferFormats(d3d, devtype, enum_z_fmt, &z_fmt);
+    if (FAILED(hr) || !z_fmt.dwSize)
+    {
+        skip("No depth buffer formats available, skipping test.\n");
+        goto done;
+    }
+
+    memset(&ddsd, 0, sizeof(ddsd)),
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    ddsd.dwWidth = 64;
+    ddsd.dwHeight = 64;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE;
+    hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    hr = IDirect3D7_CreateDevice(d3d, devtype, surface, &device);
+    ok(SUCCEEDED(hr), "Failed to create device, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_GetCaps(device, &device_desc);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    cubemap_supported = !!(device_desc.dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_CUBEMAP);
+    IDirect3DDevice7_Release(device);
+
+    IDirectDrawSurface7_Release(surface);
+
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); i++)
+    {
+        if (!cubemap_supported && tests[i].caps2 & DDSCAPS2_CUBEMAP)
+            continue;
+
+        memset(&ddsd, 0, sizeof(ddsd)),
+        ddsd.dwSize = sizeof(ddsd);
+        ddsd.dwFlags = DDSD_CAPS;
+        if (!(tests[i].caps & DDSCAPS_PRIMARYSURFACE))
+        {
+            ddsd.dwFlags |= DDSD_WIDTH | DDSD_HEIGHT;
+            ddsd.dwWidth = 64;
+            ddsd.dwHeight = 64;
+        }
+        if (tests[i].caps & DDSCAPS_ZBUFFER)
+        {
+            ddsd.dwFlags |= DDSD_PIXELFORMAT;
+            ddsd.ddpfPixelFormat = z_fmt;
+        }
+        ddsd.ddsCaps.dwCaps = tests[i].caps;
+        ddsd.ddsCaps.dwCaps2 = tests[i].caps2;
+
+        hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &surface, NULL);
+        ok(SUCCEEDED(hr), "Failed to create surface, type %s, hr %#x.\n", tests[i].name, hr);
+
+        memset(&ddsd, 0, sizeof(ddsd)),
+        ddsd.dwSize = sizeof(ddsd);
+        hr = IDirectDrawSurface7_Lock(surface, NULL, &ddsd, DDLOCK_WAIT, NULL);
+        ok(SUCCEEDED(hr), "Failed to lock surface, type %s, hr %#x.\n", tests[i].name, hr);
+        if (SUCCEEDED(hr))
+        {
+            hr = IDirectDrawSurface7_Unlock(surface, NULL);
+            ok(SUCCEEDED(hr), "Failed to unlock surface, type %s, hr %#x.\n", tests[i].name, hr);
+        }
+
+        IDirectDrawSurface7_Release(surface);
+    }
+
+done:
+    if (d3d)
+        IDirect3D7_Release(d3d);
+    refcount = IDirectDraw7_Release(ddraw);
+    ok(refcount == 0, "The ddraw object was not properly freed, refcount %u.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw7)
 {
     HMODULE module = GetModuleHandleA("ddraw.dll");
@@ -4395,4 +4590,5 @@ START_TEST(ddraw7)
     test_block_formats_creation();
     test_unsupported_formats();
     test_rt_caps();
+    test_surface_lock();
 }
