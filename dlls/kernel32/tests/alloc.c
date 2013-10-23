@@ -51,7 +51,8 @@ static void test_Heap(void)
     HANDLE heap;
     LPVOID mem1,mem1a,mem3;
     UCHAR *mem2,*mem2a;
-    UINT error,i;
+    UINT i;
+    BOOL error;
     DWORD dwSize;
 
 /* Retrieve the page size for this system */
@@ -86,10 +87,10 @@ static void test_Heap(void)
     ok(mem2!=NULL,"HeapAlloc failed\n");
     if(mem2) {
       ok(HeapSize(heap,0,mem2)>=memchunk,"HeapAlloc should return a big enough memory block\n");
-      error=0;
+      error=FALSE;
       for(i=0;i<memchunk;i++) {
         if(mem2[i]!=0) {
-          error=1;
+          error=TRUE;
         }
       }
       ok(!error,"HeapAlloc should have zeroed out it's allocated memory\n");
@@ -107,24 +108,24 @@ static void test_Heap(void)
     ok(mem2a!=NULL,"HeapReAlloc failed\n");
     if(mem2a) {
       ok(HeapSize(heap,0,mem2a)>=memchunk+5*sysInfo.dwPageSize,"HeapReAlloc failed\n");
-      error=0;
+      error=FALSE;
       for(i=0;i<5*sysInfo.dwPageSize;i++) {
         if(mem2a[memchunk+i]!=0) {
-          error=1;
+          error=TRUE;
         }
       }
       ok(!error,"HeapReAlloc should have zeroed out it's allocated memory\n");
     }
 
 /* Check that HeapRealloc honours HEAP_REALLOC_IN_PLACE_ONLY */
-    error=0;
+    error=FALSE;
     mem1a=HeapReAlloc(heap,HEAP_REALLOC_IN_PLACE_ONLY,mem1,memchunk+sysInfo.dwPageSize);
     if(mem1a!=NULL) {
       if(mem1a!=mem1) {
-        error=1;
+        error=TRUE;
       }
     }
-    ok(mem1a==NULL || error==0,"HeapReAlloc didn't honour HEAP_REALLOC_IN_PLACE_ONLY\n");
+    ok(mem1a==NULL || !error,"HeapReAlloc didn't honour HEAP_REALLOC_IN_PLACE_ONLY\n");
 
 /* Check that HeapFree works correctly */
    if(mem1a) {
@@ -168,7 +169,8 @@ static void test_Global(void)
     ULONG memchunk;
     HGLOBAL mem1,mem2,mem2a,mem2b;
     UCHAR *mem2ptr;
-    UINT error,i;
+    UINT i;
+    BOOL error;
     memchunk=100000;
 
     SetLastError(NO_ERROR);
@@ -187,10 +189,10 @@ static void test_Global(void)
       mem2ptr=GlobalLock(mem2);
       ok(mem2ptr==mem2,"GlobalLock should have returned the same memory as was allocated\n");
       if(mem2ptr) {
-        error=0;
+        error=FALSE;
         for(i=0;i<memchunk;i++) {
           if(mem2ptr[i]!=0) {
-            error=1;
+            error=TRUE;
           }
         }
         ok(!error,"GlobalAlloc should have zeroed out it's allocated memory\n");
@@ -214,10 +216,10 @@ static void test_Global(void)
       mem2ptr=GlobalLock(mem2a);
       ok(mem2ptr!=NULL,"GlobalLock Failed\n");
       if(mem2ptr) {
-        error=0;
+        error=FALSE;
         for(i=0;i<memchunk;i++) {
           if(mem2ptr[memchunk+i]!=0) {
-            error=1;
+            error=TRUE;
           }
         }
         ok(!error,"GlobalReAlloc should have zeroed out it's allocated memory\n");
@@ -260,7 +262,8 @@ static void test_Local(void)
     ULONG memchunk;
     HLOCAL mem1,mem2,mem2a,mem2b;
     UCHAR *mem2ptr;
-    UINT error,i;
+    UINT i;
+    BOOL error;
     memchunk=100000;
 
 /* Check that a normal alloc works */
@@ -278,16 +281,16 @@ static void test_Local(void)
       mem2ptr=LocalLock(mem2);
       ok(mem2ptr!=NULL,"LocalLock: error=%d\n",GetLastError());
       if(mem2ptr) {
-        error=0;
+        error=FALSE;
         for(i=0;i<memchunk;i++) {
           if(mem2ptr[i]!=0) {
-            error=1;
+            error=TRUE;
           }
         }
         ok(!error,"LocalAlloc should have zeroed out it's allocated memory\n");
         SetLastError(0);
         error=LocalUnlock(mem2);
-        ok(error==0 && GetLastError()==NO_ERROR,
+        ok(!error && GetLastError()==NO_ERROR,
            "LocalUnlock Failed: rc=%d err=%d\n",error,GetLastError());
       }
     }
@@ -306,10 +309,10 @@ static void test_Local(void)
       mem2ptr=LocalLock(mem2a);
       ok(mem2ptr!=NULL,"LocalLock Failed\n");
       if(mem2ptr) {
-        error=0;
+        error=FALSE;
         for(i=0;i<memchunk;i++) {
           if(mem2ptr[memchunk+i]!=0) {
-            error=1;
+            error=TRUE;
           }
         }
         ok(!error,"LocalReAlloc should have zeroed out it's allocated memory\n");
@@ -356,7 +359,8 @@ static void test_Virtual(void)
     SYSTEM_INFO sysInfo;
     ULONG memchunk;
     UCHAR *mem1;
-    UINT error,i;
+    UINT i;
+    BOOL error;
 
 /* Retrieve the page size for this system */
     sysInfo.dwPageSize=0;
@@ -371,19 +375,19 @@ static void test_Virtual(void)
     ok(mem1!=NULL,"VirtualAlloc failed\n");
     if(mem1) {
 /* check that memory is initialized to 0 */
-      error=0;
+      error=FALSE;
       for(i=0;i<memchunk;i++) {
         if(mem1[i]!=0) {
-          error=1;
+          error=TRUE;
         }
       }
       ok(!error,"VirtualAlloc did not initialize memory to '0's\n");
 /* Check that we can read/write to memory */
-      error=0;
+      error=FALSE;
       for(i=0;i<memchunk;i+=100) {
         mem1[i]='a';
         if(mem1[i]!='a') {
-          error=1;
+          error=TRUE;
         }
       }
       ok(!error,"Virtual memory was not writable\n");

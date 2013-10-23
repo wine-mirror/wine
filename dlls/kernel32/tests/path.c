@@ -198,21 +198,22 @@ static void test_ValidPathA(const CHAR *curdir, const CHAR *subdir, const CHAR *
 
 /* split path into leading directory, and 8.3 filename */
 static void test_SplitShortPathA(CHAR *path,CHAR *dir,CHAR *eight,CHAR *three) {
-  int done,error;
+  BOOL done = FALSE, error = FALSE;
   int ext,fil;
   int len,i;
   len=lstrlenA(path);
-  ext=len; fil=len; done=0; error=0;
+  ext=len;
+  fil=len;
 /* walk backwards over path looking for '.' or '\\' separators */
   for(i=len-1;(i>=0) && (!done);i--) {
     if(path[i]=='.')
-      if(ext!=len) error=1; else ext=i;
+      if(ext!=len) error=TRUE; else ext=i;
     else if(path[i]=='\\') {
       if(i==len-1) {
-        error=1;
+        error=TRUE;
       } else {
         fil=i;
-        done=1;
+        done=TRUE;
       }
     }
   }

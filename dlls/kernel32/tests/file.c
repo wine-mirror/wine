@@ -2147,7 +2147,7 @@ static unsigned int map_file_access( unsigned int access )
     return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
-static int is_sharing_compatible( DWORD access1, DWORD sharing1, DWORD access2, DWORD sharing2 )
+static BOOL is_sharing_compatible( DWORD access1, DWORD sharing1, DWORD access2, DWORD sharing2 )
 {
     access1 = map_file_access( access1 );
     access2 = map_file_access( access2 );
@@ -2157,22 +2157,22 @@ static int is_sharing_compatible( DWORD access1, DWORD sharing1, DWORD access2, 
     if (!access1) sharing1 = FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE;
     if (!access2) sharing2 = FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE;
 
-    if ((access1 & (FILE_READ_DATA|FILE_EXECUTE)) && !(sharing2 & FILE_SHARE_READ)) return 0;
-    if ((access1 & (FILE_WRITE_DATA|FILE_APPEND_DATA)) && !(sharing2 & FILE_SHARE_WRITE)) return 0;
-    if ((access1 & DELETE) && !(sharing2 & FILE_SHARE_DELETE)) return 0;
-    if ((access2 & (FILE_READ_DATA|FILE_EXECUTE)) && !(sharing1 & FILE_SHARE_READ)) return 0;
-    if ((access2 & (FILE_WRITE_DATA|FILE_APPEND_DATA)) && !(sharing1 & FILE_SHARE_WRITE)) return 0;
-    if ((access2 & DELETE) && !(sharing1 & FILE_SHARE_DELETE)) return 0;
-    return 1;
+    if ((access1 & (FILE_READ_DATA|FILE_EXECUTE)) && !(sharing2 & FILE_SHARE_READ)) return FALSE;
+    if ((access1 & (FILE_WRITE_DATA|FILE_APPEND_DATA)) && !(sharing2 & FILE_SHARE_WRITE)) return FALSE;
+    if ((access1 & DELETE) && !(sharing2 & FILE_SHARE_DELETE)) return FALSE;
+    if ((access2 & (FILE_READ_DATA|FILE_EXECUTE)) && !(sharing1 & FILE_SHARE_READ)) return FALSE;
+    if ((access2 & (FILE_WRITE_DATA|FILE_APPEND_DATA)) && !(sharing1 & FILE_SHARE_WRITE)) return FALSE;
+    if ((access2 & DELETE) && !(sharing1 & FILE_SHARE_DELETE)) return FALSE;
+    return TRUE;
 }
 
-static int is_sharing_map_compatible( DWORD map_access, DWORD access2, DWORD sharing2 )
+static BOOL is_sharing_map_compatible( DWORD map_access, DWORD access2, DWORD sharing2 )
 {
     if ((map_access == PAGE_READWRITE || map_access == PAGE_EXECUTE_READWRITE) &&
-        !(sharing2 & FILE_SHARE_WRITE)) return 0;
+        !(sharing2 & FILE_SHARE_WRITE)) return FALSE;
     access2 = map_file_access( access2 );
-    if ((map_access & SEC_IMAGE) && (access2 & FILE_WRITE_DATA)) return 0;
-    return 1;
+    if ((map_access & SEC_IMAGE) && (access2 & FILE_WRITE_DATA)) return FALSE;
+    return TRUE;
 }
 
 static void test_file_sharing(void)

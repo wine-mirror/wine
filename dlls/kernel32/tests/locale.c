@@ -61,7 +61,7 @@ static inline WCHAR *strchrW( const WCHAR *str, WCHAR ch )
     return NULL;
 }
 
-static inline int isdigitW( WCHAR wc )
+static inline BOOL isdigitW( WCHAR wc )
 {
     WORD type;
     GetStringTypeW( CT_CTYPE1, &wc, 1, &type );

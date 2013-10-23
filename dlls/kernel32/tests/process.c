@@ -183,12 +183,12 @@ static WCHAR*   decodeW(const char* str)
  *      exename:        executable without the path
  * function-pointers, which are not implemented in all windows versions
  */
-static int     init(void)
+static BOOL init(void)
 {
     char *p;
 
     myARGC = winetest_get_mainargs( &myARGV );
-    if (!GetCurrentDirectoryA(sizeof(base), base)) return 0;
+    if (!GetCurrentDirectoryA(sizeof(base), base)) return FALSE;
     strcpy(selfname, myARGV[0]);
 
     /* Strip the path of selfname */
@@ -206,7 +206,7 @@ static int     init(void)
     pQueryFullProcessImageNameA = (void *) GetProcAddress(hkernel32, "QueryFullProcessImageNameA");
     pQueryFullProcessImageNameW = (void *) GetProcAddress(hkernel32, "QueryFullProcessImageNameW");
     pK32GetProcessImageFileNameA = (void *) GetProcAddress(hkernel32, "K32GetProcessImageFileNameA");
-    return 1;
+    return TRUE;
 }
 
 /******************************************************************
@@ -2062,7 +2062,7 @@ static void test_DuplicateHandle(void)
 
 START_TEST(process)
 {
-    int b = init();
+    BOOL b = init();
     ok(b, "Basic init of CreateProcess test\n");
     if (!b) return;
 
