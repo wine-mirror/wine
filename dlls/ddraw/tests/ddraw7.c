@@ -3626,10 +3626,16 @@ static void test_texturemanage(void)
     {
         {DDSCAPS_SYSTEMMEMORY | DDSCAPS_TEXTURE, DDSCAPS2_TEXTUREMANAGE, DDERR_INVALIDCAPS,
                 ~0U, ~0U},
+        {DDSCAPS_SYSTEMMEMORY | DDSCAPS_TEXTURE, DDSCAPS2_D3DTEXTUREMANAGE, DDERR_INVALIDCAPS,
+                ~0U, ~0U},
         {DDSCAPS_VIDEOMEMORY | DDSCAPS_TEXTURE, DDSCAPS2_TEXTUREMANAGE, DDERR_INVALIDCAPS,
+                ~0U, ~0U},
+        {DDSCAPS_VIDEOMEMORY | DDSCAPS_TEXTURE, DDSCAPS2_D3DTEXTUREMANAGE, DDERR_INVALIDCAPS,
                 ~0U, ~0U},
         {DDSCAPS_TEXTURE, DDSCAPS2_TEXTUREMANAGE, DD_OK,
                 DDSCAPS_SYSTEMMEMORY | DDSCAPS_TEXTURE, DDSCAPS2_TEXTUREMANAGE},
+        {DDSCAPS_TEXTURE, DDSCAPS2_D3DTEXTUREMANAGE, DD_OK,
+                DDSCAPS_SYSTEMMEMORY | DDSCAPS_TEXTURE, DDSCAPS2_D3DTEXTUREMANAGE},
         {DDSCAPS_VIDEOMEMORY | DDSCAPS_TEXTURE, 0, DD_OK,
                 DDSCAPS_VIDEOMEMORY | DDSCAPS_TEXTURE | DDSCAPS_LOCALVIDMEM, 0},
         {DDSCAPS_SYSTEMMEMORY | DDSCAPS_TEXTURE, 0, DD_OK,
@@ -3637,9 +3643,15 @@ static void test_texturemanage(void)
 
         {0, DDSCAPS2_TEXTUREMANAGE, DDERR_INVALIDCAPS,
                 ~0U, ~0U},
+        {0, DDSCAPS2_D3DTEXTUREMANAGE, DDERR_INVALIDCAPS,
+                ~0U, ~0U},
         {DDSCAPS_SYSTEMMEMORY, DDSCAPS2_TEXTUREMANAGE, DDERR_INVALIDCAPS,
                 ~0U, ~0U},
+        {DDSCAPS_SYSTEMMEMORY, DDSCAPS2_D3DTEXTUREMANAGE, DDERR_INVALIDCAPS,
+                ~0U, ~0U},
         {DDSCAPS_VIDEOMEMORY, DDSCAPS2_TEXTUREMANAGE, DDERR_INVALIDCAPS,
+                ~0U, ~0U},
+        {DDSCAPS_VIDEOMEMORY, DDSCAPS2_D3DTEXTUREMANAGE, DDERR_INVALIDCAPS,
                 ~0U, ~0U},
         {DDSCAPS_VIDEOMEMORY, 0, DD_OK,
                 DDSCAPS_LOCALVIDMEM | DDSCAPS_VIDEOMEMORY, 0},
@@ -4414,7 +4426,17 @@ static void test_surface_lock(void)
         },
         {
             DDSCAPS_TEXTURE,
+            DDSCAPS2_D3DTEXTUREMANAGE,
+            "managed texture"
+        },
+        {
+            DDSCAPS_TEXTURE,
             DDSCAPS2_TEXTUREMANAGE | DDSCAPS2_OPAQUE,
+            "opaque managed texture"
+        },
+        {
+            DDSCAPS_TEXTURE,
+            DDSCAPS2_D3DTEXTUREMANAGE | DDSCAPS2_OPAQUE,
             "opaque managed texture"
         },
         {
@@ -4449,7 +4471,17 @@ static void test_surface_lock(void)
         },
         {
             DDSCAPS_TEXTURE | DDSCAPS_COMPLEX,
+            DDSCAPS2_D3DTEXTUREMANAGE | DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_ALLFACES,
+            "managed cube"
+        },
+        {
+            DDSCAPS_TEXTURE | DDSCAPS_COMPLEX,
             DDSCAPS2_TEXTUREMANAGE | DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_ALLFACES | DDSCAPS2_OPAQUE,
+            "opaque managed cube"
+        },
+        {
+            DDSCAPS_TEXTURE | DDSCAPS_COMPLEX,
+            DDSCAPS2_D3DTEXTUREMANAGE | DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_ALLFACES | DDSCAPS2_OPAQUE,
             "opaque managed cube"
         },
     };
