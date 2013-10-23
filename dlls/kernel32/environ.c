@@ -247,7 +247,7 @@ BOOL WINAPI SetEnvironmentVariableA( LPCSTR name, LPCSTR value )
     if (!name)
     {
         SetLastError(ERROR_ENVVAR_NOT_FOUND);
-        return 0;
+        return FALSE;
     }
 
     RtlCreateUnicodeStringFromAsciiz( &us_name, name );
@@ -280,7 +280,7 @@ BOOL WINAPI SetEnvironmentVariableW( LPCWSTR name, LPCWSTR value )
     if (!name)
     {
         SetLastError(ERROR_ENVVAR_NOT_FOUND);
-        return 0;
+        return FALSE;
     }
 
     RtlInitUnicodeString(&us_name, name);

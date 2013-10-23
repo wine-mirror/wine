@@ -50,7 +50,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(sync);
 
 /* check if current version is NT or Win95 */
-static inline int is_version_nt(void)
+static inline BOOL is_version_nt(void)
 {
     return !(GetVersion() & 0x80000000);
 }
@@ -1467,7 +1467,7 @@ BOOL WINAPI WaitNamedPipeA (LPCSTR name, DWORD nTimeOut)
     if (!MultiByteToWideChar( CP_ACP, 0, name, -1, buffer, MAX_PATH ))
     {
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
-        return 0;
+        return FALSE;
     }
     return WaitNamedPipeW( buffer, nTimeOut );
 }

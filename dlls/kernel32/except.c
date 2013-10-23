@@ -346,7 +346,7 @@ EXIT:
  *
  * returns TRUE for the two first conditions, FALSE for the last
  */
-static	int	start_debugger_atomic(PEXCEPTION_POINTERS epointers)
+static BOOL start_debugger_atomic(PEXCEPTION_POINTERS epointers)
 {
     static HANDLE	hRunOnce /* = 0 */;
 

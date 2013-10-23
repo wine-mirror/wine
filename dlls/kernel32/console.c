@@ -2272,7 +2272,7 @@ static int CONSOLE_WriteChars(HANDLE hCon, LPCWSTR lpBuffer, int nc, COORD* pos)
  * WriteConsoleOutput helper: handles passing to next line (+scrolling if necessary)
  *
  */
-static int	next_line(HANDLE hCon, CONSOLE_SCREEN_BUFFER_INFO* csbi)
+static BOOL next_line(HANDLE hCon, CONSOLE_SCREEN_BUFFER_INFO* csbi)
 {
     SMALL_RECT	src;
     CHAR_INFO	ci;
@@ -2281,7 +2281,7 @@ static int	next_line(HANDLE hCon, CONSOLE_SCREEN_BUFFER_INFO* csbi)
     csbi->dwCursorPosition.X = 0;
     csbi->dwCursorPosition.Y++;
 
-    if (csbi->dwCursorPosition.Y < csbi->dwSize.Y) return 1;
+    if (csbi->dwCursorPosition.Y < csbi->dwSize.Y) return TRUE;
 
     src.Top    = 1;
     src.Bottom = csbi->dwSize.Y - 1;
@@ -2296,8 +2296,8 @@ static int	next_line(HANDLE hCon, CONSOLE_SCREEN_BUFFER_INFO* csbi)
 
     csbi->dwCursorPosition.Y--;
     if (!ScrollConsoleScreenBufferW(hCon, &src, NULL, dst, &ci))
-	return 0;
-    return 1;
+        return FALSE;
+    return TRUE;
 }
 
 /******************************************************************
@@ -2308,13 +2308,13 @@ static int	next_line(HANDLE hCon, CONSOLE_SCREEN_BUFFER_INFO* csbi)
  * handled
  *
  */
-static int     	write_block(HANDLE hCon, CONSOLE_SCREEN_BUFFER_INFO* csbi,
-			    DWORD mode, LPCWSTR ptr, int len)
+static BOOL write_block(HANDLE hCon, CONSOLE_SCREEN_BUFFER_INFO* csbi,
+                        DWORD mode, LPCWSTR ptr, int len)
 {
     int	blk;	/* number of chars to write on current line */
     int done;   /* number of chars already written */
 
-    if (len <= 0) return 1;
+    if (len <= 0) return TRUE;
 
     if (mode & ENABLE_WRAP_AT_EOL_OUTPUT) /* writes remaining on next line */
     {
@@ -2323,9 +2323,9 @@ static int     	write_block(HANDLE hCon, CONSOLE_SCREEN_BUFFER_INFO* csbi,
             blk = min(len - done, csbi->dwSize.X - csbi->dwCursorPosition.X);
 
             if (CONSOLE_WriteChars(hCon, ptr + done, blk, &csbi->dwCursorPosition) != blk)
-                return 0;
+                return FALSE;
             if (csbi->dwCursorPosition.X == csbi->dwSize.X && !next_line(hCon, csbi))
-                return 0;
+                return FALSE;
         }
     }
     else
@@ -2342,11 +2342,11 @@ static int     	write_block(HANDLE hCon, CONSOLE_SCREEN_BUFFER_INFO* csbi,
 
             csbi->dwCursorPosition.X = pos;
             if (CONSOLE_WriteChars(hCon, ptr + done, blk, &csbi->dwCursorPosition) != blk)
-                return 0;
+                return FALSE;
         }
     }
 
-    return 1;
+    return TRUE;
 }
 
 /***********************************************************************
@@ -2491,7 +2491,7 @@ BOOL WINAPI WriteConsoleA(HANDLE hConsoleOutput, LPCVOID lpBuffer, DWORD nNumber
 
     if (lpNumberOfCharsWritten) *lpNumberOfCharsWritten = 0;
     xstring = HeapAlloc(GetProcessHeap(), 0, n * sizeof(WCHAR));
-    if (!xstring) return 0;
+    if (!xstring) return FALSE;
 
     MultiByteToWideChar(GetConsoleOutputCP(), 0, lpBuffer, nNumberOfCharsToWrite, xstring, n);
 
@@ -3009,7 +3009,7 @@ unsigned CONSOLE_GetNumHistoryEntries(void)
  */
 BOOL CONSOLE_GetEditionMode(HANDLE hConIn, int* mode)
 {
-    unsigned ret = FALSE;
+    unsigned ret = 0;
     SERVER_START_REQ(get_console_input_info)
     {
         req->handle = console_handle_unmap(hConIn);
