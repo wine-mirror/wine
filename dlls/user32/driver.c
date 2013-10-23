@@ -553,11 +553,6 @@ static SHORT CDECL loaderdrv_VkKeyScanEx( WCHAR ch, HKL layout )
     return load_driver()->pVkKeyScanEx( ch, layout );
 }
 
-static void CDECL loaderdrv_DestroyCursorIcon( HCURSOR cursor )
-{
-    load_driver()->pDestroyCursorIcon( cursor );
-}
-
 static void CDECL loaderdrv_SetCursor( HCURSOR cursor )
 {
     load_driver()->pSetCursor( cursor );
@@ -649,41 +644,10 @@ static BOOL CDECL loaderdrv_CreateWindow( HWND hwnd )
     return load_driver()->pCreateWindow( hwnd );
 }
 
-static void CDECL loaderdrv_DestroyWindow( HWND hwnd )
-{
-    load_driver()->pDestroyWindow( hwnd );
-}
-
 static void CDECL loaderdrv_GetDC( HDC hdc, HWND hwnd, HWND top_win, const RECT *win_rect,
                                    const RECT *top_rect, DWORD flags )
 {
     load_driver()->pGetDC( hdc, hwnd, top_win, win_rect, top_rect, flags );
-}
-
-static DWORD CDECL loaderdrv_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles, DWORD timeout,
-                                                          DWORD mask, DWORD flags )
-{
-    return load_driver()->pMsgWaitForMultipleObjectsEx( count, handles, timeout, mask, flags );
-}
-
-static void CDECL loaderdrv_ReleaseDC( HWND hwnd, HDC hdc )
-{
-    load_driver()->pReleaseDC( hwnd, hdc );
-}
-
-static BOOL CDECL loaderdrv_ScrollDC( HDC hdc, INT dx, INT dy, HRGN update )
-{
-    return load_driver()->pScrollDC( hdc, dx, dy, update );
-}
-
-static void CDECL loaderdrv_SetCapture( HWND hwnd, UINT flags )
-{
-    load_driver()->pSetCapture( hwnd, flags );
-}
-
-static void CDECL loaderdrv_SetFocus( HWND hwnd )
-{
-    load_driver()->pSetFocus( hwnd );
 }
 
 static void CDECL loaderdrv_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags )
@@ -691,72 +655,15 @@ static void CDECL loaderdrv_SetLayeredWindowAttributes( HWND hwnd, COLORREF key,
     load_driver()->pSetLayeredWindowAttributes( hwnd, key, alpha, flags );
 }
 
-static void CDECL loaderdrv_SetParent( HWND hwnd, HWND parent, HWND old_parent )
-{
-    load_driver()->pSetParent( hwnd, parent, old_parent );
-}
-
 static int CDECL loaderdrv_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
 {
     return load_driver()->pSetWindowRgn( hwnd, hrgn, redraw );
-}
-
-static void CDECL loaderdrv_SetWindowIcon( HWND hwnd, UINT type, HICON icon )
-{
-    load_driver()->pSetWindowIcon( hwnd, type, icon );
-}
-
-static void CDECL loaderdrv_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
-{
-    load_driver()->pSetWindowStyle( hwnd, offset, style );
-}
-
-static void CDECL loaderdrv_SetWindowText( HWND hwnd, LPCWSTR text )
-{
-    load_driver()->pSetWindowText( hwnd, text );
-}
-
-static UINT CDECL loaderdrv_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp )
-{
-    return load_driver()->pShowWindow( hwnd, cmd, rect, swp );
-}
-
-static LRESULT CDECL loaderdrv_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam )
-{
-    return load_driver()->pSysCommand( hwnd, wparam, lparam );
 }
 
 static BOOL CDECL loaderdrv_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
                                                  const RECT *window_rect )
 {
     return load_driver()->pUpdateLayeredWindow( hwnd, info, window_rect );
-}
-
-static LRESULT CDECL loaderdrv_WindowMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
-{
-    return load_driver()->pWindowMessage( hwnd, msg, wparam, lparam );
-}
-
-static void CDECL loaderdrv_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flags,
-                                               const RECT *window_rect, const RECT *client_rect,
-                                               RECT *visible_rect, struct window_surface **surface )
-{
-    load_driver()->pWindowPosChanging( hwnd, insert_after, swp_flags,
-                                       window_rect, client_rect, visible_rect, surface );
-}
-
-static void CDECL loaderdrv_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags,
-                                              const RECT *window_rect, const RECT *client_rect,
-                                              const RECT *visible_rect, const RECT *valid_rects,
-                                              struct window_surface *surface )
-{
-    load_driver()->pWindowPosChanged( hwnd, insert_after, swp_flags, window_rect,
-                                      client_rect, visible_rect, valid_rects, surface );
-}
-
-static BOOL CDECL loaderdrv_SystemParametersInfo( UINT action, UINT int_param, void *ptr_param, UINT flags )
-{
-    return FALSE;  /* don't trigger a driver load */
 }
 
 static USER_DRIVER lazy_load_driver =
@@ -776,7 +683,7 @@ static USER_DRIVER lazy_load_driver =
     loaderdrv_UnregisterHotKey,
     loaderdrv_VkKeyScanEx,
     /* cursor/icon functions */
-    loaderdrv_DestroyCursorIcon,
+    nulldrv_DestroyCursorIcon,
     loaderdrv_SetCursor,
     loaderdrv_GetCursorPos,
     loaderdrv_SetCursorPos,
@@ -798,25 +705,25 @@ static USER_DRIVER lazy_load_driver =
     /* windowing functions */
     loaderdrv_CreateDesktopWindow,
     loaderdrv_CreateWindow,
-    loaderdrv_DestroyWindow,
+    nulldrv_DestroyWindow,
     loaderdrv_GetDC,
-    loaderdrv_MsgWaitForMultipleObjectsEx,
-    loaderdrv_ReleaseDC,
-    loaderdrv_ScrollDC,
-    loaderdrv_SetCapture,
-    loaderdrv_SetFocus,
+    nulldrv_MsgWaitForMultipleObjectsEx,
+    nulldrv_ReleaseDC,
+    nulldrv_ScrollDC,
+    nulldrv_SetCapture,
+    nulldrv_SetFocus,
     loaderdrv_SetLayeredWindowAttributes,
-    loaderdrv_SetParent,
+    nulldrv_SetParent,
     loaderdrv_SetWindowRgn,
-    loaderdrv_SetWindowIcon,
-    loaderdrv_SetWindowStyle,
-    loaderdrv_SetWindowText,
-    loaderdrv_ShowWindow,
-    loaderdrv_SysCommand,
+    nulldrv_SetWindowIcon,
+    nulldrv_SetWindowStyle,
+    nulldrv_SetWindowText,
+    nulldrv_ShowWindow,
+    nulldrv_SysCommand,
     loaderdrv_UpdateLayeredWindow,
-    loaderdrv_WindowMessage,
-    loaderdrv_WindowPosChanging,
-    loaderdrv_WindowPosChanged,
+    nulldrv_WindowMessage,
+    nulldrv_WindowPosChanging,
+    nulldrv_WindowPosChanged,
     /* system parameters */
-    loaderdrv_SystemParametersInfo
+    nulldrv_SystemParametersInfo
 };
