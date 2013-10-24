@@ -88,6 +88,7 @@ static void (CDECL *mono_free)(void *);
 static MonoImage* (CDECL *mono_image_open)(const char *fname, MonoImageOpenStatus *status);
 MonoImage* (CDECL *mono_image_open_from_module_handle)(HMODULE module_handle, char* fname, UINT has_entry_point, MonoImageOpenStatus* status);
 static void (CDECL *mono_install_assembly_preload_hook)(MonoAssemblyPreLoadFunc func, void *user_data);
+void (CDECL *mono_jit_cleanup)(MonoDomain *domain);
 int (CDECL *mono_jit_exec)(MonoDomain *domain, MonoAssembly *assembly, int argc, char *argv[]);
 MonoDomain* (CDECL *mono_jit_init)(const char *file);
 static int (CDECL *mono_jit_set_trace_options)(const char* options);
@@ -106,6 +107,7 @@ static void (CDECL *mono_set_verbose_level)(DWORD level);
 MonoString* (CDECL *mono_string_new)(MonoDomain *domain, const char *str);
 static char* (CDECL *mono_stringify_assembly_name)(MonoAssemblyName *aname);
 MonoThread* (CDECL *mono_thread_attach)(MonoDomain *domain);
+void (CDECL *mono_thread_manage)(void);
 static void (CDECL *mono_thread_pool_cleanup)(void);
 static void (CDECL *mono_thread_suspend_all_other_threads)(void);
 static void (CDECL *mono_threads_set_shutting_down)(void);
@@ -204,6 +206,7 @@ static HRESULT load_mono(CLRRuntimeInfo *This)
         LOAD_MONO_FUNCTION(mono_free);
         LOAD_MONO_FUNCTION(mono_image_open);
         LOAD_MONO_FUNCTION(mono_install_assembly_preload_hook);
+        LOAD_MONO_FUNCTION(mono_jit_cleanup);
         LOAD_MONO_FUNCTION(mono_jit_exec);
         LOAD_MONO_FUNCTION(mono_jit_init);
         LOAD_MONO_FUNCTION(mono_jit_set_trace_options);
@@ -221,6 +224,7 @@ static HRESULT load_mono(CLRRuntimeInfo *This)
         LOAD_MONO_FUNCTION(mono_stringify_assembly_name);
         LOAD_MONO_FUNCTION(mono_string_new);
         LOAD_MONO_FUNCTION(mono_thread_attach);
+        LOAD_MONO_FUNCTION(mono_thread_manage);
         LOAD_MONO_FUNCTION(mono_trace_set_assembly);
 
 #undef LOAD_MONO_FUNCTION

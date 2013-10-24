@@ -145,6 +145,7 @@ extern MonoClass* (CDECL *mono_class_from_mono_type)(MonoType *type);
 extern MonoClass* (CDECL *mono_class_from_name)(MonoImage *image, const char* name_space, const char *name);
 extern MonoMethod* (CDECL *mono_class_get_method_from_name)(MonoClass *klass, const char *name, int param_count);
 extern MonoAssembly* (CDECL *mono_domain_assembly_open)(MonoDomain *domain, const char *name);
+extern void (CDECL *mono_jit_cleanup)(MonoDomain *domain);
 extern int (CDECL *mono_jit_exec)(MonoDomain *domain, MonoAssembly *assembly, int argc, char *argv[]);
 extern MonoDomain* (CDECL *mono_jit_init)(const char *file);
 extern MonoImage* (CDECL *mono_image_open_from_module_handle)(HMODULE module_handle, char* fname, UINT has_entry_point, MonoImageOpenStatus* status);
@@ -157,6 +158,7 @@ extern MonoObject* (CDECL *mono_runtime_invoke)(MonoMethod *method, void *obj, v
 extern void (CDECL *mono_runtime_object_init)(MonoObject *this_obj);
 extern MonoString* (CDECL *mono_string_new)(MonoDomain *domain, const char *str);
 extern MonoThread* (CDECL *mono_thread_attach)(MonoDomain *domain);
+extern void (CDECL *mono_thread_manage)(void);
 extern void (CDECL *mono_trace_set_assembly)(MonoAssembly *assembly);
 
 /* loaded runtime interfaces */

@@ -1034,7 +1034,7 @@ __int32 WINAPI _CorExeMain(void)
     int exit_code;
     int argc;
     char **argv;
-    MonoDomain *domain;
+    MonoDomain *domain=NULL;
     MonoImage *image;
     MonoImageOpenStatus status;
     MonoAssembly *assembly=NULL;
@@ -1101,7 +1101,11 @@ __int32 WINAPI _CorExeMain(void)
 
     HeapFree(GetProcessHeap(), 0, argv);
 
-    unload_all_runtimes();
+    if (domain)
+    {
+        mono_thread_manage();
+        mono_jit_cleanup(domain);
+    }
 
     return exit_code;
 }
