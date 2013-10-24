@@ -368,6 +368,15 @@ static void test_CLSIDFromProgID(void)
     {
         GUID clsid1;
 
+        memset(&clsid, 0xcc, sizeof(clsid));
+        hr = CLSIDFromProgID(wszNonExistent, &clsid);
+        ok(hr == CO_E_CLASSSTRING, "got 0x%08x\n", hr);
+        ok(IsEqualCLSID(&clsid, &CLSID_NULL), "should have zero CLSID on failure\n");
+
+        /* CLSIDFromString() doesn't check activation context */
+        hr = CLSIDFromString(progidW, &clsid);
+        ok(hr == CO_E_CLASSSTRING, "got 0x%08x\n", hr);
+
         clsid = CLSID_NULL;
         hr = CLSIDFromProgID(progidW, &clsid);
 todo_wine
