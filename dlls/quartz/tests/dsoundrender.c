@@ -39,7 +39,7 @@
 
 static IUnknown *pDSRender = NULL;
 
-static int create_dsound_renderer(void)
+static BOOL create_dsound_renderer(void)
 {
     HRESULT hr;
 

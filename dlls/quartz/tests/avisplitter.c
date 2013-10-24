@@ -57,7 +57,7 @@ static int count_threads(void)
     return threads;
 }
 
-static int create_avisplitter(void)
+static BOOL create_avisplitter(void)
 {
     HRESULT hr;
 
