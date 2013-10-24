@@ -66,7 +66,7 @@ static void test_ifont_size(LONG lo_size, LONG hi_size,
 	LPVOID pvObj = NULL;
 	IFont* ifnt = NULL;
 	HFONT hfont;
-	LOGFONT lf;
+	LOGFONTA lf;
 	CY psize;
 	HRESULT hres;
         DWORD rtnval;
@@ -110,7 +110,7 @@ static void test_ifont_size(LONG lo_size, LONG hi_size,
 	hres = IFont_get_hFont (ifnt, &hfont);
 	ok(hres == S_OK, "%s: IFont_get_hFont returns 0x%08x instead of S_OK.\n",
 		test_name, hres);
-	rtnval = GetObject (hfont, sizeof(LOGFONT), &lf);
+	rtnval = GetObjectA(hfont, sizeof(LOGFONTA), &lf);
         ok(rtnval > 0, "GetObject(hfont) failed\n");
 
         /* Since font scaling may encounter rounding errors, allow 1 pixel deviation. */
