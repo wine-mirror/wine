@@ -2873,7 +2873,7 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
      * the surface isn't mapped, and that updates done this way will be
      * visible on the screen. The game Nox is such an application,
      * Commandos: Behind Enemy Lines is another. */
-    const DWORD flags = WINED3D_SURFACE_MAPPABLE | WINED3D_SURFACE_PIN_SYSMEM;
+    const DWORD flags = WINED3D_SURFACE_PIN_SYSMEM;
 
     TRACE("ddraw %p, surface_desc %p, surface %p, outer_unknown %p.\n", ddraw, DDSD, surface, UnkOuter);
 

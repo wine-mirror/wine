@@ -5623,7 +5623,7 @@ HRESULT ddraw_surface_create_texture(struct ddraw_surface *surface, DWORD surfac
     }
     else
     {
-        wined3d_desc.usage = WINED3DUSAGE_TEXTURE;
+        wined3d_desc.usage = WINED3DUSAGE_TEXTURE | WINED3DUSAGE_DYNAMIC;
         pool = WINED3D_POOL_DEFAULT;
     }
 
@@ -5771,6 +5771,7 @@ HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw,
         /* Videomemory adds localvidmem. This is mutually exclusive with
          * systemmemory and texturemanage. */
         desc->ddsCaps.dwCaps |= DDSCAPS_LOCALVIDMEM;
+        usage |= WINED3DUSAGE_DYNAMIC;
     }
 
     format = wined3dformat_from_ddrawformat(&desc->u4.ddpfPixelFormat);
