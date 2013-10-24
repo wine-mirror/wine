@@ -220,7 +220,7 @@ test_pic_with_stream(LPSTREAM stream, unsigned int imgsize)
         if (handle)
         {
             BITMAP bmp;
-            GetObject(UlongToHandle(handle), sizeof(BITMAP), &bmp);
+            GetObjectA(UlongToHandle(handle), sizeof(BITMAP), &bmp);
             todo_wine ok(bmp.bmBits != 0, "not a dib\n");
         }
 
@@ -640,7 +640,7 @@ static void test_Render(void)
 
     desc.cbSizeofstruct = sizeof(PICTDESC);
     desc.picType = PICTYPE_ICON;
-    desc.u.icon.hicon = LoadIcon(NULL, IDI_APPLICATION);
+    desc.u.icon.hicon = LoadIconA(NULL, (LPCSTR)IDI_APPLICATION);
     if(!desc.u.icon.hicon){
         win_skip("LoadIcon failed. Skipping...\n");
         ReleaseDC(NULL, hdc);
@@ -1020,7 +1020,7 @@ static void test_load_save_icon(void)
 
     desc.cbSizeofstruct = sizeof(desc);
     desc.picType = PICTYPE_ICON;
-    desc.u.icon.hicon = LoadIcon(0, IDI_APPLICATION);
+    desc.u.icon.hicon = LoadIconA(NULL, (LPCSTR)IDI_APPLICATION);
     hr = OleCreatePictureIndirect(&desc, &IID_IPicture, FALSE, (void**)&pic);
     ok(hr == S_OK, "OleCreatePictureIndirect error %#x\n", hr);
 
