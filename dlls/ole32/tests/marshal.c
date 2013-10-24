@@ -1364,6 +1364,102 @@ todo_wine
     CloseHandle(thread);
 }
 
+static void test_tableweak_and_normal_marshal_and_releasedata(void)
+{
+    HRESULT hr;
+    DWORD tid;
+    HANDLE thread;
+    struct duo_marshal_data data;
+
+    cLocks = 0;
+    external_connections = 0;
+
+    data.hReadyEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+    data.hQuitEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+    data.marshal_flags1 = MSHLFLAGS_TABLEWEAK;
+    data.marshal_flags2 = MSHLFLAGS_NORMAL;
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &data.pStream1);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &data.pStream2);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+
+    thread = CreateThread(NULL, 0, duo_marshal_thread_proc, &data, 0, &tid);
+    ok( !WaitForSingleObject(data.hReadyEvent, 10000), "wait timed out\n" );
+    CloseHandle(data.hReadyEvent);
+
+    ok_more_than_one_lock();
+    ok_non_zero_external_conn();
+
+    /* release normal - which in the non-external conn case will free the object despite the weak ref. */
+    IStream_Seek(data.pStream2, ullZero, STREAM_SEEK_SET, NULL);
+    release_host_object(tid, 2);
+
+    ok_zero_external_conn();
+    ok_last_release_closes(TRUE);
+
+    if (with_external_conn)
+    {
+        ok_more_than_one_lock();
+        IStream_Seek(data.pStream1, ullZero, STREAM_SEEK_SET, NULL);
+        release_host_object(tid, 1);
+    }
+
+else todo_wine
+    ok_no_locks();
+
+    IStream_Release(data.pStream1);
+    IStream_Release(data.pStream2);
+
+    SetEvent(data.hQuitEvent);
+    ok( !WaitForSingleObject(thread, 10000), "wait timed out\n" );
+    CloseHandle(thread);
+}
+
+static void test_two_tableweak_marshal_and_releasedata(void)
+{
+    HRESULT hr;
+    DWORD tid;
+    HANDLE thread;
+    struct duo_marshal_data data;
+
+    cLocks = 0;
+    external_connections = 0;
+
+    data.hReadyEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+    data.hQuitEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+    data.marshal_flags1 = MSHLFLAGS_TABLEWEAK;
+    data.marshal_flags2 = MSHLFLAGS_TABLEWEAK;
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &data.pStream1);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &data.pStream2);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+
+    thread = CreateThread(NULL, 0, duo_marshal_thread_proc, &data, 0, &tid);
+    ok( !WaitForSingleObject(data.hReadyEvent, 10000), "wait timed out\n" );
+    CloseHandle(data.hReadyEvent);
+
+    ok_more_than_one_lock();
+    ok_zero_external_conn();
+
+    /* release one weak ref - the remaining weak ref will keep the obj alive */
+    IStream_Seek(data.pStream1, ullZero, STREAM_SEEK_SET, NULL);
+    release_host_object(tid, 1);
+
+    ok_more_than_one_lock();
+
+    IStream_Seek(data.pStream2, ullZero, STREAM_SEEK_SET, NULL);
+    release_host_object(tid, 2);
+
+    ok_no_locks();
+
+    IStream_Release(data.pStream1);
+    IStream_Release(data.pStream2);
+
+    SetEvent(data.hQuitEvent);
+    ok( !WaitForSingleObject(thread, 10000), "wait timed out\n" );
+    CloseHandle(thread);
+}
+
 /* tests success case of a same-thread table-strong marshal, unmarshal, unmarshal */
 static void test_tablestrong_marshal_and_unmarshal_twice(void)
 {
@@ -3435,6 +3531,8 @@ START_TEST(marshal)
         test_tableweak_marshal_releasedata1();
         test_tableweak_marshal_releasedata2();
         test_tableweak_and_normal_marshal_and_unmarshal();
+        test_tableweak_and_normal_marshal_and_releasedata();
+        test_two_tableweak_marshal_and_releasedata();
         test_tablestrong_marshal_and_unmarshal_twice();
         test_lock_object_external();
         test_disconnect_stub();
