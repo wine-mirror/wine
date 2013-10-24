@@ -905,6 +905,8 @@ void macdrv_keyboard_changed(const macdrv_event *event)
     thread_data->dead_key_state = 0;
 
     macdrv_compute_keyboard_layout(thread_data);
+
+    SendMessageW(GetActiveWindow(), WM_CANCELMODE, 0, 0);
 }
 
 
