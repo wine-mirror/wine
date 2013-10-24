@@ -26,7 +26,7 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "winsock.h"
+#include "winsock2.h"
 #include "wine/test.h"
 #include "winuser.h"
 #include "wingdi.h"
