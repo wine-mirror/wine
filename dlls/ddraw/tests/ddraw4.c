@@ -4694,6 +4694,105 @@ done:
     DestroyWindow(window);
 }
 
+static void test_surface_discard(void)
+{
+    IDirect3DDevice3 *device;
+    IDirect3D3 *d3d;
+    IDirectDraw4 *ddraw;
+    HRESULT hr;
+    HWND window;
+    DDSURFACEDESC2 ddsd;
+    IDirectDrawSurface4 *surface, *target;
+    void *addr;
+    static const struct
+    {
+        DWORD caps, caps2;
+        BOOL discard;
+    }
+    tests[] =
+    {
+        {DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY, 0, TRUE},
+        {DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY, 0, FALSE},
+        {DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY, 0, TRUE},
+        {DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY, 0, FALSE},
+        {DDSCAPS_TEXTURE, DDSCAPS2_TEXTUREMANAGE, FALSE},
+        {DDSCAPS_TEXTURE, DDSCAPS2_TEXTUREMANAGE | DDSCAPS2_HINTDYNAMIC, FALSE},
+        {DDSCAPS_TEXTURE, DDSCAPS2_D3DTEXTUREMANAGE, FALSE},
+        {DDSCAPS_TEXTURE, DDSCAPS2_D3DTEXTUREMANAGE | DDSCAPS2_HINTDYNAMIC, FALSE},
+    };
+    unsigned int i;
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a ddraw object, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+    hr = IDirect3DDevice3_GetDirect3D(device, &d3d);
+    ok(SUCCEEDED(hr), "Failed to get d3d interface, hr %#x.\n", hr);
+    hr = IDirect3D3_QueryInterface(d3d, &IID_IDirectDraw4, (void **)&ddraw);
+    ok(SUCCEEDED(hr), "Failed to get ddraw interface, hr %#x.\n", hr);
+    hr = IDirect3DDevice3_GetRenderTarget(device, &target);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); i++)
+    {
+        BOOL discarded;
+
+        memset(&ddsd, 0, sizeof(ddsd));
+        ddsd.dwSize = sizeof(ddsd);
+        ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+        ddsd.ddsCaps.dwCaps = tests[i].caps;
+        ddsd.ddsCaps.dwCaps2 = tests[i].caps2;
+        ddsd.dwWidth = 64;
+        ddsd.dwHeight = 64;
+        hr = IDirectDraw4_CreateSurface(ddraw, &ddsd, &surface, NULL);
+        ok(SUCCEEDED(hr), "Failed to create offscreen surface, hr %#x, case %u.\n", hr, i);
+
+        memset(&ddsd, 0, sizeof(ddsd));
+        ddsd.dwSize = sizeof(ddsd);
+        hr = IDirectDrawSurface4_Lock(surface, NULL, &ddsd, 0, NULL);
+        ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+        addr = ddsd.lpSurface;
+        hr = IDirectDrawSurface4_Unlock(surface, NULL);
+        ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+
+        memset(&ddsd, 0, sizeof(ddsd));
+        ddsd.dwSize = sizeof(ddsd);
+        hr = IDirectDrawSurface4_Lock(surface, NULL, &ddsd, DDLOCK_DISCARDCONTENTS, NULL);
+        ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+        discarded = ddsd.lpSurface != addr;
+        hr = IDirectDrawSurface4_Unlock(surface, NULL);
+        ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+
+        hr = IDirectDrawSurface4_Blt(target, NULL, surface, NULL, DDBLT_WAIT, NULL);
+        ok(SUCCEEDED(hr), "Failed to blit, hr %#x.\n", hr);
+
+        memset(&ddsd, 0, sizeof(ddsd));
+        ddsd.dwSize = sizeof(ddsd);
+        hr = IDirectDrawSurface4_Lock(surface, NULL, &ddsd, DDLOCK_DISCARDCONTENTS, NULL);
+        ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+        discarded |= ddsd.lpSurface != addr;
+        hr = IDirectDrawSurface4_Unlock(surface, NULL);
+        ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+
+        IDirectDrawSurface4_Release(surface);
+
+        /* Windows 7 reliably changes the address of surfaces that are discardable (Nvidia Kepler,
+         * AMD r500, evergreen). Windows XP, at least on AMD r200, does not. */
+        ok(!discarded || tests[i].discard, "Expected surface not to be discarded, case %u\n", i);
+    }
+
+    IDirectDrawSurface4_Release(target);
+    IDirectDraw4_Release(ddraw);
+    IDirect3D3_Release(d3d);
+    IDirect3DDevice3_Release(device);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw4)
 {
     test_process_vertices();
@@ -4729,4 +4828,5 @@ START_TEST(ddraw4)
     test_unsupported_formats();
     test_rt_caps();
     test_surface_lock();
+    test_surface_discard();
 }
