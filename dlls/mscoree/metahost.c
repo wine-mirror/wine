@@ -100,17 +100,12 @@ static void (CDECL *mono_profiler_install)(MonoProfiler *prof, MonoProfileFunc s
 MonoType* (CDECL *mono_reflection_type_from_name)(char *name, MonoImage *image);
 MonoObject* (CDECL *mono_runtime_invoke)(MonoMethod *method, void *obj, void **params, MonoObject **exc);
 void (CDECL *mono_runtime_object_init)(MonoObject *this_obj);
-static void (CDECL *mono_runtime_quit)(void);
-static void (CDECL *mono_runtime_set_shutting_down)(void);
 static void (CDECL *mono_set_dirs)(const char *assembly_dir, const char *config_dir);
 static void (CDECL *mono_set_verbose_level)(DWORD level);
 MonoString* (CDECL *mono_string_new)(MonoDomain *domain, const char *str);
 static char* (CDECL *mono_stringify_assembly_name)(MonoAssemblyName *aname);
 MonoThread* (CDECL *mono_thread_attach)(MonoDomain *domain);
 void (CDECL *mono_thread_manage)(void);
-static void (CDECL *mono_thread_pool_cleanup)(void);
-static void (CDECL *mono_thread_suspend_all_other_threads)(void);
-static void (CDECL *mono_threads_set_shutting_down)(void);
 void (CDECL *mono_trace_set_assembly)(MonoAssembly *assembly);
 
 static BOOL find_mono_dll(LPCWSTR path, LPWSTR dll_path);
@@ -132,10 +127,6 @@ static void set_environment(LPCWSTR bin_path)
     path_env[len++] = ';';
     strcpyW(path_env+len, bin_path);
     SetEnvironmentVariableW(pathW, path_env);
-}
-
-static void CDECL do_nothing(void)
-{
 }
 
 static MonoImage* CDECL image_open_module_handle_dummy(HMODULE module_handle,
@@ -218,7 +209,6 @@ static HRESULT load_mono(CLRRuntimeInfo *This)
         LOAD_MONO_FUNCTION(mono_reflection_type_from_name);
         LOAD_MONO_FUNCTION(mono_runtime_invoke);
         LOAD_MONO_FUNCTION(mono_runtime_object_init);
-        LOAD_MONO_FUNCTION(mono_runtime_quit);
         LOAD_MONO_FUNCTION(mono_set_dirs);
         LOAD_MONO_FUNCTION(mono_set_verbose_level);
         LOAD_MONO_FUNCTION(mono_stringify_assembly_name);
@@ -237,10 +227,6 @@ static HRESULT load_mono(CLRRuntimeInfo *This)
 } while (0);
 
         LOAD_OPT_MONO_FUNCTION(mono_image_open_from_module_handle, image_open_module_handle_dummy);
-        LOAD_OPT_MONO_FUNCTION(mono_runtime_set_shutting_down, do_nothing);
-        LOAD_OPT_MONO_FUNCTION(mono_thread_pool_cleanup, do_nothing);
-        LOAD_OPT_MONO_FUNCTION(mono_thread_suspend_all_other_threads, do_nothing);
-        LOAD_OPT_MONO_FUNCTION(mono_threads_set_shutting_down, do_nothing);
 
 #undef LOAD_OPT_MONO_FUNCTION
 
@@ -304,31 +290,6 @@ static HRESULT CLRRuntimeInfo_GetRuntimeHost(CLRRuntimeInfo *This, RuntimeHost *
         *result = This->loaded_runtime;
 
     return hr;
-}
-
-void unload_all_runtimes(void)
-{
-    int i;
-    HMODULE handle;
-
-    /* If the only references to mscoree are through dll's that were loaded by
-     * Mono, shutting down the Mono runtime will free mscoree, so take a
-     * reference to prevent that from happening. */
-    GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (const WCHAR *)unload_all_runtimes, &handle);
-
-    if (mono_handle && is_mono_started && !is_mono_shutdown)
-    {
-        /* Copied from Mono's ves_icall_System_Environment_Exit */
-        mono_threads_set_shutting_down();
-        mono_runtime_set_shutting_down();
-        mono_thread_pool_cleanup();
-        mono_thread_suspend_all_other_threads();
-        mono_runtime_quit();
-    }
-
-    for (i=0; i<NUM_RUNTIMES; i++)
-        if (runtimes[i].loaded_runtime)
-            RuntimeHost_Destroy(runtimes[i].loaded_runtime);
 }
 
 void expect_no_runtimes(void)
@@ -1147,9 +1108,21 @@ static HRESULT WINAPI CLRMetaHost_QueryLegacyV2RuntimeBinding(ICLRMetaHost* ifac
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI CLRMetaHost_ExitProcess(ICLRMetaHost* iface, INT32 iExitCode)
+HRESULT WINAPI CLRMetaHost_ExitProcess(ICLRMetaHost* iface, INT32 iExitCode)
 {
-    FIXME("%i: stub\n", iExitCode);
+    TRACE("%i\n", iExitCode);
+
+    EnterCriticalSection(&runtime_list_cs);
+
+    if (is_mono_started && !is_mono_shutdown)
+    {
+        /* search for a runtime and call System.Environment.Exit() */
+        int i;
+
+        for (i=0; i<NUM_RUNTIMES; i++)
+            if (runtimes[i].loaded_runtime)
+                RuntimeHost_ExitProcess(runtimes[i].loaded_runtime, iExitCode);
+    }
 
     ExitProcess(iExitCode);
 }

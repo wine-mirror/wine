@@ -249,8 +249,7 @@ __int32 WINAPI _CorExeMain2(PBYTE ptrMemory, DWORD cntMemory, LPWSTR imageName, 
 void WINAPI CorExitProcess(int exitCode)
 {
     TRACE("(%x)\n", exitCode);
-    unload_all_runtimes();
-    ExitProcess(exitCode);
+    CLRMetaHost_ExitProcess(0, exitCode);
 }
 
 VOID WINAPI _CorImageUnloading(PVOID imageBase)

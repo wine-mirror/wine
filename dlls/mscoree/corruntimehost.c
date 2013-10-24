@@ -214,6 +214,60 @@ static HRESULT RuntimeHost_GetIUnknownForDomain(RuntimeHost *This, MonoDomain *d
     return hr;
 }
 
+void RuntimeHost_ExitProcess(RuntimeHost *This, INT exitcode)
+{
+    HRESULT hr;
+    void *args[2];
+    MonoDomain *domain;
+    MonoAssembly *assembly;
+    MonoImage *image;
+    MonoClass *klass;
+    MonoMethod *method;
+
+    hr = RuntimeHost_GetDefaultDomain(This, &domain);
+    if (FAILED(hr))
+    {
+        ERR("Cannot get domain, hr=%x\n", hr);
+        return;
+    }
+
+    mono_thread_attach(domain);
+
+    assembly = mono_domain_assembly_open(domain, "mscorlib");
+    if (!assembly)
+    {
+        ERR("Cannot load mscorlib\n");
+        return;
+    }
+
+    image = mono_assembly_get_image(assembly);
+    if (!image)
+    {
+        ERR("Couldn't get assembly image\n");
+        return;
+    }
+
+    klass = mono_class_from_name(image, "System", "Environment");
+    if (!klass)
+    {
+        ERR("Couldn't get class from image\n");
+        return;
+    }
+
+    method = mono_class_get_method_from_name(klass, "Exit", 0);
+    if (!method)
+    {
+        ERR("Couldn't get method from class\n");
+        return;
+    }
+
+    args[0] = &exitcode;
+    args[1] = NULL;
+    mono_runtime_invoke(method, NULL, args, NULL);
+
+    ERR("Process should have exited\n");
+}
+
 static inline RuntimeHost *impl_from_ICLRRuntimeHost( ICLRRuntimeHost *iface )
 {
     return CONTAINING_RECORD(iface, RuntimeHost, ICLRRuntimeHost_iface);

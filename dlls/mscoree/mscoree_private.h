@@ -162,11 +162,11 @@ extern void (CDECL *mono_thread_manage)(void);
 extern void (CDECL *mono_trace_set_assembly)(MonoAssembly *assembly);
 
 /* loaded runtime interfaces */
-extern void unload_all_runtimes(void) DECLSPEC_HIDDEN;
-
 extern void expect_no_runtimes(void) DECLSPEC_HIDDEN;
 
 extern HRESULT RuntimeHost_Construct(const CLRRuntimeInfo *runtime_version, RuntimeHost** result) DECLSPEC_HIDDEN;
+
+extern void RuntimeHost_ExitProcess(RuntimeHost *This, INT exitcode) DECLSPEC_HIDDEN;
 
 extern HRESULT RuntimeHost_GetInterface(RuntimeHost *This, REFCLSID clsid, REFIID riid, void **ppv) DECLSPEC_HIDDEN;
 
@@ -176,6 +176,8 @@ extern HRESULT RuntimeHost_CreateManagedInstance(RuntimeHost *This, LPCWSTR name
     MonoDomain *domain, MonoObject **result) DECLSPEC_HIDDEN;
 
 extern HRESULT RuntimeHost_Destroy(RuntimeHost *This) DECLSPEC_HIDDEN;
+
+HRESULT WINAPI CLRMetaHost_ExitProcess(ICLRMetaHost* iface, INT32 iExitCode) DECLSPEC_HIDDEN;
 
 HRESULT WINAPI CLRMetaHost_GetRuntime(ICLRMetaHost* iface, LPCWSTR pwzVersion, REFIID iid, LPVOID *ppRuntime) DECLSPEC_HIDDEN;
 
