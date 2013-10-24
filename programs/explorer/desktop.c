@@ -633,11 +633,8 @@ static BOOL get_default_desktop_size( const WCHAR *name, unsigned int *width, un
     return found;
 }
 
-static void set_desktop_guid( HWND desktop, HMODULE driver )
+static void set_desktop_guid( HWND desktop, GUID *guid, HMODULE driver )
 {
-    static const WCHAR display_device_guid_propW[] = {
-        '_','_','w','i','n','e','_','d','i','s','p','l','a','y','_',
-        'd','e','v','i','c','e','_','g','u','i','d',0 };
     static const WCHAR device_keyW[] = {
         'S','y','s','t','e','m','\\',
         'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
@@ -646,18 +643,11 @@ static void set_desktop_guid( HWND desktop, HMODULE driver )
         '{','%','s','}','\\','0','0','0','0',0};
     static const WCHAR driverW[] = {'G','r','a','p','h','i','c','s','D','r','i','v','e','r',0};
 
-    GUID guid;
     RPC_WSTR guid_str;
-    ATOM guid_atom;
     HKEY hkey;
     WCHAR key[sizeof(device_keyW)/sizeof(WCHAR) + 39];
 
-    UuidCreate( &guid );
-    UuidToStringW( &guid, &guid_str );
-    TRACE( "display guid %s\n", debugstr_w(guid_str) );
-
-    guid_atom = GlobalAddAtomW( guid_str );
-    SetPropW( desktop, display_device_guid_propW, ULongToHandle(guid_atom) );
+    UuidToStringW( guid, &guid_str );
     sprintfW( key, device_keyW, guid_str );
     RpcStringFreeW( &guid_str );
 
@@ -724,6 +714,7 @@ void manage_desktop( WCHAR *arg )
 {
     static const WCHAR messageW[] = {'M','e','s','s','a','g','e',0};
     HDESK desktop = 0;
+    GUID guid;
     MSG msg;
     HDC hdc;
     HWND hwnd, msg_hwnd;
@@ -766,9 +757,12 @@ void manage_desktop( WCHAR *arg )
         SetThreadDesktop( desktop );
     }
 
+    UuidCreate( &guid );
+    TRACE( "display guid %s\n", debugstr_guid(&guid) );
+
     /* create the desktop window */
     hwnd = CreateWindowExW( 0, DESKTOP_CLASS_ATOM, NULL,
-                            WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0, 0, 0, 0, 0, 0, 0, NULL );
+                            WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0, 0, 0, 0, 0, 0, 0, &guid );
 
     /* create the HWND_MESSAGE parent */
     msg_hwnd = CreateWindowExW( 0, messageW, NULL, WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
@@ -785,7 +779,7 @@ void manage_desktop( WCHAR *arg )
         ReleaseDC( hwnd, hdc );
 
         SetWindowLongPtrW( hwnd, GWLP_WNDPROC, (LONG_PTR)desktop_wnd_proc );
-        set_desktop_guid( hwnd, graphics_driver );
+        set_desktop_guid( hwnd, &guid, graphics_driver );
         SendMessageW( hwnd, WM_SETICON, ICON_BIG, (LPARAM)LoadIconW( 0, MAKEINTRESOURCEW(OIC_WINLOGO)));
         if (name) set_desktop_window_title( hwnd, name );
         SetWindowPos( hwnd, 0, GetSystemMetrics(SM_XVIRTUALSCREEN), GetSystemMetrics(SM_YVIRTUALSCREEN),

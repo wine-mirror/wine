@@ -32,6 +32,7 @@
 #include "wingdi.h"
 #include "winnls.h"
 #include "controls.h"
+#include "wine/unicode.h"
 
 static HBRUSH hbrushPattern;
 static HBITMAP hbitmapWallPaper;
@@ -97,8 +98,36 @@ static void init_wallpaper( const WCHAR *wallpaper )
  */
 LRESULT WINAPI DesktopWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
-    if (message == WM_NCCREATE) return TRUE;
-    return 0;  /* all other messages are ignored */
+    static const WCHAR display_device_guid_propW[] = {
+        '_','_','w','i','n','e','_','d','i','s','p','l','a','y','_',
+        'd','e','v','i','c','e','_','g','u','i','d',0 };
+    static const WCHAR guid_formatW[] = {
+        '%','0','8','x','-','%','0','4','x','-','%','0','4','x','-','%','0','2','x','%','0','2','x','-',
+        '%','0','2','x','%','0','2','x','%','0','2','x','%','0','2','x','%','0','2','x','%','0','2','x',0};
+
+    switch (message)
+    {
+    case WM_NCCREATE:
+    {
+        CREATESTRUCTW *cs = (CREATESTRUCTW *)lParam;
+        const GUID *guid = cs->lpCreateParams;
+
+        if (guid)
+        {
+            ATOM atom;
+            WCHAR buffer[37];
+
+            sprintfW( buffer, guid_formatW, guid->Data1, guid->Data2, guid->Data3,
+                      guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
+                      guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7] );
+            atom = GlobalAddAtomW( buffer );
+            SetPropW( hwnd, display_device_guid_propW, ULongToHandle( atom ) );
+        }
+        return TRUE;
+    }
+    default:
+        return 0;  /* all other messages are ignored */
+    }
 }
 
 /***********************************************************************
