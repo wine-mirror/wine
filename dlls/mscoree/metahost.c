@@ -648,7 +648,7 @@ static BOOL get_mono_path(LPWSTR path)
     WCHAR base_path[MAX_PATH];
     const char *unix_data_dir;
     WCHAR *dos_data_dir;
-    int build_tree=0;
+    BOOL build_tree = FALSE;
     static WCHAR* (CDECL *wine_get_dos_file_name)(const char*);
 
     /* First try c:\windows\mono */
@@ -664,7 +664,7 @@ static BOOL get_mono_path(LPWSTR path)
     if (!unix_data_dir)
     {
         unix_data_dir = wine_get_build_dir();
-        build_tree = 1;
+        build_tree = TRUE;
     }
 
     if (unix_data_dir)

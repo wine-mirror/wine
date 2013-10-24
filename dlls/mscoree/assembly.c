@@ -63,7 +63,7 @@ typedef struct tagCLRTABLE
 
 struct tagASSEMBLY
 {
-    int is_mapped_file;
+    BOOL is_mapped_file;
 
     /* mapped files */
     LPWSTR path;
@@ -213,7 +213,7 @@ HRESULT assembly_create(ASSEMBLY **out, LPCWSTR file)
     if (!assembly)
         return E_OUTOFMEMORY;
 
-    assembly->is_mapped_file = 1;
+    assembly->is_mapped_file = TRUE;
 
     assembly->path = strdupW(file);
     if (!assembly->path)
@@ -267,7 +267,7 @@ HRESULT assembly_from_hmodule(ASSEMBLY **out, HMODULE hmodule)
     if (!assembly)
         return E_OUTOFMEMORY;
 
-    assembly->is_mapped_file = 0;
+    assembly->is_mapped_file = FALSE;
 
     assembly->data = (BYTE*)hmodule;
 

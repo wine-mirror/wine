@@ -647,7 +647,7 @@ static void parse_msi_version_string(const char *version, int *parts)
 
 static BOOL install_wine_mono(void)
 {
-    BOOL is_wow64=0;
+    BOOL is_wow64 = FALSE;
     HMODULE hmsi;
     UINT (WINAPI *pMsiGetProductInfoA)(LPCSTR,LPCSTR,LPSTR,DWORD*);
     char versionstringbuf[15];
