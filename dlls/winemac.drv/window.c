@@ -929,6 +929,20 @@ void activate_on_following_focus(void)
 }
 
 
+/***********************************************************************
+ *              set_app_icon
+ */
+static void set_app_icon(void)
+{
+    CFArrayRef images = create_app_icon_images();
+    if (images)
+    {
+        macdrv_set_application_icon(images);
+        CFRelease(images);
+    }
+}
+
+
 /**********************************************************************
  *              CreateDesktopWindow   (MACDRV.@)
  */
@@ -968,6 +982,7 @@ BOOL CDECL macdrv_CreateDesktopWindow(HWND hwnd)
         SERVER_END_REQ;
     }
 
+    set_app_icon();
     return TRUE;
 }
 

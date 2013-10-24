@@ -91,20 +91,6 @@ const char* debugstr_cf(CFTypeRef t)
 
 
 /***********************************************************************
- *              set_app_icon
- */
-static void set_app_icon(void)
-{
-    CFArrayRef images = create_app_icon_images();
-    if (images)
-    {
-        macdrv_set_application_icon(images);
-        CFRelease(images);
-    }
-}
-
-
-/***********************************************************************
  *              get_config_key
  *
  * Get a config key from either the app-specific or the default config
@@ -208,7 +194,6 @@ static BOOL process_attach(void)
         return FALSE;
     }
 
-    set_app_icon();
     macdrv_clipboard_process_attach();
 
     return TRUE;
