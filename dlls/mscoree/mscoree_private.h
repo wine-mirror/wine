@@ -55,7 +55,6 @@ typedef struct _MonoMethod MonoMethod;
 typedef struct _MonoProfiler MonoProfiler;
 typedef struct _MonoThread MonoThread;
 
-typedef struct loaded_mono loaded_mono;
 typedef struct RuntimeHost RuntimeHost;
 
 typedef struct CLRRuntimeInfo
@@ -65,7 +64,7 @@ typedef struct CLRRuntimeInfo
     DWORD major;
     DWORD minor;
     DWORD build;
-    int mono_abi_version;
+    int found;
     WCHAR mono_path[MAX_PATH];
     WCHAR mscorlib_path[MAX_PATH];
     struct RuntimeHost *loaded_runtime;
@@ -76,7 +75,6 @@ struct RuntimeHost
     ICorRuntimeHost ICorRuntimeHost_iface;
     ICLRRuntimeHost ICLRRuntimeHost_iface;
     const CLRRuntimeInfo *version;
-    loaded_mono *mono;
     struct list domains;
     MonoDomain *default_domain;
     CRITICAL_SECTION lock;
@@ -138,57 +136,35 @@ typedef MonoAssembly* (*MonoAssemblyPreLoadFunc)(MonoAssemblyName *aname, char *
 
 typedef void (*MonoProfileFunc)(MonoProfiler *prof);
 
-struct loaded_mono
-{
-    HMODULE mono_handle;
-    HMODULE glib_handle;
+extern BOOL is_mono_started;
 
-    BOOL is_started;
-    BOOL is_shutdown;
-
-    MonoImage* (CDECL *mono_assembly_get_image)(MonoAssembly *assembly);
-    MonoAssembly* (CDECL *mono_assembly_load_from)(MonoImage *image, const char *fname, MonoImageOpenStatus *status);
-    MonoAssembly* (CDECL *mono_assembly_open)(const char *filename, MonoImageOpenStatus *status);
-    MonoClass* (CDECL *mono_class_from_mono_type)(MonoType *type);
-    MonoClass* (CDECL *mono_class_from_name)(MonoImage *image, const char* name_space, const char *name);
-    MonoMethod* (CDECL *mono_class_get_method_from_name)(MonoClass *klass, const char *name, int param_count);
-    void (CDECL *mono_config_parse)(const char *filename);
-    MonoAssembly* (CDECL *mono_domain_assembly_open) (MonoDomain *domain, const char *name);
-    void (CDECL *mono_free)(void *);
-    MonoImage* (CDECL *mono_image_open)(const char *fname, MonoImageOpenStatus *status);
-    MonoImage* (CDECL *mono_image_open_from_module_handle)(HMODULE module_handle, char* fname, UINT has_entry_point, MonoImageOpenStatus* status);
-    void (CDECL *mono_install_assembly_preload_hook)(MonoAssemblyPreLoadFunc func, void *user_data);
-    int (CDECL *mono_jit_exec)(MonoDomain *domain, MonoAssembly *assembly, int argc, char *argv[]);
-    MonoDomain* (CDECL *mono_jit_init)(const char *file);
-    int (CDECL *mono_jit_set_trace_options)(const char* options);
-    void* (CDECL *mono_marshal_get_vtfixup_ftnptr)(MonoImage *image, DWORD token, WORD type);
-    MonoDomain* (CDECL *mono_object_get_domain)(MonoObject *obj);
-    MonoObject* (CDECL *mono_object_new)(MonoDomain *domain, MonoClass *klass);
-    void* (CDECL *mono_object_unbox)(MonoObject *obj);
-    void (CDECL *mono_profiler_install)(MonoProfiler *prof, MonoProfileFunc shutdown_callback);
-    MonoType* (CDECL *mono_reflection_type_from_name)(char *name, MonoImage *image);
-    MonoObject* (CDECL *mono_runtime_invoke)(MonoMethod *method, void *obj, void **params, MonoObject **exc);
-    void (CDECL *mono_runtime_object_init)(MonoObject *this_obj);
-    void (CDECL *mono_runtime_quit)(void);
-    void (CDECL *mono_runtime_set_shutting_down)(void);
-    void (CDECL *mono_set_dirs)(const char *assembly_dir, const char *config_dir);
-    void (CDECL *mono_set_verbose_level)(DWORD level);
-    char* (CDECL *mono_stringify_assembly_name)(MonoAssemblyName *aname);
-    void (CDECL *mono_thread_pool_cleanup)(void);
-    void (CDECL *mono_thread_suspend_all_other_threads)(void);
-    void (CDECL *mono_threads_set_shutting_down)(void);
-    void (CDECL *mono_trace_set_assembly)(MonoAssembly *assembly);
-    MonoString* (CDECL *mono_string_new)(MonoDomain *domain, const char *str);
-    MonoThread* (CDECL *mono_thread_attach)(MonoDomain *domain);
-};
+extern MonoImage* (CDECL *mono_assembly_get_image)(MonoAssembly *assembly);
+extern MonoAssembly* (CDECL *mono_assembly_load_from)(MonoImage *image, const char *fname, MonoImageOpenStatus *status);
+extern MonoAssembly* (CDECL *mono_assembly_open)(const char *filename, MonoImageOpenStatus *status);
+extern MonoClass* (CDECL *mono_class_from_mono_type)(MonoType *type);
+extern MonoClass* (CDECL *mono_class_from_name)(MonoImage *image, const char* name_space, const char *name);
+extern MonoMethod* (CDECL *mono_class_get_method_from_name)(MonoClass *klass, const char *name, int param_count);
+extern MonoAssembly* (CDECL *mono_domain_assembly_open)(MonoDomain *domain, const char *name);
+extern int (CDECL *mono_jit_exec)(MonoDomain *domain, MonoAssembly *assembly, int argc, char *argv[]);
+extern MonoDomain* (CDECL *mono_jit_init)(const char *file);
+extern MonoImage* (CDECL *mono_image_open_from_module_handle)(HMODULE module_handle, char* fname, UINT has_entry_point, MonoImageOpenStatus* status);
+extern void* (CDECL *mono_marshal_get_vtfixup_ftnptr)(MonoImage *image, DWORD token, WORD type);
+extern MonoDomain* (CDECL *mono_object_get_domain)(MonoObject *obj);
+extern MonoObject* (CDECL *mono_object_new)(MonoDomain *domain, MonoClass *klass);
+extern void* (CDECL *mono_object_unbox)(MonoObject *obj);
+extern MonoType* (CDECL *mono_reflection_type_from_name)(char *name, MonoImage *image);
+extern MonoObject* (CDECL *mono_runtime_invoke)(MonoMethod *method, void *obj, void **params, MonoObject **exc);
+extern void (CDECL *mono_runtime_object_init)(MonoObject *this_obj);
+extern MonoString* (CDECL *mono_string_new)(MonoDomain *domain, const char *str);
+extern MonoThread* (CDECL *mono_thread_attach)(MonoDomain *domain);
+extern void (CDECL *mono_trace_set_assembly)(MonoAssembly *assembly);
 
 /* loaded runtime interfaces */
 extern void unload_all_runtimes(void) DECLSPEC_HIDDEN;
 
 extern void expect_no_runtimes(void) DECLSPEC_HIDDEN;
 
-extern HRESULT RuntimeHost_Construct(const CLRRuntimeInfo *runtime_version,
-    loaded_mono *loaded_mono, RuntimeHost** result) DECLSPEC_HIDDEN;
+extern HRESULT RuntimeHost_Construct(const CLRRuntimeInfo *runtime_version, RuntimeHost** result) DECLSPEC_HIDDEN;
 
 extern HRESULT RuntimeHost_GetInterface(RuntimeHost *This, REFCLSID clsid, REFIID riid, void **ppv) DECLSPEC_HIDDEN;
 

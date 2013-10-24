@@ -91,7 +91,7 @@ static HRESULT RuntimeHost_AddDomain(RuntimeHost *This, MonoDomain **result)
         goto end;
     }
 
-    entry->domain = This->mono->mono_jit_init(mscorlib_path);
+    entry->domain = mono_jit_init(mscorlib_path);
 
     HeapFree(GetProcessHeap(), 0, mscorlib_path);
 
@@ -102,7 +102,7 @@ static HRESULT RuntimeHost_AddDomain(RuntimeHost *This, MonoDomain **result)
         goto end;
     }
 
-    This->mono->is_started = TRUE;
+    is_mono_started = TRUE;
 
     list_add_tail(&This->domains, &entry->entry);
 
@@ -164,30 +164,30 @@ static HRESULT RuntimeHost_GetIUnknownForDomain(RuntimeHost *This, MonoDomain *d
     MonoObject *appdomain_object;
     IUnknown *unk;
 
-    This->mono->mono_thread_attach(domain);
+    mono_thread_attach(domain);
 
-    assembly = This->mono->mono_domain_assembly_open(domain, "mscorlib");
+    assembly = mono_domain_assembly_open(domain, "mscorlib");
     if (!assembly)
     {
         ERR("Cannot load mscorlib\n");
         return E_FAIL;
     }
 
-    image = This->mono->mono_assembly_get_image(assembly);
+    image = mono_assembly_get_image(assembly);
     if (!image)
     {
         ERR("Couldn't get assembly image\n");
         return E_FAIL;
     }
 
-    klass = This->mono->mono_class_from_name(image, "System", "AppDomain");
+    klass = mono_class_from_name(image, "System", "AppDomain");
     if (!klass)
     {
         ERR("Couldn't get class from image\n");
         return E_FAIL;
     }
 
-    method = This->mono->mono_class_get_method_from_name(klass, "get_CurrentDomain", 0);
+    method = mono_class_get_method_from_name(klass, "get_CurrentDomain", 0);
     if (!method)
     {
         ERR("Couldn't get method from class\n");
@@ -195,7 +195,7 @@ static HRESULT RuntimeHost_GetIUnknownForDomain(RuntimeHost *This, MonoDomain *d
     }
 
     args[0] = NULL;
-    appdomain_object = This->mono->mono_runtime_invoke(method, NULL, args, NULL);
+    appdomain_object = mono_runtime_invoke(method, NULL, args, NULL);
     if (!appdomain_object)
     {
         ERR("Couldn't get result pointer\n");
@@ -578,17 +578,17 @@ static HRESULT WINAPI CLRRuntimeHost_ExecuteInDefaultAppDomain(ICLRRuntimeHost* 
 
     hr = E_FAIL;
 
-    This->mono->mono_thread_attach(domain);
+    mono_thread_attach(domain);
 
     filenameA = WtoA(pwzAssemblyPath);
-    assembly = This->mono->mono_domain_assembly_open(domain, filenameA);
+    assembly = mono_domain_assembly_open(domain, filenameA);
     if (!assembly)
     {
         ERR("Cannot open assembly %s\n", filenameA);
         goto cleanup;
     }
 
-    image = This->mono->mono_assembly_get_image(assembly);
+    image = mono_assembly_get_image(assembly);
     if (!image)
     {
         ERR("Couldn't get assembly image\n");
@@ -598,7 +598,7 @@ static HRESULT WINAPI CLRRuntimeHost_ExecuteInDefaultAppDomain(ICLRRuntimeHost* 
     classA = WtoA(pwzTypeName);
     ns = strrchr(classA, '.');
     *ns = '\0';
-    klass = This->mono->mono_class_from_name(image, classA, ns+1);
+    klass = mono_class_from_name(image, classA, ns+1);
     if (!klass)
     {
         ERR("Couldn't get class from image\n");
@@ -606,7 +606,7 @@ static HRESULT WINAPI CLRRuntimeHost_ExecuteInDefaultAppDomain(ICLRRuntimeHost* 
     }
 
     methodA = WtoA(pwzMethodName);
-    method = This->mono->mono_class_get_method_from_name(klass, methodA, 1);
+    method = mono_class_get_method_from_name(klass, methodA, 1);
     if (!method)
     {
         ERR("Couldn't get method from class\n");
@@ -617,15 +617,15 @@ static HRESULT WINAPI CLRRuntimeHost_ExecuteInDefaultAppDomain(ICLRRuntimeHost* 
      *   public static int functionName(String param)
      */
     argsA = WtoA(pwzArgument);
-    str = This->mono->mono_string_new(domain, argsA);
+    str = mono_string_new(domain, argsA);
     args[0] = str;
     args[1] = NULL;
-    result = This->mono->mono_runtime_invoke(method, NULL, args, NULL);
+    result = mono_runtime_invoke(method, NULL, args, NULL);
     if (!result)
         ERR("Couldn't get result pointer\n");
     else
     {
-        *pReturnValue = *(DWORD*)This->mono->mono_object_unbox(result);
+        *pReturnValue = *(DWORD*)mono_object_unbox(result);
         hr = S_OK;
     }
 
@@ -678,9 +678,9 @@ HRESULT RuntimeHost_CreateManagedInstance(RuntimeHost *This, LPCWSTR name,
 
     if (SUCCEEDED(hr))
     {
-        This->mono->mono_thread_attach(domain);
+        mono_thread_attach(domain);
 
-        type = This->mono->mono_reflection_type_from_name(nameA, NULL);
+        type = mono_reflection_type_from_name(nameA, NULL);
         if (!type)
         {
             ERR("Cannot find type %s\n", debugstr_w(name));
@@ -690,7 +690,7 @@ HRESULT RuntimeHost_CreateManagedInstance(RuntimeHost *This, LPCWSTR name,
 
     if (SUCCEEDED(hr))
     {
-        klass = This->mono->mono_class_from_mono_type(type);
+        klass = mono_class_from_mono_type(type);
         if (!klass)
         {
             ERR("Cannot convert type %s to a class\n", debugstr_w(name));
@@ -700,7 +700,7 @@ HRESULT RuntimeHost_CreateManagedInstance(RuntimeHost *This, LPCWSTR name,
 
     if (SUCCEEDED(hr))
     {
-        obj = This->mono->mono_object_new(domain, klass);
+        obj = mono_object_new(domain, klass);
         if (!obj)
         {
             ERR("Cannot allocate object of type %s\n", debugstr_w(name));
@@ -711,7 +711,7 @@ HRESULT RuntimeHost_CreateManagedInstance(RuntimeHost *This, LPCWSTR name,
     if (SUCCEEDED(hr))
     {
         /* FIXME: Detect exceptions from the constructor? */
-        This->mono->mono_runtime_object_init(obj);
+        mono_runtime_object_init(obj);
         *result = obj;
     }
 
@@ -741,30 +741,30 @@ HRESULT RuntimeHost_GetIUnknownForObject(RuntimeHost *This, MonoObject *obj,
     MonoObject *result;
     void *args[2];
 
-    domain = This->mono->mono_object_get_domain(obj);
+    domain = mono_object_get_domain(obj);
 
-    assembly = This->mono->mono_domain_assembly_open(domain, "mscorlib");
+    assembly = mono_domain_assembly_open(domain, "mscorlib");
     if (!assembly)
     {
         ERR("Cannot load mscorlib\n");
         return E_FAIL;
     }
 
-    image = This->mono->mono_assembly_get_image(assembly);
+    image = mono_assembly_get_image(assembly);
     if (!image)
     {
         ERR("Couldn't get assembly image\n");
         return E_FAIL;
     }
 
-    klass = This->mono->mono_class_from_name(image, "System.Runtime.InteropServices", "Marshal");
+    klass = mono_class_from_name(image, "System.Runtime.InteropServices", "Marshal");
     if (!klass)
     {
         ERR("Couldn't get class from image\n");
         return E_FAIL;
     }
 
-    method = This->mono->mono_class_get_method_from_name(klass, "GetIUnknownForObject", 1);
+    method = mono_class_get_method_from_name(klass, "GetIUnknownForObject", 1);
     if (!method)
     {
         ERR("Couldn't get method from class\n");
@@ -773,14 +773,14 @@ HRESULT RuntimeHost_GetIUnknownForObject(RuntimeHost *This, MonoObject *obj,
 
     args[0] = obj;
     args[1] = NULL;
-    result = This->mono->mono_runtime_invoke(method, NULL, args, NULL);
+    result = mono_runtime_invoke(method, NULL, args, NULL);
     if (!result)
     {
         ERR("Couldn't get result pointer\n");
         return E_FAIL;
     }
 
-    *ppUnk = *(IUnknown**)This->mono->mono_object_unbox(result);
+    *ppUnk = *(IUnknown**)mono_object_unbox(result);
     if (!*ppUnk)
     {
         ERR("GetIUnknownForObject returned 0\n");
@@ -915,9 +915,9 @@ static void CDECL ReallyFixupVTable(struct dll_fixup *fixup)
 
     if (SUCCEEDED(hr))
     {
-        host->mono->mono_thread_attach(domain);
+        mono_thread_attach(domain);
 
-        assembly = host->mono->mono_assembly_open(filenameA, &status);
+        assembly = mono_assembly_open(filenameA, &status);
     }
 
     if (assembly)
@@ -925,7 +925,7 @@ static void CDECL ReallyFixupVTable(struct dll_fixup *fixup)
         int i;
 
         /* Mono needs an image that belongs to an assembly. */
-        image = host->mono->mono_assembly_get_image(assembly);
+        image = mono_assembly_get_image(assembly);
 
         if (fixup->fixup->type & COR_VTABLE_32BIT)
         {
@@ -934,7 +934,7 @@ static void CDECL ReallyFixupVTable(struct dll_fixup *fixup)
             for (i=0; i<fixup->fixup->count; i++)
             {
                 TRACE("%x\n", tokens[i]);
-                vtable[i] = PtrToUint(host->mono->mono_marshal_get_vtfixup_ftnptr(
+                vtable[i] = PtrToUint(mono_marshal_get_vtfixup_ftnptr(
                     image, tokens[i], fixup->fixup->type));
             }
         }
@@ -1071,17 +1071,17 @@ __int32 WINAPI _CorExeMain(void)
 
         if (SUCCEEDED(hr))
         {
-            image = host->mono->mono_image_open_from_module_handle(GetModuleHandleW(NULL),
+            image = mono_image_open_from_module_handle(GetModuleHandleW(NULL),
                 filenameA, 1, &status);
 
             if (image)
-                assembly = host->mono->mono_assembly_load_from(image, filenameA, &status);
+                assembly = mono_assembly_load_from(image, filenameA, &status);
 
             if (assembly)
             {
-                host->mono->mono_trace_set_assembly(assembly);
+                mono_trace_set_assembly(assembly);
 
-                exit_code = host->mono->mono_jit_exec(domain, assembly, argc, argv);
+                exit_code = mono_jit_exec(domain, assembly, argc, argv);
             }
             else
             {
@@ -1143,8 +1143,7 @@ void runtimehost_uninit(void)
     }
 }
 
-HRESULT RuntimeHost_Construct(const CLRRuntimeInfo *runtime_version,
-    loaded_mono *loaded_mono, RuntimeHost** result)
+HRESULT RuntimeHost_Construct(const CLRRuntimeInfo *runtime_version, RuntimeHost** result)
 {
     RuntimeHost *This;
 
@@ -1157,7 +1156,6 @@ HRESULT RuntimeHost_Construct(const CLRRuntimeInfo *runtime_version,
 
     This->ref = 1;
     This->version = runtime_version;
-    This->mono = loaded_mono;
     list_init(&This->domains);
     This->default_domain = NULL;
     InitializeCriticalSection(&This->lock);
@@ -1337,10 +1335,10 @@ HRESULT create_monodata(REFIID riid, LPVOID *ppObj )
 
             hr = CLASS_E_CLASSNOTAVAILABLE;
 
-            host->mono->mono_thread_attach(domain);
+            mono_thread_attach(domain);
 
             filenameA = WtoA(filename);
-            assembly = host->mono->mono_domain_assembly_open(domain, filenameA);
+            assembly = mono_domain_assembly_open(domain, filenameA);
             HeapFree(GetProcessHeap(), 0, filenameA);
             if (!assembly)
             {
@@ -1348,7 +1346,7 @@ HRESULT create_monodata(REFIID riid, LPVOID *ppObj )
                 goto cleanup;
             }
 
-            image = host->mono->mono_assembly_get_image(assembly);
+            image = mono_assembly_get_image(assembly);
             if (!image)
             {
                 ERR("Couldn't get assembly image\n");
@@ -1359,7 +1357,7 @@ HRESULT create_monodata(REFIID riid, LPVOID *ppObj )
             ns = strrchr(classA, '.');
             *ns = '\0';
 
-            klass = host->mono->mono_class_from_name(image, classA, ns+1);
+            klass = mono_class_from_name(image, classA, ns+1);
             HeapFree(GetProcessHeap(), 0, classA);
             if (!klass)
             {
@@ -1370,8 +1368,8 @@ HRESULT create_monodata(REFIID riid, LPVOID *ppObj )
             /*
              * Use the default constructor for the .NET class.
              */
-            result = host->mono->mono_object_new(domain, klass);
-            host->mono->mono_runtime_object_init(result);
+            result = mono_object_new(domain, klass);
+            mono_runtime_object_init(result);
 
             hr = RuntimeHost_GetIUnknownForObject(host, result, &unk);
             if (SUCCEEDED(hr))
