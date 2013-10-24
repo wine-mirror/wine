@@ -578,7 +578,7 @@ void stub_manager_release_marshal_data(struct stub_manager *m, ULONG refs, const
     else if (ifstub->flags & MSHLFLAGS_TABLESTRONG)
         refs = 1;
 
-    stub_manager_ext_release(m, refs, tableweak, FALSE);
+    stub_manager_ext_release(m, refs, tableweak, !tableweak);
 }
 
 /* is an ifstub table marshaled? */
