@@ -1391,8 +1391,6 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
         }
     }
 
-    CLASS_RegisterBuiltinClasses();
-
     /* Find the parent window */
 
     parent = cs->hwndParent;

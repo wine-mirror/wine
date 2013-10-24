@@ -28,6 +28,7 @@
 #include "wine/gdi_driver.h"
 
 #include "user_private.h"
+#include "controls.h"
 
 static USER_DRIVER null_driver, lazy_load_driver;
 
@@ -118,6 +119,8 @@ static const USER_DRIVER *load_driver(void)
         driver = prev;
     }
     else LdrAddRefDll( 0, graphics_driver );
+
+    register_builtin_classes();
 
     DeleteDC( hdc );
     return driver;

@@ -369,7 +369,7 @@ static void register_builtin( const struct builtin_class_descr *descr )
     if (!(classPtr = CLASS_RegisterClass( descr->name, user32_module, FALSE,
                                           descr->style, 0, descr->extra ))) return;
 
-    classPtr->hCursor       = LoadCursorA( 0, (LPSTR)descr->cursor );
+    if (descr->cursor) classPtr->hCursor = LoadCursorA( 0, (LPSTR)descr->cursor );
     classPtr->hbrBackground = descr->brush;
     classPtr->winproc       = BUILTIN_WINPROC( descr->proc );
     release_class_ptr( classPtr );
@@ -381,7 +381,6 @@ static void register_builtin( const struct builtin_class_descr *descr )
  */
 static BOOL WINAPI register_builtins( INIT_ONCE *once, void *param, void **context )
 {
-    register_builtin( &DESKTOP_builtin_class );
     register_builtin( &BUTTON_builtin_class );
     register_builtin( &COMBO_builtin_class );
     register_builtin( &COMBOLBOX_builtin_class );
@@ -391,7 +390,6 @@ static BOOL WINAPI register_builtins( INIT_ONCE *once, void *param, void **conte
     register_builtin( &LISTBOX_builtin_class );
     register_builtin( &MDICLIENT_builtin_class );
     register_builtin( &MENU_builtin_class );
-    register_builtin( &MESSAGE_builtin_class );
     register_builtin( &SCROLL_builtin_class );
     register_builtin( &STATIC_builtin_class );
     return TRUE;
@@ -399,11 +397,21 @@ static BOOL WINAPI register_builtins( INIT_ONCE *once, void *param, void **conte
 
 
 /***********************************************************************
- *           CLASS_RegisterBuiltinClasses
+ *           register_builtin_classes
  */
-void CLASS_RegisterBuiltinClasses(void)
+void register_builtin_classes(void)
 {
     InitOnceExecuteOnce( &init_once, register_builtins, NULL, NULL );
+}
+
+
+/***********************************************************************
+ *           register_desktop_class
+ */
+void register_desktop_class(void)
+{
+    register_builtin( &DESKTOP_builtin_class );
+    register_builtin( &MESSAGE_builtin_class );
 }
 
 

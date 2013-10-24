@@ -48,7 +48,7 @@ const struct builtin_class_descr DESKTOP_builtin_class =
     CS_DBLCLKS,           /* style */
     WINPROC_DESKTOP,      /* proc */
     0,                    /* extra */
-    IDC_ARROW,            /* cursor */
+    0,                    /* cursor */
     (HBRUSH)(COLOR_BACKGROUND+1)    /* brush */
 };
 

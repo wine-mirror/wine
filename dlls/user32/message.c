@@ -290,7 +290,7 @@ const struct builtin_class_descr MESSAGE_builtin_class =
     0,                    /* style */
     WINPROC_MESSAGE,      /* proc */
     0,                    /* extra */
-    IDC_ARROW,            /* cursor */
+    0,                    /* cursor */
     0                     /* brush */
 };
 

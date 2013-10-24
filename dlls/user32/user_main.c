@@ -262,6 +262,8 @@ static void winstation_init(void)
         if (handle) SetThreadDesktop( handle );
     }
     HeapFree( GetProcessHeap(), 0, buffer );
+
+    register_desktop_class();
 }
 
 
