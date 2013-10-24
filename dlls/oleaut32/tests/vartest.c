@@ -28,7 +28,7 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "winsock.h"
+#include "winsock2.h"
 #include "wine/test.h"
 #include "winuser.h"
 #include "wingdi.h"
@@ -116,7 +116,7 @@ static void init(void)
     if (bstr) memcpy(&sz12_false[2], bstr, SysStringByteLen(bstr) + sizeof(WCHAR));
     SysFreeString(bstr);
 
-    hOleaut32 = GetModuleHandle("oleaut32.dll");
+    hOleaut32 = GetModuleHandleA("oleaut32.dll");
     has_i8 = GetProcAddress(hOleaut32, "VarI8FromI1") != NULL;
     if (!has_i8)
         skip("No support for I8 and UI8 data types\n");
@@ -5366,7 +5366,7 @@ static void test_VarCat(void)
     static const WCHAR sz12_date[] = {'1','2','9','/','3','0','/','1','9','8','0','\0'};
     static const WCHAR sz12_date_broken[] = {'1','2','9','/','3','0','/','8','0','\0'};
     static const WCHAR sz_empty[] = {'\0'};
-    TCHAR orig_date_format[128];
+    CHAR orig_date_format[128];
     VARTYPE leftvt, rightvt, resultvt;
     HRESULT hres;
     HRESULT expected_error_num;
@@ -5375,8 +5375,8 @@ static void test_VarCat(void)
 
     /* Set date format for testing */
     lcid = LOCALE_USER_DEFAULT;
-    GetLocaleInfo(lcid,LOCALE_SSHORTDATE,orig_date_format,128);
-    SetLocaleInfo(lcid,LOCALE_SSHORTDATE,"M/d/yyyy");
+    GetLocaleInfoA(lcid,LOCALE_SSHORTDATE,orig_date_format,128);
+    SetLocaleInfoA(lcid,LOCALE_SSHORTDATE,"M/d/yyyy");
 
     VariantInit(&left);
     VariantInit(&right);
@@ -5697,7 +5697,7 @@ static void test_VarCat(void)
            "VarCat: EMPTY concat with EMPTY did not return empty VT_BSTR\n");
 
     /* Restore original date format settings */
-    SetLocaleInfo(lcid,LOCALE_SSHORTDATE,orig_date_format);
+    SetLocaleInfoA(lcid,LOCALE_SSHORTDATE,orig_date_format);
 
     VariantClear(&left);
     VariantClear(&right);
