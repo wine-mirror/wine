@@ -197,10 +197,17 @@ static void mixer_test_controlA(HMIXER mix, LPMIXERCONTROLA control)
         details.dwControlID = control->dwControlID;
         details.cChannels = 1;
         U(details).cMultipleItems = 0;
-        details.paDetails = &value;
         details.cbDetails = sizeof(value);
 
+        /* test NULL paDetails */
+        details.paDetails = NULL;
+        rc=mixerGetControlDetails((HMIXEROBJ)mix,&details,MIXER_GETCONTROLDETAILSF_VALUE);
+        ok(rc==MMSYSERR_INVALPARAM,
+           "mixerGetDevCapsA: MMSYSERR_INVALPARAM expected, got %s\n",
+           mmsys_error(rc));
+
         /* read the current control value */
+        details.paDetails = &value;
         rc=mixerGetControlDetails((HMIXEROBJ)mix,&details,MIXER_GETCONTROLDETAILSF_VALUE);
         ok(rc==MMSYSERR_NOERROR,"mixerGetControlDetails(MIXER_GETCONTROLDETAILSF_VALUE): "
            "MMSYSERR_NOERROR expected, got %s\n",

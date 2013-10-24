@@ -3849,7 +3849,7 @@ UINT WINAPI mixerGetControlDetailsW(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcdW
     if(FAILED(hr))
         return MMSYSERR_NODRIVER;
 
-    if(!lpmcdW)
+    if(!lpmcdW || !lpmcdW->paDetails)
         return MMSYSERR_INVALPARAM;
 
     TRACE("dwControlID: %u\n", lpmcdW->dwControlID);
