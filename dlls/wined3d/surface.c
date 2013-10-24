@@ -6795,20 +6795,6 @@ static HRESULT surface_init(struct wined3d_surface *surface, UINT alignment, UIN
      * Levels need to be checked too, since they all affect what can be done. */
     switch (pool)
     {
-        case WINED3D_POOL_SCRATCH:
-            if (!lockable)
-            {
-                FIXME("Called with a pool of SCRATCH and a lockable of FALSE "
-                        "which are mutually exclusive, setting lockable to TRUE.\n");
-                lockable = TRUE;
-            }
-            break;
-
-        case WINED3D_POOL_SYSTEM_MEM:
-            if (!lockable)
-                FIXME("Called with a pool of SYSTEMMEM and a lockable of FALSE, this is acceptable but unexpected.\n");
-            break;
-
         case WINED3D_POOL_MANAGED:
             if (usage & WINED3DUSAGE_DYNAMIC)
                 FIXME("Called with a pool of MANAGED and a usage of DYNAMIC which are mutually exclusive.\n");
@@ -6817,6 +6803,10 @@ static HRESULT surface_init(struct wined3d_surface *surface, UINT alignment, UIN
         case WINED3D_POOL_DEFAULT:
             if (lockable && !(usage & (WINED3DUSAGE_DYNAMIC | WINED3DUSAGE_RENDERTARGET | WINED3DUSAGE_DEPTHSTENCIL)))
                 WARN("Creating a lockable surface with a POOL of DEFAULT, that doesn't specify DYNAMIC usage.\n");
+            break;
+
+        case WINED3D_POOL_SCRATCH:
+        case WINED3D_POOL_SYSTEM_MEM:
             break;
 
         default:
