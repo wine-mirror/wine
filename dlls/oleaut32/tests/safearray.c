@@ -32,7 +32,7 @@
 #include "winuser.h"
 #include "wingdi.h"
 #include "winnls.h"
-#include "winsock.h"
+#include "winsock2.h"
 #include "winerror.h"
 #include "winnt.h"
 
@@ -1749,7 +1749,7 @@ static void test_SafeArrayDestroyData (void)
   HRESULT hres;
   int value = 0xdeadbeef;
   LONG index[1];
-  void HUGEP *temp_pvData;
+  void *temp_pvData;
 
   sab.lLbound = 0;
   sab.cElements = 10;
