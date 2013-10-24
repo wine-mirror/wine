@@ -88,7 +88,7 @@ static int EventsQueue_Destroy(EventsQueue* omr)
     return TRUE;
 }
 
-static int EventsQueue_PutEvent(EventsQueue* omr, const Event* evt)
+static BOOL EventsQueue_PutEvent(EventsQueue* omr, const Event* evt)
 {
     EnterCriticalSection(&omr->msg_crst);
     if (omr->msg_toget == ((omr->msg_tosave + 1) % omr->ring_buffer_size))
