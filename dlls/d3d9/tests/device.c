@@ -6357,118 +6357,6 @@ static void test_swvp_buffer(void)
     DestroyWindow(window);
 }
 
-static void test_rtpatch(void)
-{
-    IDirect3DDevice9 *device;
-    IDirect3D9 *d3d9;
-    UINT refcount;
-    HWND window;
-    HRESULT hr;
-    IDirect3DVertexBuffer9 *buffer;
-    IDirect3DVertexDeclaration9 *decl;
-    static const unsigned int bufsize = 16;
-    struct
-    {
-        float x, y, z;
-    } *data;
-    D3DRECTPATCH_INFO patch;
-    static const float num_segs[] = {1.0f, 1.0f, 1.0f, 1.0f};
-    UINT handle = 0x1234;
-    D3DCAPS9 caps;
-
-    /* Position input, this generates tesselated positions, but do not generate normals
-     *  or texture coordinates. The d3d documentation isn't clear on how to do this */
-    static const D3DVERTEXELEMENT9 decl_elements[] = {
-        {0, 0,  D3DDECLTYPE_FLOAT3,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
-        D3DDECL_END()
-    };
-
-    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
-    {
-        skip("Failed to create IDirect3D9 object, skipping tests.\n");
-        return;
-    }
-
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
-    if (!(device = create_device(d3d9, window, window, TRUE)))
-    {
-        skip("Failed to create a D3D device, skipping tests.\n");
-        IDirect3D9_Release(d3d9);
-        DestroyWindow(window);
-        return;
-    }
-
-    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
-    ok(SUCCEEDED(hr), "Failed to get caps, hr %#x.\n", hr);
-    if (caps.DevCaps & D3DDEVCAPS_RTPATCHES)
-    {
-        /* The draw methods return the same values, but the patch handle support
-         * is different on the refrast, which is the only d3d implementation
-         * known to support tri/rect patches */
-        skip("Device supports patches, skipping unsupported patch test\n");
-        IDirect3DDevice9_Release(device);
-        IDirect3D9_Release(d3d9);
-        DestroyWindow(window);
-        return;
-    }
-
-    hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements, &decl);
-    ok(SUCCEEDED(hr), "Failed to create vertex declaration, hr %#x.\n", hr);
-    hr = IDirect3DDevice9_SetVertexDeclaration(device, decl);
-    ok(SUCCEEDED(hr), "Failed to set vertex declaration, hr %#x.\n", hr);
-
-    hr = IDirect3DDevice9_CreateVertexBuffer(device, bufsize * sizeof(*data), D3DUSAGE_RTPATCHES, 0,
-            D3DPOOL_MANAGED, &buffer, NULL);
-    ok(SUCCEEDED(hr), "Failed to create buffer, hr %#x.\n", hr);
-    hr = IDirect3DVertexBuffer9_Lock(buffer, 0, 0, (void **)&data, 0);
-    ok(SUCCEEDED(hr), "Failed to lock buffer, hr %#x.\n", hr);
-    memset(data, 0, bufsize * sizeof(*data));
-    hr = IDirect3DVertexBuffer9_Unlock(buffer);
-    ok(SUCCEEDED(hr), "Failed to unlock buffer, hr %#x.\n", hr);
-
-    hr = IDirect3DDevice9_SetStreamSource(device, 0, buffer, 0, sizeof(*data));
-    ok(SUCCEEDED(hr), "Failed to set stream source, hr %#x.\n", hr);
-    hr = IDirect3DDevice9_BeginScene(device);
-    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
-
-    patch.StartVertexOffsetWidth = 0;
-    patch.StartVertexOffsetHeight = 0;
-    patch.Width = 4;
-    patch.Height = 4;
-    patch.Stride = 4;
-    patch.Basis = D3DBASIS_BEZIER;
-    patch.Degree = D3DDEGREE_CUBIC;
-    hr = IDirect3DDevice9_DrawRectPatch(device, handle, num_segs, NULL);
-    ok(SUCCEEDED(hr), "Failed to draw rect patch, hr %#x.\n", hr);
-    hr = IDirect3DDevice9_DrawRectPatch(device, handle, num_segs, &patch);
-    ok(SUCCEEDED(hr), "Failed to draw rect patch, hr %#x.\n", hr);
-    hr = IDirect3DDevice9_DrawRectPatch(device, handle, num_segs, NULL);
-    ok(SUCCEEDED(hr), "Failed to draw rect patch, hr %#x.\n", hr);
-    hr = IDirect3DDevice9_DrawRectPatch(device, 0, num_segs, NULL);
-    ok(SUCCEEDED(hr), "Failed to draw rect patch, hr %#x.\n", hr);
-
-    hr = IDirect3DDevice9_EndScene(device);
-    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
-
-    hr = IDirect3DDevice9_DrawRectPatch(device, 0, num_segs, &patch);
-    ok(SUCCEEDED(hr), "Failed to draw rect patch outside scene, hr %#x.\n", hr);
-
-    hr = IDirect3DDevice9_DeletePatch(device, handle);
-    ok(hr == D3DERR_INVALIDCALL, "DeletePatch returned hr %#x.\n", hr);
-    hr = IDirect3DDevice9_DeletePatch(device, 0);
-    ok(hr == D3DERR_INVALIDCALL, "DeletePatch returned hr %#x.\n", hr);
-    hr = IDirect3DDevice9_DeletePatch(device, 0x1235);
-    ok(hr == D3DERR_INVALIDCALL, "DeletePatch returned hr %#x.\n", hr);
-
-    IDirect3DVertexDeclaration9_Release(decl);
-    IDirect3DVertexBuffer9_Release(buffer);
-    refcount = IDirect3DDevice9_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
-    IDirect3D9_Release(d3d9);
-    DestroyWindow(window);
-}
-
 static void test_npot_textures(void)
 {
     IDirect3DDevice9 *device = NULL;
@@ -7506,7 +7394,6 @@ START_TEST(device)
         test_surface_blocks();
         test_set_palette();
         test_swvp_buffer();
-        test_rtpatch();
         test_npot_textures();
         test_vidmem_accounting();
         test_volume_locking();
