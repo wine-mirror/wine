@@ -135,6 +135,13 @@ struct ifacepsredirect_data
     ULONG name_offset;
 };
 
+struct progidredirect_data
+{
+    ULONG size;
+    DWORD reserved;
+    ULONG clsid_offset;
+};
+
 struct class_reg_data
 {
     union
@@ -2331,10 +2338,22 @@ HRESULT WINAPI ProgIDFromCLSID(REFCLSID clsid, LPOLESTR *ppszProgID)
  */
 HRESULT WINAPI CLSIDFromProgID(LPCOLESTR progid, LPCLSID clsid)
 {
+    ACTCTX_SECTION_KEYED_DATA data;
+
     if (!progid || !clsid)
     {
         ERR("neither progid (%p) nor clsid (%p) are optional\n", progid, clsid);
         return E_INVALIDARG;
+    }
+
+    data.cbSize = sizeof(data);
+    if (FindActCtxSectionStringW(0, NULL, ACTIVATION_CONTEXT_SECTION_COM_PROGID_REDIRECTION,
+                                 progid, &data))
+    {
+        struct progidredirect_data *progiddata = (struct progidredirect_data*)data.lpData;
+        CLSID *alias = (CLSID*)((BYTE*)data.lpSectionBase + progiddata->clsid_offset);
+        *clsid = *alias;
+        return S_OK;
     }
 
     return clsid_from_string_reg(progid, clsid);
