@@ -437,7 +437,7 @@ ULONG stub_manager_ext_release(struct stub_manager *m, ULONG refs, BOOL tablewea
     TRACE("removed %u refs from %p (oid %s), rc is now %u\n", refs, m, wine_dbgstr_longlong(m->oid), rc);
 
     if (last_extern_ref && m->extern_conn)
-        IExternalConnection_ReleaseConnection(m->extern_conn, EXTCONN_STRONG, 0, TRUE /* FIXME: Use last_unlock releases? */);
+        IExternalConnection_ReleaseConnection(m->extern_conn, EXTCONN_STRONG, 0, last_unlock_releases);
 
     if (rc == 0)
         stub_manager_int_release(m);

@@ -430,7 +430,6 @@ static void test_normal_marshal_and_unmarshal(void)
 
     ok_more_than_one_lock();
     ok_zero_external_conn();
-todo_wine
     ok_last_release_closes(FALSE);
 
     IUnknown_Release(pProxy);
@@ -512,7 +511,6 @@ static void test_same_apartment_unmarshal_failure(void)
 
     ok_no_locks();
     ok_zero_external_conn();
-todo_wine
     ok_last_release_closes(FALSE);
 
     IStream_Release(pStream);
@@ -1582,7 +1580,6 @@ static void test_lock_object_external(void)
 
     ok_no_locks();
     ok_zero_external_conn();
-todo_wine
     ok_last_release_closes(FALSE);
 
     /* test CoLockObjectExternal doesn't release the last reference to an
@@ -1603,7 +1600,6 @@ todo_wine
 
     ok_more_than_one_lock();
     ok_zero_external_conn();
-todo_wine
     ok_last_release_closes(FALSE);
 
     CoDisconnectObject((IUnknown*)&Test_ClassFactory, 0);
@@ -1676,7 +1672,6 @@ static void test_normal_marshal_and_unmarshal_twice(void)
 
     ok_more_than_one_lock();
     ok_zero_external_conn();
-todo_wine
     ok_last_release_closes(FALSE);
 
     IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
