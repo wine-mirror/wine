@@ -44,7 +44,7 @@
     { \
         CHAR buf[260]; \
         expect_eq(!WideCharToMultiByte(CP_ACP, 0, (expr), -1, buf, 260, NULL, NULL), 0, int, "%d"); \
-        ok(lstrcmp(value, buf) == 0, #expr " expected \"%s\" got \"%s\"\n", value, buf); \
+        ok(strcmp(value, buf) == 0, #expr " expected \"%s\" got \"%s\"\n", value, buf); \
     }
 
 #define ole_expect(expr, expect) { \
@@ -628,14 +628,14 @@ static void write_typelib(int res_no, const char *filename)
     HRSRC res;
     void *ptr;
 
-    file = CreateFile( filename, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
+    file = CreateFileA( filename, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
     ok( file != INVALID_HANDLE_VALUE, "file creation failed\n" );
     if (file == INVALID_HANDLE_VALUE) return;
-    res = FindResource( GetModuleHandle(0), MAKEINTRESOURCE(res_no), "TYPELIB" );
+    res = FindResourceA( GetModuleHandleA(NULL), (LPCSTR)MAKEINTRESOURCE(res_no), "TYPELIB" );
     ok( res != 0, "couldn't find resource\n" );
-    ptr = LockResource( LoadResource( GetModuleHandle(0), res ));
-    WriteFile( file, ptr, SizeofResource( GetModuleHandle(0), res ), &written, NULL );
-    ok( written == SizeofResource( GetModuleHandle(0), res ), "couldn't write resource\n" );
+    ptr = LockResource( LoadResource( GetModuleHandleA(NULL), res ));
+    WriteFile( file, ptr, SizeofResource( GetModuleHandleA(NULL), res ), &written, NULL );
+    ok( written == SizeofResource( GetModuleHandleA(NULL), res ), "couldn't write resource\n" );
     CloseHandle( file );
 }
 
@@ -5221,7 +5221,7 @@ START_TEST(typelib)
     if ((filename = create_test_typelib(2)))
     {
         test_dump_typelib( filename );
-        DeleteFile( filename );
+        DeleteFileA( filename );
     }
 
     test_register_typelib(TRUE);
