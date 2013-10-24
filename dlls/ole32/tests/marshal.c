@@ -346,10 +346,10 @@ static DWORD start_host_object(IStream *stream, REFIID riid, IUnknown *object, M
 
 /* asks thread to release the marshal data because it has to be done by the
  * same thread that marshaled the interface in the first place. */
-static void release_host_object(DWORD tid)
+static void release_host_object(DWORD tid, WPARAM wp)
 {
     HANDLE event = CreateEventA(NULL, FALSE, FALSE, NULL);
-    PostThreadMessageA(tid, RELEASEMARSHALDATA, 0, (LPARAM)event);
+    PostThreadMessageA(tid, RELEASEMARSHALDATA, wp, (LPARAM)event);
     ok( !WaitForSingleObject(event, 10000), "wait timed out\n" );
     CloseHandle(event);
 }
@@ -1130,7 +1130,7 @@ static void test_tableweak_marshal_and_unmarshal_twice(void)
 todo_wine
         ok_more_than_one_lock();
         IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
-        release_host_object(tid);
+        release_host_object(tid, 0);
     }
 
     /* Without IExternalConnection this line is shows the difference between weak and strong table marshaling
@@ -1171,7 +1171,7 @@ static void test_tableweak_marshal_releasedata1(void)
     /* release the remaining reference on the object by calling
      * CoReleaseMarshalData in the hosting thread */
     IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
-    release_host_object(tid);
+    release_host_object(tid, 0);
 
     ok_more_than_one_lock();
     ok_non_zero_external_conn();
@@ -1224,7 +1224,7 @@ static void test_tableweak_marshal_releasedata2(void)
     /* release the remaining reference on the object by calling
      * CoReleaseMarshalData in the hosting thread */
     IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
-    release_host_object(tid);
+    release_host_object(tid, 0);
 
     ok_no_locks();
 
@@ -1244,27 +1244,27 @@ static void test_tableweak_marshal_releasedata2(void)
     end_host_object(tid, thread);
 }
 
-struct weak_and_normal_marshal_data
+struct duo_marshal_data
 {
-    IStream *pStreamWeak;
-    IStream *pStreamNormal;
+    MSHLFLAGS marshal_flags1, marshal_flags2;
+    IStream *pStream1, *pStream2;
     HANDLE hReadyEvent;
     HANDLE hQuitEvent;
 };
 
-static DWORD CALLBACK weak_and_normal_marshal_thread_proc(void *p)
+static DWORD CALLBACK duo_marshal_thread_proc(void *p)
 {
     HRESULT hr;
-    struct weak_and_normal_marshal_data *data = p;
+    struct duo_marshal_data *data = p;
     HANDLE hQuitEvent = data->hQuitEvent;
     MSG msg;
 
     pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
-    hr = CoMarshalInterface(data->pStreamWeak, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHCTX_INPROC, NULL, MSHLFLAGS_TABLEWEAK);
+    hr = CoMarshalInterface(data->pStream1, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHCTX_INPROC, NULL, data->marshal_flags1);
     ok_ole_success(hr, "CoMarshalInterface");
 
-    hr = CoMarshalInterface(data->pStreamNormal, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    hr = CoMarshalInterface(data->pStream2, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHCTX_INPROC, NULL, data->marshal_flags2);
     ok_ole_success(hr, "CoMarshalInterface");
 
     /* force the message queue to be created before signaling parent thread */
@@ -1278,7 +1278,7 @@ static DWORD CALLBACK weak_and_normal_marshal_thread_proc(void *p)
         {
             if (msg.hwnd == NULL && msg.message == RELEASEMARSHALDATA)
             {
-                CoReleaseMarshalData(data->pStreamWeak);
+                CoReleaseMarshalData(msg.wParam == 1 ? data->pStream1 : data->pStream2);
                 SetEvent((HANDLE)msg.lParam);
             }
             else
@@ -1300,33 +1300,37 @@ static void test_tableweak_and_normal_marshal_and_unmarshal(void)
     IUnknown *pProxyNormal = NULL;
     DWORD tid;
     HANDLE thread;
-    struct weak_and_normal_marshal_data data;
+    struct duo_marshal_data data;
 
     cLocks = 0;
     external_connections = 0;
 
     data.hReadyEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
     data.hQuitEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
-    hr = CreateStreamOnHGlobal(NULL, TRUE, &data.pStreamWeak);
+    data.marshal_flags1 = MSHLFLAGS_TABLEWEAK;
+    data.marshal_flags2 = MSHLFLAGS_NORMAL;
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &data.pStream1);
     ok_ole_success(hr, CreateStreamOnHGlobal);
-    hr = CreateStreamOnHGlobal(NULL, TRUE, &data.pStreamNormal);
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &data.pStream2);
     ok_ole_success(hr, CreateStreamOnHGlobal);
 
-    thread = CreateThread(NULL, 0, weak_and_normal_marshal_thread_proc, &data, 0, &tid);
+    thread = CreateThread(NULL, 0, duo_marshal_thread_proc, &data, 0, &tid);
     ok( !WaitForSingleObject(data.hReadyEvent, 10000), "wait timed out\n" );
     CloseHandle(data.hReadyEvent);
 
     ok_more_than_one_lock();
     ok_non_zero_external_conn();
 
-    IStream_Seek(data.pStreamWeak, ullZero, STREAM_SEEK_SET, NULL);
-    hr = CoUnmarshalInterface(data.pStreamWeak, &IID_IClassFactory, (void **)&pProxyWeak);
+    /* weak */
+    IStream_Seek(data.pStream1, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(data.pStream1, &IID_IClassFactory, (void **)&pProxyWeak);
     ok_ole_success(hr, CoUnmarshalInterface);
 
     ok_more_than_one_lock();
 
-    IStream_Seek(data.pStreamNormal, ullZero, STREAM_SEEK_SET, NULL);
-    hr = CoUnmarshalInterface(data.pStreamNormal, &IID_IClassFactory, (void **)&pProxyNormal);
+    /* normal */
+    IStream_Seek(data.pStream2, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(data.pStream2, &IID_IClassFactory, (void **)&pProxyNormal);
     ok_ole_success(hr, CoUnmarshalInterface);
 
     ok_more_than_one_lock();
@@ -1347,13 +1351,13 @@ static void test_tableweak_and_normal_marshal_and_unmarshal(void)
     {
 todo_wine
         ok_more_than_one_lock();
-        IStream_Seek(data.pStreamWeak, ullZero, STREAM_SEEK_SET, NULL);
-        release_host_object(tid);
+        IStream_Seek(data.pStream1, ullZero, STREAM_SEEK_SET, NULL);
+        release_host_object(tid, 1);
     }
     ok_no_locks();
 
-    IStream_Release(data.pStreamWeak);
-    IStream_Release(data.pStreamNormal);
+    IStream_Release(data.pStream1);
+    IStream_Release(data.pStream2);
 
     SetEvent(data.hQuitEvent);
     ok( !WaitForSingleObject(thread, 10000), "wait timed out\n" );
@@ -1403,7 +1407,7 @@ static void test_tablestrong_marshal_and_unmarshal_twice(void)
     /* release the remaining reference on the object by calling
      * CoReleaseMarshalData in the hosting thread */
     IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
-    release_host_object(tid);
+    release_host_object(tid, 0);
     IStream_Release(pStream);
 
     ok_no_locks();
