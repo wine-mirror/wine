@@ -59,7 +59,7 @@ struct call_entry {
 
 struct testcontext {
     enum analysis_kind kind;
-    int todo;
+    BOOL todo;
     int *failcount;
     const char *file;
     int line;
@@ -138,7 +138,7 @@ static void test_uint(UINT32 actual, UINT32 expected, const char *name, const st
 }
 
 static void ok_sequence_(struct call_sequence **seq, int sequence_index,
-    const struct call_entry *expected, const char *context, int todo,
+    const struct call_entry *expected, const char *context, BOOL todo,
     const char *file, int line)
 {
     struct call_sequence *call_seq = seq[sequence_index];
