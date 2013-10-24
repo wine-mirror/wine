@@ -1125,7 +1125,6 @@ static void test_tableweak_marshal_and_unmarshal_twice(void)
      * behaviour is altered; the remaining weak ref prevents stub shutdown. */
     if (with_external_conn)
     {
-todo_wine
         ok_more_than_one_lock();
         IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
         release_host_object(tid, 0);
@@ -1347,7 +1346,6 @@ static void test_tableweak_and_normal_marshal_and_unmarshal(void)
      * behaviour is altered; the remaining weak ref prevents stub shutdown. */
     if (with_external_conn)
     {
-todo_wine
         ok_more_than_one_lock();
         IStream_Seek(data.pStream1, ullZero, STREAM_SEEK_SET, NULL);
         release_host_object(tid, 1);
@@ -1397,7 +1395,6 @@ static void test_tableweak_and_normal_marshal_and_releasedata(void)
 
     if (with_external_conn)
     {
-todo_wine
         ok_more_than_one_lock();
         IStream_Seek(data.pStream1, ullZero, STREAM_SEEK_SET, NULL);
         release_host_object(tid, 1);

@@ -440,7 +440,8 @@ ULONG stub_manager_ext_release(struct stub_manager *m, ULONG refs, BOOL tablewea
         IExternalConnection_ReleaseConnection(m->extern_conn, EXTCONN_STRONG, 0, last_unlock_releases);
 
     if (rc == 0)
-        stub_manager_int_release(m);
+        if (!(m->extern_conn && last_unlock_releases && m->weakrefs))
+            stub_manager_int_release(m);
 
     return rc;
 }
