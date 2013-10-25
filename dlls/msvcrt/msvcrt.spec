@@ -1528,6 +1528,7 @@
 @ cdecl _set_invalid_parameter_handler(ptr)
 @ cdecl _set_purecall_handler(ptr)
 @ cdecl _set_security_error_handler(ptr)
+@ cdecl __security_error_handler(long ptr)
 @ cdecl -arch=i386 _statusfp2(ptr ptr)
 @ cdecl _wdupenv_s(ptr ptr wstr)
 @ cdecl _get_printf_count_output() MSVCRT__get_printf_count_output

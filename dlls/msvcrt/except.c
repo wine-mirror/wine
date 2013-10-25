@@ -303,3 +303,14 @@ MSVCRT_security_error_handler CDECL _set_security_error_handler(
     security_error_handler = handler;
     return old;
 }
+
+/* __security_error_handler - not exported in native msvcrt */
+void CDECL __security_error_handler(int code, void *data)
+{
+    if(security_error_handler)
+        security_error_handler(code, data);
+    else
+        FIXME("(%d, %p) stub\n", code, data);
+
+    MSVCRT__exit(3);
+}

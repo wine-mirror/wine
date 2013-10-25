@@ -194,7 +194,7 @@
 @ extern __pioinfo msvcrt.__pioinfo
 @ stub __pwctype_func
 @ cdecl __pxcptinfoptrs() msvcrt.__pxcptinfoptrs
-@ stub __security_error_handler
+@ cdecl __security_error_handler(long ptr) msvcrt.__security_error_handler
 @ cdecl __set_app_type(long) msvcrt.__set_app_type
 @ stub __set_buffer_overrun_handler
 @ extern __setlc_active msvcrt.__setlc_active
