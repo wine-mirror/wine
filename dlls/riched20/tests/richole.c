@@ -35,18 +35,17 @@
 
 static HMODULE hmoduleRichEdit;
 
-static HWND new_window(LPCTSTR lpClassName, DWORD dwStyle, HWND parent)
+static HWND new_window(LPCSTR lpClassName, DWORD dwStyle, HWND parent)
 {
-  HWND hwnd
-    = CreateWindow(lpClassName, NULL,
-                   dwStyle | WS_POPUP | WS_HSCROLL | WS_VSCROLL | WS_VISIBLE,
-                   0, 0, 200, 60, parent, NULL, hmoduleRichEdit, NULL);
+  HWND hwnd = CreateWindowA(lpClassName, NULL,
+                            dwStyle | WS_POPUP | WS_HSCROLL | WS_VSCROLL | WS_VISIBLE,
+                            0, 0, 200, 60, parent, NULL, hmoduleRichEdit, NULL);
   return hwnd;
 }
 
 static HWND new_richedit(HWND parent)
 {
-  return new_window(RICHEDIT_CLASS, ES_MULTILINE, parent);
+  return new_window(RICHEDIT_CLASS20A, ES_MULTILINE, parent);
 }
 
 static BOOL touch_file(LPCWSTR filename)
@@ -78,7 +77,7 @@ static void create_interfaces(HWND *w, IRichEditOle **reOle, ITextDocument **txt
                               ITextSelection **txtSel)
 {
   *w = new_richedit(NULL);
-  SendMessage(*w, EM_GETOLEINTERFACE, 0, (LPARAM) reOle);
+  SendMessageA(*w, EM_GETOLEINTERFACE, 0, (LPARAM)reOle);
   IRichEditOle_QueryInterface(*reOle, &IID_ITextDocument,
                                  (void **) txtDoc);
   ITextDocument_GetSelection(*txtDoc, txtSel);
@@ -109,7 +108,7 @@ static void test_Interfaces(void)
     return;
   }
 
-  res = SendMessage(w, EM_GETOLEINTERFACE, 0, (LPARAM) &reOle);
+  res = SendMessageA(w, EM_GETOLEINTERFACE, 0, (LPARAM)&reOle);
   ok(res, "SendMessage\n");
   ok(reOle != NULL, "EM_GETOLEINTERFACE\n");
 
