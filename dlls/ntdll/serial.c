@@ -367,6 +367,7 @@ static NTSTATUS get_timeouts(HANDLE handle, SERIAL_TIMEOUTS* st)
     SERVER_START_REQ( get_serial_info )
     {
         req->handle = wine_server_obj_handle( handle );
+        req->flags = 0;
         if (!(status = wine_server_call( req )))
         {
             st->ReadIntervalTimeout         = reply->readinterval;
@@ -380,17 +381,19 @@ static NTSTATUS get_timeouts(HANDLE handle, SERIAL_TIMEOUTS* st)
     return status;
 }
 
-static NTSTATUS get_wait_mask(HANDLE hDevice, DWORD *mask, DWORD *cookie)
+static NTSTATUS get_wait_mask(HANDLE hDevice, DWORD *mask, DWORD *cookie, DWORD *pending_write)
 {
     NTSTATUS    status;
 
     SERVER_START_REQ( get_serial_info )
     {
         req->handle = wine_server_obj_handle( hDevice );
+        req->flags = pending_write ? SERIALINFO_PENDING_WRITE : 0;
         if (!(status = wine_server_call( req )))
         {
             *mask = reply->eventmask;
             if (cookie) *cookie = reply->cookie;
+            if (pending_write) *pending_write = reply->pending_write;
         }
     }
     SERVER_END_REQ;
@@ -797,6 +800,7 @@ typedef struct async_commio
     DWORD               evtmask;
     DWORD               cookie;
     DWORD               mstat;
+    DWORD               pending_write;
     serial_irq_info     irq_info;
 } async_commio;
 
@@ -855,7 +859,7 @@ static NTSTATUS get_irq_info(int fd, serial_irq_info *irq_info)
 static DWORD check_events(int fd, DWORD mask,
                           const serial_irq_info *new,
                           const serial_irq_info *old,
-                          DWORD new_mstat, DWORD old_mstat)
+                          DWORD new_mstat, DWORD old_mstat, DWORD pending_write)
 {
     DWORD ret = 0, queue;
 
@@ -887,7 +891,7 @@ static DWORD check_events(int fd, DWORD mask,
     }
     if (mask & EV_TXEMPTY)
     {
-        if (!old->temt && new->temt)
+        if ((!old->temt || pending_write) && new->temt)
             ret |= EV_TXEMPTY;
     }
     return ret & mask;
@@ -934,9 +938,9 @@ static DWORD CALLBACK wait_for_event(LPVOID arg)
             }
             *commio->events = check_events(fd, commio->evtmask,
                                            &new_irq_info, &commio->irq_info,
-                                           new_mstat, commio->mstat);
+                                           new_mstat, commio->mstat, commio->pending_write);
             if (*commio->events) break;
-            get_wait_mask(commio->hDevice, &dummy, &cookie);
+            get_wait_mask(commio->hDevice, &dummy, &cookie, (commio->evtmask & EV_TXEMPTY) ? &commio->pending_write : NULL);
             if (commio->cookie != cookie)
             {
                 *commio->events = 0;
@@ -975,7 +979,8 @@ static NTSTATUS wait_on(HANDLE hDevice, int fd, HANDLE hEvent, PIO_STATUS_BLOCK 
     commio->events  = events;
     commio->iosb    = piosb;
     commio->hEvent  = hEvent;
-    get_wait_mask(commio->hDevice, &commio->evtmask, &commio->cookie);
+    commio->pending_write = 0;
+    get_wait_mask(commio->hDevice, &commio->evtmask, &commio->cookie, (commio->evtmask & EV_TXEMPTY) ? &commio->pending_write : NULL);
 
 /* We may never return, if some capabilities miss
  * Return error in that case
@@ -1022,7 +1027,7 @@ static NTSTATUS wait_on(HANDLE hDevice, int fd, HANDLE hEvent, PIO_STATUS_BLOCK 
     /* We might have received something or the TX buffer is delivered */
     *events = check_events(fd, commio->evtmask,
                                &commio->irq_info, &commio->irq_info,
-                               commio->mstat, commio->mstat);
+                               commio->mstat, commio->mstat, commio->pending_write);
     if (*events)
     {
         status = STATUS_SUCCESS;
@@ -1170,7 +1175,7 @@ static inline NTSTATUS io_control(HANDLE hDevice,
     case IOCTL_SERIAL_GET_WAIT_MASK:
         if (lpOutBuffer && nOutBufferSize == sizeof(DWORD))
         {
-            if (!(status = get_wait_mask(hDevice, lpOutBuffer, NULL)))
+            if (!(status = get_wait_mask(hDevice, lpOutBuffer, NULL, NULL)))
                 sz = sizeof(DWORD);
         }
         else

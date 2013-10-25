@@ -2212,6 +2212,7 @@ enum message_type
 /* Retrieve info about a serial port */
 @REQ(get_serial_info)
     obj_handle_t handle;       /* handle to comm port */
+    int          flags;
 @REPLY
     unsigned int readinterval;
     unsigned int readconst;
@@ -2220,6 +2221,7 @@ enum message_type
     unsigned int writemult;
     unsigned int eventmask;
     unsigned int cookie;
+    unsigned int pending_write;
 @END
 
 
@@ -2236,6 +2238,7 @@ enum message_type
 @END
 #define SERIALINFO_SET_TIMEOUTS  0x01
 #define SERIALINFO_SET_MASK      0x02
+#define SERIALINFO_PENDING_WRITE 0x04
 
 
 /* Create an async I/O */

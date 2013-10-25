@@ -943,7 +943,6 @@ static void test_waittxempty(void)
 
         res = WaitForSingleObject(ovl_wait.hEvent, TIMEOUT);
         if (i == 0)
-todo_wine
             ok(res == WAIT_OBJECT_0, "WaitCommEvent failed with a timeout\n");
         else
             ok(res == WAIT_TIMEOUT, "WaitCommEvent should fail with a timeout\n");

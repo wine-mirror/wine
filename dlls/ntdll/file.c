@@ -920,6 +920,20 @@ static NTSTATUS FILE_AsyncWriteService(void *user, IO_STATUS_BLOCK *iosb, NTSTAT
     return status;
 }
 
+static NTSTATUS set_pending_write( HANDLE device )
+{
+    NTSTATUS status;
+
+    SERVER_START_REQ( set_serial_info )
+    {
+        req->handle = wine_server_obj_handle( device );
+        req->flags  = SERIALINFO_PENDING_WRITE;
+        status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    return status;
+}
+
 /******************************************************************************
  *  NtWriteFile					[NTDLL.@]
  *  ZwWriteFile					[NTDLL.@]
@@ -1146,6 +1160,10 @@ done:
 
 err:
     if (needs_close) close( unix_handle );
+
+    if (type == FD_TYPE_SERIAL && (status == STATUS_SUCCESS || status == STATUS_PENDING))
+        set_pending_write( hFile );
+
     if (status == STATUS_SUCCESS)
     {
         io_status->u.Status = status;
