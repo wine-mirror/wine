@@ -855,8 +855,7 @@ static void test_waittxempty(void)
     SetLastError(0xdeadbeef);
     res = WaitCommEvent(hcom, &evtmask, &ovl_wait);
     ok(!res && GetLastError() == ERROR_IO_PENDING, "WaitCommEvent error %d\n", GetLastError());
-    res = WaitForSingleObject(ovl_wait.hEvent, TIMEOUT);
-todo_wine
+    res = WaitForSingleObject(ovl_wait.hEvent, 1500);
     ok(res == WAIT_OBJECT_0, "WaitCommEvent failed with a timeout\n");
     if (res == WAIT_OBJECT_0)
     {
@@ -878,16 +877,13 @@ todo_wine
         res = FALSE;
     }
     after = GetTickCount();
-todo_wine
     ok(res, "WaitCommEvent error %d\n", GetLastError());
-todo_wine
     ok(evtmask & EV_TXEMPTY, "WaitCommEvent: expected EV_TXEMPTY, got %#x\n", evtmask);
     CloseHandle(ovl_wait.hEvent);
 
     timediff = after - before;
     trace("WaitCommEvent for EV_TXEMPTY took %d ms (timeout %d)\n", timediff, TIMEOUT);
-todo_wine
-    ok(timediff < 900, "WaitCommEvent used %d ms for waiting\n", timediff);
+    ok(timediff < 1200, "WaitCommEvent used %d ms for waiting\n", timediff);
 
     res = WaitForSingleObject(ovl_write.hEvent, 0);
     ok(res == WAIT_OBJECT_0, "WriteFile failed with a timeout\n");
