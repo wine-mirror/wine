@@ -30,6 +30,7 @@
 #include <objbase.h>
 #include <richedit.h>
 #include <initguid.h>
+#include <imm.h>
 #include <textserv.h>
 #include <wine/test.h>
 #include <oleauto.h>
@@ -720,7 +721,7 @@ static void test_TxGetNaturalSize(void) {
 
     /* Variables with the text metric information */
     INT charwidth_caps_text[26];
-    TEXTMETRIC tmInfo_text;
+    TEXTMETRICA tmInfo_text;
 
     if (!init_texthost())
         return;
@@ -730,9 +731,9 @@ static void test_TxGetNaturalSize(void) {
 
     /* Populate the metric strucs */
     SetMapMode(hdcDraw,MM_TEXT);
-    GetTextMetrics(hdcDraw, &tmInfo_text);
+    GetTextMetricsA(hdcDraw, &tmInfo_text);
     SetLastError(0xdeadbeef);
-    ret = GetCharWidth32(hdcDraw,'A','Z',charwidth_caps_text);
+    ret = GetCharWidth32A(hdcDraw,'A','Z',charwidth_caps_text);
     if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) {
         win_skip("GetCharWidth32 is not available\n");
         goto cleanup;
