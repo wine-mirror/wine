@@ -939,7 +939,7 @@ static void test_waittxempty(void)
         evtmask = 0;
         SetLastError(0xdeadbeef);
         res = WaitCommEvent(hcom, &evtmask, &ovl_wait);
-        ok(!res && GetLastError() == ERROR_IO_PENDING, "%d: WaitCommEvent error %d\n", i, GetLastError());
+        ok((!res && GetLastError() == ERROR_IO_PENDING) || res /* busy system */, "%d: WaitCommEvent error %d\n", i, GetLastError());
 
         res = WaitForSingleObject(ovl_wait.hEvent, TIMEOUT);
         if (i == 0)
