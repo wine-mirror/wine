@@ -1137,7 +1137,7 @@ void make_window_embedded( struct x11drv_win_data *data )
     data->embedded = TRUE;
     data->managed = TRUE;
     sync_window_style( data );
-    set_xembed_flags( data, data->mapped ? XEMBED_MAPPED : 0 );
+    set_xembed_flags( data, (data->mapped || data->embedder) ? XEMBED_MAPPED : 0 );
 }
 
 

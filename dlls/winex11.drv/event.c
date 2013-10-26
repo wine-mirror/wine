@@ -748,34 +748,22 @@ static void X11DRV_FocusIn( HWND hwnd, XEvent *xev )
     else SetForegroundWindow( hwnd );
 }
 
-
 /**********************************************************************
- *              X11DRV_FocusOut
- *
- * Note: only top-level windows get FocusOut events.
+ *              focus_out
  */
-static void X11DRV_FocusOut( HWND hwnd, XEvent *xev )
-{
-    XFocusChangeEvent *event = &xev->xfocus;
+ static void focus_out( Display *display , HWND hwnd )
+ {
     HWND hwnd_tmp;
     Window focus_win;
     int revert;
     XIC xic;
 
-    TRACE( "win %p xwin %lx detail=%s\n", hwnd, event->window, focus_details[event->detail] );
-
-    if (event->detail == NotifyPointer)
-    {
-        if (!hwnd && event->window == x11drv_thread_data()->clip_window) reset_clipping_window();
-        return;
-    }
-    if (!hwnd) return;
     if (ximInComposeMode) return;
 
     x11drv_thread_data()->last_focus = hwnd;
     if ((xic = X11DRV_get_ic( hwnd ))) XUnsetICFocus( xic );
 
-    if (root_window != DefaultRootWindow(event->display))
+    if (root_window != DefaultRootWindow(display))
     {
         if (hwnd == GetDesktopWindow()) reset_clipping_window();
         return;
@@ -786,10 +774,10 @@ static void X11DRV_FocusOut( HWND hwnd, XEvent *xev )
     /* don't reset the foreground window, if the window which is
        getting the focus is a Wine window */
 
-    XGetInputFocus( event->display, &focus_win, &revert );
+    XGetInputFocus( display, &focus_win, &revert );
     if (focus_win)
     {
-        if (XFindContext( event->display, focus_win, winContext, (char **)&hwnd_tmp ) != 0)
+        if (XFindContext( display, focus_win, winContext, (char **)&hwnd_tmp ) != 0)
             focus_win = 0;
     }
 
@@ -805,6 +793,26 @@ static void X11DRV_FocusOut( HWND hwnd, XEvent *xev )
             SetForegroundWindow( GetDesktopWindow() );
         }
     }
+ }
+
+/**********************************************************************
+ *              X11DRV_FocusOut
+ *
+ * Note: only top-level windows get FocusOut events.
+ */
+static void X11DRV_FocusOut( HWND hwnd, XEvent *xev )
+{
+    XFocusChangeEvent *event = &xev->xfocus;
+
+    TRACE( "win %p xwin %lx detail=%s\n", hwnd, event->window, focus_details[event->detail] );
+
+    if (event->detail == NotifyPointer)
+    {
+        if (!hwnd && event->window == x11drv_thread_data()->clip_window) reset_clipping_window();
+        return;
+    }
+    if (!hwnd) return;
+    focus_out( event->display, hwnd );
 }
 
 
@@ -940,6 +948,37 @@ static BOOL is_net_wm_state_maximized( Display *display, struct x11drv_win_data 
     return (ret == 2);
 }
 
+/***********************************************************************
+ *           reparent_notify
+ */
+static void reparent_notify( Display *display, HWND hwnd, Window xparent, int x, int y )
+{
+    HWND parent, old_parent;
+    DWORD style;
+
+    style = GetWindowLongW( hwnd, GWL_STYLE );
+    if (xparent == root_window)
+    {
+        parent = GetDesktopWindow();
+        style = (style & ~WS_CHILD) | WS_POPUP;
+    }
+    else
+    {
+        if (!(parent = create_foreign_window( display, xparent ))) return;
+        style = (style & ~WS_POPUP) | WS_CHILD;
+    }
+
+    ShowWindow( hwnd, SW_HIDE );
+    old_parent = SetParent( hwnd, parent );
+    SetWindowLongW( hwnd, GWL_STYLE, style );
+    SetWindowPos( hwnd, HWND_TOP, x, y, 0, 0,
+                  SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOCOPYBITS |
+                  ((style & WS_VISIBLE) ? SWP_SHOWWINDOW : 0) );
+
+    /* make old parent destroy itself if it no longer has children */
+    if (old_parent != GetDesktopWindow()) PostMessageW( old_parent, WM_CLOSE, 0, 0 );
+}
+
 
 /***********************************************************************
  *           X11DRV_ReparentNotify
@@ -948,8 +987,6 @@ static void X11DRV_ReparentNotify( HWND hwnd, XEvent *xev )
 {
     XReparentEvent *event = &xev->xreparent;
     struct x11drv_win_data *data;
-    HWND parent, old_parent;
-    DWORD style;
 
     if (!(data = get_win_data( hwnd ))) return;
 
@@ -975,27 +1012,7 @@ static void X11DRV_ReparentNotify( HWND hwnd, XEvent *xev )
     TRACE( "%p/%lx reparented to %lx\n", hwnd, data->whole_window, event->parent );
     release_win_data( data );
 
-    style = GetWindowLongW( hwnd, GWL_STYLE );
-    if (event->parent == root_window)
-    {
-        parent = GetDesktopWindow();
-        style = (style & ~WS_CHILD) | WS_POPUP;
-    }
-    else
-    {
-        if (!(parent = create_foreign_window( event->display, event->parent ))) return;
-        style = (style & ~WS_POPUP) | WS_CHILD;
-    }
-
-    ShowWindow( hwnd, SW_HIDE );
-    old_parent = SetParent( hwnd, parent );
-    SetWindowLongW( hwnd, GWL_STYLE, style );
-    SetWindowPos( hwnd, HWND_TOP, event->x, event->y, 0, 0,
-                  SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOCOPYBITS |
-                  ((style & WS_VISIBLE) ? SWP_SHOWWINDOW : 0) );
-
-    /* make old parent destroy itself if it no longer has children */
-    if (old_parent != GetDesktopWindow()) PostMessageW( old_parent, WM_CLOSE, 0, 0 );
+    reparent_notify( event->display, hwnd, event->parent, event->x, event->y );
 }
 
 
@@ -1594,22 +1611,54 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
  */
 static void handle_xembed_protocol( HWND hwnd, XClientMessageEvent *event )
 {
-    struct x11drv_win_data *data = get_win_data( hwnd );
-
-    if (!data) return;
-
     switch (event->data.l[1])
     {
     case XEMBED_EMBEDDED_NOTIFY:
-        TRACE( "win %p/%lx XEMBED_EMBEDDED_NOTIFY owner %lx\n", hwnd, event->window, event->data.l[3] );
-        data->embedder = event->data.l[3];
+        {
+            struct x11drv_win_data *data = get_win_data( hwnd );
+            if (!data) break;
+
+            TRACE( "win %p/%lx XEMBED_EMBEDDED_NOTIFY owner %lx\n", hwnd, event->window, event->data.l[3] );
+            data->embedder = event->data.l[3];
+
+            /* window has been marked as embedded before (e.g. systray) */
+            if (data->embedded)
+            {
+                release_win_data( data );
+                break;
+            }
+
+            make_window_embedded( data );
+            release_win_data( data );
+            reparent_notify( event->display, hwnd, event->data.l[3], 0, 0 );
+        }
         break;
+
+    case XEMBED_WINDOW_DEACTIVATE:
+        TRACE( "win %p/%lx XEMBED_WINDOW_DEACTIVATE message\n", hwnd, event->window );
+        focus_out( event->display, GetAncestor( hwnd, GA_ROOT ) );
+        break;
+
+    case XEMBED_FOCUS_OUT:
+        TRACE( "win %p/%lx XEMBED_FOCUS_OUT message\n", hwnd, event->window );
+        focus_out( event->display, GetAncestor( hwnd, GA_ROOT ) );
+        break;
+
+    case XEMBED_MODALITY_ON:
+        TRACE( "win %p/%lx XEMBED_MODALITY_ON message\n", hwnd, event->window );
+        EnableWindow( hwnd, FALSE );
+        break;
+
+    case XEMBED_MODALITY_OFF:
+        TRACE( "win %p/%lx XEMBED_MODALITY_OFF message\n", hwnd, event->window );
+        EnableWindow( hwnd, TRUE );
+        break;
+
     default:
         TRACE( "win %p/%lx XEMBED message %lu(%lu)\n",
                hwnd, event->window, event->data.l[1], event->data.l[2] );
         break;
     }
-    release_win_data( data );
 }
 
 
