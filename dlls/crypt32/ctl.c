@@ -341,7 +341,7 @@ PCCTL_CONTEXT WINAPI CertFindCTLInStore(HCERTSTORE hCertStore,
 
 BOOL WINAPI CertDeleteCTLFromStore(PCCTL_CONTEXT pCtlContext)
 {
-    WINECRYPT_CERTSTORE *hcs = pCtlContext->hCertStore;
+    WINECRYPT_CERTSTORE *hcs;
     ctl_t *ctl = ctl_from_ptr(pCtlContext);
     BOOL ret;
 
@@ -349,6 +349,8 @@ BOOL WINAPI CertDeleteCTLFromStore(PCCTL_CONTEXT pCtlContext)
 
     if (!pCtlContext)
         return TRUE;
+
+    hcs = pCtlContext->hCertStore;
 
     if (hcs->dwMagic != WINE_CRYPTCERTSTORE_MAGIC)
             return FALSE;
