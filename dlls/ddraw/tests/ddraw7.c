@@ -4551,7 +4551,7 @@ static void test_surface_lock(void)
         if (tests[i].caps & DDSCAPS_ZBUFFER)
         {
             ddsd.dwFlags |= DDSD_PIXELFORMAT;
-            ddsd.ddpfPixelFormat = z_fmt;
+            U4(ddsd).ddpfPixelFormat = z_fmt;
         }
         ddsd.ddsCaps.dwCaps = tests[i].caps;
         ddsd.ddsCaps.dwCaps2 = tests[i].caps2;

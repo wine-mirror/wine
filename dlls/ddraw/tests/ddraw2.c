@@ -4041,7 +4041,7 @@ static void test_surface_lock(void)
         if (tests[i].caps & DDSCAPS_ZBUFFER)
         {
             ddsd.dwFlags |= DDSD_ZBUFFERBITDEPTH;
-            ddsd.dwZBufferBitDepth = z_depth;
+            U2(ddsd).dwZBufferBitDepth = z_depth;
         }
         ddsd.ddsCaps.dwCaps = tests[i].caps;
 
