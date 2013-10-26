@@ -31,11 +31,6 @@
 #include "winerror.h"
 #include "aclapi.h"
 
-#undef SE_BACKUP_NAME
-#undef SE_RESTORE_NAME
-#define SE_BACKUP_NAME "SeBackupPrivilege"
-#define SE_RESTORE_NAME "SeRestorePrivilege"
-
 #define IS_HKCR(hk) ((UINT_PTR)hk > 0 && ((UINT_PTR)hk & 3) == 2)
 
 static HKEY hkey_main;
