@@ -211,19 +211,20 @@ static int parse_prop( const WCHAR *str, WCHAR *value, int *quotes )
     enum parse_state state = state_quote;
     const WCHAR *p;
     WCHAR *out = value;
-    int ignore, in_quotes = 0, count = 0, len = 0;
+    BOOL ignore, in_quotes = FALSE;
+    int count = 0, len = 0;
 
     for (p = str; *p; p++)
     {
-        ignore = 0;
+        ignore = FALSE;
         switch (state)
         {
         case state_whitespace:
             switch (*p)
             {
             case ' ':
-                in_quotes = 1;
-                ignore = 1;
+                in_quotes = TRUE;
+                ignore = TRUE;
                 len++;
                 break;
             case '"':
@@ -233,7 +234,7 @@ static int parse_prop( const WCHAR *str, WCHAR *value, int *quotes )
                 break;
             default:
                 state = state_token;
-                in_quotes = 1;
+                in_quotes = TRUE;
                 len++;
                 break;
             }
@@ -250,12 +251,12 @@ static int parse_prop( const WCHAR *str, WCHAR *value, int *quotes )
             case ' ':
                 state = state_whitespace;
                 if (!count) goto done;
-                in_quotes = 1;
+                in_quotes = TRUE;
                 len++;
                 break;
             default:
-                if (!count) in_quotes = 0;
-                else in_quotes = 1;
+                if (!count) in_quotes = FALSE;
+                else in_quotes = TRUE;
                 len++;
                 break;
             }
@@ -271,13 +272,13 @@ static int parse_prop( const WCHAR *str, WCHAR *value, int *quotes )
             case ' ':
                 state = state_whitespace;
                 if (!count || (count > 1 && !len)) goto done;
-                in_quotes = 1;
+                in_quotes = TRUE;
                 len++;
                 break;
             default:
                 state = state_token;
-                if (!count) in_quotes = 0;
-                else in_quotes = 1;
+                if (!count) in_quotes = FALSE;
+                else in_quotes = TRUE;
                 len++;
                 break;
             }
