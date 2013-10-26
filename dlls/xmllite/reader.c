@@ -1501,6 +1501,7 @@ static HRESULT reader_parse_whitespace(xmlreader *reader)
         reader_set_strvalue(reader, StringValue_LocalName, &strval_empty);
         reader_set_strvalue(reader, StringValue_QualifiedName, &strval_empty);
         reader_set_strvalue(reader, StringValue_Value, &strval_empty);
+        /* fallthrough */
     case XmlReadResumeState_Whitespace:
     {
         strval value;
