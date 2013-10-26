@@ -114,10 +114,10 @@ static HRESULT ebrowser_browse_to_desktop(IExplorerBrowser *peb)
 static void process_msgs(void)
 {
     MSG msg;
-    while(PeekMessage( &msg, NULL, 0, 0, PM_REMOVE))
+    while(PeekMessageA( &msg, NULL, 0, 0, PM_REMOVE))
     {
         TranslateMessage(&msg);
-        DispatchMessage(&msg);
+        DispatchMessageA(&msg);
     }
 }
 

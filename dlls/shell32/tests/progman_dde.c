@@ -411,7 +411,7 @@ static void CheckFileExistsInProgramGroups(const char *nameToCheck, int shouldEx
         }
         strcat(path, "\\");
         strcat(path, nameToCheck);
-        attributes = GetFileAttributes(path);
+        attributes = GetFileAttributesA(path);
         if (!shouldExist)
         {
             ok (attributes == INVALID_FILE_ATTRIBUTES , "File exists and shouldn't %s.%s\n",
@@ -705,11 +705,11 @@ START_TEST(progman_dde)
     init_strings();
 
     /* Initialize DDE Instance */
-    err = DdeInitialize(&instance, DdeCallback, APPCMD_CLIENTONLY, 0);
+    err = DdeInitializeA(&instance, DdeCallback, APPCMD_CLIENTONLY, 0);
     ok (err == DMLERR_NO_ERROR, "DdeInitialize Error %s\n", GetStringFromError(err));
 
     /* Create Connection */
-    hszProgman = DdeCreateStringHandle(instance, "PROGMAN", CP_WINANSI);
+    hszProgman = DdeCreateStringHandleA(instance, "PROGMAN", CP_WINANSI);
     ok (hszProgman != NULL, "DdeCreateStringHandle Error %s\n", GetDdeLastErrorStr(instance));
     hConv = DdeConnect(instance, hszProgman, hszProgman, NULL);
     ok (DdeFreeStringHandle(instance, hszProgman), "DdeFreeStringHandle failure\n");
@@ -730,11 +730,11 @@ START_TEST(progman_dde)
     /* 2nd Instance (Followup Tests) */
     /* Initialize DDE Instance */
     instance = 0;
-    err = DdeInitialize(&instance, DdeCallback, APPCMD_CLIENTONLY, 0);
+    err = DdeInitializeA(&instance, DdeCallback, APPCMD_CLIENTONLY, 0);
     ok (err == DMLERR_NO_ERROR, "DdeInitialize Error %s\n", GetStringFromError(err));
 
     /* Create Connection */
-    hszProgman = DdeCreateStringHandle(instance, "PROGMAN", CP_WINANSI);
+    hszProgman = DdeCreateStringHandleA(instance, "PROGMAN", CP_WINANSI);
     ok (hszProgman != NULL, "DdeCreateStringHandle Error %s\n", GetDdeLastErrorStr(instance));
     hConv = DdeConnect(instance, hszProgman, hszProgman, NULL);
     ok (hConv != NULL, "DdeConnect Error %s\n", GetDdeLastErrorStr(instance));

@@ -45,6 +45,7 @@
 #include "windef.h"
 #include "shellapi.h"
 #include "shlwapi.h"
+#include "ddeml.h"
 #include "wine/test.h"
 
 #include "shell32_test.h"
@@ -72,7 +73,7 @@ static void init_event(const char* child_file)
 {
     char* event_name;
     event_name=strrchr(child_file, '\\')+1;
-    hEvent=CreateEvent(NULL, FALSE, FALSE, event_name);
+    hEvent=CreateEventA(NULL, FALSE, FALSE, event_name);
 }
 
 static void strcat_param(char* str, const char* name, const char* param)
@@ -109,14 +110,14 @@ static INT_PTR shell_execute(LPCSTR verb, LPCSTR file, LPCSTR parameters, LPCSTR
     if (winetest_debug > 1)
         trace("%s\n", shell_call);
 
-    DeleteFile(child_file);
+    DeleteFileA(child_file);
     SetLastError(0xcafebabe);
 
     /* FIXME: We cannot use ShellExecuteEx() here because if there is no
      * association it displays the 'Open With' dialog and I could not find
      * a flag to prevent this.
      */
-    rc=(INT_PTR)ShellExecute(NULL, verb, file, parameters, directory, SW_SHOWNORMAL);
+    rc=(INT_PTR)ShellExecuteA(NULL, verb, file, parameters, directory, SW_SHOWNORMAL);
 
     if (rc > 32)
     {
@@ -127,7 +128,7 @@ static INT_PTR shell_execute(LPCSTR verb, LPCSTR file, LPCSTR parameters, LPCSTR
             HWND wnd = FindWindowA("#32770", "Windows");
             if (wnd != NULL)
             {
-                SendMessage(wnd, WM_CLOSE, 0, 0);
+                SendMessageA(wnd, WM_CLOSE, 0, 0);
                 win_skip("Skipping shellexecute of file with unassociated extension\n");
                 skip_noassoc_tests = TRUE;
                 rc = SE_ERR_NOASSOC;
@@ -160,7 +161,7 @@ static INT_PTR shell_execute_ex(DWORD mask, LPCSTR verb, LPCSTR file,
                                 LPCSTR parameters, LPCSTR directory,
                                 LPCSTR class)
 {
-    SHELLEXECUTEINFO sei;
+    SHELLEXECUTEINFOA sei;
     BOOL success;
     INT_PTR rc;
 
@@ -196,9 +197,9 @@ static INT_PTR shell_execute_ex(DWORD mask, LPCSTR verb, LPCSTR file,
     U(sei).hIcon=NULL;
     sei.hProcess=NULL; /* Out */
 
-    DeleteFile(child_file);
+    DeleteFileA(child_file);
     SetLastError(0xcafebabe);
-    success=ShellExecuteEx(&sei);
+    success=ShellExecuteExA(&sei);
     rc=(INT_PTR)sei.hInstApp;
     ok((success && rc > 32) || (!success && rc <= 32),
        "%s rc=%d and hInstApp=%ld is not allowed\n", shell_call, success, rc);
@@ -242,21 +243,21 @@ static BOOL create_test_association(const char* extension)
     LONG rc;
 
     sprintf(class, "shlexec%s", extension);
-    rc=RegCreateKeyEx(HKEY_CLASSES_ROOT, extension, 0, NULL, 0, KEY_SET_VALUE,
-                      NULL, &hkey, NULL);
+    rc=RegCreateKeyExA(HKEY_CLASSES_ROOT, extension, 0, NULL, 0, KEY_SET_VALUE,
+                       NULL, &hkey, NULL);
     if (rc != ERROR_SUCCESS)
         return FALSE;
 
-    rc=RegSetValueEx(hkey, NULL, 0, REG_SZ, (LPBYTE) class, strlen(class)+1);
+    rc=RegSetValueExA(hkey, NULL, 0, REG_SZ, (LPBYTE) class, strlen(class)+1);
     ok(rc==ERROR_SUCCESS, "RegSetValueEx '%s' failed, expected ERROR_SUCCESS, got %d\n", class, rc);
     CloseHandle(hkey);
 
-    rc=RegCreateKeyEx(HKEY_CLASSES_ROOT, class, 0, NULL, 0,
-                      KEY_CREATE_SUB_KEY | KEY_ENUMERATE_SUB_KEYS, NULL, &hkey, NULL);
+    rc=RegCreateKeyExA(HKEY_CLASSES_ROOT, class, 0, NULL, 0,
+                       KEY_CREATE_SUB_KEY | KEY_ENUMERATE_SUB_KEYS, NULL, &hkey, NULL);
     ok(rc==ERROR_SUCCESS, "RegCreateKeyEx '%s' failed, expected ERROR_SUCCESS, got %d\n", class, rc);
 
-    rc=RegCreateKeyEx(hkey, "shell", 0, NULL, 0,
-                      KEY_CREATE_SUB_KEY, NULL, &hkey_shell, NULL);
+    rc=RegCreateKeyExA(hkey, "shell", 0, NULL, 0,
+                       KEY_CREATE_SUB_KEY, NULL, &hkey_shell, NULL);
     ok(rc==ERROR_SUCCESS, "RegCreateKeyEx 'shell' failed, expected ERROR_SUCCESS, got %d\n", rc);
 
     CloseHandle(hkey);
@@ -352,25 +353,25 @@ static void create_test_verb_dde(const char* extension, const char* verb,
     LONG rc;
 
     sprintf(shell, "shlexec%s\\shell", extension);
-    rc=RegOpenKeyEx(HKEY_CLASSES_ROOT, shell, 0,
-                    KEY_CREATE_SUB_KEY, &hkey_shell);
+    rc=RegOpenKeyExA(HKEY_CLASSES_ROOT, shell, 0,
+                     KEY_CREATE_SUB_KEY, &hkey_shell);
     assert(rc==ERROR_SUCCESS);
-    rc=RegCreateKeyEx(hkey_shell, verb, 0, NULL, 0, KEY_CREATE_SUB_KEY,
-                      NULL, &hkey_verb, NULL);
+    rc=RegCreateKeyExA(hkey_shell, verb, 0, NULL, 0, KEY_CREATE_SUB_KEY,
+                       NULL, &hkey_verb, NULL);
     assert(rc==ERROR_SUCCESS);
-    rc=RegCreateKeyEx(hkey_verb, "command", 0, NULL, 0, KEY_SET_VALUE,
-                      NULL, &hkey_cmd, NULL);
+    rc=RegCreateKeyExA(hkey_verb, "command", 0, NULL, 0, KEY_SET_VALUE,
+                       NULL, &hkey_cmd, NULL);
     assert(rc==ERROR_SUCCESS);
 
     if (rawcmd)
     {
-        rc=RegSetValueEx(hkey_cmd, NULL, 0, REG_SZ, (LPBYTE)cmdtail, strlen(cmdtail)+1);
+        rc=RegSetValueExA(hkey_cmd, NULL, 0, REG_SZ, (LPBYTE)cmdtail, strlen(cmdtail)+1);
     }
     else
     {
         cmd=HeapAlloc(GetProcessHeap(), 0, strlen(argv0)+10+strlen(child_file)+2+strlen(cmdtail)+1);
         sprintf(cmd,"%s shlexec \"%s\" %s", argv0, child_file, cmdtail);
-        rc=RegSetValueEx(hkey_cmd, NULL, 0, REG_SZ, (LPBYTE)cmd, strlen(cmd)+1);
+        rc=RegSetValueExA(hkey_cmd, NULL, 0, REG_SZ, (LPBYTE)cmd, strlen(cmd)+1);
         assert(rc==ERROR_SUCCESS);
         HeapFree(GetProcessHeap(), 0, cmd);
     }
@@ -379,39 +380,39 @@ static void create_test_verb_dde(const char* extension, const char* verb,
     {
         HKEY hkey_ddeexec, hkey_application, hkey_topic, hkey_ifexec;
 
-        rc=RegCreateKeyEx(hkey_verb, "ddeexec", 0, NULL, 0, KEY_SET_VALUE |
-                          KEY_CREATE_SUB_KEY, NULL, &hkey_ddeexec, NULL);
+        rc=RegCreateKeyExA(hkey_verb, "ddeexec", 0, NULL, 0, KEY_SET_VALUE |
+                           KEY_CREATE_SUB_KEY, NULL, &hkey_ddeexec, NULL);
         assert(rc==ERROR_SUCCESS);
-        rc=RegSetValueEx(hkey_ddeexec, NULL, 0, REG_SZ, (LPBYTE)ddeexec,
-                         strlen(ddeexec)+1);
+        rc=RegSetValueExA(hkey_ddeexec, NULL, 0, REG_SZ, (LPBYTE)ddeexec,
+                          strlen(ddeexec)+1);
         assert(rc==ERROR_SUCCESS);
         if (application)
         {
-            rc=RegCreateKeyEx(hkey_ddeexec, "application", 0, NULL, 0, KEY_SET_VALUE,
-                              NULL, &hkey_application, NULL);
+            rc=RegCreateKeyExA(hkey_ddeexec, "application", 0, NULL, 0, KEY_SET_VALUE,
+                               NULL, &hkey_application, NULL);
             assert(rc==ERROR_SUCCESS);
-            rc=RegSetValueEx(hkey_application, NULL, 0, REG_SZ, (LPBYTE)application,
-                             strlen(application)+1);
+            rc=RegSetValueExA(hkey_application, NULL, 0, REG_SZ, (LPBYTE)application,
+                              strlen(application)+1);
             assert(rc==ERROR_SUCCESS);
             CloseHandle(hkey_application);
         }
         if (topic)
         {
-            rc=RegCreateKeyEx(hkey_ddeexec, "topic", 0, NULL, 0, KEY_SET_VALUE,
-                              NULL, &hkey_topic, NULL);
+            rc=RegCreateKeyExA(hkey_ddeexec, "topic", 0, NULL, 0, KEY_SET_VALUE,
+                               NULL, &hkey_topic, NULL);
             assert(rc==ERROR_SUCCESS);
-            rc=RegSetValueEx(hkey_topic, NULL, 0, REG_SZ, (LPBYTE)topic,
-                             strlen(topic)+1);
+            rc=RegSetValueExA(hkey_topic, NULL, 0, REG_SZ, (LPBYTE)topic,
+                              strlen(topic)+1);
             assert(rc==ERROR_SUCCESS);
             CloseHandle(hkey_topic);
         }
         if (ifexec)
         {
-            rc=RegCreateKeyEx(hkey_ddeexec, "ifexec", 0, NULL, 0, KEY_SET_VALUE,
-                              NULL, &hkey_ifexec, NULL);
+            rc=RegCreateKeyExA(hkey_ddeexec, "ifexec", 0, NULL, 0, KEY_SET_VALUE,
+                               NULL, &hkey_ifexec, NULL);
             assert(rc==ERROR_SUCCESS);
-            rc=RegSetValueEx(hkey_ifexec, NULL, 0, REG_SZ, (LPBYTE)ifexec,
-                             strlen(ifexec)+1);
+            rc=RegSetValueExA(hkey_ifexec, NULL, 0, REG_SZ, (LPBYTE)ifexec,
+                              strlen(ifexec)+1);
             assert(rc==ERROR_SUCCESS);
             CloseHandle(hkey_ifexec);
         }
@@ -517,7 +518,7 @@ static HDDEDATA CALLBACK ddeCb(UINT uType, UINT uFmt, HCONV hConv,
         case XTYP_CONNECT:
             if (!DdeCmpStringHandles(hsz1, hszTopic))
             {
-                size = DdeQueryString(ddeInst, hsz2, ddeApplication, MAX_PATH, CP_WINANSI);
+                size = DdeQueryStringA(ddeInst, hsz2, ddeApplication, MAX_PATH, CP_WINANSI);
                 assert(size < MAX_PATH);
                 return (HDDEDATA)TRUE;
             }
@@ -601,12 +602,12 @@ static void doChild(int argc, char** argv)
 
             timer = SetTimer(NULL, 0, 2500, childTimeout);
 
-            dde_ready = OpenEvent(EVENT_MODIFY_STATE, FALSE, "winetest_shlexec_dde_ready");
+            dde_ready = OpenEventA(EVENT_MODIFY_STATE, FALSE, "winetest_shlexec_dde_ready");
             SetEvent(dde_ready);
             CloseHandle(dde_ready);
 
-            while (GetMessage(&msg, NULL, 0, 0))
-                DispatchMessage(&msg);
+            while (GetMessageA(&msg, NULL, 0, 0))
+                DispatchMessageA(&msg);
 
             Sleep(500);
             KillTimer(NULL, timer);
@@ -617,7 +618,7 @@ static void doChild(int argc, char** argv)
         }
         else
         {
-            dde_ready = OpenEvent(EVENT_MODIFY_STATE, FALSE, "winetest_shlexec_dde_ready");
+            dde_ready = OpenEventA(EVENT_MODIFY_STATE, FALSE, "winetest_shlexec_dde_ready");
             SetEvent(dde_ready);
             CloseHandle(dde_ready);
         }
@@ -792,7 +793,7 @@ static DWORD get_long_path_name(const char* shortpath, char* longpath, DWORD lon
         }
         for (; *p && *p != '/' && *p != '\\'; p++);
         tmplen = p - (shortpath + sp);
-        lstrcpyn(tmplongpath + lp, shortpath + sp, tmplen + 1);
+        lstrcpynA(tmplongpath + lp, shortpath + sp, tmplen + 1);
         /* Check if the file exists and use the existing file name */
         goit = FindFirstFileA(tmplongpath, &wfd);
         if (goit == INVALID_HANDLE_VALUE)
@@ -1685,7 +1686,7 @@ static void test_fileurls(void)
     char *s;
     INT_PTR rc;
 
-    rc = (INT_PTR)ShellExecute(NULL, NULL, "file:///nosuchfile.shlexec", NULL, NULL, SW_SHOWNORMAL);
+    rc = (INT_PTR)ShellExecuteA(NULL, NULL, "file:///nosuchfile.shlexec", NULL, NULL, SW_SHOWNORMAL);
     if (rc > 32)
     {
         win_skip("shell32 is too old (likely < 4.72). Skipping the file URL tests\n");
@@ -1693,7 +1694,7 @@ static void test_fileurls(void)
     }
 
     get_long_path_name(tmpdir, longtmpdir, sizeof(longtmpdir)/sizeof(*longtmpdir));
-    SetEnvironmentVariable("urlprefix", "file:///");
+    SetEnvironmentVariableA("urlprefix", "file:///");
 
     test=fileurl_tests;
     while (test->basename)
@@ -1764,7 +1765,7 @@ static void test_fileurls(void)
         test++;
     }
 
-    SetEnvironmentVariable("urlprefix", NULL);
+    SetEnvironmentVariableA("urlprefix", NULL);
 }
 
 static void test_find_executable(void)
@@ -2052,7 +2053,7 @@ static void test_exes(void)
     if (! skip_noassoc_tests)
     {
         sprintf(filename, "%s\\test file.noassoc", tmpdir);
-        if (CopyFile(argv0, filename, FALSE))
+        if (CopyFileA(argv0, filename, FALSE))
         {
             rc=shell_execute(NULL, filename, params, NULL);
             todo_wine {
@@ -2336,10 +2337,10 @@ static DWORD CALLBACK ddeThread(LPVOID arg)
 {
     dde_thread_info_t *info = arg;
     assert(info && info->filename);
-    PostThreadMessage(info->threadIdParent,
-                      WM_QUIT,
-                      shell_execute_ex(SEE_MASK_FLAG_DDEWAIT | SEE_MASK_FLAG_NO_UI, NULL, info->filename, NULL, NULL, NULL),
-                      0L);
+    PostThreadMessageA(info->threadIdParent,
+                       WM_QUIT,
+                       shell_execute_ex(SEE_MASK_FLAG_DDEWAIT | SEE_MASK_FLAG_NO_UI, NULL, info->filename, NULL, NULL, NULL),
+                       0);
     ExitThread(0);
 }
 
@@ -2389,7 +2390,7 @@ static void test_dde_default_app(void)
         SetEvent(hEvent);
 
         assert(CreateThread(NULL, 0, ddeThread, &info, 0, &threadId));
-        while (GetMessage(&msg, NULL, 0, 0)) DispatchMessage(&msg);
+        while (GetMessageA(&msg, NULL, 0, 0)) DispatchMessageA(&msg);
         rc = msg.wParam > 32 ? 33 : msg.wParam;
 
         /* First test, find which set of test data we expect to see */
@@ -2476,12 +2477,12 @@ static void init_test(void)
     if (FAILED(r))
         exit(1);
 
-    rc=GetModuleFileName(NULL, argv0, sizeof(argv0));
+    rc=GetModuleFileNameA(NULL, argv0, sizeof(argv0));
     assert(rc!=0 && rc<sizeof(argv0));
-    if (GetFileAttributes(argv0)==INVALID_FILE_ATTRIBUTES)
+    if (GetFileAttributesA(argv0)==INVALID_FILE_ATTRIBUTES)
     {
         strcat(argv0, ".so");
-        ok(GetFileAttributes(argv0)!=INVALID_FILE_ATTRIBUTES,
+        ok(GetFileAttributesA(argv0)!=INVALID_FILE_ATTRIBUTES,
            "unable to find argv0!\n");
     }
 
@@ -2504,7 +2505,7 @@ static void init_test(void)
         HANDLE hfile;
 
         sprintf(filename, *testfile, tmpdir);
-        hfile=CreateFile(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+        hfile=CreateFileA(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
                      FILE_ATTRIBUTE_NORMAL, NULL);
         if (hfile==INVALID_HANDLE_VALUE)
         {
@@ -2569,11 +2570,11 @@ static void cleanup_test(void)
     {
         sprintf(filename, *testfile, tmpdir);
         /* Make sure we can delete the files ('test file.noassoc' is read-only now) */
-        SetFileAttributes(filename, FILE_ATTRIBUTE_NORMAL);
-        DeleteFile(filename);
+        SetFileAttributesA(filename, FILE_ATTRIBUTE_NORMAL);
+        DeleteFileA(filename);
         testfile++;
     }
-    DeleteFile(child_file);
+    DeleteFileA(child_file);
     RemoveDirectoryA(tmpdir);
 
     /* Delete the test association */

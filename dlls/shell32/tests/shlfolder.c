@@ -2063,7 +2063,7 @@ static void test_SHGetFolderPathAndSubDirA(void)
         "expected %s to start with %s\n", testpath, appdata);
     ok(!lstrcmpA(&testpath[1 + strlen(appdata)], winetemp),
         "expected %s to end with %s\n", testpath, winetemp);
-    dwret = GetFileAttributes(testpath);
+    dwret = GetFileAttributesA(testpath);
     ok(FILE_ATTRIBUTE_DIRECTORY | dwret, "expected %x to contain FILE_ATTRIBUTE_DIRECTORY\n", dwret);
 
     /* cleanup */
@@ -4417,7 +4417,7 @@ static LRESULT CALLBACK testwindow_wndproc(HWND hwnd, UINT msg, WPARAM wparam, L
             ok(0, "Didn't expect a WM_USER_NOTIFY message (event: %x)\n", signal);
         return 0;
     }
-    return DefWindowProc(hwnd, msg, wparam, lparam);
+    return DefWindowProcA(hwnd, msg, wparam, lparam);
 }
 
 static void register_testwindow_class(void)

@@ -26,6 +26,7 @@
 #include "shlguid.h"
 #include "shobjidl.h"
 #include "shlobj.h"
+#include "shellapi.h"
 #include "wine/test.h"
 
 #include "shell32_test.h"
@@ -126,7 +127,7 @@ static void test_get_set(void)
     strcpy(buffer,"garbage");
     r = IShellLinkA_GetDescription(sl, buffer, sizeof(buffer));
     ok(r == S_OK, "GetDescription failed (0x%08x)\n", r);
-    ok(lstrcmp(buffer,str)==0, "GetDescription returned '%s'\n", buffer);
+    ok(strcmp(buffer,str)==0, "GetDescription returned '%s'\n", buffer);
 
     r = IShellLinkA_SetDescription(sl, NULL);
     ok(r == S_OK, "SetDescription failed (0x%08x)\n", r);
@@ -134,8 +135,7 @@ static void test_get_set(void)
     strcpy(buffer,"garbage");
     r = IShellLinkA_GetDescription(sl, buffer, sizeof(buffer));
     ok(r == S_OK, "GetDescription failed (0x%08x)\n", r);
-    ok(*buffer=='\0' || broken(lstrcmp(buffer,str)==0), "GetDescription returned '%s'\n", buffer); /* NT4 */
-
+    ok(*buffer=='\0' || broken(strcmp(buffer,str)==0), "GetDescription returned '%s'\n", buffer); /* NT4 */
 
     /* Test Getting / Setting the work directory */
     strcpy(buffer,"garbage");
@@ -150,7 +150,7 @@ static void test_get_set(void)
     strcpy(buffer,"garbage");
     r = IShellLinkA_GetWorkingDirectory(sl, buffer, sizeof(buffer));
     ok(r == S_OK, "GetWorkingDirectory failed (0x%08x)\n", r);
-    ok(lstrcmpi(buffer,str)==0, "GetWorkingDirectory returned '%s'\n", buffer);
+    ok(lstrcmpiA(buffer,str)==0, "GetWorkingDirectory returned '%s'\n", buffer);
 
     /* Test Getting / Setting the path */
     strcpy(buffer,"garbage");
@@ -187,7 +187,7 @@ static void test_get_set(void)
     strcpy(buffer,"garbage");
     r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), NULL, SLGP_RAWPATH);
     ok(r == S_OK, "GetPath failed (0x%08x)\n", r);
-    ok(lstrcmpi(buffer,str)==0, "GetPath returned '%s'\n", buffer);
+    ok(lstrcmpiA(buffer,str)==0, "GetPath returned '%s'\n", buffer);
 
     /* Get some real path to play with */
     GetWindowsDirectoryA( mypath, sizeof(mypath)-12 );
@@ -205,7 +205,7 @@ static void test_get_set(void)
         ret = SHGetPathFromIDListA(tmp_pidl, buffer);
         ok(ret, "SHGetPathFromIDListA failed\n");
         if (ret)
-            ok(lstrcmpi(buffer,str)==0, "GetIDList returned '%s'\n", buffer);
+            ok(lstrcmpiA(buffer,str)==0, "GetIDList returned '%s'\n", buffer);
         pILFree(tmp_pidl);
     }
 
@@ -239,8 +239,7 @@ static void test_get_set(void)
         r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), NULL, SLGP_RAWPATH);
         ok(r == S_OK, "GetPath failed (0x%08x)\n", r);
         todo_wine
-        ok(lstrcmpi(buffer, mypath)==0, "GetPath returned '%s'\n", buffer);
-
+        ok(lstrcmpiA(buffer, mypath)==0, "GetPath returned '%s'\n", buffer);
     }
 
     /* test path with quotes (IShellLinkA_SetPath returns S_FALSE on W2K and below and S_OK on XP and above */
@@ -250,8 +249,8 @@ static void test_get_set(void)
     strcpy(buffer,"garbage");
     r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), NULL, SLGP_RAWPATH);
     ok(r==S_OK, "GetPath failed (0x%08x)\n", r);
-    ok(!lstrcmp(buffer, "C:\\nonexistent\\file") ||
-       broken(!lstrcmp(buffer, "C:\\\"c:\\nonexistent\\file\"")), /* NT4 */
+    ok(!strcmp(buffer, "C:\\nonexistent\\file") ||
+       broken(!strcmp(buffer, "C:\\\"c:\\nonexistent\\file\"")), /* NT4 */
        "case doesn't match\n");
 
     r = IShellLinkA_SetPath(sl, "\"c:\\foo");
@@ -282,14 +281,14 @@ static void test_get_set(void)
     strcpy(buffer,"garbage");
     r = IShellLinkA_GetArguments(sl, buffer, sizeof(buffer));
     ok(r == S_OK, "GetArguments failed (0x%08x)\n", r);
-    ok(lstrcmp(buffer,str)==0, "GetArguments returned '%s'\n", buffer);
+    ok(strcmp(buffer,str)==0, "GetArguments returned '%s'\n", buffer);
 
     strcpy(buffer,"garbage");
     r = IShellLinkA_SetArguments(sl, NULL);
     ok(r == S_OK, "SetArguments failed (0x%08x)\n", r);
     r = IShellLinkA_GetArguments(sl, buffer, sizeof(buffer));
     ok(r == S_OK, "GetArguments failed (0x%08x)\n", r);
-    ok(!buffer[0] || lstrcmp(buffer,str)==0, "GetArguments returned '%s'\n", buffer);
+    ok(!buffer[0] || strcmp(buffer,str)==0, "GetArguments returned '%s'\n", buffer);
 
     strcpy(buffer,"garbage");
     r = IShellLinkA_SetArguments(sl, "");
@@ -327,7 +326,7 @@ static void test_get_set(void)
     i=0xdeadbeef;
     r = IShellLinkA_GetIconLocation(sl, buffer, sizeof(buffer), &i);
     ok(r == S_OK, "GetIconLocation failed (0x%08x)\n", r);
-    ok(lstrcmpi(buffer,str)==0, "GetIconLocation returned '%s'\n", buffer);
+    ok(lstrcmpiA(buffer,str)==0, "GetIconLocation returned '%s'\n", buffer);
     ok(i==0xbabecafe, "GetIconLocation returned %d'\n", i);
 
     /* Test Getting / Setting the hot key */
@@ -535,7 +534,7 @@ static void check_lnk_(int line, const WCHAR* path, lnk_desc_t* desc, int todo)
         strcpy(buffer,"garbage");
         r = IShellLinkA_GetDescription(sl, buffer, sizeof(buffer));
         lok(r == S_OK, "GetDescription failed (0x%08x)\n", r);
-        lok_todo_4(0x1, lstrcmp(buffer, desc->description)==0,
+        lok_todo_4(0x1, strcmp(buffer, desc->description)==0,
            "GetDescription returned '%s' instead of '%s'\n",
            buffer, desc->description);
     }
@@ -544,7 +543,7 @@ static void check_lnk_(int line, const WCHAR* path, lnk_desc_t* desc, int todo)
         strcpy(buffer,"garbage");
         r = IShellLinkA_GetWorkingDirectory(sl, buffer, sizeof(buffer));
         lok(r == S_OK, "GetWorkingDirectory failed (0x%08x)\n", r);
-        lok_todo_4(0x2, lstrcmpi(buffer, desc->workdir)==0,
+        lok_todo_4(0x2, lstrcmpiA(buffer, desc->workdir)==0,
            "GetWorkingDirectory returned '%s' instead of '%s'\n",
            buffer, desc->workdir);
     }
@@ -553,7 +552,7 @@ static void check_lnk_(int line, const WCHAR* path, lnk_desc_t* desc, int todo)
         strcpy(buffer,"garbage");
         r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), NULL, SLGP_RAWPATH);
         lok(SUCCEEDED(r), "GetPath failed (0x%08x)\n", r);
-        lok_todo_4(0x4, lstrcmpi(buffer, desc->path)==0,
+        lok_todo_4(0x4, lstrcmpiA(buffer, desc->path)==0,
            "GetPath returned '%s' instead of '%s'\n",
            buffer, desc->path);
     }
@@ -580,7 +579,7 @@ static void check_lnk_(int line, const WCHAR* path, lnk_desc_t* desc, int todo)
         strcpy(buffer,"garbage");
         r = IShellLinkA_GetIconLocation(sl, buffer, sizeof(buffer), &i);
         lok(r == S_OK, "GetIconLocation failed (0x%08x)\n", r);
-        lok_todo_4(0x20, lstrcmpi(buffer, desc->icon)==0,
+        lok_todo_4(0x20, lstrcmpiA(buffer, desc->icon)==0,
            "GetIconLocation returned '%s' instead of '%s'\n",
            buffer, desc->icon);
         lok_todo_4(0x20, i==desc->icon_id,
@@ -650,7 +649,7 @@ static void test_load_save(void)
     create_lnk(lnkfile, &desc, 0);
     check_lnk(lnkfile, &desc, 0x0);
 
-    r=GetModuleFileName(NULL, mypath, sizeof(mypath));
+    r=GetModuleFileNameA(NULL, mypath, sizeof(mypath));
     ok(r<sizeof(mypath), "GetModuleFileName failed (%d)\n", r);
     strcpy(mydir, mypath);
     p=strrchr(mydir, '\\');
@@ -724,7 +723,7 @@ static void test_load_save(void)
     check_lnk(lnkfile, &desc, 0x4);
 
     /* Create a temporary non-executable file */
-    r=GetTempPath(sizeof(mypath), mypath);
+    r=GetTempPathA(sizeof(mypath), mypath);
     ok(r<sizeof(mypath), "GetTempPath failed (%d), err %d\n", r, GetLastError());
     r=pGetLongPathNameA(mypath, mydir, sizeof(mydir));
     ok(r<sizeof(mydir), "GetLongPathName failed (%d), err %d\n", r, GetLastError());
@@ -734,8 +733,8 @@ static void test_load_save(void)
 
     strcpy(mypath, mydir);
     strcat(mypath, "\\test.txt");
-    hf = CreateFile(mypath, GENERIC_WRITE, 0, NULL,
-                    CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    hf = CreateFileA(mypath, GENERIC_WRITE, 0, NULL,
+                     CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     CloseHandle(hf);
 
     /* Overwrite the existing lnk file and test link to an existing non-executable file */
@@ -778,8 +777,8 @@ static void test_load_save(void)
     /* Create a temporary .bat file */
     strcpy(mypath, mydir);
     strcat(mypath, "\\test.bat");
-    hf = CreateFile(mypath, GENERIC_WRITE, 0, NULL,
-                    CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    hf = CreateFileA(mypath, GENERIC_WRITE, 0, NULL,
+                     CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     CloseHandle(hf);
 
     strcpy(realpath, mypath);
@@ -985,7 +984,7 @@ static void test_GetIconLocation(void)
     i = 0xdeadbeef;
     r = IShellLinkA_GetIconLocation(sl, buffer, sizeof(buffer), &i);
     ok(r == S_OK, "GetIconLocation failed (0x%08x)\n", r);
-    ok(lstrcmpi(buffer,str) == 0, "GetIconLocation returned '%s'\n", buffer);
+    ok(lstrcmpiA(buffer,str) == 0, "GetIconLocation returned '%s'\n", buffer);
     ok(i == 0xbabecafe, "GetIconLocation returned %d'\n", i);
 
     IShellLinkA_Release(sl);

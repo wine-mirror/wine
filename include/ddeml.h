@@ -50,14 +50,45 @@ extern "C" {
 
 #define EXPENTRY CALLBACK
 
-#define SZDDESYS_TOPIC		TEXT("System")
-#define SZDDESYS_ITEM_TOPICS	TEXT("Topics")
-#define SZDDESYS_ITEM_SYSITEMS	TEXT("SysItems")
-#define SZDDESYS_ITEM_RTNMSG	TEXT("ReturnMessage")
-#define SZDDESYS_ITEM_STATUS	TEXT("Status")
-#define SZDDESYS_ITEM_FORMATS	TEXT("Formats")
-#define SZDDESYS_ITEM_HELP	TEXT("Help")
-#define SZDDE_ITEM_ITEMLIST	TEXT("TopicItemList")
+#ifdef UNICODE
+#if defined(_MSC_VER)
+#define SZDDESYS_TOPIC          L"System"
+#define SZDDESYS_ITEM_TOPICS    L"Topics"
+#define SZDDESYS_ITEM_SYSITEMS  L"SysItems"
+#define SZDDESYS_ITEM_RTNMSG    L"ReturnMessage"
+#define SZDDESYS_ITEM_STATUS    L"Status"
+#define SZDDESYS_ITEM_FORMATS   L"Formats"
+#define SZDDESYS_ITEM_HELP      L"Help"
+#define SZDDE_ITEM_ITEMLIST     L"TopicItemList"
+#elif defined(__GNUC__)
+#define SZDDESYS_TOPIC          (const WCHAR []){'S','y','s','t','e','m',0}
+#define SZDDESYS_ITEM_TOPICS    (const WCHAR []){'T','o','p','i','c','s',0}
+#define SZDDESYS_ITEM_SYSITEMS  (const WCHAR []){'S','y','s','I','t','e','m','s',0}
+#define SZDDESYS_ITEM_RTNMSG    (const WCHAR []){'R','e','t','u','r','n','M','e','s','s','a','g','e',0}
+#define SZDDESYS_ITEM_STATUS    (const WCHAR []){'S','t','a','t','u','s',0}
+#define SZDDESYS_ITEM_FORMATS   (const WCHAR []){'F','o','r','m','a','t','s',0}
+#define SZDDESYS_ITEM_HELP      (const WCHAR []){'H','e','l','p',0}
+#define SZDDE_ITEM_ITEMLIST     (const WCHAR []){'T','o','p','i','c','I','t','e','m','L','i','s','t',0}
+#else /* _MSC_VER/__GNUC__ */
+static const WCHAR SZDDESYS_TOPIC[] = {'S','y','s','t','e','m',0};
+static const WCHAR SZDDESYS_ITEM_TOPICS[] = {'T','o','p','i','c','s',0};
+static const WCHAR SZDDESYS_ITEM_SYSITEMS[] = {'S','y','s','I','t','e','m','s',0};
+static const WCHAR SZDDESYS_ITEM_RTNMSG[] = {'R','e','t','u','r','n','M','e','s','s','a','g','e',0};
+static const WCHAR SZDDESYS_ITEM_STATUS[] = {'S','t','a','t','u','s',0};
+static const WCHAR SZDDESYS_ITEM_FORMATS[] = {'F','o','r','m','a','t','s',0};
+static const WCHAR SZDDESYS_ITEM_HELP[] = {'H','e','l','p',0};
+static const WCHAR SZDDE_ITEM_ITEMLIST[] = {'T','o','p','i','c','I','t','e','m','L','i','s','t',0};
+#endif
+#else /* UNICODE */
+#define SZDDESYS_TOPIC          "System"
+#define SZDDESYS_ITEM_TOPICS    "Topics"
+#define SZDDESYS_ITEM_SYSITEMS  "SysItems"
+#define SZDDESYS_ITEM_RTNMSG    "ReturnMessage"
+#define SZDDESYS_ITEM_STATUS    "Status"
+#define SZDDESYS_ITEM_FORMATS   "Formats"
+#define SZDDESYS_ITEM_HELP      "Help"
+#define SZDDE_ITEM_ITEMLIST     "TopicItemList"
+#endif
 
 /***************************************************
 

@@ -31,6 +31,7 @@
 #include "shlobj.h"
 #include "shlwapi.h"
 #include "knownfolders.h"
+#include "shellapi.h"
 #include "wine/test.h"
 
 #include "initguid.h"

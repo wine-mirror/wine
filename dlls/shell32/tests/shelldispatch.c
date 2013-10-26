@@ -25,6 +25,7 @@
 #include "shldisp.h"
 #include "shlobj.h"
 #include "shlwapi.h"
+#include "winsvc.h"
 #include "wine/test.h"
 
 #define EXPECT_HR(hr,hr_exp) \
