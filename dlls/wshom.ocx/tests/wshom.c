@@ -35,6 +35,7 @@ static void test_wshshell(void)
 {
     static const WCHAR desktopW[] = {'D','e','s','k','t','o','p',0};
     static const WCHAR lnk1W[] = {'f','i','l','e','.','l','n','k',0};
+    static const WCHAR pathW[] = {'%','P','A','T','H','%',0};
     IWshShell3 *sh3;
     IDispatchEx *dispex;
     IWshCollection *coll;
@@ -112,6 +113,15 @@ static void test_wshshell(void)
     EXPECT_HR(hr, S_OK);
     IUnknown_Release(unk);
     IDispatch_Release(shortcut);
+
+    /* ExpandEnvironmentStrings */
+    hr = IWshShell3_ExpandEnvironmentStrings(sh3, NULL, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    str = SysAllocString(pathW);
+    hr = IWshShell3_ExpandEnvironmentStrings(sh3, str, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    SysFreeString(str);
 
     IWshCollection_Release(coll);
     IDispatch_Release(disp);
