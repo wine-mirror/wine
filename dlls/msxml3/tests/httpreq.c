@@ -1150,16 +1150,11 @@ static HRESULT WINAPI sp_QueryService(IServiceProvider *iface, REFGUID service, 
     {
         /* FIXME: unidentified service id */
     }
-    else if (IsEqualGUID(service, &IID_IInternetProtocol) &&
-             IsEqualGUID(riid, &IID_IInternetProtocol))
-    {
-    }
-    else if (IsEqualGUID(service, &IID_IHttpNegotiate2) &&
-             IsEqualGUID(riid, &IID_IHttpNegotiate2))
-    {
-    }
-    else if (IsEqualGUID(service, &IID_IGetBindHandle) &&
-             IsEqualGUID(riid, &IID_IGetBindHandle))
+    else if ((IsEqualGUID(service, &IID_IInternetProtocol) && IsEqualGUID(riid, &IID_IInternetProtocol)) ||
+             (IsEqualGUID(service, &IID_IHttpNegotiate2) && IsEqualGUID(riid, &IID_IHttpNegotiate2)) ||
+             (IsEqualGUID(service, &IID_IGetBindHandle) && IsEqualGUID(riid, &IID_IGetBindHandle)) ||
+             (IsEqualGUID(service, &IID_IBindStatusCallback) && IsEqualGUID(riid, &IID_IBindStatusCallback)) ||
+             (IsEqualGUID(service, &IID_IWindowForBindingUI) && IsEqualGUID(riid, &IID_IWindowForBindingUI)))
     {
     }
     else
