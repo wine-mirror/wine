@@ -745,10 +745,26 @@ static HRESULT WINAPI WshShell3_CreateShortcut(IWshShell3 *iface, BSTR PathLink,
     return WshShortcut_Create(PathLink, Shortcut);
 }
 
-static HRESULT WINAPI WshShell3_ExpandEnvironmentStrings(IWshShell3 *iface, BSTR Src, BSTR* out_Dst)
+static HRESULT WINAPI WshShell3_ExpandEnvironmentStrings(IWshShell3 *iface, BSTR Src, BSTR* Dst)
 {
-    FIXME("(%s %p): stub\n", debugstr_w(Src), out_Dst);
-    return E_NOTIMPL;
+    DWORD ret;
+
+    TRACE("(%s %p)\n", debugstr_w(Src), Dst);
+
+    if (!Src || !Dst) return E_POINTER;
+
+    ret = ExpandEnvironmentStringsW(Src, NULL, 0);
+    *Dst = SysAllocStringLen(NULL, ret);
+    if (!*Dst) return E_OUTOFMEMORY;
+
+    if (ExpandEnvironmentStringsW(Src, *Dst, ret))
+        return S_OK;
+    else
+    {
+        SysFreeString(*Dst);
+        *Dst = NULL;
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
 }
 
 static HRESULT WINAPI WshShell3_RegRead(IWshShell3 *iface, BSTR Name, VARIANT* out_Value)
