@@ -2912,13 +2912,17 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
                 }
                 break;
 
+            case INTERNET_PER_CONN_PROXY_BYPASS:
+                heap_free(pi.proxyBypass);
+                pi.proxyBypass = heap_strdupW(option->Value.pszValue);
+                break;
+
             case INTERNET_PER_CONN_AUTOCONFIG_URL:
             case INTERNET_PER_CONN_AUTODISCOVERY_FLAGS:
             case INTERNET_PER_CONN_AUTOCONFIG_SECONDARY_URL:
             case INTERNET_PER_CONN_AUTOCONFIG_RELOAD_DELAY_MINS:
             case INTERNET_PER_CONN_AUTOCONFIG_LAST_DETECT_TIME:
             case INTERNET_PER_CONN_AUTOCONFIG_LAST_DETECT_URL:
-            case INTERNET_PER_CONN_PROXY_BYPASS:
                 FIXME("Unhandled dwOption %d\n", option->dwOption);
                 break;
 
