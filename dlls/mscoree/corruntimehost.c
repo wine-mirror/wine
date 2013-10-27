@@ -1269,23 +1269,6 @@ HRESULT RuntimeHost_GetInterface(RuntimeHost *This, REFCLSID clsid, REFIID riid,
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 
-HRESULT RuntimeHost_Destroy(RuntimeHost *This)
-{
-    struct DomainEntry *cursor, *cursor2;
-
-    This->lock.DebugInfo->Spare[0] = 0;
-    DeleteCriticalSection(&This->lock);
-
-    LIST_FOR_EACH_ENTRY_SAFE(cursor, cursor2, &This->domains, struct DomainEntry, entry)
-    {
-        list_remove(&cursor->entry);
-        HeapFree(GetProcessHeap(), 0, cursor);
-    }
-
-    HeapFree( GetProcessHeap(), 0, This );
-    return S_OK;
-}
-
 #define CHARS_IN_GUID 39
 #define ARRAYSIZE(array) (sizeof(array)/sizeof((array)[0]))
 

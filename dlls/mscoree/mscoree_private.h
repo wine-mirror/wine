@@ -175,8 +175,6 @@ extern HRESULT RuntimeHost_GetIUnknownForObject(RuntimeHost *This, MonoObject *o
 extern HRESULT RuntimeHost_CreateManagedInstance(RuntimeHost *This, LPCWSTR name,
     MonoDomain *domain, MonoObject **result) DECLSPEC_HIDDEN;
 
-extern HRESULT RuntimeHost_Destroy(RuntimeHost *This) DECLSPEC_HIDDEN;
-
 HRESULT WINAPI CLRMetaHost_ExitProcess(ICLRMetaHost* iface, INT32 iExitCode) DECLSPEC_HIDDEN;
 
 HRESULT WINAPI CLRMetaHost_GetRuntime(ICLRMetaHost* iface, LPCWSTR pwzVersion, REFIID iid, LPVOID *ppRuntime) DECLSPEC_HIDDEN;
