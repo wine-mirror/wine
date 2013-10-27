@@ -2912,7 +2912,7 @@ static void test_OpenPrinter_defaults(void)
     ok( !ret, "got %d\n", ret );
     pi = HeapAlloc( GetProcessHeap(), 0, needed );
     ret = GetPrinterA( printer, 2, (BYTE *)pi, needed, &needed );
-    ok( ret, "got %d\n", ret );
+    ok( ret, "GetPrinterA() failed le=%d\n", GetLastError() );
     default_size = pi->pDevMode->u1.s1.dmPaperSize;
     HeapFree( GetProcessHeap(), 0, pi );
 
@@ -2920,13 +2920,13 @@ static void test_OpenPrinter_defaults(void)
     ok( !ret, "got %d\n", ret );
     add_job = HeapAlloc( GetProcessHeap(), 0, needed );
     ret = AddJobA( printer, 1, (BYTE *)add_job, needed, &needed );
-    ok( ret, "got %d\n", ret );
+    ok( ret, "AddJobA() failed le=%d\n", GetLastError() );
 
     ret = GetJobA( printer, add_job->JobId, 2, NULL, 0, &needed );
     ok( !ret, "got %d\n", ret );
     job_info = HeapAlloc( GetProcessHeap(), 0, needed );
     ret = GetJobA( printer, add_job->JobId, 2, (BYTE *)job_info, needed, &needed );
-    ok( ret, "got %d\n", ret );
+    ok( ret, "GetJobA() failed le=%d\n", GetLastError() );
 
 todo_wine
     ok( job_info->pDevMode != NULL, "got NULL DEVMODEA\n");
@@ -2951,14 +2951,14 @@ todo_wine
     prn_def.DesiredAccess = PRINTER_ACCESS_USE;
 
     ret = OpenPrinterA( default_printer, &printer, &prn_def );
-    ok( ret, "got %d\n", ret );
+    ok( ret, "OpenPrinterA() failed le=%d\n", GetLastError() );
 
     /* GetPrinter stills returns default size */
     ret = GetPrinterA( printer, 2, NULL, 0, &needed );
     ok( !ret, "got %d\n", ret );
     pi = HeapAlloc( GetProcessHeap(), 0, needed );
     ret = GetPrinterA( printer, 2, (BYTE *)pi, needed, &needed );
-    ok( ret, "got %d\n", ret );
+    ok( ret, "GetPrinterA() failed le=%d\n", GetLastError() );
     ok( pi->pDevMode->u1.s1.dmPaperSize == default_size, "got %d default %d\n",
         pi->pDevMode->u1.s1.dmPaperSize, default_size );
 
@@ -2969,13 +2969,13 @@ todo_wine
     ok( !ret, "got %d\n", ret );
     add_job = HeapAlloc( GetProcessHeap(), 0, needed );
     ret = AddJobA( printer, 1, (BYTE *)add_job, needed, &needed );
-    ok( ret, "got %d\n", ret );
+    ok( ret, "AddJobA() failed le=%d\n", GetLastError() );
 
     ret = GetJobA( printer, add_job->JobId, 2, NULL, 0, &needed );
     ok( !ret, "got %d\n", ret );
     job_info = HeapAlloc( GetProcessHeap(), 0, needed );
     ret = GetJobA( printer, add_job->JobId, 2, (BYTE *)job_info, needed, &needed );
-    ok( ret, "got %d\n", ret );
+    ok( ret, "GetJobA() failed le=%d\n", GetLastError() );
 
     ok( job_info->pDevMode->dmFields == DM_PAPERSIZE, "got %08x\n",
         job_info->pDevMode->dmFields );
