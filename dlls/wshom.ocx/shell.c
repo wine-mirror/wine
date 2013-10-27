@@ -21,6 +21,7 @@
 
 #include "shellapi.h"
 #include "shlobj.h"
+#include "dispex.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -576,14 +577,21 @@ static HRESULT WINAPI WshShell3_QueryInterface(IWshShell3 *iface, REFIID riid, v
 {
     TRACE("(%s, %p)\n", debugstr_guid(riid), ppv);
 
+    *ppv = NULL;
+
     if(IsEqualGUID(riid, &IID_IUnknown)  ||
        IsEqualGUID(riid, &IID_IDispatch) ||
        IsEqualGUID(riid, &IID_IWshShell3))
     {
         *ppv = iface;
-    }else {
+    }
+    else if (IsEqualGUID(riid, &IID_IDispatchEx))
+    {
+        return E_NOINTERFACE;
+    }
+    else
+    {
         FIXME("Unknown iface %s\n", debugstr_guid(riid));
-        *ppv = NULL;
         return E_NOINTERFACE;
     }
 
