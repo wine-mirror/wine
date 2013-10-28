@@ -882,7 +882,7 @@ static void test_waittxempty(void)
     CloseHandle(ovl_wait.hEvent);
 
     timediff = after - before;
-    trace("WaitCommEvent for EV_TXEMPTY took %d ms (timeout %d)\n", timediff, TIMEOUT);
+    trace("WaitCommEvent for EV_TXEMPTY took %d ms (timeout 1500)\n", timediff);
     ok(timediff < 1200, "WaitCommEvent used %d ms for waiting\n", timediff);
 
     res = WaitForSingleObject(ovl_write.hEvent, 0);
