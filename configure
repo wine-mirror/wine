@@ -16135,19 +16135,13 @@ wine_fn_depend_rules ()
     ac_alldeps=$1
     ac_makedep="\$(MAKEDEP)"
     ac_input=Make.vars.in:$ac_dir/Makefile.in
-    if test $ac_dir != tools
-    then
-                ac_alldeps="$1 $ac_makedep"
-    else
-        ac_alldeps="$1 include/config.h"
-    fi
     case $1 in
       *.in) ac_input=$ac_input:$1 ;;
       *) ac_makedep="$1 $ac_makedep" ;;
     esac
 
     wine_fn_append_rule \
-"$ac_dir/Makefile: $ac_dir/Makefile.in Make.vars.in config.status $ac_alldeps
+"$ac_dir/Makefile: $ac_dir/Makefile.in Make.vars.in config.status $ac_alldeps \$(MAKEDEP)
 	@./config.status --file $ac_dir/Makefile:$ac_input && cd $ac_dir && \$(MAKE) depend
 depend: $ac_dir/depend
 .PHONY: $ac_dir/depend
@@ -17449,9 +17443,12 @@ fi
 
 if test "x$enable_tools" != xno
 then
-    wine_fn_append_rule "\$(MAKEDEP): tools/Makefile
+    ac_config_commands="$ac_config_commands tools"
+
+    wine_fn_append_rule "tools/makedep$ac_exeext: tools/makedep.c include/config.h
+	\$(CC) \$(ALLCFLAGS) -o \$@ $srcdir/tools/makedep.c \$(LDFLAGS)
 clean:: __clean__
-	\$(RM) tools/makedep\$(EXEEXT)"
+	\$(RM) tools/makedep$ac_exeext"
 fi
 
 if test -n "$with_wine64"
@@ -18214,6 +18211,7 @@ do
     "Make.rules") CONFIG_FILES="$CONFIG_FILES Make.rules" ;;
     "Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS Makefile" ;;
     "Make.tmp") CONFIG_FILES="$CONFIG_FILES Make.tmp:Make.vars.in:Makefile.in" ;;
+    "tools") CONFIG_COMMANDS="$CONFIG_COMMANDS tools" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
@@ -18862,6 +18860,7 @@ $as_echo "$as_me: creating dlls/wineps.drv/data" >&6;}; as_dir="dlls/wineps.drv/
     "include/wine":C) test -d "include/wine" || { { $as_echo "$as_me:${as_lineno-$LINENO}: creating include/wine" >&5
 $as_echo "$as_me: creating include/wine" >&6;}; as_dir="include/wine"; as_fn_mkdir_p; } ;;
     "Makefile":C) wine_fn_output_makefile Makefile ;;
+    "tools":C) as_dir=tools; as_fn_mkdir_p ;;
 
   esac
 done # for ac_tag

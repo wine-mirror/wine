@@ -35,12 +35,9 @@ INSTALLDIRS = \
 
 UPDATE_DESKTOP_DATABASE = update-desktop-database
 
-all: makedep$(EXEEXT) $(PROGRAMS)
+all: $(PROGRAMS)
 
 @MAKE_RULES@
-
-makedep $(EXEEXT:%=makedep%): makedep.o
-	$(CC) $(CFLAGS) -o $@ makedep.o $(LDFLAGS)
 
 make_ctests$(EXEEXT): make_ctests.o
 	$(CC) $(CFLAGS) -o $@ make_ctests.o $(LDFLAGS)
@@ -77,5 +74,3 @@ uninstall::
 		$(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)/winemaker.$(prog_manext) \
 		$(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext)/winemaker.$(prog_manext)
 	-$(UPDATE_DESKTOP_DATABASE)
-
-depend: makedep$(EXEEXT)

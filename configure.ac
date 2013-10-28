@@ -3492,10 +3492,12 @@ fi
 
 if test "x$enable_tools" != xno
 then
+    AC_CONFIG_COMMANDS([tools],[AS_MKDIR_P(tools)])
     WINE_APPEND_RULE(
-[\$(MAKEDEP): tools/Makefile
+[tools/makedep$ac_exeext: tools/makedep.c include/config.h
+	\$(CC) \$(ALLCFLAGS) -o \$@ $srcdir/tools/makedep.c \$(LDFLAGS)
 clean:: __clean__
-	\$(RM) tools/makedep\$(EXEEXT)])
+	\$(RM) tools/makedep$ac_exeext])
 fi
 
 if test -n "$with_wine64"

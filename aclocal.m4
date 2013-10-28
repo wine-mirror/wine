@@ -218,20 +218,13 @@ wine_fn_depend_rules ()
     ac_alldeps=$[1]
     ac_makedep="\$(MAKEDEP)"
     ac_input=Make.vars.in:$ac_dir/Makefile.in
-    if test $ac_dir != tools
-    then
-        dnl makedep is in tools so tools makefile cannot depend on it
-        ac_alldeps="$[1] $ac_makedep"
-    else
-        ac_alldeps="$[1] include/config.h"
-    fi
     case $[1] in
       *.in) ac_input=$ac_input:$[1] ;;
       *) ac_makedep="$[1] $ac_makedep" ;;
     esac
 
     wine_fn_append_rule \
-"$ac_dir/Makefile: $ac_dir/Makefile.in Make.vars.in config.status $ac_alldeps
+"$ac_dir/Makefile: $ac_dir/Makefile.in Make.vars.in config.status $ac_alldeps \$(MAKEDEP)
 	@./config.status --file $ac_dir/Makefile:$ac_input && cd $ac_dir && \$(MAKE) depend
 depend: $ac_dir/depend
 .PHONY: $ac_dir/depend

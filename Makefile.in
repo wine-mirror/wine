@@ -75,9 +75,6 @@ tools/wmc tools/wrc: tools
 tools tools/wmc tools/wrc: libs/wine
 tools/widl tools/wmc tools/wrc: libs/wpp
 
-$(MAKEDEP): include/config.h
-	@cd $(TOOLSDIR)/tools && $(MAKE) makedep$(TOOLSEXT)
-
 # Misc rules
 
 TAGSFLAGS = --langmap='c:+.idl.l.rh,make:(Make*.in)'
