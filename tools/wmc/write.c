@@ -91,7 +91,6 @@ static const char str_header[] =
 	"/* This file is generated with wmc version " PACKAGE_VERSION ". Do not edit! */\n"
 	"/* Source : %s */\n"
 	"/* Cmdline: %s */\n"
-	"/* Date   : %s */\n"
 	"\n"
         ;
 
@@ -178,11 +177,9 @@ void write_h_file(const char *fname)
 		perror(fname);
 		exit(1);
 	}
-	cptr = ctime(&now);
-	killnl(cptr, 0);
-	fprintf(fp, str_header, input_name ? input_name : "<stdin>", cmdline, cptr);
-	fprintf(fp, "#ifndef __WMCGENERATED_%08lx_H\n", (long)now);
-	fprintf(fp, "#define __WMCGENERATED_%08lx_H\n", (long)now);
+	fprintf(fp, str_header, input_name ? input_name : "<stdin>", cmdline);
+	fprintf(fp, "#ifndef __WMCGENERATED_H\n");
+	fprintf(fp, "#define __WMCGENERATED_H\n");
 	fprintf(fp, "\n");
 
 	/* Write severity and facility aliases */
@@ -501,18 +498,14 @@ static void write_rcinline(FILE *fp)
 
 void write_rc_file(const char *fname)
 {
-	FILE *fp;
-	char *cptr;
+	FILE *fp = fopen(fname, "w");
 
-	fp = fopen(fname, "w");
 	if(!fp)
 	{
 		perror(fname);
 		exit(1);
 	}
-	cptr = ctime(&now);
-	killnl(cptr, 0);
-	fprintf(fp, str_header, input_name ? input_name : "<stdin>", cmdline, cptr);
+	fprintf(fp, str_header, input_name ? input_name : "<stdin>", cmdline);
 
 	if(rcinline)
 		write_rcinline(fp);

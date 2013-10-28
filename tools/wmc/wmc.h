@@ -21,8 +21,6 @@
 #ifndef __WMC_WMC_H
 #define __WMC_WMC_H
 
-#include <time.h>	/* For time_t */
-
 #include "wmctypes.h"
 
 /*
@@ -51,7 +49,6 @@ extern char *output_name;
 extern char *input_name;
 extern char *header_name;
 extern char *cmdline;
-extern time_t now;
 
 extern int line_number;
 extern int char_number;

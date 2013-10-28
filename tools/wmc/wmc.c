@@ -174,8 +174,6 @@ int main(int argc,char *argv[])
 	signal( SIGHUP, exit_on_signal );
 #endif
 
-	now = time(NULL);
-
 	/* First rebuild the commandline to put in destination */
 	/* Could be done through env[], but not all OS-es support it */
 	cmdlen = 5; /* for "wmc " and \0 */
