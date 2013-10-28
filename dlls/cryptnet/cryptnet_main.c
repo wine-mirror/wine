@@ -464,7 +464,6 @@ static BOOL CRYPT_GetObjectFromFile(HANDLE hFile, PCRYPT_BLOB_ARRAY pObject)
             blob.pbData = CryptMemAlloc(size.u.LowPart);
             if (blob.pbData)
             {
-                blob.cbData = size.u.LowPart;
                 ret = ReadFile(hFile, blob.pbData, size.u.LowPart, &blob.cbData,
                  NULL);
                 if (ret)
