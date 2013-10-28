@@ -41,6 +41,7 @@
 #include FT_TRUETYPE_TABLES_H
 #include FT_TRUETYPE_TAGS_H
 
+#define WINE_UNICODE_API /* nothing */
 #include "wine/unicode.h"
 #include "wingdi.h"
 #include "basetsd.h"
