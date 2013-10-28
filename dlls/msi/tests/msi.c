@@ -13062,7 +13062,7 @@ done:
 static void test_MsiEnumComponents(void)
 {
     UINT r;
-    int found1, found2;
+    BOOL found1, found2;
     DWORD index;
     char comp1[39], comp2[39], guid[39];
     char comp_squashed1[33], comp_squashed2[33];
@@ -13105,11 +13105,11 @@ static void test_MsiEnumComponents(void)
 
     index = 0;
     guid[0] = 0;
-    found1 = found2 = 0;
+    found1 = found2 = FALSE;
     while (!MsiEnumComponentsA( index, guid ))
     {
-        if (!strcmp( guid, comp1 )) found1 = 1;
-        if (!strcmp( guid, comp2 )) found2 = 1;
+        if (!strcmp( guid, comp1 )) found1 = TRUE;
+        if (!strcmp( guid, comp2 )) found2 = TRUE;
         ok( guid[0], "empty guid\n" );
         guid[0] = 0;
         index++;
@@ -13128,7 +13128,7 @@ done:
 static void test_MsiEnumComponentsEx(void)
 {
     UINT r;
-    int found1, found2;
+    BOOL found1, found2;
     DWORD len, index;
     MSIINSTALLCONTEXT context;
     char comp1[39], comp2[39], guid[39], sid[128];
@@ -13181,7 +13181,7 @@ static void test_MsiEnumComponentsEx(void)
     context = 0xdeadbeef;
     sid[0] = 0;
     len = sizeof(sid);
-    found1 = found2 = 0;
+    found1 = found2 = FALSE;
     while (!pMsiEnumComponentsExA( "S-1-1-0", MSIINSTALLCONTEXT_ALL, index, guid, &context, sid, &len ))
     {
         if (!strcmp( comp1, guid ))
@@ -13189,14 +13189,14 @@ static void test_MsiEnumComponentsEx(void)
             ok( context == MSIINSTALLCONTEXT_MACHINE, "got %u\n", context );
             ok( !sid[0], "got \"%s\"\n", sid );
             ok( !len, "unexpected length %u\n", len );
-            found1 = 1;
+            found1 = TRUE;
         }
         if (!strcmp( comp2, guid ))
         {
             ok( context == MSIINSTALLCONTEXT_USERUNMANAGED, "got %u\n", context );
             ok( sid[0], "empty sid\n" );
             ok( len == strlen(sid), "unexpected length %u\n", len );
-            found2 = 1;
+            found2 = TRUE;
         }
         index++;
         guid[0] = 0;
