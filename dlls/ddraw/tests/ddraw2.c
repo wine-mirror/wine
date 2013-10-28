@@ -3664,6 +3664,7 @@ static void test_rt_caps(void)
         HRESULT create_device_hr;
         HRESULT set_rt_hr;
         HRESULT alternative_set_rt_hr;
+        BOOL create_may_fail;
     }
     test_data[] =
     {
@@ -3674,6 +3675,7 @@ static void test_rt_caps(void)
             D3D_OK,
             D3D_OK,
             D3D_OK,
+            FALSE,
         },
         {
             NULL,
@@ -3682,6 +3684,7 @@ static void test_rt_caps(void)
             D3D_OK,
             D3D_OK,
             D3D_OK,
+            FALSE,
         },
         {
             NULL,
@@ -3690,6 +3693,7 @@ static void test_rt_caps(void)
             DDERR_INVALIDCAPS,
             DDERR_INVALIDCAPS,
             DDERR_INVALIDCAPS,
+            FALSE,
         },
         {
             NULL,
@@ -3698,6 +3702,7 @@ static void test_rt_caps(void)
             D3DERR_SURFACENOTINVIDMEM,
             D3D_OK,
             D3D_OK,
+            FALSE,
         },
         {
             NULL,
@@ -3706,6 +3711,7 @@ static void test_rt_caps(void)
             DDERR_INVALIDCAPS,
             DDERR_INVALIDCAPS,
             DDERR_INVALIDCAPS,
+            FALSE,
         },
         {
             NULL,
@@ -3714,6 +3720,7 @@ static void test_rt_caps(void)
             D3D_OK,
             D3D_OK,
             D3D_OK,
+            FALSE,
         },
         {
             NULL,
@@ -3722,6 +3729,7 @@ static void test_rt_caps(void)
             D3D_OK,
             D3D_OK,
             D3D_OK,
+            FALSE,
         },
         {
             NULL,
@@ -3730,6 +3738,7 @@ static void test_rt_caps(void)
             DDERR_INVALIDCAPS,
             DDERR_INVALIDCAPS,
             DDERR_INVALIDCAPS,
+            FALSE,
         },
         {
             NULL,
@@ -3738,6 +3747,7 @@ static void test_rt_caps(void)
             D3DERR_SURFACENOTINVIDMEM,
             D3D_OK,
             D3D_OK,
+            FALSE,
         },
         {
             NULL,
@@ -3746,6 +3756,7 @@ static void test_rt_caps(void)
             DDERR_INVALIDCAPS,
             DDERR_INVALIDCAPS,
             DDERR_INVALIDCAPS,
+            FALSE,
         },
         {
             &p8_fmt,
@@ -3754,6 +3765,7 @@ static void test_rt_caps(void)
             DDERR_INVALIDCAPS,
             DDERR_INVALIDCAPS,
             DDERR_INVALIDCAPS,
+            FALSE,
         },
         {
             &p8_fmt,
@@ -3762,6 +3774,7 @@ static void test_rt_caps(void)
             DDERR_NOPALETTEATTACHED,
             DDERR_INVALIDCAPS,
             DDERR_INVALIDCAPS,
+            FALSE,
         },
         {
             &p8_fmt,
@@ -3770,6 +3783,7 @@ static void test_rt_caps(void)
             DDERR_INVALIDCAPS,
             DDERR_INVALIDCAPS,
             DDERR_INVALIDCAPS,
+            FALSE,
         },
         {
             &p8_fmt,
@@ -3778,6 +3792,7 @@ static void test_rt_caps(void)
             DDERR_NOPALETTEATTACHED,
             DDERR_INVALIDCAPS,
             DDERR_INVALIDCAPS,
+            FALSE,
         },
         {
             &p8_fmt,
@@ -3786,6 +3801,7 @@ static void test_rt_caps(void)
             DDERR_INVALIDCAPS,
             DDERR_INVALIDCAPS,
             DDERR_INVALIDCAPS,
+            FALSE,
         },
         {
             NULL,
@@ -3794,6 +3810,7 @@ static void test_rt_caps(void)
             DDERR_INVALIDCAPS,
             DDERR_INVALIDPIXELFORMAT,
             DDERR_INVALIDCAPS,
+            TRUE /* AMD Evergreen */,
         },
         {
             NULL,
@@ -3802,6 +3819,7 @@ static void test_rt_caps(void)
             DDERR_INVALIDCAPS,
             DDERR_INVALIDPIXELFORMAT,
             DDERR_INVALIDCAPS,
+            FALSE,
         },
         {
             NULL,
@@ -3810,6 +3828,7 @@ static void test_rt_caps(void)
             DDERR_INVALIDCAPS,
             DDERR_INVALIDCAPS,
             DDERR_INVALIDCAPS,
+            FALSE,
         },
         {
             NULL,
@@ -3818,6 +3837,7 @@ static void test_rt_caps(void)
             DDERR_INVALIDCAPS,
             DDERR_INVALIDPIXELFORMAT,
             DDERR_INVALIDPIXELFORMAT,
+            TRUE /* Nvidia Kepler */,
         },
         {
             NULL,
@@ -3826,6 +3846,7 @@ static void test_rt_caps(void)
             DDERR_INVALIDCAPS,
             DDERR_INVALIDCAPS,
             DDERR_INVALIDCAPS,
+            TRUE /* Nvidia Kepler */,
         },
     };
 
@@ -3881,8 +3902,11 @@ static void test_rt_caps(void)
         surface_desc.dwWidth = 640;
         surface_desc.dwHeight = 480;
         hr = IDirectDraw2_CreateSurface(ddraw, &surface_desc, &surface, NULL);
-        ok(SUCCEEDED(hr), "Test %u: Failed to create surface with caps %#x, hr %#x.\n",
+        ok(SUCCEEDED(hr) || broken(test_data[i].create_may_fail),
+                "Test %u: Failed to create surface with caps %#x, hr %#x.\n",
                 i, test_data[i].caps_in, hr);
+        if (FAILED(hr))
+            continue;
 
         memset(&surface_desc, 0, sizeof(surface_desc));
         surface_desc.dwSize = sizeof(surface_desc);
