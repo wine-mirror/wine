@@ -157,7 +157,6 @@ int line_number = 1;		/* The current line */
 int char_number = 1;		/* The current char pos within the line */
 
 char *cmdline;			/* The entire commandline */
-time_t now;			/* The time of start of wrc */
 
 int parser_debug, yy_flex_debug;
 
@@ -347,8 +346,6 @@ int main(int argc,char *argv[])
 #ifdef SIGHUP
         signal( SIGHUP, exit_on_signal );
 #endif
-
-	now = time(NULL);
 
 	/* Set the default defined stuff */
         set_version_defines();
