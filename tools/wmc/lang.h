@@ -21,6 +21,7 @@
 #ifndef __WMC_LANG_H
 #define __WMC_LANG_H
 
+#define WINE_UNICODE_API /* nothing */
 #include "wine/unicode.h"
 
 typedef struct language {
