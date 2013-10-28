@@ -21,6 +21,8 @@
 #ifndef __WRC_WRC_H
 #define __WRC_WRC_H
 
+#define WINE_UNICODE_API /* nothing */
+#include "wine/unicode.h"
 #include "wrctypes.h"
 
 /* From wrc.c */

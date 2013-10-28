@@ -26,7 +26,6 @@
 #include <string.h>
 #include <assert.h>
 
-#include "wine/unicode.h"
 #include "wrc.h"
 #include "genres.h"
 #include "newstruc.h"

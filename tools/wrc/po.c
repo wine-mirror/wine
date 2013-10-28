@@ -40,7 +40,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/list.h"
-#include "wine/unicode.h"
 
 static resource_t *new_top, *new_tail;
 

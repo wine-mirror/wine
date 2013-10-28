@@ -112,7 +112,6 @@ cident	[a-zA-Z_][0-9a-zA-Z_]*
 #define YY_NO_UNISTD_H
 #endif
 
-#include "wine/unicode.h"
 #include "wrc.h"
 #include "utils.h"
 #include "parser.h"

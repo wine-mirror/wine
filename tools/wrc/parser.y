@@ -135,7 +135,6 @@
 #include "newstruc.h"
 #include "dumpres.h"
 #include "wine/wpp.h"
-#include "wine/unicode.h"
 #include "parser.h"
 #include "windef.h"
 #include "winbase.h"

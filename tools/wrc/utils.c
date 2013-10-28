@@ -28,7 +28,6 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "wine/unicode.h"
 #include "wrc.h"
 #include "utils.h"
 #include "parser.h"
