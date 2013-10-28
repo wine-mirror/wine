@@ -476,12 +476,16 @@ static HRESULT WINAPI BSCHttpNegotiate_BeginningTransaction(IHttpNegotiate *ifac
     if (!list_empty(&This->request->reqheaders))
         size += This->request->reqheader_size*sizeof(WCHAR);
 
-    if (!size) return S_OK;
-
     if (This->request->base_uri)
     {
         IUri_GetRawUri(This->request->base_uri, &base_uri);
         size += SysStringLen(base_uri)*sizeof(WCHAR) + sizeof(refererW) + sizeof(crlfW);
+    }
+
+    if (!size)
+    {
+        SysFreeString(base_uri);
+        return S_OK;
     }
 
     buff = CoTaskMemAlloc(size);
