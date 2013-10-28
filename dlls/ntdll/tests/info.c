@@ -259,7 +259,7 @@ static void test_query_process(void)
     DWORD last_pid;
     ULONG ReturnLength;
     int i = 0, k = 0;
-    int is_nt = 0;
+    BOOL is_nt = FALSE;
     SYSTEM_BASIC_INFORMATION sbi;
 
     /* Copy of our winternl.h structure turned into a private one */
