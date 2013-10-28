@@ -1448,7 +1448,14 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
     /* Create the window structure */
 
     if (!(wndPtr = create_window_handle( parent, owner, className, module, unicode )))
-        return 0;
+    {
+        WNDCLASSW wc;
+        /* if it's a comctl32 class, GetClassInfo will load it, then we can retry */
+        if (GetLastError() != ERROR_INVALID_HANDLE ||
+            !GetClassInfoW( 0, className, &wc ) ||
+            !(wndPtr = create_window_handle( parent, owner, className, module, unicode )))
+            return 0;
+    }
     hwnd = wndPtr->obj.handle;
 
     /* Fill the window structure */

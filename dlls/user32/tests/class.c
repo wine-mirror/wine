@@ -28,13 +28,11 @@
 #include "wine/test.h"
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "winreg.h"
 #include "wingdi.h"
 #include "winuser.h"
-
-/* we don't want to include commctrl.h: */
-static const CHAR WC_EDITA[] = "Edit";
-static const WCHAR WC_EDITW[] = {'E','d','i','t',0};
+#include "commctrl.h"
 
 #define NUMCLASSWORDS 4
 
@@ -1029,9 +1027,91 @@ static void test_icons(void)
     DestroyWindow(hwnd);
 }
 
+static void test_comctl32_class( const char *name )
+{
+    WNDCLASSA wcA;
+    WNDCLASSW wcW;
+    BOOL ret;
+    HMODULE module;
+    WCHAR nameW[20];
+    HWND hwnd;
+
+    module = GetModuleHandleA( "comctl32" );
+    ok( !module, "comctl32 already loaded\n" );
+    ret = GetClassInfoA( 0, name, &wcA );
+    ok( ret || broken(!ret) /* <= winxp */, "GetClassInfoA failed for %s\n", name );
+    if (!ret) return;
+    MultiByteToWideChar( CP_ACP, 0, name, -1, nameW, sizeof(nameW) );
+    ret = GetClassInfoW( 0, nameW, &wcW );
+    ok( ret, "GetClassInfoW failed for %s\n", name );
+    module = GetModuleHandleA( "comctl32" );
+    ok( module != 0, "comctl32 not loaded\n" );
+    FreeLibrary( module );
+    module = GetModuleHandleA( "comctl32" );
+    ok( !module, "comctl32 still loaded\n" );
+    hwnd = CreateWindowA( name, "test", WS_OVERLAPPEDWINDOW, 0, 0, 10, 10, NULL, NULL, NULL, 0 );
+    ok( hwnd != 0, "failed to create window for %s\n", name );
+    module = GetModuleHandleA( "comctl32" );
+    ok( module != 0, "comctl32 not loaded\n" );
+}
+
+/* verify that comctl32 classes are automatically loaded by user32 */
+static void test_comctl32_classes(void)
+{
+    char path_name[MAX_PATH];
+    PROCESS_INFORMATION info;
+    STARTUPINFOA startup;
+    char **argv;
+    int i;
+
+    static const char *classes[] =
+    {
+        ANIMATE_CLASSA,
+        WC_COMBOBOXEXA,
+        DATETIMEPICK_CLASSA,
+        WC_HEADERA,
+        HOTKEY_CLASSA,
+        WC_IPADDRESSA,
+        WC_LISTVIEWA,
+        MONTHCAL_CLASSA,
+        WC_NATIVEFONTCTLA,
+        WC_PAGESCROLLERA,
+        PROGRESS_CLASSA,
+        REBARCLASSNAMEA,
+        STATUSCLASSNAMEA,
+        WC_TABCONTROLA,
+        TOOLBARCLASSNAMEA,
+        TOOLTIPS_CLASSA,
+        TRACKBAR_CLASSA,
+        WC_TREEVIEWA,
+        UPDOWN_CLASSA
+    };
+
+    winetest_get_mainargs( &argv );
+    for (i = 0; i < sizeof(classes) / sizeof(classes[0]); i++)
+    {
+        memset( &startup, 0, sizeof(startup) );
+        startup.cb = sizeof( startup );
+        sprintf( path_name, "%s class %s", argv[0], classes[i] );
+        ok( CreateProcessA( NULL, path_name, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info ),
+            "CreateProcess failed.\n" );
+        winetest_wait_child_process( info.hProcess );
+        CloseHandle( info.hProcess );
+        CloseHandle( info.hThread );
+    }
+}
+
 START_TEST(class)
 {
+    char **argv;
     HANDLE hInstance = GetModuleHandleA( NULL );
+    int argc = winetest_get_mainargs( &argv );
+
+    if (argc >= 3)
+    {
+        test_comctl32_class( argv[2] );
+        return;
+    }
 
     test_GetClassInfo();
     test_extra_values();
@@ -1048,6 +1128,7 @@ START_TEST(class)
     test_styles();
     test_builtinproc();
     test_icons();
+    test_comctl32_classes();
 
     /* this test unregisters the Button class so it should be executed at the end */
     test_instances();
