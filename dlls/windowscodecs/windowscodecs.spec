@@ -114,4 +114,4 @@
 @ stub WICMapShortNameToGuid
 @ stub WICMatchMetadataContent
 @ stub WICSerializeMetadataContent
-@ stub WICSetEncoderFormat_Proxy
+@ stdcall WICSetEncoderFormat_Proxy(ptr ptr ptr ptr)
