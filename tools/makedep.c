@@ -981,14 +981,18 @@ static void output_sources(void)
             else output( "%s.tab.c: %s\n", obj, source->filename );
 
             output( "\t$(BISON) $(BISONFLAGS) -p %s_ -o $@ %s\n", obj, source->filename );
-            column += output( "%s.tab.o: %s.tab.c", obj, obj );
+            output( "%s.tab.o: %s.tab.c\n", obj, obj );
+            output( "\t$(CC) -c $(ALLCFLAGS) -o $@ %s.tab.c\n", obj );
+            column += output( "%s.tab.o:", obj );
             free( header );
         }
         else if (!strcmp( ext, "l" ))  /* lex file */
         {
             output( "%s.yy.c: %s\n", obj, source->filename );
             output( "\t$(FLEX) $(LEXFLAGS) -o$@ %s\n", source->filename );
-            column += output( "%s.yy.o: %s.yy.c", obj, obj );
+            output( "%s.yy.o: %s.yy.c\n", obj, obj );
+            output( "\t$(CC) -c $(ALLCFLAGS) -o $@ %s.yy.c\n", obj );
+            column += output( "%s.yy.o:", obj );
         }
         else if (!strcmp( ext, "rc" ))  /* resource file */
         {
@@ -1069,8 +1073,21 @@ static void output_sources(void)
         {
             struct object_extension *ext;
             LIST_FOR_EACH_ENTRY( ext, &object_extensions, struct object_extension, entry )
+            {
+                if (strstr( ext->extension, "cross" ))
+                {
+                    output( "%s.%s: %s\n", obj, ext->extension, source->filename );
+                    output( "\t$(CROSSCC) -c $(ALLCROSSCFLAGS) -o $@ %s\n", source->filename );
+                }
+                else
+                {
+                    output( "%s.%s: %s\n", obj, ext->extension, source->filename );
+                    output( "\t$(CC) -c $(ALLCFLAGS) -o $@ %s\n", source->filename );
+                }
+            }
+            LIST_FOR_EACH_ENTRY( ext, &object_extensions, struct object_extension, entry )
                 column += output( "%s.%s ", obj, ext->extension );
-            column += output( ": %s", source->filename );
+            column += output( ":" );
         }
         free( obj );
 
