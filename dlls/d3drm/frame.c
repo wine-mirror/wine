@@ -197,15 +197,31 @@ static const struct IDirect3DRMFrameArrayVtbl d3drm_frame_array_vtbl =
     d3drm_frame_array_GetElement,
 };
 
-static struct d3drm_frame_array *d3drm_frame_array_create(void)
+static struct d3drm_frame_array *d3drm_frame_array_create(unsigned int frame_count, IDirect3DRMFrame3 **frames)
 {
     struct d3drm_frame_array *array;
+    unsigned int i;
 
     if (!(array = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*array))))
         return NULL;
 
     array->IDirect3DRMFrameArray_iface.lpVtbl = &d3drm_frame_array_vtbl;
     array->ref = 1;
+    array->size = frame_count;
+
+    if (frame_count)
+    {
+        if (!(array->frames = HeapAlloc(GetProcessHeap(), 0, frame_count * sizeof(*array->frames))))
+        {
+            HeapFree(GetProcessHeap(), 0, array);
+            return NULL;
+        }
+
+        for (i = 0; i < frame_count; ++i)
+        {
+            IDirect3DRMFrame3_QueryInterface(frames[i], &IID_IDirect3DRMFrame, (void **)&array->frames[i]);
+        }
+    }
 
     return array;
 }
@@ -1500,24 +1516,8 @@ static HRESULT WINAPI d3drm_frame3_GetChildren(IDirect3DRMFrame3 *iface, IDirect
     if (!children)
         return D3DRMERR_BADVALUE;
 
-    if (!(array = d3drm_frame_array_create()))
+    if (!(array = d3drm_frame_array_create(frame->nb_children, frame->children)))
         return E_OUTOFMEMORY;
-
-    array->size = frame->nb_children;
-    if (frame->nb_children)
-    {
-        ULONG i;
-
-        if (!(array->frames = HeapAlloc(GetProcessHeap(), 0, frame->nb_children * sizeof(*array->frames))))
-        {
-            HeapFree(GetProcessHeap(), 0, array);
-            return E_OUTOFMEMORY;
-        }
-        for (i = 0; i < frame->nb_children; ++i)
-        {
-            IDirect3DRMFrame3_QueryInterface(frame->children[i], &IID_IDirect3DRMFrame, (void **)&array->frames[i]);
-        }
-    }
 
     *children = &array->IDirect3DRMFrameArray_iface;
 
