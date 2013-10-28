@@ -29,7 +29,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3drm);
 
-typedef struct {
+struct d3drm_light
+{
     IDirect3DRMLight IDirect3DRMLight_iface;
     LONG ref;
     D3DRMLIGHTTYPE type;
@@ -40,63 +41,55 @@ typedef struct {
     D3DVALUE qattenuation;
     D3DVALUE umbra;
     D3DVALUE penumbra;
-} IDirect3DRMLightImpl;
+};
 
-static inline IDirect3DRMLightImpl *impl_from_IDirect3DRMLight(IDirect3DRMLight *iface)
+static inline struct d3drm_light *impl_from_IDirect3DRMLight(IDirect3DRMLight *iface)
 {
-    return CONTAINING_RECORD(iface, IDirect3DRMLightImpl, IDirect3DRMLight_iface);
+    return CONTAINING_RECORD(iface, struct d3drm_light, IDirect3DRMLight_iface);
 }
 
-/*** IUnknown methods ***/
-static HRESULT WINAPI IDirect3DRMLightImpl_QueryInterface(IDirect3DRMLight* iface,
-                                                           REFIID riid, void** object)
+static HRESULT WINAPI d3drm_light_QueryInterface(IDirect3DRMLight *iface, REFIID riid, void **out)
 {
-    IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
+    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
 
-    TRACE("(%p/%p)->(%s, %p)\n", iface, This, debugstr_guid(riid), object);
-
-    *object = NULL;
-
-    if(IsEqualGUID(riid, &IID_IUnknown) ||
-       IsEqualGUID(riid, &IID_IDirect3DRMLight))
+    if (IsEqualGUID(riid, &IID_IDirect3DRMLight)
+            || IsEqualGUID(riid, &IID_IUnknown))
     {
-        *object = &This->IDirect3DRMLight_iface;
-    }
-    else
-    {
-        FIXME("interface %s not implemented\n", debugstr_guid(riid));
-        return E_NOINTERFACE;
+        IDirect3DRMLight_AddRef(iface);
+        *out = iface;
+        return S_OK;
     }
 
-    IDirect3DRMLight_AddRef(iface);
-    return S_OK;
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+
+    *out = NULL;
+    return E_NOINTERFACE;
 }
 
-static ULONG WINAPI IDirect3DRMLightImpl_AddRef(IDirect3DRMLight* iface)
+static ULONG WINAPI d3drm_light_AddRef(IDirect3DRMLight *iface)
 {
-    IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
+    struct d3drm_light *light = impl_from_IDirect3DRMLight(iface);
+    ULONG refcount = InterlockedIncrement(&light->ref);
 
-    TRACE("(%p)->(): new ref = %d\n", iface, ref);
+    TRACE("%p increasing refcount to %u.\n", iface, refcount);
 
-    return ref;
+    return refcount;
 }
 
-static ULONG WINAPI IDirect3DRMLightImpl_Release(IDirect3DRMLight* iface)
+static ULONG WINAPI d3drm_light_Release(IDirect3DRMLight *iface)
 {
-    IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
+    struct d3drm_light *light = impl_from_IDirect3DRMLight(iface);
+    ULONG refcount = InterlockedDecrement(&light->ref);
 
-    TRACE("(%p)->(): new ref = %d\n", iface, ref);
+    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
-    if (!ref)
-        HeapFree(GetProcessHeap(), 0, This);
+    if (!refcount)
+        HeapFree(GetProcessHeap(), 0, light);
 
-    return ref;
+    return refcount;
 }
 
-/*** IDirect3DRMObject methods ***/
-static HRESULT WINAPI IDirect3DRMLightImpl_Clone(IDirect3DRMLight *iface,
+static HRESULT WINAPI d3drm_light_Clone(IDirect3DRMLight *iface,
         IUnknown *outer, REFIID iid, void **out)
 {
     FIXME("iface %p, outer %p, iid %s, out %p stub!\n", iface, outer, debugstr_guid(iid), out);
@@ -104,7 +97,7 @@ static HRESULT WINAPI IDirect3DRMLightImpl_Clone(IDirect3DRMLight *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMLightImpl_AddDestroyCallback(IDirect3DRMLight *iface,
+static HRESULT WINAPI d3drm_light_AddDestroyCallback(IDirect3DRMLight *iface,
         D3DRMOBJECTCALLBACK cb, void *ctx)
 {
     FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
@@ -112,7 +105,7 @@ static HRESULT WINAPI IDirect3DRMLightImpl_AddDestroyCallback(IDirect3DRMLight *
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMLightImpl_DeleteDestroyCallback(IDirect3DRMLight *iface,
+static HRESULT WINAPI d3drm_light_DeleteDestroyCallback(IDirect3DRMLight *iface,
         D3DRMOBJECTCALLBACK cb, void *ctx)
 {
     FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
@@ -120,40 +113,35 @@ static HRESULT WINAPI IDirect3DRMLightImpl_DeleteDestroyCallback(IDirect3DRMLigh
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMLightImpl_SetAppData(IDirect3DRMLight* iface,
-                                                       DWORD data)
+static HRESULT WINAPI d3drm_light_SetAppData(IDirect3DRMLight *iface, DWORD data)
 {
-    IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
-
-    FIXME("(%p/%p)->(%u): stub\n", iface, This, data);
+    FIXME("iface %p, data %#x stub!\n", iface, data);
 
     return E_NOTIMPL;
 }
 
-static DWORD WINAPI IDirect3DRMLightImpl_GetAppData(IDirect3DRMLight* iface)
+static DWORD WINAPI d3drm_light_GetAppData(IDirect3DRMLight *iface)
 {
-    IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
-
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    FIXME("iface %p stub!\n", iface);
 
     return 0;
 }
 
-static HRESULT WINAPI IDirect3DRMLightImpl_SetName(IDirect3DRMLight *iface, const char *name)
+static HRESULT WINAPI d3drm_light_SetName(IDirect3DRMLight *iface, const char *name)
 {
     FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMLightImpl_GetName(IDirect3DRMLight *iface, DWORD *size, char *name)
+static HRESULT WINAPI d3drm_light_GetName(IDirect3DRMLight *iface, DWORD *size, char *name)
 {
     FIXME("iface %p, size %p, name %p stub!\n", iface, size, name);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMLightImpl_GetClassName(IDirect3DRMLight *iface, DWORD *size, char *name)
+static HRESULT WINAPI d3drm_light_GetClassName(IDirect3DRMLight *iface, DWORD *size, char *name)
 {
     TRACE("iface %p, size %p, name %p.\n", iface, size, name);
 
@@ -166,247 +154,239 @@ static HRESULT WINAPI IDirect3DRMLightImpl_GetClassName(IDirect3DRMLight *iface,
     return D3DRM_OK;
 }
 
-/*** IDirect3DRMLight methods ***/
-static HRESULT WINAPI IDirect3DRMLightImpl_SetType(IDirect3DRMLight* iface, D3DRMLIGHTTYPE type)
+static HRESULT WINAPI d3drm_light_SetType(IDirect3DRMLight *iface, D3DRMLIGHTTYPE type)
 {
-    IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
+    struct d3drm_light *light = impl_from_IDirect3DRMLight(iface);
 
-    TRACE("(%p/%p)->(%u)\n", iface, This, type);
+    TRACE("iface %p, type %#x.\n", iface, type);
 
-    This->type = type;
+    light->type = type;
 
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMLightImpl_SetColor(IDirect3DRMLight* iface, D3DCOLOR color)
+static HRESULT WINAPI d3drm_light_SetColor(IDirect3DRMLight *iface, D3DCOLOR color)
 {
-    IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
+    struct d3drm_light *light = impl_from_IDirect3DRMLight(iface);
 
-    TRACE("(%p/%p)->(%u)\n", iface, This, color);
+    TRACE("iface %p, color 0x%08x.\n", iface, color);
 
-    This->color = color;
+    light->color = color;
 
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMLightImpl_SetColorRGB(IDirect3DRMLight* iface,
-                                                         D3DVALUE red, D3DVALUE green, D3DVALUE blue)
+static HRESULT WINAPI d3drm_light_SetColorRGB(IDirect3DRMLight *iface,
+        D3DVALUE red, D3DVALUE green, D3DVALUE blue)
 {
-    IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
+    struct d3drm_light *light = impl_from_IDirect3DRMLight(iface);
 
-    TRACE("(%p/%p)->(%f,%f,%f)\n", iface, This, red, green, blue);
+    TRACE("iface %p, red %.8e, green %.8e, blue %.8e.\n", iface, red, green, blue);
 
-    This->color = RGBA_MAKE((BYTE)(red * 255.0f), (BYTE)(green * 255.0f), (BYTE)(blue * 255.0f), 0xff);
+    light->color = RGBA_MAKE((BYTE)(red * 255.0f), (BYTE)(green * 255.0f), (BYTE)(blue * 255.0f), 0xff);
 
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMLightImpl_SetRange(IDirect3DRMLight* iface, D3DVALUE range)
+static HRESULT WINAPI d3drm_light_SetRange(IDirect3DRMLight *iface, D3DVALUE range)
 {
-    IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
+    struct d3drm_light *light = impl_from_IDirect3DRMLight(iface);
 
-    TRACE("(%p/%p)->(%f)\n", iface, This, range);
+    TRACE("iface %p, range %.8e.\n", iface, range);
 
-    This->range = range;
+    light->range = range;
 
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMLightImpl_SetUmbra(IDirect3DRMLight* iface, D3DVALUE umbra)
+static HRESULT WINAPI d3drm_light_SetUmbra(IDirect3DRMLight *iface, D3DVALUE umbra)
 {
-    IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
+    struct d3drm_light *light = impl_from_IDirect3DRMLight(iface);
 
-    TRACE("(%p/%p)->(%f)\n", iface, This, umbra);
+    TRACE("iface %p, umbra %.8e.\n", iface, umbra);
 
-    This->umbra = umbra;
+    light->umbra = umbra;
 
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMLightImpl_SetPenumbra(IDirect3DRMLight* iface, D3DVALUE penumbra)
+static HRESULT WINAPI d3drm_light_SetPenumbra(IDirect3DRMLight *iface, D3DVALUE penumbra)
 {
-    IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
+    struct d3drm_light *light = impl_from_IDirect3DRMLight(iface);
 
-    TRACE("(%p/%p)->(%f)\n", iface, This, penumbra);
+    TRACE("iface %p, penumbra %.8e.\n", iface, penumbra);
 
-    This->penumbra = penumbra;
+    light->penumbra = penumbra;
 
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMLightImpl_SetConstantAttenuation(IDirect3DRMLight* iface,
-                                                                    D3DVALUE cattenuation)
+static HRESULT WINAPI d3drm_light_SetConstantAttenuation(IDirect3DRMLight *iface, D3DVALUE attenuation)
 {
-    IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
+    struct d3drm_light *light = impl_from_IDirect3DRMLight(iface);
 
-    TRACE("(%p/%p)->(%f)\n", iface, This, cattenuation);
+    TRACE("iface %p, attenuation %.8e.\n", iface, attenuation);
 
-    This->cattenuation = cattenuation;
+    light->cattenuation = attenuation;
 
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMLightImpl_SetLinearAttenuation(IDirect3DRMLight* iface,
-                                                                  D3DVALUE lattenuation)
+static HRESULT WINAPI d3drm_light_SetLinearAttenuation(IDirect3DRMLight *iface, D3DVALUE attenuation)
 {
-    IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
+    struct d3drm_light *light = impl_from_IDirect3DRMLight(iface);
 
-    TRACE("(%p/%p)->(%f)\n", iface, This, lattenuation);
+    TRACE("iface %p, attenuation %.8e.\n", iface, attenuation);
 
-    This->lattenuation = lattenuation;
+    light->lattenuation = attenuation;
 
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMLightImpl_SetQuadraticAttenuation(IDirect3DRMLight* iface,
-                                                                     D3DVALUE qattenuation)
+static HRESULT WINAPI d3drm_light_SetQuadraticAttenuation(IDirect3DRMLight *iface, D3DVALUE attenuation)
 {
-    IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
+    struct d3drm_light *light = impl_from_IDirect3DRMLight(iface);
 
-    TRACE("(%p/%p)->(%f)\n", iface, This, qattenuation);
+    TRACE("iface %p, attenuation %.8e.\n", iface, attenuation);
 
-    This->qattenuation = qattenuation;
+    light->qattenuation = attenuation;
 
     return D3DRM_OK;
 }
 
-static D3DVALUE WINAPI IDirect3DRMLightImpl_GetRange(IDirect3DRMLight* iface)
+static D3DVALUE WINAPI d3drm_light_GetRange(IDirect3DRMLight *iface)
 {
-    IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
+    struct d3drm_light *light = impl_from_IDirect3DRMLight(iface);
 
-    TRACE("(%p/%p)->()\n", iface, This);
+    TRACE("iface %p.\n", iface);
 
-    return This->range;
+    return light->range;
 }
 
-static D3DVALUE WINAPI IDirect3DRMLightImpl_GetUmbra(IDirect3DRMLight* iface)
+static D3DVALUE WINAPI d3drm_light_GetUmbra(IDirect3DRMLight *iface)
 {
-    IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
+    struct d3drm_light *light = impl_from_IDirect3DRMLight(iface);
 
-    TRACE("(%p/%p)->()\n", iface, This);
+    TRACE("iface %p.\n", light);
 
-    return This->umbra;
+    return light->umbra;
 }
 
-static D3DVALUE WINAPI IDirect3DRMLightImpl_GetPenumbra(IDirect3DRMLight* iface)
+static D3DVALUE WINAPI d3drm_light_GetPenumbra(IDirect3DRMLight *iface)
 {
-    IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
+    struct d3drm_light *light = impl_from_IDirect3DRMLight(iface);
 
-    TRACE("(%p/%p)->()\n", iface, This);
+    TRACE("iface %p.\n", iface);
 
-    return This->penumbra;
+    return light->penumbra;
 }
 
-static D3DVALUE WINAPI IDirect3DRMLightImpl_GetConstantAttenuation(IDirect3DRMLight* iface)
+static D3DVALUE WINAPI d3drm_light_GetConstantAttenuation(IDirect3DRMLight *iface)
 {
-    IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
+    struct d3drm_light *light = impl_from_IDirect3DRMLight(iface);
 
-    TRACE("(%p/%p)->()\n", iface, This);
+    TRACE("iface %p.\n", iface);
 
-    return This->cattenuation;
+    return light->cattenuation;
 }
 
-static D3DVALUE WINAPI IDirect3DRMLightImpl_GetLinearAttenuation(IDirect3DRMLight* iface)
+static D3DVALUE WINAPI d3drm_light_GetLinearAttenuation(IDirect3DRMLight *iface)
 {
-    IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
+    struct d3drm_light *light = impl_from_IDirect3DRMLight(iface);
 
-    TRACE("(%p/%p)->()\n", iface, This);
+    TRACE("iface %p.\n", iface);
 
-    return This->lattenuation;
+    return light->lattenuation;
 }
 
-static D3DVALUE WINAPI IDirect3DRMLightImpl_GetQuadraticAttenuation(IDirect3DRMLight* iface)
+static D3DVALUE WINAPI d3drm_light_GetQuadraticAttenuation(IDirect3DRMLight *iface)
 {
-    IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
+    struct d3drm_light *light = impl_from_IDirect3DRMLight(iface);
 
-    TRACE("(%p/%p)->()\n", iface, This);
+    TRACE("iface %p.\n", iface);
 
-    return This->qattenuation;
+    return light->qattenuation;
 }
 
-static D3DCOLOR WINAPI IDirect3DRMLightImpl_GetColor(IDirect3DRMLight* iface)
+static D3DCOLOR WINAPI d3drm_light_GetColor(IDirect3DRMLight *iface)
 {
-    IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
+    struct d3drm_light *light = impl_from_IDirect3DRMLight(iface);
 
-    TRACE("(%p/%p)->()\n", iface, This);
+    TRACE("iface %p.\n", iface);
 
-    return This->color;
+    return light->color;
 }
 
-static D3DRMLIGHTTYPE WINAPI IDirect3DRMLightImpl_GetType(IDirect3DRMLight* iface)
+static D3DRMLIGHTTYPE WINAPI d3drm_light_GetType(IDirect3DRMLight *iface)
 {
-    IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
+    struct d3drm_light *light = impl_from_IDirect3DRMLight(iface);
 
-    TRACE("(%p/%p)->()\n", iface, This);
+    TRACE("iface %p.\n", iface);
 
-    return This->type;
+    return light->type;
 }
 
-static HRESULT WINAPI IDirect3DRMLightImpl_SetEnableFrame(IDirect3DRMLight *iface, IDirect3DRMFrame *frame)
+static HRESULT WINAPI d3drm_light_SetEnableFrame(IDirect3DRMLight *iface, IDirect3DRMFrame *frame)
 {
     FIXME("iface %p, frame %p stub!\n", iface, frame);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMLightImpl_GetEnableFrame(IDirect3DRMLight *iface, IDirect3DRMFrame **frame)
+static HRESULT WINAPI d3drm_light_GetEnableFrame(IDirect3DRMLight *iface, IDirect3DRMFrame **frame)
 {
     FIXME("iface %p, frame %p stub!\n", iface, frame);
 
     return E_NOTIMPL;
 }
 
-static const struct IDirect3DRMLightVtbl Direct3DRMLight_Vtbl =
+static const struct IDirect3DRMLightVtbl d3drm_light_vtbl =
 {
-    /*** IUnknown methods ***/
-    IDirect3DRMLightImpl_QueryInterface,
-    IDirect3DRMLightImpl_AddRef,
-    IDirect3DRMLightImpl_Release,
-    /*** IDirect3DRMObject methods ***/
-    IDirect3DRMLightImpl_Clone,
-    IDirect3DRMLightImpl_AddDestroyCallback,
-    IDirect3DRMLightImpl_DeleteDestroyCallback,
-    IDirect3DRMLightImpl_SetAppData,
-    IDirect3DRMLightImpl_GetAppData,
-    IDirect3DRMLightImpl_SetName,
-    IDirect3DRMLightImpl_GetName,
-    IDirect3DRMLightImpl_GetClassName,
-    /*** IDirect3DRMLight methods ***/
-    IDirect3DRMLightImpl_SetType,
-    IDirect3DRMLightImpl_SetColor,
-    IDirect3DRMLightImpl_SetColorRGB,
-    IDirect3DRMLightImpl_SetRange,
-    IDirect3DRMLightImpl_SetUmbra,
-    IDirect3DRMLightImpl_SetPenumbra,
-    IDirect3DRMLightImpl_SetConstantAttenuation,
-    IDirect3DRMLightImpl_SetLinearAttenuation,
-    IDirect3DRMLightImpl_SetQuadraticAttenuation,
-    IDirect3DRMLightImpl_GetRange,
-    IDirect3DRMLightImpl_GetUmbra,
-    IDirect3DRMLightImpl_GetPenumbra,
-    IDirect3DRMLightImpl_GetConstantAttenuation,
-    IDirect3DRMLightImpl_GetLinearAttenuation,
-    IDirect3DRMLightImpl_GetQuadraticAttenuation,
-    IDirect3DRMLightImpl_GetColor,
-    IDirect3DRMLightImpl_GetType,
-    IDirect3DRMLightImpl_SetEnableFrame,
-    IDirect3DRMLightImpl_GetEnableFrame
+    d3drm_light_QueryInterface,
+    d3drm_light_AddRef,
+    d3drm_light_Release,
+    d3drm_light_Clone,
+    d3drm_light_AddDestroyCallback,
+    d3drm_light_DeleteDestroyCallback,
+    d3drm_light_SetAppData,
+    d3drm_light_GetAppData,
+    d3drm_light_SetName,
+    d3drm_light_GetName,
+    d3drm_light_GetClassName,
+    d3drm_light_SetType,
+    d3drm_light_SetColor,
+    d3drm_light_SetColorRGB,
+    d3drm_light_SetRange,
+    d3drm_light_SetUmbra,
+    d3drm_light_SetPenumbra,
+    d3drm_light_SetConstantAttenuation,
+    d3drm_light_SetLinearAttenuation,
+    d3drm_light_SetQuadraticAttenuation,
+    d3drm_light_GetRange,
+    d3drm_light_GetUmbra,
+    d3drm_light_GetPenumbra,
+    d3drm_light_GetConstantAttenuation,
+    d3drm_light_GetLinearAttenuation,
+    d3drm_light_GetQuadraticAttenuation,
+    d3drm_light_GetColor,
+    d3drm_light_GetType,
+    d3drm_light_SetEnableFrame,
+    d3drm_light_GetEnableFrame,
 };
 
-HRESULT Direct3DRMLight_create(IUnknown** ppObj)
+HRESULT Direct3DRMLight_create(IUnknown **out)
 {
-    IDirect3DRMLightImpl* object;
+    struct d3drm_light *object;
 
-    TRACE("(%p)\n", ppObj);
+    TRACE("out %p.\n", out);
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DRMLightImpl));
-    if (!object)
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    object->IDirect3DRMLight_iface.lpVtbl = &Direct3DRMLight_Vtbl;
+    object->IDirect3DRMLight_iface.lpVtbl = &d3drm_light_vtbl;
     object->ref = 1;
 
-    *ppObj = (IUnknown*)&object->IDirect3DRMLight_iface;
+    *out = (IUnknown *)&object->IDirect3DRMLight_iface;
 
     return S_OK;
 }
