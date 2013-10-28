@@ -41,8 +41,11 @@ WINE_DEFAULT_DEBUG_CHANNEL( mscoree );
 
 enum parse_state
 {
+    STATE_ASSEMBLY_BINDING,
     STATE_ROOT,
     STATE_CONFIGURATION,
+    STATE_PROBING,
+    STATE_RUNTIME,
     STATE_STARTUP,
     STATE_UNKNOWN
 };
@@ -147,6 +150,23 @@ static HRESULT parse_startup(ConfigFileHandler *This, ISAXAttributes *pAttr)
     return hr;
 }
 
+static HRESULT parse_probing(ConfigFileHandler *This, ISAXAttributes *pAttr)
+{
+    static const WCHAR privatePath[] = {'p','r','i','v','a','t','e','P','a','t','h',0};
+    static const WCHAR empty[] = {0};
+    LPCWSTR value;
+    int value_size;
+    HRESULT hr;
+
+    hr = ISAXAttributes_getValueFromName(pAttr, empty, 0, privatePath, lstrlenW(privatePath), &value, &value_size);
+    if (SUCCEEDED(hr))
+        FIXME("privatePath=%s not implemented\n", debugstr_wn(value, value_size));
+    hr = S_OK;
+
+    return hr;
+}
+
+
 static HRESULT parse_supported_runtime(ConfigFileHandler *This, ISAXAttributes *pAttr)
 {
     static const WCHAR version[] = {'v','e','r','s','i','o','n',0};
@@ -199,8 +219,12 @@ static HRESULT WINAPI ConfigFileHandler_startElement(ISAXContentHandler *iface,
 {
     ConfigFileHandler *This = impl_from_ISAXContentHandler(iface);
     static const WCHAR configuration[] = {'c','o','n','f','i','g','u','r','a','t','i','o','n',0};
+    static const WCHAR assemblyBinding[] = {'a','s','s','e','m','b','l','y','B','i','n','d','i','n','g',0};
+    static const WCHAR probing[] = {'p','r','o','b','i','n','g',0};
+    static const WCHAR runtime[] = {'r','u','n','t','i','m','e',0};
     static const WCHAR startup[] = {'s','t','a','r','t','u','p',0};
     static const WCHAR supportedRuntime[] = {'s','u','p','p','o','r','t','e','d','R','u','n','t','i','m','e',0};
+
     HRESULT hr = S_OK;
 
     TRACE("%s %s %s\n", debugstr_wn(pNamespaceUri,nNamespaceUri),
@@ -229,6 +253,31 @@ static HRESULT WINAPI ConfigFileHandler_startElement(ISAXContentHandler *iface,
         {
             hr = parse_startup(This, pAttr);
             This->states[++This->statenum] = STATE_STARTUP;
+            break;
+        }
+        else if (nLocalName == sizeof(runtime)/sizeof(WCHAR)-1 &&
+            lstrcmpW(pLocalName, runtime) == 0)
+        {
+            This->states[++This->statenum] = STATE_RUNTIME;
+            break;
+        }
+        else
+            goto unknown;
+    case STATE_RUNTIME:
+        if (nLocalName == sizeof(assemblyBinding)/sizeof(WCHAR)-1 &&
+            lstrcmpW(pLocalName, assemblyBinding) == 0)
+        {
+            This->states[++This->statenum] = STATE_ASSEMBLY_BINDING;
+            break;
+        }
+        else
+            goto unknown;
+    case STATE_ASSEMBLY_BINDING:
+        if (nLocalName == sizeof(probing)/sizeof(WCHAR)-1 &&
+            lstrcmpW(pLocalName, probing) == 0)
+        {
+            hr = parse_probing(This, pAttr);
+            This->states[++This->statenum] = STATE_PROBING;
             break;
         }
         else
