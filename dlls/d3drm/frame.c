@@ -315,15 +315,32 @@ static const struct IDirect3DRMVisualArrayVtbl d3drm_visual_array_vtbl =
     d3drm_visual_array_GetElement,
 };
 
-static struct d3drm_visual_array *d3drm_visual_array_create(void)
+static struct d3drm_visual_array *d3drm_visual_array_create(unsigned int visual_count, IDirect3DRMVisual **visuals)
 {
     struct d3drm_visual_array *array;
+    unsigned int i;
 
     if (!(array = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*array))))
         return NULL;
 
     array->IDirect3DRMVisualArray_iface.lpVtbl = &d3drm_visual_array_vtbl;
     array->ref = 1;
+    array->size = visual_count;
+
+    if (visual_count)
+    {
+        if (!(array->visuals = HeapAlloc(GetProcessHeap(), 0, visual_count * sizeof(*array->visuals))))
+        {
+            HeapFree(GetProcessHeap(), 0, array);
+            return NULL;
+        }
+
+        for (i = 0; i < visual_count; ++i)
+        {
+            array->visuals[i] = visuals[i];
+            IDirect3DRMVisual_AddRef(array->visuals[i]);
+        }
+    }
 
     return array;
 }
@@ -765,25 +782,8 @@ static HRESULT WINAPI d3drm_frame2_GetVisuals(IDirect3DRMFrame2 *iface, IDirect3
     if (!visuals)
         return D3DRMERR_BADVALUE;
 
-    if (!(array = d3drm_visual_array_create()))
+    if (!(array = d3drm_visual_array_create(frame->nb_visuals, frame->visuals)))
         return E_OUTOFMEMORY;
-
-    array->size = frame->nb_visuals;
-    if (frame->nb_visuals)
-    {
-        ULONG i;
-
-        if (!(array->visuals = HeapAlloc(GetProcessHeap(), 0, frame->nb_visuals * sizeof(*array->visuals))))
-        {
-            HeapFree(GetProcessHeap(), 0, array);
-            return E_OUTOFMEMORY;
-        }
-        for (i = 0; i < frame->nb_visuals; ++i)
-        {
-            array->visuals[i] = frame->visuals[i];
-            IDirect3DRMVisual_AddRef(frame->visuals[i]);
-        }
-    }
 
     *visuals = &array->IDirect3DRMVisualArray_iface;
 
