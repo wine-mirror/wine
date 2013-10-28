@@ -5402,8 +5402,13 @@ static void test_lockrect_invalid(void)
 
     hr = IDirect3DSurface9_LockRect(surface, &locked_rect, NULL, 0);
     ok(SUCCEEDED(hr), "Failed to lock surface with rect NULL, hr %#x.\n", hr);
+    locked_rect.pBits = (BYTE *)0xdeadbeef;
+    locked_rect.Pitch = 1;
     hr = IDirect3DSurface9_LockRect(surface, &locked_rect, NULL, 0);
     ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(locked_rect.pBits == (BYTE *)0xdeadbeef, "Got unexpected pBits: %p\n",
+            locked_rect.pBits);
+    ok(locked_rect.Pitch == 1, "Got unexpected pitch %d\n", locked_rect.Pitch);
     hr = IDirect3DSurface9_UnlockRect(surface);
     ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
 
