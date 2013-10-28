@@ -168,12 +168,35 @@ out:
     return ret;
 }
 
+static IDirect3DDevice9 *create_device(IDirect3D9 *d3d9)
+{
+    D3DPRESENT_PARAMETERS present_parameters = {0};
+    IDirect3DDevice9 *device;
+    HRESULT hr;
+
+    present_parameters.Windowed = TRUE;
+    present_parameters.hDeviceWindow = create_window();
+    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    present_parameters.BackBufferWidth = 640;
+    present_parameters.BackBufferHeight = 480;
+    present_parameters.BackBufferFormat = D3DFMT_A8R8G8B8;
+    present_parameters.EnableAutoDepthStencil = TRUE;
+    present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
+
+    hr = IDirect3D9_CreateDevice(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+            present_parameters.hDeviceWindow, D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device);
+    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE || hr == D3DERR_INVALIDCALL,
+            "Failed to create a device, hr %#x.\n", hr);
+    if (FAILED(hr))
+        DestroyWindow(present_parameters.hDeviceWindow);
+
+    return device;
+}
+
 static IDirect3DDevice9 *init_d3d9(void)
 {
     IDirect3D9 * (__stdcall * d3d9_create)(UINT SDKVersion) = 0;
     IDirect3D9 *d3d9_ptr = 0;
-    IDirect3DDevice9 *device_ptr = 0;
-    D3DPRESENT_PARAMETERS present_parameters;
     HRESULT hr;
     D3DADAPTER_IDENTIFIER9 identifier;
 
@@ -188,16 +211,6 @@ static IDirect3DDevice9 *init_d3d9(void)
         return NULL;
     }
 
-    ZeroMemory(&present_parameters, sizeof(present_parameters));
-    present_parameters.Windowed = TRUE;
-    present_parameters.hDeviceWindow = create_window();
-    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
-    present_parameters.BackBufferWidth = 640;
-    present_parameters.BackBufferHeight = 480;
-    present_parameters.BackBufferFormat = D3DFMT_A8R8G8B8;
-    present_parameters.EnableAutoDepthStencil = TRUE;
-    present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
-
     memset(&identifier, 0, sizeof(identifier));
     hr = IDirect3D9_GetAdapterIdentifier(d3d9_ptr, 0, 0, &identifier);
     ok(hr == D3D_OK, "Failed to get adapter identifier description\n");
@@ -210,12 +223,7 @@ static IDirect3DDevice9 *init_d3d9(void)
           HIWORD(U(identifier.DriverVersion).HighPart), LOWORD(U(identifier.DriverVersion).HighPart),
           HIWORD(U(identifier.DriverVersion).LowPart), LOWORD(U(identifier.DriverVersion).LowPart));
 
-    hr = IDirect3D9_CreateDevice(d3d9_ptr, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
-            present_parameters.hDeviceWindow, D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device_ptr);
-    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE || hr == D3DERR_INVALIDCALL,
-            "Failed to create a device, hr %#x.\n", hr);
-
-    return device_ptr;
+    return create_device(d3d9_ptr);
 }
 
 static void cleanup_device(IDirect3DDevice9 *device)
@@ -8741,56 +8749,63 @@ cleanup:
     IDirect3DVertexDeclaration9_Release(vertex_declaration);
 }
 
-static void stencil_cull_test(IDirect3DDevice9 *device) {
+static void stencil_cull_test(IDirect3D9 *d3d9)
+{
+    IDirect3DDevice9 *device;
+    D3DCAPS9 caps;
     HRESULT hr;
-    IDirect3DSurface9 *depthstencil = NULL;
-    D3DSURFACE_DESC desc;
-    float quad1[] = {
+    static const float quad1[] =
+    {
         -1.0,   -1.0,   0.1,
          0.0,   -1.0,   0.1,
         -1.0,    0.0,   0.1,
          0.0,    0.0,   0.1,
     };
-    float quad2[] = {
+    static const float quad2[] =
+    {
          0.0,   -1.0,   0.1,
          1.0,   -1.0,   0.1,
          0.0,    0.0,   0.1,
          1.0,    0.0,   0.1,
     };
-    float quad3[] = {
+    static const float quad3[] =
+    {
         0.0,    0.0,   0.1,
         1.0,    0.0,   0.1,
         0.0,    1.0,   0.1,
         1.0,    1.0,   0.1,
     };
-    float quad4[] = {
+    static const float quad4[] =
+    {
         -1.0,    0.0,   0.1,
          0.0,    0.0,   0.1,
         -1.0,    1.0,   0.1,
          0.0,    1.0,   0.1,
     };
-    struct vertex painter[] = {
+    struct vertex painter[] =
+    {
        {-1.0,   -1.0,   0.0,    0x00000000},
        { 1.0,   -1.0,   0.0,    0x00000000},
        {-1.0,    1.0,   0.0,    0x00000000},
        { 1.0,    1.0,   0.0,    0x00000000},
     };
-    WORD indices_cw[]  = {0, 1, 3};
-    WORD indices_ccw[] = {0, 2, 3};
+    static const WORD indices_cw[]  = {0, 1, 3};
+    static const WORD indices_ccw[] = {0, 2, 3};
     unsigned int i;
     DWORD color;
 
-    IDirect3DDevice9_GetDepthStencilSurface(device, &depthstencil);
-    if(depthstencil == NULL) {
-        skip("No depth stencil buffer\n");
+    device = create_device(d3d9);
+    if (!device)
+    {
+        skip("Cannot create a device with a D24S8 stencil buffer.\n");
         return;
     }
-    hr = IDirect3DSurface9_GetDesc(depthstencil, &desc);
-    ok(hr == D3D_OK, "IDirect3DSurface9_GetDesc failed with %08x\n", hr);
-    IDirect3DSurface9_Release(depthstencil);
-    if(desc.Format != D3DFMT_D24S8 && desc.Format != D3DFMT_D24X4S4) {
-        skip("No 4 or 8 bit stencil surface\n");
-        return;
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get caps, hr %#x.\n", hr);
+    if (!(caps.StencilCaps & D3DSTENCILCAPS_TWOSIDED))
+    {
+        skip("No two sided stencil support\n");
+        goto cleanup;
     }
 
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_STENCIL, 0x00ff0000, 0.0, 0x8);
@@ -8798,6 +8813,10 @@ static void stencil_cull_test(IDirect3DDevice9 *device) {
     hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ);
     ok(SUCCEEDED(hr), "Failed to set FVF,hr %#x.\n", hr);
 
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, D3DZB_FALSE);
+    ok(hr == D3D_OK, "Failed to disable Z test, %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(hr == D3D_OK, "Failed to disable lighting, %#x.\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_STENCILFAIL, D3DSTENCILOP_INCR);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_STENCILZFAIL, D3DSTENCILOP_DECR);
@@ -8927,6 +8946,9 @@ static void stencil_cull_test(IDirect3DDevice9 *device) {
 
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
+
+cleanup:
+    cleanup_device(device);
 }
 
 static void vpos_register_test(IDirect3DDevice9 *device)
@@ -14872,11 +14894,6 @@ START_TEST(visual)
     fixed_function_decl_test(device_ptr);
     conditional_np2_repeat_test(device_ptr);
     fixed_function_bumpmap_test(device_ptr);
-    if(caps.StencilCaps & D3DSTENCILCAPS_TWOSIDED) {
-        stencil_cull_test(device_ptr);
-    } else {
-        skip("No two sided stencil support\n");
-    }
     pointsize_test(device_ptr);
     tssargtemp_test(device_ptr);
     np2_stretch_rect_test(device_ptr);
@@ -14970,6 +14987,7 @@ START_TEST(visual)
 
     multisampled_depth_buffer_test(d3d9);
     resz_test(d3d9);
+    stencil_cull_test(d3d9);
 
     IDirect3D9_Release(d3d9);
 
