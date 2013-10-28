@@ -268,6 +268,8 @@ static CLASS *CLASS_FindClass( LPCWSTR name, HINSTANCE hinstance )
     struct list *ptr;
     ATOM atom = get_int_atom_value( name );
 
+    GetDesktopWindow();  /* create the desktop window to trigger builtin class registration */
+
     USER_Lock();
 
     LIST_FOR_EACH( ptr, &class_list )
@@ -507,7 +509,7 @@ ATOM WINAPI RegisterClassExA( const WNDCLASSEXA* wc )
     CLASS *classPtr;
     HINSTANCE instance;
 
-    InitOnceExecuteOnce( &init_once, register_builtins, NULL, NULL );
+    GetDesktopWindow();  /* create the desktop window to trigger builtin class registration */
 
     if (wc->cbSize != sizeof(*wc) || wc->cbClsExtra < 0 || wc->cbWndExtra < 0 ||
         wc->hInstance == user32_module)  /* we can't register a class for user32 */
@@ -562,7 +564,7 @@ ATOM WINAPI RegisterClassExW( const WNDCLASSEXW* wc )
     CLASS *classPtr;
     HINSTANCE instance;
 
-    InitOnceExecuteOnce( &init_once, register_builtins, NULL, NULL );
+    GetDesktopWindow();  /* create the desktop window to trigger builtin class registration */
 
     if (wc->cbSize != sizeof(*wc) || wc->cbClsExtra < 0 || wc->cbWndExtra < 0 ||
         wc->hInstance == user32_module)  /* we can't register a class for user32 */
@@ -620,7 +622,7 @@ BOOL WINAPI UnregisterClassW( LPCWSTR className, HINSTANCE hInstance )
 {
     CLASS *classPtr = NULL;
 
-    InitOnceExecuteOnce( &init_once, register_builtins, NULL, NULL );
+    GetDesktopWindow();  /* create the desktop window to trigger builtin class registration */
 
     SERVER_START_REQ( destroy_class )
     {
@@ -1122,8 +1124,6 @@ BOOL WINAPI GetClassInfoExA( HINSTANCE hInstance, LPCSTR name, WNDCLASSEXA *wc )
 
     TRACE("%p %s %p\n", hInstance, debugstr_a(name), wc);
 
-    InitOnceExecuteOnce( &init_once, register_builtins, NULL, NULL );
-
     if (!wc)
     {
         SetLastError( ERROR_NOACCESS );
@@ -1174,8 +1174,6 @@ BOOL WINAPI GetClassInfoExW( HINSTANCE hInstance, LPCWSTR name, WNDCLASSEXW *wc 
     CLASS *classPtr;
 
     TRACE("%p %s %p\n", hInstance, debugstr_w(name), wc);
-
-    InitOnceExecuteOnce( &init_once, register_builtins, NULL, NULL );
 
     if (!wc)
     {
