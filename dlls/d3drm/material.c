@@ -36,71 +36,64 @@ typedef struct
     D3DVALUE b;
 } color_rgb;
 
-typedef struct {
+struct d3drm_material
+{
     IDirect3DRMMaterial2 IDirect3DRMMaterial2_iface;
     LONG ref;
     color_rgb emissive;
     color_rgb specular;
     D3DVALUE power;
     color_rgb ambient;
-} IDirect3DRMMaterialImpl;
+};
 
-static inline IDirect3DRMMaterialImpl *impl_from_IDirect3DRMMaterial2(IDirect3DRMMaterial2 *iface)
+static inline struct d3drm_material *impl_from_IDirect3DRMMaterial2(IDirect3DRMMaterial2 *iface)
 {
-    return CONTAINING_RECORD(iface, IDirect3DRMMaterialImpl, IDirect3DRMMaterial2_iface);
+    return CONTAINING_RECORD(iface, struct d3drm_material, IDirect3DRMMaterial2_iface);
 }
 
-/*** IUnknown methods ***/
-static HRESULT WINAPI IDirect3DRMMaterial2Impl_QueryInterface(IDirect3DRMMaterial2* iface,
-                                                           REFIID riid, void** ret_iface)
+static HRESULT WINAPI d3drm_material_QueryInterface(IDirect3DRMMaterial2 *iface, REFIID riid, void **out)
 {
-    IDirect3DRMMaterialImpl *This = impl_from_IDirect3DRMMaterial2(iface);
+    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
 
-    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ret_iface);
-
-    if (IsEqualGUID(riid, &IID_IUnknown) ||
-        IsEqualGUID(riid, &IID_IDirect3DRMMaterial) ||
-        IsEqualGUID(riid, &IID_IDirect3DRMMaterial2))
+    if (IsEqualGUID(riid, &IID_IDirect3DRMMaterial2)
+            || IsEqualGUID(riid, &IID_IDirect3DRMMaterial)
+            || IsEqualGUID(riid, &IID_IUnknown))
     {
-        *ret_iface = &This->IDirect3DRMMaterial2_iface;
-    }
-    else
-    {
-        *ret_iface = NULL;
-        FIXME("Interface %s not implemented\n", debugstr_guid(riid));
-        return E_NOINTERFACE;
+        IDirect3DRMMaterial2_AddRef(iface);
+        *out = iface;
+        return S_OK;
     }
 
-    IDirect3DRMMaterial_AddRef(iface);
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
 
-    return S_OK;
+    *out = NULL;
+    return E_NOINTERFACE;
 }
 
-static ULONG WINAPI IDirect3DRMMaterial2Impl_AddRef(IDirect3DRMMaterial2* iface)
+static ULONG WINAPI d3drm_material_AddRef(IDirect3DRMMaterial2 *iface)
 {
-    IDirect3DRMMaterialImpl *This = impl_from_IDirect3DRMMaterial2(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
+    struct d3drm_material *material = impl_from_IDirect3DRMMaterial2(iface);
+    ULONG refcount = InterlockedIncrement(&material->ref);
 
-    TRACE("(%p)->(): new ref = %d\n", iface, ref);
+    TRACE("%p increasing refcount to %u.\n", iface, refcount);
 
-    return ref;
+    return refcount;
 }
 
-static ULONG WINAPI IDirect3DRMMaterial2Impl_Release(IDirect3DRMMaterial2* iface)
+static ULONG WINAPI d3drm_material_Release(IDirect3DRMMaterial2 *iface)
 {
-    IDirect3DRMMaterialImpl *This = impl_from_IDirect3DRMMaterial2(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
+    struct d3drm_material *material = impl_from_IDirect3DRMMaterial2(iface);
+    ULONG refcount = InterlockedDecrement(&material->ref);
 
-    TRACE("(%p)->(): new ref = %d\n", iface, ref);
+    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
-    if (!ref)
-        HeapFree(GetProcessHeap(), 0, This);
+    if (!refcount)
+        HeapFree(GetProcessHeap(), 0, material);
 
-    return ref;
+    return refcount;
 }
 
-/*** IDirect3DRMObject methods ***/
-static HRESULT WINAPI IDirect3DRMMaterial2Impl_Clone(IDirect3DRMMaterial2 *iface,
+static HRESULT WINAPI d3drm_material_Clone(IDirect3DRMMaterial2 *iface,
         IUnknown *outer, REFIID iid, void **out)
 {
     FIXME("iface %p, outer %p, iid %s, out %p stub!\n", iface, outer, debugstr_guid(iid), out);
@@ -108,7 +101,7 @@ static HRESULT WINAPI IDirect3DRMMaterial2Impl_Clone(IDirect3DRMMaterial2 *iface
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMaterial2Impl_AddDestroyCallback(IDirect3DRMMaterial2 *iface,
+static HRESULT WINAPI d3drm_material_AddDestroyCallback(IDirect3DRMMaterial2 *iface,
         D3DRMOBJECTCALLBACK cb, void *ctx)
 {
     FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
@@ -116,7 +109,7 @@ static HRESULT WINAPI IDirect3DRMMaterial2Impl_AddDestroyCallback(IDirect3DRMMat
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMaterial2Impl_DeleteDestroyCallback(IDirect3DRMMaterial2 *iface,
+static HRESULT WINAPI d3drm_material_DeleteDestroyCallback(IDirect3DRMMaterial2 *iface,
         D3DRMOBJECTCALLBACK cb, void *ctx)
 {
     FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
@@ -124,36 +117,35 @@ static HRESULT WINAPI IDirect3DRMMaterial2Impl_DeleteDestroyCallback(IDirect3DRM
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMaterial2Impl_SetAppData(IDirect3DRMMaterial2* iface,
-                                                          DWORD data)
+static HRESULT WINAPI d3drm_material_SetAppData(IDirect3DRMMaterial2 *iface, DWORD data)
 {
-    FIXME("(%p)->(%u): stub\n", iface, data);
+    FIXME("iface %p, data %#x stub!\n", iface, data);
 
     return E_NOTIMPL;
 }
 
-static DWORD WINAPI IDirect3DRMMaterial2Impl_GetAppData(IDirect3DRMMaterial2* iface)
+static DWORD WINAPI d3drm_material_GetAppData(IDirect3DRMMaterial2 *iface)
 {
-    FIXME("(%p)->(): stub\n", iface);
+    FIXME("iface %p stub!\n", iface);
 
     return 0;
 }
 
-static HRESULT WINAPI IDirect3DRMMaterial2Impl_SetName(IDirect3DRMMaterial2 *iface, const char *name)
+static HRESULT WINAPI d3drm_material_SetName(IDirect3DRMMaterial2 *iface, const char *name)
 {
     FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMaterial2Impl_GetName(IDirect3DRMMaterial2 *iface, DWORD *size, char *name)
+static HRESULT WINAPI d3drm_material_GetName(IDirect3DRMMaterial2 *iface, DWORD *size, char *name)
 {
     FIXME("iface %p, size %p, name %p stub!\n", iface, size, name);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMaterial2Impl_GetClassName(IDirect3DRMMaterial2 *iface, DWORD *size, char *name)
+static HRESULT WINAPI d3drm_material_GetClassName(IDirect3DRMMaterial2 *iface, DWORD *size, char *name)
 {
     TRACE("iface %p, size %p, name %p.\n", iface, size, name);
 
@@ -166,157 +158,150 @@ static HRESULT WINAPI IDirect3DRMMaterial2Impl_GetClassName(IDirect3DRMMaterial2
     return D3DRM_OK;
 }
 
-/*** IDirect3DRMMaterial methods ***/
-static HRESULT WINAPI IDirect3DRMMaterial2Impl_SetPower(IDirect3DRMMaterial2* iface, D3DVALUE power)
+static HRESULT WINAPI d3drm_material_SetPower(IDirect3DRMMaterial2 *iface, D3DVALUE power)
 {
-    IDirect3DRMMaterialImpl *This = impl_from_IDirect3DRMMaterial2(iface);
+    struct d3drm_material *material = impl_from_IDirect3DRMMaterial2(iface);
 
-    TRACE("(%p)->(%f)\n", iface, power);
+    TRACE("iface %p, power %.8e.\n", iface, power);
 
-    This->power = power;
+    material->power = power;
 
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMMaterial2Impl_SetSpecular(IDirect3DRMMaterial2* iface,
-                                                           D3DVALUE r, D3DVALUE g, D3DVALUE b)
+static HRESULT WINAPI d3drm_material_SetSpecular(IDirect3DRMMaterial2 *iface,
+        D3DVALUE r, D3DVALUE g, D3DVALUE b)
 {
-    IDirect3DRMMaterialImpl *This = impl_from_IDirect3DRMMaterial2(iface);
+    struct d3drm_material *material = impl_from_IDirect3DRMMaterial2(iface);
 
-    TRACE("(%p)->(%f, %f, %f)\n", iface, r, g, b);
+    TRACE("iface %p, r %.8e, g %.8e, b %.8e.\n", iface, r, g, b);
 
-    This->specular.r = r;
-    This->specular.g = g;
-    This->specular.b = b;
+    material->specular.r = r;
+    material->specular.g = g;
+    material->specular.b = b;
 
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMMaterial2Impl_SetEmissive(IDirect3DRMMaterial2* iface,
-                                                           D3DVALUE r, D3DVALUE g, D3DVALUE b)
+static HRESULT WINAPI d3drm_material_SetEmissive(IDirect3DRMMaterial2 *iface,
+        D3DVALUE r, D3DVALUE g, D3DVALUE b)
 {
-    IDirect3DRMMaterialImpl *This = impl_from_IDirect3DRMMaterial2(iface);
+    struct d3drm_material *material = impl_from_IDirect3DRMMaterial2(iface);
 
-    TRACE("(%p)->(%f, %f, %f)\n", iface, r, g, b);
+    TRACE("iface %p, r %.8e, g %.8e, b %.8e.\n", iface, r, g, b);
 
-    This->emissive.r = r;
-    This->emissive.g = g;
-    This->emissive.b = b;
+    material->emissive.r = r;
+    material->emissive.g = g;
+    material->emissive.b = b;
 
     return D3DRM_OK;
 }
 
-static D3DVALUE WINAPI IDirect3DRMMaterial2Impl_GetPower(IDirect3DRMMaterial2* iface)
+static D3DVALUE WINAPI d3drm_material_GetPower(IDirect3DRMMaterial2 *iface)
 {
-    IDirect3DRMMaterialImpl *This = impl_from_IDirect3DRMMaterial2(iface);
+    struct d3drm_material *material = impl_from_IDirect3DRMMaterial2(iface);
 
-    TRACE("(%p)->()\n", iface);
+    TRACE("iface %p.\n", iface);
 
-    return This->power;
+    return material->power;
 }
 
-static HRESULT WINAPI IDirect3DRMMaterial2Impl_GetSpecular(IDirect3DRMMaterial2* iface,
-                                                           D3DVALUE* r, D3DVALUE* g, D3DVALUE* b)
+static HRESULT WINAPI d3drm_material_GetSpecular(IDirect3DRMMaterial2 *iface,
+        D3DVALUE *r, D3DVALUE *g, D3DVALUE *b)
 {
-    IDirect3DRMMaterialImpl *This = impl_from_IDirect3DRMMaterial2(iface);
+    struct d3drm_material *material = impl_from_IDirect3DRMMaterial2(iface);
 
-    TRACE("(%p)->(%p, %p, %p)\n", iface, r, g, b);
+    TRACE("iface %p, r %p, g %p, b %p.\n", iface, r, g, b);
 
-    *r = This->specular.r;
-    *g = This->specular.g;
-    *b = This->specular.b;
+    *r = material->specular.r;
+    *g = material->specular.g;
+    *b = material->specular.b;
 
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMMaterial2Impl_GetEmissive(IDirect3DRMMaterial2* iface,
-                                                           D3DVALUE* r, D3DVALUE* g, D3DVALUE* b)
+static HRESULT WINAPI d3drm_material_GetEmissive(IDirect3DRMMaterial2 *iface,
+        D3DVALUE *r, D3DVALUE *g, D3DVALUE *b)
 {
-    IDirect3DRMMaterialImpl *This = impl_from_IDirect3DRMMaterial2(iface);
+    struct d3drm_material *material = impl_from_IDirect3DRMMaterial2(iface);
 
-    TRACE("(%p)->(%p, %p, %p)\n", iface, r, g, b);
+    TRACE("iface %p, r %p, g %p, b %p.\n", iface, r, g, b);
 
-    *r = This->emissive.r;
-    *g = This->emissive.g;
-    *b = This->emissive.b;
+    *r = material->emissive.r;
+    *g = material->emissive.g;
+    *b = material->emissive.b;
 
     return D3DRM_OK;
 }
 
-/*** IDirect3DRMMaterial2 methods ***/
-static HRESULT WINAPI IDirect3DRMMaterial2Impl_GetAmbient(IDirect3DRMMaterial2* iface,
-                                                          D3DVALUE* r, D3DVALUE* g, D3DVALUE* b)
+static HRESULT WINAPI d3drm_material_GetAmbient(IDirect3DRMMaterial2 *iface,
+        D3DVALUE *r, D3DVALUE *g, D3DVALUE *b)
 {
-    IDirect3DRMMaterialImpl *This = impl_from_IDirect3DRMMaterial2(iface);
+    struct d3drm_material *material = impl_from_IDirect3DRMMaterial2(iface);
 
-    TRACE("(%p)->(%p, %p, %p)\n", iface, r, g, b);
+    TRACE("iface %p, r %p, g %p, b %p.\n", iface, r, g, b);
 
-    *r = This->ambient.r;
-    *g = This->ambient.g;
-    *b = This->ambient.b;
+    *r = material->ambient.r;
+    *g = material->ambient.g;
+    *b = material->ambient.b;
 
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMMaterial2Impl_SetAmbient(IDirect3DRMMaterial2* iface,
-                                                          D3DVALUE r, D3DVALUE g, D3DVALUE b)
+static HRESULT WINAPI d3drm_material_SetAmbient(IDirect3DRMMaterial2 *iface,
+        D3DVALUE r, D3DVALUE g, D3DVALUE b)
 {
-    IDirect3DRMMaterialImpl *This = impl_from_IDirect3DRMMaterial2(iface);
+    struct d3drm_material *material = impl_from_IDirect3DRMMaterial2(iface);
 
-    TRACE("(%p)->(%f, %f, %f)\n", iface, r, g, b);
+    TRACE("iface %p, r %.8e, g %.8e, b %.8e.\n", iface, r, g, b);
 
-    This->ambient.r = r;
-    This->ambient.g = g;
-    This->ambient.b = b;
+    material->ambient.r = r;
+    material->ambient.g = g;
+    material->ambient.b = b;
 
     return D3DRM_OK;
 }
 
-static const struct IDirect3DRMMaterial2Vtbl Direct3DRMMaterial2_Vtbl =
+static const struct IDirect3DRMMaterial2Vtbl d3drm_material_vtbl =
 {
-    /*** IUnknown methods ***/
-    IDirect3DRMMaterial2Impl_QueryInterface,
-    IDirect3DRMMaterial2Impl_AddRef,
-    IDirect3DRMMaterial2Impl_Release,
-    /*** IDirect3DRMObject methods ***/
-    IDirect3DRMMaterial2Impl_Clone,
-    IDirect3DRMMaterial2Impl_AddDestroyCallback,
-    IDirect3DRMMaterial2Impl_DeleteDestroyCallback,
-    IDirect3DRMMaterial2Impl_SetAppData,
-    IDirect3DRMMaterial2Impl_GetAppData,
-    IDirect3DRMMaterial2Impl_SetName,
-    IDirect3DRMMaterial2Impl_GetName,
-    IDirect3DRMMaterial2Impl_GetClassName,
-    /*** IDirect3DRMMaterial methods ***/
-    IDirect3DRMMaterial2Impl_SetPower,
-    IDirect3DRMMaterial2Impl_SetSpecular,
-    IDirect3DRMMaterial2Impl_SetEmissive,
-    IDirect3DRMMaterial2Impl_GetPower,
-    IDirect3DRMMaterial2Impl_GetSpecular,
-    IDirect3DRMMaterial2Impl_GetEmissive,
-    /*** IDirect3DRMMaterial2 methods ***/
-    IDirect3DRMMaterial2Impl_GetAmbient,
-    IDirect3DRMMaterial2Impl_SetAmbient
+    d3drm_material_QueryInterface,
+    d3drm_material_AddRef,
+    d3drm_material_Release,
+    d3drm_material_Clone,
+    d3drm_material_AddDestroyCallback,
+    d3drm_material_DeleteDestroyCallback,
+    d3drm_material_SetAppData,
+    d3drm_material_GetAppData,
+    d3drm_material_SetName,
+    d3drm_material_GetName,
+    d3drm_material_GetClassName,
+    d3drm_material_SetPower,
+    d3drm_material_SetSpecular,
+    d3drm_material_SetEmissive,
+    d3drm_material_GetPower,
+    d3drm_material_GetSpecular,
+    d3drm_material_GetEmissive,
+    d3drm_material_GetAmbient,
+    d3drm_material_SetAmbient,
 };
 
-HRESULT Direct3DRMMaterial_create(IDirect3DRMMaterial2** ret_iface)
+HRESULT Direct3DRMMaterial_create(IDirect3DRMMaterial2 **out)
 {
-    IDirect3DRMMaterialImpl* object;
+    struct d3drm_material *object;
 
-    TRACE("(%p)\n", ret_iface);
+    TRACE("out %p.\n", out);
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DRMMaterialImpl));
-    if (!object)
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    object->IDirect3DRMMaterial2_iface.lpVtbl = &Direct3DRMMaterial2_Vtbl;
+    object->IDirect3DRMMaterial2_iface.lpVtbl = &d3drm_material_vtbl;
     object->ref = 1;
 
     object->specular.r = 1.0f;
     object->specular.g = 1.0f;
     object->specular.b = 1.0f;
 
-    *ret_iface = &object->IDirect3DRMMaterial2_iface;
+    *out = &object->IDirect3DRMMaterial2_iface;
 
     return S_OK;
 }
