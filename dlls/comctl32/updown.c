@@ -150,7 +150,7 @@ static BOOL UPDOWN_OffsetVal(UPDOWN_INFO *infoPtr, int delta)
 		     (infoPtr->MaxVal < infoPtr->MinVal ? -1 : 1) *
 		     (infoPtr->MinVal - infoPtr->MaxVal) +
 		     (delta < 0 ? 1 : -1);
-        } if ((infoPtr->MaxVal > infoPtr->MinVal && infoPtr->CurVal+delta > infoPtr->MaxVal)
+        } else if ((infoPtr->MaxVal > infoPtr->MinVal && infoPtr->CurVal+delta > infoPtr->MaxVal)
                 || (infoPtr->MaxVal < infoPtr->MinVal && infoPtr->CurVal+delta < infoPtr->MaxVal)) {
             delta = infoPtr->MaxVal - infoPtr->CurVal;
         } else {
