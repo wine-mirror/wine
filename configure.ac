@@ -280,6 +280,7 @@ if test "x$enable_maintainer_mode" != "xyes"
 then
   AC_SUBST([MAINTAINER_MODE],[\#])
 else
+  test "$srcdir" = . || AC_MSG_ERROR([Maintainer mode cannot work out of tree.])
   if test "$FONTFORGE" = "false"; then AC_MSG_ERROR([You need fontforge to rebuild fonts in maintainer mode.]); fi
   if test "$RSVG" = "false"; then AC_MSG_ERROR([You need rsvg to rebuild icons in maintainer mode.]); fi
 
@@ -3462,11 +3463,11 @@ dnl Some final makefile rules
 if test "x$enable_maintainer_mode" = xyes
 then
     WINE_APPEND_RULE(
-[\$(srcdir)/configure: configure.ac aclocal.m4
-	cd \$(srcdir) && autoconf --warnings=all
-\$(srcdir)/include/config.h.in: include/stamp-h.in
-\$(srcdir)/include/stamp-h.in: configure.ac aclocal.m4
-	cd \$(srcdir) && autoheader --warnings=all
+[configure: configure.ac aclocal.m4
+	autoconf --warnings=all
+include/config.h.in: include/stamp-h.in
+include/stamp-h.in: configure.ac aclocal.m4
+	autoheader --warnings=all
 	@echo timestamp > \$[@]])
 fi
 
@@ -3475,9 +3476,9 @@ then
     test "$srcdir" = . || AC_MSG_ERROR([Rebuilding po files is not supported for out of tree builds.])
     WINE_APPEND_RULE(
 [ALL_POT_FILES =$ALL_POT_FILES
-\$(LINGUAS:%=po/%.po): \$(srcdir)/po/wine.pot
-	msgmerge --previous -q \$[@] \$(srcdir)/po/wine.pot | msgattrib --no-obsolete -o \$[@].new && mv \$[@].new \$[@]
-\$(srcdir)/po/wine.pot: \$(ALL_POT_FILES)
+\$(LINGUAS:%=po/%.po): po/wine.pot
+	msgmerge --previous -q \$[@] po/wine.pot | msgattrib --no-obsolete -o \$[@].new && mv \$[@].new \$[@]
+po/wine.pot: \$(ALL_POT_FILES)
 	msgcat -o \$[@] \$(ALL_POT_FILES)])
 fi
 

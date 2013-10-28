@@ -5834,6 +5834,7 @@ then
   MAINTAINER_MODE=\#
 
 else
+  test "$srcdir" = . || as_fn_error $? "Maintainer mode cannot work out of tree." "$LINENO" 5
   if test "$FONTFORGE" = "false"; then as_fn_error $? "You need fontforge to rebuild fonts in maintainer mode." "$LINENO" 5; fi
   if test "$RSVG" = "false"; then as_fn_error $? "You need rsvg to rebuild icons in maintainer mode." "$LINENO" 5; fi
 
@@ -16350,7 +16351,7 @@ fi
 "__builddeps__: $ac_file.$IMPLIBEXT $ac_file.$STATIC_IMPLIBEXT
 $ac_file.$IMPLIBEXT $ac_file.$STATIC_IMPLIBEXT $ac_file.cross.a: $ac_deps
 $ac_file.def: $ac_dir/$ac_name.spec $ac_dir/Makefile \$(WINEBUILD)
-	\$(WINEBUILD) \$(TARGETFLAGS)$ac_implibflags -w --def -o \$@ --export \$(srcdir)/$ac_dir/$ac_name.spec
+	\$(WINEBUILD) \$(TARGETFLAGS)$ac_implibflags -w --def -o \$@ --export $srcdir/$ac_dir/$ac_name.spec
 $ac_file.$STATIC_IMPLIBEXT: $ac_dir/Makefile dummy
 	@cd $ac_dir && \$(MAKE) lib$ac_implib.$STATIC_IMPLIBEXT
 .PHONY: $ac_dir/install-dev $ac_dir/uninstall
@@ -16383,9 +16384,9 @@ $ac_file.cross.a: $ac_dir/Makefile dummy
         wine_fn_append_rule \
 "__builddeps__: $ac_file.$IMPLIBEXT
 $ac_file.def: $ac_dir/$ac_name.spec $ac_dir/Makefile \$(WINEBUILD)
-	\$(WINEBUILD) \$(TARGETFLAGS)$ac_implibflags -w --def -o \$@ --export \$(srcdir)/$ac_dir/$ac_name.spec
+	\$(WINEBUILD) \$(TARGETFLAGS)$ac_implibflags -w --def -o \$@ --export $srcdir/$ac_dir/$ac_name.spec
 $ac_file.a: $ac_dir/$ac_name.spec $ac_dir/Makefile \$(WINEBUILD)
-	\$(WINEBUILD) \$(TARGETFLAGS)$ac_implibflags -w --implib -o \$@ --export \$(srcdir)/$ac_dir/$ac_name.spec
+	\$(WINEBUILD) \$(TARGETFLAGS)$ac_implibflags -w --implib -o \$@ --export $srcdir/$ac_dir/$ac_name.spec
 .PHONY: $ac_dir/install-dev $ac_dir/uninstall
 $ac_dir/install-dev:: $ac_file.$IMPLIBEXT \$(DESTDIR)\$(dlldir)
 	\$(INSTALL_DATA) $ac_file.$IMPLIBEXT \$(DESTDIR)\$(dlldir)/lib$ac_implib.$IMPLIBEXT
@@ -16398,7 +16399,7 @@ __uninstall__: $ac_dir/uninstall"
             wine_fn_append_rule \
 "__builddeps__: $ac_file.cross.a
 $ac_file.cross.a: $ac_dir/$ac_name.spec $ac_dir/Makefile \$(WINEBUILD)
-	\$(WINEBUILD) \$(CROSSTARGET:%=-b %)$ac_implibflags -w --implib -o \$@ --export \$(srcdir)/$ac_dir/$ac_name.spec"
+	\$(WINEBUILD) \$(CROSSTARGET:%=-b %)$ac_implibflags -w --implib -o \$@ --export $srcdir/$ac_dir/$ac_name.spec"
         fi
 
         if test "$ac_name" != "$ac_implib"
@@ -17419,11 +17420,11 @@ ac_config_files="$ac_config_files Make.tmp:Make.vars.in:Makefile.in"
 
 if test "x$enable_maintainer_mode" = xyes
 then
-    wine_fn_append_rule "\$(srcdir)/configure: configure.ac aclocal.m4
-	cd \$(srcdir) && autoconf --warnings=all
-\$(srcdir)/include/config.h.in: include/stamp-h.in
-\$(srcdir)/include/stamp-h.in: configure.ac aclocal.m4
-	cd \$(srcdir) && autoheader --warnings=all
+    wine_fn_append_rule "configure: configure.ac aclocal.m4
+	autoconf --warnings=all
+include/config.h.in: include/stamp-h.in
+include/stamp-h.in: configure.ac aclocal.m4
+	autoheader --warnings=all
 	@echo timestamp > \$@"
 fi
 
@@ -17431,9 +17432,9 @@ if test "x$with_gettextpo" = xyes
 then
     test "$srcdir" = . || as_fn_error $? "Rebuilding po files is not supported for out of tree builds." "$LINENO" 5
     wine_fn_append_rule "ALL_POT_FILES =$ALL_POT_FILES
-\$(LINGUAS:%=po/%.po): \$(srcdir)/po/wine.pot
-	msgmerge --previous -q \$@ \$(srcdir)/po/wine.pot | msgattrib --no-obsolete -o \$@.new && mv \$@.new \$@
-\$(srcdir)/po/wine.pot: \$(ALL_POT_FILES)
+\$(LINGUAS:%=po/%.po): po/wine.pot
+	msgmerge --previous -q \$@ po/wine.pot | msgattrib --no-obsolete -o \$@.new && mv \$@.new \$@
+po/wine.pot: \$(ALL_POT_FILES)
 	msgcat -o \$@ \$(ALL_POT_FILES)"
 fi
 
