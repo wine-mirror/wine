@@ -1510,6 +1510,10 @@ static BOOL parse_com_class_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll, str
         {
             entity->u.comclass.miscstatusdocprint = parse_com_class_misc(&attr_value);
         }
+        else if (xmlstr_cmp(&attr_name, descriptionW))
+        {
+            /* not stored */
+        }
         else
         {
             WARN("unknown attr %s=%s\n", debugstr_xmlstr(&attr_name), debugstr_xmlstr(&attr_value));
