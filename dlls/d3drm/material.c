@@ -29,21 +29,21 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3drm);
 
-typedef struct
+struct color_rgb
 {
     D3DVALUE r;
     D3DVALUE g;
     D3DVALUE b;
-} color_rgb;
+};
 
 struct d3drm_material
 {
     IDirect3DRMMaterial2 IDirect3DRMMaterial2_iface;
     LONG ref;
-    color_rgb emissive;
-    color_rgb specular;
+    struct color_rgb emissive;
+    struct color_rgb specular;
     D3DVALUE power;
-    color_rgb ambient;
+    struct color_rgb ambient;
 };
 
 static inline struct d3drm_material *impl_from_IDirect3DRMMaterial2(IDirect3DRMMaterial2 *iface)
