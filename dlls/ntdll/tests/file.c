@@ -2131,6 +2131,20 @@ todo_wine
     ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
     ok(bytes == 0, "bytes %u\n", bytes);
 
+    bytes = -1;
+    SetLastError(0xdeadbeef);
+    ret = ReadFile(hfile, buf, 0, &bytes, NULL);
+    ok(ret, "ReadFile error %d\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
+    ok(bytes == 0, "bytes %u\n", bytes);
+
+    bytes = -1;
+    SetLastError(0xdeadbeef);
+    ret = ReadFile(hfile, NULL, 0, &bytes, NULL);
+    ok(ret, "ReadFile error %d\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
+    ok(bytes == 0, "bytes %u\n", bytes);
+
     S(U(ovl)).Offset = sizeof(contents);
     S(U(ovl)).OffsetHigh = 0;
     ovl.Internal = -1;
@@ -2146,12 +2160,39 @@ todo_wine
     ok((NTSTATUS)ovl.Internal == STATUS_END_OF_FILE, "expected STATUS_END_OF_FILE, got %#lx\n", ovl.Internal);
     ok(ovl.InternalHigh == 0, "expected 0, got %lu\n", ovl.InternalHigh);
 
+    S(U(ovl)).Offset = sizeof(contents);
+    S(U(ovl)).OffsetHigh = 0;
+    ovl.Internal = -1;
+    ovl.InternalHigh = -1;
+    ovl.hEvent = 0;
+    bytes = -1;
+    SetLastError(0xdeadbeef);
+    ret = ReadFile(hfile, buf, 0, &bytes, &ovl);
+todo_wine
+    ok(ret, "ReadFile error %d\n", GetLastError());
+todo_wine
+    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
+    ok(bytes == 0, "bytes %u\n", bytes);
+todo_wine
+    ok((NTSTATUS)ovl.Internal == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx\n", ovl.Internal);
+    ok(ovl.InternalHigh == 0, "expected 0, got %lu\n", ovl.InternalHigh);
+
     U(iob).Status = -1;
     iob.Information = -1;
     status = pNtReadFile(hfile, 0, NULL, NULL, &iob, buf, sizeof(buf), NULL, NULL);
     ok(status == STATUS_END_OF_FILE, "expected STATUS_END_OF_FILE, got %#x\n", status);
 todo_wine
     ok(U(iob).Status == STATUS_END_OF_FILE, "expected STATUS_END_OF_FILE, got %#x\n", U(iob).Status);
+todo_wine
+    ok(iob.Information == 0, "expected 0, got %lu\n", iob.Information);
+
+    U(iob).Status = -1;
+    iob.Information = -1;
+    status = pNtReadFile(hfile, 0, NULL, NULL, &iob, buf, 0, NULL, NULL);
+todo_wine
+    ok(status == STATUS_SUCCESS, "NtReadFile error %#x\n", status);
+todo_wine
+    ok(U(iob).Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", U(iob).Status);
 todo_wine
     ok(iob.Information == 0, "expected 0, got %lu\n", iob.Information);
 
@@ -2167,11 +2208,33 @@ todo_wine
 
     U(iob).Status = -1;
     iob.Information = -1;
+    offset.QuadPart = sizeof(contents);
+    status = pNtReadFile(hfile, 0, NULL, NULL, &iob, buf, 0, &offset, NULL);
+todo_wine
+    ok(status == STATUS_SUCCESS, "NtReadFile error %#x\n", status);
+todo_wine
+    ok(U(iob).Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", U(iob).Status);
+todo_wine
+    ok(iob.Information == 0, "expected 0, got %lu\n", iob.Information);
+
+    U(iob).Status = -1;
+    iob.Information = -1;
     offset.QuadPart = (LONGLONG)-2 /* FILE_USE_FILE_POINTER_POSITION */;
     status = pNtReadFile(hfile, 0, NULL, NULL, &iob, buf, sizeof(buf), &offset, NULL);
     ok(status == STATUS_END_OF_FILE, "expected STATUS_END_OF_FILE, got %#x\n", status);
 todo_wine
     ok(U(iob).Status == STATUS_END_OF_FILE, "expected STATUS_END_OF_FILE, got %#x\n", U(iob).Status);
+todo_wine
+    ok(iob.Information == 0, "expected 0, got %lu\n", iob.Information);
+
+    U(iob).Status = -1;
+    iob.Information = -1;
+    offset.QuadPart = (LONGLONG)-2 /* FILE_USE_FILE_POINTER_POSITION */;
+    status = pNtReadFile(hfile, 0, NULL, NULL, &iob, buf, 0, &offset, NULL);
+todo_wine
+    ok(status == STATUS_SUCCESS, "NtReadFile error %#x\n", status);
+todo_wine
+    ok(U(iob).Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", U(iob).Status);
 todo_wine
     ok(iob.Information == 0, "expected 0, got %lu\n", iob.Information);
 
@@ -2392,6 +2455,68 @@ todo_wine
     off = SetFilePointer(hfile, 0, NULL, FILE_CURRENT);
     ok(off == 0, "expected 0, got %u\n", off);
 
+    offset.QuadPart = sizeof(contents);
+    S(U(ovl)).Offset = offset.u.LowPart;
+    S(U(ovl)).OffsetHigh = offset.u.HighPart;
+    ovl.Internal = -1;
+    ovl.InternalHigh = -1;
+    ovl.hEvent = 0;
+    bytes = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = ReadFile(hfile, buf, 0, &bytes, &ovl);
+    /* ReadFile return value depends on Windows version and testing it is not practical */
+    if (!ret)
+todo_wine
+        ok(GetLastError() == ERROR_IO_PENDING, "expected ERROR_IO_PENDING, got %d\n", GetLastError());
+    ret = GetLastError();
+    ok(bytes == 0, "bytes %u\n", bytes);
+
+    off = SetFilePointer(hfile, 0, NULL, FILE_CURRENT);
+    ok(off == 0, "expected 0, got %u\n", off);
+
+    if (ret == ERROR_IO_PENDING)
+    {
+        bytes = 0xdeadbeef;
+        SetLastError(0xdeadbeef);
+        ret = GetOverlappedResult(hfile, &ovl, &bytes, TRUE);
+        ok(ret, "GetOverlappedResult should report TRUE\n");
+        ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
+        ok(bytes == 0, "expected 0, read %u\n", bytes);
+        ok((NTSTATUS)ovl.Internal == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx\n", ovl.Internal);
+        ok(ovl.InternalHigh == 0, "expected 0, got %lu\n", ovl.InternalHigh);
+    }
+
+    offset.QuadPart = sizeof(contents);
+    S(U(ovl)).Offset = offset.u.LowPart;
+    S(U(ovl)).OffsetHigh = offset.u.HighPart;
+    ovl.Internal = -1;
+    ovl.InternalHigh = -1;
+    ovl.hEvent = 0;
+    bytes = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = ReadFile(hfile, NULL, 0, &bytes, &ovl);
+    /* ReadFile return value depends on Windows version and testing it is not practical */
+    if (!ret)
+todo_wine
+        ok(GetLastError() == ERROR_IO_PENDING, "expected ERROR_IO_PENDING, got %d\n", GetLastError());
+    ret = GetLastError();
+    ok(bytes == 0, "bytes %u\n", bytes);
+
+    off = SetFilePointer(hfile, 0, NULL, FILE_CURRENT);
+    ok(off == 0, "expected 0, got %u\n", off);
+
+    if (ret == ERROR_IO_PENDING)
+    {
+        bytes = 0xdeadbeef;
+        SetLastError(0xdeadbeef);
+        ret = GetOverlappedResult(hfile, &ovl, &bytes, TRUE);
+        ok(ret, "GetOverlappedResult should report TRUE\n");
+        ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
+        ok(bytes == 0, "expected 0, read %u\n", bytes);
+        ok((NTSTATUS)ovl.Internal == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx\n", ovl.Internal);
+        ok(ovl.InternalHigh == 0, "expected 0, got %lu\n", ovl.InternalHigh);
+    }
+
     U(iob).Status = -1;
     iob.Information = -1;
     offset.QuadPart = sizeof(contents);
@@ -2406,6 +2531,28 @@ todo_wine
         ok(status == STATUS_END_OF_FILE, "expected STATUS_END_OF_FILE, got %#x\n", status);
         ok(U(iob).Status == -1, "expected -1, got %#x\n", U(iob).Status);
         ok(iob.Information == -1, "expected -1, got %lu\n", iob.Information);
+    }
+
+    off = SetFilePointer(hfile, 0, NULL, FILE_CURRENT);
+    ok(off == 0, "expected 0, got %u\n", off);
+
+    U(iob).Status = -1;
+    iob.Information = -1;
+    offset.QuadPart = sizeof(contents);
+    status = pNtReadFile(hfile, 0, NULL, NULL, &iob, buf, 0, &offset, NULL);
+    if (status == STATUS_PENDING)
+    {
+        ok(U(iob).Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", U(iob).Status);
+        ok(iob.Information == 0, "expected 0, got %lu\n", iob.Information);
+    }
+    else
+    {
+todo_wine
+        ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", status);
+todo_wine
+        ok(U(iob).Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", U(iob).Status);
+todo_wine
+        ok(iob.Information == 0, "expected 0, got %lu\n", iob.Information);
     }
 
     off = SetFilePointer(hfile, 0, NULL, FILE_CURRENT);
