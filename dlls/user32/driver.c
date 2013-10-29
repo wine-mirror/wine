@@ -26,20 +26,61 @@
 #include "winuser.h"
 #include "wine/debug.h"
 #include "wine/gdi_driver.h"
+#include "wine/unicode.h"
 
 #include "user_private.h"
 #include "controls.h"
 
+WINE_DEFAULT_DEBUG_CHANNEL(user);
+
 static USER_DRIVER null_driver, lazy_load_driver;
 
 const USER_DRIVER *USER_Driver = &lazy_load_driver;
-static DWORD driver_load_error;
+static char driver_load_error[80];
+
+static HMODULE load_desktop_driver( HWND hwnd )
+{
+    static const WCHAR display_device_guid_propW[] = {
+        '_','_','w','i','n','e','_','d','i','s','p','l','a','y','_',
+        'd','e','v','i','c','e','_','g','u','i','d',0 };
+    static const WCHAR key_pathW[] = {
+        'S','y','s','t','e','m','\\',
+        'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+        'C','o','n','t','r','o','l','\\',
+        'V','i','d','e','o','\\','{',0};
+    static const WCHAR displayW[] = {'}','\\','0','0','0','0',0};
+    static const WCHAR driverW[] = {'G','r','a','p','h','i','c','s','D','r','i','v','e','r',0};
+    HMODULE ret = 0;
+    HKEY hkey;
+    DWORD size;
+    WCHAR path[MAX_PATH];
+    WCHAR key[(sizeof(key_pathW) + sizeof(displayW)) / sizeof(WCHAR) + 40];
+    UINT guid_atom = HandleToULong( GetPropW( hwnd, display_device_guid_propW ));
+
+    strcpy( driver_load_error, "The explorer process failed to start." );  /* default error */
+
+    memcpy( key, key_pathW, sizeof(key_pathW) );
+    if (!GlobalGetAtomNameW( guid_atom, key + strlenW(key), 40 )) return 0;
+    strcatW( key, displayW );
+    if (RegOpenKeyW( HKEY_LOCAL_MACHINE, key, &hkey )) return 0;
+    size = sizeof(path);
+    if (!RegQueryValueExW( hkey, driverW, NULL, NULL, (BYTE *)path, &size ))
+    {
+        if (!(ret = LoadLibraryW( path ))) ERR( "failed to load %s\n", debugstr_w(path) );
+        TRACE( "%s %p\n", debugstr_w(path), ret );
+    }
+    else
+    {
+        size = sizeof(driver_load_error);
+        RegQueryValueExA( hkey, "DriverError", NULL, NULL, (BYTE *)driver_load_error, &size );
+    }
+    RegCloseKey( hkey );
+    return ret;
+}
 
 /* load the graphics driver */
 static const USER_DRIVER *load_driver(void)
 {
-    static const WCHAR displayW[] = {'D','I','S','P','L','A','Y',0};
-    HDC hdc;
     void *ptr;
     HMODULE graphics_driver;
     USER_DRIVER *driver, *prev;
@@ -47,9 +88,7 @@ static const USER_DRIVER *load_driver(void)
     driver = HeapAlloc( GetProcessHeap(), 0, sizeof(*driver) );
     *driver = null_driver;
 
-    hdc = CreateDCW( displayW, NULL, NULL, NULL );
-
-    graphics_driver = __wine_get_driver_module( hdc );
+    graphics_driver = load_desktop_driver( GetDesktopWindow() );
     if (graphics_driver)
     {
 #define GET_USER_FUNC(name) \
@@ -109,7 +148,6 @@ static const USER_DRIVER *load_driver(void)
         GET_USER_FUNC(SystemParametersInfo);
 #undef GET_USER_FUNC
     }
-    else driver_load_error = GetLastError();
 
     prev = InterlockedCompareExchangePointer( (void **)&USER_Driver, driver, &lazy_load_driver );
     if (prev != &lazy_load_driver)
@@ -122,7 +160,6 @@ static const USER_DRIVER *load_driver(void)
 
     register_builtin_classes();
 
-    DeleteDC( hdc );
     return driver;
 }
 
@@ -304,18 +341,7 @@ static BOOL CDECL nulldrv_CreateWindow( HWND hwnd )
     if (warned++) return FALSE;
 
     MESSAGE( "Application tried to create a window, but no driver could be loaded.\n");
-    switch (driver_load_error)
-    {
-    case ERROR_MOD_NOT_FOUND:
-        MESSAGE( "The graphics driver is missing. Check your build!\n" );
-        break;
-    case ERROR_DLL_INIT_FAILED:
-        MESSAGE( "Make sure that your X server is running and that $DISPLAY is set correctly.\n" );
-        break;
-    default:
-        MESSAGE( "Unknown error (%d).\n", driver_load_error );
-    }
-
+    if (driver_load_error[0]) MESSAGE( "%s\n", driver_load_error );
     return FALSE;
 }
 
