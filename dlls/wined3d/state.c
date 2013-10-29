@@ -821,16 +821,16 @@ static void state_stencil(struct wined3d_context *context, const struct wined3d_
     const struct wined3d_gl_info *gl_info = context->gl_info;
     DWORD onesided_enable;
     DWORD twosided_enable;
-    GLint func = GL_ALWAYS;
-    GLint func_ccw = GL_ALWAYS;
-    GLint ref = 0;
-    GLuint mask = 0;
-    GLint stencilFail = GL_KEEP;
-    GLint depthFail = GL_KEEP;
-    GLint stencilPass = GL_KEEP;
-    GLint stencilFail_ccw = GL_KEEP;
-    GLint depthFail_ccw = GL_KEEP;
-    GLint stencilPass_ccw = GL_KEEP;
+    GLint func;
+    GLint func_ccw;
+    GLint ref;
+    GLuint mask;
+    GLint stencilFail;
+    GLint stencilFail_ccw;
+    GLint stencilPass;
+    GLint stencilPass_ccw;
+    GLint depthFail;
+    GLint depthFail_ccw;
 
     /* No stencil test without a stencil buffer. */
     if (!state->fb->depth_stencil)
