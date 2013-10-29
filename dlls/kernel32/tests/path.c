@@ -1930,6 +1930,72 @@ static void init_pointers(void)
 #undef MAKEFUNC
 }
 
+static void test_relative_path(void)
+{
+    char path[MAX_PATH], buf[MAX_PATH];
+    HANDLE file;
+    int ret;
+
+    if (!pGetLongPathNameA) return;
+
+    GetTempPathA(MAX_PATH, path);
+    ret = SetCurrentDirectoryA(path);
+    ok(ret, "SetCurrentDirectory error %d\n", GetLastError());
+
+    ret = CreateDirectoryA("foo", NULL);
+    ok(ret, "CreateDirectory error %d\n", GetLastError());
+    file = CreateFileA("foo\\file", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE, "failed to create temp file\n");
+    CloseHandle(file);
+    ret = CreateDirectoryA("bar", NULL);
+    ok(ret, "CreateDirectory error %d\n", GetLastError());
+    ret = SetCurrentDirectoryA("bar");
+    ok(ret, "SetCurrentDirectory error %d\n", GetLastError());
+
+    ret = GetFileAttributesA("..\\foo\\file");
+    ok(ret != INVALID_FILE_ATTRIBUTES, "GetFileAttributes error %d\n", GetLastError());
+
+    strcpy(buf, "deadbeef");
+    ret = pGetLongPathNameA(".", buf, MAX_PATH);
+    ok(ret, "GetLongPathName error %d\n", GetLastError());
+todo_wine
+    ok(!strcmp(buf, "."), "expected ., got %s\n", buf);
+    strcpy(buf, "deadbeef");
+    ret = GetShortPathNameA(".", buf, MAX_PATH);
+    ok(ret, "GetShortPathName error %d\n", GetLastError());
+todo_wine
+    ok(!strcmp(buf, "."), "expected ., got %s\n", buf);
+
+    strcpy(buf, "deadbeef");
+    ret = pGetLongPathNameA("..", buf, MAX_PATH);
+    ok(ret, "GetLongPathName error %d\n", GetLastError());
+todo_wine
+    ok(!strcmp(buf, ".."), "expected .., got %s\n", buf);
+    strcpy(buf, "deadbeef");
+    ret = GetShortPathNameA("..", buf, MAX_PATH);
+    ok(ret, "GetShortPathName error %d\n", GetLastError());
+todo_wine
+    ok(!strcmp(buf, ".."), "expected .., got %s\n", buf);
+
+    strcpy(buf, "deadbeef");
+    ret = pGetLongPathNameA("..\\foo\\file", buf, MAX_PATH);
+todo_wine
+    ok(ret, "GetLongPathName error %d\n", GetLastError());
+todo_wine
+    ok(!strcmp(buf, "..\\foo\\file"), "expected ..\\foo\\file, got %s\n", buf);
+    strcpy(buf, "deadbeef");
+    ret = GetShortPathNameA("..\\foo\\file", buf, MAX_PATH);
+todo_wine
+    ok(ret, "GetShortPathName error %d\n", GetLastError());
+todo_wine
+    ok(!strcmp(buf, "..\\foo\\file"), "expected ..\\foo\\file, got %s\n", buf);
+
+    SetCurrentDirectoryA("..");
+    DeleteFileA("foo\\file");
+    RemoveDirectoryA("foo");
+    RemoveDirectoryA("bar");
+}
+
 START_TEST(path)
 {
     CHAR origdir[MAX_PATH],curdir[MAX_PATH], curDrive, otherDrive;
@@ -1944,6 +2010,7 @@ START_TEST(path)
     if (!pActivateActCtx)
         win_skip("Activation contexts not supported, some tests will be skipped\n");
 
+    test_relative_path();
     test_InitPathA(curdir, &curDrive, &otherDrive);
     test_CurrentDirectoryA(origdir,curdir);
     test_PathNameA(curdir, curDrive, otherDrive);
