@@ -25,12 +25,12 @@ static DWORD texture_stages;
 
 static HWND create_window(void)
 {
-    WNDCLASS wc = {0};
-    wc.lpfnWndProc = DefWindowProc;
+    WNDCLASSA wc = {0};
+    wc.lpfnWndProc = DefWindowProcA;
     wc.lpszClassName = "d3d8_test_wc";
-    RegisterClass(&wc);
+    RegisterClassA(&wc);
 
-    return CreateWindow("d3d8_test_wc", "d3d8_test", 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    return CreateWindowA("d3d8_test_wc", "d3d8_test", 0, 0, 0, 0, 0, 0, 0, 0, 0);
 }
 
 static HRESULT init_d3d8(HMODULE d3d8_module, IDirect3DDevice8 **device, D3DPRESENT_PARAMETERS *device_pparams)
