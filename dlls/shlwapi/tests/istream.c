@@ -655,6 +655,52 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
 }
 
 
+void test_SHCreateStreamOnFileEx_CopyTo(void)
+{
+    HRESULT ret;
+    IStream *src, *dst;
+    WCHAR tmpPath[MAX_PATH];
+    WCHAR srcFileName[MAX_PATH];
+    WCHAR dstFileName[MAX_PATH];
+    ULARGE_INTEGER count, read, written;
+    LARGE_INTEGER distance;
+    static const char srcContents[1];
+    static const WCHAR prefix[] = { 'T', 'S', 'T', 0 };
+
+    GetTempPathW(MAX_PATH, tmpPath);
+    GetTempFileNameW(tmpPath, prefix, 0, srcFileName);
+    GetTempFileNameW(tmpPath, prefix, 0, dstFileName);
+
+    ret = pSHCreateStreamOnFileEx(srcFileName, STGM_CREATE | STGM_READWRITE | STGM_DELETEONRELEASE, FILE_ATTRIBUTE_TEMPORARY, FALSE, NULL, &src);
+    ok(SUCCEEDED(ret), "SHCreateStreamOnFileEx failed with ret=0x%08x\n", ret);
+
+    written.QuadPart = 0;
+    ret = IStream_Write(src, srcContents, sizeof(srcContents), &written.LowPart);
+    ok(SUCCEEDED(ret), "ISequentialStream_Write failed with ret=0x%08x\n", ret);
+
+    distance.QuadPart = 0;
+    ret = IStream_Seek(src, distance, STREAM_SEEK_SET, &written);
+    ok(SUCCEEDED(ret), "ISequentialStream_Seek failed with ret=0x%08x\n", ret);
+
+    ret = pSHCreateStreamOnFileEx(dstFileName, STGM_CREATE | STGM_READWRITE | STGM_DELETEONRELEASE, FILE_ATTRIBUTE_TEMPORARY, FALSE, NULL, &dst);
+    ok(SUCCEEDED(ret), "SHCreateStreamOnFileEx failed with ret=0x%08x\n", ret);
+
+    /* Test using a count larger than the source file, so that the Read operation will fall short */
+    count.QuadPart = 2;
+
+    ret = IStream_CopyTo(src, dst, count, &read, &written);
+    ok(SUCCEEDED(ret), "CopyTo failed with ret=0x%08x\n", ret);
+
+    ok(read.QuadPart == 1, "read does not match size: %d != 1\n", read.LowPart);
+    ok(written.QuadPart == 1, "written does not match size: %d != 1\n", written.LowPart);
+
+    IStream_Release(dst);
+    IStream_Release(src);
+    DeleteFileW( srcFileName );
+    DeleteFileW( dstFileName );
+}
+
+
 START_TEST(istream)
 {
     static const DWORD stgm_access[] = {
@@ -712,4 +758,6 @@ START_TEST(istream)
             }
         }
     }
+
+    test_SHCreateStreamOnFileEx_CopyTo();
 }
