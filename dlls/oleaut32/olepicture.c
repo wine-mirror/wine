@@ -2273,7 +2273,7 @@ HRESULT WINAPI OleLoadPicturePath( LPOLESTR szURLorPath, LPUNKNOWN punkCaller,
   HANDLE hFile;
   DWORD dwFileSize;
   HGLOBAL hGlobal = NULL;
-  DWORD dwBytesRead = 0;
+  DWORD dwBytesRead;
   IStream *stream;
   BOOL bRead;
   IPersistStream *pStream;
@@ -2317,7 +2317,7 @@ HRESULT WINAPI OleLoadPicturePath( LPOLESTR szURLorPath, LPUNKNOWN punkCaller,
 	  hGlobal = GlobalAlloc(GMEM_FIXED,dwFileSize);
 	  if ( hGlobal)
 	  {
-	      bRead = ReadFile(hFile, hGlobal, dwFileSize, &dwBytesRead, NULL);
+	      bRead = ReadFile(hFile, hGlobal, dwFileSize, &dwBytesRead, NULL) && dwBytesRead == dwFileSize;
 	      if (!bRead)
 	      {
 		  GlobalFree(hGlobal);
