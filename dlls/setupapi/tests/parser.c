@@ -290,8 +290,8 @@ static void test_enum_sections(void)
         ret = pSetupEnumInfSectionsA( hinf, index, buffer, sizeof(buffer), &len );
         ok( ret, "SetupEnumInfSectionsA failed err %u\n", GetLastError() );
         ok( len == 3 || len == 8, "wrong len %u\n", len );
-        ok( !lstrcmpi( buffer, "version" ) || !lstrcmpi( buffer, "s1" ) ||
-            !lstrcmpi( buffer, "s2" ) || !lstrcmpi( buffer, "s3" ) || !lstrcmpi( buffer, "strings" ),
+        ok( !lstrcmpiA( buffer, "version" ) || !lstrcmpiA( buffer, "s1" ) ||
+            !lstrcmpiA( buffer, "s2" ) || !lstrcmpiA( buffer, "s3" ) || !lstrcmpiA( buffer, "strings" ),
             "bad section '%s'\n", buffer );
     }
     SetupCloseInfFile( hinf );
@@ -542,7 +542,7 @@ static void test_pSetupGetField(void)
     hinf = test_file_contents( contents, &err );
     ok( hinf != NULL, "Expected valid INF file\n" );
 
-    ret = SetupFindFirstLine( hinf, "FileBranchInfo", NULL, &context );
+    ret = SetupFindFirstLineA( hinf, "FileBranchInfo", NULL, &context );
     ok( ret, "Failed to find first line\n" );
 
     /* native Windows crashes if a NULL context is sent in */

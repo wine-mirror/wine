@@ -241,7 +241,7 @@ static void clean_devclass_key(void)
      * the keys under the DeviceClasses key after a SetupDiDestroyDeviceInfoList.
      */
     RegOpenKeyW(HKEY_LOCAL_MACHINE, devclass, &key);
-    RegQueryInfoKey(key, NULL, NULL, NULL, &subkeys, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    RegQueryInfoKeyW(key, NULL, NULL, NULL, &subkeys, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     if (subkeys > 0)
     {
         trace("We are most likely on Windows 2000\n");
@@ -342,8 +342,8 @@ static void test_SetupDiOpenClassRegKeyExA(void)
 static void create_inf_file(LPCSTR filename)
 {
     DWORD dwNumberOfBytesWritten;
-    HANDLE hf = CreateFile(filename, GENERIC_WRITE, 0, NULL,
-                           CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    HANDLE hf = CreateFileA(filename, GENERIC_WRITE, 0, NULL,
+                            CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
     static const char data[] =
         "[Version]\n"
@@ -410,7 +410,7 @@ static void testInstallClass(void)
     ok(!RegDeleteKeyW(HKEY_LOCAL_MACHINE, classKey),
      "Couldn't delete classkey\n");
 
-    DeleteFile(tmpfile);
+    DeleteFileA(tmpfile);
 }
 
 static void testCreateDeviceInfo(void)
@@ -533,7 +533,7 @@ static void testCreateDeviceInfo(void)
         DWORD subkeys;
 
         /* Check if we have subkeys */
-        RegQueryInfoKey(key, NULL, NULL, NULL, &subkeys, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+        RegQueryInfoKeyA(key, NULL, NULL, NULL, &subkeys, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
         if (subkeys > 0)
         {
             int i;
