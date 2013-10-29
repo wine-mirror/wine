@@ -683,7 +683,7 @@ static UINT RECORD_StreamFromFile(LPCWSTR szFile, IStream **pstm)
         hGlob = GlobalAlloc(GMEM_FIXED, sz);
         if( hGlob )
         {
-            BOOL r = ReadFile(handle, hGlob, sz, &read, NULL);
+            BOOL r = ReadFile(handle, hGlob, sz, &read, NULL) && read == sz;
             if( !r )
             {
                 GlobalFree(hGlob);
