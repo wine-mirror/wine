@@ -56,7 +56,7 @@ static LANGID user_ui_language, system_ui_language;
  *
  * Check if a module handle is for a LOAD_LIBRARY_AS_DATAFILE module.
  */
-static inline int is_data_file_module( HMODULE hmod )
+static inline BOOL is_data_file_module( HMODULE hmod )
 {
     return (ULONG_PTR)hmod & 1;
 }

@@ -575,13 +575,13 @@ static void CDROM_ClearCacheEntry(int dev)
  * Determines the ide interface (the number after the ide), and the
  * number of the device on that interface for ide cdroms (*iface <= 1).
  * Determines the scsi information for scsi cdroms (*iface >= 2).
- * Returns false if the info cannot not be obtained.
+ * Returns FALSE if the info cannot not be obtained.
  */
-static int CDROM_GetInterfaceInfo(int fd, UCHAR* iface, UCHAR* port, UCHAR* device, UCHAR* lun)
+static BOOL CDROM_GetInterfaceInfo(int fd, UCHAR* iface, UCHAR* port, UCHAR* device, UCHAR* lun)
 {
 #if defined(linux)
     struct stat st;
-    if ( fstat(fd, &st) == -1 || ! S_ISBLK(st.st_mode)) return 0;
+    if ( fstat(fd, &st) == -1 || ! S_ISBLK(st.st_mode)) return FALSE;
     *port = 0;
     *iface = 0;
     *device = 0;
@@ -615,10 +615,10 @@ static int CDROM_GetInterfaceInfo(int fd, UCHAR* iface, UCHAR* port, UCHAR* devi
 #endif
         {
             WARN("CD-ROM device (%d, %d) not supported\n", major(st.st_rdev), minor(st.st_rdev));
-            return 0;
+            return FALSE;
         }
     }
-    return 1;
+    return TRUE;
 #elif defined(__NetBSD__)
     struct scsi_addr addr;
     if (ioctl(fd, SCIOCIDENTIFY, &addr) != -1)
@@ -630,16 +630,16 @@ static int CDROM_GetInterfaceInfo(int fd, UCHAR* iface, UCHAR* port, UCHAR* devi
             *iface = addr.addr.scsi.scbus;
             *device = addr.addr.scsi.target;
             *lun = addr.addr.scsi.lun;
-            return 1;
+            return TRUE;
         case TYPE_ATAPI:
             *port = 0;
             *iface = addr.addr.atapi.atbus;
             *device = addr.addr.atapi.drive;
             *lun = 0;
-            return 1;
+            return TRUE;
         }
     }
-    return 0;
+    return FALSE;
 #elif defined(__APPLE__)
     dk_scsi_identify_t addr;
     if (ioctl(fd, DKIOCSCSIIDENTIFY, &addr) != -1)
@@ -648,12 +648,12 @@ static int CDROM_GetInterfaceInfo(int fd, UCHAR* iface, UCHAR* port, UCHAR* devi
        *iface = addr.port;
        *device = addr.target;
        *lun = addr.lun;
-       return 1;
+       return TRUE;
     }
-    return 0;
+    return FALSE;
 #else
     FIXME("not implemented on this O/S\n");
-    return 0;
+    return FALSE;
 #endif
 }
 

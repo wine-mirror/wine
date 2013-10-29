@@ -161,7 +161,7 @@ static BOOL show_dot_files;
 static RTL_RUN_ONCE init_once = RTL_RUN_ONCE_INIT;
 
 /* at some point we may want to allow Winelib apps to set this */
-static const int is_case_sensitive = FALSE;
+static const BOOL is_case_sensitive = FALSE;
 
 UNICODE_STRING system_dir = { 0, 0, NULL };  /* system directory */
 
@@ -187,7 +187,7 @@ static inline BOOL is_invalid_dos_char( WCHAR ch )
 }
 
 /* check if the device can be a mounted volume */
-static inline int is_valid_mounted_device( const struct stat *st )
+static inline BOOL is_valid_mounted_device( const struct stat *st )
 {
 #if defined(linux) || defined(__sun__)
     return S_ISBLK( st->st_mode );
@@ -1184,7 +1184,7 @@ static ULONG hash_short_file_name( const UNICODE_STRING *name, LPWSTR buffer )
  */
 static BOOLEAN match_filename( const UNICODE_STRING *name_str, const UNICODE_STRING *mask_str )
 {
-    int mismatch;
+    BOOL mismatch;
     const WCHAR *name = name_str->Buffer;
     const WCHAR *mask = mask_str->Buffer;
     const WCHAR *name_end = name + name_str->Length / sizeof(WCHAR);

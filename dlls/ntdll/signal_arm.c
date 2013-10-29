@@ -876,12 +876,12 @@ void set_tpidrurw( TEB *teb )
  */
 void signal_init_thread( TEB *teb )
 {
-    static int init_done;
+    static BOOL init_done;
 
     if (!init_done)
     {
         pthread_key_create( &teb_key, NULL );
-        init_done = 1;
+        init_done = TRUE;
     }
     set_tpidrurw( teb );
     pthread_setspecific( teb_key, teb );

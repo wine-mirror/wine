@@ -476,7 +476,7 @@ void version_init( const WCHAR *appname )
 {
     static const WCHAR configW[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e',0};
     static const WCHAR appdefaultsW[] = {'A','p','p','D','e','f','a','u','l','t','s','\\',0};
-    static const int is_win64 = (sizeof(void *) > sizeof(int));
+    static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
     HANDLE root, hkey, config_key;

@@ -74,12 +74,12 @@ void CDECL NTDLL_wine_get_host_version( const char **sysname, const char **relea
 {
 #ifdef HAVE_SYS_UTSNAME_H
     static struct utsname buf;
-    static int init_done;
+    static BOOL init_done;
 
     if (!init_done)
     {
         uname( &buf );
-        init_done = 1;
+        init_done = TRUE;
     }
     if (sysname) *sysname = buf.sysname;
     if (release) *release = buf.release;

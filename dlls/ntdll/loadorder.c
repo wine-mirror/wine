@@ -53,7 +53,7 @@ struct loadorder_list
 
 static const WCHAR separatorsW[] = {',',' ','\t',0};
 
-static int init_done;
+static BOOL init_done;
 static struct loadorder_list env_list;
 
 
@@ -232,7 +232,7 @@ static void init_load_order(void)
     UNICODE_STRING strW;
     WCHAR *entry, *next;
 
-    init_done = 1;
+    init_done = TRUE;
     if (!order) return;
 
     if (!strcmp( order, "help" ))
