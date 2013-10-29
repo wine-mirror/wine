@@ -511,13 +511,13 @@ static HRESULT file_register(Registrar *This, LPCOLESTR fileName, BOOL do_regist
 
             HeapFree(GetProcessHeap(), 0, regstrw);
         }else {
-            WARN("Failed to read faile\n");
+            WARN("Failed to read file %s\n", debugstr_w(fileName));
             hres = HRESULT_FROM_WIN32(GetLastError());
         }
         HeapFree(GetProcessHeap(), 0, regstra);
         CloseHandle(file);
     }else {
-        WARN("Could not open file\n");
+        WARN("Could not open file %s\n", debugstr_w(fileName));
         hres = HRESULT_FROM_WIN32(GetLastError());
     }
 
