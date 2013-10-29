@@ -101,7 +101,7 @@ static void free_bstrs(void)
     alloced_bstrs_count = 0;
 }
 
-static void test_saxstr(const char *file, unsigned line, BSTR str, const char *expected, int todo, int *failcount)
+static void test_saxstr(const char *file, unsigned line, BSTR str, const char *expected, BOOL todo, int *failcount)
 {
     int len, lenexp, cmp;
     WCHAR buf[1024];
@@ -323,7 +323,7 @@ static const char *get_event_name(CH event)
 }
 
 static void compare_attributes(const struct call_entry *actual, const struct call_entry *expected, const char *context,
-    int todo, const char *file, int line, int *failcount)
+    BOOL todo, const char *file, int line, int *failcount)
 {
     int i, lenexp = 0;
 
@@ -359,7 +359,7 @@ static void compare_attributes(const struct call_entry *actual, const struct cal
 }
 
 static void ok_sequence_(struct call_sequence **seq, int sequence_index,
-    const struct call_entry *expected, const char *context, int todo,
+    const struct call_entry *expected, const char *context, BOOL todo,
     const char *file, int line)
 {
     struct call_sequence *call_seq = seq[sequence_index];
