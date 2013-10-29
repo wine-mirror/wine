@@ -515,6 +515,7 @@
 
 # Graphics drivers
 @ cdecl __wine_get_driver_module(long)
+@ cdecl __wine_set_display_driver(long)
 
 # OpenGL
 @ cdecl __wine_get_wgl_driver(long long)
