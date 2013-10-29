@@ -36,6 +36,9 @@
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
 #endif
+#ifdef HAVE_SYS_SYSCALL_H
+# include <sys/syscall.h>
+#endif
 #ifdef HAVE_SYS_TIME_H
 # include <sys/time.h>
 #endif
@@ -1653,6 +1656,15 @@ NTSTATUS WINAPI NtSetVolumeInformationFile(
 	FileHandle,IoStatusBlock,FsInformation,Length,FsInformationClass);
 	return 0;
 }
+
+#if defined(__ANDROID__) && !defined(HAVE_FUTIMENS)
+static int futimens( int fd, const struct timespec spec[2] )
+{
+    return syscall( __NR_utimensat, fd, NULL, spec, 0 );
+}
+#define UTIME_OMIT ((1 << 30) - 2)
+#define HAVE_FUTIMENS
+#endif  /* __ANDROID__ */
 
 static NTSTATUS set_file_times( int fd, const LARGE_INTEGER *mtime, const LARGE_INTEGER *atime )
 {
