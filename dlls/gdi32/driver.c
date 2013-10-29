@@ -28,7 +28,6 @@
 #include <stdio.h>
 #include "windef.h"
 #include "winbase.h"
-#include "winreg.h"
 #include "ddrawgdi.h"
 #include "wine/winbase16.h"
 
@@ -48,7 +47,6 @@ struct graphics_driver
 
 static struct list drivers = LIST_INIT( drivers );
 static struct graphics_driver *display_driver;
-static DWORD display_driver_load_error;
 
 const struct gdi_dc_funcs *font_driver = NULL;
 
@@ -101,48 +99,18 @@ static struct graphics_driver *create_driver( HMODULE module )
  */
 static const struct gdi_dc_funcs *get_display_driver( HMODULE *module_ret )
 {
-    struct graphics_driver *driver;
-    char buffer[MAX_PATH], libname[32], *name, *next;
-    HMODULE module = 0;
-    HKEY hkey;
-
-    if (display_driver) goto done;
-
-    strcpy( buffer, default_driver );
-    /* @@ Wine registry key: HKCU\Software\Wine\Drivers */
-    if (!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\Drivers", &hkey ))
+    if (!display_driver)
     {
-        DWORD type, count = sizeof(buffer);
-        RegQueryValueExA( hkey, "Graphics", 0, &type, (LPBYTE) buffer, &count );
-        RegCloseKey( hkey );
+        HMODULE user32 = LoadLibraryA( "user32.dll" );
+        HWND (WINAPI *pGetDesktopWindow)(void) = (void *)GetProcAddress( user32, "GetDesktopWindow" );
+
+        if (!pGetDesktopWindow() || !display_driver)
+        {
+            WARN( "failed to load the display driver, falling back to null driver\n" );
+            __wine_set_display_driver( 0 );
+        }
     }
 
-    name = buffer;
-    while (name)
-    {
-        next = strchr( name, ',' );
-        if (next) *next++ = 0;
-
-        snprintf( libname, sizeof(libname), "wine%s.drv", name );
-        if ((module = LoadLibraryA( libname )) != 0) break;
-        name = next;
-    }
-
-    if (!module) display_driver_load_error = GetLastError();
-
-    if (!(driver = create_driver( module )))
-    {
-        MESSAGE( "Could not create graphics driver '%s'\n", buffer );
-        FreeLibrary( module );
-        ExitProcess(1);
-    }
-    if (InterlockedCompareExchangePointer( (void **)&display_driver, driver, NULL ))
-    {
-        /* somebody beat us to it */
-        FreeLibrary( driver->module );
-        HeapFree( GetProcessHeap(), 0, driver );
-    }
-done:
     *module_ret = display_driver->module;
     return display_driver->funcs;
 }
@@ -201,25 +169,6 @@ done:
     *module_ret = driver->module;
     LeaveCriticalSection( &driver_section );
     return driver->funcs;
-}
-
-
-/***********************************************************************
- *           __wine_get_driver_module    (GDI32.@)
- */
-HMODULE CDECL __wine_get_driver_module( HDC hdc )
-{
-    DC *dc;
-    HMODULE ret = 0;
-
-    if ((dc = get_dc_ptr( hdc )))
-    {
-        ret = dc->module;
-        release_dc_ptr( dc );
-        if (!ret) SetLastError( display_driver_load_error );
-    }
-    else SetLastError( ERROR_INVALID_HANDLE );
-    return ret;
 }
 
 
