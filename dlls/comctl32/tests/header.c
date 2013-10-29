@@ -1354,7 +1354,7 @@ static LRESULT customdraw_1(int n, NMCUSTOMDRAW *nm)
         return 0;
     }
 
-    ok(FALSE, "To many custom draw messages (n=%d, nm->dwDrawStage=%d)\n", n, nm->dwDrawStage);
+    ok(FALSE, "Too many custom draw messages (n=%d, nm->dwDrawStage=%d)\n", n, nm->dwDrawStage);
     return -1;
 }
 
@@ -1381,7 +1381,7 @@ static LRESULT customdraw_2(int n, NMCUSTOMDRAW *nm)
         return 0;
     }
 
-    ok(FALSE, "To many custom draw messages (n=%d, nm->dwDrawStage=%d)\n", n, nm->dwDrawStage);
+    ok(FALSE, "Too many custom draw messages (n=%d, nm->dwDrawStage=%d)\n", n, nm->dwDrawStage);
     return 0;
 }
 
@@ -1411,7 +1411,7 @@ static LRESULT customdraw_3(int n, NMCUSTOMDRAW *nm)
         return 0;
     }
 
-    ok(FALSE, "To many custom draw messages (n=%d, nm->dwDrawStage=%d)\n", n, nm->dwDrawStage);
+    ok(FALSE, "Too many custom draw messages (n=%d, nm->dwDrawStage=%d)\n", n, nm->dwDrawStage);
     return 0;
 }
 
@@ -1439,7 +1439,7 @@ static LRESULT customdraw_4(int n, NMCUSTOMDRAW *nm)
         return 0;
     }
 
-    ok(FALSE, "To many custom draw messages (n=%d, nm->dwDrawStage=%d)\n", n, nm->dwDrawStage);
+    ok(FALSE, "Too many custom draw messages (n=%d, nm->dwDrawStage=%d)\n", n, nm->dwDrawStage);
     return 0;
 }
 

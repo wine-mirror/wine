@@ -510,7 +510,7 @@ static LRESULT GSM_StreamConvert(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMHEADER
             return ACMERR_NOTPOSSIBLE;
         }
 
-        /* The packing algorythm writes 32 bytes, then 33 bytes,
+        /* The packing algorithm writes 32 bytes, then 33 bytes,
          * and it seems to pad to align to 65 bytes always
          * adding extra data where necessary
          */

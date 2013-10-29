@@ -939,7 +939,7 @@ FileMonikerImpl_CommonPrefixWith(IMoniker* iface,IMoniker* pmkOther,IMoniker** p
     IBindCtx *pbind;
     DWORD mkSys;
     ULONG nb1,nb2,i,sameIdx;
-    BOOL machimeNameCase=FALSE;
+    BOOL machineNameCase = FALSE;
 
     if (ppmkPrefix==NULL)
         return E_POINTER;
@@ -997,20 +997,20 @@ FileMonikerImpl_CommonPrefixWith(IMoniker* iface,IMoniker* pmkOther,IMoniker** p
 
         if (sameIdx > 1 && *stringTable1[0]=='\\' && *stringTable2[1]=='\\'){
 
-            machimeNameCase=TRUE;
+            machineNameCase = TRUE;
 
             for(i=2;i<sameIdx;i++)
 
                 if( (*stringTable1[i]=='\\') && (i+1 < sameIdx) && (*stringTable1[i+1]=='\\') ){
-                    machimeNameCase=FALSE;
+                    machineNameCase = FALSE;
                     break;
             }
         }
 
-        if (machimeNameCase && *stringTable1[sameIdx-1]=='\\')
+        if (machineNameCase && *stringTable1[sameIdx-1]=='\\')
             sameIdx--;
 
-        if (machimeNameCase && (sameIdx<=3) && (nb1 > 3 || nb2 > 3) )
+        if (machineNameCase && (sameIdx<=3) && (nb1 > 3 || nb2 > 3) )
             ret = MK_E_NOPREFIX;
         else
         {

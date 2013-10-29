@@ -1,7 +1,7 @@
 /* GLIB - Library of useful routines for C programming
  * Copyright (C) 1995-1997  Peter Mattis, Spencer Kimball and Josh MacDonald
  *
- * Wine Gstramer integration
+ * Wine GStreamer integration
  * Copyright 2010 Aric Stewart, CodeWeavers
  *
  * gthread.c: solaris thread system implementation

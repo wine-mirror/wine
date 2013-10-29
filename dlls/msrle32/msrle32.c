@@ -1486,7 +1486,7 @@ static LRESULT Compress(CodecInfo *pi, ICCOMPRESS* lpic, DWORD dwSize)
     computeInternalFrame(pi, lpic->lpbiPrev, lpic->lpPrev);
 
     /* swap buffers for current and previous frame */
-    /* Don't free and alloc new -- costs to much time and they are of equal size ! */
+    /* Don't free and alloc new -- costs too much time and they are of equal size ! */
     pTmp = pi->pPrevFrame;
     pi->pPrevFrame = pi->pCurFrame;
     pi->pCurFrame  = pTmp;
@@ -1534,7 +1534,7 @@ static LRESULT Compress(CodecInfo *pi, ICCOMPRESS* lpic, DWORD dwSize)
   }
 
   { /* swap buffer for current and previous frame */
-    /* Don't free and alloc new -- costs to much time and they are of equal size ! */
+    /* Don't free and alloc new -- costs too much time and they are of equal size ! */
     LPWORD pTmp = pi->pPrevFrame;
 
     pi->pPrevFrame = pi->pCurFrame;

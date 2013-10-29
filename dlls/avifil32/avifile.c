@@ -2096,7 +2096,7 @@ static HRESULT AVIFILE_SaveFile(IAVIFileImpl *This)
   if (This->dwMoviChunkPos == 0)
     AVIFILE_ComputeMoviStart(This);
 
-  /* written one record to much? */
+  /* written one record too much? */
   if (This->ckLastRecord.dwFlags & MMIO_DIRTY) {
     This->dwNextFramePos -= 3 * sizeof(DWORD);
     if (This->nIdxRecords > 0)

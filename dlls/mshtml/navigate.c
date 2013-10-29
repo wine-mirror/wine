@@ -185,7 +185,7 @@ static nsresult NSAPI nsInputStream_ReadSegments(nsIInputStream *iface,
 
     nsres = aWriter(&This->nsIInputStream_iface, aClousure, This->buf, 0, aCount, &written);
     if(NS_FAILED(nsres))
-        TRACE("aWritter failed: %08x\n", nsres);
+        TRACE("aWriter failed: %08x\n", nsres);
     else if(written != This->buf_size)
         FIXME("written %d != buf_size %d\n", written, This->buf_size);
 

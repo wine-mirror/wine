@@ -4595,7 +4595,7 @@ static const invalid_uri invalid_uri_tests[] = {
     {"*a*b*c*d://not.valid.com",0,FALSE},
     /* Not allowed to have invalid % encoded data. */
     {"ftp://google.co%XX/",0,FALSE},
-    /* To many h16 components. */
+    /* Too many h16 components. */
     {"http://[1:2:3:4:5:6:7:8:9]",0,FALSE},
     /* Not enough room for IPv4 address. */
     {"http://[1:2:3:4:5:6:7:192.0.1.0]",0,FALSE},
