@@ -282,7 +282,7 @@ static void test_midiOut_device(UINT udev, HWND hwnd)
         rc = midiOutOpen(&hm, udev, (DWORD_PTR)hwnd, (DWORD_PTR)MYCBINST, CALLBACK_WINDOW);
     else
         rc = midiOutOpen(&hm, udev, (DWORD_PTR)callback_func, (DWORD_PTR)MYCBINST, CALLBACK_FUNCTION);
-    if (rc == MMSYSERR_NOTSUPPORTED)
+    if (rc == MMSYSERR_NOTSUPPORTED || rc == MMSYSERR_NODRIVER)
     {
         skip( "MIDI out not supported\n" );
         return;
@@ -481,7 +481,7 @@ static void test_midiStream(UINT udev, HWND hwnd)
         rc = midiStreamOpen(&hm, &udev, 1, (DWORD_PTR)hwnd, (DWORD_PTR)MYCBINST, CALLBACK_WINDOW);
     else
         rc = midiStreamOpen(&hm, &udev, 1, (DWORD_PTR)callback_func, (DWORD_PTR)MYCBINST, CALLBACK_FUNCTION);
-    if (rc == MMSYSERR_NOTSUPPORTED)
+    if (rc == MMSYSERR_NOTSUPPORTED || rc == MMSYSERR_NODRIVER)
     {
         skip( "MIDI stream not supported\n" );
         return;
