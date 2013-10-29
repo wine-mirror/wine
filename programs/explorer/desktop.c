@@ -30,7 +30,6 @@
 #include <shlobj.h>
 #include <shellapi.h>
 
-#include "wine/gdi_driver.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "explorer_private.h"
@@ -39,6 +38,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(explorer);
 
 #define DESKTOP_CLASS_ATOM ((LPCWSTR)MAKEINTATOM(32769))
 #define DESKTOP_ALL_ACCESS 0x01ff
+
+#ifdef __APPLE__
+static const WCHAR default_driver[] = {'m','a','c',',','x','1','1',0};
+#else
+static const WCHAR default_driver[] = {'x','1','1',0};
+#endif
 
 static BOOL using_root;
 
@@ -633,34 +638,83 @@ static BOOL get_default_desktop_size( const WCHAR *name, unsigned int *width, un
     return found;
 }
 
-static void set_desktop_guid( HWND desktop, GUID *guid, HMODULE driver )
+static HMODULE load_graphics_driver( const GUID *guid )
 {
     static const WCHAR device_keyW[] = {
         'S','y','s','t','e','m','\\',
         'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
         'C','o','n','t','r','o','l','\\',
         'V','i','d','e','o','\\',
-        '{','%','s','}','\\','0','0','0','0',0};
-    static const WCHAR driverW[] = {'G','r','a','p','h','i','c','s','D','r','i','v','e','r',0};
+        '{','%','0','8','x','-','%','0','4','x','-','%','0','4','x','-',
+        '%','0','2','x','%','0','2','x','-','%','0','2','x','%','0','2','x','%','0','2','x',
+        '%','0','2','x','%','0','2','x','%','0','2','x','}','\\','0','0','0','0',0};
+    static const WCHAR graphics_driverW[] = {'G','r','a','p','h','i','c','s','D','r','i','v','e','r',0};
+    static const WCHAR driversW[] = {'S','o','f','t','w','a','r','e','\\',
+                                     'W','i','n','e','\\','D','r','i','v','e','r','s',0};
+    static const WCHAR graphicsW[] = {'G','r','a','p','h','i','c','s',0};
+    static const WCHAR drv_formatW[] = {'w','i','n','e','%','s','.','d','r','v',0};
 
-    RPC_WSTR guid_str;
-    HKEY hkey;
+    WCHAR buffer[MAX_PATH], libname[32], *name, *next;
     WCHAR key[sizeof(device_keyW)/sizeof(WCHAR) + 39];
+    HMODULE module = 0;
+    HKEY hkey;
+    char error[80];
 
-    UuidToStringW( guid, &guid_str );
-    sprintfW( key, device_keyW, guid_str );
-    RpcStringFreeW( &guid_str );
+    strcpyW( buffer, default_driver );
+
+    /* @@ Wine registry key: HKCU\Software\Wine\Drivers */
+    if (!RegOpenKeyW( HKEY_CURRENT_USER, driversW, &hkey ))
+    {
+        DWORD count = sizeof(buffer);
+        RegQueryValueExW( hkey, graphicsW, 0, NULL, (LPBYTE)buffer, &count );
+        RegCloseKey( hkey );
+    }
+
+    name = buffer;
+    while (name)
+    {
+        next = strchrW( name, ',' );
+        if (next) *next++ = 0;
+
+        snprintfW( libname, sizeof(libname)/sizeof(WCHAR), drv_formatW, name );
+        if ((module = LoadLibraryW( libname )) != 0) break;
+        switch (GetLastError())
+        {
+        case ERROR_MOD_NOT_FOUND:
+            strcpy( error, "The graphics driver is missing. Check your build!" );
+            break;
+        case ERROR_DLL_INIT_FAILED:
+            strcpy( error, "Make sure that your X server is running and that $DISPLAY is set correctly." );
+            break;
+        default:
+            sprintf( error, "Unknown error (%u).", GetLastError() );
+            break;
+        }
+        name = next;
+    }
+
+    if (module)
+    {
+        GetModuleFileNameW( module, buffer, MAX_PATH );
+        TRACE( "display %s driver %s\n", debugstr_guid(guid), debugstr_w(buffer) );
+    }
+
+    sprintfW( key, device_keyW, guid->Data1, guid->Data2, guid->Data3,
+              guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
+              guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7] );
 
     if (!RegCreateKeyExW( HKEY_LOCAL_MACHINE, key, 0, NULL,
                           REG_OPTION_VOLATILE, KEY_SET_VALUE, NULL, &hkey, NULL  ))
     {
-        WCHAR path[MAX_PATH];
-
-        GetModuleFileNameW( driver, path, MAX_PATH );
-        RegSetValueExW( hkey, driverW, 0, REG_SZ, (BYTE *)path, (strlenW(path) + 1) * sizeof(WCHAR) );
+        if (module)
+            RegSetValueExW( hkey, graphics_driverW, 0, REG_SZ,
+                            (BYTE *)buffer, (strlenW(buffer) + 1) * sizeof(WCHAR) );
+        else
+            RegSetValueExA( hkey, "DriverError", 0, REG_SZ, (BYTE *)error, strlen(error) + 1 );
         RegCloseKey( hkey );
     }
-    else ERR( "failed to create %s\n", debugstr_w(key) );
+
+    return module;
 }
 
 static void initialize_display_settings(void)
@@ -716,8 +770,8 @@ void manage_desktop( WCHAR *arg )
     HDESK desktop = 0;
     GUID guid;
     MSG msg;
-    HDC hdc;
     HWND hwnd, msg_hwnd;
+    HMODULE graphics_driver;
     unsigned int width, height;
     WCHAR *cmdline = NULL;
     WCHAR *p = arg;
@@ -759,6 +813,7 @@ void manage_desktop( WCHAR *arg )
 
     UuidCreate( &guid );
     TRACE( "display guid %s\n", debugstr_guid(&guid) );
+    graphics_driver = load_graphics_driver( &guid );
 
     /* create the desktop window */
     hwnd = CreateWindowExW( 0, DESKTOP_CLASS_ATOM, NULL,
@@ -770,16 +825,8 @@ void manage_desktop( WCHAR *arg )
 
     if (hwnd == GetDesktopWindow())
     {
-        HMODULE shell32, graphics_driver;
-        void (WINAPI *pShellDDEInit)( BOOL );
-
-        hdc = GetDC( hwnd );
-        graphics_driver = __wine_get_driver_module( hdc );
         using_root = !desktop || !create_desktop( graphics_driver, name, width, height );
-        ReleaseDC( hwnd, hdc );
-
         SetWindowLongPtrW( hwnd, GWLP_WNDPROC, (LONG_PTR)desktop_wnd_proc );
-        set_desktop_guid( hwnd, &guid, graphics_driver );
         SendMessageW( hwnd, WM_SETICON, ICON_BIG, (LPARAM)LoadIconW( 0, MAKEINTRESOURCEW(OIC_WINLOGO)));
         if (name) set_desktop_window_title( hwnd, name );
         SetWindowPos( hwnd, 0, GetSystemMetrics(SM_XVIRTUALSCREEN), GetSystemMetrics(SM_YVIRTUALSCREEN),
@@ -789,13 +836,20 @@ void manage_desktop( WCHAR *arg )
         ClipCursor( NULL );
         initialize_display_settings();
         initialize_appbar();
-        initialize_systray( graphics_driver, using_root );
-        if (!using_root) initialize_launchers( hwnd );
 
-        if ((shell32 = LoadLibraryA( "shell32.dll" )) &&
-            (pShellDDEInit = (void *)GetProcAddress( shell32, (LPCSTR)188)))
+        if (graphics_driver)
         {
-            pShellDDEInit( TRUE );
+            HMODULE shell32;
+            void (WINAPI *pShellDDEInit)( BOOL );
+
+            initialize_systray( graphics_driver, using_root );
+            if (!using_root) initialize_launchers( hwnd );
+
+            if ((shell32 = LoadLibraryA( "shell32.dll" )) &&
+                (pShellDDEInit = (void *)GetProcAddress( shell32, (LPCSTR)188)))
+            {
+                pShellDDEInit( TRUE );
+            }
         }
     }
     else
