@@ -34,7 +34,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3drm);
 
-typedef struct {
+struct mesh_group
+{
     unsigned nb_vertices;
     D3DRMVERTEX* vertices;
     unsigned nb_faces;
@@ -44,14 +45,14 @@ typedef struct {
     D3DCOLOR color;
     IDirect3DRMMaterial2* material;
     IDirect3DRMTexture3* texture;
-} mesh_group;
+};
 
 typedef struct {
     IDirect3DRMMesh IDirect3DRMMesh_iface;
     LONG ref;
     DWORD groups_capacity;
     DWORD nb_groups;
-    mesh_group* groups;
+    struct mesh_group *groups;
 } IDirect3DRMMeshImpl;
 
 typedef struct {
@@ -2628,7 +2629,7 @@ static HRESULT WINAPI IDirect3DRMMeshImpl_AddGroup(IDirect3DRMMesh* iface,
                                                    unsigned *face_data, D3DRMGROUPINDEX *return_id)
 {
     IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
-    mesh_group* group;
+    struct mesh_group *group;
 
     TRACE("(%p)->(%u,%u,%u,%p,%p)\n", This, vertex_count, face_count, vertex_per_face, face_data, return_id);
 
@@ -2637,18 +2638,18 @@ static HRESULT WINAPI IDirect3DRMMeshImpl_AddGroup(IDirect3DRMMesh* iface,
 
     if ((This->nb_groups + 1) > This->groups_capacity)
     {
+        struct mesh_group *groups;
         ULONG new_capacity;
-        mesh_group* groups;
 
         if (!This->groups_capacity)
         {
             new_capacity = 16;
-            groups = HeapAlloc(GetProcessHeap(), 0, new_capacity * sizeof(mesh_group));
+            groups = HeapAlloc(GetProcessHeap(), 0, new_capacity * sizeof(*groups));
         }
         else
         {
             new_capacity = This->groups_capacity * 2;
-            groups = HeapReAlloc(GetProcessHeap(), 0, This->groups, new_capacity * sizeof(mesh_group));
+            groups = HeapReAlloc(GetProcessHeap(), 0, This->groups, new_capacity * sizeof(*groups));
         }
 
         if (!groups)
