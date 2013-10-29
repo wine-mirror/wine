@@ -110,7 +110,7 @@ void (CDECL *mono_trace_set_assembly)(MonoAssembly *assembly);
 
 static BOOL find_mono_dll(LPCWSTR path, LPWSTR dll_path);
 
-static MonoAssembly* mono_assembly_search_hook_fn(MonoAssemblyName *aname, char **assemblies_path, void *user_data);
+static MonoAssembly* mono_assembly_preload_hook_fn(MonoAssemblyName *aname, char **assemblies_path, void *user_data);
 
 static void mono_shutdown_callback_fn(MonoProfiler *prof);
 
@@ -236,7 +236,7 @@ static HRESULT load_mono(CLRRuntimeInfo *This)
 
         mono_config_parse(NULL);
 
-        mono_install_assembly_preload_hook(mono_assembly_search_hook_fn, NULL);
+        mono_install_assembly_preload_hook(mono_assembly_preload_hook_fn, NULL);
 
         trace_size = GetEnvironmentVariableA("WINE_MONO_TRACE", trace_setting, sizeof(trace_setting));
 
@@ -1253,7 +1253,7 @@ HRESULT get_file_from_strongname(WCHAR* stringnameW, WCHAR* assemblies_path, int
     return hr;
 }
 
-static MonoAssembly* mono_assembly_search_hook_fn(MonoAssemblyName *aname, char **assemblies_path, void *user_data)
+static MonoAssembly* mono_assembly_preload_hook_fn(MonoAssemblyName *aname, char **assemblies_path, void *user_data)
 {
     HRESULT hr;
     MonoAssembly *result=NULL;
