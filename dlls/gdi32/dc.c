@@ -131,7 +131,6 @@ DC *alloc_dc_ptr( WORD magic )
 
     dc->nulldrv.funcs       = &null_driver;
     dc->physDev             = &dc->nulldrv;
-    dc->module              = gdi32_module;
     dc->thread              = GetCurrentThreadId();
     dc->refcount            = 1;
     dc->hPen                = GDI_inc_ref_count( GetStockObject( BLACK_PEN ));
@@ -649,7 +648,6 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
     if (!(dc = alloc_dc_ptr( OBJ_DC ))) return 0;
     hdc = dc->hSelf;
 
-    dc->module  = module;
     dc->hBitmap = GDI_inc_ref_count( GetStockObject( DEFAULT_BITMAP ));
 
     TRACE("(driver=%s, device=%s, output=%s): returning %p\n",

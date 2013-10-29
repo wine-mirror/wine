@@ -69,7 +69,6 @@ typedef struct tagDC
     struct tagDC *saved_dc;
     DWORD_PTR    dwHookData;
     DCHOOKPROC   hookProc;         /* DC hook */
-    HMODULE      module;           /* module handle of the graphics driver */
     BOOL         bounds_enabled:1; /* bounds tracking is enabled */
     BOOL         path_open:1;      /* path is currently open (only for saved DCs) */
 
