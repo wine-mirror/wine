@@ -604,13 +604,13 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
                                  &needs_close, &type, &options );
     if (status) return status;
 
+    async_read = !(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT));
+
     if (!virtual_check_buffer_for_write( buffer, length ))
     {
         status = STATUS_ACCESS_VIOLATION;
         goto done;
     }
-
-    async_read = !(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT));
 
     if (type == FD_TYPE_FILE)
     {
@@ -765,14 +765,14 @@ done:
 
 err:
     if (needs_close) close( unix_handle );
-    if (status == STATUS_SUCCESS)
+    if (status == STATUS_SUCCESS || (status == STATUS_END_OF_FILE && !async_read))
     {
         io_status->u.Status = status;
         io_status->Information = total;
         TRACE("= SUCCESS (%u)\n", total);
         if (hEvent) NtSetEvent( hEvent, NULL );
-        if (apc) NtQueueApcThread( GetCurrentThread(), (PNTAPCFUNC)apc,
-                                   (ULONG_PTR)apc_user, (ULONG_PTR)io_status, 0 );
+        if (apc && !status) NtQueueApcThread( GetCurrentThread(), (PNTAPCFUNC)apc,
+                                              (ULONG_PTR)apc_user, (ULONG_PTR)io_status, 0 );
     }
     else
     {

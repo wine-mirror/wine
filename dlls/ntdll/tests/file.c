@@ -836,9 +836,9 @@ static void read_file_test(void)
     ResetEvent( event );
     status = pNtReadFile( handle, event, apc, &apc_count, &iosb, buffer, 2, &offset, NULL );
     ok( status == STATUS_END_OF_FILE, "wrong status %x\n", status );
-    todo_wine ok( U(iosb).Status == STATUS_END_OF_FILE, "wrong status %x\n", U(iosb).Status );
-    todo_wine ok( iosb.Information == 0, "wrong info %lu\n", iosb.Information );
-    todo_wine ok( is_signaled( event ), "event is not signaled\n" );
+    ok( U(iosb).Status == STATUS_END_OF_FILE, "wrong status %x\n", U(iosb).Status );
+    ok( iosb.Information == 0, "wrong info %lu\n", iosb.Information );
+    ok( is_signaled( event ), "event is not signaled\n" );
     ok( !apc_count, "apc was called\n" );
     SleepEx( 1, TRUE ); /* alertable sleep */
     ok( !apc_count, "apc was called\n" );
@@ -2094,9 +2094,7 @@ static void test_read_write(void)
     iob.Information = -1;
     status = pNtReadFile(hfile, 0, NULL, NULL, &iob, buf, sizeof(buf), NULL, NULL);
     ok(status == STATUS_END_OF_FILE, "expected STATUS_END_OF_FILE, got %#x\n", status);
-todo_wine
     ok(U(iob).Status == STATUS_END_OF_FILE, "expected STATUS_END_OF_FILE, got %#x\n", U(iob).Status);
-todo_wine
     ok(iob.Information == 0, "expected 0, got %lu\n", iob.Information);
 
     SetFilePointer(hfile, 0, NULL, FILE_BEGIN);
@@ -2156,7 +2154,6 @@ todo_wine
     ok(!ret, "ReadFile should fail\n");
     ok(GetLastError() == ERROR_HANDLE_EOF, "expected ERROR_HANDLE_EOF, got %d\n", GetLastError());
     ok(bytes == 0, "bytes %u\n", bytes);
-todo_wine
     ok((NTSTATUS)ovl.Internal == STATUS_END_OF_FILE, "expected STATUS_END_OF_FILE, got %#lx\n", ovl.Internal);
     ok(ovl.InternalHigh == 0, "expected 0, got %lu\n", ovl.InternalHigh);
 
@@ -2178,9 +2175,7 @@ todo_wine
     iob.Information = -1;
     status = pNtReadFile(hfile, 0, NULL, NULL, &iob, buf, sizeof(buf), NULL, NULL);
     ok(status == STATUS_END_OF_FILE, "expected STATUS_END_OF_FILE, got %#x\n", status);
-todo_wine
     ok(U(iob).Status == STATUS_END_OF_FILE, "expected STATUS_END_OF_FILE, got %#x\n", U(iob).Status);
-todo_wine
     ok(iob.Information == 0, "expected 0, got %lu\n", iob.Information);
 
     U(iob).Status = -1;
@@ -2195,9 +2190,7 @@ todo_wine
     offset.QuadPart = sizeof(contents);
     status = pNtReadFile(hfile, 0, NULL, NULL, &iob, buf, sizeof(buf), &offset, NULL);
     ok(status == STATUS_END_OF_FILE, "expected STATUS_END_OF_FILE, got %#x\n", status);
-todo_wine
     ok(U(iob).Status == STATUS_END_OF_FILE, "expected STATUS_END_OF_FILE, got %#x\n", U(iob).Status);
-todo_wine
     ok(iob.Information == 0, "expected 0, got %lu\n", iob.Information);
 
     U(iob).Status = -1;
@@ -2213,9 +2206,7 @@ todo_wine
     offset.QuadPart = (LONGLONG)-2 /* FILE_USE_FILE_POINTER_POSITION */;
     status = pNtReadFile(hfile, 0, NULL, NULL, &iob, buf, sizeof(buf), &offset, NULL);
     ok(status == STATUS_END_OF_FILE, "expected STATUS_END_OF_FILE, got %#x\n", status);
-todo_wine
     ok(U(iob).Status == STATUS_END_OF_FILE, "expected STATUS_END_OF_FILE, got %#x\n", U(iob).Status);
-todo_wine
     ok(iob.Information == 0, "expected 0, got %lu\n", iob.Information);
 
     U(iob).Status = -1;
