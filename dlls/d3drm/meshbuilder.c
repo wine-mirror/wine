@@ -56,10 +56,11 @@ struct d3drm_mesh
     struct mesh_group *groups;
 };
 
-typedef struct {
+struct coords_2d
+{
     D3DVALUE u;
     D3DVALUE v;
-} Coords2d;
+};
 
 typedef struct {
     D3DCOLOR color;
@@ -80,7 +81,7 @@ typedef struct {
     DWORD face_data_size;
     void *pFaceData;
     DWORD nb_coords2d;
-    Coords2d *pCoords2d;
+    struct coords_2d *pCoords2d;
     D3DCOLOR color;
     IDirect3DRMMaterial2 *material;
     IDirect3DRMTexture3 *texture;
@@ -1210,8 +1211,8 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3 *iface, IDirectXFileData *pData, 
 
             TRACE("MeshTextureCoords: nb_coords2d = %d\n", This->nb_coords2d);
 
-            This->pCoords2d = HeapAlloc(GetProcessHeap(), 0, This->nb_coords2d * sizeof(Coords2d));
-            memcpy(This->pCoords2d, ptr + sizeof(DWORD), This->nb_coords2d * sizeof(Coords2d));
+            This->pCoords2d = HeapAlloc(GetProcessHeap(), 0, This->nb_coords2d * sizeof(*This->pCoords2d));
+            memcpy(This->pCoords2d, ptr + sizeof(DWORD), This->nb_coords2d * sizeof(*This->pCoords2d));
 
         }
         else if (IsEqualGUID(guid, &TID_D3DRMMeshMaterialList))
@@ -1490,7 +1491,7 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3 *iface, IDirectXFileData *pData, 
     if (!This->pCoords2d)
     {
         This->nb_coords2d = This->nb_vertices;
-        This->pCoords2d = HeapAlloc(GetProcessHeap(), 0, This->nb_coords2d * sizeof(Coords2d));
+        This->pCoords2d = HeapAlloc(GetProcessHeap(), 0, This->nb_coords2d * sizeof(*This->pCoords2d));
         for (i = 0; i < This->nb_coords2d; i++)
         {
             This->pCoords2d[i].u = 0.0f;
