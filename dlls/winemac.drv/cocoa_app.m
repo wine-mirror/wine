@@ -787,9 +787,9 @@ int macdrv_err_on;
         return ([originalDisplayModes count] > 0 || displaysCapturedForFullscreen);
     }
 
-    - (void) updateCursor
+    - (void) updateCursor:(BOOL)force
     {
-        if (lastTargetWindow)
+        if (force || lastTargetWindow)
         {
             if (clientWantsCursorHidden && !cursorHidden)
             {
@@ -829,7 +829,7 @@ int macdrv_err_on;
         if (!clientWantsCursorHidden)
         {
             clientWantsCursorHidden = TRUE;
-            [self updateCursor];
+            [self updateCursor:TRUE];
         }
     }
 
@@ -838,7 +838,7 @@ int macdrv_err_on;
         if (clientWantsCursorHidden)
         {
             clientWantsCursorHidden = FALSE;
-            [self updateCursor];
+            [self updateCursor:FALSE];
         }
     }
 
@@ -849,7 +849,7 @@ int macdrv_err_on;
             [cursor release];
             cursor = [newCursor retain];
             cursorIsCurrent = FALSE;
-            [self updateCursor];
+            [self updateCursor:FALSE];
         }
     }
 
@@ -1516,7 +1516,7 @@ int macdrv_err_on;
         else
             lastTargetWindow = nil;
 
-        [self updateCursor];
+        [self updateCursor:FALSE];
     }
 
     - (void) handleMouseButton:(NSEvent*)theEvent
