@@ -40,15 +40,14 @@ static HRESULT (WINAPI *pDirect3DCreate9Ex)(UINT SDKVersion, IDirect3D9Ex **d3d9
 
 static HWND create_window(void)
 {
-    WNDCLASS wc = {0};
-    HWND ret;
-    wc.lpfnWndProc = DefWindowProc;
-    wc.lpszClassName = "d3d9_test_wc";
-    RegisterClass(&wc);
+    WNDCLASSA wc = {0};
 
-    ret = CreateWindow("d3d9_test_wc", "d3d9_test",
-                        WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION , 0, 0, 640, 480, 0, 0, 0, 0);
-    return ret;
+    wc.lpfnWndProc = DefWindowProcA;
+    wc.lpszClassName = "d3d9_test_wc";
+    RegisterClassA(&wc);
+
+    return CreateWindowA("d3d9_test_wc", "d3d9_test", WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION,
+            0, 0, 640, 480, 0, 0, 0, 0);
 }
 
 static IDirect3DDevice9Ex *create_device(HWND device_window, HWND focus_window, BOOL windowed)

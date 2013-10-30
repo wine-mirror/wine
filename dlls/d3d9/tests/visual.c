@@ -46,14 +46,14 @@ struct vec4
 
 static HWND create_window(void)
 {
-    WNDCLASS wc = {0};
+    WNDCLASSA wc = {0};
     HWND ret;
-    wc.lpfnWndProc = DefWindowProc;
+    wc.lpfnWndProc = DefWindowProcA;
     wc.lpszClassName = "d3d9_test_wc";
-    RegisterClass(&wc);
+    RegisterClassA(&wc);
 
-    ret = CreateWindow("d3d9_test_wc", "d3d9_test",
-                        WS_SYSMENU | WS_POPUP , 0, 0, 640, 480, 0, 0, 0, 0);
+    ret = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_SYSMENU | WS_POPUP,
+            0, 0, 640, 480, 0, 0, 0, 0);
     ShowWindow(ret, SW_SHOW);
     return ret;
 }

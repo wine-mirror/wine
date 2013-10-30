@@ -29,13 +29,13 @@ static HMODULE d3d9_handle = 0;
 
 static HWND create_window(void)
 {
-    WNDCLASS wc = {0};
-    wc.lpfnWndProc = DefWindowProc;
+    WNDCLASSA wc = {0};
+    wc.lpfnWndProc = DefWindowProcA;
     wc.lpszClassName = "d3d9_test_wc";
-    RegisterClass(&wc);
+    RegisterClassA(&wc);
 
-    return CreateWindow("d3d9_test_wc", "d3d9_test",
-            0, 0, 0, 0, 0, 0, 0, 0, 0);
+    return CreateWindowA("d3d9_test_wc", "d3d9_test", 0,
+            0, 0, 0, 0, 0, 0, 0, 0);
 }
 
 static IDirect3DDevice9 *init_d3d9(void)
