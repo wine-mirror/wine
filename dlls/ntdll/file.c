@@ -636,7 +636,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
                 lseek( unix_handle, offset->QuadPart + result, SEEK_SET );
 
             total = result;
-            status = total ? STATUS_SUCCESS : STATUS_END_OF_FILE;
+            status = (total || !length) ? STATUS_SUCCESS : STATUS_END_OF_FILE;
             goto done;
         }
     }
@@ -665,7 +665,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
                 {
                 case FD_TYPE_FILE:
                 case FD_TYPE_CHAR:
-                    status = STATUS_END_OF_FILE;
+                    status = length ? STATUS_END_OF_FILE : STATUS_SUCCESS;
                     goto done;
                 case FD_TYPE_SERIAL:
                     break;

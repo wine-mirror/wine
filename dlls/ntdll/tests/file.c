@@ -2168,12 +2168,9 @@ todo_wine
     bytes = -1;
     SetLastError(0xdeadbeef);
     ret = ReadFile(hfile, buf, 0, &bytes, &ovl);
-todo_wine
     ok(ret, "ReadFile error %d\n", GetLastError());
-todo_wine
     ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
     ok(bytes == 0, "bytes %u\n", bytes);
-todo_wine
     ok((NTSTATUS)ovl.Internal == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx\n", ovl.Internal);
     ok(ovl.InternalHigh == 0, "expected 0, got %lu\n", ovl.InternalHigh);
 
@@ -2189,11 +2186,8 @@ todo_wine
     U(iob).Status = -1;
     iob.Information = -1;
     status = pNtReadFile(hfile, 0, NULL, NULL, &iob, buf, 0, NULL, NULL);
-todo_wine
     ok(status == STATUS_SUCCESS, "NtReadFile error %#x\n", status);
-todo_wine
     ok(U(iob).Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", U(iob).Status);
-todo_wine
     ok(iob.Information == 0, "expected 0, got %lu\n", iob.Information);
 
     U(iob).Status = -1;
@@ -2210,11 +2204,8 @@ todo_wine
     iob.Information = -1;
     offset.QuadPart = sizeof(contents);
     status = pNtReadFile(hfile, 0, NULL, NULL, &iob, buf, 0, &offset, NULL);
-todo_wine
     ok(status == STATUS_SUCCESS, "NtReadFile error %#x\n", status);
-todo_wine
     ok(U(iob).Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", U(iob).Status);
-todo_wine
     ok(iob.Information == 0, "expected 0, got %lu\n", iob.Information);
 
     U(iob).Status = -1;
@@ -2231,11 +2222,8 @@ todo_wine
     iob.Information = -1;
     offset.QuadPart = (LONGLONG)-2 /* FILE_USE_FILE_POINTER_POSITION */;
     status = pNtReadFile(hfile, 0, NULL, NULL, &iob, buf, 0, &offset, NULL);
-todo_wine
     ok(status == STATUS_SUCCESS, "NtReadFile error %#x\n", status);
-todo_wine
     ok(U(iob).Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", U(iob).Status);
-todo_wine
     ok(iob.Information == 0, "expected 0, got %lu\n", iob.Information);
 
     for (i = -20; i < 0; i++)
@@ -2351,7 +2339,6 @@ todo_wine
     /* ReadFile return value depends on Windows version and testing it is not practical */
     ReadFile(hfile, buf, 0, &bytes, &ovl);
     ok(bytes == 0, "bytes %u\n", bytes);
-todo_wine
     ok((NTSTATUS)ovl.Internal == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx\n", ovl.Internal);
     ok(ovl.InternalHigh == 0, "expected 0, got %lu\n", ovl.InternalHigh);
 
@@ -2547,11 +2534,8 @@ todo_wine
     }
     else
     {
-todo_wine
         ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", status);
-todo_wine
         ok(U(iob).Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", U(iob).Status);
-todo_wine
         ok(iob.Information == 0, "expected 0, got %lu\n", iob.Information);
     }
 
