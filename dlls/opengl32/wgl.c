@@ -588,7 +588,7 @@ INT WINAPI wglGetPixelFormat(HDC hdc)
 BOOL WINAPI wglSetPixelFormat( HDC hdc, INT format, const PIXELFORMATDESCRIPTOR *descr )
 {
     struct opengl_funcs *funcs = get_dc_funcs( hdc );
-    if (!funcs) return 0;
+    if (!funcs) return FALSE;
     return funcs->wgl.p_wglSetPixelFormat( hdc, format, descr );
 }
 
