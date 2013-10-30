@@ -1963,7 +1963,6 @@ todo_wine
     strcpy(buf, "deadbeef");
     ret = GetShortPathNameA(".", buf, MAX_PATH);
     ok(ret, "GetShortPathName error %d\n", GetLastError());
-todo_wine
     ok(!strcmp(buf, "."), "expected ., got %s\n", buf);
 
     strcpy(buf, "deadbeef");
@@ -1974,7 +1973,6 @@ todo_wine
     strcpy(buf, "deadbeef");
     ret = GetShortPathNameA("..", buf, MAX_PATH);
     ok(ret, "GetShortPathName error %d\n", GetLastError());
-todo_wine
     ok(!strcmp(buf, ".."), "expected .., got %s\n", buf);
 
     strcpy(buf, "deadbeef");
@@ -1985,9 +1983,7 @@ todo_wine
     ok(!strcmp(buf, "..\\foo\\file"), "expected ..\\foo\\file, got %s\n", buf);
     strcpy(buf, "deadbeef");
     ret = GetShortPathNameA("..\\foo\\file", buf, MAX_PATH);
-todo_wine
     ok(ret, "GetShortPathName error %d\n", GetLastError());
-todo_wine
     ok(!strcmp(buf, "..\\foo\\file"), "expected ..\\foo\\file, got %s\n", buf);
 
     SetCurrentDirectoryA("..");
