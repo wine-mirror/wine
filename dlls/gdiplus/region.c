@@ -988,8 +988,8 @@ static GpStatus get_region_hrgn(struct region_element *element, GpGraphics *grap
                     case CombineModeIntersect:
                         return get_region_hrgn(element->elementdata.combine.right, graphics, hrgn);
                     case CombineModeXor: case CombineModeExclude:
-                        FIXME("cannot exclude from an infinite region\n");
-                        /* fall-through */
+                        left = CreateRectRgn(-4194304, -4194304, 4194304, 4194304);
+                        break;
                     case CombineModeUnion: case CombineModeComplement:
                         *hrgn = NULL;
                         return Ok;
@@ -1013,8 +1013,8 @@ static GpStatus get_region_hrgn(struct region_element *element, GpGraphics *grap
                         *hrgn = left;
                         return Ok;
                     case CombineModeXor: case CombineModeComplement:
-                        FIXME("cannot exclude from an infinite region\n");
-                        /* fall-through */
+                        right = CreateRectRgn(-4194304, -4194304, 4194304, 4194304);
+                        break;
                     case CombineModeUnion: case CombineModeExclude:
                         DeleteObject(left);
                         *hrgn = NULL;
