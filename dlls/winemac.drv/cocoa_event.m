@@ -460,41 +460,54 @@ void OnMainThread(dispatch_block_t block)
     NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
     NSMutableDictionary* threadDict = [[NSThread currentThread] threadDictionary];
     WineEventQueue* queue = [threadDict objectForKey:WineEventQueueThreadDictionaryKey];
+    dispatch_semaphore_t semaphore;
     __block BOOL finished;
 
     if (!queue)
     {
-        /* Fall back to synchronous dispatch without handling query events. */
-        dispatch_sync(dispatch_get_main_queue(), block);
-        [pool release];
-        return;
+        semaphore = dispatch_semaphore_create(0);
+        dispatch_retain(semaphore);
     }
 
     finished = FALSE;
     OnMainThreadAsync(^{
         block();
         finished = TRUE;
-        [queue signalEventAvailable];
+        if (queue)
+            [queue signalEventAvailable];
+        else
+        {
+            dispatch_semaphore_signal(semaphore);
+            dispatch_release(semaphore);
+        }
     });
 
-    while (!finished)
+    if (queue)
     {
-        MacDrvEvent* macDrvEvent;
-        struct kevent kev;
-
-        while (!finished &&
-               (macDrvEvent = [queue getEventMatchingMask:event_mask_for_type(QUERY_EVENT)]))
+        while (!finished)
         {
-            queue->event_handler(macDrvEvent->event);
-        }
+            MacDrvEvent* macDrvEvent;
+            struct kevent kev;
 
-        if (!finished)
-        {
-            [pool release];
-            pool = [[NSAutoreleasePool alloc] init];
+            while (!finished &&
+                   (macDrvEvent = [queue getEventMatchingMask:event_mask_for_type(QUERY_EVENT)]))
+            {
+                queue->event_handler(macDrvEvent->event);
+            }
 
-            kevent(queue->kq, NULL, 0, &kev, 1, NULL);
+            if (!finished)
+            {
+                [pool release];
+                pool = [[NSAutoreleasePool alloc] init];
+
+                kevent(queue->kq, NULL, 0, &kev, 1, NULL);
+            }
         }
+    }
+    else
+    {
+        dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+        dispatch_release(semaphore);
     }
 
     [pool release];
