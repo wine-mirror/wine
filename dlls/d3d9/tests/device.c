@@ -22,9 +22,11 @@
  */
 
 #define COBJMACROS
-#include <windowsx.h>
 #include <d3d9.h>
 #include "wine/test.h"
+
+#define GET_X_LPARAM(lp) ((int)(short)LOWORD(lp))
+#define GET_Y_LPARAM(lp) ((int)(short)HIWORD(lp))
 
 static INT screen_width;
 static INT screen_height;
