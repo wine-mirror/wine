@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2013-07-13 04:49+0200\n"
+"PO-Revision-Date: 2013-10-30 12:44+0100\n"
 "Last-Translator: Volkan Gezer <volkangezer@gmail.com>\n"
 "Language-Team: Turkish <kde-l10n-tr@kde.org>\n"
 "Language: Turkish\n"
@@ -4248,7 +4248,7 @@ msgstr ""
 
 #: winerror.mc:806
 msgid "Environment variable not found.\n"
-msgstr ""
+msgstr "Ortam değişkeni bulunamadı.\n"
 
 #: winerror.mc:811
 msgid "No signal sent.\n"
@@ -4260,11 +4260,11 @@ msgstr "Dosya adı çok uzun.\n"
 
 #: winerror.mc:821
 msgid "Ring 2 stack in use.\n"
-msgstr ""
+msgstr "Halka 2 yığını kullanımda.\n"
 
 #: winerror.mc:826
 msgid "Error in use of filename wildcards.\n"
-msgstr ""
+msgstr "Dosya adı joker karakteri kullanımında hata.\n"
 
 #: winerror.mc:831
 msgid "Invalid signal number.\n"
@@ -4276,7 +4276,7 @@ msgstr "Sinyal ele alıcısı ayarlanırken hata.\n"
 
 #: winerror.mc:841
 msgid "Segment locked.\n"
-msgstr ""
+msgstr "Bölüm kilitli.\n"
 
 #: winerror.mc:846
 msgid "Too many modules.\n"
@@ -4288,7 +4288,7 @@ msgstr ""
 
 #: winerror.mc:856
 msgid "Machine type mismatch.\n"
-msgstr ""
+msgstr "Makine tür uyumsuzluğu.\n"
 
 #: winerror.mc:861
 msgid "Bad pipe.\n"
@@ -4364,7 +4364,7 @@ msgstr ""
 
 #: winerror.mc:951
 msgid "Read/WriteProcessMemory partially completed.\n"
-msgstr ""
+msgstr "Read/WriteProcessMemory kısmen tamamlandı.\n"
 
 #: winerror.mc:956
 msgid "The oplock wasn't granted.\n"
@@ -4376,7 +4376,7 @@ msgstr ""
 
 #: winerror.mc:966
 msgid "Message 0x%1 not found in file %2.\n"
-msgstr ""
+msgstr "0x%1 iletisi %2 dosyasında bulunamadı.\n"
 
 #: winerror.mc:971
 msgid "Invalid address.\n"
@@ -4384,7 +4384,7 @@ msgstr "Geçersiz adres.\n"
 
 #: winerror.mc:976
 msgid "Arithmetic overflow.\n"
-msgstr ""
+msgstr "Aritmetik taşma.\n"
 
 #: winerror.mc:981
 msgid "Pipe connected.\n"
@@ -4396,11 +4396,11 @@ msgstr "İletişim tüneli dinleniyor.\n"
 
 #: winerror.mc:991
 msgid "Extended attribute access denied.\n"
-msgstr ""
+msgstr "Uzatılmış nitelik erişimi reddedildi.\n"
 
 #: winerror.mc:996
 msgid "I/O operation aborted.\n"
-msgstr ""
+msgstr "G/Ç işlemi iptal edildi.\n"
 
 #: winerror.mc:1001
 msgid "Overlapped I/O incomplete.\n"
@@ -4924,15 +4924,15 @@ msgstr ""
 
 #: winerror.mc:1651
 msgid "Invalid network provider name.\n"
-msgstr ""
+msgstr "Geçersiz ağ sağlayıcı adı.\n"
 
 #: winerror.mc:1656
 msgid "Cannot open network connection profile.\n"
-msgstr ""
+msgstr "Ağ bağlantı profili açılamıyor.\n"
 
 #: winerror.mc:1661
 msgid "Corrupt network connection profile.\n"
-msgstr ""
+msgstr "Ağ bağlantı profili bozuk.\n"
 
 #: winerror.mc:1666
 msgid "Not a container.\n"
@@ -5004,11 +5004,11 @@ msgstr ""
 
 #: winerror.mc:1756 winerror.mc:3741
 msgid "Connection refused.\n"
-msgstr ""
+msgstr "Bağlantı reddedildi.\n"
 
 #: winerror.mc:1761
 msgid "Connection gracefully closed.\n"
-msgstr ""
+msgstr "Bağlantı dikkatlice kapatıldı.\n"
 
 #: winerror.mc:1766
 msgid "Address already associated with transport endpoint.\n"
@@ -5340,15 +5340,15 @@ msgstr ""
 
 #: winerror.mc:2176
 msgid "No such domain.\n"
-msgstr ""
+msgstr "Böyle bir etki alanı yok.\n"
 
 #: winerror.mc:2181
 msgid "Domain already exists.\n"
-msgstr ""
+msgstr "Etki alanı zaten mevcut.\n"
 
 #: winerror.mc:2186
 msgid "Domain limit exceeded.\n"
-msgstr ""
+msgstr "Etki alanı sınırı aşıldı.\n"
 
 #: winerror.mc:2191
 msgid "Internal database corruption.\n"
@@ -5488,19 +5488,19 @@ msgstr ""
 
 #: winerror.mc:2366
 msgid "Disk is corrupt.\n"
-msgstr ""
+msgstr "Disk bozuk.\n"
 
 #: winerror.mc:2371
 msgid "No user session key.\n"
-msgstr ""
+msgstr "Kullanıcı oturum anahtarı yok.\n"
 
 #: winerror.mc:2376
 msgid "License quota exceeded.\n"
-msgstr ""
+msgstr "Lisans kotası aşıldı.\n"
 
 #: winerror.mc:2381
 msgid "Wrong target name.\n"
-msgstr ""
+msgstr "Hatalı hedef adı.\n"
 
 #: winerror.mc:2386
 msgid "Mutual authentication failed.\n"
@@ -5792,19 +5792,19 @@ msgstr ""
 
 #: winerror.mc:2746
 msgid "Unknown product.\n"
-msgstr ""
+msgstr "Bilinmeyen ürün.\n"
 
 #: winerror.mc:2751
 msgid "Unknown feature.\n"
-msgstr ""
+msgstr "Bilinmeyen özellik.\n"
 
 #: winerror.mc:2756
 msgid "Unknown component.\n"
-msgstr ""
+msgstr "Bilinmeyen bileşen.\n"
 
 #: winerror.mc:2761
 msgid "Unknown property.\n"
-msgstr ""
+msgstr "Bilinmeyen özellik.\n"
 
 #: winerror.mc:2766
 msgid "Invalid handle state.\n"
@@ -5824,11 +5824,11 @@ msgstr ""
 
 #: winerror.mc:2786
 msgid "Wrong installation package version.\n"
-msgstr ""
+msgstr "Hatalı kurulum paket sürümü.\n"
 
 #: winerror.mc:2791
 msgid "Product uninstalled.\n"
-msgstr ""
+msgstr "Ürün kaldırıldı.\n"
 
 #: winerror.mc:2796
 msgid "Invalid query syntax.\n"
@@ -8524,16 +8524,12 @@ msgstr ""
 "yeniden deneyin."
 
 #: winmm.rc:52 winmm.rc:125
-#, fuzzy
-#| msgid ""
-#| "The current MIDI Mapper setup refers to a MIDI device that is not "
-#| "installed on the system. Use MIDI Mapper to edit the setup."
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
 "on the system."
 msgstr ""
 "Geçerli MIDI Eşleyicisi kurulumu sistemde yüklü olmayan bir MIDI aygıtını "
-"gösteriyor. Kurulumu düzenlemek için MIDI Eşleyicisini kullanın."
+"gösteriyor."
 
 #: winmm.rc:53
 msgid ""
@@ -9354,22 +9350,16 @@ msgstr ""
 "kendisini çağıran tarafından miras alınır.\n"
 
 #: cmd.rc:40
-#, fuzzy
-#| msgid ""
-#| "CD <dir> is the short version of CHDIR. It changes the current\n"
-#| "default directory.\n"
 msgid ""
 "CD <directory> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
 msgstr ""
-"CD <dir> CHDIR komutunun kısa sürümüdür. Geçerli\n"
-"varsayılan dizini değiştirir.\n"
+"CD <dizin> CHDIR komutunun kısa sürümüdür. Geçerli\n"
+"öntanımlı dizini değiştirir.\n"
 
 #: cmd.rc:41
-#, fuzzy
-#| msgid "CHDIR <dir> changes the current default directory.\n"
 msgid "CHDIR <directory> changes the current default directory.\n"
-msgstr "CHDIR <dizin> geçerli varsayılan dizini değiştirir.\n"
+msgstr "CHDIR <dizin> geçerli öntanımlı dizini değiştirir.\n"
 
 #: cmd.rc:43
 msgid "CLS clears the console screen.\n"
@@ -9420,11 +9410,6 @@ msgid "ERASE <filename> deletes a file or set of files.\n"
 msgstr "ERASE <dosyaadı> bir veya birçok dosyayı siler.\n"
 
 #: cmd.rc:68
-#, fuzzy
-#| msgid ""
-#| "The FOR command is used to execute a command for each of a set of files.\n"
-#| "\n"
-#| "Syntax: FOR %variable IN (set) DO command\n"
 msgid ""
 "The FOR command is used to execute a command for each of a set of files.\n"
 "\n"
@@ -9435,7 +9420,9 @@ msgstr ""
 "FOR komutu bir dosya kümesinin her öğesi için bir komut çalıştırmada\n"
 "kullanılır.\n"
 "\n"
-"Sözdizim: FOR %değişken IN (küme) DO komut\n"
+"Kullanım: FOR %değişken IN (küme) DO komut\n"
+"\n"
+"% sembolü toplu iş dosyasında FOR kullanılırken iki kez kullanılmalıdır.\n"
 
 #: cmd.rc:80
 msgid ""
@@ -9626,17 +9613,12 @@ msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <dosyaadı> bir dosyayı yeniden adlandırır.\n"
 
 #: cmd.rc:158
-#, fuzzy
-#| msgid ""
-#| "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
 msgid "RD <directory> is the short version of RMDIR. It deletes a directory.\n"
-msgstr "MD <isim> MKDIR komutunun kısa sürümüdür. Bir alt dizin oluşturur.\n"
+msgstr "RD <dizin> RMDIR komutunun kısa sürümüdür. Bir dizini siler.\n"
 
 #: cmd.rc:159
-#, fuzzy
-#| msgid "MKDIR <name> creates a subdirectory.\n"
 msgid "RMDIR <directory> deletes a directory.\n"
-msgstr "MKDIR <isim> bir alt dizin oluşturur.\n"
+msgstr "RMDIR <dizin> bir dizini siler.\n"
 
 #: cmd.rc:203
 msgid ""
