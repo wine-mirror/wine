@@ -59,12 +59,6 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION driver_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
-#ifdef __APPLE__
-static const char default_driver[] = "mac,x11";
-#else
-static const char default_driver[] = "x11";
-#endif
-
 /**********************************************************************
  *	     create_driver
  *
