@@ -638,7 +638,7 @@ static BOOL get_default_desktop_size( const WCHAR *name, unsigned int *width, un
     return found;
 }
 
-static HMODULE load_graphics_driver( const GUID *guid )
+static HMODULE load_graphics_driver( const WCHAR *driver, const GUID *guid )
 {
     static const WCHAR device_keyW[] = {
         'S','y','s','t','e','m','\\',
@@ -660,15 +660,19 @@ static HMODULE load_graphics_driver( const GUID *guid )
     HKEY hkey;
     char error[80];
 
-    strcpyW( buffer, default_driver );
-
-    /* @@ Wine registry key: HKCU\Software\Wine\Drivers */
-    if (!RegOpenKeyW( HKEY_CURRENT_USER, driversW, &hkey ))
+    if (!driver)
     {
-        DWORD count = sizeof(buffer);
-        RegQueryValueExW( hkey, graphicsW, 0, NULL, (LPBYTE)buffer, &count );
-        RegCloseKey( hkey );
+        strcpyW( buffer, default_driver );
+
+        /* @@ Wine registry key: HKCU\Software\Wine\Drivers */
+        if (!RegOpenKeyW( HKEY_CURRENT_USER, driversW, &hkey ))
+        {
+            DWORD count = sizeof(buffer);
+            RegQueryValueExW( hkey, graphicsW, 0, NULL, (LPBYTE)buffer, &count );
+            RegCloseKey( hkey );
+        }
     }
+    else lstrcpynW( buffer, driver, sizeof(buffer)/sizeof(WCHAR) );
 
     name = buffer;
     while (name)
@@ -773,7 +777,7 @@ void manage_desktop( WCHAR *arg )
     HWND hwnd, msg_hwnd;
     HMODULE graphics_driver;
     unsigned int width, height;
-    WCHAR *cmdline = NULL;
+    WCHAR *cmdline = NULL, *driver = NULL;
     WCHAR *p = arg;
     const WCHAR *name = NULL;
 
@@ -787,12 +791,16 @@ void manage_desktop( WCHAR *arg )
     }
 
     /* parse the desktop option */
-    /* the option is of the form /desktop=name[,widthxheight] */
+    /* the option is of the form /desktop=name[,widthxheight[,driver]] */
     if (*arg == '=' || *arg == ',')
     {
         arg++;
         name = arg;
-        if ((p = strchrW( arg, ',' ))) *p++ = 0;
+        if ((p = strchrW( arg, ',' )))
+        {
+            *p++ = 0;
+            if ((driver = strchrW( p, ',' ))) *driver++ = 0;
+        }
         if (!p || !parse_size( p, &width, &height ))
             get_default_desktop_size( name, &width, &height );
     }
@@ -813,7 +821,7 @@ void manage_desktop( WCHAR *arg )
 
     UuidCreate( &guid );
     TRACE( "display guid %s\n", debugstr_guid(&guid) );
-    graphics_driver = load_graphics_driver( &guid );
+    graphics_driver = load_graphics_driver( driver, &guid );
 
     /* create the desktop window */
     hwnd = CreateWindowExW( 0, DESKTOP_CLASS_ATOM, NULL,
