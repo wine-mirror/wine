@@ -397,12 +397,13 @@ static void test_openCloseWAVE(HWND hwnd)
     parm.sys.dwRetSize = sizeof(DWORD);
     parm.sys.wDeviceType = MCI_DEVTYPE_WAVEFORM_AUDIO; /* ignored */
     err = mciSendCommand(MCI_ALL_DEVICE_ID, MCI_SYSINFO, MCI_SYSINFO_QUANTITY | MCI_WAIT, (DWORD_PTR)&parm);
-    ok(!err,"mciSendCommand(MCI_ALL_DEVICE_ID, MCI_SYSINFO QUANTITY, MCI_WAIT, 0) returned %s\n", dbg_mcierr(err));
+    ok(!err, "mciCommand sysinfo all quantity returned %s\n", dbg_mcierr(err));
     if(!err) ok(atoi(buf)==intbuf[1],"sysinfo all quantity string and command differ\n");
 
     parm.sys.dwRetSize = sizeof(DWORD)-1;
     err = mciSendCommand(MCI_ALL_DEVICE_ID, MCI_SYSINFO, MCI_SYSINFO_QUANTITY, (DWORD_PTR)&parm);
-    ok(err==MCIERR_PARAM_OVERFLOW || broken(!err/* Win9x */),"mciSendCommand MCI_SYSINFO with too small buffer returned %s\n", dbg_mcierr(err));
+    ok(err == MCIERR_PARAM_OVERFLOW || broken(!err/* Win9x */),
+            "mciCommand sysinfo with too small buffer returned %s\n", dbg_mcierr(err));
 
     err = mciSendStringA("open new type waveaudio alias r shareable", buf, sizeof(buf), NULL);
     ok(err==MCIERR_UNSUPPORTED_FUNCTION,"mci open new shareable returned %s\n", dbg_mcierr(err));
@@ -603,14 +604,14 @@ static void test_openCloseWAVE(HWND hwnd)
      * making for funny test cases. */
 
     err = mciSendCommand(MCI_ALL_DEVICE_ID, MCI_CLOSE, MCI_WAIT, 0); /* from MSDN */
-    ok(!err,"mciSendCommand(MCI_ALL_DEVICE_ID, MCI_CLOSE, MCI_WAIT, 0) returned %s\n", dbg_mcierr(err));
+    ok(!err, "mciCommand close returned %s\n", dbg_mcierr(err));
 
     err = mciSendCommand(MCI_ALL_DEVICE_ID, MCI_CLOSE, MCI_NOTIFY, 0);
-    ok(!err,"mciSendCommand(MCI_ALL_DEVICE_ID, MCI_CLOSE, MCI_NOTIFY, 0) returned %s\n", dbg_mcierr(err));
+    ok(!err, "mciCommand close returned %s\n", dbg_mcierr(err));
 
     parm.gen.dwCallback = (DWORD_PTR)hwnd;
     err = mciSendCommand(MCI_ALL_DEVICE_ID, MCI_CLOSE, MCI_NOTIFY, (DWORD_PTR)&parm);
-    ok(!err,"mciSendCommand(MCI_ALL_DEVICE_ID, MCI_CLOSE, MCI_NOTIFY, hwnd) returned %s\n", dbg_mcierr(err));
+    ok(!err, "mciCommand close returned %s\n", dbg_mcierr(err));
     test_notification(hwnd, command_close_all, 0); /* None left */
 }
 
@@ -1184,7 +1185,7 @@ static void test_AutoOpenWAVE(HWND hwnd)
     parm.sys.dwRetSize = 2*sizeof(DWORD); /* only one DWORD is used */
     parm.sys.wDeviceType = MCI_DEVTYPE_WAVEFORM_AUDIO;
     err = mciSendCommand(0, MCI_SYSINFO, MCI_SYSINFO_QUANTITY | MCI_SYSINFO_OPEN, (DWORD_PTR)&parm);
-    ok(!err,"mciSendCommand(0(WAVEAUDIO), MCI_SYSINFO, OPEN | MCI_NOTIFY) returned %s\n", dbg_mcierr(err));
+    ok(!err, "mciCommand sysinfo waveaudio open notify returned %s\n", dbg_mcierr(err));
     if(!err) ok(atoi(buf)==intbuf[1],"sysinfo waveaudio quantity open string and command differ\n");
 
     err = mciSendStringA("sysinfo waveaudio name 1 open notify", buf, sizeof(buf), hwnd);
