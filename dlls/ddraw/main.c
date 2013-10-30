@@ -872,10 +872,9 @@ BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)
          * exclusive mode, we replace the window proc of the ddraw window. If
          * an application would unload ddraw from the WM_DESTROY handler for
          * that window, it would return to unmapped memory and die. Apparently
-         * this is supposed to work on Windows. We should probably use
-         * GET_MODULE_HANDLE_EX_FLAG_PIN for this, but that's not currently
-         * implemented. */
-        if (!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (const WCHAR *)&ddraw_self, &ddraw_self))
+         * this is supposed to work on Windows. */
+        if (!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_PIN,
+                (const WCHAR *)&ddraw_self, &ddraw_self))
             ERR("Failed to get own module handle.\n");
 
         instance = inst;
