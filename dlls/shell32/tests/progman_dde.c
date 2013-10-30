@@ -363,7 +363,7 @@ static void DdeExecuteCommand(DWORD instance, HCONV hConv, const char *strCmd, H
  * window creation happened were not encouraging (not including
  * SetWindowsHookEx).
  */
-static void CheckWindowCreated(const char *winName, int closeWindow, int testParams)
+static void CheckWindowCreated(const char *winName, BOOL closeWindow, int testParams)
 {
     HWND window = NULL;
     int i;
@@ -387,7 +387,7 @@ static void CheckWindowCreated(const char *winName, int closeWindow, int testPar
 /* Check for Existence (or non-existence) of a file or group
  *   When testing for existence of a group, groupName is not needed
  */
-static void CheckFileExistsInProgramGroups(const char *nameToCheck, int shouldExist, int isGroup,
+static void CheckFileExistsInProgramGroups(const char *nameToCheck, BOOL shouldExist, BOOL isGroup,
                                            const char *groupName, int testParams)
 {
     char path[MAX_PATH];
@@ -469,7 +469,7 @@ static void CreateGroupTest(DWORD instance, HCONV hConv, const char *command, UI
  *        1. window is open
  */
 static void ShowGroupTest(DWORD instance, HCONV hConv, const char *command, UINT expected_result,
-                          const char *groupName, const char *windowTitle, int closeAfterShowing, int testParams)
+                          const char *groupName, const char *windowTitle, BOOL closeAfterShowing, int testParams)
 {
     HDDEDATA hData;
     UINT error;
