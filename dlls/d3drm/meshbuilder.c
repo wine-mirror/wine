@@ -47,13 +47,14 @@ struct mesh_group
     IDirect3DRMTexture3* texture;
 };
 
-typedef struct {
+struct d3drm_mesh
+{
     IDirect3DRMMesh IDirect3DRMMesh_iface;
     LONG ref;
     DWORD groups_capacity;
     DWORD nb_groups;
     struct mesh_group *groups;
-} IDirect3DRMMeshImpl;
+};
 
 typedef struct {
     D3DVALUE u;
@@ -309,9 +310,9 @@ char templates[] = {
 "}"
 };
 
-static inline IDirect3DRMMeshImpl *impl_from_IDirect3DRMMesh(IDirect3DRMMesh *iface)
+static inline struct d3drm_mesh *impl_from_IDirect3DRMMesh(IDirect3DRMMesh *iface)
 {
-    return CONTAINING_RECORD(iface, IDirect3DRMMeshImpl, IDirect3DRMMesh_iface);
+    return CONTAINING_RECORD(iface, struct d3drm_mesh, IDirect3DRMMesh_iface);
 }
 
 static inline IDirect3DRMMeshBuilderImpl *impl_from_IDirect3DRMMeshBuilder2(IDirect3DRMMeshBuilder2 *iface)
@@ -2460,70 +2461,62 @@ HRESULT Direct3DRMMeshBuilder_create(REFIID riid, IUnknown** ppObj)
     return S_OK;
 }
 
-/*** IUnknown methods ***/
-static HRESULT WINAPI IDirect3DRMMeshImpl_QueryInterface(IDirect3DRMMesh* iface,
-                                                         REFIID riid, void** ppvObject)
+static HRESULT WINAPI d3drm_mesh_QueryInterface(IDirect3DRMMesh *iface, REFIID riid, void **out)
 {
-    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
 
-    TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(riid), ppvObject);
-
-    *ppvObject = NULL;
-
-    if (IsEqualGUID(riid, &IID_IUnknown) ||
-        IsEqualGUID(riid, &IID_IDirect3DRMMesh))
+    if (IsEqualGUID(riid, &IID_IDirect3DRMMesh)
+            || IsEqualGUID(riid, &IID_IUnknown))
     {
-        *ppvObject = &This->IDirect3DRMMesh_iface;
-    }
-    else
-    {
-        FIXME("interface %s not implemented\n", debugstr_guid(riid));
-        return E_NOINTERFACE;
+        IDirect3DRMMesh_AddRef(iface);
+        *out = iface;
+        return S_OK;
     }
 
-    IDirect3DRMMesh_AddRef(iface);
-    return S_OK;
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+
+    *out = NULL;
+    return E_NOINTERFACE;
 }
 
-static ULONG WINAPI IDirect3DRMMeshImpl_AddRef(IDirect3DRMMesh* iface)
+static ULONG WINAPI d3drm_mesh_AddRef(IDirect3DRMMesh *iface)
 {
-    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
+    struct d3drm_mesh *mesh = impl_from_IDirect3DRMMesh(iface);
+    ULONG refcount = InterlockedIncrement(&mesh->ref);
 
-    TRACE("(%p)->(): new ref = %d\n", This, ref);
+    TRACE("%p increasing refcount to %u.\n", iface, refcount);
 
-    return ref;
+    return refcount;
 }
 
-static ULONG WINAPI IDirect3DRMMeshImpl_Release(IDirect3DRMMesh* iface)
+static ULONG WINAPI d3drm_mesh_Release(IDirect3DRMMesh *iface)
 {
-    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
+    struct d3drm_mesh *mesh = impl_from_IDirect3DRMMesh(iface);
+    ULONG refcount = InterlockedDecrement(&mesh->ref);
 
-    TRACE("(%p)->(): new ref = %d\n", This, ref);
+    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
-    if (!ref)
+    if (!refcount)
     {
         DWORD i;
 
-        for (i = 0; i < This->nb_groups; i++)
+        for (i = 0; i < mesh->nb_groups; ++i)
         {
-            HeapFree(GetProcessHeap(), 0, This->groups[i].vertices);
-            HeapFree(GetProcessHeap(), 0, This->groups[i].face_data);
-            if (This->groups[i].material)
-                IDirect3DRMMaterial2_Release(This->groups[i].material);
-            if (This->groups[i].texture)
-                IDirect3DRMTexture3_Release(This->groups[i].texture);
+            HeapFree(GetProcessHeap(), 0, mesh->groups[i].vertices);
+            HeapFree(GetProcessHeap(), 0, mesh->groups[i].face_data);
+            if (mesh->groups[i].material)
+                IDirect3DRMMaterial2_Release(mesh->groups[i].material);
+            if (mesh->groups[i].texture)
+                IDirect3DRMTexture3_Release(mesh->groups[i].texture);
         }
-        HeapFree(GetProcessHeap(), 0, This->groups);
-        HeapFree(GetProcessHeap(), 0, This);
+        HeapFree(GetProcessHeap(), 0, mesh->groups);
+        HeapFree(GetProcessHeap(), 0, mesh);
     }
 
-    return ref;
+    return refcount;
 }
 
-/*** IDirect3DRMObject methods ***/
-static HRESULT WINAPI IDirect3DRMMeshImpl_Clone(IDirect3DRMMesh *iface,
+static HRESULT WINAPI d3drm_mesh_Clone(IDirect3DRMMesh *iface,
         IUnknown *outer, REFIID iid, void **out)
 {
     FIXME("iface %p, outer %p, iid %s, out %p stub!\n", iface, outer, debugstr_guid(iid), out);
@@ -2531,7 +2524,7 @@ static HRESULT WINAPI IDirect3DRMMeshImpl_Clone(IDirect3DRMMesh *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshImpl_AddDestroyCallback(IDirect3DRMMesh *iface,
+static HRESULT WINAPI d3drm_mesh_AddDestroyCallback(IDirect3DRMMesh *iface,
         D3DRMOBJECTCALLBACK cb, void *ctx)
 {
     FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
@@ -2539,7 +2532,7 @@ static HRESULT WINAPI IDirect3DRMMeshImpl_AddDestroyCallback(IDirect3DRMMesh *if
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshImpl_DeleteDestroyCallback(IDirect3DRMMesh *iface,
+static HRESULT WINAPI d3drm_mesh_DeleteDestroyCallback(IDirect3DRMMesh *iface,
         D3DRMOBJECTCALLBACK cb, void *ctx)
 {
     FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
@@ -2547,40 +2540,35 @@ static HRESULT WINAPI IDirect3DRMMeshImpl_DeleteDestroyCallback(IDirect3DRMMesh 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshImpl_SetAppData(IDirect3DRMMesh* iface,
-                                                     DWORD data)
+static HRESULT WINAPI d3drm_mesh_SetAppData(IDirect3DRMMesh *iface, DWORD data)
 {
-    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
-
-    FIXME("(%p)->(%u): stub\n", This, data);
+    FIXME("iface %p, data %#x stub!\n", iface, data);
 
     return E_NOTIMPL;
 }
 
-static DWORD WINAPI IDirect3DRMMeshImpl_GetAppData(IDirect3DRMMesh* iface)
+static DWORD WINAPI d3drm_mesh_GetAppData(IDirect3DRMMesh *iface)
 {
-    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
-
-    FIXME("(%p)->(): stub\n", This);
+    FIXME("iface %p stub!\n", iface);
 
     return 0;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshImpl_SetName(IDirect3DRMMesh *iface, const char *name)
+static HRESULT WINAPI d3drm_mesh_SetName(IDirect3DRMMesh *iface, const char *name)
 {
     FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshImpl_GetName(IDirect3DRMMesh *iface, DWORD *size, char *name)
+static HRESULT WINAPI d3drm_mesh_GetName(IDirect3DRMMesh *iface, DWORD *size, char *name)
 {
     FIXME("iface %p, size %p, name %p stub!\n", iface, size, name);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshImpl_GetClassName(IDirect3DRMMesh *iface, DWORD *size, char *name)
+static HRESULT WINAPI d3drm_mesh_GetClassName(IDirect3DRMMesh *iface, DWORD *size, char *name)
 {
     TRACE("iface %p, size %p, name %p.\n", iface, size, name);
 
@@ -2593,73 +2581,65 @@ static HRESULT WINAPI IDirect3DRMMeshImpl_GetClassName(IDirect3DRMMesh *iface, D
     return D3DRM_OK;
 }
 
-/*** IDirect3DRMMesh methods ***/
-static HRESULT WINAPI IDirect3DRMMeshImpl_Scale(IDirect3DRMMesh* iface,
-                                                D3DVALUE sx, D3DVALUE sy, D3DVALUE sz)
+static HRESULT WINAPI d3drm_mesh_Scale(IDirect3DRMMesh *iface,
+        D3DVALUE sx, D3DVALUE sy, D3DVALUE sz)
 {
-    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
-
-    FIXME("(%p)->(%f,%f,%f): stub\n", This, sx, sy,sz);
+    FIXME("iface %p, sx %.8e, sy %.8e, sz %.8e stub!\n", iface, sx, sy, sz);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshImpl_Translate(IDirect3DRMMesh* iface,
-                                                    D3DVALUE tx, D3DVALUE ty, D3DVALUE tz)
+static HRESULT WINAPI d3drm_mesh_Translate(IDirect3DRMMesh *iface,
+        D3DVALUE tx, D3DVALUE ty, D3DVALUE tz)
 {
-    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
-
-    FIXME("(%p)->(%f,%f,%f): stub\n", This, tx, ty,tz);
+    FIXME("iface %p, tx %.8e, ty %.8e, tz %.8e stub!\n", iface, tx, ty, tz);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshImpl_GetBox(IDirect3DRMMesh* iface,
-                                                 D3DRMBOX * box)
+static HRESULT WINAPI d3drm_mesh_GetBox(IDirect3DRMMesh *iface, D3DRMBOX *box)
 {
-    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
-
-    FIXME("(%p)->(%p): stub\n", This, box);
+    FIXME("iface %p, box %p stub!\n", iface, box);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshImpl_AddGroup(IDirect3DRMMesh* iface,
-                                                   unsigned vertex_count, unsigned face_count, unsigned vertex_per_face,
-                                                   unsigned *face_data, D3DRMGROUPINDEX *return_id)
+static HRESULT WINAPI d3drm_mesh_AddGroup(IDirect3DRMMesh *iface, unsigned vertex_count,
+        unsigned face_count, unsigned vertex_per_face, unsigned *face_data, D3DRMGROUPINDEX *id)
 {
-    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+    struct d3drm_mesh *mesh = impl_from_IDirect3DRMMesh(iface);
     struct mesh_group *group;
 
-    TRACE("(%p)->(%u,%u,%u,%p,%p)\n", This, vertex_count, face_count, vertex_per_face, face_data, return_id);
+    TRACE("iface %p, vertex_count %u, face_count %u, vertex_per_face %u, face_data %p, id %p.\n",
+            iface, vertex_count, face_count, vertex_per_face, face_data, id);
 
-    if (!face_data || !return_id)
+    if (!face_data || !id)
         return E_POINTER;
 
-    if ((This->nb_groups + 1) > This->groups_capacity)
+    if ((mesh->nb_groups + 1) > mesh->groups_capacity)
     {
         struct mesh_group *groups;
         ULONG new_capacity;
 
-        if (!This->groups_capacity)
+        if (!mesh->groups_capacity)
         {
             new_capacity = 16;
             groups = HeapAlloc(GetProcessHeap(), 0, new_capacity * sizeof(*groups));
         }
         else
         {
-            new_capacity = This->groups_capacity * 2;
-            groups = HeapReAlloc(GetProcessHeap(), 0, This->groups, new_capacity * sizeof(*groups));
+            new_capacity = mesh->groups_capacity * 2;
+            groups = HeapReAlloc(GetProcessHeap(), 0, mesh->groups, new_capacity * sizeof(*groups));
         }
 
         if (!groups)
             return E_OUTOFMEMORY;
 
-        This->groups_capacity = new_capacity;
-        This->groups = groups;
+        mesh->groups_capacity = new_capacity;
+        mesh->groups = groups;
     }
 
-    group = This->groups + This->nb_groups;
+    group = mesh->groups + mesh->nb_groups;
 
     group->vertices = HeapAlloc(GetProcessHeap(), 0, vertex_count * sizeof(D3DRMVERTEX));
     if (!group->vertices)
@@ -2699,87 +2679,80 @@ static HRESULT WINAPI IDirect3DRMMeshImpl_AddGroup(IDirect3DRMMesh* iface,
     group->material = NULL;
     group->texture = NULL;
 
-    *return_id = This->nb_groups++;
+    *id = mesh->nb_groups++;
 
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshImpl_SetVertices(IDirect3DRMMesh* iface,
-                                                      D3DRMGROUPINDEX id, unsigned index, unsigned count,
-                                                      D3DRMVERTEX *values)
+static HRESULT WINAPI d3drm_mesh_SetVertices(IDirect3DRMMesh *iface, D3DRMGROUPINDEX group_id,
+        unsigned int start_idx, unsigned int count, D3DRMVERTEX *values)
 {
-    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+    struct d3drm_mesh *mesh = impl_from_IDirect3DRMMesh(iface);
 
-    TRACE("(%p)->(%u,%u,%u,%p)\n", This, id, index, count, values);
+    TRACE("iface %p, group_id %#x, start_idx %u, count %u, values %p.\n",
+            iface, group_id, start_idx, count, values);
 
-    if (id >= This->nb_groups)
+    if (group_id >= mesh->nb_groups)
         return D3DRMERR_BADVALUE;
 
-    if ((index + count - 1) >= This->groups[id].nb_vertices)
+    if ((start_idx + count - 1) >= mesh->groups[group_id].nb_vertices)
         return D3DRMERR_BADVALUE;
 
     if (!values)
         return E_POINTER;
 
-    memcpy(This->groups[id].vertices + index, values, count * sizeof(D3DRMVERTEX));
+    memcpy(mesh->groups[group_id].vertices + start_idx, values, count * sizeof(*values));
 
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshImpl_SetGroupColor(IDirect3DRMMesh* iface,
-                                                        D3DRMGROUPINDEX id, D3DCOLOR color)
+static HRESULT WINAPI d3drm_mesh_SetGroupColor(IDirect3DRMMesh *iface, D3DRMGROUPINDEX id, D3DCOLOR color)
 {
-    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+    struct d3drm_mesh *mesh = impl_from_IDirect3DRMMesh(iface);
 
-    TRACE("(%p)->(%u,%x)\n", This, id, color);
+    TRACE("iface %p, id %#x, color 0x%08x.\n", iface, id, color);
 
-    if (id >= This->nb_groups)
+    if (id >= mesh->nb_groups)
         return D3DRMERR_BADVALUE;
 
-    This->groups[id].color = color;
+    mesh->groups[id].color = color;
 
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshImpl_SetGroupColorRGB(IDirect3DRMMesh* iface,
-                                                           D3DRMGROUPINDEX id, D3DVALUE red, D3DVALUE green, D3DVALUE blue)
+static HRESULT WINAPI d3drm_mesh_SetGroupColorRGB(IDirect3DRMMesh *iface,
+        D3DRMGROUPINDEX id, D3DVALUE red, D3DVALUE green, D3DVALUE blue)
 {
-    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+    struct d3drm_mesh *mesh = impl_from_IDirect3DRMMesh(iface);
 
-    TRACE("(%p)->(%u,%f,%f,%f)\n", This, id, red, green, blue);
+    TRACE("iface %p, id %#x, red %.8e, green %.8e, blue %.8e.\n", iface, id, red, green, blue);
 
-    if (id >= This->nb_groups)
+    if (id >= mesh->nb_groups)
         return D3DRMERR_BADVALUE;
 
-    This->groups[id].color = RGBA_MAKE((BYTE)(red * 255.0f), (BYTE)(green * 255.0f), (BYTE)(blue * 255.0f), 0xff);
+    mesh->groups[id].color = RGBA_MAKE((BYTE)(red * 255.0f), (BYTE)(green * 255.0f), (BYTE)(blue * 255.0f), 0xff);
 
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshImpl_SetGroupMapping(IDirect3DRMMesh* iface,
-                                                          D3DRMGROUPINDEX id, D3DRMMAPPING value)
+static HRESULT WINAPI d3drm_mesh_SetGroupMapping(IDirect3DRMMesh *iface, D3DRMGROUPINDEX id, D3DRMMAPPING value)
 {
-    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
-
-    FIXME("(%p)->(%u,%u): stub\n", This, id, value);
+    FIXME("iface %p, id %#x, value %#x stub!\n", iface, id, value);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshImpl_SetGroupQuality(IDirect3DRMMesh* iface,
-                                                          D3DRMGROUPINDEX id, D3DRMRENDERQUALITY value)
+static HRESULT WINAPI d3drm_mesh_SetGroupQuality(IDirect3DRMMesh *iface, D3DRMGROUPINDEX id, D3DRMRENDERQUALITY value)
 {
-    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
-
-    FIXME("(%p)->(%u,%u): stub\n", This, id, value);
+    FIXME("iface %p, id %#x, value %#x stub!\n", iface, id, value);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshImpl_SetGroupMaterial(IDirect3DRMMesh *iface,
+static HRESULT WINAPI d3drm_mesh_SetGroupMaterial(IDirect3DRMMesh *iface,
         D3DRMGROUPINDEX id, IDirect3DRMMaterial *material)
 {
-    IDirect3DRMMeshImpl *mesh = impl_from_IDirect3DRMMesh(iface);
+    struct d3drm_mesh *mesh = impl_from_IDirect3DRMMesh(iface);
 
     TRACE("iface %p, id %#x, material %p.\n", iface, id, material);
 
@@ -2797,113 +2770,110 @@ static HRESULT WINAPI IDirect3DRMMeshImpl_SetGroupMaterial(IDirect3DRMMesh *ifac
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshImpl_SetGroupTexture(IDirect3DRMMesh *iface,
+static HRESULT WINAPI d3drm_mesh_SetGroupTexture(IDirect3DRMMesh *iface,
         D3DRMGROUPINDEX id, IDirect3DRMTexture *texture)
 {
-    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+    struct d3drm_mesh *mesh = impl_from_IDirect3DRMMesh(iface);
 
-    TRACE("(%p)->(%u,%p)\n", This, id, texture);
+    TRACE("iface %p, id %#x, texture %p.\n", iface, id, texture);
 
-    if (id >= This->nb_groups)
+    if (id >= mesh->nb_groups)
         return D3DRMERR_BADVALUE;
 
-    if (This->groups[id].texture)
-        IDirect3DRMTexture3_Release(This->groups[id].texture);
+    if (mesh->groups[id].texture)
+        IDirect3DRMTexture3_Release(mesh->groups[id].texture);
 
     if (!texture)
     {
-        This->groups[id].texture = NULL;
+        mesh->groups[id].texture = NULL;
         return D3DRM_OK;
     }
 
-    return IDirect3DRMTexture3_QueryInterface(texture, &IID_IDirect3DRMTexture, (void **)&This->groups[id].texture);
+    return IDirect3DRMTexture3_QueryInterface(texture, &IID_IDirect3DRMTexture, (void **)&mesh->groups[id].texture);
 }
 
-static DWORD WINAPI IDirect3DRMMeshImpl_GetGroupCount(IDirect3DRMMesh* iface)
+static DWORD WINAPI d3drm_mesh_GetGroupCount(IDirect3DRMMesh *iface)
 {
-    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+    struct d3drm_mesh *mesh = impl_from_IDirect3DRMMesh(iface);
 
-    TRACE("(%p)->()\n", This);
+    TRACE("iface %p.\n", iface);
 
-    return This->nb_groups;
+    return mesh->nb_groups;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshImpl_GetGroup(IDirect3DRMMesh* iface,
-                                                   D3DRMGROUPINDEX id, unsigned *vertex_count, unsigned *face_count, unsigned *vertex_per_face,
-                                                   DWORD *face_data_size, unsigned *face_data)
+static HRESULT WINAPI d3drm_mesh_GetGroup(IDirect3DRMMesh *iface, D3DRMGROUPINDEX id, unsigned *vertex_count,
+        unsigned *face_count, unsigned *vertex_per_face, DWORD *face_data_size, unsigned *face_data)
 {
-    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+    struct d3drm_mesh *mesh = impl_from_IDirect3DRMMesh(iface);
 
-    TRACE("(%p)->(%u,%p,%p,%p,%p,%p)\n", This, id, vertex_count, face_count, vertex_per_face, face_data_size, face_data);
+    TRACE("iface %p, id %#x, vertex_count %p, face_count %p, vertex_per_face %p, face_data_size %p, face_data %p.\n",
+            iface, id, vertex_count, face_count, vertex_per_face, face_data_size,face_data);
 
-    if (id >= This->nb_groups)
+    if (id >= mesh->nb_groups)
         return D3DRMERR_BADVALUE;
 
     if (vertex_count)
-        *vertex_count = This->groups[id].nb_vertices;
+        *vertex_count = mesh->groups[id].nb_vertices;
     if (face_count)
-        *face_count = This->groups[id].nb_faces;
+        *face_count = mesh->groups[id].nb_faces;
     if (vertex_per_face)
-        *vertex_per_face = This->groups[id].vertex_per_face;
+        *vertex_per_face = mesh->groups[id].vertex_per_face;
     if (face_data_size)
-        *face_data_size = This->groups[id].face_data_size;
+        *face_data_size = mesh->groups[id].face_data_size;
     if (face_data)
-        memcpy(face_data, This->groups[id].face_data, This->groups[id].face_data_size * sizeof(DWORD));
+        memcpy(face_data, mesh->groups[id].face_data, mesh->groups[id].face_data_size * sizeof(*face_data));
 
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshImpl_GetVertices(IDirect3DRMMesh* iface,
-                                                      D3DRMGROUPINDEX id, DWORD index, DWORD count, D3DRMVERTEX *return_ptr)
+static HRESULT WINAPI d3drm_mesh_GetVertices(IDirect3DRMMesh *iface,
+        D3DRMGROUPINDEX group_id, DWORD start_idx, DWORD count, D3DRMVERTEX *vertices)
 {
-    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+    struct d3drm_mesh *mesh = impl_from_IDirect3DRMMesh(iface);
 
-    TRACE("(%p)->(%u,%u,%u,%p)\n", This, id, index, count, return_ptr);
+    TRACE("iface %p, group_id %#x, start_idx %u, count %u, vertices %p.\n",
+            iface, group_id, start_idx, count, vertices);
 
-    if (id >= This->nb_groups)
+    if (group_id >= mesh->nb_groups)
         return D3DRMERR_BADVALUE;
 
-    if ((index + count - 1) >= This->groups[id].nb_vertices)
+    if ((start_idx + count - 1) >= mesh->groups[group_id].nb_vertices)
         return D3DRMERR_BADVALUE;
 
-    if (!return_ptr)
+    if (!vertices)
         return E_POINTER;
 
-    memcpy(return_ptr, This->groups[id].vertices + index, count * sizeof(D3DRMVERTEX));
+    memcpy(vertices, mesh->groups[group_id].vertices + start_idx, count * sizeof(*vertices));
 
     return D3DRM_OK;
 }
 
-static D3DCOLOR WINAPI IDirect3DRMMeshImpl_GetGroupColor(IDirect3DRMMesh* iface, D3DRMGROUPINDEX id)
+static D3DCOLOR WINAPI d3drm_mesh_GetGroupColor(IDirect3DRMMesh *iface, D3DRMGROUPINDEX id)
 {
-    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+    struct d3drm_mesh *mesh = impl_from_IDirect3DRMMesh(iface);
 
-    TRACE("(%p)->(%u)\n", This, id);
+    TRACE("iface %p, id %#x.\n", iface, id);
 
-    return This->groups[id].color;
+    return mesh->groups[id].color;
 }
 
-static D3DRMMAPPING WINAPI IDirect3DRMMeshImpl_GetGroupMapping(IDirect3DRMMesh* iface, D3DRMGROUPINDEX id)
+static D3DRMMAPPING WINAPI d3drm_mesh_GetGroupMapping(IDirect3DRMMesh *iface, D3DRMGROUPINDEX id)
 {
-    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
-
-    FIXME("(%p)->(%u): stub\n", This, id);
+    FIXME("iface %p, id %#x stub!\n", iface, id);
 
     return 0;
 }
-static D3DRMRENDERQUALITY WINAPI IDirect3DRMMeshImpl_GetGroupQuality(IDirect3DRMMesh* iface, D3DRMGROUPINDEX id)
+static D3DRMRENDERQUALITY WINAPI d3drm_mesh_GetGroupQuality(IDirect3DRMMesh *iface, D3DRMGROUPINDEX id)
 {
-    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
-
-    FIXME("(%p)->(%u): stub\n", This, id);
+    FIXME("iface %p, id %#x stub!\n", iface, id);
 
     return 0;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshImpl_GetGroupMaterial(IDirect3DRMMesh *iface,
+static HRESULT WINAPI d3drm_mesh_GetGroupMaterial(IDirect3DRMMesh *iface,
         D3DRMGROUPINDEX id, IDirect3DRMMaterial **material)
 {
-    IDirect3DRMMeshImpl *mesh = impl_from_IDirect3DRMMesh(iface);
+    struct d3drm_mesh *mesh = impl_from_IDirect3DRMMesh(iface);
 
     TRACE("iface %p, id %#x, material %p.\n", iface, id, material);
 
@@ -2921,78 +2891,74 @@ static HRESULT WINAPI IDirect3DRMMeshImpl_GetGroupMaterial(IDirect3DRMMesh *ifac
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshImpl_GetGroupTexture(IDirect3DRMMesh *iface,
+static HRESULT WINAPI d3drm_mesh_GetGroupTexture(IDirect3DRMMesh *iface,
         D3DRMGROUPINDEX id, IDirect3DRMTexture **texture)
 {
-    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+    struct d3drm_mesh *mesh = impl_from_IDirect3DRMMesh(iface);
 
-    TRACE("(%p)->(%u,%p)\n", This, id, texture);
+    TRACE("iface %p, id %#x, texture %p.\n", iface, id, texture);
 
-    if (id >= This->nb_groups)
+    if (id >= mesh->nb_groups)
         return D3DRMERR_BADVALUE;
 
     if (!texture)
         return E_POINTER;
 
-    if (This->groups[id].texture)
-        IDirect3DRMTexture_QueryInterface(This->groups[id].texture, &IID_IDirect3DRMTexture, (void**)texture);
+    if (mesh->groups[id].texture)
+        IDirect3DRMTexture_QueryInterface(mesh->groups[id].texture, &IID_IDirect3DRMTexture, (void **)texture);
     else
         *texture = NULL;
 
     return D3DRM_OK;
 }
 
-static const struct IDirect3DRMMeshVtbl Direct3DRMMesh_Vtbl =
+static const struct IDirect3DRMMeshVtbl d3drm_mesh_vtbl =
 {
-    /*** IUnknown methods ***/
-    IDirect3DRMMeshImpl_QueryInterface,
-    IDirect3DRMMeshImpl_AddRef,
-    IDirect3DRMMeshImpl_Release,
-    /*** IDirect3DRMObject methods ***/
-    IDirect3DRMMeshImpl_Clone,
-    IDirect3DRMMeshImpl_AddDestroyCallback,
-    IDirect3DRMMeshImpl_DeleteDestroyCallback,
-    IDirect3DRMMeshImpl_SetAppData,
-    IDirect3DRMMeshImpl_GetAppData,
-    IDirect3DRMMeshImpl_SetName,
-    IDirect3DRMMeshImpl_GetName,
-    IDirect3DRMMeshImpl_GetClassName,
-    /*** IDirect3DRMMesh methods ***/
-    IDirect3DRMMeshImpl_Scale,
-    IDirect3DRMMeshImpl_Translate,
-    IDirect3DRMMeshImpl_GetBox,
-    IDirect3DRMMeshImpl_AddGroup,
-    IDirect3DRMMeshImpl_SetVertices,
-    IDirect3DRMMeshImpl_SetGroupColor,
-    IDirect3DRMMeshImpl_SetGroupColorRGB,
-    IDirect3DRMMeshImpl_SetGroupMapping,
-    IDirect3DRMMeshImpl_SetGroupQuality,
-    IDirect3DRMMeshImpl_SetGroupMaterial,
-    IDirect3DRMMeshImpl_SetGroupTexture,
-    IDirect3DRMMeshImpl_GetGroupCount,
-    IDirect3DRMMeshImpl_GetGroup,
-    IDirect3DRMMeshImpl_GetVertices,
-    IDirect3DRMMeshImpl_GetGroupColor,
-    IDirect3DRMMeshImpl_GetGroupMapping,
-    IDirect3DRMMeshImpl_GetGroupQuality,
-    IDirect3DRMMeshImpl_GetGroupMaterial,
-    IDirect3DRMMeshImpl_GetGroupTexture
+    d3drm_mesh_QueryInterface,
+    d3drm_mesh_AddRef,
+    d3drm_mesh_Release,
+    d3drm_mesh_Clone,
+    d3drm_mesh_AddDestroyCallback,
+    d3drm_mesh_DeleteDestroyCallback,
+    d3drm_mesh_SetAppData,
+    d3drm_mesh_GetAppData,
+    d3drm_mesh_SetName,
+    d3drm_mesh_GetName,
+    d3drm_mesh_GetClassName,
+    d3drm_mesh_Scale,
+    d3drm_mesh_Translate,
+    d3drm_mesh_GetBox,
+    d3drm_mesh_AddGroup,
+    d3drm_mesh_SetVertices,
+    d3drm_mesh_SetGroupColor,
+    d3drm_mesh_SetGroupColorRGB,
+    d3drm_mesh_SetGroupMapping,
+    d3drm_mesh_SetGroupQuality,
+    d3drm_mesh_SetGroupMaterial,
+    d3drm_mesh_SetGroupTexture,
+    d3drm_mesh_GetGroupCount,
+    d3drm_mesh_GetGroup,
+    d3drm_mesh_GetVertices,
+    d3drm_mesh_GetGroupColor,
+    d3drm_mesh_GetGroupMapping,
+    d3drm_mesh_GetGroupQuality,
+    d3drm_mesh_GetGroupMaterial,
+    d3drm_mesh_GetGroupTexture,
 };
 
-HRESULT Direct3DRMMesh_create(IDirect3DRMMesh** obj)
+HRESULT Direct3DRMMesh_create(IDirect3DRMMesh **mesh)
 {
-    IDirect3DRMMeshImpl* object;
+    struct d3drm_mesh *object;
 
-    TRACE("(%p)\n", obj);
+    TRACE("mesh %p.\n", mesh);
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DRMMeshImpl));
-    if (!object)
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    object->IDirect3DRMMesh_iface.lpVtbl = &Direct3DRMMesh_Vtbl;
+    object->IDirect3DRMMesh_iface.lpVtbl = &d3drm_mesh_vtbl;
     object->ref = 1;
 
-    *obj = &object->IDirect3DRMMesh_iface;
+    *mesh = &object->IDirect3DRMMesh_iface;
 
     return S_OK;
 }
