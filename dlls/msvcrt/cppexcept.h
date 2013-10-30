@@ -41,7 +41,7 @@ typedef struct __exception
 {
   const vtable_ptr *vtable;
   char             *name;    /* Name of this exception, always a new copy for each object */
-  int               do_free; /* Whether to free 'name' in our dtor */
+  BOOL              do_free; /* Whether to free 'name' in our dtor */
 } exception;
 
 typedef void (*cxx_copy_ctor)(void);

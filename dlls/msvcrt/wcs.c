@@ -1895,7 +1895,7 @@ MSVCRT_wchar_t* CDECL MSVCRT_wcsstr(const MSVCRT_wchar_t *str, const MSVCRT_wcha
 __int64 CDECL _wtoi64_l(const MSVCRT_wchar_t *str, MSVCRT__locale_t locale)
 {
     ULONGLONG RunningTotal = 0;
-    char bMinus = 0;
+    BOOL bMinus = FALSE;
 
     while (isspaceW(*str)) {
         str++;
@@ -1904,7 +1904,7 @@ __int64 CDECL _wtoi64_l(const MSVCRT_wchar_t *str, MSVCRT__locale_t locale)
     if (*str == '+') {
         str++;
     } else if (*str == '-') {
-        bMinus = 1;
+        bMinus = TRUE;
         str++;
     } /* if */
 
