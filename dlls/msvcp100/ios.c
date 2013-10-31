@@ -978,7 +978,7 @@ int __thiscall basic_streambuf_char_sputc(basic_streambuf_char *this, char ch)
 {
     TRACE("(%p %d)\n", this, ch);
     return basic_streambuf_char__Pnavail(this) ?
-        (*basic_streambuf_char__Pninc(this) = ch) :
+        (unsigned char)(*basic_streambuf_char__Pninc(this) = ch) :
         call_basic_streambuf_char_overflow(this, (unsigned char)ch);
 }
 
