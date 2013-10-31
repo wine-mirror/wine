@@ -422,11 +422,12 @@ static int chomp( WCHAR *str )
 {
 	enum chomp_state state = cs_token;
 	WCHAR *p, *out;
-	int count = 1, ignore;
+        int count = 1;
+        BOOL ignore;
 
 	for( p = str, out = str; *p; p++ )
 	{
-		ignore = 1;
+                ignore = TRUE;
 		switch( state )
 		{
 		case cs_whitespace:
@@ -440,7 +441,7 @@ static int chomp( WCHAR *str )
 				break;
 			default:
 				count++;
-				ignore = 0;
+                                ignore = FALSE;
 				state = cs_token;
 			}
 			break;
@@ -456,7 +457,7 @@ static int chomp( WCHAR *str )
 				*out++ = 0;
 				break;
 			default:
-				ignore = 0;
+                                ignore = FALSE;
 			}
 			break;
 
@@ -467,7 +468,7 @@ static int chomp( WCHAR *str )
 				state = cs_token;
 				break;
 			default:
-				ignore = 0;
+                                ignore = FALSE;
 			}
 			break;
 		}
