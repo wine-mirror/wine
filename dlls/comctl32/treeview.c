@@ -2943,6 +2943,62 @@ TREEVIEW_Invalidate(const TREEVIEW_INFO *infoPtr, const TREEVIEW_ITEM *item)
         InvalidateRect(infoPtr->hwnd, NULL, TRUE);
 }
 
+static void
+TREEVIEW_InitCheckboxes(TREEVIEW_INFO *infoPtr)
+{
+    RECT rc;
+    HBITMAP hbm, hbmOld;
+    HDC hdc, hdcScreen;
+    int nIndex;
+
+    infoPtr->himlState = ImageList_Create(16, 16, ILC_COLOR | ILC_MASK, 3, 0);
+
+    hdcScreen = GetDC(0);
+
+    hdc = CreateCompatibleDC(hdcScreen);
+    hbm = CreateCompatibleBitmap(hdcScreen, 48, 16);
+    hbmOld = SelectObject(hdc, hbm);
+
+    SetRect(&rc, 0, 0, 48, 16);
+    FillRect(hdc, &rc, (HBRUSH)(COLOR_WINDOW+1));
+
+    SetRect(&rc, 18, 2, 30, 14);
+    DrawFrameControl(hdc, &rc, DFC_BUTTON,
+                     DFCS_BUTTONCHECK|DFCS_FLAT);
+
+    SetRect(&rc, 34, 2, 46, 14);
+    DrawFrameControl(hdc, &rc, DFC_BUTTON,
+                     DFCS_BUTTONCHECK|DFCS_FLAT|DFCS_CHECKED);
+
+    SelectObject(hdc, hbmOld);
+    nIndex = ImageList_AddMasked(infoPtr->himlState, hbm,
+                                 comctl32_color.clrWindow);
+    TRACE("checkbox index %d\n", nIndex);
+
+    DeleteObject(hbm);
+    DeleteDC(hdc);
+    ReleaseDC(0, hdcScreen);
+
+    infoPtr->stateImageWidth = 16;
+    infoPtr->stateImageHeight = 16;
+}
+
+static void
+TREEVIEW_ResetImageStateIndex(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item)
+{
+    TREEVIEW_ITEM *child = item->firstChild;
+
+    item->state &= ~TVIS_STATEIMAGEMASK;
+    item->state |= INDEXTOSTATEIMAGEMASK(1);
+
+    while (child)
+    {
+        TREEVIEW_ITEM *next = child->nextSibling;
+        TREEVIEW_ResetImageStateIndex(infoPtr, child);
+        child = next;
+    }
+}
+
 static LRESULT
 TREEVIEW_Paint(TREEVIEW_INFO *infoPtr, HDC hdc_ref)
 {
@@ -2951,6 +3007,17 @@ TREEVIEW_Paint(TREEVIEW_INFO *infoPtr, HDC hdc_ref)
     RECT rc;
 
     TRACE("(%p %p)\n", infoPtr, hdc_ref);
+
+    if ((infoPtr->dwStyle & TVS_CHECKBOXES) && !infoPtr->himlState)
+    {
+        TREEVIEW_InitCheckboxes(infoPtr);
+        TREEVIEW_ResetImageStateIndex(infoPtr, infoPtr->root);
+
+        TREEVIEW_EndEditLabelNow(infoPtr, TRUE);
+        TREEVIEW_UpdateSubTree(infoPtr, infoPtr->root);
+        TREEVIEW_UpdateScrollBars(infoPtr);
+        TREEVIEW_Invalidate(infoPtr, NULL);
+    }
 
     if (hdc_ref)
     {
@@ -4972,46 +5039,6 @@ TREEVIEW_MouseWheel(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
 /* Create/Destroy *******************************************************/
 
-static void
-TREEVIEW_InitCheckboxes(TREEVIEW_INFO *infoPtr)
-{
-    RECT rc;
-    HBITMAP hbm, hbmOld;
-    HDC hdc, hdcScreen;
-    int nIndex;
-
-    infoPtr->himlState = ImageList_Create(16, 16, ILC_COLOR | ILC_MASK, 3, 0);
-
-    hdcScreen = GetDC(0);
-
-    hdc = CreateCompatibleDC(hdcScreen);
-    hbm = CreateCompatibleBitmap(hdcScreen, 48, 16);
-    hbmOld = SelectObject(hdc, hbm);
-
-    SetRect(&rc, 0, 0, 48, 16);
-    FillRect(hdc, &rc, (HBRUSH)(COLOR_WINDOW+1));
-
-    SetRect(&rc, 18, 2, 30, 14);
-    DrawFrameControl(hdc, &rc, DFC_BUTTON,
-                     DFCS_BUTTONCHECK|DFCS_FLAT);
-
-    SetRect(&rc, 34, 2, 46, 14);
-    DrawFrameControl(hdc, &rc, DFC_BUTTON,
-                     DFCS_BUTTONCHECK|DFCS_FLAT|DFCS_CHECKED);
-
-    SelectObject(hdc, hbmOld);
-    nIndex = ImageList_AddMasked(infoPtr->himlState, hbm,
-                                 comctl32_color.clrWindow);
-    TRACE("checkbox index %d\n", nIndex);
-
-    DeleteObject(hbm);
-    DeleteDC(hdc);
-    ReleaseDC(0, hdcScreen);
-
-    infoPtr->stateImageWidth = 16;
-    infoPtr->stateImageHeight = 16;
-}
-
 static LRESULT
 TREEVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
 {
@@ -5451,21 +5478,6 @@ TREEVIEW_Size(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-static void TREEVIEW_ResetImageStateIndex(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item)
-{
-    TREEVIEW_ITEM *child = item->firstChild;
-
-    item->state &= ~TVIS_STATEIMAGEMASK;
-    item->state |= INDEXTOSTATEIMAGEMASK(1);
-
-    while (child)
-    {
-        TREEVIEW_ITEM *next = child->nextSibling;
-        TREEVIEW_ResetImageStateIndex(infoPtr, child);
-        child = next;
-    }
-}
-
 static LRESULT
 TREEVIEW_StyleChanged(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
@@ -5509,6 +5521,7 @@ TREEVIEW_StyleChanged(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
         infoPtr->dwStyle = dwNewStyle;
     }
 
+    TREEVIEW_EndEditLabelNow(infoPtr, TRUE);
     TREEVIEW_UpdateSubTree(infoPtr, infoPtr->root);
     TREEVIEW_UpdateScrollBars(infoPtr);
     TREEVIEW_Invalidate(infoPtr, NULL);
