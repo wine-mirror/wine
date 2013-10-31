@@ -1737,7 +1737,8 @@ mmsystem.h
 
 %include
 
-"windows.h"
+"windef.h"
+"mmsystem.h"
 
 %type
 

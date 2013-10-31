@@ -11,7 +11,8 @@
 
 #define WINE_NOWINSOCK
 
-#include "windows.h"
+#include "windef.h"
+#include "mmsystem.h"
 
 #include "wine/test.h"
 
