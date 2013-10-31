@@ -797,7 +797,8 @@ static void test_ImmGetIMCLockCount(void)
 static void test_ImmGetIMCCLockCount(void)
 {
     HIMCC imcc;
-    DWORD count, g_count, ret, i;
+    DWORD count, g_count, i;
+    BOOL ret;
     VOID *p;
 
     imcc = ImmCreateIMCC(sizeof(CANDIDATEINFO));
