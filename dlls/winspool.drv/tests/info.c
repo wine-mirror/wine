@@ -2916,9 +2916,19 @@ static void test_OpenPrinter_defaults(void)
     default_size = pi->pDevMode->u1.s1.dmPaperSize;
     HeapFree( GetProcessHeap(), 0, pi );
 
+    needed = 0;
+    SetLastError( 0xdeadbeef );
     ret = AddJobA( printer, 1, NULL, 0, &needed );
     ok( !ret, "got %d\n", ret );
-    add_job = HeapAlloc( GetProcessHeap(), 0, needed );
+    if (GetLastError() == ERROR_NOT_SUPPORTED) /* win8 */
+    {
+        win_skip( "AddJob is not supported on this platform\n" );
+        ClosePrinter( printer );
+        return;
+    }
+    ok( GetLastError() == ERROR_INSUFFICIENT_BUFFER, "expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError() );
+    ok( needed > sizeof(ADDJOB_INFO_1A), "AddJob needs %u bytes\n", needed);
+    add_job = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, needed );
     ret = AddJobA( printer, 1, (BYTE *)add_job, needed, &needed );
     ok( ret, "AddJobA() failed le=%d\n", GetLastError() );
 
