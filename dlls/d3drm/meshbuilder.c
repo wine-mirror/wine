@@ -62,11 +62,12 @@ struct coords_2d
     D3DVALUE v;
 };
 
-typedef struct {
+struct mesh_material
+{
     D3DCOLOR color;
     IDirect3DRMMaterial2 *material;
     IDirect3DRMTexture3 *texture;
-} mesh_material;
+};
 
 typedef struct {
     IDirect3DRMMeshBuilder2 IDirect3DRMMeshBuilder2_iface;
@@ -86,7 +87,7 @@ typedef struct {
     IDirect3DRMMaterial2 *material;
     IDirect3DRMTexture3 *texture;
     DWORD nb_materials;
-    mesh_material *materials;
+    struct mesh_material *materials;
     DWORD *material_indices;
 } IDirect3DRMMeshBuilderImpl;
 
