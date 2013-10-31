@@ -178,7 +178,8 @@ static void test_get_certificate(char *cert_data, int index)
     HANDLE hFile;
     LPWIN_CERTIFICATE cert;
     DWORD cert_len = 0;
-    DWORD err, ret;
+    DWORD err;
+    BOOL ret;
 
     hFile = CreateFileA(test_dll_path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
