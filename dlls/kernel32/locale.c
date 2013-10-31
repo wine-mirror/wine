@@ -215,6 +215,7 @@ static const union cptable *get_codepage_table( unsigned int codepage )
     case CP_THREAD_ACP:
         if (NtCurrentTeb()->CurrentLocale == GetUserDefaultLCID()) return ansi_cptable;
         codepage = get_lcid_codepage( NtCurrentTeb()->CurrentLocale );
+        if (!codepage) return ansi_cptable;
         /* fall through */
     default:
         if (codepage == ansi_cptable->info.codepage) return ansi_cptable;
