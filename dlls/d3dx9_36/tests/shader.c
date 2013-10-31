@@ -1424,14 +1424,12 @@ static void test_setting_constants(void)
     ULONG refcnt;
 
     /* Create the device to use for our tests */
-    wnd = CreateWindow("static", "d3dx9_test", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL);
-    d3d = Direct3DCreate9(D3D_SDK_VERSION);
-    if (!wnd)
+    if (!(wnd = CreateWindowA("static", "d3dx9_test", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL)))
     {
         skip("Couldn't create application window\n");
         return;
     }
-    if (!d3d)
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Couldn't create IDirect3D9 object\n");
         DestroyWindow(wnd);
@@ -6070,14 +6068,12 @@ static void test_registerset(void)
     D3DCAPS9 caps;
 
     /* Create the device to use for our tests */
-    wnd = CreateWindow("static", "d3dx9_test", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL);
-    d3d = Direct3DCreate9(D3D_SDK_VERSION);
-    if (!wnd)
+    if (!(wnd = CreateWindowA("static", "d3dx9_test", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL)))
     {
         skip("Couldn't create application window\n");
         return;
     }
-    if (!d3d)
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Couldn't create IDirect3D9 object\n");
         DestroyWindow(wnd);
@@ -6376,14 +6372,12 @@ static void test_registerset_defaults(void)
     D3DCAPS9 caps;
 
     /* Create the device to use for our tests */
-    wnd = CreateWindow("static", "d3dx9_test", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL);
-    d3d = Direct3DCreate9(D3D_SDK_VERSION);
-    if (!wnd)
+    if (!(wnd = CreateWindowA("static", "d3dx9_test", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL)))
     {
         skip("Couldn't create application window\n");
         return;
     }
-    if (!d3d)
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Couldn't create IDirect3D9 object\n");
         DestroyWindow(wnd);

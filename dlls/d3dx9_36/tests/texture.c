@@ -1786,8 +1786,8 @@ START_TEST(texture)
     D3DPRESENT_PARAMETERS d3dpp;
     HRESULT hr;
 
-    wnd = CreateWindow("static", "d3dx9_test", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL);
-    if (!wnd) {
+    if (!(wnd = CreateWindowA("static", "d3dx9_test", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL)))
+    {
         skip("Couldn't create application window\n");
         return;
     }

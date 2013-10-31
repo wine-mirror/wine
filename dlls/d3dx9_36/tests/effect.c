@@ -2691,13 +2691,13 @@ START_TEST(effect)
     HRESULT hr;
     ULONG count;
 
-    wnd = CreateWindow("static", "d3dx9_test", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL);
-    d3d = Direct3DCreate9(D3D_SDK_VERSION);
-    if (!wnd) {
+    if (!(wnd = CreateWindowA("static", "d3dx9_test", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL)))
+    {
         skip("Couldn't create application window\n");
         return;
     }
-    if (!d3d) {
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
+    {
         skip("Couldn't create IDirect3D9 object\n");
         DestroyWindow(wnd);
         return;
